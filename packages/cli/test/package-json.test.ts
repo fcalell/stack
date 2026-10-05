@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { PACKAGE_MANAGER } from "../src/lib/stack-packages.ts";
 import { packageJsonTemplate } from "../src/templates/package-json.ts";
 
 const devDependencies = (plugins: string[]): Record<string, string> =>
@@ -62,7 +63,7 @@ test("every stack package is a commit-free spec from the table", () => {
 		pkg.devDependencies["@fcalell/biome-config"],
 		"github:fcalell/stack#path:/packages/biome-config",
 	);
-	assert.equal(pkg.packageManager, "pnpm@11.28.3");
+	assert.equal(pkg.packageManager, PACKAGE_MANAGER);
 });
 
 test("an app in stack's workspace leaves Biome and the package manager to the checkout", () => {

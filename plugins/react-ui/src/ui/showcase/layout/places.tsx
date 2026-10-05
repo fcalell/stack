@@ -174,7 +174,7 @@ export function Verify() {
 						leading={{ icon: "Globe" }}
 						title="shop.acme.dev"
 						meta={["acme-web", "Production"]}
-						onOpen={() => navigate(to({ place: "domains" }))}
+						href={to({ place: "domains" })}
 					/>
 				</Group>
 				<Text>

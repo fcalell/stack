@@ -16,11 +16,11 @@ pattern whose shortlist is thinner than the rest says so on its page, with what 
 ## Anchor apps
 
 Apps that recur across the 28 pattern shortlists, by count of cited executions
-(161 rows, 88 apps; three or more listed). They are the anchors by evidence, not by assumption.
+(161 rows, 87 apps; three or more listed). They are the anchors by evidence, not by assumption.
 
 | App | Executions |
 | --- | --- |
-| Linear | 9 |
+| Linear | 10 |
 | Notion | 7 |
 | Vercel | 6 |
 | Vapi | 5 |
@@ -37,5 +37,5 @@ Apps that recur across the 28 pattern shortlists, by count of cited executions
 | Laravel Cloud | 3 |
 | Airtable | 3 |
 
-`v0` is Vercel's; counted together Vercel leads with Linear. Linear, Notion, Vercel, Supabase
+`v0` is Vercel's; counted together Vercel's 9 stands next to Linear's 10. Linear, Notion, Vercel, Supabase
 and Attio also have a `DESIGN.md` in the corpus, so their numbers are exact.

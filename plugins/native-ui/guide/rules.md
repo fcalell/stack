@@ -9,10 +9,10 @@ composes components and never restyles them.
 
 Find the roster component that owns the shape: the frame (`Shell`, `Place`, `Screen`, `Split`),
 the rhythm (`Section`, `Group`, `List`), the row (`ListRow`, `DefinitionRow`, `FormField`), the
-control, the text role (`Text`). A `View` rebuilding one is drift. A `Split` is its page's frame region: it stands as
-the bleeding `Place`'s (or `Screen`'s) direct child, never inside a component of the app's,
-since the page reads its props for its head's back and Details acts; deeper it draws as a plain
-region and no head draws them.
+control, the text role (`Text`). A `View` rebuilding one is drift. A `Split` is its page's frame
+region: it stands as the bleeding `Place`'s (or `Screen`'s) direct child, never inside a component
+of the app's, since the page reads its props for its head's back and Details acts; deeper it draws
+as a plain region and no head draws them.
 
 A record the open record links to opens beside it: the `Split`'s `beside` holds a `Screen` whose
 `back` is the open record's route. On the phone it stands in the open record's stead, its back
@@ -36,8 +36,7 @@ in React Native's `Text`.
 Every colour, size, radius and spacing is a contract token, never an arbitrary value (`h-[34px]`),
 a literal colour or raw pixels. Copy renders through `Text` (`body` or `meta`, with `strong`) or
 the molecule that owns its role (`title` is `Place`'s and `Screen`'s, `heading` `Section`'s,
-`figure` `Stats`', `display` `Stat`'s); colour
-comes through a component's props.
+`figure` `Stats`', `display` `Stat`'s); colour comes through a component's props.
 
 ## A picture is an `Image`
 
@@ -85,6 +84,7 @@ heads the step's screen, whether that is a `Place`, an auth column or a sheet pa
 
 ```tsx
 <StepCount at={2} of={3} />
+```
 
 ## A rail of fixed states is `Stages`
 
@@ -96,6 +96,7 @@ stage after the last done one. A feed of what happened is not a rail.
 
 ```tsx
 <Stages steps={request.stages} ended={request.rejection} />
+```
 
 ## Counts are `Stats` and `Stat`
 
@@ -184,20 +185,40 @@ A value outside its editable context is a `DefinitionRow` with `locked`, a `Lock
 with an `href` ("Held by CR-12, Ana"). A locked row takes no `description`, `act`, `href` or
 `onOpen`. A held value is never a disabled `FormField`.
 
+## A form about an object opens on that object
+
+A form about an object (a domain, a project) opens on that object as one `ListRow` in a `Group`,
+the `Form`'s first child: the object's glyph as `leading`, its name as `title`, where it lives as
+`meta`, and `href` to the route that changes it.
+
+```tsx
+<Form>
+  <Group>
+    <ListRow
+      leading={{ icon: "Globe" }}
+      title="shop.acme.dev"
+      meta={["acme-web", "Production"]}
+      href={domainRoute}
+    />
+  </Group>
+  <FormField label="Code">…</FormField>
+</Form>
+```
+
 ## Collections take data
 
 A collection takes data and draws its states. A `List` takes its `query` (or static
 `items`) and one item map, `row` for `ListRow`s, `file` for `FileRow`s or `meter` for `Meter`s,
 one function per slot; declare a slot only if every item fills it. Pending, it waits in those
-slots; failed, it shows `sentence` and Retry; empty, `empty`, with the act that fills it. Rows share one `leading` kind
-(`avatar`, `icon` or `status`) or none. The first meta part names the item; it and the status
-stay whole as the later parts, then the chip, truncate. A file row's `chip` says why it is listed
-or what its change is; it stays whole and the path yields to it. A Section counts them and waits with them when
-they stand as its direct children, inside a direct `Group`, or as a direct `QueryBoundary`'s
-query; a collection inside the app's own component, or inside a `QueryBoundary`'s body, draws
-itself but adds no count and no busy state to the Section's head. A `Group` holds
-static rows; rows from data in a card are a `List` placed in the `Group`, drawing its states
-on the card, never a `.map` of `ListRow`s or `Meter`s.
+slots; failed, it shows `sentence` and Retry; empty, `empty`, with the act that fills it. Rows
+share one `leading` kind (`avatar`, `icon` or `status`) or none. The first meta part names the
+item; it and the status stay whole as the later parts, then the chip, truncate. A file row's `chip`
+says why it is listed or what its change is; it stays whole and the path yields to it. A Section
+counts them and waits with them when they stand as its direct children, inside a direct `Group`,
+or as a direct `QueryBoundary`'s query; a collection inside the app's own component, or inside a
+`QueryBoundary`'s body, draws itself but adds no count and no busy state to the Section's head. A
+`Group` holds static rows; rows from data in a card are a `List` placed in the `Group`, drawing
+its states on the card, never a `.map` of `ListRow`s or `Meter`s.
 
 A read that answers not found (its query's `error` carries `code: "NOT_FOUND"`, as a stack
 procedure throws it, or `status: 404`) draws "This no longer exists." (the `missing` word) with
@@ -218,7 +239,10 @@ and `moved` reading a row's reason from its item. Below `tablet` each row leads 
 `tablet` a tick column leads the grid and its head tick is unchecked, mixed or checked over the rows
 that can be ticked. `onChange` hears the viewer's tick and your rule decides what the set becomes
 (ticking a change under a new parent ticks the parent): return the ruled set through `chosen`. The
-table draws no count. Its count is the `ActionBar`'s: dock `<ActionBar chosen={{ count, of }} acts={[publish]} />` as the Place's `foot`, and it reads "N of M chosen" over the full-width act, whose label you set ("Publish 4 changes") and whose `blocked` reason you give when nothing can go.
+table draws no count. Its count is the `ActionBar`'s: dock
+`<ActionBar chosen={{ count, of }} acts={[publish]} />` as the Place's `foot`, and it reads "N of M
+chosen" over the full-width act, whose label you set ("Publish 4 changes") and whose `blocked`
+reason you give when nothing can go.
 
 ```tsx
 <List
@@ -236,16 +260,15 @@ form: a set (`onChange` hears the set) draws check rows, one value or `null` (`o
 the value) radio rows, one answer among a few described options.
 
 A `Thread` takes its `query` (or `items`) the same way through a `message` map (`key`,
-`author`, `name`, `body`, `at`, `attachments`, `meta`, `onOpen`, `detail`), each reading only its item, since a message
-draws again only when its item changes; its `MessageInput` stays the `foot`. In a
-`Place`'s body, or in a `Split`'s `main` under the record's `ItemHeader`, it fills what holds it:
-its log scrolls and the input docks at the foot. It stands there as the body's direct child, or
-as `main` (in a fragment under the record's `ItemHeader`), never inside a component of the
-app's, so the frame knows it from its first render. What a
-system line names stands under it as its `detail`, a `MessageDetail`, exactly one of: a `row`
-(a `ListRow`'s slots, in a hairline card, opening its record), a free act's `code` under its
-verb, or a `fold` of lines the line opens in place; never a `ListRow` or a `Code` between the
-messages.
+`author`, `name`, `body`, `at`, `attachments`, `meta`, `onOpen`, `detail`), each reading only its
+item, since a message draws again only when its item changes; its `MessageInput` stays the `foot`.
+In a `Place`'s body, or in a `Split`'s `main` under the record's `ItemHeader`, it fills what holds
+it: its log scrolls and the input docks at the foot. It stands there as the body's direct child,
+or as `main` (in a fragment under the record's `ItemHeader`), never inside a component of the
+app's, so the frame knows it from its first render. What a system line names stands under it as
+its `detail`, a `MessageDetail`, exactly one of: a `row` (a `ListRow`'s slots, in a hairline card,
+opening its record), a free act's `code` under its verb, or a `fold` of lines the line opens in
+place; never a `ListRow` or a `Code` between the messages.
 
 A `MessageInput`'s `onAttach` hears `PickedFile`s: the paperclip opens the photo library or the
 files, and a file picked comes through it. A paste into the text brings nothing, since React
@@ -269,8 +292,9 @@ file lands in; outside one the refusal vanishes.
 
 A field that stays in view while a `Place`'s sections scroll under it (an ask box over a
 home's sections) is the Place's `foot`: it docks at the Place's bottom, above the tab bar on
-touch; a selection bar (an `ActionBar` with `chosen`) docks the same way. A Place takes a `foot` or an `act`, never both, since each holds the screen's filled act.
-A `Thread` in a Place with a `foot` stands among its sections, inline, its `foot` left empty.
+touch; a selection bar (an `ActionBar` with `chosen`) docks the same way. A Place takes a `foot` or
+an `act`, never both, since each holds the screen's filled act. A `Thread` in a Place with a
+`foot` stands among its sections, inline, its `foot` left empty.
 
 A `BarChart` takes data the same way, its `bar` map reading each item's `key`, `label`, `value`,
 `parts` (by its declared `keys`) and `at`; its failed and empty forms stand at the chart's height.

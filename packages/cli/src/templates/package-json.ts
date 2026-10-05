@@ -1,4 +1,8 @@
-import { stackPluginSpecs, stackSpec } from "../lib/stack-packages.ts";
+import {
+	PACKAGE_MANAGER,
+	stackPluginSpecs,
+	stackSpec,
+} from "../lib/stack-packages.ts";
 import { tsconfigLayout } from "./tsconfig.ts";
 
 interface PackageJsonOptions {
@@ -57,7 +61,7 @@ export function packageJsonTemplate(options: PackageJsonOptions): string {
 		private: true,
 		type: "module",
 	};
-	if (!options.workspace) pkg.packageManager = "pnpm@11.28.3";
+	if (!options.workspace) pkg.packageManager = PACKAGE_MANAGER;
 
 	// TODO: `#/*` once the scaffold's TypeScript is 6.0 or later; 5.9
 	// refuses a subpath import that starts with `#/`.

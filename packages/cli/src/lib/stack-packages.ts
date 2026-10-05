@@ -1,3 +1,6 @@
+// The package manager a scaffolded project outside stack's workspace pins.
+export const PACKAGE_MANAGER = "pnpm@11.28.3";
+
 // Every first-party package a consumer installs, by the directory it lives in
 // within stack's repository and the first-party packages its `dependencies`
 // name. A test holds each entry to the package's own manifest. `builds` is

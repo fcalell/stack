@@ -16,12 +16,14 @@ Eleven subpaths:
 - `@fcalell/ui-core/derive`: `deriveTheme(theme)` resolves the knobs into final values, one string
   per token, plus the motion scale as numbers.
 - `@fcalell/ui-core/emit`: the records a plugin renders. `themeTokens` is the `@theme` block: the
-  eleven reset namespaces, the touch density set, tracking, radii, widths, breakpoints, the two
-  font stacks, the durations and curves, and the light colors. `rootTokens` is what sits on the
-  root outside `@theme`: the hairline, the focus ring's width and offset, the layers' order
-  (`--layer-<layer>`) and the light shadows.
-  `modeTokens` is one mode's colors and its two shadows. `densityTokens` is one density's type
-  scale, spacing roles and sizes (the room's in canvas units); `roomTokens` and `roomScope` are the room set scaled. `nativeMeasureTokens` is native's two measures in px over `themeTokens`' `ch`. `reducedMotionTokens` is every duration at 0ms. `shadowUtilities` is the declaration of each `shadow-*` utility, reading its mode's variable.
+  eleven reset namespaces, the touch density set, tracking, radii, widths, breakpoints, the two font
+  stacks, the durations and curves, and the light colors. `rootTokens` is what sits on the root
+  outside `@theme`: the hairline, the focus ring's width and offset, the layers' order
+  (`--layer-<layer>`) and the light shadows. `modeTokens` is one mode's colors and its two shadows.
+  `densityTokens` is one density's type scale, spacing roles and sizes (the room's in canvas units);
+  `roomTokens` and `roomScope` are the room set scaled. `nativeMeasureTokens` is native's two
+  measures in px over `themeTokens`' `ch`. `reducedMotionTokens` is every duration at 0ms.
+  `shadowUtilities` is the declaration of each `shadow-*` utility, reading its mode's variable.
   `raisedGroundTokens` is what a raised ground (`RAISED_GROUNDS`: `group`, `raised`) declares for
   everything inside it, the hairline read through `edge-raised`.
 - `@fcalell/ui-core/cn`: `cn()`, the class merger, taught the contract's six scales.
@@ -33,11 +35,10 @@ Eleven subpaths:
   `ButtonFit`, `IconButtonFit` and `LinkFit`, what an act sits in, read off each matrix's `fit`
   axis; `ActionBarFit`, where an action bar stands, `end` or `full`, off `ACTION_BAR`'s;
   `TextRole`, the `body` and `meta` roles `Text` draws).
-- `@fcalell/ui-core/descriptors`: `IconName`, `Act`, `IconAct`, `Part`, `StatusMark`, `ChipMark`, `Option`, `OptionGroup`,
-  `PlaceSpec`, `Switcher`, `Hunk`, `FieldBinding`, `Confirmation`, `MenuItem`, `RowEntry`, `Lock`, `Answered`, `TableColumn`, `TableRowSlots`,
-  `CellEdit` and the other framework-free types a prop carries.
-
-  `CellEdit`, `Stage`, `StageEnd` and the other framework-free types a prop carries.
+- `@fcalell/ui-core/descriptors`: `IconName`, `Act`, `IconAct`, `Part`, `StatusMark`, `ChipMark`,
+  `Option`, `OptionGroup`, `PlaceSpec`, `Switcher`, `Hunk`, `FieldBinding`, `Confirmation`,
+  `MenuItem`, `RowEntry`, `Lock`, `Answered`, `TableColumn`, `TableRowSlots`, `CellEdit`, `Stage`,
+  `StageEnd` and the other framework-free types a prop carries.
 - `@fcalell/ui-core/commit`: `commitMoment()`, when a typing control's value is final: on
   leaving the field or Enter, only when it changed since focus, Escape restoring the value at
   focus, and ending the edit. Both plugins' `Input` and `TextArea` drive their `onCommit` with it.
@@ -67,10 +68,10 @@ every utility reads its variable and the active scope sets it.
 ## DESIGN.md
 
 The package's `DESIGN.md`, shipped in its `files` so a consumer reads it under
-`node_modules/@fcalell/ui-core/`, is the contract in the [DESIGN.md format](https://github.com/google-labs-code/design.md):
-the default theme's tokens as front matter, each matrix cell and single cell as a component (dark
-values and their components suffixed `-dark`), and the roster with the cells each component draws,
-its states and the tokens it owns.
+`node_modules/@fcalell/ui-core/`, is the contract in the [DESIGN.md
+format](https://github.com/google-labs-code/design.md): the default theme's tokens as front matter,
+each matrix cell and single cell as a component (dark values and their components suffixed `-dark`),
+and the roster with the cells each component draws, its states and the tokens it owns.
 `src/design-md.ts` emits it and `pnpm --filter @fcalell/ui-core design-md` writes it. The package's
 `test` fails when the committed file differs from the emitter's output or when `design.md lint`
 reports an error, so it is never edited by hand.
@@ -101,8 +102,8 @@ the two together, all 360 hues each.
 Density is not a knob. The web draws the desktop set where the primary pointer is fine and the
 viewport is at least `tablet` wide, and the touch set everywhere else, so a desktop window
 narrower than `tablet` draws the touch set; a `data-density` attribute on the root pins any set,
-which is how the showcase addresses a density. Native is touch-only, and room inside a room
-`Place`. The `room` set is the one a screen declares (`Place`'s `distance`), since no query
+which is how the showcase addresses a density. Native is touch-only outside a room `Place`. The
+`room` set is the one a screen declares (`Place`'s `distance`), since no query
 detects how far a screen is read from: the touch set drawn on a 960 × 540 canvas and multiplied by
 the room unit `u = max(1px, min(100vw / 960, 100dvh / 540))` (native: from the window's size),
 so at 1920 × 1080 `u` is 2 and the body is 32, the title 44, a control 88 and a row 96. In the
@@ -117,11 +118,24 @@ since it always draws the touch set and so the touch structure.
 ## Words
 
 Every word a molecule draws or reads aloud on its own comes from `words`, a typed object passed
-once beside `theme`: the seven `Status` words, `recommended`, `copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`,
-`more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `edit`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `downloadFailed`, `latest`, `missing`, `typeValue`, `pickValue`, `chooseFile`, `photos`, `files`, `warning`, `locked`, `modified`, `chooseAll`, `expand`, `collapse`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changed`, `unchanged`, `stale`, `wrongType`, `stepOf` and `chosenOf`. A counted word is `{ one, other }`, each form spelling `{count}` where the number stands, drawn through `counted(word, count)` (`one` at a count of one, `other` at any other). A slot word spells each of its named slots as `{name}` where the value stands (`meterValue` `{value}` and `{max}`, `meterOver` `{amount}`, `meterMark` `{name}` and `{value}`, `linesAdded` and `linesRemoved` `{count}`, `changed` `{before}` and `{after}`, `wrongType` `{name}` and `{types}`, `stepOf` `{at}` and `{of}`, `chosenOf` `{count}` and `{of}`), drawn through `filled(word, values)`; the schema rejects a translation that drops a slot. `Words` requires every key and
-`wordsSchema` is closed, so a translation that misses a word fails `tsc` and the schema, never the
-interface. `ENGLISH` is the default. A sentence that belongs to the consumer is a prop on the
-molecule that draws it (`placeholder`, `notice`, every `sentence`, every label), never a key.
+once beside `theme`: the seven `Status` words, `recommended`, `copy`, `copied`, `download`, `back`,
+`close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`,
+`retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `edit`, `details`, `places`,
+`notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`,
+`seen`, `unseen`, `copyFailed`, `downloadFailed`, `latest`, `missing`, `chooseFile`, `typeValue`, `pickValue`,
+`locked`, `warning`, `photos`, `files`, `modified`, `unchanged`, `stale`, `chooseAll`, `expand`,
+`collapse`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`,
+`linesAdded`, `linesRemoved`, `changed`, `wrongType`, `stepOf` and `chosenOf`. A counted word is
+`{ one, other }`, each form spelling `{count}` where the number stands, drawn through
+`counted(word, count)` (`one` at a count of one, `other` at any other). A slot word spells each of
+its named slots as `{name}` where the value stands (`meterValue` `{value}` and `{max}`, `meterOver`
+`{amount}`, `meterMark` `{name}` and `{value}`, `linesAdded` and `linesRemoved` `{count}`, `changed`
+`{before}` and `{after}`, `wrongType` `{name}` and `{types}`, `stepOf` `{at}` and `{of}`, `chosenOf`
+`{count}` and `{of}`), drawn through `filled(word, values)`; the schema rejects a translation that
+drops a slot. `Words` requires every key and `wordsSchema` is closed, so a translation that misses
+a word fails `tsc` and the schema, never the interface. `ENGLISH` is the default. A sentence that
+belongs to the consumer is a prop on the molecule that draws it (`placeholder`, `notice`, every
+`sentence`, every label), never a key.
 
 ## Color roles
 
@@ -134,11 +148,12 @@ accent read as one palette.
   sheet, a toast). Dark: `canvas` 3.6, `surface` 8.1, `group` and `raised` 13.1, so a
   lifted layer sits one step above the content.
 - `edge`: the hairline over `canvas` and `surface`. `edge-raised`: the hairline inside a group and
-  on a lifted layer; the container re-points `edge` to it, so a row inside a group draws `edge`
-  and gets the raised value. The web scopes the re-point on the raised grounds' fill
-  classes (`bg-group`, `bg-raised`), after its mode scopes; native scopes it on each raised surface's content (uniwind's `ScopedVariables`), resolving each read in the mode. In light the two are one hairline; the dark ladder spans more than
-  one hairline can straddle, so there they differ. `edge-strong`: a control's boundary, at 3:1
-  against `surface` and `group`.
+  on a lifted layer; the container re-points `edge` to it, so a row inside a group draws `edge` and
+  gets the raised value. The web scopes the re-point on the raised grounds' fill classes
+  (`bg-group`, `bg-raised`), after its mode scopes; native scopes it on each raised surface's
+  content (uniwind's `ScopedVariables`), resolving each read in the mode. In light the two are one
+  hairline; the dark ladder spans more than one hairline can straddle, so there they differ.
+  `edge-strong`: a control's boundary, at 3:1 against `surface` and `group`.
 - `scrim`: the veil behind a dialog or a sheet.
 - Three inks. `ink-body`: the primary line of anything. `ink-meta`: a secondary line, a
   placeholder, a table header. `ink-faint`: disabled text only, at about 3:1, which WCAG exempts.
@@ -199,19 +214,19 @@ Status colors: `active` → `accent-ink`, `waiting` → `ink-meta`, `done` → `
 
 ## Type roles
 
-Eight roles named by use, each a ratio of the body size. Two rules decide which one a piece of
-text takes. Size follows structure, never emphasis: the primary line of anything is `body`, a
-secondary line is `meta`, and emphasis inside a line is weight 500 (`strong`), never a size
-change. A size role names a place, once: `title` is the page's name, once per screen; `heading` a
-section's or a card's name, never inside a row; `caption` text inside a small component (a chip, a
-key hint), never a sentence; `code` what a machine reads; `figure` a count's number in a strip of them. So there is no label role: a field label
-and a row's leading cell are `body` at 500, a table header is `meta` at 500, menu and picker
-items are `body`. Weight, ink, family and, on `display` and `figure`, tabular figures ride with the role; a molecule may set a role's weight in
-its own cell, never a consumer.
+Eight roles named by use, each a ratio of the body size. Two rules decide which one a piece of text
+takes. Size follows structure, never emphasis: the primary line of anything is `body`, a secondary
+line is `meta`, and emphasis inside a line is weight 500 (`strong`), never a size change. A size
+role names a place, once: `title` is the page's name, once per screen; `heading` a section's or a
+card's name, never inside a row; `caption` text inside a small component (a chip, a key hint), never
+a sentence; `code` what a machine reads; `figure` a count's number in a strip of them. So there is
+no label role: a field label and a row's leading cell are `body` at 500, a table header is `meta` at
+500, menu and picker items are `body`. Weight, ink, family and, on `display` and `figure`, tabular
+figures ride with the role; a molecule may set a role's weight in its own cell, never a consumer.
 
 The body size is the one base, per density: 13 on desktop, 16 on touch (and 16 canvas units in the
-room), the input size below which iOS Safari zooms on focus. Each size rounds to the whole pixel and each line box to the even
-pixel, a tie rounding up.
+room), the input size below which iOS Safari zooms on focus. Each size rounds to the whole pixel and
+each line box to the even pixel, a tie rounding up.
 
 | Role | Desktop, size / line | Touch, size / line | Weight | Ink | Used for |
 | --- | --- | --- | --- | --- | --- |
@@ -233,31 +248,48 @@ carry none.
 
 ## Space, sizes, radii, elevation
 
-One base, 4 px; every spacing role is a multiple of it, picked per density, so a density moves
-the roles up and down one ladder. Twelve roles by use, desktop then touch: `inside` 6 / 8 (within
-a control: icon to label, dot to text), `control-x` 12 / 16 (a control's inline padding), `pair`
-6 / 8 (between paired elements: label over input, title over description), `acts` 8 / 8
-(between the acts of a bar: a page header, a toolbar, an action bar), `rows` 2 / 4 (between
-rows in a menu or a nav list; rows in a hairline list abut), `card` 16 / 16 (a card's
-inset), `tile` 12 / 16 (a compact card's inset: a board card), `float` 4 / 4 (a floating surface's inset: a select's list, a menu, a picker popover), `fields` 16 / 24 (between fields), `sections` 32 / 40 (between sections of a
-page), `page` 24 / 16 (the page inset). A list bleeds by `control-x`, so its rows' leading meets the title over it. Touch is the same roles one rung looser except the
-float inset and the acts gap, which hold, and the page inset, which a phone narrows; the room is touch's
-with a `page` of 48 canvas units. Six are gap roles, what a container may put between its children:
-`inside`, `pair`, `acts`, `rows`, `fields`, `sections`; the other five (`control-x`, `card`, `tile`,
-`float`, `page`) are insets.
+One base, 4 px; every spacing role is a multiple of it, picked per density, so a density moves the
+roles up and down one ladder. Twelve roles by use, desktop then touch: `inside` 6 / 8 (within a
+control: icon to label, dot to text), `control-x` 12 / 16 (a control's inline padding), `pair` 6 / 8
+(between paired elements: label over input, title over description), `acts` 8 / 8 (between the acts
+of a bar: a page header, a toolbar, an action bar), `rows` 2 / 4 (between rows in a menu or a nav
+list; rows in a hairline list abut), `card` 16 / 16 (a card's inset), `tile` 12 / 16 (a compact
+card's inset: a board card), `float` 4 / 4 (a floating surface's inset: a select's list, a menu, a
+picker popover), `fields` 16 / 24 (between fields), `sections` 32 / 40 (between sections of a page),
+`page` 24 / 16 (the page inset). A list bleeds by `control-x`, so its rows' leading meets the title
+over it. Touch is the same roles one rung looser except the float inset and the acts gap, which
+hold, and the page inset, which a phone narrows; the room is touch's with a `page` of 48 canvas
+units. Six are gap roles, what a container may put between its children: `inside`, `pair`, `acts`,
+`rows`, `fields`, `sections`; the other five (`control-x`, `card`, `tile`, `float`, `page`) are
+insets.
 
 Thirty-three sizes per density sit in the same `--spacing-*` namespace, so a cell names them as it
 names a role (`min-h-control`, `size-avatar`), and nothing is spaced by them. Desktop then touch:
-`control` 32 / 44 (a button, a segmented control), `control-compact` 28 / 44 (a menu item, a
-toolbar control), `field` 38 / 48 (a form input), `row` 32 / 48 (a one-line row), `row-2` 48 / 64
-(a two-line row), `row-setting` 64 / 72 (a setting row), `strip` 40 / 44 (a page header bar: a Place's or Screen's title and acts), `target` 24 / 44 (the least hit area of any interactive part), `indent` 16 / 20 (a tree row's step in, one per level, a hairline rail on its end), `dot` 6 / 8, `chip` 20 /
-24, `avatar` 24 / 32, `spinner` 14 / 18 (the `icon` rung), `switch-w` 28 / 40, `switch-h` 16 / 24, `thumb` 12 / 20,
-`switch-inset` 2 / 2, `switch-travel` 12 / 16 (the thumb's travel, derived: `switch-w` less
-`thumb` and both insets), `skeleton` 12 / 12, `icon-meta` 12 / 14 (an icon beside meta or
-caption text), `icon` 14 / 18 (beside body text), `icon-control` 16 / 20 (inside a control),
+`control` 32 / 44 (a button, a segmented control), `control-compact` 28 / 44 (a menu item, a toolbar
+control), `field` 38 / 48 (a form input), `row` 32 / 48 (a one-line row), `row-2` 48 / 64 (a
+two-line row), `row-setting` 64 / 72 (a setting row), `strip` 40 / 44 (a page header bar: a Place's
+or Screen's title and acts), `target` 24 / 44 (the least hit area of any interactive part), `indent`
+16 / 20 (a tree row's step in, one per level, a hairline rail on its end), `dot` 6 / 8, `chip` 20 /
+24, `avatar` 24 / 32, `spinner` 14 / 18 (the `icon` rung), `switch-w` 28 / 40, `switch-h` 16 / 24,
+`thumb` 12 / 20, `switch-inset` 2 / 2, `switch-travel` 12 / 16 (the thumb's travel, derived:
+`switch-w` less `thumb` and both insets), `skeleton` 12 / 12, `icon-meta` 12 / 14 (an icon beside
+meta or caption text), `icon` 14 / 18 (beside body text), `icon-control` 16 / 20 (inside a control),
 `check` 16 / 20 (a checkbox's box), `track` 2 / 4 (a slider's track thickness), `otp` 44 / 48 (a
-one-time-code box, square), `text-area` 60 / 72 (a text area's least value height, derived: three body line boxes), `meter` 6 / 8 (a meter's bar), `chart` 128 / 192 (a chart's plot, its gridlines four bands), `qr` 160 / 240 (a QR code's square, its quiet zone inside it), `figures` 29 / 36 (four tabular figures at the code size: a diff's number columns, a file row's count lanes; derived at `MONO_ADVANCE`, Plex Mono's 0.6 em, rounded up, since native has no `ch`), `message-input` 160 / 192 (a message input's tallest text, derived: eight body line boxes, the text scrolling past it), `image-tile` 80 / 96 (an image thumbnail's side, derived: four body line boxes, the lines of provenance it stands beside) and `image-cap` 400 / 480 (the tallest an image grows at its container's width, derived: twenty body line boxes); `thumb` is the switch's knob, so neither takes that name. On touch every target is at least 44. A cell says `min-h`, never `h`: a label
-must be able to grow its control under OS font scaling. A minimum height is the floor of something pressed (a control, a field, a target, a chip, a row), the set height of a bar (`strip`, a page's strip and its touch top bar), an intrinsic size, or the height of what a part swaps with (`PENDING_TRACK` an action bar's); any other container takes its height from its content and padding, its parts centred on its tallest, never from another component's size.
+one-time-code box, square), `text-area` 60 / 72 (a text area's least value height, derived: three
+body line boxes), `meter` 6 / 8 (a meter's bar), `chart` 128 / 192 (a chart's plot, its gridlines
+four bands), `qr` 160 / 240 (a QR code's square, its quiet zone inside it), `figures` 29 / 36 (four
+tabular figures at the code size: a diff's number columns, a file row's count lanes; derived at
+`MONO_ADVANCE`, Plex Mono's 0.6 em, rounded up, since native has no `ch`), `message-input` 160 / 192
+(a message input's tallest text, derived: eight body line boxes, the text scrolling past it),
+`image-tile` 80 / 96 (an image thumbnail's side, derived: four body line boxes, the lines of
+provenance it stands beside) and `image-cap` 400 / 480 (the tallest an image grows at its
+container's width, derived: twenty body line boxes); `thumb` is the switch's knob, so neither takes
+that name. On touch every target is at least 44. A cell says `min-h`, never `h`: a label must be
+able to grow its control under OS font scaling. A minimum height is the floor of something pressed
+(a control, a field, a target, a chip, a row), the set height of a bar (`strip`, a page's strip and
+its touch top bar), an intrinsic size, or the height of what a part swaps with (`PENDING_TRACK` an
+action bar's); any other container takes its height from its content and padding, its parts centred
+on its tallest, never from another component's size.
 
 Seven radius roles, density-invariant, a radius naming the role and never the size: `chip` 4
 (an outlined chip, a skeleton bar, a checkbox), `control` 6 (a button, a field, a segmented
@@ -267,14 +299,20 @@ status, a switch). One hairline of 1 px draws region edges, row splits and field
 `--hairline`. The focus ring is `ring`, 2 px at a 2 px offset outside the box, so it never covers
 the control's own edge; inside a list it is drawn inward.
 
-Widths are a short label's measure (a chip's label, a status word, a skeleton label's lane), the lifted layers' ranges, the one measure for running
-text and the fixed regions of a frame, as `--container-*`: `measure-short` 18ch, `popover` 240, `toast` 360, `dialog` 520, `sheet` 640, `measure` 58ch (native has no `ch`, so `nativeMeasureTokens` declares the two measures in px at `SANS_ADVANCE`, Plex Sans's 0.6 em "0", of the touch body size, rounded up: 173 and 557; there a short label's cap is the body's 18 characters whatever its own size, and a consumer face with a wider "0" overflows them); a layer never stretches to
-its container. The regions: `sidebar` 240 (the Shell's places), `list` 360 and `pane` 320 (a
-split's list column and record pane), `column` 300 (a board column), `auth` 400 (the sign-in
-column), `empty` 320 (an empty state's column). A width never takes a spacing role's or a size's name, since `w-*` reads `--spacing-*`
-first. A skeleton bar alone may take a fraction width (`w-1/12`, `w-1/5`, `w-1/4`, `w-1/3`,
-`w-1/2`, `w-2/3`, `w-3/4`) to stand at the length of the text it replaces: structural, never a token; a chart column's share of its slot (`w-2/3`) is structural the same way. Breakpoints are `--breakpoint-*`: `tablet` 768, `desktop` 1024, `wide` 1440, so
-`tablet:` and `desktop:` are the only responsive variants.
+Widths are a short label's measure (a chip's label, a status word, a skeleton label's lane), the
+lifted layers' ranges, the one measure for running text and the fixed regions of a frame, as
+`--container-*`: `measure-short` 18ch, `popover` 240, `toast` 360, `dialog` 520, `sheet` 640,
+`measure` 58ch (native has no `ch`, so `nativeMeasureTokens` declares the two measures in px at
+`SANS_ADVANCE`, Plex Sans's 0.6 em "0", of the touch body size, rounded up: 173 and 557; there a
+short label's cap is the body's 18 characters whatever its own size, and a consumer face with a
+wider "0" overflows them); a layer never stretches to its container. The regions: `sidebar` 240 (the
+Shell's places), `list` 360 and `pane` 320 (a split's list column and record pane), `column` 300 (a
+board column), `auth` 400 (the sign-in column), `empty` 320 (an empty state's column). A width never
+takes a spacing role's or a size's name, since `w-*` reads `--spacing-*` first. A skeleton bar alone
+may take a fraction width (`w-1/12`, `w-1/5`, `w-1/4`, `w-1/3`, `w-1/2`, `w-2/3`, `w-3/4`) to stand
+at the length of the text it replaces: structural, never a token; a chart column's share of its slot
+(`w-2/3`) is structural the same way. Breakpoints are `--breakpoint-*`: `tablet` 768, `desktop`
+1024, `wide` 1440, so `tablet:` and `desktop:` are the only responsive variants.
 
 Elevation is two levels spent on lifted layers only: `shadow-float` for a popover, a menu, a
 picker, a toast; `shadow-modal` for a dialog, a sheet, a command palette. Groups, rows and cards
@@ -284,12 +322,12 @@ black at a higher opacity. Each mode has its own pair, and each utility reads `v
 so a shadow follows the mode; the values are sRGB because React Native's `boxShadow` takes no
 oklch.
 
-The layers over the page stand in the order of `STACK_ORDER`, each one step above the one
-before: `sheet` 1 (the scrim and the sheet), `popover` 2 (a popover over the sheet it opens
-from), `toasts` 3, over the page's 0, so a toast raised while a sheet or a confirm is open is seen and its dismiss pressed. Each is
-`--layer-<layer>` on the root, read on the web as `z-(--layer-<layer>)`, since Tailwind's `z-*`
-reads no theme namespace. A stacking order inside one component (a frozen table column) is its
-own structural class inside `isolate`, never a layer.
+The layers over the page stand in the order of `STACK_ORDER`, each one step above the one before:
+`sheet` 1 (the scrim and the sheet), `popover` 2 (a popover over the sheet it opens from), `toasts`
+3, over the page's 0, so a toast raised while a sheet or a confirm is open is seen and its dismiss
+pressed. Each is `--layer-<layer>` on the root, read on the web as `z-(--layer-<layer>)`, since
+Tailwind's `z-*` reads no theme namespace. A stacking order inside one component (a frozen table
+column) is its own structural class inside `isolate`, never a layer.
 
 Density is emitted as sets. `themeTokens` seeds the touch set on every platform;
 `densityTokens` is any set, which the web renders as the desktop set under a fine pointer at
@@ -298,8 +336,7 @@ the web's `touch:` variant is emitted over the same condition, and inside a room
 set is `roomTokens(scale)`, its values canvas units that `scale` turns into the platform's: the web's
 `roomScope` is each as `calc(N * var(--room-unit))` under `[data-density="room"]`, native scales the
 same record by `roomUnitFor(width, height)` into uniwind's `ScopedVariables`
-(`roomMeasureTokens` its two measures, `roomRingTokens` the web's ring). Native is touch-only
-outside a room `Place`.
+(`roomMeasureTokens` its two measures, `roomRingTokens` the web's ring).
 
 ## Motion
 
@@ -320,26 +357,27 @@ returns the scale as numbers (`motion.durations` and `motion.loop` in millisecon
 
 ## Contrast contracts
 
-At the default knobs, in both modes, each text pair clears 4.5:1: `ink-body` on `canvas`,
-`surface`, `group`, `raised`, `accent-soft`, `ok-soft`, `warn-soft` and `danger-soft`; `ink-meta`
-and `accent-ink` on the four grounds and on `accent-soft`; `ok`, `warn` and `danger` on the four
-grounds and each on its own soft; `on-accent` on `accent`, `act-accent-hover` and
-`act-accent-press`; `danger` on `canvas`, `surface` and `group` under `wash-hover` and `wash-press`,
-a destructive act's label under the act's own wash; `on-danger` on `danger`; `on-act-danger` on
-`act-danger`, `act-danger-hover` and `act-danger-press`; every `chip-red-ink` on its `chip-red-soft`; every `avatar-1-ink` on its
-`avatar-1`. Each graphic pair clears 3:1: `edge-strong` on `surface` and `group`, and on `surface` under
-`wash-press` and `wash-selected` (a held boundary, so a checkbox reads on a pressed or selected row), `accent` on
-`canvas`, `surface` and `group`, `on-act-accent` on `act-accent-pending`, `on-act-danger` on
-`act-danger-pending`, `toggle-on` and `toggle-on-hover` on `canvas`, `surface` and `group`,
-`switch-thumb` on both, every chip mark on `surface`. No act fill is measured against its
-ground: a labelled act is named by its label, and a pending one is inert. A hold sits on a literal or a `mix`, per mode, and may name a veil over its ground
-(`under`), composited as a browser draws a translucent fill over an opaque one, an alpha blend in
-gamma sRGB. `ink-faint` on `surface` is the one
-exemption, held at about 3:1 so it reads as off. The verify script measures every pair and every
-hold, and sweeps the hues: `accentHue` over all 360 values at the default cast, `castHue` over all
-360 at the default accent, and the two together. At each hue every value stays inside sRGB and
-every pair and hold above keeps its floor. A warm cast (70) keeps the dark canvas inside
-`#000`–`#191a1f`, and a cast at the accent's complement keeps every accent hold.
+At the default knobs, in both modes, each text pair clears 4.5:1: `ink-body` on `canvas`, `surface`,
+`group`, `raised`, `accent-soft`, `ok-soft`, `warn-soft` and `danger-soft`; `ink-meta` and
+`accent-ink` on the four grounds and on `accent-soft`; `ok`, `warn` and `danger` on the four grounds
+and each on its own soft; `on-accent` on `accent`, `act-accent-hover` and `act-accent-press`;
+`danger` on `canvas`, `surface` and `group` under `wash-hover` and `wash-press`, a destructive act's
+label under the act's own wash; `on-danger` on `danger`; `on-act-danger` on `act-danger`,
+`act-danger-hover` and `act-danger-press`; every `chip-red-ink` on its `chip-red-soft`; every
+`avatar-1-ink` on its `avatar-1`. Each graphic pair clears 3:1: `edge-strong` on `surface` and
+`group`, and on `surface` under `wash-press` and `wash-selected` (a held boundary, so a checkbox
+reads on a pressed or selected row), `accent` on `canvas`, `surface` and `group`, `on-act-accent` on
+`act-accent-pending`, `on-act-danger` on `act-danger-pending`, `toggle-on` and `toggle-on-hover` on
+`canvas`, `surface` and `group`, `switch-thumb` on both, every chip mark on `surface`. No act fill
+is measured against its ground: a labelled act is named by its label, and a pending one is inert. A
+hold sits on a literal or a `mix`, per mode, and may name a veil over its ground (`under`),
+composited as a browser draws a translucent fill over an opaque one, an alpha blend in gamma sRGB.
+`ink-faint` on `surface` is the one exemption, held at about 3:1 so it reads as off. The verify
+script measures every pair and every hold, and sweeps the hues: `accentHue` over all 360 values at
+the default cast, `castHue` over all 360 at the default accent, and the two together. At each hue
+every value stays inside sRGB and every pair and hold above keeps its floor. A warm cast (70) keeps
+the dark canvas inside `#000`–`#191a1f`, and a cast at the accent's complement keeps every accent
+hold.
 
 ## What the reset does not catch
 
@@ -366,32 +404,32 @@ The canon binds every component either UI plugin ships:
    container's end or across it (`full`, its acts at the field's height). The composing molecule
    sets it (a `Place` passes `bar` to its strip's acts, a field's trailing act `field`, a `Form`
    under an auth column `full`), and a call site may.
-6. `Text` draws `body` and `meta`, with `strong`; every other type role is drawn by the molecule
-   that owns its place (`title` by `Page` and `Screen`, `heading` by `Section` and `Card`,
-   `caption` by `Chip` and `Kbd`, `code` by `Code`, `display` by `Stat`, `figure` by `Stats`). `TEXT` keeps all eight
-   roles as the table those owners draw from.
-2. A composed region is data: an act is an `Act`, a row's marks a `StatusMark` and a `ChipMark`, a place is a `PlaceSpec`, what the
-   shell switches between is a `Switcher` (a pick: options carrying their avatars, the current
-   value, and `act`, the act that makes a new one), never a node;
-   the owning molecule renders it. An `Act` says what it does, never how it looks: `destructive`
-   marks one that removes or ends something, and an `ActionBar` draws it as `danger` when it is
-   the bar's one filled act and as `destructive`, the hairline form, otherwise. An `Act` names
-   no glyph (a `Place`'s act is the page's create act and the `Place` draws it with `Plus`);
-   an `IconAct` is an icon-only act whose label is read aloud, never drawn. A `Form` has no
-   submit handler: its `ActionBar`'s filled act submits it (on the web Enter in a field runs
-   it), that act's `onAct` is the one handler, and while the promise it returns pends the act
-   is pending, the bar's other acts ignore the press and the form is busy. A `confirm()` is
-   the same shape: its `Confirmation`'s act runs the work, pending while its promise pends
-   (the sheet's other acts inert), the sheet closing when it resolves and staying open to retry
-   when it rejects; `confirm()` returns nothing, and dismissing the sheet runs nothing. An icon is an `IconName`, a Lucide glyph by its PascalCase
-   name (`Check`, `ChevronDown`), typed off the `lucide` package: the set is fixed, not
-   configured, and each plugin draws the name from its platform's Lucide package. `children` is the one open slot, on the molecules the roster
-   gives it to.
+2. A composed region is data: an act is an `Act`, a row's marks a `StatusMark` and a `ChipMark`, a
+   place is a `PlaceSpec`, what the shell switches between is a `Switcher` (a pick: options carrying
+   their avatars, the current value, and `act`, the act that makes a new one), never a node; the
+   owning molecule renders it. An `Act` says what it does, never how it looks: `destructive` marks
+   one that removes or ends something, and an `ActionBar` draws it as `danger` when it is the bar's
+   one filled act and as `destructive`, the hairline form, otherwise. An `Act` names no glyph (a
+   `Place`'s act is the page's create act and the `Place` draws it with `Plus`); an `IconAct` is an
+   icon-only act whose label is read aloud, never drawn. A `Form` has no submit handler: its
+   `ActionBar`'s filled act submits it (on the web Enter in a field runs it), that act's `onAct` is
+   the one handler, and while the promise it returns pends the act is pending, the bar's other acts
+   ignore the press and the form is busy. A `confirm()` is the same shape: its `Confirmation`'s act
+   runs the work, pending while its promise pends (the sheet's other acts inert), the sheet closing
+   when it resolves and staying open to retry when it rejects; `confirm()` returns nothing, and
+   dismissing the sheet runs nothing. An icon is an `IconName`, a Lucide glyph by its PascalCase
+   name (`Check`, `ChevronDown`), typed off the `lucide` package: the set is fixed, not configured,
+   and each plugin draws the name from its platform's Lucide package. `children` is the one open
+   slot, on the molecules the roster gives it to.
 3. Molecules compose molecules; a product's `ui/` composes stack molecules and never a host.
 4. No `class`, `className`, `classList` or `style` prop, on any component, in either plugin: each
    is declared `?: never`, and `CLOSED_PROPS` is the list both verify suites read. A look the
    matrices do not cover is a matrix cell or a consumer primitive under `ui/`, in that order.
 5. Every word a component draws on its own comes from `words`; every sentence is a prop.
+6. `Text` draws `body` and `meta`, with `strong`; every other type role is drawn by the molecule
+   that owns its place (`title` by `Place` and `Screen`, `heading` by `Section` and `Card`,
+   `caption` by `Chip` and `Kbd`, `code` by `Code`, `display` by `Stat`, `figure` by `Stats`).
+   `TEXT` keeps all eight roles as the table those owners draw from.
 
 ## The roster
 
@@ -403,35 +441,37 @@ has a form for (`states`, from `STATES`: `rest`, `hover`, `focus`, `active`, `di
 `loading`, `error`, `selected`, `empty`), the same in both plugins. Every family is drawn by at
 least one component, and a component that takes `loading` or `empty` lists that state.
 
-A component also declares what it owns (`owns`): the type roles, the
-colours, the radii, the spacing roles, the sizes and widths, and the shadow levels it may draw. A
-colour is a name or a family prefix ending in `-` (`chip-` covers every chip role); the other
-namespaces name their tokens, and a namespace left out owns nothing. The verify suite reads every
-class of every cell the component draws (a family at every axis product, a named family cell as
-the table's base and that cell alone), and a class spelling a token its
-entry does not own fails by name. A molecule that picks a composed atom's `fit` or `act` draws
-those atom cells too (a `Place` draws `BUTTON.fit.bar`), so it owns what they spell, so a type role, a colour or a size reaches a cell only through
-the component that owns it. It also declares what it holds (`holds`): the families and constants of its own box,
-which only it spells, so every other component draws them by composing it; a cell no entry holds (a type
-role, the field box, the row and its title and meta lines, the line box, the popover, the scrim, the
-skeleton) is shared, spelled by each component that draws it. A plugin's verify suite reads every component's exported props type against it, so a
-prop added on one platform, a prop renamed, or a style channel reopened fails by name. The
-directory of a component is its name in kebab case (`componentDir("ListRow")` is `list-row`).
+A component also declares what it owns (`owns`): the type roles, the colours, the radii, the spacing
+roles, the sizes and widths, and the shadow levels it may draw. A colour is a name or a family
+prefix ending in `-` (`chip-` covers every chip role); the other namespaces name their tokens, and a
+namespace left out owns nothing. The verify suite reads every class of every cell the component
+draws (a family at every axis product, a named family cell as the table's base and that cell alone),
+and a class spelling a token its entry does not own fails by name. A molecule that picks a composed
+atom's `fit` or `act` draws those atom cells too (a `Place` draws `BUTTON.fit.bar`), so it owns what
+they spell, so a type role, a colour or a size reaches a cell only through the component that owns
+it. It also declares what it holds (`holds`): the families and constants of its own box, which only
+it spells, so every other component draws them by composing it; a cell no entry holds (a type role,
+the field box, the row and its title and meta lines, the line box, the popover, the scrim, the
+skeleton) is shared, spelled by each component that draws it. A plugin's verify suite reads every
+component's exported props type against it, so a prop added on one platform, a prop renamed, or a
+style channel reopened fails by name. The directory of a component is its name in kebab case
+(`componentDir("ListRow")` is `list-row`).
 
 ## The sharing line
 
 Matrices hold the platform-invariant cells only: fills, borders (and a container's `divide-`
 hairline between its children), ink, spacing roles, radius, type role, font weight, font family,
 sizes and widths. Display, alignment, flex sizing, truncation, positioning, overflow, a negative
-margin that bleeds a region, a fraction width and every interaction state are platform overlays composed through `cn()` after the matrix (React Native is flex by
-default and the web is not, so a shared `flex-row` would be wrong on one). What a component is
-given (an act, a family, a checked value, an error) is an axis; where the pointer or the focus is
-on it is an overlay. A label's cell carries its ink, since React Native text inherits no colour;
-an act's fill carries it too, for the web glyph and spinner drawn in the current colour. No
-arbitrary value in a cell, in either spelling. A control's horizontal padding is the `control-x` spacing role; its
-minimum height is a size; a row and a surface inset on spacing roles. No framework code in
-ui-core: logic both platforms run, free of React and React Native (a derivation, a collection's
-state decisions in `list-state`), lives here once instead of as a twin in each plugin.
+margin that bleeds a region, a fraction width and every interaction state are platform overlays
+composed through `cn()` after the matrix (React Native is flex by default and the web is not, so a
+shared `flex-row` would be wrong on one). What a component is given (an act, a family, a checked
+value, an error) is an axis; where the pointer or the focus is on it is an overlay. A label's cell
+carries its ink, since React Native text inherits no colour; an act's fill carries it too, for the
+web glyph and spinner drawn in the current colour. No arbitrary value in a cell, in either spelling.
+A control's horizontal padding is the `control-x` spacing role; its minimum height is a size; a row
+and a surface inset on spacing roles. No framework code in ui-core: logic both platforms run, free
+of React and React Native (a derivation, a collection's state decisions in `list-state`), lives here
+once instead of as a twin in each plugin.
 
 ## Composing with cn
 

@@ -9,10 +9,6 @@ A dialect is the references' number where the system keeps its own; the [judging
 
 input 38; two-line rows 64–70, the touch setting row the contract's 72 single-line; label 12–13/500 over 11–12 muted description; page title the system's title role (the references' 15–16 is a dialect); radius 4–8 (cards 8, inputs 4–6); hairline card or surface-step tile; save per card or right-aligned under the group, the system's primary act (dark or accent is a dialect), accent otherwise only on checked controls.
 
-## Compose
-
-A form about an object opens on that object as one `ListRow` in a `Group`, the `Form`'s first child: the object's glyph as `leading`, its name as `title`, where it lives as `meta`, and `onOpen` to change it.
-
 ## References
 
 Queries: `account settings page with a form of labeled text inputs, toggles and a save button` · `workspace general settings with sectioned cards, each card a field with description and its own save action` · `dark mode settings screen with profile name and email fields, section headings and a danger zone`

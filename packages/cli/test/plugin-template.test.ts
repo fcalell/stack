@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { pluginFiles } from "../src/commands/plugin.ts";
+import { PACKAGE_MANAGER } from "../src/lib/stack-packages.ts";
 
 function scaffold(workspace: boolean) {
 	const files = new Map(
@@ -21,7 +22,7 @@ test("a scaffolded plugin installs stack from GitHub", () => {
 		"github:fcalell/stack#path:/packages/typescript-config",
 	);
 	assert.ok(files.has("pnpm-workspace.yaml"));
-	assert.equal(pkg.packageManager, "pnpm@11.28.3");
+	assert.equal(pkg.packageManager, PACKAGE_MANAGER);
 });
 
 test("a plugin scaffolded inside stack's workspace takes the workspace's packages and writes no pnpm-workspace.yaml", () => {

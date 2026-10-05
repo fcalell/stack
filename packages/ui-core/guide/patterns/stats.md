@@ -5,7 +5,7 @@ executions behind it. Read the measurements as the [references](../references.md
 
 ## Range
 
-strip: one hairline card radius 8 split by 1 px rules, or one card per cell; cell padding 16–20; label 12–13 muted (11 caps in one) over the figure 18–26/400–500, a meta line 12 muted under it, a delta in a status hue only on its glyph; zeros drawn; two to a row at phone width. Lone figure: 26–52/500–700 on the web, 22–29 on the phone, the largest text on its screen; figure first with its label 12 muted under it, or the label over it as a strip cell's.
+strip: one hairline card radius 8 split by 1 px rules, or one card per cell; cell padding 16–20; label 12–13 muted (11 caps in one) over the figure 18–26/400–500, a meta line 12 muted under it, a delta in a status hue only on its glyph; zeros drawn; two to a row at phone width, tiles radius 12–16 with a gap ≈ 10, label 12–17 muted, the figure 16–22/400–700 with its unit muted (MyFitnessPal, MacroFactor). Lone figure: 26–52/500–700 on the web, the largest text on its screen; figure first with its label 12 muted under it, or the label over it as a strip cell's. The phone's lone figure is unmeasured: no reference shows one figure alone on a phone screen.
 
 ## References
 
@@ -24,4 +24,4 @@ Queries: screens `project dashboard with a strip of stat cards in one hairline c
 
 DESIGN.md: none of the cited products is among those `VoltAgent/awesome-design-md` carries (Linear, Notion, Vercel, Supabase and Attio by the references page); Vercel's observability card draws label 12 over figure ≈ 14/500, a summary inside a card rather than a strip.
 
-The references span: strip cells as one ruled card (Neon, Gorgias) or one card each (Mintlify), padding 16–20; label 12–13 muted over the figure 18–26/400–500; meta 12 muted, a delta's hue on its glyph; zeros and empty values drawn; two to a row on the phone (MacroFactor). A lone figure 26–52 on the web and 22–29 on the phone at 500–700, figure first with its label under it in Framer and MyFitnessPal, the label over it in Plain and Aboard. Tabular figures cannot be read off the previews.
+The references span: strip cells as one ruled card (Neon, Gorgias) or one card each (Mintlify), padding 16–20; label 12–13 muted over the figure 18–26/400–500; meta 12 muted, a delta's hue on its glyph; zeros and empty values drawn; on the phone two tiles to a row (MacroFactor, MyFitnessPal), radius 12–16, the figure 16–22/400–700. A lone figure 26–52 on the web at 500–700, figure first with its label under it in Framer, the label over it in Plain and Aboard; no reference holds a lone figure on a phone. Tabular figures cannot be read off the previews.
