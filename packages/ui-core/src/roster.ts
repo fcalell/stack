@@ -1764,6 +1764,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// collection: its facts from `query` or `items` through a `row` map, its
 		// head from the declared `columns`, so its waiting facts draw a bar per
 		// column under the real head; its failed and empty EmptyStates its own.
+		// A fact's `status` is its verdict, a Status in the label's line after
+		// its chips; a passing fact gives none, or a done one where the screen
+		// wants the pass read.
 		Comparison: {
 			props: [
 				"label",
@@ -1782,8 +1785,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"COMPARISON_LABEL",
 				"COMPARISON_ROW",
 				"LINE_BOX.role.body",
+				"SKELETON.kind.dot",
 				"SKELETON.kind.line",
 				"SKELETON_LANE.role.body",
+				"STATUS",
+				"STATUS_DOT",
+				"STATUS_LABEL",
+				"STATUS_SPINNER",
 				"TEXT.role.body",
 				"TEXT.role.meta",
 				"TEXT_STRONG.role.body",
@@ -1799,10 +1807,14 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"chip-neutral-soft",
 					"chip-neutral-ink",
 					"skeleton",
+					"ok",
+					"warn",
+					"danger",
+					"accent-ink",
 				],
 				radii: ["full", "chip"],
 				spacing: ["pair", "inside", "card"],
-				sizes: ["row", "chip", "measure-short", "skeleton"],
+				sizes: ["row", "chip", "dot", "measure-short", "skeleton"],
 			},
 		},
 		// The grid from tablet up, a cell cursor its keyboard; below tablet a List of

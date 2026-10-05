@@ -274,15 +274,37 @@ test("a waiting Group draws its Lists' waiting rows, else setting row skeletons"
 	assert.equal(groupWait(0), "settings");
 });
 
-test("a pending Comparison with three columns draws three bars per row, and a chips bar only when chips are declared", () => {
+test("a pending Comparison with three columns draws three bars per row, a chips bar only when chips are declared and a status bar only when status is", () => {
 	const calls: string[] = [];
 	const chips = () => {
 		calls.push("chips");
 		return undefined;
 	};
+	const status = () => {
+		calls.push("status");
+		return undefined;
+	};
 	const columns = ["Free", "Team", "Business"];
-	assert.deepEqual(factShape(columns, {}), { values: 3, chips: false });
-	assert.deepEqual(factShape(columns, { chips }), { values: 3, chips: true });
+	assert.deepEqual(factShape(columns, {}), {
+		values: 3,
+		chips: false,
+		status: false,
+	});
+	assert.deepEqual(factShape(columns, { chips }), {
+		values: 3,
+		chips: true,
+		status: false,
+	});
+	assert.deepEqual(factShape(columns, { status }), {
+		values: 3,
+		chips: false,
+		status: true,
+	});
+	assert.deepEqual(factShape(columns, { chips, status }), {
+		values: 3,
+		chips: true,
+		status: true,
+	});
 	assert.equal(factShape(["Team", "Business"], {}).values, 2);
 	assert.deepEqual(calls, []);
 });

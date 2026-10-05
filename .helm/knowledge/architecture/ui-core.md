@@ -615,12 +615,18 @@ a tick with no animation, never jumped to full.
   `navigate`. A missing list gives the Section no count.
 - A `Comparison` is a collection of facts with the List's source (`query` with `sentence` and
   `empty`, or `items` waiting on `loading`) and a `row` map over a fact's slots: `key`, `label`,
-  `values` (one per column, in order) and `chips`. Its column heads are its declared `columns`,
+  `values` (one per column, in order), `chips` and `status`. A fact's `status` is its verdict, a
+  `StatusMark` drawn in the label's line after the label and its chips, so on touch it never
+  squeezes the values; a passing fact returns none, or `{ state: "done", label: "Matches" }` where
+  the screen wants the pass read. It is a trailing `Status` rather than a leading one (a passing
+  row has none, and every row of a list leads with the same kind of mark) or a tint (status hue
+  stays on the dot). Its column heads are its declared `columns`,
   known before the data, so its waiting form is the real head over four facts of bars: a value bar
-  per column, and a chip's bar beside the label's when `row` declares `chips` (`factShape` in
-  `./list-state`), each bar a share of its line's short-label lane (`SKELETON_LANE`), so it
-  stands at a typical label's or value's length rather than the column's. The Section around reads its wait and no count: its facts are one
-  record's, not items the Section counts.
+  per column, and a chip's bar and a status's bar beside the label's when `row` declares `chips`
+  or `status` (`factShape` in `./list-state`), each bar a share of its line's short-label lane
+  (`SKELETON_LANE`), so it stands at a typical label's or value's length rather than the column's.
+  The Section around reads its wait and no count: its facts are one record's, not items the
+  Section counts.
 - An `OptionList` is a collection with a static form. A static set takes `options` (an `Option`
   is already the projected row, waiting on `loading`); a set from a query takes `query`,
   `sentence`, `empty` and an `option` map over the check row's slots (`value`, `label`,

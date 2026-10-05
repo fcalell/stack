@@ -185,20 +185,25 @@ export function meterShape(slots: { meta?: unknown }): MeterShape {
 }
 
 // The bars a waiting Comparison's fact draws, known before any item: one
-// value bar per declared column, and a chips bar when its `row` map declares
-// chips.
+// value bar per declared column, a chips bar when its `row` map declares
+// chips, and a status bar when it declares `status`.
 export interface FactShape {
 	values: number;
 	chips: boolean;
+	status: boolean;
 }
 
 // The waiting fact's shape from the declared columns and the `row` map's
 // slots, read by key: no slot function runs.
 export function factShape(
 	columns: readonly string[],
-	slots: { chips?: unknown },
+	slots: { chips?: unknown; status?: unknown },
 ): FactShape {
-	return { values: columns.length, chips: slots.chips !== undefined };
+	return {
+		values: columns.length,
+		chips: slots.chips !== undefined,
+		status: slots.status !== undefined,
+	};
 }
 
 // The count a Section shows: its own `count` when it has one (a total its

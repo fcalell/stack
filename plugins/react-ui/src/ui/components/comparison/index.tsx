@@ -1,4 +1,5 @@
 import { cn } from "@fcalell/ui-core/cn";
+import type { StatusMark } from "@fcalell/ui-core/descriptors";
 import {
 	type FactShape,
 	factShape,
@@ -25,6 +26,8 @@ import { EmptyStateBase } from "../empty-state/base.tsx";
 import { Missing } from "../empty-state/missing.tsx";
 import { Group } from "../group/index.tsx";
 import type { ListSource } from "../list/index.tsx";
+import { StatusBase } from "../status/base.tsx";
+import { Status } from "../status/index.tsx";
 
 const ROW = "flex items-baseline flex-wrap";
 const ROW_WAIT = "flex items-center flex-wrap";
@@ -38,21 +41,22 @@ const COLUMN = "basis-0 grow min-w-0 wrap-break-word hyphens-auto text-pretty";
 const LABEL =
 	"flex flex-wrap basis-0 grow min-w-0 items-center touch:basis-full";
 const LABEL_TEXT = "min-w-0 wrap-break-word";
-// A chip keeps its width beside a label that wraps.
-const CHIP = "inline-flex shrink-0";
+// A chip or a verdict keeps its width beside a label that wraps.
+const MARK = "inline-flex shrink-0";
 const CELL_WAIT = "flex items-center h-lh basis-0 grow min-w-0";
 const LABEL_WAIT = "flex items-center basis-0 grow min-w-0 touch:basis-full";
 const LINE_HEIGHT = "h-lh";
 // A chip stands taller than the label's line.
 const CHIP_LINE = "min-h-chip";
-// The waiting facts: four rows of a label's bar (a chip's bar beside it when
-// chips are declared) and each column's bar, every bar a share of the
+// The waiting facts: four rows of a label's bar (a chip's bar and a status's
+// beside it when declared) and each column's bar, every bar a share of the
 // short-label lane of the line it stands in, so it stands at the length of a
 // typical label or value rather than of the column.
 const BAR_ROOM = "flex grow items-center";
 const LABEL_BARS = ["w-1/2", "w-1/3", "w-2/3", "w-1/2"] as const;
 const VALUE_BARS = ["w-1/3", "w-2/3", "w-1/2"] as const;
-const CHIP_BAR = "w-1/4";
+const END_BAR = "w-1/4";
+const STATUS_BAR = "flex min-w-0";
 
 /** One function per fact slot, each called with a loaded item; the slots given are the shape the waiting facts draw. */
 export interface FactSlots<T> {
@@ -64,6 +68,8 @@ export interface FactSlots<T> {
 	values: (item: T) => readonly string[];
 	/** The chips beside the fact's label. */
 	chips?: (item: T) => readonly string[] | undefined;
+	/** The fact's verdict, drawn after the label and its chips; a passing fact returns undefined, or a done mark where the screen reads the pass out. */
+	status?: (item: T) => StatusMark | undefined;
 }
 
 /** Facts set side by side across two or three columns, from a query or from items. */
@@ -104,7 +110,12 @@ function FactWait(props: { shape: FactShape; index: number }) {
 						)}
 					/>
 					{shape.chips ? (
-						<span className={cn(skeleton({ kind: "line" }), CHIP_BAR)} />
+						<span className={cn(skeleton({ kind: "line" }), END_BAR)} />
+					) : null}
+					{shape.status ? (
+						<span className={cn(STATUS_BAR, END_BAR)}>
+							<StatusBase waiting="half" />
+						</span>
 					) : null}
 				</span>
 			</span>
@@ -128,8 +139,8 @@ function FactWait(props: { shape: FactShape; index: number }) {
 	);
 }
 
-// A loaded fact: its label (its chips beside it) and its value under each
-// column.
+// A loaded fact: its label (its chips and its verdict beside it) and its
+// value under each column.
 function Fact<T>(props: {
 	item: T;
 	row: FactSlots<T>;
@@ -138,6 +149,7 @@ function Fact<T>(props: {
 	const { item, row, columns } = props;
 	const values = row.values(item);
 	const chips = row.chips?.(item) ?? [];
+	const status = row.status?.(item);
 	return (
 		// biome-ignore lint/a11y/useSemanticElements: a Group's rows, which no native table element can hold
 		// biome-ignore lint/a11y/useFocusableInteractive: a read row
@@ -155,10 +167,15 @@ function Fact<T>(props: {
 					{row.label(item)}
 				</span>
 				{chips.map((chip) => (
-					<span key={chip} className={CHIP}>
+					<span key={chip} className={MARK}>
 						<Chip family="neutral" label={chip} />
 					</span>
 				))}
+				{status ? (
+					<span className={MARK}>
+						<Status state={status.state} label={status.label} />
+					</span>
+				) : null}
 			</span>
 			{columns.map((column, index) => (
 				// biome-ignore lint/a11y/useSemanticElements: a Group's rows, which no native table element can hold
@@ -174,7 +191,7 @@ function Fact<T>(props: {
 	);
 }
 
-/** A Group of its own rows: a head row of `columns` at meta 500, then each fact's label at body 500 (its chips beside it) and its values in equal columns, a wrapped value keeping its row's air. On touch the label stands on its own line over the values. No column is the accent's; nothing is a selection. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, the head stands over four waiting facts, each a bar per column and a chips bar when `row` declares chips; a query that answers not found draws the rest EmptyState saying it no longer exists with Back, never Retry; a failed query draws the failed EmptyState with `sentence` and Retry; no item draws `empty`; then one row per fact. */
+/** A Group of its own rows: a head row of `columns` at meta 500, then each fact's label at body 500 (its chips beside it, then its `status` verdict, a Status read out in the row, a passing fact drawing none) and its values in equal columns, a wrapped value keeping its row's air. On touch the label stands on its own line over the values, the verdict on that line. No column is the accent's; nothing is a selection. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, the head stands over four waiting facts, each a bar per column, a chips bar when `row` declares chips and a status bar when it declares `status`; a query that answers not found draws the rest EmptyState saying it no longer exists with Back, never Retry; a failed query draws the failed EmptyState with `sentence` and Retry; no item draws `empty`; then one row per fact. */
 export function Comparison<T>(props: ComparisonProps<T>) {
 	const words = useWords();
 	const base = {
