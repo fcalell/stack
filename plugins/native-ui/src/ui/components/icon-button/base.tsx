@@ -31,7 +31,8 @@ export function IconButtonBase({
 	fit?: IconButtonFit;
 	disabled?: boolean;
 	open?: boolean;
-	// The act folds a branch: its state is read aloud, with no press wash.
+	// The act folds a branch: its state is read aloud, and the open wash (`open`)
+	// is not drawn for it.
 	expanded?: boolean;
 }) {
 	return (

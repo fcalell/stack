@@ -300,7 +300,7 @@ export function List<T, V extends string | null = string>(
 						fold: each.branch
 							? {
 									open: each.open,
-									onToggle: () => setFolded(toggled(folded, each.key)),
+									onToggle: () => setFolded((keys) => toggled(keys, each.key)),
 								}
 							: undefined,
 					}}

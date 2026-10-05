@@ -173,10 +173,10 @@ acts on the first line, and a `List`'s `row` map takes it as one boolean for eve
 
 Rows that branch (a journey's choice points and their legs) are a tree: the `List`'s `row` map gives
 `children`, each item's children, and the List draws a rail per level, a fold act on every parent
-(open by default) and a lane every row reserves for it, so give each item a `key` unique across the
-whole tree. Never indent rows with a class, a nested `List` or a `ListRow` of your own. A `dim`
-branch gives `dim` to the parent and every child. Arrow Left folds an open branch and Arrow Right
-opens a closed one.
+(open by default, read aloud as expanded or collapsed) and a lane every row reserves for it, so
+give each item a `key` unique across the whole tree. Never indent rows with a class, a nested
+`List` or a `ListRow` of your own. A `dim` branch gives `dim` to the parent and every child. The
+fold act is the only way to fold a branch: the list draws no tree roles and binds no arrow keys.
 
 Rows of inline terms (a mapping of sources to targets, a filter's conditions) are `Rules`: each
 `Rule` is `{ id, terms, onRemove? }`, its `terms` a pair (`{ from, to }`) or a condition

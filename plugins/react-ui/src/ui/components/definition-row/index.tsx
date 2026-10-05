@@ -9,7 +9,6 @@ import type {
 import {
 	DEFINITION_ROW,
 	DEFINITION_ROW_CHEVRON,
-	LOCK_GLYPH,
 	ROW_TITLE_LINE,
 	row,
 	text,
@@ -24,6 +23,7 @@ import { IconButton } from "../icon-button/index.tsx";
 import { Link } from "../link/index.tsx";
 import { ChangeMark } from "../status/change.tsx";
 import { Status } from "../status/index.tsx";
+import { LockMark } from "../status/lock.tsx";
 
 const ROW = "relative flex items-center";
 // A row that opens washes under the pointer and the press on its hit.
@@ -42,8 +42,6 @@ const VALUE_SLOT = "flex basis-0 grow min-w-0 justify-end";
 const ACTS = "relative flex shrink-0";
 // The chevron draws in the slot's ink (currentColor).
 const CHEVRON = "flex shrink-0 items-center justify-center text-ink-meta";
-const LOCK = "flex items-center";
-const LOCK_NAME = "sr-only";
 
 /** What a definition shows: words, a status, or an in-place control. */
 export type DefinitionValue =
@@ -104,7 +102,6 @@ export function DefinitionRow({
 	href,
 	onOpen,
 }: DefinitionRowProps) {
-	const words = useWords();
 	const opens = href !== undefined || onOpen !== undefined;
 	const copied = copyable && typeof value === "string" ? value : undefined;
 	let shown: ReactNode = null;
@@ -188,12 +185,7 @@ export function DefinitionRow({
 				<span className={cn(ROW_TITLE_LINE, LINE)}>
 					{title}
 					{shown}
-					{locked ? (
-						<span className={cn(LOCK_GLYPH, LOCK)}>
-							<Icon name="Lock" fit="meta" />
-							<span className={LOCK_NAME}>{words.locked}</span>
-						</span>
-					) : null}
+					{locked ? <LockMark /> : null}
 				</span>
 				{under ? <span className={text({ role: "meta" })}>{under}</span> : null}
 			</span>

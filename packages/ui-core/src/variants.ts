@@ -79,6 +79,7 @@ import {
 	TEXT_AREA_BUDGET,
 	TEXT_STRONG,
 	TOAST_STATE,
+	TREE_BLEED,
 } from "./variant-tables.ts";
 
 // A variant's props: one optional pick per axis, and the class or the
@@ -130,6 +131,7 @@ export const switchThumb = build(SWITCH_THUMB);
 export const checkbox = build(CHECKBOX);
 export const optionRadio = build(OPTION_RADIO);
 export const row = build(ROW);
+export const treeBleed = build(TREE_BLEED);
 export const rowTitle = build(ROW_TITLE);
 export const rowStep = build(ROW_STEP);
 export const lineBox = build(LINE_BOX);
@@ -234,6 +236,7 @@ export const FAMILIES: readonly Family[] = [
 	family("CHECKBOX", CHECKBOX, checkbox),
 	family("OPTION_RADIO", OPTION_RADIO, optionRadio),
 	family("ROW", ROW, row),
+	family("TREE_BLEED", TREE_BLEED, treeBleed),
 	family("ROW_TITLE", ROW_TITLE, rowTitle),
 	family("ROW_STEP", ROW_STEP, rowStep),
 	family("LINE_BOX", LINE_BOX, lineBox),
@@ -441,9 +444,10 @@ export const DEFINITION_ROW = "gap-fields";
 // A definition row's link chevron, centred in the square of the icon act it
 // stands in for, so values with an act or a link end at one x.
 export const DEFINITION_ROW_CHEVRON = "size-control-compact";
-// A lock glyph (`Lock` at the meta icon size) after a value or in a column's
-// head: the meta ink, an inside gap from what it follows.
-export const LOCK_GLYPH = "ms-inside shrink-0 text-ink-meta";
+// A lock glyph (`Lock` at the meta icon size) after a value, in a column's
+// head or on a row's meta line: the meta ink; what it follows stands an inside
+// gap from it.
+export const LOCK_GLYPH = "shrink-0 text-ink-meta";
 // A record's head: the overline, the title and the facts line a pair apart;
 // the facts wrap at the fields rhythm, a counted fact its word beside its
 // count.

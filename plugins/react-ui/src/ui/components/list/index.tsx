@@ -253,14 +253,13 @@ export function List<T, V extends string | null = string>(
 	// In a Group the card is the rows' box: they stand in it directly, so its
 	// hairline falls once between them.
 	// The rows read the route the List read once, through `ListedRoute`.
-	// A tree's rows abut, so its rails run unbroken, and stand in a `tree`.
+	// A tree's rows abut, so its rails run unbroken.
 	const frame = (rows: ReactNode, tree = false) => (
 		<ListedRoute value={at}>
 			{ground === "group" ? (
 				rows
 			) : (
 				<div
-					role={tree ? "tree" : undefined}
 					aria-busy={busy || undefined}
 					className={cn(tree ? LIST_TREE : LIST, STACK)}
 				>
@@ -333,7 +332,7 @@ export function List<T, V extends string | null = string>(
 						fold: each.branch
 							? {
 									open: each.open,
-									onToggle: () => setFolded(toggled(folded, each.key)),
+									onToggle: () => setFolded((keys) => toggled(keys, each.key)),
 								}
 							: undefined,
 					}}

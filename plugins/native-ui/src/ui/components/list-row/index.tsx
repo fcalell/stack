@@ -11,7 +11,6 @@ import type {
 } from "@fcalell/ui-core/descriptors";
 import {
 	FIELD_ERROR_LINE,
-	lineBox,
 	ROW_ACTS,
 	ROW_ENTRY,
 	ROW_LEADING,
@@ -20,6 +19,7 @@ import {
 	ROW_STEPS,
 	ROW_TITLE_LINE,
 	ROW_TRAILING,
+	type RowLines,
 	row,
 	rowStep,
 	rowTitle,
@@ -27,6 +27,7 @@ import {
 	TREE_LANE,
 	TREE_RAIL,
 	text,
+	treeBleed,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useContext, useMemo } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
@@ -54,15 +55,15 @@ import { Picker } from "../picker";
 import { Status } from "../status";
 import { ChangeMark } from "../status/change";
 import { StatusDot } from "../status/dot";
-import { LockMark, WarningMark } from "./marks";
+import { LockMark } from "../status/lock";
+import { WarningMark } from "./marks";
 
 const ROW = "relative flex-row items-center";
 // A row whose title wraps whole stands its parts on the title's first line:
-// each in a box one body line tall, a strut setting the line (as the web's
-// `h-lh` does).
+// each in a box one body line tall, centred on the line; a taller part
+// overflows it centred.
 const ROW_WHOLE = "relative flex-row items-start";
-const FIRST_LINE = "flex-row shrink-0 items-center";
-const STRUT = "​";
+const FIRST_LINE = "flex-row shrink-0 items-center h-line-body";
 // A list row's wash is square on the phone, where it meets the screen's edge.
 const SQUARE = "rounded-none";
 // The hit covers the row under its text, its pick and its acts, and takes the
@@ -101,7 +102,6 @@ const ENTRY_FIELD = "flex-1 min-w-0";
 // press on any of it falls through to the row's hit but the fold act.
 const TREE = "flex-row shrink-0 self-stretch";
 const FOLD = "shrink-0 items-center justify-center self-center";
-const BLEED = { one: "", two: "-my-rows", whole: "-my-pair" } as const;
 
 export interface ListRowProps<V extends string | null = string> extends Closed {
 	// Where the row stands in a change set: its mark at the row's start, ahead
@@ -164,7 +164,7 @@ export interface ListRowProps<V extends string | null = string> extends Closed {
 // of the tree reserves, a branch's fold act standing in it.
 function TreeLead(props: {
 	tree: RowTree;
-	lines: keyof typeof BLEED;
+	lines: RowLines;
 	wrap: boolean;
 	named: string;
 }) {
@@ -173,7 +173,7 @@ function TreeLead(props: {
 	const { depth, fold } = tree;
 	const levels = Array.from({ length: depth }, (_, level) => level);
 	return (
-		<View pointerEvents="box-none" className={cn(TREE, BLEED[lines])}>
+		<View pointerEvents="box-none" className={cn(TREE, treeBleed({ lines }))}>
 			{levels.map((level) => (
 				<View key={level} pointerEvents="none" className={TREE_RAIL} />
 			))}
@@ -199,7 +199,6 @@ function First(props: { on: boolean; children: ReactNode }) {
 	if (!props.on) return props.children;
 	return (
 		<View pointerEvents="box-none" className={FIRST_LINE}>
-			<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
 			{props.children}
 		</View>
 	);
@@ -317,6 +316,7 @@ export function ListRow<V extends string | null = string>({
 	const lined = Boolean(entry || listed || parts?.length || marked);
 	const stacked = lined ? "two" : "one";
 	const lines = wrap ? "whole" : stacked;
+	const inline = useMemo(() => ({ label: entry?.label ?? "" }), [entry?.label]);
 	const entryReason = useReasonLine(entry?.act.blocked);
 	const actReason = useReasonLine(act?.blocked);
 	const [first, ...rest] = parts ?? [];
@@ -388,7 +388,7 @@ export function ListRow<V extends string | null = string>({
 			) : entry ? (
 				<View pointerEvents="box-none" className={cn(ROW_ENTRY, TEXT)}>
 					{titleLine}
-					<InlineField.Provider value={{ label: entry.label }}>
+					<InlineField.Provider value={inline}>
 						<FieldError.Provider value={Boolean(entry.error)}>
 							<View className={cn(ROW_META_LINE, ENTRY)}>
 								<View className={ENTRY_FIELD}>
@@ -418,9 +418,13 @@ export function ListRow<V extends string | null = string>({
 				<View pointerEvents="none" className={TEXT}>
 					{titleLine}
 					<View className={cn(ROW_STEPS, STEPS)}>
-						{listed.map((step) => (
-							<View key={step.label} className={cn(ROW_META_LINE, STEP)}>
-								<StatusDot state={step.state} />
+						{listed.map((step, at) => (
+							<View
+								// biome-ignore lint/suspicious/noArrayIndexKey: two steps may share a label, so a step is its label at its position
+								key={`${step.label}:${at}`}
+								className={cn(ROW_META_LINE, STEP)}
+							>
+								<StatusDot state={step.state} label={words[step.state]} />
 								<RNText
 									numberOfLines={1}
 									className={cn(
@@ -467,7 +471,7 @@ export function ListRow<V extends string | null = string>({
 									</View>
 								) : null}
 								{warning !== undefined ? <WarningMark label={warning} /> : null}
-								{lock !== undefined ? <LockMark label={lock} /> : null}
+								{lock !== undefined ? <LockMark reason={lock} /> : null}
 								{chip ? (
 									<View className={CHIP_MARK}>
 										<Chip family={chip.family} label={chip.label} />

@@ -161,6 +161,8 @@ const SIZE_USE: Record<(typeof SIZES)[number], string> = {
 		"the tallest an image grows at its container's width: twenty body line boxes",
 	"chips-inset":
 		"the inset above and below the chips of a pick of several: half of what the compact control has over a chip",
+	"line-body":
+		"one body line's box: a part on a wrapped title's first line is pinned to it",
 };
 
 const RADIUS_USE: Record<(typeof RADIUS_ROLES)[number], string> = {

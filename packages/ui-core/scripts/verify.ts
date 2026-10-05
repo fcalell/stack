@@ -180,6 +180,7 @@ import {
 	TEXT_AREA_BUDGET,
 	TEXT_STRONG,
 	TOAST_STATE,
+	TREE_BLEED,
 } from "../src/variant-tables.ts";
 import * as variants from "../src/variants.ts";
 import {
@@ -261,6 +262,7 @@ import {
 	textStrong,
 	toastContentTone,
 	toastState,
+	treeBleed,
 } from "../src/variants.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -496,6 +498,7 @@ const MATRICES: readonly Registration[] = [
 	["CHECKBOX", CHECKBOX, checkbox],
 	["OPTION_RADIO", OPTION_RADIO, optionRadio],
 	["ROW", ROW, row],
+	["TREE_BLEED", TREE_BLEED, treeBleed],
 	["ROW_TITLE", ROW_TITLE, rowTitle],
 	["ROW_STEP", ROW_STEP, rowStep],
 	["LINE_BOX", LINE_BOX, lineBox],
@@ -713,7 +716,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(TYPE_ROLES.length, 8, "type role count");
 	requireEqual(SPACING_ROLES.length, 11, "spacing role count");
 	requireEqual(GAP_ROLES.length, 6, "gap role count");
-	requireEqual(SIZES.length, 34, "size count");
+	requireEqual(SIZES.length, 35, "size count");
 	requireEqual(RADIUS_ROLES.length, 7, "radius role count");
 	requireEqual(SHADOW_LEVELS.length, 2, "shadow level count");
 	requireEqual(WIDTHS.length, 12, "width count");
@@ -870,6 +873,7 @@ check("c06", "every scale is its ratio of the base", () => {
 			"image-tile": 4 * Number.parseInt(tokens["--leading-body"] ?? "", 10),
 			"image-cap": 20 * Number.parseInt(tokens["--leading-body"] ?? "", 10),
 			"chips-inset": (px["control-compact"] - px.chip) / 2,
+			"line-body": Number.parseInt(tokens["--leading-body"] ?? "", 10),
 		};
 		for (const size of SIZES) {
 			requireEqual(

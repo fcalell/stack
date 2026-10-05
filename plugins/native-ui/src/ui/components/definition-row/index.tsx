@@ -7,7 +7,6 @@ import type {
 import {
 	DEFINITION_ROW,
 	DEFINITION_ROW_CHEVRON,
-	LOCK_GLYPH,
 	ROW_TITLE_LINE,
 	row,
 	text,
@@ -27,6 +26,7 @@ import { IconButton } from "../icon-button";
 import { Link } from "../link";
 import { Status } from "../status";
 import { ChangeMark } from "../status/change";
+import { LockMark } from "../status/lock";
 
 const ROW = "relative flex-row items-center";
 // The hit covers the row under its text and its acts, and takes the press
@@ -41,7 +41,6 @@ const VALUE = "flex-1 min-w-0 text-right";
 const VALUE_SLOT = "flex-1 min-w-0 flex-row justify-end";
 const ACTS = "relative flex-row shrink-0";
 const CHEVRON = "shrink-0 items-center justify-center";
-const LOCK = "justify-center";
 
 export type DefinitionValue =
 	| string
@@ -108,7 +107,6 @@ export function DefinitionRow({
 	href,
 	onOpen,
 }: DefinitionRowProps) {
-	const words = useWords();
 	const open = href !== undefined ? () => navigate(href) : onOpen;
 	const copied = copyable && typeof value === "string" ? value : undefined;
 	let shown: ReactNode = null;
@@ -197,17 +195,7 @@ export function DefinitionRow({
 						{label}
 					</RNText>
 					{shown}
-					{locked ? (
-						<View
-							accessible
-							accessibilityLabel={words.locked}
-							className={cn(LOCK_GLYPH, LOCK)}
-						>
-							<Ink.Provider value="ink-meta">
-								<Icon name="Lock" fit="meta" />
-							</Ink.Provider>
-						</View>
-					) : null}
+					{locked ? <LockMark /> : null}
 				</View>
 				{under ? (
 					<RNText className={text({ role: "meta" })}>{under}</RNText>

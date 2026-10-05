@@ -286,14 +286,17 @@ tabular figures at the code size: a diff's number columns, a file row's count la
 (a message input's tallest text, derived: eight body line boxes, the text scrolling past it),
 `image-tile` 80 / 96 (an image thumbnail's side, derived: four body line boxes, the lines of
 provenance it stands beside), `image-cap` 400 / 480 (the tallest an image grows at its container's
-width, derived: twenty body line boxes) and `chips-inset` 4 / 10 (the inset above and below the
-chips of a pick of several, derived: half of what the compact control has over a chip); `thumb` is
-the switch's knob, so neither takes that name. On touch every target is at least 44. A cell says
-`min-h`, never `h`: a label must be able to grow its control under OS font scaling. A minimum height
-is the floor of something pressed (a control, a field, a target, a chip, a row), the set height of a
-bar (`strip`, a page's strip and its touch top bar), an intrinsic size, or the height of what a part
-swaps with (`PENDING_TRACK` an action bar's); any other container takes its height from its content
-and padding, its parts centred on its tallest, never from another component's size.
+width, derived: twenty body line boxes), `line-body` 20 / 24 (one body line's box, derived: the
+height a part standing on a wrapped title's first line is pinned to, so a taller part overflows it
+centred) and `chips-inset` 4 / 10 (the inset above and below the chips of a pick of several,
+derived: half of what the compact control has over a chip); `thumb` is the switch's knob, so neither
+takes that name. On touch every target is at least 44. A cell says `min-h`, never `h`: a label must
+be able to grow its control under OS font scaling. A minimum height is the floor of something
+pressed (a control, a field, a target, a chip, a row), the set height of a bar (`strip`, a page's
+strip and its touch top bar), an intrinsic size (one body line's box, `line-body`, which a taller
+part overflows), or the height of what a part swaps with (`PENDING_TRACK` an action bar's); any
+other container takes its height from its content and padding, its parts centred on its tallest,
+never from another component's size.
 
 Seven radius roles, density-invariant, a radius naming the role and never the size: `chip` 4
 (an outlined chip, a skeleton bar, a checkbox), `control` 6 (a button, a field, a segmented

@@ -17,11 +17,11 @@ import { cn } from "../../lib/cn";
 import { GroundContext } from "../../lib/ground";
 
 // The geometry of the row it stands in for (`./index.tsx`); a strut sets
-// each line's height, as the web's `h-lh` does.
+// each line's height.
 const ROW = "relative flex-row items-center";
 // A wrapped title's row stands its parts on the title's first line.
 const ROW_WHOLE = "relative flex-row items-start";
-const FIRST_LINE = "flex-row shrink-0 items-center";
+const FIRST_LINE = "flex-row shrink-0 items-center h-line-body";
 const LINE_WHOLE = "flex-row items-start min-w-0";
 const TITLE_LINES = "flex-1 min-w-0";
 const SQUARE = "rounded-none";
@@ -80,12 +80,7 @@ export const WAITING_ROWS = BARS.length;
 // A part on the title's first line while the title wraps.
 function First(props: { on: boolean; children: ReactNode }) {
 	if (!props.on) return props.children;
-	return (
-		<View className={FIRST_LINE}>
-			<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
-			{props.children}
-		</View>
-	);
+	return <View className={FIRST_LINE}>{props.children}</View>;
 }
 
 // One body line of a title's bar, a strut setting the line's height.

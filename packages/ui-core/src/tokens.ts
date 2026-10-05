@@ -781,7 +781,9 @@ export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
 // tallest a message input's text grows before it scrolls, `image-tile` an
 // image thumbnail's side and `image-cap` the tallest an image grows at its
 // container's width, `chips-inset` the inset above and below the chips of a
-// pick of several that centres a chip in the compact control (`thumb` is the
+// pick of several that centres a chip in the compact control, and `line-body`
+// one body line's box: the height a part standing on a wrapped title's first
+// line is pinned to, so a taller part overflows it centred (`thumb` is the
 // switch's knob).
 export const SIZES = [
 	"control",
@@ -818,6 +820,7 @@ export const SIZES = [
 	"image-tile",
 	"image-cap",
 	"chips-inset",
+	"line-body",
 ] as const;
 export type Size = (typeof SIZES)[number];
 
@@ -827,7 +830,7 @@ export type Size = (typeof SIZES)[number];
 // `MONO_ADVANCE`, rounded up to the pixel; a message input's tallest text,
 // eight body line boxes; an image thumbnail's side, four body line boxes (the
 // provenance lines it stands beside); an image's height cap, twenty; the chips
-// inset, half of what the compact control has over a chip.
+// inset, half of what the compact control has over a chip; one body line box.
 export type DerivedSize =
 	| "switch-travel"
 	| "text-area"
@@ -835,7 +838,8 @@ export type DerivedSize =
 	| "message-input"
 	| "image-tile"
 	| "image-cap"
-	| "chips-inset";
+	| "chips-inset"
+	| "line-body";
 
 // The room set is the touch one, in canvas units: every target is then at
 // least 44 of 960, the 32 the ten-foot guidance asks, and 88 at 1920.

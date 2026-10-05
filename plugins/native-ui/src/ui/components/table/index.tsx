@@ -1,6 +1,5 @@
 import type {
 	CellValue,
-	Option,
 	StatusCell,
 	TableCell,
 	TableChoice,
@@ -18,15 +17,19 @@ import {
 	chooseReason,
 	chooseRow,
 	isChangeCell,
+	isStatusCell,
 	listState,
 	retryOf,
+	type Sort,
+	shown as shownWith,
+	sorted,
 	type TableRecord,
 	tableRecords,
+	tickable,
 } from "@fcalell/ui-core/list-state";
 import { BREAKPOINT_PX } from "@fcalell/ui-core/tokens";
 import {
 	FIGURES,
-	LOCK_GLYPH,
 	rowWarningContentTone,
 	skeleton,
 	TABLE_CELL,
@@ -81,6 +84,7 @@ import { PickerBase } from "../picker/base";
 import type { QueryLike } from "../query-boundary";
 import { StatusBase } from "../status/base";
 import { ChangeMark } from "../status/change";
+import { LockMark } from "../status/lock";
 
 const ROOT = "grow";
 // The frozen leading column stands outside the sideways scroll, on the
@@ -104,14 +108,13 @@ const REASON_STACK = "shrink min-w-0";
 // A sortable header washes under the press through the Pressable's own
 // pressed state.
 const SORT = "flex-row items-center w-full min-w-0 active:bg-wash-press";
-const HEAD = "flex-row items-center min-w-0";
+const HEAD = "flex-row items-center gap-inside min-w-0";
 const LABEL = "shrink";
 const GLYPH = "shrink-0";
-const CELL = "flex-row items-center min-w-0";
+const CELL = "flex-row items-center gap-inside min-w-0";
 const CELL_END = "justify-end";
 const VALUE = "shrink";
 const TICK = "shrink-0";
-const LOCK = "justify-center";
 // A Chip hugs its top edge in a row, so it stands centred in a slot of its own.
 const CHIP = "shrink min-w-0";
 // An edit fills the cell it stands in.
@@ -131,12 +134,6 @@ const LOADING_BARS = [
 	["w-2/3", "w-1/2", "w-1/3", "w-1/2", "w-2/3"],
 ] as const;
 const NUMBER_BAR = "w-1/4";
-
-type Direction = "descending" | "ascending";
-interface Sort {
-	key: string;
-	direction: Direction;
-}
 
 // Where a table's records come from: a query, with what failed to load over
 // the retry act, or items, `loading` while they are on their way.
@@ -186,56 +183,9 @@ export type TableProps<T = unknown> = TableBase<T> &
 	TableSource<T> &
 	(Reads | Edits);
 
-function optionsOf(column: TableColumn): readonly Option<string | null>[] {
-	if (column.edit?.control !== "picker") return [];
-	return column.edit.options.flatMap((entry) =>
-		"options" in entry ? entry.options : [entry],
-	);
-}
-
-// What a cell reads as: a picked value its option's label, a status its word,
-// an age its distance from now.
+// What a cell reads as, an age in this platform's words.
 function shown(column: TableColumn, cell: TableCell | undefined): string {
-	if (cell === null || cell === undefined || typeof cell === "boolean")
-		return "";
-	if (isChangeCell(cell)) return cell.after ?? "";
-	if (typeof cell === "object") return cell.label ?? "";
-	if (column.kind === "age") return age(String(cell));
-	const option = optionsOf(column).find((o) => o.value === cell);
-	return option?.label ?? String(cell);
-}
-
-function order(
-	column: TableColumn,
-	cell: TableCell | undefined,
-): number | string {
-	if (cell === null || cell === undefined) return "";
-	if (typeof cell === "boolean") return cell ? 1 : 0;
-	if (typeof cell === "number") return cell;
-	if (isChangeCell(cell)) return cell.after ?? "";
-	if (typeof cell === "object") return cell.label ?? cell.status;
-	if (column.kind === "age") return Date.parse(cell);
-	return shown(column, cell);
-}
-
-// Rows by the sorted column, an empty cell last either way.
-function sorted(
-	rows: readonly TableRecord[],
-	columns: readonly TableColumn[],
-	sort: Sort | undefined,
-): readonly TableRecord[] {
-	const column = columns.find((c) => c.key === sort?.key);
-	if (!sort || !column) return rows;
-	const sign = sort.direction === "ascending" ? 1 : -1;
-	return [...rows].sort((a, b) => {
-		const x = order(column, a.cells[column.key]);
-		const y = order(column, b.cells[column.key]);
-		if (x === "" || y === "") return x === y ? 0 : x === "" ? 1 : -1;
-		if (typeof x === "number" && typeof y === "number") return (x - y) * sign;
-		return (
-			String(x).localeCompare(String(y), undefined, { numeric: true }) * sign
-		);
-	});
+	return shownWith(column, cell, age);
 }
 
 // A header pressed again turns its sort over, then off; another column sorts
@@ -561,27 +511,6 @@ const RestRow = memo(function RestRow(props: {
 	);
 });
 
-// A lock glyph, read aloud as the word Locked, then the column's reason when
-// it has one.
-function LockMark(props: { reason?: string }) {
-	const words = useWords();
-	return (
-		<View
-			accessible
-			accessibilityLabel={
-				props.reason === undefined
-					? words.locked
-					: `${words.locked}, ${props.reason}`
-			}
-			className={cn(LOCK_GLYPH, LOCK)}
-		>
-			<Ink.Provider value="ink-meta">
-				<Icon name="Lock" fit="meta" />
-			</Ink.Provider>
-		</View>
-	);
-}
-
 // A cell past the leading one, by whether and how its column edits (the
 // leading column never edits, nor a column locked whole, nor a column its row
 // locks); a value its row locks that its column edits ends in a lock.
@@ -664,7 +593,7 @@ function Grid(props: {
 	const words = useWords();
 	const ticked = useMemo(() => new Set(choose?.chosen), [choose?.chosen]);
 	// The head tick reaches the rows that can be ticked; with none it is off.
-	const reach = rows.some((row) => row.blocked === undefined);
+	const reach = tickable(rows).length > 0;
 	const lead = columns[0];
 	const rest = useMemo(() => columns.slice(1), [columns]);
 	const [store] = useState(pressStore);
@@ -1180,8 +1109,11 @@ function Phone(props: {
 								return shown(column, at);
 							})
 							.filter((part) => part !== "");
-						if (record.blocked === undefined && record.moved !== undefined)
-							parts.unshift(record.moved);
+						// The tick draws a blocked reason itself; with none, the reason
+						// that leads the meta is the rule's move.
+						const moved =
+							record.blocked === undefined ? chooseReason(record) : undefined;
+						if (moved !== undefined) parts.unshift(moved);
 						return parts.length ? parts : undefined;
 					}
 				: undefined,
@@ -1194,10 +1126,7 @@ function Phone(props: {
 		status: status
 			? (record) => {
 					const state = cell(record, status);
-					// A status cell is the one object a cell holds.
-					return typeof state === "object" &&
-						state !== null &&
-						"status" in state
+					return isStatusCell(state)
 						? {
 								state: state.status,
 								label: state.label ?? words[state.status],

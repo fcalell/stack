@@ -87,40 +87,42 @@ pinned by the package's verify suite; this entry holds the architecture and its 
   each role a ratio rounded to the pixel, its line box to the even pixel), the eleven spacing roles
   (multiples of 4, one rung looser on touch except the float and page insets and the acts gap; a
   list bleeds by `control-x`, so its rows' leading meets the title over it at either density) and
-  the thirty-four sizes (control 32/44, field 38/48, target 24/44, `indent` 16/20 (a tree row's step
+  the thirty-five sizes (control 32/44, field 38/48, target 24/44, `indent` 16/20 (a tree row's step
   in), the switch and its derived thumb travel, the avatar, three icon sizes by the text beside
   them, the check, the slider track, the one-time-code box, the meter's bar, the chart's plot, the
-  QR square, and five derived from the type: the text area's three body lines, the message input's
+  QR square, and six derived from the type: the text area's three body lines, the message input's
   eight, an image thumbnail's four (`image-tile`, 80/96, the lines of provenance it stands beside),
-  an image's height cap of twenty (`image-cap`, 400/480) and `figures`, four tabular figures at the
-  code size, held by a diff's number columns and a file row's count lanes), and one derived from two
-  sizes: `chips-inset`, what the compact control has over a chip, halved (4/10, a pick of several's
-  vertical inset). The thumbnail's name is not `thumb`, which the switch's knob holds: `size-*` and
-  `max-w-*` read one `--spacing-*` namespace. A size counted in figures is px at `MONO_ADVANCE`
-  (Plex Mono's 0.6 em), never a `ch` width, because uniwind has no `ch` unit and native draws the
-  figures too; a named mono with a wider advance overflows it. The two measures are `ch` on the web
-  (`measure-short` 18ch, `measure` 58ch), so each label keeps 18 characters of its own font; native
-  has no `ch`, so `nativeMeasureTokens` declares them in px at `SANS_ADVANCE` (Plex Sans's "0", 0.6
-  em) of the touch body size, rounded up (173 and 557). That is a native limit: there every short
-  label's cap is the body's 18 characters whatever its role (a chip's caption included, and
-  `SKELETON_LANE`'s role axis draws one width), and a named sans with a wider "0" overflows them.
-  `themeTokens` seeds the touch set on both platforms; the web overrides it with the desktop set in
-  a `:root` rule in `@layer base` under a fine pointer at `tablet` width and wider (so a desktop
-  window narrower than `tablet` draws the touch set and structure), the cascade the dark layer
-  rides, so no cell carries a density class: a non-inline `@theme` utility reads its variable, so
-  `text-body` and `min-h-control` follow. `data-density` on the web root pins any set on any device,
-  the showcase's pin, never a consumer option. Native is touch-only outside a room Place. A molecule
-  whose structure follows density (an action bar at natural width on the desktop, full width on
-  touch) reads it through the web's `touch:` custom variant, emitted over the density layer's own
-  condition (the touch pin, or no desktop pin where the pointer is not fine or the viewport is
-  narrower than `tablet`), and `useTouch` reads the same one query, so a structural class, a tree
-  and the token set cannot disagree; native always draws the touch set, so it draws the touch
-  structure with no variant; the variant sits in a web molecule's overlay, never a cell. A value
-  that flips by density is the same overlay over the desktop cell, never a matrix value. Structure
-  is decided by CSS wherever CSS can, a runtime check (`useTouch`) only where the tree differs (the
-  Shell, Place and Screen). Rejected: a `fine:` variant in the cells (an interaction condition in a
-  shared cell, meaningless on native) and one type scale at every density (13 on a phone is
-  unreadable and 16 on a desktop row wastes the row).
+  an image's height cap of twenty (`image-cap`, 400/480), one body line's box (`line-body`, 20/24:
+  the height a part standing on a wrapped title's first line is pinned to, so a taller part
+  overflows it centred, a height set where a `min-h` would grow with its tallest part) and
+  `figures`, four tabular figures at the code size, held by a diff's number columns and a file row's
+  count lanes), and one derived from two sizes: `chips-inset`, what the compact control has over a
+  chip, halved (4/10, a pick of several's vertical inset). The thumbnail's name is not `thumb`,
+  which the switch's knob holds: `size-*` and `max-w-*` read one `--spacing-*` namespace. A size
+  counted in figures is px at `MONO_ADVANCE` (Plex Mono's 0.6 em), never a `ch` width, because
+  uniwind has no `ch` unit and native draws the figures too; a named mono with a wider advance
+  overflows it. The two measures are `ch` on the web (`measure-short` 18ch, `measure` 58ch), so each
+  label keeps 18 characters of its own font; native has no `ch`, so `nativeMeasureTokens` declares
+  them in px at `SANS_ADVANCE` (Plex Sans's "0", 0.6 em) of the touch body size, rounded up (173 and
+  557). That is a native limit: there every short label's cap is the body's 18 characters whatever
+  its role (a chip's caption included, and `SKELETON_LANE`'s role axis draws one width), and a named
+  sans with a wider "0" overflows them. `themeTokens` seeds the touch set on both platforms; the web
+  overrides it with the desktop set in a `:root` rule in `@layer base` under a fine pointer at
+  `tablet` width and wider (so a desktop window narrower than `tablet` draws the touch set and
+  structure), the cascade the dark layer rides, so no cell carries a density class: a non-inline
+  `@theme` utility reads its variable, so `text-body` and `min-h-control` follow. `data-density` on
+  the web root pins any set on any device, the showcase's pin, never a consumer option. Native is
+  touch-only outside a room Place. A molecule whose structure follows density (an action bar at
+  natural width on the desktop, full width on touch) reads it through the web's `touch:` custom
+  variant, emitted over the density layer's own condition (the touch pin, or no desktop pin where
+  the pointer is not fine or the viewport is narrower than `tablet`), and `useTouch` reads the same
+  one query, so a structural class, a tree and the token set cannot disagree; native always draws
+  the touch set, so it draws the touch structure with no variant; the variant sits in a web
+  molecule's overlay, never a cell. A value that flips by density is the same overlay over the
+  desktop cell, never a matrix value. Structure is decided by CSS wherever CSS can, a runtime check
+  (`useTouch`) only where the tree differs (the Shell, Place and Screen). Rejected: a `fine:`
+  variant in the cells (an interaction condition in a shared cell, meaningless on native) and one
+  type scale at every density (13 on a phone is unreadable and 16 on a desktop row wastes the row).
 - The `room` density is the third set, the one tier a screen declares (`Place.distance: "room"`),
   because no media query detects viewing distance; desktop and touch stay automatic. Both
   platforms' ten-foot guidance designs on one 960 × 540 canvas scaled to the screen (Microsoft at
@@ -586,7 +588,13 @@ a tick with no animation, never jumped to full.
   named "Sort, {column}, {direction}" by the words `sort`, `ascending` and `descending`; its rows
   are the List's `items` through a `row` map whose slots the columns declare (an age column the
   trailing, the status and chip columns the marks), so its loading rows wait in the slots the loaded
-  ones draw. A Table takes data as a List does: `query` (with `sentence`) or `items` (`loading`
+  ones draw. What a cell reads as and sorts by (`shown`, `order`, `sorted`, an age read through the
+  platform's own words), the rows a tick reaches (`tickable`), a row's reason (`chooseReason`) and
+  the cell guards (`isChangeCell`, `isStatusCell`) are `./list-state`'s, so neither platform's Table
+  re-derives them. A Table takes data as a List does: `query` (with `sentence`) or `items`
+  (`loading` while a compound body waits), each `TableColumn<T>` reading its cell from the item by
+  `cell`, and a `row` map (`TableRowSlots<T>`) for the row's own slots. Both forms draw one
+  projection, A Table takes data as a List does: `query` (with `sentence`) or `items` (`loading`
   while a compound body waits), each `TableColumn<T>` reading its cell from the item by `cell`, and
   a `row` map (`TableRowSlots<T>`) for the row's own slots. Both forms draw one projection,
   `tableRecords` in `./list-state`, so the grid and the touch List read the same item. It decides
@@ -597,8 +605,8 @@ a tick with no animation, never jumped to full.
   mounts its touch List with no `SectionContext`, since on the web both forms are mounted. A row
   with `href` is its leading cell's link (`tabindex -1`, so a new tab opens it); a row's `locked`
   names the columns it draws read only (an owner's role), and in an editable table a cell it locks
-  (one its column would edit) ends in a `LOCK_GLYPH`, read aloud as the word `locked`. A column's
-  own `locked` (a reason string) makes the column read only in this table: its cells never edit and
+  (one its column would edit) ends in the lock mark, read aloud as the word `locked`. A column's own
+  `locked` (a reason string) makes the column read only in this table: its cells never edit and
   carry no glyph, since a lock on every cell of a column is noise, and its head draws the glyph
   after the label, reading aloud "Locked, {reason}". Both scopes share `cellEdit` and `cellLocked`
   in `./list-state`. A chip column's pick draws its value and options as the column's chips (the
@@ -814,8 +822,11 @@ a tick with no animation, never jumped to full.
   `lock`, `chip`, at most one each, in that order on the meta line (`ROW_MARKS`). `warning` is
   what is wrong with the row (a string: "Name conflicts with Checkout"), a `TriangleAlert` glyph
   at the meta icon size in `warn` (`ROW_WARNING`) beside its label in the meta ink, read after the
-  `warning` word; `lock` is what the row holds ("Holds 3 fields"), a `Lock` glyph in the meta ink
-  whose label shows from `tablet` and is read aloud always, the glyph alone below. The act that
+  `warning` word; `lock` is what the row holds ("Holds 3 fields"), the lock mark whose label shows
+  from `tablet` and is read aloud always, after the word `locked`, the glyph alone below. The
+  mark is one internal `LockMark` per platform (`status/lock`), which a Table cell and head and a
+  `DefinitionRow` draw too: `LOCK_GLYPH` (the meta ink, no margin) names the glyph, and the
+  container's gap spaces it from what it follows. The act that
   clears a warning is the row's `act`, one visible act a row; a mark that is itself a press would
   put a second hit inside a row that may open. The marks yield from the end of the line: the chip
   truncates first, then the lock's label, and the warning's label keeps. Why named props: `List`'s
@@ -878,14 +889,16 @@ a tick with no animation, never jumped to full.
   the consumer gives `meta` back once the act settles), one line each (`ROW_STEPS`, a pair gap, and
   `ROW_STEP`): the status mark (`StatusDot`, the spinner while `running`, the same cells as
   `Status`) and the label at meta size, the running step in `ink-body` and the others in
-  `ink-meta`. It takes no descriptor of its own, so it shares nothing with `Stage` (a rail of
+  `ink-meta`; each mark carries its state's word as its label, so the state is never told by
+  colour alone. It takes no descriptor of its own, so it shares nothing with `Stage` (a rail of
   fixed stages: a progress indicator, not a status list). A waiting row draws the meta line a
   `steps` slot declares, never the steps (`rowShape` reads `steps` as a meta line).
   `wrap` (`RowSlots.wrap`, one boolean for the list) is a title read whole: `ROW.lines.whole`
   (no minimum height, a `pair` pad, the lines set the height) wraps it to every line at body 400
   (`ROW_TITLE` `form` `whole`, so a list of notes is not a wall of medium weight), the change
   mark, leading, trailing value or pick and acts standing in a box one body line tall on its
-  first line (the web's `h-lh`, the phone's strut). A `Quoted` title still wraps to two lines
+  first line (`line-body`, `h-line-body` on both platforms: the box is pinned to one body line,
+  so a 44 act overflows it centred on the line instead of growing it). A `Quoted` title still wraps to two lines
   and adds quotes (a model-written name), `Prose` has no per-item meta or more, `Message` is a
   turn; a row whose title wraps is none of them. `rowShape.wrap` is the list's flag, so the
   waiting row draws two body lines and keeps its leading, trailing and acts on the first. The
@@ -904,18 +917,19 @@ a tick with no animation, never jumped to full.
   reserves the lane (`TREE_LANE`, the `control-compact` square; waiting rows too, through
   `rowShape.tree`), a branch's fold act standing in it as the bar-fit `IconButton` with a
   `ChevronRight` or `ChevronDown`, named by the words `expand` and `collapse` before the title. The
-  levels and the lane stand as one box that bleeds the row's padding (`-my-rows` on a two-line
-  row, `-my-pair` on a wrapped one), and the tree's list drops the row gap (`LIST_TREE`), so a rail
-  is unbroken from row to row. The web draws `role="tree"` on the list and `treeitem` with
-  `aria-level` and `aria-expanded` on each row, Arrow Left folding an open branch and Arrow Right
-  opening a closed one, except in a `Group`, whose card holds the rows directly (its hairline is a
-  child selector a `tree` wrapper would break); the phone reads the fold act's
-  `accessibilityState.expanded`. `dim` composes by item: an off-path branch gives `dim` to its
-  parent and each child, so the branch reads grey whole, its rail and chevron staying in the meta
-  ink. A Section counts a tree's top level, not every node.
+  levels and the lane stand as one box that bleeds the row's padding (`TREE_BLEED`, keyed on
+  `ROW.lines`: the negative of the form's `py`, so `-my-rows` on a two-line row and `-my-pair` on a
+  wrapped one), and the tree's list drops the row gap (`LIST_TREE`), so a rail is unbroken from
+  row to row. A tree is a list of rows with the fold act as its one state: the web and the phone
+  both read it from the act's `aria-expanded` and `accessibilityState.expanded`. The web draws no
+  `tree` or `treeitem` roles, which would promise roving focus and Up and Down between rows that
+  the list does not have; a branch folds from its act. `dim`
+  composes by item: an off-path branch gives `dim` to its parent and each child, so the branch
+  reads grey whole, its chevron staying in the meta ink and its rail the `edge` hairline. A
+  Section counts a tree's top level, not every node.
 - A value outside its editable context reads locked on the fact's own row: `DefinitionRow.locked`
-  is a `Lock` (`reason`, `href`), drawing a `LOCK_GLYPH` (`Lock` at `icon-meta`, the meta ink,
-  read aloud as the word `locked`) after the value and the reason as the row's meta line, the
+  is a `Lock` (`reason`, `href`), drawing the lock mark after the value and the reason as the
+  row's meta line, the
   whole line an inline `Link` when `href` names what holds it ("Held by CR-12, Ana"). The value
   stays (`copyable` too); the row takes no `description`, `act`, `href` or `onOpen` (a union on
   `locked`), since the reason is its one line and its one link, never a link inside a row that

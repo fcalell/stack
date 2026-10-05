@@ -14,7 +14,6 @@ import type {
 } from "@fcalell/ui-core/descriptors";
 import {
 	FIELD_ERROR_LINE,
-	lineBox,
 	ROW_ACTS,
 	ROW_ENTRY,
 	ROW_LEADING,
@@ -23,6 +22,7 @@ import {
 	ROW_STEPS,
 	ROW_TITLE_LINE,
 	ROW_TRAILING,
+	type RowLines,
 	row,
 	rowStep,
 	rowTitle,
@@ -30,8 +30,9 @@ import {
 	TREE_LANE,
 	TREE_RAIL,
 	text,
+	treeBleed,
 } from "@fcalell/ui-core/variants";
-import { type KeyboardEvent, type ReactNode, use, useId, useMemo } from "react";
+import { type ReactNode, use, useId, useMemo } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { InlineField } from "../../lib/field.ts";
 import { GroundContext } from "../../lib/ground.ts";
@@ -54,13 +55,15 @@ import { Picker } from "../picker/index.tsx";
 import { ChangeMark } from "../status/change.tsx";
 import { StatusDot } from "../status/dot.tsx";
 import { Status } from "../status/index.tsx";
-import { LockMark, WarningMark } from "./marks.tsx";
+import { LockMark } from "../status/lock.tsx";
+import { WarningMark } from "./marks.tsx";
 
 const ROW = "relative flex items-center";
 // A row whose title wraps whole stands its parts on the title's first line.
 const ROW_WHOLE = "relative flex items-start";
-// The box one body line tall a part stands in, centred on the first line.
-const FIRST_LINE = "flex shrink-0 items-center h-lh";
+// The box one body line tall a part stands in, centred on the first line; a
+// taller part overflows it centred.
+const FIRST_LINE = "flex shrink-0 items-center h-line-body";
 // A list row's wash is square on touch, where it meets the screen's edge.
 const SQUARE = "touch:rounded-none";
 // A row that opens washes under the pointer and the press; the chosen one a
@@ -107,7 +110,6 @@ const ENTRY_FIELD = "grow min-w-0";
 // height, over its padding, so a level's rail is unbroken from row to row.
 const TREE = "flex shrink-0 self-stretch";
 const FOLD = "flex shrink-0 items-center justify-center self-center";
-const BLEED = { one: "", two: "-my-rows", whole: "-my-pair" } as const;
 
 /** One thing in a list or a group. */
 export interface ListRowProps<V extends string | null = string> extends Closed {
@@ -147,43 +149,17 @@ export interface ListRowProps<V extends string | null = string> extends Closed {
 	onOpen?: () => void;
 }
 
-// A tree row in a list is a treeitem of the list's tree, at its depth, open or
-// closed when it is a branch; Arrow Left folds a branch and Arrow Right opens
-// it, but not while the key is typing in the row's entry. The focus stands on
-// the row's hit and fold act inside it.
-function treeitemProps(tree: RowTree) {
-	const { depth, fold } = tree;
-	return {
-		role: "treeitem",
-		"aria-level": depth + 1,
-		"aria-expanded": fold?.open,
-		onKeyDown: (event: KeyboardEvent) => {
-			if (fold === undefined || event.target instanceof HTMLInputElement)
-				return;
-			const hide = event.key === "ArrowLeft" && fold.open;
-			const show = event.key === "ArrowRight" && !fold.open;
-			if (!hide && !show) return;
-			event.preventDefault();
-			fold.onToggle();
-		},
-	};
-}
-
 // A part standing on the title's first line while the title wraps whole.
 function First(props: { on: boolean; children: ReactNode }) {
 	if (!props.on) return props.children;
-	return (
-		<span className={cn(lineBox({ role: "body" }), FIRST_LINE)}>
-			{props.children}
-		</span>
-	);
+	return <span className={FIRST_LINE}>{props.children}</span>;
 }
 
 // A tree row's rails and fold lane: a rail per level, then the lane every row
 // of the tree reserves, a branch's fold act standing in it.
 function TreeLead(props: {
 	tree: RowTree;
-	lines: keyof typeof BLEED;
+	lines: RowLines;
 	wrap: boolean;
 	named: string;
 }) {
@@ -192,7 +168,7 @@ function TreeLead(props: {
 	const { depth, fold } = tree;
 	const levels = Array.from({ length: depth }, (_, level) => level);
 	return (
-		<span className={cn(TREE, BLEED[lines])}>
+		<span className={cn(TREE, treeBleed({ lines }))}>
 			{levels.map((level) => (
 				<span key={level} className={TREE_RAIL} />
 			))}
@@ -203,6 +179,7 @@ function TreeLead(props: {
 							icon={fold.open ? "ChevronDown" : "ChevronRight"}
 							fit="bar"
 							label={`${fold.open ? words.collapse : words.expand} ${named}`}
+							aria-expanded={fold.open}
 							onClick={fold.onToggle}
 						/>
 					) : null}
@@ -281,7 +258,7 @@ function trailingWord(trailing: RowTrailing<string | null>): string {
 	return "";
 }
 
-/** Inside a tree `List` the row opens with a rail per level and the fold lane every row of the tree reserves, a branch's fold act in it; Arrow Left and Right fold and open it. Then the change mark, the leading slot, the title with its trailing value over the meta line (its status, warning, lock and chip at the end, yielding from the chip), the entry (its input and act, its error under it) or the step list, a trailing pick, then the row's act and the more act. A row that opens is one hit under its pick and acts, current (the selection wash) at its `href`; it washes under the pointer and the press. In a `Group` it runs edge to edge at the card's inset, elsewhere it is an inset rounded wash, square on touch. */
+/** Inside a tree `List` the row opens with a rail per level and the fold lane every row of the tree reserves, a branch's fold act in it, `aria-expanded` its state. Then the change mark, the leading slot, the title with its trailing value over the meta line (its status, warning, lock and chip at the end, yielding from the chip), the entry (its input and act, its error under it) or the step list, a trailing pick, then the row's act and the more act. A row that opens is one hit under its pick and acts, current (the selection wash) at its `href`; it washes under the pointer and the press. In a `Group` it runs edge to edge at the card's inset, elsewhere it is an inset rounded wash, square on touch. */
 export function ListRow<V extends string | null = string>({
 	change,
 	leading,
@@ -320,6 +297,7 @@ export function ListRow<V extends string | null = string>({
 	const lined = Boolean(entry || listed || parts?.length || marked);
 	const stacked = lined ? "two" : "one";
 	const lines = wrap ? "whole" : stacked;
+	const inline = useMemo(() => ({ label: entry?.label ?? "" }), [entry?.label]);
 	const entryReason = useReasonLine(entry?.act.blocked);
 	const actReason = useReasonLine(act?.blocked);
 	const [first, ...rest] = parts ?? [];
@@ -365,7 +343,6 @@ export function ListRow<V extends string | null = string>({
 		);
 	return (
 		<div
-			{...(tree && ground === "list" ? treeitemProps(tree) : {})}
 			className={cn(
 				row({ lines, ground, state: current ? "selected" : "rest" }),
 				wrap ? ROW_WHOLE : ROW,
@@ -400,7 +377,7 @@ export function ListRow<V extends string | null = string>({
 					className={cn(ROW_ENTRY, TEXT)}
 				>
 					{titleLine}
-					<InlineField value={{ label: entry.label }}>
+					<InlineField value={inline}>
 						<span className={cn(ROW_META_LINE, ENTRY)}>
 							<span className={ENTRY_FIELD}>
 								<Input
@@ -425,9 +402,10 @@ export function ListRow<V extends string | null = string>({
 				<span className={TEXT}>
 					{titleLine}
 					<span className={cn(ROW_STEPS, STEPS)}>
-						{listed.map((step) => (
+						{listed.map((step, at) => (
 							<span
-								key={step.label}
+								// biome-ignore lint/suspicious/noArrayIndexKey: two steps may share a label, so a step is its label at its position
+								key={`${step.label}:${at}`}
 								className={cn(
 									rowStep({
 										state: step.state === "running" ? "running" : "rest",
@@ -435,7 +413,7 @@ export function ListRow<V extends string | null = string>({
 									STEP,
 								)}
 							>
-								<StatusDot state={step.state} />
+								<StatusDot state={step.state} label={words[step.state]} />
 								<span className={STEP_LABEL}>{step.label}</span>
 							</span>
 						))}
@@ -466,7 +444,9 @@ export function ListRow<V extends string | null = string>({
 									</span>
 								) : null}
 								{warning !== undefined ? <WarningMark label={warning} /> : null}
-								{lock !== undefined ? <LockMark label={lock} /> : null}
+								{lock !== undefined ? (
+									<LockMark reason={lock} labelled />
+								) : null}
 								{chip ? (
 									<span className={CHIP_MARK}>
 										<Chip family={chip.family} label={chip.label} />

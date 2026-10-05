@@ -20,7 +20,7 @@ import { GroundContext } from "../../lib/ground.ts";
 const ROW = "relative flex items-center";
 // A wrapped title's row stands its parts on the title's first line.
 const ROW_WHOLE = "relative flex items-start";
-const FIRST_LINE = "flex shrink-0 items-center h-lh";
+const FIRST_LINE = "flex shrink-0 items-center h-line-body";
 const LINE_WHOLE = "flex items-start min-w-0";
 const TITLE_LINES = "flex flex-col grow min-w-0";
 const SQUARE = "touch:rounded-none";
@@ -77,11 +77,7 @@ export const WAITING_ROWS = BARS.length;
 // A part on the title's first line while the title wraps.
 function First(props: { on: boolean; children: ReactNode }) {
 	if (!props.on) return props.children;
-	return (
-		<span className={cn(lineBox({ role: "body" }), FIRST_LINE)}>
-			{props.children}
-		</span>
-	);
+	return <span className={FIRST_LINE}>{props.children}</span>;
 }
 
 // One body line of a title's bar, at the line's height.

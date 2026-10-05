@@ -26,15 +26,19 @@ import {
 	tableRecords,
 	treeRows,
 } from "../src/list-state.ts";
-import { sizePx } from "../src/scales.ts";
+import { leadingOf, sizePx } from "../src/scales.ts";
 import { ENGLISH } from "../src/tokens.ts";
 import {
 	changeContentTone,
 	LIST_TREE,
+	LOCK_GLYPH,
+	type RowLines,
+	row,
 	rowStep,
 	rowTitle,
 	rowTitleForm,
 	TREE_RAIL,
+	treeBleed,
 } from "../src/variants.ts";
 
 const refetch = () => {};
@@ -644,4 +648,23 @@ test("a tree's rail is one indent step with a hairline, and its rows abut", () =
 	assert.doesNotMatch(LIST_TREE, /\bgap-/);
 	assert.equal(sizePx("desktop", "indent"), 16);
 	assert.equal(sizePx("touch", "indent"), 20);
+});
+
+test("a tree row's bleed is its lines form's padding, negated", () => {
+	const padding = (lines: RowLines) =>
+		row({ lines }).match(/\bpy-(\w+)\b/)?.[1];
+	for (const lines of ["one", "two", "setting", "whole"] as const) {
+		const bleed = treeBleed({ lines }).match(/-my-(\w+)/)?.[1];
+		assert.equal(bleed, padding(lines), lines);
+	}
+});
+
+test("a body line's box is the body's line box at each density", () => {
+	assert.equal(sizePx("desktop", "line-body"), leadingOf("desktop", "body"));
+	assert.equal(sizePx("touch", "line-body"), leadingOf("touch", "body"));
+	assert.equal(sizePx("room", "line-body"), leadingOf("room", "body"));
+});
+
+test("a lock glyph sets no margin of its own", () => {
+	assert.doesNotMatch(LOCK_GLYPH, /\bm[se]?-/);
 });

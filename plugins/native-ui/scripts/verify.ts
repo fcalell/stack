@@ -162,6 +162,7 @@ const NATIVE_OVERLAYS = [
 	"gap-inside",
 	"gap-pair",
 	"grow",
+	"h-line-body",
 	"hidden",
 	"inset-0",
 	"inset-x-0",

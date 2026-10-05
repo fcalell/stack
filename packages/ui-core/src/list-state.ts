@@ -9,6 +9,7 @@ import type {
 	Option,
 	OptionGroup,
 	Route,
+	StatusCell,
 	StepState,
 	TableCell,
 	TableChoice,
@@ -563,7 +564,7 @@ export function cellLocked(
 }
 
 // The rows a tick reaches: every row with no blocked reason.
-function tickable(rows: readonly TableRecord[]): TableRecord[] {
+export function tickable(rows: readonly TableRecord[]): TableRecord[] {
 	return rows.filter((row) => row.blocked === undefined);
 }
 
@@ -608,14 +609,82 @@ export function chooseReason(row: TableRecord): string | undefined {
 	return row.blocked ?? row.moved;
 }
 
+// How a table's sort stands: the column and the way round it turns.
+export interface Sort {
+	key: string;
+	direction: "descending" | "ascending";
+}
+
+// The label a column's picked value stands under, as its option.
+function labelOf(column: TableColumn, value: string): string | undefined {
+	if (column.edit?.control !== "picker") return undefined;
+	return column.edit.options
+		.flatMap((entry) => ("options" in entry ? entry.options : [entry]))
+		.find((option) => option.value === value)?.label;
+}
+
+// What a cell reads as: a picked value its option's label, a status its word,
+// an age its distance from now (`age`, the platform's own words for it).
+export function shown(
+	column: TableColumn,
+	cell: TableCell | undefined,
+	age: (moment: string) => string,
+): string {
+	if (cell === null || cell === undefined || typeof cell === "boolean")
+		return "";
+	if (isChangeCell(cell)) return cell.after ?? "";
+	if (typeof cell === "object") return cell.label ?? "";
+	if (column.kind === "age") return age(String(cell));
+	return labelOf(column, String(cell)) ?? String(cell);
+}
+
+// What a cell sorts by: a number or a moment as itself, anything else as the
+// text it reads as; an empty cell as "".
+export function order(
+	column: TableColumn,
+	cell: TableCell | undefined,
+): number | string {
+	if (cell === null || cell === undefined) return "";
+	if (typeof cell === "boolean") return cell ? 1 : 0;
+	if (typeof cell === "number") return cell;
+	if (isChangeCell(cell)) return cell.after ?? "";
+	if (typeof cell === "object") return cell.label ?? cell.status;
+	if (column.kind === "age") return Date.parse(cell);
+	return labelOf(column, cell) ?? cell;
+}
+
+// Rows by the sorted column, an empty cell last either way.
+export function sorted(
+	rows: readonly TableRecord[],
+	columns: readonly TableColumn[],
+	sort: Sort | undefined,
+): readonly TableRecord[] {
+	const column = columns.find((c) => c.key === sort?.key);
+	if (!sort || !column) return rows;
+	const sign = sort.direction === "ascending" ? 1 : -1;
+	return [...rows].sort((a, b) => {
+		const x = order(column, a.cells[column.key]);
+		const y = order(column, b.cells[column.key]);
+		if (x === "" || y === "") return x === y ? 0 : x === "" ? 1 : -1;
+		if (typeof x === "number" && typeof y === "number") return (x - y) * sign;
+		return (
+			String(x).localeCompare(String(y), undefined, { numeric: true }) * sign
+		);
+	});
+}
+
 // What a change cell is: both values, a value added (no before) or removed (no
 // after); none when it holds neither, drawing nothing.
 export type ChangeCellKind = Exclude<ChangeKind, "unchanged" | "stale">;
 
-// A table cell that holds a change (the object with a `before`, as a status
-// cell is the one with a `status`).
+// A table cell that holds a change (the object with a `before`).
 export function isChangeCell(cell: TableCell | undefined): cell is ChangeCell {
 	return typeof cell === "object" && cell !== null && "before" in cell;
+}
+
+// A table cell that holds a status (the object with a `status`).
+export function isStatusCell(cell: TableCell | undefined): cell is StatusCell {
+	return typeof cell === "object" && cell !== null && "status" in cell;
 }
 
 export function changeKind(cell: ChangeCell): ChangeCellKind | undefined {
