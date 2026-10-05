@@ -50,6 +50,7 @@ import {
 	PROSE_MARKER,
 	QR_CODE,
 	ROW,
+	RULE_ARROW,
 	SECTION,
 	SEGMENT,
 	SEGMENT_LABEL,
@@ -130,6 +131,7 @@ export const tableChangeValue = build(TABLE_CHANGE_VALUE);
 export const segment = build(SEGMENT);
 export const segmentLabel = build(SEGMENT_LABEL);
 export const picker = build(PICKER);
+export const ruleArrow = build(RULE_ARROW);
 export const formField = build(FORM_FIELD);
 export const banner = build(BANNER);
 export const bannerGlyph = build(BANNER_GLYPH);
@@ -227,6 +229,7 @@ export const FAMILIES: readonly Family[] = [
 	family("SEGMENT", SEGMENT, segment),
 	family("SEGMENT_LABEL", SEGMENT_LABEL, segmentLabel),
 	family("PICKER", PICKER, picker),
+	family("RULE_ARROW", RULE_ARROW, ruleArrow),
 	family("FORM_FIELD", FORM_FIELD, formField),
 	family("BANNER", BANNER, banner),
 	family("BANNER_GLYPH", BANNER_GLYPH, bannerGlyph),
@@ -357,6 +360,13 @@ export const PICKER_VALUE =
 // The pick's popover at the popover's width (its ground and inset are
 // `POPOVER`'s).
 export const PICKER_POPOVER = "w-popover";
+// A list of rules on the desktop: one grid whose rows are subgrids, so the
+// columns align across rows, a pair rhythm between rows and the inside gap
+// between terms. A rule's terms keep the inside gap on touch too, stacked in
+// its card (`RULE_CARD`'s inset, a `Group` holding the cards).
+export const RULES = "gap-x-inside gap-y-pair";
+export const RULE_ROW = "gap-inside";
+export const RULE_CARD = "px-card py-pair";
 // A box on the group ground.
 export const GROUP_GROUND = "rounded-card bg-group";
 // A popover: raised on the float shadow inside its hairline, its rows inset
@@ -785,6 +795,13 @@ export function toastContentTone(state: ToastState): ContentTone {
 // A banner's glyph ink, its kind's.
 export function bannerContentTone(kind: BannerKind): ContentTone {
 	return toneOf(BANNER_GLYPH.variants.kind[kind]);
+}
+
+// A pair row's arrow ink, its state's.
+export function ruleArrowContentTone(
+	state: keyof (typeof RULE_ARROW)["variants"]["state"],
+): ContentTone {
+	return toneOf(RULE_ARROW.variants.state[state]);
 }
 
 // A stable step for a name, so one name keeps one fill everywhere.

@@ -129,7 +129,7 @@ pinned by the package's verify suite; this entry holds the architecture and its 
 ## Words
 
 Every word a molecule draws or reads aloud on its own (the seven `Status` words, `recommended`,
-`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, `chooseFile`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved` and `changed`) comes
+`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, `typeValue`, `pickValue`, `chooseFile`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved` and `changed`) comes
 from `words`, a closed typed object with English defaults. The `Words` type requires every key
 and `wordsSchema` is strict, so a translation missing a word fails `tsc` and the schema. It is a
 plugin option beside `theme`; each plugin contributes a `WordsProvider` into the generated entry
@@ -207,10 +207,43 @@ a tick with no animation, never jumped to full.
   draws `ROW {state}` for the pointer alone, where a list's or a group's chosen row draws
   `selected`. A destructive menu act's label draws `MENU_LABEL {kind: destructive}`
   (`text-danger`), an axis because the act is given, not pointed at.
-- The Picker's trigger takes `PICKER {fit}`: `field`, the field box at the bar fit, or `row`,
+- The Picker's trigger takes `PICKER {fit}`: `field`, the field box at the bar fit; `bar`, the
+  same box filling the column a `Rules` row gives it; or `row`,
   a list row's trailing pick, its value (`PICKER_VALUE`) and chevron in a `PILL_ACT` that
   pulls back by its own padding at the row's end (`-me-inside`). The Picker's `fit` prop picks it,
   and a `ListRow`'s trailing pick (`RowTrailing`'s `pick`) passes `row`. The Picker holds `PILL_ACT`.
+- A pick of several is the Picker given an array `value` (`MultiPick`), never a second component:
+  the list's rows tick, it stays open while the viewer picks (Base UI's `multiple` on the select
+  and the combobox, a toggle in the touch sheet), and the box holds one removable neutral `Chip`
+  per value in a wrapping row, so it grows past the bar height only when the chips wrap. The chips
+  hold their own remove acts, so the box is no button: the trigger that opens the list is a
+  button after the chips, filling the line, and the box is a `div` on the field cells. The
+  rows tick as a single pick's do (`Check`), not a `CHECKBOX` per row, since an option row is
+  the one interactive element and a checkbox inside it would nest a second. The types are two
+  overloads on `value` (`PickOneProps`, `PickSeveralProps`), each handler's parameter typed by
+  the value beside it; a props union alone leaves a lambda's parameter untyped.
+- `Rules` is the one molecule for the inline-term rows a mapping and a filter are made of, each
+  `Rule` a pair (`from`, an arrow, `to`) or a condition (`field`, fixed `operator` words, a
+  `value`) with a remove act, and `add` ending the list. A `RuleValue` is one of three terms,
+  each a bar-fit `Picker` or an `Input`: `pick` (`OptionPick`), `picks` (`MultiPick`, the
+  chips) or `either` (`EitherPick`): a picked option or a typed value, `EitherValue`
+  `{ picked?: V } | { typed: string }`. The picked form is a Picker whose options lead with their
+  own glyph, or `Braces` when they carry no leading form (`marked`), and whose list ends with the
+  act `typeValue`; the typed form is an `Input` at the bar fit (read from `InlineField`, the
+  context that names it by the term and focuses it after the viewer's own act) whose trailing act
+  `pickValue` (`ListFilter`) returns to the pick. The mark of which form it is is that leading
+  glyph (a typed value has none and keeps the `text` kind), never Value/Field tabs, which would
+  be a second control row over the 28 px row. The arrow is `ArrowRight` at `icon-meta`, faded
+  (`RULE_ARROW {state: unset}`, `ink-disabled`) until both sides hold a value (`pairSet`). From
+  `tablet` the list is one grid of four columns (the terms share what the arrow or operator and
+  the remove act leave) with each row a subgrid, so the columns align across rows whichever
+  shape a row has; the rows sit at the bar fit (`control-compact`) with the `inside` gap
+  (`RULES`, `RULE_ROW`). On touch the tree differs (`useTouch`): each rule is a card of stacked
+  terms (`RULE_CARD`, the arrow `ArrowDown`) in a `Group`, the columns no longer aligning, and
+  native always draws that form. Rejected: a `Table` picker-cell kind with an arrow column (the
+  Table's edit needs `onOpen`, its touch form is a `ListRow` list, and a mapping is a part of
+  a form, not records), an open `terms: Term[]` list (it cannot keep the columns aligned or
+  typed), and two components for pairs and conditions.
 - A status is a mark: a status that moves is a `Picker` whose options carry states
   (`Option.status`), its options and its value drawn as the `Status`, as an ItemHeader's moving
   status fact (`{ pick }`) is. Rejected: `Status` with `onOpen`, an act that opened a menu of
@@ -625,7 +658,7 @@ a tick with no animation, never jumped to full.
   place (it wins over `meta`, `status` and `chip`), its error under it in the error ink
   (`ROW_ENTRY_ERROR`, held by ListRow beside `ROW_ENTRY`'s gap). The row keeps no state: the
   consumer gives `meta` or `status` in place of `entry` once the act settles. The Input is named
-  by the entry's `label` and reads its bar fit from an internal context (`EntryField`), as a
+  by the entry's `label` and reads its bar fit from an internal context (`InlineField`, shared with a `Rules` term), as a
   Table cell's does from `CellField`. A blocked act's reason draws on the row's own line, the
   Button handed a reason host, so the act keeps its place. Rejected: a `Form` or a `FormField`
   in a `Group` row, which draws a label over its field and a foot ActionBar, the wrong geometry
@@ -820,7 +853,7 @@ a tick with no animation, never jumped to full.
   satisfy. Rejected: optional
   `value` and `onChange` on every control read from the field's context, which would compile a
   control with no value anywhere and could not type a boolean field against an `Input`.
-- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 57 components in four
+- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 58 components in four
   layers (atoms, layout molecules, shared molecules, content molecules) with their prop names,
   the cells each draws (a whole matrix family, one family cell as `FAMILY.axis.value`, or a single
   cell) and the states it has a form for, the same in both plugins; the showcase draws exactly those matrix cells and states. Each plugin's verify suite reads every component's exported props type

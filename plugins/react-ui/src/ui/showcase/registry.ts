@@ -40,6 +40,7 @@ import { drawProse } from "./frames/prose.tsx";
 import { drawProseDiff } from "./frames/prose-diff.tsx";
 import { drawQrCode } from "./frames/qr-code.tsx";
 import { drawQueryBoundary } from "./frames/query-boundary.tsx";
+import { drawRules } from "./frames/rules.tsx";
 import { drawScreen } from "./frames/screen.tsx";
 import { drawSection } from "./frames/section.tsx";
 import { drawSegmentedControl } from "./frames/segmented-control.tsx";
@@ -122,4 +123,5 @@ export const registry: Partial<
 	ProseDiff: drawProseDiff,
 	FileRow: drawFileRow,
 	Comparison: drawComparison,
+	Rules: drawRules,
 };

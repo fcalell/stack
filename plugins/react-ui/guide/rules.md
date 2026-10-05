@@ -69,6 +69,29 @@ row waits on keeps its pending press there, never also in `more`). An input on a
 in the meta line's place; once its act settles, give the row `meta` or `status` instead of
 `entry`. A `List`'s `row` map declares `act` and `entry` only if every item fills them.
 
+Rows of inline terms (a mapping of sources to targets, a filter's conditions) are `Rules`: each
+`Rule` is `{ id, terms, onRemove? }`, its `terms` a pair (`{ from, to }`) or a condition
+(`{ field, operator, value }`), each term a `RuleValue`, one of `{ pick }` (an `OptionPick`),
+`{ picks }` (a `MultiPick`, the chosen values as removable chips) or `{ either }` (an
+`EitherPick`: a picked option or a typed value, `{ picked }` or `{ typed }`, with a way back).
+`add` is the act that ends the list. A pick of several outside a rule is a `Picker` given an
+array `value`.
+
+```tsx
+<Rules
+  rules={[{
+    id: "page",
+    terms: {
+      field: { label: "Field", options: fields, value: "page.type", onChange: setField },
+      operator: "in",
+      value: { picks: { label: "Values", options: pages, value: ["checkout"], onChange: setPages } },
+    },
+    onRemove: remove,
+  }]}
+  add={{ label: "Add condition", onAct: add }}
+/>
+```
+
 ## Collections take data
 
 A collection takes data and draws its states. A `List` takes its `query` (or static

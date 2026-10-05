@@ -56,6 +56,7 @@ import { Meter } from "@fcalell/plugin-native-ui/components/meter";
 import { BarChart } from "@fcalell/plugin-native-ui/components/bar-chart";
 import { QrCode } from "@fcalell/plugin-native-ui/components/qr-code";
 import { Image } from "@fcalell/plugin-native-ui/components/image";
+import { Rules } from "@fcalell/plugin-native-ui/components/rules";
 import { Chip } from "@fcalell/plugin-native-ui/components/chip";
 import { Select } from "@fcalell/plugin-native-ui/components/select";
 import { Table } from "@fcalell/plugin-native-ui/components/table";
@@ -839,6 +840,21 @@ export const closure = (
 		<Comparison label="x" columns={["a"]} items={[]} row={{ key: String, label: String, values: () => [] }} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<Comparison label="x" columns={["a"]} items={[]} row={{ key: String, label: String, values: () => [] }} placeholderTextColorClassName="text-ink-body" />
+		<Rules rules={[]} />
+		{/* @ts-expect-error: closed channel */}
+		<Rules rules={[]} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Rules rules={[]} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Rules rules={[]} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Rules rules={[]} classList={{}} />
+		{/* @ts-expect-error: closed channel */}
+		<Rules rules={[]} colorClassName="text-ink-body" />
+		{/* @ts-expect-error: closed channel */}
+		<Rules rules={[]} selectionColorClassName="text-ink-body" />
+		{/* @ts-expect-error: closed channel */}
+		<Rules rules={[]} placeholderTextColorClassName="text-ink-body" />
 		<Message author="you" body="a" />
 		<Message author="system" body="a" detail={{ fold: "b" }} />
 		{/* @ts-expect-error: closed channel */}

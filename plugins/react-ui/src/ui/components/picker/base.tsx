@@ -7,6 +7,7 @@ import type {
 	Option,
 	OptionGroup,
 } from "@fcalell/ui-core/descriptors";
+import { toggled } from "@fcalell/ui-core/list-state";
 import type { ChipFamily } from "@fcalell/ui-core/tokens";
 import {
 	FIELD_GLYPH,
@@ -50,16 +51,23 @@ import { Input } from "../input/index.tsx";
 import { SheetBase } from "../sheet/base.tsx";
 import { StatusDot } from "../status/dot.tsx";
 import { Status } from "../status/index.tsx";
-import type { PickerProps } from "./index.tsx";
+import type { PickerProps, PickOneProps, PickSeveralProps } from "./index.tsx";
 
 // A field-fit trigger is the field box at the bar fit; open, it keeps the
 // ring, as the `Select`'s does.
 const FIELD_TRIGGER =
 	"flex shrink-0 items-center text-start hover:border-edge-hover";
 const FIELD_OPEN = "outline-2 outline-offset-2 outline-ring";
-// In a table cell the trigger fills the cell it stands in for.
-const IN_CELL = "w-full";
+// In a table cell, or at the bar fit in a rule row, the trigger fills the
+// cell or column it stands in for.
+const FILL = "w-full";
 const FIELD_VALUE = "min-w-0 grow truncate";
+// A pick of several: the box wraps its chips, and the trigger that opens the
+// list fills the line after them, its chevron at the box's end.
+const SEVERAL_BOX =
+	"flex flex-wrap items-center min-w-0 hover:border-edge-hover";
+const SEVERAL_TRIGGER =
+	"flex grow self-stretch items-center justify-between min-w-target text-start";
 // A row-fit trigger centres in its row and pulls back by its own padding at
 // the row's end; it stands over a row's hit. Open, it holds the press wash
 // and the value takes the body ink.
@@ -108,6 +116,20 @@ const ACT_ROW =
 const ACT_GLYPH = "flex shrink-0 text-ink-meta";
 
 const SEARCH_PAST = 6;
+
+// Base UI's props for a trigger.
+type Handed = ComponentProps<"button">;
+
+interface Several<V extends string | null> {
+	value: readonly V[];
+	onChange: (value: V[]) => void;
+}
+
+export function isSeveral<V extends string | null>(
+	props: PickerProps<V>,
+): props is PickerProps<V> & Several<V> {
+	return Array.isArray(props.value);
+}
 
 interface Grouped<V extends string | null> {
 	label?: string;
@@ -235,24 +257,34 @@ function GroupLabel(props: { children: ReactNode }) {
 // What every pick draws: the public `Picker`'s field and row triggers, or a
 // trigger its composer draws (the Shell's switcher), over the one list. Outside
 // the package's exports.
-export function PickerBase<V extends string | null = string>({
-	label,
-	options,
-	value,
-	onChange,
-	fit = "field",
-	act,
-	drawn,
-	chip,
-	name,
-}: PickerProps<V> & {
+interface Composed {
 	/** A trigger drawn by the composer, handed Base UI's props and whether the list is open. */
 	drawn?: (handed: ComponentProps<"button">, open: boolean) => ReactElement;
 	/** The family a chip column's value and options draw as chips of. */
 	chip?: ChipFamily;
 	/** The trigger's name where its composer says more than the value (a sort's direction). */
 	name?: string;
-}) {
+}
+
+// Overloaded as `Picker` is, so a handler's parameter is typed by the value
+// beside it.
+export function PickerBase<V extends string | null = string>(
+	props: PickOneProps<V> & Composed,
+): ReactElement;
+export function PickerBase<V extends string | null = string>(
+	props: PickSeveralProps<V> & Composed,
+): ReactElement;
+export function PickerBase<V extends string | null = string>(
+	props: PickerProps<V> & Composed,
+): ReactElement;
+export function PickerBase<V extends string | null = string>(
+	props: PickerProps<V> & Composed,
+) {
+	const { label, options, fit = "field", act, drawn, chip, name } = props;
+	// A pick of several: its value is an array, which `Several` types as one.
+	const several = isSeveral(props) ? props : undefined;
+	const value = isSeveral(props) ? undefined : props.value;
+	const set = several?.value;
 	const touch = useTouch();
 	// In a table cell the pick mounts open as its edit starts, and its list
 	// gone, its leave played, ends the edit. The list hands focus back to the
@@ -279,9 +311,17 @@ export function PickerBase<V extends string | null = string>({
 	const many = flat.length > SEARCH_PAST;
 	const [searching, setSearching] = useState(many);
 	if (!open && searching !== many) setSearching(many);
+	// A pick of several keeps its list open, an option toggling in and out.
+	const chosen = (set ?? []).flatMap(
+		(one) => flat.find((option) => option.value === one) ?? [],
+	);
 	const pick = (next: V) => {
+		if (isSeveral(props)) {
+			props.onChange(toggled(props.value, next));
+			return;
+		}
 		setOpen(false);
-		onChange(next);
+		props.onChange(next);
 	};
 	// A row's pick names its value with it; a field box's value is its own.
 	const named =
@@ -326,30 +366,77 @@ export function PickerBase<V extends string | null = string>({
 				{status ?? current?.label ?? label}
 			</span>
 		);
-	const own = (handed: ComponentProps<"button">) => (
-		<button
-			{...handed}
-			type="button"
-			aria-label={named}
-			tabIndex={cell ? -1 : handed.tabIndex}
-			className={
-				fit === "row"
-					? cn(PILL_ACT, picker({ fit }), ROW_TRIGGER, open && ROW_OPEN)
-					: cn(
-							field({ fit: "bar" }),
-							picker({ fit }),
-							FIELD_GLYPH,
-							FIELD_TRIGGER,
-							cell && IN_CELL,
-							open && FIELD_OPEN,
-						)
-			}
+	// The chips of a pick of several each hold their own remove act, so the
+	// box is no button: the trigger that opens the list stands after them.
+	const severalBox = (handed: Handed, picks: Several<V>) => (
+		<div
+			className={cn(
+				field({ fit: "bar" }),
+				picker({ fit: "bar" }),
+				FIELD_GLYPH,
+				SEVERAL_BOX,
+				FILL,
+				open && FIELD_OPEN,
+			)}
 		>
-			{glyph}
-			{fit === "row" ? rowValue : fieldShown}
-			<Icon name="ChevronDown" fit={fit === "row" ? "meta" : "control"} />
-		</button>
+			{chosen.map((option) => (
+				<Chip
+					key={String(option.value)}
+					family="neutral"
+					label={option.label}
+					onRemove={() =>
+						picks.onChange(picks.value.filter((one) => one !== option.value))
+					}
+				/>
+			))}
+			<button
+				{...handed}
+				type="button"
+				aria-label={named}
+				className={SEVERAL_TRIGGER}
+			>
+				{chosen.length === 0 ? (
+					<span
+						className={cn(
+							fieldValue({ kind: "text" }),
+							FIELD_PLACEHOLDER,
+							FIELD_VALUE,
+						)}
+					>
+						{label}
+					</span>
+				) : null}
+				<Icon name="ChevronDown" fit="control" />
+			</button>
+		</div>
 	);
+	const own = (handed: ComponentProps<"button">) =>
+		several ? (
+			severalBox(handed, several)
+		) : (
+			<button
+				{...handed}
+				type="button"
+				aria-label={named}
+				tabIndex={cell ? -1 : handed.tabIndex}
+				className={
+					fit === "row"
+						? cn(PILL_ACT, picker({ fit }), ROW_TRIGGER, open && ROW_OPEN)
+						: cn(
+								field({ fit: "bar" }),
+								picker({ fit }),
+								FIELD_GLYPH,
+								FIELD_TRIGGER,
+								(cell || fit === "bar") && FILL,
+								open && FIELD_OPEN,
+							)
+				}
+			>
+				{glyph}
+				{fit === "row" ? rowValue : fieldShown}
+				<Icon name="ChevronDown" fit={fit === "row" ? "meta" : "control"} />
+			</button>
+		);
 	const trigger = drawn
 		? (handed: ComponentProps<"button">) => drawn(handed, open)
 		: own;
@@ -359,6 +446,7 @@ export function PickerBase<V extends string | null = string>({
 				label={label}
 				groups={groups}
 				value={value}
+				several={several}
 				searching={searching}
 				open={open}
 				setOpen={setOpen}
@@ -375,6 +463,8 @@ export function PickerBase<V extends string | null = string>({
 				label={label}
 				groups={groups}
 				current={current}
+				several={several}
+				chosen={chosen}
 				open={open}
 				setOpen={setOpen}
 				onGone={cell?.done}
@@ -390,6 +480,7 @@ export function PickerBase<V extends string | null = string>({
 			label={label}
 			groups={groups}
 			value={value}
+			several={several}
 			open={open}
 			setOpen={setOpen}
 			onGone={cell?.done}
@@ -442,6 +533,8 @@ interface PickParts<V extends string | null> {
 	trigger: (props: ComponentProps<"button">) => ReactElement;
 	act?: IconAct;
 	chip?: ChipFamily;
+	// A pick of several: its chosen values and what hears their new set.
+	several?: Several<V>;
 }
 
 // Where a desktop list hands focus as it closes: Base UI's own return, or
@@ -459,8 +552,12 @@ function PickList<V extends string | null>(
 	const align = use(CellField) ? "start" : "end";
 	return (
 		<Select.Root
-			value={props.value ?? null}
-			onValueChange={(next) => props.pick(next as V)}
+			multiple={props.several !== undefined}
+			value={props.several ? [...props.several.value] : (props.value ?? null)}
+			onValueChange={(next) => {
+				if (props.several) props.several.onChange(next as V[]);
+				else props.pick(next as V);
+			}}
 			open={props.open}
 			onOpenChange={props.setOpen}
 			onOpenChangeComplete={(next) => {
@@ -538,6 +635,7 @@ function PickList<V extends string | null>(
 function PickSearch<V extends string | null>(
 	props: PickParts<V> & {
 		current: Option<V> | undefined;
+		chosen: Option<V>[];
 		finalFocus: FinalFocus;
 	},
 ) {
@@ -548,9 +646,16 @@ function PickSearch<V extends string | null>(
 	return (
 		<Combobox.Root
 			items={props.groups}
-			value={props.current ?? null}
+			multiple={props.several !== undefined}
+			value={props.several ? props.chosen : (props.current ?? null)}
 			onValueChange={(next) => {
-				if (next) props.pick((next as Option<V>).value);
+				if (props.several)
+					props.several.onChange((next as Option<V>[]).map((one) => one.value));
+				else if (next) props.pick((next as Option<V>).value);
+			}}
+			// The search stays typed while several are picked from one query.
+			onInputValueChange={(_, details) => {
+				if (props.several && details.isItemPress) details.cancel();
 			}}
 			open={props.open}
 			onOpenChange={props.setOpen}
@@ -675,6 +780,7 @@ function PickSheet<V extends string | null>(props: SheetParts<V>) {
 					label={props.label}
 					groups={props.groups}
 					value={props.value}
+					several={props.several}
 					searching={props.searching}
 					setOpen={props.setOpen}
 					pick={props.pick}
@@ -709,10 +815,10 @@ function PickRows<V extends string | null>(
 	// one, else the first, and follows focus in the DOM, so a move re-renders
 	// no option.
 	const values = shown.flatMap((group) => group.items.map((o) => o.value));
-	const stop =
-		props.value !== undefined && values.includes(props.value)
-			? props.value
-			: values[0];
+	const isChosen = (one: V) =>
+		props.several ? props.several.value.includes(one) : one === props.value;
+	const kept = values.find(isChosen);
+	const stop = kept !== undefined ? kept : values[0];
 	return (
 		<div className={SHEET_ROWS}>
 			{props.searching ? (
@@ -722,6 +828,7 @@ function PickRows<V extends string | null>(
 			) : null}
 			<div
 				role="listbox"
+				aria-multiselectable={props.several ? true : undefined}
 				aria-label={props.label}
 				onKeyDown={moveFocus}
 				onFocus={rove}
@@ -736,7 +843,7 @@ function PickRows<V extends string | null>(
 					>
 						{group.label ? <GroupLabel>{group.label}</GroupLabel> : null}
 						{group.items.map((option) => {
-							const chosen = option.value === props.value;
+							const chosen = isChosen(option.value);
 							const stands = option.value === stop;
 							return (
 								<button

@@ -26,7 +26,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { use, useId, useMemo } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { EntryField } from "../../lib/field.ts";
+import { InlineField } from "../../lib/field.ts";
 import { GroundContext } from "../../lib/ground.ts";
 import { isCurrent, useRoute } from "../../lib/navigate.ts";
 import { joinParts, META_CUT, partText } from "../../lib/parts.ts";
@@ -252,7 +252,7 @@ export function ListRow<V extends string | null = string>({
 						{titled}
 						{value}
 					</span>
-					<EntryField value={{ label: entry.label }}>
+					<InlineField value={{ label: entry.label }}>
 						<span className={cn(ROW_META_LINE, ENTRY)}>
 							<span className={ENTRY_FIELD}>
 								<Input
@@ -264,7 +264,7 @@ export function ListRow<V extends string | null = string>({
 							</span>
 							<ActButton act={entry.act} host={entryReason.host} />
 						</span>
-					</EntryField>
+					</InlineField>
 					{entry.error ? (
 						<Field.Error match className={ROW_ENTRY_ERROR}>
 							{entry.error}

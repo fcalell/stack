@@ -25,7 +25,7 @@ import { useContext, useMemo } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { EntryField, FieldError } from "../../lib/field";
+import { FieldError, InlineField } from "../../lib/field";
 import { GroundContext } from "../../lib/ground";
 import { Ink } from "../../lib/ink";
 import { isCurrent, navigate, usePathname } from "../../lib/navigate";
@@ -242,7 +242,7 @@ export function ListRow<V extends string | null = string>({
 						{titled}
 						{value}
 					</View>
-					<EntryField.Provider value={{ label: entry.label }}>
+					<InlineField.Provider value={{ label: entry.label }}>
 						<FieldError.Provider value={Boolean(entry.error)}>
 							<View className={cn(ROW_META_LINE, ENTRY)}>
 								<View className={ENTRY_FIELD}>
@@ -256,7 +256,7 @@ export function ListRow<V extends string | null = string>({
 								<ActButton act={entry.act} host={entryReason.host} />
 							</View>
 						</FieldError.Provider>
-					</EntryField.Provider>
+					</InlineField.Provider>
 					{entry.error ? (
 						<RNText
 							accessibilityLiveRegion="polite"

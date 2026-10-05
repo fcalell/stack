@@ -144,6 +144,7 @@ import {
 	PROSE_MARKER,
 	QR_CODE,
 	ROW,
+	RULE_ARROW,
 	SECTION,
 	SEGMENT,
 	SEGMENT_LABEL,
@@ -214,6 +215,8 @@ import {
 	proseMarker,
 	qrCode,
 	row,
+	ruleArrow,
+	ruleArrowContentTone,
 	section,
 	segment,
 	segmentLabel,
@@ -480,6 +483,7 @@ const MATRICES: readonly Registration[] = [
 	["SEGMENT", SEGMENT, segment],
 	["SEGMENT_LABEL", SEGMENT_LABEL, segmentLabel],
 	["PICKER", PICKER, picker],
+	["RULE_ARROW", RULE_ARROW, ruleArrow],
 	["FORM_FIELD", FORM_FIELD, formField],
 	["BANNER", BANNER, banner],
 	["BANNER_GLYPH", BANNER_GLYPH, bannerGlyph],
@@ -687,7 +691,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(SHADOW_LEVELS.length, 2, "shadow level count");
 	requireEqual(WIDTHS.length, 12, "width count");
 	requireEqual(BREAKPOINTS.length, 3, "breakpoint count");
-	requireEqual(WORD_KEYS.length, 45, "word count");
+	requireEqual(WORD_KEYS.length, 47, "word count");
 	requireEqual(COUNTED_WORD_KEYS.length, 1, "counted word count");
 	requireEqual(SLOT_WORD_KEYS.length, 7, "slot word count");
 	requireEqual(
@@ -1671,6 +1675,11 @@ check("c22", "the content tones are contract colors", () => {
 		assert(colors.has(token), `bannerContentTone(${kind}): ${token}`);
 		checked++;
 	}
+	for (const state of keysOf(RULE_ARROW.variants.state)) {
+		const token = ruleArrowContentTone(state);
+		assert(colors.has(token), `ruleArrowContentTone(${state}): ${token}`);
+		checked++;
+	}
 	requireEqual(toastContentTone("done"), "ok", "done glyph ink");
 	requireEqual(bannerContentTone("note"), "accent-ink", "note glyph ink");
 	requireEqual(buttonContentTone("primary"), "on-act-accent", "primary ink");
@@ -1720,7 +1729,7 @@ check(
 			assert(
 				(/^<V>$/.test(params) && /\bField\w+<V>/.test(header[0])) ||
 					(/^<V extends string \| null = string>$/.test(params) &&
-						/\b(?:Option|Row)\w*</.test(header[0])) ||
+						/\b(?:Option|Row|MultiPick|Either|Rule)\w*</.test(header[0])) ||
 					(/^<T = never>$/.test(params) && /\bTableColumn</.test(header[0])) ||
 					(/^<T>$/.test(params) && /\bTableRowSlots</.test(header[0])),
 				`type parameters must be exactly <V> on a field binding, <V extends string | null = string> on an option or a row's pick, <T = never> on a table column or <T> on its row map, got ${params}`,
@@ -1750,6 +1759,12 @@ check(
 			"TableCell",
 			"CellValue",
 			"TableRowSlots",
+			"MultiPick",
+			"EitherValue",
+			"EitherPick",
+			"RuleValue",
+			"RuleTerms",
+			"Rule",
 		]) {
 			assert(
 				new RegExp(`^export (?:interface|type) ${name}\\b`, "m").test(source),
@@ -1838,7 +1853,7 @@ check(
 	"the roster is closed, camelCase, and off the style channels",
 	() => {
 		const entries = rosterEntries();
-		requireEqual(entries.length, 57, "component count");
+		requireEqual(entries.length, 58, "component count");
 		const names = new Set<string>();
 		for (const [, name, { props }] of entries) {
 			assert(/^[A-Z][A-Za-z]+$/.test(name), `${name} is not PascalCase`);

@@ -1103,10 +1103,22 @@ components:
     backgroundColor: "{colors.wash-selected-hover-dark}"
     textColor: "{colors.ink-body-dark}"
     typography: "{typography.body}"
+  picker-bar:
+    textColor: "{colors.ink-meta}"
+  picker-bar-dark:
+    textColor: "{colors.ink-meta-dark}"
   picker-row:
     textColor: "{colors.ink-meta}"
   picker-row-dark:
     textColor: "{colors.ink-meta-dark}"
+  rule-arrow-set:
+    textColor: "{colors.ink-meta}"
+  rule-arrow-set-dark:
+    textColor: "{colors.ink-meta-dark}"
+  rule-arrow-unset:
+    textColor: "{colors.ink-disabled}"
+  rule-arrow-unset-dark:
+    textColor: "{colors.ink-disabled-dark}"
   banner-note:
     rounded: "{rounded.control}"
     typography: "{typography.body}"
@@ -2201,6 +2213,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `FileRow` | content | `CHIP`, `CHIP_LABEL`, `FILE_COUNT`, `FILE_COUNTS`, `FILE_PATH`, `FILE_PATH_PART`, `ICON.fit.body`, `ROW.ground.group`, `ROW.ground.list`, `ROW.lines.one`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.state.rest`, `ROW.state.selected`, `ROW.state.selected-hover`, `ROW_LEADING`, `SKELETON.kind.icon`, `SKELETON.kind.line`, `SKELETON_LANE.role.meta`, `SKELETON_ROW.kind.one-line`, `SKELETON_ROW.kind.one-line-group` | rest, hover, focus, active, selected, loading |
 | `Comparison` | content | `CHIP.family.neutral`, `CHIP.trailing.none`, `CHIP_LABEL.family.neutral`, `COMPARISON_LABEL`, `COMPARISON_ROW`, `LINE_BOX.role.body`, `SKELETON.kind.dot`, `SKELETON.kind.line`, `SKELETON_LANE.role.body`, `STATUS`, `STATUS_DOT`, `STATUS_LABEL`, `STATUS_SPINNER`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body`, `TEXT_STRONG.role.meta` | rest, loading, error, empty |
 | `Table` | content | `CHECKBOX`, `CHECKBOX_MARK`, `CHIP.family.teal`, `CHIP.trailing.none`, `CHIP_LABEL.family.teal`, `FIELD.fit.bar`, `FIELD.state.rest`, `FIELD.trailing.none`, `FIGURES`, `ICON.fit.body`, `ICON.fit.meta`, `SKELETON.kind.check`, `SKELETON.kind.dot`, `SKELETON.kind.line`, `SPINNER`, `SPINNER_ARC`, `SPINNER_TRACK`, `STATUS`, `STATUS_DOT`, `STATUS_LABEL`, `STATUS_SPINNER`, `TABLE`, `TABLE_CELL`, `TABLE_CHANGE`, `TABLE_CHANGE_VALUE.kind.added`, `TABLE_CHANGE_VALUE.kind.after`, `TABLE_CHANGE_VALUE.kind.before`, `TABLE_CHANGE_VALUE.kind.removed`, `TABLE_EMPTY`, `TABLE_FRAME`, `TABLE_FROZEN`, `TABLE_FROZEN_CELL`, `TABLE_HEAD`, `TABLE_HEAD_LABEL`, `TABLE_ROW`, `TEXT.role.body`, `TEXT.role.code`, `TEXT.role.meta`, `TEXT_STRONG.role.body` | rest, hover, focus, active, loading, error, selected, empty |
+| `Rules` | content | `ICON.fit.meta`, `RULES`, `RULE_ROW`, `RULE_CARD`, `RULE_ARROW`, `TEXT.role.meta` | rest |
 | `Message` | content | `ICON.fit.meta`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `MESSAGE`, `MESSAGE_BUBBLE`, `MESSAGE_HEAD`, `MESSAGE_LINE`, `MESSAGE_OPEN`, `MESSAGE_CARD`, `MESSAGE_CODE`, `MESSAGE_FOLD`, `SKELETON.kind.line`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT.role.code`, `TEXT_STRONG.role.body` | rest, hover, focus, active, loading |
 | `MessageInput` | content | `BUTTON.act.primary`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.secondary`, `CHIP.family.neutral`, `CHIP.trailing.remove`, `CHIP_LABEL.family.neutral`, `CHIP_REMOVE_HIT`, `FIELD.fit.bar`, `FIELD.state.rest`, `FIELD.trailing.none`, `FIELD_VALUE.kind.text`, `ICON.fit.control`, `ICON.fit.meta`, `ICON_BUTTON.fit.bar`, `MESSAGE_ATTACH_SLOT`, `MESSAGE_INPUT`, `MESSAGE_INPUT_BOX`, `MESSAGE_INPUT_CHIPS`, `MESSAGE_INPUT_FIELD`, `MESSAGE_INPUT_FOOT`, `MESSAGE_INPUT_ROW`, `MESSAGE_INPUT_TEXT`, `MESSAGE_INPUT_VALUE`, `MESSAGE_NOTICE`, `MESSAGE_NOTICE_TEXT`, `SPINNER`, `SPINNER_ARC`, `SPINNER_TRACK`, `TEXT.role.meta` | rest, hover, focus, disabled |
 | `Meter` | content | `FIGURES`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `METER`, `METER_COUNTS`, `METER_FILL`, `METER_HEAD`, `METER_ITEM`, `METER_MARK`, `METER_TRACK`, `SKELETON.kind.line`, `SKELETON.kind.meter`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body` | rest, loading |
@@ -2262,6 +2275,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `FileRow` | `code`, `meta`, `caption` | `ink-meta`, `ink-body`, `ok`, `danger`, `wash-hover`, `ring`, `wash-press`, `wash-selected`, `wash-selected-hover`, `chip-`, `skeleton` | `row`, `full`, `chip` | `inside`, `control-x`, `card` | `row`, `avatar`, `icon`, `figures`, `skeleton`, `measure-short`, `chip` | none |
 | `Comparison` | `meta`, `body`, `caption` | `ink-meta`, `ink-body`, `chip-neutral-soft`, `chip-neutral-ink`, `skeleton`, `ok`, `warn`, `danger`, `accent-ink` | `full`, `chip` | `pair`, `inside`, `card` | `row`, `chip`, `dot`, `measure-short`, `skeleton` | none |
 | `Table` | `body`, `meta`, `code`, `caption` | `edge`, `ink-meta`, `ink-body`, `ring`, `chip-teal-soft`, `chip-teal-ink`, `toggle-on`, `on-accent`, `ok`, `wash-hover`, `accent-ink`, `edge-strong`, `surface`, `danger`, `warn`, `wash-press`, `wash-selected`, `wash-selected-hover`, `edge-hover`, `toggle-on-hover`, `skeleton`, `ok-soft`, `danger-soft` | `full`, `chip`, `control` | `control-x`, `inside`, `pair`, `page` | `measure-short`, `popover`, `toast`, `dialog`, `sheet`, `measure`, `sidebar`, `list`, `pane`, `column`, `auth`, `empty`, `row`, `icon-meta`, `chip`, `check`, `dot`, `spinner`, `control-compact`, `icon`, `skeleton` | none |
+| `Rules` | `meta` | `ink-meta`, `ink-disabled` | none | `inside`, `pair`, `card` | `icon-meta` | none |
 | `Message` | `meta`, `body`, `code` | `ink-meta`, `group`, `ink-body`, `edge`, `surface`, `skeleton`, `wash-hover`, `ring`, `wash-press` | `card`, `control`, `chip` | `pair`, `tile`, `inside` | `target`, `icon-meta`, `skeleton`, `figures` | none |
 | `MessageInput` | `body`, `meta`, `caption` | `edge`, `surface`, `ink-meta`, `ink-body`, `act-accent`, `on-act-accent`, `fill-disabled`, `ink-disabled`, `edge-hover`, `ring`, `chip-neutral-soft`, `chip-neutral-ink` | `card`, `control`, `full` | `pair`, `rows`, `inside`, `control-x` | `message-input`, `control-compact`, `icon-control`, `chip`, `measure-short`, `icon-meta`, `spinner` | none |
 | `Meter` | `body`, `meta` | `ink-body`, `ink-meta`, `fill-neutral`, `warn`, `danger`, `skeleton` | `chip` | `pair`, `inside`, `card` | `meter`, `track`, `skeleton` | none |

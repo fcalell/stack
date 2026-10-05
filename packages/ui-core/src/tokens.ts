@@ -1134,6 +1134,8 @@ export const WORD_KEYS = [
 	"latest",
 	"missing",
 	"chooseFile",
+	"typeValue",
+	"pickValue",
 ] as const;
 export type WordKey = (typeof WORD_KEYS)[number];
 
@@ -1212,6 +1214,8 @@ export const ENGLISH: Words = {
 	latest: "Latest",
 	missing: "This no longer exists.",
 	chooseFile: "Choose file",
+	typeValue: "Type a value",
+	pickValue: "Pick a field",
 	earlierLines: {
 		one: "Show {count} earlier line",
 		other: "Show {count} earlier lines",

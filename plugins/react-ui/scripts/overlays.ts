@@ -399,6 +399,10 @@ export const OVERLAYS: readonly string[] = [
 	// Image
 	"object-contain",
 	"size-full",
+	// Rules
+	"col-span-4",
+	"items-stretch",
+	"self-end",
 	// Table
 	"font-normal",
 	"p-0",

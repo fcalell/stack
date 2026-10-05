@@ -539,17 +539,35 @@ export const SEGMENT_LABEL = matrix({
 // ── Picker ──────────────────────────────────────────────────────────
 
 // The pick's trigger by where it stands: a field box (`FIELD` at the bar
-// fit) in a toolbar, or a row's trailing value in a `PILL_ACT`, its ink the
-// meta ink for the chevron beside the value.
+// fit) in a toolbar, a field box that fills its column in a rule row (`bar`:
+// its value, or the chips of a several pick, wrap inside it), or a row's
+// trailing value in a `PILL_ACT`, its ink the meta ink for the chevron beside
+// the value.
 export const PICKER = matrix({
 	base: "",
 	variants: {
 		fit: {
 			field: "",
+			bar: "gap-inside text-ink-meta",
 			row: "gap-inside text-ink-meta",
 		},
 	},
 	defaultVariants: { fit: "field" },
+});
+
+// ── Rules ───────────────────────────────────────────────────────────
+
+// A pair row's arrow, in the meta ink while both sides are set and the
+// disabled ink while either is not.
+export const RULE_ARROW = matrix({
+	base: "",
+	variants: {
+		state: {
+			set: "text-ink-meta",
+			unset: "text-ink-disabled",
+		},
+	},
+	defaultVariants: { state: "set" },
 });
 
 // ── Form field ──────────────────────────────────────────────────────

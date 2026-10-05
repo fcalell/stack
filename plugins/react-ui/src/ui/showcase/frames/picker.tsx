@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Group } from "../../components/group/index.tsx";
 import { ListRow } from "../../components/list-row/index.tsx";
 import { Picker } from "../../components/picker/index.tsx";
@@ -79,6 +80,38 @@ function Triggers() {
 	);
 }
 
+// The bar fit fills its column: a pick, and a pick of several holding its
+// values as chips (two, then none).
+function Bars() {
+	const [roles, setRoles] = useState<Role[]>(["admin", "member"]);
+	const [reviewers, setReviewers] = useState<(string | null)[]>([]);
+	return (
+		<div className="flex w-popover max-w-full flex-col gap-pair">
+			<Picker
+				fit="bar"
+				label="Role"
+				options={[...ROLES]}
+				value="admin"
+				onChange={change}
+			/>
+			<Picker
+				fit="bar"
+				label="Roles"
+				options={[...ROLES]}
+				value={roles}
+				onChange={setRoles}
+			/>
+			<Picker
+				fit="bar"
+				label="Reviewers"
+				options={OWNERS.slice(1)}
+				value={reviewers}
+				onChange={setReviewers}
+			/>
+		</div>
+	);
+}
+
 // The trigger opens from the pointer: a popover's on its press down, a
 // sheet's on its click.
 function openFirst(stage: HTMLElement) {
@@ -107,22 +140,23 @@ export function drawPicker(frame: ShowcaseFrame) {
 		cell === "PICKER_VALUE" ||
 		cell.startsWith("ICON.fit.meta") ||
 		cell.startsWith("ROW.");
+	const bar = cell.startsWith("PICKER.fit.bar");
 	if (frame.state === "selected")
 		return (
 			<Stage contain={frame.density === "touch"} ready={openFirst}>
-				<div className="flex flex-col p-card">
-					{row ? (
-						<Members />
-					) : (
-						<Picker
-							label="Owner"
-							options={OWNERS}
-							value={null}
-							onChange={change}
-						/>
-					)}
-				</div>
+				<div className="flex flex-col p-card">{opened(row, bar)}</div>
 			</Stage>
 		);
-	return row ? <Members /> : <Triggers />;
+	if (row) return <Members />;
+	return bar ? <Bars /> : <Triggers />;
+}
+
+// What the open state draws: the members' row picks, the bar fit's picks, or
+// the owner filter.
+function opened(row: boolean, bar: boolean) {
+	if (row) return <Members />;
+	if (bar) return <Bars />;
+	return (
+		<Picker label="Owner" options={OWNERS} value={null} onChange={change} />
+	);
 }

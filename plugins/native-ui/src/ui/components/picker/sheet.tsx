@@ -141,11 +141,13 @@ function OptionText({
 // rows edge to edge at the card's inset under their group labels, the chosen
 // one ticked, a search leading them past six options and an act (the act that
 // makes a new option) under a hairline after them; a pick or the act closes it.
-// Outside the package's exports.
+// A `chosen` set makes it a pick of several: the options in it are ticked and a
+// pick toggles one without closing the sheet. Outside the package's exports.
 export function PickSheet<V extends string | null>({
 	title,
 	groups: { groups, flat },
 	value,
+	chosen: set,
 	onChange,
 	open,
 	onClose,
@@ -156,6 +158,7 @@ export function PickSheet<V extends string | null>({
 	title: string;
 	groups: OptionGroups<V>;
 	value: V | undefined;
+	chosen?: readonly V[];
 	onChange: (value: V) => void;
 	open: boolean;
 	onClose: () => void;
@@ -220,15 +223,17 @@ export function PickSheet<V extends string | null>({
 							</RNText>
 						) : null}
 						{group.items.map((option) => {
-							const chosen = option.value === value;
+							const chosen = set
+								? set.includes(option.value)
+								: option.value === value;
 							return (
 								<Pressable
 									key={String(option.value)}
-									accessibilityRole="radio"
+									accessibilityRole={set ? "checkbox" : "radio"}
 									accessibilityLabel={option.label}
 									accessibilityState={{ checked: chosen }}
 									onPress={() => {
-										onClose();
+										if (!set) onClose();
 										onChange(option.value);
 									}}
 									className={cn(

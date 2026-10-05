@@ -1215,7 +1215,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// trailing, `fit: row`) its value and a chevron in a `PILL_ACT`; either
 		// opens a popover of rows (a sheet of rows on touch), a search field
 		// above six options; an option may lead with its avatar, and one act
-		// (the act that makes a new option) ends the list under a hairline.
+		// (the act that makes a new option) ends the list under a hairline. At
+		// the `bar` fit the field box fills its column. Its `value` an array
+		// makes it a pick of several: the rows tick and the list stays open, and
+		// the box holds one removable neutral chip per value.
 		Picker: {
 			props: ["label", "options", "value", "onChange", "fit", "act"],
 			draws: [
@@ -2009,6 +2012,32 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"icon",
 					"skeleton",
 				],
+			},
+		},
+		// Rules, one per row, each a pair (a source mapped to a target: from, an
+		// arrow, to) or a condition (a field, fixed operator words, a value), the
+		// terms each a `Picker` at the `bar` fit (a pick, or a pick of several as
+		// removable chips) or an either (a pick whose list ends with the act that
+		// types a value, or the typed `Input` whose act picks again), and a
+		// remove act. From `tablet` the columns align across rows; on touch each
+		// rule is a card of stacked terms in a `Group`. `add` ends the list.
+		Rules: {
+			props: ["rules", "add"],
+			draws: [
+				"ICON.fit.meta",
+				"RULES",
+				"RULE_ROW",
+				"RULE_CARD",
+				"RULE_ARROW",
+				"TEXT.role.meta",
+			],
+			holds: ["RULES", "RULE_ROW", "RULE_CARD", "RULE_ARROW"],
+			states: ["rest"],
+			owns: {
+				roles: ["meta"],
+				colors: ["ink-meta", "ink-disabled"],
+				spacing: ["inside", "pair", "card"],
+				sizes: ["icon-meta"],
 			},
 		},
 		// Its props are a union on `author`: `you` and `other` take `name`, `system`

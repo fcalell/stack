@@ -96,6 +96,58 @@ export interface OptionPick<V extends string | null = string> {
 	onChange: (value: NoInfer<V>) => void;
 }
 
+// A pick of several: the options ticked in the list, which stays open while
+// the viewer picks, and the chosen ones drawn as removable chips.
+export interface MultiPick<V extends string | null = string> {
+	label: string;
+	options: readonly Option<V>[] | readonly OptionGroup<V>[];
+	value: readonly NoInfer<V>[];
+	onChange: (value: NoInfer<V>[]) => void;
+}
+
+// What a cell holds when it is a picked option or a typed value: the one
+// the viewer chose, `picked` unset while neither is.
+export type EitherValue<V extends string | null = string> =
+	| { picked?: V }
+	| { typed: string };
+
+// A picked option or a typed value in one cell: the pick, whose list ends
+// with the act that switches to typing, or the typed value, whose field ends
+// with the act that switches back to the pick.
+export interface EitherPick<V extends string | null = string> {
+	label: string;
+	options: readonly Option<V>[] | readonly OptionGroup<V>[];
+	value: EitherValue<NoInfer<V>>;
+	onChange: (value: EitherValue<NoInfer<V>>) => void;
+	placeholder?: string;
+}
+
+// One term of a rule: a pick, a pick of several, or a picked option or a
+// typed value.
+export type RuleValue<V extends string | null = string> =
+	| { pick: OptionPick<V>; picks?: never; either?: never }
+	| { picks: MultiPick<V>; pick?: never; either?: never }
+	| { either: EitherPick<V>; pick?: never; picks?: never };
+
+// A rule's terms, one of two rows: a pair (a source mapped to a target) or a
+// condition (a field, fixed operator words, a value).
+export type RuleTerms<V extends string | null = string> =
+	| { from: RuleValue<V>; to: RuleValue<V>; field?: never }
+	| {
+			field: OptionPick<V>;
+			operator: string;
+			value: RuleValue<V>;
+			from?: never;
+	  };
+
+// One row of a `Rules` list: its `id`, unique in the list, its terms, and
+// `onRemove`, which draws the row's remove act.
+export interface Rule<V extends string | null = string> {
+	id: string;
+	terms: RuleTerms<V>;
+	onRemove?: () => void;
+}
+
 // A list row's trailing: a value that cannot change (an age, a count, a
 // word), or a pick.
 export type RowTrailing<V extends string | null = string> =

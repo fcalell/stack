@@ -32,6 +32,7 @@ import { Meter } from "@fcalell/plugin-react-ui/components/meter";
 import { PendingBar } from "@fcalell/plugin-react-ui/components/pending-bar";
 import { Picker } from "@fcalell/plugin-react-ui/components/picker";
 import { QrCode } from "@fcalell/plugin-react-ui/components/qr-code";
+import { Rules } from "@fcalell/plugin-react-ui/components/rules";
 import { QueryBoundary } from "@fcalell/plugin-react-ui/components/query-boundary";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Screen } from "@fcalell/plugin-react-ui/components/screen";
@@ -527,6 +528,15 @@ export const closure = (
 		<Comparison label="x" columns={["a"]} items={[]} row={{ key: String, label: String, values: () => [] }} class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<Comparison label="x" columns={["a"]} items={[]} row={{ key: String, label: String, values: () => [] }} classList={{}} />
+		<Rules rules={[]} />
+		{/* @ts-expect-error: closed channel */}
+		<Rules rules={[]} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Rules rules={[]} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Rules rules={[]} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Rules rules={[]} classList={{}} />
 		<BarChart label="x" items={[]} bar={{ key: String, label: String, value: Number }} />
 		{/* @ts-expect-error: closed channel */}
 		<BarChart label="x" items={[]} bar={{ key: String, label: String, value: Number }} className="x" />

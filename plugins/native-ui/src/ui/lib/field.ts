@@ -52,8 +52,10 @@ export const CellField = createContext<
 	{ label: string; done: () => void } | undefined
 >(undefined);
 
-// Set by a `ListRow` around its entry: the input stands at the field's bar fit,
-// named by the entry's label, since no `FormField` labels it.
-export const EntryField = createContext<{ label: string } | undefined>(
-	undefined,
-);
+// Set by a row that holds an `Input` with no `FormField` around it (a
+// `ListRow`'s entry, a `Rules` term's typed value): the input stands at the
+// field's bar fit, named by `label`, and takes focus as it mounts when
+// `focus` says the viewer's own act brought it.
+export const InlineField = createContext<
+	{ label: string; focus?: boolean } | undefined
+>(undefined);

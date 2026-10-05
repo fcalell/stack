@@ -193,6 +193,7 @@ const NATIVE_OVERLAYS = [
 	"relative",
 	"rounded-none",
 	"self-center",
+	"self-end",
 	"self-stretch",
 	"self-start",
 	"shrink",

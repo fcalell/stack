@@ -12,7 +12,7 @@ import {
 import { type MouseEvent, use } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { useCommit } from "../../lib/commit.ts";
-import { CellField, EntryField, FieldDisabled } from "../../lib/field.ts";
+import { CellField, FieldDisabled, InlineField } from "../../lib/field.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
@@ -91,7 +91,7 @@ export interface InputProps extends Closed {
 	act?: IconAct;
 }
 
-/** A field box on the surface: hairline at rest, `edge-hover` under the pointer, the ring on focus, `edge-error` when its `FormField` is in error, the disabled fill when it is disabled. In a `Table` cell it stands at the bar fit, named by the cell; in a `ListRow`'s entry, named by the entry's label. */
+/** A field box on the surface: hairline at rest, `edge-hover` under the pointer, the ring on focus, `edge-error` when its `FormField` is in error, the disabled fill when it is disabled. In a `Table` cell it stands at the bar fit, named by the cell; in a `ListRow`'s entry or a `Rules` term, named by its label. */
 export function Input({
 	kind,
 	value,
@@ -106,7 +106,7 @@ export function Input({
 	const surface = SURFACE[which];
 	const search = which === "search";
 	const cell = use(CellField);
-	const entry = use(EntryField);
+	const inline = use(InlineField);
 	const commit = useCommit(value, onChange, onCommit, true);
 	return (
 		<Control
@@ -119,9 +119,9 @@ export function Input({
 			autoCapitalize={which === "text" ? undefined : "off"}
 			spellCheck={which === "text" ? undefined : false}
 			placeholder={placeholder ?? (search ? words.search : undefined)}
-			aria-label={search ? words.search : (cell?.label ?? entry?.label)}
+			aria-label={search ? words.search : (cell?.label ?? inline?.label)}
 			tabIndex={cell ? -1 : undefined}
-			autoFocus={cell?.starts}
+			autoFocus={cell?.starts || inline?.focus}
 			// Base UI's Field wires the control (its id, label, description and
 			// validity); the render function hands over its props and state so the
 			// box around the value draws that state.
@@ -131,7 +131,7 @@ export function Input({
 					onMouseDown={focusValue}
 					className={cn(
 						field({
-							fit: search || cell || entry ? "bar" : "form",
+							fit: search || cell || inline ? "bar" : "form",
 							trailing: act ? "act" : "none",
 							state: state.valid === false ? "error" : "rest",
 						}),
