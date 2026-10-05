@@ -22,7 +22,7 @@ import {
 	FieldError,
 	FieldFocus,
 	InlineField,
-	useColumnFocus,
+	useFieldClaim,
 	useFieldName,
 } from "../../lib/field";
 import { Ink } from "../../lib/ink";
@@ -104,7 +104,7 @@ export function Input({
 	const cell = useContext(CellField);
 	const inline = useContext(InlineField);
 	const input = useRef<TextInput>(null);
-	const column = useColumnFocus(input);
+	const column = useFieldClaim(input);
 	// A placeholder's colour is a prop, never a class: `FIELD_PLACEHOLDER`'s ink.
 	const placeholderInk = useTokenColor("--color-ink-meta");
 	const which = kind ?? "text";

@@ -28,6 +28,7 @@ import {
 } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { FieldRefusal, GroupName, LabelTarget } from "../../lib/field.ts";
+import { focusFirst } from "../../lib/focus.ts";
 import { GroundContext } from "../../lib/ground.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Checkbox } from "../checkbox/index.tsx";
@@ -58,21 +59,6 @@ const SUMMARY = "flex items-center min-w-0";
 const SUMMARY_GLYPH = "flex shrink-0";
 const SUMMARY_LABEL = "min-w-0 truncate";
 const SUMMARY_ANSWER = "min-w-0 grow truncate";
-// What a reopened field focuses first: the first control it holds that a
-// viewer can reach (Base UI keeps hidden inputs beside a select).
-const CONTROLS = "input, textarea, button";
-type Control = HTMLInputElement | HTMLTextAreaElement | HTMLButtonElement;
-
-function focusFirst(root: HTMLElement | null) {
-	const reachable = (control: Control) =>
-		!control.disabled &&
-		control.tabIndex >= 0 &&
-		control.getAttribute("aria-hidden") !== "true";
-	Array.from(root?.querySelectorAll<Control>(CONTROLS) ?? [])
-		.find(reachable)
-		?.focus();
-}
-
 interface FormFieldBase extends Closed {
 	/** Where the field stands in a change set: its mark ahead of the field, on its label's line. */
 	change?: ChangeKind;

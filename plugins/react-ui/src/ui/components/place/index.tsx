@@ -21,12 +21,14 @@ import {
 	PAGE_TOP_BAR,
 	text,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, use, useId, useState } from "react";
+import { type ReactNode, use, useId, useRef, useState } from "react";
 import { backGlyph } from "../../lib/back.ts";
 import type { Closed } from "../../lib/closed.ts";
+import { useFootFocus } from "../../lib/focus.ts";
 import {
 	ActRoom,
 	DetailsSheet,
+	FootPlace,
 	PageTitle,
 	PlaceRoute,
 	ShellSwitcher,
@@ -203,6 +205,8 @@ export function Place({
 	const [bodyNode, setBodyNode] = useState<HTMLDivElement | null>(null);
 	const stop = useScrolls(bodyNode, "y");
 	const [sheet] = useState(() => Dialog.createHandle<unknown>());
+	const dock = useRef<HTMLDivElement>(null);
+	useFootFocus(dock);
 	const fit = touch ? "body" : "bar";
 	const back =
 		list !== undefined ? (
@@ -338,9 +342,10 @@ export function Place({
 							</div>
 							{foot ? (
 								<div
+									ref={dock}
 									className={cn(FOOT_DOCKED, DOCKED, !touch && DOCKED_CENTRES)}
 								>
-									{foot}
+									<FootPlace value="docked">{foot}</FootPlace>
 								</div>
 							) : null}
 						</div>

@@ -1,12 +1,135 @@
-import type { Act } from "@fcalell/ui-core/descriptors";
+import { cn } from "@fcalell/ui-core/cn";
+import type { Act, Option } from "@fcalell/ui-core/descriptors";
+import { SHELL_COLUMN } from "@fcalell/ui-core/variants";
+import { useState } from "react";
+import { MessageInput } from "../../components/message-input/index.tsx";
+import { OptionList } from "../../components/option-list/index.tsx";
+import { Place } from "../../components/place/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import { ConfirmSheet } from "../../components/sheet/confirm.tsx";
 import { Sheet } from "../../components/sheet/index.tsx";
+import { Thread } from "../../components/thread/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { StandInRows } from "./layout-context.tsx";
 import { press, Stage } from "./overlay-stage.tsx";
+import { TURN, TURNS } from "./thread.tsx";
 
 const act = () => {};
+
+interface Question {
+	title: string;
+	options: Option[];
+}
+
+// The four questions a conversation asks before it acts, each a radio list.
+const QUESTIONS: Question[] = [
+	{
+		title: "Which environment?",
+		options: [
+			{ value: "production", label: "Production", recommended: true },
+			{ value: "staging", label: "Staging" },
+			{ value: "preview", label: "Preview" },
+		],
+	},
+	{
+		title: "Which build image?",
+		options: [
+			{ value: "node-20", label: "Node 20", recommended: true },
+			{ value: "node-18", label: "Node 18", description: "Leaves on Oct 12" },
+			{ value: "bun", label: "Bun" },
+		],
+	},
+	{
+		title: "When should it run?",
+		options: [
+			{ value: "now", label: "Now" },
+			{ value: "after", label: "After the migration" },
+			{ value: "hold", label: "Hold it until I say" },
+		],
+	},
+	{
+		title: "Who hears about it?",
+		options: [
+			{ value: "me", label: "Only me" },
+			{ value: "team", label: "The team", recommended: true },
+			{ value: "channel", label: "The #deploys channel" },
+		],
+	},
+];
+
+// A conversation filling its page with a four-question sheet docked in its
+// foot: each page a Section of one radio list, Back in the head from the
+// second, Next on the first three and Send on the last. The foot is at most
+// half the frame, so the question scrolls in it at a phone's height; closing
+// returns the input.
+function DockedQuestions() {
+	const [value, setValue] = useState("");
+	const [at, setAt] = useState(0);
+	const [open, setOpen] = useState(true);
+	const [answers, setAnswers] = useState<(string | null)[]>(
+		QUESTIONS.map(() => null),
+	);
+	const question = QUESTIONS[at];
+	const last = at === QUESTIONS.length - 1;
+	const close = () => {
+		setOpen(false);
+		setAt(0);
+	};
+	const input = (
+		<MessageInput
+			value={value}
+			onChange={setValue}
+			onAttach={act}
+			placeholder="Ask about this deploy"
+			onSend={() => setValue("")}
+		/>
+	);
+	return (
+		<div
+			className={cn(
+				SHELL_COLUMN,
+				"flex flex-col h-185 w-screen max-w-full overflow-hidden",
+			)}
+		>
+			<Place title="Assistant">
+				<Thread
+					items={TURNS}
+					message={TURN}
+					foot={
+						open && question ? (
+							<Sheet
+								open
+								onClose={close}
+								back={at > 0 ? () => setAt(at - 1) : undefined}
+								title={`Question ${at + 1} of ${QUESTIONS.length}`}
+								description="Before I redeploy"
+								submit={{
+									label: last ? "Send" : "Next",
+									onAct: last ? close : () => setAt(at + 1),
+								}}
+								foot={last ? "Your answers go with the redeploy." : undefined}
+							>
+								<Section title={question.title}>
+									<OptionList
+										options={question.options}
+										value={answers[at] ?? null}
+										onChange={(next) =>
+											setAnswers(
+												answers.map((was, i) => (i === at ? next : was)),
+											)
+										}
+									/>
+								</Section>
+							</Sheet>
+						) : (
+							input
+						)
+					}
+				/>
+			</Place>
+		</div>
+	);
+}
 
 function submitOf(state: ShowcaseFrame["state"]): Act {
 	return {
@@ -65,7 +188,9 @@ const typeAndRun = (stage: HTMLElement) =>
 // form cell, a second page with back on the body icon act cell, the Split's pane on the
 // pane cell, and the confirm on the primary act cell: its typed name blocked
 // on `disabled` (the reason shown as the side sheet's is), typed and its act
-// running on `loading`. The rows inside are context.
+// running on `loading`. The rows inside are context. The bar fit cell draws the
+// docked form, since the docked foot draws no matrix cell of its own: a
+// conversation with a four-question sheet in its foot at a phone's height.
 export function drawSheet(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
 	const { state } = frame;
@@ -109,6 +234,7 @@ export function drawSheet(frame: ShowcaseFrame) {
 				</Sheet>
 			</Stage>
 		);
+	if (cell === "BUTTON.fit.bar" && state === "rest") return <DockedQuestions />;
 	if (cell === "BUTTON.act.primary")
 		return (
 			<Stage

@@ -1,8 +1,10 @@
 import type { Act } from "@fcalell/ui-core/descriptors";
 import type { SheetFit } from "@fcalell/ui-core/variants";
-import type { ReactNode } from "react";
+import { type ReactNode, use } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { FootPlace } from "../../lib/frame.ts";
 import { SheetBase } from "./base.tsx";
+import { SheetDocked } from "./docked.tsx";
 
 /** A task over the page. */
 export interface SheetProps extends Closed {
@@ -26,7 +28,7 @@ export interface SheetProps extends Closed {
 	children?: ReactNode;
 }
 
-/** On the desktop a side sheet at the end over the scrim, its head (the title over the description beside the close act) over the body and the foot; on touch a bottom sheet with the close act first and the submit at the head's end, a blocked submit's reason under the head. */
+/** On the desktop a side sheet at the end over the scrim, its head (the title over the description beside the close act) over the body and the foot; on touch a bottom sheet with the close act first and the submit at the head's end, a blocked submit's reason under the head. Passed as a `Thread`'s or a `Place`'s `foot` it docks there with no scrim: the back act, the title over the description and the close act in the head, the body scrolling under the foot's half-height bound, the `foot` line beside the `submit` in the foot, at both densities; Escape calls `onClose`, and closing hands focus to the input that returns. */
 export function Sheet({
 	open,
 	onClose,
@@ -38,6 +40,20 @@ export function Sheet({
 	fit,
 	children,
 }: SheetProps) {
+	if (use(FootPlace))
+		return (
+			<SheetDocked
+				open={open}
+				onClose={onClose}
+				title={title}
+				description={description}
+				back={back}
+				submit={submit}
+				foot={foot}
+			>
+				{children}
+			</SheetDocked>
+		);
 	return (
 		<SheetBase
 			open={open}

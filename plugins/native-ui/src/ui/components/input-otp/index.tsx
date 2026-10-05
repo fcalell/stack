@@ -6,7 +6,7 @@ import { cn } from "../../lib/cn";
 import {
 	FieldError,
 	FieldFocus,
-	useColumnFocus,
+	useFieldClaim,
 	useFieldName,
 } from "../../lib/field";
 import { useLive } from "../../lib/live";
@@ -46,7 +46,7 @@ export function InputOtp({
 	const focused = useContext(FieldFocus);
 	const live = useLive(loading ? words.checking : "");
 	const input = useRef<TextInput>(null);
-	const column = useColumnFocus(input);
+	const column = useFieldClaim(input);
 	return (
 		<View className="gap-pair">
 			<View

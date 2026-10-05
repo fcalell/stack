@@ -1398,6 +1398,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// `fit` is the desktop side sheet's: a form, or a Split's record pane.
 		// On touch the submit stands at the head row's end and a blocked
 		// submit's reason under the head.
+		// Passed as a Thread's or a Place's `foot` it docks there, drawing the
+		// docked head and foot inside the foot's raised cell with no scrim.
 		Sheet: {
 			props: [
 				"open",
@@ -1418,6 +1420,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SHEET_HEAD_ROW",
 				"SHEET_BODY",
 				"SHEET_FOOT",
+				"SHEET_DOCKED_HEAD",
+				"SHEET_DOCKED_BODY",
+				"SHEET_DOCKED_FOOT",
+				"THREAD_COLUMN",
 				"SCRIM",
 				"TEXT.role.heading",
 				"TEXT.role.body",
@@ -1437,6 +1443,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SHEET_HEAD_ROW",
 				"SHEET_BODY",
 				"SHEET_FOOT",
+				"SHEET_DOCKED_HEAD",
+				"SHEET_DOCKED_BODY",
+				"SHEET_DOCKED_FOOT",
 			],
 			states: ["rest", "disabled", "loading"],
 			owns: {
@@ -1462,7 +1471,14 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"control-x",
 					"page",
 				],
-				sizes: ["sheet", "pane", "dialog", "control", "control-compact"],
+				sizes: [
+					"sheet",
+					"pane",
+					"dialog",
+					"measure",
+					"control",
+					"control-compact",
+				],
 				elevation: ["modal"],
 			},
 		},
@@ -2782,8 +2798,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// A collection: its Messages from `query` or `items` through the
 		// `message` map, its waiting turns the Message's own loading forms, its
-		// failed and empty EmptyStates its own in the log; a MessageInput its
-		// `foot`, drawn in every state. While a filling Thread's reader is scrolled
+		// failed and empty EmptyStates its own in the log; a MessageInput, or a
+		// Sheet docked in its place, its `foot`, drawn in every state. While a filling Thread's reader is scrolled
 		// up, a secondary Latest act floats over the log above the foot.
 		Thread: {
 			props: [

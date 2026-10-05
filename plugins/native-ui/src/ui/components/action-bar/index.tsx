@@ -22,7 +22,7 @@ import {
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { AuthColumnFocus } from "../../lib/field";
+import { InAuthColumn } from "../../lib/field";
 import { FormContext } from "../../lib/form";
 import { useLive } from "../../lib/live";
 import { ReasonHostContext } from "../../lib/reason";
@@ -144,7 +144,7 @@ function ActHost(props: {
 // stands over the acts at the bar's start.
 export function ActionBar({ acts, fit, chosen }: ActionBarProps) {
 	// Inside an `AuthColumn` a bar with no `fit` stands across the column.
-	const inColumn = useContext(AuthColumnFocus) !== null;
+	const inColumn = useContext(InAuthColumn);
 	const where = fit ?? (inColumn ? "full" : "end");
 	const pend = useContext(FormContext);
 	const [running, setRunning] = useState(false);

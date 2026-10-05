@@ -11,7 +11,7 @@ import { Text as RNText, type TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { AuthColumnFocus } from "../../lib/field";
+import { FieldClaim, InAuthColumn } from "../../lib/field";
 import { Scroll } from "../../lib/hosts";
 import { StepCount } from "../step-count";
 
@@ -56,50 +56,55 @@ export function AuthColumn({
 	const insets = useSafeAreaInsets();
 	const runs = typeof sentence === "string" ? [sentence] : sentence;
 	return (
-		<AuthColumnFocus.Provider value={held}>
-			<Scroll
-				className={SCROLL}
-				contentContainerClassName={cn(AUTH_PAGE, PAGE)}
-			>
-				<View
-					style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
-					className={AUTH_COLUMN}
+		<InAuthColumn.Provider value>
+			<FieldClaim.Provider value={held}>
+				<Scroll
+					className={SCROLL}
+					contentContainerClassName={cn(AUTH_PAGE, PAGE)}
 				>
-					{banner}
-					<RNText
-						className={cn(text({ role: "meta" }), textStrong({ role: "meta" }))}
+					<View
+						style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
+						className={AUTH_COLUMN}
 					>
-						{product}
-					</RNText>
-					{step ? <StepCount at={step.at} of={step.of} /> : null}
-					<View className={AUTH_HEAD}>
+						{banner}
 						<RNText
-							accessibilityRole="header"
-							className={text({ role: "title" })}
+							className={cn(
+								text({ role: "meta" }),
+								textStrong({ role: "meta" }),
+							)}
 						>
-							{title}
+							{product}
 						</RNText>
-						{runs ? (
-							<RNText className={text({ role: "meta" })}>
-								{runs.map((run, at) =>
-									typeof run === "string" ? (
-										run
-									) : (
-										<RNText
-											// biome-ignore lint/suspicious/noArrayIndexKey: a run is its position
-											key={at}
-											className={textStrong({ role: "meta" })}
-										>
-											{run.strong}
-										</RNText>
-									),
-								)}
+						{step ? <StepCount at={step.at} of={step.of} /> : null}
+						<View className={AUTH_HEAD}>
+							<RNText
+								accessibilityRole="header"
+								className={text({ role: "title" })}
+							>
+								{title}
 							</RNText>
-						) : null}
+							{runs ? (
+								<RNText className={text({ role: "meta" })}>
+									{runs.map((run, at) =>
+										typeof run === "string" ? (
+											run
+										) : (
+											<RNText
+												// biome-ignore lint/suspicious/noArrayIndexKey: a run is its position
+												key={at}
+												className={textStrong({ role: "meta" })}
+											>
+												{run.strong}
+											</RNText>
+										),
+									)}
+								</RNText>
+							) : null}
+						</View>
+						{children}
 					</View>
-					{children}
-				</View>
-			</Scroll>
-		</AuthColumnFocus.Provider>
+				</Scroll>
+			</FieldClaim.Provider>
+		</InAuthColumn.Provider>
 	);
 }

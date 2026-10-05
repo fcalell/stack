@@ -62,3 +62,9 @@ export const PageTitle = createContext<string | undefined>(undefined);
 // that mounts takes focus unless one of the column's typing controls holds it.
 export const AuthColumnRoot =
 	createContext<RefObject<HTMLElement | null> | null>(null);
+
+// Where the foot a `Sheet` stands in is: `docked` in a filling Thread's or a
+// Place's foot, `inline` in a Thread among sections, `null` anywhere else. A
+// `Sheet` in a foot draws its docked form, which resets it to `null` for what
+// it holds, so a sheet opened from inside is the modal one.
+export const FootPlace = createContext<"docked" | "inline" | null>(null);

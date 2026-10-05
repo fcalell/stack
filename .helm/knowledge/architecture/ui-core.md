@@ -572,6 +572,27 @@ a tick with no animation, never jumped to full.
   docking its input), which hides the dock from the call site; a `MessageInput` docked variant,
   since docking is the frame's, never the field's (the column the field keeps is its own at every
   use, not a docked form).
+- A `Sheet` passed as a Thread's or a Place's `foot` docks there by derivation (`FootPlace`, set by
+  the frame around its foot: `docked` in a Place's foot and a filling Thread's, `inline` in a Thread
+  among sections; a `Sheet` anywhere else is the modal one, and the docked form resets it for what it
+  holds). No prop, no new roster part: the Sheet draws `SHEET_DOCKED_HEAD`,
+  `SHEET_DOCKED_BODY` (the sections gap and the card inset above and below) and `SHEET_DOCKED_FOOT`
+  inside the foot's raised cell, so none carries a surface, radius, shadow, hairline or side inset and
+  all three share the foot's edge. The head holds the back act, the title and the close act in `SHEET_HEAD_ROW`
+  over the description; the foot holds the `foot` line beside the `submit` bar (over it on touch); the
+  head-end submit and Cancel of the modal form are gone, since the dock stands above the keyboard and
+  the close act is in the head. The docked foot is bounded: `FOOT_DOCKED` carries `max-h-1/2 min-h-0`,
+  a structural fraction of its frame (the accepted fractions are structural, never a size token), so
+  a conversation keeps half its frame and the Sheet scrolls its body between its pinned head and foot;
+  inline among sections it has no bound, since the page scrolls. On the desktop the docked Sheet holds
+  `THREAD_COLUMN` in the foot that centres it. Focus: each page (a new `title`) takes the body's first
+  field on the web and on the phone (a first-mount claim, `FieldClaim`, which the AuthColumn provides too; its `full` bar fit stays the AuthColumn frame's alone), Escape on the web
+  calls `onClose`, and a docked foot hands focus to its first typing control when the page that held
+  it leaves (the web region reads who held focus in the render that swaps the foot; the phone's
+  region holds a `FootReturn` claim the leaving Sheet sets and the `MessageInput` that mounts takes).
+  Rejected: a `Thread` `form` prop or a `DockedForm` component (a second component for the same
+  regions, switched by the app per place), and a `Form` that pins its own bar in a foot (no head for
+  the title and close act, and it restates the Sheet's regions).
 - A record the main opened is the Split's `beside`: a `Screen` whose `back` is the main's route,
   given by the consumer because the route's depth differs by surface and no component can derive it.
   From `wide` of the page the list, the main and the beside record stand together, main and beside

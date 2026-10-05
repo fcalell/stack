@@ -18,13 +18,15 @@ import {
 	PAGE_TOP_BAR,
 	text,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, useContext } from "react";
+import { type ReactNode, useContext, useRef } from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import {
 	ActRoom,
 	DetailsOpen,
+	FootPlace,
+	FootReturn,
 	PageTitle,
 	PlaceRoute,
 	RecordShown,
@@ -131,6 +133,8 @@ export function Place({
 	const words = useWords();
 	const switcher = useContext(ShellSwitcher);
 	const route = useContext(PlaceRoute);
+	// The claim a docked sheet leaves the foot for the input that returns.
+	const claim = useRef(false);
 	// What the head shows of the Split in the body, read off its props: a
 	// record beside the main stands alone, its head the page's one.
 	const split = useSplitHead(children);
@@ -267,7 +271,13 @@ export function Place({
 								{toasts}
 							</View>
 							{foot ? (
-								<View className={cn(FOOT_DOCKED, DOCKED)}>{foot}</View>
+								<View className={cn(FOOT_DOCKED, DOCKED)}>
+									<FootPlace.Provider value="docked">
+										<FootReturn.Provider value={claim}>
+											{foot}
+										</FootReturn.Provider>
+									</FootPlace.Provider>
+								</View>
 							) : null}
 						</Lifted>
 						{tabs}

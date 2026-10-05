@@ -100,3 +100,15 @@ export const ActRoom = createContext<ReactNode>(null);
 
 // The Place's or Screen's title, which names a Split's list.
 export const PageTitle = createContext<string | undefined>(undefined);
+
+// Where the foot a `Sheet` stands in is: `docked` in a filling Thread's or a
+// Place's foot, `inline` in a Thread among sections, `null` anywhere else. A
+// `Sheet` in a foot draws its docked form, which resets it to `null` for what
+// it holds, so a sheet opened from inside is the modal one.
+export const FootPlace = createContext<"docked" | "inline" | null>(null);
+
+// The claim a docked foot region holds for the input that returns: a docked
+// `Sheet` leaving the region sets it, and the `MessageInput` that mounts in
+// its place takes focus and clears it (React runs the leaving tree's cleanups
+// before the arriving tree's effects).
+export const FootReturn = createContext<RefObject<boolean> | null>(null);

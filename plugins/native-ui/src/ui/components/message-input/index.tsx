@@ -16,12 +16,13 @@ import {
 } from "@fcalell/ui-core/variants";
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
-import { useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { Text as RNText, TextInput, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FieldDisabled } from "../../lib/field";
 import { ActInert } from "../../lib/form";
+import { FootReturn } from "../../lib/frame";
 import { pickedFromDocument, pickedFromImage } from "../../lib/picked";
 import { useTokenColor } from "../../lib/theme";
 import { useWords } from "../../lib/words";
@@ -92,6 +93,13 @@ export function MessageInput({
 	// A placeholder's colour is a prop, never a class: `FIELD_PLACEHOLDER`'s ink.
 	const placeholderInk = useTokenColor("--color-ink-meta");
 	const textField = useRef<TextInput>(null);
+	const returned = useContext(FootReturn);
+	// The input that returns where a docked sheet closed takes focus.
+	useEffect(() => {
+		if (!returned?.current) return;
+		returned.current = false;
+		textField.current?.focus();
+	}, [returned]);
 	const [choosing, setChoosing] = useState(false);
 	const sendable = value.trim() !== "" && !disabled;
 	const photos = async () => {

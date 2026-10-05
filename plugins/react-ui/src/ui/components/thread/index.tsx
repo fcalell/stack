@@ -28,7 +28,13 @@ import {
 	useState,
 } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { PageTitle, ThreadBleeds, ThreadRoom } from "../../lib/frame.ts";
+import { useFootFocus } from "../../lib/focus.ts";
+import {
+	FootPlace,
+	PageTitle,
+	ThreadBleeds,
+	ThreadRoom,
+} from "../../lib/frame.ts";
 import { useTouch } from "../../lib/media.ts";
 import { useWords } from "../../lib/words.tsx";
 import { EmptyStateBase } from "../empty-state/base.tsx";
@@ -51,6 +57,9 @@ const SCROLLS =
 const CENTRES = "items-center";
 // The docked foot names itself the anchor the Shell's toasts stand above.
 const DOCKED = "flex flex-col shrink-0 [anchor-name:--docked-foot]";
+// What the docked foot holds shrinks to the foot's bound, so a docked form
+// scrolls inside it.
+const FOOT_COLUMN = "flex flex-col min-h-0";
 // The region over the foot: the log, and the Latest act floating at its foot.
 const REGION = "relative flex flex-col grow min-h-0";
 // The log is at its end while its last pixel shows; a reader who scrolled
@@ -219,6 +228,8 @@ export function Thread<T>(props: ThreadProps<T>) {
 	const title = use(PageTitle);
 	const log = useRef<HTMLDivElement>(null);
 	const content = useRef<HTMLDivElement>(null);
+	const dock = useRef<HTMLDivElement>(null);
+	useFootFocus(dock);
 	const atEnd = useRef(true);
 	// The reader is scrolled up: the Latest act stands over the foot.
 	const [away, setAway] = useState(false);
@@ -253,7 +264,11 @@ export function Thread<T>(props: ThreadProps<T>) {
 				<div role="log" aria-busy={busy} className={cn(THREAD, column, STACK)}>
 					{children}
 				</div>
-				{foot ? <div className={cn(column, STACK)}>{foot}</div> : null}
+				{foot ? (
+					<FootPlace value="inline">
+						<div className={cn(column, STACK)}>{foot}</div>
+					</FootPlace>
+				) : null}
 			</div>
 		);
 	return (
@@ -285,8 +300,10 @@ export function Thread<T>(props: ThreadProps<T>) {
 				<Latest onBack={away ? toLatest : null} />
 			</div>
 			{foot ? (
-				<div className={cn(FOOT_DOCKED, DOCKED, centres)}>
-					<div className={cn(column, STACK)}>{foot}</div>
+				<div ref={dock} className={cn(FOOT_DOCKED, DOCKED, centres)}>
+					<FootPlace value="docked">
+						<div className={cn(column, FOOT_COLUMN)}>{foot}</div>
+					</FootPlace>
 				</div>
 			) : null}
 		</div>

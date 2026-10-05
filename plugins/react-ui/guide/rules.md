@@ -360,7 +360,8 @@ the value) radio rows, one answer among a few described options.
 
 A `Thread` takes its `query` (or `items`) the same way through a `message` map (`key`,
 `author`, `name`, `body`, `at`, `attachments`, `meta`, `onOpen`, `detail`), each reading only its
-item, since a message draws again only when its item changes; its `MessageInput` stays the `foot`.
+item, since a message draws again only when its item changes; its `foot` is a `MessageInput`, or a
+`Sheet` docked in its place.
 In a `Place`'s body, or in a `Split`'s `main` under the record's `ItemHeader`, it fills what holds
 it: its log scrolls and the input docks at the foot. It stands there as the body's direct child,
 or as `main` (in a fragment under the record's `ItemHeader`), never inside a component of the
@@ -396,6 +397,14 @@ home's sections) is the Place's `foot`: it docks at the Place's bottom, above th
 touch; a selection bar (an `ActionBar` with `chosen`) docks the same way. A Place takes a `foot` or
 an `act`, never both, since each holds the screen's filled act. A `Thread` in a Place with a
 `foot` stands among its sections, inline, its `foot` left empty.
+
+A `Sheet` passed as a `Thread`'s or a `Place`'s `foot` docks there, derived from where it stands:
+no prop, no scrim. The head keeps the back act, the title over the `description` and the close act;
+the body scrolls between the head and the foot, which hold their height (the `foot` line beside the `submit`,
+over it on touch), and the docked foot is at most half its frame, so the conversation keeps the rest. Pass
+the same `<Sheet>` as the modal from a page and as the `foot` of a conversation; closing it (render
+the `MessageInput` in its place) returns focus to the input, and each page (a new `title`) takes
+focus in its first field. A `Sheet` among a `Thread`'s sections draws the same form with no bound.
 
 A column is a width and the region around it aligns it. A filling `Thread`'s log and a docked foot
 (a `Place`'s `foot`, a filling `Thread`'s input) centre their measure column, and a selection bar's;

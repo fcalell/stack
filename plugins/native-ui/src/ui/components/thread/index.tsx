@@ -30,7 +30,12 @@ import {
 import { Platform, ScrollView, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { ThreadBleeds, ThreadRoom } from "../../lib/frame";
+import {
+	FootPlace,
+	FootReturn,
+	ThreadBleeds,
+	ThreadRoom,
+} from "../../lib/frame";
 import { Lifted } from "../../lib/hosts";
 import { useLive } from "../../lib/live";
 import { useWords } from "../../lib/words";
@@ -247,6 +252,8 @@ export function Thread<T>(props: ThreadProps<T>) {
 	const fill = useContext(ThreadRoom);
 	const bleeds = useContext(ThreadBleeds);
 	const log = useRef<ScrollView>(null);
+	// The claim a docked sheet leaves the foot for the input that returns.
+	const claim = useRef(false);
 	// The reader is scrolled up: the Latest act stands over the foot.
 	const [away, setAway] = useState(false);
 	// Back to the newest message, at the log's origin.
@@ -260,7 +267,9 @@ export function Thread<T>(props: ThreadProps<T>) {
 				<View {...live} accessibilityState={{ busy }} className={THREAD}>
 					{children}
 				</View>
-				{foot ?? null}
+				{foot ? (
+					<FootPlace.Provider value="inline">{foot}</FootPlace.Provider>
+				) : null}
 			</View>
 		);
 	// Newest first, each upside down inside the upside-down log, so it reads
@@ -302,7 +311,13 @@ export function Thread<T>(props: ThreadProps<T>) {
 				{/* The page's toasts stand over the log, above the docked input. */}
 				<ToastRoom />
 			</View>
-			{foot ? <View className={cn(FOOT_DOCKED, DOCKED)}>{foot}</View> : null}
+			{foot ? (
+				<View className={cn(FOOT_DOCKED, DOCKED)}>
+					<FootPlace.Provider value="docked">
+						<FootReturn.Provider value={claim}>{foot}</FootReturn.Provider>
+					</FootPlace.Provider>
+				</View>
+			) : null}
 		</Lifted>
 	);
 }

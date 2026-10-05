@@ -61,20 +61,24 @@ export const InlineField = createContext<
 	{ label: string; focus?: boolean } | undefined
 >(undefined);
 
-// Set by an `AuthColumn` around its body: the typing control of the column
-// that holds focus, if any. An `Input` or `InputOtp` that mounts there takes
-// focus unless one holds it, so the first field of a page or of a step that
-// replaces the body takes it, and a second field beside it, or one revealed
-// while another is typed in, never does. An `ActionBar` in it with no `fit`
+// Set by an `AuthColumn` around its body: an `ActionBar` in it with no `fit`
 // reads `full`.
-export const AuthColumnFocus =
-	createContext<RefObject<TextInput | null> | null>(null);
+export const InAuthColumn = createContext(false);
 
-// A typing control's claim on its `AuthColumn`'s focus: it takes focus as it
+// Set by an `AuthColumn` or a docked `Sheet` around its body: the typing
+// control of the region that holds focus, if any. An `Input` or `InputOtp` that
+// mounts there takes focus unless one holds it, so the first field of a page
+// or of a step that replaces the body takes it, and a second field beside it,
+// or one revealed while another is typed in, never does.
+export const FieldClaim = createContext<RefObject<TextInput | null> | null>(
+	null,
+);
+
+// A typing control's claim on its region's focus: it takes focus as it
 // mounts when none holds it, and holds it for as long as it is focused.
 // `onFocus` and `onBlur` join the control's own handlers.
-export function useColumnFocus(input: RefObject<TextInput | null>) {
-	const column = useContext(AuthColumnFocus);
+export function useFieldClaim(input: RefObject<TextInput | null>) {
+	const column = useContext(FieldClaim);
 	useEffect(() => {
 		const control = input.current;
 		if (!column || !control) return;

@@ -509,6 +509,15 @@ export const SHEET_HEAD_ROW = "gap-acts";
 export const SHEET_BODY = "gap-sections p-card";
 export const SHEET_FOOT =
 	"gap-acts px-card py-card border-t border-edge bg-raised";
+// A sheet docked in a foot (`FOOT_DOCKED`): the foot is the raised cell, so the
+// head, the body and the foot carry no surface, radius, shadow, hairline or
+// side inset of their own, so all three share the foot's edge; the head's row
+// stands over its description a pair apart, the body keeps its sections a
+// sections gap apart and the card inset above and below, the foot's line
+// beside or over the acts an acts gap apart.
+export const SHEET_DOCKED_HEAD = "gap-pair";
+export const SHEET_DOCKED_BODY = "gap-sections py-card";
+export const SHEET_DOCKED_FOOT = "gap-acts";
 // An empty state: its column at the empty width (the mark, the text, the
 // act a fields gap apart), the title over the sentence a pair apart, and in a
 // Section a hairline frame at the card inset around it; in a Group the card
@@ -789,9 +798,11 @@ export const PAGE_BODY = "gap-sections p-page";
 // region of its own under what scrolls past it, a raised surface (a step in
 // dark, the float shadow in light) inside a hairline, at the page inset at the
 // sides and an acts gap above and below what it holds (a selection bar stands
-// in its height range, a field at its own).
+// in its height range, a field at its own), at most half its frame's height
+// (a structural fraction, never a size token) with the room to shrink to it: a
+// docked `Sheet` fills it, its body scrolling.
 export const FOOT_DOCKED =
-	"border-t border-edge-raised bg-raised shadow-float px-page py-acts";
+	"border-t border-edge-raised bg-raised shadow-float px-page py-acts max-h-1/2 min-h-0";
 export const PAGE_BODY_OVER_FOOT = "pb-sections";
 // A touch Place's act, floating over the body's end on a layer at the page
 // inset, lifted off what scrolls under it as a Thread's Latest act is, and
