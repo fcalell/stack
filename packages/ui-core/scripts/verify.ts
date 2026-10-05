@@ -693,7 +693,7 @@ check("c02", "package.json shape", () => {
 check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(COLOR_NAMES.length, 86, "color count");
 	requireEqual(new Set(COLOR_NAMES).size, COLOR_NAMES.length, "unique colors");
-	requireEqual(TYPE_ROLES.length, 7, "type role count");
+	requireEqual(TYPE_ROLES.length, 8, "type role count");
 	requireEqual(SPACING_ROLES.length, 11, "spacing role count");
 	requireEqual(GAP_ROLES.length, 6, "gap role count");
 	requireEqual(SIZES.length, 32, "size count");
@@ -1865,7 +1865,7 @@ check(
 	"the roster is closed, camelCase, and off the style channels",
 	() => {
 		const entries = rosterEntries();
-		requireEqual(entries.length, 60, "component count");
+		requireEqual(entries.length, 62, "component count");
 		const names = new Set<string>();
 		for (const [, name, { props }] of entries) {
 			assert(/^[A-Z][A-Za-z]+$/.test(name), `${name} is not PascalCase`);

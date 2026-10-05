@@ -40,6 +40,8 @@ export const TEXT = matrix({
 		role: {
 			display:
 				"text-display leading-display tracking-display font-medium text-ink-body tabular-nums",
+			figure:
+				"text-figure leading-figure font-medium text-ink-body tabular-nums",
 			title:
 				"text-title leading-title tracking-title font-semibold text-ink-body",
 			heading:
@@ -54,13 +56,14 @@ export const TEXT = matrix({
 	defaultVariants: { role: "body" },
 });
 
-// Emphasis inside a line: weight 500, never a size. `display`, `title` and
-// `heading` already sit at or above it.
+// Emphasis inside a line: weight 500, never a size. `display`, `figure`,
+// `title` and `heading` already sit at or above it.
 export const TEXT_STRONG = matrix({
 	base: "",
 	variants: {
 		role: {
 			display: "",
+			figure: "",
 			title: "",
 			heading: "",
 			body: "font-medium",
@@ -422,6 +425,8 @@ export const LINE_BOX = matrix({
 			meta: "text-meta leading-meta",
 			heading: "text-heading leading-heading",
 			code: "text-code leading-code",
+			figure: "text-figure leading-figure",
+			display: "text-display leading-display",
 		},
 	},
 	defaultVariants: { role: "body" },

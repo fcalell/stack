@@ -35,6 +35,7 @@ const THEME = deriveTheme();
 
 const SAMPLE: Record<TypeRole, string> = {
 	display: "1,284,302",
+	figure: "1,284",
 	title: "Workspace settings",
 	heading: "Members and invitations",
 	body: "Invite teammates by email. They join as Members until an owner changes their role.",

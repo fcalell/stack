@@ -1,6 +1,6 @@
 ---
 id: 003-27
-status: backlog
+status: review
 sessions: {}
 ---
 # ui-core: a count strip

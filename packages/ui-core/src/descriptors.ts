@@ -264,6 +264,20 @@ export interface CountLink {
 	href: Route;
 }
 
+// A count in a strip: a label over its figure (zero is a count, drawn), an
+// optional unit beside the figure and meta line under it, then either the
+// whole cell a link to `href` or sub-counts that are links of their own, never
+// both, since a cell inside a link cannot hold links.
+export type StatSpec = {
+	label: string;
+	value: number;
+	unit?: string;
+	meta?: string;
+} & (
+	| { counts?: readonly CountLink[]; href?: never }
+	| { href: Route; counts?: never }
+);
+
 // The point a meter marks on its track: a tick at `value` of its max, named
 // `label` to assistive tech. Once the meter's value reaches it the fill turns
 // `warn`.

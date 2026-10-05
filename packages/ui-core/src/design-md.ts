@@ -94,6 +94,7 @@ const COLOR_USE: Record<string, string> = {
 
 const TYPE_USE: Record<TypeRole, string> = {
 	display: "a display number, one per screen, in tabular figures",
+	figure: "a count's number in a strip of them, in tabular figures",
 	title: "the page's name, once per screen",
 	heading: "a section's or a card's name, never inside a row",
 	body: "the primary line of anything: prose, a row, a field, a menu item",
@@ -421,7 +422,7 @@ function body(resolved: ResolvedTheme): string[] {
 		"",
 		"## Typography",
 		"",
-		`Seven roles named by place. Two rules decide the role: size follows structure, never emphasis (the primary line of anything is \`body\`, a secondary line is \`meta\`, emphasis inside a line is weight ${WEIGHT[STRONG_WEIGHT]}, never a size change); and a size role names a place once (\`title\` the page's name, once per screen; \`heading\` a section's or a card's name, never inside a row; \`caption\` text inside a small component, never a sentence; \`code\` what a machine reads). There is no label role: a field label and a row's leading cell are \`body\` at ${WEIGHT[STRONG_WEIGHT]}, a table header is \`meta\` at ${WEIGHT[STRONG_WEIGHT]}. The scale moves with density (desktop body 13, touch body 16); nothing else moves it.`,
+		`Eight roles named by place. Two rules decide the role: size follows structure, never emphasis (the primary line of anything is \`body\`, a secondary line is \`meta\`, emphasis inside a line is weight ${WEIGHT[STRONG_WEIGHT]}, never a size change); and a size role names a place once (\`title\` the page's name, once per screen; \`heading\` a section's or a card's name, never inside a row; \`caption\` text inside a small component, never a sentence; \`code\` what a machine reads; \`figure\` a count's number in a strip of them). There is no label role: a field label and a row's leading cell are \`body\` at ${WEIGHT[STRONG_WEIGHT]}, a table header is \`meta\` at ${WEIGHT[STRONG_WEIGHT]}. The scale moves with density (desktop body 13, touch body 16); nothing else moves it.`,
 		"",
 		...table(
 			["Role", "Desktop", "Touch", "Weight", "Ink", "Place"],

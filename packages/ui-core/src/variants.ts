@@ -610,6 +610,18 @@ export const METER_COUNTS = "gap-inside";
 // A meter's mark: a tick across the track at the mark's share, standing proud
 // of it by `inside` above and below. It sits outside the track, which clips.
 export const METER_MARK = "w-track bg-ink-body -inset-y-inside";
+// Stats: one hairline card on the surface holding the cells. A cell draws its
+// own top and start hairlines, so the card splits wherever its cells wrap (a
+// platform overlay bleeds the cells by a hairline and the card clips the
+// outer ones). The cell is the label over the figure (and its unit) over the
+// meta line, or over its counts, a gap apart with no glyph between.
+export const STATS = "rounded-card border border-edge bg-surface";
+export const STATS_CELL = "gap-pair p-card border-t border-l border-edge";
+export const STATS_FIGURE = "gap-inside";
+export const STATS_COUNTS = "gap-inside";
+// Stat: the figure first (read "2, need you") with its label under it.
+export const STAT = "gap-pair";
+export const STAT_FIGURE = "gap-inside";
 // BarChart: the head (the total and its unit, then the series' keys) over
 // the body (the axis beside the plot over its times). The plot is the chart's
 // height in four bands (`chartBand`); a stacked part over another is split

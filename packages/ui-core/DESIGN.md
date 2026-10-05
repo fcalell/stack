@@ -183,6 +183,11 @@ typography:
     fontWeight: 500
     lineHeight: "40px"
     letterSpacing: "-0.02em"
+  figure:
+    fontFamily: "\"IBM Plex Sans\", \"IBM Plex Sans Fallback\", ui-sans-serif, system-ui, sans-serif"
+    fontSize: "22px"
+    fontWeight: 500
+    lineHeight: "26px"
   title:
     fontFamily: "\"IBM Plex Sans\", \"IBM Plex Sans Fallback\", ui-sans-serif, system-ui, sans-serif"
     fontSize: "18px"
@@ -274,6 +279,12 @@ components:
     textColor: "{colors.ink-body}"
   text-display-dark:
     typography: "{typography.display}"
+    textColor: "{colors.ink-body-dark}"
+  text-figure:
+    typography: "{typography.figure}"
+    textColor: "{colors.ink-body}"
+  text-figure-dark:
+    typography: "{typography.figure}"
     textColor: "{colors.ink-body-dark}"
   text-title:
     typography: "{typography.title}"
@@ -979,6 +990,10 @@ components:
     typography: "{typography.heading}"
   line-box-code:
     typography: "{typography.code}"
+  line-box-figure:
+    typography: "{typography.figure}"
+  line-box-display:
+    typography: "{typography.display}"
   table-row-highlighted:
     backgroundColor: "{colors.wash-hover}"
   table-row-highlighted-dark:
@@ -1973,6 +1988,14 @@ components:
     textColor: "{colors.ink-meta}"
   stage-check-dark:
     textColor: "{colors.ink-meta-dark}"
+  stats:
+    rounded: "{rounded.card}"
+    backgroundColor: "{colors.surface}"
+  stats-dark:
+    rounded: "{rounded.card}"
+    backgroundColor: "{colors.surface-dark}"
+  stats-cell:
+    padding: "{spacing.card}"
   status-label:
     typography: "{typography.meta}"
     textColor: "{colors.ink-meta}"
@@ -2132,11 +2155,12 @@ A chart's series take the chip marks in order: `chip-teal`, `chip-violet`, `chip
 
 ## Typography
 
-Seven roles named by place. Two rules decide the role: size follows structure, never emphasis (the primary line of anything is `body`, a secondary line is `meta`, emphasis inside a line is weight 500, never a size change); and a size role names a place once (`title` the page's name, once per screen; `heading` a section's or a card's name, never inside a row; `caption` text inside a small component, never a sentence; `code` what a machine reads). There is no label role: a field label and a row's leading cell are `body` at 500, a table header is `meta` at 500. The scale moves with density (desktop body 13, touch body 16); nothing else moves it.
+Eight roles named by place. Two rules decide the role: size follows structure, never emphasis (the primary line of anything is `body`, a secondary line is `meta`, emphasis inside a line is weight 500, never a size change); and a size role names a place once (`title` the page's name, once per screen; `heading` a section's or a card's name, never inside a row; `caption` text inside a small component, never a sentence; `code` what a machine reads; `figure` a count's number in a strip of them). There is no label role: a field label and a row's leading cell are `body` at 500, a table header is `meta` at 500. The scale moves with density (desktop body 13, touch body 16); nothing else moves it.
 
 | Role | Desktop | Touch | Weight | Ink | Place |
 | --- | --- | --- | --- | --- | --- |
 | `display` | 36px / 40px | 44px / 48px | 500 | `ink-body` | a display number, one per screen, in tabular figures |
+| `figure` | 22px / 26px | 27px / 32px | 500 | `ink-body` | a count's number in a strip of them, in tabular figures |
 | `title` | 18px / 24px | 22px / 28px | 600 | `ink-body` | the page's name, once per screen |
 | `heading` | 15px / 20px | 18px / 24px | 600 | `ink-body` | a section's or a card's name, never inside a row |
 | `body` | 13px / 20px | 16px / 24px | 400 | `ink-body` | the primary line of anything: prose, a row, a field, a menu item |
@@ -2281,6 +2305,8 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `MessageInput` | content | `BUTTON.act.primary`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.secondary`, `CHIP.family.neutral`, `CHIP.trailing.remove`, `CHIP_LABEL.family.neutral`, `CHIP_REMOVE_HIT`, `FIELD.fit.bar`, `FIELD.state.rest`, `FIELD.trailing.none`, `FIELD_VALUE.kind.text`, `ICON.fit.control`, `ICON.fit.meta`, `ICON_BUTTON.fit.bar`, `MESSAGE_ATTACH_SLOT`, `MESSAGE_INPUT`, `MESSAGE_INPUT_BOX`, `MESSAGE_INPUT_CHIPS`, `MESSAGE_INPUT_FIELD`, `MESSAGE_INPUT_FOOT`, `MESSAGE_INPUT_ROW`, `MESSAGE_INPUT_TEXT`, `MESSAGE_INPUT_VALUE`, `MESSAGE_NOTICE`, `MESSAGE_NOTICE_TEXT`, `SPINNER`, `SPINNER_ARC`, `SPINNER_TRACK`, `TEXT.role.meta` | rest, hover, focus, disabled |
 | `Meter` | content | `FIGURES`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `METER`, `METER_COUNTS`, `METER_FILL`, `METER_HEAD`, `METER_ITEM`, `METER_MARK`, `METER_TRACK`, `SKELETON.kind.line`, `SKELETON.kind.meter`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body` | rest, loading |
 | `Stages` | content | `ICON.fit.meta`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `STAGE`, `STAGE_CHECK`, `STAGE_RAIL`, `STAGE_ROW`, `STAGE_WORDS`, `STATUS_DOT.state.active`, `STATUS_DOT.state.failed`, `STATUS_DOT.state.idle`, `TEXT.role.meta` | rest |
+| `Stats` | content | `FIGURES`, `LINE_BOX.role.figure`, `LINE_BOX.role.meta`, `SKELETON.kind.line`, `STATS`, `STATS_CELL`, `STATS_COUNTS`, `STATS_FIGURE`, `TEXT.role.figure`, `TEXT.role.meta` | rest, loading |
+| `Stat` | content | `LINE_BOX.role.display`, `LINE_BOX.role.meta`, `SKELETON.kind.line`, `STAT`, `STAT_FIGURE`, `TEXT.role.display`, `TEXT.role.meta` | rest, loading |
 | `BarChart` | content | `CHART`, `CHART_BAND`, `CHART_BODY`, `CHART_FILL`, `CHART_GRID`, `CHART_HEAD`, `CHART_KEY`, `CHART_KEYS`, `CHART_KEY_DOT`, `CHART_MAIN`, `CHART_PART_SPLIT`, `CHART_TICK_LANE`, `CHART_TOTAL`, `FIGURES`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `SKELETON.kind.chart`, `SKELETON.kind.line`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body` | rest, loading, error, empty |
 | `Thread` | content | `THREAD`, `THREAD_COLUMN`, `THREAD_LOG`, `THREAD_UNDER_HEAD`, `FOOT`, `THREAD_LATEST` | rest, loading, error, empty |
 | `QrCode` | content | `QR_CODE`, `QR_TILE` | rest, loading |
@@ -2345,6 +2371,8 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `MessageInput` | `body`, `meta`, `caption` | `edge`, `surface`, `ink-meta`, `ink-body`, `act-accent`, `on-act-accent`, `fill-disabled`, `ink-disabled`, `edge-hover`, `ring`, `chip-neutral-soft`, `chip-neutral-ink` | `card`, `control`, `full` | `pair`, `rows`, `inside`, `control-x` | `message-input`, `control-compact`, `icon-control`, `chip`, `measure-short`, `icon-meta`, `spinner` | none |
 | `Meter` | `body`, `meta` | `ink-body`, `ink-meta`, `fill-neutral`, `warn`, `danger`, `skeleton` | `chip` | `pair`, `inside`, `card` | `meter`, `track`, `skeleton` | none |
 | `Stages` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `accent-ink`, `danger` | `full` | `pair` | `icon-meta`, `dot` | none |
+| `Stats` | `figure`, `meta` | `edge`, `surface`, `ink-body`, `ink-meta`, `skeleton`, `wash-hover`, `wash-press` | `card`, `chip` | `pair`, `inside`, `card` | `skeleton` | none |
+| `Stat` | `display`, `meta` | `ink-body`, `ink-meta`, `skeleton` | `chip` | `pair`, `inside` | `skeleton` | none |
 | `BarChart` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `chip-` | `full`, `chip` | `fields`, `inside`, `pair` | `chart`, `dot`, `skeleton`, `figures` | none |
 | `Thread` | none | `raised`, `edge` | `control` | `sections`, `page`, `pair` | `measure` | `float` |
 | `QrCode` | none | `edge`, `surface`, `ink-body`, `skeleton` | `card` | none | `qr` | none |

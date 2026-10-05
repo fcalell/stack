@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Linking, Text as RNText } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { isRoute, navigate } from "../../lib/navigate";
 
 // Inline is underlined at rest and plain under the press; standalone the
 // other way round, its box kept to its words in a stretching parent. An
@@ -15,6 +16,8 @@ const OVERLAY: Record<LinkFit, string> = {
 };
 
 export interface LinkProps extends Closed {
+	// A route of the app (navigated through the router) or an external URL
+	// (opened by the OS).
 	href: string;
 	fit?: LinkFit;
 	children?: ReactNode;
@@ -32,7 +35,8 @@ export function Link({ href, fit, children }: LinkProps) {
 				OVERLAY[place],
 			)}
 			onPress={() => {
-				Linking.openURL(href);
+				if (isRoute(href)) navigate(href);
+				else Linking.openURL(href);
 			}}
 		>
 			{children}

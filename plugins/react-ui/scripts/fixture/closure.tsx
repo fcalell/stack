@@ -31,6 +31,8 @@ import { Link } from "@fcalell/plugin-react-ui/components/link";
 import { Message } from "@fcalell/plugin-react-ui/components/message";
 import { MessageInput } from "@fcalell/plugin-react-ui/components/message-input";
 import { Meter } from "@fcalell/plugin-react-ui/components/meter";
+import { Stat } from "@fcalell/plugin-react-ui/components/stat";
+import { Stats } from "@fcalell/plugin-react-ui/components/stats";
 import { PendingBar } from "@fcalell/plugin-react-ui/components/pending-bar";
 import { Picker } from "@fcalell/plugin-react-ui/components/picker";
 import { QrCode } from "@fcalell/plugin-react-ui/components/qr-code";
@@ -614,6 +616,27 @@ export const closure = (
 		<StepCount at={1} of={3} class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<StepCount at={1} of={3} classList={{}} />
+		<Stats items={[{ label: "x", value: 1 }]} />
+		<Stats items={[{ label: "x", value: 1, href: "/x" }, { label: "x", value: 1, counts: [{ label: "x", value: 1, href: "/x" }] }]} />
+		{/* @ts-expect-error: a cell is a link or holds links, never both */}
+		<Stats items={[{ label: "x", value: 1, href: "/x", counts: [{ label: "x", value: 1, href: "/x" }] }]} />
+		{/* @ts-expect-error: closed channel */}
+		<Stats items={[]} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Stats items={[]} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Stats items={[]} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Stats items={[]} classList={{}} />
+		<Stat label="x" value={1} />
+		{/* @ts-expect-error: closed channel */}
+		<Stat label="x" value={1} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Stat label="x" value={1} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Stat label="x" value={1} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Stat label="x" value={1} classList={{}} />
 		<Thread items={[]} message={{ key: String, author: () => "you", body: String }} />
 		<Thread query={{ data: ["a"], isPending: false, isError: false, refetch: () => {} }} sentence="x" empty={{ sentence: "x" }} message={{ key: String, author: () => "system", body: String, onOpen: () => () => {} }} foot={null} />
 		{/* @ts-expect-error: a thread takes a query or items, never both */}

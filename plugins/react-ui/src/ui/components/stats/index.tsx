@@ -1,0 +1,81 @@
+import { cn } from "@fcalell/ui-core/cn";
+import type { StatSpec } from "@fcalell/ui-core/descriptors";
+import { formatterFor } from "@fcalell/ui-core/format";
+import {
+	FIGURES,
+	STATS,
+	STATS_CELL,
+	STATS_COUNTS,
+	STATS_FIGURE,
+	text,
+} from "@fcalell/ui-core/variants";
+import type { Closed } from "../../lib/closed.ts";
+import { Link } from "../link/index.tsx";
+import { StatsWait } from "./wait.tsx";
+
+const CLIP = "overflow-hidden";
+// Each cell draws its own top and start hairline; the strip bleeds by one so
+// the card clips the outer ones.
+const CELLS = "flex flex-wrap -mt-px -ml-px";
+// Two to a row below `tablet` of the page, one row from it.
+const CELL =
+	"relative flex flex-col min-w-0 grow basis-1/2 page-tablet:basis-0";
+const OPENS = "hover:bg-wash-hover active:bg-wash-press";
+const HIT = "absolute inset-0 focus-visible:-outline-offset-2";
+const FIGURE = "flex items-baseline";
+const COUNTS = "flex flex-wrap";
+
+/** A strip of counts. */
+export interface StatsProps extends Closed {
+	/** The cells, in order: each a label over its figure. */
+	items: readonly StatSpec[];
+	/** The cells wait as bars in their line boxes; the strip's length is the data's, so four stand in. */
+	loading?: boolean;
+}
+
+/** One hairline card of counts split by hairlines, each cell its label in meta over its figure in tabular figures (its unit muted beside it), then a meta line or sub-counts as links, or the whole cell a link to its list. Zeros are drawn. Two cells to a row below `tablet` of the page. */
+export function Stats({ items, loading }: StatsProps) {
+	if (loading) return <StatsWait />;
+	const number = formatterFor("number");
+	return (
+		<div className={cn(STATS, CLIP)}>
+			<ul className={CELLS}>
+				{items.map((item) => (
+					<li
+						key={item.label}
+						className={cn(STATS_CELL, CELL, item.href !== undefined && OPENS)}
+					>
+						{item.href !== undefined ? (
+							// biome-ignore lint/a11y/useAnchorContent: the hit covers the cell, named by its label
+							<a href={item.href} aria-label={item.label} className={HIT} />
+						) : null}
+						<span className={text({ role: "meta" })}>{item.label}</span>
+						<p className={cn(STATS_FIGURE, FIGURE)}>
+							<span className={text({ role: "figure" })}>
+								{number.format(item.value)}
+							</span>
+							{item.unit ? (
+								<span className={text({ role: "meta" })}>{item.unit}</span>
+							) : null}
+						</p>
+						{item.meta ? (
+							<p className={text({ role: "meta" })}>{item.meta}</p>
+						) : null}
+						{item.counts ? (
+							<p className={cn(text({ role: "meta" }), STATS_COUNTS, COUNTS)}>
+								{item.counts.map((count) => (
+									<Link key={`${count.href}${count.label}`} href={count.href}>
+										<span className={FIGURES}>
+											{number.format(count.value)}
+										</span>{" "}
+										{count.label}
+									</Link>
+								))}
+							</p>
+						) : null}
+					</li>
+				))}
+			</ul>
+		</div>
+	);
+}

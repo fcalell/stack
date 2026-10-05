@@ -411,6 +411,8 @@ export const OVERLAYS: readonly string[] = [
 	// the four columns (term, arrow, term, remove) size to their content or share what is left; no width token names an auto/fr template
 	"grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto]",
 	"grid-cols-subgrid",
+	// Stats
+	"page-tablet:basis-0",
 	// Table
 	"font-normal",
 	"p-0",

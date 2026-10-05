@@ -41,7 +41,7 @@ shadow, weight, tone, transition or state is a look, and a numeric dimension is 
 Every colour, size, radius and spacing is a contract token; never an arbitrary value
 (`h-[34px]`), a literal colour or a raw pixel size. Copy renders through `Text` (`body` or `meta`,
 with `strong`) or the molecule that owns its role (`title` is `Place`'s and `Screen`'s, `heading`
-`Section`'s); colour comes through a component's props.
+`Section`'s, `figure` `Stats`', `display` `Stat`'s); colour comes through a component's props.
 
 ## A picture is an `Image`
 
@@ -74,6 +74,20 @@ stage after the last done one. A feed of what happened is not a rail.
 
 ```tsx
 <Stages steps={request.stages} ended={request.rejection} />
+
+## Counts are `Stats` and `Stat`
+
+A strip of counts is `Stats`, never a `Columns` of `Text`: `items`, each a `StatSpec` (`label`,
+`value`, `unit`, `meta`) that is either the whole cell a link (`href`) or carries `counts` (each a
+`CountLink` with its own `href`), never both. Zeros are counts, drawn. It stands two cells to a row
+below `tablet`. One figure that is the focal point of its screen is a `Stat` (`label`, `value`, `unit`),
+once per screen, its label read after it ("2 need you"); a `Stats` cell's label is read before it.
+
+```tsx
+<Stats items={[
+  { label: "Projects", value: projects.length, href: "/projects" },
+  { label: "Tests", value: 1284, counts: [{ label: "failing", value: 3, href: "/tests/failing" }] },
+]} />
 ```
 
 ## Data, never nodes

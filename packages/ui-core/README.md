@@ -192,14 +192,14 @@ Status colors: `active` → `accent-ink`, `waiting` → `ink-meta`, `done` → `
 
 ## Type roles
 
-Seven roles named by use, each a ratio of the body size. Two rules decide which one a piece of
+Eight roles named by use, each a ratio of the body size. Two rules decide which one a piece of
 text takes. Size follows structure, never emphasis: the primary line of anything is `body`, a
 secondary line is `meta`, and emphasis inside a line is weight 500 (`strong`), never a size
 change. A size role names a place, once: `title` is the page's name, once per screen; `heading` a
 section's or a card's name, never inside a row; `caption` text inside a small component (a chip, a
-key hint), never a sentence; `code` what a machine reads. So there is no label role: a field label
+key hint), never a sentence; `code` what a machine reads; `figure` a count's number in a strip of them. So there is no label role: a field label
 and a row's leading cell are `body` at 500, a table header is `meta` at 500, menu and picker
-items are `body`. Weight, ink, family and, on `display`, tabular figures ride with the role; a molecule may set a role's weight in
+items are `body`. Weight, ink, family and, on `display` and `figure`, tabular figures ride with the role; a molecule may set a role's weight in
 its own cell, never a consumer.
 
 The body size is the one base, per density: 13 on desktop, 16 on touch, the input size below
@@ -209,6 +209,7 @@ pixel, a tie rounding up.
 | Role | Desktop, size / line | Touch, size / line | Weight | Ink | Used for |
 | --- | --- | --- | --- | --- | --- |
 | `display` | 36 / 40 | 44 / 48 | 500 | `ink-body` | a display number, one per screen, in tabular figures |
+| `figure` | 22 / 26 | 27 / 32 | 500 | `ink-body` | a count's number in a strip of them, in tabular figures |
 | `title` | 18 / 24 | 22 / 28 | 600 | `ink-body` | the page's name, once per screen |
 | `heading` | 15 / 20 | 18 / 24 | 600 | `ink-body` | a section's or a card's name, never inside a row |
 | `body` | 13 / 20 | 16 / 24 | 400 | `ink-body` | the primary line of anything: prose, a row, a field, a menu item |
@@ -216,7 +217,7 @@ pixel, a tie rounding up.
 | `caption` | 11 / 16 | 14 / 22 | 400 | `ink-meta` | text inside a small component, never a sentence |
 | `code` | 12 / 18 | 15 / 22 | 400, mono family | `ink-body` | what a machine reads |
 
-`strong` is 500; `display`, `title` and `heading` already sit at or above it. Tracking is in em
+`strong` is 500; `display`, `figure`, `title` and `heading` already sit at or above it. Tracking is in em
 and density-invariant: `display` -0.02, `title` -0.01, `heading` -0.005, `caption` 0.01; the rest
 carry none.
 
@@ -351,7 +352,7 @@ The canon binds every component either UI plugin ships:
    under an auth column `full`), and a call site may.
 6. `Text` draws `body` and `meta`, with `strong`; every other type role is drawn by the molecule
    that owns its place (`title` by `Page` and `Screen`, `heading` by `Section` and `Card`,
-   `caption` by `Chip` and `Kbd`, `code` by `Code`, `display` by `Stat`). `TEXT` keeps all seven
+   `caption` by `Chip` and `Kbd`, `code` by `Code`, `display` by `Stat`, `figure` by `Stats`). `TEXT` keeps all eight
    roles as the table those owners draw from.
 2. A composed region is data: an act is an `Act`, a row's marks a `StatusMark` and a `ChipMark`, a place is a `PlaceSpec`, what the
    shell switches between is a `Switcher` (a pick: options carrying their avatars, the current
@@ -378,7 +379,7 @@ The canon binds every component either UI plugin ships:
 
 ## The roster
 
-`ROSTER` in `@fcalell/ui-core/roster` is the closed list: 60 components in four layers (atoms,
+`ROSTER` in `@fcalell/ui-core/roster` is the closed list: 62 components in four layers (atoms,
 layout molecules, shared molecules, content molecules), each with its prop names, the cells it
 draws (`draws`: a `FAMILIES` name for every cell of that family, `FAMILY.axis.value` for one of
 its cells, as `Text` draws `TEXT.role.body`, or a single-cell constant of `./variants`) and the states it

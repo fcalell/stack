@@ -185,8 +185,8 @@ a tick with no animation, never jumped to full.
   shared `flex-row` would be wrong on one). What a component is given (an act, a family, a
   checked value, an error) is an axis; where the pointer or focus is on it (hover, press, focus,
   disabled, pending) is an overlay. A type role's cell carries its ink and, for `mono`,
-  its family, since RN Text inherits nothing and both platforms bind `--font-mono`; `display`
-  carries `tabular-nums`, a stat's figures at one width (uniwind maps it to `fontVariant`; native redeclares the utility plain, since Tailwind composes it from unset `--tw-*` variables that uniwind from 1.11 resolves to empty tokens React Native logs as unsupported). A
+  its family, since RN Text inherits nothing and both platforms bind `--font-mono`; `display` and `figure`
+  carry `tabular-nums`, a stat's figures at one width (uniwind maps it to `fontVariant`; native redeclares the utility plain, since Tailwind composes it from unset `--tw-*` variables that uniwind from 1.11 resolves to empty tokens React Native logs as unsupported). A
   labelled act's fill (`BUTTON`, `CHIP`) carries the ink as well, since the web glyph and
   spinner inside it draw in the current colour.
 - An atom's or a molecule's (layout, shared, content) class strings are split on this line: a part with an axis (a state, a ground, a fit, what it holds)
@@ -794,6 +794,29 @@ a tick with no animation, never jumped to full.
   element carrying the meter role. The `List`'s `meter` map takes `counts` (a function of the item,
   exclusive with `meta`) and `mark`.
 - A `StepCount` (`{ at, of }`) is an onboarding flow's place in it: `of` segments (two to four) at the `meter` height (`STEP_COUNT_SEGMENT {state}`, radius `chip`, a gap `inside` apart), the steps before `at` `done`, `at` `current` and the rest `later` (`stepStateOf`, so both platforms draw one state per segment), over "Step n of m" (the slot word `stepOf`) at meta, which is also the component's accessible name. `done` and `current` fill `ink-meta`, `later` `fill-neutral`, never the accent, which the rubric leaves to checked controls and the active dot. It is an atom, not a prop on `Place`, `Form` or `Sheet`: an onboarding step can be any of the three. It takes the count alone, not a `Step[]`: onboarding steps carry no label or date.
+
+- A count strip is `Stats` (`items: StatSpec[]`) and one display figure is `Stat`, the two
+  members of one figure-with-its-label mechanism. The strip is one hairline card (`STATS`) whose
+  cells draw their own top and start hairline (`STATS_CELL`) so it splits wherever the cells
+  wrap, which `divide-*` cannot do and native has not; a platform overlay bleeds the cells by a
+  hairline and the card clips the outer ones. A cell is the label in meta over its figure at the
+  `figure` role (a ratio of the body, 1.69, so 22 desktop and 27 touch at 500 and tabular: the
+  strip's measured range is 18 to 26, and a body-strong figure reads as meta-sized beside its
+  label) with a unit muted beside it, then a meta line or the cell's sub-counts as `Link`s, or the
+  whole cell a link to its `href` (a hit over the cell with the row wash), never both, since a
+  cell inside a link cannot hold links: `StatSpec` types the two exclusive. Zeros are drawn.
+  Cells stand in one row from `tablet` of the page and two to a row below it and on the phone;
+  an odd count ends on one cell across its row. `Stat` is the
+  figure first at `display` with its label in meta under it (read "2, need you", where a strip's
+  cell is label-first because its label names which count), one per screen as the role's rule
+  says. A waiting strip is four cells at the loaded cell's label and figure line boxes, since
+  its length is the data's, so its width changes on load by the cells' number and its height by
+  the meta line or counts a loaded cell may add.
+- The phone `Link` takes an `href` of either kind and decides by its shape: a path from the root
+  navigates through `lib/navigate` (as a row's `href` does) and anything else (a scheme, or a
+  protocol-relative `//`) opens through `Linking`. Both platforms' `href` is a string, so the
+  props stay the same; the router's route types are checked where a `Route` is a prop
+  (`CountLink`, a row), not in the Link's string.
 - On the web every route reader shares the page's one `popstate` listener (`useRoute` in
   `lib/navigate`). A List reads the route once and hands it to its rows through `ListedRoute`,
   internal: a row's `useRoute` takes it from there and subscribes to nothing, and a ListRow or
@@ -894,7 +917,7 @@ a tick with no animation, never jumped to full.
   satisfy. Rejected: optional
   `value` and `onChange` on every control read from the field's context, which would compile a
   control with no value anywhere and could not type a boolean field against an `Input`.
-- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 60 components in four
+- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 62 components in four
   layers (atoms, layout molecules, shared molecules, content molecules) with their prop names,
   the cells each draws (a whole matrix family, one family cell as `FAMILY.axis.value`, or a single
   cell) and the states it has a form for, the same in both plugins; the showcase draws exactly those matrix cells and states. Each plugin's verify suite reads every component's exported props type
@@ -996,7 +1019,7 @@ a tick with no animation, never jumped to full.
   frames (a guess against Base UI's own focus).
 - `Text` draws `body` and `meta` (plus `strong`) and names those roles' cells of `TEXT` and
   `TEXT_STRONG`, not either family; every other type role is drawn by the molecule that owns
-  its place, and `TEXT` keeps all seven roles as the one table those owners draw from.
+  its place, and `TEXT` keeps all eight roles as the one table those owners draw from.
 - Tokens are enforced by ownership: a token names a place, and the component that owns the place
   draws it. A component declares `owns` on its entry, the type roles,
   colours (a name, or a family prefix ending in `-`), radii, spacing roles, sizes and widths, and

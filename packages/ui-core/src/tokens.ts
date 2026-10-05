@@ -558,11 +558,13 @@ export function stagesShown<T extends { state: string }>(
 // size change. A size role names a place, once: `title` is the page's name,
 // once per screen; `heading` a section's or a card's name, never inside a
 // row; `caption` text inside a small component (a chip, a key hint), never
-// a sentence; `code` what a machine reads. So there is no label role: a
+// a sentence; `code` what a machine reads; `figure` a count's number in a
+// strip of them, between `display` (one per screen) and `title`. So there is no label role: a
 // field label and a row's leading cell are `body` at 500, a table header is
 // `meta` at 500, menu and picker items are `body`.
 export const TYPE_ROLES = [
 	"display",
+	"figure",
 	"title",
 	"heading",
 	"body",
@@ -591,7 +593,7 @@ export const BODY_SIZE: Record<Density, number> = { desktop: 13, touch: 16 };
 // of the size, its line box rounded to the even pixel (a tie rounds up).
 // Tracking is in em and density-invariant. Ink is a color role, family a
 // font role.
-// `tabular` draws the figures at one width: a display is a stat.
+// `tabular` draws the figures at one width: a display and a figure are stats.
 export interface TypeRoleSpec {
 	size: number;
 	leading: number;
@@ -605,6 +607,14 @@ export const TYPE_SCALE: Record<TypeRole, TypeRoleSpec> = {
 	display: {
 		size: 2.77,
 		leading: 1.1,
+		weight: "medium",
+		ink: "ink-body",
+		family: "sans",
+		tabular: true,
+	},
+	figure: {
+		size: 1.69,
+		leading: 1.2,
 		weight: "medium",
 		ink: "ink-body",
 		family: "sans",

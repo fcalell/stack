@@ -2334,6 +2334,66 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				sizes: ["icon-meta", "dot"],
 			},
 		},
+		// A strip of counts in one hairline card, its cells split by hairlines:
+		// each a label over its figure (a unit beside it), then a meta line or
+		// sub-counts (links composed from `Link`), or the whole cell a link to
+		// its `href`, never both. Zeros are drawn. Cells stand in a row, two to a
+		// row below `tablet` of the page and on the phone.
+		Stats: {
+			props: ["items", "loading"],
+			draws: [
+				"FIGURES",
+				"LINE_BOX.role.figure",
+				"LINE_BOX.role.meta",
+				"SKELETON.kind.line",
+				"STATS",
+				"STATS_CELL",
+				"STATS_COUNTS",
+				"STATS_FIGURE",
+				"TEXT.role.figure",
+				"TEXT.role.meta",
+			],
+			holds: ["STATS", "STATS_CELL", "STATS_FIGURE", "STATS_COUNTS"],
+			states: ["rest", "loading"],
+			owns: {
+				roles: ["figure", "meta"],
+				colors: [
+					"edge",
+					"surface",
+					"ink-body",
+					"ink-meta",
+					"skeleton",
+					"wash-hover",
+					"wash-press",
+				],
+				radii: ["card", "chip"],
+				spacing: ["pair", "inside", "card"],
+				sizes: ["skeleton"],
+			},
+		},
+		// One figure at the `display` role, its label under it (figure first, read
+		// "2, need you"), a unit beside the figure. One per screen.
+		Stat: {
+			props: ["label", "value", "unit", "loading"],
+			draws: [
+				"LINE_BOX.role.display",
+				"LINE_BOX.role.meta",
+				"SKELETON.kind.line",
+				"STAT",
+				"STAT_FIGURE",
+				"TEXT.role.display",
+				"TEXT.role.meta",
+			],
+			holds: ["STAT", "STAT_FIGURE"],
+			states: ["rest", "loading"],
+			owns: {
+				roles: ["display", "meta"],
+				colors: ["ink-body", "ink-meta", "skeleton"],
+				radii: ["chip"],
+				spacing: ["pair", "inside"],
+				sizes: ["skeleton"],
+			},
+		},
 		// A collection: columns over time in the chip marks, stacked by one
 		// dimension, its bars from `query` or `items` through the `bar` map;
 		// `label` names what it counts, the plot and the visually hidden table

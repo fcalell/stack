@@ -53,6 +53,8 @@ import { Comparison } from "@fcalell/plugin-native-ui/components/comparison";
 import { Message } from "@fcalell/plugin-native-ui/components/message";
 import { MessageInput } from "@fcalell/plugin-native-ui/components/message-input";
 import { Meter } from "@fcalell/plugin-native-ui/components/meter";
+import { Stat } from "@fcalell/plugin-native-ui/components/stat";
+import { Stats } from "@fcalell/plugin-native-ui/components/stats";
 import { BarChart } from "@fcalell/plugin-native-ui/components/bar-chart";
 import { QrCode } from "@fcalell/plugin-native-ui/components/qr-code";
 import { Image } from "@fcalell/plugin-native-ui/components/image";
@@ -1054,6 +1056,39 @@ export const closure = (
 		<Stages steps={[]} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<Stages steps={[]} placeholderTextColorClassName="text-ink-body" />
+		<Stats items={[{ label: "a", value: 1 }]} />
+		<Stats items={[{ label: "a", value: 1, href: "/a" }, { label: "a", value: 1, counts: [{ label: "a", value: 1, href: "/a" }] }]} />
+		{/* @ts-expect-error: a cell is a link or holds links, never both */}
+		<Stats items={[{ label: "a", value: 1, href: "/a", counts: [{ label: "a", value: 1, href: "/a" }] }]} />
+		<Stat label="a" value={1} />
+		{/* @ts-expect-error: closed channel */}
+		<Stats items={[]} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Stats items={[]} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Stats items={[]} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Stats items={[]} classList={{}} />
+		{/* @ts-expect-error: closed channel */}
+		<Stats items={[]} colorClassName="text-ink-body" />
+		{/* @ts-expect-error: closed channel */}
+		<Stats items={[]} selectionColorClassName="text-ink-body" />
+		{/* @ts-expect-error: closed channel */}
+		<Stats items={[]} placeholderTextColorClassName="text-ink-body" />
+		{/* @ts-expect-error: closed channel */}
+		<Stat label="a" value={1} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Stat label="a" value={1} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Stat label="a" value={1} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Stat label="a" value={1} classList={{}} />
+		{/* @ts-expect-error: closed channel */}
+		<Stat label="a" value={1} colorClassName="text-ink-body" />
+		{/* @ts-expect-error: closed channel */}
+		<Stat label="a" value={1} selectionColorClassName="text-ink-body" />
+		{/* @ts-expect-error: closed channel */}
+		<Stat label="a" value={1} placeholderTextColorClassName="text-ink-body" />
 		<Image src="a" alt="a" />
 		{/* @ts-expect-error: closed channel */}
 		<Image src="a" alt="a" className="x" />

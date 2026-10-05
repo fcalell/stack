@@ -13,7 +13,7 @@ const OVERLAY: Record<LinkFit, string> = {
 
 /** A navigation to another place. */
 export interface LinkProps extends Closed {
-	/** Where it goes. */
+	/** Where it goes: a route of the app or an external URL. */
 	href: string;
 	/** Inside a line of text (the default), or on its own at the target height. */
 	fit?: LinkFit;
