@@ -1,7 +1,7 @@
 import { Input as Control } from "@base-ui/react/input";
 import { cn } from "@fcalell/ui-core/cn";
 import type { PickedFile } from "@fcalell/ui-core/descriptors";
-import { accepts } from "@fcalell/ui-core/file";
+import { accepts, kindsOf } from "@fcalell/ui-core/file";
 import { formatterFor } from "@fcalell/ui-core/format";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
@@ -41,7 +41,7 @@ const BYTES = {
 	style: "unit",
 	unit: "byte",
 	notation: "compact",
-	unitDisplay: "narrow",
+	unitDisplay: "short",
 } as const;
 
 /** One file chosen or dropped, the control a `FormField` labels, describes and marks in error. */
@@ -65,7 +65,7 @@ export function FileInput({ value, onChange, accept }: FileInputProps) {
 			refuse?.(
 				filled(words.wrongType, {
 					name: file.name,
-					types: accept.join(", "),
+					types: kindsOf(accept, words).join(", "),
 				}),
 			);
 			return;
@@ -122,7 +122,7 @@ export function FileInput({ value, onChange, accept }: FileInputProps) {
 					)}
 				>
 					<input {...control} className={PICK} />
-					<Icon name="FileUp" fit="control" />
+					<Icon name={value ? "File" : "FileUp"} fit="control" />
 					<span
 						className={cn(
 							fieldValue({ kind: "text" }),

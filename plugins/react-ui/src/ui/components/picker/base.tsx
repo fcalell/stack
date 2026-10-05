@@ -10,7 +10,7 @@ import type {
 import { toggled } from "@fcalell/ui-core/list-state";
 import type { ChipFamily } from "@fcalell/ui-core/tokens";
 import {
-	CHIPS_BOX,
+	CHIPS_RUN,
 	CHIPS_TRIGGER,
 	FIELD_GLYPH,
 	FIELD_PLACEHOLDER,
@@ -64,12 +64,13 @@ const FIELD_OPEN = "outline-2 outline-offset-2 outline-ring";
 // cell or column it stands in for.
 const FILL = "w-full";
 const FIELD_VALUE = "min-w-0 grow truncate";
-// A pick of several: the box wraps its chips, and the trigger that opens the
-// list fills the line after them, its chevron at the box's end.
-const SEVERAL_BOX =
-	"flex flex-wrap items-center min-w-0 hover:border-edge-hover";
+// A pick of several: the chips wrap in a run, and the trigger that opens the
+// list stands beside it, filling what the run leaves, its chevron at the box's
+// end; the run wraps, so the chevron never takes a line of its own.
+const SEVERAL_BOX = "flex items-stretch min-w-0 hover:border-edge-hover";
+const SEVERAL_RUN = "flex flex-wrap items-center gap-inside min-w-0";
 const SEVERAL_TRIGGER =
-	"flex grow self-stretch items-center justify-between min-w-target text-start";
+	"flex grow shrink-0 items-center justify-end min-w-target text-start";
 // A row-fit trigger centres in its row and pulls back by its own padding at
 // the row's end; it stands over a row's hit. Open, it holds the press wash
 // and the value takes the body ink.
@@ -116,6 +117,8 @@ const ACT_SLOT = "flex flex-col border-t pt-float";
 const ACT_ROW =
 	"flex items-center text-start hover:bg-wash-hover active:bg-wash-press focus-visible:-outline-offset-2";
 const ACT_GLYPH = "flex shrink-0 text-ink-meta";
+
+const NO_MATCHES = "flex items-center";
 
 const SEARCH_PAST = 6;
 
@@ -243,6 +246,21 @@ function PickAct(props: {
 	);
 }
 
+// What a search that matches nothing says, on a row of the list.
+function NoMatches(props: { ground: RowGround; children: ReactNode }) {
+	return (
+		<div
+			className={cn(
+				row({ ground: props.ground }),
+				text({ role: "meta" }),
+				NO_MATCHES,
+			)}
+		>
+			{props.children}
+		</div>
+	);
+}
+
 function GroupLabel(props: { children: ReactNode }) {
 	return (
 		<div
@@ -300,6 +318,8 @@ export function PickerBase<V extends string | null = string>(
 	const value = isSeveral(props) ? undefined : props.value;
 	const set = several?.value;
 	const touch = useTouch();
+	const box = useRef<HTMLDivElement>(null);
+	const run = useRef<HTMLDivElement>(null);
 	// In a table cell the pick mounts open as its edit starts, and its list
 	// gone, its leave played, ends the edit. The list hands focus back to the
 	// cell as it unmounts (after its option's own press has focused it), unless
@@ -382,28 +402,41 @@ export function PickerBase<V extends string | null = string>(
 				{status ?? current?.label ?? label}
 			</span>
 		);
+	// A removed chip hands focus to the next chip's remove act, else the
+	// previous one's, else the trigger.
+	const removeChip = (picks: Several<V>, option: Option<V>, at: number) => {
+		const chips = run.current?.children;
+		const near = chips?.[at + 1] ?? chips?.[at - 1];
+		const next = near?.querySelector("button") ?? box.current?.lastElementChild;
+		picks.onChange(toggled(picks.value, option.value));
+		if (next instanceof HTMLElement) next.focus();
+	};
 	// The chips of a pick of several each hold their own remove act, so the
 	// box is no button: the trigger that opens the list stands after them.
 	const severalBox = (handed: Handed, picks: Several<V>) => (
 		<div
+			ref={box}
 			className={cn(
 				field({ fit: "bar" }),
 				picker({ fit: "bar" }),
 				FIELD_GLYPH,
-				CHIPS_BOX,
 				SEVERAL_BOX,
 				FILL,
 				open && FIELD_OPEN,
 			)}
 		>
-			{chosen.map((option) => (
-				<Chip
-					key={String(option.value)}
-					family="neutral"
-					label={option.label}
-					onRemove={() => picks.onChange(toggled(picks.value, option.value))}
-				/>
-			))}
+			{chosen.length > 0 ? (
+				<div ref={run} className={cn(CHIPS_RUN, SEVERAL_RUN)}>
+					{chosen.map((option, at) => (
+						<Chip
+							key={String(option.value)}
+							family="neutral"
+							label={option.label}
+							onRemove={() => removeChip(picks, option, at)}
+						/>
+					))}
+				</div>
+			) : null}
 			<button
 				{...handed}
 				type="button"
@@ -556,8 +589,8 @@ interface PickParts<V extends string | null> {
 	several?: Several<V>;
 }
 
-// Where a desktop list hands focus as it closes: Base UI's own return, or
-// what a table cell's pick names.
+// Where a desktop list hands focus as it closes: Base UI's own return,
+// or what a table cell's pick names.
 type FinalFocus = true | (() => HTMLElement | false);
 
 // The desktop list of six options or fewer: Base UI's select supplies the
@@ -665,6 +698,7 @@ function PickSearch<V extends string | null>(
 	return (
 		<Combobox.Root
 			items={props.groups}
+			autoHighlight
 			multiple={props.several !== undefined}
 			value={props.several ? props.chosen : (props.current ?? null)}
 			onValueChange={(next) => {
@@ -743,6 +777,9 @@ function PickSearch<V extends string | null>(
 								</Combobox.Group>
 							)}
 						</Combobox.List>
+						<Combobox.Empty
+							render={<NoMatches ground="list">{words.noMatches}</NoMatches>}
+						/>
 						{props.act ? (
 							<PickAct
 								act={props.act}
@@ -822,6 +859,7 @@ function PickRows<V extends string | null>(
 		first: RefObject<HTMLButtonElement | null>;
 	},
 ) {
+	const words = useWords();
 	const [search, setSearch] = useState("");
 	const typed = search.trim().toLowerCase();
 	const shown = props.groups
@@ -893,6 +931,9 @@ function PickRows<V extends string | null>(
 					</div>
 				))}
 			</div>
+			{shown.length === 0 ? (
+				<NoMatches ground="group">{words.noMatches}</NoMatches>
+			) : null}
 			{props.act ? (
 				<PickAct
 					act={props.act}

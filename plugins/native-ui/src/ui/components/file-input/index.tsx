@@ -1,5 +1,5 @@
 import type { PickedFile } from "@fcalell/ui-core/descriptors";
-import { accepts, pickerTypes } from "@fcalell/ui-core/file";
+import { accepts, kindsOf, pickerTypes } from "@fcalell/ui-core/file";
 import { formatterFor } from "@fcalell/ui-core/format";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
@@ -30,7 +30,7 @@ const BYTES = {
 	style: "unit",
 	unit: "byte",
 	notation: "compact",
-	unitDisplay: "narrow",
+	unitDisplay: "short",
 } as const;
 
 export interface FileInputProps extends Closed {
@@ -64,7 +64,10 @@ export function FileInput({ value, onChange, accept }: FileInputProps) {
 		const file = pickedFromDocument(asset);
 		if (!accepts(file, accept)) {
 			refuse?.(
-				filled(words.wrongType, { name: file.name, types: accept.join(", ") }),
+				filled(words.wrongType, {
+					name: file.name,
+					types: kindsOf(accept, words).join(", "),
+				}),
 			);
 			return;
 		}
@@ -96,7 +99,7 @@ export function FileInput({ value, onChange, accept }: FileInputProps) {
 				className="flex-1 flex-row items-center gap-inside min-w-0"
 			>
 				<Ink.Provider value={ink}>
-					<Icon name="FileUp" fit="control" />
+					<Icon name={value ? "File" : "FileUp"} fit="control" />
 				</Ink.Provider>
 				<RNText
 					numberOfLines={1}

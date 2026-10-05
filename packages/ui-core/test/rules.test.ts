@@ -12,6 +12,7 @@ import {
 	marked,
 	PICKED_GLYPH,
 	pairSet,
+	ruleName,
 	termLabel,
 	termSet,
 } from "../src/rules.ts";
@@ -63,6 +64,31 @@ test("a term is named by what it picks", () => {
 	assert.equal(termLabel(pick()), "Field");
 	assert.equal(termLabel(picks([])), "Values");
 	assert.equal(termLabel(either({})), "Source");
+});
+
+test("a rule's remove act is named by what the rule holds", () => {
+	const pair = (from: string, to?: string): RuleTerms => ({
+		from: either({ typed: from }),
+		to: pick(to),
+	});
+	assert.equal(ruleName(pair("checkout", "url")), "Source, checkout, URL");
+	assert.equal(ruleName(pair("", undefined)), "Source");
+	assert.notEqual(
+		ruleName(pair("checkout", "url")),
+		ruleName(pair("signup", "url")),
+	);
+	assert.equal(
+		ruleName({
+			field: pick("page").pick,
+			operator: "in",
+			value: picks(["url", "who"]),
+		}),
+		"Field, Page type, in, URL, Visitor",
+	);
+	assert.equal(
+		ruleName({ field: pick().pick, operator: "is", value: either({}) }),
+		"Field, is",
+	);
 });
 
 test("a typed value is told from a picked one", () => {

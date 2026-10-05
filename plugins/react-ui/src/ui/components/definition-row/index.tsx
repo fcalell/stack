@@ -165,7 +165,9 @@ export function DefinitionRow({
 			locked.href === undefined ? (
 				locked.reason
 			) : (
-				<Link href={locked.href}>{locked.reason}</Link>
+				<Link href={locked.href} fit="standalone">
+					{locked.reason}
+				</Link>
 			);
 	return (
 		<div

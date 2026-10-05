@@ -5,14 +5,14 @@ import type {
 	Rule,
 	RuleValue,
 } from "@fcalell/ui-core/descriptors";
-import { isTyped, marked, pairSet, termLabel } from "@fcalell/ui-core/rules";
+import { isTyped, marked, pairSet, ruleName } from "@fcalell/ui-core/rules";
 import {
 	RULE_CARD,
 	RULE_ROW,
 	RULES,
 	ruleArrow,
 } from "@fcalell/ui-core/variants";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { InlineField } from "../../lib/field.ts";
 import { useTouch } from "../../lib/media.ts";
@@ -100,14 +100,15 @@ function Term<V extends string | null>({ value }: { value: RuleValue<V> }) {
 
 function RuleRow<V extends string | null>({
 	rule,
+	onRemove,
 	touch,
 }: {
 	rule: Rule<V>;
+	onRemove: (() => void) | undefined;
 	touch: boolean;
 }) {
 	const words = useWords();
 	const { terms } = rule;
-	const named = terms.from ? termLabel(terms.from) : terms.field.label;
 	const middle = terms.from ? (
 		<span
 			className={cn(
@@ -123,13 +124,13 @@ function RuleRow<V extends string | null>({
 	// The grid's fourth column stands empty for a rule that cannot go; a
 	// stacked card has no column to hold.
 	const absent = touch ? null : <span />;
-	const remove = rule.onRemove ? (
-		<span className={cn(MARK, touch && REMOVE_END)}>
+	const remove = onRemove ? (
+		<span data-rule-remove="" className={cn(MARK, touch && REMOVE_END)}>
 			<IconButton
 				icon="X"
 				fit="bar"
-				label={`${words.remove} ${named}`}
-				onAct={rule.onRemove}
+				label={`${words.remove} ${ruleName(terms)}`}
+				onAct={onRemove}
 			/>
 		</span>
 	) : (
@@ -159,8 +160,31 @@ export function Rules<V extends string | null = string>({
 	add,
 }: RulesProps<V>) {
 	const touch = useTouch();
+	const list = useRef<HTMLElement | null>(null);
+	// One ref for the list element of either density, a `ul` or a `div`.
+	const hold = (element: HTMLElement | null) => {
+		list.current = element;
+	};
+	const removable = rules.filter((rule) => rule.onRemove);
+	// A removed rule hands focus to the next row's remove act, else the
+	// previous one's, else the add act, so a keyboard viewer keeps their place.
+	const removeRule = (rule: Rule<V>) => () => {
+		const acts = list.current?.querySelectorAll("[data-rule-remove] button");
+		const at = removable.indexOf(rule);
+		const next =
+			acts?.[at + 1] ??
+			acts?.[at - 1] ??
+			list.current?.querySelector("[data-rule-add] button");
+		rule.onRemove?.();
+		if (next instanceof HTMLElement) next.focus();
+	};
 	const rows = rules.map((rule) => (
-		<RuleRow key={rule.id} rule={rule} touch={touch} />
+		<RuleRow
+			key={rule.id}
+			rule={rule}
+			onRemove={rule.onRemove && removeRule(rule)}
+			touch={touch}
+		/>
 	));
 	const act = add ? (
 		<Button
@@ -175,20 +199,24 @@ export function Rules<V extends string | null = string>({
 	) : null;
 	if (touch)
 		return (
-			<div className={STACK}>
+			<div ref={hold} className={STACK}>
 				{rows.length > 0 ? (
 					// biome-ignore lint/a11y/useSemanticElements: the Group's card sits between the list and its cards, and a `ul` over it cannot hold its `div`
 					<div role="list" className={GROUP_SLOT}>
 						<Group>{rows}</Group>
 					</div>
 				) : null}
-				{act}
+				{act ? <div data-rule-add="">{act}</div> : null}
 			</div>
 		);
 	return (
-		<ul className={cn(RULES, GRID)}>
+		<ul ref={hold} className={cn(RULES, GRID)}>
 			{rows}
-			{act ? <li className={ADD}>{act}</li> : null}
+			{act ? (
+				<li data-rule-add="" className={ADD}>
+					{act}
+				</li>
+			) : null}
 		</ul>
 	);
 }

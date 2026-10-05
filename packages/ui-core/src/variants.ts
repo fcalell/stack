@@ -362,12 +362,13 @@ export const FIELD_PLACEHOLDER = "text-ink-meta";
 // A field's unit after its value, and its glyph (search, chevron).
 export const FIELD_UNIT = "text-body leading-body font-normal text-ink-meta";
 export const FIELD_GLYPH = "text-ink-meta";
-// A field's box around a pick of several: its chips wrap inside it, inset
-// above and below by what centres a chip in the compact control (so one line of
-// chips stands at the control's height); the trigger after them reaches back
-// across the inset, so its hit stays the box's height.
-export const CHIPS_BOX = "py-chips-inset";
-export const CHIPS_TRIGGER = "-my-chips-inset py-chips-inset";
+// A pick of several's chips wrap in a run inside its field box, inset above
+// and below by what centres a chip in the compact control (so one line of
+// chips stands at the box's bar-fit height, border included); the trigger
+// beside the run reaches across the box's border, so its hit is the box's
+// height.
+export const CHIPS_RUN = "py-chips-inset";
+export const CHIPS_TRIGGER = "-my-hairline py-hairline";
 // A text area's value: three body lines at least, a line more for each past them.
 export const TEXT_AREA_VALUE = "min-h-text-area";
 // A one-time code's row of boxes and the digit in each.

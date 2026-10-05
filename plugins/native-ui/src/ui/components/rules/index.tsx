@@ -4,7 +4,7 @@ import type {
 	Rule,
 	RuleValue,
 } from "@fcalell/ui-core/descriptors";
-import { isTyped, marked, pairSet, termLabel } from "@fcalell/ui-core/rules";
+import { isTyped, marked, pairSet, ruleName } from "@fcalell/ui-core/rules";
 import {
 	RULE_CARD,
 	RULE_ROW,
@@ -92,7 +92,6 @@ function Term<V extends string | null>({ value }: { value: RuleValue<V> }) {
 function RuleRow<V extends string | null>({ rule }: { rule: Rule<V> }) {
 	const words = useWords();
 	const { terms } = rule;
-	const named = terms.from ? termLabel(terms.from) : terms.field.label;
 	const middle = terms.from ? (
 		<View className={MARK}>
 			<Ink.Provider
@@ -118,7 +117,7 @@ function RuleRow<V extends string | null>({ rule }: { rule: Rule<V> }) {
 					<IconButton
 						icon="X"
 						fit="bar"
-						label={`${words.remove} ${named}`}
+						label={`${words.remove} ${ruleName(terms)}`}
 						onAct={rule.onRemove}
 					/>
 				</View>

@@ -132,14 +132,16 @@ export const BUTTON_LABEL = matrix({
 });
 
 // An icon-only act: square, no boundary at rest, in the meta ink. `field`
-// sits inside a field's end, at the compact square.
+// sits inside a field's end, at the compact square, reaching across the box's
+// border so a bar-fit box (the compact control's height, border included)
+// holds it at its own height.
 export const ICON_BUTTON = matrix({
 	base: "rounded-control text-ink-meta",
 	variants: {
 		fit: {
 			body: "size-control",
 			bar: "size-control-compact",
-			field: "size-control-compact",
+			field: "size-control-compact -my-hairline",
 		},
 	},
 	defaultVariants: { fit: "body" },

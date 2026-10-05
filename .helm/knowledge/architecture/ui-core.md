@@ -95,8 +95,10 @@ its rationale.
   the height a part standing on a wrapped title's first line is pinned to, so a taller part
   overflows it centred, a height set where a `min-h` would grow with its tallest part) and
   `figures`, four tabular figures at the code size, held by a diff's number columns and a file row's
-  count lanes), and one derived from two sizes: `chips-inset`, what the compact control has over a
-  chip, halved (4/10, a pick of several's vertical inset). The thumbnail's name is not `thumb`,
+  count lanes), `hairline` (1/1, a field box's border: an act inside a bar-fit box reaches across it
+  with `-my-hairline`, so the box stays at the compact control's height, border included) and one
+  derived from two sizes: `chips-inset`, what the compact control has over a chip, halved, less the
+  border (3/9, a pick of several's vertical inset). The thumbnail's name is not `thumb`,
   which the switch's knob holds: `size-*` and `max-w-*` read one `--spacing-*` namespace. A size
   counted in figures is px at `MONO_ADVANCE` (Plex Mono's 0.6 em), never a `ch` width, because
   uniwind has no `ch` unit and native draws the figures too; a named mono with a wider advance
@@ -193,7 +195,7 @@ Every word a molecule draws or reads aloud on its own (the seven `Status` words,
 `edit`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`,
 `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `downloadFailed`, `latest`,
 `missing`, `chooseFile`, `typeValue`, `pickValue`, `locked`, `warning`, `photos`, `files`,
-`changed`, `unchanged`, `stale`, `chooseAll`, `chooseNone`, `expand`, `collapse`, the counted
+`changed`, `unchanged`, `stale`, `chooseAll`, `chooseNone`, `noMatches`, `imageFiles`, `audioFiles`, `videoFiles`, `textFiles`, `expand`, `collapse`, the counted
 `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`,
 `linesRemoved`, `changedFrom`, `wrongType`, `stepOf` and `chosenOf`) comes from `words`, a closed
 typed object with English defaults. The `Words` type requires every key and `wordsSchema` is strict,
@@ -283,12 +285,16 @@ a tick with no animation, never jumped to full.
 - A pick of several is the Picker given an array `value` (`MultiPick`), never a second component:
   the list's rows tick, it stays open while the viewer picks (Base UI's `multiple` on the select
   and the combobox, a toggle in the touch sheet), and the box holds one removable neutral `Chip`
-  per value in a wrapping row, so it grows past the bar height only when the chips wrap, the
-  chips inset above and below by what centres one in the bar height (`CHIPS_BOX`, the derived
-  size `chips-inset`; the trigger reaches back across it, `CHIPS_TRIGGER`, so its hit stays the
-  box's height). A chip's remove act hears the set with its value toggled out (`toggled`). The chips
-  hold their own remove acts, so the box is no button: the trigger that opens the list is a
-  button after the chips, filling the line, and the box is a `div` on the field cells. The
+  per value in a wrapping run, so it grows past the bar height only when the chips wrap, the
+  run inset above and below by what centres one in the bar height, border included (`CHIPS_RUN`,
+  the derived size `chips-inset`; the trigger reaches across the inset and the border,
+  `CHIPS_TRIGGER`, so its hit is the box's height). A chip's remove act hears the set with its
+  value toggled out (`toggled`) and hands focus to the next chip's remove, else the previous
+  one's, else the trigger. The chips hold their own remove acts, so the box is no button: the
+  trigger that opens the list is a button beside the run, filling what the run leaves with its
+  chevron at the box's end (the run wraps, so the chevron never takes a line), and the box is a
+  `div` on the field cells. A search that matches nothing draws `noMatches` on a row of the
+  list. The
   rows tick as a single pick's do (`Check`), not a `CHECKBOX` per row, since an option row is
   the one interactive element and a checkbox inside it would nest a second. The types are two
   overloads on `value` (`PickOneProps`, `PickSeveralProps`), each handler's parameter typed by

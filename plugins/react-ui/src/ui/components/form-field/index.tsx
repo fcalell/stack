@@ -146,10 +146,20 @@ function FieldBody<V>(props: FormFieldProps<V>) {
 	const form = formOf(control);
 	const root = useRef<HTMLDivElement>(null);
 	const wasFolded = useRef(folded);
-	// The field unfolding hands focus to its control, which it owns.
+	// The field unfolding hands focus to its control, which it owns; folding
+	// over a focused control (focus then falls to the page) hands it to the
+	// summary's Edit act, a frame later: an Enter that commits would otherwise
+	// reach the Edit act's own press.
 	useEffect(() => {
-		if (wasFolded.current && !folded) focusFirst(root.current);
+		const was = wasFolded.current;
 		wasFolded.current = folded;
+		if (was && !folded) focusFirst(root.current);
+		if (was || !folded || document.activeElement !== document.body)
+			return undefined;
+		const frame = requestAnimationFrame(() =>
+			root.current?.querySelector("button")?.focus(),
+		);
+		return () => cancelAnimationFrame(frame);
 	}, [folded]);
 	const labelId = useId();
 	const saidId = useId();

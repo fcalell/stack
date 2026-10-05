@@ -75,6 +75,7 @@ import {
 	fallbackFace,
 	filled,
 	GAP_ROLES,
+	HAIRLINE_PX,
 	KNOB_DEFAULTS,
 	LOOP_MS,
 	MEASURE_CHARACTERS,
@@ -726,12 +727,12 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(TYPE_ROLES.length, 8, "type role count");
 	requireEqual(SPACING_ROLES.length, 11, "spacing role count");
 	requireEqual(GAP_ROLES.length, 6, "gap role count");
-	requireEqual(SIZES.length, 35, "size count");
+	requireEqual(SIZES.length, 36, "size count");
 	requireEqual(RADIUS_ROLES.length, 7, "radius role count");
 	requireEqual(SHADOW_LEVELS.length, 2, "shadow level count");
 	requireEqual(WIDTHS.length, 13, "width count");
 	requireEqual(BREAKPOINTS.length, 3, "breakpoint count");
-	requireEqual(WORD_KEYS.length, 60, "word count");
+	requireEqual(WORD_KEYS.length, 65, "word count");
 	requireEqual(COUNTED_WORD_KEYS.length, 1, "counted word count");
 	requireEqual(SLOT_WORD_KEYS.length, 9, "slot word count");
 	requireEqual(
@@ -882,7 +883,8 @@ check("c06", "every scale is its ratio of the base", () => {
 			"message-input": 8 * Number.parseInt(tokens["--leading-body"] ?? "", 10),
 			"image-tile": 4 * Number.parseInt(tokens["--leading-body"] ?? "", 10),
 			"image-cap": 20 * Number.parseInt(tokens["--leading-body"] ?? "", 10),
-			"chips-inset": (px["control-compact"] - px.chip) / 2,
+			hairline: HAIRLINE_PX,
+			"chips-inset": (px["control-compact"] - px.chip) / 2 - HAIRLINE_PX,
 			"line-body": Number.parseInt(tokens["--leading-body"] ?? "", 10),
 		};
 		for (const size of SIZES) {
@@ -2122,8 +2124,8 @@ check("c31", "words: English is total and the schema is closed", () => {
 		"a filled overage",
 	);
 	requireEqual(
-		filled(ENGLISH.wrongType, { name: "a.pdf", types: "text/csv, .har" }),
-		"a.pdf isn't one of text/csv, .har",
+		filled(ENGLISH.wrongType, { name: "a.pdf", types: "CSV, HAR" }),
+		"a.pdf isn't one of CSV, HAR",
 		"a filled refusal",
 	);
 	return `${WORD_KEYS.length} words, ${COUNTED_WORD_KEYS.length} counted and ${SLOT_WORD_KEYS.length} with slots, sentence case, missing and extra keys rejected`;

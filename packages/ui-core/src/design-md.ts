@@ -159,8 +159,10 @@ const SIZE_USE: Record<(typeof SIZES)[number], string> = {
 		"an image thumbnail's side: four body line boxes, the lines of provenance it stands beside",
 	"image-cap":
 		"the tallest an image grows at its container's width: twenty body line boxes",
+	hairline:
+		"a field box's border: an act inside the box reaches across it, so its hit stands at the box's height",
 	"chips-inset":
-		"the inset above and below the chips of a pick of several: half of what the compact control has over a chip",
+		"the inset above and below the chips of a pick of several: half of what the compact control has over a chip, less the border",
 	"line-body":
 		"one body line's box: a part on a wrapped title's first line is pinned to it",
 };

@@ -1,7 +1,7 @@
 import { toggled } from "@fcalell/ui-core/list-state";
 import type { ChipFamily } from "@fcalell/ui-core/tokens";
 import {
-	CHIPS_BOX,
+	CHIPS_RUN,
 	CHIPS_TRIGGER,
 	FIELD_PLACEHOLDER,
 	field,
@@ -27,11 +27,13 @@ import { PickSheet, useOptionGroups } from "./sheet";
 const FIELD_TRIGGER = "flex-row shrink-0 items-center";
 const FILL = "w-full";
 const FIELD_VALUE = "min-w-0 grow shrink";
-// A pick of several: the box wraps its chips, and the trigger that opens the
-// sheet fills the line after them, its chevron at the box's end.
-const SEVERAL_BOX = "flex-row flex-wrap items-center w-full";
+// A pick of several: the chips wrap in a run, and the trigger that opens the
+// sheet stands beside it, filling what the run leaves, its chevron at the
+// box's end; the run wraps, so the chevron never takes a line of its own.
+const SEVERAL_BOX = "flex-row items-stretch w-full";
+const SEVERAL_RUN = "flex-row flex-wrap items-center gap-inside shrink min-w-0";
 const SEVERAL_TRIGGER =
-	"flex-row grow self-stretch items-center justify-between min-w-target";
+	"flex-row grow shrink-0 items-center justify-end min-w-target";
 const FIELD_STATUS = "min-w-0 grow shrink flex-row";
 // A chip column's value is its chip.
 const CHIP_SLOT = "flex-row grow min-w-0";
@@ -149,23 +151,22 @@ export function PickerBase<V extends string | null = string>(
 	// box is no press: the trigger that opens the sheet stands after them.
 	const trigger = several ? (
 		<View
-			className={cn(
-				field({ fit: "bar" }),
-				picker({ fit: "bar" }),
-				CHIPS_BOX,
-				SEVERAL_BOX,
-			)}
+			className={cn(field({ fit: "bar" }), picker({ fit: "bar" }), SEVERAL_BOX)}
 		>
-			{chosen.map((option) => (
-				<Chip
-					key={String(option.value)}
-					family="neutral"
-					label={option.label}
-					onRemove={() =>
-						several.onChange(toggled(several.value, option.value))
-					}
-				/>
-			))}
+			{chosen.length > 0 ? (
+				<View className={cn(CHIPS_RUN, SEVERAL_RUN)}>
+					{chosen.map((option) => (
+						<Chip
+							key={String(option.value)}
+							family="neutral"
+							label={option.label}
+							onRemove={() =>
+								several.onChange(toggled(several.value, option.value))
+							}
+						/>
+					))}
+				</View>
+			) : null}
 			<Pressable
 				accessibilityRole="button"
 				accessibilityLabel={name ?? label}

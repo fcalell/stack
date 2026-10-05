@@ -15,13 +15,15 @@ const CHOSEN = {
 // line a refused file lands in; the frame's `error` and `disabled` reach the
 // control through it. `FIELD.state.error` is in error in every state. The
 // cells that draw the box's own parts stand empty (the word in its placeholder
-// ink, the whole box the act); the rest hold a chosen file, its size after the
-// name and the act that removes it.
+// ink, the whole box the act), and the focus state, whose ring is the box's
+// alone (a forced frame would ring the remove act as well); the rest hold a
+// chosen file, its size after the name and the act that removes it.
 export function drawFileInput(frame: ShowcaseFrame) {
 	const name = frame.cell.name;
 	const empty =
 		frame.state === "empty" ||
 		frame.state === "error" ||
+		frame.state === "focus" ||
 		name === "FIELD.trailing.none" ||
 		name === "FIELD.state.error" ||
 		name === "FIELD_PLACEHOLDER";

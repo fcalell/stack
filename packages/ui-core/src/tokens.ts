@@ -780,8 +780,10 @@ export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
 // columns, a file row's count lanes), `message-input` the
 // tallest a message input's text grows before it scrolls, `image-tile` an
 // image thumbnail's side and `image-cap` the tallest an image grows at its
-// container's width, `chips-inset` the inset above and below the chips of a
-// pick of several that centres a chip in the compact control, and `line-body`
+// container's width, `hairline` a field box's border, which an act inside it
+// reaches across so its hit stands at the box's height, `chips-inset` the
+// inset above and below the chips of a pick of several that centres a chip in
+// the compact control (the border inside it), and `line-body`
 // one body line's box: the height a part standing on a wrapped title's first
 // line is pinned to, so a taller part overflows it centred (`thumb` is the
 // switch's knob).
@@ -819,6 +821,7 @@ export const SIZES = [
 	"message-input",
 	"image-tile",
 	"image-cap",
+	"hairline",
 	"chips-inset",
 	"line-body",
 ] as const;
@@ -829,8 +832,9 @@ export type Size = (typeof SIZES)[number];
 // line boxes; `figures`, four tabular figures at the code size at
 // `MONO_ADVANCE`, rounded up to the pixel; a message input's tallest text,
 // eight body line boxes; an image thumbnail's side, four body line boxes (the
-// provenance lines it stands beside); an image's height cap, twenty; the chips
-// inset, half of what the compact control has over a chip; one body line box.
+// provenance lines it stands beside); an image's height cap, twenty; the
+// hairline; the chips inset, half of what the compact control has over a chip
+// less the hairline; one body line box.
 export type DerivedSize =
 	| "switch-travel"
 	| "text-area"
@@ -838,6 +842,7 @@ export type DerivedSize =
 	| "message-input"
 	| "image-tile"
 	| "image-cap"
+	| "hairline"
 	| "chips-inset"
 	| "line-body";
 
@@ -1199,6 +1204,11 @@ export const WORD_KEYS = [
 	"stale",
 	"chooseAll",
 	"chooseNone",
+	"noMatches",
+	"imageFiles",
+	"audioFiles",
+	"videoFiles",
+	"textFiles",
 	"expand",
 	"collapse",
 ] as const;
@@ -1294,6 +1304,11 @@ export const ENGLISH: Words = {
 	stale: "Stale",
 	chooseAll: "Select all",
 	chooseNone: "Deselect all",
+	noMatches: "No matches",
+	imageFiles: "Images",
+	audioFiles: "Audio",
+	videoFiles: "Video",
+	textFiles: "Text files",
 	expand: "Expand",
 	collapse: "Collapse",
 	earlierLines: {

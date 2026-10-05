@@ -18,6 +18,7 @@ import { useMemo, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
+import { useWords } from "../../lib/words";
 import { Avatar } from "../avatar";
 import { Chip } from "../chip";
 import { Icon } from "../icon";
@@ -46,6 +47,8 @@ const KIND = "shrink-0 self-center";
 // inset below the line.
 const ACT_SLOT = "border-t pt-float";
 const ACT_GLYPH = "shrink-0";
+// What a search that matches nothing says, on a row of the sheet.
+const NO_MATCHES = "py-pair";
 
 // Past six options a search leads the list.
 const SEARCH_PAST = 6;
@@ -176,6 +179,7 @@ export function PickSheet<V extends string | null>({
 	act?: IconAct;
 	chip?: ChipFamily;
 }) {
+	const words = useWords();
 	const [search, setSearch] = useState("");
 	// The search clears as the sheet opens, during render, so the rows keep
 	// their filter while the sheet leaves.
@@ -269,6 +273,17 @@ export function PickSheet<V extends string | null>({
 						})}
 					</View>
 				))}
+				{shown.length === 0 ? (
+					<RNText
+						className={cn(
+							row({ ground: "group" }),
+							text({ role: "meta" }),
+							NO_MATCHES,
+						)}
+					>
+						{words.noMatches}
+					</RNText>
+				) : null}
 				{act ? (
 					<View className={cn(HAIRLINE, ACT_SLOT)}>
 						<Pressable

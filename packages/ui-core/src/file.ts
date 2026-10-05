@@ -1,4 +1,5 @@
 import type { PickedFile } from "./descriptors.ts";
+import type { Words } from "./tokens.ts";
 
 // A file control's `accept` entries: a MIME type (`text/csv`), a MIME family
 // (`image/*`) or an extension with its dot (`.har`). A file matches when any
@@ -19,6 +20,31 @@ export function accepts(
 		if (want.endsWith("/*")) return type.startsWith(want.slice(0, -1));
 		return type === want;
 	});
+}
+
+// The kinds an `accept` list names, in the viewer's words: a MIME family
+// (`image/*`) by its word, an extension (`.har`) or a MIME type (`text/csv`)
+// by its letters, the type's last dotted or `+` part, so a type and its
+// extension name one kind.
+export function kindsOf(
+	accept: readonly string[],
+	words: Pick<Words, "imageFiles" | "audioFiles" | "videoFiles" | "textFiles">,
+): string[] {
+	const families: Record<string, string> = {
+		image: words.imageFiles,
+		audio: words.audioFiles,
+		video: words.videoFiles,
+		text: words.textFiles,
+	};
+	const kinds = accept.map((entry) => {
+		const want = entry.trim().toLowerCase();
+		if (want.startsWith(".")) return want.slice(1).toUpperCase();
+		const [family = "", subtype = ""] = want.split("/");
+		if (subtype === "*") return families[family] ?? family;
+		const named = subtype.replace(/^x-/, "").split(/[.+]/).at(-1) ?? subtype;
+		return named.toUpperCase();
+	});
+	return [...new Set(kinds)];
 }
 
 // What the phone's document picker is asked for: the MIME types when `accept`
