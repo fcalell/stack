@@ -38,7 +38,7 @@ const SESSION = { secret: SECRET, cookiePrefix: "better-auth", secure: false };
 async function setup(
 	schema: Record<string, unknown>,
 	auth: Partial<AuthRuntimeInput>,
-	extraEnv: Record<string, string> = {},
+	extraEnv: Record<string, unknown> = {},
 ) {
 	const env = {
 		DB_FILE: join(mkdtempSync(join(tmpdir(), "stack-auth-")), "app.sqlite"),
@@ -417,4 +417,168 @@ test("check-slug refuses a slug the app's routes hold with the create's refusal"
 	});
 	assert.equal(free.status, 200, await free.clone().text());
 	assert.deepEqual(await free.json(), { status: true });
+});
+
+// Better Auth's `verification` table, read raw: the plugin stores the hashed
+// token there as the identifier.
+const verificationRows = (client: {
+	select(): { from(t: unknown): { all(): unknown[] } };
+}) =>
+	client.select().from(authSchema.verification).all() as {
+		identifier: string;
+		expiresAt: Date | number;
+	}[];
+
+async function sendMagicLink(
+	fetchPath: (path: string, init?: RequestInit) => Promise<Response>,
+	email: string,
+) {
+	return browser(
+		fetchPath,
+		ORIGIN,
+		new CookieJar(),
+	)("/api/auth/sign-in/magic-link", {
+		method: "POST",
+		body: JSON.stringify({ email, callbackURL: "/home" }),
+	});
+}
+
+test("a magic link reaches sendMagicLink and its verify signs the address in", async () => {
+	const sent: AuthCallbackPayloads["sendMagicLink"][] = [];
+	const { client, env, fetchPath } = await setup(authSchema, {
+		magicLink: true,
+		callbacks: { sendMagicLink: (payload) => void sent.push(payload) },
+	});
+
+	const response = await sendMagicLink(fetchPath, "grace@example.com");
+	assert.equal(response.status, 200, await response.text());
+	assert.equal(sent.length, 1);
+	const [link] = sent;
+	assert.equal(link?.email, "grace@example.com");
+	assert.equal(link?.env, env);
+	const url = new URL(link?.url ?? "");
+	assert.equal(url.origin, ORIGIN);
+	assert.equal(url.pathname, "/api/auth/magic-link/verify");
+	assert.equal(url.searchParams.get("token"), link?.token);
+
+	const jar = new CookieJar();
+	const send = browser(fetchPath, ORIGIN, jar);
+	const verified = await send(`${url.pathname}${url.search}`, {
+		redirect: "manual",
+	});
+	assert.ok(
+		verified.status >= 300 && verified.status < 400,
+		`status ${verified.status}`,
+	);
+	assert.ok(jar.cookies.has("better-auth.session_token"));
+	assert.equal(await sessionUser(send), "grace@example.com");
+	const created = client
+		.select()
+		.from(authSchema.user)
+		.all()
+		.find((row) => row.email === "grace@example.com");
+	assert.equal(created?.emailVerified, true);
+	assert.equal(created?.name, "");
+});
+
+test("a magic link token is stored hashed, expires in five minutes and is spent on its first verify", async () => {
+	const sent: AuthCallbackPayloads["sendMagicLink"][] = [];
+	const { client, fetchPath } = await setup(authSchema, {
+		magicLink: true,
+		callbacks: { sendMagicLink: (payload) => void sent.push(payload) },
+	});
+	const before = Date.now();
+	const response = await sendMagicLink(fetchPath, "ada@example.com");
+	assert.equal(response.status, 200, await response.text());
+	const [link] = sent;
+	assert.ok(link);
+
+	const rows = verificationRows(client);
+	assert.equal(rows.length, 1);
+	assert.notEqual(rows[0]?.identifier, link.token);
+	assert.ok(!rows[0]?.identifier.includes(link.token));
+	const expiresAt = new Date(rows[0]?.expiresAt ?? 0).getTime();
+	assert.ok(Math.abs(expiresAt - (before + 300_000)) < 5_000, `${expiresAt}`);
+
+	const path = `${new URL(link.url).pathname}${new URL(link.url).search}`;
+	const first = await browser(
+		fetchPath,
+		ORIGIN,
+		new CookieJar(),
+	)(path, {
+		redirect: "manual",
+	});
+	assert.ok(first.status >= 300 && first.status < 400);
+	assert.doesNotMatch(first.headers.get("location") ?? "", /INVALID_TOKEN/);
+	const second = await browser(
+		fetchPath,
+		ORIGIN,
+		new CookieJar(),
+	)(path, {
+		redirect: "manual",
+	});
+	assert.ok(second.status >= 300 && second.status < 400);
+	assert.match(second.headers.get("location") ?? "", /error=INVALID_TOKEN/);
+	assert.equal(client.select().from(authSchema.session).all().length, 1);
+});
+
+test("with the magic link on, a callbacks file without sendMagicLink refuses to build", async () => {
+	const { client, env, authOptions } = await setup(authSchema, {
+		magicLink: true,
+		callbacks: {},
+	});
+	await assert.rejects(
+		async () => authRuntime(authOptions).context(env, { db: client }),
+		{ name: "MissingSendMagicLinkError" },
+	);
+	await authRuntime({ ...authOptions, magicLink: false }).context(env, {
+		db: client,
+	});
+});
+
+test("the per-email limiter covers the magic-link send", async () => {
+	const sent: AuthCallbackPayloads["sendMagicLink"][] = [];
+	const used = new Set<string>();
+	const { fetchPath } = await setup(
+		authSchema,
+		{
+			magicLink: true,
+			callbacks: { sendMagicLink: (payload) => void sent.push(payload) },
+			rateLimiter: {
+				ip: { binding: "IP_LIMIT" },
+				email: { binding: "EMAIL_LIMIT" },
+			},
+		},
+		{
+			IP_LIMIT: { limit: async () => ({ success: true }) },
+			EMAIL_LIMIT: {
+				limit: async ({ key }: { key: string }) => {
+					const fresh = !used.has(key);
+					used.add(key);
+					return { success: fresh };
+				},
+			},
+		},
+	);
+
+	assert.equal((await sendMagicLink(fetchPath, "ada@example.com")).status, 200);
+	const second = await sendMagicLink(fetchPath, "ada@example.com");
+	assert.equal(second.status, 429);
+	assert.deepEqual(await second.json(), { code: "TOO_MANY_REQUESTS" });
+	assert.equal(sent.length, 1);
+	assert.equal(
+		(await sendMagicLink(fetchPath, "grace@example.com")).status,
+		200,
+	);
+	assert.equal(sent.length, 2);
+});
+
+test("without the option the magic-link paths are unserved", async () => {
+	const sent: AuthCallbackPayloads["sendMagicLink"][] = [];
+	const { fetchPath } = await setup(authSchema, {
+		callbacks: { sendMagicLink: (payload) => void sent.push(payload) },
+	});
+	const response = await sendMagicLink(fetchPath, "ada@example.com");
+	assert.equal(response.status, 404);
+	assert.equal(sent.length, 0);
 });

@@ -129,6 +129,10 @@ export const authOptionsSchema = z.object({
 	// Email one-time-password sign-in. On by default; OAuth-only consumers set
 	// `false` to drop the email-OTP plugin and its required callback file.
 	emailOtp: z.boolean().default(true),
+	// Magic-link sign-in. Off by default; on, the consumer's `sendMagicLink`
+	// callback is required. The token lives 5 minutes, is stored hashed and
+	// is spent on its first verification; an unknown address signs up.
+	magicLink: z.boolean().default(false),
 	// OAuth social providers. `true` enables a provider with conventional env
 	// var names (e.g. GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET); an object
 	// overrides the var names. The runtime reads credentials from env at request
@@ -265,11 +269,14 @@ export type OtpType =
 // runtime's `AuthCallbacks` type (`./worker/index.ts`) derive their payload
 // types from here, so the two can never drift apart. Every callback is
 // optional in the type, each gated on the option that turns its feature on;
-// `sendOTP` is required at runtime while `emailOtp` (on by default) is. Every payload carries `env`, so a
+// `sendOTP` is required at runtime while `emailOtp` (on by default) is, and
+// `sendMagicLink` while `magicLink` is. Every payload carries `env`, so a
 // callback reaches per-request bindings (an email send binding, a queue)
 // instead of module scope.
 export interface AuthCallbackPayloads<TEnv = unknown> {
 	sendOTP: { email: string; code: string; type: OtpType; env: TEnv };
+	// `url` is the link to send; `token` is the plain token it carries.
+	sendMagicLink: { email: string; url: string; token: string; env: TEnv };
 	// `invitationId` is what the accept link carries: the invitee signs in and
 	// accepts the invitation by id.
 	sendInvitation: {

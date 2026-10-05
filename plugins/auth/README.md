@@ -1,6 +1,6 @@
 # @fcalell/plugin-auth
 
-Authentication for `@fcalell/stack`: Better Auth with email codes, OAuth (Apple, Google),
+Authentication for `@fcalell/stack`: Better Auth with email codes and magic links, OAuth (Apple, Google),
 passkeys, organizations with roles, tenancy scopes and record abilities, on either deploy target.
 
 ## Install
@@ -23,7 +23,7 @@ Using auth in an app lives in `guide/`, indexed into a consumer's `.stack/guide.
 Built with `plugin` from `@fcalell/cli`; requires `api` and `db`. Callbacks are declared with
 `callback.optional<AuthCallbackPayloads[...]>()`, the payload types `AuthCallbacks` in
 `./runtime` derives from too, so the two never drift. `sendOTP` is required at runtime while
-`emailOtp` is on.
+`emailOtp` is on, `sendMagicLink` while `magicLink` is.
 
 ### Owned slots
 
@@ -33,7 +33,7 @@ Built with `plugin` from `@fcalell/cli`; requires `api` and `db`. Callbacks are 
 | `appUrlDevDefault` | derived | `APP_URL`'s dev default: the first frontend dev origin, else the deploy target's, else `https://<domain>` |
 | `callbackFile` | value | The callback file, `src/worker/plugins/auth.ts`; an override must stay under `src/` |
 | `cookiePrefix` | value | The resolved cookie prefix (`better-auth` unset), read by native-ui's generated constants |
-| `clientFlags` | value | The web client's flags (`passkey`, `emailOtp`, `organization`), null without auth |
+| `clientFlags` | value | The web client's flags (`passkey`, `emailOtp`, `magicLink`, `organization`), null without auth |
 | `reservedSlugs` | list | A frontend's top-level routes, baked beside `RESERVED_SLUGS` as the organization slugs the runtime refuses |
 
 `sameSite: "none"` is baked for a native consumer; the runtime widens web cookies to `none` in
@@ -50,7 +50,7 @@ dev, where the frontend and the worker are cross-origin.
 | `api.slots.workerImports` | `src/shared/scopes.ts` as a namespace, with organizations on and the file present |
 | `api.slots.pluginRuntimes` | `authRuntime(...)` from `runtimeOptions` |
 | `api.slots.testingEntries` | `authTesting({ cookiePrefix, secretVar, appUrlVar, expiresIn?, roles? })` |
-| `api.slots.callbacks` | The callback file, whenever it exists; its absence throws while `emailOtp` is on |
+| `api.slots.callbacks` | The callback file, whenever it exists; its absence throws while `emailOtp` or `magicLink` is on |
 | `api.slots.rbacStatements` | `ac`'s statements, else the default organization statements |
 | `api.slots.entities` | The auth tables' export names, organization and passkey tables when enabled |
 | `cliSlots.initPrompts` | Cookie prefix and organization toggle |

@@ -181,7 +181,7 @@ e.g. consulting `ctx.fileExists` before writing.
 | `appUrlDevDefault` | `derived<string>` | Canonical dev URL for `APP_URL`'s dev default: the first `api.slots.devCorsOrigins` entry (a frontend's), else the first `api.slots.devTargetOrigins` entry (the deploy target's), else `https://<domain>` |
 | `callbackFile` | `value<string>` | Consumer callback-file path (default `src/worker/plugins/auth.ts`); override for a restructured worker layout |
 | `cookiePrefix` | `value<string>` | Resolved session-cookie prefix (`cookies.prefix` ?? better-auth's `"better-auth"` default); read by native-ui's generated auth-client constants |
-| `clientFlags` | `value<AuthClientFlags \| null>` | The web client's `{ passkey, emailOtp, organization }`, from the options, `organization` carrying the access control's statements and role grants as the worker gets them; seeded null and filled by auth's own contribution, so a reader without auth in the config sees null |
+| `clientFlags` | `value<AuthClientFlags \| null>` | The web client's `{ passkey, emailOtp, magicLink, organization }`, from the options, `organization` carrying the access control's statements and role grants as the worker gets them; seeded null and filled by auth's own contribution, so a reader without auth in the config sees null |
 | `reservedSlugs` | `list<string>` | The app's top-level routes, which an organization slug may not take (an organization is served at `/<slug>`). With organizations on, `runtimeOptions` bakes them beside plugin-api's `RESERVED_SLUGS` and the runtime refuses them on organization create and update |
 
 ## `db.slots.*` (plugin-db)

@@ -71,3 +71,12 @@ test("the configured access control builds the organization methods", () => {
 		false,
 	);
 });
+
+test("the magic link flag adds signIn.magicLink", () => {
+	const on = createAuthClient({ magicLink: true });
+	assert.equal(typeof on.signIn.magicLink, "function");
+	assert.equal(typeof on.magicLink.verify, "function");
+	const off = createAuthClient({});
+	// @ts-expect-error the magic-link plugin is off
+	assert.ok(off.signIn.magicLink);
+});

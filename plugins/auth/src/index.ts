@@ -295,6 +295,8 @@ export const auth = plugin("auth", {
 		// Required only while `emailOtp` is on; the runtime refuses to build
 		// better-auth without it then.
 		sendOTP: callback.optional<AuthCallbackPayloads["sendOTP"]>(),
+		// Required only while `magicLink` is on, as `sendOTP` is for `emailOtp`.
+		sendMagicLink: callback.optional<AuthCallbackPayloads["sendMagicLink"]>(),
 		sendInvitation: callback.optional<AuthCallbackPayloads["sendInvitation"]>(),
 		beforeDelete: callback.optional<AuthCallbackPayloads["beforeDelete"]>(),
 		sendDeleteVerification:
@@ -317,12 +319,12 @@ export const auth = plugin("auth", {
 		{
 			page: "callbacks",
 			trigger:
-				"Writing `src/worker/plugins/auth.ts`: sending codes or invitations, account deletion, or a sign-in flow of your own",
+				"Writing `src/worker/plugins/auth.ts`: sending codes, magic links or invitations, account deletion, or a sign-in flow of your own",
 		},
 		{
 			page: "sign-in",
 			trigger:
-				"Adding OAuth or passkeys, or calling auth from the web or native client",
+				"Adding OAuth, passkeys or magic links, or calling auth from the web or native client",
 		},
 		{
 			page: "organizations",
@@ -472,6 +474,7 @@ export const auth = plugin("auth", {
 		self.slots.clientFlags.contribute(() => ({
 			passkey: self.options.passkey !== false,
 			emailOtp: self.options.emailOtp,
+			magicLink: self.options.magicLink,
 			organization: organizationAccess(self.options.organization),
 		})),
 
@@ -531,7 +534,7 @@ export const auth = plugin("auth", {
 
 		// Callbacks: wire the consumer's callback file onto the auth runtime
 		// entry whenever it exists. With `emailOtp` on, `sendOTP` is required,
-		// so a missing file is a misconfiguration: throwing here beats
+		// and with `magicLink` on, `sendMagicLink`, so a missing file is a misconfiguration: throwing here beats
 		// generating a worker that refuses its first request. Path is resolved
 		// via `auth.slots.callbackFile` so consumers who restructure the repo
 		// can point at a new location.
@@ -539,14 +542,19 @@ export const auth = plugin("auth", {
 			const path = await ctx.resolve(self.slots.callbackFile);
 			const exists = await ctx.fileExists(path);
 			if (!exists) {
-				// Without email OTP no callback is required: skip wiring
-				// instead of forcing a dead file.
-				if (self.options.emailOtp === false) return undefined;
+				// Without a code or link sign-in no callback is required: skip
+				// wiring instead of forcing a dead file.
+				if (self.options.emailOtp === false && !self.options.magicLink)
+					return undefined;
+				const needs = [
+					...(self.options.emailOtp === false ? [] : ["`sendOTP`"]),
+					...(self.options.magicLink ? ["`sendMagicLink`"] : []),
+				].join(" and ");
 				throw new Error(
 					`plugin-auth: callback file \`${path}\` is missing. ` +
-						"With `emailOtp` on, the consumer implements the `sendOTP` " +
-						"callback there. Run `stack init` / `stack add auth` to scaffold " +
-						"the file, or set `emailOtp: false`.",
+						`The consumer implements ${needs} there. ` +
+						"Run `stack init` / `stack add auth` to scaffold the file, " +
+						"or turn the sign-in that needs it off.",
 				);
 			}
 			// Strip the `src/` prefix when computing the import source —

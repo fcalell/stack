@@ -27,7 +27,7 @@ runtime export.
 |--------|---------|----------------|
 | `@fcalell/plugin-cloudflare` | Cloudflare bindings, wrangler.toml codegen, `wrangler types` Env generation | `cloudflare()` |
 | `@fcalell/plugin-db` | Drizzle ORM clients and runtimes (D1 on cloudflare, SQLite on node), schema tooling, migrations | `db()` |
-| `@fcalell/plugin-auth` | Better Auth integration (email OTP, OAuth, passkeys, consumer plugins), RBAC, access control, web and native clients | `auth()` |
+| `@fcalell/plugin-auth` | Better Auth integration (email OTP, magic links, OAuth, passkeys, consumer plugins), RBAC, access control, web and native clients | `auth()` |
 | `@fcalell/plugin-api` | API framework: Hono + oRPC, procedure builder, typed client | `api()` |
 | `@fcalell/plugin-node` | Long-running Node server target: serves the worker + static SPA, background services, typed WebSocket surface | `node()` |
 | `@fcalell/plugin-vite` | Framework-agnostic Vite lifecycle (providers virtual module) | `vite()` |

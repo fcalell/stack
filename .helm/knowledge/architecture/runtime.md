@@ -146,9 +146,10 @@ release peer-requires its own version of `better-auth` and `@better-auth/core`.
 
 The callbacks file is the consumer's seam into better-auth's own extension mechanism:
 `AuthCallbacks.plugins` are registered after the framework's plugins, and the file is wired
-whenever it exists. Every callback is optional in `AuthCallbacks`; with `emailOtp` on, generate
-refuses a missing file and the runtime refuses to build better-auth without `sendOTP`, naming
-it, while `emailOtp: false` requires neither. `drizzleAdapter`'s schema
+whenever it exists. Every callback is optional in `AuthCallbacks`; with `emailOtp` or `magicLink` on, generate
+refuses a missing file and the runtime refuses to build better-auth without `sendOTP` or
+`sendMagicLink`, naming it, while `emailOtp: false` without `magicLink` requires neither. The
+per-email rate limit covers the OTP send and `/sign-in/magic-link`, which share a bucket. `drizzleAdapter`'s schema
 map starts from the drizzle client's full schema (the consumer's `src/schema`) and then names the
 framework's tables explicitly (`organization` and `passkey` tables only when enabled), so a
 consumer plugin's model resolves to the consumer's table of that name while the framework's

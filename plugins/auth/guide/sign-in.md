@@ -1,8 +1,24 @@
 # Sign-in
 
-Email one-time codes are on by default; OAuth and passkeys are options of `auth()`. Better Auth
+Email one-time codes are on by default; magic links, OAuth and passkeys are options of `auth()`. Better Auth
 serves every sign-in under `/api/auth` on the worker, and the dev server proxies that path, so in
 dev the web client calls the page's own origin.
+
+## Magic links
+
+`magicLink: true` adds sign-in by emailed link and requires `sendMagicLink({ email, url, token, env })`
+in the callbacks file (see [callbacks](./callbacks.md)). The token expires in 5 minutes, is stored
+hashed and is spent on its first verification. The send is rate limited per email, sharing the
+bucket of the code send. An address with no user signs up when its link is first opened.
+
+```ts
+auth({ magicLink: true }),
+// client: createAuthClient({ magicLink: true })
+await authClient.signIn.magicLink({ email, callbackURL: "/home" });
+```
+
+`callbackURL` is relative or on a trusted origin; the verify redirect refuses any other. A
+spent, unknown or expired link redirects to `callbackURL` with `error=INVALID_TOKEN`.
 
 ## OAuth
 
@@ -44,7 +60,7 @@ await authClient.signIn.emailOtp({ email, otp });
 await authClient.signIn.social({ provider: "google" });
 ```
 
-`emailOtp` defaults to `true` on both sides. `organization` takes `true`, or
+`emailOtp` defaults to `true` and `magicLink` to `false` on both sides. `organization` takes `true`, or
 `{ statements, roles }` from your access control (see [organizations](./organizations.md)), and
 then `organization.inviteMember({ role })` takes only your role names. `baseURL` defaults to the
 page's origin.

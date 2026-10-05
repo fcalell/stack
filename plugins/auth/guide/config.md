@@ -22,6 +22,7 @@ auth({
 | `session.updateAge` | unset | How often, in seconds, a session's expiry is refreshed |
 | `session.freshAge` | 1 day | How young a session must be to count as fresh. `0` turns the check off, so any stolen cookie can delete its account |
 | `emailOtp` | `true` | Email one-time-code sign-in; `false` for an OAuth-only app |
+| `magicLink` | `false` | Magic-link sign-in; on, `sendMagicLink` is required, see [sign-in](./sign-in.md) |
 | `socialProviders.google` / `.apple` | off | OAuth, see [sign-in](./sign-in.md) |
 | `passkey` | `false` | `{}` turns passkeys on, see [sign-in](./sign-in.md) |
 | `organization` | off | `true` or `{ ac, roles }`, see [organizations](./organizations.md) |

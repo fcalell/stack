@@ -214,3 +214,27 @@ test("the testing entry bakes the cookie prefix, the var names, the session leng
 		appUrlVar: string("APP_URL"),
 	});
 });
+
+test("the magic link alone requires the callbacks file", async () => {
+	await assert.rejects(
+		generatedWorker({ emailOtp: false, magicLink: true }),
+		/src\/worker\/plugins\/auth\.ts/,
+	);
+	const flagsFor = async (options: AuthOptions) => {
+		const { graph } = buildGraphFromDiscovered({
+			discovered: [
+				discover(api, api()),
+				discover(db, db({ dialect: "sqlite", path: "app.sqlite" })),
+				discover(auth, auth(options)),
+			],
+			app: { name: "codegen", domain: "example.com" },
+			cwd: mkdtempSync(join(tmpdir(), "stack-auth-codegen-")),
+		});
+		return graph.resolve(auth.slots.clientFlags);
+	};
+	assert.equal(
+		(await flagsFor({ emailOtp: false, magicLink: true }))?.magicLink,
+		true,
+	);
+	assert.equal((await flagsFor({ emailOtp: false }))?.magicLink, false);
+});

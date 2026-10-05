@@ -1,5 +1,9 @@
 import { passkeyClient } from "@better-auth/passkey/client";
-import { emailOTPClient, organizationClient } from "better-auth/client/plugins";
+import {
+	emailOTPClient,
+	magicLinkClient,
+	organizationClient,
+} from "better-auth/client/plugins";
 import {
 	type AccessControl,
 	createAccessControl,
@@ -30,6 +34,8 @@ export interface AuthClientOptions {
 	passkey?: boolean;
 	// `auth({ emailOtp })`, on by default on both sides.
 	emailOtp?: boolean;
+	// `auth({ magicLink })`, off by default on both sides.
+	magicLink?: boolean;
 	// `auth({ organization })`: adds the organization, member and invitation
 	// methods. With the consumer's access control, its roles are the roles
 	// the methods take (`inviteMember({ role })`); `true` keeps better-auth's
@@ -51,6 +57,7 @@ type OrganizationClientAccess<A extends OrganizationAccess> = {
 type ClientPlugins<O extends AuthClientOptions> = [
 	...(O["passkey"] extends true ? [ReturnType<typeof passkeyClient>] : []),
 	...(O["emailOtp"] extends false ? [] : [ReturnType<typeof emailOTPClient>]),
+	...(O["magicLink"] extends true ? [ReturnType<typeof magicLinkClient>] : []),
 	// Instantiated with the options it is called with: the bare `ReturnType`
 	// takes the options constraint, whose conditionals erase every
 	// organization method from the client type.
@@ -95,6 +102,7 @@ export function createAuthClient<const O extends AuthClientOptions>(
 	const plugins = [
 		...(options.passkey ? [passkeyClient()] : []),
 		...(options.emailOtp === false ? [] : [emailOTPClient()]),
+		...(options.magicLink ? [magicLinkClient()] : []),
 		...(options.organization ? [organizationPlugin(options.organization)] : []),
 	] as ClientPlugins<O>;
 	return createBetterAuthClient({ baseURL: options.baseURL, plugins });

@@ -27,6 +27,7 @@ through it. `AuthCallbacks<Env>` types it with the worker's `Env`; bare `AuthCal
 | Callback | Runs when |
 | --- | --- |
 | `sendOTP` | A one-time code is issued. `type` is `sign-in`, `email-verification`, `forget-password` or `change-email` (`OtpType`). Required while `emailOtp` is on |
+| `sendMagicLink` | A magic link is requested. It carries `email`, the `url` to send and its `token`. Required while `magicLink` is on |
 | `sendInvitation` | An organization invitation is sent. It carries `invitationId` (what the accept link names), `role`, `organization` (`id`, `name`, `slug`) and `inviter` (`id`, `name`, `email`). An invitation expires after 48 hours |
 | `generateOTP` | A code is about to be generated. Return a string to fix it (a review account's code), `undefined` for a random one. Synchronous |
 | `beforeDelete` | `user.deleteUser` is on and an account is about to go. Throw to refuse; clean up storage and personal data here |
@@ -36,8 +37,9 @@ through it. `AuthCallbacks<Env>` types it with the worker's `Env`; bare `AuthCal
 
 - Import only `@fcalell/plugin-auth/runtime` here, never the package root: the file is bundled
   into the worker, and the root drags in the plugin's Node-only codegen.
-- With `emailOtp` on, a missing file fails `stack generate`, and a file without `sendOTP` makes
-  the worker refuse to start auth. With `emailOtp: false` the file is optional.
+- With `emailOtp` or `magicLink` on, a missing file fails `stack generate`, and a file without
+  `sendOTP` (or `sendMagicLink`) makes the worker refuse to start auth. With `emailOtp: false`
+  and no `magicLink` the file is optional.
 - Key a `generateOTP` override on `type` as well as `email`: it runs for every code type.
 - Without `sendDeleteVerification`, deletion needs a session younger than `session.freshAge`;
   never set `freshAge: 0` to get around it.

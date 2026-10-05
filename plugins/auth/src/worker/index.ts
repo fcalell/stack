@@ -17,6 +17,7 @@ import {
 	createAccessControl as createBetterAuthAccessControl,
 } from "better-auth/plugins/access";
 import { emailOTP } from "better-auth/plugins/email-otp";
+import { magicLink } from "better-auth/plugins/magic-link";
 import { organization } from "better-auth/plugins/organization";
 import { z } from "zod";
 import { compileStatements, packAbility } from "../ability/index.ts";
@@ -72,6 +73,10 @@ export interface AuthCallbacks<TEnv = unknown> {
 	// Required while `emailOtp` is on: the runtime refuses to build without it.
 	sendOTP?(
 		payload: AuthCallbackPayloads<TEnv>["sendOTP"],
+	): void | Promise<void>;
+	// Required while `magicLink` is on: the runtime refuses to build without it.
+	sendMagicLink?(
+		payload: AuthCallbackPayloads<TEnv>["sendMagicLink"],
 	): void | Promise<void>;
 	sendInvitation?(
 		payload: AuthCallbackPayloads<TEnv>["sendInvitation"],
@@ -134,6 +139,8 @@ export interface AuthRuntimeInput extends AuthRuntimeOptions {
 		  };
 	// On by default; `false` drops the email-OTP plugin (OAuth-only consumers).
 	emailOtp?: boolean;
+	// Off by default; on, adds the magic-link plugin and requires `sendMagicLink`.
+	magicLink?: boolean;
 	// Resolved provider → env-var references (var names, never secrets — the
 	// runtime reads credentials from `env` at request time).
 	socialProviders?: Partial<Record<SocialProviderName, ResolvedSocialProvider>>;
@@ -273,6 +280,16 @@ class MissingSendOtpError extends Error {
 	}
 }
 
+class MissingSendMagicLinkError extends Error {
+	constructor() {
+		super(
+			"plugin-auth: `magicLink` is on but the callbacks file defines no `sendMagicLink`. " +
+				"Implement `sendMagicLink` in src/worker/plugins/auth.ts, or set `magicLink: false`.",
+		);
+		this.name = "MissingSendMagicLinkError";
+	}
+}
+
 function buildAuth(
 	env: Record<string, unknown>,
 	db: unknown,
@@ -309,6 +326,24 @@ function buildAuth(
 				otpLength: 6,
 				expiresIn: 300,
 				allowedAttempts: 3,
+			}),
+		);
+	}
+
+	if (options.magicLink) {
+		const sendMagicLink = options.callbacks?.sendMagicLink;
+		if (!sendMagicLink) throw new MissingSendMagicLinkError();
+		plugins.push(
+			magicLink({
+				sendMagicLink: async ({ email, url, token }) => {
+					await sendMagicLink({ email, url, token, env });
+				},
+				// Pinned, not options, as the OTP's are: a dependency bump never
+				// moves them. A token is spent on its first verification, so
+				// `allowedAttempts` is never passed.
+				expiresIn: 300,
+				disableSignUp: false,
+				storeToken: "hashed",
 			}),
 		);
 	}
@@ -536,9 +571,13 @@ function getOrInitAuth(
 	return auth;
 }
 
-// OTP send is the email-bombing amplifier — the only auth route that gets a
-// per-email limit on top of the blanket per-IP one.
-const OTP_SEND_SUFFIX = "/email-otp/send-verification-otp";
+// The sends are the email-bombing amplifiers — the only auth routes that get
+// a per-email limit on top of the blanket per-IP one. Both share the email's
+// bucket. The magic-link verify is a GET with no body: per-IP only.
+const EMAIL_SEND_SUFFIXES = [
+	"/email-otp/send-verification-otp",
+	"/sign-in/magic-link",
+];
 
 function tooManyRequests(): Response {
 	return new Response(JSON.stringify({ code: "TOO_MANY_REQUESTS" }), {
@@ -578,7 +617,10 @@ async function checkRateLimit(
 		if (!result.success) return tooManyRequests();
 	}
 
-	if (rateLimiter.email && url.pathname.endsWith(OTP_SEND_SUFFIX)) {
+	if (
+		rateLimiter.email &&
+		EMAIL_SEND_SUFFIXES.some((suffix) => url.pathname.endsWith(suffix))
+	) {
 		const email = await readRequestEmail(request);
 		if (email) {
 			const result = await rateLimiter.email.limit({ key: emailKey(email) });
