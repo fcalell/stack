@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, isAbsolute, join, relative } from "node:path";
 import { test } from "node:test";
@@ -18,15 +18,24 @@ function devGraph({
 	devVars,
 	wrangler,
 	web = true,
+	routes = false,
 }: {
 	devVars?: string;
 	wrangler?: string;
 	web?: boolean;
+	routes?: boolean;
 } = {}) {
 	const cwd = mkdtempSync(join(tmpdir(), "stack-cloudflare-dev-"));
 	if (devVars !== undefined) writeFileSync(join(cwd, ".dev.vars"), devVars);
 	if (wrangler !== undefined) {
 		writeFileSync(join(cwd, "wrangler.toml"), wrangler);
+	}
+	if (routes) {
+		mkdirSync(join(cwd, "src/worker/routes"), { recursive: true });
+		writeFileSync(
+			join(cwd, "src/worker/routes/hello.ts"),
+			"export const hello = {};\n",
+		);
 	}
 	const plugins = [
 		{
@@ -172,4 +181,13 @@ test("the generated wrangler config has no assets without vite", async () => {
 test("a root wrangler.toml declaring [assets] fails generate", async () => {
 	const graph = devGraph({ wrangler: '[assets]\ndirectory = "../public"\n' });
 	await assert.rejects(graph.resolve(cloudflare.slots.wranglerToml), /assets/);
+});
+
+// `wrangler types` declares the global `Env`; the worker's base context
+// carries it, so a handler's `context.env` reads it typed.
+test("the worker and the procedure entry type their env with Env", async () => {
+	const graph = devGraph({ routes: true });
+	for (const path of [".stack/worker.ts", ".stack/procedure.ts"]) {
+		assert.match((await artifact(graph, path)) ?? "", /createWorker<Env>\(/);
+	}
 });

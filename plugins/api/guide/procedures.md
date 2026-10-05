@@ -16,6 +16,7 @@ export const projects = {
     .input(z.object({ status: z.enum(["active", "archived"]).optional() }))
     .query(async ({ input, context }) => {
       // context.db, context.user, context.session, context.organization, context.member
+      // context.env.APP_URL: typed as the generated `Env` on Cloudflare, `unknown` on node
       // input.organizationId (the scope), input.cursor and input.limit (paginated)
     }),
 

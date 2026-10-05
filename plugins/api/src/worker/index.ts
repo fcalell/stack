@@ -155,8 +155,10 @@ export interface AppBuilder<TContext extends Record<string, unknown>> {
 
 // ---------- Base context ----------
 
-export type BaseContext = {
-	env: unknown;
+// `TEnv` is the env type the deploy target names (`Env` on Cloudflare), baked
+// into the generated `createWorker<Env>(...)`; `unknown` without one.
+export type BaseContext<TEnv = unknown> = {
+	env: TEnv;
 	// The raw HTTP request, named so no scope's row shadows it.
 	httpRequest: Request;
 	reqHeaders: Headers;
@@ -249,14 +251,14 @@ function assertEnvChecks(checks: EnvCheckSpec[], env: unknown): void {
 
 // ---------- createWorker ----------
 
-export default function createWorker(
+export default function createWorker<TEnv = unknown>(
 	options?: ApiWorkerOptions,
-): AppBuilder<BaseContext> {
+): AppBuilder<BaseContext<TEnv>> {
 	const apiOptions: ResolvedApiOptions = {
 		prefix: "/rpc",
 		...options,
 	};
-	return createAppBuilder<BaseContext>([], apiOptions);
+	return createAppBuilder<BaseContext<TEnv>>([], apiOptions);
 }
 
 function createAppBuilder<TContext extends Record<string, unknown>>(

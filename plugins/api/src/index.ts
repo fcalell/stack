@@ -6,6 +6,7 @@ import type {
 	MiddlewareSpec,
 	TsExpression,
 	TsImportSpec,
+	TsTypeRef,
 } from "@fcalell/cli/ast";
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { z } from "zod";
@@ -248,6 +249,18 @@ const env = slot.list<EnvSpec>({
 	uniqueBy: (e) => e.name,
 });
 
+// The type of the worker's `env`, handed over by the deploy target that
+// declares one (cloudflare: the global `Env` `wrangler types` writes).
+// `workerBase` bakes it as `createWorker`'s type argument, so every handler's
+// `context.env` carries it. `null` (the seed) means no target names one and
+// `env` stays `unknown`. `override: true` because one target is authoritative.
+const envType = slot.value<TsTypeRef | null>({
+	source: SOURCE,
+	name: "envType",
+	override: true,
+	seed: () => null,
+});
+
 // The root builder call. Derived from cors + options so worker options
 // (prefix / cors) are baked in purely from dataflow.
 const workerBase = slot.derived({
@@ -258,6 +271,7 @@ const workerBase = slot.derived({
 		devCors: devCorsOrigins,
 		devTargets: devTargetOrigins,
 		env,
+		envType,
 	},
 	compute: (inp, ctx: ContributionCtx<ApiOptions>): TsExpression => {
 		const options = ctx.options;
@@ -333,6 +347,7 @@ const workerBase = slot.derived({
 			kind: "call",
 			callee: { kind: "identifier", name: "createWorker" },
 			args: properties.length > 0 ? [{ kind: "object", properties }] : [],
+			...(inp.envType ? { typeArgs: [inp.envType] } : {}),
 		};
 	},
 });
@@ -565,6 +580,7 @@ export const api = plugin("api", {
 		cors,
 		callbacks,
 		env,
+		envType,
 		workerBase,
 		workerSource,
 		routeBarrelSource,

@@ -59,7 +59,8 @@ export const api = plugin("api", {
 | `api.slots.cors` | `derived<string[]>` | Final production CORS list: `app.origins` minus local origins (kept under `localOrigins: deployed`), or `[https://domain, https://app.domain, ...corsOrigins]` |
 | `api.slots.callbacks` | `map<string, CallbackSpec>` | Plugin-name → callback identifier; spliced onto matching runtime |
 | `api.slots.env` | `list<EnvSpec>` (`uniqueBy: name`) | Env vars the worker reads (`{ name, devDefault, validate? }`), declared by the plugin that reads them (api contributes the consumer's `env` option); cloudflare renders `.dev.vars`, node sets unset vars to `devDefault` in the dev process |
-| `api.slots.workerBase` | `derived<TsExpression>` | The `createWorker({...})` call expression; bakes `env` into `envChecks` |
+| `api.slots.envType` | `value<TsTypeRef \| null>` (`override`) | The type of the worker's `env`; cloudflare contributes the global `Env`, so `context.env` is typed on Cloudflare and `unknown` otherwise |
+| `api.slots.workerBase` | `derived<TsExpression>` | The `createWorker({...})` call expression; bakes `env` into `envChecks` and `envType` into its type argument |
 | `api.slots.workerSource` | `derived<string \| null>` | Final `.stack/worker.ts` source; null when no runtimes are present |
 | `api.slots.rbacStatements` | `value<Record<string, readonly string[]> \| null>` (`override`) | RBAC action statements for `procedure({ rbac })` / `procedure({ can })`'s type-level autocomplete; `auth` contributes from `organization.ac.statements` |
 | `api.slots.entities` | `list<string>` | Entity vocabulary for `procedure({ reads, writes })`'s type-level autocomplete (sorted, deduplicated union); `db` contributes the consumer's Drizzle schema export names, `auth` contributes its own table names |

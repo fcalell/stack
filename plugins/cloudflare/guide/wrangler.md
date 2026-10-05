@@ -47,7 +47,8 @@ Generate only appends what it lacks (`STACK_DEV`, a var declared since) and mirr
 
 `stack generate` runs `wrangler types` into `.stack/worker-configuration.d.ts`, which declares the
 global `Env`: every binding and var, a `.dev.vars` var typed `string`. Type the worker's env with
-it (`AuthCallbacks<Env>`). When `wrangler types` fails, generate warns and removes the file, so
+it (`AuthCallbacks<Env>`). `Env` types the procedure context too: a handler's `context.env` is
+`Env`, so `context.env.APP_URL` is a `string` and a var `Env` lacks is a type error. When `wrangler types` fails, generate warns and removes the file, so
 `Env` stops resolving rather than going stale: run
 `pnpm exec wrangler types .stack/worker-configuration.d.ts -c .stack/wrangler.toml` to see why.
 

@@ -44,7 +44,12 @@ wrangler/Miniflare local dev, so `_devMode` is false in production. Rate limitin
 true.
 
 The base context every procedure starts from is `env`, `httpRequest` (the raw HTTP `Request`),
-`reqHeaders`, `resHeaders` (oRPC's header plugins), `executionCtx` and `_devMode`; plugin-db adds
+`reqHeaders`, `resHeaders` (oRPC's header plugins), `executionCtx` and `_devMode`. `env` takes the
+type the deploy target names through `api.slots.envType`: `BaseContext<TEnv>` and `createWorker<TEnv>`
+carry it, and the generated worker and procedure entry render `createWorker<Env>(…)` on Cloudflare,
+so `context.env.APP_URL` reads as `string` and an undeclared var is a type error. Without a target
+that names one (node) `env` is `unknown`. The parameter is type-only; `envChecks` stays the runtime
+guard. Plugin-db adds
 `db`, plugin-auth's runtime `auth`, `tenancy` and `_rateLimiter`, and its auth middleware `user`
 and `session`. A scoped procedure then writes each resolved level's row under its scope's name,
 `organization` and `member` at the root. The raw request is `httpRequest`, not `request`, because

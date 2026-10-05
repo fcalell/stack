@@ -1,13 +1,14 @@
 // Composed as `.stack/worker.ts` is generated: a default export and its
 // router type, with an env check the test entry's env must pass.
 import createWorker from "../../../src/worker/index.ts";
+import type { FixtureEnv } from "./procedure.ts";
 import * as routes from "./routes/index.ts";
 import { SCOPE_ROW_ID } from "./routes/scoped.ts";
 
 // The context plugin-auth would provide, stubbed so plugin-api's tests
 // never import it: every caller is one signed-in user, and the scope
 // resolves for `SCOPE_ROW_ID` only, with the caller as its owner.
-const worker = createWorker({
+const worker = createWorker<FixtureEnv>({
 	prefix: "/rpc",
 	envChecks: [{ name: "FIXTURE_SECRET", minLength: 16 }],
 })

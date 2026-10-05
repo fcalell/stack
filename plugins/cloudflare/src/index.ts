@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { log } from "@clack/prompts";
 import { type ContributionCtx, plugin, slot } from "@fcalell/cli";
+import type { TsTypeRef } from "@fcalell/cli/ast";
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { api } from "@fcalell/plugin-api";
 import { vite } from "@fcalell/plugin-vite";
@@ -219,6 +220,12 @@ export const cloudflare = plugin("cloudflare", {
 			});
 			return files;
 		}),
+
+		// The global `Env` `wrangler types` declares types the worker's `env`:
+		// `.stack/worker.ts` and `.stack/procedure.ts` render `createWorker<Env>(…)`.
+		api.slots.envType.contribute(
+			(): TsTypeRef => ({ kind: "reference", name: "Env" }),
+		),
 
 		// The worker's own dev origin: with no frontend plugin it is the only
 		// one, so APP_URL's dev default and the dev trusted origins derive

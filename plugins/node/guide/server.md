@@ -31,7 +31,8 @@ Replace `cloudflare()` with `node()`, and the database with `db({ dialect: "sqli
 
 ## Env
 
-The worker's `env` is `process.env`. Every declared env var, auth's and the database's included,
+The worker's `env` is `process.env`, and `context.env` is untyped (`unknown`) in a handler: there is no
+`Env` declaration here. Every declared env var, auth's and the database's included,
 is checked on the first request, which refuses to serve while one is missing.
 
 - The sqlite database opens the file `DB_FILE` names; the `path` option is its dev value. Set
