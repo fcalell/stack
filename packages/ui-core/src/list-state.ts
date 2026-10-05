@@ -444,9 +444,12 @@ export function sectionCount(
 // collections standing as its direct children, inside a direct Group, or as
 // a direct QueryBoundary's props. Nothing deeper registers or is read.
 export interface SectionParts {
-	// Each List or Table: it waits, it counts, and it is a body of rows. A
-	// List of facts (its `definition` map) is none: it waits alone.
-	lists: readonly Pick<ListInput, "query" | "items" | "loading">[];
+	// Each List or Table: it waits, and it counts and is a body of rows unless
+	// `definition` is set (its `definition` map is given). A List of facts is
+	// no collection a viewer counts: it waits alone, like a chart.
+	lists: readonly (Pick<ListInput, "query" | "items" | "loading"> & {
+		definition?: boolean;
+	})[];
 	// Each other waiter: a QueryBoundary's queries, a BarChart's or a
 	// Comparison's own items, whether they wait.
 	waits: readonly boolean[];
@@ -473,28 +476,34 @@ const FALLBACK_FIELDS = 3;
 
 // The Section's head and loading body, decided from its own props and the
 // parts its body holds: busy while it loads or a part waits; its own count,
-// else its lists' total once each answers; and, while it loads with no body
-// of rows (which waits as its own skeleton rows), one skeleton field per
-// field, or three.
+// else the total of its lists that are no `definition` list, once each
+// answers; and, while it loads with no body of rows (which waits as its own
+// skeleton rows), one skeleton field per field, or three.
 export function sectionState(
 	parts: SectionParts,
 	own: { count?: number; loading?: boolean },
 ): SectionState {
 	const loading = own.loading === true;
-	const inputs = parts.lists.map((list) => ({
-		...list,
+	const inputOf = (list: SectionParts["lists"][number]): ListInput => ({
+		query: list.query,
+		items: list.items,
+		loading: list.loading,
 		sectionLoading: loading,
 		inSection: true,
 		hasEmpty: false,
-	}));
-	const rows = parts.lists.length + parts.groups;
+	});
+	const counting = parts.lists.filter((list) => !list.definition);
+	const rows = counting.length + parts.groups;
 	return {
 		busy:
 			loading ||
-			inputs.some((input) => listWaits(input)) ||
+			parts.lists.some((list) => listWaits(inputOf(list))) ||
 			parts.waits.some(Boolean),
-		counted: own.count !== undefined || parts.lists.length > 0,
-		count: sectionCount(own.count, inputs.map(listCount)),
+		counted: own.count !== undefined || counting.length > 0,
+		count: sectionCount(
+			own.count,
+			counting.map((list) => listCount(inputOf(list))),
+		),
 		fields: !loading || rows > 0 ? 0 : parts.fields || FALLBACK_FIELDS,
 	};
 }

@@ -3,7 +3,6 @@ import type {
 	ChangeKind,
 	ChipMark,
 	CountLink,
-	DefinitionData,
 	IconAct,
 	Lock,
 	MenuItem,
@@ -27,7 +26,7 @@ import {
 	treeRows,
 } from "@fcalell/ui-core/list-state";
 import { LIST, LIST_TREE } from "@fcalell/ui-core/variants";
-import { type ReactElement, type ReactNode, useContext, useState } from "react";
+import { type ReactElement, useContext, useState } from "react";
 import { View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { between, useGroupList } from "../../lib/group";
@@ -36,7 +35,7 @@ import type { Route } from "../../lib/route";
 import { SectionContext } from "../../lib/section";
 import { TreeContext } from "../../lib/tree";
 import { useWords } from "../../lib/words";
-import { DefinitionRow } from "../definition-row";
+import { DefinitionRow, type DefinitionValue } from "../definition-row";
 import { DefinitionWait } from "../definition-row/wait";
 import type { EmptyStateProps } from "../empty-state";
 import { EmptyStateBase } from "../empty-state/base";
@@ -167,7 +166,7 @@ export type MeterSlots<T> = MeterSlotsBase<T> &
 interface DefinitionSlotsBase<T> {
 	key: (item: T) => string;
 	label: (item: T) => string;
-	value?: (item: T) => DefinitionData | ReactNode | undefined;
+	value?: (item: T) => DefinitionValue | undefined;
 	// Where the fact stands in a change set, its change mark.
 	change?: (item: T) => ChangeKind | undefined;
 	// Whether every value is copied whole (identifiers): drawn in the code role

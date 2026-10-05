@@ -1,5 +1,6 @@
 import type { DefinitionShape } from "@fcalell/ui-core/list-state";
 import {
+	DEFINITION_ROW,
 	DEFINITION_ROW_CHEVRON,
 	ROW_TITLE_LINE,
 	skeleton,
@@ -51,6 +52,7 @@ export function DefinitionWait(props: {
 		<View
 			className={cn(
 				skeletonRow({ kind: one ? "one-line-group" : "setting" }),
+				DEFINITION_ROW,
 				ROW,
 			)}
 		>

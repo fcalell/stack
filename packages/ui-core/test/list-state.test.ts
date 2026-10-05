@@ -346,6 +346,25 @@ test("a Section's head and loading body follow from its own props and the parts 
 		),
 		{ busy: true, counted: true, count: undefined, fields: 0 },
 	);
+	// A list of facts (`definition`) waits alone: it makes the head busy, adds
+	// no count and is no body of rows.
+	assert.deepEqual(
+		sectionState(
+			{
+				...none,
+				lists: [{ items: [1] }, { query: waiting, definition: true }],
+			},
+			{},
+		),
+		{ busy: true, counted: true, count: 1, fields: 0 },
+	);
+	assert.deepEqual(
+		sectionState(
+			{ ...none, lists: [{ items: [1], definition: true }] },
+			{ loading: true },
+		),
+		{ busy: true, counted: false, count: undefined, fields: 3 },
+	);
 	// Its own count wins; another waiter makes the head busy.
 	assert.deepEqual(sectionState({ ...none, waits: [true] }, { count: 11 }), {
 		busy: true,

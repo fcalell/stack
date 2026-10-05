@@ -38,7 +38,7 @@ const HIT = "absolute inset-0 active:bg-wash-press";
 const MARK = "shrink-0";
 const LEADING = "shrink-0 items-center justify-center";
 // The path takes the overflow first (its shrink weight is 10^7 against the
-// chip's 1, as ListRow's meta line sets out), down to its floor, a `minWidth`
+// chip's 1, the weight of a mark's label in ListRow's meta line), down to its floor, a `minWidth`
 // from its name; it clips what its floor holds.
 const PATH = "grow shrink-10000000 flex-row overflow-hidden";
 const DIRECTORY = "shrink min-w-0";

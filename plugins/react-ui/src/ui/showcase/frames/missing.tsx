@@ -8,6 +8,7 @@ import { Column } from "./place.tsx";
 
 const NOWHERE = "Nothing is at this address.";
 const OPEN_NOW = { label: "Open Now", href: "/" } as const;
+const BACK = { label: "Back", href: "/" } as const;
 
 // A page as tall as the viewport, so a Missing alone in its body centres in
 // what the body leaves.
@@ -34,7 +35,7 @@ export function drawMissing(frame: ShowcaseFrame) {
 						title="Webhooks"
 						description="Where Acme posts deploy events."
 					>
-						<Missing />
+						<Missing act={BACK} />
 					</Section>
 				</Place>
 			</Column>

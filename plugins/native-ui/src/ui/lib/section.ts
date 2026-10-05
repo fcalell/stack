@@ -48,7 +48,7 @@ export function sectionPartsOf(
 	children: ReactNode,
 	kinds: SectionKinds,
 ): SectionParts {
-	const lists: Pick<ListInput, "query" | "items" | "loading">[] = [];
+	const lists: SectionParts["lists"][number][] = [];
 	const waits: boolean[] = [];
 	let groups = 0;
 	let fields = 0;
@@ -60,11 +60,12 @@ export function sectionPartsOf(
 			else if (kinds.lists.includes(type)) {
 				// A List's or a Table's props carry their items, whatever the item type.
 				const { query, items, loading, definition } = props as CollectionProps;
-				// A `definition` list is facts, not a collection a viewer counts: it
-				// waits alone, like a chart, and adds no count.
-				if (definition !== undefined)
-					waits.push(query?.isPending === true || loading === true);
-				else lists.push({ query, items, loading });
+				lists.push({
+					query,
+					items,
+					loading,
+					definition: definition !== undefined,
+				});
 			} else if (kinds.waits.includes(type)) {
 				// A BarChart's or a Comparison's props carry their items the same way.
 				const { query, loading } = props as CollectionProps;

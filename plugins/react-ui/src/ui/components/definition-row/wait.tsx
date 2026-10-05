@@ -1,6 +1,7 @@
 import { cn } from "@fcalell/ui-core/cn";
 import type { DefinitionShape } from "@fcalell/ui-core/list-state";
 import {
+	DEFINITION_ROW,
 	DEFINITION_ROW_CHEVRON,
 	lineBox,
 	ROW_TITLE_LINE,
@@ -47,6 +48,7 @@ export function DefinitionWait(props: {
 			aria-hidden
 			className={cn(
 				skeletonRow({ kind: one ? "one-line-group" : "setting" }),
+				DEFINITION_ROW,
 				ROW,
 			)}
 		>

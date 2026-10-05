@@ -1214,7 +1214,8 @@ a tick with no animation, never jumped to full.
   DefinitionRow's boxes (the label's body line box beside the switch's target-sized hit box on the
   title line, the description's meta line box under it), so its height and its bars' centres are a
   one-line setting row's at either density. A `definition` List adds no count to a Section's head
-  (`sectionPartsOf` reads the map key and files it as a waiter, not a counted list).
+  (`sectionPartsOf` flags the list by its map key, and `sectionState` makes it busy-only: no
+  count, no body of rows).
 - A Meter, a FormField or a Slider in a Group stands as its item at the card's inset (`GROUP_ITEM`, drawn by each through `GroundContext`, held by none, like `FIELD_ERROR_LINE`), the
   Group's hairline between, a FormField keeping its label and giving its control the list ground; a set of them from data is a `List` taking `meter`, in the Group (a set
   of label and value rows from data is a `List` taking `definition`). A

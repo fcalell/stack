@@ -4,7 +4,6 @@ import type {
 	ChangeKind,
 	ChipMark,
 	CountLink,
-	DefinitionData,
 	IconAct,
 	Lock,
 	MenuItem,
@@ -45,7 +44,10 @@ import { ListedRoute, useRoute } from "../../lib/navigate.ts";
 import { SectionContext } from "../../lib/section.ts";
 import { TreeContext } from "../../lib/tree.ts";
 import { useWords } from "../../lib/words.tsx";
-import { DefinitionRow } from "../definition-row/index.tsx";
+import {
+	DefinitionRow,
+	type DefinitionValue,
+} from "../definition-row/index.tsx";
 import { DefinitionWait } from "../definition-row/wait.tsx";
 import { EmptyStateBase } from "../empty-state/base.tsx";
 import type { EmptyStateProps } from "../empty-state/index.tsx";
@@ -209,7 +211,7 @@ interface DefinitionSlotsBase<T> {
 	/** What the fact is. */
 	label: (item: T) => string;
 	/** The fact: words, a status, or a control that changes it in place. */
-	value?: (item: T) => DefinitionData | ReactNode | undefined;
+	value?: (item: T) => DefinitionValue | undefined;
 	/** Where the fact stands in a change set, its change mark. */
 	change?: (item: T) => ChangeKind | undefined;
 	/** Whether every value is copied whole (identifiers): drawn in the code role with a copy act; one value for the list, so the waiting rows hold the act's square. */

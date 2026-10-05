@@ -43,6 +43,7 @@ test("a Section reads the collections standing as its children, in a fragment, i
 		query: undefined,
 		items: [1],
 		loading: undefined,
+		definition: false,
 	});
 	assert.deepEqual(parts.waits, [true, true]);
 	assert.equal(parts.groups, 1);
@@ -50,12 +51,24 @@ test("a Section reads the collections standing as its children, in a fragment, i
 	assert.equal(parts.fields, 3);
 });
 
-test("a definition list is no collection a Section counts: it waits alone, adding no count", () => {
+test("a list taking a definition map is flagged for ui-core, which counts it as no collection", () => {
 	const parts = sectionPartsOf(
 		el(Group, {}, el(List, { query: pending, definition: {} })),
 		KINDS,
 	);
-	assert.deepEqual(parts, { lists: [], waits: [true], groups: 1, fields: 0 });
+	assert.deepEqual(parts, {
+		lists: [
+			{
+				query: pending,
+				items: undefined,
+				loading: undefined,
+				definition: true,
+			},
+		],
+		waits: [],
+		groups: 1,
+		fields: 0,
+	});
 });
 
 test("nothing deeper is read: an app's own component, a settled QueryBoundary's loading form, a Group in a Group", () => {
