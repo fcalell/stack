@@ -24,3 +24,15 @@ test("a Place takes its filled act or a foot, never both", () => {
 	};
 	void [acting, both];
 });
+
+test("a Place read from across a room holds nothing that opens a layer", () => {
+	const room: PlaceProps = { title: "Deploys", distance: "room" };
+	// @ts-expect-error: a context's picker opens outside the room scope
+	const picked: PlaceProps = {
+		title: "Deploys",
+		distance: "room",
+		context: { label: "Set", options: [], onChange: act },
+	};
+	void [room, picked];
+	assert.ok(ROSTER.layout.Place?.props.includes("distance"));
+});

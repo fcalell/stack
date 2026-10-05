@@ -116,6 +116,25 @@ once per screen, its label read after it ("2 need you"); a `Stats` cell's label 
 ]} />
 ```
 
+## A screen read from across a room declares its distance
+
+A screen read from across a room (a television, a wall display) takes `distance="room"` on its
+`Place`: no query detects the viewing distance, so the page states it. The page draws the touch
+set on a 960 × 540 canvas, scaled to the screen by its width and height (`min(100vw / 960,
+100dvh / 540)`, never under one pixel): at 1920 × 1080 the body is 32, the title 44, a control 88
+and a `Stat`'s figure 160, five times its label. It holds one column of `Columns`, `Stats` and
+one `Stat` and never splits, since breakpoints stay px while its widths scale, and it takes no
+`context`, `more` or `foot`, whose layers open outside it. Set it on the screen's one page,
+never on a part of a page, and never a density of your own: `data-density` is the showcase's pin.
+Its sizes ignore browser zoom, and a scaled size is fractional.
+
+```tsx
+<Place title="Deploys" distance="room">
+  <Stat label="need you" value={3} />
+  <Stats items={[{ label: "Deployed", value: 14 }, { label: "Failed", value: 1 }]} />
+</Place>
+```
+
 ## Data, never nodes
 
 A composed region is data its molecule renders: an `Act` (`{ label, onAct, destructive? }`),

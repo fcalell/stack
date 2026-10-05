@@ -540,9 +540,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// `foot` (a field, never beside the act) docks under the scrolling body.
 		// A `context` is a pick beside the title (the page's change set, its
 		// version), a Picker at the row fit that takes the option's chip.
+		// A `distance` of `room` draws the page for a screen read from across a
+		// room: the touch structure at the room set (`DENSITIES`), one column that
+		// never splits, holding no `context`, `more` or `foot`, whose layers open outside it.
 		Place: {
 			props: [
 				"title",
+				"distance",
 				"context",
 				"actions",
 				"act",

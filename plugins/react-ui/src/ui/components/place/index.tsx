@@ -33,7 +33,7 @@ import {
 	ThreadRoom,
 } from "../../lib/frame.ts";
 import { HeadingContext } from "../../lib/heading.ts";
-import { useTouch } from "../../lib/media.ts";
+import { RoomContext, useTouch } from "../../lib/media.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Button } from "../button/index.tsx";
 import { IconButtonBase, IconButtonLink } from "../icon-button/base.tsx";
@@ -160,12 +160,24 @@ type PlaceEnd =
 			act?: never;
 	  };
 
-/** A page in the shell. */
-export type PlaceProps = PlaceBase & PlaceEnd;
+/** Where the page is read from: a screen across a room draws the room set, which no query detects, so the page states it. */
+type PlaceDistance =
+	| { distance?: undefined }
+	| {
+			/** The page is read from across a room: the room set and the touch structure, in one column that never splits, with no `context`, `more` or `foot`. */
+			distance: "room";
+			context?: never;
+			more?: never;
+			foot?: never;
+	  };
 
-/** A page under a head and its hairline: on the desktop the title, its `context` pick and its acts share one strip, on touch the pick stands on the title line under the top bar; on touch the top bar (the shell's switcher, the actions, more) stands over the title and the act floats over the body's end, lifted. A `foot` docks at the page's bottom at both densities a sections gap under the body's end, the body scrolling under it, above the tab bar on touch; on the desktop it stands in the measure-wide column a Thread's foot stands in. A Place is the size container what stands in it decides its structure by (a Split its regions, a Table its grid): a Thread in its body fills it, unless the Place has a `foot`, where it stands among the sections; it draws the Details act of a Split's pane, below `wide` of its width, and with a record open a back act to the place's route, drawn below `tablet` first: before the title in the strip, in the switcher's stead in the top bar. While a record stands beside the main, below `tablet` the Place draws no head: that record's head is the page's one. */
+/** A page in the shell. */
+export type PlaceProps = PlaceBase & PlaceEnd & PlaceDistance;
+
+/** A page under a head and its hairline: on the desktop the title, its `context` pick and its acts share one strip, on touch the pick stands on the title line under the top bar; on touch the top bar (the shell's switcher, the actions, more) stands over the title and the act floats over the body's end, lifted. A `foot` docks at the page's bottom at both densities a sections gap under the body's end, the body scrolling under it, above the tab bar on touch; on the desktop it stands in the measure-wide column a Thread's foot stands in. A Place is the size container what stands in it decides its structure by (a Split its regions, a Table its grid): a Thread in its body fills it, unless the Place has a `foot`, where it stands among the sections; it draws the Details act of a Split's pane, below `wide` of its width, and with a record open a back act to the place's route, drawn below `tablet` first: before the title in the strip, in the switcher's stead in the top bar. While a record stands beside the main, below `tablet` the Place draws no head: that record's head is the page's one. With `distance` `room` it draws the room set and the touch structure, without the shell's switcher. */
 export function Place({
 	title,
+	distance,
 	context,
 	actions,
 	act,
@@ -174,7 +186,8 @@ export function Place({
 	foot,
 	children,
 }: PlaceProps) {
-	const touch = useTouch();
+	const far = distance === "room";
+	const touch = useTouch() || far;
 	const words = useWords();
 	const switcher = use(ShellSwitcher);
 	const route = use(PlaceRoute);
@@ -197,7 +210,8 @@ export function Place({
 		) : null;
 	// On touch the shell's switcher leads the top bar, giving the back act its
 	// place where the back act shows; on the desktop it stands in the sidebar.
-	const pick = switcher ? <SwitcherPick switcher={switcher} touch /> : null;
+	const pick =
+		switcher && !far ? <SwitcherPick switcher={switcher} touch /> : null;
 	const lead = !touch ? null : back ? (
 		<span className={BESIDE_BACK}>{pick}</span>
 	) : (
@@ -300,22 +314,27 @@ export function Place({
 	);
 	return (
 		<DetailsSheet value={sheet}>
-			<PageTitle value={titleId}>
-				<HeadingContext value={2}>
-					<div className={cn(PLACE, PAGE)}>
-						{head}
-						<div className={BODY_WRAP}>
-							{body}
-							{layer}
-						</div>
-						{foot ? (
-							<div className={cn(FOOT, DOCKED)}>
-								<div className={cn(column, FOOT_COLUMN)}>{foot}</div>
+			<RoomContext value={far}>
+				<PageTitle value={titleId}>
+					<HeadingContext value={2}>
+						<div
+							data-density={far ? "room" : undefined}
+							className={cn(PLACE, PAGE)}
+						>
+							{head}
+							<div className={BODY_WRAP}>
+								{body}
+								{layer}
 							</div>
-						) : null}
-					</div>
-				</HeadingContext>
-			</PageTitle>
+							{foot ? (
+								<div className={cn(FOOT, DOCKED)}>
+									<div className={cn(column, FOOT_COLUMN)}>{foot}</div>
+								</div>
+							) : null}
+						</div>
+					</HeadingContext>
+				</PageTitle>
+			</RoomContext>
 		</DetailsSheet>
 	);
 }

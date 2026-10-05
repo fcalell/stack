@@ -51,7 +51,10 @@ and with no `desktop` pin where the pointer is not fine or the viewport is narro
 `tablet`, so a molecule's structure follows density (an action bar at natural width on the
 desktop, full width on touch); a molecule whose tree differs by density (the Shell's sidebar or
 tab bar) reads `useTouch`. A token never needs it: a size, a spacing role and a type role follow
-density through their variables.
+density through their variables. The room set is the one scope a `Place` declares
+(`distance="room"`): `[data-density="room"]` in the density layer (`ROOM_SCOPE`) holds
+`--room-unit` and every room value as a `calc` over it, the `touch:` variant matches inside it,
+and `useTouch` reads the Place's `RoomContext` as well as the query.
 
 `page-<breakpoint>:` and `page-max-<breakpoint>:` draw from or below a breakpoint's width of the
 `page` container (`@container/page`), emitted from the contract's breakpoint values. `pb-safe`

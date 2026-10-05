@@ -17,5 +17,3 @@ Working evidence: dated, drains, or gets promoted into `.helm/knowledge/`. Nothi
   molecule's loading state, or epic 004.
 - [render-smells.md](./render-smells.md): fixing a component that renders, measures or commits twice
   or waits on timing, or filing epic 005 (render once).
-- [room-density.md](./room-density.md): building the `room` density (003-57), the ten-foot canvas
-  and its scale unit, or judging a screen read from across a room.

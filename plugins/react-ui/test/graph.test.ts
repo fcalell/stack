@@ -55,7 +55,7 @@ test("app.css imports Tailwind without detection, then the web sheet, then the c
 	assert.match(css, /@utility shadow-/);
 	assert.match(
 		css,
-		/@custom-variant touch \{\n:root\[data-density="touch"\] & \{\n\t@slot;\n\}\n@media not \(\(pointer: fine\) and \(width >= 768px\)\) \{\n:root:not\(\[data-density="desktop"\]\) & \{\n\t@slot;\n\}\n\}\n\}/,
+		/@custom-variant touch \{\n:root\[data-density="touch"\] & \{\n\t@slot;\n\}\n\[data-density="room"\] & \{\n\t@slot;\n\}\n@media not \(\(pointer: fine\) and \(width >= 768px\)\) \{\n:root:not\(\[data-density="desktop"\]\) & \{\n\t@slot;\n\}\n\}\n\}/,
 	);
 	assert.match(
 		css,
@@ -112,6 +112,20 @@ test("a fine pointer at tablet width draws the desktop set, and data-density pin
 		desktop,
 		/@media \(pointer: fine\) and \(width >= 768px\) \{\n:root\[data-density="touch"\] \{\n\t--text-display: 44px;/,
 	);
+});
+
+test("a Place declaring a room scales the room set from its own unit", async () => {
+	const css = (await artifacts()).get(".stack/app.css") ?? "";
+	assert.match(
+		css,
+		/\[data-density="room"\] \{\n\t--room-unit: max\(1px, min\(100vw \/ 960, 100dvh \/ 540\)\);/,
+	);
+	assert.match(css, /--text-body: calc\(16 \* var\(--room-unit\)\);/);
+	assert.match(css, /--text-display: calc\(80 \* var\(--room-unit\)\);/);
+	assert.match(css, /--spacing-page: calc\(48 \* var\(--room-unit\)\);/);
+	assert.match(css, /--focus-ring: calc\(2 \* var\(--room-unit\)\);/);
+	assert.match(css, /--hairline: calc\(1 \* var\(--room-unit\)\);/);
+	assert.match(css, /--default-border-width: var\(--hairline\);/);
 });
 
 test("the vite config runs Tailwind, the fonts and the mode script", async () => {

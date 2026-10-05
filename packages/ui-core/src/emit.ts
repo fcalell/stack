@@ -1,5 +1,12 @@
 import type { ResolvedTheme } from "./derive.ts";
 import {
+	leadingOf,
+	nativeMeasurePx,
+	sizeOf,
+	sizePx,
+	spacingOf,
+} from "./scales.ts";
+import {
 	BREAKPOINTS,
 	COLOR_NAMES,
 	type Density,
@@ -9,9 +16,11 @@ import {
 	HAIRLINE_PX,
 	MEASURES,
 	type Mode,
+	RADIUS_PX,
 	RADIUS_ROLES,
 	RING_OFFSET_PX,
 	RING_PX,
+	ROOM_CANVAS,
 	SHADOW_LEVELS,
 	type ShadowLevel,
 	SIZES,
@@ -19,6 +28,7 @@ import {
 	STACK_ORDER,
 	TRACKED_ROLES,
 	TYPE_ROLES,
+	WIDTH_VALUE,
 	WIDTHS,
 	ZEROED_NAMESPACES,
 } from "./tokens.ts";
@@ -70,6 +80,8 @@ export function themeTokens(resolved: ResolvedTheme): Record<string, string> {
 	// so it stills with them under reduced motion.
 	tokens["--default-transition-duration"] = "var(--transition-duration-base)";
 	tokens["--default-transition-timing-function"] = "var(--ease-out)";
+	// A bare `border` and a `divide` read the hairline, so the room scales them.
+	tokens["--default-border-width"] = "var(--hairline)";
 	for (const name of COLOR_NAMES) {
 		tokens[`--color-${name}`] = resolved.colors.light[name];
 	}
@@ -122,6 +134,98 @@ export function densityTokens(
 		tokens[`--spacing-${size}`] = resolved.sizes[density][size];
 	}
 	return tokens;
+}
+
+// ── The room set ────────────────────────────────────────────────────
+
+// The custom property that holds the room unit on the web.
+export const ROOM_UNIT = "--room-unit";
+
+// The room unit as a CSS length: the screen over `ROOM_CANVAS` on the tighter
+// axis, so a portrait or ultrawide screen stays inside the canvas, and never
+// under 1 px, so a small window keeps the touch set at least. At 1920 × 1080
+// it is 2 px. `vw` ignores browser zoom: the screen is read, never zoomed.
+export function roomUnit(): string {
+	const { width, height } = ROOM_CANVAS;
+	return `max(1px, min(100vw / ${width}, 100dvh / ${height}))`;
+}
+
+// The same unit as a number, for a window of this size in px (native, which
+// has no `vw`).
+export function roomUnitFor(width: number, height: number): number {
+	return Math.max(
+		1,
+		Math.min(width / ROOM_CANVAS.width, height / ROOM_CANVAS.height),
+	);
+}
+
+// The room set as one record: the type roles, the spacing roles and the
+// sizes of `densityTokens`, plus what is a constant at the other densities
+// and scales with the room, the radii, the fixed widths and the hairline.
+// Each value is the canvas units its token holds, `scale` turning them into
+// the platform's value: the web a `calc` over `--room-unit`, native the
+// number times the unit it computes from the window. A `full` radius and the
+// `ch` measures stay as they are.
+export function roomTokens<T>(scale: (units: number) => T): Record<string, T> {
+	const tokens: Record<string, T> = {};
+	for (const role of TYPE_ROLES) {
+		tokens[`--text-${role}`] = scale(sizeOf("room", role));
+		tokens[`--text-${role}--line-height`] = scale(leadingOf("room", role));
+		tokens[`--leading-${role}`] = scale(leadingOf("room", role));
+	}
+	for (const role of SPACING_ROLES) {
+		tokens[`--spacing-${role}`] = scale(spacingOf("room", role));
+	}
+	for (const size of SIZES) {
+		tokens[`--spacing-${size}`] = scale(sizePx("room", size));
+	}
+	for (const role of RADIUS_ROLES) {
+		if (role !== "full") tokens[`--radius-${role}`] = scale(RADIUS_PX[role]);
+	}
+	for (const width of WIDTHS) {
+		if (!(MEASURES as readonly string[]).includes(width)) {
+			tokens[`--container-${width}`] = scale(
+				Number.parseInt(WIDTH_VALUE[width], 10),
+			);
+		}
+	}
+	tokens["--hairline"] = scale(HAIRLINE_PX);
+	return tokens;
+}
+
+// Native's two measures in the room: the px `nativeMeasureTokens` declares,
+// scaled. Native reads no `ch`, so there they scale with the room instead of
+// following the type.
+export function roomMeasureTokens<T>(
+	scale: (units: number) => T,
+): Record<string, T> {
+	const tokens: Record<string, T> = {};
+	for (const measure of MEASURES) {
+		tokens[`--container-${measure}`] = scale(nativeMeasurePx(measure));
+	}
+	return tokens;
+}
+
+// The focus ring's width and offset in the room, which the web's base rule
+// reads; native draws no ring.
+export function roomRingTokens<T>(
+	scale: (units: number) => T,
+): Record<string, T> {
+	return {
+		"--focus-ring": scale(RING_PX),
+		"--focus-ring-offset": scale(RING_OFFSET_PX),
+	};
+}
+
+// What the web declares under a room scope: the unit, then every room value
+// as a `calc` over it.
+export function roomScope(): Record<string, string> {
+	const scale = (units: number) => `calc(${units} * var(${ROOM_UNIT}))`;
+	return {
+		[ROOM_UNIT]: roomUnit(),
+		...roomTokens(scale),
+		...roomRingTokens(scale),
+	};
 }
 
 // Every duration rung at 0, which the web renders under

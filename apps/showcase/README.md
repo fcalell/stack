@@ -7,7 +7,7 @@ pnpm showcase                  # from the repo root: builds the workspace chain,
 pnpm --filter showcase build   # stack build
 ```
 
-Three pages:
+Four pages:
 
 - `/`: the roster frames, every component in every cell and state, light and dark side by side.
 - `/foundations`: the token page, every role of the contract on the emitted `app.css`, light and
@@ -22,6 +22,9 @@ Three pages:
   `&query=loading|error|missing|empty` (`missing` answers not found, so every read draws its
   "no longer exists" form with Back; `empty` answers every collection with none, so each draws
   its empty form); fixture data, no network. The view toggles sit under the app.
+- `/tv`: a screen read from across a room, a `Place` with `distance="room"` holding a `Stat` and
+  a `Stats` in one column, dark unless `?mode=light`. It carries no toggles and takes no density:
+  the room scale follows the window, so a browser at 1280, 1920 and 3840 wide draws those screens.
 
 The URL holds the view: `?mode=<light|dark>` sets the page's own mode (without it the page keeps
 what the mode script set) and `?density=<touch|desktop>` the density it draws at (`desktop`

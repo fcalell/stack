@@ -21,7 +21,7 @@ Eleven subpaths:
   root outside `@theme`: the hairline, the focus ring's width and offset, the layers' order
   (`--layer-<layer>`) and the light shadows.
   `modeTokens` is one mode's colors and its two shadows. `densityTokens` is one density's type
-  scale, spacing roles and sizes. `nativeMeasureTokens` is native's two measures in px over `themeTokens`' `ch`. `reducedMotionTokens` is every duration at 0ms. `shadowUtilities` is the declaration of each `shadow-*` utility, reading its mode's variable.
+  scale, spacing roles and sizes (the room's in canvas units); `roomTokens` and `roomScope` are the room set scaled. `nativeMeasureTokens` is native's two measures in px over `themeTokens`' `ch`. `reducedMotionTokens` is every duration at 0ms. `shadowUtilities` is the declaration of each `shadow-*` utility, reading its mode's variable.
   `raisedGroundTokens` is what a raised ground (`RAISED_GROUNDS`: `group`, `raised`) declares for
   everything inside it, the hairline read through `edge-raised`.
 - `@fcalell/ui-core/cn`: `cn()`, the class merger, taught the contract's six scales.
@@ -100,8 +100,15 @@ the two together, all 360 hues each.
 
 Density is not a knob. The web draws the desktop set where the primary pointer is fine and the
 viewport is at least `tablet` wide, and the touch set everywhere else, so a desktop window
-narrower than `tablet` draws the touch set; a `data-density` attribute on the root pins either,
-which is how the showcase addresses a density. Native is touch-only. A molecule whose
+narrower than `tablet` draws the touch set; a `data-density` attribute on the root pins any set,
+which is how the showcase addresses a density. Native is touch-only, and room inside a room
+`Place`. The `room` set is the one a screen declares (`Place`'s `distance`), since no query
+detects how far a screen is read from: the touch set drawn on a 960 × 540 canvas and multiplied by
+the room unit `u = max(1px, min(100vw / 960, 100dvh / 540))` (native: from the window's size),
+so at 1920 × 1080 `u` is 2 and the body is 32, the title 44, a control 88 and a row 96. In the
+room only, `display` is 5 times the body and `page` is 48 canvas units all round; the radii, the
+fixed widths, the hairline and the ring scale by `u` too, and a room page holds one column and never
+splits, because breakpoints stay px. A molecule whose
 structure (not a token) follows density reads it through the web's `touch:` variant, which
 applies exactly where the touch set draws (a `data-density="touch"` pin, or no `desktop` pin
 where the pointer is not fine or the viewport is narrower than `tablet`); native has no variant,
@@ -202,8 +209,8 @@ and a row's leading cell are `body` at 500, a table header is `meta` at 500, men
 items are `body`. Weight, ink, family and, on `display` and `figure`, tabular figures ride with the role; a molecule may set a role's weight in
 its own cell, never a consumer.
 
-The body size is the one base, per density: 13 on desktop, 16 on touch, the input size below
-which iOS Safari zooms on focus. Each size rounds to the whole pixel and each line box to the even
+The body size is the one base, per density: 13 on desktop, 16 on touch (and 16 canvas units in the
+room), the input size below which iOS Safari zooms on focus. Each size rounds to the whole pixel and each line box to the even
 pixel, a tie rounding up.
 
 | Role | Desktop, size / line | Touch, size / line | Weight | Ink | Used for |
@@ -216,6 +223,9 @@ pixel, a tie rounding up.
 | `meta` | 12 / 18 | 15 / 22 | 400 | `ink-meta` | a secondary line, a description, a table header at 500 |
 | `caption` | 11 / 16 | 14 / 22 | 400 | `ink-meta` | text inside a small component, never a sentence |
 | `code` | 12 / 18 | 15 / 22 | 400, mono family | `ink-body` | what a machine reads |
+
+The room's table is touch's in canvas units but for `display`, 80 / 88 (a ratio of 5, so a glanceable
+figure stands 5.3 times its meta label).
 
 `strong` is 500; `display`, `figure`, `title` and `heading` already sit at or above it. Tracking is in em
 and density-invariant: `display` -0.02, `title` -0.01, `heading` -0.005, `caption` 0.01; the rest
@@ -231,7 +241,8 @@ a control: icon to label, dot to text), `control-x` 12 / 16 (a control's inline 
 rows in a menu or a nav list; rows in a hairline list abut), `card` 16 / 16 (a card's
 inset), `tile` 12 / 16 (a compact card's inset: a board card), `float` 4 / 4 (a floating surface's inset: a select's list, a menu, a picker popover), `fields` 16 / 24 (between fields), `sections` 32 / 40 (between sections of a
 page), `page` 24 / 16 (the page inset). A list bleeds by `control-x`, so its rows' leading meets the title over it. Touch is the same roles one rung looser except the
-float inset and the acts gap, which hold, and the page inset, which a phone narrows. Six are gap roles, what a container may put between its children:
+float inset and the acts gap, which hold, and the page inset, which a phone narrows; the room is touch's
+with a `page` of 48 canvas units. Six are gap roles, what a container may put between its children:
 `inside`, `pair`, `acts`, `rows`, `fields`, `sections`; the other five (`control-x`, `card`, `tile`,
 `float`, `page`) are insets.
 
@@ -281,9 +292,14 @@ reads no theme namespace. A stacking order inside one component (a frozen table 
 own structural class inside `isolate`, never a layer.
 
 Density is emitted as sets. `themeTokens` seeds the touch set on every platform;
-`densityTokens` is either set, which the web renders as the desktop set under a fine pointer at
-`tablet` width and wider, and as either set under a `data-density` attribute on the root, so a screenshot pins a density;
-the web's `touch:` variant is emitted over the same condition. Native is touch-only.
+`densityTokens` is any set, which the web renders as the desktop set under a fine pointer at
+`tablet` width and wider, and as any set under a `data-density` attribute on the root, so a screenshot pins a density;
+the web's `touch:` variant is emitted over the same condition, and inside a room scope. The room
+set is `roomTokens(scale)`, its values canvas units that `scale` turns into the platform's: the web's
+`roomScope` is each as `calc(N * var(--room-unit))` under `[data-density="room"]`, native scales the
+same record by `roomUnitFor(width, height)` into uniwind's `ScopedVariables`
+(`roomMeasureTokens` its two measures, `roomRingTokens` the web's ring). Native is touch-only
+outside a room `Place`.
 
 ## Motion
 

@@ -13,13 +13,22 @@ export type Mode = (typeof MODES)[number];
 // How dense everything draws, decided by the pointer and the width, never by
 // a knob: where the primary pointer is fine (a mouse or a trackpad) and the
 // viewport is at least `tablet` wide the web draws the `desktop` set,
-// everywhere else the `touch` set, the 44 px world.
-// `data-density` on the web root pins either set on any device, which is how
+// everywhere else the `touch` set, the 44 px world. `room` is the one set a
+// screen declares (`Place`'s `distance`), since no query detects the viewing
+// distance of a television or a wall display: the touch set drawn on
+// `ROOM_CANVAS` and scaled to the screen, so its numbers are canvas units
+// that a platform multiplies by the room unit.
+// `data-density` on the web root pins any set on any device, which is how
 // the showcase addresses a density. Density moves the type
-// scale, the spacing roles and every size; nothing else. Native is
-// touch-only.
-export const DENSITIES = ["touch", "desktop"] as const;
+// scale, the spacing roles and every size, and in `room` the radii, the
+// widths, the hairline and the ring too. Native is touch and room only.
+export const DENSITIES = ["touch", "desktop", "room"] as const;
 export type Density = (typeof DENSITIES)[number];
+
+// The canvas the room set is drawn on, the ten-foot guidance's own
+// (Microsoft's XAML at 200 %, Android TV at mdpi): the room unit is the
+// screen over it on the tighter axis, never under one pixel.
+export const ROOM_CANVAS = { width: 960, height: 540 } as const;
 
 export const FONT_ROLES = ["sans", "mono"] as const;
 export type FontRole = (typeof FONT_ROLES)[number];
@@ -587,7 +596,18 @@ export type FontWeight = "regular" | "medium" | "semibold";
 
 // The body size per density, the one base of the scale: 16 is also the
 // input size below which iOS Safari zooms on focus.
-export const BODY_SIZE: Record<Density, number> = { desktop: 13, touch: 16 };
+export const BODY_SIZE: Record<Density, number> = {
+	desktop: 13,
+	touch: 16,
+	room: 16,
+};
+
+// A role's size ratio in `room` where it differs from `TYPE_SCALE`: a
+// glanceable figure stands five times its label, where the touch ratio is a
+// stat's inside a page.
+export const ROOM_TYPE_SIZE: Partial<Record<TypeRole, number>> = {
+	display: 5,
+};
 
 // `size` is a ratio of the body size, rounded to the pixel; `leading` a ratio
 // of the size, its line box rounded to the even pixel (a tie rounds up).
@@ -737,7 +757,24 @@ export type GapRole = (typeof GAP_ROLES)[number];
 
 // Multiples of `SPACE_BASE`. Touch is the same roles one rung looser, except
 // the float inset and the acts gap, which hold, and the page inset, which a
-// phone narrows.
+// phone narrows. Room is the touch set with the page inset at the safe area
+// of the ten-foot canvas, 48 canvas units (12 rungs) all round: one `page`
+// role serves both axes, so it costs the canvas height 42 units over the 27
+// the guidance allows top and bottom.
+const TOUCH_SPACING: Record<SpacingRole, number> = {
+	inside: 2,
+	"control-x": 4,
+	pair: 2,
+	acts: 2,
+	rows: 1,
+	card: 4,
+	tile: 4,
+	float: 1,
+	fields: 6,
+	sections: 10,
+	page: 4,
+};
+
 export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
 	desktop: {
 		inside: 1.5,
@@ -752,19 +789,8 @@ export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
 		sections: 8,
 		page: 6,
 	},
-	touch: {
-		inside: 2,
-		"control-x": 4,
-		pair: 2,
-		acts: 2,
-		rows: 1,
-		card: 4,
-		tile: 4,
-		float: 1,
-		fields: 6,
-		sections: 10,
-		page: 4,
-	},
+	touch: TOUCH_SPACING,
+	room: { ...TOUCH_SPACING, page: 12 },
 };
 
 // ── Sizes per density ───────────────────────────────────────────────
@@ -833,6 +859,37 @@ export type DerivedSize =
 	| "image-tile"
 	| "image-cap";
 
+// The room set is the touch one, in canvas units: every target is then at
+// least 44 of 960, the 32 the ten-foot guidance asks, and 88 at 1920.
+const TOUCH_SIZES: Record<Exclude<Size, DerivedSize>, number> = {
+	control: 44,
+	"control-compact": 44,
+	field: 48,
+	row: 48,
+	"row-2": 64,
+	"row-setting": 72,
+	strip: 44,
+	target: 44,
+	dot: 8,
+	chip: 24,
+	avatar: 32,
+	spinner: 18,
+	"switch-w": 40,
+	"switch-h": 24,
+	thumb: 20,
+	"switch-inset": 2,
+	skeleton: 12,
+	"icon-meta": 14,
+	icon: 18,
+	"icon-control": 20,
+	check: 20,
+	track: 4,
+	otp: 48,
+	meter: 8,
+	chart: 192,
+	qr: 240,
+};
+
 export const SIZE_PX: Record<
 	Density,
 	Record<Exclude<Size, DerivedSize>, number>
@@ -865,34 +922,8 @@ export const SIZE_PX: Record<
 		chart: 128,
 		qr: 160,
 	},
-	touch: {
-		control: 44,
-		"control-compact": 44,
-		field: 48,
-		row: 48,
-		"row-2": 64,
-		"row-setting": 72,
-		strip: 44,
-		target: 44,
-		dot: 8,
-		chip: 24,
-		avatar: 32,
-		spinner: 18,
-		"switch-w": 40,
-		"switch-h": 24,
-		thumb: 20,
-		"switch-inset": 2,
-		skeleton: 12,
-		"icon-meta": 14,
-		icon: 18,
-		"icon-control": 20,
-		check: 20,
-		track: 4,
-		otp: 48,
-		meter: 8,
-		chart: 192,
-		qr: 240,
-	},
+	touch: TOUCH_SIZES,
+	room: TOUCH_SIZES,
 };
 
 // ── Radius, hairline, ring, widths, breakpoints ─────────────────────

@@ -80,7 +80,8 @@ pinned by the package's verify suite; this entry holds the architecture and its 
   computed per avatar name (neither a token nor a cell); chip hues stepped off the accent (a
   family must never wear the accent, so the six are fixed and the accent's band is left out);
   `Status` with a family mode (a state and a data value are two concepts, so two names).
-- Density is a theme, and it moves three scales: the type roles (body 13 on
+- Density is a theme, and it moves three scales (the room set, below, scales the radii, the fixed
+  widths, the hairline and the ring too): the type roles (body 13 on
   the desktop set, 16 on touch, each role a ratio rounded to the pixel, its line box to the even
   pixel), the eleven spacing roles (multiples of 4, one rung looser on touch except the float
   and page insets and the acts gap; a list bleeds by `control-x`, so its rows' leading meets
@@ -99,8 +100,8 @@ pinned by the package's verify suite; this entry holds the architecture and its 
   `tablet` width and wider (so a desktop window narrower than `tablet` draws the touch set and
   structure), the cascade the dark layer rides, so no cell carries a density
   class: a non-inline `@theme` utility reads its variable, so `text-body` and
-  `min-h-control` follow. `data-density` on the web root pins either set on any device, the showcase's
-  pin, never a consumer option. Native is touch-only. A molecule whose structure follows
+  `min-h-control` follow. `data-density` on the web root pins any set on any device, the showcase's
+  pin, never a consumer option. Native is touch, and room inside a room Place. A molecule whose structure follows
   density (an action bar at natural width on the desktop, full width on touch) reads it through
   the web's `touch:` custom variant, emitted over the density layer's own condition (the touch
   pin, or no desktop pin where the pointer is not fine or the viewport is narrower than `tablet`),
@@ -109,8 +110,54 @@ pinned by the package's verify suite; this entry holds the architecture and its 
   variant; the variant sits in a web molecule's overlay, never a cell. A value that flips by density is the same overlay over the desktop cell, never a matrix value. Structure is decided by CSS wherever CSS can, a runtime check (`useTouch`) only where the tree differs (the Shell, Place and Screen). Rejected: a `fine:` variant in the cells (an interaction
   condition in a shared cell, meaningless on native) and one type scale at every density (13 on
   a phone is unreadable and 16 on a desktop row wastes the row).
+- The `room` density is the third set, the one tier a screen declares (`Place.distance: "room"`),
+  because no media query detects viewing distance; desktop and touch stay automatic. Both
+  platforms' ten-foot guidance designs on one 960 × 540 canvas scaled to the screen (Microsoft at
+  200 % for XAML and 150 % for HTML, Android TV at mdpi), and on that canvas the body is 15–16,
+  controls at least 32 and the information a phone's: stack's touch set. So the room set is the
+  touch set drawn on `ROOM_CANVAS` and multiplied by the room unit
+  `u = max(1px, min(100vw / 960, 100dvh / 540))`, never a third hand-tuned ladder. The canvas
+  settles why the set scales instead of holding px: the CSS width a TV browser reports varies
+  (1280, 960, 1920), so a fixed set is right on one screen and half or double on the next. The
+  unit takes the tighter axis, so a portrait or ultrawide screen stays inside the canvas, and
+  never falls under 1 px, so a small window keeps the touch set at least. At 1280 × 720 `u` is
+  1.33, at 1920 × 1080 it is 2 (body 32, title 44, control and target 88, row 96) and at
+  3840 × 2160 it is 4. Two values differ from touch: `display` takes ratio 5 in room only
+  (`ROOM_TYPE_SIZE`, 80 canvas units, so a glanceable figure stands 5.3× its meta label where the
+  references run 5–9×; 2.77 stays right for a stat inside a page), and `page` is 12 rungs, 48
+  canvas units all round (one role serves both axes, so it costs the height 42 units over the 27
+  the guidance allows top and bottom). The radii, the fixed widths (every width but the two `ch`
+  measures, which follow the type), the hairline and the ring scale by `u` too: a 1 px hairline
+  vanishes at three metres, a 6 px radius on an 88 px control reads square, and a pane must hold
+  the characters it holds on a phone. Motion is unchanged, and focus is the existing ring,
+  scaled (no scale transform: the roster draws focus as a ring everywhere, and a scaled element
+  blurs its text on most TV compositors). The structure is touch's: the `touch:` variant and
+  `useTouch` match inside a room Place, so nothing depends on hover.
+  Emission: `roomTokens(scale)` is one record whose values are canvas units, `scale` turning them
+  into the platform's value, so both platforms share one derivation. The web's `roomScope`
+  renders each as `calc(N * var(--room-unit))` under `[data-density="room"]`, which the Place
+  sets on its root (a root `data-density="room"` pins it page-wide) and which holds `--room-unit`
+  itself, so the unit resolves at the element that reads it. The scales (`scales.ts`) take no
+  theme, so native imports them without the colour machinery: it computes
+  `roomUnitFor(width, height)` from `useWindowDimensions` and scopes the numbers with uniwind's
+  `ScopedVariables` (`RoomScope`, the `RaisedGround` mechanism), a scoped variable taking a value
+  and never a `calc`. The hairline reaches every border through
+  `--default-border-width: var(--hairline)` in `@theme`: Tailwind inlines a theme value into the
+  utility, so only a variable reference lets a bare `border` and a `divide` follow the room.
+  A room Place holds one structure and never splits, since breakpoints (px literals, and the
+  `page` container queries that read them) stay px while its widths scale: at 1920 a Place's
+  container sees `wide` with its widths doubled, so a `Split` or a beside column would overflow.
+  It holds one column of `Columns`, `Stats` and `Stat`, with no `context`, `more` or `foot`
+  (their layers portal outside the scope and would draw at the page's density), and `Place`
+  types it so. Two limits stay named: a `vw` size ignores browser zoom (the screen is read from
+  across a room, never zoomed, and the floor keeps it at the touch set at least), and `calc`
+  sizes are fractional, so room line boxes leave the even-pixel rule (a TV scales the frame
+  anyway). Rejected: a consumer density option or a viewing-distance media query (none detects
+  distance), a hand-tuned third ladder (right on one screen, wrong on the next), breakpoints that
+  scale with `u` (every container query rewritten, relative units in `@container` conditions
+  unverified) and a `page-y` role used only by room.
 - Emission returns token records, never CSS text (`themeTokens`, `rootTokens`, `modeTokens`,
-  `densityTokens`, `reducedMotionTokens`, `shadowUtilities`): records
+  `densityTokens`, `roomTokens`, `reducedMotionTokens`, `shadowUtilities`): records
   validate per key, need no escaping, and keep ui-core free of `@fcalell/cli`. `modeTokens`
   carries every color and the two shadows by full custom-property name; both plugins wrap the two
   shadows in `@utility` rules reading `var(--shadow-<level>)`, because the `--shadow-*` theme

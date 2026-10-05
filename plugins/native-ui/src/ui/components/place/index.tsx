@@ -33,6 +33,7 @@ import {
 } from "../../lib/frame";
 import { Lifted, Scroll } from "../../lib/hosts";
 import { navigate } from "../../lib/navigate";
+import { RoomScope } from "../../lib/room";
 import { useWords } from "../../lib/words";
 import { Button } from "../button";
 import { IconButton } from "../icon-button";
@@ -90,7 +91,14 @@ interface PlaceBase extends Closed {
 // that act: never both.
 type PlaceEnd = { act?: Act; foot?: never } | { foot?: ReactNode; act?: never };
 
-export type PlaceProps = PlaceBase & PlaceEnd;
+// Where the page is read from: a screen across a room draws the room set,
+// which no query detects, so the page states it. It holds no `context`,
+// `more` or `foot`, whose layers open outside it.
+type PlaceDistance =
+	| { distance?: undefined }
+	| { distance: "room"; context?: never; more?: never; foot?: never };
+
+export type PlaceProps = PlaceBase & PlaceEnd & PlaceDistance;
 
 // A page in the shell: the top bar (the shell's switcher, the actions, more)
 // over the title, its `context` pick (a change set, a version) beside it, the body under it, and the one act floating lifted over
@@ -106,6 +114,7 @@ export type PlaceProps = PlaceBase & PlaceEnd;
 // Shell's tab bar stands under it all, and its toasts over the body.
 export function Place({
 	title,
+	distance,
 	context,
 	actions,
 	act,
@@ -140,7 +149,7 @@ export function Place({
 				label={words.back}
 				onAct={() => navigate(route)}
 			/>
-		) : switcher ? (
+		) : switcher && distance !== "room" ? (
 			<SwitcherPick switcher={switcher} />
 		) : null;
 	const acts = [...(actions ?? []), ...(split.details ? [split.details] : [])];
@@ -151,7 +160,7 @@ export function Place({
 	// last row, so its room is the act's height over the page inset.
 	const footprint = act ? ACT_ROOM_ELEMENT : null;
 	const tabs = useContext(ShellTabs);
-	return (
+	const page = (
 		<DetailsOpen.Provider value={split.held}>
 			<RecordShown.Provider value={split.record}>
 				<PageTitle.Provider value={title}>
@@ -258,4 +267,5 @@ export function Place({
 			</RecordShown.Provider>
 		</DetailsOpen.Provider>
 	);
+	return distance === "room" ? <RoomScope>{page}</RoomScope> : page;
 }

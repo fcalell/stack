@@ -18,6 +18,7 @@ import {
 	MODES,
 	type Mode,
 	RADIUS_ROLES,
+	ROOM_CANVAS,
 	SHADOW_LEVELS,
 	SIZES,
 	SLOT_WORD_KEYS,
@@ -302,6 +303,11 @@ function components(): Array<[string, Record<string, string>]> {
 // YAML's double-quoted scalar is JSON's string syntax.
 const q = JSON.stringify;
 
+// A room value without its `px`: the canvas units it stands for.
+function canvas(value: string): string {
+	return value.replace(/px$/, "");
+}
+
 // The front matter carries the desktop set, the default on the web; the
 // touch set is the body's table.
 function frontMatter(resolved: ResolvedTheme): string[] {
@@ -422,14 +428,15 @@ function body(resolved: ResolvedTheme): string[] {
 		"",
 		"## Typography",
 		"",
-		`Eight roles named by place. Two rules decide the role: size follows structure, never emphasis (the primary line of anything is \`body\`, a secondary line is \`meta\`, emphasis inside a line is weight ${WEIGHT[STRONG_WEIGHT]}, never a size change); and a size role names a place once (\`title\` the page's name, once per screen; \`heading\` a section's or a card's name, never inside a row; \`caption\` text inside a small component, never a sentence; \`code\` what a machine reads; \`figure\` a count's number in a strip of them). There is no label role: a field label and a row's leading cell are \`body\` at ${WEIGHT[STRONG_WEIGHT]}, a table header is \`meta\` at ${WEIGHT[STRONG_WEIGHT]}. The scale moves with density (desktop body 13, touch body 16); nothing else moves it.`,
+		`Eight roles named by place. Two rules decide the role: size follows structure, never emphasis (the primary line of anything is \`body\`, a secondary line is \`meta\`, emphasis inside a line is weight ${WEIGHT[STRONG_WEIGHT]}, never a size change); and a size role names a place once (\`title\` the page's name, once per screen; \`heading\` a section's or a card's name, never inside a row; \`caption\` text inside a small component, never a sentence; \`code\` what a machine reads; \`figure\` a count's number in a strip of them). There is no label role: a field label and a row's leading cell are \`body\` at ${WEIGHT[STRONG_WEIGHT]}, a table header is \`meta\` at ${WEIGHT[STRONG_WEIGHT]}. The scale moves with density (desktop body 13, touch body 16, room body 16 canvas units); nothing else moves it, except that in the room \`display\` stands five times the body (a glanceable figure, not a stat inside a page).`,
 		"",
 		...table(
-			["Role", "Desktop", "Touch", "Weight", "Ink", "Place"],
+			["Role", "Desktop", "Touch", "Room", "Weight", "Ink", "Place"],
 			TYPE_ROLES.map((role) => [
 				code(role),
 				`${resolved.type.desktop[role].size} / ${resolved.type.desktop[role].leading}`,
 				`${resolved.type.touch[role].size} / ${resolved.type.touch[role].leading}`,
+				`${canvas(resolved.type.room[role].size)} / ${canvas(resolved.type.room[role].leading)}`,
 				String(WEIGHT[TYPE_SCALE[role].weight]),
 				code(TYPE_SCALE[role].ink),
 				TYPE_USE[role],
@@ -443,23 +450,25 @@ function body(resolved: ResolvedTheme): string[] {
 		"Spacing roles are multiples of a 4 px base, picked per density, named by what they separate:",
 		"",
 		...table(
-			["Role", "Desktop", "Touch", "Separates"],
+			["Role", "Desktop", "Touch", "Room", "Separates"],
 			SPACING_ROLES.map((role) => [
 				code(role),
 				resolved.spacing.desktop[role],
 				resolved.spacing.touch[role],
+				canvas(resolved.spacing.room[role]),
 				SPACING_USE[role],
 			]),
 		),
 		"",
-		`Sizes are heights and squares in the same namespace. Density is a theme and never a knob: the web draws the desktop set where the primary pointer is fine and the viewport is at least \`tablet\` wide (${resolved.breakpoints.tablet}) and the touch set everywhere else, native draws the touch set, and a \`data-density\` attribute on the web root pins either. A molecule whose structure follows density (an action bar at natural width on the desktop, full width on touch) reads it through the web's \`touch:\` variant, the same rule (a \`data-density="touch"\` pin, or no \`desktop\` pin where the pointer is not fine or the viewport is narrower than \`tablet\`); native is the touch set, so its molecules draw the touch structure with no variant. Every touch target is at least ${resolved.sizes.touch.target}; on the desktop every interactive part keeps a ${resolved.sizes.desktop.target} hit area whatever it draws.`,
+		`Sizes are heights and squares in the same namespace. Density is a theme and never a knob: the web draws the desktop set where the primary pointer is fine and the viewport is at least \`tablet\` wide (${resolved.breakpoints.tablet}) and the touch set everywhere else, native draws the touch set, and a \`data-density\` attribute on the web root pins either. A molecule whose structure follows density (an action bar at natural width on the desktop, full width on touch) reads it through the web's \`touch:\` variant, the same rule (a \`data-density="touch"\` pin, or no \`desktop\` pin where the pointer is not fine or the viewport is narrower than \`tablet\`); native is the touch set, so its molecules draw the touch structure with no variant. The room is the one set a screen declares (\`Place\`'s \`distance\`), since no query detects how far a screen is read from: the touch set drawn on a ${ROOM_CANVAS.width} × ${ROOM_CANVAS.height} canvas, so the Room columns are canvas units, each multiplied by the room unit \`u = max(1px, min(100vw / ${ROOM_CANVAS.width}, 100dvh / ${ROOM_CANVAS.height}))\` (native computes it from the window's size), 2 px at 1920 × 1080. The room's \`page\` is ${canvas(resolved.spacing.room.page)} all round (the ten-foot safe area), its radii, fixed widths, hairline and ring scale by \`u\` too, and its structure is the touch one (\`touch:\` matches inside it). A room page holds one column and never splits, because breakpoints stay px while its widths scale, and it holds no menu, picker or sheet, whose layers open outside it. Two limits: \`vw\` sizes ignore browser zoom, and a scaled size is fractional, outside the even-pixel rule. Every touch target is at least ${resolved.sizes.touch.target}; on the desktop every interactive part keeps a ${resolved.sizes.desktop.target} hit area whatever it draws.`,
 		"",
 		...table(
-			["Size", "Desktop", "Touch", "Is"],
+			["Size", "Desktop", "Touch", "Room", "Is"],
 			SIZES.map((size) => [
 				code(size),
 				resolved.sizes.desktop[size],
 				resolved.sizes.touch[size],
+				canvas(resolved.sizes.room[size]),
 				SIZE_USE[size],
 			]),
 		),
@@ -478,7 +487,7 @@ function body(resolved: ResolvedTheme): string[] {
 		"",
 		"## Elevation & Depth",
 		"",
-		`A card at rest has a hairline and no shadow. Two levels lift a layer, each per mode: ${SHADOW_LEVELS.map((level) => `${code(`shadow-${level}`)} (light ${code(resolved.shadows.light[level])}, dark ${code(resolved.shadows.dark[level])})`).join("; ")}. \`shadow-float\` lifts a popover, a menu, a picker's list, a toast and an act floating over what scrolls (a touch Place's act, a Thread's Latest); \`shadow-modal\` a dialog, a sheet and a command palette. In dark the lift is carried by the \`raised\` step and the hairline as much as by the shadow. The hairline is 1 px; the focus ring is \`ring\` at 2 px, 2 px outside the box, drawn inward inside a list. The layers over the page stand in one order, each \`--layer-<layer>\` read as \`z-(--layer-<layer>)\` on the web: ${STACK_ORDER.map((layer) => `${code(layer)} ${rootTokens(resolved)[`--layer-${layer}`]}`).join(" < ")}, the page at 0. A sheet's scrim and the sheet stand on \`sheet\`, a popover over a sheet it opens from, and the toasts over both, so a toast raised while a sheet or a confirm is open is seen and its dismiss pressed.`,
+		`A card at rest has a hairline and no shadow. Two levels lift a layer, each per mode: ${SHADOW_LEVELS.map((level) => `${code(`shadow-${level}`)} (light ${code(resolved.shadows.light[level])}, dark ${code(resolved.shadows.dark[level])})`).join("; ")}. \`shadow-float\` lifts a popover, a menu, a picker's list, a toast and an act floating over what scrolls (a touch Place's act, a Thread's Latest); \`shadow-modal\` a dialog, a sheet and a command palette. In dark the lift is carried by the \`raised\` step and the hairline as much as by the shadow. The hairline is 1 px; the focus ring is \`ring\` at 2 px, 2 px outside the box, drawn inward inside a list (in the room 1 and 2 canvas units, 2 and 4 px at 1920 × 1080). The layers over the page stand in one order, each \`--layer-<layer>\` read as \`z-(--layer-<layer>)\` on the web: ${STACK_ORDER.map((layer) => `${code(layer)} ${rootTokens(resolved)[`--layer-${layer}`]}`).join(" < ")}, the page at 0. A sheet's scrim and the sheet stand on \`sheet\`, a popover over a sheet it opens from, and the toasts over both, so a toast raised while a sheet or a confirm is open is seen and its dismiss pressed.`,
 		"",
 		"## Shapes",
 		"",

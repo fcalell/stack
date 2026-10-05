@@ -45,9 +45,15 @@ reactUi({
 
 Density is no option. The desktop set draws where the pointer is fine and the viewport is at
 least `tablet` wide; the touch set draws everywhere else, so a narrow desktop window draws the
-touch sizes and structure. A `data-density` attribute on `<html>` pins either one: `desktop` or
-`touch`. Sizes, spacing roles and type roles follow density on their own; a molecule whose
-structure differs by density reads it itself.
+touch sizes and structure. A `data-density` attribute on `<html>` pins one: `desktop` or `touch`.
+Sizes, spacing roles and type roles follow density on their own; a molecule whose structure
+differs by density reads it itself.
+
+A screen read from across a room is the one set a page declares, `Place`'s `distance="room"`: its
+`Place` sets `data-density="room"` on itself, so the touch set at a 960 × 540 canvas scaled to the
+window draws inside it (`--room-unit` holds the scale), with the touch structure. A layer that
+portals (a menu, a picker, a sheet) draws outside that scope, which is why a room `Place` takes no
+`context`, `more` or `foot`.
 
 ## The page container
 

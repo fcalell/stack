@@ -115,6 +115,23 @@ A `Link`'s `href` is a route of the app (it navigates through the router) or an 
 ]} />
 ```
 
+## A screen read from across a room declares its distance
+
+A screen read from across a room (a wall display, a tablet on a stand) takes `distance="room"`
+on its `Place`: nothing detects the viewing distance, so the page states it. The page draws the
+touch set on a 960 × 540 canvas, scaled to the window by its width and height (never under one):
+on a 1920 × 1080 window the body is 32, the title 44, a control 88 and a `Stat`'s figure 160,
+five times its label, and a rotation or a resize rescales it. It holds one column of `Columns`,
+`Stats` and one `Stat`, and takes no `context`, `more` or `foot`, whose layers open outside it.
+Set it on the screen's one page, never on a part of a page. A scaled size is fractional.
+
+```tsx
+<Place title="Deploys" distance="room">
+  <Stat label="need you" value={3} />
+  <Stats items={[{ label: "Deployed", value: 14 }, { label: "Failed", value: 1 }]} />
+</Place>
+```
+
 ## Data, never nodes
 
 A composed region is data its molecule draws: an `Act` (`{ label, onAct, destructive? }`),

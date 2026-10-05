@@ -27,6 +27,9 @@ import {
 	modeTokens,
 	nativeMeasureTokens,
 	raisedGroundTokens,
+	roomMeasureTokens,
+	roomTokens,
+	roomUnitFor,
 	shadowUtilities,
 	themeTokens,
 } from "@fcalell/ui-core/emit";
@@ -54,6 +57,7 @@ import {
 	COLORS,
 	type ColorName,
 	ENGLISH,
+	HAIRLINE_PX,
 	KNOB_DEFAULTS,
 	SHADOW_LEVELS,
 	STATUS_STATES,
@@ -687,6 +691,7 @@ check("a3", "the emitted sheet has the contract shape", () => {
 	const expected = {
 		...themeTokens(resolved),
 		...nativeMeasureTokens(resolved),
+		"--hairline": `${HAIRLINE_PX}px`,
 	};
 	for (const [name, value] of Object.entries(expected)) {
 		assert(
@@ -991,6 +996,76 @@ check("a-raised", "a raised ground re-points the hairline", () => {
 	}
 	return `border-edge outside -> inside a raised ground: ${drawn.join(", ")}`;
 });
+
+// `RoomScope` scopes the room set at the window's unit; uniwind's store lays
+// the scope over the theme's variables, so a size, a type role, a radius and
+// a border read the scaled value when they draw.
+check(
+	"a-room",
+	"a room scope scales sizes, type, radii and the hairline",
+	() => {
+		const compiledCss = pipeline();
+		const theme = themeScope(compiledCss, "light");
+		const scopedAt = (width: number, height: number): Vars => {
+			const unit = roomUnitFor(width, height);
+			const scale = (units: number) => units * unit;
+			const scoped: Vars = { ...theme };
+			for (const [name, value] of Object.entries({
+				...roomTokens(scale),
+				...roomMeasureTokens(scale),
+			})) {
+				scoped[name] = () => value;
+			}
+			return scoped;
+		};
+		const drawn: string[] = [];
+		for (const [width, height, control, body, display, page] of [
+			[1280, 720, 44 * (4 / 3), 16 * (4 / 3), 5 * 16 * (4 / 3), 48 * (4 / 3)],
+			[1920, 1080, 88, 32, 160, 96],
+			[3840, 2160, 176, 64, 320, 192],
+		] as const) {
+			const vars = scopedAt(width, height);
+			const got = {
+				control: styleValue(compiledCss, "min-h-control", "minHeight", vars),
+				body: styleValue(compiledCss, "text-body", "fontSize", vars),
+				display: styleValue(compiledCss, "text-display", "fontSize", vars),
+				page: styleValue(compiledCss, "p-page", "padding", vars),
+				radius: styleValue(
+					compiledCss,
+					"rounded-control",
+					"borderRadius",
+					vars,
+				),
+				hairline: styleValue(compiledCss, "border", "borderWidth", vars),
+			};
+			const unit = roomUnitFor(width, height);
+			const want = {
+				control,
+				body,
+				display,
+				page,
+				radius: 6 * unit,
+				hairline: HAIRLINE_PX * unit,
+			};
+			for (const [name, value] of Object.entries(want)) {
+				const read = got[name as keyof typeof got];
+				assert(
+					typeof read === "number" && Math.abs(read - value) < 1e-6,
+					`${width} × ${height}: ${name} draws ${String(read)}, expected ${value}`,
+				);
+			}
+			drawn.push(`${width}: control ${got.control}, body ${got.body}`);
+		}
+		const outside = styleValue(
+			compiledCss,
+			"min-h-control",
+			"minHeight",
+			theme,
+		);
+		assert(outside === 44, `outside a room the control is ${String(outside)}`);
+		return `${drawn.join("; ")}; outside a room 44`;
+	},
+);
 
 check("a6", "the build resolves the inventory and kills the retired", () => {
 	const roster = FAMILIES.map((family) => family.name).join(" ");

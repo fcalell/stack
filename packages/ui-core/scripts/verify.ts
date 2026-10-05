@@ -20,6 +20,12 @@ import {
 	modeTokens,
 	nativeMeasureTokens,
 	reducedMotionTokens,
+	roomMeasureTokens,
+	roomRingTokens,
+	roomScope,
+	roomTokens,
+	roomUnit,
+	roomUnitFor,
 	rootTokens,
 	shadowUtilities,
 	themeTokens,
@@ -77,6 +83,8 @@ import {
 	type Mode,
 	RADIUS_PX,
 	RADIUS_ROLES,
+	ROOM_CANVAS,
+	ROOM_TYPE_SIZE,
 	SANS_ADVANCE,
 	SHADOW_LEVELS,
 	SIZE_PX,
@@ -815,7 +823,10 @@ check("c06", "every scale is its ratio of the base", () => {
 		const body = BODY_SIZE[density];
 		const tokens = densityTokens(base, density);
 		for (const role of TYPE_ROLES) {
-			const size = Math.round(body * TYPE_SCALE[role].size);
+			const ratio =
+				(density === "room" ? ROOM_TYPE_SIZE[role] : undefined) ??
+				TYPE_SCALE[role].size;
+			const size = Math.round(body * ratio);
 			requireEqual(tokens[`--text-${role}`], `${size}px`, `${density} ${role}`);
 			const box = Number.parseInt(tokens[`--leading-${role}`] ?? "", 10);
 			requireEqual(box % 2, 0, `${role} line box is even`);
@@ -830,11 +841,11 @@ check("c06", "every scale is its ratio of the base", () => {
 				`${role} modifier shape`,
 			);
 		}
-		const ratio = SPACING_RATIO[density];
+		const spacing = SPACING_RATIO[density];
 		for (const role of SPACING_ROLES) {
 			requireEqual(
 				tokens[`--spacing-${role}`],
-				`${SPACE_BASE * ratio[role]}px`,
+				`${SPACE_BASE * spacing[role]}px`,
 				`${density} ${role}`,
 			);
 		}
@@ -932,7 +943,7 @@ check("c06", "every scale is its ratio of the base", () => {
 			rung,
 		);
 	}
-	return "7 roles × 2 densities with even line boxes, 12 spacing roles, 17 sizes, 4 trackings, 8 radii, 11 widths, 3 breakpoints, 2 families with their fallback faces, 4 durations";
+	return "7 roles × 3 densities with even line boxes, 12 spacing roles, 17 sizes, 4 trackings, 8 radii, 11 widths, 3 breakpoints, 2 families with their fallback faces, 4 durations";
 });
 
 check(
@@ -967,6 +978,125 @@ check(
 			"desktop body line plus inside",
 		);
 		return "touch 44/48/38 seeded, desktop 32/28/38 beside it, the type scale moves with them";
+	},
+);
+
+check(
+	"c06-room",
+	"the room set is the touch set on the canvas, scaled by the unit",
+	() => {
+		requireEqual(
+			roomUnit(),
+			`max(1px, min(100vw / ${ROOM_CANVAS.width}, 100dvh / ${ROOM_CANVAS.height}))`,
+			"the room unit",
+		);
+		// The unit of a window: the tighter axis, never under 1 (a portrait
+		// screen or a small window).
+		for (const [width, height, unit] of [
+			[1280, 720, 4 / 3],
+			[1920, 1080, 2],
+			[3840, 2160, 4],
+			[1080, 1920, 1.125],
+			[320, 480, 1],
+		] as const) {
+			requireEqual(
+				roomUnitFor(width, height),
+				unit,
+				`u at ${width} × ${height}`,
+			);
+		}
+		const touch = densityTokens(base, "touch");
+		const canvas = densityTokens(base, "room");
+		const number = (value: string) => Number.parseFloat(value);
+		// What the room moves off the touch set: a figure stands five times its
+		// label, and the page inset is the ten-foot safe area.
+		const moved = new Set([
+			"--text-display",
+			"--text-display--line-height",
+			"--leading-display",
+			"--spacing-page",
+		]);
+		const unit1 = roomTokens((units) => units);
+		for (const [key, value] of Object.entries(canvas)) {
+			requireEqual(unit1[key], number(value), `${key} at u = 1`);
+			if (!moved.has(key)) requireEqual(value, touch[key], `${key} is touch's`);
+		}
+		requireEqual(canvas["--text-display"], "80px", "display is 5 body");
+		requireEqual(canvas["--leading-display"], "88px", "display line box");
+		requireEqual(canvas["--spacing-page"], "48px", "page is the safe inset");
+		// The sweep at u = 1 (a window at the canvas) and u = 2 (1920 × 1080):
+		// every value is a positive number of pixels, none under the touch set's.
+		for (const unit of [1, 2]) {
+			const set = roomTokens((units) => units * unit);
+			const ring = roomRingTokens((units) => units * unit);
+			const measures = roomMeasureTokens((units) => units * unit);
+			for (const [key, value] of Object.entries({
+				...set,
+				...ring,
+				...measures,
+			})) {
+				assert(
+					Number.isFinite(value) && value > 0,
+					`${key} at u = ${unit} is ${value}`,
+				);
+			}
+			for (const [key, value] of Object.entries(touch)) {
+				if (moved.has(key)) continue;
+				assert(
+					(set[key] ?? 0) >= number(value),
+					`${key} at u = ${unit} falls under the touch set`,
+				);
+			}
+			requireEqual(set["--hairline"], unit, `hairline at u = ${unit}`);
+			requireEqual(ring["--focus-ring"], 2 * unit, `ring at u = ${unit}`);
+			requireEqual(
+				ring["--focus-ring-offset"],
+				2 * unit,
+				`ring offset at u = ${unit}`,
+			);
+		}
+		// 1920 × 1080, u = 2, against the ten-foot range.
+		const at2 = roomTokens((units) => units * 2);
+		const key = (name: string) => at2[name] ?? Number.NaN;
+		requireEqual(key("--text-body"), 32, "body at 1920");
+		requireEqual(key("--text-title"), 44, "title at 1920");
+		requireEqual(key("--spacing-control"), 88, "control at 1920");
+		requireEqual(key("--spacing-row"), 96, "row at 1920");
+		requireEqual(key("--spacing-page"), 96, "page at 1920");
+		requireEqual(key("--text-display"), 160, "display at 1920");
+		requireEqual(key("--radius-control"), 12, "radius at 1920");
+		assert(
+			key("--text-body") >= 30 && key("--text-body") <= 32,
+			"body is in the range of 30 to 32",
+		);
+		assert(key("--text-caption") >= 24, "supplemental text is at least 24");
+		assert(key("--spacing-target") >= 64, "a target is at least 64");
+		assert(
+			key("--text-display") / key("--text-meta") >= 5,
+			"a figure stands at least five times its label",
+		);
+		// The web declares each as a calc over the unit, the ring included.
+		const scope = roomScope();
+		requireEqual(scope["--room-unit"], roomUnit(), "the scope holds the unit");
+		const ring1 = roomRingTokens((units) => units);
+		for (const [name, value] of Object.entries(scope)) {
+			if (name === "--room-unit") continue;
+			const units = unit1[name] ?? ring1[name];
+			requireEqual(value, `calc(${units} * var(--room-unit))`, name);
+		}
+		for (const name of Object.keys(unit1)) {
+			assert(name in scope, `the web scope is missing ${name}`);
+		}
+		for (const name of Object.keys(canvas)) {
+			assert(name in unit1, `the room tokens miss ${name}`);
+		}
+		for (const name of Object.keys(scope)) {
+			assert(
+				!name.startsWith("--container-measure"),
+				`${name}: a ch measure follows the type, never the unit`,
+			);
+		}
+		return "touch's set at u = 1 but display and page; at 1920 × 1080 body 32, title 44, control 88, row 96, display 160, page 96, hairline 2, ring 4; the web scope is a calc over the unit";
 	},
 );
 
@@ -1045,6 +1175,7 @@ check("c08", "themeTokens and modeTokens carry the right keys", () => {
 	for (const bp of BREAKPOINTS) expected.add(`--breakpoint-${bp}`);
 	expected.add("--font-sans");
 	expected.add("--font-mono");
+	expected.add("--default-border-width");
 	for (const rung of DURATIONS) expected.add(`--transition-duration-${rung}`);
 	expected.add("--transition-duration-loop");
 	for (const easing of EASINGS) expected.add(`--ease-${easing}`);

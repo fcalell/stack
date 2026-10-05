@@ -4,6 +4,7 @@ import {
 	modeTokens,
 	raisedGroundTokens,
 	reducedMotionTokens,
+	roomScope,
 	rootTokens,
 	shadowUtilities,
 	themeTokens,
@@ -24,7 +25,7 @@ import {
 	TYPE_ROLES,
 	WIDTHS,
 } from "@fcalell/ui-core/tokens";
-import { DESKTOP_MEDIA, TOUCH_MEDIA } from "../density.ts";
+import { DESKTOP_MEDIA, ROOM_SCOPE, TOUCH_MEDIA } from "../density.ts";
 import type { CssBlock, CssLayer, CssSourceInline } from "../types.ts";
 import { renderMediaRule, renderRule } from "./codegen.ts";
 
@@ -88,8 +89,11 @@ export function rootLayer(resolved: ResolvedTheme): CssLayer {
 // the seeded touch set in `@layer base`, the same cascade the dark layer
 // rides, so every cell that names a size or a type role (`min-h-control`,
 // `text-body`) follows with no class of its own. `data-density` on the root
-// pins either set on any device, which is how the showcase and a board
-// address a density.
+// pins any set on any device, which is how the showcase and a board
+// address a density. The room set is the one a `Place` declares: its values are
+// `calc`s over `--room-unit`, which the scope holds itself, so the unit
+// resolves where it is read; the scope comes last so a root pinned to the
+// room beats the desktop query.
 const PINNED_DESKTOP = ':root[data-density="desktop"]';
 const PINNED_TOUCH = ':root[data-density="touch"]';
 
@@ -102,6 +106,7 @@ export function densityLayer(resolved: ResolvedTheme): CssLayer {
 			renderRule(PINNED_TOUCH, densityTokens(resolved, "touch")),
 		),
 		renderRule(PINNED_DESKTOP, desktop),
+		renderRule(ROOM_SCOPE, roomScope()),
 	];
 	return { name: "base", content: rules.join("\n") };
 }
@@ -109,7 +114,8 @@ export function densityLayer(resolved: ResolvedTheme): CssLayer {
 const slot = (selector: string) => `${selector} & {\n\t@slot;\n}`;
 
 // `touch:` draws where the density layer draws the touch set: under the touch
-// pin, or with no desktop pin outside the desktop query. It is how a
+// pin, or with no desktop pin outside the desktop query, and inside a room
+// scope, which draws the touch structure. It is how a
 // molecule's structure (not a token) follows density; a size or a type role
 // follows through its variable and never needs it.
 export function touchVariant(): CssBlock {
@@ -118,6 +124,7 @@ export function touchVariant(): CssBlock {
 		name: "touch",
 		content: [
 			slot(PINNED_TOUCH),
+			slot(ROOM_SCOPE),
 			renderMediaRule(TOUCH_MEDIA, slot(':root:not([data-density="desktop"])')),
 		].join("\n"),
 	};

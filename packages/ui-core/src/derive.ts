@@ -9,9 +9,9 @@ import {
 	oklchToRgb,
 	veiledLuminance,
 } from "./oklch.ts";
+import { nativeMeasurePx, sizesFor, spacingFor, typeFor } from "./scales.ts";
 import { type ParsedTheme, parseTheme, type Theme } from "./schema.ts";
 import {
-	BODY_SIZE,
 	BREAKPOINT_PX,
 	BREAKPOINTS,
 	type Breakpoint,
@@ -35,31 +35,21 @@ import {
 	type Knobs,
 	LABEL,
 	LOOP_MS,
-	MEASURE_CHARACTERS,
 	MEASURES,
 	type Measure,
 	MODES,
-	MONO_ADVANCE,
 	type Mode,
 	RADIUS_PX,
 	RADIUS_ROLES,
 	type RadiusRole,
-	SANS_ADVANCE,
 	SHADOW_INK,
 	SHADOW_LAYERS,
 	SHADOW_LEVELS,
 	type ShadowLevel,
-	SIZE_PX,
-	SIZES,
 	type Size,
-	SPACE_BASE,
-	SPACING_RATIO,
-	SPACING_ROLES,
 	type SpacingRole,
 	TRACKED_ROLES,
 	type TrackedRole,
-	TYPE_ROLES,
-	TYPE_SCALE,
 	TYPE_TRACKING,
 	type TypeRole,
 	WIDTH_VALUE,
@@ -78,7 +68,9 @@ export interface ResolvedTheme {
 	// Each level as a `box-shadow` list in sRGB, since React Native's
 	// `boxShadow` parses no oklch.
 	shadows: Record<Mode, Record<ShadowLevel, string>>;
-	// The three scales density moves, each set complete on its own.
+	// The three scales density moves, each set complete on its own. The
+	// `room` set is in canvas units (`ROOM_CANVAS`), each `Npx` standing for N
+	// times the room unit, never a pixel count.
 	type: Record<Density, Record<TypeRole, { size: string; leading: string }>>;
 	tracking: Record<TrackedRole, string>;
 	spacing: Record<Density, Record<SpacingRole, string>>;
@@ -260,63 +252,6 @@ function shadowsFor(mode: Mode, knobs: Knobs): Record<ShadowLevel, string> {
 	return out;
 }
 
-// ── The scales ──────────────────────────────────────────────────────
-
-// The nearest even pixel; a tie rounds up.
-function roundEven(value: number): number {
-	return 2 * Math.round(value / 2);
-}
-
-function sizeOf(density: Density, role: TypeRole): number {
-	return Math.round(BODY_SIZE[density] * TYPE_SCALE[role].size);
-}
-
-function leadingOf(density: Density, role: TypeRole): number {
-	return roundEven(sizeOf(density, role) * TYPE_SCALE[role].leading);
-}
-
-function typeFor(
-	density: Density,
-): Record<TypeRole, { size: string; leading: string }> {
-	const out = {} as Record<TypeRole, { size: string; leading: string }>;
-	for (const role of TYPE_ROLES) {
-		out[role] = {
-			size: `${sizeOf(density, role)}px`,
-			leading: `${leadingOf(density, role)}px`,
-		};
-	}
-	return out;
-}
-
-function spacingFor(density: Density): Record<SpacingRole, string> {
-	const out = {} as Record<SpacingRole, string>;
-	for (const role of SPACING_ROLES) {
-		out[role] = `${SPACE_BASE * SPACING_RATIO[density][role]}px`;
-	}
-	return out;
-}
-
-function sizePx(density: Density, size: Size): number {
-	const px = SIZE_PX[density];
-	if (size === "switch-travel") {
-		return px["switch-w"] - px.thumb - 2 * px["switch-inset"];
-	}
-	if (size === "text-area") return 3 * leadingOf(density, "body");
-	if (size === "figures") {
-		return Math.ceil(4 * MONO_ADVANCE * sizeOf(density, "code"));
-	}
-	if (size === "message-input") return 8 * leadingOf(density, "body");
-	if (size === "image-tile") return 4 * leadingOf(density, "body");
-	if (size === "image-cap") return 20 * leadingOf(density, "body");
-	return px[size];
-}
-
-function sizesFor(density: Density): Record<Size, string> {
-	const out = {} as Record<Size, string>;
-	for (const size of SIZES) out[size] = `${sizePx(density, size)}px`;
-	return out;
-}
-
 function perDensity<T>(build: (density: Density) => T): Record<Density, T> {
 	const out = {} as Record<Density, T>;
 	for (const density of DENSITIES) out[density] = build(density);
@@ -377,8 +312,7 @@ export function deriveTheme(theme: Theme = {}): ResolvedTheme {
 		widths: record(WIDTHS, (width) => WIDTH_VALUE[width]),
 		nativeMeasures: record(
 			MEASURES,
-			(measure) =>
-				`${Math.ceil(MEASURE_CHARACTERS[measure] * SANS_ADVANCE * BODY_SIZE.touch)}px`,
+			(measure) => `${nativeMeasurePx(measure)}px`,
 		),
 		breakpoints: record(BREAKPOINTS, (bp) => `${BREAKPOINT_PX[bp]}px`),
 		fonts: {

@@ -2209,18 +2209,18 @@ A chart's series take the chip marks in order: `chip-teal`, `chip-violet`, `chip
 
 ## Typography
 
-Eight roles named by place. Two rules decide the role: size follows structure, never emphasis (the primary line of anything is `body`, a secondary line is `meta`, emphasis inside a line is weight 500, never a size change); and a size role names a place once (`title` the page's name, once per screen; `heading` a section's or a card's name, never inside a row; `caption` text inside a small component, never a sentence; `code` what a machine reads; `figure` a count's number in a strip of them). There is no label role: a field label and a row's leading cell are `body` at 500, a table header is `meta` at 500. The scale moves with density (desktop body 13, touch body 16); nothing else moves it.
+Eight roles named by place. Two rules decide the role: size follows structure, never emphasis (the primary line of anything is `body`, a secondary line is `meta`, emphasis inside a line is weight 500, never a size change); and a size role names a place once (`title` the page's name, once per screen; `heading` a section's or a card's name, never inside a row; `caption` text inside a small component, never a sentence; `code` what a machine reads; `figure` a count's number in a strip of them). There is no label role: a field label and a row's leading cell are `body` at 500, a table header is `meta` at 500. The scale moves with density (desktop body 13, touch body 16, room body 16 canvas units); nothing else moves it, except that in the room `display` stands five times the body (a glanceable figure, not a stat inside a page).
 
-| Role | Desktop | Touch | Weight | Ink | Place |
-| --- | --- | --- | --- | --- | --- |
-| `display` | 36px / 40px | 44px / 48px | 500 | `ink-body` | a display number, one per screen, in tabular figures |
-| `figure` | 22px / 26px | 27px / 32px | 500 | `ink-body` | a count's number in a strip of them, in tabular figures |
-| `title` | 18px / 24px | 22px / 28px | 600 | `ink-body` | the page's name, once per screen |
-| `heading` | 15px / 20px | 18px / 24px | 600 | `ink-body` | a section's or a card's name, never inside a row |
-| `body` | 13px / 20px | 16px / 24px | 400 | `ink-body` | the primary line of anything: prose, a row, a field, a menu item |
-| `meta` | 12px / 18px | 15px / 22px | 400 | `ink-meta` | a secondary line, a description, a table header at 500 |
-| `caption` | 11px / 16px | 14px / 22px | 400 | `ink-meta` | text inside a small component (a chip, a key hint), never a sentence |
-| `code` | 12px / 18px | 15px / 22px | 400 | `ink-body` | what a machine reads |
+| Role | Desktop | Touch | Room | Weight | Ink | Place |
+| --- | --- | --- | --- | --- | --- | --- |
+| `display` | 36px / 40px | 44px / 48px | 80 / 88 | 500 | `ink-body` | a display number, one per screen, in tabular figures |
+| `figure` | 22px / 26px | 27px / 32px | 27 / 32 | 500 | `ink-body` | a count's number in a strip of them, in tabular figures |
+| `title` | 18px / 24px | 22px / 28px | 22 / 28 | 600 | `ink-body` | the page's name, once per screen |
+| `heading` | 15px / 20px | 18px / 24px | 18 / 24 | 600 | `ink-body` | a section's or a card's name, never inside a row |
+| `body` | 13px / 20px | 16px / 24px | 16 / 24 | 400 | `ink-body` | the primary line of anything: prose, a row, a field, a menu item |
+| `meta` | 12px / 18px | 15px / 22px | 15 / 22 | 400 | `ink-meta` | a secondary line, a description, a table header at 500 |
+| `caption` | 11px / 16px | 14px / 22px | 14 / 22 | 400 | `ink-meta` | text inside a small component (a chip, a key hint), never a sentence |
+| `code` | 12px / 18px | 15px / 22px | 15 / 22 | 400 | `ink-body` | what a machine reads |
 
 Tracking: `display` -0.02em, `title` -0.01em, `heading` -0.005em, `caption` 0.01em; the rest 0. `sans` is `"IBM Plex Sans", "IBM Plex Sans Fallback", ui-sans-serif, system-ui, sans-serif`; `mono` is `"IBM Plex Mono", "IBM Plex Mono Fallback", ui-monospace, "SFMono-Regular", Menlo, monospace`. Each named family is followed by its metric fallback face. Running text wraps at `measure`, 58ch; native, which has no `ch`, draws it at 557px (its characters at the sans face's figure advance of the touch body size, so a consumer face with a wider "0" overflows it).
 
@@ -2228,62 +2228,62 @@ Tracking: `display` -0.02em, `title` -0.01em, `heading` -0.005em, `caption` 0.01
 
 Spacing roles are multiples of a 4 px base, picked per density, named by what they separate:
 
-| Role | Desktop | Touch | Separates |
-| --- | --- | --- | --- |
-| `inside` | 6px | 8px | within a control: icon to label, dot to text |
-| `control-x` | 12px | 16px | a control's inline padding |
-| `pair` | 6px | 8px | between paired elements: label over input, title over description |
-| `acts` | 8px | 8px | between the acts of a bar: a page header, a toolbar, an action bar |
-| `rows` | 2px | 4px | between rows in a menu or a nav list |
-| `card` | 16px | 16px | a card's inset |
-| `tile` | 12px | 16px | a compact card's inset: a board card |
-| `float` | 4px | 4px | a floating surface's inset: a select's list, a menu, a picker popover |
-| `fields` | 16px | 24px | between fields |
-| `sections` | 32px | 40px | between sections of a page |
-| `page` | 24px | 16px | the page inset |
+| Role | Desktop | Touch | Room | Separates |
+| --- | --- | --- | --- | --- |
+| `inside` | 6px | 8px | 8 | within a control: icon to label, dot to text |
+| `control-x` | 12px | 16px | 16 | a control's inline padding |
+| `pair` | 6px | 8px | 8 | between paired elements: label over input, title over description |
+| `acts` | 8px | 8px | 8 | between the acts of a bar: a page header, a toolbar, an action bar |
+| `rows` | 2px | 4px | 4 | between rows in a menu or a nav list |
+| `card` | 16px | 16px | 16 | a card's inset |
+| `tile` | 12px | 16px | 16 | a compact card's inset: a board card |
+| `float` | 4px | 4px | 4 | a floating surface's inset: a select's list, a menu, a picker popover |
+| `fields` | 16px | 24px | 24 | between fields |
+| `sections` | 32px | 40px | 40 | between sections of a page |
+| `page` | 24px | 16px | 48 | the page inset |
 
-Sizes are heights and squares in the same namespace. Density is a theme and never a knob: the web draws the desktop set where the primary pointer is fine and the viewport is at least `tablet` wide (768px) and the touch set everywhere else, native draws the touch set, and a `data-density` attribute on the web root pins either. A molecule whose structure follows density (an action bar at natural width on the desktop, full width on touch) reads it through the web's `touch:` variant, the same rule (a `data-density="touch"` pin, or no `desktop` pin where the pointer is not fine or the viewport is narrower than `tablet`); native is the touch set, so its molecules draw the touch structure with no variant. Every touch target is at least 44px; on the desktop every interactive part keeps a 24px hit area whatever it draws.
+Sizes are heights and squares in the same namespace. Density is a theme and never a knob: the web draws the desktop set where the primary pointer is fine and the viewport is at least `tablet` wide (768px) and the touch set everywhere else, native draws the touch set, and a `data-density` attribute on the web root pins either. A molecule whose structure follows density (an action bar at natural width on the desktop, full width on touch) reads it through the web's `touch:` variant, the same rule (a `data-density="touch"` pin, or no `desktop` pin where the pointer is not fine or the viewport is narrower than `tablet`); native is the touch set, so its molecules draw the touch structure with no variant. The room is the one set a screen declares (`Place`'s `distance`), since no query detects how far a screen is read from: the touch set drawn on a 960 × 540 canvas, so the Room columns are canvas units, each multiplied by the room unit `u = max(1px, min(100vw / 960, 100dvh / 540))` (native computes it from the window's size), 2 px at 1920 × 1080. The room's `page` is 48 all round (the ten-foot safe area), its radii, fixed widths, hairline and ring scale by `u` too, and its structure is the touch one (`touch:` matches inside it). A room page holds one column and never splits, because breakpoints stay px while its widths scale, and it holds no menu, picker or sheet, whose layers open outside it. Two limits: `vw` sizes ignore browser zoom, and a scaled size is fractional, outside the even-pixel rule. Every touch target is at least 44px; on the desktop every interactive part keeps a 24px hit area whatever it draws.
 
-| Size | Desktop | Touch | Is |
-| --- | --- | --- | --- |
-| `control` | 32px | 44px | a button, a segmented control |
-| `control-compact` | 28px | 44px | a menu item, a toolbar control |
-| `field` | 38px | 48px | a form input |
-| `row` | 32px | 48px | a one-line row |
-| `row-2` | 48px | 64px | a two-line row |
-| `row-setting` | 64px | 72px | a setting row: label and description beside a control |
-| `strip` | 40px | 44px | a page header bar: a Place's or Screen's title and acts |
-| `target` | 24px | 44px | the least hit area of any interactive part |
-| `dot` | 6px | 8px | a status or chip mark |
-| `chip` | 20px | 24px | a chip's height |
-| `avatar` | 24px | 32px | an avatar's side |
-| `spinner` | 14px | 18px | the spinner inside a pending act |
-| `switch-w` | 28px | 40px | a switch's width |
-| `switch-h` | 16px | 24px | a switch's height |
-| `thumb` | 12px | 20px | a switch's knob |
-| `switch-inset` | 2px | 2px | the knob's inset from its track |
-| `switch-travel` | 12px | 16px | the knob's travel: the width less the knob and both insets |
-| `skeleton` | 12px | 12px | a skeleton bar's height |
-| `icon-meta` | 12px | 14px | an icon beside meta or caption text |
-| `icon` | 14px | 18px | an icon beside body text |
-| `icon-control` | 16px | 20px | an icon inside a control |
-| `check` | 16px | 20px | a checkbox's box |
-| `track` | 2px | 4px | a slider's track thickness |
-| `otp` | 44px | 48px | a one-time-code box's largest side; the box is square and shrinks with its row |
-| `text-area` | 60px | 72px | a text area's least value height: three body line boxes |
-| `meter` | 6px | 8px | a meter's bar |
-| `chart` | 128px | 192px | a chart's plot, its gridlines four bands |
-| `qr` | 160px | 240px | a QR code's square, its quiet zone inside it |
-| `figures` | 29px | 36px | four tabular figures at the code size: a diff's number columns, a file row's count lanes |
-| `message-input` | 160px | 192px | a message input's tallest text: eight body line boxes, scrolling past it |
-| `image-tile` | 80px | 96px | an image thumbnail's side: four body line boxes, the lines of provenance it stands beside |
-| `image-cap` | 400px | 480px | the tallest an image grows at its container's width: twenty body line boxes |
+| Size | Desktop | Touch | Room | Is |
+| --- | --- | --- | --- | --- |
+| `control` | 32px | 44px | 44 | a button, a segmented control |
+| `control-compact` | 28px | 44px | 44 | a menu item, a toolbar control |
+| `field` | 38px | 48px | 48 | a form input |
+| `row` | 32px | 48px | 48 | a one-line row |
+| `row-2` | 48px | 64px | 64 | a two-line row |
+| `row-setting` | 64px | 72px | 72 | a setting row: label and description beside a control |
+| `strip` | 40px | 44px | 44 | a page header bar: a Place's or Screen's title and acts |
+| `target` | 24px | 44px | 44 | the least hit area of any interactive part |
+| `dot` | 6px | 8px | 8 | a status or chip mark |
+| `chip` | 20px | 24px | 24 | a chip's height |
+| `avatar` | 24px | 32px | 32 | an avatar's side |
+| `spinner` | 14px | 18px | 18 | the spinner inside a pending act |
+| `switch-w` | 28px | 40px | 40 | a switch's width |
+| `switch-h` | 16px | 24px | 24 | a switch's height |
+| `thumb` | 12px | 20px | 20 | a switch's knob |
+| `switch-inset` | 2px | 2px | 2 | the knob's inset from its track |
+| `switch-travel` | 12px | 16px | 16 | the knob's travel: the width less the knob and both insets |
+| `skeleton` | 12px | 12px | 12 | a skeleton bar's height |
+| `icon-meta` | 12px | 14px | 14 | an icon beside meta or caption text |
+| `icon` | 14px | 18px | 18 | an icon beside body text |
+| `icon-control` | 16px | 20px | 20 | an icon inside a control |
+| `check` | 16px | 20px | 20 | a checkbox's box |
+| `track` | 2px | 4px | 4 | a slider's track thickness |
+| `otp` | 44px | 48px | 48 | a one-time-code box's largest side; the box is square and shrinks with its row |
+| `text-area` | 60px | 72px | 72 | a text area's least value height: three body line boxes |
+| `meter` | 6px | 8px | 8 | a meter's bar |
+| `chart` | 128px | 192px | 192 | a chart's plot, its gridlines four bands |
+| `qr` | 160px | 240px | 240 | a QR code's square, its quiet zone inside it |
+| `figures` | 29px | 36px | 36 | four tabular figures at the code size: a diff's number columns, a file row's count lanes |
+| `message-input` | 160px | 192px | 192 | a message input's tallest text: eight body line boxes, scrolling past it |
+| `image-tile` | 80px | 96px | 96 | an image thumbnail's side: four body line boxes, the lines of provenance it stands beside |
+| `image-cap` | 400px | 480px | 480 | the tallest an image grows at its container's width: twenty body line boxes |
 
 Widths of lifted layers, never stretched to their container, and of a frame's fixed regions: `measure-short` 18ch (native 173px, at the body size, so a label's own size is lost there), `popover` 240px, `toast` 360px, `dialog` 520px, `sheet` 640px, `sidebar` 240px, `list` 360px, `pane` 320px, `column` 300px, `auth` 400px, `empty` 320px. Breakpoints: `tablet` 768px, `desktop` 1024px, `wide` 1440px; they are the only responsive variants, of the viewport (`tablet:`) and, on the web, of a page's width (`page-tablet:`, `page-max-tablet:`), by which a Split decides its regions.
 
 ## Elevation & Depth
 
-A card at rest has a hairline and no shadow. Two levels lift a layer, each per mode: `shadow-float` (light `0 1px 2px rgba(20, 22, 27, 0.06), 0 4px 12px rgba(20, 22, 27, 0.08)`, dark `0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.5)`); `shadow-modal` (light `0 2px 4px rgba(20, 22, 27, 0.06), 0 16px 40px rgba(20, 22, 27, 0.14)`, dark `0 2px 4px rgba(0, 0, 0, 0.4), 0 16px 40px rgba(0, 0, 0, 0.65)`). `shadow-float` lifts a popover, a menu, a picker's list, a toast and an act floating over what scrolls (a touch Place's act, a Thread's Latest); `shadow-modal` a dialog, a sheet and a command palette. In dark the lift is carried by the `raised` step and the hairline as much as by the shadow. The hairline is 1 px; the focus ring is `ring` at 2 px, 2 px outside the box, drawn inward inside a list. The layers over the page stand in one order, each `--layer-<layer>` read as `z-(--layer-<layer>)` on the web: `sheet` 1 < `popover` 2 < `toasts` 3, the page at 0. A sheet's scrim and the sheet stand on `sheet`, a popover over a sheet it opens from, and the toasts over both, so a toast raised while a sheet or a confirm is open is seen and its dismiss pressed.
+A card at rest has a hairline and no shadow. Two levels lift a layer, each per mode: `shadow-float` (light `0 1px 2px rgba(20, 22, 27, 0.06), 0 4px 12px rgba(20, 22, 27, 0.08)`, dark `0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.5)`); `shadow-modal` (light `0 2px 4px rgba(20, 22, 27, 0.06), 0 16px 40px rgba(20, 22, 27, 0.14)`, dark `0 2px 4px rgba(0, 0, 0, 0.4), 0 16px 40px rgba(0, 0, 0, 0.65)`). `shadow-float` lifts a popover, a menu, a picker's list, a toast and an act floating over what scrolls (a touch Place's act, a Thread's Latest); `shadow-modal` a dialog, a sheet and a command palette. In dark the lift is carried by the `raised` step and the hairline as much as by the shadow. The hairline is 1 px; the focus ring is `ring` at 2 px, 2 px outside the box, drawn inward inside a list (in the room 1 and 2 canvas units, 2 and 4 px at 1920 × 1080). The layers over the page stand in one order, each `--layer-<layer>` read as `z-(--layer-<layer>)` on the web: `sheet` 1 < `popover` 2 < `toasts` 3, the page at 0. A sheet's scrim and the sheet stand on `sheet`, a popover over a sheet it opens from, and the toasts over both, so a toast raised while a sheet or a confirm is open is seen and its dismiss pressed.
 
 ## Shapes
 

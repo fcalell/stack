@@ -5,17 +5,22 @@ import {
 	shadowUtilities,
 	themeTokens,
 } from "@fcalell/ui-core/emit";
-import { MODES } from "@fcalell/ui-core/tokens";
+import { HAIRLINE_PX, MODES } from "@fcalell/ui-core/tokens";
 
 // The `@theme` record: the namespace resets lead, then the scales, the
 // families and the invariant and light colors, the two measures in px since
-// uniwind reads no `ch`. On native every color
+// uniwind reads no `ch`, and the hairline every border reads (the web has it
+// on the root). On native every color
 // utility resolves through the active theme's scoped variables, so which mode
 // seeds `@theme` never shows at runtime.
 export function themeDeclarations(
 	resolved: ResolvedTheme,
 ): Record<string, string> {
-	return { ...themeTokens(resolved), ...nativeMeasureTokens(resolved) };
+	return {
+		...themeTokens(resolved),
+		...nativeMeasureTokens(resolved),
+		"--hairline": `${HAIRLINE_PX}px`,
+	};
 }
 
 // The utilities native declares itself, as top-level `@utility` blocks, name →
