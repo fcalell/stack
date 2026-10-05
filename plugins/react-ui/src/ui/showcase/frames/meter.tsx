@@ -42,6 +42,26 @@ function Usage() {
 						unit="GB"
 						meta="11.8 of 10 GB · 1.8 GB over, billed at the end of the month"
 					/>,
+					<Meter
+						key="reserve"
+						label="Jobs this window"
+						value={62}
+						max={100}
+						unit="jobs"
+						mark={{ value: 80, label: "Reserve" }}
+						meta="Jobs and watches pause at the reserve"
+					/>,
+					<Meter
+						key="tests"
+						label="Passing"
+						value={34}
+						max={42}
+						unit="tests"
+						counts={[
+							{ label: "failing", value: 3, href: "/tests/failing" },
+							{ label: "untested", value: 5, href: "/tests/untested" },
+						]}
+					/>,
 				]}
 			</Group>
 		</Section>
@@ -84,6 +104,14 @@ const LEVELS: Record<string, ReactNode> = {
 				max={3}
 				unit="projects"
 				meta="3 of 3 projects"
+			/>
+			<Meter
+				label="Jobs this window"
+				value={85}
+				max={100}
+				unit="jobs"
+				mark={{ value: 80, label: "Reserve" }}
+				meta="Past the reserve: jobs and watches pause"
 			/>
 		</>
 	),

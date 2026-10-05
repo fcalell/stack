@@ -516,6 +516,17 @@ export const CHART_SERIES = [
 // is over.
 export const METER_NEAR = 0.9;
 
+export type MeterLevel = "under" | "near" | "over";
+
+// The level a share of the max stands at: past the max over, from `near` near
+// (`METER_NEAR`, or a meter's own mark), else under. Both platforms read it, so
+// one meter draws one level.
+export function levelOf(share: number, near: number = METER_NEAR): MeterLevel {
+	if (share > 1) return "over";
+	if (share >= near) return "near";
+	return "under";
+}
+
 // ── Type ────────────────────────────────────────────────────────────
 
 // Two rules decide which role a piece of text takes. Size follows structure,
@@ -1133,6 +1144,7 @@ export interface CountedWord {
 export const SLOT_WORDS = {
 	meterValue: ["value", "max"],
 	meterOver: ["amount"],
+	meterMark: ["name", "value"],
 	linesAdded: ["count"],
 	linesRemoved: ["count"],
 	changed: ["before", "after"],
@@ -1196,6 +1208,7 @@ export const ENGLISH: Words = {
 	},
 	meterValue: "{value} of {max}",
 	meterOver: "{amount} over",
+	meterMark: "{name} at {value}",
 	linesAdded: "{count} added",
 	linesRemoved: "{count} removed",
 	changed: "from {before} to {after}",

@@ -2094,17 +2094,30 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		// A bar at the `meter` size, its fill by level, its value read aloud with
-		// its `unit`.
+		// its `unit`. Under it one line: `meta`, or `counts` (links composed from
+		// `Link`), never both. A `mark` is a tick across the track at its value,
+		// the meter's near point, its label read aloud.
 		Meter: {
-			props: ["label", "value", "max", "unit", "meta", "loading"],
+			props: [
+				"label",
+				"value",
+				"max",
+				"unit",
+				"meta",
+				"counts",
+				"mark",
+				"loading",
+			],
 			draws: [
 				"FIGURES",
 				"LINE_BOX.role.body",
 				"LINE_BOX.role.meta",
 				"METER",
+				"METER_COUNTS",
 				"METER_FILL",
 				"METER_HEAD",
 				"METER_ITEM",
+				"METER_MARK",
 				"METER_TRACK",
 				"SKELETON.kind.line",
 				"SKELETON.kind.meter",
@@ -2112,7 +2125,15 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"TEXT.role.meta",
 				"TEXT_STRONG.role.body",
 			],
-			holds: ["METER", "METER_ITEM", "METER_HEAD", "METER_TRACK", "METER_FILL"],
+			holds: [
+				"METER",
+				"METER_ITEM",
+				"METER_HEAD",
+				"METER_TRACK",
+				"METER_FILL",
+				"METER_COUNTS",
+				"METER_MARK",
+			],
 			states: ["rest", "loading"],
 			owns: {
 				roles: ["body", "meta"],
@@ -2126,7 +2147,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				],
 				radii: ["chip"],
 				spacing: ["pair", "inside", "card"],
-				sizes: ["meter", "skeleton"],
+				sizes: ["meter", "track", "skeleton"],
 			},
 		},
 		// A collection: columns over time in the chip marks, stacked by one

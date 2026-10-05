@@ -1638,6 +1638,12 @@ components:
     textColor: "{colors.ink-meta-dark}"
   meter-item:
     padding: "{spacing.card}"
+  meter-mark:
+    width: "{spacing.track}"
+    backgroundColor: "{colors.ink-body}"
+  meter-mark-dark:
+    width: "{spacing.track}"
+    backgroundColor: "{colors.ink-body-dark}"
   meter-track:
     height: "{spacing.meter}"
     rounded: "{rounded.chip}"
@@ -2144,7 +2150,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `Table` | content | `CHECKBOX`, `CHECKBOX_MARK`, `CHIP.family.teal`, `CHIP.trailing.none`, `CHIP_LABEL.family.teal`, `FIELD.fit.bar`, `FIELD.state.rest`, `FIELD.trailing.none`, `FIGURES`, `ICON.fit.body`, `ICON.fit.meta`, `SKELETON.kind.check`, `SKELETON.kind.dot`, `SKELETON.kind.line`, `SPINNER`, `SPINNER_ARC`, `SPINNER_TRACK`, `STATUS`, `STATUS_DOT`, `STATUS_LABEL`, `STATUS_SPINNER`, `TABLE`, `TABLE_CELL`, `TABLE_CHANGE`, `TABLE_CHANGE_VALUE.kind.added`, `TABLE_CHANGE_VALUE.kind.after`, `TABLE_CHANGE_VALUE.kind.before`, `TABLE_CHANGE_VALUE.kind.removed`, `TABLE_EMPTY`, `TABLE_FRAME`, `TABLE_FROZEN`, `TABLE_FROZEN_CELL`, `TABLE_HEAD`, `TABLE_HEAD_LABEL`, `TABLE_ROW`, `TEXT.role.body`, `TEXT.role.code`, `TEXT.role.meta`, `TEXT_STRONG.role.body` | rest, hover, focus, active, loading, error, selected, empty |
 | `Message` | content | `ICON.fit.meta`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `MESSAGE`, `MESSAGE_BUBBLE`, `MESSAGE_HEAD`, `MESSAGE_LINE`, `MESSAGE_OPEN`, `MESSAGE_CARD`, `MESSAGE_CODE`, `MESSAGE_FOLD`, `SKELETON.kind.line`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT.role.code`, `TEXT_STRONG.role.body` | rest, hover, focus, active, loading |
 | `MessageInput` | content | `BUTTON.act.primary`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.secondary`, `CHIP.family.neutral`, `CHIP.trailing.remove`, `CHIP_LABEL.family.neutral`, `CHIP_REMOVE_HIT`, `FIELD.fit.bar`, `FIELD.state.rest`, `FIELD.trailing.none`, `FIELD_VALUE.kind.text`, `ICON.fit.control`, `ICON.fit.meta`, `ICON_BUTTON.fit.bar`, `MESSAGE_ATTACH_SLOT`, `MESSAGE_INPUT`, `MESSAGE_INPUT_BOX`, `MESSAGE_INPUT_CHIPS`, `MESSAGE_INPUT_FIELD`, `MESSAGE_INPUT_FOOT`, `MESSAGE_INPUT_ROW`, `MESSAGE_INPUT_TEXT`, `MESSAGE_INPUT_VALUE`, `MESSAGE_NOTICE`, `MESSAGE_NOTICE_TEXT`, `SPINNER`, `SPINNER_ARC`, `SPINNER_TRACK`, `TEXT.role.meta` | rest, hover, focus, disabled |
-| `Meter` | content | `FIGURES`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `METER`, `METER_FILL`, `METER_HEAD`, `METER_ITEM`, `METER_TRACK`, `SKELETON.kind.line`, `SKELETON.kind.meter`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body` | rest, loading |
+| `Meter` | content | `FIGURES`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `METER`, `METER_COUNTS`, `METER_FILL`, `METER_HEAD`, `METER_ITEM`, `METER_MARK`, `METER_TRACK`, `SKELETON.kind.line`, `SKELETON.kind.meter`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body` | rest, loading |
 | `BarChart` | content | `CHART`, `CHART_BAND`, `CHART_BODY`, `CHART_FILL`, `CHART_GRID`, `CHART_HEAD`, `CHART_KEY`, `CHART_KEYS`, `CHART_KEY_DOT`, `CHART_MAIN`, `CHART_PART_SPLIT`, `CHART_TICK_LANE`, `CHART_TOTAL`, `FIGURES`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `SKELETON.kind.chart`, `SKELETON.kind.line`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body` | rest, loading, error, empty |
 | `Thread` | content | `THREAD`, `THREAD_COLUMN`, `THREAD_LOG`, `THREAD_UNDER_HEAD`, `FOOT`, `THREAD_LATEST` | rest, loading, error, empty |
 | `QrCode` | content | `QR_CODE`, `QR_TILE` | rest, loading |
@@ -2203,7 +2209,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Table` | `body`, `meta`, `code`, `caption` | `edge`, `ink-meta`, `ink-body`, `ring`, `chip-teal-soft`, `chip-teal-ink`, `toggle-on`, `on-accent`, `ok`, `wash-hover`, `accent-ink`, `edge-strong`, `surface`, `danger`, `warn`, `wash-press`, `wash-selected`, `wash-selected-hover`, `edge-hover`, `toggle-on-hover`, `skeleton`, `ok-soft`, `danger-soft` | `full`, `chip`, `control` | `control-x`, `inside`, `pair`, `page` | `measure-short`, `popover`, `toast`, `dialog`, `sheet`, `measure`, `sidebar`, `list`, `pane`, `column`, `auth`, `empty`, `row`, `icon-meta`, `chip`, `check`, `dot`, `spinner`, `control-compact`, `icon`, `skeleton` | none |
 | `Message` | `meta`, `body`, `code` | `ink-meta`, `group`, `ink-body`, `edge`, `surface`, `skeleton`, `wash-hover`, `ring`, `wash-press` | `card`, `control`, `chip` | `pair`, `tile`, `inside` | `target`, `icon-meta`, `skeleton`, `figures` | none |
 | `MessageInput` | `body`, `meta`, `caption` | `edge`, `surface`, `ink-meta`, `ink-body`, `act-accent`, `on-act-accent`, `fill-disabled`, `ink-disabled`, `edge-hover`, `ring`, `chip-neutral-soft`, `chip-neutral-ink` | `card`, `control`, `full` | `pair`, `rows`, `inside`, `control-x` | `message-input`, `control-compact`, `icon-control`, `chip`, `measure-short`, `icon-meta`, `spinner` | none |
-| `Meter` | `body`, `meta` | `ink-body`, `ink-meta`, `fill-neutral`, `warn`, `danger`, `skeleton` | `chip` | `pair`, `inside`, `card` | `meter`, `skeleton` | none |
+| `Meter` | `body`, `meta` | `ink-body`, `ink-meta`, `fill-neutral`, `warn`, `danger`, `skeleton` | `chip` | `pair`, `inside`, `card` | `meter`, `track`, `skeleton` | none |
 | `BarChart` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `chip-` | `full`, `chip` | `fields`, `inside`, `pair` | `chart`, `dot`, `skeleton`, `figures` | none |
 | `Thread` | none | `raised`, `edge` | `control` | `sections`, `page`, `pair` | `measure` | `float` |
 | `QrCode` | none | `edge`, `surface`, `ink-body`, `skeleton` | `card` | none | `qr` | none |
@@ -2234,4 +2240,4 @@ Durations are read as `duration-<rung>`; every rung is 0 under `prefers-reduced-
 - Do draw one `title` per screen, no `heading` inside a row, no `caption` sentence; emphasis is weight, never size.
 - Do keep text at 4.5:1 or more on its fill; the contract measures every pair it draws.
 - Do time motion with a duration rung and a contract curve; don't write a literal duration.
-- Do take every word a component draws from `words`; a sentence is a prop. A counted word (`earlierLines`) is `{ one, other }`, each form spelling `{count}` where the number stands, drawn through `counted(word, count)`. A slot word (`meterValue`, `meterOver`, `linesAdded`, `linesRemoved`, `changed`) spells its named slots as `{name}` where each value stands, drawn through `filled(word, values)`.
+- Do take every word a component draws from `words`; a sentence is a prop. A counted word (`earlierLines`) is `{ one, other }`, each form spelling `{count}` where the number stands, drawn through `counted(word, count)`. A slot word (`meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changed`) spells its named slots as `{name}` where each value stands, drawn through `filled(word, values)`.

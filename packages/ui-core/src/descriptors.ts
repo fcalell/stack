@@ -176,6 +176,23 @@ export type Route = RouteRegistry extends { route: infer R extends string }
 	? R
 	: string;
 
+// A count that leads to its list: its figure drawn tabular beside its label,
+// the whole a link to `href`. Shared by every molecule that carries counts (a
+// `Meter`'s line under its bar, a stat strip's cell): zero is a count, drawn.
+export interface CountLink {
+	label: string;
+	value: number;
+	href: Route;
+}
+
+// The point a meter marks on its track: a tick at `value` of its max, named
+// `label` to assistive tech. Once the meter's value reaches it the fill turns
+// `warn`.
+export interface MeterMark {
+	value: number;
+	label: string;
+}
+
 // A place in the shell: a route, a label, an icon, an optional count.
 export interface PlaceSpec {
 	route: Route;

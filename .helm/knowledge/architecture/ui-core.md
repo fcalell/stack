@@ -67,7 +67,7 @@ pinned by the package's verify suite; this entry holds the architecture and its 
   `act-danger`) with their states, and the switch's five with the shared `toggle-on`. `COLOR_GROUPS` holds the roles by those groups and `COLOR_NAMES`
   is its flattening. A chart's series take the chip marks in `CHART_SERIES` order and a meter's
   level turns on `METER_NEAR`, contract data the cells are keyed by (`CHART_FILL {series}`,
-  `METER_FILL {level}`), so both platforms draw the same series colour and the same level for a
+  `METER_FILL {level}`; `levelOf` reads it, a meter's `mark` standing in for `METER_NEAR`), so both platforms draw the same series colour and the same level for a
   value. The dark hairline is two tokens because the dark ladder spans more
   than one hairline can straddle: a group or a lifted layer re-points `--color-edge` to
   `edge-raised` for everything inside it, so a part never picks between them. The grounds are
@@ -126,7 +126,7 @@ pinned by the package's verify suite; this entry holds the architecture and its 
 ## Words
 
 Every word a molecule draws or reads aloud on its own (the seven `Status` words, `recommended`,
-`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `linesAdded`, `linesRemoved` and `changed`) comes
+`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved` and `changed`) comes
 from `words`, a closed typed object with English defaults. The `Words` type requires every key
 and `wordsSchema` is strict, so a translation missing a word fails `tsc` and the schema. It is a
 plugin option beside `theme`; each plugin contributes a `WordsProvider` into the generated entry
@@ -604,7 +604,7 @@ a tick with no animation, never jumped to full.
   `file`, one per `FileRow` slot, or `meter`, one per `Meter` slot. Its waiting rows are the row's
   own markup (`list-row/wait.tsx`, `file-row/wait.tsx`, `meter/wait.tsx`), a ListRow's with bars in
   the slots `row` declares, a FileRow's chip bar only when `file` declares `chip` (`fileShape`)
-  and a Meter's meta bar only when `meter` declares `meta`, read before any item exists. The `leading` slot names its kind by its one key (`{ avatar }`, `{ icon }` or
+  and a Meter's line bar only when `meter` declares `meta` or `counts`, read before any item exists. The `leading` slot names its kind by its one key (`{ avatar }`, `{ icon }` or
   `{ status }`, each a function of the item), so a list's rows share one kind or have none, and
   the waiting row draws that kind's mark at its size (`SKELETON` `avatar`, `icon` or `dot`). A
   trailing waits `figures` wide; a declared `status` or `chip` draws the marks' bar at the meta
@@ -712,6 +712,15 @@ a tick with no animation, never jumped to full.
   its height and its bars' centres are a one-line setting row's at either density.
 - A Meter in a Group stands as its item at the card's inset (`METER_ITEM`, by `GroundContext`),
   the Group's hairline between; a set of them from data is a `List` taking `meter`, in the Group. A FileRow is selected at its `href`, as a ListRow is.
+- A Meter's one line under its bar is `meta` (words) or `counts` (`CountLink[]`, links), exclusive
+  in the type, as the meter's head already carries the share. `CountLink` (`{ label, value, href }`)
+  is the shared descriptor for a count that leads to its list; every molecule carrying counts
+  takes it and composes `Link`, never spelling it. A `mark` (`{ value, label }`, `MeterMark`) is
+  a tick across the track at `value / max` (`METER_MARK`, outside the clipping track) and the
+  meter's near point in place of `METER_NEAR`; its label and value are read aloud (`meterMark`).
+  The role's children are presentational to assistive tech, so the counts stand outside the
+  element carrying the meter role. The `List`'s `meter` map takes `counts` (a function of the item,
+  exclusive with `meta`) and `mark`.
 - On the web every route reader shares the page's one `popstate` listener (`useRoute` in
   `lib/navigate`). A List reads the route once and hands it to its rows through `ListedRoute`,
   internal: a row's `useRoute` takes it from there and subscribes to nothing, and a ListRow or

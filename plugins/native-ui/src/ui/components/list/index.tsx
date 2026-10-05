@@ -1,6 +1,8 @@
 import type {
 	ChipMark,
+	CountLink,
 	MenuItem,
+	MeterMark,
 	Part,
 	RowLeading,
 	RowTrailing,
@@ -92,16 +94,25 @@ export interface FileSlots<T> {
 	onOpen?: (item: T) => void;
 }
 
-// One function per `Meter` slot, each called with a loaded item; a
-// declared `meta` is the line the waiting meters draw.
-export interface MeterSlots<T> {
+interface MeterSlotsBase<T> {
 	key: (item: T) => string;
 	label: (item: T) => string;
 	value: (item: T) => number;
 	max: (item: T) => number;
 	unit?: (item: T) => string | undefined;
-	meta?: (item: T) => string | undefined;
+	// The tick across the bar: the meter's near point.
+	mark?: (item: T) => MeterMark | undefined;
 }
+
+// One function per `Meter` slot, each called with a loaded item; a declared
+// `meta` or `counts` is the line the waiting meters draw, never both.
+// `counts` is the line under the bar as links: counts that lead to their
+// lists.
+export type MeterSlots<T> = MeterSlotsBase<T> &
+	(
+		| { meta?: (item: T) => string | undefined; counts?: never }
+		| { counts: (item: T) => CountLink[]; meta?: never }
+	);
 
 // What an empty list draws: an EmptyState's mark, title, sentence and the
 // act that fills the list.
@@ -238,7 +249,10 @@ export function List<T, V extends string | null = string>(
 					value={meter.value(item)}
 					max={meter.max(item)}
 					unit={meter.unit?.(item)}
-					meta={meter.meta?.(item)}
+					mark={meter.mark?.(item)}
+					{...(meter.counts
+						? { counts: meter.counts(item) }
+						: { meta: meter.meta?.(item) })}
 				/>
 			)),
 		);

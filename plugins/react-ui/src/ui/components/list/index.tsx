@@ -1,7 +1,9 @@
 import { cn } from "@fcalell/ui-core/cn";
 import type {
 	ChipMark,
+	CountLink,
 	MenuItem,
+	MeterMark,
 	Part,
 	RowLeading,
 	RowTrailing,
@@ -107,8 +109,7 @@ export interface FileSlots<T> {
 	onOpen?: (item: T) => void;
 }
 
-/** One function per `Meter` slot, each called with a loaded item; a declared `meta` is the line the waiting meters draw. */
-export interface MeterSlots<T> {
+interface MeterSlotsBase<T> {
 	/** The item's React key, unique in the list. */
 	key: (item: T) => string;
 	/** What is measured. */
@@ -119,9 +120,24 @@ export interface MeterSlots<T> {
 	max: (item: T) => number;
 	/** What the value counts. */
 	unit?: (item: T) => string | undefined;
-	/** The line under the bar. */
-	meta?: (item: T) => string | undefined;
+	/** The tick across the bar: the meter's near point. */
+	mark?: (item: T) => MeterMark | undefined;
 }
+
+/** One function per `Meter` slot, each called with a loaded item; a declared `meta` or `counts` is the line the waiting meters draw, never both. */
+export type MeterSlots<T> = MeterSlotsBase<T> &
+	(
+		| {
+				/** The line under the bar. */
+				meta?: (item: T) => string | undefined;
+				counts?: never;
+		  }
+		| {
+				/** The line under the bar as links: counts that lead to their lists. */
+				counts: (item: T) => CountLink[];
+				meta?: never;
+		  }
+	);
 
 /** What an empty list draws: an EmptyState's mark, title, sentence and the act that fills the list. */
 export type ListEmpty = Pick<
@@ -267,7 +283,10 @@ export function List<T, V extends string | null = string>(
 					value={meter.value(item)}
 					max={meter.max(item)}
 					unit={meter.unit?.(item)}
-					meta={meter.meta?.(item)}
+					mark={meter.mark?.(item)}
+					{...(meter.counts
+						? { counts: meter.counts(item) }
+						: { meta: meter.meta?.(item) })}
 				/>
 			)),
 		);

@@ -175,15 +175,19 @@ export function fileShape(slots: { chip?: unknown }): FileShape {
 }
 
 // The slots a waiting Meter draws, known before any item: the label, share
-// and bar always, the meta line when the `meter` map declares one.
+// and bar always, the line under the bar when the `meter` map declares `meta`
+// or `counts`.
 export interface MeterShape {
 	meta: boolean;
 }
 
 // The waiting meter's shape from the slots a `meter` map declares, read by
 // key: no slot function runs.
-export function meterShape(slots: { meta?: unknown }): MeterShape {
-	return { meta: slots.meta !== undefined };
+export function meterShape(slots: {
+	meta?: unknown;
+	counts?: unknown;
+}): MeterShape {
+	return { meta: slots.meta !== undefined || slots.counts !== undefined };
 }
 
 // The bars a waiting Comparison's fact draws, known before any item: one

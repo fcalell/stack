@@ -1,6 +1,6 @@
 ---
 id: 003-29
-status: backlog
+status: review
 sessions: {}
 ---
 # ui-core: a meter row carries linked counts

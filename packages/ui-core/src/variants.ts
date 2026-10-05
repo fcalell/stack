@@ -565,6 +565,12 @@ export const METER = "gap-pair";
 export const METER_ITEM = "p-card";
 export const METER_HEAD = "gap-inside";
 export const METER_TRACK = "h-meter rounded-chip bg-fill-neutral";
+// A meter's counts: its links on the line under the bar, a gap apart with no
+// glyph between.
+export const METER_COUNTS = "gap-inside";
+// A meter's mark: a tick across the track at the mark's share, standing proud
+// of it by `inside` above and below. It sits outside the track, which clips.
+export const METER_MARK = "w-track bg-ink-body -inset-y-inside";
 // BarChart: the head (the total and its unit, then the series' keys) over
 // the body (the axis beside the plot over its times). The plot is the chart's
 // height in four bands (`chartBand`); a stacked part over another is split
