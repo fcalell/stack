@@ -25,6 +25,7 @@ import { Input } from "@fcalell/plugin-react-ui/components/input";
 import { InputOtp } from "@fcalell/plugin-react-ui/components/input-otp";
 import { Image } from "@fcalell/plugin-react-ui/components/image";
 import { StepCount } from "@fcalell/plugin-react-ui/components/step-count";
+import { Stages } from "@fcalell/plugin-react-ui/components/stages";
 import { ItemHeader } from "@fcalell/plugin-react-ui/components/item-header";
 import { Link } from "@fcalell/plugin-react-ui/components/link";
 import { Message } from "@fcalell/plugin-react-ui/components/message";
@@ -584,6 +585,17 @@ export const closure = (
 		<QrCode value="x" class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<QrCode value="x" classList={{}} />
+		<Stages steps={[{ label: "x", state: "done", at: "2026-09-14T09:12:00Z" }, { label: "y", state: "later" }]} ended={{ label: "x", reason: "y" }} />
+		{/* @ts-expect-error: a later stage has no moment */}
+		<Stages steps={[{ label: "x", state: "later", at: "2026-09-14T09:12:00Z" }]} />
+		{/* @ts-expect-error: closed channel */}
+		<Stages steps={[]} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Stages steps={[]} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Stages steps={[]} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Stages steps={[]} classList={{}} />
 		<Image src="x" alt="x" />
 		{/* @ts-expect-error: closed channel */}
 		<Image src="x" alt="x" className="x" />

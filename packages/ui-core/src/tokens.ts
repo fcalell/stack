@@ -537,6 +537,19 @@ export function stepStateOf(step: number, at: number): StepState {
 	return "later";
 }
 
+// The stages a rail draws: all of them, or, once the rail has ended, those up
+// to the last done one (every stage after it gives way to the terminal row).
+// Both platforms read it, so one rail draws the same rows.
+export function stagesShown<T extends { state: string }>(
+	steps: readonly T[],
+	ended: boolean,
+): readonly T[] {
+	if (!ended) return steps;
+	let last = steps.length;
+	while (last > 0 && steps[last - 1]?.state !== "done") last--;
+	return steps.slice(0, last);
+}
+
 // ── Type ────────────────────────────────────────────────────────────
 
 // Two rules decide which role a piece of text takes. Size follows structure,

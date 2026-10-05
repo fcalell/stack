@@ -217,6 +217,7 @@ const NATIVE_OVERLAYS = [
 	"w-3/4",
 	"w-figures",
 	"w-full",
+	"w-icon-meta",
 	"w-measure-short",
 ];
 

@@ -399,6 +399,8 @@ export const OVERLAYS: readonly string[] = [
 	"invisible",
 	"flex-1",
 	"self-start",
+	// Stages
+	"w-icon-meta",
 	// Image
 	"object-contain",
 	"size-full",

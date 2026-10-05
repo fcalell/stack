@@ -63,6 +63,17 @@ heads the step's page, whether that is a `Place`, an auth column or a sheet page
 
 ```tsx
 <StepCount at={2} of={3} />
+
+## A rail of fixed states is `Stages`
+
+A known sequence with a position in it (Submitted, In spec, In build, Live) is `Stages`, never a
+`List` of rows or a `Status` per line: `steps`, each a `Stage` (`{ label, state, at? }` from
+`@fcalell/ui-core/descriptors`, `state` `done`, `current` or `later`, `at` an ISO moment a done or
+current stage may carry), and `ended`, the terminal row (`{ label, reason }`) that replaces every
+stage after the last done one. A feed of what happened is not a rail.
+
+```tsx
+<Stages steps={request.stages} ended={request.rejection} />
 ```
 
 ## Data, never nodes

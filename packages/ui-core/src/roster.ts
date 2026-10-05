@@ -2301,6 +2301,41 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				sizes: ["meter", "track", "skeleton"],
 			},
 		},
+		// A known sequence with a position in it, top to bottom on a hairline
+		// rail: each `steps` entry a `Stage` (`done`, `current` or `later`), a
+		// done one a check at the meta icon size, its `at` a moment under the
+		// label, the current one the active dot, its label at 500 and
+		// `aria-current="step"`, a later one the hollow dot with its label in
+		// meta. `ended` replaces every step after the last done one with a
+		// terminal row: the failed dot, its label and its reason in meta. The
+		// hue is the marks'; a label's ink is its own. Static data, so it has no
+		// waiting form.
+		Stages: {
+			props: ["steps", "ended"],
+			draws: [
+				"ICON.fit.meta",
+				"LINE_BOX.role.body",
+				"LINE_BOX.role.meta",
+				"STAGE",
+				"STAGE_CHECK",
+				"STAGE_RAIL",
+				"STAGE_ROW",
+				"STAGE_WORDS",
+				"STATUS_DOT.state.active",
+				"STATUS_DOT.state.failed",
+				"STATUS_DOT.state.idle",
+				"TEXT.role.meta",
+			],
+			holds: ["STAGE", "STAGE_ROW", "STAGE_WORDS", "STAGE_RAIL", "STAGE_CHECK"],
+			states: ["rest"],
+			owns: {
+				roles: ["body", "meta"],
+				colors: ["ink-body", "ink-meta", "edge", "accent-ink", "danger"],
+				radii: ["full"],
+				spacing: ["pair"],
+				sizes: ["icon-meta", "dot"],
+			},
+		},
 		// A collection: columns over time in the chip marks, stacked by one
 		// dimension, its bars from `query` or `items` through the `bar` map;
 		// `label` names what it counts, the plot and the visually hidden table

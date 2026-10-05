@@ -50,6 +50,7 @@ import { drawShell } from "./frames/shell.tsx";
 import { drawSlider } from "./frames/slider.tsx";
 import { drawSpinner } from "./frames/spinner.tsx";
 import { drawSplit } from "./frames/split.tsx";
+import { drawStages } from "./frames/stages.tsx";
 import { drawStatus } from "./frames/status.tsx";
 import { drawStepCount } from "./frames/step-count.tsx";
 import { drawSwitch } from "./frames/switch.tsx";
@@ -115,6 +116,7 @@ export const registry: Partial<
 	MessageInput: drawMessageInput,
 	Thread: drawThread,
 	Meter: drawMeter,
+	Stages: drawStages,
 	BarChart: drawBarChart,
 	QrCode: drawQrCode,
 	Image: drawImage,

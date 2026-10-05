@@ -58,6 +58,7 @@ import { QrCode } from "@fcalell/plugin-native-ui/components/qr-code";
 import { Image } from "@fcalell/plugin-native-ui/components/image";
 import { Rules } from "@fcalell/plugin-native-ui/components/rules";
 import { StepCount } from "@fcalell/plugin-native-ui/components/step-count";
+import { Stages } from "@fcalell/plugin-native-ui/components/stages";
 import { Chip } from "@fcalell/plugin-native-ui/components/chip";
 import { Select } from "@fcalell/plugin-native-ui/components/select";
 import { Table } from "@fcalell/plugin-native-ui/components/table";
@@ -1036,6 +1037,23 @@ export const closure = (
 		<QrCode value="a" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<QrCode value="a" placeholderTextColorClassName="text-ink-body" />
+		<Stages steps={[{ label: "a", state: "done", at: "2026-09-14T09:12:00Z" }, { label: "b", state: "later" }]} ended={{ label: "a", reason: "b" }} />
+		{/* @ts-expect-error: a later stage has no moment */}
+		<Stages steps={[{ label: "a", state: "later", at: "2026-09-14T09:12:00Z" }]} />
+		{/* @ts-expect-error: closed channel */}
+		<Stages steps={[]} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Stages steps={[]} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Stages steps={[]} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Stages steps={[]} classList={{}} />
+		{/* @ts-expect-error: closed channel */}
+		<Stages steps={[]} colorClassName="text-ink-body" />
+		{/* @ts-expect-error: closed channel */}
+		<Stages steps={[]} selectionColorClassName="text-ink-body" />
+		{/* @ts-expect-error: closed channel */}
+		<Stages steps={[]} placeholderTextColorClassName="text-ink-body" />
 		<Image src="a" alt="a" />
 		{/* @ts-expect-error: closed channel */}
 		<Image src="a" alt="a" className="x" />

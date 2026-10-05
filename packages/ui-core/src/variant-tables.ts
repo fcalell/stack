@@ -820,6 +820,23 @@ export const STEP_COUNT_SEGMENT = matrix({
 	defaultVariants: { state: "later" },
 });
 
+// ── Stages ──────────────────────────────────────────────────────────
+
+// A stage's label by where the rail stands at it: done at body, current at
+// body 500, later at meta, the terminal row at body 500 as the current one
+// is. The ink is the label's own in every state; a stage's hue is its mark's.
+export const STAGE = matrix({
+	base: "",
+	variants: {
+		state: {
+			done: "text-body leading-body font-normal text-ink-body",
+			current: "text-body leading-body font-medium text-ink-body",
+			later: "text-meta leading-meta font-normal text-ink-meta",
+			ended: "text-body leading-body font-medium text-ink-body",
+		},
+	},
+});
+
 // ── Bar chart ───────────────────────────────────────────────────────
 
 // One of the four bands the plot's height splits into, its top a gridline

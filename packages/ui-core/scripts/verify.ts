@@ -154,6 +154,7 @@ import {
 	SKELETON_LANE,
 	SKELETON_ROW,
 	SPLIT_MAIN,
+	STAGE,
 	STATUS_DOT,
 	STEP_COUNT_SEGMENT,
 	SWITCH,
@@ -228,6 +229,8 @@ import {
 	skeletonLane,
 	skeletonRow,
 	splitMain,
+	stage,
+	stageContentTone,
 	statusContentTone,
 	statusDot,
 	stepCountSegment,
@@ -509,6 +512,7 @@ const MATRICES: readonly Registration[] = [
 	["QR_CODE", QR_CODE, qrCode],
 	["IMAGE", IMAGE, image],
 	["IMAGE_PICTURE", IMAGE_PICTURE, imagePicture],
+	["STAGE", STAGE, stage],
 	["PLACE_ROW", PLACE_ROW, placeRow],
 	["PLACE_ROW_GLYPH", PLACE_ROW_GLYPH, placeRowGlyph],
 	["PLACE_TAB", PLACE_TAB, placeTab],
@@ -1686,6 +1690,8 @@ check("c22", "the content tones are contract colors", () => {
 		assert(colors.has(token), `ruleArrowContentTone(${state}): ${token}`);
 		checked++;
 	}
+	requireEqual(stageContentTone(), "ink-meta", "done stage's check ink");
+	checked++;
 	requireEqual(toastContentTone("done"), "ok", "done glyph ink");
 	requireEqual(bannerContentTone("note"), "accent-ink", "note glyph ink");
 	requireEqual(buttonContentTone("primary"), "on-act-accent", "primary ink");
@@ -1859,7 +1865,7 @@ check(
 	"the roster is closed, camelCase, and off the style channels",
 	() => {
 		const entries = rosterEntries();
-		requireEqual(entries.length, 59, "component count");
+		requireEqual(entries.length, 60, "component count");
 		const names = new Set<string>();
 		for (const [, name, { props }] of entries) {
 			assert(/^[A-Z][A-Za-z]+$/.test(name), `${name} is not PascalCase`);

@@ -272,6 +272,20 @@ export interface MeterMark {
 	label: string;
 }
 
+// One stage of a rail of fixed states: its label and where the rail stands at
+// it. A done or current stage may carry the moment it was reached or began
+// (`at`, an ISO moment); a later one has none to give.
+export type Stage =
+	| { label: string; state: "done" | "current"; at?: string }
+	| { label: string; state: "later"; at?: never };
+
+// How a rail ended short of its last stage: the terminal row that stands in
+// place of every stage after the last done one, its reason under its label.
+export interface StageEnd {
+	label: string;
+	reason: string;
+}
+
 // A place in the shell: a route, a label, an icon, an optional count.
 export interface PlaceSpec {
 	route: Route;

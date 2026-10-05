@@ -36,6 +36,8 @@ Eleven subpaths:
 - `@fcalell/ui-core/descriptors`: `IconName`, `Act`, `IconAct`, `Part`, `StatusMark`, `ChipMark`, `Option`, `OptionGroup`,
   `PlaceSpec`, `Switcher`, `Hunk`, `FieldBinding`, `Confirmation`, `MenuItem`, `RowEntry`, `Lock`, `Answered`, `TableColumn`, `TableRowSlots`,
   `CellEdit` and the other framework-free types a prop carries.
+
+  `CellEdit`, `Stage`, `StageEnd` and the other framework-free types a prop carries.
 - `@fcalell/ui-core/commit`: `commitMoment()`, when a typing control's value is final: on
   leaving the field or Enter, only when it changed since focus, Escape restoring the value at
   focus, and ending the edit. Both plugins' `Input` and `TextArea` drive their `onCommit` with it.
@@ -376,7 +378,7 @@ The canon binds every component either UI plugin ships:
 
 ## The roster
 
-`ROSTER` in `@fcalell/ui-core/roster` is the closed list: 59 components in four layers (atoms,
+`ROSTER` in `@fcalell/ui-core/roster` is the closed list: 60 components in four layers (atoms,
 layout molecules, shared molecules, content molecules), each with its prop names, the cells it
 draws (`draws`: a `FAMILIES` name for every cell of that family, `FAMILY.axis.value` for one of
 its cells, as `Text` draws `TEXT.role.body`, or a single-cell constant of `./variants`) and the states it

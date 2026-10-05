@@ -60,6 +60,7 @@ import {
 	SKELETON_LANE,
 	SKELETON_ROW,
 	SPLIT_MAIN,
+	STAGE,
 	STATUS_DOT,
 	STEP_COUNT_SEGMENT,
 	SWITCH,
@@ -153,6 +154,7 @@ export const meterFill = build(METER_FILL);
 export const chartBand = build(CHART_BAND);
 export const chartFill = build(CHART_FILL);
 export const qrCode = build(QR_CODE);
+export const stage = build(STAGE);
 export const image = build(IMAGE);
 export const imagePicture = build(IMAGE_PICTURE);
 export const placeRow = build(PLACE_ROW);
@@ -255,6 +257,7 @@ export const FAMILIES: readonly Family[] = [
 	family("QR_CODE", QR_CODE, qrCode),
 	family("IMAGE", IMAGE, image),
 	family("IMAGE_PICTURE", IMAGE_PICTURE, imagePicture),
+	family("STAGE", STAGE, stage),
 	family("PLACE_ROW", PLACE_ROW, placeRow),
 	family("PLACE_ROW_GLYPH", PLACE_ROW_GLYPH, placeRowGlyph),
 	family("PLACE_TAB", PLACE_TAB, placeTab),
@@ -639,6 +642,16 @@ export const THREAD_UNDER_HEAD = "mt-page border-t border-edge";
 export const THREAD_LATEST = "mb-pair rounded-control bg-raised shadow-float";
 // QrCode: the tile at the qr size inside a hairline on the surface.
 export const QR_TILE = "size-qr rounded-card border border-edge bg-surface";
+// Stages: a rail of fixed states. A stage is its mark beside its words, the
+// words the label with one meta line under it; a hairline in the edge ink
+// runs from each mark to the next (`STAGE_RAIL`), and the room between two
+// stages is the words' own bottom inset, so the rail runs unbroken. The
+// check's ink is the meta ink; the current, later and ended marks are status
+// dots.
+export const STAGE_ROW = "gap-pair";
+export const STAGE_WORDS = "pb-pair";
+export const STAGE_RAIL = "border-l border-edge";
+export const STAGE_CHECK = "text-ink-meta";
 // Image: its full view stands on the scrim with no frame, the picture inside
 // the page inset; the close act is a lifted ground at the control radius over
 // the picture, as the Latest act floats over a log.
@@ -758,6 +771,7 @@ export type SegmentState = keyof (typeof SEGMENT)["variants"]["state"];
 export type RowLines = keyof (typeof ROW)["variants"]["lines"];
 export type RowGround = keyof (typeof ROW)["variants"]["ground"];
 export type SheetFit = keyof (typeof SHEET_SIDE)["variants"]["fit"];
+export type StageState = keyof (typeof STAGE)["variants"]["state"];
 export type ImageFit = keyof (typeof IMAGE)["variants"]["fit"];
 export type ImageState = keyof (typeof IMAGE)["variants"]["state"];
 export type FormIn = keyof (typeof FORM)["variants"]["in"];
@@ -800,6 +814,11 @@ export function buttonContentTone(act: ButtonAct): ContentTone {
 export function statusContentTone(state: StatusState): ContentTone {
 	if (state === "running") return toneOf(STATUS_SPINNER);
 	return toneOf(STATUS_DOT.variants.state[state]);
+}
+
+// A done stage's check ink.
+export function stageContentTone(): ContentTone {
+	return toneOf(STAGE_CHECK);
 }
 
 // A toast's glyph ink, its state's.

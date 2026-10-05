@@ -830,6 +830,25 @@ a tick with no animation, never jumped to full.
   full-height gorhom sheet carries the same head, and a picture raises no toast to stand under.
   Rejected: an `image` slot on `FileRow` or
   `Message`, which would repeat the open-full mechanism per component.
+- A rail of fixed states is `Stages`, a known sequence with a position in it (an activity feed
+  draws what happened, onboarding's step progress is its own molecule): `steps`, each a `Stage`
+  (`{ label, state: "done" | "current" | "later", at? }`, its own descriptor), and `ended`, a
+  `StageEnd` (`{ label, reason }`). Stages stand top to bottom as an ordered list on a hairline
+  rail in the `edge` ink (`STAGE_RAIL`) running from each mark to the next, so at phone width
+  the line is what reads as sequence. A done stage is a check at `icon-meta` (the meta ink,
+  `STAGE_CHECK`, read on the phone through `stageContentTone`) with its `at` as a moment in
+  meta under the label; the current stage is the active status dot with its label at body 500
+  and `aria-current="step"` (the phone: the selected row); a later stage is the hollow `idle`
+  dot with its label in meta. `at` is typed off a later stage, which draws none. `ended` replaces
+  every stage after the last done one (`stagesShown`, so both platforms draw the same rows, the
+  current one included) with a terminal row: the failed dot, its label at 500 and its reason in
+  meta. The marks carry the hue (the current dot's accent, the failed dot's danger) and a label's
+  ink is its own in every state; the rail is the one hairline whether a stage is done or not.
+  `STAGE {state}` is the label's cell, the row's gap and the words' bottom inset (`STAGE_ROW`,
+  `STAGE_WORDS`) carry the room between stages, inside the rail's run. Each mark stands on its
+  label's first line (a later label is meta, so its mark is on a meta line) and names its state
+  to assistive tech through the existing status words (`done`, `active`, `waiting`, `failed`),
+  so `words` gains none. Stages is static data, so it has no waiting form.
 - A copy act (`Code`'s, `DefinitionRow`'s) reads Copied for two seconds from the last copy: each
   copy is a counted moment and the reset is keyed on it, so a copy inside the window restarts it.
 - `Code`'s `download` is the file's name, a string because the name is the one value stack cannot
@@ -868,7 +887,7 @@ a tick with no animation, never jumped to full.
   satisfy. Rejected: optional
   `value` and `onChange` on every control read from the field's context, which would compile a
   control with no value anywhere and could not type a boolean field against an `Input`.
-- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 59 components in four
+- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 60 components in four
   layers (atoms, layout molecules, shared molecules, content molecules) with their prop names,
   the cells each draws (a whole matrix family, one family cell as `FAMILY.axis.value`, or a single
   cell) and the states it has a form for, the same in both plugins; the showcase draws exactly those matrix cells and states. Each plugin's verify suite reads every component's exported props type
