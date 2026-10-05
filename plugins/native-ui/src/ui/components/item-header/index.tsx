@@ -82,6 +82,27 @@ function factKey(fact: Fact): string {
 	return partText(fact);
 }
 
+// The save fact holds its widest form's room (the failed form, a status and a
+// retry, drawn unseen in the flow) under the live form, so the facts line wraps
+// the same as the save moves between its states. Like the pick it pulls back
+// at both ends by a pill's padding.
+const SAVE = "flex-row -mx-inside";
+const SAVE_FORM = "absolute inset-0 flex-row items-center";
+const SAVE_ROOM = "flex-row items-center opacity-0";
+const SAVE_PILL = cn(PILL_ACT, ITEM_FACT, FACT);
+
+function Retry() {
+	const words = useWords();
+	return (
+		<>
+			<Ink.Provider value="ink-meta">
+				<Icon name="RotateCcw" fit="meta" />
+			</Ink.Provider>
+			<RNText className={text({ role: "meta" })}>{words.retry}</RNText>
+		</>
+	);
+}
+
 function SaveFact({
 	save,
 	onRetry,
@@ -101,23 +122,37 @@ function SaveFact({
 			AccessibilityInfo.sendAccessibilityEvent(region.current, "focus");
 	};
 	return (
-		<View className={cn(ITEM_FACT, FACT)}>
-			<View ref={region} accessible {...live} className={cn(ITEM_FACT, FACT)}>
-				{save === "failed" ? (
-					<Status state="failed" label={said} />
-				) : (
-					<RNText className={text({ role: "meta" })}>{said}</RNText>
-				)}
+		<View className={SAVE}>
+			<View
+				accessibilityElementsHidden
+				importantForAccessibility="no-hide-descendants"
+				className={SAVE_ROOM}
+			>
+				<View className={SAVE_PILL}>
+					<Status state="failed" label={words.notSaved} />
+				</View>
+				<View className={cn(PILL_ACT, ITEM_FACT, ACT)}>
+					<Retry />
+				</View>
 			</View>
-			{save === "failed" ? (
-				<Pressable
-					accessibilityRole="button"
-					onPress={retry}
-					className={cn(PILL_ACT, ACT)}
-				>
-					<RNText className={text({ role: "meta" })}>{words.retry}</RNText>
-				</Pressable>
-			) : null}
+			<View className={SAVE_FORM}>
+				<View ref={region} accessible {...live} className={SAVE_PILL}>
+					{save === "failed" ? (
+						<Status state="failed" label={said} />
+					) : (
+						<RNText className={text({ role: "meta" })}>{said}</RNText>
+					)}
+				</View>
+				{save === "failed" ? (
+					<Pressable
+						accessibilityRole="button"
+						onPress={retry}
+						className={cn(PILL_ACT, ITEM_FACT, ACT)}
+					>
+						<Retry />
+					</Pressable>
+				) : null}
+			</View>
 		</View>
 	);
 }

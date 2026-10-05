@@ -595,7 +595,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"ink-body",
 					"ink-meta",
 					"edge",
+					"edge-raised",
 					"surface",
+					"raised",
 					"act-accent",
 					"on-act-accent",
 					"wash-hover",
@@ -819,8 +821,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// `fit: field`. `chosen` makes it a selection bar over a list: "N of M
 		// chosen" (the slot word `chosenOf`) at meta at the bar's start, the acts
 		// at its end, stacked on touch with the count over the acts; `chosen.onAll`
-		// adds, on touch, the act beside the count that chooses every row (the
-		// word `chooseAll`) or, once all are, clears them (`chooseNone`).
+		// adds the acts beside the count: one that clears the rows (the word
+		// `chooseNone`) while any are chosen, and, below `tablet` of the page where
+		// the table draws no head tick, one that chooses every one (`chooseAll`)
+		// while some stand unchosen. The bar's column is centred in its foot.
 		ActionBar: {
 			props: ["acts", "fit", "chosen"],
 			draws: [
@@ -828,7 +832,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ACTION_BAR_ACTS",
 				"ACTION_BAR_CHOSEN",
 				"ACTION_BAR_SELECTION",
-				"PILL_ACT",
+				"ACTION_BAR_ALL",
 				"TEXT.role.meta",
 				"BUTTON.act.primary",
 				"BUTTON.act.danger",
@@ -846,6 +850,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ACTION_BAR_ACTS",
 				"ACTION_BAR_CHOSEN",
 				"ACTION_BAR_SELECTION",
+				"ACTION_BAR_ALL",
 			],
 			states: ["rest", "loading", "disabled"],
 			owns: {
@@ -853,6 +858,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				colors: [
 					"ink-meta",
 					"ink-body",
+					"ink-disabled",
 					"edge",
 					"danger",
 					"act-accent",
@@ -1250,7 +1256,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// Loading, each line keeps its line box and the facts line the height
 		// of the status that moves on it. A fact in words that opens a sheet is its
-		// words and a chevron in a `PILL_ACT`, a button named by the fact.
+		// words and a chevron in a `PILL_ACT`, a button named by the fact. A save
+		// fact is the status region (a pill, so its ring is one) and, failed, a
+		// retry in a `PILL_ACT` led by a retry glyph; where the facts wrap (below
+		// `tablet`) it holds the failed form's room in every state, so the line
+		// never wraps differently as a save moves.
 		ItemHeader: {
 			props: ["overline", "title", "facts", "loading"],
 			draws: [
@@ -2714,15 +2724,15 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"THREAD_COLUMN",
 				"THREAD_LOG",
 				"THREAD_UNDER_HEAD",
-				"FOOT",
+				"FOOT_DOCKED",
 				"THREAD_LATEST",
 			],
 			holds: ["THREAD", "THREAD_LOG", "THREAD_UNDER_HEAD", "THREAD_LATEST"],
 			states: ["rest", "loading", "error", "empty"],
 			owns: {
-				colors: ["raised", "edge"],
+				colors: ["raised", "edge", "edge-raised"],
 				radii: ["control"],
-				spacing: ["sections", "page", "pair"],
+				spacing: ["sections", "page", "pair", "acts"],
 				sizes: ["measure"],
 				elevation: ["float"],
 			},

@@ -279,11 +279,13 @@ its tick moved ("Needed by Checkout"), each as a line under the row's name. The 
 count. Its count is the `ActionBar`'s: dock `<ActionBar chosen={{ count, of, onAll }}
 acts={[publish]} />` as the Place's `foot`, and it reads "N of M chosen" at the bar's start beside
 the one act, whose label you set ("Publish 4 changes") and whose `blocked` reason you give when
-nothing can go. Touch has no head tick, so `onAll` puts a choose-all act beside the count there,
-which reads "Select all" while some rows stand unchosen and "Deselect all" once all are (`of` counts
-the rows that can be chosen) and calls `onAll(true)` or `onAll(false)`: apply your rule to it as to
-a tick. On the desktop the head tick is the select-all and the bar draws no such act. On the desktop
-the bar spans the page's width; on touch the count stands over the full-width act. A row of a `List`
+nothing can go. `onAll` puts a "Deselect all" act beside the count, live while any rows are chosen
+(`of` counts the rows that can be chosen), and calls `onAll(false)`. Where the table draws no head
+tick (below `tablet` of its page, at either density) it also puts a "Select all" act there, live while
+some rows stand unchosen, which calls `onAll(true)`: apply your rule to them as to a tick. Where the
+table draws its head tick, that tick is the select-all and the bar draws no such act. The bar's
+column stands centred in the foot, no wider than a table-wide bar; on touch the count stands over the
+full-width act. A row of a `List`
 leads with a tick as `leading: { check }` (its `blocked` reason leads the meta line).
 
 ```tsx

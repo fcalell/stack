@@ -11,7 +11,7 @@ import {
 	WAITING_MESSAGES,
 } from "@fcalell/ui-core/list-state";
 import {
-	FOOT,
+	FOOT_DOCKED,
 	THREAD,
 	THREAD_LOG,
 	THREAD_UNDER_HEAD,
@@ -302,7 +302,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 				{/* The page's toasts stand over the log, above the docked input. */}
 				<ToastRoom />
 			</View>
-			{foot ? <View className={cn(FOOT, DOCKED)}>{foot}</View> : null}
+			{foot ? <View className={cn(FOOT_DOCKED, DOCKED)}>{foot}</View> : null}
 		</Lifted>
 	);
 }

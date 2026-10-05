@@ -346,8 +346,9 @@ export const STATUS_SPINNER = "text-accent-ink";
 export const STATUS_LABEL =
 	"max-w-measure-short text-meta leading-meta font-normal text-ink-meta";
 // Words that act in a pill with no boundary at rest: a row's pick and a
-// status that moves (Picker), a header fact that opens a sheet (ItemHeader).
-// It pulls back by its own padding on the side that
+// status that moves (Picker), a header fact that opens a sheet or retries a
+// save (ItemHeader), whose status region takes the pill's shape for its
+// focus ring. It pulls back by its own padding on the side that
 // meets plain text (an overlay), so its words sit where static words do.
 // Shared by both drawers.
 export const PILL_ACT = "rounded-full px-inside min-h-target";
@@ -777,13 +778,13 @@ export const PAGE_TOP_BAR = "gap-acts min-h-strip";
 // The touch title over the head's hairline, a pair apart from it.
 export const PAGE_TITLE = "pb-pair";
 export const PAGE_BODY = "gap-sections p-page";
-// A docked foot (a Place's `foot`, a filling Thread's input) stands under
-// what scrolls past it at the page inset, a sections gap under its end.
-export const FOOT = "px-page pb-page";
-// A Place's docked foot is a region of its own: a hairline and a surface step
-// under the body that scrolls to its edge, a pair above and below what it
-// holds (a selection bar stands at its height range, a field at its own).
-export const FOOT_DOCKED = "border-t border-edge bg-surface px-page py-pair";
+// A docked foot (a Place's `foot`, a filling Thread's input) is one cell: a
+// region of its own under what scrolls past it, a raised surface (a step in
+// dark, the float shadow in light) inside a hairline, at the page inset at the
+// sides and an acts gap above and below what it holds (a selection bar stands
+// in its height range, a field at its own).
+export const FOOT_DOCKED =
+	"border-t border-edge-raised bg-raised shadow-float px-page py-acts";
 export const PAGE_BODY_OVER_FOOT = "pb-sections";
 // A touch Place's act, floating over the body's end on a layer at the page
 // inset, lifted off what scrolls under it as a Thread's Latest act is, and
@@ -838,8 +839,12 @@ export const ACTION_BAR_ACTS = "gap-acts";
 // and the count's own row with its choose-all act.
 export const ACTION_BAR_CHOSEN = "gap-pair";
 // A selection bar's column: its container's width up to the selection-bar
-// pattern's table-wide width, standing at the container's start.
-export const ACTION_BAR_SELECTION = "w-full max-w-selection";
+// pattern's table-wide width, centred in the container.
+export const ACTION_BAR_SELECTION = "w-full max-w-selection mx-auto";
+// The act beside a selection bar's count that chooses or clears every row:
+// words at the control radius, as the filled act beside it, washed at the
+// pointer.
+export const ACTION_BAR_ALL = "rounded-control px-inside min-h-target";
 // A toolbar's band under a bleeding page's strip, a hairline across the page
 // and its controls at the page inset: its controls and acts in wrapping rows
 // at the acts rhythm, the applied filters' chips at the pair rhythm.

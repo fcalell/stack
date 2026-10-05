@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ItemHeader } from "../../components/item-header/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { Wide } from "./layout-context.tsx";
+import { Opened } from "./place.tsx";
 
 const move = () => {};
 
@@ -68,23 +69,25 @@ export function drawItemHeader(frame: ShowcaseFrame) {
 			</Wide>
 		);
 	return (
-		<Wide>
-			<ItemHeader
-				overline={OVERLINE}
-				title="Retry failed webhooks with exponential backoff and a dead-letter queue after five attempts"
-				facts={[moving("attention"), ...REST]}
-			/>
-			<ItemHeader
-				overline={OVERLINE}
-				title="Fix invoice rounding"
-				facts={[moving(state), ...REST]}
-			/>
-			<SavingHead />
-			<ItemHeader
-				overline={OVERLINE}
-				title="Read the vendor's onboarding email"
-				facts={[{ label: "Outside content", onOpen: move }, ...REST]}
-			/>
-		</Wide>
+		<Opened popup="closed">
+			<Wide>
+				<ItemHeader
+					overline={OVERLINE}
+					title="Retry failed webhooks with exponential backoff and a dead-letter queue after five attempts"
+					facts={[moving("attention"), ...REST]}
+				/>
+				<ItemHeader
+					overline={OVERLINE}
+					title="Fix invoice rounding"
+					facts={[moving(state), ...REST]}
+				/>
+				<SavingHead />
+				<ItemHeader
+					overline={OVERLINE}
+					title="Read the vendor's onboarding email"
+					facts={[{ label: "Outside content", onOpen: move }, ...REST]}
+				/>
+			</Wide>
+		</Opened>
 	);
 }

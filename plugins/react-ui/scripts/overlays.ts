@@ -250,6 +250,10 @@ export const OVERLAYS: readonly string[] = [
 	"h-lh",
 	"hidden",
 	"touch:flex",
+	"max-tablet:flex",
+	"max-tablet:inline-flex",
+	"inline-grid",
+	"-mx-inside",
 	// EmptyState, QueryBoundary, Banner, PendingBar
 	"self-center",
 	"text-center",

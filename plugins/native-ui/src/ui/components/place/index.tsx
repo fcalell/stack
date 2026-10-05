@@ -50,8 +50,10 @@ const TOP_BAR = "flex-row items-center";
 const SPACER = "flex-1";
 const TITLE = "min-w-0 grow";
 // With a context the title and its pick stand on one line a pair apart.
-const TITLE_LINE = "flex-row items-center gap-pair";
-const TITLE_FIT = "min-w-0 shrink";
+const TITLE_LINE = "flex-row flex-wrap items-center gap-pair";
+const TITLE_FIT = "min-w-0 max-w-full";
+// Where the line is short the pick yields first: it drops under the title,
+// whole, so the title keeps its words.
 const CONTEXT = "shrink-0 flex-row";
 // The body scrolls under the fixed head; a bleeding body leaves scrolling
 // to its child, which keeps the act's room.

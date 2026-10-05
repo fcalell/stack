@@ -68,8 +68,10 @@ const SPACER = "grow";
 const TITLE = "min-w-0 grow truncate";
 // With a context the title and its pick stand on one line a pair apart, the
 // line taking the spacer's room; the pick's list hangs from its start.
-const TITLE_LINE = "flex min-w-0 grow items-center gap-pair";
-const TITLE_FIT = "min-w-0 truncate";
+const TITLE_LINE = "flex min-w-0 grow flex-wrap items-center gap-pair";
+const TITLE_FIT = "min-w-0 max-w-full truncate";
+// Where the line is short the pick yields first: it drops under the title,
+// whole, so the title keeps its words.
 const CONTEXT = "inline-flex shrink-0";
 // The body fills the column, so an EmptyState alone in it centres, and
 // scrolls under the fixed head; a bleeding body fills the rest and

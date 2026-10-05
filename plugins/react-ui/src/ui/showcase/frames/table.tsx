@@ -288,7 +288,8 @@ function Tasks(props: {
 		blocked: chosen.length === 0 ? "Choose a change to publish." : undefined,
 	};
 	// The rows that can be chosen: the held one cannot, so `of` counts the rest.
-	// `onAll` draws on touch, where the table has no head tick.
+	// `onAll` clears the rows, and chooses them all below `tablet` of the page,
+	// where the table draws no head tick.
 	const tickable = tasks.filter((task) => task.id !== "purge");
 	const placed = publishing
 		? {

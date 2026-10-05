@@ -19,3 +19,5 @@ Martechthings' meaning fields save as they are typed, with one quiet line in the
 
 ## Shape
 `ItemHeader`'s `Fact` gains `{ save: "saving" | "saved" | "failed"; onRetry: () => void }`, stack-owned words `saving`, `saved`, `notSaved` and the existing `retry`, in a polite live region. Saving and saved are meta-ink facts; failed is the `failed` status mark with `notSaved` and a `Button` `secondary` at the `bar` fit labelled `retry`.
+
+Review (decided by fcalell after critique 2): the retry stays a words pill, so the head keeps one height, not a `Button` `secondary` at the `bar` fit; it leads with a retry glyph (`RotateCcw`) so it reads as an act, and the status region draws as a pill, so its focus ring is one. Where the facts wrap (below `tablet`; always on the phone) the save fact holds the failed form's room in every state, so the facts line wraps the same as a save moves and the head gains no line when a save fails.

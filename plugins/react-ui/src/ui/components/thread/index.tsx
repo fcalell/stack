@@ -12,7 +12,7 @@ import {
 	WAITING_MESSAGES,
 } from "@fcalell/ui-core/list-state";
 import {
-	FOOT,
+	FOOT_DOCKED,
 	THREAD,
 	THREAD_COLUMN,
 	THREAD_LOG,
@@ -279,7 +279,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 				<Latest onBack={away ? toLatest : null} />
 			</div>
 			{foot ? (
-				<div className={cn(FOOT, DOCKED)}>
+				<div className={cn(FOOT_DOCKED, DOCKED)}>
 					<div className={cn(column, STACK)}>{foot}</div>
 				</div>
 			) : null}

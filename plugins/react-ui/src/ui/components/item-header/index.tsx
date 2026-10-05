@@ -44,8 +44,9 @@ const OPEN = cn(ACT, "-ms-inside");
 // A loading line stands in its text's line box, so the loading head keeps
 // the loaded head's height.
 const LINE_WAIT = "flex items-center h-lh";
-// On touch the facts wrap to a second line, which the loading head reserves.
-const WRAP_WAIT = "hidden touch:flex items-center h-lh";
+// Where the facts wrap to a second line (a window under `tablet`) the
+// loading head reserves it.
+const WRAP_WAIT = "hidden max-tablet:flex items-center h-lh";
 const FACTS_WAIT = "flex flex-col";
 const FACTS_LINE_WAIT = "flex items-center";
 const COUNT_WAIT = "inline-flex shrink-0";
@@ -83,6 +84,27 @@ function factKey<V extends string | null>(fact: Fact<V>): string {
 	return partText(fact);
 }
 
+// The save fact stands in one grid cell. Under `tablet`, where the facts wrap,
+// it holds its widest form's room (the failed form, a status and a retry, drawn
+// unseen under the live one), so the line wraps the same as the save moves
+// between its states; from `tablet` it takes the live form's own width. Like
+// the pick it pulls back at both ends by a pill's padding.
+const SAVE = "inline-grid -mx-inside";
+const SAVE_FORM = "col-start-1 row-start-1 inline-flex items-center";
+const SAVE_ROOM =
+	"col-start-1 row-start-1 items-center invisible hidden max-tablet:inline-flex";
+const SAVE_PILL = cn(PILL_ACT, ITEM_FACT, FACT);
+
+function Retry() {
+	const words = useWords();
+	return (
+		<>
+			<Icon name="RotateCcw" fit="meta" />
+			<span className={text({ role: "meta" })}>{words.retry}</span>
+		</>
+	);
+}
+
 // The region stands from the record's open, `saved` at rest, and stays mounted
 // as the save moves between its states, so a screen reader announces each
 // change, the first "Saving…" included. It holds the focus a pressed Retry
@@ -101,24 +123,29 @@ function SaveFact({
 		region.current?.focus();
 	};
 	return (
-		<span className={cn(ITEM_FACT, FACT)}>
-			<span
-				ref={region}
-				tabIndex={-1}
-				role="status"
-				className={cn(ITEM_FACT, FACT)}
-			>
-				{save === "failed" ? (
+		<span className={SAVE}>
+			<span aria-hidden className={SAVE_ROOM}>
+				<span className={SAVE_PILL}>
 					<Status state="failed" label={words.notSaved} />
-				) : (
-					<span className={text({ role: "meta" })}>{words[save]}</span>
-				)}
+				</span>
+				<span className={cn(PILL_ACT, ITEM_FACT, ACT)}>
+					<Retry />
+				</span>
 			</span>
-			{save === "failed" ? (
-				<BaseButton onClick={retry} className={cn(PILL_ACT, ACT)}>
-					<span className={text({ role: "meta" })}>{words.retry}</span>
-				</BaseButton>
-			) : null}
+			<span className={SAVE_FORM}>
+				<span ref={region} tabIndex={-1} role="status" className={SAVE_PILL}>
+					{save === "failed" ? (
+						<Status state="failed" label={words.notSaved} />
+					) : (
+						<span className={text({ role: "meta" })}>{words[save]}</span>
+					)}
+				</span>
+				{save === "failed" ? (
+					<BaseButton onClick={retry} className={cn(PILL_ACT, ITEM_FACT, ACT)}>
+						<Retry />
+					</BaseButton>
+				) : null}
+			</span>
 		</span>
 	);
 }
@@ -128,6 +155,7 @@ function FactPart<V extends string | null>({ fact }: { fact: Fact<V> }) {
 		return (
 			<BaseButton
 				onClick={fact.onOpen}
+				aria-haspopup="dialog"
 				className={cn(PILL_ACT, ITEM_FACT, OPEN)}
 			>
 				<span className={text({ role: "meta" })}>

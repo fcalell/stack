@@ -472,11 +472,11 @@ export type TableCell =
 	| null;
 
 // A selection bar's count of the rows a list chooses: `count` of `of` (the rows
-// that can be chosen). `onAll` adds the act beside the count that chooses every
-// row while some stand unchosen (it hears `true`) and clears them once all are
-// (`false`), as a table's head tick does. It draws on touch only (below
-// `tablet` on the web, always on the phone), where a table has no head tick; on
-// the desktop the head tick is the select-all.
+// that can be chosen). `onAll` adds the acts beside the count: one that clears
+// the rows while any are chosen (it hears `false`) and one that chooses every
+// row while some stand unchosen (`true`). The choose-all act draws wherever the
+// table shows no head tick (below `tablet` of the page on the web, always on
+// the phone), since the head tick is the select-all where it stands.
 export interface ChosenCount {
 	count: number;
 	of: number;

@@ -35,17 +35,18 @@ export function Column(props: { children: ReactNode }) {
 }
 
 // A frame whose first menu (or, `popup: "listbox"`, its first pick) is open:
-// once mounted it focuses that trigger and opens it from the keyboard. The
+// once mounted it focuses that trigger and opens it from the keyboard; with
+// `popup: "closed"` it opens none and holds the popups a viewer opens. The
 // popup mounts inside the frame, so it draws the frame's mode.
 export function Opened(props: {
 	children: ReactNode;
-	popup?: "menu" | "listbox";
+	popup?: "menu" | "listbox" | "closed";
 }) {
 	const popup = props.popup ?? "menu";
 	const frame = useRef<HTMLDivElement>(null);
 	const [container, setContainer] = useState<HTMLElement | null>(null);
 	useEffect(() => {
-		if (!container) return;
+		if (!container || popup === "closed") return;
 		const trigger = frame.current?.querySelector<HTMLElement>(
 			`[aria-haspopup="${popup}"]`,
 		);
@@ -169,9 +170,11 @@ export function drawPlace(frame: ShowcaseFrame) {
 		cell.startsWith("CHIP")
 	)
 		return (
-			<Column>
-				<Spec />
-			</Column>
+			<Opened popup="closed">
+				<Column>
+					<Spec />
+				</Column>
+			</Opened>
 		);
 	if (cell === "TEXT.role.title")
 		return (

@@ -5,13 +5,13 @@ import { pressStands } from "@fcalell/ui-core/reason";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
 	ACTION_BAR_ACTS,
+	ACTION_BAR_ALL,
 	ACTION_BAR_CHOSEN,
 	ACTION_BAR_SELECTION,
 	type ActionBarFit,
 	actionBar,
 	type ButtonAct,
 	type ButtonFit,
-	PILL_ACT,
 	text,
 } from "@fcalell/ui-core/variants";
 import {
@@ -51,11 +51,18 @@ const ROW: Record<ActionBarFit, string> = {
 	full: "flex flex-col self-stretch",
 };
 
-// The count and its all-or-clear act stand a pair apart at the row's start; the
-// act is words in a pill, washed at the pointer.
-const COUNT = "flex items-center";
-const ALL =
+// The count and its choose and clear acts stand a pair apart at the row's
+// start; an act is words washed at the pointer, the one that does not apply
+// (every row chosen, none chosen) in the disabled ink and still focusable, so
+// the focus a press leaves is not lost as the other applies.
+const COUNT = "flex flex-wrap items-center";
+const ALL = "shrink-0 whitespace-nowrap";
+const ALL_LIVE =
 	"inline-flex items-center text-ink-meta hover:bg-wash-hover active:bg-wash-press";
+const ALL_INERT = "inline-flex items-center text-ink-disabled";
+// The choose-all act stands where the table has no head tick: below `tablet`
+// of the page, the width the table collapses to its list form at.
+const CHOOSE_ALL = "page-tablet:hidden";
 
 // The last act is the one filled act; a destructive act draws `danger`
 // filled and the hairline `destructive` otherwise.
@@ -70,8 +77,32 @@ export interface ActionBarProps extends Closed {
 	acts: Act[];
 	/** Where the bar stands: at its container's end (the default), or across it with each act at the field's height. */
 	fit?: ActionBarFit;
-	/** A selection bar's count, "N of M chosen" at meta at the bar's start (a `Table`'s `choose` set against its rows), announced as it changes, with `onAll` a select-all or deselect-all act beside it on touch (the desktop `Table`'s head tick is that act); the act's label and its blocked reason stay the act's. Docked as a `Place`'s `foot`, its count and acts in a column that stands at the foot's start, no wider than a table-wide bar. */
+	/** A selection bar's count, "N of M chosen" at meta at the bar's start (a `Table`'s `choose` set against its rows), announced as it changes, with `onAll` a deselect-all act beside it and, below `tablet` of the page where the `Table` draws no head tick, a select-all act; the act's label and its blocked reason stay the act's. Docked as a `Place`'s `foot`, its count and acts in a column centred in the foot, no wider than a table-wide bar. */
 	chosen?: ChosenCount;
+}
+
+function AllAct(props: {
+	label: string;
+	applies: boolean;
+	onAct: () => void;
+	/** The act stands only where the table draws no head tick. */
+	noHeadTick?: boolean;
+}) {
+	return (
+		<BaseButton
+			disabled={!props.applies}
+			focusableWhenDisabled
+			onClick={props.onAct}
+			className={cn(
+				ACTION_BAR_ALL,
+				ALL,
+				props.applies ? ALL_LIVE : ALL_INERT,
+				props.noHeadTick && CHOOSE_ALL,
+			)}
+		>
+			<span className={text({ role: "meta" })}>{props.label}</span>
+		</BaseButton>
+	);
 }
 
 // An act's reason host: the same object while the act stays blocked by one
@@ -164,19 +195,24 @@ export function ActionBar({ acts, fit, chosen }: ActionBarProps) {
 			})}
 		</div>
 	);
-	// The act chooses every row while some stand unchosen and clears them once
-	// all are. On touch only: a desktop table has its head tick for it.
-	const every = chosen !== undefined && chosen.count >= chosen.of;
+	// One act clears the rows while any are chosen, one chooses every row while
+	// some stand unchosen; the table's head tick is the second where it stands.
+	const onAll = chosen?.onAll;
 	const all =
-		touch && chosen?.onAll !== undefined && chosen.of > 0 ? (
-			<BaseButton
-				onClick={() => chosen.onAll?.(!every)}
-				className={cn(PILL_ACT, ALL)}
-			>
-				<span className={text({ role: "meta" })}>
-					{every ? words.chooseNone : words.chooseAll}
-				</span>
-			</BaseButton>
+		chosen !== undefined && onAll !== undefined && chosen.of > 0 ? (
+			<>
+				<AllAct
+					label={words.chooseAll}
+					applies={chosen.count < chosen.of}
+					onAct={() => onAll(true)}
+					noHeadTick
+				/>
+				<AllAct
+					label={words.chooseNone}
+					applies={chosen.count > 0}
+					onAct={() => onAll(false)}
+				/>
+			</>
 		) : null;
 	return (
 		<div

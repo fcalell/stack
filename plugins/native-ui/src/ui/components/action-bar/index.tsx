@@ -3,13 +3,13 @@ import { pressStands } from "@fcalell/ui-core/reason";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
 	ACTION_BAR_ACTS,
+	ACTION_BAR_ALL,
 	ACTION_BAR_CHOSEN,
 	ACTION_BAR_SELECTION,
 	type ActionBarFit,
 	actionBar,
 	type ButtonAct,
 	type ButtonFit,
-	PILL_ACT,
 	text,
 } from "@fcalell/ui-core/variants";
 import {
@@ -33,9 +33,12 @@ import { Button } from "../button";
 // the filled act first.
 const ACTS = "flex-col-reverse";
 const FIT: Record<ActionBarFit, ButtonFit> = { end: "body", full: "field" };
-// The count and its all-or-clear act stand a pair apart over the acts.
-const COUNT = "flex-row items-center";
-const ALL = "flex-row items-center active:bg-wash-press";
+// The count and its choose and clear acts stand a pair apart over the acts; the
+// one that does not apply (every row chosen, none chosen) is in the disabled ink.
+const COUNT = "flex-row flex-wrap items-center";
+const ALL = "flex-row items-center";
+const ALL_LIVE = "active:bg-wash-press";
+const ALL_INERT = "text-ink-disabled";
 
 // The last act is the one filled act; a destructive act draws `danger`
 // filled and the hairline `destructive` otherwise.
@@ -49,14 +52,31 @@ export interface ActionBarProps extends Closed {
 	fit?: ActionBarFit;
 	// A selection bar's count, "N of M chosen" at meta over the acts (a
 	// `Table`'s `choose` set against its rows), announced as it changes, with
-	// `onAll` a select-all or deselect-all act beside it. Docked as a `Place`'s
-	// `foot`.
+	// `onAll` a select-all and a deselect-all act beside it. Docked as a
+	// `Place`'s `foot`, its column centred in it.
 	chosen?: ChosenCount;
 }
 
+function AllAct(props: { label: string; applies: boolean; onAct: () => void }) {
+	return (
+		<Pressable
+			accessibilityRole="button"
+			accessibilityState={{ disabled: !props.applies }}
+			onPress={props.applies ? props.onAct : undefined}
+			className={cn(ACTION_BAR_ALL, ALL, props.applies && ALL_LIVE)}
+		>
+			<RNText
+				className={cn(text({ role: "meta" }), !props.applies && ALL_INERT)}
+			>
+				{props.label}
+			</RNText>
+		</Pressable>
+	);
+}
+
 // The count over the acts, a live region that announces as it changes, with the
-// act that chooses every row while some stand unchosen and clears them once
-// all are, as a table's head tick does.
+// act that clears the rows while any are chosen and the one that chooses every
+// row while some stand unchosen: the phone's table has no head tick.
 function Chosen({ chosen }: { chosen: ChosenCount }) {
 	const words = useWords();
 	const said = filled(words.chosenOf, {
@@ -64,7 +84,6 @@ function Chosen({ chosen }: { chosen: ChosenCount }) {
 		of: String(chosen.of),
 	});
 	const live = useLive(said);
-	const every = chosen.count >= chosen.of;
 	const { onAll } = chosen;
 	return (
 		<View className={cn(ACTION_BAR_CHOSEN, COUNT)}>
@@ -72,15 +91,18 @@ function Chosen({ chosen }: { chosen: ChosenCount }) {
 				{said}
 			</RNText>
 			{onAll !== undefined && chosen.of > 0 ? (
-				<Pressable
-					accessibilityRole="button"
-					onPress={() => onAll(!every)}
-					className={cn(PILL_ACT, ALL)}
-				>
-					<RNText className={text({ role: "meta" })}>
-						{every ? words.chooseNone : words.chooseAll}
-					</RNText>
-				</Pressable>
+				<>
+					<AllAct
+						label={words.chooseAll}
+						applies={chosen.count < chosen.of}
+						onAct={() => onAll(true)}
+					/>
+					<AllAct
+						label={words.chooseNone}
+						applies={chosen.count > 0}
+						onAct={() => onAll(false)}
+					/>
+				</>
 			) : null}
 		</View>
 	);

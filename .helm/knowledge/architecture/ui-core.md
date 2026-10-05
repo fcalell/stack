@@ -339,7 +339,9 @@ a tick with no animation, never jumped to full.
   (the Picker's internal `align`, as an `ItemHeader`'s pick fact's does): a pick that leads its
   line would otherwise hang its end-aligned list past the page's start edge. Its value is capped at
   `measure-short` and truncates (`PICKER_VALUE`, as a status label is), so a long label cannot crush
-  the title. It stands on the title line under the top bar on touch too, since the context is part
+  the title, and the pick yields first on a short line: the title line wraps, so the pick drops under the
+  title, whole, rather than the title (which truncates only when it alone is wider than the line)
+  or the pick's value, chip and chevron being cut. It stands on the title line under the top bar on touch too, since the context is part
   of the page's address and the top bar is the shell's switcher. A context's kind (Draft, Ready) is
   `Option.chip`, the `ChipMark` a `ListRow` carries: the chip draws after the option's label in the
   list and on the trigger, and `Option.status` keeps meaning a work state that moves. Rejected: a
@@ -349,7 +351,7 @@ a tick with no animation, never jumped to full.
   Picker's `chip` family) draws its own chip alone and ignores `Option.chip`.
 - A header fact in words that opens a sheet is `{ label: Part; onOpen }` on `ItemHeader`: the words
   in the meta ink and a trailing `ChevronRight` at the meta fit in a `PILL_ACT`, pulled back at its
-  start as a pick fact is, a button named by the fact; the consumer's `onOpen` opens its own
+  start as a pick fact is, a button named by the fact (`aria-haspopup="dialog"` on the web); the consumer's `onOpen` opens its own
   `Sheet`. The chevron stays because on touch there is no hover and an unmarked opening fact cannot
   be found; it is the form a system `Message` line takes with `onOpen`. Rejected: `Status` with
   `onOpen` (a status carries a hue, a fact in words none), a `Button` beside the facts (a second
@@ -358,10 +360,17 @@ a tick with no animation, never jumped to full.
   "saved" | "failed"; onRetry }`, which stack owns so the words (`saving`, `saved`, `notSaved`,
   `retry`) and the announcement are not the consumer's to spell. `saving` and `saved` are meta-ink
   words; `failed` is the `failed` Status with `notSaved`, then `retry` as words in a
-  `PILL_ACT` (a button named by the fact, in the meta ink as an opening fact is), so the fact stands
-  at the target height (`ITEM_FACT`, `min-h-target`) in all three states and the head keeps the
-  loading head's height as the save moves. The words stand in a polite live region
-  (`role="status"` on the web; on the phone `useLive`, below) that excludes the Retry act, so it
+  `PILL_ACT` led by a `RotateCcw` glyph (a button named by the fact, in the meta ink as an opening
+  fact is; the glyph is what tells it from the facts beside it, and it stays words in a pill, never a
+  `Button`, so the head keeps one height), so the fact stands at the target height (`ITEM_FACT`,
+  `min-h-target`) in all three states and the head keeps the loading head's height as the save moves.
+  Where the facts wrap (below `tablet` on the web, always on the phone) the fact also holds the
+  failed form's room in every state, the failed form drawn unseen in the one grid cell the live form
+  stands in (a stacked, unseen copy on the phone), so the line wraps the same in all three and the
+  head never gains a line when a save fails; from `tablet` it takes the live form's own width, so
+  "Saved" leaves no gap after it. The words stand in a polite live region
+  (`role="status"` on the web, drawn as a pill so its focus ring is one; on the phone `useLive`,
+  below) that excludes the Retry act, so it
   announces "Not saved" alone, and keeps one key across the states, so the region persists and each
   change is announced. It also takes the focus a pressed Retry leaves as that act gives way to the
   saving words (`tabIndex={-1}` and `focus()` on the web, `sendAccessibilityEvent` on the phone),
@@ -522,9 +531,11 @@ a tick with no animation, never jumped to full.
   an act floating over what scrolls is a lifted layer, the one shadow it carries.
 - A field that stays in view while a Place's sections scroll (an ask box over a home) is the Place's
   `foot`, an explicit slot: it docks under the body at both densities on the `FOOT_DOCKED` cell (the
-  page inset at the sides, a pair above and below, under a hairline on a surface step, so the body
-  that scrolls to its edge never cuts into what it holds and a selection bar stands in its 38–52
-  height range; held by no entry; a filling Thread's own input docks on `FOOT`), the body scrolling past it, above the tab bar on touch and, on native, lifted over the keyboard
+  page inset at the sides, an acts gap above and below, a raised surface under a hairline, the
+  selection-bar pattern's "raised surface": a step over the body in dark, the `float` shadow in
+  light, so the body that scrolls to its edge never cuts into what it holds and a selection bar
+  stands in its 38–52 height range; held by no entry; a filling Thread's own input docks on the
+  same cell, so one docked composer draws one foot), the body scrolling past it, above the tab bar on touch and, on native, lifted over the keyboard
   (the body and the foot share one `KeyboardAvoidingView`, `Lifted`). The body ends a sections gap
   over it (`PAGE_BODY_OVER_FOOT`), as a filling Thread's log ends over its input, so the field reads
   apart from the last section; the foot spans the body at every density, whatever it holds (the
@@ -688,16 +699,20 @@ a tick with no animation, never jumped to full.
   column's width); below `tablet` the tick is the `ListRow`'s leading `check` and a moved reason
   follows the change value in its meta. The head tick draws no count, and the table none: "N of M chosen" belongs to the
   selection bar, which reads this selection: an `ActionBar` with `chosen: { count, of, onAll? }`
-  docked as the Place's `foot`. Touch has no head tick, so `onAll` puts the choose-all act on the
-  bar there only (below `tablet` on the web, always on the phone); on the desktop the head tick is
-  the select-all and the bar draws none. The act stands beside the count, words in a pill
-  (`PILL_ACT`) reading `chooseAll` while some rows stand unchosen and `chooseNone` once all are, as
-  the head tick toggles, and calls `onAll(true)` or `onAll(false)`. `of` counts the rows that can be
-  chosen, so a list with blocked rows still reaches the cleared state. It draws the slot word
+  docked as the Place's `foot`. The table draws its head tick from `tablet` of its page and a list
+  form below it, so `onAll` puts the choose-all act on the bar wherever the table shows no head tick,
+  decided by that same page width and never by touch (a desktop window at 768 has the act, a touch
+  grid at 1280 has the tick; on the phone the table is always the list form). Two acts stand beside
+  the count, words washed at the pointer at the control radius (`ACTION_BAR_ALL`, so the ring
+  follows the filled act's edge): `chooseAll`, calling `onAll(true)` and drawn only where the table
+  has no head tick, and `chooseNone`, calling `onAll(false)` at every width, the clear act the
+  selection-bar pattern names. One that does not apply (every row chosen, none chosen) stays drawn in
+  the disabled ink and focusable, so the focus a press leaves is not lost as the other applies. `of`
+  counts the rows that can be chosen, so a list with blocked rows still reaches the cleared state. It draws the slot word
   `chosenOf` at meta at the bar's start (one phrase, since the count left behind is `of - count`),
   in a polite live region, and the acts beside it at the end (`ACTION_BAR_CHOSEN`, a pair apart),
   the bar's one filled act the page's one; on touch the count stands over the full-width act. The
-  foot spans the body, but the bar's count and acts stand in a column at its start no wider than
+  foot spans the body, but the bar's count and acts stand in a column centred in it no wider than
   the `selection` width (`ACTION_BAR_SELECTION`, the selection-bar pattern's table-wide bar), so
   the count and the act stay a reading distance apart on a wide screen. The
   act's label ("Publish 4 changes") and its blocked reason stay the consumer's `Act`. The bar is not
@@ -728,7 +743,7 @@ a tick with no animation, never jumped to full.
   in a Place's body fills the page at every width, decided by where it stands, from its first
   render: the frame hands it `ThreadRoom`, and the body draws no inset and leaves scrolling to it,
   its log scrolls at the page inset (`THREAD_LOG`), opening at the newest message and following each
-  that arrives while the reader is at the end, the input docked at the foot (`FOOT`); a Section
+  that arrives while the reader is at the end, the input docked at the foot (`FOOT_DOCKED`); a Section
   takes the room back. The phone log's origin is its end: the ScrollView and each message turn
   upside down (as React Native's `VirtualizedList` inverts a list), the messages newest first, so
   its first frame shows the newest message and a keyboard's resize keeps the bottom anchored;
