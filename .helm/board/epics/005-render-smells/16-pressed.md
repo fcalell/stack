@@ -1,6 +1,6 @@
 ---
 id: 005-16
-status: review
+status: done
 sessions: {}
 ---
 # react-ui, native-ui: a blocked act's press is derived, not reset by an effect
