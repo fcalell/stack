@@ -97,10 +97,11 @@ const TRAILING = "shrink-0";
 // truncates with an ellipsis; the status and the glyphs keep their width, and
 // past them the line clips at the row's edge rather than overprint. The shrink
 // weights are the order: a flex line takes the overflow from each item in
-// proportion to its weight times its own width, so each weight stands a
-// thousand above the next (the warning's in `./marks.tsx`, the chip's slot
-// below) to outweigh any ratio between the marks' widths. The parts' box
-// grows into the room the marks leave.
+// proportion to its weight times its own width, and a part that still fits
+// must take none of it, so the weights run 1, 10^7 and 10^14 (the warning's in
+// `./marks.tsx`, the chip's slot below), which holds an earlier part's share of
+// the overflow to a few thousandths of a pixel. The parts' box grows into the
+// room the marks leave.
 const META_LINE = "flex-row items-center min-w-0 overflow-hidden";
 const META_PARTS = "flex-row grow shrink min-w-0";
 const META_FIRST = "shrink min-w-0";
@@ -111,7 +112,7 @@ const STATUS_MARK = "shrink-0";
 // the chip, wider than the room the slot is left, wraps under the slot's one
 // line height and is clipped away.
 const CHIP_SLOT =
-	"flex-row flex-wrap h-chip min-w-0 shrink-1000000000 overflow-hidden";
+	"flex-row flex-wrap h-chip min-w-0 shrink-100000000000000 overflow-hidden";
 const CHIP_START = "w-0 h-full";
 const CHIP_MARK = "shrink-0";
 const ACTS = "relative flex-row shrink-0 items-center";

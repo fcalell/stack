@@ -43,7 +43,9 @@ import { PickerBase } from "../picker/base.tsx";
 import { SwitcherPick } from "../shell/switcher.tsx";
 import { BODY_FILLED } from "../thread/fill.ts";
 
-const PLACE = "flex flex-col grow min-h-0";
+// The column clips what stands past its sides, so its docked foot's shadow
+// never falls on the region beside it; its top stays open for the lift.
+const PLACE = "flex flex-col grow min-h-0 overflow-x-clip";
 // A page is the size container what stands in it decides its structure by
 // (a Split its regions, a Table its grid); the acts a Split's marks show hide by the
 // same widths.

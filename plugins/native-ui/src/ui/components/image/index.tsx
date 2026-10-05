@@ -29,9 +29,10 @@ const FETCHING = "absolute inset-0 opacity-0";
 // A picture in a box of its aspect fills the box, cover-cropped.
 const FILLS = "h-full";
 const FAILED = "items-center justify-center overflow-hidden";
-// The words of a failed content tile; a thumbnail has no room for a sentence,
-// so its alt names the tile and the glyph is drawn alone.
-const ALT = "shrink max-w-full";
+// The words of a failed content tile, wrapped whole inside its box and
+// centred under the glyph; a thumbnail has no room for a sentence, so its alt
+// names the tile and the glyph is drawn alone.
+const ALT = "shrink max-w-full text-center";
 // A press on the scrim around the picture closes the view.
 const SCRIM_HIT = "absolute inset-0";
 const VIEW = "flex-1 items-center justify-center";
@@ -112,9 +113,7 @@ export function Image({ src, alt, fit, aspect, loading }: ImageProps) {
 					<Icon name="ImageOff" />
 				</Ink.Provider>
 				{place === "thumb" ? null : (
-					<RNText numberOfLines={1} className={cn(text({ role: "meta" }), ALT)}>
-						{alt}
-					</RNText>
+					<RNText className={cn(text({ role: "meta" }), ALT)}>{alt}</RNText>
 				)}
 			</View>
 		);

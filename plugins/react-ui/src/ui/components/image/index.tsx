@@ -29,10 +29,11 @@ const BOXED = "absolute inset-0 h-full";
 const FAILED = "flex flex-col items-center justify-center";
 // The words of a failed tile: a thumbnail has no room for a sentence, so its
 // alt names the tile to assistive tech and in a tooltip, the glyph alone
-// drawn.
+// drawn; a content tile wraps its alt whole inside its box, centred under the
+// glyph.
 const ALT: Record<ImageFit, string> = {
 	thumb: "sr-only",
-	content: "min-w-0 max-w-full truncate",
+	content: "min-w-0 max-w-full text-center wrap-break-word",
 };
 // The full view fills the sheet's layer, which takes no press: the picture
 // and the act take theirs, and a press anywhere else is on the scrim. The

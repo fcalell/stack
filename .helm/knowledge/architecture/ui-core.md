@@ -544,7 +544,10 @@ a tick with no animation, never jumped to full.
   over it (`PAGE_BODY_OVER_FOOT`), as a filling Thread's log ends over its input, so the field reads
   apart from the last section; the foot spans the body at every density, whatever it holds (the
   Place never reads its element type), and a docked `MessageInput` keeps its own measure column
-  (`THREAD_COLUMN`) inside it on the desktop, the column a Thread's input stands in. It names the
+  (`THREAD_COLUMN`) inside it on the desktop, the column a Thread's input stands in. Its `float`
+  shadow stays in the foot's own column: the web Place clips its sides (`overflow-x-clip`, its top
+  open for the lift), as the scrolling region a Thread's foot stands in does, so the shadow never
+  darkens the sidebar beside it. It names the
   Shell's toasts' anchor as a filling Thread's input does. `act` and `foot` are exclusive in the
   props type: the foot's Send is the screen's one filled act, so a floating act beside it would be a
   second. A Place with a `foot` gives a Thread no room to fill (`ThreadRoom`), so a Thread in its
@@ -896,10 +899,12 @@ a tick with no animation, never jumped to full.
   `DefinitionRow` draw too: `LOCK_GLYPH` (the meta ink, no margin) names the glyph, and the
   container's gap spaces it from what it follows. The act that clears a warning is the row's `act`,
   one visible act a row; a mark that is itself a press would put a second hit inside a row that may
-  open. The meta line yields from its end, by shrink weights each a thousand above the next
-  (1, 1000, a million and a billion: a flex line takes the overflow from each item in proportion to
-  its weight times its own width, so a smaller ratio lets three marks yield at once) so the order
-  holds: the later meta parts (they take no width of their own), then the chip, then the lock's
+  open. The meta line yields from its end, by shrink weights (1, 10^7, 10^14 and 10^20, the lock's
+  label absent on the phone: a flex line takes the overflow from each item in proportion to its
+  weight times its own width, and `truncate` draws an ellipsis on any overflow, so a thin ratio
+  lets an earlier part take a sub-pixel share and cut a part that fits; at these the share stays a
+  few thousandths of a pixel against the layout's 1/64 px, and Tailwind reads no bare number from
+  10^21) so the order holds: the later meta parts (they take no width of their own), then the chip, then the lock's
   label, then the warning's label, and last the first part, which names the item and truncates with
   an ellipsis; the status and every glyph keep their width, and past them the line clips at the
   row's edge rather than overprint. The chip is shown whole or not at all: it stands in a slot one
@@ -1221,8 +1226,10 @@ a tick with no animation, never jumped to full.
   waits, hidden, so the frame (`IMAGE {state}`: a skeleton at that height) is replaced by the bytes
   without a second fetch; a failed fetch draws a group-ground tile at the same box with an
   `ImageOff` glyph in the meta ink (`IMAGE_FAILED_INK`, 4.5:1 on `group` in both modes with the alt
-  text it labels) over the alt text in meta and nothing to open (a thumbnail draws the glyph alone,
-  its alt the tile's accessible name and tooltip, since an 80 px tile holds no sentence), so `alt`
+  text it labels) over the alt text in meta, wrapped whole and centred inside the box (the box's
+  height holds it, so no part of the sentence is cut), and nothing to open (a thumbnail draws the
+  glyph alone, its alt the tile's accessible name and tooltip, since an 80 px tile holds no
+  sentence), so `alt`
   is the one word the form needs and `words` gains none. A press moves the
   frame's hairline: `edge-hover` under the pointer, `ink-body` while pressed, since `edge-hover`
   aliases `edge-strong` and a pressed frame must differ from a hovered one. A loaded picture is a button named by `alt`; a press opens it over the scrim with no frame,

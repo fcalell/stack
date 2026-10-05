@@ -106,10 +106,13 @@ const TITLE_BEFORE_VALUE = "basis-1/2";
 // names the item and truncates with an ellipsis; the status and the glyphs
 // keep their width, and past them the line clips at the row's edge rather
 // than overprint. The shrink weights are the order: a flex line takes the
-// overflow from each item in proportion to its weight times its own width, so
-// each weight stands a thousand above the next (`./marks.tsx`, `./lock.tsx`
-// and the chip's slot below) to outweigh any ratio between the marks' widths.
-// The parts' box grows into the room the marks leave.
+// overflow from each item in proportion to its weight times its own width, and
+// `truncate` draws its ellipsis on any overflow, however small, so a part that
+// still fits must take none of it: the weights run 1, 10^7, 10^14 and 10^20
+// (`./marks.tsx`, `./lock.tsx` and the chip's slot below; Tailwind reads no
+// bare number from 10^21), which holds an earlier part's share of the overflow
+// to a few thousandths of a pixel, against the layout's 1/64 px. The parts'
+// box grows into the room the marks leave.
 const META_LINE = "flex items-center min-w-0 overflow-hidden";
 const META_PARTS = "flex grow shrink min-w-0";
 const META_FIRST = "min-w-0 truncate";
@@ -131,7 +134,7 @@ const STATUS_MARK = "flex shrink-0";
 // the chip, wider than the room the slot is left, wraps under the slot's one
 // line height and is clipped away.
 const CHIP_SLOT =
-	"flex flex-wrap h-chip min-w-0 shrink-1000000000 overflow-hidden";
+	"flex flex-wrap h-chip min-w-0 shrink-100000000000000000000 overflow-hidden";
 const CHIP_START = "w-0 h-full";
 const CHIP_MARK = "flex shrink-0";
 const ACTS = "relative flex shrink-0 items-center";
