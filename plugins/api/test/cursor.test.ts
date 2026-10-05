@@ -7,15 +7,22 @@ import {
 	sqliteTable,
 	text,
 } from "drizzle-orm/sqlite-core";
+import { ApiError } from "../src/error.ts";
 import { decodeCursor, encodeCursor, paginate } from "../src/lib/cursor.ts";
 
 const items = sqliteTable("items", {
 	id: text("id").primaryKey(),
 	createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+	name: text("name"),
 });
 
-type Row = { id: string; createdAt: Date };
-type Config = { where?: SQL; limit?: number; orderBy?: SQL[] };
+type Row = { id: string; createdAt: Date; name: string | null };
+type Config = {
+	columns?: { name?: false };
+	where?: SQL;
+	limit?: number;
+	orderBy?: SQL[];
+};
 
 const dialect = new SQLiteSyncDialect();
 const render = (term: SQL) => dialect.sqlToQuery(term);
@@ -37,6 +44,7 @@ const asc = { column: items.createdAt, direction: "asc" as const };
 const row = (n: number): Row => ({
 	id: `r${n}`,
 	createdAt: new Date(n * 1000),
+	name: null,
 });
 
 test("a desc page orders the order column and the id descending", async () => {
@@ -122,10 +130,33 @@ test("the limit is clamped before the query", async () => {
 });
 
 test("a malformed cursor is refused before the query", async () => {
-	const cursors = [btoa("nocolon"), btoa("abc:id"), btoa("123:")];
+	const cursors = [
+		"%%%not base64",
+		btoa("nocolon"),
+		btoa("abc:id"),
+		btoa("123:"),
+	];
 	for (const cursor of cursors) {
 		const q = stub();
-		await assert.rejects(paginate(q, { ...base, orderBy: desc, cursor }));
+		await assert.rejects(
+			paginate(q, { ...base, orderBy: desc, cursor }),
+			(error) => error instanceof ApiError && error.code === "BAD_REQUEST",
+		);
 		assert.equal(q.calls.length, 0);
 	}
+});
+
+test("columns pass to the query and leave the row type", async () => {
+	const q = stub([row(1)]);
+	const columns = { name: false } as const;
+	const res = await paginate(q, { ...base, orderBy: desc, columns });
+	assert.equal(q.calls[0]?.columns, columns);
+	// @ts-expect-error name is dropped from the answer's row type
+	res.data[0]?.name;
+	assert.ok(res.data[0]?.id);
+
+	const plain = stub([row(1)]);
+	const all = await paginate<Row, object>(plain, { ...base, orderBy: desc });
+	assert.equal("columns" in (plain.calls[0] ?? {}), false);
+	assert.equal(all.data[0]?.name, null);
 });

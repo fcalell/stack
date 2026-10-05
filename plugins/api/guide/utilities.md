@@ -25,7 +25,13 @@ return paginate(db.query.projects, {
 Rows order by the order column in the direction given, then by `id` in the same direction, so a
 `desc` page is the newest rows and rows sharing a moment page in a stable order by `id`. The
 cursor encodes the last row's `createdAt` and `id`, so the next page continues past that row.
-`nextCursor` is `null` on the last page. `clampLimit(limit)` keeps a limit within 1 to
+`nextCursor` is `null` on the last page.
+
+`columns` is Drizzle's relational `columns` config narrowed to exclusion: the row's keys other than
+`id` and `createdAt`, each `false` (`columns: { body: false }`). The answer's row type omits each
+key it names, and `id` and `createdAt` always stay because the cursor reads them. A malformed
+cursor (not base64, no separator, a non-numeric time, an empty id) answers `BAD_REQUEST`, before
+any query. `clampLimit(limit)` keeps a limit within 1 to
 `MAX_LIMIT` (100), defaulting to `DEFAULT_LIMIT` (20).
 
 ## Slugs
