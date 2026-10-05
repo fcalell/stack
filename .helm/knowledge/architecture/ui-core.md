@@ -1098,7 +1098,13 @@ a tick with no animation, never jumped to full.
   being a literal type. Rejected: a `ChoiceList` beside it, the same rows under a second name.
 - A `BarChart` is a collection on the same decisions: `query` (or `items`, waiting on `loading`)
   and a `bar` map (`key`, `label`, `value`, `parts` by `keys`, `at`, each a function of the
-  item). Its `keys` are declared, so its pending form is its loaded boxes in skeleton with the
+  item). Its head is the sum of its bars (a flow); `level` (the bars are a level, a fact only the
+  app holds, so no derivation) makes it the last bar's value and each key's last part, the spoken
+  summary the same figure. Its axis scale and head are `./chart`'s `chartScale` and `chartHead`,
+  one pure answer for both platforms: four even steps over the peak, and when every value and
+  part is a whole number and the step would fall under 1, a step of 1 over as many bands as the peak
+  rounds up to, so a peak of 3 ticks 1, 2, 3 and never past its bars. Its `keys` are
+  declared, so its pending form is its loaded boxes in skeleton with the
   legend standing. Its failed and empty EmptyStates stand at its loaded height: the loaded boxes
   are held unseen under them in one cell (the web's grid placement and `invisible`; native lays
   the EmptyState absolutely over the boxes at `opacity-0`), so the Section does not move, and the

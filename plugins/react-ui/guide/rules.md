@@ -380,6 +380,8 @@ an `act`, never both, since each holds the screen's filled act. A `Thread` in a 
 
 A `BarChart` takes data the same way, its `bar` map reading each item's `key`, `label`, `value`,
 `parts` (by its declared `keys`) and `at`; its failed and empty forms stand at the chart's height.
+Its head sums the bars, which is right for a flow (requests per day); bars that are a level (open
+flags per round, a reading each hour) take `level`, and the head draws the last bar, never the sum.
 
 Any other region reading a query sits in its own `QueryBoundary`, naming its loading form; it
 draws the not-found form when every failed query answers not found.

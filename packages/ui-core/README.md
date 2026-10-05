@@ -57,6 +57,11 @@ Seventeen subpaths:
 - `@fcalell/ui-core/format`: `formatterFor(kind, lang, options)`, the platform's `Intl` number,
   date and relative-time formatters, built once per kind, language and options; every formatter
   both plugins use comes from it.
+- `@fcalell/ui-core/chart`: what a `BarChart` decides before it draws: `chartScale(peaks, figures)`,
+  its axis step, band count and top (four even bands, or a step of 1 over the peak rounded up for a
+  small whole-number chart), and
+  `chartHead(series, keys, level)`, the figures its head draws (the sum, or the last bar's with
+  `level`).
 - `@fcalell/ui-core/clock`: what a clock-read part draws, as functions of its times and now:
   `timeLeft`, a `PendingRun` with `pendingRun` and `pendingShare` (a `PendingBar`'s clock and
   fill), and `ageWords` (an ISO moment's age). Both plugins tick `now` from one shared clock.

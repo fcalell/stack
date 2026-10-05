@@ -1,3 +1,4 @@
+import { BANDS, chartHead, chartScale } from "@fcalell/ui-core/chart";
 import { formatterFor } from "@fcalell/ui-core/format";
 import { listBusy, listState, retryOf } from "@fcalell/ui-core/list-state";
 import { CHART_SERIES } from "@fcalell/ui-core/tokens";
@@ -66,18 +67,6 @@ const BAR = "w-full";
 const HELD = "opacity-0";
 const OVER = "absolute inset-0";
 
-// Four bands, the last one's bottom the baseline.
-const BANDS = 4;
-
-// The axis top: four even steps over the largest bar, each step the first
-// whole multiple of its own magnitude.
-function stepOf(peak: number): number {
-	if (peak <= 0) return 1;
-	const raw = peak / BANDS;
-	const magnitude = 10 ** Math.floor(Math.log10(raw));
-	return Math.ceil(raw / magnitude) * magnitude;
-}
-
 // Every figure of one chart in one notation: compact once its axis reaches
 // five figures, so a tick stays inside its four-figure lane.
 function formatter(top: number): (value: number) => string {
@@ -88,8 +77,8 @@ function formatter(top: number): (value: number) => string {
 	return (value) => plain.format(value);
 }
 
-function band(index: number) {
-	return index === BANDS - 1 ? "both" : "top";
+function band(index: number, bands: number) {
+	return index === bands - 1 ? "both" : "top";
 }
 
 // A part's or a column's height: its value's share of the axis top.
@@ -149,6 +138,10 @@ export type BarChartProps<T = unknown> = Closed &
 		bar: BarSlots<T>;
 		// What the values count (`requests`, `minutes`), drawn after the total.
 		unit?: string;
+		// The bars are a level, not a flow (open flags per round, not requests
+		// per day): the head draws the last bar's value, and each key the last
+		// bar's part, never their sum.
+		level?: boolean;
 	};
 
 // One bar, read from its item.
@@ -160,7 +153,7 @@ interface Bar {
 	at?: string;
 }
 
-// The total at body 500 with its unit, the parts' keys under it, then the
+// The total (the last bar with `level`) at body 500 with its unit, the parts' keys under it, then the
 // axis beside the plot, its four gridlines a hairline, the columns in the
 // chip marks by part, a time under each bar that has one. React Native has no
 // hidden table: the total names the chart and sums it, and each column reads
@@ -173,7 +166,7 @@ interface Bar {
 // `sentence` and Retry, and no item `empty`, each at the chart's loaded
 // height; then one bar per item.
 export function BarChart<T>(props: BarChartProps<T>) {
-	const { label, keys, unit } = props;
+	const { label, keys, unit, level } = props;
 	const words = useWords();
 	const base = {
 		query: props.query,
@@ -221,21 +214,25 @@ export function BarChart<T>(props: BarChartProps<T>) {
 	}));
 	const labels = keys ?? [];
 	const part = (bar: Bar, key: string) => bar.parts?.[key] ?? 0;
-	const peak = Math.max(
-		0,
-		...series.map((bar) =>
-			keys ? keys.reduce((sum, key) => sum + part(bar, key), 0) : bar.value,
-		),
+	const peaks = series.map((bar) =>
+		keys ? keys.reduce((sum, key) => sum + part(bar, key), 0) : bar.value,
 	);
-	const step = stepOf(peak);
-	const top = step * BANDS;
+	const peak = Math.max(0, ...peaks);
+	const { step, top, bands } = chartScale(
+		peaks,
+		series.flatMap((bar) => [
+			bar.value,
+			...labels.map((key) => part(bar, key)),
+		]),
+	);
 	const figure = formatter(top);
 	// A column gives assistive tech the figures the plot cannot: in full.
 	const full = formatterFor("number");
-	const total = series.reduce((sum, bar) => sum + bar.value, 0);
-	const keyTotals = labels.map((label) => ({
+	const head = chartHead(series, labels, level === true);
+	const { total } = head;
+	const keyTotals = labels.map((label, at) => ({
 		label,
-		value: series.reduce((sum, bar) => sum + part(bar, label), 0),
+		value: head.parts[at] ?? 0,
 	}));
 	const summary = [
 		label,
@@ -284,12 +281,12 @@ export function BarChart<T>(props: BarChartProps<T>) {
 			</View>
 			<View className={cn(CHART_BODY, BODY)}>
 				<View {...HIDDEN} className={cn(CHART_GRID, CHART_TICK_LANE, AXIS)}>
-					{Array.from({ length: BANDS }, (_, index) => (
+					{Array.from({ length: bands }, (_, index) => (
 						<View
 							// biome-ignore lint/suspicious/noArrayIndexKey: a band is its index
 							key={index}
 							className={cn(
-								chartBand({ kind: "axis", rule: band(index) }),
+								chartBand({ kind: "axis", rule: band(index, bands) }),
 								AXIS_BAND,
 							)}
 						>
@@ -304,12 +301,12 @@ export function BarChart<T>(props: BarChartProps<T>) {
 				<View className={cn(CHART_MAIN, MAIN)}>
 					<View className={PLOT}>
 						<View className={CHART_GRID}>
-							{Array.from({ length: BANDS }, (_, index) => (
+							{Array.from({ length: bands }, (_, index) => (
 								<View
 									// biome-ignore lint/suspicious/noArrayIndexKey: a band is its index
 									key={index}
 									className={cn(
-										chartBand({ kind: "grid", rule: band(index) }),
+										chartBand({ kind: "grid", rule: band(index, bands) }),
 										GRID_BAND,
 									)}
 								/>
@@ -463,7 +460,7 @@ function Loading(props: { keys?: readonly string[]; busy: boolean }) {
 							// biome-ignore lint/suspicious/noArrayIndexKey: a band is its index
 							key={index}
 							className={cn(
-								chartBand({ kind: "axis", rule: band(index) }),
+								chartBand({ kind: "axis", rule: band(index, BANDS) }),
 								AXIS_BAND,
 							)}
 						>

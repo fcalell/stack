@@ -66,6 +66,16 @@ function byService(keys: readonly string[]): Day[] {
 // column named by the label for want of a unit.
 const QUIET: Day[] = WEEK.map(([day]) => ({ day, value: 0, at: day }));
 
+// Open flags per review round: a level, so the chart's head reads the last
+// round and its ticks stand on whole numbers.
+const FLAGS = [2, 3, 1].map(
+	(value, index): Day => ({
+		day: `Round ${index + 1}`,
+		value,
+		at: `R${index + 1}`,
+	}),
+);
+
 // A `CHART_FILL.series` cell past the first stacks by service (past the
 // third, by six of them); a `CHART_BAND` cell at rest adds a week of zeros;
 // every other cell draws the one series. Each chart takes a query in the
@@ -105,6 +115,17 @@ export function drawBarChart(frame: ShowcaseFrame) {
 			{quiet ? (
 				<Section title="Cron runs" description="Per day this week.">
 					<BarChart label="Cron runs" items={QUIET} bar={BAR} />
+				</Section>
+			) : null}
+			{quiet ? (
+				<Section title="Open flags" description="At the end of each round.">
+					<BarChart
+						label="Open flags per round"
+						items={FLAGS}
+						bar={BAR}
+						unit="flags"
+						level
+					/>
 				</Section>
 			) : null}
 		</Wide>

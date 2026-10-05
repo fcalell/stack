@@ -27,6 +27,10 @@
 			"types": "./dist/commit.d.ts",
 			"default": "./dist/commit.js"
 		},
+		"./chart": {
+			"types": "./dist/chart.d.ts",
+			"default": "./dist/chart.js"
+		},
 		"./clock": {
 			"types": "./dist/clock.d.ts",
 			"default": "./dist/clock.js"

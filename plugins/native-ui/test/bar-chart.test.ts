@@ -37,7 +37,7 @@ test("a BarChart takes a query with sentence and empty, or items, through bar", 
 test("the roster's BarChart takes data and lists its failed and empty states", () => {
 	const entry = rosterEntries().find(([, name]) => name === "BarChart")?.[2];
 	assert.ok(entry);
-	for (const prop of ["query", "items", "bar", "sentence", "empty"])
+	for (const prop of ["query", "items", "bar", "sentence", "empty", "level"])
 		assert.ok(entry.props.includes(prop), prop);
 	assert.ok(!entry.props.includes("series"));
 	assert.ok(entry.states.includes("error"));

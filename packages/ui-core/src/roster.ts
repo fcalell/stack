@@ -2675,13 +2675,16 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// dimension, its bars from `query` or `items` through the `bar` map;
 		// `label` names what it counts, the plot and the visually hidden table
 		// the values reach assistive tech by; `keys` names the stack's parts in
-		// order, so the legend and each part's mark stand before the data does.
-		// Its failed and empty EmptyStates are its own, at its loaded height.
+		// order, so the legend and each part's mark stand before the data does;
+		// `level` says the bars are a level, so its head draws the last bar, not
+		// the sum. Its failed and empty EmptyStates are its own, at its loaded
+		// height.
 		BarChart: {
 			props: [
 				"label",
 				"keys",
 				"unit",
+				"level",
 				"query",
 				"sentence",
 				"empty",
