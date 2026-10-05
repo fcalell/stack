@@ -65,9 +65,9 @@ interface QueryBuilder<T, C> {
 
 export async function paginate<
 	T extends { id: string; createdAt: Date },
-	C extends ExcludedColumns<T> = object,
+	const C extends ExcludedColumns<T> = object,
 >(
-	queryBuilder: QueryBuilder<T, C>,
+	queryBuilder: QueryBuilder<T, NoInfer<C>>,
 	options: PaginateOptions<C>,
 ): Promise<PaginatedResult<Omit<T, keyof C>>> {
 	const limit = clampLimit(options.limit);

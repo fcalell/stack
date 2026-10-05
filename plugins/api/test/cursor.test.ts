@@ -160,3 +160,22 @@ test("columns pass to the query and leave the row type", async () => {
 	assert.equal("columns" in (plain.calls[0] ?? {}), false);
 	assert.equal(all.data[0]?.name, null);
 });
+
+test("columns infer from the options alone against a wide query builder", async () => {
+	type Wide = {
+		columns?: Partial<Record<keyof Row, boolean>>;
+		where?: SQL;
+		limit?: number;
+		orderBy?: SQL[];
+	};
+	const wide = { findMany: async (_config: Wide) => [row(1)] };
+	const res = await paginate(wide, {
+		...base,
+		orderBy: desc,
+		columns: { name: false },
+	});
+	// @ts-expect-error name is dropped from the answer's row type
+	res.data[0]?.name;
+	assert.ok(res.data[0]?.id);
+	assert.ok(res.data[0]?.createdAt);
+});
