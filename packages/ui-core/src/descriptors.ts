@@ -234,10 +234,14 @@ export interface ConfirmName {
 	blocked: string;
 }
 
+// `cancel` is the way out's label, the `cancel` word unless given: the
+// decision's own words for leaving it ("Keep editing", "Stay"). The way out
+// runs nothing; Escape, the scrim and the sheet's close dismiss alike.
 export interface Confirmation {
 	title: string;
 	sentence: string;
 	act: ConfirmAct;
+	cancel?: string;
 	confirmName?: ConfirmName;
 }
 
@@ -385,7 +389,7 @@ export type MessageDetail =
 	| {
 			row: {
 				leading?: RowLeading;
-				title: string;
+				title: Part;
 				meta?: Part[];
 				status?: StatusMark;
 				chip?: ChipMark;

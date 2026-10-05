@@ -11,10 +11,11 @@ import { Input } from "../input";
 import { SheetBase } from "./base";
 
 // One decision as a bottom sheet: the sentence under the title and the act
-// over Cancel in the foot (a destructive act the danger fill), Cancel its one
-// dismissing act. The act runs the work: pending while its promise pends,
-// Cancel and the scrim inert; the sheet closes when it resolves and stays
-// open, the act ready again, when it rejects. A decision that asks for a name draws its
+// over the way out in the foot (Cancel unless the decision names it; a
+// destructive act the danger fill), the way out its one dismissing act. The
+// act runs the work: pending while its promise pends, the way out and the
+// scrim inert; the sheet closes when it resolves and stays open, the act
+// ready again, when it rejects. A decision that asks for a name draws its
 // field in the body, the act blocked on its reason until the name typed
 // matches, the field taking focus as the sheet opens.
 function ConfirmSheet({
@@ -59,7 +60,7 @@ function ConfirmSheet({
 			title={entry.title}
 			description={entry.sentence}
 			acts={[
-				{ label: words.cancel, onAct: dismiss },
+				{ label: entry.cancel ?? words.cancel, onAct: dismiss },
 				{
 					label: entry.act.label,
 					destructive: entry.act.destructive,

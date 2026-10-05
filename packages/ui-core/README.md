@@ -435,7 +435,7 @@ The canon binds every component either UI plugin ships:
    ignore the press and the form is busy. A `confirm()` is the same shape: its `Confirmation`'s act
    runs the work, pending while its promise pends (the sheet's other acts inert), the sheet closing
    when it resolves and staying open to retry when it rejects; `confirm()` returns nothing, and
-   dismissing the sheet runs nothing. An icon is an `IconName`, a Lucide glyph by its PascalCase
+   dismissing the sheet runs nothing; its `cancel` names the way out ("Keep editing"), the `cancel` word unless given. An icon is an `IconName`, a Lucide glyph by its PascalCase
    name (`Check`, `ChevronDown`), typed off the `lucide` package: the set is fixed, not configured,
    and each plugin draws the name from its platform's Lucide package. `children` is the one open
    slot, on the molecules the roster gives it to.

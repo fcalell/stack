@@ -183,7 +183,7 @@ act as words in the meta ink with no hairline, a resend or a skip, never its fil
 an `IconAct`, a row's `StatusMark` and `ChipMark`, a `PlaceSpec`, all from
 `@fcalell/ui-core/descriptors`. An icon is an `IconName`, a Lucide glyph's PascalCase name.
 `children` is open only where the roster gives it. A `Form` submits through its `ActionBar`'s
-filled act, the act pending while its promise pends; a `confirm()` takes a `Confirmation`.
+filled act, the act pending while its promise pends; a `confirm()` takes a `Confirmation`, its `cancel` the way out's own label ("Keep editing") where the `cancel` word is not the decision's.
 
 A row's marks are named props on the meta line, at most one each, in order: `status`, `warning`
 (what is wrong, a string), `lock` (what it holds, a string, its label shown from `tablet`) and
@@ -341,7 +341,7 @@ In a `Place`'s body, or in a `Split`'s `main` under the record's `ItemHeader`, i
 it: its log scrolls and the input docks at the foot. It stands there as the body's direct child,
 or as `main` (in a fragment under the record's `ItemHeader`), never inside a component of the
 app's, so the frame knows it from its first render. What a system line names stands under it as
-its `detail`, a `MessageDetail`, exactly one of: a `row` (a `ListRow`'s slots, in a hairline card,
+its `detail`, a `MessageDetail`, exactly one of: a `row` (a `ListRow`'s slots, its `title` a `Part` so a `Quoted` one draws its quotes, in a hairline card,
 opening its record), a free act's `code` under its verb, or a `fold` of lines the line opens in
 place; never a `ListRow` or a `Code` between the messages.
 

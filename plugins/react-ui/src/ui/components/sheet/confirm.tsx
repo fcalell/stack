@@ -9,7 +9,7 @@ import { FormField } from "../form-field/index.tsx";
 import { Input } from "../input/index.tsx";
 import { SheetBase } from "./base.tsx";
 
-/** One decision: centred on the desktop, a bottom sheet on touch, the sentence under the title and the act after Cancel (a destructive act the danger fill). The act runs the work: pending while its promise pends, the sheet's other acts and its dismissal inert; the sheet closes when it resolves and stays open, the act ready again, when it rejects. A decision that asks for a name draws its field over the acts, the act blocked on its reason until the name typed matches. Outside the package's exports: the Shell draws the queue's first. */
+/** One decision: centred on the desktop, a bottom sheet on touch, the sentence under the title and the act after the way out, Cancel unless the decision names it (a destructive act the danger fill). The act runs the work: pending while its promise pends, the sheet's other acts and its dismissal inert; the sheet closes when it resolves and stays open, the act ready again, when it rejects. A decision that asks for a name draws its field over the acts, the act blocked on its reason until the name typed matches. Outside the package's exports: the Shell draws the queue's first. */
 export function ConfirmSheet(props: {
 	entry: ConfirmEntry;
 	open: boolean;
@@ -50,7 +50,7 @@ export function ConfirmSheet(props: {
 			title={entry.title}
 			description={entry.sentence}
 			acts={[
-				{ label: words.cancel, onAct: dismiss },
+				{ label: entry.cancel ?? words.cancel, onAct: dismiss },
 				{
 					label: entry.act.label,
 					destructive: entry.act.destructive,

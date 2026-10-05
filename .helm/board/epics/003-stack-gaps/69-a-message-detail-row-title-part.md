@@ -1,6 +1,6 @@
 ---
 id: 003-69
-status: backlog
+status: review
 sessions: {}
 ---
 # ui-core: a message detail row's title is a Part

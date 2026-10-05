@@ -350,9 +350,10 @@ export const react = plugin("react", {
 			return { kind: "meta", name: "theme-color", content: themeColor };
 		}),
 		self.slots.htmlHead.contribute((): HtmlInjection | undefined => {
+			// With no icon the browser asks for `/favicon.ico` by itself; an
+			// empty data URL makes it request nothing.
 			const { icon } = self.options;
-			if (!icon) return undefined;
-			return { kind: "link", rel: "icon", href: icon };
+			return { kind: "link", rel: "icon", href: icon ?? "data:," };
 		}),
 		self.slots.htmlBodyEnd.contribute(
 			async (ctx): Promise<HtmlInjection | undefined> => {

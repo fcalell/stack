@@ -125,6 +125,22 @@ export const TURNS: Turn[] = [
 			},
 		},
 	},
+	{
+		id: "t9",
+		author: "system",
+		body: "Named the change set",
+		at: today("10:06"),
+		detail: {
+			row: {
+				leading: { icon: "GitBranch" },
+				title: {
+					quoted: "Backfill the invoice totals before the redeploy goes out",
+				},
+				meta: ["Change set"],
+				onOpen: act,
+			},
+		},
+	},
 ];
 
 // Board 53's thread in a Place body (the Place's frame is context): system

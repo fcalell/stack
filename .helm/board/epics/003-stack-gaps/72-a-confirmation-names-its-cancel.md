@@ -1,6 +1,6 @@
 ---
 id: 003-72
-status: backlog
+status: review
 sessions: {}
 ---
 # ui-core: a confirmation names its cancel act

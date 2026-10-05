@@ -96,6 +96,11 @@ test("the head carries the app's name and the metadata options", async () => {
 	assert.match(html, /<link rel="icon" href="\/icon\.svg"/);
 });
 
+test("an app with no icon emits an icon link that requests nothing", async () => {
+	const html = (await artifacts({})).get(".stack/index.html") ?? "";
+	assert.match(html, /<link rel="icon" href="data:,"/);
+});
+
 test("a custom routes directory reaches the router plugin and the scaffolds", async () => {
 	const g = graph({ routes: { dir: "src/pages" } });
 	const files = await g.resolve(cliSlots.artifactFiles);

@@ -33,6 +33,7 @@ const CONFIRM = {
 	id: 0,
 	title: "Delete acme-web?",
 	sentence: "Its deploys, domains and logs go with it. This cannot be undone.",
+	cancel: "Keep the project",
 	act: {
 		label: "Delete project",
 		destructive: true,

@@ -21,7 +21,7 @@ plugins: [
 | --- | --- | --- |
 | `title` | `app.name` | The document's `<title>` |
 | `description` | none | `<meta name="description">` |
-| `icon` | none | `<link rel="icon">`: a URL, usually a file in `public/` (`"/favicon.svg"`) |
+| `icon` | none | `<link rel="icon">`: a URL, usually a file in `public/` (`"/favicon.svg"`); with none the link is `data:,`, so the browser requests no `/favicon.ico` |
 | `themeColor` | none | `<meta name="theme-color">` |
 | `lang` | `"en"` | `<html lang>` |
 | `routes` | `{ dir: "src/app/routes" }` | The routes directory, from the app's root |

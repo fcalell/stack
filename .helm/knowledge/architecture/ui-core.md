@@ -864,7 +864,7 @@ a tick with no animation, never jumped to full.
   `autoFocus` from `FieldFocus`, which the caller that knows no other field holds focus sets (a
   confirm's typed name), never a mount effect reading the focused input.
 - What an agent made or did stands in a thread as a system Message's `detail` (`MessageDetail`,
-  exactly one of three, the others typed `?: never`): `row`, one `ListRow` on the group ground in a
+  exactly one of three, the others typed `?: never`): `row`, one `ListRow` (its `title` a `Part`) on the group ground in a
   hairline card on the surface (`MESSAGE_CARD`), its slots the row's (the kind leads as the icon or
   the first meta part), opening its record; `code`, a free act's arguments in the code role under
   the line, its verb, in the meta ink since they rank under it (`MESSAGE_CODE`); `fold`, meta lines
@@ -1409,7 +1409,7 @@ a tick with no animation, never jumped to full.
 - A confirm's act runs the work, as a Form's submit does: `ConfirmAct.onAct` returns a promise,
   the act is pending and the sheet's other acts inert while it pends, and the sheet closes when it
   resolves and stays open to retry when it rejects (the caller says why, a toast). `confirm()`
-  returns nothing: a caller that awaited a boolean and then did the work left the sheet closed
+  returns nothing, and its optional `cancel` is the way out's label (the `cancel` word unless given): the words for leaving a decision are the decision's own ("Keep editing", "Stay"), so no word derives them. A caller that awaited a boolean and then did the work left the sheet closed
   with nothing pending while the work ran, and lost the retry.
 - A sheet knows what it holds before it presents. A sheet stands full height when it holds a
   `TextArea` (which grows with its value) or a menu that searches (a pick past six options, whose
