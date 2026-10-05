@@ -126,7 +126,7 @@ pinned by the package's verify suite; this entry holds the architecture and its 
 ## Words
 
 Every word a molecule draws or reads aloud on its own (the seven `Status` words, `recommended`,
-`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `add`, `remove`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `linesAdded` and `linesRemoved`) comes
+`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `linesAdded` and `linesRemoved`) comes
 from `words`, a closed typed object with English defaults. The `Words` type requires every key
 and `wordsSchema` is strict, so a translation missing a word fails `tsc` and the schema. It is a
 plugin option beside `theme`; each plugin contributes a `WordsProvider` into the generated entry
@@ -212,6 +212,16 @@ a tick with no animation, never jumped to full.
   (`Option.status`), its options and its value drawn as the `Status`, as an ItemHeader's moving
   status fact (`{ pick }`) is. Rejected: `Status` with `onOpen`, an act that opened a menu of
   states the mark could not show as the current one.
+- A field that saves as it is typed shows its save as an `ItemHeader` fact, `{ save: "saving" |
+  "saved" | "failed"; onRetry }`, which stack owns so the words (`saving`, `saved`, `notSaved`,
+  `retry`) and the announcement are not the consumer's to spell. `saving` and `saved` are meta-ink
+  words; `failed` is the `failed` Status with `notSaved`, then a `secondary` bar-fit `Button`
+  labelled `retry`. The fact stands in a polite live region (`role="status"` on the web;
+  `accessibilityLiveRegion="polite"` on the phone, plus `AccessibilityInfo.announceForAccessibility`
+  on iOS, which has no live region) and keeps one key across its states, so the region persists and
+  each change is announced. Rejected: a generic fact that carries an act, which lets any fact hold
+  acts and leaves the words and the announcement to the consumer; a `Banner`, which is loud for a
+  save that usually succeeds. An autosaving `FieldBinding` feeding this fact is not built.
 - `running` is work under way and `active` a steady state (a watch that stands, a service that is
   up): both wear the accent, and `running` draws a `Spinner` where every other state draws its
   dot, wherever a status draws one (a `Status`, a list row's `{ status }` leading, an

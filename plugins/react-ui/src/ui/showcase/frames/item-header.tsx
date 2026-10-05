@@ -1,5 +1,6 @@
 import type { Option } from "@fcalell/ui-core/descriptors";
 import type { StatusState } from "@fcalell/ui-core/tokens";
+import { useEffect, useState } from "react";
 import { ItemHeader } from "../../components/item-header/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { Wide } from "./layout-context.tsx";
@@ -24,10 +25,38 @@ function moving(state: StatusState) {
 	};
 }
 
+type Save = "saving" | "saved" | "failed";
+
+// What follows each save state: a retry starts a save, a save finishes, and a
+// finished one is followed by a failed one, so the head cycles the three.
+const NEXT: Record<Save, Save> = {
+	failed: "saving",
+	saving: "saved",
+	saved: "failed",
+};
+
+// The head rests on a failed save, its retry starting the cycle.
+function SavingHead() {
+	const [save, setSave] = useState<Save>("failed");
+	useEffect(() => {
+		if (save === "failed") return;
+		const timer = setTimeout(() => setSave(NEXT[save]), 1500);
+		return () => clearTimeout(timer);
+	}, [save]);
+	return (
+		<ItemHeader
+			overline={OVERLINE}
+			title="Describe the meaning of this field"
+			facts={[{ save, onRetry: () => setSave(NEXT.failed) }, ...REST]}
+		/>
+	);
+}
+
 // Every cell draws the head in the frame's state: at rest a title that
 // wraps over one that does not, the lines a pair apart in both, the first
 // fact a status that moves; loading the bars in each line's box. A
-// `STATUS_DOT.state` cell stands on that state.
+// `STATUS_DOT.state` cell stands on that state. A third head carries a save
+// fact that cycles its three states.
 export function drawItemHeader(frame: ShowcaseFrame) {
 	const [family, , value] = frame.cell.name.split(".");
 	// The third segment of a `STATUS_DOT.state` cell is a state key.
@@ -50,6 +79,7 @@ export function drawItemHeader(frame: ShowcaseFrame) {
 				title="Fix invoice rounding"
 				facts={[moving(state), ...REST]}
 			/>
+			<SavingHead />
 		</Wide>
 	);
 }

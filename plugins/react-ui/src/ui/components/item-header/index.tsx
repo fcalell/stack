@@ -20,6 +20,8 @@ import { OverThread } from "../../lib/frame.ts";
 import { HeadingContext } from "../../lib/heading.ts";
 import { useTouch } from "../../lib/media.ts";
 import { joinParts, META_CUT, partText } from "../../lib/parts.ts";
+import { useWords } from "../../lib/words.tsx";
+import { Button } from "../button/index.tsx";
 import { Count } from "../count/index.tsx";
 import { Picker } from "../picker/index.tsx";
 import { Status } from "../status/index.tsx";
@@ -41,12 +43,13 @@ const FACTS_WAIT = "flex flex-col";
 const FACTS_LINE_WAIT = "flex items-center";
 const COUNT_WAIT = "inline-flex shrink-0";
 
-/** One fact under the title: words, a status, a status that moves (a pick whose options carry states), or a count beside its word. */
+/** One fact under the title: words, a status, a status that moves (a pick whose options carry states), a count beside its word, or the state of a save that runs as the record is typed, a failed one with its retry. */
 export type Fact<V extends string | null = string> =
 	| Part
 	| { status: StatusState; label?: string }
 	| { pick: OptionPick<V> }
-	| { count: number; label: string };
+	| { count: number; label: string }
+	| { save: "saving" | "saved" | "failed"; onRetry: () => void };
 
 /** A record's head. */
 export interface ItemHeaderProps<V extends string | null = string>
@@ -67,7 +70,37 @@ function factKey<V extends string | null>(fact: Fact<V>): string {
 		return `${fact.status} ${fact.label ?? ""}`;
 	if (typeof fact === "object" && "count" in fact)
 		return `${fact.count} ${fact.label}`;
+	if (typeof fact === "object" && "save" in fact) return "save";
 	return partText(fact);
+}
+
+// The region stays mounted as the save moves between its states, so a screen
+// reader announces each change.
+function SaveFact({
+	save,
+	onRetry,
+}: {
+	save: "saving" | "saved" | "failed";
+	onRetry: () => void;
+}) {
+	const words = useWords();
+	return (
+		<span role="status" className={cn(ITEM_FACT, FACT)}>
+			{save === "failed" ? (
+				<>
+					<Status state="failed" label={words.notSaved} />
+					<Button
+						act="secondary"
+						fit="bar"
+						label={words.retry}
+						onAct={onRetry}
+					/>
+				</>
+			) : (
+				<span className={text({ role: "meta" })}>{words[save]}</span>
+			)}
+		</span>
+	);
 }
 
 function FactPart<V extends string | null>({ fact }: { fact: Fact<V> }) {
@@ -86,6 +119,8 @@ function FactPart<V extends string | null>({ fact }: { fact: Fact<V> }) {
 				<Count value={fact.count} />
 			</span>
 		);
+	if (typeof fact === "object" && "save" in fact)
+		return <SaveFact save={fact.save} onRetry={fact.onRetry} />;
 	return (
 		<span className={text({ role: "meta" })}>{partText(fact, META_CUT)}</span>
 	);

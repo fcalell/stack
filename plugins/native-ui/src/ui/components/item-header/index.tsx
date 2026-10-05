@@ -13,10 +13,18 @@ import {
 	skeletonRow,
 	text,
 } from "@fcalell/ui-core/variants";
-import { Text as RNText, View } from "react-native";
+import { useEffect } from "react";
+import {
+	AccessibilityInfo,
+	Platform,
+	Text as RNText,
+	View,
+} from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { joinParts, META_CUT, partText } from "../../lib/parts";
+import { useWords } from "../../lib/words";
+import { Button } from "../button";
 import { Count } from "../count";
 import { Picker } from "../picker";
 import { Status } from "../status";
@@ -36,12 +44,14 @@ const COUNT_WAIT = "shrink-0";
 const STRUT = "​";
 
 // One fact under the title: words, a status, a status that moves (a pick
-// whose options carry states), or a count beside its word.
+// whose options carry states), a count beside its word, or the state of a save
+// that runs as the record is typed, a failed one with its retry.
 export type Fact =
 	| Part
 	| { status: StatusState; label?: string }
 	| { pick: OptionPick }
-	| { count: number; label: string };
+	| { count: number; label: string }
+	| { save: "saving" | "saved" | "failed"; onRetry: () => void };
 
 export interface ItemHeaderProps extends Closed {
 	// The parts that place the record, joined by a middle dot over the title.
@@ -60,7 +70,41 @@ function factKey(fact: Fact): string {
 		return `${fact.status} ${fact.label ?? ""}`;
 	if (typeof fact === "object" && "count" in fact)
 		return `${fact.count} ${fact.label}`;
+	if (typeof fact === "object" && "save" in fact) return "save";
 	return partText(fact);
+}
+
+// A live region announces on Android; iOS has none, so each change is
+// announced by hand.
+function SaveFact({
+	save,
+	onRetry,
+}: {
+	save: "saving" | "saved" | "failed";
+	onRetry: () => void;
+}) {
+	const words = useWords();
+	const said = save === "failed" ? words.notSaved : words[save];
+	useEffect(() => {
+		if (Platform.OS === "ios") AccessibilityInfo.announceForAccessibility(said);
+	}, [said]);
+	return (
+		<View accessibilityLiveRegion="polite" className={cn(ITEM_FACT, FACT)}>
+			{save === "failed" ? (
+				<>
+					<Status state="failed" label={said} />
+					<Button
+						act="secondary"
+						fit="bar"
+						label={words.retry}
+						onAct={onRetry}
+					/>
+				</>
+			) : (
+				<RNText className={text({ role: "meta" })}>{said}</RNText>
+			)}
+		</View>
+	);
 }
 
 function FactPart({ fact }: { fact: Fact }) {
@@ -79,6 +123,8 @@ function FactPart({ fact }: { fact: Fact }) {
 				<Count value={fact.count} />
 			</View>
 		);
+	if (typeof fact === "object" && "save" in fact)
+		return <SaveFact save={fact.save} onRetry={fact.onRetry} />;
 	return (
 		<RNText className={text({ role: "meta" })}>
 			{partText(fact, META_CUT)}
