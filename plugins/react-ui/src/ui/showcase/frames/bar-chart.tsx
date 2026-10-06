@@ -123,7 +123,7 @@ export function drawBarChart(frame: ShowcaseFrame) {
 						label="Open flags per round"
 						items={FLAGS}
 						bar={BAR}
-						unit="flags"
+						unit={{ one: "flag", other: "flags" }}
 						level
 					/>
 				</Section>

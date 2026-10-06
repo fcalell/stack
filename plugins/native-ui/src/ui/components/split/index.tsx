@@ -32,9 +32,9 @@ import { holdsThread } from "../thread";
 
 const REGION = "flex-1";
 // Whatever stands first in a bleeding body carries its own top inset: the
-// record its cell's, the list alone the page inset, sideways too, which its
-// bleeding rows meet the title across.
-const LIST = "pt-page px-page";
+// record its cell's, the list `SPLIT_LIST_STACK`'s, and the page inset
+// sideways, which its bleeding rows meet the title across.
+const LIST = "px-page";
 
 export interface SplitProps extends Closed {
 	list?: ReactNode;

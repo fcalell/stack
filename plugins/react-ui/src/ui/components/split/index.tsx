@@ -32,10 +32,9 @@ const SPLIT = "flex min-w-0 grow min-h-0";
 // with nothing tabbable inside.
 const LIST =
 	"flex flex-col shrink-0 overflow-y-auto focus-visible:-outline-offset-2";
-// Below `tablet` the list stands alone: the page's width under its own top
-// inset, with no hairline.
+// Below `tablet` the list stands alone: the page's width, with no hairline.
 const LIST_ALONE =
-	"page-max-tablet:w-full page-max-tablet:pt-page page-max-tablet:pb-0 page-max-tablet:border-r-0";
+	"page-max-tablet:w-full page-max-tablet:pb-0 page-max-tablet:border-r-0";
 // Below `tablet` one region stands: the open record, else the list.
 const BEHIND = "page-max-tablet:hidden";
 // The floating act's room under the record, kept only where the record

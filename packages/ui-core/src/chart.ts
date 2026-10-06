@@ -38,6 +38,20 @@ function stepOf(peak: number): number {
 	return Math.ceil(raw / magnitude) * magnitude;
 }
 
+// What a chart's values count: one word (`requests`), or the word at one and
+// at every other count (`{ one: "flag", other: "flags" }`) for a unit that
+// takes a plural.
+export type ChartUnit =
+	| string
+	| { readonly one: string; readonly other: string };
+
+// The unit's word at a count, so the head ("1 flag") and the spoken total
+// agree with the figure.
+export function unitOf(unit: ChartUnit, count: number): string {
+	if (typeof unit === "string") return unit;
+	return count === 1 ? unit.one : unit.other;
+}
+
 interface HeadBar {
 	readonly value: number;
 	readonly parts?: Readonly<Record<string, number>>;

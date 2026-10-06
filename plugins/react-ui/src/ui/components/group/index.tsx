@@ -22,6 +22,7 @@ const SETTING: DefinitionShape = {
 	change: false,
 	description: true,
 	end: "switch",
+	code: false,
 };
 const SETTINGS = [0, 1, 2] as const;
 

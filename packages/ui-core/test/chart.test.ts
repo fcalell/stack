@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { chartHead, chartScale } from "../src/chart.ts";
+import { chartHead, chartScale, unitOf } from "../src/chart.ts";
 
 test("four even steps over the peak, each the first whole multiple of its magnitude", () => {
 	assert.deepEqual(chartScale([100]), { step: 30, bands: 4, top: 120 });
@@ -63,4 +63,12 @@ test("a level's head is the last bar's value and parts", () => {
 
 test("a level with no bar reads 0", () => {
 	assert.deepEqual(chartHead([], ["open"], true), { total: 0, parts: [0] });
+});
+
+test("a chart's unit takes its singular at one and its plural at every other count, and a bare word stays", () => {
+	const flags = { one: "flag", other: "flags" };
+	assert.equal(unitOf(flags, 1), "flag");
+	assert.equal(unitOf(flags, 0), "flags");
+	assert.equal(unitOf(flags, 6), "flags");
+	assert.equal(unitOf("minutes", 1), "minutes");
 });

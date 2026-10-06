@@ -32,6 +32,7 @@ import {
 	treeMove,
 	treeRows,
 	treeStop,
+	valueCut,
 	waitingDepth,
 	waitLine,
 } from "../src/list-state.ts";
@@ -258,13 +259,17 @@ test("a waiting definition row's shape comes from the keys a `definition` map de
 		change: false,
 		description: false,
 		end: "none",
+		code: false,
 	});
 	assert.deepEqual(
 		definitionShape({ change: spy("change"), description: spy("description") }),
-		{ change: true, description: true, end: "none" },
+		{ change: true, description: true, end: "none", code: false },
 	);
 	assert.equal(definitionShape({ copyable: true }).end, "act");
 	assert.equal(definitionShape({ copyable: false }).end, "none");
+	assert.equal(definitionShape({ copyable: true }).code, true);
+	assert.equal(definitionShape({ copyable: false }).code, false);
+	assert.equal(definitionShape({ act: spy("act") }).code, false);
 	assert.equal(definitionShape({ act: spy("act") }).end, "act");
 	assert.equal(definitionShape({ href: spy("href") }).end, "chevron");
 	assert.equal(definitionShape({ onOpen: spy("onOpen") }).end, "chevron");
@@ -276,6 +281,7 @@ test("a waiting definition row's shape comes from the keys a `definition` map de
 		change: false,
 		description: true,
 		end: "none",
+		code: false,
 	});
 	assert.deepEqual(calls, []);
 });
@@ -855,4 +861,22 @@ test("a file name keeps its start and its end, and its floor is the cut form", (
 		floor: 8,
 	});
 	assert.deepEqual(pathCut("a"), { stem: "a", tail: "", floor: 1 });
+});
+
+test("a definition value cuts to a stem and a tail of its last four characters, at most half a short value, and the two make the whole value", () => {
+	assert.deepEqual(
+		valueCut("SHA256:uNiVxQ0aB3dE8fGhIjKlMnOpQrStUvWxYz0123k3Qz"),
+		{
+			stem: "SHA256:uNiVxQ0aB3dE8fGhIjKlMnOpQrStUvWxYz0123",
+			tail: "k3Qz",
+		},
+	);
+	assert.deepEqual(valueCut("us-east-1"), { stem: "us-ea", tail: "st-1" });
+	assert.deepEqual(valueCut("Pro"), { stem: "Pr", tail: "o" });
+	assert.deepEqual(valueCut("a"), { stem: "a", tail: "" });
+	assert.deepEqual(valueCut(""), { stem: "", tail: "" });
+	const emoji = "🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂";
+	const cut = valueCut(emoji);
+	assert.equal(`${cut.stem}${cut.tail}`, emoji);
+	assert.equal(Array.from(cut.tail).length, 4);
 });

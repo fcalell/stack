@@ -1,4 +1,10 @@
-import { BANDS, chartHead, chartScale } from "@fcalell/ui-core/chart";
+import {
+	BANDS,
+	type ChartUnit,
+	chartHead,
+	chartScale,
+	unitOf,
+} from "@fcalell/ui-core/chart";
 import { formatterFor } from "@fcalell/ui-core/format";
 import { listBusy, listState, retryOf } from "@fcalell/ui-core/list-state";
 import { CHART_SERIES } from "@fcalell/ui-core/tokens";
@@ -136,8 +142,10 @@ export type BarChartProps<T = unknown> = Closed &
 		// its series mark.
 		keys?: readonly string[];
 		bar: BarSlots<T>;
-		// What the values count (`requests`, `minutes`), drawn after the total.
-		unit?: string;
+		// What the values count (`requests`, `minutes`), drawn after the total; a
+		// unit that takes a plural is `{ one, other }`, read at the figure it
+		// follows.
+		unit?: ChartUnit;
 		// The bars are a level, not a flow (open flags per round, not requests
 		// per day): the head draws the last bar's value, and each key the last
 		// bar's part, never their sum.
@@ -236,13 +244,15 @@ export function BarChart<T>(props: BarChartProps<T>) {
 	}));
 	const summary = [
 		label,
-		unit ? `${figure(total)} ${unit}` : figure(total),
+		unit ? `${figure(total)} ${unitOf(unit, total)}` : figure(total),
 		...keyTotals.map((key) => `${key.label} ${figure(key.value)}`),
 	].join(", ");
 	const said = (bar: Bar) =>
 		[
 			bar.label,
-			unit ? `${full.format(bar.value)} ${unit}` : full.format(bar.value),
+			unit
+				? `${full.format(bar.value)} ${unitOf(unit, bar.value)}`
+				: full.format(bar.value),
 			...labels.map((key) => `${key} ${full.format(part(bar, key))}`),
 		].join(", ");
 	const totalLine = (
@@ -256,7 +266,11 @@ export function BarChart<T>(props: BarChartProps<T>) {
 			>
 				{figure(total)}
 			</RNText>
-			{unit ? <RNText className={text({ role: "meta" })}>{unit}</RNText> : null}
+			{unit ? (
+				<RNText className={text({ role: "meta" })}>
+					{unitOf(unit, total)}
+				</RNText>
+			) : null}
 		</View>
 	);
 	return (

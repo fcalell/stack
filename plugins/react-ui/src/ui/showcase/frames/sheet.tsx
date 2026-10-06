@@ -186,7 +186,7 @@ const typeAndRun = (stage: HTMLElement) =>
 
 // The side sheet (the bottom sheet on touch) in its three states on its
 // form cell, a second page with back on the body icon act cell, the Split's pane on the
-// pane cell, and the confirm on the primary act cell: its typed name blocked
+// pane cell (two Sections in its body, a sections gap apart), and the confirm on the primary act cell: its typed name blocked
 // on `disabled` (the reason shown as the side sheet's is), typed and its act
 // running on `loading`. The rows inside are context. The bar fit cell draws the
 // docked form, since the docked foot draws no matrix cell of its own: a
@@ -229,6 +229,9 @@ export function drawSheet(frame: ShowcaseFrame) {
 			<Stage contain>
 				<Sheet open onClose={act} title="Details" fit="pane">
 					<Section title="Properties">
+						<StandInRows ground="list" />
+					</Section>
+					<Section title="Activity">
 						<StandInRows ground="list" />
 					</Section>
 				</Sheet>

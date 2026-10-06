@@ -339,12 +339,15 @@ export type DefinitionEnd = "none" | "act" | "chevron" | "switch";
 
 // The slots a waiting DefinitionRow draws beyond its label bar, known before
 // any item: the change mark's lane, a meta line under the label (a
-// description, or a locked row's reason; the value bar moves to it), and
-// what stands at the row's end.
+// description, or a locked row's reason; the value bar moves to it), what
+// stands at the row's end, and whether every value is copied whole (`code`:
+// an identifier, drawn in the code role, so its bar runs the room a long one
+// takes rather than a short word's).
 export interface DefinitionShape {
 	change: boolean;
 	description: boolean;
 	end: DefinitionEnd;
+	code: boolean;
 }
 
 // The waiting definition row's shape from the slots a `definition` map
@@ -367,6 +370,27 @@ export function definitionShape(slots: {
 		change: slots.change !== undefined,
 		description: slots.description !== undefined || slots.locked !== undefined,
 		end,
+		code: slots.copyable === true,
+	};
+}
+
+// The characters a definition value keeps at its end when the row cuts it.
+const VALUE_TAIL = 4;
+
+// A definition value, cut for a row too narrow for it: the stem gives way
+// from its end (an ellipsis after it) and the tail, its last VALUE_TAIL
+// characters (at most half a short value), never does, so the start and the
+// end of a long identifier stay (`SHA256:uNiV…k3Qz`). Each platform draws the
+// stem truncating to its own box, so the row measures the room it gives; the
+// two parts together are the whole value, which stays the accessible text and
+// the copy payload. Both platforms read it, so one value cuts the same way.
+export function valueCut(value: string): { stem: string; tail: string } {
+	const characters = Array.from(value);
+	const kept = Math.min(VALUE_TAIL, Math.floor(characters.length / 2));
+	const at = characters.length - kept;
+	return {
+		stem: characters.slice(0, at).join(""),
+		tail: characters.slice(at).join(""),
 	};
 }
 

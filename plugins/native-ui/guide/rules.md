@@ -276,7 +276,10 @@ the Section's head. A `definition` list adds no count to a Section's head (facts
 collection a viewer counts), though it still makes the head busy while it waits. A `Group` holds static
 rows, and items that are no row (a `Meter`, a `FormField`, a `Slider`) which stand at the card's inset with its hairline between and keep their labels (an add field over a `List` is a `FormField` in the `Group`); rows from data in a card are a `List` placed in the `Group`, drawing its states on the card,
 never a `.map` of `ListRow`s, `DefinitionRow`s or `Meter`s. A `definition` list stands in a `Group`,
-as a `DefinitionRow` does.
+as a `DefinitionRow` does. A `definition` row's string value that does not fit its room cuts in its
+middle (its start and its last four characters stay, `SHA256:uNiV…k3Qz`) on one line; the whole value
+stays its read text and, with `copyable`, what the copy act copies, so a value never needs a wrapper
+that truncates it.
 
 A read that answers not found (its query's `error` carries `code: "NOT_FOUND"`, as a stack
 procedure throws it, or `status: 404`) draws "This no longer exists." (the `missing` word) with
@@ -377,12 +380,14 @@ focus in its first field. A `Sheet` among a `Thread`'s sections draws the same f
 A column is a width and the region around it aligns it: a docked foot (a `Place`'s `foot`, a
 `Thread`'s input) centres a selection bar's column. A region that holds a page's sections (a
 `Place`'s body, a `Split`'s list and record, a `Sheet`'s body) stands them a sections gap apart:
-never wrap sections in a `View` to space them.
+never wrap sections in a `View` to space them. A `Split`'s list stands its first section at the page inset, as the record does, so both start on one line.
 
 A `BarChart` takes data the same way, its `bar` map reading each item's `key`, `label`, `value`,
 `parts` (by its declared `keys`) and `at`; its failed and empty forms stand at the chart's height.
 Its head sums the bars, which is right for a flow (requests per day); bars that are a level (open
 flags per round, a reading each hour) take `level`, and the head draws the last bar, never the sum.
+A `unit` that takes a plural is `{ one: "flag", other: "flags" }`, never a bare plural: the head and the
+spoken total read the form their figure takes ("1 flag", "6 flags").
 
 Any other region reading a query sits in its own `QueryBoundary`, naming its loading form; it
 draws the not-found form when every failed query answers not found.

@@ -1,4 +1,10 @@
-import { BANDS, chartHead, chartScale } from "@fcalell/ui-core/chart";
+import {
+	BANDS,
+	type ChartUnit,
+	chartHead,
+	chartScale,
+	unitOf,
+} from "@fcalell/ui-core/chart";
 import { cn } from "@fcalell/ui-core/cn";
 import { formatterFor } from "@fcalell/ui-core/format";
 import { listBusy, listState, retryOf } from "@fcalell/ui-core/list-state";
@@ -127,8 +133,8 @@ export type BarChartProps<T = unknown> = Closed &
 		keys?: readonly string[];
 		/** The bar slots, read from each item. */
 		bar: BarSlots<T>;
-		/** What the values count (`requests`, `minutes`), drawn after the total. */
-		unit?: string;
+		/** What the values count (`requests`, `minutes`), drawn after the total; a unit that takes a plural is `{ one, other }` (`{ one: "flag", other: "flags" }`), read at the figure it follows. */
+		unit?: ChartUnit;
 		/** The bars are a level, not a flow (open flags per round, not requests per day): the head draws the last bar's value, and each key the last bar's part, never their sum. */
 		level?: boolean;
 	};
@@ -223,11 +229,15 @@ export function BarChart<T>(props: BarChartProps<T>) {
 			>
 				{figure.format(total)}
 			</span>
-			{unit ? <span className={text({ role: "meta" })}>{unit}</span> : null}
+			{unit ? (
+				<span className={text({ role: "meta" })}>{unitOf(unit, total)}</span>
+			) : null}
 		</div>
 	);
 	const summary = [
-		unit ? `${figure.format(total)} ${unit}` : figure.format(total),
+		unit
+			? `${figure.format(total)} ${unitOf(unit, total)}`
+			: figure.format(total),
 		...keyTotals.map((key) => `${key.label} ${figure.format(key.value)}`),
 	].join(", ");
 	const height = (value: number) => ({ height: `${(value / top) * 100}%` });
@@ -321,7 +331,7 @@ export function BarChart<T>(props: BarChartProps<T>) {
 							<thead>
 								<tr>
 									<th scope="col">{words.time}</th>
-									<th scope="col">{unit ?? label}</th>
+									<th scope="col">{unit ? unitOf(unit, 0) : label}</th>
 									{labels.map((label) => (
 										<th key={label} scope="col">
 											{label}

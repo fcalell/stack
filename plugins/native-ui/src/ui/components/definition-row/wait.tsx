@@ -22,11 +22,17 @@ const LABEL_LINE = "flex-1 min-w-0 flex-row items-center";
 const META_LINE = "flex-row items-center";
 const END = "shrink-0";
 const SWITCH = "shrink-0 items-center justify-center min-h-target min-w-target";
-// A fact's label bar a third of the line, its value bar a quarter, at the
-// line's end.
-const LABEL_ONE = "w-1/3 flex-row items-center";
+// A fact's label bar four figures wide, a short label's, starting where the
+// label text does; its value bar at the line's end in the room the value
+// takes. An identifier (`code`) fills the room the label leaves up to the
+// measure, where the loaded value, cut to the room, fills it; any other value
+// is a short word, half its lane.
+const LABEL_ONE = "w-figures shrink-0 flex-row items-center";
 const BAR = "flex-1";
-const VALUE_BAR = "ms-auto w-1/4";
+const CODE_LANE = "flex-1 min-w-0 max-w-measure ms-auto";
+const WORD_LANE = "min-w-0 w-measure-short ms-auto items-end";
+const CODE_BAR = "w-full";
+const WORD_BAR = "w-1/2";
 // A setting row's bars, a label over a description, each at the length of the
 // line it stands in for.
 const BARS = [
@@ -68,7 +74,14 @@ export function DefinitionWait(props: {
 							<Strut role="body" />
 							<View className={cn(skeleton({ kind: "line" }), BAR)} />
 						</View>
-						<View className={cn(skeleton({ kind: "line" }), VALUE_BAR)} />
+						<View className={shape.code ? CODE_LANE : WORD_LANE}>
+							<View
+								className={cn(
+									skeleton({ kind: "line" }),
+									shape.code ? CODE_BAR : WORD_BAR,
+								)}
+							/>
+						</View>
 					</View>
 				) : (
 					<>

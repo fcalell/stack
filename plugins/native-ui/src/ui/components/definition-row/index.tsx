@@ -5,6 +5,7 @@ import type {
 	Lock,
 	StatusState,
 } from "@fcalell/ui-core/descriptors";
+import { valueCut } from "@fcalell/ui-core/list-state";
 import {
 	DEFINITION_ROW,
 	DEFINITION_ROW_CHEVRON,
@@ -37,9 +38,11 @@ const TEXT_BLOCK = "flex-1 min-w-0";
 const LINE = "flex-row items-center min-w-0";
 const LABEL = "shrink";
 // The value gives way first: it takes the room the label leaves, ending at
-// the line's end.
-const VALUE = "flex-1 min-w-0 text-right";
-const VALUE_SLOT = "flex-1 min-w-0 flex-row justify-end";
+// the line's end; a string too long for it cuts in its middle, its stem
+// truncating to the room and its tail standing whole (`valueCut`).
+const VALUE = "flex-1 min-w-0 flex-row justify-end";
+const STEM = "shrink";
+const TAIL = "shrink-0";
 const ACTS = "relative flex-row shrink-0";
 const CHEVRON = "shrink-0 items-center justify-center";
 
@@ -108,23 +111,28 @@ export function DefinitionRow({
 	const open = href !== undefined ? () => navigate(href) : onOpen;
 	const copied = copyable && typeof value === "string" ? value : undefined;
 	let shown: ReactNode = null;
-	if (typeof value === "string")
+	if (typeof value === "string") {
+		const { stem, tail } = valueCut(value);
+		const role = text({ role: copied ? "code" : "meta" });
+		// The two parts read as the one value.
 		shown = (
-			<RNText
-				numberOfLines={1}
-				className={cn(text({ role: copied ? "code" : "meta" }), VALUE)}
-			>
-				{value}
-			</RNText>
+			<View accessible accessibilityLabel={value} className={VALUE}>
+				<RNText numberOfLines={1} className={cn(role, STEM)}>
+					{stem}
+				</RNText>
+				<RNText numberOfLines={1} className={cn(role, TAIL)}>
+					{tail}
+				</RNText>
+			</View>
 		);
-	else if (isStatus(value))
+	} else if (isStatus(value))
 		shown = (
-			<View className={VALUE_SLOT}>
+			<View className={VALUE}>
 				<Status state={value.status} label={value.label} />
 			</View>
 		);
 	else if (value !== undefined && value !== null)
-		shown = <View className={VALUE_SLOT}>{value}</View>;
+		shown = <View className={VALUE}>{value}</View>;
 	let end: ReactNode = null;
 	if (copied !== undefined || act)
 		end = (

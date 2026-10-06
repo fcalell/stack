@@ -45,7 +45,8 @@ Seventeen subpaths:
   a `List`'s or `Table`'s state and waiting shape (`listState`, `rowShape`), a table's records,
   sort and tick logic (`tableRecords`, `sorted`, `tickable`), a tree's visible rows (`treeRows`),
   the states a meter, a step count and a rail draw (`levelOf`, `stepStateOf`, `stagesShown`) and
-  the set a toggled value leaves (`toggled`).
+  the set a toggled value leaves (`toggled`), and a definition value's cut (`valueCut`, its stem and
+  the last four characters it keeps).
 - `@fcalell/ui-core/file`: `accepts(file, accept)`, whether a picked file matches a control's
   `accept` list, and `pickerTypes(accept)`, the MIME types a platform's picker filters by.
 - `@fcalell/ui-core/commit`: `commitMoment()`, when a typing control's value is final: on
@@ -68,7 +69,8 @@ Seventeen subpaths:
   its axis step, band count and top (four even bands, or a step of 1 over the peak rounded up for a
   small whole-number chart), and
   `chartHead(series, keys, level)`, the figures its head draws (the sum, or the last bar's with
-  `level`).
+  `level`), and `unitOf(unit, count)`, a unit's word at the figure it follows (a word, or
+  `{ one, other }`).
 - `@fcalell/ui-core/clock`: what a clock-read part draws, as functions of its times and now:
   `timeLeft`, a `PendingRun` with `pendingRun` and `pendingShare` (a `PendingBar`'s clock and
   fill), and an ISO moment's age: `ageOf` (its value and unit), `ageWords` (long) and `ageShort`

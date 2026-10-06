@@ -491,7 +491,9 @@ a tick with no animation, never jumped to full.
   `page-max-<breakpoint>:` variants, emitted from the breakpoint values, query it, so the Split's
   regions and the Details and back acts its marks show follow the room the page has beside a sidebar
   rather than the viewport; native draws the touch one. A bleeding body draws no inset, and whatever
-  stands first in it (a Toolbar, the record, the list alone) carries its own top inset.
+  stands first in it (a Toolbar, the record, the list) carries its own top inset; a Split's list
+  stands its first section at the page inset (`SPLIT_LIST_STACK`'s `pt-page`) under the strip's
+  hairline at every width, so the list and the record share a top on `wide`.
 - A loading form stands in for what it replaces at that part's size: `SKELETON` by the part
   (`line`, `avatar`, `icon`, `dot`, `check`, `switch`, `count`, `field`, `meter`, `chart`) and
   `SKELETON_ROW` by the row it replaces (`setting`, `field`, `facts`, `one-line`,
@@ -641,7 +643,7 @@ a tick with no animation, never jumped to full.
   centres at every density on both platforms, so a selection bar wider than the screen's measure
   stands centred on a wide touch screen too, and what else it holds spans it (`w-full`). A region that holds a page's sections stands them a sections gap apart
   (`PAGE_BODY`, `SPLIT_MAIN rest`, `SPLIT_PANE`, `SHEET_BODY`, and a Split's list by
-  `SPLIT_LIST_STACK`, which the phone's list reads as well), so no wrapper restates the gap; a
+  `SPLIT_LIST_STACK`, which the phone's list reads as well, with the list's top inset), so no wrapper restates the gap; a
   `Form` is one child, so the gap shows only between a sheet's sections.
 - A class with no look is structural, an overlay the web's class sweep classifies: a stacking
   order inside one component (`z-1`, a frozen table column over the cells that scroll under it,
@@ -942,7 +944,14 @@ a tick with no animation, never jumped to full.
   `file` declares `change` (`fileShape`), and a Meter's line bar only when `meter` declares `meta`
   or `counts`, and a DefinitionRow's change lane, meta line (a description or a lock's reason, the
   value bar moving to the title line when none) and end square (an act or `copyable`, or a
-  chevron) by the slots `definition` declares (`definitionShape`), read before any item exists. The `leading` slot names its kind by its one key (`{
+  chevron) by the slots `definition` declares (`definitionShape`), read before any item exists. Its
+  bars stand at the loaded row's columns: the label bar `figures` wide from the label's start, the
+  value bar at the line's end in the room its value takes, an identifier (`copyable`, `code`) the room
+  the label leaves up to the `measure`, where its loaded value, cut to the room, fills it, any other
+  value half a short-label lane. A loaded string value too long for its room cuts in its middle
+  (`list-state`'s `valueCut`: the stem truncating to the room the row gives, the last four
+  characters standing whole), each platform measuring its own box; the whole value stays the read
+  text and the copy act's payload. The `leading` slot names its kind by its one key (`{
   avatar }`, `{ icon }` or `{ status }`, each a function of the item), so a list's rows share one
   kind or have none, and the waiting row draws that kind's mark at its size (`SKELETON` `avatar`,
   `icon` or `dot`). A trailing waits `figures` wide; a declared `status` or `chip` draws the marks'
@@ -1171,7 +1180,8 @@ a tick with no animation, never jumped to full.
   item). Its head is the sum of its bars (a flow); `level` (the bars are a level, a fact only the
   app holds, so no derivation) makes it the last bar's value and each key's last part, the spoken
   summary the same figure. Its axis scale and head are `./chart`'s `chartScale` and `chartHead`,
-  one pure answer for both platforms: four even steps over the peak, and when every value and
+  one pure answer for both platforms (with `unitOf`, the unit's form at the figure it follows:
+  `unit` is a word or `{ one, other }`): four even steps over the peak, and when every value and
   part is a whole number and the step would fall under 1, a step of 1 over as many bands as the peak
   rounds up to, so a peak of 3 ticks 1, 2, 3 and never past its bars. Its `keys` are
   declared, so its pending form is its loaded boxes in skeleton with the

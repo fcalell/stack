@@ -7,6 +7,7 @@ import {
 	ROW_TITLE_LINE,
 	skeleton,
 	skeletonRow,
+	text,
 } from "@fcalell/ui-core/variants";
 
 // The geometry of the loaded DefinitionRow (`./index.tsx`): the label's line
@@ -22,11 +23,16 @@ const META_LINE = "flex items-center h-lh";
 const END = "shrink-0";
 const SWITCH =
 	"flex shrink-0 items-center justify-center min-h-target min-w-target";
-// A fact's label bar a third of the line, its value bar a quarter, at the
-// line's end.
-const LABEL_BAR = "w-1/3";
-const VALUE_BAR = "w-1/4";
-const AT_END = "ms-auto";
+// A fact's label bar four figures wide, a short label's, starting where the
+// label text does; its value bar at the line's end in the room the value
+// takes. An identifier (`code`) fills the room the label leaves up to the
+// measure, in the code role's characters, where the loaded value, cut to the
+// room, fills it; any other value is a short word, half its lane.
+const LABEL_BAR = "w-figures shrink-0";
+const CODE_LANE = "flex basis-0 grow min-w-0 max-w-measure ms-auto justify-end";
+const WORD_LANE = "flex min-w-0 w-measure-short ms-auto justify-end";
+const CODE_BAR = "w-full";
+const WORD_BAR = "w-1/2";
 // A setting row's bars, a label over a description, each at the length of the
 // line it stands in for.
 const BARS = [
@@ -35,7 +41,7 @@ const BARS = [
 	["w-1/3", "w-1/2"],
 ] as const;
 
-/** A DefinitionRow waiting, the `index`th of a waiting list: the change mark's skeleton in its lane when `change` is declared; a label bar and a value bar at the line's end, or, with a `description`, the label bar over a meta line's bar; then the act's square, the link's chevron square or the switch's box at the end. Busy only through the Group or List that holds it. Outside the package's exports. */
+/** A DefinitionRow waiting, the `index`th of a waiting list: the change mark's skeleton in its lane when `change` is declared; a label bar and a value bar at the line's end (the room an identifier's value takes when the list is `copyable`), or, with a `description`, the label bar over a meta line's bar; then the act's square, the link's chevron square or the switch's box at the end. Busy only through the Group or List that holds it. Outside the package's exports. */
 export function DefinitionWait(props: {
 	shape: DefinitionShape;
 	index: number;
@@ -69,8 +75,17 @@ export function DefinitionWait(props: {
 					>
 						<span className={cn(skeleton({ kind: "line" }), LABEL_BAR)} />
 						<span
-							className={cn(skeleton({ kind: "line" }), AT_END, VALUE_BAR)}
-						/>
+							className={
+								shape.code ? cn(text({ role: "code" }), CODE_LANE) : WORD_LANE
+							}
+						>
+							<span
+								className={cn(
+									skeleton({ kind: "line" }),
+									shape.code ? CODE_BAR : WORD_BAR,
+								)}
+							/>
+						</span>
 					</span>
 				) : (
 					<>

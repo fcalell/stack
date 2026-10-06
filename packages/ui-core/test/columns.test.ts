@@ -29,7 +29,8 @@ test("a region holding a page's sections stands them a sections gap apart", () =
 		splitMain({ state: "rest" }),
 	])
 		assert.match(cell, /\bgap-sections\b/);
-	assert.match(SPLIT_LIST, /\bpy-inside\b/);
+	assert.match(SPLIT_LIST_STACK, /\bpt-page\b/);
+	assert.doesNotMatch(SPLIT_LIST, /\bp[ty]-/);
 });
 
 test("the Split holds the list's sections rhythm as its own cell", () => {
