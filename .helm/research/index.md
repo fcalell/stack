@@ -19,4 +19,5 @@ Working evidence: dated, drains, or gets promoted into `.helm/knowledge/`. Nothi
   or a consumer's workflow or journey graph on it.
 - [render-smells.md](./render-smells.md): fixing a component that renders, measures or commits twice
   or waits on timing, or filing epic 005 (render once).
+- [screens-spike.md](./screens-spike.md): building the screens plugin (epic 007): answering `/rpc` from typed fixtures with MSW, a Storybook config from vite's slots, listing routes.
 - [stories-triage.md](./stories-triage.md): reading a failing `pnpm stories:test` (axe or a behaviour play test), changing the page-level rule list, or working stories 003-111 to 003-114.
