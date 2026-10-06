@@ -76,7 +76,7 @@ transition duration is 0 ms.
 ## Auditing with axe
 
 Every popup (a menu, a picker, a select, a sheet) mounts in a popup layer the `Shell` and the
-`AuthColumn` each draw inside their `main` landmark, so an open popup passes axe's `region` rule.
+`Gate` each draw inside their `main` landmark, so an open popup passes axe's `region` rule.
 A popup outside both (a bare component in a test page) mounts in `<body>`.
 
 Exclude `[data-base-ui-focus-guard]` from an audit, as in

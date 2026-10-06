@@ -7,6 +7,7 @@ const source = (path: string) =>
 
 test("the toasts stand above a docked foot by layout: the Shell holds no footing, height or frame state, and no foot reports its height", () => {
 	const shell = source("components/shell/index.tsx");
+	const host = source("components/shell/host.tsx");
 	assert.doesNotMatch(shell, /\[(footing|height|frame),/);
 	assert.doesNotMatch(shell, /FootDocks/);
 	for (const path of [
@@ -15,7 +16,7 @@ test("the toasts stand above a docked foot by layout: the Shell holds no footing
 		"components/thread/index.tsx",
 	])
 		assert.doesNotMatch(source(path), /useFootDocks|FootDocks/, path);
-	assert.match(shell, /anchor\(--docked-foot_top/);
+	assert.match(host, /anchor\(--docked-foot_top/);
 	for (const path of [
 		"components/place/index.tsx",
 		"components/thread/index.tsx",

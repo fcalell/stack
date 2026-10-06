@@ -27,8 +27,8 @@ export interface InputOtpProps extends Closed {
 // lies over the boxes, invisible, so a tap anywhere focuses it and the
 // system's code suggestion and a paste of the whole code fill it at once; the
 // boxes draw it. It takes focus as it mounts where `FieldFocus` asks, as an
-// `Input` does, so a code sheet is typed into at once, and in an
-// `AuthColumn` unless a typing control there holds it. `onComplete`
+// `Input` does, so a code sheet is typed into at once, and in a
+// `Gate` unless a typing control there holds it. `onComplete`
 // hears the code once its last digit lands; `loading` holds the boxes at rest
 // while the code is checked, the input inert (unwritable and marked
 // disabled, still read) and the row busy, the spinner and its line under it.

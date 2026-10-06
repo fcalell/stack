@@ -1,4 +1,3 @@
-import { Toast as ToastControl } from "@base-ui/react/toast";
 import { cn } from "@fcalell/ui-core/cn";
 import type { PlaceSpec, Switcher } from "@fcalell/ui-core/descriptors";
 import { placeAt } from "@fcalell/ui-core/route";
@@ -13,7 +12,6 @@ import {
 	SHELL_SIDEBAR,
 	SHELL_TAB_BAR,
 	SWITCHER_SLOT,
-	TOASTS,
 	text,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useState } from "react";
@@ -21,15 +19,12 @@ import type { Closed } from "../../lib/closed.ts";
 import { PlaceRoute, ShellSwitcher } from "../../lib/frame.ts";
 import { useTouch } from "../../lib/media.ts";
 import { follow, useRoute } from "../../lib/navigate.ts";
-import { PortalContainer, usePopupLayer } from "../../lib/portal.ts";
-import { toasts } from "../../lib/toast.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Count } from "../count/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { List } from "../list/index.tsx";
 import { FloatingActRoom, Place } from "../place/index.tsx";
-import { Confirmations } from "../sheet/confirm.tsx";
-import { ToastList } from "../toast/layer.tsx";
+import { FrameHost, FrameMain } from "./host.tsx";
 import { SwitcherPick } from "./switcher.tsx";
 
 // The shell fills the viewport; the page inside scrolls its own body.
@@ -43,20 +38,11 @@ const PLACES = "flex flex-col";
 // the density line, since the page draws them in its own tree.
 const COLUMN = "group/column relative flex flex-col min-w-0 grow";
 const BANNER_SLOT = "flex flex-col";
-// The page and the toasts standing over its foot: at the end on the
-// desktop, centred on touch, above the tab bar and, while a Place's act
-// floats or a foot docks, above the act or the foot. It is the main
-// landmark, so a page's headers inside it are no banners.
-const MAIN = "relative flex flex-col grow min-h-0";
+// The toasts stand at the end on the desktop and centred on touch, above the
+// tab bar and, while a Place's act floats or a foot docks, above the act or
+// the foot. The page is the main landmark, so a page's headers inside it are
+// no banners.
 const ACT_ROOM = "hidden shrink-0 group-has-data-act-floats/column:flex";
-// The toasts stand on their layer over an open sheet's portal, so nothing
-// between them and the root makes a stacking context (no `isolate`, `z-*` or
-// transform on the frame, the column or `main`; verify b-layers holds it).
-// Their foot is the top of a docked foot (a Place's `foot`, a filling
-// Thread's input), which names itself the `--docked-foot` anchor: the layer
-// stands above it by layout as it grows, and at `main`'s foot without one.
-const TOASTS_LAYER =
-	"absolute inset-0 bottom-[anchor(--docked-foot_top,0px)] z-(--layer-toasts) flex flex-col items-end justify-end pointer-events-none touch:items-center";
 // A place row rings inset, inside the sidebar's inset.
 const ROW_BOX = "flex items-center focus-visible:-outline-offset-2";
 const ROW_PRESS = "hover:bg-wash-hover active:bg-wash-press";
@@ -92,9 +78,6 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 	const at = useRoute();
 	// The More page stands at the route it opened on: going to a place closes it.
 	const [moreAt, setMoreAt] = useState<string>();
-	// Every popup (menu, picker, select, sheet) mounts in the popup layer, so an
-	// open popup stands inside the main landmark.
-	const [layer, setLayer] = usePopupLayer();
 	const more = moreAt === at;
 	const route = placeAt(places, at);
 	const rest = places.length > TAB_ROOM ? places.slice(TAB_ROOM - 1) : [];
@@ -147,37 +130,29 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 			onMore={() => setMoreAt(at)}
 		/>
 	) : null;
-	// The toast queue and the confirm() decisions stand in every Shell.
 	return (
-		<PortalContainer value={layer}>
-			<ToastControl.Provider toastManager={toasts}>
-				<div className={FRAME}>
-					{sidebar}
-					<div className={cn(SHELL_COLUMN, COLUMN)}>
-						{banner ? (
-							<div className={cn(SHELL_BANNER, BANNER_SLOT)}>{banner}</div>
-						) : null}
-						<main className={MAIN}>
-							<ShellSwitcher value={switcher}>
-								<PlaceRoute value={route}>{page}</PlaceRoute>
-							</ShellSwitcher>
-							<ToastControl.Viewport
-								aria-label={words.notifications}
-								className={cn(TOASTS, TOASTS_LAYER)}
-							>
-								<ToastList />
-								<div className={ACT_ROOM}>
-									<FloatingActRoom />
-								</div>
-							</ToastControl.Viewport>
-							<div ref={setLayer} />
-						</main>
-						{tabs}
-					</div>
+		<FrameHost>
+			<div className={FRAME}>
+				{sidebar}
+				<div className={cn(SHELL_COLUMN, COLUMN)}>
+					{banner ? (
+						<div className={cn(SHELL_BANNER, BANNER_SLOT)}>{banner}</div>
+					) : null}
+					<FrameMain
+						beside={
+							<div className={ACT_ROOM}>
+								<FloatingActRoom />
+							</div>
+						}
+					>
+						<ShellSwitcher value={switcher}>
+							<PlaceRoute value={route}>{page}</PlaceRoute>
+						</ShellSwitcher>
+					</FrameMain>
+					{tabs}
 				</div>
-				<Confirmations />
-			</ToastControl.Provider>
-		</PortalContainer>
+			</div>
+		</FrameHost>
 	);
 }
 

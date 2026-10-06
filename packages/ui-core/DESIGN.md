@@ -1702,12 +1702,6 @@ components:
   action-bar-all:
     rounded: "{rounded.control}"
     height: "{spacing.target}"
-  auth-page:
-    backgroundColor: "{colors.surface}"
-    padding: "{spacing.page}"
-  auth-page-dark:
-    backgroundColor: "{colors.surface-dark}"
-    padding: "{spacing.page}"
   chart-grid:
     height: "{spacing.chart}"
   chart-key-dot:
@@ -1824,6 +1818,15 @@ components:
     textColor: "{colors.ok}"
   form-field-summary-glyph-dark:
     textColor: "{colors.ok-dark}"
+  gate:
+    backgroundColor: "{colors.surface}"
+    padding: "{spacing.page}"
+  gate-dark:
+    backgroundColor: "{colors.surface-dark}"
+    padding: "{spacing.page}"
+  gate-mark:
+    height: "{spacing.avatar}"
+    width: "{spacing.avatar}"
   group:
     rounded: "{rounded.card}"
     backgroundColor: "{colors.surface}"
@@ -2422,7 +2425,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `Avatar` | atom | `AVATAR`, `AVATAR_LABEL` | rest |
 | `Link` | atom | `LINK`, `LINK_TARGET` | rest, hover, focus, active |
 | `Place` | layout | `PAGE_HEAD`, `PAGE_HEAD_ROOM`, `PAGE_TOP_BAR`, `PAGE_TITLE`, `TEXT.role.title`, `PILL_ACT`, `PICKER_VALUE`, `ICON.fit.meta`, `CHIP`, `CHIP_LABEL`, `PAGE_BODY`, `FOOT_DOCKED`, `PAGE_BODY_OVER_FOOT`, `FLOATING_ACT`, `FLOATING_ACT_LIFT`, `FLOATING_ACT_ROOM`, `FLOATING_ACT_FOOT`, `BUTTON.act.primary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.primary`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
-| `AuthColumn` | layout | `AUTH_PAGE`, `AUTH_COLUMN`, `AUTH_HEAD`, `TEXT.role.title`, `TEXT.role.meta`, `TEXT_STRONG.role.meta` | rest |
+| `Gate` | layout | `GATE`, `GATE_COLUMN`, `GATE_FLOW`, `GATE_LEAD`, `GATE_HEAD`, `GATE_MARK`, `TEXT.role.title`, `TEXT.role.meta`, `TEXT_STRONG.role.meta` | rest |
 | `Screen` | layout | `PAGE_HEAD`, `PAGE_TOP_BAR`, `PAGE_TITLE`, `TEXT.role.title`, `PAGE_BODY`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
 | `Split` | layout | `SPLIT_LIST`, `SPLIT_LIST_STACK`, `SPLIT_MAIN`, `SPLIT_BESIDE`, `SPLIT_PANE`, `ICON_BUTTON.fit.bar` | rest, empty |
 | `Section` | layout | `SECTION`, `SECTION_HEAD`, `SECTION_HEAD_ROW`, `SECTION_TITLE`, `SECTION_TOGGLE`, `TEXT.role.heading`, `TEXT.role.meta`, `ICON.fit.body`, `COUNT`, `COUNT_LABEL`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive`, `ICON_BUTTON.fit.bar`, `SKELETON.kind.count`, `SKELETON.kind.line`, `SKELETON.kind.field`, `SKELETON_ROW.kind.field`, `TEXT.role.caption`, `LINE_BOX.role.body` | rest, hover, focus, active, disabled, loading |
@@ -2491,7 +2494,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Avatar` | `caption` | `avatar-` | `full` | none | `avatar` | none |
 | `Link` | none | `accent-ink`, `ring` | none | none | `target` | none |
 | `Place` | `title`, `body`, `meta`, `caption` | `ink-body`, `ink-meta`, `edge`, `edge-raised`, `surface`, `raised`, `act-accent`, `on-act-accent`, `wash-hover`, `wash-press`, `danger`, `chip-` | `control`, `full` | `acts`, `page`, `sections`, `inside`, `control-x`, `rows`, `pair` | `strip`, `control`, `control-compact`, `popover`, `list`, `measure`, `target`, `icon-meta`, `chip`, `measure-short` | `float` |
-| `AuthColumn` | `title`, `meta` | `ink-body`, `ink-meta`, `surface` | none | `page`, `fields`, `pair` | `auth` | none |
+| `Gate` | `title`, `meta` | `ink-body`, `ink-meta`, `surface` | none | `page`, `sections`, `fields`, `pair` | `auth`, `avatar` | none |
 | `Screen` | `title` | `ink-body`, `ink-meta`, `edge` | `control` | `acts`, `page`, `sections`, `pair` | `strip`, `control`, `control-compact` | none |
 | `Split` | none | `edge`, `ink-meta`, `surface` | `control` | `inside`, `page`, `sections` | `list`, `pane`, `control-compact` | none |
 | `Section` | `heading`, `meta`, `body`, `caption` | `ink-body`, `ink-meta`, `edge`, `fill-neutral`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `danger` | `row`, `control`, `chip`, `full` | `pair`, `fields`, `inside`, `control-x` | `icon`, `chip`, `control-compact`, `skeleton`, `field`, `target` | none |

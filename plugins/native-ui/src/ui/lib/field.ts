@@ -61,11 +61,7 @@ export const InlineField = createContext<
 	{ label: string; focus?: boolean } | undefined
 >(undefined);
 
-// Set by an `AuthColumn` around its body: an `ActionBar` in it with no `fit`
-// reads `full`.
-export const InAuthColumn = createContext(false);
-
-// Set by an `AuthColumn` or a docked `Sheet` around its body: the typing
+// Set by a `Gate` or a docked `Sheet` around its body: the typing
 // control of the region that holds focus, if any. An `Input` or `InputOtp` that
 // mounts there takes focus unless one holds it, so the first field of a page
 // or of a step that replaces the body takes it, and a second field beside it,

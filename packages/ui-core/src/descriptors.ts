@@ -338,9 +338,17 @@ export interface StageEnd {
 	reason: string;
 }
 
-// One run of a meta line: plain words, or a part at strong weight (the
-// address a sentence names), the way a nested `Text strong` draws.
-export type Run = string | { strong: string };
+// A meta line as data: runs of plain words, a part at strong weight (the
+// address a sentence names) a `{ strong }` run, the way a nested `Text strong`
+// draws.
+export type Sentence = readonly (string | { strong: string })[];
+
+// The product's mark a `Gate` leads with: its `name`, which draws in the place
+// of the image at `src` while that fails or `src` is absent.
+export interface GateMark {
+	name: string;
+	src?: string;
+}
 
 // A place in the shell: a route, a label, an icon, an optional count.
 export interface PlaceSpec {

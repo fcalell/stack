@@ -7,7 +7,7 @@ composes components and never restyles them.
 
 ## Pick the component first
 
-Find the roster component that owns the shape: the frame (`Shell`, `Place`, `Screen`, `Split`, `AuthColumn`),
+Find the roster component that owns the shape: the frame (`Shell`, `Place`, `Screen`, `Split`, `Gate`),
 the rhythm (`Section`, `Group`, `List`), the row (`ListRow`, `DefinitionRow`, `FormField`), the
 control, the text role (`Text`). A `View` rebuilding one is drift. A `Split` is its page's frame
 region: it stands as the bleeding `Place`'s (or `Screen`'s) direct child, never inside a component
@@ -38,7 +38,7 @@ in React Native's `Text`.
 
 Every colour, size, radius and spacing is a contract token, never an arbitrary value (`h-[34px]`),
 a literal colour or raw pixels. Copy renders through `Text` (`body` or `meta`, with `strong`) or
-the molecule that owns its role (`title` is `Place`'s, `Screen`'s and `AuthColumn`'s, `heading` `Section`'s,
+the molecule that owns its role (`title` is `Place`'s, `Screen`'s and `Gate`'s, `heading` `Section`'s,
 `figure` `Stats`', `display` `Stat`'s); colour comes through a component's props.
 
 ## A picture is an `Image`
@@ -87,37 +87,38 @@ label in the sheet and on the trigger; `status` stays for a work state that move
 />
 ```
 
-## A page outside the shell is an `AuthColumn`
+## A page outside the shell is a `Gate`
 
-A page with no sidebar or tab bar beside it (sign-in, a consent step) is an `AuthColumn`, never a
-`Place`, a `Screen` or a hand-built centred `View`. It takes `product` (the product's name, the line that
-leads the column), `step` (`{ at, of }`, a `StepCount` between the product and the title),
-`title` (the page's one header), `sentence` (a meta line: a string, or `Run[]` from
-`@fcalell/ui-core/descriptors`, each run a string or `{ strong }` at weight 500, never a node),
-`banner` (a `Banner`, first in the column) and `children`, the step's body (a `Form`, a `Group`,
-an `OptionList`, a `List`). It stands one column at most the `auth` width, centred; on touch it spans the
-viewport inside the page inset. An `Input` or `InputOtp` that mounts in it takes focus unless a
-typing control of the column holds it, and a `Form`'s `ActionBar` in it draws `full`. It draws no
-word of its own, and `toast()` and `confirm()` stand only inside a `Shell`: say an outcome in a field
-or a banner.
+A page with no sidebar or tab bar beside it (sign-in, a consent step) is a `Gate`, never a
+`Place`, a `Screen` or a hand-built centred `View`. It takes `title` (the page's one header),
+`description` (a meta line as a `Sentence` from `@fcalell/ui-core/descriptors`: runs, each a string or
+`{ strong }` at weight 500, never a node or one string), `step` (`{ at, of }`, a `StepCount` between
+the mark and the title), `mark` (`{ name, src? }`, the product's image at the avatar's size, its
+`name` standing in its place while the image fails or `src` is absent), `banner` (a `Banner`, first in the column) and
+`children`, the step's body (a `Form`, a `Group`, an `OptionList`, a `List`, `Section`s). It is a root
+frame as the `Shell` is: one column at most the `auth` width inside the page inset, standing at the
+top, the banner, the lead and the body a sections gap apart, with `toast()` and `confirm()` standing
+in it. It keeps the safe area and scrolls over the keyboard. An `Input` or `InputOtp` that mounts in
+it takes focus unless a typing control of the column holds it, so the first field of a step takes
+it, and a `Form`'s `ActionBar` in it draws `full`. It draws no word of its own.
 
 ```tsx
-<AuthColumn
-  product="Acme"
+<Gate
+  mark={{ src: "https://example.com/mark.png", name: "Acme" }}
   step={{ at: 1, of: 2 }}
   title="Choose a workspace"
-  sentence={["Signed in as ", { strong: "ana@acme.dev" }]}
+  description={["Signed in as ", { strong: "ana@acme.dev" }]}
   banner={expired ? <Banner kind="warn" sentence="This request has expired." /> : undefined}
 >
   <Group><List items={workspaces} row={row} /></Group>
-</AuthColumn>
+</Gate>
 ```
 
 ## An onboarding step shows its count
 
 A flow of two to four steps shows where it stands as a `StepCount`: `at` (counted from one) and
 `of`. It draws a segment per step and "Step n of m", never a hand-built bar or a row of dots. It
-heads the step's screen, whether that is a `Place`, a sheet page or, as its `step`, an `AuthColumn`, which draws it between the product and the title.
+heads the step's screen, whether that is a `Place`, a sheet page or, as its `step`, a `Gate`, which draws it between the mark and the title.
 
 ```tsx
 <StepCount at={2} of={3} />

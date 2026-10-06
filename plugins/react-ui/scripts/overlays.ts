@@ -413,9 +413,9 @@ export const OVERLAYS: readonly string[] = [
 	"invisible",
 	"flex-1",
 	"self-start",
-	// AuthColumn
-	"min-h-dvh",
+	// Gate
 	"my-auto",
+	"touch:my-0",
 	// Stages
 	"w-icon-meta",
 	// Image

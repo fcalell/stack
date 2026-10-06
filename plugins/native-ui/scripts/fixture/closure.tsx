@@ -10,7 +10,7 @@ import { Button } from "@fcalell/plugin-native-ui/components/button";
 import { IconButton } from "@fcalell/plugin-native-ui/components/icon-button";
 import { Count } from "@fcalell/plugin-native-ui/components/count";
 import { Status } from "@fcalell/plugin-native-ui/components/status";
-import { AuthColumn } from "@fcalell/plugin-native-ui/components/auth-column";
+import { Gate } from "@fcalell/plugin-native-ui/components/gate";
 import { Input } from "@fcalell/plugin-native-ui/components/input";
 import { FileInput } from "@fcalell/plugin-native-ui/components/file-input";
 import { TextArea } from "@fcalell/plugin-native-ui/components/text-area";
@@ -1144,23 +1144,23 @@ export const closure = (
 		<StepCount at={1} of={3} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<StepCount at={1} of={3} placeholderTextColorClassName="text-ink-body" />
-		<AuthColumn product="a" title="a" />
-		<AuthColumn product="a" step={{ at: 1, of: 2 }} title="a" sentence={["a", { strong: "b" }]} banner={<Banner sentence="a" />}><Text>a</Text></AuthColumn>
-		{/* @ts-expect-error: a sentence is words or runs, never a node */}
-		<AuthColumn product="a" title="a" sentence={<Text>a</Text>} />
+		<Gate title="a" mark={{ name: "a" }} />
+		<Gate step={{ at: 1, of: 2 }} title="a" description={["a", { strong: "b" }]} banner={<Banner sentence="a" />}><Text>a</Text></Gate>
+		{/* @ts-expect-error: a description is runs, never a node */}
+		<Gate title="a" description={<Text>a</Text>} />
 		{/* @ts-expect-error: closed channel */}
-		<AuthColumn product="a" title="a" className="x" />
+		<Gate title="a" className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<AuthColumn product="a" title="a" style={{ flex: 1 }} />
+		<Gate title="a" style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<AuthColumn product="a" title="a" class="x" />
+		<Gate title="a" class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<AuthColumn product="a" title="a" classList={{}} />
+		<Gate title="a" classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<AuthColumn product="a" title="a" colorClassName="text-ink-body" />
+		<Gate title="a" colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<AuthColumn product="a" title="a" selectionColorClassName="text-ink-body" />
+		<Gate title="a" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<AuthColumn product="a" title="a" placeholderTextColorClassName="text-ink-body" />
+		<Gate title="a" placeholderTextColorClassName="text-ink-body" />
 	</>
 );

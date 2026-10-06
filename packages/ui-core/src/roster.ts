@@ -632,29 +632,41 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				elevation: ["float"],
 			},
 		},
-		// A page outside the shell (sign-in, a consent step): one centred column at
-		// the `auth` width, a `Banner` first, the product's name at meta and 500, an
-		// optional `StepCount`, the title (the page's one `h1`), the sentence (runs,
-		// the strong one at 500) a pair under it, then the step's body. On touch it
-		// spans the viewport inside the page inset. A typing field that opens in it
-		// takes focus, and a `Form`'s `ActionBar` in it draws `full`.
-		AuthColumn: {
-			props: ["product", "step", "title", "sentence", "banner", "children"],
+		// A page outside the shell (sign-in, a consent step), a root frame as the
+		// Shell is: one centred column at the `auth` width, a `Banner` first, then
+		// the lead (the product's mark, an optional `StepCount`, the title, the
+		// page's one `h1`, and the description, runs with the strong one at 500, a
+		// pair under it), then the step's body a sections gap under it. It hosts
+		// `toast()` and `confirm()`. On touch it spans the viewport inside the page
+		// inset and stands at the top. The first field of a step takes focus, and a
+		// `Form`'s `ActionBar` in it draws `full`.
+		Gate: {
+			props: ["title", "description", "step", "mark", "banner", "children"],
 			draws: [
-				"AUTH_PAGE",
-				"AUTH_COLUMN",
-				"AUTH_HEAD",
+				"GATE",
+				"GATE_COLUMN",
+				"GATE_FLOW",
+				"GATE_LEAD",
+				"GATE_HEAD",
+				"GATE_MARK",
 				"TEXT.role.title",
 				"TEXT.role.meta",
 				"TEXT_STRONG.role.meta",
 			],
-			holds: ["AUTH_PAGE", "AUTH_COLUMN", "AUTH_HEAD"],
+			holds: [
+				"GATE",
+				"GATE_COLUMN",
+				"GATE_FLOW",
+				"GATE_LEAD",
+				"GATE_HEAD",
+				"GATE_MARK",
+			],
 			states: ["rest"],
 			owns: {
 				roles: ["title", "meta"],
 				colors: ["ink-body", "ink-meta", "surface"],
-				spacing: ["page", "fields", "pair"],
-				sizes: ["auth"],
+				spacing: ["page", "sections", "fields", "pair"],
+				sizes: ["auth", "avatar"],
 			},
 		},
 		// A pushed page: the back act first, no act; on touch its toasts stand

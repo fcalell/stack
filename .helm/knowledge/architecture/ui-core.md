@@ -445,7 +445,7 @@ a tick with no animation, never jumped to full.
   stand in (`ToastRoom`): a Place's body over its act's room (above its `foot` and the tab bar by
   layout), a pushed Screen's body, or a filling Thread's log (above its input, and lifted with it
   over the keyboard), the Place leaving it to a Thread it holds, as its child or its Split's record;
-  the box places the Shell's toasts' layer by measuring itself against the Shell's root
+  the box places the Shell's toasts' layer by measuring itself against its frame's root (the Shell's or the Gate's `FrameHost`)
   (`ToastFrame`), the one measure left, since the layer stands outside the page's tree (below).
   Rejected: a registration the Shell reads in render from a host object, since a frame that mounts
   after the Shell's render (a route that waits first) leaves nothing that renders the Shell's tab
@@ -600,7 +600,7 @@ a tick with no animation, never jumped to full.
   `THREAD_COLUMN` in the foot that centres it. Focus: each page (a new `title`) takes the body's first
   tabbable on the web once the page has settled (a radio group sets its tab stop after the commit),
   so an act that relabels or leaves never drops focus to the document; on the phone the first
-  field of the page takes it (a first-mount claim, `FieldClaim`, which the AuthColumn provides too; its `full` bar fit stays the AuthColumn frame's alone), Escape on the web
+  field of the page takes it (a first-mount claim, `FieldClaim`, which the Gate provides too; its `full` bar fit stays the Gate frame's alone), Escape on the web
   calls `onClose`, and a docked foot, and a Thread's inline one, hands focus to its first typing control when the page that held
   it leaves (the web region reads who held focus in the render that swaps the foot; the phone's
   region holds a `FootReturn` claim the leaving Sheet sets and the `MessageInput` that mounts takes).
@@ -664,8 +664,8 @@ a tick with no animation, never jumped to full.
   `--layer-<layer>` and read on the web as `z-(--layer-<layer>)`, since Tailwind's `z-*` reads no
   theme namespace. A sheet's scrim and layer, each popover's positioner and the toasts' layer each
   draw theirs, so a toast raised while a sheet or a `confirm()` is open stands over the scrim and
-  its dismiss takes the press. On the web the Shell and the `AuthColumn` each draw a popup layer
-  (`usePopupLayer`, `lib/portal.ts`), an empty element last in `main`, and name it the
+  its dismiss takes the press. On the web the Shell and the `Gate` each draw a popup layer
+  (`FrameHost`, `components/shell/host.tsx`), an empty element last in `main`, and name it the
   `PortalContainer` around their whole tree, so every popup (a menu, a picker, a select, a sheet)
   mounts inside the main landmark, where an axe `region` check finds it; a popup under neither
   portals into `<body>` as Base UI does by default. The
@@ -678,9 +678,9 @@ a tick with no animation, never jumped to full.
   the sheets (a Base UI portal mounts in the order it opens, and the layer would lose `main`'s
   geometry). React Native's `zIndex` orders siblings only, so native reads the order by tree
   position: gorhom's `BottomSheetModalProvider` draws its sheets after its children, in its own
-  host. The native Shell holds a provider around its column, inside a host view, and draws the
+  host. The native `FrameHost` (the Shell's and the Gate's) holds a provider around its frame, inside a host view, and draws the
   toasts' layer after that view, so over every sheet; the layer stands over the box the page draws
-  for it (`ToastRoom`), measured against the Shell's root, so the toasts keep the page's geometry. A
+  for it (`ToastRoom`), measured against the frame's root, so the toasts keep the page's geometry. A
   sheet resolves the nearest provider, so every sheet opened under a Shell stands in the Shell's
   host and stacks against the others there; the entry's root provider hosts only the screens with no
   Shell, where no toast stands, so the two hosts never hold sheets that must stack together. The
@@ -1265,33 +1265,44 @@ a tick with no animation, never jumped to full.
   of m" (the slot word `stepOf`) at meta, which is also the component's accessible name. `done` and
   `current` fill `ink-meta`, `later` `fill-neutral`, never the accent, which the rubric leaves to
   checked controls and the active dot. It is an atom, not a prop on `Place`, `Form` or `Sheet`: an
-  onboarding step can be any of the three. The one frame that owns its place is `AuthColumn`, whose
-  `step` draws it between the product line and the title. It takes the count alone, not a `Step[]`: onboarding
+  onboarding step can be any of the three. The one frame that owns its place is `Gate`, whose
+  `step` draws it between the mark and the title. It takes the count alone, not a `Step[]`: onboarding
   steps carry no label or date.
-- `AuthColumn` is the layout frame of a page outside the shell (a sign-in, a consent step), beside
+- `Gate` is the layout frame of a page outside the shell (a sign-in, a consent step), beside
   `Shell`, `Place`, `Screen` and `Split` rather than a variant of `Place`, whose strip, acts, foot
-  and floating act all assume the sidebar or tab bar beside it; a host element at the `auth` width
-  would be a numeric dimension, which the rules refuse. Its props are `product`, `step`, `title`,
-  `sentence`, `banner` and `children`, the style channels closed. It draws, on the surface at the
-  page inset (`AUTH_PAGE`), one column `w-full max-w-auth` (`AUTH_COLUMN`, parts a `fields` gap apart,
-  centred across, and down by an auto margin while it fits, never `justify-center`, which clips the
-  top of a column taller than the viewport): the `banner` (a `Banner`, first at the column's width),
-  the `product` name as a line at meta and 500 (text, no mark asset exists), the `StepCount`, then
-  the head (`AUTH_HEAD`, a `pair` apart): the `title` at the `title` role, the page's one `h1`, its
-  body's `Section`s a level under, and the `sentence`, a `string | readonly Run[]` (`Run` in
-  `./descriptors`: a string, or `{ strong }` at 500, the way a nested `Text strong` draws), data
-  because composed regions are data. On touch it spans the viewport inside the page inset; on the
-  phone it keeps the safe area and its keyboard-aware scroll keeps the focused field and the submit
-  act in view. It draws no word of its own, and `toast()` and `confirm()` stand only inside a
-  `Shell`. Inside it a `Form`'s `ActionBar` with no `fit` draws `full` (an explicit `fit` wins), and
-  a typing control takes focus as it mounts, unless focus already stands in a typing control of the
-  same column: the first field of the page or of a step that replaces the body takes it, a second
-  field beside it or one revealed while another is typed in never does. Both platforms follow the
-  rule: the web reads `document.activeElement` against the column's root, native keeps the column's
-  held `TextInput` and its controls claim it as they mount and on focus. Programmatic focus opens no
-  keyboard on mobile Safari; on the phone it does, which suits a one-task page. A `Select` or
-  `Picker` that reveals a typed field hands focus to that field, since a pick holds no typing focus.
-  A logo, and a client's mark joined to the product, are later gaps.
+  and floating act all assume the sidebar or tab bar beside it, or of `Screen`, which carries a back
+  act and covers a tab bar; a host element at the `auth` width would be a numeric dimension, which the
+  rules refuse. Its props are `title`, `description`, `step`, `mark`, `banner` and `children`, the
+  style channels closed. It is a root frame as the `Shell` is: it mounts the `FrameHost` both share
+  (the `toast()` queue, the `confirm()` decisions, the popup layer; `components/shell/host.tsx` on
+  each platform), so `toast()` and `confirm()` stand in it, and on the web it sets `PageTitle`, a
+  `HeadingContext` of 2 and a `main` landmark. It draws, on the surface at the page inset (`GATE`),
+  one column `w-full max-w-auth` (`GATE_COLUMN`, a width and nothing else; the region centres it,
+  across, and down by an auto margin while it fits, never `justify-center`, which clips the top of a
+  column taller than the viewport, and at the top on touch), whose banner, lead and body stand a
+  `sections` gap apart (`GATE_FLOW`): the `banner` (a `Banner`, first at the column's width), then
+  the lead (`GATE_LEAD`, a `fields` gap apart): the `mark`, the `StepCount`, and the head
+  (`GATE_HEAD`, a `pair` apart), the `title` at the `title` role, the page's one `h1`, its body's
+  `Section`s a level under, and the `description`. The `description` is a `Sentence`
+  (`./descriptors`: runs, each a string or `{ strong }` at 500, the way a nested `Text strong`
+  draws), data because composed regions are data; a lone string is no `Sentence`. The `mark` is a
+  `GateMark` (`{ name, src? }`): the product's image at the avatar's size (`GATE_MARK`,
+  `size-avatar`), and its `name` at meta and 500 in its place while the image fails or `src` is
+  absent. It is not an `Image`, which opens a full view. On touch it spans the viewport inside the
+  page inset; on the phone it keeps the safe area and its keyboard-aware scroll keeps the focused
+  field and the submit act in view. It draws no word of its own. It sets `FormStands` to `auth`
+  (`FORM in.auth`, no cell of its own: the column is the form's, as a sheet's body is), so an
+  `ActionBar` in it with no `fit` draws `full` (an explicit `fit` wins). Focus: the first field of a
+  step takes it. On the web the frame runs `focusFirst` (`lib/focus.ts`) over its column's typing
+  controls once on mount and again whenever `title` changes, so a sign-in opens on its field and the
+  step that replaces the body hands focus to its own; a step with no field leaves focus where it is.
+  On the phone a first-mount claim (`FieldClaim`, a held `TextInput` the frame owns) goes to the
+  first `Input` or `InputOtp` that mounts and to no second field beside it or one revealed while
+  another is typed in. Programmatic focus opens no keyboard on mobile Safari; on the phone it does,
+  which suits a one-task page. A `Select` or `Picker` that reveals a typed field hands focus to that
+  field, since a pick holds no typing focus. The mark is a prop (its first consumer); a
+  `reactUi({ mark })` or `nativeUi({ mark })` config asset that the `Shell` draws too is the move
+  when a second frame draws it.
 - A count strip is `Stats` (`items: StatSpec[]`) and one display figure is `Stat`, the two members
   of one figure-with-its-label mechanism. The strip is one card (`STATS`) whose cells draw their own
   top and start hairline (`STATS_CELL`) so it splits wherever the cells wrap, which `divide-*`
@@ -1413,7 +1424,7 @@ a tick with no animation, never jumped to full.
   unmounts, so focus never drops to the page. The web's text takes a tab stop only while it
   scrolls sideways (a resize observer reads it), else it is focusable by script alone, so the fold
   still lands on it and a reader passes no region with nothing to scroll. The web's page-frame
-  scrollers (the Place's and Screen's body, the Split's list, main and pane, a sheet's body) follow
+  scrollers (the Place's and Screen's body, the Split's list, main and pane, a sheet's body, the Gate's page) follow
   the same rule through `lib/scrolls.ts`, on the vertical axis, with one more condition: a
   region takes the stop only while it scrolls and holds nothing a keyboard reaches (axe's
   `scrollable-region-focusable`; what a keyboard reaches is `isTabbable` of `lib/focus`, the rule a
@@ -1514,7 +1525,7 @@ a tick with no animation, never jumped to full.
   `fit` axis (`IconFit`, `ButtonFit`, `IconButtonFit`, `LinkFit`, `ActionBarFit`, `FieldFit`,
   `SheetFit`, `PickerFit`, `ColumnsFit`), defaulting to the matrix's default; the composing molecule
   sets it (a `Place` passes `bar` to its strip's acts, a field's trailing act `field`, a `Form`
-  under an auth column `full`, a `Split` its details sheet `pane`) and a call site may.
+  under a `Gate` `full`, a `Split` its details sheet `pane`) and a call site may.
   `ACTION_BAR`'s two fits carry no cell: `end` and `full` differ in structure (an overlay) and in
   the `Button` fit the bar passes (`body`, `field`), and the matrix exists so the closed type is
   read off an axis like every other fit. `Columns` takes `fit` the same way: `board` (the default)
@@ -1632,7 +1643,7 @@ does not name, a literal that duplicates a cell, an off-contract utility, or a d
   wrapper `aria-hidden`, so a failed toast raised while one has stood continuously since before the
   sheet opened is not announced. Once no failed toast stands the wrapper is gone, and the next is
   announced.
-- The native toasts' layer stands over a box measured against the Shell's root (`ToastRoom`,
+- The native toasts' layer stands over a box measured against the frame's root (`ToastRoom`,
   `ToastFrame`): the layer must stand after the sheets' host, outside the page's tree, so no layout
   places it, and it follows a growing input a layout late.
 - An `Image`'s full view takes no pinch-zoom or pan: it is contain-fit, as large as the page inset

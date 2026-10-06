@@ -5,7 +5,7 @@
 // tsconfig include).
 
 import { ActionBar } from "@fcalell/plugin-react-ui/components/action-bar";
-import { AuthColumn } from "@fcalell/plugin-react-ui/components/auth-column";
+import { Gate } from "@fcalell/plugin-react-ui/components/gate";
 import { Avatar } from "@fcalell/plugin-react-ui/components/avatar";
 import { Banner } from "@fcalell/plugin-react-ui/components/banner";
 import { BarChart } from "@fcalell/plugin-react-ui/components/bar-chart";
@@ -639,18 +639,18 @@ export const closure = (
 		<StepCount at={1} of={3} class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<StepCount at={1} of={3} classList={{}} />
-		<AuthColumn product="x" title="x" />
-		<AuthColumn product="x" step={{ at: 1, of: 2 }} title="x" sentence={["x", { strong: "y" }]} banner={<Banner sentence="x" />}>x</AuthColumn>
-		{/* @ts-expect-error: a sentence is words or runs, never a node */}
-		<AuthColumn product="x" title="x" sentence={<b />} />
+		<Gate title="x" mark={{ name: "x" }} />
+		<Gate step={{ at: 1, of: 2 }} title="x" description={["x", { strong: "y" }]} banner={<Banner sentence="x" />}>x</Gate>
+		{/* @ts-expect-error: a description is runs, never a node */}
+		<Gate title="x" description={<b />} />
 		{/* @ts-expect-error: closed channel */}
-		<AuthColumn product="x" title="x" className="x" />
+		<Gate title="x" className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<AuthColumn product="x" title="x" style={{ flex: 1 }} />
+		<Gate title="x" style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<AuthColumn product="x" title="x" class="x" />
+		<Gate title="x" class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<AuthColumn product="x" title="x" classList={{}} />
+		<Gate title="x" classList={{}} />
 		<Stats items={[{ label: "x", value: 1 }]} />
 		<Stats items={[{ label: "x", value: 1, href: "/x" }, { label: "x", value: 1, counts: [{ label: "x", value: 1, href: "/x" }] }]} />
 		{/* @ts-expect-error: a cell is a link or holds links, never both */}

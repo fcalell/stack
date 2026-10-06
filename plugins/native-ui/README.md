@@ -63,12 +63,13 @@ base's `view` form: a gorhom modal at the screen's height inside the safe area, 
 ground, body or foot, so a sheet's chrome never takes the picture's room. It stands under the toasts
 like every sheet, and it draws the picture contain-fit with no pinch-zoom.
 
-`AuthColumn` is the frame of a page outside the shell (a sign-in, a consent step): the banner, the
-product's name, an optional `StepCount`, the title, the sentence and the body in one column at the
+`Gate` is the frame of a page outside the shell (a sign-in, a consent step): the banner, the
+product's mark, an optional `StepCount`, the title, the description and the body in one column at the
 `auth` width inside the page inset, scrolling over the keyboard (`Scroll`) and keeping the safe
-area. It hands `AuthColumnFocus` (`./lib/field`) to its body: an `Input` or `InputOtp` that mounts in
+area. It mounts the same `FrameHost` as the `Shell` (the sheets' provider, the toasts, `confirm()`)
+and hands `FieldClaim` (`./lib/field`) to its body: an `Input` or `InputOtp` that mounts in
 it takes focus unless a typing control of the column holds it, and an `ActionBar` with no `fit` reads
-`full`.
+`full` (the `Gate` sets `FormStands` to `auth`).
 
 ## Verify
 

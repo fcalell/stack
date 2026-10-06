@@ -18,9 +18,10 @@ export const SubmitContext = createContext(false);
 // says so, drawn in its disabled form.
 export const ActInert = createContext(false);
 
-// Where a `Form` stands, which bounds its column: a sheet's body is the
-// form's column; anywhere else the form stands on a page's, at most a line of
-// running text wide.
+// Where a `Form` stands, which bounds its column: a sheet's body, or a
+// `Gate`'s column, is the form's column; anywhere else the form stands on a
+// page's, at most a line of running text wide. An `ActionBar` in a `Gate`
+// reads `auth` and stands across the column.
 export const FormStands = createContext<FormIn>("page");
 
 // A submit button's press runs the act itself, so the press ends the native

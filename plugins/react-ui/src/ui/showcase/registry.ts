@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import type { ShowcaseFrame } from "./cells.ts";
 import { drawActionBar } from "./frames/action-bar.tsx";
-import { drawAuthColumn } from "./frames/auth-column.tsx";
 import { drawAvatar } from "./frames/avatar.tsx";
 import { drawBanner } from "./frames/banner.tsx";
 import { drawBarChart } from "./frames/bar-chart.tsx";
@@ -19,6 +18,7 @@ import { drawFileInput } from "./frames/file-input.tsx";
 import { drawFileRow } from "./frames/file-row.tsx";
 import { drawForm } from "./frames/form.tsx";
 import { drawFormField } from "./frames/form-field.tsx";
+import { drawGate } from "./frames/gate.tsx";
 import { drawGroup } from "./frames/group.tsx";
 import { drawIcon } from "./frames/icon.tsx";
 import { drawIconButton } from "./frames/icon-button.tsx";
@@ -91,7 +91,7 @@ export const registry: Partial<
 	Avatar: drawAvatar,
 	Link: drawLink,
 	Place: drawPlace,
-	AuthColumn: drawAuthColumn,
+	Gate: drawGate,
 	Screen: drawScreen,
 	Split: drawSplit,
 	Section: drawSection,

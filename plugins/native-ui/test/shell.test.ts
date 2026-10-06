@@ -6,9 +6,13 @@ const source = (path: string) =>
 	readFileSync(new URL(`../src/ui/${path}`, import.meta.url), "utf8");
 
 test("the toasts stand over the box the page draws above its docked foot: the Shell holds no footing, height or frame state, and no foot reports its height", () => {
-	const shell = source("components/shell/index.tsx");
-	assert.doesNotMatch(shell, /\[(footing|height|frame),/);
-	assert.doesNotMatch(shell, /onLayout|FootDocks/);
+	for (const shell of [
+		source("components/shell/index.tsx"),
+		source("components/shell/host.tsx"),
+	]) {
+		assert.doesNotMatch(shell, /\[(footing|height|frame),/);
+		assert.doesNotMatch(shell, /onLayout|FootDocks/);
+	}
 	for (const path of [
 		"lib/frame.ts",
 		"components/place/index.tsx",

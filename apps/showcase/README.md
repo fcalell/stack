@@ -16,7 +16,7 @@ Four pages:
   content molecule in its place: the Shell around the place `?place=` names (`deploys`,
   `projects`, `usage`, `domains`, `logs`, `assistant`, `members`, `settings`, `home`;
   `welcome` is the first run, `sign-in` the email step and then the code step, and `connect` the first
-  of two Connect steps, each an `AuthColumn` outside the shell, `&query=error` standing a warn banner
+  of two Connect steps, each a `Gate` outside the shell, `&query=error` standing a warn banner
   over either), each place at its own route with the view, a Screen
   pushed over it by `&screen=` (`verify`, over `domains`), a deploy open by `&record=` (`d1` to `d5`,
   each with its changes, release notes and build log), the changed file its diff shows by

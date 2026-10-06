@@ -1,20 +1,20 @@
-import type { Run } from "@fcalell/ui-core/descriptors";
+import type { Sentence } from "@fcalell/ui-core/descriptors";
 import { use, useState } from "react";
 import { ActionBar } from "../../components/action-bar/index.tsx";
-import { AuthColumn } from "../../components/auth-column/index.tsx";
 import { Banner } from "../../components/banner/index.tsx";
 import { Form } from "../../components/form/index.tsx";
 import { FormField } from "../../components/form-field/index.tsx";
+import { Gate } from "../../components/gate/index.tsx";
 import { Group } from "../../components/group/index.tsx";
 import { Input } from "../../components/input/index.tsx";
 import { InputOtp } from "../../components/input-otp/index.tsx";
 import { List } from "../../components/list/index.tsx";
+import { MARK } from "../frames/gate.tsx";
 import { act, HereContext, settle } from "./here.ts";
 
-// Two pages outside the shell, each one `AuthColumn`: the sign-in's email
+// Two pages outside the shell, each one `Gate`: the sign-in's email
 // step and the code step its Continue swaps in, and the first of the two
 // Connect steps. `&query=error` stands a warn banner over either.
-const PRODUCT = "Acme";
 const ADDRESS = "ana@acme.dev";
 const SIGN_IN_EXPIRED =
 	"This sign-in request has expired. Start again from your client.";
@@ -33,14 +33,14 @@ export function SignIn() {
 	const [email, setEmail] = useState(ADDRESS);
 	const [code, setCode] = useState("");
 	const coded = at === "code";
-	const sentence: readonly Run[] = coded
+	const description: Sentence = coded
 		? ["We sent a code to ", { strong: email }]
 		: ["Your invitation went to ", { strong: ADDRESS }, "."];
 	return (
-		<AuthColumn
-			product={PRODUCT}
+		<Gate
+			mark={MARK}
 			title={coded ? "Check your email" : "Sign in"}
-			sentence={sentence}
+			description={description}
 			banner={<Notice sentence={SIGN_IN_EXPIRED} />}
 		>
 			{coded ? (
@@ -77,7 +77,7 @@ export function SignIn() {
 					/>
 				</Form>
 			)}
-		</AuthColumn>
+		</Gate>
 	);
 }
 
@@ -89,11 +89,11 @@ const WORKSPACES = [
 
 export function Connect() {
 	return (
-		<AuthColumn
-			product={PRODUCT}
+		<Gate
+			mark={MARK}
 			step={{ at: 1, of: 2 }}
 			title="Choose a workspace"
-			sentence={["Signed in as ", { strong: ADDRESS }]}
+			description={["Signed in as ", { strong: ADDRESS }]}
 			banner={<Notice sentence={CONNECT_EXPIRED} />}
 		>
 			<Group>
@@ -108,6 +108,6 @@ export function Connect() {
 					}}
 				/>
 			</Group>
-		</AuthColumn>
+		</Gate>
 	);
 }

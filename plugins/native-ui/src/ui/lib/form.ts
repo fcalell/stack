@@ -14,6 +14,7 @@ export const FormContext = createContext<
 export const ActInert = createContext(false);
 
 // Where a `Form` stands, which bounds its column: a sheet's body is the
-// form's column; anywhere else the form stands on a page's, at most a line of
+// form's column, so is a `Gate`'s (its `ActionBar` stands across it);
+// anywhere else the form stands on a page's, at most a line of
 // running text wide.
 export const FormStands = createContext<FormIn>("page");

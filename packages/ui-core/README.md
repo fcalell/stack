@@ -38,7 +38,7 @@ Seventeen subpaths:
 - `@fcalell/ui-core/descriptors`: `IconName`, `Act`, `IconAct`, `Part`, `StatusMark`, `ChipMark`,
   `Option`, `OptionGroup`, `PlaceSpec`, `Switcher`, `Hunk`, `FieldBinding`, `Confirmation`,
   `MenuItem`, `RowEntry`, `Lock`, `Answered`, `TableColumn`, `TableRowSlots`, `CellEdit`, `Stage`,
-  `StageEnd` and the other framework-free types a prop carries.
+  `StageEnd`, `Sentence`, `GateMark` and the other framework-free types a prop carries.
 - `@fcalell/ui-core/rules`: what the Rules editor and the Picker decide before they draw, free of
   any framework: `termSet`, `pairSet`, `termLabel`, `isTyped` and `marked` (with `PICKED_GLYPH`).
 - `@fcalell/ui-core/list-state`: what a collection decides before it draws, free of any framework:
@@ -435,7 +435,7 @@ The canon binds every component either UI plugin ships:
    `IconButton` in a body or a bar; a `Link` inline or standalone; an `ActionBar` at its
    container's end or across it (`full`, its acts at the field's height). The composing molecule
    sets it (a `Place` passes `bar` to its strip's acts, a field's trailing act `field`, a `Form`
-   under an auth column `full`), and a call site may.
+   under a `Gate` `full`), and a call site may.
 2. A composed region is data: an act is an `Act`, a row's marks a `StatusMark` and a `ChipMark`, a
    place is a `PlaceSpec`, what the shell switches between is a `Switcher` (a pick: options carrying
    their avatars, the current value, and `act`, the act that makes a new one), never a node; the
@@ -460,7 +460,7 @@ The canon binds every component either UI plugin ships:
    matrices do not cover is a matrix cell or a consumer primitive under `ui/`, in that order.
 5. Every word a component draws on its own comes from `words`; every sentence is a prop.
 6. `Text` draws `body` and `meta`, with `strong`; every other type role is drawn by the molecule
-   that owns its place (`title` by `Place`, `Screen` and `AuthColumn`, `heading` by `Section` and `Card`,
+   that owns its place (`title` by `Place`, `Screen` and `Gate`, `heading` by `Section` and `Card`,
    `caption` by `Chip` and `Kbd`, `code` by `Code`, `display` by `Stat`, `figure` by `Stats`).
    `TEXT` keeps all eight roles as the table those owners draw from.
 

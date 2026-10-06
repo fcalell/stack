@@ -49,7 +49,12 @@ import {
 	TYPE_ROLES,
 	WIDTHS,
 } from "@fcalell/ui-core/tokens";
-import { SHELL_COLUMN } from "@fcalell/ui-core/variants";
+import {
+	GATE,
+	GATE_COLUMN,
+	GATE_FLOW,
+	SHELL_COLUMN,
+} from "@fcalell/ui-core/variants";
 import { Node, Project, SyntaxKind } from "ts-morph";
 import { reactUi } from "../src/index.ts";
 import { OVERLAYS, SKELETON_WIDTHS } from "./overlays.ts";
@@ -766,22 +771,27 @@ check(
 	"b-layers",
 	"nothing under the toasts' layer makes a stacking context",
 	() => {
-		const source = readFileSync(
-			resolve(COMPONENT_DIR, "shell/index.tsx"),
-			"utf8",
-		);
-		const spelled = (name: string): string => {
+		const read = (path: string) =>
+			readFileSync(resolve(COMPONENT_DIR, path), "utf8");
+		const spelled = (path: string, name: string): string => {
 			const literal = new RegExp(`const ${name} =\\s*"([^"]*)"`).exec(
-				source,
+				read(path),
 			)?.[1];
-			assert(literal !== undefined, `the Shell spells no ${name}`);
+			assert(literal !== undefined, `${path} spells no ${name}`);
 			return literal;
 		};
+		// The Shell's and the Gate's chains, root to the shared `main`.
 		const ancestors = [
-			spelled("FRAME"),
+			spelled("shell/index.tsx", "FRAME"),
 			SHELL_COLUMN,
-			spelled("COLUMN"),
-			spelled("MAIN"),
+			spelled("shell/index.tsx", "COLUMN"),
+			spelled("gate/index.tsx", "FRAME"),
+			spelled("shell/host.tsx", "MAIN"),
+			GATE,
+			spelled("gate/index.tsx", "PAGE"),
+			GATE_COLUMN,
+			GATE_FLOW,
+			spelled("gate/index.tsx", "COLUMN"),
 		];
 		const hits = ancestors
 			.flatMap((literal) => classes(literal))
@@ -790,7 +800,7 @@ check(
 			hits.length === 0,
 			`a stacking context under the toasts' layer: ${hits.join(", ")}`,
 		);
-		return `${ancestors.length} class strings from the root to the toasts' layer, none a stacking context`;
+		return `${ancestors.length} class strings from each frame's root to the toasts' layer, none a stacking context`;
 	},
 );
 

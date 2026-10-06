@@ -1130,7 +1130,8 @@ export const SECTION = matrix({
 // A form's one column: its children fields apart, or sections apart when it
 // holds sections (each section's fields then at the fields rhythm). On a page
 // the column is at most a line of running text wide, so its fields, banners
-// and act end together; in a sheet the sheet is the column.
+// and act end together; in a sheet the sheet is the column, and in a `Gate`
+// the gate's.
 export const FORM = matrix({
 	base: "",
 	variants: {
@@ -1141,6 +1142,7 @@ export const FORM = matrix({
 		in: {
 			page: "max-w-measure",
 			sheet: "",
+			auth: "",
 		},
 	},
 	defaultVariants: { holds: "fields", in: "page" },

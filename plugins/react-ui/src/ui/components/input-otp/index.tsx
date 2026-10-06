@@ -1,9 +1,7 @@
 import { Input as Control } from "@base-ui/react/input";
 import { cn } from "@fcalell/ui-core/cn";
 import { OTP, OTP_DIGIT, otpBox, text } from "@fcalell/ui-core/variants";
-import { useRef } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { useColumnFocus } from "../../lib/field.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Spinner } from "../spinner/index.tsx";
 
@@ -34,7 +32,7 @@ export interface InputOtpProps extends Closed {
 	loading?: boolean;
 }
 
-/** A row of digit boxes over one input; the box the next digit lands in rings on focus. In an `AuthColumn` it takes focus as it mounts unless a typing control there holds it. */
+/** A row of digit boxes over one input; the box the next digit lands in rings on focus. */
 export function InputOtp({
 	length,
 	value,
@@ -44,11 +42,8 @@ export function InputOtp({
 }: InputOtpProps) {
 	const words = useWords();
 	const active = Math.min(value.length, length - 1);
-	const control = useRef<HTMLInputElement>(null);
-	useColumnFocus(control);
 	return (
 		<Control
-			ref={control}
 			value={value}
 			onValueChange={(raw) => {
 				const next = raw.replace(/\D/g, "").slice(0, length);

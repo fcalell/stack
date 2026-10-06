@@ -12,21 +12,13 @@ import {
 	SHELL_BANNER,
 	SHELL_COLUMN,
 	SHELL_TAB_BAR,
-	TOASTS,
 } from "@fcalell/ui-core/variants";
-import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
-import { type ReactNode, useMemo, useRef, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import {
-	PlaceRoute,
-	ShellSwitcher,
-	ShellTabs,
-	type ToastBox,
-	ToastFrame,
-} from "../../lib/frame";
+import { PlaceRoute, ShellSwitcher, ShellTabs } from "../../lib/frame";
 import { Ink } from "../../lib/ink";
 import { navigate, usePathname } from "../../lib/navigate";
 import { useWords } from "../../lib/words";
@@ -34,14 +26,10 @@ import { Count } from "../count";
 import { Icon } from "../icon";
 import { List } from "../list";
 import { Place } from "../place";
-import { Confirmations } from "../sheet/confirm";
-import { ToastList } from "../toast/layer";
+import { FrameHost } from "./host";
 
-const FILL = "flex-1";
 const FRAME = "flex-1 overflow-hidden";
 const CONTENT = "flex-1";
-// The page's measured box gives the layer's `top` and `height`.
-const TOAST_LAYER = "absolute inset-x-0 items-center justify-end";
 
 const TABS = "flex-row";
 const TAB = "flex-col-reverse items-center justify-center min-w-0 flex-1";
@@ -73,18 +61,10 @@ export interface ShellProps extends Closed {
 // trigger starts each Place's top bar and the tab bar stands under each
 // Place's body, the current place's route handed down for a Place's back act;
 // a pushed Screen draws neither, so it covers the tab bar, and clears the home
-// indicator itself.
-// The column holds its own sheets' provider, the nearest one every sheet
-// inside resolves, which draws the sheets after the column; the toasts' layer
-// stands after the provider's host view, so over every sheet, since React
-// Native's `zIndex` orders siblings only. The host view is never flattened: a
-// sheet's layer is `accessibilityViewIsModal`, which hides its siblings from
-// VoiceOver, and the toasts' layer is not among them.
+// indicator itself. The sheets' provider, the toasts and the `confirm()` host
+// are `FrameHost`'s.
 export function Shell({ places, banner, switcher, children }: ShellProps) {
 	const insets = useSafeAreaInsets();
-	const root = useRef<View>(null);
-	const [box, place] = useState<ToastBox>();
-	const [toastFrame] = useState<ToastFrame>(() => ({ root, place }));
 	const pathname = usePathname();
 	// The More page stands at the route it opened on: going to a place closes it.
 	const [moreAt, setMoreAt] = useState<string>();
@@ -106,39 +86,23 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 		[places, route, pathname, more],
 	);
 	return (
-		<View ref={root} className={FILL}>
-			<View collapsable={false} className={FILL}>
-				<BottomSheetModalProvider>
-					<View
-						style={{ paddingTop: insets.top }}
-						className={cn(SHELL_COLUMN, FRAME)}
-					>
-						{banner ? <View className={SHELL_BANNER}>{banner}</View> : null}
-						<View className={CONTENT}>
-							<ShellSwitcher.Provider value={switcher}>
-								<ShellTabs.Provider value={tabs}>
-									<PlaceRoute.Provider value={route}>
-										<ToastFrame.Provider value={toastFrame}>
-											{more ? <MorePage places={rest} /> : children}
-										</ToastFrame.Provider>
-									</PlaceRoute.Provider>
-								</ShellTabs.Provider>
-							</ShellSwitcher.Provider>
-						</View>
-						<Confirmations />
-					</View>
-				</BottomSheetModalProvider>
-			</View>
-			{box ? (
-				<View
-					pointerEvents="box-none"
-					style={box}
-					className={cn(TOASTS, TOAST_LAYER)}
-				>
-					<ToastList />
+		<FrameHost>
+			<View
+				style={{ paddingTop: insets.top }}
+				className={cn(SHELL_COLUMN, FRAME)}
+			>
+				{banner ? <View className={SHELL_BANNER}>{banner}</View> : null}
+				<View className={CONTENT}>
+					<ShellSwitcher.Provider value={switcher}>
+						<ShellTabs.Provider value={tabs}>
+							<PlaceRoute.Provider value={route}>
+								{more ? <MorePage places={rest} /> : children}
+							</PlaceRoute.Provider>
+						</ShellTabs.Provider>
+					</ShellSwitcher.Provider>
 				</View>
-			) : null}
-		</View>
+			</View>
+		</FrameHost>
 	);
 }
 

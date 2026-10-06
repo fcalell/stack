@@ -75,7 +75,7 @@ const KEYBOARD: Record<InputKind, KeyboardTypeOptions> = {
 // command, a path, a host), mono and never corrected or capitalized; `email`
 // opens the email keyboard, offers the address the system knows and is never
 // corrected or capitalized; `act` is an icon act inside the field's end.
-// In an `AuthColumn` it takes focus as it mounts unless a typing control there
+// In a `Gate` it takes focus as it mounts unless a typing control there
 // holds it.
 // `onCommit` hears the value once the viewer is done with it: on leaving the
 // field or on the keyboard's return, only when it changed since the field took
