@@ -123,13 +123,16 @@ graph, compiles it with the Tailwind CLI in `scripts/fixture/`, and holds the co
 
 ## The showcase
 
-`Showcase` (`@fcalell/plugin-react-ui/showcase`) is a page generated from data: for every roster
-component, one frame per matrix cell it draws (the families its roster entry's `draws` names,
-enumerated by `matrixCells`) and state its roster entry's `states` lists, light and dark side by
-side, each frame scoped by its mode's class, at one density. The URL decides
-the view (`?mode=dark&density=desktop`) and the page's toggles rewrite it, storing nothing. Every
-frame carries `data-cell="<component>/<cell>/<state>/<mode>/<density>"`; `showcaseCells()` lists
-every id over both densities, so a density's page draws half of them.
+`Showcase` (`@fcalell/plugin-react-ui/showcase`) is a page generated from data: for the roster
+component `?component=<Name>` names, one frame per matrix cell it draws (the families its roster
+entry's `draws` names, enumerated by `matrixCells`) and state its roster entry's `states` lists,
+light and dark side by side, each frame scoped by its mode's class, at one density. Without a
+component the page links every one. A page holds one component because a frame's cost grows with
+the document around it: the whole roster in one document never finishes drawing. The URL decides
+the view (`?mode=dark&density=desktop`) and the page's toggles set those two parameters, keeping
+the rest and storing nothing. Every frame carries
+`data-cell="<component>/<cell>/<state>/<mode>/<density>"`; `showcaseCells()` lists every id over
+both densities, so a density's page draws half of a component's.
 
 A component's frames are drawn by one function in `src/ui/showcase/frames/<dir>.tsx`, registered
 under its roster name in `registry.ts`: it takes the frame and returns the real component in that

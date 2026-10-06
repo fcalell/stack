@@ -10,9 +10,9 @@ const HIT =
 const RING =
 	"group-focus-visible/toggle:outline-2 group-focus-visible/toggle:outline-offset-2 group-focus-visible/toggle:outline-ring";
 const OFF =
-	"inline-flex shrink-0 items-center justify-start group-not-aria-disabled/toggle:group-hover/toggle:bg-switch-off-hover group-not-aria-disabled/toggle:group-active/toggle:bg-switch-off-hover group-aria-disabled/toggle:bg-fill-disabled";
+	"inline-flex shrink-0 items-center justify-start group-not-data-disabled/toggle:group-hover/toggle:bg-switch-off-hover group-not-data-disabled/toggle:group-active/toggle:bg-switch-off-hover group-data-disabled/toggle:bg-fill-disabled";
 const ON =
-	"inline-flex shrink-0 items-center justify-start group-not-aria-disabled/toggle:group-hover/toggle:bg-toggle-on-hover group-not-aria-disabled/toggle:group-active/toggle:bg-toggle-on-hover group-aria-disabled/toggle:bg-fill-disabled";
+	"inline-flex shrink-0 items-center justify-start group-not-data-disabled/toggle:group-hover/toggle:bg-toggle-on-hover group-not-data-disabled/toggle:group-active/toggle:bg-toggle-on-hover group-data-disabled/toggle:bg-fill-disabled";
 const THUMB =
 	"transition-transform duration-fast ease-in-out data-disabled:bg-ink-disabled";
 
@@ -30,9 +30,13 @@ export interface SwitchProps extends Closed {
 export function Switch({ checked, onChange, label }: SwitchProps) {
 	const state = checked ? "on" : "off";
 	// A field around it disables it through Base UI's field context, which
-	// sets `aria-disabled` on the hit box and `data-disabled` on the thumb.
+	// sets `disabled` and `data-disabled` on the hit box and the thumb.
+	// The hit box is a native button: on a span, Base UI reads the hidden
+	// input's `labels` after every render, a walk of the whole document.
 	return (
 		<Base.Root
+			nativeButton
+			render={<button type="button" />}
 			checked={checked}
 			onCheckedChange={(next) => onChange(next)}
 			aria-label={label}

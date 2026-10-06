@@ -1649,6 +1649,13 @@ does not name, a literal that duplicates a cell, an off-contract utility, or a d
   1.12's `ScopedTheme` keeps the parent's scoped variables and cannot clear one. No screen does this
   today.
 - A native Button's `count` is not read aloud: the pressable's accessible name is its `label` alone.
+- Base UI's Checkbox, Switch, Radio and OTP field look for a `<label>` after every render (a
+  layout effect with no dependencies reading the hidden input's `labels`, which walks the whole
+  document) unless the control is named by `aria-labelledby`, a `Field` label, or renders a native
+  button. The cost grows with the document, so a long list of ticks renders in quadratic time:
+  react-ui's Checkbox and Switch render a native `<button>` (`nativeButton`), as
+  SegmentedControl's radios do, and a disabled one carries `disabled` and `data-disabled`, never
+  `aria-disabled`, so their disabled looks key on `data-disabled`.
 - A failed toast's announcement is Base UI's visually hidden `role="alert"` wrapper beside the
   toasts' viewport, which exists only while a failed toast stands and the viewport is unfocused, and
   carries no `aria-live`. When a sheet opens while a failed toast stands, the modal marks that
@@ -1659,7 +1666,8 @@ does not name, a literal that duplicates a cell, an off-contract utility, or a d
   `ToastFrame`): the layer must stand after the sheets' host, outside the page's tree, so no layout
   places it, and it follows a growing input a layout late.
 - An `Image`'s full view takes no pinch-zoom or pan: it is contain-fit, as large as the page inset
-  leaves room for.- A product cannot draw in the platform font: `fonts.sans` unset is IBM Plex Sans,
+  leaves room for.
+- A product cannot draw in the platform font: `fonts.sans` unset is IBM Plex Sans,
   and the platform stack only stands behind the named family and its metric fallback face.
 - Comparison's `hyphens-auto` is unverified: the Nix Playwright browsers ship no hyphenation
   dictionaries, so a value wider than its column breaks mid-letter there.

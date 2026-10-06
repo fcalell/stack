@@ -51,9 +51,11 @@ function search(view: View): string {
 	return `?${new URLSearchParams({ mode: view.mode, density: view.density })}`;
 }
 
+// The page's own parameters (a layout's place, a roster's component) stay.
 function writeView(view: View): void {
 	const url = new URL(window.location.href);
-	url.search = search(view);
+	url.searchParams.set("mode", view.mode);
+	url.searchParams.set("density", view.density);
 	window.history.replaceState(window.history.state, "", url);
 }
 

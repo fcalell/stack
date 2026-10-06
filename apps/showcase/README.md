@@ -9,7 +9,9 @@ pnpm --filter showcase build   # stack build
 
 Four pages:
 
-- `/`: the roster frames, every component in every cell and state, light and dark side by side.
+- `/`: the roster frames, one component a page: `?component=<Name>` (`ListRow`, `Table`, …) draws
+  that component in every cell and state, light and dark side by side, and without it the page
+  links every component.
 - `/foundations`: the token page, every role of the contract on the emitted `app.css`, light and
   dark side by side.
 - `/layout`: one app composed with the built components, every atom, layout, shared and

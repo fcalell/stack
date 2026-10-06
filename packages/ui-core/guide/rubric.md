@@ -50,6 +50,10 @@ disabled part is exempt from the text and boundary floors; an inline link inside
 exempt from the target floor (a standalone link takes a `target` hit box); a checked box on a
 dark selected row keeps its accent fill at 2.1–2.5:1 (rest and hover), the check glyph at 5.3:1 carrying the state.
 
+### Accessibility
+
+The bar is WCAG 2.2 AA by construction, at two levels, each a floor. Semantics: an accessible name, role and state on every control, and the contrast, target, keyboard-reach, visible-focus and reduced-motion floors above. Widget behaviour: an overlay takes focus when it opens and returns it to its trigger when it closes, Escape closes it, and the page behind a modal is hidden from assistive tech; a composite (menu, list box, grid, radio group, tree) moves by arrow keys and typeahead; a toast or a changed status is announced. A role promises its behaviour, so a role without that behaviour fails. A verified screen-reader matrix and a conformance report are out of scope until a product needs them.
+
 ## Bans (any one fails)
 
 Eyebrow labels (the 9–10 px uppercase group label inside a palette or menu is the one allowed

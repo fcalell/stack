@@ -13,6 +13,12 @@ needed. Consumers don't install or import `drizzle-orm`, `hono`, `zod`, `vite`, 
 value can be generated, inferred, defaulted, or auto-wired, a plugin must do it behind the scenes. A
 new consumer-facing option is the last resort, not the first.
 
+Accessibility is part of that: the roster's components carry the bar the
+[rubric](../../../packages/ui-core/guide/rubric.md#accessibility) sets, semantics and widget
+behaviour, so a screen composed from them meets it with no consumer code. One correct component
+covers every product and one broken component breaks every product, so a choice that moves this
+behaviour (a primitive library dropped, a widget hand-built) is judged against the bar first.
+
 ## Everything is opt-in and composable
 
 A project can use just the UI, just the database, or the full stack. Plugins declare typed slot

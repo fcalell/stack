@@ -8,30 +8,57 @@ export { showcaseCells } from "./cells.ts";
 export { registry } from "./registry.ts";
 
 const FRAMES = showcaseFrames();
+const LINK = cn(text({ role: "body" }), "text-accent-ink");
 
-// Every roster component's frames: each cell in every state it has, light
-// and dark side by side, each frame scoped to its own mode, at the URL's
-// density. A frame draws its registered component, or its component's name
-// and the cell's strings.
+// One roster component's frames, the one `?component=` names: each cell in
+// every state it has, light and dark side by side, each frame scoped to its
+// own mode, at the URL's density. A frame draws its registered component, or
+// its component's name and the cell's strings. Without a component the page
+// links every one. A page holds one component because a frame's cost grows
+// with the document around it (a forced focus lays out the whole page), so
+// the whole roster in one document never finishes drawing.
 export function Showcase() {
 	const [view, change] = useView();
 	const frames = FRAMES.filter((frame) => frame.density === view.density);
 	const components = [...new Set(frames.map((frame) => frame.component))];
+	const asked = new URLSearchParams(location.search).get("component");
+	const shown = components.find((component) => component === asked);
+	const to = (component?: string) =>
+		`/?${new URLSearchParams({
+			...(component ? { component } : {}),
+			mode: view.mode,
+			density: view.density,
+		})}`;
+	const drawn = frames.filter((frame) => frame.component === shown);
 
 	return (
 		<main className="flex flex-col gap-sections p-page min-h-screen">
 			<header className="flex flex-row flex-wrap items-center gap-inside">
 				<h1 className={text({ role: "title" })}>Showcase</h1>
 				<ViewBar view={view} onChange={change} />
-				<p className={text({ role: "meta" })}>{frames.length} frames</p>
+				{shown ? (
+					<a href={to()} className={LINK}>
+						Every component
+					</a>
+				) : null}
+				<p className={text({ role: "meta" })}>
+					{shown ? drawn.length : frames.length} frames
+				</p>
 			</header>
-			{components.map((component) => (
-				<Component
-					key={component}
-					name={component}
-					frames={frames.filter((frame) => frame.component === component)}
-				/>
-			))}
+			{shown ? (
+				<Component name={shown} frames={drawn} />
+			) : (
+				<nav
+					aria-label="Components"
+					className="flex flex-row flex-wrap gap-inside"
+				>
+					{components.map((component) => (
+						<a key={component} href={to(component)} className={LINK}>
+							{component}
+						</a>
+					))}
+				</nav>
+			)}
 		</main>
 	);
 }
