@@ -1,6 +1,6 @@
 ---
 id: 006-01
-status: backlog
+status: done
 sessions: {}
 ---
 # ui-core: the canvas's contract and its graph logic
