@@ -219,7 +219,7 @@ row's act pends, its work's steps are `steps` (a `StatusMark` each, the running 
 one line each in the meta line's place, so give `meta` back once the act settles. A title read
 whole (a note, a memory) is `wrap`: it wraps to every line at 400 with its leading, trailing and
 acts on the first line, and a `List`'s `row` map takes it as one boolean for every row. A
-`{ quoted }` title marks a model-written name; `wrap` is for text a person approved.
+`{ quoted }` title marks a model-written name and wraps whole in a row with a second line; `wrap` is for text a person approved.
 
 Rows that branch (a journey's choice points and their legs) are a tree: the `List`'s `row` map gives
 `children`, each item's children, and the List draws a rail per level, a fold act on every parent

@@ -1057,7 +1057,7 @@ a tick with no animation, never jumped to full.
   of medium weight), the change mark, leading, trailing value or pick and acts standing in a box one
   body line tall on its first line (`line-body`, `h-line-body` on both platforms: the box is pinned
   to one body line, so a 44 act overflows it centred on the line instead of growing it). A `Quoted`
-  title still wraps to two lines and adds quotes (a model-written name), `Prose` has no per-item
+  title wraps whole in a row that has a second line (its closing quote is never cut away) and adds quotes (a model-written name), `Prose` has no per-item
   meta or more, `Message` is a turn; a row whose title wraps is none of them. `rowShape.wrap` is the
   list's flag, so the waiting row draws the one-line form (one body line in the title's place, its
   leading, trailing and acts on it), the row a note loads into when it fits a line, and the list
@@ -1318,7 +1318,9 @@ a tick with no animation, never jumped to full.
   name down to its floor, then the chip's label truncates; the counts never yield. The floor is
   the whole name when it is short (at most twice the three-character lead, the extension and
   one character), else its cut form: the first three characters, an ellipsis, then its end (`pathCut` in
-  `list-state`, one source for both platforms). The
+  `list-state`, one source for both platforms). The path splits after its last slash, the slash
+  staying with the directory, so a directory that yields takes its separator and the name never
+  begins with a slash. The
   chip is why the row is listed, so it stays present, and a cut path gives up its directory
   first, keeping its file name, and its record opens in full a press away. The path fits by layout,
   never by measure, so it draws cut in its first frame and never re-cuts when the mono face

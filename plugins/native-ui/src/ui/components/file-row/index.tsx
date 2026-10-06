@@ -80,11 +80,12 @@ function glyph(seen: boolean | undefined): IconName {
 	return seen ? "CircleCheck" : "Circle";
 }
 
-// The path split before its last slash: the directory, and the name with its
-// slash first.
+// The path split after its last slash: the directory with its slash last, and
+// the name. The slash goes with the directory, so a directory that has given
+// way takes its separator with it and the name draws none.
 function split(path: string): [string, string] {
-	const slash = path.lastIndexOf("/");
-	return slash < 0 ? ["", path] : [path.slice(0, slash), path.slice(slash)];
+	const slash = path.lastIndexOf("/") + 1;
+	return [path.slice(0, slash), path.slice(slash)];
 }
 
 // The path fits by layout: the name takes its width up to the whole box and

@@ -41,7 +41,8 @@ export interface IconAct {
 }
 
 // A model-written name: typographic quotes around it, drawn in the slot's own
-// role; cut at 40 characters in a `meta` part, wrapped to two lines in a title.
+// role; cut at 40 characters in a `meta` part, wrapped whole in a title (in a
+// row with a second line).
 export interface Quoted {
 	quoted: string;
 }

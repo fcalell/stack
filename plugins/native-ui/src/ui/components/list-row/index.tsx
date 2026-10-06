@@ -352,6 +352,9 @@ export function ListRow<V extends string | null = string>({
 	);
 	const stacked = lined ? "two" : "one";
 	const lines = wrap ? "whole" : stacked;
+	// A model-written name (`Quoted`) wraps in a row that has a second line, so
+	// its closing quote is never cut away; its row grows by the lines it wraps.
+	const quotedWraps = lined && typeof title !== "string";
 	// A wrapped title and an entry's input are lines under the title's first, so
 	// the parts beside them stand on that first line.
 	const top = wrap || entry !== undefined;
@@ -375,7 +378,7 @@ export function ListRow<V extends string | null = string>({
 		) : null;
 	const titled = (
 		<RNText
-			numberOfLines={wrap ? undefined : 1}
+			numberOfLines={wrap || quotedWraps ? undefined : 1}
 			className={cn(rowTitle({ form: rowTitleForm(wrap, dim) }), TITLE)}
 		>
 			{named}

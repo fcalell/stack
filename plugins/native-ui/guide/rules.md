@@ -207,7 +207,7 @@ its work's steps are `steps` (a `StatusMark` each, the running one in `running`)
 in the meta line's place, so give `meta` back once the act settles. A title read whole (a note,
 a memory) is `wrap`: it wraps to every line at 400 with its leading, trailing and acts on the
 first line, and a `List`'s `row` map takes it as one boolean for every row. A `{ quoted }` title
-marks a model-written name; `wrap` is for text a person approved. A row's trailing age is the ISO
+marks a model-written name and wraps whole in a row with a second line; `wrap` is for text a person approved. A row's trailing age is the ISO
 moment itself, `trailing: { age: item.madeAt }`: the row words it short ("2 min") and keeps it
 current, so pass the moment, never a worded string.
 

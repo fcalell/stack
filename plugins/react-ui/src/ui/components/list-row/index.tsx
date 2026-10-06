@@ -347,6 +347,9 @@ export function ListRow<V extends string | null = string>({
 	);
 	const stacked = lined ? "two" : "one";
 	const lines = wrap ? "whole" : stacked;
+	// A model-written name (`Quoted`) wraps in a row that has a second line, so
+	// its closing quote is never cut away; its row grows by the lines it wraps.
+	const quotedWraps = lined && typeof title !== "string";
 	// A wrapped title and an entry's input are lines under the title's first, so
 	// the parts beside them stand on that first line.
 	const top = wrap || entry !== undefined;
@@ -374,13 +377,13 @@ export function ListRow<V extends string | null = string>({
 		) : null;
 	// A value beside a one-line title is whole or gone: the title holds half its
 	// line before the value takes a place on it.
-	const titles = value !== null && !top;
+	const titles = value !== null && !top && !quotedWraps;
 	const titled = (
 		<span
 			id={tree ? titleId : undefined}
 			className={cn(
 				rowTitle({ form: rowTitleForm(wrap, dim) }),
-				wrap ? TITLE_WHOLE : TITLE,
+				wrap || quotedWraps ? TITLE_WHOLE : TITLE,
 				titles && TITLE_BEFORE_VALUE,
 			)}
 		>

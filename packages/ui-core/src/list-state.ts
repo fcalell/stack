@@ -945,21 +945,21 @@ const NAME_LEAD = 3;
 // stem keeps its first NAME_LEAD characters, so a short name never loses its
 // start. `floor` is the least characters the path shows of the name: the whole
 // name when it is short, else its cut form (the lead, an ellipsis, the tail).
-// A leading slash (the name as split from its directory) is no character of
-// it. Both platforms read it, so one name cuts the same way.
+// The name is the path after its last slash; the slash stays with the
+// directory, so a path whose directory has given way draws none. Both
+// platforms read it, so one name cuts the same way.
 export function pathCut(name: string): {
 	stem: string;
 	tail: string;
 	floor: number;
 } {
-	const lead = name.startsWith("/") ? 1 : 0;
-	const bare = name.length - lead;
 	const dot = name.lastIndexOf(".");
-	const kept = dot > lead ? name.length - dot + NAME_LEAD : NAME_LEAD * 2;
-	const cut = name.length - Math.max(0, Math.min(kept, bare - NAME_LEAD));
+	const kept = dot > 0 ? name.length - dot + NAME_LEAD : NAME_LEAD * 2;
+	const cut =
+		name.length - Math.max(0, Math.min(kept, name.length - NAME_LEAD));
 	return {
 		stem: name.slice(0, cut),
 		tail: name.slice(cut),
-		floor: lead + Math.min(bare, NAME_LEAD + 1 + kept),
+		floor: Math.min(name.length, NAME_LEAD + 1 + kept),
 	};
 }

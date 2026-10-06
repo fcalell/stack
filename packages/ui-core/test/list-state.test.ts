@@ -839,10 +839,10 @@ test("a file name keeps its start and its end, and its floor is the cut form", (
 		tail: "me.json",
 		floor: 10,
 	});
-	assert.deepEqual(pathCut("/flags.md"), {
-		stem: "/fla",
+	assert.deepEqual(pathCut("flags.md"), {
+		stem: "fla",
 		tail: "gs.md",
-		floor: 9,
+		floor: 8,
 	});
 	assert.deepEqual(pathCut("payment-terms.md"), {
 		stem: "payment-te",
