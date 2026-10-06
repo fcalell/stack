@@ -368,12 +368,14 @@ an `act`, never both, since each holds the screen's filled act. A `Thread` in a 
 `foot` stands among its sections, inline, its `foot` left empty.
 
 A `Sheet` passed as a `Thread`'s or a `Place`'s `foot` docks there, derived from where it stands:
-no prop, no scrim. The head keeps the back act, the title over the `description` and the close act;
+no prop, no scrim. The head keeps the back act before one column, the title (a label, so a Section
+inside leads it) and the close act over the `description`, so both lines share a start;
 the body scrolls between the head and the foot, which hold their height (the `foot` line over the `submit`),
-and the docked foot is at most half its frame, so the conversation keeps the rest. Pass
+and the docked foot fits what it holds up to three fifths of its frame, so the conversation keeps
+two fifths and a body taller than that scrolls. Pass
 the same `<Sheet>` as the modal from a page and as the `foot` of a conversation; closing it (render
-the `MessageInput` in its place) returns focus to the input, and each page (a new `title`) takes
-focus in its first field. A `Sheet` among a `Thread`'s sections draws the same form with no bound.
+the `MessageInput` in its place) returns focus to the input, and each page (a new `title`) opens at
+the top of its body, its first field taking focus. A `Sheet` among a `Thread`'s sections draws the same form with no bound.
 
 A column is a width and the region around it aligns it: a docked foot (a `Place`'s `foot`, a
 `Thread`'s input) centres a selection bar's column. A region that holds a page's sections (a

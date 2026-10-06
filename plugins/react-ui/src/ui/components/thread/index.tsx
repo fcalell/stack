@@ -49,9 +49,11 @@ const FILL = "flex flex-col grow min-h-0";
 // In a Split's main the Thread bleeds through the inset the record's head
 // keeps, under the head's hairline.
 const BLEED = "-mx-page";
-// The log rings inset, its edge meeting the page's.
+// The log rings inset, its edge meeting the page's. It is the containing block of
+// the visually hidden text inside its messages, which would otherwise lay out
+// past it and give the scroller around it a scroll of its own.
 const SCROLLS =
-	"flex flex-col grow min-h-0 overflow-y-auto focus-visible:-outline-offset-2";
+	"relative flex flex-col grow min-h-0 overflow-y-auto focus-visible:-outline-offset-2";
 // The log and the docked foot own their frame's width: on the desktop they
 // centre the measure column; on touch the messages and the input span it.
 const CENTRES = "items-center";
@@ -231,6 +233,11 @@ export function Thread<T>(props: ThreadProps<T>) {
 	const dock = useRef<HTMLDivElement>(null);
 	useFootFocus(dock);
 	const atEnd = useRef(true);
+	// The log's box and content heights as the follow last saw them. A scroll
+	// event that reads other heights came with a resize (the foot changed, a
+	// message grew): the browser keeping its place, not the reader scrolling,
+	// and the follow, which runs next, settles the log at its end.
+	const laid = useRef<[number, number]>([0, 0]);
 	// The reader is scrolled up: the Latest act stands over the foot.
 	const [away, setAway] = useState(false);
 	// The log opens at its end and stays there while the reader is, as a
@@ -241,6 +248,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 		if (!fill || !scroller || !inner) return;
 		const follow = () => {
 			if (atEnd.current) scroller.scrollTop = scroller.scrollHeight;
+			laid.current = [scroller.clientHeight, scroller.scrollHeight];
 		};
 		follow();
 		const observer = new ResizeObserver(follow);
@@ -289,6 +297,8 @@ export function Thread<T>(props: ThreadProps<T>) {
 					onScroll={(event) => {
 						const { scrollHeight, scrollTop, clientHeight } =
 							event.currentTarget;
+						const [height, content] = laid.current;
+						if (clientHeight !== height || scrollHeight !== content) return;
 						const end = scrollHeight - scrollTop - clientHeight <= AT_END;
 						atEnd.current = end;
 						setAway(!end);

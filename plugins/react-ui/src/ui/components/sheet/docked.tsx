@@ -7,8 +7,16 @@ import {
 	SHEET_HEAD_ROW,
 	THREAD_COLUMN,
 	text,
+	textStrong,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, useEffect, useId, useState } from "react";
+import {
+	type ReactNode,
+	useEffect,
+	useId,
+	useLayoutEffect,
+	useRef,
+	useState,
+} from "react";
 import { backGlyph } from "../../lib/back.ts";
 import { focusFirst } from "../../lib/focus.ts";
 import { FormStands } from "../../lib/form.ts";
@@ -28,7 +36,8 @@ import { IconButton } from "../icon-button/index.tsx";
 // height and the body scrolls in what is left. The foot centres what it holds,
 // so the sheet spans it.
 const ROOT = "flex flex-col w-full min-h-0";
-const HEAD = "flex flex-col shrink-0";
+const HEAD = "flex items-start shrink-0";
+const HEAD_MAIN = "flex flex-col grow min-w-0";
 const HEAD_ROW = "flex items-center";
 const TITLE = "grow min-w-0 truncate";
 // The body takes a tab stop only while it scrolls with nothing tabbable inside.
@@ -51,7 +60,7 @@ export interface SheetDockedProps {
 	children?: ReactNode;
 }
 
-/** A `Sheet` standing in a Thread's or a Place's foot: no scrim, portal or dialog, the foot's raised cell its surface. The head holds the back act, the title over the description and the close act; the body scrolls between the head and the foot, which hold their height; the foot holds the line beside (over, on touch) the submit. Escape closes it, and each page takes focus in its first field. Closed it draws nothing. */
+/** A `Sheet` standing in a Thread's or a Place's foot: no scrim, portal or dialog, the foot's raised cell its surface. The head holds the back act before one column, the title and the close act over the description, so both lines share a start; the body scrolls between the head and the foot, which hold their height; the foot holds the line beside (over, on touch) the submit. Escape closes it, and each page opens at its top with focus in its first field. Closed it draws nothing. */
 export function SheetDocked({
 	open,
 	onClose,
@@ -66,15 +75,28 @@ export function SheetDocked({
 	const words = useWords();
 	const titleId = useId();
 	const descriptionId = useId();
+	const root = useRef<HTMLElement>(null);
 	const [body, setBody] = useState<HTMLDivElement | null>(null);
 	const stop = useScrolls(body, "y");
 	const [touchedValue, setTouched] = useTouchState();
 	const page = usePageTurn(open, title, description, () => setTouched(false));
-	// Each page, a wizard's turn, takes focus in its first field; a page with
-	// none leaves it where it was.
+	// A new page opens at its top, not where the last one was scrolled to.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: a new page resets the scroll
+	useLayoutEffect(() => {
+		if (body) body.scrollTop = 0;
+	}, [page, body]);
+	// Each page takes focus in its first tabbable once it has settled (a radio
+	// group sets its tab stop after the commit), whatever held it: an act that
+	// relabels or leaves drops focus to the document, which a page with nothing
+	// tabbable gives to the sheet's first one.
 	// biome-ignore lint/correctness/useExhaustiveDependencies: a new page takes focus
 	useEffect(() => {
-		if (open) focusFirst(body);
+		if (!open || !body) return;
+		const frame = requestAnimationFrame(() => {
+			focusFirst(body);
+			if (document.activeElement === document.body) focusFirst(root.current);
+		});
+		return () => cancelAnimationFrame(frame);
 	}, [open, page, body]);
 	if (!open) return null;
 	const iconFit = touch ? "body" : "bar";
@@ -85,6 +107,7 @@ export function SheetDocked({
 	return (
 		<TouchedContext value={touchedValue}>
 			<section
+				ref={root}
 				aria-labelledby={titleId}
 				aria-describedby={description ? descriptionId : undefined}
 				onKeyDown={(event) => {
@@ -96,31 +119,40 @@ export function SheetDocked({
 				onChange={touchedValue.touch}
 				className={cn(!touch && THREAD_COLUMN, ROOT)}
 			>
-				<div className={cn(SHEET_DOCKED_HEAD, HEAD)}>
-					<div className={cn(SHEET_HEAD_ROW, HEAD_ROW)}>
-						{back ? (
-							<IconButton
-								icon={backGlyph(touch)}
-								fit={iconFit}
-								label={words.back}
-								onAct={back}
-							/>
-						) : null}
-						<h2 id={titleId} className={cn(text({ role: "heading" }), TITLE)}>
-							{title}
-						</h2>
+				<div className={cn(SHEET_HEAD_ROW, HEAD)}>
+					{back ? (
 						<IconButton
-							icon="X"
+							icon={backGlyph(touch)}
 							fit={iconFit}
-							label={words.close}
-							onAct={onClose}
+							label={words.back}
+							onAct={back}
 						/>
-					</div>
-					{description ? (
-						<p id={descriptionId} className={text({ role: "meta" })}>
-							{description}
-						</p>
 					) : null}
+					<div className={cn(SHEET_DOCKED_HEAD, HEAD_MAIN)}>
+						<div className={cn(SHEET_HEAD_ROW, HEAD_ROW)}>
+							<h2
+								id={titleId}
+								className={cn(
+									text({ role: "body" }),
+									textStrong({ role: "body" }),
+									TITLE,
+								)}
+							>
+								{title}
+							</h2>
+							<IconButton
+								icon="X"
+								fit={iconFit}
+								label={words.close}
+								onAct={onClose}
+							/>
+						</div>
+						{description ? (
+							<p id={descriptionId} className={text({ role: "meta" })}>
+								{description}
+							</p>
+						) : null}
+					</div>
 				</div>
 				<div
 					ref={setBody}

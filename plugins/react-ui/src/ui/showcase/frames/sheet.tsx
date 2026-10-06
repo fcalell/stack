@@ -1,7 +1,7 @@
 import { cn } from "@fcalell/ui-core/cn";
 import type { Act, Option } from "@fcalell/ui-core/descriptors";
 import { SHELL_COLUMN } from "@fcalell/ui-core/variants";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MessageInput } from "../../components/message-input/index.tsx";
 import { OptionList } from "../../components/option-list/index.tsx";
 import { Place } from "../../components/place/index.tsx";
@@ -59,16 +59,27 @@ const QUESTIONS: Question[] = [
 
 // A conversation filling its page with a four-question sheet docked in its
 // foot: each page a Section of one radio list, Back in the head from the
-// second, Next on the first three and Send on the last. The foot is at most
-// half the frame, so the question scrolls in it at a phone's height; closing
-// returns the input.
-function DockedQuestions() {
+// second, Next on the first three and Send on the last. The foot fits the page
+// up to three fifths of the frame, so a question taller than that scrolls in
+// it; closing returns the input. Send's states open on the last page: blocked
+// before the last question is answered (its reason shown once pressed),
+// pending while it works, and failed, the act ready again with the foot line
+// saying why.
+function DockedQuestions({ state }: { state: ShowcaseFrame["state"] }) {
+	const frame = useRef<HTMLDivElement>(null);
 	const [value, setValue] = useState("");
-	const [at, setAt] = useState(0);
+	const [at, setAt] = useState(state === "rest" ? 0 : QUESTIONS.length - 1);
 	const [open, setOpen] = useState(true);
 	const [answers, setAnswers] = useState<(string | null)[]>(
-		QUESTIONS.map(() => null),
+		QUESTIONS.map((_, i) =>
+			state === "loading" || state === "error"
+				? (QUESTIONS[i]?.options[0]?.value ?? null)
+				: null,
+		),
 	);
+	useEffect(() => {
+		if (state === "disabled" && frame.current) pressSubmit(frame.current);
+	}, [state]);
 	const question = QUESTIONS[at];
 	const last = at === QUESTIONS.length - 1;
 	const close = () => {
@@ -86,6 +97,7 @@ function DockedQuestions() {
 	);
 	return (
 		<div
+			ref={frame}
 			className={cn(
 				SHELL_COLUMN,
 				"flex flex-col h-185 w-screen max-w-full overflow-hidden",
@@ -106,8 +118,19 @@ function DockedQuestions() {
 								submit={{
 									label: last ? "Send" : "Next",
 									onAct: last ? close : () => setAt(at + 1),
+									loading: (last && state === "loading") || undefined,
+									blocked:
+										last && state === "disabled"
+											? "Choose who hears about it first."
+											: undefined,
 								}}
-								foot={last ? "Your answers go with the redeploy." : undefined}
+								foot={
+									last
+										? state === "error"
+											? "Couldn't send your answers. Try again."
+											: "Your answers go with the redeploy."
+										: undefined
+								}
 							>
 								<Section title={question.title}>
 									<OptionList
@@ -237,7 +260,7 @@ export function drawSheet(frame: ShowcaseFrame) {
 				</Sheet>
 			</Stage>
 		);
-	if (cell === "BUTTON.fit.bar" && state === "rest") return <DockedQuestions />;
+	if (cell === "BUTTON.fit.bar") return <DockedQuestions state={state} />;
 	if (cell === "BUTTON.act.primary")
 		return (
 			<Stage

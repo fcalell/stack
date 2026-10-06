@@ -1403,7 +1403,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// On touch the submit stands at the head row's end and a blocked
 		// submit's reason under the head.
 		// Passed as a Thread's or a Place's `foot` it docks there, drawing the
-		// docked head and foot inside the foot's raised cell with no scrim.
+		// docked head and foot inside the foot's raised cell with no scrim. The
+		// docked foot's states are its submit's: pending (`loading`), blocked
+		// (`disabled`), and failed (`error`, the act ready again, the `foot`
+		// line saying why).
 		Sheet: {
 			props: [
 				"open",
@@ -1451,7 +1454,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SHEET_DOCKED_BODY",
 				"SHEET_DOCKED_FOOT",
 			],
-			states: ["rest", "disabled", "loading"],
+			states: ["rest", "disabled", "loading", "error"],
 			owns: {
 				roles: ["heading", "body", "meta"],
 				colors: [
