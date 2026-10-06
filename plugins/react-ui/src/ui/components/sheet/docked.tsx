@@ -22,6 +22,7 @@ import { focusFirst } from "../../lib/focus.ts";
 import { FormStands } from "../../lib/form.ts";
 import { FootPlace } from "../../lib/frame.ts";
 import { useTouch } from "../../lib/media.ts";
+import { ReasonKept } from "../../lib/reason.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
 import {
 	TouchedContext,
@@ -103,7 +104,11 @@ export function SheetDocked({
 	const line = foot ? (
 		<p className={cn(text({ role: "meta" }), FOOT_LINE)}>{foot}</p>
 	) : null;
-	const bar = submit ? <ActionBar acts={[submit]} /> : null;
+	const bar = submit ? (
+		<ReasonKept value>
+			<ActionBar acts={[submit]} />
+		</ReasonKept>
+	) : null;
 	return (
 		<TouchedContext value={touchedValue}>
 			<section

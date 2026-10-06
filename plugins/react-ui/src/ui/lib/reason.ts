@@ -25,3 +25,7 @@ export function usePressed(
 	const press = useCallback(() => setUnder(blocked), [blocked]);
 	return [pressStands(blocked, under), press];
 }
+
+// Set around a docked foot's act bar: a blocked act's reason keeps its line
+// before it shows, so showing it never moves the act it describes.
+export const ReasonKept = createContext(false);

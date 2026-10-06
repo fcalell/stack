@@ -24,7 +24,7 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FormContext, FormStands } from "../../lib/form";
 import { useLive } from "../../lib/live";
-import { ReasonHostContext } from "../../lib/reason";
+import { ReasonHostContext, ReasonKept } from "../../lib/reason";
 import { useTouched } from "../../lib/touched";
 import { useWords } from "../../lib/words";
 import { Button } from "../button";
@@ -39,6 +39,8 @@ const COUNT = "flex-row flex-wrap items-center";
 const ALL = "flex-row items-center";
 const ALL_LIVE = "active:bg-wash-press";
 const ALL_INERT = "text-ink-disabled";
+// A kept reason holds its line while unshown.
+const KEPT = "opacity-0";
 
 // The last act is the one filled act; a destructive act draws `danger`
 // filled and the hairline `destructive` otherwise.
@@ -146,6 +148,7 @@ export function ActionBar({ acts, fit, chosen }: ActionBarProps) {
 	const inColumn = useContext(FormStands) === "auth";
 	const where = fit ?? (inColumn ? "full" : "end");
 	const pend = useContext(FormContext);
+	const kept = useContext(ReasonKept);
 	const [running, setRunning] = useState(false);
 	const { touched } = useTouched();
 	// Each blocked act's press, by label, as the reason it came under: it
@@ -203,14 +206,22 @@ export function ActionBar({ acts, fit, chosen }: ActionBarProps) {
 					);
 				})}
 			</View>
-			{acts.map((act) =>
-				act.blocked !== undefined &&
-				(touched || pressStands(act.blocked, pressed.get(act.label))) ? (
-					<RNText key={act.label} className={text({ role: "meta" })}>
+			{acts.map((act) => {
+				if (act.blocked === undefined) return null;
+				const shown =
+					touched || pressStands(act.blocked, pressed.get(act.label));
+				if (!(shown || kept)) return null;
+				return (
+					<RNText
+						key={act.label}
+						accessibilityElementsHidden={!shown}
+						importantForAccessibility={shown ? "auto" : "no-hide-descendants"}
+						className={cn(text({ role: "meta" }), !shown && KEPT)}
+					>
 						{act.blocked}
 					</RNText>
-				) : null,
-			)}
+				);
+			})}
 		</View>
 	);
 }

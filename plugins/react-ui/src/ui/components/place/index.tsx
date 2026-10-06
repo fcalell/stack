@@ -88,6 +88,9 @@ const BODY =
 	"flex flex-col grow overflow-y-auto focus-visible:-outline-offset-2";
 const BLEED = "flex flex-col grow min-h-0";
 const BODY_WRAP = "relative flex flex-col grow min-h-0";
+// What the body and the docked foot share: the head stands outside it, so the
+// foot's bound is a fraction of it and the body keeps the rest.
+const REGION = "flex flex-col grow min-h-0";
 // The foot stays under the body, which scrolls past it, and spans it; a field
 // keeps its own measure column inside, which the foot centres at every density,
 // so a selection bar wider than the screen's measure stands centred on touch too.
@@ -335,15 +338,17 @@ export function Place({
 						>
 							<h1 className={TITLE_ALONE}>{title}</h1>
 							{head}
-							<div className={BODY_WRAP}>
-								{body}
-								{layer}
-							</div>
-							{foot ? (
-								<div ref={dock} className={cn(FOOT_DOCKED, DOCKED)}>
-									<FootPlace value="docked">{foot}</FootPlace>
+							<div className={REGION}>
+								<div className={BODY_WRAP}>
+									{body}
+									{layer}
 								</div>
-							) : null}
+								{foot ? (
+									<div ref={dock} className={cn(FOOT_DOCKED, DOCKED)}>
+										<FootPlace value="docked">{foot}</FootPlace>
+									</div>
+								) : null}
+							</div>
 						</div>
 					</HeadingContext>
 				</PageTitle>

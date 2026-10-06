@@ -806,9 +806,10 @@ export const PAGE_BODY = "gap-sections p-page";
 // dark, the float shadow in light) inside a hairline, at the page inset at the
 // sides and an acts gap above and below what it holds (a selection bar stands
 // in its height range, a field at its own), fitting what it holds up to three
-// fifths of its frame's height (a structural fraction, never a size token), so
-// what stands over it keeps two fifths, with the room to shrink to it: a docked
-// `Sheet` fills it, its body scrolling only past the bound.
+// fifths of the region it shares with what stands over it (the log and the
+// foot, never the head: a structural fraction, never a size token), so that
+// keeps two fifths, with the room to shrink to it: a docked `Sheet` fills it,
+// its body scrolling only past the bound.
 export const FOOT_DOCKED =
 	"border-t border-edge-raised bg-raised shadow-float px-page py-acts max-h-3/5 min-h-0";
 export const PAGE_BODY_OVER_FOOT = "pb-sections";

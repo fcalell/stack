@@ -30,7 +30,7 @@ export interface SheetProps extends Closed {
 // at the head's end, the description under them; the body; the foot's line.
 // Passed as a Thread's or a Place's `foot` it docks there with no scrim: the
 // back act, the title and the close act over the description in the head, the
-// body scrolling under the foot's half-height bound, the foot line over the
+// body scrolling under the foot's bound, the foot line over the
 // submit; `onClose` hears the close act, and closing hands focus to the input
 // that returns.
 export function Sheet({

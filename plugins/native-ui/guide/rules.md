@@ -374,8 +374,10 @@ A `Sheet` passed as a `Thread`'s or a `Place`'s `foot` docks there, derived from
 no prop, no scrim. The head keeps the back act before one column, the title (a label, so a Section
 inside leads it) and the close act over the `description`, so both lines share a start;
 the body scrolls between the head and the foot, which hold their height (the `foot` line over the `submit`),
-and the docked foot fits what it holds up to three fifths of its frame, so the conversation keeps
-two fifths and a body taller than that scrolls. Pass
+and the docked foot fits what it holds up to three fifths of the region it shares with the log, so
+the log keeps two fifths of it and a body taller than that scrolls. A blocked `submit`’s reason keeps
+its line in the foot, so showing it never moves the act; a failed one is a `Banner` of kind
+`danger` first in the body, the act ready again. Pass
 the same `<Sheet>` as the modal from a page and as the `foot` of a conversation; closing it (render
 the `MessageInput` in its place) returns focus to the input, and each page (a new `title`) opens at
 the top of its body, its first field taking focus. A `Sheet` among a `Thread`'s sections draws the same form with no bound.

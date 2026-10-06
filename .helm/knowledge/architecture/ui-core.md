@@ -592,11 +592,15 @@ a tick with no animation, never jumped to full.
   the foot holds the `foot` line beside the `submit` bar (over it on touch); the
   head-end submit and Cancel of the modal form are gone, since the dock stands above the keyboard and
   the close act is in the head. The docked foot fits its content and is bounded: `FOOT_DOCKED` carries
-  `max-h-3/5 min-h-0`, a structural fraction of the box it docks in (the accepted fractions are
-  structural, never a size token) at every density, so a conversation keeps two fifths of it and the
+  `max-h-3/5 min-h-0`, a structural fraction of the region the log and the foot share (a filling
+  Thread's own column; the web Place's body and `foot` stand in one region under the head, so the head
+  is never counted; the phone's `Lifted` is that region) at every density (the accepted fractions are
+  structural, never a size token), so the log keeps two fifths of it and the
   Sheet scrolls its body between its pinned head and foot only past the bound, each page opening at the
   body's top; inline among sections it has no bound, since the page scrolls. Its states are its
-  submit's: pending, blocked, and failed (the act ready again, the `foot` line saying why). On the desktop the docked Sheet holds
+  submit's: pending, blocked (the reason keeps its line under the act before it shows, `ReasonKept`
+  around the foot's bar, so showing it never moves the act), and failed (the act ready again, a
+  `Banner` of kind `danger` first in the body saying why, the system's failure cell and glyph). On the desktop the docked Sheet holds
   `THREAD_COLUMN` in the foot that centres it. Focus: each page (a new `title`) takes the body's first
   tabbable on the web once the page has settled (a radio group sets its tab stop after the commit),
   so an act that relabels or leaves never drops focus to the document; on the phone the first

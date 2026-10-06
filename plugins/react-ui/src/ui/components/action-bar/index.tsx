@@ -30,7 +30,7 @@ import {
 	SubmitContext,
 } from "../../lib/form.ts";
 import { useTouch } from "../../lib/media.ts";
-import { ReasonHostContext } from "../../lib/reason.ts";
+import { ReasonHostContext, ReasonKept } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Button } from "../button/index.tsx";
@@ -141,6 +141,7 @@ export function ActionBar({ acts, fit, chosen }: ActionBarProps) {
 	const [running, setRunning] = useState(false);
 	const { touched } = useTouched();
 	const reason = useId();
+	const kept = use(ReasonKept);
 	// Each blocked act's press, by label, as the reason it came under: it
 	// stands while the act is blocked by that reason
 	// (`@fcalell/ui-core/reason`).
@@ -250,6 +251,7 @@ export function ActionBar({ acts, fit, chosen }: ActionBarProps) {
 					<Reason
 						key={act.label}
 						id={`${reason}-${at}`}
+						kept={kept}
 						shown={touched || pressStands(act.blocked, pressed.get(act.label))}
 					>
 						{act.blocked}

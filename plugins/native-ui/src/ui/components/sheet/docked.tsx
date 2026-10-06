@@ -22,6 +22,7 @@ import { FieldClaim, FieldNameContext } from "../../lib/field";
 import { FormStands } from "../../lib/form";
 import { FootPlace, FootReturn } from "../../lib/frame";
 import { Scroll, type ScrollRef } from "../../lib/hosts";
+import { ReasonKept } from "../../lib/reason";
 import { TouchedContext, usePageTurn } from "../../lib/touched";
 import { useWords } from "../../lib/words";
 import { ActionBar } from "../action-bar";
@@ -149,7 +150,11 @@ export function SheetDocked({
 											<RNText className={text({ role: "meta" })}>{foot}</RNText>
 										</View>
 									) : null}
-									{submit ? <ActionBar acts={[submit]} /> : null}
+									{submit ? (
+										<ReasonKept.Provider value>
+											<ActionBar acts={[submit]} />
+										</ReasonKept.Provider>
+									) : null}
 								</View>
 							) : null}
 						</View>
