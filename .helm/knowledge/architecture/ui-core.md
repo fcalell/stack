@@ -1323,12 +1323,11 @@ a tick with no animation, never jumped to full.
   in its lane before the glyph and read aloud with the row, its waiting form reserving the lane.
   The chip never carries it.
 - A FileRow carries at most one `ChipMark` (why the file is listed),
-  standing between the path and the count lanes at its label's `measure-short` cap; the path
-  takes the room the chip leaves and yields in order: the directory down to nothing, then the
-  name down to its floor, then the chip's label truncates; the counts never yield. The floor is
-  the whole name when it is short (at most twice the three-character lead, the extension and
-  one character), else its cut form: the first three characters, an ellipsis, then its end (`pathCut` in
-  `list-state`, one source for both platforms). The path splits after its last slash, the slash
+  standing between the path and the count lanes at its label's `measure-short` cap; the chip's label
+  never truncates, so the path takes the room the chip leaves and yields alone, in order: the
+  directory down to nothing, then the name, cut in its middle with its end (the extension and the
+  three characters before it) kept, down to nothing; the counts never yield (`pathCut` in
+  `list-state` splits the name for the web, one source). The path splits after its last slash, the slash
   staying with the directory, so a directory that yields takes its separator and the name never
   begins with a slash. The
   chip is why the row is listed, so it stays present, and a cut path gives up its directory
@@ -1336,11 +1335,10 @@ a tick with no animation, never jumped to full.
   never by measure, so it draws cut in its first frame and never re-cuts when the mono face
   loads: the name takes its width up to the whole box (`max-w-full`, no shrink) and the
   directory the room it leaves, ellipsized at its end down to nothing; past the box the name is
-  cut in its middle, its end kept (the web: a truncating stem of at least three characters
-  before an unshrinking tail of the extension and the three characters before it, the path
-  box's `min-width` the floor in `ch` and its shrink weight 10^7 against the chip's 1, as
-  ListRow's meta line; the phone: `ellipsizeMode="middle"`, the floor in px at a quarter of
-  `figures` per character, the same weights). The chip's
+  cut in its middle, its end kept (the web: a truncating stem before an unshrinking tail of the
+  extension and the three characters before it; the phone: `ellipsizeMode="middle"`); the path
+  box has no `min-width` and is the one shrinking item of the row, the chip, marks and counts
+  not shrinking. The chip's
   cells and size are FileRow's own in the roster, composed from `Chip`, with no token of its own.
 - Code, Diff and ProseDiff stand in one frame on the surface inside a hairline (`CONTENT_FRAME`),
   so a diff's soft grounds always sit on the surface; a diff's number columns and a file row's

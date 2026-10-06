@@ -839,28 +839,24 @@ test("a several-pick toggles a member in and out, keeping order", () => {
 	assert.deepEqual(toggled([], "a"), ["a"]);
 });
 
-test("a file name keeps its start and its end, and its floor is the cut form", () => {
+test("a file name keeps its start and its end", () => {
 	assert.deepEqual(pathCut("biome.json"), {
 		stem: "bio",
 		tail: "me.json",
-		floor: 10,
 	});
 	assert.deepEqual(pathCut("flags.md"), {
 		stem: "fla",
 		tail: "gs.md",
-		floor: 8,
 	});
 	assert.deepEqual(pathCut("payment-terms.md"), {
 		stem: "payment-te",
 		tail: "rms.md",
-		floor: 10,
 	});
 	assert.deepEqual(pathCut("Makefile"), {
 		stem: "Mak",
 		tail: "efile",
-		floor: 8,
 	});
-	assert.deepEqual(pathCut("a"), { stem: "a", tail: "", floor: 1 });
+	assert.deepEqual(pathCut("a"), { stem: "a", tail: "" });
 });
 
 test("a definition value cuts to a stem and a tail of its last four characters, at most half a short value, and the two make the whole value", () => {
