@@ -1,15 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { icons } from "lucide";
-import {
-	backEdges,
-	HANDOFF_GLYPH,
-	pathOrder,
-	spokenNames,
-} from "../src/canvas.ts";
-import type { CanvasEdge, CanvasNode } from "../src/descriptors.ts";
+import { backEdges, HANDOFF_GLYPH, pathOrder } from "../src/canvas.ts";
 import { ROSTER, rosterEntries } from "../src/roster.ts";
-import { ENGLISH } from "../src/tokens.ts";
 
 // `from>to` edges, numbered in order: the Nth is `eN`.
 function graph(ids: string, edgeList: string) {
@@ -85,111 +78,6 @@ test("the journey numbers its nodes 1 to 7 from the path order", () => {
 		[1, 2, 3, 4, 5, 6, 7],
 	);
 });
-
-function node(id: string, rest: Partial<CanvasNode>): CanvasNode {
-	return { id, icon: "Check", title: id, ...rest };
-}
-
-function edge(from: string, to: string, label?: string): CanvasEdge {
-	return { id: `${from}>${to}`, from, to, ...(label ? { label } : {}) };
-}
-
-const ship = node("sh", { title: "Ship" });
-const implement = node("im", { title: "Implement" });
-
-const spoken: Array<
-	[
-		string,
-		CanvasNode,
-		CanvasEdge[],
-		string,
-		{ off: string; next: string } | undefined,
-	]
-> = [
-	[
-		"every part",
-		node("rv", {
-			number: 3,
-			overline: "Reviewer",
-			title: "Review",
-			line: "Checks the diff",
-			status: { state: "done", label: "Done" },
-		}),
-		[edge("rv", "sh", "approve"), edge("rv", "im", "request changes")],
-		"3, Reviewer, Review, Checks the diff, Done, Next: approve, Ship; request changes, Implement",
-		undefined,
-	],
-	["a title alone", implement, [], "Implement", undefined],
-	[
-		"an edge with no label",
-		ship,
-		[edge("sh", "im")],
-		"Ship, Next: Implement",
-		undefined,
-	],
-	[
-		"off",
-		node("lint", {
-			title: "Lint",
-			overline: "Check",
-			line: "Runs lint",
-			off: true,
-		}),
-		[],
-		"Check, Lint, Off",
-		undefined,
-	],
-	[
-		"a problem",
-		node("build", {
-			title: "Build",
-			line: "Runs the build",
-			problem: "Missing token",
-		}),
-		[],
-		"Build, Runs the build, Missing token",
-		undefined,
-	],
-	[
-		"a count",
-		node("fan", { title: "Fan out", count: 4 }),
-		[],
-		"4, Fan out",
-		undefined,
-	],
-	[
-		"a number over a count",
-		node("fan", { title: "Fan out", number: 2, count: 4 }),
-		[],
-		"2, Fan out",
-		undefined,
-	],
-	["an unknown target", ship, [edge("sh", "ghost")], "Ship", undefined],
-	[
-		"other words, off",
-		node("lint", { title: "Lint", overline: "Check", off: true }),
-		[],
-		"Check, Lint, Aus",
-		{ off: "Aus", next: "Weiter" },
-	],
-	[
-		"other words, next",
-		ship,
-		[edge("sh", "im", "ok")],
-		"Ship, Weiter: ok, Implement",
-		{ off: "Aus", next: "Weiter" },
-	],
-];
-
-for (const [name, subject, edges, want, words] of spoken) {
-	test(`spokenNames: ${name}`, () => {
-		const nodes = [subject, ship, implement].filter(
-			(each, at, all) => all.findIndex((other) => other.id === each.id) === at,
-		);
-		const got = spokenNames(nodes, edges, words ?? ENGLISH).get(subject.id);
-		assert.equal(got, want);
-	});
-}
 
 test("Canvas is a web-only roster entry with the descriptor's props", () => {
 	const canvas = ROSTER.content.Canvas;

@@ -9,9 +9,10 @@ Nothing was built.
 
 ## Verdict
 
-One molecule, **`Canvas`**, web only (`react-ui`), over two dependencies: `@xyflow/react` draws
-the viewport, nodes, edges, pan, zoom and drag, and `elkjs` computes a top-to-bottom layout when
-the consumer gives no positions. Every part of a node and an edge is data. The consumer passes no
+One molecule, **`Canvas`**, web only (`react-ui`), that owns its viewport. `d3-zoom` does pan,
+zoom and pinch on one transformed layer. Nodes are absolutely placed elements measured by a
+`ResizeObserver`, and edges are the canvas's own SVG with its own orthogonal router. `elkjs`
+computes a top-to-bottom layout in a worker when the consumer gives no positions. Every part of a node and an edge is data. The consumer passes no
 node renderer, so the look stays stack's. The canvas never makes or removes an edge on its own:
 edges are data, set in the consumer's sheet, and a port drag is a pointer shortcut the consumer
 may switch on.
@@ -41,7 +42,7 @@ Sources: Stead `design/07-interface.md` ("A workflow: the canvas", "A run", "Wor
 | Taken path | From its anchor (Twenty): full contrast, rest dimmed | Stated: full contrast, rest dimmed, walked one step at a time |
 | Problems | A danger `Banner` over the canvas with a `List`; a row pans to its node and selects it | A refusal names a step; the first failing one is shown |
 | Touch | 375 px: one finger pans, pinch zooms, long press moves, 44 px at any zoom, zoomed-out nodes collapse to their glyph | Desktop only (inferred) |
-| Keyboard, AT | Tab through nodes in path order, Enter opens the sheet; read as a list of nodes with their edges named | None stated; the story's criteria apply |
+| Keyboard | Tab through nodes in path order, Enter opens the sheet. Screen readers are out of scope | None stated; the story's criteria apply |
 | Placement | `main` without the measure; the System index in the list column | A view of the Journey `Split` main, beside the step list |
 
 Neither consumer asks for undo, multi-select, copy and paste, a minimap, or a delete key on the
@@ -90,14 +91,14 @@ What they agree on:
 
 | Library | Licence | What it gives | What it lacks |
 | --- | --- | --- | --- |
-| `@xyflow/react` 12 | MIT, about 57 KB gzip | Viewport, pan, pinch zoom, node drag, port connections, custom node and edge types, viewport culling, focusable nodes and edges, auto-pan on focus, localisable ARIA text | Long press to lift a node on touch, groups as layout (it nests by `parentId` but sizes nothing), layout |
+| `d3-zoom` | ISC | Pan, wheel zoom and pinch zoom on one transform, with a constrained extent and eased transitions | Nodes, edges and node drag, which the canvas draws itself |
+| `@xyflow/react` 12 (not chosen) | MIT, about 57 KB gzip | Viewport, pan, pinch zoom, node drag, port connections, custom node and edge types, viewport culling, focusable nodes and edges, auto-pan on focus, localisable ARIA text | Long press to lift a node on touch, groups as layout (it nests by `parentId` but sizes nothing), layout. Not chosen because hiding its attribution needs a React Flow Pro subscription and it logs a console warning on every load, while the canvas already overrode most of it |
 | `elkjs` | EPL-2.0 | Layered layout with direction, model order, ports, compound nodes (a loop group), edge label placement, orthogonal routing, feedback edges; runs in a worker | Small size: it is a compiled Java library and loads lazily |
 | `@dagrejs/dagre` | MIT | Layered layout, small | Ports, edge labels routed around groups, reliable compound layout |
-| Stack's own SVG | n/a | Full control | Pan, pinch, drag, culling and focus handling are all hand-built, a widget the [philosophy](../knowledge/product/philosophy.md) judges against the bar first |
+| Stack's own SVG and elements | n/a | Full control: the node layer, the edges and their orthogonal router, selection and keyboard | Drag, culling and focus handling are hand-built over `d3-zoom`, a widget the [philosophy](../knowledge/product/philosophy.md) judges against the bar first |
 
-React Flow's own accessibility gives Tab through nodes, Enter to select, Escape to clear,
-arrow keys to move, and auto-pan to a focused node. The canvas keeps Tab, Enter, Escape and
-auto-pan and turns arrow-key moves off (`disableKeyboardA11y`). DOM order is the order the nodes
+The canvas builds its own keyboard: Tab through nodes, Enter to select, Escape to clear, and
+auto-pan to a focused node. Arrow keys do not move a node. DOM order is the order the nodes
 array gives, so the canvas sorts it into path order. Expo's DOM components (`'use dom'`) can run
 this same web canvas inside a native app when a phone consumer appears.
 
@@ -177,7 +178,7 @@ product nouns:
 
 | Act | Pointer | Touch | Keyboard |
 | --- | --- | --- | --- |
-| Pan | Drag the ground; wheel scrolls | One finger | Auto-pan to the focused node |
+| Pan | Drag the ground; the wheel pans | One finger | Auto-pan to the focused node |
 | Zoom | Ctrl/⌘ wheel; the stack | Pinch; the stack | The stack's buttons |
 | Select | Click | Tap | Tab to a node, Enter |
 | Move | Drag at once | Long press lifts, then drag | None; Arrange instead |
@@ -189,11 +190,11 @@ on one zooms to it.
 
 ### Assistive technology
 
-The canvas root is a `region` named by `label`. The nodes are a `list` in path order. Each node
-is a `listitem` holding one button whose name reads, in order: number, overline, title, line,
-status, problem, then its out-edges as "Next: approve, Implement; request changes, Review". The
-zoom stack and `act` follow the list in the Tab order. Edges are not focusable: their meaning is
-in each node's name.
+Screen readers are out of scope for the canvas. It builds no spoken form: no spoken node names, no
+forced `list` and `listitem` roles, no `aria-*` for a state, no `sr-only` text. A state reads from
+a node's visible text or mark, never by colour alone. The root is a `region` named by `label`, a
+named landmark and one attribute. The keyboard is in scope: Tab reaches the nodes in path order,
+then the zoom stack and `act`; Enter selects and Escape clears. Edges are not focusable.
 
 ## Decisions
 
@@ -204,17 +205,25 @@ Decided by fcalell (2026-10-06):
    two tab stops and two targets under the 44 px floor at any zoom. Stead's spec draws a
    `Switch` on the node and takes this change.
 2. **Dashed means handoff.** Inactive draws dimmed. The pattern page says so.
-3. **`elkjs` is taken unmodified** as a dependency of `react-ui`. EPL-2.0 binds changes to its own
+3. **`elkjs` is taken unmodified** as a dependency of `react-ui`, and runs in a worker. EPL-2.0 binds changes to its own
    files and nothing else.
 4. **No change-set marks on nodes** until a consumer files the need.
 5. **The phone pans and zooms** at 375 px as Stead specifies, judged by the rubric's floors. No
    column fallback below `tablet`.
+6. **The canvas owns its viewport.** `d3-zoom` (ISC) does pan, zoom and pinch on one transformed
+   layer, nodes are absolutely placed elements measured by a `ResizeObserver`, and edges are the
+   canvas's own SVG with its own orthogonal router. `@xyflow/react` is not used: hiding its
+   attribution needs a React Flow Pro subscription and it logs a console warning on every load.
 
 ## Risks
 
-- React Flow has no long press. Lifting a node on touch is built over its drag start, and it
-  must not take a pan.
+- Touch pinch and pan share one gesture stream. A second finger turns a pan into a pinch, and
+  `d3-zoom`'s filter must let a node's long press and a port drag through without starting a pan.
+- A long press lifts a node over the canvas's own pointer handling. It must not take a pan, so
+  the press cancels once the finger moves past a small slop before the timer fires.
+- The wheel pans and Ctrl/⌘ wheel zooms, which is not `d3-zoom`'s default. A trackpad pinch
+  arrives as a Ctrl wheel, so the filter reads the modifier to tell pan from zoom.
 - Semantic zoom (glyph-only nodes) re-renders every node when zoom crosses the threshold, so the
   node reads the threshold, never the raw zoom.
-- React Flow ships its own stylesheet. The canvas imports only the base styles and draws
-  everything else from ui-core cells, which `a6` and the overlay allowlist check.
+- Node sizes come from a `ResizeObserver`, so the first layout waits for a measure and a resize
+  reruns the edge router.

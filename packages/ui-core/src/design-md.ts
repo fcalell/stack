@@ -52,6 +52,7 @@ const COLOR_USE: Record<string, string> = {
 	edge: "the hairline over canvas and surface; inside a group or a lifted layer the container re-points it to `edge-raised`",
 	"edge-raised": "the hairline inside a group and on a lifted layer",
 	"edge-strong": "a control's boundary, at 3:1",
+	grid: "the canvas's dot grid, at 1.5:1 on `canvas`",
 	scrim: "the veil behind a dialog or a sheet",
 	"ink-body": "the primary line of anything",
 	"ink-meta": "a secondary line, a placeholder, a table header",

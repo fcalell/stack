@@ -81,8 +81,7 @@ Twenty subpaths:
 - `@fcalell/ui-core/canvas`: what a `Canvas` and its consumers decide from a graph, free of any
   framework: `pathOrder(nodes, edges)`, every node id once, depth first from the roots with a node
   of several predecessors placed after its last and a cycle cut at its back edge; `backEdges(order,
-  edges)`, the ids of the edges whose target is at or before its source; `spokenNames(nodes, edges,
-  words)`, each node's accessible name; and `HANDOFF_GLYPH`.
+  edges)`, the ids of the edges whose target is at or before its source; and `HANDOFF_GLYPH`.
 - `@fcalell/ui-core/harness`: internal. The shared core of the packages' `scripts/verify.ts`.
 - `@fcalell/ui-core/manifest`: `uiCoreGuide`, the package's `guide/` pages with their load
   triggers, which react-ui and native-ui contribute to `cliSlots.guide`.
@@ -153,7 +152,7 @@ beside `theme`: the seven `Status` words, `recommended`, `copy`, `copied`, `down
 `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`,
 `seen`, `unseen`, `copyFailed`, `downloadFailed`, `latest`, `missing`, `chooseFile`, `typeValue`,
 `pickValue`, `locked`, `warning`, `photos`, `files`, `changed`, `unchanged`, `stale`, `chooseAll`,
-`chooseNone`, `noMatches`, `imageFiles`, `audioFiles`, `videoFiles`, `textFiles`, `expand`, `collapse`, `zoomIn`, `zoomOut`, `fit`, `arrange`, `off`, `next`, the counted `earlierLines` and `waitLeft`, and the slot words `meterValue`,
+`chooseNone`, `noMatches`, `imageFiles`, `audioFiles`, `videoFiles`, `textFiles`, `expand`, `collapse`, `zoomIn`, `zoomOut`, `fit`, `arrange`, `off`, the counted `earlierLines` and `waitLeft`, and the slot words `meterValue`,
 `meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changedFrom`, `wrongType`, `stepOf` and
 `chosenOf`. A counted word is `{ one, other }`, each form spelling `{count}` where the number
 stands, drawn through `counted(word, count)` (`one` at a count of one, `other` at any other). A slot
@@ -183,6 +182,8 @@ default the greys and the accent read as one palette.
   content (uniwind's `ScopedVariables`), resolving each read in the mode. In light the two are one
   hairline; the dark ladder spans more than one hairline can straddle, so there they differ.
   `edge-strong`: a control's boundary, at 3:1 against `surface` and `group`.
+- `grid`: the canvas's dot grid, at 1.5:1 against `canvas` in both modes, between the hairline and
+  a control's boundary.
 - `scrim`: the veil behind a dialog or a sheet.
 - Three inks. `ink-body`: the primary line of anything. `ink-meta`: a secondary line, a
   placeholder, a table header. `ink-faint`: disabled text only, at about 3:1, which WCAG exempts.

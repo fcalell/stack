@@ -806,7 +806,8 @@ check(
 
 check("b-nouns", "no product noun in src", () => {
 	// A token boundary, not a word boundary: the contract's `card` role (`p-card`,
-	// `rounded-card`) is a class segment, never the product noun.
+	// `rounded-card`) is a class segment, never the product noun, and so is the
+	// role a `spacing("card")` call names.
 	const pattern = new RegExp(
 		`(?<![\\w-])(${PRODUCT_NOUNS.join("|")})(?![\\w-])`,
 		"i",
@@ -815,7 +816,7 @@ check("b-nouns", "no product noun in src", () => {
 	for (const path of walk(resolve(pkgDir, "src"), /\.(ts|tsx)$/)) {
 		const lines = withoutComments(readFileSync(path, "utf8")).split("\n");
 		lines.forEach((line, index) => {
-			const match = pattern.exec(line);
+			const match = pattern.exec(line.replace(/\bspacing\("[\w-]+"\)/g, ""));
 			if (match)
 				hits.push(`${relative(pkgDir, path)}:${index + 1}: ${match[0]}`);
 		});

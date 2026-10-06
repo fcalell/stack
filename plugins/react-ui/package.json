@@ -14,6 +14,10 @@
 			"types": "./dist/node/fonts.d.ts",
 			"default": "./dist/node/fonts.js"
 		},
+		"./node/canvas": {
+			"types": "./dist/node/canvas.d.ts",
+			"default": "./dist/node/canvas.js"
+		},
 		"./node/mode": {
 			"types": "./dist/node/mode.d.ts",
 			"default": "./dist/node/mode.js"
@@ -66,7 +70,12 @@
 		"@fontsource-variable/ibm-plex-sans": "^5.3.0",
 		"@fontsource/ibm-plex-mono": "^5.3.0",
 		"@tailwindcss/vite": "^4.3.3",
+		"@types/d3-selection": "^3.0.11",
+		"@types/d3-zoom": "^3.0.8",
+		"d3-selection": "^3.0.0",
+		"d3-zoom": "^3.0.0",
 		"diff": "^8.0.2",
+		"elkjs": "^0.12.0",
 		"lucide": "^1.49.0",
 		"lucide-react": "^1.49.0",
 		"marked": "^18.0.7",

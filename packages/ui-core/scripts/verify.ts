@@ -730,7 +730,7 @@ check("c02", "package.json shape", () => {
 });
 
 check("c03", "tokens.ts declares the contract", () => {
-	requireEqual(COLOR_NAMES.length, 86, "color count");
+	requireEqual(COLOR_NAMES.length, 87, "color count");
 	requireEqual(new Set(COLOR_NAMES).size, COLOR_NAMES.length, "unique colors");
 	requireEqual(TYPE_ROLES.length, 8, "type role count");
 	requireEqual(SPACING_ROLES.length, 11, "spacing role count");
@@ -740,7 +740,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(SHADOW_LEVELS.length, 2, "shadow level count");
 	requireEqual(WIDTHS.length, 14, "width count");
 	requireEqual(BREAKPOINTS.length, 3, "breakpoint count");
-	requireEqual(WORD_KEYS.length, 71, "word count");
+	requireEqual(WORD_KEYS.length, 70, "word count");
 	requireEqual(COUNTED_WORD_KEYS.length, 2, "counted word count");
 	requireEqual(SLOT_WORD_KEYS.length, 9, "slot word count");
 	requireEqual(
@@ -1397,12 +1397,12 @@ check(
 			});
 		requireEqual(
 			literals("light").join(" "),
-			"canvas group edge edge-raised edge-strong scrim ink-body ink-meta ink-faint",
+			"canvas group edge edge-raised edge-strong grid scrim ink-body ink-meta ink-faint",
 			"the light cast literals",
 		);
 		requireEqual(
 			literals("dark").join(" "),
-			"canvas surface group raised edge edge-raised edge-strong ink-body ink-meta ink-faint on-danger",
+			"canvas surface group raised edge edge-raised edge-strong grid ink-body ink-meta ink-faint on-danger",
 			"the dark cast literals",
 		);
 		// A cast re-hues each cast literal at its declared chroma; a role that

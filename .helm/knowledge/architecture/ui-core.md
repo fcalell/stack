@@ -57,7 +57,7 @@ its rationale.
   slider) has no label, so it and its hover are measured at 3:1 on every ground and its hover
   lightens in dark, away from the near-black ground.
 - Color roles name the place they draw: surfaces (`canvas`, `surface`, `group`, `raised`, `edge`,
-  `edge-raised`, `edge-strong`, `scrim`), three inks (`ink-body`, `ink-meta`, `ink-faint` for
+  `edge-raised`, `edge-strong`, `grid` the canvas's dot grid at 1.5:1 on `canvas`, `scrim`), three inks (`ink-body`, `ink-meta`, `ink-faint` for
   disabled text only), the accent (`accent`, `on-accent`, `accent-soft`, `accent-ink` for a link and
   the ring), three status families with `-soft` and `on-danger`, six chip families by hue name each
   with a mark, a `-soft` ground and an `-ink` and a `neutral` family whose soft and ink alias
@@ -202,7 +202,7 @@ Every word a molecule draws or reads aloud on its own (the seven `Status` words,
 `edit`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`,
 `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `downloadFailed`, `latest`,
 `missing`, `chooseFile`, `typeValue`, `pickValue`, `locked`, `warning`, `photos`, `files`,
-`changed`, `unchanged`, `stale`, `chooseAll`, `chooseNone`, `noMatches`, `imageFiles`, `audioFiles`, `videoFiles`, `textFiles`, `expand`, `collapse`, `zoomIn`, `zoomOut`, `fit`, `arrange`, `off`, `next`, the counted
+`changed`, `unchanged`, `stale`, `chooseAll`, `chooseNone`, `noMatches`, `imageFiles`, `audioFiles`, `videoFiles`, `textFiles`, `expand`, `collapse`, `zoomIn`, `zoomOut`, `fit`, `arrange`, `off`, the counted
 `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`,
 `linesRemoved`, `changedFrom`, `wrongType`, `stepOf` and `chosenOf`) comes from `words`, a closed
 typed object with English defaults. The `Words` type requires every key and `wordsSchema` is strict,
@@ -1524,6 +1524,35 @@ a tick with no animation, never jumped to full.
   the rule is the guide's). The web draws a drag-over as the focus ring (the contract has no dashed
   edge); the phone has no drop. `expo-document-picker` is a native-ui peer declared as
   `expo-clipboard` is; its config plugin only sets an iCloud container, so the component needs none.
+- `Canvas` (web only) draws a graph on two libraries that react-ui carries as its own
+  dependencies, so a consumer installs neither: `d3-zoom` is the viewport and `elkjs` places the
+  nodes. The canvas owns everything else. `d3-zoom` on the region gives pan, the Ctrl or Cmd wheel
+  and pinch, and its transform lands on one layer by script, so a pan renders no React tree; a
+  plain wheel pans through the canvas's own listener, since d3-zoom's wheel always zooms. The layer
+  holds, bottom to top, the group frames, one SVG of every edge with its chips over it, and the
+  nodes, which are absolutely placed elements in path order measured by a `ResizeObserver`; every
+  look is a held `CANVAS_*` cell or a listed overlay. A group is a frame computed from its
+  members' boxes, not a node, so a group needs no parent or ordering rule. ELK runs only when no
+  node has a position, and is given the forward edges alone, to layer the nodes: it does not break
+  a cycle inside a group, and it never sees a label or draws an edge. The canvas routes every edge
+  itself from the final boxes (`geometry.ts`, pure): a forward edge bends in the middle of the layer
+  gap under its source, or in the gap above its target when that leg would cross a node or another
+  group's head, and the layer gap is derived from the chip so a chip beside the leg after the bend
+  clears the line, the arrowhead and the next row by a `pair`;
+  a back edge runs up a corridor at the side, inside the group when both ends are in it, the frame
+  growing on the right to hold the corridor and its chip. A chip stands beside its edge, never on
+  it, so one route serves a computed layout and a stored one. A group's left padding grows so its
+  head text ends a `pair` before the first column an edge crosses the head band at, and ELK's
+  Brandes-Köpf placement is balanced so a parent stands over its children. A graph that fits at scale 1 opens
+  centred, a larger one at scale 1 with its first node in path order at the top centre; Fit is
+  capped at scale 1. ELK's worker is its own file imported with `?worker`, which cannot survive
+  Vite's pre-bundling of this package's `.tsx` entries: the module holding the import
+  (`lib/canvas-layout`) is reached from a dynamic import by the package's own name, so a graph the
+  consumer placed loads neither ELK nor its worker, and the generated Vite config carries
+  `canvasPlugin()`, which serves that module as source and pre-bundles ELK's CJS API by name.
+  Screen readers are out of scope; the keyboard is in: with `onSelect` each node is a button in
+  path order, and a node focused from the keyboard, or a selection from outside, pans into view
+  (a press focuses the button too, and panning then would move a node out from under the pointer).
 - A `FormField` folds an answered question by `answered` (`{ answer, onEdit }`): one summary row
   at the row height (`FORM_FIELD_SUMMARY`: a `Check` in the `ok` ink, the label in body 500, the
   answer truncated in meta, a trailing `Pencil` `IconButton` at the bar fit named by the `edit`

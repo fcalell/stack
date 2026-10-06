@@ -61,6 +61,7 @@ import { TextArea } from "@fcalell/plugin-react-ui/components/text-area";
 import { Thread } from "@fcalell/plugin-react-ui/components/thread";
 import { Toast } from "@fcalell/plugin-react-ui/components/toast";
 import { Table } from "@fcalell/plugin-react-ui/components/table";
+import { Canvas } from "@fcalell/plugin-react-ui/components/canvas";
 import { Toolbar } from "@fcalell/plugin-react-ui/components/toolbar";
 import { Code } from "@fcalell/plugin-react-ui/components/code";
 import { Comparison } from "@fcalell/plugin-react-ui/components/comparison";
@@ -699,5 +700,14 @@ export const closure = (
 		<Table columns={[]} items={[]} row={{ id: String }} classList={{}} />
 		{/* @ts-expect-error: onEdit requires onOpen */}
 		<Table columns={[]} items={[]} row={{ id: String }} onEdit={() => {}} />
+		<Canvas label="x" nodes={[]} />
+		{/* @ts-expect-error: closed channel */}
+		<Canvas label="x" nodes={[]} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Canvas label="x" nodes={[]} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Canvas label="x" nodes={[]} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Canvas label="x" nodes={[]} classList={{}} />
 	</>
 );

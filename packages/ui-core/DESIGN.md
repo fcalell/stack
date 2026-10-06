@@ -11,6 +11,7 @@ colors:
   edge: "oklch(0.915 0.004 264)"
   edge-raised: "oklch(0.915 0.004 264)"
   edge-strong: "oklch(0.61 0.01 264)"
+  grid: "oklch(0.843 0.004 264)"
   scrim: "oklch(0.2 0.01 264 / 0.45)"
   ink-body: "oklch(0.2 0.008 264)"
   ink-meta: "oklch(0.45 0.012 264)"
@@ -97,6 +98,7 @@ colors:
   edge-dark: "oklch(0.298 0.008 264)"
   edge-raised-dark: "oklch(0.332 0.008 264)"
   edge-strong-dark: "oklch(0.575 0.01 264)"
+  grid-dark: "oklch(0.315 0.008 264)"
   scrim-dark: "oklch(0 0 0 / 0.5)"
   ink-body-dark: "oklch(0.97 0.002 264)"
   ink-meta-dark: "oklch(0.76 0.01 264)"
@@ -2319,6 +2321,7 @@ Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fi
 | `edge` | `oklch(0.915 0.004 264)` | `oklch(0.298 0.008 264)` | the hairline over canvas and surface; inside a group or a lifted layer the container re-points it to `edge-raised` |
 | `edge-raised` | `oklch(0.915 0.004 264)` | `oklch(0.332 0.008 264)` | the hairline inside a group and on a lifted layer |
 | `edge-strong` | `oklch(0.61 0.01 264)` | `oklch(0.575 0.01 264)` | a control's boundary, at 3:1 |
+| `grid` | `oklch(0.843 0.004 264)` | `oklch(0.315 0.008 264)` | the canvas's dot grid, at 1.5:1 on `canvas` |
 | `scrim` | `oklch(0.2 0.01 264 / 0.45)` | `oklch(0 0 0 / 0.5)` | the veil behind a dialog or a sheet |
 | `ink-body` | `oklch(0.2 0.008 264)` | `oklch(0.97 0.002 264)` | the primary line of anything |
 | `ink-meta` | `oklch(0.45 0.012 264)` | `oklch(0.76 0.01 264)` | a secondary line, a placeholder, a table header |
@@ -2570,7 +2573,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `Thread` | content | `THREAD`, `THREAD_COLUMN`, `THREAD_LOG`, `THREAD_UNDER_HEAD`, `FOOT_DOCKED`, `THREAD_LATEST` | rest, loading, error, empty |
 | `QrCode` | content | `QR_CODE`, `QR_TILE` | rest, loading |
 | `Image` | content | `IMAGE`, `IMAGE_PICTURE`, `IMAGE_FULL`, `IMAGE_CLOSE`, `IMAGE_FAILED_INK`, `ICON.fit.body`, `ICON_BUTTON.fit.body`, `TEXT.role.meta`, `SCRIM` | rest, hover, focus, active, loading, error |
-| `Canvas` | content, web only | `CANVAS_GROUND`, `CANVAS_NODE`, `CANVAS_NODE_TEXT`, `CANVAS_PORT`, `CANVAS_PORT_HIT`, `CANVAS_GROUP`, `CANVAS_GROUP_HEAD`, `CANVAS_ZOOM`, `ICON.fit.meta`, `ICON_BUTTON.fit.body`, `COUNT`, `COUNT_LABEL`, `CHIP.family.neutral`, `CHIP.trailing.none`, `CHIP_LABEL.family.neutral`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC` | rest, selected |
+| `Canvas` | content, web only | `CANVAS_GROUND`, `CANVAS_NODE`, `CANVAS_NODE_TEXT`, `CANVAS_PORT`, `CANVAS_PORT_HIT`, `CANVAS_GROUP`, `CANVAS_GROUP_HEAD`, `CANVAS_ZOOM`, `ICON.fit.meta`, `ICON_BUTTON.fit.body`, `BUTTON.act.quiet`, `BUTTON.fit.body`, `BUTTON_LABEL.act.quiet`, `COUNT`, `COUNT_LABEL`, `CHIP.family.neutral`, `CHIP.trailing.none`, `CHIP_LABEL.family.neutral`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC` | rest, selected |
 
 A component owns the tokens it may draw: a cell it draws that spells a type role, a colour, a radius, a spacing role, a size or a shadow outside its row is a contract error. A colour ending in `-` is a family (`chip-` is every chip role).
 
@@ -2639,7 +2642,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Thread` | none | `raised`, `edge`, `edge-raised` | `control` | `sections`, `page`, `pair`, `acts` | `measure` | `float` |
 | `QrCode` | none | `edge`, `surface`, `ink-body`, `skeleton` | `card` | none | `qr` | none |
 | `Image` | `meta` | `edge`, `edge-hover`, `ink-body`, `skeleton`, `group`, `ink-meta`, `raised`, `scrim` | `control`, `card` | `page`, `inside` | `image-tile`, `image-cap`, `icon`, `control` | `float` |
-| `Canvas` | `body`, `meta`, `caption` | `canvas`, `group`, `surface`, `edge`, `edge-strong`, `edge-error`, `selected-outline`, `ink-body`, `ink-meta`, `ink-error`, `ink-disabled`, `fill-neutral`, `accent-ink`, `ok`, `warn`, `danger`, `chip-` | `card`, `control`, `full`, `chip` | `inside`, `pair`, `control-x` | `node`, `port`, `target`, `row-2`, `control`, `dot`, `chip`, `icon-meta`, `measure-short`, `spinner` | none |
+| `Canvas` | `body`, `meta`, `caption` | `canvas`, `group`, `surface`, `edge`, `edge-strong`, `edge-error`, `selected-outline`, `edge-hover`, `grid`, `ring`, `ink-body`, `ink-meta`, `ink-error`, `ink-disabled`, `fill-neutral`, `accent-ink`, `ok`, `warn`, `danger`, `chip-` | `card`, `control`, `full`, `chip` | `inside`, `pair`, `control-x` | `node`, `port`, `target`, `row-2`, `control`, `dot`, `chip`, `icon-meta`, `measure-short`, `spinner` | none |
 
 ### Motion
 

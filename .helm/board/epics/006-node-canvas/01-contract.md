@@ -246,7 +246,7 @@ cell, and say so in the commit.
 ### 6. Words (`tokens.ts`: `WORD_KEYS`, `ENGLISH`)
 
 Append to `WORD_KEYS` after `collapse`, with these English values (sentence case, none a slot or
-counted word). `c03` word count 65 to 71; update the word lists in `packages/ui-core/README.md`
+counted word). `c03` word count 65 to 70; update the word lists in `packages/ui-core/README.md`
 and `.helm/knowledge/architecture/ui-core.md`.
 
 | key | English | drawn / read as |
@@ -255,10 +255,7 @@ and `.helm/knowledge/architecture/ui-core.md`.
 | `zoomOut` | `Zoom out` | zoom stack button name |
 | `fit` | `Fit` | zoom stack button name |
 | `arrange` | `Arrange` | zoom stack button name (only with `onMove`) |
-| `off` | `Off` | the off node's line, drawn and spoken |
-| `next` | `Next` | the lead of a node's spoken out-edges |
-
-The `: ` and `; ` in a spoken name are punctuation, not words.
+| `off` | `Off` | the off node's line |
 
 ### 7. The logic (`packages/ui-core/src/canvas.ts`, new; `./canvas` in `package.json` `exports`)
 
@@ -268,7 +265,7 @@ to the sorted subpath string in `scripts/verify.ts` `c02` (and `packages/ui-core
 subpath list). Input types are structural, so a consumer passes its own objects:
 
 ```ts
-import type { CanvasEdge, CanvasNode, IconName, Words } from "./descriptors.ts";
+import type { CanvasEdge, CanvasNode, IconName } from "./descriptors.ts";
 
 // A handoff edge's glyph, drawn beside its label.
 export const HANDOFF_GLYPH: IconName = "ArrowRightLeft";
@@ -282,12 +279,6 @@ export function backEdges(
 	order: readonly string[],
 	edges: readonly Pick<CanvasEdge, "id" | "from" | "to">[],
 ): string[];
-
-export function spokenNames(
-	nodes: readonly CanvasNode[],
-	edges: readonly CanvasEdge[],
-	words: Pick<Words, "off" | "next">,
-): Map<string, string>;
 ```
 
 **`pathOrder`** returns every node id once. Edges naming an id not in `nodes` are ignored. Node ids
@@ -314,21 +305,8 @@ a back edge's target is an ancestor of its source over the other edges, so it pr
 order step 2 produces. The design's "target precedes source in path order" is therefore the
 definition to export, and step 1 is only how the order avoids a loop.
 
-**`spokenNames`** returns each node's accessible name by id, in this order, each part omitted when
-absent and the parts joined with `", "`:
-
-1. the figure: `number ?? count`, as a string (the canvas never invents a number: a consumer that
-   wants the journey's numbering derives it from `pathOrder`)
-2. `overline`
-3. `title`
-4. `words.off` when `off`, else `line`
-5. `status.label`
-6. `problem`
-7. the out-edges, when any whose target is a known node: `` `${words.next}: ${items.join("; ")}` ``
-   where each item is `label, target title` (or the target title alone when the edge has no label),
-   in edge-array order, back edges and handoff edges included.
-
-A handoff reads like any edge: its meaning is its label.
+Screen readers are out of scope for the canvas, so ui-core holds no spoken-name logic: the
+module is the path order, the back edges and the handoff glyph.
 
 ## Tests
 
@@ -355,21 +333,6 @@ in the list, `backEdges(order, edges)` returns edge ids.
 
 Every order lists each node once (assert length and set size on every row).
 
-`spokenNames` (English words; icons are any `IconName`, `"Check"`):
-
-| node | edges | name |
-| --- | --- | --- |
-| `rv` number 3, overline Reviewer, title Review, line "Checks the diff", status `{ done, "Done" }` | `rv>sh` "approve", `rv>im` "request changes"; `sh` is titled Ship, `im` Implement | `3, Reviewer, Review, Checks the diff, Done, Next: approve, Ship; request changes, Implement` |
-| `im`, title Implement | none | `Implement` |
-| `sh`, title Ship | `sh>im` with no label | `Ship, Next: Implement` |
-| title Lint, overline Check, line "Runs lint", `off` | none | `Check, Lint, Off` |
-| title Build, line "Runs the build", problem "Missing token" | none | `Build, Runs the build, Missing token` |
-| title "Fan out", `count` 4 | none | `4, Fan out` |
-| title "Fan out", `number` 2, `count` 4 | none | `2, Fan out` |
-| `sh` as above | `sh>ghost` | `Ship` |
-| title Lint, overline Check, `off`, words `{ off: "Aus", next: "Weiter" }` | none | `Check, Lint, Aus` |
-| `sh` as above, same words | `sh>im` "ok" | `Ship, Weiter: ok, Implement` |
-
 A roster test in the same file (precedent: `test/split.test.ts`): `ROSTER.content.Canvas.props`
 equals the list above; `platforms` is `["web"]`; `rosterEntries("native")` has no `Canvas` and
 `rosterEntries("web")` and `rosterEntries()` have it; `HANDOFF_GLYPH` is a key of Lucide's icons.
@@ -395,14 +358,14 @@ above in their files, not here.
 ## Acceptance criteria
 - [x] `pnpm check` passes.
 - [x] `pnpm --filter @fcalell/ui-core test` passes, including `canvas.test.ts` with every row above and the `DESIGN.md` drift test (regenerated with `pnpm --filter @fcalell/ui-core design-md`).
-- [x] `pnpm --filter @fcalell/ui-core verify` passes: `c02` (the `./canvas` subpath), `c03` (37 sizes, 14 widths, 71 words), `c19`, `c20`, `c21`, `c26` (the new matrices and constants), `c23` (descriptors types only), `c28` (65 components, `platforms` valid), `c31` (the six words), `c34`, `c35` (`Canvas`'s `owns`), `c36` (its holds).
+- [x] `pnpm --filter @fcalell/ui-core verify` passes: `c02` (the `./canvas` subpath), `c03` (37 sizes, 14 widths, 70 words), `c19`, `c20`, `c21`, `c26` (the new matrices and constants), `c23` (descriptors types only), `c28` (65 components, `platforms` valid), `c31` (the five words), `c34`, `c35` (`Canvas`'s `owns`), `c36` (its holds).
 - [x] `pnpm --filter @fcalell/plugin-native-ui verify` passes: `b-roster` and `b7` count 64 components (the web-only entry is skipped), `a6` resolves `w-node`, `size-port` and `border-dashed`.
 - [x] `pnpm --filter @fcalell/plugin-react-ui verify` passes: `b-roster` reports 64 of 65 components built, no other check changes.
 - [x] Path order on the journey example numbers S1 1, A1 2, A2 3, B1 4, B2 5, R 6, T 7, and on the workflow with a loop's back edge and a gate's upstream edge terminates, lists each node once and reports `e4` and `e6` as back edges.
 - [x] No component directory, frame or story was added, and no file under `apps/showcase`, `plugins/react-ui/src/ui/showcase` or `plugins/react-ui/scripts/verify.ts` changed.
 
 ## Decided
-The four questions the refinement raised take its recommendations (2026-10-06):
+The three questions the refinement raised take its recommendations (2026-10-06):
 - **Selection's weight.** The contract has a 1 px hairline and a 2 px ring; the range measures 1.5.
   Recommended: `CANVAS_NODE.selected` recolours the 1 px border to `selected-outline`, and story 02
   adds the weight as a web overlay at the ring's 2 px (`outline-2 outline-selected-outline`, no
@@ -412,16 +375,15 @@ The four questions the refinement raised take its recommendations (2026-10-06):
   Recommended: keep `onSelect`, because it must also say "nothing" (`null`, from Escape or the
   ground), which neither existing name carries, and add one line for it to the README canon's
   `onChange` item rather than a new canon name in this story.
-- **`count` in the spoken name.** The design's spoken order omits it, but a drawn figure that a
-  screen reader skips is a gap. Recommended: read the drawn figure (`number ?? count`) first, as
-  above, and treat the design's list as incomplete.
 - **Web-only cells in ui-core.** The `CANVAS_*` cells are platform-invariant tokens, so they sit
   in the shared matrices and enter native-ui's `a6` probe though no phone component draws them.
   Recommended: accept that (they compile or `a6` names them), rather than a second, web-only
   matrix module.
+- **Selection's weight, revised (fcalell, 2026-10-06).** The selection is a 1 px outline outside the
+  1 px border, a 2 px ring in all, decided after the critique measured 3 px.
 
 ## Progress
-Implemented, not committed. `pnpm --filter @fcalell/ui-core test` (178 pass), ui-core `verify` (34/34), native-ui `verify` (19/19, 64 components, `a6` resolves `w-node`, `size-port`, `border-dashed`), react-ui `verify` (13/13, "64 of 65 roster components built") and `pnpm check` all pass.
+Implemented, not committed. `pnpm --filter @fcalell/ui-core test` (168 pass), ui-core `verify` (34/34), native-ui `verify` (19/19, 64 components, `a6` resolves `w-node`, `size-port`, `border-dashed`), react-ui `verify` (13/13, "64 of 65 roster components built") and `pnpm check` all pass.
 Deviations from the brief:
 - `ColumnWidth` in `descriptors.ts` now excludes `node` as well as `selection`: the new width made react-ui's `Table` `WIDTH` record incomplete (react-ui `b7` failed in `tsc`).
 - `design-md.ts` has per-size and per-width use maps, so "nothing else in the emit changes" held only after adding `port` to `SIZE_USE`; the Layer cell emits `<layer>, <platform> only` for any single-platform entry.

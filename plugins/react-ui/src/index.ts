@@ -169,6 +169,10 @@ export const reactUi = plugin("react-ui", {
 			trigger:
 				"Importing a web component, or setting the theme, words or fonts, or reasoning about density, dark mode or the page container",
 		},
+		{
+			page: "canvas",
+			trigger: "Drawing a graph of nodes and edges, a workflow or a journey",
+		},
 	],
 
 	slots: {
@@ -218,6 +222,22 @@ export const reactUi = plugin("react-ui", {
 				args: defaultMode ? [{ kind: "string", value: defaultMode }] : [],
 			};
 		}),
+		// Vite's dev optimizer pre-bundles this package's `.tsx`, which a
+		// `?worker` import cannot survive: the canvas's layout module is served
+		// as source, and ELK's CJS API is pre-bundled by name.
+		vite.slots.configImports.contribute(
+			(): TsImportSpec => ({
+				source: "@fcalell/plugin-react-ui/node/canvas",
+				named: ["canvasPlugin"],
+			}),
+		),
+		vite.slots.pluginCalls.contribute(
+			(): TsExpression => ({
+				kind: "call",
+				callee: { kind: "identifier", name: "canvasPlugin" },
+				args: [],
+			}),
+		),
 		// Fonts are served straight out of this package's node_modules
 		// (@fontsource). When the stack is workspace-linked those files sit
 		// outside the consumer's workspace root and Vite's dev server 403s

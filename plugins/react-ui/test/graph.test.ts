@@ -159,6 +159,15 @@ test("the dev server pre-bundles the roster's .tsx subpaths", async () => {
 	assert.match(config, /optimizeDeps: \{ extensions: \["\.tsx"\] \}/);
 });
 
+test("the vite config carries the canvas plugin that serves its worker module", async () => {
+	const config = (await artifacts()).get(".stack/vite.config.ts") ?? "";
+	assert.match(
+		config,
+		/import \{ canvasPlugin \} from "@fcalell\/plugin-react-ui\/node\/canvas";/,
+	);
+	assert.match(config, /canvasPlugin\(\)/);
+});
+
 test("words mount a provider only when given", async () => {
 	const bare = (await artifacts()).get(".stack/virtual-providers.tsx");
 	assert.doesNotMatch(bare ?? "", /WordsProvider/);

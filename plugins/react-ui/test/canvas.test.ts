@@ -1,0 +1,926 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import { backEdges, pathOrder } from "@fcalell/ui-core/canvas";
+import type { CanvasGroup } from "@fcalell/ui-core/descriptors";
+import { WIDTH_VALUE } from "@fcalell/ui-core/tokens";
+import ELK from "elkjs";
+import {
+	elkGraph,
+	fromElk,
+	graphKey,
+	layerGap,
+} from "../src/ui/components/canvas/elk.ts";
+import {
+	ARROW,
+	type Box,
+	cleanPoints,
+	crisp,
+	crosses,
+	groupBoxes,
+	groupTree,
+	leftPads,
+	type Route,
+	type RouteInput,
+	roundedPath,
+	routeEdges,
+	verticalLegs,
+} from "../src/ui/components/canvas/geometry.ts";
+import { nodeLook } from "../src/ui/components/canvas/look.ts";
+import {
+	fitTransform,
+	inside,
+	openTransform,
+	whole,
+} from "../src/ui/components/canvas/view.ts";
+import { type Graph, JOURNEY, WORKFLOW } from "../src/ui/showcase/graphs.ts";
+
+const WIDTH = Number.parseFloat(WIDTH_VALUE.node);
+const HEIGHT = 56;
+const HEAD = 28;
+const PAD = 16;
+const PAIR = 8;
+const CHIP = 20;
+// A head's text starts a control's inline padding in and runs 7 px a letter.
+const PADX = 12;
+const GAPS = { node: 16, layer: layerGap(48, CHIP, PAIR), page: 24 };
+
+const node = (id: string) => ({ id });
+
+function graph(over: Partial<Parameters<typeof elkGraph>[0]> = {}) {
+	const { nodes, edges, groups = [] } = WORKFLOW;
+	const order = pathOrder(nodes, edges);
+	return elkGraph({
+		nodes,
+		edges,
+		groups,
+		order,
+		sizes: new Map(nodes.map((n) => [n.id, { width: WIDTH, height: HEIGHT }])),
+		head: HEAD,
+		pad: PAD,
+		gaps: GAPS,
+		...over,
+	});
+}
+
+const ids = (nodes: { id: string }[] | undefined) =>
+	(nodes ?? []).map((n) => n.id);
+
+test("elkGraph stands the children in path order and a group where its first member stands", () => {
+	const elk = graph();
+	// start, plan, then the loop (build's place), gate, review, handoff.
+	assert.deepEqual(ids(elk.children), [
+		"n:start",
+		"n:plan",
+		"g:loop",
+		"n:gate",
+		"n:review",
+		"n:handoff",
+	]);
+	const loop = elk.children?.find((child) => child.id === "g:loop");
+	assert.deepEqual(ids(loop?.children), ["n:build", "n:check"]);
+	// ELK gives a group's own layout its default spacing unless the group is told.
+	assert.deepEqual(loop?.layoutOptions, {
+		"elk.padding": "[top=44,left=16,bottom=16,right=16]",
+		"elk.spacing.nodeNode": "16",
+		"elk.layered.spacing.nodeNodeBetweenLayers": "88",
+	});
+});
+
+test("elkGraph sizes a node by the width token and its measured height", () => {
+	const build = graph()
+		.children?.flatMap((c) => c.children ?? [c])
+		.find((c) => c.id === "n:build");
+	assert.equal(build?.width, WIDTH);
+	assert.equal(build?.height, HEIGHT);
+});
+
+test("elkGraph gives ELK the forward edges only, in array order, with prefixed ids", () => {
+	const elk = graph();
+	assert.deepEqual(
+		(elk.edges ?? []).map((e) => e.id),
+		[
+			"e:start-plan",
+			"e:plan-build",
+			"e:build-check",
+			"e:check-gate",
+			"e:gate-review",
+			"e:review-handoff",
+		],
+	);
+	const first = elk.edges?.[0];
+	assert.deepEqual([first?.sources, first?.targets], [["n:start"], ["n:plan"]]);
+});
+
+test("elkGraph carries the root options and the spacing it is given, and no edge routing", () => {
+	assert.deepEqual(graph().layoutOptions, {
+		"elk.algorithm": "layered",
+		"elk.direction": "DOWN",
+		"elk.hierarchyHandling": "INCLUDE_CHILDREN",
+		"elk.layered.considerModelOrder.strategy": "NODES_AND_EDGES",
+		"elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+		"elk.layered.nodePlacement.bk.fixedAlignment": "BALANCED",
+		"elk.json.shapeCoords": "ROOT",
+		"elk.spacing.nodeNode": "16",
+		"elk.layered.spacing.nodeNodeBetweenLayers": "88",
+		"elk.padding": "[top=24,left=24,bottom=24,right=24]",
+	});
+});
+
+test("a node held by two groups belongs to the first, and an unknown id is ignored", () => {
+	const groups: CanvasGroup[] = [
+		{ id: "one", head: "One", holds: ["a", "ghost"] },
+		{ id: "two", head: "Two", holds: ["a", "b"] },
+	];
+	const nodes = ["a", "b", "c"].map(node);
+	const elk = elkGraph({
+		nodes,
+		edges: [],
+		groups,
+		order: ["a", "b", "c"],
+		sizes: new Map(nodes.map((n) => [n.id, { width: WIDTH, height: HEIGHT }])),
+		head: HEAD,
+		pad: PAD,
+		gaps: GAPS,
+	});
+	assert.deepEqual(ids(elk.children), ["g:one", "g:two", "n:c"]);
+	assert.deepEqual(ids(elk.children?.[0]?.children), ["n:a"]);
+	assert.deepEqual(ids(elk.children?.[1]?.children), ["n:b"]);
+});
+
+test("a group never takes its own ancestor, and a group holding no node is dropped", () => {
+	const groups: CanvasGroup[] = [
+		{ id: "outer", head: "Outer", holds: ["inner", "a"] },
+		{ id: "inner", head: "Inner", holds: ["outer", "b"] },
+		{ id: "empty", head: "Empty", holds: [] },
+	];
+	const tree = groupTree(groups, new Set(["a", "b"]));
+	assert.deepEqual(tree.roots, ["outer", "empty"]);
+	assert.deepEqual(tree.groups.get("outer"), ["inner"]);
+	assert.deepEqual(tree.groups.get("inner"), []);
+	assert.equal(tree.parent.get("inner"), "outer");
+	const nodes = ["a", "b"].map(node);
+	const elk = elkGraph({
+		nodes,
+		edges: [],
+		groups,
+		order: ["a", "b"],
+		sizes: new Map(nodes.map((n) => [n.id, { width: WIDTH, height: HEIGHT }])),
+		head: HEAD,
+		pad: PAD,
+		gaps: GAPS,
+	});
+	assert.deepEqual(ids(elk.children), ["g:outer"]);
+});
+
+test("a layer gap holds the bend, the chip and the air round them", () => {
+	// Half the gap holds a pair, the chip, a pair and an arrowhead.
+	assert.equal(layerGap(48, 20, 8), 88);
+	assert.equal(layerGap(48, 0, 8), 48);
+	assert.equal(layerGap(120, 20, 8), 120);
+});
+
+test("fromElk reads every node's absolute position and ignores a group's rectangle", () => {
+	const out = fromElk({
+		id: "root",
+		children: [
+			{ id: "n:a", x: 24, y: 24, width: 240, height: 56 },
+			{
+				id: "g:loop",
+				x: 24,
+				y: 120,
+				width: 300,
+				height: 200,
+				children: [{ id: "n:b", x: 40, y: 164, width: 240, height: 56 }],
+			},
+		],
+	});
+	assert.deepEqual(
+		[...out],
+		[
+			["a", { x: 24, y: 24 }],
+			["b", { x: 40, y: 164 }],
+		],
+	);
+});
+
+test("graphKey holds still for a status, a label or a selection and moves for an edge's ends", () => {
+	const { nodes, edges, groups = [] } = WORKFLOW;
+	const key = graphKey(nodes, edges, groups);
+	const relabelled = edges.map((e) => ({ ...e, label: "other" }));
+	const moved = nodes.map((n) => ({ ...n, status: undefined, line: "other" }));
+	assert.equal(graphKey(moved, relabelled, groups), key);
+	const rewired = edges.map((e, i) => (i === 0 ? { ...e, to: "gate" } : e));
+	assert.notEqual(graphKey(nodes, rewired, groups), key);
+	assert.notEqual(graphKey(nodes, edges, []), key);
+	const renamed = groups.map((g) => ({ ...g, head: "Else" }));
+	assert.notEqual(graphKey(nodes, edges, renamed), key);
+});
+
+test("nodeLook selects the node that matches and rests the others", () => {
+	assert.deepEqual(nodeLook(node("a"), "a"), {
+		state: "selected",
+		tone: "rest",
+	});
+	assert.deepEqual(nodeLook(node("a"), "b"), { state: "rest", tone: "rest" });
+	assert.deepEqual(nodeLook(node("a"), undefined), {
+		state: "rest",
+		tone: "rest",
+	});
+});
+
+const box = (x: number, y: number, width = 100, height = 50): Box => ({
+	x,
+	y,
+	width,
+	height,
+});
+
+test("groupBoxes grows the members' rectangle by the padding and the head on top", () => {
+	const boxes = new Map([
+		["a", box(100, 100)],
+		["b", box(140, 200)],
+	]);
+	const frames = groupBoxes(
+		[{ id: "g", head: "G", holds: ["a", "b"] }],
+		boxes,
+		{ pad: 10, head: 30 },
+	);
+	assert.deepEqual(frames.get("g"), { x: 90, y: 60, width: 160, height: 200 });
+});
+
+test("groupBoxes frames a nested group inside the one that holds it, whichever is listed first", () => {
+	const boxes = new Map([
+		["a", box(100, 100)],
+		["b", box(100, 200)],
+	]);
+	const outer = { id: "outer", head: "O", holds: ["inner", "a"] };
+	const inner = { id: "inner", head: "I", holds: ["b"] };
+	for (const groups of [
+		[outer, inner],
+		[inner, outer],
+	]) {
+		const frames = groupBoxes(groups, boxes, { pad: 10, head: 30 });
+		assert.deepEqual(frames.get("inner"), {
+			x: 90,
+			y: 160,
+			width: 120,
+			height: 100,
+		});
+		assert.deepEqual(frames.get("outer"), {
+			x: 80,
+			y: 60,
+			width: 140,
+			height: 210,
+		});
+	}
+	assert.equal(
+		groupBoxes([{ id: "g", head: "G", holds: ["ghost"] }], boxes, {
+			pad: 10,
+			head: 30,
+		}).size,
+		0,
+	);
+});
+
+test("groupBoxes grows a frame to the right edge a back edge's corridor asks for", () => {
+	const boxes = new Map([["a", box(100, 100)]]);
+	const frames = groupBoxes(
+		[{ id: "g", head: "G", holds: ["a"] }],
+		boxes,
+		{ pad: 10, head: 30 },
+		new Map([["g", 260]]),
+	);
+	assert.deepEqual(frames.get("g"), { x: 90, y: 60, width: 180, height: 100 });
+});
+
+test("cleanPoints removes a repeat and a point on its neighbours' line, retraces included", () => {
+	const p = (x: number, y: number) => ({ x, y });
+	assert.deepEqual(cleanPoints([p(0, 0), p(0, 0), p(0, 10)]), [
+		p(0, 0),
+		p(0, 10),
+	]);
+	assert.deepEqual(cleanPoints([p(0, 0), p(0, 5), p(0, 10)]), [
+		p(0, 0),
+		p(0, 10),
+	]);
+	assert.deepEqual(
+		cleanPoints([p(144, 194.5), p(144, 214.5), p(144, 201.5), p(144, 221.5)]),
+		[p(144, 194.5), p(144, 221.5)],
+	);
+	assert.deepEqual(cleanPoints([p(0, 0), p(10, 0), p(10, 10)]), [
+		p(0, 0),
+		p(10, 0),
+		p(10, 10),
+	]);
+});
+
+test("roundedPath turns each corner into an arc of the radius, clamped to half a segment", () => {
+	const corner = [
+		{ x: 0, y: 0 },
+		{ x: 100, y: 0 },
+		{ x: 100, y: 100 },
+	];
+	assert.equal(roundedPath(corner, 10), "M0 0L90 0Q100 0 100 10L100 100");
+	assert.equal(roundedPath(corner, 80), "M0 0L50 0Q100 0 100 50L100 100");
+	assert.equal(roundedPath([], 10), "");
+});
+
+test("inside reads a box against the pane under the transform, inset on every side", () => {
+	const transform = { x: 10, y: 10, k: 2 };
+	const pane = { width: 400, height: 300 };
+	assert.equal(inside(box(10, 10, 50, 20), transform, pane, 16), true);
+	assert.equal(inside(box(0, 0, 50, 20), transform, pane, 16), false);
+	assert.equal(inside(box(180, 10, 50, 20), transform, pane, 16), false);
+});
+
+test("fitTransform never exceeds scale 1 and centres the bounds", () => {
+	const pane = { width: 400, height: 300 };
+	const small = fitTransform(box(10, 20, 100, 50), pane, 16);
+	assert.equal(small.k, 1);
+	assert.equal(small.x + (10 + 50) * small.k, 200);
+	assert.equal(small.y + (20 + 25) * small.k, 150);
+
+	const large = fitTransform(box(0, 0, 1000, 200), pane, 16);
+	assert.equal(large.k, (400 - 32) / 1000);
+	assert.ok(large.k < 1);
+	assert.ok(Math.abs(large.x + 500 * large.k - 200) <= 0.5);
+	assert.ok(Math.abs(large.y + 100 * large.k - 150) <= 0.5);
+});
+
+test("openTransform centres a graph that fits and opens a larger one at its first node's top centre", () => {
+	const pane = { width: 400, height: 300 };
+	const fits = openTransform(
+		box(10, 20, 100, 50),
+		box(10, 20, 100, 50),
+		pane,
+		16,
+	);
+	assert.deepEqual(fits, { k: 1, x: 140, y: 105 });
+	const bounds = box(0, 0, 1000, 1000);
+	const first = box(300, 40, 240, 56);
+	const open = openTransform(bounds, first, pane, 16);
+	assert.equal(open.k, 1);
+	// The first node's top centre stands on the pane's centre line, `inset`
+	// below its top.
+	assert.equal((first.x + first.width / 2) * open.k + open.x, 200);
+	assert.equal(first.y * open.k + open.y, 16);
+});
+
+// The graphs are placed by real ELK, the way the canvas does, with a node
+// height, a group head and a chip of fixed test size, then routed.
+const FIXTURES: [string, Graph][] = [
+	["workflow", WORKFLOW],
+	["journey", JOURNEY],
+];
+
+const chipSize = (label: string | undefined, handoff: boolean | undefined) => ({
+	width: 7 * (label?.length ?? 0) + 24 + (handoff ? 20 : 0),
+	height: CHIP,
+});
+
+async function route(source: Graph, pair = PAIR) {
+	const { nodes, edges, groups = [] } = source;
+	const order = pathOrder(nodes, edges);
+	const reach = new Map(groups.map((g) => [g.id, PADX + 7 * g.head.length]));
+	const left = leftPads(groups, reach, { pad: PAD, pair, width: WIDTH });
+	const sizes = new Map(
+		nodes.map((n) => [n.id, { width: WIDTH, height: HEIGHT }]),
+	);
+	const output = await new ELK().layout(
+		elkGraph({
+			nodes,
+			edges,
+			groups,
+			order,
+			sizes,
+			head: HEAD,
+			pad: PAD,
+			left,
+			gaps: { ...GAPS, layer: layerGap(48, CHIP, pair) },
+		}),
+	);
+	const boxes = new Map<string, Box>(
+		[...fromElk(output)].map(([id, point]) => [
+			id,
+			{ ...point, width: WIDTH, height: HEIGHT },
+		]),
+	);
+	const labels = new Map(
+		edges
+			.filter((e) => e.label !== undefined || e.handoff)
+			.map((e) => [e.id, chipSize(e.label, e.handoff)]),
+	);
+	const back = backEdges(order, edges);
+	const input: RouteInput = {
+		boxes,
+		edges,
+		back,
+		groups,
+		labels,
+		head: HEAD,
+		pad: PAD,
+		left,
+		pair,
+	};
+	return {
+		...routeEdges(input),
+		input,
+		output,
+		back,
+		boxes,
+		order,
+		reach,
+		left,
+	};
+}
+
+const cache = new Map<Graph, ReturnType<typeof route>>();
+const placed = (source: Graph) => {
+	let result = cache.get(source);
+	if (!result) {
+		result = route(source);
+		cache.set(source, result);
+	}
+	return result;
+};
+
+const segments = (route: Route) =>
+	route.points.slice(1).map((to, i) => [route.points[i], to] as const);
+
+test("real ELK places the workflow without overlap, its forward edges downward, and the frames equal its own", async () => {
+	const { boxes, output, back, input } = await placed(WORKFLOW);
+	const { nodes, edges, groups = [] } = WORKFLOW;
+	assert.equal(boxes.size, nodes.length);
+	const all = [...boxes.entries()];
+	for (const [i, [a, one]] of all.entries()) {
+		for (const [b, two] of all.slice(i + 1)) {
+			const apart =
+				one.x + one.width <= two.x ||
+				two.x + two.width <= one.x ||
+				one.y + one.height <= two.y ||
+				two.y + two.height <= one.y;
+			assert.ok(apart, `${a} overlaps ${b}`);
+		}
+	}
+	for (const e of edges) {
+		if (back.includes(e.id)) continue;
+		const from = boxes.get(e.from);
+		const to = boxes.get(e.to);
+		assert.ok(
+			from && to && to.y >= from.y + from.height,
+			`${e.id} runs downward`,
+		);
+	}
+	const frames = groupBoxes(groups, boxes, {
+		pad: PAD,
+		head: HEAD,
+		left: input.left,
+	});
+	for (const group of groups) {
+		const own = output.children?.find((c) => c.id === `g:${group.id}`);
+		const frame = frames.get(group.id);
+		assert.ok(own && frame);
+		for (const side of ["x", "y", "width", "height"] as const) {
+			assert.ok(
+				Math.abs((own[side] ?? 0) - frame[side]) < 1,
+				`${group.id} ${side}: ELK ${own[side]}, frame ${frame[side]}`,
+			);
+		}
+	}
+	assert.equal(input.back.length, 2);
+});
+
+const grow = (box: Box, by: number): Box => ({
+	x: box.x - by,
+	y: box.y - by,
+	width: box.width + 2 * by,
+	height: box.height + 2 * by,
+});
+
+const overlaps = (a: Box, b: Box) =>
+	a.x < b.x + b.width &&
+	b.x < a.x + a.width &&
+	a.y < b.y + b.height &&
+	b.y < a.y + a.height;
+
+for (const [name, source] of FIXTURES) {
+	test(`${name}: no route holds a repeated point or one on its neighbours' line`, async () => {
+		const { routes } = await placed(source);
+		assert.ok(routes.size > 0);
+		for (const [id, { points }] of routes) {
+			assert.deepEqual(cleanPoints(points), points, id);
+		}
+	});
+
+	test(`${name}: forward routes are orthogonal, run bottom centre to top centre and cross no node or foreign head`, async () => {
+		const { routes, frames, boxes, back } = await placed(source);
+		const { edges, groups = [] } = source;
+		const tree = groupTree(groups, new Set(boxes.keys()));
+		const holders = (id: string) => {
+			const out: string[] = [];
+			for (let at = tree.parent.get(id); at; at = tree.parent.get(at))
+				out.push(at);
+			return out;
+		};
+		for (const edge of edges) {
+			if (back.includes(edge.id)) continue;
+			const found = routes.get(edge.id);
+			const from = boxes.get(edge.from);
+			const to = boxes.get(edge.to);
+			assert.ok(found && from && to, edge.id);
+			assert.deepEqual(found.points[0], {
+				x: from.x + from.width / 2,
+				y: from.y + from.height,
+			});
+			assert.deepEqual(found.points.at(-1), {
+				x: to.x + to.width / 2,
+				y: to.y,
+			});
+			const held = new Set([...holders(edge.from), ...holders(edge.to)]);
+			for (const [a, b] of segments(found)) {
+				assert.ok(a && b);
+				assert.ok(a.x === b.x || a.y === b.y, `${edge.id} is orthogonal`);
+				for (const [id, other] of boxes) {
+					if (id === edge.from || id === edge.to) continue;
+					assert.ok(!crosses(a, b, other), `${edge.id} crosses ${id}`);
+				}
+				for (const [id, frame] of frames) {
+					if (held.has(id)) continue;
+					const band = { ...frame, height: HEAD };
+					assert.ok(
+						!crosses(a, b, band),
+						`${edge.id} crosses the head of ${id}`,
+					);
+				}
+			}
+		}
+	});
+
+	test(`${name}: a chip stands beside a leg of its edge, on a stretch no other edge draws on, clear of every node, head, chip, arrowhead and its own line`, async () => {
+		const { routes, frames, boxes, back } = await placed(source);
+		const chips = [...routes].filter(([, r]) => r.label);
+		assert.ok(chips.length > 0);
+		for (const [id, { label, points }] of chips) {
+			assert.ok(label, id);
+			const leg = verticalLegs(points).find((l) => l.x + PAIR === label.x);
+			assert.ok(leg, `${id}: a leg ${PAIR} left of its chip`);
+			if (!back.includes(id)) {
+				// `pair` under the stretch's top and a `pair` of air under the chip.
+				const top = label.y - PAIR;
+				const bottom = label.y + label.height + PAIR;
+				assert.ok(
+					top >= leg.top && bottom <= leg.bottom,
+					`${id}: inside its leg`,
+				);
+				for (const [other, found] of routes) {
+					if (other === id) continue;
+					for (const l of verticalLegs(found.points))
+						assert.ok(
+							!(l.x === leg.x && l.top < bottom && l.bottom > top),
+							`${id}: ${other} draws on its stretch`,
+						);
+				}
+			}
+			// It clears each by a `pair`: grown by one, it still touches none.
+			const near = grow(label, PAIR);
+			for (const [at, other] of boxes)
+				assert.ok(!overlaps(near, other), `${id} is near ${at}`);
+			for (const [at, frame] of frames)
+				assert.ok(
+					!overlaps(near, { ...frame, height: HEAD }),
+					`${id} is near the head of ${at}`,
+				);
+			for (const [other, found] of routes) {
+				assert.ok(
+					!overlaps(near, found.arrow),
+					`${id} is near the arrow of ${other}`,
+				);
+				if (other !== id && found.label)
+					assert.ok(
+						!overlaps(near, found.label),
+						`${id} is near the chip of ${other}`,
+					);
+			}
+			for (const [x, y] of segments({ points, arrow: label }))
+				assert.ok(x && y && !crosses(x, y, near), `${id} is near its line`);
+		}
+	});
+}
+
+test("the journey's three option chips stand apart, level, a pair under the fan-out's bend", async () => {
+	const { routes, boxes } = await placed(JOURNEY);
+	const begin = boxes.get("begin");
+	assert.ok(begin);
+	const chips = ["begin-a1", "begin-b1", "begin-c1"].map((id) => {
+		const label = routes.get(id)?.label;
+		assert.ok(label, id);
+		return label;
+	});
+	assert.equal(new Set(chips.map((c) => c.x)).size, 3);
+	// The bend is the middle of the layer gap.
+	for (const c of chips)
+		assert.equal(c.y, begin.y + begin.height + GAPS.layer / 2 + PAIR);
+});
+
+const alone = (over: Partial<RouteInput>): RouteInput => ({
+	boxes: new Map(),
+	edges: [],
+	back: [],
+	groups: [],
+	labels: new Map(),
+	head: HEAD,
+	pad: PAD,
+	pair: PAIR,
+	...over,
+});
+
+test("a target whose column holds a node is entered from the middle of the gap above it", () => {
+	const boxes = new Map([
+		["s", box(0, 0, 240, 56)],
+		["blocker", box(300, 100, 240, 56)],
+		["t", box(300, 300, 240, 56)],
+	]);
+	const edges = [{ id: "e", from: "s", to: "t" }];
+	const blocked = routeEdges(alone({ boxes, edges }));
+	assert.deepEqual(blocked.routes.get("e")?.points, [
+		{ x: 120, y: 56 },
+		// The gap above the target runs from the blocker's bottom (156) to its top.
+		{ x: 120, y: 228 },
+		{ x: 420, y: 228 },
+		{ x: 420, y: 300 },
+	]);
+	const clear = new Map([...boxes].filter(([id]) => id !== "blocker"));
+	const free = routeEdges(alone({ boxes: clear, edges }));
+	// Clear, it bends in the middle of the gap under the source.
+	assert.deepEqual(free.routes.get("e")?.points[1], { x: 120, y: 178 });
+});
+
+test("a target not far enough below its source bends at the middle of the span, unchecked", () => {
+	const boxes = new Map([
+		["s", box(0, 0, 240, 56)],
+		["t", box(300, 60, 240, 56)],
+	]);
+	const { routes } = routeEdges(
+		alone({ boxes, edges: [{ id: "e", from: "s", to: "t" }] }),
+	);
+	assert.deepEqual(routes.get("e")?.points, [
+		{ x: 120, y: 56 },
+		{ x: 120, y: 58 },
+		{ x: 420, y: 58 },
+		{ x: 420, y: 60 },
+	]);
+});
+
+test("the workflow's loop edge runs inside the loop's frame, the gate's answer clears every frame and the frame differs from the bare rectangle only on the right", async () => {
+	const { routes, frames, boxes, left } = await placed(WORKFLOW);
+	const loop = frames.get("loop");
+	const bare = groupBoxes(WORKFLOW.groups ?? [], boxes, {
+		pad: PAD,
+		head: HEAD,
+		left,
+	}).get("loop");
+	assert.ok(loop && bare);
+	const corridor = (id: string) =>
+		verticalLegs(routes.get(id)?.points ?? [])[0];
+	const red = corridor("check-build");
+	const answer = corridor("gate-plan");
+	assert.ok(red && answer);
+	const chip = routes.get("check-build")?.label;
+	assert.ok(chip);
+	assert.ok(red.x > loop.x && red.x < loop.x + loop.width);
+	// The frame holds the chip and its own padding.
+	assert.ok(loop.x + loop.width >= chip.x + chip.width + PAD);
+	assert.ok(answer.x > loop.x + loop.width);
+	assert.deepEqual(
+		[loop.x, loop.y, loop.height],
+		[bare.x, bare.y, bare.height],
+	);
+	assert.ok(loop.width > bare.width);
+});
+
+test("corridors whose spans meet stand the widest chip and two pairs apart", () => {
+	const boxes = new Map(
+		["a", "b", "c"].map(
+			(id, i) => [id, box(0, i * 120, WIDTH, HEIGHT)] as const,
+		),
+	);
+	const edges = [
+		{ id: "ca", from: "c", to: "a" },
+		{ id: "cb", from: "c", to: "b" },
+		{ id: "ba", from: "b", to: "a" },
+	];
+	const labels = new Map([
+		["ca", { width: 90, height: CHIP }],
+		["cb", { width: 40, height: CHIP }],
+		["ba", { width: 60, height: CHIP }],
+	]);
+	const { routes } = routeEdges(
+		alone({ boxes, edges, back: edges.map((e) => e.id), labels }),
+	);
+	const x = (id: string) =>
+		verticalLegs(routes.get(id)?.points ?? [])[0]?.x ?? 0;
+	for (const [one, two] of [
+		["ca", "cb"],
+		["ca", "ba"],
+		["cb", "ba"],
+	] as const) {
+		const widest = Math.max(
+			labels.get(one)?.width ?? 0,
+			labels.get(two)?.width ?? 0,
+		);
+		assert.ok(Math.abs(x(one) - x(two)) >= widest + 2 * PAIR, `${one} ${two}`);
+	}
+});
+
+test("a self-loop leaves and returns on its own node's right side", () => {
+	const { routes } = routeEdges(
+		alone({
+			boxes: new Map([["a", box(0, 0, 240, 56)]]),
+			edges: [{ id: "loop", from: "a", to: "a" }],
+			back: ["loop"],
+		}),
+	);
+	const points = routes.get("loop")?.points ?? [];
+	assert.equal(points.length, 4);
+	assert.deepEqual(points[0], { x: 240, y: 14 });
+	assert.deepEqual(points.at(-1), { x: 240, y: 42 });
+});
+
+test("a nested group's back edge grows the inner frame, and the outer frame grows with it", () => {
+	const boxes = new Map([
+		["a", box(0, 0, 100, 50)],
+		["b", box(0, 100, 100, 50)],
+	]);
+	const groups = [
+		{ id: "outer", head: "O", holds: ["inner"] },
+		{ id: "inner", head: "I", holds: ["a", "b"] },
+	];
+	const edges = [{ id: "up", from: "b", to: "a" }];
+	const labels = new Map([["up", { width: 50, height: CHIP }]]);
+	const base = groupBoxes(groups, boxes, { pad: PAD, head: HEAD });
+	const { frames } = routeEdges(
+		alone({ boxes, edges, back: ["up"], groups, labels }),
+	);
+	for (const id of ["inner", "outer"]) {
+		const grown = frames.get(id);
+		const was = base.get(id);
+		assert.ok(grown && was);
+		assert.ok(grown.width > was.width, id);
+	}
+	const inner = frames.get("inner");
+	const outer = frames.get("outer");
+	assert.ok(inner && outer);
+	assert.ok(outer.x + outer.width >= inner.x + inner.width + PAD);
+});
+
+test("leftPads widens a group's left side until its head text ends a pair before a node's centre", () => {
+	const groups = [
+		{ id: "long", head: "L", holds: [] },
+		{ id: "short", head: "S", holds: [] },
+	];
+	const pads = leftPads(
+		groups,
+		new Map([
+			["long", 185],
+			["short", 60],
+		]),
+		{ pad: 16, pair: 8, width: 240 },
+	);
+	// 185 + 8 - 120; a head that already ends before the centre keeps `pad`.
+	assert.deepEqual([...pads], [["long", 73]]);
+});
+
+test("workflow: every edge that crosses a group's head band passes a pair beyond the head text", async () => {
+	const { routes, frames, reach } = await placed(WORKFLOW);
+	let crossed = 0;
+	for (const [id, frame] of frames) {
+		const band = { ...frame, height: HEAD };
+		const end = frame.x + (reach.get(id) ?? 0);
+		for (const [edge, route] of routes) {
+			for (const [a, b] of segments(route)) {
+				if (!a || !b || !crosses(a, b, band)) continue;
+				crossed++;
+				assert.ok(
+					Math.min(a.x, b.x) >= end + PAIR,
+					`${edge} crosses the head ${Math.min(a.x, b.x) - end} px from its text`,
+				);
+			}
+		}
+	}
+	assert.ok(crossed > 0);
+});
+
+for (const [name, source] of FIXTURES) {
+	test(`${name}: no forward bend lies within a pair of a node's top or bottom`, async () => {
+		const { routes, boxes, back } = await placed(source);
+		for (const edge of source.edges) {
+			if (back.includes(edge.id)) continue;
+			const points = routes.get(edge.id)?.points ?? [];
+			for (const { y } of points.slice(1, -1))
+				for (const [id, node] of boxes) {
+					assert.ok(
+						Math.abs(y - node.y) >= PAIR &&
+							Math.abs(y - (node.y + node.height)) >= PAIR,
+						`${edge.id} bends at ${y}, near ${id}`,
+					);
+				}
+		}
+	});
+}
+
+test("the journey's start node stands over the middle of its legs", async () => {
+	const { boxes } = await placed(JOURNEY);
+	const centre = (id: string) => {
+		const node = boxes.get(id);
+		assert.ok(node, id);
+		return node.x + node.width / 2;
+	};
+	const legs = ["a1", "b1", "c1"].map(centre);
+	const middle = (Math.min(...legs) + Math.max(...legs)) / 2;
+	assert.ok(
+		Math.abs(centre("begin") - middle) <= PAIR,
+		`begin is ${centre("begin") - middle} px off the middle of its legs`,
+	);
+});
+
+test("crisp moves each point onto its pixel's centre", () => {
+	assert.deepEqual(
+		crisp([
+			{ x: 181.2969, y: 92 },
+			{ x: 181.7, y: 172.99 },
+		]),
+		[
+			{ x: 181.5, y: 92.5 },
+			{ x: 181.5, y: 172.5 },
+		],
+	);
+});
+
+for (const pair of [PAIR, 6]) {
+	test(`workflow at pair ${pair}: each back-edge stub holds the arrowhead and a corner`, async () => {
+		const { routes, frames, back, boxes } = await route(WORKFLOW, pair);
+		assert.ok(back.length > 0);
+		for (const id of back) {
+			const points = routes.get(id)?.points ?? [];
+			assert.equal(points.length, 4, id);
+			const [out, , , into] = points;
+			assert.ok(out && into);
+			const edge = WORKFLOW.edges.find((e) => e.id === id);
+			assert.ok(edge, id);
+			const far = points[1];
+			assert.ok(far);
+			const source = boxes.get(edge.from);
+			const target = boxes.get(edge.to);
+			assert.ok(source && target);
+			assert.ok(
+				far.x - (source.x + source.width) >= ARROW + pair,
+				`${id} out of its source`,
+			);
+			assert.ok(
+				far.x - (target.x + target.width) >= ARROW + pair,
+				`${id} into its target`,
+			);
+		}
+		// The loop's frame still holds its corridor and chip.
+		const loop = frames.get("loop");
+		const corridor = routes.get("check-build")?.points[1];
+		const chip = routes.get("check-build")?.label;
+		assert.ok(loop && corridor && chip);
+		assert.ok(loop.x + loop.width >= chip.x + chip.width + PAD);
+	});
+}
+
+test("whole puts a transform's translate on whole pixels and keeps its scale", () => {
+	assert.deepEqual(whole({ x: 260.156, y: -573.5, k: 1 }), {
+		x: 260,
+		y: -573,
+		k: 1,
+	});
+	assert.deepEqual(whole({ x: -0.4, y: 12.5, k: 0.37 }), {
+		x: -0,
+		y: 13,
+		k: 0.37,
+	});
+});
+
+test("fromElk rounds every position to whole pixels, and real ELK's are whole", async () => {
+	const out = fromElk({
+		id: "root",
+		children: [{ id: "n:a", x: 303.84, y: 24.4, width: 240, height: 56 }],
+	});
+	assert.deepEqual([...out], [["a", { x: 304, y: 24 }]]);
+	for (const source of [WORKFLOW, JOURNEY]) {
+		const { boxes } = await placed(source);
+		for (const [id, { x, y }] of boxes)
+			assert.ok(Number.isInteger(x) && Number.isInteger(y), id);
+	}
+});
+
+test("leftPads rounds up to whole pixels", () => {
+	const pads = leftPads(
+		[{ id: "g", head: "G", holds: [] }],
+		new Map([["g", 150.3]]),
+		{ pad: 16, pair: 6, width: 240 },
+	);
+	assert.deepEqual([...pads], [["g", 37]]);
+});

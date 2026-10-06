@@ -2,7 +2,7 @@
 // consumer that numbers or reads its nodes share one answer. Inputs are
 // structural, so a consumer passes its own objects.
 
-import type { CanvasEdge, CanvasNode, IconName, Words } from "./descriptors.ts";
+import type { CanvasEdge, CanvasNode, IconName } from "./descriptors.ts";
 
 // A handoff edge's glyph, drawn beside its label.
 export const HANDOFF_GLYPH: IconName = "ArrowRightLeft";
@@ -99,35 +99,4 @@ export function backEdges(
 			return from !== undefined && to !== undefined && to <= from;
 		})
 		.map((edge) => edge.id);
-}
-
-// Each node's accessible name by id: its figure (`number` over `count`), overline,
-// title, `off` word or line, status label and problem, then its out-edges to
-// known nodes as `Next: label, target title; ...`, joined with commas.
-export function spokenNames(
-	nodes: readonly CanvasNode[],
-	edges: readonly CanvasEdge[],
-	words: Pick<Words, "off" | "next">,
-): Map<string, string> {
-	const titles = new Map(nodes.map((node) => [node.id, node.title]));
-	return new Map(
-		nodes.map((node) => {
-			const next = edges
-				.filter((edge) => edge.from === node.id && titles.has(edge.to))
-				.map((edge) =>
-					[edge.label, titles.get(edge.to)].filter(Boolean).join(", "),
-				);
-			const figure = node.number ?? node.count;
-			const parts = [
-				figure === undefined ? undefined : String(figure),
-				node.overline,
-				node.title,
-				node.off ? words.off : node.line,
-				node.status?.label,
-				node.problem,
-				next.length > 0 ? `${words.next}: ${next.join("; ")}` : undefined,
-			];
-			return [node.id, parts.filter((part) => part !== undefined).join(", ")];
-		}),
-	);
 }

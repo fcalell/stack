@@ -89,6 +89,7 @@ export const COLOR_GROUPS = {
 		"edge",
 		"edge-raised",
 		"edge-strong",
+		"grid",
 		"scrim",
 	],
 	inks: ["ink-body", "ink-meta", "ink-faint"],
@@ -367,6 +368,10 @@ export const COLORS: Record<ColorName, ColorDeclaration> = {
 		light: { ...neutral(0.62, 0.01), holds: EDGE_STRONG_HOLDS },
 		dark: { ...neutral(0.53, 0.01), holds: EDGE_STRONG_HOLDS },
 	},
+	// The canvas's dot grid: 1.5:1 on `canvas` in both modes, between the hairline
+	// (1.19 light, 1.41 dark) and a control's boundary, so a dot reads without
+	// competing with a node's edge.
+	grid: { light: neutral(0.843, 0.004), dark: neutral(0.315, 0.008) },
 	scrim: {
 		light: neutral(0.2, 0.01, 0.45),
 		dark: { l: 0, c: 0, hue: 0, alpha: 0.5 },
@@ -1232,7 +1237,6 @@ export const WORD_KEYS = [
 	"fit",
 	"arrange",
 	"off",
-	"next",
 ] as const;
 export type WordKey = (typeof WORD_KEYS)[number];
 
@@ -1338,7 +1342,6 @@ export const ENGLISH: Words = {
 	fit: "Fit",
 	arrange: "Arrange",
 	off: "Off",
-	next: "Next",
 	earlierLines: {
 		one: "Show {count} earlier line",
 		other: "Show {count} earlier lines",

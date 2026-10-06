@@ -431,6 +431,15 @@ export const OVERLAYS: readonly string[] = [
 	"grid-cols-subgrid",
 	// Stats
 	"page-tablet:basis-0",
+	// Canvas
+	"outline-1",
+	"outline-selected-outline",
+	"overflow-visible",
+	"text-grid",
+	"text-edge-strong",
+	"bottom-page",
+	"left-page",
+	"inset-x-0",
 	// Table
 	"font-normal",
 	"p-0",
@@ -449,16 +458,7 @@ export const OVERLAYS: readonly string[] = [
 	"min-h-row",
 	"min-h-row-2",
 	"w-measure-short",
-	"w-popover",
-	"w-dialog",
-	"w-sheet",
 	"w-measure",
-	"w-sidebar",
-	"w-list",
-	"w-pane",
-	"w-column",
-	"w-auth",
-	"w-empty",
 ];
 
 // SKELETON: a skeleton bar stands at the length of the text it replaces as a
