@@ -86,8 +86,8 @@ its rationale.
   each role a ratio rounded to the pixel, its line box to the even pixel), the eleven spacing roles
   (multiples of 4, one rung looser on touch except the float and page insets and the acts gap; a
   list bleeds by `control-x`, so its rows' leading meets the title over it at either density) and
-  the thirty-five sizes (control 32/44, field 38/48, target 24/44, `indent` 16/20 (a tree row's step
-  in), the switch and its derived thumb travel, the avatar, three icon sizes by the text beside
+  the thirty-seven sizes (control 32/44, field 38/48, target 24/44, `indent` 16/20 (a tree row's step
+  in), `port` 8/8 (a canvas port's drawn size, over the 6/8 dot), the switch and its derived thumb travel, the avatar, three icon sizes by the text beside
   them, the check, the slider track, the one-time-code box, the meter's bar, the chart's plot, the
   QR square, and six derived from the type: the text area's three body lines, the message input's
   eight, an image thumbnail's four (`image-tile`, 80/96, the lines of provenance it stands beside),
@@ -202,7 +202,7 @@ Every word a molecule draws or reads aloud on its own (the seven `Status` words,
 `edit`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`,
 `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `downloadFailed`, `latest`,
 `missing`, `chooseFile`, `typeValue`, `pickValue`, `locked`, `warning`, `photos`, `files`,
-`changed`, `unchanged`, `stale`, `chooseAll`, `chooseNone`, `noMatches`, `imageFiles`, `audioFiles`, `videoFiles`, `textFiles`, `expand`, `collapse`, the counted
+`changed`, `unchanged`, `stale`, `chooseAll`, `chooseNone`, `noMatches`, `imageFiles`, `audioFiles`, `videoFiles`, `textFiles`, `expand`, `collapse`, `zoomIn`, `zoomOut`, `fit`, `arrange`, `off`, `next`, the counted
 `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`,
 `linesRemoved`, `changedFrom`, `wrongType`, `stepOf` and `chosenOf`) comes from `words`, a closed
 typed object with English defaults. The `Words` type requires every key and `wordsSchema` is strict,
@@ -645,7 +645,7 @@ a tick with no animation, never jumped to full.
   (`padding-bottom: env(safe-area-inset-bottom)`, non-zero under the document's
   `viewport-fit=cover`), an overlay the tab bar spells beside `SHELL_TAB_BAR`; native pads the
   same inset from `react-native-safe-area-context`.
-- A frame's fixed regions are widths (`sidebar`, `list`, `pane`, `column`, `auth`, `empty` an empty
+- A frame's fixed regions are widths (`sidebar`, `list`, `pane`, `column`, `node` a canvas node, `auth`, `empty` an empty
   state's column, `selection` a selection bar's column), so a region keeps its measure at any viewport. A skeleton bar alone takes a
   fraction width (`w-1/12`, `w-1/5`, `w-1/4` to `w-3/4`) to stand at its text's length: structural,
   a closed list in the web verify's overlay acceptance, never a token; a chart column's share of its
@@ -1482,10 +1482,12 @@ a tick with no animation, never jumped to full.
   Rejected: optional `value` and `onChange` on every control read from the field's context, which
   would compile a control with no value anywhere and could not type a boolean field against an
   `Input`.
-- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 64 components in four
+- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 65 components in four
   layers (atoms, layout molecules, shared molecules, content molecules) with their prop names, the
   cells each draws (a whole matrix family, one family cell as `FAMILY.axis.value`, or a single cell)
-  and the states it has a form for, the same in both plugins; the showcase draws exactly those
+  and the states it has a form for, the same in both plugins; an entry with `platforms` ships on
+  those alone (`Canvas`, web only, so `rosterEntries("native")` leaves it out and the phone's
+  verify suite reads the rest); the showcase draws exactly those
   matrix cells and states. Each plugin's verify suite reads every component's exported props type
   against it with ts-morph, so a prop added on one platform, renamed, or a style channel reopened
   fails by name. A component's directory is `componentDir(name)` (`ListRow` → `list-row`). A
@@ -1626,6 +1628,67 @@ in composing the unit. ui-core is no plugin, so it contributes nothing itself:
 the consumer's own `dependencies`, so the index's `node_modules/@fcalell/ui-core/guide/` paths
 resolve. A platform's rules for every `.tsx` are its plugin's own page (react-ui's
 `guide/rules.md`).
+
+## The showcase and Storybook
+
+`apps/showcase` serves three pages (`/foundations`, `/layout`, `/tv`; `/` redirects to
+`/foundations`) and the roster in Storybook. react-ui's `./showcase/cells`, `./showcase/frame` and
+`./showcase/frames/*` export the frame data, the `Frame` wrapper and one drawer per component;
+`.storybook/` imports them, nothing is copied. A story is a component in one state
+(`rest`, `disabled`, `loading`, `error`, `empty`, `selected`, whichever its roster entry lists)
+drawing every cell through `Frame`, light and dark side by side, at the toolbar's density. The pointer and
+focus states (`hover`, `active`, `focus`) stay in the roster, the contract both platforms verify, and
+draw no frame and no story: the web's variants match only the real pseudo-classes, and the critique
+reaches those looks by driving the real component. A frame is not a page, so a component story runs
+every axe rule except the page-level ones (`.storybook/preview.tsx`: landmarks, `page-has-heading-one`,
+`region`, `heading-order`, `bypass`, `skip-link`), which judge a whole document that many frames share.
+
+Three kinds of story, one `pnpm stories:test` run (headless Chrome at desktop density and 1280 px;
+touch is a toolbar toggle, not a test run; `a11y.test` is `error`):
+
+- **Page stories**: each place of `/layout`, the pushed Screen and an open record, one page in one mode
+  per story, generated from `@fcalell/plugin-react-ui/showcase/pages` (the list the route also
+  reads; `LayoutPage` takes the `Here` values the route reads from the URL), over the whole
+  document with every axe rule, `region` and the page-level ones included.
+- **Behaviour stories**: hand-written in `apps/showcase/behaviour/`, one per interactive component
+  that owns a widget behaviour the rubric's accessibility floor sets (an overlay's focus in and
+  out, Escape and the hidden page behind; a composite's arrow keys and typeahead; an announcement),
+  each a play function driving the real component by keyboard. They cover Sheet and a `confirm()`
+  decision, a Sheet docked in a Place's foot, Menu, Select, Picker, OptionList, SegmentedControl,
+  Table, List (tree), Slider, InputOtp, Toast and Gate; Screen, Split and Shell move no focus
+  themselves.
+- **Component stories**, above.
+
+A failing assertion is a finding in the component: it stays failing until the component is fixed,
+never weakened or skipped, and no axe rule or selector is excluded beyond the page-level rules.
+
+Storybook runs on stack's generated Vite config (`.stack/vite.config.ts`, by `viteConfigPath`),
+adapted in `.storybook/stack-vite.ts`, which Vitest's config shares:
+
+- The TanStack router plugin goes (it needs the route files and rewrites `routeTree.gen.ts`), and the
+  `server` block goes: its `X-Frame-Options: DENY` and CSP `frame-ancestors 'none'` block Storybook's
+  preview iframe.
+- `root` moves from `.stack/` to the app (Storybook's relative story paths resolve there), with
+  `publicDir` and `outDir`; `server.fs.allow` widens to the workspace root, where the plugin
+  sources live.
+- Storybook runs Vite in middleware mode and never calls `server.listen()`, the call that starts
+  Vite's dependency optimizer, so `optimizeDeps.include` and the scan never run: a CJS dependency
+  behind a `node_modules` import (`react-dom/client` through Storybook's dom shim) is served raw
+  and fails with "require is not defined", and each dep found late reloads the page. A plugin
+  starts the optimizer (`depsOptimizer.init()`) itself, which restores the scan; no dependency
+  list is kept.
+- The browser provider launches Playwright's own browser; where none is installed (NixOS),
+  `CHROME_PATH` names a Chrome to launch. `@storybook/addon-vitest` needs no
+  `setProjectAnnotations` file since Storybook 10.3.
+
+The stories are generated: `.storybook/roster.ts` writes one CSF module per roster component into
+the gitignored `apps/showcase/stories/` (Storybook's watcher does not see a file under a dot
+directory, so not under `.storybook/`), each importing only that component's drawer. Storybook
+re-indexes a file matched by `stories` only when it changes and Node caches an ES module for the
+life of a process, so the roster is read in a child process, and a Vite plugin watches
+`cells.ts`, the drawers and ui-core's built `dist` and rewrites the modules whose text changed:
+a roster edit reaches the sidebar without a restart, and `vitest --changed` reruns only the
+modules whose import graph holds the edited file.
 
 ## Enforcement
 

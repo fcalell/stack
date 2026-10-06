@@ -4,18 +4,19 @@ import { type ReactNode, use } from "react";
 import { Shell } from "../components/shell/index.tsx";
 import { Assistant } from "./layout/assistant.tsx";
 import { Deploys } from "./layout/deploys.tsx";
-import { act, HereContext, readHere, useTo } from "./layout/here.ts";
+import { act, type Here, HereContext, readHere, useTo } from "./layout/here.ts";
 import { Home } from "./layout/home.tsx";
 import { Members } from "./layout/members.tsx";
 import { Domains, Logs, Projects, Verify, Welcome } from "./layout/places.tsx";
 import { Settings } from "./layout/settings.tsx";
 import { Connect, SignIn } from "./layout/sign-in.tsx";
 import { Usage } from "./layout/usage.tsx";
+import type { INSIDE_PLACES, OUTSIDE_PLACES } from "./pages.ts";
 import { useView, ViewBar } from "./view.tsx";
 
 // The places the review draws, by the `place` the URL names, and the Screens
 // pushed over them, by its `screen`.
-const PAGES = {
+const PAGES: Record<(typeof INSIDE_PLACES)[number], () => ReactNode> = {
 	home: Home,
 	deploys: Deploys,
 	projects: Projects,
@@ -25,18 +26,18 @@ const PAGES = {
 	assistant: Assistant,
 	members: Members,
 	settings: Settings,
-} as const;
+};
 type Page = keyof typeof PAGES;
 const SCREENS = { verify: Verify } as const;
 
 // The pages outside the shell, by the `place` the URL names: the first run,
 // the sign-in (email, then code) and the first Connect step, each standing
 // on its own with no sidebar or tab bar.
-const OUTSIDE = {
+const OUTSIDE: Record<(typeof OUTSIDE_PLACES)[number], () => ReactNode> = {
 	welcome: Welcome,
 	"sign-in": SignIn,
 	connect: Connect,
-} as const;
+};
 const isOutside = (place: string): place is keyof typeof OUTSIDE =>
 	place in OUTSIDE;
 
@@ -84,14 +85,24 @@ const SWITCHER: Switcher = {
 // sit under the app, past the viewport.
 export function Layout() {
 	const [view, change] = useView();
-	const here = readHere(view);
 	return (
-		<HereContext value={here}>
-			{isOutside(here.place) ? <Outside place={here.place} /> : <App />}
+		<>
+			<LayoutPage here={readHere(view)} />
 			<footer className="flex flex-row flex-wrap items-center gap-inside p-page">
 				<p className={text({ role: "title" })}>Layout</p>
 				<ViewBar view={view} onChange={change} />
 			</footer>
+		</>
+	);
+}
+
+// The page `here` names, with no view toggles: the route reads `here` from the
+// URL, a story hands it in.
+export function LayoutPage(props: { here: Here }) {
+	const { here } = props;
+	return (
+		<HereContext value={here}>
+			{isOutside(here.place) ? <Outside place={here.place} /> : <App />}
 		</HereContext>
 	);
 }

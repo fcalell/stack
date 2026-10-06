@@ -1,6 +1,6 @@
 # Design critique
 
-A critique judges one rendered unit (a component frame in stack's showcase, or a screen an app
+A critique judges one rendered unit (a component's story in stack's Storybook, or a screen an app
 composed from the roster) against the [rubric](./rubric.md) and reports findings with measured
 numbers. The critic is a fresh session that played no part in composing the unit; it never
 prescribes a look and never edits a file: it says what is off and by how much. Its own
@@ -8,8 +8,8 @@ measurements are the only machine numbers on a render and never evidence of tast
 
 ## What the critic needs
 
-The URL that renders the unit (a showcase frame, the app's dev server route, or a phone route's
-deep link), the patterns it implements, the states it declares and how to reach each (a route, a
+The URL that renders the unit (a Storybook story, `iframe.html?id=<story id>&viewMode=story`, a
+page story among them, the app's dev server route, or a phone route's deep link), the patterns it implements, the states it declares and how to reach each (a route, a
 fixture, a control), the references it was built from, and the files that draw it. Open the
 rubric, the [judging](./judging.md) page, and the page under `patterns/` of each of those
 patterns only. A unit that cannot be opened in a browser or on the emulator is reported as
@@ -64,9 +64,12 @@ each step read as [A phone screen](#a-phone-screen) says.
    the unit's elements: the font sizes and weights in use, row and control heights, radii, border
    colours and widths, shadows, each layer's surface colour, every occurrence of the accent. Each
    value outside its range is a finding with the measured number and the range.
-3. **Interact.** Click every control, hover every row, tab through in order. Screenshot rest,
-   hover, focus, active, disabled, loading, empty, error and selected wherever the unit declares
-   them. A declared state with no visible change is a finding, and so is a loading form whose
+3. **Interact.** Click every control, hover every row, tab through in order. A story draws a
+   component in its prop states (rest, disabled, loading, empty, error, selected) and never a
+   pointer or focus look: the critic reaches hover, press and focus by driving the real component
+   in the story (move the pointer onto it, press and hold, Tab to it). Screenshot rest, hover,
+   focus, active, disabled, loading, empty, error and selected wherever the unit declares them. A
+   declared state with no visible change is a finding, and so is a loading form whose
    height differs from the loaded one, except a collection of unknown length: it waits with a
    fixed number of rows; the list's height may change only by the difference in row count: each
    waiting row matches its loaded row's height and text start, measured row by row, and any

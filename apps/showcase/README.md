@@ -7,11 +7,36 @@ pnpm showcase                  # from the repo root: builds the workspace chain,
 pnpm --filter showcase build   # stack build
 ```
 
-Four pages:
+The roster is in Storybook, three kinds of story:
 
-- `/`: the roster frames, one component a page: `?component=<Name>` (`ListRow`, `Table`, …) draws
-  that component in every cell and state, light and dark side by side, and without it the page
-  links every component.
+- **Component stories**: one per component and accessibility-relevant state (`rest`, `disabled`,
+  `loading`, `error`, `empty`, `selected`), every cell of that component, light and dark side by
+  side, at the toolbar's density (desktop or touch). The `rest` story takes a `cell` control to
+  browse one cell. Hover, press and focus are drawn nowhere: drive the real component in its story.
+- **Page stories** (`Pages/`): each place of the `/layout` app (`deploys`, `projects`, `usage`,
+  `domains`, `logs`, `assistant`, `members`, `settings`, `home`, and `welcome`, `sign-in`, `connect`
+  outside the shell), the Screen pushed over `domains` (`verify`) and an open record (`deploy-d1`),
+  generated from the places list, one page in one mode per story.
+- **Behaviour stories** (`behaviour/*.stories.tsx`, written by hand): the real component driven by
+  keyboard, with a play function asserting the rubric's widget-behaviour floor: Sheet (and a
+  `confirm()` decision), Menu, Select, Picker, OptionList, SegmentedControl, Table (grid cursor),
+  List (tree), Slider, InputOtp, Toast and Gate, and a Sheet docked in a Place's foot. Screen, Split
+  and Shell own no focus move or key handling of their own, so they have none.
+
+```bash
+pnpm stories        # from the repo root: builds the workspace chain, then Storybook on :6006
+pnpm stories:test   # every story in a headless browser: axe on each, the play tests run
+```
+
+The test run is desktop density at a 1280 by 800 viewport; touch is a toolbar toggle. A component
+story runs every axe rule except the page-level ones (`.storybook/preview.tsx` lists them and
+why); a page story runs all of them over the whole document. Playwright's bundled browser is the
+default. Where none is installed (NixOS), point `CHROME_PATH` at a Chrome:
+`CHROME_PATH=$(which google-chrome-stable) pnpm stories:test`. `.storybook/` holds the config;
+`stories/` is generated from the roster and the places list and gitignored.
+
+Three pages stay in the app (`/` redirects to `/foundations`):
+
 - `/foundations`: the token page, every role of the contract on the emitted `app.css`, light and
   dark side by side.
 - `/layout`: one app composed with the built components, every atom, layout, shared and

@@ -5,8 +5,6 @@ import type { ShowcaseFrame } from "../cells.ts";
 import { SCREEN } from "./image.tsx";
 import { Wide } from "./layout-context.tsx";
 
-const open = () => {};
-
 // A moment today at a board's time, as an ISO string the Message formats.
 export function today(time: string): string {
 	const [hours = 0, minutes = 0] = time.split(":").map(Number);
@@ -223,8 +221,7 @@ function Rest(props: { author: Author }) {
 }
 
 // Board 53's message cells on a thread's pane: each author at rest, each
-// loading; the pointer and focus states force the system line that opens,
-// the one pressable form.
+// loading.
 export function drawMessage(frame: ShowcaseFrame) {
 	const author = authorOf(frame.cell.name);
 	let drawn: ReactNode;
@@ -238,17 +235,6 @@ export function drawMessage(frame: ShowcaseFrame) {
 				)}
 			</Pane>
 		);
-	else if (frame.state === "rest") drawn = <Rest author={author} />;
-	else
-		drawn = (
-			<Pane>
-				<Message
-					author="system"
-					body="Relayed from #deploys"
-					at={today("10:04")}
-					onOpen={open}
-				/>
-			</Pane>
-		);
+	else drawn = <Rest author={author} />;
 	return <Wide>{drawn}</Wide>;
 }

@@ -16,39 +16,6 @@
 @source "../../../ui-core/src";
 @source "../../../../packages/ui-core/src";
 
-/* The three pointer and focus variants also match inside an element carrying
-   `data-force-state`, so the showcase draws each state in a static frame with
-   the component's own overlay classes. `hover` keeps Tailwind's
-   `(hover: hover)` condition on the real pseudo-class. */
-@custom-variant hover {
-	@media (hover: hover) {
-		&:hover {
-			@slot;
-		}
-	}
-	&:where([data-force-state="hover"] *) {
-		@slot;
-	}
-}
-
-@custom-variant active {
-	&:active {
-		@slot;
-	}
-	&:where([data-force-state="active"] *) {
-		@slot;
-	}
-}
-
-@custom-variant focus-visible {
-	&:focus-visible {
-		@slot;
-	}
-	&:where([data-force-state="focus"] *) {
-		@slot;
-	}
-}
-
 @layer base {
 	:root {
 		color-scheme: light;
@@ -89,18 +56,8 @@
 
 	/* The ring is drawn outside the box at an offset, so it never covers the
 	   control's own edge. Components spell nothing for it; a control inside a
-	   control rings inset with `focus-visible:-outline-offset-2`. Inside a
-	   showcase frame forced to focus, every tabbable element draws it. */
-	:focus-visible,
-	:where([data-force-state="focus"])
-		:is(
-			a[href],
-			button:not([disabled]),
-			input:not([type="hidden"], [disabled]),
-			textarea:not([disabled]),
-			select:not([disabled]),
-			[tabindex]:not([tabindex="-1"])
-		) {
+	   control rings inset with `focus-visible:-outline-offset-2`. */
+	:focus-visible {
 		outline: var(--focus-ring) solid var(--color-ring);
 		outline-offset: var(--focus-ring-offset);
 	}

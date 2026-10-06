@@ -1208,7 +1208,7 @@ check("b7", "the closure fixture proves every prop at the type layer", () => {
 	const fixturePath = resolve(fixtureDir, "closure.tsx");
 	const source = readFileSync(fixturePath, "utf8");
 	const directives = source.match(/@ts-expect-error/g) ?? [];
-	const components = rosterEntries().length;
+	const components = rosterEntries("native").length;
 	assert(
 		directives.length >= components * 7,
 		`only ${directives.length} @ts-expect-error sites for ${components} components`,
@@ -1245,7 +1245,7 @@ check("b-roster", "every component carries exactly its roster props", () => {
 	const dirs = new Set(readdirSync(COMPONENT_DIR));
 	const seen = new Set<string>();
 	let props = 0;
-	for (const [, name, { props: expected }] of rosterEntries()) {
+	for (const [, name, { props: expected }] of rosterEntries("native")) {
 		const dir = componentDir(name);
 		seen.add(dir);
 		const file = resolve(COMPONENT_DIR, dir, "index.tsx");
@@ -1311,7 +1311,7 @@ check("b-holds", "no component imports a cell another one holds", () => {
 	const held = heldSpellings();
 	// A component is read once its artboard is approved, as its `owns` marks.
 	const approved = new Set(
-		rosterEntries()
+		rosterEntries("native")
 			.filter(([, , entry]) => entry.owns)
 			.map(([, name]) => componentDir(name)),
 	);

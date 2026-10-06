@@ -48,6 +48,7 @@ import {
 	CLOSED_PROPS,
 	componentDir,
 	type Owns,
+	PLATFORMS,
 	rosterEntries,
 	STATES,
 } from "../src/roster.ts";
@@ -119,6 +120,8 @@ import {
 	BANNER_GLYPH,
 	BUTTON,
 	BUTTON_LABEL,
+	CANVAS_NODE,
+	CANVAS_NODE_TEXT,
 	CHANGE_MARK,
 	CHART_BAND,
 	CHART_FILL,
@@ -199,6 +202,8 @@ import {
 	button,
 	buttonContentTone,
 	buttonLabel,
+	canvasNode,
+	canvasNodeText,
 	changeMark,
 	chartBand,
 	chartFill,
@@ -542,6 +547,8 @@ const MATRICES: readonly Registration[] = [
 	["QR_CODE", QR_CODE, qrCode],
 	["IMAGE", IMAGE, image],
 	["IMAGE_PICTURE", IMAGE_PICTURE, imagePicture],
+	["CANVAS_NODE", CANVAS_NODE, canvasNode],
+	["CANVAS_NODE_TEXT", CANVAS_NODE_TEXT, canvasNodeText],
 	["STAGE", STAGE, stage],
 	["STAGE_MARK", STAGE_MARK, stageMark],
 	["STAGE_RAIL", STAGE_RAIL, stageRail],
@@ -704,7 +711,7 @@ check("c02", "package.json shape", () => {
 		Object.keys(pkg.exports ?? {})
 			.sort()
 			.join(" "),
-		"./chart ./clock ./cn ./commit ./derive ./descriptors ./emit ./file ./format ./harness ./list-state ./manifest ./reason ./roster ./route ./rules ./schema ./tokens ./variants",
+		"./canvas ./chart ./clock ./cn ./commit ./derive ./descriptors ./emit ./file ./format ./harness ./list-state ./manifest ./reason ./roster ./route ./rules ./schema ./tokens ./variants",
 		"export subpaths",
 	);
 	assert(pkg.peerDependencies?.zod, "zod is not a peerDependency");
@@ -728,12 +735,12 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(TYPE_ROLES.length, 8, "type role count");
 	requireEqual(SPACING_ROLES.length, 11, "spacing role count");
 	requireEqual(GAP_ROLES.length, 6, "gap role count");
-	requireEqual(SIZES.length, 36, "size count");
+	requireEqual(SIZES.length, 37, "size count");
 	requireEqual(RADIUS_ROLES.length, 7, "radius role count");
 	requireEqual(SHADOW_LEVELS.length, 2, "shadow level count");
-	requireEqual(WIDTHS.length, 13, "width count");
+	requireEqual(WIDTHS.length, 14, "width count");
 	requireEqual(BREAKPOINTS.length, 3, "breakpoint count");
-	requireEqual(WORD_KEYS.length, 65, "word count");
+	requireEqual(WORD_KEYS.length, 71, "word count");
 	requireEqual(COUNTED_WORD_KEYS.length, 2, "counted word count");
 	requireEqual(SLOT_WORD_KEYS.length, 9, "slot word count");
 	requireEqual(
@@ -2050,7 +2057,7 @@ check(
 	"the roster is closed, camelCase, and off the style channels",
 	() => {
 		const entries = rosterEntries();
-		requireEqual(entries.length, 64, "component count");
+		requireEqual(entries.length, 65, "component count");
 		const names = new Set<string>();
 		for (const [, name, { props }] of entries) {
 			assert(/^[A-Z][A-Za-z]+$/.test(name), `${name} is not PascalCase`);
@@ -2247,6 +2254,16 @@ check("c34", "the roster draws every family and names only real states", () => {
 		);
 		for (const state of entry.states) {
 			assert(STATES.includes(state), `${name} names unknown state ${state}`);
+		}
+		assert(
+			entry.platforms === undefined || entry.platforms.length > 0,
+			`${name} ships on no platform`,
+		);
+		for (const platform of entry.platforms ?? []) {
+			assert(
+				PLATFORMS.includes(platform),
+				`${name} names unknown platform ${platform}`,
+			);
 		}
 		for (const prop of ["loading", "empty"] as const) {
 			if (entry.props.includes(prop)) {

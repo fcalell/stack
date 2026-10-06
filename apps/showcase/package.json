@@ -10,7 +10,10 @@
 		"generate": "stack generate",
 		"dev": "stack dev",
 		"build": "stack build",
-		"check-types": "tsc --noEmit"
+		"check-types": "tsc --noEmit",
+		"storybook": "storybook dev -p 6006 --no-open --ci",
+		"build-storybook": "storybook build",
+		"test-storybook": "vitest run"
 	},
 	"dependencies": {
 		"@fcalell/plugin-api": "workspace:*",
@@ -28,13 +31,21 @@
 		"@fcalell/cli": "workspace:*",
 		"@fcalell/typescript-config": "workspace:*",
 		"@fcalell/ui-core": "workspace:*",
+		"@storybook/addon-a11y": "^10.6.1",
+		"@storybook/addon-vitest": "^10.6.1",
+		"@storybook/react-vite": "^10.6.1",
 		"@tailwindcss/vite": "^4.3.3",
 		"@tanstack/router-plugin": "^1.168.41",
+		"@types/node": "^25.5.0",
 		"@types/react": "^19.3.0",
 		"@types/react-dom": "^19.3.0",
 		"@vitejs/plugin-react": "^5.2.0",
+		"@vitest/browser-playwright": "^5.0.3",
 		"babel-plugin-react-compiler": "^1.0.0",
+		"playwright": "^1.63.0",
+		"storybook": "^10.6.1",
 		"typescript": "^5.9.3",
-		"vite": "^7.0.4"
+		"vite": "^7.3.6",
+		"vitest": "^5.0.3"
 	}
 }

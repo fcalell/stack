@@ -750,8 +750,8 @@ function waitingKind(cell: string): "avatar" | "icon" | "status" | "check" {
 	return "icon";
 }
 
-// The skeleton and line-box cells draw the waiting rows; the pointer, focus
-// and current states draw the Split's list, a cell on the group ground or a
+// The skeleton and line-box cells draw the waiting rows; the current state
+// draws the Split's list, a cell on the group ground or a
 // part only the props draw (a chip, the more act, a glyph, one line) the
 // props; the rest cells draw the issues too.
 export function drawListRow(frame: ShowcaseFrame) {

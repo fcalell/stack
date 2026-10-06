@@ -15,6 +15,8 @@ import {
 	BANNER_GLYPH,
 	BUTTON,
 	BUTTON_LABEL,
+	CANVAS_NODE,
+	CANVAS_NODE_TEXT,
 	CHANGE_MARK,
 	CHART_BAND,
 	CHART_FILL,
@@ -170,6 +172,8 @@ export const stageMark = build(STAGE_MARK);
 export const stageRail = build(STAGE_RAIL);
 export const image = build(IMAGE);
 export const imagePicture = build(IMAGE_PICTURE);
+export const canvasNode = build(CANVAS_NODE);
+export const canvasNodeText = build(CANVAS_NODE_TEXT);
 export const placeRow = build(PLACE_ROW);
 export const placeRowGlyph = build(PLACE_ROW_GLYPH);
 export const placeTab = build(PLACE_TAB);
@@ -274,6 +278,8 @@ export const FAMILIES: readonly Family[] = [
 	family("QR_CODE", QR_CODE, qrCode),
 	family("IMAGE", IMAGE, image),
 	family("IMAGE_PICTURE", IMAGE_PICTURE, imagePicture),
+	family("CANVAS_NODE", CANVAS_NODE, canvasNode),
+	family("CANVAS_NODE_TEXT", CANVAS_NODE_TEXT, canvasNodeText),
 	family("STAGE", STAGE, stage),
 	family("STAGE_MARK", STAGE_MARK, stageMark),
 	family("STAGE_RAIL", STAGE_RAIL, stageRail),
@@ -755,6 +761,21 @@ export const STEP_COUNT_SEGMENTS = "gap-inside";
 // (`IMAGE_REMOVE_DISC`).
 export const IMAGE_REMOVE = "m-inside min-h-target min-w-target rounded-full";
 export const IMAGE_REMOVE_DISC = "border border-edge bg-raised";
+
+// Canvas: the ground the nodes stand on, one step off the page; a port, a
+// hollow ring on the node's edge inside a hit box the target's size (24, 44 on
+// touch); a group's dashed frame and its head on the group ground; the zoom
+// stack's box. The dot grid, the edge strokes and the zoom's buttons (`IconButton`)
+// are not cells.
+export const CANVAS_GROUND = "bg-canvas";
+export const CANVAS_PORT =
+	"size-port rounded-full border border-edge-strong bg-surface";
+export const CANVAS_PORT_HIT = "size-target";
+export const CANVAS_GROUP =
+	"rounded-card border border-dashed border-edge-strong";
+export const CANVAS_GROUP_HEAD =
+	"gap-inside px-control-x py-inside rounded-t-card bg-group text-meta leading-meta font-normal text-ink-meta";
+export const CANVAS_ZOOM = "rounded-control border border-edge bg-surface";
 
 // ── Layout ──────────────────────────────────────────────────────────
 

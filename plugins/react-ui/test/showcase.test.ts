@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { rosterEntries } from "@fcalell/ui-core/roster";
 import { showcaseCells, showcaseFrames } from "../src/ui/showcase/cells.ts";
+import { showcasePages } from "../src/ui/showcase/pages.ts";
 
 test("every roster component has frames, and every cell id is unique", () => {
 	const ids = showcaseCells();
@@ -17,4 +18,14 @@ test("every roster component has frames, and every cell id is unique", () => {
 	assert.ok(
 		!ids.some((id) => id.startsWith("Text/") && !id.includes("/rest/")),
 	);
+});
+
+test("no frame draws a pointer or focus state", () => {
+	assert.ok(!showcaseCells().some((id) => /\/(hover|active|focus)\//.test(id)));
+});
+
+test("every page has a unique name", () => {
+	const names = showcasePages().map((page) => page.name);
+	assert.equal(new Set(names).size, names.length);
+	assert.ok(names.includes("verify") && names.includes("welcome"));
 });

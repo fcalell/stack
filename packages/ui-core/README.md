@@ -8,7 +8,7 @@ own CSS from the same records and ui-core stays framework-free. Two subpaths are
 `./harness`, internal tooling for the packages' verify scripts, and `./manifest`, the guide pages
 the UI plugins index.
 
-Seventeen subpaths:
+Twenty subpaths:
 
 - `@fcalell/ui-core/tokens`: the contract as data, the sheet's every value, the knob defaults and
   the English `words`.
@@ -75,8 +75,14 @@ Seventeen subpaths:
   `timeLeft`, a `PendingRun` with `pendingRun` and `pendingShare` (a `PendingBar`'s clock and
   fill), and an ISO moment's age: `ageOf` (its value and unit), `ageWords` (long) and `ageShort`
   (a row's "2 min"). Both plugins tick `now` from one shared clock.
-- `@fcalell/ui-core/roster`: the component roster as data (`ROSTER`, `STATES`, `CLOSED_PROPS`): the
-  layer, prop names, drawn cells, states and owned tokens of every component both plugins ship.
+- `@fcalell/ui-core/roster`: the component roster as data (`ROSTER`, `STATES`, `CLOSED_PROPS`,
+  `PLATFORMS`, `rosterEntries(platform?)`): the layer, prop names, drawn cells, states, platforms
+  and owned tokens of every component the plugins ship.
+- `@fcalell/ui-core/canvas`: what a `Canvas` and its consumers decide from a graph, free of any
+  framework: `pathOrder(nodes, edges)`, every node id once, depth first from the roots with a node
+  of several predecessors placed after its last and a cycle cut at its back edge; `backEdges(order,
+  edges)`, the ids of the edges whose target is at or before its source; `spokenNames(nodes, edges,
+  words)`, each node's accessible name; and `HANDOFF_GLYPH`.
 - `@fcalell/ui-core/harness`: internal. The shared core of the packages' `scripts/verify.ts`.
 - `@fcalell/ui-core/manifest`: `uiCoreGuide`, the package's `guide/` pages with their load
   triggers, which react-ui and native-ui contribute to `cliSlots.guide`.
@@ -147,7 +153,7 @@ beside `theme`: the seven `Status` words, `recommended`, `copy`, `copied`, `down
 `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`,
 `seen`, `unseen`, `copyFailed`, `downloadFailed`, `latest`, `missing`, `chooseFile`, `typeValue`,
 `pickValue`, `locked`, `warning`, `photos`, `files`, `changed`, `unchanged`, `stale`, `chooseAll`,
-`chooseNone`, `noMatches`, `imageFiles`, `audioFiles`, `videoFiles`, `textFiles`, `expand`, `collapse`, the counted `earlierLines` and `waitLeft`, and the slot words `meterValue`,
+`chooseNone`, `noMatches`, `imageFiles`, `audioFiles`, `videoFiles`, `textFiles`, `expand`, `collapse`, `zoomIn`, `zoomOut`, `fit`, `arrange`, `off`, `next`, the counted `earlierLines` and `waitLeft`, and the slot words `meterValue`,
 `meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changedFrom`, `wrongType`, `stepOf` and
 `chosenOf`. A counted word is `{ one, other }`, each form spelling `{count}` where the number
 stands, drawn through `counted(word, count)` (`one` at a count of one, `other` at any other). A slot
@@ -284,13 +290,14 @@ units. Six are gap roles, what a container may put between its children: `inside
 `rows`, `fields`, `sections`; the other five (`control-x`, `card`, `tile`, `float`, `page`) are
 insets.
 
-Thirty-five sizes per density sit in the same `--spacing-*` namespace, so a cell names them as it
+Thirty-seven sizes per density sit in the same `--spacing-*` namespace, so a cell names them as it
 names a role (`min-h-control`, `size-avatar`), and nothing is spaced by them. Desktop then touch:
 `control` 32 / 44 (a button, a segmented control), `control-compact` 28 / 44 (a menu item, a toolbar
 control), `field` 38 / 48 (a form input), `row` 32 / 48 (a one-line row), `row-2` 48 / 64 (a
 two-line row), `row-setting` 64 / 72 (a setting row), `strip` 40 / 44 (a page header bar: a Place's
 or Screen's title and acts), `target` 24 / 44 (the least hit area of any interactive part), `indent`
-16 / 20 (a tree row's step in, one per level, a hairline rail on its end), `dot` 6 / 8, `chip` 20 /
+16 / 20 (a tree row's step in, one per level, a hairline rail on its end), `dot` 6 / 8, `port` 8 / 8 (a canvas
+port's drawn size, over the dot), `chip` 20 /
 24, `avatar` 24 / 32, `spinner` 14 / 18 (the `icon` rung), `switch-w` 28 / 40, `switch-h` 16 / 24,
 `thumb` 12 / 20, `switch-inset` 2 / 2, `switch-travel` 12 / 16 (the thumb's travel, derived:
 `switch-w` less `thumb` and both insets), `skeleton` 12 / 12, `icon-meta` 12 / 14 (an icon beside
@@ -340,7 +347,7 @@ lifted layers' ranges, the one measure for running text and the fixed regions of
 short label's cap is the body's 18 characters whatever its own size, and a consumer face with a
 wider "0" overflows them); a layer never stretches to its container. The regions: `sidebar` 240 (the
 Shell's places), `list` 360 and `pane` 320 (a split's list column and record pane), `column` 300 (a
-board column), `auth` 400 (the sign-in column), `empty` 320 (an empty state's column), `selection` 1060 (a selection bar's column, the pattern's table-wide bar). A width never
+board column), `node` 240 (a canvas node), `auth` 400 (the sign-in column), `empty` 320 (an empty state's column), `selection` 1060 (a selection bar's column, the pattern's table-wide bar). A width never
 takes a spacing role's or a size's name, since `w-*` reads `--spacing-*` first. A skeleton bar alone
 may take a fraction width (`w-1/12`, `w-1/5`, `w-1/4`, `w-1/3`, `w-1/2`, `w-2/3`, `w-3/4`) to stand
 at the length of the text it replaces: structural, never a token; a chart column's share of its slot
@@ -428,7 +435,7 @@ do not cover is a matrix cell or a consumer primitive under `ui/`, never a class
 The canon binds every component either UI plugin ships:
 
 1. One name per concept: `label` for the visible word, `loading` for a busy control, `onChange`
-   for a value's change, `onAct` for an act, `act` for a labelled act or a button's kind, `blocked`
+   for a value's change (`onSelect` is its one sibling: a selection that may also be nothing, `null`), `onAct` for an act, `act` for a labelled act or a button's kind, `blocked`
    for a disabled control's reason, `sentence` for a consumer's line, `fit` for what a component
    sits in. `fit` is a closed enum off its matrix's `fit` axis, defaulting to the matrix's default:
    an `Icon` sits beside meta, body or a control; a `Button` in a body, a bar or under a field; an
@@ -466,13 +473,17 @@ The canon binds every component either UI plugin ships:
 
 ## The roster
 
-`ROSTER` in `@fcalell/ui-core/roster` is the closed list: 64 components in four layers (atoms,
+`ROSTER` in `@fcalell/ui-core/roster` is the closed list: 65 components in four layers (atoms,
 layout molecules, shared molecules, content molecules), each with its prop names, the cells it draws
 (`draws`: a `FAMILIES` name for every cell of that family, `FAMILY.axis.value` for one of its cells,
 as `Text` draws `TEXT.role.body`, or a single-cell constant of `./variants`) and the states it has a
 form for (`states`, from `STATES`: `rest`, `hover`, `focus`, `active`, `disabled`, `loading`,
 `error`, `selected`, `empty`), the same in both plugins. Every family is drawn by at least one
 component, and a component that takes `loading` or `empty` lists that state.
+
+An entry with `platforms` ships on those platforms alone (`Canvas` is `["web"]`); one without ships on
+both, and `rosterEntries(platform)` returns the entries a platform ships. `DESIGN.md` marks a
+single-platform entry in its Layer cell.
 
 A component also declares what it owns (`owns`): the type roles, the colours, the radii, the spacing
 roles, the sizes and widths, and the shadow levels it may draw. A colour is a name or a family

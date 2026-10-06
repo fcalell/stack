@@ -30,9 +30,8 @@ function drawn(fit: ImageFit, state: ShowcaseFrame["state"]) {
 const pressPicture = (stage: HTMLElement) =>
 	requestAnimationFrame(() => press(stage.querySelector("button")));
 
-// `IMAGE.fit.<fit>` draws the picture at that fit in the frame's state (the
-// pointer and focus states forced by the frame, `loading` the skeleton, `error`
-// the failed form); `IMAGE.state.<state>` both fits in that state and
+// `IMAGE.fit.<fit>` draws the picture at that fit in the frame's state
+// (`loading` the skeleton, `error` the failed form); `IMAGE.state.<state>` both fits in that state and
 // `IMAGE_PICTURE.fit.<fit>` the picture alone. The Close act's cell
 // (`ICON_BUTTON.fit.body`) draws the full view opened, contain-fit on the
 // scrim.

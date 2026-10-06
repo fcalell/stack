@@ -7,7 +7,7 @@ const change = () => {};
 
 // The frame's `error` reaches the control through Base UI's
 // `Field`, as a `FormField` puts it; `OTP_BOX.state.error` is in error in
-// every state. A focus frame rings the box the next digit lands in.
+// every state.
 export function drawInputOtp(frame: ShowcaseFrame) {
 	const loading = frame.state === "loading";
 	return (

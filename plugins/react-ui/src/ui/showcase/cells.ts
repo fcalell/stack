@@ -23,10 +23,24 @@ export interface ShowcaseFrame {
 	layer: Layer;
 	component: string;
 	cell: ShowcaseCell;
-	state: State;
+	state: DrawnState;
 	mode: ShowcaseMode;
 	density: ShowcaseDensity;
 }
+
+// The states a frame draws: each one a prop of the component. A pointer or
+// focus look is reached by driving the real component, so no frame draws it.
+const DRAWN_STATES = [
+	"rest",
+	"disabled",
+	"loading",
+	"error",
+	"empty",
+	"selected",
+] as const satisfies readonly State[];
+export type DrawnState = (typeof DRAWN_STATES)[number];
+const isDrawn = (state: State): state is DrawnState =>
+	DRAWN_STATES.some((drawn) => drawn === state);
 
 const CELLS = matrixCells(FAMILIES);
 const BASE: ShowcaseCell = { name: "base", classes: [] };
@@ -45,12 +59,13 @@ function componentCells(entry: RosterEntry): ShowcaseCell[] {
 }
 
 // Every frame the showcase draws, in roster order: each component's cells,
-// each in every state its roster entry lists, every mode and density.
+// each in every drawn state its roster entry lists, every mode and density.
 export function showcaseFrames(): ShowcaseFrame[] {
 	const frames: ShowcaseFrame[] = [];
 	for (const [layer, component, entry] of rosterEntries()) {
 		for (const cell of componentCells(entry)) {
 			for (const state of entry.states) {
+				if (!isDrawn(state)) continue;
 				for (const density of DENSITIES) {
 					for (const mode of MODES) {
 						frames.push({

@@ -251,6 +251,7 @@ spacing:
   target: "24px"
   indent: "16px"
   dot: "6px"
+  port: "8px"
   chip: "20px"
   avatar: "24px"
   spinner: "14px"
@@ -1446,6 +1447,72 @@ components:
     rounded: "{rounded.card}"
     padding: "{spacing.inside}"
     backgroundColor: "{colors.group-dark}"
+  canvas-node-rest:
+    height: "{spacing.row-2}"
+    rounded: "{rounded.card}"
+    backgroundColor: "{colors.group}"
+  canvas-node-rest-dark:
+    height: "{spacing.row-2}"
+    rounded: "{rounded.card}"
+    backgroundColor: "{colors.group-dark}"
+  canvas-node-selected:
+    height: "{spacing.row-2}"
+    rounded: "{rounded.card}"
+    backgroundColor: "{colors.group}"
+  canvas-node-selected-dark:
+    height: "{spacing.row-2}"
+    rounded: "{rounded.card}"
+    backgroundColor: "{colors.group-dark}"
+  canvas-node-problem:
+    height: "{spacing.row-2}"
+    rounded: "{rounded.card}"
+    backgroundColor: "{colors.group}"
+  canvas-node-problem-dark:
+    height: "{spacing.row-2}"
+    rounded: "{rounded.card}"
+    backgroundColor: "{colors.group-dark}"
+  canvas-node-text-overline:
+    typography: "{typography.caption}"
+    textColor: "{colors.ink-meta}"
+  canvas-node-text-overline-dark:
+    typography: "{typography.caption}"
+    textColor: "{colors.ink-meta-dark}"
+  canvas-node-text-title:
+    typography: "{typography.body}"
+    textColor: "{colors.ink-body}"
+  canvas-node-text-title-dark:
+    typography: "{typography.body}"
+    textColor: "{colors.ink-body-dark}"
+  canvas-node-text-line:
+    typography: "{typography.meta}"
+    textColor: "{colors.ink-meta}"
+  canvas-node-text-line-dark:
+    typography: "{typography.meta}"
+    textColor: "{colors.ink-meta-dark}"
+  canvas-node-text-rest:
+    typography: "{typography.meta}"
+    textColor: "{colors.ink-meta}"
+  canvas-node-text-rest-dark:
+    typography: "{typography.meta}"
+    textColor: "{colors.ink-meta-dark}"
+  canvas-node-text-off:
+    typography: "{typography.meta}"
+    textColor: "{colors.ink-meta}"
+  canvas-node-text-off-dark:
+    typography: "{typography.meta}"
+    textColor: "{colors.ink-meta-dark}"
+  canvas-node-text-problem:
+    typography: "{typography.meta}"
+    textColor: "{colors.ink-error}"
+  canvas-node-text-problem-dark:
+    typography: "{typography.meta}"
+    textColor: "{colors.ink-error-dark}"
+  canvas-node-text-dimmed:
+    typography: "{typography.meta}"
+    textColor: "{colors.ink-disabled}"
+  canvas-node-text-dimmed-dark:
+    typography: "{typography.meta}"
+    textColor: "{colors.ink-disabled-dark}"
   stage-done:
     typography: "{typography.body}"
     textColor: "{colors.ink-body}"
@@ -1702,6 +1769,39 @@ components:
   action-bar-all:
     rounded: "{rounded.control}"
     height: "{spacing.target}"
+  canvas-ground:
+    backgroundColor: "{colors.canvas}"
+  canvas-ground-dark:
+    backgroundColor: "{colors.canvas-dark}"
+  canvas-group:
+    rounded: "{rounded.card}"
+  canvas-group-head:
+    backgroundColor: "{colors.group}"
+    typography: "{typography.meta}"
+    textColor: "{colors.ink-meta}"
+  canvas-group-head-dark:
+    backgroundColor: "{colors.group-dark}"
+    typography: "{typography.meta}"
+    textColor: "{colors.ink-meta-dark}"
+  canvas-port:
+    height: "{spacing.port}"
+    width: "{spacing.port}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.surface}"
+  canvas-port-dark:
+    height: "{spacing.port}"
+    width: "{spacing.port}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.surface-dark}"
+  canvas-port-hit:
+    height: "{spacing.target}"
+    width: "{spacing.target}"
+  canvas-zoom:
+    rounded: "{rounded.control}"
+    backgroundColor: "{colors.surface}"
+  canvas-zoom-dark:
+    rounded: "{rounded.control}"
+    backgroundColor: "{colors.surface-dark}"
   chart-grid:
     height: "{spacing.chart}"
   chart-key-dot:
@@ -2352,6 +2452,7 @@ Sizes are heights and squares in the same namespace. Density is a theme and neve
 | `target` | 24px | 44px | 44 | the least hit area of any interactive part |
 | `indent` | 16px | 20px | 20 | a tree row's step in: one per level, a hairline rail on its end |
 | `dot` | 6px | 8px | 8 | a status or chip mark |
+| `port` | 8px | 8px | 8 | a canvas port's drawn size |
 | `chip` | 20px | 24px | 24 | a chip's height |
 | `avatar` | 24px | 32px | 32 | an avatar's side |
 | `spinner` | 14px | 18px | 18 | the spinner inside a pending act |
@@ -2381,7 +2482,7 @@ Sizes are heights and squares in the same namespace. Density is a theme and neve
 
 An icon's stroke is a weight on Lucide's 24-unit grid, so it scales with the icon: `line` 2, an icon's own, and `mark` 3.5, a mark that carries meaning at the meta size (a checkbox's tick and dash, a change mark's glyph), which at 12px draws 1.75 px where `line` draws 1 px across two pixel rows at half coverage. No component spells a stroke number.
 
-Widths of lifted layers, never stretched to their container, and of a frame's fixed regions: `measure-short` 18ch (native 173px, at the body size, so a label's own size is lost there), `popover` 240px, `toast` 360px, `dialog` 520px, `sheet` 640px, `sidebar` 240px, `list` 360px, `pane` 320px, `column` 300px, `auth` 400px, `empty` 320px, `selection` 1060px. Breakpoints: `tablet` 768px, `desktop` 1024px, `wide` 1440px; they are the only responsive variants, of the viewport (`tablet:`) and, on the web, of a page's width (`page-tablet:`, `page-max-tablet:`), by which a Split decides its regions.
+Widths of lifted layers, never stretched to their container, and of a frame's fixed regions: `measure-short` 18ch (native 173px, at the body size, so a label's own size is lost there), `popover` 240px, `toast` 360px, `dialog` 520px, `sheet` 640px, `sidebar` 240px, `list` 360px, `pane` 320px, `column` 300px, `node` 240px, `auth` 400px, `empty` 320px, `selection` 1060px. Breakpoints: `tablet` 768px, `desktop` 1024px, `wide` 1440px; they are the only responsive variants, of the viewport (`tablet:`) and, on the web, of a page's width (`page-tablet:`, `page-max-tablet:`), by which a Split decides its regions.
 
 ## Elevation & Depth
 
@@ -2469,6 +2570,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `Thread` | content | `THREAD`, `THREAD_COLUMN`, `THREAD_LOG`, `THREAD_UNDER_HEAD`, `FOOT_DOCKED`, `THREAD_LATEST` | rest, loading, error, empty |
 | `QrCode` | content | `QR_CODE`, `QR_TILE` | rest, loading |
 | `Image` | content | `IMAGE`, `IMAGE_PICTURE`, `IMAGE_FULL`, `IMAGE_CLOSE`, `IMAGE_FAILED_INK`, `ICON.fit.body`, `ICON_BUTTON.fit.body`, `TEXT.role.meta`, `SCRIM` | rest, hover, focus, active, loading, error |
+| `Canvas` | content, web only | `CANVAS_GROUND`, `CANVAS_NODE`, `CANVAS_NODE_TEXT`, `CANVAS_PORT`, `CANVAS_PORT_HIT`, `CANVAS_GROUP`, `CANVAS_GROUP_HEAD`, `CANVAS_ZOOM`, `ICON.fit.meta`, `ICON_BUTTON.fit.body`, `COUNT`, `COUNT_LABEL`, `CHIP.family.neutral`, `CHIP.trailing.none`, `CHIP_LABEL.family.neutral`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC` | rest, selected |
 
 A component owns the tokens it may draw: a cell it draws that spells a type role, a colour, a radius, a spacing role, a size or a shadow outside its row is a contract error. A colour ending in `-` is a family (`chip-` is every chip role).
 
@@ -2525,7 +2627,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `ProseDiff` | `body` | `edge`, `surface`, `ink-body`, `danger-soft`, `ok-soft`, `skeleton` | `card`, `chip` | `card` | `measure`, `skeleton` | none |
 | `FileRow` | `code`, `meta`, `caption` | `ink-meta`, `ink-body`, `ok`, `warn`, `danger`, `wash-hover`, `ring`, `wash-press`, `wash-selected`, `wash-selected-hover`, `chip-`, `skeleton` | `row`, `full`, `chip` | `inside`, `control-x`, `card` | `row`, `avatar`, `icon`, `figures`, `skeleton`, `measure-short`, `chip`, `icon-meta` | none |
 | `Comparison` | `meta`, `body`, `caption` | `ink-meta`, `ink-body`, `chip-neutral-soft`, `chip-neutral-ink`, `skeleton`, `ok`, `warn`, `danger`, `accent-ink` | `full`, `chip` | `pair`, `inside`, `card` | `row`, `chip`, `dot`, `measure-short`, `skeleton` | none |
-| `Table` | `body`, `meta`, `code`, `caption` | `edge`, `ink-meta`, `ink-body`, `ring`, `chip-teal-soft`, `chip-teal-ink`, `toggle-on`, `on-accent`, `ok`, `wash-hover`, `accent-ink`, `edge-strong`, `surface`, `danger`, `warn`, `wash-press`, `wash-selected`, `wash-selected-hover`, `edge-hover`, `toggle-on-hover`, `skeleton`, `ok-soft`, `danger-soft`, `fill-disabled`, `ink-disabled` | `full`, `chip`, `control` | `control-x`, `inside`, `pair`, `page` | `measure-short`, `popover`, `toast`, `dialog`, `sheet`, `measure`, `sidebar`, `list`, `pane`, `column`, `auth`, `empty`, `selection`, `row`, `row-2`, `target`, `icon-meta`, `chip`, `check`, `dot`, `spinner`, `control-compact`, `icon`, `skeleton`, `line-body` | none |
+| `Table` | `body`, `meta`, `code`, `caption` | `edge`, `ink-meta`, `ink-body`, `ring`, `chip-teal-soft`, `chip-teal-ink`, `toggle-on`, `on-accent`, `ok`, `wash-hover`, `accent-ink`, `edge-strong`, `surface`, `danger`, `warn`, `wash-press`, `wash-selected`, `wash-selected-hover`, `edge-hover`, `toggle-on-hover`, `skeleton`, `ok-soft`, `danger-soft`, `fill-disabled`, `ink-disabled` | `full`, `chip`, `control` | `control-x`, `inside`, `pair`, `page` | `measure-short`, `popover`, `toast`, `dialog`, `sheet`, `measure`, `sidebar`, `list`, `pane`, `column`, `node`, `auth`, `empty`, `selection`, `row`, `row-2`, `target`, `icon-meta`, `chip`, `check`, `dot`, `spinner`, `control-compact`, `icon`, `skeleton`, `line-body` | none |
 | `Rules` | `meta` | `ink-meta`, `ink-disabled` | none | `inside`, `pair`, `card` | `icon-meta` | none |
 | `Message` | `meta`, `body`, `code`, `caption` | `ink-meta`, `group`, `ink-body`, `edge`, `surface`, `skeleton`, `wash-hover`, `ring`, `wash-press`, `chip-` | `card`, `control`, `chip`, `full` | `pair`, `tile`, `inside` | `target`, `icon-meta`, `skeleton`, `figures`, `chip`, `measure-short`, `image-tile` | none |
 | `MessageInput` | `body`, `meta`, `caption` | `edge`, `surface`, `ink-meta`, `ink-body`, `act-accent`, `on-act-accent`, `fill-disabled`, `ink-disabled`, `edge-hover`, `ring`, `raised`, `chip-neutral-soft`, `chip-neutral-ink` | `card`, `control`, `full` | `pair`, `rows`, `inside`, `control-x` | `message-input`, `control-compact`, `icon-control`, `chip`, `measure`, `measure-short`, `icon-meta`, `target`, `spinner`, `image-tile` | none |
@@ -2537,6 +2639,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Thread` | none | `raised`, `edge`, `edge-raised` | `control` | `sections`, `page`, `pair`, `acts` | `measure` | `float` |
 | `QrCode` | none | `edge`, `surface`, `ink-body`, `skeleton` | `card` | none | `qr` | none |
 | `Image` | `meta` | `edge`, `edge-hover`, `ink-body`, `skeleton`, `group`, `ink-meta`, `raised`, `scrim` | `control`, `card` | `page`, `inside` | `image-tile`, `image-cap`, `icon`, `control` | `float` |
+| `Canvas` | `body`, `meta`, `caption` | `canvas`, `group`, `surface`, `edge`, `edge-strong`, `edge-error`, `selected-outline`, `ink-body`, `ink-meta`, `ink-error`, `ink-disabled`, `fill-neutral`, `accent-ink`, `ok`, `warn`, `danger`, `chip-` | `card`, `control`, `full`, `chip` | `inside`, `pair`, `control-x` | `node`, `port`, `target`, `row-2`, `control`, `dot`, `chip`, `icon-meta`, `measure-short`, `spinner` | none |
 
 ### Motion
 

@@ -15,5 +15,8 @@ Working evidence: dated, drains, or gets promoted into `.helm/knowledge/`. Nothi
 - [skeleton-loading.md](./skeleton-loading.md): drawing a component's loading form in skeleton
   (where its shape comes from before the data), changing `List`, `QueryBoundary` or a data
   molecule's loading state, or epic 004.
+- [node-canvas.md](./node-canvas.md): designing or building the node canvas (story 003-110),
+  or a consumer's workflow or journey graph on it.
 - [render-smells.md](./render-smells.md): fixing a component that renders, measures or commits twice
   or waits on timing, or filing epic 005 (render once).
+- [stories-triage.md](./stories-triage.md): reading a failing `pnpm stories:test` (axe or a behaviour play test), changing the page-level rule list, or working stories 003-111 to 003-114.

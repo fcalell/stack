@@ -824,7 +824,7 @@ check("b-nouns", "no product noun in src", () => {
 	return `${PRODUCT_NOUNS.length} nouns absent from src`;
 });
 
-// Every component and every lib module, resolved by plain node (no tsx
+// Every component, lib module and frame drawer, resolved by plain node (no tsx
 // hooks, which add extensions of their own) through the package's
 // `exports`, so only a real resolution to an existing file passes.
 check("b-exports", "every subpath reaches its file through exports", () => {
@@ -835,6 +835,13 @@ check("b-exports", "every subpath reaches its file through exports", () => {
 	}
 	for (const dir of readdirSync(COMPONENT_DIR)) {
 		expected.set(`components/${dir}`, resolve(COMPONENT_DIR, dir, "index.tsx"));
+	}
+	const framesDir = resolve(pkgDir, "src/ui/showcase/frames");
+	for (const name of readdirSync(framesDir)) {
+		expected.set(
+			`showcase/frames/${name.replace(/\.tsx$/, "")}`,
+			resolve(framesDir, name),
+		);
 	}
 	const script = `const out = {}; for (const s of ${JSON.stringify([...expected.keys()])}) { try { out[s] = import.meta.resolve("@fcalell/plugin-react-ui/" + s); } catch { out[s] = null; } } console.log(JSON.stringify(out));`;
 	const output = execFileSync(
@@ -858,7 +865,7 @@ check("b-exports", "every subpath reaches its file through exports", () => {
 		broken.length === 0,
 		`subpaths a consumer cannot import:\n  ${broken.join("\n  ")}`,
 	);
-	return `${expected.size} lib and component subpaths, each resolved to its own file`;
+	return `${expected.size} lib, component and frame drawer subpaths, each resolved to its own file`;
 });
 
 report();

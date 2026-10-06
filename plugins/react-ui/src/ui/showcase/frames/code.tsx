@@ -59,10 +59,6 @@ function Tail(props: { copy?: boolean }) {
 	return <Code text={BUILD_LOG} title="Build log" tail={4} copy={props.copy} />;
 }
 
-// The pointer frames draw the fold alone among the acts, so only it takes
-// the forced state; the focus frames draw the part their cell names (the
-// fold, the copy act, else the text) beside the text, which a forced focus
-// rings too.
 export function drawCode(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
 	if (frame.state === "loading")
@@ -72,31 +68,6 @@ export function drawCode(frame: ShowcaseFrame) {
 				<Code text="" loading />
 			</Wide>
 		);
-	if (frame.state === "hover" || frame.state === "active")
-		return (
-			<Wide>
-				<Tail />
-			</Wide>
-		);
-	if (frame.state === "focus") {
-		if (cell === "ICON.fit.meta")
-			return (
-				<Wide>
-					<Tail />
-				</Wide>
-			);
-		if (cell === "ICON_BUTTON.fit.body" || cell === "ICON.fit.control")
-			return (
-				<Wide>
-					<Code text={INSTALL} copy download="install.txt" />
-				</Wide>
-			);
-		return (
-			<Wide>
-				<Code text={CURL} title="Terminal" />
-			</Wide>
-		);
-	}
 	if (cell === "ICON.fit.meta")
 		return (
 			<Wide>

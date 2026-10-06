@@ -85,8 +85,7 @@ function Changes() {
 	);
 }
 
-// The pointer and focus states force the link row, whose hit takes them;
-// every rest cell draws the settings group, a `STATUS_DOT.state` cell its
+// Every rest cell draws the settings group, a `STATUS_DOT.state` cell its
 // status row in that state, a `CHANGE_MARK` cell the change set's facts.
 export function drawDefinitionRow(frame: ShowcaseFrame) {
 	const [family, , value] = frame.cell.name.split(".");

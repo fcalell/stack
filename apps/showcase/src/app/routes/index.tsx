@@ -1,6 +1,7 @@
-import { Showcase } from "@fcalell/plugin-react-ui/showcase";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
-	component: Showcase,
+	beforeLoad: () => {
+		throw redirect({ to: "/foundations" });
+	},
 });

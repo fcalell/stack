@@ -19,6 +19,9 @@ import * as variants from "./variants.ts";
 export const LAYERS = ["atom", "layout", "shared", "content"] as const;
 export type Layer = (typeof LAYERS)[number];
 
+export const PLATFORMS = ["web", "native"] as const;
+export type Platform = (typeof PLATFORMS)[number];
+
 // The style channels no component may take. Each is declared `?: never` on
 // every component's props, in both plugins.
 export const CLOSED_PROPS = [
@@ -72,6 +75,8 @@ export interface RosterEntry {
 	holds?: readonly string[];
 	states: readonly State[];
 	owns?: Owns;
+	// The platforms that ship it; absent means both.
+	platforms?: readonly Platform[];
 }
 
 // A pressable control's four.
@@ -2914,6 +2919,95 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				elevation: ["float"],
 			},
 		},
+		// A graph of nodes and edges on a pannable ground, the web's alone: the
+		// phone has no pointer to drag a node or draw an edge with. Selection
+		// recolours the node's outline; a `path` dims what a run did not take.
+		Canvas: {
+			props: [
+				"label",
+				"nodes",
+				"edges",
+				"groups",
+				"selected",
+				"onSelect",
+				"path",
+				"onMove",
+				"onConnect",
+				"act",
+			],
+			platforms: ["web"],
+			draws: [
+				"CANVAS_GROUND",
+				"CANVAS_NODE",
+				"CANVAS_NODE_TEXT",
+				"CANVAS_PORT",
+				"CANVAS_PORT_HIT",
+				"CANVAS_GROUP",
+				"CANVAS_GROUP_HEAD",
+				"CANVAS_ZOOM",
+				"ICON.fit.meta",
+				"ICON_BUTTON.fit.body",
+				"COUNT",
+				"COUNT_LABEL",
+				"CHIP.family.neutral",
+				"CHIP.trailing.none",
+				"CHIP_LABEL.family.neutral",
+				"STATUS",
+				"STATUS_DOT",
+				"STATUS_SPINNER",
+				"STATUS_LABEL",
+				"SPINNER",
+				"SPINNER_TRACK",
+				"SPINNER_ARC",
+			],
+			holds: [
+				"CANVAS_GROUND",
+				"CANVAS_NODE",
+				"CANVAS_NODE_TEXT",
+				"CANVAS_PORT",
+				"CANVAS_PORT_HIT",
+				"CANVAS_GROUP",
+				"CANVAS_GROUP_HEAD",
+				"CANVAS_ZOOM",
+			],
+			states: ["rest", "selected"],
+			owns: {
+				roles: ["body", "meta", "caption"],
+				colors: [
+					"canvas",
+					"group",
+					"surface",
+					"edge",
+					"edge-strong",
+					"edge-error",
+					"selected-outline",
+					"ink-body",
+					"ink-meta",
+					"ink-error",
+					"ink-disabled",
+					"fill-neutral",
+					"accent-ink",
+					"ok",
+					"warn",
+					"danger",
+					"chip-",
+				],
+				radii: ["card", "control", "full", "chip"],
+				spacing: ["inside", "pair", "control-x"],
+				sizes: [
+					"node",
+					"port",
+					"target",
+					"row-2",
+					"control",
+					"dot",
+					"chip",
+					"icon-meta",
+					"measure-short",
+					"spinner",
+				],
+			},
+		},
 	},
 };
 
@@ -2922,10 +3016,16 @@ export function componentDir(name: string): string {
 	return name.replace(/(?<!^)[A-Z]/g, (ch) => `-${ch}`).toLowerCase();
 }
 
-export function rosterEntries(): Array<[Layer, string, RosterEntry]> {
+// With a platform, only the entries that ship on it.
+export function rosterEntries(
+	platform?: Platform,
+): Array<[Layer, string, RosterEntry]> {
 	const out: Array<[Layer, string, RosterEntry]> = [];
 	for (const layer of LAYERS) {
 		for (const [name, entry] of Object.entries(ROSTER[layer])) {
+			if (platform && entry.platforms && !entry.platforms.includes(platform)) {
+				continue;
+			}
 			out.push([layer, name, entry]);
 		}
 	}

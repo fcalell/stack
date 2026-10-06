@@ -1,5 +1,6 @@
 import { createContext, use, useEffect, useState } from "react";
 import type { QueryLike } from "../../components/query-boundary/index.tsx";
+import { FIXTURE_MS } from "../pages.ts";
 import type { View } from "../view.tsx";
 
 // Where the review stands: the place the URL names, the Screen pushed over
@@ -72,7 +73,10 @@ export function useFixture<T>(data: T): QueryLike<T> {
 		setState("pending");
 		if (query === "loading") return;
 		const failed = query === "missing" || (query === "error" && run === 0);
-		const timer = setTimeout(() => setState(failed ? "error" : "done"), 900);
+		const timer = setTimeout(
+			() => setState(failed ? "error" : "done"),
+			FIXTURE_MS,
+		);
 		return () => clearTimeout(timer);
 	}, [query, run]);
 	const isError = state === "error";

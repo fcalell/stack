@@ -93,8 +93,7 @@ function Live(props: {
 	);
 }
 
-// Board 53's input frames, the shape by the page's density: a pointer or
-// focus state on a typed value; disabled with its notice; at rest the frames
+// Board 53's input frames, the shape by the page's density: disabled with its notice; at rest the frames
 // whose part the cell names (Send for the primary act, Stop beside it for
 // the secondary and the icon act, the notice's act for the bar fit, the chips
 // for the chip and its glyph, the field and its text for the field, the empty
@@ -162,7 +161,6 @@ export function drawMessageInput(frame: ShowcaseFrame) {
 	let drawn: ReactNode;
 	if (frame.state === "disabled")
 		drawn = <Live disabled notice={{ sentence: "This thread is archived." }} />;
-	else if (frame.state === "rest") drawn = <Rest cell={frame.cell.name} />;
-	else drawn = <Live value={ASKED} />;
+	else drawn = <Rest cell={frame.cell.name} />;
 	return <Wide>{drawn}</Wide>;
 }

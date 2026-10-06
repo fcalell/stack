@@ -426,11 +426,11 @@ export type MessageDetail =
 
 // ── Table ───────────────────────────────────────────────────────────
 
-// A column's width: a `widths` rung (but a selection bar's column), or a
-// fraction of the table's width. A column with neither shares what the others
+// A column's width: a `widths` rung (but a selection bar's column and a canvas
+// node's), or a fraction of the table's width. A column with neither shares what the others
 // leave.
 export type ColumnWidth =
-	| Exclude<Width, "selection">
+	| Exclude<Width, "selection" | "node">
 	| "1/4"
 	| "1/3"
 	| "1/2"
@@ -556,4 +556,54 @@ export interface TableRowSlots<T> {
 	locked?: (item: T) => readonly string[] | undefined;
 	warning?: (item: T) => string | undefined;
 	change?: (item: T) => ChangeKind | undefined;
+}
+
+// A point on the canvas, in its own coordinates.
+export interface CanvasPoint {
+	x: number;
+	y: number;
+}
+
+// One node: its glyph, its words and the one figure in its trailing slot,
+// `number` (a place in a sequence) over `count`. A `problem` is drawn in
+// place of `line`; an `off` node is drawn quiet. Without a `position` the
+// canvas places it.
+export interface CanvasNode {
+	id: string;
+	icon: IconName;
+	overline?: string;
+	title: string;
+	line?: string;
+	number?: number;
+	count?: number;
+	status?: StatusMark;
+	problem?: string;
+	off?: boolean;
+	position?: CanvasPoint;
+}
+
+// An edge from one node's id to another's, its `label` drawn on it; a
+// `handoff` edge carries its glyph beside the label.
+export interface CanvasEdge {
+	id: string;
+	from: string;
+	to: string;
+	label?: string;
+	handoff?: boolean;
+}
+
+// A frame round the nodes and groups it `holds`, by id; a group may hold a
+// group.
+export interface CanvasGroup {
+	id: string;
+	head: string;
+	holds: readonly string[];
+}
+
+// A run or scenario's taken path, by id; everything else dims. `at` is the
+// node the run stands at.
+export interface CanvasPath {
+	nodes: readonly string[];
+	edges: readonly string[];
+	at?: string;
 }

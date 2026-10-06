@@ -1,0 +1,59 @@
+import { showcaseFrames } from "@fcalell/plugin-react-ui/showcase/cells";
+import { type Draw, Frame } from "@fcalell/plugin-react-ui/showcase/frame";
+import type { StoryObj } from "@storybook/react-vite";
+
+const FRAMES = showcaseFrames();
+
+interface Args {
+	cell: string;
+}
+
+// One story per component and state: every cell the component draws in that
+// state, light and dark side by side, at the toolbar's density. The `rest`
+// story takes a `cell` arg to browse one cell.
+export function stateStories(component: string, draw?: Draw) {
+	const own = FRAMES.filter((frame) => frame.component === component);
+	return (state: string): StoryObj<Args> => {
+		const cells = [
+			...new Set(
+				own.filter((frame) => frame.state === state).map((f) => f.cell.name),
+			),
+		];
+		return {
+			args: { cell: "all" },
+			argTypes: {
+				cell:
+					state === "rest"
+						? { control: "select", options: ["all", ...cells] }
+						: { table: { disable: true } },
+			},
+			parameters: { layout: "padded" },
+			render: (args, context) => {
+				const density = String(context.globals.density);
+				return (
+					<div key={density} className="flex flex-col gap-inside">
+						{cells
+							.filter((cell) => args.cell === "all" || args.cell === cell)
+							.map((cell) => (
+								<div
+									key={cell}
+									className="flex flex-row flex-wrap gap-pair min-w-0"
+								>
+									{own
+										.filter(
+											(frame) =>
+												frame.cell.name === cell &&
+												frame.state === state &&
+												frame.density === density,
+										)
+										.map((frame) => (
+											<Frame key={frame.id} frame={frame} draw={draw} />
+										))}
+								</div>
+							))}
+					</div>
+				);
+			},
+		};
+	};
+}

@@ -51,7 +51,7 @@ function search(view: View): string {
 	return `?${new URLSearchParams({ mode: view.mode, density: view.density })}`;
 }
 
-// The page's own parameters (a layout's place, a roster's component) stay.
+// The page's own parameters (a layout's place) stay.
 function writeView(view: View): void {
 	const url = new URL(window.location.href);
 	url.searchParams.set("mode", view.mode);
@@ -78,7 +78,6 @@ export function useView(): [View, (next: View) => void] {
 
 // The showcase's pages, each linked from the others' headers.
 const PAGES = [
-	{ path: "/", label: "Showcase" },
 	{ path: "/foundations", label: "Foundations" },
 	{ path: "/layout", label: "Layout" },
 ];

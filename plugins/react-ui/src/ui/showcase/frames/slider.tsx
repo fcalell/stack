@@ -18,12 +18,12 @@ function at(value: number) {
 	);
 }
 
-// The one slider cell: at 30 of 0 to 60 in every state, and at rest and
-// under focus also at the minimum and the maximum, where the thumb meets the
+// The one slider cell: at 30 of 0 to 60 in every state, and at rest also at
+// the minimum and the maximum, where the thumb meets the
 // track's ends. A disabled slider is drawn inside a disabled field, the way a
 // form disables it.
 export function drawSlider(frame: ShowcaseFrame) {
-	const ends = frame.state === "rest" || frame.state === "focus";
+	const ends = frame.state === "rest";
 	const drawn = (
 		<div className="flex flex-col gap-pair w-popover">
 			{at(30)}

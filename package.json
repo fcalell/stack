@@ -6,7 +6,9 @@
 		"check-types": "turbo run check-types",
 		"check": "turbo run build check-types test && pnpm lint",
 		"showcase": "turbo run build --filter=showcase^... && pnpm --filter showcase dev",
-		"clear": "pnpm -r --if-present run clear && rm -rf node_modules .turbo"
+		"clear": "pnpm -r --if-present run clear && rm -rf node_modules .turbo",
+		"stories": "turbo run build --filter=showcase^... && pnpm --filter showcase generate && pnpm --filter showcase storybook",
+		"stories:test": "turbo run build --filter=showcase^... && pnpm --filter showcase generate && pnpm --filter showcase test-storybook"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.16",

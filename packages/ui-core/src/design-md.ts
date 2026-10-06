@@ -133,6 +133,7 @@ const SIZE_USE: Record<(typeof SIZES)[number], string> = {
 	target: "the least hit area of any interactive part",
 	indent: "a tree row's step in: one per level, a hairline rail on its end",
 	dot: "a status or chip mark",
+	port: "a canvas port's drawn size",
 	chip: "a chip's height",
 	avatar: "an avatar's side",
 	spinner: "the spinner inside a pending act",
@@ -514,7 +515,9 @@ function body(resolved: ResolvedTheme): string[] {
 			["Component", "Layer", "Draws", "States"],
 			rosterEntries().map(([layer, name, entry]) => [
 				code(name),
-				layer,
+				entry.platforms?.length === 1
+					? `${layer}, ${entry.platforms[0]} only`
+					: layer,
 				entry.draws.map(code).join(", ") || "none",
 				entry.states.join(", "),
 			]),

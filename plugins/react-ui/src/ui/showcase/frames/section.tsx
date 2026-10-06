@@ -48,8 +48,7 @@ function Members(props: { blocked?: boolean }) {
 	);
 }
 
-// By state: the pointer and focus states force the fold toggle of a folded
-// section; `disabled` draws the blocked act before it is pressed and in a
+// By state: `disabled` draws the blocked act before it is pressed and in a
 // touched form with its reason shown; `loading` the waiting count over a
 // Group's and a List's own skeleton rows (a List as a waiting QueryBoundary's
 // loading form too), and the section's skeleton fields standing in
@@ -59,18 +58,6 @@ function Members(props: { blocked?: boolean }) {
 export function drawSection(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
 	const add = { label: "Add", onAct: act };
-	if (
-		frame.state === "hover" ||
-		frame.state === "focus" ||
-		frame.state === "active"
-	)
-		return (
-			<Wide>
-				<Section title="Done" count={11} folded onToggle={act}>
-					<List items={STAND_INS} row={STAND_IN_ROW} />
-				</Section>
-			</Wide>
-		);
 	if (frame.state === "disabled")
 		return (
 			<Wide>

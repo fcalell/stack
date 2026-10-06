@@ -51,14 +51,13 @@ function opener(highlight: boolean) {
 const OPEN = opener(false);
 const HIGHLIGHT = opener(true);
 
-// The trigger alone in each pointer state on its fit cells; the menu open
+// The trigger alone on its fit cells; the menu open
 // on its form cells (the popover on the desktop, the sheet on touch) and,
 // on the highlighted row cell, with the keyboard on its second row.
 export function drawMenu(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
 	if (cell === "ICON_BUTTON.fit.bar" || cell === "ICON_BUTTON.fit.body")
 		return <Menu label="More" items={ITEMS} />;
-	if (frame.state !== "rest") return undefined;
 	if (cell === "MENU.form.popover" || cell === "MENU.form.sheet")
 		return (
 			<Stage contain={frame.density === "touch"} ready={OPEN}>

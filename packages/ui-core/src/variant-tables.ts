@@ -1036,6 +1036,50 @@ export const IMAGE_PICTURE = matrix({
 	defaultVariants: { fit: "content" },
 });
 
+// ── Canvas ──────────────────────────────────────────────────────────
+
+// A node's box on the group ground and the colour of its outline: the rest
+// hairline, the selection's, or the problem's. Off and path-dimmed nodes draw
+// the rest box and differ in their text's ink; the path's `at` node draws
+// `selected`.
+export const CANVAS_NODE = matrix({
+	base: "w-node min-h-row-2 gap-pair px-control-x py-inside rounded-card border bg-group",
+	variants: {
+		state: {
+			rest: "border-edge",
+			selected: "border-selected-outline",
+			problem: "border-edge-error",
+		},
+	},
+	defaultVariants: { state: "rest" },
+});
+
+// A node's text: the type role rides on the part, the ink on the tone. A rest
+// overline and line are meta, a rest title is body; off, problem and dimmed
+// recolour every part they reach.
+export const CANVAS_NODE_TEXT = matrix({
+	base: "",
+	variants: {
+		part: {
+			overline: "text-caption leading-caption tracking-caption font-normal",
+			title: "text-body leading-body font-medium",
+			line: "text-meta leading-meta font-normal",
+		},
+		tone: {
+			rest: "",
+			off: "text-ink-meta",
+			problem: "text-ink-error",
+			dimmed: "text-ink-disabled",
+		},
+	},
+	compoundVariants: [
+		{ part: "overline", tone: "rest", class: "text-ink-meta" },
+		{ part: "line", tone: "rest", class: "text-ink-meta" },
+		{ part: "title", tone: "rest", class: "text-ink-body" },
+	],
+	defaultVariants: { part: "line", tone: "rest" },
+});
+
 // ── Place ───────────────────────────────────────────────────────────
 
 // Navigation keeps the accent out: a place is selected by a grey fill in the

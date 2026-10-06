@@ -770,7 +770,8 @@ export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
 // it names a role (`min-h-control`, `size-avatar`). Desktop: control 32,
 // compact 28 (menus, toolbars), field 38, one-line row 32, two-line row 48,
 // setting row 64, strip 40 (a page header bar: the title and its acts),
-// target 24, indent 16 (a tree row's step in, one per level). Touch: every
+// target 24, indent 16 (a tree row's step in, one per level). `port` is a canvas
+// port's drawn size, 8 at every density, so it stands over the 6 dot. Touch: every
 // target at least 44, indent 20. An
 // icon is sized by what it sits beside: `icon-meta` meta or caption text,
 // `icon` body text, `icon-control` the inside of a control. The spinner is
@@ -798,6 +799,7 @@ export const SIZES = [
 	"target",
 	"indent",
 	"dot",
+	"port",
 	"chip",
 	"avatar",
 	"spinner",
@@ -859,6 +861,7 @@ const TOUCH_SIZES: Record<Exclude<Size, DerivedSize>, number> = {
 	target: 44,
 	indent: 20,
 	dot: 8,
+	port: 8,
 	chip: 24,
 	avatar: 32,
 	spinner: 18,
@@ -893,6 +896,7 @@ export const SIZE_PX: Record<
 		target: 24,
 		indent: 16,
 		dot: 6,
+		port: 8,
 		chip: 20,
 		avatar: 24,
 		spinner: 14,
@@ -963,7 +967,7 @@ export type IconStroke = keyof typeof ICON_STROKE;
 // lane), the widths of lifted layers, each at its pattern's range (a layer
 // never stretches to its container), the one measure for running text, and
 // the fixed regions of a frame (the sidebar, a split's list column and record
-// pane, a board column, the auth column, an empty state's column) and the
+// pane, a board column, a canvas node, the auth column, an empty state's column) and the
 // column a selection bar's count and acts stand in, the selection-bar
 // pattern's table-wide width.
 // A width name never repeats a size name: `max-w-*` reads `--spacing-*` first.
@@ -978,6 +982,7 @@ export const WIDTHS = [
 	"list",
 	"pane",
 	"column",
+	"node",
 	"auth",
 	"empty",
 	"selection",
@@ -1006,6 +1011,7 @@ export const WIDTH_VALUE: Record<Width, string> = {
 	list: "360px",
 	pane: "320px",
 	column: "300px",
+	node: "240px",
 	auth: "400px",
 	empty: "320px",
 	selection: "1060px",
@@ -1221,6 +1227,12 @@ export const WORD_KEYS = [
 	"textFiles",
 	"expand",
 	"collapse",
+	"zoomIn",
+	"zoomOut",
+	"fit",
+	"arrange",
+	"off",
+	"next",
 ] as const;
 export type WordKey = (typeof WORD_KEYS)[number];
 
@@ -1321,6 +1333,12 @@ export const ENGLISH: Words = {
 	textFiles: "Text files",
 	expand: "Expand",
 	collapse: "Collapse",
+	zoomIn: "Zoom in",
+	zoomOut: "Zoom out",
+	fit: "Fit",
+	arrange: "Arrange",
+	off: "Off",
+	next: "Next",
 	earlierLines: {
 		one: "Show {count} earlier line",
 		other: "Show {count} earlier lines",

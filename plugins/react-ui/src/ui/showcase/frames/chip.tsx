@@ -7,11 +7,8 @@ const LONG =
 	"A value long enough to reach the chip label's bound and truncate there";
 
 // `CHIP.family.<family>` draws the family: at rest the plain chip over the
-// removable one, in the pressable states the removable one. `CHIP.trailing`
-// draws either end; `CHIP_LABEL.family.<family>` a label past its bound.
-// `CHIP.trailing.none` and `CHIP_LABEL` have no pointer or focus form (those
-// states belong to the remove act), so the frame draws the plain chip in
-// every state, where it looks as it rests.
+// removable one. `CHIP.trailing` draws either end; `CHIP_LABEL.family.<family>`
+// a label past its bound.
 export function drawChip(frame: ShowcaseFrame) {
 	const drawn = drawCell(frame);
 	// items-start, so the frame's column does not stretch the inline marks.
@@ -22,11 +19,9 @@ export function drawChip(frame: ShowcaseFrame) {
 
 function drawCell(frame: ShowcaseFrame) {
 	const [cell, axis, value] = frame.cell.name.split(".");
-	const rest = frame.state === "rest";
 	if (cell === "CHIP" && axis === "family") {
 		// The third segment of a `family` cell is a chip family key.
 		const family = value as ChipFamily;
-		if (!rest) return <Chip label="Design" family={family} onRemove={remove} />;
 		return (
 			<>
 				<Chip label="Design" family={family} />

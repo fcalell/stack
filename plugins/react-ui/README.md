@@ -123,28 +123,35 @@ graph, compiles it with the Tailwind CLI in `scripts/fixture/`, and holds the co
 
 ## The showcase
 
-`Showcase` (`@fcalell/plugin-react-ui/showcase`) is a page generated from data: for the roster
-component `?component=<Name>` names, one frame per matrix cell it draws (the families its roster
-entry's `draws` names, enumerated by `matrixCells`) and state its roster entry's `states` lists,
-light and dark side by side, each frame scoped by its mode's class, at one density. Without a
-component the page links every one. A page holds one component because a frame's cost grows with
-the document around it: the whole roster in one document never finishes drawing. The URL decides
-the view (`?mode=dark&density=desktop`) and the page's toggles set those two parameters, keeping
-the rest and storing nothing. Every frame carries
-`data-cell="<component>/<cell>/<state>/<mode>/<density>"`; `showcaseCells()` lists every id over
-both densities, so a density's page draws half of a component's.
+The roster is drawn in Storybook (`apps/showcase`, `pnpm stories`) from data this package exports:
 
-A component's frames are drawn by one function in `src/ui/showcase/frames/<dir>.tsx`, registered
-under its roster name in `registry.ts`: it takes the frame and returns the real component in that
-cell and state, or `undefined` for a cell the component has no form for. The frames stay out of
-the component directory, so a component never depends on the showcase. A component without a
-registered function, or a cell it returns `undefined` for, draws its name and its cell's classes.
-A state the component takes as a prop (`disabled` through `blocked`, `loading`, `error`,
-`selected`, `empty`) is drawn by passing it. The pointer and focus states are forced: each frame
-carries `data-force-state="<state>"`, and `globals.css` redefines the `hover`, `active` and
-`focus-visible` variants to match inside `[data-force-state=hover|active|focus]` as well as on the
-real pseudo-class, and draws the focus ring on every tabbable element in a `focus` frame. The
-component's own overlay classes then draw the state, with nothing showcase-only in it.
+- `@fcalell/plugin-react-ui/showcase/cells`: `showcaseFrames()`, one frame per matrix cell a roster
+  component draws (the families its entry's `draws` names, enumerated by `matrixCells`) and drawn
+  state its entry's `states` lists (`rest`, `disabled`, `loading`, `error`, `empty`, `selected`; the
+  pointer and focus states stay in the roster and draw no frame), in both modes and both densities;
+  `showcaseCells()`, every frame's id. Every frame carries
+  `data-cell="<component>/<cell>/<state>/<mode>/<density>"`.
+- `@fcalell/plugin-react-ui/showcase/pages`: `showcasePages()`, the places the `/layout` app draws
+  (each place, the pushed Screen and an open record), which its route and Storybook's page stories
+  both read; `LayoutPage` (`./showcase/layout`) draws one of them from the `Here` values it is handed.
+- `@fcalell/plugin-react-ui/showcase/frame`: `Frame`, the wrapper a frame is drawn in: its
+  `data-cell`, its mode's class and the canvas ground. It takes the frame and
+  a drawer, and draws the component's name and the cell's strings where there is none.
+- `@fcalell/plugin-react-ui/showcase/frames/<dir>`: one component's drawer, `draw<Name>`.
+
+A component's frames are drawn by one function in `src/ui/showcase/frames/<dir>.tsx`: it takes the
+frame and returns the real component in that cell and state, or `undefined` for a cell the
+component has no form for. The frames stay out of the component directory, so a component never
+depends on the showcase. A state the component takes as a prop (`disabled` through `blocked`,
+`loading`, `error`, `selected`, `empty`) is drawn by passing it. A pointer or focus look is drawn
+nowhere: the real component takes it from the pointer and the keyboard, and the critique drives it
+there.
+
+The other pages (`/foundations`, `/layout`, `/tv`) are `./showcase/foundations`, `./showcase/layout`
+and `./showcase/tv`; the URL holds their view (`?mode=dark&density=desktop`) and their toggles set
+those two parameters, keeping the rest and storing nothing. `/layout` reads its place from the URL
+(`?place=deploys`) and hands it to `LayoutPage`, which Storybook's page stories render one place at a
+time.
 
 ## Slots
 

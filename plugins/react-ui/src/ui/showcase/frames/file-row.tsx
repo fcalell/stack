@@ -99,19 +99,6 @@ const ROWS: File[] = [
 	{ path: LONG, added: 2, removed: 1, href: "#docs" },
 ];
 
-// A pointer or focus frame draws one row that opens over one that does not,
-// so only the first takes the forced state.
-const PRESSED: File[] = [
-	{
-		path: "src/billing/invoice.test.ts",
-		added: 18,
-		removed: 3,
-		seen: false,
-		href: "#invoice-test",
-	},
-	{ path: "src/billing/invoice.ts", added: 4, removed: 2, seen: true },
-];
-
 // The open file's row current (its href is the page's own path) between
 // two that open elsewhere.
 function selected(): File[] {
@@ -148,9 +135,7 @@ export function drawFileRow(frame: ShowcaseFrame) {
 	const group =
 		cell === "ROW.ground.group" || cell === "SKELETON_ROW.kind.one-line-group";
 	const loading = frame.state === "loading";
-	let files = PRESSED;
-	if (frame.state === "rest" || loading) files = ROWS;
-	else if (frame.state === "selected") files = selected();
+	const files = frame.state === "selected" ? selected() : ROWS;
 	if (group)
 		return (
 			<Wide>
