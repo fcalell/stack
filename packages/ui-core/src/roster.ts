@@ -6,12 +6,12 @@
 
 import {
 	type ColorName,
+	MEASURES,
 	type RadiusRole,
 	type ShadowLevel,
 	type Size,
 	type SpacingRole,
 	type TypeRole,
-	WIDTHS,
 	type Width,
 } from "./tokens.ts";
 import * as variants from "./variants.ts";
@@ -2355,9 +2355,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				],
 				radii: ["full", "chip", "control"],
 				spacing: ["control-x", "inside", "pair", "page"],
-				// A column stands at any `widths` rung its descriptor names.
+				// A column stands at the measure its descriptor names.
 				sizes: [
-					...WIDTHS,
+					...MEASURES,
 					"row",
 					"row-2",
 					"target",

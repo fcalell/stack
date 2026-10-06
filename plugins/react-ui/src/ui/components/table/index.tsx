@@ -162,21 +162,11 @@ const FROZEN_CHOSEN_PRESS =
 	"group-hover/row:bg-wash-selected-hover group-active/row:bg-wash-press";
 const SORT_BAR = "flex items-center justify-end";
 
-// A desktop column's width: its `widths` rung, its share, or what the others
+// A desktop column's width: its measure, its share, or what the others
 // leave; a touch column stands at the short measure.
 const WIDTH: Record<NonNullable<TableColumn["width"]>, string> = {
 	"measure-short": "w-measure-short",
-	popover: "w-popover",
-	toast: "w-toast",
-	dialog: "w-dialog",
-	sheet: "w-sheet",
 	measure: "w-measure",
-	sidebar: "w-sidebar",
-	list: "w-list",
-	pane: "w-pane",
-	column: "w-column",
-	auth: "w-auth",
-	empty: "w-empty",
 	"1/4": "w-1/4",
 	"1/3": "w-1/3",
 	"1/2": "w-1/2",
