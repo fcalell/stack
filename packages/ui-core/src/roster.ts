@@ -873,6 +873,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ACTION_BAR_SELECTION",
 				"ACTION_BAR_ALL",
 				"TEXT.role.meta",
+				"FIELD_ERROR_LINE",
 				"BUTTON.act.primary",
 				"BUTTON.act.danger",
 				"BUTTON.act.secondary",
@@ -900,6 +901,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"ink-meta",
 					"ink-body",
 					"ink-disabled",
+					"ink-error",
 					"edge",
 					"danger",
 					"act-accent",
@@ -1413,12 +1415,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// `fit` is the desktop side sheet's: a form, or a Split's record pane.
 		// On touch the submit stands at the head row's end and a blocked
-		// submit's reason under the head.
+		// submit's reason or a `failed` sentence under the head.
 		// Passed as a Thread's or a Place's `foot` it docks there, drawing the
 		// docked head and foot inside the foot's raised cell with no scrim. The
 		// docked foot's states are its submit's: pending (`loading`), blocked
-		// (`disabled`), and failed (`error`, the act ready again, the `foot`
-		// line saying why).
+		// (`disabled`), and failed (`error`, the act ready again, the `failed`
+		// sentence under it in the line a blocked reason keeps, in the field
+		// error's cell and ink).
 		Sheet: {
 			props: [
 				"open",
@@ -1428,6 +1431,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"back",
 				"submit",
 				"foot",
+				"failed",
 				"fit",
 				"children",
 			],
@@ -1448,6 +1452,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"TEXT.role.body",
 				"TEXT_STRONG.role.body",
 				"TEXT.role.meta",
+				"FIELD_ERROR_LINE",
 				"ICON_BUTTON.fit.bar",
 				"ICON_BUTTON.fit.body",
 				"BUTTON.act.primary",
@@ -1476,6 +1481,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"edge",
 					"ink-body",
 					"ink-meta",
+					"ink-error",
 					"act-accent",
 					"on-act-accent",
 				],

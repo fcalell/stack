@@ -599,8 +599,14 @@ a tick with no animation, never jumped to full.
   Sheet scrolls its body between its pinned head and foot only past the bound, each page opening at the
   body's top; inline among sections it has no bound, since the page scrolls. Its states are its
   submit's: pending, blocked (the reason keeps its line under the act before it shows, `ReasonKept`
-  around the foot's bar, so showing it never moves the act), and failed (the act ready again, a
-  `Banner` of kind `danger` first in the body saying why, the system's failure cell and glyph). On the desktop the docked Sheet holds
+  around the foot's bar, so showing it never moves the act), and failed (the act ready again, the
+  `Sheet`'s `failed` sentence in that same kept line: `ActFailed` around the bar hands it to the
+  `ActionBar`, which draws it in `FIELD_ERROR_LINE`, the field error's cell and ink, in place of the
+  reason when no act is blocked, and holds the line empty while neither shows, so no state moves the
+  act; no `Banner`). `failed` is the `Sheet`'s prop and
+  not an `Act` field, since only a sheet's one submit has a line to fail in; the modal `Sheet` takes
+  it too, in the foot bar's line on the desktop and under the head's submit on touch (the phone's
+  modal only the latter). On the desktop the docked Sheet holds
   `THREAD_COLUMN` in the foot that centres it. Focus: each page (a new `title`) takes the body's first
   tabbable on the web once the page has settled (a radio group sets its tab stop after the commit),
   so an act that relabels or leaves never drops focus to the document; on the phone the first

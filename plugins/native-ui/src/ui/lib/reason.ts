@@ -29,3 +29,9 @@ export function usePressed(
 // Set around a docked foot's act bar: a blocked act's reason keeps its line
 // before it shows, so showing it never moves the act it describes.
 export const ReasonKept = createContext(false);
+
+// Set around a sheet's submit bar: the sentence the act's last run failed
+// with, drawn in the line the reason uses (the one a kept bar holds) under
+// the act, so a failure never moves the act either. A blocked act's reason
+// stands before it.
+export const ActFailed = createContext<string | undefined>(undefined);

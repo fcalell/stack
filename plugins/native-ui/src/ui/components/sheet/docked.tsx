@@ -22,7 +22,7 @@ import { FieldClaim, FieldNameContext } from "../../lib/field";
 import { FormStands } from "../../lib/form";
 import { FootPlace, FootReturn } from "../../lib/frame";
 import { Scroll, type ScrollRef } from "../../lib/hosts";
-import { ReasonKept } from "../../lib/reason";
+import { ActFailed, ReasonKept } from "../../lib/reason";
 import { TouchedContext, usePageTurn } from "../../lib/touched";
 import { useWords } from "../../lib/words";
 import { ActionBar } from "../action-bar";
@@ -50,6 +50,7 @@ export interface SheetDockedProps {
 	back?: () => void;
 	submit?: Act;
 	foot?: string;
+	failed?: string;
 	children?: ReactNode;
 }
 
@@ -58,7 +59,8 @@ export interface SheetDockedProps {
 // column, the title and the close act over the description, so both lines
 // share a start; the body scrolls between the head and the foot, which hold
 // their height, and each page opens at its top; the foot holds the line over
-// the submit. The first field of each page takes focus as it mounts, and
+// the submit, and under it one kept line for a blocked reason or a failed
+// run's sentence. The first field of each page takes focus as it mounts, and
 // leaving sets the foot's claim for the input that returns. Closed it draws
 // nothing.
 export function SheetDocked({
@@ -69,6 +71,7 @@ export function SheetDocked({
 	back,
 	submit,
 	foot,
+	failed,
 	children,
 }: SheetDockedProps) {
 	const words = useWords();
@@ -152,7 +155,9 @@ export function SheetDocked({
 									) : null}
 									{submit ? (
 										<ReasonKept.Provider value>
-											<ActionBar acts={[submit]} />
+											<ActFailed.Provider value={failed}>
+												<ActionBar acts={[submit]} />
+											</ActFailed.Provider>
 										</ReasonKept.Provider>
 									) : null}
 								</View>

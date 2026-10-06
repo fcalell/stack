@@ -22,7 +22,7 @@ import { focusFirst } from "../../lib/focus.ts";
 import { FormStands } from "../../lib/form.ts";
 import { FootPlace } from "../../lib/frame.ts";
 import { useTouch } from "../../lib/media.ts";
-import { ReasonKept } from "../../lib/reason.ts";
+import { ActFailed, ReasonKept } from "../../lib/reason.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
 import {
 	TouchedContext,
@@ -58,10 +58,11 @@ export interface SheetDockedProps {
 	back?: () => void;
 	submit?: Act;
 	foot?: string;
+	failed?: string;
 	children?: ReactNode;
 }
 
-/** A `Sheet` standing in a Thread's or a Place's foot: no scrim, portal or dialog, the foot's raised cell its surface. The head holds the back act before one column, the title and the close act over the description, so both lines share a start; the body scrolls between the head and the foot, which hold their height; the foot holds the line beside (over, on touch) the submit. Escape closes it, and each page opens at its top with focus in its first field. Closed it draws nothing. */
+/** A `Sheet` standing in a Thread's or a Place's foot: no scrim, portal or dialog, the foot's raised cell its surface. The head holds the back act before one column, the title and the close act over the description, so both lines share a start; the body scrolls between the head and the foot, which hold their height; the foot holds the line beside (over, on touch) the submit, and under the submit one kept line for a blocked reason or a failed run's sentence. Escape closes it, and each page opens at its top with focus in its first field. Closed it draws nothing. */
 export function SheetDocked({
 	open,
 	onClose,
@@ -70,6 +71,7 @@ export function SheetDocked({
 	back,
 	submit,
 	foot,
+	failed,
 	children,
 }: SheetDockedProps) {
 	const touch = useTouch();
@@ -106,7 +108,9 @@ export function SheetDocked({
 	) : null;
 	const bar = submit ? (
 		<ReasonKept value>
-			<ActionBar acts={[submit]} />
+			<ActFailed value={failed}>
+				<ActionBar acts={[submit]} />
+			</ActFailed>
 		</ReasonKept>
 	) : null;
 	return (

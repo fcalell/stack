@@ -1,6 +1,7 @@
 import type { Act } from "@fcalell/ui-core/descriptors";
 import { pressStands } from "@fcalell/ui-core/reason";
 import {
+	FIELD_ERROR_LINE,
 	SCRIM,
 	SHEET,
 	SHEET_BODY,
@@ -47,6 +48,7 @@ import { useResolveClassNames, withUniwind } from "uniwind";
 import { cn } from "../../lib/cn";
 import { FieldNameContext } from "../../lib/field";
 import { FormStands } from "../../lib/form";
+import { useLive } from "../../lib/live";
 import { timing } from "../../lib/motion";
 import { RaisedGround } from "../../lib/raised";
 import { type ReasonHost, ReasonHostContext } from "../../lib/reason";
@@ -103,6 +105,8 @@ interface Parts {
 	onClose: () => void;
 	// A blocked submit's reason once the sheet is touched or the submit pressed.
 	reason?: string;
+	// The sentence the submit's last run failed with, in the reason's line.
+	failed?: string;
 	host?: ReasonHost;
 	touched: Touched;
 	// The sheet's height cap, gorhom's `maxDynamicContentSize`.
@@ -199,8 +203,10 @@ function Head() {
 		host,
 		description,
 		reason,
+		failed,
 		above,
 	} = useParts();
+	const live = useLive(failed ?? "");
 	return (
 		<RaisedGround>
 			<View className={SHEET_HEAD}>
@@ -255,6 +261,11 @@ function Head() {
 				{reason ? (
 					<RNText className={cn(text({ role: "meta" }), REASON)}>
 						{reason}
+					</RNText>
+				) : null}
+				{failed && submit?.blocked === undefined ? (
+					<RNText {...live} className={cn(FIELD_ERROR_LINE, REASON)}>
+						{failed}
 					</RNText>
 				) : null}
 			</View>
@@ -360,6 +371,7 @@ export interface SheetBaseProps {
 	back?: () => void;
 	submit?: Act;
 	foot?: string;
+	failed?: string;
 	fit?: SheetFit;
 	// A decision's acts, the foot's `ActionBar`.
 	acts?: Act[];
@@ -382,8 +394,9 @@ export interface SheetBaseProps {
 // (the close act, or back on a second page, or neither for a decision, whose
 // acts dismiss it, the title and the submit at its
 // end where a keyboard would cover a bar, the description under them and a
-// blocked submit's reason under the head), the body under it, and the foot
-// (its line over a decision's acts) at the body's end, or fixed at the
+// blocked submit's reason or a failed run's sentence under the head), the
+// body under it, and the foot (its line over a decision's acts) at the body's
+// end, or fixed at the
 // bottom once the body scrolls. Native draws the phone at every width, so
 // `fit` picks only the pane's title. The title names a typing control
 // inside that no `FormField` labels. A new `title` or `description` is a new
@@ -397,6 +410,7 @@ export function SheetBase({
 	back,
 	submit,
 	foot,
+	failed,
 	fit,
 	acts,
 	form,
@@ -457,6 +471,7 @@ export function SheetBase({
 		submit,
 		fit,
 		foot,
+		failed,
 		acts,
 		above,
 		busy,

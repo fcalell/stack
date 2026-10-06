@@ -410,8 +410,11 @@ inside leads it) and the close act over the `description`, so both lines share a
 the body scrolls between the head and the foot, which hold their height (the `foot` line beside the `submit`,
 over it on touch), and the docked foot fits what it holds up to three fifths of the region it
 shares with the log, so the log keeps two fifths of it and a body taller than that scrolls. A blocked
-`submit`’s reason keeps its line in the foot, so showing it never moves the act; a failed one is a
-`Banner` of kind `danger` first in the body, the act ready again. Pass
+`submit`’s reason keeps its line under the act in the foot, so showing it never moves the act; a
+failed run is the `failed` sentence in that same line, in the field error’s cell and ink, the act
+ready again and no `Banner`: clear `failed` when the act runs again, and a blocked `submit`’s reason
+stands before it. The modal `Sheet` takes `failed` too, in the foot’s bar line on the desktop and
+under the head’s submit on touch. Pass
 the same `<Sheet>` as the modal from a page and as the `foot` of a conversation; closing it (render
 the `MessageInput` in its place) returns focus to the input, and each page (a new `title`) opens at
 the top of its body with focus in its first field. A `Sheet` among a `Thread`'s sections draws the same form with no bound.

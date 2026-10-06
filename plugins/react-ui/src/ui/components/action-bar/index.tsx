@@ -30,7 +30,7 @@ import {
 	SubmitContext,
 } from "../../lib/form.ts";
 import { useTouch } from "../../lib/media.ts";
-import { ReasonHostContext, ReasonKept } from "../../lib/reason.ts";
+import { ActFailed, ReasonHostContext, ReasonKept } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Button } from "../button/index.tsx";
@@ -68,6 +68,10 @@ const ALL_INERT = "inline-flex items-center text-ink-disabled";
 // The choose-all act stands where the table has no head tick: below `tablet`
 // of the page, the width the table collapses to its list form at.
 const CHOOSE_ALL = "page-tablet:hidden";
+
+// A kept failure line's text while nothing failed: a no-break space holds the
+// line's height.
+const NO_FAILURE = " ";
 
 // The last act is the one filled act; a destructive act draws `danger`
 // filled and the hairline `destructive` otherwise.
@@ -142,6 +146,9 @@ export function ActionBar({ acts, fit, chosen }: ActionBarProps) {
 	const { touched } = useTouched();
 	const reason = useId();
 	const kept = use(ReasonKept);
+	const failed = use(ActFailed);
+	// A blocked act's reason takes the line a failure would draw in.
+	const blocked = acts.some((act) => act.blocked !== undefined);
 	// Each blocked act's press, by label, as the reason it came under: it
 	// stands while the act is blocked by that reason
 	// (`@fcalell/ui-core/reason`).
@@ -257,6 +264,16 @@ export function ActionBar({ acts, fit, chosen }: ActionBarProps) {
 						{act.blocked}
 					</Reason>
 				),
+			)}
+			{blocked || !(kept || failed !== undefined) ? null : (
+				<Reason
+					id={`${reason}-failed`}
+					kept={kept}
+					failed
+					shown={failed !== undefined}
+				>
+					{failed ?? NO_FAILURE}
+				</Reason>
 			)}
 		</div>
 	);

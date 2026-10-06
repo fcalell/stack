@@ -10,6 +10,7 @@ import {
 	actionBar,
 	type ButtonAct,
 	type ButtonFit,
+	FIELD_ERROR_LINE,
 	text,
 } from "@fcalell/ui-core/variants";
 import {
@@ -24,7 +25,7 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FormContext, FormStands } from "../../lib/form";
 import { useLive } from "../../lib/live";
-import { ReasonHostContext, ReasonKept } from "../../lib/reason";
+import { ActFailed, ReasonHostContext, ReasonKept } from "../../lib/reason";
 import { useTouched } from "../../lib/touched";
 import { useWords } from "../../lib/words";
 import { Button } from "../button";
@@ -41,6 +42,9 @@ const ALL_LIVE = "active:bg-wash-press";
 const ALL_INERT = "text-ink-disabled";
 // A kept reason holds its line while unshown.
 const KEPT = "opacity-0";
+// A kept failure line's text while nothing failed: a no-break space holds the
+// line's height.
+const NO_FAILURE = " ";
 
 // The last act is the one filled act; a destructive act draws `danger`
 // filled and the hairline `destructive` otherwise.
@@ -149,6 +153,10 @@ export function ActionBar({ acts, fit, chosen }: ActionBarProps) {
 	const where = fit ?? (inColumn ? "full" : "end");
 	const pend = useContext(FormContext);
 	const kept = useContext(ReasonKept);
+	const failed = useContext(ActFailed);
+	const live = useLive(failed ?? "");
+	// A blocked act's reason takes the line a failure would draw in.
+	const blocked = acts.some((act) => act.blocked !== undefined);
 	const [running, setRunning] = useState(false);
 	const { touched } = useTouched();
 	// Each blocked act's press, by label, as the reason it came under: it
@@ -222,6 +230,18 @@ export function ActionBar({ acts, fit, chosen }: ActionBarProps) {
 					</RNText>
 				);
 			})}
+			{blocked || !(kept || failed !== undefined) ? null : (
+				<RNText
+					{...live}
+					accessibilityElementsHidden={failed === undefined}
+					importantForAccessibility={
+						failed === undefined ? "no-hide-descendants" : "auto"
+					}
+					className={cn(FIELD_ERROR_LINE, failed === undefined && KEPT)}
+				>
+					{failed ?? NO_FAILURE}
+				</RNText>
+			)}
 		</View>
 	);
 }

@@ -28,7 +28,7 @@ import { backGlyph } from "../../lib/back.ts";
 import { FormStands } from "../../lib/form.ts";
 import { useTouch } from "../../lib/media.ts";
 import { PortalContainer } from "../../lib/portal.ts";
-import { ReasonHostContext } from "../../lib/reason.ts";
+import { ActFailed, ReasonHostContext } from "../../lib/reason.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
 import {
 	TouchedContext,
@@ -103,6 +103,7 @@ export interface SheetBaseProps {
 	back?: () => void;
 	submit?: Act;
 	foot?: string;
+	failed?: string;
 	fit?: SheetFit;
 	/** A decision's acts, the foot's `ActionBar` at both densities. */
 	acts?: Act[];
@@ -130,6 +131,7 @@ export function SheetBase({
 	back,
 	submit,
 	foot,
+	failed,
 	fit,
 	acts,
 	form,
@@ -243,7 +245,11 @@ export function SheetBase({
 		(submit && !touch
 			? [{ label: words.cancel, onAct: onClose }, submit]
 			: undefined);
-	const actionBar = bar ? <ActionBar acts={bar} /> : null;
+	const actionBar = bar ? (
+		<ActFailed value={failed}>
+			<ActionBar acts={bar} />
+		</ActFailed>
+	) : null;
 	const footLine = foot ? (
 		<div className={touch ? FOOT_LINE : FOOT_LINE_ROW}>
 			<p className={text({ role: "meta" })}>{foot}</p>
@@ -270,6 +276,11 @@ export function SheetBase({
 				{headSubmit && submit?.blocked ? (
 					<Reason id={reason} shown={touched || pressed} end>
 						{submit.blocked}
+					</Reason>
+				) : null}
+				{headSubmit && submit?.blocked === undefined && failed ? (
+					<Reason id={reason} shown failed end>
+						{failed}
 					</Reason>
 				) : null}
 			</div>

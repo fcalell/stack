@@ -20,6 +20,11 @@ export interface SheetProps extends Closed {
 	submit?: Act;
 	// A sentence in the foot.
 	foot?: string;
+	// The sentence the submit's last run failed with: a one-line error in the
+	// line a blocked reason keeps (under the head's submit, or under the docked
+	// foot's act), the act ready again. Clear it to dismiss; a blocked
+	// submit's reason stands before it.
+	failed?: string;
 	// What the desktop side sheet holds; on the phone a pane's title steps
 	// down to body 500.
 	fit?: SheetFit;
@@ -31,7 +36,8 @@ export interface SheetProps extends Closed {
 // Passed as a Thread's or a Place's `foot` it docks there with no scrim: the
 // back act, the title and the close act over the description in the head, the
 // body scrolling under the foot's bound, the foot line over the
-// submit; `onClose` hears the close act, and closing hands focus to the input
+// submit and under it one kept line for a blocked reason or a failed run;
+// `onClose` hears the close act, and closing hands focus to the input
 // that returns.
 export function Sheet({
 	open,
@@ -41,6 +47,7 @@ export function Sheet({
 	back,
 	submit,
 	foot,
+	failed,
 	fit,
 	children,
 }: SheetProps) {
@@ -54,6 +61,7 @@ export function Sheet({
 				back={back}
 				submit={submit}
 				foot={foot}
+				failed={failed}
 			>
 				{children}
 			</SheetDocked>
@@ -67,6 +75,7 @@ export function Sheet({
 			back={back}
 			submit={submit}
 			foot={foot}
+			failed={failed}
 			fit={fit}
 		>
 			{children}

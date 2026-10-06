@@ -22,6 +22,8 @@ export interface SheetProps extends Closed {
 	submit?: Act;
 	/** A sentence in the foot, beside the submit on the desktop. */
 	foot?: string;
+	/** The sentence the `submit`'s last run failed with: a one-line error in the line a blocked reason keeps under the act (under the head's submit on touch), the act ready again. Clear it to dismiss; a blocked `submit`'s reason stands before it. */
+	failed?: string;
 	/** What the desktop side sheet holds: a form (the default) or a record's pane. */
 	fit?: SheetFit;
 	/** The body. */
@@ -37,6 +39,7 @@ export function Sheet({
 	back,
 	submit,
 	foot,
+	failed,
 	fit,
 	children,
 }: SheetProps) {
@@ -50,6 +53,7 @@ export function Sheet({
 				back={back}
 				submit={submit}
 				foot={foot}
+				failed={failed}
 			>
 				{children}
 			</SheetDocked>
@@ -63,6 +67,7 @@ export function Sheet({
 			back={back}
 			submit={submit}
 			foot={foot}
+			failed={failed}
 			fit={fit}
 		>
 			{children}
