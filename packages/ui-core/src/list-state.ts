@@ -966,12 +966,16 @@ const NAME_LEAD = 3;
 
 // A file row's name, cut: its end (`tail`, never cut) is the extension and the
 // NAME_LEAD characters before it (twice that without an extension), but its
-// stem keeps its first NAME_LEAD characters, so a short name never splits
-// inside its start. The name is the path after its last slash; the slash stays
-// with the directory, so a path whose directory has given way draws none.
+// stem keeps its first NAME_LEAD characters, so a short name never loses its
+// start. `floor` is the least characters the path shows of the name: the whole
+// name when it is short, else its cut form (the lead, an ellipsis, the tail).
+// The name is the path after its last slash; the slash stays with the
+// directory, so a path whose directory has given way draws none. Both
+// platforms read it, so one name cuts the same way.
 export function pathCut(name: string): {
 	stem: string;
 	tail: string;
+	floor: number;
 } {
 	const dot = name.lastIndexOf(".");
 	const kept = dot > 0 ? name.length - dot + NAME_LEAD : NAME_LEAD * 2;
@@ -980,5 +984,6 @@ export function pathCut(name: string): {
 	return {
 		stem: name.slice(0, cut),
 		tail: name.slice(cut),
+		floor: Math.min(name.length, NAME_LEAD + 1 + kept),
 	};
 }

@@ -53,8 +53,8 @@ const REVIEW: File[] = [
 ];
 
 // A chip beside a short name at the touch width: the directory goes first, the
-// name cuts in its middle (`biome.json` holds whole, a long one cuts to
-// `bio…json`) and then to nothing, and the chip's label stays whole.
+// name never loses its start (`biome.json` holds whole, a long one cuts to
+// `bio…json`), and the chip's label truncates before the path goes below it.
 const CHIPPED: File[] = [
 	{
 		path: "biome.json",

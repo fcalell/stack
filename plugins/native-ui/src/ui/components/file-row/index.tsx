@@ -3,6 +3,7 @@ import type {
 	ChipMark,
 	IconName,
 } from "@fcalell/ui-core/descriptors";
+import { pathCut } from "@fcalell/ui-core/list-state";
 import { isCurrent } from "@fcalell/ui-core/route";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
@@ -21,6 +22,7 @@ import { GroundContext } from "../../lib/ground";
 import { Ink } from "../../lib/ink";
 import { navigate, usePathname } from "../../lib/navigate";
 import type { Route } from "../../lib/route";
+import { useCSSVariable } from "../../lib/theme";
 import { useWords } from "../../lib/words";
 import { Chip } from "../chip";
 import { Icon } from "../icon";
@@ -35,20 +37,21 @@ const HIT = "absolute inset-0 active:bg-wash-press";
 // The change mark stands in its own lane at the row's start, ahead of the glyph.
 const MARK = "shrink-0";
 const LEADING = "shrink-0 items-center justify-center";
-// The path takes the overflow alone, down to nothing: the chip, the marks and
-// the counts never shrink; it clips what it cannot hold.
-const PATH = "grow shrink flex-row overflow-hidden";
+// The path takes the overflow first (its shrink weight is 10^7 against the
+// chip's 1, the weight of a mark's label in ListRow's meta line), down to its floor, a `minWidth`
+// from its name; it clips what its floor holds.
+const PATH = "grow shrink-10000000 flex-row overflow-hidden";
 const DIRECTORY = "shrink min-w-0";
 const NAME = "shrink-0 max-w-full";
-// The chip's label stands whole up to its measure cap; it never truncates for
-// the path.
-const CHIP = "shrink-0";
+// The chip stands at its label's measure cap while the path holds above its
+// floor; below it the chip's label truncates.
+const CHIP = "shrink min-w-0";
 const COUNTS = "flex-row shrink-0 items-center";
 const COUNT = "text-right";
 
 export interface FileRowProps extends Closed {
 	// The file's path; the directory gives way first when it is too long, then
-	// the name's middle, down to nothing; the chip's label stays whole.
+	// the name's middle down to its floor, then the chip's label.
 	path: string;
 	// Lines added; zero draws nothing.
 	added: number;
@@ -88,16 +91,20 @@ function split(path: string): [string, string] {
 // The path fits by layout: the name takes its width up to the whole box and
 // the directory the room it leaves, ellipsized at its end, so the directory
 // gives way first, down to nothing; then the name is cut in its middle, its
-// end (the extension) kept; the path yields down to nothing before the chip's
-// label does.
+// end (the extension) kept, down to its floor, below which the chip's label
+// truncates. Yoga has no `ch`: the floor is its characters at a quarter of
+// `figures`, four code figures.
 function Path({ path }: { path: string }) {
 	const [dir, name] = split(path);
+	const figures = useCSSVariable("--spacing-figures");
+	const advance = Number.parseFloat(String(figures ?? 0)) / 4;
 	return (
 		<View
 			pointerEvents="none"
 			accessibilityElementsHidden
 			importantForAccessibility="no-hide-descendants"
 			className={PATH}
+			style={{ minWidth: pathCut(name).floor * advance }}
 		>
 			{dir ? (
 				<RNText
