@@ -32,11 +32,12 @@ const FRAME = "flex h-dvh overflow-hidden";
 const SIDEBAR = "relative flex flex-col shrink-0";
 const SLOT = "flex";
 const PLACES = "flex flex-col";
-// The column reads the marks the page inside draws: a pushed Screen's
+// The column clears the top safe inset, so a banner or a page's head never
+// stands under a notch. It reads the marks the page inside draws: a pushed Screen's
 // `data-screen` hides the tab bar, a floating act's `data-act-floats` lifts
 // the toasts by the act's room. Both hold from the first paint and across
 // the density line, since the page draws them in its own tree.
-const COLUMN = "group/column relative flex flex-col min-w-0 grow";
+const COLUMN = "group/column relative flex flex-col min-w-0 grow pt-safe";
 const BANNER_SLOT = "flex flex-col";
 // The toasts stand at the end on the desktop and centred on touch, above the
 // tab bar and, while a Place's act floats or a foot docks, above the act or

@@ -225,6 +225,7 @@ export const OVERLAYS: readonly string[] = [
 	"h-dvh",
 	"z-(--layer-toasts)",
 	"pb-safe",
+	"pt-safe",
 	"text-left",
 	"top-0",
 	"left-full",

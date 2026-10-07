@@ -48,10 +48,10 @@ its rationale.
   dark `accent` 3:1 on `group` (a checked box, an on switch), `edge-strong` 3:1 on `surface` under
   `wash-press` and `wash-selected` in both modes (an unticked box on a pressed or selected row), the
   light `danger` 4.5:1 under `wash-press` on `group` (a destructive act's pressed label) and 4.5:1
-  under `on-danger` in both modes (the filled danger act), each filled act's pending fill 3:1 under
+  under `on-danger`, the dark `act-danger` 4.5:1 under `on-act-danger` (the filled danger act: in
+  dark a deep red of its own, since the danger ink holds no light label), each filled act's pending fill 3:1 under
   its label (the spinner on a pending act). Hover and press move a filled act away from its label:
-  the accent toward black in both modes, the danger toward black in light and toward `ink-body` in
-  dark, where its label is near-black; its pending fill is inert and recedes toward its label in
+  the accent and the danger toward black in both modes; its pending fill is inert and recedes toward its label in
   light and toward the page in dark. A labelled act's fill takes no 3:1 ground floor in any state,
   since its label names it; a toggle on (`toggle-on`, drawn by the switch, the checkbox and the
   slider) has no label, so it and its hover are measured at 3:1 on every ground and its hover
@@ -66,7 +66,7 @@ its rationale.
   `selected-outline`, `edge-hover`, `edge-error`, `ink-error`, `ink-disabled`), the two act fills
   (`act-accent`, `act-danger`) with their states, and the switch's five with the shared `toggle-on`.
   `COLOR_GROUPS` holds the roles by those groups and `COLOR_NAMES` is its flattening. A chart's
-  series take the chip marks in `CHART_SERIES` order and a meter's level turns on `METER_NEAR`,
+  series take the `chart-<hue>` fills in `CHART_SERIES` order (the chip hue at about 60 % of the mark's chroma, each holding 3:1 on `surface` and `group`, so a bar reads as data and a chip mark stays the chip's) and a meter's level turns on `METER_NEAR`,
   contract data the cells are keyed by (`CHART_FILL {series}`, `METER_FILL {level}`; `levelOf` in
   `./list-state` reads it, a meter's `mark` standing in for `METER_NEAR`), so both platforms draw
   the same series colour and the same level for a value. The dark hairline is two tokens because the

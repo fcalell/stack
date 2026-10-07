@@ -30,7 +30,7 @@ colors:
   chip-red: "oklch(0.56 0.2 25)"
   chip-red-soft: "oklch(0.945 0.026 25)"
   chip-red-ink: "oklch(0.42 0.1 25)"
-  chip-amber: "oklch(0.65 0.13 85)"
+  chip-amber: "oklch(0.62 0.127 85)"
   chip-amber-soft: "oklch(0.945 0.035 85)"
   chip-amber-ink: "oklch(0.42 0.085 85)"
   chip-green: "oklch(0.5 0.154 145)"
@@ -47,6 +47,12 @@ colors:
   chip-pink-ink: "oklch(0.42 0.1 350)"
   chip-neutral-soft: "oklch(0.2 0.008 264 / 0.08)"
   chip-neutral-ink: "oklch(0.2 0.008 264)"
+  chart-red: "oklch(0.63 0.12 25)"
+  chart-amber: "oklch(0.62 0.078 85)"
+  chart-green: "oklch(0.61 0.092 145)"
+  chart-teal: "oklch(0.61 0.061 195)"
+  chart-violet: "oklch(0.63 0.12 305)"
+  chart-pink: "oklch(0.63 0.12 350)"
   avatar-1: "oklch(0.88 0.062 20)"
   avatar-1-ink: "oklch(0.38 0.1 20)"
   avatar-2: "oklch(0.88 0.07 60)"
@@ -110,9 +116,9 @@ colors:
   ok-dark: "oklch(0.64 0.17 150)"
   ok-soft-dark: "oklch(0.28 0.05 150)"
   warn-dark: "oklch(0.75 0.15 80)"
-  warn-soft-dark: "oklch(0.28 0.05 75)"
+  warn-soft-dark: "oklch(0.25 0.035 75)"
   danger-dark: "oklch(0.71 0.178 25)"
-  danger-soft-dark: "oklch(0.28 0.06 25)"
+  danger-soft-dark: "oklch(0.25 0.04 25)"
   on-danger-dark: "oklch(0.16 0.005 264)"
   chip-red-dark: "oklch(0.75 0.147 25)"
   chip-red-soft-dark: "oklch(0.3 0.05 25)"
@@ -134,6 +140,12 @@ colors:
   chip-pink-ink-dark: "oklch(0.87 0.08 350)"
   chip-neutral-soft-dark: "oklch(0.97 0.002 264 / 0.08)"
   chip-neutral-ink-dark: "oklch(0.97 0.002 264)"
+  chart-red-dark: "oklch(0.55 0.088 25)"
+  chart-amber-dark: "oklch(0.54 0.09 85)"
+  chart-green-dark: "oklch(0.53 0.111 145)"
+  chart-teal-dark: "oklch(0.53 0.071 195)"
+  chart-violet-dark: "oklch(0.55 0.12 305)"
+  chart-pink-dark: "oklch(0.555 0.12 350)"
   avatar-1-dark: "oklch(0.4 0.08 20)"
   avatar-1-ink-dark: "oklch(0.92 0.04 20)"
   avatar-2-dark: "oklch(0.4 0.08 60)"
@@ -168,11 +180,11 @@ colors:
   act-accent-hover-dark: "oklch(0.475 0.167 264)"
   act-accent-press-dark: "oklch(0.421 0.148 264)"
   act-accent-pending-dark: "oklch(0.426 0.134 264)"
-  act-danger-dark: "oklch(0.71 0.178 25)"
-  on-act-danger-dark: "oklch(0.16 0.005 264)"
-  act-danger-hover-dark: "oklch(0.741 0.157 24.925)"
-  act-danger-press-dark: "oklch(0.767 0.137 24.844)"
-  act-danger-pending-dark: "oklch(0.545 0.124 24.405)"
+  act-danger-dark: "oklch(0.5 0.17 25)"
+  on-act-danger-dark: "oklch(1 0 0)"
+  act-danger-hover-dark: "oklch(0.44 0.15 25)"
+  act-danger-press-dark: "oklch(0.39 0.133 25)"
+  act-danger-pending-dark: "oklch(0.398 0.118 24.377)"
   switch-off-dark: "oklch(0.575 0.01 264)"
   switch-off-hover-dark: "oklch(0.634 0.009 264)"
   toggle-on-dark: "oklch(0.54 0.19 264)"
@@ -626,12 +638,12 @@ components:
     height: "{spacing.dot}"
     width: "{spacing.dot}"
     rounded: "{rounded.full}"
-    backgroundColor: "{colors.warn}"
+    backgroundColor: "{colors.chip-amber}"
   status-dot-attention-dark:
     height: "{spacing.dot}"
     width: "{spacing.dot}"
     rounded: "{rounded.full}"
-    backgroundColor: "{colors.warn-dark}"
+    backgroundColor: "{colors.chip-amber-dark}"
   status-dot-failed:
     height: "{spacing.dot}"
     width: "{spacing.dot}"
@@ -1398,29 +1410,29 @@ components:
     rounded: "{rounded.chip}"
     backgroundColor: "{colors.danger-dark}"
   chart-fill-teal:
-    backgroundColor: "{colors.chip-teal}"
+    backgroundColor: "{colors.chart-teal}"
   chart-fill-teal-dark:
-    backgroundColor: "{colors.chip-teal-dark}"
+    backgroundColor: "{colors.chart-teal-dark}"
   chart-fill-violet:
-    backgroundColor: "{colors.chip-violet}"
+    backgroundColor: "{colors.chart-violet}"
   chart-fill-violet-dark:
-    backgroundColor: "{colors.chip-violet-dark}"
+    backgroundColor: "{colors.chart-violet-dark}"
   chart-fill-amber:
-    backgroundColor: "{colors.chip-amber}"
+    backgroundColor: "{colors.chart-amber}"
   chart-fill-amber-dark:
-    backgroundColor: "{colors.chip-amber-dark}"
+    backgroundColor: "{colors.chart-amber-dark}"
   chart-fill-pink:
-    backgroundColor: "{colors.chip-pink}"
+    backgroundColor: "{colors.chart-pink}"
   chart-fill-pink-dark:
-    backgroundColor: "{colors.chip-pink-dark}"
+    backgroundColor: "{colors.chart-pink-dark}"
   chart-fill-green:
-    backgroundColor: "{colors.chip-green}"
+    backgroundColor: "{colors.chart-green}"
   chart-fill-green-dark:
-    backgroundColor: "{colors.chip-green-dark}"
+    backgroundColor: "{colors.chart-green-dark}"
   chart-fill-red:
-    backgroundColor: "{colors.chip-red}"
+    backgroundColor: "{colors.chart-red}"
   chart-fill-red-dark:
-    backgroundColor: "{colors.chip-red-dark}"
+    backgroundColor: "{colors.chart-red-dark}"
   qr-code-rest:
     textColor: "{colors.ink-body}"
   qr-code-rest-dark:
@@ -1995,10 +2007,10 @@ components:
     width: "{spacing.control-compact}"
   message-bubble:
     rounded: "{rounded.card}"
-    backgroundColor: "{colors.group}"
+    backgroundColor: "{colors.fill-neutral}"
   message-bubble-dark:
     rounded: "{rounded.card}"
-    backgroundColor: "{colors.group-dark}"
+    backgroundColor: "{colors.fill-neutral-dark}"
   message-card:
     rounded: "{rounded.card}"
     backgroundColor: "{colors.surface}"
@@ -2190,6 +2202,8 @@ components:
     backgroundColor: "{colors.raised}"
   sheet-foot-dark:
     backgroundColor: "{colors.raised-dark}"
+  shell-banner:
+    padding: "{spacing.page}"
   shell-column:
     backgroundColor: "{colors.surface}"
   shell-column-dark:
@@ -2339,7 +2353,7 @@ One closed token contract, the approved foundations sheet, drawn by two UI plugi
 
 ## Colors
 
-Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fixed chroma per role (the cast knob moves the hue, never the chroma, so no contrast moves), one accent hue (its chroma is held inside sRGB at any hue), three status hues, six hued chip families and a neutral one (`fill-neutral` under `ink-body`, no mark), eight avatar steps. A wash is the body ink at an alpha, so it sits on any surface as one more step. Inside a group or a lifted layer the container re-points `edge` to `edge-raised`, so a part never picks between them.
+Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fixed chroma per role (the cast knob moves the hue, never the chroma, so no contrast moves), one accent hue (its chroma is held inside sRGB at any hue), three status hues, six hued chip families and a neutral one (`fill-neutral` under `ink-body`, no mark), six chart fills, eight avatar steps. A wash is the body ink at an alpha, so it sits on any surface as one more step. Inside a group or a lifted layer the container re-points `edge` to `edge-raised`, so a part never picks between them.
 
 | Role | Light | Dark | Draws |
 | --- | --- | --- | --- |
@@ -2361,31 +2375,37 @@ Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fi
 | `accent-ink` | `oklch(0.52 0.19 264)` | `oklch(0.72 0.13 264)` | a link, the focus ring, a selection outline |
 | `ok` | `oklch(0.49 0.129 150)` | `oklch(0.64 0.17 150)` | the `done` mark, an added line's ink |
 | `ok-soft` | `oklch(0.965 0.04 150)` | `oklch(0.28 0.05 150)` | the ground under an `ok` mark, an added line |
-| `warn` | `oklch(0.48 0.099 70)` | `oklch(0.75 0.15 80)` | the `attention` mark |
-| `warn-soft` | `oklch(0.965 0.036 85)` | `oklch(0.28 0.05 75)` | the ground under a `warn` mark |
+| `warn` | `oklch(0.48 0.099 70)` | `oklch(0.75 0.15 80)` | a caution's ink: a banner's glyph and act, a change mark |
+| `warn-soft` | `oklch(0.965 0.036 85)` | `oklch(0.25 0.035 75)` | the ground under a `warn` mark |
 | `danger` | `oklch(0.515 0.19 25)` | `oklch(0.71 0.178 25)` | the `failed` mark, a destructive act's label, an error ring, the filled destructive act |
-| `danger-soft` | `oklch(0.965 0.016 20)` | `oklch(0.28 0.06 25)` | the ground under a `danger` mark, a removed line |
+| `danger-soft` | `oklch(0.965 0.016 20)` | `oklch(0.25 0.04 25)` | the ground under a `danger` mark, a removed line |
 | `on-danger` | `oklch(1 0 0)` | `oklch(0.16 0.005 264)` | text on a `danger` fill, the one saturated state |
-| `chip-red` | `oklch(0.56 0.2 25)` | `oklch(0.75 0.147 25)` | a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft |
-| `chip-red-soft` | `oklch(0.945 0.026 25)` | `oklch(0.3 0.05 25)` | a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft |
-| `chip-red-ink` | `oklch(0.42 0.1 25)` | `oklch(0.87 0.068 25)` | a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft |
-| `chip-amber` | `oklch(0.65 0.13 85)` | `oklch(0.75 0.15 85)` | a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft |
-| `chip-amber-soft` | `oklch(0.945 0.035 85)` | `oklch(0.3 0.05 85)` | a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft |
-| `chip-amber-ink` | `oklch(0.42 0.085 85)` | `oklch(0.87 0.08 85)` | a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft |
-| `chip-green` | `oklch(0.5 0.154 145)` | `oklch(0.6 0.185 145)` | a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft |
-| `chip-green-soft` | `oklch(0.945 0.035 145)` | `oklch(0.3 0.05 145)` | a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft |
-| `chip-green-ink` | `oklch(0.42 0.1 145)` | `oklch(0.87 0.08 145)` | a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft |
-| `chip-teal` | `oklch(0.61 0.102 195)` | `oklch(0.71 0.118 195)` | a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft |
-| `chip-teal-soft` | `oklch(0.945 0.035 195)` | `oklch(0.3 0.05 195)` | a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft |
-| `chip-teal-ink` | `oklch(0.42 0.07 195)` | `oklch(0.87 0.08 195)` | a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft |
-| `chip-violet` | `oklch(0.51 0.2 305)` | `oklch(0.65 0.2 305)` | a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft |
-| `chip-violet-soft` | `oklch(0.945 0.032 305)` | `oklch(0.3 0.05 305)` | a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft |
-| `chip-violet-ink` | `oklch(0.42 0.1 305)` | `oklch(0.87 0.078 305)` | a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft |
-| `chip-pink` | `oklch(0.51 0.2 350)` | `oklch(0.6 0.2 350)` | a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft |
-| `chip-pink-soft` | `oklch(0.945 0.031 350)` | `oklch(0.3 0.05 350)` | a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft |
-| `chip-pink-ink` | `oklch(0.42 0.1 350)` | `oklch(0.87 0.08 350)` | a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft |
-| `chip-neutral-soft` | `oklch(0.2 0.008 264 / 0.08)` | `oklch(0.97 0.002 264 / 0.08)` | a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft |
-| `chip-neutral-ink` | `oklch(0.2 0.008 264)` | `oklch(0.97 0.002 264)` | a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft |
+| `chip-red` | `oklch(0.56 0.2 25)` | `oklch(0.75 0.147 25)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |
+| `chip-red-soft` | `oklch(0.945 0.026 25)` | `oklch(0.3 0.05 25)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |
+| `chip-red-ink` | `oklch(0.42 0.1 25)` | `oklch(0.87 0.068 25)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |
+| `chip-amber` | `oklch(0.62 0.127 85)` | `oklch(0.75 0.15 85)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |
+| `chip-amber-soft` | `oklch(0.945 0.035 85)` | `oklch(0.3 0.05 85)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |
+| `chip-amber-ink` | `oklch(0.42 0.085 85)` | `oklch(0.87 0.08 85)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |
+| `chip-green` | `oklch(0.5 0.154 145)` | `oklch(0.6 0.185 145)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |
+| `chip-green-soft` | `oklch(0.945 0.035 145)` | `oklch(0.3 0.05 145)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |
+| `chip-green-ink` | `oklch(0.42 0.1 145)` | `oklch(0.87 0.08 145)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |
+| `chip-teal` | `oklch(0.61 0.102 195)` | `oklch(0.71 0.118 195)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |
+| `chip-teal-soft` | `oklch(0.945 0.035 195)` | `oklch(0.3 0.05 195)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |
+| `chip-teal-ink` | `oklch(0.42 0.07 195)` | `oklch(0.87 0.08 195)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |
+| `chip-violet` | `oklch(0.51 0.2 305)` | `oklch(0.65 0.2 305)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |
+| `chip-violet-soft` | `oklch(0.945 0.032 305)` | `oklch(0.3 0.05 305)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |
+| `chip-violet-ink` | `oklch(0.42 0.1 305)` | `oklch(0.87 0.078 305)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |
+| `chip-pink` | `oklch(0.51 0.2 350)` | `oklch(0.6 0.2 350)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |
+| `chip-pink-soft` | `oklch(0.945 0.031 350)` | `oklch(0.3 0.05 350)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |
+| `chip-pink-ink` | `oklch(0.42 0.1 350)` | `oklch(0.87 0.08 350)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |
+| `chip-neutral-soft` | `oklch(0.2 0.008 264 / 0.08)` | `oklch(0.97 0.002 264 / 0.08)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |
+| `chip-neutral-ink` | `oklch(0.2 0.008 264)` | `oklch(0.97 0.002 264)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |
+| `chart-red` | `oklch(0.63 0.12 25)` | `oklch(0.55 0.088 25)` | a chart series' fill: the chip hue, quieter, at 3:1 on `surface` and `group` |
+| `chart-amber` | `oklch(0.62 0.078 85)` | `oklch(0.54 0.09 85)` | a chart series' fill: the chip hue, quieter, at 3:1 on `surface` and `group` |
+| `chart-green` | `oklch(0.61 0.092 145)` | `oklch(0.53 0.111 145)` | a chart series' fill: the chip hue, quieter, at 3:1 on `surface` and `group` |
+| `chart-teal` | `oklch(0.61 0.061 195)` | `oklch(0.53 0.071 195)` | a chart series' fill: the chip hue, quieter, at 3:1 on `surface` and `group` |
+| `chart-violet` | `oklch(0.63 0.12 305)` | `oklch(0.55 0.12 305)` | a chart series' fill: the chip hue, quieter, at 3:1 on `surface` and `group` |
+| `chart-pink` | `oklch(0.63 0.12 350)` | `oklch(0.555 0.12 350)` | a chart series' fill: the chip hue, quieter, at 3:1 on `surface` and `group` |
 | `avatar-1` | `oklch(0.88 0.062 20)` | `oklch(0.4 0.08 20)` | an `Avatar`'s fill and the initial on it, one step per name |
 | `avatar-1-ink` | `oklch(0.38 0.1 20)` | `oklch(0.92 0.04 20)` | an `Avatar`'s fill and the initial on it, one step per name |
 | `avatar-2` | `oklch(0.88 0.07 60)` | `oklch(0.4 0.08 60)` | an `Avatar`'s fill and the initial on it, one step per name |
@@ -2420,20 +2440,20 @@ Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fi
 | `act-accent-hover` | `oklch(0.458 0.167 264)` | `oklch(0.475 0.167 264)` | the primary act's fill; `-hover`, `-press` and `-pending` its states |
 | `act-accent-press` | `oklch(0.406 0.148 264)` | `oklch(0.421 0.148 264)` | the primary act's fill; `-hover`, `-press` and `-pending` its states |
 | `act-accent-pending` | `oklch(0.664 0.133 264)` | `oklch(0.426 0.134 264)` | the primary act's fill; `-hover`, `-press` and `-pending` its states |
-| `act-danger` | `oklch(0.515 0.19 25)` | `oklch(0.71 0.178 25)` | a confirm's destructive act's fill; `-hover`, `-press` and `-pending` its states |
-| `on-act-danger` | `oklch(1 0 0)` | `oklch(0.16 0.005 264)` | the filled destructive act's label |
-| `act-danger-hover` | `oklch(0.453 0.167 25)` | `oklch(0.741 0.157 24.925)` | a confirm's destructive act's fill; `-hover`, `-press` and `-pending` its states |
-| `act-danger-press` | `oklch(0.402 0.148 25)` | `oklch(0.767 0.137 24.844)` | a confirm's destructive act's fill; `-hover`, `-press` and `-pending` its states |
-| `act-danger-pending` | `oklch(0.661 0.133 25)` | `oklch(0.545 0.124 24.405)` | a confirm's destructive act's fill; `-hover`, `-press` and `-pending` its states |
+| `act-danger` | `oklch(0.515 0.19 25)` | `oklch(0.5 0.17 25)` | a confirm's destructive act's fill; `-hover`, `-press` and `-pending` its states |
+| `on-act-danger` | `oklch(1 0 0)` | `oklch(1 0 0)` | the filled destructive act's label |
+| `act-danger-hover` | `oklch(0.453 0.167 25)` | `oklch(0.44 0.15 25)` | a confirm's destructive act's fill; `-hover`, `-press` and `-pending` its states |
+| `act-danger-press` | `oklch(0.402 0.148 25)` | `oklch(0.39 0.133 25)` | a confirm's destructive act's fill; `-hover`, `-press` and `-pending` its states |
+| `act-danger-pending` | `oklch(0.661 0.133 25)` | `oklch(0.398 0.118 24.377)` | a confirm's destructive act's fill; `-hover`, `-press` and `-pending` its states |
 | `switch-off` | `oklch(0.61 0.01 264)` | `oklch(0.575 0.01 264)` | a switch's track off; `-hover` under the pointer |
 | `switch-off-hover` | `oklch(0.549 0.01 264)` | `oklch(0.634 0.009 264)` | a switch's track off; `-hover` under the pointer |
 | `toggle-on` | `oklch(0.52 0.19 264)` | `oklch(0.54 0.19 264)` | a toggle on: a switch's track, a checked box, a slider's fill; `-hover` under the pointer |
 | `toggle-on-hover` | `oklch(0.458 0.167 264)` | `oklch(0.595 0.167 264)` | a toggle on: a switch's track, a checked box, a slider's fill; `-hover` under the pointer |
 | `switch-thumb` | `oklch(1 0 0)` | `oklch(1 0 0)` | a switch's knob |
 
-Status colors: `active` is `accent-ink`, `running` is `accent-ink` drawn as a spinner in the dot's place, `waiting` and `idle` are `ink-meta`, `done` is `ok`, `attention` is `warn`, `failed` is `danger`.
+Status colors: `active` is `accent-ink`, `running` is `accent-ink` drawn as a spinner in the dot's place, `waiting` and `idle` are `ink-meta`, `done` is `ok`, `attention` is `chip-amber`, `failed` is `danger`.
 
-A chart's series take the chip marks in order: `chip-teal`, `chip-violet`, `chip-amber`, `chip-pink`, `chip-green`, `chip-red`; one series takes the first. A meter at or above 0.9 of its max is near, and above its max is over.
+A chart's series take the chart fills in order: `chart-teal`, `chart-violet`, `chart-amber`, `chart-pink`, `chart-green`, `chart-red`; one series takes the first. A meter at or above 0.9 of its max is near, and above its max is over.
 
 ## Typography
 
@@ -2583,7 +2603,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `Failed` | shared | `EMPTY_COLUMN`, `EMPTY_TEXT`, `EMPTY_FRAME`, `EMPTY_CARD`, `EMPTY_MARK`, `ICON.fit.control`, `TEXT.role.meta`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.secondary` | rest |
 | `QueryBoundary` | shared | none | rest, loading, error |
 | `Toast` | shared | `TOAST`, `TOAST_STATE`, `ICON.fit.body`, `TEXT.role.body`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `ICON_BUTTON.fit.bar` | rest |
-| `Banner` | shared | `BANNER`, `BANNER_ROW`, `BANNER_MAIN`, `BANNER_GLYPH`, `ICON.fit.body`, `TEXT.role.body`, `TEXT.role.meta`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary` | rest, disabled |
+| `Banner` | shared | `BANNER`, `BANNER_ROW`, `BANNER_MAIN`, `BANNER_GLYPH`, `ICON.fit.body`, `TEXT.role.body`, `TEXT.role.meta`, `BUTTON.act.quiet`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.quiet` | rest, disabled |
 | `PendingBar` | shared | `PENDING_BAR`, `PENDING_ROW`, `PENDING_TRACK`, `PENDING_FILL`, `PENDING_LEFT`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `TEXT.role.body`, `TEXT.role.meta`, `BUTTON.act.secondary`, `BUTTON.fit.body`, `BUTTON_LABEL.act.secondary` | rest, disabled |
 | `Prose` | content | `LINE_BOX.role.body`, `LINK.fit.inline`, `PROSE`, `PROSE_BLOCKS`, `PROSE_CODESPAN`, `PROSE_EMPHASIS`, `PROSE_ITEM`, `PROSE_LIST`, `PROSE_MARKER`, `PROSE_PART`, `PROSE_QUOTE`, `PROSE_RULE`, `PROSE_STRIKE`, `SKELETON.kind.line`, `TEXT.role.body`, `TEXT.role.heading`, `TEXT_STRONG.role.body` | rest, loading |
 | `Code` | content | `CODE_ACT`, `CODE_FOLD`, `CODE_HEAD`, `CODE_TEXT`, `CODE_UNDER_HEAD`, `CONTENT_FRAME`, `ICON.fit.control`, `ICON.fit.meta`, `ICON_BUTTON.fit.body`, `LINE_BOX.role.code`, `LINE_BOX.role.meta`, `SKELETON.kind.line`, `TEXT.role.code`, `TEXT.role.meta` | rest, hover, focus, active, loading |
@@ -2615,7 +2635,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `IconButton` | none | `ink-meta`, `ink-body`, `wash-hover`, `wash-press`, `ink-disabled`, `ring` | `control` | none | `control`, `control-compact`, `hairline` | none |
 | `Count` | `caption` | `fill-neutral`, `ink-meta` | `full` | `inside` | `chip` | none |
 | `StepCount` | `meta` | `ink-meta`, `fill-neutral` | `chip` | `pair`, `inside` | `meter` | none |
-| `Status` | `meta` | `accent-ink`, `ink-meta`, `ok`, `warn`, `danger`, `skeleton` | `full`, `chip` | `inside` | `dot`, `spinner`, `measure-short`, `skeleton`, `icon`, `icon-meta` | none |
+| `Status` | `meta` | `accent-ink`, `ink-meta`, `ok`, `warn`, `chip-amber`, `danger`, `skeleton` | `full`, `chip` | `inside` | `dot`, `spinner`, `measure-short`, `skeleton`, `icon`, `icon-meta` | none |
 | `Chip` | `caption` | `chip-`, `wash-hover`, `wash-press`, `ring` | `full` | `inside` | `chip`, `measure-short` | none |
 | `Input` | `body`, `code` | `surface`, `edge`, `edge-hover`, `edge-error`, `ink-body`, `ink-meta`, `fill-disabled`, `ink-disabled`, `ring` | `control` | `inside`, `control-x` | `field`, `control-compact` | none |
 | `FileInput` | `body`, `meta` | `surface`, `edge`, `edge-hover`, `edge-error`, `ink-body`, `ink-meta`, `fill-disabled`, `ink-disabled`, `ring` | `control` | `inside`, `control-x` | `field`, `icon-control` | none |
@@ -2640,10 +2660,10 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `ActionBar` | `meta`, `body` | `ink-meta`, `ink-body`, `ink-disabled`, `ink-error`, `edge`, `danger`, `act-accent`, `on-act-accent`, `act-danger`, `on-act-danger`, `wash-hover`, `wash-press`, `skeleton` | `control`, `full` | `pair`, `acts`, `inside`, `control-x` | `control`, `field`, `target`, `selection`, `control-compact`, `measure-short` | none |
 | `Columns` | none | none | none | `fields`, `page`, `sections` | `column` | none |
 | `Shell` | `body`, `caption` | `canvas`, `surface`, `edge`, `ink-body`, `ink-meta`, `fill-neutral`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `ring` | `row`, `control`, `full` | `inside`, `control-x`, `rows`, `pair`, `float`, `page` | `row`, `sidebar`, `target`, `chip`, `icon`, `icon-control`, `popover` | none |
-| `ListRow` | `body`, `meta`, `caption` | `ink-body`, `ink-meta`, `ink-disabled`, `ink-error`, `surface`, `edge`, `edge-error`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `ring`, `accent-ink`, `ok`, `warn`, `danger`, `avatar-`, `chip-`, `skeleton`, `fill-disabled`, `edge-strong`, `toggle-on`, `toggle-on-hover`, `on-accent` | `row`, `full`, `control`, `chip` | `inside`, `rows`, `control-x`, `card`, `acts`, `pair` | `row`, `row-2`, `avatar`, `icon`, `icon-meta`, `dot`, `spinner`, `measure-short`, `chip`, `control-compact`, `skeleton`, `figures`, `check`, `target`, `indent`, `line-body` | none |
-| `DefinitionRow` | `body`, `meta`, `code` | `ink-body`, `ink-meta`, `wash-hover`, `wash-press`, `ring`, `accent-ink`, `ok`, `warn`, `danger`, `skeleton` | `full`, `control`, `chip` | `fields`, `card`, `inside`, `pair` | `row`, `row-setting`, `control-compact`, `icon`, `icon-meta`, `dot`, `spinner`, `measure-short`, `measure`, `figures`, `skeleton`, `switch-w`, `switch-h`, `target` | none |
-| `FormField` | `body`, `meta` | `ink-body`, `ink-meta`, `ink-error`, `ink-disabled`, `ok`, `warn`, `danger` | `control` | `pair`, `fields`, `inside`, `card` | `row`, `icon`, `icon-meta`, `control-compact` | none |
-| `ItemHeader` | `body`, `meta`, `title`, `caption` | `ink-body`, `ink-meta`, `edge`, `fill-neutral`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `accent-ink`, `ok`, `warn`, `danger` | `control`, `chip`, `full` | `pair`, `sections`, `inside`, `fields`, `control-x` | `skeleton`, `target`, `control-compact`, `chip`, `dot`, `spinner`, `icon-meta`, `measure-short`, `measure` | none |
+| `ListRow` | `body`, `meta`, `caption` | `ink-body`, `ink-meta`, `ink-disabled`, `ink-error`, `surface`, `edge`, `edge-error`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `ring`, `accent-ink`, `ok`, `warn`, `chip-amber`, `danger`, `avatar-`, `chip-`, `skeleton`, `fill-disabled`, `edge-strong`, `toggle-on`, `toggle-on-hover`, `on-accent` | `row`, `full`, `control`, `chip` | `inside`, `rows`, `control-x`, `card`, `acts`, `pair` | `row`, `row-2`, `avatar`, `icon`, `icon-meta`, `dot`, `spinner`, `measure-short`, `chip`, `control-compact`, `skeleton`, `figures`, `check`, `target`, `indent`, `line-body` | none |
+| `DefinitionRow` | `body`, `meta`, `code` | `ink-body`, `ink-meta`, `wash-hover`, `wash-press`, `ring`, `accent-ink`, `ok`, `warn`, `chip-amber`, `danger`, `skeleton` | `full`, `control`, `chip` | `fields`, `card`, `inside`, `pair` | `row`, `row-setting`, `control-compact`, `icon`, `icon-meta`, `dot`, `spinner`, `measure-short`, `measure`, `figures`, `skeleton`, `switch-w`, `switch-h`, `target` | none |
+| `FormField` | `body`, `meta` | `ink-body`, `ink-meta`, `ink-error`, `ink-disabled`, `ok`, `warn`, `chip-amber`, `danger` | `control` | `pair`, `fields`, `inside`, `card` | `row`, `icon`, `icon-meta`, `control-compact` | none |
+| `ItemHeader` | `body`, `meta`, `title`, `caption` | `ink-body`, `ink-meta`, `edge`, `fill-neutral`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `accent-ink`, `ok`, `warn`, `chip-amber`, `danger` | `control`, `chip`, `full` | `pair`, `sections`, `inside`, `fields`, `control-x` | `skeleton`, `target`, `control-compact`, `chip`, `dot`, `spinner`, `icon-meta`, `measure-short`, `measure` | none |
 | `SegmentedControl` | `body` | `group`, `ink-body`, `ink-meta`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `ring` | `control` | `control-x` | `control-compact` | none |
 | `Sheet` | `heading`, `body`, `meta` | `scrim`, `raised`, `edge-raised`, `edge`, `ink-body`, `ink-meta`, `ink-error`, `act-accent`, `on-act-accent` | `sheet`, `control` | `pair`, `card`, `acts`, `fields`, `sections`, `inside`, `control-x`, `page` | `sheet`, `pane`, `dialog`, `measure`, `control`, `control-compact`, `row-2` | `modal` |
 | `Picker` | `body`, `meta`, `caption` | `ink-body`, `ink-meta`, `surface`, `edge`, `edge-hover`, `raised`, `avatar-`, `chip-`, `edge-raised`, `wash-hover`, `wash-press`, `ring` | `full`, `control`, `popover`, `row` | `inside`, `pair`, `float`, `rows`, `control-x`, `card` | `target`, `control-compact`, `popover`, `avatar`, `chip`, `chips-inset`, `hairline`, `measure-short`, `row`, `row-2`, `icon-meta`, `icon`, `icon-control` | `float` |
@@ -2652,28 +2672,28 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `EmptyState` | `title`, `heading`, `body`, `meta` | `fill-neutral`, `ink-body`, `ink-meta`, `danger`, `edge`, `act-accent`, `on-act-accent` | `full`, `card`, `control` | `fields`, `pair`, `card`, `inside`, `control-x`, `acts` | `empty`, `control`, `control-compact`, `icon-control` | none |
 | `Missing` | `body`, `meta` | `edge`, `ink-body`, `ink-meta` | `card`, `control` | `fields`, `pair`, `card`, `inside`, `control-x` | `empty`, `control`, `control-compact` | none |
 | `Failed` | `body`, `meta` | `fill-neutral`, `ink-body`, `ink-meta`, `danger`, `edge` | `full`, `card`, `control` | `fields`, `pair`, `card`, `inside`, `control-x` | `empty`, `control`, `control-compact`, `icon-control` | none |
-| `Toast` | `body` | `raised`, `edge-raised`, `edge`, `ink-body`, `ink-meta`, `ok`, `warn`, `danger` | `card`, `control` | `card`, `pair`, `inside`, `control-x` | `toast`, `icon`, `control-compact` | `float` |
-| `Banner` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `accent-soft`, `accent-ink`, `warn-soft`, `warn`, `danger-soft`, `danger` | `control` | `control-x`, `pair`, `inside` | `icon`, `control-compact` | none |
+| `Toast` | `body` | `raised`, `edge-raised`, `edge`, `ink-body`, `ink-meta`, `ok`, `warn`, `chip-amber`, `danger` | `card`, `control` | `card`, `pair`, `inside`, `control-x` | `toast`, `icon`, `control-compact` | `float` |
+| `Banner` | `body`, `meta` | `ink-body`, `ink-meta`, `accent-soft`, `accent-ink`, `warn-soft`, `warn`, `danger-soft`, `danger` | `control` | `control-x`, `pair`, `inside` | `icon`, `control-compact` | none |
 | `PendingBar` | `body`, `meta` | `group`, `ink-body`, `ink-meta`, `edge` | `control`, `full` | `pair`, `acts`, `control-x`, `inside` | `control`, `track`, `spinner` | none |
 | `Prose` | `body`, `heading`, `code` | `ink-body`, `ink-meta`, `fill-neutral`, `accent-ink`, `edge-strong`, `edge`, `skeleton` | `chip` | `sections`, `pair`, `fields`, `inside`, `control-x` | `measure`, `icon`, `skeleton` | none |
 | `Code` | `code`, `meta` | `edge`, `surface`, `ink-body`, `ring`, `ink-meta`, `wash-hover`, `skeleton`, `wash-press` | `card`, `control`, `chip` | `tile`, `acts`, `float`, `inside` | `control`, `icon-control`, `strip`, `target`, `icon-meta`, `skeleton` | none |
 | `Diff` | `code` | `edge`, `surface`, `group`, `ink-meta`, `ink-body`, `danger-soft`, `ok-soft`, `skeleton` | `card`, `chip` | `inside`, `rows`, `control-x` | `figures`, `skeleton` | none |
 | `ProseDiff` | `body` | `edge`, `surface`, `ink-body`, `danger-soft`, `ok-soft`, `skeleton` | `card`, `chip` | `card` | `measure`, `skeleton` | none |
-| `FileRow` | `code`, `meta`, `caption` | `ink-meta`, `ink-body`, `ok`, `warn`, `danger`, `wash-hover`, `ring`, `wash-press`, `wash-selected`, `wash-selected-hover`, `chip-`, `skeleton` | `row`, `full`, `chip` | `inside`, `control-x`, `card` | `row`, `avatar`, `icon`, `figures`, `skeleton`, `measure-short`, `chip`, `icon-meta` | none |
-| `Comparison` | `meta`, `body`, `caption` | `ink-meta`, `ink-body`, `chip-neutral-soft`, `chip-neutral-ink`, `skeleton`, `ok`, `warn`, `danger`, `accent-ink` | `full`, `chip` | `pair`, `inside`, `card` | `row`, `chip`, `dot`, `measure-short`, `skeleton` | none |
-| `Table` | `body`, `meta`, `code`, `caption` | `edge`, `ink-meta`, `ink-body`, `ring`, `chip-teal-soft`, `chip-teal-ink`, `toggle-on`, `on-accent`, `ok`, `wash-hover`, `accent-ink`, `edge-strong`, `surface`, `danger`, `warn`, `wash-press`, `wash-selected`, `wash-selected-hover`, `edge-hover`, `toggle-on-hover`, `skeleton`, `ok-soft`, `danger-soft`, `fill-disabled`, `ink-disabled` | `full`, `chip`, `control` | `control-x`, `inside`, `pair`, `page` | `measure-short`, `measure`, `row`, `row-2`, `target`, `icon-meta`, `chip`, `check`, `dot`, `spinner`, `control-compact`, `icon`, `skeleton`, `line-body` | none |
+| `FileRow` | `code`, `meta`, `caption` | `ink-meta`, `ink-body`, `ok`, `warn`, `chip-amber`, `danger`, `wash-hover`, `ring`, `wash-press`, `wash-selected`, `wash-selected-hover`, `chip-`, `skeleton` | `row`, `full`, `chip` | `inside`, `control-x`, `card` | `row`, `avatar`, `icon`, `figures`, `skeleton`, `measure-short`, `chip`, `icon-meta` | none |
+| `Comparison` | `meta`, `body`, `caption` | `ink-meta`, `ink-body`, `chip-neutral-soft`, `chip-neutral-ink`, `skeleton`, `ok`, `warn`, `chip-amber`, `danger`, `accent-ink` | `full`, `chip` | `pair`, `inside`, `card` | `row`, `chip`, `dot`, `measure-short`, `skeleton` | none |
+| `Table` | `body`, `meta`, `code`, `caption` | `edge`, `ink-meta`, `ink-body`, `ring`, `chip-teal-soft`, `chip-teal-ink`, `toggle-on`, `on-accent`, `ok`, `wash-hover`, `accent-ink`, `edge-strong`, `surface`, `danger`, `warn`, `chip-amber`, `wash-press`, `wash-selected`, `wash-selected-hover`, `edge-hover`, `toggle-on-hover`, `skeleton`, `ok-soft`, `danger-soft`, `fill-disabled`, `ink-disabled` | `full`, `chip`, `control` | `control-x`, `inside`, `pair`, `page` | `measure-short`, `measure`, `row`, `row-2`, `target`, `icon-meta`, `chip`, `check`, `dot`, `spinner`, `control-compact`, `icon`, `skeleton`, `line-body` | none |
 | `Rules` | `meta` | `ink-meta`, `ink-disabled` | none | `inside`, `pair`, `card` | `icon-meta` | none |
-| `Message` | `meta`, `body`, `code`, `caption` | `ink-meta`, `group`, `ink-body`, `edge`, `surface`, `skeleton`, `wash-hover`, `ring`, `wash-press`, `chip-` | `card`, `control`, `chip`, `full` | `pair`, `tile`, `inside` | `target`, `icon-meta`, `skeleton`, `figures`, `chip`, `measure-short`, `image-tile` | none |
+| `Message` | `meta`, `body`, `code`, `caption` | `ink-meta`, `fill-neutral`, `ink-body`, `edge`, `surface`, `skeleton`, `wash-hover`, `ring`, `wash-press`, `chip-` | `card`, `control`, `chip`, `full` | `pair`, `tile`, `inside` | `target`, `icon-meta`, `skeleton`, `figures`, `chip`, `measure-short`, `image-tile` | none |
 | `MessageInput` | `body`, `meta`, `caption` | `edge`, `surface`, `ink-meta`, `ink-body`, `act-accent`, `on-act-accent`, `fill-disabled`, `ink-disabled`, `edge-hover`, `ring`, `raised`, `chip-neutral-soft`, `chip-neutral-ink` | `card`, `control`, `full` | `pair`, `rows`, `inside`, `control-x` | `message-input`, `control-compact`, `icon-control`, `chip`, `measure`, `measure-short`, `icon-meta`, `target`, `spinner`, `image-tile` | none |
 | `Meter` | `body`, `meta` | `ink-body`, `ink-meta`, `accent-ink`, `fill-neutral`, `warn`, `danger`, `skeleton` | `chip` | `pair`, `inside`, `card` | `meter`, `track`, `skeleton`, `target` | none |
 | `Stages` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `edge-strong`, `accent-ink`, `canvas`, `danger` | `full` | `pair` | `icon-meta`, `row-2` | none |
 | `Stats` | `figure`, `meta` | `edge`, `surface`, `ink-body`, `ink-meta`, `accent-ink`, `skeleton`, `wash-hover`, `wash-press` | `card`, `chip` | `pair`, `inside`, `card` | `skeleton`, `target` | none |
 | `Stat` | `display`, `meta` | `ink-body`, `ink-meta`, `skeleton` | `chip` | `pair`, `inside` | `skeleton` | none |
-| `BarChart` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `chip-` | `full`, `chip` | `fields`, `inside`, `pair` | `chart`, `dot`, `skeleton`, `figures` | none |
+| `BarChart` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `chart-` | `full`, `chip` | `fields`, `inside`, `pair` | `chart`, `dot`, `skeleton`, `figures` | none |
 | `Thread` | none | `raised`, `edge`, `edge-raised` | `control` | `sections`, `page`, `pair`, `acts` | `measure` | `float` |
 | `QrCode` | none | `edge`, `surface`, `ink-body`, `skeleton` | `card` | none | `qr` | none |
 | `Image` | `meta` | `edge`, `edge-hover`, `ink-body`, `skeleton`, `group`, `ink-meta`, `raised`, `scrim` | `control`, `card` | `page`, `inside` | `image-tile`, `image-cap`, `icon`, `control` | `float` |
-| `Canvas` | `body`, `meta`, `caption` | `canvas`, `group`, `surface`, `edge`, `edge-strong`, `edge-error`, `selected-outline`, `edge-hover`, `grid`, `ring`, `ink-body`, `ink-meta`, `ink-disabled`, `fill-neutral`, `accent-ink`, `ok`, `warn`, `danger`, `chip-` | `card`, `control`, `full`, `chip` | `inside`, `pair`, `control-x` | `node`, `port`, `target`, `row-2`, `control`, `dot`, `chip`, `icon-meta`, `icon`, `measure-short`, `spinner` | none |
+| `Canvas` | `body`, `meta`, `caption` | `canvas`, `group`, `surface`, `edge`, `edge-strong`, `edge-error`, `selected-outline`, `edge-hover`, `grid`, `ring`, `ink-body`, `ink-meta`, `ink-disabled`, `fill-neutral`, `accent-ink`, `ok`, `warn`, `chip-amber`, `danger`, `chip-` | `card`, `control`, `full`, `chip` | `inside`, `pair`, `control-x` | `node`, `port`, `target`, `row-2`, `control`, `dot`, `chip`, `icon-meta`, `icon`, `measure-short`, `spinner` | none |
 
 ### Motion
 

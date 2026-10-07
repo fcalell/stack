@@ -51,7 +51,7 @@ look-ahead: a reset (`border-0`) is excluded per category.
 
 | File | Slot | Content |
 |------|------|---------|
-| `.stack/app.css` | `reactUi.slots.appCssSource` | `tailwindcss` with `source(none)`, the plugin's `globals.css`, `@source "../src"`, the `@theme` tokens and shadow utilities from ui-core, the `touch:` and `page-*` custom variants, the `pb-safe` utility, and `@layer base` for the mode scopes, reduced motion and density |
+| `.stack/app.css` | `reactUi.slots.appCssSource` | `tailwindcss` with `source(none)`, the plugin's `globals.css`, `@source "../src"`, the `@theme` tokens and shadow utilities from ui-core, the `touch:` and `page-*` custom variants, the `pb-safe` and `pt-safe` utilities, and `@layer base` for the mode scopes, reduced motion and density |
 
 `.stack/entry.tsx` imports `./app.css`; `.stack/vite.config.ts` gains `tailwindcss()`,
 `themeFontsPlugin` (the preloads and `@font-face` rules) and `themeModePlugin` (the script that
@@ -70,7 +70,7 @@ and `useTouch` reads the Place's `DistanceContext` as well as the query.
 
 `page-<breakpoint>:` and `page-max-<breakpoint>:` draw from or below a breakpoint's width of the
 `page` container (`@container/page`), emitted from the contract's breakpoint values. `pb-safe`
-pads by `env(safe-area-inset-bottom)`, non-zero under the react plugin's `viewport-fit=cover`.
+and `pt-safe` pad by `env(safe-area-inset-bottom)` and `env(safe-area-inset-top)`, non-zero under the react plugin's `viewport-fit=cover`.
 Each `@font-face` gets a metric fallback face named by ui-core's `fallbackFace`
 (`"IBM Plex Sans Fallback"`), the name the contract's family stack carries second.
 

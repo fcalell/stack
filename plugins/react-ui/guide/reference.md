@@ -87,4 +87,5 @@ judged alike.
 ## Safe areas
 
 The touch tab bar clears a phone's home indicator by itself: the document sets
-`viewport-fit=cover`, and the bar pads its bottom by the safe-area inset.
+`viewport-fit=cover`, and the bar pads its bottom by the safe-area inset. The Shell's column pads
+its top by the safe-area inset, so a banner or a page's head clears a notch or a status bar.

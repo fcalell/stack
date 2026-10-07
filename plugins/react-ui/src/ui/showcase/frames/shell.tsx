@@ -1,4 +1,5 @@
 import type { PlaceSpec, Switcher } from "@fcalell/ui-core/descriptors";
+import { Banner } from "../../components/banner/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { Shell } from "../../components/shell/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
@@ -34,10 +35,19 @@ const SWITCHER: Switcher = {
 	act: { label: "New workspace", icon: "Plus", onAct: act },
 };
 
+// The banner stands over the page's head, so the frame judges the gap under it.
+const BANNER = (
+	<Banner
+		kind="danger"
+		sentence="The last deploy of api failed."
+		act={{ label: "Open logs", onAct: act }}
+	/>
+);
+
 function Frame() {
 	return (
 		<Column>
-			<Shell places={places()} switcher={SWITCHER}>
+			<Shell places={places()} banner={BANNER} switcher={SWITCHER}>
 				<Place
 					title="Deploys"
 					actions={ACTIONS}

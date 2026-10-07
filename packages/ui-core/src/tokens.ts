@@ -116,6 +116,9 @@ export const COLOR_GROUPS = {
 		"chip-neutral-soft",
 		"chip-neutral-ink",
 	],
+	// a chart series' fill: the chip hue, quieter, holding 3:1 on `surface` and
+	// `group`
+	chart: CHIP_HUES.map((hue) => `chart-${hue}` as const),
 	// the fill and the initial on it
 	avatars: AVATAR_STEPS.flatMap(
 		(step) => [`avatar-${step}`, `avatar-${step}-ink`] as const,
@@ -241,7 +244,7 @@ const CHIP: Record<
 	{ hue: number; light: [number, number]; dark: [number, number] }
 > = {
 	red: { hue: 25, light: [0.56, 0.2], dark: [0.75, 0.147] },
-	amber: { hue: 85, light: [0.65, 0.13], dark: [0.75, 0.15] },
+	amber: { hue: 85, light: [0.62, 0.13], dark: [0.75, 0.15] },
 	green: { hue: 145, light: [0.5, 0.154], dark: [0.6, 0.185] },
 	teal: { hue: 195, light: [0.61, 0.102], dark: [0.71, 0.118] },
 	violet: { hue: 305, light: [0.51, 0.2], dark: [0.65, 0.2] },
@@ -303,6 +306,34 @@ function chipColors(): Record<ChipColor, ColorDeclaration> {
 	return out;
 }
 
+// A chart series' fill: the chip hue at about 60 % of the mark's chroma, its
+// lightness the nearest to the mark's that holds 3:1 on `surface` and `group`
+// (light: the lightest that holds; dark: the darkest).
+const CHART: Record<
+	ChipHue,
+	{ light: [number, number]; dark: [number, number] }
+> = {
+	red: { light: [0.63, 0.12], dark: [0.55, 0.088] },
+	amber: { light: [0.62, 0.078], dark: [0.54, 0.09] },
+	green: { light: [0.61, 0.092], dark: [0.53, 0.111] },
+	teal: { light: [0.61, 0.061], dark: [0.53, 0.071] },
+	violet: { light: [0.63, 0.12], dark: [0.55, 0.12] },
+	pink: { light: [0.63, 0.12], dark: [0.555, 0.12] },
+};
+
+function chartColors(): Record<`chart-${ChipHue}`, ColorDeclaration> {
+	const out = {} as Record<`chart-${ChipHue}`, ColorDeclaration>;
+	for (const family of CHIP_HUES) {
+		const { hue } = CHIP[family];
+		const { light, dark } = CHART[family];
+		out[`chart-${family}`] = {
+			light: { l: light[0], c: light[1], hue },
+			dark: { l: dark[0], c: dark[1], hue },
+		};
+	}
+	return out;
+}
+
 // Eight hues at 40–50° spacing: a pastel fill with a hue-darkened initial in
 // light, a deep fill with a hue-lightened initial in dark. Each entry is the
 // hue, then the chroma of the fill and of the ink, light and dark.
@@ -337,6 +368,17 @@ function avatarColors(): Record<AvatarColor, ColorDeclaration> {
 	}
 	return out;
 }
+
+// The danger ink in light, which the filled act wears as it is.
+const DANGER_LIGHT: ColorValue = {
+	l: 0.55,
+	c: 0.19,
+	hue: 25,
+	holds: [
+		{ on: "group", under: "wash-press", ratio: 4.5 },
+		{ on: "on-danger", ratio: 4.5 },
+	],
+};
 
 const EDGE_STRONG_HOLDS: readonly Holds[] = [
 	{ on: "surface", under: "wash-press", ratio: 3 },
@@ -417,21 +459,13 @@ export const COLORS: Record<ColorName, ColorDeclaration> = {
 	},
 	"warn-soft": {
 		light: { l: 0.965, c: 0.036, hue: 85 },
-		dark: { l: 0.28, c: 0.05, hue: 75 },
+		dark: { l: 0.25, c: 0.035, hue: 75 },
 	},
 	// A hairline destructive act's label holds text contrast under its press
 	// wash on a group, the darkest ground it takes in light; the filled
 	// danger act holds its own label.
 	danger: {
-		light: {
-			l: 0.55,
-			c: 0.19,
-			hue: 25,
-			holds: [
-				{ on: "group", under: "wash-press", ratio: 4.5 },
-				{ on: "on-danger", ratio: 4.5 },
-			],
-		},
+		light: DANGER_LIGHT,
 		dark: {
 			l: 0.71,
 			c: 0.178,
@@ -441,10 +475,11 @@ export const COLORS: Record<ColorName, ColorDeclaration> = {
 	},
 	"danger-soft": {
 		light: { l: 0.965, c: 0.016, hue: 20 },
-		dark: { l: 0.28, c: 0.06, hue: 25 },
+		dark: { l: 0.25, c: 0.04, hue: 25 },
 	},
 	"on-danger": { light: WHITE, dark: neutral(0.16, 0.005) },
 	...chipColors(),
+	...chartColors(),
 	...avatarColors(),
 	// Measured on surface in CIE L*: light 100 → hover 95.8 → selected 91.0 →
 	// selected + hover 87.8; dark 8.1 → 13.1 → 19.7 → 23.8.
@@ -462,9 +497,9 @@ export const COLORS: Record<ColorName, ColorDeclaration> = {
 	"ink-error": { alias: "danger" },
 	"ink-disabled": { alias: "ink-faint" },
 	// Hover and press move a fill 12 % and 22 % away from its label, so the
-	// label only gains contrast: the accent act (a white label in both modes)
-	// and the danger act in light (white) toward black, the danger act in dark
-	// (a near-black label) toward `ink-body`.
+	// label only gains contrast: both filled acts wear a white label in both
+	// modes and move toward black. The danger act in dark is a deep red of its
+	// own, since the danger ink holds no light label.
 	// Pending is inert and recedes 30 %: a filled act toward its label in
 	// light and toward the page in dark, held at 3:1 under its label, where
 	// the spinner draws. A labelled act's fill
@@ -482,21 +517,21 @@ export const COLORS: Record<ColorName, ColorDeclaration> = {
 			dark: [{ on: "on-act-accent", ratio: 3 }],
 		},
 	},
-	"act-danger": { alias: "danger" },
-	"on-act-danger": { alias: "on-danger" },
-	"act-danger-hover": {
-		mix: "danger",
-		toward: { light: "black", dark: "ink-body" },
-		amount: 0.12,
+	"act-danger": {
+		light: DANGER_LIGHT,
+		dark: {
+			l: 0.5,
+			c: 0.17,
+			hue: 25,
+			holds: [{ on: "on-act-danger", ratio: 4.5 }],
+		},
 	},
-	"act-danger-press": {
-		mix: "danger",
-		toward: { light: "black", dark: "ink-body" },
-		amount: 0.22,
-	},
+	"on-act-danger": { light: WHITE, dark: WHITE },
+	"act-danger-hover": { mix: "act-danger", toward: "black", amount: 0.12 },
+	"act-danger-press": { mix: "act-danger", toward: "black", amount: 0.22 },
 	"act-danger-pending": {
-		mix: "danger",
-		toward: { light: "on-danger", dark: "canvas" },
+		mix: "act-danger",
+		toward: { light: "on-act-danger", dark: "canvas" },
 		amount: 0.3,
 		holds: {
 			light: [{ on: "on-act-danger", ratio: 3 }],

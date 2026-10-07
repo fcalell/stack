@@ -63,13 +63,15 @@ const COLOR_USE: Record<string, string> = {
 	"accent-ink": "a link, the focus ring, a selection outline",
 	ok: "the `done` mark, an added line's ink",
 	"ok-soft": "the ground under an `ok` mark, an added line",
-	warn: "the `attention` mark",
+	warn: "a caution's ink: a banner's glyph and act, a change mark",
 	"warn-soft": "the ground under a `warn` mark",
 	danger:
 		"the `failed` mark, a destructive act's label, an error ring, the filled destructive act",
 	"danger-soft": "the ground under a `danger` mark, a removed line",
 	"on-danger": "text on a `danger` fill, the one saturated state",
-	chip: "a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft",
+	chip: "a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft",
+	chart:
+		"a chart series' fill: the chip hue, quieter, at 3:1 on `surface` and `group`",
 	avatar: "an `Avatar`'s fill and the initial on it, one step per name",
 	"wash-hover": "a transparent part under the pointer",
 	"wash-press": "a transparent part pressed",
@@ -382,6 +384,7 @@ function code(value: string): string {
 function useOf(name: string): string {
 	const base = name
 		.replace(/^(chip)-[a-z]+(-soft|-ink)?$/, "$1")
+		.replace(/^(chart)-[a-z]+$/, "$1")
 		.replace(/^(avatar)-\d(-ink)?$/, "$1")
 		.replace(
 			/^(act-accent|act-danger|switch-off|toggle-on)-(hover|press|pending)$/,
@@ -416,7 +419,7 @@ function body(resolved: ResolvedTheme): string[] {
 		"",
 		"## Colors",
 		"",
-		"Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fixed chroma per role (the cast knob moves the hue, never the chroma, so no contrast moves), one accent hue (its chroma is held inside sRGB at any hue), three status hues, six hued chip families and a neutral one (`fill-neutral` under `ink-body`, no mark), eight avatar steps. A wash is the body ink at an alpha, so it sits on any surface as one more step. Inside a group or a lifted layer the container re-points `edge` to `edge-raised`, so a part never picks between them.",
+		"Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fixed chroma per role (the cast knob moves the hue, never the chroma, so no contrast moves), one accent hue (its chroma is held inside sRGB at any hue), three status hues, six hued chip families and a neutral one (`fill-neutral` under `ink-body`, no mark), six chart fills, eight avatar steps. A wash is the body ink at an alpha, so it sits on any surface as one more step. Inside a group or a lifted layer the container re-points `edge` to `edge-raised`, so a part never picks between them.",
 		"",
 		...table(
 			["Role", "Light", "Dark", "Draws"],
@@ -428,9 +431,9 @@ function body(resolved: ResolvedTheme): string[] {
 			]),
 		),
 		"",
-		"Status colors: `active` is `accent-ink`, `running` is `accent-ink` drawn as a spinner in the dot's place, `waiting` and `idle` are `ink-meta`, `done` is `ok`, `attention` is `warn`, `failed` is `danger`.",
+		"Status colors: `active` is `accent-ink`, `running` is `accent-ink` drawn as a spinner in the dot's place, `waiting` and `idle` are `ink-meta`, `done` is `ok`, `attention` is `chip-amber`, `failed` is `danger`.",
 		"",
-		`A chart's series take the chip marks in order: ${CHART_SERIES.map((hue) => code(`chip-${hue}`)).join(", ")}; one series takes the first. A meter at or above ${METER_NEAR} of its max is near, and above its max is over.`,
+		`A chart's series take the chart fills in order: ${CHART_SERIES.map((hue) => code(`chart-${hue}`)).join(", ")}; one series takes the first. A meter at or above ${METER_NEAR} of its max is near, and above its max is over.`,
 		"",
 		"## Typography",
 		"",

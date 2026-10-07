@@ -8,6 +8,7 @@ import {
 	buttonLabel,
 } from "@fcalell/ui-core/variants";
 import { use } from "react";
+import { ActInk } from "../../lib/act-ink.ts";
 import type { Closed } from "../../lib/closed.ts";
 import { ActInert, endSubmit, SubmitContext } from "../../lib/form.ts";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
@@ -103,6 +104,9 @@ export function Button({
 	const said = muted && (pressed || touched);
 	const look = lookOf(kind, loading === true, muted || inert);
 	const labelLook = loading ? PENDING : (muted || inert) && LABEL_BLOCKED[kind];
+	const banner = use(ActInk);
+	// A quiet act in a banner is in the banner's kind's ink.
+	const ink = kind === "quiet" && banner;
 	const press = () => {
 		if (inert) return;
 		if (!muted) onAct?.();
@@ -122,14 +126,14 @@ export function Button({
 				endSubmit(submits, event);
 				press();
 			}}
-			className={cn(button({ act: kind, fit }), BOX, look)}
+			className={cn(button({ act: kind, fit }), BOX, ink, look)}
 		>
 			{icon ? (
 				<span className={cn(GLYPH, loading && PENDING)}>
 					<Icon name={icon} fit="control" />
 				</span>
 			) : null}
-			<span className={cn(buttonLabel({ act: kind }), LABEL, labelLook)}>
+			<span className={cn(buttonLabel({ act: kind }), LABEL, ink, labelLook)}>
 				{label}
 			</span>
 			{wait !== undefined ? (

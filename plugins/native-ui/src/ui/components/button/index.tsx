@@ -9,6 +9,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { useContext } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
+import { ActInk } from "../../lib/act-ink";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { ActInert } from "../../lib/form";
@@ -116,8 +117,14 @@ export function Button({
 	const said = muted && (pressed || touched);
 	const look = lookOf(kind, loading === true, muted || inert);
 	const labelLook = loading ? PENDING : (muted || inert) && LABEL_BLOCKED[kind];
+	// A quiet act in a banner is in the banner's kind's ink.
+	const banner = useContext(ActInk);
+	const toned = kind === "quiet" ? banner : undefined;
+	const labelInk = toned?.label;
 	const ink =
-		(muted || inert) && !loading ? INK_BLOCKED[kind] : buttonContentTone(kind);
+		(muted || inert) && !loading
+			? INK_BLOCKED[kind]
+			: (toned?.tone ?? buttonContentTone(kind));
 	const press = () => {
 		if (loading || inert) return;
 		if (!muted) onAct?.();
@@ -143,7 +150,7 @@ export function Button({
 				) : null}
 				<RNText
 					numberOfLines={1}
-					className={cn(buttonLabel({ act: kind }), labelLook)}
+					className={cn(buttonLabel({ act: kind }), labelInk, labelLook)}
 				>
 					{label}
 				</RNText>

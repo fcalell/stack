@@ -1,6 +1,6 @@
 ---
 id: 003-93
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: a banner's act reads as a grey-outlined box on the tint
@@ -14,7 +14,12 @@ At 390 and 320 the act stands under the sentence as an outlined 73 x 44 button, 
 The app passes only `act`; the button's variant is the Banner's. Reference banners (Linear, Vercel, GitHub) draw the act as a tinted or text button in the banner's kind, without a neutral border. Screens: Stead's sign-off set, `banner-urgent-*`.
 
 ## Acceptance criteria
-- [ ] A banner's act takes the kind's family, with no neutral outline on a tint, in light and dark.
+- [x] A banner's act takes the kind's family, with no neutral outline on a tint, in light and dark.
 
 ## Open questions
 - [ ] A banner act variant, or a tinted secondary: the stack session decides.
+
+## Built
+No variant: the Banner draws its act as the existing `quiet` Button at the bar fit, in the kind's ink (`bannerGlyph`'s class on the label and the box, so a spinner or glyph follows) at the label's weight 500, with no hairline or fill. The Banner hands the ink through `ActInk` (`lib/act-ink.ts`, both platforms); a quiet Button reads it, and a blocked or pending act keeps its own look. The 44 px touch target is the bar fit's `control-compact`. The roster's Banner draws `BUTTON.act.quiet` and owns no `edge`.
+Evidence: `ui-core verify`, `plugin-react-ui verify`, `plugin-native-ui verify` and `pnpm check` pass; `shared/Banner` Rest and Disabled pass in the browser run.
+Owner render: `shared/Banner` Rest (note, warn, danger) and Disabled, light and dark.

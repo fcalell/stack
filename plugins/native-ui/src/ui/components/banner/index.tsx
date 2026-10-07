@@ -5,9 +5,11 @@ import {
 	type BannerKind,
 	banner,
 	bannerContentTone,
+	bannerGlyph,
 	text,
 } from "@fcalell/ui-core/variants";
 import { Text as RNText, View } from "react-native";
+import { ActInk, type ActInkValue } from "../../lib/act-ink";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
@@ -25,6 +27,16 @@ const GLYPH_BOX = "flex-row items-center shrink-0";
 const SENTENCE = "min-w-0 flex-1";
 const ACT_SLOT = "flex-row shrink-0";
 
+const INKS: Record<BannerKind, ActInkValue> = {
+	note: inkOf("note"),
+	warn: inkOf("warn"),
+	danger: inkOf("danger"),
+};
+
+function inkOf(kind: BannerKind): ActInkValue {
+	return { label: bannerGlyph({ kind }), tone: bannerContentTone(kind) };
+}
+
 const GLYPHS: Record<BannerKind, IconName> = {
 	note: "Info",
 	warn: "TriangleAlert",
@@ -41,8 +53,8 @@ export interface BannerProps extends Closed {
 }
 
 // A tinted strip at its content's height: the kind's glyph in the kind's ink
-// beside the sentence in the body ink, and the act, a hairline Button at the
-// bar fit, under the line.
+// beside the sentence in the body ink, and the act, a quiet Button at the
+// bar fit in the kind's ink, under the line.
 export function Banner({ kind, sentence, act }: BannerProps) {
 	const drawn = kind ?? "note";
 	return (
@@ -64,14 +76,16 @@ export function Banner({ kind, sentence, act }: BannerProps) {
 				</View>
 				{act ? (
 					<View className={ACT_SLOT}>
-						<Button
-							act="secondary"
-							fit="bar"
-							label={act.label}
-							onAct={act.onAct}
-							loading={act.loading}
-							blocked={act.blocked}
-						/>
+						<ActInk.Provider value={INKS[drawn]}>
+							<Button
+								act="quiet"
+								fit="bar"
+								label={act.label}
+								onAct={act.onAct}
+								loading={act.loading}
+								blocked={act.blocked}
+							/>
+						</ActInk.Provider>
 					</View>
 				) : null}
 			</View>

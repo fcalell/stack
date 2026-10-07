@@ -9,6 +9,7 @@ import {
 	text,
 } from "@fcalell/ui-core/variants";
 import { useMemo } from "react";
+import { ActInk } from "../../lib/act-ink.ts";
 import type { Closed } from "../../lib/closed.ts";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
@@ -43,7 +44,7 @@ export interface BannerProps extends Closed {
 	act?: Act;
 }
 
-/** A tinted strip at its content's height: the kind's glyph in the kind's ink beside the sentence in the body ink, and the act, a hairline Button at the bar fit, beside the line on the desktop and under it on touch. */
+/** A tinted strip at its content's height: the kind's glyph in the kind's ink beside the sentence in the body ink, and the act, a quiet Button at the bar fit in the kind's ink, beside the line on the desktop and under it on touch. */
 export function Banner({ kind, sentence, act }: BannerProps) {
 	const drawn = kind ?? "note";
 	const { touched } = useTouched();
@@ -67,16 +68,18 @@ export function Banner({ kind, sentence, act }: BannerProps) {
 				</div>
 				{act ? (
 					<span className={ACT_SLOT}>
-						<ReasonHostContext value={host}>
-							<Button
-								act="secondary"
-								fit="bar"
-								label={act.label}
-								onAct={act.onAct}
-								loading={act.loading}
-								blocked={blocked}
-							/>
-						</ReasonHostContext>
+						<ActInk value={bannerGlyph({ kind: drawn })}>
+							<ReasonHostContext value={host}>
+								<Button
+									act="quiet"
+									fit="bar"
+									label={act.label}
+									onAct={act.onAct}
+									loading={act.loading}
+									blocked={blocked}
+								/>
+							</ReasonHostContext>
+						</ActInk>
 					</span>
 				) : null}
 			</div>

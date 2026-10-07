@@ -193,7 +193,7 @@ default the greys and the accent read as one palette.
   ring, a selection outline; the accent itself in light, lighter in dark so it reads on the
   near-black ground.
 - The status trio, each with a `-soft` ground: `ok` the `done` mark and an added line's ink,
-  `ok-soft` the ground under it; `warn` the `attention` mark, `warn-soft` its ground; `danger` the
+  `ok-soft` the ground under it; `warn` the ink of a caution (a banner's glyph and act, a change mark; text, held at 4.5:1), `warn-soft` its ground; `danger` the
   `failed` mark, a destructive act's label (in light held at 4.5:1 under `wash-press` on `group`),
   an error ring, `danger-soft` its ground and a removed line. `on-danger`: text on a `danger` fill,
   the one saturated state fill, which `danger` holds at 4.5:1 in both modes. The dark tones are
@@ -206,8 +206,10 @@ default the greys and the accent read as one palette.
   between neighbours so the set separates by lightness as well as hue.
 - The seventh chip family, `neutral`, has no hue and no mark: `chip-neutral-soft` is `fill-neutral`
   and `chip-neutral-ink` is `ink-body`, the applied filter and any tag without a category.
-- A chart's series take the chip marks in `CHART_SERIES` order: `teal`, `violet`, `amber`,
-  `pink`, `green`, `red`; one series takes the first. A meter at or above `METER_NEAR` (0.9) of its
+- A chart's series take the six `chart-<hue>` fills (`chart-red` and its five) in `CHART_SERIES`
+  order: `teal`, `violet`, `amber`, `pink`, `green`, `red`; one series takes the first. Each is its
+  chip hue at about 60 % of the mark's chroma, at the lightness nearest the mark's that holds 3:1
+  on `surface` and `group`, so a bar reads as data and the chip marks stay the chips'. A meter at or above `METER_NEAR` (0.9) of its
   max is near, and above its max is over.
 - Eight avatars at 40 to 50° spacing: `avatar-1` the fill and `avatar-1-ink` the initial on it,
   through `avatar-8` and `avatar-8-ink`; a pastel fill under a hue-darkened initial in light, a
@@ -222,12 +224,11 @@ default the greys and the accent read as one palette.
   under the pointer, `edge-strong`; `edge-error` a field's boundary in error and `ink-error` an
   error message, both `danger`; `ink-disabled` a disabled part's label, `ink-faint`.
 - Two act fills. `act-accent` is `accent` under `on-act-accent`, the primary act; `act-danger` is
-  `danger` under `on-act-danger` (`on-danger`), a confirm's destructive primary (rows and menus keep
+  `danger` in light and a deep red of its own in dark, under a white `on-act-danger`, a confirm's destructive primary (rows and menus keep
   the hairline destructive act). Hover and press move the fill away from the label, 12 % and 22 % in
   OKLab toward a second color a `mix` may name per mode, so the label only gains contrast:
-  `act-accent-hover` and `-press` toward black in both modes (a white label), and `act-danger-hover`
-  and `-press` toward black in light (a white label) and toward `ink-body` in dark (a near-black
-  label). Pending is inert and recedes 30 %: a filled act's `-pending` toward its label in light and
+  `act-accent-hover` and `-press`, and `act-danger-hover` and `-press`, toward black in both modes (a
+  white label). Pending is inert and recedes 30 %: a filled act's `-pending` toward its label in light and
   toward `canvas` in dark, held at 3:1 under its label where the spinner draws. A labelled act's
   fill takes no 3:1 floor on its ground in any state: its label names it.
 - The toggles. `toggle-on` is `accent`, the on fill of a switch's track, a checked box and a
@@ -238,7 +239,7 @@ default the greys and the accent read as one palette.
   `on-accent`. A switch has no label of its own, so it disables by opacity.
 
 Status colors: `active` → `accent-ink`, `waiting` → `ink-meta`, `done` → `ok`, `attention` →
-`warn`, `failed` → `danger`, `idle` → `ink-meta`.
+`chip-amber`, `failed` → `danger`, `idle` → `ink-meta`.
 
 ## Type roles
 
@@ -488,7 +489,7 @@ single-platform entry in its Layer cell.
 
 A component also declares what it owns (`owns`): the type roles, the colours, the radii, the spacing
 roles, the sizes and widths, and the shadow levels it may draw. A colour is a name or a family
-prefix ending in `-` (`chip-` covers every chip role); the other namespaces name their tokens, and a
+prefix ending in `-` (`chip-` covers every chip role, `chart-` every chart fill); the other namespaces name their tokens, and a
 namespace left out owns nothing. The verify suite reads every class of every cell the component
 draws (a family at every axis product, a named family cell as the table's base and that cell alone),
 and a class spelling a token its entry does not own fails by name. A molecule that picks a composed

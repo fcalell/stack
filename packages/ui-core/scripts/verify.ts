@@ -404,7 +404,11 @@ const GRAPHIC_FLOORS: Array<[ColorName, ColorName[]]> = [
 	["switch-thumb", ["toggle-on", "toggle-on-hover"]],
 	...CHIP_HUES.map((family): [ColorName, ColorName[]] => [
 		`chip-${family}`,
-		["surface"],
+		["surface", "group"],
+	]),
+	...CHART_SERIES.map((hue): [ColorName, ColorName[]] => [
+		`chart-${hue}`,
+		["surface", "group"],
 	]),
 ];
 
@@ -733,7 +737,7 @@ check("c02", "package.json shape", () => {
 });
 
 check("c03", "tokens.ts declares the contract", () => {
-	requireEqual(COLOR_NAMES.length, 87, "color count");
+	requireEqual(COLOR_NAMES.length, 93, "color count");
 	requireEqual(new Set(COLOR_NAMES).size, COLOR_NAMES.length, "unique colors");
 	requireEqual(TYPE_ROLES.length, 8, "type role count");
 	requireEqual(SPACING_ROLES.length, 11, "spacing role count");
@@ -1581,6 +1585,7 @@ check("c15", "the README carries the design laws, off the brand", () => {
 	for (const name of COLOR_NAMES) {
 		const representative = name
 			.replace(/^chip-[a-z]+/, "chip-red")
+			.replace(/^chart-[a-z]+/, "chart-red")
 			.replace(/^avatar-\d/, "avatar-1");
 		assert(
 			readme.includes(`\`${representative}\``),
@@ -1797,7 +1802,7 @@ check("c19", "every cva renders exactly its own table", () => {
 	for (const hue of CHART_SERIES) {
 		requireEqual(
 			CHART_FILL.variants.series[hue],
-			`bg-chip-${hue}`,
+			`bg-chart-${hue}`,
 			`CHART_FILL.series.${hue}`,
 		);
 	}

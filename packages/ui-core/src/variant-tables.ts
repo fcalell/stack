@@ -213,7 +213,7 @@ export const STATUS_DOT = matrix({
 			active: "bg-accent-ink",
 			waiting: "bg-ink-meta",
 			done: "bg-ok",
-			attention: "bg-warn",
+			attention: "bg-chip-amber",
 			failed: "bg-danger",
 			idle: "border border-ink-meta",
 		},
@@ -967,18 +967,18 @@ export const CHART_BAND = matrix({
 	defaultVariants: { kind: "grid", rule: "top" },
 });
 
-// A series' mark (a column, a stacked part, a key's dot) in the chip marks,
+// A series' mark (a column, a stacked part, a key's dot) in the chart fills,
 // in `CHART_SERIES` order: one series takes the first.
 export const CHART_FILL = matrix({
 	base: "",
 	variants: {
 		series: {
-			teal: "bg-chip-teal",
-			violet: "bg-chip-violet",
-			amber: "bg-chip-amber",
-			pink: "bg-chip-pink",
-			green: "bg-chip-green",
-			red: "bg-chip-red",
+			teal: "bg-chart-teal",
+			violet: "bg-chart-violet",
+			amber: "bg-chart-amber",
+			pink: "bg-chart-pink",
+			green: "bg-chart-green",
+			red: "bg-chart-red",
 		},
 	},
 	defaultVariants: { series: "teal" },

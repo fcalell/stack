@@ -152,13 +152,21 @@ export function pageVariants(): CssBlock[] {
 	});
 }
 
-// `pb-safe` keeps a bottom bar clear of the home indicator under `viewport-fit=cover`.
-export function safeAreaUtility(): CssBlock {
-	return {
-		kind: "utility",
-		name: "pb-safe",
-		declarations: { "padding-bottom": "env(safe-area-inset-bottom)" },
-	};
+// `pb-safe` keeps a bottom bar clear of the home indicator and `pt-safe` the
+// top of the column clear of the notch or status bar, under `viewport-fit=cover`.
+export function safeAreaUtilities(): CssBlock[] {
+	return [
+		{
+			kind: "utility",
+			name: "pb-safe",
+			declarations: { "padding-bottom": "env(safe-area-inset-bottom)" },
+		},
+		{
+			kind: "utility",
+			name: "pt-safe",
+			declarations: { "padding-top": "env(safe-area-inset-top)" },
+		},
+	];
 }
 
 // Each mode is a class scope in `@layer base`, not a third block kind:

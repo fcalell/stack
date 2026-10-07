@@ -624,7 +624,7 @@ export const TABLE_EMPTY = "pt-page";
 export const TABLE_CHANGE = "gap-inside text-ink-meta";
 // A leading cell's name and its warning a gap apart.
 export const TABLE_NAME = "gap-inside";
-// Message: yours in a bubble on the group ground; the name beside the time;
+// Message: yours in a bubble on the neutral fill; the name beside the time;
 // a system line's words beside its time, wrapping; the line that opens, a
 // pill at the target height with the pointer's washes. Under a system line,
 // its card: one list row in a hairline card on the surface; a free act's code
@@ -633,7 +633,7 @@ export const TABLE_NAME = "gap-inside";
 // one wrapping row a gap apart, over the bubble at the column's end (the
 // `MessageInput` draws the same row over its text), and its provenance line
 // (`meta`) leads the time.
-export const MESSAGE_BUBBLE = "rounded-card bg-group px-tile py-pair";
+export const MESSAGE_BUBBLE = "rounded-card bg-fill-neutral px-tile py-pair";
 export const MESSAGE_HEAD = "gap-inside";
 export const MESSAGE_LINE = "gap-x-inside";
 export const MESSAGE_OPEN =
@@ -785,16 +785,20 @@ export const CANVAS_ZOOM = "rounded-control border border-edge bg-surface";
 
 // The shell on the desktop: the sidebar on the canvas beside the column on
 // the surface, a hairline between; the switcher's slot and the places inset
-// by the float inset, so no wash meets the sidebar's edge.
+// by the float inset, so no wash meets the sidebar's edge and the first row
+// centres on the page title's line (the strip less a row, halved, is the float
+// inset).
 export const SHELL_SIDEBAR = "w-sidebar bg-canvas border-r border-edge";
 export const SHELL_COLUMN = "bg-surface";
-// The column's banner slot: a `Banner` at the page inset, so its edge meets
-// the Place title's.
-export const SHELL_BANNER = "px-page pt-page";
+// The column's banner slot: a `Banner` at the page inset all round, so its
+// edge meets the Place title's and the page gap stands under it, above the
+// header.
+export const SHELL_BANNER = "p-page";
 export const SWITCHER_SLOT = "p-float";
 export const SHELL_PLACES = "gap-rows p-float";
-// The shell on touch: the tab bar on the canvas under a hairline.
-export const SHELL_TAB_BAR = "px-float bg-canvas border-t border-edge";
+// The shell on touch: the tab bar on the canvas under a hairline, a pair
+// above its glyphs so they centre on the header strip's line.
+export const SHELL_TAB_BAR = "px-float pt-pair bg-canvas border-t border-edge";
 // A page outside the shell, a Gate: the surface ground at the page inset, one
 // column at the `auth` width (a column cell is a width; the region centres
 // it) whose banner, lead and body stand a sections gap apart. The lead (the
