@@ -290,9 +290,10 @@ every item fills it. Pending, it waits in those slots; failed, it shows
 `sentence` and Retry; empty, `empty`, with the act that fills it. Rows share one `leading` kind
 (`avatar`, `icon` or `status`) or none. The first meta part names the item. A row's meta line
 yields from its end, in this strict order: the later parts truncate (they show at least a short word
-of room or none), then the chip leaves whole, then the lock's label truncates, then the warning's,
+of room or none; a `{ quoted }` part cuts ahead of the plain ones, so a long quote or reason yields
+and an age and spend that must read are the row's `trailing`), then the chip leaves whole, then the lock's label truncates, then the warning's,
 and last the first part truncates; the status and the glyphs stay whole. A value trailing a title
-(an age, an ISO moment the row words short and keeps current) is whole or gone: it leaves once the title would hold under half its line. Below `tablet`
+(an age, an ISO moment the row words short and keeps current) is whole or gone: it leaves once the title would hold under half its line. A row that opens (`href` or `onOpen`) ends in a chevron after its trailing value; a row with an `act`, `more`, a trailing pick or a tree's fold draws none, and neither does a static row. Below `tablet`
 a row with an `act` stands its acts on a line under its text, at the row's end, so give `act` the
 next step and let the row decide where it stands. A table's `selected` row washes in its list form
 as in its grid. A file row's `change` (a `ChangeKind`) draws the

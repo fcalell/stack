@@ -516,7 +516,12 @@ a tick with no animation, never jumped to full.
   the status and the glyphs keep their width, and past them the line clips at the row's edge rather
   than overprint (the marks are described under `warning` below). The later parts take no width of
   their own (`w-0`, growing into the room the marks leave) and show at least `figures` of it or
-  none, in the chip's wrapping slot, so a bare separator and an ellipsis never draw. A value
+  none, in the chip's wrapping slot, so a bare separator and an ellipsis never draw; the slot's
+  text shrinks to nothing on its own line, so its box never passes the slot. A model-written later
+  part (`Quoted`) stands in a span of its own that yields ahead of the plain parts, which is the
+  one way a row says which part gives way: the age and spend that must read whole are its
+  `trailing`. A row that opens (`href` or `onOpen`) ends in a chevron (`ROW_CHEVRON`, the square of an icon act) after
+  its trailing value, unless its end holds an `act`, the more menu, a pick or a tree's fold. A value
   trailing a one-line title is whole or gone the same way: the title's basis is half its line, so
   a value wider than what that leaves wraps under the line and is clipped away, and the title then
   takes the whole line (a 320 px table row shows its name, not its age). Both rules are the web's: the phone's later parts and values still truncate with an ellipsis. Every row keeps one height, so its waiting form matches it by

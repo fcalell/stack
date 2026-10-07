@@ -447,6 +447,9 @@ export const ROW_META_LINE = "gap-x-inside";
 export const ROW_MARKS = "gap-inside";
 export const ROW_WARNING = "text-warn";
 export const ROW_ACTS = "gap-acts";
+// The chevron a list row that opens ends in, centred in the square of the icon
+// act it stands in for, so rows with a menu and rows that open end at one x.
+export const ROW_CHEVRON = "size-control-compact";
 // A list row's step list, in the meta line's place while its act pends: one
 // line per step (`rowStep`), a pair gap apart.
 export const ROW_STEPS = "gap-pair";

@@ -16,3 +16,31 @@ export function partText(part: Part, cut?: number): string {
 export function joinParts(parts: readonly Part[], cut?: number): string {
 	return parts.map((part) => partText(part, cut)).join(" · ");
 }
+
+// A text the meta line truncates as one.
+export interface PartRun {
+	quoted: boolean;
+	text: string;
+}
+
+// The later parts as the runs the meta line cuts apart: a `Quoted` part stands
+// alone, so it can yield ahead of the plain parts, and the plain parts between
+// quotes join.
+export function partRuns(parts: readonly Part[], cut?: number): PartRun[] {
+	const runs: PartRun[] = [];
+	let plain: Part[] = [];
+	const flush = () => {
+		if (plain.length) runs.push({ quoted: false, text: joinParts(plain) });
+		plain = [];
+	};
+	for (const part of parts) {
+		if (typeof part === "string") {
+			plain.push(part);
+			continue;
+		}
+		flush();
+		runs.push({ quoted: true, text: partText(part, cut) });
+	}
+	flush();
+	return runs;
+}

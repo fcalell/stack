@@ -16,6 +16,7 @@ import { isCurrent } from "@fcalell/ui-core/route";
 import {
 	FIELD_ERROR_LINE,
 	ROW_ACTS,
+	ROW_CHEVRON,
 	ROW_ENTRY,
 	ROW_LEADING,
 	ROW_META_LINE,
@@ -40,7 +41,7 @@ import type { Closed } from "../../lib/closed.ts";
 import { InlineField } from "../../lib/field.ts";
 import { GroundContext } from "../../lib/ground.ts";
 import { follow, navigate, useRoute } from "../../lib/navigate.ts";
-import { joinParts, META_CUT, partText } from "../../lib/parts.ts";
+import { joinParts, META_CUT, partRuns, partText } from "../../lib/parts.ts";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { TrailingWait } from "../../lib/trailing-wait.ts";
@@ -108,11 +109,12 @@ const TRAILING_BAR = "w-figures";
 const VALUE_LINE = "flex-wrap h-line-body overflow-hidden";
 const TITLE_BEFORE_VALUE = "basis-1/2";
 // The meta line is one line that yields in order: the later parts truncate
-// first (they take no width of their own), then the chip (shown whole or not at
-// all), the lock's label, the warning's label and last the first part, which
-// names the item and truncates with an ellipsis; the status and the glyphs
-// keep their width, and past them the line clips at the row's edge rather
-// than overprint. The shrink weights are the order: a flex line takes the
+// first (they take no width of their own), a model-written one (`Quoted`)
+// ahead of the plain ones, then the chip (shown whole or not at all), the
+// lock's label, the warning's label and last the first part, which names the
+// item and truncates with an ellipsis; the status and the glyphs keep their
+// width, and past them the line clips at the row's edge rather than
+// overprint. The shrink weights are the order: a flex line takes the
 // overflow from each item in proportion to its weight times its own width, and
 // `truncate` draws its ellipsis on any overflow, however small, so a part that
 // still fits must take none of it: the weights run 1, 10^7, 10^14 and 10^20
@@ -126,10 +128,14 @@ const META_FIRST = "min-w-0 truncate";
 // The later parts take no width of their own and truncate into the room the
 // marks leave, but show at least `figures` of it or none: they stand in a slot
 // that wraps its text under its one line, clipped away, when the room is less,
-// so a bare separator and an ellipsis never draw.
+// so a bare separator and an ellipsis never draw. The text's basis is the
+// `figures` that decides the wrap, and it can shrink to nothing, so a text
+// wrapped away has a box no wider than the slot.
 const LATER = "flex flex-wrap grow w-0 min-w-0 h-lh overflow-hidden";
 const LATER_START = "w-0 h-full";
-const LATER_TEXT = "grow basis-0 min-w-figures truncate";
+const LATER_TEXT = "flex grow basis-figures min-w-0 overflow-hidden";
+const LATER_RUN = "min-w-0 truncate";
+const LATER_QUOTED = "min-w-0 truncate shrink-10000000";
 // A step is one body line's box tall (the step lists' 19 of the references,
 // at the type scale's rung), its label truncating before its mark does.
 const STEPS = "flex flex-col min-w-0";
@@ -145,6 +151,9 @@ const CHIP_SLOT =
 const CHIP_START = "w-0 h-full";
 const CHIP_MARK = "flex shrink-0";
 const ACTS = "relative flex shrink-0 items-center";
+// The chevron draws in the ink of the slot (currentColor), as a definition
+// row's does.
+const CHEVRON = "flex shrink-0 items-center justify-center text-ink-meta";
 // The entry stands above the hit: the input and its act, the field filling
 // the room the act leaves.
 const ENTRY = "relative flex items-center min-w-0";
@@ -307,7 +316,7 @@ function trailingWord(trailing: RowTrailing<string | null>): ReactNode {
 	return "";
 }
 
-/** Inside a tree `List` the row is a `treeitem` (its level, and `aria-expanded` on a branch) and the tree's focus stop (Enter opens it), and opens with a rail per level and the fold lane every row of the tree reserves, a branch's fold act in it for the pointer. Then the change mark, the leading slot, the title with its trailing value over the meta line (its status, warning, lock and chip at the end, yielding from the chip), the entry (its input and act, its error under it) or the step list, a trailing pick, then the row's act and the more act. A row that opens is one hit under its pick and acts, current (the selection wash) at its `href`; it washes under the pointer and the press. In a `Group` it runs edge to edge at the card's inset, elsewhere it is an inset rounded wash, square on touch. */
+/** Inside a tree `List` the row is a `treeitem` (its level, and `aria-expanded` on a branch) and the tree's focus stop (Enter opens it), and opens with a rail per level and the fold lane every row of the tree reserves, a branch's fold act in it for the pointer. Then the change mark, the leading slot, the title with its trailing value over the meta line (its status, warning, lock and chip at the end, yielding from the chip), the entry (its input and act, its error under it) or the step list, a trailing pick, then the row's act and the more act. A row that opens ends in a chevron after its trailing value, unless its end holds an act, the more act, a pick or a tree's fold. A row that opens is one hit under its pick and acts, current (the selection wash) at its `href`; it washes under the pointer and the press. In a `Group` it runs edge to edge at the card's inset, elsewhere it is an inset rounded wash, square on touch. */
 export function ListRow<V extends string | null = string>({
 	change,
 	leading,
@@ -336,6 +345,14 @@ export function ListRow<V extends string | null = string>({
 	const named = partText(title);
 	const current = selected || (href !== undefined && isCurrent(href, at));
 	const opens = href !== undefined || onOpen !== undefined;
+	// A row that opens ends in a chevron unless its end already holds an act, a
+	// pick or a tree's fold.
+	const chevron =
+		opens &&
+		act === undefined &&
+		!more?.length &&
+		!(trailing && "pick" in trailing) &&
+		!tree?.fold;
 	const marked =
 		status !== undefined ||
 		warning !== undefined ||
@@ -550,7 +567,15 @@ export function ListRow<V extends string | null = string>({
 									<span className={cn(text({ role: "meta" }), LATER)}>
 										<span aria-hidden className={LATER_START} />
 										<span className={LATER_TEXT}>
-											{` · ${joinParts(rest, META_CUT)}`}
+											{partRuns(rest, META_CUT).map((run, at) => (
+												<span
+													// biome-ignore lint/suspicious/noArrayIndexKey: the runs come from parts that never reorder, so position is the identity
+													key={at}
+													className={run.quoted ? LATER_QUOTED : LATER_RUN}
+												>
+													{` · ${run.text}`}
+												</span>
+											))}
 										</span>
 									</span>
 								) : null}
@@ -578,6 +603,13 @@ export function ListRow<V extends string | null = string>({
 			{!waits && trailing && "pick" in trailing ? (
 				<First on={top}>
 					<Picker {...trailing.pick} fit="row" />
+				</First>
+			) : null}
+			{chevron ? (
+				<First on={top}>
+					<span className={cn(ROW_CHEVRON, CHEVRON)}>
+						<Icon name="ChevronRight" />
+					</span>
 				</First>
 			) : null}
 			{act || more?.length ? (

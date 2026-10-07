@@ -4,6 +4,7 @@ import type {
 	ChipMark,
 	IconName,
 	MenuItem,
+	Part as MetaPart,
 	RowEntry,
 	RowTrailing,
 	StatusMark,
@@ -194,12 +195,15 @@ const INVITES: Invite[] = [
 ];
 
 // A job's stage led by its state: a steady one (a watch that stands) beside
-// one under way, whose leading and status spin.
+// one under way, whose leading and status spin, and one still waiting. A stage
+// that has run opens its output and ends in a chevron; the waiting one is a
+// static row.
 interface Stage {
 	id: string;
 	title: string;
 	meta: string[];
 	status: StatusMark;
+	href?: string;
 }
 
 const STAGE_ROW: RowSlots<Stage> = {
@@ -208,6 +212,7 @@ const STAGE_ROW: RowSlots<Stage> = {
 	title: (stage) => stage.title,
 	meta: (stage) => stage.meta,
 	status: (stage) => stage.status,
+	href: (stage) => stage.href,
 };
 
 const STAGES: Stage[] = [
@@ -216,12 +221,60 @@ const STAGES: Stage[] = [
 		title: "Watch main",
 		meta: ["Since Monday"],
 		status: { state: "active", label: "Watching" },
+		href: "#watch",
 	},
 	{
 		id: "rebase",
 		title: "Rebasing on main",
 		meta: ["Started 2 min ago"],
 		status: { state: "running", label: "Running" },
+		href: "#rebase",
+	},
+	{
+		id: "deploy",
+		title: "Deploy to staging",
+		meta: ["After the rebase"],
+		status: { state: "waiting", label: "Waiting" },
+	},
+];
+
+// A work item's meta line at the phone's narrowest: its stage, the model-written
+// epic it belongs to (long enough to yield) and a reason, with its age and
+// spend as the row's trailing value, which stays whole while the quote cuts.
+interface Work {
+	id: string;
+	title: string;
+	meta: MetaPart[];
+	trailing: string;
+}
+
+const WORK_ROW: RowSlots<Work> = {
+	key: (work) => work.id,
+	title: (work) => work.title,
+	meta: (work) => work.meta,
+	trailing: (work) => ({ value: work.trailing }),
+	href: (work) => `#${work.id}`,
+};
+
+const WORKS: Work[] = [
+	{
+		id: "sign-in",
+		title: "Sign-in from a second device",
+		meta: [
+			"implementing",
+			{ quoted: "Let a signed-in account approve a new device from the first" },
+			"pass 1",
+		],
+		trailing: "18 min · $0.42",
+	},
+	{
+		id: "sync",
+		title: "Sync the shelf between devices",
+		meta: [
+			"blocked by",
+			{ quoted: "Sync the shelf between devices and offline" },
+		],
+		trailing: "8 min · $0.12",
 	},
 ];
 
@@ -722,6 +775,8 @@ function part<T>(
 	};
 }
 
+const WORK_PART = part(() => WORKS, WORK_ROW);
+
 const PARTS = {
 	deploys: part(
 		() => DEPLOYS,
@@ -732,6 +787,13 @@ const PARTS = {
 	issues: part(issues, ISSUE_ROW),
 	invites: part(() => INVITES, INVITE_ROW),
 	stages: part(() => STAGES, STAGE_ROW),
+	// At the pane's width, the phone's narrowest.
+	works: {
+		...WORK_PART,
+		draw: (state: DrawnState, pair: boolean) => (
+			<div className="w-pane max-w-full">{WORK_PART.draw(state, pair)}</div>
+		),
+	},
 	steps: part(() => STEPS, STEP_ROW),
 	sources: part(
 		() => SOURCES,
@@ -776,6 +838,7 @@ const CELL_PARTS: ReadonlyArray<readonly [string, keyof typeof PARTS]> = [
 	["ROW_TITLE.form.dim", "hops"],
 	["ROW_TITLE", "deploys"],
 	["ROW_STEP", "imports"],
+	["ROW_META_LINE", "works"],
 	["TREE_", "legs"],
 	["CHANGE_MARK", "changes"],
 	["CHECKBOX", "ticks"],

@@ -1058,6 +1058,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// (`TREE_LANE`) ahead of its change mark, every row of the tree reserving
 		// it; a branch's fold act is the bar-fit IconButton's square with a
 		// chevron, a leaf's lane is empty.
+		// A row that opens (`href` or `onOpen`) ends in a chevron after its
+		// trailing value (`ROW_CHEVRON`), unless its end holds an `act`, `more`, a
+		// pick or a tree's fold.
 		ListRow: {
 			props: [
 				"change",
@@ -1104,6 +1107,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ROW_WARNING",
 				"LOCK_GLYPH",
 				"ROW_ACTS",
+				"ROW_CHEVRON",
 				"CHANGE_MARK",
 				"CHECKBOX",
 				"CHECKBOX_MARK",
@@ -1155,6 +1159,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ROW_MARKS",
 				"ROW_WARNING",
 				"ROW_ACTS",
+				"ROW_CHEVRON",
 				"ROW_ENTRY",
 			],
 			states: [...PRESS, "loading", "error", "selected"],

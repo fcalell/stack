@@ -332,7 +332,6 @@ export const OVERLAYS: readonly string[] = [
 	"min-h-chip",
 	"h-chip",
 	"min-w-icon-meta",
-	"min-w-figures",
 	"shrink-100000000000000",
 	"shrink-100000000000000000000",
 	"size-control-compact",

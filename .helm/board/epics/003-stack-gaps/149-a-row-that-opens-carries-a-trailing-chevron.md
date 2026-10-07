@@ -1,6 +1,6 @@
 ---
 id: 003-149
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: a ListRow that opens carries a trailing chevron like a DefinitionRow does
@@ -14,9 +14,16 @@ Evidence, Stead repo screens critique unit u9 (Stead 948b7ec, stack 5564217; sho
 `DefinitionRow` draws `<Icon name="ChevronRight" />` for a row that opens (definition-row/index.tsx:144). `ListRow` draws a chevron only as a tree's fold act (list-row/index.tsx:220); a row with `href` or `onOpen` gets a hit area and a wash (`PRESS`) and no trailing mark, and a `trailing` value ("pass 1 · 18 min") ends the row with no room for one. The same rows differ by part alone. Reference: state-rail.md, Deel's stages each opening their detail; Vercel's build steps.
 
 ## Acceptance criteria
-- [ ] A `ListRow` that opens (href or onOpen) ends in a muted trailing chevron after its `trailing` value, the same mark `DefinitionRow` draws, in a Group and in a list.
-- [ ] A row that does not open draws none.
-- [ ] The ListRow showcase holds an opening row beside a static one.
+- [x] A `ListRow` that opens (href or onOpen) ends in a muted trailing chevron after its `trailing` value, the same mark `DefinitionRow` draws, in a Group and in a list.
+- [x] A row that does not open draws none.
+- [x] The ListRow showcase holds an opening row beside a static one.
+
+## Decided
+Every opening row draws the chevron, no prop. A row whose end already holds something draws none: an `act`, the `more` menu, a trailing pick (its own chevron-down) or a tree's fold. The `more` and pick exclusions go beyond the ruling's act and fold: a chevron beside a menu or a pick reads as two end affordances.
+
+## Built
+Both platforms' `ListRow` draw `ChevronRight` in `ROW_CHEVRON` (a `control-compact` square, muted, the size of the definition row's chevron) after the trailing value and before the acts; the roster lists the cell under `ListRow`. The `ListRow` frame's Stages part has two stages that open and one static.
+Evidence: `behaviour/row-meta.stories.tsx` `ChevronEnds` and `ChevronEndsTouch` (an opening row's chevron ends the row after its value; a static row, an `act` row and a `more` row draw none), and the generated `ListRow`, `List`, `Group` and `Split` stories pass.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides, whether every opening row draws it or a prop asks.
+- [x] Its shape: every opening row draws it; no prop.
