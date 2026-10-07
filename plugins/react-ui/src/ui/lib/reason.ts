@@ -14,6 +14,10 @@ export const ReasonHostContext = createContext<ReasonHost | undefined>(
 	undefined,
 );
 
+// The host of a bar that draws its blocked acts' reasons at rest on its own
+// line: a press has nothing to show.
+export const REASON_AT_REST: ReasonHost = { press: () => {} };
+
 // A blocked act's press (`@fcalell/ui-core/reason`): whether it stands under
 // `blocked`, and the press that keeps it. Unblocking or a new reason forgets
 // it in render.

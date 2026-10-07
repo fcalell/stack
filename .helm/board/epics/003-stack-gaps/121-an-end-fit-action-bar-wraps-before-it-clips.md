@@ -1,6 +1,6 @@
 ---
 id: 003-121
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: an end-fit ActionBar wraps its acts before its first one is cut off
@@ -14,8 +14,15 @@ Re-measured by the item screens critique at Stead `54deb15` (unit u3, `it-stalle
 `ActionBar fit="end"` draws `BAR` as `flex flex-col items-end` and the acts as `flex items-center justify-end` with no wrap and no `min-w-0` / `max-w-full` (plugins/react-ui/src/ui/components/action-bar/index.tsx), so the acts row takes its max-content width and `items-end` pushes the overflow to the start edge, out of the container to the left. Below the `touch` set the acts stack, so the miss stands between touch and the width where four acts fit. 003-96 is the end bar's alignment under its content and the touch stack above the tab bar; it does not name an overflow, and its acceptance would not catch this. Seen at stack `5564217`.
 
 ## Acceptance criteria
-- [ ] An end-fit bar whose acts need more than its container wraps them to a further row, the filled act last, with every act inside the container's edges at every width the bar stands at.
+- [x] An end-fit bar whose acts need more than its container wraps them to a further row, the filled act last, with every act inside the container's edges at every width the bar stands at.
 - [ ] The ActionBar showcase holds a four-act bar at the narrowest non-touch container and the critique measures the left edge.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides, whether the bar wraps, stacks below a measure, or collapses the quiet acts into a menu.
+- [x] Its shape (a component, a variant, a token, an option): the stack session decides, whether the bar wraps, stacks below a measure, or collapses the quiet acts into a menu.
+
+## Ruled
+Bug, not a new shape: the end-fit acts row takes `flex-wrap min-w-0 max-w-full`, the filled act last in the DOM, so the acts wrap to a further row inside the container. No option or variant.
+
+## Built
+`ACTS.end` in `plugins/react-ui/src/ui/components/action-bar/index.tsx` is `flex flex-wrap items-center justify-end min-w-0 max-w-full`; the touch stack is unchanged (native stacks always). The ActionBar frame draws a four-act bar in a `w-list` column in the `BUTTON.fit.body` rest cell, and `apps/showcase/behaviour/action-bar.stories.tsx` (`WrapsInsideItsContainer`) asserts every act inside the column and the filled act on a lower row. Passes with the ActionBar and Button generated stories, waiting, form-leave and sheet behaviour stories; `pnpm check` build, types and tests pass.
+The critique session measures the four-act bar's left edge.

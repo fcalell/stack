@@ -194,7 +194,7 @@ act as words in the meta ink with no hairline, a resend or a skip, never its fil
 an `IconAct`, a row's `StatusMark` and `ChipMark`, a `PlaceSpec`, all from
 `@fcalell/ui-core/descriptors`. An icon is an `IconName`, a Lucide glyph's PascalCase name.
 `children` is open only where the roster gives it. A `Form` submits through its `ActionBar`'s
-filled act, the act pending while its promise pends. A `Form` that stands edited asks once, "Discard your edit?" or Keep editing, when its page is left (a router navigation, the back button, a reload or a closed tab), so the app writes no leave guard of its own; pressing the filled act ends the edit, so an act that navigates is never asked, and a rejected act puts the edit back. A `confirm()` takes a `Confirmation`, its `cancel` the way out's own label ("Keep editing") where the `cancel` word is not the decision's.
+filled act, the act pending while its promise pends; an `ActionBar` draws its last blocked act's `blocked` reason under the acts at rest, at meta size, and an end bar wraps its acts to a further row (the filled act last) before they leave its container. A `Form` that stands edited asks once, "Discard your edit?" or Keep editing, when its page is left (a router navigation, the back button, a reload or a closed tab), so the app writes no leave guard of its own; pressing the filled act ends the edit, so an act that navigates is never asked, and a rejected act puts the edit back. A `confirm()` takes a `Confirmation`, its `cancel` the way out's own label ("Keep editing") where the `cancel` word is not the decision's.
 
 An act that is out of reach for a while (a resend after a code is sent) is a `Button` with `wait`, its seconds left, never a `blocked` reason that grows its row: it draws the count in its label, is inert while the count is above zero, and keeps its width at zero. Pass `wait` every tick, `0` once it is live; a `Button` is never wrapped in a context of the roster's own to be inert.
 
@@ -422,7 +422,7 @@ inside leads it) and the close act over the `description`, so both lines share a
 the body scrolls between the head and the foot, which hold their height (the `foot` line beside the `submit`,
 over it on touch), and the docked foot fits what it holds up to three fifths of the region it
 shares with the log, so the log keeps two fifths of it and a body taller than that scrolls. A blocked
-`submit`’s reason keeps its line under the act in the foot, so showing it never moves the act; a
+`submit`’s reason stands at rest under the act in the foot; a
 failed run is the `failed` sentence in that same line, in the field error’s cell and ink, the act
 ready again and no `Banner`: clear `failed` when the act runs again, and a blocked `submit`’s reason
 stands before it. The modal `Sheet` takes `failed` too, in the foot’s bar line on the desktop and

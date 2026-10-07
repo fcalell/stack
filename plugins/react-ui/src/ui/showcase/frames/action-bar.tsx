@@ -1,15 +1,11 @@
 import type { Act } from "@fcalell/ui-core/descriptors";
-import { createLeave } from "@fcalell/ui-core/leave";
 import type { ActionBarFit } from "@fcalell/ui-core/variants";
 import { ActionBar } from "../../components/action-bar/index.tsx";
-import { TouchedContext } from "../../lib/touched.ts";
 import type { ShowcaseFrame } from "../cells.ts";
 import { Column } from "./place.tsx";
 import { Publish } from "./table.tsx";
 
 const change = () => {};
-// A touched sheet, so a blocked act shows its reason.
-const TOUCHED = { touched: true, touch: change, leave: createLeave() };
 
 interface Drawn {
 	fit: ActionBarFit;
@@ -41,6 +37,14 @@ const ROW_ACTS: Drawn = {
 	],
 	reason: "Choose a role first.",
 };
+// Four acts in the narrowest column an end bar stands in above touch: they
+// wrap to a further row, the filled act last, and stay inside the column.
+const WRAPPED: Act[] = [
+	{ label: "Cut the scope in the thread", onAct: change },
+	{ label: "Split the work in its thread", onAct: change },
+	{ label: "Accept the flags as known limits", onAct: change },
+	{ label: "Continue refining", onAct: change },
+];
 const LOGIN: Drawn = {
 	fit: "full",
 	acts: [{ label: "Continue", onAct: change }],
@@ -50,8 +54,8 @@ const LOGIN: Drawn = {
 // A sheet's footer by default; the danger cell a confirm's, the destructive
 // cell a destructive secondary beside the filled act, the full fit and the
 // field fit a login's one act, the meta cell a selection bar's count over a
-// list. `loading` draws the filled act pending, `disabled` it blocked in a
-// touched sheet with its reason shown.
+// list. `loading` draws the filled act pending, `disabled` it blocked with
+// its reason at rest under the acts.
 function drawnOf(cell: string): Drawn {
 	if (cell === "BUTTON.act.danger" || cell === "BUTTON_LABEL.act.danger")
 		return CONFIRM;
@@ -82,15 +86,7 @@ export function drawActionBar(frame: ShowcaseFrame) {
 	// its foot, the act pending in `loading` and blocked in `disabled`.
 	if (frame.cell.name === "TEXT.role.meta") {
 		const page = <Publish state={frame.state} />;
-		return (
-			<Column>
-				{frame.state === "disabled" ? (
-					<TouchedContext value={TOUCHED}>{page}</TouchedContext>
-				) : (
-					page
-				)}
-			</Column>
-		);
+		return <Column>{page}</Column>;
 	}
 	const { fit, acts, reason } = drawnOf(frame.cell.name);
 	const last = acts.length - 1;
@@ -111,9 +107,14 @@ export function drawActionBar(frame: ShowcaseFrame) {
 				<Waiting fit={fit} />
 			</div>
 		);
-	return frame.state === "disabled" ? (
-		<TouchedContext value={TOUCHED}>{bar}</TouchedContext>
-	) : (
-		bar
-	);
+	if (frame.cell.name === "BUTTON.fit.body" && frame.state === "rest")
+		return (
+			<div className="flex flex-col gap-sections">
+				{bar}
+				<div className="w-list max-w-full">
+					<ActionBar fit="end" acts={WRAPPED} />
+				</div>
+			</div>
+		);
+	return bar;
 }

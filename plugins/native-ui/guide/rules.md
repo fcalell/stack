@@ -183,7 +183,7 @@ act as words in the meta ink with no hairline, a resend or a skip, never its fil
 an `IconAct`, a row's `StatusMark` and `ChipMark`, a menu's `MenuItem`s, a `PlaceSpec`, all from
 `@fcalell/ui-core/descriptors`. An icon is an `IconName`, a Lucide glyph's PascalCase name.
 `children` is open only where the roster gives it. A `Form`'s `ActionBar` filled act runs its
-`onAct`. A `FormField` takes a `FieldBinding` from the
+`onAct`; an `ActionBar` draws its last blocked act's `blocked` reason under the acts at rest, at meta size. A `FormField` takes a `FieldBinding` from the
 app's own form state. A `Form` that stands edited asks once, "Discard your edit?" or Keep editing, when its screen is left (the back, a swipe, a navigate that removes it), so the app writes no `beforeRemove` guard of its own; pressing the filled act ends the edit, so an act that navigates is never asked, and a rejected act puts the edit back. A `confirm()` takes a `Confirmation`, its `cancel` the way out's own label ("Keep editing") where the `cancel` word is not the decision's.
 
 A row's marks are named props on the meta line, at most one each, in order: `status`, `warning`
@@ -388,8 +388,8 @@ no prop, no scrim. The head keeps the back act before one column, the title (a l
 inside leads it) and the close act over the `description`, so both lines share a start;
 the body scrolls between the head and the foot, which hold their height (the `foot` line over the `submit`),
 and the docked foot fits what it holds up to three fifths of the region it shares with the log, so
-the log keeps two fifths of it and a body taller than that scrolls. A blocked `submit`’s reason keeps
-its line under the act in the foot, so showing it never moves the act; a failed run is the `failed`
+the log keeps two fifths of it and a body taller than that scrolls. A blocked `submit`’s reason stands
+at rest under the act in the foot; a failed run is the `failed`
 sentence in that same line, in the field error’s cell and ink, the act ready again and no `Banner`:
 clear `failed` when the act runs again, and a blocked `submit`’s reason stands before it. The modal
 `Sheet` takes `failed` too, under the head’s submit. Pass

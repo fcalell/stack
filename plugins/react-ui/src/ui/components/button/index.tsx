@@ -21,7 +21,6 @@ import { Reason } from "./reason.tsx";
 const STACK = "flex flex-col items-start gap-pair";
 const GLYPH = "shrink-0";
 const PENDING = "opacity-0";
-const LABEL_BLOCKED = "text-ink-disabled";
 const SPINNER_LAYER = "absolute inset-0 flex items-center justify-center";
 
 const FILL_PENDING: Record<ButtonAct, string> = {
@@ -33,11 +32,21 @@ const FILL_PENDING: Record<ButtonAct, string> = {
 };
 
 const BLOCKED: Record<ButtonAct, string> = {
-	primary: "aria-disabled:bg-fill-disabled aria-disabled:text-ink-disabled",
-	danger: "aria-disabled:bg-fill-disabled aria-disabled:text-ink-disabled",
+	primary: "aria-disabled:bg-fill-disabled aria-disabled:text-ink-meta",
+	danger: "aria-disabled:bg-fill-disabled aria-disabled:text-ink-meta",
 	secondary: "aria-disabled:text-ink-disabled",
 	destructive: "aria-disabled:text-ink-disabled",
 	quiet: "aria-disabled:text-ink-disabled",
+};
+
+// A filled act's label reads in the meta ink on the disabled fill, which holds
+// 4.5:1; the unfilled acts' words are in the disabled ink.
+const LABEL_BLOCKED: Record<ButtonAct, string> = {
+	primary: "text-ink-meta",
+	danger: "text-ink-meta",
+	secondary: "text-ink-disabled",
+	destructive: "text-ink-disabled",
+	quiet: "text-ink-disabled",
 };
 
 // Pending and blocked both set aria-disabled, so one look is chosen: pending
@@ -93,7 +102,7 @@ export function Button({
 	const [pressed, keep] = usePressed(blocked);
 	const said = muted && (pressed || touched);
 	const look = lookOf(kind, loading === true, muted || inert);
-	const labelLook = loading ? PENDING : (muted || inert) && LABEL_BLOCKED;
+	const labelLook = loading ? PENDING : (muted || inert) && LABEL_BLOCKED[kind];
 	const press = () => {
 		if (inert) return;
 		if (!muted) onAct?.();

@@ -2,7 +2,6 @@ import { Button as BaseButton } from "@base-ui/react/button";
 import { cn } from "@fcalell/ui-core/cn";
 import type { Act, ChosenCount } from "@fcalell/ui-core/descriptors";
 import { waitCount } from "@fcalell/ui-core/list-state";
-import { pressStands } from "@fcalell/ui-core/reason";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
 	ACTION_BAR_ACTS,
@@ -15,7 +14,7 @@ import {
 	type ButtonFit,
 	text,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, use, useCallback, useMemo, useState } from "react";
+import { use, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import {
 	ActInert,
@@ -25,22 +24,28 @@ import {
 } from "../../lib/form.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 import { useTouch } from "../../lib/media.ts";
-import { ActFailed, ReasonHostContext, ReasonKept } from "../../lib/reason.ts";
+import {
+	ActFailed,
+	REASON_AT_REST,
+	ReasonHostContext,
+	ReasonKept,
+} from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Button } from "../button/index.tsx";
 import { Reason } from "../button/reason.tsx";
 import { ActionBarWait } from "./wait.tsx";
 
-// End: the acts at their width at the container's end. Full: the acts share
-// the container's width at the field's height. On touch both stack one act
-// per row across the container, the filled act first.
+// End: the acts at their width at the container's end, wrapped to a further
+// row (the filled act last) when they need more than the container. Full: the
+// acts share the container's width at the field's height. On touch both stack
+// one act per row across the container, the filled act first.
 const BAR: Record<ActionBarFit, string> = {
 	end: "flex flex-col items-end touch:items-stretch",
 	full: "flex flex-col",
 };
 const ACTS: Record<ActionBarFit, string> = {
-	end: "flex items-center justify-end touch:flex-col touch:items-stretch",
+	end: "flex flex-wrap items-center justify-end min-w-0 max-w-full touch:flex-col touch:items-stretch",
 	full: "grid grid-flow-col auto-cols-fr touch:flex touch:flex-col",
 };
 const FIT: Record<ActionBarFit, ButtonFit> = { end: "body", full: "field" };
@@ -113,25 +118,6 @@ function AllAct(props: {
 	);
 }
 
-// An act's reason host: the same object while the act stays blocked by one
-// reason, so the act under it renders only when its own props change.
-function ActHost(props: {
-	label: string;
-	blocked: string | undefined;
-	press: (label: string, reason: string) => void;
-	children: ReactNode;
-}) {
-	const { label, blocked, press } = props;
-	const host = useMemo(
-		() =>
-			blocked === undefined
-				? undefined
-				: { press: () => press(label, blocked) },
-		[label, blocked, press],
-	);
-	return <ReasonHostContext value={host}>{props.children}</ReasonHostContext>;
-}
-
 /** The acts row over a blocked act's reason, beside a selection count when `chosen` is set; while one act is pending the others ignore the press. */
 export function ActionBar({ acts, fit, chosen, loading }: ActionBarProps) {
 	// Inside a `Gate` a bar with no `fit` stands across the column.
@@ -140,22 +126,12 @@ export function ActionBar({ acts, fit, chosen, loading }: ActionBarProps) {
 	const words = useWords();
 	const pend = use(FormContext);
 	const [running, setRunning] = useState(false);
-	const { touched, leave } = useTouched();
+	const { leave } = useTouched();
 	const kept = use(ReasonKept);
 	const failed = use(ActFailed);
-	// A blocked act's reason takes the line a failure would draw in.
-	const blocked = acts.some((act) => act.blocked !== undefined);
-	// Each blocked act's press, by label, as the reason it came under: it
-	// stands while the act is blocked by that reason
-	// (`@fcalell/ui-core/reason`).
-	const [pressed, setPressed] = useState<ReadonlyMap<string, string>>(
-		new Map(),
-	);
-	const press = useCallback(
-		(label: string, reason: string) =>
-			setPressed((was) => new Map(was).set(label, reason)),
-		[],
-	);
+	// The last blocked act's reason stands at rest under the acts, in the line
+	// a failure would draw in.
+	const reason = acts.findLast((act) => act.blocked !== undefined)?.blocked;
 	const busy = running || acts.some((act) => act.loading);
 	const lastAt = acts.length - 1;
 	const waits = waitCount(loading, use(LoadingContext), 1);
@@ -191,19 +167,14 @@ export function ActionBar({ acts, fit, chosen, loading }: ActionBarProps) {
 		void ran.then(done(false), done(true));
 	};
 	const buttons = (
-		<div className={cn(ACTION_BAR_ACTS, ACTS[where])}>
-			{drawn.map(([act, at]) => {
-				const last = at === lastAt;
-				const loading = act.loading === true || (last && running);
-				const run = last ? runFilled : act.onAct;
-				return (
-					<ActHost
-						key={act.label}
-						label={act.label}
-						blocked={act.blocked}
-						press={press}
-					>
-						<SubmitContext value={last && pend !== undefined}>
+		<ReasonHostContext value={REASON_AT_REST}>
+			<div className={cn(ACTION_BAR_ACTS, ACTS[where])}>
+				{drawn.map(([act, at]) => {
+					const last = at === lastAt;
+					const loading = act.loading === true || (last && running);
+					const run = last ? runFilled : act.onAct;
+					return (
+						<SubmitContext key={act.label} value={last && pend !== undefined}>
 							<ActInert value={busy && !loading}>
 								<Button
 									act={kindOf(act, last)}
@@ -215,10 +186,10 @@ export function ActionBar({ acts, fit, chosen, loading }: ActionBarProps) {
 								/>
 							</ActInert>
 						</SubmitContext>
-					</ActHost>
-				);
-			})}
-		</div>
+					);
+				})}
+			</div>
+		</ReasonHostContext>
 	);
 	// One act clears the rows while any are chosen, one chooses every row while
 	// some stand unchosen; the table's head tick is the second where it stands.
@@ -263,18 +234,8 @@ export function ActionBar({ acts, fit, chosen, loading }: ActionBarProps) {
 			) : (
 				buttons
 			)}
-			{acts.map((act) =>
-				act.blocked === undefined ? null : (
-					<Reason
-						key={act.label}
-						kept={kept}
-						shown={touched || pressStands(act.blocked, pressed.get(act.label))}
-					>
-						{act.blocked}
-					</Reason>
-				),
-			)}
-			{blocked || !(kept || failed !== undefined) ? null : (
+			{reason === undefined ? null : <Reason shown>{reason}</Reason>}
+			{reason !== undefined || !(kept || failed !== undefined) ? null : (
 				<Reason kept={kept} failed shown={failed !== undefined}>
 					{failed ?? NO_FAILURE}
 				</Reason>

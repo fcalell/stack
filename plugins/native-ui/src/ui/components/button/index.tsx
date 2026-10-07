@@ -23,7 +23,6 @@ import { Spinner } from "../spinner";
 const STACK = "items-start gap-pair";
 const BOX = "flex-row items-center justify-center";
 const PENDING = "opacity-0";
-const LABEL_BLOCKED = "text-ink-disabled";
 const SPINNER_LAYER = "absolute inset-0 items-center justify-center";
 
 const PRESS: Record<ButtonAct, string> = {
@@ -40,6 +39,23 @@ const FILL_PENDING: Record<ButtonAct, string> = {
 	secondary: "",
 	destructive: "",
 	quiet: "",
+};
+
+// A filled act's label reads in the meta ink on the disabled fill, which holds
+// 4.5:1; the unfilled acts' words are in the disabled ink.
+const LABEL_BLOCKED: Record<ButtonAct, string> = {
+	primary: "text-ink-meta",
+	danger: "text-ink-meta",
+	secondary: "text-ink-disabled",
+	destructive: "text-ink-disabled",
+	quiet: "text-ink-disabled",
+};
+const INK_BLOCKED: Record<ButtonAct, "ink-meta" | "ink-disabled"> = {
+	primary: "ink-meta",
+	danger: "ink-meta",
+	secondary: "ink-disabled",
+	destructive: "ink-disabled",
+	quiet: "ink-disabled",
 };
 
 // The blocked ink is the label's and the glyph's, through `Ink`: a view draws
@@ -99,9 +115,9 @@ export function Button({
 	const [pressed, keep] = usePressed(blocked);
 	const said = muted && (pressed || touched);
 	const look = lookOf(kind, loading === true, muted || inert);
-	const labelLook = loading ? PENDING : (muted || inert) && LABEL_BLOCKED;
+	const labelLook = loading ? PENDING : (muted || inert) && LABEL_BLOCKED[kind];
 	const ink =
-		(muted || inert) && !loading ? "ink-disabled" : buttonContentTone(kind);
+		(muted || inert) && !loading ? INK_BLOCKED[kind] : buttonContentTone(kind);
 	const press = () => {
 		if (loading || inert) return;
 		if (!muted) onAct?.();

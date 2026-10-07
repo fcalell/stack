@@ -874,7 +874,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			owns: { colors: ["edge"], spacing: ["pair", "page", "inside", "acts"] },
 		},
 		// The one filled act is the last; a destructive act draws `danger`
-		// filled and `destructive` otherwise. `fit: full` passes the acts
+		// filled and `destructive` otherwise. The last blocked act's reason
+		// stands at rest under the acts at meta size; at `fit: end` the acts
+		// wrap to a further row, the filled act last, before they leave the
+		// container. `fit: full` passes the acts
 		// `fit: field`. `chosen` makes it a selection bar over a list: "N of M
 		// chosen" (the slot word `chosenOf`) at meta at the bar's start, the acts
 		// at its end, stacked on touch with the count over the acts; `chosen.onAll`

@@ -1,6 +1,5 @@
 import type { Act, ChosenCount } from "@fcalell/ui-core/descriptors";
 import { waitCount } from "@fcalell/ui-core/list-state";
-import { pressStands } from "@fcalell/ui-core/reason";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
 	ACTION_BAR_ACTS,
@@ -14,19 +13,18 @@ import {
 	FIELD_ERROR_LINE,
 	text,
 } from "@fcalell/ui-core/variants";
-import {
-	type ReactNode,
-	useCallback,
-	useContext,
-	useMemo,
-	useState,
-} from "react";
+import { useContext, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FormStands } from "../../lib/form";
 import { LoadingContext } from "../../lib/loading";
-import { ActFailed, ReasonHostContext, ReasonKept } from "../../lib/reason";
+import {
+	ActFailed,
+	REASON_AT_REST,
+	ReasonHostContext,
+	ReasonKept,
+} from "../../lib/reason";
 import { useTouched } from "../../lib/touched";
 import { useWords } from "../../lib/words";
 import { Button } from "../button";
@@ -42,7 +40,7 @@ const COUNT = "flex-row flex-wrap items-center";
 const ALL = "flex-row items-center";
 const ALL_LIVE = "active:bg-wash-press";
 const ALL_INERT = "text-ink-disabled";
-// A kept reason holds its line while unshown.
+// A kept failure line holds its height while nothing failed.
 const KEPT = "opacity-0";
 // A kept failure line's text while nothing failed: a no-break space holds the
 // line's height.
@@ -123,35 +121,12 @@ function Chosen({ chosen }: { chosen: ChosenCount }) {
 	);
 }
 
-// An act's reason host: the same object while the act stays blocked by one
-// reason, so the act under it renders only when its own props change.
-function ActHost(props: {
-	label: string;
-	blocked: string | undefined;
-	press: (label: string, reason: string) => void;
-	children: ReactNode;
-}) {
-	const { label, blocked, press } = props;
-	const host = useMemo(
-		() =>
-			blocked === undefined
-				? undefined
-				: { press: () => press(label, blocked) },
-		[label, blocked, press],
-	);
-	return (
-		<ReasonHostContext.Provider value={host}>
-			{props.children}
-		</ReasonHostContext.Provider>
-	);
-}
-
 // The acts that close a form, a sheet or a confirm, stacked across the
 // container with the filled act on top. A Screen pins it above the home
 // indicator; a Form or a Sheet keeps it in flow. A promise the filled act's
 // `onAct` returns keeps it pending until it settles, and the others ignore
-// the press meanwhile. A blocked act's reason draws under the acts, so the
-// act keeps its row and stretches as a live one does. With `chosen` the count
+// the press meanwhile. The last blocked act's reason stands at rest under the
+// acts, so the act keeps its row and stretches as a live one does. With `chosen` the count
 // stands over the acts at the bar's start.
 export function ActionBar({ acts, fit, chosen, loading }: ActionBarProps) {
 	// Inside a `Gate` a bar with no `fit` stands across the column.
@@ -159,21 +134,10 @@ export function ActionBar({ acts, fit, chosen, loading }: ActionBarProps) {
 	const where = fit ?? (inColumn ? "full" : "end");
 	const kept = useContext(ReasonKept);
 	const failed = useContext(ActFailed);
-	// A blocked act's reason takes the line a failure would draw in.
-	const blocked = acts.some((act) => act.blocked !== undefined);
+	// The last blocked act's reason takes the line a failure would draw in.
+	const reason = acts.findLast((act) => act.blocked !== undefined)?.blocked;
 	const [running, setRunning] = useState(false);
-	const { touched, leave } = useTouched();
-	// Each blocked act's press, by label, as the reason it came under: it
-	// stands while the act is blocked by that reason
-	// (`@fcalell/ui-core/reason`).
-	const [pressed, setPressed] = useState<ReadonlyMap<string, string>>(
-		new Map(),
-	);
-	const press = useCallback(
-		(label: string, reason: string) =>
-			setPressed((was) => new Map(was).set(label, reason)),
-		[],
-	);
+	const { leave } = useTouched();
 	const busy = running || acts.some((act) => act.loading);
 	const waits = waitCount(loading, useContext(LoadingContext), 1);
 	const lastAt = acts.length - 1;
@@ -207,19 +171,15 @@ export function ActionBar({ acts, fit, chosen, loading }: ActionBarProps) {
 			className={cn(actionBar({ fit: where }), chosen && ACTION_BAR_SELECTION)}
 		>
 			{chosen ? <Chosen chosen={chosen} /> : null}
-			<View className={cn(ACTION_BAR_ACTS, ACTS)}>
-				{acts.map((act, at) => {
-					const last = at === lastAt;
-					const loading = act.loading === true || (last && running);
-					const run = last ? runFilled : act.onAct;
-					return (
-						<ActHost
-							key={act.label}
-							label={act.label}
-							blocked={act.blocked}
-							press={press}
-						>
+			<ReasonHostContext.Provider value={REASON_AT_REST}>
+				<View className={cn(ACTION_BAR_ACTS, ACTS)}>
+					{acts.map((act, at) => {
+						const last = at === lastAt;
+						const loading = act.loading === true || (last && running);
+						const run = last ? runFilled : act.onAct;
+						return (
 							<Button
+								key={act.label}
 								act={kindOf(act, last)}
 								fit={FIT[where]}
 								label={act.label}
@@ -227,25 +187,14 @@ export function ActionBar({ acts, fit, chosen, loading }: ActionBarProps) {
 								loading={loading}
 								blocked={act.blocked}
 							/>
-						</ActHost>
-					);
-				})}
-			</View>
-			{acts.map((act) => {
-				if (act.blocked === undefined) return null;
-				const shown =
-					touched || pressStands(act.blocked, pressed.get(act.label));
-				if (!(shown || kept)) return null;
-				return (
-					<RNText
-						key={act.label}
-						className={cn(text({ role: "meta" }), !shown && KEPT)}
-					>
-						{act.blocked}
-					</RNText>
-				);
-			})}
-			{blocked || !(kept || failed !== undefined) ? null : (
+						);
+					})}
+				</View>
+			</ReasonHostContext.Provider>
+			{reason === undefined ? null : (
+				<RNText className={text({ role: "meta" })}>{reason}</RNText>
+			)}
+			{reason !== undefined || !(kept || failed !== undefined) ? null : (
 				<RNText className={cn(FIELD_ERROR_LINE, failed === undefined && KEPT)}>
 					{failed ?? NO_FAILURE}
 				</RNText>

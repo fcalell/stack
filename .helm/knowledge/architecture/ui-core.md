@@ -582,12 +582,11 @@ a tick with no animation, never jumped to full.
   structural, never a size token), so the log keeps two fifths of it and the
   Sheet scrolls its body between its pinned head and foot only past the bound, each page opening at the
   body's top; inline among sections it has no bound, since the page scrolls. Its states are its
-  submit's: pending, blocked (the reason keeps its line under the act before it shows, `ReasonKept`
-  around the foot's bar, so showing it never moves the act), and failed (the act ready again, the
+  submit's: pending, blocked (the reason stands at rest under the act), and failed (the act ready again, the
   `Sheet`'s `failed` sentence in that same kept line: `ActFailed` around the bar hands it to the
   `ActionBar`, which draws it in `FIELD_ERROR_LINE`, the field error's cell and ink, in place of the
-  reason when no act is blocked, and holds the line empty while neither shows, so no state moves the
-  act; no `Banner`). `failed` is the `Sheet`'s prop and
+  reason when no act is blocked, and holds the line empty while neither shows, so a failure moves
+  nothing; no `Banner`). `failed` is the `Sheet`'s prop and
   not an `Act` field, since only a sheet's one submit has a line to fail in; the modal `Sheet` takes
   it too, in the foot bar's line on the desktop and under the head's submit on touch (the phone's
   modal only the latter). On the desktop the docked Sheet holds
@@ -860,13 +859,14 @@ a tick with no animation, never jumped to full.
   so a thread's re-render (a keystroke in its input, a message arriving) skips every message already
   drawn. The showcase compiles the workspace's plugin source with the React Compiler, which memoises
   on its own; a consumer's `node_modules` copy is not compiled, so these memos are explicit.
-- A blocked act shows its reason once pressed or once its form or sheet is touched. The press is
+- A blocked act shows its reason once pressed or once its form or sheet is touched, except in an
+  ActionBar, which draws the last blocked act's reason at rest under the acts (it hands its acts
+  `REASON_AT_REST`, a host whose press shows nothing). The press is
   derived, never reset by an effect: it is kept as the reason the act was blocked by when
   pressed, and stands while `blocked` is that reason (`pressStands` in ui-core's `./reason`,
   `usePressed` in each plugin's `lib/reason`), so unblocking or a new reason forgets it in render
-  and a new reason waits for its own press. A reason host (an ActionBar's act, a sheet's submit,
-  a Section's head act, a Banner's or a PendingBar's act) keeps the press the same way, and an
-  ActionBar's host is the same object per act while its reason holds. An ActionBar settles the
+  and a new reason waits for its own press. A reason host (a sheet's submit, a Section's head
+  act, a Banner's or a PendingBar's act) keeps the press the same way. An ActionBar settles the
   filled act's promise with `then(done, done)`, so a failing act leaves no derived promise to
   reject unhandled.
 - A `MessageInput` sends while an answer streams: `working` sets Stop before Send and leaves Send
