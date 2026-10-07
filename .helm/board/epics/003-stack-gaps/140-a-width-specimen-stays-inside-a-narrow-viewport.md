@@ -1,6 +1,6 @@
 ---
 id: 003-140
-status: backlog
+status: review
 sessions: {}
 ---
 # plugin-react-ui: a width specimen stays inside a narrow viewport
@@ -19,5 +19,21 @@ How it does that (clamped with its number beside it, scrolled inside its own fra
 scale) is the stack session's call.
 
 ## Acceptance criteria
-- [ ] `stack screens test --all` passes `/foundations` and `/` at all five widths, both modes.
-- [ ] Each width specimen still reads its token's measure.
+- [x] `stack screens test --all` passes `/foundations` and `/` at all five widths, both modes.
+- [x] Each width specimen still reads its token's measure.
+
+## Findings (screens session)
+
+- The overflow came from more than the width bars: the `sizes` specimens (`min-w-image-cap`,
+  `min-w-qr`, `min-w-message-input`), and the two-column `Modes` grid at 320, whose panels are too
+  narrow for the display sample. Fixed in `foundations.tsx`: each width bar is `w-full` capped at
+  `max-w-<width>` (its measure still in its label), each size box is `w-<size> max-w-full`, and
+  `Modes` is one column below `tablet`. Overflow no longer fails at any width.
+- axe's `color-contrast` then failed `/foundations` and `/`: the `pending` and `disabled` act
+  specimens and the disabled field specimen were plain `div`s painted to look like those states, so
+  axe judged them as live text. Each is now the real component in its state (`Button` `loading` and
+  `blocked`, `FormField` `disabled` over an `Input`), whose DOM carries `aria-disabled`/`aria-busy`
+  and `disabled`; the painted `pending` swatch is gone. A real pending act passes axe, so no token
+  gap is filed. The field specimens' `<p>` also took no ink (they inherited the page's), now
+  `text({ role: "body" })`.
+- `stack screens test --all`: 17 files, 170 tests passed.

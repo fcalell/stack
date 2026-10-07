@@ -27,6 +27,9 @@ import {
 	textStrong,
 } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
+import { Button } from "../components/button/index.tsx";
+import { FormField } from "../components/form-field/index.tsx";
+import { Input } from "../components/input/index.tsx";
 import { useView, type View, ViewBar } from "./view.tsx";
 
 // Every class this page builds from a token's name (`bg-${name}`) is one
@@ -87,6 +90,8 @@ function colorRows(group: ColorGroup): ColorName[][] {
 const ACT_FILLS = COLOR_GROUPS.acts.filter((name) =>
 	COLOR_NAMES.includes(`on-${name}` as ColorName),
 );
+// The act each fill belongs to, for its real pending and disabled states.
+const ACT_KIND = { "act-accent": "primary", "act-danger": "danger" } as const;
 const WASHES = COLOR_GROUPS.washes.filter((name) => name.startsWith("wash-"));
 const SWITCH_TRACKS = COLOR_GROUPS.switch.filter(
 	(name) => name !== "switch-thumb",
@@ -98,7 +103,6 @@ const FIELD_STATES: ReadonlyArray<readonly [string, string]> = [
 	["rest", field()],
 	["hover", cn(field(), "border-edge-hover")],
 	["error", field({ state: "error" })],
-	["disabled", cn(field(), "bg-fill-disabled text-ink-disabled")],
 ];
 
 // Every foundation of the contract on the real emitted sheet: type, colour,
@@ -166,7 +170,7 @@ function Panel(props: { mode?: Mode; children: ReactNode }) {
 // The same foundations twice, each panel scoped to its own mode.
 function Modes(props: { children: ReactNode }) {
 	return (
-		<div className="grid grid-cols-2 gap-fields">
+		<div className="grid grid-cols-1 tablet:grid-cols-2 gap-fields">
 			{MODES.map((mode) => (
 				<Panel key={mode} mode={mode}>
 					{props.children}
@@ -306,12 +310,15 @@ function Space(props: { view: View }) {
 			<Group title="sizes">
 				<div className="flex flex-row flex-wrap items-end gap-fields">
 					{SIZES.map((size) => (
-						<div key={size} className="flex flex-col items-start gap-rows">
+						<div
+							key={size}
+							className="flex flex-col items-start gap-rows min-w-0 max-w-full"
+						>
 							<div
 								data-size={size}
 								className={cn(
-									"border border-edge-strong",
-									`min-h-${size} min-w-${size}`,
+									"max-w-full border border-edge-strong",
+									`min-h-${size} w-${size}`,
 								)}
 							/>
 							<Label name={size} value={THEME.sizes[density][size]} />
@@ -349,7 +356,7 @@ function Widths() {
 					<Label name={width} value={THEME.widths[width]} />
 					<div
 						data-width={width}
-						className={cn("h-1 bg-edge-strong", `w-${width}`)}
+						className={cn("h-1 w-full bg-edge-strong", `max-w-${width}`)}
 					/>
 				</div>
 			))}
@@ -403,8 +410,9 @@ function States() {
 					<div key={fill} className="flex flex-row flex-wrap gap-pair">
 						{[
 							fill,
-							...COLOR_GROUPS.acts.filter((name) =>
-								name.startsWith(`${fill}-`),
+							...COLOR_GROUPS.acts.filter(
+								(name) =>
+									name.startsWith(`${fill}-`) && !name.endsWith("-pending"),
 							),
 						].map((state) => (
 							<div
@@ -421,15 +429,19 @@ function States() {
 								</p>
 							</div>
 						))}
-						<div
-							data-act={`${fill}-disabled`}
-							className={cn(
-								"flex items-center justify-center",
-								button(),
-								"bg-fill-disabled",
-							)}
-						>
-							<p className={cn(buttonLabel(), "text-ink-disabled")}>disabled</p>
+						<div data-act={`${fill}-pending`}>
+							<Button
+								act={ACT_KIND[fill as keyof typeof ACT_KIND]}
+								label="pending"
+								loading
+							/>
+						</div>
+						<div data-act={`${fill}-disabled`}>
+							<Button
+								act={ACT_KIND[fill as keyof typeof ACT_KIND]}
+								label="disabled"
+								blocked="Not available."
+							/>
 						</div>
 					</div>
 				))}
@@ -442,9 +454,14 @@ function States() {
 							data-field={state}
 							className={cn("flex items-center", classes)}
 						>
-							<p>{state}</p>
+							<p className={text({ role: "body" })}>{state}</p>
 						</div>
 					))}
+					<div data-field="disabled">
+						<FormField label="disabled" disabled>
+							<Input value="disabled" onChange={() => {}} />
+						</FormField>
+					</div>
 				</div>
 			</Group>
 			<Group title="focus ring">
@@ -467,7 +484,7 @@ function States() {
 							"outline-2 outline-offset-2 outline-ring",
 						)}
 					>
-						<p>focus</p>
+						<p className={text({ role: "body" })}>focus</p>
 					</div>
 				</div>
 			</Group>

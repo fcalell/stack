@@ -1,4 +1,5 @@
 import type { Preview } from "@storybook/react-vite";
+import { expect } from "vitest";
 import { page } from "vitest/browser";
 import { HEIGHT, overflowError, WIDTHS } from "./overflow.ts";
 
@@ -81,7 +82,10 @@ const floors: Preview = {
 		const failures = await overflow();
 		failures.push(...logged);
 		release();
-		if (failures.length > 0) throw new Error(failures.join("\n"));
+		// Soft: the test fails but the hooks after this one still run, so the a11y
+		// addon's axe result lands in the same run. Hooks run last-listed first and
+		// the addon throws, so the floors are listed after it and run before it.
+		expect.soft(failures, "floors").toEqual([]);
 	},
 };
 
