@@ -1,4 +1,4 @@
-import type { ComponentType } from "react";
+import type { ReactNode } from "react";
 import { use } from "react";
 import { Gate } from "../components/gate/index.tsx";
 import { Link } from "../components/link/index.tsx";
@@ -11,7 +11,7 @@ import { useWords } from "./words.tsx";
 // structurally so react-ui imports no router. The generated entry hands the
 // app's router to `bindNotFound` right after creating it.
 export interface NotFoundRouter {
-	update(options: { defaultNotFoundComponent: ComponentType }): void;
+	update(options: { defaultNotFoundComponent: () => ReactNode }): void;
 }
 
 // The page for an address nothing serves, drawn by the router wherever the miss

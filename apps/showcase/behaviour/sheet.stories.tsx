@@ -67,7 +67,11 @@ export const Decision: StoryObj = {
 					confirm({
 						title: "Disconnect Acme?",
 						sentence: "Its deploys stop until you connect it again.",
-						act: { label: "Disconnect", destructive: true, onAct: () => {} },
+						act: {
+							label: "Disconnect",
+							destructive: true,
+							onAct: () => Promise.resolve(),
+						},
 					})
 				}
 			/>
