@@ -1,9 +1,18 @@
 import { useState } from "react";
 import { Canvas } from "../../components/canvas/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
-import { type Graph, JOURNEY, WORKFLOW } from "../graphs.ts";
+import {
+	type Graph,
+	JOURNEY,
+	OFF,
+	PROBLEM,
+	RUN,
+	SCENARIO,
+	STATUSES,
+	WORKFLOW,
+} from "../graphs.ts";
 
-export { JOURNEY, WORKFLOW };
+export { JOURNEY, OFF, PROBLEM, RUN, SCENARIO, STATUSES, WORKFLOW };
 
 // The canvas fills its region and has no height of its own. It stands on the
 // page's ground, `surface`, as it does on a Shell column or a Gate, so it steps
@@ -17,24 +26,38 @@ export const TALL =
 	"flex flex-col h-[72rem] w-[56rem] max-w-full bg-surface p-page";
 export const SMALL = "flex flex-col h-[12rem] w-[20rem] bg-surface p-page";
 
+// The state frames' stages. A canvas opens at scale 1 and shows a graph whole
+// only when its pane is as tall as the drawing, which the layout decides after
+// the frame renders, so a stage is sized to the drawing measured in the touch
+// density (the taller): the workflow is 1258 px and the journey 814 px, each
+// plus the pane's inset on both sides. `FramesHoldTheirGraph` fails when a
+// graph or a density outgrows its stage.
+const WORKFLOW_STAGE =
+	"flex flex-col h-[86rem] w-[56rem] max-w-full bg-surface p-page";
+const JOURNEY_STAGE =
+	"flex flex-col h-[58rem] w-[56rem] max-w-full bg-surface p-page";
+
 // Read-only but for the selection, which a click or Escape moves.
 function Selectable({
 	label,
 	graph,
+	stage,
 	first,
 }: {
 	label: string;
 	graph: Graph;
+	stage: string;
 	first?: string;
 }) {
 	const [selected, select] = useState(first);
 	return (
-		<div className={STAGE}>
+		<div className={stage}>
 			<Canvas
 				label={label}
 				nodes={graph.nodes}
 				edges={graph.edges}
 				groups={graph.groups}
+				path={graph.path}
 				selected={selected}
 				onSelect={(id) => select(id ?? undefined)}
 			/>
@@ -42,11 +65,47 @@ function Selectable({
 	);
 }
 
-// The canvas draws in one cell, `CANVAS_NODE.state.rest`: the workflow at
-// rest, the journey with its confirm node selected.
+// What each cell draws: the cell is the tone or state its frame is there to
+// judge, and the canvas draws every state its graph holds. The confirm node of
+// the journey is selected in the `selected` frame of the first.
+const DRAWN: Record<string, { label: string; graph: Graph }> = {
+	"CANVAS_NODE.state.problem": { label: "Problem", graph: PROBLEM },
+	"CANVAS_NODE_TEXT.tone.off": { label: "Off", graph: OFF },
+	"STATUS_DOT.state.active": { label: "Status", graph: STATUSES },
+};
+
+// The canvas draws in six cells: the workflow at rest (the journey with its
+// confirm node selected), a problem, an off node, a status per state, a run
+// over the workflow and a scenario over the journey.
 export function drawCanvas(frame: ShowcaseFrame) {
-	if (frame.cell.name !== "CANVAS_NODE.state.rest") return undefined;
-	if (frame.state === "selected")
-		return <Selectable label="Journey" graph={JOURNEY} first="merge" />;
-	return <Selectable label="Workflow" graph={WORKFLOW} />;
+	const { name } = frame.cell;
+	if (name === "CANVAS_NODE.state.rest") {
+		if (frame.state === "selected")
+			return (
+				<Selectable
+					label="Journey"
+					graph={JOURNEY}
+					stage={JOURNEY_STAGE}
+					first="merge"
+				/>
+			);
+		return (
+			<Selectable label="Workflow" graph={WORKFLOW} stage={WORKFLOW_STAGE} />
+		);
+	}
+	if (name === "CANVAS_NODE_TEXT.tone.dimmed")
+		return frame.state === "selected" ? (
+			<Selectable label="Scenario" graph={SCENARIO} stage={JOURNEY_STAGE} />
+		) : (
+			<Selectable label="Run" graph={RUN} stage={WORKFLOW_STAGE} />
+		);
+	const drawn = DRAWN[name];
+	if (!drawn || frame.state !== "rest") return undefined;
+	return (
+		<Selectable
+			label={drawn.label}
+			graph={drawn.graph}
+			stage={WORKFLOW_STAGE}
+		/>
+	);
 }

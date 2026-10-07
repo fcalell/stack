@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { backEdges, pathOrder } from "@fcalell/ui-core/canvas";
 import type { CanvasGroup } from "@fcalell/ui-core/descriptors";
-import { WIDTH_VALUE } from "@fcalell/ui-core/tokens";
+import { STATUS_STATES, WIDTH_VALUE } from "@fcalell/ui-core/tokens";
 import ELK from "elkjs";
 import {
 	elkGraph,
@@ -25,14 +25,24 @@ import {
 	routeEdges,
 	verticalLegs,
 } from "../src/ui/components/canvas/geometry.ts";
-import { nodeLook } from "../src/ui/components/canvas/look.ts";
+import { edgeLook, nodeLook } from "../src/ui/components/canvas/look.ts";
 import {
 	fitTransform,
 	inside,
 	openTransform,
 	whole,
 } from "../src/ui/components/canvas/view.ts";
-import { type Graph, JOURNEY, WORKFLOW } from "../src/ui/showcase/graphs.ts";
+import { showcaseFrames } from "../src/ui/showcase/cells.ts";
+import {
+	type Graph,
+	JOURNEY,
+	OFF,
+	PROBLEM,
+	RUN,
+	SCENARIO,
+	STATUSES,
+	WORKFLOW,
+} from "../src/ui/showcase/graphs.ts";
 
 const WIDTH = Number.parseFloat(WIDTH_VALUE.node);
 const HEIGHT = 56;
@@ -217,15 +227,202 @@ test("graphKey holds still for a status, a label or a selection and moves for an
 });
 
 test("nodeLook selects the node that matches and rests the others", () => {
-	assert.deepEqual(nodeLook(node("a"), "a"), {
-		state: "selected",
-		tone: "rest",
-	});
-	assert.deepEqual(nodeLook(node("a"), "b"), { state: "rest", tone: "rest" });
+	assert.equal(nodeLook(node("a"), "a").state, "selected");
+	assert.equal(nodeLook(node("a"), "b").state, "rest");
 	assert.deepEqual(nodeLook(node("a"), undefined), {
 		state: "rest",
 		tone: "rest",
+		shows: "line",
+		status: false,
+		problem: false,
 	});
+});
+
+const DONE = { state: "done", label: "Done" } as const;
+const ONE_PATH = { nodes: ["a"], edges: [] };
+
+test("nodeLook with no path puts every node on it, and draws a status when it holds one", () => {
+	assert.equal(nodeLook({ id: "a", status: DONE }, undefined).status, true);
+	assert.equal(nodeLook({ id: "a" }, undefined).status, false);
+});
+
+test("nodeLook draws a problem alone as the danger box, its words in rest ink in place of the line, and the danger mark", () => {
+	assert.deepEqual(nodeLook({ id: "a", problem: "Bad" }, undefined), {
+		state: "problem",
+		tone: "rest",
+		shows: "problem",
+		status: false,
+		problem: true,
+	});
+});
+
+test("nodeLook lets selection win the outline over a problem, and keeps the words and the mark", () => {
+	const look = nodeLook({ id: "a", problem: "Bad" }, "a");
+	assert.equal(look.state, "selected");
+	assert.equal(look.shows, "problem");
+	assert.equal(look.problem, true);
+});
+
+test("nodeLook draws a problem and a status together: each keeps its own mark", () => {
+	const look = nodeLook({ id: "a", problem: "Bad", status: DONE }, undefined);
+	assert.equal(look.status, true);
+	assert.equal(look.problem, true);
+	assert.equal(look.state, "problem");
+});
+
+test("nodeLook lets off win over a problem: the word off, the rest box", () => {
+	assert.deepEqual(
+		nodeLook({ id: "a", off: true, problem: "Bad" }, undefined),
+		{
+			state: "rest",
+			tone: "off",
+			shows: "off",
+			status: false,
+			problem: false,
+		},
+	);
+	assert.deepEqual(nodeLook({ id: "a", off: true }, undefined), {
+		state: "rest",
+		tone: "off",
+		shows: "off",
+		status: false,
+		problem: false,
+	});
+});
+
+test("nodeLook dims a node off the path in every part, with the rest box and no status", () => {
+	assert.deepEqual(nodeLook({ id: "b", status: DONE }, undefined, ONE_PATH), {
+		state: "rest",
+		tone: "dimmed",
+		shows: "line",
+		status: false,
+		problem: false,
+	});
+});
+
+test("nodeLook keeps a selected node's ink dimmed off the path", () => {
+	const look = nodeLook({ id: "b" }, "b", ONE_PATH);
+	assert.equal(look.state, "selected");
+	assert.equal(look.tone, "dimmed");
+});
+
+test("nodeLook draws a problem off the path in dimmed ink, the rest box and no mark", () => {
+	assert.deepEqual(nodeLook({ id: "b", problem: "Bad" }, undefined, ONE_PATH), {
+		state: "rest",
+		tone: "dimmed",
+		shows: "problem",
+		status: false,
+		problem: false,
+	});
+});
+
+test("nodeLook outlines where the path stands, on the path even when it lists no such node", () => {
+	const path = { nodes: ["a"], edges: [], at: "z" };
+	const at = nodeLook({ id: "z", status: DONE }, undefined, path);
+	assert.equal(at.state, "selected");
+	assert.equal(at.tone, "rest");
+	assert.equal(at.status, true);
+	const both = nodeLook({ id: "z" }, "z", path);
+	assert.equal(both.state, "selected");
+	assert.equal(nodeLook({ id: "a" }, "z", path).state, "rest");
+});
+
+test("nodeLook with a path that lists no node dims every node but the one it stands at", () => {
+	const path = { nodes: [], edges: [], at: "a" };
+	assert.equal(nodeLook({ id: "a" }, undefined, path).tone, "rest");
+	assert.equal(nodeLook({ id: "b" }, undefined, path).tone, "dimmed");
+});
+
+const EDGE = { id: "e", from: "a", to: "b" };
+const ENDS = new Map<string, { off?: boolean }>([
+	["a", {}],
+	["b", {}],
+	["c", { off: true }],
+]);
+
+test("edgeLook rests an edge with no path and dims one the path does not list", () => {
+	assert.equal(edgeLook(EDGE, ENDS, undefined), "rest");
+	assert.equal(edgeLook(EDGE, ENDS, { nodes: [], edges: ["e"] }), "rest");
+	assert.equal(edgeLook(EDGE, ENDS, { nodes: [], edges: ["f"] }), "dimmed");
+});
+
+test("edgeLook reads an edge by its own id, never by its ends", () => {
+	const path = { nodes: ["a", "b"], edges: [] };
+	assert.equal(edgeLook(EDGE, ENDS, path), "dimmed");
+});
+
+test("edgeLook dims an edge to or from an off node, and never reads an unknown end as off", () => {
+	assert.equal(
+		edgeLook({ id: "e", from: "a", to: "c" }, ENDS, undefined),
+		"dimmed",
+	);
+	assert.equal(
+		edgeLook({ id: "e", from: "c", to: "b" }, ENDS, undefined),
+		"dimmed",
+	);
+	assert.equal(
+		edgeLook({ id: "e", from: "a", to: "unknown" }, ENDS, undefined),
+		"rest",
+	);
+});
+
+const STATED = [
+	["OFF", OFF],
+	["PROBLEM", PROBLEM],
+	["STATUSES", STATUSES],
+	["RUN", RUN],
+	["SCENARIO", SCENARIO],
+] as const;
+
+test("every state fixture's path and edge ids exist, and it holds no position", () => {
+	for (const [name, graph] of STATED) {
+		const nodes = new Set(graph.nodes.map((n) => n.id));
+		const edges = new Set(graph.edges.map((e) => e.id));
+		for (const id of graph.path?.nodes ?? [])
+			assert.ok(nodes.has(id), name + id);
+		for (const id of graph.path?.edges ?? [])
+			assert.ok(edges.has(id), name + id);
+		if (graph.path?.at) assert.ok(nodes.has(graph.path.at), name);
+		assert.ok(
+			graph.nodes.every((n) => n.position === undefined),
+			name,
+		);
+	}
+});
+
+test("a run and a scenario leave nodes off their path, at stands on it", () => {
+	for (const graph of [RUN, SCENARIO]) {
+		assert.ok(graph.path);
+		assert.ok(graph.path.nodes.length < graph.nodes.length);
+		assert.ok(graph.path.at && graph.path.nodes.includes(graph.path.at));
+	}
+});
+
+test("STATUSES holds each status state exactly once", () => {
+	const states = STATUSES.nodes.map((n) => n.status?.state);
+	assert.deepEqual([...states].sort(), [...STATUS_STATES].sort());
+});
+
+test("the state fixtures change no structure: the key stands for every one", () => {
+	const key = graphKey(WORKFLOW.nodes, WORKFLOW.edges, WORKFLOW.groups ?? []);
+	for (const graph of [OFF, PROBLEM, STATUSES, RUN])
+		assert.equal(graphKey(graph.nodes, graph.edges, graph.groups ?? []), key);
+});
+
+test("Canvas draws its state fixtures in cells of showcaseFrames", () => {
+	const cells = new Set(
+		showcaseFrames()
+			.filter((frame) => frame.component === "Canvas")
+			.map((frame) => `${frame.cell.name}/${frame.state}`),
+	);
+	for (const cell of [
+		"CANVAS_NODE.state.problem/rest",
+		"CANVAS_NODE_TEXT.tone.off/rest",
+		"STATUS_DOT.state.active/rest",
+		"CANVAS_NODE_TEXT.tone.dimmed/rest",
+		"CANVAS_NODE_TEXT.tone.dimmed/selected",
+	])
+		assert.ok(cells.has(cell), cell);
 });
 
 const box = (x: number, y: number, width = 100, height = 50): Box => ({

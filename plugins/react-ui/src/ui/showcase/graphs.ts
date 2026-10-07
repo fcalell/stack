@@ -3,6 +3,7 @@ import type {
 	CanvasEdge,
 	CanvasGroup,
 	CanvasNode,
+	CanvasPath,
 } from "@fcalell/ui-core/descriptors";
 
 // The two graphs the canvas is shown and tested with, as plain data so a node
@@ -12,6 +13,7 @@ export interface Graph {
 	nodes: CanvasNode[];
 	edges: CanvasEdge[];
 	groups?: CanvasGroup[];
+	path?: CanvasPath;
 }
 
 // A workflow: a loop in a group, a gate's answer going back upstream, and a
@@ -174,3 +176,75 @@ export const JOURNEY: Graph = {
 	nodes: LEGS.map((node) => ({ ...node, number: NUMBERS.get(node.id) })),
 	edges: BRANCHES,
 };
+
+// The states a node and an edge draw, each over one of the two graphs: the
+// graph's nodes with a mark added to those named. Fixtures hold no position,
+// so the canvas places them.
+type Marks = Record<string, Partial<CanvasNode>>;
+
+function marked(graph: Graph, marks: Marks, path?: CanvasPath): Graph {
+	return {
+		...graph,
+		nodes: graph.nodes.map((node) => ({ ...node, ...marks[node.id] })),
+		...(path && { path }),
+	};
+}
+
+// An off node: its in-edge dims, and its out-edge, the handoff, dims and
+// stays dashed.
+export const OFF = marked(WORKFLOW, { review: { off: true } });
+
+// A problem found on save: the first words, in place of the line.
+export const PROBLEM = marked(WORKFLOW, {
+	build: { problem: "Missing the target" },
+});
+
+// One status per node and per state, in node order.
+export const STATUSES = marked(WORKFLOW, {
+	start: { status: { state: "done", label: "Done" } },
+	plan: { status: { state: "waiting", label: "Waiting" } },
+	build: { status: { state: "running", label: "Running" } },
+	check: { status: { state: "failed", label: "Failed" } },
+	gate: { status: { state: "attention", label: "Needs a look" } },
+	review: { status: { state: "active", label: "Active" } },
+	handoff: { status: { state: "idle", label: "Idle" } },
+});
+
+// A run: the loop ran once, the gate answered "green" and the review is under
+// way; the gate's answer upstream and the handoff stay off the path.
+const DONE = { state: "done", label: "Done" } as const;
+export const RUN = marked(
+	WORKFLOW,
+	{
+		start: { status: DONE },
+		plan: { status: DONE },
+		build: { status: DONE },
+		check: { status: DONE },
+		gate: { status: DONE },
+		review: { status: { state: "running", label: "Running" } },
+	},
+	{
+		nodes: ["start", "plan", "build", "check", "gate", "review"],
+		edges: [
+			"start-plan",
+			"plan-build",
+			"build-check",
+			"check-build",
+			"check-gate",
+			"gate-review",
+		],
+		at: "review",
+	},
+);
+
+// A scenario that stops where it failed: the rest of the journey dims.
+const PASSED = { state: "done", label: "Passed" } as const;
+export const SCENARIO = marked(
+	JOURNEY,
+	{
+		begin: { status: PASSED },
+		b1: { status: PASSED },
+		b2: { status: { state: "failed", label: "Failed" } },
+	},
+	{ nodes: ["begin", "b1", "b2"], edges: ["begin-b1", "b1-b2"], at: "b2" },
+);

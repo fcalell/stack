@@ -8,6 +8,17 @@ interface Args {
 	cell: string;
 }
 
+// A node off a run's path draws disabled ink on purpose (the pattern page's rule: the rest of a
+// run in disabled ink), about 3:1. Axe exempts only a disabled control, and these are enabled
+// buttons, so their text is left out of the check. Only the dimmed frames, only Canvas. The
+// exclusion is the whole node, not `color-contrast` alone: a per-story `config.rules` entry
+// replaces the preview's page-level list (arrays do not merge), so scoping the rule would copy it.
+const UNCHECKED: Record<string, string[]> = {
+	Canvas: [
+		'[data-cell^="Canvas/CANVAS_NODE_TEXT.tone.dimmed/"] [data-layer] button',
+	],
+};
+
 // One story per component and state: every cell the component draws in that
 // state, light and dark side by side, at the toolbar's density. The `rest`
 // story takes a `cell` arg to browse one cell.
@@ -27,7 +38,12 @@ export function stateStories(component: string, draw?: Draw) {
 						? { control: "select", options: ["all", ...cells] }
 						: { table: { disable: true } },
 			},
-			parameters: { layout: "padded" },
+			parameters: {
+				layout: "padded",
+				...(UNCHECKED[component] && {
+					a11y: { context: { exclude: UNCHECKED[component] } },
+				}),
+			},
 			render: (args, context) => {
 				const density = String(context.globals.density);
 				return (

@@ -61,6 +61,37 @@ their group. With `onMove` it tells you each node's absolute position once, afte
 them: store those and pass them back as `position`. Give some nodes a position and you place
 all of them; a node without one stands at the origin.
 
+## States
+
+A node says its state in its own text or mark, never by colour alone.
+
+- `off: true` draws the node quiet with the word "Off" in place of its line, and dims its edges.
+  An off edge is never dashed: dashed means a handoff and nothing else. The switch for it lives
+  in the node's sheet, not on the canvas. An off node ignores its `problem`.
+- `problem` draws the node's border in the danger hue, a danger dot in its trailing column and
+  its words in place of the line, in the ink a line has. The dot stays when the node is selected,
+  which takes the border. Pass the first words only, and name the whole problem outside the canvas
+  in a `Banner` and a `List`. A node with a `problem` and a `status` draws both marks.
+- `status` is a `StatusMark` (`{ state, label }`): a dot and its word, a spinner while the state
+  is `running`, in the node's trailing column. Keep the label short.
+- `path` (`nodes`, `edges`, `at`) is what a run or a scenario took. A node the path leaves out
+  draws every part in disabled ink and no status or problem mark, an edge it leaves out dims, and `at` is outlined
+  as a selection is. An edge is on the path by its own id, never by its ends.
+
+A run over the workflow, with a status on the nodes it took:
+
+```tsx
+<Canvas
+  label="Release run"
+  nodes={nodes.map((node) => ({ ...node, status: statuses.get(node.id) }))}
+  edges={edges}
+  groups={groups}
+  path={{ nodes: ["build", "check"], edges: ["a", "b"], at: "check" }}
+/>
+```
+
+A state never moves a node or runs the layout again.
+
 ## Choosing a node
 
 A canvas with no handler is read-only: it has no node button and no node moves. Pass `onSelect`

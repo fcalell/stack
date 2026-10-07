@@ -1055,8 +1055,8 @@ export const CANVAS_NODE = matrix({
 });
 
 // A node's text: the type role rides on the part, the ink on the tone. A rest
-// overline and line are meta, a rest title is body; off, problem and dimmed
-// recolour every part they reach.
+// overline and line are meta, a rest title is body; off and dimmed recolour
+// every part they reach. A problem's words keep the rest ink.
 export const CANVAS_NODE_TEXT = matrix({
 	base: "",
 	variants: {
@@ -1068,7 +1068,6 @@ export const CANVAS_NODE_TEXT = matrix({
 		tone: {
 			rest: "",
 			off: "text-ink-meta",
-			problem: "text-ink-error",
 			dimmed: "text-ink-disabled",
 		},
 	},

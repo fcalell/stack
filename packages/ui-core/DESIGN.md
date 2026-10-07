@@ -1503,12 +1503,6 @@ components:
   canvas-node-text-off-dark:
     typography: "{typography.meta}"
     textColor: "{colors.ink-meta-dark}"
-  canvas-node-text-problem:
-    typography: "{typography.meta}"
-    textColor: "{colors.ink-error}"
-  canvas-node-text-problem-dark:
-    typography: "{typography.meta}"
-    textColor: "{colors.ink-error-dark}"
   canvas-node-text-dimmed:
     typography: "{typography.meta}"
     textColor: "{colors.ink-disabled}"
@@ -2642,7 +2636,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Thread` | none | `raised`, `edge`, `edge-raised` | `control` | `sections`, `page`, `pair`, `acts` | `measure` | `float` |
 | `QrCode` | none | `edge`, `surface`, `ink-body`, `skeleton` | `card` | none | `qr` | none |
 | `Image` | `meta` | `edge`, `edge-hover`, `ink-body`, `skeleton`, `group`, `ink-meta`, `raised`, `scrim` | `control`, `card` | `page`, `inside` | `image-tile`, `image-cap`, `icon`, `control` | `float` |
-| `Canvas` | `body`, `meta`, `caption` | `canvas`, `group`, `surface`, `edge`, `edge-strong`, `edge-error`, `selected-outline`, `edge-hover`, `grid`, `ring`, `ink-body`, `ink-meta`, `ink-error`, `ink-disabled`, `fill-neutral`, `accent-ink`, `ok`, `warn`, `danger`, `chip-` | `card`, `control`, `full`, `chip` | `inside`, `pair`, `control-x` | `node`, `port`, `target`, `row-2`, `control`, `dot`, `chip`, `icon-meta`, `measure-short`, `spinner` | none |
+| `Canvas` | `body`, `meta`, `caption` | `canvas`, `group`, `surface`, `edge`, `edge-strong`, `edge-error`, `selected-outline`, `edge-hover`, `grid`, `ring`, `ink-body`, `ink-meta`, `ink-disabled`, `fill-neutral`, `accent-ink`, `ok`, `warn`, `danger`, `chip-` | `card`, `control`, `full`, `chip` | `inside`, `pair`, `control-x` | `node`, `port`, `target`, `row-2`, `control`, `dot`, `chip`, `icon-meta`, `measure-short`, `spinner` | none |
 
 ### Motion
 

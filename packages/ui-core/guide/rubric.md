@@ -46,7 +46,8 @@ chip row and a tab row pass when each target is 24 or more); horizontal overflow
 error or warning. The carve-outs, each a WCAG exemption or the system's own look: a control whose
 label or content names it (a labelled field, an act with a label, a search field with its glyph,
 the OTP boxes) is exempt from the 3:1 boundary floor at rest, since the label is the cue; a
-disabled part is exempt from the text and boundary floors; an inline link inside a sentence is
+disabled part, a node off a run's path and a dimmed edge (off a run's path, or into or out of a
+node switched off) are exempt from the text and boundary floors; an inline link inside a sentence is
 exempt from the target floor (a standalone link takes a `target` hit box); a checked box on a
 dark selected row keeps its accent fill at 2.1–2.5:1 (rest and hover), the check glyph at 5.3:1 carrying the state.
 

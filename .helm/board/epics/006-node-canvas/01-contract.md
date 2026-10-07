@@ -153,7 +153,7 @@ Canvas: {
 
 `owns` covers every token spelled by the cells in `draws` (run `c35`; it names each miss). Expected:
 roles `body`, `meta`, `caption`; colors `canvas`, `group`, `surface`, `edge`, `edge-strong`,
-`edge-error`, `selected-outline`, `ink-body`, `ink-meta`, `ink-error`, `ink-disabled`,
+`edge-error`, `selected-outline`, `ink-body`, `ink-meta`, `ink-disabled`,
 `fill-neutral`, `accent-ink`, `ok`, `warn`, `danger`, `chip-`; radii `card`, `control`, `full`,
 `chip`; spacing `inside`, `pair`, `control-x`; sizes `node`, `port`, `target`, `row-2`, `control`,
 `dot`, `chip`, `icon-meta`, `measure-short`, `spinner`. Story 02 widens `owns` for what its
@@ -209,13 +209,12 @@ ink per part in compound rows):
 | `part.line` | `text-meta leading-meta font-normal` (12) |
 | `tone.rest` | empty |
 | `tone.off` | `text-ink-meta` |
-| `tone.problem` | `text-ink-error` |
 | `tone.dimmed` | `text-ink-disabled` |
 | compound `overline`+`rest`, `line`+`rest` | `text-ink-meta` |
 | compound `title`+`rest` | `text-ink-body` |
 
 `defaultVariants`: `part: line`, `tone: rest`. Intended use: off draws the title and overline in
-`off` and the word `off` as the line in `off`; a problem draws the line in `problem`; a node off
+`off` and the word `off` as the line in `off`; a problem draws the line in `rest` and its mark is the danger dot; a node off
 the path draws every part in `dimmed`.
 
 **Constants** (single cells in `variants.ts`, after the existing groups):

@@ -1553,6 +1553,13 @@ a tick with no animation, never jumped to full.
   Screen readers are out of scope; the keyboard is in: with `onSelect` each node is a button in
   path order, and a node focused from the keyboard, or a selection from outside, pans into view
   (a press focuses the button too, and panning then would move a node out from under the pointer).
+  A node's tone is `nodeLook` and an edge's is `edgeLook` (`look.ts`, pure): selected over problem,
+  off path over off over rest, and an off node ignores its problem; a problem's words keep the rest
+  ink (status colour is a mark's) and its mark is a `failed` `StatusDot` in the trailing column,
+  which outlives selection taking the border; an edge is on a path by its own id and dims beside an
+  off node. The dimmed edge draws `grid`, the dot grid's ink: `edge` is fainter than the grid
+  (1.19:1 and 1.41:1 on `canvas`) and `ink-faint` stands within 0.05 of lightness of
+  `edge-strong`, so neither tells a dimmed edge from the grid or from a taken one. A state recolours and never moves a node or reruns the layout (`graphKey` reads structure only).
 - A `FormField` folds an answered question by `answered` (`{ answer, onEdit }`): one summary row
   at the row height (`FORM_FIELD_SUMMARY`: a `Check` in the `ok` ink, the label in body 500, the
   answer truncated in meta, a trailing `Pencil` `IconButton` at the bar fit named by the `edit`
@@ -1689,7 +1696,12 @@ touch is a toolbar toggle, not a test run; `a11y.test` is `error`):
 - **Component stories**, above.
 
 A failing assertion is a finding in the component: it stays failing until the component is fixed,
-never weakened or skipped, and no axe rule or selector is excluded beyond the page-level rules.
+never weakened or skipped, and nothing is excluded from axe beyond the page-level rules and the
+node buttons of a canvas that draws a run's path: `Canvas`'s dimmed frames
+(`.storybook/state-stories.tsx`) and the behaviour stories that draw a `path`. A node off the path
+draws disabled ink (about 3:1) by the pattern's rule, and axe exempts only a disabled control, which
+these enabled buttons are. The exclusion leaves those nodes out of every rule, since a per-story
+`config.rules` entry replaces the preview's page-level list and would copy it.
 
 Storybook runs on stack's generated Vite config (`.stack/vite.config.ts`, by `viteConfigPath`),
 adapted in `.storybook/stack-vite.ts`, which Vitest's config shares:

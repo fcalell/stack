@@ -2989,7 +2989,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"ring",
 					"ink-body",
 					"ink-meta",
-					"ink-error",
 					"ink-disabled",
 					"fill-neutral",
 					"accent-ink",

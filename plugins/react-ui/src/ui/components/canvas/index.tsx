@@ -30,7 +30,7 @@ import type { Size } from "./geometry.ts";
 import { GroupFrame } from "./group.tsx";
 import { EdgeLabel } from "./label.tsx";
 import { useLayout } from "./layout.ts";
-import { nodeLook } from "./look.ts";
+import { type EdgeTone, edgeLook, nodeLook } from "./look.ts";
 import { NodeView } from "./node.tsx";
 import { useViewport } from "./viewport.ts";
 import { ActFoot, ZoomStack } from "./zoom.tsx";
@@ -82,6 +82,7 @@ export function Canvas({
 	groups = NO_GROUPS,
 	selected,
 	onSelect,
+	path,
 	onMove,
 	act,
 }: CanvasProps) {
@@ -130,6 +131,9 @@ export function Canvas({
 	}, [selected]);
 
 	const byId = new Map(nodes.map((node) => [node.id, node]));
+	const tones = new Map<string, EdgeTone>(
+		edges.map((edge) => [edge.id, edgeLook(edge, byId, path)]),
+	);
 
 	// Escape clears the selection from anywhere inside the region.
 	const clear = (event: KeyboardEvent) => {
@@ -168,7 +172,12 @@ export function Canvas({
 						<GroupFrame key={group.id} head={group.head} box={frame} />
 					) : null;
 				})}
-				<EdgeLayer edges={edges} routes={routed.routes} radius={space.pair} />
+				<EdgeLayer
+					edges={edges}
+					routes={routed.routes}
+					tones={tones}
+					radius={space.pair}
+				/>
 				{order.map((id) => {
 					const node = byId.get(id);
 					if (!node) return null;
@@ -176,7 +185,7 @@ export function Canvas({
 						<NodeView
 							key={id}
 							node={node}
-							look={nodeLook(node, selected)}
+							look={nodeLook(node, selected, path)}
 							box={boxes.get(id) ?? node.position ?? ORIGIN}
 							onSelect={onSelect}
 							onSize={resized}

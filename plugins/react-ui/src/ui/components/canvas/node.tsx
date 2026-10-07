@@ -2,8 +2,11 @@ import { cn } from "@fcalell/ui-core/cn";
 import type { CanvasNode } from "@fcalell/ui-core/descriptors";
 import { canvasNode, canvasNodeText } from "@fcalell/ui-core/variants";
 import { type FocusEvent, useLayoutEffect, useState } from "react";
+import { useWords } from "../../lib/words.tsx";
 import { Count } from "../count/index.tsx";
 import { Icon } from "../icon/index.tsx";
+import { StatusDot } from "../status/dot.tsx";
+import { Status } from "../status/index.tsx";
 import type { Box, Size } from "./geometry.ts";
 import type { NodeLook } from "./look.ts";
 
@@ -55,10 +58,17 @@ export function NodeView({
 	onFocusVisible: (id: string) => void;
 }) {
 	const measure = useSize(node.id, onSize);
+	const words = useWords();
 	const figure = node.number ?? node.count;
-	const line = (part: "overline" | "title" | "line", text: string) => (
-		<span className={cn(canvasNodeText({ part, tone: look.tone }), LINE)}>
-			{text}
+	const lines = { line: node.line, off: words.off, problem: node.problem };
+	const body = lines[look.shows];
+	const status =
+		look.status && node.status ? (
+			<Status state={node.status.state} label={node.status.label} />
+		) : null;
+	const part = (name: "overline" | "title" | "line", value: string) => (
+		<span className={cn(canvasNodeText({ part: name, tone: look.tone }), LINE)}>
+			{value}
 		</span>
 	);
 	const classes = cn(
@@ -74,13 +84,15 @@ export function NodeView({
 		<>
 			<Icon name={node.icon} fit="meta" />
 			<span className={COLUMN}>
-				{node.overline ? line("overline", node.overline) : null}
-				{line("title", node.title)}
-				{node.line ? line("line", node.line) : null}
+				{node.overline ? part("overline", node.overline) : null}
+				{part("title", node.title)}
+				{body ? part("line", body) : null}
 			</span>
-			{figure === undefined ? null : (
+			{figure === undefined && !status && !look.problem ? null : (
 				<span className={TRAILING}>
-					<Count value={figure} />
+					{figure === undefined ? null : <Count value={figure} />}
+					{status}
+					{look.problem ? <StatusDot state="failed" /> : null}
 				</span>
 			)}
 		</>

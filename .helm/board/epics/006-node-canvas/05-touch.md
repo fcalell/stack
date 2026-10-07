@@ -267,7 +267,9 @@ point sets the live position, `null` clears it); `drop` is the release path 04 h
 - **The look carries over (03).** `look.state` (`rest`, `selected`, `problem`) is the glyph's
   border, `tone` `dimmed` and `off` ink the `Icon` through `text-ink-disabled` and `text-ink-meta`
   on the glyph button (classes in `overlays.ts` already), and `look.status` draws a `StatusDot` at
-  the glyph's corner, the spinner while `running`. A glyph carries no words, so the overview reads
+  the glyph's corner, the spinner while `running`. `look.problem` draws the `failed` `StatusDot`
+  there (the node's own danger mark, which outlives selection taking the border); a node with both is
+  05's to place. A glyph carries no words, so the overview reads
   state by border and dot, and the word is one tap away.
 - **Group heads and edge labels** take the same flag: below it they are `invisible` (they stay in
   the layout, so frames and routes do not move), so the overview shows no text at all.
@@ -476,7 +478,7 @@ helpers do (copy them into the file; they are not exported).
    from it to another node's port calls `onConnect(from, to)` at both scales without panning; a
    release on the ground calls `onConnect(from, null)`.
 9. **Selection through the glyph's state.** A `PROBLEM` and a `STATUSES` fixture below the floor:
-   the problem glyph's border colour differs from a rest glyph's, and a status glyph holds a dot.
+   the problem glyph's border colour differs from a rest glyph's and it holds the danger dot, and a status glyph holds a dot.
 
 `apps/showcase/behaviour/canvas-overview.stories.tsx` (new, beside it) holds the pointer story,
 `title: "Behaviour/Canvas overview"`, no `touch` tag, `globals: { density: "desktop" }`, so the

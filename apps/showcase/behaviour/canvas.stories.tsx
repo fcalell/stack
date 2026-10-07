@@ -2,10 +2,18 @@ import { Canvas } from "@fcalell/plugin-react-ui/components/canvas";
 import { List } from "@fcalell/plugin-react-ui/components/list";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Split } from "@fcalell/plugin-react-ui/components/split";
+import { showcaseFrames } from "@fcalell/plugin-react-ui/showcase/cells";
+import { Frame } from "@fcalell/plugin-react-ui/showcase/frame";
 import {
+	drawCanvas,
 	JOURNEY,
+	OFF,
+	PROBLEM,
+	RUN,
+	SCENARIO,
 	SMALL,
 	STAGE,
+	STATUSES,
 	TALL,
 	WORKFLOW,
 } from "@fcalell/plugin-react-ui/showcase/frames/canvas";
@@ -707,3 +715,351 @@ export const Silent: StoryObj = {
 		for (const spy of spies) await expect(spy).not.toHaveBeenCalled();
 	},
 };
+
+// ── States ──────────────────────────────────────────────────────────
+
+// A state fixture in a stage that holds the whole graph; a node's button is
+// read by its place in path order, an edge by its `data-edge` mark.
+type Fixture = typeof WORKFLOW;
+
+function Stated(props: { graph: Fixture; label: string; heard?: Select }) {
+	const [selected, setSelected] = useState<string>();
+	return (
+		<div className={TALL}>
+			<Canvas
+				label={props.label}
+				nodes={props.graph.nodes}
+				edges={props.graph.edges}
+				groups={props.graph.groups}
+				path={props.graph.path}
+				selected={selected}
+				onSelect={(id) => {
+					props.heard?.(id);
+					setSelected(id ?? undefined);
+				}}
+			/>
+		</div>
+	);
+}
+
+const orderOf = (graph: Fixture) => pathOrder(graph.nodes, graph.edges);
+
+function stateButton(root: Element, graph: Fixture, id: string): HTMLElement {
+	const button = nodeButtons(root)[orderOf(graph).indexOf(id)];
+	if (!button) throw new Error(`no button for the node ${id}`);
+	return button;
+}
+
+// A node's text column is its second child; its title is the second line.
+function titleText(button: Element): Element {
+	const title = button.children[1]?.children[1];
+	if (!title) throw new Error("no title");
+	return title;
+}
+
+function lineText(button: Element): Element {
+	const line = button.children[1]?.children[2];
+	if (!line) throw new Error("no line");
+	return line;
+}
+
+const ink = (element: Element) => getComputedStyle(element).color;
+// The outline's width, or "none" when it has no style (Chromium reports a
+// styleless outline's width as its 3px initial value).
+function outline(element: Element): string {
+	const style = getComputedStyle(element);
+	return style.outlineStyle === "none" ? "none" : style.outlineWidth;
+}
+
+// A synthetic click is a script focus, which Chromium counts as a keyboard one,
+// so the focus ring (2px) covers the selection's outline (1px). The selection's
+// own outline is read once focus has left the node.
+async function clicked(
+	userEvent: Parameters<NonNullable<StoryObj["play"]>>[0]["userEvent"],
+	button: Element,
+) {
+	await userEvent.click(button);
+	if (document.activeElement instanceof HTMLElement)
+		document.activeElement.blur();
+}
+
+// The nodes of a story that draws a run's path: the nodes off the path draw
+// disabled ink on purpose (about 3:1), which axe exempts only on a disabled
+// control, so these stories leave their nodes out of its check. Every other
+// canvas story runs every rule.
+const DIMMED_NODES = {
+	a11y: { context: { exclude: ["[data-layer] button"] } },
+};
+
+function edgeOf(
+	root: Element,
+	id: string,
+): { ink: string; dash: string | null } {
+	const group = root.querySelector(`[data-edge="${id}"]`);
+	const line = group?.querySelector('path[fill="none"]');
+	if (!group || !line) throw new Error(`no edge ${id}`);
+	return { ink: ink(group), dash: line.getAttribute("stroke-dasharray") };
+}
+
+async function standing(
+	canvas: Parameters<NonNullable<StoryObj["play"]>>[0]["canvas"],
+	label: string,
+) {
+	const region = await canvas.findByRole("region", { name: label });
+	await waitFor(() => expect(nodeButtons(region)[0]).toBeVisible(), LAID);
+	return region;
+}
+
+// Tab walks every node in path order, whatever its state.
+async function tabbable(
+	userEvent: Parameters<NonNullable<StoryObj["play"]>>[0]["userEvent"],
+	region: Element,
+	graph: Fixture,
+) {
+	for (const id of orderOf(graph)) {
+		await userEvent.tab();
+		await expect(stateButton(region, graph, id)).toHaveFocus();
+	}
+}
+
+// An off node reads as the word Off in place of its line and in muted ink; its
+// edges change ink and keep their dash or lack of one.
+export const Off: StoryObj = {
+	render: () => <Stated graph={OFF} label="Off" />,
+	play: async ({ canvas, userEvent }) => {
+		const region = await standing(canvas, "Off");
+		const review = stateButton(region, OFF, "review");
+		const plan = stateButton(region, OFF, "plan");
+		await expect(review).toHaveTextContent("Off");
+		await expect(review).not.toHaveTextContent("Reads the changes");
+		await expect(ink(titleText(review))).not.toBe(ink(titleText(plan)));
+		const rest = edgeOf(region, "plan-build");
+		const into = edgeOf(region, "gate-review");
+		await expect(into.dash).toBeNull();
+		await expect(into.ink).not.toBe(rest.ink);
+		const out = edgeOf(region, "review-handoff");
+		await expect(out.dash).not.toBeNull();
+		await expect(out.ink).not.toBe(rest.ink);
+		await tabbable(userEvent, region, OFF);
+	},
+};
+
+// A problem is its first words in place of the line, in the ink a rest line has
+// (status colour belongs to a mark), on a danger border with a danger dot in the
+// trailing column; selecting the node takes the border for the selection's
+// outline and keeps the words and the dot.
+export const Problem: StoryObj = {
+	render: () => <Stated graph={PROBLEM} label="Problem" />,
+	play: async ({ canvas, userEvent }) => {
+		const region = await standing(canvas, "Problem");
+		const build = stateButton(region, PROBLEM, "build");
+		const plan = stateButton(region, PROBLEM, "plan");
+		await expect(build).toHaveTextContent("Missing the target");
+		await expect(build).not.toHaveTextContent("Edits the files");
+		await expect(getComputedStyle(build).borderTopColor).not.toBe(
+			getComputedStyle(plan).borderTopColor,
+		);
+		await expect(ink(lineText(build))).toBe(ink(lineText(plan)));
+		await expect(build.querySelector(".rounded-full")).not.toBeNull();
+		await expect(plan.querySelector(".rounded-full")).toBeNull();
+		await clicked(userEvent, build);
+		await expect(outline(build)).toBe("1px");
+		await expect(build).toHaveTextContent("Missing the target");
+		await expect(build.querySelector(".rounded-full")).not.toBeNull();
+	},
+};
+
+// A status is its dot (a spinner while it runs) and its word.
+export const Statuses: StoryObj = {
+	render: () => <Stated graph={STATUSES} label="Statuses" />,
+	play: async ({ canvas }) => {
+		const region = await standing(canvas, "Statuses");
+		for (const node of STATUSES.nodes) {
+			const button = stateButton(region, STATUSES, node.id);
+			await expect(button).toHaveTextContent(node.status?.label ?? "none");
+			const spinning = button.querySelector(".animate-spin") !== null;
+			await expect(spinning).toBe(node.status?.state === "running");
+			if (node.status?.state !== "running")
+				await expect(button.querySelector(".rounded-full")).not.toBeNull();
+		}
+		const check = stateButton(region, STATUSES, "check");
+		await expect(check).toHaveTextContent("3");
+		await expect(check).toHaveTextContent("Failed");
+		await expect(stateButton(region, STATUSES, "build")).toHaveTextContent(
+			"Running",
+		);
+	},
+};
+
+// A run: the nodes it did not take draw disabled ink and no status, the ones
+// it took keep theirs, it stands at one node, and the edges it did not take dim.
+export const Run: StoryObj = {
+	parameters: DIMMED_NODES,
+	render: () => <Stated graph={RUN} label="Run" />,
+	play: async ({ canvas, userEvent }) => {
+		const region = await standing(canvas, "Run");
+		const taken = RUN.path?.nodes ?? [];
+		const start = stateButton(region, RUN, "start");
+		const handoff = stateButton(region, RUN, "handoff");
+		await expect(ink(titleText(handoff))).not.toBe(ink(titleText(start)));
+		await expect(handoff).not.toHaveTextContent(/Done|Running/);
+		for (const id of taken.slice(0, 5))
+			await expect(stateButton(region, RUN, id)).toHaveTextContent("Done");
+		await expect(stateButton(region, RUN, "review")).toHaveTextContent(
+			"Running",
+		);
+		for (const node of RUN.nodes)
+			await expect(outline(stateButton(region, RUN, node.id))).toBe(
+				node.id === RUN.path?.at ? "1px" : "none",
+			);
+		const rest = edgeOf(region, "build-check");
+		await expect(edgeOf(region, "gate-plan").ink).not.toBe(rest.ink);
+		await expect(edgeOf(region, "review-handoff").ink).not.toBe(rest.ink);
+		await expect(edgeOf(region, "check-build").ink).toBe(rest.ink);
+		await tabbable(userEvent, region, RUN);
+	},
+};
+
+// A scenario that stops at the node that failed: the rest of the journey is
+// dimmed, bare of status and still numbered.
+export const Scenario: StoryObj = {
+	parameters: DIMMED_NODES,
+	render: () => <Stated graph={SCENARIO} label="Scenario" />,
+	play: async ({ canvas }) => {
+		const region = await standing(canvas, "Scenario");
+		const failed = stateButton(region, SCENARIO, "b2");
+		await expect(outline(failed)).toBe("1px");
+		await expect(failed).toHaveTextContent("Failed");
+		const begin = ink(titleText(stateButton(region, SCENARIO, "begin")));
+		const merge = ink(titleText(stateButton(region, SCENARIO, "merge")));
+		await expect(merge).not.toBe(begin);
+		for (const id of ["merge", "finish", "a1", "a2", "c1"]) {
+			const button = stateButton(region, SCENARIO, id);
+			await expect(ink(titleText(button))).toBe(merge);
+			await expect(button).not.toHaveTextContent(/Passed|Failed/);
+		}
+		for (const node of SCENARIO.nodes) {
+			const button = stateButton(region, SCENARIO, node.id);
+			await expect(button.children[2]).toHaveTextContent(String(node.number));
+		}
+	},
+};
+
+// A dimmed node is still a button: it takes the click, the outline, and keeps
+// its dimmed ink.
+export const SelectsOverAPath: StoryObj<{ heard: Select }> = {
+	parameters: DIMMED_NODES,
+	args: { heard: fn() },
+	render: (args) => <Stated graph={RUN} label="Run" heard={args.heard} />,
+	play: async ({ args, canvas, userEvent }) => {
+		const region = await standing(canvas, "Run");
+		const handoff = stateButton(region, RUN, "handoff");
+		const before = ink(titleText(handoff));
+		await clicked(userEvent, handoff);
+		await expect(args.heard).toHaveBeenCalledWith("handoff");
+		await waitFor(() => expect(outline(handoff)).toBe("1px"));
+		await expect(ink(titleText(handoff))).toBe(before);
+	},
+};
+
+// A path or a status that arrives moves no node: the layout does not run again.
+// ELK's worker is one per page, so its resource entry alone cannot tell a second
+// run; the requests posted to it can.
+let posted: ReturnType<typeof spyOn> | undefined;
+
+function Arrives() {
+	const [run, setRun] = useState(false);
+	const graph = run ? RUN : WORKFLOW;
+	return (
+		<>
+			<button type="button" onClick={() => setRun(true)}>
+				Start the run
+			</button>
+			<div className={TALL}>
+				<Canvas
+					label="Arrives"
+					nodes={graph.nodes}
+					edges={graph.edges}
+					groups={graph.groups}
+					path={graph.path}
+					onSelect={fn()}
+				/>
+			</div>
+		</>
+	);
+}
+
+export const StateKeepsTheLayout: StoryObj = {
+	parameters: DIMMED_NODES,
+	beforeEach: () => {
+		posted = spyOn(Worker.prototype, "postMessage");
+	},
+	render: () => <Arrives />,
+	play: async ({ canvas, userEvent }) => {
+		const region = await standing(canvas, "Arrives");
+		const requests = () => posted?.mock.calls.length ?? 0;
+		const before = { requests: requests(), workers: workers() };
+		await expect(before.requests).toBeGreaterThan(0);
+		const box = rect(stateButton(region, WORKFLOW, "plan"));
+		await userEvent.click(
+			canvas.getByRole("button", { name: "Start the run" }),
+		);
+		await waitFor(() =>
+			expect(stateButton(region, RUN, "review")).toHaveTextContent("Running"),
+		);
+		await new Promise((done) => setTimeout(done, 500));
+		await expect(requests()).toBe(before.requests);
+		await expect(workers()).toBe(before.workers);
+		await expect(rect(stateButton(region, RUN, "plan")).top).toBe(box.top);
+	},
+};
+
+// Each generated canvas frame's stage holds its whole graph at scale 1: the
+// drawing (frames, chips, nodes) and every node's button lie inside the pane
+// the canvas draws in, so the state a frame is there to show is on screen.
+// The two densities size nodes differently, so each is checked.
+function framesHoldTheirGraph(density: "desktop" | "touch"): StoryObj {
+	const frames = showcaseFrames().filter(
+		(frame) =>
+			frame.component === "Canvas" &&
+			frame.mode === "light" &&
+			frame.density === density &&
+			drawCanvas(frame) !== undefined,
+	);
+	return {
+		globals: { density },
+		parameters: DIMMED_NODES,
+		render: () => (
+			<div className="flex flex-col gap-pair">
+				{frames.map((frame) => (
+					<Frame key={frame.id} frame={frame} draw={drawCanvas} />
+				))}
+			</div>
+		),
+		play: async ({ canvasElement }) => {
+			const drawnFrames = [...canvasElement.querySelectorAll("[data-cell]")];
+			await expect(drawnFrames).toHaveLength(frames.length);
+			for (const frame of drawnFrames) {
+				const region = frame.querySelector("section");
+				const layer = frame.querySelector("[data-layer]");
+				if (!region || !layer) throw new Error(`no canvas in ${frame.id}`);
+				await waitFor(
+					() => expect(getComputedStyle(region).opacity).toBe("1"),
+					LAID,
+				);
+				await expect(viewport(frame).scale).toBe(1);
+				const pane = rect(region);
+				const buttons = [...nodeButtons(frame)];
+				await expect(buttons.length).toBeGreaterThanOrEqual(
+					JOURNEY.nodes.length - 1,
+				);
+				for (const button of buttons)
+					await expect(holds(pane, rect(button))).toBe(true);
+				await expect(holds(pane, drawn(layer))).toBe(true);
+			}
+		},
+	};
+}
+
+export const FramesHoldTheirGraphAtDesktop = framesHoldTheirGraph("desktop");
+export const FramesHoldTheirGraphAtTouch = framesHoldTheirGraph("touch");
