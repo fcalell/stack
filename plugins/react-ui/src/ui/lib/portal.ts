@@ -10,3 +10,8 @@ import { createContext } from "react";
 export const PortalContainer = createContext<HTMLElement | null | undefined>(
 	undefined,
 );
+
+// A root frame (the Shell, the Gate) names its popup layer but is no surface
+// that scopes its own mode: a sheet in it stays modal. Only a container named
+// outside a host (a showcase frame's stage) holds a sheet beside others.
+export const PortalHosted = createContext(false);

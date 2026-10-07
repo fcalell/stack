@@ -23,6 +23,7 @@ import { SIZE_PX, WIDTH_VALUE } from "@fcalell/ui-core/tokens";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { expect, fn, spyOn, waitFor } from "storybook/test";
+import { FOCUS_GUARD } from "../.storybook/focus-guard.ts";
 import { lowestZoom, room } from "./canvas-support.ts";
 import { click as mouseClick, drag as mouseDrag, type Point } from "./mouse.ts";
 
@@ -797,7 +798,7 @@ async function clicked(
 // control, so these stories leave their nodes out of its check. Every other
 // canvas story runs every rule.
 const DIMMED_NODES = {
-	a11y: { context: { exclude: ["[data-layer] button"] } },
+	a11y: { context: { exclude: [FOCUS_GUARD, "[data-layer] button"] } },
 };
 
 function edgeOf(

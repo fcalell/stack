@@ -124,11 +124,14 @@ export function Input({
 			autoFocus={cell?.starts || inline?.focus}
 			// Base UI's Field wires the control (its id, label, description and
 			// validity); the render function hands over its props and state so the
-			// box around the value draws that state.
+			// box around the value draws that state. A disabled box carries
+			// `aria-disabled` itself: the unit outside the native control reads as
+			// disabled to a checker only through an ancestor that says so.
 			render={(control, state) => (
 				// biome-ignore lint/a11y/noStaticElementInteractions: the press forwards focus to the input inside, which the keyboard reaches on its own
 				<div
 					onMouseDown={focusValue}
+					aria-disabled={state.disabled || undefined}
 					className={cn(
 						field({
 							fit: search || cell || inline ? "bar" : "form",

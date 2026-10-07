@@ -96,10 +96,13 @@ export function FileInput({ value, onChange, accept }: FileInputProps) {
 			onChange={pick}
 			// Base UI's Field wires the control (its id, label, description and
 			// validity); the render function hands over its props and state so the
-			// box around the value draws that state.
+			// box around the value draws that state. A disabled box carries
+			// `aria-disabled` itself, so the name and size outside the native
+			// control read as disabled to a checker.
 			render={(control, state) => (
 				// biome-ignore lint/a11y/noStaticElementInteractions: the box only takes a drop; the file input inside it is the control the keyboard reaches
 				<div
+					aria-disabled={state.disabled || undefined}
 					onDragOver={(event) => {
 						event.preventDefault();
 						if (!state.disabled) setOver(true);

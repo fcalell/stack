@@ -27,7 +27,7 @@ import {
 import { backGlyph } from "../../lib/back.ts";
 import { FormStands } from "../../lib/form.ts";
 import { useTouch } from "../../lib/media.ts";
-import { PortalContainer } from "../../lib/portal.ts";
+import { PortalContainer, PortalHosted } from "../../lib/portal.ts";
 import { ActFailed, ReasonHostContext } from "../../lib/reason.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
 import {
@@ -144,6 +144,8 @@ export function SheetBase({
 	const touch = useTouch();
 	const words = useWords();
 	const container = use(PortalContainer);
+	// A container a host names only places the popup: the sheet stays modal.
+	const scoped = container !== undefined && !use(PortalHosted);
 	const titleId = useId();
 	const [touchedValue, setTouched] = useTouchState();
 	const { touched } = touchedValue;
@@ -313,8 +315,8 @@ export function SheetBase({
 			// A surface that scopes its own mode (a showcase frame) holds the
 			// sheet beside others, so it hides and traps nothing outside it and
 			// stays open while another takes focus.
-			modal={container === undefined}
-			disablePointerDismissal={container !== undefined}
+			modal={!scoped}
+			disablePointerDismissal={scoped}
 		>
 			<Dialog.Portal container={container}>
 				<Dialog.Backdrop className={cn(SCRIM, BACKDROP, SCRIM_MOTION)} />

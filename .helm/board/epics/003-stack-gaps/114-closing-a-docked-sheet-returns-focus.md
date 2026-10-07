@@ -17,3 +17,9 @@ A Sheet docked in a Place's or a Thread's foot hands focus to the `MessageInput`
 
 ## Open questions
 - [ ] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Decided while building (2026-10-07), by the building session
+- `useFootFocus(region)` keeps its signature (`Place`, `Thread` untouched) and reads no ref during render. A ref `held` is set by `trackHold` (`lib/focus.ts`): capture-phase `focusin` and `pointerdown` on the document set it to whether the event's target is inside the region.
+- Removing the focused element fires neither event, so the hold survives the commit that swaps the sheet for the input. The after-commit effect, when `held.current` and `document.activeElement === document.body`, resets it and calls `focusFirst(region.current, "input, textarea")`.
+- `trackHold` is tested under node with a fake document (`test/focus.test.ts`). `DockedInThreadFoot` in `apps/showcase/behaviour/sheet.stories.tsx` is the Thread twin of `DockedInFoot`.
+- Unverified in a browser: the acceptance criteria stay unticked until the verifier proves them.

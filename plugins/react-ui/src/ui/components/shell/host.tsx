@@ -2,7 +2,7 @@ import { Toast as ToastControl } from "@base-ui/react/toast";
 import { cn } from "@fcalell/ui-core/cn";
 import { TOASTS } from "@fcalell/ui-core/variants";
 import { createContext, type ReactNode, use, useState } from "react";
-import { PortalContainer } from "../../lib/portal.ts";
+import { PortalContainer, PortalHosted } from "../../lib/portal.ts";
 import { toasts } from "../../lib/toast.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Confirmations } from "../sheet/confirm.tsx";
@@ -30,12 +30,14 @@ export function FrameHost({ children }: { children: ReactNode }) {
 	const [layer, setLayer] = useState<HTMLElement | null>(null);
 	return (
 		<PortalContainer value={layer}>
-			<PopupLayer value={setLayer}>
-				<ToastControl.Provider toastManager={toasts}>
-					{children}
-					<Confirmations />
-				</ToastControl.Provider>
-			</PopupLayer>
+			<PortalHosted value>
+				<PopupLayer value={setLayer}>
+					<ToastControl.Provider toastManager={toasts}>
+						{children}
+						<Confirmations />
+					</ToastControl.Provider>
+				</PopupLayer>
+			</PortalHosted>
 		</PortalContainer>
 	);
 }

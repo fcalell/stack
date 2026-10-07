@@ -5,6 +5,7 @@ import { Input } from "@fcalell/plugin-react-ui/components/input";
 import { MessageInput } from "@fcalell/plugin-react-ui/components/message-input";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Sheet } from "@fcalell/plugin-react-ui/components/sheet";
+import { Thread } from "@fcalell/plugin-react-ui/components/thread";
 import { confirm } from "@fcalell/plugin-react-ui/lib/confirm";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
@@ -92,44 +93,75 @@ export const Decision: StoryObj = {
 	},
 };
 
-function Docked() {
+// The foot a docked question stands in, then the input that returns.
+function useDockedFoot() {
 	const [open, setOpen] = useState(true);
 	const [text, setText] = useState("");
+	const docked = open ? (
+		<Sheet
+			open
+			onClose={() => setOpen(false)}
+			title="Question 1 of 1"
+			submit={{ label: "Send", onAct: () => setOpen(false) }}
+		>
+			<p>Who hears about it?</p>
+		</Sheet>
+	) : (
+		<MessageInput value={text} onChange={setText} onSend={() => {}} />
+	);
+	return docked;
+}
+
+function Docked() {
+	const foot = useDockedFoot();
+	return <Place title="Assistant" foot={foot} />;
+}
+
+const TURNS = [{ id: "t1", body: "Why did the last deploy fail?" }];
+
+function DockedThread() {
+	const foot = useDockedFoot();
 	return (
-		<Place
-			title="Assistant"
-			foot={
-				open ? (
-					<Sheet
-						open
-						onClose={() => setOpen(false)}
-						title="Question 1 of 1"
-						submit={{ label: "Send", onAct: () => setOpen(false) }}
-					>
-						<p>Who hears about it?</p>
-					</Sheet>
-				) : (
-					<MessageInput value={text} onChange={setText} onSend={() => {}} />
-				)
-			}
-		/>
+		<Place title="Assistant">
+			<Thread
+				items={TURNS}
+				message={{
+					key: (turn) => turn.id,
+					author: () => "you",
+					body: (turn) => turn.body,
+				}}
+				foot={foot}
+			/>
+		</Place>
 	);
 }
+
+const closesToInput: NonNullable<StoryObj["play"]> = async ({
+	canvas,
+	userEvent,
+}) => {
+	await canvas.findByRole("region", { name: "Question 1 of 1" });
+	canvas.getByRole("button", { name: "Send" }).focus();
+	await userEvent.keyboard("{Escape}");
+	await waitFor(() =>
+		expect(
+			canvas.queryByRole("region", { name: "Question 1 of 1" }),
+		).toBeNull(),
+	);
+	await waitFor(() => expect(canvas.getByRole("textbox")).toHaveFocus());
+};
 
 // A Sheet docked in a Place's foot: Escape closes it and hands focus to the
 // input that returns in its place.
 export const DockedInFoot: StoryObj = {
 	parameters: { layout: "fullscreen" },
 	render: () => <Docked />,
-	play: async ({ canvas, userEvent }) => {
-		await canvas.findByRole("region", { name: "Question 1 of 1" });
-		canvas.getByRole("button", { name: "Send" }).focus();
-		await userEvent.keyboard("{Escape}");
-		await waitFor(() =>
-			expect(
-				canvas.queryByRole("region", { name: "Question 1 of 1" }),
-			).toBeNull(),
-		);
-		await waitFor(() => expect(canvas.getByRole("textbox")).toHaveFocus());
-	},
+	play: closesToInput,
+};
+
+// The same in a Thread's foot.
+export const DockedInThreadFoot: StoryObj = {
+	parameters: { layout: "fullscreen" },
+	render: () => <DockedThread />,
+	play: closesToInput,
 };

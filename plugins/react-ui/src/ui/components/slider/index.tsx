@@ -78,6 +78,11 @@ export function Slider({
 			format={unit ? { style: "unit", unit } : undefined}
 			thumbAlignment="edge"
 			className={cn(SLIDER, item, BOX)}
+			// Base UI marks a disabled slider with `data-disabled` alone; the label
+			// and value read as disabled to a checker through `aria-disabled` here.
+			render={(root, state) => (
+				<div {...root} aria-disabled={state.disabled || undefined} />
+			)}
 		>
 			<div className={cn(SLIDER_HEAD, HEAD)}>
 				<Base.Label className={cn(SLIDER_LABEL, LABEL)}>{label}</Base.Label>

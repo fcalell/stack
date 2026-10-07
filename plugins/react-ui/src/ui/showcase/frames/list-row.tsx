@@ -5,15 +5,15 @@ import type {
 	IconName,
 	MenuItem,
 	RowEntry,
+	RowTrailing,
 	StatusMark,
 } from "@fcalell/ui-core/descriptors";
 import type { StatusState } from "@fcalell/ui-core/tokens";
 import type { ReactNode } from "react";
 import { Group } from "../../components/group/index.tsx";
 import { List, type RowSlots } from "../../components/list/index.tsx";
-import { ListRow } from "../../components/list-row/index.tsx";
 import { ago } from "../ago.ts";
-import type { ShowcaseFrame } from "../cells.ts";
+import type { DrawnState, ShowcaseFrame } from "../cells.ts";
 
 const act = () => {};
 
@@ -621,162 +621,195 @@ const SOURCES: Source[] = [
 	},
 ];
 
-function Issues() {
-	return <List items={issues()} row={ISSUE_ROW} />;
+const NOTES: Note[] = [
+	{ id: "kickoff", title: "Kickoff notes", edited: "Edited 2 d ago" },
+	{ id: "retro", title: "Retro actions", edited: "Edited last week" },
+];
+
+// A member in a Group: a trailing value, a trailing pick, a status mark.
+interface Member {
+	id: string;
+	name: string;
+	email: string;
+	trailing?: RowTrailing;
+	status?: StatusMark;
 }
 
-// Board 40's props: deploys in a List (a glyph leading, a status and a chip
-// on the meta line, the more act), services on one line, a job's stages (a
-// running row beside an active one), change set entries (every mark and the
-// act that clears the warning), a change set (one row of every kind), ticked
-// entries (one ticked, one blocked), a journey's hops (the rows off the
-// path dimmed) and the same journey as a tree of three levels, an import whose steps stand in its meta line's place, notes
-// whose titles wrap whole, and members in a Group (a trailing
-// value, a trailing pick, a status dot leading).
-function Props() {
-	return (
-		<>
-			<List items={DEPLOYS} row={DEPLOY_ROW} />
-			<List items={SERVICES} row={SERVICE_ROW} />
-			<List items={STAGES} row={STAGE_ROW} />
-			<List items={STEPS} row={STEP_ROW} />
-			<List items={SOURCES} row={SOURCE_ROW} />
-			<List items={ENTRIES} row={ENTRY_ROW} />
-			<List items={CHANGES} row={CHANGE_ROW} />
-			<List items={TICKS} row={TICK_ROW} />
-			<List items={HOPS} row={HOP_ROW} />
-			<List items={LEGS} row={LEG_ROW} />
-			<List items={IMPORTS} row={IMPORT_ROW} />
-			<List items={MEMORIES} row={MEMORY_ROW} />
-			<Group>
-				<ListRow
-					leading={{ icon: "Globe" }}
-					title="Pricing page"
-					meta={["Imported 2 min ago"]}
-					status={{ state: "done", label: "Imported" }}
-					act={{ label: "Edit", onAct: act }}
-				/>
-				<ListRow
-					leading={{ avatar: { name: "Ana Ruiz" } }}
-					title="Ana Ruiz"
-					meta={["ana@acme.app"]}
-					trailing={{ value: "Owner" }}
-					more={MORE}
-				/>
-				<ListRow
-					leading={{ avatar: { name: "Ben Kaya" } }}
-					title="Ben Kaya"
-					meta={["ben@acme.app"]}
-					trailing={{
-						pick: {
-							label: "Ben Kaya's role",
-							options: ROLES,
-							value: "admin",
-							onChange: act,
-						},
-					}}
-					more={MORE}
-				/>
-				<ListRow
-					leading={{ status: "waiting" }}
-					title="lea@northwind.io"
-					meta={["Invited 2 d ago by Ana Ruiz"]}
-					status={{ state: "waiting", label: "Pending" }}
-					more={MORE}
-				/>
-			</Group>
-		</>
-	);
+const MEMBER_ROW: RowSlots<Member> = {
+	key: (member) => member.id,
+	leading: { avatar: (member) => ({ name: member.name }) },
+	title: (member) => member.name,
+	meta: (member) => [member.email],
+	trailing: (member) => member.trailing,
+	status: (member) => member.status,
+	more: () => MORE,
+};
+
+const MEMBERS: Member[] = [
+	{
+		id: "ana",
+		name: "Ana Ruiz",
+		email: "ana@acme.app",
+		trailing: { value: "Owner" },
+	},
+	{
+		id: "ben",
+		name: "Ben Kaya",
+		email: "ben@acme.app",
+		trailing: {
+			pick: {
+				label: "Ben Kaya's role",
+				options: ROLES,
+				value: "admin",
+				onChange: act,
+			},
+		},
+	},
+	{
+		id: "lea",
+		name: "Lea Novak",
+		email: "lea@northwind.io",
+		status: { state: "waiting", label: "Pending" },
+	},
+	{
+		id: "omar",
+		name: "Omar Haddad",
+		email: "omar@northwind.io",
+		status: { state: "failed", label: "Declined" },
+	},
+];
+
+// A part is one List of the rows a cell names, drawn in the frame's state: its
+// rows at rest, its waiting rows loading (over the loaded ones when `pair`
+// sets the skeleton against what it stands in for), the rows that failed in
+// error, the first row current when selected. A part with no failed row
+// (`failing` unset) draws the deploys' failed ones in error.
+interface Part {
+	draw: (state: DrawnState, pair: boolean) => ReactNode;
+	failing: boolean;
 }
 
-// Waiting rows over the loaded ones they stand in for, led by the kind the
-// cell names (a glyph by default), then a note's title over its meta with no
-// leading.
-function Waiting(props: { kind: "avatar" | "icon" | "status" | "check" }) {
-	let led = (
-		<>
-			<List items={[]} loading row={DEPLOY_ROW} />
-			<List items={DEPLOYS} row={DEPLOY_ROW} />
-		</>
-	);
-	if (props.kind === "avatar")
-		led = (
-			<>
-				<List items={[]} loading row={ISSUE_ROW} />
-				<List items={issues()} row={ISSUE_ROW} />
-			</>
-		);
-	if (props.kind === "status")
-		led = (
-			<>
-				<List items={[]} loading row={INVITE_ROW} />
-				<List items={INVITES} row={INVITE_ROW} />
-			</>
-		);
-	if (props.kind === "check")
-		led = (
-			<>
-				<List items={[]} loading row={TICK_ROW} />
-				<List items={TICKS} row={TICK_ROW} />
-			</>
-		);
-	return (
-		<>
-			{led}
-			<List items={[]} loading row={NOTE_ROW} />
-			<List items={[]} loading row={STEP_ROW} />
-			<List items={STEPS} row={STEP_ROW} />
-			<List items={[]} loading row={SOURCE_ROW} />
-			<List items={SOURCES} row={SOURCE_ROW} />
-			<List items={[]} loading row={ENTRY_ROW} />
-			<List items={ENTRIES} row={ENTRY_ROW} />
-			<List items={[]} loading row={CHANGE_ROW} />
-			<List items={CHANGES} row={CHANGE_ROW} />
-			<List items={[]} loading row={LEG_ROW} />
-			<List items={LEGS} row={LEG_ROW} />
-			<List items={[]} loading row={IMPORT_ROW} />
-			<List items={IMPORTS} row={IMPORT_ROW} />
-			<List items={[]} loading row={MEMORY_ROW} />
-			<List items={MEMORIES} row={MEMORY_ROW} />
-		</>
-	);
+function part<T>(
+	items: () => T[],
+	row: RowSlots<T>,
+	failing?: (item: T) => boolean,
+): Part {
+	return {
+		failing: failing !== undefined,
+		draw: (state, pair) => {
+			const all = items();
+			if (state === "loading" || (pair && state === "rest"))
+				return (
+					<>
+						<List items={[]} loading row={row} />
+						{pair ? <List items={all} row={row} /> : null}
+					</>
+				);
+			if (state === "error")
+				return <List items={failing ? all.filter(failing) : all} row={row} />;
+			const first = all[0];
+			return (
+				<List
+					items={all}
+					row={
+						state === "selected"
+							? { ...row, selected: (item) => item === first }
+							: row
+					}
+				/>
+			);
+		},
+	};
 }
 
-// The leading kind a skeleton cell stands for.
-function waitingKind(cell: string): "avatar" | "icon" | "status" | "check" {
-	if (cell === "SKELETON.kind.avatar") return "avatar";
-	if (cell === "SKELETON.kind.check") return "check";
-	if (cell === "SKELETON.kind.dot") return "status";
-	return "icon";
-}
+const PARTS = {
+	deploys: part(
+		() => DEPLOYS,
+		DEPLOY_ROW,
+		(deploy) => deploy.status.state === "failed",
+	),
+	services: part(() => SERVICES, SERVICE_ROW),
+	issues: part(issues, ISSUE_ROW),
+	invites: part(() => INVITES, INVITE_ROW),
+	stages: part(() => STAGES, STAGE_ROW),
+	steps: part(() => STEPS, STEP_ROW),
+	sources: part(
+		() => SOURCES,
+		SOURCE_ROW,
+		(source) => source.entry.error !== undefined,
+	),
+	entries: part(
+		() => ENTRIES,
+		ENTRY_ROW,
+		(entry) => entry.status.state === "failed",
+	),
+	changes: part(() => CHANGES, CHANGE_ROW),
+	ticks: part(() => TICKS, TICK_ROW),
+	hops: part(
+		() => HOPS,
+		HOP_ROW,
+		(hop) => hop.status.state === "failed",
+	),
+	// The tree's one root holds the failed leaf, so error draws the whole tree.
+	legs: part(
+		() => LEGS,
+		LEG_ROW,
+		() => true,
+	),
+	imports: part(() => IMPORTS, IMPORT_ROW),
+	memories: part(() => MEMORIES, MEMORY_ROW),
+	notes: part(() => NOTES, NOTE_ROW),
+	members: part(
+		() => MEMBERS,
+		MEMBER_ROW,
+		(member) => member.status?.state === "failed",
+	),
+};
 
-// The skeleton and line-box cells draw the waiting rows; the current state
-// draws the Split's list, a cell on the group ground or a
-// part only the props draw (a chip, the more act, a glyph, one line) the
-// props; the rest cells draw the issues too.
+// The part a cell names, by the cell's name or its family's: the first match
+// wins, a cell naming no part draws the Split's list (the first row current).
+const CELL_PARTS: ReadonlyArray<readonly [string, keyof typeof PARTS]> = [
+	["ROW.ground.group", "members"],
+	["ROW.lines.one", "services"],
+	["ROW.lines.whole", "memories"],
+	["ROW_TITLE.form.whole", "memories"],
+	["ROW_TITLE.form.dim", "hops"],
+	["ROW_TITLE", "deploys"],
+	["ROW_STEP", "imports"],
+	["TREE_", "legs"],
+	["CHANGE_MARK", "changes"],
+	["CHECKBOX", "ticks"],
+	["CHIP", "deploys"],
+	["ICON_BUTTON", "steps"],
+	["ICON", "deploys"],
+	["BUTTON", "steps"],
+	["FIELD", "sources"],
+	["TEXT.role.meta", "deploys"],
+	["AVATAR", "issues"],
+	["STATUS", "stages"],
+	["SPINNER", "stages"],
+	["SKELETON.kind.avatar", "issues"],
+	["SKELETON.kind.icon", "deploys"],
+	["SKELETON.kind.dot", "invites"],
+	["SKELETON.kind.check", "ticks"],
+	["SKELETON.kind.bar", "sources"],
+	["SKELETON", "notes"],
+	["LINE_BOX", "notes"],
+];
+
+// A skeleton cell is the waiting form itself, so it draws it over the loaded
+// rows it stands in for, at rest too.
+const waits = (cell: string) =>
+	cell.startsWith("SKELETON") || cell.startsWith("LINE_BOX");
+
+// Each cell draws the part it names, in the frame's state.
 export function drawListRow(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
-	if (cell.startsWith("SKELETON") || cell.startsWith("LINE_BOX"))
-		return (
-			<Page>
-				<Waiting kind={waitingKind(cell)} />
-			</Page>
-		);
-	const props =
-		cell === "ROW.ground.group" ||
-		cell === "ROW.lines.one" ||
-		cell === "ROW.lines.whole" ||
-		cell.startsWith("ROW_TITLE") ||
-		cell.startsWith("ROW_STEP") ||
-		cell.startsWith("CHIP") ||
-		cell.startsWith("ICON") ||
-		cell.startsWith("BUTTON") ||
-		cell.startsWith("FIELD") ||
-		cell.startsWith("FORM_FIELD") ||
-		cell === "ROW_MARKS" ||
-		cell === "ROW_WARNING" ||
-		cell.startsWith("CHANGE_MARK") ||
-		cell.startsWith("CHECKBOX") ||
-		cell === "ROW_ACTS";
-	return <Page>{props ? <Props /> : <Issues />}</Page>;
+	const named = CELL_PARTS.find(([prefix]) => cell.startsWith(prefix));
+	let chosen = PARTS[named?.[1] ?? "issues"];
+	if (frame.state === "error" && !chosen.failing) chosen = PARTS.deploys;
+	const drawn = chosen.draw(frame.state, waits(cell));
+	return (
+		<Page>{cell === "ROW.ground.group" ? <Group>{drawn}</Group> : drawn}</Page>
+	);
 }

@@ -80,7 +80,9 @@ Run every axe rule except the document-structure ones (landmarks, heading order,
 guards, the spans that relay Tab between a trigger and its portaled popup, as focusable and
 `aria-hidden` by design, so `aria-hidden-focus` flags each one; no prop turns them off. Each guard
 moves focus on `onFocus`, so no focus rests on hidden content. Drop the exclude once Base UI ships
-guards that are not focusable or not hidden.
+guards that are not focusable or not hidden. The showcase excludes it once in its Storybook preview
+(`a11y.context`) and the screens floors do the same, so a consumer screen with an open popup is
+judged alike.
 
 ## Safe areas
 

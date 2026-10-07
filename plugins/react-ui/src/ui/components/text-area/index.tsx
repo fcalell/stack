@@ -61,9 +61,12 @@ export function TextArea({
 			spellCheck={source ? false : undefined}
 			placeholder={placeholder}
 			// Base UI's Field wires the control; the render function hands over its
-			// props and state so the box around the value draws that state.
+			// props and state so the box around the value draws that state. A
+			// disabled box carries `aria-disabled` itself, so the budget outside the
+			// native control reads as disabled to a checker.
 			render={(control, state) => (
 				<div
+					aria-disabled={state.disabled || undefined}
 					className={cn(
 						textArea({ state: state.valid === false ? "error" : "rest" }),
 						BOX,

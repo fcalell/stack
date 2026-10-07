@@ -69,6 +69,14 @@ const floors: Preview = {
 			// A screen is a page, so the document-level rules judge it. The a11y
 			// addon turns `region` off for components, and axe leaves `target-size`
 			// off.
+			// An open non-modal popup (a Menu, a Select, a Screen's more menu) has
+			// Base UI's focus guards around it: focusable `aria-hidden` spans that
+			// relay Tab and that no one rests on, which `aria-hidden-focus` flags.
+			// A story-level `context.exclude` replaces this one (arrays overwrite).
+			// TODO: Base UI 1.8.0 draws them on purpose with no prop to drop them;
+			// remove this when a release ships guards that are not focusable or
+			// not hidden.
+			context: { exclude: ["[data-base-ui-focus-guard]"] },
 			config: {
 				rules: [
 					{ id: "region", enabled: true },

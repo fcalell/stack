@@ -18,3 +18,9 @@ A Sheet or a `confirm()` decision opened in a running app leaves the page behind
 
 ## Open questions
 - [ ] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Decided while building (2026-10-07), by the building session
+- `lib/portal.ts` gains `PortalHosted` (a boolean context, default `false`). `FrameHost` provides `true`, so a container it names only places the popup.
+- `SheetBase` computes `scoped = container !== undefined && !use(PortalHosted)` and passes `modal={!scoped}`, `disablePointerDismissal={scoped}`. A Stage or a frame's own `PortalContainer` stays scoped; a sheet in the Shell or a Gate is modal, the scrim dismisses, and Base UI's `markOthers` keeps `[aria-live]`, so toasts stay announced.
+- Menu, picker and select read `PortalContainer` for placement only and are unchanged.
+- Unverified in a browser: the acceptance criteria stay unticked until the verifier proves them.

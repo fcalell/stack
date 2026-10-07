@@ -79,6 +79,10 @@ screens a changed file reaches; `--all` runs every one.
 - Queries must come from `createApiQueryUtils` (`node_modules/@fcalell/plugin-api/guide/client.md`).
   Query utils built directly with oRPC's `createTanstackQueryUtils` send queries as `POST`, so a
   forced state never reaches them.
+- An open non-modal popup (a Menu, a Select, a Screen's more menu) draws Base UI's focus guards,
+  focusable `aria-hidden` spans axe's `aria-hidden-focus` flags, so the floors' axe run excludes
+  `[data-base-ui-focus-guard]`; the exclusion goes once a Base UI release ships guards that are
+  not focusable or not hidden.
 - The session is one fixed signed-in user with no app-specific session fields, and there is no
   signed-out state.
 

@@ -1736,12 +1736,20 @@ A page is not one of them: the places above are the app's routes, and the workbe
 the document it is; `stack screens test` checks it.
 
 A failing assertion is a finding in the component: it stays failing until the component is fixed,
-never weakened or skipped, and nothing is excluded from axe beyond the document-structure rules and the
-node buttons of a canvas that draws a run's path: `Canvas`'s dimmed frames
-(`.storybook/state-stories.tsx`) and the behaviour stories that draw a `path`. A node off the path
+never weakened or skipped, and nothing is excluded from axe beyond the document-structure rules, Base UI's
+focus guards, and the node buttons of a canvas that draws a run's path: `Canvas`'s dimmed frames
+(`.storybook/state-stories.tsx`) and the behaviour stories that draw a `path`. An open non-modal
+popup (Menu, Select, Picker, a Screen's more menu) has `[data-base-ui-focus-guard]` spans around
+it, focusable and `aria-hidden` by Base UI's design with no prop to drop them, which
+`aria-hidden-focus` flags and which no one rests on (a Tab onto one
+hands focus into or past the popup). The selector is excluded once where each run is configured:
+the preview's `a11y.context` (`.storybook/focus-guard.ts`) and the screens floors' (`floors.ts`),
+each with a `// TODO:` to drop it on a Base UI release whose guards are not focusable or not hidden. A node off the path
 draws disabled ink (about 3:1) by the pattern's rule, and axe exempts only a disabled control, which
 these enabled buttons are. The exclusion leaves those nodes out of every rule, since a per-story
-`config.rules` entry replaces the preview's document-structure list and would copy it.
+`config.rules` entry replaces the preview's document-structure list and would copy it. A story-level
+`context.exclude` replaces the preview's too (Storybook overwrites arrays), so these entries spread
+the focus-guard selector in.
 
 Storybook runs on `.stack/storybook.vite.config.ts` (by `viteConfigPath`), which `.storybook/main.ts`
 writes at start by calling `writeStorybookConfig({ config, cwd })` from
