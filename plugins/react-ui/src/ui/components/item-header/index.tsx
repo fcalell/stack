@@ -166,7 +166,7 @@ function FactPart<V extends string | null>({ fact }: { fact: Fact<V> }) {
 	if (typeof fact === "object" && "pick" in fact)
 		return (
 			<span className={PICK}>
-				<PickerBase {...fact.pick} fit="row" align="start" />
+				<PickerBase {...fact.pick} fit="row" />
 			</span>
 		);
 	if (typeof fact === "object" && "status" in fact)

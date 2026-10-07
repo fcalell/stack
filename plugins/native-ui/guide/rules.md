@@ -184,7 +184,7 @@ an `IconAct`, a row's `StatusMark` and `ChipMark`, a menu's `MenuItem`s, a `Plac
 `@fcalell/ui-core/descriptors`. An icon is an `IconName`, a Lucide glyph's PascalCase name.
 `children` is open only where the roster gives it. A `Form`'s `ActionBar` filled act runs its
 `onAct`; an `ActionBar` draws its last blocked act's `blocked` reason under the acts at rest, at meta size. A `FormField` takes a `FieldBinding` from the
-app's own form state. A `Form` that stands edited asks once, "Discard your edit?" or Keep editing, when its screen is left (the back, a swipe, a navigate that removes it), so the app writes no `beforeRemove` guard of its own; pressing the filled act ends the edit, so an act that navigates is never asked, and a rejected act puts the edit back. A `confirm()` takes a `Confirmation`, its `cancel` the way out's own label ("Keep editing") where the `cancel` word is not the decision's.
+app's own form state. A `Form` that stands edited asks once, "Discard your edit?" or Keep editing, when its screen is left (the back, a swipe, a navigate that removes it), so the app writes no `beforeRemove` guard of its own; pressing the filled act ends the edit, so an act that navigates is never asked, and a rejected act puts the edit back. An `Input` with an `act` presses that act on the keyboard's return. A `confirm()` takes a `Confirmation`, its `cancel` the way out's own label ("Keep editing") where the `cancel` word is not the decision's.
 
 A row's marks are named props on the meta line, at most one each, in order: `status`, `warning`
 (what is wrong, a string), `lock` (what it holds, a string, a glyph) and `chip`; the

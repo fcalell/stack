@@ -24,6 +24,10 @@ export const ActInert = createContext(false);
 // reads `auth` and stands across the column.
 export const FormStands = createContext<FormIn>("page");
 
+// A Form, or a FormField, holding a filling TextArea (which marks its box
+// `data-fill`) takes the free height of the region the page gives it.
+export const HOLDS_FILL = "has-data-fill:grow";
+
 // A submit button's press runs the act itself, so the press ends the native
 // submit it would start: a step the act swaps in leaves the form detached,
 // and a submit still pending then logs "the form is not connected". Enter in a

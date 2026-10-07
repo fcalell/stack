@@ -41,11 +41,13 @@ export const PlaceRoute = createContext<string | undefined>(undefined);
 // a read leads to `PlaceRoute`.
 export const BackRoute = createContext<string | undefined>(undefined);
 
-// Whether a Thread standing here fills the region it stands in: true in a
-// Place's body without a foot and in a Split's main, false in a Section,
-// where it stands among the page's sections. A filling Thread marks its root
-// `data-fill`, and the region reads the mark by a `has-[>[data-fill]]`
-// variant (no inset, scrolling left to the log) from its first frame.
+// Whether a Thread, or a source TextArea in a page Form, standing here fills
+// the region it stands in: true in a Place's body without a foot and in a
+// Split's main, false in a Section, where it stands among the page's sections.
+// A filling Thread marks its root `data-fill`, and the region reads the mark
+// by a `has-[>[data-fill]]` variant (no inset, scrolling left to the log) from
+// its first frame. A filling TextArea marks its box, which the Form and the
+// FormField around it read by `has-data-fill` to grow.
 export const ThreadRoom = createContext(false);
 
 // A Split's main keeps the page inset around the record's head, so a Thread

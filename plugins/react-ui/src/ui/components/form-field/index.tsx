@@ -29,6 +29,7 @@ import {
 import type { Closed } from "../../lib/closed.ts";
 import { FieldRefusal, GroupName, LabelTarget } from "../../lib/field.ts";
 import { focusFirst } from "../../lib/focus.ts";
+import { HOLDS_FILL } from "../../lib/form.ts";
 import { GroundContext } from "../../lib/ground.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Checkbox } from "../checkbox/index.tsx";
@@ -230,6 +231,7 @@ function FieldBody<V>(props: FormFieldProps<V>) {
 	const box = cn(
 		formField({ holds }),
 		holds === "switch" ? BESIDE : holds === "checkbox" ? AHEAD : STACK,
+		HOLDS_FILL,
 	);
 	return (
 		<Field.Root

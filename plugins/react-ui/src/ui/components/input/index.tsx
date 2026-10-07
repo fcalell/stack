@@ -9,7 +9,7 @@ import {
 	field,
 	fieldValue,
 } from "@fcalell/ui-core/variants";
-import { type MouseEvent, use } from "react";
+import { type KeyboardEvent, type MouseEvent, use } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { useCommit } from "../../lib/commit.ts";
 import { CellField, FieldDisabled, InlineField } from "../../lib/field.ts";
@@ -87,7 +87,7 @@ export interface InputProps extends Closed {
 	placeholder?: string;
 	/** A `number`'s unit, drawn after the value. */
 	unit?: string;
-	/** An icon act inside the field's end (copy, reveal). */
+	/** An icon act inside the field's end (copy, reveal, add); Enter in the field presses it. */
 	act?: IconAct;
 }
 
@@ -108,11 +108,19 @@ export function Input({
 	const cell = use(CellField);
 	const inline = use(InlineField);
 	const commit = useCommit(value, onChange, onCommit, true);
+	// Enter presses the act in place of a submit.
+	const keys = (event: KeyboardEvent<HTMLElement>) => {
+		commit.onKeyDown(event);
+		if (!act || event.key !== "Enter") return;
+		event.preventDefault();
+		act.onAct();
+	};
 	return (
 		<Control
 			value={value}
 			onValueChange={(next) => onChange(next)}
 			{...commit}
+			onKeyDown={keys}
 			type={TYPES[which]}
 			inputMode={which === "number" ? "decimal" : undefined}
 			autoComplete={which === "email" ? "email" : undefined}

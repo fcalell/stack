@@ -339,9 +339,9 @@ a tick with no animation, never jumped to full.
 - A page read in a context (Live, one change set, a past version) names it by a pick beside its
   title: `Place.context`, a `Switcher` (an `OptionPick` with its closing `IconAct`, the type the
   shell's switcher takes), drawn as the Picker at the `row` fit right after the `h1`, a `pair` apart
-  box to box, so its wash and ring never reach the title. Its list hangs from the trigger's start
-  (the Picker's internal `align`, as an `ItemHeader`'s pick fact's does): a pick that leads its
-  line would otherwise hang its end-aligned list past the page's start edge. Its value is capped at
+  box to box, so its wash and ring never reach the title. Its list hangs from the trigger's start,
+  as every Picker's does (a Picker has no `align`; a list that would leave the viewport shifts
+  back in). Its value is capped at
   `measure-short` and truncates (`PICKER_VALUE`, as a status label is), so a long label cannot crush
   the title, and the pick yields first on a short line: the title line wraps, so the pick drops under the
   title, whole, rather than the title (which truncates only when it alone is wider than the line)
@@ -1637,6 +1637,16 @@ a tick with no animation, never jumped to full.
   never a pushed page. Rejected: the TextArea asking the sheet from a mount effect (gorhom mounts
   the content only once presented, so the sheet opened content-tall and re-snapped after paint, and
   never shrank back), and a public height prop.
+- A `kind="source"` TextArea in a page's Form fills the free height of the page: the page is the
+  document the field edits, and a window of a few lines loses its context. The field decides it
+  in render (`ThreadRoom` true, `FormStands` `page`) and marks its box `data-fill`; the Form and
+  the FormField around it read the mark by `has-data-fill` and grow, and the value takes the rest
+  of its box from a zero flex basis, so the box's least height stays the value's three lines and
+  the value scrolls inside past its room. A TextArea in a Section or a sheet grows with its value.
+  Rejected: `rows` and `fill` props (the page decides the height, not the app), and the phone,
+  where the keyboard takes the lower half and the field keeps growing with its value.
+- An `Input` with an `act` presses that act on Enter (the key's `commit` moment still fires, a
+  blur does not press it), so a field that adds what is typed needs no `Form` around it.
 - A sheet keeps its content until it has left. State that belongs to one opening resets as the next
   arrives, during render, never as the sheet starts closing: a sheet's touched and pressed marks
   reset as it opens or turns to a new page (a wizard's, or the next queued decision's), and a

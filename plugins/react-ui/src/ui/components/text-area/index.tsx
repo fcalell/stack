@@ -6,11 +6,19 @@ import {
 	textArea,
 	textAreaBudget,
 } from "@fcalell/ui-core/variants";
+import { use } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { useCommit } from "../../lib/commit.ts";
+import { FormStands } from "../../lib/form.ts";
+import { ThreadRoom } from "../../lib/frame.ts";
 
 // The box draws the field's states, as `Input`'s does.
 const BOX = "flex flex-col";
+// A box filling the room its page gives it: the value takes the rest of the box
+// from a zero basis, so the box's own least height is the value's three lines
+// and the value scrolls inside past its room.
+const BOX_FILLS = "grow";
+const VALUE_FILLS = "grow basis-0";
 const BOX_HOVER = "hover:border-edge-hover";
 const BOX_FOCUS =
 	"has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ring";
@@ -40,7 +48,7 @@ export interface TextAreaProps extends Closed {
 	budget?: number;
 }
 
-/** A field box that grows with its value, the budget's count under the value. */
+/** A field box that grows with its value, the budget's count under the value. A `source` one in a page's `Form` fills the free height of the page instead, three lines at least, and scrolls inside. */
 export function TextArea({
 	kind,
 	value,
@@ -50,6 +58,7 @@ export function TextArea({
 	budget,
 }: TextAreaProps) {
 	const source = kind === "source";
+	const fills = source && use(ThreadRoom) && use(FormStands) === "page";
 	const commit = useCommit(value, onChange, onCommit, false);
 	const count = budget === undefined ? undefined : wordCount(value);
 	return (
@@ -67,9 +76,11 @@ export function TextArea({
 			render={(control, state) => (
 				<div
 					aria-disabled={state.disabled || undefined}
+					data-fill={fills || undefined}
 					className={cn(
 						textArea({ state: state.valid === false ? "error" : "rest" }),
 						BOX,
+						fills && BOX_FILLS,
 						BOX_FOCUS,
 						state.disabled ? BOX_DISABLED : state.valid !== false && BOX_HOVER,
 					)}
@@ -80,6 +91,7 @@ export function TextArea({
 							fieldValue({ kind: source ? "code" : "text" }),
 							TEXT_AREA_VALUE,
 							VALUE,
+							fills && VALUE_FILLS,
 						)}
 					/>
 					{count !== undefined && budget !== undefined ? (

@@ -6,6 +6,14 @@ import { Picker } from "../../components/picker/index.tsx";
 import { Toolbar } from "../../components/toolbar/index.tsx";
 
 const change = () => {};
+const REGIONS = [
+	{ value: "fra", label: "Frankfurt" },
+	{ value: "iad", label: "Virginia" },
+];
+const OWNERS = [
+	{ value: "ana", label: "Ana Ruiz" },
+	{ value: "ben", label: "Ben Kaya" },
+];
 const SCOPES = [
 	{ value: "all", label: "Every project in the workspace" },
 	{
@@ -15,9 +23,10 @@ const SCOPES = [
 ];
 
 // The search, Filter with its count, Sort and Display, and two applied
-// filters as removable neutral chips; then, in a column narrower than its
-// long picked value, a field-fit Picker alone on its line, truncating its
-// value before the chevron.
+// filters as removable neutral chips; then two Pickers at the strip's start,
+// each hanging its list from its own start edge; then, in a column narrower
+// than its long picked value, a field-fit Picker alone on its line,
+// truncating its value before the chevron.
 export function drawToolbar() {
 	return (
 		<div className="flex flex-col gap-sections">
@@ -46,6 +55,22 @@ export function drawToolbar() {
 				/>
 				<Chip family="neutral" label="Region: Frankfurt" onRemove={change} />
 				<Chip family="neutral" label="Owner: Ana Ruiz" onRemove={change} />
+			</Toolbar>
+			<Toolbar>
+				<Picker
+					fit="bar"
+					label="Region"
+					options={REGIONS}
+					value="fra"
+					onChange={change}
+				/>
+				<Picker
+					fit="bar"
+					label="Owner"
+					options={OWNERS}
+					value="ana"
+					onChange={change}
+				/>
 			</Toolbar>
 			<div className="flex w-popover max-w-full flex-col">
 				<Toolbar>

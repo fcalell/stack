@@ -74,7 +74,8 @@ const KEYBOARD: Record<InputKind, KeyboardTypeOptions> = {
 // and draws `unit` after the value; `source` is text a machine reads (a
 // command, a path, a host), mono and never corrected or capitalized; `email`
 // opens the email keyboard, offers the address the system knows and is never
-// corrected or capitalized; `act` is an icon act inside the field's end.
+// corrected or capitalized; `act` is an icon act inside the field's end, which
+// the keyboard's return presses.
 // In a `Gate` it takes focus as it mounts unless a typing control there
 // holds it.
 // `onCommit` hears the value once the viewer is done with it: on leaving the
@@ -176,7 +177,10 @@ export function Input({
 					moment.leave(value, commit);
 					cell?.done();
 				}}
-				onSubmitEditing={() => moment.commit(value, commit)}
+				onSubmitEditing={() => {
+					moment.commit(value, commit);
+					act?.onAct();
+				}}
 				onKeyPress={(event) => {
 					if (!onCommit || event.nativeEvent.key !== "Escape") return;
 					moment.cancel(value, onChange);

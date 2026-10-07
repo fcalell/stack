@@ -252,7 +252,7 @@ export function Place({
 		<div className={cn(TITLE_LINE, touch && PAGE_TITLE)}>
 			{heading}
 			<span className={CONTEXT}>
-				<PickerBase {...context} fit="row" align="start" />
+				<PickerBase {...context} fit="row" />
 			</span>
 		</div>
 	) : (

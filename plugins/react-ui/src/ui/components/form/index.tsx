@@ -2,7 +2,7 @@ import { cn } from "@fcalell/ui-core/cn";
 import { FORM_FOOT, form } from "@fcalell/ui-core/variants";
 import { Children, isValidElement, type ReactNode, use, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { FormContext, FormStands } from "../../lib/form.ts";
+import { FormContext, FormStands, HOLDS_FILL } from "../../lib/form.ts";
 import { useLeaveGuard } from "../../lib/leave.ts";
 import { TouchedContext, useTouchState } from "../../lib/touched.ts";
 import { ActionBar } from "../action-bar/index.tsx";
@@ -38,6 +38,7 @@ export function Form({ children }: FormProps) {
 					className={cn(
 						form({ holds: sectioned ? "sections" : "fields", in: within }),
 						STACK,
+						HOLDS_FILL,
 					)}
 				>
 					{sectioned
