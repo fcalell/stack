@@ -180,6 +180,8 @@ export const OVERLAYS: readonly string[] = [
 	"group-[:has(>[data-fill])]/main:w-full",
 	"group-[:has(>[data-fill])]/main:max-w-measure",
 	"group-[:has(>[data-fill])]/main:mx-auto",
+	"group-[:not(:has(>[data-fill]))]/main:-mb-sections",
+	"group-[:not(:has(>[data-fill]))]/main:pb-pair",
 	"page-wide:hidden",
 	"page-max-wide:hidden",
 	"border-edge",

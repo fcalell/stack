@@ -759,6 +759,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SECTION_HEAD_ROW",
 				"SECTION_TITLE",
 				"SECTION_TOGGLE",
+				"SECTION_NESTED_TITLE",
 				"TEXT.role.heading",
 				"TEXT.role.meta",
 				"ICON.fit.body",
@@ -1382,7 +1383,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"PILL_ACT",
 				"ICON.fit.meta",
 				"TEXT.role.meta",
-				"TEXT.role.heading",
+				"TEXT.role.title",
 				"STATUS",
 				"STATUS_DOT",
 				"STATUS_SPINNER",
@@ -1393,7 +1394,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"COUNT",
 				"COUNT_LABEL",
 				"LINE_BOX.role.meta",
-				"LINE_BOX.role.heading",
+				"LINE_BOX.role.title",
 				"SKELETON_LINES",
 				"SKELETON_ROW.kind.facts",
 				"SKELETON.kind.line",
@@ -1402,7 +1403,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			holds: ["ITEM_HEADER", "ITEM_FACTS", "ITEM_FACT"],
 			states: ["rest", "loading"],
 			owns: {
-				roles: ["body", "meta", "heading", "caption"],
+				roles: ["body", "meta", "title", "caption"],
 				colors: [
 					"ink-body",
 					"ink-meta",
@@ -1418,7 +1419,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"danger",
 				],
 				radii: ["control", "chip", "full"],
-				spacing: ["pair", "inside", "fields", "control-x"],
+				spacing: ["pair", "sections", "inside", "fields", "control-x"],
 				sizes: [
 					"skeleton",
 					"target",

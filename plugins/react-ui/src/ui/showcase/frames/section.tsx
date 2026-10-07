@@ -97,7 +97,7 @@ function Members(props: { blocked?: boolean }) {
 // loading form too), and the section's skeleton fields standing in
 // for a body of fields in a Form. At rest the cell picks the form: the icon act a
 // column's head, `SECTION.in.form` a section of fields in a Form, the chevron an open and a folded section over a List, the
-// destructive act a section over a List whose act removes it, the skeleton cells the loading form, every other cell the section over a Group.
+// destructive act a section over a List whose act removes it, the skeleton cells the loading form, every other cell the section over a Group, then a Section holding two Sections, which name themselves a level below it.
 export function drawSection(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
 	const add = { label: "Add", onAct: act };
@@ -205,6 +205,18 @@ export function drawSection(frame: ShowcaseFrame) {
 	return (
 		<Wide>
 			<Members />
+			<Section title="Memory" description="What the workspace remembers.">
+				<Section title="Workspace">
+					<Group>
+						<StandInRows ground="group" />
+					</Group>
+				</Section>
+				<Section title="Code">
+					<Group>
+						<StandInRows ground="group" />
+					</Group>
+				</Section>
+			</Section>
 		</Wide>
 	);
 }

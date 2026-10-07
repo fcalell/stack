@@ -13,9 +13,11 @@ import {
 	skeletonRow,
 	text,
 } from "@fcalell/ui-core/variants";
+import { useContext } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { ThreadBleeds, ThreadRoom } from "../../lib/frame";
 import { Ink } from "../../lib/ink";
 
 import { joinParts, META_CUT, partText } from "../../lib/parts";
@@ -42,6 +44,9 @@ const OPEN = cn(ACT, "-ms-inside");
 const LINE_WAIT = "flex-row items-center";
 const FACTS_LINE_WAIT = "flex-row items-center";
 const COUNT_WAIT = "shrink-0";
+// A head with no facts line in a Split's main stands a pair above what follows:
+// it pulls the main's sections gap back and pads the pair in.
+const BARE = "-mb-sections pb-pair";
 
 // One fact under the title: words, a status, words that open a sheet, a status that
 // moves (a pick whose options carry states), a count beside its word, or the state of a save
@@ -178,7 +183,7 @@ function FactPart({ fact }: { fact: Fact }) {
 	);
 }
 
-function LineWait({ role, bar }: { role: "meta" | "heading"; bar: string }) {
+function LineWait({ role, bar }: { role: "meta" | "title"; bar: string }) {
 	return (
 		<View className={LINE_WAIT}>
 			<Strut role={role} />
@@ -187,7 +192,7 @@ function LineWait({ role, bar }: { role: "meta" | "heading"; bar: string }) {
 	);
 }
 
-// The overline, the title at the heading role and the facts, a pair apart
+// The overline, the title at the title role and the facts, a pair apart
 // whether the title wraps or not. React Native exposes no heading level, so
 // the title is a header at any depth.
 export function ItemHeader({
@@ -196,11 +201,16 @@ export function ItemHeader({
 	facts,
 	loading,
 }: ItemHeaderProps) {
+	// `ThreadBleeds` stands in a Split's record region; a filling Thread there
+	// (`ThreadRoom`) leaves no gap to pull back.
+	const bleeds = useContext(ThreadBleeds);
+	const room = useContext(ThreadRoom);
+	const inMain = bleeds && !room;
 	if (loading)
 		return (
 			<View accessibilityState={{ busy: true }} className={ITEM_HEADER}>
 				<LineWait role="meta" bar="w-1/4" />
-				<LineWait role="heading" bar="w-1/2" />
+				<LineWait role="title" bar="w-1/2" />
 				<View className={SKELETON_LINES}>
 					<View className={cn(skeletonRow({ kind: "facts" }), FACTS_LINE_WAIT)}>
 						<View className={cn(skeleton({ kind: "line" }), "w-1/3")} />
@@ -211,13 +221,13 @@ export function ItemHeader({
 			</View>
 		);
 	return (
-		<View className={ITEM_HEADER}>
+		<View className={cn(ITEM_HEADER, inMain && !facts?.length && BARE)}>
 			{overline && overline.length > 0 ? (
 				<RNText numberOfLines={1} className={text({ role: "meta" })}>
 					{joinParts(overline, META_CUT)}
 				</RNText>
 			) : null}
-			<RNText accessibilityRole="header" className={text({ role: "heading" })}>
+			<RNText accessibilityRole="header" className={text({ role: "title" })}>
 				{partText(title)}
 			</RNText>
 			{facts && facts.length > 0 ? (

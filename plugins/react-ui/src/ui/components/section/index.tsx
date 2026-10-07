@@ -6,6 +6,7 @@ import {
 	lineBox,
 	SECTION_HEAD,
 	SECTION_HEAD_ROW,
+	SECTION_NESTED_TITLE,
 	SECTION_TITLE,
 	SECTION_TOGGLE,
 	section,
@@ -124,6 +125,8 @@ export function Section({
 	children,
 }: SectionProps) {
 	const level = use(HeadingContext);
+	// A Section inside a Section names itself a level below its parent.
+	const nested = use(SectionContext);
 	// Inside a Form the section takes the fields rhythm.
 	const within = use(FormContext) ? "form" : "page";
 	const Heading = `h${level}` as const;
@@ -174,7 +177,13 @@ export function Section({
 	else if (shown !== undefined) tally = <Count value={shown} />;
 	const name = (
 		<>
-			<span id={titleId} className={cn(text({ role: "heading" }), TITLE)}>
+			<span
+				id={titleId}
+				className={cn(
+					nested ? SECTION_NESTED_TITLE : text({ role: "heading" }),
+					TITLE,
+				)}
+			>
 				{partText(title)}
 			</span>
 			{tally}

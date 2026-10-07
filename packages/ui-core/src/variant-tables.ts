@@ -498,6 +498,7 @@ export const LINE_BOX = matrix({
 		role: {
 			body: "text-body leading-body",
 			meta: "text-meta leading-meta",
+			title: "text-title leading-title",
 			heading: "text-heading leading-heading",
 			code: "text-code leading-code",
 			figure: "text-figure leading-figure",

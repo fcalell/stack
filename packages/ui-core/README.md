@@ -245,7 +245,7 @@ Status colors: `active` → `accent-ink`, `waiting` → `ink-meta`, `done` → `
 Eight roles named by use, each a ratio of the body size. Two rules decide which one a piece of text
 takes. Size follows structure, never emphasis: the primary line of anything is `body`, a secondary
 line is `meta`, and emphasis inside a line is weight 500 (`strong`), never a size change. A size
-role names a place, once: `title` is the page's name, once per screen; `heading` a section's or a
+role names a place, once: `title` is a page's or a record's name, once per page or record; `heading` a section's or a
 card's name, never inside a row; `caption` text inside a small component (a chip, a key hint), never
 a sentence; `code` what a machine reads; `figure` a count's number in a strip of them. So there is
 no label role: a field label and a row's leading cell are `body` at 500, a table header is `meta` at
@@ -260,7 +260,7 @@ each line box to the even pixel, a tie rounding up.
 | --- | --- | --- | --- | --- | --- |
 | `display` | 36 / 40 | 44 / 48 | 500 | `ink-body` | a display number, one per screen, in tabular figures |
 | `figure` | 22 / 26 | 27 / 32 | 500 | `ink-body` | a count's number in a strip of them, in tabular figures |
-| `title` | 18 / 24 | 22 / 28 | 600 | `ink-body` | the page's name, once per screen |
+| `title` | 18 / 24 | 22 / 28 | 600 | `ink-body` | a page's or a record's name, once per page or record |
 | `heading` | 15 / 20 | 18 / 24 | 600 | `ink-body` | a section's or a card's name, never inside a row |
 | `body` | 13 / 20 | 16 / 24 | 400 | `ink-body` | the primary line of anything: prose, a row, a field, a menu item |
 | `meta` | 12 / 18 | 15 / 22 | 400 | `ink-meta` | a secondary line, a description, a table header at 500 |

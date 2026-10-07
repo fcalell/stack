@@ -15,7 +15,7 @@ carve-outs (a checked control, the `active` dot) apply inside every pattern.
 
 ## Type
 
-An obvious scale with at most six sizes on a screen; display ≥ 2.5× body where a display role
+An obvious scale with at most six sizes on a screen; sizes are distinct pixel sizes, so weights add none, and a density keeps the count (desktop and touch draw six at most, touch's page roles stand at 22, 18, 16, 15 and 14); display ≥ 2.5× body where a display role
 appears; measure 45–75 ch where the column is wider than the text's natural measure (a phone
 column is exempt: the column sets the measure, body never shrinks to reach it); tracking never
 below −0.04 em; body never below 12 px at any density; one sans for UI, mono only for what a

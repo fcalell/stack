@@ -3,6 +3,7 @@ import { sectionState } from "@fcalell/ui-core/list-state";
 import {
 	SECTION_HEAD,
 	SECTION_HEAD_ROW,
+	SECTION_NESTED_TITLE,
 	SECTION_TITLE,
 	SECTION_TOGGLE,
 	section,
@@ -118,6 +119,8 @@ export function Section({
 	children,
 }: SectionProps) {
 	const within = useContext(FormContext) ? "form" : "page";
+	// A Section inside a Section names itself a level below its parent.
+	const nested = useContext(SectionContext);
 	// `folded` is the initial fold: the section holds its fold from there.
 	const [open, setOpen] = useState(folded !== true);
 	// The Section reads its body's collections off its children in render (by
@@ -155,7 +158,10 @@ export function Section({
 	else if (shown !== undefined) tally = <Count value={shown} />;
 	const name = (
 		<>
-			<RNText numberOfLines={1} className={text({ role: "heading" })}>
+			<RNText
+				numberOfLines={1}
+				className={nested ? SECTION_NESTED_TITLE : text({ role: "heading" })}
+			>
 				{partText(title)}
 			</RNText>
 			{tally}

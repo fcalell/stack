@@ -50,6 +50,12 @@ const WRAP_WAIT = "hidden max-tablet:flex items-center h-lh";
 const FACTS_WAIT = "flex flex-col";
 const FACTS_LINE_WAIT = "flex items-center";
 const COUNT_WAIT = "inline-flex shrink-0";
+// With no facts line a head in a Split's main (`group/main`) stands a pair, not
+// a sections step, above what follows: it pulls the main's gap back and pads
+// the pair in, unless a Thread fills the main (no gap there). The contract
+// holds no variant, so the overlay is the head's.
+const BARE =
+	"group-[:not(:has(>[data-fill]))]/main:-mb-sections group-[:not(:has(>[data-fill]))]/main:pb-pair";
 
 /** One fact under the title: words, a status, words that open a sheet, a status that moves (a pick whose options carry states), a count beside its word, or the state of a save that runs as the record is typed, a failed one with its retry. */
 export type Fact<V extends string | null = string> =
@@ -185,7 +191,7 @@ function FactPart<V extends string | null>({ fact }: { fact: Fact<V> }) {
 	);
 }
 
-/** The overline, the title at the heading role and the facts, a pair apart whether the title wraps or not. The title is a heading at the level where the header stands. Over a Thread filling a Split's main it stands in the Thread's column on the desktop. */
+/** The overline, the title at the title role and the facts, a pair apart whether the title wraps or not. The title is a heading at the level where the header stands. With no facts line it stands a pair, not a sections step, above what follows in a Split's main. Over a Thread filling a Split's main it stands in the Thread's column on the desktop. */
 export function ItemHeader<V extends string | null = string>({
 	overline,
 	title,
@@ -204,7 +210,7 @@ export function ItemHeader<V extends string | null = string>({
 				<span className={cn(lineBox({ role: "meta" }), LINE_WAIT)}>
 					<span className={cn(skeleton({ kind: "line" }), "w-1/4")} />
 				</span>
-				<span className={cn(lineBox({ role: "heading" }), LINE_WAIT)}>
+				<span className={cn(lineBox({ role: "title" }), LINE_WAIT)}>
 					<span className={cn(skeleton({ kind: "line" }), "w-1/2")} />
 				</span>
 				<span className={cn(SKELETON_LINES, FACTS_WAIT)}>
@@ -219,13 +225,13 @@ export function ItemHeader<V extends string | null = string>({
 			</div>
 		);
 	return (
-		<header className={cn(ITEM_HEADER, HEAD, column)}>
+		<header className={cn(ITEM_HEADER, HEAD, column, !facts?.length && BARE)}>
 			{overline && overline.length > 0 ? (
 				<p className={cn(text({ role: "meta" }), OVERLINE)}>
 					{joinParts(overline, META_CUT)}
 				</p>
 			) : null}
-			<Heading className={text({ role: "heading" })}>{partText(title)}</Heading>
+			<Heading className={text({ role: "title" })}>{partText(title)}</Heading>
 			{facts && facts.length > 0 ? (
 				<div className={cn(ITEM_FACTS, FACTS)}>
 					{facts.map((fact) => (

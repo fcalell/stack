@@ -1083,6 +1083,8 @@ components:
     typography: "{typography.body}"
   line-box-meta:
     typography: "{typography.meta}"
+  line-box-title:
+    typography: "{typography.title}"
   line-box-heading:
     typography: "{typography.heading}"
   line-box-code:
@@ -2155,6 +2157,12 @@ components:
     backgroundColor: "{colors.scrim}"
   scrim-dark:
     backgroundColor: "{colors.scrim-dark}"
+  section-nested-title:
+    typography: "{typography.body}"
+    textColor: "{colors.ink-body}"
+  section-nested-title-dark:
+    typography: "{typography.body}"
+    textColor: "{colors.ink-body-dark}"
   section-toggle:
     height: "{spacing.target}"
     rounded: "{rounded.row}"
@@ -2429,13 +2437,13 @@ A chart's series take the chip marks in order: `chip-teal`, `chip-violet`, `chip
 
 ## Typography
 
-8 roles, named by place. Two rules decide the role: size follows structure, never emphasis (the primary line of anything is `body`, a secondary line is `meta`, emphasis inside a line is weight 500, never a size change); and a size role names a place once (`title` the page's name, once per screen; `heading` a section's or a card's name, never inside a row; `caption` text inside a small component, never a sentence; `code` what a machine reads; `figure` a count's number in a strip of them). There is no label role: a field label and a row's leading cell are `body` at 500, a table header is `meta` at 500. The scale moves with density (desktop body 13, touch body 16, room body 16 canvas units); nothing else moves it, except that in the room `display` stands five times the body (a glanceable figure, not a stat inside a page).
+8 roles, named by place. Two rules decide the role: size follows structure, never emphasis (the primary line of anything is `body`, a secondary line is `meta`, emphasis inside a line is weight 500, never a size change); and a size role names a place once (`title` a page's or a record's name, once per page or record; `heading` a section's or a card's name, never inside a row; `caption` text inside a small component, never a sentence; `code` what a machine reads; `figure` a count's number in a strip of them). There is no label role: a field label and a row's leading cell are `body` at 500, a table header is `meta` at 500. The scale moves with density (desktop body 13, touch body 16, room body 16 canvas units); nothing else moves it, except that in the room `display` stands five times the body (a glanceable figure, not a stat inside a page).
 
 | Role | Desktop | Touch | Room | Weight | Ink | Place |
 | --- | --- | --- | --- | --- | --- | --- |
 | `display` | 36px / 40px | 44px / 48px | 80 / 88 | 500 | `ink-body` | a display number, one per screen, in tabular figures |
 | `figure` | 22px / 26px | 27px / 32px | 27 / 32 | 500 | `ink-body` | a count's number in a strip of them, in tabular figures |
-| `title` | 18px / 24px | 22px / 28px | 22 / 28 | 600 | `ink-body` | the page's name, once per screen |
+| `title` | 18px / 24px | 22px / 28px | 22 / 28 | 600 | `ink-body` | a page's or a record's name, once per page or record |
 | `heading` | 15px / 20px | 18px / 24px | 18 / 24 | 600 | `ink-body` | a section's or a card's name, never inside a row |
 | `body` | 13px / 20px | 16px / 24px | 16 / 24 | 400 | `ink-body` | the primary line of anything: prose, a row, a field, a menu item |
 | `meta` | 12px / 18px | 15px / 22px | 15 / 22 | 400 | `ink-meta` | a secondary line, a description, a table header at 500 |
@@ -2553,7 +2561,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `Gate` | layout | `GATE`, `GATE_COLUMN`, `GATE_FLOW`, `GATE_LEAD`, `GATE_HEAD`, `GATE_MARK`, `TEXT.role.title`, `TEXT.role.meta`, `TEXT_STRONG.role.meta` | rest |
 | `Screen` | layout | `PAGE_HEAD`, `PAGE_TOP_BAR`, `PAGE_TITLE`, `TEXT.role.title`, `PAGE_BODY`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
 | `Split` | layout | `SPLIT_LIST`, `SPLIT_LIST_STACK`, `SPLIT_MAIN`, `SPLIT_BESIDE`, `SPLIT_PANE`, `ICON_BUTTON.fit.bar` | rest, empty |
-| `Section` | layout | `SECTION`, `SECTION_HEAD`, `SECTION_HEAD_ROW`, `SECTION_TITLE`, `SECTION_TOGGLE`, `TEXT.role.heading`, `TEXT.role.meta`, `ICON.fit.body`, `COUNT`, `COUNT_LABEL`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive`, `ICON_BUTTON.fit.bar`, `SKELETON.kind.count`, `SKELETON.kind.line`, `SKELETON.kind.field`, `SKELETON_ROW.kind.field`, `TEXT.role.caption`, `LINE_BOX.role.body` | rest, hover, focus, active, disabled, loading |
+| `Section` | layout | `SECTION`, `SECTION_HEAD`, `SECTION_HEAD_ROW`, `SECTION_TITLE`, `SECTION_TOGGLE`, `SECTION_NESTED_TITLE`, `TEXT.role.heading`, `TEXT.role.meta`, `ICON.fit.body`, `COUNT`, `COUNT_LABEL`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive`, `ICON_BUTTON.fit.bar`, `SKELETON.kind.count`, `SKELETON.kind.line`, `SKELETON.kind.field`, `SKELETON_ROW.kind.field`, `TEXT.role.caption`, `LINE_BOX.role.body` | rest, hover, focus, active, disabled, loading |
 | `Group` | layout | `GROUP` | rest, loading |
 | `List` | layout | `LIST`, `LIST_TREE` | rest, loading, error, empty |
 | `Form` | layout | `FORM`, `FORM_FOOT` | rest, loading |
@@ -2564,7 +2572,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `ListRow` | shared | `ROW.lines.one`, `ROW.lines.two`, `ROW.lines.whole`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.state.selected`, `ROW.state.selected-hover`, `ROW.ground.list`, `ROW.ground.group`, `ROW_TITLE`, `ROW_STEPS`, `ROW_STEP`, `TREE_RAIL`, `TREE_LANE`, `TREE_BLEED`, `ROW_LEADING`, `ROW_TITLE_LINE`, `ROW_META_LINE`, `ROW_TRAILING`, `ROW_MARKS`, `ROW_WARNING`, `LOCK_GLYPH`, `ROW_ACTS`, `ROW_CHEVRON`, `CHANGE_MARK`, `CHECKBOX`, `CHECKBOX_MARK`, `TEXT.role.meta`, `ICON.fit.body`, `ICON.fit.meta`, `AVATAR`, `AVATAR_LABEL`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `CHIP`, `CHIP_LABEL`, `ICON_BUTTON.fit.bar`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `FIELD.fit.bar`, `FIELD.trailing.none`, `FIELD.state.rest`, `FIELD.state.error`, `FIELD_VALUE.kind.text`, `FIELD_PLACEHOLDER`, `ROW_ENTRY`, `FIELD_ERROR_LINE`, `SKELETON.kind.avatar`, `SKELETON.kind.icon`, `SKELETON.kind.dot`, `SKELETON.kind.check`, `SKELETON.kind.bar`, `SKELETON_LANE.role.body`, `SKELETON_LANE.role.meta`, `SKELETON.kind.line`, `LINE_BOX.role.body`, `LINE_BOX.role.meta` | rest, hover, focus, active, loading, error, selected |
 | `DefinitionRow` | shared | `ROW.lines.one`, `ROW.lines.setting`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.group`, `DEFINITION_ROW`, `DEFINITION_ROW_CHEVRON`, `ROW_TITLE_LINE`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `TEXT.role.code`, `ICON.fit.body`, `ICON.fit.meta`, `LINK.fit.inline`, `LOCK_GLYPH`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `ICON_BUTTON.fit.bar`, `CHANGE_MARK`, `SKELETON_ROW.kind.one-line-group`, `SKELETON_ROW.kind.setting`, `SKELETON.kind.line`, `SKELETON.kind.icon`, `SKELETON.kind.switch`, `LINE_BOX.role.body`, `LINE_BOX.role.meta` | rest, hover, focus, active, loading |
 | `FormField` | shared | `FORM_FIELD`, `GROUP_ITEM`, `FIELD_ERROR_LINE`, `FORM_FIELD_SUMMARY`, `FORM_FIELD_SUMMARY_GLYPH`, `CHANGE_MARK`, `ICON.fit.body`, `ICON.fit.meta`, `ICON_BUTTON.fit.bar`, `LINE_BOX.role.body`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta` | rest, disabled, error |
-| `ItemHeader` | shared | `ITEM_HEADER`, `THREAD_COLUMN`, `ITEM_FACTS`, `ITEM_FACT`, `PILL_ACT`, `ICON.fit.meta`, `TEXT.role.meta`, `TEXT.role.heading`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `COUNT`, `COUNT_LABEL`, `LINE_BOX.role.meta`, `LINE_BOX.role.heading`, `SKELETON_LINES`, `SKELETON_ROW.kind.facts`, `SKELETON.kind.line`, `SKELETON.kind.count` | rest, loading |
+| `ItemHeader` | shared | `ITEM_HEADER`, `THREAD_COLUMN`, `ITEM_FACTS`, `ITEM_FACT`, `PILL_ACT`, `ICON.fit.meta`, `TEXT.role.meta`, `TEXT.role.title`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `COUNT`, `COUNT_LABEL`, `LINE_BOX.role.meta`, `LINE_BOX.role.title`, `SKELETON_LINES`, `SKELETON_ROW.kind.facts`, `SKELETON.kind.line`, `SKELETON.kind.count` | rest, loading |
 | `SegmentedControl` | shared | `SEGMENTED_CONTROL`, `SEGMENT`, `SEGMENT_LABEL` | rest, hover, focus, active, selected |
 | `Sheet` | shared | `SHEET`, `SHEET_SIDE`, `SHEET_CENTERED`, `SHEET_HEAD`, `SHEET_HEAD_ROW`, `SHEET_BODY`, `SHEET_FOOT`, `SHEET_DOCKED_HEAD`, `SHEET_DOCKED_BODY`, `SHEET_DOCKED_FOOT`, `THREAD_COLUMN`, `SCRIM`, `TEXT.role.heading`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `FIELD_ERROR_LINE`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body`, `BUTTON.act.primary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.primary` | rest, disabled, loading, error |
 | `Picker` | shared | `PICKER`, `HAIRLINE`, `ROW_LEADING`, `AVATAR`, `AVATAR_LABEL`, `PILL_ACT`, `PICKER_VALUE`, `ICON.fit.meta`, `CHIP`, `CHIP_LABEL`, `FIELD.fit.bar`, `FIELD.trailing.none`, `FIELD.state.rest`, `FIELD_VALUE.kind.text`, `FIELD_VALUE.kind.search`, `FIELD_PLACEHOLDER`, `FIELD_GLYPH`, `CHIPS_RUN`, `CHIPS_TRIGGER`, `ICON.fit.control`, `PICKER_EMPTY`, `POPOVER`, `PICKER_POPOVER`, `SELECT_GROUP`, `ROW.lines.one`, `ROW.lines.two`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.list`, `ROW.ground.group`, `TEXT.role.body`, `TEXT.role.meta`, `ICON.fit.body` | rest, hover, focus, active, selected |
@@ -2635,7 +2643,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `ListRow` | `body`, `meta`, `caption` | `ink-body`, `ink-meta`, `ink-disabled`, `ink-error`, `surface`, `edge`, `edge-error`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `ring`, `accent-ink`, `ok`, `warn`, `danger`, `avatar-`, `chip-`, `skeleton`, `fill-disabled`, `edge-strong`, `toggle-on`, `toggle-on-hover`, `on-accent` | `row`, `full`, `control`, `chip` | `inside`, `rows`, `control-x`, `card`, `acts`, `pair` | `row`, `row-2`, `avatar`, `icon`, `icon-meta`, `dot`, `spinner`, `measure-short`, `chip`, `control-compact`, `skeleton`, `figures`, `check`, `target`, `indent`, `line-body` | none |
 | `DefinitionRow` | `body`, `meta`, `code` | `ink-body`, `ink-meta`, `wash-hover`, `wash-press`, `ring`, `accent-ink`, `ok`, `warn`, `danger`, `skeleton` | `full`, `control`, `chip` | `fields`, `card`, `inside`, `pair` | `row`, `row-setting`, `control-compact`, `icon`, `icon-meta`, `dot`, `spinner`, `measure-short`, `measure`, `figures`, `skeleton`, `switch-w`, `switch-h`, `target` | none |
 | `FormField` | `body`, `meta` | `ink-body`, `ink-meta`, `ink-error`, `ink-disabled`, `ok`, `warn`, `danger` | `control` | `pair`, `fields`, `inside`, `card` | `row`, `icon`, `icon-meta`, `control-compact` | none |
-| `ItemHeader` | `body`, `meta`, `heading`, `caption` | `ink-body`, `ink-meta`, `edge`, `fill-neutral`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `accent-ink`, `ok`, `warn`, `danger` | `control`, `chip`, `full` | `pair`, `inside`, `fields`, `control-x` | `skeleton`, `target`, `control-compact`, `chip`, `dot`, `spinner`, `icon-meta`, `measure-short`, `measure` | none |
+| `ItemHeader` | `body`, `meta`, `title`, `caption` | `ink-body`, `ink-meta`, `edge`, `fill-neutral`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `accent-ink`, `ok`, `warn`, `danger` | `control`, `chip`, `full` | `pair`, `sections`, `inside`, `fields`, `control-x` | `skeleton`, `target`, `control-compact`, `chip`, `dot`, `spinner`, `icon-meta`, `measure-short`, `measure` | none |
 | `SegmentedControl` | `body` | `group`, `ink-body`, `ink-meta`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `ring` | `control` | `control-x` | `control-compact` | none |
 | `Sheet` | `heading`, `body`, `meta` | `scrim`, `raised`, `edge-raised`, `edge`, `ink-body`, `ink-meta`, `ink-error`, `act-accent`, `on-act-accent` | `sheet`, `control` | `pair`, `card`, `acts`, `fields`, `sections`, `inside`, `control-x`, `page` | `sheet`, `pane`, `dialog`, `measure`, `control`, `control-compact`, `row-2` | `modal` |
 | `Picker` | `body`, `meta`, `caption` | `ink-body`, `ink-meta`, `surface`, `edge`, `edge-hover`, `raised`, `avatar-`, `chip-`, `edge-raised`, `wash-hover`, `wash-press`, `ring` | `full`, `control`, `popover`, `row` | `inside`, `pair`, `float`, `rows`, `control-x`, `card` | `target`, `control-compact`, `popover`, `avatar`, `chip`, `chips-inset`, `hairline`, `measure-short`, `row`, `row-2`, `icon-meta`, `icon`, `icon-control` | `float` |

@@ -537,8 +537,8 @@ export const METER_NEAR = 0.9;
 // Two rules decide which role a piece of text takes. Size follows structure,
 // never emphasis: the primary line of anything is `body`, a secondary line
 // is `meta`, and emphasis inside a line is weight 500 (`strong`), never a
-// size change. A size role names a place, once: `title` is the page's name,
-// once per screen; `heading` a section's or a card's name, never inside a
+// size change. A size role names a place, once: `title` is a page's or a record's name,
+// once per page or record; `heading` a section's or a card's name, never inside a
 // row; `caption` text inside a small component (a chip, a key hint), never
 // a sentence; `code` what a machine reads; `figure` a count's number in a
 // strip of them, between `display` (one per screen) and `title`. So there is no label role: a

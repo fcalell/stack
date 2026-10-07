@@ -65,7 +65,7 @@ target size and spacing; console output).
    `*{transition:none!important;animation:none!important}`. Park the pointer off-screen and clear
    the console.
 2. **Measure** the rubric's system constants and each pattern page's range. Read the computed styles of
-   the unit's elements: the font sizes and weights in use, row and control heights, radii, border
+   the unit's elements: the font sizes and weights in use (sizes are counted as distinct pixel sizes, never as size and weight pairs: 16/400 and 16/500 are one size), row and control heights, radii, border
    colours and widths, shadows, each layer's surface colour, every occurrence of the accent. Each
    value outside its range is a finding with the measured number and the range.
 3. **Interact.** Click every control, hover every row, tab through in order. A story draws a

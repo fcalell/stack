@@ -869,6 +869,10 @@ export const SECTION_HEAD = "gap-pair";
 export const SECTION_HEAD_ROW = "gap-fields";
 export const SECTION_TITLE = "gap-inside";
 export const SECTION_TOGGLE = "gap-inside min-h-target px-inside rounded-row";
+// A Section inside a Section names itself a level below its parent: the body
+// size at the heading's weight, so the screen draws no new size.
+export const SECTION_NESTED_TITLE =
+	"text-body leading-body font-semibold text-ink-body";
 // A group: a hairline card on the surface drawing the hairline between its
 // rows once, so no row carries one. `divide-*` is a child selector uniwind
 // drops, so native draws that hairline per row.

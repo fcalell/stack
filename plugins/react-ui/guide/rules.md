@@ -20,7 +20,7 @@ A record the open record links to opens beside it: the `Split`'s `beside` holds 
 `back` is the open record's route. From `wide` it stands beside the main, its back act a Close;
 below `wide` it stands in the main's place with its back act, and below `tablet` its head is the
 page's only head, its back act to the main. The record's title keeps its heading level at every
-width.
+width. An `ItemHeader` with no facts line stands a pair, not a sections gap, above the record's first section.
 
 ```tsx
 <Split list={rows} main={<Item />} beside={<Screen title="Run 12" back={itemRoute}><Run /></Screen>} />
@@ -44,8 +44,8 @@ shadow, weight, tone, transition or state is a look, and a numeric dimension is 
 
 Every colour, size, radius and spacing is a contract token; never an arbitrary value
 (`h-[34px]`), a literal colour or a raw pixel size. Copy renders through `Text` (`body` or `meta`,
-with `strong`) or the molecule that owns its role (`title` is `Place`'s, `Screen`'s and `Gate`'s, `heading`
-`Section`'s, `figure` `Stats`', `display` `Stat`'s); colour comes through a component's props.
+with `strong`) or the molecule that owns its role (`title` is `Place`'s, `Screen`'s, `Gate`'s and `ItemHeader`'s, `heading`
+`Section`'s (a `Section` inside a `Section` names itself at `body` semibold, a level below), `figure` `Stats`', `display` `Stat`'s); colour comes through a component's props.
 
 ## A picture is an `Image`
 

@@ -1,6 +1,6 @@
 ---
 id: 003-106
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: a record's ItemHeader title outranks its Section titles
@@ -22,11 +22,17 @@ Both parts draw the same role, so nothing in the app can separate them without a
 - The `title` role is larger than `heading` in the roster ("`title` and `heading` already sit at or above it"), so a part exists to draw a record's name higher; `ItemHeader` does not use it.
 
 ## Acceptance criteria
-- [ ] An `ItemHeader` title reads a clear level above a `Section` title beside it, in a `Split` main and on an item screen, on every platform the app runs on.
-- [ ] With no facts line, the head stands a pair or a fields step above the record's first `Section`, not a sections step, so it reads as the record's title.
-- [ ] A record whose head has facts keeps its facts line under the title at `ITEM_FACTS` rhythm.
-- [ ] The loading head (`loading`) keeps the loaded head's height.
+- [x] An `ItemHeader` title reads a clear level above a `Section` title beside it, in a `Split` main and on an item screen, on every platform the app runs on.
+- [x] With no facts line, the head stands a pair or a fields step above the record's first `Section`, not a sections step, so it reads as the record's title.
+- [x] A record whose head has facts keeps its facts line under the title at `ITEM_FACTS` rhythm.
+- [x] The loading head (`loading`) keeps the loaded head's height.
 
 ## Open questions
-- [ ] Its shape (the title in the `title` role, a distinct head role, or a head spacing token): the stack session decides.
-- [ ] Whether the head-to-first-section step belongs to `SPLIT_MAIN`, to `ItemHeader`, or to the record body.
+- [x] Its shape (the title in the `title` role, a distinct head role, or a head spacing token): the stack session decides.
+- [x] Whether the head-to-first-section step belongs to `SPLIT_MAIN`, to `ItemHeader`, or to the record body.
+
+## Built
+`ItemHeader`'s title takes the `title` role (18 desktop, 22 touch) in both plugins, and its loading bar stands in the `title` line box (`LINE_BOX.role.title`, new). No size joins the scale, and the role doc reads "a page's or a record's name" (`README.md`, `design-md.ts`, `tokens.ts`, regenerated `DESIGN.md`).
+With no facts line a head in a Split's main stands a pair above what follows, not a sections step. The contract holds no variant (verify c20, c21), so `SPLIT_MAIN` cannot carry the sibling rule: the web head draws it as an overlay keyed on its main (`group/main`, off while a Thread fills it), and the native head reads `ThreadBleeds` and `ThreadRoom`. A head with facts keeps the sections step and its facts at `ITEM_FACTS`. The loading head keeps its structure. The Split frame's main holds an `ItemHeader` over its first Section.
+Measured at 1200 (desktop): the title draws 18/600 over the Section title's 15/600; a bare head's title stands 6 px above its first Section, a head with facts 32 px. An item screen (a `Screen` body, `PAGE_BODY`) keeps the sections step, since the rule is the Split main's.
+Evidence: `stories/ItemHeader.stories.ts` and `stories/Split.stories.ts` pass; `ui-core`, `plugin-react-ui` and `plugin-native-ui` verify pass.

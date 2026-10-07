@@ -1,6 +1,6 @@
 ---
 id: 003-145
-status: backlog
+status: review
 sessions: {}
 ---
 # ui-core: a Section's count chip draws smaller than body
@@ -16,4 +16,7 @@ Stead's Work board draws each Section's count in a pill at 13 px type and 20 px 
 - [ ] The Count showcase holds the chip beside a Section title and the critique measures it.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides, whether the caption role steps to 12 px or the chip takes a role of its own.
+- [x] Its shape (a component, a variant, a token, an option): the stack session decides, whether the caption role steps to 12 px or the chip takes a role of its own.
+
+## Ruled
+By design. `caption` is 0.846 of the body: 11 px on the desktop (13 × 0.846) and 14 on touch (16 × 0.846), inside the rubric's 10 to 12 range at the density the chip is judged at. Rendered in a Section at 1200 px, the chip's figure draws 11 px in a 20 px pill (the 16 to 22 range). The 13 px in the story's evidence is the body size, so the reading was of another element. The caption step stays and the chip takes no role of its own.

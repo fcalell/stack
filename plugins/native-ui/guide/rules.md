@@ -19,7 +19,7 @@ ahead of the `Screen`'s own `back`.
 
 A record the open record links to opens beside it: the `Split`'s `beside` holds a `Screen` whose
 `back` is the open record's route. On the phone it stands in the open record's stead, its back
-act in its top bar, its head the page's only head.
+act in its top bar, its head the page's only head. An `ItemHeader` with no facts line stands a pair, not a sections gap, above the record's first section.
 
 ```tsx
 <Split list={rows} main={<Item />} beside={<Screen title="Run 12" back={itemRoute}><Run /></Screen>} />
@@ -38,7 +38,7 @@ in React Native's `Text`.
 
 Every colour, size, radius and spacing is a contract token, never an arbitrary value (`h-[34px]`),
 a literal colour or raw pixels. Copy renders through `Text` (`body` or `meta`, with `strong`) or
-the molecule that owns its role (`title` is `Place`'s, `Screen`'s and `Gate`'s, `heading` `Section`'s,
+the molecule that owns its role (`title` is `Place`'s, `Screen`'s, `Gate`'s and `ItemHeader`'s, `heading` `Section`'s (a `Section` inside a `Section` names itself at `body` semibold, a level below),
 `figure` `Stats`', `display` `Stat`'s); colour comes through a component's props.
 
 ## A picture is an `Image`
