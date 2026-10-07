@@ -1,9 +1,11 @@
 import { fileURLToPath } from "node:url";
+import { writeStorybookConfig } from "@fcalell/plugin-screens/node";
 import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
 import { playwright } from "@vitest/browser-playwright";
+import { loadConfigFromFile, mergeConfig } from "vite";
 import { defineConfig } from "vitest/config";
-import stackConfig from "./.stack/vite.config.ts";
-import { adaptStackConfig } from "./.storybook/stack-vite.ts";
+import { rosterPlugin } from "./.storybook/roster-plugin.ts";
+import stackConfig from "./stack.config.ts";
 
 const dirname = fileURLToPath(new URL(".", import.meta.url));
 
@@ -11,8 +13,16 @@ const dirname = fileURLToPath(new URL(".", import.meta.url));
 // `CHROME_PATH` names a Chrome to launch instead.
 const chrome = process.env.CHROME_PATH;
 
+// The app's own Vite config for a Storybook that draws components, from the
+// slots it renders from.
+const loaded = await loadConfigFromFile(
+	{ command: "serve", mode: "test" },
+	await writeStorybookConfig({ config: stackConfig, cwd: dirname }),
+);
+if (!loaded) throw new Error("the Storybook Vite config did not load");
+
 export default defineConfig({
-	...adaptStackConfig(stackConfig),
+	...mergeConfig(loaded.config, { plugins: [rosterPlugin()] }),
 	test: {
 		projects: [
 			{
@@ -26,6 +36,8 @@ export default defineConfig({
 				test: {
 					name: "storybook",
 					testTimeout: 120_000,
+					// Memory: each parallel page is one renderer, so at most two open at once.
+					maxWorkers: 2,
 					browser: {
 						enabled: true,
 						headless: true,

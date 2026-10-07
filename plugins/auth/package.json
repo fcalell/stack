@@ -49,6 +49,10 @@
 			"types": "./dist/infer.d.ts",
 			"default": "./dist/infer.js"
 		},
+		"./screens": {
+			"types": "./dist/screens.d.ts",
+			"default": "./dist/screens.js"
+		},
 		"./testing": {
 			"types": "./dist/testing/index.d.ts",
 			"default": "./dist/testing/index.js"
@@ -85,6 +89,7 @@
 		"@fcalell/plugin-api": "workspace:*",
 		"@fcalell/plugin-cloudflare": "workspace:*",
 		"@fcalell/plugin-db": "workspace:*",
+		"@fcalell/plugin-screens": "workspace:*",
 		"@orpc/server": "^1.14.4",
 		"better-auth": "1.7.7",
 		"zod": "^4.3.6"
@@ -107,6 +112,8 @@
 	},
 	"devDependencies": {
 		"@fcalell/auth-testing": "workspace:*",
+		"@fcalell/plugin-react": "workspace:*",
+		"@fcalell/plugin-vite": "workspace:*",
 		"@fcalell/typescript-config": "workspace:*",
 		"@types/node": "^25.5.0",
 		"@react-native-google-signin/google-signin": "^16.1.2",

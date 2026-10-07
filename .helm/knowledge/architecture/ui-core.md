@@ -1652,8 +1652,17 @@ resolve. A platform's rules for every `.tsx` are its plugin's own page (react-ui
 
 ## The showcase and Storybook
 
-`apps/showcase` serves three pages (`/foundations`, `/layout`, `/tv`; `/` redirects to
-`/foundations`) and the roster in Storybook. react-ui's `./showcase/cells`, `./showcase/frame` and
+`apps/showcase` is a stack consumer. Its routes are the token page and the television page
+(`/foundations`, `/tv`; `/` redirects to `/foundations`) and the places of one app composed from
+the built components: `/deploys` (with `/deploys/$deployId` and `/deploys/$deployId/steps/$stepId`),
+`/projects`, `/usage`, `/domains` (and `/domains/verify`, a Screen over it), `/logs`, `/assistant`,
+`/members`, `/settings` and `/home` in the Shell (the pathless layout `_app`), and `/sign-in`
+and `/connect` outside it. A place calls typed procedures through the generated client
+(`src/worker/routes/`, each with zod schemas and a stub handler that answers no rows) and draws their
+states through the components' own `query` props and `QueryBoundary`; `src/app/fixtures.ts` answers every
+procedure with the data a place shows and gives each route `$param` an example value. The screens
+workbench (`stack screens dev`) draws every route in data, loading, error, empty and not found, light
+and dark, at either density. The roster is in Storybook. react-ui's `./showcase/cells`, `./showcase/frame` and
 `./showcase/frames/*` export the frame data, the `Frame` wrapper and one drawer per component;
 `.storybook/` imports them, nothing is copied. A story is a component in one state
 (`rest`, `disabled`, `loading`, `error`, `empty`, `selected`, whichever its roster entry lists)
@@ -1664,12 +1673,9 @@ reaches those looks by driving the real component. A frame is not a page, so a c
 every axe rule except the document-structure ones (`.storybook/preview.tsx`: landmarks, `page-has-heading-one`,
 `region`, `heading-order`, `bypass`, `skip-link`), which no screen draws.
 
-Three kinds of story, one `pnpm stories:test` run (headless Chrome at desktop density and 1280 px;
+Two kinds of story, one `pnpm stories:test` run (headless Chrome at desktop density and 1280 px;
 touch is a toolbar toggle, not a test run; `a11y.test` is `error`):
 
-- **Page stories**: each place of `/layout`, the pushed Screen and an open record, one page in one mode
-  per story, generated from `@fcalell/plugin-react-ui/showcase/pages` (the list the route also
-  reads; `LayoutPage` takes the `Here` values the route reads from the URL), with the same axe rules as a component story.
 - **Behaviour stories**: hand-written in `apps/showcase/behaviour/`, one per interactive component
   that owns a widget behaviour the rubric's accessibility floor sets (an overlay's focus in and
   out, Escape and focus kept inside a modal; a composite's arrow keys and typeahead),
@@ -1679,6 +1685,9 @@ touch is a toolbar toggle, not a test run; `a11y.test` is `error`):
   themselves.
 - **Component stories**, above.
 
+A page is not one of them: the places above are the app's routes, and the workbench draws each as
+the document it is.
+
 A failing assertion is a finding in the component: it stays failing until the component is fixed,
 never weakened or skipped, and nothing is excluded from axe beyond the document-structure rules and the
 node buttons of a canvas that draws a run's path: `Canvas`'s dimmed frames
@@ -1687,21 +1696,30 @@ draws disabled ink (about 3:1) by the pattern's rule, and axe exempts only a dis
 these enabled buttons are. The exclusion leaves those nodes out of every rule, since a per-story
 `config.rules` entry replaces the preview's document-structure list and would copy it.
 
-Storybook runs on stack's generated Vite config (`.stack/vite.config.ts`, by `viteConfigPath`),
-adapted in `.storybook/stack-vite.ts`, which Vitest's config shares:
+Storybook runs on `.stack/storybook.vite.config.ts` (by `viteConfigPath`), which `.storybook/main.ts`
+writes at start by calling `writeStorybookConfig({ config, cwd })` from
+`@fcalell/plugin-screens/node` with the app's `stack.config.ts` (it resolves the slots the app's own
+config renders from; `stack generate` writes no such file), and which Vitest's config loads the
+same way (`vitest.config.ts` calls it, then `loadConfigFromFile`). Nothing is adapted by hand:
 
-- The TanStack router plugin goes (it needs the route files and rewrites `routeTree.gen.ts`), and the
-  `server` block goes: its `X-Frame-Options: DENY` and CSP `frame-ancestors 'none'` block Storybook's
-  preview iframe.
-- `root` moves from `.stack/` to the app (Storybook's relative story paths resolve there), with
-  `publicDir` and `outDir`; `server.fs.allow` widens to the workspace root, where the plugin
-  sources live.
+- The TanStack router plugin is not in it (it needs the route files and rewrites
+  `routeTree.gen.ts`, and no roster story routes): it is in `vite.slots.appPlugins`, which the
+  function does not read, so nothing matches its name, and the `server` block is blank of the headers
+  `X-Frame-Options: DENY` and CSP `frame-ancestors 'none'`, which block Storybook's preview iframe,
+  and of the proxy and the port.
+- Vite's `root` stays `.stack/`: every path a contribution hands a plugin is anchored on the config
+  file, so nothing moves it. `main.ts` names its story globs relative to `.storybook/`, which is how
+  `@storybook/addon-vitest` joins them to the config directory to find the story files.
 - Storybook runs Vite in middleware mode and never calls `server.listen()`, the call that starts
   Vite's dependency optimizer, so `optimizeDeps.include` and the scan never run: a CJS dependency
   behind a `node_modules` import (`react-dom/client` through Storybook's dom shim) is served raw
-  and fails with "require is not defined", and each dep found late reloads the page. A plugin
-  starts the optimizer (`depsOptimizer.init()`) itself, which restores the scan; no dependency
-  list is kept.
+  and fails with "require is not defined", and each dep found late reloads the page. The
+  config's host plugin, `storybookHost()` from `@fcalell/plugin-screens/vite`, starts the
+  optimizer (`depsOptimizer.init()`), which restores the scan; no dependency list is kept.
+
+What stays in `.storybook/` is the roster's own: `rosterPlugin` (added to the derived config by
+`main.ts`' `viteFinal` and by Vitest's config), the story globs and the generated modules below.
+
 - The browser provider launches Playwright's own browser; where none is installed (NixOS),
   `CHROME_PATH` names a Chrome to launch. `@storybook/addon-vitest` needs no
   `setProjectAnnotations` file since Storybook 10.3.
@@ -1714,6 +1732,16 @@ life of a process, so the roster is read in a child process, and a Vite plugin w
 `cells.ts`, the drawers and ui-core's built `dist` and rewrites the modules whose text changed:
 a roster edit reaches the sidebar without a restart, and `vitest --changed` reruns only the
 modules whose import graph holds the edited file.
+
+The showcase is the first consumer of the screens workbench (`stack screens dev`, plugin-screens): every
+route of the app (the three pages included) is a screen in five states, on the derived
+`.stack/screens.vite.config.ts`. The two hosts derive their config the same way, from vite's slots, and
+differ in what they draw: the workbench keeps the router plugin and adds `screensPlugin` (the route
+tree, the fixtures, MSW's worker); the roster's Storybook leaves the router out and adds only the
+optimizer start.
+
+The Vitest browser project sets `maxWorkers: 2`, which caps the story pages one `pnpm stories:test` opens at
+once (each is a renderer, and a wider run exhausts the memory of a 16 GiB machine).
 
 ## Enforcement
 

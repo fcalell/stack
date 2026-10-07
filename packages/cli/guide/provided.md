@@ -20,6 +20,7 @@ domain missing from the config arrives with `stack add <plugin>`.
 | react | The HTML shell and `<head>`, the entry, the providers module, the Vite config, typed routes, memoization by the React Compiler, same-origin API calls in dev | The routes and what they import |
 | react-ui, native-ui | The roster and its look: stylesheet or native theme, fonts, dark mode, density, safe areas, English words | Screens composed from the roster, the theme knobs, other languages' words |
 | expo | Metro and Expo configs, the router entry, the native client stamped with its build, the version gate, EAS build and update commands, typed routes | The screens, and the update-wall screen the gate signals |
+| screens | One workbench that draws every web route in data, loading, error, empty and not-found, light and dark, at either density, from typed fixtures with no backend running; the host's config, stories and request answers; the signed-in session when `auth` is present | The fixtures in `src/app/fixtures.ts`, one per procedure the routes call, and an example value per route `$param` |
 | cli | One `stack dev` for every process and watcher; one `stack deploy` that builds, checks, migrates, seeds and deploys; the tsconfigs, the lint config, this guide's index | `stack.config.ts` |
 
 ## Rules

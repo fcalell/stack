@@ -1,0 +1,144 @@
+import { literalToProps, type TsExpression } from "@fcalell/cli/ast";
+import {
+	renderViteConfig,
+	type ViteConfigValues,
+} from "@fcalell/plugin-vite/node";
+import type { ScreensConfigValues } from "../types.ts";
+
+// The app's fixtures module, beside the routes by convention.
+export const FIXTURES = "src/app/fixtures.ts";
+
+const ident = (name: string): TsExpression => ({ kind: "identifier", name });
+
+// The directory the generated config sits in, `.stack/`.
+const configDir: TsExpression = {
+	kind: "call",
+	callee: ident("fileURLToPath"),
+	args: [
+		{
+			kind: "new",
+			callee: ident("URL"),
+			args: [
+				{ kind: "string", value: "." },
+				{ kind: "member", object: ident("import.meta"), property: "url" },
+			],
+		},
+	],
+};
+
+// This package's own location: Vite 403s a path outside its workspace root, and
+// a workspace-linked stack checkout serves the preview from beside the app's.
+const ownRoot: TsExpression = {
+	kind: "call",
+	callee: ident("searchForWorkspaceRoot"),
+	args: [
+		{
+			kind: "call",
+			callee: ident("fileURLToPath"),
+			args: [
+				{
+					kind: "call",
+					callee: {
+						kind: "member",
+						object: ident("import.meta"),
+						property: "resolve",
+					},
+					args: [{ kind: "string", value: "@fcalell/plugin-screens" }],
+				},
+			],
+		},
+	],
+};
+
+// What every Storybook host changes in the app's own config; nothing here
+// reaches the app's `.stack/vite.config.ts`.
+//   - `clientHeaders` goes: `frame-ancestors 'none'` blocks Storybook's
+//     preview iframe.
+//   - No dev-server proxy and no port: the app's backend is never reached, and
+//     Storybook serves Vite itself.
+function hosted(values: ViteConfigValues): ViteConfigValues {
+	return { ...values, serverProxy: [], clientHeaders: {}, devServerPort: 0 };
+}
+
+// The Vite config the screens host runs on: the app's own, rendered from the
+// same slot values, with what a host that serves the app's screens changes.
+//   - `hosted`'s changes.
+//   - The router plugin, which the app's own config runs, and the screens
+//     plugin join: the route tree and fixtures, MSW's worker, and the
+//     dependency optimizer.
+export function renderScreensConfig(values: ScreensConfigValues): string {
+	const props = literalToProps({
+		fixtures: `../${FIXTURES}`,
+		routesDir: `../${values.routesDir}`,
+		entryImports: values.entryImports.flatMap((spec) =>
+			"sideEffect" in spec ? [spec.source] : [],
+		),
+		routerBindings: values.routerBindings.flatMap((spec) =>
+			"named" in spec
+				? spec.named.map((entry) => ({
+						source: spec.source,
+						name: typeof entry === "string" ? entry : entry.name,
+					}))
+				: [],
+		),
+		prefixes: values.prefixes,
+		handlerModules: values.handlerModules,
+		previewGlobals: values.previewGlobals,
+	});
+	const plugin: TsExpression = {
+		kind: "call",
+		callee: ident("screensPlugin"),
+		args: [
+			{
+				kind: "object",
+				properties: [
+					{ key: "stackDir", value: configDir },
+					...Object.entries(props).map(([key, value]) => ({ key, value })),
+				],
+			},
+		],
+	};
+	return renderViteConfig(
+		hosted({
+			...values,
+			configImports: [
+				...values.configImports,
+				...values.routerPlugin.imports,
+				{ source: "node:url", named: ["fileURLToPath"] },
+				{ source: "@fcalell/plugin-screens/vite", named: ["screensPlugin"] },
+			],
+			pluginCalls: [values.routerPlugin.call, ...values.pluginCalls, plugin],
+			fsAllow: [...values.fsAllow, ownRoot],
+		}),
+	);
+}
+
+// The Vite config of a Storybook that draws components, not routes (the
+// showcase's roster): the app's own plugin calls, which hold no router plugin
+// (it needs the route files and rewrites the route tree), with `hosted`'s
+// changes and the dependency optimizer.
+export function renderComponentHostConfig(values: ViteConfigValues): string {
+	return renderViteConfig(
+		hosted({
+			...values,
+			configImports: [
+				...values.configImports,
+				{ source: "@fcalell/plugin-screens/vite", named: ["storybookHost"] },
+			],
+			pluginCalls: [
+				...values.pluginCalls,
+				{ kind: "call", callee: ident("storybookHost"), args: [] },
+			],
+		}),
+	);
+}
+
+// `.stack/screens/main.ts`: Storybook's config directory holds this one file.
+export function renderStorybookMain(routesDir: string): string {
+	return [
+		'import { screensMain } from "@fcalell/plugin-screens/storybook";',
+		"",
+		`export default screensMain({ routesDir: ${JSON.stringify(routesDir)} });`,
+		"",
+	].join("\n");
+}

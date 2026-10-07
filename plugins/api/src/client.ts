@@ -4,6 +4,7 @@ import { getRegisteredApiClient, registerApiClient } from "./ability-client.ts";
 import { captureEntityHeaders } from "./query-invalidation.ts";
 import type { RouterClient } from "./types.ts";
 
+export { isNotFound } from "./not-found.ts";
 export type { RouterClient } from "./types.ts";
 
 export interface ClientConfig {
@@ -38,6 +39,33 @@ function resolveClientUrl(url: string): string {
 	return new URL(url, location.origin).toString();
 }
 
+// oRPC's TanStack Query utils tag every call they make with an operation
+// context (`queryOptions` -> "query", `mutationOptions` -> "mutation", ...)
+// under the symbol `@orpc/tanstack-query` exports. That package is an optional
+// peer this entry must not import, so `./tanstack-query.tsx`, which imports it,
+// hands the symbol over (`createApiQueryUtils`) before its calls are made.
+let operationContext: symbol | undefined;
+
+export function registerOperationContext(symbol: symbol): void {
+	operationContext = symbol;
+}
+
+// The operation types oRPC's own docs send as GET.
+const READ_OPERATIONS = new Set(["query", "streamed", "live", "infinite"]);
+
+// A read travels as GET (its input in `?data=`), so a reader of the wire, the
+// screens workbench's answerer, tells a query from a mutation by the method.
+// Every other call (a mutation, a call outside TanStack Query) is a POST.
+function methodOf(options: { context: object }): "GET" | "POST" {
+	if (operationContext === undefined) return "POST";
+	const operation = (
+		options.context as Record<symbol, { type?: string } | undefined>
+	)[operationContext];
+	return operation?.type && READ_OPERATIONS.has(operation.type)
+		? "GET"
+		: "POST";
+}
+
 export function createClient<TRouter>(
 	config?: ClientConfig,
 ): RouterClient<TRouter> {
@@ -46,6 +74,7 @@ export function createClient<TRouter>(
 
 	const link = new RPCLink({
 		url,
+		method: methodOf,
 		headers: config?.headers,
 		fetch: async (request, init) => {
 			const response = await baseFetch(request, {

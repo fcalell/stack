@@ -69,7 +69,12 @@ export async function generateFromConfig(
 	};
 }
 
-export async function generate(configPath: string): Promise<void> {
+// `stack generate`, and the `generate` a plugin command's context carries:
+// load the config, write every artifact, run the postWrite hooks.
+export async function generate(
+	configPath: string,
+	cwd: string = process.cwd(),
+): Promise<void> {
 	const config = await loadConfig(configPath);
-	await generateFromConfig(config, process.cwd(), { writeToDisk: true });
+	await generateFromConfig(config, cwd, { writeToDisk: true });
 }

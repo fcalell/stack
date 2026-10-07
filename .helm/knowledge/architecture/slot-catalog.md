@@ -108,7 +108,8 @@ e.g. consulting `ctx.fileExists` before writing.
 | Slot | Kind | Purpose |
 |------|------|---------|
 | `configImports` | `list<TsImportSpec>` | Imports for `.stack/vite.config.ts` |
-| `pluginCalls` | `list<TsExpression>` (sorted by callee name) | Vite plugin call expressions; a plugin whose Vite plugins must run in a set order contributes them as one array expression (Vite flattens it), as plugin-react does with `tanstackRouter()` before `react()` |
+| `pluginCalls` | `list<TsExpression>` (sorted by callee name) | Vite plugin call expressions every Vite config of the app runs, the app's own and a host's (Storybook's); a plugin whose Vite plugins must run in a set order contributes them as one array expression (Vite flattens it). A call only the app's own config runs goes to `appPlugins` |
+| `appPlugins` | `list<AppPlugin>` (`{ call: TsExpression, imports: TsImportSpec[] }`) | A plugin call only the app's own config runs, with the imports it needs. `viteConfig` is the one reader: it renders these calls ahead of `pluginCalls` and merges their imports into `configImports`, so a host that draws components in its own Vite config reads `pluginCalls` and `configImports` alone and holds none of them, with no name to match. plugin-react contributes the router plugin here (`react.slots.routerPlugin`), which therefore runs ahead of `react()` and every other call. A host that draws routes reads the owning slot instead (`screens.viteConfig` reads `react.slots.routerPlugin`) |
 | `resolveAliases` | `list<{ find, replacement }>` | `resolve.alias` entries |
 | `resolveDedupe` | `list<string>` | Bare specifiers rendered into `resolve.dedupe` (de-duplicated); plugins whose runtime must stay a singleton contribute here so workspace-linked checkouts can't ship a second copy in the production bundle. plugin-react contributes `react` and `react-dom` |
 | `devServerPort` | `value<number>` | Dev server port (defaults to options.port ?? 3000) |
@@ -118,6 +119,10 @@ e.g. consulting `ctx.fileExists` before writing.
 | `watchIgnored` | `list<string>` (sorted) | Globs rendered into `server.watch.ignored`, added to Vite's own defaults; a plugin whose tool writes scratch files under Vite's root contributes their glob so the writes never reach hot-update handling. plugin-cloudflare contributes `**/.wrangler/**` (wrangler's dev bundle in `.stack/.wrangler/tmp/`) |
 | `clientHeaders` | `map<string>` | Headers every response of the web client's host carries; vite contributes `Content-Security-Policy: frame-ancestors 'none'` and `X-Frame-Options: DENY`, so no stack app is framed and no option allows it. Three readers: vite renders it into `server.headers` (dev), cloudflare writes it to `<outDir>/_headers` in a `post` build step, node passes it to its static server; resolves `{}` without vite |
 | `viteConfig` | `derived<string \| null>` | Final `.stack/vite.config.ts` source; null when nothing to emit |
+
+`@fcalell/plugin-vite/node` exports `renderViteConfig(values: ViteConfigValues)`, the pure renderer `viteConfig` calls. `ViteConfigValues` has one field per slot `viteConfig` hands it, under the slot's own name (the app-only calls already merged into `pluginCalls` and `configImports`), so a host that builds its own graph (`buildGraphFromConfig`, then `graph.resolve(vite.slots.<name>)`) passes the resolved values through, changes the ones it needs (`clientHeaders: {}`, extra `pluginCalls` of its own that never reach the app's config) and renders its own variant.
+
+A path a contribution hands a Vite plugin is an expression anchored on the config file (`fileURLToPath(new URL("../src/app/routes", import.meta.url))`), so it holds when a host moves Vite's `root`, and no absolute path of the machine is written into the config. plugin-react hands TanStack's router plugin `routesDirectory` and `generatedRouteTree` this way. A contribution declares every import its expression uses through `configImports` (`{ source: "node:url", named: ["fileURLToPath"] }` for these paths); the renderer imports only what its own output uses and merges all imports by source, dropping repeated names, so two contributions declaring the same import are one line.
 
 ## `react.slots.*` (plugin-react)
 
@@ -131,6 +136,7 @@ e.g. consulting `ctx.fileExists` before writing.
 | `htmlHead` | `list<HtmlInjection>` (one `title`, one of each `html-attr`) | `<head>` injections (title, meta, link, script, html-attr); react contributes `lang`, the title (`title` ?? `app.name`), `description`, `themeColor`, `icon` |
 | `htmlBodyEnd` | `list<HtmlInjection>` | End-of-body injections; react adds the `/entry.tsx` module script when there is an entry |
 | `routesDir` | `derived<string \| null>` | The routes directory relative to the project root (`routes.dir` ?? `src/app/routes`); null when `routes: false` |
+| `routerPlugin` | `derived<AppPlugin \| null>` | TanStack's router plugin as `{ call, imports }`: `tanstackRouter({ target, autoCodeSplitting, routesDirectory, generatedRouteTree })` with its import and `fileURLToPath`'s; null when routing is off. react contributes it to `vite.slots.appPlugins`, so the app's config runs it; a host that draws no route (Storybook's roster) never reads it, and one that draws routes (`screens.viteConfig`) reads it here |
 | `entrySource` | `derived<string \| null>` | Final `.stack/entry.tsx` |
 | `htmlSource` | `derived<string \| null>` | Final `.stack/index.html` |
 | `providersSource` | `derived<string \| null>` | Final `.stack/virtual-providers.tsx`; null leaves plugin-vite's pass-through stub |
@@ -148,6 +154,21 @@ e.g. consulting `ctx.fileExists` before writing.
 | `fonts` | `derived<FontEntry[]>` | Resolved font files (consumer options or `defaultFonts`: IBM Plex Sans on its `wght` axis, IBM Plex Mono at 400, 500 and 600); `[]` loads none. The families the roles bind to are the theme's `fonts` knob, emitted by ui-core |
 | `resolvedTheme` | `derived<ResolvedTheme>` | The `theme` option run through `@fcalell/ui-core`'s `deriveTheme`, resolved once so every block contribution reads one value |
 | `appCssSource` | `derived<string \| null>` | Final `.stack/app.css`; null when nothing landed |
+
+## `screens.slots.*` (plugin-screens)
+
+| Slot | Kind | Purpose |
+|------|------|---------|
+| `handlerModules` | `list<string>` (sorted) | Module specifiers of endpoints a plugin owns outside the app's router: each default-exports an array of MSW request handlers, imported by the screens host's virtual module and answered beside the app's procedures in every story. plugin-auth contributes `@fcalell/plugin-auth/screens`: a signed-in session (better-auth's `Session` and `User`, fixed values) answering `GET */api/auth/get-session`, the one call `useSession()` makes, at the `AUTH_PREFIX` the worker mounts auth under. Its other endpoints fall to the host's `no fixture` answer, since `/api/auth` is one of `routePrefixes`. A config without `screens` leaves the contribution unread |
+| `previewGlobals` | `list<PreviewGlobal>` (sorted by name) | Toolbar globals a plugin pins on the document root before a story paints, as data so the host knows no design system: `{ name, title, values, default, apply }`, where `apply` is `{ attribute }` (the value is set as that attribute) or `{ classes }` (a map from a value to the class it adds; the other classes of the map are removed). The host renders each as a Storybook toolbar select (`globalTypes`, `initialGlobals`) and applies them in its decorator, reading the list from its virtual module. react-ui contributes `mode` (`light`, `dark`; `{ classes: { dark: "dark" } }`; opening on the theme's `defaultMode`, else `light`) and `density` (`desktop`, `touch`; `{ attribute: "data-density" }`) |
+| `viteConfig` | `derived<string \| null>` | Final `.stack/screens.vite.config.ts` source: `renderViteConfig` over vite's input slots, with `clientHeaders: {}`, no `serverProxy` and no port, the screens package's own location in `fsAllow`, and one host-only plugin call, `screensPlugin({ stackDir, fixtures, routesDir, entryImports, routerBindings, prefixes, handlerModules, previewGlobals })`. It reads `react.slots.routesDir` (null: no output), the side-effect imports of `react.slots.entryImports` (the stylesheet) and the named imports of `react.slots.routerBindings` (what the entry calls with its router), `api.slots.routePrefixes` (the prefixes MSW answers) `handlerModules` and `previewGlobals`; the app's own `vite.slots.*` never receive a host-only call. It reads `react.slots.routerPlugin` for the router plugin, which it runs ahead of the app's `pluginCalls`, as the app's config does; null when it is |
+| `storybookMain` | `derived<string \| null>` | Final `.stack/screens/main.ts`, Storybook's config directory: one `screensMain({ routesDir })` call; null when `routesDir` is |
+
+`@fcalell/plugin-screens/node` exports `writeStorybookConfig({ config, cwd })`, which a Storybook of the app's own that draws components (the showcase's roster) calls from its `.storybook/main.ts` and its `vitest.config.ts`, with the app's `stack.config.ts`. It builds the slot graph (`buildGraphFromConfig`), resolves vite's slots, renders them with `renderViteConfig` as the screens host does (`clientHeaders: {}`, no `serverProxy` and no port) and one host-only plugin call, `storybookHost()`, which starts the dependency optimizer (Storybook runs Vite in middleware mode and never calls `server.listen()`, the call that starts it), writes `.stack/storybook.vite.config.ts` and returns its path, for Storybook's `viteConfigPath` and Vite's `loadConfigFromFile`. The router plugin is out because `vite.slots.pluginCalls` holds none (it is in `appPlugins`); no `screensPlugin`, no route tree and no fixtures reach it. It is a function and not a slot, so a consumer without such a Storybook gets no file; `generate` never writes it.
+
+`@fcalell/plugin-screens/fixtures` exports `defineFixtures<AppRouter>(procedures, params)`, the default export of the app's `src/app/fixtures.ts`: `procedures` is `Fixtures<AppRouter>` (each procedure optional, `(input) => output` by its `Procedure<I, O>` type) and `params` an example value per route `$param` name.
+
+`@fcalell/plugin-api/client` exports `isNotFound(error)`: the check for the `ORPCError` code `NOT_FOUND` that stack's procedures throw, which plugin-api's own client reads and the screens host answers.
 
 ## `expo.slots.*` (plugin-expo)
 
@@ -188,6 +209,10 @@ e.g. consulting `ctx.fileExists` before writing.
 | `cookiePrefix` | `value<string>` | Resolved session-cookie prefix (`cookies.prefix` ?? better-auth's `"better-auth"` default); read by native-ui's generated auth-client constants |
 | `clientFlags` | `value<AuthClientFlags \| null>` | The web client's `{ passkey, emailOtp, magicLink, organization, mcp }`, from the options, `organization` carrying the access control's statements and role grants as the worker gets them; seeded null and filled by auth's own contribution, so a reader without auth in the config sees null |
 | `reservedSlugs` | `list<string>` | The app's top-level routes, which an organization slug may not take (an organization is served at `/<slug>`). With organizations on, `runtimeOptions` bakes them beside plugin-api's `RESERVED_SLUGS` and the runtime refuses them on organization create and update |
+
+Auth also contributes to other plugins' slots (`api.slots.*`, `cloudflare.slots.*`, `db.slots.schemaModules`, `screens.slots.handlerModules`); those rows name it.
+
+The `./screens` subpath is the one place auth touches MSW, through `@fcalell/plugin-screens/msw` (a re-export of the app's copy, so the host runs one), and `@fcalell/plugin-screens` is a dependency of auth only for its slots, as `cloudflare` and `db` are: its Storybook and MSW packages are optional peers `stack add screens` installs.
 
 ## `db.slots.*` (plugin-db)
 

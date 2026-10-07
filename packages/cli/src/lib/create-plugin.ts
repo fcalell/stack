@@ -84,6 +84,10 @@ export interface CommandContext<TOptions> {
 	options: TOptions;
 	cwd: string;
 	resolve<T>(slot: Slot<T>): Promise<T>;
+	// Runs the pipeline `stack generate` runs, in process: every artifact is
+	// written and every postWrite hook has run when it resolves. `resolve` keeps
+	// answering from the graph built before.
+	generate(): Promise<void>;
 	log: LogContext;
 	prompt: PromptContext;
 }

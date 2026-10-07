@@ -2,7 +2,6 @@
 import { resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { log } from "@clack/prompts";
-import type { CommandContext } from "./lib/create-plugin.ts";
 import { ConfigValidationError, StackError } from "./lib/errors.ts";
 
 // `strict: false` lets plugin-subcommand flags (e.g. `stack db apply --remote`)
@@ -132,8 +131,7 @@ async function main(): Promise<void> {
 	}
 
 	// Plugin subcommands (`stack <plugin> <command>`) — build the slot graph
-	// once, look the command up, and hand it a CommandContext whose `resolve`
-	// is wired to the graph.
+	// once, look the command up, and hand it a CommandContext wired to the graph.
 	const pluginName = command;
 	const commandName = subcommand;
 	if (!commandName) usage();
@@ -143,9 +141,7 @@ async function main(): Promise<void> {
 	const { findPluginCommand, parseCommandFlags } = await import(
 		"./lib/command-router.ts"
 	);
-	const { createLogContext, createPromptContext } = await import(
-		"./lib/prompt.ts"
-	);
+	const { createCommandContext } = await import("./lib/command-context.ts");
 
 	const config = await loadConfig(configPath);
 	const { graph, plugins } = await buildGraphFromConfig({
@@ -164,13 +160,12 @@ async function main(): Promise<void> {
 	const flags = parseCommandFlags(match.command, process.argv.slice(2));
 	const plugin = plugins.find((p) => p.name === pluginName);
 
-	const ctx: CommandContext<unknown> = {
+	const ctx = createCommandContext({
 		options: plugin?.options ?? {},
 		cwd: process.cwd(),
-		resolve: (slot) => graph.resolve(slot),
-		log: createLogContext(),
-		prompt: createPromptContext(),
-	};
+		graph,
+		configPath,
+	});
 
 	await match.command.handler(ctx, flags);
 }

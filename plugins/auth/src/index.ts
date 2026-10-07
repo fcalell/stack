@@ -8,6 +8,7 @@ import { api } from "@fcalell/plugin-api";
 import { RESERVED_SLUGS } from "@fcalell/plugin-api/lib/slugify";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
 import { db } from "@fcalell/plugin-db";
+import { screens } from "@fcalell/plugin-screens";
 import {
 	defaultOrgRoles,
 	defaultOrgStatements,
@@ -504,6 +505,13 @@ export const auth = plugin("auth", {
 			self.options.mcp
 				? [AUTH_PREFIX, ...OAUTH_DISCOVERY_PREFIXES]
 				: AUTH_PREFIX,
+		),
+
+		// The screens workbench answers the session a signed-in screen reads;
+		// without `screens` in the config the slot resolves to nothing and this
+		// is a no-op.
+		screens.slots.handlerModules.contribute(
+			() => "@fcalell/plugin-auth/screens",
 		),
 
 		// The MCP endpoint (api's `src/worker/mcp.ts`) authenticates through

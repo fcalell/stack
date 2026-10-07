@@ -562,15 +562,23 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 				}
 			}
 
-			app.post(`${rpcPrefix}/*`, async (c) => {
+			// A query travels as GET (its input in `?data=`), everything else as
+			// POST. The RPC handler refuses a GET on any procedure that is not a
+			// query (`stamp` in ../procedure.ts), so a cross-site navigation can
+			// only trigger a read.
+			app.on(["GET", "POST"], `${rpcPrefix}/*`, async (c) => {
 				// oRPC parses a request with a *missing* Content-Type as JSON, and
 				// SameSite=None (native support) means a browser can send one
 				// cross-site without a CORS preflight. Reject anything that isn't
 				// explicitly application/json before it reaches the RPC handler.
 				// Lowercased first: RFC 9110 treats the media type token
-				// case-insensitively ("Application/JSON" is valid JSON).
+				// case-insensitively ("Application/JSON" is valid JSON). A GET has
+				// no body to parse.
 				const contentType = c.req.header("content-type")?.toLowerCase();
-				if (!contentType?.startsWith("application/json")) {
+				if (
+					c.req.method === "POST" &&
+					!contentType?.startsWith("application/json")
+				) {
 					return c.json({ code: "UNSUPPORTED_MEDIA_TYPE" }, 415);
 				}
 

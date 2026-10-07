@@ -17,7 +17,7 @@
           packages = [
             # engines.node is ">=22.20" (`path.matchesGlob` is stable from it); node 24 matches the linked ../helm consumer.
             pkgs.nodejs_24
-            # Provides the `pnpm` shim that honours packageManager (pnpm@11.28.3).
+            # Provides the `pnpm` shim that honours packageManager (pnpm@11.28.4).
             pkgs.corepack
 
             # turbo runs check-types across the workspace (root `pnpm check`).

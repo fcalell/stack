@@ -1,24 +1,32 @@
 import { posix } from "node:path";
 import {
+	dedupeImports,
 	renderTsSourceFile,
 	type TsExpression,
 	type TsImportSpec,
 	type TsSourceFile,
 } from "@fcalell/cli/ast";
-import type { CodegenViteConfigPayload } from "../types.ts";
+import type { ViteConfigValues } from "../types.ts";
 
-export function aggregateViteConfig(payload: CodegenViteConfigPayload): string {
-	const imports: TsImportSpec[] = [
+// Renders a Vite config module from the resolved values of `vite.slots.*`.
+// `.stack/vite.config.ts` is this output for the app's own slot values; a host
+// that needs another variant (no `clientHeaders`, extra plugin calls) resolves
+// the slots itself, adjusts the values and renders them here. The renderer
+// imports what its own output uses (`defineConfig`, `fileURLToPath` for `root`,
+// `searchForWorkspaceRoot` for `fsAllow`); a contribution declares every import
+// its expression needs, and the renderer merges them by source.
+export function renderViteConfig(values: ViteConfigValues): string {
+	const imports: TsImportSpec[] = dedupeImports([
 		{ source: "node:url", named: ["fileURLToPath"] },
 		{
 			source: "vite",
 			named:
-				payload.fsAllow.length > 0
+				values.fsAllow.length > 0
 					? ["defineConfig", "searchForWorkspaceRoot"]
 					: ["defineConfig"],
 		},
-		...payload.imports,
-	];
+		...values.configImports,
+	]);
 
 	const configProps: Array<{
 		key: string;
@@ -54,7 +62,7 @@ export function aggregateViteConfig(payload: CodegenViteConfigPayload): string {
 				properties: [
 					{
 						key: "outDir",
-						value: { kind: "string", value: posix.join("..", payload.outDir) },
+						value: { kind: "string", value: posix.join("..", values.outDir) },
 					},
 					{ key: "emptyOutDir", value: { kind: "boolean", value: true } },
 				],
@@ -62,23 +70,23 @@ export function aggregateViteConfig(payload: CodegenViteConfigPayload): string {
 		},
 		{
 			key: "plugins",
-			value: { kind: "array", items: payload.pluginCalls },
+			value: { kind: "array", items: values.pluginCalls },
 		},
 	];
 
 	const serverProps: Array<{ key: string; value: TsExpression }> = [];
-	if (payload.devServerPort > 0) {
+	if (values.devServerPort > 0) {
 		serverProps.push({
 			key: "port",
-			value: { kind: "number", value: payload.devServerPort },
+			value: { kind: "number", value: values.devServerPort },
 		});
 	}
-	if (payload.serverProxy.length > 0) {
+	if (values.serverProxy.length > 0) {
 		serverProps.push({
 			key: "proxy",
 			value: {
 				kind: "object",
-				properties: payload.serverProxy.map((entry) => ({
+				properties: values.serverProxy.map((entry) => ({
 					key: entry.path,
 					value: {
 						kind: "object",
@@ -101,7 +109,7 @@ export function aggregateViteConfig(payload: CodegenViteConfigPayload): string {
 			},
 		});
 	}
-	const headerNames = Object.keys(payload.clientHeaders).sort();
+	const headerNames = Object.keys(values.clientHeaders).sort();
 	if (headerNames.length > 0) {
 		serverProps.push({
 			key: "headers",
@@ -111,13 +119,13 @@ export function aggregateViteConfig(payload: CodegenViteConfigPayload): string {
 					key: name,
 					value: {
 						kind: "string",
-						value: payload.clientHeaders[name] as string,
+						value: values.clientHeaders[name] as string,
 					},
 				})),
 			},
 		});
 	}
-	if (payload.fsAllow.length > 0) {
+	if (values.fsAllow.length > 0) {
 		serverProps.push({
 			key: "fs",
 			value: {
@@ -146,7 +154,7 @@ export function aggregateViteConfig(payload: CodegenViteConfigPayload): string {
 										},
 									],
 								},
-								...payload.fsAllow,
+								...values.fsAllow,
 							],
 						},
 					},
@@ -154,7 +162,7 @@ export function aggregateViteConfig(payload: CodegenViteConfigPayload): string {
 			},
 		});
 	}
-	const watchIgnored = [...new Set(payload.watchIgnored)];
+	const watchIgnored = [...new Set(values.watchIgnored)];
 	if (watchIgnored.length > 0) {
 		serverProps.push({
 			key: "watch",
@@ -183,19 +191,19 @@ export function aggregateViteConfig(payload: CodegenViteConfigPayload): string {
 	}
 
 	const resolveProps: Array<{ key: string; value: TsExpression }> = [];
-	if (payload.resolveAliases.length > 0) {
+	if (values.resolveAliases.length > 0) {
 		resolveProps.push({
 			key: "alias",
 			value: {
 				kind: "object",
-				properties: payload.resolveAliases.map((a) => ({
+				properties: values.resolveAliases.map((a) => ({
 					key: a.find,
 					value: { kind: "string", value: a.replacement },
 				})),
 			},
 		});
 	}
-	const dedupe = [...new Set(payload.resolveDedupe)];
+	const dedupe = [...new Set(values.resolveDedupe)];
 	if (dedupe.length > 0) {
 		resolveProps.push({
 			key: "dedupe",

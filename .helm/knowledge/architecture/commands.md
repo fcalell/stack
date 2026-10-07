@@ -71,7 +71,16 @@ $ stack db reset         # Reset local database
 ```
 
 Each handler receives a `CommandContext` with `options` (typed from the plugin's schema), `cwd`,
-`log`, `prompt`, and `resolve(slot)`.
+`log`, `prompt`, `resolve(slot)` and `generate()`. `generate()` runs `stack generate`'s own
+function in process, against the same config and `cwd`: every artifact is written and every
+`postWrite` hook has run when it resolves. A command that reads generated files calls it first
+instead of spawning the CLI; `resolve` keeps answering from the graph built before the call.
+
+## Screens
+
+`stack screens dev [--port 6006]` runs `ctx.generate()` (the route tree, the stylesheet and the two screens files must exist), then Storybook on the config directory `.stack/screens/`, whose Vite config is `.stack/screens.vite.config.ts`. The route files under `react`'s routes directory are its stories. The Storybook packages are the app's own (`stack add screens` writes them as `devDependencies`, see [consumer-project](./consumer-project.md#from-github)); the handler runs the `storybook` the app installs and the config resolves its framework and addon from the app. The handler resolves no slot: both screens files are `generate` artifacts, `screens.slots.viteConfig` and `storybookMain`. A Storybook of the app's own that draws components (the showcase's roster) runs on a third, `.stack/storybook.vite.config.ts`, which its own config writes by calling `writeStorybookConfig` from `@fcalell/plugin-screens/node`; `generate` never writes it and no command serves it.
+
+A story's forced state (loading, error, empty, not found) answers a query only; a mutation always answers from its fixture (or `no fixture for <path>`). The kind is the HTTP method: stack's client sends a query as `GET` and a mutation as `POST` (see [runtime](./runtime.md)), so the answerer reads it off the request, with no header of its own.
 
 ## Limits
 

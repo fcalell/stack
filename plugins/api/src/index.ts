@@ -618,7 +618,7 @@ export const api = plugin("api", {
 		{
 			page: "client",
 			trigger:
-				"Calling the API from the app: the typed client, queries, cache invalidation or `useAbility`",
+				"Calling the API from the app: the typed client, queries, drawing a not-found state, cache invalidation or `useAbility`",
 		},
 		{ page: "testing", trigger: "Writing a test that calls a procedure" },
 		{

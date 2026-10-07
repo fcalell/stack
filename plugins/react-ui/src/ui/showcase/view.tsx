@@ -3,7 +3,6 @@ import {
 	SEGMENTED_CONTROL,
 	segment,
 	segmentLabel,
-	text,
 } from "@fcalell/ui-core/variants";
 import { useLayoutEffect, useState } from "react";
 import {
@@ -47,11 +46,7 @@ function applyView(view: View): void {
 	root.dataset.density = view.density;
 }
 
-function search(view: View): string {
-	return `?${new URLSearchParams({ mode: view.mode, density: view.density })}`;
-}
-
-// The page's own parameters (a layout's place) stay.
+// The page's own parameters stay.
 function writeView(view: View): void {
 	const url = new URL(window.location.href);
 	url.searchParams.set("mode", view.mode);
@@ -76,14 +71,7 @@ export function useView(): [View, (next: View) => void] {
 	return [view, change];
 }
 
-// The showcase's pages, each linked from the others' headers.
-const PAGES = [
-	{ path: "/foundations", label: "Foundations" },
-	{ path: "/layout", label: "Layout" },
-];
-
-// A header's mode and density toggles, and the links to the sibling pages at
-// the same view.
+// A header's mode and density toggles.
 export function ViewBar(props: { view: View; onChange: (next: View) => void }) {
 	const { view, onChange } = props;
 	return (
@@ -100,15 +88,6 @@ export function ViewBar(props: { view: View; onChange: (next: View) => void }) {
 				value={view.density}
 				onChange={(density) => onChange({ ...view, density })}
 			/>
-			{PAGES.filter((page) => page.path !== location.pathname).map((page) => (
-				<a
-					key={page.path}
-					href={`${page.path}${search(view)}`}
-					className={cn(text({ role: "body" }), "text-accent-ink")}
-				>
-					{page.label}
-				</a>
-			))}
 		</>
 	);
 }

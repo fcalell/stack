@@ -34,6 +34,7 @@ runtime export.
 | `@fcalell/plugin-react` | React on the web: Vite + React Compiler, TanStack Router file routes, app entry, providers, HTML shell and `<head>` metadata | `react()` |
 | `@fcalell/plugin-react-ui` | Design system on the web: `.stack/app.css` from the ui-core contract on Tailwind v4, fonts, the mode script, words, the roster components over Base UI, and the showcase data Storybook draws the roster from | `reactUi()` |
 | `@fcalell/plugin-expo` | Expo/React Native: Metro + app config + expo-router entry + EAS commands | `expo()` |
+| `@fcalell/plugin-screens` | The screens workbench: Storybook on the app's own Vite config serves every route in each query state from typed fixtures, answered by MSW in oRPC's wire format | `screens()` |
 | `@fcalell/plugin-native-ui` | Design system on the phone: the ui-core roster in React Native + Expo + uniwind, the phone layout at every width, fonts, words, native providers | `nativeUi()` |
 
 ## Dependency graph
@@ -49,20 +50,26 @@ and add's auto-pull); ordering falls out of the slot edges.
 plugin-cloudflare ────────> cli (owns cloudflare.slots.bindings/vars/routes/wranglerToml;
                                  derives from api.slots.env / routePrefixes, empty without api;
                                  contributes to vite.slots.serverProxy for same-origin dev)
-plugin-vite ──────────────> cli (owns vite.slots.configImports/pluginCalls/devServerPort/viteConfig;
+plugin-vite ──────────────> cli (owns vite.slots.configImports/pluginCalls/appPlugins/devServerPort/viteConfig;
                                  contributes to api.slots.devCorsOrigins for localhost dev)
 plugin-react ─────────────> cli, requires vite
                                  (owns react.slots.providers/entryImports/mountExpression/htmlShell/
-                                  htmlHead/htmlBodyEnd/routesDir/entrySource/htmlSource/providersSource/
+                                  htmlHead/htmlBodyEnd/routesDir/routerPlugin/entrySource/htmlSource/providersSource/
                                   routesDtsSource/topLevelRoutes/homeScaffold;
-                                  contributes to vite.slots.configImports/pluginCalls/resolveDedupe,
+                                  contributes to vite.slots.configImports/pluginCalls/appPlugins/resolveDedupe,
                                   cliSlots.postWrite (the route tree)/initScaffolds/removeFiles)
+plugin-screens ───────────> cli, requires react + api
+                                 (owns screens.slots.handlerModules/previewGlobals/viteConfig/storybookMain;
+                                  derives from vite's input slots, react.slots.routesDir/routerPlugin/entryImports/
+                                  routerBindings and api.slots.routePrefixes;
+                                  contributes to cliSlots.artifactFiles; reads, never writes, the app's Vite config)
 plugin-react-ui ──────────> cli + ui-core, requires react + vite
                                  (owns reactUi.slots.appCssImports/appCssBlocks/appCssLayers/fonts/
                                   resolvedTheme/appCssSource;
                                   contributes to vite.slots.configImports/pluginCalls/fsAllow,
                                   react.slots.providers/entryImports, auth.slots.reservedSlugs
-                                  (from react.slots.topLevelRoutes), cliSlots.buildSteps)
+                                  (from react.slots.topLevelRoutes), screens.slots.previewGlobals,
+                                  cliSlots.buildSteps)
 plugin-expo ──────────────> cli (owns expo.slots.metroConfig/expoConfig/entrySource,
                                  providers, easBuildProfiles/easUpdateChannel;
                                  contributes to api.slots.devCorsOrigins for the Metro dev origin,

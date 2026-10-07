@@ -1,3 +1,6 @@
 test-results/
 storybook-static/
 stories/
+
+.stack
+.wrangler

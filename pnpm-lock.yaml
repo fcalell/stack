@@ -159,12 +159,18 @@ importers:
       '@fcalell/plugin-api':
         specifier: workspace:*
         version: link:../../plugins/api
+      '@fcalell/plugin-cloudflare':
+        specifier: workspace:*
+        version: link:../../plugins/cloudflare
       '@fcalell/plugin-react':
         specifier: workspace:*
         version: link:../../plugins/react
       '@fcalell/plugin-react-ui':
         specifier: workspace:*
         version: link:../../plugins/react-ui
+      '@fcalell/plugin-screens':
+        specifier: workspace:*
+        version: link:../../plugins/screens
       '@fcalell/plugin-vite':
         specifier: workspace:*
         version: link:../../plugins/vite
@@ -196,6 +202,15 @@ importers:
       '@fcalell/ui-core':
         specifier: workspace:*
         version: link:../../packages/ui-core
+      '@orpc/client':
+        specifier: 1.14.4
+        version: 1.14.4(@opentelemetry/api@1.9.1)
+      '@orpc/server':
+        specifier: 1.14.4
+        version: 1.14.4(@opentelemetry/api@1.9.1)(ws@8.22.0)
+      '@orpc/standard-server-fetch':
+        specifier: 1.14.4
+        version: 1.14.4(@opentelemetry/api@1.9.1)
       '@storybook/addon-a11y':
         specifier: ^10.6.1
         version: 10.6.1(storybook@10.6.1(@types/react@19.3.0)(prettier@3.9.9)(react@19.3.0))
@@ -229,6 +244,12 @@ importers:
       babel-plugin-react-compiler:
         specifier: ^1.0.0
         version: 1.0.0
+      msw:
+        specifier: ^2.15.0
+        version: 2.15.0(@types/node@25.9.8)(typescript@5.9.3)
+      msw-storybook-addon:
+        specifier: ^3.0.3
+        version: 3.0.3(msw@2.15.0(@types/node@25.9.8)(typescript@5.9.3))(storybook@10.6.1(@types/react@19.3.0)(prettier@3.9.9)(react@19.3.0))
       playwright:
         specifier: ^1.63.0
         version: 1.63.0
@@ -244,6 +265,9 @@ importers:
       vitest:
         specifier: ^5.0.3
         version: 5.0.3(@opentelemetry/api@1.9.1)(@types/node@25.9.8)(@vitest/browser-playwright@5.0.3)(@vitest/ui@5.0.3)(happy-dom@20.10.6)(msw@2.15.0(@types/node@25.9.8)(typescript@5.9.3))(vite@7.3.6(@types/node@25.9.8)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.51.2)(tsx@4.21.0)(yaml@2.9.1))
+      wrangler:
+        specifier: ^4.98.0
+        version: 4.147.0(@types/node@25.9.8)
 
   packages/auth-testing:
     dependencies:
@@ -438,6 +462,9 @@ importers:
       '@fcalell/plugin-db':
         specifier: workspace:*
         version: link:../db
+      '@fcalell/plugin-screens':
+        specifier: workspace:*
+        version: link:../screens
       '@orpc/server':
         specifier: ^1.14.4
         version: 1.14.4(@opentelemetry/api@1.9.1)(ws@8.22.0)
@@ -451,6 +478,12 @@ importers:
       '@fcalell/auth-testing':
         specifier: workspace:*
         version: link:../../packages/auth-testing
+      '@fcalell/plugin-react':
+        specifier: workspace:*
+        version: link:../react
+      '@fcalell/plugin-vite':
+        specifier: workspace:*
+        version: link:../vite
       '@fcalell/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
@@ -787,6 +820,9 @@ importers:
       '@fcalell/plugin-react':
         specifier: workspace:*
         version: link:../react
+      '@fcalell/plugin-screens':
+        specifier: workspace:*
+        version: link:../screens
       '@fcalell/plugin-vite':
         specifier: workspace:*
         version: link:../vite
@@ -860,6 +896,76 @@ importers:
       tsx:
         specifier: ^4.19.0
         version: 4.21.0
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vite:
+        specifier: ^7.3.6
+        version: 7.3.6(@types/node@25.9.8)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.51.2)(tsx@4.21.0)(yaml@2.9.1)
+
+  plugins/screens:
+    dependencies:
+      '@fcalell/cli':
+        specifier: workspace:*
+        version: link:../../packages/cli
+      '@fcalell/plugin-api':
+        specifier: workspace:*
+        version: link:../api
+      '@fcalell/plugin-react':
+        specifier: workspace:*
+        version: link:../react
+      '@fcalell/plugin-vite':
+        specifier: workspace:*
+        version: link:../vite
+    devDependencies:
+      '@fcalell/plugin-cloudflare':
+        specifier: workspace:*
+        version: link:../cloudflare
+      '@fcalell/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
+      '@orpc/client':
+        specifier: 1.14.4
+        version: 1.14.4(@opentelemetry/api@1.9.1)
+      '@orpc/server':
+        specifier: 1.14.4
+        version: 1.14.4(@opentelemetry/api@1.9.1)(ws@8.22.0)
+      '@orpc/standard-server-fetch':
+        specifier: 1.14.4
+        version: 1.14.4(@opentelemetry/api@1.9.1)
+      '@storybook/addon-a11y':
+        specifier: ^10.6.1
+        version: 10.6.1(storybook@10.6.1(@types/react@19.3.0)(prettier@3.9.9)(react@19.3.0))
+      '@storybook/react-vite':
+        specifier: ^10.6.1
+        version: 10.6.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(rollup@4.63.5)(storybook@10.6.1(@types/react@19.3.0)(prettier@3.9.9)(react@19.3.0))(supports-color@10.2.2)(typescript@5.9.3)(vite@7.3.6(@types/node@25.9.8)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.51.2)(tsx@4.21.0)(yaml@2.9.1))
+      '@tanstack/react-router':
+        specifier: ^1.170.40
+        version: 1.170.40(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      '@types/node':
+        specifier: ^25.5.0
+        version: 25.9.8
+      '@types/react':
+        specifier: ^19.3.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: ^19.3.0
+        version: 19.3.0(@types/react@19.3.0)
+      msw:
+        specifier: ^2.15.0
+        version: 2.15.0(@types/node@25.9.8)(typescript@5.9.3)
+      msw-storybook-addon:
+        specifier: ^3.0.3
+        version: 3.0.3(msw@2.15.0(@types/node@25.9.8)(typescript@5.9.3))(storybook@10.6.1(@types/react@19.3.0)(prettier@3.9.9)(react@19.3.0))
+      react:
+        specifier: ^19.3.0
+        version: 19.3.0
+      react-dom:
+        specifier: ^19.3.0
+        version: 19.3.0(react@19.3.0)
+      storybook:
+        specifier: ^10.6.1
+        version: 10.6.1(@types/react@19.3.0)(prettier@3.9.9)(react@19.3.0)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -6505,6 +6611,13 @@ packages:
   ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
 
+  msw-storybook-addon@3.0.3:
+    resolution: {integrity: sha512-4Jh4oKxqdHzqoBwe5mke9eCxfUQud5TaU5PME1476GDfelSXMkZLBTkDFehPvq5hMC8ksOkEjL5fAo4kS8d4pg==}
+    hasBin: true
+    peerDependencies:
+      msw: '>=2'
+      storybook: ^9.0.0 || ^10.0.0 || ^11.0.0-0
+
   msw@2.15.0:
     resolution: {integrity: sha512-2wQAmKkQKxRuXvYJxVhPGG0wZNBQyD06oJvxqw90XqLvptdqxdlHrFUfEteKkpaNORX3Xzc+HtEl/q0nfmN2wQ==}
     engines: {node: '>=18'}
@@ -9928,8 +10041,7 @@ snapshots:
   '@img/sharp-win32-x64@0.35.4':
     optional: true
 
-  '@inquirer/ansi@2.0.9':
-    optional: true
+  '@inquirer/ansi@2.0.9': {}
 
   '@inquirer/confirm@6.3.3(@types/node@25.5.0)':
     dependencies:
@@ -9945,7 +10057,6 @@ snapshots:
       '@inquirer/type': 4.2.0(@types/node@25.9.8)
     optionalDependencies:
       '@types/node': 25.9.8
-    optional: true
 
   '@inquirer/core@12.0.4(@types/node@25.5.0)':
     dependencies:
@@ -9971,10 +10082,8 @@ snapshots:
       signal-exit: 4.1.0
     optionalDependencies:
       '@types/node': 25.9.8
-    optional: true
 
-  '@inquirer/figures@2.0.9':
-    optional: true
+  '@inquirer/figures@2.0.9': {}
 
   '@inquirer/type@4.2.0(@types/node@25.5.0)':
     optionalDependencies:
@@ -9984,7 +10093,6 @@ snapshots:
   '@inquirer/type@4.2.0(@types/node@25.9.8)':
     optionalDependencies:
       '@types/node': 25.9.8
-    optional: true
 
   '@isaacs/ttlcache@1.4.1': {}
 
@@ -10069,7 +10177,6 @@ snapshots:
       is-node-process: 1.2.0
       outvariant: 1.4.3
       strict-event-emitter: 0.5.1
-    optional: true
 
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     optional: true
@@ -10092,20 +10199,16 @@ snapshots:
 
   '@noble/hashes@2.2.0': {}
 
-  '@open-draft/deferred-promise@2.2.0':
-    optional: true
+  '@open-draft/deferred-promise@2.2.0': {}
 
-  '@open-draft/deferred-promise@3.0.0':
-    optional: true
+  '@open-draft/deferred-promise@3.0.0': {}
 
   '@open-draft/logger@0.3.0':
     dependencies:
       is-node-process: 1.2.0
       outvariant: 1.4.3
-    optional: true
 
-  '@open-draft/until@2.1.0':
-    optional: true
+  '@open-draft/until@2.1.0': {}
 
   '@opentelemetry/api@1.9.1':
     optional: true
@@ -11608,10 +11711,8 @@ snapshots:
   '@types/set-cookie-parser@2.4.10':
     dependencies:
       '@types/node': 25.9.8
-    optional: true
 
-  '@types/statuses@2.0.6':
-    optional: true
+  '@types/statuses@2.0.6': {}
 
   '@types/unist@2.0.11': {}
 
@@ -12214,8 +12315,7 @@ snapshots:
 
   cli-spinners@2.9.2: {}
 
-  cli-width@4.1.0:
-    optional: true
+  cli-width@4.1.0: {}
 
   client-only@0.0.1: {}
 
@@ -13107,18 +13207,15 @@ snapshots:
 
   fast-deep-equal@3.1.3: {}
 
-  fast-string-truncated-width@3.0.3:
-    optional: true
+  fast-string-truncated-width@3.0.3: {}
 
   fast-string-width@3.0.2:
     dependencies:
       fast-string-truncated-width: 3.0.3
-    optional: true
 
   fast-wrap-ansi@0.2.2:
     dependencies:
       fast-string-width: 3.0.2
-    optional: true
 
   fault@2.0.1:
     dependencies:
@@ -13195,8 +13292,7 @@ snapshots:
 
   graceful-fs@4.2.11: {}
 
-  graphql@16.14.2:
-    optional: true
+  graphql@16.14.2: {}
 
   happy-dom@20.10.6:
     dependencies:
@@ -13226,7 +13322,6 @@ snapshots:
     dependencies:
       '@types/set-cookie-parser': 2.4.10
       set-cookie-parser: 3.1.2
-    optional: true
 
   hermes-compiler@250829098.0.10: {}
 
@@ -13310,8 +13405,7 @@ snapshots:
     dependencies:
       is-docker: 3.0.0
 
-  is-node-process@1.2.0:
-    optional: true
+  is-node-process@1.2.0: {}
 
   is-number@7.0.0: {}
 
@@ -14506,6 +14600,11 @@ snapshots:
 
   ms@2.1.3: {}
 
+  msw-storybook-addon@3.0.3(msw@2.15.0(@types/node@25.9.8)(typescript@5.9.3))(storybook@10.6.1(@types/react@19.3.0)(prettier@3.9.9)(react@19.3.0)):
+    dependencies:
+      msw: 2.15.0(@types/node@25.9.8)(typescript@5.9.3)
+      storybook: 10.6.1(@types/react@19.3.0)(prettier@3.9.9)(react@19.3.0)
+
   msw@2.15.0(@types/node@25.5.0)(typescript@5.9.3):
     dependencies:
       '@inquirer/confirm': 6.3.3(@types/node@25.5.0)
@@ -14556,12 +14655,10 @@ snapshots:
       typescript: 5.9.3
     transitivePeerDependencies:
       - '@types/node'
-    optional: true
 
   multitars@1.0.2: {}
 
-  mute-stream@3.0.0:
-    optional: true
+  mute-stream@3.0.0: {}
 
   nanoid@3.3.11: {}
 
@@ -14658,8 +14755,7 @@ snapshots:
       strip-ansi: 5.2.0
       wcwidth: 1.0.1
 
-  outvariant@1.4.3:
-    optional: true
+  outvariant@1.4.3: {}
 
   oxc-parser@0.127.0:
     dependencies:
@@ -15324,8 +15420,7 @@ snapshots:
       onetime: 2.0.1
       signal-exit: 3.0.7
 
-  rettime@0.11.12:
-    optional: true
+  rettime@0.11.12: {}
 
   rollup@4.63.5:
     dependencies:
@@ -15475,8 +15570,7 @@ snapshots:
 
   signal-exit@3.0.7: {}
 
-  signal-exit@4.1.0:
-    optional: true
+  signal-exit@4.1.0: {}
 
   simple-plist@1.3.1:
     dependencies:
@@ -15566,8 +15660,7 @@ snapshots:
 
   stream-buffers@2.2.0: {}
 
-  strict-event-emitter@0.5.1:
-    optional: true
+  strict-event-emitter@0.5.1: {}
 
   strict-uri-encode@2.0.0: {}
 
@@ -15679,13 +15772,11 @@ snapshots:
 
   tinyspy@4.0.6: {}
 
-  tldts-core@7.4.16:
-    optional: true
+  tldts-core@7.4.16: {}
 
   tldts@7.4.16:
     dependencies:
       tldts-core: 7.4.16
-    optional: true
 
   tmpl@1.0.5: {}
 
@@ -15702,7 +15793,6 @@ snapshots:
   tough-cookie@6.0.2:
     dependencies:
       tldts: 7.4.16
-    optional: true
 
   trough@2.2.0: {}
 
@@ -15834,8 +15924,7 @@ snapshots:
       rollup: 4.63.5
       vite: 7.3.6(@types/node@25.9.8)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.51.2)(tsx@4.21.0)(yaml@2.9.1)
 
-  until-async@3.0.2:
-    optional: true
+  until-async@3.0.2: {}
 
   update-browserslist-db@1.2.3(browserslist@4.28.2):
     dependencies:

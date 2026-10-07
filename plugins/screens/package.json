@@ -1,0 +1,123 @@
+{
+	"name": "@fcalell/plugin-screens",
+	"version": "0.0.0",
+	"type": "module",
+	"sideEffects": false,
+	"engines": {
+		"node": ">=24"
+	},
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./node": {
+			"types": "./dist/node/index.d.ts",
+			"default": "./dist/node/index.js"
+		},
+		"./vite": {
+			"types": "./dist/node/vite-plugin.d.ts",
+			"default": "./dist/node/vite-plugin.js"
+		},
+		"./storybook": {
+			"types": "./dist/node/storybook.d.ts",
+			"default": "./dist/node/storybook.js"
+		},
+		"./fixtures": "./src/ui/fixtures.ts",
+		"./msw": "./src/ui/msw.ts",
+		"./preview": "./src/ui/preview.tsx",
+		"./stories": "./src/ui/stories.tsx"
+	},
+	"files": [
+		"dist",
+		"src",
+		"guide",
+		"README.md",
+		"tsconfig.json",
+		"tsconfig.build.json"
+	],
+	"license": "MIT",
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"prepare": "pnpm build",
+		"check-types": "tsc --noEmit --pretty",
+		"lint": "biome check --write --unsafe",
+		"check": "pnpm check-types && pnpm lint",
+		"test": "node --test 'test/**/*.test.ts'",
+		"clear": "rm -rf dist node_modules .turbo"
+	},
+	"peerDependencies": {
+		"@orpc/client": "1.14.4",
+		"@orpc/server": "1.14.4",
+		"@orpc/standard-server-fetch": "1.14.4",
+		"@storybook/addon-a11y": "^10.6.1",
+		"@storybook/react-vite": "^10.6.1",
+		"@tanstack/react-router": "^1.170.40",
+		"msw": "^2.15.0",
+		"msw-storybook-addon": "^3.0.3",
+		"react": "^19.3",
+		"react-dom": "^19.3",
+		"storybook": "^10.6.1"
+	},
+	"peerDependenciesMeta": {
+		"@orpc/client": {
+			"optional": true
+		},
+		"@orpc/server": {
+			"optional": true
+		},
+		"@orpc/standard-server-fetch": {
+			"optional": true
+		},
+		"@storybook/addon-a11y": {
+			"optional": true
+		},
+		"@storybook/react-vite": {
+			"optional": true
+		},
+		"@tanstack/react-router": {
+			"optional": true
+		},
+		"msw": {
+			"optional": true
+		},
+		"msw-storybook-addon": {
+			"optional": true
+		},
+		"react": {
+			"optional": true
+		},
+		"react-dom": {
+			"optional": true
+		},
+		"storybook": {
+			"optional": true
+		}
+	},
+	"dependencies": {
+		"@fcalell/cli": "workspace:*",
+		"@fcalell/plugin-api": "workspace:*",
+		"@fcalell/plugin-react": "workspace:*",
+		"@fcalell/plugin-vite": "workspace:*"
+	},
+	"devDependencies": {
+		"@fcalell/plugin-cloudflare": "workspace:*",
+		"@fcalell/typescript-config": "workspace:*",
+		"@orpc/client": "1.14.4",
+		"@orpc/server": "1.14.4",
+		"@orpc/standard-server-fetch": "1.14.4",
+		"@storybook/addon-a11y": "^10.6.1",
+		"@storybook/react-vite": "^10.6.1",
+		"@tanstack/react-router": "^1.170.40",
+		"@types/node": "^25.5.0",
+		"@types/react": "^19.3.0",
+		"@types/react-dom": "^19.3.0",
+		"msw": "^2.15.0",
+		"msw-storybook-addon": "^3.0.3",
+		"react": "^19.3.0",
+		"react-dom": "^19.3.0",
+		"storybook": "^10.6.1",
+		"typescript": "^5.9.3",
+		"vite": "^7.3.6"
+	}
+}

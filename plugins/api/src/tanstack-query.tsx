@@ -7,9 +7,13 @@ import {
 	orgRulesQueryKey,
 	type PackedRulesLike,
 } from "@fcalell/plugin-api/ability-client";
+import { registerOperationContext } from "@fcalell/plugin-api/client";
 import { handleMutationSuccess } from "@fcalell/plugin-api/query-invalidation";
 import type { RouterClient } from "@fcalell/plugin-api/types";
-import { createTanstackQueryUtils } from "@orpc/tanstack-query";
+import {
+	createTanstackQueryUtils,
+	OPERATION_CONTEXT_SYMBOL,
+} from "@orpc/tanstack-query";
 import {
 	MutationCache,
 	QueryClient,
@@ -84,7 +88,10 @@ export function createQueryClient(config?: QueryClientConfig): QueryClient {
 // Wrap a typed oRPC client with TanStack Query helpers (`.queryOptions`,
 // `.mutationOptions`, `.infiniteOptions`). The native analog of `createClient`
 // from `@fcalell/plugin-api/client` — same router-typed surface, query-shaped.
+// The client sends a query these utils make as GET: it learns the operation
+// context's symbol here, from the copy of `@orpc/tanstack-query` the utils are.
 export function createApiQueryUtils<TRouter>(client: RouterClient<TRouter>) {
+	registerOperationContext(OPERATION_CONTEXT_SYMBOL);
 	return createTanstackQueryUtils(client);
 }
 

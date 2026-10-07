@@ -8,6 +8,10 @@
 			"types": "./dist/index.d.ts",
 			"default": "./dist/index.js"
 		},
+		"./node": {
+			"types": "./dist/node/index.d.ts",
+			"default": "./dist/node/index.js"
+		},
 		"./preset": {
 			"types": "./dist/node/preset.d.ts",
 			"default": "./dist/node/preset.js"

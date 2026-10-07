@@ -8,7 +8,7 @@ import type {
 	TsImportSpec,
 } from "@fcalell/cli/ast";
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
-import { vite } from "@fcalell/plugin-vite";
+import { type AppPlugin, vite } from "@fcalell/plugin-vite";
 import {
 	aggregateEntry,
 	aggregateHtml,
@@ -101,6 +101,43 @@ const routesDir = slot.derived({
 		const routes = ctx.options.routes;
 		if (routes === false) return null;
 		return routes?.dir ?? "src/app/routes";
+	},
+});
+
+// The router plugin's call and the imports it needs: TanStack's route-tree
+// generator, on the app's route files. Null when routing is off. A host that
+// draws components renders no route, so it leaves this slot unread.
+const routerPlugin = slot.derived({
+	source: SOURCE,
+	name: "routerPlugin",
+	inputs: { dir: routesDir },
+	compute: (inp): AppPlugin | null => {
+		if (inp.dir === null) return null;
+		const paths = routerPaths(inp.dir);
+		return {
+			imports: [
+				{ source: "@tanstack/router-plugin/vite", named: ["tanstackRouter"] },
+				{ source: "node:url", named: ["fileURLToPath"] },
+			],
+			call: {
+				kind: "call",
+				callee: { kind: "identifier", name: "tanstackRouter" },
+				args: [
+					{
+						kind: "object",
+						properties: [
+							{ key: "target", value: { kind: "string", value: "react" } },
+							{
+								key: "autoCodeSplitting",
+								value: { kind: "boolean", value: true },
+							},
+							{ key: "routesDirectory", value: paths.routesDirectory },
+							{ key: "generatedRouteTree", value: paths.generatedRouteTree },
+						],
+					},
+				],
+			},
+		};
 	},
 });
 
@@ -203,6 +240,7 @@ export const react = plugin("react", {
 		htmlHead,
 		htmlBodyEnd,
 		routesDir,
+		routerPlugin,
 		entrySource,
 		htmlSource,
 		providersSource,
@@ -219,19 +257,15 @@ export const react = plugin("react", {
 				default: "react",
 			}),
 		),
-		vite.slots.configImports.contribute(async (ctx) => {
-			if ((await ctx.resolve(self.slots.routesDir)) === null) return undefined;
-			return {
-				source: "@tanstack/router-plugin/vite",
-				named: ["tanstackRouter"],
-			} as TsImportSpec;
-		}),
-		// One nested plugin array (Vite flattens it): the router plugin must
-		// run before the React plugin, so the pair holds its own order rather
-		// than leaning on the sorted `pluginCalls` list.
-		vite.slots.pluginCalls.contribute(async (ctx): Promise<TsExpression> => {
-			const dir = await ctx.resolve(self.slots.routesDir);
-			const reactCall: TsExpression = {
+		// The router plugin is the app's own: a host that draws components
+		// (Storybook's roster) never reads it. It runs before the React plugin,
+		// which `appPlugins` (rendered ahead of `pluginCalls`) keeps by position.
+		vite.slots.appPlugins.contribute(
+			async (ctx): Promise<AppPlugin | undefined> =>
+				(await ctx.resolve(self.slots.routerPlugin)) ?? undefined,
+		),
+		vite.slots.pluginCalls.contribute(
+			(): TsExpression => ({
 				kind: "call",
 				callee: { kind: "identifier", name: "react" },
 				args: [
@@ -267,35 +301,8 @@ export const react = plugin("react", {
 						],
 					},
 				],
-			};
-			if (dir === null) return reactCall;
-			const paths = routerPaths(dir);
-			const routerCall: TsExpression = {
-				kind: "call",
-				callee: { kind: "identifier", name: "tanstackRouter" },
-				args: [
-					{
-						kind: "object",
-						properties: [
-							{ key: "target", value: { kind: "string", value: "react" } },
-							{
-								key: "autoCodeSplitting",
-								value: { kind: "boolean", value: true },
-							},
-							{
-								key: "routesDirectory",
-								value: { kind: "string", value: paths.routesDirectory },
-							},
-							{
-								key: "generatedRouteTree",
-								value: { kind: "string", value: paths.generatedRouteTree },
-							},
-						],
-					},
-				],
-			};
-			return { kind: "array", items: [routerCall, reactCall] };
-		}),
+			}),
+		),
 
 		// React's runtime must be a singleton: a workspace-linked stack
 		// checkout resolving its own copy would ship two, and hooks throw.

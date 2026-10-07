@@ -11,6 +11,7 @@ step does. Run a command from the app's root. Every command but `init` takes
 | `stack remove <plugin>` | Dropping a plugin no other plugin requires: it removes the plugin's files and dependencies, patches the config and regenerates |
 | `stack generate` | After editing `stack.config.ts`, or when `.stack/` is missing. `dev` and `build` run it first |
 | `stack dev` | Working on the app: every plugin's dev process (the worker, the Node server, Vite) runs in one terminal, and the watchers regenerate as files change. Metro is not one: it runs under `stack expo dev` (`node_modules/@fcalell/plugin-expo/guide/builds.md`) |
+| `stack screens dev [--port 6006]` | Designing or changing a web screen: it serves every route in each of its query states from `src/app/fixtures.ts`, with no backend (`node_modules/@fcalell/plugin-screens/guide/screens.md`) |
 | `stack build` | Building for production |
 | `stack deploy` | Shipping: it builds, shows each pre-deploy check for confirmation, then deploys |
 | `stack <plugin> <command>` | A plugin's own command, such as `stack db push` |

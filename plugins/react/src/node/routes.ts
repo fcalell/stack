@@ -1,34 +1,64 @@
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import type { TsExpression } from "@fcalell/cli/ast";
 import { Generator, getConfig } from "@tanstack/router-generator";
 
 // Where the generated route tree lands, relative to the project root. The
 // entry and `.stack/routes.d.ts` import it as `./routeTree.gen.ts`.
 export const ROUTE_TREE = ".stack/routeTree.gen.ts";
 
-// TanStack's generator options for a routes directory given relative to the
-// project root. The Vite plugin resolves relative paths against Vite's root,
-// `.stack/`, so the paths are written from there; `stack generate` runs the
-// same generator from the same root, so both write one tree.
+// `fileURLToPath(new URL("<path>", import.meta.url))`: an absolute path
+// anchored on the generated `.stack/vite.config.ts`, so it holds wherever the
+// host puts Vite's `root` and no machine-specific path is written into the
+// config. The plugin contributes the `node:url` import it needs.
+function besideConfig(path: string): TsExpression {
+	return {
+		kind: "call",
+		callee: { kind: "identifier", name: "fileURLToPath" },
+		args: [
+			{
+				kind: "new",
+				callee: { kind: "identifier", name: "URL" },
+				args: [
+					{ kind: "string", value: path },
+					{
+						kind: "member",
+						object: { kind: "identifier", name: "import.meta" },
+						property: "url",
+					},
+				],
+			},
+		],
+	};
+}
+
+// TanStack's router plugin options for a routes directory given relative to
+// the project root, as expressions evaluated in `.stack/vite.config.ts`.
 export function routerPaths(dir: string): {
-	routesDirectory: string;
-	generatedRouteTree: string;
+	routesDirectory: TsExpression;
+	generatedRouteTree: TsExpression;
 } {
 	return {
-		routesDirectory: `../${dir}`,
-		generatedRouteTree: "./routeTree.gen.ts",
+		routesDirectory: besideConfig(`../${dir}`),
+		generatedRouteTree: besideConfig("./routeTree.gen.ts"),
 	};
 }
 
 // Writes `.stack/routeTree.gen.ts`, so the consumer's type-check sees its
-// typed routes right after `stack generate`, before Vite has run.
+// typed routes right after `stack generate`, before Vite has run. The paths
+// are the ones the router plugin resolves from the config's location.
 export async function generateRouteTree(
 	cwd: string,
 	dir: string,
 ): Promise<void> {
 	const root = join(cwd, ".stack");
 	const config = getConfig(
-		{ target: "react", disableLogging: true, ...routerPaths(dir) },
+		{
+			target: "react",
+			disableLogging: true,
+			routesDirectory: join(cwd, dir),
+			generatedRouteTree: join(cwd, ROUTE_TREE),
+		},
 		root,
 	);
 	await new Generator({ config, root }).run();

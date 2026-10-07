@@ -15,6 +15,8 @@ export const api = createClient<AppRouter>(); // url "/rpc", credentials "includ
 export const orpc = createApiQueryUtils(api);
 ```
 
+A query made through `orpc.*.queryOptions` travels as `GET` (its input in the URL) and a mutation as `POST`. Build the utils with `createApiQueryUtils`: oRPC's own `createTanstackQueryUtils` sends queries as `POST`.
+
 On the phone, pass an absolute `url` (`process.env.EXPO_PUBLIC_API_URL`). `headers` takes an
 object or a function returning one.
 
@@ -29,6 +31,17 @@ wrapped in `QueryProvider`; never wrap it again. Without one, add `@tanstack/rea
 ```tsx
 const { data } = useQuery(orpc.projects.list.queryOptions({ input: { organizationId } }));
 const create = useMutation(orpc.projects.create.mutationOptions());
+```
+
+## Not found
+
+A procedure that throws `ApiError("NOT_FOUND")` reaches the screen as a failed query.
+`isNotFound(error)` from `@fcalell/plugin-api/client` tells that error from any other, so the
+screen draws its not-found state for it and its error state for the rest.
+
+```tsx
+const project = useQuery(orpc.projects.get.queryOptions({ input: { projectId } }));
+if (project.isError) return isNotFound(project.error) ? <ProjectNotFound /> : <ProjectError />;
 ```
 
 ## Cache invalidation

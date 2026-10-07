@@ -29,7 +29,7 @@ conventions and typed routes; and [`add-a-route.md`](./guide/add-a-route.md), th
 | `.stack/routes.d.ts` | `react.slots.routesDtsSource` | The router's `Register` declaration |
 | `.stack/routeTree.gen.ts` | `cliSlots.postWrite` | TanStack Router's route tree |
 
-`.stack/vite.config.ts` gains `tanstackRouter()` ahead of `react()` (with the React Compiler), and `resolve.dedupe` for `react` and `react-dom`. `routes: false` turns file routing off: no route tree, no `routes.d.ts`, and no mount until a peer contributes one to `react.slots.mountExpression`.
+`.stack/vite.config.ts` gains `tanstackRouter()` ahead of `react()` (with the React Compiler; the router plugin is `react.slots.routerPlugin`, which reaches the app's config through `vite.slots.appPlugins`), and `resolve.dedupe` for `react` and `react-dom`. `routes: false` turns file routing off: no route tree, no `routes.d.ts`, and no mount until a peer contributes one to `react.slots.mountExpression`.
 
 ## Slots
 

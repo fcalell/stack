@@ -5,6 +5,7 @@ packages:
 
 allowBuilds:
   esbuild: true
+  msw: false
   workerd: true
   "@parcel/watcher": false
   "@prisma/client": false

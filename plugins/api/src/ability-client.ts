@@ -6,7 +6,7 @@ import {
 	type RawRuleOf,
 } from "@casl/ability";
 import { type PackRule, unpackRules } from "@casl/ability/extra";
-import { ORPCError } from "@orpc/client";
+import { isNotFound } from "./not-found.ts";
 import { ORG_RULES_PATH, SCOPE_ROUTES_PATH } from "./wire.ts";
 
 // WS6.3: framework-agnostic core behind
@@ -94,7 +94,7 @@ export async function fetchOrgRules(
 		// on) or no membership of this organization: both deny everything, and
 		// neither is a real failure. Every other error propagates: a real outage must
 		// surface through the query's error state, never a silent deny-all.
-		if (error instanceof ORPCError && error.code === "NOT_FOUND") return [];
+		if (isNotFound(error)) return [];
 		throw error;
 	}
 }

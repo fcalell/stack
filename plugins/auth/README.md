@@ -54,6 +54,7 @@ dev, where the frontend and the worker are cross-origin.
 | `api.slots.callbacks` | The callback file, whenever it exists; its absence throws while `emailOtp` or `magicLink` is on |
 | `api.slots.rbacStatements` | `ac`'s statements, else the default organization statements |
 | `api.slots.entities` | The auth tables' export names, organization, passkey and OAuth (`mcp`) tables when enabled |
+| `screens.slots.handlerModules` | `@fcalell/plugin-auth/screens`: MSW handlers answering `GET */api/auth/get-session` with a signed-in session typed by Better Auth's `Session` and `User`; unread without `screens` in the config |
 | `cliSlots.initPrompts` | Cookie prefix and organization toggle |
 | `cliSlots.initScaffolds`, `cliSlots.removeFiles` (auto) | `src/worker/plugins/auth.ts` from `templates/callbacks.ts` |
 

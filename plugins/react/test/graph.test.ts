@@ -50,8 +50,15 @@ test("the vite config runs the router plugin before React, with the compiler on"
 	const router = config.indexOf("tanstackRouter({");
 	const compiler = config.indexOf("react({");
 	assert.ok(router > 0 && compiler > router, config);
-	assert.match(config, /routesDirectory: "\.\.\/src\/app\/routes"/);
-	assert.match(config, /generatedRouteTree: "\.\/routeTree\.gen\.ts"/);
+	assert.match(
+		config,
+		/routesDirectory: fileURLToPath\(new URL\("\.\.\/src\/app\/routes", import\.meta\.url\)\)/,
+	);
+	assert.match(
+		config,
+		/generatedRouteTree: fileURLToPath\(new URL\("\.\/routeTree\.gen\.ts", import\.meta\.url\)\)/,
+	);
+	assert.equal(config.match(/from "node:url"/g)?.length, 1, config);
 	assert.match(config, /autoCodeSplitting: true/);
 	assert.match(config, /\["babel-plugin-react-compiler", \{\}\]/);
 	assert.match(config, /dedupe: \["react", "react-dom"\]/);
@@ -150,7 +157,10 @@ test("a custom routes directory reaches the router plugin and the scaffolds", as
 	const g = graph({ routes: { dir: "src/pages" } });
 	const files = await g.resolve(cliSlots.artifactFiles);
 	const config = files.find((f) => f.path === ".stack/vite.config.ts");
-	assert.match(config?.content ?? "", /routesDirectory: "\.\.\/src\/pages"/);
+	assert.match(
+		config?.content ?? "",
+		/routesDirectory: fileURLToPath\(new URL\("\.\.\/src\/pages", import\.meta\.url\)\)/,
+	);
 	const targets = (await g.resolve(cliSlots.initScaffolds)).map(
 		(s) => s.target,
 	);
@@ -176,4 +186,39 @@ test("routing off drops the router, the mount and the route scaffolds", async ()
 	assert.deepEqual(await g.resolve(cliSlots.initScaffolds), []);
 	assert.deepEqual(await g.resolve(react.slots.topLevelRoutes), []);
 	assert.deepEqual(await g.resolve(cliSlots.postWrite), []);
+});
+
+test("the router plugin is its own slot, held out of the calls every host reads", async () => {
+	const g = graph();
+	const router = await g.resolve(react.slots.routerPlugin);
+	assert.ok(router);
+	assert.deepEqual(
+		router.imports.map((spec) => spec.source),
+		["@tanstack/router-plugin/vite", "node:url"],
+	);
+	assert.equal(
+		router.call.kind === "call" &&
+			router.call.callee.kind === "identifier" &&
+			router.call.callee.name,
+		"tanstackRouter",
+	);
+
+	// `vite.slots.pluginCalls` is what a host that draws components renders:
+	// React's plugin and no router. The app's config renders the router first.
+	const calls = (await g.resolve(vite.slots.pluginCalls)).map((call) =>
+		call.kind === "call" && call.callee.kind === "identifier"
+			? call.callee.name
+			: call.kind,
+	);
+	assert.ok(calls.includes("react"), calls.join());
+	assert.ok(!calls.includes("tanstackRouter"), calls.join());
+	assert.deepEqual(await g.resolve(vite.slots.appPlugins), [router]);
+	const config = (await artifacts()).get(".stack/vite.config.ts") ?? "";
+	assert.match(config, /plugins: \[tanstackRouter\(\{/);
+});
+
+test("routing off leaves the router slot null and nothing for the app to add", async () => {
+	const g = graph({ routes: false });
+	assert.equal(await g.resolve(react.slots.routerPlugin), null);
+	assert.deepEqual(await g.resolve(vite.slots.appPlugins), []);
 });

@@ -59,6 +59,8 @@ my-app/
                              # `route.tsx` wraps its folder, `_layout` nests without a URL
                              # segment, `(group)` scopes without one; `react({ routes: { dir } })`
                              # moves it
+      fixtures.ts            # with screens: `defineFixtures<AppRouter>(procedures, params)`, the
+                             # answers of the procedures and an example value per route `$param`
   .stack/                    # generated — gitignored
     guide.md                 # the guide's index from cliSlots.guide: each page's load trigger
                              # and its path under node_modules, grouped by domain
@@ -71,6 +73,14 @@ my-app/
     wrangler.toml            # merged wrangler config from cloudflare.slots.wranglerToml
     .dev.vars                # generated mirror of the root .dev.vars (wrangler resolves it against the config dir)
     vite.config.ts           # Vite config from vite.slots.viteConfig
+    screens.vite.config.ts   # the same slot values rendered for the screens workbench's host, from
+                             # screens.slots.viteConfig (with screens)
+    screens/main.ts          # Storybook's config directory for `stack screens dev`, from
+                             # screens.slots.storybookMain (with screens)
+    storybook.vite.config.ts # the same slot values rendered for a Storybook that draws components
+                             # and no route (no router plugin), written by `writeStorybookConfig`
+                             # from `@fcalell/plugin-screens/node` when such a Storybook starts, never
+                             # by `generate`
     entry.tsx                # app bootstrap from react.slots.entrySource (the router inside the
                              # providers under StrictMode) or expo.slots.entrySource
     index.html               # web HTML shell with the <head> metadata from react.slots.htmlSource
@@ -207,6 +217,14 @@ latest commit together. The CLI's table (`packages/cli/src/lib/stack-packages.ts
 first-party package to its spec and lists its first-party `dependencies`; `stack init` and
 `stack add` write every `@fcalell/*` spec from it, and a plugin's own `dependencies` take a stack
 package's spec through `stackSpec` from `@fcalell/cli`.
+
+A package only a plugin's own host loads is not that plugin's dependency: `@fcalell/plugin-screens`
+keeps Storybook, its addons, MSW and oRPC's server as optional peers of its package and lists the
+same ranges as its `devDependencies`, which `stack add screens` writes into the app's
+`package.json`. An app with auth or react-ui, which depend on the package for its slots, installs
+none of them: they are optional because pnpm auto-installs a missing peer that is not. The host
+resolves each from the app's root, and a test holds the list to the manifest's
+`peerDependencies`.
 
 pnpm fetches the commit, installs the whole stack workspace in the clone (with the root's pinned
 pnpm) and runs the package's `prepare`; that install runs every workspace project's `prepare` in

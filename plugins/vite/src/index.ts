@@ -4,8 +4,9 @@ import { plugin, slot } from "@fcalell/cli";
 import type { TsExpression, TsImportSpec } from "@fcalell/cli/ast";
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { api } from "@fcalell/plugin-api";
-import { aggregateViteConfig } from "./node/codegen.ts";
+import { renderViteConfig } from "./node/codegen.ts";
 import {
+	type AppPlugin,
 	type ServerProxyEntry,
 	type ViteOptions,
 	viteOptionsSchema,
@@ -58,6 +59,17 @@ const pluginCalls = slot.list<TsExpression>({
 	source: SOURCE,
 	name: "pluginCalls",
 	sortBy: (a, b) => pluginCallName(a).localeCompare(pluginCallName(b)),
+});
+
+// A plugin call only the app's own config runs, with the imports it needs. A
+// host that draws the app's components in its own Vite (Storybook's roster)
+// renders `pluginCalls` alone, so a call the app needs and such a host must not
+// run (the route-tree generator) goes here. Rendered ahead of `pluginCalls`;
+// only `viteConfig` reads it, and a host that draws routes reads the slot that
+// owns the call.
+const appPlugins = slot.list<AppPlugin>({
+	source: SOURCE,
+	name: "appPlugins",
 });
 
 const resolveAliases = slot.list<{ find: string; replacement: string }>({
@@ -148,31 +160,35 @@ const viteConfig = slot.derived({
 	source: SOURCE,
 	name: "viteConfig",
 	inputs: {
-		imports: configImports,
-		plugins: pluginCalls,
-		aliases: resolveAliases,
-		dedupe: resolveDedupe,
-		port: devServerPort,
+		configImports,
+		pluginCalls,
+		appPlugins,
+		resolveAliases,
+		resolveDedupe,
+		devServerPort,
 		outDir,
-		proxy: serverProxy,
+		serverProxy,
 		fsAllow,
 		watchIgnored,
 		clientHeaders,
 	},
 	compute: (inp): string | null => {
 		if (inp.outDir === null) return null;
-		if (inp.plugins.length === 0 && inp.imports.length === 0) return null;
-		return aggregateViteConfig({
+		if (
+			inp.pluginCalls.length === 0 &&
+			inp.configImports.length === 0 &&
+			inp.appPlugins.length === 0
+		)
+			return null;
+		const { appPlugins: app, ...values } = inp;
+		return renderViteConfig({
+			...values,
 			outDir: inp.outDir,
-			imports: inp.imports,
-			pluginCalls: inp.plugins,
-			resolveAliases: inp.aliases,
-			resolveDedupe: inp.dedupe,
-			devServerPort: inp.port,
-			serverProxy: inp.proxy,
-			fsAllow: inp.fsAllow,
-			watchIgnored: inp.watchIgnored,
-			clientHeaders: inp.clientHeaders,
+			configImports: [
+				...inp.configImports,
+				...app.flatMap((a) => a.imports),
+			].sort((a, b) => a.source.localeCompare(b.source)),
+			pluginCalls: [...app.map((a) => a.call), ...inp.pluginCalls],
 		});
 	},
 });
@@ -190,6 +206,7 @@ export const vite = plugin("vite", {
 	slots: {
 		configImports,
 		pluginCalls,
+		appPlugins,
 		resolveAliases,
 		resolveDedupe,
 		devServerPort,
@@ -295,4 +312,4 @@ export const vite = plugin("vite", {
 	],
 });
 
-export type { ServerProxyEntry, ViteOptions } from "./types.ts";
+export type { AppPlugin, ServerProxyEntry, ViteOptions } from "./types.ts";

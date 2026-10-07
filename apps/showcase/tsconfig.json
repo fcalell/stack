@@ -1,5 +1,7 @@
 {
-	"extends": "@fcalell/typescript-config/web-vite.json",
-	"include": ["src", ".stack/*.d.ts", ".storybook", "vitest.config.ts"],
-	"exclude": ["stories"]
+	"files": [],
+	"references": [
+		{ "path": "./tsconfig.app.json" },
+		{ "path": "./tsconfig.worker.json" }
+	]
 }

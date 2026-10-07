@@ -31,10 +31,8 @@
 		"./lib/words": "./src/ui/lib/words.tsx",
 		"./lib/*": "./src/ui/lib/*.ts",
 		"./showcase/foundations": "./src/ui/showcase/foundations.tsx",
-		"./showcase/layout": "./src/ui/showcase/layout.tsx",
 		"./showcase/tv": "./src/ui/showcase/tv.tsx",
 		"./showcase/cells": "./src/ui/showcase/cells.ts",
-		"./showcase/pages": "./src/ui/showcase/pages.ts",
 		"./showcase/frame": "./src/ui/showcase/frame.tsx",
 		"./showcase/frames/*": "./src/ui/showcase/frames/*.tsx"
 	},
@@ -65,6 +63,7 @@
 		"@fcalell/cli": "workspace:*",
 		"@fcalell/plugin-auth": "workspace:*",
 		"@fcalell/plugin-react": "workspace:*",
+		"@fcalell/plugin-screens": "workspace:*",
 		"@fcalell/plugin-vite": "workspace:*",
 		"@fcalell/ui-core": "workspace:*",
 		"@fontsource-variable/ibm-plex-sans": "^5.3.0",

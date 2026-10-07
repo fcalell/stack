@@ -131,9 +131,6 @@ The roster is drawn in Storybook (`apps/showcase`, `pnpm stories`) from data thi
   pointer and focus states stay in the roster and draw no frame), in both modes and both densities;
   `showcaseCells()`, every frame's id. Every frame carries
   `data-cell="<component>/<cell>/<state>/<mode>/<density>"`.
-- `@fcalell/plugin-react-ui/showcase/pages`: `showcasePages()`, the places the `/layout` app draws
-  (each place, the pushed Screen and an open record), which its route and Storybook's page stories
-  both read; `LayoutPage` (`./showcase/layout`) draws one of them from the `Here` values it is handed.
 - `@fcalell/plugin-react-ui/showcase/frame`: `Frame`, the wrapper a frame is drawn in: its
   `data-cell`, its mode's class and the canvas ground. It takes the frame and
   a drawer, and draws the component's name and the cell's strings where there is none.
@@ -147,11 +144,11 @@ depends on the showcase. A state the component takes as a prop (`disabled` throu
 nowhere: the real component takes it from the pointer and the keyboard, and the critique drives it
 there.
 
-The other pages (`/foundations`, `/layout`, `/tv`) are `./showcase/foundations`, `./showcase/layout`
-and `./showcase/tv`; the URL holds their view (`?mode=dark&density=desktop`) and their toggles set
-those two parameters, keeping the rest and storing nothing. `/layout` reads its place from the URL
-(`?place=deploys`) and hands it to `LayoutPage`, which Storybook's page stories render one place at a
-time.
+The other pages (`/foundations`, `/tv`) are `./showcase/foundations` and `./showcase/tv`;
+the URL holds `/foundations`' view (`?mode=dark&density=desktop`) and its toggles set those two
+parameters, keeping the rest and storing nothing. The places of one app composed from the
+components are the showcase app's own routes (`apps/showcase/src/app/routes`), drawn by the screens
+workbench.
 
 ## Slots
 

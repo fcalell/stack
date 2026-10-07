@@ -9,6 +9,7 @@ import {
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { auth } from "@fcalell/plugin-auth";
 import { react } from "@fcalell/plugin-react";
+import { type PreviewGlobal, screens } from "@fcalell/plugin-screens";
 import { vite } from "@fcalell/plugin-vite";
 import { deriveTheme } from "@fcalell/ui-core/derive";
 import { uiCoreGuide } from "@fcalell/ui-core/manifest";
@@ -238,6 +239,9 @@ export const reactUi = plugin("react-ui", {
 				args: [],
 			}),
 		),
+		vite.slots.configImports.contribute(
+			(): TsImportSpec => ({ source: "node:url", named: ["fileURLToPath"] }),
+		),
 		// Fonts are served straight out of this package's node_modules
 		// (@fontsource). When the stack is workspace-linked those files sit
 		// outside the consumer's workspace root and Vite's dev server 403s
@@ -364,6 +368,30 @@ export const reactUi = plugin("react-ui", {
 					source: "@fcalell/plugin-react-ui/lib/navigate",
 					named: ["bindRouter"],
 				};
+			},
+		),
+		// The mode and the density the sheet keys on (a `dark` class and
+		// `data-density` on the root), as toolbars the screens workbench pins
+		// before a story paints. The workbench opens in the theme's default mode.
+		screens.slots.previewGlobals.contribute(
+			async (ctx): Promise<PreviewGlobal[]> => {
+				const { defaultMode } = await ctx.resolve(self.slots.resolvedTheme);
+				return [
+					{
+						name: "mode",
+						title: "Mode",
+						values: ["light", "dark"],
+						default: defaultMode ?? "light",
+						apply: { classes: { dark: "dark" } },
+					},
+					{
+						name: "density",
+						title: "Density",
+						values: ["desktop", "touch"],
+						default: "desktop",
+						apply: { attribute: "data-density" },
+					},
+				];
 			},
 		),
 		emitArtifact(".stack/app.css", self.slots.appCssSource),

@@ -1,5 +1,8 @@
 // The package manager a scaffolded project outside stack's workspace pins.
-export const PACKAGE_MANAGER = "pnpm@11.28.3";
+// 11.28.4 is the first whose frozen install does not link a skipped optional
+// dependency (fsevents on Linux) or an unresolved optional peer to the working
+// directory, a link Vite's watcher then loads as the module (pnpm#16454).
+export const PACKAGE_MANAGER = "pnpm@11.28.4";
 
 // Every first-party package a consumer installs, by the directory it lives in
 // within stack's repository and the first-party packages its `dependencies`
@@ -28,6 +31,7 @@ export const STACK_PACKAGES = {
 			"@fcalell/plugin-api",
 			"@fcalell/plugin-cloudflare",
 			"@fcalell/plugin-db",
+			"@fcalell/plugin-screens",
 		],
 		// better-auth's Prisma adapter auto-installs its peer; auth uses Drizzle.
 		// Its better-sqlite3 ^12 peer installs beside plugin-db's 13 and builds
@@ -92,9 +96,22 @@ export const STACK_PACKAGES = {
 			"@fcalell/cli",
 			"@fcalell/plugin-auth",
 			"@fcalell/plugin-react",
+			"@fcalell/plugin-screens",
 			"@fcalell/plugin-vite",
 			"@fcalell/ui-core",
 		],
+	},
+	"@fcalell/plugin-screens": {
+		dir: "plugins/screens",
+		dependencies: [
+			"@fcalell/cli",
+			"@fcalell/plugin-api",
+			"@fcalell/plugin-react",
+			"@fcalell/plugin-vite",
+		],
+		// msw reaches the app as its own dependency (`stack add screens`); its
+		// postinstall only prints, the worker file is served from its package.
+		builds: { msw: false },
 	},
 	"@fcalell/plugin-vite": {
 		dir: "plugins/vite",

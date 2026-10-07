@@ -669,14 +669,19 @@ interface OrpcChain {
 interface OrpcTerminal {
 	readonly "~orpc": unknown;
 	meta(meta: Record<string, unknown>): OrpcTerminal;
+	route(route: { method: "GET" }): OrpcTerminal;
 }
 
 // What a procedure's terminal call says it is, as the oRPC meta the MCP
 // endpoint reads: a query is read-only, a mutation and a bare handler are not.
 type ProcedureKind = "query" | "mutation";
 
+// A query is also the one kind that answers a GET: oRPC's RPCHandler refuses
+// GET on a procedure whose route method is not GET (`StrictGetMethodPlugin`,
+// on by default), so a mutation or a bare handler never runs from a link.
 function stamp(terminal: OrpcTerminal, kind: ProcedureKind): OrpcTerminal {
-	return terminal.meta({ kind });
+	const stamped = terminal.meta({ kind });
+	return kind === "query" ? stamped.route({ method: "GET" }) : stamped;
 }
 
 interface BuilderState {

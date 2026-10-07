@@ -23,21 +23,21 @@ by the consumer.
 - Host: Storybook on the app's own Vite configuration, derived from the same `vite.slots` the
   app's config renders from, so a story renders a route through the app's real router (memory
   history at the route's URL) with the app's plugins. The adaptations the showcase's
-  `apps/showcase/.storybook/stack-vite.ts` makes by hand (no frame-blocking headers, the root at
+  Storybook once made by hand in `stack-vite.ts` (no frame-blocking headers, the root at
   the app rather than `.stack/`, the dependency optimizer started in middleware mode) come from
   the derivation instead; the showcase's roster Storybook, which renders no route, then uses it
   without the router plugin. Stories regenerate from the route list without a restart, as the roster's do.
 - A guide page says when to open the workbench and how a screen's states are reached.
 
 ## Acceptance criteria
-- [ ] In a consumer with routes and procedures, the command serves one screen per route, each in
+- [x] In a consumer with routes and procedures, the command serves one screen per route, each in
   data, loading, error, empty and not-found, light and dark, at desktop and touch.
-- [ ] A fixture whose shape departs from its procedure's output fails `pnpm check`.
-- [ ] A route added while the command runs appears without a restart.
-- [ ] The consumer's repo holds no Storybook config, story or harness file of its own.
-- [ ] The showcase's Storybook derives its config the same way, and `stack-vite.ts` holds nothing
+- [x] A fixture whose shape departs from its procedure's output fails `pnpm check`.
+- [x] A route added while the command runs appears without a restart.
+- [x] The consumer's repo holds no Storybook config, story or harness file of its own.
+- [x] The showcase's Storybook derives its config the same way, and `stack-vite.ts` holds nothing
   the slots now contribute.
-- [ ] The guide index lists the new page with its load trigger.
+- [x] The guide index lists the new page with its load trigger.
 
 Decided by fcalell (2026-10-06):
 
@@ -81,6 +81,23 @@ Decided after the spike (2026-10-06):
   `{ data, nextCursor }` page → no items, a record has no empty form). A procedure without a
   fixture answers `no fixture for <path>`, never the network.
 - A parent route renders its children through `<Outlet/>`; the guide page says so.
+
+Decided while building (2026-10-06), by fcalell:
+
+- Queries travel as GET and mutations as POST: `createApiQueryUtils` registers the oRPC operation
+  context, so a forced state reaches queries only and a mutation answers from its fixture.
+- `CommandContext.generate()` lives in core, so a plugin command can run generation itself.
+- Preview globals are contributed through `screens.slots.previewGlobals`; react-ui contributes the
+  mode and the density.
+- The screens owner is light: Storybook, MSW and the oRPC server are optional peers that
+  `stack add screens` installs through the plugin's devDependencies, and auth imports msw through
+  `@fcalell/plugin-screens/msw`.
+- A contribution declares its own imports and the vite renderer dedupes them.
+- plugin-react's router call lives in `react.slots.routerPlugin` and reaches the app only through
+  `vite.slots.appPlugins`; the roster Storybook calls `writeStorybookConfig` (from
+  `@fcalell/plugin-screens/node`) rather than reading a generated per-consumer file.
+- `/welcome` is dropped; its gap is filed as 003-139.
+- pnpm is pinned to 11.28.4: 11.28.3's frozen install links `fsevents` to the working directory.
 
 ## Open questions
 - [x] The command's home.

@@ -10,7 +10,7 @@
 		"generate": "stack generate",
 		"dev": "stack dev",
 		"build": "stack build",
-		"check-types": "tsc --noEmit",
+		"check-types": "tsc -b",
 		"storybook": "storybook dev -p 6006 --no-open --ci",
 		"build-storybook": "storybook build",
 		"test-storybook": "vitest run"
@@ -18,8 +18,10 @@
 	"dependencies": {
 		"@base-ui/react": "^1.8.0",
 		"@fcalell/plugin-api": "workspace:*",
+		"@fcalell/plugin-cloudflare": "workspace:*",
 		"@fcalell/plugin-react": "workspace:*",
 		"@fcalell/plugin-react-ui": "workspace:*",
+		"@fcalell/plugin-screens": "workspace:*",
 		"@fcalell/plugin-vite": "workspace:*",
 		"@orpc/tanstack-query": "^1.14.4",
 		"@tanstack/react-query": "^5.104.0",
@@ -29,9 +31,13 @@
 		"tailwindcss": "^4.3.3"
 	},
 	"devDependencies": {
+		"@base-ui/react": "^1.8.0",
 		"@fcalell/cli": "workspace:*",
 		"@fcalell/typescript-config": "workspace:*",
 		"@fcalell/ui-core": "workspace:*",
+		"@orpc/client": "1.14.4",
+		"@orpc/server": "1.14.4",
+		"@orpc/standard-server-fetch": "1.14.4",
 		"@storybook/addon-a11y": "^10.6.1",
 		"@storybook/addon-vitest": "^10.6.1",
 		"@storybook/react-vite": "^10.6.1",
@@ -43,10 +49,13 @@
 		"@vitejs/plugin-react": "^5.2.0",
 		"@vitest/browser-playwright": "^5.0.3",
 		"babel-plugin-react-compiler": "^1.0.0",
+		"msw": "^2.15.0",
+		"msw-storybook-addon": "^3.0.3",
 		"playwright": "^1.63.0",
 		"storybook": "^10.6.1",
 		"typescript": "^5.9.3",
 		"vite": "^7.3.6",
-		"vitest": "^5.0.3"
+		"vitest": "^5.0.3",
+		"wrangler": "^4.98.0"
 	}
 }

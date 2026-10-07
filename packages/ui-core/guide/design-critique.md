@@ -9,7 +9,7 @@ measurements are the only machine numbers on a render and never evidence of tast
 ## What the critic needs
 
 The URL that renders the unit (a Storybook story, `iframe.html?id=<story id>&viewMode=story`, a
-page story among them, the app's dev server route, or a phone route's deep link), the patterns it implements, the states it declares and how to reach each (a route, a
+screen of the screens workbench among them, the app's dev server route, or a phone route's deep link), the patterns it implements, the states it declares and how to reach each (a route, a
 fixture, a control), the references it was built from, and the files that draw it. Open the
 rubric, the [judging](./judging.md) page, and the page under `patterns/` of each of those
 patterns only. A unit that cannot be opened in a browser or on the emulator is reported as

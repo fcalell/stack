@@ -31,9 +31,10 @@ export default createMiddleware(async (c, next) => {
 ## Rules
 
 - Every raw route that changes state calls `isForbiddenOrigin(c)` first. The RPC tree gets its
-  CSRF guard from its JSON content type; a multipart upload does not. It refuses a request whose
-  browser `Origin` is off the CORS allow-list and passes one with no `Origin` (a browser cannot
-  forge that cross-site, and the native client sends none).
+  CSRF guard from its JSON content type on a `POST` (a `GET` reaches queries only and has no
+  body); a multipart upload has no such guard. It refuses a request whose browser `Origin` is off
+  the CORS allow-list and passes one with no `Origin` (a browser cannot forge that cross-site, and
+  the native client sends none).
 
 ## Renamed cache headers
 

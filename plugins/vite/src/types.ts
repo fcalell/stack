@@ -23,12 +23,17 @@ export interface ServerProxyEntry {
 	ws?: boolean;
 }
 
-// Pure aggregator input shape consumed by the `aggregateViteConfig` helper
-// (which lives in node/codegen.ts and plugs into the `vite.slots.viteConfig`
-// derivation). Kept as a first-class type so the aggregator stays testable
-// in isolation — the plugin index wires slot values into this shape.
-export interface CodegenViteConfigPayload {
+// A plugin call with the imports it needs, for `vite.slots.appPlugins`.
+export interface AppPlugin {
+	call: TsExpression;
 	imports: TsImportSpec[];
+}
+
+// The resolved values of vite's input slots, one field per slot under the
+// slot's own name: `renderViteConfig` takes them as `graph.resolve` returns
+// them, so a caller adjusts one field and passes the rest through.
+export interface ViteConfigValues {
+	configImports: TsImportSpec[];
 	pluginCalls: TsExpression[];
 	resolveAliases: Array<{ find: string; replacement: string }>;
 	// Bare specifiers for `resolve.dedupe`: every import of one resolves from
@@ -40,7 +45,7 @@ export interface CodegenViteConfigPayload {
 	outDir: string;
 	serverProxy: ServerProxyEntry[];
 	// Extra `server.fs.allow` path expressions. Any entry switches the
-	// rendered config to an explicit allow list, so the aggregator prepends
+	// rendered config to an explicit allow list, so the renderer prepends
 	// the consumer's own workspace root (Vite disables its auto-detection
 	// the moment a custom list is set).
 	fsAllow: TsExpression[];

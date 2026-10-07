@@ -152,6 +152,11 @@ test("the vite config runs Tailwind, the fonts and the mode script", async () =>
 		/specifier: "@fontsource\/ibm-plex-mono\/files\/ibm-plex-mono-latin-600-normal\.woff2"/,
 	);
 	assert.match(config, /import\.meta\.resolve\("@fcalell\/plugin-react-ui"\)/);
+	assert.equal(config.match(/from "node:url"/g)?.length, 1, config);
+	assert.match(
+		config,
+		/import \{ defineConfig, searchForWorkspaceRoot \} from "vite";/,
+	);
 });
 
 test("the dev server pre-bundles the roster's .tsx subpaths", async () => {
