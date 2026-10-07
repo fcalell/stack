@@ -402,6 +402,8 @@ export const OVERLAYS: readonly string[] = [
 	"w-full",
 	// Message, MessageInput, Thread, Meter, BarChart, QrCode
 	"whitespace-nowrap",
+	"pt-[calc(1lh/2)]",
+	"translate-y-1/2",
 	"max-w-4/5",
 	"disabled:placeholder:text-ink-disabled",
 	"border-edge-hover",

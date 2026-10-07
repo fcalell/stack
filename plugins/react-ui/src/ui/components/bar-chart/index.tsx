@@ -3,6 +3,7 @@ import {
 	type ChartUnit,
 	chartHead,
 	chartScale,
+	currencyOf,
 	unitOf,
 } from "@fcalell/ui-core/chart";
 import { cn } from "@fcalell/ui-core/cn";
@@ -45,11 +46,15 @@ const HEAD = "flex flex-col";
 const KEYS = "flex flex-wrap";
 const KEY = "inline-flex items-center";
 const DOT = "shrink-0";
-const BODY = "flex items-start";
+// The body stands half a meta line below the head, so the top tick, centred
+// on the plot's top edge, keeps the pair gap from the head's last line.
+const BODY = "flex items-start pt-[calc(1lh/2)]";
 const AXIS = "flex flex-col shrink-0";
-const AXIS_BAND = "flex justify-end flex-1";
-// A tick centres on its gridline.
-const TICK = "-translate-y-1/2";
+const AXIS_BAND = "relative flex-1";
+// A tick centres on its gridline; the last band's bottom is the baseline,
+// whose tick is the zero.
+const TICK = "absolute end-0 top-0 -translate-y-1/2";
+const ZERO = "absolute end-0 bottom-0 translate-y-1/2";
 const MAIN = "flex flex-col grow min-w-0";
 const PLOT = "relative";
 const GRID = "flex flex-col";
@@ -70,16 +75,51 @@ const LAYER = "col-start-1 row-start-1";
 const HELD = "invisible";
 const OVER = "flex flex-col";
 
+interface Figures {
+	// The head's and the keys' figures.
+	figure: Intl.NumberFormat;
+	// The axis's ticks, in the lane four figures wide.
+	tick: Intl.NumberFormat;
+}
+
 // Every figure of one chart in one notation: compact once its axis reaches
-// five figures, so a tick stays inside its four-figure lane.
-function formatter(top: number): Intl.NumberFormat {
-	return formatterFor(
-		"number",
-		undefined,
-		top >= 10_000
-			? { notation: "compact", maximumFractionDigits: 1 }
-			: { maximumFractionDigits: 1 },
-	);
+// five figures, so a tick stays inside its four-figure lane. Money keeps its
+// figures exact (the cents of "$30.97" are not the axis's step) and writes
+// its ticks short: no cents when the step is whole.
+function formatters(
+	top: number,
+	step: number,
+	unit: ChartUnit | undefined,
+): Figures {
+	const compact = top >= 10_000;
+	const currency = currencyOf(unit);
+	if (currency === undefined) {
+		const plain = formatterFor(
+			"number",
+			undefined,
+			compact
+				? { notation: "compact", maximumFractionDigits: 1 }
+				: { maximumFractionDigits: 1 },
+		);
+		return { figure: plain, tick: plain };
+	}
+	const money = { style: "currency", currency } as const;
+	const whole = { minimumFractionDigits: 0, maximumFractionDigits: 0 };
+	return {
+		figure: formatterFor("number", undefined, money),
+		tick: formatterFor("number", undefined, {
+			...money,
+			...(compact
+				? {
+						notation: "compact",
+						minimumFractionDigits: 0,
+						maximumFractionDigits: 1,
+					}
+				: Number.isInteger(step)
+					? whole
+					: {}),
+		}),
+	};
 }
 
 function band(index: number, bands: number) {
@@ -130,7 +170,7 @@ export type BarChartProps<T = unknown> = Closed &
 		keys?: readonly string[];
 		/** The bar slots, read from each item. */
 		bar: BarSlots<T>;
-		/** What the values count (`requests`, `minutes`), drawn after the total; a unit that takes a plural is `{ one, other }` (`{ one: "flag", other: "flags" }`), the form chosen by the figure it follows. */
+		/** What the values count (`requests`, `minutes`), drawn after the total; a unit that takes a plural is `{ one, other }` (`{ one: "flag", other: "flags" }`), the form chosen by the figure it follows; money is `{ currency: "USD" }`, its figures written in the currency with no word after them. */
 		unit?: ChartUnit;
 		/** The bars are a level, not a flow (open flags per round, not requests per day): the head draws the last bar's value, and each key the last bar's part, never their sum. */
 		level?: boolean;
@@ -144,7 +184,7 @@ interface Bar {
 	at?: string;
 }
 
-/** The total (the last bar with `level`) at body 500 with its unit, the parts' keys under it, then the axis beside the plot, its four gridlines a hairline, the columns in the chip marks by part, a time under each bar that has one. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, its boxes in skeleton at their loaded size with the keys standing (a Section around a pending query busy); a query that answers not found draws the rest EmptyState saying it no longer exists with Back (never Retry), a failed query the failed EmptyState with `sentence` and Retry, and no item `empty`, each at the chart's loaded height; then one bar per item. */
+/** The total (the last bar with `level`) at body 500 with its unit, the parts' keys under it, then the axis beside the plot, its four gridlines a hairline each with its tick centred on it and the baseline with its 0, the columns in the chip marks by part, a time under each bar that has one. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, its boxes in skeleton at their loaded size with the keys standing (a Section around a pending query busy); a query that answers not found draws the rest EmptyState saying it no longer exists with Back (never Retry), a failed query the failed EmptyState with `sentence` and Retry, and no item `empty`, each at the chart's loaded height; then one bar per item. */
 export function BarChart<T>(props: BarChartProps<T>) {
 	const { label, keys, unit, level } = props;
 	const words = useWords();
@@ -204,9 +244,10 @@ export function BarChart<T>(props: BarChartProps<T>) {
 			...labels.map((key) => part(bar, key)),
 		]),
 	);
-	const figure = formatter(top);
+	const { figure, tick } = formatters(top, step, unit);
 	const head = chartHead(series, labels, level === true);
 	const { total } = head;
+	const word = unit ? unitOf(unit, total) : undefined;
 	const keyTotals = labels.map((label, at) => ({
 		label,
 		value: head.parts[at] ?? 0,
@@ -222,9 +263,7 @@ export function BarChart<T>(props: BarChartProps<T>) {
 			>
 				{figure.format(total)}
 			</span>
-			{unit ? (
-				<span className={text({ role: "meta" })}>{unitOf(unit, total)}</span>
-			) : null}
+			{word ? <span className={text({ role: "meta" })}>{word}</span> : null}
 		</div>
 	);
 	const height = (value: number) => ({ height: `${(value / top) * 100}%` });
@@ -246,7 +285,7 @@ export function BarChart<T>(props: BarChartProps<T>) {
 			) : (
 				totalLine
 			)}
-			<div className={cn(CHART_BODY, BODY)}>
+			<div className={cn(CHART_BODY, BODY, lineBox({ role: "meta" }))}>
 				<div aria-hidden className={cn(CHART_GRID, CHART_TICK_LANE, AXIS)}>
 					{Array.from({ length: bands }, (_, index) => (
 						<div
@@ -259,7 +298,12 @@ export function BarChart<T>(props: BarChartProps<T>) {
 						>
 							{peak > 0 ? (
 								<span className={cn(text({ role: "meta" }), FIGURES, TICK)}>
-									{figure.format(top - step * index)}
+									{tick.format(top - step * index)}
+								</span>
+							) : null}
+							{peak > 0 && index === bands - 1 ? (
+								<span className={cn(text({ role: "meta" }), FIGURES, ZERO)}>
+									{tick.format(0)}
 								</span>
 							) : null}
 						</div>
@@ -400,7 +444,7 @@ function Loading(props: { keys?: readonly string[]; busy: boolean }) {
 			) : (
 				total
 			)}
-			<div className={cn(CHART_BODY, BODY)}>
+			<div className={cn(CHART_BODY, BODY, lineBox({ role: "meta" }))}>
 				<div className={cn(CHART_GRID, CHART_TICK_LANE, AXIS)}>
 					{Array.from({ length: BANDS }, (_, index) => (
 						<div
@@ -414,6 +458,13 @@ function Loading(props: { keys?: readonly string[]; busy: boolean }) {
 							<span className={cn(lineBox({ role: "meta" }), LINE, BAR, TICK)}>
 								<span className={cn(skeleton({ kind: "line" }), BAR)} />
 							</span>
+							{index === BANDS - 1 ? (
+								<span
+									className={cn(lineBox({ role: "meta" }), LINE, BAR, ZERO)}
+								>
+									<span className={cn(skeleton({ kind: "line" }), BAR)} />
+								</span>
+							) : null}
 						</div>
 					))}
 				</div>

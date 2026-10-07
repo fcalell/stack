@@ -110,14 +110,38 @@ function lineKey(line: DiffLine): string {
 	return `${line.kind}:${line.before ?? ""}:${line.after ?? ""}`;
 }
 
-// The two number columns and the marker. A Text inherits nothing from the
-// row it stands in, so each cell takes the line's role and ink.
-function Gutters({ line }: { line?: DiffLine }) {
+// The number columns a diff draws: a side's column stands when a line of the
+// diff carries its number, so a diff that only adds or only removes draws one.
+interface Numbers {
+	before: boolean;
+	after: boolean;
+}
+
+const BOTH: Numbers = { before: true, after: true };
+
+function numbersOf(hunks: readonly Hunk[]): Numbers {
+	const lines = hunks.flatMap((hunk) => hunk.lines);
+	return {
+		before: lines.some((line) => line.before !== undefined),
+		after: lines.some((line) => line.after !== undefined),
+	};
+}
+
+// The number columns and the marker. A Text inherits nothing from the row it
+// stands in, so each cell takes the line's role and ink.
+function Gutters(props: { line?: DiffLine; numbers: Numbers }) {
+	const { line, numbers } = props;
 	const kind = diffLine({ kind: line?.kind ?? "context" });
 	return (
 		<>
-			<RNText className={cn(kind, DIFF_GUTTER, GUTTER)}>{line?.before}</RNText>
-			<RNText className={cn(kind, DIFF_GUTTER, GUTTER)}>{line?.after}</RNText>
+			{numbers.before ? (
+				<RNText className={cn(kind, DIFF_GUTTER, GUTTER)}>
+					{line?.before}
+				</RNText>
+			) : null}
+			{numbers.after ? (
+				<RNText className={cn(kind, DIFF_GUTTER, GUTTER)}>{line?.after}</RNText>
+			) : null}
 			<RNText className={cn(kind, DIFF_MARK)}>
 				{MARKS[line?.kind ?? "context"]}
 			</RNText>
@@ -127,8 +151,9 @@ function Gutters({ line }: { line?: DiffLine }) {
 
 // A unified diff at the code role in the frame Code shares: each hunk's
 // header on the group ground in the meta ink, then its lines, added on
-// ok-soft and removed on danger-soft, the whole row, each with its two line
-// numbers and its `+` or `−` marker. A long line wraps under itself at the
+// ok-soft and removed on danger-soft, the whole row, each with its line
+// numbers (the old and the new, or the one side a diff that only adds or only
+// removes has) and its `+` or `−` marker. A long line wraps under itself at the
 // line's start: React Native has no text indent, so a wrapped line does not
 // hang. The frame is a list named by `label`, the phone having no table.
 export function Diff({ label, hunks, before, after, loading }: DiffProps) {
@@ -137,6 +162,7 @@ export function Diff({ label, hunks, before, after, loading }: DiffProps) {
 		() => hunks ?? (loading ? [] : lineHunks(before ?? "", after ?? "")),
 		[hunks, before, after, loading],
 	);
+	const numbers = numbersOf(shown);
 	if (loading)
 		return (
 			<View
@@ -155,7 +181,7 @@ export function Diff({ label, hunks, before, after, loading }: DiffProps) {
 						key={index}
 						className={cn(diffLine({ kind: "context" }), ROW)}
 					>
-						<Gutters />
+						<Gutters numbers={BOTH} />
 						<View className={cn(DIFF_CODE, BAR_LINE)}>
 							<Strut role="code" />
 							<View className={cn(skeleton({ kind: "line" }), width)} />
@@ -181,7 +207,7 @@ export function Diff({ label, hunks, before, after, loading }: DiffProps) {
 						key={`${hunkKey(hunk)}/${lineKey(line)}`}
 						className={cn(diffLine({ kind: line.kind }), ROW)}
 					>
-						<Gutters line={line} />
+						<Gutters line={line} numbers={numbers} />
 						<RNText
 							className={cn(diffLine({ kind: line.kind }), DIFF_CODE, CODE)}
 						>

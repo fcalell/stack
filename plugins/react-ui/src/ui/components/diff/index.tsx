@@ -118,11 +118,37 @@ function lineKey(line: DiffLine): string {
 	return `${line.kind}:${line.before ?? ""}:${line.after ?? ""}`;
 }
 
-function Gutters(props: { line?: DiffLine }) {
+// The number columns a diff draws: a side's column stands when a line of the
+// diff carries its number, so a diff that only adds or only removes draws one.
+interface Numbers {
+	before: boolean;
+	after: boolean;
+}
+
+const BOTH: Numbers = { before: true, after: true };
+
+function numbersOf(hunks: readonly Hunk[]): Numbers {
+	const lines = hunks.flatMap((hunk) => hunk.lines);
+	return {
+		before: lines.some((line) => line.before !== undefined),
+		after: lines.some((line) => line.after !== undefined),
+	};
+}
+
+// A hunk's header spans the number columns, the marker and the code.
+function span(numbers: Numbers): number {
+	return 2 + Number(numbers.before) + Number(numbers.after);
+}
+
+function Gutters(props: { line?: DiffLine; numbers: Numbers }) {
 	return (
 		<>
-			<td className={cn(DIFF_GUTTER, GUTTER)}>{props.line?.before}</td>
-			<td className={cn(DIFF_GUTTER, GUTTER)}>{props.line?.after}</td>
+			{props.numbers.before ? (
+				<td className={cn(DIFF_GUTTER, GUTTER)}>{props.line?.before}</td>
+			) : null}
+			{props.numbers.after ? (
+				<td className={cn(DIFF_GUTTER, GUTTER)}>{props.line?.after}</td>
+			) : null}
 			<td className={cn(DIFF_MARK, MARK)}>
 				{MARKS[props.line?.kind ?? "context"]}
 			</td>
@@ -130,20 +156,21 @@ function Gutters(props: { line?: DiffLine }) {
 	);
 }
 
-/** A unified diff at the code role in the frame Code shares: each hunk's header on the group ground in the meta ink, then its lines, added on ok-soft and removed on danger-soft, the whole row, each with its two line numbers and its `+` or `−` marker. A long line wraps under itself at every width, hung one inset, its numbers on its first line. */
+/** A unified diff at the code role in the frame Code shares: each hunk's header on the group ground in the meta ink, then its lines, added on ok-soft and removed on danger-soft, the whole row, each with its line numbers (the old and the new, or the one side a diff that only adds or only removes has) and its `+` or `−` marker. A long line wraps under itself at every width, hung one inset, its numbers on its first line. */
 export function Diff({ label, hunks, before, after, loading }: DiffProps) {
 	// The hunks derive once per text pair, and not while the diff waits.
 	const shown = useMemo(
 		() => hunks ?? (loading ? [] : lineHunks(before ?? "", after ?? "")),
 		[hunks, before, after, loading],
 	);
+	const numbers = numbersOf(shown);
 	if (loading)
 		return (
 			<div aria-busy className={cn(CONTENT_FRAME, FRAME)}>
 				<table className={TABLE}>
 					<tbody>
 						<tr className={diffLine({ kind: "header" })}>
-							<td colSpan={4} className={DIFF_HUNK}>
+							<td colSpan={span(BOTH)} className={DIFF_HUNK}>
 								<span className={LINE}>
 									<span
 										className={cn(skeleton({ kind: "line" }), HEADER_BAR)}
@@ -154,7 +181,7 @@ export function Diff({ label, hunks, before, after, loading }: DiffProps) {
 						{BARS.map((width, index) => (
 							// biome-ignore lint/suspicious/noArrayIndexKey: the lines are fixed stand-ins
 							<tr key={index} className={diffLine({ kind: "context" })}>
-								<Gutters />
+								<Gutters numbers={BOTH} />
 								<td className={cn(DIFF_CODE, CODE)}>
 									<span className={LINE}>
 										<span className={cn(skeleton({ kind: "line" }), width)} />
@@ -172,7 +199,7 @@ export function Diff({ label, hunks, before, after, loading }: DiffProps) {
 				<tbody>
 					{shown.map((hunk) => [
 						<tr key={hunkKey(hunk)} className={diffLine({ kind: "header" })}>
-							<td colSpan={4} className={DIFF_HUNK}>
+							<td colSpan={span(numbers)} className={DIFF_HUNK}>
 								<div className={cn(DIFF_HANG, HANG)}>{hunk.header}</div>
 							</td>
 						</tr>,
@@ -181,7 +208,7 @@ export function Diff({ label, hunks, before, after, loading }: DiffProps) {
 								key={`${hunkKey(hunk)}/${lineKey(line)}`}
 								className={diffLine({ kind: line.kind })}
 							>
-								<Gutters line={line} />
+								<Gutters line={line} numbers={numbers} />
 								<td className={cn(DIFF_CODE, DIFF_HANG, CODE, HANG)}>
 									{held(line.text)}
 								</td>

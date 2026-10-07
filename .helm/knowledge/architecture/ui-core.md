@@ -1202,9 +1202,13 @@ a tick with no animation, never jumped to full.
   item). Its head is the sum of its bars (a flow); `level` (the bars are a level, a fact only the
   app holds, so no derivation) makes it the last bar's value and each key's last part. Its axis scale and head are `./chart`'s `chartScale` and `chartHead`,
   one pure answer for both platforms (with `unitOf`, the unit's form at the figure it follows:
-  `unit` is a word or `{ one, other }`): four even steps over the peak, and when every value and
+  `unit` is a word, `{ one, other }` or `{ currency }`, whose figures carry the symbol and no word
+  follows; a currency's head and keys stay exact and its ticks drop the cents when the step is
+  whole): four even steps over the peak, and when every value and
   part is a whole number and the step would fall under 1, a step of 1 over as many bands as the peak
-  rounds up to, so a peak of 3 ticks 1, 2, 3 and never past its bars. Its `keys` are
+  rounds up to, so a peak of 3 ticks 1, 2, 3 and never past its bars. Each tick is centred on its
+  gridline and the baseline carries the 0, so the top tick reaches half a meta line above the plot
+  and the body stands that far below the head (`tickReach`; the web's `1lh / 2`). Its `keys` are
   declared, so its pending form is its loaded boxes in skeleton with the
   legend standing. Its failed and empty EmptyStates stand at its loaded height: the loaded boxes
   are held unseen under them in one cell (the web's grid placement and `invisible`; native lays

@@ -75,8 +75,19 @@ const FLAGS = [2, 3, 1].map(
 	}),
 );
 
+// Spend per day in dollars, a total of $30.97: the head reads the cents and
+// the axis whole dollars.
+const SPEND = [3.2, 4.15, 5.1, 6, 4.27, 3.5, 4.75].map(
+	(value, index): Day => ({
+		day: WEEK[index]?.[0] ?? "",
+		value,
+		at: WEEK[index]?.[0],
+	}),
+);
+
 // A `CHART_FILL.series` cell past the first stacks by service (past the
-// third, by six of them); a `CHART_BAND` cell at rest adds a week of zeros;
+// third, by six of them); a `CHART_BAND` cell at rest adds a week of zeros,
+// a week of spend in dollars and the open flags;
 // every other cell draws the one series. Each chart takes a query in the
 // frame's state: its loaded boxes in skeleton, its failure, its empty form.
 export function drawBarChart(frame: ShowcaseFrame) {
@@ -114,6 +125,16 @@ export function drawBarChart(frame: ShowcaseFrame) {
 			{quiet ? (
 				<Section title="Cron runs" description="Per day this week.">
 					<BarChart label="Cron runs" items={QUIET} bar={BAR} />
+				</Section>
+			) : null}
+			{quiet ? (
+				<Section title="Spend" description="Per day this week.">
+					<BarChart
+						label="Spend per day this week"
+						items={SPEND}
+						bar={BAR}
+						unit={{ currency: "USD" }}
+					/>
 				</Section>
 			) : null}
 			{quiet ? (

@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { chartHead, chartScale, unitOf } from "../src/chart.ts";
+import {
+	chartHead,
+	chartScale,
+	currencyOf,
+	tickReach,
+	unitOf,
+} from "../src/chart.ts";
 
 test("four even steps over the peak, each the first whole multiple of its magnitude", () => {
 	assert.deepEqual(chartScale([100]), { step: 30, bands: 4, top: 120 });
@@ -71,4 +77,18 @@ test("a chart's unit takes its singular at one and its plural at every other cou
 	assert.equal(unitOf(flags, 0), "flags");
 	assert.equal(unitOf(flags, 6), "flags");
 	assert.equal(unitOf("minutes", 1), "minutes");
+});
+
+test("a currency is a unit with no word, and a word names no currency", () => {
+	const dollars = { currency: "USD" };
+	assert.equal(currencyOf(dollars), "USD");
+	assert.equal(unitOf(dollars, 31), undefined);
+	assert.equal(currencyOf("minutes"), undefined);
+	assert.equal(currencyOf({ one: "flag", other: "flags" }), undefined);
+	assert.equal(currencyOf(undefined), undefined);
+});
+
+test("the top tick reaches half a meta line above the plot", () => {
+	assert.equal(tickReach("desktop"), 9);
+	assert.equal(tickReach("touch"), 11);
 });

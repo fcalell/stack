@@ -1,8 +1,18 @@
 // What a BarChart decides before it draws, free of any framework: both
 // platforms read this one scale and head instead of a copy each.
 
+import { leadingOf } from "./scales.ts";
+import type { Density } from "./tokens.ts";
+
 // Four bands, the last one's bottom the baseline.
 export const BANDS = 4;
+
+// How far the top tick, centred on the plot's top edge, reaches above it:
+// half a meta line. The web reads it as `1lh / 2` of the body's meta line;
+// the phone, with no `lh` unit, as this number of px.
+export function tickReach(density: Density): number {
+	return leadingOf(density, "meta") / 2;
+}
 
 export interface ChartScale {
 	// One band's value.
@@ -38,16 +48,27 @@ function stepOf(peak: number): number {
 	return Math.ceil(raw / magnitude) * magnitude;
 }
 
-// What a chart's values count: one word (`requests`), or the word at one and
-// at every other count (`{ one: "flag", other: "flags" }`) for a unit that
-// takes a plural.
+// What a chart's values count: one word (`requests`), the word at one and at
+// every other count (`{ one: "flag", other: "flags" }`) for a unit that takes
+// a plural, or money (`{ currency: "USD" }`), whose figures carry the symbol
+// and no word follows.
 export type ChartUnit =
 	| string
-	| { readonly one: string; readonly other: string };
+	| { readonly one: string; readonly other: string }
+	| { readonly currency: string };
 
-// The unit's word at a count, so the head ("1 flag") agrees with the figure.
-export function unitOf(unit: ChartUnit, count: number): string {
+// The currency a unit counts in, none for a word.
+export function currencyOf(unit: ChartUnit | undefined): string | undefined {
+	return typeof unit === "object" && "currency" in unit
+		? unit.currency
+		: undefined;
+}
+
+// The unit's word at a count, so the head ("1 flag") agrees with the figure;
+// none for a currency.
+export function unitOf(unit: ChartUnit, count: number): string | undefined {
 	if (typeof unit === "string") return unit;
+	if ("currency" in unit) return undefined;
 	return count === 1 ? unit.one : unit.other;
 }
 

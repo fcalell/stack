@@ -3,6 +3,8 @@ import {
 	type ChartUnit,
 	chartHead,
 	chartScale,
+	currencyOf,
+	tickReach,
 	unitOf,
 } from "@fcalell/ui-core/chart";
 import { formatterFor } from "@fcalell/ui-core/format";
@@ -47,10 +49,15 @@ const KEYS = "flex-row flex-wrap";
 const KEY = "flex-row items-center";
 const DOT = "shrink-0";
 const BODY = "flex-row items-start";
+// The body stands half a meta line below the head, so the top tick, centred
+// on the plot's top edge, keeps the pair gap from the head's last line.
+const REACH = { paddingTop: tickReach("touch") } as const;
 const AXIS = "shrink-0";
-const AXIS_BAND = "flex-row justify-end flex-1";
-// A tick centres on its gridline.
-const TICK = "-translate-y-1/2";
+const AXIS_BAND = "relative flex-1";
+// A tick centres on its gridline; the last band's bottom is the baseline,
+// whose tick is the zero.
+const TICK = "absolute right-0 top-0 -translate-y-1/2";
+const ZERO = "absolute right-0 bottom-0 translate-y-1/2";
 const MAIN = "grow min-w-0";
 const PLOT = "relative";
 const GRID_BAND = "flex-1";
@@ -73,14 +80,54 @@ const BAR = "w-full";
 const HELD = "opacity-0";
 const OVER = "absolute inset-0";
 
+interface Figures {
+	// The head's and the keys' figures.
+	figure: (value: number) => string;
+	// The axis's ticks, in the lane four figures wide.
+	tick: (value: number) => string;
+}
+
 // Every figure of one chart in one notation: compact once its axis reaches
-// five figures, so a tick stays inside its four-figure lane.
-function formatter(top: number): (value: number) => string {
-	if (top >= 10_000) return compact;
-	const plain = formatterFor("number", undefined, {
-		maximumFractionDigits: 1,
+// five figures, so a tick stays inside its four-figure lane. Money keeps its
+// figures exact (the cents of "$30.97" are not the axis's step) and writes
+// its ticks short: no cents when the step is whole.
+// TODO: a compact money tick is the symbol before `compact`'s figure, which
+// reads right for a symbol-first currency; with Intl's compact notation on
+// Hermes (see `compact`) it is the currency formatter's own.
+function formatters(
+	top: number,
+	step: number,
+	unit: ChartUnit | undefined,
+): Figures {
+	const currency = currencyOf(unit);
+	if (currency === undefined) {
+		const plain = formatterFor("number", undefined, {
+			maximumFractionDigits: 1,
+		});
+		const figure = (value: number) =>
+			top >= 10_000 ? compact(value) : plain.format(value);
+		return { figure, tick: figure };
+	}
+	const money = formatterFor("number", undefined, {
+		style: "currency",
+		currency,
 	});
-	return (value) => plain.format(value);
+	const whole = formatterFor("number", undefined, {
+		style: "currency",
+		currency,
+		minimumFractionDigits: 0,
+		maximumFractionDigits: 0,
+	});
+	const symbol =
+		money.formatToParts(0).find((part) => part.type === "currency")?.value ??
+		"";
+	return {
+		figure: (value) => money.format(value),
+		tick: (value) => {
+			if (top >= 10_000) return `${symbol}${compact(value)}`;
+			return (Number.isInteger(step) ? whole : money).format(value);
+		},
+	};
 }
 
 function band(index: number, bands: number) {
@@ -136,7 +183,8 @@ export type BarChartProps<T = unknown> = Closed &
 		bar: BarSlots<T>;
 		// What the values count (`requests`, `minutes`), drawn after the total; a
 		// unit that takes a plural is `{ one, other }`, read at the figure it
-		// follows.
+		// follows; money is `{ currency: "USD" }`, its figures written in the
+		// currency with no word after them.
 		unit?: ChartUnit;
 		// The bars are a level, not a flow (open flags per round, not requests
 		// per day): the head draws the last bar's value, and each key the last
@@ -153,7 +201,7 @@ interface Bar {
 }
 
 // The total (the last bar with `level`) at body 500 with its unit, the parts' keys under it, then the
-// axis beside the plot, its four gridlines a hairline, the columns in the
+// axis beside the plot, its four gridlines a hairline each with its tick centred on it and the baseline with its 0, the columns in the
 // chip marks by part, a time under each bar that has one. It draws its
 // collection's four states: while its query is pending, `loading` is set or a
 // loading Section around it waits, its boxes in skeleton at their loaded size
@@ -220,9 +268,10 @@ export function BarChart<T>(props: BarChartProps<T>) {
 			...labels.map((key) => part(bar, key)),
 		]),
 	);
-	const figure = formatter(top);
+	const { figure, tick } = formatters(top, step, unit);
 	const head = chartHead(series, labels, level === true);
 	const { total } = head;
+	const word = unit ? unitOf(unit, total) : undefined;
 	const keyTotals = labels.map((label, at) => ({
 		label,
 		value: head.parts[at] ?? 0,
@@ -239,11 +288,7 @@ export function BarChart<T>(props: BarChartProps<T>) {
 			>
 				{figure(total)}
 			</RNText>
-			{unit ? (
-				<RNText className={text({ role: "meta" })}>
-					{unitOf(unit, total)}
-				</RNText>
-			) : null}
+			{word ? <RNText className={text({ role: "meta" })}>{word}</RNText> : null}
 		</View>
 	);
 	return (
@@ -264,7 +309,7 @@ export function BarChart<T>(props: BarChartProps<T>) {
 			) : (
 				totalLine
 			)}
-			<View className={cn(CHART_BODY, BODY)}>
+			<View className={cn(CHART_BODY, BODY)} style={REACH}>
 				<View className={cn(CHART_GRID, CHART_TICK_LANE, AXIS)}>
 					{Array.from({ length: bands }, (_, index) => (
 						<View
@@ -277,7 +322,12 @@ export function BarChart<T>(props: BarChartProps<T>) {
 						>
 							{peak > 0 ? (
 								<RNText className={cn(text({ role: "meta" }), FIGURES, TICK)}>
-									{figure(top - step * index)}
+									{tick(top - step * index)}
+								</RNText>
+							) : null}
+							{peak > 0 && index === bands - 1 ? (
+								<RNText className={cn(text({ role: "meta" }), FIGURES, ZERO)}>
+									{tick(0)}
 								</RNText>
 							) : null}
 						</View>
@@ -430,7 +480,7 @@ function Loading(props: { keys?: readonly string[] }) {
 			) : (
 				total
 			)}
-			<View className={cn(CHART_BODY, BODY)}>
+			<View className={cn(CHART_BODY, BODY)} style={REACH}>
 				<View className={cn(CHART_GRID, CHART_TICK_LANE, AXIS)}>
 					{Array.from({ length: BANDS }, (_, index) => (
 						<View
@@ -445,6 +495,12 @@ function Loading(props: { keys?: readonly string[] }) {
 								<Strut role="meta" />
 								<View className={cn(skeleton({ kind: "line" }), BAR)} />
 							</View>
+							{index === BANDS - 1 ? (
+								<View className={cn(LINE, BAR, ZERO)}>
+									<Strut role="meta" />
+									<View className={cn(skeleton({ kind: "line" }), BAR)} />
+								</View>
+							) : null}
 						</View>
 					))}
 				</View>
