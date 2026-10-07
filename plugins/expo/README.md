@@ -31,6 +31,7 @@ options and the root files; [`builds.md`](./guide/builds.md), the commands and `
 | `.stack/app.config.cjs` | `expo.slots.expoConfig` |
 | `.stack/entry.tsx` | `expo.slots.entrySource` |
 | `.stack/expo-env.d.ts` | Static ambient-types reference |
+| `<routes dir>/+not-found.tsx` | `expo.slots.notFoundFile`: a design system's page for an unmatched address (native-ui's), written into the app's routes directory, where expo-router reads it, only while no `+not-found.*` sits at its root |
 
 The generated configs are `.cjs`: the root shims `require()` them through Node, and the consumer
 is `type: module`, so a `.js` would parse as ESM. `.stack/metro.config.cjs` sets Metro's
@@ -48,6 +49,8 @@ is `type: module`, so a `.js` would parse as ESM. `.stack/metro.config.cjs` sets
 | `expo.slots.entryImports` | `list<TsImportSpec>` | Imports for `.stack/entry.tsx` |
 | `expo.slots.devServerPort` | `value<number>` | Resolved Metro dev-server port |
 | `expo.slots.routesPagesDir` | `derived<string \| null>` | Resolved routes directory, `null` when routing is disabled |
+| `expo.slots.notFoundRoute` | `value<string \| null>` | Module whose default export is the page for an address no route serves, contributed by a design system |
+| `expo.slots.notFoundFile` | `derived<GeneratedFile \| null>` | The `+not-found.tsx` generate writes for it; null while the app has one |
 | `expo.slots.easBuildProfiles` | `value<string[]>` | EAS build profile names |
 | `expo.slots.easUpdateChannel` | `value<string>` | Default EAS Update channel |
 | `expo.slots.metroConfig` | `derived<string \| null>` | Final `.stack/metro.config.cjs` |

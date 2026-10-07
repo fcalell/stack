@@ -10,6 +10,7 @@ import type {
 	TsImportSpec,
 } from "@fcalell/cli/ast";
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
+import type { GeneratedFile } from "@fcalell/cli/specs";
 import { api } from "@fcalell/plugin-api";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
 import { z } from "zod";
@@ -18,6 +19,11 @@ import {
 	aggregateExpoConfig,
 	aggregateMetroConfig,
 } from "./node/codegen.ts";
+import {
+	hasNotFoundRoute,
+	NOT_FOUND_FILE,
+	notFoundRouteSource,
+} from "./node/not-found.ts";
 import { buildRoutesDts } from "./node/routes.ts";
 import {
 	type ExpoConfigPlugin,
@@ -229,6 +235,34 @@ const routesPagesDir = slot.derived({
 	},
 });
 
+// The module whose default export is the page for an address no route serves:
+// a design system plugin contributes its own. With one, generate writes it as
+// the app's `+not-found` route unless the app has a route of its own there.
+const notFoundRoute = slot.value<string | null>({
+	source: SOURCE,
+	name: "notFoundRoute",
+	override: true,
+	seed: () => null,
+});
+
+// The route file generate writes for an unmatched address, in the app's routes
+// directory where expo-router reads it: null without a page, with routing off,
+// or while the app has a route there, whether its own or this one from an
+// earlier generate.
+const notFoundFile = slot.derived({
+	source: SOURCE,
+	name: "notFoundFile",
+	inputs: { module: notFoundRoute, pagesDir: routesPagesDir },
+	compute: (inp, ctx): GeneratedFile | null => {
+		if (inp.module === null || inp.pagesDir === null) return null;
+		if (hasNotFoundRoute(ctx.cwd, inp.pagesDir)) return null;
+		return {
+			path: `${inp.pagesDir}/${NOT_FOUND_FILE}`,
+			content: notFoundRouteSource(inp.module),
+		};
+	},
+});
+
 // EAS build profile names (`eas build --profile <name>`). Consumed by the
 // `expo build` command to validate the requested profile and pick a default.
 const easBuildProfiles = slot.value<string[], ExpoOptions>({
@@ -410,6 +444,8 @@ export const expo = plugin("expo", {
 		entryImports,
 		devServerPort,
 		routesPagesDir,
+		notFoundRoute,
+		notFoundFile,
 		easBuildProfiles,
 		easUpdateChannel,
 		metroConfig,
@@ -621,6 +657,12 @@ export const expo = plugin("expo", {
 		emitArtifact(".stack/app.config.cjs", self.slots.expoConfig),
 		emitArtifact(ENTRY_ARTIFACT, self.slots.entrySource),
 		emitArtifact(ROUTES_ARTIFACT, self.slots.routesDtsSource),
+
+		// The page for an unmatched address: written once into the app's routes
+		// directory, never over a route of the app's.
+		cliSlots.artifactFiles.contribute(
+			async (ctx) => (await ctx.resolve(self.slots.notFoundFile)) ?? undefined,
+		),
 
 		// A route file added or removed during `stack dev` retypes the hrefs.
 		cliSlots.devWatchers.contribute(async (ctx) => {

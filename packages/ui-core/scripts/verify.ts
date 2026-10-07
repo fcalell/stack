@@ -714,7 +714,7 @@ check("c02", "package.json shape", () => {
 		Object.keys(pkg.exports ?? {})
 			.sort()
 			.join(" "),
-		"./canvas ./chart ./clock ./cn ./commit ./derive ./descriptors ./emit ./file ./format ./harness ./list-state ./manifest ./reason ./roster ./route ./rules ./schema ./tokens ./variants",
+		"./canvas ./chart ./clock ./cn ./commit ./derive ./descriptors ./emit ./file ./format ./harness ./leave ./list-state ./manifest ./reason ./roster ./route ./rules ./schema ./tokens ./variants",
 		"export subpaths",
 	);
 	assert(pkg.peerDependencies?.zod, "zod is not a peerDependency");
@@ -743,7 +743,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(SHADOW_LEVELS.length, 2, "shadow level count");
 	requireEqual(WIDTHS.length, 14, "width count");
 	requireEqual(BREAKPOINTS.length, 3, "breakpoint count");
-	requireEqual(WORD_KEYS.length, 64, "word count");
+	requireEqual(WORD_KEYS.length, 70, "word count");
 	requireEqual(COUNTED_WORD_KEYS.length, 1, "counted word count");
 	requireEqual(SLOT_WORD_KEYS.length, 3, "slot word count");
 	requireEqual(
@@ -2060,7 +2060,7 @@ check(
 	"the roster is closed, camelCase, and off the style channels",
 	() => {
 		const entries = rosterEntries();
-		requireEqual(entries.length, 65, "component count");
+		requireEqual(entries.length, 66, "component count");
 		const names = new Set<string>();
 		for (const [, name, { props }] of entries) {
 			assert(/^[A-Z][A-Za-z]+$/.test(name), `${name} is not PascalCase`);

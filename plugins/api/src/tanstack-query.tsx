@@ -8,7 +8,10 @@ import {
 	type PackedRulesLike,
 } from "@fcalell/plugin-api/ability-client";
 import { registerOperationContext } from "@fcalell/plugin-api/client";
-import { handleMutationSuccess } from "@fcalell/plugin-api/query-invalidation";
+import {
+	type EntityName,
+	handleMutationSuccess,
+} from "@fcalell/plugin-api/query-invalidation";
 import type { RouterClient } from "@fcalell/plugin-api/types";
 import {
 	createTanstackQueryUtils,
@@ -38,6 +41,15 @@ export {
 	useQueryClient,
 	useSuspenseQuery,
 } from "@tanstack/react-query";
+
+// A query outside the API declares what it reads as `meta: { reads: [...] }`
+// (see `query-invalidation.ts`); registering the shape types those names over
+// the app's `EntityName`, on web and phone alike. Other meta keys stay open.
+declare module "@tanstack/react-query" {
+	interface Register {
+		queryMeta: { reads?: readonly EntityName[] } & Record<string, unknown>;
+	}
+}
 
 // Mobile-friendly defaults: a single retry (flaky cellular shouldn't hammer the
 // worker) and a short freshness window so navigating between screens doesn't

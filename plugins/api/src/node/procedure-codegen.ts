@@ -213,7 +213,18 @@ type ContextOf<B> = B extends AppBuilder<infer C> ? C : never;
 // erasure keeps that from being a real cycle.
 export type WorkerContext = ContextOf<typeof __chain>;
 type RbacStatements = ${statementsType};
-type Entity = ${entityType};
+export type Entity = ${entityType};
+
+// Types the client's \`invalidateForWrites\` and a query's \`meta.reads\` over
+// \`Entity\` (type-only: nothing reaches the bundle). \`worker.ts\` re-exports
+// \`Entity\`, so an app's program loads this file with the router type. The
+// import puts the module in the program, which an augmentation alone does not.
+import type {} from "@fcalell/plugin-api/query-invalidation";
+declare module "@fcalell/plugin-api/query-invalidation" {
+	interface Register {
+		entity: Entity;
+	}
+}
 
 export const procedure = createProcedure<WorkerContext, RbacStatements, Entity>();
 `;

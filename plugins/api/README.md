@@ -65,7 +65,7 @@ export const api = plugin("api", {
 | `api.slots.workerBase` | `derived<TsExpression>` | The `createWorker({...})` call expression; bakes `env` into `envChecks` and `envType` into its type argument |
 | `api.slots.workerSource` | `derived<string \| null>` | Final `.stack/worker.ts` source; null when no runtimes are present |
 | `api.slots.rbacStatements` | `value<Record<string, readonly string[]> \| null>` (`override`) | RBAC action statements for `procedure({ rbac })` / `procedure({ can })`'s type-level autocomplete; `auth` contributes from `organization.ac.statements` |
-| `api.slots.entities` | `list<string>` | Entity vocabulary for `procedure({ reads, writes })`'s type-level autocomplete (sorted, deduplicated union); `db` contributes the consumer's Drizzle schema export names, `auth` contributes its own table names, `api` contributes the consumer's `entities` option |
+| `api.slots.entities` | `list<string>` | Entity vocabulary for `procedure({ reads, writes })`'s type-level autocomplete, and (as `Entity` in `.stack/procedure.ts`) for the client's `invalidateForWrites` and `meta.reads` (sorted, deduplicated union); `db` contributes the consumer's Drizzle schema export names, `auth` contributes its own table names, `api` contributes the consumer's `entities` option |
 | `api.slots.testingImports` | `list<TsImportSpec>` | Imports the test entries' option values need, sorted by source |
 | `api.slots.testingEntries` | `list<PluginRuntimeEntry>` | `.use(xTesting({...}))` entries on the test entry, one per plugin with a `./testing` subpath, sorted by plugin |
 | `api.slots.testingSource` | `derived<string \| null>` | Final `.stack/testing.ts` source; null when `workerSource` is |
@@ -154,7 +154,7 @@ export const procedure = createProcedure<WorkerContext, RbacStatements, Entity>(
 | `@fcalell/plugin-api/client` | `createClient()`, `RouterClient`, `ClientConfig` |
 | `@fcalell/plugin-api/testing` | `createTestEntry()`, `TestEntry`, `TestApp`, `TestingPlugin`, `TestingContext`, `TestingSetup`, `McpTestClient`, `McpOptions`, `McpRefusal`, `ORPCError` -- the Node-only runtime `.stack/testing.ts` calls |
 | `@fcalell/plugin-api/tanstack-query` | `createQueryClient()`, `createApiQueryUtils()`, `QueryProvider`, `useAbility(organizationId, recordRules?)`, `ORG_RULES_QUERY_KEY`, `orgRulesQueryKey()`, query hooks -- native TanStack Query client (runtime-only) |
-| `@fcalell/plugin-api/query-invalidation` | `captureEntityHeaders()`, `invalidateForWrites()`, `handleMutationSuccess()`, `createEntityRegistry()` -- framework-agnostic auto-invalidation core (runtime-only) |
+| `@fcalell/plugin-api/query-invalidation` | `captureEntityHeaders()`, `invalidateForWrites()`, `handleMutationSuccess()`, `createEntityRegistry()`, `EntityName` -- framework-agnostic auto-invalidation core; `invalidateForWrites` takes the app's `Entity` names (type-only) |
 | `@fcalell/plugin-api/ability-client` | `composeAbility()`, `fetchOrgRules(organizationId)`, `registerApiClient()`, `ORG_RULES_QUERY_KEY`, `orgRulesQueryKey()`, `PackedRulesLike` -- framework-agnostic `useAbility()` core (runtime-only), consumed by `./tanstack-query` |
 | `@fcalell/plugin-api/schema` | `z` (Zod re-export), `ZodObject`, `ZodType`, `ZodRawShape` |
 | `@fcalell/plugin-api/lib/cursor` | `encodeCursor`, `decodeCursor`, `paginate`, `clampLimit`, constants |

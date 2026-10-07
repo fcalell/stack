@@ -162,7 +162,7 @@ export function ActionBar({ acts, fit, chosen, loading }: ActionBarProps) {
 	// A blocked act's reason takes the line a failure would draw in.
 	const blocked = acts.some((act) => act.blocked !== undefined);
 	const [running, setRunning] = useState(false);
-	const { touched } = useTouched();
+	const { touched, leave } = useTouched();
 	// Each blocked act's press, by label, as the reason it came under: it
 	// stands while the act is blocked by that reason
 	// (`@fcalell/ui-core/reason`).
@@ -179,13 +179,28 @@ export function ActionBar({ acts, fit, chosen, loading }: ActionBarProps) {
 	const lastAt = acts.length - 1;
 	if (waits !== undefined) return <ActionBarWait fit={where} count={waits} />;
 	const runFilled = () => {
-		const ran = acts[lastAt]?.onAct();
-		if (!(ran instanceof Promise)) return;
+		// The press ends the form's edit before the act runs, so an act that
+		// navigates is not asked; a rejection puts the edit back.
+		leave.press();
+		let ran: unknown;
+		try {
+			ran = acts[lastAt]?.onAct();
+		} catch (error) {
+			leave.settle(true);
+			throw error;
+		}
+		if (!(ran instanceof Promise)) {
+			leave.settle(false);
+			return;
+		}
 		setRunning(true);
 		// Settled either way, so a failing act leaves no derived promise to
 		// reject unhandled: its rejection stays the caller's.
-		const done = () => setRunning(false);
-		void ran.then(done, done);
+		const done = (rejected: boolean) => () => {
+			leave.settle(rejected);
+			setRunning(false);
+		};
+		void ran.then(done(false), done(true));
 	};
 	return (
 		<View

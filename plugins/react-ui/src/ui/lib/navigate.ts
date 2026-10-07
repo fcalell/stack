@@ -1,3 +1,4 @@
+import type { Leave } from "@fcalell/ui-core/leave";
 import {
 	createContext,
 	type MouseEvent,
@@ -14,6 +15,13 @@ export interface InPlaceRouter {
 	state: {
 		location: { href: string };
 		resolvedLocation?: { href: string };
+	};
+	// A blocker resolves `true` to hold a navigation, as the router's own does.
+	history: {
+		block(blocker: {
+			blockerFn: () => Promise<boolean>;
+			enableBeforeUnload: () => boolean;
+		}): () => void;
 	};
 }
 
@@ -88,6 +96,28 @@ export function isRoute(href: string): boolean {
 export function navigate(route: string): void {
 	if (bound && isRoute(route)) bound.navigate({ href: route });
 	else location.assign(route);
+}
+
+// A form that stands edited holds its leave: bound, the router's history asks
+// before any navigation it makes (a push, a replace, the back button), the
+// question's answer deciding whether it goes ahead, and the page's unload is
+// held only while the form asks; unbound, the unload is all the page can hold,
+// since an act there loads the document. Returns the release.
+export function blockLeave(
+	leave: Leave,
+	ask: () => Promise<boolean>,
+): () => void {
+	if (bound) {
+		return bound.history.block({
+			blockerFn: async () => !(await leave.attempt(ask)),
+			enableBeforeUnload: leave.asks,
+		});
+	}
+	const unload = (event: BeforeUnloadEvent) => {
+		if (leave.asks()) event.preventDefault();
+	};
+	addEventListener("beforeunload", unload);
+	return () => removeEventListener("beforeunload", unload);
 }
 
 // An anchor's click: a plain primary click on a route of the app opens it in

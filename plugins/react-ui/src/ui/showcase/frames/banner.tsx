@@ -1,3 +1,4 @@
+import { createLeave } from "@fcalell/ui-core/leave";
 import type { BannerKind } from "@fcalell/ui-core/variants";
 import { Banner } from "../../components/banner/index.tsx";
 import { TouchedContext } from "../../lib/touched.ts";
@@ -6,7 +7,7 @@ import { Wide } from "./layout-context.tsx";
 
 const act = () => {};
 // A touched form, so a blocked act shows its reason.
-const TOUCHED = { touched: true, touch: act };
+const TOUCHED = { touched: true, touch: act, leave: createLeave() };
 const TRIAL = "Your trial ends in 3 days.";
 const UPGRADE = { label: "Upgrade", onAct: act };
 const BLOCKED = { ...UPGRADE, blocked: "Only an owner can upgrade." };

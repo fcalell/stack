@@ -12,6 +12,7 @@
 		"./components/*": "./src/ui/components/*/index.tsx",
 		"./lib/glyph": "./src/ui/lib/glyph.tsx",
 		"./lib/hosts": "./src/ui/lib/hosts.tsx",
+		"./lib/not-found": "./src/ui/lib/not-found.tsx",
 		"./lib/parts": "./src/ui/lib/parts.tsx",
 		"./lib/raised": "./src/ui/lib/raised.tsx",
 		"./lib/room": "./src/ui/lib/room.tsx",

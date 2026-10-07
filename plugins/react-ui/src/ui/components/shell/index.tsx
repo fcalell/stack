@@ -16,9 +16,9 @@ import {
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { PlaceRoute, ShellSwitcher } from "../../lib/frame.ts";
+import { PlaceRoute, ShellHome, ShellSwitcher } from "../../lib/frame.ts";
 import { useTouch } from "../../lib/media.ts";
-import { follow, useRoute } from "../../lib/navigate.ts";
+import { follow, isRoute, useRoute } from "../../lib/navigate.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Count } from "../count/index.tsx";
 import { Icon } from "../icon/index.tsx";
@@ -81,6 +81,10 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 	const more = moreAt === at;
 	const route = placeAt(places, at);
 	const rest = places.length > TAB_ROOM ? places.slice(TAB_ROOM - 1) : [];
+	// A place that is a spot on its page (`#activity`) leads nowhere from an
+	// address nothing serves, so home is the first place that is a route.
+	const first = places.find((spec) => isRoute(spec.route));
+	const home = first && { label: first.label, href: first.route };
 	// The More page stands in the page's place while it is open on touch.
 	const page = touch && more ? <MorePage places={rest} /> : children;
 	// The sidebar and the tab bar differ by density; the column, and the page
@@ -145,9 +149,11 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 							</div>
 						}
 					>
-						<ShellSwitcher value={switcher}>
-							<PlaceRoute value={route}>{page}</PlaceRoute>
-						</ShellSwitcher>
+						<ShellHome value={home}>
+							<ShellSwitcher value={switcher}>
+								<PlaceRoute value={route}>{page}</PlaceRoute>
+							</ShellSwitcher>
+						</ShellHome>
 					</FrameMain>
 					{tabs}
 				</div>

@@ -61,6 +61,8 @@ run `stack generate` before `pnpm check`.
 - Keep a route file to its route: the `Route` export and the components it renders. A component
   two routes share lives in the app's `ui/` or a `-components/` directory, never in another
   route file.
+- An address no route serves needs no route of yours: with `reactUi()` the router draws its
+  not-found page. A `$.tsx` catch-all or a route's `notFoundComponent` replaces it.
 - With `reactUi()` and `auth()` in the config, an organization lives at `/<slug>`, so every
   route's first static segment (`settings`, `inbox`) is a slug auth refuses. Name a top-level
   route knowing it takes that word from every organization.

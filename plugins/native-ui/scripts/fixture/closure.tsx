@@ -42,6 +42,7 @@ import { Sheet } from "@fcalell/plugin-native-ui/components/sheet";
 import { Picker } from "@fcalell/plugin-native-ui/components/picker";
 import { OptionList } from "@fcalell/plugin-native-ui/components/option-list";
 import { EmptyState } from "@fcalell/plugin-native-ui/components/empty-state";
+import { Failed } from "@fcalell/plugin-native-ui/components/failed";
 import { Missing } from "@fcalell/plugin-native-ui/components/missing";
 import { Toast } from "@fcalell/plugin-native-ui/components/toast";
 import { Banner } from "@fcalell/plugin-native-ui/components/banner";
@@ -677,6 +678,19 @@ export const closure = (
 		<EmptyState sentence="a" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<EmptyState sentence="a" placeholderTextColorClassName="text-ink-body" />
+		<Failed sentence="a" act={{ label: "a", onAct: () => {} }} />
+		{/* @ts-expect-error: a Failed's act runs a function, never a link */}
+		<Failed sentence="a" act={{ label: "a", href: "/" }} />
+		{/* @ts-expect-error: closed channel */}
+		<Failed sentence="a" act={{ label: "a", onAct: () => {} }} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Failed sentence="a" act={{ label: "a", onAct: () => {} }} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Failed sentence="a" act={{ label: "a", onAct: () => {} }} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Failed sentence="a" act={{ label: "a", onAct: () => {} }} classList={{}} />
+		{/* @ts-expect-error: closed channel */}
+		<Failed sentence="a" act={{ label: "a", onAct: () => {} }} colorClassName="text-ink-body" />
 		<Missing />
 		<Missing sentence="a" act={{ label: "a", href: "/" }} />
 		{/* @ts-expect-error: closed channel */}

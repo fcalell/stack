@@ -11,6 +11,20 @@ import { STACK_READS_HEADER, STACK_WRITES_HEADER } from "./wire.ts";
 // pathKey the server middleware derives its procedure path from, so captured
 // headers key on the identical string the client-side queryKey produces.
 
+// The app's entity names. The generated `.stack/procedure.ts` merges
+// `entity: Entity` (the union of `api.slots.entities`) into this interface, so
+// `invalidateForWrites` and a query's `meta.reads` take those names and a typo
+// fails `tsc`. Unmerged, a name is any string. Type-only: the client bundle
+// carries nothing.
+// biome-ignore lint/suspicious/noEmptyInterface: an interface so `.stack/procedure.ts` can merge into it
+export interface Register {}
+
+export type EntityName = Register extends {
+	entity: infer TEntity extends string;
+}
+	? TEntity
+	: string;
+
 interface EntityEntry {
 	reads: string[];
 	writes: string[];
@@ -47,7 +61,7 @@ export interface EntityRegistry {
 	/** Invalidates every cached query whose recorded or declared (`meta.reads`) reads intersect `writes`. */
 	invalidateForWrites(
 		queryClient: InvalidatableQueryClient,
-		writes: readonly string[],
+		writes: readonly EntityName[],
 	): void;
 	/** Looks up the writes recorded for `mutationKey`'s pathKey and invalidates for them. No-op when nothing was recorded. */
 	handleMutationSuccess(
@@ -142,7 +156,7 @@ export function captureEntityHeaders(pathKey: string, headers: Headers): void {
 
 export function invalidateForWrites(
 	queryClient: InvalidatableQueryClient,
-	writes: readonly string[],
+	writes: readonly EntityName[],
 ): void {
 	defaultEntityRegistry.invalidateForWrites(queryClient, writes);
 }

@@ -1,17 +1,22 @@
+import { createLeave, type Leave } from "@fcalell/ui-core/leave";
 import { createContext, use, useMemo, useState } from "react";
 
 // A `Form` or a `Sheet` is touched once a field inside it takes input. A
 // blocked act inside shows its reason from then on, or once it is pressed;
 // before either it is inert and the reason is unshown. Fields call `touch`
-// on change.
+// on change. The same input edits its `leave`, which an `ActionBar`
+// presses and a `Form` asks from when it is left: touched keeps its meaning
+// (the reason shows) while the edit comes and goes with the act.
 export interface Touched {
 	touched: boolean;
 	touch: () => void;
+	leave: Leave;
 }
 
 export const TouchedContext = createContext<Touched>({
 	touched: false,
 	touch: () => {},
+	leave: createLeave(),
 });
 
 export function useTouched(): Touched {
@@ -20,12 +25,21 @@ export function useTouched(): Touched {
 
 // A Form's or a Sheet's own touched state: the value its `TouchedContext`
 // hands down, which changes only when it is touched or reset, and the setter
-// that resets it.
+// that resets it. Its `leave` is one object for the life of the form, read
+// when a leave is tried and so never state.
 export function useTouchState() {
 	const [touched, setTouched] = useState(false);
+	const [leave] = useState(createLeave);
 	const value = useMemo<Touched>(
-		() => ({ touched, touch: () => setTouched(true) }),
-		[touched],
+		() => ({
+			touched,
+			touch: () => {
+				leave.edit();
+				setTouched(true);
+			},
+			leave,
+		}),
+		[touched, leave],
 	);
 	return [value, setTouched] as const;
 }

@@ -376,6 +376,19 @@ export const reactUi = plugin("react-ui", {
 				};
 			},
 		),
+		// The page for an address nothing serves, set as the router's default
+		// not-found page: the app passes nothing, and a route of its own that
+		// matches (a catch-all) or sets a `notFoundComponent` wins.
+		react.slots.routerBindings.contribute(
+			async (ctx): Promise<TsImportSpec | undefined> => {
+				if ((await ctx.resolve(react.slots.routesDir)) === null)
+					return undefined;
+				return {
+					source: "@fcalell/plugin-react-ui/lib/not-found",
+					named: ["bindNotFound"],
+				};
+			},
+		),
 		// The mode and the density the sheet keys on (a `dark` class and
 		// `data-density` on the root), as toolbars the screens workbench pins
 		// before a story paints. The workbench opens in the theme's default mode,

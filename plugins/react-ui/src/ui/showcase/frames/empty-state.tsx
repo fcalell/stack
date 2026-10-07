@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Button } from "../../components/button/index.tsx";
 import { EmptyState } from "../../components/empty-state/index.tsx";
+import { Failed } from "../../components/failed/index.tsx";
 import { Group } from "../../components/group/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { Section } from "../../components/section/index.tsx";
@@ -14,12 +15,18 @@ const PROJECTS = "A project holds the deploys, domains and logs of one app.";
 
 // A page as tall as the viewport, so an EmptyState alone in its body
 // centres in what the body leaves.
+function Tall(props: { title: string; children: ReactNode }) {
+	return (
+		<div className="flex flex-col h-dvh">
+			<Place title={props.title}>{props.children}</Place>
+		</div>
+	);
+}
+
 function Page(props: { children: ReactNode }) {
 	return (
 		<Column>
-			<div className="flex flex-col h-dvh">
-				<Place title="Projects">{props.children}</Place>
-			</div>
+			<Tall title="Projects">{props.children}</Tall>
 		</Column>
 	);
 }
@@ -85,14 +92,24 @@ export function drawEmptyState(frame: ShowcaseFrame) {
 				</EmptyState>
 			</Page>
 		);
+	// The create form over the failed one, each alone on a page of its own: the
+	// filled act with the plus beside the hairline one without.
 	return (
-		<Page>
-			<EmptyState
-				icon="FolderPlus"
-				title="No projects yet"
-				sentence={PROJECTS}
-				act={NEW_PROJECT}
-			/>
-		</Page>
+		<Column>
+			<Tall title="Projects">
+				<EmptyState
+					icon="FolderPlus"
+					title="No projects yet"
+					sentence={PROJECTS}
+					act={NEW_PROJECT}
+				/>
+			</Tall>
+			<Tall title="Deploys">
+				<Failed
+					sentence="Deploys did not load."
+					act={{ label: "Retry", onAct: act }}
+				/>
+			</Tall>
+		</Column>
 	);
 }

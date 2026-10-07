@@ -40,6 +40,12 @@ export default function Layout() {
 
 A place is current at its route and every route under it; `/` only at itself.
 
+## An address no route serves
+
+With `nativeUi()`, `stack generate` writes `src/app/+not-found.tsx` when the directory holds no
+`+not-found` file: the page for an unmatched address, drawn inside the root layout. It is yours
+from then on: replace its contents to draw another page, and it is never rewritten.
+
 ## Places and screens
 
 A route a tab opens renders a `Place`. A route pushed over it (a record, a form) renders a

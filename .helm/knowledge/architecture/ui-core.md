@@ -202,7 +202,7 @@ Every word a molecule draws on its own (the seven `Status` words, `recommended`,
 `edit`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`,
 `message`, `copyFailed`, `downloadFailed`, `latest`,
 `missing`, `chooseFile`, `typeValue`, `pickValue`, `locked`, `photos`, `files`,
-`changed`, `unchanged`, `stale`, `chooseAll`, `chooseNone`, `noMatches`, `imageFiles`, `audioFiles`, `videoFiles`, `textFiles`, `expand`, `collapse`, `zoomIn`, `zoomOut`, `fit`, `arrange`, `off`, the counted
+`changed`, `unchanged`, `stale`, `chooseAll`, `chooseNone`, `noMatches`, `imageFiles`, `audioFiles`, `videoFiles`, `textFiles`, `expand`, `collapse`, `zoomIn`, `zoomOut`, `fit`, `arrange`, `off`, `notFound`, `nowhere`, `discardEdit`, `keepEditing`, `discard`, `editUnsaved`, the counted
 `earlierLines`, and the slot words `wrongType`, `stepOf` and `chosenOf`) comes from `words`, a closed
 typed object with English defaults. The `Words` type requires every key and `wordsSchema` is strict,
 so a translation missing a word fails `tsc` and the schema. It is a plugin option beside `theme`;
@@ -1122,7 +1122,7 @@ a tick with no animation, never jumped to full.
   route (`{ label, href }`), the one descriptor both platforms carry, and the act defaults to
   Back. Rejected: an `EmptyState` flag for the act's kind (a consumer option to pick a look) and
   deriving it from `href` (a create act that navigates, "Add a repo", keeps its plus). `tone`
-  stays internal, as does `fill`. Stack drawing an unmatched address itself is not part of it. An OptionList
+  stays internal, as does `fill`. An OptionList
   draws it as its card's line, `missing` beside a secondary Back, as its failed line stands.
   Back goes to `BackRoute`, the enclosing `Screen`'s `back` or the `back` of a Split between
   them and the read (which wins), else to `PlaceRoute`, the route of the place that owns the
@@ -1133,6 +1133,35 @@ a tick with no animation, never jumped to full.
   `follow`, which opens a plain primary click on a route of the app through the app's router
   (bound by the generated entry through `react.slots.routerBindings`) and leaves every other
   click (modified, middle, external) to the browser. A missing list gives the Section no count.
+- An address no route serves is drawn by stack, with no part, option or prop: the `notFound` word
+  ("Not found") as the title and the `nowhere` word ("Nothing is at this address.") as the sentence,
+  on both platforms through one internal component per platform (`lib/not-found`), not in the roster.
+  Where it stands decides its frame: under a Shell, a `Place` holding the `Missing` form whose act
+  goes to the Shell's first place that is a route (`ShellHome`, a context the Shell hands down; a
+  place that is a spot on its page, `#activity`, leads nowhere from a missing address); outside
+  one, a `Gate` with the `back` word as a standalone link to `/`. On the web react-ui contributes
+  `bindNotFound` through `react.slots.routerBindings`, which sets the router's
+  `defaultNotFoundComponent` after `createRouter` (`router.update` merges options and the
+  default is read at render). TanStack's `fuzzy` mode hands a miss to the nearest matched route
+  with children: an address under one of the app's routes (`/members/zzz`) stands in that route's
+  layout, so under a pathless `_app` Shell, while a miss no route is under matches the root alone
+  and stands outside it. A route of the app's own wins (a catch-all that matches, a route's
+  `notFoundComponent`). On the phone expo-router reads an unmatched address's route from a
+  `+not-found` file at the root of the routes directory and from no other place, so expo writes
+  one there through `expo.slots.notFoundRoute`/`notFoundFile` (native-ui contributes the module)
+  only while none sits at the root; it stands inside the root layout, so a layout drawing a Shell
+  is where it draws a Place. Rejected: a roster part and an option (the page is the same in every
+  app and an app's own route replaces it), expo-router's require-context keys patched in the
+  generated entry (a documented file route exists), and a file in `.stack/` (expo-router reads
+  none).
+- The failed form is public as `Failed` (`sentence`, `act: Act`) for a read that is no query (a
+  mutation that opens a file): the alert mark, the hairline act with no plus, drawn by the same
+  `EmptyStateBase` `failed` tone that `QueryBoundary` renders through `Failed` itself, so the two
+  cannot drift. A failed tone's act is the hairline one in every form, a first run's included. Its
+  act is a function act, never a `LinkAct` (a way back is a `Missing`). Rejected: `QueryBoundary`
+  taking a mutation's result (a boundary reads a query's `isPending`, `error` and `refetch`; a
+  fake query is a workaround), `Missing` taking an `Act` (its form has no mark and no Retry) and an
+  `EmptyState` tone (the look option `tone` stays internal).
 - A `Comparison` is a collection of facts with the List's source (`query` with `sentence` and
   `empty`, or `items` waiting on `loading`) and a `row` map over a fact's slots: `key`, `label`,
   `values` (one per column, in order), `chips` and `status`. A fact's `status` is its verdict, a
@@ -1579,6 +1608,24 @@ a tick with no animation, never jumped to full.
   resolves and stays open to retry when it rejects (the caller says why, a toast). `confirm()`
   returns nothing, and its optional `cancel` is the way out's label (the `cancel` word unless given): the words for leaving a decision are the decision's own ("Keep editing", "Stay"), so no word derives them. A caller that awaited a boolean and then did the work left the sheet closed
   with nothing pending while the work ran, and lost the retry.
+- A `Form` that stands edited asks once when its page is left, with no prop: the app passes
+  nothing and writes no guard. The state is ui-core's `createLeave` (`./leave`), one object per
+  `Form` beside `touched` in `useTouchState`, a ref-like store and never React state, because a
+  leave is tried in a router callback that must read the press made a tick before. A field's
+  input edits it; the `ActionBar`'s filled act clears it before running (a sync act that
+  navigates, or an async one that navigates after it resolves, is never asked) and puts it back if
+  the act rejects; no question while the act pends. `touched` keeps its meaning (a blocked act's
+  reason shows), so the two are apart. The question is a `Confirmation` (`discardEdit`, a
+  the `editUnsaved` sentence, a destructive `discard` act, `cancel` `keepEditing`)
+  asked through each plugin's `ask`, which resolves with the decision's answer where `confirm()`
+  returns nothing, and resolves `true` at once when no frame hosts the queue. Web: the bound
+  router's `history.block` (an async blocker resolving to hold or go, so a push, a replace and the
+  back button ask alike, with `enableBeforeUnload` true only while the form asks); unbound, a
+  `beforeunload` listener alone. Phone: the screen's `beforeRemove` is prevented and a discard
+  dispatches the event's action; `navigate` between tabs removes no screen, so a tab switch asks
+  nothing. A `Form` in a sheet asks nothing (the sheet closes on its own acts), and two edited
+  forms on one page each ask. Rejected: a prop or a `Form` variant (every edited form wants it),
+  a capture-phase anchor interceptor (a router push and a back never reach it) and block-then-replay.
 - A sheet knows what it holds before it presents. A sheet stands full height when it holds a
   `TextArea` (which grows with its value) or a menu that searches (a pick past six options, whose
   list would else jump as the filter narrows), read in render: on the phone off the elements it is

@@ -351,6 +351,12 @@ export const nativeUi = plugin("native-ui", {
 		expo.slots.providers.contribute(() => authProvider(self.options)),
 		expo.slots.providers.contribute(() => bottomSheetProvider),
 
+		// The page for an address no route serves: expo writes it as the app's
+		// `+not-found` route unless the app has one of its own.
+		expo.slots.notFoundRoute.contribute(
+			() => "@fcalell/plugin-native-ui/lib/not-found",
+		),
+
 		// ── Emit the uniwind entry stylesheet ─────────────────────────────
 		emitArtifact(GLOBAL_CSS_ARTIFACT, self.slots.appCssSource),
 		emitArtifact(NATIVE_AUTH_ARTIFACT, self.slots.nativeAuthSource),

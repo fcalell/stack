@@ -1228,6 +1228,12 @@ export const WORD_KEYS = [
 	"fit",
 	"arrange",
 	"off",
+	"notFound",
+	"nowhere",
+	"discardEdit",
+	"keepEditing",
+	"discard",
+	"editUnsaved",
 ] as const;
 export type WordKey = (typeof WORD_KEYS)[number];
 
@@ -1321,6 +1327,12 @@ export const ENGLISH: Words = {
 	fit: "Fit",
 	arrange: "Arrange",
 	off: "Off",
+	notFound: "Not found",
+	nowhere: "Nothing is at this address.",
+	discardEdit: "Discard your edit?",
+	keepEditing: "Keep editing",
+	discard: "Discard",
+	editUnsaved: "What you changed here is not saved.",
 	earlierLines: {
 		one: "Show {count} earlier line",
 		other: "Show {count} earlier lines",

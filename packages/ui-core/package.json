@@ -79,6 +79,10 @@
 			"types": "./dist/manifest.d.ts",
 			"default": "./dist/manifest.js"
 		},
+		"./leave": {
+			"types": "./dist/leave.d.ts",
+			"default": "./dist/leave.js"
+		},
 		"./list-state": {
 			"types": "./dist/list-state.d.ts",
 			"default": "./dist/list-state.js"

@@ -200,3 +200,16 @@ test("the entry hands the router to react-ui's navigation, and not without route
 	const off = (await artifacts({}, { routes: false })).get(".stack/entry.tsx");
 	assert.doesNotMatch(off ?? "", /bindRouter/);
 });
+
+test("the entry sets react-ui's page for an unknown address on the router before render, and not without routes", async () => {
+	const entry = (await artifacts()).get(".stack/entry.tsx") ?? "";
+	assert.match(
+		entry,
+		/import \{ bindNotFound \} from "@fcalell\/plugin-react-ui\/lib\/not-found";/,
+	);
+	const call = entry.indexOf("bindNotFound(router);");
+	assert.ok(entry.indexOf("createRouter({ routeTree })") < call, entry);
+	assert.ok(call < entry.indexOf("<RouterProvider"), entry);
+	const off = (await artifacts({}, { routes: false })).get(".stack/entry.tsx");
+	assert.doesNotMatch(off ?? "", /bindNotFound/);
+});

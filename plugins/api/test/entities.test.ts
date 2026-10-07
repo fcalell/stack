@@ -90,3 +90,16 @@ test("with no db and no auth, Entity is the app's union and not string", async (
 	const bare = (await graphOf({}).resolve(api.slots.procedureSource)) as string;
 	assert.match(bare, /type Entity = string;/);
 });
+
+test("the rendered procedure file merges Entity into the client's Register, and the worker file carries it to the app", async () => {
+	const graph = graphOf({ entities: ["settings"] });
+	const procedure = (await graph.resolve(api.slots.procedureSource)) as string;
+	assert.match(procedure, /export type Entity = "settings";/);
+	assert.match(
+		procedure,
+		/declare module "@fcalell\/plugin-api\/query-invalidation" \{\s+interface Register \{\s+entity: Entity;/,
+	);
+
+	const worker = (await graph.resolve(api.slots.workerSource)) as string;
+	assert.match(worker, /export type \{ Entity \} from "\.\/procedure\.ts";/);
+});

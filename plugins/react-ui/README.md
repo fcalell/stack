@@ -77,6 +77,11 @@ Each `@font-face` gets a metric fallback face named by ui-core's `fallbackFace`
 The plugin also hands the CLI ui-core's guide pages (`cliSlots.guide`), as native-ui does;
 the index lists each page once.
 
+It hands the generated entry two router bindings (`react.slots.routerBindings`): `bindRouter`
+(`lib/navigate`), so an act opens a route in place, and `bindNotFound` (`lib/not-found`), which sets
+the router's default not-found page: a `Place` with `Missing` when the miss stands under a
+`Shell`, a `Gate` with Back to `/` when it stands at the root. A route of the app's own wins.
+
 ## Components
 
 Each roster component lives in `src/ui/components/<componentDir(name)>/index.tsx` and is

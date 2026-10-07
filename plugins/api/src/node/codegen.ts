@@ -113,6 +113,13 @@ export function aggregateWorker(payload: WorkerPayload): string {
 			// bare `reference` pastes the text verbatim which is what we want.
 			type: { kind: "reference", name: "typeof worker._router" },
 		});
+		// Loads `procedure.ts`, and so its `Register` merge (see
+		// `./procedure-codegen.ts`), into any program that reads the router type.
+		statements.push({
+			kind: "export-type-ref",
+			source: "./procedure.ts",
+			names: ["Entity"],
+		});
 		statements.push({
 			kind: "export-default",
 			value: { kind: "identifier", name: "worker" },

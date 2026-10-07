@@ -1844,9 +1844,38 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				sizes: ["empty", "control", "control-compact"],
 			},
 		},
+		// The EmptyState's failed form: the alert mark in the danger ink, the
+		// sentence at meta and the act that runs a function (never a link), the
+		// hairline act with no plus, in the EmptyState's frames, so it draws the
+		// EmptyState's cells less the create act and the title role. The form a
+		// QueryBoundary draws for a failed query, for a read that is no query.
+		Failed: {
+			props: ["sentence", "act"],
+			draws: [
+				"EMPTY_COLUMN",
+				"EMPTY_TEXT",
+				"EMPTY_FRAME",
+				"EMPTY_CARD",
+				"EMPTY_MARK",
+				"ICON.fit.control",
+				"TEXT.role.meta",
+				"BUTTON.act.secondary",
+				"BUTTON.fit.bar",
+				"BUTTON.fit.body",
+				"BUTTON_LABEL.act.secondary",
+			],
+			states: ["rest"],
+			owns: {
+				roles: ["body", "meta"],
+				colors: ["fill-neutral", "ink-body", "ink-meta", "danger", "edge"],
+				radii: ["full", "card", "control"],
+				spacing: ["fields", "pair", "card", "inside", "control-x"],
+				sizes: ["empty", "control", "control-compact", "icon-control"],
+			},
+		},
 		// Loading, the body's own loading form (`loading`), else the loading
 		// form of the Group or List it composes (a Section's busy head through
-		// the Section either way); failed, the EmptyState's failed form with its
+		// the Section either way); failed, the `Failed` form with its
 		// sentence and a retry act. It spells no cell.
 		QueryBoundary: {
 			props: ["query", "sentence", "children", "loading"],

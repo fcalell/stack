@@ -22,12 +22,40 @@ export function confirm(confirmation: Confirmation): void {
 	emit();
 }
 
+// Each asked decision's answer, called once the decision leaves the queue.
+const answers = new Map<number, () => void>();
+
+// A decision whose answer the caller waits on: `true` once its act's work
+// resolved, `false` when it was dismissed (the way out, Escape, the scrim).
+// With no host drawing the queue (a Shell or a Gate) nothing can ask, so the
+// answer is `true`.
+export function ask(confirmation: Confirmation): Promise<boolean> {
+	if (listeners.size === 0) return Promise.resolve(true);
+	return new Promise((resolve) => {
+		let taken = false;
+		answers.set(nextId, () => resolve(taken));
+		confirm({
+			...confirmation,
+			act: {
+				...confirmation.act,
+				onAct: () =>
+					confirmation.act.onAct().then((done) => {
+						taken = true;
+						return done;
+					}),
+			},
+		});
+	});
+}
+
 // The decision leaves the queue: its act's work resolved, or the sheet was
 // dismissed. A second call is ignored.
 export function dismissConfirmation(id: number): void {
 	if (!entries.some((entry) => entry.id === id)) return;
 	entries = entries.filter((entry) => entry.id !== id);
 	emit();
+	answers.get(id)?.();
+	answers.delete(id);
 }
 
 function subscribe(listener: () => void): () => void {

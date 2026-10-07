@@ -31,7 +31,6 @@ import {
 	isValidElement,
 	type PropsWithChildren,
 	type ReactNode,
-	useCallback,
 	useContext,
 	useEffect,
 	useLayoutEffect,
@@ -51,7 +50,12 @@ import { FormStands } from "../../lib/form";
 import { timing } from "../../lib/motion";
 import { RaisedGround } from "../../lib/raised";
 import { type ReasonHost, ReasonHostContext } from "../../lib/reason";
-import { type Touched, TouchedContext, usePageTurn } from "../../lib/touched";
+import {
+	type Touched,
+	TouchedContext,
+	usePageTurn,
+	useTouchState,
+} from "../../lib/touched";
 import { useWords } from "../../lib/words";
 import { ActionBar } from "../action-bar";
 import { Button } from "../button";
@@ -418,9 +422,9 @@ export function SheetBase({
 	const { height } = useWindowDimensions();
 	const ref = useRef<BottomSheetModal>(null);
 	const [settled, setSettled] = useState(false);
-	const [touched, setTouched] = useState(false);
+	const [touchedValue, setTouched] = useTouchState();
+	const { touched } = touchedValue;
 	const [pressedUnder, setPressedUnder] = useState<string>();
-	const touch = useCallback(() => setTouched(true), []);
 	const view = form === "view";
 	const tall =
 		(form === "menu" && above !== undefined) || holdsTextArea(children);
@@ -454,7 +458,6 @@ export function SheetBase({
 			ref.current?.present();
 		} else if (held.current) ref.current?.dismiss(LEAVE);
 	}, [open]);
-	const touchedValue = useMemo(() => ({ touched, touch }), [touched, touch]);
 	const host = useMemo(
 		() =>
 			blocked ? { press: () => setPressedUnder(submit?.blocked) } : undefined,

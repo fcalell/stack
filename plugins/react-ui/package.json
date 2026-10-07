@@ -28,6 +28,7 @@
 		},
 		"./globals.css": "./src/ui/globals.css",
 		"./components/*": "./src/ui/components/*/index.tsx",
+		"./lib/not-found": "./src/ui/lib/not-found.tsx",
 		"./lib/words": "./src/ui/lib/words.tsx",
 		"./lib/*": "./src/ui/lib/*.ts",
 		"./showcase/foundations": "./src/ui/showcase/foundations.tsx",

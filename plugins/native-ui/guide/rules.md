@@ -184,7 +184,7 @@ an `IconAct`, a row's `StatusMark` and `ChipMark`, a menu's `MenuItem`s, a `Plac
 `@fcalell/ui-core/descriptors`. An icon is an `IconName`, a Lucide glyph's PascalCase name.
 `children` is open only where the roster gives it. A `Form`'s `ActionBar` filled act runs its
 `onAct`. A `FormField` takes a `FieldBinding` from the
-app's own form state; a `confirm()` takes a `Confirmation`, its `cancel` the way out's own label ("Keep editing") where the `cancel` word is not the decision's.
+app's own form state. A `Form` that stands edited asks once, "Discard your edit?" or Keep editing, when its screen is left (the back, a swipe, a navigate that removes it), so the app writes no `beforeRemove` guard of its own; pressing the filled act ends the edit, so an act that navigates is never asked, and a rejected act puts the edit back. A `confirm()` takes a `Confirmation`, its `cancel` the way out's own label ("Keep editing") where the `cancel` word is not the decision's.
 
 A row's marks are named props on the meta line, at most one each, in order: `status`, `warning`
 (what is wrong, a string), `lock` (what it holds, a string, a glyph) and `chip`; the
@@ -291,9 +291,22 @@ opened by an address after it was removed then needs no screen of its own.
 A missing state decided from data (a record the loaded list lacks, an address nothing serves) is
 a `Missing`, never an `EmptyState`: its `sentence` defaults to the `missing` word and its `act` is
 a `LinkAct` (`{ label, href }`, a way back) defaulting to the same Back, drawn as the hairline
-act with no plus. An `EmptyState`'s act is the create act. A catch-all route composes `<Place
-title="Not found"><Missing sentence="Nothing is at this address." act={{ label: "Open Now", href:
-"/" }} /></Place>`.
+act with no plus. An `EmptyState`'s act is the create act.
+
+An address no route serves needs no route of yours: `stack generate` writes `+not-found.tsx` into
+the routes directory when it holds none, a one-line re-export of stack's page, "Not found" with
+"Nothing is at this address." (the `notFound` and `nowhere` words). It stands where expo-router
+stands the route, inside the root layout: a `Place` under a `Shell` whose act goes to the Shell's
+first place that is a route, a `Gate` with Back to `/` under a layout with none. A `+not-found.tsx`
+of your own wins and is never rewritten; to own the page, replace the file's contents with a
+default export composing `<Place title="Not found"><Missing sentence="Nothing is at this address."
+act={{ label: "Open Now", href: "/" }} /></Place>`.
+
+A read that is no query and failed (a mutation that opens a file) is a `Failed`, never an
+`EmptyState` and never a query faked for `QueryBoundary`: its `sentence` says what did not load and
+its `act` is a function act (`{ label, onAct }`, Retry), never a `LinkAct`, drawn under the alert
+mark as the hairline act with no plus, the form `QueryBoundary` draws for a failed query. A way back
+that creates nothing is a `Missing`; a read of a query is a `QueryBoundary` or a collection's own `query`.
 
 A `Table` takes its data the same way: `query` with `sentence`, or `items`; each column reads its
 cell from the item by `cell`, and `row` gives the row's `id`, `href`, `locked`, `warning` (what is

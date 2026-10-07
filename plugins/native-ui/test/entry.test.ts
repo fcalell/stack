@@ -54,3 +54,24 @@ test("the words, Query and Auth providers wrap the sheets' provider", async () =
 		/<WordsProvider .*><QueryProvider [^>]*><AuthProvider [^>]*><BottomSheetModalProvider><Fragment><ExpoRoot [^>]*\/><StatusBar [^>]*\/><\/Fragment><\/BottomSheetModalProvider><\/AuthProvider><\/QueryProvider><\/WordsProvider>/s,
 	);
 });
+
+// expo-router reads an unmatched address's route from a `+not-found` file in
+// the routes directory, which stack writes as a re-export of the Shell-aware
+// page native-ui ships.
+test("the app's `+not-found` route re-exports native-ui's page", async () => {
+	const { graph } = buildGraphFromDiscovered({
+		discovered: [
+			discover(api, api()),
+			discover(expo, expo()),
+			discover(nativeUi, nativeUi()),
+		],
+		app: { name: "My App", domain: "example.com" },
+		cwd: mkdtempSync(join(tmpdir(), "stack-native-ui-entry-")),
+	});
+	const route = await graph.resolve(expo.slots.notFoundFile);
+	assert.equal(route?.path, "src/app/+not-found.tsx");
+	assert.match(
+		route?.content ?? "",
+		/^export \{ default \} from "@fcalell\/plugin-native-ui\/lib\/not-found";$/m,
+	);
+});

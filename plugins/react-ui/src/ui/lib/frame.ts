@@ -1,5 +1,5 @@
 import type { Dialog } from "@base-ui/react/dialog";
-import type { Switcher } from "@fcalell/ui-core/descriptors";
+import type { LinkAct, Switcher } from "@fcalell/ui-core/descriptors";
 import { createContext, type ReactNode } from "react";
 
 // What the frame molecules hand each other. The Shell hands its switcher to
@@ -26,6 +26,11 @@ export interface BesideFrame {
 	details?: Dialog.Handle<unknown>;
 }
 export const Beside = createContext<BesideFrame | null>(null);
+
+// The way to the first of the Shell's places that is an address of the app:
+// where the page for an address nothing serves leads. `undefined` outside a
+// Shell, which is how that page knows whether it stands in one.
+export const ShellHome = createContext<LinkAct | undefined>(undefined);
 
 // The route of the Shell's current place: the list a Place returns to
 // from a record its Split shows alone.

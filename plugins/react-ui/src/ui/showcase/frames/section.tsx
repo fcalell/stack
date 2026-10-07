@@ -1,3 +1,4 @@
+import { createLeave } from "@fcalell/ui-core/leave";
 import { Code } from "../../components/code/index.tsx";
 import { Form } from "../../components/form/index.tsx";
 import { FormField } from "../../components/form-field/index.tsx";
@@ -26,7 +27,7 @@ const act = () => {};
 const INVITE = { label: "Invite", onAct: act };
 const BLOCKED = { ...INVITE, blocked: "Only owners invite." };
 // A touched form, so a blocked act shows its reason.
-const TOUCHED = { touched: true, touch: act };
+const TOUCHED = { touched: true, touch: act, leave: createLeave() };
 const DESCRIPTION = "People who can open this workspace.";
 // An app's own component around a List and a settled query a QueryBoundary
 // reads: in a loading Section each waits as rows, however deep its List.

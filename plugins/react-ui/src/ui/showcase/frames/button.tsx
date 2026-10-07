@@ -1,3 +1,4 @@
+import { createLeave } from "@fcalell/ui-core/leave";
 import type { ButtonAct, ButtonFit } from "@fcalell/ui-core/variants";
 import { Button, type ButtonProps } from "../../components/button/index.tsx";
 import { TouchedContext } from "../../lib/touched.ts";
@@ -13,7 +14,7 @@ const LABEL: Record<ButtonAct, string> = {
 };
 const REASON = "Name the project first.";
 // A touched form, so a blocked act shows its reason.
-const TOUCHED = { touched: true, touch: act };
+const TOUCHED = { touched: true, touch: act, leave: createLeave() };
 // The count cell: a secondary act in a bar with its count after the label.
 const COUNTED: ButtonProps = {
 	act: "secondary",

@@ -2,7 +2,7 @@ import { boundaryState } from "@fcalell/ui-core/list-state";
 import type { ReactNode } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { useWords } from "../../lib/words.tsx";
-import { EmptyStateBase } from "../empty-state/base.tsx";
+import { Failed } from "../failed/index.tsx";
 import { Missing } from "../missing/index.tsx";
 
 /** The part of a TanStack query result a boundary reads; a `useQuery` result is one. */
@@ -62,8 +62,7 @@ export function QueryBoundary<Q extends Queries>({
 	if (state === "missing") return <Missing />;
 	if (state === "failed")
 		return (
-			<EmptyStateBase
-				tone="failed"
+			<Failed
 				sentence={sentence}
 				act={{
 					label: words.retry,

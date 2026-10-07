@@ -140,7 +140,7 @@ export function ActionBar({ acts, fit, chosen, loading }: ActionBarProps) {
 	const words = useWords();
 	const pend = use(FormContext);
 	const [running, setRunning] = useState(false);
-	const { touched } = useTouched();
+	const { touched, leave } = useTouched();
 	const kept = use(ReasonKept);
 	const failed = use(ActFailed);
 	// A blocked act's reason takes the line a failure would draw in.
@@ -165,17 +165,30 @@ export function ActionBar({ acts, fit, chosen, loading }: ActionBarProps) {
 	const ordered = acts.map((act, at) => [act, at] as const);
 	const drawn = touch ? ordered.toReversed() : ordered;
 	const runFilled = () => {
-		const ran = acts[lastAt]?.onAct();
-		if (!(ran instanceof Promise)) return;
+		// The press ends the form's edit before the act runs, so an act that
+		// navigates is not asked; a rejection puts the edit back.
+		leave.press();
+		let ran: unknown;
+		try {
+			ran = acts[lastAt]?.onAct();
+		} catch (error) {
+			leave.settle(true);
+			throw error;
+		}
+		if (!(ran instanceof Promise)) {
+			leave.settle(false);
+			return;
+		}
 		setRunning(true);
 		pend?.(true);
 		// Settled either way, so a failing act leaves no derived promise to
 		// reject unhandled: its rejection stays the caller's.
-		const done = () => {
+		const done = (rejected: boolean) => () => {
+			leave.settle(rejected);
 			setRunning(false);
 			pend?.(false);
 		};
-		void ran.then(done, done);
+		void ran.then(done(false), done(true));
 	};
 	const buttons = (
 		<div className={cn(ACTION_BAR_ACTS, ACTS[where])}>

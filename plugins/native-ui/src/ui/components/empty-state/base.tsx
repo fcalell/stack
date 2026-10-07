@@ -97,7 +97,7 @@ export function EmptyStateBase(props: {
 		const button = act ? (
 			<ActButton
 				act={act}
-				kind={framed ? "secondary" : "primary"}
+				kind={framed || props.tone !== "rest" ? "secondary" : "primary"}
 				fit={framed ? "bar" : "body"}
 			/>
 		) : null;

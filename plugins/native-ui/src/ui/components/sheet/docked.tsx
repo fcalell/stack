@@ -7,15 +7,7 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import {
-	type ReactNode,
-	useCallback,
-	useContext,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from "react";
+import { type ReactNode, useContext, useEffect, useRef } from "react";
 import { Text as RNText, type TextInput, View } from "react-native";
 import { cn } from "../../lib/cn";
 import { FieldClaim, FieldNameContext } from "../../lib/field";
@@ -23,7 +15,7 @@ import { FormStands } from "../../lib/form";
 import { FootPlace, FootReturn } from "../../lib/frame";
 import { Scroll, type ScrollRef } from "../../lib/hosts";
 import { ActFailed, ReasonKept } from "../../lib/reason";
-import { TouchedContext, usePageTurn } from "../../lib/touched";
+import { TouchedContext, usePageTurn, useTouchState } from "../../lib/touched";
 import { useWords } from "../../lib/words";
 import { ActionBar } from "../action-bar";
 import { IconButton } from "../icon-button";
@@ -78,9 +70,7 @@ export function SheetDocked({
 	const claim = useContext(FootReturn);
 	const held = useRef<TextInput>(null);
 	const scroll = useRef<ScrollRef>(null);
-	const [touched, setTouched] = useState(false);
-	const touch = useCallback(() => setTouched(true), []);
-	const touchedValue = useMemo(() => ({ touched, touch }), [touched, touch]);
+	const [touchedValue, setTouched] = useTouchState();
 	const page = usePageTurn(open, title, description, () => setTouched(false));
 	// A new page opens at its top, not where the last one was scrolled to.
 	// biome-ignore lint/correctness/useExhaustiveDependencies: a new page resets the scroll

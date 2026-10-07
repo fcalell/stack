@@ -18,9 +18,14 @@ import { Pressable, Text as RNText, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { PlaceRoute, ShellSwitcher, ShellTabs } from "../../lib/frame";
+import {
+	PlaceRoute,
+	ShellHome,
+	ShellSwitcher,
+	ShellTabs,
+} from "../../lib/frame";
 import { Ink } from "../../lib/ink";
-import { navigate, usePathname } from "../../lib/navigate";
+import { isRoute, navigate, usePathname } from "../../lib/navigate";
 import { useWords } from "../../lib/words";
 import { Count } from "../count";
 import { Icon } from "../icon";
@@ -71,6 +76,10 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 	const more = moreAt === pathname;
 	const route = placeAt(places, pathname);
 	const rest = places.length > TAB_ROOM ? places.slice(TAB_ROOM - 1) : [];
+	// A place that is a spot on its page (`#activity`) leads nowhere from an
+	// address nothing serves, so home is the first place that is a route.
+	const first = places.find((spec) => isRoute(spec.route));
+	const home = first && { label: first.label, href: first.route };
 	// The tab bar each Place draws changes only with the places, the route and
 	// the More page, so a Shell state change re-renders no Place.
 	const tabs = useMemo(
@@ -93,13 +102,15 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 			>
 				{banner ? <View className={SHELL_BANNER}>{banner}</View> : null}
 				<View className={CONTENT}>
-					<ShellSwitcher.Provider value={switcher}>
-						<ShellTabs.Provider value={tabs}>
-							<PlaceRoute.Provider value={route}>
-								{more ? <MorePage places={rest} /> : children}
-							</PlaceRoute.Provider>
-						</ShellTabs.Provider>
-					</ShellSwitcher.Provider>
+					<ShellHome.Provider value={home}>
+						<ShellSwitcher.Provider value={switcher}>
+							<ShellTabs.Provider value={tabs}>
+								<PlaceRoute.Provider value={route}>
+									{more ? <MorePage places={rest} /> : children}
+								</PlaceRoute.Provider>
+							</ShellTabs.Provider>
+						</ShellSwitcher.Provider>
+					</ShellHome.Provider>
 				</View>
 			</View>
 		</FrameHost>

@@ -1,4 +1,5 @@
 import type { Act } from "@fcalell/ui-core/descriptors";
+import { createLeave } from "@fcalell/ui-core/leave";
 import type { ActionBarFit } from "@fcalell/ui-core/variants";
 import { ActionBar } from "../../components/action-bar/index.tsx";
 import { TouchedContext } from "../../lib/touched.ts";
@@ -8,7 +9,7 @@ import { Publish } from "./table.tsx";
 
 const change = () => {};
 // A touched sheet, so a blocked act shows its reason.
-const TOUCHED = { touched: true, touch: change };
+const TOUCHED = { touched: true, touch: change, leave: createLeave() };
 
 interface Drawn {
 	fit: ActionBarFit;

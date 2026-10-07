@@ -194,7 +194,7 @@ act as words in the meta ink with no hairline, a resend or a skip, never its fil
 an `IconAct`, a row's `StatusMark` and `ChipMark`, a `PlaceSpec`, all from
 `@fcalell/ui-core/descriptors`. An icon is an `IconName`, a Lucide glyph's PascalCase name.
 `children` is open only where the roster gives it. A `Form` submits through its `ActionBar`'s
-filled act, the act pending while its promise pends; a `confirm()` takes a `Confirmation`, its `cancel` the way out's own label ("Keep editing") where the `cancel` word is not the decision's.
+filled act, the act pending while its promise pends. A `Form` that stands edited asks once, "Discard your edit?" or Keep editing, when its page is left (a router navigation, the back button, a reload or a closed tab), so the app writes no leave guard of its own; pressing the filled act ends the edit, so an act that navigates is never asked, and a rejected act puts the edit back. A `confirm()` takes a `Confirmation`, its `cancel` the way out's own label ("Keep editing") where the `cancel` word is not the decision's.
 
 An act that is out of reach for a while (a resend after a code is sent) is a `Button` with `wait`, its seconds left, never a `blocked` reason that grows its row: it draws the count in its label, is inert while the count is above zero, and keeps its width at zero. Pass `wait` every tick, `0` once it is live; a `Button` is never wrapped in a context of the roster's own to be inert.
 
@@ -319,9 +319,22 @@ opened by an address after it was removed then needs no screen of its own.
 A missing state decided from data (a record the loaded list lacks, an address nothing serves) is
 a `Missing`, never an `EmptyState`: its `sentence` defaults to the `missing` word and its `act` is
 a `LinkAct` (`{ label, href }`, a way back) defaulting to the same Back, drawn as the hairline
-act with no plus. An `EmptyState`'s act is the create act. A catch-all route composes `<Place
-title="Not found"><Missing sentence="Nothing is at this address." act={{ label: "Open Now", href:
-"/" }} /></Place>`.
+act with no plus. An `EmptyState`'s act is the create act.
+
+An address no route serves needs no route of yours: stack sets the router's not-found page, "Not
+found" with "Nothing is at this address." (the `notFound` and `nowhere` words). An address under
+one of your routes stands in that route's layout, so under a `Shell` it is a `Place` whose act
+goes to the Shell's first place that is a route; any other miss stands at the root, outside the
+shell, a `Gate` with Back to `/`. A route of your own wins: a catch-all route (`$.tsx`) that
+matches, or a `notFoundComponent` on a route. To own the page under a shell, add `$.tsx` beside
+the layout's routes and compose `<Place title="Not found"><Missing sentence="Nothing is at this
+address." act={{ label: "Open Now", href: "/" }} /></Place>`.
+
+A read that is no query and failed (a mutation that opens a file) is a `Failed`, never an
+`EmptyState` and never a query faked for `QueryBoundary`: its `sentence` says what did not load and
+its `act` is a function act (`{ label, onAct }`, Retry), never a `LinkAct`, drawn under the alert
+mark as the hairline act with no plus, the form `QueryBoundary` draws for a failed query. A way back
+that creates nothing is a `Missing`; a read of a query is a `QueryBoundary` or a collection's own `query`.
 
 A `Table` takes its data the same way: `query` with `sentence`, or `items`; each column reads its
 cell from the item by `cell`, and `row` gives the row's `id`, `href`, `locked`, `warning` (what is

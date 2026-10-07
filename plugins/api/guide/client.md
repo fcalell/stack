@@ -55,6 +55,13 @@ nothing.
 - A mutation that owns every cache it changes opts out with `meta: { skipAutoInvalidation: true }`.
 - A query outside the API declares its reads on its options, `meta: { reads: ["member"] }`, and
   then refetches on those writes like an API query.
+- A write the API never answered (a socket frame, a webhook) calls
+  `invalidateForWrites(queryClient, ["member"])` from `@fcalell/plugin-api/query-invalidation`.
+- The names in `meta.reads` and `invalidateForWrites` are the app's `Entity` (the union in
+  `.stack/procedure.ts`, also exported from `.stack/worker`), so a typo fails `tsc` on web and
+  phone. The check is type-only and adds nothing to the bundle. Stack registers TanStack Query's
+  `queryMeta`, so the app adds its own meta keys to a query directly and never registers
+  `queryMeta` itself, which would conflict with `reads`.
 - A custom `mutationCache` passed to `createQueryClient` turns auto-invalidation off: the app
   owns invalidation then.
 

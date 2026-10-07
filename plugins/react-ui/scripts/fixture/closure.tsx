@@ -16,6 +16,7 @@ import { Columns } from "@fcalell/plugin-react-ui/components/columns";
 import { Count } from "@fcalell/plugin-react-ui/components/count";
 import { DefinitionRow } from "@fcalell/plugin-react-ui/components/definition-row";
 import { EmptyState } from "@fcalell/plugin-react-ui/components/empty-state";
+import { Failed } from "@fcalell/plugin-react-ui/components/failed";
 import { FileInput } from "@fcalell/plugin-react-ui/components/file-input";
 import { Form } from "@fcalell/plugin-react-ui/components/form";
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
@@ -457,6 +458,17 @@ export const closure = (
 		<EmptyState sentence="x" class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<EmptyState sentence="x" classList={{}} />
+		<Failed sentence="x" act={{ label: "x", onAct: () => {} }} />
+		{/* @ts-expect-error: a Failed's act runs a function, never a link */}
+		<Failed sentence="x" act={{ label: "x", href: "/" }} />
+		{/* @ts-expect-error: closed channel */}
+		<Failed sentence="x" act={{ label: "x", onAct: () => {} }} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Failed sentence="x" act={{ label: "x", onAct: () => {} }} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Failed sentence="x" act={{ label: "x", onAct: () => {} }} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Failed sentence="x" act={{ label: "x", onAct: () => {} }} classList={{}} />
 		<Missing />
 		<Missing sentence="x" act={{ label: "x", href: "/" }} />
 		{/* @ts-expect-error: closed channel */}

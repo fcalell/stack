@@ -58,7 +58,12 @@ my-app/
                              # `__root.tsx` wraps every route, `index.tsx`, `$param`, a folder's
                              # `route.tsx` wraps its folder, `_layout` nests without a URL
                              # segment, `(group)` scopes without one; `react({ routes: { dir } })`
-                             # moves it
+                             # moves it. The phone's expo-router files sit in `src/app` itself
+                             # (`expo({ routes: { appDir } })`), where `stack generate` writes
+                             # `+not-found.tsx` while no `+not-found.*` sits at its root: a
+                             # re-export of native-ui's page for an unmatched address, then the app's
+                             # to replace (expo-router reads that route from no other place; the web
+                             # needs no file, its not-found page is set in the entry)
       fixtures.ts            # with screens: `defineFixtures<AppRouter>(procedures, params)`, the
                              # answers of the procedures and an example value per route `$param`
   .stack/                    # generated — gitignored

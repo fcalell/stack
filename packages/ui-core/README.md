@@ -8,7 +8,7 @@ own CSS from the same records and ui-core stays framework-free. Two subpaths are
 `./harness`, internal tooling for the packages' verify scripts, and `./manifest`, the guide pages
 the UI plugins index.
 
-Twenty subpaths:
+Twenty-one subpaths:
 
 - `@fcalell/ui-core/tokens`: the contract as data, the sheet's every value, the knob defaults and
   the English `words`.
@@ -55,6 +55,9 @@ Twenty subpaths:
 - `@fcalell/ui-core/reason`: `pressStands(blocked, pressedUnder)`, whether a blocked act's press
   still shows its reason: a press is kept as the reason it came under and stands while the act
   is blocked by that reason, so unblocking or a new reason forgets it in render.
+- `@fcalell/ui-core/leave`: `createLeave()`, whether leaving a form asks: a field's input edits it, the
+  filled act's press clears the edit while the act runs (a rejection puts it back), and a leave
+  attempt asks once while the form stands edited. Both plugins' `Form` and `ActionBar` drive it.
 - `@fcalell/ui-core/route`: where an address stands among a shell's places, by plain string
   parsing (React Native's `URL` is partial): `isCurrent(route, at)`, whether a row's route is
   current (a route is current below it, the root `/` only at itself, a query narrows it to the
@@ -152,7 +155,7 @@ beside `theme`: the seven `Status` words, `recommended`, `copy`, `copied`, `down
 `notifications`, `code`, `added`, `removed`, `sort`, `message`,
 `copyFailed`, `downloadFailed`, `latest`, `missing`, `chooseFile`, `typeValue`,
 `pickValue`, `locked`, `photos`, `files`, `changed`, `unchanged`, `stale`, `chooseAll`,
-`chooseNone`, `noMatches`, `imageFiles`, `audioFiles`, `videoFiles`, `textFiles`, `expand`, `collapse`, `zoomIn`, `zoomOut`, `fit`, `arrange`, `off`, the counted `earlierLines`, and the slot words `wrongType`, `stepOf` and
+`chooseNone`, `noMatches`, `imageFiles`, `audioFiles`, `videoFiles`, `textFiles`, `expand`, `collapse`, `zoomIn`, `zoomOut`, `fit`, `arrange`, `off`, `notFound`, `nowhere`, `discardEdit`, `keepEditing`, `discard`, `editUnsaved`, the counted `earlierLines`, and the slot words `wrongType`, `stepOf` and
 `chosenOf`. A counted word is `{ one, other }`, each form spelling `{count}` where the number
 stands, drawn through `counted(word, count)` (`one` at a count of one, `other` at any other). A slot
 word spells each of its named slots as `{name}` where the value stands (`wrongType` `{name}` and `{types}`, `stepOf`
