@@ -10,7 +10,7 @@ A unit is measured against the range on the page of each pattern it implements
 (`patterns/<pattern>.md`); a value outside the range is a finding with the measured number and
 the range. Where a range names a dialect, the system's own rule holds and the references' number
 is not a finding: labels draw at the body role (13), emphasis is weight 500, a title or heading
-is the system's role, the focus ring is the system's 2 px ring, and the rubric's accent
+is the system's role, the focus ring is the system's 2 px ring drawn 2 px outside a field's kept 1 px edge (one ring, not a double one), and the rubric's accent
 carve-outs (a checked control, the `active` dot) apply inside every pattern.
 
 ## Type

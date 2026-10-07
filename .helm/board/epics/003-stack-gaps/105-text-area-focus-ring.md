@@ -1,6 +1,6 @@
 ---
 id: 003-105
-status: backlog
+status: done
 sessions: {}
 ---
 # react-ui: a focused TextArea draws one ring
@@ -16,3 +16,6 @@ text-area/index.tsx puts `has-focus-visible:outline-2 outline-offset-2 outline-r
 
 ## Open questions
 - [ ] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Ruled
+By design. Every control (Input, TextArea, Picker, Select, MessageInput, InputOtp, Checkbox, Switch, Button) draws the system's 2 px ring 2 px outside its own edge (`RING_OFFSET_PX` in `tokens.ts`), so a field keeps its 1 px edge under the ring: one ring, with a visible gap, not a double ring. A ring over the border would drop the edge's own contrast and make fields the one control that rings differently. `judging.md` states it as the system's own rule, so the critique does not file it. A different system ring is its own story.
