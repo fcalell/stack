@@ -96,7 +96,7 @@ Decided while building (2026-10-06), by fcalell:
 - plugin-react's router call lives in `react.slots.routerPlugin` and reaches the app only through
   `vite.slots.appPlugins`; the roster Storybook calls `writeStorybookConfig` (from
   `@fcalell/plugin-screens/node`) rather than reading a generated per-consumer file.
-- `/welcome` is dropped; its gap is filed as 003-139.
+- `/welcome` is dropped; its gap is filed as 003-160.
 - pnpm is pinned to 11.28.4: 11.28.3's frozen install links `fsevents` to the working directory.
 
 ## Open questions
