@@ -64,12 +64,15 @@ export function EdgeLayer({
 	routes,
 	tones,
 	radius,
+	below,
 }: {
 	edges: readonly CanvasEdge[];
 	routes: ReadonlyMap<string, Route>;
 	// Each edge's tone, by id.
 	tones: ReadonlyMap<string, EdgeTone>;
 	radius: number;
+	// Under the text floor the chips draw nothing.
+	below: boolean;
 }) {
 	return (
 		<>
@@ -96,6 +99,7 @@ export function EdgeLayer({
 						handoff={edge.handoff ?? false}
 						tone={tones.get(edge.id) ?? "rest"}
 						at={at}
+						below={below}
 					/>
 				) : null;
 			})}

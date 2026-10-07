@@ -19,10 +19,11 @@ import {
 } from "@fcalell/plugin-react-ui/showcase/frames/canvas";
 import { pathOrder } from "@fcalell/ui-core/canvas";
 import type { CanvasNode, CanvasPoint } from "@fcalell/ui-core/descriptors";
-import { WIDTH_VALUE } from "@fcalell/ui-core/tokens";
+import { SIZE_PX, WIDTH_VALUE } from "@fcalell/ui-core/tokens";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { expect, fn, spyOn, waitFor } from "storybook/test";
+import { lowestZoom, room } from "./canvas-support.ts";
 import { click as mouseClick, drag as mouseDrag, type Point } from "./mouse.ts";
 
 const ORDER = pathOrder(WORKFLOW.nodes, WORKFLOW.edges);
@@ -278,7 +279,9 @@ export const ZoomStack: StoryObj = {
 };
 
 // Zoom in is unavailable at the largest scale and Zoom out at the smallest,
-// where the button keeps focus and the layer stops scaling.
+// where the button keeps focus and the layer stops scaling. The smallest is the
+// zoom at which two glyphs of the control size would touch (`minZoomFor`), read
+// here off the laid-out nodes.
 export const ZoomLimits: StoryObj = {
 	render: () => <Workflow />,
 	play: async ({ canvas, canvasElement, userEvent }) => {
@@ -297,7 +300,9 @@ export const ZoomLimits: StoryObj = {
 		await expect(zoomIn).toHaveAttribute("aria-disabled", "true");
 		await expect(zoomOut).not.toHaveAttribute("aria-disabled", "true");
 		for (let step = 0; step < 12; step++) await userEvent.click(zoomOut);
-		await expect(scale()).toBe(0.1);
+		await expect(
+			Math.abs(scale() - lowestZoom(canvasElement, SIZE_PX.desktop.control)),
+		).toBeLessThan(0.005);
 		await expect(zoomOut).toHaveAttribute("aria-disabled", "true");
 		await expect(zoomIn).not.toHaveAttribute("aria-disabled", "true");
 	},
@@ -462,7 +467,8 @@ function drawn(layer: Element): DOMRect {
 	return new DOMRect(left, top, right - left, bottom - top);
 }
 
-// A graph that fits at scale 1 opens centred in the region.
+// A graph that fits at scale 1 opens centred in the room the zoom stack and the
+// act leave.
 export const OpensCentred: StoryObj = {
 	render: () => (
 		<div className={TALL}>
@@ -500,18 +506,18 @@ export const OpensCentred: StoryObj = {
 		const layer = canvasElement.querySelector("[data-layer]");
 		if (!layer) throw new Error("no layer");
 		const graph = drawn(layer);
-		const pane = rect(region);
+		const space = room(region);
 		await expect(
-			Math.abs(graph.left + graph.width / 2 - (pane.left + pane.width / 2)),
+			Math.abs(graph.left + graph.width / 2 - (space.left + space.width / 2)),
 		).toBeLessThan(1);
 		await expect(
-			Math.abs(graph.top + graph.height / 2 - (pane.top + pane.height / 2)),
+			Math.abs(graph.top + graph.height / 2 - (space.top + space.height / 2)),
 		).toBeLessThan(1);
 	},
 };
 
-// A graph larger than the region opens at scale 1 with its first node's top
-// centre on the region's centre line, a page inset below its top.
+// A graph larger than the room opens at scale 1 with its first node's top
+// centre on the room's centre line, a page inset below the pane's top.
 export const OpensAtTheFirstNode: StoryObj = {
 	render: () => (
 		<div className={SMALL}>
@@ -536,12 +542,14 @@ export const OpensAtTheFirstNode: StoryObj = {
 		await expect(viewport(canvasElement).scale).toBe(1);
 		const button = nodeButtons(canvasElement)[0];
 		if (!button) throw new Error("no node");
-		const pane = rect(region);
+		const space = room(region);
 		const box = rect(button);
 		await expect(
-			Math.abs(box.left + box.width / 2 - (pane.left + pane.width / 2)),
+			Math.abs(box.left + box.width / 2 - (space.left + space.width / 2)),
 		).toBeLessThan(1);
-		await expect(Math.abs(box.top - (pane.top + page()))).toBeLessThan(1);
+		await expect(Math.abs(box.top - (rect(region).top + page()))).toBeLessThan(
+			1,
+		);
 	},
 };
 
@@ -1015,7 +1023,8 @@ export const StateKeepsTheLayout: StoryObj = {
 	},
 };
 
-// Each generated canvas frame's stage holds its whole graph at scale 1: the
+// Each generated canvas frame's stage, but the glyph's (which `Canvas overview`
+// checks, fitted under the text floor), holds its whole graph at scale 1: the
 // drawing (frames, chips, nodes) and every node's button lie inside the pane
 // the canvas draws in, so the state a frame is there to show is on screen.
 // The two densities size nodes differently, so each is checked.
@@ -1025,6 +1034,7 @@ function framesHoldTheirGraph(density: "desktop" | "touch"): StoryObj {
 			frame.component === "Canvas" &&
 			frame.mode === "light" &&
 			frame.density === density &&
+			!frame.cell.name.startsWith("CANVAS_NODE_GLYPH") &&
 			drawCanvas(frame) !== undefined,
 	);
 	return {

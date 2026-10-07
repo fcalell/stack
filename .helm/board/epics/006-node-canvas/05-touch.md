@@ -1,6 +1,6 @@
 ---
 id: 006-05
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: the canvas on touch at 375, and its overview on every input
@@ -185,8 +185,9 @@ Behaviour, each a browser test (below):
   element (the event precedes d3's `mousedown`, which reads the filter) and runs 04's drag
   handlers; `useLift` ignores a mouse.
 
-`NodeView` draws a lifted node with 02's `SELECTED` outline overlay (the one element, no new
-class): the lifted node is the one in hand. It does not call `onSelect`.
+`NodeView` draws a lifted node with a 2 px `outline-2` in the selection's colour (the focus ring's
+width; the one element, no new class beyond `outline-2`, already in the allowlist): the lifted node
+is the one in hand. It does not call `onSelect`.
 
 **Live position, owned by 04.** While a node is in hand its position lives in 04's `live` map in
 `Region` (`id -> CanvasPoint`), which `placeOf(id)` reads for the nodes, the group frames and the
@@ -236,7 +237,7 @@ point sets the live position, `null` clears it); `drop` is the release path 04 h
   			<button type="button" onClick={centre} style={UNZOOM}
   				className={cn(canvasNodeGlyph({ state: look.state }), "relative flex items-center justify-center select-none", look.state === "selected" && SELECTED)}>
   				<Icon name={node.icon} fit="body" />
-  				{look.status ? <span className="absolute top-inside right-inside"><StatusDot state={node.status.state} /></span> : null}
+  				{look.status ? <span className="absolute -top-inside -right-inside"><StatusDot state={node.status.state} /></span> : null}
   			</button>
   		</div>
   	) : null}
@@ -266,10 +267,9 @@ point sets the live position, `null` clears it); `drop` is the release path 04 h
   like 02's moves, so reduced motion needs no branch. It does not select.
 - **The look carries over (03).** `look.state` (`rest`, `selected`, `problem`) is the glyph's
   border, `tone` `dimmed` and `off` ink the `Icon` through `text-ink-disabled` and `text-ink-meta`
-  on the glyph button (classes in `overlays.ts` already), and `look.status` draws a `StatusDot` at
-  the glyph's corner, the spinner while `running`. `look.problem` draws the `failed` `StatusDot`
-  there (the node's own danger mark, which outlives selection taking the border); a node with both is
-  05's to place. A glyph carries no words, so the overview reads
+  on the glyph button (classes in `overlays.ts` already), and `look.status` draws a `StatusDot` on
+  the glyph box's top right corner, straddling its border so it clears the icon, the spinner while `running`. `look.problem` draws the `failed` `StatusDot`
+  on the bottom right corner the same way (the node's own danger mark, which outlives selection taking the border). A glyph carries no words, so the overview reads
   state by border and dot, and the word is one tap away.
 - **Group heads and edge labels** take the same flag: below it they are `invisible` (they stay in
   the layout, so frames and routes do not move), so the overview shows no text at all.
@@ -284,7 +284,8 @@ point sets the live position, `null` clears it); `drop` is the release path 04 h
   closer than that when zoomed far out. On every input the canvas passes `minZoom` to
   `useViewport`: `minZoomFor(boxes, glyph)`, with `glyph` the density's `control` size
   (`SIZE_PX[touch ? "touch" : "desktop"].control`) over the smallest `max(|dx|, |dy|)` between two
-  node centres, clamped to `[0.1, 1]`, so no two glyphs overlap, recomputed when the boxes change.
+  node centres, clamped to `[0.1, 1]`, so no two glyphs overlap, recomputed when the boxes change. (The critique's ruling adds a gap: see
+  "Decided after the critique".)
   It maps to d3's `scaleExtent([minZoom, 2])`, applied in an effect (not at creation, since the
   boxes arrive after the first measure), followed by `behaviour.scaleBy(select(region), 1)` to
   re-clamp a zoom already below it.
@@ -330,8 +331,8 @@ Edited:
   `minZoom` from `minZoomFor` (all three on every input), `useLift`'s `at` wired to 04's `at`.
 - `view.ts`: `ZOOM_TO_NODE`, `centredTransform`.
 - 04's port element: the hit child's `style={UNZOOM}` on touch.
-- `plugins/react-ui/scripts/overlays.ts`: under `// Canvas`, `"select-none"`, `"top-inside"`,
-  `"right-inside"` (the rest of the glyph's classes are in the list: `relative`, `absolute`,
+- `plugins/react-ui/scripts/overlays.ts`: under `// Canvas`, `"select-none"`, `"-top-inside"`,
+  `"-bottom-inside"` (`-right-inside` is a token class, so `b5` lists none; the rest of the glyph's classes are in the list: `relative`, `absolute`,
   `inset-0`, `flex`, `items-center`, `justify-center`, `invisible`, `outline-2`,
   `outline-selected-outline`, `text-ink-disabled`, `text-ink-meta`; `invisible` also serves the group
   heads and edge labels below, so 05 adds no entry for them). `b5` names any miss or stale
@@ -452,7 +453,7 @@ helpers do (copy them into the file; they are not exported).
 4. **Long press.** A hold of `LIFT_MS` plus a margin on `plan`, then a drag of `d` screen px: the
    node's flow position moved by `d` over the scale (within 1 px), the layer's translate and scale
    are unchanged although the finger moved (d3-zoom is starved, not merely overridden), the node
-   has the selection's outline while down, and on release `onMove` is called once with the node's
+   has a 2 px outline in the selection's colour while down, and the device is pulsed once, and on release `onMove` is called once with the node's
    id and that absolute position, `onSelect` not at all. After release a one-finger drag on the
    ground pans by exactly its own delta (the frozen gesture left no jump).
 5. **No gesture takes another's.** (a) A drag from a node that starts before the press completes
@@ -572,12 +573,12 @@ under 11 px in an overview; the glyph form's border and dot against the pattern 
   added time.
 
 ## Acceptance criteria
-- [ ] With real touch at 375 on the workflow story: a drag pans, a pinch zooms, a long press then a drag moves a node (one `onMove`, no pan, no `onSelect`), and no gesture takes another's (scenarios 1 to 5).
-- [ ] Every zoom button, the `act` and (with `onConnect`) every port is at least 44 px on screen at any zoom, and a port drag connects at scale 0.5 as at 1.
-- [ ] Zoomed out below 1 on any input, every node is a glyph of the density's `control` size (a pointer's `IconButton` size, 44 on touch) with its state's border and dot, no two overlap, no node text renders under 11 px, and a click, tap or Enter on one zooms to it at its own size without selecting it.
-- [ ] Crossing zoom 1 changes the DOM once and zooming within a side changes none; no node reads the raw zoom.
-- [ ] `pnpm stories:test` passes at 375 in both modes (the `touch` project) and at 1280 × 800 (the first project, the overview stories included), axe included.
-- [ ] `pnpm check` passes; react-ui's, ui-core's and native-ui's `verify` pass; `DESIGN.md` is regenerated.
+- [x] With real touch at 375 on the workflow story: a drag pans, a pinch zooms, a long press then a drag moves a node (one `onMove`, no pan, no `onSelect`), and no gesture takes another's (scenarios 1 to 5).
+- [x] Every zoom button and the `act` are at least 44 px on screen at any zoom, and (with `onConnect`) every port is at least 44 px at every zoom that draws one (1 and above: below the floor a node is its glyph and draws no port), and a finger drag connects at 1 as at 1.5.
+- [x] Zoomed out below 1 on any input, every node is a glyph of the density's `control` size (a pointer's `IconButton` size, 44 on touch) with its state's border and dot, no two overlap, no node text renders under 11 px, and a click, tap or Enter on one zooms to it at its own size without selecting it.
+- [x] Crossing zoom 1 changes the DOM once and zooming within a side changes none; no node reads the raw zoom.
+- [x] `pnpm stories:test` passes at 375 in both modes (the `touch` project) and at 1280 × 800 (the first project, the overview stories included), axe included. Every Canvas story passes (touch 40 of 40, `canvas.stories.tsx` 43 of 43, overview 20 of 20, generated `Canvas` 2 of 2); the 13 failures of the full run are the known non-canvas ones.
+- [x] `pnpm check` passes; react-ui's, ui-core's and native-ui's `verify` pass; `DESIGN.md` is regenerated.
 - [ ] The design critique judges 375 renders in both modes against the rubric's floors.
 
 ## Decided
@@ -585,7 +586,7 @@ Decided by fcalell (2026-10-06):
 
 - **The phone pans and zooms at 375 with no column fallback.**
 - **Screen readers are out of scope.** The glyph form, the lift and the controls spell no `aria-*`
-  or spoken form; a glyph's button is named by nothing beyond its glyph.
+  or spoken form; a glyph's button carries `title={node.title}`, a native tooltip that also names the button for axe and voice control. It is the one name the canvas spells; no `aria-*`, no spoken form.
 - **A node holds no control.**
 - **Below the text floor, every node draws its glyph alone, on every input** (fcalell, after the
   design critique of the node canvas). The trigger is any zoom where node text would render under
@@ -619,6 +620,18 @@ Decided in this brief from the above and the evidence read:
 - A lift does not interrupt d3-zoom's gesture; it withholds `touchmove` and a second `touchstart`
   from it until the lifting finger ends, and lets `touchend` through so the gesture closes itself.
 
+Decided after the build (2026-10-07): **the glyph's button carries `title={node.title}`.** The preview runs every axe rule on every story, and `button-name` fails an unnamed button; the user's delegate ruled for a `title`, which axe-core 4.13 accepts (`non-empty-title`) and which is no `aria-*`, no spoken form and no exclusion.
+
+Decided after the critique (2026-10-07), the user's delegate ruling on the "rework" verdict:
+
+- **The marks straddle the glyph box's corner** (`-top-inside`, `-bottom-inside` and `-right-inside`), in place of the inside offsets: the status dot, the spinner and the problem dot overlapped the icon. Re-measured: at 32 px (mouse) the icon is 14, the dots 6 and the gap to the icon 8; the spinner is 14 and its box meets the icon's at a corner point (gap 0, no overlap); at 44 px (touch) the icon is 18, the dots 8 with a gap of 12 and the spinner 18 with a gap of 2. The spinner clears the icon at 32 px, so it stays a mark and does not replace the icon while `running`.
+- **The lift shows.** A lifted node draws a 2 px outline (`outline-2`, the selection's colour), the focus ring's width, in place of the selection's 1 px, which a node in hand did not read through, and `navigator.vibrate?.(10)` fires once at the lift as a progressive enhancement.
+- **The opening view clears the chrome.** The first view takes the room Fit takes (`viewport.clearance()`, the `data-clear` read of the zoom stack and the act), through one helper for both, so a graph that fits the room opens centred in it and no node opens under the chrome. A graph larger than the room still opens at zoom 1 with its first node at the top centre of the room (02's rule: a larger graph keeps its text readable), so a lower node can stand under the act at the pane's foot, as the pane itself cuts the graph.
+- **The routes follow the glyph below the floor.** Edges and frames drew to the hidden card's box, so a back edge ended 29 to 64 px from the glyph in empty space. Below the floor each node's routing box is its glyph's rect in flow units, centred on the card's centre with side `glyph / k` (rounded up to a `pair` of flow so routing runs only as that side steps, not on every wheel tick); ELK's positions and the cards' sizes stay, nothing moves, and the frames tighten by construction. No port is drawn there, so the router leaves no ring.
+- **A gap at the zoom-out limit.** `minZoomFor(boxes, glyph, pair)` keeps `2 * pair` (screen px) between two glyphs, not only their size, so the edges between them still draw: the shortest route reads 11.9 px on screen at the desktop limit and 15.2 px at the touch limit.
+- **The act's focus ring was the critic's scripted focus.** A real Tab key (a trusted CDP key press from the region) onto "Add a step" draws the ring (`:focus-visible`, 2 px solid, unclipped by the region): `globals.css` gives every control the ring, and a scripted `focus()` or a synthetic key (`userEvent.tab()`) does not match `:focus-visible`. No code change.
+- **The act may cover the last glyph at the zoom-out limit.** The limit is a bound, not a chosen view; the glyph stays reachable by a pan and the Fit.
+
 Decided by fcalell's orchestrator (2026-10-06), all taking the recommendation:
 
 1. **`centreOn` takes an optional zoom**; a tap on a glyph calls `centreOn(box, ZOOM_TO_NODE)`.
@@ -626,3 +639,51 @@ Decided by fcalell's orchestrator (2026-10-06), all taking the recommendation:
 3. **A mouse in the touch density drags at once**: `NodeView` sets `data-no-pan` at `pointerdown` when `pointerType === "mouse"`. The input type, not the density, is the honest discriminator here.
 4. **One canvas-wide below-floor flag**, passed as a prop.
 5. **Names follow 04**: `drop(id, point)`, `at(id, point | null)`, `place`, `hit.ts` (`isGround`, `hit`), and `toPage` in `behaviour/mouse.ts`.
+
+## Progress
+Built to the brief and the code as 04 left it. The glyph's button carries `title={node.title}` (see "Decided after the build"), which settles the open choice the first build stopped on: axe's `button-name` passes on every glyph. The critique ran once and returned "rework"; its rulings are built (see "Decided after the critique" and "After the critique") and the critique box stays unticked for a second run by a session that played no part in the work.
+
+### After the critique
+- **Marks**: `node.tsx` places the marks with `-top-inside`, `-bottom-inside` and `-right-inside` on the glyph's own box. Measured by `MarksClearTheIcon` (both modes, both densities): desktop glyph 32, icon 14, dot 6 (gap to the icon 8), spinner 14 (gap 0, corner to corner); touch glyph 44, icon 18, dot 8 (gap 12), spinner 18 (gap 2). Nothing overlaps.
+- **Lift**: `outline-2` in the selection's colour while held (`LongPress` asserts `2px`), and `navigator.vibrate?.(10)` once at the lift (`LongPress` stands a spy in for it and asserts one call with 10).
+- **Opening view**: `openTransform` takes a `Clearance`; `useLayout` passes `viewport.clearance()`, the read `fit` uses (the viewport's one helper). `OpensClearOfTheChrome` (both modes) asserts no card meets the stack or the act, at 1280 (`Canvas overview`, the workflow in its full stage) and at 375 (`Canvas touch`, the same). 02's `OpensCentred` and `OpensAtTheFirstNode` read the room, not the pane, through `canvas-support`'s `room()`.
+- **Routes below the floor**: `floor.ts` gains `routeSide(zoom, glyph, step)` (0 from zoom 1; else `glyph / zoom` rounded up to a multiple of `step`, the `pair`) and `glyphBoxes(boxes, side)`; `useLayout` reads the side through `useViewportValue` (it re-renders only as the side steps) and routes to `glyphBoxes` with no ports. `GroupFrame` carries `data-group` so a story reads it. `RoutesFollowTheGlyphs` (both modes, both densities, at just under 1 and at the limit) asserts every edge's ends lie within a `pair` of their glyph's rect (measured at most 3.7 px just under 1, 0.6 px at the limit), every route is at least `2 * pair - 1` long on screen, and a frame holds each glyph by the card padding and ends a padding under its lowest.
+- **Routing time** (node, `routeEdges`, mean of 50 runs after warm-up): the workflow (7 nodes, 8 edges, 1 group) 0.15 ms by card and 0.10 ms by glyph; the journey (8 nodes) 0.08 ms both; a synthetic 200-node, 199-edge tree 9.6 ms by card and 8.9 ms by glyph. The glyph boxes do not make routing slower, and the step bounds how often it runs.
+- **The limit's gap**: `minZoomFor(boxes, glyph, pair)` is `(glyph + 2 * pair) / nearest`; `canvas.test.ts` covers it (the L-infinity metric, the clamp, a zero gap, the workflow at both glyph sizes, and a gap of `2 * pair` at the limit), plus `routeSide`, `glyphBoxes`, glyph-routed ends and frames over both fixtures, and `openTransform` with a clearance. Measured at the limit: the shortest route is 11.9 px on screen at desktop (`pair` 6) and 15.2 px at touch (`pair` 8).
+- **The act's ring**: `ActFocusRing` (`Canvas overview`, both modes) presses a real Tab (a trusted CDP key, `tabKey`) from the ground until the act is focused, then asserts `:focus-visible`, a solid 2 px outline and that the ring stays inside the region. It passes, so the cause was the critic's scripted focus; no code change.
+- **Story helpers**: `groundPoint` now stands 32 px (a finger's touch adjustment) clear of every button, since a tap 4 px from the first node snapped to it once the opening view moved the node; `lowestZoom` adds the gap.
+
+### Gate
+- `pnpm check` exits 0 after the critique's rulings (42 of 42 turbo tasks, Biome 798 files, no fixes). react-ui `verify` 13/13, ui-core `verify` 34/34, native-ui `verify` 19/19; react-ui `check-types` clean and `test` 145 pass (`canvas.test.ts` 80).
+- The five Canvas story files, run together with `--maxWorkers=1` under a 5 GB cgroup cap (77 s): 105 of 105 pass. `canvas.stories.tsx` 43, `canvas-overview.stories.tsx` 20, `canvas-touch.stories.tsx` (touch project) 40 and the generated `Canvas` 2, light and dark, axe included. The new stories (`OpensClearOfTheChrome`, `RoutesFollowTheGlyphs`, `MarksClearTheIcon` at both densities, `ActFocusRing`) and the changed ones (`LongPress`, `OpensCentred`, `OpensAtTheFirstNode`) pass. The full `stories:test` was not run for this round; the first build's run (below) had 13 known non-canvas failures.
+- The first build's full run: `pnpm stories:test` (both projects, 1215 s under a 6 GB cgroup cap with `--maxWorkers=1`): 263 of 276 pass, 13 fail in 9 files, every one a known non-canvas failure: Sheet `Decision` and `Docked In Foot`, FileInput, TextArea, Input and Slider `Disabled`, Select `Selected`, Screen `Rest`, Menu `Rest`, and ListRow's four load timeouts.
+- `FitClearsTheChrome` was seen to fail at desktop and touch with `clearance()` removed (a node under the act), then restored.
+
+### Memory of the run
+The canvas does not leak; the run's growth is the test setup. Peak resident memory is the run's, not the component's:
+- One file at a time, in its own Vitest run, peak of the single Chrome renderer: `canvas-touch` 421 MB (34 stories, 52 s), `canvas-overview` 404 MB (12, 13 s), `canvas.stories.tsx` 514 MB (43, 28 s), generated `Canvas` 314 MB (2, 9 s). The same three desktop files in one page in turn (`--maxWorkers=1`) peak at 510 MB: nothing accumulates across files.
+- 62 mounts and unmounts of the workflow `Canvas` (each crossing the floor), a forced GC after: JS heap 28 to 29 MB, DOM nodes 367 flat, event listeners 175 flat, live `ResizeObserver`s 0, net `document` and `window` listeners 0. ELK's worker is a module singleton, one per page, and stays alive after a canvas unmounts.
+- The full run's one renderer climbs to 4.5 GB (cgroup peak 5.8 GB with one worker per project) while `stories/ListRow.stories.ts` runs, which takes 600 s of the 1215 s and ends in its four known timeouts: the renderer goes from 1.0 to 4.3 GB over that file and falls to 340 MB when it ends. `OptionList` and `Table` ride at 2.7 to 3.0 GB. The other 60 generated files finish in about 230 s with the renderer under 700 MB. At Vitest's default workers the same run reached 6.0 GB in 90 s (22 Chrome processes) and the cap killed it.
+- Vitest's browser mode opens one page per parallel worker, runs the files queued to it one after another in a fresh iframe each (`isolate`, on by default), and caps the pages by `maxWorkers`; Chrome keeps a page's renderer heap between iframes.
+- Recommendation, for the showcase session's `vitest.config.ts` (not edited here): fix ListRow's runaway frame (the known timeout) and set `maxWorkers` so a run fits in memory; the gate here ran with `--maxWorkers=1`.
+
+### What is built
+- ui-core: `CANVAS_NODE_GLYPH`, `canvasNodeGlyph`, the `Canvas` roster entry (`draws` gains `CANVAS_NODE_GLYPH` and `ICON.fit.body`, `holds` the glyph cell, `owns.sizes` the `icon` size `c35` named), `verify.ts`'s `MATRICES`, `DESIGN.md` regenerated.
+- react-ui: `floor.ts`, `lift.ts`; `viewport.ts` (`centreOn(box, zoom?)`, `limit(lowest)`, `clearance()`), `view.ts` (`EXTENT` moved here, `ZOOM_TO_NODE`, `centredTransform`, `Clearance`, a fit that leaves room), `node.tsx` (lift, glyph, `below`, port hit at `UNZOOM` on touch), `index.tsx`, `group.tsx`, `label.tsx`, `edges.tsx`, `zoom.tsx`; overlays `top-inside`, `right-inside`, `bottom-inside`; `drawCanvas` draws the glyph cells (the workflow fitted, under the floor); the guide's "On touch" section and the knowledge base's `Canvas` bullet.
+- Showcase: `touch.ts`, `canvas-support.ts`, `canvas-touch.stories.tsx` (17 scenarios, each in both modes), `canvas-overview.stories.tsx`, and the `touch` project in `vitest.config.ts`.
+
+### The `Rest` story's axe
+The glyph frames press Fit after the layout shows, so axe may run on the card form or the glyph form. Both pass: the card form is the workflow frame's own, and the glyph button is named by its `title`, so `button-name` passes at either moment. `GlyphFramesAtDesktop` and `GlyphFramesAtTouch` hold axe on the glyph form after Fit. Four runs of the generated `Canvas` stories in this build all passed.
+
+### Deviations (the code won over the brief)
+- **Fit leaves room for the canvas's own chrome** (the 04 critique's overlap). The zoom stack and the act foot mark themselves `data-clear="left"` and `"bottom"`; `viewport.fit` reads their rects off the DOM, adds a `pair`, and `fitTransform(bounds, pane, inset, clear)` fits and centres in the room that leaves. Arrange's fit goes through the same call. The critique's ruling gives the opening view the same read (`viewport.clearance()`). A story at each density asserts no card and no glyph meets either part after Fit and after Arrange.
+- **The glyph is a sibling of the card, not a wrapper.** The card stays the layer's direct child (02's and 04's stories select `[data-layer] > button` and read its `style.left`), and the glyph stands in its own `pointer-events-none` box of the card's rect, which `NodeView` returns beside it in a fragment (a fragment that appears and disappears would remount the card). `NodeView`'s `box` carries the size once measured.
+- **A mouse in the touch density** sets `data-no-pan` on the press and removes it on release, since `data-no-pan` otherwise stays on a node for the next finger; `useLift` keeps a pan's click from selecting even when the lift is off (a read-only canvas, a glyph).
+- **`NodeEdit`** gains `touch` and `liftable`; `draggable` is `onMove && !touch && !below`. `ports` is off below the floor, as the brief says, though the invisible card would hide them anyway.
+- **`viewport.limit(lowest)`** replaces the brief's `minZoom` option on `useViewport`: the boxes the minimum comes from exist only after the layout, which needs the viewport. `ZoomStack` takes `minZoom` and disables Zoom out at it. 02's `ZoomLimits` expected 0.1; it now expects the zoom `minZoomFor` gives (read off the laid-out nodes).
+- **Scenario 8 at scale 0.5 cannot exist**: below zoom 1 the node is its glyph and draws no port. A port's hit is asserted 44 px at zoom 1, 1.5 and 2, a finger drag connects at 1 and 1.5 and a release on the ground reports `null`, and below the floor no `[data-port]` exists. The second acceptance box is left unticked for that reading.
+- **Marks on a glyph**: the status dot top right, the problem's danger dot bottom right, as the card's trailing column stacks them; the critique's ruling moves both onto the box's corner (see "Decided after the critique").
+- **Story infrastructure.** The Storybook addon's setup sets each story's viewport itself (a `viewport` global, else 1200 x 900) over the project's instance, so the touch stories name a 375 x 812 `phone` in their meta; the desktop run is therefore 1200 x 900, not 1280 x 800. `touch.ts` waits two frames per event (Chrome aligns moves to a frame) and none for a gesture that must finish inside a long press's time, since a slow frame under load lifted a node before a pan began once. A hold's reads use real time. `LIFT_MS`, `SLOP` and `Graph` reach the stories through `showcase/frames/canvas`, as the stage classes do; `canvas-support.ts` holds what both new files read. 02's `FramesHoldTheirGraph` leaves the glyph frames to `GlyphFramesAt*`. A `MutationObserver` collects its records in its callback (`takeRecords` is empty after any await).
+- **The text floor** is `round(BODY_SIZE.desktop * TYPE_SCALE.caption.size)` = 11, read from the tokens (`scales.ts` is not an export of ui-core), passed as both the text and the floor, so the threshold is exactly zoom 1.
+- **Not run.** The design critique. The second acceptance box stays unticked: its "connects at scale 0.5" clause has no scenario, since no port exists below the floor.
+- **02's wheel, pinch and touch box is ticked** on `Behaviour/Canvas` `Wheel` and `DragDoesNotSelect`, and `Behaviour/Canvas touch` `Pan` and `Pinch` (light and dark).

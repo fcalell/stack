@@ -1079,6 +1079,20 @@ export const CANVAS_NODE_TEXT = matrix({
 	defaultVariants: { part: "line", tone: "rest" },
 });
 
+// A node under the text floor: its glyph alone in a control-sized box. The state
+// is the outline's colour, as the node's own.
+export const CANVAS_NODE_GLYPH = matrix({
+	base: "size-control rounded-card border bg-group",
+	variants: {
+		state: {
+			rest: "border-edge",
+			selected: "border-selected-outline",
+			problem: "border-edge-error",
+		},
+	},
+	defaultVariants: { state: "rest" },
+});
+
 // ── Place ───────────────────────────────────────────────────────────
 
 // Navigation keeps the accent out: a place is selected by a grey fill in the

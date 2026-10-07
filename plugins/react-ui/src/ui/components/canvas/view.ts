@@ -66,45 +66,79 @@ export const whole = ({ x, y, k }: Transform): Transform => ({
 	y: Math.round(y),
 });
 
-function centred(bounds: Box, pane: Size, k: number): Transform {
+// The scale a pan or zoom stays within; the lower end rises with the graph
+// (`minZoomFor`).
+export const EXTENT: readonly [number, number] = [0.1, 2];
+
+// A node at its own size: the one zoom its tokens are drawn for, and the text
+// floor's threshold.
+export const ZOOM_TO_NODE = 1;
+
+// The transform that puts the box's centre on the pane's centre at scale `k`.
+export function centredTransform(box: Box, k: number, pane: Size): Transform {
 	return {
 		k,
-		x: pane.width / 2 - (bounds.x + bounds.width / 2) * k,
-		y: pane.height / 2 - (bounds.y + bounds.height / 2) * k,
+		x: pane.width / 2 - (box.x + box.width / 2) * k,
+		y: pane.height / 2 - (box.y + box.height / 2) * k,
 	};
 }
 
-// The transform that stands the bounds whole in the pane, centred, at the
-// scale that fits and never above 1: a small graph keeps its own size.
+// How far the canvas's own chrome reaches in from the pane's left and bottom
+// edges (the zoom stack and the act): a fitted graph stays outside it.
+export interface Clearance {
+	left: number;
+	bottom: number;
+}
+
+export const NO_CLEARANCE: Clearance = { left: 0, bottom: 0 };
+
+// The part of the pane a fit may fill: inset on every side, and past the
+// chrome on the left and the bottom.
+function room(pane: Size, inset: number, clear: Clearance): Box {
+	const x = Math.max(inset, clear.left);
+	const bottom = Math.max(inset, clear.bottom);
+	return {
+		x,
+		y: inset,
+		width: pane.width - inset - x,
+		height: pane.height - inset - bottom,
+	};
+}
+
+// The transform that stands the bounds whole in the room the pane leaves,
+// centred there, at the scale that fits and never above 1: a small graph keeps
+// its own size.
 export function fitTransform(
 	bounds: Box,
 	pane: Size,
 	inset: number,
+	clear: Clearance = NO_CLEARANCE,
 ): Transform {
-	const k = Math.min(
-		1,
-		(pane.width - 2 * inset) / bounds.width,
-		(pane.height - 2 * inset) / bounds.height,
-	);
-	return centred(bounds, pane, k);
+	const area = room(pane, inset, clear);
+	const k = Math.min(1, area.width / bounds.width, area.height / bounds.height);
+	const centre = centredTransform(bounds, k, area);
+	return { k, x: centre.x + area.x, y: centre.y + area.y };
 }
 
-// What a graph opens at: centred at scale 1 when it fits there, else at scale
-// 1 with the first node's top centre on the pane's centre line, `inset` below
-// its top.
+// What a graph opens at, in the room the pane leaves (as a fit does): centred
+// at scale 1 when it fits there, else at scale 1 with the first node's top
+// centre on the room's centre line, `inset` below its top.
 export function openTransform(
 	bounds: Box,
 	first: Box | undefined,
 	pane: Size,
 	inset: number,
+	clear: Clearance = NO_CLEARANCE,
 ): Transform {
-	const fits =
-		bounds.width <= pane.width - 2 * inset &&
-		bounds.height <= pane.height - 2 * inset;
-	if (fits || !first) return centred(bounds, pane, 1);
+	const area = room(pane, inset, clear);
+	const fits = bounds.width <= area.width && bounds.height <= area.height;
+	if (fits || !first) {
+		const centre = centredTransform(bounds, 1, area);
+		return { k: 1, x: centre.x + area.x, y: centre.y + area.y };
+	}
 	return {
 		k: 1,
-		x: pane.width / 2 - (first.x + first.width / 2),
-		y: inset - first.y,
+		x: area.x + area.width / 2 - (first.x + first.width / 2),
+		y: area.y - first.y,
 	};
 }

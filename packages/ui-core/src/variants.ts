@@ -16,6 +16,7 @@ import {
 	BUTTON,
 	BUTTON_LABEL,
 	CANVAS_NODE,
+	CANVAS_NODE_GLYPH,
 	CANVAS_NODE_TEXT,
 	CHANGE_MARK,
 	CHART_BAND,
@@ -174,6 +175,7 @@ export const image = build(IMAGE);
 export const imagePicture = build(IMAGE_PICTURE);
 export const canvasNode = build(CANVAS_NODE);
 export const canvasNodeText = build(CANVAS_NODE_TEXT);
+export const canvasNodeGlyph = build(CANVAS_NODE_GLYPH);
 export const placeRow = build(PLACE_ROW);
 export const placeRowGlyph = build(PLACE_ROW_GLYPH);
 export const placeTab = build(PLACE_TAB);
@@ -280,6 +282,7 @@ export const FAMILIES: readonly Family[] = [
 	family("IMAGE_PICTURE", IMAGE_PICTURE, imagePicture),
 	family("CANVAS_NODE", CANVAS_NODE, canvasNode),
 	family("CANVAS_NODE_TEXT", CANVAS_NODE_TEXT, canvasNodeText),
+	family("CANVAS_NODE_GLYPH", CANVAS_NODE_GLYPH, canvasNodeGlyph),
 	family("STAGE", STAGE, stage),
 	family("STAGE_MARK", STAGE_MARK, stageMark),
 	family("STAGE_RAIL", STAGE_RAIL, stageRail),

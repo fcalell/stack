@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Canvas } from "../../components/canvas/index.tsx";
+import { LIFT_MS, SLOP } from "../../components/canvas/lift.ts";
+import { useWords } from "../../lib/words.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import {
 	type Graph,
@@ -12,7 +14,18 @@ import {
 	WORKFLOW,
 } from "../graphs.ts";
 
-export { JOURNEY, OFF, PROBLEM, RUN, SCENARIO, STATUSES, WORKFLOW };
+export type { Graph };
+export {
+	JOURNEY,
+	LIFT_MS,
+	OFF,
+	PROBLEM,
+	RUN,
+	SCENARIO,
+	SLOP,
+	STATUSES,
+	WORKFLOW,
+};
 
 // The canvas fills its region and has no height of its own. It stands on the
 // page's ground, `surface`, as it does on a Shell column or a Gate, so it steps
@@ -32,9 +45,9 @@ export const SMALL = "flex flex-col h-[12rem] w-[20rem] bg-surface p-page";
 // density (the taller): the workflow is 1258 px and the journey 814 px, each
 // plus the pane's inset on both sides. `FramesHoldTheirGraph` fails when a
 // graph or a density outgrows its stage.
-const WORKFLOW_STAGE =
+export const WORKFLOW_STAGE =
 	"flex flex-col h-[86rem] w-[56rem] max-w-full bg-surface p-page";
-const JOURNEY_STAGE =
+export const JOURNEY_STAGE =
 	"flex flex-col h-[58rem] w-[56rem] max-w-full bg-surface p-page";
 
 // Read-only but for the selection, which a click or Escape moves.
@@ -65,6 +78,34 @@ function Selectable({
 	);
 }
 
+// A graph fitted to its stage, which for the workflow is under the text floor,
+// so every node is its glyph alone. The canvas has no prop for a zoom, so the
+// frame presses its Fit once the layout shows.
+function Overview({ graph, first }: { graph: Graph; first?: string }) {
+	const stage = useRef<HTMLDivElement>(null);
+	const words = useWords();
+	useEffect(() => {
+		let frame = 0;
+		const fit = () => {
+			const region = stage.current?.querySelector("section");
+			if (region && getComputedStyle(region).opacity === "1") {
+				region
+					.querySelector<HTMLElement>(`button[aria-label="${words.fit}"]`)
+					?.click();
+				return;
+			}
+			frame = requestAnimationFrame(fit);
+		};
+		fit();
+		return () => cancelAnimationFrame(frame);
+	}, [words.fit]);
+	return (
+		<div ref={stage}>
+			<Selectable label="Workflow" graph={graph} stage={STAGE} first={first} />
+		</div>
+	);
+}
+
 // What each cell draws: the cell is the tone or state its frame is there to
 // judge, and the canvas draws every state its graph holds. The confirm node of
 // the journey is selected in the `selected` frame of the first.
@@ -74,11 +115,23 @@ const DRAWN: Record<string, { label: string; graph: Graph }> = {
 	"STATUS_DOT.state.active": { label: "Status", graph: STATUSES },
 };
 
-// The canvas draws in six cells: the workflow at rest (the journey with its
+// The canvas draws in seven cells: the workflow at rest (the journey with its
 // confirm node selected), a problem, an off node, a status per state, a run
-// over the workflow and a scenario over the journey.
+// over the workflow, a scenario over the journey, and the glyph a node is under
+// the text floor, which is the workflow fitted: at rest, with its plan node
+// selected, and with a problem.
 export function drawCanvas(frame: ShowcaseFrame) {
 	const { name } = frame.cell;
+	if (name.startsWith("CANVAS_NODE_GLYPH.state.")) {
+		if (frame.state !== "rest") return undefined;
+		const state = name.slice(name.lastIndexOf(".") + 1);
+		return (
+			<Overview
+				graph={state === "problem" ? PROBLEM : WORKFLOW}
+				first={state === "selected" ? "plan" : undefined}
+			/>
+		);
+	}
 	if (name === "CANVAS_NODE.state.rest") {
 		if (frame.state === "selected")
 			return (

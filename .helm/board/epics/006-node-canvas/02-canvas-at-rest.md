@@ -31,7 +31,8 @@ React Flow build, which this brief supersedes: it is rewritten in place. What su
   `@fcalell/ui-core/canvas`) up a corridor at the side, inside the group when both its ends are.
   A label chip stands beside its edge's line, never on it.
 - **First view.** A graph that fits at zoom 1 opens centred; a larger one opens at zoom 1 with the
-  first node in path order at the top centre. Fit fits everything, capped at zoom 1.
+  first node in path order at the top centre. Fit fits everything, capped at zoom 1. Both, and Fit,
+  take the room the zoom stack and the act leave (05).
 - Each node is one `button` named by its visible text. DOM order and Tab order are `pathOrder`;
   Enter selects, Escape clears, a node focused from the keyboard is panned into view, and a `selected` changed from
   outside pans to its node. Screen readers are out of scope (Decided).
@@ -654,7 +655,7 @@ input-independent. 05 builds it; until then 02 shows sub-floor text when zoomed 
 ## Acceptance criteria
 - [ ] Generated stories draw the workflow in `Canvas`'s `Rest` story and the journey with `merge` selected in its `Selected` story, light and dark, on a `surface` stage so the canvas steps off its surround, and `pnpm stories:test` (the vitest config's 1280 × 800) passes with the behaviour stories above, none logging to the console; the design critique judges a 1280 × 800 render of both taken through Storybook.
 - [x] No chip is clipped by or covers a node, a group head, another chip or an arrowhead, and none lies on its own edge; the journey's three "Option" chips are apart; no forward edge runs behind a node or another group's head; the loop's back edge runs inside the loop's frame and every corridor is separated by its label plus two `pair`s; no route has a retracing point. The node tests assert each over both fixtures.
-- [ ] A plain wheel pans, Ctrl/Cmd+wheel and a pinch zoom, a drag pans (and does not select), one finger pans and two pinch.
+- [x] A plain wheel pans, Ctrl/Cmd+wheel and a pinch zoom, a drag pans (and does not select), one finger pans and two pinch. Proved by `Behaviour/Canvas` `Wheel` and `DragDoesNotSelect` (a mouse), and `Behaviour/Canvas touch` `Pan` and `Pinch` (real touch at 375, `PanLight`, `PanDark`, `PinchLight`, `PinchDark`).
 - [x] A graph that fits at zoom 1 opens centred; a larger one opens at zoom 1 with its first node at the top centre inset by `spacing("page")`; Fit fits everything at a scale of at most 1.
 - [x] With the keyboard alone, focus moves through the nodes in path order, Enter selects and Escape clears; a node focused from the keyboard and a `selected` changed from outside pan into view, and a press never pans.
 - [x] A graph with positions draws as given, calls `onMove` never and loads no worker; the same graph without positions is placed by ELK in a worker and reports every absolute position once through `onMove` when it is passed.

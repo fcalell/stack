@@ -26,8 +26,16 @@ import {
 	useState,
 } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { useTouch } from "../../lib/media.ts";
 import { ConnectionLine } from "./connection.tsx";
 import { EdgeLayer } from "./edges.tsx";
+import {
+	belowFloor,
+	glyphSize,
+	minZoomFor,
+	TEXT_FLOOR,
+	UNZOOM_VAR,
+} from "./floor.ts";
 import type { Size } from "./geometry.ts";
 import { GroupFrame } from "./group.tsx";
 import { isGround } from "./hit.ts";
@@ -36,7 +44,7 @@ import { useLayout } from "./layout.ts";
 import { type EdgeTone, edgeLook, nodeLook } from "./look.ts";
 import { type NodeEdit, NodeView } from "./node.tsx";
 import { landAt, place } from "./view.ts";
-import { useViewport } from "./viewport.ts";
+import { useViewport, useViewportValue } from "./viewport.ts";
 import { ActFoot, ZoomStack } from "./zoom.tsx";
 
 /** A graph of nodes and edges on a pannable, zoomable ground. */
@@ -94,6 +102,13 @@ export function Canvas({
 	const grid = useId();
 	const region = useRef<HTMLElement>(null);
 	const viewport = useViewport(region);
+	const touch = useTouch();
+	// One flag for the whole canvas, true while the smallest text a node draws
+	// renders under the text floor: a crossing renders once, and a pan or a zoom
+	// within a side renders nothing.
+	const below = useViewportValue(viewport, (view) =>
+		belowFloor(view.k, TEXT_FLOOR, TEXT_FLOOR),
+	);
 	const [sizes, setSizes] = useState(NO_SIZES);
 	const [probe, setProbe] = useState<HTMLElement | null>(null);
 	const order = useMemo(() => pathOrder(nodes, edges), [nodes, edges]);
@@ -125,7 +140,25 @@ export function Canvas({
 		landed,
 		onMove,
 		ports: Boolean(onConnect),
+		glyph: glyphSize(touch),
 	});
+
+	// The lowest zoom at which no two glyphs stand closer than the gap the edges
+	// between them need.
+	const minZoom = useMemo(
+		() => minZoomFor([...boxes.values()], glyphSize(touch), space.pair),
+		[boxes, touch, space.pair],
+	);
+	useEffect(() => viewport.limit(minZoom), [viewport, minZoom]);
+	// The glyph and a port's hit hold their size on screen at any zoom through
+	// this variable, set by script so a pinch renders nothing.
+	useEffect(() => {
+		const element = region.current;
+		const set = () =>
+			element?.style.setProperty(UNZOOM_VAR, String(1 / viewport.get().k));
+		set();
+		return viewport.subscribe(set);
+	}, [viewport]);
 
 	const at = useCallback((id: string, point: CanvasPoint | null) => {
 		setLive((last) => {
@@ -237,8 +270,10 @@ export function Canvas({
 	const edit: NodeEdit = {
 		viewport,
 		region,
-		draggable: Boolean(onMove),
-		ports: Boolean(onConnect),
+		touch,
+		draggable: Boolean(onMove) && !touch && !below,
+		liftable: Boolean(onMove) && touch && !below,
+		ports: Boolean(onConnect) && !below,
 		at,
 		drop,
 		linking,
@@ -266,7 +301,13 @@ export function Canvas({
 				{groups.map((group) => {
 					const frame = routed.frames.get(group.id);
 					return frame ? (
-						<GroupFrame key={group.id} head={group.head} box={frame} />
+						<GroupFrame
+							key={group.id}
+							id={group.id}
+							head={group.head}
+							box={frame}
+							below={below}
+						/>
 					) : null;
 				})}
 				<EdgeLayer
@@ -274,6 +315,7 @@ export function Canvas({
 					routes={routed.routes}
 					tones={tones}
 					radius={space.pair}
+					below={below}
 				/>
 				{order.map((id) => {
 					const node = byId.get(id);
@@ -287,6 +329,7 @@ export function Canvas({
 							landing={positioned && !node.position && !landed.has(id)}
 							lifted={live.has(id)}
 							targeted={link?.target === id}
+							below={below}
 							edit={edit}
 							onSelect={onSelect}
 							onSize={resized}
@@ -301,6 +344,7 @@ export function Canvas({
 			<ZoomStack
 				viewport={viewport}
 				bounds={routed.bounds}
+				minZoom={minZoom}
 				onArrange={onMove ? arrange : undefined}
 			/>
 			{act ? <ActFoot act={act} /> : null}

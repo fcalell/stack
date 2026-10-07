@@ -17,7 +17,12 @@ export default defineConfig({
 		projects: [
 			{
 				extends: true,
-				plugins: [storybookTest({ configDir: `${dirname}.storybook` })],
+				plugins: [
+					storybookTest({
+						configDir: `${dirname}.storybook`,
+						tags: { exclude: ["touch"] },
+					}),
+				],
 				test: {
 					name: "storybook",
 					testTimeout: 120_000,
@@ -31,6 +36,33 @@ export default defineConfig({
 						// drawn at a desktop width, not Vitest's 414 px default.
 						instances: [
 							{ browser: "chromium", viewport: { width: 1280, height: 800 } },
+						],
+					},
+				},
+			},
+			// A second project: the touch stories, in a 375 px phone with touch events
+			// on (`hasTouch` also sets `navigator.maxTouchPoints`, which d3-zoom reads
+			// when the canvas mounts).
+			{
+				extends: true,
+				plugins: [
+					storybookTest({
+						configDir: `${dirname}.storybook`,
+						tags: { include: ["touch"] },
+					}),
+				],
+				test: {
+					name: "touch",
+					testTimeout: 120_000,
+					browser: {
+						enabled: true,
+						headless: true,
+						provider: playwright({
+							contextOptions: { hasTouch: true },
+							...(chrome ? { launchOptions: { executablePath: chrome } } : {}),
+						}),
+						instances: [
+							{ browser: "chromium", viewport: { width: 375, height: 812 } },
 						],
 					},
 				},

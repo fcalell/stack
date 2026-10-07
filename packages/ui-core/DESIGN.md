@@ -1509,6 +1509,36 @@ components:
   canvas-node-text-dimmed-dark:
     typography: "{typography.meta}"
     textColor: "{colors.ink-disabled-dark}"
+  canvas-node-glyph-rest:
+    height: "{spacing.control}"
+    width: "{spacing.control}"
+    rounded: "{rounded.card}"
+    backgroundColor: "{colors.group}"
+  canvas-node-glyph-rest-dark:
+    height: "{spacing.control}"
+    width: "{spacing.control}"
+    rounded: "{rounded.card}"
+    backgroundColor: "{colors.group-dark}"
+  canvas-node-glyph-selected:
+    height: "{spacing.control}"
+    width: "{spacing.control}"
+    rounded: "{rounded.card}"
+    backgroundColor: "{colors.group}"
+  canvas-node-glyph-selected-dark:
+    height: "{spacing.control}"
+    width: "{spacing.control}"
+    rounded: "{rounded.card}"
+    backgroundColor: "{colors.group-dark}"
+  canvas-node-glyph-problem:
+    height: "{spacing.control}"
+    width: "{spacing.control}"
+    rounded: "{rounded.card}"
+    backgroundColor: "{colors.group}"
+  canvas-node-glyph-problem-dark:
+    height: "{spacing.control}"
+    width: "{spacing.control}"
+    rounded: "{rounded.card}"
+    backgroundColor: "{colors.group-dark}"
   stage-done:
     typography: "{typography.body}"
     textColor: "{colors.ink-body}"
@@ -2567,7 +2597,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `Thread` | content | `THREAD`, `THREAD_COLUMN`, `THREAD_LOG`, `THREAD_UNDER_HEAD`, `FOOT_DOCKED`, `THREAD_LATEST` | rest, loading, error, empty |
 | `QrCode` | content | `QR_CODE`, `QR_TILE` | rest, loading |
 | `Image` | content | `IMAGE`, `IMAGE_PICTURE`, `IMAGE_FULL`, `IMAGE_CLOSE`, `IMAGE_FAILED_INK`, `ICON.fit.body`, `ICON_BUTTON.fit.body`, `TEXT.role.meta`, `SCRIM` | rest, hover, focus, active, loading, error |
-| `Canvas` | content, web only | `CANVAS_GROUND`, `CANVAS_NODE`, `CANVAS_NODE_TEXT`, `CANVAS_PORT`, `CANVAS_PORT_HIT`, `CANVAS_GROUP`, `CANVAS_GROUP_HEAD`, `CANVAS_ZOOM`, `ICON.fit.meta`, `ICON_BUTTON.fit.body`, `BUTTON.act.quiet`, `BUTTON.fit.body`, `BUTTON_LABEL.act.quiet`, `COUNT`, `COUNT_LABEL`, `CHIP.family.neutral`, `CHIP.trailing.none`, `CHIP_LABEL.family.neutral`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC` | rest, selected |
+| `Canvas` | content, web only | `CANVAS_GROUND`, `CANVAS_NODE`, `CANVAS_NODE_TEXT`, `CANVAS_NODE_GLYPH`, `CANVAS_PORT`, `CANVAS_PORT_HIT`, `CANVAS_GROUP`, `CANVAS_GROUP_HEAD`, `CANVAS_ZOOM`, `ICON.fit.meta`, `ICON.fit.body`, `ICON_BUTTON.fit.body`, `BUTTON.act.quiet`, `BUTTON.fit.body`, `BUTTON_LABEL.act.quiet`, `COUNT`, `COUNT_LABEL`, `CHIP.family.neutral`, `CHIP.trailing.none`, `CHIP_LABEL.family.neutral`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC` | rest, selected |
 
 A component owns the tokens it may draw: a cell it draws that spells a type role, a colour, a radius, a spacing role, a size or a shadow outside its row is a contract error. A colour ending in `-` is a family (`chip-` is every chip role).
 
@@ -2636,7 +2666,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Thread` | none | `raised`, `edge`, `edge-raised` | `control` | `sections`, `page`, `pair`, `acts` | `measure` | `float` |
 | `QrCode` | none | `edge`, `surface`, `ink-body`, `skeleton` | `card` | none | `qr` | none |
 | `Image` | `meta` | `edge`, `edge-hover`, `ink-body`, `skeleton`, `group`, `ink-meta`, `raised`, `scrim` | `control`, `card` | `page`, `inside` | `image-tile`, `image-cap`, `icon`, `control` | `float` |
-| `Canvas` | `body`, `meta`, `caption` | `canvas`, `group`, `surface`, `edge`, `edge-strong`, `edge-error`, `selected-outline`, `edge-hover`, `grid`, `ring`, `ink-body`, `ink-meta`, `ink-disabled`, `fill-neutral`, `accent-ink`, `ok`, `warn`, `danger`, `chip-` | `card`, `control`, `full`, `chip` | `inside`, `pair`, `control-x` | `node`, `port`, `target`, `row-2`, `control`, `dot`, `chip`, `icon-meta`, `measure-short`, `spinner` | none |
+| `Canvas` | `body`, `meta`, `caption` | `canvas`, `group`, `surface`, `edge`, `edge-strong`, `edge-error`, `selected-outline`, `edge-hover`, `grid`, `ring`, `ink-body`, `ink-meta`, `ink-disabled`, `fill-neutral`, `accent-ink`, `ok`, `warn`, `danger`, `chip-` | `card`, `control`, `full`, `chip` | `inside`, `pair`, `control-x` | `node`, `port`, `target`, `row-2`, `control`, `dot`, `chip`, `icon-meta`, `icon`, `measure-short`, `spinner` | none |
 
 ### Motion
 

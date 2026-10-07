@@ -9,7 +9,16 @@ import {
 } from "react";
 import { spacing } from "../../lib/media.ts";
 import type { Box } from "./geometry.ts";
-import { fitTransform, inside, type Transform, whole } from "./view.ts";
+import {
+	type Clearance,
+	centredTransform,
+	EXTENT,
+	fitTransform,
+	inside,
+	NO_CLEARANCE,
+	type Transform,
+	whole,
+} from "./view.ts";
 
 // The canvas's viewport: pan, wheel, pinch and the zoom stack over one layer.
 // The rest of the canvas reaches the pan and zoom only through this object.
@@ -22,14 +31,17 @@ export interface Viewport {
 	// Instant, within the scale extent.
 	set(transform: Transform): void;
 	fit(bounds: Box): void;
-	// Pans only, at the zoom it has; nothing when the box is already in view.
-	centreOn(box: Box): void;
+	// What the canvas's own chrome takes from the pane, which a fit and the opening view stay clear of.
+	clearance(): Clearance;
+	// Pans only, at the zoom it has, and nothing when the box is already in
+	// view; given a zoom it always moves, to that zoom, the box centred.
+	centreOn(box: Box, zoom?: number): void;
+	// Raises the lowest scale, and a scale already under it to it.
+	limit(lowest: number): void;
 	// A pointer's client position as a flow point.
 	screenToFlow(point: CanvasPoint): CanvasPoint;
 }
 
-// The scale a pan or zoom stays within.
-export const EXTENT: readonly [number, number] = [0.1, 2];
 const STEP = 1.5;
 // One wheel event moves the scale by at most the zoom stack's step, in d3's
 // log2 measure; a trackpad pinch's small deltas stay proportional below it.
@@ -114,9 +126,27 @@ function make(region: RefObject<HTMLElement | null>) {
 		height: region.current?.clientHeight ?? 0,
 	});
 
+	// What the canvas's own chrome takes from the pane: a part marked
+	// `data-clear` with the edge it stands against, `left` or `bottom`, and
+	// a `pair` of air beyond it.
+	const clearance = (): Clearance => {
+		const element = region.current;
+		if (!element) return NO_CLEARANCE;
+		const pane = element.getBoundingClientRect();
+		const pair = spacing("pair");
+		const out = { left: 0, bottom: 0 };
+		for (const part of element.querySelectorAll<HTMLElement>("[data-clear]")) {
+			const box = part.getBoundingClientRect();
+			if (part.dataset.clear === "left")
+				out.left = Math.max(out.left, box.right - pane.left + pair);
+			else out.bottom = Math.max(out.bottom, pane.bottom - box.top + pair);
+		}
+		return out;
+	};
+
 	// The scale moves by `factor` about the pane's centre.
 	const zoomBy = (factor: number) => {
-		const [low, high] = EXTENT;
+		const [low, high] = behaviour.scaleExtent();
 		const k = Math.min(high, Math.max(low, current.k * factor));
 		const ratio = k / current.k;
 		const { width, height } = pane();
@@ -149,18 +179,22 @@ function make(region: RefObject<HTMLElement | null>) {
 					zoomIdentity.translate(x, y).scale(Math.min(high, Math.max(low, k))),
 				);
 		},
+		clearance,
 		fit(bounds) {
-			viewport.set(fitTransform(bounds, pane(), spacing("page")));
+			viewport.set(fitTransform(bounds, pane(), spacing("page"), clearance()));
 		},
-		centreOn(box) {
-			const { width, height } = pane();
-			if (inside(box, current, { width, height }, spacing("page"))) return;
-			const { k } = current;
-			viewport.set({
-				k,
-				x: width / 2 - (box.x + box.width / 2) * k,
-				y: height / 2 - (box.y + box.height / 2) * k,
-			});
+		centreOn(box, zoom) {
+			const size = pane();
+			if (zoom === undefined) {
+				if (inside(box, current, size, spacing("page"))) return;
+				viewport.set(centredTransform(box, current.k, size));
+				return;
+			}
+			viewport.set(centredTransform(box, zoom, size));
+		},
+		limit(lowest) {
+			behaviour.scaleExtent([lowest, EXTENT[1]]);
+			if (current.k < lowest) zoomBy(1);
 		},
 		screenToFlow(point) {
 			const rect = region.current?.getBoundingClientRect();

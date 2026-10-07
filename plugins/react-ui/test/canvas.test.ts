@@ -11,6 +11,14 @@ import {
 	layerGap,
 } from "../src/ui/components/canvas/elk.ts";
 import {
+	belowFloor,
+	glyphBoxes,
+	glyphSize,
+	minZoomFor,
+	routeSide,
+	TEXT_FLOOR,
+} from "../src/ui/components/canvas/floor.ts";
+import {
 	ARROW,
 	ARROW_REF,
 	type Box,
@@ -28,8 +36,11 @@ import {
 	routeEdges,
 	verticalLegs,
 } from "../src/ui/components/canvas/geometry.ts";
+import { carried } from "../src/ui/components/canvas/lift.ts";
 import { edgeLook, nodeLook } from "../src/ui/components/canvas/look.ts";
 import {
+	centredTransform,
+	EXTENT,
 	fitTransform,
 	inside,
 	landAt,
@@ -569,6 +580,29 @@ test("openTransform centres a graph that fits and opens a larger one at its firs
 	// below its top.
 	assert.equal((first.x + first.width / 2) * open.k + open.x, 200);
 	assert.equal(first.y * open.k + open.y, 16);
+});
+
+test("openTransform stays clear of the chrome a fit does: centred in the room, and a larger graph's first node at the room's top centre", () => {
+	const pane = { width: 400, height: 300 };
+	const clear = { left: 80, bottom: 70 };
+	// The room is x 80 to 384 and y 16 to 230: 304 wide, 214 high.
+	const bounds = box(10, 20, 100, 50);
+	const fits = openTransform(bounds, bounds, pane, 16, clear);
+	assert.deepEqual(fits, { k: 1, x: 80 + 152 - 60, y: 16 + 107 - 45 });
+	const large = box(0, 0, 1000, 1000);
+	const first = box(300, 40, 240, 56);
+	const open = openTransform(large, first, pane, 16, clear);
+	assert.equal(open.k, 1);
+	assert.equal((first.x + first.width / 2) * open.k + open.x, 80 + 152);
+	assert.equal(first.y * open.k + open.y, 16);
+	// A graph that fits the pane but not the room opens as a larger one.
+	const wide = box(0, 0, 330, 100);
+	assert.equal(openTransform(wide, first, pane, 16).k, 1);
+	assert.equal(
+		(first.x + first.width / 2) * 1 +
+			openTransform(wide, first, pane, 16, clear).x,
+		80 + 152,
+	);
 });
 
 // The graphs are placed by real ELK, the way the canvas does, with a node
@@ -1273,4 +1307,177 @@ test("elkGraph ignores the positions the nodes carry", () => {
 		position: { x: index * 10, y: index * 20 },
 	}));
 	assert.deepEqual(graph({ nodes: placed }), graph());
+});
+
+test("the text floor is the caption's size, and a zoom is below it under exactly zoom 1", () => {
+	assert.equal(TEXT_FLOOR, 11);
+	assert.equal(belowFloor(1, TEXT_FLOOR, TEXT_FLOOR), false);
+	assert.equal(belowFloor(1 - 1e-9, TEXT_FLOOR, TEXT_FLOOR), true);
+	assert.equal(belowFloor(2, TEXT_FLOOR, TEXT_FLOOR), false);
+	assert.equal(belowFloor(0.5, 22, 11), false);
+	assert.equal(belowFloor(0.49, 22, 11), true);
+});
+
+test("a glyph is the control size of its density", () => {
+	assert.equal(glyphSize(false), 32);
+	assert.equal(glyphSize(true), 44);
+});
+
+test("minZoomFor keeps two glyphs a gap of 2 * pair apart by the larger axis of their centres, within the scale extent", () => {
+	const at = (x: number, y: number) => box(x - 100, y - 20, 200, 40);
+	// Centres 200 apart across and 120 apart down: the larger gap decides.
+	const pair = [at(0, 0), at(200, 120)];
+	assert.equal(minZoomFor(pair, 32, PAIR), (32 + 2 * PAIR) / 200);
+	assert.equal(minZoomFor(pair, 44, PAIR), (44 + 2 * PAIR) / 200);
+	assert.equal(minZoomFor(pair, 32, 0), 32 / 200);
+	// The nearest pair of three decides.
+	assert.equal(
+		minZoomFor([at(0, 0), at(400, 0), at(400, 160)], 32, PAIR),
+		(32 + 2 * PAIR) / 160,
+	);
+	// Never above 1, never under the extent's floor; one node or none gives it.
+	assert.equal(minZoomFor([at(0, 0), at(10, 0)], 32, PAIR), 1);
+	assert.equal(minZoomFor([at(0, 0), at(0, 0)], 32, PAIR), 1);
+	assert.equal(minZoomFor([at(0, 0), at(100000, 0)], 32, PAIR), EXTENT[0]);
+	assert.equal(minZoomFor([at(0, 0)], 32, PAIR), EXTENT[0]);
+	assert.equal(minZoomFor([], 32, PAIR), EXTENT[0]);
+});
+
+test("minZoomFor on the workflow keeps every pair of glyphs a gap of 2 * pair apart at that zoom", async () => {
+	const boxes = [...(await placed(WORKFLOW)).boxes.values()];
+	for (const glyph of [glyphSize(false), glyphSize(true)]) {
+		const k = minZoomFor(boxes, glyph, PAIR);
+		assert.ok(k >= EXTENT[0] && k <= 1);
+		boxes.forEach((one, index) => {
+			for (const two of boxes.slice(index + 1)) {
+				const gap = Math.max(
+					Math.abs(one.x + one.width / 2 - (two.x + two.width / 2)),
+					Math.abs(one.y + one.height / 2 - (two.y + two.height / 2)),
+				);
+				assert.ok(gap * k >= glyph + 2 * PAIR - 1e-9);
+			}
+		});
+	}
+});
+
+test("routeSide is 0 from zoom 1 and, under it, the glyph over the zoom rounded up to a step", () => {
+	assert.equal(routeSide(1, 32, PAIR), 0);
+	assert.equal(routeSide(2, 32, PAIR), 0);
+	assert.equal(routeSide(0.5, 32, PAIR), 64);
+	// A tick inside one step is the same side: nothing is routed again.
+	assert.equal(routeSide(0.485, 32, PAIR), routeSide(0.49, 32, PAIR));
+	assert.equal(routeSide(0.49, 32, PAIR), 72);
+	for (const k of [0.99, 0.7, 0.33, 0.1]) {
+		const side = routeSide(k, 44, PAIR);
+		assert.ok(side >= 44 / k && side < 44 / k + PAIR);
+		assert.equal(side % PAIR, 0);
+	}
+});
+
+test("glyphBoxes centres a square of the side on each box", () => {
+	const boxes = new Map([["a", box(10, 20, 240, 56)]]);
+	assert.deepEqual(glyphBoxes(boxes, 64).get("a"), box(98, 16, 64, 64));
+});
+
+test("routed to its glyph's box, every edge's two ends lie on the glyphs and a frame holds its glyphs by the padding", async () => {
+	for (const [, source] of FIXTURES) {
+		const { input } = await placed(source);
+		for (const glyph of [glyphSize(false), glyphSize(true)]) {
+			const k = minZoomFor([...input.boxes.values()], glyph, PAIR);
+			const side = routeSide(k, glyph, PAIR);
+			assert.ok(side > 0);
+			const solids = glyphBoxes(input.boxes, side);
+			const { routes, frames } = routeEdges({
+				...input,
+				boxes: solids,
+				ports: false,
+			});
+			for (const edge of input.edges) {
+				const route = routes.get(edge.id);
+				const from = solids.get(edge.from);
+				const to = solids.get(edge.to);
+				assert.ok(route && from && to, edge.id);
+				const first = route.points[0];
+				const last = route.points.at(-1);
+				assert.ok(first && last);
+				const on = (point: { x: number; y: number }, b: Box) =>
+					point.x >= b.x &&
+					point.x <= b.x + b.width &&
+					point.y >= b.y &&
+					point.y <= b.y + b.height;
+				assert.ok(on(first, from), `${edge.id}: starts on its source's glyph`);
+				assert.ok(on(last, to), `${edge.id}: ends on its target's glyph`);
+			}
+			for (const group of input.groups) {
+				const frame = frames.get(group.id);
+				assert.ok(frame, group.id);
+				for (const id of group.holds) {
+					const held = solids.get(id);
+					if (!held) continue;
+					assert.ok(frame.x <= held.x - input.pad + 1e-9);
+					assert.ok(frame.y <= held.y - input.pad - input.head + 1e-9);
+					assert.ok(
+						frame.x + frame.width >= held.x + held.width + input.pad - 1e-9,
+					);
+					assert.ok(
+						frame.y + frame.height >= held.y + held.height + input.pad - 1e-9,
+					);
+				}
+			}
+		}
+	}
+});
+
+test("carried moves a node by the pointer's distance over the zoom", () => {
+	const start = { x: 100, y: 50 };
+	const from = { x: 300, y: 200 };
+	assert.deepEqual(carried(start, from, { x: 360, y: 240 }, 1), {
+		x: 160,
+		y: 90,
+	});
+	assert.deepEqual(carried(start, from, { x: 360, y: 240 }, 2), {
+		x: 130,
+		y: 70,
+	});
+	assert.deepEqual(carried(start, from, from, 0.5), start);
+	assert.deepEqual(carried(start, from, { x: 290, y: 190 }, 0.5), {
+		x: 80,
+		y: 30,
+	});
+});
+
+test("centredTransform puts the box's centre on the pane's centre at the given zoom", () => {
+	const pane = { width: 400, height: 300 };
+	const target = box(100, 60, 240, 56);
+	for (const k of [0.5, 1, 2]) {
+		const { x, y } = centredTransform(target, k, pane);
+		assert.equal((target.x + target.width / 2) * k + x, pane.width / 2);
+		assert.equal((target.y + target.height / 2) * k + y, pane.height / 2);
+		assert.equal(centredTransform(target, k, pane).k, k);
+	}
+});
+
+test("fitTransform stands the bounds clear of the chrome on the left and the bottom", () => {
+	const pane = { width: 400, height: 300 };
+	const bounds = box(0, 0, 1000, 200);
+	// No chrome, or chrome inside the inset, is the plain fit.
+	assert.deepEqual(
+		fitTransform(bounds, pane, 16, { left: 10, bottom: 10 }),
+		fitTransform(bounds, pane, 16),
+	);
+	const clear = { left: 60, bottom: 90 };
+	const fit = fitTransform(bounds, pane, 16, clear);
+	// The scale fits the room left: 400 - 16 - 60 wide.
+	assert.equal(fit.k, (400 - 16 - 60) / 1000);
+	// The drawing stands inside the room, centred in it.
+	assert.ok(fit.x >= 60 - 1e-9);
+	assert.ok(fit.x + 1000 * fit.k <= 400 - 16 + 1e-9);
+	assert.ok(fit.y + 200 * fit.k <= 300 - 90 + 1e-9);
+	assert.ok(Math.abs(fit.x + 500 * fit.k - (60 + (400 - 16)) / 2) < 1e-9);
+	assert.ok(Math.abs(fit.y + 100 * fit.k - (16 + (300 - 90)) / 2) < 1e-9);
+	// A tall graph is held by the bottom.
+	const tall = fitTransform(box(0, 0, 100, 1000), pane, 16, clear);
+	assert.equal(tall.k, (300 - 16 - 90) / 1000);
+	// A small graph keeps its own size.
+	assert.equal(fitTransform(box(0, 0, 50, 50), pane, 16, clear).k, 1);
 });

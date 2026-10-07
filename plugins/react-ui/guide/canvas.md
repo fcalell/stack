@@ -51,8 +51,9 @@ const numbered = nodes.map((node) => ({ ...node, number: numbers.get(node.id) })
 A plain wheel pans, Ctrl or Cmd with the wheel zooms (a trackpad pinch is a Ctrl wheel), a drag
 pans, even from a node (with `onMove` a drag from a node moves that node instead), one finger pans
 and two pinch. The zoom stack at the bottom left zooms in, zooms out and fits: Fit shows the whole
-graph, never larger than its own size. A graph that fits at its own size opens centred; a larger one opens at its own size with its
-first node, in path order, at the top centre.
+graph, never larger than its own size and clear of the zoom stack and the `act`. A graph that fits at its own size opens centred in the room the zoom stack and the `act` leave,
+so no node opens under them; a larger one opens at its own size with its first node, in path
+order, at the top centre of that room.
 
 ## Where the nodes stand
 
@@ -89,6 +90,28 @@ forgotten on release.
   pointer is your own sheet: the ports are not focusable. A `path` does not gate editing and a
   port keeps its ink on a dimmed or marked node: a run you want read-only is a canvas given
   neither handler.
+
+## On touch
+
+The canvas draws the touch density's sizes at touch, and a phone pans and zooms the same
+canvas. One finger drags the ground, and drags a node too, which pans (a node never moves under a
+finger that is moving). Two fingers pinch. With `onMove`, a node held still for a moment lifts,
+draws a 2 px outline in the selection's colour (a pulse on a device that has one), and follows the finger; releasing it calls `onMove` once. A
+second finger landing on a lifted node drops it where it is. A lift never selects, and a tap on a
+node selects it as a click does.
+
+Every zoom button, the `act`, each glyph and each port is at least 44 px at the touch density, at
+any zoom: a port's hit is drawn at that size whatever the scale.
+
+On every input, pointer and finger alike, a node under zoom 1 is its glyph alone: the icon in a
+box of the density's `control` size, its border the state's (a selection or a problem), its
+status as a dot on the box's top right corner, and a problem as a danger dot on its bottom right
+corner, straddling the border so neither covers the icon. It carries the node's `title` as its tooltip. Group heads and edge labels
+draw nothing there, so an overview never shows text under the caption size. A click, a tap or
+Enter on a glyph zooms to that node at its own size and chooses nothing. Edges and group frames
+follow the glyphs, so an edge ends on its glyph, and zooming out stops where two glyphs would stand
+closer than two `pair`, so the edges between them still draw. Keep `problem` and `status` words short and put the detail in your
+sheet: a glyph shows the mark, and the words are one tap away.
 
 ## States
 

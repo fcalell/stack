@@ -17,6 +17,7 @@ import {
 } from "react";
 import { spacing } from "../../lib/media.ts";
 import { elkGraph, fromElk, type Gaps, graphKey, layerGap } from "./elk.ts";
+import { glyphBoxes, routeSide } from "./floor.ts";
 import {
 	type Box,
 	leftPads,
@@ -25,7 +26,7 @@ import {
 	type Size,
 } from "./geometry.ts";
 import { openTransform, type Places, place } from "./view.ts";
-import type { Viewport } from "./viewport.ts";
+import { useViewportValue, type Viewport } from "./viewport.ts";
 
 // The sizes a layout is drawn by, from the spacing roles at the density in
 // force: a layer gap holds the router's bend and a label chip with air round
@@ -167,6 +168,9 @@ interface LayoutArgs {
 	onMove?: (id: string, position: CanvasPoint) => void;
 	// Each node draws an in port.
 	ports: boolean;
+	// A glyph's size on screen at the density: under the text floor the routes
+	// and the frames follow it.
+	glyph: number;
 }
 
 export interface Layout {
@@ -199,6 +203,7 @@ export function useLayout({
 	landed,
 	onMove,
 	ports,
+	glyph,
 }: LayoutArgs): Layout {
 	const key = graphKey(nodes, edges, groups);
 	const placing = nodes.length > 0 && nodes.every((node) => !node.position);
@@ -289,13 +294,24 @@ export function useLayout({
 	);
 	const back = useMemo(() => backEdges(order, edges), [order, edges]);
 	const { pad, pair, port } = space;
+	// Under the floor a node is its glyph, so the routes and the frames follow
+	// the glyph's box, centred on the card's, and not the card's. ELK's positions
+	// and the cards' sizes stay as they are. The side moves in steps of a `pair`,
+	// which bounds how often the routes are drawn while the zoom moves.
+	const side = useViewportValue(viewport, (view) =>
+		routeSide(view.k, glyph, spacing("pair")),
+	);
+	const solids = useMemo(
+		() => (side > 0 ? glyphBoxes(boxes, side) : boxes),
+		[boxes, side],
+	);
 	const head = measures?.head ?? 0;
 	const labels = measures?.labels;
 	const reach = measures?.reach;
 	const routed = useMemo(
 		() =>
 			routeEdges({
-				boxes,
+				boxes: solids,
 				edges,
 				back,
 				groups,
@@ -308,10 +324,24 @@ export function useLayout({
 					width: WIDTH,
 				}),
 				pair,
-				ports,
+				// A glyph draws no port.
+				ports: ports && side === 0,
 				port,
 			}),
-		[boxes, edges, back, groups, labels, reach, head, pad, pair, ports, port],
+		[
+			solids,
+			edges,
+			back,
+			groups,
+			labels,
+			reach,
+			head,
+			pad,
+			pair,
+			ports,
+			side,
+			port,
+		],
 	);
 
 	useLayoutEffect(() => {
@@ -328,6 +358,7 @@ export function useLayout({
 				boxes.get(order[0] ?? ""),
 				{ width: element.clientWidth, height: element.clientHeight },
 				spacing("page"),
+				viewport.clearance(),
 			),
 		);
 		setReady(true);
