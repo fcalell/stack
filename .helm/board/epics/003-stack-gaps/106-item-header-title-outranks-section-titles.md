@@ -12,6 +12,8 @@ A record's name must read one level above the section headings under it. In a `S
 
 With no facts line, the head is the title alone, and the record body's `gap-sections` step (`SPLIT_MAIN` state `rest`: `gap-sections p-page`; the sections role is 10 units on touch, 8 on desktop) leaves the header about 60px above its first `Section`, so the head reads detached from the record it names instead of as its title.
 
+Evidence, Stead repo screens critique unit u9 (Stead 948b7ec, stack 5564217; shots in Stead scratchpad critique/u9/shots/), shot repo-1440-light-a: the repo name stands in the Screen head (18/600) and the ItemHeader (15/600), and the Commands and Landings section titles also draw 15/600, so the ItemHeader title does not outrank its sections.
+
 ## Approach
 Both parts draw the same role, so nothing in the app can separate them without a host element or a token override, which is a workaround:
 - `ItemHeader` (`plugin-react-ui` `item-header/index.tsx`) draws its title as `<Heading className={text({ role: "heading" })}>`; its own gap is `ITEM_HEADER` = `gap-pair` between overline, title and facts.
