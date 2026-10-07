@@ -165,3 +165,93 @@ export const DockedInThreadFoot: StoryObj = {
 	render: () => <DockedThread />,
 	play: closesToInput,
 };
+
+const QUESTION =
+	"Should the rename go in the changelog, in the migration notes, or in both of them together?";
+
+// A docked title is a sentence: it wraps to its whole text, ending in no
+// ellipsis, and its close act stands at the first line.
+export const DockedTitleWraps: StoryObj = {
+	parameters: { layout: "fullscreen" },
+	render: () => (
+		<Place
+			title="Assistant"
+			foot={
+				<Sheet open onClose={() => {}} title={QUESTION}>
+					<p>Both</p>
+				</Sheet>
+			}
+		/>
+	),
+	play: async ({ canvas }) => {
+		const title = await canvas.findByText(QUESTION);
+		const line = Number.parseFloat(getComputedStyle(title).lineHeight);
+		expect(title.scrollWidth).toBeLessThanOrEqual(title.clientWidth);
+		expect(title.getBoundingClientRect().height).toBeGreaterThan(line * 1.5);
+		const close = canvas.getByRole("button", { name: "Close" });
+		expect(close.getBoundingClientRect().top).toBeLessThanOrEqual(
+			title.getBoundingClientRect().top,
+		);
+	},
+};
+
+// The touch head holds the close act, the title and the submit in one row: a
+// title longer than its room wraps whole and the submit stays beside it.
+export const TouchHeadKeepsItsTitle: StoryObj = {
+	tags: ["touch"],
+	globals: { density: "touch", viewport: { value: "phone", isRotated: false } },
+	parameters: {
+		viewport: {
+			options: {
+				phone: {
+					name: "Phone",
+					styles: { width: "375px", height: "812px" },
+					type: "mobile",
+				},
+			},
+		},
+	},
+	render: () => (
+		<Sheet
+			open
+			onClose={() => {}}
+			title="New thread with the code reviewer"
+			submit={{ label: "Open the thread", onAct: () => {} }}
+		>
+			<p>Body</p>
+		</Sheet>
+	),
+	play: async () => {
+		const title = await screen.findByText("New thread with the code reviewer");
+		const line = Number.parseFloat(getComputedStyle(title).lineHeight);
+		expect(title.scrollWidth).toBeLessThanOrEqual(title.clientWidth);
+		expect(title.getBoundingClientRect().height).toBeGreaterThan(line * 1.5);
+		const submit = screen.getByRole("button", { name: "Open the thread" });
+		expect(submit.getBoundingClientRect().right).toBeLessThanOrEqual(
+			window.innerWidth,
+		);
+		expect(submit.getBoundingClientRect().left).toBeGreaterThanOrEqual(
+			title.getBoundingClientRect().right,
+		);
+	},
+};
+
+// A desktop side sheet for a short form is its content's height, hung from
+// the top at the end edge.
+export const SideSheetFitsItsContent: StoryObj = {
+	parameters: { layout: "fullscreen" },
+	render: () => <Page />,
+	play: async ({ canvas, userEvent }) => {
+		await userEvent.click(
+			canvas.getByRole("button", { name: "Rename domain" }),
+		);
+		const dialog = await screen.findByRole("dialog", { name: "Rename domain" });
+		// The enter plays first: the sheet slides in from the end edge.
+		await waitFor(() =>
+			expect(dialog.getBoundingClientRect().right).toBe(window.innerWidth),
+		);
+		const box = dialog.getBoundingClientRect();
+		expect(box.top).toBe(0);
+		expect(box.height).toBeLessThan(window.innerHeight / 2);
+	},
+};

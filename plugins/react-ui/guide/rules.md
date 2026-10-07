@@ -419,7 +419,7 @@ an `act`, never both, since each holds the screen's filled act. A `Thread` in a 
 
 A `Sheet` passed as a `Thread`'s or a `Place`'s `foot` docks there, derived from where it stands:
 no prop, no scrim. The head keeps the back act before one column, the title (a label, so a Section
-inside leads it) and the close act over the `description`, so both lines share a start;
+inside leads it; it wraps to its whole text, the close act at its first line) and the close act over the `description`, so both lines share a start;
 the body scrolls between the head and the foot, which hold their height (the `foot` line beside the `submit`,
 over it on touch), and the docked foot fits what it holds up to three fifths of the region it
 shares with the log, so the log keeps two fifths of it and a body taller than that scrolls. A blocked

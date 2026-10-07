@@ -1544,6 +1544,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"measure",
 					"control",
 					"control-compact",
+					"row-2",
 				],
 				elevation: ["modal"],
 			},

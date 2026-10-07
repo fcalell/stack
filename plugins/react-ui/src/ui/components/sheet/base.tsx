@@ -61,7 +61,11 @@ const CENTRED_MOTION =
 // one, so a press above it still dismisses.
 const LAYER_BOTTOM =
 	"fixed inset-0 z-(--layer-sheet) flex flex-col justify-end pt-page";
-const LAYER_SIDE = "fixed inset-0 z-(--layer-sheet) flex justify-end";
+// A side sheet hangs from the top at the end edge: its content's height up to
+// the layer's, so a short form is a card and a long one the full height.
+const LAYER_SIDE =
+	"fixed inset-0 z-(--layer-sheet) flex items-start justify-end";
+const BOX_SIDE = "max-h-full";
 const LAYER_CENTRED =
 	"fixed inset-0 z-(--layer-sheet) flex items-center justify-center";
 const BOX = "relative flex flex-col";
@@ -80,7 +84,10 @@ const HEAD = "flex flex-col";
 const HEAD_ROW = "flex items-center";
 const TITLE_BLOCK = "flex flex-col grow min-w-0";
 const TITLE_SLOT = "flex items-center min-w-0";
-const TITLE = "truncate";
+const TITLE = "min-w-0 wrap-break-word";
+// The desktop head is a two-line row tall (the title over its description)
+// whether or not the description stands.
+const HEAD_ROW_TALL = "min-h-row-2";
 // The body takes a tab stop only while it scrolls with nothing tabbable inside.
 const BODY =
 	"flex flex-col grow min-h-0 overflow-y-auto overscroll-contain focus-visible:-outline-offset-2";
@@ -226,7 +233,13 @@ export function SheetBase({
 		<p className={text({ role: "meta" })}>{description}</p>
 	) : null;
 	const headRow = (
-		<div className={cn(SHEET_HEAD_ROW, HEAD_ROW)}>
+		<div
+			className={cn(
+				SHEET_HEAD_ROW,
+				HEAD_ROW,
+				!(touch || centred) && HEAD_ROW_TALL,
+			)}
+		>
 			{start}
 			<div className={TITLE_BLOCK}>
 				{titled}
@@ -301,7 +314,7 @@ export function SheetBase({
 			? cn(SHEET, BOX, BOX_BOTTOM, tall && BOX_TALL, BOTTOM_MOTION)
 			: centred
 				? cn(SHEET_CENTERED, BOX, BOX_FLOAT, CENTRED_MOTION)
-				: cn(sheetSide({ fit }), BOX, BOX_FLOAT, SIDE_MOTION);
+				: cn(sheetSide({ fit }), BOX, BOX_FLOAT, BOX_SIDE, SIDE_MOTION);
 	const layer =
 		view || centred ? LAYER_CENTRED : touch ? LAYER_BOTTOM : LAYER_SIDE;
 	return (

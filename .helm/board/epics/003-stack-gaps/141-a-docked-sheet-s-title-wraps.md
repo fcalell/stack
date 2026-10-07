@@ -1,6 +1,6 @@
 ---
 id: 003-141
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: a docked Sheet's title wraps whole
@@ -12,9 +12,13 @@ Stead's question sheet docks in a conversation's foot titled by the question, an
 `SheetDocked` (plugins/react-ui/src/ui/components/sheet/docked.tsx) sets the title in `TITLE = "grow min-w-0 truncate"` beside the close act, so any title longer than the row ends in an ellipsis. A docked title can be a sentence, so it should wrap to two or three lines, the close act staying at the first line's top, the description under it. 003-91 is the touch head of the modal `Sheet` beside its submit; 003-99 is the desktop head's rhythm; 003-129 is the body's floor, which a taller head makes harder, so the two are read together. The app cannot shorten a question (it is the agent's). Seen at stack `5564217`.
 
 ## Acceptance criteria
-- [ ] A docked Sheet's title wraps to its whole text on touch and desktop, the close act aligned to the first line.
-- [ ] A short title is unchanged.
+- [x] A docked Sheet's title wraps to its whole text on touch and desktop, the close act aligned to the first line.
+- [x] A short title is unchanged.
 - [ ] The Sheet showcase holds a docked Sheet with a two-line title and the critique measures the head and the body floor left.
+
+## Built
+
+The docked head's title is a `min-h-control` slot centring its text (a short title sits where it did) and the text wraps (`wrap-break-word`); the head row aligns to `items-start`, so the close act stands at the first line's top. Web: `plugins/react-ui/src/ui/components/sheet/docked.tsx`; phone: `plugins/native-ui/src/ui/components/sheet/docked.tsx` (`numberOfLines` removed). Evidence: `behaviour/sheet.stories.tsx` `DockedTitleWraps` passes (no overflow, more than one line, close act at the title's top). The showcase frame keeps its short titles; the critique measures a two-line docked title from `DockedTitleWraps`' render.
 
 ## Open questions
 - [ ] Its shape (a component, a variant, a token, an option): the stack session decides, whether the title wraps freely or clamps at a line count with the full text available.

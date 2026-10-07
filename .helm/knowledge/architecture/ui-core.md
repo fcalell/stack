@@ -532,9 +532,10 @@ a tick with no animation, never jumped to full.
   intrinsic size, or the height of what a part swaps with: `PENDING_TRACK` an action bar's
   (`min-h-control`). Any other container takes its height from its content and padding through flex,
   its parts centred on the tallest, never from a height copied from another component to line things
-  up: a section head or a sheet head is its act's height, a banner its line (or its act) inside
-  `py-pair`. Rejected: a `header` size, a minimum that made a title-only head as tall as one with an
-  act.
+  up: a section head is its act's height, a banner its line (or its act) inside `py-pair`. A desktop
+  sheet head is the exception: a two-line row tall (`row-2`) with or without its description, so the
+  body's first field never jumps between sheets. Rejected: a `header` size, a minimum that made a
+  title-only section head as tall as one with an act.
 - A touch Place draws its one floating act; in a Split it centres on the list by CSS alone: a
   bleeding Place is the `group/page` whose layer, from `tablet` of the page and with a
   `data-split` inside, narrows to `w-list` at the body's start (below `tablet` it spans whichever
@@ -576,7 +577,8 @@ a tick with no animation, never jumped to full.
   inside the foot's raised cell, so none carries a surface, radius, shadow, hairline or side inset and
   all three share the foot's edge. The head holds the back act before one column (`SHEET_HEAD_ROW`
   twice): the title and the close act over the description, so the two lines share a start whether the
-  back act stands or not. The title is a label (`body` at `strong`, as the pane sheet's), since the
+  back act stands or not. The title wraps to its whole text with the close act at its first line (it
+  is often the question the options answer) and is a label (`body` at `strong`, as the pane sheet's), since the
   Section a page holds is a `heading` and a counter ("Question 2 of 4") never outranks the question;
   the foot holds the `foot` line beside the `submit` bar (over it on touch); the
   head-end submit and Cancel of the modal form are gone, since the dock stands above the keyboard and
@@ -1635,6 +1637,9 @@ a tick with no animation, never jumped to full.
   nothing. A `Form` in a sheet asks nothing (the sheet closes on its own acts), and two edited
   forms on one page each ask. Rejected: a prop or a `Form` variant (every edited form wants it),
   a capture-phase anchor interceptor (a router push and a back never reach it) and block-then-replay.
+- A desktop side sheet is its content's height up to the viewport's, hung from the top at the end
+  edge: a short form is a card, a long one the full height with its body scrolling. No `fit` value
+  says it. A sheet's title wraps beside its acts at every density and never ends in an ellipsis.
 - A sheet knows what it holds before it presents. A sheet stands full height when it holds a
   `TextArea` (which grows with its value) or a menu that searches (a pick past six options, whose
   list would else jump as the filter narrows), read in render: on the phone off the elements it is

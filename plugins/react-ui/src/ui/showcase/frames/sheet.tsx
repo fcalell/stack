@@ -2,6 +2,8 @@ import { cn } from "@fcalell/ui-core/cn";
 import type { Act, Option } from "@fcalell/ui-core/descriptors";
 import { SHELL_COLUMN } from "@fcalell/ui-core/variants";
 import { useEffect, useRef, useState } from "react";
+import { FormField } from "../../components/form-field/index.tsx";
+import { Input } from "../../components/input/index.tsx";
 import { MessageInput } from "../../components/message-input/index.tsx";
 import { OptionList } from "../../components/option-list/index.tsx";
 import { Place } from "../../components/place/index.tsx";
@@ -153,6 +155,16 @@ function DockedQuestions({ state }: { state: ShowcaseFrame["state"] }) {
 	);
 }
 
+// A short form: one field, so the side sheet is its content's height.
+function OneField() {
+	const [value, setValue] = useState("production");
+	return (
+		<FormField label="Branch">
+			<Input value={value} onChange={setValue} />
+		</FormField>
+	);
+}
+
 function submitOf(state: ShowcaseFrame["state"]): Act {
 	return {
 		label: "Save",
@@ -248,7 +260,7 @@ export function drawSheet(frame: ShowcaseFrame) {
 					description="acme-web · what every production deploy reads"
 					submit={submitOf(state)}
 				>
-					<StandInRows ground="list" />
+					<OneField />
 				</Sheet>
 			</Stage>
 		);

@@ -233,7 +233,6 @@ function Head() {
 					<View className={TITLE_BLOCK}>
 						<View accessibilityRole="header" className={TITLE_SLOT}>
 							<RNText
-								numberOfLines={1}
 								className={cn(
 									fit === "pane"
 										? cn(text({ role: "body" }), textStrong({ role: "body" }))

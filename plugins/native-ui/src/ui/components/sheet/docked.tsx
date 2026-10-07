@@ -26,8 +26,9 @@ import { IconButton } from "../icon-button";
 const ROOT = "w-full min-h-0 shrink";
 const HEAD = "flex-row items-start shrink-0";
 const HEAD_MAIN = "flex-1 min-w-0";
-const HEAD_ROW = "flex-row items-center";
-const TITLE_SLOT = "flex-1 flex-row items-center min-w-0";
+// The close act stands at the title's first line, which centres on it.
+const HEAD_ROW = "flex-row items-start";
+const TITLE_SLOT = "flex-1 flex-row items-center min-w-0 min-h-control";
 const TITLE = "shrink";
 const BODY = "shrink";
 const FOOT = "shrink-0";
@@ -103,7 +104,6 @@ export function SheetDocked({
 									<View className={cn(SHEET_HEAD_ROW, HEAD_ROW)}>
 										<View accessibilityRole="header" className={TITLE_SLOT}>
 											<RNText
-												numberOfLines={1}
 												className={cn(
 													text({ role: "body" }),
 													textStrong({ role: "body" }),

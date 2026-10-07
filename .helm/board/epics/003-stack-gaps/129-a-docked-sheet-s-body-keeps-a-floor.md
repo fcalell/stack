@@ -18,5 +18,9 @@ Measured again in the u5 run (390 x 844, usage banner up): the body scroller is 
 - [ ] A docked Sheet with room is unchanged.
 - [ ] The Thread showcase holds a two-page docked Sheet at 390 x 844 with a banner up and the critique measures the body and the Latest act's clearance.
 
+## Blocked
+
+The ruling (CSS only: a derived body `min-h` of three option rows, the log giving way) does not hold in Chromium. A body floor cannot lift `FOOT_DOCKED`'s `max-h-3/5`: a `max-height` clamps the foot, so the pinned head and foot line plus the floor overflow its box. `min-height: min-content` on the foot (flex or grid layout, `minmax(floor, max-content)` tracks) does beat the cap, but a block axis min-content equals the content height, so a long body takes the whole foot and the log vanishes (measured: foot 901 px of a 600 px region). The floor needs the pinned parts' measured heights, or a docked sheet whose head and foot line scroll with the body. Awaiting the owner's choice.
+
 ## Open questions
 - [ ] Its shape (a component, a variant, a token, an option): the stack session decides, whether the cap rises to keep a floor, the body gets a `min-h`, or the foot line leaves the foot on touch.

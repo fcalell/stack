@@ -1,6 +1,6 @@
 ---
 id: 003-147
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: a desktop side Sheet for a short form is not a full-height drawer
@@ -12,8 +12,12 @@ Stead's New epic (three checkboxes) and Add a repo (one select) sheets draw at 1
 `Sheet` with `fit` "form" (the default) is the full-height side sheet (`SHEET_SIDE`), whatever the form's length; `SheetCentered` exists in ui-core variants but the Sheet takes no way to say a short form. The app cannot size the sheet (geometry goes on host elements only). 003-129 is a docked sheet's body floor, 003-99 the head's rhythm; the reason's size is 003-140's. Seen at stack `5564217`.
 
 ## Acceptance criteria
-- [ ] A Sheet whose body is short on the desktop sizes to its content (a floor and a ceiling) or draws centred, and keeps the full-height side form for a long one.
-- [ ] The Sheet showcase holds a one-field form and the critique measures the empty body left.
+- [x] A Sheet whose body is short on the desktop sizes to its content (a floor and a ceiling) or draws centred, and keeps the full-height side form for a long one.
+- [x] The Sheet showcase holds a one-field form and the critique measures the empty body left.
+
+## Built
+
+No `fit` value (ruled). The desktop side sheet is its content's height with the layer's height as ceiling, hung from the top at the end edge (`LAYER_SIDE` `items-start`, `max-h-full` on the box in `plugins/react-ui/src/ui/components/sheet/base.tsx`); a form past the viewport is the full height with its body scrolling. The second-page frame in `plugins/react-ui/src/ui/showcase/frames/sheet.tsx` now holds one `FormField`. Evidence: `behaviour/sheet.stories.tsx` `SideSheetFitsItsContent` passes (top 0, right edge at the viewport's, under half the height), and the generated Sheet stories pass. The look (a card hung at the end edge, against a drawer or a centred card) stands for the owner's sign-off.
 
 ## Open questions
 - [ ] Its shape (a component, a variant, a token, an option): the stack session decides, whether `fit` gains a value or the Sheet decides by its body.

@@ -39,8 +39,10 @@ import { IconButton } from "../icon-button/index.tsx";
 const ROOT = "flex flex-col w-full min-h-0";
 const HEAD = "flex items-start shrink-0";
 const HEAD_MAIN = "flex flex-col grow min-w-0";
-const HEAD_ROW = "flex items-center";
-const TITLE = "grow min-w-0 truncate";
+// The close act stands at the title's first line, which centres on it.
+const HEAD_ROW = "flex items-start";
+const TITLE_SLOT = "flex items-center grow min-w-0 min-h-control";
+const TITLE = "min-w-0 wrap-break-word";
 // The body takes a tab stop only while it scrolls with nothing tabbable inside.
 const BODY =
 	"flex flex-col min-h-0 overflow-y-auto overscroll-contain focus-visible:-outline-offset-2";
@@ -137,15 +139,16 @@ export function SheetDocked({
 					) : null}
 					<div className={cn(SHEET_DOCKED_HEAD, HEAD_MAIN)}>
 						<div className={cn(SHEET_HEAD_ROW, HEAD_ROW)}>
-							<h2
-								id={titleId}
-								className={cn(
-									text({ role: "body" }),
-									textStrong({ role: "body" }),
-									TITLE,
-								)}
-							>
-								{title}
+							<h2 id={titleId} className={TITLE_SLOT}>
+								<span
+									className={cn(
+										text({ role: "body" }),
+										textStrong({ role: "body" }),
+										TITLE,
+									)}
+								>
+									{title}
+								</span>
 							</h2>
 							<IconButton
 								icon="X"
