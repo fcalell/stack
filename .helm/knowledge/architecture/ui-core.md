@@ -1796,7 +1796,11 @@ tree, the fixtures, MSW's worker); the roster's Storybook leaves the router out 
 optimizer start.
 
 The Vitest browser project sets `maxWorkers: 2`, which caps the story pages one `pnpm stories:test` opens at
-once (each is a renderer, and a wider run exhausts the memory of a 16 GiB machine).
+once (each is a renderer, and a wider run exhausts the memory of a 16 GiB machine). The showcase's browser
+scripts (`test-storybook`, `test-screens`) hold one lock per user (`$XDG_RUNTIME_DIR/stack-browser.lock`,
+through `flock`), so runs from several sessions or worktrees queue instead of running side by side: two
+runs together exhaust the same memory. A file subset goes through the script too
+(`pnpm --filter showcase test-storybook <files>`); `vitest` called directly bypasses the lock.
 
 ## Enforcement
 

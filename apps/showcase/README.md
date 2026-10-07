@@ -39,7 +39,7 @@ example value for the route params (`deployId`, `stepId`).
 
 ```bash
 pnpm --filter showcase exec stack screens dev   # Storybook on every route of the app, on :6006
-pnpm --filter showcase exec stack screens test  # every screen headlessly (--all: not only the changed ones)
+pnpm --filter showcase test-screens  # every screen headlessly (--all: not only the changed ones)
 ```
 
 Every route is drawn in data, loading, error, empty and not found, light and dark, at either
