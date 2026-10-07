@@ -77,6 +77,10 @@ my-app/
                              # screens.slots.viteConfig (with screens)
     screens/main.ts          # Storybook's config directory for `stack screens dev`, from
                              # screens.slots.storybookMain (with screens)
+    screens-test/main.ts     # the same with the floors, for `stack screens test`, from
+                             # screens.slots.testMain (with screens)
+    screens.vitest.config.ts # `stack screens test`'s Vitest config, from screens.slots.vitestConfig
+                             # (with screens)
     storybook.vite.config.ts # the same slot values rendered for a Storybook that draws components
                              # and no route (no router plugin), written by `writeStorybookConfig`
                              # from `@fcalell/plugin-screens/node` when such a Storybook starts, never
@@ -219,7 +223,7 @@ first-party package to its spec and lists its first-party `dependencies`; `stack
 package's spec through `stackSpec` from `@fcalell/cli`.
 
 A package only a plugin's own host loads is not that plugin's dependency: `@fcalell/plugin-screens`
-keeps Storybook, its addons, MSW and oRPC's server as optional peers of its package and lists the
+keeps Storybook, its addons, MSW, oRPC's server, Vitest and Playwright as optional peers of its package and lists the
 same ranges as its `devDependencies`, which `stack add screens` writes into the app's
 `package.json`. An app with auth or react-ui, which depend on the package for its slots, installs
 none of them: they are optional because pnpm auto-installs a missing peer that is not. The host

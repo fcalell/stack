@@ -36,8 +36,7 @@ const peer = plugin("peer", {
 	],
 });
 
-function artifacts(routes?: { dir: string } | false) {
-	const cwd = mkdtempSync(join(tmpdir(), "stack-screens-"));
+function graphAt(cwd: string, routes?: { dir: string } | false) {
 	const configs = [
 		{ factory: vite, config: vite() },
 		{ factory: react, config: react({ routes }) },
@@ -54,12 +53,16 @@ function artifacts(routes?: { dir: string } | false) {
 				options: config.options,
 			}) as unknown as DiscoveredPlugin,
 	);
-	const { graph } = buildGraphFromDiscovered({
+	return buildGraphFromDiscovered({
 		discovered,
 		app: { name: "shop", domain: "example.com" },
 		cwd,
-	});
-	return graph
+	}).graph;
+}
+
+function artifacts(routes?: { dir: string } | false) {
+	const cwd = mkdtempSync(join(tmpdir(), "stack-screens-"));
+	return graphAt(cwd, routes)
 		.resolve(cliSlots.artifactFiles)
 		.then((files) => new Map(files.map((f) => [f.path, f.content])));
 }
@@ -104,22 +107,53 @@ test("the screens plugin carries the entry's stylesheet, router bindings, prefix
 	);
 });
 
-test("a moved routes directory reaches the host config and Storybook's main", async () => {
+test("a moved routes directory reaches the host config", async () => {
 	const files = await artifacts({ dir: "src/pages" });
 	assert.match(
 		files.get(".stack/screens.vite.config.ts") ?? "",
 		/routesDir: "\.\.\/src\/pages"/,
 	);
+});
+
+test("the workbench's Storybook config has no floors and the test run's has them", async () => {
+	const files = await artifacts();
 	assert.match(
 		files.get(".stack/screens/main.ts") ?? "",
-		/screensMain\(\{ routesDir: "src\/pages" \}\)/,
+		/screensMain\(\{ floors: false \}\)/,
+	);
+	assert.match(
+		files.get(".stack/screens-test/main.ts") ?? "",
+		/screensMain\(\{ floors: true \}\)/,
 	);
 });
 
-test("without routes there are no screens to host", async () => {
+test("the test run's config extends the host config and runs one browser project", async () => {
+	const config =
+		(await artifacts()).get(".stack/screens.vitest.config.ts") ?? "";
+	assert.match(config, /import screens from "\.\/screens\.vite\.config\.ts";/);
+	assert.match(config, /\.\.\.screens,/);
+	assert.match(
+		config,
+		/storybookTest\(\{\s*configDir: fileURLToPath\(new URL\("\.\/screens-test", import\.meta\.url\)\),\s*\}\)/,
+	);
+	assert.match(config, /executablePath: chrome/);
+	assert.match(config, /process\.env\.CHROME_PATH/);
+	assert.match(config, /maxWorkers: 2/);
+	assert.match(config, /testTimeout: 120_000/);
+	assert.match(config, /viewport: \{ width: 1280, height: 800 \}/);
+	assert.match(config, /headless: true/);
+});
+
+test("without routes there are no screens to host or to test", async () => {
 	const files = await artifacts(false);
-	assert.equal(files.has(".stack/screens.vite.config.ts"), false);
-	assert.equal(files.has(".stack/screens/main.ts"), false);
+	for (const path of [
+		".stack/screens.vite.config.ts",
+		".stack/screens/main.ts",
+		".stack/screens-test/main.ts",
+		".stack/screens.vitest.config.ts",
+	]) {
+		assert.equal(files.has(path), false, path);
+	}
 });
 
 test("the app's config runs the router plugin and the host's runs it first, once", async () => {
@@ -139,7 +173,38 @@ test("the app's config runs the router plugin and the host's runs it first, once
 	}
 });
 
+// The host's router plugin never splits a route's component into its own
+// module, so a test run's import walk reaches it; the app's config splits.
+test("code splitting is off in the host's router plugin only", async () => {
+	const files = await artifacts();
+	const app = files.get(".stack/vite.config.ts") ?? "";
+	const host = files.get(".stack/screens.vite.config.ts") ?? "";
+	assert.match(app, /autoCodeSplitting: true/);
+	assert.doesNotMatch(app, /autoCodeSplitting: false/);
+	assert.match(host, /autoCodeSplitting: false/);
+	assert.doesNotMatch(host, /autoCodeSplitting: true/);
+});
+
 test("no config file is generated for a Storybook that draws components", async () => {
 	const files = await artifacts();
 	assert.equal(files.has(".stack/storybook.vite.config.ts"), false);
+});
+
+// The route tree's hook (react's) is the other one; syncing the files runs
+// in `stories.test.ts`.
+test("syncing the story files is a hook after generate, with routes only", async () => {
+	const cwd = mkdtempSync(join(tmpdir(), "stack-screens-"));
+	assert.equal((await graphAt(cwd).resolve(cliSlots.postWrite)).length, 2);
+	assert.equal(
+		(await graphAt(cwd, false).resolve(cliSlots.postWrite)).length,
+		0,
+	);
+});
+
+test("the story folder is ignored and removed with the plugin", async () => {
+	assert.deepEqual(screens.cli.gitignore, ["stack-screens"]);
+	const graph = graphAt(mkdtempSync(join(tmpdir(), "stack-screens-")));
+	assert.ok(
+		(await graph.resolve(cliSlots.removeFiles)).includes("stack-screens/"),
+	);
 });

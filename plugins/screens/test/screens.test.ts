@@ -3,15 +3,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { routeIndexer } from "../src/node/indexer.ts";
-import {
-	routeIdOf,
-	routeOfModuleId,
-	SCREEN_STATES,
-	screenModule,
-	screenModuleId,
-	screenTitle,
-} from "../src/node/screens.ts";
+import { routeIdOf, screenTitle } from "../src/node/screens.ts";
 import { screensModule } from "../src/node/virtual.ts";
 import { screensPlugin } from "../src/node/vite-plugin.ts";
 import { routeUrl } from "../src/ui/route.ts";
@@ -51,48 +43,6 @@ test("a segment that adds no URL is not in a route's title", () => {
 	assert.equal(screenTitle("/_app/projects"), "Screens/projects");
 	assert.equal(screenTitle("/_app/deploys/$id/"), "Screens/deploys/$id/index");
 	assert.equal(screenTitle("/(auth)/sign-in"), "Screens/sign-in");
-});
-
-test("a route's module id round-trips through the virtual id", () => {
-	for (const id of ["/", "/projects/$id", "/a/b/", "/_layout/x"]) {
-		assert.equal(routeOfModuleId(screenModuleId(id)), id);
-	}
-	assert.equal(routeOfModuleId("virtual:stack-screens"), null);
-	assert.equal(routeOfModuleId("/src/app/x.tsx"), null);
-});
-
-test("the module of a route exports the story the indexer lists, state by state", () => {
-	const source = screenModule("/projects/$id");
-	for (const { state, exportName, name } of SCREEN_STATES) {
-		assert.ok(
-			source.includes(
-				`export const ${exportName} = screenStory("/projects/$id", "${state}", "${name}");`,
-			),
-			exportName,
-		);
-	}
-	assert.match(source, /from "@fcalell\/plugin-screens\/stories"/);
-});
-
-test("the indexer lists five states of a route file and nothing of any other", async () => {
-	const dir = mkdtempSync(join(tmpdir(), "stack-screens-"));
-	const route = join(dir, "projects.$id.tsx");
-	writeFileSync(route, 'createFileRoute("/projects/$id")({});');
-	const other = join(dir, "helpers.ts");
-	writeFileSync(other, "export const x = 1;");
-
-	const entries = await routeIndexer.createIndex(route, {} as never);
-	assert.deepEqual(
-		entries.map((e) => [e.exportName, e.name]),
-		SCREEN_STATES.map((s) => [s.exportName, s.name]),
-	);
-	for (const entry of entries) {
-		assert.equal(entry.type, "story");
-		assert.equal(entry.importPath, screenModuleId("/projects/$id"));
-		assert.equal(entry.title, "Screens/projects/$id");
-	}
-	assert.deepEqual(await routeIndexer.createIndex(other, {} as never), []);
-	assert.ok(routeIndexer.test.test(route));
 });
 
 test("a route is drawn at its full path with each param filled from the fixtures", () => {
@@ -191,16 +141,14 @@ test("a fixtures file is imported once it exists", () => {
 	);
 });
 
-test("the plugin serves its virtual modules and no other id", () => {
+test("the plugin serves its virtual module and no other id", () => {
 	const plugin = screensPlugin(options);
 	const resolveId = plugin.resolveId as (id: string) => string | undefined;
 	const load = plugin.load as (id: string) => string | undefined;
 	assert.equal(resolveId("virtual:stack-screens"), "\0virtual:stack-screens");
-	const id = screenModuleId("/projects");
-	assert.equal(resolveId(id), `\0${id}`);
+	assert.equal(resolveId("virtual:stack-screen--%2Fprojects"), undefined);
 	assert.equal(resolveId("react"), undefined);
 	assert.equal(load("/src/app/x.tsx"), undefined);
 	assert.equal(load("\0virtual:stack-providers"), undefined);
-	assert.equal(load(`\0${id}`), screenModule("/projects"));
 	assert.ok(load("\0virtual:stack-screens")?.includes("export const prefixes"));
 });

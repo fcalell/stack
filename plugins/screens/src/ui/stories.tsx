@@ -40,14 +40,15 @@ function Screen({ routeId }: { routeId: string }) {
 
 // One screen of a route in one state: the app's router at the route's URL,
 // while the worker answers every call to the app's procedures from the
-// fixtures for that state.
+// fixtures for that state. `globals` pins toolbar globals for the story, which
+// a story file does for the combinations a test run checks.
 export function screenStory(
 	routeId: string,
 	state: ScreenState,
-	name: string,
+	globals: Record<string, string> = {},
 ): StoryObj {
 	return {
-		name,
+		globals,
 		parameters: {
 			layout: "fullscreen",
 			msw: {

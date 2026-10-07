@@ -59,10 +59,10 @@ plugin-react ─────────────> cli, requires vite
                                   contributes to vite.slots.configImports/pluginCalls/appPlugins/resolveDedupe,
                                   cliSlots.postWrite (the route tree)/initScaffolds/removeFiles)
 plugin-screens ───────────> cli, requires react + api
-                                 (owns screens.slots.handlerModules/previewGlobals/viteConfig/storybookMain;
-                                  derives from vite's input slots, react.slots.routesDir/routerPlugin/entryImports/
+                                 (owns screens.slots.handlerModules/previewGlobals/viteConfig/storybookMain/testMain/vitestConfig;
+                                  derives from vite's input slots, react.slots.routesDir/routerOptions/entryImports/
                                   routerBindings and api.slots.routePrefixes;
-                                  contributes to cliSlots.artifactFiles; reads, never writes, the app's Vite config)
+                                  contributes to cliSlots.artifactFiles/postWrite (the story files)/removeFiles; reads, never writes, the app's Vite config)
 plugin-react-ui ──────────> cli + ui-core, requires react + vite
                                  (owns reactUi.slots.appCssImports/appCssBlocks/appCssLayers/fonts/
                                   resolvedTheme/appCssSource;

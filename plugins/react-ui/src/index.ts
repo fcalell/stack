@@ -372,7 +372,9 @@ export const reactUi = plugin("react-ui", {
 		),
 		// The mode and the density the sheet keys on (a `dark` class and
 		// `data-density` on the root), as toolbars the screens workbench pins
-		// before a story paints. The workbench opens in the theme's default mode.
+		// before a story paints. The workbench opens in the theme's default mode,
+		// and a test run checks both modes at desktop density (density moves sizes,
+		// not names, roles or states).
 		screens.slots.previewGlobals.contribute(
 			async (ctx): Promise<PreviewGlobal[]> => {
 				const { defaultMode } = await ctx.resolve(self.slots.resolvedTheme);
@@ -382,6 +384,7 @@ export const reactUi = plugin("react-ui", {
 						title: "Mode",
 						values: ["light", "dark"],
 						default: defaultMode ?? "light",
+						checked: ["light", "dark"],
 						apply: { classes: { dark: "dark" } },
 					},
 					{

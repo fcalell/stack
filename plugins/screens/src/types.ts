@@ -1,5 +1,5 @@
 import type { TsImportSpec } from "@fcalell/cli/ast";
-import type { AppPlugin } from "@fcalell/plugin-vite";
+import type { RouterOptions } from "@fcalell/plugin-react";
 import type { ViteConfigValues } from "@fcalell/plugin-vite/node";
 
 // One toolbar global a plugin pins on the document root before a story's first
@@ -14,6 +14,9 @@ export interface PreviewGlobal {
 	values: string[];
 	// The value a story opens with; one of `values`.
 	default: string;
+	// The values `stack screens test` checks every screen in, each a story named
+	// for it; only `default` when absent.
+	checked?: string[];
 	// How the chosen value reaches the root: `attribute` sets it, `classes` adds
 	// the class named for the value (a value with no entry adds none) and removes
 	// the others.
@@ -25,8 +28,9 @@ export interface PreviewGlobal {
 export interface ScreensConfigValues extends ViteConfigValues {
 	// The routes directory, relative to the project root.
 	routesDir: string;
-	// The router plugin the app's config runs, which the host runs too.
-	routerPlugin: AppPlugin;
+	// The options of the router plugin the app's config runs, which the host runs
+	// with its own changes.
+	routerOptions: RouterOptions;
 	// The entry's imports: its side-effect ones (the stylesheet) are the stories'.
 	entryImports: TsImportSpec[];
 	// The entry's calls with its router, as named imports.

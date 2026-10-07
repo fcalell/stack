@@ -39,11 +39,14 @@ example value for the route params (`deployId`, `stepId`).
 
 ```bash
 pnpm --filter showcase exec stack screens dev   # Storybook on every route of the app, on :6006
+pnpm --filter showcase exec stack screens test  # every screen headlessly (--all: not only the changed ones)
 ```
 
 Every route is drawn in data, loading, error, empty and not found, light and dark, at either
 density: the toolbar pins the mode and the density, and no request leaves MSW. A mutation always
-answers from its fixture, whatever state the screen is forced into.
+answers from its fixture, whatever state the screen is forced into. The test run opens each screen
+in every state, light and dark, and fails it on an axe violation, a horizontal overflow at 320 to
+1440 px, or a console error or warning.
 
 ## The roster
 

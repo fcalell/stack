@@ -6,11 +6,43 @@ import {
 	type TsExpression,
 	type TsSourceFile,
 } from "@fcalell/cli/ast";
+import type { AppPlugin } from "@fcalell/plugin-vite";
 import type {
 	CodegenEntryPayload,
 	CodegenHtmlPayload,
 	CompositionProvidersPayload,
+	RouterOptions,
 } from "../types.ts";
+
+// TanStack's router plugin call on a set of options, with the imports it
+// needs: what `react.slots.routerPlugin` holds, and what a host that runs the
+// plugin on options of its own renders.
+export function routerPluginFor(options: RouterOptions): AppPlugin {
+	return {
+		imports: [
+			{ source: "@tanstack/router-plugin/vite", named: ["tanstackRouter"] },
+			{ source: "node:url", named: ["fileURLToPath"] },
+		],
+		call: {
+			kind: "call",
+			callee: { kind: "identifier", name: "tanstackRouter" },
+			args: [
+				{
+					kind: "object",
+					properties: [
+						{ key: "target", value: { kind: "string", value: "react" } },
+						{
+							key: "autoCodeSplitting",
+							value: { kind: "boolean", value: options.autoCodeSplitting },
+						},
+						{ key: "routesDirectory", value: options.routesDirectory },
+						{ key: "generatedRouteTree", value: options.generatedRouteTree },
+					],
+				},
+			],
+		},
+	};
+}
 
 // Render `.stack/entry.tsx`. Returns null when no plugin contributes a mount
 // — plugin-react contributes the default via react.slots.mountExpression.

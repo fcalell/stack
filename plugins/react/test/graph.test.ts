@@ -9,6 +9,7 @@ import { cliSlots } from "@fcalell/cli/cli-slots";
 import type { DiscoveredPlugin } from "@fcalell/cli/discovery";
 import { vite } from "@fcalell/plugin-vite";
 import { type ReactOptions, react } from "../src/index.ts";
+import { routerPluginFor } from "../src/node/codegen.ts";
 
 // The graph `stack generate` resolves for vite + react.
 function graph(options: ReactOptions = {}) {
@@ -217,8 +218,29 @@ test("the router plugin is its own slot, held out of the calls every host reads"
 	assert.match(config, /plugins: \[tanstackRouter\(\{/);
 });
 
+test("the router plugin's options are data a host reruns the plugin on", async () => {
+	const g = graph();
+	const options = await g.resolve(react.slots.routerOptions);
+	assert.ok(options);
+	assert.equal(options.autoCodeSplitting, true);
+	assert.deepEqual(
+		await g.resolve(react.slots.routerPlugin),
+		routerPluginFor(options),
+	);
+	const host = routerPluginFor({ ...options, autoCodeSplitting: false });
+	assert.deepEqual(
+		host.imports,
+		(await g.resolve(react.slots.routerPlugin))?.imports,
+	);
+	assert.notDeepEqual(
+		host.call,
+		(await g.resolve(react.slots.routerPlugin))?.call,
+	);
+});
+
 test("routing off leaves the router slot null and nothing for the app to add", async () => {
 	const g = graph({ routes: false });
+	assert.equal(await g.resolve(react.slots.routerOptions), null);
 	assert.equal(await g.resolve(react.slots.routerPlugin), null);
 	assert.deepEqual(await g.resolve(vite.slots.appPlugins), []);
 });

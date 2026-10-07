@@ -3,12 +3,12 @@
 The workbench draws every route of the web app, one screen per route, in each state its queries
 can take, from fixtures and with no backend running. Open it while designing or changing any
 screen, and again before calling the screen done: a screen is done when all five states look
-right. The app writes no story, harness or workbench config; a new route is a new screen on its
-own.
+right. The app writes no story, harness or workbench config; a new route is a new screen on its own.
 
 ```bash
 stack add screens   # once: installs the workbench and its packages into the app
 stack screens dev   # serves the workbench (--port 6006)
+stack screens test  # checks every screen headlessly (--all: not only the changed ones)
 ```
 
 ## The states
@@ -64,8 +64,18 @@ export default defineFixtures<AppRouter>(
 A route renders as it does in the app, so a parent route (a layout, `route.tsx`) draws its
 children through `<Outlet />`; without it a screen under the parent shows an empty frame.
 
+## The test run
+
+`stack screens test` fails a screen with an axe violation (every rule, the page-level ones and
+`target-size` included), a horizontal overflow at 320, 390, 768, 1280 or 1440 px, or a console error
+or warning, naming the screen, state and mode. It runs the
+screens a changed file reaches; `--all` runs every one.
+
 ## Limits
 
+- `target-size` is axe's WCAG 2.2 rule, the rubric's target floor: a target under 24 px fails
+  only when a 24 px circle on it meets another target, so a lone small control passes. The 44 px
+  primary act on touch is judged, since the run is at desktop density.
 - Queries must come from `createApiQueryUtils` (`node_modules/@fcalell/plugin-api/guide/client.md`).
   Query utils built directly with oRPC's `createTanstackQueryUtils` send queries as `POST`, so a
   forced state never reaches them.
@@ -73,4 +83,4 @@ children through `<Outlet />`; without it a screen under the parent shows an emp
   signed-out state.
 
 **Check:** `stack screens dev` lists the new route with its five states, each drawing as
-designed, and `pnpm check` passes.
+designed, and `stack screens test` and `pnpm check` pass.

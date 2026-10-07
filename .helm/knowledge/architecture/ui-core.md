@@ -1671,7 +1671,7 @@ focus states (`hover`, `active`, `focus`) stay in the roster, the contract both 
 draw no frame and no story: the web's variants match only the real pseudo-classes, and the critique
 reaches those looks by driving the real component. A frame is not a page, so a component story runs
 every axe rule except the document-structure ones (`.storybook/preview.tsx`: landmarks, `page-has-heading-one`,
-`region`, `heading-order`, `bypass`, `skip-link`), which no screen draws.
+`region`, `heading-order`, `bypass`, `skip-link`), which no frame draws; `stack screens test` runs them, with every other rule, on each screen of an app.
 
 Two kinds of story, one `pnpm stories:test` run (headless Chrome at desktop density and 1280 px;
 touch is a toolbar toggle, not a test run; `a11y.test` is `error`):
@@ -1686,7 +1686,7 @@ touch is a toolbar toggle, not a test run; `a11y.test` is `error`):
 - **Component stories**, above.
 
 A page is not one of them: the places above are the app's routes, and the workbench draws each as
-the document it is.
+the document it is; `stack screens test` checks it.
 
 A failing assertion is a finding in the component: it stays failing until the component is fixed,
 never weakened or skipped, and nothing is excluded from axe beyond the document-structure rules and the

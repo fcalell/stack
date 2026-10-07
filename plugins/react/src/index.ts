@@ -13,6 +13,7 @@ import {
 	aggregateEntry,
 	aggregateHtml,
 	aggregateProviders,
+	routerPluginFor,
 } from "./node/codegen.ts";
 import {
 	generateRouteTree,
@@ -20,7 +21,12 @@ import {
 	routerPaths,
 	topLevelSegments,
 } from "./node/routes.ts";
-import { type Mount, type ReactOptions, reactOptionsSchema } from "./types.ts";
+import {
+	type Mount,
+	type ReactOptions,
+	type RouterOptions,
+	reactOptionsSchema,
+} from "./types.ts";
 
 const SOURCE = "react";
 
@@ -104,41 +110,28 @@ const routesDir = slot.derived({
 	},
 });
 
+// The router plugin's options, as data: the app's config runs the plugin on
+// them as they are, and a host that draws the screens reads them to run it with
+// one changed. Null when routing is off.
+const routerOptions = slot.derived({
+	source: SOURCE,
+	name: "routerOptions",
+	inputs: { dir: routesDir },
+	compute: (inp): RouterOptions | null =>
+		inp.dir === null
+			? null
+			: { autoCodeSplitting: true, ...routerPaths(inp.dir) },
+});
+
 // The router plugin's call and the imports it needs: TanStack's route-tree
 // generator, on the app's route files. Null when routing is off. A host that
 // draws components renders no route, so it leaves this slot unread.
 const routerPlugin = slot.derived({
 	source: SOURCE,
 	name: "routerPlugin",
-	inputs: { dir: routesDir },
-	compute: (inp): AppPlugin | null => {
-		if (inp.dir === null) return null;
-		const paths = routerPaths(inp.dir);
-		return {
-			imports: [
-				{ source: "@tanstack/router-plugin/vite", named: ["tanstackRouter"] },
-				{ source: "node:url", named: ["fileURLToPath"] },
-			],
-			call: {
-				kind: "call",
-				callee: { kind: "identifier", name: "tanstackRouter" },
-				args: [
-					{
-						kind: "object",
-						properties: [
-							{ key: "target", value: { kind: "string", value: "react" } },
-							{
-								key: "autoCodeSplitting",
-								value: { kind: "boolean", value: true },
-							},
-							{ key: "routesDirectory", value: paths.routesDirectory },
-							{ key: "generatedRouteTree", value: paths.generatedRouteTree },
-						],
-					},
-				],
-			},
-		};
-	},
+	inputs: { options: routerOptions },
+	compute: (inp): AppPlugin | null =>
+		inp.options === null ? null : routerPluginFor(inp.options),
 });
 
 // Rendered `.stack/entry.tsx`; null when no mount is contributed.
@@ -240,6 +233,7 @@ export const react = plugin("react", {
 		htmlHead,
 		htmlBodyEnd,
 		routesDir,
+		routerOptions,
 		routerPlugin,
 		entrySource,
 		htmlSource,
@@ -421,4 +415,4 @@ export const react = plugin("react", {
 	],
 });
 
-export type { Mount, ReactOptions } from "./types.ts";
+export type { Mount, ReactOptions, RouterOptions } from "./types.ts";

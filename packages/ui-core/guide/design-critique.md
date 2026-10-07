@@ -4,7 +4,8 @@ A critique judges one rendered unit (a component's story in stack's Storybook, o
 composed from the roster) against the [rubric](./rubric.md) and reports findings with measured
 numbers. The critic is a fresh session that played no part in composing the unit; it never
 prescribes a look and never edits a file: it says what is off and by how much. Its own
-measurements are the only machine numbers on a render and never evidence of taste.
+measurements and `stack screens test`'s result are the only machine numbers on a render and never
+evidence of taste.
 
 ## What the critic needs
 
@@ -55,7 +56,10 @@ the route as a deep link, opens it with Maestro's `openLink`, and drives it with
 ## Procedure
 
 Every render, in this order, in a browser the critic can script; a phone screen on the emulator,
-each step read as [A phone screen](#a-phone-screen) says.
+each step read as [A phone screen](#a-phone-screen) says. A web screen's `stack screens test`
+result is read first: a failing run is a blocker, and the critic measures none of what it
+measures (every axe rule, text contrast among them; horizontal overflow at the five widths;
+target size and spacing; console output).
 
 1. **Prepare.** Open the URL. Set `prefers-reduced-motion: reduce` and inject
    `*{transition:none!important;animation:none!important}`. Park the pointer off-screen and clear
@@ -76,16 +80,14 @@ each step read as [A phone screen](#a-phone-screen) says.
    per-row difference is a finding; a loaded row whose text wraps grows by its wrapped lines, its
    waiting row matching its one-line form.
 4. **Widths.** 1280 and 390 px, plus 768 and 1440 for a screen; 390 draws the touch density.
-   Horizontal overflow, clipped text, a control under 24 px, or a touch target under 44 px at 390
-   is a finding.
+   Clipped text, or a primary act under 44 px at 390, is a finding.
 5. **Modes.** Repeat steps 2 to 4 in dark mode, through the page's mode control or the `dark`
    class on the root. Dark is a calibration, not an inversion: check the surface steps and the
    hairline's lightness.
 6. **Floors.** On the composited render, in both modes and every declared state, measure each
-   floor the rubric's floors section sets, with its carve-outs: text contrast, the contrast of
-   control boundaries, focus rings and icon-only controls, target size and spacing,
-   `scrollWidth` against the viewport at 320, 390, 768, 1280 and 1440, and Tab reaching every
-   control with a visible focus. Report each as the measured value beside its floor; one under
+   floor the command does not measure, with the rubric's carve-outs: the contrast of control
+   boundaries, focus rings and icon-only controls, the 44 px primary act on touch, and Tab
+   reaching every control with a visible focus. Report each as the measured value beside its floor; one under
    its floor is a blocker.
 7. **Judge** type, hierarchy, structure, colour, motion and composition by the judging page,
    and the rubric's bans. Each finding cites a screenshot and an element.
@@ -98,15 +100,13 @@ each step read as [A phone screen](#a-phone-screen) says.
    dense and very long content handled; `…`, never `...`; no `user-scalable=no`. On an app
    screen, also the platform's rules page: no class, `style` or look at a call site outside an
    intrinsic host's geometry, and no raw element rebuilding a shape a roster component owns.
-9. **Console.** Zero errors or warnings, else a finding.
-
 ## Report
 
 ```
 verdict: ship | rework | reject
 unit: <what was rendered, URL, widths and modes covered>
 
-blockers   (a ban, a floor missed, a constant or range missed by more than 20 %, an invisible state, overflow, a console error)
+blockers   (a ban, a floor missed, a failing `stack screens test`, a constant or range missed by more than 20 %, an invisible state)
 rework     (a number outside its range, a hygiene miss, a judged finding)
 nits       (within range but at its edge, or a judged remark below rework)
 

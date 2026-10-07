@@ -452,4 +452,4 @@ host element carrying tokens.
 
 ## Done
 
-`pnpm check` passes, and the screen is checked in light and dark at desktop and touch density.
+`pnpm check` and `stack screens test` pass for the app's screens, and the screen is checked in light and dark at desktop and touch density.

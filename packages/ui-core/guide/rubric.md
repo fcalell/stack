@@ -3,8 +3,8 @@
 The standard a stack component and a consumer screen are judged by, in a
 [design critique](./design-critique.md). Every tell is a number or a yes/no read off the rendered
 unit at 1280 and 390 (a phone screen at 390 and 320 dp), light and dark, pointer parked
-off-screen, transitions disabled, every control clicked. The critic's own measurements are the
-only machine numbers on a render and never evidence of taste. The numbers, the constants below and each pattern's range (its page
+off-screen, transitions disabled, every control clicked. The critic's own measurements and
+`stack screens test`'s result are the only machine numbers on a render and never evidence of taste. The numbers, the constants below and each pattern's range (its page
 under `patterns/`), are the floor a unit must clear before the judged questions
 ([judging](./judging.md)) and the bans below are asked at all.
 
@@ -37,7 +37,7 @@ scaled number, never the desktop one.
 
 ## Floors
 
-Measured on the render, each an outright fail: text under 4.5:1 (large text under 3:1); a control
+Measured on the render (`stack screens test` checks a screen's page-level axe rules, overflow, target size and console errors; the 44×44 primary act on touch stays judged), each an outright fail: text under 4.5:1 (large text under 3:1); a control
 boundary, focus ring or icon-only control under 3:1 against its ground, in either mode or any
 state; a target under 24×24 CSS px (44×44 for a primary act on touch) unless a 24 px circle
 centred on it meets no other target or its circle (WCAG 2.5.8: abutting list rows, a wrapping
@@ -53,7 +53,7 @@ dark selected row keeps its accent fill at 2.1–2.5:1 (rest and hover), the che
 
 ### Accessibility
 
-The bar is keyboard and sight, at two levels, each a floor. Semantics: the native element or role for what a part is, an accessible name on every control, icon act and named region, and the contrast, target, keyboard-reach, visible-focus and reduced-motion floors above. Widget behaviour: an overlay takes focus when it opens and returns it to its trigger when it closes, Escape closes it, and focus stays inside a modal; a composite (menu, list box, grid, radio group, tree) moves by arrow keys and typeahead. A role promises its behaviour, so a role without that behaviour fails. Screen readers are not a target (`philosophy.md`): nothing is built for one alone, no announcement, no hidden duplicate content, no sentence assembled only to be spoken, and nothing is verified with one. Both levels are tested by `pnpm stories:test` before a UI change lands. Semantics: axe on every component and state story (light and dark side by side, desktop density) with every rule but the document-structure ones (landmarks, heading order, skip links), which a component's frame cannot answer; those judge a whole document, which the screens workbench draws for every route of an app in every state. Widget behaviour: a play test per interactive component drives the real component by keyboard and asserts the floor above (focus in, focus back, Escape, arrow keys and typeahead).
+The bar is keyboard and sight, at two levels, each a floor. Semantics: the native element or role for what a part is, an accessible name on every control, icon act and named region, and the contrast, target, keyboard-reach, visible-focus and reduced-motion floors above. Widget behaviour: an overlay takes focus when it opens and returns it to its trigger when it closes, Escape closes it, and focus stays inside a modal; a composite (menu, list box, grid, radio group, tree) moves by arrow keys and typeahead. A role promises its behaviour, so a role without that behaviour fails. Screen readers are not a target (`philosophy.md`): nothing is built for one alone, no announcement, no hidden duplicate content, no sentence assembled only to be spoken, and nothing is verified with one. Both levels are tested by `pnpm stories:test` before a UI change lands. Semantics: axe on every component and state story (light and dark side by side, desktop density) with every rule but the document-structure ones (landmarks, heading order, skip links), which a component's frame cannot answer; those judge a whole document, so `stack screens test` runs every axe rule on every screen of an app in every state, light and dark, and checks horizontal overflow at the five widths, target size (axe's `target-size`: 24 px or the 2.5.8 spacing exception, inline links exempt) and console errors. The 44 px primary act on touch stays judged. Widget behaviour: a play test per interactive component drives the real component by keyboard and asserts the floor above (focus in, focus back, Escape, arrow keys and typeahead).
 
 ## Bans (any one fails)
 

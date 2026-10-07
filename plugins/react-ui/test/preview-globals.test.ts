@@ -48,6 +48,7 @@ test("the screens workbench pins the mode and the density the sheet keys on", as
 			title: "Mode",
 			values: ["light", "dark"],
 			default: "light",
+			checked: ["light", "dark"],
 			apply: { classes: { dark: "dark" } },
 		},
 	]);

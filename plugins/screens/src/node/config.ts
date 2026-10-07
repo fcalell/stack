@@ -1,4 +1,5 @@
 import { literalToProps, type TsExpression } from "@fcalell/cli/ast";
+import { routerPluginFor } from "@fcalell/plugin-react/codegen";
 import {
 	renderViteConfig,
 	type ViteConfigValues,
@@ -65,7 +66,10 @@ function hosted(values: ViteConfigValues): ViteConfigValues {
 //   - `hosted`'s changes.
 //   - The router plugin, which the app's own config runs, and the screens
 //     plugin join: the route tree and fixtures, MSW's worker, and the
-//     dependency optimizer.
+//     dependency optimizer. The router plugin runs with `autoCodeSplitting`
+//     off: split modules (`?tsr-split=component`) are ids that fail
+//     `existsSync`, so Vitest's `--changed` walk drops them and a component's
+//     edit would reach no screen.
 export function renderScreensConfig(values: ScreensConfigValues): string {
 	const props = literalToProps({
 		fixtures: `../${FIXTURES}`,
@@ -98,16 +102,20 @@ export function renderScreensConfig(values: ScreensConfigValues): string {
 			},
 		],
 	};
+	const router = routerPluginFor({
+		...values.routerOptions,
+		autoCodeSplitting: false,
+	});
 	return renderViteConfig(
 		hosted({
 			...values,
 			configImports: [
 				...values.configImports,
-				...values.routerPlugin.imports,
+				...router.imports,
 				{ source: "node:url", named: ["fileURLToPath"] },
 				{ source: "@fcalell/plugin-screens/vite", named: ["screensPlugin"] },
 			],
-			pluginCalls: [values.routerPlugin.call, ...values.pluginCalls, plugin],
+			pluginCalls: [router.call, ...values.pluginCalls, plugin],
 			fsAllow: [...values.fsAllow, ownRoot],
 		}),
 	);
@@ -134,11 +142,59 @@ export function renderComponentHostConfig(values: ViteConfigValues): string {
 }
 
 // `.stack/screens/main.ts`: Storybook's config directory holds this one file.
-export function renderStorybookMain(routesDir: string): string {
+// The one for the test run (`.stack/screens-test/main.ts`) adds the floors.
+export function renderStorybookMain(options: { floors: boolean }): string {
 	return [
 		'import { screensMain } from "@fcalell/plugin-screens/storybook";',
 		"",
-		`export default screensMain({ routesDir: ${JSON.stringify(routesDir)} });`,
+		`export default screensMain({ floors: ${options.floors} });`,
 		"",
 	].join("\n");
+}
+
+// `.stack/screens.vitest.config.ts`: the screens host's own Vite config with
+// the Storybook test plugin on the test run's config directory, one browser
+// project. Each parallel page is one renderer, so two open at most.
+export function renderVitestConfig(): string {
+	return `import { fileURLToPath } from "node:url";
+import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
+import { playwright } from "@vitest/browser-playwright";
+import { defineConfig } from "vitest/config";
+import screens from "./screens.vite.config.ts";
+
+// Playwright's own browser is the default; where none is installed (NixOS),
+// \`CHROME_PATH\` names a Chrome to launch instead.
+const chrome = process.env.CHROME_PATH;
+
+export default defineConfig({
+	...screens,
+	test: {
+		projects: [
+			{
+				extends: true,
+				plugins: [
+					storybookTest({
+						configDir: fileURLToPath(new URL("./screens-test", import.meta.url)),
+					}),
+				],
+				test: {
+					name: "screens",
+					testTimeout: 120_000,
+					maxWorkers: 2,
+					browser: {
+						enabled: true,
+						headless: true,
+						provider: playwright(
+							chrome ? { launchOptions: { executablePath: chrome } } : {},
+						),
+						instances: [
+							{ browser: "chromium", viewport: { width: 1280, height: 800 } },
+						],
+					},
+				},
+			},
+		],
+	},
+});
+`;
 }
