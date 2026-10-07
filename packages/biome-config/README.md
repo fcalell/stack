@@ -17,6 +17,10 @@ pnpm add -D @fcalell/biome-config
 }
 ```
 
+A stack app's `biome.json` also extends `./.stack/biome.json`, which `stack generate` writes with
+the lint rules the app's plugins ship (`@fcalell/plugin-react-ui`'s web rules). This package ships no
+rule of its own: a rule belongs to the domain it enforces.
+
 The `$schema` path is the installed biome's own, so it never lags the version. Biome also
 reads the repo's `.editorconfig`, which `stack init` writes.
 
@@ -25,6 +29,8 @@ reads the repo's `.editorconfig`, which `stack init` writes.
 - **Formatter:** enabled, tab indentation
 - **Linter:** enabled with default rules; `useValidAriaRole` is an error that skips non-DOM
   components, so React Native's `role` props pass
+- **Plugins:** none here. Biome resolves a plugin path against the root config's directory, not
+  the extending file, so a shared preset cannot carry one; the plugins ride `.stack/biome.json`
 - **CSS:** Tailwind directives support enabled
 - **Import organization:** automatic via `organizeImports` assist
 - **VCS:** git, so every `.gitignore` entry is excluded

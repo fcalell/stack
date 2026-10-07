@@ -51,6 +51,8 @@ Everything under `.stack/` is generated and gitignored: never edit it, change th
 source it reads and regenerate.
 
 - `.stack/guide.md`, the index of this guide: one line per page, saying when to open it.
+- `.stack/biome.json`, the lint rules the plugins ship for the app's source, which the app's
+  `biome.json` extends: `pnpm lint` needs it, so run `stack generate` first in a fresh clone.
 - Each plugin's generated files: the worker entry, the Vite or Metro config, the stylesheet, the
   typed routes, the test entry.
 

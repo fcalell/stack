@@ -1,0 +1,12 @@
+language js(typescript, jsx)
+
+// A component takes no class, className, classList or style.
+jsx_attribute(name=$n) as $a where {
+	$n <: r"(?:class|className|classList|style)",
+	$a <: within or {
+		jsx_opening_element(name=$t),
+		jsx_self_closing_element(name=$t)
+	} ,
+	$t <: r"[A-Z].*",
+	register_diagnostic(span=$a, message="A component takes no class, className, classList or style (rules.md: Classes are geometry, on host elements only)")
+}

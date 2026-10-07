@@ -8,6 +8,15 @@ export interface GeneratedFile {
 	content: string;
 }
 
+// A Biome GritQL plugin a package ships: `path` is the `.grit` file inside its
+// package (`@fcalell/plugin-react-ui/lint/no-img.grit`), `includes` the globs,
+// relative to the consumer's root, of the sources it runs on. Rendered into
+// `.stack/biome.json`, which the consumer's `biome.json` extends.
+export interface LintPlugin {
+	path: string;
+	includes: string[];
+}
+
 // One line of the consumer's `.stack/guide.md`: when to open a page (a load
 // trigger, never a summary of the page) and the page, `guide/<page>.md` inside
 // `package`. Entries group under `domain`.

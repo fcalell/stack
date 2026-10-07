@@ -1,7 +1,13 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	realpathSync,
+	writeFileSync,
+} from "node:fs";
 import { createRequire } from "node:module";
-import { basename, join } from "node:path";
+import { basename, join, relative, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 import { intro, log, note, outro } from "@clack/prompts";
 import {
@@ -201,13 +207,18 @@ export async function scaffold(
 		[".gitignore", gitignoreTemplate({ plugins: selectedPlugins })],
 	];
 	// An app in stack's own workspace lints and formats under the checkout's
-	// root configs: Biome refuses a second root config below it.
-	if (!stackWorkspaceRoot(dir)) {
-		baseEntries.push(
-			["biome.json", biomeTemplate()],
-			[".editorconfig", editorconfigTemplate()],
-		);
-	}
+	// root configs: Biome refuses a second root config below it, so its
+	// `biome.json` extends the root's and it writes no `.editorconfig`.
+	const workspaceRoot = stackWorkspaceRoot(dir);
+	const rootConfig =
+		workspaceRoot === null
+			? null
+			: relative(realpathSync(dir), join(workspaceRoot, "biome.json"))
+					.split(sep)
+					.join("/");
+	baseEntries.push(["biome.json", biomeTemplate({ rootConfig })]);
+	if (!workspaceRoot)
+		baseEntries.push([".editorconfig", editorconfigTemplate()]);
 	const createdBase: string[] = [];
 	for (const [path, content] of baseEntries) {
 		if (writeIfMissingString(path, content)) createdBase.push(path);
@@ -284,10 +295,10 @@ export async function scaffold(
 	patchPackageJson(dir, { ...dependencies, fields: packageJsonFields });
 	if (gitignore.length > 0) ensureGitignore(...gitignore);
 	installStack(dir);
-	formatWritten(dir, written);
 
 	// Run the real generate path against the config we just wrote — this is
-	// the same code `stack generate` runs.
+	// the same code `stack generate` runs. It precedes the format: the app's
+	// `biome.json` extends the generated `.stack/biome.json`.
 	try {
 		const { generate } = await import("./generate.ts");
 		await generate("stack.config.ts");
@@ -302,6 +313,8 @@ export async function scaffold(
 			"INIT_GENERATE_FAILED",
 		);
 	}
+
+	formatWritten(dir, written);
 
 	note("stack dev", "Next steps");
 	outro("Done!");

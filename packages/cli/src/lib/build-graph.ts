@@ -1,6 +1,7 @@
 import { access, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { AppConfig, StackConfig } from "../config.ts";
+import { LINT_PATH, lintConfig } from "../templates/biome.ts";
 import { tsconfigLayout, workerTsconfig } from "../templates/tsconfig.ts";
 import { cliSlots } from "./cli-slots.ts";
 import { type DiscoveredPlugin, discoverPlugins } from "./discovery.ts";
@@ -89,6 +90,10 @@ export function buildGraphFromDiscovered(
 			cliSlots.artifactFiles.contribute(async (ctx) => ({
 				path: GUIDE_PATH,
 				content: renderGuide(await ctx.resolve(cliSlots.guide)),
+			})),
+			cliSlots.artifactFiles.contribute(async (ctx) => ({
+				path: LINT_PATH,
+				content: lintConfig(await ctx.resolve(cliSlots.lintPlugins)),
 			})),
 		],
 	};

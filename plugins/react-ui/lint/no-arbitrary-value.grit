@@ -1,0 +1,9 @@
+language js(typescript, jsx)
+
+// A utility with a bracketed value (`h-[34px]`, `bg-[#fff]`, `grid-cols-[1fr_2fr]`). A variant or a
+// selector in brackets (`[&>svg]:size-4`, `data-[open]:flex`, `min-[400px]:flex`) is followed by `:`.
+jsx_attribute(name=$n) as $a where {
+	$n <: r"(?:class|className)",
+	$a <: r"(?s).*[a-z]-\[[^\]\s]+\](?:[^:].*|$)",
+	register_diagnostic(span=$a, message="A class takes tokens, never an arbitrary value (rules.md: Tokens only)")
+}

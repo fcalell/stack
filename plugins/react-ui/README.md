@@ -35,6 +35,18 @@ How to build on the plugin lives in `guide/`, indexed into a consumer's `.stack/
 [`reference.md`](./guide/reference.md), the components' subpaths, the options, density, the
 page container and the modes. The screen recipe and the design standard are ui-core's pages.
 
+## Lint rules
+
+`lint/*.grit` are the web rules' "never" list as Biome GritQL plugins, each message naming its
+section of `guide/rules.md`, whose table says which rule enforces which never and which stay a
+reading of the page. The plugin contributes them to `cliSlots.lintPlugins` with `includes` the
+directory its routes sit in (`react.slots.routesDir`'s parent, or `src` with file routing off), so
+`stack generate` writes them into `.stack/biome.json` and the app's `biome.json` extends it. A new
+rule is a file here, a name in `LINT_RULES` (`src/node/lint.ts`), a row in the page's table and
+an offender in `test/lint.test.ts`, which runs the repo's Biome over a scratch app. A rule matches
+the attribute's text by regex, since Biome's GritQL reads a node's text whole and has no
+look-ahead: a reset (`border-0`) is excluded per category.
+
 ## Generated files
 
 | File | Slot | Content |

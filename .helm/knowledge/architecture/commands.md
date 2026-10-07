@@ -42,12 +42,13 @@ check, since the added plugin meets the requirement. `init` validates the finish
 so a selection meeting a one-of twice fails before the scaffold. The default lives in the
 requiring plugin's declaration, so the CLI names no domain.
 In an app inside stack's own workspace, every `@fcalell/*` spec becomes `workspace:*` instead,
-no `pnpm-workspace.yaml` or `biome.json` is written, and the workspace root installs
+no `pnpm-workspace.yaml` is written, its `biome.json` extends the checkout's, and the workspace root installs
 ([consumer-project](./consumer-project.md#inside-stacks-workspace)).
 The scaffold then runs in the app's installed `@fcalell/cli`, imported from the app's root,
 which need not be the copy that started `init`: slots match by identity, and the installed
 plugins import the app's copy. It writes the CLI-owned base files (the tsconfigs, `biome.json`,
-`.editorconfig`, `.gitignore`, each only when missing) and makes `CLAUDE.md` import `@.stack/guide.md`: the file
+`.editorconfig`, `.gitignore`, each only when missing), runs `generate`, then formats what it wrote
+(the app's `biome.json` extends the generated `.stack/biome.json`), and makes `CLAUDE.md` import `@.stack/guide.md`: the file
 is created with that line when missing, and the line appended when absent
 ([consumer-project](./consumer-project.md#the-guide)).
 

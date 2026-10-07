@@ -1,0 +1,8 @@
+language js(typescript, jsx)
+
+or {
+	`<img $props />`,
+	`<img $props>$c</img>`
+} as $el where {
+	register_diagnostic(span=$el, message="A picture is an Image, never an <img> (rules.md: A picture is an Image)")
+}

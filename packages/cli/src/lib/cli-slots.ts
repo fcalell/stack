@@ -6,6 +6,7 @@ import type {
 	DevReadyTask,
 	GeneratedFile,
 	GuideEntry,
+	LintPlugin,
 	ProcessSpec,
 	PromptSpec,
 	WatcherSpec,
@@ -62,6 +63,13 @@ export const cliSlots = {
 		source: SOURCE,
 		name: "guide",
 		sortBy: (a, b) => a.domain.localeCompare(b.domain),
+	}),
+	// The Biome plugins the consumer's lint runs on its own sources, from the
+	// package that owns the rules. Rendered into `.stack/biome.json`.
+	lintPlugins: slot.list<LintPlugin>({
+		source: SOURCE,
+		name: "lintPlugins",
+		uniqueBy: (p) => p.path,
 	}),
 	postWrite: slot.list<() => Promise<void>>({
 		source: SOURCE,

@@ -1,0 +1,8 @@
+language js(typescript, jsx)
+
+// A literal colour or a raw pixel size in a `style`.
+jsx_attribute(name=$n) as $a where {
+	$n <: r"style",
+	$a <: r"(?s).*(?:#[0-9a-fA-F]{3,8}\b|\b(?:rgb|rgba|hsl|hsla|hwb|lab|lch|oklab|oklch)\(|\b[0-9]+(?:\.[0-9]+)?px\b).*",
+	register_diagnostic(span=$a, message="Every colour and size is a contract token, never a literal colour or a raw pixel size (rules.md: Tokens only)")
+}

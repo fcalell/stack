@@ -1,0 +1,6 @@
+language js(typescript, jsx)
+
+jsx_attribute(name=$n) as $a where {
+	$n <: r"data-density",
+	register_diagnostic(span=$a, message="Never a density of your own: data-density is the showcase's pin (rules.md: A screen read from across a room declares its distance)")
+}

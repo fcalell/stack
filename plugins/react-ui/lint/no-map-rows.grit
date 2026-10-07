@@ -1,0 +1,10 @@
+language js(typescript, jsx)
+
+// Rows from data are a `List`'s item map, never a `.map` of rows.
+`$list.map($cb)` where {
+	$cb <: contains or {
+		jsx_self_closing_element(name=r"(?:ListRow|DefinitionRow|Meter)"),
+		jsx_opening_element(name=r"(?:ListRow|DefinitionRow|Meter)")
+	},
+	register_diagnostic(span=$cb, message="Rows from data are a List with a row, definition or meter map, never a .map of ListRows, DefinitionRows or Meters (rules.md: Collections take data)")
+}

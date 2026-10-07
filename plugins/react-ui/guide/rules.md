@@ -450,6 +450,28 @@ out, compose the rest, and file it by the gap recipe (`node_modules/@fcalell/cli
 Never a call-site class, a wrapper that re-adds a look, a local copy of a stack component, or a
 host element carrying tokens.
 
+## What the check enforces
+
+`pnpm check` fails these on the app's own sources (the directory its routes sit in), each
+message naming its section; `stack generate` writes them into `.stack/biome.json`, which the
+app's `biome.json` extends. The rest stays a rule a reviewer holds.
+
+| Never | Lint rule |
+| --- | --- |
+| a `class`, `className`, `classList` or `style` on a component | `no-class-on-component` |
+| a fill, radius, border, shadow, weight, transition or numeric dimension in a host element's class string (a reset such as `border-0` or `bg-none` is no look) | `no-host-look` |
+| an arbitrary value in a class (`h-[34px]`) | `no-arbitrary-value` |
+| a literal colour or pixel size in a `style` | `no-raw-style` |
+| an `<img>` | `no-img` |
+| a `data-density` of your own | `no-density` |
+| a `.map` of `ListRow`s, `DefinitionRow`s or `Meter`s | `no-map-rows` |
+| a tone class on a host element | not enforced: `text-*` names a colour and an alignment alike |
+| a class a variable or a function builds | not enforced: only the string literals of the attribute are read |
+| a literal colour or size held in a constant | not enforced: a lint reads the attribute, not where its value came from |
+| a host element that rebuilds a roster shape, or a `Picker` of your own beside a `title` | not enforced: what an element draws is told by its render, which the design critique judges |
+| a wrapper that re-adds a look, or a local copy of a stack component | not enforced: a copy is told by what it draws, never by its name |
+| a `Split` inside an app component, rows indented by a nested `List` | not enforced: where an element stands is no property of its own code |
+
 ## Done
 
 `pnpm check` and `stack screens test` pass for the app's screens, and the screen is checked in light and dark at desktop and touch density.

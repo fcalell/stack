@@ -20,6 +20,7 @@ lifecycle hooks; rarely read from these.
 | `cliSlots.gitignore` | `list<string>` | `.gitignore` entries (auto-wired from `plugin({ gitignore })`) |
 | `cliSlots.guide` | `list<GuideEntry>` (sorted by domain) | The guide's pages, auto-wired from `plugin({ guide })` under the plugin's name and package; the CLI adds its own (`config`, `commands`, `gap`), and react-ui and native-ui each add ui-core's. Rendered by the CLI into `.stack/guide.md`, a page two plugins list written once |
 | `cliSlots.artifactFiles` | `list<GeneratedFile>` | `{ path, content }` files written under `.stack/` (or anywhere in cwd) |
+| `cliSlots.lintPlugins` | `list<LintPlugin>` (`{ path, includes }`, unique by `path`) | The Biome GritQL rules a package ships for the app's own sources: `path` is the `.grit` file inside the package (`@fcalell/plugin-react-ui/lint/no-img.grit`), `includes` the globs, relative to the app's root, it runs on. Rendered by the CLI into `.stack/biome.json`, written for every app (empty when no plugin contributes), which the app's `biome.json` extends |
 | `cliSlots.postWrite` | `list<() => Promise<void>>` | Hooks to run after artifact files land (e.g. `wrangler types`, TanStack Router's route tree) |
 | `cliSlots.devProcesses` | `list<ProcessSpec>` | Long-running dev processes spawned in parallel |
 | `cliSlots.devWatchers` | `list<WatcherSpec>` | chokidar watchers attached during `stack dev` |

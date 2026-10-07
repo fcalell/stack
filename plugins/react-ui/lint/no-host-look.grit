@@ -1,0 +1,38 @@
+language js(typescript, jsx)
+
+// A look on a host element, matched per whitespace token of the class string: a fill, radius, border,
+// shadow, weight or transition, or a numeric dimension. A token is preceded by a quote, a space, a
+// variant's colon or `!`. Each branch skips its own reset (`bg-none`, `border-0`), which is no look.
+jsx_attribute(name=$n) as $a where {
+	$n <: r"(?:class|className)",
+	$a <: within or {
+		jsx_opening_element(name=$t),
+		jsx_self_closing_element(name=$t)
+	} ,
+	$t <: r"[a-z].*",
+	or {
+		and {
+			$a <: r"(?s).*[\s\"'`:!]bg-[^\s\"'`]+(?:[\s\"'`].*|$)",
+			not $a <: r"(?s).*[\s\"'`:!]bg-none(?:[\s\"'`].*|$)"
+		},
+		and {
+			$a <: r"(?s).*[\s\"'`:!]rounded(?:-[^\s\"'`]+)?(?:[\s\"'`].*|$)",
+			not $a <: r"(?s).*[\s\"'`:!]rounded-none(?:[\s\"'`].*|$)"
+		},
+		and {
+			$a <: r"(?s).*[\s\"'`:!]shadow(?:-[^\s\"'`]+)?(?:[\s\"'`].*|$)",
+			not $a <: r"(?s).*[\s\"'`:!]shadow-none(?:[\s\"'`].*|$)"
+		},
+		and {
+			$a <: r"(?s).*[\s\"'`:!]transition(?:-[^\s\"'`]+)?(?:[\s\"'`].*|$)",
+			not $a <: r"(?s).*[\s\"'`:!]transition-none(?:[\s\"'`].*|$)"
+		},
+		and {
+			$a <: r"(?s).*[\s\"'`:!]border(?:-[^\s\"'`]+)?(?:[\s\"'`].*|$)",
+			not $a <: r"(?s).*[\s\"'`:!]border(?:-[xytrblse])?-(?:0|none)(?:[\s\"'`].*|$)"
+		},
+		$a <: r"(?s).*[\s\"'`:!](?:font|duration|ease|delay)-[^\s\"'`]+(?:[\s\"'`].*|$)",
+		$a <: r"(?s).*[\s\"'`:!]-?(?:size|[wh]|min-[wh]|max-[wh]|[pm][xytrblse]?|gap(?:-[xy])?|space-[xy]|inset(?:-[xy])?|top|right|bottom|left|start|end)-(?:[1-9][0-9]*(?:\.[0-9]+)?|0\.[0-9]+)(?:[\s\"'`].*|$)"
+	},
+	register_diagnostic(span=$a, message="A host element carries geometry only, never a look: fill, radius, border, shadow, weight, transition or a numeric dimension (rules.md: Classes are geometry, on host elements only)")
+}

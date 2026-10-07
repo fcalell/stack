@@ -15,6 +15,7 @@ import { deriveTheme } from "@fcalell/ui-core/derive";
 import { uiCoreGuide } from "@fcalell/ui-core/manifest";
 import { aggregateAppCss } from "./node/codegen.ts";
 import { defaultFonts, type FontEntry } from "./node/fonts.ts";
+import { lintPlugins } from "./node/lint.ts";
 import {
 	densityLayer,
 	modeLayer,
@@ -323,6 +324,11 @@ export const reactUi = plugin("react-ui", {
 				wrap: { identifier: "QueryProvider" },
 				order: 2,
 			}),
+		),
+
+		// The web rules, as lint rules on the app's own sources.
+		cliSlots.lintPlugins.contribute(async (ctx) =>
+			lintPlugins(await ctx.resolve(react.slots.routesDir)),
 		),
 
 		// ── App CSS ─────────────────────────────────────────────────────
