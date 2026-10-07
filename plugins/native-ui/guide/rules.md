@@ -15,7 +15,9 @@ of the app's, since the page reads its props for its head's back and Details act
 as a plain region and no head draws them. Its back act returns to the place's route; a list that
 stands at a deeper route names it as `back` (`<Split back={treeRoute} …>`), which an open record
 returns to, whether its page is a `Place` or a pushed `Screen`, and a missing read in it leads to,
-ahead of the `Screen`'s own `back`.
+ahead of the `Screen`'s own `back`. A list that stands alone at a deeper route is a pushed `Screen`
+whose `back` is the route above it, holding `<Split back={treeRoute} …>`: the `Screen`'s back act
+leads up while the list stands alone, and the `Split`'s `back` takes its place once a record is open.
 
 A record the open record links to opens beside it: the `Split`'s `beside` holds a `Screen` whose
 `back` is the open record's route. On the phone it stands in the open record's stead, its back

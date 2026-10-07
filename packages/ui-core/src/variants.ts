@@ -861,8 +861,9 @@ export const FLOATING_ACT_FOOT = "pb-page";
 // A list holding sections stands them a sections gap apart, as a page body
 // does, the first at the page inset under the strip's hairline at every
 // width, where the record's first line stands: the rhythm is its own cell,
-// which the phone's list reads as well.
-export const SPLIT_LIST = "w-list pb-inside px-page border-r border-edge";
+// which the phone's list reads as well. Its bottom inset is the record's, so
+// an empty list and an empty main centre on one line.
+export const SPLIT_LIST = "w-list pb-page px-page border-r border-edge";
 export const SPLIT_LIST_STACK = "gap-sections pt-page";
 export const SPLIT_PANE = "gap-sections w-pane p-page border-l border-edge";
 // A record the main opened: from `wide` of its page the main and it share what

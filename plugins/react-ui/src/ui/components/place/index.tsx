@@ -338,6 +338,7 @@ export function Place({
 					<HeadingContext value={2}>
 						<div
 							data-density={far ? "room" : undefined}
+							data-foot={foot ? "" : undefined}
 							className={cn(PLACE, PAGE)}
 						>
 							{head}

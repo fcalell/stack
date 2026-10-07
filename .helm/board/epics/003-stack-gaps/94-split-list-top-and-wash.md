@@ -1,6 +1,6 @@
 ---
 id: 003-94
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: a Split's list and main start at one top, and the list's wash stays in its column
@@ -12,9 +12,13 @@ Stead's split screens (Now, Chats, Work board, System; `packages/server/src/app/
 Nothing in the app can set the list's inset: geometry classes go on host elements only and the Split owns both regions. Story 82 kept `SPLIT_LIST`'s `py-inside` deliberately and does not address the main's top; 88 caps the main's width only. The wash overhang is by design for a bare list (`LIST` comment) but lands over a Group's hairline and past the list column's inset in the screens. Seen at stack 4e9c133 (pin f6563f6 draws the same).
 
 ## Acceptance criteria
-- [ ] The first content of the list and of the main/pane share one top inset under the head hairline, at desktop density.
-- [ ] A selected or hovered row's wash stays inside the list column and inside a Group's border.
+- [x] The first content of the list and of the main/pane share one top inset under the head hairline, at desktop density.
+- [x] A selected or hovered row's wash stays inside the list column and inside a Group's border.
 - [ ] A showcase Split frame holds a list and a record and the critique judges the tops and the wash.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides.
+- [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Decided
+Already satisfied at HEAD. `SPLIT_LIST_STACK` gives the list `pt-page`, the same inset as `SPLIT_MAIN` and `SPLIT_PANE` (the story's `py-inside` is story 82's earlier form), so the first content of the list and of the main share one top. A row's wash cannot leave its Group: the Group clips its rows (`overflow-hidden`) and a bare list's bleed (`-mx-control-x`) stays inside the list column's `px-page`. No change to the shape; `SPLIT_MAIN`'s measure is 88's.
+Evidence: `behaviour/split.stories.tsx` `TopsAndWash` (list and main headings at one top; every row inside the Group's border).

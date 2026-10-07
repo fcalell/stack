@@ -1,6 +1,6 @@
 ---
 id: 003-122
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: a Split's `tablet` reads against the viewport, so a 768 px screen keeps its main
@@ -13,8 +13,12 @@ Stead sets Now, Chats, Work and System from a list and a main with a "Pick an it
 
 ## Acceptance criteria
 - [ ] At a 768 px viewport in the Shell, a Split stands its list and its main (or `empty`) together, with the sidebar standing.
-- [ ] Below that width one region stands at a time, as now, and the phone is unchanged.
-- [ ] The reading of `tablet` is written in the Split's rule beside `wide`'s, with the viewport width at which each region opens.
+- [x] Below that width one region stands at a time, as now, and the phone is unchanged.
+- [x] The reading of `tablet` is written in the Split's rule beside `wide`'s, with the viewport width at which each region opens.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides, together with 003-115, whether the breakpoints read the viewport less the sidebar or the container's thresholds drop.
+- [x] Its shape (a component, a variant, a token, an option): the stack session decides, together with 003-115, whether the breakpoints read the viewport less the sidebar or the container's thresholds drop.
+
+## Ruled
+By design, nothing changes. `tablet` stays 768: it is also the viewport density switch, and at a 768 viewport the Shell's page is 528, which leaves a 168 px main beside the 360 px list. The Split rule now says the list and the main stand together from a page 768 wide (a 1008 viewport in the Shell) and `beside` and `pane` from a page 1200 wide (a 1440 viewport).
+Evidence: `behaviour/split.stories.tsx` `FromTablet` and `BelowTablet` (pages 768 and 767 px).

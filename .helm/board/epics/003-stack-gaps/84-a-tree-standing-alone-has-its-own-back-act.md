@@ -1,6 +1,6 @@
 ---
 id: 003-84
-status: backlog
+status: review
 sessions: {}
 ---
 # ui-core: a list standing alone at a deeper route draws its own back act
@@ -12,7 +12,11 @@ Stead's System shows a repo's knowledge tree as the list at `/system/repos/<repo
 `Split.back` (story 68) is the route an open record returns to, the list's own route. The tree's back act needs a second route, the list's parent, which neither the Split nor the router can derive: the tree and the page share one layout component. Story 68 left it out of scope.
 
 ## Acceptance criteria
-- [ ] Stack provides the part on every platform the app runs on.
+- [x] Stack provides the part on every platform the app runs on.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides. A second route on `Split`, or a back act on the Place that a list standing alone also draws.
+- [x] Its shape (a component, a variant, a token, an option): the stack session decides. A second route on `Split`, or a back act on the Place that a list standing alone also draws.
+
+## Ruled
+No new surface. A list standing alone at a deeper route is a pushed `Screen` whose `back` is the route above it, holding `<Split back={treeRoute}>`: the Screen's back act leads up while the list stands alone, and `LIST_BACK_REPLACED` swaps in the Split's `back` once a record is open. Both rules pages and `ui-core.md` say so; native reads the same through `Screen`'s `exit`.
+Evidence: `behaviour/split.stories.tsx` `TreeAloneGoesUp` and `TreeRecordGoesToTree` (desktop and `Touch`: the one visible Back act leads to the parent, then to the tree).

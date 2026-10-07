@@ -35,6 +35,10 @@ const LIST =
 // Below `tablet` the list stands alone: the page's width, with no hairline.
 const LIST_ALONE =
 	"page-max-tablet:w-full page-max-tablet:pb-0 page-max-tablet:border-r-0";
+// Over a docked foot (the Place marks `data-foot`) the list ends a sections
+// gap above it at every width, below `tablet` too, where it has no inset.
+const LIST_FOOT =
+	"group-data-foot/page:pb-sections page-max-tablet:group-data-foot/page:pb-sections";
 // Below `tablet` one region stands: the open record, else the list.
 const BEHIND = "page-max-tablet:hidden";
 // The floating act's room under the record, kept only where the record
@@ -132,6 +136,7 @@ export function Split({ list, main, beside, pane, empty, back }: SplitProps) {
 						SPLIT_LIST_STACK,
 						LIST,
 						LIST_ALONE,
+						LIST_FOOT,
 						opened && BEHIND,
 					)}
 				>

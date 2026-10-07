@@ -454,7 +454,10 @@ a tick with no animation, never jumped to full.
   its regions `BackRoute` as `back`, outranking the enclosing Screen's own), the Screen's `back` or
   the place's route when unset. The page reads it off its direct child Split as it reads the rest
   (`splitOf` on the web, `useSplitHead` on native); a Screen's own back act stays while the list
-  stands beside the record; a tree standing alone at a deeper route draws no back act of its own.
+  stands beside the record, so a tree standing alone at a deeper route is a pushed Screen whose `back` is
+  the route above it, holding `<Split back={treeRoute}>`: the Screen's back act leads up (`LIST_BACK_REPLACED`
+  hides it) once a record is open and the Split's `back` takes its place. No second route on Split and no
+  back act on Place.
 - A molecule whose structure follows density keeps one constant per structure, never a density axis:
   the page's head (`PAGE_HEAD`, one hairline at both densities) holds the desktop strip
   (`PAGE_TOP_BAR` with the title and acts in one row) or the touch one (`PAGE_TOP_BAR` over the
@@ -475,6 +478,10 @@ a tick with no animation, never jumped to full.
   starts a page inset under it, where a Section's title is a line of the body a pair over its
   content; the two rhythms are not one, and a Place's title is the section's name at every density
   (the app never forks it by density).
+  `tablet` and `wide` are read against the page container, which in the Shell is the viewport less the
+  240 px sidebar: the list and the main stand together from a page 768 wide (a 1008 viewport), where the
+  main would otherwise be 168 px at a 768 viewport, and `wide` is 1200 so that `beside` and `pane` stand
+  from a 1440 viewport. `wide` is read only through the page container (no viewport `wide:` is drawn).
 - A loading form stands in for what it replaces at that part's size: `SKELETON` by the part
   (`line`, `avatar`, `icon`, `dot`, `check`, `switch`, `count`, `field`, `meter`, `chart`) and
   `SKELETON_ROW` by the row it replaces (`setting`, `field`, `facts`, `one-line`,
@@ -562,7 +569,9 @@ a tick with no animation, never jumped to full.
   same cell, so one docked composer draws one foot), the body scrolling past it, above the tab bar on touch and, on native, lifted over the keyboard
   (the body and the foot share one `KeyboardAvoidingView`, `Lifted`). The body ends a sections gap
   over it (`PAGE_BODY_OVER_FOOT`), as a filling Thread's log ends over its input, so the field reads
-  apart from the last section; the foot spans the body at every density, whatever it holds (the
+  apart from the last section (a bleeding Place's Split list, which keeps no body inset, ends there
+  too: the web Place marks `data-foot` and the list reads it at every width, native hands the Split
+  a sections-gap room as it hands the floating act's); the foot spans the body at every density, whatever it holds (the
   Place never reads its element type), and a docked `MessageInput` keeps its own measure column
   (`THREAD_COLUMN`) inside it on the desktop, the column a Thread's input stands in. Its `float`
   shadow stays in the foot's own column: the web Place clips its sides (`overflow-x-clip`, its top

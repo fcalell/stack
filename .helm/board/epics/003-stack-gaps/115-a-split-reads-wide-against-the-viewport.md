@@ -1,6 +1,6 @@
 ---
 id: 003-115
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: a Split's `wide` stands at a 1440 px viewport beside the shell's sidebar
@@ -12,9 +12,13 @@ Stead sets three screens from `wide` (design/07-interface.md, 1440 px): the revi
 `Split`'s regions switch on `page-wide:` and `page-max-wide:` (`MAIN_SHARED`, `BESIDE`, `PANE` in plugins/react-ui/src/ui/components/split/index.tsx), and the page is the size container they query, so `wide` is read against the Split's container and not the viewport. In the Shell the container is the viewport less the 240 px sidebar: 1200 px at a 1440 px viewport, which is below `wide`, so the pane and beside-main never stand at the width the spec names and open only from about 1680 px. Stead cannot move the width: a host breakpoint is not geometry the rules page allows, and the spec's 1440 is the screen's width as a person reads it, with the sidebar among what the screen holds. Seen at stack `5564217`.
 
 ## Acceptance criteria
-- [ ] At a 1440 px viewport in the Shell, a Split's `beside` stands beside its main and its `pane` stands beside its list and main, with the sidebar standing.
-- [ ] Below that width a record the main opened still stands in the main's place, and on the phone it replaces it.
-- [ ] The reading of `wide` (the page's container, or the viewport less the sidebar) is written in the Split's rule, with the width at which each region opens.
+- [x] At a 1440 px viewport in the Shell, a Split's `beside` stands beside its main and its `pane` stands beside its list and main, with the sidebar standing.
+- [x] Below that width a record the main opened still stands in the main's place, and on the phone it replaces it.
+- [x] The reading of `wide` (the page's container, or the viewport less the sidebar) is written in the Split's rule, with the width at which each region opens.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides, whether `wide` is lowered, the sidebar counts outside the page's container, or the Split's regions read a different threshold.
+- [x] Its shape (a component, a variant, a token, an option): the stack session decides, whether `wide` is lowered, the sidebar counts outside the page's container, or the Split's regions read a different threshold.
+
+## Built
+`wide` is 1200 (it was 1440) in `tokens.ts`: it is read only through the page container, which in the Shell is the viewport less the 240 px sidebar, so `beside` and `pane` stand from a 1440 viewport. DESIGN.md regenerated; `graph.test.ts` pins 1200; the Split rule (`rules.md`) and `ui-core.md` state both thresholds.
+Evidence: `behaviour/split.stories.tsx` `BesideFromWide`, `BesideBelowWide`, `PaneFromWide`, `PaneBelowWide` (pages 1200 and 1199 px).

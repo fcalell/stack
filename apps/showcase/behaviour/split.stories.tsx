@@ -1,0 +1,398 @@
+import { EmptyState } from "@fcalell/plugin-react-ui/components/empty-state";
+import { Group } from "@fcalell/plugin-react-ui/components/group";
+import { List } from "@fcalell/plugin-react-ui/components/list";
+import { MessageInput } from "@fcalell/plugin-react-ui/components/message-input";
+import { Place } from "@fcalell/plugin-react-ui/components/place";
+import { Screen } from "@fcalell/plugin-react-ui/components/screen";
+import { Section } from "@fcalell/plugin-react-ui/components/section";
+import { Split } from "@fcalell/plugin-react-ui/components/split";
+import { Toolbar } from "@fcalell/plugin-react-ui/components/toolbar";
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import type { ReactNode } from "react";
+import { expect, waitFor } from "storybook/test";
+
+const NAMES = ["Ana Ruiz", "Ben Kaya", "Ema Okafor", "Rui Alves", "Zoe Park"];
+const ROWS = {
+	key: (name: string) => name,
+	title: (name: string) => name,
+};
+const noop = () => {};
+
+function Rows() {
+	return <List items={NAMES} row={ROWS} />;
+}
+
+// A page `width` px wide: the container its regions query.
+function Page(props: { width: number; children: ReactNode }) {
+	return (
+		<div
+			style={{
+				width: props.width,
+				height: 700,
+				display: "flex",
+				flexDirection: "column",
+			}}
+		>
+			{props.children}
+		</div>
+	);
+}
+
+// A token's size in px, read off a probe wearing its class.
+function token(
+	root: Element,
+	className: string,
+	property: "paddingLeft" | "paddingBottom",
+): number {
+	const probe = document.createElement("div");
+	probe.className = className;
+	root.append(probe);
+	const size = Number.parseFloat(getComputedStyle(probe)[property]);
+	probe.remove();
+	return size;
+}
+
+function shown(el: Element | null | undefined): boolean {
+	return el != null && getComputedStyle(el).display !== "none";
+}
+
+function must<T extends Element>(el: T | null | undefined): T {
+	if (!el) throw new Error("the element is not drawn");
+	return el;
+}
+
+// The Split's regions in order: the list, the main (or its empty form), the
+// record beside it or the pane.
+function regions(canvasElement: HTMLElement) {
+	return [...must(canvasElement.querySelector("[data-split]")).children];
+}
+
+export default { title: "Behaviour/Split" } satisfies Meta;
+
+function Foot(props: { foot: boolean }) {
+	return (
+		<Page width={375}>
+			<Place
+				title="Now"
+				bleed
+				foot={
+					props.foot ? (
+						<MessageInput
+							value=""
+							onChange={noop}
+							placeholder="Ask"
+							onSend={noop}
+						/>
+					) : undefined
+				}
+			>
+				<Split
+					list={
+						<Section title="Open">
+							<Rows />
+							<Rows />
+							<Rows />
+							<Rows />
+						</Section>
+					}
+				/>
+			</Place>
+		</Page>
+	);
+}
+
+async function footGap(canvasElement: HTMLElement) {
+	const nav = must(canvasElement.querySelector("nav"));
+	nav.scrollTop = nav.scrollHeight;
+	await waitFor(() => expect(nav.scrollTop).toBeGreaterThan(0));
+	const last = must(nav.lastElementChild).getBoundingClientRect();
+	return {
+		gap: nav.getBoundingClientRect().bottom - last.bottom,
+		sections: token(canvasElement, "pb-sections", "paddingBottom"),
+	};
+}
+
+function touch(story: StoryObj): StoryObj {
+	return {
+		...story,
+		tags: ["touch"],
+		globals: {
+			density: "touch",
+			viewport: { value: "phone", isRotated: false },
+		},
+		parameters: {
+			...story.parameters,
+			viewport: {
+				options: {
+					phone: {
+						name: "Phone",
+						styles: { width: "375px", height: "812px" },
+						type: "mobile",
+					},
+				},
+			},
+		},
+	};
+}
+
+// A Split standing as the list alone, over a docked foot, ends its content a
+// sections gap above the foot; with no foot its last row meets the region's end.
+export const ListOverFoot: StoryObj = {
+	render: () => <Foot foot />,
+	play: async ({ canvasElement }) => {
+		const { gap, sections } = await footGap(canvasElement);
+		await expect(gap).toBe(sections);
+	},
+};
+
+export const ListWithoutFoot: StoryObj = {
+	render: () => <Foot foot={false} />,
+	play: async ({ canvasElement }) => {
+		const { gap } = await footGap(canvasElement);
+		await expect(gap).toBe(0);
+	},
+};
+
+export const ListOverFootTouch = touch(ListOverFoot);
+export const ListWithoutFootTouch = touch(ListWithoutFoot);
+
+// An empty list and an empty main, both EmptyStates, stand on one centre.
+export const EmptyCentres: StoryObj = {
+	render: () => (
+		<Page width={1300}>
+			<Place title="Work" bleed>
+				<Toolbar>
+					<button type="button">Filter</button>
+				</Toolbar>
+				<Split
+					list={
+						<EmptyState title="No stories yet" sentence="Add the first one." />
+					}
+					empty={<EmptyState title="No story open" sentence="Pick a story." />}
+				/>
+			</Place>
+		</Page>
+	),
+	play: async ({ canvasElement }) => {
+		const top = (text: string) =>
+			must(
+				[...canvasElement.querySelectorAll("h2")].find(
+					(el) => el.textContent === text,
+				),
+			).getBoundingClientRect().top;
+		await expect(top("No stories yet")).toBe(top("No story open"));
+	},
+};
+
+// The list and the main share one top under the head's hairline, and a row's
+// wash stays inside a Group's border.
+export const TopsAndWash: StoryObj = {
+	render: () => (
+		<Page width={1300}>
+			<Place title="Now" bleed>
+				<Split
+					list={
+						<Section title="Open">
+							<Group>
+								<Rows />
+							</Group>
+						</Section>
+					}
+					main={
+						<Section title="Detail">
+							<Rows />
+						</Section>
+					}
+				/>
+			</Place>
+		</Page>
+	),
+	play: async ({ canvasElement }) => {
+		const [list, main] = regions(canvasElement);
+		const top = (el: Element | undefined) =>
+			must(el?.querySelector("h3, h2")).getBoundingClientRect().top;
+		await expect(top(list)).toBe(top(main));
+		const group = must(
+			must(list).querySelector("[class*='rounded-card']"),
+		).getBoundingClientRect();
+		for (const row of must(list).querySelectorAll("[class*='min-h-row']")) {
+			const box = row.getBoundingClientRect();
+			await expect(box.left).toBeGreaterThanOrEqual(group.left + 1);
+			await expect(box.right).toBeLessThanOrEqual(group.right - 1);
+		}
+	},
+};
+
+function Opened(props: { width: number; beside: boolean }) {
+	return (
+		<Page width={props.width}>
+			<Place title="Now" bleed>
+				<Split
+					list={<Rows />}
+					main={
+						<Section title="Review">
+							<Rows />
+						</Section>
+					}
+					pane={
+						<Section title="Properties">
+							<Rows />
+						</Section>
+					}
+					beside={
+						props.beside ? (
+							<Screen title="File" back="/review">
+								<Rows />
+							</Screen>
+						) : undefined
+					}
+				/>
+			</Place>
+		</Page>
+	);
+}
+
+// The page's width decides: from `tablet` (768) the list and the main stand
+// together, below it one region at a time; from `wide` (1200) the record
+// beside the main and the pane stand beside it, below it they take its place.
+export const FromTablet: StoryObj = {
+	render: () => <Opened width={768} beside={false} />,
+	play: async ({ canvasElement }) => {
+		const [list, main] = regions(canvasElement);
+		await expect(shown(list)).toBe(true);
+		await expect(shown(main)).toBe(true);
+	},
+};
+
+export const BelowTablet: StoryObj = {
+	render: () => <Opened width={767} beside={false} />,
+	play: async ({ canvasElement }) => {
+		const [list, main] = regions(canvasElement);
+		await expect(shown(list)).toBe(false);
+		await expect(shown(main)).toBe(true);
+	},
+};
+
+export const BesideFromWide: StoryObj = {
+	render: () => <Opened width={1200} beside />,
+	play: async ({ canvasElement }) => {
+		const [list, main, beside] = regions(canvasElement);
+		await expect(shown(list)).toBe(true);
+		await expect(shown(main)).toBe(true);
+		await expect(shown(beside)).toBe(true);
+	},
+};
+
+export const BesideBelowWide: StoryObj = {
+	render: () => <Opened width={1199} beside />,
+	play: async ({ canvasElement }) => {
+		const [list, main, beside] = regions(canvasElement);
+		await expect(shown(list)).toBe(true);
+		await expect(shown(main)).toBe(false);
+		await expect(shown(beside)).toBe(true);
+	},
+};
+
+export const PaneFromWide: StoryObj = {
+	render: () => <Opened width={1200} beside={false} />,
+	play: async ({ canvasElement }) => {
+		await expect(shown(canvasElement.querySelector("aside"))).toBe(true);
+	},
+};
+
+export const PaneBelowWide: StoryObj = {
+	render: () => <Opened width={1199} beside={false} />,
+	play: async ({ canvasElement }) => {
+		await expect(shown(canvasElement.querySelector("aside"))).toBe(false);
+	},
+};
+
+// At the phone a record beside the main stands alone with one head, the
+// Screen's: the Place draws none, and the Screen's title and body start at the
+// page's gutter.
+const besideAtThePhone: StoryObj = {
+	render: () => (
+		<Page width={375}>
+			<Place title="System" bleed>
+				<Split
+					list={<Rows />}
+					main={
+						<Section title="Page">
+							<Rows />
+						</Section>
+					}
+					beside={
+						<Screen title="History" back="/page">
+							<Rows />
+						</Screen>
+					}
+				/>
+			</Place>
+		</Page>
+	),
+	play: async ({ canvasElement }) => {
+		const heads = [...canvasElement.querySelectorAll("header")].filter(shown);
+		await expect(heads).toHaveLength(1);
+		const gutter = token(canvasElement, "px-page", "paddingLeft");
+		const title = must(
+			[...canvasElement.querySelectorAll("h1, h2")].find(
+				(el) => el.textContent === "History",
+			),
+		);
+		await expect(title.getBoundingClientRect().left).toBe(gutter);
+		const name = must(
+			[...must(regions(canvasElement)[2]).querySelectorAll("*")].find(
+				(el) => el.children.length === 0 && el.textContent === NAMES[0],
+			),
+		);
+		await expect(name.getBoundingClientRect().left).toBe(gutter);
+	},
+};
+
+export const BesideAtThePhone = touch(besideAtThePhone);
+
+// A list standing alone at a deeper route is a pushed Screen holding
+// `<Split back>`: the Screen's back act leads up while the list stands alone,
+// and the Split's `back` takes its place once a record is open.
+function Tree(props: { open: boolean }) {
+	return (
+		<Page width={375}>
+			<Screen title="Knowledge" back="/repos/x">
+				<Split
+					back="/repos/x/knowledge"
+					list={<Rows />}
+					main={
+						props.open ? (
+							<Section title="Page">
+								<Rows />
+							</Section>
+						) : undefined
+					}
+				/>
+			</Screen>
+		</Page>
+	);
+}
+
+function backs(canvasElement: HTMLElement) {
+	return [...canvasElement.querySelectorAll("a[aria-label='Back']")]
+		.filter((el) => shown(el) && shown(el.parentElement))
+		.map((el) => el.getAttribute("href"));
+}
+
+export const TreeAloneGoesUp: StoryObj = {
+	render: () => <Tree open={false} />,
+	play: async ({ canvasElement }) => {
+		await expect(backs(canvasElement)).toEqual(["/repos/x"]);
+	},
+};
+
+export const TreeRecordGoesToTree: StoryObj = {
+	render: () => <Tree open />,
+	play: async ({ canvasElement }) => {
+		await expect(backs(canvasElement)).toEqual(["/repos/x/knowledge"]);
+	},
+};
+
+export const TreeAloneGoesUpTouch = touch(TreeAloneGoesUp);
+export const TreeRecordGoesToTreeTouch = touch(TreeRecordGoesToTree);

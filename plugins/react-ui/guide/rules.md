@@ -14,7 +14,15 @@ its page's frame region: it stands as the bleeding `Place`'s (or `Screen`'s) dir
 inside a component of the app's, so the page's head draws its back and Details acts. Its back act
 returns to the place's route; a list that stands at a deeper route names it as `back`
 (`<Split back={treeRoute} …>`), which an open record returns to, whether its page is a `Place` or a
-pushed `Screen`, and a missing read in it leads to, ahead of the `Screen`'s own `back`.
+pushed `Screen`, and a missing read in it leads to, ahead of the `Screen`'s own `back`. A list that
+stands alone at a deeper route is a pushed `Screen` whose `back` is the route above it, holding
+`<Split back={treeRoute} …>`: the `Screen`'s back act leads up while the list stands alone, and the
+`Split`'s `back` takes its place once a record is open.
+
+A `Split` reads its regions against its page's width, not the viewport's, and in the `Shell` the page
+is the viewport less the 240 px sidebar. The list and the main stand together from a page `tablet`
+(768) wide, a 1008 px viewport; `beside` and `pane` stand from a page `wide` (1200) wide, a 1440 px
+viewport. Below them one region stands at a time.
 
 A record the open record links to opens beside it: the `Split`'s `beside` holds a `Screen` whose
 `back` is the open record's route. From `wide` it stands beside the main, its back act a Close;

@@ -83,6 +83,7 @@ export function FloatingActRoom() {
 // regions keeps one identity and no consumer renders again with the Place.
 const ACT_ROOM_ELEMENT = <FloatingActRoom />;
 const SCROLL_ROOM = <View className={FLOATING_ACT_ROOM} />;
+const FOOT_ROOM_ELEMENT = <View className={PAGE_BODY_OVER_FOOT} />;
 
 interface PlaceBase extends Closed {
 	title: string;
@@ -169,8 +170,10 @@ export function Place({
 	const bar = lead != null || acts.length > 0 || Boolean(more?.length);
 	const room = act ? SCROLL_ROOM : null;
 	// A region scrolling inside a bleeding body keeps no page inset under its
-	// last row, so its room is the act's height over the page inset.
-	const footprint = act ? ACT_ROOM_ELEMENT : null;
+	// last row, so its room is the act's height over the page inset, or a
+	// sections gap over a docked foot.
+	const footRoom = foot !== undefined ? FOOT_ROOM_ELEMENT : null;
+	const footprint = act ? ACT_ROOM_ELEMENT : footRoom;
 	const tabs = useContext(ShellTabs);
 	const page = (
 		<DetailsOpen.Provider value={split.held}>

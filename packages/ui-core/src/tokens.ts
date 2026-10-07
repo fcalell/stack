@@ -1061,10 +1061,12 @@ export const WIDTH_VALUE: Record<Width, string> = {
 export const BREAKPOINTS = ["tablet", "desktop", "wide"] as const;
 export type Breakpoint = (typeof BREAKPOINTS)[number];
 
+// `wide` is read only against a page's container, which beside the shell's
+// `sidebar` is the viewport less 240: it opens at a 1440 viewport.
 export const BREAKPOINT_PX: Record<Breakpoint, number> = {
 	tablet: 768,
 	desktop: 1024,
-	wide: 1440,
+	wide: 1200,
 };
 
 // ── Elevation ───────────────────────────────────────────────────────

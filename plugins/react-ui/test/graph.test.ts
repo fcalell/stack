@@ -66,7 +66,7 @@ test("app.css imports Tailwind without detection, then the web sheet, then the c
 	);
 	assert.match(
 		css,
-		/@custom-variant page-wide \{\n@container page \(width >= 1440px\) \{\n\t@slot;\n\}\n\}/,
+		/@custom-variant page-wide \{\n@container page \(width >= 1200px\) \{\n\t@slot;\n\}\n\}/,
 	);
 	assert.match(css, /\.dark \{\n\tcolor-scheme: dark;/);
 	assert.match(css, /\.light \{\n\tcolor-scheme: light;/);
