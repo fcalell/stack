@@ -25,6 +25,7 @@ import {
 	sectionPartsOf,
 } from "../../lib/section";
 import { Strut } from "../../lib/strut";
+import { ActionBar } from "../action-bar";
 import { BarChart } from "../bar-chart";
 import { Button } from "../button";
 import { Code } from "../code";
@@ -72,7 +73,7 @@ const BODY_WAITS = "hidden";
 const KINDS: SectionKinds = {
 	lists: [List, Table],
 	waits: [BarChart, Comparison],
-	forms: [Code, Meter, Prose, Slider, Thread],
+	forms: [ActionBar, Code, Meter, Prose, Slider, Thread],
 	boundary: QueryBoundary,
 	group: Group,
 	field: FormField,
@@ -83,6 +84,9 @@ export interface SectionProps extends Closed {
 	// A total the body's lists do not hold; without it a List in the body
 	// counts its items here.
 	count?: number;
+	// A sentence under the title. While the Section loads, `""` stands one
+	// meta-height bar where the sentence will be and an undefined `description`
+	// stands none; loaded, `""` draws no line, as an undefined one.
 	description?: string;
 	// Set, the title folds the body, and this is its initial fold: `true`
 	// starts folded, `false` open; later changes are not read.
@@ -127,6 +131,17 @@ export function Section({
 		count: shown,
 		fields,
 	} = sectionState(sectionPartsOf(children, KINDS), { count, loading });
+	// The description waits as a bar only when the Section says it will have
+	// one: an empty string, which is no line once loaded.
+	let sentence: ReactNode = null;
+	if (description) sentence = <Text role="meta">{description}</Text>;
+	else if (loading === true && description === "")
+		sentence = (
+			<View className={LABEL_LINE}>
+				<Strut role="meta" />
+				<View className={cn(skeleton({ kind: "line" }), "w-1/2")} />
+			</View>
+		);
 	// A count waits with the body.
 	let tally: ReactNode = null;
 	if (counted && busy)
@@ -187,7 +202,7 @@ export function Section({
 								)}
 							</Pressable>
 						)}
-						{description ? <Text role="meta">{description}</Text> : null}
+						{sentence}
 					</View>
 					{act ? (
 						<View className={ACT_SLOT}>

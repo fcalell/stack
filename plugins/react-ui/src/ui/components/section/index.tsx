@@ -26,6 +26,7 @@ import {
 	sectionPartsOf,
 } from "../../lib/section.ts";
 import { useTouched } from "../../lib/touched.ts";
+import { ActionBar } from "../action-bar/index.tsx";
 import { BarChart } from "../bar-chart/index.tsx";
 import { Button } from "../button/index.tsx";
 import { Reason } from "../button/reason.tsx";
@@ -75,12 +76,13 @@ const FIELD_WAIT = "flex flex-col";
 const LABEL_WAIT = "w-1/4";
 // The label's bar stands in the label's line box, at its line height.
 const LABEL_LINE = "flex items-center h-lh";
-
+// The description's bar stands in the meta line's box, at the sentence's half measure.
+const DESCRIPTION_LINE = "flex items-center h-lh";
 // The components the Section reads its body by (`sectionPartsOf`).
 const KINDS: SectionKinds = {
 	lists: [List, Table],
 	waits: [BarChart, Comparison],
-	forms: [Code, Meter, Prose, Slider, Thread],
+	forms: [ActionBar, Code, Meter, Prose, Slider, Thread],
 	boundary: QueryBoundary,
 	group: Group,
 	field: FormField,
@@ -96,7 +98,7 @@ export interface SectionProps extends Closed {
 	title: Part;
 	/** A total the body's lists do not hold, in a grey pill after the title; without it a List in the body counts its items there. */
 	count?: number;
-	/** A sentence under the title. */
+	/** A sentence under the title. While the Section loads, `""` stands one meta-height bar where the sentence will be and an undefined `description` stands none; loaded, `""` draws no line, as an undefined one. */
 	description?: string;
 	/** Set, the title folds the body, and this is its initial fold: `true` starts folded, `false` open; later changes are not read. */
 	folded?: boolean;
@@ -148,6 +150,19 @@ export function Section({
 		() => (blocked === undefined ? undefined : { press }),
 		[blocked, press],
 	);
+	// The description waits as a bar only when the Section says it will have
+	// one: an empty string, which is no line once loaded.
+	let sentence: ReactNode = null;
+	if (description) sentence = <Text role="meta">{description}</Text>;
+	else if (loading === true && description === "")
+		sentence = (
+			<span
+				aria-hidden
+				className={cn(lineBox({ role: "meta" }), DESCRIPTION_LINE)}
+			>
+				<span className={cn(skeleton({ kind: "line" }), "w-1/2")} />
+			</span>
+		);
 	// A count waits with the body.
 	let tally: ReactNode = null;
 	if (counted && busy)
@@ -201,7 +216,7 @@ export function Section({
 								</Collapsible.Trigger>
 							</Heading>
 						)}
-						{description ? <Text role="meta">{description}</Text> : null}
+						{sentence}
 					</div>
 					{act ? (
 						<div className={ACT_SLOT}>

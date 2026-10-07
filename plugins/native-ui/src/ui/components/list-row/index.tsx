@@ -24,6 +24,7 @@ import {
 	rowStep,
 	rowTitle,
 	rowTitleForm,
+	skeleton,
 	TREE_LANE,
 	TREE_RAIL,
 	text,
@@ -43,6 +44,7 @@ import { joinParts, META_CUT, partText } from "../../lib/parts";
 import { ReasonHostContext, usePressed } from "../../lib/reason";
 import type { Route } from "../../lib/route";
 import { useTouched } from "../../lib/touched";
+import { TrailingWait } from "../../lib/trailing-wait";
 import { type RowTree, TreeContext } from "../../lib/tree";
 import { useWords } from "../../lib/words";
 import { Avatar } from "../avatar";
@@ -93,6 +95,8 @@ const STEPS = "min-w-0";
 const STEP = "flex-row items-center min-w-0 h-line-body";
 const STEP_LABEL = "shrink";
 const TRAILING = "shrink-0";
+// A trailing value waiting: four figures, a count's or an age's width.
+const TRAILING_BAR = "w-figures";
 // The meta line is one line that yields in order: the later parts truncate
 // first (they take no width of their own), then the chip (shown whole or not at
 // all), the warning's label and last the first part, which names the item and
@@ -333,6 +337,7 @@ export function ListRow<V extends string | null = string>({
 	const words = useWords();
 	const ground = useContext(GroundContext);
 	const tree = useContext(TreeContext);
+	const waits = useContext(TrailingWait);
 	const pathname = usePathname();
 	const named = partText(title);
 	const current = selected || (href !== undefined && isCurrent(href, pathname));
@@ -368,9 +373,15 @@ export function ListRow<V extends string | null = string>({
 	const value =
 		trailing && !("pick" in trailing) ? (
 			<First on={top}>
-				<RNText className={cn(ROW_TRAILING, TRAILING)}>
-					{trailingWord(trailing)}
-				</RNText>
+				{waits ? (
+					<View
+						className={cn(skeleton({ kind: "line" }), TRAILING_BAR, TRAILING)}
+					/>
+				) : (
+					<RNText className={cn(ROW_TRAILING, TRAILING)}>
+						{trailingWord(trailing)}
+					</RNText>
+				)}
 			</First>
 		) : null;
 	const titled = (

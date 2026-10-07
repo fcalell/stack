@@ -33,6 +33,7 @@ import {
 	treeRows,
 	treeStop,
 	valueCut,
+	waitCount,
 	waitingDepth,
 	waitLine,
 } from "../src/list-state.ts";
@@ -415,6 +416,19 @@ test("a waiting Group draws the waiting forms of the parts that register, else s
 	assert.equal(groupWait(1), "parts");
 	assert.equal(groupWait(2), "parts");
 	assert.equal(groupWait(0), "settings");
+});
+
+test("a part that waits for a count reads its own loading, else the loading it inherits as the fallback", () => {
+	assert.equal(waitCount(undefined, false, 1), undefined);
+	assert.equal(waitCount(false, true, 1), undefined);
+	assert.equal(waitCount(true, false, 1), 1);
+	assert.equal(waitCount(undefined, true, 2), 2);
+	assert.equal(waitCount(3, false, 1), 3);
+	assert.equal(waitCount(3, true, 1), 3);
+	// 0 is not waiting, even inside a loading Section.
+	assert.equal(waitCount(0, true, 1), undefined);
+	assert.equal(waitCount(Number.NaN, false, 1), undefined);
+	assert.equal(waitCount(2.7, false, 1), 2);
 });
 
 test("a pending Comparison with three columns draws three bars per row, a chips bar only when chips are declared and a status bar only when status is", () => {

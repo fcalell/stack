@@ -36,9 +36,20 @@ stack deploy --skip-checks
 *Released 2 October 2026.*`;
 
 // Board 50's record description: paragraphs alone, an inline code and a link.
+const SENTENCE = "Waits for the staging migration.";
+
 const DESCRIPTION = `Moves the billing webhooks off the legacy queue. Each event is now acknowledged once its handler commits, so a retry never charges twice.
 
 Rollout is behind \`billing.queue_v2\`; see [the runbook](#runbook) before turning it on for an enterprise workspace.`;
+
+/** A one-line text, loaded and waiting as one line, in a Section each. */
+export function Sentence(props: { loading?: boolean }) {
+	return (
+		<Section title="Why it waits" loading={props.loading}>
+			<Prose markdown={SENTENCE} loading={props.loading ? 1 : undefined} />
+		</Section>
+	);
+}
 
 // The loading frames draw the description's Section waiting; the body and
 // link cells draw the description, every other cell the release notes.
@@ -50,6 +61,8 @@ export function drawProse(frame: ShowcaseFrame) {
 				<Section title="Description">
 					<Prose markdown={DESCRIPTION} loading />
 				</Section>
+				<Sentence />
+				<Sentence loading />
 			</Wide>
 		);
 	if (cell === "TEXT.role.body" || cell === "LINK.fit.inline")

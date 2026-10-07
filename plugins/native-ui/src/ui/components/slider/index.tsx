@@ -39,7 +39,7 @@ export interface SliderProps extends Closed {
 	unit?: string;
 }
 
-/** A slider's label and value over its track: the fill up to the thumb, the rest after it. In a loading `Group` or `Section` it draws its waiting form, at the same height. */
+/** A slider's label and value over its track: the fill up to the thumb, the rest after it. It waits through its Group or Section: in a loading one it draws its waiting form, at the same height. */
 export function Slider({
 	label,
 	value,

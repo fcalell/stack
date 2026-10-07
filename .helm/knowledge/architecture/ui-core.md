@@ -472,7 +472,17 @@ a tick with no animation, never jumped to full.
   (`line`, `avatar`, `icon`, `dot`, `check`, `switch`, `count`, `field`, `meter`, `chart`) and
   `SKELETON_ROW` by the row it replaces (`setting`, `field`, `facts`, `one-line`,
   `one-line-group`); a ListRow waits in its own markup (below). The loading frame keeps the loaded
-  frame's height.
+  frame's height. `loading` is a boolean on every part, except where the loaded size is a count of
+  drawn units the app knows and the part cannot derive: a Prose's lines and an ActionBar's acts take
+  `loading?: boolean | number`, `true` the default form (two paragraphs, one act) and a number from 1
+  the count; 0 and `false` are not waiting, so `loading={rows?.length}` reads the loaded form at 0
+  (`waitCount` in `./list-state`). A loading Group or Section hands down a boolean
+  (`LoadingContext`), so an inheriting Prose or ActionBar draws the default; a count is set on the
+  part itself. A waiting ActionBar is that many act-shaped bars at the loaded geometry (the control's
+  box at the end, the field's height across, one per row on touch). A Section's `description` is a
+  declaration of the same kind: while the Section loads, `""` stands one meta-height bar where the
+  sentence will be and an undefined `description` stands none (loaded, both draw no line), because
+  the app knows a description is coming and not its words.
 - No arbitrary values in a cell, in either spelling. A control pads across on `control-x`, stands
   on a size (`min-h-control`, `min-h-field`) and insets on a spacing role; density moves all
   three through the variables.
@@ -920,7 +930,10 @@ a tick with no animation, never jumped to full.
 - A collection takes data and draws its states at the leaf. A `List` takes `query` (or `items`,
   waiting on `loading`) and one item map: `row`, one function per `ListRow` slot, `file`, one per
   `FileRow` slot, `meter`, one per `Meter` slot, or `definition`, one per `DefinitionRow` slot
-  (`copyable` one value for the list). Its waiting rows are the row's own markup
+  (`copyable` one value for the list). A `row` List given its `items` while `loading` (a map with
+  a `trailing` slot, no tree) stands as loaded rows with each trailing value a four-figure bar
+  (`TrailingWait` in `lib/trailing-wait`, read by `ListRow`): the titles are known, only the
+  values arrive; a List without items waits as below. Its waiting rows are the row's own markup
   (`list-row/wait.tsx`, `file-row/wait.tsx`, `meter/wait.tsx`, `definition-row/wait.tsx`), a ListRow's with bars in the slots
   `row` declares, a FileRow's chip bar only when `file` declares `chip`, and its change lane when
   `file` declares `change` (`fileShape`), and a Meter's line bar only when `meter` declares `meta`

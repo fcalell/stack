@@ -32,6 +32,7 @@ import { between, useGroupPart } from "../../lib/group";
 import { LoadingContext } from "../../lib/loading";
 import type { Route } from "../../lib/route";
 import { SectionContext } from "../../lib/section";
+import { TRAILING_PLACEHOLDER, TrailingWait } from "../../lib/trailing-wait";
 import { TreeContext } from "../../lib/tree";
 import { useWords } from "../../lib/words";
 import { DefinitionRow, type DefinitionValue } from "../definition-row";
@@ -213,7 +214,9 @@ export type ListSource<T> =
 	  }
 	| {
 			items: readonly T[];
-			// The items are on their way (a compound body's loading form).
+			// The items are on their way (a compound body's loading form). Given
+			// items and a `row` map with a `trailing` slot (no tree), the rows stand
+			// as loaded and only their trailing values wait.
 			loading?: boolean;
 			// Without it an empty list draws nothing.
 			empty?: ListEmpty;
@@ -267,6 +270,14 @@ export function List<T, V extends string | null = string>(
 	const input = { ...base, inSection: useContext(SectionContext) };
 	const ground = listGround(useGroupPart());
 	const state = listState(input);
+	// Items given while the list loads (a row map with a trailing slot, no tree):
+	// the rows stand as loaded, their trailing values waiting.
+	const known =
+		state === "pending" &&
+		props.loading === true &&
+		props.row?.trailing !== undefined &&
+		props.row.children === undefined &&
+		(props.items?.length ?? 0) > 0;
 	// In a Group the card is the rows' box: each row after the first draws
 	// the group's hairline above it.
 	// A tree's rows abut, so its rails run unbroken.
@@ -280,7 +291,7 @@ export function List<T, V extends string | null = string>(
 		) : (
 			<View className={tree ? LIST_TREE : LIST}>{rows}</View>
 		);
-	if (state === "pending") {
+	if (state === "pending" && !known) {
 		return frame(
 			WAITING.map((index) => {
 				if (props.row)
@@ -324,7 +335,7 @@ export function List<T, V extends string | null = string>(
 				leading={row.leading && leadingOf(row.leading, item)}
 				title={row.title(item)}
 				meta={row.meta?.(item)}
-				trailing={row.trailing?.(item)}
+				trailing={known ? TRAILING_PLACEHOLDER : row.trailing?.(item)}
 				status={row.status?.(item)}
 				warning={row.warning?.(item)}
 				lock={row.lock?.(item)}
@@ -341,7 +352,12 @@ export function List<T, V extends string | null = string>(
 			/>
 		);
 		const { children } = row;
-		if (children === undefined) return frame(items.map(rowOf));
+		if (children === undefined)
+			return (
+				<TrailingWait.Provider value={known}>
+					{frame(items.map(rowOf))}
+				</TrailingWait.Provider>
+			);
 		// Each row of the tree reads its depth and fold from its own provider.
 		return frame(
 			treeRows(items, { key: row.key, children }, folded).map((each) => (

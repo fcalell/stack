@@ -63,6 +63,17 @@ export function Bodies(props: { loading?: boolean }) {
 	);
 }
 
+/** A head with its description, loaded and waiting for it (`description=""`). */
+export function Described(props: { loading?: boolean }) {
+	return (
+		<Section
+			title="Check"
+			description={props.loading ? "" : "Passed on 6dbf0da"}
+			loading={props.loading}
+		/>
+	);
+}
+
 function Members(props: { blocked?: boolean }) {
 	return (
 		<Section
@@ -126,6 +137,8 @@ export function drawSection(frame: ShowcaseFrame) {
 				</Section>
 				<Bodies />
 				<Bodies loading />
+				<Described />
+				<Described loading />
 				<Form>
 					<Section title="Profile" loading>
 						<FormField label="Workspace name">

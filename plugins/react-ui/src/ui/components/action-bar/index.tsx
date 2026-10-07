@@ -1,6 +1,7 @@
 import { Button as BaseButton } from "@base-ui/react/button";
 import { cn } from "@fcalell/ui-core/cn";
 import type { Act, ChosenCount } from "@fcalell/ui-core/descriptors";
+import { waitCount } from "@fcalell/ui-core/list-state";
 import { pressStands } from "@fcalell/ui-core/reason";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
@@ -22,12 +23,14 @@ import {
 	FormStands,
 	SubmitContext,
 } from "../../lib/form.ts";
+import { LoadingContext } from "../../lib/loading.ts";
 import { useTouch } from "../../lib/media.ts";
 import { ActFailed, ReasonHostContext, ReasonKept } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Button } from "../button/index.tsx";
 import { Reason } from "../button/reason.tsx";
+import { ActionBarWait } from "./wait.tsx";
 
 // End: the acts at their width at the container's end. Full: the acts share
 // the container's width at the field's height. On touch both stack one act
@@ -82,6 +85,8 @@ export interface ActionBarProps extends Closed {
 	fit?: ActionBarFit;
 	/** A selection bar's count, "N of M chosen" at meta at the bar's start (a `Table`'s `choose` set against its rows), with `onAll` a deselect-all act beside it and, below `tablet` of the page where the `Table` draws no head tick, a select-all act; the act's label and its blocked reason stay the act's. Docked as a `Place`'s `foot`, its count and acts in a column centred in the foot, no wider than a table-wide bar. */
 	chosen?: ChosenCount;
+	/** The acts wait: a count of act-shaped bars, `true` standing for one (the acts are unknown before the read, so give `acts` as `[]`). A number from 1 is the count of acts the bar will hold, and 0 or `false` is not waiting, so `loading={rows?.length}` reads the loaded bar at 0. Unset, a loading `Group` or `Section` around it makes it wait, as one act: it hands down a boolean, so set the count on the bar itself. */
+	loading?: boolean | number;
 }
 
 function AllAct(props: {
@@ -128,7 +133,7 @@ function ActHost(props: {
 }
 
 /** The acts row over a blocked act's reason, beside a selection count when `chosen` is set; while one act is pending the others ignore the press. */
-export function ActionBar({ acts, fit, chosen }: ActionBarProps) {
+export function ActionBar({ acts, fit, chosen, loading }: ActionBarProps) {
 	// Inside a `Gate` a bar with no `fit` stands across the column.
 	const where = fit ?? (use(FormStands) === "auth" ? "full" : "end");
 	const touch = useTouch();
@@ -153,6 +158,8 @@ export function ActionBar({ acts, fit, chosen }: ActionBarProps) {
 	);
 	const busy = running || acts.some((act) => act.loading);
 	const lastAt = acts.length - 1;
+	const waits = waitCount(loading, use(LoadingContext), 1);
+	if (waits !== undefined) return <ActionBarWait fit={where} count={waits} />;
 	// The tree holds the acts in drawn order, so Tab follows it: on touch the
 	// stack draws the filled act first.
 	const ordered = acts.map((act, at) => [act, at] as const);

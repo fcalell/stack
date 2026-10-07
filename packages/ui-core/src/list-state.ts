@@ -119,6 +119,24 @@ export function groupWait(parts: number): "parts" | "settings" {
 	return parts > 0 ? "parts" : "settings";
 }
 
+// How many drawn units a part's waiting form stands for, where that count is
+// one the app knows and the part cannot derive (a Prose's lines, an
+// ActionBar's acts): the part's own `loading` (`true` for `fallback`, a
+// number from 1 for that count), else the loading its Group or Section hands
+// down, which is a boolean and so only ever the fallback. Undefined when the
+// part does not wait; `false`, 0 and a count under 1 are not waiting, so a
+// `loading={rows?.length}` that reads 0 shows the loaded form.
+export function waitCount(
+	own: boolean | number | undefined,
+	inherited: boolean,
+	fallback: number,
+): number | undefined {
+	const set = own ?? inherited;
+	if (set === true) return fallback;
+	if (typeof set === "number" && set >= 1) return Math.floor(set);
+	return undefined;
+}
+
 // The kind of mark every row of a list leads with.
 export type LeadingKind = "avatar" | "icon" | "status" | "check";
 

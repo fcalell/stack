@@ -64,6 +64,18 @@ function drawnOf(cell: string): Drawn {
 	return SAVE;
 }
 
+/** A bar of two acts loaded, and the bar waiting for one and for two. */
+export function Waiting(props: { fit: ActionBarFit }) {
+	const { fit } = props;
+	return (
+		<div className="flex flex-col gap-fields">
+			<ActionBar fit={fit} acts={SAVE.acts} />
+			<ActionBar fit={fit} acts={[]} loading />
+			<ActionBar fit={fit} acts={[]} loading={2} />
+		</div>
+	);
+}
+
 export function drawActionBar(frame: ShowcaseFrame) {
 	// The meta cell is the selection count: a publish page's bar docked at
 	// its foot, the act pending in `loading` and blocked in `disabled`.
@@ -91,6 +103,13 @@ export function drawActionBar(frame: ShowcaseFrame) {
 				},
 	);
 	const bar = <ActionBar fit={fit} acts={drawn} />;
+	if (frame.state === "loading")
+		return (
+			<div className="flex flex-col gap-sections">
+				{bar}
+				<Waiting fit={fit} />
+			</div>
+		);
 	return frame.state === "disabled" ? (
 		<TouchedContext value={TOUCHED}>{bar}</TouchedContext>
 	) : (

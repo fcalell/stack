@@ -739,6 +739,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// elsewhere. Loading, a Group or a List in its body draws its own
 		// skeleton rows and a Prose, Thread, Code, Meter or Slider its own waiting
 		// form; the Section draws its own over a body of fields.
+		// While it loads, `description=""` stands one meta-height bar where the
+		// sentence will be, and an undefined `description` stands none; loaded, `""`
+		// draws no line, as an undefined one.
 		Section: {
 			props: [
 				"title",
@@ -830,6 +833,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// branches are folded (open by default), handing every row its depth
 		// and fold. A `definition` list stands in a Group and adds no count to
 		// a Section's head: facts are not a collection a viewer counts.
+		// Given `items` while `loading`, a `row` map with a `trailing` slot (no tree)
+		// stands as loaded rows with the trailing values waiting.
 		List: {
 			props: [
 				"query",
@@ -877,8 +882,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// `chooseNone`) while any are chosen, and, below `tablet` of the page where
 		// the table draws no head tick, one that chooses every one (`chooseAll`)
 		// while some stand unchosen. The bar's column is centred in its foot.
+		// `loading` is a count of acts (`true` one): the bar waits as that many
+		// act-shaped bars at the loaded geometry, one per row on touch; 0 or
+		// `false` is not waiting, and a loading Group or Section hands down `true`
+		// only.
 		ActionBar: {
-			props: ["acts", "fit", "chosen"],
+			props: ["acts", "fit", "chosen", "loading"],
 			draws: [
 				"ACTION_BAR",
 				"ACTION_BAR_ACTS",
@@ -899,6 +908,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"BUTTON_LABEL.act.secondary",
 				"BUTTON_LABEL.act.destructive",
 				"BUTTON_LABEL.act.quiet",
+				"SKELETON.kind.bar",
+				"SKELETON.kind.field",
 			],
 			holds: [
 				"ACTION_BAR",
@@ -923,10 +934,18 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"on-act-danger",
 					"wash-hover",
 					"wash-press",
+					"skeleton",
 				],
 				radii: ["control", "full"],
 				spacing: ["pair", "acts", "inside", "control-x"],
-				sizes: ["control", "field", "target", "selection"],
+				sizes: [
+					"control",
+					"field",
+					"target",
+					"selection",
+					"control-compact",
+					"measure-short",
+				],
 			},
 		},
 		Columns: {
@@ -1939,6 +1958,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// Markdown at the measure: headings, paragraphs, lists, quotes, rules, inline
 		// code and links; a fenced block is a `Code`. No syntax colours, tables,
 		// task lists or images.
+		// `loading` is a count of lines (`true` the two paragraphs): the Prose waits
+		// as that many line bars; 0 or `false` is not waiting, and a loading Group
+		// or Section hands down `true` only.
 		Prose: {
 			props: ["markdown", "loading"],
 			draws: [

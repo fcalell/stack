@@ -1,3 +1,4 @@
+import { waitCount } from "@fcalell/ui-core/list-state";
 import {
 	PROSE,
 	PROSE_BLOCKS,
@@ -40,14 +41,31 @@ const BARS = [
 	["w-full", "w-full", "w-1/4"],
 	["w-full", "w-full", "w-1/2"],
 ] as const;
+// The default form: no count was given, so the two paragraphs.
+const DEFAULT_WAIT = 0;
+const FULL = "w-full";
+const LAST = "w-1/2";
+
+// The paragraphs a waiting Prose draws: the default two, or one paragraph of
+// `lines` full lines whose last runs half the measure.
+function paragraphsOf(lines: number): readonly (readonly string[])[] {
+	if (lines === DEFAULT_WAIT) return BARS;
+	return [
+		Array.from({ length: lines }, (_, at) => (at === lines - 1 ? LAST : FULL)),
+	];
+}
 
 export interface ProseProps extends Closed {
 	// The text, in markdown: headings, paragraphs, lists, quotes, rules,
 	// inline code, links and fenced code.
 	markdown: string;
-	// The text waits: two paragraphs of line boxes stand in for it. Unset, a
-	// loading `Section` or `Group` around it makes it wait.
-	loading?: boolean;
+	// The text waits: `true` stands two paragraphs of line boxes in for it, and
+	// a number from 1 stands that many lines of one paragraph (its last half
+	// the measure), so a one-line text waits as one line. 0 or `false` is not
+	// waiting, so `loading={lines?.length}` reads the loaded text at 0. Unset, a
+	// loading `Section` or `Group` around it makes it wait as two paragraphs: it
+	// hands down a boolean, so set the count on the Prose itself.
+	loading?: boolean | number;
 }
 
 // A link's target, unless its scheme runs script.
@@ -295,7 +313,8 @@ function Headed({ part }: { part: Part }) {
 // header, which has no levels on the phone.
 export function Prose({ markdown, loading }: ProseProps) {
 	const inherited = useContext(LoadingContext);
-	const waiting = loading ?? inherited;
+	const lines = waitCount(loading, inherited, DEFAULT_WAIT);
+	const waiting = lines !== undefined;
 	// The markdown lexes and folds once per text, and not while the prose waits.
 	const root = useMemo(
 		() => (waiting ? undefined : parts(lexer(markdown))),
@@ -305,7 +324,7 @@ export function Prose({ markdown, loading }: ProseProps) {
 		return (
 			<View accessibilityState={{ busy: true }} className={cn(PROSE, COLUMN)}>
 				<View className={PROSE_BLOCKS}>
-					{BARS.map((paragraph, index) => (
+					{paragraphsOf(lines ?? DEFAULT_WAIT).map((paragraph, index) => (
 						// biome-ignore lint/suspicious/noArrayIndexKey: the paragraphs are fixed stand-ins
 						<View key={index}>
 							{paragraph.map((width, line) => (

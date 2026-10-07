@@ -95,7 +95,7 @@ function isStatus(
 	return typeof value === "object" && value !== null && "status" in value;
 }
 
-/** The change mark at the start, the label at body 500 with the value at the line's end (a value too long for its room cut in its middle, the whole value still its text), the description under both; an icon act, or a link's chevron in the act's square, at the row's end, so values with either end at one x. A locked row draws a lock after its value and its reason under both in the description's place, the whole line a link with an `href`. */
+/** The change mark at the start, the label at body 500 with the value at the line's end (a value too long for its room cut in its middle, the whole value still its text), the description under both; an icon act, or a link's chevron in the act's square, at the row's end, so values with either end at one x. A locked row draws a lock after its value and its reason under both in the description's place, the whole line a link with an `href`. It waits through its Group or Section, drawing the form of the row it is given. */
 export function DefinitionRow({
 	change,
 	label,

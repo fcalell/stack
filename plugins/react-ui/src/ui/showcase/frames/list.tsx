@@ -70,6 +70,32 @@ const HOSTS = [
 
 const refetch = () => {};
 
+// Rows whose titles are known before their counts: loading, they stand as
+// loaded with the counts waiting.
+const AREAS = [
+	{ id: "a1", name: "Notes", count: 12 },
+	{ id: "a2", name: "Deploys", count: 3 },
+	{ id: "a3", name: "Hosts", count: 2 },
+];
+
+/** A List of known rows with a trailing count, loaded or waiting for the counts. */
+export function Areas(props: { loading?: boolean }) {
+	return (
+		<Section title="Areas">
+			<List
+				items={AREAS}
+				loading={props.loading}
+				row={{
+					key: (area) => area.id,
+					title: (area) => area.name,
+					trailing: (area) => ({ count: area.count }),
+					href: (area) => `#${area.id}`,
+				}}
+			/>
+		</Section>
+	);
+}
+
 // Every cell draws four Lists in the frame's state, each in a Section on a
 // page as it ships: notes (a title over a meta line, no leading), deploys
 // (an avatar leading, an age trailing), each waiting in its own rows' slots,
@@ -159,6 +185,12 @@ export function drawList(frame: ShowcaseFrame) {
 						/>
 					</Group>
 				</Section>
+				{frame.state === "loading" ? (
+					<>
+						<Areas />
+						<Areas loading />
+					</>
+				) : null}
 			</Place>
 		</Column>
 	);

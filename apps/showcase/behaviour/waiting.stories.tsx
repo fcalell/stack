@@ -1,11 +1,18 @@
+import { ActionBar } from "@fcalell/plugin-react-ui/components/action-bar";
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
 import { Input } from "@fcalell/plugin-react-ui/components/input";
+import { Prose } from "@fcalell/plugin-react-ui/components/prose";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
 import { Slider } from "@fcalell/plugin-react-ui/components/slider";
 import { Facts } from "@fcalell/plugin-react-ui/showcase/frames/definition-row";
 import { Static } from "@fcalell/plugin-react-ui/showcase/frames/group";
-import { Bodies } from "@fcalell/plugin-react-ui/showcase/frames/section";
+import { Areas } from "@fcalell/plugin-react-ui/showcase/frames/list";
+import { Sentence } from "@fcalell/plugin-react-ui/showcase/frames/prose";
+import {
+	Bodies,
+	Described,
+} from "@fcalell/plugin-react-ui/showcase/frames/section";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import type { ReactNode } from "react";
 import { expect, waitFor, within } from "storybook/test";
@@ -176,6 +183,115 @@ const fields: StoryObj = {
 	},
 };
 
+// A waiting Prose stands for the lines it is told: one line waits as one line.
+const sentence: StoryObj = {
+	render: () => <Pair loaded={<Sentence />} waiting={<Sentence loading />} />,
+	play: async ({ canvas }) => {
+		await stand(canvas);
+	},
+};
+
+// A waiting Prose without a count keeps its two paragraphs; given one it draws
+// that many lines of one.
+const lines: StoryObj = {
+	render: () => (
+		<div className="w-sheet max-w-full">
+			<div data-testid="default">
+				<Prose markdown="x" loading />
+			</div>
+			<div data-testid="three">
+				<Prose markdown="x" loading={3} />
+			</div>
+		</div>
+	),
+	play: async ({ canvas }) => {
+		const paragraphs = (id: string) => [
+			...(canvas.getByTestId(id).querySelector("[aria-busy]")?.firstElementChild
+				?.children ?? []),
+		];
+		await expect(paragraphs("default")).toHaveLength(2);
+		await expect(paragraphs("three")).toHaveLength(1);
+		await expect(paragraphs("three")[0]?.children).toHaveLength(3);
+	},
+};
+
+// A bar waits as the acts it is told, loaded against waiting at each count and
+// fit: the control's box at the end, the field across, one per row on touch.
+const acts = (count: number) =>
+	Array.from({ length: count }, (_, at) => ({
+		label: `Act ${at + 1}`,
+		onAct: change,
+	}));
+const actBar: StoryObj = {
+	render: () => (
+		<>
+			{(["end", "full"] as const).flatMap((fit) =>
+				[1, 2].map((count) => (
+					<Pair
+						key={`${fit}-${count}`}
+						loaded={<ActionBar fit={fit} acts={acts(count)} />}
+						waiting={<ActionBar fit={fit} acts={[]} loading={count} />}
+					/>
+				)),
+			)}
+		</>
+	),
+	play: async ({ canvas }) => {
+		for (let at = 0; at < 4; at++) await stand(canvas, at);
+		await expect(canvas.queryAllByRole("button")).toHaveLength(6);
+	},
+};
+
+// `0` and `false` are not waiting: the loaded Prose and the loaded bar draw.
+const zero: StoryObj = {
+	render: () => (
+		<div className="flex flex-col gap-sections w-sheet max-w-full">
+			<Prose markdown="Reads as text." loading={0} />
+			<ActionBar acts={acts(1)} loading={0} />
+			<ActionBar acts={[{ label: "Kept", onAct: change }]} loading={false} />
+		</div>
+	),
+	play: async ({ canvas }) => {
+		await expect(canvas.getByText("Reads as text.")).toBeVisible();
+		await expect(canvas.getByRole("button", { name: "Act 1" })).toBeVisible();
+		await expect(canvas.getByRole("button", { name: "Kept" })).toBeVisible();
+	},
+};
+
+// A loading Section with `description=""` stands one meta line's bar, so its head
+// keeps its loaded height; an undefined `description` stands none.
+const described: StoryObj = {
+	render: () => (
+		<>
+			<Pair loaded={<Described />} waiting={<Described loading />} />
+			<Pair
+				loaded={<Section title="Check" />}
+				waiting={<Section title="Check" loading />}
+			/>
+		</>
+	),
+	play: async ({ canvas }) => {
+		await stand(canvas, 0);
+		await stand(canvas, 1);
+		const bare = height(canvas.getAllByTestId("waiting")[1] as Element);
+		const bar = height(canvas.getAllByTestId("waiting")[0] as Element);
+		await expect(bar).toBeGreaterThan(bare);
+	},
+};
+
+// A List given its items while it loads stands as the loaded rows with their
+// titles, only the trailing counts waiting at the loaded rows' height.
+const known: StoryObj = {
+	render: () => <Pair loaded={<Areas />} waiting={<Areas loading />} />,
+	play: async ({ canvas }) => {
+		const { waiting } = await stand(canvas);
+		const here = within(waiting);
+		for (const name of ["Notes", "Deploys", "Hosts"])
+			await expect(here.getByText(name)).toBeVisible();
+		await expect(here.queryByText("12")).toBeNull();
+	},
+};
+
 export const GroupOfStaticParts = group;
 export const SliderAloneAndInAGroup = sliders;
 export const DefinitionRowsInACard = facts;
@@ -206,7 +322,18 @@ function touch(story: StoryObj): StoryObj {
 	};
 }
 
+export const ProseOfOneLine = sentence;
+export const ProseLineCount = lines;
+export const ActionBarAtItsActs = actBar;
+export const NotWaitingAtZero = zero;
+export const SectionDescriptionLine = described;
+export const ListOfKnownRows = known;
+
 export const GroupOfStaticPartsTouch = touch(group);
+export const ProseOfOneLineTouch = touch(sentence);
+export const ActionBarAtItsActsTouch = touch(actBar);
+export const SectionDescriptionLineTouch = touch(described);
+export const ListOfKnownRowsTouch = touch(known);
 export const SliderAloneAndInAGroupTouch = touch(sliders);
 export const DefinitionRowsInACardTouch = touch(facts);
 export const SectionOverItsPartsTouch = touch(bodies);

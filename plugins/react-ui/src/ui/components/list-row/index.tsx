@@ -27,6 +27,7 @@ import {
 	rowStep,
 	rowTitle,
 	rowTitleForm,
+	skeleton,
 	TREE_LANE,
 	TREE_RAIL,
 	text,
@@ -42,6 +43,7 @@ import { follow, navigate, useRoute } from "../../lib/navigate.ts";
 import { joinParts, META_CUT, partText } from "../../lib/parts.ts";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
+import { TrailingWait } from "../../lib/trailing-wait.ts";
 import { type RowTree, TreeContext } from "../../lib/tree.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Avatar } from "../avatar/index.tsx";
@@ -97,6 +99,8 @@ const TITLE = "truncate grow";
 const TITLE_WHOLE = "grow min-w-0 wrap-break-word";
 const LINE_WHOLE = "flex items-start min-w-0";
 const TRAILING = "shrink-0";
+// A trailing value waiting: four figures, a count's or an age's width.
+const TRAILING_BAR = "w-figures";
 // A one-line title and its value stand on a line that wraps: the title's basis
 // is half the line, so the value, wider than what that leaves, wraps under the
 // line's one height and is clipped away; with room, the title grows to fill
@@ -327,6 +331,7 @@ export function ListRow<V extends string | null = string>({
 	const words = useWords();
 	const ground = use(GroundContext);
 	const tree = use(TreeContext);
+	const waits = use(TrailingWait);
 	const at = useRoute();
 	const named = partText(title);
 	const current = selected || (href !== undefined && isCurrent(href, at));
@@ -363,9 +368,16 @@ export function ListRow<V extends string | null = string>({
 	const value =
 		trailing && !("pick" in trailing) ? (
 			<First on={top}>
-				<span className={cn(ROW_TRAILING, TRAILING)}>
-					{trailingWord(trailing)}
-				</span>
+				{waits ? (
+					<span
+						aria-hidden
+						className={cn(skeleton({ kind: "line" }), TRAILING_BAR, TRAILING)}
+					/>
+				) : (
+					<span className={cn(ROW_TRAILING, TRAILING)}>
+						{trailingWord(trailing)}
+					</span>
+				)}
 			</First>
 		) : null;
 	// A value beside a one-line title is whole or gone: the title holds half its

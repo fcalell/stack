@@ -1,4 +1,5 @@
 import type { Act, ChosenCount } from "@fcalell/ui-core/descriptors";
+import { waitCount } from "@fcalell/ui-core/list-state";
 import { pressStands } from "@fcalell/ui-core/reason";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
@@ -24,10 +25,12 @@ import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FormStands } from "../../lib/form";
+import { LoadingContext } from "../../lib/loading";
 import { ActFailed, ReasonHostContext, ReasonKept } from "../../lib/reason";
 import { useTouched } from "../../lib/touched";
 import { useWords } from "../../lib/words";
 import { Button } from "../button";
+import { ActionBarWait } from "./wait";
 
 // The touch structure at either fit: one act per row across the container,
 // the filled act first.
@@ -63,6 +66,13 @@ export interface ActionBarProps extends Closed {
 	// `onAll` a select-all and a deselect-all act beside it. Docked as a
 	// `Place`'s `foot`, its column centred in it.
 	chosen?: ChosenCount;
+	// The acts wait: a count of act-shaped bars, `true` standing for one (the
+	// acts are unknown before the read, so give `acts` as `[]`). A number from 1
+	// is the count of acts the bar will hold, and 0 or `false` is not waiting,
+	// so `loading={rows?.length}` reads the loaded bar at 0. Unset, a loading
+	// `Group` or `Section` around it makes it wait, as one act: it hands down a
+	// boolean, so set the count on the bar itself.
+	loading?: boolean | number;
 }
 
 function AllAct(props: { label: string; applies: boolean; onAct: () => void }) {
@@ -143,7 +153,7 @@ function ActHost(props: {
 // the press meanwhile. A blocked act's reason draws under the acts, so the
 // act keeps its row and stretches as a live one does. With `chosen` the count
 // stands over the acts at the bar's start.
-export function ActionBar({ acts, fit, chosen }: ActionBarProps) {
+export function ActionBar({ acts, fit, chosen, loading }: ActionBarProps) {
 	// Inside a `Gate` a bar with no `fit` stands across the column.
 	const inColumn = useContext(FormStands) === "auth";
 	const where = fit ?? (inColumn ? "full" : "end");
@@ -165,7 +175,9 @@ export function ActionBar({ acts, fit, chosen }: ActionBarProps) {
 		[],
 	);
 	const busy = running || acts.some((act) => act.loading);
+	const waits = waitCount(loading, useContext(LoadingContext), 1);
 	const lastAt = acts.length - 1;
+	if (waits !== undefined) return <ActionBarWait fit={where} count={waits} />;
 	const runFilled = () => {
 		const ran = acts[lastAt]?.onAct();
 		if (!(ran instanceof Promise)) return;
