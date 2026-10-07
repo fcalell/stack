@@ -24,16 +24,12 @@ const BAR = "w-full";
 
 // A Meter waiting: the label, share, bar and, when `line` is not `none`, the
 // line under the bar as bars in their boxes (a meta line's, or one count
-// link's target box); busy when it waits alone (a list of them is busy once).
-// Outside the package's exports.
-export function MeterWait(props: { busy: boolean; line: WaitLine }) {
+// link's target box). Outside the package's exports.
+export function MeterWait(props: { line: WaitLine }) {
 	// In a Group the meter is one of its items, at the card's inset.
 	const item = useContext(GroundContext) === "group" && GROUP_ITEM;
 	return (
-		<View
-			accessibilityState={{ busy: props.busy }}
-			className={cn(METER, item, STACK)}
-		>
+		<View className={cn(METER, item, STACK)}>
 			<View className={cn(METER_HEAD, HEAD)}>
 				<View className={cn(LINE, LABEL_WAIT)}>
 					<Strut role="body" />

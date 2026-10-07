@@ -151,13 +151,8 @@ function FieldBody<V>(props: FormFieldProps<V>) {
 		return () => cancelAnimationFrame(frame);
 	}, [folded]);
 	const labelId = useId();
-	const saidId = useId();
-	// What a group of controls is named and described by, one value per change.
-	const described = error || description ? saidId : undefined;
-	const group = useMemo(
-		() => ({ labelledBy: labelId, describedBy: described }),
-		[labelId, described],
-	);
+	// What a group of controls is named by.
+	const group = useMemo(() => ({ labelledBy: labelId }), [labelId]);
 	const holds =
 		form === "switch" || form === "checkbox" ? form : ("field" as const);
 	const named = (
@@ -183,8 +178,8 @@ function FieldBody<V>(props: FormFieldProps<V>) {
 			{description}
 		</Field.Description>
 	) : null;
-	// A group takes no field context: its label and its line under it name and
-	// describe the group, never the controls inside.
+	// A group takes no field context: its label names the group, never the
+	// controls inside.
 	if (answered)
 		return (
 			<div ref={root} className={cn(FORM_FIELD_SUMMARY, SUMMARY)}>
@@ -226,10 +221,7 @@ function FieldBody<V>(props: FormFieldProps<V>) {
 				</p>
 				<GroupName value={group}>{control}</GroupName>
 				{error || description ? (
-					<p
-						id={saidId}
-						className={error ? FIELD_ERROR_LINE : text({ role: "meta" })}
-					>
+					<p className={error ? FIELD_ERROR_LINE : text({ role: "meta" })}>
 						{error ?? description}
 					</p>
 				) : null}

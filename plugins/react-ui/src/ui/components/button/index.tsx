@@ -1,19 +1,17 @@
 import { Button as BaseButton } from "@base-ui/react/button";
 import { cn } from "@fcalell/ui-core/cn";
 import type { IconName } from "@fcalell/ui-core/descriptors";
-import { counted } from "@fcalell/ui-core/tokens";
 import {
 	type ButtonAct,
 	type ButtonFit,
 	button,
 	buttonLabel,
 } from "@fcalell/ui-core/variants";
-import { use, useId } from "react";
+import { use } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { ActInert, endSubmit, SubmitContext } from "../../lib/form.ts";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
-import { useWords } from "../../lib/words.tsx";
 import { Count } from "../count/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { Spinner } from "../spinner/index.tsx";
@@ -62,13 +60,13 @@ export interface ButtonProps extends Closed {
 	label: string;
 	/** A number after the label, in a grey pill. */
 	count?: number;
-	/** A wait, in seconds left: the act is inert while it is above zero, its count drawn and its name carrying the seconds left, and it draws no reason, so its row never grows. At zero the count's slot stays, hidden, so the act keeps its width. */
+	/** A wait, in seconds left: the act is inert while it is above zero, its count drawn, and it draws no reason, so its row never grows. At zero the count's slot stays, hidden, so the act keeps its width. */
 	wait?: number;
 	/** Runs the act. */
 	onAct?: () => void;
 	/** The act is running: inert, its glyph and label hidden under a spinner, its name kept. */
 	loading?: boolean;
-	/** Why the act cannot run: it is inert, describes itself by this sentence, and shows it under itself once pressed or once its form or sheet is touched. */
+	/** Why the act cannot run: it is inert, and shows this sentence under itself once pressed or once its form or sheet is touched. */
 	blocked?: string;
 }
 
@@ -84,9 +82,7 @@ export function Button({
 	loading,
 	blocked,
 }: ButtonProps) {
-	const words = useWords();
 	const kind = act ?? "primary";
-	const reason = useId();
 	const muted = blocked !== undefined;
 	const { touched } = useTouched();
 	const host = use(ReasonHostContext);
@@ -111,12 +107,8 @@ export function Button({
 			disabled={loading}
 			focusableWhenDisabled
 			type={submits ? "submit" : "button"}
-			aria-label={
-				waiting ? `${label}, ${counted(words.waitLeft, wait)}` : undefined
-			}
 			aria-disabled={loading || muted || inert || undefined}
 			aria-busy={loading || undefined}
-			aria-describedby={muted ? (host?.id ?? reason) : undefined}
 			onClick={(event) => {
 				endSubmit(submits, event);
 				press();
@@ -132,10 +124,7 @@ export function Button({
 				{label}
 			</span>
 			{wait !== undefined ? (
-				<span
-					aria-hidden
-					className={cn(GLYPH, (loading || !waiting) && PENDING)}
-				>
+				<span className={cn(GLYPH, (loading || !waiting) && PENDING)}>
 					<Count value={wait} />
 				</span>
 			) : count !== undefined ? (
@@ -155,9 +144,7 @@ export function Button({
 	return (
 		<div className={STACK}>
 			{control}
-			<Reason id={reason} shown={said}>
-				{blocked}
-			</Reason>
+			<Reason shown={said}>{blocked}</Reason>
 		</div>
 	);
 }

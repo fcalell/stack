@@ -284,8 +284,6 @@ interface Composed {
 	drawn?: (handed: ComponentProps<"button">, open: boolean) => ReactElement;
 	/** The family a chip column's value and options draw as chips of. */
 	chip?: ChipFamily;
-	/** The trigger's name where its composer says more than the value (a sort's direction). */
-	name?: string;
 	/** Which edge of the trigger the desktop list hangs from: its end (the default), or its start where the trigger leads its line (a title's context, a header's fact). */
 	align?: "start" | "end";
 }
@@ -304,16 +302,7 @@ export function PickerBase<V extends string | null = string>(
 export function PickerBase<V extends string | null = string>(
 	props: PickerProps<V> & Composed,
 ) {
-	const {
-		label,
-		options,
-		fit = "field",
-		act,
-		drawn,
-		chip,
-		name,
-		align,
-	} = props;
+	const { label, options, fit = "field", act, drawn, chip, align } = props;
 	// A pick of several: its value is an array, which `Several` types as one.
 	const several = isSeveral(props) ? props : undefined;
 	const value = isSeveral(props) ? undefined : props.value;
@@ -360,7 +349,6 @@ export function PickerBase<V extends string | null = string>(
 	};
 	// A row's pick names its value with it; a field box's value is its own.
 	const named =
-		name ??
 		cell?.label ??
 		(fit === "row" && current ? `${label}, ${current.label}` : label);
 	const glyph = current?.icon ? (

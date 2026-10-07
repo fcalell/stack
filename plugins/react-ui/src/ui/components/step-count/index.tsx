@@ -22,13 +22,12 @@ export interface StepCountProps extends Closed {
 	of: number;
 }
 
-/** One segment per step at the meter's height, the steps up to the current one in the meta ink and the later ones a wash, over "Step n of m" at meta, which names it to assistive tech. */
+/** One segment per step at the meter's height, the steps up to the current one in the meta ink and the later ones a wash, over "Step n of m" at meta. */
 export function StepCount({ at, of }: StepCountProps) {
 	const words = useWords();
 	const sentence = filled(words.stepOf, { at: String(at), of: String(of) });
 	return (
-		// The role's children are presentational: the sentence is its name.
-		<div role="img" aria-label={sentence} className={cn(STEP_COUNT, STACK)}>
+		<div className={cn(STEP_COUNT, STACK)}>
 			<div className={cn(STEP_COUNT_SEGMENTS, SEGMENTS)}>
 				{Array.from({ length: of }, (_, index) => index + 1).map((step) => (
 					<div

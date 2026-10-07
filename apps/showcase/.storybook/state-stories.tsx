@@ -12,7 +12,7 @@ interface Args {
 // run in disabled ink), about 3:1. Axe exempts only a disabled control, and these are enabled
 // buttons, so their text is left out of the check. Only the dimmed frames, only Canvas. The
 // exclusion is the whole node, not `color-contrast` alone: a per-story `config.rules` entry
-// replaces the preview's page-level list (arrays do not merge), so scoping the rule would copy it.
+// replaces the preview's document-rule list (arrays do not merge), so scoping the rule would copy it.
 const UNCHECKED: Record<string, string[]> = {
 	Canvas: [
 		'[data-cell^="Canvas/CANVAS_NODE_TEXT.tone.dimmed/"] [data-layer] button',

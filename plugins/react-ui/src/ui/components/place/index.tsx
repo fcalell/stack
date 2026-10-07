@@ -65,11 +65,8 @@ const ROW_MARKED =
 	"hidden items-center page-max-tablet:group-has-data-record/page:flex page-max-wide:group-has-data-pane/page:flex group-has-[[data-pane][data-beside]]/page:flex";
 const HEAD = "flex flex-col";
 // Below `tablet` of the page a record standing beside the main stands alone,
-// its head the page's one, so the Place draws none; its title stays read as
-// an unseen `h1`, so the page keeps its `h1` and the record its level.
+// its head the page's one, so the Place draws none.
 const HEAD_BESIDE = "page-max-tablet:group-has-data-beside/page:hidden";
-const TITLE_ALONE =
-	"sr-only hidden page-max-tablet:group-has-data-beside/page:block";
 const ROW = "flex items-center";
 const SPACER = "grow";
 const TITLE = "min-w-0 grow truncate";
@@ -336,7 +333,6 @@ export function Place({
 							data-density={far ? "room" : undefined}
 							className={cn(PLACE, PAGE)}
 						>
-							<h1 className={TITLE_ALONE}>{title}</h1>
 							{head}
 							<div className={REGION}>
 								<div className={BODY_WRAP}>

@@ -14,7 +14,6 @@ import {
 	cellLocked,
 	changeKind,
 	changeMeta,
-	changeReading,
 	chooseAllToggled,
 	chooseHead,
 	chooseReason,
@@ -56,7 +55,6 @@ import {
 	memo,
 	type ReactNode,
 	use,
-	useId,
 	useMemo,
 	useRef,
 	useState,
@@ -101,9 +99,8 @@ const LIST_FORM = "flex flex-col grow page-tablet:hidden";
 // cells alone, never over a sheet or a floating act.
 const FRAME = "flex flex-col isolate";
 // On touch every column stands at one width and the grid scrolls sideways
-// under its frozen leading column. The scroller is positioned so the spoken
-// spans of its cells (absolute) stand in its scroll, never past it.
-const SCROLLS = "relative overflow-x-auto";
+// under its frozen leading column.
+const SCROLLS = "overflow-x-auto";
 const FIT = "w-full table-fixed";
 const MAX = "w-max table-fixed";
 const HEAD_CELL = "p-0 font-normal";
@@ -144,9 +141,6 @@ const CHANGE = "flex items-center min-w-0";
 const CHANGE_LEAD = "flex items-start min-w-0";
 const MARK_LINE = "flex shrink-0 items-center h-line-body";
 const TICK = "flex shrink-0 text-ink-body";
-// What a cell says aloud and does not draw: a ticked read-only check its
-// column's label, a lock its word, a change its reading.
-const SPOKEN = "sr-only";
 // The empty slot spans the grid: a framed EmptyState stands across it, an
 // unframed one centres in what the page's body leaves.
 const EMPTY = "flex flex-col grow";
@@ -380,7 +374,6 @@ const Row = memo(function Row(props: {
 	const name = lead ? shown(lead, row.cells[lead.key]) : "";
 	const shift = choosing ? 1 : 0;
 	const reason = chooseReason(row);
-	const reasonId = useId();
 	return (
 		<tr
 			aria-selected={chosen || undefined}
@@ -397,7 +390,6 @@ const Row = memo(function Row(props: {
 					index={index}
 					name={name}
 					ticked={props.ticked}
-					describedBy={reason === undefined ? undefined : reasonId}
 					tall={reason !== undefined}
 					frozen={props.touch}
 					chosen={chosen}
@@ -415,13 +407,11 @@ const Row = memo(function Row(props: {
 					place={place + shift}
 					leading={place === 0}
 					cell={row.cells[column.key]}
-					name={`${column.label}, ${name}`}
 					control={editOf(columns, place, props.edits, row)?.control}
 					locked={cellLocked(column, place === 0, props.edits, row)}
 					frozen={props.touch && place === 0}
 					shifted={choosing}
 					reason={reason}
-					reasonId={reasonId}
 					chosen={chosen}
 					opens={opens}
 					here={props.cursor === place + shift}
@@ -433,15 +423,14 @@ const Row = memo(function Row(props: {
 	);
 });
 
-// A row's tick cell: a Checkbox named by the leading cell's name and
-// described by the row's reason, disabled while the row is blocked. Frozen
+// A row's tick cell: a Checkbox named by the leading cell's name, disabled
+// while the row is blocked. Frozen
 // first on touch, where the leading column freezes after it.
 function TickCell(props: {
 	row: TableRecord;
 	index: number;
 	name: string;
 	ticked: boolean;
-	describedBy: string | undefined;
 	tall: boolean;
 	frozen: boolean;
 	chosen: boolean;
@@ -481,7 +470,7 @@ function TickCell(props: {
 							home: () => actions.home(index, 0),
 						}}
 					>
-						<LabelTarget value={{ describedBy: props.describedBy }}>
+						<LabelTarget value={{}}>
 							<Checkbox
 								checked={props.ticked}
 								onChange={(on) => actions.tick(row, on)}
@@ -506,23 +495,21 @@ const Cell = memo(function Cell(props: {
 	place: number;
 	leading: boolean;
 	cell: TableCell | undefined;
-	name: string;
 	control: NonNullable<TableColumn["edit"]>["control"] | undefined;
 	// Its row locks a value its column edits: a lock ends the cell.
 	locked: boolean;
 	frozen: boolean;
 	// A tick column stands before it.
 	shifted: boolean;
-	// The leading cell's reason under the name, the id its tick is described by.
+	// The leading cell's reason under the name.
 	reason: string | undefined;
-	reasonId: string;
 	chosen: boolean;
 	opens: boolean;
 	here: boolean;
 	editing: Editing | undefined;
 	actions: GridActions;
 }) {
-	const { row, index, column, place, cell, name, control, actions } = props;
+	const { row, index, column, place, cell, control, actions } = props;
 	const [hovered, setHovered] = useState(false);
 	// A started edit's control mounts afresh over the one the pointer showed,
 	// so it mounts focused or open.
@@ -532,7 +519,7 @@ const Cell = memo(function Cell(props: {
 		control !== "checkbox" &&
 		(props.editing !== undefined || hovered);
 	const field = (starting: boolean) => ({
-		label: name,
+		label: column.label,
 		starts: starting,
 		done: actions.done,
 		home: () => actions.home(index, place),
@@ -589,7 +576,7 @@ const Cell = memo(function Cell(props: {
 							<Checkbox
 								checked={cell === true}
 								onChange={(checked) => actions.edit(row, column, checked)}
-								label={name}
+								label={column.label}
 							/>
 						</LabelTarget>
 					</CellField>
@@ -604,7 +591,6 @@ const Cell = memo(function Cell(props: {
 						warning={row.warning}
 						change={row.change}
 						reason={props.reason}
-						reasonId={props.reasonId}
 					/>
 					{props.locked ? <LockMark /> : null}
 				</div>
@@ -1012,10 +998,8 @@ function CellValueView(props: {
 	warning: string | undefined;
 	change: ChangeKind | undefined;
 	reason: string | undefined;
-	reasonId: string;
 }) {
 	const { column, cell, leading } = props;
-	const words = useWords();
 	if (cell === null || cell === undefined) return null;
 	if (leading) {
 		const strong = cn(
@@ -1046,10 +1030,7 @@ function CellValueView(props: {
 			) : (
 				<span className={REASON_STACK}>
 					{line}
-					<span
-						id={props.reasonId}
-						className={cn(text({ role: "meta" }), VALUE)}
-					>
+					<span className={cn(text({ role: "meta" }), VALUE)}>
 						{props.reason}
 					</span>
 				</span>
@@ -1071,7 +1052,6 @@ function CellValueView(props: {
 			return cell === true ? (
 				<span className={TICK}>
 					<Icon name="Check" />
-					<span className={SPOKEN}>{column.label}</span>
 				</span>
 			) : null;
 		case "status": {
@@ -1082,13 +1062,10 @@ function CellValueView(props: {
 			if (!isChangeCell(cell)) return null;
 			const kind = changeKind(cell);
 			if (kind === undefined) return null;
-			// The words read it whole; the glyphs and values only draw it.
 			return (
 				<span className={cn(CHANGE, TABLE_CHANGE)}>
-					<span className={SPOKEN}>{changeReading(cell, words)}</span>
 					{cell.before !== null && (
 						<span
-							aria-hidden
 							className={cn(
 								tableChangeValue({
 									kind: kind === "removed" ? "removed" : "before",
@@ -1103,7 +1080,6 @@ function CellValueView(props: {
 					{kind === "changed" && <Icon name="ArrowRight" fit="meta" />}
 					{cell.after !== null && (
 						<span
-							aria-hidden
 							className={cn(
 								tableChangeValue({
 									kind: kind === "added" ? "added" : "after",
@@ -1284,11 +1260,6 @@ function Phone(props: {
 		<div className={SORT_BAR}>
 			<PickerBase<string>
 				label={words.sort}
-				name={
-					sortedBy && sort
-						? `${words.sort}, ${sortedBy.label}, ${words[sort.direction]}`
-						: undefined
-				}
 				options={sortable.map((column) => ({
 					value: column.key,
 					label: column.label,

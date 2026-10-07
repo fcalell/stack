@@ -46,11 +46,11 @@ export function Stats({ items, loading }: StatsProps) {
 						className={cn(STATS_CELL, CELL, item.href !== undefined && OPENS)}
 					>
 						{item.href !== undefined ? (
-							// biome-ignore lint/a11y/useAnchorContent: the hit covers the cell, named by its label, value and unit
+							// biome-ignore lint/a11y/useAnchorContent: the hit covers the cell, named by its label
 							<a
 								href={item.href}
 								onClick={follow}
-								aria-label={`${item.label}, ${number.format(item.value)}${item.unit ? ` ${item.unit}` : ""}`}
+								aria-label={item.label}
 								className={HIT}
 							/>
 						) : null}

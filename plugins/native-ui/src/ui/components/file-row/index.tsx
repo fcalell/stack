@@ -5,7 +5,7 @@ import type {
 } from "@fcalell/ui-core/descriptors";
 import { pathCut } from "@fcalell/ui-core/list-state";
 import { isCurrent } from "@fcalell/ui-core/route";
-import { filled } from "@fcalell/ui-core/tokens";
+
 import {
 	FILE_COUNTS,
 	FILE_PATH,
@@ -23,7 +23,7 @@ import { Ink } from "../../lib/ink";
 import { navigate, usePathname } from "../../lib/navigate";
 import type { Route } from "../../lib/route";
 import { useCSSVariable } from "../../lib/theme";
-import { useWords } from "../../lib/words";
+
 import { Chip } from "../chip";
 import { Icon } from "../icon";
 import { ChangeMark } from "../status/change";
@@ -101,8 +101,6 @@ function Path({ path }: { path: string }) {
 	return (
 		<View
 			pointerEvents="none"
-			accessibilityElementsHidden
-			importantForAccessibility="no-hide-descendants"
 			className={PATH}
 			style={{ minWidth: pathCut(name).floor * advance }}
 		>
@@ -134,8 +132,7 @@ function Path({ path }: { path: string }) {
 // the meta ink, the name at 500) cut to the room its chip leaves, its chip,
 // its added and removed counts each in its own lane. A row that opens is one
 // hit, current (the selection wash) at its `href`, named by the whole path,
-// its chip, its counts and its seen state, the cut text never read; it washes
-// under the press.
+// the cut text never read; it washes under the press.
 // In a `Group` it runs edge to edge at the card's inset, elsewhere it is the
 // list's row, square on the phone.
 export function FileRow({
@@ -149,32 +146,15 @@ export function FileRow({
 	onOpen,
 	loading,
 }: FileRowProps) {
-	const words = useWords();
 	const ground = useContext(GroundContext);
 	const pathname = usePathname();
 	if (loading)
-		return (
-			<FileWait busy change={change !== undefined} chip={chip !== undefined} />
-		);
-	const seenWord = seen ? words.seen : words.unseen;
-	const named = [
-		path,
-		change ? words[change] : undefined,
-		chip?.label,
-		added > 0 ? filled(words.linesAdded, { count: String(added) }) : undefined,
-		removed > 0
-			? filled(words.linesRemoved, { count: String(removed) })
-			: undefined,
-		seen === undefined ? undefined : seenWord,
-	]
-		.filter(Boolean)
-		.join(", ");
+		return <FileWait change={change !== undefined} chip={chip !== undefined} />;
+
 	const current = href !== undefined && isCurrent(href, pathname);
 	const open = href !== undefined ? () => navigate(href) : onOpen;
 	return (
 		<View
-			accessible={!open}
-			accessibilityLabel={open ? undefined : named}
 			className={cn(
 				row({ lines: "one", ground, state: current ? "selected" : "rest" }),
 				ROW,
@@ -184,49 +164,29 @@ export function FileRow({
 			{open ? (
 				<Pressable
 					accessibilityRole={href !== undefined ? "link" : "button"}
-					accessibilityLabel={named}
+					accessibilityLabel={path}
 					accessibilityState={{ selected: current }}
 					onPress={open}
 					className={HIT}
 				/>
 			) : null}
 			{change ? (
-				<View
-					pointerEvents="none"
-					accessibilityElementsHidden
-					importantForAccessibility="no-hide-descendants"
-					className={MARK}
-				>
+				<View pointerEvents="none" className={MARK}>
 					<ChangeMark kind={change} />
 				</View>
 			) : null}
-			<View
-				pointerEvents="none"
-				accessibilityElementsHidden
-				importantForAccessibility="no-hide-descendants"
-				className={cn(ROW_LEADING, LEADING)}
-			>
+			<View pointerEvents="none" className={cn(ROW_LEADING, LEADING)}>
 				<Ink.Provider value="ink-meta">
 					<Icon name={glyph(seen)} />
 				</Ink.Provider>
 			</View>
 			<Path path={path} />
 			{chip ? (
-				<View
-					pointerEvents="none"
-					accessibilityElementsHidden
-					importantForAccessibility="no-hide-descendants"
-					className={CHIP}
-				>
+				<View pointerEvents="none" className={CHIP}>
 					<Chip family={chip.family} label={chip.label} />
 				</View>
 			) : null}
-			<View
-				pointerEvents="none"
-				accessibilityElementsHidden
-				importantForAccessibility="no-hide-descendants"
-				className={cn(FILE_COUNTS, COUNTS)}
-			>
+			<View pointerEvents="none" className={cn(FILE_COUNTS, COUNTS)}>
 				<RNText
 					className={cn(FILE_COUNTS, fileCount({ kind: "added" }), COUNT)}
 				>

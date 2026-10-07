@@ -14,10 +14,14 @@ value can be generated, inferred, defaulted, or auto-wired, a plugin must do it 
 new consumer-facing option is the last resort, not the first.
 
 Accessibility is part of that: the roster's components carry the bar the
-[rubric](../../../packages/ui-core/guide/rubric.md#accessibility) sets, semantics and widget
-behaviour, so a screen composed from them meets it with no consumer code. One correct component
-covers every product and one broken component breaks every product, so a choice that moves this
-behaviour (a primitive library dropped, a widget hand-built) is judged against the bar first.
+[rubric](../../../packages/ui-core/guide/rubric.md#accessibility) sets, native semantics with a name
+on every control and keyboard behaviour, so a screen composed from them meets it with no consumer
+code. One correct component covers every product and one broken component breaks every product, so
+a choice that moves this behaviour (a primitive library dropped, a widget hand-built) is judged
+against the bar first. Screen readers are not a target: nothing is built for one alone (an
+announcement, hidden duplicate content, a sentence assembled only to be spoken) and nothing is
+verified with one, since the names and roles the bar keeps already serve keyboard, voice control,
+tests and agents, and the rest is cost no product has asked for.
 
 ## Everything is opt-in and composable
 

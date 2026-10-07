@@ -9,7 +9,6 @@ import {
 	useFieldClaim,
 	useFieldName,
 } from "../../lib/field";
-import { useLive } from "../../lib/live";
 import { useTouched } from "../../lib/touched";
 import { useWords } from "../../lib/words";
 import { Spinner } from "../spinner";
@@ -31,7 +30,7 @@ export interface InputOtpProps extends Closed {
 // `Gate` unless a typing control there holds it. `onComplete`
 // hears the code once its last digit lands; `loading` holds the boxes at rest
 // while the code is checked, the input inert (unwritable and marked
-// disabled, still read) and the row busy, the spinner and its line under it.
+// disabled, still read), the spinner and its line under it.
 export function InputOtp({
 	length,
 	value,
@@ -44,15 +43,11 @@ export function InputOtp({
 	const name = useFieldName();
 	const error = useContext(FieldError);
 	const focused = useContext(FieldFocus);
-	const live = useLive(loading ? words.checking : "");
 	const input = useRef<TextInput>(null);
 	const column = useFieldClaim(input);
 	return (
 		<View className="gap-pair">
-			<View
-				accessibilityState={{ busy: loading }}
-				className={cn(OTP, "relative flex-row items-center")}
-			>
+			<View className={cn(OTP, "relative flex-row items-center")}>
 				{Array.from({ length }, (_, index) => (
 					<View
 						// biome-ignore lint/suspicious/noArrayIndexKey: a box is its position
@@ -92,7 +87,7 @@ export function InputOtp({
 				/>
 			</View>
 			{loading ? (
-				<View {...live} className="flex-row items-center gap-inside">
+				<View className="flex-row items-center gap-inside">
 					<Spinner />
 					<RNText className={text({ role: "meta" })}>{words.checking}</RNText>
 				</View>

@@ -6,14 +6,6 @@ import {
 import type { StoryObj } from "@storybook/react-vite";
 import { expect, waitFor } from "storybook/test";
 
-// A page is judged as the document it is: every axe rule runs, the page-level
-// ones included, over the whole document (`html`), and `region`, which
-// Storybook switches off, is back on.
-const PAGE_A11Y = {
-	context: "html",
-	config: { rules: [{ id: "region", enabled: true }] },
-};
-
 // One page of the `/layout` app in one mode, at the toolbar's density, with
 // its fixture queries answered before the page is judged.
 export function pageStory(
@@ -21,7 +13,7 @@ export function pageStory(
 	mode: "light" | "dark",
 ): StoryObj {
 	return {
-		parameters: { layout: "fullscreen", mode, a11y: PAGE_A11Y },
+		parameters: { layout: "fullscreen", mode },
 		render: (_args, context) => (
 			<LayoutPage
 				here={{

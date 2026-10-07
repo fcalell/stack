@@ -197,7 +197,7 @@ an `IconAct`, a row's `StatusMark` and `ChipMark`, a `PlaceSpec`, all from
 `children` is open only where the roster gives it. A `Form` submits through its `ActionBar`'s
 filled act, the act pending while its promise pends; a `confirm()` takes a `Confirmation`, its `cancel` the way out's own label ("Keep editing") where the `cancel` word is not the decision's.
 
-An act that is out of reach for a while (a resend after a code is sent) is a `Button` with `wait`, its seconds left, never a `blocked` reason that grows its row: it draws the count in its label, is inert while the count is above zero, names the seconds left to assistive tech, and keeps its width at zero. Pass `wait` every tick, `0` once it is live; a `Button` is never wrapped in a context of the roster's own to be inert.
+An act that is out of reach for a while (a resend after a code is sent) is a `Button` with `wait`, its seconds left, never a `blocked` reason that grows its row: it draws the count in its label, is inert while the count is above zero, and keeps its width at zero. Pass `wait` every tick, `0` once it is live; a `Button` is never wrapped in a context of the roster's own to be inert.
 
 A row's marks are named props on the meta line, at most one each, in order: `status`, `warning`
 (what is wrong, a string), `lock` (what it holds, a string, its label shown from `tablet`) and
@@ -225,7 +225,7 @@ acts on the first line, and a `List`'s `row` map takes it as one boolean for eve
 
 Rows that branch (a journey's choice points and their legs) are a tree: the `List`'s `row` map gives
 `children`, each item's children, and the List draws a rail per level, a fold act on every parent
-(open by default, read aloud as expanded or collapsed) and a lane every row reserves for it, so
+(open by default) and a lane every row reserves for it, so
 give each item a `key` unique across the whole tree. Never indent rows with a class, a nested
 `List` or a `ListRow` of your own. A `dim` branch gives `dim` to the parent and every child. The
 tree is a real tree (the WAI-ARIA tree pattern): the list is a `tree` and each row a `treeitem`,
@@ -429,8 +429,7 @@ A `BarChart` takes data the same way, its `bar` map reading each item's `key`, `
 `parts` (by its declared `keys`) and `at`; its failed and empty forms stand at the chart's height.
 Its head sums the bars, which is right for a flow (requests per day); bars that are a level (open
 flags per round, a reading each hour) take `level`, and the head draws the last bar, never the sum.
-A `unit` that takes a plural is `{ one: "flag", other: "flags" }`, never a bare plural: the head and the
-spoken total read the form their figure takes ("1 flag", "6 flags").
+A `unit` that takes a plural is `{ one: "flag", other: "flags" }`, never a bare plural: the head reads the form its figure takes ("1 flag", "6 flags").
 
 Any other region reading a query sits in its own `QueryBoundary`, naming its loading form; it
 draws the not-found form when every failed query answers not found.

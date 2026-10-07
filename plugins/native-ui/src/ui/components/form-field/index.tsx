@@ -34,7 +34,6 @@ import {
 } from "../../lib/field";
 import { GroundContext } from "../../lib/ground";
 import { Ink } from "../../lib/ink";
-import { useLive } from "../../lib/live";
 import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 import { Checkbox, type CheckboxProps } from "../checkbox";
@@ -148,7 +147,6 @@ function FieldBody<V>(props: FormFieldProps<V>) {
 	const control = folded ? null : fieldControl(props);
 	const form = formOf(control);
 	const said = error ?? description;
-	const live = useLive(error ?? "");
 	// What a group of controls is named and described by, one value per change.
 	const group = useMemo(() => ({ label, said }), [label, said]);
 	const labelClass = cn(
@@ -158,9 +156,7 @@ function FieldBody<V>(props: FormFieldProps<V>) {
 	);
 	const named = <RNText className={labelClass}>{label}</RNText>;
 	const line = error ? (
-		<RNText {...live} className={FIELD_ERROR_LINE}>
-			{error}
-		</RNText>
+		<RNText className={FIELD_ERROR_LINE}>{error}</RNText>
 	) : description ? (
 		<RNText className={text({ role: "meta" })}>{description}</RNText>
 	) : null;

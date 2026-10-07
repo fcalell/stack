@@ -6,7 +6,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { Text as RNText, View } from "react-native";
 import { Ink } from "../../lib/ink";
-import { useWords } from "../../lib/words";
+
 import { Icon } from "../icon";
 
 // The warning keeps its glyph and yields its label after the chip and before
@@ -14,16 +14,11 @@ import { Icon } from "../icon";
 const WARNING = "flex-row items-center min-w-icon-meta shrink-10000000";
 const LABEL = "shrink min-w-0";
 
-// What is wrong with a row: a warn glyph and its sentence in the meta ink,
-// read after the word. Outside the package's exports.
+// What is wrong with a row: a warn glyph and its sentence in the meta ink.
+// Outside the package's exports.
 export function WarningMark(props: { label: string }) {
-	const words = useWords();
 	return (
-		<View
-			accessible
-			accessibilityLabel={`${words.warning}. ${props.label}`}
-			className={cn(ROW_MARKS, WARNING)}
-		>
+		<View className={cn(ROW_MARKS, WARNING)}>
 			<Ink.Provider value={rowWarningContentTone()}>
 				<Icon name="TriangleAlert" fit="meta" />
 			</Ink.Provider>

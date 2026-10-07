@@ -169,7 +169,6 @@ export const OVERLAYS: readonly string[] = [
 	"page-max-wide:group-has-data-pane/page:flex",
 	"group-has-[[data-pane][data-beside]]/page:flex",
 	"page-max-tablet:group-has-data-beside/page:hidden",
-	"page-max-tablet:group-has-data-beside/page:block",
 	// A region reads the mark of a Thread filling it: no inset, the log
 	// scrolling; the record's head over it stands in the Thread's column.
 	"[&:has(>[data-fill])]:p-0",
@@ -227,7 +226,6 @@ export const OVERLAYS: readonly string[] = [
 	"top-0",
 	"left-full",
 	"max-w-full",
-	"flex-col-reverse",
 	// DefinitionRow, ItemHeader
 	"relative",
 	"after:absolute",
@@ -384,8 +382,6 @@ export const OVERLAYS: readonly string[] = [
 	"page-max-tablet:basis-0",
 	"page-max-tablet:basis-full",
 	"page-max-tablet:justify-end",
-	"sr-only",
-	"page-max-tablet:sr-only",
 	// Prose, Code, Diff, ProseDiff, FileRow, Comparison
 	"inline-block",
 	"whitespace-pre",
@@ -399,7 +395,7 @@ export const OVERLAYS: readonly string[] = [
 	"text-meta",
 	"items-baseline",
 	"touch:basis-full",
-	"touch:sr-only",
+	"touch:hidden",
 	"text-center",
 	"text-end",
 	"w-full",
@@ -446,6 +442,8 @@ export const OVERLAYS: readonly string[] = [
 	"h-0",
 	"-top-px",
 	"-bottom-px",
+	"-top-inside",
+	"-bottom-inside",
 	"cursor-crosshair",
 	"cursor-default",
 	"bg-edge-strong",

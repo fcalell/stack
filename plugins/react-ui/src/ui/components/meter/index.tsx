@@ -2,7 +2,6 @@ import { cn } from "@fcalell/ui-core/cn";
 import type { CountLink, MeterMark } from "@fcalell/ui-core/descriptors";
 import { formatterFor } from "@fcalell/ui-core/format";
 import { levelOf, waitLine } from "@fcalell/ui-core/list-state";
-import { filled } from "@fcalell/ui-core/tokens";
 import {
 	FIGURES,
 	GROUP_ITEM,
@@ -17,7 +16,6 @@ import {
 import { use } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { GroundContext } from "../../lib/ground.ts";
-import { useWords } from "../../lib/words.tsx";
 import { CountLinks } from "./count-links.tsx";
 import { MeterWait } from "./wait.tsx";
 
@@ -36,9 +34,9 @@ interface MeterBase extends Closed {
 	value: number;
 	/** The limit. */
 	max: number;
-	/** What the value counts (`GB`, `requests`), read aloud with it. */
+	/** What the value counts (`GB`, `requests`). */
 	unit?: string;
-	/** A tick across the track at the mark's value, named to assistive tech: the point the fill turns `warn` at, in place of the near share. */
+	/** A tick across the track at the mark's value: the point the fill turns `warn` at, in place of the near share. */
 	mark?: MeterMark;
 	/** The label, share, bar and the line under it (the `meta` or `counts` given) as bars in their boxes. */
 	loading?: boolean;
@@ -65,41 +63,20 @@ export function Meter({
 	label,
 	value,
 	max,
-	unit,
 	meta,
 	counts,
 	mark,
 	loading,
 }: MeterProps) {
-	const words = useWords();
 	// In a Group the meter is one of its items, at the card's inset.
 	const item = use(GroundContext) === "group" && GROUP_ITEM;
-	if (loading) return <MeterWait busy line={waitLine({ meta, counts })} />;
+	if (loading) return <MeterWait line={waitLine({ meta, counts })} />;
 	const share = max > 0 ? value / max : 0;
 	const markShare = mark && max > 0 ? mark.value / max : undefined;
-	const number = formatterFor("number");
 	const percent = formatterFor("number", undefined, {
 		style: "percent",
 		maximumFractionDigits: 0,
 	}).format(share);
-	// A figure with its unit, when the meter counts one.
-	const unitOf = (figure: string) => (unit ? `${figure} ${unit}` : figure);
-	const amount = unitOf(
-		filled(words.meterValue, {
-			value: number.format(value),
-			max: number.format(max),
-		}),
-	);
-	const rest =
-		share > 1
-			? filled(words.meterOver, { amount: unitOf(number.format(value - max)) })
-			: percent;
-	const marked = mark
-		? `, ${filled(words.meterMark, {
-				name: mark.label,
-				value: unitOf(number.format(mark.value)),
-			})}`
-		: "";
 	return (
 		<div className={cn(METER, item, STACK)}>
 			{/* The role's children are presentational: the counts stand outside it, as links. */}
@@ -110,7 +87,6 @@ export function Meter({
 				aria-valuemin={0}
 				aria-valuemax={max}
 				aria-valuenow={Math.min(value, max)}
-				aria-valuetext={`${amount}, ${rest}${marked}`}
 				className={cn(METER, STACK)}
 			>
 				<div className={cn(METER_HEAD, HEAD)}>

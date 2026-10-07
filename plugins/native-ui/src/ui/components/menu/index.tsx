@@ -3,7 +3,7 @@ import type { Closed } from "../../lib/closed";
 import { MenuBase } from "./base";
 
 export interface MenuProps extends Closed {
-	// The more act's name, read aloud, and the sheet's title.
+	// The more act's name and the sheet's title.
 	label: string;
 	// The acts in order; the destructive ones stand last under a hairline.
 	items: readonly MenuItem[];

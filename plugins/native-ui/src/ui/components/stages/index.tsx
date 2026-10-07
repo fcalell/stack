@@ -16,7 +16,7 @@ import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
 import { moment } from "../../lib/moment";
 import { Strut } from "../../lib/strut";
-import { useWords } from "../../lib/words";
+
 import { Icon } from "../icon";
 
 const LIST = "min-w-0";
@@ -55,8 +55,7 @@ function Row(props: {
 	// The rail the row before runs down to this mark; none above the first.
 	above?: RailState;
 	current?: boolean;
-	// What assistive tech reads for the row: its state, label and moment.
-	spoken: string;
+
 	children: ReactNode;
 }) {
 	// A later label is meta text, so its mark stands on a meta line.
@@ -66,8 +65,6 @@ function Row(props: {
 		: stageRail({ state: railBelow(props.state) });
 	return (
 		<View
-			accessible
-			accessibilityLabel={props.spoken}
 			accessibilityState={{ selected: props.current }}
 			className={cn(STAGE_ROW, ROW)}
 		>
@@ -101,7 +98,6 @@ function Row(props: {
 // danger cross, its label and its reason in meta. React Native has no
 // current-step role: the current row is the selected one.
 export function Stages({ steps, ended }: StagesProps) {
-	const words = useWords();
 	const shown = stagesShown(steps, ended !== undefined);
 	const lastShown = shown.at(-1);
 	return (
@@ -110,9 +106,7 @@ export function Stages({ steps, ended }: StagesProps) {
 				const last = ended === undefined && at === shown.length - 1;
 				const before = shown[at - 1];
 				let mark = <View className={stageMark({ state: "later" })} />;
-				let spoken: string = words.waiting;
 				if (step.state === "done") {
-					spoken = words.done;
 					mark = (
 						<View className={cn(stageMark({ state: "done" }), DISC)}>
 							<Ink.Provider value={stageContentTone("check")}>
@@ -122,7 +116,6 @@ export function Stages({ steps, ended }: StagesProps) {
 					);
 				}
 				if (step.state === "current") {
-					spoken = words.active;
 					mark = <View className={stageMark({ state: "current" })} />;
 				}
 				return (
@@ -134,9 +127,6 @@ export function Stages({ steps, ended }: StagesProps) {
 						last={last}
 						above={before && railBelow(before.state)}
 						current={step.state === "current"}
-						spoken={[spoken, step.label, step.at ? moment(step.at) : undefined]
-							.filter(Boolean)
-							.join(", ")}
 					>
 						<RNText className={stage({ state: step.state })}>
 							{step.label}
@@ -159,7 +149,6 @@ export function Stages({ steps, ended }: StagesProps) {
 					}
 					last
 					above={lastShown && railBelow(lastShown.state)}
-					spoken={[words.failed, ended.label, ended.reason].join(", ")}
 				>
 					<RNText className={stage({ state: "ended" })}>{ended.label}</RNText>
 					<RNText className={text({ role: "meta" })}>{ended.reason}</RNText>

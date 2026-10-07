@@ -68,7 +68,7 @@ interface MessageBase extends Closed {
 export type MessageProps =
 	| (MessageBase & {
 			author: "you" | "other";
-			// Who said it: drawn over `other`'s reply, read aloud before yours.
+			// Who said it: drawn over `other`'s reply.
 			name?: string;
 			// What came with it, one row over the bubble (yours at the column's
 			// end) or the reply: an attachment with `src` a thumbnail that opens
@@ -254,19 +254,12 @@ export const Message = memo(function Message(props: MessageProps) {
 					<LineWait role="meta" bar={TIME_BAR} />
 				</View>
 			);
-		// React Native has no visually hidden text: the speaker is read before
-		// the words as part of the bubble's name.
 		return (
 			<View className={cn(message({ author }), YOURS)}>
 				{attached}
 				{body ? (
 					<View className={cn(MESSAGE_BUBBLE, BUBBLE)}>
-						<RNText
-							accessibilityLabel={name ? `${name}, ${body}` : undefined}
-							className={text({ role: "body" })}
-						>
-							{body}
-						</RNText>
+						<RNText className={text({ role: "body" })}>{body}</RNText>
 					</View>
 				) : null}
 				{line}

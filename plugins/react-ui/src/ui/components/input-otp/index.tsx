@@ -28,7 +28,7 @@ export interface InputOtpProps extends Closed {
 	onChange: (value: string) => void;
 	/** Hears the code once its last digit lands. */
 	onComplete?: (value: string) => void;
-	/** The code is being checked: the boxes hold it at rest, the input is inert and the row busy, a spinner line under it. */
+	/** The code is being checked: the boxes hold it at rest, the input is disabled, a spinner line under it. */
 	loading?: boolean;
 }
 
@@ -54,17 +54,12 @@ export function InputOtp({
 			inputMode="numeric"
 			autoComplete="one-time-code"
 			maxLength={length}
-			// Inert while the code is checked, yet still read: out of the tab
-			// order and unwritable, never `disabled` or `inert`, which would drop
-			// its name and its digits from the accessibility tree.
-			readOnly={loading}
-			tabIndex={loading ? -1 : undefined}
-			aria-disabled={loading || undefined}
+			disabled={loading}
 			// Base UI's Field wires the input; the render function hands over its
 			// props and state so the boxes draw the field's error.
 			render={(control, state) => (
 				<div className={STACK}>
-					<div aria-busy={loading || undefined} className={cn(OTP, ROW)}>
+					<div className={cn(OTP, ROW)}>
 						<input {...control} className={INPUT} />
 						{Array.from({ length }, (_, index) => (
 							<span

@@ -39,14 +39,11 @@ export const Typing: StoryObj = {
 	},
 };
 
-// A code being checked is announced and takes no more digits, yet stays read.
+// A code being checked says so and takes no more digits.
 export const Checking: StoryObj = {
 	render: () => <Code loading />,
 	play: async ({ canvas }) => {
 		await expect(canvas.getByRole("status")).toHaveTextContent(/checking/i);
-		await expect(canvas.getByRole("textbox", { name: "Code" })).toHaveAttribute(
-			"aria-disabled",
-			"true",
-		);
+		await expect(canvas.getByRole("textbox", { name: "Code" })).toBeDisabled();
 	},
 };

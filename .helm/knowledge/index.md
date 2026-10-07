@@ -8,7 +8,7 @@ not column lists or build history (authoring rules: `.helm/agents/knowledge-base
 
 ## Product
 
-- [Philosophy](./product/philosophy.md): judging whether a feature, option, or API surface fits the framework: automation-first, domain ownership, composability, the shared plugin contract, or a non-goal; or a choice that moves accessibility behaviour (a primitive library dropped, a widget hand-built)
+- [Philosophy](./product/philosophy.md): judging whether a feature, option, or API surface fits the framework: automation-first, domain ownership, composability, the shared plugin contract, or a non-goal; or a choice that moves accessibility behaviour (a primitive library dropped, a widget hand-built, something built for a screen reader)
 
 ## Architecture
 

@@ -21,7 +21,7 @@ export interface CheckboxProps extends Closed {
 	checked: boolean | "mixed";
 	/** Hears the next value when the viewer toggles it; a mixed box checks. */
 	onChange: (checked: boolean) => void;
-	/** Its name, read aloud; the row around it draws the visible label. */
+	/** Its name; the row around it draws the visible label. */
 	label: string;
 }
 

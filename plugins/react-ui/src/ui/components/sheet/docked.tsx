@@ -77,7 +77,6 @@ export function SheetDocked({
 	const touch = useTouch();
 	const words = useWords();
 	const titleId = useId();
-	const descriptionId = useId();
 	const root = useRef<HTMLElement>(null);
 	const [body, setBody] = useState<HTMLDivElement | null>(null);
 	const stop = useScrolls(body, "y");
@@ -118,7 +117,6 @@ export function SheetDocked({
 			<section
 				ref={root}
 				aria-labelledby={titleId}
-				aria-describedby={description ? descriptionId : undefined}
 				onKeyDown={(event) => {
 					if (event.key !== "Escape") return;
 					event.stopPropagation();
@@ -157,9 +155,7 @@ export function SheetDocked({
 							/>
 						</div>
 						{description ? (
-							<p id={descriptionId} className={text({ role: "meta" })}>
-								{description}
-							</p>
+							<p className={text({ role: "meta" })}>{description}</p>
 						) : null}
 					</div>
 				</div>

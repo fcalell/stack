@@ -32,7 +32,7 @@ import {
 	text,
 	treeBleed,
 } from "@fcalell/ui-core/variants";
-import { type KeyboardEvent, type ReactNode, use, useId, useMemo } from "react";
+import { type KeyboardEvent, type ReactNode, use, useMemo } from "react";
 import { ageShort } from "../../lib/age.ts";
 import { useClock } from "../../lib/clock.ts";
 import type { Closed } from "../../lib/closed.ts";
@@ -166,7 +166,7 @@ export interface ListRowProps<V extends string | null = string> extends Closed {
 	status?: StatusMark;
 	/** What is wrong with the row, on the meta line after the status: a warn glyph and the sentence. The act that clears it is the row's `act`. */
 	warning?: string;
-	/** What the row holds, on the meta line after the warning: a lock glyph and its label, shown from `tablet` and read aloud always. */
+	/** What the row holds, on the meta line after the warning: a lock glyph and its label, shown from `tablet`. */
 	lock?: string;
 	/** A data value's chip on the meta line. */
 	chip?: ChipMark;
@@ -258,18 +258,15 @@ function Leading(props: { leading: RowLeading; named: string }) {
 // A blocked act's reason draws on the row's own line, so the act keeps its
 // place; the act is handed the host.
 function useReasonLine(blocked: string | undefined) {
-	const id = useId();
 	const { touched } = useTouched();
 	const [pressed, press] = usePressed(blocked);
 	const host = useMemo(
-		() => (blocked === undefined ? undefined : { id, press }),
-		[blocked, id, press],
+		() => (blocked === undefined ? undefined : { press }),
+		[blocked, press],
 	);
 	const line =
 		blocked === undefined ? null : (
-			<Reason id={id} shown={pressed || touched}>
-				{blocked}
-			</Reason>
+			<Reason shown={pressed || touched}>{blocked}</Reason>
 		);
 	return { host, line };
 }
@@ -358,10 +355,6 @@ export function ListRow<V extends string | null = string>({
 	const inline = useMemo(() => ({ label: entry?.label ?? "" }), [entry?.label]);
 	const entryReason = useReasonLine(entry?.act.blocked);
 	const actReason = useReasonLine(act?.blocked);
-	// A tree's row is named by its title and described by the meta line's marks.
-	const titleId = useId();
-	const metaId = useId();
-	const metaLined = lined && !entry && !listed;
 	// A blocked tick's reason follows the first part inside the span that yields
 	// last, so the part that names the item stays whole ahead of it.
 	const [first, ...rest] = meta ?? [];
@@ -380,7 +373,6 @@ export function ListRow<V extends string | null = string>({
 	const titles = value !== null && !top && !quotedWraps;
 	const titled = (
 		<span
-			id={tree ? titleId : undefined}
 			className={cn(
 				rowTitle({ form: rowTitleForm(wrap, dim) }),
 				wrap || quotedWraps ? TITLE_WHOLE : TITLE,
@@ -404,7 +396,7 @@ export function ListRow<V extends string | null = string>({
 	);
 	const hitClass = cn(HIT, ground === "list" && HIT_LIST);
 	// In a tree the row is the focus stop and the hit is the pointer's alone.
-	const pointed = tree ? { tabIndex: -1, "aria-hidden": true } : {};
+	const pointed = tree ? { tabIndex: -1 } : {};
 	let hit = null;
 	if (href !== undefined)
 		hit = (
@@ -433,9 +425,9 @@ export function ListRow<V extends string | null = string>({
 		if (href !== undefined) navigate(href);
 		else onOpen?.();
 	};
-	// A tree's row is a `treeitem` (the WAI-ARIA tree pattern): named by its
-	// title, described by its meta line, its level and, on a branch, whether it
-	// is open; the tree holds one tab stop, so the rest are focusable by script.
+	// A tree's row is a `treeitem` (the WAI-ARIA tree pattern) with its level
+	// and, on a branch, whether it is open; the tree holds one tab stop, so the
+	// rest are focusable by script.
 	const item = tree
 		? {
 				role: "treeitem",
@@ -443,8 +435,6 @@ export function ListRow<V extends string | null = string>({
 				"aria-level": tree.depth + 1,
 				"aria-expanded": tree.fold?.open,
 				"aria-current": current ? ("page" as const) : undefined,
-				"aria-labelledby": titleId,
-				"aria-describedby": metaLined ? metaId : undefined,
 				onKeyDown: opens ? openOnEnter : undefined,
 			}
 		: {};
@@ -523,7 +513,7 @@ export function ListRow<V extends string | null = string>({
 									STEP,
 								)}
 							>
-								<StatusDot state={step.state} label={words[step.state]} />
+								<StatusDot state={step.state} />
 								<span className={STEP_LABEL}>{step.label}</span>
 							</span>
 						))}
@@ -533,10 +523,7 @@ export function ListRow<V extends string | null = string>({
 			) : (
 				<span className={column}>
 					{titleLine}
-					<span
-						id={tree ? metaId : undefined}
-						className={cn(ROW_META_LINE, META_LINE)}
-					>
+					<span className={cn(ROW_META_LINE, META_LINE)}>
 						{lead.length === 0 ? null : (
 							<span className={META_PARTS}>
 								<span className={cn(text({ role: "meta" }), META_FIRST)}>

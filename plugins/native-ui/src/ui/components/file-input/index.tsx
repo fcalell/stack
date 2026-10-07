@@ -92,7 +92,6 @@ export function FileInput({ value, onChange, accept }: FileInputProps) {
 			<Pressable
 				accessibilityRole="button"
 				accessibilityLabel={name}
-				accessibilityValue={{ text: value?.name ?? words.chooseFile }}
 				accessibilityState={{ disabled }}
 				disabled={disabled}
 				onPress={choose}

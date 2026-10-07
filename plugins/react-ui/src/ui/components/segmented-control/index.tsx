@@ -30,7 +30,7 @@ export interface Segment {
 
 /** A view switch over two to four options, one chosen. */
 export interface SegmentedControlProps extends Closed {
-	/** What the options switch, read aloud as the group's name. */
+	/** What the options switch, names the group. */
 	label: string;
 	/** The options in order. */
 	options: readonly Segment[];
@@ -53,7 +53,6 @@ export function SegmentedControl({
 		<RadioGroup
 			aria-label={named ? undefined : label}
 			aria-labelledby={named?.labelledBy}
-			aria-describedby={named?.describedBy}
 			value={value}
 			onValueChange={(next) => onChange(next as string)}
 			className={cn(SEGMENTED_CONTROL, TRACK)}

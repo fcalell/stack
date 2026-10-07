@@ -3,7 +3,6 @@ import {
 	choose,
 	chosenOf,
 	isOneChoice,
-	listBusy,
 	listState,
 	type OneChoice,
 	type OptionChoice,
@@ -207,7 +206,7 @@ function Wait({
 }
 
 // Option rows on a hairline card, each the Checkbox (several choices) or the
-// radio (one choice, read aloud as radios in a radiogroup) on its label's
+// radio (one choice, a radiogroup) on its label's
 // first line, a description and the recommended mark on the line under it;
 // the pressed row washes, the checked box or the ringed dot is the choice.
 // The children stand under the first chosen option. From a query it draws its
@@ -237,14 +236,12 @@ export function OptionList<V extends string = string, T = unknown>(
 		hasEmpty: props.empty !== undefined,
 	};
 	const state = listState(input);
-	const busy = listBusy(input);
 	const one = isOneChoice(props);
 	const frame = (body: ReactNode, radios = false) => (
 		<View
 			accessibilityRole={radios ? "radiogroup" : undefined}
 			accessibilityLabel={named?.label}
 			accessibilityHint={named?.said}
-			accessibilityState={busy ? { busy } : undefined}
 			className={OPTION_LIST}
 		>
 			{body}

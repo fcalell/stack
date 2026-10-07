@@ -23,8 +23,7 @@ import {
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { FormContext, FormStands } from "../../lib/form";
-import { useLive } from "../../lib/live";
+import { FormStands } from "../../lib/form";
 import { ActFailed, ReasonHostContext, ReasonKept } from "../../lib/reason";
 import { useTouched } from "../../lib/touched";
 import { useWords } from "../../lib/words";
@@ -60,7 +59,7 @@ export interface ActionBarProps extends Closed {
 	// (the default inside a `Gate`).
 	fit?: ActionBarFit;
 	// A selection bar's count, "N of M chosen" at meta over the acts (a
-	// `Table`'s `choose` set against its rows), announced as it changes, with
+	// `Table`'s `choose` set against its rows), with
 	// `onAll` a select-all and a deselect-all act beside it. Docked as a
 	// `Place`'s `foot`, its column centred in it.
 	chosen?: ChosenCount;
@@ -83,22 +82,19 @@ function AllAct(props: { label: string; applies: boolean; onAct: () => void }) {
 	);
 }
 
-// The count over the acts, a live region that announces as it changes, with the
-// act that clears the rows while any are chosen and the one that chooses every
-// row while some stand unchosen: the phone's table has no head tick.
+// The count over the acts, with the act that clears the rows while any are
+// chosen and the one that chooses every row while some stand unchosen: the
+// phone's table has no head tick.
 function Chosen({ chosen }: { chosen: ChosenCount }) {
 	const words = useWords();
 	const said = filled(words.chosenOf, {
 		count: String(chosen.count),
 		of: String(chosen.of),
 	});
-	const live = useLive(said);
 	const { onAll } = chosen;
 	return (
 		<View className={cn(ACTION_BAR_CHOSEN, COUNT)}>
-			<RNText {...live} className={text({ role: "meta" })}>
-				{said}
-			</RNText>
+			<RNText className={text({ role: "meta" })}>{said}</RNText>
 			{onAll !== undefined && chosen.of > 0 ? (
 				<>
 					<AllAct
@@ -151,10 +147,8 @@ export function ActionBar({ acts, fit, chosen }: ActionBarProps) {
 	// Inside a `Gate` a bar with no `fit` stands across the column.
 	const inColumn = useContext(FormStands) === "auth";
 	const where = fit ?? (inColumn ? "full" : "end");
-	const pend = useContext(FormContext);
 	const kept = useContext(ReasonKept);
 	const failed = useContext(ActFailed);
-	const live = useLive(failed ?? "");
 	// A blocked act's reason takes the line a failure would draw in.
 	const blocked = acts.some((act) => act.blocked !== undefined);
 	const [running, setRunning] = useState(false);
@@ -176,13 +170,9 @@ export function ActionBar({ acts, fit, chosen }: ActionBarProps) {
 		const ran = acts[lastAt]?.onAct();
 		if (!(ran instanceof Promise)) return;
 		setRunning(true);
-		pend?.(true);
 		// Settled either way, so a failing act leaves no derived promise to
 		// reject unhandled: its rejection stays the caller's.
-		const done = () => {
-			setRunning(false);
-			pend?.(false);
-		};
+		const done = () => setRunning(false);
 		void ran.then(done, done);
 	};
 	return (
@@ -222,8 +212,6 @@ export function ActionBar({ acts, fit, chosen }: ActionBarProps) {
 				return (
 					<RNText
 						key={act.label}
-						accessibilityElementsHidden={!shown}
-						importantForAccessibility={shown ? "auto" : "no-hide-descendants"}
 						className={cn(text({ role: "meta" }), !shown && KEPT)}
 					>
 						{act.blocked}
@@ -231,14 +219,7 @@ export function ActionBar({ acts, fit, chosen }: ActionBarProps) {
 				);
 			})}
 			{blocked || !(kept || failed !== undefined) ? null : (
-				<RNText
-					{...live}
-					accessibilityElementsHidden={failed === undefined}
-					importantForAccessibility={
-						failed === undefined ? "no-hide-descendants" : "auto"
-					}
-					className={cn(FIELD_ERROR_LINE, failed === undefined && KEPT)}
-				>
+				<RNText className={cn(FIELD_ERROR_LINE, failed === undefined && KEPT)}>
 					{failed ?? NO_FAILURE}
 				</RNText>
 			)}

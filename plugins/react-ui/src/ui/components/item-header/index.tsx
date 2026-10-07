@@ -106,8 +106,7 @@ function Retry() {
 }
 
 // The region stands from the record's open, `saved` at rest, and stays mounted
-// as the save moves between its states, so a screen reader announces each
-// change, the first "Saving…" included. It holds the focus a pressed Retry
+// as the save moves between its states, and holds the focus a pressed Retry
 // leaves as that act gives way to the saving words.
 function SaveFact({
 	save,

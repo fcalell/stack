@@ -7,7 +7,6 @@ import type {
 } from "@fcalell/ui-core/descriptors";
 import { pathCut } from "@fcalell/ui-core/list-state";
 import { isCurrent } from "@fcalell/ui-core/route";
-import { filled } from "@fcalell/ui-core/tokens";
 import {
 	FILE_COUNTS,
 	FILE_PATH,
@@ -20,7 +19,6 @@ import { use } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { GroundContext } from "../../lib/ground.ts";
 import { follow, useRoute } from "../../lib/navigate.ts";
-import { useWords } from "../../lib/words.tsx";
 import { Chip } from "../chip/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { ChangeMark } from "../status/change.tsx";
@@ -50,9 +48,6 @@ const PART = "shrink-0";
 const CHIP = "flex min-w-0 shrink";
 const COUNTS = "flex shrink-0 items-center";
 const COUNT = "text-end";
-// The row's name where it has no hit: the full path, the chip, the counts and
-// the seen state, for the cut path and the glyph are drawn alone.
-const SPOKEN = "sr-only";
 
 /** A changed file in a review's list. */
 export interface FileRowProps extends Closed {
@@ -98,11 +93,7 @@ function Path(props: { path: string }) {
 	const [dir, name] = split(props.path);
 	const { stem, tail, floor } = pathCut(name);
 	return (
-		<span
-			aria-hidden
-			className={cn(FILE_PATH, PATH)}
-			style={{ minWidth: `${floor}ch` }}
-		>
+		<span className={cn(FILE_PATH, PATH)} style={{ minWidth: `${floor}ch` }}>
 			{dir ? (
 				<span className={cn(filePathPart({ part: "directory" }), DIRECTORY)}>
 					{dir}
@@ -116,7 +107,7 @@ function Path(props: { path: string }) {
 	);
 }
 
-/** A changed file: its seen mark leading, its path in mono (the directory in the meta ink, the name at 500) cut to the room its chip leaves, its chip, its added and removed counts each in its own lane. A row that opens is one hit, current (the selection wash) at its `href`, named by the whole path, its chip, its counts and its seen state; it washes under the pointer and the press. In a `Group` it runs edge to edge at the card's inset, elsewhere it is an inset rounded wash, square on touch. */
+/** A changed file: its seen mark leading, its path in mono (the directory in the meta ink, the name at 500) cut to the room its chip leaves, its chip, its added and removed counts each in its own lane. A row that opens is one hit, current (the selection wash) at its `href`, named by the path; it washes under the pointer and the press. In a `Group` it runs edge to edge at the card's inset, elsewhere it is an inset rounded wash, square on touch. */
 export function FileRow({
 	path,
 	added,
@@ -128,43 +119,27 @@ export function FileRow({
 	onOpen,
 	loading,
 }: FileRowProps) {
-	const words = useWords();
 	const ground = use(GroundContext);
 	const at = useRoute();
 	if (loading)
-		return (
-			<FileWait busy change={change !== undefined} chip={chip !== undefined} />
-		);
-	const seenWord = seen ? words.seen : words.unseen;
-	const named = [
-		path,
-		change ? words[change] : undefined,
-		chip?.label,
-		added > 0 ? filled(words.linesAdded, { count: String(added) }) : undefined,
-		removed > 0
-			? filled(words.linesRemoved, { count: String(removed) })
-			: undefined,
-		seen === undefined ? undefined : seenWord,
-	]
-		.filter(Boolean)
-		.join(", ");
+		return <FileWait change={change !== undefined} chip={chip !== undefined} />;
 	const current = href !== undefined && isCurrent(href, at);
 	const hitClass = cn(HIT, ground === "list" && HIT_LIST);
 	let hit = null;
 	if (href !== undefined)
 		hit = (
-			// biome-ignore lint/a11y/useAnchorContent: the hit covers the row, named by its path and counts
+			// biome-ignore lint/a11y/useAnchorContent: the hit covers the row, named by its path
 			<a
 				href={href}
 				onClick={follow}
-				aria-label={named}
+				aria-label={path}
 				aria-current={current ? "page" : undefined}
 				className={hitClass}
 			/>
 		);
 	else if (onOpen)
 		hit = (
-			<BaseButton aria-label={named} onClick={onOpen} className={hitClass} />
+			<BaseButton aria-label={path} onClick={onOpen} className={hitClass} />
 		);
 	return (
 		<div
@@ -175,22 +150,22 @@ export function FileRow({
 				hit && (current ? CHOSEN_PRESS : PRESS),
 			)}
 		>
-			{hit ?? <span className={SPOKEN}>{named}</span>}
+			{hit}
 			{change ? (
-				<span aria-hidden className={MARK}>
+				<span className={MARK}>
 					<ChangeMark kind={change} />
 				</span>
 			) : null}
-			<span aria-hidden className={cn(ROW_LEADING, LEADING)}>
+			<span className={cn(ROW_LEADING, LEADING)}>
 				<Icon name={glyph(seen)} />
 			</span>
 			<Path path={path} />
 			{chip ? (
-				<span aria-hidden className={CHIP}>
+				<span className={CHIP}>
 					<Chip family={chip.family} label={chip.label} />
 				</span>
 			) : null}
-			<span aria-hidden className={cn(FILE_COUNTS, COUNTS)}>
+			<span className={cn(FILE_COUNTS, COUNTS)}>
 				<span className={cn(fileCount({ kind: "added" }), COUNT)}>
 					{added > 0 ? `+${added}` : null}
 				</span>

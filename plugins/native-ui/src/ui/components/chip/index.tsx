@@ -1,6 +1,6 @@
 import type { ChipFamily } from "@fcalell/ui-core/tokens";
 import { chip, chipLabel, REMOVE_HIT } from "@fcalell/ui-core/variants";
-import type { Ref } from "react";
+
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
@@ -18,14 +18,7 @@ export interface ChipProps extends Closed {
 // one act removes the value, a round hit box the chip's height closing its
 // right end. A lucide glyph takes a number and a colour, so the remove mark's
 // size is resolved and its ink is the family's, which the web inherits.
-// `ref` reaches the remove act, so a composer can move focus to it once a
-// neighbour is removed.
-export function Chip({
-	label,
-	family,
-	onRemove,
-	ref,
-}: ChipProps & { ref?: Ref<View> }) {
+export function Chip({ label, family, onRemove }: ChipProps) {
 	const words = useWords();
 	return (
 		<View
@@ -39,7 +32,6 @@ export function Chip({
 			</RNText>
 			{onRemove ? (
 				<Pressable
-					ref={ref}
 					accessibilityRole="button"
 					accessibilityLabel={`${words.remove} ${label}`}
 					onPress={onRemove}

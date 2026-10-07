@@ -209,7 +209,6 @@ const CLASS_ROOTS = [
 	"cursor",
 	"pointer-events",
 	"select",
-	"sr",
 	"col",
 	"row",
 	"table",
@@ -233,7 +232,6 @@ const CLASS_EXACT = [
 	"italic",
 	"uppercase",
 	"tabular-nums",
-	"sr-only",
 	"invisible",
 	"isolate",
 ];

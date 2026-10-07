@@ -8,21 +8,19 @@ const END_DESKTOP = "text-end touch:text-start";
 // A kept line holds its height while the reason is unshown.
 const KEPT = "invisible";
 
-/** A blocked act's reason, the act's description: held from the start and hidden until shown, so the press that shows it keeps the act mounted and focused. A `kept` line holds its place while hidden, so showing it moves nothing. A `failed` line is the sentence an act's run failed with, in the field error's cell and ink, announced as it shows. Outside the package's exports: the Button draws it, or the host that draws it on its own line. */
+/** A blocked act's reason, drawn once `shown`. A `kept` line holds its place while unshown, so showing it moves nothing. A `failed` line is the sentence an act's run failed with, in the field error's cell and ink. Outside the package's exports: the Button draws it, or the host that draws it on its own line. */
 export function Reason(props: {
-	id: string;
 	shown: boolean;
 	kept?: boolean;
 	failed?: boolean;
 	end?: boolean | "desktop";
 	children: string;
 }) {
+	if (!(props.shown || props.kept)) return null;
 	const end = props.end === "desktop" ? END_DESKTOP : props.end && END;
 	return (
 		<p
-			id={props.id}
 			role={props.failed && props.shown ? "alert" : undefined}
-			hidden={!(props.shown || props.kept)}
 			className={cn(
 				props.failed ? FIELD_ERROR_LINE : text({ role: "meta" }),
 				end,

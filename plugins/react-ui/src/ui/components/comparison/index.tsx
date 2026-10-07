@@ -32,9 +32,8 @@ import { Status } from "../status/index.tsx";
 const ROW = "flex items-baseline flex-wrap";
 const ROW_WAIT = "flex items-center flex-wrap";
 // The head's cell over the labels; on touch the label stands on its own line
-// over the values, so the corner leaves the layout, kept for assistive tech
-// as the head row's first cell.
-const CORNER = "basis-0 grow min-w-0 touch:sr-only";
+// over the values, so the corner leaves the layout.
+const CORNER = "basis-0 grow min-w-0 touch:hidden";
 // A word wider than its column hyphenates in the document's language before
 // it breaks; a wrapped value leaves no lone word on its last line.
 const COLUMN = "basis-0 grow min-w-0 wrap-break-word hyphens-auto text-pretty";

@@ -15,7 +15,6 @@ import {
 import type { ReactNode } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { moment } from "../../lib/moment.ts";
-import { useWords } from "../../lib/words.tsx";
 import { Icon } from "../icon/index.tsx";
 
 const LIST = "flex flex-col min-w-0";
@@ -85,7 +84,6 @@ function Row(props: {
 
 /** Its stages top to bottom on a hairline rail joining their marks, solid through the done stages: a done one a disc with a check and its moment under the label, the current one a ring in the accent with its label at 500, a later one a hollow ring with its label in meta; an ended rail closes on a danger cross, its label and its reason in meta. */
 export function Stages({ steps, ended }: StagesProps) {
-	const words = useWords();
 	const shown = stagesShown(steps, ended !== undefined);
 	const lastShown = shown.at(-1);
 	return (
@@ -95,16 +93,14 @@ export function Stages({ steps, ended }: StagesProps) {
 				const before = shown[at - 1];
 				let mark = (
 					<span
-						role="img"
-						aria-label={words.waiting}
+						aria-hidden
 						className={cn(stageMark({ state: "later" }), SHAPE)}
 					/>
 				);
 				if (step.state === "done")
 					mark = (
 						<span
-							role="img"
-							aria-label={words.done}
+							aria-hidden
 							className={cn(stageMark({ state: "done" }), STAGE_CHECK, GLYPH)}
 						>
 							<Icon name="Check" fit="meta" />
@@ -113,8 +109,7 @@ export function Stages({ steps, ended }: StagesProps) {
 				if (step.state === "current")
 					mark = (
 						<span
-							role="img"
-							aria-label={words.active}
+							aria-hidden
 							className={cn(stageMark({ state: "current" }), SHAPE)}
 						/>
 					);
@@ -141,11 +136,7 @@ export function Stages({ steps, ended }: StagesProps) {
 				<Row
 					state="ended"
 					mark={
-						<span
-							role="img"
-							aria-label={words.failed}
-							className={cn(STAGE_CROSS, GLYPH)}
-						>
+						<span aria-hidden className={cn(STAGE_CROSS, GLYPH)}>
 							<Icon name="X" fit="meta" />
 						</span>
 					}

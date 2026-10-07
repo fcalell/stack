@@ -120,7 +120,6 @@ export function Section({
 	const within = use(FormContext) ? "form" : "page";
 	const Heading = `h${level}` as const;
 	const titleId = useId();
-	const reasonId = useId();
 	const bodyId = useId();
 	const { touched } = useTouched();
 	const blocked =
@@ -140,8 +139,8 @@ export function Section({
 		fields,
 	} = sectionState(sectionPartsOf(children, KINDS), { count, loading });
 	const host = useMemo(
-		() => (blocked === undefined ? undefined : { id: reasonId, press }),
-		[blocked, reasonId, press],
+		() => (blocked === undefined ? undefined : { press }),
+		[blocked, press],
 	);
 	// A count waits with the body.
 	let tally: ReactNode = null;
@@ -223,12 +222,12 @@ export function Section({
 					) : null}
 				</div>
 				{blocked === undefined ? null : (
-					<Reason id={reasonId} shown={pressed || touched} end>
+					<Reason shown={pressed || touched} end>
 						{blocked}
 					</Reason>
 				)}
 			</div>
-			{/* Kept mounted while folded and named on the toggle, so its `aria-controls` resolves in either state (Base UI names it only while open). A section without children draws no body. */}
+			{/* Kept mounted while folded, so its `aria-controls` resolves in either state (Base UI names it only while open) and what the body holds (a field's text, a fold inside) keeps its state. A section without children draws no body. */}
 			{children === undefined || children === null ? null : (
 				<Collapsible.Panel
 					id={bodyId}

@@ -11,12 +11,7 @@ import {
 	SLIDER_VALUE,
 } from "@fcalell/ui-core/variants";
 import { useContext, useRef, useState } from "react";
-import {
-	type AccessibilityActionEvent,
-	PanResponder,
-	Text as RNText,
-	View,
-} from "react-native";
+import { PanResponder, Text as RNText, View } from "react-native";
 import { useResolveClassNames } from "uniwind";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
@@ -37,7 +32,7 @@ export interface SliderProps extends Closed {
 	max: number;
 	/** The distance between two values it can take; 1 unless set. */
 	step?: number;
-	/** An Intl unit identifier (`minute`, `percent`), formatted after the value in the device's locale, drawn and read aloud. */
+	/** An Intl unit identifier (`minute`, `percent`), formatted after the value in the device's locale. */
 	unit?: string;
 }
 
@@ -97,11 +92,6 @@ export function Slider({
 		}),
 	).current;
 
-	function adjust(event: AccessibilityActionEvent): void {
-		const delta = event.nativeEvent.actionName === "increment" ? 1 : -1;
-		onChange(settle(value + delta * quantum));
-	}
-
 	const formatted = formatterFor(
 		"number",
 		undefined,
@@ -132,9 +122,7 @@ export function Slider({
 				accessibilityRole="adjustable"
 				accessibilityLabel={label}
 				accessibilityState={{ disabled }}
-				accessibilityValue={{ min, max, now: value, text: formatted }}
-				accessibilityActions={[{ name: "increment" }, { name: "decrement" }]}
-				onAccessibilityAction={disabled ? undefined : adjust}
+				accessibilityValue={{ min, max, now: value }}
 				pointerEvents="box-only"
 				onLayout={(event) => {
 					width.current = event.nativeEvent.layout.width;

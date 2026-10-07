@@ -48,7 +48,6 @@ import { useResolveClassNames, withUniwind } from "uniwind";
 import { cn } from "../../lib/cn";
 import { FieldNameContext } from "../../lib/field";
 import { FormStands } from "../../lib/form";
-import { useLive } from "../../lib/live";
 import { timing } from "../../lib/motion";
 import { RaisedGround } from "../../lib/raised";
 import { type ReasonHost, ReasonHostContext } from "../../lib/reason";
@@ -61,7 +60,7 @@ import { IconButton } from "../icon-button";
 import { IconButtonBase } from "../icon-button/base";
 import { TextArea } from "../text-area";
 
-// The layer over the app that VoiceOver keeps to while the sheet is open.
+// The modal layer over the app while the sheet is open.
 const LAYER = "absolute inset-0";
 const HEAD_ROW = "flex-row items-center";
 const TITLE_BLOCK = "flex-1 min-w-0";
@@ -206,7 +205,6 @@ function Head() {
 		failed,
 		above,
 	} = useParts();
-	const live = useLive(failed ?? "");
 	return (
 		<RaisedGround>
 			<View className={SHEET_HEAD}>
@@ -264,9 +262,7 @@ function Head() {
 					</RNText>
 				) : null}
 				{failed && submit?.blocked === undefined ? (
-					<RNText {...live} className={cn(FIELD_ERROR_LINE, REASON)}>
-						{failed}
-					</RNText>
+					<RNText className={cn(FIELD_ERROR_LINE, REASON)}>{failed}</RNText>
 				) : null}
 			</View>
 			{above}

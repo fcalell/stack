@@ -8,7 +8,7 @@ import {
 	bannerGlyph,
 	text,
 } from "@fcalell/ui-core/variants";
-import { useId, useMemo } from "react";
+import { useMemo } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
@@ -46,13 +46,12 @@ export interface BannerProps extends Closed {
 /** A tinted strip at its content's height: the kind's glyph in the kind's ink beside the sentence in the body ink, and the act, a hairline Button at the bar fit, beside the line on the desktop and under it on touch. */
 export function Banner({ kind, sentence, act }: BannerProps) {
 	const drawn = kind ?? "note";
-	const reasonId = useId();
 	const { touched } = useTouched();
 	const blocked = act?.blocked;
 	const [pressed, press] = usePressed(blocked);
 	const host = useMemo(
-		() => (blocked === undefined ? undefined : { id: reasonId, press }),
-		[blocked, reasonId, press],
+		() => (blocked === undefined ? undefined : { press }),
+		[blocked, press],
 	);
 	return (
 		<div
@@ -82,7 +81,7 @@ export function Banner({ kind, sentence, act }: BannerProps) {
 				) : null}
 			</div>
 			{blocked === undefined ? null : (
-				<Reason id={reasonId} shown={pressed || touched} end="desktop">
+				<Reason shown={pressed || touched} end="desktop">
 					{blocked}
 				</Reason>
 			)}

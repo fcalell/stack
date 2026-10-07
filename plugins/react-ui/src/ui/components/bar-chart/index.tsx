@@ -57,7 +57,6 @@ const GRID_BAND = "flex-1";
 const BARS = "absolute inset-0 flex";
 const SLOT = "flex flex-col justify-end items-center flex-1 min-w-0";
 const PART = "shrink-0";
-const TABLE = "sr-only";
 const TIMES = "flex";
 const TIME = "flex justify-center flex-1 min-w-0";
 const TIME_TEXT = "whitespace-nowrap";
@@ -91,7 +90,7 @@ function band(index: number, bands: number) {
 export interface BarSlots<T> {
 	/** The item's React key, unique in the chart. */
 	key: (item: T) => string;
-	/** The bar's period, naming its row in the values' table. */
+	/** The bar's period. */
 	label: (item: T) => string;
 	/** The bar's total. */
 	value: (item: T) => number;
@@ -127,13 +126,13 @@ type ChartSource<T> =
 /** Columns over time: one bar per item, stacked by one dimension when `keys` names its parts. */
 export type BarChartProps<T = unknown> = Closed &
 	ChartSource<T> & {
-		/** What the chart counts, which names the plot and captions its table. */
+		/** What the chart counts, which names the plot. */
 		label: string;
 		/** The names a bar's parts stack by, bottom first: present, the chart is stacked and draws them as its legend in every form, each name holding its series mark. */
 		keys?: readonly string[];
 		/** The bar slots, read from each item. */
 		bar: BarSlots<T>;
-		/** What the values count (`requests`, `minutes`), drawn after the total; a unit that takes a plural is `{ one, other }` (`{ one: "flag", other: "flags" }`), read at the figure it follows. */
+		/** What the values count (`requests`, `minutes`), drawn after the total; a unit that takes a plural is `{ one, other }` (`{ one: "flag", other: "flags" }`), the form chosen by the figure it follows. */
 		unit?: ChartUnit;
 		/** The bars are a level, not a flow (open flags per round, not requests per day): the head draws the last bar's value, and each key the last bar's part, never their sum. */
 		level?: boolean;
@@ -142,13 +141,12 @@ export type BarChartProps<T = unknown> = Closed &
 // One bar, read from its item.
 interface Bar {
 	key: string;
-	label: string;
 	value: number;
 	parts?: Readonly<Record<string, number>>;
 	at?: string;
 }
 
-/** The total (the last bar with `level`) at body 500 with its unit, the parts' keys under it, then the axis beside the plot, its four gridlines a hairline, the columns in the chip marks by part, a time under each bar that has one; the values reach assistive tech as a visually hidden table. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, its boxes in skeleton at their loaded size with the keys standing (a Section around a pending query busy); a query that answers not found draws the rest EmptyState saying it no longer exists with Back (never Retry), a failed query the failed EmptyState with `sentence` and Retry, and no item `empty`, each at the chart's loaded height; then one bar per item. */
+/** The total (the last bar with `level`) at body 500 with its unit, the parts' keys under it, then the axis beside the plot, its four gridlines a hairline, the columns in the chip marks by part, a time under each bar that has one. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, its boxes in skeleton at their loaded size with the keys standing (a Section around a pending query busy); a query that answers not found draws the rest EmptyState saying it no longer exists with Back (never Retry), a failed query the failed EmptyState with `sentence` and Retry, and no item `empty`, each at the chart's loaded height; then one bar per item. */
 export function BarChart<T>(props: BarChartProps<T>) {
 	const { label, keys, unit, level } = props;
 	const words = useWords();
@@ -191,7 +189,6 @@ export function BarChart<T>(props: BarChartProps<T>) {
 	const items = (props.query ? props.query.data : props.items) ?? [];
 	const series: Bar[] = items.map((item) => ({
 		key: bar.key(item),
-		label: bar.label(item),
 		value: bar.value(item),
 		parts: bar.parts?.(item),
 		at: bar.at?.(item),
@@ -210,8 +207,6 @@ export function BarChart<T>(props: BarChartProps<T>) {
 		]),
 	);
 	const figure = formatter(top);
-	// The table gives assistive tech the figures the plot cannot: in full.
-	const full = formatterFor("number");
 	const head = chartHead(series, labels, level === true);
 	const { total } = head;
 	const keyTotals = labels.map((label, at) => ({
@@ -234,12 +229,6 @@ export function BarChart<T>(props: BarChartProps<T>) {
 			) : null}
 		</div>
 	);
-	const summary = [
-		unit
-			? `${figure.format(total)} ${unitOf(unit, total)}`
-			: figure.format(total),
-		...keyTotals.map((key) => `${key.label} ${figure.format(key.value)}`),
-	].join(", ");
 	const height = (value: number) => ({ height: `${(value / top) * 100}%` });
 	return (
 		<div className={cn(CHART, STACK)}>
@@ -279,7 +268,7 @@ export function BarChart<T>(props: BarChartProps<T>) {
 					))}
 				</div>
 				<div className={cn(CHART_MAIN, MAIN)}>
-					<div role="img" aria-label={`${label}: ${summary}`} className={PLOT}>
+					<div role="img" aria-label={label} className={PLOT}>
 						<div className={cn(CHART_GRID, GRID)}>
 							{Array.from({ length: bands }, (_, index) => (
 								<div
@@ -324,33 +313,6 @@ export function BarChart<T>(props: BarChartProps<T>) {
 								</div>
 							))}
 						</div>
-					</div>
-					<div className={TABLE}>
-						<table>
-							<caption>{label}</caption>
-							<thead>
-								<tr>
-									<th scope="col">{words.time}</th>
-									<th scope="col">{unit ? unitOf(unit, 0) : label}</th>
-									{labels.map((label) => (
-										<th key={label} scope="col">
-											{label}
-										</th>
-									))}
-								</tr>
-							</thead>
-							<tbody>
-								{series.map((bar) => (
-									<tr key={bar.key}>
-										<th scope="row">{bar.label}</th>
-										<td>{full.format(bar.value)}</td>
-										{labels.map((label) => (
-											<td key={label}>{full.format(part(bar, label))}</td>
-										))}
-									</tr>
-								))}
-							</tbody>
-						</table>
 					</div>
 					<div aria-hidden className={TIMES}>
 						{series.map((bar) => (

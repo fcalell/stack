@@ -43,7 +43,7 @@ export interface SliderProps extends Closed {
 	max: number;
 	/** The distance between two values it can take; 1 unless set. */
 	step?: number;
-	/** An Intl unit identifier (`minute`, `percent`), formatted after the value in the viewer's locale, drawn and read aloud. */
+	/** An Intl unit identifier (`minute`, `percent`), formatted after the value in the viewer's locale. */
 	unit?: string;
 }
 

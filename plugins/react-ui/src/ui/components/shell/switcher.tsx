@@ -51,7 +51,6 @@ export function SwitcherPick(props: { switcher: Switcher; touch: boolean }) {
 				<button
 					{...handed}
 					type="button"
-					aria-label={`${switcher.label}, ${name}`}
 					className={
 						touch
 							? cn(SWITCHER, TRIGGER_TOUCH)

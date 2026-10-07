@@ -171,15 +171,11 @@ function List(props: { list: Tokens.List; quoted: boolean; id: string }) {
 	));
 	const box = cn(PROSE_LIST, STACK);
 	return list.ordered ? (
-		// biome-ignore lint/a11y/noRedundantRoles: WebKit drops a list's role under preflight's `list-style: none`
-		<ol role="list" className={box} start={first}>
+		<ol className={box} start={first}>
 			{items}
 		</ol>
 	) : (
-		// biome-ignore lint/a11y/noRedundantRoles: WebKit drops a list's role under preflight's `list-style: none`
-		<ul role="list" className={box}>
-			{items}
-		</ul>
+		<ul className={box}>{items}</ul>
 	);
 }
 

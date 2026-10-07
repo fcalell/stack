@@ -144,9 +144,7 @@ export function SheetBase({
 	const touch = useTouch();
 	const words = useWords();
 	const container = use(PortalContainer);
-	const reason = useId();
 	const titleId = useId();
-	const descriptionId = useId();
 	const [touchedValue, setTouched] = useTouchState();
 	const { touched } = touchedValue;
 	const [pressedUnder, setPressedUnder] = useState<string>();
@@ -182,10 +180,8 @@ export function SheetBase({
 	) : null;
 	const host = useMemo(
 		() =>
-			blocked
-				? { id: reason, press: () => setPressedUnder(submit?.blocked) }
-				: undefined,
-		[blocked, reason, submit?.blocked],
+			blocked ? { press: () => setPressedUnder(submit?.blocked) } : undefined,
+		[blocked, submit?.blocked],
 	);
 	// On touch the submit stands at the head's end in close's place, which
 	// moves to the start unless back holds it. It pends on its promise, as the
@@ -225,9 +221,7 @@ export function SheetBase({
 		</h2>
 	);
 	const said = description ? (
-		<p id={descriptionId} className={text({ role: "meta" })}>
-			{description}
-		</p>
+		<p className={text({ role: "meta" })}>{description}</p>
 	) : null;
 	const headRow = (
 		<div className={cn(SHEET_HEAD_ROW, HEAD_ROW)}>
@@ -274,12 +268,12 @@ export function SheetBase({
 				{headRow}
 				{touch ? said : null}
 				{headSubmit && submit?.blocked ? (
-					<Reason id={reason} shown={touched || pressed} end>
+					<Reason shown={touched || pressed} end>
 						{submit.blocked}
 					</Reason>
 				) : null}
 				{headSubmit && submit?.blocked === undefined && failed ? (
-					<Reason id={reason} shown failed end>
+					<Reason shown failed end>
 						{failed}
 					</Reason>
 				) : null}
@@ -343,7 +337,6 @@ export function SheetBase({
 						role={centred ? "alertdialog" : "dialog"}
 						aria-label={view ? title : undefined}
 						aria-labelledby={view ? undefined : titleId}
-						aria-describedby={description ? descriptionId : undefined}
 						// A field inside takes input: a blocked act says its reason.
 						onChange={touchedValue.touch}
 						className={box}

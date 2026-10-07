@@ -6,7 +6,7 @@ import {
 	unitOf,
 } from "@fcalell/ui-core/chart";
 import { formatterFor } from "@fcalell/ui-core/format";
-import { listBusy, listState, retryOf } from "@fcalell/ui-core/list-state";
+import { listState, retryOf } from "@fcalell/ui-core/list-state";
 import { CHART_SERIES } from "@fcalell/ui-core/tokens";
 import {
 	CHART,
@@ -92,17 +92,10 @@ function height(value: number, top: number) {
 	return { height: `${(value / top) * 100}%` } as const;
 }
 
-// Hidden from assistive tech: the axis and the times, whose figures each
-// column reads aloud.
-const HIDDEN = {
-	accessibilityElementsHidden: true,
-	importantForAccessibility: "no-hide-descendants",
-} as const;
-
 // One function per bar slot, each called with a loaded item.
 export interface BarSlots<T> {
 	key: (item: T) => string;
-	// The bar's period, which its column reads aloud.
+	// The bar's period.
 	label: (item: T) => string;
 	value: (item: T) => number;
 	// The bar's parts' values by the chart's `keys`; a key it lacks is 0.
@@ -155,7 +148,6 @@ export type BarChartProps<T = unknown> = Closed &
 // One bar, read from its item.
 interface Bar {
 	key: string;
-	label: string;
 	value: number;
 	parts?: Readonly<Record<string, number>>;
 	at?: string;
@@ -163,18 +155,16 @@ interface Bar {
 
 // The total (the last bar with `level`) at body 500 with its unit, the parts' keys under it, then the
 // axis beside the plot, its four gridlines a hairline, the columns in the
-// chip marks by part, a time under each bar that has one. React Native has no
-// hidden table: the total names the chart and sums it, and each column reads
-// its label and its figures in full, as the web's table rows do. It draws its
+// chip marks by part, a time under each bar that has one. It draws its
 // collection's four states: while its query is pending, `loading` is set or a
 // loading Section around it waits, its boxes in skeleton at their loaded size
-// with the keys standing (a Section around a pending query busy); a query
+// with the keys standing; a query
 // that answers not found draws the rest EmptyState saying it no longer exists
 // with Back (never Retry), a failed query the failed EmptyState with
 // `sentence` and Retry, and no item `empty`, each at the chart's loaded
 // height; then one bar per item.
 export function BarChart<T>(props: BarChartProps<T>) {
-	const { label, keys, unit, level } = props;
+	const { keys, unit, level } = props;
 	const words = useWords();
 	const base = {
 		query: props.query,
@@ -186,8 +176,7 @@ export function BarChart<T>(props: BarChartProps<T>) {
 	};
 	const input = { ...base, inSection: useContext(SectionContext) };
 	const state = listState(input);
-	if (state === "pending")
-		return <Loading keys={keys} busy={listBusy(input)} />;
+	if (state === "pending") return <Loading keys={keys} />;
 	if (state === "missing")
 		return (
 			<Stand keys={keys}>
@@ -215,7 +204,6 @@ export function BarChart<T>(props: BarChartProps<T>) {
 	const items = (props.query ? props.query.data : props.items) ?? [];
 	const series: Bar[] = items.map((item) => ({
 		key: bar.key(item),
-		label: bar.label(item),
 		value: bar.value(item),
 		parts: bar.parts?.(item),
 		at: bar.at?.(item),
@@ -234,27 +222,13 @@ export function BarChart<T>(props: BarChartProps<T>) {
 		]),
 	);
 	const figure = formatter(top);
-	// A column gives assistive tech the figures the plot cannot: in full.
-	const full = formatterFor("number");
 	const head = chartHead(series, labels, level === true);
 	const { total } = head;
 	const keyTotals = labels.map((label, at) => ({
 		label,
 		value: head.parts[at] ?? 0,
 	}));
-	const summary = [
-		label,
-		unit ? `${figure(total)} ${unitOf(unit, total)}` : figure(total),
-		...keyTotals.map((key) => `${key.label} ${figure(key.value)}`),
-	].join(", ");
-	const said = (bar: Bar) =>
-		[
-			bar.label,
-			unit
-				? `${full.format(bar.value)} ${unitOf(unit, bar.value)}`
-				: full.format(bar.value),
-			...labels.map((key) => `${key} ${full.format(part(bar, key))}`),
-		].join(", ");
+
 	const totalLine = (
 		<View className={cn(CHART_TOTAL, TOTAL)}>
 			<RNText
@@ -275,26 +249,24 @@ export function BarChart<T>(props: BarChartProps<T>) {
 	);
 	return (
 		<View className={cn(CHART, STACK)}>
-			<View accessible accessibilityLabel={summary}>
-				{labels.length > 0 ? (
-					<View className={CHART_HEAD}>
-						{totalLine}
-						<View className={cn(CHART_KEYS, KEYS)}>
-							{keyTotals.map((key, at) => (
-								<Key key={key.label} name={key.label} at={at}>
-									<RNText className={cn(text({ role: "meta" }), FIGURES)}>
-										{figure(key.value)}
-									</RNText>
-								</Key>
-							))}
-						</View>
+			{labels.length > 0 ? (
+				<View className={CHART_HEAD}>
+					{totalLine}
+					<View className={cn(CHART_KEYS, KEYS)}>
+						{keyTotals.map((key, at) => (
+							<Key key={key.label} name={key.label} at={at}>
+								<RNText className={cn(text({ role: "meta" }), FIGURES)}>
+									{figure(key.value)}
+								</RNText>
+							</Key>
+						))}
 					</View>
-				) : (
-					totalLine
-				)}
-			</View>
+				</View>
+			) : (
+				totalLine
+			)}
 			<View className={cn(CHART_BODY, BODY)}>
-				<View {...HIDDEN} className={cn(CHART_GRID, CHART_TICK_LANE, AXIS)}>
+				<View className={cn(CHART_GRID, CHART_TICK_LANE, AXIS)}>
 					{Array.from({ length: bands }, (_, index) => (
 						<View
 							// biome-ignore lint/suspicious/noArrayIndexKey: a band is its index
@@ -328,12 +300,7 @@ export function BarChart<T>(props: BarChartProps<T>) {
 						</View>
 						<View className={BARS}>
 							{series.map((bar) => (
-								<View
-									key={bar.key}
-									accessible
-									accessibilityLabel={said(bar)}
-									className={SLOT}
-								>
+								<View key={bar.key} className={SLOT}>
 									{keys ? (
 										// The first part stands on the baseline, each next one
 										// over it, split from it by a clear line.
@@ -377,7 +344,7 @@ export function BarChart<T>(props: BarChartProps<T>) {
 							))}
 						</View>
 					</View>
-					<View {...HIDDEN} className={TIMES}>
+					<View className={TIMES}>
 						{series.map((bar) => (
 							<View key={bar.key} className={TIME}>
 								{bar.at ? (
@@ -419,15 +386,15 @@ function Key(props: { name: string; at: number; children: ReactNode }) {
 	);
 }
 
-// A failed, missing or empty chart: its EmptyState over the loaded boxes, held unseen
-// and hidden from assistive tech. React Native has no grid to stack the two
+// A failed, missing or empty chart: its EmptyState over the loaded boxes, held
+// unseen. React Native has no grid to stack the two
 // in one cell, so the EmptyState lies over the boxes, which set the height,
 // its frame filling them.
 function Stand(props: { keys?: readonly string[]; children: ReactNode }) {
 	return (
 		<View>
-			<View {...HIDDEN} className={HELD}>
-				<Loading keys={props.keys} busy={false} />
+			<View className={HELD}>
+				<Loading keys={props.keys} />
 			</View>
 			<View className={OVER}>{props.children}</View>
 		</View>
@@ -438,7 +405,7 @@ function Stand(props: { keys?: readonly string[]; children: ReactNode }) {
 // waiting in a lane four figures wide, so the legend wraps as the loaded one
 // does), a tick's lane on each gridline, the plot's box, a time's lane at
 // each end of the plot.
-function Loading(props: { keys?: readonly string[]; busy: boolean }) {
+function Loading(props: { keys?: readonly string[] }) {
 	const total = (
 		<View className={LINE}>
 			<Strut role="body" />
@@ -446,10 +413,7 @@ function Loading(props: { keys?: readonly string[]; busy: boolean }) {
 		</View>
 	);
 	return (
-		<View
-			accessibilityState={{ busy: props.busy }}
-			className={cn(CHART, STACK)}
-		>
+		<View className={cn(CHART, STACK)}>
 			{props.keys ? (
 				<View className={CHART_HEAD}>
 					{total}

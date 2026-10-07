@@ -63,13 +63,10 @@ export function isSeveral<V extends string | null>(
 interface Composed {
 	// The family a chip column's value and options draw as chips of.
 	chip?: ChipFamily;
-	// The trigger's name where its composer says more than the value (a sort's direction).
-	name?: string;
 }
 
 // What every pick draws: the public `Picker`, or a composer's pick that says
-// more (a sort's name with its direction, a chip column's chips, a table
-// cell's edit). Outside the package's exports. Overloaded as `Picker` is, so
+// more (a chip column's chips, a table cell's edit). Outside the package's exports. Overloaded as `Picker` is, so
 // a handler's parameter is typed by the value beside it.
 export function PickerBase<V extends string | null = string>(
 	props: PickOneProps<V> & Composed,
@@ -83,7 +80,7 @@ export function PickerBase<V extends string | null = string>(
 export function PickerBase<V extends string | null = string>(
 	props: PickerProps<V> & Composed,
 ) {
-	const { label, options, fit = "field", act, chip, name } = props;
+	const { label, options, fit = "field", act, chip } = props;
 	const several = isSeveral(props) ? props : undefined;
 	const value = isSeveral(props) ? undefined : props.value;
 	// In a table cell the pick opens as its edit starts, and its sheet gone,
@@ -170,7 +167,7 @@ export function PickerBase<V extends string | null = string>(
 			) : null}
 			<Pressable
 				accessibilityRole="button"
-				accessibilityLabel={name ?? label}
+				accessibilityLabel={label}
 				accessibilityState={{ expanded: open }}
 				onPress={() => setOpen(true)}
 				className={cn(CHIPS_TRIGGER, SEVERAL_TRIGGER)}
@@ -193,7 +190,7 @@ export function PickerBase<V extends string | null = string>(
 	) : (
 		<Pressable
 			accessibilityRole="button"
-			accessibilityLabel={name ?? cell?.label ?? label}
+			accessibilityLabel={cell?.label ?? label}
 			accessibilityValue={{ text: current?.label }}
 			accessibilityState={{ expanded: open }}
 			onPress={() => setOpen(true)}

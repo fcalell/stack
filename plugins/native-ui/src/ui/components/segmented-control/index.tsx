@@ -24,7 +24,7 @@ export interface Segment {
 }
 
 export interface SegmentedControlProps extends Closed {
-	// What the options switch, read aloud as the group's name.
+	// What the options switch, the group's name.
 	label: string;
 	options: readonly Segment[];
 	value: string;

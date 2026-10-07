@@ -327,7 +327,7 @@ export function List<T, V extends string | null = string>(
 	};
 	const input = { ...base, inSection: use(SectionContext) };
 	const busy = listBusy(input);
-	const ground = listGround(useGroupList(busy));
+	const ground = listGround(useGroupList());
 	const state = listState(input);
 	// In a Group the card is the rows' box: they stand in it directly, so its
 	// hairline falls once between them.
@@ -361,9 +361,7 @@ export function List<T, V extends string | null = string>(
 						<RowWait key={index} shape={rowShape(props.row)} index={index} />
 					);
 				if (props.meter)
-					return (
-						<MeterWait key={index} busy={false} {...meterShape(props.meter)} />
-					);
+					return <MeterWait key={index} {...meterShape(props.meter)} />;
 				if (props.definition)
 					return (
 						<DefinitionWait
@@ -372,7 +370,7 @@ export function List<T, V extends string | null = string>(
 							index={index}
 						/>
 					);
-				return <FileWait key={index} busy={false} {...fileShape(props.file)} />;
+				return <FileWait key={index} {...fileShape(props.file)} />;
 			}),
 			undefined,
 			props.row?.children !== undefined,

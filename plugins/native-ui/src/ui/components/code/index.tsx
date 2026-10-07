@@ -11,14 +11,8 @@ import {
 } from "@fcalell/ui-core/variants";
 import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
-import { useEffect, useRef, useState } from "react";
-import {
-	AccessibilityInfo,
-	Pressable,
-	Text as RNText,
-	ScrollView,
-	View,
-} from "react-native";
+import { useState } from "react";
+import { Pressable, Text as RNText, ScrollView, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { useCopy } from "../../lib/copy";
@@ -107,8 +101,7 @@ function DownloadAct(props: { name: string; value: string; file: string }) {
 // wraps, the text scrolling sideways inside the frame. A head names it
 // (`title`) and carries the copy and download acts; without a title they
 // stand side by side in a column beside the first line. `tail` folds the earlier lines behind a
-// one-way act that reveals them and leaves, the screen reader's focus
-// landing on the text.
+// one-way act that reveals them and leaves.
 export function Code({
 	text: source,
 	title,
@@ -118,14 +111,7 @@ export function Code({
 	loading,
 }: CodeProps) {
 	const words = useWords();
-	const textRef = useRef<RNText>(null);
 	const [unfolded, setUnfolded] = useState(false);
-	// The fold leaves with the lines it folded; the focus lands on them once
-	// they are drawn.
-	useEffect(() => {
-		if (unfolded && textRef.current)
-			AccessibilityInfo.sendAccessibilityEvent(textRef.current, "focus");
-	}, [unfolded]);
 	const acts = (
 		<>
 			{copy ? <CopyAct name={title ?? download} value={source} /> : null}
@@ -208,9 +194,7 @@ export function Code({
 			className={cn(title && !fold && CODE_UNDER_HEAD, beside && TEXT_BESIDE)}
 			contentContainerClassName={codeText({ act: beside ? "beside" : "none" })}
 		>
-			<RNText ref={textRef} className={text({ role: "code" })}>
-				{shown.join("\n")}
-			</RNText>
+			<RNText className={text({ role: "code" })}>{shown.join("\n")}</RNText>
 		</ScrollView>
 	);
 	return (

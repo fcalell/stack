@@ -2,12 +2,10 @@ import "../.stack/app.css";
 import Providers from "virtual:stack-providers";
 import type { Preview } from "@storybook/react-vite";
 
-// A component's frame is not a page: its stories share one document with the
-// other frames, so axe's rules that judge the document as a whole (its
-// landmarks, headings and bypass blocks) say nothing about the component. A
-// page story re-enables them (`page-stories.tsx`); every other rule runs on
-// every story.
-const PAGE_LEVEL_RULES = [
+// Axe runs every rule on every story except the ones that judge a document as
+// a whole (its landmarks, heading order, bypass blocks): a story is a frame or
+// a page, never the app's one document, and screen readers are not a target.
+const DOCUMENT_RULES = [
 	"bypass",
 	"heading-order",
 	"landmark-no-duplicate-banner",
@@ -51,7 +49,7 @@ const preview: Preview = {
 		a11y: {
 			test: "error",
 			config: {
-				rules: PAGE_LEVEL_RULES.map((id) => ({ id, enabled: false })),
+				rules: DOCUMENT_RULES.map((id) => ({ id, enabled: false })),
 			},
 		},
 	},

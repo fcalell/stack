@@ -29,7 +29,7 @@ import { useClock } from "../../lib/clock";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
-import { useLive } from "../../lib/live";
+
 import { ReasonHostContext, usePressed } from "../../lib/reason";
 import { useTouched } from "../../lib/touched";
 import { Button } from "../button";
@@ -71,7 +71,7 @@ function Fill(props: { run: PendingRun; now: number }) {
 }
 
 export interface PendingBarProps extends Closed {
-	// What is happening, announced as it changes.
+	// What is happening.
 	sentence: string;
 	// When the work ends: the track fills toward it and shows the time left;
 	// unset, a spinner turns.
@@ -83,7 +83,7 @@ export interface PendingBarProps extends Closed {
 
 // One line on the group ground: the spinner, or a meta-ink line along the
 // track's foot filling toward `until` with the time left beside the
-// sentence, which alone is the live region; the act under it.
+// sentence; the act under it.
 export function PendingBar({ sentence, until, act }: PendingBarProps) {
 	const end = until?.getTime();
 	// The shared clock ticks the bar until its end, never past it.
@@ -93,7 +93,7 @@ export function PendingBar({ sentence, until, act }: PendingBarProps) {
 	);
 	if (end !== undefined && run?.end !== end) setRun(pendingRun(end, now, run));
 	const { touched } = useTouched();
-	const live = useLive(sentence);
+
 	const blocked = act?.blocked;
 	const [pressed, press] = usePressed(blocked);
 	const host = useMemo(
@@ -113,7 +113,6 @@ export function PendingBar({ sentence, until, act }: PendingBarProps) {
 					)}
 					<RNText
 						numberOfLines={1}
-						{...live}
 						className={cn(text({ role: "body" }), SENTENCE)}
 					>
 						{sentence}

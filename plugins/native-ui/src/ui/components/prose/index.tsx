@@ -290,7 +290,7 @@ function Headed({ part }: { part: Part }) {
 // slot), quotes and rules a fields gap apart; inline code on the neutral
 // fill; a fenced block is a `Code` with its copy act. Raw HTML reads as its
 // own text; tables, task lists and images draw as text. A heading is a
-// header to the screen reader, which has no heading levels on the phone.
+// header, which has no levels on the phone.
 export function Prose({ markdown, loading }: ProseProps) {
 	// The markdown lexes and folds once per text, and not while the prose waits.
 	const root = useMemo(

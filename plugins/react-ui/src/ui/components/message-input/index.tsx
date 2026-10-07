@@ -27,7 +27,6 @@ import {
 	type DragEvent,
 	type KeyboardEvent,
 	type ReactNode,
-	useId,
 	useRef,
 	useState,
 } from "react";
@@ -114,7 +113,6 @@ export function MessageInput({
 	const textField = useRef<HTMLTextAreaElement>(null);
 	const chooser = useRef<HTMLInputElement>(null);
 	const [over, setOver] = useState(false);
-	const noticeId = useId();
 	// Focus never drops to the page: Send and Stop hand it to the text, a
 	// removed chip to the next chip's remove, else the previous one's.
 	const send = () => {
@@ -199,7 +197,6 @@ export function MessageInput({
 	const textarea = (
 		<textarea
 			ref={textField}
-			aria-describedby={notice ? noticeId : undefined}
 			value={value}
 			onChange={(event) => onChange(event.target.value)}
 			onKeyDown={keyDown}
@@ -278,7 +275,6 @@ export function MessageInput({
 						/>
 					) : null}
 					<p
-						id={noticeId}
 						className={cn(
 							text({ role: "meta" }),
 							MESSAGE_NOTICE_TEXT,
@@ -305,7 +301,7 @@ export function MessageInput({
 		if (notice)
 			under = (
 				<div className={cn(MESSAGE_NOTICE, NOTICE)}>
-					<p id={noticeId} className={cn(text({ role: "meta" }), NOTICE_TEXT)}>
+					<p className={cn(text({ role: "meta" }), NOTICE_TEXT)}>
 						{notice.sentence}
 					</p>
 					{act}

@@ -11,7 +11,6 @@ import {
 	cellLocked,
 	changeKind,
 	changeMeta,
-	changeReading,
 	chooseAllToggled,
 	chooseHead,
 	chooseReason,
@@ -380,16 +379,10 @@ const LeadRow = memo(function LeadRow(props: {
 	actions: GridActions;
 }) {
 	const { row, lead, name, chosen, opens, store, actions } = props;
-	const words = useWords();
 	const state = useRowState(store, row.id, chosen);
 	let role: "link" | "button" | undefined;
 	if (opens) role = props.link ? "link" : "button";
 	const reason = chooseReason(row);
-	const named = reason === undefined ? name : `${name}. ${reason}`;
-	const spoken =
-		row.warning === undefined
-			? named
-			: `${named}. ${words.warning}. ${row.warning}`;
 	const gap =
 		(row.warning !== undefined || row.change !== undefined) && TABLE_NAME;
 	const line = (
@@ -406,8 +399,7 @@ const LeadRow = memo(function LeadRow(props: {
 				{name}
 			</RNText>
 			{row.warning === undefined ? null : (
-				// The frozen column is a short measure wide: the glyph alone, the
-				// sentence read with the row's name.
+				// The frozen column is a short measure wide: the glyph alone.
 				<View className={GLYPH}>
 					<Ink.Provider value={rowWarningContentTone()}>
 						<Icon name="TriangleAlert" fit="meta" />
@@ -437,9 +429,7 @@ const LeadRow = memo(function LeadRow(props: {
 			) : null}
 			<Pressable
 				accessibilityRole={role}
-				accessibilityLabel={
-					row.change === undefined ? spoken : `${words[row.change]}. ${spoken}`
-				}
+				accessibilityLabel={name}
 				accessibilityState={{ selected: chosen }}
 				{...pressOf(row, opens, store, actions)}
 				className={COLUMN}
@@ -477,7 +467,6 @@ const LeadRow = memo(function LeadRow(props: {
 const RestRow = memo(function RestRow(props: {
 	row: TableRecord;
 	columns: readonly TableColumn[];
-	name: string;
 	chosen: boolean;
 	opens: boolean;
 	edits: boolean;
@@ -488,7 +477,7 @@ const RestRow = memo(function RestRow(props: {
 	store: PressStore;
 	actions: GridActions;
 }) {
-	const { row, columns, name, chosen, opens, store, actions } = props;
+	const { row, columns, chosen, opens, store, actions } = props;
 	const state = useRowState(store, row.id, chosen);
 	return (
 		<Pressable
@@ -501,7 +490,6 @@ const RestRow = memo(function RestRow(props: {
 					<Cell
 						row={row}
 						column={column}
-						name={name}
 						edits={props.edits}
 						editing={props.editing === column.key}
 						tall={props.tall}
@@ -519,7 +507,6 @@ const RestRow = memo(function RestRow(props: {
 function Cell(props: {
 	row: TableRecord;
 	column: TableColumn;
-	name: string;
 	edits: boolean;
 	editing: boolean;
 	tall: boolean;
@@ -528,7 +515,6 @@ function Cell(props: {
 	const { row, column, actions } = props;
 	const value = row.cells[column.key];
 	const control = cellEdit(column, false, props.edits, row)?.control;
-	const label = `${column.label}, ${props.name}`;
 	const box = cn(
 		TABLE_CELL,
 		CELL,
@@ -540,13 +526,17 @@ function Cell(props: {
 		return (
 			<Pressable
 				accessibilityRole="checkbox"
-				accessibilityLabel={label}
+				accessibilityLabel={column.label}
 				accessibilityState={{ checked: value === true }}
 				onPress={() => edit(value !== true)}
 				className={box}
 			>
 				<LabelTarget.Provider value>
-					<Checkbox checked={value === true} onChange={edit} label={label} />
+					<Checkbox
+						checked={value === true}
+						onChange={edit}
+						label={column.label}
+					/>
 				</LabelTarget.Provider>
 			</Pressable>
 		);
@@ -554,7 +544,9 @@ function Cell(props: {
 		return (
 			<View className={box}>
 				<View className={EDIT}>
-					<CellField.Provider value={{ label, done: actions.done }}>
+					<CellField.Provider
+						value={{ label: column.label, done: actions.done }}
+					>
 						<CellEdit column={column} cell={value} onEdit={edit} />
 					</CellField.Provider>
 				</View>
@@ -564,7 +556,7 @@ function Cell(props: {
 		return (
 			<Pressable
 				accessibilityRole="button"
-				accessibilityLabel={label}
+				accessibilityLabel={column.label}
 				accessibilityValue={{ text: shown(column, value) }}
 				onPress={() => actions.start(row.id, column.key)}
 				className={box}
@@ -755,7 +747,6 @@ function Grid(props: {
 									key={row.id}
 									row={row}
 									columns={rest}
-									name={name(row)}
 									chosen={row.id === props.selected}
 									opens={opens(row)}
 									edits={edits}
@@ -778,7 +769,6 @@ function HeadCell(props: {
 	onSort: () => void;
 }) {
 	const { column, sort, frozen } = props;
-	const words = useWords();
 	const end = isEnd(column);
 	const direction = sort?.key === column.key ? sort.direction : undefined;
 	const edge = frozen && tableFrozenCell({ state: "rest" });
@@ -793,8 +783,7 @@ function HeadCell(props: {
 			{column.label}
 		</RNText>
 	);
-	const lock =
-		column.locked === undefined ? null : <LockMark reason={column.locked} />;
+	const lock = column.locked === undefined ? null : <LockMark />;
 	if (!column.sortable)
 		return (
 			<View className={cn(TABLE_CELL, edge, HEAD, end && CELL_END)}>
@@ -818,7 +807,6 @@ function HeadCell(props: {
 		<Pressable
 			accessibilityRole="button"
 			accessibilityLabel={column.label}
-			accessibilityValue={{ text: direction ? words[direction] : undefined }}
 			onPress={props.onSort}
 			className={cn(tableHead({ state: "rest" }), edge, SORT, end && CELL_END)}
 		>
@@ -842,7 +830,6 @@ function CellValueView(props: {
 	cell: TableCell | undefined;
 }) {
 	const { column, cell } = props;
-	const words = useWords();
 	if (cell === null || cell === undefined) return null;
 	switch (column.kind) {
 		case "check":
@@ -867,13 +854,8 @@ function CellValueView(props: {
 			if (!isChangeCell(cell)) return null;
 			const kind = changeKind(cell);
 			if (kind === undefined) return null;
-			// The words read it whole; the glyph and values only draw it.
 			return (
-				<View
-					accessible
-					accessibilityLabel={changeReading(cell, words)}
-					className={cn(CELL, TABLE_CHANGE)}
-				>
+				<View className={cn(CELL, TABLE_CHANGE)}>
 					{cell.before !== null && (
 						<RNText
 							numberOfLines={1}
@@ -1044,11 +1026,6 @@ function Phone(props: {
 		<View className={SORT_BAR}>
 			<PickerBase<string>
 				label={words.sort}
-				name={
-					sortedBy && sort
-						? `${words.sort}, ${sortedBy.label}, ${words[sort.direction]}`
-						: undefined
-				}
 				options={sortable.map((column) => ({
 					value: column.key,
 					label: column.label,

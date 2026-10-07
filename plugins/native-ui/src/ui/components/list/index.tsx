@@ -16,7 +16,6 @@ import type {
 import {
 	definitionShape,
 	fileShape,
-	listBusy,
 	listGround,
 	listState,
 	meterShape,
@@ -267,8 +266,7 @@ export function List<T, V extends string | null = string>(
 		hasEmpty: props.empty !== undefined,
 	};
 	const input = { ...base, inSection: useContext(SectionContext) };
-	const busy = listBusy(input);
-	const ground = listGround(useGroupList(busy));
+	const ground = listGround(useGroupList());
 	const state = listState(input);
 	// In a Group the card is the rows' box: each row after the first draws
 	// the group's hairline above it.
@@ -281,9 +279,7 @@ export function List<T, V extends string | null = string>(
 				</View>
 			))
 		) : (
-			<View accessibilityState={{ busy }} className={tree ? LIST_TREE : LIST}>
-				{rows}
-			</View>
+			<View className={tree ? LIST_TREE : LIST}>{rows}</View>
 		);
 	if (state === "pending") {
 		return frame(
@@ -293,9 +289,7 @@ export function List<T, V extends string | null = string>(
 						<RowWait key={index} shape={rowShape(props.row)} index={index} />
 					);
 				if (props.meter)
-					return (
-						<MeterWait key={index} busy={false} {...meterShape(props.meter)} />
-					);
+					return <MeterWait key={index} {...meterShape(props.meter)} />;
 				if (props.definition)
 					return (
 						<DefinitionWait
@@ -304,7 +298,7 @@ export function List<T, V extends string | null = string>(
 							index={index}
 						/>
 					);
-				return <FileWait key={index} busy={false} {...fileShape(props.file)} />;
+				return <FileWait key={index} {...fileShape(props.file)} />;
 			}),
 			props.row?.children !== undefined,
 		);

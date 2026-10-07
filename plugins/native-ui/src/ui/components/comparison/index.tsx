@@ -2,7 +2,6 @@ import type { StatusMark } from "@fcalell/ui-core/descriptors";
 import {
 	type FactShape,
 	factShape,
-	listBusy,
 	listState,
 	retryOf,
 } from "@fcalell/ui-core/list-state";
@@ -131,9 +130,8 @@ function FactWait(props: { shape: FactShape; index: number }) {
 	);
 }
 
-// A loaded fact, said whole (its label, its chips, its verdict, each value
-// after its column's label): its label (its chips and its verdict beside it)
-// on its own line over its value under each column.
+// A loaded fact: its label (its chips and its verdict beside it) on its own
+// line over its value under each column.
 function Fact<T>(props: {
 	item: T;
 	row: FactSlots<T>;
@@ -144,18 +142,8 @@ function Fact<T>(props: {
 	const values = row.values(item);
 	const chips = row.chips?.(item) ?? [];
 	const status = row.status?.(item);
-	const spoken = [
-		label,
-		...chips,
-		...(status ? [status.label] : []),
-		...columns.map((column, index) => `${column}, ${values[index]}`),
-	].join(", ");
 	return (
-		<View
-			accessible
-			accessibilityLabel={spoken}
-			className={cn(COMPARISON_ROW, ROW)}
-		>
+		<View className={cn(COMPARISON_ROW, ROW)}>
 			<View className={cn(COMPARISON_LABEL, LABEL)}>
 				<RNText
 					className={cn(
@@ -190,8 +178,8 @@ function Fact<T>(props: {
 // fact's label at body 500 (its chips beside it, then its `status` verdict, a
 // passing fact drawing none) on its own line over its values in equal
 // columns, the phone's form. No column is the accent's;
-// nothing is a selection. The phone has no table, so each row says its fact
-// whole and the head, which the rows repeat, is drawn alone. It draws its
+// nothing is a selection. The phone has no table, so the head, which the rows
+// repeat, is drawn alone. It draws its
 // collection's four states: while its query is pending, `loading` is set or
 // a loading Section around it waits, the head stands over four waiting
 // facts, each a bar per column, a chips bar when `row` declares chips and a
@@ -236,32 +224,22 @@ export function Comparison<T>(props: ComparisonProps<T>) {
 					<Fact key={row.key(item)} item={item} row={row} columns={columns} />
 				));
 	return (
-		<View
-			accessibilityRole="list"
-			accessibilityLabel={props.label}
-			accessibilityState={{ busy: listBusy(input) }}
-		>
-			<Group loading={false}>
-				<View
-					accessibilityElementsHidden
-					importantForAccessibility="no-hide-descendants"
-					className={cn(COMPARISON_ROW, ROW)}
-				>
-					{columns.map((column) => (
-						<RNText
-							key={column}
-							className={cn(
-								text({ role: "meta" }),
-								textStrong({ role: "meta" }),
-								COLUMN,
-							)}
-						>
-							{column}
-						</RNText>
-					))}
-				</View>
-				{facts}
-			</Group>
-		</View>
+		<Group loading={false}>
+			<View className={cn(COMPARISON_ROW, ROW)}>
+				{columns.map((column) => (
+					<RNText
+						key={column}
+						className={cn(
+							text({ role: "meta" }),
+							textStrong({ role: "meta" }),
+							COLUMN,
+						)}
+					>
+						{column}
+					</RNText>
+				))}
+			</View>
+			{facts}
+		</Group>
 	);
 }

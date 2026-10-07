@@ -9,7 +9,6 @@ import { confirm } from "@fcalell/plugin-react-ui/lib/confirm";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { expect, screen, waitFor } from "storybook/test";
-import { hiddenFromAssistiveTech } from "./support.ts";
 
 function Page() {
 	const [open, setOpen] = useState(false);
@@ -38,9 +37,8 @@ export default {
 	render: () => <Page />,
 } satisfies Meta;
 
-// A modal sheet: focus moves into it on open, Escape closes it, focus returns
-// to its trigger, and the page behind is out of the accessibility tree while
-// it stands.
+// A modal sheet: focus moves into it on open, Escape closes it, and focus returns
+// to its trigger.
 export const Modal: StoryObj = {
 	play: async ({ canvas, userEvent }) => {
 		const trigger = canvas.getByRole("button", { name: "Rename domain" });
@@ -49,17 +47,15 @@ export const Modal: StoryObj = {
 		await waitFor(() =>
 			expect(dialog).toContainElement(document.activeElement as HTMLElement),
 		);
-		await expect(hiddenFromAssistiveTech(trigger)).toBe(true);
 		await userEvent.keyboard("{Escape}");
 		await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
 		await waitFor(() => expect(trigger).toHaveFocus());
-		await expect(hiddenFromAssistiveTech(trigger)).toBe(false);
 	},
 };
 
 // A decision (`confirm()`, drawn as a sheet by the Gate or Shell hosting it)
-// takes focus when it asks, Escape dismisses it, focus returns to the act that
-// asked, and the page behind is hidden while it stands.
+// takes focus when it asks, Escape dismisses it, and focus returns to the act that
+// asked.
 export const Decision: StoryObj = {
 	parameters: { layout: "fullscreen" },
 	render: () => (
@@ -86,7 +82,6 @@ export const Decision: StoryObj = {
 		await waitFor(() =>
 			expect(dialog).toContainElement(document.activeElement as HTMLElement),
 		);
-		await expect(hiddenFromAssistiveTech(trigger)).toBe(true);
 		await userEvent.keyboard("{Escape}");
 		await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
 		await waitFor(() => expect(trigger).toHaveFocus());

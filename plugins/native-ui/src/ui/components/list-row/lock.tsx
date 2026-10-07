@@ -7,16 +7,13 @@ import { Icon } from "../icon";
 
 const LOCK = "flex-row items-center";
 
-// A lock glyph, read aloud as the word Locked, then `reason` when it has
-// one. Outside the package's exports.
-export function LockMark({ reason }: { reason?: string }) {
+// A lock glyph, named Locked. Outside the package's exports.
+export function LockMark() {
 	const words = useWords();
 	return (
 		<View
 			accessible
-			accessibilityLabel={
-				reason === undefined ? words.locked : `${words.locked}, ${reason}`
-			}
+			accessibilityLabel={words.locked}
 			className={cn(LOCK_GLYPH, LOCK)}
 		>
 			<Ink.Provider value="ink-meta">

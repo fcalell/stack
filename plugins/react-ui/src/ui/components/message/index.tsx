@@ -41,8 +41,6 @@ const LINE_TEXT = "inline-flex flex-wrap justify-center min-w-0";
 const OPEN =
 	"inline-flex items-center min-w-0 hover:bg-wash-hover active:bg-wash-press";
 const HEAD = "flex items-baseline";
-// Read before the body, never drawn: the speaker `other` shows.
-const HIDDEN_HEAD = "sr-only";
 const BUBBLE = "max-w-4/5";
 // A token too long for the line (a link, a hash) breaks anywhere.
 const BODY = "whitespace-pre-wrap wrap-anywhere";
@@ -71,7 +69,7 @@ export type MessageProps =
 	| (MessageBase & {
 			/** `you`, a bubble at the column's end; `other`, a reply read as Prose under its name. */
 			author: "you" | "other";
-			/** Who said it: drawn over `other`'s reply, read aloud before yours. */
+			/** Who said it: drawn over `other`'s reply; yours draws none. */
 			name?: string;
 			/** What came with it, one row over the bubble (yours at the column's end) or the reply: an attachment with `src` a thumbnail that opens full size, one without a chip of its name. */
 			attachments?: readonly Attachment[];
@@ -230,7 +228,6 @@ export const Message = memo(function Message(props: MessageProps) {
 			);
 		return (
 			<article className={cn(message({ author }), YOURS)}>
-				{name ? <p className={HIDDEN_HEAD}>{name}</p> : null}
 				{attached}
 				{body ? (
 					<div className={cn(MESSAGE_BUBBLE, BUBBLE)}>

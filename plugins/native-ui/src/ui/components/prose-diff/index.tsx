@@ -12,7 +12,6 @@ import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Strut } from "../../lib/strut";
-import { useWords } from "../../lib/words";
 
 const FRAME = "min-w-0 overflow-hidden";
 // A line of the body role: a zero-width strut sets its height, the bar
@@ -32,17 +31,14 @@ export interface ProseDiffProps extends Closed {
 
 // Body text at the measure in the frame Code and Diff share, its edit marked
 // in place: a removed run struck through on danger-soft, an added run
-// underlined on ok-soft. A nested run cannot carry its own name, so the
-// paragraph's spoken text names each run by its kind.
+// underlined on ok-soft.
 export function ProseDiff({ before, after, loading }: ProseDiffProps) {
-	const words = useWords();
-	// The runs and their spoken text derive once per text pair. A run marks its
-	// words alone, its edge whitespace standing outside it; each run is keyed
-	// by where it starts in the two texts read together.
-	const { runs, spoken } = useMemo(() => {
+	// The runs derive once per text pair. A run marks its words alone, its edge
+	// whitespace standing outside it; each run is keyed by where it starts in
+	// the two texts read together.
+	const runs = useMemo(() => {
 		const drawn: ReactNode[] = [];
-		const said: string[] = [];
-		if (loading) return { runs: drawn, spoken: said };
+		if (loading) return drawn;
 		const parts = diffWords(before, after);
 		let at = 0;
 		parts.forEach((part, index) => {
@@ -56,7 +52,6 @@ export function ProseDiff({ before, after, loading }: ProseDiffProps) {
 			);
 			if ((!part.added && !part.removed) || !marked) {
 				drawn.push(part.value);
-				said.push(part.value);
 				return;
 			}
 			// A removed run and the added run beside it stand a space apart.
@@ -76,10 +71,9 @@ export function ProseDiff({ before, after, loading }: ProseDiffProps) {
 				</RNText>,
 				trail,
 			);
-			said.push(gap, `${words[kind]} ${marked}`, trail);
 		});
-		return { runs: drawn, spoken: said };
-	}, [before, after, loading, words]);
+		return drawn;
+	}, [before, after, loading]);
 	if (loading)
 		return (
 			<View
@@ -102,10 +96,7 @@ export function ProseDiff({ before, after, loading }: ProseDiffProps) {
 	return (
 		<View className={cn(CONTENT_FRAME, FRAME)}>
 			<View className={PROSE_DIFF_BODY}>
-				<RNText
-					accessibilityLabel={spoken.join("")}
-					className={cn(text({ role: "body" }), PROSE_DIFF_TEXT)}
-				>
+				<RNText className={cn(text({ role: "body" }), PROSE_DIFF_TEXT)}>
 					{runs}
 				</RNText>
 			</View>

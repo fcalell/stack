@@ -49,11 +49,9 @@ const FILL = "flex flex-col grow min-h-0";
 // In a Split's main the Thread bleeds through the inset the record's head
 // keeps, under the head's hairline.
 const BLEED = "-mx-page";
-// The log rings inset, its edge meeting the page's. It is the containing block of
-// the visually hidden text inside its messages, which would otherwise lay out
-// past it and give the scroller around it a scroll of its own.
+// The log rings inset, its edge meeting the page's.
 const SCROLLS =
-	"relative flex flex-col grow min-h-0 overflow-y-auto focus-visible:-outline-offset-2";
+	"flex flex-col grow min-h-0 overflow-y-auto focus-visible:-outline-offset-2";
 // The log and the docked foot own their frame's width: on the desktop they
 // centre the measure column; on touch the messages and the input span it.
 const CENTRES = "items-center";
@@ -74,7 +72,7 @@ export interface MessageSlots<T> {
 	key: (item: T) => string;
 	/** Who said it: `you`, `other` or `system`. */
 	author: (item: T) => "you" | "other" | "system";
-	/** Who said it, by name: drawn over `other`'s reply, read aloud before yours; a system line takes none. */
+	/** Who said it, by name: drawn over `other`'s reply, yours draws none; a system line takes none. */
 	name?: (item: T) => string | undefined;
 	/** What was said: plain text for `you` and `system`, markdown for `other`. */
 	body: (item: T) => string;

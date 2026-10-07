@@ -139,11 +139,7 @@ export function MessageInput({
 					)}
 				>
 					{attachments && attachments.length > 0 ? (
-						<Attachments
-							attachments={attachments}
-							onRemove={onDetach}
-							fallback={textField}
-						/>
+						<Attachments attachments={attachments} onRemove={onDetach} />
 					) : null}
 					<TextInput
 						ref={textField}
@@ -181,11 +177,7 @@ export function MessageInput({
 			{notice ? (
 				<View className={cn(MESSAGE_INPUT_ROW, NOTICE)}>
 					{onAttach ? (
-						<View
-							accessibilityElementsHidden
-							importantForAccessibility="no-hide-descendants"
-							className={cn(MESSAGE_ATTACH_SLOT, ATTACH_SLOT)}
-						/>
+						<View className={cn(MESSAGE_ATTACH_SLOT, ATTACH_SLOT)} />
 					) : null}
 					<RNText
 						className={cn(

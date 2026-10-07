@@ -41,6 +41,5 @@ export const Thumb: StoryObj = {
 		await expect(thumb).toHaveAttribute("aria-valuenow", "0");
 		await userEvent.keyboard("{End}");
 		await expect(thumb).toHaveAttribute("aria-valuenow", "60");
-		await expect(thumb).toHaveAttribute("aria-valuetext");
 	},
 };

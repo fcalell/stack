@@ -38,7 +38,6 @@ import { cn } from "../../lib/cn";
 import { FieldDisabled, FieldError, InlineField } from "../../lib/field";
 import { GroundContext } from "../../lib/ground";
 import { Ink } from "../../lib/ink";
-import { useLive } from "../../lib/live";
 import { navigate, usePathname } from "../../lib/navigate";
 import { joinParts, META_CUT, partText } from "../../lib/parts";
 import { ReasonHostContext, usePressed } from "../../lib/reason";
@@ -151,8 +150,7 @@ export interface ListRowProps<V extends string | null = string> extends Closed {
 	// What is wrong with the row, on the meta line after the status: a warn
 	// glyph and the sentence. The act that clears it is the row's `act`.
 	warning?: string;
-	// What the row holds, on the meta line after the warning: a lock glyph,
-	// its label read aloud.
+	// What the row holds, on the meta line after the warning: a lock glyph.
 	lock?: string;
 	// A data value's chip on the meta line.
 	chip?: ChipMark;
@@ -361,7 +359,6 @@ export function ListRow<V extends string | null = string>({
 	const under = act !== undefined && !top;
 	const inline = useMemo(() => ({ label: entry?.label ?? "" }), [entry?.label]);
 	const entryReason = useReasonLine(entry?.act.blocked);
-	const live = useLive(entry?.error ?? "");
 	const actReason = useReasonLine(act?.blocked);
 	// A blocked tick's reason follows the first part inside the span that yields
 	// last, so the part that names the item stays whole ahead of it.
@@ -453,9 +450,7 @@ export function ListRow<V extends string | null = string>({
 						</FieldError.Provider>
 					</InlineField.Provider>
 					{entry.error ? (
-						<RNText {...live} className={FIELD_ERROR_LINE}>
-							{entry.error}
-						</RNText>
+						<RNText className={FIELD_ERROR_LINE}>{entry.error}</RNText>
 					) : null}
 					{entryReason.line}
 					{actReason.line}
@@ -470,7 +465,7 @@ export function ListRow<V extends string | null = string>({
 								key={at}
 								className={cn(ROW_META_LINE, STEP)}
 							>
-								<StatusDot state={step.state} label={words[step.state]} />
+								<StatusDot state={step.state} />
 								<RNText
 									numberOfLines={1}
 									className={cn(
@@ -515,7 +510,7 @@ export function ListRow<V extends string | null = string>({
 							</View>
 						) : null}
 						{warning !== undefined ? <WarningMark label={warning} /> : null}
-						{lock !== undefined ? <LockMark reason={lock} /> : null}
+						{lock !== undefined ? <LockMark /> : null}
 						{chip ? (
 							<View className={CHIP_SLOT}>
 								<View className={CHIP_START} />

@@ -14,7 +14,7 @@ import {
 	PENDING_TRACK,
 	text,
 } from "@fcalell/ui-core/variants";
-import { useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useClock } from "../../lib/clock.ts";
 import type { Closed } from "../../lib/closed.ts";
 import { useReducedMotion } from "../../lib/media.ts";
@@ -82,13 +82,12 @@ export function PendingBar({ sentence, until, act }: PendingBarProps) {
 		end === undefined ? undefined : pendingRun(end, now),
 	);
 	if (end !== undefined && run?.end !== end) setRun(pendingRun(end, now, run));
-	const reasonId = useId();
 	const { touched } = useTouched();
 	const blocked = act?.blocked;
 	const [pressed, press] = usePressed(blocked);
 	const host = useMemo(
-		() => (blocked === undefined ? undefined : { id: reasonId, press }),
-		[blocked, reasonId, press],
+		() => (blocked === undefined ? undefined : { press }),
+		[blocked, press],
 	);
 	return (
 		<div className={cn(PENDING_BAR, BAR)}>
@@ -121,9 +120,7 @@ export function PendingBar({ sentence, until, act }: PendingBarProps) {
 				) : null}
 			</div>
 			{blocked === undefined ? null : (
-				<Reason id={reasonId} shown={pressed || touched}>
-					{blocked}
-				</Reason>
+				<Reason shown={pressed || touched}>{blocked}</Reason>
 			)}
 		</div>
 	);

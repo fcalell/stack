@@ -12,7 +12,7 @@ export interface IconButtonProps extends Closed {
 	onAct: () => void;
 }
 
-// A square act with no boundary at rest; the label is read aloud, never
+// A square act with no boundary at rest; the label is its name, never
 // drawn. Inside a disabled field it is inert.
 export function IconButton({ icon, fit, label, onAct }: IconButtonProps) {
 	const disabled = useContext(FieldDisabled);

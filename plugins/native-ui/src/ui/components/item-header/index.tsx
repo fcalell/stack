@@ -13,17 +13,11 @@ import {
 	skeletonRow,
 	text,
 } from "@fcalell/ui-core/variants";
-import { useRef } from "react";
-import {
-	AccessibilityInfo,
-	Pressable,
-	Text as RNText,
-	View,
-} from "react-native";
+import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
-import { useLive } from "../../lib/live";
+
 import { joinParts, META_CUT, partText } from "../../lib/parts";
 import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
@@ -112,22 +106,9 @@ function SaveFact({
 }) {
 	const words = useWords();
 	const said = save === "failed" ? words.notSaved : words[save];
-	const live = useLive(said);
-	// The region holds the screen reader's focus a pressed Retry leaves as that
-	// act gives way to the saving words.
-	const region = useRef<View>(null);
-	const retry = () => {
-		onRetry();
-		if (region.current)
-			AccessibilityInfo.sendAccessibilityEvent(region.current, "focus");
-	};
 	return (
 		<View className={SAVE}>
-			<View
-				accessibilityElementsHidden
-				importantForAccessibility="no-hide-descendants"
-				className={SAVE_ROOM}
-			>
+			<View className={SAVE_ROOM}>
 				<View className={SAVE_PILL}>
 					<Status state="failed" label={words.notSaved} />
 				</View>
@@ -136,7 +117,7 @@ function SaveFact({
 				</View>
 			</View>
 			<View className={SAVE_FORM}>
-				<View ref={region} accessible {...live} className={SAVE_PILL}>
+				<View className={SAVE_PILL}>
 					{save === "failed" ? (
 						<Status state="failed" label={said} />
 					) : (
@@ -146,7 +127,7 @@ function SaveFact({
 				{save === "failed" ? (
 					<Pressable
 						accessibilityRole="button"
-						onPress={retry}
+						onPress={onRetry}
 						className={cn(PILL_ACT, ITEM_FACT, ACT)}
 					>
 						<Retry />

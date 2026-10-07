@@ -5,7 +5,6 @@ import type {
 } from "@fcalell/ui-core/descriptors";
 import {
 	type ListState,
-	listBusy,
 	listState,
 	retryOf,
 	WAITING_MESSAGES,
@@ -37,7 +36,7 @@ import {
 	ThreadRoom,
 } from "../../lib/frame";
 import { Lifted } from "../../lib/hosts";
-import { useLive } from "../../lib/live";
+
 import { useWords } from "../../lib/words";
 import { EmptyStateBase } from "../empty-state/base";
 import type { ListEmpty } from "../list";
@@ -46,7 +45,6 @@ import { Missing } from "../missing";
 import type { QueryLike } from "../query-boundary";
 import { ToastRoom } from "../toast/room";
 import { Latest } from "./latest";
-import { newest } from "./newest";
 
 const FILL = "flex-1";
 // In a Split's main the Thread bleeds through the inset the record's head
@@ -77,8 +75,7 @@ export interface MessageSlots<T> {
 	// The item's React key, unique in the thread.
 	key: (item: T) => string;
 	author: (item: T) => "you" | "other" | "system";
-	// Drawn over `other`'s reply, read aloud before yours; a system line
-	// takes none.
+	// Drawn over `other`'s reply; a system line takes none.
 	name?: (item: T) => string | undefined;
 	// Plain text for `you` and `system`, markdown for `other`.
 	body: (item: T) => string;
@@ -216,9 +213,7 @@ function logOf<T>(
 // message and following each that arrives while the reader is at the end,
 // the input docked at the foot over the keyboard; while the reader is scrolled
 // up, a Latest act floats centred above the foot and returns to the newest
-// message. React Native has no log
-// role: the log is a polite live region, so an arriving message is announced
-// on Android, and `useLive` announces an arriving reply on iOS. It draws its
+// message. It draws its
 // collection's states, the input under each: while its query is pending or
 // `loading` is set, Message's loading forms (another's reply, yours,
 // another's reply), the log at its end; a failed query, the failed
@@ -236,19 +231,13 @@ export function Thread<T>(props: ThreadProps<T>) {
 		inSection: false,
 		hasEmpty: props.empty !== undefined,
 	};
-	const busy = listBusy(input);
 	// The latest slots, which each drawn message reads when its item changes
 	// and its acts call when pressed.
 	const slots = useRef(props.message);
 	slots.current = props.message;
 	const state = listState(input);
 	const children = logOf(props, state, words.retry, slots);
-	const heard = newest(
-		props.query ? props.query.data : props.items,
-		state,
-		props.message,
-	);
-	const live = useLive(heard.text, { id: heard.id });
+
 	const fill = useContext(ThreadRoom);
 	const bleeds = useContext(ThreadBleeds);
 	const log = useRef<ScrollView>(null);
@@ -264,9 +253,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 	if (!fill)
 		return (
 			<View className={THREAD}>
-				<View {...live} accessibilityState={{ busy }} className={THREAD}>
-					{children}
-				</View>
+				{children}
 				{foot ? (
 					<FootPlace.Provider value="inline">
 						<FootReturn.Provider value={claim}>{foot}</FootReturn.Provider>
@@ -292,8 +279,6 @@ export function Thread<T>(props: ThreadProps<T>) {
 			<View className={REGION}>
 				<ScrollView
 					ref={log}
-					{...live}
-					accessibilityState={{ busy }}
 					style={INVERTED}
 					// A message arriving at the origin keeps a scrolled-up reader's
 					// place, and one at the end follows it.

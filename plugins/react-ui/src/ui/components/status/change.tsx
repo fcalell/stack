@@ -2,20 +2,16 @@ import { cn } from "@fcalell/ui-core/cn";
 import type { ChangeKind } from "@fcalell/ui-core/descriptors";
 import { CHANGE_GLYPH } from "@fcalell/ui-core/list-state";
 import { changeMark } from "@fcalell/ui-core/variants";
-import { useWords } from "../../lib/words.tsx";
 import { IconBase } from "../icon/index.tsx";
 
 const BOX = "flex shrink-0 items-center justify-center";
-const SPOKEN = "sr-only";
 
-/** Where a row, a fact or a field stands in a change set: its kind's glyph in the kind's ink in a lane one icon wide, named by the kind's word. Outside the package's exports. */
+/** Where a row, a fact or a field stands in a change set: its kind's glyph in the kind's ink in a lane one icon wide. Outside the package's exports. */
 export function ChangeMark(props: { kind: ChangeKind }) {
-	const words = useWords();
 	const { kind } = props;
 	return (
 		<span className={cn(changeMark({ kind }), BOX)}>
 			<IconBase name={CHANGE_GLYPH[kind]} fit="meta" stroke="mark" />
-			<span className={SPOKEN}>{words[kind]}</span>
 		</span>
 	);
 }

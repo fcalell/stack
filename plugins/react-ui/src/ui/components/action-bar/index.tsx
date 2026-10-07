@@ -14,14 +14,7 @@ import {
 	type ButtonFit,
 	text,
 } from "@fcalell/ui-core/variants";
-import {
-	type ReactNode,
-	use,
-	useCallback,
-	useId,
-	useMemo,
-	useState,
-} from "react";
+import { type ReactNode, use, useCallback, useMemo, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import {
 	ActInert,
@@ -87,7 +80,7 @@ export interface ActionBarProps extends Closed {
 	acts: Act[];
 	/** Where the bar stands: at its container's end (the default), or across it with each act at the field's height (the default inside a `Gate`). */
 	fit?: ActionBarFit;
-	/** A selection bar's count, "N of M chosen" at meta at the bar's start (a `Table`'s `choose` set against its rows), announced as it changes, with `onAll` a deselect-all act beside it and, below `tablet` of the page where the `Table` draws no head tick, a select-all act; the act's label and its blocked reason stay the act's. Docked as a `Place`'s `foot`, its count and acts in a column centred in the foot, no wider than a table-wide bar. */
+	/** A selection bar's count, "N of M chosen" at meta at the bar's start (a `Table`'s `choose` set against its rows), with `onAll` a deselect-all act beside it and, below `tablet` of the page where the `Table` draws no head tick, a select-all act; the act's label and its blocked reason stay the act's. Docked as a `Place`'s `foot`, its count and acts in a column centred in the foot, no wider than a table-wide bar. */
 	chosen?: ChosenCount;
 }
 
@@ -118,19 +111,18 @@ function AllAct(props: {
 // An act's reason host: the same object while the act stays blocked by one
 // reason, so the act under it renders only when its own props change.
 function ActHost(props: {
-	id: string;
 	label: string;
 	blocked: string | undefined;
 	press: (label: string, reason: string) => void;
 	children: ReactNode;
 }) {
-	const { id, label, blocked, press } = props;
+	const { label, blocked, press } = props;
 	const host = useMemo(
 		() =>
 			blocked === undefined
 				? undefined
-				: { id, press: () => press(label, blocked) },
-		[id, label, blocked, press],
+				: { press: () => press(label, blocked) },
+		[label, blocked, press],
 	);
 	return <ReasonHostContext value={host}>{props.children}</ReasonHostContext>;
 }
@@ -144,7 +136,6 @@ export function ActionBar({ acts, fit, chosen }: ActionBarProps) {
 	const pend = use(FormContext);
 	const [running, setRunning] = useState(false);
 	const { touched } = useTouched();
-	const reason = useId();
 	const kept = use(ReasonKept);
 	const failed = use(ActFailed);
 	// A blocked act's reason takes the line a failure would draw in.
@@ -188,7 +179,6 @@ export function ActionBar({ acts, fit, chosen }: ActionBarProps) {
 				return (
 					<ActHost
 						key={act.label}
-						id={`${reason}-${at}`}
 						label={act.label}
 						blocked={act.blocked}
 						press={press}
@@ -253,11 +243,10 @@ export function ActionBar({ acts, fit, chosen }: ActionBarProps) {
 			) : (
 				buttons
 			)}
-			{acts.map((act, at) =>
+			{acts.map((act) =>
 				act.blocked === undefined ? null : (
 					<Reason
 						key={act.label}
-						id={`${reason}-${at}`}
 						kept={kept}
 						shown={touched || pressStands(act.blocked, pressed.get(act.label))}
 					>
@@ -266,12 +255,7 @@ export function ActionBar({ acts, fit, chosen }: ActionBarProps) {
 				),
 			)}
 			{blocked || !(kept || failed !== undefined) ? null : (
-				<Reason
-					id={`${reason}-failed`}
-					kept={kept}
-					failed
-					shown={failed !== undefined}
-				>
+				<Reason kept={kept} failed shown={failed !== undefined}>
 					{failed ?? NO_FAILURE}
 				</Reason>
 			)}

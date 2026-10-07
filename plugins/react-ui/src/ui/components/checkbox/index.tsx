@@ -36,7 +36,7 @@ export interface CheckboxProps extends Closed {
 	checked: boolean | "mixed";
 	/** Hears the next value when the viewer toggles it; a mixed box checks. */
 	onChange: (checked: boolean) => void;
-	/** Its name, read aloud; the row around it draws the visible label. */
+	/** Its name; the row around it draws the visible label. */
 	label: string;
 }
 
@@ -61,7 +61,6 @@ export function Checkbox({ checked, onChange, label }: CheckboxProps) {
 			onCheckedChange={(next) => onChange(next)}
 			aria-label={label}
 			aria-labelledby={target?.labelledBy}
-			aria-describedby={target?.describedBy}
 			{...(cell ? { tabIndex: -1 } : {})}
 			className={target ? IN_LABEL : HIT}
 		>

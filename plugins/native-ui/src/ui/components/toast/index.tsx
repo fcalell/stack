@@ -22,7 +22,6 @@ import { withUniwind } from "uniwind";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
-import { useLive } from "../../lib/live";
 import { curve } from "../../lib/motion";
 import { RaisedGround } from "../../lib/raised";
 import { dismissToast, ToastEntry } from "../../lib/toast";
@@ -73,14 +72,10 @@ export interface ToastProps extends Closed {
 
 // A raised toast: the state's glyph, the sentence, its act and the dismiss
 // act. It stands in the toasts' layer the Shell holds, which `toast()`
-// queues it to; a failed one is announced at once.
+// queues it to.
 export function Toast({ sentence, state, act }: ToastProps) {
 	const words = useWords();
 	const id = useContext(ToastEntry);
-	const live = useLive(sentence, {
-		assertive: state === "failed",
-		appears: true,
-	});
 	if (id === undefined)
 		throw new Error(
 			"a Toast stands in the Shell's toasts layer, queued by toast()",
@@ -91,7 +86,6 @@ export function Toast({ sentence, state, act }: ToastProps) {
 				entering={ENTER}
 				exiting={LEAVE}
 				layout={CLOSE_UP}
-				{...live}
 				className={cn(TOAST, BOX)}
 			>
 				{state ? (

@@ -19,16 +19,12 @@ const LABEL_WAIT = "grow";
 const SHARE_WAIT = "justify-end shrink-0";
 const BAR = "w-full";
 
-/** A Meter waiting: the label, share, bar and, when `line` is not `none`, the line under the bar as bars in their boxes (a meta line's, or one count link's target box); busy when it waits alone (a list of them is busy once). Outside the package's exports. */
-export function MeterWait(props: { busy: boolean; line: WaitLine }) {
+/** A Meter waiting: the label, share, bar and, when `line` is not `none`, the line under the bar as bars in their boxes (a meta line's, or one count link's target box). Outside the package's exports. */
+export function MeterWait(props: { line: WaitLine }) {
 	// In a Group the meter is one of its items, at the card's inset.
 	const item = use(GroundContext) === "group" && GROUP_ITEM;
 	return (
-		<div
-			aria-busy={props.busy || undefined}
-			aria-hidden={props.busy ? undefined : true}
-			className={cn(METER, item, STACK)}
-		>
+		<div aria-hidden className={cn(METER, item, STACK)}>
 			<div className={cn(METER_HEAD, HEAD)}>
 				<span className={cn(lineBox({ role: "body" }), LINE, LABEL_WAIT)}>
 					<span className={cn(skeleton({ kind: "line" }), "w-1/3")} />

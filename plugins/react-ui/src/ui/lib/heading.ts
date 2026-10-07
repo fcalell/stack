@@ -18,8 +18,7 @@ export const DEEPER = {
 
 // A Screen titles at the page's `h1` and hands 2 to its body. A record beside
 // a Split's main titles at the level where it stands and hands the next to its
-// body, at every width: where its head stands alone the Place's `h1` stays
-// read, unseen, so the outline is the same at every width.
+// body, at every width.
 export function screenLevels(
 	beside: boolean,
 	level: HeadingLevel,

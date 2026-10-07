@@ -52,7 +52,7 @@ const LABEL = "truncate grow";
 
 const TABS = "flex pb-safe group-has-data-screen/column:hidden";
 const TAB =
-	"flex flex-col-reverse items-center justify-center min-w-0 grow basis-0 focus-visible:-outline-offset-2";
+	"flex flex-col items-center justify-center min-w-0 grow basis-0 focus-visible:-outline-offset-2";
 const TAB_GLYPH = "relative flex";
 const TAB_COUNT = "absolute top-0 left-full flex";
 const TAB_LABEL = "max-w-full truncate";
@@ -180,8 +180,6 @@ function MorePage(props: { places: readonly PlaceSpec[] }) {
 // The touch shell's places: glyph over label, the count over the glyph's
 // end; past five places, four and a More tab, which opens the page of the
 // rest and is selected while it stands or the current place is among them.
-// A tab holds its label ahead of its glyph and stacks them reversed, so its
-// name reads the label then the count.
 function TabBar(props: {
 	places: readonly PlaceSpec[];
 	route: string | undefined;
@@ -251,6 +249,7 @@ function TabBar(props: {
 function Tab(props: { icon: ReactNode; label: string; selected: boolean }) {
 	return (
 		<>
+			<span className={TAB_GLYPH}>{props.icon}</span>
 			<span
 				className={cn(
 					placeTabLabel({ state: props.selected ? "selected" : "idle" }),
@@ -259,7 +258,6 @@ function Tab(props: { icon: ReactNode; label: string; selected: boolean }) {
 			>
 				{props.label}
 			</span>
-			<span className={TAB_GLYPH}>{props.icon}</span>
 		</>
 	);
 }

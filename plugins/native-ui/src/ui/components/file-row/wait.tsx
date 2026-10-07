@@ -26,17 +26,11 @@ const COUNTS_BAR = "w-1/3";
 
 // A FileRow waiting: the change mark's skeleton in its lane when `change` is
 // declared, the glyph, the path's bar, a chip's bar when `chip` is declared, and
-// the counts' bar, busy when it waits alone (a list of them is
-// busy once). Outside the package's exports.
-export function FileWait(props: {
-	busy: boolean;
-	change: boolean;
-	chip: boolean;
-}) {
+// the counts' bar. Outside the package's exports.
+export function FileWait(props: { change: boolean; chip: boolean }) {
 	const ground = useContext(GroundContext);
 	return (
 		<View
-			accessibilityState={{ busy: props.busy }}
 			className={cn(
 				skeletonRow({
 					kind: ground === "group" ? "one-line-group" : "one-line",

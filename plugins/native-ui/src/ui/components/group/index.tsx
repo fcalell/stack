@@ -36,10 +36,9 @@ export interface GroupProps extends Closed {
 
 // Rows in a hairline card on the surface, the hairline drawn once between
 // them, so no row carries one. A List in it draws its rows, its waiting rows
-// and its failed and empty forms on the card, the card busy while the
-// List's items wait. A loading Section's body waits with it: a List draws
-// its own waiting rows, and skeleton setting rows stand in for static rows;
-// the group says it is busy only on its own `loading` or a busy List.
+// and its failed and empty forms on the card. A loading Section's body waits
+// with it: a List draws its own waiting rows, and skeleton setting rows stand
+// in for static rows.
 export function Group({ loading, children }: GroupProps) {
 	const inherited = useContext(LoadingContext);
 	const waiting = loading ?? inherited;
@@ -47,16 +46,14 @@ export function Group({ loading, children }: GroupProps) {
 	// registers; with none, setting skeletons. The body renders once to learn,
 	// and the swap lands in a synchronous re-render before paint.
 	const lists = useRef(0);
-	const [busyLists, setBusyLists] = useState(0);
+
 	const [settings, setSettings] = useState(false);
 	const host = useMemo<GroupHost>(
 		() => ({
-			list: (busy) => {
+			list: () => {
 				lists.current += 1;
-				if (busy) setBusyLists((count) => count + 1);
 				return () => {
 					lists.current -= 1;
-					if (busy) setBusyLists((count) => count - 1);
 				};
 			},
 		}),
@@ -73,7 +70,7 @@ export function Group({ loading, children }: GroupProps) {
 			: Children.toArray(children);
 	return (
 		<View
-			accessibilityState={{ busy: loading === true || busyLists > 0 }}
+			accessibilityState={{ busy: loading === true }}
 			className={cn(GROUP, BOX)}
 		>
 			<LoadingContext.Provider value={waiting}>

@@ -23,11 +23,10 @@ export interface FormProps extends Closed {
 // the `ActionBar` under a hairline across the form; the bar sits in flow, so
 // it scrolls with the fields and the keyboard never covers it. Its filled act
 // runs its `onAct` (native has no implicit submission); while that promise
-// pends the act is pending, the others ignore the press and the form is
-// busy. A blocked act says its reason once a field has taken input.
+// pends the act is pending and the others ignore the press. A blocked act
+// says its reason once a field has taken input.
 export function Form({ children }: FormProps) {
 	const within = useContext(FormStands);
-	const [pending, setPending] = useState(false);
 	const [touched, setTouched] = useState(false);
 	const touch = useMemo(
 		() => ({ touched, touch: () => setTouched(true) }),
@@ -38,10 +37,9 @@ export function Form({ children }: FormProps) {
 		(node) => isValidElement(node) && node.type === Section,
 	);
 	return (
-		<FormContext.Provider value={setPending}>
+		<FormContext.Provider value>
 			<TouchedContext.Provider value={touch}>
 				<View
-					accessibilityState={{ busy: pending }}
 					className={form({
 						holds: sectioned ? "sections" : "fields",
 						in: within,

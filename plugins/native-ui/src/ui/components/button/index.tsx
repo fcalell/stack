@@ -1,5 +1,4 @@
 import type { IconName } from "@fcalell/ui-core/descriptors";
-import { counted } from "@fcalell/ui-core/tokens";
 import {
 	type ButtonAct,
 	type ButtonFit,
@@ -16,7 +15,7 @@ import { ActInert } from "../../lib/form";
 import { Ink } from "../../lib/ink";
 import { ReasonHostContext, usePressed } from "../../lib/reason";
 import { useTouched } from "../../lib/touched";
-import { useWords } from "../../lib/words";
+
 import { Count } from "../count";
 import { Icon } from "../icon";
 import { Spinner } from "../spinner";
@@ -90,7 +89,6 @@ export function Button({
 	loading,
 	blocked,
 }: ButtonProps) {
-	const words = useWords();
 	const kind = act ?? "primary";
 	const muted = blocked !== undefined;
 	const { touched } = useTouched();
@@ -113,9 +111,7 @@ export function Button({
 	const control = (
 		<Pressable
 			accessibilityRole="button"
-			accessibilityLabel={
-				waiting ? `${label}, ${counted(words.waitLeft, wait)}` : label
-			}
+			accessibilityLabel={label}
 			accessibilityState={{
 				disabled: loading || muted || inert,
 				busy: loading,
@@ -137,11 +133,7 @@ export function Button({
 					{label}
 				</RNText>
 				{wait !== undefined ? (
-					<View
-						accessibilityElementsHidden
-						importantForAccessibility="no-hide-descendants"
-						className={loading || !waiting ? PENDING : undefined}
-					>
+					<View className={loading || !waiting ? PENDING : undefined}>
 						<Count value={wait} />
 					</View>
 				) : count !== undefined ? (

@@ -16,24 +16,18 @@ const TOAST_LAYER = "absolute inset-x-0 items-center justify-end";
 // after the frame, the `confirm()` decisions as a sheet, and the toast queue
 // over the box the page draws (`ToastRoom`), measured against this root. The
 // toasts' layer stands after the provider's host view, so over every sheet,
-// since React Native's `zIndex` orders siblings only. The host view is never
-// flattened: a sheet's layer is `accessibilityViewIsModal`, which hides its
-// siblings from VoiceOver, and the toasts' layer is not among them.
-// Outside the package's exports.
+// since React Native's `zIndex` orders siblings only. Outside the package's
+// exports.
 export function FrameHost({ children }: { children: ReactNode }) {
 	const root = useRef<View>(null);
 	const [box, place] = useState<ToastBox>();
 	const [toastFrame] = useState<ToastFrame>(() => ({ root, place }));
 	return (
 		<View ref={root} className={FILL}>
-			<View collapsable={false} className={FILL}>
-				<BottomSheetModalProvider>
-					<ToastFrame.Provider value={toastFrame}>
-						{children}
-					</ToastFrame.Provider>
-					<Confirmations />
-				</BottomSheetModalProvider>
-			</View>
+			<BottomSheetModalProvider>
+				<ToastFrame.Provider value={toastFrame}>{children}</ToastFrame.Provider>
+				<Confirmations />
+			</BottomSheetModalProvider>
 			{box ? (
 				<View
 					pointerEvents="box-none"

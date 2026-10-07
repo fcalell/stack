@@ -17,11 +17,10 @@ const Turning = withUniwind(Animated.View);
 export interface SpinnerProps extends Closed {}
 
 // A turning ring in the ink of its place, the size of the glyph it replaces;
-// hidden from assistive tech, since its owner announces the wait. A view
-// takes no currentColor, so the place's ink is resolved and set as the
-// border colour: the arc's `border-t-transparent` is the top edge's own key
-// and survives it. uniwind's free build has no `animate-*`, so the turn is
-// React Native's own loop over the contract's loop duration.
+// A view takes no currentColor, so the place's ink is resolved and set as
+// the border colour: the arc's `border-t-transparent` is the top edge's own
+// key and survives it. uniwind's free build has no `animate-*`, so the turn
+// is React Native's own loop over the contract's loop duration.
 export function Spinner(_props: SpinnerProps) {
 	const borderColor = useTokenColor(`--color-${useInk() ?? "ink-meta"}`);
 	const turn = useRef(new Animated.Value(0)).current;
@@ -42,11 +41,7 @@ export function Spinner(_props: SpinnerProps) {
 		outputRange: ["0deg", "360deg"],
 	});
 	return (
-		<View
-			accessibilityElementsHidden
-			importantForAccessibility="no-hide-descendants"
-			className={SPINNER}
-		>
+		<View className={SPINNER}>
 			<View className={cn(SPINNER_TRACK, LAYER)} style={{ borderColor }} />
 			<Turning
 				className={cn(SPINNER_ARC, LAYER)}

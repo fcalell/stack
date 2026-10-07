@@ -75,11 +75,7 @@ transition duration is 0 ms.
 
 ## Auditing with axe
 
-Every popup (a menu, a picker, a select, a sheet) mounts in a popup layer the `Shell` and the
-`Gate` each draw inside their `main` landmark, so an open popup passes axe's `region` rule.
-A popup outside both (a bare component in a test page) mounts in `<body>`.
-
-Exclude `[data-base-ui-focus-guard]` from an audit, as in
+Run every axe rule except the document-structure ones (landmarks, heading order, skip links): screen readers are not a target. Exclude `[data-base-ui-focus-guard]` from an audit, as in
 `new AxeBuilder({ page }).exclude("[data-base-ui-focus-guard]")`. Base UI 1.8.0 draws its focus
 guards, the spans that relay Tab between a trigger and its portaled popup, as focusable and
 `aria-hidden` by design, so `aria-hidden-focus` flags each one; no prop turns them off. Each guard

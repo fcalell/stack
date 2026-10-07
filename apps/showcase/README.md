@@ -28,9 +28,7 @@ pnpm stories        # from the repo root: builds the workspace chain, then Story
 pnpm stories:test   # every story in a headless browser: axe on each, the play tests run
 ```
 
-The test run is desktop density at a 1280 by 800 viewport; touch is a toolbar toggle. A component
-story runs every axe rule except the page-level ones (`.storybook/preview.tsx` lists them and
-why); a page story runs all of them over the whole document. Playwright's bundled browser is the
+The test run is desktop density at a 1280 by 800 viewport; touch is a toolbar toggle. Every story runs every axe rule except the document-structure ones (landmarks, heading order, skip links; `.storybook/preview.tsx` lists them). Playwright's bundled browser is the
 default. Where none is installed (NixOS), point `CHROME_PATH` at a Chrome:
 `CHROME_PATH=$(which google-chrome-stable) pnpm stories:test`. `.storybook/` holds the config;
 `stories/` is generated from the roster and the places list and gitignored.

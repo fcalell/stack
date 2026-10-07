@@ -224,8 +224,8 @@ export function OptionList<V extends string = string, T = unknown>(
 	const { children } = props;
 	const words = useWords();
 	const back = useBackAct();
-	const named = use(GroupName);
 	const ids = useId();
+	const named = use(GroupName);
 	const input = {
 		query: props.query,
 		items: props.options,
@@ -242,7 +242,6 @@ export function OptionList<V extends string = string, T = unknown>(
 			role="group"
 			aria-busy={listBusy(input) || undefined}
 			aria-labelledby={named?.labelledBy}
-			aria-describedby={named?.describedBy}
 			className={cn(OPTION_LIST, LIST)}
 		>
 			{body}
@@ -305,12 +304,7 @@ export function OptionList<V extends string = string, T = unknown>(
 			{group.options.map((option, place) => {
 				const chosen = chosenValues.includes(option.value);
 				const marked = option.description || option.recommended;
-				const labelId = `${ids}-${at}-${place}`;
-				const saidId = `${labelId}-said`;
-				const target = {
-					labelledBy: labelId,
-					describedBy: option.description ? saidId : undefined,
-				};
+				const target = { labelledBy: `${ids}-${at}-${place}` };
 				return (
 					<Fragment key={option.value}>
 						{/* biome-ignore lint/a11y/noLabelWithoutControl: the Checkbox or the radio inside is its control */}
@@ -323,7 +317,6 @@ export function OptionList<V extends string = string, T = unknown>(
 										<Radio.Root
 											value={option.value}
 											aria-labelledby={target.labelledBy}
-											aria-describedby={target.describedBy}
 											className={cn(
 												optionRadio({
 													state: chosen ? "checked" : "unchecked",
@@ -346,14 +339,14 @@ export function OptionList<V extends string = string, T = unknown>(
 								{marked ? (
 									<span className={TEXT}>
 										<span
-											id={labelId}
+											id={target.labelledBy}
 											className={cn(text({ role: "body" }), TITLE)}
 										>
 											{option.label}
 										</span>
 										<span className={cn(ROW_META_LINE, DESCRIPTION_LINE)}>
 											{option.description ? (
-												<span id={saidId} className={text({ role: "meta" })}>
+												<span className={text({ role: "meta" })}>
 													{option.description}
 												</span>
 											) : null}
@@ -364,7 +357,7 @@ export function OptionList<V extends string = string, T = unknown>(
 									</span>
 								) : (
 									<span
-										id={labelId}
+										id={target.labelledBy}
 										className={cn(text({ role: "body" }), LABEL)}
 									>
 										{option.label}
@@ -394,7 +387,6 @@ export function OptionList<V extends string = string, T = unknown>(
 				if (next !== null) choose<V>(props, next);
 			}}
 			aria-labelledby={named?.labelledBy}
-			aria-describedby={named?.describedBy}
 			className={cn(OPTION_LIST, LIST)}
 		>
 			{rows}

@@ -11,7 +11,6 @@ import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
-import { useLive } from "../../lib/live";
 import { Strut } from "../../lib/strut";
 import { Button } from "../button";
 import { Icon } from "../icon";
@@ -34,7 +33,7 @@ const GLYPHS: Record<BannerKind, IconName> = {
 
 export interface BannerProps extends Closed {
 	// What it tells: news (`note`, the default), a caution (`warn`), or a
-	// failure (`danger`, announced at once).
+	// failure (`danger`).
 	kind?: BannerKind;
 	sentence: string;
 	// The one act it offers, under the line; a blocked act's reason under it.
@@ -46,14 +45,9 @@ export interface BannerProps extends Closed {
 // bar fit, under the line.
 export function Banner({ kind, sentence, act }: BannerProps) {
 	const drawn = kind ?? "note";
-	const live = useLive(sentence, {
-		assertive: drawn === "danger",
-		appears: drawn === "danger",
-	});
 	return (
 		<View
 			role={drawn === "danger" ? "alert" : "status"}
-			{...live}
 			className={cn(banner({ kind: drawn }), BOX)}
 		>
 			<View className={cn(BANNER_MAIN, MAIN)}>
