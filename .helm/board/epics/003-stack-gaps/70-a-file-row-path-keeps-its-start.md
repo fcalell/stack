@@ -8,6 +8,8 @@ sessions: {}
 ## Goal
 Stead's review lists sensitive files with a chip saying why each is listed (github.com/fcalell/stead, packages/server/src/app/ui/review.tsx; design/07-interface.md "The review screen"). At 375 px the row draws "ome.jso" for biome.json and "d./flags.md" for docs/flags.md, with room to spare.
 
+Evidence, item screens critique unit u4 (main 54deb15, shots `r3-else-390-dark`, `blocked-tap-390-light`): still reproducing at this pin. At 390 the sensitive rows draw the path cut to "b… me.json" and "do… flags.md" while the chip is also cut ("what the check …"), and about 120 px right of the +N count stays empty (the count sits at x of about 320 of 390): the row has width to spare yet cuts both, and the count lane is not right-aligned.
+
 ## Approach
 The app passes `path` and `chip` as FileRow's props ask; the cut happens inside FileRow's path parts, which lose the path's start rather than yielding it whole beside the chip (rules.md: the chip stays whole and the path yields). Seen at stack f6563f6.
 

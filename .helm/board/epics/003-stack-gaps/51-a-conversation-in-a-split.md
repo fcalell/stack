@@ -8,6 +8,8 @@ sessions: {}
 ## Goal
 A `Thread` stands as the open record in a `Split`'s main under its record's `ItemHeader`, its log scrolling inside main and its `MessageInput`, or the question sheet docked in its place, at main's foot beside the list and the pane, at 375, 768 and 1440, inside a bleeding `Place`. Chats' open session or thread; Work's card thread at `/work/code/<card>/thread`. Both places carry their create act in `actions`, so no floating act stands over the input. Stead needs it: `design/07-interface.md` at github.com/fcalell/stead, "Gaps", and the surfaces named here.
 
+Evidence, card critique unit u7 (Stead `c9c9e5a`, shot `i1440/i-thread-1440-light`, stack `5564217`): the card's full thread opened in a Split's main at 1440 has no back act to the card it belongs to (the Place header shows only New story and More), and `Screen` cannot wrap it, since its scrolling body gives a `Thread` no fill context. The Split's `back` draws only below `tablet`, and then leads to the list, not the record. 07 asks for "back to the card" in main on the desktop. On the phone the same thread's back leads to the board's list too: `Split`'s `back` names the route where the list stands alone, so a record pushed from a record (the thread from its card) has no way to name its parent record.
+
 ## Approach
 Only a `Place` provides the context a `Thread` uses to fill its page and dock its foot; `Split`'s main is a scrolling region with no such provider, so a `Thread` there reports filling to the enclosing `Place`. Stack's showcase has no `Thread` inside a `Split`.
 
