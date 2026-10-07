@@ -370,20 +370,25 @@ export function ListRow<V extends string | null = string>({
 	const [first, ...rest] = meta ?? [];
 	const lead: Part[] = first === undefined ? [] : [first];
 	if (blocked !== undefined) lead.push(blocked);
-	const value =
-		trailing && !("pick" in trailing) ? (
+	// A waiting row (its List was given the items while it loads) draws the bar
+	// in the value's place; the app's slot is not read for it.
+	let value: ReactNode = null;
+	if (waits)
+		value = (
 			<First on={top}>
-				{waits ? (
-					<View
-						className={cn(skeleton({ kind: "line" }), TRAILING_BAR, TRAILING)}
-					/>
-				) : (
-					<RNText className={cn(ROW_TRAILING, TRAILING)}>
-						{trailingWord(trailing)}
-					</RNText>
-				)}
+				<View
+					className={cn(skeleton({ kind: "line" }), TRAILING_BAR, TRAILING)}
+				/>
 			</First>
-		) : null;
+		);
+	else if (trailing && !("pick" in trailing))
+		value = (
+			<First on={top}>
+				<RNText className={cn(ROW_TRAILING, TRAILING)}>
+					{trailingWord(trailing)}
+				</RNText>
+			</First>
+		);
 	const titled = (
 		<RNText
 			numberOfLines={wrap || quotedWraps ? undefined : 1}
@@ -534,7 +539,7 @@ export function ListRow<V extends string | null = string>({
 					{actReason.line}
 				</View>
 			)}
-			{trailing && "pick" in trailing ? (
+			{!waits && trailing && "pick" in trailing ? (
 				<First on={top}>
 					<Picker {...trailing.pick} fit="row" />
 				</First>

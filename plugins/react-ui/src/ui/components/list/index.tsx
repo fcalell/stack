@@ -42,7 +42,7 @@ import { useGroupPart } from "../../lib/group.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 import { ListedRoute, useRoute } from "../../lib/navigate.ts";
 import { SectionContext } from "../../lib/section.ts";
-import { TRAILING_PLACEHOLDER, TrailingWait } from "../../lib/trailing-wait.ts";
+import { TrailingWait } from "../../lib/trailing-wait.ts";
 import { TreeContext } from "../../lib/tree.ts";
 import { useWords } from "../../lib/words.tsx";
 import {
@@ -405,7 +405,7 @@ export function List<T, V extends string | null = string>(
 				leading={row.leading && leadingOf(row.leading, item)}
 				title={row.title(item)}
 				meta={row.meta?.(item)}
-				trailing={known ? TRAILING_PLACEHOLDER : row.trailing?.(item)}
+				trailing={known ? undefined : row.trailing?.(item)}
 				status={row.status?.(item)}
 				warning={row.warning?.(item)}
 				lock={row.lock?.(item)}

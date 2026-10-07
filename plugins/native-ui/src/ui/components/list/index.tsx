@@ -32,7 +32,7 @@ import { between, useGroupPart } from "../../lib/group";
 import { LoadingContext } from "../../lib/loading";
 import type { Route } from "../../lib/route";
 import { SectionContext } from "../../lib/section";
-import { TRAILING_PLACEHOLDER, TrailingWait } from "../../lib/trailing-wait";
+import { TrailingWait } from "../../lib/trailing-wait";
 import { TreeContext } from "../../lib/tree";
 import { useWords } from "../../lib/words";
 import { DefinitionRow, type DefinitionValue } from "../definition-row";
@@ -335,7 +335,7 @@ export function List<T, V extends string | null = string>(
 				leading={row.leading && leadingOf(row.leading, item)}
 				title={row.title(item)}
 				meta={row.meta?.(item)}
-				trailing={known ? TRAILING_PLACEHOLDER : row.trailing?.(item)}
+				trailing={known ? undefined : row.trailing?.(item)}
 				status={row.status?.(item)}
 				warning={row.warning?.(item)}
 				lock={row.lock?.(item)}
