@@ -1,6 +1,6 @@
 ---
 id: 007-02
-status: backlog
+status: review
 sessions: {}
 ---
 # stack: check every served screen headlessly
