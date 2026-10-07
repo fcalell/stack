@@ -39,7 +39,7 @@ export interface LinkAct {
 	href: Route;
 }
 
-// An icon-only act: the label is read aloud, never drawn.
+// An icon-only act: the label is its accessible name, never drawn.
 export interface IconAct {
 	icon: IconName;
 	label: string;
@@ -318,12 +318,10 @@ export type StatSpec = {
 	| { href: Route; counts?: never }
 );
 
-// The point a meter marks on its track: a tick at `value` of its max, named
-// `label` to assistive tech. Once the meter's value reaches it the fill turns
-// `warn`.
+// The point a meter marks on its track: a tick at `value` of its max. Once the
+// meter's value reaches it the fill turns `warn`.
 export interface MeterMark {
 	value: number;
-	label: string;
 }
 
 // Where a flow stands at one of its steps: done, the current one, or still to
@@ -460,9 +458,9 @@ interface ColumnBase {
 	width?: ColumnWidth;
 	align?: "start" | "end";
 	sortable?: boolean;
-	// Why the column is read only in this table: its cells never edit (its
-	// `edit` is ignored) and its head draws a lock, the reason read aloud.
-	locked?: string;
+	// The column is read only in this table: its cells never edit (its `edit` is
+	// ignored) and its head draws a lock glyph.
+	locked?: boolean;
 }
 
 // A column by the kind of value its cells hold, each kind with the edits

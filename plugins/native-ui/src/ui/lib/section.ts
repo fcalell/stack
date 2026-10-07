@@ -20,6 +20,9 @@ export interface SectionKinds {
 	lists: readonly unknown[];
 	// Each waits alone (a BarChart, a Comparison).
 	waits: readonly unknown[];
+	// Each draws its own waiting form (a Prose, a Thread, a Code, a Meter, a
+	// Slider).
+	forms: readonly unknown[];
 	boundary: unknown;
 	group: unknown;
 	field: unknown;
@@ -52,6 +55,7 @@ export function sectionPartsOf(
 	const waits: boolean[] = [];
 	let groups = 0;
 	let fields = 0;
+	let forms = 0;
 	const walk = (node: ReactNode, inGroup: boolean) => {
 		for (const child of Children.toArray(node)) {
 			if (!isValidElement<{ children?: ReactNode }>(child)) continue;
@@ -81,9 +85,10 @@ export function sectionPartsOf(
 			} else if (type === kinds.group && !inGroup) {
 				groups += 1;
 				walk(props.children, true);
-			} else if (type === kinds.field) fields += 1;
+			} else if (kinds.forms.includes(type)) forms += 1;
+			else if (type === kinds.field) fields += 1;
 		}
 	};
 	walk(children, false);
-	return { lists, waits, groups, fields };
+	return { lists, waits, groups, fields, forms };
 }

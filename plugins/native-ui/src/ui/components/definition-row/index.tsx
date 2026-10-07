@@ -5,7 +5,7 @@ import type {
 	Lock,
 	StatusState,
 } from "@fcalell/ui-core/descriptors";
-import { valueCut } from "@fcalell/ui-core/list-state";
+import { definitionShape, valueCut } from "@fcalell/ui-core/list-state";
 import {
 	DEFINITION_ROW,
 	DEFINITION_ROW_CHEVRON,
@@ -14,12 +14,14 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import type { ReactNode } from "react";
+import { isValidElement, type ReactNode, useContext } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { useCopy } from "../../lib/copy";
+import { useGroupPart } from "../../lib/group";
 import { Ink } from "../../lib/ink";
+import { LoadingContext } from "../../lib/loading";
 import { navigate } from "../../lib/navigate";
 import type { Route } from "../../lib/route";
 import { useWords } from "../../lib/words";
@@ -29,6 +31,7 @@ import { Link } from "../link";
 import { LockMark } from "../list-row/lock";
 import { Status } from "../status";
 import { ChangeMark } from "../status/change";
+import { DefinitionWait } from "./wait";
 
 const ROW = "relative flex-row items-center";
 // The hit covers the row under its text and its acts, and takes the press
@@ -108,6 +111,27 @@ export function DefinitionRow({
 	href,
 	onOpen,
 }: DefinitionRowProps) {
+	// In a waiting Group or Section the row draws its waiting form, built from
+	// what it is given: a control as its value stands as the switch's box.
+	const waiting = useContext(LoadingContext);
+	useGroupPart();
+	if (waiting) {
+		const shape = definitionShape({
+			change,
+			description,
+			locked,
+			copyable,
+			act,
+			href,
+			onOpen,
+		});
+		return (
+			<DefinitionWait
+				shape={isValidElement(value) ? { ...shape, end: "switch" } : shape}
+				index={0}
+			/>
+		);
+	}
 	const open = href !== undefined ? () => navigate(href) : onOpen;
 	const copied = copyable && typeof value === "string" ? value : undefined;
 	let shown: ReactNode = null;

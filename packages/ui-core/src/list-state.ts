@@ -17,7 +17,7 @@ import type {
 	TableColumn,
 	TableRowSlots,
 } from "./descriptors.ts";
-import { filled, METER_NEAR, type Words } from "./tokens.ts";
+import { METER_NEAR, type Words } from "./tokens.ts";
 import type { RowGround } from "./variants.ts";
 
 export type ListState = "pending" | "failed" | "missing" | "empty" | "loaded";
@@ -111,11 +111,12 @@ export function listGround(inGroup: boolean): RowGround {
 	return inGroup ? "group" : "list";
 }
 
-// What a waiting `Group` draws: the waiting rows of the Lists it holds
-// (however deep), each in the slots its map declares; with no List, setting
-// row skeletons in place of its static rows.
-export function groupWait(lists: number): "rows" | "settings" {
-	return lists > 0 ? "rows" : "settings";
+// What a waiting `Group` draws: the waiting forms of the parts it holds that
+// have one (a List's rows in the slots its map declares, a Meter, a Slider, a
+// DefinitionRow), each registered however deep; with none, setting row
+// skeletons in place of its static children.
+export function groupWait(parts: number): "parts" | "settings" {
+	return parts > 0 ? "parts" : "settings";
 }
 
 // The kind of mark every row of a list leads with.
@@ -481,6 +482,9 @@ export interface SectionParts {
 	groups: number;
 	// Each FormField.
 	fields: number;
+	// Each part that draws its own waiting form while the Section loads (a
+	// Prose, a Thread, a Code, a Meter, a Slider).
+	forms: number;
 }
 
 export interface SectionState {
@@ -495,14 +499,15 @@ export interface SectionState {
 }
 
 // A loading body of fields waits as one skeleton per field, or as three
-// when it holds none (content other than fields).
+// when it holds none (content no part knows how to wait as).
 const FALLBACK_FIELDS = 3;
 
 // The Section's head and loading body, decided from its own props and the
 // parts its body holds: busy while it loads or a part waits; its own count,
 // else the total of its lists that are no `definition` list, once each
 // answers; and, while it loads with no body of rows (which waits as its own
-// skeleton rows), one skeleton field per field, or three.
+// skeleton rows) and no part that waits in its own form beside no field, one
+// skeleton field per field, or three.
 export function sectionState(
 	parts: SectionParts,
 	own: { count?: number; loading?: boolean },
@@ -528,7 +533,10 @@ export function sectionState(
 			own.count,
 			counting.map((list) => listCount(inputOf(list))),
 		),
-		fields: !loading || rows > 0 ? 0 : parts.fields || FALLBACK_FIELDS,
+		fields:
+			!loading || rows > 0 || (parts.forms > 0 && parts.fields === 0)
+				? 0
+				: parts.fields || FALLBACK_FIELDS,
 	};
 }
 
@@ -610,7 +618,7 @@ export function optionsOf<T, V extends string>(
 	return [...groups].map(([label, options]) => ({ label, options }));
 }
 
-// An OptionList's one choice: radio rows, read aloud as a radiogroup.
+// An OptionList's one choice: radio rows in a radiogroup.
 export interface OneChoice<V extends string> {
 	// The chosen option's value; null before one is chosen.
 	value: V | null;
@@ -720,7 +728,7 @@ export function cellEdit(
 	edits: boolean,
 	row: TableRecord,
 ): TableColumn["edit"] {
-	if (!edits || leading || column.locked !== undefined) return undefined;
+	if (!edits || leading || column.locked) return undefined;
 	if (row.locked?.includes(column.key)) return undefined;
 	return column.edit;
 }
@@ -733,7 +741,7 @@ export function cellLocked(
 	edits: boolean,
 	row: TableRecord,
 ): boolean {
-	if (!edits || leading || column.locked !== undefined) return false;
+	if (!edits || leading || column.locked) return false;
 	return column.edit !== undefined && row.locked?.includes(column.key) === true;
 }
 
@@ -888,18 +896,15 @@ export function changeKind(cell: ChangeCell): ChangeCellKind | undefined {
 	return undefined;
 }
 
-// A change cell read aloud: "from X to Y", or the word added or removed
-// before the one value it holds.
-export function changeReading(
+// A change cell as a touch row's meta part: "X → Y", or the word added or
+// removed before the one value it holds.
+export function changeMeta(
 	cell: ChangeCell,
-	words: Pick<Words, "changedFrom" | "added" | "removed">,
+	words: Pick<Words, "added" | "removed">,
 ): string {
 	switch (changeKind(cell)) {
 		case "changed":
-			return filled(words.changedFrom, {
-				before: cell.before ?? "",
-				after: cell.after ?? "",
-			});
+			return `${cell.before} → ${cell.after}`;
 		case "added":
 			return `${words.added} ${cell.after}`;
 		case "removed":
@@ -907,17 +912,6 @@ export function changeReading(
 		default:
 			return "";
 	}
-}
-
-// A change cell as a touch row's meta part: "X → Y", or its reading when one
-// value stands alone.
-export function changeMeta(
-	cell: ChangeCell,
-	words: Pick<Words, "changedFrom" | "added" | "removed">,
-): string {
-	return changeKind(cell) === "changed"
-		? `${cell.before} → ${cell.after}`
-		: changeReading(cell, words);
 }
 
 // A change mark's glyph by kind: drawn, and named by the kind's own word.

@@ -27,6 +27,7 @@ import {
 import { Strut } from "../../lib/strut";
 import { BarChart } from "../bar-chart";
 import { Button } from "../button";
+import { Code } from "../code";
 import { Comparison } from "../comparison";
 import { Count } from "../count";
 import { FormField } from "../form-field";
@@ -34,9 +35,13 @@ import { Group } from "../group";
 import { Icon } from "../icon";
 import { IconButton } from "../icon-button";
 import { List } from "../list";
+import { Meter } from "../meter";
+import { Prose } from "../prose";
 import { QueryBoundary } from "../query-boundary";
+import { Slider } from "../slider";
 import { Table } from "../table";
 import { Text } from "../text";
+import { Thread } from "../thread";
 
 const BOX = "min-w-0";
 const HEAD_ROW = "flex-row items-center";
@@ -67,6 +72,7 @@ const BODY_WAITS = "hidden";
 const KINDS: SectionKinds = {
 	lists: [List, Table],
 	waits: [BarChart, Comparison],
+	forms: [Code, Meter, Prose, Slider, Thread],
 	boundary: QueryBoundary,
 	group: Group,
 	field: FormField,
@@ -92,8 +98,9 @@ export interface SectionProps extends Closed {
 // A heading with its count, description and act over its body; the title
 // folds the body when `folded` is set. Inside a Form it takes the fields
 // rhythm. A loading section hands its loading to a Group or a List in its
-// body, which draws its own skeleton rows; any other body waits as three
-// skeleton fields. A blocked act says its reason under itself once pressed
+// body, which draws its own skeleton rows, and to a Prose, Thread, Code,
+// Meter or Slider, which draws its own waiting form; fields wait as one
+// skeleton field each, and any other body as three. A blocked act says its reason under itself once pressed
 // or once its form or sheet is touched, as a `Button` does. React Native
 // exposes no heading level, so the title is a header at any depth.
 export function Section({

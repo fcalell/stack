@@ -90,8 +90,6 @@ function band(index: number, bands: number) {
 export interface BarSlots<T> {
 	/** The item's React key, unique in the chart. */
 	key: (item: T) => string;
-	/** The bar's period. */
-	label: (item: T) => string;
 	/** The bar's total. */
 	value: (item: T) => number;
 	/** The bar's parts' values by the chart's `keys`; a key it lacks is 0. */

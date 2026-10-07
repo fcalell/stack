@@ -1,13 +1,16 @@
+import { Code } from "../../components/code/index.tsx";
 import { Form } from "../../components/form/index.tsx";
 import { FormField } from "../../components/form-field/index.tsx";
 import { Group } from "../../components/group/index.tsx";
 import { Input } from "../../components/input/index.tsx";
 import { List } from "../../components/list/index.tsx";
+import { Prose } from "../../components/prose/index.tsx";
 import {
 	QueryBoundary,
 	type QueryLike,
 } from "../../components/query-boundary/index.tsx";
 import { Section } from "../../components/section/index.tsx";
+import { Thread } from "../../components/thread/index.tsx";
 import { TouchedContext } from "../../lib/touched.ts";
 import type { ShowcaseFrame } from "../cells.ts";
 import { Labelled } from "./form.tsx";
@@ -17,6 +20,7 @@ import {
 	StandInRows,
 	Wide,
 } from "./layout-context.tsx";
+import { TURN, TURNS } from "./thread.tsx";
 
 const act = () => {};
 const INVITE = { label: "Invite", onAct: act };
@@ -32,6 +36,32 @@ const PENDING: QueryLike<typeof STAND_INS> = {
 	isError: false,
 	refetch: act,
 };
+
+// A body that is no field and no rows, as loaded and as waiting: each part draws
+// its own waiting form in a loading Section.
+const NOTES =
+	"Moves the billing webhooks off the legacy queue. Each event is acknowledged once its handler commits, so a retry never charges twice.";
+const CHECK = Array.from(
+	{ length: 8 },
+	(_, line) => `step ${line + 1} ok`,
+).join("\n");
+
+export function Bodies(props: { loading?: boolean }) {
+	const { loading } = props;
+	return (
+		<>
+			<Section title="Notes" loading={loading}>
+				<Prose markdown={NOTES} />
+			</Section>
+			<Section title="Thread" loading={loading}>
+				<Thread items={TURNS.slice(0, 3)} message={TURN} />
+			</Section>
+			<Section title="Check" loading={loading}>
+				<Code text={CHECK} tail={3} />
+			</Section>
+		</>
+	);
+}
 
 function Members(props: { blocked?: boolean }) {
 	return (
@@ -50,7 +80,8 @@ function Members(props: { blocked?: boolean }) {
 
 // By state: `disabled` draws the blocked act before it is pressed and in a
 // touched form with its reason shown; `loading` the waiting count over a
-// Group's and a List's own skeleton rows (a List as a waiting QueryBoundary's
+// Group's and a List's own skeleton rows, a Prose, a Thread and a Code each
+// waiting in its own form beside the loaded Section (a List as a waiting QueryBoundary's
 // loading form too), and the section's skeleton fields standing in
 // for a body of fields in a Form. At rest the cell picks the form: the icon act a
 // column's head, `SECTION.in.form` a section of fields in a Form, the chevron an open and a folded section over a List, the
@@ -93,6 +124,8 @@ export function drawSection(frame: ShowcaseFrame) {
 						{(names) => <List items={names} row={STAND_IN_ROW} />}
 					</QueryBoundary>
 				</Section>
+				<Bodies />
+				<Bodies loading />
 				<Form>
 					<Section title="Profile" loading>
 						<FormField label="Workspace name">

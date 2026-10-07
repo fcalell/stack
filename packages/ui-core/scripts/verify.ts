@@ -743,9 +743,9 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(SHADOW_LEVELS.length, 2, "shadow level count");
 	requireEqual(WIDTHS.length, 14, "width count");
 	requireEqual(BREAKPOINTS.length, 3, "breakpoint count");
-	requireEqual(WORD_KEYS.length, 70, "word count");
-	requireEqual(COUNTED_WORD_KEYS.length, 2, "counted word count");
-	requireEqual(SLOT_WORD_KEYS.length, 9, "slot word count");
+	requireEqual(WORD_KEYS.length, 64, "word count");
+	requireEqual(COUNTED_WORD_KEYS.length, 1, "counted word count");
+	requireEqual(SLOT_WORD_KEYS.length, 3, "slot word count");
 	requireEqual(
 		[...CHART_SERIES].sort().join(" "),
 		[...CHIP_HUES].sort().join(" "),
@@ -2142,14 +2142,14 @@ check("c31", "words: English is total and the schema is closed", () => {
 		assert(!slotless.success, `${key} without its slots was accepted`);
 	}
 	requireEqual(
-		filled(ENGLISH.meterValue, { value: "8.4", max: "10" }),
-		"8.4 of 10",
-		"a filled meter value",
+		filled(ENGLISH.stepOf, { at: "2", of: "5" }),
+		"Step 2 of 5",
+		"a filled step count",
 	);
 	requireEqual(
-		filled(ENGLISH.meterOver, { amount: "1.8" }),
-		"1.8 over",
-		"a filled overage",
+		filled(ENGLISH.chosenOf, { count: "3", of: "8" }),
+		"3 of 8 chosen",
+		"a filled selection count",
 	);
 	requireEqual(
 		filled(ENGLISH.wrongType, { name: "a.pdf", types: "CSV, HAR" }),

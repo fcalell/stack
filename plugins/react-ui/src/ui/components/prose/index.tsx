@@ -20,6 +20,7 @@ import { lexer, type Token, type Tokens } from "marked";
 import { type ReactNode, use, useMemo } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { HeadingContext } from "../../lib/heading.ts";
+import { LoadingContext } from "../../lib/loading.ts";
 import { Code } from "../code/index.tsx";
 import { Link } from "../link/index.tsx";
 
@@ -58,7 +59,7 @@ const BARS = [
 export interface ProseProps extends Closed {
 	/** The text, in markdown: headings, paragraphs, lists, quotes, rules, inline code, links and fenced code. */
 	markdown: string;
-	/** The text waits: two paragraphs of line boxes stand in for it. */
+	/** The text waits: two paragraphs of line boxes stand in for it. Unset, a loading `Section` or `Group` around it makes it wait. */
 	loading?: boolean;
 }
 
@@ -303,10 +304,12 @@ function Headed(props: { part: Part; level: number }) {
 /** Markdown at the body role, its column at the measure: `#` and `##` head its parts a sections gap apart at the heading role, `###` and deeper head a part inside them at body 500; paragraphs, lists (the marker hung in its own slot), quotes and rules a fields gap apart; inline code on the neutral fill; a fenced block is a `Code` with its copy act. Raw HTML reads as its own text; tables, task lists and images draw as text. */
 export function Prose({ markdown, loading }: ProseProps) {
 	const level = use(HeadingContext);
+	const inherited = use(LoadingContext);
+	const waiting = loading ?? inherited;
 	// The markdown lexes and folds once per text, and not while the prose waits.
 	const root = useMemo(
-		() => (loading ? undefined : parts(lexer(markdown))),
-		[markdown, loading],
+		() => (waiting ? undefined : parts(lexer(markdown))),
+		[markdown, waiting],
 	);
 	if (!root)
 		return (
@@ -332,14 +335,17 @@ export function Prose({ markdown, loading }: ProseProps) {
 				</div>
 			</div>
 		);
+	// Its fenced blocks are `Code` and wait only as the text does.
 	return (
-		<div className={cn(PROSE, COLUMN)}>
-			{root.blocks.length > 0 ? <Blocks part={root} level={level} /> : null}
-			{root.parts
-				.filter((part) => (part.heading?.depth ?? 1) <= 2)
-				.map((part) => (
-					<Headed key={part.key} part={part} level={level} />
-				))}
-		</div>
+		<LoadingContext value={false}>
+			<div className={cn(PROSE, COLUMN)}>
+				{root.blocks.length > 0 ? <Blocks part={root} level={level} /> : null}
+				{root.parts
+					.filter((part) => (part.heading?.depth ?? 1) <= 2)
+					.map((part) => (
+						<Headed key={part.key} part={part} level={level} />
+					))}
+			</div>
+		</LoadingContext>
 	);
 }

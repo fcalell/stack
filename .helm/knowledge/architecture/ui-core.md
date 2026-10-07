@@ -196,15 +196,14 @@ its rationale.
 
 ## Words
 
-Every word a molecule draws or reads aloud on its own (the seven `Status` words, `recommended`,
+Every word a molecule draws on its own (the seven `Status` words, `recommended`,
 `copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`,
 `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`,
-`edit`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`,
-`descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `downloadFailed`, `latest`,
-`missing`, `chooseFile`, `typeValue`, `pickValue`, `locked`, `warning`, `photos`, `files`,
+`edit`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`,
+`message`, `copyFailed`, `downloadFailed`, `latest`,
+`missing`, `chooseFile`, `typeValue`, `pickValue`, `locked`, `photos`, `files`,
 `changed`, `unchanged`, `stale`, `chooseAll`, `chooseNone`, `noMatches`, `imageFiles`, `audioFiles`, `videoFiles`, `textFiles`, `expand`, `collapse`, `zoomIn`, `zoomOut`, `fit`, `arrange`, `off`, the counted
-`earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`,
-`linesRemoved`, `changedFrom`, `wrongType`, `stepOf` and `chosenOf`) comes from `words`, a closed
+`earlierLines`, and the slot words `wrongType`, `stepOf` and `chosenOf`) comes from `words`, a closed
 typed object with English defaults. The `Words` type requires every key and `wordsSchema` is strict,
 so a translation missing a word fails `tsc` and the schema. It is a plugin option beside `theme`;
 each plugin contributes a `WordsProvider` into the generated entry through its platform's
@@ -363,48 +362,23 @@ a tick with no animation, never jumped to full.
   control for one fact) and a `Link` (the accent hue).
 - A field that saves as it is typed shows its save as an `ItemHeader` fact, `{ save: "saving" |
   "saved" | "failed"; onRetry }`, which stack owns so the words (`saving`, `saved`, `notSaved`,
-  `retry`) and the announcement are not the consumer's to spell. `saving` and `saved` are meta-ink
+  `retry`) are not the consumer's to spell. `saving` and `saved` are meta-ink
   words; `failed` is the `failed` Status with `notSaved`, then `retry` as words in a
   `PILL_ACT` led by a `RotateCcw` glyph (a button named by the fact, in the meta ink as an opening
   fact is; the glyph is what tells it from the facts beside it, and it stays words in a pill, never a
   `Button`, so the head keeps one height), so the fact stands at the target height (`ITEM_FACT`,
   `min-h-target`) in all three states and the head keeps the loading head's height as the save moves.
   Where the facts wrap (below `tablet` on the web, always on the phone) the fact also holds the
-  failed form's room in every state, the failed form drawn unseen in the one grid cell the live form
-  stands in (a stacked, unseen copy on the phone), so the line wraps the same in all three and the
+  failed form's room in every state, the failed form drawn invisible in the one grid cell the live form
+  stands in (a stacked, transparent copy on the phone), so the line wraps the same in all three and the
   head never gains a line when a save fails; from `tablet` it takes the live form's own width, so
-  "Saved" leaves no gap after it. The words stand in a polite live region
-  (`role="status"` on the web, drawn as a pill so its focus ring is one; on the phone `useLive`,
-  below) that excludes the Retry act, so it
-  announces "Not saved" alone, and keeps one key across the states, so the region persists and each
-  change is announced. It also takes the focus a pressed Retry leaves as that act gives way to the
-  saving words (`tabIndex={-1}` and `focus()` on the web, `sendAccessibilityEvent` on the phone),
-  so a keyboard or screen-reader user keeps their place. The fact stands from the record's open, `saved` at rest: a region that first
-  mounts holding `saving` has no earlier text to change from, so that first save may go unheard. The
-  selection bar's count announces through the same hook. Rejected: a generic fact that carries an
-  act, which lets any fact hold acts and leaves the words and the announcement to the consumer; a
+  "Saved" leaves no gap after it. The words stand in one pill, drawn as a pill so its focus ring is
+  one, which keeps one key across the states and takes the focus a pressed Retry leaves as that act
+  gives way to the saving words (`tabIndex={-1}` and `focus()` on the web), so a keyboard user keeps
+  their place. The fact stands from the record's open, `saved` at rest. Rejected: a generic fact
+  that carries an act, which lets any fact hold acts and leaves the words to the consumer; a
   `Banner`, which is loud for a save that usually succeeds. An autosaving `FieldBinding` feeding
   this fact is not built.
-- A phone component announces a change only through `useLive` in `lib/live`: React Native's
-  `accessibilityLiveRegion` is Android's alone, so the hook returns that prop (the OS speaks an
-  Android live region) and, on iOS, calls `AccessibilityInfo.announceForAccessibility`
-  (`announceForAccessibilityWithOptions` at high priority when `assertive`) once per change of the
-  text. The rest is iOS's, and `announcement` in `lib/announce` holds it: the hook never announces
-  the text standing at mount, an empty text, or a repeat of the last text. `appears` marks a
-  component that is itself the news, announced as it mounts: the toast, and the banner when it draws
-  `danger`, which are the web's `role="alert"`; a note or warn banner and the pending bar are
-  `role="status"` there and speak only on change, so a screen opening on one does not read it. An
-  `undefined` text holds the baseline (a log still loading). An `id` names what the text belongs to
-  and is announced when it changes, not the text. The `Thread` passes its newest message's key and
-  that message's body at that moment, and an empty text under an id is not taken, so a reply is read
-  once with its first text (a stream that lands empty first is read as its text arrives), a
-  streaming reply is not read per chunk, and a second reply with an identical body is still read.
-  Its own messages (author `you`) are silent, and it is silent on opening its history, after a
-  failed load (a retry that lands announces no history) and while the thread is missing; an empty
-  log holds `""`, so its first message is news. The sites: the toast and banner sentences (assertive
-  when failed or danger), the pending bar's sentence, a form field's and a list row entry's error
-  line, the one-time code's checking line, the `Thread`'s newest reply, the `ItemHeader` save fact
-  and the selection bar's count. A test pins that no other file names either API.
 - `running` is work under way and `active` a steady state (a watch that stands, a service that is
   up): both wear the accent, and `running` draws a `Spinner` where every other state draws its
   dot, wherever a status draws one (a `Status`, a list row's `{ status }` leading, an
@@ -631,12 +605,8 @@ a tick with no animation, never jumped to full.
   `beside` prop (native), and draws no head, so one top bar holds one back act, to the main, and the
   list is reached by going back from the main; the Split hands the Details act to that head through
   `Beside`. The Split hands the Screen `Beside`: the Screen covers no tab bar, its title is a
-  heading at the level where it stands at every width, and where its head stands alone the Place's
-  `h1` stays read, unseen (native's header role has no level; the web's Place draws its title's twin
-  `h1` as `sr-only`, shown only where the beside record stands alone, `HEAD_BESIDE`'s mark, so the
-  outline is `h1` Place, the record's title a level under, its sections under that, at every width;
-  a body's levels cannot swap by container query, which is why the record keeps its level and the
-  page's `h1` is the one that returns), and on the web its body's sections, not its root, are the `page` container, so its
+  heading at the level where it stands at every width, and where its head stands alone the Place
+  draws no `h1`; the record keeps its level, since a body's levels cannot swap by container query, and on the web its body's sections, not its root, are the `page` container, so its
   head's acts and the floating act's room read the outer page's width and what stands in its body
   reads its own. Rejected: the record in the pane (the pane is the open record's details, at
   forty-five characters), a `Sheet` (an overlay over the scrim with no back to the main), and a
@@ -665,7 +635,7 @@ a tick with no animation, never jumped to full.
 - A class with no look is structural, an overlay the web's class sweep classifies: a stacking
   order inside one component (`z-1`, a frozen table column over the cells that scroll under it,
   inside `isolate`, the grid its own stacking context so the column never stands over a sheet),
-  `sr-only` (a contract utility with no token), `invisible` (an absent act holding its slot's
+  `invisible` (an absent act holding its slot's
   width), grid placement (`col-start-1 row-start-1`, two acts in one slot), `table-fixed`, a
   hanging indent (`-indent-control-x`, a wrapped diff line's first line pulled back over its
   hang) and `wrap-anywhere`.
@@ -677,14 +647,12 @@ a tick with no animation, never jumped to full.
   its dismiss takes the press. On the web the Shell and the `Gate` each draw a popup layer
   (`FrameHost`, `components/shell/host.tsx`), an empty element last in `main`, and name it the
   `PortalContainer` around their whole tree, so every popup (a menu, a picker, a select, a sheet)
-  mounts inside the main landmark, where an axe `region` check finds it; a popup under neither
+  mounts inside `main`; a popup under neither
   portals into `<body>` as Base UI does by default. The
   layer follows the toasts' viewport in DOM order, so by DOM order alone a sheet would stand over
   the toasts; the `z-(--layer-*)` steps decide. The toasts' layer stays inside `main` for its geometry
   (above the tab bar, the floating act, the docked foot's anchor), so nothing between it and the
-  root may make a stacking context. Base UI's modal leaves the toasts announced: it marks the
-  outside `aria-hidden` but keeps every `[aria-live]` element and its ancestors, the toasts'
-  viewport among them. Rejected: a literal `z-*` at the call site, and portalling the toasts after
+  root may make a stacking context. Rejected: a literal `z-*` at the call site, and portalling the toasts after
   the sheets (a Base UI portal mounts in the order it opens, and the layer would lose `main`'s
   geometry). React Native's `zIndex` orders siblings only, so native reads the order by tree
   position: gorhom's `BottomSheetModalProvider` draws its sheets after its children, in its own
@@ -694,8 +662,7 @@ a tick with no animation, never jumped to full.
   sheet resolves the nearest provider, so every sheet opened under a Shell stands in the Shell's
   host and stacks against the others there; the entry's root provider hosts only the screens with no
   Shell, where no toast stands, so the two hosts never hold sheets that must stack together. The
-  host view is never flattened: a sheet's layer is `accessibilityViewIsModal`, which hides its
-  siblings from VoiceOver, and the toasts' layer is not among them. gorhom draws a sheet's content
+  host view is never flattened: a sheet's layer is `accessibilityViewIsModal` and the toasts' layer is not among them. gorhom draws a sheet's content
   in its host, outside the screen that opened it, so the entry's words, Query and Auth providers
   wrap the root provider. Rejected: a toasts portal through gorhom's host (its name is internal, and
   an entry keeps its first mount's place, under every later sheet), react-native-screens'
@@ -731,10 +698,10 @@ a tick with no animation, never jumped to full.
   mounts its touch List with no `SectionContext`, since on the web both forms are mounted. A row
   with `href` is its leading cell's link (`tabindex -1`, so a new tab opens it); a row's `locked`
   names the columns it draws read only (an owner's role), and in an editable table a cell it locks
-  (one its column would edit) ends in the lock mark, read aloud as the word `locked`. A column's own
-  `locked` (a reason string) makes the column read only in this table: its cells never edit and
+  (one its column would edit) ends in the lock mark. A column's own
+  `locked` (a boolean) makes the column read only in this table: its cells never edit and
   carry no glyph, since a lock on every cell of a column is noise, and its head draws the glyph
-  after the label, reading aloud "Locked, {reason}". Both scopes share `cellEdit` and `cellLocked`
+  after the label. Both scopes share `cellEdit` and `cellLocked`
   in `./list-state`. A chip column's pick draws its value and options as the column's chips (the
   Picker's internal base), and an Input, a Picker or a Checkbox inside a cell stands at the bar fit,
   named by the cell and out of the tab order, by the cell's context. An edit the keyboard or a tap
@@ -746,9 +713,7 @@ a tick with no animation, never jumped to full.
   the Status's own loading form (its internal base: the dot's and the word's skeletons at its gap).
   An empty grid keeps its header and holds its `empty` a page inset under it, across the grid's
   width as a List's EmptyState fills its column (`TABLE_EMPTY`: no side inset; on touch the form
-  stands alone, the List's width). A read-only check cell draws a tick, read aloud as its column's
-  label. The sideways scroller is positioned, so the spoken spans of its cells (absolute, with no
-  offset) stay inside its scroll and never widen the page. Where the grid scrolls sideways its
+  stands alone, the List's width). A read-only check cell draws a tick. Where the grid scrolls sideways its
   leading column stays: the frozen cell on the surface
   (`TABLE_FROZEN`), its content carrying its end hairline and the row's wash (`TABLE_FROZEN_CELL`).
   A `change` column holds a `ChangeCell` (`{ before, after }`, either null), read only and sorted by
@@ -762,8 +727,8 @@ a tick with no animation, never jumped to full.
   what the table is read for and the first meta part truncates last; the reason is the tail of
   that part, so it truncates before the value does, and a blocked tick's reason joins the first
   part the same way. At 320 the status mark (whole) takes 90 of the 146 px the row's text has, so
-  a change value of 73 px draws ellipsized there. It reads aloud through the
-  slot word `changedFrom` ("from X to Y"), or `added` or `removed` before the one value it holds.
+  a change value of 73 px draws ellipsized there. A change cell with one value draws `added` or
+  `removed` before it.
   Rejected: tinting `after` for any change (a rename is not good news), and a Comparison column
   (that sets facts side by side, not one value's movement). A Table chooses rows through `choose`
   (`TableChoice<T>`: `chosen`, the ticked ids, and `onChange`, which hears the set a tick makes;
@@ -773,7 +738,7 @@ a tick with no animation, never jumped to full.
   a per-row `onTick` because the head tick and a parent and child rule both act on sets; the prop is
   `choose` because `selected` is already the open record. A tick column leads the grid, a square the
   row's height (`w-row`) in the cell cursor's first column (Space or Enter ticks), each row's
-  `Checkbox` named by its leading cell and described by its reason, the head tick `unchecked`,
+  `Checkbox` named by its leading cell, the head tick `unchecked`,
   `mixed` or `checked` over the rows that can be ticked and named by the word `chooseAll`
   (`chooseHead` and `chooseAllToggled` in `./list-state`: from mixed it checks every tickable row,
   from checked it clears them, and a chosen id the rows do not hold keeps its place). A `blocked`
@@ -785,7 +750,7 @@ a tick with no animation, never jumped to full.
   cell the grid's cursor owns focus and the tick leaves the tab order, an explicit `tabIndex` of
   `undefined` on Base UI's checkbox would drop its own stop, so it is spread only for a cell. A
   reason is a meta line, never a tick tooltip, since a tooltip is unreachable on touch and by
-  assistive tech. On touch the leading and tick columns both freeze (the leading one at the tick
+  keyboard. On touch the leading and tick columns both freeze (the leading one at the tick
   column's width); below `tablet` the tick is the `ListRow`'s leading `check` and a moved reason
   follows the change value in its meta. The head tick draws no count, and the table none: "N of M chosen" belongs to the
   selection bar, which reads this selection: an `ActionBar` with `chosen: { count, of, onAll? }`
@@ -800,7 +765,7 @@ a tick with no animation, never jumped to full.
   the disabled ink and focusable, so the focus a press leaves is not lost as the other applies. `of`
   counts the rows that can be chosen, so a list with blocked rows still reaches the cleared state. It draws the slot word
   `chosenOf` at meta at the bar's start (one phrase, since the count left behind is `of - count`),
-  in a polite live region, and the acts beside it at the end (`ACTION_BAR_CHOSEN`, a pair apart),
+  and the acts beside it at the end (`ACTION_BAR_CHOSEN`, a pair apart),
   the bar's one filled act the page's one; on touch the count stands over the full-width act. The
   foot spans the body, but the bar's count and acts stand in a column centred in it no wider than
   the `selection` width (`ACTION_BAR_SELECTION`, the selection-bar pattern's table-wide bar), so
@@ -904,7 +869,7 @@ a tick with no animation, never jumped to full.
   Screen scroll (`Scroll` in `lib/hosts`) keeping taps on its acts
   (`keyboardShouldPersistTaps="handled"`) and a docked foot standing outside any scroll. The web
   input refocuses its text after Send and Stop, which is keyboard focus management there. A removed
-  chip hands the screen reader's focus on (`sendAccessibilityEvent`), never the keyboard.
+  chip hands no focus on.
 - A message carries what came with it: `Message` for `you` and `other` takes `attachments`
   (`Attachment`: an id, a name and an optional `src`, an image's address) and `meta` (`Part[]`, the
   name `ListRow` gives its meta line), `system` takes neither. The attachments stand in one wrapping
@@ -982,9 +947,8 @@ a tick with no animation, never jumped to full.
 - A `ListRow` carries several marks as named props, not a `marks` record: `status`, `warning`,
   `lock`, `chip`, at most one each, in that order on the meta line (`ROW_MARKS`). `warning` is what
   is wrong with the row (a string: "Name conflicts with Checkout"), a `TriangleAlert` glyph at the
-  meta icon size in `warn` (`ROW_WARNING`) beside its label in the meta ink, read after the
-  `warning` word; `lock` is what the row holds ("Holds 3 fields"), the lock mark whose label shows
-  from `tablet` and is read aloud always, after the word `locked`, the glyph alone below. The mark
+  meta icon size in `warn` (`ROW_WARNING`) beside its label in the meta ink; `lock` is what the row holds ("Holds 3 fields"), the lock mark whose label shows
+  from `tablet`, the glyph alone below. The mark
   is one internal `LockMark` per platform (`list-row/lock`), which a Table cell and head and a
   `DefinitionRow` draw too: `LOCK_GLYPH` (the meta ink, no margin) names the glyph, and the
   container's gap spaces it from what it follows. The act that clears a warning is the row's `act`,
@@ -1027,8 +991,7 @@ a tick with no animation, never jumped to full.
   change cell's added and removed values) in a lane one icon wide, so the marked rows of a set line
   up (an unmarked row draws no lane). The glyph carries kind and hue: no edge bar, which the rubric
   keeps for the diff. Its word is the kind's own (`added`, `changed`, `removed`, `unchanged`,
-  `stale`, plain words), its accessible name, spoken "Changed" for `changed`; the change cell's
-  from-to slot word is `changedFrom`. The lane stands ahead of the leading slot (`ListRow`), the
+  `stale`, plain words), its accessible name on the phone. The lane stands ahead of the leading slot (`ListRow`), the
   label (`DefinitionRow`), the field on its label's line (`FormField`, every form of it), and the
   name in a Table's leading cell (on touch the `ListRow` change). A row with no `change` draws no
   lane, so a set marks its untouched rows `unchanged`; `rowShape` reads a declared `change` slot, so
@@ -1106,10 +1069,10 @@ a tick with no animation, never jumped to full.
   `ROW.lines`: the negative of the form's `py`, so `-my-rows` on a two-line row and `-my-pair` on a
   wrapped one), and the tree's list drops the row gap (`LIST_TREE`), so a rail is unbroken from row
   to row. On the web the tree is a real tree, the WAI-ARIA tree pattern: the list is `role="tree"`,
-  each row a `treeitem` (the row's own element: named by its title, described by its meta line,
+  each row a `treeitem` (the row's own element: named by its title,
   `aria-level` its depth plus one, `aria-expanded` on a branch, `aria-current` at its `href`) and the
   tree holds one tab stop, roving to the row last focused (`treeStop`; the hit link and the fold act
-  leave the tab order, the fold act staying for the pointer and a touch screen reader). Down and Up
+  leave the tab order, the fold act staying for the pointer). Down and Up
   move between visible rows, Right opens a closed branch or moves to the first child, Left folds an
   open branch or moves to the parent, Home and End go to the first and last visible row, and Enter
   opens the row. That navigation is `treeMove` in `./list-state` (pure, tested, returning a focus
@@ -1181,7 +1144,7 @@ a tick with no animation, never jumped to full.
   No Section reads it. Its projection and waiting shape (`optionsOf`, `optionShape`,
   `optionsShape`) are in `./list-state`.
 - An `OptionList`'s `value` picks its form: a set is several choices, check rows each toggling
-  the set; one value or null is one choice, radio rows read aloud as a radiogroup (the web's
+  the set; one value or null is one choice, radio rows in a radiogroup (the web's
   Base UI `RadioGroup`, native `radiogroup` around `radio` rows with their checked state). The
   radio is the box's size (`OPTION_RADIO {state}`, a `full` ring in `edge-strong`, `toggle-on`
   when chosen) around the `toggle-on` dot (`OPTION_RADIO_DOT`), both held by OptionList. The
@@ -1193,10 +1156,9 @@ a tick with no animation, never jumped to full.
   not narrow a props union by `value: V | null` against `value: readonly V[]`, neither member
   being a literal type. Rejected: a `ChoiceList` beside it, the same rows under a second name.
 - A `BarChart` is a collection on the same decisions: `query` (or `items`, waiting on `loading`)
-  and a `bar` map (`key`, `label`, `value`, `parts` by `keys`, `at`, each a function of the
+  and a `bar` map (`key`, `value`, `parts` by `keys`, `at`, each a function of the
   item). Its head is the sum of its bars (a flow); `level` (the bars are a level, a fact only the
-  app holds, so no derivation) makes it the last bar's value and each key's last part, the spoken
-  summary the same figure. Its axis scale and head are `./chart`'s `chartScale` and `chartHead`,
+  app holds, so no derivation) makes it the last bar's value and each key's last part. Its axis scale and head are `./chart`'s `chartScale` and `chartHead`,
   one pure answer for both platforms (with `unitOf`, the unit's form at the figure it follows:
   `unit` is a word or `{ one, other }`): four even steps over the peak, and when every value and
   part is a whole number and the step would fall under 1, a step of 1 over as many bands as the peak
@@ -1218,7 +1180,11 @@ a tick with no animation, never jumped to full.
   (`sectionState` in `./list-state`): busy while the Section loads or a part waits; its own
   `count`, else its lists' total once every list has answered (a failed or missing one gives
   none, an empty collection none beside its empty state); and, while loading with no body of
-  rows, one skeleton field per `FormField`, three when none. Outside the rule nothing is read: a
+  rows and no part that waits in its own form beside no field, one skeleton field per `FormField`,
+  three when none. The parts that wait in their own form are the platform walker's `forms` (a
+  Prose, a Thread, a Code, a Meter, a Slider): a loading Section hands them its loading through
+  `LoadingContext` and shows its body, so a body of one of them stands at that part's waiting form
+  and not at three fields; a field beside one keeps the skeleton fields. Outside the rule nothing is read: a
   collection inside an app's own component (a `ui/` wrapper around a List) draws itself but adds
   no count and no busy state to the head, and the Lists inside a QueryBoundary's body are not
   counted (its queries still make the head busy). The body stays mounted in every form, hidden
@@ -1236,8 +1202,16 @@ a tick with no animation, never jumped to full.
   phone: each row after the first draws it on its wrapper, as the Group does its children), its
   failed and empty EmptyStates in the card at `EMPTY_CARD` (the card their frame, in place of
   `EMPTY_FRAME`). A busy List makes the Group busy, for the card is its box. A waiting Group
-  (its `loading`, or a loading Section's) renders its body once and, when no List registered,
-  swaps it for setting skeletons before paint (`groupWait`), the Section's mechanism. A waiting
+  (its `loading`, or a loading Section's) renders its body once and, when no part registered
+  (a List, a Meter, a Slider, a DefinitionRow register through `useGroupPart`, however deep),
+  swaps it for setting skeletons before paint (`groupWait`), the Section's mechanism; with a part
+  registered the body stays and each part draws its own waiting form from the loading it reads
+  (`LoadingContext`), in order, so a card of static parts waits at one form per part and at the
+  loaded card's height. A DefinitionRow's form is built from what it is given (`definitionShape`: a
+  `description` or `locked` reason is the setting form, an `act` or `href` the end's square, a
+  control as its value the switch's box) and a Slider's is its label's and value's bars over a
+  bar in the track's box. The setting skeletons stay the form for children no part answers for
+  (an app's own row). A waiting
   setting row is the DefinitionRow's own wait (`definition-row/wait.tsx`, shared with a
   `definition` List, `end: "switch"` internal to the Group): it stands in the loaded
   DefinitionRow's boxes (the label's body line box beside the switch's target-sized hit box on the
@@ -1261,10 +1235,10 @@ a tick with no animation, never jumped to full.
   loaded height by the line it declares (`WaitLine` in `./list-state`: `counts`, a target-high
   box, over `meta`, a meta line box, over none), read off the `meta` or `counts` it is given even
   while it waits; `Stats` waits one cell per item it is given, four of label and figure when it
-  has none. A `mark` (`{ value, label }`, `MeterMark`) is a tick across the track centred
+  has none. A `mark` (`{ value }`, `MeterMark`) is a tick across the track centred
   on `value / max` (`METER_MARK`, outside the clipping track) and the meter's near point in place of
-  `METER_NEAR`; its label and value are read aloud (`meterMark`). The role's children are
-  presentational to assistive tech, so the counts stand outside the element carrying the meter role.
+  `METER_NEAR`. The role's children are presentational, so the counts stand outside the element
+  carrying the meter role.
   The `List`'s `meter` map takes `counts` (a function of the item, exclusive with `meta`) and
   `mark`.
 - A `StepCount` (`{ at, of }`) is an onboarding flow's place in it: `of` segments (two to four) at
@@ -1272,7 +1246,7 @@ a tick with no animation, never jumped to full.
   radius `chip`, a gap `inside` apart), the steps
   before `at` `done`, `at` `current` and the rest `later` (`stepStateOf` in `./list-state`, so both
   platforms draw one state per segment, its `StepState` the type a `Stage` takes too), over "Step n
-  of m" (the slot word `stepOf`) at meta, which is also the component's accessible name. `done` and
+  of m" (the slot word `stepOf`) at meta. `done` and
   `current` fill `ink-meta`, `later` `fill-neutral`, never the accent, which the rubric leaves to
   checked controls and the active dot. It is an atom, not a prop on `Place`, `Form` or `Sheet`: an
   onboarding step can be any of the three. The one frame that owns its place is `Gate`, whose
@@ -1348,7 +1322,7 @@ a tick with no animation, never jumped to full.
   Group keys each row's wrapper by the row's own key (`Children.toArray`'s, its place among the
   children as written), so a conditional row appearing shifts no later row's state.
 - A FileRow's own change is its `change` (a `ChangeKind`): the one change mark every row draws,
-  in its lane before the glyph and read aloud with the row, its waiting form reserving the lane.
+  in its lane before the glyph, its waiting form reserving the lane.
   The chip never carries it.
 - A FileRow carries at most one `ChipMark` (why the file is listed),
   standing between the path and the count lanes at its label's `measure-short` cap; the path
@@ -1427,8 +1401,7 @@ a tick with no animation, never jumped to full.
   `STAGE_WORDS`; `row-2`, 48 / 64, the state rail's 28–56 and 48–70) carry the room between stages,
   so a later row of one meta line keeps the pace of a done one. The rail runs through each mark's
   line box in two halves around the mark, so it breaks nowhere. Each mark stands on its label's first line (a later label is meta, so its mark is
-  on a meta line) and names its state to assistive tech through the existing status words (`done`,
-  `active`, `waiting`, `failed`), so `words` gains none. Stages is static data, so it has no waiting
+  on a meta line) and draws its state as its glyph, so `words` gains none. Stages is static data, so it has no waiting
   form.
 - A copy act (`Code`'s, `DefinitionRow`'s) reads Copied for two seconds from the last copy: each
   copy is a counted moment and the reset is keyed on it, so a copy inside the window restarts it.
@@ -1438,8 +1411,7 @@ a tick with no animation, never jumped to full.
   still lands on it and a reader passes no region with nothing to scroll. The web's page-frame
   scrollers (the Place's and Screen's body, the Split's list, main and pane, a sheet's body, the Gate's page) follow
   the same rule through `lib/scrolls.ts`, on the vertical axis, with one more condition: a
-  region takes the stop only while it scrolls and holds nothing a keyboard reaches (axe's
-  `scrollable-region-focusable`; what a keyboard reaches is `isTabbable` of `lib/focus`, the rule a
+  region takes the stop only while it scrolls and holds nothing a keyboard reaches (what a keyboard reaches is `isTabbable` of `lib/focus`, the rule a
   docked Sheet's focus hand-back reads), re-measured when its content changes anywhere inside it or
   an element's tab-affecting attribute does, since a waiting form holds its loaded size and resizes
   nothing, so a body of links gains no stop, and a body of text, which
@@ -1676,32 +1648,31 @@ drawing every cell through `Frame`, light and dark side by side, at the toolbar'
 focus states (`hover`, `active`, `focus`) stay in the roster, the contract both platforms verify, and
 draw no frame and no story: the web's variants match only the real pseudo-classes, and the critique
 reaches those looks by driving the real component. A frame is not a page, so a component story runs
-every axe rule except the page-level ones (`.storybook/preview.tsx`: landmarks, `page-has-heading-one`,
-`region`, `heading-order`, `bypass`, `skip-link`), which judge a whole document that many frames share.
+every axe rule except the document-structure ones (`.storybook/preview.tsx`: landmarks, `page-has-heading-one`,
+`region`, `heading-order`, `bypass`, `skip-link`), which no screen draws.
 
 Three kinds of story, one `pnpm stories:test` run (headless Chrome at desktop density and 1280 px;
 touch is a toolbar toggle, not a test run; `a11y.test` is `error`):
 
 - **Page stories**: each place of `/layout`, the pushed Screen and an open record, one page in one mode
   per story, generated from `@fcalell/plugin-react-ui/showcase/pages` (the list the route also
-  reads; `LayoutPage` takes the `Here` values the route reads from the URL), over the whole
-  document with every axe rule, `region` and the page-level ones included.
+  reads; `LayoutPage` takes the `Here` values the route reads from the URL), with the same axe rules as a component story.
 - **Behaviour stories**: hand-written in `apps/showcase/behaviour/`, one per interactive component
   that owns a widget behaviour the rubric's accessibility floor sets (an overlay's focus in and
-  out, Escape and the hidden page behind; a composite's arrow keys and typeahead; an announcement),
+  out, Escape and focus kept inside a modal; a composite's arrow keys and typeahead),
   each a play function driving the real component by keyboard. They cover Sheet and a `confirm()`
   decision, a Sheet docked in a Place's foot, Menu, Select, Picker, OptionList, SegmentedControl,
-  Table, List (tree), Slider, InputOtp, Toast and Gate; Screen, Split and Shell move no focus
+  Table, List (tree), Slider, InputOtp and Gate; Screen, Split and Shell move no focus
   themselves.
 - **Component stories**, above.
 
 A failing assertion is a finding in the component: it stays failing until the component is fixed,
-never weakened or skipped, and nothing is excluded from axe beyond the page-level rules and the
+never weakened or skipped, and nothing is excluded from axe beyond the document-structure rules and the
 node buttons of a canvas that draws a run's path: `Canvas`'s dimmed frames
 (`.storybook/state-stories.tsx`) and the behaviour stories that draw a `path`. A node off the path
 draws disabled ink (about 3:1) by the pattern's rule, and axe exempts only a disabled control, which
 these enabled buttons are. The exclusion leaves those nodes out of every rule, since a per-story
-`config.rules` entry replaces the preview's page-level list and would copy it.
+`config.rules` entry replaces the preview's document-structure list and would copy it.
 
 Storybook runs on stack's generated Vite config (`.stack/vite.config.ts`, by `viteConfigPath`),
 adapted in `.storybook/stack-vite.ts`, which Vitest's config shares:
@@ -1752,7 +1723,7 @@ does not name, a literal that duplicates a cell, an off-contract utility, or a d
 - A native QR tile inside a dark raised ground draws its edge at the dark raised value: uniwind
   1.12's `ScopedTheme` keeps the parent's scoped variables and cannot clear one. No screen does this
   today.
-- A native Button's `count` is not read aloud: the pressable's accessible name is its `label` alone.
+- A native Button's `count` is not in its accessible name: that is its `label` alone.
 - Base UI's Checkbox, Switch, Radio and OTP field look for a `<label>` after every render (a
   layout effect with no dependencies reading the hidden input's `labels`, which walks the whole
   document) unless the control is named by `aria-labelledby`, a `Field` label, or renders a native
@@ -1760,12 +1731,6 @@ does not name, a literal that duplicates a cell, an off-contract utility, or a d
   react-ui's Checkbox and Switch render a native `<button>` (`nativeButton`), as
   SegmentedControl's radios do, and a disabled one carries `disabled` and `data-disabled`, never
   `aria-disabled`, so their disabled looks key on `data-disabled`.
-- A failed toast's announcement is Base UI's visually hidden `role="alert"` wrapper beside the
-  toasts' viewport, which exists only while a failed toast stands and the viewport is unfocused, and
-  carries no `aria-live`. When a sheet opens while a failed toast stands, the modal marks that
-  wrapper `aria-hidden`, so a failed toast raised while one has stood continuously since before the
-  sheet opened is not announced. Once no failed toast stands the wrapper is gone, and the next is
-  announced.
 - The native toasts' layer stands over a box measured against the frame's root (`ToastRoom`,
   `ToastFrame`): the layer must stand after the sheets' host, outside the page's tree, so no layout
   places it, and it follows a growing input a layout late.
@@ -1775,5 +1740,4 @@ does not name, a literal that duplicates a cell, an off-contract utility, or a d
   and the platform stack only stands behind the named family and its metric fallback face.
 - Comparison's `hyphens-auto` is unverified: the Nix Playwright browsers ship no hyphenation
   dictionaries, so a value wider than its column breaks mid-letter there.
-- Native Diff and Comparison name a `list`-role container (React Native has no table role); whether
-  VoiceOver and TalkBack announce that name is unverified.
+- Native Diff and Comparison name a `list`-role container (React Native has no table role).

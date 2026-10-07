@@ -13,7 +13,6 @@ interface Day {
 
 const BAR: BarSlots<Day> = {
 	key: (day) => day.day,
-	label: (day) => day.day,
 	value: (day) => day.value,
 	parts: (day) => day.parts,
 	at: (day) => day.at,

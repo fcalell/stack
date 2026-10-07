@@ -11,12 +11,13 @@ import {
 } from "@fcalell/ui-core/variants";
 import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { Pressable, Text as RNText, ScrollView, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { useCopy } from "../../lib/copy";
 import { Ink } from "../../lib/ink";
+import { LoadingContext } from "../../lib/loading";
 import { Strut } from "../../lib/strut";
 import { toast } from "../../lib/toast";
 import { useWords } from "../../lib/words";
@@ -58,7 +59,8 @@ export interface CodeProps extends Closed {
 	// copy act, in the same place.
 	download?: string;
 	// The text waits: line boxes stand in for it under the head, `tail` of
-	// them under the fold's when it folds.
+	// them under the fold's when it folds. Unset, a loading `Section` or `Group`
+	// around it makes it wait.
 	loading?: boolean;
 }
 
@@ -108,8 +110,10 @@ export function Code({
 	tail,
 	copy,
 	download,
-	loading,
+	loading: own,
 }: CodeProps) {
+	const inherited = useContext(LoadingContext);
+	const loading = own ?? inherited;
 	const words = useWords();
 	const [unfolded, setUnfolded] = useState(false);
 	const acts = (

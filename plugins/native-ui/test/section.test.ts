@@ -8,6 +8,7 @@ import { type SectionKinds, sectionPartsOf } from "../src/ui/lib/section.ts";
 const List = () => null;
 const Table = () => null;
 const Chart = () => null;
+const Prose = () => null;
 const Boundary = () => null;
 const Group = () => null;
 const Field = () => null;
@@ -15,6 +16,7 @@ const Own = (props: { children?: ReactNode }) => props.children;
 const KINDS: SectionKinds = {
 	lists: [List, Table],
 	waits: [Chart],
+	forms: [Prose],
 	boundary: Boundary,
 	group: Group,
 	field: Field,
@@ -35,6 +37,7 @@ test("a Section reads the collections standing as its children, in a fragment, i
 			el(Chart, { loading: true }),
 			el(Boundary, { query: [answered, pending], loading: el(Field) }),
 			el(Field),
+			el(Prose),
 		],
 		KINDS,
 	);
@@ -49,6 +52,8 @@ test("a Section reads the collections standing as its children, in a fragment, i
 	assert.equal(parts.groups, 1);
 	// The direct field, the Group's field and the waiting boundary's loading form.
 	assert.equal(parts.fields, 3);
+	// The Prose is a part with its own waiting form.
+	assert.equal(parts.forms, 1);
 });
 
 test("a list taking a definition map is flagged for ui-core, which counts it as no collection", () => {
@@ -68,6 +73,7 @@ test("a list taking a definition map is flagged for ui-core, which counts it as 
 		waits: [],
 		groups: 1,
 		fields: 0,
+		forms: 0,
 	});
 });
 
@@ -80,7 +86,13 @@ test("nothing deeper is read: an app's own component, a settled QueryBoundary's 
 		],
 		KINDS,
 	);
-	assert.deepEqual(parts, { lists: [], waits: [false], groups: 1, fields: 0 });
+	assert.deepEqual(parts, {
+		lists: [],
+		waits: [false],
+		groups: 1,
+		fields: 0,
+		forms: 0,
+	});
 });
 
 test("no registration, no layout effect in lib/section.ts", () => {

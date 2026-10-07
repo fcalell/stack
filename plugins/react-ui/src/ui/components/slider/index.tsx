@@ -14,6 +14,9 @@ import {
 import { use } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { GroundContext } from "../../lib/ground.ts";
+import { useGroupPart } from "../../lib/group.ts";
+import { LoadingContext } from "../../lib/loading.ts";
+import { SliderWait } from "./wait.tsx";
 
 const BOX = "flex flex-col justify-center";
 const HEAD = "flex items-center justify-between";
@@ -47,7 +50,7 @@ export interface SliderProps extends Closed {
 	unit?: string;
 }
 
-/** A slider's label and value over its track: the fill up to the thumb, the rest after it. In a `Group` it stands as one of the card's items at the card's inset, the group's hairline between. */
+/** A slider's label and value over its track: the fill up to the thumb, the rest after it. In a `Group` it stands as one of the card's items at the card's inset, the group's hairline between. In a loading `Group` or `Section` it draws its waiting form, at the same height. */
 export function Slider({
 	label,
 	value,
@@ -59,6 +62,9 @@ export function Slider({
 }: SliderProps) {
 	// In a Group the slider is one of its items, at the card's inset.
 	const item = use(GroundContext) === "group" && GROUP_ITEM;
+	const waiting = use(LoadingContext);
+	useGroupPart();
+	if (waiting) return <SliderWait />;
 	// The fill and the rest share the track less the thumb in proportion to
 	// the value, and the thumb, positioned by Base UI at the same point with
 	// `edge` alignment, sits in the gap between them, so neither runs under it.

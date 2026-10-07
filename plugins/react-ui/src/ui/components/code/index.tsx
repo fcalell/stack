@@ -12,9 +12,10 @@ import {
 	skeleton,
 	text,
 } from "@fcalell/ui-core/variants";
-import { useId, useState } from "react";
+import { use, useId, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { useCopy } from "../../lib/copy.ts";
+import { LoadingContext } from "../../lib/loading.ts";
 import { InsetRing } from "../../lib/ring.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
 import { useWords } from "../../lib/words.tsx";
@@ -55,7 +56,7 @@ export interface CodeProps extends Closed {
 	copy?: boolean;
 	/** Adds the download act, saving the text as a file of this name (`recovery-codes.txt`), named by the title (else by the file): after the copy act, in the same place. */
 	download?: string;
-	/** The text waits: line boxes stand in for it under the head, `tail` of them under the fold's when it folds. */
+	/** The text waits: line boxes stand in for it under the head, `tail` of them under the fold's when it folds. Unset, a loading `Section` or `Group` around it makes it wait. */
 	loading?: boolean;
 }
 
@@ -105,8 +106,10 @@ export function Code({
 	tail,
 	copy,
 	download,
-	loading,
+	loading: own,
 }: CodeProps) {
+	const inherited = use(LoadingContext);
+	const loading = own ?? inherited;
 	const words = useWords();
 	const id = useId();
 	const [textNode, setTextNode] = useState<HTMLPreElement | null>(null);

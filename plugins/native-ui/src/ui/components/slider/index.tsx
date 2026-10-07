@@ -17,6 +17,9 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FieldDisabled } from "../../lib/field";
 import { GroundContext } from "../../lib/ground";
+import { useGroupPart } from "../../lib/group";
+import { LoadingContext } from "../../lib/loading";
+import { SliderWait } from "./wait";
 
 /** A number picked along a range, its label over the track. */
 export interface SliderProps extends Closed {
@@ -36,7 +39,7 @@ export interface SliderProps extends Closed {
 	unit?: string;
 }
 
-/** A slider's label and value over its track: the fill up to the thumb, the rest after it. */
+/** A slider's label and value over its track: the fill up to the thumb, the rest after it. In a loading `Group` or `Section` it draws its waiting form, at the same height. */
 export function Slider({
 	label,
 	value,
@@ -49,6 +52,8 @@ export function Slider({
 	const disabled = useContext(FieldDisabled);
 	// In a Group the slider is one of its items, at the card's inset.
 	const item = useContext(GroundContext) === "group" && GROUP_ITEM;
+	const waiting = useContext(LoadingContext);
+	useGroupPart();
 	const [pressed, setPressed] = useState(false);
 	// The track's width, which only a touch reads, so its layout renders nothing.
 	const width = useRef(0);
@@ -98,6 +103,7 @@ export function Slider({
 		unit ? { style: "unit", unit } : {},
 	).format(value);
 	const active = pressed && !disabled;
+	if (waiting) return <SliderWait />;
 	return (
 		<View className={cn(SLIDER, item, "justify-center")}>
 			<View

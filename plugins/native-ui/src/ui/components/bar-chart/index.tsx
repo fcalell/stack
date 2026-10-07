@@ -95,8 +95,6 @@ function height(value: number, top: number) {
 // One function per bar slot, each called with a loaded item.
 export interface BarSlots<T> {
 	key: (item: T) => string;
-	// The bar's period.
-	label: (item: T) => string;
 	value: (item: T) => number;
 	// The bar's parts' values by the chart's `keys`; a key it lacks is 0.
 	parts?: (item: T) => Readonly<Record<string, number>> | undefined;
@@ -128,7 +126,8 @@ type ChartSource<T> =
 // names its parts.
 export type BarChartProps<T = unknown> = Closed &
 	ChartSource<T> & {
-		// What the chart counts, which names the plot.
+		// What the chart counts: the web names its plot by it, the phone draws
+		// no name for the plot.
 		label: string;
 		// The names a bar's parts stack by, bottom first: present, the chart is
 		// stacked and draws them as its legend in every form, each name holding

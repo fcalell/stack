@@ -145,7 +145,6 @@ export function MessageInput({
 						ref={textField}
 						multiline
 						accessibilityLabel={words.message}
-						accessibilityHint={notice?.sentence}
 						accessibilityState={{ disabled }}
 						editable={!disabled}
 						value={value}

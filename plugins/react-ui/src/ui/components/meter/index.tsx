@@ -16,6 +16,8 @@ import {
 import { use } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { GroundContext } from "../../lib/ground.ts";
+import { useGroupPart } from "../../lib/group.ts";
+import { LoadingContext } from "../../lib/loading.ts";
 import { CountLinks } from "./count-links.tsx";
 import { MeterWait } from "./wait.tsx";
 
@@ -34,8 +36,6 @@ interface MeterBase extends Closed {
 	value: number;
 	/** The limit. */
 	max: number;
-	/** What the value counts (`GB`, `requests`). */
-	unit?: string;
 	/** A tick across the track at the mark's value: the point the fill turns `warn` at, in place of the near share. */
 	mark?: MeterMark;
 	/** The label, share, bar and the line under it (the `meta` or `counts` given) as bars in their boxes. */
@@ -70,7 +70,10 @@ export function Meter({
 }: MeterProps) {
 	// In a Group the meter is one of its items, at the card's inset.
 	const item = use(GroundContext) === "group" && GROUP_ITEM;
-	if (loading) return <MeterWait line={waitLine({ meta, counts })} />;
+	const inherited = use(LoadingContext);
+	useGroupPart();
+	if (loading ?? inherited)
+		return <MeterWait line={waitLine({ meta, counts })} />;
 	const share = max > 0 ? value / max : 0;
 	const markShare = mark && max > 0 ? mark.value / max : undefined;
 	const percent = formatterFor("number", undefined, {

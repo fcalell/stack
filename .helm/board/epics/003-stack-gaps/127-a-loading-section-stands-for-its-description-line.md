@@ -18,3 +18,6 @@ Stead's review screen waits as the loaded one stands, and its Check, Criteria an
 
 ## Open questions
 - [ ] Its shape (a component, a variant, a token, an option): the stack session decides, whether `description` takes a waiting marker, a `loading` Section with a `description` draws the bar and keeps the text for the readers, or a separate prop.
+
+## Decided while building (2026-10-07)
+Not built: the shape is a consumer-surface choice, so it waits for a ruling. The part cannot derive that a description line stands, since the app does not know it before the read. Options: (a) `description=""` while the Section loads stands one meta-height bar and draws nothing loaded (an empty string draws no line today), so no prop changes, and an app writes `description={read?.tally ?? ""}`; (b) `description` also takes `true`, a marker the type carries for the waiting case; (c) a separate prop. Recommended: (a), the way a List reads the slots its map declares and a waiting form stands for them; its cost is that the convention is implicit, so the Section's `description` doc and the rules page say it. The Section's waiting form keeps the real text out of the accessibility tree because it draws a bar and no string.

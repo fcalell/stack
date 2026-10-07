@@ -145,20 +145,17 @@ always draws the touch set and so the touch structure.
 
 ## Words
 
-Every word a molecule draws or reads aloud on its own comes from `words`, a typed object passed once
+Every word a molecule draws on its own comes from `words`, a typed object passed once
 beside `theme`: the seven `Status` words, `recommended`, `copy`, `copied`, `download`, `back`,
 `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`,
 `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `edit`, `details`, `places`,
-`notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`,
-`seen`, `unseen`, `copyFailed`, `downloadFailed`, `latest`, `missing`, `chooseFile`, `typeValue`,
-`pickValue`, `locked`, `warning`, `photos`, `files`, `changed`, `unchanged`, `stale`, `chooseAll`,
-`chooseNone`, `noMatches`, `imageFiles`, `audioFiles`, `videoFiles`, `textFiles`, `expand`, `collapse`, `zoomIn`, `zoomOut`, `fit`, `arrange`, `off`, the counted `earlierLines` and `waitLeft`, and the slot words `meterValue`,
-`meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changedFrom`, `wrongType`, `stepOf` and
+`notifications`, `code`, `added`, `removed`, `sort`, `message`,
+`copyFailed`, `downloadFailed`, `latest`, `missing`, `chooseFile`, `typeValue`,
+`pickValue`, `locked`, `photos`, `files`, `changed`, `unchanged`, `stale`, `chooseAll`,
+`chooseNone`, `noMatches`, `imageFiles`, `audioFiles`, `videoFiles`, `textFiles`, `expand`, `collapse`, `zoomIn`, `zoomOut`, `fit`, `arrange`, `off`, the counted `earlierLines`, and the slot words `wrongType`, `stepOf` and
 `chosenOf`. A counted word is `{ one, other }`, each form spelling `{count}` where the number
 stands, drawn through `counted(word, count)` (`one` at a count of one, `other` at any other). A slot
-word spells each of its named slots as `{name}` where the value stands (`meterValue` `{value}` and
-`{max}`, `meterOver` `{amount}`, `meterMark` `{name}` and `{value}`, `linesAdded` and `linesRemoved`
-`{count}`, `changedFrom` `{before}` and `{after}`, `wrongType` `{name}` and `{types}`, `stepOf`
+word spells each of its named slots as `{name}` where the value stands (`wrongType` `{name}` and `{types}`, `stepOf`
 `{at}` and `{of}`, `chosenOf` `{count}` and `{of}`), drawn through `filled(word, values)`; the
 schema rejects a translation that drops a slot. `Words` requires every key and `wordsSchema` is
 closed, so a translation that misses a word fails `tsc` and the schema, never the interface.
@@ -452,7 +449,7 @@ The canon binds every component either UI plugin ships:
    one filled act and as `destructive`, the hairline form, otherwise; `quiet` marks one drawn as words in the meta ink
    with no hairline (`BUTTON {act: quiet}`), never the bar's filled act. An `Act` names no glyph (a
    `Place`'s act is the page's create act and the `Place` draws it with `Plus`); an `IconAct` is an
-   icon-only act whose label is read aloud, never drawn. A `Form` has no submit handler: its
+   icon-only act whose label is its accessible name, never drawn. A `Form` has no submit handler: its
    `ActionBar`'s filled act submits it (on the web Enter in a field runs it), that act's `onAct` is
    the one handler, and while the promise it returns pends the act is pending, the bar's other acts
    ignore the press and the form is busy. A `confirm()` is the same shape: its `Confirmation`'s act

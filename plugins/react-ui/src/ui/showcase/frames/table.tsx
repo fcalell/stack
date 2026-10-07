@@ -97,7 +97,7 @@ const COLUMNS: TableColumn<Task>[] = [
 		kind: "change",
 		width: "measure-short",
 		sortable: true,
-		locked: "Held by CR-12, Ana",
+		locked: true,
 		cell: (task) => task.timeout,
 	},
 	{

@@ -7,7 +7,7 @@ import type {
 	Lock,
 	StatusState,
 } from "@fcalell/ui-core/descriptors";
-import { valueCut } from "@fcalell/ui-core/list-state";
+import { definitionShape, valueCut } from "@fcalell/ui-core/list-state";
 import {
 	DEFINITION_ROW,
 	DEFINITION_ROW_CHEVRON,
@@ -16,9 +16,11 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import type { ReactNode } from "react";
+import { isValidElement, type ReactNode, use } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { useCopy } from "../../lib/copy.ts";
+import { useGroupPart } from "../../lib/group.ts";
+import { LoadingContext } from "../../lib/loading.ts";
 import { follow } from "../../lib/navigate.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Icon } from "../icon/index.tsx";
@@ -27,6 +29,7 @@ import { Link } from "../link/index.tsx";
 import { LockMark } from "../list-row/lock.tsx";
 import { ChangeMark } from "../status/change.tsx";
 import { Status } from "../status/index.tsx";
+import { DefinitionWait } from "./wait.tsx";
 
 const ROW = "relative flex items-center";
 // A row that opens washes under the pointer and the press on its hit.
@@ -104,6 +107,27 @@ export function DefinitionRow({
 	href,
 	onOpen,
 }: DefinitionRowProps) {
+	// In a waiting Group or Section the row draws its waiting form, built from
+	// what it is given: a control as its value stands as the switch's box.
+	const waiting = use(LoadingContext);
+	useGroupPart();
+	if (waiting) {
+		const shape = definitionShape({
+			change,
+			description,
+			locked,
+			copyable,
+			act,
+			href,
+			onOpen,
+		});
+		return (
+			<DefinitionWait
+				shape={isValidElement(value) ? { ...shape, end: "switch" } : shape}
+				index={0}
+			/>
+		);
+	}
 	const opens = href !== undefined || onOpen !== undefined;
 	const copied = copyable && typeof value === "string" ? value : undefined;
 	let shown: ReactNode = null;

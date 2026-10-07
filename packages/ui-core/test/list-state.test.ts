@@ -337,7 +337,7 @@ test("a Section shows its own count, else its lists' total once every list has a
 });
 
 test("a Section's head and loading body follow from its own props and the parts its body holds", () => {
-	const none = { lists: [], waits: [], groups: 0, fields: 0 };
+	const none = { lists: [], waits: [], groups: 0, fields: 0, forms: 0 };
 	const answered = { isPending: false, isError: false, data: [1, 2] };
 	const waiting = { isPending: true, isError: false, data: undefined };
 	// Its lists' total once each answers, none while one waits.
@@ -389,6 +389,16 @@ test("a Section's head and loading body follow from its own props and the parts 
 		2,
 	);
 	assert.equal(sectionState(none, { loading: true }).fields, 3);
+	// A part that waits in its own form (a Prose, a Thread, a Code) stands for
+	// the body, so no skeleton fields do; a field beside it keeps them.
+	assert.equal(
+		sectionState({ ...none, forms: 1 }, { loading: true }).fields,
+		0,
+	);
+	assert.equal(
+		sectionState({ ...none, forms: 1, fields: 2 }, { loading: true }).fields,
+		2,
+	);
 	assert.equal(sectionState({ ...none, fields: 2 }, {}).fields, 0);
 	assert.equal(
 		sectionState({ ...none, lists: [{ items: [1] }] }, { loading: true }).count,
@@ -401,9 +411,9 @@ test("a List in a Group draws group rows; the same List outside draws list rows"
 	assert.equal(listGround(false), "list");
 });
 
-test("a waiting Group draws its Lists' waiting rows, else setting row skeletons", () => {
-	assert.equal(groupWait(1), "rows");
-	assert.equal(groupWait(2), "rows");
+test("a waiting Group draws the waiting forms of the parts that register, else setting row skeletons", () => {
+	assert.equal(groupWait(1), "parts");
+	assert.equal(groupWait(2), "parts");
 	assert.equal(groupWait(0), "settings");
 });
 

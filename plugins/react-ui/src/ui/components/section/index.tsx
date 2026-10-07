@@ -29,6 +29,7 @@ import { useTouched } from "../../lib/touched.ts";
 import { BarChart } from "../bar-chart/index.tsx";
 import { Button } from "../button/index.tsx";
 import { Reason } from "../button/reason.tsx";
+import { Code } from "../code/index.tsx";
 import { Comparison } from "../comparison/index.tsx";
 import { Count } from "../count/index.tsx";
 import { FormField } from "../form-field/index.tsx";
@@ -36,9 +37,13 @@ import { Group } from "../group/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 import { List } from "../list/index.tsx";
+import { Meter } from "../meter/index.tsx";
+import { Prose } from "../prose/index.tsx";
 import { QueryBoundary } from "../query-boundary/index.tsx";
+import { Slider } from "../slider/index.tsx";
 import { Table } from "../table/index.tsx";
 import { Text } from "../text/index.tsx";
+import { Thread } from "../thread/index.tsx";
 
 const BOX = "flex flex-col min-w-0";
 const HEAD = "flex flex-col";
@@ -75,6 +80,7 @@ const LABEL_LINE = "flex items-center h-lh";
 const KINDS: SectionKinds = {
 	lists: [List, Table],
 	waits: [BarChart, Comparison],
+	forms: [Code, Meter, Prose, Slider, Thread],
 	boundary: QueryBoundary,
 	group: Group,
 	field: FormField,
@@ -98,7 +104,7 @@ export interface SectionProps extends Closed {
 	onToggle?: (open: boolean) => void;
 	/** The section's one act, at the head's end: a labelled act or an icon act. */
 	act?: Act | IconAct;
-	/** The count (when there is one) and the body wait: a Group or a List in the body draws its own skeleton rows, and skeleton fields stand in for any other body. */
+	/** The count (when there is one) and the body wait: a Group or a List in the body draws its own skeleton rows, a Prose, Thread, Code, Meter or Slider its own waiting form, and skeleton fields stand in for fields and for any other body. */
 	loading?: boolean;
 	/** The body: a Group, a List, or the rows a Form lays out. */
 	children?: ReactNode;

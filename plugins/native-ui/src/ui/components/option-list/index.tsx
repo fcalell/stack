@@ -241,7 +241,6 @@ export function OptionList<V extends string = string, T = unknown>(
 		<View
 			accessibilityRole={radios ? "radiogroup" : undefined}
 			accessibilityLabel={named?.label}
-			accessibilityHint={named?.said}
 			className={OPTION_LIST}
 		>
 			{body}
@@ -311,7 +310,6 @@ export function OptionList<V extends string = string, T = unknown>(
 							<Pressable
 								accessibilityRole={one ? "radio" : "checkbox"}
 								accessibilityLabel={option.label}
-								accessibilityHint={option.description}
 								accessibilityState={{ checked: chosen }}
 								onPress={() => choose<V>(props, option.value)}
 								className={cn(row({ lines: marked ? "two" : "one" }), OPTION)}

@@ -36,6 +36,7 @@ import {
 	ThreadRoom,
 } from "../../lib/frame";
 import { Lifted } from "../../lib/hosts";
+import { LoadingContext } from "../../lib/loading";
 
 import { useWords } from "../../lib/words";
 import { EmptyStateBase } from "../empty-state/base";
@@ -214,8 +215,8 @@ function logOf<T>(
 // the input docked at the foot over the keyboard; while the reader is scrolled
 // up, a Latest act floats centred above the foot and returns to the newest
 // message. It draws its
-// collection's states, the input under each: while its query is pending or
-// `loading` is set, Message's loading forms (another's reply, yours,
+// collection's states, the input under each: while its query is pending,
+// `loading` is set or a loading `Section` holds it, Message's loading forms (another's reply, yours,
 // another's reply), the log at its end; a failed query, the failed
 // EmptyState with `sentence` and Retry in the log; a query that answers not
 // found, the form saying it no longer exists with Back; no message, `empty`
@@ -227,7 +228,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 		query: props.query,
 		items: props.items,
 		loading: props.loading,
-		sectionLoading: false,
+		sectionLoading: useContext(LoadingContext),
 		inSection: false,
 		hasEmpty: props.empty !== undefined,
 	};

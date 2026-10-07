@@ -15,10 +15,11 @@ import {
 	textStrong,
 } from "@fcalell/ui-core/variants";
 import { lexer, type Token, type Tokens } from "marked";
-import { type ReactNode, useMemo } from "react";
+import { type ReactNode, useContext, useMemo } from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { LoadingContext } from "../../lib/loading";
 import { Strut } from "../../lib/strut";
 import { Code } from "../code";
 import { Link } from "../link";
@@ -44,7 +45,8 @@ export interface ProseProps extends Closed {
 	// The text, in markdown: headings, paragraphs, lists, quotes, rules,
 	// inline code, links and fenced code.
 	markdown: string;
-	// The text waits: two paragraphs of line boxes stand in for it.
+	// The text waits: two paragraphs of line boxes stand in for it. Unset, a
+	// loading `Section` or `Group` around it makes it wait.
 	loading?: boolean;
 }
 
@@ -292,10 +294,12 @@ function Headed({ part }: { part: Part }) {
 // own text; tables, task lists and images draw as text. A heading is a
 // header, which has no levels on the phone.
 export function Prose({ markdown, loading }: ProseProps) {
+	const inherited = useContext(LoadingContext);
+	const waiting = loading ?? inherited;
 	// The markdown lexes and folds once per text, and not while the prose waits.
 	const root = useMemo(
-		() => (loading ? undefined : parts(lexer(markdown))),
-		[markdown, loading],
+		() => (waiting ? undefined : parts(lexer(markdown))),
+		[markdown, waiting],
 	);
 	if (!root)
 		return (
@@ -316,14 +320,17 @@ export function Prose({ markdown, loading }: ProseProps) {
 				</View>
 			</View>
 		);
+	// Its fenced blocks are `Code` and wait only as the text does.
 	return (
-		<View className={cn(PROSE, COLUMN)}>
-			{root.blocks.length > 0 ? <Blocks part={root} /> : null}
-			{root.parts
-				.filter((part) => (part.heading?.depth ?? 1) <= 2)
-				.map((part) => (
-					<Headed key={part.key} part={part} />
-				))}
-		</View>
+		<LoadingContext.Provider value={false}>
+			<View className={cn(PROSE, COLUMN)}>
+				{root.blocks.length > 0 ? <Blocks part={root} /> : null}
+				{root.parts
+					.filter((part) => (part.heading?.depth ?? 1) <= 2)
+					.map((part) => (
+						<Headed key={part.key} part={part} />
+					))}
+			</View>
+		</LoadingContext.Provider>
 	);
 }

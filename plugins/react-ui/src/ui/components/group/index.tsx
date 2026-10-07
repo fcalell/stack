@@ -28,7 +28,7 @@ const SETTINGS = [0, 1, 2] as const;
 
 /** Rows in a hairline card. */
 export interface GroupProps extends Closed {
-	/** The rows wait (a loading Section's body waits with it): a List in it draws its own waiting rows, and skeleton setting rows stand in for static rows. */
+	/** The rows wait (a loading Section's body waits with it): a List in it draws its own waiting rows, a Meter, a Slider and a DefinitionRow their own waiting forms, and skeleton setting rows stand in for children none of them answers for. */
 	loading?: boolean;
 	/** The rows: static rows, or a List whose rows stand on the card. */
 	children?: ReactNode;
@@ -38,24 +38,25 @@ export interface GroupProps extends Closed {
 export function Group({ loading, children }: GroupProps) {
 	const inherited = use(LoadingContext);
 	const waiting = loading ?? inherited;
-	// A waiting body draws a List's own waiting rows when one (however deep)
-	// registers; with none, setting skeletons. The body renders once to learn,
-	// and the swap lands in a synchronous re-render before paint.
-	const lists = useRef(0);
+	// A waiting body draws the waiting forms of the parts that register (however
+	// deep: a List, a Meter, a Slider, a DefinitionRow); with none, setting
+	// skeletons. The body renders once to learn, and the swap lands in a
+	// synchronous re-render before paint.
+	const parts = useRef(0);
 	const [settings, setSettings] = useState(false);
 	const host = useMemo<GroupHost>(
 		() => ({
-			list: () => {
-				lists.current += 1;
+			part: () => {
+				parts.current += 1;
 				return () => {
-					lists.current -= 1;
+					parts.current -= 1;
 				};
 			},
 		}),
 		[],
 	);
 	useLayoutEffect(() => {
-		setSettings(waiting && groupWait(lists.current) === "settings");
+		setSettings(waiting && groupWait(parts.current) === "settings");
 	}, [waiting]);
 	return (
 		<div aria-busy={loading || undefined} className={cn(GROUP, BOX)}>

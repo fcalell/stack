@@ -20,8 +20,7 @@ A record the open record links to opens beside it: the `Split`'s `beside` holds 
 `back` is the open record's route. From `wide` it stands beside the main, its back act a Close;
 below `wide` it stands in the main's place with its back act, and below `tablet` its head is the
 page's only head, its back act to the main. The record's title keeps its heading level at every
-width, and below `tablet` the `Place`'s `h1` stays read, unseen, so the outline is the same at
-every width.
+width.
 
 ```tsx
 <Split list={rows} main={<Item />} beside={<Screen title="Run 12" back={itemRoute}><Run /></Screen>} />
@@ -306,7 +305,7 @@ the Section's head. A `definition` list adds no count to a Section's head (facts
 collection a viewer counts), though it still makes the head busy while it waits. A `Group` holds static
 rows, and items that are no row (a `Meter`, a `FormField`, a `Slider`) which stand at the card's inset with its hairline between and keep their labels (an add field over a `List` is a `FormField` in the `Group`); rows from data in a card are a `List` placed in the `Group`, drawing its states on the card,
 never a `.map` of `ListRow`s, `DefinitionRow`s or `Meter`s. A `definition` list stands in a `Group`,
-as a `DefinitionRow` does. A `definition` row's string value that does not fit its room cuts in its
+as a `DefinitionRow` does. A waiting `Group` (its `loading`, or a loading `Section`'s) draws one waiting form per `Meter`, `Slider` and `DefinitionRow` it holds, at the loaded card's height (a row's form follows the `description`, `act`, `href`, `locked` or control it is given), and three setting rows for rows of your own. A loading `Section` whose body is a `Prose`, a `Thread`, a `Code`, a `Meter` or a `Slider` draws that part's waiting form, and skeleton fields stand in only for fields and for any other body. A `definition` row's string value that does not fit its room cuts in its
 middle (its start and its last four characters stay, `SHA256:uNiV…k3Qz`) on one line; the whole value
 stays its read text and, with `copyable`, what the copy act copies, so a value never needs a wrapper
 that truncates it.
@@ -328,7 +327,7 @@ A `Table` takes its data the same way: `query` with `sentence`, or `items`; each
 cell from the item by `cell`, and `row` gives the row's `id`, `href`, `locked`, `warning` (what is
 wrong with it, drawn after its name) and `change` (where it stands in a change set, its mark ahead
 of its name). It draws its states itself, with no `QueryBoundary` around it. An editable table
-(`onEdit`) draws a lock after a cell its row locks; a column's own `locked` (a reason) makes it read
+(`onEdit`) draws a lock after a cell its row locks; a column's own `locked` makes it read
 only, its lock in the head alone.
 
 A table that acts on rows takes `choose`: `chosen` (the ticked ids) and `onChange`, with `blocked`
@@ -425,7 +424,7 @@ a `Thread` among sections keeps their start, at the measure, as a `Text` paragra
 that holds a page's sections (a `Place`'s body, a `Split`'s list, main and pane, a `Sheet`'s body)
 stands them a sections gap apart: never wrap sections in a `div` to space them. A `Split`'s list stands its first section at the page inset, as the record does, so both start on one line.
 
-A `BarChart` takes data the same way, its `bar` map reading each item's `key`, `label`, `value`,
+A `BarChart` takes data the same way, its `bar` map reading each item's `key`, `value`,
 `parts` (by its declared `keys`) and `at`; its failed and empty forms stand at the chart's height.
 Its head sums the bars, which is right for a flow (requests per day); bars that are a level (open
 flags per round, a reading each hour) take `level`, and the head draws the last bar, never the sum.

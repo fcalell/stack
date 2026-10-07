@@ -19,7 +19,6 @@ interface Day {
 
 const BAR: BarSlots<Day> = {
 	key: (day) => day.day,
-	label: (day) => day.day,
 	value: (day) => day.value,
 	parts: (day) => day.parts,
 	at: (day) => day.at,
@@ -80,21 +79,18 @@ const METERS: MeterProps[] = [
 		label: "Requests",
 		value: 412_000,
 		max: 1_000_000,
-		unit: "requests",
 		meta: "412,000 of 1M requests",
 	},
 	{
 		label: "Build minutes",
 		value: 5_640,
 		max: 6_000,
-		unit: "minutes",
 		meta: "5,640 of 6,000 minutes, 360 left",
 	},
 	{
 		label: "Storage",
 		value: 11.8,
 		max: 10,
-		unit: "GB",
 		meta: "1.8 GB over, billed at the end of the month",
 	},
 ];
@@ -140,7 +136,6 @@ export function Usage() {
 							label: (meter) => meter.label,
 							value: (meter) => meter.value,
 							max: (meter) => meter.max,
-							unit: (meter) => meter.unit,
 							meta: (meter) => meter.meta,
 						}}
 					/>

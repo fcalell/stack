@@ -45,7 +45,6 @@ export function SegmentedControl({
 		<View
 			accessibilityRole="radiogroup"
 			accessibilityLabel={named?.label ?? label}
-			accessibilityHint={named?.said}
 			className={cn(SEGMENTED_CONTROL, TRACK)}
 		>
 			{options.map((option) => {

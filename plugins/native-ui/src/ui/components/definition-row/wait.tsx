@@ -22,6 +22,7 @@ const LABEL_LINE = "flex-1 min-w-0 flex-row items-center";
 const META_LINE = "flex-row items-center";
 const END = "shrink-0";
 const SWITCH = "shrink-0 items-center justify-center min-h-target min-w-target";
+const SWITCH_VALUE = `${SWITCH} ms-auto`;
 // A fact's label bar four figures wide, a short label's, starting where the
 // label text does; its value bar at the line's end in the room the value
 // takes. An identifier (`code`) fills the room the label leaves up to the
@@ -45,7 +46,8 @@ const BARS = [
 // skeleton in its lane when `change` is declared; a label bar and a value bar
 // at the line's end, or, with a `description`, the label bar over a meta
 // line's bar; then the act's square, the link's chevron square or the
-// switch's box at the end. Busy only through the Group or List that holds it.
+// switch's box at the end, or in the value's place when a one-line row holds
+// a control. Busy only through the Group, Section or List that holds it.
 // Outside the package's exports.
 export function DefinitionWait(props: {
 	shape: DefinitionShape;
@@ -54,6 +56,9 @@ export function DefinitionWait(props: {
 	const { shape } = props;
 	const [label, description] = BARS[props.index % BARS.length] ?? BARS[0];
 	const one = !shape.description;
+	// A one-line row holding a control stands the switch's box where the value
+	// bar stands.
+	const control = one && shape.end === "switch";
 	return (
 		<View
 			className={cn(
@@ -74,14 +79,20 @@ export function DefinitionWait(props: {
 							<Strut role="body" />
 							<View className={cn(skeleton({ kind: "line" }), BAR)} />
 						</View>
-						<View className={shape.code ? CODE_LANE : WORD_LANE}>
-							<View
-								className={cn(
-									skeleton({ kind: "line" }),
-									shape.code ? CODE_BAR : WORD_BAR,
-								)}
-							/>
-						</View>
+						{control ? (
+							<View className={SWITCH_VALUE}>
+								<View className={skeleton({ kind: "switch" })} />
+							</View>
+						) : (
+							<View className={shape.code ? CODE_LANE : WORD_LANE}>
+								<View
+									className={cn(
+										skeleton({ kind: "line" }),
+										shape.code ? CODE_BAR : WORD_BAR,
+									)}
+								/>
+							</View>
+						)}
 					</View>
 				) : (
 					<>

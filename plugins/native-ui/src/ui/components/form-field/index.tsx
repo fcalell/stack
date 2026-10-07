@@ -146,9 +146,8 @@ function FieldBody<V>(props: FormFieldProps<V>) {
 	// A folded field draws no control, so the consumer's function is not called.
 	const control = folded ? null : fieldControl(props);
 	const form = formOf(control);
-	const said = error ?? description;
-	// What a group of controls is named and described by, one value per change.
-	const group = useMemo(() => ({ label, said }), [label, said]);
+	// What a group of controls is named by, one value per change.
+	const group = useMemo(() => ({ label }), [label]);
 	const labelClass = cn(
 		text({ role: "body" }),
 		textStrong({ role: "body" }),
@@ -183,8 +182,8 @@ function FieldBody<V>(props: FormFieldProps<V>) {
 				/>
 			</View>
 		);
-	// A group takes no field context: its label and its line under it name
-	// and describe the group, never the controls inside.
+	// A group takes no field context: its label names the group, never the
+	// controls inside.
 	if (form === "group")
 		return (
 			<View className={cn(formField({ holds: "field" }), STACK)}>
@@ -199,7 +198,6 @@ function FieldBody<V>(props: FormFieldProps<V>) {
 			<Pressable
 				accessibilityRole="checkbox"
 				accessibilityLabel={label}
-				accessibilityHint={said}
 				accessibilityState={{ checked, disabled }}
 				disabled={disabled}
 				onPress={() => onChange(checked !== true)}

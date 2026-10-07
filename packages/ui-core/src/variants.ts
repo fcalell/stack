@@ -420,8 +420,6 @@ export const PICKER_POPOVER = "w-popover";
 export const RULES = "gap-x-inside gap-y-pair";
 export const RULE_ROW = "gap-inside";
 export const RULE_CARD = "px-card py-pair";
-// A box on the group ground.
-export const GROUP_GROUND = "rounded-card bg-group";
 // A popover: raised on the float shadow inside its hairline, its rows inset
 // by the float inset so a row's wash sits just inside the edge.
 export const POPOVER =

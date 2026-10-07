@@ -560,15 +560,15 @@ export const closure = (
 		<Rules rules={[]} class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<Rules rules={[]} classList={{}} />
-		<BarChart label="x" items={[]} bar={{ key: String, label: String, value: Number }} />
+		<BarChart label="x" items={[]} bar={{ key: String, value: Number }} />
 		{/* @ts-expect-error: closed channel */}
-		<BarChart label="x" items={[]} bar={{ key: String, label: String, value: Number }} className="x" />
+		<BarChart label="x" items={[]} bar={{ key: String, value: Number }} className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<BarChart label="x" items={[]} bar={{ key: String, label: String, value: Number }} style={{ flex: 1 }} />
+		<BarChart label="x" items={[]} bar={{ key: String, value: Number }} style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<BarChart label="x" items={[]} bar={{ key: String, label: String, value: Number }} class="x" />
+		<BarChart label="x" items={[]} bar={{ key: String, value: Number }} class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<BarChart label="x" items={[]} bar={{ key: String, label: String, value: Number }} classList={{}} />
+		<BarChart label="x" items={[]} bar={{ key: String, value: Number }} classList={{}} />
 		<Message author="you" body="x" />
 		<Message author="system" body="x" detail={{ row: { title: "x", meta: ["y"] } }} />
 		{/* @ts-expect-error: closed channel */}

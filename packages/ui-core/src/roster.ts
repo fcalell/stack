@@ -442,6 +442,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SLIDER_FILL",
 				"SLIDER_REST",
 				"SLIDER_THUMB",
+				"SKELETON.kind.line",
+				"LINE_BOX.role.body",
+				"LINE_BOX.role.meta",
 			],
 			holds: [
 				"SLIDER",
@@ -453,10 +456,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SLIDER_REST",
 				"SLIDER_THUMB",
 			],
-			states: [...PRESS, "disabled"],
+			states: [...PRESS, "disabled", "loading"],
 			owns: {
 				roles: ["body", "meta"],
 				colors: [
+					"skeleton",
 					"ink-body",
 					"ink-meta",
 					"toggle-",
@@ -469,9 +473,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"ink-disabled",
 					"ring",
 				],
-				radii: ["full"],
+				radii: ["full", "chip"],
 				spacing: ["pair", "fields", "card"],
-				sizes: ["target", "track", "thumb"],
+				sizes: ["target", "track", "thumb", "skeleton"],
 			},
 		},
 		Switch: {
@@ -733,7 +737,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// its own line under the head row.
 		// Its rhythm is `SECTION.in`: `form` inside a Form, `page`
 		// elsewhere. Loading, a Group or a List in its body draws its own
-		// skeleton rows; the Section draws its own over a body of fields.
+		// skeleton rows and a Prose, Thread, Code, Meter or Slider its own waiting
+		// form; the Section draws its own over a body of fields.
 		Section: {
 			props: [
 				"title",
@@ -802,6 +807,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				],
 			},
 		},
+		// Waiting, each Meter, Slider and DefinitionRow in it draws its own waiting
+		// form at its loaded height; three setting rows stand for children no part
+		// answers for.
 		Group: {
 			props: ["loading", "children"],
 			draws: ["GROUP"],
@@ -1011,7 +1019,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// each of Status, warning, lock and Chip, on the meta line in that
 		// order: a warning is what is wrong with the row (the act that clears
 		// it is the row's `act`), a lock what the row holds (its label shown
-		// from `tablet`, read aloud always). Its trailing is a value, or a
+		// from `tablet`). Its trailing is a value, or a
 		// pick: a `Picker` at the `row` fit, centred in the row.
 		// A `leading` of `check` is the row's tick, a `Checkbox` in the leading
 		// slot named by the title; its `blocked` reason draws it disabled and
@@ -1190,7 +1198,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// a description, the label over the meta line; the act's square or the
 		// chevron's at the end when declared. A string value too long for its
 		// room cuts in its middle (`valueCut`), the whole value its text. A waiting Group's setting rows are
-		// the same wait with a description and the switch's box at the end.
+		// the same wait with a description and the switch's box at the end; a row in
+		// a waiting Group or Section draws it from the props it is given.
 		DefinitionRow: {
 			props: [
 				"change",
@@ -2588,21 +2597,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				],
 			},
 		},
-		// A bar at the `meter` size, its fill by level, its value read aloud with
-		// its `unit`. Under it one line: `meta`, or `counts` (links composed from
-		// `Link`), never both. A `mark` is a tick across the track at its value,
-		// the meter's near point, its label read aloud.
+		// A bar at the `meter` size, its fill by level. Under it one line: `meta`,
+		// or `counts` (links composed from `Link`), never both. A `mark` is a tick
+		// across the track at its value, the meter's near point.
 		Meter: {
-			props: [
-				"label",
-				"value",
-				"max",
-				"unit",
-				"meta",
-				"counts",
-				"mark",
-				"loading",
-			],
+			props: ["label", "value", "max", "meta", "counts", "mark", "loading"],
 			draws: [
 				"LINK_TARGET",
 				"COUNT_LINKS",
@@ -2760,8 +2759,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// A collection: columns over time in the chip marks, stacked by one
 		// dimension, its bars from `query` or `items` through the `bar` map;
-		// `label` names what it counts, the plot and the visually hidden table
-		// the values reach assistive tech by; `keys` names the stack's parts in
+		// `label` names the plot on the web; `keys` names the stack's parts in
 		// order, so the legend and each part's mark stand before the data does;
 		// `level` says the bars are a level, so its head draws the last bar, not
 		// the sum. Its failed and empty EmptyStates are its own, at its loaded

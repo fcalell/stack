@@ -6,7 +6,6 @@ import {
 	cellLocked,
 	changeKind,
 	changeMeta,
-	changeReading,
 	isChangeCell,
 	isStatusCell,
 	order,
@@ -22,7 +21,6 @@ test("an empty grid's EmptyState stands a page inset under the header, across th
 });
 
 const words = {
-	changedFrom: "from {before} to {after}",
 	added: "Added",
 	removed: "Removed",
 };
@@ -37,15 +35,13 @@ test("a change cell is added without a before, removed without an after, and emp
 	assert.equal(isChangeCell("1"), false);
 });
 
-test("a change cell reads aloud from X to Y, and touch sets X → Y", () => {
+test("a change cell sets X → Y on touch, the word added or removed before a lone value", () => {
 	const changed = { before: "30s", after: "60s" };
-	assert.equal(changeReading(changed, words), "from 30s to 60s");
 	assert.equal(changeMeta(changed, words), "30s → 60s");
 	const added = { before: null, after: "60s" };
-	assert.equal(changeReading(added, words), "Added 60s");
 	assert.equal(changeMeta(added, words), "Added 60s");
 	const removed = { before: "30s", after: null };
-	assert.equal(changeReading(removed, words), "Removed 30s");
+	assert.equal(changeMeta(removed, words), "Removed 30s");
 	assert.equal(changeMeta({ before: null, after: null }, words), "");
 });
 
@@ -74,7 +70,7 @@ const editable: TableColumn = {
 	cell: () => "",
 	edit: { control: "input" },
 };
-const held: TableColumn = { ...editable, locked: "Held by CR-12" };
+const held: TableColumn = { ...editable, locked: true };
 const plain: TableColumn = { key: "role", label: "Role", cell: () => "" };
 
 test("a cell edits through its column, unless the row or the column locks it", () => {

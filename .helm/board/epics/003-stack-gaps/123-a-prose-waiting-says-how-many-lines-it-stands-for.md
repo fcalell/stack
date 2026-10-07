@@ -18,3 +18,6 @@ Stead's Action item draws "Why it waits" as a `Prose` of one sentence (github.co
 
 ## Open questions
 - [ ] Its shape (a component, a variant, a token, an option): the stack session decides, whether a `lines` prop, a `lines` of paragraphs, or a variant of one short paragraph.
+
+## Decided while building (2026-10-07)
+Not built: the shape is a consumer-surface choice, so it waits for a ruling. Built meanwhile (003-131, 003-132): the waiting contract every part follows, that a part draws its waiting form when its own `loading` or the `LoadingContext` of the loading Group or Section holding it is set, and builds the form from the props it is given. `Prose` now takes that inherited loading, so a loading Section over a `Prose` shows the Prose's own form; its form is still the fixed two paragraphs. The count of lines is a fact the app has and the part cannot derive (`markdown` is empty or stale while it waits), so it needs a prop: a `lines` count on `Prose` read while it waits (an absent count keeps the two paragraphs), or `loading` taking the count (`loading={1}`; `true` the default). Recommended: `loading` as the count, the same rule as 003-139's acts, and no new name.

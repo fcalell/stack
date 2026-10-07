@@ -28,7 +28,7 @@ import { LIST, LIST_TREE } from "@fcalell/ui-core/variants";
 import { type ReactElement, useContext, useState } from "react";
 import { View } from "react-native";
 import type { Closed } from "../../lib/closed";
-import { between, useGroupList } from "../../lib/group";
+import { between, useGroupPart } from "../../lib/group";
 import { LoadingContext } from "../../lib/loading";
 import type { Route } from "../../lib/route";
 import { SectionContext } from "../../lib/section";
@@ -147,7 +147,6 @@ interface MeterSlotsBase<T> {
 	label: (item: T) => string;
 	value: (item: T) => number;
 	max: (item: T) => number;
-	unit?: (item: T) => string | undefined;
 	// The tick across the bar: the meter's near point.
 	mark?: (item: T) => MeterMark | undefined;
 }
@@ -266,7 +265,7 @@ export function List<T, V extends string | null = string>(
 		hasEmpty: props.empty !== undefined,
 	};
 	const input = { ...base, inSection: useContext(SectionContext) };
-	const ground = listGround(useGroupList());
+	const ground = listGround(useGroupPart());
 	const state = listState(input);
 	// In a Group the card is the rows' box: each row after the first draws
 	// the group's hairline above it.
@@ -373,7 +372,6 @@ export function List<T, V extends string | null = string>(
 					label={meter.label(item)}
 					value={meter.value(item)}
 					max={meter.max(item)}
-					unit={meter.unit?.(item)}
 					mark={meter.mark?.(item)}
 					{...(meter.counts
 						? { counts: meter.counts(item) }

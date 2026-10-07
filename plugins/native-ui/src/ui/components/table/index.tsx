@@ -783,7 +783,7 @@ function HeadCell(props: {
 			{column.label}
 		</RNText>
 	);
-	const lock = column.locked === undefined ? null : <LockMark />;
+	const lock = column.locked ? <LockMark /> : null;
 	if (!column.sortable)
 		return (
 			<View className={cn(TABLE_CELL, edge, HEAD, end && CELL_END)}>

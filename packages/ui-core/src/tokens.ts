@@ -517,9 +517,6 @@ export const COLORS: Record<ColorName, ColorDeclaration> = {
 	"switch-thumb": { alias: "on-accent" },
 };
 
-// A switch, which has no label of its own, disables by opacity.
-export const DISABLED_OPACITY = 0.45;
-
 // The order a chart's series take the chip marks (`chip-<hue>`): one series
 // takes the first.
 export const CHART_SERIES = [
@@ -1159,7 +1156,7 @@ export function fallbackFace(family: string): string {
 
 // ── Words ───────────────────────────────────────────────────────────
 
-// Every word a molecule draws or reads aloud on its own. A consumer's sentence
+// Every word a molecule draws on its own. A consumer's sentence
 // is a prop on the molecule that draws it, never a key here.
 export const STATUS_STATES = [
 	"active",
@@ -1203,12 +1200,7 @@ export const WORD_KEYS = [
 	"added",
 	"removed",
 	"sort",
-	"ascending",
-	"descending",
-	"time",
 	"message",
-	"seen",
-	"unseen",
 	"copyFailed",
 	"downloadFailed",
 	"latest",
@@ -1217,7 +1209,6 @@ export const WORD_KEYS = [
 	"typeValue",
 	"pickValue",
 	"locked",
-	"warning",
 	"photos",
 	"files",
 	"changed",
@@ -1242,7 +1233,7 @@ export type WordKey = (typeof WORD_KEYS)[number];
 
 // A word drawn with a number: `one` where the count is one, `other` at
 // every other count, each spelling `{count}` where the number stands.
-export const COUNTED_WORD_KEYS = ["earlierLines", "waitLeft"] as const;
+export const COUNTED_WORD_KEYS = ["earlierLines"] as const;
 export type CountedWordKey = (typeof COUNTED_WORD_KEYS)[number];
 
 export interface CountedWord {
@@ -1253,12 +1244,6 @@ export interface CountedWord {
 // A word drawn with values: each spells its slots as `{name}` where the
 // value stands, drawn through `filled()`.
 export const SLOT_WORDS = {
-	meterValue: ["value", "max"],
-	meterOver: ["amount"],
-	meterMark: ["name", "value"],
-	linesAdded: ["count"],
-	linesRemoved: ["count"],
-	changedFrom: ["before", "after"],
 	wrongType: ["name", "types"],
 	stepOf: ["at", "of"],
 	chosenOf: ["count", "of"],
@@ -1308,12 +1293,7 @@ export const ENGLISH: Words = {
 	added: "Added",
 	removed: "Removed",
 	sort: "Sort",
-	ascending: "Ascending",
-	descending: "Descending",
-	time: "Time",
 	message: "Message",
-	seen: "Seen",
-	unseen: "Not seen",
 	copyFailed: "Couldn't copy",
 	downloadFailed: "Couldn't download",
 	latest: "Latest",
@@ -1322,7 +1302,6 @@ export const ENGLISH: Words = {
 	typeValue: "Type a value",
 	pickValue: "Pick a field",
 	locked: "Locked",
-	warning: "Warning",
 	photos: "Photos",
 	files: "Files",
 	changed: "Changed",
@@ -1346,22 +1325,12 @@ export const ENGLISH: Words = {
 		one: "Show {count} earlier line",
 		other: "Show {count} earlier lines",
 	},
-	waitLeft: {
-		one: "{count} second left",
-		other: "{count} seconds left",
-	},
-	meterValue: "{value} of {max}",
-	meterOver: "{amount} over",
-	meterMark: "{name} at {value}",
-	linesAdded: "{count} added",
-	linesRemoved: "{count} removed",
-	changedFrom: "from {before} to {after}",
 	wrongType: "{name} isn't one of {types}",
 	stepOf: "Step {at} of {of}",
 	chosenOf: "{count} of {of} chosen",
 };
 
-// A slot word with its values: `filled(words.meterValue, { value, max })`.
+// A slot word with its values: `filled(words.stepOf, { at, of })`.
 export function filled(word: string, values: Record<string, string>): string {
 	return word.replace(
 		/\{(\w+)\}/g,

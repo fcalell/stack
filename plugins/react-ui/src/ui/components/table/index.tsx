@@ -930,8 +930,7 @@ function HeadCell(props: {
 			<Icon name="ArrowUpDown" fit="meta" />
 		</span>
 	);
-	const lock =
-		column.locked === undefined ? null : <LockMark reason={column.locked} />;
+	const lock = column.locked ? <LockMark /> : null;
 	const content = (
 		<>
 			{end ? glyph : null}

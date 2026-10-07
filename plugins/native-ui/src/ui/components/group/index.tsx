@@ -37,30 +37,32 @@ export interface GroupProps extends Closed {
 // Rows in a hairline card on the surface, the hairline drawn once between
 // them, so no row carries one. A List in it draws its rows, its waiting rows
 // and its failed and empty forms on the card. A loading Section's body waits
-// with it: a List draws its own waiting rows, and skeleton setting rows stand
-// in for static rows.
+// with it: a List draws its own waiting rows, a Meter, a Slider and a
+// DefinitionRow their own waiting forms, and skeleton setting rows stand in
+// for children none of them answers for.
 export function Group({ loading, children }: GroupProps) {
 	const inherited = useContext(LoadingContext);
 	const waiting = loading ?? inherited;
-	// A waiting body draws a List's own waiting rows when one (however deep)
-	// registers; with none, setting skeletons. The body renders once to learn,
-	// and the swap lands in a synchronous re-render before paint.
-	const lists = useRef(0);
+	// A waiting body draws the waiting forms of the parts that register (however
+	// deep: a List, a Meter, a Slider, a DefinitionRow); with none, setting
+	// skeletons. The body renders once to learn, and the swap lands in a
+	// synchronous re-render before paint.
+	const parts = useRef(0);
 
 	const [settings, setSettings] = useState(false);
 	const host = useMemo<GroupHost>(
 		() => ({
-			list: () => {
-				lists.current += 1;
+			part: () => {
+				parts.current += 1;
 				return () => {
-					lists.current -= 1;
+					parts.current -= 1;
 				};
 			},
 		}),
 		[],
 	);
 	useLayoutEffect(() => {
-		setSettings(waiting && groupWait(lists.current) === "settings");
+		setSettings(waiting && groupWait(parts.current) === "settings");
 	}, [waiting]);
 	const rows =
 		waiting && settings

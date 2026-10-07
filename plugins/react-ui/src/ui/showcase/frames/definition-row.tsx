@@ -1,10 +1,42 @@
 import type { StatusState } from "@fcalell/ui-core/tokens";
 import { DefinitionRow } from "../../components/definition-row/index.tsx";
 import { Group } from "../../components/group/index.tsx";
+import { Switch } from "../../components/switch/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { Wide } from "./layout-context.tsx";
 
 const act = () => {};
+
+// The facts of a card, as loaded or waiting; a waiting row draws the form of
+// what it is given (a description, an act, a link, a control).
+export function Facts(props: { loading?: boolean }) {
+	return (
+		<Group loading={props.loading}>
+			<DefinitionRow label="Plan" value="Business" />
+			<DefinitionRow
+				label="Workspace name"
+				value="Acme"
+				act={{ icon: "Pencil", label: "Rename", onAct: act }}
+			/>
+			<DefinitionRow label="Workspace ID" value="ws_7f3k9q2m4x" copyable />
+			<DefinitionRow
+				label="Custom domain"
+				description="Mail and links go out from it."
+				value={{ status: "done", label: "Verified" }}
+				href="#domain"
+			/>
+			<DefinitionRow
+				label="Contract end"
+				value="31 Dec 2026"
+				locked={{ reason: "Held by CR-12, Ana" }}
+			/>
+			<DefinitionRow
+				label="Notify on failure"
+				value={<Switch checked onChange={act} label="Notify on failure" />}
+			/>
+		</Group>
+	);
+}
 
 function Region() {
 	return (
@@ -86,7 +118,8 @@ function Changes() {
 }
 
 // Every rest cell draws the settings group, a `STATUS_DOT.state` cell its
-// status row in that state, a `CHANGE_MARK` cell the change set's facts.
+// status row in that state, a `CHANGE_MARK` cell the change set's facts;
+// loading draws a card of facts waiting beside the loaded one.
 export function drawDefinitionRow(frame: ShowcaseFrame) {
 	const [family, , value] = frame.cell.name.split(".");
 	// The third segment of a `STATUS_DOT.state` cell is a state key.
@@ -98,9 +131,10 @@ export function drawDefinitionRow(frame: ShowcaseFrame) {
 			{frame.state === "rest" ? (
 				rest
 			) : (
-				<Group>
-					<Region />
-				</Group>
+				<>
+					<Facts />
+					<Facts loading />
+				</>
 			)}
 		</Wide>
 	);

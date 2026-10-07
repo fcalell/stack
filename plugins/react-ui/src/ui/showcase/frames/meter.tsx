@@ -23,7 +23,6 @@ function Usage() {
 						label="Requests"
 						value={250_000}
 						max={1_000_000}
-						unit="requests"
 						meta="250k of 1M requests"
 					/>,
 					<Meter
@@ -31,7 +30,6 @@ function Usage() {
 						label="Build minutes"
 						value={4000}
 						max={6000}
-						unit="minutes"
 						meta="4,000 of 6,000 minutes"
 					/>,
 					<Meter
@@ -39,7 +37,6 @@ function Usage() {
 						label="Bandwidth"
 						value={92}
 						max={100}
-						unit="GB"
 						meta="92 of 100 GB"
 					/>,
 					<Meter
@@ -47,7 +44,6 @@ function Usage() {
 						label="Storage"
 						value={11.8}
 						max={10}
-						unit="GB"
 						meta="11.8 of 10 GB · 1.8 GB over, billed at the end of the month"
 					/>,
 					<Meter
@@ -55,8 +51,7 @@ function Usage() {
 						label="Jobs this window"
 						value={62}
 						max={100}
-						unit="jobs"
-						mark={{ value: 80, label: "Reserve" }}
+						mark={{ value: 80 }}
 						meta="Jobs and watches pause at the reserve"
 					/>,
 					<Slider
@@ -74,7 +69,6 @@ function Usage() {
 						label="Passing"
 						value={34}
 						max={42}
-						unit="tests"
 						counts={[
 							{ label: "failing", value: 3, href: "/tests/failing" },
 							{ label: "untested", value: 5, href: "/tests/untested" },
@@ -90,57 +84,31 @@ function Usage() {
 const LEVELS: Record<string, ReactNode> = {
 	"METER_FILL.level.under": (
 		<>
-			<Meter
-				label="Seats"
-				value={1}
-				max={12}
-				unit="seats"
-				meta="1 of 12 seats"
-			/>
+			<Meter label="Seats" value={1} max={12} meta="1 of 12 seats" />
 			<Meter
 				label="Preview deploys"
 				value={0}
 				max={100}
-				unit="preview deploys"
 				meta="0 of 100 this month"
 			/>
-			<Meter label="Build minutes" value={4000} max={6000} unit="minutes" />
+			<Meter label="Build minutes" value={4000} max={6000} />
 		</>
 	),
 	"METER_FILL.level.near": (
 		<>
-			<Meter
-				label="Bandwidth"
-				value={92}
-				max={100}
-				unit="GB"
-				meta="92 of 100 GB"
-			/>
-			<Meter
-				label="Projects"
-				value={3}
-				max={3}
-				unit="projects"
-				meta="3 of 3 projects"
-			/>
+			<Meter label="Bandwidth" value={92} max={100} meta="92 of 100 GB" />
+			<Meter label="Projects" value={3} max={3} meta="3 of 3 projects" />
 			<Meter
 				label="Jobs this window"
 				value={85}
 				max={100}
-				unit="jobs"
-				mark={{ value: 80, label: "Reserve" }}
+				mark={{ value: 80 }}
 				meta="Past the reserve: jobs and watches pause"
 			/>
 		</>
 	),
 	"METER_FILL.level.over": (
-		<Meter
-			label="Storage"
-			value={11.8}
-			max={10}
-			unit="GB"
-			meta="11.8 of 10 GB"
-		/>
+		<Meter label="Storage" value={11.8} max={10} meta="11.8 of 10 GB" />
 	),
 };
 
@@ -152,23 +120,11 @@ export function drawMeter(frame: ShowcaseFrame) {
 		drawn = (
 			<>
 				<div className="grid grid-cols-2 gap-x-fields">
-					<Meter
-						label="Seats"
-						value={1}
-						max={12}
-						unit="seats"
-						meta="1 of 12 seats"
-					/>
+					<Meter label="Seats" value={1} max={12} meta="1 of 12 seats" />
 					<Meter label="" value={0} max={0} meta="" loading />
 				</div>
 				<div className="grid grid-cols-2 gap-x-fields">
-					<Meter
-						label="Passing"
-						value={34}
-						max={42}
-						unit="tests"
-						counts={COUNTS}
-					/>
+					<Meter label="Passing" value={34} max={42} counts={COUNTS} />
 					<Meter label="" value={0} max={0} counts={COUNTS} loading />
 				</div>
 			</>

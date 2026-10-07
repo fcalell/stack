@@ -23,6 +23,7 @@ const META_LINE = "flex items-center h-lh";
 const END = "shrink-0";
 const SWITCH =
 	"flex shrink-0 items-center justify-center min-h-target min-w-target";
+const SWITCH_VALUE = `${SWITCH} ms-auto`;
 // A fact's label bar four figures wide, a short label's, starting where the
 // label text does; its value bar at the line's end in the room the value
 // takes. An identifier (`code`) fills the room the label leaves up to the
@@ -41,7 +42,7 @@ const BARS = [
 	["w-1/3", "w-1/2"],
 ] as const;
 
-/** A DefinitionRow waiting, the `index`th of a waiting list: the change mark's skeleton in its lane when `change` is declared; a label bar and a value bar at the line's end (the room an identifier's value takes when the list is `copyable`), or, with a `description`, the label bar over a meta line's bar; then the act's square, the link's chevron square or the switch's box at the end. Busy only through the Group or List that holds it. Outside the package's exports. */
+/** A DefinitionRow waiting, the `index`th of a waiting list (a static row is the first): the change mark's skeleton in its lane when `change` is declared; a label bar and a value bar at the line's end (the room an identifier's value takes when the row is `copyable`), or the switch's box in the value's place when it holds a control, or, with a `description`, the label bar over a meta line's bar; then the act's square, the link's chevron square or the switch's box at the end. Busy only through the Group, Section or List that holds it. Outside the package's exports. */
 export function DefinitionWait(props: {
 	shape: DefinitionShape;
 	index: number;
@@ -49,6 +50,9 @@ export function DefinitionWait(props: {
 	const { shape } = props;
 	const [label, description] = BARS[props.index % BARS.length] ?? BARS[0];
 	const one = !shape.description;
+	// A one-line row holding a control stands the switch's box where the value
+	// bar stands.
+	const control = one && shape.end === "switch";
 	return (
 		<div
 			aria-hidden
@@ -70,22 +74,28 @@ export function DefinitionWait(props: {
 							ROW_TITLE_LINE,
 							lineBox({ role: "body" }),
 							TITLE,
-							LINE_HEIGHT,
+							!control && LINE_HEIGHT,
 						)}
 					>
 						<span className={cn(skeleton({ kind: "line" }), LABEL_BAR)} />
-						<span
-							className={
-								shape.code ? cn(text({ role: "code" }), CODE_LANE) : WORD_LANE
-							}
-						>
+						{control ? (
+							<span className={SWITCH_VALUE}>
+								<span className={skeleton({ kind: "switch" })} />
+							</span>
+						) : (
 							<span
-								className={cn(
-									skeleton({ kind: "line" }),
-									shape.code ? CODE_BAR : WORD_BAR,
-								)}
-							/>
-						</span>
+								className={
+									shape.code ? cn(text({ role: "code" }), CODE_LANE) : WORD_LANE
+								}
+							>
+								<span
+									className={cn(
+										skeleton({ kind: "line" }),
+										shape.code ? CODE_BAR : WORD_BAR,
+									)}
+								/>
+							</span>
+						)}
 					</span>
 				) : (
 					<>

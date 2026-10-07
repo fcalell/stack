@@ -12,7 +12,6 @@ const DAYS: Day[] = [{ day: "Mon", value: 3 }];
 const label = "Requests";
 const bar = {
 	key: (day: Day) => day.day,
-	label: (day: Day) => day.day,
 	value: (day: Day) => day.value,
 };
 const refetch = () => {};

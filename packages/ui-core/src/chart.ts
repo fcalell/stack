@@ -45,8 +45,7 @@ export type ChartUnit =
 	| string
 	| { readonly one: string; readonly other: string };
 
-// The unit's word at a count, so the head ("1 flag") and the spoken total
-// agree with the figure.
+// The unit's word at a count, so the head ("1 flag") agrees with the figure.
 export function unitOf(unit: ChartUnit, count: number): string {
 	if (typeof unit === "string") return unit;
 	return count === 1 ? unit.one : unit.other;

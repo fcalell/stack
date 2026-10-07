@@ -116,7 +116,6 @@ export function Button({
 				disabled: loading || muted || inert,
 				busy: loading,
 			}}
-			accessibilityHint={blocked}
 			onPress={press}
 			className={cn(button({ act: kind, fit }), BOX, look)}
 		>

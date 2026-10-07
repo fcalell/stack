@@ -38,7 +38,7 @@ import {
 	useState,
 } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { useGroupList } from "../../lib/group.ts";
+import { useGroupPart } from "../../lib/group.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 import { ListedRoute, useRoute } from "../../lib/navigate.ts";
 import { SectionContext } from "../../lib/section.ts";
@@ -184,8 +184,6 @@ interface MeterSlotsBase<T> {
 	value: (item: T) => number;
 	/** The limit. */
 	max: (item: T) => number;
-	/** What the value counts. */
-	unit?: (item: T) => string | undefined;
 	/** The tick across the bar: the meter's near point. */
 	mark?: (item: T) => MeterMark | undefined;
 }
@@ -327,7 +325,7 @@ export function List<T, V extends string | null = string>(
 	};
 	const input = { ...base, inSection: use(SectionContext) };
 	const busy = listBusy(input);
-	const ground = listGround(useGroupList());
+	const ground = listGround(useGroupPart());
 	const state = listState(input);
 	// In a Group the card is the rows' box: they stand in it directly, so its
 	// hairline falls once between them.
@@ -475,7 +473,6 @@ export function List<T, V extends string | null = string>(
 					label={meter.label(item)}
 					value={meter.value(item)}
 					max={meter.max(item)}
-					unit={meter.unit?.(item)}
 					mark={meter.mark?.(item)}
 					{...(meter.counts
 						? { counts: meter.counts(item) }

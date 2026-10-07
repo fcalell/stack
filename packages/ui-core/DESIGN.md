@@ -1959,12 +1959,6 @@ components:
   group-dark:
     rounded: "{rounded.card}"
     backgroundColor: "{colors.surface-dark}"
-  group-ground:
-    rounded: "{rounded.card}"
-    backgroundColor: "{colors.group}"
-  group-ground-dark:
-    rounded: "{rounded.card}"
-    backgroundColor: "{colors.group-dark}"
   group-item:
     padding: "{spacing.card}"
   image-close:
@@ -2546,7 +2540,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `TextArea` | atom | `TEXT_AREA`, `TEXT_AREA_BUDGET`, `TEXT_AREA_VALUE`, `FIELD_VALUE`, `FIELD_PLACEHOLDER` | rest, hover, focus, disabled, error |
 | `InputOtp` | atom | `OTP`, `OTP_BOX`, `OTP_DIGIT`, `TEXT.role.meta`, `SPINNER` | rest, focus, loading, error |
 | `Select` | atom | `FIELD`, `FIELD_VALUE`, `FIELD_PLACEHOLDER`, `FIELD_GLYPH`, `POPOVER`, `SELECT_GROUP`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.state.selected`, `ROW.ground.list`, `TEXT.role.meta`, `TEXT_STRONG.role.meta` | rest, hover, focus, selected, disabled, error |
-| `Slider` | atom | `GROUP_ITEM`, `SLIDER`, `SLIDER_HEAD`, `SLIDER_LABEL`, `SLIDER_VALUE`, `SLIDER_TRACK`, `SLIDER_FILL`, `SLIDER_REST`, `SLIDER_THUMB` | rest, hover, focus, active, disabled |
+| `Slider` | atom | `GROUP_ITEM`, `SLIDER`, `SLIDER_HEAD`, `SLIDER_LABEL`, `SLIDER_VALUE`, `SLIDER_TRACK`, `SLIDER_FILL`, `SLIDER_REST`, `SLIDER_THUMB`, `SKELETON.kind.line`, `LINE_BOX.role.body`, `LINE_BOX.role.meta` | rest, hover, focus, active, disabled, loading |
 | `Switch` | atom | `SWITCH`, `SWITCH_THUMB` | rest, hover, focus, active, disabled, selected |
 | `Checkbox` | atom | `CHECKBOX`, `CHECKBOX_MARK` | rest, hover, focus, active, disabled, selected |
 | `Spinner` | atom | `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC` | rest |
@@ -2616,7 +2610,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `TextArea` | `body`, `code`, `caption` | `surface`, `edge`, `edge-hover`, `edge-error`, `ink-body`, `ink-meta`, `ink-error`, `fill-disabled`, `ink-disabled`, `ring` | `control` | `rows`, `control-x`, `inside` | `text-area` | none |
 | `InputOtp` | `heading`, `meta` | `surface`, `edge`, `edge-error`, `ink-body`, `ink-meta`, `ring` | `control` | `inside`, `pair` | `otp`, `spinner` | none |
 | `Select` | `body`, `code`, `meta` | `surface`, `edge`, `edge-hover`, `edge-error`, `ink-body`, `ink-meta`, `fill-disabled`, `ink-disabled`, `ring`, `raised`, `edge-raised`, `wash-hover`, `wash-press`, `wash-selected` | `control`, `row`, `popover` | `inside`, `control-x`, `pair`, `rows`, `float` | `field`, `control-compact`, `row` | `float` |
-| `Slider` | `body`, `meta` | `ink-body`, `ink-meta`, `toggle-`, `edge`, `edge-strong`, `surface`, `wash-hover`, `wash-press`, `fill-disabled`, `ink-disabled`, `ring` | `full` | `pair`, `fields`, `card` | `target`, `track`, `thumb` | none |
+| `Slider` | `body`, `meta` | `skeleton`, `ink-body`, `ink-meta`, `toggle-`, `edge`, `edge-strong`, `surface`, `wash-hover`, `wash-press`, `fill-disabled`, `ink-disabled`, `ring` | `full`, `chip` | `pair`, `fields`, `card` | `target`, `track`, `thumb`, `skeleton` | none |
 | `Switch` | none | `switch-`, `toggle-`, `fill-disabled`, `ink-disabled`, `ring` | `full` | none | `switch-w`, `switch-h`, `thumb`, `switch-inset`, `switch-travel`, `target` | none |
 | `Checkbox` | none | `edge-strong`, `surface`, `toggle-`, `on-accent`, `wash-hover`, `wash-press`, `edge`, `fill-disabled`, `ink-disabled`, `ring` | `chip` | none | `check`, `target`, `icon-meta` | none |
 | `Spinner` | none | none | `full` | none | `spinner` | none |
@@ -2694,4 +2688,4 @@ Durations are read as `duration-<rung>`; every rung is 0 under `prefers-reduced-
 - Do draw one `title` per screen, no `heading` inside a row, no `caption` sentence; emphasis is weight, never size.
 - Do keep text at 4.5:1 or more on its fill; the contract measures every pair it draws.
 - Do time motion with a duration rung and a contract curve; don't write a literal duration.
-- Do take every word a component draws from `words`; a sentence is a prop. A counted word (`earlierLines`, `waitLeft`) is `{ one, other }`, each form spelling `{count}` where the number stands, drawn through `counted(word, count)`. A slot word (`meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changedFrom`, `wrongType`, `stepOf`, `chosenOf`) spells its named slots as `{name}` where each value stands, drawn through `filled(word, values)`.
+- Do take every word a component draws from `words`; a sentence is a prop. A counted word (`earlierLines`) is `{ one, other }`, each form spelling `{count}` where the number stands, drawn through `counted(word, count)`. A slot word (`wrongType`, `stepOf`, `chosenOf`) spells its named slots as `{name}` where each value stands, drawn through `filled(word, values)`.

@@ -37,12 +37,11 @@ export const FieldFocus = createContext(false);
 export const LabelTarget = createContext(false);
 
 // Set by a `FormField` around a group of controls (an OptionList, a
-// SegmentedControl): its label and its description or error, which name and
-// describe the group. No field context reaches the controls inside, so each
-// keeps its own name.
-export const GroupName = createContext<
-	{ label: string; said?: string } | undefined
->(undefined);
+// SegmentedControl): its label, which names the group. No field context
+// reaches the controls inside, so each keeps its own name.
+export const GroupName = createContext<{ label: string } | undefined>(
+	undefined,
+);
 
 // Set by a `Table` around a cell's edit: the control stands in the cell at the
 // field's bar fit, named by the cell (its column, then its row); a number reads

@@ -18,6 +18,8 @@ import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { GroundContext } from "../../lib/ground";
+import { useGroupPart } from "../../lib/group";
+import { LoadingContext } from "../../lib/loading";
 
 import { CountLinks } from "./count-links";
 import { MeterWait } from "./wait";
@@ -37,8 +39,6 @@ interface MeterBase extends Closed {
 	value: number;
 	// The limit.
 	max: number;
-	// What the value counts (`GB`, `requests`).
-	unit?: string;
 	// A tick across the track at the mark's value: the point the fill turns
 	// `warn` at, in place of the near share.
 	mark?: MeterMark;
@@ -79,7 +79,10 @@ export function Meter({
 }: MeterProps) {
 	// In a Group the meter is one of its items, at the card's inset.
 	const item = useContext(GroundContext) === "group" && GROUP_ITEM;
-	if (loading) return <MeterWait line={waitLine({ meta, counts })} />;
+	const inherited = useContext(LoadingContext);
+	useGroupPart();
+	if (loading ?? inherited)
+		return <MeterWait line={waitLine({ meta, counts })} />;
 	const share = max > 0 ? value / max : 0;
 	const markShare = mark && max > 0 ? mark.value / max : undefined;
 	const percent = formatterFor("number", undefined, {
