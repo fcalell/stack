@@ -142,6 +142,14 @@ const headBand = (frame: Box, head: number): Box => ({
 // The arrowhead's box, on its edge's end.
 export const ARROW = 8;
 
+// The marker's reference point along its length: the point that stands on the
+// route's end. The tip is `ARROW - ARROW_REF` past it.
+export const ARROW_REF = 7;
+
+// Where a stroke stands within its pixel: `crisp` puts a point on a pixel's
+// centre, half a pixel under a whole coordinate.
+export const PIXEL_CENTRE = 0.5;
+
 export interface Leg {
 	x: number;
 	top: number;
@@ -179,6 +187,13 @@ export interface RouteInput {
 	left?: ReadonlyMap<string, number>;
 	// The corner radius and the unit every distance off a line is a multiple of.
 	pair: number;
+	// Whether each node draws an in port, and the ring's drawn size. The ring is
+	// painted over the edges, centred on its node's top edge, so a forward
+	// route ends above that edge by the ring's radius, the tip's overhang past
+	// the route's end and a pixel centre: drawn, the arrowhead's tip stands on
+	// the ring's outer top edge, a half pixel clear.
+	ports: boolean;
+	port: number;
 }
 
 const same = (a: CanvasPoint, b: CanvasPoint) => a.x === b.x && a.y === b.y;
@@ -208,6 +223,21 @@ export function cleanPoints(points: readonly CanvasPoint[]): CanvasPoint[] {
 		}
 	}
 	return out;
+}
+
+// A forward route between two points, with no collision check: straight when
+// they share an x, bent in the middle of the span when `to` is not at least
+// `2 * pair` below `from`, else bent at `bend` (a `pair` under `from` unless
+// the router knows the gap).
+export function bendRoute(
+	from: CanvasPoint,
+	to: CanvasPoint,
+	pair: number,
+	bend: number = from.y + pair,
+): CanvasPoint[] {
+	if (from.x === to.x) return [from, to];
+	const y = to.y < from.y + 2 * pair ? (from.y + to.y) / 2 : bend;
+	return [from, { x: from.x, y }, { x: to.x, y }, to];
 }
 
 // The vertical legs of a polyline.
@@ -263,6 +293,11 @@ const length = (leg: Leg) => leg.bottom - leg.top;
 // corridor past everything it meets and enters its target's right side.
 export function routeEdges(input: RouteInput): Routes {
 	const { boxes, edges, back, groups, labels, head, pad, left, pair } = input;
+	// A back edge, a self loop included, enters its target's right side, where
+	// no ring stands.
+	const ring = input.ports
+		? input.port / 2 + (ARROW - ARROW_REF) + PIXEL_CENTRE
+		: 0;
 	const tree = groupTree(groups, new Set(boxes.keys()));
 	const reach = new Map<string, number>();
 	let frames = groupBoxes(groups, boxes, { pad, head, left }, reach);
@@ -387,14 +422,12 @@ export function routeEdges(input: RouteInput): Routes {
 			y: source.y + source.height,
 		};
 		const to = { x: target.x + target.width / 2, y: target.y };
-		const bent = (y: number) => [from, { x: from.x, y }, { x: to.x, y }, to];
-		let points: CanvasPoint[];
-		if (from.x === to.x) points = [from, to];
-		else if (to.y < from.y + 2 * pair) points = bent((from.y + to.y) / 2);
-		else {
+		const end = { x: to.x, y: to.y - ring };
+		let bend: number | undefined;
+		if (from.x !== to.x && to.y >= from.y + 2 * pair) {
 			// The bend stands in the middle of the layer gap under the source: up
 			// to the nearest node or frame below it.
-			const bend = (from.y + Math.min(to.y, ...below(from.y))) / 2;
+			bend = (from.y + Math.min(to.y, ...below(from.y))) / 2;
 			const ends = new Set([edge.from, edge.to]);
 			const heldByEnd = new Set([...ends].flatMap(holders));
 			const down = { x: to.x, y: bend };
@@ -407,13 +440,13 @@ export function routeEdges(input: RouteInput): Routes {
 				);
 			// Else in the middle of the gap above the target.
 			const above = Math.max(from.y, ...over(to.y));
-			points = bent(blocked ? (above + to.y) / 2 : bend);
+			if (blocked) bend = (above + to.y) / 2;
 		}
 		routes.set(edge.id, {
-			points: cleanPoints(points),
+			points: cleanPoints(bendRoute(from, end, pair, bend)),
 			arrow: {
-				x: to.x - ARROW / 2,
-				y: to.y - ARROW,
+				x: end.x - ARROW / 2,
+				y: end.y - ARROW,
 				width: ARROW,
 				height: ARROW,
 			},
@@ -471,8 +504,8 @@ const fixed = (value: number): number => Math.round(value * 100) / 100;
 // solid column at scale 1.
 export function crisp(points: readonly CanvasPoint[]): CanvasPoint[] {
 	return points.map(({ x, y }) => ({
-		x: Math.floor(x) + 0.5,
-		y: Math.floor(y) + 0.5,
+		x: Math.floor(x) + PIXEL_CENTRE,
+		y: Math.floor(y) + PIXEL_CENTRE,
 	}));
 }
 

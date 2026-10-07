@@ -1559,7 +1559,7 @@ a tick with no animation, never jumped to full.
   which outlives selection taking the border; an edge is on a path by its own id and dims beside an
   off node. The dimmed edge draws `grid`, the dot grid's ink: `edge` is fainter than the grid
   (1.19:1 and 1.41:1 on `canvas`) and `ink-faint` stands within 0.05 of lightness of
-  `edge-strong`, so neither tells a dimmed edge from the grid or from a taken one. A state recolours and never moves a node or reruns the layout (`graphKey` reads structure only).
+  `edge-strong`, so neither tells a dimmed edge from the grid or from a taken one. A state recolours and never moves a node or reruns the layout (`graphKey` reads structure only). Editing is controlled: the canvas holds only a drag's live position, a landed node's spot and a connection in progress, and reports through `onMove` and `onConnect`. A node's pointer handlers and its ports live in `NodeView`, and a port is hit-tested through `elementsFromPoint` on the laid-out DOM, never by geometry, which is also how the in port a dragged link would end on is found (pointer capture holds `:hover`), so it can fill with ink. A dragged node lifts in z-order only, with no shadow. Where ports show, the router ends a forward edge above its target by the port's radius, the arrowhead tip's overhang and a pixel centre, so the tip stands on the ring's outer top and the ring never covers the arrowhead.
 - A `FormField` folds an answered question by `answered` (`{ answer, onEdit }`): one summary row
   at the row height (`FORM_FIELD_SUMMARY`: a `Check` in the `ok` ink, the label in body 500, the
   answer truncated in meta, a trailing `Pencil` `IconButton` at the bar fit named by the `edit`

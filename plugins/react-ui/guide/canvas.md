@@ -49,9 +49,9 @@ const numbered = nodes.map((node) => ({ ...node, number: numbers.get(node.id) })
 ## Moving around
 
 A plain wheel pans, Ctrl or Cmd with the wheel zooms (a trackpad pinch is a Ctrl wheel), a drag
-pans, even from a node, one finger pans and two pinch. The zoom stack at
-the bottom left zooms in, zooms out and fits: Fit shows the whole graph, never larger than its own
-size. A graph that fits at its own size opens centred; a larger one opens at its own size with its
+pans, even from a node (with `onMove` a drag from a node moves that node instead), one finger pans
+and two pinch. The zoom stack at the bottom left zooms in, zooms out and fits: Fit shows the whole
+graph, never larger than its own size. A graph that fits at its own size opens centred; a larger one opens at its own size with its
 first node, in path order, at the top centre.
 
 ## Where the nodes stand
@@ -59,7 +59,36 @@ first node, in path order, at the top centre.
 Give no node a `position` and the canvas places them top to bottom in path order, loops inside
 their group. With `onMove` it tells you each node's absolute position once, after it has placed
 them: store those and pass them back as `position`. Give some nodes a position and you place
-all of them; a node without one stands at the origin.
+all of them; a node without one among placed ones lands at the centre of the view (see Editing).
+
+## Editing
+
+Editing is controlled: the canvas reports and holds nothing of yours. `onMove(id, position)`
+reports a node's position when a drag ends, once for each node when the canvas lays them out or
+Arrange runs, and once for a node that lands. **Store each one and pass it back as `position`**:
+that is what makes a drag, Arrange and a landing stick, and a position you do not store is
+forgotten on release.
+
+- **Move.** With `onMove` a node follows a drag at once, with no long press and no handle, and
+  the edges and group frames follow it, and it stands over the nodes it crosses. A drag never
+  selects. Arrange joins the zoom stack, the
+  way to lay the graph out again without dragging: it ignores every position, reports each
+  node's, and fits the view.
+- **Landing.** A node added without a `position` among placed ones lands with its centre at the
+  centre of the view, and `onSelect` is called with its id. Two added at once land on one
+  another. Without `onMove` it is drawn there and nothing is reported.
+- **Connect.** With `onConnect` each node shows an in port at its top and an out port at its
+  bottom. Dragging an out port to an in port calls `onConnect(from, to)`, and releasing on the
+  ground calls `onConnect(from, null)`: open whatever you offer for a dropped link (your sheet).
+  The in port under the pointer fills with ink while the link is dragged, so the release has a
+  visible target, and a forward edge ends just above an in port, clear of its ring. A release over
+  a node's body, a control or outside the canvas reports nothing, and a link from a node to itself
+  is reported: refuse it when you save. The canvas never adds the edge; add it to your own data and
+  pass it back in `edges`.
+- A canvas with neither handler has no drag, no Arrange and no port. Connecting without a
+  pointer is your own sheet: the ports are not focusable. A `path` does not gate editing and a
+  port keeps its ink on a dimmed or marked node: a run you want read-only is a canvas given
+  neither handler.
 
 ## States
 

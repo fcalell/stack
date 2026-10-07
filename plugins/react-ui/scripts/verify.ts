@@ -215,6 +215,8 @@ const CLASS_ROOTS = [
 	"table",
 	"wrap",
 	"-indent",
+	"-top",
+	"-bottom",
 ];
 const CLASS_EXACT = [
 	"border",

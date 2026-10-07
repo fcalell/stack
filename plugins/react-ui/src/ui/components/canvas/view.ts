@@ -1,4 +1,35 @@
+import type { CanvasNode, CanvasPoint } from "@fcalell/ui-core/descriptors";
 import type { Box, Size } from "./geometry.ts";
+
+export const ORIGIN: CanvasPoint = { x: 0, y: 0 };
+
+// The places a node's position can come from besides its own: a drag's live
+// one, a landing's, and the layout's.
+export interface Places {
+	live: ReadonlyMap<string, CanvasPoint>;
+	landed: ReadonlyMap<string, CanvasPoint>;
+	computed?: ReadonlyMap<string, CanvasPoint>;
+}
+
+// Where a node stands: what the pointer holds beats what the consumer gave,
+// which beats a landing, which beats the layout, which beats the origin.
+export function place(
+	node: Pick<CanvasNode, "id" | "position">,
+	{ live, landed, computed }: Places,
+): CanvasPoint {
+	return (
+		live.get(node.id) ??
+		node.position ??
+		landed.get(node.id) ??
+		computed?.get(node.id) ??
+		ORIGIN
+	);
+}
+
+// The position whose box of `size` is centred on `centre`.
+export function landAt(centre: CanvasPoint, size: Size): CanvasPoint {
+	return { x: centre.x - size.width / 2, y: centre.y - size.height / 2 };
+}
 
 // Pure maths of the view: where the layer stands for a graph and a pane. A
 // transform maps a flow point `p` to the pane point `p * k + (x, y)`.

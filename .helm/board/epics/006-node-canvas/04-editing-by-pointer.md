@@ -1,6 +1,6 @@
 ---
 id: 006-04
-status: backlog
+status: done
 sessions: {}
 ---
 # react-ui: a pointer moves nodes, arranges the graph and connects ports
@@ -88,10 +88,12 @@ All under `plugins/react-ui/src/ui/components/canvas/` unless named.
    linear in the graph, and `NodeView` is memoised on its own props so only the dragged node and
    the edge layer render.
 
-2. **The connection in progress.** `link`, `useState<{ from: string; to: CanvasPoint } | null>`,
-   written only through `linking(from: string, to: CanvasPoint | null)` (`null` clears it). While
-   it is set, `Region` renders `ConnectionLine` as the layer's last child. `from` is an out port's
-   node and `to` the pointer in flow coordinates.
+2. **The connection in progress.** `link`, `useState<{ from: string; to: CanvasPoint; target: string | null } | null>`,
+   written only through `linking(from: string, to: CanvasPoint | null, target: string | null)`
+   (`null` clears it). While it is set, `Region` renders `ConnectionLine` as the layer's last
+   child. `from` is an out port's node, `to` the pointer in flow coordinates and `target` the node
+   whose in port is under the pointer (`hit`, run by the out port's `pointermove`). Each `NodeView`
+   gets `targeted` (`link?.target === id`) and `lifted` (`live.has(id)`).
 
 3. **Landing** (`landed`, `useState<ReadonlyMap<string, CanvasPoint>>`). A `useLayoutEffect` runs
    on `[nodes, sizes, ready]` and, once the layout has run (02's `ready`), for each node that has
@@ -174,7 +176,9 @@ only with the flag that needs them.
   the pointer through a pan or a zoom. A move is every `pointermove` whose point differs from the
   press. The `button` never carries a drag handle: the whole node drags. The 24 px port hit
   overlaps the node's top and bottom edge, so a press in those 12 px of its centre band starts a
-  connection (the port takes it, below), not a drag; the rest of the node drags.
+  connection (the port takes it, below), not a drag; the rest of the node drags. While its id is in
+  `live` the node takes `z-1` and nothing else (no shadow): it stands over the nodes it crosses, in
+  the layer's own stacking context, and drops back on release.
 - **Focus.** `onFocus` calls `viewport.centreOn(box)` only when the focus is the keyboard's
   (`event.currentTarget.matches(":focus-visible")`). A press focuses a button, and a pan in the
   middle of `pointerdown` would move the node out from under the pointer when it stands partly
@@ -197,7 +201,10 @@ only with the flag that needs them.
   ```
 
   and the out port the same at `bottom-0 translate-y-1/2` with `data-port="out"` and the pointer
-  handlers below. The node's element is `absolute`, so a port centres on its top or bottom edge
+  handlers below. The out port is `cursor-crosshair` and the in port `cursor-default`. The in port
+  that is the link's `target` fills with ink: `bg-edge-strong` joins `CANVAS_PORT` through `cn`
+  (a react-ui overlay, not a ui-core cell). `:hover` never reaches it under the out port's pointer
+  capture, so `link.move` runs `hit()` and the region says which port it is. The node's element is `absolute`, so a port centres on its top or bottom edge
   (within the 1 px border of the router's top and bottom centre `T` and `S`). The ring is
   `CANVAS_PORT` (8, hollow: `bg-surface` over `border-edge-strong`) and the hit is
   `CANVAS_PORT_HIT` (24 on a fine pointer, 44 on touch, by the density, so no touch overlay in
@@ -207,10 +214,10 @@ only with the flag that needs them.
   and no tab stop; the screen-reader decision (02) holds.
 - **Out port drag.** `onPointerDown` (primary button): `stopPropagation()` so the node does not
   start a move, `setPointerCapture`, `moved = false`. `onPointerMove`: the first changed point
-  sets `moved`; then `linking(id, screenToFlow(pointer))`. `onPointerUp`: when `moved`,
+  sets `moved`; then `linking(id, screenToFlow(pointer), hit(pointer, region).node)`. `onPointerUp`: when `moved`,
   `const { node, ground } = hit(pointerClient, region)`; `node` calls `onConnect(id, node)`,
-  `ground` calls `onConnect(id, null)`, else nothing; then `linking(id, null)` and release the
-  capture. `onPointerCancel`: `linking(id, null)`, nothing reported. A press on the out port that
+  `ground` calls `onConnect(id, null)`, else nothing; then `linking(id, null, null)` and release the
+  capture. `onPointerCancel`: `linking(id, null, null)`, nothing reported. A press on the out port that
   never moves reports nothing. An in port has no handler: a press on it starts nothing and does
   not pan.
 
@@ -228,7 +235,13 @@ The stroke group of `EdgeLayer` (`<g className="text-edge-strong">`, the arrowhe
 `ConnectionLine` both render, so a line being drawn is the line it becomes. Each edge's `path`
 also takes `data-edge={id}` (the stories read it). `geometry.ts` exports `bendRoute(from, to,
 pair)`, the forward router's rules 1, 2 and 4 with no collision check (02's "Forward route"),
-which `routeEdges` already needs for route A and which the connection line reuses.
+which `routeEdges` already needs for route A and which the connection line reuses. `routeEdges`
+takes `ports` (whether each node draws an in port) and `port` (the ring's drawn size, read from
+`--spacing-port`): with ports a forward route and its arrowhead end above its target's top by the
+ring's radius (`port / 2`), the tip's overhang past the route's end (`ARROW - ARROW_REF`) and a
+pixel centre (`PIXEL_CENTRE`, which `crisp` puts a stroke on), so the drawn tip stands on the
+ring's outer top; without ports they end on the node's edge. A back edge and a self loop enter a node's
+right side, where no ring stands, and are unchanged.
 
 `ConnectionLine({ from, to })` in `connection.tsx` draws, in the layer's flow coordinates,
 `roundedPath(cleanPoints(bendRoute(S, to, pair)), pair)` through `Stroke` with `dashed={false}`
@@ -242,7 +255,8 @@ nothing focusable.
 ### Overlays and the allowlist
 
 New classes beyond 02's table: on a draggable node `cursor-grab`, `active:cursor-grabbing` and
-`select-none`; on a port `left-1/2`, `top-0`, `bottom-0`, `-translate-x-1/2`, `-translate-y-1/2`
+`select-none`, and `z-1` while it is held (listed already, under Table); on a port
+`cursor-crosshair` (out), `cursor-default` (in) and `bg-edge-strong` (the link's target); on a port `left-1/2`, `top-0`, `bottom-0`, `-translate-x-1/2`, `-translate-y-1/2`
 and `translate-y-1/2`. Every other class this story spells (`absolute`, `flex`, `items-center`,
 `justify-center`, `shrink-0`, `invisible`, `text-edge-strong`, `overflow-visible`,
 `pointer-events-none`) is already listed. `plugins/react-ui/scripts/overlays.ts`, in the
@@ -273,6 +287,7 @@ already there from 05, it is not added twice.
 | --- | --- |
 | `landAt` | the centre minus the node's half; a zero-sized node is the centre itself; a negative centre keeps its sign |
 | `place` | live beats a given position, a given position beats landed, landed beats computed, computed beats the origin |
+| `routeEdges` with ports | a forward route (bent and straight) and its arrowhead end a radius, the tip's overhang and a pixel centre above the target's top (the drawn tip a half pixel above the ring's outer top), all else equal; a back edge and a self loop are unchanged |
 | `bendRoute` | equal x gives `[S, T]`; otherwise orthogonal with its bend `pair` under the source; a target within `2 * pair` bends at the span's middle; a target left of or above the source draws, with no duplicate or collinear point after `cleanPoints` |
 
 The same file asserts the pure arrays 02 already tests are unchanged: `elkGraph` ignores `position`
@@ -362,6 +377,22 @@ finding if it fails, never weakened.
    layer, and a wheel with `ctrlKey` over it changes the scale: `data-no-pan` stops a pan from a
    press, not a zoom. A failure is a finding against 02's `filter`.
 
+After the critique, six stories more (`LiftsADraggedNode`, `MarksTheConnectionTarget`,
+`PortCursors`, `ArrowEndsAboveThePort`, `ArrowEndsOnTheNodeWithoutPorts`, `PortsOnEveryTone`):
+
+10. **A dragged node lifts.** Drag `plan` over `build` (which the DOM holds after it): mid-drag
+    `elementFromPoint` at the overlap is inside `plan`, with no shadow; after release it is inside
+    `build` again.
+11. **The target shows.** Holding a link over `build`'s in port, that ring's fill is the ink of its
+    own border and differs from another in port's; it clears on release, and over the ground no
+    port is filled.
+12. **Cursors.** Every out port is `crosshair`, every in port `default`, a node `grab`.
+13. **The arrowhead ends above the ring.** With `onConnect`, the tip of `plan-build`'s
+    arrowhead, read from the rendered path's end plus the marker's overhang, is at or above `build`'s
+    ring's top and within a pixel of it; without `onConnect`, the path ends on the node's edge.
+14. **Ports on every tone.** A Run, a Problem and an Off graph, each with `onMove` and
+    `onConnect`, have two ports on every node, each ring in the rest edge's ink.
+
 `pnpm stories:test` also runs the generated `Rest` and `Selected` stories under axe: they stay
 read-only, so they gain no port and nothing here changes them. The Arrange button's name
 (`Arrange`) is in the accessibility tree; the ports are not operable by keyboard, which is the
@@ -396,12 +427,12 @@ decided shape (a connection by keyboard is the consumer's sheet).
 | Design critique | judges a 1280 x 800 render of the workflow with `onConnect` and `onMove` passed, taken through Storybook: ports 8 hollow on the node's edges, the arrowhead meeting the port, Arrange in the stack within the 28 to 36 range, no accent but selection. A session that played no part in the work runs it. |
 
 ## Acceptance criteria
-- [ ] With real pointer input at the stories' 1280 x 800: a drag moves a node at once and reports once on release; Arrange restores the computed layout and fits; a port drag to a node calls `onConnect(from, to)` and a release on the ground calls `onConnect(from, null)`, the canvas adding no edge.
-- [ ] A drag never selects, never pans, and a wheel over a draggable node still pans and zooms.
-- [ ] A node without a position among placed ones lands centred on the viewport and is selected; with no position on any node, the layout places them.
-- [ ] Without `onMove` and `onConnect`, no port, no Arrange and no drag exist; each alone adds only its own.
-- [ ] A port draws 8 px hollow with a 24 px hit on a fine pointer, as a child of `NodeView`.
-- [ ] `pnpm stories:test` and `pnpm check` pass; react-ui, ui-core and native-ui `verify` pass.
+- [x] With real pointer input at the stories' 1280 x 800: a drag moves a node at once and reports once on release; Arrange restores the computed layout and fits; a port drag to a node calls `onConnect(from, to)` and a release on the ground calls `onConnect(from, null)`, the canvas adding no edge.
+- [x] A drag never selects, never pans, and a wheel over a draggable node still pans and zooms.
+- [x] A node without a position among placed ones lands centred on the viewport and is selected; with no position on any node, the layout places them.
+- [x] Without `onMove` and `onConnect`, no port, no Arrange and no drag exist; each alone adds only its own.
+- [x] A port draws 8 px hollow with a 24 px hit on a fine pointer, as a child of `NodeView`.
+- [x] `pnpm stories:test` and `pnpm check` pass; react-ui, ui-core and native-ui `verify` pass.
 
 ## Decided
 Decided by fcalell (2026-10-06); the open questions took their recommendations except the sixth.
@@ -451,7 +482,40 @@ Answered by fcalell's orchestrator (2026-10-06), all taking the recommendation:
 - **Pan into view on focus runs only for `:focus-visible`**, as `NodeView`'s focus rule above
   says. 02 builds this too.
 - **05 is rewritten on this shape** and uses 04's names: `draggable`, `at`, `drop`, `hit`.
-- **The port ring over the arrowhead's tip is left for the critique** (Risks).
+- **The port ring over the arrowhead's tip was left for the critique**; it ruled (see "Decided
+  after the critique").
+
+## Decided after the critique (2026-10-07)
+The design critique ruled "rework". The user's delegate decided:
+
+1. **The arrowhead ends above the in port's ring.** The ring (8 px, centred on the node's top edge,
+   painted above edges) covered the arrowhead's last 4 px, so the arrow read as a T-bar. The intent is that the
+   arrow's tip meets the ring's top edge, and "4 px" was only the estimate. With ports,
+   `routeEdges` ends a forward route above the target by three named parts: the ring's radius
+   (`port / 2`, derived from the port size), the marker's tip overhang past the route's end
+   (`ARROW - ARROW_REF`) and `crisp`'s pixel centre (`PIXEL_CENTRE`), so the drawn tip stands on the
+   ring's outer top, a half pixel clear (a stroke stands on a pixel centre, so it cannot land on the
+   edge itself). Without ports the tip stays on the node's edge. A back edge and a self loop enter a node's right side, where there is no ring, so they are
+   unchanged. The connection line still ends at the pointer.
+2. **A dragged node lifts in z-order only, with no shadow.** It takes `z-1` (the allowlist's
+   existing in-component step; `--layer-*` orders the overlays over the page) while its id is in
+   `live`. A shadow is for a layer that floats over the page, and the node stays on the ground.
+3. **The connection target shows.** The in port under the pointer fills with `bg-edge-strong`
+   while a link is dragged, so the user sees where a release lands. It is a react-ui overlay through
+   `cn` on the `CANVAS_PORT` span, not a ui-core cell. Under pointer capture CSS `:hover` cannot
+   work, so `link.move` runs `hit()`, and the region keeps `target: string | null` in the link
+   state and gives `NodeView` `targeted`.
+4. **Cursors.** The out port is `cursor-crosshair` (it starts a link) and the in port is
+   `cursor-default` (it starts nothing), so neither reads as the node's grab.
+5. **The connection line stays identical to an edge.** A line being drawn is the line it becomes,
+   as decided; no change.
+6. **Ports keep full `edge-strong` ink on every node tone** (off, problem, dimmed off a run's
+   path), because a port is a live control. A `path` does not gate editing, as 03's brief says: a
+   consumer that wants a run read-only passes no `onMove` or `onConnect`. A story renders a state
+   graph with both and asserts the ports; the next critique judges how it looks.
+7. **Infra.** `apps/showcase/.storybook/` is not touched. `mouse.ts` loads `vitest/browser`
+   only through a dynamic `import()` inside the function that sends input, never at the module's
+   top level, so Storybook never pre-bundles it.
 
 ## Risks
 - A drag's position is held in the canvas and reported on release, and each move re-renders the
@@ -461,12 +525,57 @@ Answered by fcalell's orchestrator (2026-10-06), all taking the recommendation:
   the click to the node; story 1 asserts it, and a touch release is 05's.
 - `hit` reads `document.elementsFromPoint`. A canvas inside an `inert` region or a shadow root
   would fail it; stack renders neither.
-- A node paints above the edge layer, so a port's ring (`bg-surface`) covers the last 4 px of the
-  arrowhead that ends at the node's top centre. The critique judges "the arrowhead meeting the
-  port"; if it reads as clipped, the fix is a router change (the arrow ends 4 px above `T`), not a
-  port style.
+- A node paints above the edge layer and a port's ring stands centred on the node's top edge, so
+  a route that ended on the edge would be covered by the ring's radius. `routeEdges` ends a forward
+  route above the edge by the ring's radius when ports show, plus two terms. The marker draws its tip
+  `ARROW - ARROW_REF` (1 px) past the route's end and a stroke stands half a pixel under its point, so the end is lifted by all three
+  and the drawn tip stands a half pixel above the ring's outer top. `ARROW_REF` and `PIXEL_CENTRE`
+  are the marker's `refX` and `crisp`'s offset, so a change to either moves the end with it.
 - Fit after Arrange runs one frame after the consumer's positions commit. If it runs before,
   the fit uses the old bounds; story 2's inside-the-region assertion fails and the fit moves
   into an effect on the positions' change.
 - The 24 px hit is in flow units, so at a low zoom on a fine pointer it shrinks on screen; 05
   un-zooms it on touch and desktop keeps the pattern's 24.
+
+## Progress
+Built to the brief, then reworked to "Decided after the critique": the first critique ruled "rework", and the rework has not been critiqued again (a session that played no part in the work, on a 1280 x 800 render of the workflow with `onConnect` and `onMove` passed).
+
+Gate:
+- `pnpm check` exits 0 (42 of 42 turbo tasks, Biome 797 files, no fixes). react-ui `verify` 13/13 ("65 of 65 roster components built, 331 props"); ui-core `verify` 34/34; native-ui `verify` 19/19; react-ui `test` 134 pass (`canvas.test.ts` 69: two new, a forward route's end and arrowhead with ports and without, and a back edge and self loop unchanged by them). Nothing in ui-core moved.
+- `pnpm stories:test`: 218 of 230 tests pass, 10 of 79 files fail, and **every Canvas story passes**: 43 in `canvas.stories.tsx` (37 before the critique, 6 new) plus the generated `Rest` and `Selected`. The 12 failures are the known ones, none draws a canvas: Menu `Rest`, Screen `Rest`, Select `Selected`, Input, TextArea, Slider and FileInput `Disabled`, Sheet `Decision` and `Docked In Foot`, and the ListRow (`Rest`, `Loading`) and Table `Rest` load timeouts. The suite's exit status is 1 because of them.
+- The behaviour stories use real mouse input through `cdp()`: `MovesANode`, `MoveDoesNotPan`, `Arranges`, `ConnectsToANode`, `ConnectsToTheGround`, `LandsANode`, `HandlersNone`, `HandlersMove`, `HandlersConnect`, `HandlersBoth`, `PortGeometry`, `KeyboardWithEditing`, `WheelOverADraggableNode`, and after the critique `LiftsADraggedNode`, `MarksTheConnectionTarget`, `PortCursors`, `ArrowEndsAboveThePort`, `ArrowEndsOnTheNodeWithoutPorts`, `PortsOnEveryTone`. The lift and the target stories were seen to fail with the lift and the target class removed, then restored.
+- After the arrowhead's end took the tip's overhang and the pixel centre, `pnpm check` (42 of 42) and react-ui `verify` (13/13) re-ran, and the Canvas files alone re-ran (`behaviour/canvas.stories.tsx` 43 of 43, the generated `stories/Canvas.stories.ts` 2 of 2); the full `stories:test` ran before that change.
+- A cold Storybook start can still re-optimise `vitest/browser` and load a duplicate React. The fix is `optimizeDeps.include` in the Storybook Vite config, which the showcase and Storybook session owns; `mouse.ts` loads the module only through a dynamic `import()` inside `send`.
+
+First thing verified: `cdp()` from `vitest/browser` reaches Playwright's Chromium in the Storybook vitest project with no config change (`api.allowWrite` and `allowExec` default to true on localhost): a `mouseMoved`, `mousePressed` and `mouseReleased` arrive as real pointer events at the coordinates `toPage` gives, and a `touchStart` through `Input.dispatchTouchEvent` arrives as `touchstart`. The Vitest browser command fallback and `userEvent.pointer` were not needed.
+
+Deviations from the brief (the code and 03's shape won):
+- **`vitest/browser` is imported when an event is sent, not at the top of `mouse.ts`.** The module throws on evaluation outside a Vitest run ("can be imported only inside the Browser Mode"), so a top-level import would stop Storybook's own UI from loading the whole story file, where the brief expects only the play to fail. A dynamic `import()` in `send` does that.
+- **`mouse.ts` exports `toPage`, `drag`, `click` and `Point`.** 05's `touch.ts` does not exist yet, so the shared `toPage` lives here for it to import. `drag(from, to, { steps, hold })`: `hold` is a callback run with the button down at `to`, and the button is released after it whether it throws or not.
+- **A port's hit sits in a zero-height wrapper, not a negative translate.** react-ui's `verify` sweep (`CLASS_ROOTS`) does not know `-translate`, so b5 reports the brief's `-translate-x-1/2` and `-translate-y-1/2` as stale entries; adding the root also sweeps a toast class (`-translate-y-[calc(...)]`) that compiles to nothing, which is not this story's. Each port is `<span class="absolute inset-x-0 h-0 flex items-center justify-center -top-px | -bottom-px">` holding the `data-port` hit (`CANVAS_PORT_HIT`) and the ring, so the hit is centred on the edge by flex with no translate. `-top` and `-bottom` joined `CLASS_ROOTS` in `scripts/verify.ts` (not on the brief's file list) for `-top-px` and `-bottom-px`. New overlay entries: `cursor-grab`, `active:cursor-grabbing`, `select-none`, `h-0`, `-top-px`, `-bottom-px`.
+- **The ring stands on the node's border edge, not its padding edge.** Placed at the padding box (`top-0`) the out port's centre was 1.5 px above the route's start (1 px border plus `crisp`'s 0.5) and `PortGeometry` failed the brief's "within 1 px of a route's start". The wrapper's `-top-px` and `-bottom-px` put the centre on the border edge: 0 px from the node's edge, 0.5 px from a route's end.
+- **`bendRoute(from, to, pair, bend = from.y + pair)`.** 02's route A bends in the middle of the layer gap under the source, not a `pair` under it, so `routeEdges` passes its own `bend` (the gap's middle, or the gap above the target when blocked) and the connection line takes the default. Rules 1 and 2/4 live in it; the collision check stays in `routeEdges`.
+- **`Stroke({ path, dashed, tone, edge })`** keeps 03's `<g data-edge className={tone}>`: `data-edge` is on the group, not the `path`, and stories read `g[data-edge]` and its `path[fill="none"]`. `edge` is absent for the connection line. `ConnectionLine({ from: Box, to, pair })` takes the source's box and the router's `pair`.
+- **Arrange is an `IconButtonBase`** like the other three buttons of the stack (they take `onClick`), not the public `IconButton`.
+- **Not memoised.** `NodeView` is not wrapped in `memo`: its `look` and `box` props are new objects each render, and no story asserts the render count. The React Compiler that stack's `plugin-react` adds to a consumer's build caches the rest. Every drag move reruns `routeEdges` and renders the nodes; none stutters at 8 nodes.
+- **`NodeView` takes `landing` and `edit`** (a `NodeEdit`: `viewport`, `region`, `draggable`, `ports`, `at`, `drop`, `linking`, `onConnect`) rather than six loose props. An in port also stops `pointerdown`, so a press on it never starts the node's drag. `useLayout` keeps `latest` itself and takes `live` and `landed`; it returns `arrange`. The layout function the brief calls `place(key)` is `run(key, arranged)` here, to leave `place` to `view.ts`. `Laid` has no `key` and gains `arranged`.
+- **A port's lint suppressions.** Biome's `noStaticElementInteractions` and `useKeyWithClickEvents` flag the port spans; each carries a `biome-ignore` naming the decision (a pointer shortcut, the keyboard route is the consumer's sheet).
+- **Story 1's "a press and release without moving calls neither"** is read as: no `onMove`, and the click selects (a plain click is a press and a release). The wheel story dispatches 02's synthetic `WheelEvent` at the node, as `Wheel` does.
+- **`PortGeometry`** asserts the ring's centre within 0.01 px of the node's top or bottom edge, tighter than the brief's 1 px, and within 1 px of the `plan-build` route's start.
+- **The lift is `z-1`, not `z-10`.** The allowlist's in-component step (the Table's frozen column, listed under Table) already stands in `overlays.ts`, so the canvas block does not list it twice; `--layer-*` orders overlays over the page and the layer's transform is its own stacking context.
+- **`routeEdges` takes `ports` and `port`** (the flag and the ring's drawn size, `Space.port`, read from `--spacing-port` like the spacing roles), and the route and its arrowhead end `port / 2 + (ARROW - ARROW_REF) + PIXEL_CENTRE` above the target (the ruling said 4 px, the ring's radius, as an estimate; the tip's overhang and crisp's pixel centre are added so the drawn tip is not covered). A back edge and a self loop enter the target's right side, where no ring stands, so they are unchanged.
+- **`NodeView` gets booleans**, `lifted` (`live.has(id)`) and `targeted` (`link.target === id`), and `linking` takes `(from, to, target)`.
+
+The fresh design critique (2026-10-07, 1280 × 800, real mouse, light and dark) shipped it with no blocker or major finding:
+- The arrowhead's tip stands 0.5 px clear above the in port's ring.
+- A dragged node is topmost at the overlap, and the later node is topmost again after release.
+- The connection target fills in the ring's ink in both modes.
+- The cursors are `crosshair` on the out port, `default` on the in port and `grab` on the node.
+- A full-ink ring beside dimmed ink reads as a live control.
+
+Its nits:
+- A held link's arrowhead presses into the filled target ring, because the link ends at the pointer.
+- The in port's 24 px hit covers 12 px of the node's top with the `default` cursor.
+- The fixture's "Add a step" act overlaps the bottom node, at zoom 1 and after Arrange's fit. That last one is 02's fit room, carried to 05, which reworks the overview and fit.
+
+The gate after the arrow fix: `pnpm check` exits 0, and the Canvas stories pass, 45 of 45 across the behaviour file and the generated frames.

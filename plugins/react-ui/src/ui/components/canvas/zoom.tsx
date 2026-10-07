@@ -12,15 +12,17 @@ const FOOT =
 	"absolute bottom-page inset-x-0 flex justify-center pointer-events-none";
 const ACT = "pointer-events-auto";
 
-// Zoom in, zoom out and fit, stacked at the bottom left. A press here starts
-// no pan. A zoom is unavailable at its end of the scale; the button keeps
-// focus, as a disabled icon act does.
+// Zoom in, zoom out and fit, stacked at the bottom left, then arrange when the
+// canvas can move nodes. A press here starts no pan. A zoom is unavailable at
+// its end of the scale; the button keeps focus, as a disabled icon act does.
 export function ZoomStack({
 	viewport,
 	bounds,
+	onArrange,
 }: {
 	viewport: Viewport;
 	bounds: Box;
+	onArrange?: () => void;
 }) {
 	const words = useWords();
 	const [low, high] = EXTENT;
@@ -48,6 +50,14 @@ export function ZoomStack({
 				label={words.fit}
 				onClick={() => viewport.fit(bounds)}
 			/>
+			{onArrange ? (
+				<IconButtonBase
+					icon="Network"
+					fit="body"
+					label={words.arrange}
+					onClick={onArrange}
+				/>
+			) : null}
 		</div>
 	);
 }

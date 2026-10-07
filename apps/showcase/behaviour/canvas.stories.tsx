@@ -18,11 +18,12 @@ import {
 	WORKFLOW,
 } from "@fcalell/plugin-react-ui/showcase/frames/canvas";
 import { pathOrder } from "@fcalell/ui-core/canvas";
-import type { CanvasNode } from "@fcalell/ui-core/descriptors";
+import type { CanvasNode, CanvasPoint } from "@fcalell/ui-core/descriptors";
 import { WIDTH_VALUE } from "@fcalell/ui-core/tokens";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { expect, fn, spyOn, waitFor } from "storybook/test";
+import { click as mouseClick, drag as mouseDrag, type Point } from "./mouse.ts";
 
 const ORDER = pathOrder(WORKFLOW.nodes, WORKFLOW.edges);
 
@@ -1063,3 +1064,724 @@ function framesHoldTheirGraph(density: "desktop" | "touch"): StoryObj {
 
 export const FramesHoldTheirGraphAtDesktop = framesHoldTheirGraph("desktop");
 export const FramesHoldTheirGraphAtTouch = framesHoldTheirGraph("touch");
+
+// ── Editing by pointer ──────────────────────────────────────────────
+
+// Input is the browser's own mouse (`mouse.ts`), so a press, a move and a
+// release are real pointer events and real hit-testing.
+type Moved = (id: string, at: CanvasPoint) => void;
+type Connected = (from: string, to: string | null) => void;
+type Spy<T extends (...args: never[]) => unknown> = ReturnType<typeof fn<T>>;
+interface Heard {
+	moved: Moved;
+	connected: Connected;
+	selected: Select;
+}
+const HEARD: Heard = { moved: fn(), connected: fn(), selected: fn() };
+const calls = (spy: unknown) => (spy as Spy<Moved>).mock.calls;
+
+const ADDED: CanvasNode = {
+	id: "added",
+	icon: "Plus",
+	overline: "Step",
+	title: "New step",
+	line: "Added from outside",
+};
+
+// A page that stores what `onMove` reports, the way the canvas expects, and
+// records what it hears. `move` and `connect` choose which handlers it passes;
+// a button outside the canvas appends a node with no position.
+function Editable(
+	props: Heard & { move: boolean; connect: boolean; start?: CanvasNode[] },
+) {
+	const [nodes, setNodes] = useState(props.start ?? WORKFLOW.nodes);
+	const [selected, setSelected] = useState<string>();
+	return (
+		<>
+			<button
+				type="button"
+				onClick={() => setNodes((last) => [...last, ADDED])}
+			>
+				Append a node
+			</button>
+			<div className={STAGE}>
+				<Canvas
+					label="Workflow"
+					nodes={nodes}
+					edges={WORKFLOW.edges}
+					groups={WORKFLOW.groups}
+					selected={selected}
+					onSelect={(id) => {
+						props.selected(id);
+						setSelected(id ?? undefined);
+					}}
+					onMove={
+						props.move
+							? (id, at) => {
+									props.moved(id, at);
+									setNodes((last) =>
+										last.map((node) =>
+											node.id === id ? { ...node, position: at } : node,
+										),
+									);
+								}
+							: undefined
+					}
+					onConnect={props.connect ? props.connected : undefined}
+					act={{ label: "Add a step", onAct: fn() }}
+				/>
+			</div>
+		</>
+	);
+}
+
+const edit = (move: boolean, connect: boolean, start?: CanvasNode[]) =>
+	({
+		args: HEARD,
+		render: (args: Heard) => (
+			<Editable {...args} move={move} connect={connect} start={start} />
+		),
+	}) satisfies StoryObj<Heard>;
+
+const centre = (box: DOMRect): Point => ({
+	x: box.left + box.width / 2,
+	y: box.top + box.height / 2,
+});
+
+// A node's button by its id, wherever the page holds it in path order.
+function nodeFor(root: Element, id: string): HTMLElement {
+	const title = WORKFLOW.nodes
+		.concat(ADDED)
+		.find((node) => node.id === id)?.title;
+	const button = [...nodeButtons(root)].find(
+		(each) => title && each.textContent?.includes(title),
+	);
+	if (!button) throw new Error(`no button for the node ${id}`);
+	return button;
+}
+
+const portOf = (root: Element, id: string, kind: "in" | "out"): HTMLElement => {
+	const port = nodeFor(root, id).querySelector<HTMLElement>(
+		`[data-port="${kind}"]`,
+	);
+	if (!port) throw new Error(`no ${kind} port on ${id}`);
+	return port;
+};
+
+const at = (element: Element) => centre(rect(element));
+const layerOf = (root: Element) => {
+	const layer = root.querySelector<HTMLElement>("[data-layer]");
+	if (!layer) throw new Error("no layer");
+	return layer;
+};
+const left = (element: HTMLElement) => Number.parseFloat(element.style.left);
+const top = (element: HTMLElement) => Number.parseFloat(element.style.top);
+const around = (a: number, b: number, within = 0.5) =>
+	Math.abs(a - b) <= within;
+
+// Waits for the page's first layout: every node reported, the canvas shown.
+async function laidOut(
+	canvas: Parameters<NonNullable<StoryObj["play"]>>[0]["canvas"],
+	heard?: Moved,
+) {
+	const region = await canvas.findByRole("region", { name: "Workflow" });
+	if (heard)
+		await waitFor(
+			() => expect(heard).toHaveBeenCalledTimes(WORKFLOW.nodes.length),
+			LAID,
+		);
+	await waitFor(() => expect(nodeFor(region, "plan")).toBeVisible(), LAID);
+	return region;
+}
+
+// A point of the ground: the topmost element there is the region, its layer or
+// its grid.
+function groundPoint(region: Element): Point {
+	const pane = rect(region);
+	for (let y = pane.top + 20; y < pane.bottom - 20; y += 24)
+		for (let x = pane.right - 20; x > pane.left + 20; x -= 24) {
+			const top = document.elementFromPoint(x, y);
+			if (
+				top &&
+				(top === region ||
+					top.matches("[data-layer], [data-ground], [data-ground] *"))
+			)
+				return { x, y };
+		}
+	throw new Error("no ground in the region");
+}
+
+const shift = (point: Point, x: number, y: number): Point => ({
+	x: point.x + x,
+	y: point.y + y,
+});
+
+// A node dragged by the pointer follows it at once and reports once, on
+// release, in flow coordinates; a drag does not pan and does not select.
+export const MovesANode: StoryObj<Heard> = {
+	...edit(true, false),
+	play: async ({ args, canvas, canvasElement }) => {
+		const region = await laidOut(canvas, args.moved);
+		const plan = nodeFor(region, "plan");
+		const build = nodeFor(region, "build");
+		const frame = [...layerOf(canvasElement).children].find((child) =>
+			child.textContent?.includes(WORKFLOW.groups?.[0]?.head ?? "?"),
+		);
+		const back = () =>
+			canvasElement
+				.querySelector('[data-edge="check-build"] path[fill="none"]')
+				?.getAttribute("d");
+		const before = {
+			view: viewport(canvasElement),
+			x: left(plan),
+			y: top(plan),
+			reports: calls(args.moved).length,
+		};
+		const { scale } = before.view;
+		const from = at(plan);
+		await mouseDrag(from, shift(from, 120, 60), {
+			hold: async () => {
+				await expect(around(left(plan), before.x + 120 / scale)).toBe(true);
+				await expect(around(top(plan), before.y + 60 / scale)).toBe(true);
+				await expect(viewport(canvasElement)).toEqual(before.view);
+				await expect(calls(args.moved)).toHaveLength(before.reports);
+			},
+		});
+		await expect(calls(args.moved)).toHaveLength(before.reports + 1);
+		const [id, to] = calls(args.moved).at(-1) ?? [];
+		await expect(id).toBe("plan");
+		await expect(around(to.x, before.x + 120 / scale, 0.01)).toBe(true);
+		await expect(around(to.y, before.y + 60 / scale, 0.01)).toBe(true);
+		await expect(args.selected).not.toHaveBeenCalled();
+		await expect(viewport(canvasElement)).toEqual(before.view);
+
+		// A press that never moves reports no position; the click selects.
+		const reports = calls(args.moved).length;
+		await mouseClick(at(plan));
+		await expect(calls(args.moved)).toHaveLength(reports);
+		await expect(args.selected).toHaveBeenCalledWith("plan");
+
+		// The back edge's path and the group's frame follow a member.
+		const path = back();
+		const box = frame && JSON.stringify(rect(frame));
+		const start = at(build);
+		await mouseDrag(start, shift(start, 90, 40), {
+			hold: async () => {
+				await expect(back()).not.toBe(path);
+				await expect(frame && JSON.stringify(rect(frame))).not.toBe(box);
+			},
+		});
+	},
+};
+
+// A node standing partly outside the region, pressed and dragged, does not pan
+// the view under the pointer.
+export const MoveDoesNotPan: StoryObj<Heard> = {
+	...edit(true, false),
+	play: async ({ args, canvas, canvasElement }) => {
+		const region = await laidOut(canvas, args.moved);
+		const plan = nodeFor(region, "plan");
+		wheel(region, {
+			deltaY: rect(plan).top - rect(region).top + 10,
+		});
+		await waitFor(() => expect(rect(plan).top).toBeLessThan(rect(region).top));
+		const before = viewport(canvasElement);
+		const from = { x: at(plan).x, y: rect(region).top + 4 };
+		await mouseDrag(from, shift(from, 40, 30), {
+			hold: async () => {
+				await expect(viewport(canvasElement)).toEqual(before);
+			},
+		});
+		await expect(viewport(canvasElement)).toEqual(before);
+		await expect(args.selected).not.toHaveBeenCalled();
+	},
+};
+
+// Arrange puts every node back where the layout had it, reports each in path
+// order and fits the view, without loading the layout's worker again.
+export const Arranges: StoryObj<Heard> = {
+	...edit(true, false),
+	play: async ({ args, canvas, canvasElement }) => {
+		const region = await laidOut(canvas, args.moved);
+		const count = WORKFLOW.nodes.length;
+		const first = calls(args.moved)
+			.slice(0, count)
+			.map(([id, point]) => ({ id, point }));
+		await expect(first.map(({ id }) => id)).toEqual(ORDER);
+		const loaded = workers();
+		for (const id of ["plan", "build"]) {
+			const from = at(nodeFor(region, id));
+			await mouseDrag(from, shift(from, 70, 30));
+		}
+		await expect(calls(args.moved)).toHaveLength(count + 2);
+		const arrange = canvas.getByRole("button", { name: "Arrange" });
+		await mouseClick(at(arrange));
+		await waitFor(
+			() => expect(calls(args.moved)).toHaveLength(2 * count + 2),
+			LAID,
+		);
+		await expect(
+			calls(args.moved)
+				.slice(count + 2)
+				.map(([id, point]) => ({ id, point })),
+		).toEqual(first);
+		await waitFor(() => {
+			for (const node of nodeButtons(canvasElement))
+				expect(holds(rect(region), rect(node))).toBe(true);
+		});
+		await mouseClick(at(arrange));
+		await waitFor(
+			() => expect(calls(args.moved)).toHaveLength(3 * count + 2),
+			LAID,
+		);
+		await expect(workers()).toBe(loaded);
+	},
+};
+
+// A port drag to another node's in port reports the pair; the canvas draws no
+// edge. A line follows the pointer while it is down and is gone after.
+export const ConnectsToANode: StoryObj<Heard> = {
+	...edit(true, true),
+	play: async ({ args, canvas, canvasElement }) => {
+		const region = await laidOut(canvas, args.moved);
+		const edges = () => canvasElement.querySelectorAll("g[data-edge]").length;
+		const drawn = edges();
+		const reports = calls(args.moved).length;
+		const from = at(portOf(region, "plan", "out"));
+		const to = at(portOf(region, "build", "in"));
+		await mouseDrag(from, to, {
+			hold: async () => {
+				const line = canvasElement.querySelector("[data-link] path[fill=none]");
+				await expect(line).not.toBeNull();
+				const end = line ? rect(line) : new DOMRect();
+				await expect(around(end.bottom, to.y, 2)).toBe(true);
+				await expect(end.left - 2 <= to.x && to.x <= end.right + 2).toBe(true);
+			},
+		});
+		await expect(args.connected).toHaveBeenCalledTimes(1);
+		await expect(args.connected).toHaveBeenCalledWith("plan", "build");
+		await expect(edges()).toBe(drawn);
+		await expect(canvasElement.querySelector("[data-link]")).toBeNull();
+		await expect(args.selected).not.toHaveBeenCalled();
+		await expect(calls(args.moved)).toHaveLength(reports);
+	},
+};
+
+// A release on the ground reports `null`; a release over a node's body, the zoom
+// stack or outside the region reports nothing, and a self connection is reported.
+export const ConnectsToTheGround: StoryObj<Heard> = {
+	...edit(true, true),
+	play: async ({ args, canvas, canvasElement }) => {
+		const region = await laidOut(canvas, args.moved);
+		const from = at(portOf(region, "plan", "out"));
+		const view = viewport(canvasElement);
+		await mouseDrag(from, groundPoint(region));
+		await expect(args.connected).toHaveBeenCalledTimes(1);
+		await expect(args.connected).toHaveBeenLastCalledWith("plan", null);
+
+		for (const to of [
+			at(nodeFor(region, "build")),
+			at(canvas.getByRole("button", { name: "Zoom in" })),
+			{ x: rect(region).left - 8, y: from.y },
+		]) {
+			await mouseDrag(from, to);
+			await expect(args.connected).toHaveBeenCalledTimes(1);
+		}
+
+		// An in port starts nothing and does not pan; an out port pressed and
+		// released without moving reports nothing.
+		const reports = calls(args.moved).length;
+		const inPort = at(portOf(region, "plan", "in"));
+		await mouseDrag(inPort, shift(inPort, 60, -20), {
+			hold: async () => {
+				await expect(canvasElement.querySelector("[data-link]")).toBeNull();
+			},
+		});
+		await mouseClick(from);
+		await expect(args.connected).toHaveBeenCalledTimes(1);
+		await expect(calls(args.moved)).toHaveLength(reports);
+		await expect(viewport(canvasElement)).toEqual(view);
+
+		await mouseDrag(from, at(portOf(region, "plan", "in")));
+		await expect(args.connected).toHaveBeenCalledTimes(2);
+		await expect(args.connected).toHaveBeenLastCalledWith("plan", "plan");
+	},
+};
+
+// A node with no position among placed ones lands centred on the viewport and
+// is chosen, painted over what stands there; the placed ones stay.
+export const LandsANode: StoryObj<Heard> = {
+	...edit(true, false, PLACED),
+	play: async ({ args, canvas, canvasElement }) => {
+		const region = await laidOut(canvas);
+		await expect(args.moved).not.toHaveBeenCalled();
+		const plan = nodeFor(region, "plan");
+		// Pan the ground until the plan stands on the region's centre.
+		const pane = centre(rect(region));
+		const away = at(plan);
+		const ground = groundPoint(region);
+		await mouseDrag(ground, shift(ground, pane.x - away.x, pane.y - away.y));
+		await waitFor(() => expect(around(at(plan).x, pane.x, 1)).toBe(true));
+		const stood = [...nodeButtons(canvasElement)].map((node) => [
+			node.style.left,
+			node.style.top,
+		]);
+		const seen: { visible: boolean; x: number; y: number }[] = [];
+		let watching = true;
+		const sample = () => {
+			const added = [...nodeButtons(canvasElement)].find((node) =>
+				node.textContent?.includes(ADDED.title),
+			);
+			if (added)
+				seen.push({
+					visible: getComputedStyle(added).visibility !== "hidden",
+					x: rect(added).left,
+					y: rect(added).top,
+				});
+			if (watching) requestAnimationFrame(sample);
+		};
+		sample();
+		await mouseClick(at(canvas.getByRole("button", { name: "Append a node" })));
+		await waitFor(() => expect(args.moved).toHaveBeenCalledTimes(1), LAID);
+		await waitFor(() => expect(args.selected).toHaveBeenCalledWith("added"));
+		const added = nodeFor(region, "added");
+		await waitFor(() => expect(added).toBeVisible());
+		watching = false;
+		await expect(calls(args.moved)[0]?.[0]).toBe("added");
+		await expect(around(at(added).x, pane.x, 2)).toBe(true);
+		await expect(around(at(added).y, pane.y, 2)).toBe(true);
+		await expect(
+			[...nodeButtons(canvasElement)]
+				.filter((node) => node !== added)
+				.map((node) => [node.style.left, node.style.top]),
+		).toEqual(stood);
+		// It paints over the plan it covers, and was never drawn elsewhere.
+		const over = document.elementsFromPoint(pane.x, pane.y);
+		await expect(over.indexOf(added)).toBeLessThan(over.indexOf(plan));
+		const placed = seen.filter((frame) => frame.visible);
+		for (const frame of placed) {
+			await expect(around(frame.x, rect(added).left, 2)).toBe(true);
+			await expect(around(frame.y, rect(added).top, 2)).toBe(true);
+		}
+	},
+};
+
+// The handlers a canvas is given decide what it draws and does.
+function handlers(move: boolean, connect: boolean): StoryObj<Heard> {
+	return {
+		...edit(move, connect),
+		play: async ({ args, canvas, canvasElement }) => {
+			const region = await laidOut(canvas, move ? args.moved : undefined);
+			const plan = nodeFor(region, "plan");
+			await expect(canvasElement.querySelectorAll("[data-port]")).toHaveLength(
+				connect ? 2 * WORKFLOW.nodes.length : 0,
+			);
+			await expect(
+				canvas.queryByRole("button", { name: "Arrange" }) !== null,
+			).toBe(move);
+			await expect(plan.hasAttribute("data-no-pan")).toBe(move);
+			const view = viewport(canvasElement);
+			const from = at(plan);
+			const start = { x: left(plan), y: top(plan) };
+			await mouseDrag(from, shift(from, 60, 40));
+			if (move) {
+				await expect(left(plan)).not.toBe(start.x);
+				await expect(viewport(canvasElement)).toEqual(view);
+				return;
+			}
+			await waitFor(() => expect(viewport(canvasElement).x).not.toBe(view.x));
+			await expect({ x: left(plan), y: top(plan) }).toEqual(start);
+			if (!connect) return;
+			// A drag on a port connects and does not pan.
+			const panned = viewport(canvasElement);
+			const out = at(portOf(region, "plan", "out"));
+			await mouseDrag(out, groundPoint(region));
+			await expect(args.connected).toHaveBeenCalledWith("plan", null);
+			await expect(viewport(canvasElement)).toEqual(panned);
+		},
+	};
+}
+
+export const HandlersNone = handlers(false, false);
+export const HandlersMove = handlers(true, false);
+export const HandlersConnect = handlers(false, true);
+export const HandlersBoth = handlers(true, true);
+
+// At the desktop a port's ring is 8 and its hit 24, centred on the node's top
+// or bottom edge, where a route starts or ends.
+export const PortGeometry: StoryObj<Heard> = {
+	...edit(false, true),
+	play: async ({ canvas, canvasElement }) => {
+		const region = await laidOut(canvas);
+		const view = viewport(canvasElement);
+		const pane = rect(region);
+		const start = (id: string) => {
+			const d = canvasElement
+				.querySelector(`[data-edge="${id}"] path[fill="none"]`)
+				?.getAttribute("d");
+			const [x = "0", y = "0"] =
+				/^M(-?[\d.]+) (-?[\d.]+)/.exec(d ?? "")?.slice(1) ?? [];
+			return {
+				x: pane.left + view.x + Number(x) * view.scale,
+				y: pane.top + view.y + Number(y) * view.scale,
+			};
+		};
+		for (const node of WORKFLOW.nodes) {
+			const box = rect(nodeFor(region, node.id));
+			for (const kind of ["in", "out"] as const) {
+				const hit = rect(portOf(region, node.id, kind));
+				const ring = portOf(region, node.id, kind).firstElementChild;
+				const dot = ring ? rect(ring) : new DOMRect();
+				await expect([dot.width, dot.height]).toEqual([8, 8]);
+				await expect([hit.width, hit.height]).toEqual([24, 24]);
+				await expect(around(centre(hit).x, centre(dot).x, 0.01)).toBe(true);
+				await expect(around(centre(hit).y, centre(dot).y, 0.01)).toBe(true);
+				await expect(around(centre(dot).x, box.left + box.width / 2, 1)).toBe(
+					true,
+				);
+				await expect(
+					around(centre(dot).y, kind === "in" ? box.top : box.bottom, 0.01),
+				).toBe(true);
+			}
+		}
+		const end = start("plan-build");
+		const out = centre(
+			rect(portOf(region, "plan", "out").firstElementChild ?? region),
+		);
+		await expect(around(out.x, end.x, 1)).toBe(true);
+		await expect(around(out.y, end.y, 1)).toBe(true);
+	},
+};
+
+// The keyboard is as it was: nodes in path order, the zoom stack with Arrange,
+// then the act, and no port takes focus.
+export const KeyboardWithEditing: StoryObj<Heard> = {
+	...edit(true, true),
+	play: async ({ args, canvas, canvasElement, userEvent }) => {
+		const region = await laidOut(canvas, args.moved);
+		(document.activeElement as HTMLElement | null)?.blur();
+		await userEvent.tab();
+		await expect(
+			canvas.getByRole("button", { name: "Append a node" }),
+		).toHaveFocus();
+		for (const id of ORDER) {
+			await userEvent.tab();
+			await expect(nodeButton(region, id)).toHaveFocus();
+		}
+		for (const name of [
+			"Zoom in",
+			"Zoom out",
+			"Fit",
+			"Arrange",
+			"Add a step",
+		]) {
+			await userEvent.tab();
+			await expect(canvas.getByRole("button", { name })).toHaveFocus();
+		}
+		for (const port of canvasElement.querySelectorAll("[data-port]")) {
+			await expect(port.hasAttribute("tabindex")).toBe(false);
+			await expect(port.closest("button")).not.toBeNull();
+		}
+	},
+};
+
+// A draggable node does not stop the wheel: a plain wheel pans and one with
+// Ctrl zooms, over the node as over the ground.
+export const WheelOverADraggableNode: StoryObj<Heard> = {
+	...edit(true, false),
+	play: async ({ args, canvas, canvasElement }) => {
+		const region = await laidOut(canvas, args.moved);
+		const plan = nodeFor(region, "plan");
+		await expect(plan.hasAttribute("data-no-pan")).toBe(true);
+		const before = viewport(canvasElement);
+		await expect(wheel(plan, { deltaY: 60 }).defaultPrevented).toBe(true);
+		const panned = viewport(canvasElement);
+		await expect(panned.scale).toBe(before.scale);
+		await expect(panned.y).toBeLessThan(before.y);
+		wheel(plan, { deltaY: 50, ctrlKey: true });
+		await expect(viewport(canvasElement).scale).toBeLessThan(before.scale);
+	},
+};
+
+// ── Editing's marks ─────────────────────────────────────────────────
+
+// A node's pointer marks: the dragged node stands over the ones it crosses with
+// no shadow, the in port a link would end on fills with ink, and each port has
+// its own cursor.
+export const LiftsADraggedNode: StoryObj<Heard> = {
+	...edit(true, false),
+	play: async ({ args, canvas }) => {
+		const region = await laidOut(canvas, args.moved);
+		const plan = nodeFor(region, "plan");
+		const build = nodeFor(region, "build");
+		// The DOM holds `plan` before `build`, so at rest `build` stands over it.
+		await expect(ORDER.indexOf("plan")).toBeLessThan(ORDER.indexOf("build"));
+		const over = (point: Point) =>
+			document.elementFromPoint(point.x, point.y)?.closest("button");
+		const meet = at(build);
+		await mouseDrag(at(plan), meet, {
+			hold: async () => {
+				await waitFor(() => expect(over(meet)).toBe(plan));
+				await expect(getComputedStyle(plan).boxShadow).toBe("none");
+			},
+		});
+		await expect(args.moved).toHaveBeenCalled();
+		await waitFor(() => expect(over(meet)).toBe(build));
+	},
+};
+
+export const MarksTheConnectionTarget: StoryObj<Heard> = {
+	...edit(true, true),
+	play: async ({ args, canvas }) => {
+		const region = await laidOut(canvas, args.moved);
+		const ring = (id: string) => {
+			const dot = portOf(region, id, "in").firstElementChild;
+			if (!dot) throw new Error(`no ring on ${id}`);
+			return dot;
+		};
+		const fill = (id: string) => getComputedStyle(ring(id)).backgroundColor;
+		const stroke = (id: string) => getComputedStyle(ring(id)).borderTopColor;
+		const rest = fill("check");
+		await expect(rest).not.toBe(stroke("build"));
+		const from = at(portOf(region, "plan", "out"));
+		await mouseDrag(from, at(portOf(region, "build", "in")), {
+			hold: async () => {
+				// Under pointer capture :hover never reaches the port, so the canvas
+				// says which port the link would end on.
+				await waitFor(() => expect(fill("build")).toBe(stroke("build")));
+				await expect(fill("build")).not.toBe(fill("check"));
+				await expect(fill("check")).toBe(rest);
+			},
+		});
+		await waitFor(() => expect(fill("build")).toBe(rest));
+		await expect(args.connected).toHaveBeenLastCalledWith("plan", "build");
+
+		// Over the ground no port is the target.
+		await mouseDrag(from, groundPoint(region), {
+			hold: async () => {
+				for (const node of WORKFLOW.nodes)
+					await expect(fill(node.id)).toBe(rest);
+			},
+		});
+	},
+};
+
+export const PortCursors: StoryObj<Heard> = {
+	...edit(true, true),
+	play: async ({ args, canvas }) => {
+		const region = await laidOut(canvas, args.moved);
+		for (const node of WORKFLOW.nodes) {
+			const out = portOf(region, node.id, "out");
+			const into = portOf(region, node.id, "in");
+			await expect(getComputedStyle(out).cursor).toBe("crosshair");
+			await expect(getComputedStyle(into).cursor).toBe("default");
+			await expect(getComputedStyle(nodeFor(region, node.id)).cursor).toBe(
+				"grab",
+			);
+		}
+	},
+};
+
+// With ports a forward edge's arrowhead tip stands on the ring's outer top, so
+// the ring covers none of it; without them the edge ends on the node's edge.
+const gapAbove = (root: Element, edge: string, target: HTMLElement) => {
+	const d = root
+		.querySelector(`[data-edge="${edge}"] path[fill="none"]`)
+		?.getAttribute("d");
+	const [, , y = "0"] = /(-?[\d.]+) (-?[\d.]+)$/.exec(d ?? "") ?? [];
+	return top(target) - Number(y);
+};
+
+export const ArrowEndsAboveThePort: StoryObj<Heard> = {
+	...edit(true, true),
+	play: async ({ args, canvas, canvasElement }) => {
+		const region = await laidOut(canvas, args.moved);
+		const ring = portOf(region, "build", "in").firstElementChild;
+		const line = canvasElement.querySelector(
+			'[data-edge="plan-build"] path[fill="none"]',
+		);
+		const marker = canvasElement.querySelector(
+			'[data-edge="plan-build"] marker',
+		);
+		if (!ring || !line || !marker) throw new Error("no ring, line or marker");
+		const { scale } = viewport(canvasElement);
+		// The tip stands where the marker puts it: its length past the point on
+		// the line's end (`refX`), at the layer's scale. The line's box ends there.
+		const overhang =
+			(Number(marker.getAttribute("markerWidth")) -
+				Number(marker.getAttribute("refX"))) *
+			scale;
+		const tip = rect(line).bottom + overhang;
+		const outer = rect(ring).top;
+		// At or above the ring's outer top, and on it to a pixel: the ring covers
+		// none of the arrowhead and the arrowhead does not float.
+		await expect(tip).toBeLessThanOrEqual(outer);
+		await expect(outer - tip).toBeLessThanOrEqual(scale);
+	},
+};
+
+export const ArrowEndsOnTheNodeWithoutPorts: StoryObj<Heard> = {
+	...edit(true, false),
+	play: async ({ args, canvas, canvasElement }) => {
+		const region = await laidOut(canvas, args.moved);
+		await expect(
+			around(
+				gapAbove(canvasElement, "plan-build", nodeFor(region, "build")),
+				0,
+				0.5,
+			),
+		).toBe(true);
+	},
+};
+
+// A port is a live control: it keeps full `edge-strong` ink on every node's
+// tone (a node off a run's path, off, or with a problem), and a path does not
+// gate editing.
+function StatedEditing(props: { graph: Fixture; label: string }) {
+	return (
+		<div className={TALL}>
+			<Canvas
+				label={props.label}
+				nodes={props.graph.nodes}
+				edges={props.graph.edges}
+				groups={props.graph.groups}
+				path={props.graph.path}
+				onSelect={fn()}
+				onMove={fn()}
+				onConnect={fn()}
+			/>
+		</div>
+	);
+}
+
+export const PortsOnEveryTone: StoryObj = {
+	parameters: DIMMED_NODES,
+	render: () => (
+		<>
+			<StatedEditing graph={RUN} label="Run" />
+			<StatedEditing graph={PROBLEM} label="Problem" />
+			<StatedEditing graph={OFF} label="Off" />
+		</>
+	),
+	play: async ({ canvas }) => {
+		for (const [graph, label] of [
+			[RUN, "Run"],
+			[PROBLEM, "Problem"],
+			[OFF, "Off"],
+		] as const) {
+			const region = await standing(canvas, label);
+			const edge = ink(
+				region.querySelector('[data-edge="build-check"]') ?? region,
+			);
+			for (const node of graph.nodes) {
+				const button = stateButton(region, graph, node.id);
+				for (const kind of ["in", "out"] as const) {
+					const port = button.querySelector(`[data-port="${kind}"]`);
+					await expect(port).not.toBeNull();
+					const dot = port?.firstElementChild;
+					await expect(dot && getComputedStyle(dot).borderTopColor).toBe(edge);
+				}
+			}
+		}
+	},
+};

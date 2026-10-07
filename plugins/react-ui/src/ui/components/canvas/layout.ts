@@ -8,6 +8,7 @@ import type {
 import { WIDTH_VALUE } from "@fcalell/ui-core/tokens";
 import {
 	type RefObject,
+	useCallback,
 	useEffect,
 	useLayoutEffect,
 	useMemo,
@@ -23,7 +24,7 @@ import {
 	routeEdges,
 	type Size,
 } from "./geometry.ts";
-import { openTransform } from "./view.ts";
+import { openTransform, type Places, place } from "./view.ts";
 import type { Viewport } from "./viewport.ts";
 
 // The sizes a layout is drawn by, from the spacing roles at the density in
@@ -32,6 +33,8 @@ import type { Viewport } from "./viewport.ts";
 export interface Space {
 	pad: number;
 	pair: number;
+	// A port ring's drawn size.
+	port: number;
 	gaps: Gaps;
 }
 
@@ -40,6 +43,11 @@ export function spaces(chip: number): Space {
 	return {
 		pad: spacing("card"),
 		pair,
+		port: Number.parseFloat(
+			getComputedStyle(document.documentElement).getPropertyValue(
+				"--spacing-port",
+			),
+		),
 		gaps: {
 			node: spacing("card"),
 			layer: layerGap(spacing("sections"), chip, pair),
@@ -116,27 +124,28 @@ function useMeasures(probe: HTMLElement | null, key: string): Measures | null {
 	return measures;
 }
 
-const ORIGIN: CanvasPoint = { x: 0, y: 0 };
 const WIDTH = Number.parseFloat(WIDTH_VALUE.node);
 
 // A box of the flow for each node whose place and size are known.
 function boxesOf(
 	nodes: readonly CanvasNode[],
-	computed: ReadonlyMap<string, CanvasPoint> | undefined,
+	places: Places,
 	sizes: ReadonlyMap<string, Size>,
 ): Map<string, Box> {
 	const boxes = new Map<string, Box>();
 	for (const node of nodes) {
 		const size = sizes.get(node.id);
-		const at = node.position ?? computed?.get(node.id) ?? ORIGIN;
-		if (size) boxes.set(node.id, { ...at, ...size });
+		if (size) boxes.set(node.id, { ...place(node, places), ...size });
 	}
 	return boxes;
 }
 
+// One run of the layout. Each is its own object, so a rerun for the same
+// structure (Arrange) is reported again.
 interface Laid {
-	key: string;
 	positions: ReadonlyMap<string, CanvasPoint>;
+	// It came from Arrange, which fits the view once it is reported.
+	arranged: boolean;
 }
 
 interface LayoutArgs {
@@ -152,7 +161,12 @@ interface LayoutArgs {
 	probed: boolean;
 	// The probe's parts, so the observer is given them again when they change.
 	probeKey: string;
+	// The positions a drag holds and a landing chose, which `place` reads.
+	live: ReadonlyMap<string, CanvasPoint>;
+	landed: ReadonlyMap<string, CanvasPoint>;
 	onMove?: (id: string, position: CanvasPoint) => void;
+	// Each node draws an in port.
+	ports: boolean;
 }
 
 export interface Layout {
@@ -161,12 +175,15 @@ export interface Layout {
 	space: Space;
 	// The graph is placed and the first view set, so it may show.
 	ready: boolean;
+	// Runs the layout again, every position ignored, and fits the view to it.
+	arrange: () => void;
 }
 
 // Measures, decides, runs, reports, routes and opens the first view. ELK
-// places nodes only when no node has a position, once every node is measured
-// and the probe read, and not again for the same structure. Its worker is
-// imported when first wanted: a graph the consumer placed never loads it.
+// places nodes when no node has a position, once every node is measured and
+// the probe read, and not again for the same structure; Arrange runs it again
+// whatever the positions. Its worker is imported when first wanted: a graph
+// the consumer placed never loads it.
 export function useLayout({
 	nodes,
 	edges,
@@ -178,7 +195,10 @@ export function useLayout({
 	probe,
 	probed,
 	probeKey,
+	live,
+	landed,
 	onMove,
+	ports,
 }: LayoutArgs): Layout {
 	const key = graphKey(nodes, edges, groups);
 	const placing = nodes.length > 0 && nodes.every((node) => !node.position);
@@ -189,59 +209,86 @@ export function useLayout({
 	const [ready, setReady] = useState(false);
 	const current = useRef(key);
 	const ran = useRef<string | null>(null);
-	const reported = useRef<string | null>(null);
+	// A run is in flight from its request to its result.
+	const flight = useRef(false);
+	const reported = useRef<Laid | null>(null);
 
 	useEffect(() => {
 		current.current = key;
 	}, [key]);
 
+	// ELK's input is sizes, never positions, so any run is the same layout.
+	const run = useCallback(
+		(at: string, arranged: boolean) => {
+			if (!measures) return;
+			flight.current = true;
+			const chip = Math.max(
+				0,
+				...[...measures.labels.values()].map((s) => s.height),
+			);
+			const { pad, pair, gaps } = spaces(chip);
+			const graph = elkGraph({
+				nodes,
+				edges,
+				groups,
+				order,
+				sizes,
+				head: measures.head,
+				pad,
+				left: leftPads(groups, measures.reach, { pad, pair, width: WIDTH }),
+				gaps,
+			});
+			void import("@fcalell/plugin-react-ui/lib/canvas-layout")
+				.then(({ layoutElk }) => layoutElk(graph))
+				.then((output) => {
+					flight.current = false;
+					if (current.current === at)
+						setLaid({ positions: fromElk(output), arranged });
+				});
+		},
+		[measures, nodes, edges, groups, order, sizes],
+	);
+
 	useEffect(() => {
 		if (!placing || !measured || !measures || ran.current === key) return;
 		ran.current = key;
-		const chip = Math.max(
-			0,
-			...[...measures.labels.values()].map((s) => s.height),
-		);
-		const { pad, pair, gaps } = spaces(chip);
-		const graph = elkGraph({
-			nodes,
-			edges,
-			groups,
-			order,
-			sizes,
-			head: measures.head,
-			pad,
-			left: leftPads(groups, measures.reach, { pad, pair, width: WIDTH }),
-			gaps,
-		});
-		void import("@fcalell/plugin-react-ui/lib/canvas-layout")
-			.then(({ layoutElk }) => layoutElk(graph))
-			.then((output) => {
-				if (current.current === key)
-					setLaid({ key, positions: fromElk(output) });
-			});
-	}, [placing, measured, measures, key, nodes, edges, groups, order, sizes]);
+		run(key, false);
+	}, [placing, measured, measures, key, run]);
 
+	const arrange = () => {
+		if (flight.current || !measured || !measures) return;
+		run(key, true);
+	};
+
+	// What the router drew last, so Arrange fits the bounds the consumer's
+	// positions produced and not the ones the run was asked from.
+	const latest = useRef<Routes | null>(null);
 	useEffect(() => {
-		if (!onMove || !laid || reported.current === laid.key) return;
-		reported.current = laid.key;
+		if (!onMove || !laid || reported.current === laid) return;
+		reported.current = laid;
 		for (const id of order) {
 			const at = laid.positions.get(id);
 			if (at) onMove(id, at);
 		}
-	}, [laid, onMove, order]);
+		// The consumer's positions commit before the frame.
+		if (laid.arranged)
+			requestAnimationFrame(() => {
+				if (latest.current) viewport.fit(latest.current.bounds);
+			});
+	}, [laid, onMove, order, viewport]);
 
 	const chip = Math.max(
 		0,
 		...[...(measures?.labels.values() ?? [])].map((s) => s.height),
 	);
 	const space = spaces(chip);
+	const computed = laid?.positions;
 	const boxes = useMemo(
-		() => boxesOf(nodes, laid?.positions, sizes),
-		[nodes, laid, sizes],
+		() => boxesOf(nodes, { live, landed, computed }, sizes),
+		[nodes, live, landed, computed, sizes],
 	);
 	const back = useMemo(() => backEdges(order, edges), [order, edges]);
-	const { pad, pair } = space;
+	const { pad, pair, port } = space;
 	const head = measures?.head ?? 0;
 	const labels = measures?.labels;
 	const reach = measures?.reach;
@@ -261,9 +308,15 @@ export function useLayout({
 					width: WIDTH,
 				}),
 				pair,
+				ports,
+				port,
 			}),
-		[boxes, edges, back, groups, labels, reach, head, pad, pair],
+		[boxes, edges, back, groups, labels, reach, head, pad, pair, ports, port],
 	);
+
+	useLayoutEffect(() => {
+		latest.current = routed;
+	}, [routed]);
 
 	const placed = !placing || laid !== null;
 	useLayoutEffect(() => {
@@ -290,5 +343,5 @@ export function useLayout({
 		viewport,
 	]);
 
-	return { boxes, routed, space, ready };
+	return { boxes, routed, space, ready, arrange };
 }

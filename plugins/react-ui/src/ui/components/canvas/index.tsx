@@ -20,18 +20,22 @@ import {
 	useEffect,
 	useEffectEvent,
 	useId,
+	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState,
 } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { ConnectionLine } from "./connection.tsx";
 import { EdgeLayer } from "./edges.tsx";
 import type { Size } from "./geometry.ts";
 import { GroupFrame } from "./group.tsx";
+import { isGround } from "./hit.ts";
 import { EdgeLabel } from "./label.tsx";
 import { useLayout } from "./layout.ts";
 import { type EdgeTone, edgeLook, nodeLook } from "./look.ts";
-import { NodeView } from "./node.tsx";
+import { type NodeEdit, NodeView } from "./node.tsx";
+import { landAt, place } from "./view.ts";
 import { useViewport } from "./viewport.ts";
 import { ActFoot, ZoomStack } from "./zoom.tsx";
 
@@ -62,7 +66,7 @@ export interface CanvasProps extends Closed {
 const NO_EDGES: readonly CanvasEdge[] = [];
 const NO_GROUPS: readonly CanvasGroup[] = [];
 const NO_SIZES: ReadonlyMap<string, Size> = new Map();
-const ORIGIN: CanvasPoint = { x: 0, y: 0 };
+const NO_POINTS: ReadonlyMap<string, CanvasPoint> = new Map();
 
 const REGION =
 	"relative flex flex-col grow min-h-0 min-w-0 overflow-hidden touch-none";
@@ -84,6 +88,7 @@ export function Canvas({
 	onSelect,
 	path,
 	onMove,
+	onConnect,
 	act,
 }: CanvasProps) {
 	const grid = useId();
@@ -96,7 +101,16 @@ export function Canvas({
 		(edge) => edge.label !== undefined || edge.handoff,
 	);
 	const probed = groups.length > 0 || chipped.length > 0;
-	const { boxes, routed, space, ready } = useLayout({
+	// The one live position of each node a drag holds, set only through `at` and
+	// cleared on release; where a landing put a node; and the link being drawn.
+	const [live, setLive] = useState(NO_POINTS);
+	const [landed, setLanded] = useState(NO_POINTS);
+	const [link, setLink] = useState<{
+		from: string;
+		to: CanvasPoint;
+		target: string | null;
+	} | null>(null);
+	const { boxes, routed, space, ready, arrange } = useLayout({
 		nodes,
 		edges,
 		groups,
@@ -107,8 +121,77 @@ export function Canvas({
 		probe,
 		probed,
 		probeKey: `${groups.map((group) => group.id + group.head).join()}:${chipped.map((edge) => edge.id).join()}`,
+		live,
+		landed,
 		onMove,
+		ports: Boolean(onConnect),
 	});
+
+	const at = useCallback((id: string, point: CanvasPoint | null) => {
+		setLive((last) => {
+			if (point === null && !last.has(id)) return last;
+			const next = new Map(last);
+			if (point === null) next.delete(id);
+			else next.set(id, point);
+			return next;
+		});
+	}, []);
+	const drop = useCallback(
+		(id: string, point: CanvasPoint) => {
+			onMove?.(id, point);
+			at(id, null);
+		},
+		[onMove, at],
+	);
+	const linking = useCallback(
+		(from: string, to: CanvasPoint | null, target: string | null) => {
+			setLink(to && { from, to, target });
+		},
+		[],
+	);
+
+	// A node with no position among nodes that have one lands with its centre on
+	// the viewport's, and is chosen. When none has a position the layout places
+	// them all, so nothing lands. The ids a landing has seen keep a node from
+	// landing twice; an id that leaves `nodes` leaves with it.
+	const seen = useRef(new Set<string>());
+	const positioned = nodes.some((node) => node.position);
+	useLayoutEffect(() => {
+		const present = new Set(nodes.map((node) => node.id));
+		const gone = [...seen.current].filter((id) => !present.has(id));
+		const pane = region.current?.getBoundingClientRect();
+		const fresh =
+			ready && pane && positioned
+				? nodes.filter(
+						(node) =>
+							!node.position &&
+							!seen.current.has(node.id) &&
+							sizes.has(node.id),
+					)
+				: [];
+		if (gone.length === 0 && fresh.length === 0) return;
+		const spots = fresh.flatMap((node) => {
+			const size = sizes.get(node.id);
+			if (!size || !pane) return [];
+			const centre = viewport.screenToFlow({
+				x: pane.left + pane.width / 2,
+				y: pane.top + pane.height / 2,
+			});
+			return [[node.id, landAt(centre, size)] as const];
+		});
+		for (const id of gone) seen.current.delete(id);
+		setLanded((last) => {
+			const next = new Map(last);
+			for (const id of gone) next.delete(id);
+			for (const [id, spot] of spots) next.set(id, spot);
+			return next;
+		});
+		for (const [id, spot] of spots) {
+			seen.current.add(id);
+			onMove?.(id, spot);
+			onSelect?.(id);
+		}
+	}, [nodes, sizes, ready, positioned, viewport, onMove, onSelect]);
 
 	// A node writes its size only when it changed.
 	const resized = useCallback((id: string, size: Size) => {
@@ -131,6 +214,7 @@ export function Canvas({
 	}, [selected]);
 
 	const byId = new Map(nodes.map((node) => [node.id, node]));
+	const source = link ? boxes.get(link.from) : undefined;
 	const tones = new Map<string, EdgeTone>(
 		edges.map((edge) => [edge.id, edgeLook(edge, byId, path)]),
 	);
@@ -143,9 +227,22 @@ export function Canvas({
 	// so a pan never gets here.
 	const ground = (event: MouseEvent) => {
 		const target = event.target;
-		if (target instanceof Element && target.closest("button, [data-no-pan]"))
-			return;
-		onSelect?.(null);
+		if (
+			region.current &&
+			target instanceof Element &&
+			isGround(target, region.current)
+		)
+			onSelect?.(null);
+	};
+	const edit: NodeEdit = {
+		viewport,
+		region,
+		draggable: Boolean(onMove),
+		ports: Boolean(onConnect),
+		at,
+		drop,
+		linking,
+		onConnect,
 	};
 
 	return (
@@ -157,7 +254,7 @@ export function Canvas({
 			onClick={onSelect ? ground : undefined}
 			className={cn(CANVAS_GROUND, REGION, !ready && HIDDEN)}
 		>
-			<svg aria-hidden="true" className={GRID}>
+			<svg aria-hidden="true" data-ground className={GRID}>
 				<defs>
 					<pattern id={grid} data-grid patternUnits="userSpaceOnUse">
 						<circle fill="currentColor" />
@@ -186,15 +283,26 @@ export function Canvas({
 							key={id}
 							node={node}
 							look={nodeLook(node, selected, path)}
-							box={boxes.get(id) ?? node.position ?? ORIGIN}
+							box={boxes.get(id) ?? place(node, { live, landed })}
+							landing={positioned && !node.position && !landed.has(id)}
+							lifted={live.has(id)}
+							targeted={link?.target === id}
+							edit={edit}
 							onSelect={onSelect}
 							onSize={resized}
 							onFocusVisible={reveal}
 						/>
 					);
 				})}
+				{link && source ? (
+					<ConnectionLine from={source} to={link.to} pair={space.pair} />
+				) : null}
 			</div>
-			<ZoomStack viewport={viewport} bounds={routed.bounds} />
+			<ZoomStack
+				viewport={viewport}
+				bounds={routed.bounds}
+				onArrange={onMove ? arrange : undefined}
+			/>
 			{act ? <ActFoot act={act} /> : null}
 			{probed ? (
 				<div ref={setProbe} aria-hidden="true" className={PROBE}>

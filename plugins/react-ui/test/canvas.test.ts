@@ -12,13 +12,16 @@ import {
 } from "../src/ui/components/canvas/elk.ts";
 import {
 	ARROW,
+	ARROW_REF,
 	type Box,
+	bendRoute,
 	cleanPoints,
 	crisp,
 	crosses,
 	groupBoxes,
 	groupTree,
 	leftPads,
+	PIXEL_CENTRE,
 	type Route,
 	type RouteInput,
 	roundedPath,
@@ -29,7 +32,10 @@ import { edgeLook, nodeLook } from "../src/ui/components/canvas/look.ts";
 import {
 	fitTransform,
 	inside,
+	landAt,
+	ORIGIN,
 	openTransform,
+	place,
 	whole,
 } from "../src/ui/components/canvas/view.ts";
 import { showcaseFrames } from "../src/ui/showcase/cells.ts";
@@ -49,6 +55,8 @@ const HEIGHT = 56;
 const HEAD = 28;
 const PAD = 16;
 const PAIR = 8;
+// A port ring's drawn size.
+const PORT = 8;
 const CHIP = 20;
 // A head's text starts a control's inline padding in and runs 7 px a letter.
 const PADX = 12;
@@ -618,6 +626,8 @@ async function route(source: Graph, pair = PAIR) {
 		pad: PAD,
 		left,
 		pair,
+		ports: false,
+		port: PORT,
 	};
 	return {
 		...routeEdges(input),
@@ -828,6 +838,8 @@ const alone = (over: Partial<RouteInput>): RouteInput => ({
 	head: HEAD,
 	pad: PAD,
 	pair: PAIR,
+	ports: false,
+	port: PORT,
 	...over,
 });
 
@@ -850,6 +862,58 @@ test("a target whose column holds a node is entered from the middle of the gap a
 	const free = routeEdges(alone({ boxes: clear, edges }));
 	// Clear, it bends in the middle of the gap under the source.
 	assert.deepEqual(free.routes.get("e")?.points[1], { x: 120, y: 178 });
+});
+
+test("with ports a forward route ends a ring's radius, the tip's overhang and a pixel centre above its target's top, the arrowhead with it; without, on the edge", () => {
+	const boxes = new Map([
+		["s", box(0, 0, 240, 56)],
+		["t", box(300, 300, 240, 56)],
+		["u", box(0, 300, 240, 56)],
+	]);
+	const edges = [
+		{ id: "bent", from: "s", to: "t" },
+		{ id: "straight", from: "s", to: "u" },
+	];
+	const bare = routeEdges(alone({ boxes, edges }));
+	const ringed = routeEdges(alone({ boxes, edges, ports: true }));
+	for (const [id, x] of [
+		["bent", 420],
+		["straight", 120],
+	] as const) {
+		const without = bare.routes.get(id);
+		const withRing = ringed.routes.get(id);
+		assert.deepEqual(without?.points.at(-1), { x, y: 300 });
+		// The drawn tip, a stroke on a pixel centre plus the overhang, lands a
+		// half pixel above the ring's outer top (300 - PORT / 2).
+		const end = 300 - PORT / 2 - (ARROW - ARROW_REF) - PIXEL_CENTRE;
+		assert.deepEqual(withRing?.points.at(-1), { x, y: end });
+		assert.equal(crisp([{ x, y: end }])[0]?.y, end);
+		assert.equal(end + (ARROW - ARROW_REF), 300 - PORT / 2 - PIXEL_CENTRE);
+		assert.equal(without?.arrow.y, 300 - ARROW);
+		assert.equal(withRing?.arrow.y, end - ARROW);
+		// Nothing else moves: the route starts where it did.
+		assert.deepEqual(withRing?.points[0], without?.points[0]);
+		assert.equal(withRing?.points.length, without?.points.length);
+	}
+});
+
+test("a back edge and a self loop enter a node's right side, so ports leave them unmoved", () => {
+	const boxes = new Map([
+		["a", box(0, 0, 240, 56)],
+		["b", box(0, 200, 240, 56)],
+	]);
+	const edges = [
+		{ id: "down", from: "a", to: "b" },
+		{ id: "up", from: "b", to: "a" },
+		{ id: "loop", from: "b", to: "b" },
+	];
+	const input = { boxes, edges, back: ["up", "loop"] };
+	const bare = routeEdges(alone(input));
+	const ringed = routeEdges(alone({ ...input, ports: true }));
+	for (const id of ["up", "loop"]) {
+		assert.deepEqual(ringed.routes.get(id), bare.routes.get(id));
+	}
+	assert.notDeepEqual(ringed.routes.get("down"), bare.routes.get("down"));
 });
 
 test("a target not far enough below its source bends at the middle of the span, unchecked", () => {
@@ -1120,4 +1184,93 @@ test("leftPads rounds up to whole pixels", () => {
 		{ pad: 16, pair: 6, width: 240 },
 	);
 	assert.deepEqual([...pads], [["g", 37]]);
+});
+
+test("landAt puts the node's centre on the point, keeping its sign", () => {
+	assert.deepEqual(landAt({ x: 100, y: 60 }, { width: 40, height: 20 }), {
+		x: 80,
+		y: 50,
+	});
+	assert.deepEqual(landAt({ x: 7, y: 9 }, { width: 0, height: 0 }), {
+		x: 7,
+		y: 9,
+	});
+	assert.deepEqual(landAt({ x: -100, y: -60 }, { width: 40, height: 20 }), {
+		x: -120,
+		y: -70,
+	});
+});
+
+test("place reads live, then the given position, then landed, then computed, then the origin", () => {
+	const at = (x: number) => ({ x, y: x });
+	const node = { id: "a", position: at(2) };
+	const bare = { id: "a" };
+	const live = new Map([["a", at(1)]]);
+	const landed = new Map([["a", at(3)]]);
+	const computed = new Map([["a", at(4)]]);
+	const none = new Map<string, { x: number; y: number }>();
+	assert.deepEqual(place(node, { live, landed, computed }), at(1));
+	assert.deepEqual(place(node, { live: none, landed, computed }), at(2));
+	assert.deepEqual(place(bare, { live: none, landed, computed }), at(3));
+	assert.deepEqual(place(bare, { live: none, landed: none, computed }), at(4));
+	assert.deepEqual(place(bare, { live: none, landed: none }), ORIGIN);
+});
+
+test("bendRoute is straight on one column and bends a pair under the source otherwise", () => {
+	const S = { x: 100, y: 0 };
+	assert.deepEqual(bendRoute(S, { x: 100, y: 200 }, PAIR), [
+		S,
+		{ x: 100, y: 200 },
+	]);
+	assert.deepEqual(bendRoute(S, { x: 40, y: 200 }, PAIR), [
+		S,
+		{ x: 100, y: PAIR },
+		{ x: 40, y: PAIR },
+		{ x: 40, y: 200 },
+	]);
+});
+
+test("bendRoute bends a target within two pairs at the middle of the span", () => {
+	const S = { x: 100, y: 0 };
+	const T = { x: 160, y: 2 * PAIR - 1 };
+	assert.deepEqual(bendRoute(S, T, PAIR), [
+		S,
+		{ x: 100, y: T.y / 2 },
+		{ x: 160, y: T.y / 2 },
+		T,
+	]);
+});
+
+test("bendRoute draws a target left of or above the source with nothing doubled or collinear", () => {
+	const S = { x: 100, y: 100 };
+	for (const T of [
+		{ x: 20, y: 400 },
+		{ x: 20, y: 100 },
+		{ x: 180, y: 40 },
+		{ x: 100, y: 40 },
+		{ x: 100, y: 100 },
+	]) {
+		const points = cleanPoints(bendRoute(S, T, PAIR));
+		assert.deepEqual(points[0], S);
+		assert.deepEqual(points.at(-1), T);
+		points.forEach((point, index) => {
+			const before = points[index - 1];
+			const after = points[index + 1];
+			if (before) assert.notDeepEqual(before, point);
+			if (before && after)
+				assert.notEqual(
+					(point.x - before.x) * (after.y - point.y),
+					(point.y - before.y) * (after.x - point.x),
+				);
+		});
+	}
+});
+
+test("elkGraph ignores the positions the nodes carry", () => {
+	const { nodes } = WORKFLOW;
+	const placed = nodes.map((n, index) => ({
+		...n,
+		position: { x: index * 10, y: index * 20 },
+	}));
+	assert.deepEqual(graph({ nodes: placed }), graph());
 });
