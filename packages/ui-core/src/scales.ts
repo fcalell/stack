@@ -79,6 +79,7 @@ export function sizePx(density: Density, size: Size): number {
 		return (px["control-compact"] - px.chip) / 2 - HAIRLINE_PX;
 	}
 	if (size === "line-body") return leadingOf(density, "body");
+	if (size === "icon-inset") return (px.control - px["icon-control"]) / 2;
 	return px[size];
 }
 

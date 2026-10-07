@@ -6,6 +6,7 @@ import {
 	PAGE_HEAD,
 	PAGE_TITLE,
 	PAGE_TOP_BAR,
+	PAGE_TOP_BAR_TOUCH,
 	text,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useId, useState } from "react";
@@ -25,7 +26,7 @@ import { useWords } from "../../lib/words.tsx";
 import { IconButtonLink } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 import { Menu } from "../menu/index.tsx";
-import { DETAILS, Details } from "../place/index.tsx";
+import { DETAILS, Details, ROW_MARKED } from "../place/index.tsx";
 import { splitOf } from "../split/index.tsx";
 
 // A screen is the size container a Split inside decides its regions by.
@@ -143,6 +144,13 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	const overflow = more?.length ? (
 		<Menu label={words.more} items={more} />
 	) : null;
+	// On touch a top bar with nothing else in it stands only while the Split's marks show its back or Details act.
+	const bar =
+		!touch ||
+		backAct !== null ||
+		acts.length > 0 ||
+		overflow !== null ||
+		besideDetails !== null;
 	const titleClass = cn(text({ role: "title" }), TITLE, touch && PAGE_TITLE);
 	const heading = (
 		<Heading id={titleId} className={titleClass}>
@@ -155,7 +163,13 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	// it does not draw, so the acts after it never shift.
 	const head = (
 		<header className={cn(PAGE_HEAD, HEAD)}>
-			<div className={cn(PAGE_TOP_BAR, ROW)}>
+			<div
+				className={cn(
+					PAGE_TOP_BAR,
+					touch && PAGE_TOP_BAR_TOUCH,
+					bar ? ROW : ROW_MARKED,
+				)}
+			>
 				{backAct}
 				{touch ? null : heading}
 				{touch ? <span className={SPACER} /> : null}

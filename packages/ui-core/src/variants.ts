@@ -810,9 +810,10 @@ export const GATE_FLOW = "gap-sections";
 export const GATE_LEAD = "gap-fields";
 export const GATE_HEAD = "gap-pair";
 export const GATE_MARK = "size-avatar";
-// The switcher's trigger in a touch top bar; in the sidebar it is a
+// The switcher's trigger in a touch top bar, which reaches across the page
+// inset (`PAGE_TOP_BAR_TOUCH`) by the inset it keeps; in the sidebar it is a
 // `PLACE_ROW` with the name at body 500.
-export const SWITCHER = "gap-inside min-h-target rounded-control";
+export const SWITCHER = "gap-inside px-icon-inset min-h-target rounded-control";
 // The toasts' layer over the column (the desktop shell) or at a touch
 // screen's foot, each toast a pair apart.
 export const TOASTS = "p-page gap-pair";
@@ -827,6 +828,9 @@ export const PAGE_HEAD = "px-page border-b border-edge";
 // the sides: the ten-foot safe area is all round.
 export const PAGE_HEAD_ROOM = "pt-page";
 export const PAGE_TOP_BAR = "gap-acts min-h-strip";
+// The touch top bar reaches across the page inset by an icon act's inset, so
+// its first and last glyphs stand at the title's start and the inset's end.
+export const PAGE_TOP_BAR_TOUCH = "-mx-icon-inset";
 // The touch title over the head's hairline, a pair apart from it.
 export const PAGE_TITLE = "pb-pair";
 export const PAGE_BODY = "gap-sections p-page";

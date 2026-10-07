@@ -25,6 +25,13 @@ act in its top bar, its head the page's only head. An `ItemHeader` with no facts
 <Split list={rows} main={<Item />} beside={<Screen title="Run 12" back={itemRoute}><Run /></Screen>} />
 ```
 
+A `Place`'s `title` is the page's name at every density: a place that draws one section of a larger
+area titles itself with the section's name (`Repos`, not `System`), which the sidebar item or the tab
+carries; the app never picks another title for the phone. A `Group` or `List` standing directly in a
+`Place`'s body stands a page inset under the head's hairline, where a `Section`'s title stands a pair
+over its body: the page's title is a strip over a hairline, the section's a line of the body, and a
+list that should read as a section's own wants a `Section`.
+
 ## Classes are geometry, on hosts only
 
 A component takes no `class`, `className`, `classList` or `style`, nor uniwind's host class

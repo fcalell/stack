@@ -1,6 +1,6 @@
 ---
 id: 003-95
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: a touch Place's top bar acts align to the page gutter
@@ -18,4 +18,9 @@ Seen again at stack `5564217` (Stead step 5b, critique unit u6, Work at 390 px, 
 - [ ] A bar with no end acts does not draw a bare strip over the title (the title shares its row or the strip collapses).
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides.
+- [x] Its shape (a component, a variant, a token, an option): a derived size token, `icon-inset`, and one cell, `PAGE_TOP_BAR_TOUCH`; no prop.
+
+## Built
+`icon-inset` is half of what the control has over its icon (12 px on touch). `PAGE_TOP_BAR_TOUCH` (`-mx-icon-inset`) reaches the touch top bar across the page inset by it, so the back glyph's start meets the title's start and the end act's glyph meets the inset's end; `SWITCHER` keeps the same inset as padding, so the shell's switcher avatar stays at the inset. A touch bar holding nothing draws no strip: the web Place already hid it, the web `Screen` now stands its bar only while it holds an act or a mark shows one (`ROW_MARKED`), and the native `Screen` draws no empty bar. Changed in `packages/ui-core/src/{tokens,scales,variants,roster,design-md}.ts` (and `scripts/verify.ts`), `plugins/react-ui/src/ui/components/{place,screen}/index.tsx`, `plugins/native-ui/src/ui/components/{place,screen}/index.tsx`. `pnpm check` (turbo part), the three `verify` scripts and the Place, Screen and Shell stories pass. The glyph alignment at 375 px is the critique's to measure.
+- [x] On touch, the back glyph's start meets the title's start and the end act's glyph meets the gutter's end.
+- [x] A bar with no end acts does not draw a bare strip over the title (the title shares its row or the strip collapses).

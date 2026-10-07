@@ -292,6 +292,7 @@ spacing:
   hairline: "1px"
   chips-inset: "3px"
   line-body: "20px"
+  icon-inset: "8px"
 components:
   text-display:
     typography: "{typography.display}"
@@ -2531,6 +2532,7 @@ Sizes are heights and squares in the same namespace. Density is a theme and neve
 | `hairline` | 1px | 1px | 1 | a field box's border: an act inside the box reaches across it, so its hit stands at the box's height |
 | `chips-inset` | 3px | 9px | 9 | the inset above and below the chips of a pick of several: half of what the compact control has over a chip, less the border |
 | `line-body` | 20px | 24px | 24 | one body line's box: a part on a wrapped title's first line is pinned to it |
+| `icon-inset` | 8px | 12px | 12 | the gap between an icon act's box and its glyph: half of what the control has over its icon, which a bar of acts reaches across so the glyphs stand at its edges |
 
 An icon's stroke is a weight on Lucide's 24-unit grid, so it scales with the icon: `line` 2, an icon's own, and `mark` 3.5, a mark that carries meaning at the meta size (a checkbox's tick and dash, a change mark's glyph), which at 12px draws 1.75 px where `line` draws 1 px across two pixel rows at half coverage. No component spells a stroke number.
 
@@ -2577,9 +2579,9 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `Spinner` | atom | `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC` | rest |
 | `Avatar` | atom | `AVATAR`, `AVATAR_LABEL` | rest |
 | `Link` | atom | `LINK`, `LINK_TARGET` | rest, hover, focus, active |
-| `Place` | layout | `PAGE_HEAD`, `PAGE_HEAD_ROOM`, `PAGE_TOP_BAR`, `PAGE_TITLE`, `TEXT.role.title`, `PILL_ACT`, `PICKER_VALUE`, `ICON.fit.meta`, `CHIP`, `CHIP_LABEL`, `PAGE_BODY`, `FOOT_DOCKED`, `PAGE_BODY_OVER_FOOT`, `FLOATING_ACT`, `FLOATING_ACT_LIFT`, `FLOATING_ACT_ROOM`, `FLOATING_ACT_FOOT`, `BUTTON.act.primary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.primary`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
+| `Place` | layout | `PAGE_HEAD`, `PAGE_HEAD_ROOM`, `PAGE_TOP_BAR`, `PAGE_TOP_BAR_TOUCH`, `PAGE_TITLE`, `TEXT.role.title`, `PILL_ACT`, `PICKER_VALUE`, `ICON.fit.meta`, `CHIP`, `CHIP_LABEL`, `PAGE_BODY`, `FOOT_DOCKED`, `PAGE_BODY_OVER_FOOT`, `FLOATING_ACT`, `FLOATING_ACT_LIFT`, `FLOATING_ACT_ROOM`, `FLOATING_ACT_FOOT`, `BUTTON.act.primary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.primary`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
 | `Gate` | layout | `GATE`, `GATE_COLUMN`, `GATE_FLOW`, `GATE_LEAD`, `GATE_HEAD`, `GATE_MARK`, `TEXT.role.title`, `TEXT.role.meta`, `TEXT_STRONG.role.meta` | rest |
-| `Screen` | layout | `PAGE_HEAD`, `PAGE_TOP_BAR`, `PAGE_TITLE`, `TEXT.role.title`, `PAGE_BODY`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
+| `Screen` | layout | `PAGE_HEAD`, `PAGE_TOP_BAR`, `PAGE_TOP_BAR_TOUCH`, `PAGE_TITLE`, `TEXT.role.title`, `PAGE_BODY`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
 | `Split` | layout | `SPLIT_LIST`, `SPLIT_LIST_STACK`, `SPLIT_MAIN`, `SPLIT_BESIDE`, `SPLIT_PANE`, `ICON_BUTTON.fit.bar` | rest, empty |
 | `Section` | layout | `SECTION`, `SECTION_HEAD`, `SECTION_HEAD_ROW`, `SECTION_TITLE`, `SECTION_TOGGLE`, `SECTION_NESTED_TITLE`, `TEXT.role.heading`, `TEXT.role.meta`, `ICON.fit.body`, `COUNT`, `COUNT_LABEL`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive`, `ICON_BUTTON.fit.bar`, `SKELETON.kind.count`, `SKELETON.kind.line`, `SKELETON.kind.field`, `SKELETON_ROW.kind.field`, `TEXT.role.caption`, `LINE_BOX.role.body` | rest, hover, focus, active, disabled, loading |
 | `Group` | layout | `GROUP` | rest, loading |
@@ -2648,9 +2650,9 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Spinner` | none | none | `full` | none | `spinner` | none |
 | `Avatar` | `caption` | `avatar-` | `full` | none | `avatar` | none |
 | `Link` | none | `accent-ink`, `ring` | none | none | `target` | none |
-| `Place` | `title`, `body`, `meta`, `caption` | `ink-body`, `ink-meta`, `edge`, `edge-raised`, `surface`, `raised`, `act-accent`, `on-act-accent`, `wash-hover`, `wash-press`, `danger`, `chip-` | `control`, `full` | `acts`, `page`, `sections`, `inside`, `control-x`, `rows`, `pair` | `strip`, `control`, `control-compact`, `popover`, `list`, `measure`, `target`, `icon-meta`, `chip`, `measure-short` | `float` |
+| `Place` | `title`, `body`, `meta`, `caption` | `ink-body`, `ink-meta`, `edge`, `edge-raised`, `surface`, `raised`, `act-accent`, `on-act-accent`, `wash-hover`, `wash-press`, `danger`, `chip-` | `control`, `full` | `acts`, `page`, `sections`, `inside`, `control-x`, `rows`, `pair` | `strip`, `control`, `control-compact`, `popover`, `list`, `measure`, `target`, `icon-meta`, `chip`, `measure-short`, `icon-inset` | `float` |
 | `Gate` | `title`, `meta` | `ink-body`, `ink-meta`, `surface` | none | `page`, `sections`, `fields`, `pair` | `auth`, `avatar` | none |
-| `Screen` | `title` | `ink-body`, `ink-meta`, `edge` | `control` | `acts`, `page`, `sections`, `pair` | `strip`, `control`, `control-compact` | none |
+| `Screen` | `title` | `ink-body`, `ink-meta`, `edge` | `control` | `acts`, `page`, `sections`, `pair` | `strip`, `control`, `control-compact`, `icon-inset` | none |
 | `Split` | none | `edge`, `ink-meta`, `surface` | `control` | `inside`, `page`, `sections` | `list`, `pane`, `control-compact` | none |
 | `Section` | `heading`, `meta`, `body`, `caption` | `ink-body`, `ink-meta`, `edge`, `fill-neutral`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `danger` | `row`, `control`, `chip`, `full` | `pair`, `fields`, `inside`, `control-x` | `icon`, `chip`, `control-compact`, `skeleton`, `field`, `target` | none |
 | `Group` | none | `edge`, `surface` | `card` | none | none | none |
@@ -2659,7 +2661,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Toolbar` | none | `edge` | none | `pair`, `page`, `inside`, `acts` | none | none |
 | `ActionBar` | `meta`, `body` | `ink-meta`, `ink-body`, `ink-disabled`, `ink-error`, `edge`, `danger`, `act-accent`, `on-act-accent`, `act-danger`, `on-act-danger`, `wash-hover`, `wash-press`, `skeleton` | `control`, `full` | `pair`, `acts`, `inside`, `control-x` | `control`, `field`, `target`, `selection`, `control-compact`, `measure-short` | none |
 | `Columns` | none | none | none | `fields`, `page`, `sections` | `column` | none |
-| `Shell` | `body`, `caption` | `canvas`, `surface`, `edge`, `ink-body`, `ink-meta`, `fill-neutral`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `ring` | `row`, `control`, `full` | `inside`, `control-x`, `rows`, `pair`, `float`, `page` | `row`, `sidebar`, `target`, `chip`, `icon`, `icon-control`, `popover` | none |
+| `Shell` | `body`, `caption` | `canvas`, `surface`, `edge`, `ink-body`, `ink-meta`, `fill-neutral`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `ring` | `row`, `control`, `full` | `inside`, `control-x`, `rows`, `pair`, `float`, `page` | `row`, `sidebar`, `target`, `chip`, `icon`, `icon-control`, `popover`, `icon-inset` | none |
 | `ListRow` | `body`, `meta`, `caption` | `ink-body`, `ink-meta`, `ink-disabled`, `ink-error`, `surface`, `edge`, `edge-error`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `ring`, `accent-ink`, `ok`, `warn`, `chip-amber`, `danger`, `avatar-`, `chip-`, `skeleton`, `fill-disabled`, `edge-strong`, `toggle-on`, `toggle-on-hover`, `on-accent` | `row`, `full`, `control`, `chip` | `inside`, `rows`, `control-x`, `card`, `acts`, `pair` | `row`, `row-2`, `avatar`, `icon`, `icon-meta`, `dot`, `spinner`, `measure-short`, `chip`, `control-compact`, `skeleton`, `figures`, `check`, `target`, `indent`, `line-body` | none |
 | `DefinitionRow` | `body`, `meta`, `code` | `ink-body`, `ink-meta`, `wash-hover`, `wash-press`, `ring`, `accent-ink`, `ok`, `warn`, `chip-amber`, `danger`, `skeleton` | `full`, `control`, `chip` | `fields`, `card`, `inside`, `pair` | `row`, `row-setting`, `control-compact`, `icon`, `icon-meta`, `dot`, `spinner`, `measure-short`, `measure`, `figures`, `skeleton`, `switch-w`, `switch-h`, `target` | none |
 | `FormField` | `body`, `meta` | `ink-body`, `ink-meta`, `ink-error`, `ink-disabled`, `ok`, `warn`, `chip-amber`, `danger` | `control` | `pair`, `fields`, `inside`, `card` | `row`, `icon`, `icon-meta`, `control-compact` | none |

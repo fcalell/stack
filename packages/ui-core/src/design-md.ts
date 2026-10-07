@@ -170,6 +170,8 @@ const SIZE_USE: Record<(typeof SIZES)[number], string> = {
 		"the inset above and below the chips of a pick of several: half of what the compact control has over a chip, less the border",
 	"line-body":
 		"one body line's box: a part on a wrapped title's first line is pinned to it",
+	"icon-inset":
+		"the gap between an icon act's box and its glyph: half of what the control has over its icon, which a bar of acts reaches across so the glyphs stand at its edges",
 };
 
 const RADIUS_USE: Record<(typeof RADIUS_ROLES)[number], string> = {

@@ -467,7 +467,14 @@ a tick with no animation, never jumped to full.
   rather than the viewport; native draws the touch one. A bleeding body draws no inset, and whatever
   stands first in it (a Toolbar, the record, the list) carries its own top inset; a Split's list
   stands its first section at the page inset (`SPLIT_LIST_STACK`'s `pt-page`) under the strip's
-  hairline at every width, so the list and the record share a top on `wide`.
+  hairline at every width, so the list and the record share a top on `wide`. The touch top bar
+  (`PAGE_TOP_BAR_TOUCH`) reaches across the page inset by `icon-inset`, half of what the control has
+  over its icon, so its first and last icon glyphs stand at the title's start and the inset's end;
+  the switcher's trigger keeps the same inset as its padding, so its avatar stands there too, and a
+  bar holding nothing draws no strip. A Place's title is a strip over a hairline and the body
+  starts a page inset under it, where a Section's title is a line of the body a pair over its
+  content; the two rhythms are not one, and a Place's title is the section's name at every density
+  (the app never forks it by density).
 - A loading form stands in for what it replaces at that part's size: `SKELETON` by the part
   (`line`, `avatar`, `icon`, `dot`, `check`, `switch`, `count`, `field`, `meter`, `chart`) and
   `SKELETON_ROW` by the row it replaces (`setting`, `field`, `facts`, `one-line`,

@@ -19,6 +19,7 @@ import {
 	PAGE_HEAD_ROOM,
 	PAGE_TITLE,
 	PAGE_TOP_BAR,
+	PAGE_TOP_BAR_TOUCH,
 	text,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useId, useRef, useState } from "react";
@@ -61,7 +62,7 @@ const PAGE = "@container/page group/page";
 // top bar holding nothing else stands only while one of them shows.
 export const DETAILS =
 	"hidden page-max-wide:group-has-data-pane/page:flex group-has-[[data-pane][data-beside]]/page:flex";
-const ROW_MARKED =
+export const ROW_MARKED =
 	"hidden items-center page-max-tablet:group-has-data-record/page:flex page-max-wide:group-has-data-pane/page:flex group-has-[[data-pane][data-beside]]/page:flex";
 const HEAD = "flex flex-col";
 // Below `tablet` of the page a record standing beside the main stands alone,
@@ -292,7 +293,13 @@ export function Place({
 	// holds `null` where it does not draw, so the acts after it never shift.
 	const head = (
 		<header className={cn(PAGE_HEAD, far && PAGE_HEAD_ROOM, HEAD, HEAD_BESIDE)}>
-			<div className={cn(PAGE_TOP_BAR, bar ? ROW : ROW_MARKED)}>
+			<div
+				className={cn(
+					PAGE_TOP_BAR,
+					touch && PAGE_TOP_BAR_TOUCH,
+					bar ? ROW : ROW_MARKED,
+				)}
+			>
 				{back}
 				{lead}
 				{touch ? null : line}

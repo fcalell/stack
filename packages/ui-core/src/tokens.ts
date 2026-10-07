@@ -823,8 +823,9 @@ export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
 // inset above and below the chips of a pick of several that centres a chip in
 // the compact control (the border inside it), and `line-body`
 // one body line's box: the height a part standing on a wrapped title's first
-// line is pinned to, so a taller part overflows it centred (`thumb` is the
-// switch's knob).
+// line is pinned to, so a taller part overflows it centred, and `icon-inset`
+// the gap between an icon act's box and its glyph, which a bar of acts reaches
+// across so the glyphs stand at its edges (`thumb` is the switch's knob).
 export const SIZES = [
 	"control",
 	"control-compact",
@@ -863,6 +864,7 @@ export const SIZES = [
 	"hairline",
 	"chips-inset",
 	"line-body",
+	"icon-inset",
 ] as const;
 export type Size = (typeof SIZES)[number];
 
@@ -873,7 +875,8 @@ export type Size = (typeof SIZES)[number];
 // eight body line boxes; an image thumbnail's side, four body line boxes (the
 // provenance lines it stands beside); an image's height cap, twenty; the
 // hairline; the chips inset, half of what the compact control has over a chip
-// less the hairline; one body line box.
+// less the hairline; one body line box; the icon inset, half of what the
+// control has over its icon.
 export type DerivedSize =
 	| "switch-travel"
 	| "text-area"
@@ -883,7 +886,8 @@ export type DerivedSize =
 	| "image-cap"
 	| "hairline"
 	| "chips-inset"
-	| "line-body";
+	| "line-body"
+	| "icon-inset";
 
 // The room set is the touch one, in canvas units: every target is then at
 // least 44 of 960, the 32 the ten-foot guidance asks, and 88 at 1920.

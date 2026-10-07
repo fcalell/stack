@@ -4,6 +4,7 @@ import {
 	PAGE_HEAD,
 	PAGE_TITLE,
 	PAGE_TOP_BAR,
+	PAGE_TOP_BAR_TOUCH,
 	text,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useContext } from "react";
@@ -64,6 +65,13 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	// it stands, else the screen's own `back`.
 	const exit = split.record ? (split.back ?? back) : back;
 	const insets = useSafeAreaInsets();
+	const acts = [
+		...(actions ?? []),
+		...(split.details ? [split.details] : []),
+		...(frame?.details ? [frame.details] : []),
+	];
+	// A top bar with nothing in it is not drawn.
+	const bar = exit !== undefined || acts.length > 0 || Boolean(more?.length);
 	return (
 		<DetailsOpen.Provider value={split.held}>
 			<PageTitle.Provider value={title}>
@@ -72,25 +80,23 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 					className={SCREEN}
 				>
 					<View className={PAGE_HEAD}>
-						<View className={cn(PAGE_TOP_BAR, TOP_BAR)}>
-							{exit === undefined ? null : (
-								<IconButton
-									icon="ChevronLeft"
-									fit="body"
-									label={words.back}
-									onAct={() => navigate(exit)}
-								/>
-							)}
-							<View className={SPACER} />
-							{[
-								...(actions ?? []),
-								...(split.details ? [split.details] : []),
-								...(frame?.details ? [frame.details] : []),
-							].map((action) => (
-								<IconButton key={action.label} {...action} fit="body" />
-							))}
-							{more?.length ? <Menu label={words.more} items={more} /> : null}
-						</View>
+						{bar ? (
+							<View className={cn(PAGE_TOP_BAR, PAGE_TOP_BAR_TOUCH, TOP_BAR)}>
+								{exit === undefined ? null : (
+									<IconButton
+										icon="ChevronLeft"
+										fit="body"
+										label={words.back}
+										onAct={() => navigate(exit)}
+									/>
+								)}
+								<View className={SPACER} />
+								{acts.map((action) => (
+									<IconButton key={action.label} {...action} fit="body" />
+								))}
+								{more?.length ? <Menu label={words.more} items={more} /> : null}
+							</View>
+						) : null}
 						<RNText
 							accessibilityRole="header"
 							className={cn(text({ role: "title" }), TITLE, PAGE_TITLE)}

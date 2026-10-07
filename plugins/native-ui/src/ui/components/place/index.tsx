@@ -16,6 +16,7 @@ import {
 	PAGE_HEAD_ROOM,
 	PAGE_TITLE,
 	PAGE_TOP_BAR,
+	PAGE_TOP_BAR_TOUCH,
 	text,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useContext, useRef } from "react";
@@ -179,7 +180,9 @@ export function Place({
 						{split.beside ? null : (
 							<View className={cn(PAGE_HEAD, far && PAGE_HEAD_ROOM)}>
 								{bar ? (
-									<View className={cn(PAGE_TOP_BAR, TOP_BAR)}>
+									<View
+										className={cn(PAGE_TOP_BAR, PAGE_TOP_BAR_TOUCH, TOP_BAR)}
+									>
 										{lead}
 										<View className={SPACER} />
 										{acts.map((action) => (
