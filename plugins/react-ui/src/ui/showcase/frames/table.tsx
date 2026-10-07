@@ -233,22 +233,44 @@ function queryOf(
 	};
 }
 
-// The frame's table with its edits held in the frame's own state.
-function Tasks(props: {
-	readOnly?: boolean;
+// What a cell draws of the table: its columns by key (in the table's order,
+// the leading one always) and its rows by id, drawn in the frame's state.
+// `ready` drives the frame once it mounts, and is one function for the life of
+// the part, as the effect that runs it depends on it.
+interface Part {
+	columns: readonly string[];
+	rows: readonly string[];
 	changes?: boolean;
 	choosing?: boolean;
+	readOnly?: boolean;
+	ready?: (frame: HTMLElement) => void;
+}
+
+const WHOLE: Part = {
+	columns: COLUMNS.map((column) => column.key),
+	rows: TASKS.map((task) => task.id),
+};
+
+// The frame's table over the part's columns and rows, with its edits held in
+// the frame's own state. The first row is the open record when selected.
+function Tasks(props: {
+	part?: Part;
 	// The state of the selection bar docked at the page's foot, which makes
 	// the page a publish page: the bar reads the chosen count, and while it
 	// is `disabled` nothing is chosen and the act is blocked.
 	publish?: ShowcaseFrame["state"];
 	state: ShowcaseFrame["state"];
 }) {
-	const choosing = props.choosing || props.publish !== undefined;
-	const row = props.changes || choosing ? CHANGE_SET : ROW;
+	const part = props.part ?? WHOLE;
+	const choosing = part.choosing || props.publish !== undefined;
+	const row = part.changes || choosing ? CHANGE_SET : ROW;
 	const [tasks, setTasks] = useState(TASKS);
 	const [chosen, setChosen] = useState(
 		props.publish === "disabled" ? [] : ["rollup", "invoices"],
+	);
+	const columns = COLUMNS.filter((column) => part.columns.includes(column.key));
+	const shown = part.rows.flatMap((id) =>
+		tasks.filter((task) => task.id === id),
 	);
 	const choose: TableChoice<Task> | undefined = choosing
 		? {
@@ -288,7 +310,7 @@ function Tasks(props: {
 	// The rows that can be chosen: the held one cannot, so `of` counts the rest.
 	// `onAll` clears the rows, and chooses them all below `tablet` of the page,
 	// where the table draws no head tick.
-	const tickable = tasks.filter((task) => task.id !== "purge");
+	const tickable = shown.filter((task) => task.id !== "purge");
 	const placed = publishing
 		? {
 				foot: (
@@ -306,15 +328,15 @@ function Tasks(props: {
 		: { act: { label: "New task", onAct: act } };
 	return (
 		<Place title="Cron tasks" {...placed}>
-			{props.readOnly ? (
-				<Table columns={COLUMNS} items={tasks} row={row} onOpen={act} />
+			{part.readOnly ? (
+				<Table columns={columns} items={shown} row={row} onOpen={act} />
 			) : (
 				<Table
-					columns={COLUMNS}
-					query={queryOf(props.state, tasks)}
+					columns={columns}
+					query={queryOf(props.state, shown)}
 					sentence="Cron tasks did not load."
 					row={row}
-					selected={props.state === "selected" ? "reindex" : undefined}
+					selected={props.state === "selected" ? part.rows[0] : undefined}
 					choose={choose}
 					empty={empty}
 					onOpen={act}
@@ -331,13 +353,13 @@ function Tasks(props: {
 // mounts inside the frame, so it draws the frame's mode.
 function Driven(props: {
 	children: ReactNode;
-	ready: (frame: HTMLElement) => void;
+	ready?: (frame: HTMLElement) => void;
 }) {
 	const frame = useRef<HTMLDivElement>(null);
 	const [container, setContainer] = useState<HTMLElement | null>(null);
 	const { ready } = props;
 	useLayoutEffect(() => {
-		if (frame.current) ready(frame.current);
+		if (frame.current) ready?.(frame.current);
 	}, [ready]);
 	return (
 		<PortalContainer value={container}>
@@ -384,48 +406,149 @@ function editAt(frame: HTMLElement, row: number, column: number) {
 }
 
 const newest = (frame: HTMLElement) => sortBy(frame, "Updated", "descending");
-const READY: Partial<Record<string, (frame: HTMLElement) => void>> = {
-	// The typed edit: a source cell, then a number cell. An edit is opened by
-	// focus, so on the page at most one edit frame keeps its edit open (the
-	// last to take focus); the edits are checked live.
-	"FIELD.fit.bar": (frame) => editAt(frame, 1, 1),
-	"FIELD.state.rest": (frame) => editAt(frame, 2, 3),
-	// Sorted by an end-aligned column, ascending.
-	"TABLE_HEAD_LABEL.sort.sorted": (frame) =>
-		sortBy(frame, "Retries", "ascending"),
-};
+const byRetries = (frame: HTMLElement) => sortBy(frame, "Retries", "ascending");
 
-// The Table on every cell it draws, the cell picking what the frame shows: an
-// edit open on the field's cells, a read-only grid (the check as its glyph)
-// on the body icon, the change set's marks on the change mark, the change
-// set's rule (a head tick mixed over its rows, a blocked row, a moved one) on
-// the mixed checkbox, an ascending sort on the sorted label, the rest sorted
-// newest first. The state picks the query's answer: the open record
-// selected, pending, failed, empty.
+// A part: the leading column and the ones named, over the rows named.
+function only(
+	columns: readonly string[],
+	rows: readonly string[],
+	more?: Omit<Part, "columns" | "rows">,
+): Part {
+	return { columns: ["task", ...columns], rows, ...more };
+}
+
+// A part whose edit opens from the keyboard on a cell, once it mounts.
+function editing(part: Part, row: string, column: string): Part {
+	return {
+		...part,
+		ready: (frame) =>
+			editAt(frame, part.rows.indexOf(row), part.columns.indexOf(column)),
+	};
+}
+
+const standing = (kind: ChangeKind) =>
+	Object.keys(STANDING)
+		.filter((id) => STANDING[id] === kind)
+		.slice(0, 1);
+
+// A cell draws the part it names, the name or its family's the first match of
+// this list: one row of each status, of each change mark and of each change
+// value, the columns a kind of text, glyph, chip or edit stands in, and the
+// head, row and frozen cells on a few rows of the common columns. A cell
+// naming none draws that few, sorted newest first.
+const SORTED = only(["retries", "updated"], ["backup", "invoices", "reindex"], {
+	ready: byRetries,
+});
+const CELL_PARTS: ReadonlyArray<readonly [string, Part]> = [
+	...TASKS.map(
+		(task) =>
+			[
+				`STATUS_DOT.state.${task.last.status}`,
+				only(["last"], [task.id]),
+			] as const,
+	),
+	...[...new Set(Object.values(STANDING))].map(
+		(kind) =>
+			[
+				`CHANGE_MARK.kind.${kind}`,
+				only([], standing(kind), { changes: true }),
+			] as const,
+	),
+	...(
+		[
+			["before", "changed"],
+			["after", "changed"],
+			["added", "added"],
+			["removed", "removed"],
+		] as const
+	).map(
+		([value, kind]) =>
+			[
+				`TABLE_CHANGE_VALUE.kind.${value}`,
+				only(["timeout"], standing(kind)),
+			] as const,
+	),
+	["TEXT_STRONG", only(["retries"], ["backup", "invoices"])],
+	[
+		"TEXT.role.meta",
+		only(["updated"], ["backup", "rollup"], { ready: newest }),
+	],
+	["TEXT.role.code", only(["schedule"], ["backup", "invoices"])],
+	["TEXT", only(["retries"], ["backup", "invoices"])],
+	// The sort arrows, the lock on the timeout's head and the change's arrow.
+	["ICON.fit.meta", only(["timeout"], standing("changed"))],
+	// The check as its glyph, read-only.
+	[
+		"ICON.fit.body",
+		only(["alerts"], ["backup", "reindex"], { readOnly: true }),
+	],
+	["CHIP", only(["queue"], ["backup", "invoices"])],
+	// The lock ends the session purge's schedule, which its row holds.
+	[
+		"FIELD.fit.bar",
+		editing(
+			only(["schedule"], ["backup", "invoices", "purge"]),
+			"invoices",
+			"schedule",
+		),
+	],
+	[
+		"FIELD.state.rest",
+		editing(only(["retries"], ["backup", "reindex"]), "reindex", "retries"),
+	],
+	[
+		"FIELD.trailing.none",
+		editing(only(["queue"], ["backup", "invoices"]), "invoices", "queue"),
+	],
+	["CHECKBOX.state.unchecked", only(["alerts"], ["reindex"])],
+	["CHECKBOX.state.checked", only(["alerts"], ["backup"])],
+	// The change set's rule: a head tick mixed over its rows, a blocked row, a
+	// moved one.
+	[
+		"CHECKBOX.state.mixed",
+		only(["last"], ["backup", "invoices", "purge", "rollup"], {
+			choosing: true,
+		}),
+	],
+	["TABLE_HEAD_LABEL.sort.sorted", SORTED],
+	[
+		"TABLE_HEAD_LABEL",
+		only(["retries", "updated"], ["backup", "invoices", "reindex"]),
+	],
+	["SKELETON.kind.line", only(["schedule"], ["backup"])],
+	["SKELETON.kind.check", only(["alerts"], ["backup"])],
+	["SKELETON.kind.dot", only(["last"], ["backup"])],
+];
+const COMMON = only(
+	["retries", "last", "updated"],
+	["backup", "invoices", "reindex"],
+	{
+		ready: newest,
+	},
+);
+
+// A skeleton cell is the waiting form itself, so it draws it at rest too.
+const waits = (cell: string) => cell.startsWith("SKELETON");
+
+// The Table on the part each cell names, in the frame's state: the open record
+// selected, pending, failed, empty. The picked edit holds in a stage: the
+// queue's chips in the popover, or on touch in the pick sheet, held inside
+// the frame.
 export function drawTable(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
-	const tasks = (
-		<Tasks
-			readOnly={cell === "ICON.fit.body"}
-			changes={cell.startsWith("CHANGE_MARK")}
-			choosing={cell === "CHECKBOX.state.mixed"}
-			state={frame.state}
-		/>
-	);
-	// The picked edit: the queue's chips in the popover, or on touch in the
-	// pick sheet, held inside the frame.
+	const part =
+		CELL_PARTS.find(([prefix]) => cell.startsWith(prefix))?.[1] ?? COMMON;
+	const state = waits(cell) && frame.state === "rest" ? "loading" : frame.state;
+	const tasks = <Tasks part={part} state={state} />;
 	if (cell === "FIELD.trailing.none")
 		return (
-			<Stage
-				contain={frame.density === "touch"}
-				ready={(stage) => editAt(stage, 1, 2)}
-			>
+			<Stage contain={frame.density === "touch"} ready={part.ready}>
 				{tasks}
 			</Stage>
 		);
 	return (
 		<Column>
-			<Driven ready={READY[cell] ?? newest}>{tasks}</Driven>
+			<Driven ready={part.ready}>{tasks}</Driven>
 		</Column>
 	);
 }
