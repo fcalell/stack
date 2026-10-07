@@ -24,6 +24,10 @@ if (!loaded) throw new Error("the Storybook Vite config did not load");
 export default defineConfig({
 	...mergeConfig(loaded.config, { plugins: [rosterPlugin()] }),
 	test: {
+		// Memory: each parallel page is one renderer, so at most two open at once
+		// across both projects. Set here, not per project: projects with different
+		// `maxWorkers` cannot share one run.
+		maxWorkers: 2,
 		projects: [
 			{
 				extends: true,
@@ -36,8 +40,6 @@ export default defineConfig({
 				test: {
 					name: "storybook",
 					testTimeout: 120_000,
-					// Memory: each parallel page is one renderer, so at most two open at once.
-					maxWorkers: 2,
 					browser: {
 						enabled: true,
 						headless: true,

@@ -1795,7 +1795,7 @@ differ in what they draw: the workbench keeps the router plugin and adds `screen
 tree, the fixtures, MSW's worker); the roster's Storybook leaves the router out and adds only the
 optimizer start.
 
-The Vitest browser project sets `maxWorkers: 2`, which caps the story pages one `pnpm stories:test` opens at
+The Vitest run sets `maxWorkers: 2` for both browser projects, which caps the story pages one `pnpm stories:test` opens at
 once (each is a renderer, and a wider run exhausts the memory of a 16 GiB machine). The showcase's browser
 scripts (`test-storybook`, `test-screens`) hold one lock per user (`$XDG_RUNTIME_DIR/stack-browser.lock`,
 through `flock`), so runs from several sessions or worktrees queue instead of running side by side: two
