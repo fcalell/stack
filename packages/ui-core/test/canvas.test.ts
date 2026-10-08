@@ -93,6 +93,7 @@ test("Canvas is a web-only roster entry with the descriptor's props", () => {
 		"onMove",
 		"onConnect",
 		"act",
+		"loading",
 	]);
 	assert.deepEqual(canvas.platforms, ["web"]);
 	const has = (platform?: "web" | "native") =>

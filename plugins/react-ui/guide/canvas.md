@@ -159,6 +159,14 @@ const [selected, setSelected] = useState<string>();
 
 An `act` stands at the foot's centre; it adds, it never removes.
 
+## Loading
+
+`loading` stands the ground and its grid with three node-shaped skeletons, busy to assistive
+technology, while the data is read, so the page below the head does not move when the graph
+arrives. Pass `nodes={[]}` meanwhile: `nodes`, the handlers and the `act` are ignored, and the
+loading form draws no zoom stack, no act, no node button and no drag. Do not stand `nodes={[]}`
+for a wait: it reads as an empty graph.
+
 ## Where it stands
 
 The canvas has no height of its own: it fills the region it stands in. Stand it as a `Split`'s

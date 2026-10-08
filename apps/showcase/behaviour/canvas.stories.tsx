@@ -1036,6 +1036,59 @@ export const StateKeepsTheLayout: StoryObj = {
 	},
 };
 
+// A waiting canvas stands the loaded one's ground and grid with three
+// node-shaped cards stacked at its centre, and is busy and inert: no button, no
+// zoom stack, no act, however the page handlers read.
+export const Loading: StoryObj = {
+	render: () => (
+		<>
+			<div className={STAGE} data-testid="loaded">
+				<Canvas label="Loaded" nodes={WORKFLOW.nodes} edges={WORKFLOW.edges} />
+			</div>
+			<div className={STAGE} data-testid="waiting">
+				<Canvas
+					label="Waiting"
+					nodes={WORKFLOW.nodes}
+					loading
+					onSelect={fn()}
+					onMove={fn()}
+					onConnect={fn()}
+					act={{ label: "Add node", onAct: fn() }}
+				/>
+			</div>
+		</>
+	),
+	play: async ({ canvas }) => {
+		const waiting = await canvas.findByRole("region", { name: "Waiting" });
+		const loaded = await canvas.findByRole("region", { name: "Loaded" });
+		await waitFor(
+			() => expect(getComputedStyle(loaded).opacity).toBe("1"),
+			LAID,
+		);
+		await expect(waiting).toHaveAttribute("aria-busy", "true");
+		await expect(waiting.querySelectorAll("button")).toHaveLength(0);
+		await expect(waiting.querySelector("[data-grid]")).not.toBeNull();
+		await expect(getComputedStyle(waiting).backgroundColor).toBe(
+			getComputedStyle(loaded).backgroundColor,
+		);
+		const cards = [
+			...(waiting.querySelector("[aria-hidden]:not(svg)")?.children ?? []),
+		];
+		await expect(cards).toHaveLength(3);
+		const node = rect(nodeButtons(loaded)[0] as Element);
+		const pane = rect(waiting);
+		for (const card of cards) {
+			await expect(rect(card).width).toBeCloseTo(node.width, 0);
+			await expect(
+				Math.abs(
+					rect(card).left + rect(card).width / 2 - (pane.left + pane.width / 2),
+				),
+			).toBeLessThan(1);
+		}
+		await expect(rect(waiting).height).toBe(rect(loaded).height);
+	},
+};
+
 // Each generated canvas frame's stage, but the glyph's (which `Canvas overview`
 // checks, fitted under the text floor), holds its whole graph at scale 1: the
 // drawing (frames, chips, nodes) and every node's button lie inside the pane
@@ -1047,6 +1100,7 @@ function framesHoldTheirGraph(density: "desktop" | "touch"): StoryObj {
 			frame.component === "Canvas" &&
 			frame.mode === "light" &&
 			frame.density === density &&
+			frame.state !== "loading" &&
 			!frame.cell.name.startsWith("CANVAS_NODE_GLYPH") &&
 			drawCanvas(frame) !== undefined,
 	);

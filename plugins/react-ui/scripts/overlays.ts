@@ -438,6 +438,7 @@ export const OVERLAYS: readonly string[] = [
 	// Stats
 	"page-tablet:basis-0",
 	// Canvas
+	"gap-sections",
 	"outline-selected-outline",
 	"overflow-visible",
 	"text-grid",

@@ -8,18 +8,13 @@ import type {
 	CanvasPath,
 	CanvasPoint,
 } from "@fcalell/ui-core/descriptors";
-import {
-	CANVAS_GROUND,
-	CANVAS_GROUP,
-	CANVAS_GROUP_HEAD,
-} from "@fcalell/ui-core/variants";
+import { CANVAS_GROUP, CANVAS_GROUP_HEAD } from "@fcalell/ui-core/variants";
 import {
 	type KeyboardEvent,
 	type MouseEvent,
 	useCallback,
 	useEffect,
 	useEffectEvent,
-	useId,
 	useLayoutEffect,
 	useMemo,
 	useRef,
@@ -37,6 +32,7 @@ import {
 	UNZOOM_VAR,
 } from "./floor.ts";
 import type { Size } from "./geometry.ts";
+import { GROUND, Grid } from "./ground.tsx";
 import { GroupFrame } from "./group.tsx";
 import { isGround } from "./hit.ts";
 import { EdgeLabel } from "./label.tsx";
@@ -45,6 +41,7 @@ import { type EdgeTone, edgeLook, nodeLook } from "./look.ts";
 import { type NodeEdit, NodeView } from "./node.tsx";
 import { landAt, place } from "./view.ts";
 import { useViewport, useViewportValue } from "./viewport.ts";
+import { CanvasWait } from "./wait.tsx";
 import { ActFoot, ZoomStack } from "./zoom.tsx";
 
 /** A graph of nodes and edges on a pannable, zoomable ground. */
@@ -69,6 +66,8 @@ export interface CanvasProps extends Closed {
 	onConnect?: (from: string, to: string | null) => void;
 	/** The canvas's act, at the foot's centre. */
 	act?: Act;
+	/** Stands the ground and three node-shaped bars in place of the graph while the data is read; `nodes`, every handler and the `act` are then ignored. */
+	loading?: boolean;
 }
 
 const NO_EDGES: readonly CanvasEdge[] = [];
@@ -76,10 +75,7 @@ const NO_GROUPS: readonly CanvasGroup[] = [];
 const NO_SIZES: ReadonlyMap<string, Size> = new Map();
 const NO_POINTS: ReadonlyMap<string, CanvasPoint> = new Map();
 
-const REGION =
-	"relative flex flex-col grow min-h-0 min-w-0 overflow-hidden touch-none";
 const HIDDEN = "opacity-0";
-const GRID = "absolute inset-0 size-full text-grid";
 const LAYER = "absolute left-0 top-0";
 const FLOW = "flex items-center";
 const COLUMN = "flex flex-col";
@@ -87,7 +83,15 @@ const PROBE = "invisible absolute flex flex-col items-start";
 const NBSP = "\u00a0";
 
 /** A graph of nodes and edges, laid out and pannable; read-only until it is given `onSelect`, `onMove` or `onConnect`. */
-export function Canvas({
+export function Canvas({ loading, ...graph }: CanvasProps) {
+	return loading ? (
+		<CanvasWait label={graph.label} />
+	) : (
+		<CanvasGraph {...graph} />
+	);
+}
+
+function CanvasGraph({
 	label,
 	nodes,
 	edges = NO_EDGES,
@@ -98,8 +102,7 @@ export function Canvas({
 	onMove,
 	onConnect,
 	act,
-}: CanvasProps) {
-	const grid = useId();
+}: Omit<CanvasProps, "loading">) {
 	const region = useRef<HTMLElement>(null);
 	const viewport = useViewport(region);
 	const touch = useTouch();
@@ -287,16 +290,9 @@ export function Canvas({
 			data-fill
 			onKeyDown={clear}
 			onClick={onSelect ? ground : undefined}
-			className={cn(CANVAS_GROUND, REGION, !ready && HIDDEN)}
+			className={cn(GROUND, !ready && HIDDEN)}
 		>
-			<svg aria-hidden="true" data-ground className={GRID}>
-				<defs>
-					<pattern id={grid} data-grid patternUnits="userSpaceOnUse">
-						<circle fill="currentColor" />
-					</pattern>
-				</defs>
-				<rect width="100%" height="100%" fill={`url(#${grid})`} />
-			</svg>
+			<Grid />
 			<div data-layer className={LAYER}>
 				{groups.map((group) => {
 					const frame = routed.frames.get(group.id);

@@ -1627,7 +1627,10 @@ a tick with no animation, never jumped to full.
   `expo-clipboard` is; its config plugin only sets an iCloud container, so the component needs none.
 - `Canvas` (web only) draws a graph on two libraries that react-ui carries as its own
   dependencies, so a consumer installs neither: `d3-zoom` is the viewport and `elkjs` places the
-  nodes. The canvas owns everything else. `d3-zoom` on the region gives pan, the Ctrl or Cmd wheel
+  nodes. The canvas owns everything else. `loading` swaps the whole graph component for a hookless
+  `CanvasWait` (the ground and grid it shares with the graph, three `canvasNode` cards of skeletons
+  in a centred column), so no viewport, layout or ELK runs while waiting and no zoom stack or act
+  stands (both are overlays, so omitting them moves nothing). `d3-zoom` on the region gives pan, the Ctrl or Cmd wheel
   and pinch, and its transform lands on one layer by script, so a pan renders no React tree; a
   plain wheel pans through the canvas's own listener, since d3-zoom's wheel always zooms. The layer
   holds, bottom to top, the group frames, one SVG of every edge with its chips over it, and the

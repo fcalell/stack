@@ -116,12 +116,18 @@ const DRAWN: Record<string, { label: string; graph: Graph }> = {
 };
 
 // The canvas draws in seven cells: the workflow at rest (the journey with its
-// confirm node selected), a problem, an off node, a status per state, a run
-// over the workflow, a scenario over the journey, and the glyph a node is under
-// the text floor, which is the workflow fitted: at rest, with its plan node
-// selected, and with a problem.
+// confirm node selected, and waiting), a problem, an off node, a status per
+// state, a run over the workflow, a scenario over the journey, and the glyph a
+// node is under the text floor, which is the workflow fitted: at rest, with its
+// plan node selected, and with a problem.
 export function drawCanvas(frame: ShowcaseFrame) {
 	const { name } = frame.cell;
+	if (frame.state === "loading")
+		return name === "CANVAS_NODE.state.rest" ? (
+			<div className={STAGE}>
+				<Canvas label="Workflow" nodes={[]} loading />
+			</div>
+		) : undefined;
 	if (name.startsWith("CANVAS_NODE_GLYPH.state.")) {
 		if (frame.state !== "rest") return undefined;
 		const state = name.slice(name.lastIndexOf(".") + 1);

@@ -50,8 +50,8 @@ const MOST = Math.log2(STEP);
 // Firefox report pixels for a trackpad, so a line count comes from a mouse.
 const LINE = 16;
 // The dot grid, in the pattern page's range: a 16 px pitch of 1 px dots.
-const PITCH = 16;
-const DOT = 0.5;
+export const PITCH = 16;
+export const DOT = 0.5;
 
 // d3-zoom's own scale of a wheel's delta by its mode; a Ctrl or Cmd wheel (a
 // trackpad pinch is a Ctrl wheel) zooms ten times faster.
