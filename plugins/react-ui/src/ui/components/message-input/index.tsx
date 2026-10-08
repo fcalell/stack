@@ -26,6 +26,7 @@ import {
 	type ClipboardEvent,
 	type DragEvent,
 	type KeyboardEvent,
+	type MouseEvent,
 	type ReactNode,
 	useRef,
 	useState,
@@ -89,7 +90,7 @@ export interface MessageInputProps extends Closed {
 	disabled?: boolean;
 }
 
-/** On the desktop one box (its attachments, the text growing to eight lines and scrolling past them, then the attach act, Stop while an answer comes, and Send), the notice under it at the text's x; on touch one row (attach, the field growing upward, Stop's icon act while an answer comes, Send), the notice under it in the same columns. */
+/** On the desktop one box (its attachments, the text growing to eight lines and scrolling past them, then the attach act, Stop while an answer comes, and Send), the notice under it at the text's x; on touch one row (attach, the field growing upward, Stop's icon act while an answer comes, Send), the notice under it in the same columns. A press anywhere in the box or field that is no act focuses the text, the caret at its end. */
 export function MessageInput({
 	value,
 	onChange,
@@ -166,6 +167,17 @@ export function MessageInput({
 					},
 				}
 			: undefined;
+	// A press on the box that lands on no act or chip puts the focus in the text,
+	// the caret at its end: the box is the field, not its one line.
+	const focusText = (event: MouseEvent<HTMLDivElement>) => {
+		const area = textField.current;
+		if (!area || event.target === area) return;
+		if (event.target instanceof Element && event.target.closest("button, a"))
+			return;
+		event.preventDefault();
+		area.focus();
+		area.setSelectionRange(area.value.length, area.value.length);
+	};
 	// A phone's return key breaks the line; the desktop's sends.
 	const keyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
 		if (touch || event.key !== "Enter" || event.shiftKey) return;
@@ -250,8 +262,10 @@ export function MessageInput({
 		input = (
 			<div className={cn(MESSAGE_INPUT_ROW, ROW)}>
 				{attach}
+				{/* biome-ignore lint/a11y/noStaticElementInteractions: a pointer shortcut to the text; the keyboard reaches the text itself */}
 				<div
 					{...dropping}
+					onMouseDown={focusText}
 					className={cn(
 						field({ fit: "bar", trailing: "none", state: "rest" }),
 						MESSAGE_INPUT_FIELD,
@@ -288,7 +302,12 @@ export function MessageInput({
 			);
 	} else {
 		input = (
-			<div {...dropping} className={cn(MESSAGE_INPUT_BOX, STACK, box)}>
+			// biome-ignore lint/a11y/noStaticElementInteractions: a pointer shortcut to the text; the keyboard reaches the text itself
+			<div
+				{...dropping}
+				onMouseDown={focusText}
+				className={cn(MESSAGE_INPUT_BOX, STACK, box)}
+			>
 				{chips ? <div className={MESSAGE_INPUT_CHIPS}>{chips}</div> : null}
 				<div className={MESSAGE_INPUT_TEXT}>{textarea}</div>
 				<div className={cn(MESSAGE_INPUT_FOOT, FOOT)}>

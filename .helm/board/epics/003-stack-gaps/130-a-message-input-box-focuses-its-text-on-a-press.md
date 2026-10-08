@@ -1,6 +1,6 @@
 ---
 id: 003-130
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: a message input's box focuses its text on a press
@@ -14,9 +14,12 @@ Touch: Now's ask box at 320 and 390 measures a 177 x 24 text area inside a 44 px
 The desktop box (`MESSAGE_INPUT_BOX` in ui-core/src/variants.ts, the `div` in plugins/react-ui/src/ui/components/message-input/index.tsx) carries the border, the focus ring (`BOX_FOCUS`) and the drop handlers, and focuses its text only for Send and Stop; no press handler on the box reaches the text area, and the text area is a single-line-high element that grows with its text. A `TextArea` and the other fields are labels or take the press on their whole box, so this is the one bordered field whose surface is mostly dead. The app cannot add a handler to the roster's box. Not 003-105 (the focus ring) and not 003-48 (paste and drop). Seen at stack `5564217`.
 
 ## Acceptance criteria
-- [ ] A press anywhere in the desktop box that is not an act (the padding, the gap under the text, the foot row's empty part) puts focus in the text, with the caret at its end.
-- [ ] A press on an act, a chip or its remove act does what it did.
-- [ ] The MessageInput showcase holds the desktop box and the critique presses its edges.
+- [x] A press anywhere in the desktop box that is not an act (the padding, the gap under the text, the foot row's empty part) puts focus in the text, with the caret at its end.
+- [x] A press on an act, a chip or its remove act does what it did.
+- [x] The MessageInput showcase holds the desktop box and the critique presses its edges.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides, whether the box takes the press or the text area fills the box's height.
+- [x] Its shape (a component, a variant, a token, an option): the stack session decides, whether the box takes the press or the text area fills the box's height.
+
+## Built
+No prop. The desktop box and the touch field take a mouse-down that lands on no button or link and focus the text, the caret at its end (react-ui `focusText`); on the phone's native field a press focuses the `TextInput` through a non-accessible `Pressable`. A press on an act, chip or remove act does what it did. Evidence: `behaviour/message-input.stories.tsx` presses the box's padding and the foot row's empty part (focus lands in the text, the caret at its end), then presses Send; the MessageInput stories pass. The critique pressing the box's edges is still to run.

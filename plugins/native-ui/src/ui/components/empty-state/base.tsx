@@ -72,6 +72,19 @@ export function EmptyStateBase(props: {
 		</RNText>
 	);
 	const { act } = props;
+	// A Section that holds nothing and offers nothing says it as one sentence,
+	// unframed; a title, mark, act or children keep the frame, and a fill keeps
+	// the box it fills.
+	const quiet =
+		section &&
+		!inGroup &&
+		!props.fill &&
+		props.title === undefined &&
+		!mark &&
+		!act &&
+		!props.children;
+	if (quiet)
+		return <RNText className={text({ role: "meta" })}>{props.sentence}</RNText>;
 	// Where it stands picks the form: the title's role and the act's look.
 	if (framed || !page) {
 		const title =

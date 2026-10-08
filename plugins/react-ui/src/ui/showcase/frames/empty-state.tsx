@@ -56,6 +56,9 @@ export function drawEmptyState(frame: ShowcaseFrame) {
 							act={{ label: "Add endpoint", onAct: act }}
 						/>
 					</Section>
+					<Section title="Needs you">
+						<EmptyState sentence="Nothing needs you." />
+					</Section>
 				</Place>
 			</Column>
 		);

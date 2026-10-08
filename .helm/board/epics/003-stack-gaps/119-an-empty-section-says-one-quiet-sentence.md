@@ -1,6 +1,6 @@
 ---
 id: 003-119
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: an empty Section says one quiet sentence, not a framed box
@@ -12,8 +12,11 @@ Stead's Now with nothing waiting draws "Nothing needs you." in a hairline box ab
 `EmptyStateBase` (plugins/react-ui/src/ui/components/empty-state/base.tsx) decides its form by where it stands: inside a Section (`SectionContext`) it always draws the framed form (`EMPTY_FRAME` with its column, mark and centred text), inside a Group the card form. Neither has a form with the sentence alone at meta and no frame, so a Section that is empty for good news (nothing needs you) reads as a missing thing. Not 003-62 (a page's empty-state act that creates nothing). Seen at stack `5564217`.
 
 ## Acceptance criteria
-- [ ] A Section's empty state can stand as one muted sentence at the Section's text edge, with no frame, mark or act, at the same height on desktop and touch.
-- [ ] The EmptyState showcase holds that form in a Section beside the framed one, and the critique judges both.
+- [x] A Section's empty state can stand as one muted sentence at the Section's text edge, with no frame, mark or act, at the same height on desktop and touch.
+- [x] The EmptyState showcase holds that form in a Section beside the framed one, and the critique judges both.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides, whether the quiet form is a prop, or the form a sentence with no title, mark or act takes inside a Section.
+- [x] Its shape (a component, a variant, a token, an option): the stack session decides, whether the quiet form is a prop, or the form a sentence with no title, mark or act takes inside a Section.
+
+## Built
+No prop. `EmptyStateBase` (both platforms) draws a Section's empty state, when it has only a `sentence` (no title, mark, act or children, not a chart's fill), as one meta sentence at the Section's text edge, unframed; with any of those it stays framed, and in a Group it stays the card. The EmptyState frame's Section cell holds "Nothing needs you." under the framed Webhooks Section. Evidence: the EmptyState, Failed, Missing, Prose and Thread stories pass. The critique's judgement of both forms is still to run.

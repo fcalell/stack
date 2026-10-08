@@ -396,7 +396,6 @@ export const OVERLAYS: readonly string[] = [
 	"page-max-tablet:justify-end",
 	// Prose, Code, Diff, ProseDiff, FileRow, Comparison
 	"inline-block",
-	"whitespace-pre",
 	"whitespace-pre-wrap",
 	"wrap-anywhere",
 	"wrap-break-word",

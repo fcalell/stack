@@ -17,7 +17,7 @@ import {
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 import { useContext, useEffect, useRef, useState } from "react";
-import { Text as RNText, TextInput, View } from "react-native";
+import { Pressable, Text as RNText, TextInput, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FieldDisabled } from "../../lib/field";
@@ -130,7 +130,10 @@ export function MessageInput({
 						/>
 					</FieldDisabled.Provider>
 				) : null}
-				<View
+				{/* A press on the field outside its chips puts the focus in the text; the text is the one control. */}
+				<Pressable
+					accessible={false}
+					onPress={() => textField.current?.focus()}
 					className={cn(
 						field({ fit: "bar", trailing: "none", state: "rest" }),
 						MESSAGE_INPUT_FIELD,
@@ -158,7 +161,7 @@ export function MessageInput({
 							disabled && VALUE_DISABLED,
 						)}
 					/>
-				</View>
+				</Pressable>
 				{/* Stop is an icon act, so the field keeps its width; its glyph is the stop square in a ring, never a bare square a checkbox would read as. */}
 				{working ? (
 					<IconButtonBase

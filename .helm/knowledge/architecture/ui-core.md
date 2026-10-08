@@ -1479,11 +1479,12 @@ a tick with no animation, never jumped to full.
 - A copy act (`Code`'s, `DefinitionRow`'s) reads Copied for two seconds from the last copy: each
   copy is a counted moment and the reset is keyed on it, so a copy inside the window restarts it.
   Unfolding a `Code` moves focus to its already-mounted text in the press, before the fold act
-  unmounts, so focus never drops to the page. The web's text takes a tab stop only while it
-  scrolls sideways (a resize observer reads it), else it is focusable by script alone, so the fold
-  still lands on it and a reader passes no region with nothing to scroll. The web's page-frame
-  scrollers (the Place's and Screen's body, the Split's list, main and pane, a sheet's body, the Gate's page) follow
-  the same rule through `lib/scrolls.ts`, on the vertical axis, with one more condition: a
+  unmounts, so focus never drops to the page. A `Code` keeps its line breaks and wraps a long line
+  anywhere (no `wrap` prop, no sideways scroll), so an argument the operator copies reads whole at
+  every width and the web's text is focusable by script alone, where the fold lands on it. Its
+  height on load changes by the lines that wrap, as a Diff's does. The web's page-frame
+  scrollers (the Place's and Screen's body, the Split's list, main and pane, a sheet's body, the Gate's page) take a
+  tab stop only while they scroll, through `lib/scrolls.ts`, on the vertical axis, with one more condition: a
   region takes the stop only while it scrolls and holds nothing a keyboard reaches (what a keyboard reaches is `isTabbable` of `lib/focus`, the rule a
   docked Sheet's focus hand-back reads), re-measured when its content changes anywhere inside it or
   an element's tab-affecting attribute does, since a waiting form holds its loaded size and resizes

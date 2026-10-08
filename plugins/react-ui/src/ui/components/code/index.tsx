@@ -17,7 +17,6 @@ import type { Closed } from "../../lib/closed.ts";
 import { useCopy } from "../../lib/copy.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 import { InsetRing } from "../../lib/ring.ts";
-import { useScrolls } from "../../lib/scrolls.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
@@ -26,10 +25,11 @@ const FRAME = "flex flex-col min-w-0 overflow-hidden";
 const HEAD = "flex items-center";
 const TITLE = "grow min-w-0 truncate";
 const BODY = "flex min-w-0";
-// The text scrolls sideways and never wraps; focusable so a keyboard scrolls
-// it, its ring inward inside the frame's clip.
+// The text keeps its line breaks and wraps a long token anywhere, so an
+// argument reads whole at any width. Focusable by script (the fold lands on
+// it), its ring inward inside the frame's clip.
 const TEXT =
-	"overflow-x-auto whitespace-pre focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring";
+	"whitespace-pre-wrap wrap-anywhere focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring";
 const TEXT_BESIDE = "grow min-w-0";
 const ACT = "shrink-0";
 const LINE = "flex items-center h-lh";
@@ -99,7 +99,7 @@ function CopyAct(props: { name?: string; text: string }) {
 	);
 }
 
-/** Mono at the code role in the frame Code, Diff and ProseDiff share; never wraps, the text scrolling sideways inside the frame and taking a tab stop only when it does. A head names it (`title`) and carries the copy and download acts; without a title they stand side by side in a column beside the first line. `tail` folds the earlier lines behind a one-way act that reveals them and leaves, the focus landing on the text. */
+/** Mono at the code role in the frame Code, Diff and ProseDiff share; keeps its line breaks and wraps a long line at any width, never scrolling sideways. A head names it (`title`) and carries the copy and download acts; without a title they stand side by side in a column beside the first line. `tail` folds the earlier lines behind a one-way act that reveals them and leaves, the focus landing on the text. */
 export function Code({
 	text: source,
 	title,
@@ -113,7 +113,6 @@ export function Code({
 	const words = useWords();
 	const id = useId();
 	const [textNode, setTextNode] = useState<HTMLPreElement | null>(null);
-	const scrolls = useScrolls(textNode, "x");
 	const [unfolded, setUnfolded] = useState(false);
 	const name = title ?? words.code;
 	// The acts' name: the title, else the file the download saves.
@@ -193,9 +192,8 @@ export function Code({
 		<pre
 			ref={setTextNode}
 			id={id}
-			// A keyboard scrolls the text sideways; one that fits is focusable by
-			// script only (the fold lands on it), out of the tab order.
-			tabIndex={scrolls ? 0 : -1}
+			// Focusable by script only (the fold lands on it), out of the tab order.
+			tabIndex={-1}
 			role="group"
 			aria-label={name}
 			className={cn(

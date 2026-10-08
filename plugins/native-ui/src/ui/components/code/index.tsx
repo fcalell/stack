@@ -12,7 +12,7 @@ import {
 import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import { useContext, useState } from "react";
-import { Pressable, Text as RNText, ScrollView, View } from "react-native";
+import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { useCopy } from "../../lib/copy";
@@ -99,8 +99,8 @@ function DownloadAct(props: { name: string; value: string; file: string }) {
 	);
 }
 
-// Mono at the code role in the frame Code, Diff and ProseDiff share; never
-// wraps, the text scrolling sideways inside the frame. A head names it
+// Mono at the code role in the frame Code, Diff and ProseDiff share; a long
+// line wraps, never scrolling sideways. A head names it
 // (`title`) and carries the copy and download acts; without a title they
 // stand side by side in a column beside the first line. `tail` folds the earlier lines behind a
 // one-way act that reveals them and leaves.
@@ -189,17 +189,16 @@ export function Code({
 				</RNText>
 			</Pressable>
 		) : null;
-	// The padding rides the content, so it scrolls with the text as the web's
-	// does inside its scrolling box.
 	const body = (
-		<ScrollView
-			horizontal
-			showsHorizontalScrollIndicator={false}
-			className={cn(title && !fold && CODE_UNDER_HEAD, beside && TEXT_BESIDE)}
-			contentContainerClassName={codeText({ act: beside ? "beside" : "none" })}
+		<View
+			className={cn(
+				codeText({ act: beside ? "beside" : "none" }),
+				title && !fold && CODE_UNDER_HEAD,
+				beside && TEXT_BESIDE,
+			)}
 		>
 			<RNText className={text({ role: "code" })}>{shown.join("\n")}</RNText>
-		</ScrollView>
+		</View>
 	);
 	return (
 		<View className={cn(CONTENT_FRAME, FRAME)}>

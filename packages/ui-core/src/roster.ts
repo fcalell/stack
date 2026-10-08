@@ -1775,7 +1775,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// `icon` at the control fit), the title at the role of where it stands
 		// (heading on a page, body 500 in a Section, title on a first run) and
 		// the act; in a Section a hairline frame around it, in a Group the
-		// card's.
+		// card's; a Section's with only a sentence is that sentence at meta, unframed.
 		EmptyState: {
 			props: ["icon", "title", "sentence", "act", "children"],
 			draws: [
