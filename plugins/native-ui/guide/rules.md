@@ -379,7 +379,7 @@ The bar's column stands centred in the foot.
 
 An `OptionList` holds a static set in `options`. Options from a query take `query`, `sentence`,
 `empty` (a sentence) and an `option` map over the check row: `value`, `label`, `description`,
-`recommended` and `group`; it waits, fails and empties inside its card. Its `value` picks the
+`recommended`, `blocked` and `group`; it waits, fails and empties inside its card. Its `value` picks the
 form: a set (`onChange` hears the set) draws check rows, one value or `null` (`onChange` hears
 the value) radio rows, one answer among a few described options. An option that cannot be chosen
 now carries `blocked`, a short reason that replaces its description in the disabled ink (in an

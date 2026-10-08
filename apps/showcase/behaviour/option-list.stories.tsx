@@ -144,15 +144,38 @@ const AGENTS = [
 	{ value: "editor", label: "Editor", blocked: "Asks for edit" },
 ];
 
-function Agents(props: { width: number; several: boolean }) {
+// The same agents read from data: the `option` map names where each slot is.
+const ROWS = AGENTS.map((agent) => ({
+	id: agent.value,
+	name: agent.label,
+	about: "description" in agent ? agent.description : undefined,
+	why: "blocked" in agent ? agent.blocked : undefined,
+}));
+const QUERY = {
+	data: ROWS,
+	isPending: false,
+	isError: false,
+	refetch: () => {},
+};
+const SLOTS = {
+	value: (row: (typeof ROWS)[number]) => row.id,
+	label: (row: (typeof ROWS)[number]) => row.name,
+	description: (row: (typeof ROWS)[number]) => row.about,
+	blocked: (row: (typeof ROWS)[number]) => row.why,
+};
+
+function Agents(props: { width: number; several: boolean; queried: boolean }) {
 	const [many, setMany] = useState<string[]>(["editor"]);
 	const [one, setOne] = useState<string | null>("editor");
+	const source = props.queried
+		? { query: QUERY, option: SLOTS, sentence: "Did not load.", empty: "None." }
+		: { options: AGENTS };
 	return (
 		<div style={{ width: props.width, maxWidth: "100%" }}>
 			{props.several ? (
-				<OptionList options={AGENTS} value={many} onChange={setMany} />
+				<OptionList {...source} value={many} onChange={setMany} />
 			) : (
-				<OptionList options={AGENTS} value={one} onChange={setOne} />
+				<OptionList {...source} value={one} onChange={setOne} />
 			)}
 		</div>
 	);
@@ -167,11 +190,12 @@ const disabled = (element: HTMLElement) =>
 
 // A blocked option takes no press and leads its meta line with its reason in
 // the disabled ink, in a two-line row; a blocked option in the value draws and
-// acts as any chosen one (no reason), and once removed is blocked again.
-function blocks(width: number, several: boolean): StoryObj {
+// acts as any chosen one (no reason), and once removed is blocked again, from
+// a static set or a query's `option` map alike.
+function blocks(width: number, several: boolean, queried = false): StoryObj {
 	const role = several ? "checkbox" : "radio";
 	return {
-		render: () => <Agents width={width} several={several} />,
+		render: () => <Agents width={width} several={several} queried={queried} />,
 		play: async ({ canvas, userEvent }) => {
 			const [writer, reviewer, editor] = canvas.getAllByRole(role);
 			if (!writer || !reviewer || !editor) throw new Error("no options");
@@ -210,3 +234,6 @@ export const BlockedChecks320 = blocks(320, true);
 export const BlockedChecks1440 = blocks(1440, true);
 export const BlockedRadios320 = blocks(320, false);
 export const BlockedRadios1440 = blocks(1440, false);
+export const BlockedFromData320 = blocks(320, true, true);
+export const BlockedFromData1440 = blocks(1440, true, true);
+export const BlockedRadiosFromData1440 = blocks(1440, false, true);

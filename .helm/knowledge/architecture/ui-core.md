@@ -1255,7 +1255,7 @@ a tick with no animation, never jumped to full.
 - An `OptionList` is a collection with a static form. A static set takes `options` (an `Option`
   is already the projected row, waiting on `loading`); a set from a query takes `query`,
   `sentence`, `empty` and an `option` map over the check row's slots (`value`, `label`,
-  `description`, `recommended`, and `group`, the label it stands under, groups in the order they
+  `description`, `recommended`, `blocked`, and `group`, the label it stands under, groups in the order they
   first appear). Every state stands in its card, so the field keeps its place in the form:
   waiting, four check rows, two-line only when `description` is declared (a static set: when an
   option is described) under a group label's bar only when `group` is; failed, one row holding

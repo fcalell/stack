@@ -609,6 +609,7 @@ export interface OptionSlots<T, V extends string> {
 	label: (item: T) => string;
 	description?: (item: T) => string | undefined;
 	recommended?: (item: T) => boolean | undefined;
+	blocked?: (item: T) => string | undefined;
 	group?: (item: T) => string;
 }
 
@@ -626,6 +627,8 @@ export function optionsOf<T, V extends string>(
 		const description = slots.description?.(item);
 		if (description !== undefined) option.description = description;
 		if (slots.recommended?.(item)) option.recommended = true;
+		const blocked = slots.blocked?.(item);
+		if (blocked !== undefined) option.blocked = blocked;
 		return option;
 	};
 	const { group } = slots;

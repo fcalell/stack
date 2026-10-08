@@ -93,6 +93,22 @@ test("a query's items project into options, grouped in first-seen order", () => 
 	);
 });
 
+test("a query's blocked slot carries the reason into the option", () => {
+	assert.deepEqual(
+		optionsOf(SCOPES, {
+			value: (s) => s.id,
+			label: (s) => s.name,
+			blocked: (s) =>
+				s.id === "issues" ? "Needs the Planning plan" : undefined,
+		}),
+		[
+			{ value: "read", label: "Read repos" },
+			{ value: "issues", label: "Issues", blocked: "Needs the Planning plan" },
+			{ value: "write", label: "Write repos" },
+		],
+	);
+});
+
 test("one value or null is one choice; a set is several", () => {
 	const one: OneChoice<string> = { value: null, onChange: () => {} };
 	const set: SetChoice<string> = { value: [], onChange: () => {} };

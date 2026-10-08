@@ -39,3 +39,11 @@ Stead's workflow canvas sets an agent node's agents in a `Picker`, and design/07
 
 ## Owner ruling
 The owner rules: a query-driven `OptionList`'s `option` map gains a `blocked` slot (a field name, as its other slots), so an option read from data can be blocked. The arrow keys landing on a blocked option in the Select and Picker lists is accepted (as the Menu); Enter and a press pick nothing. To build: the map slot. Still open after it: the touch sheet and native rows unexercised, and the critique.
+
+## Built (the map slot)
+- `OptionSlots.blocked` (`ui-core/src/list-state.ts`): a function of the loaded item returning the reason or `undefined`, as the other slots; `optionsOf` carries it into `Option.blocked`, so both platforms' `OptionList` draw and act on it with no change of their own (they read `optionsOf`). It leaves the waiting shape unchanged. Unit test in `test/option-list.test.ts`; both `guide/rules.md` pages and `ui-core.md` list the slot.
+- Evidence: `behaviour/option-list.stories.tsx` `BlockedFromData320`, `BlockedFromData1440` (check rows) and `BlockedRadiosFromData1440` read the three agents from a query through the `option` map and pass the same checks as the static set (disabled, no click, reason in its own ink, row height equal to the described row's, chosen blocked option enabled and removable then blocked again): 16 of 16 in the file; the run peaked at 2954 MiB.
+
+## Open
+- The touch sheet and the native rows are not exercised by any story; native is not rendered. The `Select`, `Picker`, `MultiPick` and `OptionList` box stays unticked until a native render or a touch-sheet story exists.
+- The critique has not measured the Picker frame at 320 and 1440.
