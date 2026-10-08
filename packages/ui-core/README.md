@@ -116,7 +116,7 @@ with it.
 | Knob | Default | Moves |
 | --- | --- | --- |
 | `accentHue` | 264 | the accent-bound roles: `accent`, `accent-soft`, `accent-ink`, `ring`, `selected-outline`, `act-accent` with `act-accent-hover`, `act-accent-press` and `act-accent-pending`, `toggle-on` and `toggle-on-hover`. The three status hues, the hued chip families and the avatars are fixed |
-| `castHue` | `accentHue` | the hue every neutral carries: `canvas`, `surface`, `group`, `raised`, the three hairlines, `scrim`, the three inks, the washes, `skeleton`, `switch-off`, `fill-disabled`, `fill-neutral` with the neutral chip's soft and ink, dark `on-danger` and the light shadows. Each neutral keeps the chroma the sheet declares for it, so the cast tints the chrome and moves no contrast. It never reaches the accent, the status trio, the hued chip families or the avatars |
+| `castHue` | `accentHue` | the hue every neutral carries: `canvas`, `surface`, `group`, `raised`, the three hairlines, `scrim`, the three inks, the washes, `skeleton`, `switch-off`, `fill-disabled`, `fill-neutral` with the neutral chip's soft and ink and the light shadows. Each neutral keeps the chroma the sheet declares for it, so the cast tints the chrome and moves no contrast. It never reaches the accent, the status trio, the hued chip families or the avatars |
 | `fonts` | `sans` "IBM Plex Sans", `mono` "IBM Plex Mono" | the two families as `--font-sans` and `--font-mono`, each followed by its metric fallback face (`fallbackFace(family)`, the family name plus ` Fallback`) and then its platform fallback stack. The files are each plugin's `fonts` option |
 | `defaultMode` | unset | the mode a viewer with no stored choice starts in, ahead of the system preference; unset, the system decides |
 
@@ -195,8 +195,7 @@ default the greys and the accent read as one palette.
 - The status trio, each with a `-soft` ground: `ok` the `done` mark and an added line's ink,
   `ok-soft` the ground under it; `warn` the ink of a caution (a banner's glyph and act, a change mark; text, held at 4.5:1), `warn-soft` its ground; `danger` the
   `failed` mark, a destructive act's label (in light held at 4.5:1 under `wash-press` on `group`),
-  an error ring, `danger-soft` its ground and a removed line. `on-danger`: text on a `danger` fill,
-  the one saturated state fill, which `danger` holds at 4.5:1 in both modes. The dark tones are
+  an error ring, `danger-soft` its ground and a removed line. The dark tones are
   capped at L 0.75 and spread in lightness so they separate under protanopia and deuteranopia.
 - Six chip families in hue order, the accent's band left out so no family wears it: `red`,
   `amber`, `green`, `teal`, `violet`, `pink`. Each is three roles: `chip-red` the mark (a dot, a
@@ -218,7 +217,7 @@ default the greys and the accent read as one palette.
   more step: `wash-hover` a transparent part under the pointer, `wash-press` pressed,
   `wash-selected` a selected row or chip, `wash-selected-hover` a selected row under the pointer,
   `skeleton` a loading bar, `fill-disabled` a disabled act's or chip's box, `fill-neutral` a
-  resting neutral ground (a count's pill, a grey chip).
+  resting neutral ground (a grey chip, a message bubble).
 - The places, each an alias of the tone that draws it: `ring` the focus ring and
   `selected-outline` a selected tile's outline, both `accent-ink`; `edge-hover` a field's boundary
   under the pointer, `edge-strong`; `edge-error` a field's boundary in error and `ink-error` an
@@ -404,7 +403,7 @@ At the default knobs, in both modes, each text pair clears 4.5:1: `ink-body` on 
 `accent-ink` on the four grounds and on `accent-soft`; `ok`, `warn` and `danger` on the four grounds
 and each on its own soft; `on-accent` on `accent`, `act-accent-hover` and `act-accent-press`;
 `danger` on `canvas`, `surface` and `group` under `wash-hover` and `wash-press`, a destructive act's
-label under the act's own wash; `on-danger` on `danger`; `on-act-danger` on `act-danger`,
+label under the act's own wash; `on-act-danger` on `act-danger`,
 `act-danger-hover` and `act-danger-press`; every `chip-red-ink` on its `chip-red-soft`; every
 `avatar-1-ink` on its `avatar-1`. Each graphic pair clears 3:1: `edge-strong` on `surface` and
 `group`, and on `surface` under `wash-press` and `wash-selected` (a held boundary, so a checkbox

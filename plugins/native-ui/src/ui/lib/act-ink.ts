@@ -9,3 +9,7 @@ export interface ActInkValue {
 }
 
 export const ActInk = createContext<ActInkValue | undefined>(undefined);
+
+// Set by a `Button` around its count: the number draws in the act's ink, not
+// the muted one.
+export const InAct = createContext(false);

@@ -21,8 +21,7 @@ its rationale.
 - Four knobs and nothing else: `accentHue` (264), `castHue` (the neutrals' hue, `accentHue`
   unless set), `fonts` (the two family names, IBM Plex Sans and IBM Plex Mono unless set) and
   `defaultMode`. Every other value is the sheet. The cast reaches every neutral (the grounds, the
-  hairlines, the inks, the washes, `switch-off`, `fill-disabled`, `fill-neutral`, dark
-  `on-danger`, the light shadow ink) through the `"cast"` hue marker, the way `"accent"` marks
+  hairlines, the inks, the washes, `switch-off`, `fill-disabled`, `fill-neutral`, the light shadow ink) through the `"cast"` hue marker, the way `"accent"` marks
   the accent's literals; it never reaches the accent, the status trio, the hued chip families or the
   avatars. Its chroma is a constant per role and mode, never a knob: hue at a neutral's chroma
   moves no contrast, while chroma decides whether a cast is a tint or a color and re-tunes the
@@ -47,8 +46,7 @@ its rationale.
   carries the held value at its own hue: `accent-ink` holds 4.5:1 on `group` and `accent-soft`, the
   dark `accent` 3:1 on `group` (a checked box, an on switch), `edge-strong` 3:1 on `surface` under
   `wash-press` and `wash-selected` in both modes (an unticked box on a pressed or selected row), the
-  light `danger` 4.5:1 under `wash-press` on `group` (a destructive act's pressed label) and 4.5:1
-  under `on-danger`, the dark `act-danger` 4.5:1 under `on-act-danger` (the filled danger act: in
+  light `danger` 4.5:1 under `wash-press` on `group` (a destructive act's pressed label), the dark `act-danger` 4.5:1 under `on-act-danger` (the filled danger act: in
   dark a deep red of its own, since the danger ink holds no light label), each filled act's pending fill 3:1 under
   its label (the spinner on a pending act). Hover and press move a filled act away from its label:
   the accent and the danger toward black in both modes; its pending fill is inert and recedes toward its label in
@@ -59,7 +57,7 @@ its rationale.
 - Color roles name the place they draw: surfaces (`canvas`, `surface`, `group`, `raised`, `edge`,
   `edge-raised`, `edge-strong`, `grid` the canvas's dot grid at 1.5:1 on `canvas`, `scrim`), three inks (`ink-body`, `ink-meta`, `ink-faint` for
   disabled text only), the accent (`accent`, `on-accent`, `accent-soft`, `accent-ink` for a link and
-  the ring), three status families with `-soft` and `on-danger`, six chip families by hue name each
+  the ring), three status families with `-soft`, six chip families by hue name each
   with a mark, a `-soft` ground and an `-ink` and a `neutral` family whose soft and ink alias
   `fill-neutral` and `ink-body` (no mark), eight avatar steps each with an `-ink`, seven washes
   (`fill-neutral` the resting neutral ground among them), six place aliases (`ring`,

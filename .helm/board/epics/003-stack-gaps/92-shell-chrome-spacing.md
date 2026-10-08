@@ -22,12 +22,17 @@ Nothing in the app can fix these: geometry classes go on host elements only, and
 - [x] A showcase frame draws the Shell with a banner, a page header and a tab count; the design critique is run by a session that played no part.
 
 ## Open questions
-- [ ] Which tokens each slot takes: the stack session decides.
+- [x] Which tokens each slot takes: the spacing seams take the page, pair and float rungs (Built); the count is the muted-ink number everywhere.
 
 ## Built
 `SHELL_BANNER` is `p-page` (was `px-page pt-page`), so the page gap stands under the banner above the header, on both platforms. `SHELL_TAB_BAR` takes `pt-pair`, which puts the glyphs' centre on the header strip's line (touch strip 44, glyph centre 22). The sidebar needed no change: the places' float inset centres a 32 px row on the 40 px strip (`(strip - row) / 2 = float`), so the first row already shares the title's line; the comment on `SHELL_SIDEBAR` states the derivation. The Shell frame (`layout/Shell`) draws a danger banner over the Place's head, with the Activity count in the sidebar and the tab bar.
 Evidence: `pnpm check`, the three verifies and `layout/Shell` Rest and Selected in the browser run pass.
 Owner render: `layout/Shell` Rest and Selected, desktop and touch, light and dark; confirm the sidebar's first row against the header title.
 
-## Open
-The count is still a grey pill. Dropping the pill means changing `Count`, which every count in the system draws (a Button's count, a Section tally, an ItemHeader fact, a canvas figure), and the Shell may not import `COUNT_LABEL` since `Count` holds it. Question for the owner: is a count the muted-ink number everywhere, or only in the Shell? Recommended answer: everywhere (`COUNT` loses its ground, the label stays), since a pill in one place and a number in another is two counts.
+## Ruled
+A count is the muted-ink number everywhere: one `Count`, one `COUNT` cell, no pill in the nav and a number in the heads.
+
+## Built (the count)
+`COUNT` is `text-ink-meta` (it lost its ground, `min-h-chip`, `min-w-chip`, `px-inside` and `rounded-full`); `COUNT_LABEL` keeps the caption type and tabular figures but no colour, so a count in a filled act can take the act's. `Count` inside a `Button` (an internal `InAct` context the button sets around its count and `wait`) draws in the button's own ink (web: currentColor of the act; native: the `Ink` the button provides, blocked and banner inks included). That is the label's ink in every `act` and state, so the count holds the contrast the label already holds (`on-act-accent` on `act-accent`, `on-act-danger` on `act-danger`, `ink-meta` on `fill-disabled`, the unfilled acts on the page); `ui-core verify` gates those pairs, light and dark. The waiting count (`skeleton({ kind: "count" })`, Section's and ItemHeader's `COUNT_WAIT`) is a `h-skeleton` bar one figure wide, its width set by an unseen caption figure, so loaded and waiting rows keep their height. The Shell's `TAB_COUNT` overlay stands the plain number at the glyph's top end. Doc comments no longer say pill.
+Evidence: `pnpm check`, the three verifies and the `Button`, `Count`, `Section`, `ItemHeader`, `Shell`, `Meter`, `Canvas` and waiting stories in the browser run.
+Owner render: `atom/Count` Rest; `atom/Button` Rest and Loading (every act, light and dark); `layout/Shell` Rest (sidebar count, tab count); `layout/Section` Rest and Loading (tally, waiting bar); `shared/ItemHeader` Rest and Loading (count fact, waiting bar).

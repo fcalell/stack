@@ -43,7 +43,9 @@ const OPEN = cn(ACT, "-ms-inside");
 // reserves.
 const LINE_WAIT = "flex-row items-center";
 const FACTS_LINE_WAIT = "flex-row items-center";
-const COUNT_WAIT = "shrink-0";
+// The waiting count is a bar one figure wide, set by an unseen figure.
+const COUNT_WAIT = "shrink-0 flex-row items-center";
+const FIGURE_WAIT = "opacity-0 tabular-nums";
 // A head with no facts line in a Split's main stands a pair above what follows:
 // it pulls the main's sections gap back and pads the pair in.
 const BARE = "-mb-sections pb-pair";
@@ -214,7 +216,11 @@ export function ItemHeader({
 				<View className={SKELETON_LINES}>
 					<View className={cn(skeletonRow({ kind: "facts" }), FACTS_LINE_WAIT)}>
 						<View className={cn(skeleton({ kind: "line" }), "w-1/3")} />
-						<View className={cn(skeleton({ kind: "count" }), COUNT_WAIT)} />
+						<View className={cn(skeleton({ kind: "count" }), COUNT_WAIT)}>
+							<RNText className={cn(text({ role: "caption" }), FIGURE_WAIT)}>
+								0
+							</RNText>
+						</View>
 					</View>
 					<LineWait role="meta" bar="w-1/2" />
 				</View>

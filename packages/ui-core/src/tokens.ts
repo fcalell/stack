@@ -94,15 +94,7 @@ export const COLOR_GROUPS = {
 	],
 	inks: ["ink-body", "ink-meta", "ink-faint"],
 	accent: ["accent", "on-accent", "accent-soft", "accent-ink"],
-	status: [
-		"ok",
-		"ok-soft",
-		"warn",
-		"warn-soft",
-		"danger",
-		"danger-soft",
-		"on-danger",
-	],
+	status: ["ok", "ok-soft", "warn", "warn-soft", "danger", "danger-soft"],
 	// the mark, the soft ground, the ink on the soft; neutral has no mark
 	chips: [
 		...CHIP_HUES.flatMap(
@@ -374,10 +366,7 @@ const DANGER_LIGHT: ColorValue = {
 	l: 0.55,
 	c: 0.19,
 	hue: 25,
-	holds: [
-		{ on: "group", under: "wash-press", ratio: 4.5 },
-		{ on: "on-danger", ratio: 4.5 },
-	],
+	holds: [{ on: "group", under: "wash-press", ratio: 4.5 }],
 };
 
 const EDGE_STRONG_HOLDS: readonly Holds[] = [
@@ -470,14 +459,12 @@ export const COLORS: Record<ColorName, ColorDeclaration> = {
 			l: 0.71,
 			c: 0.178,
 			hue: 25,
-			holds: [{ on: "on-danger", ratio: 4.5 }],
 		},
 	},
 	"danger-soft": {
 		light: { l: 0.965, c: 0.016, hue: 20 },
 		dark: { l: 0.25, c: 0.04, hue: 25 },
 	},
-	"on-danger": { light: WHITE, dark: neutral(0.16, 0.005) },
 	...chipColors(),
 	...chartColors(),
 	...avatarColors(),

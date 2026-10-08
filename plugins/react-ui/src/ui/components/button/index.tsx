@@ -8,7 +8,7 @@ import {
 	buttonLabel,
 } from "@fcalell/ui-core/variants";
 import { use } from "react";
-import { ActInk } from "../../lib/act-ink.ts";
+import { ActInk, InAct } from "../../lib/act-ink.ts";
 import type { Closed } from "../../lib/closed.ts";
 import { ActInert, endSubmit, SubmitContext } from "../../lib/form.ts";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
@@ -68,7 +68,7 @@ export interface ButtonProps extends Closed {
 	icon?: IconName;
 	/** The visible word, and the act's accessible name. */
 	label: string;
-	/** A number after the label, in a grey pill. */
+	/** A number after the label, in the label's ink. */
 	count?: number;
 	/** A wait, in seconds left: the act is inert while it is above zero, its count drawn, and it draws no reason, so its row never grows. At zero the count's slot stays, hidden, so the act keeps its width. */
 	wait?: number;
@@ -138,11 +138,15 @@ export function Button({
 			</span>
 			{wait !== undefined ? (
 				<span className={cn(GLYPH, (loading || !waiting) && PENDING)}>
-					<Count value={wait} />
+					<InAct value>
+						<Count value={wait} />
+					</InAct>
 				</span>
 			) : count !== undefined ? (
 				<span className={cn(GLYPH, loading && PENDING)}>
-					<Count value={count} />
+					<InAct value>
+						<Count value={count} />
+					</InAct>
 				</span>
 			) : null}
 			{loading ? (

@@ -9,7 +9,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { useContext } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
-import { ActInk } from "../../lib/act-ink";
+import { ActInk, InAct } from "../../lib/act-ink";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { ActInert } from "../../lib/form";
@@ -156,11 +156,15 @@ export function Button({
 				</RNText>
 				{wait !== undefined ? (
 					<View className={loading || !waiting ? PENDING : undefined}>
-						<Count value={wait} />
+						<InAct.Provider value>
+							<Count value={wait} />
+						</InAct.Provider>
 					</View>
 				) : count !== undefined ? (
 					<View className={loading ? PENDING : undefined}>
-						<Count value={count} />
+						<InAct.Provider value>
+							<Count value={count} />
+						</InAct.Provider>
 					</View>
 				) : null}
 				{loading ? (

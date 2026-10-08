@@ -1,20 +1,21 @@
 import { cn } from "@fcalell/ui-core/cn";
 import { COUNT, COUNT_LABEL } from "@fcalell/ui-core/variants";
+import { use } from "react";
+import { InAct } from "../../lib/act-ink.ts";
 import type { Closed } from "../../lib/closed.ts";
 
-const PILL = "inline-flex items-center justify-center shrink-0";
-
-/** A number in a pill. */
+/** A number in the muted ink. */
 export interface CountProps extends Closed {
 	/** The number. */
 	value: number;
 }
 
-/** A number in a grey pill, its figures at one width. */
+/** A number in the muted ink, its figures at one width; in a `Button` it draws in the act's ink. */
 export function Count({ value }: CountProps) {
+	const inAct = use(InAct);
 	return (
-		<span className={cn(COUNT, PILL)}>
-			<span className={COUNT_LABEL}>{value}</span>
+		<span className={inAct ? COUNT_LABEL : cn(COUNT, COUNT_LABEL)}>
+			{value}
 		</span>
 	);
 }

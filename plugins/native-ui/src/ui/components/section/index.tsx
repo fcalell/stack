@@ -56,9 +56,9 @@ const TITLE_LINE = "flex-row items-center min-w-0";
 const TOGGLE =
 	"flex-row items-center grow min-w-0 -ms-inside active:bg-wash-press";
 const ACT_SLOT = "flex-row items-center shrink-0";
-// The waiting count stands at a one-figure pill's width: the pill's padding
-// round an unseen figure at the pill's type.
-const COUNT_WAIT = "shrink-0 flex-row items-center px-inside";
+// The waiting count is a bar one figure wide: an unseen figure at the
+// count's type sets the width.
+const COUNT_WAIT = "shrink-0 flex-row items-center";
 const FIGURE_WAIT = "opacity-0 tabular-nums";
 // The label line at the length of a field label.
 const LABEL_WAIT = "w-1/4";
@@ -160,7 +160,11 @@ export function Section({
 		<>
 			<RNText
 				numberOfLines={1}
-				className={nested ? SECTION_NESTED_TITLE : text({ role: "heading" })}
+				className={
+					nested || folded !== undefined
+						? SECTION_NESTED_TITLE
+						: text({ role: "heading" })
+				}
 			>
 				{partText(title)}
 			</RNText>
@@ -200,10 +204,10 @@ export function Section({
 							>
 								{({ pressed }) => (
 									<>
-										{name}
 										<Ink.Provider value={pressed ? "ink-body" : "ink-meta"}>
 											<Icon name={open ? "ChevronDown" : "ChevronRight"} />
 										</Ink.Provider>
+										{name}
 									</>
 								)}
 							</Pressable>

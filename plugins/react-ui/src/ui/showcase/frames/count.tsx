@@ -1,6 +1,6 @@
 import { Count } from "../../components/count/index.tsx";
 
-// The single-cell pill: a one-, two- and three-digit value and zero.
+// The single-cell number: a one-, two- and three-digit value and zero.
 export function drawCount() {
 	return (
 		<span className="flex items-center gap-inside">

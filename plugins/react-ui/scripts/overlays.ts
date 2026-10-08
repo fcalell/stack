@@ -196,7 +196,6 @@ export const OVERLAYS: readonly string[] = [
 	"border-edge",
 	"page-wide:border-l",
 	// Section, Group, List, Columns
-	"px-inside",
 	"tabular-nums",
 	"flex",
 	"flex-col",

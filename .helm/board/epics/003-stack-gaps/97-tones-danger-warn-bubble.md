@@ -30,6 +30,7 @@ Tokens in `tokens.ts`, gated by `ui-core verify` (text 4.5, boundary and mark 3)
 - Dark `warn-soft` is L 0.25 C 0.035 and `danger-soft` L 0.25 C 0.04 (were 0.28 with C 0.05 and 0.06); `warn`, `danger` and `ink-body` hold 4.5 on them.
 - The attention dot reads `chip-amber`, the existing amber mark, not a new dot token: a warn that holds 4.5:1 as text is brown, and the mark is already amber. `chip-amber` light drops from L 0.65 to 0.62 so every chip mark holds 3:1 on `group` as well as `surface` (verify now measures both).
 - `MESSAGE_BUBBLE` is `bg-fill-neutral` (the existing resting neutral ground, the body ink at 8 %) in place of `bg-group`, which sat 0.04 of L off the dark surface.
-No new dot, bubble or tint token. `on-danger` stays and has no drawing cell left; deleting it is a follow-up.
+A meter's near fill is `chip-amber` too: a bar fill is a mark (3:1), and `warn` stays for text and soft grounds.
+No new dot, bubble or tint token. `on-danger` had no drawing cell left and is deleted (the token, its contrast holds and its docs); `on-act-danger` carries the filled danger act.
 Evidence: `ui-core verify` (34/34, 225 contrast pairs), both plugin verifies and `pnpm check` pass; `atom/Button`, `shared/Banner`, `atom/Status`, `content/Message` pass in the browser run.
 Owner render, dark: `atom/Button` Rest, Disabled and Loading (danger act); `shared/Banner` Rest and Disabled (warn and danger tints); `content/Diff`, `content/ProseDiff` and `content/Comparison` Rest (removed lines on `danger-soft`); `content/Message` Rest and `content/Thread` Rest (bubble); the Foundations page's colour rows. Light: `atom/Status` Rest (attention dot), plus the same `shared/ListRow` status cells.

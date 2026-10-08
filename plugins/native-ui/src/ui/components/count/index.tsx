@@ -1,19 +1,28 @@
 import { COUNT, COUNT_LABEL } from "@fcalell/ui-core/variants";
-import { Text as RNText, View } from "react-native";
+import { useContext } from "react";
+import { Text as RNText } from "react-native";
+import { InAct } from "../../lib/act-ink";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-
-const PILL = "items-center justify-center";
+import { useInk } from "../../lib/ink";
+import { useTokenColor } from "../../lib/theme";
 
 export interface CountProps extends Closed {
 	value: number;
 }
 
-// A number in a grey pill, its figures at one width.
+// A number in the muted ink, its figures at one width. In a `Button` it draws
+// in the act's ink: a text takes no currentColor, so the ink the button
+// provides (`Ink`) is resolved and set.
 export function Count({ value }: CountProps) {
+	const inAct = useContext(InAct);
+	const color = useTokenColor(`--color-${useInk() ?? "ink-meta"}`);
 	return (
-		<View className={cn(COUNT, PILL)}>
-			<RNText className={COUNT_LABEL}>{value}</RNText>
-		</View>
+		<RNText
+			className={inAct ? COUNT_LABEL : cn(COUNT, COUNT_LABEL)}
+			style={inAct ? { color } : undefined}
+		>
+			{value}
+		</RNText>
 	);
 }

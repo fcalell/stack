@@ -26,7 +26,6 @@ colors:
   warn-soft: "oklch(0.965 0.036 85)"
   danger: "oklch(0.515 0.19 25)"
   danger-soft: "oklch(0.965 0.016 20)"
-  on-danger: "oklch(1 0 0)"
   chip-red: "oklch(0.56 0.2 25)"
   chip-red-soft: "oklch(0.945 0.026 25)"
   chip-red-ink: "oklch(0.42 0.1 25)"
@@ -119,7 +118,6 @@ colors:
   warn-soft-dark: "oklch(0.25 0.035 75)"
   danger-dark: "oklch(0.71 0.178 25)"
   danger-soft-dark: "oklch(0.25 0.04 25)"
-  on-danger-dark: "oklch(0.16 0.005 264)"
   chip-red-dark: "oklch(0.75 0.147 25)"
   chip-red-soft-dark: "oklch(0.3 0.05 25)"
   chip-red-ink-dark: "oklch(0.87 0.068 25)"
@@ -1400,10 +1398,10 @@ components:
     backgroundColor: "{colors.ink-meta-dark}"
   meter-fill-near:
     rounded: "{rounded.chip}"
-    backgroundColor: "{colors.warn}"
+    backgroundColor: "{colors.chip-amber}"
   meter-fill-near-dark:
     rounded: "{rounded.chip}"
-    backgroundColor: "{colors.warn-dark}"
+    backgroundColor: "{colors.chip-amber-dark}"
   meter-fill-over:
     rounded: "{rounded.chip}"
     backgroundColor: "{colors.danger}"
@@ -1716,14 +1714,12 @@ components:
     rounded: "{rounded.full}"
     backgroundColor: "{colors.skeleton-dark}"
   skeleton-count:
-    height: "{spacing.chip}"
-    width: "{spacing.chip}"
-    rounded: "{rounded.full}"
+    height: "{spacing.skeleton}"
+    rounded: "{rounded.chip}"
     backgroundColor: "{colors.skeleton}"
   skeleton-count-dark:
-    height: "{spacing.chip}"
-    width: "{spacing.chip}"
-    rounded: "{rounded.full}"
+    height: "{spacing.skeleton}"
+    rounded: "{rounded.chip}"
     backgroundColor: "{colors.skeleton-dark}"
   skeleton-field:
     height: "{spacing.field}"
@@ -1876,21 +1872,11 @@ components:
     rounded: "{rounded.card}"
     backgroundColor: "{colors.surface-dark}"
   count:
-    height: "{spacing.chip}"
-    width: "{spacing.chip}"
-    rounded: "{rounded.full}"
-    backgroundColor: "{colors.fill-neutral}"
+    textColor: "{colors.ink-meta}"
   count-dark:
-    height: "{spacing.chip}"
-    width: "{spacing.chip}"
-    rounded: "{rounded.full}"
-    backgroundColor: "{colors.fill-neutral-dark}"
+    textColor: "{colors.ink-meta-dark}"
   count-label:
     typography: "{typography.caption}"
-    textColor: "{colors.ink-meta}"
-  count-label-dark:
-    typography: "{typography.caption}"
-    textColor: "{colors.ink-meta-dark}"
   definition-row-chevron:
     height: "{spacing.control-compact}"
     width: "{spacing.control-compact}"
@@ -2380,7 +2366,6 @@ Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fi
 | `warn-soft` | `oklch(0.965 0.036 85)` | `oklch(0.25 0.035 75)` | the ground under a `warn` mark |
 | `danger` | `oklch(0.515 0.19 25)` | `oklch(0.71 0.178 25)` | the `failed` mark, a destructive act's label, an error ring, the filled destructive act |
 | `danger-soft` | `oklch(0.965 0.016 20)` | `oklch(0.25 0.04 25)` | the ground under a `danger` mark, a removed line |
-| `on-danger` | `oklch(1 0 0)` | `oklch(0.16 0.005 264)` | text on a `danger` fill, the one saturated state |
 | `chip-red` | `oklch(0.56 0.2 25)` | `oklch(0.75 0.147 25)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |
 | `chip-red-soft` | `oklch(0.945 0.026 25)` | `oklch(0.3 0.05 25)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |
 | `chip-red-ink` | `oklch(0.42 0.1 25)` | `oklch(0.87 0.068 25)` | a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft |
@@ -2429,7 +2414,7 @@ Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fi
 | `wash-selected-hover` | `oklch(0.2 0.008 264 / 0.15)` | `oklch(0.97 0.002 264 / 0.15)` | a selected row under the pointer |
 | `skeleton` | `oklch(0.2 0.008 264 / 0.09)` | `oklch(0.97 0.002 264 / 0.09)` | a loading bar |
 | `fill-disabled` | `oklch(0.2 0.008 264 / 0.06)` | `oklch(0.97 0.002 264 / 0.06)` | a disabled act's or chip's box |
-| `fill-neutral` | `oklch(0.2 0.008 264 / 0.08)` | `oklch(0.97 0.002 264 / 0.08)` | a resting neutral ground: a count's pill, a grey chip |
+| `fill-neutral` | `oklch(0.2 0.008 264 / 0.08)` | `oklch(0.97 0.002 264 / 0.08)` | a resting neutral ground: a grey chip, a message bubble |
 | `ring` | `oklch(0.52 0.19 264)` | `oklch(0.72 0.13 264)` | the focus ring |
 | `selected-outline` | `oklch(0.52 0.19 264)` | `oklch(0.72 0.13 264)` | a selected tile's outline |
 | `edge-hover` | `oklch(0.61 0.01 264)` | `oklch(0.575 0.01 264)` | a field's boundary under the pointer |
@@ -2562,7 +2547,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | --- | --- | --- | --- |
 | `Text` | atom | `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body`, `TEXT_STRONG.role.meta` | rest |
 | `Icon` | atom | `ICON` | rest |
-| `Button` | atom | `BUTTON`, `BUTTON_LABEL`, `ICON.fit.control`, `COUNT`, `COUNT_LABEL` | rest, hover, focus, active, disabled, loading |
+| `Button` | atom | `BUTTON`, `BUTTON_LABEL`, `ICON.fit.control`, `COUNT_LABEL` | rest, hover, focus, active, disabled, loading |
 | `IconButton` | atom | `ICON_BUTTON` | rest, hover, focus, active |
 | `Count` | atom | `COUNT`, `COUNT_LABEL` | rest |
 | `StepCount` | atom | `STEP_COUNT`, `STEP_COUNT_SEGMENTS`, `STEP_COUNT_SEGMENT`, `TEXT.role.meta` | rest |
@@ -2633,9 +2618,9 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | --- | --- | --- | --- | --- | --- | --- |
 | `Text` | `body`, `meta` | `ink-body`, `ink-meta` | none | none | `measure` | none |
 | `Icon` | none | none | none | none | `icon-meta`, `icon`, `icon-control` | none |
-| `Button` | `body`, `meta`, `caption` | `act-`, `on-act-`, `edge`, `ink-body`, `ink-meta`, `fill-neutral`, `danger`, `wash-hover`, `wash-press`, `fill-disabled`, `ink-disabled`, `ring` | `control`, `full` | `inside`, `control-x`, `pair` | `control`, `control-compact`, `field`, `icon-control`, `chip` | none |
+| `Button` | `body`, `meta`, `caption` | `act-`, `on-act-`, `edge`, `ink-body`, `ink-meta`, `danger`, `wash-hover`, `wash-press`, `fill-disabled`, `ink-disabled`, `ring` | `control` | `inside`, `control-x`, `pair` | `control`, `control-compact`, `field`, `icon-control` | none |
 | `IconButton` | none | `ink-meta`, `ink-body`, `wash-hover`, `wash-press`, `ink-disabled`, `ring` | `control` | none | `control`, `control-compact`, `hairline` | none |
-| `Count` | `caption` | `fill-neutral`, `ink-meta` | `full` | `inside` | `chip` | none |
+| `Count` | `caption` | `ink-meta` | none | none | none | none |
 | `StepCount` | `meta` | `ink-meta`, `fill-neutral` | `chip` | `pair`, `inside` | `meter` | none |
 | `Status` | `meta` | `accent-ink`, `ink-meta`, `ok`, `warn`, `chip-amber`, `danger`, `skeleton` | `full`, `chip` | `inside` | `dot`, `spinner`, `measure-short`, `skeleton`, `icon`, `icon-meta` | none |
 | `Chip` | `caption` | `chip-`, `wash-hover`, `wash-press`, `ring` | `full` | `inside` | `chip`, `measure-short` | none |
@@ -2654,18 +2639,18 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Gate` | `title`, `meta` | `ink-body`, `ink-meta`, `surface` | none | `page`, `sections`, `fields`, `pair` | `auth`, `avatar` | none |
 | `Screen` | `title` | `ink-body`, `ink-meta`, `edge` | `control` | `acts`, `page`, `sections`, `pair` | `strip`, `control`, `control-compact`, `icon-inset` | none |
 | `Split` | none | `edge`, `ink-meta`, `surface` | `control` | `inside`, `page`, `sections` | `list`, `pane`, `control-compact` | none |
-| `Section` | `heading`, `meta`, `body`, `caption` | `ink-body`, `ink-meta`, `edge`, `fill-neutral`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `danger` | `row`, `control`, `chip`, `full` | `pair`, `fields`, `inside`, `control-x` | `icon`, `chip`, `control-compact`, `skeleton`, `field`, `target` | none |
+| `Section` | `heading`, `meta`, `body`, `caption` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `danger` | `row`, `control`, `chip` | `pair`, `fields`, `inside`, `control-x` | `icon`, `control-compact`, `skeleton`, `field`, `target` | none |
 | `Group` | none | `edge`, `surface` | `card` | none | none | none |
 | `List` | none | none | none | `rows`, `control-x` | none | none |
 | `Form` | none | `edge` | none | `fields`, `sections` | `measure` | none |
 | `Toolbar` | none | `edge` | none | `pair`, `page`, `inside`, `acts` | none | none |
 | `ActionBar` | `meta`, `body` | `ink-meta`, `ink-body`, `ink-disabled`, `ink-error`, `edge`, `danger`, `act-accent`, `on-act-accent`, `act-danger`, `on-act-danger`, `wash-hover`, `wash-press`, `skeleton` | `control`, `full` | `pair`, `acts`, `inside`, `control-x` | `control`, `field`, `target`, `selection`, `control-compact`, `measure-short` | none |
 | `Columns` | none | none | none | `fields`, `page`, `sections` | `column` | none |
-| `Shell` | `body`, `caption` | `canvas`, `surface`, `edge`, `ink-body`, `ink-meta`, `fill-neutral`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `ring` | `row`, `control`, `full` | `inside`, `control-x`, `rows`, `pair`, `float`, `page` | `row`, `sidebar`, `target`, `chip`, `icon`, `icon-control`, `popover`, `icon-inset` | none |
+| `Shell` | `body`, `caption` | `canvas`, `surface`, `edge`, `ink-body`, `ink-meta`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `ring` | `row`, `control` | `inside`, `control-x`, `rows`, `pair`, `float`, `page` | `row`, `sidebar`, `target`, `icon`, `icon-control`, `popover`, `icon-inset` | none |
 | `ListRow` | `body`, `meta`, `caption` | `ink-body`, `ink-meta`, `ink-disabled`, `ink-error`, `surface`, `edge`, `edge-error`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `ring`, `accent-ink`, `ok`, `warn`, `chip-amber`, `danger`, `avatar-`, `chip-`, `skeleton`, `fill-disabled`, `edge-strong`, `toggle-on`, `toggle-on-hover`, `on-accent` | `row`, `full`, `control`, `chip` | `inside`, `rows`, `control-x`, `card`, `acts`, `pair` | `row`, `row-2`, `avatar`, `icon`, `icon-meta`, `dot`, `spinner`, `measure-short`, `chip`, `control-compact`, `skeleton`, `figures`, `check`, `target`, `indent`, `line-body` | none |
 | `DefinitionRow` | `body`, `meta`, `code` | `ink-body`, `ink-meta`, `wash-hover`, `wash-press`, `ring`, `accent-ink`, `ok`, `warn`, `chip-amber`, `danger`, `skeleton` | `full`, `control`, `chip` | `fields`, `card`, `inside`, `pair` | `row`, `row-setting`, `control-compact`, `icon`, `icon-meta`, `dot`, `spinner`, `measure-short`, `measure`, `figures`, `skeleton`, `switch-w`, `switch-h`, `target` | none |
 | `FormField` | `body`, `meta` | `ink-body`, `ink-meta`, `ink-error`, `ink-disabled`, `ok`, `warn`, `chip-amber`, `danger` | `control` | `pair`, `fields`, `inside`, `card` | `row`, `icon`, `icon-meta`, `control-compact` | none |
-| `ItemHeader` | `body`, `meta`, `title`, `caption` | `ink-body`, `ink-meta`, `edge`, `fill-neutral`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `accent-ink`, `ok`, `warn`, `chip-amber`, `danger` | `control`, `chip`, `full` | `pair`, `sections`, `inside`, `fields`, `control-x` | `skeleton`, `target`, `control-compact`, `chip`, `dot`, `spinner`, `icon-meta`, `measure-short`, `measure` | none |
+| `ItemHeader` | `body`, `meta`, `title`, `caption` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `accent-ink`, `ok`, `warn`, `chip-amber`, `danger` | `control`, `chip`, `full` | `pair`, `sections`, `inside`, `fields`, `control-x` | `skeleton`, `target`, `control-compact`, `dot`, `spinner`, `icon-meta`, `measure-short`, `measure` | none |
 | `SegmentedControl` | `body` | `group`, `ink-body`, `ink-meta`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `ring` | `control` | `control-x` | `control-compact` | none |
 | `Sheet` | `heading`, `body`, `meta` | `scrim`, `raised`, `edge-raised`, `edge`, `ink-body`, `ink-meta`, `ink-error`, `act-accent`, `on-act-accent` | `sheet`, `control` | `pair`, `card`, `acts`, `fields`, `sections`, `inside`, `control-x`, `page` | `sheet`, `pane`, `dialog`, `measure`, `control`, `control-compact`, `row-2` | `modal` |
 | `Picker` | `body`, `meta`, `caption` | `ink-body`, `ink-meta`, `surface`, `edge`, `edge-hover`, `raised`, `avatar-`, `chip-`, `edge-raised`, `wash-hover`, `wash-press`, `ring` | `full`, `control`, `popover`, `row` | `inside`, `pair`, `float`, `rows`, `control-x`, `card` | `target`, `control-compact`, `popover`, `avatar`, `chip`, `chips-inset`, `hairline`, `measure-short`, `row`, `row-2`, `icon-meta`, `icon`, `icon-control` | `float` |
@@ -2687,7 +2672,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Rules` | `meta` | `ink-meta`, `ink-disabled` | none | `inside`, `pair`, `card` | `icon-meta` | none |
 | `Message` | `meta`, `body`, `code`, `caption` | `ink-meta`, `fill-neutral`, `ink-body`, `edge`, `surface`, `skeleton`, `wash-hover`, `ring`, `wash-press`, `chip-` | `card`, `control`, `chip`, `full` | `pair`, `tile`, `inside` | `target`, `icon-meta`, `skeleton`, `figures`, `chip`, `measure-short`, `image-tile` | none |
 | `MessageInput` | `body`, `meta`, `caption` | `edge`, `surface`, `ink-meta`, `ink-body`, `act-accent`, `on-act-accent`, `fill-disabled`, `ink-disabled`, `edge-hover`, `ring`, `raised`, `chip-neutral-soft`, `chip-neutral-ink` | `card`, `control`, `full` | `pair`, `rows`, `inside`, `control-x` | `message-input`, `control-compact`, `icon-control`, `chip`, `measure`, `measure-short`, `icon-meta`, `target`, `spinner`, `image-tile` | none |
-| `Meter` | `body`, `meta` | `ink-body`, `ink-meta`, `accent-ink`, `fill-neutral`, `warn`, `danger`, `skeleton` | `chip` | `pair`, `inside`, `card` | `meter`, `track`, `skeleton`, `target` | none |
+| `Meter` | `body`, `meta` | `ink-body`, `ink-meta`, `accent-ink`, `fill-neutral`, `chip-amber`, `danger`, `skeleton` | `chip` | `pair`, `inside`, `card` | `meter`, `track`, `skeleton`, `target` | none |
 | `Stages` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `edge-strong`, `accent-ink`, `canvas`, `danger` | `full` | `pair` | `icon-meta`, `row-2` | none |
 | `Stats` | `figure`, `meta` | `edge`, `surface`, `ink-body`, `ink-meta`, `accent-ink`, `skeleton`, `wash-hover`, `wash-press` | `card`, `chip` | `pair`, `inside`, `card` | `skeleton`, `target` | none |
 | `Stat` | `display`, `meta` | `ink-body`, `ink-meta`, `skeleton` | `chip` | `pair`, `inside` | `skeleton` | none |

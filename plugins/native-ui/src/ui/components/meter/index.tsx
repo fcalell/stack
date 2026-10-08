@@ -40,7 +40,7 @@ interface MeterBase extends Closed {
 	// The limit.
 	max: number;
 	// A tick across the track at the mark's value: the point the fill turns
-	// `warn` at, in place of the near share.
+	// amber at, in place of the near share.
 	mark?: MeterMark;
 	// The label, share, bar and the line under it (the `meta` or `counts` given)
 	// as bars in their boxes.
@@ -63,7 +63,7 @@ type MeterLine =
 export type MeterProps = MeterBase & MeterLine;
 
 // The label at body 500 with the share in percent at its end, the bar under
-// them filling by the share in the meta ink, `warn` once near full (at its
+// them filling by the share in the meta ink, amber once near full (at its
 // `mark` when it has one) and `danger` once over, the line under the bar: the
 // meta, or the counts as links. In a `Group` it stands as one of its items at
 // the card's inset, the group's hairline between. React Native has no meter

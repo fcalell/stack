@@ -871,13 +871,13 @@ export const MESSAGE = matrix({
 // ── Meter ───────────────────────────────────────────────────────────
 
 // A meter's fill by its level (`METER_NEAR`): under in the meta ink, near in
-// `warn`, over in `danger`; never the accent.
+// the amber mark, over in `danger`; never the accent.
 export const METER_FILL = matrix({
 	base: "h-full rounded-chip",
 	variants: {
 		level: {
 			under: "bg-ink-meta",
-			near: "bg-warn",
+			near: "bg-chip-amber",
 			over: "bg-danger",
 		},
 	},
@@ -1257,7 +1257,7 @@ export const SKELETON = matrix({
 			line: "h-skeleton rounded-chip bg-skeleton",
 			avatar: "size-avatar rounded-full bg-skeleton",
 			switch: "w-switch-w h-switch-h rounded-full bg-skeleton",
-			count: "min-h-chip min-w-chip rounded-full bg-skeleton",
+			count: "h-skeleton rounded-chip bg-skeleton",
 			field: "min-h-field rounded-control bg-skeleton",
 			bar: "min-h-control-compact rounded-control bg-skeleton",
 			check: "size-check rounded-chip bg-skeleton",

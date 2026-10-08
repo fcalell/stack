@@ -199,7 +199,6 @@ const NATIVE_OVERLAYS = [
 	"pt-pair",
 	"pt-sections",
 	"px-card",
-	"px-inside",
 	"px-page",
 	"py-0",
 	"py-pair",

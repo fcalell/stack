@@ -26,7 +26,7 @@ const COUNTED: ButtonProps = {
 
 // `BUTTON.act.<act>` draws that act at the body fit, `BUTTON.fit.<fit>` the
 // primary act at that fit, `ICON.fit.control` the primary act with its
-// glyph; `BUTTON.fit.bar` adds the counted act beside it (the `COUNT` cells);
+// glyph; `BUTTON.fit.bar` adds the counted act beside it (the `COUNT_LABEL` cell);
 // `loading` passes `loading`. `disabled` draws the blocked act twice, as the
 // board's two columns: before it is pressed, then in a touched form with its
 // reason shown. The `BUTTON_LABEL` cells are drawn inside every button.

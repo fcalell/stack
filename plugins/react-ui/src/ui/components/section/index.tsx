@@ -68,9 +68,9 @@ const BODY = "flex flex-col";
 // stays mounted, hidden, while skeleton fields stand in for it.
 const BODY_SHOWN = "contents";
 const BODY_WAITS = "hidden";
-// The waiting count stands at a one-figure pill's width: the pill's padding
-// round an unseen figure at the pill's type.
-const COUNT_WAIT = "inline-flex shrink-0 items-center px-inside";
+// The waiting count is a bar one figure wide: an unseen figure at the
+// count's type sets the width.
+const COUNT_WAIT = "inline-flex shrink-0 items-center";
 const FIGURE_WAIT = "opacity-0 tabular-nums";
 const FIELD_WAIT = "flex flex-col";
 // The label line at the length of a field label.
@@ -97,7 +97,7 @@ function partText(part: Part): string {
 export interface SectionProps extends Closed {
 	/** The heading. */
 	title: Part;
-	/** A total the body's lists do not hold, in a grey pill after the title; without it a List in the body counts its items there. */
+	/** A total the body's lists do not hold, in the muted ink after the title; without it a List in the body counts its items there. */
 	count?: number;
 	/** A sentence under the title. While the Section loads, `""` stands one meta-height bar where the sentence will be and an undefined `description` stands none; loaded, `""` draws no line, as an undefined one. */
 	description?: string;
@@ -180,7 +180,9 @@ export function Section({
 			<span
 				id={titleId}
 				className={cn(
-					nested ? SECTION_NESTED_TITLE : text({ role: "heading" }),
+					nested || folded !== undefined
+						? SECTION_NESTED_TITLE
+						: text({ role: "heading" }),
 					TITLE,
 				)}
 			>
@@ -220,8 +222,8 @@ export function Section({
 									aria-controls={bodyId}
 									className={cn(SECTION_TOGGLE, TOGGLE)}
 								>
-									{name}
 									<Icon name={open ? "ChevronDown" : "ChevronRight"} />
+									{name}
 								</Collapsible.Trigger>
 							</Heading>
 						)}

@@ -68,7 +68,6 @@ const COLOR_USE: Record<string, string> = {
 	danger:
 		"the `failed` mark, a destructive act's label, an error ring, the filled destructive act",
 	"danger-soft": "the ground under a `danger` mark, a removed line",
-	"on-danger": "text on a `danger` fill, the one saturated state",
 	chip: "a `Chip`'s family: the mark (a dot, an attention status), the soft ground, the ink on the soft",
 	chart:
 		"a chart series' fill: the chip hue, quieter, at 3:1 on `surface` and `group`",
@@ -79,7 +78,7 @@ const COLOR_USE: Record<string, string> = {
 	"wash-selected-hover": "a selected row under the pointer",
 	skeleton: "a loading bar",
 	"fill-disabled": "a disabled act's or chip's box",
-	"fill-neutral": "a resting neutral ground: a count's pill, a grey chip",
+	"fill-neutral": "a resting neutral ground: a grey chip, a message bubble",
 	ring: "the focus ring",
 	"selected-outline": "a selected tile's outline",
 	"edge-hover": "a field's boundary under the pointer",

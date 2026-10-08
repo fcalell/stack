@@ -379,7 +379,6 @@ const TEXT_FLOORS: Array<[ColorName, ColorName[]]> = [
 	["warn", [...GROUNDS, "warn-soft"]],
 	["danger", [...GROUNDS, "danger-soft"]],
 	["on-accent", ["accent", "act-accent-hover", "act-accent-press"]],
-	["on-danger", ["danger"]],
 	["on-act-danger", ["act-danger", "act-danger-hover", "act-danger-press"]],
 	...CHIP_HUES.map((family): [ColorName, ColorName[]] => [
 		`chip-${family}-ink`,
@@ -737,7 +736,7 @@ check("c02", "package.json shape", () => {
 });
 
 check("c03", "tokens.ts declares the contract", () => {
-	requireEqual(COLOR_NAMES.length, 93, "color count");
+	requireEqual(COLOR_NAMES.length, 92, "color count");
 	requireEqual(new Set(COLOR_NAMES).size, COLOR_NAMES.length, "unique colors");
 	requireEqual(TYPE_ROLES.length, 8, "type role count");
 	requireEqual(SPACING_ROLES.length, 11, "spacing role count");
@@ -1410,7 +1409,7 @@ check(
 		);
 		requireEqual(
 			literals("dark").join(" "),
-			"canvas surface group raised edge edge-raised edge-strong grid ink-body ink-meta ink-faint on-danger",
+			"canvas surface group raised edge edge-raised edge-strong grid ink-body ink-meta ink-faint",
 			"the dark cast literals",
 		);
 		// A cast re-hues each cast literal at its declared chroma; a role that

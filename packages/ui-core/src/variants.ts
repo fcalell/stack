@@ -335,11 +335,11 @@ export function matrixCells(
 
 // Single cells: one class string each, shared verbatim by both plugins.
 
-// A number in a pill on one grey step, its figures at one width.
-export const COUNT =
-	"min-h-chip min-w-chip px-inside rounded-full bg-fill-neutral";
+// A number in the muted ink, its figures at one width. A count inside a
+// filled act draws `COUNT_LABEL` alone, in the act's label ink.
+export const COUNT = "text-ink-meta";
 export const COUNT_LABEL =
-	"text-caption leading-caption tracking-caption font-normal text-ink-meta tabular-nums";
+	"text-caption leading-caption tracking-caption font-normal tabular-nums";
 // A ring the size of the glyph it replaces: a track at 30 % under a turning
 // arc, both in the ink of its place (a plugin overlay: native colours a prop).
 export const SPINNER = "size-spinner";
@@ -872,14 +872,15 @@ export const SPLIT_PANE = "gap-sections w-pane p-page border-l border-edge";
 export const SPLIT_BESIDE = "grow basis-0";
 // A section's head (its rhythm is `SECTION`'s): the head row over a blocked
 // act's reason, the title centred on the act, which sets the row's height.
-// The fold toggle's wash overhangs the title's start only (a web overlay
-// pulls it back).
+// The fold toggle's wash overhangs its start only, where its chevron stands
+// (a web overlay pulls it back).
 export const SECTION_HEAD = "gap-pair";
 export const SECTION_HEAD_ROW = "gap-fields";
 export const SECTION_TITLE = "gap-inside";
 export const SECTION_TOGGLE = "gap-inside min-h-target px-inside rounded-row";
-// A Section inside a Section names itself a level below its parent: the body
-// size at the heading's weight, so the screen draws no new size.
+// A Section inside a Section, or a folded one, names itself a level below an
+// open top-level title: the body size at the heading's weight, so the screen
+// draws no new size.
 export const SECTION_NESTED_TITLE =
 	"text-body leading-body font-semibold text-ink-body";
 // A group: a hairline card on the surface drawing the hairline between its

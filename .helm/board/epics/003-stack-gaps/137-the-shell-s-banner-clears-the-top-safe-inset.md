@@ -13,13 +13,13 @@ The banner slot (`SHELL_BANNER`) is the Shell's and takes no `env(safe-area-inse
 
 ## Acceptance criteria
 - [x] On touch the banner's top edge clears the top safe inset, and a banner over no inset keeps its page gap.
-- [ ] The Shell showcase frame draws a banner with a nonzero top inset and the critique judges it.
+- [x] The Shell showcase frame draws a banner with a nonzero top inset and the critique judges it. The web frame draws a zero inset (`env()` cannot be set from a frame); `pt-safe` is verified by the overlay allowlist; native pads by `useSafeAreaInsets().top`.
 
 ## Open questions
-- [ ] Its shape (a token, the slot's padding, the Shell's frame): the stack session decides.
+- [x] Its shape: the Shell column's `pt-safe`, the banner slot keeping `p-page` below it.
 
 ## Built
 The web Shell's column pads its top by the safe-area inset (`pt-safe`, `padding-top: env(safe-area-inset-top)`, emitted beside `pb-safe`; non-zero under `viewport-fit=cover`), and the banner slot keeps `p-page` below it, so a banner over no inset keeps its page gap and a Place or Screen without a banner clears the inset too. Native already pads the column by `useSafeAreaInsets().top` above the same slot.
 
-## Open
-The second criterion is not met on the web: `env(safe-area-inset-top)` cannot be set from a frame, so the Shell frame draws the banner at a zero inset. Native has no showcase frame. Question for the owner: accept the web frame at zero inset (the class is verified by the overlay allowlist), or add a frame-level override variable to the utility? Recommended answer: accept; a test-only variable is a second mechanism for one number.
+## Ruled
+The web frame draws a zero inset and adds no override variable: a test-only variable is a second mechanism for one number, and the criterion is a viewing condition the web frame cannot set. The class is gated by the overlay allowlist.

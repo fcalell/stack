@@ -49,7 +49,9 @@ const LINE_WAIT = "flex items-center h-lh";
 const WRAP_WAIT = "hidden max-tablet:flex items-center h-lh";
 const FACTS_WAIT = "flex flex-col";
 const FACTS_LINE_WAIT = "flex items-center";
-const COUNT_WAIT = "inline-flex shrink-0";
+// The waiting count is a bar one figure wide, set by an unseen figure.
+const COUNT_WAIT = "inline-flex shrink-0 items-center";
+const FIGURE_WAIT = "opacity-0 tabular-nums";
 // With no facts line a head in a Split's main (`group/main`) stands a pair, not
 // a sections step, above what follows: it pulls the main's gap back and pads
 // the pair in, unless a Thread fills the main (no gap there). The contract
@@ -216,7 +218,11 @@ export function ItemHeader<V extends string | null = string>({
 				<span className={cn(SKELETON_LINES, FACTS_WAIT)}>
 					<span className={cn(skeletonRow({ kind: "facts" }), FACTS_LINE_WAIT)}>
 						<span className={cn(skeleton({ kind: "line" }), "w-1/3")} />
-						<span className={cn(skeleton({ kind: "count" }), COUNT_WAIT)} />
+						<span className={cn(skeleton({ kind: "count" }), COUNT_WAIT)}>
+							<span className={cn(text({ role: "caption" }), FIGURE_WAIT)}>
+								0
+							</span>
+						</span>
 					</span>
 					<span className={cn(lineBox({ role: "meta" }), WRAP_WAIT)}>
 						<span className={cn(skeleton({ kind: "line" }), "w-1/2")} />
