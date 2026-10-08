@@ -877,7 +877,7 @@ a tick with no animation, never jumped to full.
   `enabled` off) with its content held to its height, so a Thread arriving late remounts nothing
   beside it. Rejected: a Thread telling its frame in a layout effect, which commits the frame twice
   and, on native, swapped the body's scroll for a view and remounted every sibling. A filled Place's
-  floating act would stand over the docked input: accepted while no Place has both. A Split's main
+  floating act would stand over the docked input: accepted while no Place has both. A part above a Thread is its sibling in the region, and the head pairs with a Banner after it as with an ActionBar. Rejected: the region reading the mark at any depth (`data-fill` is also the source TextArea's and the Canvas's, nested regions would match each other's Thread, and an app wrapper is no flex column, so the Thread would still not fill it), and a Thread slot or a roster part for what a sibling does. A Split's main
   gives it room too, so a Thread under a record's `ItemHeader` fills the main the same way: the main
   stops scrolling, keeping the page inset around the head alone (`SPLIT_MAIN {state: fills}`; the
   web spells it as the `rest` cell less its gap and foot under the fill mark), and the Thread bleeds

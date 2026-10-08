@@ -1,4 +1,5 @@
 import { ActionBar } from "@fcalell/plugin-react-ui/components/action-bar";
+import { Banner } from "@fcalell/plugin-react-ui/components/banner";
 import { Code } from "@fcalell/plugin-react-ui/components/code";
 import { DefinitionRow } from "@fcalell/plugin-react-ui/components/definition-row";
 import { EmptyState } from "@fcalell/plugin-react-ui/components/empty-state";
@@ -14,7 +15,7 @@ import { Split } from "@fcalell/plugin-react-ui/components/split";
 import { Thread } from "@fcalell/plugin-react-ui/components/thread";
 import { Toolbar } from "@fcalell/plugin-react-ui/components/toolbar";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { expect, waitFor } from "storybook/test";
 
 const NAMES = ["Ana Ruiz", "Ben Kaya", "Ema Okafor", "Rui Alves", "Zoe Park"];
@@ -630,3 +631,165 @@ function fills(width: number): StoryObj {
 export const ThreadFillsMain375 = touch(fills(375));
 export const ThreadFillsMain768 = fills(768);
 export const ThreadFillsMain1280 = fills(1280);
+
+// A part above the Thread is a sibling of it in the main: the head pairs with
+// a Banner after it (facts or not), and the Thread stays the main's direct
+// child, so the log scrolls inside the main whose form stays filled.
+const LONG = Array.from({ length: 40 }, (_, at) => ({
+	id: String(at),
+	author: at % 2 ? "other" : "you",
+	body: `Message ${at}: the migration timed out, so the release stopped before it served traffic.`,
+}));
+
+function Notified(props: { width: number; facts: boolean; banner: boolean }) {
+	const [text, setText] = useState("");
+	return (
+		<Page width={props.width}>
+			<Place title="Chats" bleed>
+				<Split
+					list={<Rows />}
+					main={
+						<>
+							<ItemHeader
+								title="Why did the last deploy of api fail?"
+								facts={props.facts ? ["Ana Ruiz", "Today"] : undefined}
+							/>
+							{props.banner ? (
+								<Banner kind="warn" sentence="The run is paused." />
+							) : null}
+							<Thread
+								items={LONG}
+								message={{
+									key: (turn) => turn.id,
+									author: (turn) => turn.author,
+									body: (turn) => turn.body,
+								}}
+								foot={
+									<MessageInput
+										value={text}
+										onChange={setText}
+										placeholder="Reply"
+										onSend={noop}
+									/>
+								}
+							/>
+						</>
+					}
+				/>
+			</Place>
+		</Page>
+	);
+}
+
+function notified(width: number, facts: boolean): StoryObj {
+	return {
+		parameters: { layout: "fullscreen" },
+		render: () => <Notified width={width} facts={facts} banner />,
+		play: async ({ canvas, canvasElement }) => {
+			const log = await canvas.findByRole("log");
+			const send = await canvas.findByRole("button", { name: "Send" });
+			const main = must(regions(canvasElement)[1]);
+			const head = must(main.querySelector("header"));
+			const banner = await canvas.findByRole("status");
+			for (let at = 0; at < 10; at++) await frame();
+			await expect(main.scrollHeight).toBeLessThanOrEqual(main.clientHeight);
+			await expect(log.scrollHeight).toBeGreaterThan(log.clientHeight);
+			await waitFor(() =>
+				expect(
+					log.scrollHeight - log.scrollTop - log.clientHeight,
+				).toBeLessThan(4),
+			);
+			const gap =
+				banner.getBoundingClientRect().top -
+				head.getBoundingClientRect().bottom;
+			await expect(gap).toBeCloseTo(
+				token(canvasElement, "pb-pair", "paddingBottom"),
+				0,
+			);
+			const before = [head, banner].map((el) => el.getBoundingClientRect().top);
+			log.scrollTop = 0;
+			await frame();
+			await expect(
+				[head, banner].map((el) => el.getBoundingClientRect().top),
+			).toEqual(before);
+			const bounds = main.getBoundingClientRect();
+			const sent = send.getBoundingClientRect();
+			await expect(sent.bottom).toBeLessThanOrEqual(bounds.bottom);
+			const field = canvas.getByRole("textbox", { name: "Message" });
+			await expect(field.getBoundingClientRect().width).toBeGreaterThanOrEqual(
+				100,
+			);
+		},
+	};
+}
+
+export const ThreadUnderBanner375 = touch(notified(375, true));
+export const ThreadUnderBanner768 = notified(768, true);
+export const ThreadUnderBanner1440 = notified(1440, true);
+export const ThreadUnderBannerNoFacts1440 = notified(1440, false);
+
+// The banner coming and going keeps the Thread mounted, so its typed input stays.
+export const ThreadKeepsInputAsBannerToggles: StoryObj = {
+	parameters: { layout: "fullscreen" },
+	render: function Toggle() {
+		const [banner, setBanner] = useState(false);
+		return (
+			<>
+				<button type="button" onClick={() => setBanner((on) => !on)}>
+					Toggle
+				</button>
+				<Notified width={768} facts banner={banner} />
+			</>
+		);
+	},
+	play: async ({ canvas, userEvent }) => {
+		const field = await canvas.findByRole("textbox", { name: "Message" });
+		await userEvent.type(field, "kept");
+		await userEvent.click(canvas.getByRole("button", { name: "Toggle" }));
+		await canvas.findByRole("status");
+		await expect(canvas.getByRole("textbox", { name: "Message" })).toBe(field);
+		await expect(field).toHaveValue("kept");
+	},
+};
+
+// A Banner sibling above a Thread in a Place body: its measured insets (left, right, top, banner to log) are asserted flush so a
+// failure prints them.
+export const PlaceBodyBannerMeasured: StoryObj = {
+	parameters: { layout: "fullscreen" },
+	render: () => (
+		<Page width={768}>
+			<Place title="Chats" bleed>
+				<Banner kind="warn" sentence="The run is paused." />
+				<Thread
+					items={LONG}
+					message={{
+						key: (turn) => turn.id,
+						author: (turn) => turn.author,
+						body: (turn) => turn.body,
+					}}
+					foot={
+						<MessageInput
+							value=""
+							onChange={noop}
+							placeholder="Reply"
+							onSend={noop}
+						/>
+					}
+				/>
+			</Place>
+		</Page>
+	),
+	play: async ({ canvas }) => {
+		const banner = await canvas.findByRole("status");
+		const log = await canvas.findByRole("log");
+		for (let at = 0; at < 10; at++) await frame();
+		const body = must(banner.parentElement).getBoundingClientRect();
+		const b = banner.getBoundingClientRect();
+		await expect({
+			left: b.left - body.left,
+			right: body.right - b.right,
+			top: b.top - body.top,
+			toLog: log.getBoundingClientRect().top - b.bottom,
+		}).toEqual({ left: 0, right: 0, top: 0, toLog: 0 });
+	},
+};

@@ -21,7 +21,7 @@ leads up while the list stands alone, and the `Split`'s `back` takes its place o
 
 A record the open record links to opens beside it: the `Split`'s `beside` holds a `Screen` whose
 `back` is the open record's route. On the phone it stands in the open record's stead, its back
-act in its top bar, its head the page's only head. The body's first child, an `ItemHeader`, stands a pair, not a sections gap, above an `ActionBar` directly after it (a `Place`, a `Screen` or a `Split`'s `main`) and, in a `Split`'s `main` when it has no facts line, above the record's first section (not above a `Thread`). The body reads its own children, a fragment seen through: a head or bar reached through a wrapper component keeps the sections step.
+act in its top bar, its head the page's only head. The body's first child, an `ItemHeader`, stands a pair, not a sections gap, above an `ActionBar` or a `Banner` directly after it (a `Place`, a `Screen` or a `Split`'s `main`) and, in a `Split`'s `main` when it has no facts line, above the record's first section (not above a `Thread`). The body reads its own children, a fragment seen through: a head or bar reached through a wrapper component keeps the sections step.
 
 ```tsx
 <Split list={rows} main={<Item />} beside={<Screen title="Run 12" back={itemRoute}><Run /></Screen>} />
@@ -384,7 +384,7 @@ item, since a message draws again only when its item changes; its `foot` is a `M
 In a `Place`'s body, or in a `Split`'s `main` under the record's `ItemHeader`, it fills what holds
 it: its log scrolls and the input docks at the foot. It stands there as the body's direct child,
 or as `main` (in a fragment under the record's `ItemHeader`), never inside a component of the
-app's, so the frame knows it from its first render. What a system line names stands under it as
+app's, so the frame knows it from its first render. A part above the Thread (a `Banner`, an `ActionBar`) stands as its sibling in the same region, in that fragment, never wrapped together with it; wrapped, the region keeps its scrolling form. What a system line names stands under it as
 its `detail`, a `MessageDetail`, exactly one of: a `row` (a `ListRow`'s slots, its `title` a `Part` so a `Quoted` one draws its quotes, in a hairline card,
 opening its record), a free act's `code` under its verb, or a `fold` of lines the line opens in
 place; never a `ListRow` or a `Code` between the messages.

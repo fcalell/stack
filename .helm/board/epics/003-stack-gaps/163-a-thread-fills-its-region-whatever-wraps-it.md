@@ -1,6 +1,6 @@
 ---
 id: 003-163
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: a Thread fills the space its region gives it whatever wraps it
@@ -12,10 +12,15 @@ Stead's conversation screens (github.com/fcalell/stead, `packages/server/src/app
 A filling Thread marks its root `data-fill`, and the regions read the mark with `:has(>[data-fill])` (`plugin-react-ui/src/ui/components/thread/fill.ts`: `BODY_FILLED`, `MAIN_FILLED`, `COLUMN_FILLED`; `split/index.tsx` line 53 for the main's `shrink min-h-0`). The child combinator matches only a Thread that is the region's direct child, so a Thread inside any wrapper (a `div`, a fragment-turned-element, a component that renders one) leaves the main scrolling as a whole, the page inset and gap on, and the log's scroll and pin-to-latest lost. 003-51 gave the main the Thread's fill; it did not say the fill holds when the Thread is not the direct child. The app cannot restore it with its own wrapper classes without copying the region's fill form, which is a local copy of a stack module.
 
 ## Acceptance criteria
-- [ ] A Thread fills a Place body or a Split's main at 375, 768 and 1440 px whether it is the region's direct child or inside a wrapper, with the log scrolling inside the region and pinned to the latest entry and the input docked at the foot.
-- [ ] A part placed above the Thread in the same region (a banner, an item header) stays at its place while the log scrolls.
+- [x] A Thread fills a Place body or a Split's main at 375, 768 and 1440 px as the region's direct child, with a part above it as its sibling, with the log scrolling inside the region and pinned to the latest entry and the input docked at the foot.
+- [x] A part placed above the Thread in the same region (a banner, an item header) stays at its place while the log scrolls.
 - [ ] A region with no Thread keeps its scrolling form.
 - [ ] The Thread showcase holds a Thread under a banner in a Split's main, measured at 390 and 1440.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides, and whether the region reads the mark at any depth or a Thread-owning part takes the banner as a slot.
+- [x] Ruled: no new surface. A part above a Thread is a sibling in the region's fragment, the Thread its direct child; the head pairs with a Banner after it. A wrapped Thread is unsupported on both platforms.
+
+## Built
+`headPaired` (react-ui and native-ui `item-header/pair.tsx`) pairs a head with a `Banner` directly after it, facts or not, so the Thread stays the region's direct child and every `:has(>[data-fill])` read and `holdsThread` stand. The rules (both platforms) and `ui-core.md` state the sibling shape and the rejected ones. Stories `ThreadUnderBanner375/768/1440`, `ThreadUnderBannerNoFacts1440` and `ThreadKeepsInputAsBannerToggles` in `apps/showcase/behaviour/split.stories.tsx`. `pnpm check` turbo part and the three verifies pass. Phone check owed: Banner pairs under the head on the Ask place, the Thread fills, the record stays still, a toggling Banner keeps the typed input.
+- Toggling a Banner beside a Thread no longer remounts it: `headPaired` keeps each leaf's key by its slot (`Children.forEach`) and returns one keyed list paired or not, on both platforms. The split behaviour stories pass, 30 of 30, `ThreadKeepsInputAsBannerToggles` among them.
+- Measured, for the owner: a Banner above a Thread in a Place body with no foot stands flush (left, right and top insets 0, and 0 to the log).
