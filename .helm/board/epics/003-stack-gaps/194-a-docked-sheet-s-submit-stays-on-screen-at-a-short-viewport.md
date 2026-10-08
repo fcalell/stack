@@ -37,3 +37,5 @@ The floor stops being a minimum on the scroller and becomes a minimum on the bod
 
 ## Open
 - The last acceptance box (the Thread showcase's two-page docked Sheet at 320 x 640 and 390 x 667, the submit's bottom measured against the tab bar's top) waits on a design critique run by a session that played no part in the work. The stories assert the same two measures (submit bottom against the region's bottom and against a stand-in tab bar's top).
+
+Native unrendered: the native-ui change is type-checked and verified, not rendered on a phone.

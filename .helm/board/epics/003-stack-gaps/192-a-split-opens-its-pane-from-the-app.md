@@ -35,3 +35,5 @@ design/07-interface.md "### A workflow: the canvas", Interactions: "A tap on a n
 
 ## Open
 - The last acceptance box (the Split showcase's app-opened pane at 375 and 768 and its close, measured by the critique) waits on a design critique run by a session that played no part in the work. The stories assert the sheet's box (bottom sheet full width at the bottom edge at 375, side sheet at the viewport's end at 768), the close counts and the no-sheet case from `wide`.
+
+Native unrendered: the native-ui change is type-checked and verified, not rendered on a phone.

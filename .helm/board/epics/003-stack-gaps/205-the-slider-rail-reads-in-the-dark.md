@@ -26,3 +26,5 @@ The slider's unfilled rail is `SLIDER_REST = "h-track rounded-full bg-edge"` (ui
 ## Built
 
 `SLIDER_REST` in `packages/ui-core/src/variants.ts`; the disabled rail in both `slider/index.tsx`. Evidence: `behaviour/slider.stories.tsx` `RailLight`, `RailDark`, `RailTouchLight`, `RailTouchDark`, `RailDisabled` and `RailDisabledLight` pass. At value 0 the rail is 2px (desktop) and 4px (touch), its background equals `bg-edge-strong`, and its contrast against the surface is 3.52:1 bare and 3.80:1 in a Group in light, 4.45:1 bare and 4.08:1 in a Group in dark, each at or over 3:1; a disabled rail equals `bg-edge`. Left for the critique: the first box (the rail reads as a track, its contrast measured by the critique).
+
+Native unrendered: the native-ui change is type-checked and verified, not rendered on a phone.

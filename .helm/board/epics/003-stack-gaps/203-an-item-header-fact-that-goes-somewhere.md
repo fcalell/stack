@@ -26,3 +26,5 @@ An `ItemHeader` fact is a string, a status, or `{ label, onOpen }`, which draws 
 ## Built
 
 `Fact` gains `{ label: Part; href: Route; onOpen?: never }` in `plugins/react-ui/src/ui/components/item-header/index.tsx` and `plugins/native-ui/src/ui/components/item-header/index.tsx` (`FactPart`, `factKey`). The roster comment, both `rules.md` and `ui-core.md` describe it. Evidence: `behaviour/item-header.stories.tsx` `FactToARoute` (1280) and `FactToARouteTouch` (390) assert the route fact is an `a` with its `href`, has no `aria-haspopup`, draws the chevron, shares the radius and height of the sheet fact beside it, and the sheet fact is still a button with `aria-haspopup="dialog"`. The generated ItemHeader frame holds both facts; its Rest and Loading stories pass with axe. Left for the critique: the third box (the showcase measured by the critique).
+
+Native unrendered: the native-ui change is type-checked and verified, not rendered on a phone.

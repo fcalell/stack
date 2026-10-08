@@ -30,3 +30,5 @@ A boolean `replying?: boolean` on `ThreadProps` (both platforms), outside the `q
 
 ## Open
 - The last acceptance box (a log ending on a waiting reply at 390 and 1280, measured by the critique) waits on a design critique run by a session that played no part in the work. The repo holds no native story host, so the native draw is pinned by its source test and `verify` only.
+
+Native unrendered: the native-ui change is type-checked and verified, not rendered on a phone.

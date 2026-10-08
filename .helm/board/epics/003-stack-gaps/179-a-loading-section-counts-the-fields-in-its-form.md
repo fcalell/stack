@@ -39,3 +39,5 @@ The owner rules: fields plus an `ActionBar` as direct Section children (no Form)
 
 ## Owner ruling
 Second ruling: the field kinds left (Slider, Select, OptionList, SegmentedControl, and folded fields) go to 003-293. 179 waits on the critique; the native form is not rendered.
+
+Native unrendered: the native-ui change is type-checked and verified, not rendered on a phone.

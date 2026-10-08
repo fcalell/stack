@@ -30,3 +30,5 @@ A log floor as a contract size, `docked-log-floor`, two rows (96 px on touch, 64
 
 ## Open
 - The last acceptance box (the Thread showcase's docked Sheet at 390 x 844 under a banner, the log's height measured against the floor by the critique) waits on a design critique run by a session that played no part in the work. The stories assert the log at or over `docked-log-floor` and the body at or over `docked-floor`.
+
+Native unrendered: the native-ui change is type-checked and verified, not rendered on a phone.

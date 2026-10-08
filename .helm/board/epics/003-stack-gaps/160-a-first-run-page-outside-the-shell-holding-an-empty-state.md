@@ -1,6 +1,6 @@
 ---
 id: 003-160
-status: done
+status: review
 sessions: {}
 ---
 # ui-core: a first-run page outside the shell holding only an EmptyState
@@ -15,7 +15,7 @@ A page outside the shell is a `Gate` (rules.md), and nothing else fits:
 - `EmptyState` on its own draws no page ground and no centring down the viewport, so it needs a host that fills the viewport on the canvas ground. The dropped route did that with `<main className="flex flex-col items-center justify-center p-sections bg-canvas min-h-dvh">`, which breaks rules.md's "classes are geometry" (`bg-canvas` is a fill, `min-h-dvh` a numeric dimension) and its "a page outside the shell is a `Gate`".
 
 ## Acceptance criteria
-- [x] Stack provides a part for the first-run page: one `EmptyState` centred across and down the viewport on the Gate's ground (`surface`; see Ruled), an act and a secondary act, one `h1` (the EmptyState's title), on web and phone.
+- [ ] Stack provides a part for the first-run page: one `EmptyState` centred across and down the viewport on the Gate's ground (`surface`; see Ruled), an act and a secondary act, one `h1` (the EmptyState's title), on web and phone.
 - [x] It is a root frame like `Gate` and `Shell`, so `toast()` and `confirm()` stand in it, and the rules name it beside `Gate` for a page outside the shell.
 - [x] The showcase restores `/welcome` on it, with no host element carrying a look.
 
@@ -34,6 +34,7 @@ The first run is a `Gate` with no `title`: it draws no lead and provides no `Pag
 - `DESIGN.md` regenerated: no change (it carries no Gate prose).
 
 Evidence: `apps/showcase/behaviour/gate.stories.tsx` `FirstRunCentred` (1440) and `FirstRunCentredOnTouch` (390, touch density) assert exactly one `h1` (the EmptyState's) and the column centred across and down within 1 px; they pass with the Gate, EmptyState and Failed stories and the Failed and not-found behaviour stories; `pnpm --filter showcase test-screens` passes (17 files, 170 tests, `/welcome` among them); `pnpm check` and the three `verify` runs pass.
+Native unrendered: first-run part, on web and phone.
 
 ## Critique
 Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/shell/report.md`).

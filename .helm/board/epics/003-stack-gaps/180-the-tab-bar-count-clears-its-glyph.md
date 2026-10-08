@@ -41,3 +41,5 @@ Evidence (identical in light and dark): the start is -4.07, -8.14 and -12.21 px 
 
 ## Open
 - The critique has not measured the Shell frame (the second acceptance box).
+
+Native unrendered: the native-ui change is type-checked and verified, not rendered on a phone.

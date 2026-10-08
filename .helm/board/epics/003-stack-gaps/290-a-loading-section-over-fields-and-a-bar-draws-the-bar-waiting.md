@@ -25,3 +25,5 @@ The Section draws a direct bar's waiting form after the skeleton fields; no `For
 Evidence: `behaviour/waiting.stories.tsx` holds `SectionOverFieldsAndItsBar` (+ Touch): a loading `Section` of two `FormField`s and a one-act `ActionBar` stands within 1 px of the loaded Section's height at 1280 desktop and 375 touch, with `aria-busy` and no textbox or button in the waiting tree. `SectionOverFields` (fields alone), `SectionOverItsForm`, `SectionOverAGroup` and `SectionOverAList` still pass. The scoped run (`--changed master`) passed 308 of 308 (66 files), peak 4194 MiB. `pnpm check` turbo 45/45; the react-ui, native-ui and ui-core `verify`s pass.
 
 The first criterion is measured on the web; the native twin has no render run here and waits on the critique, as does the showcase measure.
+
+Native unrendered: the native-ui change is type-checked and verified, not rendered on a phone.

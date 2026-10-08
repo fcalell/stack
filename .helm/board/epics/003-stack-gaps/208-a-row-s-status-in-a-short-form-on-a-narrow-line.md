@@ -12,7 +12,7 @@ Stead's Repos list rows read title, then a meta line of the remote, "· main" an
 Not a repeat of 003-118: that story asked the status to yield before the subject is cut, and was ruled closed because the status shares the overflow with the first part (003-104) and an app that needs a subject whole puts it first or moves the status's words. Here the app already gives the subject as the first part and the status in its own mark, and the shared overflow does what 003-104 built: both are cut, the status to a fragment. The part left unprovided is a status that can say less instead of being clipped. `Status` takes one `label` and truncates it (list-row/index.tsx `STATUS_MARK`, status/index.tsx); the app can pass a shorter word ("5 min ago") only for every width, since it does not know the line's room. 003-83 (and 047e0d1f) gave the trailing age a short form the row words itself, and the meta line's status of an age ("Fetched 5 minutes ago") has none. Moving the words elsewhere is not available either: they are the row's status, drawn with its dot.
 
 ## Acceptance criteria
-- [x] A row whose status words can be said shorter draws the short words when the meta line is out of room for the long ones, so a status is never left as a clipped fragment of its first word, on both platforms.
+- [ ] A row whose status words can be said shorter draws the short words when the meta line is out of room for the long ones, so a status is never left as a clipped fragment of its first word, on both platforms.
 - [x] A row with room, and a status with no short form, are unchanged.
 - [ ] The ListRow showcase holds a status with a short form on a line too narrow for it, at 320, 390 and the 440 px list column, measured by the critique.
 
@@ -29,3 +29,4 @@ Not a repeat of 003-118: that story asked the status to yield before the subject
 - Both `rules.md`, the roster ListRow note and `ui-core.md` describe it.
 - Showcase: `behaviour/list-row-status.stories.tsx` (`StatusShort`, `StatusShortResizes`, `StatusLong` and touch twins): at 440, 390 and 320 the drawn words are whole (the long form where it fits, `5 min ago` at 320, the long label still in the tree), a line resized through 440, 400, 360, 330 and back draws one form per width, a row with room and a status with no short form keep the long words (cut as before where they do not fit). Scoped stories run: the `list-row`, `row-meta`, `status`, `list.stories` and `table` files, all passed.
 - The phone's measure is unchecked on a device (the twin is the fallback the ruling names); the native verify suite and type-check pass.
+Native unrendered: short status on a narrow line, on both platforms.

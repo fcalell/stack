@@ -26,3 +26,5 @@ Radius, not an exception: a pick in a row is a control, so the rubric's rule sta
 ## Built
 
 `PILL_ACT` is `WORD_ACT` (`packages/ui-core/src/variants.ts`, `rounded-control`), renamed in the roster, `variant-tables.ts`, `ui-core.md`, both pickers' `base.tsx`, both `item-header/index.tsx` and the Place and Picker frame drawers. Evidence: `behaviour/picker.stories.tsx` `RowRadius` (desktop, 1280) and `RowRadiusTouch` (390) assert the trigger's computed `border-top-left-radius` is 6px at rest, under the real pointer's hover (the wash drawn) and open, and that the keyboard-focused outline is 2px solid. `place.test.ts` asserts `WORD_ACT` is `rounded-control` and not `rounded-full`. The generated Picker, Place and ItemHeader stories (rest, selected, disabled, light and dark, axe) pass. Left for the critique: the second box (the ring on both platforms; native is not rendered here) and the third (the frames measured at 390 and 1280 in both modes).
+
+Native unrendered: the native-ui change is type-checked and verified, not rendered on a phone.

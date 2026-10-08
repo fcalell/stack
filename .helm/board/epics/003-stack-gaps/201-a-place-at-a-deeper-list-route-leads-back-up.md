@@ -25,3 +25,5 @@ A `Place` draws a back act only while a record is open (its strip or top bar lea
 ## Built
 `Place` (react-ui) draws an `up` act as an `IconButtonLink` in a `LIST_BACK_REPLACED` span first in the strip and, on touch, in the lead slot of the top bar in the switcher's stead (with `PAGE_TOP_BAR_START` when the bar is the title's row); below `tablet` with a record open the record's back act shows instead. native-ui leads the top bar with the record's back, else `up`, else the switcher. A Place with no `up` is unchanged. `up` is in the roster's Place entry, both `rules.md`, and `ui-core.md`. The Split showcase frame stands under `up` so the critique can measure it at 390 (list alone, record open) and 1280.
 Evidence: `apps/showcase/behaviour/place.stories.tsx` (`UpLeadsTheStrip` before the title at 1280, `UpLeadsTheTopBar390` 44x44 at the page edge, `UpGivesWayToTheRecordBack390`, `UpWithARecordBesideTheList`, `OwnRouteDrawsNoUp`, `UpTakesTheSwitcherPlace390`) pass. The third acceptance waits on the critique.
+
+Native unrendered: the native-ui change is type-checked and verified, not rendered on a phone.

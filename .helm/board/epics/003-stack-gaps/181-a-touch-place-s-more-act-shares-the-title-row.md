@@ -29,3 +29,5 @@ Not measured: the critique's call on a back-plus-title row (the Split stories wi
 
 ## Owner ruling
 The owner keeps the ruled shape: a back act with no switcher stands on the title row. The critique judges the back-plus-title row; the native form is not rendered.
+
+Native unrendered: the native-ui change is type-checked and verified, not rendered on a phone.
