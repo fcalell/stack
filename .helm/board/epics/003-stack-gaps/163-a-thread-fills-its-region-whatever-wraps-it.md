@@ -1,0 +1,21 @@
+---
+id: 003-163
+status: backlog
+sessions: {}
+---
+# react-ui: a Thread fills the space its region gives it whatever wraps it
+
+## Goal
+Stead's conversation screens (github.com/fcalell/stead, `packages/server/src/app/ui/conversation.tsx:1`, which opens: "Renders as a fragment so the `Thread` is the main's direct child, which is how the main knows to fill"; the Thread stands at lines 397 and 635, beside its `header` and `sheet`). A conversation in a Split's main sometimes needs a banner or another part above the Thread in the same region (a state line, a notice about the run), and the Thread must still scroll its own log and pin to the latest entry with its input docked at the foot. Today the app must keep every part a sibling and the Thread the region's direct child, so a part above the Thread cannot share a wrapper with it.
+
+## Approach
+A filling Thread marks its root `data-fill`, and the regions read the mark with `:has(>[data-fill])` (`plugin-react-ui/src/ui/components/thread/fill.ts`: `BODY_FILLED`, `MAIN_FILLED`, `COLUMN_FILLED`; `split/index.tsx` line 53 for the main's `shrink min-h-0`). The child combinator matches only a Thread that is the region's direct child, so a Thread inside any wrapper (a `div`, a fragment-turned-element, a component that renders one) leaves the main scrolling as a whole, the page inset and gap on, and the log's scroll and pin-to-latest lost. 003-51 gave the main the Thread's fill; it did not say the fill holds when the Thread is not the direct child. The app cannot restore it with its own wrapper classes without copying the region's fill form, which is a local copy of a stack module.
+
+## Acceptance criteria
+- [ ] A Thread fills a Place body or a Split's main at 375, 768 and 1440 px whether it is the region's direct child or inside a wrapper, with the log scrolling inside the region and pinned to the latest entry and the input docked at the foot.
+- [ ] A part placed above the Thread in the same region (a banner, an item header) stays at its place while the log scrolls.
+- [ ] A region with no Thread keeps its scrolling form.
+- [ ] The Thread showcase holds a Thread under a banner in a Split's main, measured at 390 and 1440.
+
+## Open questions
+- [ ] Its shape (a component, a variant, a token, an option): the stack session decides, and whether the region reads the mark at any depth or a Thread-owning part takes the banner as a slot.
