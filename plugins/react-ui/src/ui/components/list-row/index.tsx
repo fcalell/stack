@@ -9,6 +9,7 @@ import type {
 	RowEntry,
 	RowLeading,
 	RowPart,
+	RowStatus,
 	RowTitle,
 	RowTrailing,
 	StatusMark,
@@ -35,7 +36,13 @@ import {
 	text,
 	treeBleed,
 } from "@fcalell/ui-core/variants";
-import { type KeyboardEvent, type ReactNode, use, useMemo } from "react";
+import {
+	type KeyboardEvent,
+	type ReactNode,
+	use,
+	useMemo,
+	useState,
+} from "react";
 import { ageShort } from "../../lib/age.ts";
 import { useClock } from "../../lib/clock.ts";
 import type { Closed } from "../../lib/closed.ts";
@@ -67,9 +74,9 @@ import { MenuBase } from "../menu/base.tsx";
 import { Picker } from "../picker/index.tsx";
 import { ChangeMark } from "../status/change.tsx";
 import { StatusDot } from "../status/dot.tsx";
-import { Status } from "../status/index.tsx";
 import { LockMark } from "./lock.tsx";
 import { WarningMark } from "./marks.tsx";
+import { RowStatusMark } from "./status.tsx";
 
 const ROW = "relative flex items-center";
 // Below `tablet` a row with a labelled act stands its acts on a line of their
@@ -157,7 +164,6 @@ const SEPARATOR = "shrink-0";
 const STEPS = "flex flex-col min-w-0";
 const STEP = "flex items-center min-w-0 h-line-body";
 const STEP_LABEL = "truncate";
-const STATUS_MARK = "flex min-w-0";
 // The chip stands in a slot that shows it whole or not at all: a flex line
 // always keeps its first item, so a zero-width start item takes that place and
 // the chip, wider than the room the slot is left, wraps under the slot's one
@@ -191,8 +197,8 @@ export interface ListRowProps<V extends string | null = string> extends Closed {
 	meta?: readonly RowPart[];
 	/** A value at the title line's end (an age, a count, a word: shown whole or gone), or a pick that applies at once. */
 	trailing?: RowTrailing<V>;
-	/** A work state on the meta line; a waiting act is told by its tone. */
-	status?: StatusMark;
+	/** A work state on the meta line; a waiting act is told by its tone. `{ loading: true }` while the read that answers it has not: a bar at the status's place and height, so the row keeps its height when it answers. A `short` form draws in place of the `label` while the long one would be cut. */
+	status?: RowStatus;
 	/** What is wrong with the row, on the meta line after the status: a warn glyph and its label (a short phrase; truncates). The act that clears it is the row's `act`. */
 	warning?: string;
 	/** What the row holds, on the meta line after the warning: a lock glyph and its label, shown from `tablet` (a short phrase; truncates). */
@@ -396,6 +402,7 @@ export function ListRow<V extends string | null = string>({
 	const top = wrap || entry !== undefined;
 	const under = act !== undefined && !top;
 	const column = cn(TEXT, under && TEXT_UNDER);
+	const [metaLine, setMetaLine] = useState<HTMLSpanElement | null>(null);
 	const inline = useMemo(() => ({ label: entry?.label ?? "" }), [entry?.label]);
 	const entryReason = useReasonLine(entry?.act.blocked);
 	const actReason = useReasonLine(act?.blocked);
@@ -591,7 +598,7 @@ export function ListRow<V extends string | null = string>({
 			) : (
 				<span className={column}>
 					{titleLine}
-					<span className={cn(ROW_META_LINE, META_LINE)}>
+					<span ref={setMetaLine} className={cn(ROW_META_LINE, META_LINE)}>
 						{lead.length === 0 ? null : (
 							<span className={META_PARTS}>
 								<span
@@ -637,11 +644,7 @@ export function ListRow<V extends string | null = string>({
 								) : null}
 							</span>
 						)}
-						{status ? (
-							<span className={STATUS_MARK}>
-								<Status state={status.state} label={status.label} />
-							</span>
-						) : null}
+						{status ? <RowStatusMark status={status} line={metaLine} /> : null}
 						{warning !== undefined ? <WarningMark label={warning} /> : null}
 						{lock !== undefined ? <LockMark reason={lock} labelled /> : null}
 						{chip ? (

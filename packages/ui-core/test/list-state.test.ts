@@ -26,6 +26,7 @@ import {
 	rowShape,
 	sectionCount,
 	sectionState,
+	shortHeld,
 	tableRecords,
 	toggled,
 	touchMeta,
@@ -909,4 +910,16 @@ test("a definition value of one word cuts to a stem and a tail of its last four 
 	const cut = valueCut(emoji);
 	assert.equal(`${cut.stem}${cut.tail}`, emoji);
 	assert.equal(Array.from(cut.tail).length, 4);
+});
+
+test("shortHeld holds the width the long form was cut at and tries it again only on a wider line", () => {
+	const fits = () => false;
+	const cut = () => true;
+	assert.equal(shortHeld(null, 300, fits), null);
+	assert.equal(shortHeld(null, 300, cut), 300);
+	assert.equal(shortHeld(300, 300, fits), 300);
+	assert.equal(shortHeld(300, 200, fits), 300);
+	assert.equal(shortHeld(300, 301, cut), null);
+	assert.equal(shortHeld(null, 301, cut), 301);
+	assert.equal(shortHeld(null, 301, fits), null);
 });

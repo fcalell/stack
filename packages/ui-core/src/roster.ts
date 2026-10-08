@@ -1061,7 +1061,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// each of Status, warning, lock and Chip, on the meta line in that
 		// order: a warning is what is wrong with the row (the act that clears
 		// it is the row's `act`), a lock what the row holds (its label shown
-		// from `tablet`). Its trailing is a value, or a
+		// from `tablet`). A `status` whose read has not answered is
+		// `{ loading: true }`: a bar at the Status's place and height, so the
+		// row keeps its height when it answers. A status with a `short` form
+		// draws it in place of its label while the long one would be cut on the
+		// meta line. Its trailing is a value, or a
 		// pick: a `Picker` at the `row` fit, centred in the row.
 		// A `leading` of `check` is the row's tick, a `Checkbox` in the leading
 		// slot named by the title; its `blocked` reason draws it disabled and

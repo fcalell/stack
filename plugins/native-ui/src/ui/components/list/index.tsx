@@ -10,6 +10,7 @@ import type {
 	RowEntry,
 	RowLeading,
 	RowPart,
+	RowStatus,
 	RowTitle,
 	RowTrailing,
 	StatusMark,
@@ -106,7 +107,7 @@ export interface RowSlots<T, V extends string | null = string> {
 	/** The row's meta line (each part a short phrase; one line, the later parts truncating first). */
 	meta?: (item: T) => readonly RowPart[] | undefined;
 	trailing?: (item: T) => RowTrailing<V> | undefined;
-	status?: (item: T) => StatusMark | undefined;
+	status?: (item: T) => RowStatus | undefined;
 	/** What is wrong with the row, a warning mark (a short phrase; truncates). */
 	warning?: (item: T) => string | undefined;
 	/** What the row holds, a lock mark (a short phrase; truncates). */

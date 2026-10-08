@@ -11,6 +11,7 @@ import type {
 	RowEntry,
 	RowLeading,
 	RowPart,
+	RowStatus,
 	RowTitle,
 	RowTrailing,
 	StatusMark,
@@ -128,7 +129,7 @@ export interface RowSlots<T, V extends string | null = string> {
 	/** The row's trailing value or pick. */
 	trailing?: (item: T) => RowTrailing<V> | undefined;
 	/** The row's status mark. */
-	status?: (item: T) => StatusMark | undefined;
+	status?: (item: T) => RowStatus | undefined;
 	/** What is wrong with the row, a warning mark (a short phrase; truncates). */
 	warning?: (item: T) => string | undefined;
 	/** What the row holds, a lock mark (a short phrase; truncates). */

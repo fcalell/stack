@@ -1,6 +1,6 @@
 ---
 id: 003-206
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: a known row's status line waits on its own read
@@ -12,9 +12,19 @@ Stead's System index is a fixed list of sections (Status, Usage, Leads, Agents, 
 A `List` waits in two forms (`list-row/wait.tsx`, `trailing-wait.ts`, the List's `known` branch, rules.md on waiting rows): rows fully waiting (`RowWait`, the status a dot alone), or items given with `loading`, which stand as the loaded rows with only their trailing value waiting; `status` passes through `row.status(item)` as is. Nothing lets one known row say its status line is on its way, so it stands either absent (the row a line short) or with words the app would invent. A stand-in status ("Reading") draws words the read has not given and still changes the row when it answers.
 
 ## Acceptance criteria
-- [ ] A known row whose status is on its way stands its status line as a waiting bar at the loaded row's height, and draws the status in place when it arrives, on both platforms.
-- [ ] A row with no status, and a row whose status is known, are unchanged.
+- [x] A known row whose status is on its way stands its status line as a waiting bar at the loaded row's height, and draws the status in place when it arrives, on both platforms.
+- [x] A row with no status, and a row whose status is known, are unchanged.
 - [ ] The ListRow showcase holds a known list with one row's status waiting, at 390 and 1280, measured by the critique.
 
 ## Open questions
-- [ ] Its shape (a waiting status from the row map, a per-item loading slot, or another): the stack session decides.
+- [x] Its shape (a waiting status from the row map, a per-item loading slot, or another): the stack session decides.
+
+## Ruled
+A `status` may be `{ loading: true }` (`RowStatus`, ui-core `descriptors.ts`, taken by `ListRow.status` and `RowSlots.status`; `StatusMark` itself is unchanged). A string or `null` sentinel is an untyped meaning, and a per-item slot is a second function for one state; `loading` is the roster's one waiting word.
+
+## Built
+- ui-core `descriptors.ts`: `RowStatus = StatusMark | { loading: true }`; `roster.ts` ListRow note; `README.md` and `verify.ts` name it.
+- react-ui and native-ui `list-row/status.tsx` (new): a waiting status stands as a `skeleton` line bar `w-measure-short` in a box the meta line's height (`LINE_BOX` meta with `h-lh` on the web, a `Strut` on the phone), hidden from assistive tech, yielding to the first part as the status does. It counts as a mark, so the row is the two-line row from its first frame. Loaded, the `Status` draws in the same place. `ListRow` and `List` types take `RowStatus`; a row with no status, and a row with a loaded one, draw as before.
+- Both `rules.md` and `ui-core.md` describe the waiting status.
+- Showcase: `behaviour/list-row-status.stories.tsx` (`StatusWaits`, `StatusWaitsKnown` and their touch twins) draws a `List` whose Agents status waits, in a 390 and a 440 px column, in a plain list and in a `known` list: the waiting row is as tall as its answered self, the rows under it keep their top and height after the answer, a row with no status stays a line shorter. Scoped stories run: the `list-row`, `row-meta`, `status`, `list.stories` and `table` files, all passed.
+- The phone's render is unchecked on a device; the native verify suite and type-check pass.

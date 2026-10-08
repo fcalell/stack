@@ -1073,6 +1073,29 @@ a tick with no animation, never jumped to full.
   grid, the same glyph and label; on touch it is the `ListRow` warning, and on the phone's frozen
   leading column, a short measure wide, the glyph alone with the sentence read with the row's name.
   The Table has no row act, so a warning's act on a Table row is the row's open.
+- A row's `status` is a `RowStatus` (`descriptors.ts`): a `StatusMark`, or `{ loading: true }`
+  while the read that answers it has not, which a `List`'s `row.status` and a `ListRow` take (not
+  `StatusMark` itself, which other parts consume; `loading` is the roster's one waiting word, where
+  a sentinel string or a second per-item slot would be an untyped meaning or a second function for
+  one state). A waiting status counts as a mark, so the row is the two-line row from its first frame,
+  and stands as a `skeleton` line bar `w-measure-short` in a box the meta line's height (`LINE_BOX`
+  `meta`, `h-lh`; a `Strut` on the phone) where the `Status` will draw, yielding to the first part
+  as the status does, so nothing moves when it answers; it works in a `known` List and in a plain
+  `ListRow`. `StatusMark.short` is the status's words said shorter ("5 min ago"), drawn in the
+  label's place only on a `ListRow`'s meta line and only while the long form would be cut; `label`
+  stays the name (read by assistive tech beside the visible short form). The short form is what the
+  app offered to read whole, so it takes no part in the meta line's shared overflow (`shrink-0`):
+  the first part yields for it, where the long form shares the overflow with the first part.
+  Stack cannot reword an
+  app's sentence and a floor in characters leaves a fragment, so the app offers the words. The long
+  form is the first paint, measured before paint (web: a layout effect reads the label's
+  `scrollWidth` against its `clientWidth` and a `ResizeObserver` watches the meta line; phone: an
+  invisible twin `Text` at the word's width reports `onTextLayout` lines past one where the visible
+  word truncates, since a truncated line's report differs between platforms). The decision rests on
+  the meta line's width alone, never on the form drawn, or the two would flip: `shortHeld`
+  (`./list-state`) holds the width at which the long form was cut, draws the short form while the
+  line is no wider, and tries the long form again only on a wider line; a new `label` or `short`
+  clears it.
 - A row, a fact or a field carries where it stands in a change set as one `change?: ChangeKind`
   (`added`, `changed`, `removed`, `unchanged`, `stale`, in `descriptors.ts`, the one `ChangeKind`;
   the change cell's own kinds are the subset `ChangeCellKind`) across `ListRow`, `DefinitionRow` and

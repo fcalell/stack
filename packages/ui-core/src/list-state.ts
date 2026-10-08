@@ -1025,3 +1025,19 @@ export function pathCut(name: string): {
 		floor: Math.min(name.length, NAME_LEAD + 1 + kept),
 	};
 }
+
+// A row's status with a short form decides between its two forms on the
+// meta line's width alone, never on the form drawn (a form that read its own
+// cut would flip between the two). The line's width at which the long form
+// was cut is held and the short form drawn while the line is no wider; wider,
+// the long form draws again and `cut` reads whether it still does not fit,
+// which holds the new width. Returns the width held, or null while the long
+// form draws.
+export function shortHeld(
+	held: number | null,
+	width: number,
+	cut: () => boolean,
+): number | null {
+	if (held === null) return cut() ? width : null;
+	return width > held ? null : held;
+}

@@ -35,7 +35,7 @@ Twenty-one subpaths:
   `ButtonFit`, `IconButtonFit` and `LinkFit`, what an act sits in, read off each matrix's `fit`
   axis; `ActionBarFit`, where an action bar stands, `end` or `full`, off `ACTION_BAR`'s;
   `TextRole`, the `body` and `meta` roles `Text` draws).
-- `@fcalell/ui-core/descriptors`: `IconName`, `Act`, `IconAct`, `Part`, `StatusMark`, `ChipMark`,
+- `@fcalell/ui-core/descriptors`: `IconName`, `Act`, `IconAct`, `Part`, `StatusMark`, `RowStatus`, `ChipMark`,
   `Option`, `OptionGroup`, `PlaceSpec`, `Switcher`, `Hunk`, `FieldBinding`, `Confirmation`,
   `MenuItem`, `RowEntry`, `Lock`, `Answered`, `TableColumn`, `TableRowSlots`, `CellEdit`, `Stage`,
   `StageEnd`, `Sentence`, `Coded`, `RowTitle`, `GateMark` and the other framework-free types a prop carries.

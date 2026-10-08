@@ -83,7 +83,15 @@ export interface StatusMark {
 	state: StatusState;
 	// The state's word (a word; truncates when its line is out of room).
 	label: string;
+	// The word said shorter ("5 min ago"); a row's meta line draws it in place
+	// of `label` when the line is out of room for the long form. `label` stays
+	// the name.
+	short?: string;
 }
+
+// A row's status as its map gives it: the mark, or `{ loading: true }` while
+// the read that answers it has not.
+export type RowStatus = StatusMark | { loading: true };
 
 export interface ChipMark {
 	family: ChipFamily;

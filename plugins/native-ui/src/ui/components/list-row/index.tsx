@@ -6,6 +6,7 @@ import type {
 	RowEntry,
 	RowLeading,
 	RowPart,
+	RowStatus,
 	RowTitle,
 	RowTrailing,
 	StatusMark,
@@ -32,7 +33,7 @@ import {
 	text,
 	treeBleed,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, useContext, useMemo } from "react";
+import { type ReactNode, useContext, useMemo, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import { ageShort } from "../../lib/age";
 import { useClock } from "../../lib/clock";
@@ -65,11 +66,11 @@ import { IconButtonBase } from "../icon-button/base";
 import { Input } from "../input";
 import { MenuBase } from "../menu/base";
 import { Picker } from "../picker";
-import { Status } from "../status";
 import { ChangeMark } from "../status/change";
 import { StatusDot } from "../status/dot";
 import { LockMark } from "./lock";
 import { WarningMark } from "./marks";
+import { RowStatusMark } from "./status";
 
 const ROW = "relative flex-row items-center";
 // A row with a labelled act stands its acts on a line of their own at the
@@ -131,7 +132,6 @@ const META_RUN = "shrink min-w-0";
 const META_QUOTED = "shrink-10000000 min-w-0";
 const META_CODE = "flex-row shrink-10000000 min-w-0";
 const SEPARATOR = "shrink-0";
-const STATUS_MARK = "shrink min-w-0";
 // The chip stands in a slot that shows it whole or not at all: a flex line
 // always keeps its first item, so a zero-width start item takes that place and
 // the chip, wider than the room the slot is left, wraps under the slot's one
@@ -168,7 +168,11 @@ export interface ListRowProps<V extends string | null = string> extends Closed {
 	/** A value at the title line's end (an age, a count, a word: kept whole, the title truncating first), or a pick that applies at once. */
 	trailing?: RowTrailing<V>;
 	// A work state on the meta line; a waiting act is told by its tone.
-	status?: StatusMark;
+	// `{ loading: true }` while the read that answers it has not: a bar at the
+	// status's place and height, so the row keeps its height when it answers.
+	// A `short` form draws in place of the `label` while the long one would be
+	// cut.
+	status?: RowStatus;
 	/** What is wrong with the row, on the meta line after the status: a warn glyph and its label (a short phrase; truncates). The act that clears it is the row's `act`. */
 	warning?: string;
 	/** What the row holds, on the meta line after the warning: a lock glyph and its label (a short phrase; truncates). */
@@ -395,6 +399,8 @@ export function ListRow<V extends string | null = string>({
 	// the parts beside them stand on that first line.
 	const top = wrap || entry !== undefined;
 	const under = act !== undefined && !top;
+	// The meta line's width, which decides a status's short form.
+	const [metaWidth, setMetaWidth] = useState(0);
 	const inline = useMemo(() => ({ label: entry?.label ?? "" }), [entry?.label]);
 	const entryReason = useReasonLine(entry?.act.blocked);
 	const actReason = useReasonLine(act?.blocked);
@@ -549,7 +555,10 @@ export function ListRow<V extends string | null = string>({
 			) : (
 				<View pointerEvents="none" className={TEXT}>
 					{titleLine}
-					<View className={cn(ROW_META_LINE, META_LINE)}>
+					<View
+						onLayout={(event) => setMetaWidth(event.nativeEvent.layout.width)}
+						className={cn(ROW_META_LINE, META_LINE)}
+					>
 						{lead.length === 0 ? null : (
 							<View className={META_PARTS}>
 								{coded ? (
@@ -596,11 +605,7 @@ export function ListRow<V extends string | null = string>({
 								) : null}
 							</View>
 						)}
-						{status ? (
-							<View className={STATUS_MARK}>
-								<Status state={status.state} label={status.label} />
-							</View>
-						) : null}
+						{status ? <RowStatusMark status={status} line={metaWidth} /> : null}
 						{warning !== undefined ? <WarningMark label={warning} /> : null}
 						{lock !== undefined ? <LockMark /> : null}
 						{chip ? (
