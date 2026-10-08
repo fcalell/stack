@@ -10,6 +10,7 @@ import {
 	MESSAGE_BUBBLE,
 	MESSAGE_CARD,
 	MESSAGE_CODE,
+	MESSAGE_ENTRY,
 	MESSAGE_FOLD,
 	MESSAGE_HEAD,
 	MESSAGE_LINE,
@@ -153,7 +154,7 @@ function SystemMessage(props: {
 	);
 	if (detail?.row === undefined) return centred;
 	return (
-		<div className={STACK}>
+		<div className={cn(MESSAGE_ENTRY, STACK)}>
 			{centred}
 			<div className={cn(MESSAGE_CARD, FRAMED)}>
 				<GroundContext value="group">

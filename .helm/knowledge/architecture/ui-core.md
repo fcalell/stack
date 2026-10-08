@@ -952,7 +952,7 @@ a tick with no animation, never jumped to full.
   (`MESSAGE_FOLD`) the line opens in place under it, its chevron turning down, read whole without a
   sheet. The code and the fold stand start-aligned across the message column at the pill's inset,
   wrapping at a space and breaking a token only when it outruns the line. The line stays the centred
-  meta line; a fold's line is its toggle, so it opens nothing else. A thread holds one item kind, so
+  meta line; a fold's line is its toggle, so it opens nothing else. A line and its card stand a pair step apart (`MESSAGE_ENTRY`), the label over its content as a Section's title is over its body. A thread holds one item kind, so
   a row or a `Code` between messages is a detail, never a second item map or children.
 - A collection takes data and draws its states at the leaf. A `List` takes `query` (or `items`,
   waiting on `loading`) and one item map: `row`, one function per `ListRow` slot, `file`, one per

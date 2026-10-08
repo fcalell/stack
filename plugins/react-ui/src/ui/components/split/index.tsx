@@ -106,9 +106,9 @@ export function Split({ list, main, beside, pane, empty, back }: SplitProps) {
 	const [listNode, setListNode] = useState<HTMLElement | null>(null);
 	const [mainNode, setMainNode] = useState<HTMLElement | null>(null);
 	const [paneNode, setPaneNode] = useState<HTMLElement | null>(null);
-	const listStop = useScrolls(listNode, "y");
-	const mainStop = useScrolls(mainNode, "y");
-	const paneStop = useScrolls(paneNode, "y");
+	const listStop = useScrolls(listNode);
+	const mainStop = useScrolls(mainNode);
+	const paneStop = useScrolls(paneNode);
 	const opened = main !== undefined;
 	const detailed = opened && pane !== undefined;
 	const besides = opened && beside !== undefined;

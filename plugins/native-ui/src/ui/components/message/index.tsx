@@ -7,6 +7,7 @@ import {
 	MESSAGE_BUBBLE,
 	MESSAGE_CARD,
 	MESSAGE_CODE,
+	MESSAGE_ENTRY,
 	MESSAGE_FOLD,
 	MESSAGE_HEAD,
 	MESSAGE_LINE,
@@ -164,7 +165,7 @@ function SystemMessage(props: {
 	);
 	if (detail?.row === undefined) return centred;
 	return (
-		<View>
+		<View className={MESSAGE_ENTRY}>
 			{centred}
 			<View className={cn(MESSAGE_CARD, FRAMED)}>
 				<GroundContext.Provider value="group">

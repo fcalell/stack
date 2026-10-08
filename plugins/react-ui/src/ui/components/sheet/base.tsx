@@ -160,7 +160,7 @@ export function SheetBase({
 	const [running, setRunning] = useState(false);
 	const popup = useRef<HTMLDivElement>(null);
 	const [bodyNode, setBodyNode] = useState<HTMLDivElement | null>(null);
-	const stop = useScrolls(bodyNode, "y");
+	const stop = useScrolls(bodyNode);
 	const blocked = submit?.blocked !== undefined;
 	// The submit's press stands while it is blocked by the reason it came
 	// under (`@fcalell/ui-core/reason`).

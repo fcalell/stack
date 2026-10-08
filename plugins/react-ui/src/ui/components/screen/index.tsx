@@ -86,7 +86,7 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	const sheet = (beside ? use(DetailsSheet) : null) ?? own;
 	const titleId = useId();
 	const [bodyNode, setBodyNode] = useState<HTMLDivElement | null>(null);
-	const stop = useScrolls(bodyNode, "y");
+	const stop = useScrolls(bodyNode);
 	const fit = touch ? "body" : "bar";
 	const levels = screenLevels(beside, level);
 	const Heading = `h${levels.title}` as const;

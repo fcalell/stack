@@ -631,13 +631,15 @@ export const TABLE_NAME = "gap-inside";
 // the code in the meta ink, ranking under its verb. Its attachments stand in
 // one wrapping row a gap apart, over the bubble at the column's end (the
 // `MessageInput` draws the same row over its text), and its provenance line
-// (`meta`) leads the time.
+// (`meta`) leads the time. A line and its card are one entry a pair apart, the
+// label over its content.
 export const MESSAGE_BUBBLE = "rounded-card bg-fill-neutral px-tile py-pair";
 export const MESSAGE_HEAD = "gap-inside";
 export const MESSAGE_LINE = "gap-x-inside";
 export const MESSAGE_OPEN =
 	"gap-inside rounded-control px-inside min-h-target text-ink-meta";
 export const MESSAGE_ATTACHMENTS = "gap-inside";
+export const MESSAGE_ENTRY = "gap-pair";
 export const MESSAGE_CARD = "rounded-card border border-edge bg-surface";
 export const MESSAGE_CODE = "px-inside text-ink-meta";
 export const MESSAGE_FOLD = "px-inside";

@@ -1,22 +1,12 @@
 import { useEffect, useState } from "react";
 import { isTabbable } from "./focus.ts";
 
-/** Whether a region takes a tab stop of its own: it runs past its box along `axis` and holds nothing a keyboard reaches, so no other stop scrolls it. */
+/** Whether a region takes a tab stop of its own: it runs past its box vertically and holds nothing a keyboard reaches, so no other stop scrolls it. */
 export function takesStop(
-	box: {
-		scrollWidth: number;
-		clientWidth: number;
-		scrollHeight: number;
-		clientHeight: number;
-	},
-	axis: "x" | "y",
+	box: { scrollHeight: number; clientHeight: number },
 	tabbable: boolean,
 ): boolean {
-	const scrolls =
-		axis === "x"
-			? box.scrollWidth > box.clientWidth
-			: box.scrollHeight > box.clientHeight;
-	return scrolls && !tabbable;
+	return box.scrollHeight > box.clientHeight && !tabbable;
 }
 
 /** Whether a mutation changed `node`'s own children, the ones its size is watched on; a change deeper in the subtree only needs a re-measure. */
@@ -41,7 +31,7 @@ const TABBABLE_ATTRIBUTES = [
 ];
 
 /** Whether a scrolling region takes a tab stop (`takesStop`), measured as it resizes. Its children are watched too, since new content resizes them and not the box; a change to its own children rebinds them. Content swapping anywhere inside it, or an element becoming or ceasing to be tabbable, re-measures it, since a loaded body holds its waiting size and resizes nothing. */
-export function useScrolls(node: HTMLElement | null, axis: "x" | "y"): boolean {
+export function useScrolls(node: HTMLElement | null): boolean {
 	const [stop, setStop] = useState(false);
 	useEffect(() => {
 		if (!node) return;
@@ -49,7 +39,6 @@ export function useScrolls(node: HTMLElement | null, axis: "x" | "y"): boolean {
 			setStop(
 				takesStop(
 					node,
-					axis,
 					Array.from(node.querySelectorAll<HTMLElement>("*")).some(isTabbable),
 				),
 			);
@@ -75,6 +64,6 @@ export function useScrolls(node: HTMLElement | null, axis: "x" | "y"): boolean {
 			resize.disconnect();
 			content.disconnect();
 		};
-	}, [node, axis]);
+	}, [node]);
 	return stop;
 }

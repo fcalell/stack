@@ -205,7 +205,7 @@ export function Place({
 	const list = splitOf(children)?.back ?? route;
 	const titleId = useId();
 	const [bodyNode, setBodyNode] = useState<HTMLDivElement | null>(null);
-	const stop = useScrolls(bodyNode, "y");
+	const stop = useScrolls(bodyNode);
 	const [sheet] = useState(() => Dialog.createHandle<unknown>());
 	const dock = useRef<HTMLDivElement>(null);
 	useFootFocus(dock);

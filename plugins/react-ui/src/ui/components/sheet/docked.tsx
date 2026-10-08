@@ -89,7 +89,7 @@ export function SheetDocked({
 	const titleId = useId();
 	const root = useRef<HTMLElement>(null);
 	const [body, setBody] = useState<HTMLDivElement | null>(null);
-	const stop = useScrolls(body, "y");
+	const stop = useScrolls(body);
 	const [touchedValue, setTouched] = useTouchState();
 	const page = usePageTurn(open, title, description, () => setTouched(false));
 	// A new page opens at its top, not where the last one was scrolled to.
