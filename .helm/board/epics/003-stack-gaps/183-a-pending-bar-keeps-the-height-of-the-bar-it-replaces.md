@@ -1,6 +1,6 @@
 ---
 id: 003-183
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: a PendingBar keeps the height of the action bar it replaces
@@ -12,9 +12,19 @@ Stead's item screens swap their `ActionBar` for a `PendingBar` in the same place
 `PendingBar` draws its own one-row height whatever stood in its place, and `ActionBar` and `PendingBar` share nothing that carries the bar's extent. `Act.loading` keeps a single act's place (a spinner on its label), but 07's pattern is the bar becoming the server's phase in words, with a track toward a deadline, which one act's spinner cannot say. The app cannot size the PendingBar: no prop takes a height or act count, and a wrapper with a min-height is a local copy of the bar's geometry.
 
 ## Acceptance criteria
-- [ ] A `PendingBar` that takes an `ActionBar`'s place stands at that bar's height at every density (stacked acts on touch, wrapped rows on the desktop), so nothing below it moves when the swap happens or when the bar comes back.
-- [ ] A `PendingBar` standing alone is unchanged.
-- [ ] The showcase holds the swap for a one-, two- and three-act bar at 390 and 1280, measured by the critique.
+- [x] An `ActionBar` given `pending` stands the pending form at the bar's own loaded height at every density (stacked acts on touch, wrapped rows on the desktop, a blocked act's reason line included), so nothing below it moves when `pending` is set or cleared; the ghost acts take no focus, press or announcement, and Enter in a form field does not submit through them. (Web verified by the stories; native by construction, the reason line and pending-with-own-act limit measured as below.)
+- [x] A `PendingBar` standing alone is unchanged.
+- [ ] The showcase holds the swap (`pending` set and clear) for a one-, two- and three-act bar at 390 and 1280, plus a four-act desktop bar that wraps, measured by the critique (the frame holds them; the critique is a separate session).
 
 ## Open questions
-- [ ] Its shape (the PendingBar taking the act count, as `ActionBar loading={acts}` does, or one part that holds both forms): the stack session decides.
+- [x] Its shape: ruled, `ActionBar` takes `pending`.
+
+## Ruled
+Neither shape: a count on `PendingBar` cannot reproduce a desktop bar whose acts wrap by their label widths, so the loaded bar is the measure. `ActionBar` takes `pending?: PendingBarProps` and draws its own acts as a ghost under the `PendingBar`.
+
+## Built
+- react-ui `components/action-bar/index.tsx`: with `pending` set, one grid cell holds the bar (`invisible`, `inert`, `aria-hidden`, every act `ActInert`, none the form's submit) and the `PendingBar` over it, so the cell is the loaded bar's height at every density and wrap and Enter in a field presses no ghost act.
+- native-ui `components/action-bar/index.tsx`: the ghost stays in flow at `opacity-0` (`pointerEvents="none"`, hidden from accessibility), the `PendingBar` `absolute` over it. Limit: a pending form taller than the bar (its own `act` over a one-act bar) overlays what is below; the phone cannot measure the frame after paint.
+- `PendingBar` alone is unchanged; its doc comments and both `rules.md` point to `pending`. The ui-core roster lists the `pending` prop; `ui-core.md` describes the swap.
+- Showcase: the ActionBar frame holds the swap for one, two and three acts and the wrapped four-act bar (`Swaps`). `behaviour/action-bar.stories.tsx` asserts the pending box equals the loaded box in height (within half a pixel) and that the line below keeps its offset, on the desktop and touch density, and that the ghost acts are absent from the accessible tree and Enter in a field submits nothing. Scoped stories run: 105 files, 404 tests passed, peak 4890 MiB.
+- Out of scope: `Act.loading` is unchanged; the same latent gap for a Section holding fields directly plus an `ActionBar` (003-179) stays.

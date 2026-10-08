@@ -1,4 +1,8 @@
 import { ActionBar } from "@fcalell/plugin-react-ui/components/action-bar";
+import { Form } from "@fcalell/plugin-react-ui/components/form";
+import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
+import { Input } from "@fcalell/plugin-react-ui/components/input";
+import { Swaps } from "@fcalell/plugin-react-ui/showcase/frames/action-bar";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect } from "storybook/test";
 
@@ -60,3 +64,88 @@ export const BlockedReasonAtRest: StoryObj = {
 		);
 	},
 };
+
+// A bar given `pending` stands the pending form at the loaded bar's height, so
+// what is below keeps its top: the loaded bar and the pending one, each over a
+// line, are the same height and the line sits at the same offset, for one, two
+// and three acts and for a four-act bar that wraps.
+const swapsInPlace: StoryObj = {
+	render: () => <Swaps />,
+	play: async ({ canvasElement }) => {
+		const loaded = [...canvasElement.querySelectorAll("[data-swap=loaded]")];
+		await expect(loaded).toHaveLength(4);
+		for (const before of loaded) {
+			const after = before.parentElement?.querySelector("[data-swap=pending]");
+			const top = (box?: Element | null) =>
+				box?.lastElementChild?.getBoundingClientRect().top ?? 0;
+			const box = (element?: Element | null) =>
+				element?.getBoundingClientRect() ?? new DOMRect();
+			await expect(box(after).height).toBeCloseTo(box(before).height, 0);
+			await expect(top(after) - box(after).top).toBeCloseTo(
+				top(before) - box(before).top,
+				0,
+			);
+		}
+	},
+};
+
+// The acts under a pending form take no focus, no press and no announcement,
+// and Enter in a field does not submit through them.
+let pressed = 0;
+const heldActs: StoryObj = {
+	render: () => (
+		<Form>
+			<FormField label="Name">
+				<Input value="Acme" onChange={act} />
+			</FormField>
+			<ActionBar
+				acts={[
+					{ label: "Close", onAct: act },
+					{
+						label: "Merge",
+						onAct: () => {
+							pressed++;
+						},
+					},
+				]}
+				pending={{ sentence: "Merging", act: { label: "Cancel", onAct: act } }}
+			/>
+		</Form>
+	),
+	play: async ({ canvas, userEvent }) => {
+		pressed = 0;
+		await expect(canvas.queryByRole("button", { name: "Merge" })).toBeNull();
+		await expect(canvas.getAllByRole("button")).toHaveLength(1);
+		await userEvent.type(canvas.getByRole("textbox"), "{Enter}");
+		await expect(pressed).toBe(0);
+	},
+};
+
+export const SwapKeepsTheBarsHeight = swapsInPlace;
+export const PendingHoldsTheActsInert = heldActs;
+
+// The same scenarios in a 390 px phone at the touch density.
+function touch(story: StoryObj): StoryObj {
+	return {
+		...story,
+		tags: ["touch"],
+		globals: {
+			density: "touch",
+			viewport: { value: "phone", isRotated: false },
+		},
+		parameters: {
+			viewport: {
+				options: {
+					phone: {
+						name: "Phone",
+						styles: { width: "390px", height: "812px" },
+						type: "mobile",
+					},
+				},
+			},
+		},
+	};
+}
+
+export const SwapKeepsTheBarsHeightTouch = touch(swapsInPlace);
+export const PendingHoldsTheActsInertTouch = touch(heldActs);

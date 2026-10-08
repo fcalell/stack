@@ -1,6 +1,7 @@
 import type { Act } from "@fcalell/ui-core/descriptors";
 import type { ActionBarFit } from "@fcalell/ui-core/variants";
 import { ActionBar } from "../../components/action-bar/index.tsx";
+import { Text } from "../../components/text/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { Column } from "./place.tsx";
 import { Publish } from "./table.tsx";
@@ -81,6 +82,53 @@ export function Waiting(props: { fit: ActionBarFit }) {
 	);
 }
 
+const PENDING = { sentence: "Merging the change" };
+// A bar of one, two and three acts, each swapped for its pending form.
+const SWAPPED: Act[][] = [
+	[{ label: "Merge", onAct: change }],
+	[
+		{ label: "Close", onAct: change },
+		{ label: "Merge", onAct: change },
+	],
+	[
+		{ label: "Decline", onAct: change, destructive: true },
+		{ label: "Close", onAct: change },
+		{ label: "Merge", onAct: change },
+	],
+];
+
+// A bar of `acts` loaded and the same bar pending, a line below each so the
+// swap's shift shows.
+function Swapped(props: { acts: Act[] }) {
+	const { acts } = props;
+	return (
+		<div className="flex flex-col gap-sections">
+			<div data-swap="loaded" className="flex flex-col">
+				<ActionBar acts={acts} />
+				<Text role="meta">Below the bar</Text>
+			</div>
+			<div data-swap="pending" className="flex flex-col">
+				<ActionBar acts={acts} pending={PENDING} />
+				<Text role="meta">Below the bar</Text>
+			</div>
+		</div>
+	);
+}
+
+/** The swap for a bar of one, two and three acts and for the four-act bar that wraps. */
+export function Swaps() {
+	return (
+		<>
+			{SWAPPED.map((acts) => (
+				<Swapped key={acts.length} acts={acts} />
+			))}
+			<div className="w-list max-w-full">
+				<Swapped acts={WRAPPED} />
+			</div>
+		</>
+	);
+}
+
 export function drawActionBar(frame: ShowcaseFrame) {
 	// The meta cell is the selection count: a publish page's bar docked at
 	// its foot, the act pending in `loading` and blocked in `disabled`.
@@ -114,6 +162,7 @@ export function drawActionBar(frame: ShowcaseFrame) {
 				<div className="w-list max-w-full">
 					<ActionBar fit="end" acts={WRAPPED} />
 				</div>
+				<Swaps />
 			</div>
 		);
 	return bar;

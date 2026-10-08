@@ -28,6 +28,7 @@ import {
 import { useTouched } from "../../lib/touched";
 import { useWords } from "../../lib/words";
 import { Button } from "../button";
+import { PendingBar, type PendingBarProps } from "../pending-bar";
 import { ActionBarWait } from "./wait";
 
 // The touch structure at either fit: one act per row across the container,
@@ -42,6 +43,10 @@ const ALL_LIVE = "active:bg-wash-press";
 const ALL_INERT = "text-ink-disabled";
 // A kept failure line holds its height while nothing failed.
 const KEPT = "opacity-0";
+// A pending bar stands over the bar it replaces, which keeps its place in the
+// flow unseen: the held place is the loaded bar's height.
+const GHOST = "opacity-0";
+const OVER = "absolute top-0 inset-x-0";
 // A kept failure line's text while nothing failed: a no-break space holds the
 // line's height.
 const NO_FAILURE = " ";
@@ -71,6 +76,12 @@ export interface ActionBarProps extends Closed {
 	// `Group` or `Section` around it makes it wait, as one act: it hands down a
 	// boolean, so set the count on the bar itself.
 	loading?: boolean | number;
+	// The server works on a decision: a `PendingBar` takes the bar's place at
+	// the bar's own loaded height, the acts kept under it unseen and out of
+	// reach. A `PendingBar` alone is for a place that held no bar. A pending
+	// form taller than the bar (its own `act` on a one-act bar) overlays what
+	// stands below it.
+	pending?: PendingBarProps;
 }
 
 function AllAct(props: { label: string; applies: boolean; onAct: () => void }) {
@@ -128,7 +139,13 @@ function Chosen({ chosen }: { chosen: ChosenCount }) {
 // the press meanwhile. The last blocked act's reason stands at rest under the
 // acts, so the act keeps its row and stretches as a live one does. With `chosen` the count
 // stands over the acts at the bar's start.
-export function ActionBar({ acts, fit, chosen, loading }: ActionBarProps) {
+export function ActionBar({
+	acts,
+	fit,
+	chosen,
+	loading,
+	pending,
+}: ActionBarProps) {
 	// Inside a `Gate` a bar with no `fit` stands across the column.
 	const inColumn = useContext(FormStands) === "auth";
 	const where = fit ?? (inColumn ? "full" : "end");
@@ -166,7 +183,8 @@ export function ActionBar({ acts, fit, chosen, loading }: ActionBarProps) {
 		};
 		void ran.then(done(false), done(true));
 	};
-	return (
+	// The bar under a `PendingBar` is drawn with no act that presses.
+	const bar = (ghost: boolean) => (
 		<View
 			className={cn(actionBar({ fit: where }), chosen && ACTION_BAR_SELECTION)}
 		>
@@ -183,7 +201,7 @@ export function ActionBar({ acts, fit, chosen, loading }: ActionBarProps) {
 								act={kindOf(act, last)}
 								fit={FIT[where]}
 								label={act.label}
-								onAct={busy && !loading ? undefined : run}
+								onAct={ghost || (busy && !loading) ? undefined : run}
 								loading={loading}
 								blocked={act.blocked}
 							/>
@@ -199,6 +217,22 @@ export function ActionBar({ acts, fit, chosen, loading }: ActionBarProps) {
 					{failed ?? NO_FAILURE}
 				</RNText>
 			)}
+		</View>
+	);
+	if (pending === undefined) return bar(false);
+	return (
+		<View>
+			<View
+				pointerEvents="none"
+				accessibilityElementsHidden
+				importantForAccessibility="no-hide-descendants"
+				className={GHOST}
+			>
+				{bar(true)}
+			</View>
+			<View className={OVER}>
+				<PendingBar {...pending} />
+			</View>
 		</View>
 	);
 }

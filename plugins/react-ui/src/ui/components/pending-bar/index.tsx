@@ -63,7 +63,7 @@ function Fill(props: { run: PendingRun; now: number }) {
 	);
 }
 
-/** Work the page waits on, in an ActionBar's place. */
+/** Work the page waits on, in an ActionBar's place. To keep the bar's height while the server works, give the `ActionBar` a `pending`; a `PendingBar` alone is for a place that held no bar. */
 export interface PendingBarProps extends Closed {
 	/** What is happening, announced as it changes (a short phrase; truncates). */
 	sentence: string;

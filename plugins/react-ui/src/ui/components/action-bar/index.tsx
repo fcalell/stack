@@ -34,6 +34,7 @@ import { useTouched } from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Button } from "../button/index.tsx";
 import { Reason } from "../button/reason.tsx";
+import { PendingBar, type PendingBarProps } from "../pending-bar/index.tsx";
 import { ActionBarWait } from "./wait.tsx";
 
 // End: the acts at their width at the container's end, wrapped to a further
@@ -56,6 +57,13 @@ const ROW: Record<ActionBarFit, string> = {
 	end: "flex items-center justify-between self-stretch touch:flex-col touch:items-stretch",
 	full: "flex flex-col self-stretch",
 };
+
+// A pending bar and the bar it stands over share one cell, so the cell is the
+// loaded bar's height at every density and wrap; the loaded bar stays under it
+// unseen, inert and out of the tree readers walk.
+const HOLD = "grid grid-cols-1";
+const CELL = "col-start-1 row-start-1";
+const GHOST = "invisible";
 
 // The count and its choose and clear acts stand a pair apart at the row's
 // start; an act is words washed at the pointer, the one that does not apply
@@ -92,6 +100,8 @@ export interface ActionBarProps extends Closed {
 	chosen?: ChosenCount;
 	/** The acts wait: a count of act-shaped bars, `true` standing for one (the acts are unknown before the read, so give `acts` as `[]`). A number from 1 is the count of acts the bar will hold, and 0 or `false` is not waiting, so `loading={rows?.length}` reads the loaded bar at 0. Unset, a loading `Group` or `Section` around it makes it wait, as one act: it hands down a boolean, so set the count on the bar itself. */
 	loading?: boolean | number;
+	/** The server works on a decision: a `PendingBar` takes the bar's place at the bar's own loaded height, so nothing below it moves when `pending` is set or cleared. The acts stay drawn under it, unseen and out of reach. A `PendingBar` alone is for a place that held no bar. */
+	pending?: PendingBarProps;
 }
 
 function AllAct(props: {
@@ -119,7 +129,13 @@ function AllAct(props: {
 }
 
 /** The acts row over a blocked act's reason, beside a selection count when `chosen` is set; while one act is pending the others ignore the press. */
-export function ActionBar({ acts, fit, chosen, loading }: ActionBarProps) {
+export function ActionBar({
+	acts,
+	fit,
+	chosen,
+	loading,
+	pending,
+}: ActionBarProps) {
 	// Inside a `Gate` a bar with no `fit` stands across the column.
 	const where = fit ?? (use(FormStands) === "auth" ? "full" : "end");
 	const touch = useTouch();
@@ -166,7 +182,8 @@ export function ActionBar({ acts, fit, chosen, loading }: ActionBarProps) {
 		};
 		void ran.then(done(false), done(true));
 	};
-	const buttons = (
+	// The bar under a `PendingBar` is drawn with no act that submits or presses.
+	const buttons = (ghost: boolean) => (
 		<ReasonHostContext value={REASON_AT_REST}>
 			<div className={cn(ACTION_BAR_ACTS, ACTS[where])}>
 				{drawn.map(([act, at]) => {
@@ -174,8 +191,11 @@ export function ActionBar({ acts, fit, chosen, loading }: ActionBarProps) {
 					const loading = act.loading === true || (last && running);
 					const run = last ? runFilled : act.onAct;
 					return (
-						<SubmitContext key={act.label} value={last && pend !== undefined}>
-							<ActInert value={busy && !loading}>
+						<SubmitContext
+							key={act.label}
+							value={!ghost && last && pend !== undefined}
+						>
+							<ActInert value={ghost || (busy && !loading)}>
 								<Button
 									act={kindOf(act, last)}
 									fit={FIT[where]}
@@ -210,7 +230,7 @@ export function ActionBar({ acts, fit, chosen, loading }: ActionBarProps) {
 				/>
 			</>
 		) : null;
-	return (
+	const bar = (ghost: boolean) => (
 		<div
 			className={cn(
 				actionBar({ fit: where }),
@@ -229,10 +249,10 @@ export function ActionBar({ acts, fit, chosen, loading }: ActionBarProps) {
 						</span>
 						{all}
 					</div>
-					{buttons}
+					{buttons(ghost)}
 				</div>
 			) : (
-				buttons
+				buttons(ghost)
 			)}
 			{reason === undefined ? null : <Reason shown>{reason}</Reason>}
 			{reason !== undefined || !(kept || failed !== undefined) ? null : (
@@ -240,6 +260,17 @@ export function ActionBar({ acts, fit, chosen, loading }: ActionBarProps) {
 					{failed ?? NO_FAILURE}
 				</Reason>
 			)}
+		</div>
+	);
+	if (pending === undefined) return bar(false);
+	return (
+		<div className={HOLD}>
+			<div inert aria-hidden className={cn(CELL, GHOST)}>
+				{bar(true)}
+			</div>
+			<div className={CELL}>
+				<PendingBar {...pending} />
+			</div>
 		</div>
 	);
 }

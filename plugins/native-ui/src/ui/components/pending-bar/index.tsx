@@ -83,7 +83,9 @@ export interface PendingBarProps extends Closed {
 
 // One line on the group ground: the spinner, or a meta-ink line along the
 // track's foot filling toward `until` with the time left beside the
-// sentence; the act under it.
+// sentence; the act under it. To keep an `ActionBar`'s height while the server
+// works, give the bar a `pending`; a `PendingBar` alone is for a place that
+// held no bar.
 export function PendingBar({ sentence, until, act }: PendingBarProps) {
 	const end = until?.getTime();
 	// The shared clock ticks the bar until its end, never past it.

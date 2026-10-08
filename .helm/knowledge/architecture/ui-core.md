@@ -498,7 +498,13 @@ a tick with no animation, never jumped to full.
   (`waitCount` in `./list-state`). A loading Group or Section hands down a boolean
   (`LoadingContext`), so an inheriting Prose or ActionBar draws the default; a count is set on the
   part itself. A waiting ActionBar is that many act-shaped bars at the loaded geometry (the control's
-  box at the end, the field's height across, one per row on touch). A Section's `description` is a
+  box at the end, the field's height across, one per row on touch). An ActionBar's `pending`
+  (a PendingBar's props) keeps the bar's height through the swap: no count reproduces a bar whose acts
+  wrap by their label widths, so the loaded bar is the measure. On the web it stays drawn in one grid
+  cell with the PendingBar, `invisible`, `inert` and `aria-hidden`, its acts inert and none the
+  form's submit; on the phone it stays in flow at zero opacity with the PendingBar `absolute` over it,
+  so a pending form taller than the bar (its own `act` over one act) overlays what is below, the
+  frame being unmeasurable after paint. A Section's `description` is a
   declaration of the same kind: while the Section loads, `""` stands one meta-height bar where the
   sentence will be and an undefined `description` stands none (loaded, both draw no line), because
   the app knows a description is coming and not its words.

@@ -891,9 +891,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// `loading` is a count of acts (`true` one): the bar waits as that many
 		// act-shaped bars at the loaded geometry, one per row on touch; 0 or
 		// `false` is not waiting, and a loading Group or Section hands down `true`
-		// only.
+		// only. `pending` is a PendingBar's props: the bar draws it over its own
+		// acts, which stay drawn unseen and inert, so the place keeps the loaded
+		// bar's height.
 		ActionBar: {
-			props: ["acts", "fit", "chosen", "loading"],
+			props: ["acts", "fit", "chosen", "loading", "pending"],
 			draws: [
 				"ACTION_BAR",
 				"ACTION_BAR_ACTS",
