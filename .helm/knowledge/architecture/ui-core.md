@@ -1858,10 +1858,14 @@ optimizer start.
 
 The Vitest run sets `maxWorkers: 2` for both browser projects, which caps the story pages one `pnpm stories:test` opens at
 once (each is a renderer, and a wider run exhausts the memory of a 16 GiB machine). The showcase's browser
-scripts (`test-storybook`, `test-screens`) hold one lock per user (`$XDG_RUNTIME_DIR/stack-browser.lock`,
-through `flock`), so runs from several sessions or worktrees queue instead of running side by side: two
-runs together exhaust the same memory. A file subset goes through the script too
-(`pnpm --filter showcase test-storybook <files>`); `vitest` called directly bypasses the lock.
+scripts (`test-storybook`, `test-screens`) run through `browser-run.sh`, a memory budget per user shared by
+every session and worktree: a run claims its cap (`STACK_BROWSER_MB`, 6 GiB by default) and starts while
+the available memory, less the caps of the runs already admitted, covers it and a reserve
+(`STACK_BROWSER_RESERVE_MB`, 2 GiB); otherwise it waits. Under systemd the run is held to its cap with no
+swap, so one that outgrows it is killed alone instead of exhausting the machine; without `/proc/meminfo`
+the budget is one run at a time. A file subset goes through the script too
+(`pnpm --filter showcase test-storybook <files>`); `vitest` called directly bypasses the budget, and any
+other browser (a script driving Playwright) runs as `apps/showcase/browser-run.sh <command>` with its own cap.
 
 ## Enforcement
 

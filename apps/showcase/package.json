@@ -13,8 +13,8 @@
 		"check-types": "tsc -b",
 		"storybook": "storybook dev -p 6006 --no-open --ci",
 		"build-storybook": "storybook build",
-		"test-storybook": "flock \"${XDG_RUNTIME_DIR:-/tmp}/stack-browser.lock\" vitest run",
-		"test-screens": "flock \"${XDG_RUNTIME_DIR:-/tmp}/stack-browser.lock\" stack screens test"
+		"test-storybook": "./browser-run.sh vitest run",
+		"test-screens": "./browser-run.sh stack screens test"
 	},
 	"dependencies": {
 		"@base-ui/react": "^1.8.0",
