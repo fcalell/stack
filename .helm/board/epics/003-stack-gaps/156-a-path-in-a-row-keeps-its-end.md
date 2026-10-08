@@ -1,6 +1,6 @@
 ---
 id: 003-156
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a ListRow whose title or meta is a path keeps its end
@@ -25,3 +25,6 @@ No flag and no path-sniffing: a `{ code }` part (003-90) that is a whole title o
 `CodeCut` (`plugins/react-ui/src/ui/lib/code.tsx`, `plugins/native-ui/src/ui/lib/code.tsx`) draws the stem truncating and the tail whole; `ListRow` uses it for a title that is one `Coded`, a first meta part that is one `Coded`, and a later `Coded` part. The `works` part of the ListRow showcase frame holds a path title and a path meta part at the phone width.
 
 Evidence: `behaviour/row-meta.stories.tsx` `CodeRuns` and `CodeRunsTouch` (320 and 360 px, desktop and touch density) assert the stem is clipped, the end is whole and unclipped, and no box passes its row; the `ListRow` state stories pass.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/rows/report.md`).

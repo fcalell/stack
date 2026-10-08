@@ -28,3 +28,6 @@ suppression goes.
 
 ## Progress
 Built; `pnpm check` and `pnpm verify` pass. Web live at 1440: one shared popstate listener (plus the router's), and selecting a row marks it current. Cut (decided 2026-10-05, the recommended answer): rows are not memoised, so every row redraws on a navigation (12 on the deploys page) instead of only the rows whose `current` changes; memoising took a props box and a serialised shape per row per render, more code and likely more cost than those redraws. Open: the phone live criterion on the harness.
+
+## Critique
+Unrendered: its profiler and phone criteria cannot be drawn in Storybook.

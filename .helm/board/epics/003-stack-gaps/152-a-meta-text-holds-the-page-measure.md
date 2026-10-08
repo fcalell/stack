@@ -1,6 +1,6 @@
 ---
 id: 003-152
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a meta Text holds the page's measure, not 58 characters of its small size
@@ -26,3 +26,6 @@ Not a `ch` cap. `measure` is a derived size in px: 58 characters at the sans fig
 - `emit.ts`, `derive.ts`, `design-md.ts` (the type scale paragraph and the sizes table), `plugins/react-ui/src/node/theme.ts` (`max-w` joins the sizes' safelist), the foundations page, both verify scripts; `DESIGN.md` regenerated.
 - Showcase: the Text frame's two roles draw two sentences so each runs to the measure; the Form frame's fields cell stands under a body paragraph for the same comparison.
 - Evidence: `behaviour/measure.stories.tsx` `TextAndFormShareTheMeasure` (1280) and `...Touch` (375) hold a body Text, a meta Text, a Form and its field box to one width; they pass, as do `ui-core`, `react-ui` and `native-ui` verify. 768 sits between the two densities' widths (the desktop set from `tablet` on a fine pointer), both covered.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/rows/report.md`).

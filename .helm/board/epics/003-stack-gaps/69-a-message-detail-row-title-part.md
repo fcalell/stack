@@ -20,3 +20,6 @@ No source change on either platform. A showcase thread frame gains a quoted deta
 
 ## Open questions
 - [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Critique
+Unrendered: the rows critique did not capture the Message or Thread detail row.

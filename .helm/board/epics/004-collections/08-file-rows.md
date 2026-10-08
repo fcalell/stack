@@ -1,6 +1,6 @@
 ---
 id: 004-08
-status: review
+status: done
 sessions: {}
 ---
 # react-ui, native-ui: a list of changed files from data draws its own four states
@@ -31,3 +31,6 @@ Web and phone take the same props. Needs a query (a deploy's or a review's chang
 
 ## Progress
 The file map, its four states and the changes page shipped with 004-02; the type-level tests are added. Open: the live criteria (web per batch, phone on the harness).
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/rows/report.md`).

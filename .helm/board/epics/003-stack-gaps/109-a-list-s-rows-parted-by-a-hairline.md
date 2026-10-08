@@ -1,6 +1,6 @@
 ---
 id: 003-109
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a List's rows parted by a hairline
@@ -29,3 +29,6 @@ No prop. A List decides from its `row` map: a map that declares `meta` (two-line
 - react-ui `List` picks it over `LIST` when `row.meta` is declared and `row.children` is not, for loaded and waiting rows alike. native-ui `List` draws the same hairline per row through `between`, as Group does.
 - Both `rules.md` state the rule with the references (Linear inbox and the dark-mode page for the no-line side; Vercel rows, the data-table page and the Dribbble messages screen for the hairline side).
 - Evidence: `behaviour/list.stories.tsx` `Separators` passes (two-line rows part by one hairline, one-line rows none, a List in a Group adds none). The render in Stead's Now, Chats and Work lists is for the critique session.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/rows/report.md`).

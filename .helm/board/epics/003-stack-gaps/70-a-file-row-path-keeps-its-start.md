@@ -1,6 +1,6 @@
 ---
 id: 003-70
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a file row's path keeps its start beside its chip
@@ -23,3 +23,6 @@ The chip is never whole-or-gone here: it is why the row is listed. Web `overlays
 
 ## Open questions
 - [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/rows/report.md`).

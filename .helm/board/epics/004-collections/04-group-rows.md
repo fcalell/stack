@@ -1,6 +1,6 @@
 ---
 id: 004-04
-status: review
+status: done
 sessions: {}
 ---
 # react-ui, native-ui: a List inside a Group draws its rows on the card
@@ -31,3 +31,6 @@ Web (`plugins/react-ui`) and phone (`plugins/native-ui`) alike. Depends on 004-0
 
 ## Progress
 Built on web and phone; `pnpm check` passes. The web live criterion passed in the showcase (devices and projects-by-stage, all four states). Open: the phone live check on the harness.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/rows/report.md`).

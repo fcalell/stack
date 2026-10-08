@@ -1,6 +1,6 @@
 ---
 id: 003-65
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: label and value rows from data
@@ -22,3 +22,6 @@ The list stands in a Group and adds no count to a Section's head. `DefinitionRow
 
 ## Open questions
 - [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/rows/report.md`).

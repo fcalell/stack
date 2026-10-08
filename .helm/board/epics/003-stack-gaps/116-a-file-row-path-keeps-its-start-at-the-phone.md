@@ -1,6 +1,6 @@
 ---
 id: 003-116
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a file row's path keeps its start beside a chip at 375 px
@@ -23,3 +23,6 @@ No change to `FileRow`. The frame's chipped list holds a long name (`payment-ter
 
 ## Open questions
 - [ ] Its shape (a component, a variant, a token, an option): the stack session decides, and whether 003-70 reopens or this closes with it.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/rows/report.md`).

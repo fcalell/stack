@@ -1,6 +1,6 @@
 ---
 id: 003-83
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a row's trailing age in its short form
@@ -21,3 +21,6 @@ Each plugin's `lib/age.ts` gains public `ageShort(moment, now)` beside `age`; na
 
 ## Open questions
 - [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/rows/report.md`).

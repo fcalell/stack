@@ -27,3 +27,6 @@ measures, `cut()` and `middle()` go.
 
 ## Progress
 Built; `pnpm check` and `pnpm verify` pass. Web live at 1440 and 375 with the mono font held back 3 s: no path box mutates through the font load, every name keeps its tail, and the directory gives way first (to nothing on the longest path). Open: the phone live criterion on the harness.
+
+## Critique
+Partial: the path floor ships (see 003-70); the delayed-font web check and the phone check were not run.

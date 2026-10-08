@@ -1,6 +1,6 @@
 ---
 id: 003-104
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a row's status label truncates with room to spare
@@ -21,3 +21,6 @@ Evidence, Stead repo screens critique unit u9 (Stead 948b7ec, stack 5564217; sho
 
 ## Built
 `STATUS_LABEL` no longer carries `max-w-measure-short`: the word truncates only when the line it stands in is out of room, so ItemHeader's "Fetched 28 seconds ago" draws whole. A ListRow's status mark is no longer `shrink-0` (web `flex min-w-0`, native `shrink min-w-0`), so a status without a cap shares the overflow with the first part in proportion to their widths instead of pushing the line past the row. `apps/showcase/behaviour/row-meta.stories.tsx` `StatusRoom` asserts a long status draws whole in a 640 px row and truncates, with the row's children inside its box, at 320 px, and a `Status` alone draws whole.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/rows/report.md`).

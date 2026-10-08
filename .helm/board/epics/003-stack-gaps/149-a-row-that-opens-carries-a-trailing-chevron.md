@@ -1,6 +1,6 @@
 ---
 id: 003-149
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a ListRow that opens carries a trailing chevron like a DefinitionRow does
@@ -27,3 +27,6 @@ Evidence: `behaviour/row-meta.stories.tsx` `ChevronEnds` and `ChevronEndsTouch` 
 
 ## Open questions
 - [x] Its shape: every opening row draws it; no prop.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/rows/report.md`).

@@ -1,6 +1,6 @@
 ---
 id: 003-143
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a meta part's box stays inside its row
@@ -21,3 +21,6 @@ Evidence: `behaviour/row-meta.stories.tsx` `MetaYields` (every box in the row en
 
 ## Open questions
 - [x] Its shape: a basis and a shrinkable box, no new prop or token.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/rows/report.md`).

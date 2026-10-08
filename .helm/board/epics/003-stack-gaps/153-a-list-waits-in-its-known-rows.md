@@ -1,6 +1,6 @@
 ---
 id: 003-153
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a List given its items waits in those rows, only their trailing values waiting
@@ -23,3 +23,6 @@ A `List` with `loading` draws waiting rows "in the slots its map declares" (list
 Built under the waiting contract of 003-131, 003-132 and 003-123: the part derives its form from what it is given, with no new prop. A `List` with `row`, a `trailing` slot in the map, no tree (`children`), its own `loading` set and `items` that hold a row draws those rows as loaded, and each row's trailing value as a four-figure bar. The List passes such a row `trailing={undefined}` (the app's `trailing` slot is not called for it) and sets a `TrailingWait` context (`lib/trailing-wait`), which is the only signal: `ListRow` reads it and draws the bar in the value's place, with the title, leading, meta and acts as the map gives them for the item. A trailing pick waits as the same bar. A List without items, with a query, with a tree, in a loading Section (the context, not its own `loading`) or without a `trailing` slot waits as it did. Decided: the trigger is the List's own `loading` with items, not the loading a Section hands down, since a loading Section's items are not known to be real. The `ui-core.md` List entry, the roster note, the `loading` doc on both platforms and both `rules.md` pages say it. The List frame's `Loading` state holds a list of known rows with pending counts beside the loaded one; the critique measures them at 390 and 1440. Proven at 1280 and in a 375 px phone: the waiting list's height equals the loaded list's, its titles stand and its counts do not.
 
 Ruled (2026-10-07): no placeholder value goes through `ListRow`'s typed `trailing` prop. The context alone makes the row wait (`waits || (trailing && !("pick" in trailing))` gates the value; the pick path is guarded by `!waits`), and the List does not read the app's slot for a known waiting row. The trigger stays the List's own `loading` with items. Re-proven by `ListOfKnownRows` and its Touch story and the List state stories.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/rows/report.md`).

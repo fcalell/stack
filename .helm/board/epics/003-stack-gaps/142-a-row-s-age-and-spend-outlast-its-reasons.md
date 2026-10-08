@@ -1,6 +1,6 @@
 ---
 id: 003-142
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a row's age and spend are the last meta parts to be cut
@@ -24,3 +24,6 @@ Evidence: `behaviour/row-meta.stories.tsx` `MetaYields` and `MetaYieldsTouch` (t
 
 ## Open questions
 - [x] Its shape: no `Part` flag; a `Quoted` part yields first (ruling for 003-142).
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/rows/report.md`).
