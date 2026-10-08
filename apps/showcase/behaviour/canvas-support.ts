@@ -56,7 +56,9 @@ export function card(root: Element, id: string): HTMLElement {
 
 // The glyph buttons, in path order.
 export const glyphs = (root: Element) =>
-	root.querySelectorAll<HTMLElement>("[data-layer] > div > button");
+	root.querySelectorAll<HTMLElement>(
+		"[data-layer] > div:not([data-group]) > button",
+	);
 
 export const left = (element: HTMLElement) =>
 	Number.parseFloat(element.style.left);

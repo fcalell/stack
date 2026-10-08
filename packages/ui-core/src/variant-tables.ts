@@ -1094,6 +1094,19 @@ export const CANVAS_NODE_GLYPH = matrix({
 	defaultVariants: { state: "rest" },
 });
 
+// A group's dashed frame: the dash says a group, the outline's colour says it
+// is selected.
+export const CANVAS_GROUP = matrix({
+	base: "rounded-card border border-dashed",
+	variants: {
+		state: {
+			rest: "border-edge-strong",
+			selected: "border-selected-outline",
+		},
+	},
+	defaultVariants: { state: "rest" },
+});
+
 // ── Place ───────────────────────────────────────────────────────────
 
 // Navigation keeps the accent out: a place is selected by a grey fill in the

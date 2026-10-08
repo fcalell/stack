@@ -104,6 +104,13 @@ const apart = (a: DOMRect, b: DOMRect) =>
 const nodeButtons = (root: Element) =>
 	root.querySelectorAll<HTMLElement>("[data-layer] > button");
 
+// A group's head, which is a button when the canvas hears a choice.
+function headOf(root: Element, id: string): HTMLElement {
+	const head = root.querySelector<HTMLElement>(`[data-group="${id}"] > button`);
+	if (!head) throw new Error(`no head button for the group ${id}`);
+	return head;
+}
+
 // A node's button, by its id: the DOM holds them in path order.
 function nodeButton(root: Element, id: string): HTMLElement {
 	const button = nodeButtons(root)[ORDER.indexOf(id)];
@@ -128,8 +135,8 @@ function viewport(root: Element): {
 const titleOf = (id: string) =>
 	WORKFLOW.nodes.find((node) => node.id === id)?.title ?? "";
 
-// The nodes in path order, then Zoom in, Zoom out, Fit; Enter chooses the
-// focused node and Escape clears the choice.
+// The group heads, then the nodes in path order, then Zoom in, Zoom out, Fit;
+// Enter chooses the focused node and Escape clears the choice.
 export const Keyboard: StoryObj<{ heard: Select }> = {
 	args: { heard: fn() },
 	render: (args) => <Workflow heard={args.heard} />,
@@ -139,6 +146,13 @@ export const Keyboard: StoryObj<{ heard: Select }> = {
 			() => expect(nodeButton(region, ORDER[0] ?? "")).toBeVisible(),
 			LAID,
 		);
+		for (const group of WORKFLOW.groups ?? []) {
+			await userEvent.tab();
+			await expect(headOf(canvasElement, group.id)).toHaveFocus();
+			await expect(headOf(canvasElement, group.id)).toHaveTextContent(
+				group.head,
+			);
+		}
 		for (const id of ORDER) {
 			await userEvent.tab();
 			await expect(nodeButton(canvasElement, id)).toHaveFocus();
@@ -158,6 +172,59 @@ export const Keyboard: StoryObj<{ heard: Select }> = {
 		}
 	},
 };
+
+// A group's head is a button at least a target tall that chooses the group's
+// id; the group draws the selection's outline until Escape clears it; the
+// frame's body takes no pointer, so a drag from it pans.
+function groupSelect(
+	density: "desktop" | "touch",
+): StoryObj<{ heard: Select }> {
+	return {
+		args: { heard: fn() },
+		globals: { density },
+		render: (args) => <Workflow heard={args.heard} />,
+		play: async ({ args, canvas, canvasElement, userEvent }) => {
+			const region = await canvas.findByRole("region", { name: "Workflow" });
+			await waitFor(
+				() => expect(nodeButton(region, ORDER[0] ?? "")).toBeVisible(),
+				LAID,
+			);
+			const group = WORKFLOW.groups?.[0];
+			if (!group) throw new Error("no group");
+			const head = headOf(region, group.id);
+			const frame = head.parentElement as HTMLElement;
+			await expect(head).toHaveAccessibleName(group.head);
+			await expect(rect(head).height).toBeGreaterThanOrEqual(
+				SIZE_PX[density].target - 0.5,
+			);
+			const rest = getComputedStyle(frame).borderTopColor;
+			await userEvent.click(head);
+			await expect(args.heard).toHaveBeenLastCalledWith(group.id);
+			await waitFor(() =>
+				expect(getComputedStyle(frame).borderTopColor).not.toBe(rest),
+			);
+			await userEvent.keyboard("{Escape}");
+			await expect(args.heard).toHaveBeenLastCalledWith(null);
+			await waitFor(() =>
+				expect(getComputedStyle(frame).borderTopColor).toBe(rest),
+			);
+			// The frame's body takes no pointer: a press just inside its left edge
+			// lands on the ground and a drag from there pans.
+			const from: Point = {
+				x: rect(frame).left + 3,
+				y: rect(frame).top + rect(frame).height / 2,
+			};
+			await expect(document.elementFromPoint(from.x, from.y)).not.toBe(frame);
+			const before = viewport(canvasElement);
+			await mouseDrag(from, { x: from.x + 40, y: from.y + 30 });
+			await waitFor(() => expect(viewport(canvasElement).x).not.toBe(before.x));
+			await expect(args.heard).toHaveBeenLastCalledWith(null);
+		},
+	};
+}
+
+export const GroupSelectAtDesktop = groupSelect("desktop");
+export const GroupSelectAtTouch = groupSelect("touch");
 
 // A selection from outside the canvas brings its node into view at the zoom
 // the canvas has.
@@ -192,7 +259,9 @@ export const PanToFocused: StoryObj = {
 		// At scale 1, Tab to the last node: the focus pan sets a whole-pixel
 		// translate, so a vertical edge is still one solid column.
 		const last = nodeButton(region, ORDER.at(-1) ?? "");
-		for (let step = 0; step < ORDER.length; step++) await userEvent.tab();
+		const heads = WORKFLOW.groups?.length ?? 0;
+		for (let step = 0; step < heads + ORDER.length; step++)
+			await userEvent.tab();
 		await expect(last).toHaveFocus();
 		await waitFor(() => expect(holds(rect(region), rect(last))).toBe(true));
 		const panned = viewport(canvasElement);
@@ -215,7 +284,7 @@ export const PanToFocused: StoryObj = {
 		const first = nodeButton(region, ORDER[0] ?? "");
 		await waitFor(() => expect(holds(rect(region), rect(first))).toBe(false));
 		(document.activeElement as HTMLElement | null)?.blur();
-		await userEvent.tab();
+		for (let step = 0; step <= heads; step++) await userEvent.tab();
 		await expect(first).toHaveFocus();
 		await waitFor(() => expect(holds(rect(region), rect(first))).toBe(true));
 	},
@@ -838,6 +907,10 @@ async function tabbable(
 	region: Element,
 	graph: Fixture,
 ) {
+	for (const group of graph.groups ?? []) {
+		await userEvent.tab();
+		await expect(headOf(region, group.id)).toHaveFocus();
+	}
 	for (const id of orderOf(graph)) {
 		await userEvent.tab();
 		await expect(stateButton(region, graph, id)).toHaveFocus();
@@ -1076,7 +1149,11 @@ export const Loading: StoryObj = {
 			...(waiting.querySelector("[aria-hidden]:not(svg)")?.children ?? []),
 		];
 		await expect(cards).toHaveLength(3);
-		const node = rect(nodeButtons(loaded)[0] as Element);
+		const node = rect(
+			canvas
+				.getByText(WORKFLOW.nodes[0]?.title ?? "")
+				.closest("[data-layer] > div") as Element,
+		);
 		const pane = rect(waiting);
 		for (const card of cards) {
 			await expect(rect(card).width).toBeCloseTo(node.width, 0);
@@ -1110,7 +1187,9 @@ export const EmptyText: StoryObj = {
 			LAID,
 		);
 		const text = canvas.getByText(EMPTY);
-		const node = region.querySelector("[data-layer] > div") as HTMLElement;
+		const node = canvas
+			.getByText(WORKFLOW.nodes[0]?.title ?? "")
+			.closest("[data-layer] > div") as HTMLElement;
 		await expect(region).toHaveAccessibleDescription(EMPTY);
 		await expect(getComputedStyle(text).pointerEvents).toBe("none");
 		const standing = () => ({
@@ -1686,6 +1765,10 @@ export const KeyboardWithEditing: StoryObj<Heard> = {
 		await expect(
 			canvas.getByRole("button", { name: "Append a node" }),
 		).toHaveFocus();
+		for (const group of WORKFLOW.groups ?? []) {
+			await userEvent.tab();
+			await expect(headOf(region, group.id)).toHaveFocus();
+		}
 		for (const id of ORDER) {
 			await userEvent.tab();
 			await expect(nodeButton(region, id)).toHaveFocus();

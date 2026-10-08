@@ -29,7 +29,7 @@ The canvas guide (`plugin-react-ui/guide/canvas.md`) names no loading form.
 `loading?: boolean` on `CanvasProps`, no skeleton export. `Canvas` is a wrapper over `CanvasGraph` and the hookless `CanvasWait` (`canvas/wait.tsx`), so no viewport, layout or ELK runs while waiting. The wait stands the ground and grid (shared with the graph through `canvas/ground.tsx`) and three `canvasNode` cards of skeletons in a centred column at `gap-sections`, `aria-busy`. The zoom stack and the act do not stand while waiting (both are absolute overlays, so omitting them moves nothing; an inert act would read as an add in flight). `nodes`, `act`, `onSelect`, `onMove` and `onConnect` are ignored while loading.
 
 ## Built
-`canvas/wait.tsx`, `canvas/ground.tsx`, `canvas/index.tsx` (the split), the Canvas roster entry (`loading` prop and state, the skeleton cells), `guide/canvas.md`, the `ui-core.md` Canvas paragraph, the showcase `loading` frame and the `Loading` behaviour story. `pnpm check` and the three verifies pass; the browser evidence is in the batch run.
+`canvas/wait.tsx`, `canvas/ground.tsx`, `canvas/index.tsx` (the split), the Canvas roster entry (`loading` prop and state, the skeleton cells), `guide/canvas.md`, the `ui-core.md` Canvas paragraph, the showcase `loading` frame and the `Loading` behaviour story. `pnpm check` and the three verifies pass; the scoped browser run of `Canvas.stories.ts` and the three canvas behaviour files passes (115 tests, peak 2840 MiB).
 
 ## Open
 Not delivered, by the ruling: the first criterion asks for the zoom stack and the foot "as loaded"; the ruling draws neither while waiting. A decision for the owner: confirm the narrowing, or the zoom stack and foot stand (inert) in the loading form.

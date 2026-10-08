@@ -15,6 +15,7 @@ import {
 	BANNER_GLYPH,
 	BUTTON,
 	BUTTON_LABEL,
+	CANVAS_GROUP,
 	CANVAS_NODE,
 	CANVAS_NODE_GLYPH,
 	CANVAS_NODE_TEXT,
@@ -173,6 +174,7 @@ export const stageMark = build(STAGE_MARK);
 export const stageRail = build(STAGE_RAIL);
 export const image = build(IMAGE);
 export const imagePicture = build(IMAGE_PICTURE);
+export const canvasGroup = build(CANVAS_GROUP);
 export const canvasNode = build(CANVAS_NODE);
 export const canvasNodeText = build(CANVAS_NODE_TEXT);
 export const canvasNodeGlyph = build(CANVAS_NODE_GLYPH);
@@ -280,6 +282,7 @@ export const FAMILIES: readonly Family[] = [
 	family("QR_CODE", QR_CODE, qrCode),
 	family("IMAGE", IMAGE, image),
 	family("IMAGE_PICTURE", IMAGE_PICTURE, imagePicture),
+	family("CANVAS_GROUP", CANVAS_GROUP, canvasGroup),
 	family("CANVAS_NODE", CANVAS_NODE, canvasNode),
 	family("CANVAS_NODE_TEXT", CANVAS_NODE_TEXT, canvasNodeText),
 	family("CANVAS_NODE_GLYPH", CANVAS_NODE_GLYPH, canvasNodeGlyph),
@@ -780,10 +783,8 @@ export const CANVAS_GROUND = "bg-canvas";
 export const CANVAS_PORT =
 	"size-port rounded-full border border-edge-strong bg-surface";
 export const CANVAS_PORT_HIT = "size-target";
-export const CANVAS_GROUP =
-	"rounded-card border border-dashed border-edge-strong";
 export const CANVAS_GROUP_HEAD =
-	"gap-inside px-control-x py-inside rounded-t-card bg-group text-meta leading-meta font-normal text-ink-meta";
+	"gap-inside px-control-x py-inside min-h-target rounded-t-card bg-group text-meta leading-meta font-normal text-ink-meta";
 export const CANVAS_ZOOM = "rounded-control border border-edge bg-surface";
 
 // ── Layout ──────────────────────────────────────────────────────────

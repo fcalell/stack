@@ -157,6 +157,14 @@ const [selected, setSelected] = useState<string>();
 <Canvas label="Journey" nodes={numbered} edges={edges} selected={selected} onSelect={(id) => setSelected(id ?? undefined)} />
 ```
 
+A group is a frame; with `onSelect` its head is a selectable control. The head is a button named
+by its text (at least a target tall) that calls `onSelect(group.id)`, and `selected` may name a
+group, which draws its frame in the selection's outline. Node ids and group ids share one
+namespace. The frame's body takes no pointer, so a drag from it pans, and a group does not move:
+its frame follows its holds. The heads take their Tab stops first, outer before inner, then the
+nodes in path order. Under the text floor a head draws nothing and is no stop. A group holding no
+present node has no frame, so it cannot be chosen.
+
 An `act` stands at the foot's centre; it adds, it never removes.
 
 ## Loading

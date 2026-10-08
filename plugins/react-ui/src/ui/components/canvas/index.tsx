@@ -8,7 +8,7 @@ import type {
 	CanvasPath,
 	CanvasPoint,
 } from "@fcalell/ui-core/descriptors";
-import { CANVAS_GROUP, CANVAS_GROUP_HEAD } from "@fcalell/ui-core/variants";
+import { CANVAS_GROUP_HEAD, canvasGroup } from "@fcalell/ui-core/variants";
 import {
 	type KeyboardEvent,
 	type MouseEvent,
@@ -56,9 +56,9 @@ export interface CanvasProps extends Closed {
 	edges?: readonly CanvasEdge[];
 	/** Frames around the nodes they hold. */
 	groups?: readonly CanvasGroup[];
-	/** The selected node's id. */
+	/** The selected node's or group's id. */
 	selected?: string;
-	/** Hears a node's id when it is chosen, `null` when the choice is cleared; with it nodes are buttons. */
+	/** Hears a node's or group's id when it is chosen, `null` when the choice is cleared; with it nodes and group heads are buttons. */
 	onSelect?: (id: string | null) => void;
 	/** A run's taken path; what it leaves out dims. */
 	path?: CanvasPath;
@@ -245,7 +245,7 @@ function CanvasGraph({
 	}, []);
 
 	const reveal = (id: string) => {
-		const box = boxes.get(id);
+		const box = boxes.get(id) ?? routed.frames.get(id);
 		if (box) viewport.centreOn(box);
 	};
 	// A selection from outside brings its node into view; one the pointer made
@@ -318,6 +318,9 @@ function CanvasGraph({
 							head={group.head}
 							box={frame}
 							below={below}
+							selected={selected === group.id}
+							onSelect={onSelect}
+							onFocusVisible={reveal}
 						/>
 					) : null;
 				})}
@@ -365,7 +368,7 @@ function CanvasGraph({
 						<div
 							key={group.id}
 							data-head={group.id}
-							className={cn(CANVAS_GROUP, COLUMN)}
+							className={cn(canvasGroup({ state: "rest" }), COLUMN)}
 						>
 							<div className={cn(CANVAS_GROUP_HEAD, FLOW)}>
 								<span>{group.head || NBSP}</span>

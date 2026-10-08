@@ -1640,7 +1640,14 @@ a tick with no animation, never jumped to full.
   holds, bottom to top, the group frames, one SVG of every edge with its chips over it, and the
   nodes, which are absolutely placed elements in path order measured by a `ResizeObserver`; every
   look is a held `CANVAS_*` cell or a listed overlay. A group is a frame computed from its
-  members' boxes, not a node, so a group needs no parent or ordering rule. ELK runs only when no
+  members' boxes, not a node, so a group needs no parent or ordering rule. Node and group ids share
+  one namespace (`holds` mixes both), so the same `onSelect` and `selected` choose a group, with no
+  `onSelectGroup`: only the head is a `<button>` (the frame's body keeps `pointer-events-none` and
+  pans, and `CANVAS_GROUP_HEAD` carries `min-h-target`, so the probe lays the frame out with the
+  taller head), `CANVAS_GROUP` is a `state` matrix whose `selected` recolours the dash, the heads
+  take their Tab stops before the nodes (frames render first), and under the text floor the head is
+  no button. A group holds no `onMove` (a frame follows its holds) and a group with no present
+  node has no frame, so it cannot be chosen. ELK runs only when no
   node has a position, and is given the forward edges alone, to layer the nodes: it does not break
   a cycle inside a group, and it never sees a label or draws an edge. The canvas routes every edge
   itself from the final boxes (`geometry.ts`, pure): a forward edge bends in the middle of the layer

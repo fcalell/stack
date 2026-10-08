@@ -1465,6 +1465,10 @@ components:
     rounded: "{rounded.card}"
     padding: "{spacing.inside}"
     backgroundColor: "{colors.group-dark}"
+  canvas-group-rest:
+    rounded: "{rounded.card}"
+  canvas-group-selected:
+    rounded: "{rounded.card}"
   canvas-node-rest:
     height: "{spacing.row-2}"
     rounded: "{rounded.card}"
@@ -1813,13 +1817,13 @@ components:
     backgroundColor: "{colors.canvas}"
   canvas-ground-dark:
     backgroundColor: "{colors.canvas-dark}"
-  canvas-group:
-    rounded: "{rounded.card}"
   canvas-group-head:
+    height: "{spacing.target}"
     backgroundColor: "{colors.group}"
     typography: "{typography.meta}"
     textColor: "{colors.ink-meta}"
   canvas-group-head-dark:
+    height: "{spacing.target}"
     backgroundColor: "{colors.group-dark}"
     typography: "{typography.meta}"
     textColor: "{colors.ink-meta-dark}"

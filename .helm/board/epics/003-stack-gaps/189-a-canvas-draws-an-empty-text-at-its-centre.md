@@ -29,7 +29,7 @@ A Canvas with one node and no edge has nowhere to say that the graph is not yet 
 `empty?: string` on `CanvasProps`, a sentence of app copy (not a slot, not a `words` entry). Stack does not decide when it stands: the app passes it or `undefined`. It stands in the layer, centred on `routed.bounds` one `space.pair` under their bottom edge, so it speaks from under the node it points at and follows the pan and zoom (not the view's centre, where the lone trigger opens). It holds its size on screen through `--canvas-unzoom`, so it is the meta role at the text floor at any zoom, capped at `max-w-measure`. `pointer-events-none`: a drag through it pans and a tap on it reaches the ground. The region's `aria-describedby` names it.
 
 ## Built
-`canvas/caption.tsx` mounted by `canvas/index.tsx`, the `empty` prop and state in the Canvas roster entry, `guide/canvas.md`, the `ui-core.md` Canvas paragraph, an `empty` showcase frame and the `EmptyText` behaviour story. `pnpm check` and the three verifies pass; the browser evidence is in the batch run.
+`canvas/caption.tsx` mounted by `canvas/index.tsx`, the `empty` prop and state in the Canvas roster entry, `guide/canvas.md`, the `ui-core.md` Canvas paragraph, an `empty` showcase frame and the `EmptyText` behaviour story. `pnpm check` and the three verifies pass; the scoped browser run of `Canvas.stories.ts` and the three canvas behaviour files passes (115 tests, peak 2840 MiB).
 
 ## Open
 Not delivered, by the ruling: the first criterion says the text is "at the centre of its view"; the ruling stands it under the graph's bounds. A decision for the owner: confirm the narrowing.

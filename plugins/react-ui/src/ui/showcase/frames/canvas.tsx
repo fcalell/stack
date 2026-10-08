@@ -117,8 +117,9 @@ const DRAWN: Record<string, { label: string; graph: Graph }> = {
 	"STATUS_DOT.state.active": { label: "Status", graph: STATUSES },
 };
 
-// The canvas draws in seven cells: the workflow at rest (the journey with its
-// confirm node selected, and waiting), a problem, an off node, a status per
+// The canvas draws in these cells: the workflow at rest (the journey with its
+// confirm node selected, and waiting), the workflow with its loop group at rest
+// and selected, a problem, an off node, a status per
 // state, a run over the workflow, a scenario over the journey, and the glyph a
 // node is under the text floor, which is the workflow fitted: at rest, with its
 // plan node selected, and with a problem.
@@ -147,6 +148,17 @@ export function drawCanvas(frame: ShowcaseFrame) {
 			<Overview
 				graph={state === "problem" ? PROBLEM : WORKFLOW}
 				first={state === "selected" ? "plan" : undefined}
+			/>
+		);
+	}
+	if (name.startsWith("CANVAS_GROUP.state.")) {
+		if (frame.state !== "rest") return undefined;
+		return (
+			<Selectable
+				label="Workflow"
+				graph={WORKFLOW}
+				stage={WORKFLOW_STAGE}
+				first={name.endsWith(".selected") ? "loop" : undefined}
 			/>
 		);
 	}
