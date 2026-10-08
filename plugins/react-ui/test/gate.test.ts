@@ -23,8 +23,15 @@ test("a gate takes its head as data", () => {
 	gate({ title: "x", description: "Signed in as ana" });
 	// @ts-expect-error: the mark names itself
 	gate({ title: "x", mark: { src: "/mark.svg" } });
-	// @ts-expect-error: the title is the page's one h1
+	// no title: a first run, the EmptyState's title is the page's h1
 	gate({});
+	gate({ children: node });
+	// @ts-expect-error: a lead comes only with a title
+	gate({ description: ["x"] });
+	// @ts-expect-error: a lead comes only with a title
+	gate({ step: { at: 1, of: 2 } });
+	// @ts-expect-error: a lead comes only with a title
+	gate({ mark: { name: "Acme" } });
 	// @ts-expect-error: the product is the mark's name
 	gate({ title: "x", product: "Acme" });
 	// @ts-expect-error: the act is a Place's

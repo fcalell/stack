@@ -2,9 +2,10 @@
 
 A critique judges one rendered unit (a component's story in stack's Storybook, or a screen an app
 composed from the roster) against the [rubric](./rubric.md) and reports findings with measured
-numbers. The critic is a fresh session that played no part in composing the unit; it never
-prescribes a look and never edits a file: it says what is off and by how much. Its own
-measurements and `stack screens test`'s result are the only machine numbers on a render and never
+numbers. The critic is a fresh session that played no part in composing the unit. The verdict
+and its findings prescribe no look: they say what is off and by how much. The critic never edits
+a file. After the verdict it lists improvements as comparisons with references, which are
+evidence, not a prescription. Its own measurements and `stack screens test`'s result are the only machine numbers on a render and never
 evidence of taste.
 
 ## What the critic needs
@@ -52,6 +53,8 @@ the route as a deep link, opens it with Maestro's `openLink`, and drives it with
 9. **Console.** Metro's output, where the app's JavaScript logs arrive, shows zero warnings
    and errors, except Reanimated's "Reduced motion setting is enabled" warning, which the
    harness's own reduced motion raises.
+
+The [Improve](#improve) section applies as on the web, with the same pattern pages.
 
 ## Procedure
 
@@ -111,7 +114,31 @@ rework     (a number outside its range, a hygiene miss, a judged finding)
 nits       (within range but at its edge, or a judged remark below rework)
 
 each line: <file:line | screenshot | measurement> · <measured value> vs <range> · <one sentence>
+
+improve    (after the verdict, never moves it)
+each line: <reference> · <what it shows, measured> vs <what the render does, measured> · lands: <where>
 ```
 
 The verdict follows the rubric's verdict section. Approve only on what was rendered, never on
 the author's word.
+
+## Improve
+
+The critic writes this section in the same run, after the verdict is fixed. Nothing in it is a
+blocker, a rework item or a nit, and the verdict is never re-derived from it.
+
+The references are the executions on the pattern pages of the patterns the unit implements.
+Mobbin is searched only when a page has none, or when its stand-in note says its shortlist is
+thin. Each line has this form:
+
+```
+<reference: pattern page + Mobbin link or DESIGN.md line> · <what it shows, measured> vs <what the render does, measured> · lands: roster look (stack story: <component>) | composition (app: <file>)
+```
+
+The critic states the reference's property and the gap; it invents no value, so the measured
+range and the design system still decide the look. An improvement that would break a rubric ban,
+floor or range is dropped. The section holds at most about five lines, and "none" is a valid
+answer.
+
+A look on a roster component is a stack story, since rules.md bans a look at a call site; only a
+composition improvement is the app's to change.

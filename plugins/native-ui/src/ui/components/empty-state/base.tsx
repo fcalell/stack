@@ -132,7 +132,7 @@ export function EmptyStateBase(props: {
 				</View>
 			);
 		return (
-			<View className={EMPTY_COLUMN}>
+			<View className={cn(EMPTY_COLUMN, ABOVE)}>
 				{mark ? <View className={MARK_SLOT}>{mark}</View> : null}
 				{words}
 				{button || props.children ? (

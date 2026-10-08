@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Button } from "../../components/button/index.tsx";
 import { EmptyState } from "../../components/empty-state/index.tsx";
 import { Failed } from "../../components/failed/index.tsx";
+import { Gate } from "../../components/gate/index.tsx";
 import { Group } from "../../components/group/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { Section } from "../../components/section/index.tsx";
@@ -64,7 +65,7 @@ export function drawEmptyState(frame: ShowcaseFrame) {
 		);
 	if (cell === "TEXT.role.title" || cell === "BUTTON.fit.body")
 		return (
-			<div className="flex flex-col items-center justify-center p-sections bg-canvas w-screen max-w-full">
+			<Gate>
 				<EmptyState
 					icon="Rocket"
 					title="Deploy your first app"
@@ -73,7 +74,7 @@ export function drawEmptyState(frame: ShowcaseFrame) {
 				>
 					<Button act="secondary" label="Start from a template" onAct={act} />
 				</EmptyState>
-			</div>
+			</Gate>
 		);
 	if (cell === "TEXT.role.meta")
 		return (

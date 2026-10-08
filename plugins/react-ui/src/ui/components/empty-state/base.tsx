@@ -122,7 +122,7 @@ export function EmptyStateBase(props: {
 				</div>
 			);
 		return (
-			<div className={cn(EMPTY_COLUMN, FIRST)}>
+			<div className={cn(EMPTY_COLUMN, FIRST, ABOVE)}>
 				{mark ? <span className={MARK_SLOT}>{mark}</span> : null}
 				{words}
 				{button || props.children ? (

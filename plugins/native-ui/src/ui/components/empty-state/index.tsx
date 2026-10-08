@@ -25,8 +25,8 @@ export interface EmptyStateProps extends Closed {
 // Group in the card (the card its frame), its title at body 500 and its act
 // the hairline one, except that a Section's with only a `sentence` (no title,
 // icon, act or children) is that sentence at the meta role, unframed;
-// anywhere else it is a first run,
-// its title at the title role and its acts stacked across the column.
+// anywhere else (a `Gate` with no title, which holds it alone) it is a first run,
+// its title the page's header at the title role and its acts stacked across the column.
 export function EmptyState({
 	icon,
 	title,

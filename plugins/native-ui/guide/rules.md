@@ -111,6 +111,20 @@ in it. It keeps the safe area and scrolls over the keyboard. An `Input` or `Inpu
 it takes focus unless a typing control of the column holds it, so the first field of a step takes
 it, and a `Form`'s `ActionBar` in it draws `full`. It draws no word of its own.
 
+A first run (no workspace yet, nothing to show) is a `Gate` with no `title` holding one
+`EmptyState`: the Gate draws no lead and no header, the `EmptyState`'s title is the page's header,
+its `act` the filled one and its secondary act a `<Button act="secondary" />` child, stacked under
+it. The column is centred down on the Gate's ground. `mark`, `step` and `description` come only
+with a `title`.
+
+```tsx
+<Gate>
+  <EmptyState icon="Rocket" title="Deploy your first app" sentence="…" act={connect}>
+    <Button act="secondary" label="Start from a template" onAct={fromTemplate} />
+  </EmptyState>
+</Gate>
+```
+
 ```tsx
 <Gate
   mark={{ src: "https://example.com/mark.png", name: "Acme" }}

@@ -647,8 +647,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// page's one `h1`, and the description, runs with the strong one at 500, a
 		// pair under it), then the step's body a sections gap under it. It hosts
 		// `toast()` and `confirm()`. On touch it spans the viewport inside the page
-		// inset and stands at the top. The first field of a step takes focus, and a
-		// `Form`'s `ActionBar` in it draws `full`.
+		// inset and a typed step stands at the top. The first field of a step takes
+		// focus, and a `Form`'s `ActionBar` in it draws `full`. The title is
+		// optional: without it the Gate is a first run, drawing no lead and no `h1`
+		// of its own (`mark`, `step` and `description` come only with a title), its
+		// one `EmptyState` the page's `h1`, the column centred down at every width.
 		Gate: {
 			props: ["title", "description", "step", "mark", "banner", "children"],
 			draws: [
