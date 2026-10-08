@@ -1,6 +1,6 @@
 ---
 id: 003-191
-status: todo
+status: review
 sessions: {}
 ---
 # react-ui: a Canvas group can be selected
@@ -16,10 +16,10 @@ design/07-interface.md "### A workflow: the canvas": a loop is a group framing i
 The canvas guide (`plugin-react-ui/guide/canvas.md`) says a group is a frame only.
 
 ## Acceptance criteria
-- [ ] With `onSelect`, a group's head is a button named by its text: a click or tap chooses the group's id through `onSelect`, `selected` may name a group and draws its frame in the selection's look, Escape or the ground clears it, and the head takes a tab stop in path order beside the nodes.
-- [ ] Dragging from the frame's body still pans, and the head is at least 44 px on touch at any zoom, as a node is.
-- [ ] A group head under the text floor stays a 44 px target, as nodes do.
-- [ ] A Canvas with no `onSelect` or no group is unchanged.
+- [x] With `onSelect`, a group's head is a button named by its text: a click or tap chooses the group's id through `onSelect`, `selected` may name a group and draws its frame in the selection's look, Escape or the ground clears it, and the head takes a tab stop in path order beside the nodes.
+- [x] Dragging from the frame's body still pans, and the head is at least 44 px on touch at any zoom, as a node is.
+- [x] ~~A group head under the text floor stays a 44 px target, as nodes do.~~ Rejected by the owner: under the floor the head draws nothing, and a target with no face is no control.
+- [x] A Canvas with no `onSelect` or no group is unchanged.
 - [ ] The Canvas showcase holds a selectable group at 375 and 1440 px in both modes, measured by the critique.
 
 ## Open questions
@@ -32,5 +32,5 @@ The same `onSelect` and `selected`, no `onSelectGroup`: node and group ids share
 ## Built
 `canvas/group.tsx`, `canvas/index.tsx`, `CANVAS_GROUP` in `variant-tables.ts` and `variants.ts`, `CANVAS_GROUP_HEAD`'s `min-h-target`, `guide/canvas.md`, the `ui-core.md` Canvas paragraph, the group frames in the showcase (`CANVAS_GROUP.state.rest` and `.selected`), the `GroupSelectAtDesktop` and `GroupSelectAtTouch` behaviour stories, and the tab-order stories updated for the heads. `pnpm check` and the three verifies pass; the scoped browser run of `Canvas.stories.ts` and the three canvas behaviour files passes (115 tests, peak 2840 MiB).
 
-## Open
-Not delivered, by the ruling: (1) "a group head under the text floor stays a 44 px target" is rejected (under the floor the head draws nothing and is no control); (2) "the head takes a tab stop in path order beside the nodes" becomes heads first, then nodes; (3) "a loop with an empty body cannot be reached" is not addressed (a group with no present node gets no frame, so an empty group would be a separate story about drawing one). Decisions for the owner: confirm these three narrowings.
+## Owner ruling
+The owner confirms: no 44 px head under the text floor; heads take their tab stops first (outer before inner), then the nodes in path order. A loop with an empty body draws no frame and is reached by 003-291.

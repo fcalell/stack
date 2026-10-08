@@ -1,0 +1,20 @@
+---
+id: 003-207
+status: backlog
+sessions: {}
+---
+# react-ui: a row-fit Picker draws its hover and open fill at the control radius, not a pill
+
+## Goal
+Stead's repo screen puts a `Picker` at `fit="row"` as the value of two `DefinitionRow`s, "Landings go to" and "Sensitive above" (github.com/fcalell/stead, `packages/server/src/app/routes/system/-components/repos.tsx`, the `Picker`s at lines 252-262 and 304-314; design/07-interface.md "Repos"). On hover and while open the pick draws a wash with a computed border-radius of 9999 px, a pill around "main" and "100 kB", the only pill on a screen of 4 to 6 px controls. Evidence: Stead Repos critique unit u9 (stack `74a0e3d`, HEAD checked: nothing under `plugins/react-ui/src/ui/components/picker` has moved for this since), shots `hover-picker.png` and `picker-size.png` in the Stead scratchpad `critique/u9/shots/`.
+
+## Approach
+The row-fit trigger is `cn(PILL_ACT, picker({ fit }), ROW_TRIGGER, ...)` (plugins/react-ui/src/ui/components/picker/base.tsx), and `PILL_ACT = "rounded-full px-inside min-h-target"` (ui-core/src/variants.ts), whose comment calls it "words that act in a pill with no boundary at rest". The pill was chosen on purpose (003-06, 003-44, ui-core.md), so the app's composition is not the cause: it passes `fit="row"` and a label and cannot set a radius. It conflicts with ui-core's rubric (`packages/ui-core/guide/rubric.md`, radius: "controls and rows 4-6; ... pills only on chips and status"). A pick standing in a row is a control, not a chip or a status, and a row's own wash, a Menu row's and a ListRow's hover all draw at the row radius. The pill is invisible at rest, so on hover it reads as a different shape appearing beside rows that are not. The same `PILL_ACT` serves ItemHeader's opening and retry facts, which are not chips or status either; this story is the Picker's, and the stack session decides whether they follow.
+
+## Acceptance criteria
+- [ ] A row-fit Picker's hover, press and open fill draws at the control radius (4-6 px), or the rubric names the pill as an exception for a row's pick and says why.
+- [ ] The trigger's focus ring follows the same shape, on both platforms.
+- [ ] The Picker showcase's row fit holds hover and open frames, measured by the critique at 390 and 1280 in both modes.
+
+## Open questions
+- [ ] Its shape (a control-radius wash on the row-fit trigger, a cell other than `PILL_ACT`, or a ruled exception in the rubric): the stack session decides, and whether ItemHeader's facts share it.

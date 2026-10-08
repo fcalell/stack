@@ -25,6 +25,5 @@ Stead's shell passes `Shell` a count on its Now place (github.com/fcalell/stead,
 `ms-inside` on `TAB_COUNT` in react-ui and native-ui `components/shell/index.tsx`. The Shell frame's Activity count is 44 (a two-figure count in the sidebar and the tab bar). `behaviour/shell.stories.tsx` `TabCountClearsItsGlyph` (320 px, touch) draws counts of 4, 44 and 444 and asserts the gap equals the `ms-inside` step and the label is centred under the glyph.
 Evidence at 320: gap 8 px for 4, 44 and 444; the label's centre equals the glyph's. Limit: the three-figure count on the last (fifth) tab ends 7.2 px past the bar's right edge (it clips); the one- and two-figure counts on the first and second tabs end 258 and 188 px inside it. A compact-count rule is a design call: a contract gap, not decided here.
 
-## Open
-- A three-figure count on the last tab at 320 px ends 7.2 px past the bar and clips: the acceptance is not met for it. The owner decides the shape (a compact count, or another).
-- Measured at 320 px light only; 390, 768 and dark are not run. The critique has not measured the frame.
+## Owner ruling
+The owner rules a compact count: past 99 a tab count reads "99+", on both platforms, so a three-figure count stays clear of the bar's edge on the last tab at 320. To build.

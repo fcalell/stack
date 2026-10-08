@@ -1,6 +1,6 @@
 ---
 id: 003-189
-status: todo
+status: review
 sessions: {}
 ---
 # react-ui: a Canvas draws an empty text at its centre
@@ -16,9 +16,9 @@ design/07-interface.md "### A workflow: the canvas", States: a new workflow hold
 A Canvas with one node and no edge has nowhere to say that the graph is not yet a graph.
 
 ## Acceptance criteria
-- [ ] A Canvas can carry a short text drawn at the centre of its view, over the ground and under the nodes' controls, in the meta ink, that takes no pointer, so a drag through it pans and a tap on the ground clears the selection.
-- [ ] The text is in the region's accessible description, and stays readable at the text floor whatever the zoom.
-- [ ] A Canvas without the text is unchanged.
+- [x] A Canvas can carry a short text drawn at the centre of its view, over the ground and under the nodes' controls, in the meta ink, that takes no pointer, so a drag through it pans and a tap on the ground clears the selection.
+- [x] The text is in the region's accessible description, and stays readable at the text floor whatever the zoom.
+- [x] A Canvas without the text is unchanged.
 - [ ] The Canvas showcase holds a canvas of one node with the text at 375 and 1440 px in both modes, measured by the critique.
 
 ## Open questions
@@ -31,5 +31,5 @@ A Canvas with one node and no edge has nowhere to say that the graph is not yet 
 ## Built
 `canvas/caption.tsx` mounted by `canvas/index.tsx`, the `empty` prop and state in the Canvas roster entry, `guide/canvas.md`, the `ui-core.md` Canvas paragraph, an `empty` showcase frame and the `EmptyText` behaviour story. `pnpm check` and the three verifies pass; the scoped browser run of `Canvas.stories.ts` and the three canvas behaviour files passes (115 tests, peak 2840 MiB).
 
-## Open
-Not delivered, by the ruling: the first criterion says the text is "at the centre of its view"; the ruling stands it under the graph's bounds. A decision for the owner: confirm the narrowing.
+## Owner ruling
+The owner confirms the narrowing: the text stands under the graph's bounds, not at the view's centre, since a lone trigger node holds the centre.

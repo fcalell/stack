@@ -37,8 +37,5 @@ Stead's workflow canvas sets an agent node's agents in a `Picker`, and design/07
 - `guide/rules.md` of both platforms and `ui-core.md` state it. The Picker showcase frame holds a blocked owner and a pick of several with a blocked chosen chip.
 - Evidence: `behaviour/option-list.stories.tsx` (BlockedChecks and BlockedRadios at 320 and 1440), `behaviour/picker.stories.tsx` and `behaviour/select.stories.tsx` (Blocked at 320 and 1440) pass with the existing stories in the three files (23 of 23): a blocked row is disabled, takes no click or Enter, its reason is in a different ink from the description and its row height equals the described row's; the chosen blocked option is enabled, shows no reason, and once unticked or removed is blocked again with its reason.
 
-## Open
-- A query-driven `OptionList`'s `option` map has no `blocked` slot, so an option read from data cannot be blocked; only static `options`, `Picker` and `Select` take it. The owner decides whether the map gains the slot.
-- The arrow keys still land on a blocked option in the Select and Picker lists (Base UI 1.8 passes no disabled indices); Enter and a press pick nothing. Skipping it would need a stack-side handler.
-- The touch sheet and the native rows are not exercised by any story; native is not rendered.
-- The critique has not measured the frame at 320 and 1440.
+## Owner ruling
+The owner rules: a query-driven `OptionList`'s `option` map gains a `blocked` slot (a field name, as its other slots), so an option read from data can be blocked. The arrow keys landing on a blocked option in the Select and Picker lists is accepted (as the Menu); Enter and a press pick nothing. To build: the map slot. Still open after it: the touch sheet and native rows unexercised, and the critique.

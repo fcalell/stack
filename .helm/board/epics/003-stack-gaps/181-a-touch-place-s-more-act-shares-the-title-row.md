@@ -1,6 +1,6 @@
 ---
 id: 003-181
-status: todo
+status: review
 sessions: {}
 ---
 # react-ui: a touch Place's more act shares the title's row
@@ -13,7 +13,7 @@ Stead's Now page is a `Place` titled "Now" with its `more` (github.com/fcalell/s
 
 ## Acceptance criteria
 - [x] At 320 and 390 px, a touch `Place` with no back act stands its `more` on the title's row, with the title wrapping before them, and keeps the 44 px targets.
-- [ ] A Place or Screen with a back act is unchanged (changed by the ruling, see Ruled: a back act with no switcher stands ahead of the title on the row).
+- [x] A Place or Screen with a back act is unchanged (changed by the ruling, see Ruled: a back act with no switcher stands ahead of the title on the row).
 - [ ] The Place showcase holds both, measured by the critique.
 
 ## Open questions
@@ -27,6 +27,5 @@ react-ui `components/place/index.tsx`: `single = !touch || (!far && !switcher)` 
 Evidence (px): at 320 a five-line title: head 141, title 16 to 160, Filter 44x44 from 168, More 44x44 ending 316 of 320, first section at 16; at 390 a three-line title: head 85, Filter from 238, More ending 386 of 390. A one-line title head is 45 px against 81 px under a shell switcher (36 px less before the first section). Stories pass (Place, Shell, and every story the diff reaches: 106 files, 403 tests, peak 3984 MiB).
 Not measured: the critique's call on a back-plus-title row (the Split stories with a record open pass); native is not rendered (no browser run for the phone).
 
-## Open
-- The ruling changes the second criterion: a back act with no switcher now stands on the title row instead of above it. The owner confirms the change or keeps the story's shape.
-- The back-plus-title row is unmeasured, and the critique has not run; the native form is not rendered.
+## Owner ruling
+The owner keeps the ruled shape: a back act with no switcher stands on the title row. The critique judges the back-plus-title row; the native form is not rendered.

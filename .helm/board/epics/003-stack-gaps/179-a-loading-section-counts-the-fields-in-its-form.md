@@ -29,8 +29,5 @@ Evidence: `behaviour/waiting.stories.tsx` holds `SectionOverItsForm` (+ Touch) a
 
 Limits: a field with a description, or a switch or checkbox field, is not measured (the Section's own skeleton field has the same limit). Fields plus an `ActionBar` as direct Section children still hide the bar's waiting form (out of scope).
 
-## Open
-- The height match is measured only for label-plus-control fields (378 px desktop, 492 px touch, loaded and waiting equal). A field with a description and a switch or checkbox field are not measured: the ruling left them to report.
-- A loading `Group` or `List` body has no story of its own; only `SectionOverFields` reruns.
-- Out of scope by the ruling, still a gap: fields plus an `ActionBar` as direct Section children (no Form) hide the bar's waiting form. The owner decides whether it is this story or another.
-- The critique has not measured the frame; the native form is not rendered.
+## Owner ruling
+The owner rules: fields plus an `ActionBar` as direct Section children (no Form) go to 003-290. To build here: the height match measured for a field with a description and for a switch and a checkbox field, and a loading `Group` and `List` body each with a story; a kind that does not match is fixed in `FieldWait`. Then the critique; the native form is not rendered.

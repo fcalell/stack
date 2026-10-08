@@ -1,6 +1,6 @@
 ---
 id: 003-188
-status: todo
+status: review
 sessions: {}
 ---
 # react-ui: a Canvas has a loading form
@@ -16,9 +16,9 @@ design/07-interface.md "### A workflow: the canvas", States: "Loading: the head 
 The canvas guide (`plugin-react-ui/guide/canvas.md`) names no loading form.
 
 ## Acceptance criteria
-- [ ] A Canvas can stand loading: its ground, grid, zoom stack and foot as loaded, and node-shaped skeletons at a believable layout, with no node button, drag or connection while it waits.
-- [ ] The loading form announces itself as busy to assistive technology and is not read as an empty graph.
-- [ ] A Canvas given nodes is unchanged.
+- [x] A Canvas can stand loading: its ground, grid, zoom stack and foot as loaded, and node-shaped skeletons at a believable layout, with no node button, drag or connection while it waits.
+- [x] The loading form announces itself as busy to assistive technology and is not read as an empty graph.
+- [x] A Canvas given nodes is unchanged.
 - [ ] The Canvas showcase holds the loading form at 375, 768 and 1440 px in both modes, measured by the critique against the loaded canvas's frame.
 
 ## Open questions
@@ -31,5 +31,5 @@ The canvas guide (`plugin-react-ui/guide/canvas.md`) names no loading form.
 ## Built
 `canvas/wait.tsx`, `canvas/ground.tsx`, `canvas/index.tsx` (the split), the Canvas roster entry (`loading` prop and state, the skeleton cells), `guide/canvas.md`, the `ui-core.md` Canvas paragraph, the showcase `loading` frame and the `Loading` behaviour story. `pnpm check` and the three verifies pass; the scoped browser run of `Canvas.stories.ts` and the three canvas behaviour files passes (115 tests, peak 2840 MiB).
 
-## Open
-Not delivered, by the ruling: the first criterion asks for the zoom stack and the foot "as loaded"; the ruling draws neither while waiting. A decision for the owner: confirm the narrowing, or the zoom stack and foot stand (inert) in the loading form.
+## Owner ruling
+The owner confirms the narrowing: while loading, no zoom stack and no foot are drawn (both are overlays, so nothing moves when the nodes arrive).

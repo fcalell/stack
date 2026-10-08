@@ -1,6 +1,6 @@
 ---
 id: 003-193
-status: todo
+status: done
 sessions: {}
 ---
 # react-ui: a file row holds its path floor beside a chip in a page's list
@@ -39,5 +39,5 @@ The long name keeps its tail `ces.md` whole at every width and its stem grows wi
 
 The native `FileRow` has the same structure (`pathCut` floor as `minWidth`, path `grow` with a 10^7 shrink weight, counts `shrink-0`); no phone render was run for it, so native is unverified.
 
-## Open
-Closed "by design, no stack code" on the evidence above; the owner confirms or rules otherwise. Not delivered: the criteria stay unticked because the ruling narrows the first box to the reproduction, and the second asks the critique to measure the stories at 320 and 390, which no critique session has run. What Stead's tree must differ in: its path element is narrower than its own floor and about 80 px stand unused beside the counts, so its row's content box is narrower than the row (a wrapper, a padding or a width on the row), or its `path` is not the row's flex child. Stead reads `getBoundingClientRect` of the row, its path span and its counts in its own 390 render.
+## Owner ruling
+The owner closes it: by design, no stack code. The reproduction stories in `behaviour/row-meta.stories.tsx` (`ReviewFloor*`) hold the floor and spend the row's width at 320, 390 and 768. Stead measures the row, its path span and its counts in its own 390 render to find the wrapper or width that narrows its row.
