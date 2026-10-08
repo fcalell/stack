@@ -163,7 +163,7 @@ import { playwright } from "@vitest/browser-playwright";
 import { configDefaults, defineConfig } from "vitest/config";
 import screens from "./screens.vite.config.ts";
 
-// Playwright's own browser is the default; where none is installed (NixOS),
+// Playwright's own browser is the default; where none is installed,
 // \`CHROME_PATH\` names a Chrome to launch instead.
 const chrome = process.env.CHROME_PATH;
 

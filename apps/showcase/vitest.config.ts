@@ -12,7 +12,7 @@ import stackConfig from "./stack.config.ts";
 
 const dirname = fileURLToPath(new URL(".", import.meta.url));
 
-// Playwright's own browser is the default. Where none is installed (NixOS),
+// Playwright's own browser is the default. Where none is installed,
 // `CHROME_PATH` names a Chrome to launch instead.
 const chrome = process.env.CHROME_PATH;
 

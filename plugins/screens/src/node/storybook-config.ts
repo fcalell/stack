@@ -1,4 +1,5 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import { mkdir, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { StackConfig } from "@fcalell/cli";
 import { buildGraphFromConfig } from "@fcalell/cli/build-graph";
@@ -39,6 +40,10 @@ export async function writeStorybookConfig(options: {
 	});
 	const path = join(options.cwd, STORYBOOK_VITE_CONFIG);
 	await mkdir(join(options.cwd, ".stack"), { recursive: true });
-	await writeFile(path, source);
+	// Storybook's main.ts and Vitest's config each write it as they load, and a
+	// load can overlap a write: a rename hands a reader the whole file or the old one.
+	const temp = `${path}.${randomUUID()}.tmp`;
+	await writeFile(temp, source);
+	await rename(temp, path);
 	return path;
 }
