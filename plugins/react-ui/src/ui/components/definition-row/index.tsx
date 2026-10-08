@@ -40,16 +40,26 @@ const HIT =
 	"after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-ring";
 const TEXT_BLOCK = "flex flex-col grow min-w-0";
 const LINE = "flex items-center min-w-0";
-const LABEL = "truncate";
-// The value gives way first: it takes the room the label leaves, ending at
-// the line's end; a string too long for it cuts in its middle, its stem
-// truncating to the room and its tail standing whole (`valueCut`).
+// A label with nothing under it keeps a rows inset above and below, so one that
+// wraps has room; within the row's height a one-line label does not grow it.
+const ALONE = "py-rows";
+// The label wraps to the room its value leaves.
+const LABEL = "min-w-0 wrap-break-word";
+// A string or a status gives way first: it takes the room the label leaves,
+// ending at the line's end; an identifier too long for it cuts in its middle, its stem
+// truncating to the room and its tail standing whole (`valueCut`); words are
+// one text run that truncates at its end.
 const VALUE = "flex basis-0 grow min-w-0 justify-end";
 const STEM = "min-w-0 truncate";
 const TAIL = "shrink-0";
+// A control stands whole at the line's end, the label wrapping beside it.
+const CONTROL = "flex shrink-0 ms-auto";
 const ACTS = "relative flex shrink-0";
 // The chevron draws in the slot's ink (currentColor).
 const CHEVRON = "flex shrink-0 items-center justify-center text-ink-meta";
+// A row with no act or link keeps that square empty, so every value in a Group
+// ends at one x.
+const NO_END = "shrink-0";
 
 /** What a definition shows: words, a status, or an in-place control. */
 export type DefinitionValue = DefinitionData | ReactNode;
@@ -95,7 +105,7 @@ function isStatus(
 	return typeof value === "object" && value !== null && "status" in value;
 }
 
-/** The change mark at the start, the label at body 500 with the value at the line's end (a value too long for its room cut in its middle, the whole value still its text), the description under both; an icon act, or a link's chevron in the act's square, at the row's end, so values with either end at one x. A locked row draws a lock after its value and its reason under both in the description's place, the whole line a link with an `href`. It waits through its Group or Section, drawing the form of the row it is given. */
+/** The change mark at the start, the label at body 500, wrapping to the room its value leaves, with the value at the line's end (an identifier too long for its room cut in its middle, the whole value still its text; a control whole, centred beside the label), the description under both; an icon act, or a link's chevron in the act's square, at the row's end, the square empty on a row with neither, so every value in a Group ends at one x. A locked row draws a lock after its value and its reason under both in the description's place, the whole line a link with an `href`. It waits through its Group or Section, drawing the form of the row it is given. */
 export function DefinitionRow({
 	change,
 	label,
@@ -136,7 +146,7 @@ export function DefinitionRow({
 		shown = (
 			<span className={cn(text({ role: copied ? "code" : "meta" }), VALUE)}>
 				<span className={STEM}>{stem}</span>
-				<span className={TAIL}>{tail}</span>
+				{tail ? <span className={TAIL}>{tail}</span> : null}
 			</span>
 		);
 	} else if (isStatus(value))
@@ -146,8 +156,8 @@ export function DefinitionRow({
 			</span>
 		);
 	else if (value !== undefined && value !== null)
-		shown = <span className={VALUE}>{value}</span>;
-	let end: ReactNode = null;
+		shown = <span className={CONTROL}>{value}</span>;
+	let end: ReactNode;
 	if (copied !== undefined || act)
 		end = (
 			<span className={ACTS}>
@@ -168,10 +178,23 @@ export function DefinitionRow({
 				<Icon name="ChevronRight" />
 			</span>
 		);
+	else
+		end = <span aria-hidden className={cn(DEFINITION_ROW_CHEVRON, NO_END)} />;
+	let under: ReactNode = description;
+	if (locked)
+		under =
+			locked.href === undefined ? (
+				locked.reason
+			) : (
+				<Link href={locked.href} fit="standalone">
+					{locked.reason}
+				</Link>
+			);
 	const name = cn(
 		text({ role: "body" }),
 		textStrong({ role: "body" }),
 		LABEL,
+		!under && ALONE,
 		opens && HIT,
 	);
 	let title: ReactNode = <span className={name}>{label}</span>;
@@ -187,16 +210,6 @@ export function DefinitionRow({
 				{label}
 			</BaseButton>
 		);
-	let under: ReactNode = description;
-	if (locked)
-		under =
-			locked.href === undefined ? (
-				locked.reason
-			) : (
-				<Link href={locked.href} fit="standalone">
-					{locked.reason}
-				</Link>
-			);
 	return (
 		<div
 			className={cn(

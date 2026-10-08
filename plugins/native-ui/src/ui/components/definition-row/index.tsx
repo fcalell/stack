@@ -39,15 +39,25 @@ const ROW = "relative flex-row items-center";
 const HIT = "absolute inset-0 active:bg-wash-press";
 const TEXT_BLOCK = "flex-1 min-w-0";
 const LINE = "flex-row items-center min-w-0";
+// A label with nothing under it keeps a rows inset above and below, so one that
+// wraps has room; within the row's height a one-line label does not grow it.
+const ALONE = "py-rows";
+// The label wraps to the room its value leaves.
 const LABEL = "shrink";
-// The value gives way first: it takes the room the label leaves, ending at
-// the line's end; a string too long for it cuts in its middle, its stem
-// truncating to the room and its tail standing whole (`valueCut`).
+// A string or a status gives way first: it takes the room the label leaves, ending at
+// the line's end; an identifier too long for it cuts in its middle, its stem
+// truncating to the room and its tail standing whole (`valueCut`); words are
+// one text run that truncates at its end.
 const VALUE = "flex-1 min-w-0 flex-row justify-end";
 const STEM = "shrink";
 const TAIL = "shrink-0";
+// A control stands whole at the line's end, the label wrapping beside it.
+const CONTROL = "shrink-0 ms-auto flex-row";
 const ACTS = "relative flex-row shrink-0";
 const CHEVRON = "shrink-0 items-center justify-center";
+// A row with no act or link keeps that square empty, so every value in a Group
+// ends at one x.
+const NO_END = "shrink-0";
 
 export type DefinitionValue = DefinitionData | ReactNode;
 
@@ -96,7 +106,8 @@ function isStatus(
 
 // The change mark at the start, the label at body 500 with the value at the line's end, the description
 // under both; an icon act, or a link's chevron in the act's square, at the
-// row's end, so values with either end at one x. A row that opens is one hit
+// row's end, the square empty on a row with neither, so every value in a Group
+// ends at one x; the label wraps to the room its value leaves. A row that opens is one hit
 // under its acts. A locked row draws a lock after its value and its reason
 // under both in the description's place, the whole line a link with an
 // `href`. It waits through its Group or Section, drawing the form of the row
@@ -145,9 +156,11 @@ export function DefinitionRow({
 				<RNText numberOfLines={1} className={cn(role, STEM)}>
 					{stem}
 				</RNText>
-				<RNText numberOfLines={1} className={cn(role, TAIL)}>
-					{tail}
-				</RNText>
+				{tail ? (
+					<RNText numberOfLines={1} className={cn(role, TAIL)}>
+						{tail}
+					</RNText>
+				) : null}
 			</View>
 		);
 	} else if (isStatus(value))
@@ -157,8 +170,8 @@ export function DefinitionRow({
 			</View>
 		);
 	else if (value !== undefined && value !== null)
-		shown = <View className={VALUE}>{value}</View>;
-	let end: ReactNode = null;
+		shown = <View className={CONTROL}>{value}</View>;
+	let end: ReactNode;
 	if (copied !== undefined || act)
 		end = (
 			<View className={ACTS}>
@@ -183,6 +196,13 @@ export function DefinitionRow({
 					<Icon name="ChevronRight" />
 				</Ink.Provider>
 			</View>
+		);
+	else
+		end = (
+			<View
+				pointerEvents="none"
+				className={cn(DEFINITION_ROW_CHEVRON, NO_END)}
+			/>
 		);
 	let under: ReactNode = description;
 	if (locked)
@@ -216,11 +236,11 @@ export function DefinitionRow({
 			<View pointerEvents={open ? "none" : "auto"} className={TEXT_BLOCK}>
 				<View className={cn(ROW_TITLE_LINE, LINE)}>
 					<RNText
-						numberOfLines={1}
 						className={cn(
 							text({ role: "body" }),
 							textStrong({ role: "body" }),
 							LABEL,
+							!under && ALONE,
 						)}
 					>
 						{label}

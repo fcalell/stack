@@ -19,3 +19,7 @@ ListRow's meta line holds that "the status and the glyphs keep their width" and 
 
 ## Open questions
 - [ ] Its shape (a component, a variant, a token, an option): the stack session decides, whether the status takes a shrink weight, a floor on the first part, or a shorter word on a narrow line.
+
+## Measured
+Not built. The quoted subject as the later meta part ("Rename the flag to --strict across every message of the repo", status "Waiting for you"), the quote span in a row of 320 and 360 px: desktop 135 and 175 px of the 237 it needs (status 81 px); touch 76 and 116 px of the 297 it needs (status 102 px). `measure-short` is 126 px desktop and 162 px touch. The later parts take no width of their own (`w-0`, growing into what the lead and the marks leave), so a status that shrinks, whatever its weight, changes nothing for the quote: the quote gets what the lead and the status leave. A floor on the quote needs a `min-w` on the quoted run, which pads a short quote with empty room inside the later slot, or a restructure of the slot. 003-104 lets an uncapped status share the overflow with the first part.
+Question: take `measure-short` as the quote's floor (the quoted run's `min-w`, the status mark at a shrink weight above the plain parts)? Recommended: no; it moves the touch row at 320 px from 76 to 162 px of 297 and nothing on the desktop, for a padded box.

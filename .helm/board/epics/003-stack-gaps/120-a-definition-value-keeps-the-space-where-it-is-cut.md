@@ -1,6 +1,6 @@
 ---
 id: 003-120
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: a DefinitionRow value keeps its word space where the stem and the tail meet
@@ -18,9 +18,12 @@ Evidence, System critique unit u8 (Stead `948b7ec`, shots `usage-1440-light`, St
 `DefinitionRow` draws a string value as `<span STEM>` (`min-w-0 truncate`, which is `white-space: nowrap; overflow: hidden`) and `<span TAIL>` (`shrink-0`), cut by `valueCut` (ui-core/src/list-state.ts) at the last `VALUE_TAIL` characters, at most half the value. The cut falls anywhere, a space included, and a space that ends the stem's line is removed by the nowrap box, so "Keep the " + "note" draws "Keep thenote". The same cut splits a word in two nodes ("N|o") for a value of two characters. Not 003-100 (end alignment of values in a Group). Seen at stack `5564217`.
 
 ## Acceptance criteria
-- [ ] A value short enough to fit draws as one text run with every space it has, whatever `valueCut` returns, and its text is one node.
-- [ ] A value cut for a narrow row keeps the space at its cut, or does not cut at a space.
-- [ ] The DefinitionRow showcase holds a multi-word value ending at a space-adjacent cut.
+- [x] A value short enough to fit draws as one text run with every space it has, whatever `valueCut` returns, and its text is one node.
+- [x] A value cut for a narrow row keeps the space at its cut, or does not cut at a space.
+- [x] The DefinitionRow showcase holds a multi-word value ending at a space-adjacent cut.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides, whether the stem keeps its trailing space (`white-space: pre`), the cut moves off a space, or a value that fits is not cut.
+- [x] Its shape (a component, a variant, a token, an option): the stack session decides, whether the stem keeps its trailing space (`white-space: pre`), the cut moves off a space, or a value that fits is not cut.
+
+## Built
+`valueCut` (ui-core/src/list-state.ts) cuts only a value of one word longer than eight characters (twice the four-character tail); a value with a space, or eight characters or fewer, is one stem with no tail, so no space ends a node and no word is split in two. Both DefinitionRows draw the tail only when it exists, so a value of words is one text node that truncates at its end. `ui-core/test/list-state.test.ts` pins the cut; `apps/showcase/behaviour/definition-row.stories.tsx` (`ValueWords`, desktop and touch) asserts "No history yet", "7.4 GB left", "This machine" and "No" are one node and whole, a long sentence truncates at its end and an identifier keeps `k3Qz`. The General frame holds "No history yet".

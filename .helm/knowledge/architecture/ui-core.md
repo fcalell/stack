@@ -525,7 +525,7 @@ a tick with no animation, never jumped to full.
   centred in it, so the titles of a list share one x whatever leads them; its meta line
   (`ROW_META_LINE`) is one line that yields in order: the later parts truncate first, then the chip,
   the lock's label, the warning's label and last the first part (naming the item, with an ellipsis);
-  the status and the glyphs keep their width, and past them the line clips at the row's edge rather
+  the status truncates with it only when the line is out of room, the glyphs keep their width, and past them the line clips at the row's edge rather
   than overprint (the marks are described under `warning` below). The later parts take no width of
   their own (`w-0`, growing into the room the marks leave) and show at least `figures` of it or
   none, in the chip's wrapping slot, so a bare separator and an ellipsis never draw; the slot's
@@ -537,7 +537,7 @@ a tick with no animation, never jumped to full.
   trailing a one-line title is whole or gone the same way: the title's basis is half its line, so
   a value wider than what that leaves wraps under the line and is clipped away, and the title then
   takes the whole line (a 320 px table row shows its name, not its age). Both rules are the web's: the phone's later parts and values still truncate with an ellipsis. Every row keeps one height, so its waiting form matches it by
-  construction. A short label (a chip's, a status word, a skeleton label's lane) is bounded by the
+  construction. A short label (a chip's, a skeleton label's lane) is bounded by the
   one width `measure-short` (18ch, the short sibling of `measure`).
 - A minimum height is the floor of something pressed (a control, a field, a target, a chip, a row),
   the set height of a bar (`strip` 40 / 44: the page's desktop strip and its touch top bar), an
@@ -1000,7 +1000,7 @@ a tick with no animation, never jumped to full.
   few thousandths of a pixel against the layout's 1/64 px, and Tailwind reads no bare number from
   10^21) so the order holds: the later meta parts (they take no width of their own), then the chip, then the lock's
   label, then the warning's label, and last the first part, which names the item and truncates with
-  an ellipsis; the status and every glyph keep their width, and past them the line clips at the
+  an ellipsis (the status shares the first part's tier and truncates, uncapped, only when the line is out of room); every glyph keeps its width, and past them the line clips at the
   row's edge rather than overprint. The chip is shown whole or not at all: it stands in a slot one
   line tall that wraps (a start item as wide as nothing and as tall as the slot holds the first
   line a flex line always keeps, so a chip wider than the room the slot is left wraps under the

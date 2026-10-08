@@ -345,15 +345,14 @@ export const COUNT_LABEL =
 export const SPINNER = "size-spinner";
 export const SPINNER_TRACK = "rounded-full border-2 opacity-30";
 export const SPINNER_ARC = "rounded-full border-2 border-t-transparent";
-// A status: its dot (`statusDot`) beside its word, the word bounded as a
-// chip's label is, so a long one truncates before a row's title does.
+// A status: its dot (`statusDot`) beside its word, the word truncating only
+// when the line it stands on is out of room.
 export const STATUS = "gap-inside";
 // A running status's mark: the spinner in the dot's place, its slot carrying
 // the accent ink the spinner draws in (a native place sets the same tone as
 // the spinner's ink, read through `statusContentTone`).
 export const STATUS_SPINNER = "text-accent-ink";
-export const STATUS_LABEL =
-	"max-w-measure-short text-meta leading-meta font-normal text-ink-meta";
+export const STATUS_LABEL = "text-meta leading-meta font-normal text-ink-meta";
 // Words that act in a pill with no boundary at rest: a row's pick and a
 // status that moves (Picker), a header fact that opens a sheet or retries a
 // save (ItemHeader), whose status region takes the pill's shape for its

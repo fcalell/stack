@@ -1,5 +1,6 @@
 import { FileRow } from "@fcalell/plugin-react-ui/components/file-row";
 import { ListRow } from "@fcalell/plugin-react-ui/components/list-row";
+import { Status } from "@fcalell/plugin-react-ui/components/status";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect, within } from "storybook/test";
 
@@ -224,3 +225,50 @@ export const MetaYieldsTouch = touch(MetaYields);
 export const MetaStarvedTouch = touch(MetaStarved);
 export const FilePathFloorTouch = touch(FilePathFloor);
 export const ChevronEndsTouch = touch(ChevronEnds);
+
+// A status label draws whole while its line has room and truncates, within its
+// row, only when the line is out of it; no measure caps it short of the room:
+// a row's, a head's fact (`Status` alone) as well. Desktop only: the room is
+// the frame's, not the density's.
+const WATCHES = "Watches paused for under a minute while the repository syncs";
+
+const statusRoom: Play = async ({ canvas }) => {
+	const room = within(canvas.getByTestId("room"));
+	const tight = within(canvas.getByTestId("tight"));
+	await expect(clipped(room.getByText(WATCHES))).toBe(false);
+	await expect(clipped(room.getByText("Fetched 28 seconds ago"))).toBe(false);
+	await expect(clipped(tight.getByText(WATCHES))).toBe(true);
+	const row = tight.getByRole("link", { name: "Usage" }).parentElement;
+	if (!row) throw new Error("the row has no box");
+	for (const element of row.querySelectorAll("*")) {
+		await expect(right(element)).toBeLessThanOrEqual(right(row) + 0.5);
+	}
+};
+
+function Usage() {
+	return (
+		<>
+			<ListRow
+				title="Usage"
+				meta={["System"]}
+				status={{ state: "waiting", label: WATCHES }}
+				href="#usage"
+			/>
+			<Status state="done" label="Fetched 28 seconds ago" />
+		</>
+	);
+}
+
+export const StatusRoom: StoryObj = {
+	render: () => (
+		<div className="flex flex-col gap-sections max-w-full">
+			<div data-testid="room" className="w-sheet max-w-full">
+				<Usage />
+			</div>
+			<div data-testid="tight" className="w-pane max-w-full">
+				<Usage />
+			</div>
+		</div>
+	),
+	play: statusRoom,
+};

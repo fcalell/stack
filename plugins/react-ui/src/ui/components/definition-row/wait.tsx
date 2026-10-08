@@ -42,7 +42,7 @@ const BARS = [
 	["w-1/3", "w-1/2"],
 ] as const;
 
-/** A DefinitionRow waiting, the `index`th of a waiting list (a static row is the first): the change mark's skeleton in its lane when `change` is declared; a label bar and a value bar at the line's end (the room an identifier's value takes when the row is `copyable`), or the switch's box in the value's place when it holds a control, or, with a `description`, the label bar over a meta line's bar; then the act's square, the link's chevron square or the switch's box at the end. Busy only through the Group, Section or List that holds it. Outside the package's exports. */
+/** A DefinitionRow waiting, the `index`th of a waiting list (a static row is the first): the change mark's skeleton in its lane when `change` is declared; a label bar and a value bar at the line's end (the room an identifier's value takes when the row is `copyable`), or the switch's box in the value's place when it holds a control, or, with a `description`, the label bar over a meta line's bar; then the end square (the act's or the link's chevron, empty on a row with neither) and the switch's box beside the label. Busy only through the Group, Section or List that holds it. Outside the package's exports. */
 export function DefinitionWait(props: {
 	shape: DefinitionShape;
 	index: number;
@@ -115,9 +115,7 @@ export function DefinitionWait(props: {
 					</>
 				)}
 			</span>
-			{shape.end === "act" || shape.end === "chevron" ? (
-				<span className={cn(DEFINITION_ROW_CHEVRON, END)} />
-			) : null}
+			<span className={cn(DEFINITION_ROW_CHEVRON, END)} />
 		</div>
 	);
 }

@@ -102,8 +102,11 @@ const TRAILING_BAR = "w-figures";
 // first (they take no width of their own), a model-written one (`Quoted`)
 // ahead of the plain ones, then the chip (shown whole or not at all), the
 // warning's label and last the first part, which names the item and truncates
-// with an ellipsis; the status and the glyphs keep their width, and past them
-// the line clips at the row's edge rather than overprint. The shrink
+// with an ellipsis; the glyphs keep their width, and past them the line clips
+// at the row's edge rather than overprint. The status stands in the parts'
+// tier: the two share the overflow in proportion to their widths, so a long
+// status never takes the line from the subject, nor the subject from the
+// status. The shrink
 // weights are the order: a flex line takes the overflow from each item in
 // proportion to its weight times its own width, and a part that still fits
 // must take none of it, so the weights run 1, 10^7 and 10^14 (the warning's in
@@ -116,7 +119,7 @@ const META_FIRST = "shrink min-w-0";
 const META_LATER = "flex-row grow w-0 overflow-hidden";
 const META_RUN = "shrink min-w-0";
 const META_QUOTED = "shrink-10000000 min-w-0";
-const STATUS_MARK = "shrink-0";
+const STATUS_MARK = "shrink min-w-0";
 // The chip stands in a slot that shows it whole or not at all: a flex line
 // always keeps its first item, so a zero-width start item takes that place and
 // the chip, wider than the room the slot is left, wraps under the slot's one

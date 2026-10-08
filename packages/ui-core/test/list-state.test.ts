@@ -887,7 +887,7 @@ test("a file name keeps its start and its end, and its floor is the cut form", (
 	assert.deepEqual(pathCut("a"), { stem: "a", tail: "", floor: 1 });
 });
 
-test("a definition value cuts to a stem and a tail of its last four characters, at most half a short value, and the two make the whole value", () => {
+test("a definition value of one word cuts to a stem and a tail of its last four characters, a value of words or of eight characters or fewer stays one stem, and the two make the whole value", () => {
 	assert.deepEqual(
 		valueCut("SHA256:uNiVxQ0aB3dE8fGhIjKlMnOpQrStUvWxYz0123k3Qz"),
 		{
@@ -896,7 +896,13 @@ test("a definition value cuts to a stem and a tail of its last four characters, 
 		},
 	);
 	assert.deepEqual(valueCut("us-east-1"), { stem: "us-ea", tail: "st-1" });
-	assert.deepEqual(valueCut("Pro"), { stem: "Pr", tail: "o" });
+	assert.deepEqual(valueCut("Business"), { stem: "Business", tail: "" });
+	assert.deepEqual(valueCut("No"), { stem: "No", tail: "" });
+	assert.deepEqual(valueCut("No history yet"), {
+		stem: "No history yet",
+		tail: "",
+	});
+	assert.deepEqual(valueCut("7.4 GB left"), { stem: "7.4 GB left", tail: "" });
 	assert.deepEqual(valueCut("a"), { stem: "a", tail: "" });
 	assert.deepEqual(valueCut(""), { stem: "", tail: "" });
 	const emoji = "🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂";

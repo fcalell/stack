@@ -1217,7 +1217,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// `DefinitionWait`: a label bar and a value bar on one line (the value
 		// bar the room an identifier takes when the map is `copyable`), or, with
 		// a description, the label over the meta line; the act's square or the
-		// chevron's at the end when declared. A string value too long for its
+		// chevron's at the end when declared. A one-word string value of more than eight characters too long for its
 		// room cuts in its middle (`valueCut`), the whole value its text. A waiting Group's setting rows are
 		// the same wait with a description and the switch's box at the end; a row in
 		// a waiting Group or Section draws it from the props it is given.
@@ -1286,7 +1286,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"skeleton",
 				],
 				radii: ["full", "control", "chip"],
-				spacing: ["fields", "card", "inside", "pair"],
+				spacing: ["fields", "card", "inside", "pair", "rows"],
 				sizes: [
 					"row",
 					"row-setting",

@@ -398,15 +398,19 @@ const VALUE_TAIL = 4;
 
 // A definition value, cut for a row too narrow for it: the stem gives way
 // from its end (an ellipsis after it) and the tail, its last VALUE_TAIL
-// characters (at most half a short value), never does, so the start and the
-// end of a long identifier stay (`SHA256:uNiV…k3Qz`). Each platform draws the
-// stem truncating to its own box, so the row measures the room it gives; the
-// two parts together are the whole value, which stays the accessible text and
-// the copy payload. Both platforms read it, so one value cuts the same way.
+// characters, never does, so the start and the end of a long identifier stay
+// (`SHA256:uNiV…k3Qz`). Only a value of one word longer than twice the tail is
+// cut: a value with a space is words (`No history yet`), which read from their
+// start, and a shorter one has no middle to give; both stay one stem, so no
+// space ends a node and no word is split in two. Each platform draws the stem
+// truncating to its own box, so the row measures the room it gives; the two
+// parts together are the whole value, which stays the accessible text and the
+// copy payload. Both platforms read it, so one value cuts the same way.
 export function valueCut(value: string): { stem: string; tail: string } {
 	const characters = Array.from(value);
-	const kept = Math.min(VALUE_TAIL, Math.floor(characters.length / 2));
-	const at = characters.length - kept;
+	if (characters.length <= VALUE_TAIL * 2 || /\s/.test(value))
+		return { stem: value, tail: "" };
+	const at = characters.length - VALUE_TAIL;
 	return {
 		stem: characters.slice(0, at).join(""),
 		tail: characters.slice(at).join(""),

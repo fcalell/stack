@@ -45,8 +45,8 @@ const BARS = [
 // A DefinitionRow waiting, the `index`th of a waiting list: the change mark's
 // skeleton in its lane when `change` is declared; a label bar and a value bar
 // at the line's end, or, with a `description`, the label bar over a meta
-// line's bar; then the act's square, the link's chevron square or the
-// switch's box at the end, or in the value's place when a one-line row holds
+// line's bar; then the end square (the act's or the link's chevron, empty on a
+// row with neither); the switch's box stands in the value's place when a one-line row holds
 // a control. Busy only through the Group, Section or List that holds it.
 // Outside the package's exports.
 export function DefinitionWait(props: {
@@ -114,9 +114,7 @@ export function DefinitionWait(props: {
 					</>
 				)}
 			</View>
-			{shape.end === "act" || shape.end === "chevron" ? (
-				<View className={cn(DEFINITION_ROW_CHEVRON, END)} />
-			) : null}
+			<View className={cn(DEFINITION_ROW_CHEVRON, END)} />
 		</View>
 	);
 }

@@ -112,9 +112,11 @@ const TITLE_BEFORE_VALUE = "basis-1/2";
 // first (they take no width of their own), a model-written one (`Quoted`)
 // ahead of the plain ones, then the chip (shown whole or not at all), the
 // lock's label, the warning's label and last the first part, which names the
-// item and truncates with an ellipsis; the status and the glyphs keep their
-// width, and past them the line clips at the row's edge rather than
-// overprint. The shrink weights are the order: a flex line takes the
+// item and truncates with an ellipsis; the glyphs keep their width, and past
+// them the line clips at the row's edge rather than overprint. The status
+// stands in the first part's tier: the two share the overflow in proportion to
+// their widths, so a long status never takes the line from the subject, nor
+// the subject from the status. The shrink weights are the order: a flex line takes the
 // overflow from each item in proportion to its weight times its own width, and
 // `truncate` draws its ellipsis on any overflow, however small, so a part that
 // still fits must take none of it: the weights run 1, 10^7, 10^14 and 10^20
@@ -141,7 +143,7 @@ const LATER_QUOTED = "min-w-0 truncate shrink-10000000";
 const STEPS = "flex flex-col min-w-0";
 const STEP = "flex items-center min-w-0 h-line-body";
 const STEP_LABEL = "truncate";
-const STATUS_MARK = "flex shrink-0";
+const STATUS_MARK = "flex min-w-0";
 // The chip stands in a slot that shows it whole or not at all: a flex line
 // always keeps its first item, so a zero-width start item takes that place and
 // the chip, wider than the room the slot is left, wraps under the slot's one

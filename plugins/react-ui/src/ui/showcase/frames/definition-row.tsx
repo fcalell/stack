@@ -49,7 +49,8 @@ function Region() {
 }
 
 // Board 40's settings: an act, a copyable code value under a description, a
-// link, a status under a description, a row with neither act nor link, and
+// link, a status under a description, a row with neither act nor link, a value
+// of words, a sentence label beside a switch, and
 // two locked values, their reason a link to the request that holds one.
 function General(props: { status: StatusState }) {
 	return (
@@ -89,6 +90,11 @@ function General(props: { status: StatusState }) {
 				label="Billing contact"
 				value="ana@acme.test"
 				locked={{ reason: "Set by your organisation" }}
+			/>
+			<DefinitionRow label="Expected spend" value="No history yet" />
+			<DefinitionRow
+				label="Only what changed since you last looked"
+				value={<Switch checked onChange={act} label="Only what changed" />}
 			/>
 		</Group>
 	);

@@ -254,6 +254,7 @@ export const OVERLAYS: readonly string[] = [
 	"justify-center",
 	"justify-end",
 	"min-w-0",
+	"py-rows",
 	"shrink-0",
 	"truncate",
 	"text-end",
