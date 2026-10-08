@@ -88,12 +88,18 @@ function split(path: string): [string, string] {
 // the directory the room it leaves, ellipsized at its end, so the directory
 // gives way first, down to nothing; then the name's stem truncates before its
 // kept end, a cut in its middle, down to the name's floor, below which the
-// chip's label truncates.
+// chip's label truncates. The floor is its characters in `ch` rounded up to the
+// pixel: `ch` is the advance of "0" and a run of text can advance a 64th of a
+// pixel per glyph past it, so an exact floor leaves the name's last character
+// short and `text-overflow` cuts it.
 function Path(props: { path: string }) {
 	const [dir, name] = split(props.path);
 	const { stem, tail, floor } = pathCut(name);
 	return (
-		<span className={cn(FILE_PATH, PATH)} style={{ minWidth: `${floor}ch` }}>
+		<span
+			className={cn(FILE_PATH, PATH)}
+			style={{ minWidth: `round(up, ${floor}ch, 1px)` }}
+		>
 			{dir ? (
 				<span className={cn(filePathPart({ part: "directory" }), DIRECTORY)}>
 					{dir}

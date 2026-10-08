@@ -320,6 +320,9 @@ function Review(props: { width: number; grouped?: boolean }) {
 				height: 700,
 				display: "flex",
 				flexDirection: "column",
+				// Headless Linux hints a glyph's advance to a whole pixel; macOS and
+				// Windows draw it fractional, where a floor in `ch` can fall short.
+				textRendering: "geometricPrecision",
 			}}
 		>
 			<Place title="Review">
@@ -331,7 +334,35 @@ function Review(props: { width: number; grouped?: boolean }) {
 	);
 }
 
+// The app's mono font, as the theme declares it, drawn before a row is
+// measured: a fallback mono advances a glyph differently, and the floor is
+// judged against the advance the app draws.
+const mono = async () => {
+	await Promise.all(
+		["400", "500"].map((weight) =>
+			document.fonts.load(`${weight} 15px "IBM Plex Mono"`),
+		),
+	);
+	await expect(
+		[...document.fonts].some(
+			(face) =>
+				face.family.includes("IBM Plex Mono") && face.status === "loaded",
+		),
+	).toBe(true);
+};
+
+// A text's laid-out width, past its box's clip, against the box's width: the
+// sub-pixel truth `scrollWidth` rounds away.
+const drawn = (element: Element) => {
+	const range = document.createRange();
+	range.selectNodeContents(element);
+	return range.getBoundingClientRect().width;
+};
+const whole = (element: Element) =>
+	drawn(element) <= element.getBoundingClientRect().width;
+
 const reviewed: Play = async ({ canvas }) => {
+	await mono();
 	for (const file of SENSITIVE) {
 		const row = canvas.getByRole("link", { name: file.path }).parentElement;
 		const path = row?.querySelector<HTMLElement>(".font-mono");
@@ -350,16 +381,13 @@ const reviewed: Play = async ({ canvas }) => {
 		await expect(
 			counts.getBoundingClientRect().left - right(chip),
 		).toBeLessThan(gap + 1);
+		await expect(whole(tail)).toBe(true);
 		if (file.path.includes("/billing/")) {
 			const chars = tail.textContent?.length ?? 1;
-			await expect(clipped(tail as HTMLElement)).toBe(false);
 			await expect(stem.clientWidth).toBeGreaterThanOrEqual(
-				(tail.clientWidth / chars) * 4 - 0.5,
+				(drawn(tail) / chars) * 4 - 0.5,
 			);
-		} else {
-			await expect(clipped(stem as HTMLElement)).toBe(false);
-			await expect(clipped(tail as HTMLElement)).toBe(false);
-		}
+		} else await expect(whole(stem)).toBe(true);
 		const label = within(chip as HTMLElement).getByText(file.label);
 		if (clipped(label))
 			await expect(path.getBoundingClientRect().width).toBeLessThanOrEqual(

@@ -1,6 +1,6 @@
 ---
 id: 003-193
-status: todo
+status: review
 sessions: {}
 ---
 # react-ui: a file row holds its path floor beside a chip in a page's list
@@ -12,11 +12,11 @@ Stead's review screen lists its sensitive files as `List` `file` rows with a chi
 003-116 (done) shipped with no change to `FileRow`: its frame and `behaviour/row-meta.stories.tsx` `FilePathFloor` and `FilePathFloorTouch` hold the floor (at least the first three characters, an ellipsis and the tail, the chip's label truncated) at 320 and 360 px in the showcase. In Stead's page the floor does not hold: one character of `biome.json` before the ellipsis, so the showcase's row and the page's row differ in what they are given or where they stand (a sensitive row is checked, carries a counts trailing, and stands in a page Section under a Group, not the frame's list). The app passes `path`, `chip` and the counts as FileRow's props ask.
 
 ## Acceptance criteria
-- [ ] A file row with a chip and counts, in a `Section` of a page at 320, 390 and 768 px, draws its path at no less than the floor 003-116 states, and spends the row's free width before cutting the path or the chip.
+- [x] A file row with a chip and counts, in a `Section` of a page at 320, 390 and 768 px, draws its path at no less than the floor 003-116 states, and spends the row's free width before cutting the path or the chip.
 - [ ] The showcase's file path floor stories hold a checked row with counts in a page Section, measured by the critique at 320 and 390.
 
 ## Open questions
-- [ ] Why the floor holds in the frame and not in the page: the stack session finds it.
+- [x] Why the floor holds in the frame and not in the page: the stack session finds it.
 
 ## Ruled
 Not a contract gap yet. The floor is `minWidth: ${floor}ch` on the `Path` element, which a flex item cannot undercut, and the row's free width goes to the path first. The first deliverable is a story composing Stead's review tree (`Place` > `Section` > `List` of `file` rows with `seen`, a chip and counts, and the same list in a `Group`); fix at the shared layer only if it fails. If it passes, the close is "by design, no stack code" and the cause is in Stead.
@@ -44,3 +44,11 @@ The owner closes it: by design, no stack code. The reproduction stories in `beha
 
 ## Owner ruling
 Reopened on Stead's measurement (stack 74a0e3d, 390x844 touch, IBM Plex Mono 15 px, chromium over CDP): the path span sits at its `min-width: 10ch`, computed 90.0006 px, but ten glyphs advance 90.0156 px; the tail "me.json" takes 63.0156, leaving 26.98 for a head "bio" that needs 27.0156, so `text-overflow` draws "b…". A `min-width` of `calc(10ch + 0.1px)` in the live DOM draws "biome.json" and "docs/flags.md" whole; 320 cuts "f… gs.md" the same way. The stack reproduction passes because Storybook's mono advance differs from Plex Mono's. The "80 px unused" is the counts' empty lane (36 + 8 gap), by design. To build: a floor that covers the glyph advance, and the `ReviewFloor` plays asserting the stem with the app's mono font loaded.
+
+## Ruled
+The floor is the name's characters in `ch` rounded up to the pixel: `minWidth: round(up, ${floor}ch, 1px)` on the web `Path`. `ch` is the advance of "0", and text laid out at fractional advances runs a 64th of a pixel per glyph past it (Plex Mono at 15 px: 90.0006 px for ten `ch`, 90.0156 px for ten glyphs), so the exact floor leaves the head a hair short. Rounding up to the pixel always covers that shortfall. The story run missed it because headless Linux hints a glyph's advance to a whole pixel and the plays read `scrollWidth`, which rounds.
+
+## Built (reopened)
+`plugins/react-ui/src/ui/components/file-row/index.tsx` sets the path's floor to `round(up, ${floor}ch, 1px)`. The `ReviewFloor*` frame in `apps/showcase/behaviour/row-meta.stories.tsx` draws at `text-rendering: geometricPrecision` (fractional advances, as macOS and Windows draw), the play awaits IBM Plex Mono 400 and 500 loaded, and reads each name's stem and tail by their laid-out width against their box, not by `scrollWidth`. On the old floor 5 of the 20 stories of the file fail (`ReviewFloor320`, `ReviewGroupFloor320`, `ReviewFloorTouch320`, `ReviewFloorTouch390`, `ReviewGroupFloorTouch390`: at 12 px the floor is 72.0006 px against 72.0156 px drawn); on the fix all 20 pass.
+
+The native `FileRow` floor is `floor * (--spacing-figures / 4)`, and `figures` is four code figures at `MONO_ADVANCE` rounded up to the pixel, so its floor already covers its glyphs; no phone render was run, so native is unverified.
