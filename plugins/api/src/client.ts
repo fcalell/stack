@@ -3,6 +3,7 @@ import { RPCLink } from "@orpc/client/fetch";
 import { getRegisteredApiClient, registerApiClient } from "./ability-client.ts";
 import { captureEntityHeaders } from "./query-invalidation.ts";
 import type { RouterClient } from "./types.ts";
+import { STACK_NOT_FOUND_HEADER } from "./wire.ts";
 
 export { isNotFound } from "./not-found.ts";
 export type { RouterClient } from "./types.ts";
@@ -91,6 +92,15 @@ export function createClient<TRouter>(
 				);
 			} catch {
 				// Capture is best-effort; the response must pass through untouched.
+			}
+			// A read's not found travels as a success status (see the worker);
+			// oRPC decodes an error from the status, so the 404 goes back on.
+			if (response.headers.has(STACK_NOT_FOUND_HEADER)) {
+				return new Response(response.body, {
+					status: 404,
+					statusText: "Not Found",
+					headers: response.headers,
+				});
 			}
 			return response;
 		},

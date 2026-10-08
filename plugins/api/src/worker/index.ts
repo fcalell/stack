@@ -16,6 +16,7 @@ import {
 	extractIp,
 	type RateLimitBinding,
 } from "../procedure.ts";
+import { STACK_NOT_FOUND_HEADER } from "../wire.ts";
 import { buildMcpTools, createMcpEndpoint, createMcpRoute } from "./mcp.ts";
 
 export type { InferRouter } from "../types.ts";
@@ -470,6 +471,7 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 							return allowed.includes(requestOrigin) ? requestOrigin : null;
 						},
 						credentials: true,
+						exposeHeaders: [STACK_NOT_FOUND_HEADER],
 					}),
 				);
 			}
@@ -594,6 +596,14 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 				});
 
 				if (matched) {
+					// A browser prints every 404 fetch response as a console error,
+					// so a read's not found travels as a 200 the stack client turns
+					// back into a 404. A mutation's stays 404.
+					if (response.status === 404 && c.req.method === "GET") {
+						const headers = new Headers(response.headers);
+						headers.set(STACK_NOT_FOUND_HEADER, "1");
+						return c.newResponse(response.body, { status: 200, headers });
+					}
 					return c.newResponse(response.body, response);
 				}
 

@@ -78,4 +78,7 @@ procedure({ auth: true })
   .query(({ context }) => context.project);
 ```
 
+A read's `NOT_FOUND` travels as a success status with an `x-stack-not-found` header that the
+stack client restores to a 404, so the browser console stays clean; a mutation's stays a 404.
+
 **Check:** `pnpm check` passes.

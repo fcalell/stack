@@ -37,7 +37,10 @@ const create = useMutation(orpc.projects.create.mutationOptions());
 
 A procedure that throws `ApiError("NOT_FOUND")` reaches the screen as a failed query.
 `isNotFound(error)` from `@fcalell/plugin-api/client` tells that error from any other, so the
-screen draws its not-found state for it and its error state for the rest.
+screen draws its not-found state for it and its error state for the rest. A read's not found
+travels as a 200 carrying `x-stack-not-found` (a browser logs every 404 fetch response as a
+console error), and the client restores the 404 before decoding it; a client of `/rpc` that is
+not stack's sees the 200. A mutation's not found stays a 404.
 
 ```tsx
 const project = useQuery(orpc.projects.get.queryOptions({ input: { projectId } }));

@@ -4,11 +4,16 @@
 // same headers/path (`./query-invalidation.ts`, `./ability-client.ts`,
 // `./tanstack-query.tsx`). Import-free by construction — mirrors
 // `plugins/expo/src/version-gate-shared.ts` — so a client bundle depending
-// only on these three constants doesn't drag the server builder along with
+// only on these constants doesn't drag the server builder along with
 // it. `./procedure.ts` re-exports them from here, so `@fcalell/plugin-api/procedure`
 // consumers (generated code, `plugins/auth`'s worker) see no change.
 export const STACK_READS_HEADER = "x-stack-reads";
 export const STACK_WRITES_HEADER = "x-stack-writes";
+
+// Marks a read whose answer is "not found", sent with a success status because
+// a browser prints every 404 fetch response as a console error before any code
+// reads it. The client puts the 404 back before oRPC decodes the body.
+export const STACK_NOT_FOUND_HEADER = "x-stack-not-found";
 
 // What an entity name may contain. Names reach `Headers.set` comma-joined, and
 // comma is the client-side split delimiter, so `procedure()` and the
