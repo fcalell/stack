@@ -2,6 +2,7 @@ import { cn } from "@fcalell/ui-core/cn";
 import type { Act } from "@fcalell/ui-core/descriptors";
 import { SHEET_DOCKED_BODY_SHARE } from "@fcalell/ui-core/tokens";
 import {
+	lineBox,
 	SHEET_DOCKED_BODY,
 	SHEET_DOCKED_FLOOR,
 	SHEET_DOCKED_FOOT,
@@ -9,7 +10,6 @@ import {
 	SHEET_HEAD_ROW,
 	THREAD_COLUMN,
 	text,
-	textStrong,
 } from "@fcalell/ui-core/variants";
 import {
 	type ReactNode,
@@ -42,9 +42,9 @@ import { IconButton } from "../icon-button/index.tsx";
 const ROOT = "flex flex-col w-full min-h-0";
 const HEAD = "flex items-start shrink-0";
 const HEAD_MAIN = "flex flex-col grow min-w-0";
-// The close act stands at the title's first line, which centres on it.
-const HEAD_ROW = "flex items-start";
-const TITLE_SLOT = "flex items-center grow min-w-0 min-h-control";
+// The back and close acts stand at the title's first line: each in a box one
+// heading line tall, centred on the line; a taller act overflows it centred.
+const FIRST_LINE = "flex shrink-0 items-center h-lh";
 const TITLE = "min-w-0 wrap-break-word";
 // The body takes a tab stop only while it scrolls with nothing tabbable inside.
 const BODY =
@@ -67,7 +67,7 @@ export interface SheetDockedProps {
 	children?: ReactNode;
 }
 
-/** A `Sheet` standing in a Thread's or a Place's foot: no scrim, portal or dialog, the foot's raised cell its surface. The head holds the back act before one column, the title and the close act over the description, so both lines share a start; the body scrolls between the head and the foot, which hold their height; the foot holds the line beside (over, on touch) the submit, and under the submit one kept line for a blocked reason or a failed run's sentence. Escape closes it, and each page opens at its top with focus in its first field. Closed it draws nothing. */
+/** A `Sheet` standing in a Thread's or a Place's foot: no scrim, portal or dialog, the foot's raised cell its surface. The head holds the back act before one column, the title over the description, with the acts at the title's first line; the body scrolls between the head and the foot, which hold their height; the foot holds the line beside (over, on touch) the submit, and under the submit one kept line for a blocked reason or a failed run's sentence. Escape closes it, and each page opens at its top with focus in its first field. Closed it draws nothing. */
 export function SheetDocked({
 	open,
 	onClose,
@@ -134,36 +134,30 @@ export function SheetDocked({
 			>
 				<div className={cn(SHEET_HEAD_ROW, HEAD)}>
 					{back ? (
-						<IconButton
-							icon={backGlyph(touch)}
-							fit={iconFit}
-							label={words.back}
-							onAct={back}
-						/>
-					) : null}
-					<div className={cn(SHEET_DOCKED_HEAD, HEAD_MAIN)}>
-						<div className={cn(SHEET_HEAD_ROW, HEAD_ROW)}>
-							<h2 id={titleId} className={TITLE_SLOT}>
-								<span
-									className={cn(
-										text({ role: "body" }),
-										textStrong({ role: "body" }),
-										TITLE,
-									)}
-								>
-									{title}
-								</span>
-							</h2>
+						<div className={cn(lineBox({ role: "heading" }), FIRST_LINE)}>
 							<IconButton
-								icon="X"
+								icon={backGlyph(touch)}
 								fit={iconFit}
-								label={words.close}
-								onAct={onClose}
+								label={words.back}
+								onAct={back}
 							/>
 						</div>
+					) : null}
+					<div className={cn(SHEET_DOCKED_HEAD, HEAD_MAIN)}>
+						<h2 id={titleId} className={cn(text({ role: "heading" }), TITLE)}>
+							{title}
+						</h2>
 						{description ? (
 							<p className={text({ role: "meta" })}>{description}</p>
 						) : null}
+					</div>
+					<div className={cn(lineBox({ role: "heading" }), FIRST_LINE)}>
+						<IconButton
+							icon="X"
+							fit={iconFit}
+							label={words.close}
+							onAct={onClose}
+						/>
 					</div>
 				</div>
 				<div

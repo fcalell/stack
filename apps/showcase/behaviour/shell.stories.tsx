@@ -2,12 +2,14 @@ import { ActionBar } from "@fcalell/plugin-react-ui/components/action-bar";
 import { Form } from "@fcalell/plugin-react-ui/components/form";
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Input } from "@fcalell/plugin-react-ui/components/input";
+import { MessageInput } from "@fcalell/plugin-react-ui/components/message-input";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Shell } from "@fcalell/plugin-react-ui/components/shell";
+import { toast } from "@fcalell/plugin-react-ui/lib/toast";
 import type { PlaceSpec } from "@fcalell/ui-core/descriptors";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
-import { expect, waitFor } from "storybook/test";
+import { expect, screen, waitFor } from "storybook/test";
 
 const noop = () => {};
 const PLACES: PlaceSpec[] = [
@@ -165,5 +167,66 @@ export const PlaceLabelsReadInDark: StoryObj = {
 			console.log(`${link.textContent} ${ratio.toFixed(2)}`);
 			await expect(ratio).toBeGreaterThanOrEqual(4.5);
 		}
+	},
+};
+
+function MoreMenu() {
+	return (
+		<Shell places={PLACES}>
+			<Place
+				title="Members"
+				more={[
+					{ label: "Duplicate", onAct: noop },
+					{ label: "Delete", onAct: noop, destructive: true },
+				]}
+			>
+				<p>The page.</p>
+			</Place>
+		</Shell>
+	);
+}
+
+// A Menu opened in the Shell stands inside the page's landmark, so the axe
+// run finds no menu outside a region.
+export const MenuStandsInTheLandmark: StoryObj = {
+	parameters: { layout: "fullscreen" },
+	render: () => <MoreMenu />,
+	play: async ({ canvas, userEvent }) => {
+		await userEvent.click(canvas.getByRole("button", { name: "More" }));
+		const menu = await screen.findByRole("menu");
+		expect(menu.closest("main")).not.toBeNull();
+	},
+};
+
+function ToastOverFoot() {
+	const [text, setText] = useState("");
+	return (
+		<Shell places={PLACES}>
+			<Place
+				title="Assistant"
+				foot={<MessageInput value={text} onChange={setText} onSend={noop} />}
+			>
+				<p>The page.</p>
+			</Place>
+		</Shell>
+	);
+}
+
+// A toast stands above a docked foot, and keeps above it as the foot grows a
+// line.
+export const ToastStandsAboveTheFoot: StoryObj = {
+	parameters: { layout: "fullscreen" },
+	render: () => <ToastOverFoot />,
+	play: async ({ canvas, userEvent }) => {
+		toast("Saved");
+		const sentence = await canvas.findByText("Saved");
+		const input = canvas.getByRole("textbox");
+		const above = () =>
+			expect(sentence.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+				input.getBoundingClientRect().top,
+			);
+		await above();
+		await userEvent.type(input, "one{Shift>}{Enter}{/Shift}two");
+		await waitFor(above);
 	},
 };

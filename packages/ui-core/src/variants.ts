@@ -412,6 +412,9 @@ export const PICKER_VALUE =
 // The pick's popover at the popover's width (its ground and inset are
 // `POPOVER`'s).
 export const PICKER_POPOVER = "w-popover";
+// The select's list at the popover's width too (its ground and inset are
+// `POPOVER`'s); the trigger's width is its floor.
+export const SELECT_POPOVER = "w-popover";
 // A list of rules on the desktop: one grid whose rows are subgrids, so the
 // columns align across rows, a pair rhythm between rows and the inside gap
 // between terms. A rule's terms keep the inside gap on touch too, stacked in
@@ -522,8 +525,7 @@ export const SHEET_FOOT =
 // head, the body and the foot carry no surface, radius, shadow, hairline or
 // side inset of their own, so all three share the foot's edge; the head's back
 // act stands before one column, so the title and the description share one
-// start: the column's row (the title, the close act) over the description a
-// pair apart; the body keeps its sections a
+// start: the title over the description a pair apart; the body keeps its sections a
 // sections gap apart and the card inset above and below, the foot's line
 // beside or over the acts an acts gap apart.
 export const SHEET_DOCKED_HEAD = "gap-pair";

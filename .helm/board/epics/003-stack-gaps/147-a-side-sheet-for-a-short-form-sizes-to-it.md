@@ -24,3 +24,7 @@ No `fit` value (ruled). The desktop side sheet is its content's height with the 
 
 ## Critique
 Rework: at 4x the side sheet's foot draws a square corner about 2 px past the 8 px bottom-left radius. The look (a 640 x 222 card at the top end, the page dimmed below) is the owner's earlier ruling.
+
+## Rework
+
+The side sheet's foot follows the box's radius (`rounded-bl-sheet` on the desktop foot, `sheet/base.tsx`), so its raised ground ends at the 8 px corner. Judged by the critique at 4x.

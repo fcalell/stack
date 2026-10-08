@@ -6,7 +6,6 @@ import {
 	SHEET_DOCKED_HEAD,
 	SHEET_HEAD_ROW,
 	text,
-	textStrong,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useContext, useEffect, useRef } from "react";
 import { Text as RNText, type TextInput, View } from "react-native";
@@ -28,9 +27,9 @@ import { IconButton } from "../icon-button";
 const ROOT = "w-full min-h-0 shrink";
 const HEAD = "flex-row items-start shrink-0";
 const HEAD_MAIN = "flex-1 min-w-0";
-// The close act stands at the title's first line, which centres on it.
-const HEAD_ROW = "flex-row items-start";
-const TITLE_SLOT = "flex-1 flex-row items-center min-w-0 min-h-control";
+// The back and close acts stand at the title's first line: each in a box one
+// heading line tall, centred on the line; a taller act overflows it centred.
+const FIRST_LINE = "shrink-0 justify-center items-center";
 const TITLE = "shrink";
 const BODY = "shrink";
 // In a foot the body scrolls past two fifths of the foot's region and keeps
@@ -56,8 +55,8 @@ export interface SheetDockedProps {
 
 // A `Sheet` standing in a Thread's or a Place's foot: no scrim or modal, the
 // foot's raised cell its surface. The head holds the back act before one
-// column, the title and the close act over the description, so both lines
-// share a start; the body, bounded, scrolls between the head and the foot, which
+// column, the title over the description, with the acts at the title's first
+// line; the body, bounded, scrolls between the head and the foot, which
 // hold their height, and each page opens at its top; the foot holds the line over
 // the submit, and under it one kept line for a blocked reason or a failed
 // run's sentence. The first field of each page takes focus as it mounts, and
@@ -84,6 +83,9 @@ export function SheetDocked({
 		region > 0
 			? { maxHeight: SHEET_DOCKED_BODY_SHARE * region, minHeight: floor }
 			: undefined;
+	const line = {
+		height: Number.parseFloat(String(useCSSVariable("--leading-heading") ?? 0)),
+	};
 	const held = useRef<TextInput>(null);
 	const scroll = useRef<ScrollRef>(null);
 	const [touchedValue, setTouched] = useTouchState();
@@ -108,38 +110,35 @@ export function SheetDocked({
 						<View className={ROOT}>
 							<View className={cn(SHEET_HEAD_ROW, HEAD)}>
 								{back ? (
-									<IconButton
-										icon="ChevronLeft"
-										fit="body"
-										label={words.back}
-										onAct={back}
-									/>
-								) : null}
-								<View className={cn(SHEET_DOCKED_HEAD, HEAD_MAIN)}>
-									<View className={cn(SHEET_HEAD_ROW, HEAD_ROW)}>
-										<View accessibilityRole="header" className={TITLE_SLOT}>
-											<RNText
-												className={cn(
-													text({ role: "body" }),
-													textStrong({ role: "body" }),
-													TITLE,
-												)}
-											>
-												{title}
-											</RNText>
-										</View>
+									<View className={FIRST_LINE} style={line}>
 										<IconButton
-											icon="X"
+											icon="ChevronLeft"
 											fit="body"
-											label={words.close}
-											onAct={onClose}
+											label={words.back}
+											onAct={back}
 										/>
 									</View>
+								) : null}
+								<View className={cn(SHEET_DOCKED_HEAD, HEAD_MAIN)}>
+									<RNText
+										accessibilityRole="header"
+										className={cn(text({ role: "heading" }), TITLE)}
+									>
+										{title}
+									</RNText>
 									{description ? (
 										<RNText className={text({ role: "meta" })}>
 											{description}
 										</RNText>
 									) : null}
+								</View>
+								<View className={FIRST_LINE} style={line}>
+									<IconButton
+										icon="X"
+										fit="body"
+										label={words.close}
+										onAct={onClose}
+									/>
 								</View>
 							</View>
 							<Scroll

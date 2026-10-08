@@ -18,7 +18,8 @@ import { Icon } from "../icon/index.tsx";
 import { IconButtonBase } from "../icon-button/base.tsx";
 import { SheetBase } from "../sheet/base.tsx";
 
-const POPUP = "flex flex-col";
+// Base UI focuses the popup itself after a pointer open; its rows carry the ring.
+const POPUP = "flex flex-col outline-none";
 const POSITIONER = "z-(--layer-popover)";
 // The popover drops in from a float above as it fades, and fades out; on
 // transform and opacity alone, the rungs zeroed under reduced motion.

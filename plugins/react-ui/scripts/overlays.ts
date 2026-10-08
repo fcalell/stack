@@ -66,7 +66,7 @@ export const OVERLAYS: readonly string[] = [
 	"truncate",
 	"bg-fill-disabled",
 	"text-ink-disabled",
-	"w-(--anchor-width)",
+	"min-w-(--anchor-width)",
 	"data-popup-open:outline-2",
 	"data-popup-open:outline-offset-2",
 	"data-popup-open:outline-ring",
@@ -282,6 +282,7 @@ export const OVERLAYS: readonly string[] = [
 	"touch:text-start",
 	// Sheet, Menu, Toast
 	"z-(--layer-sheet)",
+	"rounded-bl-sheet",
 	"z-(--layer-popover)",
 	"relative",
 	"absolute",

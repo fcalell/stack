@@ -16,7 +16,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useId, useMemo, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { FormContext } from "../../lib/form.ts";
+import { FormContext, FormStands } from "../../lib/form.ts";
 import { ThreadRoom } from "../../lib/frame.ts";
 import { DEEPER, HeadingContext } from "../../lib/heading.ts";
 import { LoadingContext } from "../../lib/loading.ts";
@@ -127,6 +127,8 @@ export function Section({
 	const level = use(HeadingContext);
 	// A Section inside a Section names itself a level below its parent.
 	const nested = use(SectionContext);
+	// A section in a sheet's body reads a level below the sheet's title.
+	const stood = use(FormStands) === "sheet";
 	// Inside a Form the section takes the fields rhythm.
 	const within = use(FormContext) ? "form" : "page";
 	const Heading = `h${level}` as const;
@@ -180,7 +182,7 @@ export function Section({
 			<span
 				id={titleId}
 				className={cn(
-					nested || folded !== undefined
+					nested || stood || folded !== undefined
 						? SECTION_NESTED_TITLE
 						: text({ role: "heading" }),
 					TITLE,

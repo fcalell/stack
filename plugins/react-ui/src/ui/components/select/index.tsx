@@ -9,6 +9,7 @@ import {
 	POPOVER,
 	row,
 	SELECT_GROUP,
+	SELECT_POPOVER,
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
@@ -26,9 +27,9 @@ const TRIGGER_OPEN =
 // The value starts at the start, as an input's does, not at the button's centre.
 const VALUE = "min-w-0 grow truncate text-start";
 const VALUE_DISABLED = "text-ink-disabled";
-// The list stands at the trigger's width, which Base UI sets on the
-// positioner as `--anchor-width`.
-const POPUP = "flex flex-col w-(--anchor-width)";
+// The list stands at the popover's width, or the trigger's when that is wider
+// (Base UI sets it on the positioner as `--anchor-width`).
+const POPUP = "flex flex-col min-w-(--anchor-width)";
 const POSITIONER = "z-(--layer-popover)";
 const OPTION_GROUP = "flex flex-col";
 const GROUP_LABEL = "px-control-x pt-pair";
@@ -124,7 +125,7 @@ export function Select<V extends string | null = string>({
 					// over its field.
 					sideOffset={() => spacing("pair")}
 				>
-					<Control.Popup className={cn(POPOVER, POPUP)}>
+					<Control.Popup className={cn(POPOVER, SELECT_POPOVER, POPUP)}>
 						{groups.map((group, at) => (
 							<Control.Group
 								key={group.label ?? at}

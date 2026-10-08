@@ -44,3 +44,13 @@ export const Popover: StoryObj = {
 		await waitFor(() => expect(trigger).toHaveFocus());
 	},
 };
+
+// Opened by the pointer, the popup takes focus itself and draws no ring: the
+// rows carry the keyboard's.
+export const PointerOpenDrawsNoRing: StoryObj = {
+	play: async ({ canvas, userEvent }) => {
+		await userEvent.click(canvas.getByRole("button", { name: "More" }));
+		const menu = await screen.findByRole("menu");
+		expect(getComputedStyle(menu).outlineStyle).toBe("none");
+	},
+};

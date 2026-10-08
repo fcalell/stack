@@ -91,6 +91,9 @@ const HEAD_ROW_TALL = "min-h-row-2";
 // The body takes a tab stop only while it scrolls with nothing tabbable inside.
 const BODY =
 	"flex flex-col grow min-h-0 overflow-y-auto overscroll-contain focus-visible:-outline-offset-2";
+// The side sheet's foot carries the raised ground to the box's corner, so it
+// follows the box's radius.
+const FOOT_SIDE = "rounded-bl-sheet";
 const FOOT_ROW = "flex items-center";
 const FOOT_STACK = "flex flex-col";
 const FOOT_LINE = "flex items-center min-w-0";
@@ -266,7 +269,13 @@ export function SheetBase({
 	) : null;
 	const footer =
 		footLine || actionBar ? (
-			<div className={cn(SHEET_FOOT, touch ? FOOT_STACK : FOOT_ROW)}>
+			<div
+				className={cn(
+					SHEET_FOOT,
+					touch ? FOOT_STACK : FOOT_ROW,
+					!touch && FOOT_SIDE,
+				)}
+			>
 				{footLine ?? (touch ? null : <div className={SPACER} />)}
 				{actionBar}
 			</div>
@@ -349,7 +358,7 @@ export function SheetBase({
 								? () => popup.current?.querySelector("input") ?? true
 								: focus
 						}
-						role={centred ? "alertdialog" : "dialog"}
+						role={form === "centred" ? "alertdialog" : "dialog"}
 						aria-label={view ? title : undefined}
 						aria-labelledby={view ? undefined : titleId}
 						// A field inside takes input: a blocked act says its reason.

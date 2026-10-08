@@ -54,3 +54,27 @@ export const Listbox: StoryObj = {
 		await waitFor(() => expect(trigger).toHaveFocus());
 	},
 };
+
+// The list is a popover wide whatever the trigger's width, and no label in it
+// clips.
+export const ListIsPopoverWide: StoryObj = {
+	play: async ({ canvas, userEvent }) => {
+		await userEvent.click(canvas.getByRole("combobox"));
+		const list = await screen.findByRole("listbox");
+		const popup = list.closest("[data-side]") ?? list;
+		const popover = Number.parseFloat(
+			getComputedStyle(document.documentElement).getPropertyValue(
+				"--container-popover",
+			),
+		);
+		expect(popup.getBoundingClientRect().width).toBeGreaterThanOrEqual(
+			popover - 1,
+		);
+		for (const option of screen.getAllByRole("option")) {
+			const label = option.firstElementChild?.firstElementChild;
+			if (label) {
+				expect(label.scrollWidth).toBeLessThanOrEqual(label.clientWidth);
+			}
+		}
+	},
+};

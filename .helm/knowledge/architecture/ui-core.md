@@ -596,11 +596,13 @@ a tick with no animation, never jumped to full.
   holds). No prop, no new roster part: the Sheet draws `SHEET_DOCKED_HEAD`,
   `SHEET_DOCKED_BODY` (the sections gap and the card inset above and below) and `SHEET_DOCKED_FOOT`
   inside the foot's raised cell, so none carries a surface, radius, shadow, hairline or side inset and
-  all three share the foot's edge. The head holds the back act before one column (`SHEET_HEAD_ROW`
-  twice): the title and the close act over the description, so the two lines share a start whether the
-  back act stands or not. The title wraps to its whole text with the close act at its first line (it
-  is often the question the options answer) and is a label (`body` at `strong`, as the pane sheet's), since the
-  Section a page holds is a `heading` and a counter ("Question 2 of 4") never outranks the question;
+  all three share the foot's edge. The head holds the back act before one column: the title
+  over the description, so the two lines share a start whether the back act stands or not, the back and
+  close acts each in a box one heading line tall at the title's first line (a taller act overflows it
+  centred). The title wraps to its whole text (it is often the question the options answer) and is the
+  `heading` role, the modal Sheet's, so a container's name outranks what it holds: a Section in a
+  sheet's body reads nested (`FormStands` is `sheet`), a level below the title, and a counter
+  ("Question 2 of 4") never outranks the question;
   the foot holds the `foot` line beside the `submit` bar (over it on touch); the
   head-end submit and Cancel of the modal form are gone, since the dock stands above the keyboard and
   the close act is in the head. The docked foot fits its content up to the region the log and the foot

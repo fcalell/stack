@@ -15,7 +15,7 @@ import { type ReactNode, useContext, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { FormContext } from "../../lib/form";
+import { FormContext, FormStands } from "../../lib/form";
 import { ThreadRoom } from "../../lib/frame";
 import { Ink } from "../../lib/ink";
 import { LoadingContext } from "../../lib/loading";
@@ -120,6 +120,8 @@ export function Section({
 	const within = useContext(FormContext) ? "form" : "page";
 	// A Section inside a Section names itself a level below its parent.
 	const nested = useContext(SectionContext);
+	// A section in a sheet's body reads a level below the sheet's title.
+	const stood = useContext(FormStands) === "sheet";
 	// `folded` is the initial fold: the section holds its fold from there.
 	const [open, setOpen] = useState(folded !== true);
 	// The Section reads its body's collections off its children in render (by
@@ -160,7 +162,7 @@ export function Section({
 			<RNText
 				numberOfLines={1}
 				className={
-					nested || folded !== undefined
+					nested || stood || folded !== undefined
 						? SECTION_NESTED_TITLE
 						: text({ role: "heading" })
 				}

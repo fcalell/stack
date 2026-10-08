@@ -128,7 +128,6 @@ function Pair() {
 	return (
 		<Toolbar>
 			<Picker
-				fit="bar"
 				label="Repo"
 				options={[
 					{ value: "web", label: "web" },
@@ -137,13 +136,7 @@ function Pair() {
 				value={repo}
 				onChange={setRepo}
 			/>
-			<Picker
-				fit="bar"
-				label="Lead"
-				options={OWNERS}
-				value={lead}
-				onChange={setLead}
-			/>
+			<Picker label="Lead" options={OWNERS} value={lead} onChange={setLead} />
 		</Toolbar>
 	);
 }
@@ -153,6 +146,16 @@ function Pair() {
 export const Start: StoryObj = {
 	render: () => <Pair />,
 	play: async ({ canvas, userEvent }) => {
+		// The two triggers stand on one line with room beside them.
+		const [repo, lead] = [/Repo/, /Lead/].map((name) =>
+			canvas.getByRole("combobox", { name }),
+		);
+		expect(
+			Math.abs(
+				(repo?.getBoundingClientRect().top ?? 0) -
+					(lead?.getBoundingClientRect().top ?? 1),
+			),
+		).toBeLessThan(2);
 		for (const name of [/Repo/, /Lead/]) {
 			const trigger = canvas.getByRole("combobox", { name });
 			await userEvent.click(trigger);

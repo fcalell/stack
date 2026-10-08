@@ -25,7 +25,7 @@ const SCOPES = [
 // The search, Filter with its count, Sort and Display, and two applied
 // filters as removable neutral chips; then two Pickers at the strip's start,
 // each hanging its list from its own start edge; then, in a column narrower
-// than its long picked value, a field-fit Picker alone on its line,
+// than its long picked value, a Picker alone on its line,
 // truncating its value before the chevron.
 export function drawToolbar() {
 	return (
@@ -58,19 +58,12 @@ export function drawToolbar() {
 			</Toolbar>
 			<Toolbar>
 				<Picker
-					fit="bar"
 					label="Region"
 					options={REGIONS}
 					value="fra"
 					onChange={change}
 				/>
-				<Picker
-					fit="bar"
-					label="Owner"
-					options={OWNERS}
-					value="ana"
-					onChange={change}
-				/>
+				<Picker label="Owner" options={OWNERS} value="ana" onChange={change} />
 			</Toolbar>
 			<div className="flex w-popover max-w-full flex-col">
 				<Toolbar>

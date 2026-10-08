@@ -25,3 +25,7 @@ Both platforms, with a showcase Thread holding a two-page docked Sheet at 375 x 
 
 ## Critique
 Rework: a docked Sheet's title is 13/500 (16/500 touch) over a Section heading of 15/600 (18/600) in its own body, so the body outranks the sheet; the touch gap from title to description is 18 px against about 4 in the modal head.
+
+## Rework
+
+The docked title takes the `heading` role (15/600, 18/600 touch), the modal Sheet's, and a `Section` in a sheet's body reads nested (13/600, 16/600 touch) through `FormStands`, so the container's name outranks its contents (ruling 5). Web `sheet/docked.tsx` and `section/index.tsx`; phone the same two files. The same Section rule reads in the modal Sheet's body (`SectionInModalSheet`); the pane fit's 13/500 title over 13/600 sections is an open item for the critique. Evidence: `Behaviour/Sheet` `DockedTitleOutranksItsBody`, `DockedTitleOutranksItsBodyTouch` and `SectionInModalSheet`. The sheet behaviour and Sheet stories pass, 17 of 17.

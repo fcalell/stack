@@ -417,8 +417,8 @@ an `act`, never both, since each holds the screen's filled act. A `Thread` in a 
 `foot` stands among its sections, inline, its `foot` left empty.
 
 A `Sheet` passed as a `Thread`'s or a `Place`'s `foot` docks there, derived from where it stands:
-no prop, no scrim. The head keeps the back act before one column, the title (a label, so a Section
-inside leads it; it wraps to its whole text, the close act at its first line) and the close act over the `description`, so both lines share a start;
+no prop, no scrim. The head keeps the back act before one column, the title (the `heading` role, so a Section
+inside reads a level below; it wraps to its whole text, the close act at its first line) over the `description`, with the close act at the title's first line;
 the body scrolls between the head and the foot, which hold their height (the `foot` line over the `submit`),
 and the body scrolls past two fifths of the region it shares with the log, and keeps three rows
 whatever the head, the foot line and the log hold (a shorter body pads to them), the head, foot

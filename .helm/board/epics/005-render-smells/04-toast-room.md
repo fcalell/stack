@@ -36,3 +36,7 @@ Built; `pnpm check` and `pnpm verify` pass. Web live on the assistant at 375 and
 
 ## Critique
 Unrendered: no story draws a toast over a docked foot.
+
+## Rework
+
+`Behaviour/Shell` `ToastStandsAboveTheFoot` raises a toast over a Place's docked `MessageInput` and asserts it stands above the input, before and after the input grows a line.

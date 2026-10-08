@@ -96,6 +96,13 @@ export const Decision: StoryObj = {
 	},
 };
 
+// The same decision at touch density is an alertdialog too.
+export const DecisionTouch: StoryObj = {
+	...Decision,
+	tags: ["touch"],
+	globals: { density: "touch" },
+};
+
 // The foot a docked question stands in, then the input that returns.
 function useDockedFoot() {
 	const [open, setOpen] = useState(true);
@@ -256,6 +263,96 @@ export const SideSheetFitsItsContent: StoryObj = {
 		const box = dialog.getBoundingClientRect();
 		expect(box.top).toBe(0);
 		expect(box.height).toBeLessThan(window.innerHeight / 2);
+	},
+};
+
+function sized(el: HTMLElement) {
+	const style = getComputedStyle(el);
+	return `${style.fontSize} ${style.fontWeight}`;
+}
+
+// The gap between the head's title text and its description, a pair.
+function pairGap(title: HTMLElement, description: HTMLElement) {
+	return (
+		description.getBoundingClientRect().top -
+		title.getBoundingClientRect().bottom
+	);
+}
+
+// A docked title is the container's name: the `heading` role (15/600), over a
+// Section in its body that reads a level below (13/600), and the description
+// follows the title a pair below.
+export const DockedTitleOutranksItsBody: StoryObj = {
+	parameters: { layout: "fullscreen" },
+	render: () => (
+		<Place
+			title="Assistant"
+			foot={
+				<Sheet
+					open
+					onClose={() => {}}
+					title="Question 1 of 2"
+					description="Before I redeploy"
+				>
+					<Section title="Which environment?">
+						<p>Production</p>
+					</Section>
+				</Sheet>
+			}
+		/>
+	),
+	play: async ({ canvas }) => {
+		const title = await canvas.findByRole("heading", {
+			name: "Question 1 of 2",
+		});
+		const section = canvas.getByText("Which environment?");
+		expect(sized(title)).toBe("15px 600");
+		expect(sized(section)).toBe("13px 600");
+		const pair = Number.parseFloat(
+			getComputedStyle(document.documentElement).getPropertyValue(
+				"--spacing-pair",
+			),
+		);
+		const gap = pairGap(title, canvas.getByText("Before I redeploy"));
+		expect(gap).toBeGreaterThanOrEqual(pair - 2);
+		expect(gap).toBeLessThanOrEqual(pair + 4);
+	},
+};
+
+// The same at touch: 18/600 over 16/600, the description a pair (8) below.
+export const DockedTitleOutranksItsBodyTouch: StoryObj = {
+	...DockedTitleOutranksItsBody,
+	tags: ["touch"],
+	globals: { density: "touch" },
+	play: async ({ canvas }) => {
+		const title = await canvas.findByRole("heading", {
+			name: "Question 1 of 2",
+		});
+		const section = canvas.getByText("Which environment?");
+		expect(sized(title)).toBe("18px 600");
+		expect(sized(section)).toBe("16px 600");
+		const gap = pairGap(title, canvas.getByText("Before I redeploy"));
+		expect(gap).toBeGreaterThanOrEqual(6);
+		expect(gap).toBeLessThan(12);
+	},
+};
+
+// A Section in a modal Sheet's body reads under the modal title too.
+export const SectionInModalSheet: StoryObj = {
+	render: () => (
+		<Sheet open onClose={() => {}} title="Rename domain">
+			<Section title="Details">
+				<p>Body</p>
+			</Section>
+		</Sheet>
+	),
+	play: async () => {
+		const title = await screen.findByRole("heading", { name: "Rename domain" });
+		// The modal head styles the span inside its heading.
+		const text = title.firstElementChild;
+		if (!(text instanceof HTMLElement)) throw new Error("no title text");
+		expect(sized(text)).toBe("15px 600");
+		expect(sized(screen.getByText("Details"))).toBe("13px 600");
 	},
 };
 

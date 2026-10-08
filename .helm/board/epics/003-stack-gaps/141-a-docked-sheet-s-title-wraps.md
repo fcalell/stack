@@ -25,3 +25,7 @@ The docked head's title is a `min-h-control` slot centring its text (a short tit
 
 ## Critique
 Rework: a docked Sheet's title is 13/500 (16/500 touch) over a Section heading of 15/600 (18/600) in its own body, so the body outranks the sheet; the touch gap from title to description is 18 px against about 4 in the modal head.
+
+## Rework
+
+The head is `[back] [title over description] [close]` with `items-start`: the title is a wrapping `h2`, the description its sibling in one column a pair below, and the back and close acts each stand in a box one heading line tall (`h-lh` on the web, the `--leading-heading` height on the phone), so a short title is centred with its act and a wrapped one keeps the act at the first line. The touch title-to-description gap is a pair (8) where it was 18. Files: both `sheet/docked.tsx`. Evidence: `DockedTitleWraps` and `DockedTitleOutranksItsBodyTouch`. The sheet behaviour and Sheet stories pass, 17 of 17.

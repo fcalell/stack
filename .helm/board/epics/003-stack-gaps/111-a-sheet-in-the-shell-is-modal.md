@@ -27,3 +27,7 @@ A Sheet or a `confirm()` decision opened in a running app leaves the page behind
 
 ## Critique
 Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/sheet/report.md`).
+
+## Rework
+
+A confirm is an `alertdialog` at every density: `SheetBase` reads `form === "centred"` for the role, not the desktop-only `centred`. `Behaviour/Sheet` `DecisionTouch` (tag `touch`) asserts it.

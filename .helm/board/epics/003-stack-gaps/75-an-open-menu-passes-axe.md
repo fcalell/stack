@@ -24,3 +24,7 @@ Split in two. `region` (a fix, web only): the Shell renders a popup layer as the
 
 ## Critique
 Unrendered: not captured by the sheet critique (Menu in the Shell; the axe guard exception is not a render; the docked focus return).
+
+## Rework
+
+`Behaviour/Shell` `MenuStandsInTheLandmark` opens a Place's more menu in the Shell and asserts the popup stands inside `main`.
