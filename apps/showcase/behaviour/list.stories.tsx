@@ -1,3 +1,4 @@
+import { Group } from "@fcalell/plugin-react-ui/components/group";
 import { List } from "@fcalell/plugin-react-ui/components/list";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect, waitFor } from "storybook/test";
@@ -61,5 +62,61 @@ export const Tree: StoryObj = {
 		await expect(items().at(-1)).toHaveFocus();
 		await userEvent.keyboard("{Home}");
 		await expect(items()[0]).toHaveFocus();
+	},
+};
+
+const RUNS = [
+	{ id: "a", name: "Deploy api", meta: "2 min ago" },
+	{ id: "b", name: "Deploy web", meta: "9 min ago" },
+];
+
+function Runs(props: { meta: boolean }) {
+	return (
+		<List
+			items={RUNS}
+			row={{
+				key: (run) => run.id,
+				title: (run) => run.name,
+				meta: props.meta ? (run) => [run.meta] : undefined,
+			}}
+		/>
+	);
+}
+
+const edge = (element: Element | undefined) =>
+	element ? getComputedStyle(element).borderBottomWidth : undefined;
+
+// A row map that declares `meta` parts its rows by one hairline between them;
+// a map without it draws none, and a List in a Group leaves the group's
+// hairline the only one.
+export const Separators: StoryObj = {
+	render: () => (
+		<>
+			<div data-testid="two-line">
+				<Runs meta />
+			</div>
+			<div data-testid="one-line">
+				<Runs meta={false} />
+			</div>
+			<div data-testid="grouped">
+				<Group>
+					<Runs meta />
+				</Group>
+			</div>
+		</>
+	),
+	play: async ({ canvas }) => {
+		const rows = (id: string) => [
+			...(canvas.getByTestId(id).firstElementChild?.children ?? []),
+		];
+		const two = rows("two-line");
+		await expect(two).toHaveLength(2);
+		await expect(edge(two[0])).toBe("1px");
+		await expect(edge(two[1])).toBe("0px");
+		for (const row of rows("one-line")) await expect(edge(row)).toBe("0px");
+		const grouped = rows("grouped");
+		await expect(grouped).toHaveLength(2);
+		await expect(edge(grouped[0])).toBe("1px");
+		await expect(edge(grouped[0]?.firstElementChild ?? undefined)).toBe("0px");
 	},
 };

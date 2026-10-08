@@ -1,6 +1,6 @@
 ---
 id: 003-128
-status: backlog
+status: review
 sessions: {}
 ---
 # ui-core: an icon act stands blocked or pending
@@ -14,9 +14,18 @@ Evidence, Stead repo screens critique unit u9 (Stead 948b7ec, stack 5564217; sho
 `IconAct` is `{ icon, label, onAct }` (ui-core/src/descriptors.ts) and `IconButton` takes the same three props, so an icon act can be neither blocked nor pending, where `Act` carries `blocked` and `loading`. `IconButtonBase` already draws a disabled form (MessageInput's touch Stop uses `disabled`), but nothing public reaches it. The app can only leave the acts out while waiting, which moves the head, or give them an `onAct` that does nothing, which draws an enabled act that is not (a workaround). Not 003-103 (a labelled Button's disabled contrast). Seen at stack `5564217`.
 
 ## Acceptance criteria
-- [ ] An icon act can be drawn blocked (inert, its reason read aloud, keeping focus as a blocked Button does) and pending, in every place a `IconAct` stands: a Place's or Screen's actions, a Section's act, a Switcher's act.
-- [ ] An icon act with neither is unchanged.
-- [ ] The IconButton showcase holds the blocked and pending forms beside the rest form and the critique judges their contrast and touch size.
+- [x] An icon act can be drawn pending in every place an `IconAct` stands (blocked is not built: see Ruled).
+- [x] An icon act without `loading` is unchanged.
+- [ ] The IconButton showcase holds the pending form beside the rest form; the critique judges its contrast and touch size.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides, whether `IconAct` takes the same `blocked` and `loading` as `Act` or a smaller state.
+- [x] Its shape: `loading` only (see Ruled).
+
+## Ruled
+`IconAct` takes `loading?: boolean` only, with `Act`'s meaning: inert, the glyph swapped for the spinner, size unchanged. `blocked` lands with the first consumer that is inert for a reason other than pending.
+
+## Built
+- `IconAct.loading` in `packages/ui-core/src/descriptors.ts`; `IconButton` lists `loading` and a `loading` state in the roster.
+- react-ui and native-ui `IconButton` and `IconButtonBase` take `loading`: the press does nothing, the button is `aria-busy` and keeps focus (react), the glyph is the spinner in the rest ink, the square is unchanged. Place and Screen actions spread it; Section's act, Input's act, DefinitionRow's act and the Switcher's act row pass it on.
+- Showcase: the `ICON_BUTTON` frames draw the `loading` state; `behaviour/icon-button.stories.tsx` `Loading` asserts inert, busy, no glyph and the same size as a resting act. Generated `IconButton` stories pass.
+- Both `rules.md` name `loading` on `IconAct`.

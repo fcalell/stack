@@ -10,11 +10,18 @@ export interface IconButtonProps extends Closed {
 	fit?: IconButtonFit;
 	label: string;
 	onAct: () => void;
+	loading?: boolean;
 }
 
 // A square act with no boundary at rest; the label is its name, never
 // drawn. Inside a disabled field it is inert.
-export function IconButton({ icon, fit, label, onAct }: IconButtonProps) {
+export function IconButton({
+	icon,
+	fit,
+	label,
+	onAct,
+	loading,
+}: IconButtonProps) {
 	const disabled = useContext(FieldDisabled);
 	return (
 		<IconButtonBase
@@ -22,6 +29,7 @@ export function IconButton({ icon, fit, label, onAct }: IconButtonProps) {
 			fit={fit}
 			label={label}
 			onAct={onAct}
+			loading={loading}
 			disabled={disabled}
 		/>
 	);

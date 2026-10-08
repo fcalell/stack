@@ -168,6 +168,7 @@ export function DefinitionRow({
 						fit="bar"
 						label={act.label}
 						onAct={act.onAct}
+						loading={act.loading}
 					/>
 				) : null}
 			</span>

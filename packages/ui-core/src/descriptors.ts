@@ -39,11 +39,13 @@ export interface LinkAct {
 	href: Route;
 }
 
-// An icon-only act: the label is its accessible name, never drawn.
+// An icon-only act: the label is its accessible name, never drawn. `loading`
+// is an `Act`'s: the act is running, inert, its glyph swapped for the spinner.
 export interface IconAct {
 	icon: IconName;
 	label: string;
 	onAct: () => void;
+	loading?: boolean;
 }
 
 // A model-written name: typographic quotes around it, drawn in the slot's own

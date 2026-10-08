@@ -8,6 +8,7 @@ import { FieldDisabled } from "../../lib/field.ts";
 import { follow } from "../../lib/navigate.ts";
 import { InsetRing } from "../../lib/ring.ts";
 import { Icon } from "../icon/index.tsx";
+import { Spinner } from "../spinner/index.tsx";
 
 const BOX = "relative inline-flex items-center justify-center shrink-0";
 // Inside a field or a clipping frame the ring is drawn inset.
@@ -26,26 +27,36 @@ export function IconButtonBase({
 	icon,
 	fit,
 	label,
+	loading,
 	...handed
-}: Handed & { icon: IconName; fit?: IconButtonFit; label: string }) {
+}: Handed & {
+	icon: IconName;
+	fit?: IconButtonFit;
+	label: string;
+	loading?: boolean;
+}) {
 	// Inert inside a disabled field, or when its holder says so (a sheet's
-	// close while its act pends).
-	const disabled = useContext(FieldDisabled) || handed.disabled === true;
+	// close while its act pends), or while it runs.
+	const disabled =
+		useContext(FieldDisabled) || handed.disabled === true || loading === true;
 	const inset = useContext(InsetRing) || fit === "field";
+	const look = disabled ? DISABLED : PRESS;
 	return (
 		<BaseButton
 			{...handed}
 			aria-label={label}
+			aria-busy={loading || undefined}
 			disabled={disabled}
 			focusableWhenDisabled
 			className={cn(
 				iconButton({ fit }),
 				BOX,
 				inset && INSET,
-				disabled ? DISABLED : PRESS,
+				// A running act keeps the rest ink under its spinner and takes no wash.
+				loading ? undefined : look,
 			)}
 		>
-			<Icon name={icon} fit="control" />
+			{loading ? <Spinner /> : <Icon name={icon} fit="control" />}
 		</BaseButton>
 	);
 }

@@ -2548,7 +2548,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `Text` | atom | `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body`, `TEXT_STRONG.role.meta` | rest |
 | `Icon` | atom | `ICON` | rest |
 | `Button` | atom | `BUTTON`, `BUTTON_LABEL`, `ICON.fit.control`, `COUNT_LABEL` | rest, hover, focus, active, disabled, loading |
-| `IconButton` | atom | `ICON_BUTTON` | rest, hover, focus, active |
+| `IconButton` | atom | `ICON_BUTTON` | rest, hover, focus, active, loading |
 | `Count` | atom | `COUNT`, `COUNT_LABEL` | rest |
 | `StepCount` | atom | `STEP_COUNT`, `STEP_COUNT_SEGMENTS`, `STEP_COUNT_SEGMENT`, `TEXT.role.meta` | rest |
 | `Status` | atom | `CHANGE_MARK`, `ICON.fit.meta`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `SKELETON.kind.dot`, `SKELETON.kind.line` | rest |
@@ -2570,7 +2570,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `Split` | layout | `SPLIT_LIST`, `SPLIT_LIST_STACK`, `SPLIT_MAIN`, `SPLIT_BESIDE`, `SPLIT_PANE`, `ICON_BUTTON.fit.bar` | rest, empty |
 | `Section` | layout | `SECTION`, `SECTION_HEAD`, `SECTION_HEAD_ROW`, `SECTION_TITLE`, `SECTION_TOGGLE`, `SECTION_NESTED_TITLE`, `TEXT.role.heading`, `TEXT.role.meta`, `ICON.fit.body`, `COUNT`, `COUNT_LABEL`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive`, `ICON_BUTTON.fit.bar`, `SKELETON.kind.count`, `SKELETON.kind.line`, `SKELETON.kind.field`, `SKELETON_ROW.kind.field`, `TEXT.role.caption`, `LINE_BOX.role.body` | rest, hover, focus, active, disabled, loading |
 | `Group` | layout | `GROUP` | rest, loading |
-| `List` | layout | `LIST`, `LIST_TREE` | rest, loading, error, empty |
+| `List` | layout | `LIST`, `LIST_TREE`, `LIST_DIVIDED` | rest, loading, error, empty |
 | `Form` | layout | `FORM`, `FORM_FOOT` | rest, loading |
 | `Toolbar` | layout | `TOOLBAR`, `TOOLBAR_ROW`, `TOOLBAR_CHIPS` | rest |
 | `ActionBar` | layout | `ACTION_BAR`, `ACTION_BAR_ACTS`, `ACTION_BAR_CHOSEN`, `ACTION_BAR_SELECTION`, `ACTION_BAR_ALL`, `TEXT.role.meta`, `FIELD_ERROR_LINE`, `BUTTON.act.primary`, `BUTTON.act.danger`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.act.quiet`, `BUTTON.fit.body`, `BUTTON.fit.field`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.danger`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive`, `BUTTON_LABEL.act.quiet`, `SKELETON.kind.bar`, `SKELETON.kind.field` | rest, loading, disabled |
@@ -2641,7 +2641,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Split` | none | `edge`, `ink-meta`, `surface` | `control` | `inside`, `page`, `sections` | `list`, `pane`, `control-compact` | none |
 | `Section` | `heading`, `meta`, `body`, `caption` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `danger` | `row`, `control`, `chip` | `pair`, `fields`, `inside`, `control-x` | `icon`, `control-compact`, `skeleton`, `field`, `target` | none |
 | `Group` | none | `edge`, `surface` | `card` | none | none | none |
-| `List` | none | none | none | `rows`, `control-x` | none | none |
+| `List` | none | `edge` | none | `rows`, `control-x` | none | none |
 | `Form` | none | `edge` | none | `fields`, `sections` | `measure` | none |
 | `Toolbar` | none | `edge` | none | `pair`, `page`, `inside`, `acts` | none | none |
 | `ActionBar` | `meta`, `body` | `ink-meta`, `ink-body`, `ink-disabled`, `ink-error`, `edge`, `danger`, `act-accent`, `on-act-accent`, `act-danger`, `on-act-danger`, `wash-hover`, `wash-press`, `skeleton` | `control`, `full` | `pair`, `acts`, `inside`, `control-x` | `control`, `field`, `target`, `selection`, `control-compact`, `measure-short` | none |

@@ -24,7 +24,7 @@ import {
 	toggled,
 	treeRows,
 } from "@fcalell/ui-core/list-state";
-import { LIST, LIST_TREE } from "@fcalell/ui-core/variants";
+import { LIST, LIST_DIVIDED, LIST_TREE } from "@fcalell/ui-core/variants";
 import { type ReactElement, useContext, useState } from "react";
 import { View } from "react-native";
 import type { Closed } from "../../lib/closed";
@@ -279,18 +279,25 @@ export function List<T, V extends string | null = string>(
 		props.row.children === undefined &&
 		(props.items?.length ?? 0) > 0;
 	// In a Group the card is the rows' box: each row after the first draws
-	// the group's hairline above it.
+	// the group's hairline above it. Two-line rows (a map with a `meta`) abut
+	// under the same hairline.
 	// A tree's rows abut, so its rails run unbroken.
-	const frame = (rows: readonly ReactElement[], tree = false) =>
-		ground === "group" ? (
-			rows.map((row, index) => (
-				<View key={row.key ?? index} className={between(index)}>
-					{row}
-				</View>
-			))
+	const divided =
+		props.row?.meta !== undefined && props.row.children === undefined;
+	const frame = (rows: readonly ReactElement[], tree = false) => {
+		if (ground !== "group" && !divided)
+			return <View className={tree ? LIST_TREE : LIST}>{rows}</View>;
+		const lines = rows.map((row, index) => (
+			<View key={row.key ?? index} className={between(index)}>
+				{row}
+			</View>
+		));
+		return ground === "group" ? (
+			lines
 		) : (
-			<View className={tree ? LIST_TREE : LIST}>{rows}</View>
+			<View className={LIST_DIVIDED}>{lines}</View>
 		);
+	};
 	if (state === "pending" && !known) {
 		return frame(
 			WAITING.map((index) => {

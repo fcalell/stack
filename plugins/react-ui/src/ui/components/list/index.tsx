@@ -29,7 +29,7 @@ import {
 	treeRows,
 	treeStop,
 } from "@fcalell/ui-core/list-state";
-import { LIST, LIST_TREE } from "@fcalell/ui-core/variants";
+import { LIST, LIST_DIVIDED, LIST_TREE } from "@fcalell/ui-core/variants";
 import {
 	type FocusEvent,
 	type KeyboardEvent,
@@ -339,7 +339,12 @@ export function List<T, V extends string | null = string>(
 	// In a Group the card is the rows' box: they stand in it directly, so its
 	// hairline falls once between them.
 	// The rows read the route the List read once, through `ListedRoute`.
-	// A tree's rows abut, so its rails run unbroken.
+	// A tree's rows abut, so its rails run unbroken; two-line rows (a map with
+	// a `meta`) abut under a hairline.
+	const flat =
+		props.row?.meta !== undefined && props.row.children === undefined
+			? LIST_DIVIDED
+			: LIST;
 	const frame = (rows: ReactNode, nav?: TreeNav, abut = nav !== undefined) => {
 		let box = rows;
 		if (ground === "group" && nav)
@@ -353,7 +358,7 @@ export function List<T, V extends string | null = string>(
 				<div
 					{...nav}
 					aria-busy={busy || undefined}
-					className={cn(abut ? LIST_TREE : LIST, STACK)}
+					className={cn(abut ? LIST_TREE : flat, STACK)}
 				>
 					{rows}
 				</div>

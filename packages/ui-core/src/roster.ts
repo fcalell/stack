@@ -142,10 +142,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		IconButton: {
-			props: ["icon", "fit", "label", "onAct"],
+			props: ["icon", "fit", "label", "onAct", "loading"],
 			draws: ["ICON_BUTTON"],
 			holds: ["ICON_BUTTON"],
-			states: [...PRESS],
+			states: [...PRESS, "loading"],
 			owns: {
 				colors: [
 					"ink-meta",
@@ -825,8 +825,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// A `row` map with `children` makes it a tree: the rows abut
 		// (`LIST_TREE`), each level one step in, and the List owns which
 		// branches are folded (open by default), handing every row its depth
-		// and fold. A `definition` list stands in a Group and adds no count to
-		// a Section's head: facts are not a collection a viewer counts.
+		// and fold. A `row` map with a `meta` line (no tree) abuts its rows under
+		// a full-width hairline (`LIST_DIVIDED`), outside a Group, whose own
+		// hairline falls once between rows. A `definition` list stands in a
+		// Group and adds no count to a Section's head: facts are not a
+		// collection a viewer counts.
 		// Given `items` while `loading`, a `row` map with a `trailing` slot (no tree)
 		// stands as loaded rows with the trailing values waiting.
 		List: {
@@ -841,10 +844,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"items",
 				"loading",
 			],
-			draws: ["LIST", "LIST_TREE"],
-			holds: ["LIST", "LIST_TREE"],
+			draws: ["LIST", "LIST_TREE", "LIST_DIVIDED"],
+			holds: ["LIST", "LIST_TREE", "LIST_DIVIDED"],
 			states: ["rest", "loading", "error", "empty"],
 			owns: {
+				colors: ["edge"],
 				spacing: ["rows", "control-x"],
 			},
 		},

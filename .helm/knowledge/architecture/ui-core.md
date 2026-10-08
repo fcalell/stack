@@ -1108,7 +1108,9 @@ a tick with no animation, never jumped to full.
   levels and the lane stand as one box that bleeds the row's padding (`TREE_BLEED`, keyed on
   `ROW.lines`: the negative of the form's `py`, so `-my-rows` on a two-line row and `-my-pair` on a
   wrapped one), and the tree's list drops the row gap (`LIST_TREE`), so a rail is unbroken from row
-  to row. On the web the tree is a real tree, the WAI-ARIA tree pattern: the list is `role="tree"`,
+  to row. A flat list whose `row` map declares `meta` (two-line rows) abuts its rows too and parts
+  them with one full-width hairline (`LIST_DIVIDED`, `divide-y` on the web and `between` per row on
+  the phone); a Group's own hairline falls once instead, and a tree draws none. On the web the tree is a real tree, the WAI-ARIA tree pattern: the list is `role="tree"`,
   each row a `treeitem` (the row's own element: named by its title,
   `aria-level` its depth plus one, `aria-expanded` on a branch, `aria-current` at its `href`) and the
   tree holds one tab stop, roving to the row last focused (`treeStop`; the hit link and the fold act

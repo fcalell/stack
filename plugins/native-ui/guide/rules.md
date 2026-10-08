@@ -189,7 +189,7 @@ mode, and a screen across a room reads best dark, so run the app dark (`defaultM
 
 A composed region is data its molecule draws: an `Act` (`{ label, onAct, destructive?, quiet? }`; `quiet` draws an `ActionBar`'s
 act as words in the meta ink with no hairline, a resend or a skip, never its filled act),
-an `IconAct`, a row's `StatusMark` and `ChipMark`, a menu's `MenuItem`s, a `PlaceSpec`, all from
+an `IconAct` (`{ icon, label, onAct, loading? }`; `loading` is an `Act`'s: the act is running, inert, its glyph swapped for the spinner at the same size), a row's `StatusMark` and `ChipMark`, a menu's `MenuItem`s, a `PlaceSpec`, all from
 `@fcalell/ui-core/descriptors`. An icon is an `IconName`, a Lucide glyph's PascalCase name.
 `children` is open only where the roster gives it. A `Form`'s `ActionBar` filled act runs its
 `onAct`; an `ActionBar` draws its last blocked act's `blocked` reason under the acts at rest, at meta size. A `FormField` takes a `FieldBinding` from the
@@ -210,6 +210,8 @@ row waits on keeps its pending press there, never also in `more`). An input on a
 `entry`, a `RowEntry` (`label`, `field`, `placeholder`, `act`, `error`) standing under the title
 in the meta line's place; once its act settles, give the row `meta` or `status` instead of
 `entry`. A `List`'s `row` map declares `act` and `entry` only if every item fills them.
+
+A `List` decides its rows' separator from its `row` map, never a prop: a map that declares `meta` (two-line rows) draws a full-width hairline once between rows, with no gap and no inset; any other map draws none, rows on the ground at the rows rhythm. The rows of one list never differ, so an item without a meta still stands under its hairline, and the waiting rows match. A tree's rails run unbroken, so a tree draws none, and a `List` in a `Group` takes the group's one hairline and adds none. The references split by row height: single-line and tight inbox rows read by whitespace and a press wash (`patterns/activity-feed.md`: the Linear inbox at about 54 px; `patterns/dark-mode.md`), where tall two-line rows are parted by a hairline (`patterns/chips-and-statuses.md`: Vercel deployment rows; `patterns/data-table.md`: horizontal lines only in lists; the Dribbble messages screen on Mobbin).
 
 A row off a highlighted path (a journey's untaken steps) is `dim`: its title in the meta ink at
 400, never faded, still a hit, its glyph and marks keeping their hue. While a row's act pends,

@@ -1,6 +1,6 @@
 ---
 id: 003-109
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: a List's rows parted by a hairline
@@ -16,7 +16,16 @@ The pages split by row height and density: the guide's no-line references are si
 
 ## Acceptance criteria
 - [ ] A List's rows are parted so row edges read at a glance in the Now, Chats and Work board lists, light and dark.
-- [ ] The choice is stated in `rules.md` with the references that justify it.
+- [x] The choice is stated in `rules.md` with the references that justify it.
 
 ## Open questions
-- [ ] Separators always, by density, or a List option: the stack session decides.
+- [x] Separators always, by density, or a List option: decided per List from its `row` map (see Ruled).
+
+## Ruled
+No prop. A List decides from its `row` map: a map that declares `meta` (two-line rows) draws a full-width hairline once between rows, otherwise none. No inset. A List in a Group takes the group's hairline and adds none. A tree (a map with `children`) draws none, so its rails run unbroken.
+
+## Built
+- `LIST_DIVIDED` (`-mx-control-x divide-y divide-edge`, rows abutting) in `packages/ui-core/src/variants.ts`, drawn and held by `List` in the roster (owns `edge`).
+- react-ui `List` picks it over `LIST` when `row.meta` is declared and `row.children` is not, for loaded and waiting rows alike. native-ui `List` draws the same hairline per row through `between`, as Group does.
+- Both `rules.md` state the rule with the references (Linear inbox and the dark-mode page for the no-line side; Vercel rows, the data-table page and the Dribbble messages screen for the hairline side).
+- Evidence: `behaviour/list.stories.tsx` `Separators` passes (two-line rows part by one hairline, one-line rows none, a List in a Group adds none). The render in Stead's Now, Chats and Work lists is for the critique session.

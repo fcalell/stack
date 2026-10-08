@@ -898,6 +898,10 @@ export const GROUP_ITEM = "p-card";
 export const LIST = "gap-rows -mx-control-x";
 // A tree's list: its rows abut, so a level's rail runs unbroken down them.
 export const LIST_TREE = "-mx-control-x";
+// A list whose row map declares a `meta` line (two-line rows): its rows abut
+// under a full-width hairline once between them. `divide-*` is a child
+// selector uniwind drops, so native draws that hairline per row.
+export const LIST_DIVIDED = "-mx-control-x divide-y divide-edge";
 // A tree row's level: one `indent` step in, its hairline rail on the end, so
 // the rail falls under the middle of the parent's fold lane. A row draws one
 // per level of its depth.

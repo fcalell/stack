@@ -222,6 +222,7 @@ export function Section({
 									fit="bar"
 									label={act.label}
 									onAct={act.onAct}
+									loading={act.loading}
 								/>
 							) : (
 								<Button

@@ -4,6 +4,7 @@ import { Pressable } from "react-native";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
 import { Icon } from "../icon";
+import { Spinner } from "../spinner";
 
 const BOX = "items-center justify-center";
 const PRESS = "active:bg-wash-press";
@@ -22,6 +23,7 @@ export function IconButtonBase({
 	onAct,
 	fit,
 	disabled,
+	loading,
 	open,
 	expanded,
 }: {
@@ -30,6 +32,8 @@ export function IconButtonBase({
 	onAct: () => void;
 	fit?: IconButtonFit;
 	disabled?: boolean;
+	// The act is running: inert, its glyph swapped for the spinner, the rest ink kept.
+	loading?: boolean;
 	open?: boolean;
 	// The act folds a branch: its state is the accessibility state, and the open wash (`open`)
 	// is not drawn for it.
@@ -39,14 +43,23 @@ export function IconButtonBase({
 		<Pressable
 			accessibilityRole="button"
 			accessibilityLabel={label}
-			accessibilityState={{ disabled, expanded: expanded ?? open }}
-			disabled={disabled}
+			accessibilityState={{
+				disabled: disabled || loading,
+				busy: loading,
+				expanded: expanded ?? open,
+			}}
+			disabled={disabled || loading}
 			onPress={onAct}
-			className={cn(iconButton({ fit }), BOX, !disabled && PRESS, open && OPEN)}
+			className={cn(
+				iconButton({ fit }),
+				BOX,
+				!disabled && !loading && PRESS,
+				open && OPEN,
+			)}
 		>
 			{({ pressed }) => (
 				<Ink.Provider value={toneOf(pressed || open === true, disabled)}>
-					<Icon name={icon} fit="control" />
+					{loading ? <Spinner /> : <Icon name={icon} fit="control" />}
 				</Ink.Provider>
 			)}
 		</Pressable>

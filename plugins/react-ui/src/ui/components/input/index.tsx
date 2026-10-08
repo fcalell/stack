@@ -178,6 +178,7 @@ export function Input({
 								icon={act.icon}
 								label={act.label}
 								onAct={act.onAct}
+								loading={act.loading}
 								fit="field"
 							/>
 						</FieldDisabled>

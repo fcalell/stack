@@ -4,7 +4,7 @@ import type { ShowcaseFrame } from "../cells.ts";
 
 const act = () => {};
 
-// `ICON_BUTTON.fit.<fit>` draws the act at that fit.
+// `ICON_BUTTON.fit.<fit>` draws the act at that fit; `loading` passes `loading`.
 export function drawIconButton(frame: ShowcaseFrame) {
 	const [cell, axis, value] = frame.cell.name.split(".");
 	if (cell !== "ICON_BUTTON" || axis !== "fit") return undefined;
@@ -14,6 +14,7 @@ export function drawIconButton(frame: ShowcaseFrame) {
 			fit={value as IconButtonFit}
 			label="More"
 			onAct={act}
+			loading={frame.state === "loading"}
 		/>
 	);
 }

@@ -51,6 +51,7 @@ import { Chip } from "../chip/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { Input } from "../input/index.tsx";
 import { SheetBase } from "../sheet/base.tsx";
+import { Spinner } from "../spinner/index.tsx";
 import { StatusDot } from "../status/dot.tsx";
 import { Status } from "../status/index.tsx";
 import type { PickerProps, PickOneProps, PickSeveralProps } from "./index.tsx";
@@ -220,6 +221,7 @@ function OptionText(props: {
 
 // The act that ends the list under a hairline: its glyph and label on a row,
 // washed under the pointer and the press; it closes the list as it runs.
+// Pending, its glyph is the spinner and the press does nothing.
 function PickAct(props: {
 	act: IconAct;
 	ground: RowGround;
@@ -232,14 +234,17 @@ function PickAct(props: {
 			<button
 				type="button"
 				onFocus={props.onFocus}
+				aria-disabled={act.loading || undefined}
+				aria-busy={act.loading || undefined}
 				onClick={() => {
+					if (act.loading) return;
 					props.done();
 					act.onAct();
 				}}
 				className={cn(row({ ground: props.ground }), ACT_ROW)}
 			>
 				<span className={ACT_GLYPH}>
-					<Icon name={act.icon} />
+					{act.loading ? <Spinner /> : <Icon name={act.icon} />}
 				</span>
 				<span className={cn(text({ role: "body" }), LINE)}>{act.label}</span>
 			</button>
