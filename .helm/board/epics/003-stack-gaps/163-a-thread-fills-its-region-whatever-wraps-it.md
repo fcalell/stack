@@ -1,6 +1,6 @@
 ---
 id: 003-163
-status: review
+status: todo
 sessions: {}
 ---
 # react-ui: a Thread fills the space its region gives it whatever wraps it
@@ -24,3 +24,6 @@ A filling Thread marks its root `data-fill`, and the regions read the mark with 
 `headPaired` (react-ui and native-ui `item-header/pair.tsx`) pairs a head with a `Banner` directly after it, facts or not, so the Thread stays the region's direct child and every `:has(>[data-fill])` read and `holdsThread` stand. The rules (both platforms) and `ui-core.md` state the sibling shape and the rejected ones. Stories `ThreadUnderBanner375/768/1440`, `ThreadUnderBannerNoFacts1440` and `ThreadKeepsInputAsBannerToggles` in `apps/showcase/behaviour/split.stories.tsx`. `pnpm check` turbo part and the three verifies pass. Phone check owed: Banner pairs under the head on the Ask place, the Thread fills, the record stays still, a toggling Banner keeps the typed input.
 - Toggling a Banner beside a Thread no longer remounts it: `headPaired` keeps each leaf's key by its slot (`Children.forEach`) and returns one keyed list paired or not, on both platforms. The split behaviour stories pass, 30 of 30, `ThreadKeepsInputAsBannerToggles` among them.
 - Measured, for the owner: a Banner above a Thread in a Place body with no foot stands flush (left, right and top insets 0, and 0 to the log).
+
+## Cut
+The story's title and Goal asked that a Thread fill its region whatever wraps it (a Thread inside a wrapper element or an app component), and the original first criterion named "direct child or inside a wrapper". Only the direct-child form is delivered; a wrapped Thread is unsupported on both platforms. An AI ruling cut it (scratchpad `rulings-7.md`, lines 1 to 8, "Reject all three options as framed. The app's wrapper is the unsupported thing"; the Open question and first criterion were rewritten to match); the owner did not rule it. The gap is in the code today: the regions read `:has(>[data-fill])` and native `holdsThread` reads element types, so a wrapped Thread leaves the region scrolling as a whole. The measured-at-390 showcase and the phone check are also still owed.

@@ -1,6 +1,6 @@
 ---
 id: 003-136
-status: done
+status: todo
 sessions: {}
 ---
 # react-ui: a TextArea's height can be asked for, or fill the free height of its page
@@ -14,7 +14,7 @@ Evidence, System critique unit u8 (Stead `948b7ec`, shot `s11-note-edit`): a not
 `TEXT_AREA_VALUE` is `min-h-text-area`, three body lines (`3 * leadingOf(density, "body")`, ui-core/src/scales.ts line 70), and the box grows with its value (text-area/index.tsx), so the height is the text's, never a size the app can ask for: there is no `rows`, no height prop and no fill. A source page is edited as a document, and a field that is a document's size at the start of the edit and grows by a line per line typed loses the page's context. The app cannot add a height to the roster's box (geometry classes go on host elements only). Seen at stack `5564217`.
 
 ## Acceptance criteria
-- [x] A `kind="source"` TextArea in a page's Form fills the free height of the page, three lines at least, and scrolls inside (ruled: no `rows`, no `fill` prop).
+- [ ] A `kind="source"` TextArea in a page's Form fills the free height of the page, three lines at least, and scrolls inside (ruled: no `rows`, no `fill` prop).
 - [x] Elsewhere (prose, a Section, a sheet) a TextArea is unchanged: it grows with its value.
 - [ ] The TextArea showcase holds a source field that fills a page's height (the `FIELD_VALUE.kind.code` frame, a Place with a Form and 40 lines); the critique measures it at 390 and 1440 (web only; the phone keeps growing, see Built).
 
@@ -26,3 +26,6 @@ react-ui `text-area/index.tsx`: a `source` TextArea with `ThreadRoom` true (a Pl
 
 ## Critique
 Ship, by a fresh critic at 1280, 768, 1440 and 390, light and dark (scratchpad `critique/fields/report.md`).
+
+## Cut
+The acceptance asked that a `kind="source"` TextArea in a page Form fill the free height, three lines at least, and that the showcase and critique hold it at 390 and 1440. It is delivered on the web only. The phone keeps growing with its value: the builder cut it in the story's Built note ("Native keeps growing ... the ruling is read as the web page's"), with no ruling file. The `rows` and `fill` props were cut by an AI ruling (`rulings.md` line 73, "No `rows` and no `fill` prop"). The gap is in the code today: native-ui `text-area/index.tsx` has no fill form, so the phone's source field still opens as a three-line window.

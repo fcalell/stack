@@ -1,6 +1,6 @@
 ---
 id: 003-132
-status: done
+status: todo
 sessions: {}
 ---
 # react-ui: a waiting Group stands for the static rows it holds (a Slider, a DefinitionRow)
@@ -18,7 +18,7 @@ Evidence, Stead repo screens critique unit u9 (Stead 948b7ec, stack 5564217; sho
 `Group loading` with no List in it draws a fixed `SETTINGS = [0, 1, 2]` of three setting-row skeletons with a switch (plugins/react-ui/src/ui/components/group/index.tsx, `groupWait` in ui-core/src/list-state.ts), whatever static rows it holds, and `DefinitionRow` and `Slider` read no loading state at all (`Meter` has `loading`). So a Group of static rows can wait at three rows of one shape only: not at the count of its rows, not with a Slider's label-over-track height, not as one-line rows without a switch. The app can pass `loading` to a `Meter` alone (Stead does) but has no waiting form to pass for a Slider or a plain fact. 003-34 sets the geometry of those three setting rows; 003-66 stands a Slider in a Group's card, loaded; this is the waiting form for what a Group holds besides a List. Seen at stack `5564217`.
 
 ## Acceptance criteria
-- [x] A waiting `Slider` draws its label bar and a track-height bar at the loaded Slider's height, in a Group and alone. (`SliderAloneAndInAGroup`, `SliderAloneAndInAGroupTouch`: "alone" is a loading Section's own child, see below)
+- [ ] A waiting `Slider` draws its label bar and a track-height bar at the loaded Slider's height, in a Group and alone. (`SliderAloneAndInAGroup`, `SliderAloneAndInAGroupTouch`: "alone" is a loading Section's own child, see below)
 - [x] A waiting `DefinitionRow` draws the one-line row's label and value bars at the loaded row's height (a switch's box only where the row holds a control). (`Behaviour/Waiting` `DefinitionRowsInACard`, `DefinitionRowsInACardTouch`: each of six rows of every form, row by row)
 - [x] A waiting Group holding static rows draws one waiting form per row it holds, in order, so its height matches the loaded card; a Group with a List is unchanged. (`GroupOfStaticParts`, `GroupOfStaticPartsTouch`; a Group with a List runs the path it ran, and `GroupOfOwnRows` keeps its three setting rows)
 - [ ] The Group showcase holds a waiting Group of a Meter, a Slider and DefinitionRows beside the loaded one, and the critique measures both cards at 1440 and 390.
@@ -37,3 +37,6 @@ Ruled (2026-10-07): no `loading` on `Slider` or `DefinitionRow`; "alone" means a
 
 ## Critique
 Ship, by a fresh critic at 1280, 768, 1440 and 390, light and dark (scratchpad `critique/fields/report.md`).
+
+## Cut
+Criterion 1 asked that a waiting `Slider` draw its form "in a Group and alone", and the Goal that a Slider or DefinitionRow outside any Group or Section be able to wait. It is delivered only through a loading Group or Section: neither part has a `loading` prop (`Meter` does), so a Slider or DefinitionRow standing alone, or an app's own rows in a Group, still cannot wait by count or shape. The story's own Ruled note (2026-10-07) cut it, reading "alone" as a loading Section's child; no ruling file exists and the owner did not rule it. The gap is in the code today (`slider/index.tsx` and the DefinitionRow take no `loading`); the critique half of criterion 4 is also still open.

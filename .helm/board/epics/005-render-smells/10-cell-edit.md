@@ -28,7 +28,8 @@ open, so no counter crosses the grid. No `requestAnimationFrame` stays in the ed
 - [ ] (live) phone, on the harness: Escape in a cell edit commits nothing.
 
 ## Progress
-Built; `pnpm check` and `pnpm verify` pass. Web live at 1440 under a 6x CPU throttle: Enter focuses a text cell's input and opens a role cell's list in the next frame; Escape restores and commits nothing; focus returns to the cell. Escape now leaves every typing control with `onCommit`. Open: the phone live criterion; the touch PickSheet's focus return is read from Base UI, not measured.
+Built; `pnpm check` and `pnpm verify` pass. Escape now leaves every typing control with `onCommit`. The web timing criterion (Escape under a 6x CPU throttle, the role cell's list open in the edit's first frame) is not run. Open: the phone live criterion; the touch PickSheet's focus return is read from Base UI, not measured.
+Open: the timing criteria wait for the live critique.
 
 ## Critique
 Partial: every state the story feeds renders correctly; its timing criteria (throttled Escape, copy timing, the clock past `until`) were not driven.

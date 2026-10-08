@@ -1,6 +1,6 @@
 ---
 id: 003-122
-status: done
+status: todo
 sessions: {}
 ---
 # react-ui: a Split's `tablet` reads against the viewport, so a 768 px screen keeps its main
@@ -25,3 +25,6 @@ Evidence: `behaviour/split.stories.tsx` `FromTablet` and `BelowTablet` (pages 76
 
 ## Critique
 Ship, by a fresh critic at 1280, 768, 1440 and 390, light and dark (scratchpad `critique/split/report.md`).
+
+## Cut
+Acceptance 1 asked that at a 768 px viewport in the Shell a Split stand its list and its main (or `empty`) together with the sidebar standing. It is not delivered: at 768 the Split still draws one region at a time. An AI ruling cut it (`rulings.md` item 1, lines 9 to 12, "Do not change `tablet`. Close the story as by design"; the story's Ruled repeats it); the owner did not rule it. The gap is in the code today: `tablet` stays 768 against the page container, which is 528 at a 768 viewport; only the rule text changed.

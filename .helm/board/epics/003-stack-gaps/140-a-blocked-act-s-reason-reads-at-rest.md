@@ -1,6 +1,6 @@
 ---
 id: 003-140
-status: done
+status: todo
 sessions: {}
 ---
 # react-ui: a blocked act's reason reads at rest
@@ -30,3 +30,6 @@ Acceptance 2 is ruled out: screen readers are not a target, so no description li
 
 ## Critique
 Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/acts/report.md`).
+
+## Cut
+The acceptance asked that the reason stay the act's description for assistive technology (2), that the bar hold the line's height so unblocking moves nothing (3), and that the critique measure the showcase at touch and desktop, light and dark (4). The reason now draws at rest (1), but the other three are not delivered. Criterion 3 was cut by an AI ruling (`rulings.md` line 85, "No reserved-height prop; unblocking only removes a line below"). Criterion 2 was cut by the builder in the story's own Built note ("screen readers are not a target"), with no ruling file behind it. The gap is in the code today: the Button holds no `aria-describedby` for the reason, and unblocking an act in an ActionBar removes a line and moves the content below.

@@ -1,6 +1,6 @@
 ---
 id: 003-103
-status: done
+status: todo
 sessions: {}
 ---
 # react-ui: a blocked Button's label reads, and a full-width blocked act is not a grey placeholder
@@ -13,7 +13,7 @@ A blocked/disabled Button's label sits at ~2:1 against its grey `fill-disabled` 
 
 ## Acceptance criteria
 - [x] A blocked Button's label holds a legible contrast (stack decides the floor) in light and dark.
-- [x] A blocked full-width act on touch keeps its shape as an act (outline or hairline), not a bare grey slab.
+- [ ] A blocked full-width act on touch keeps its shape as an act (outline or hairline), not a bare grey slab.
 
 ## Open questions
 - [x] Its shape (a component, a variant, a token, an option): the stack session decides.
@@ -27,3 +27,6 @@ Acceptance 2 is ruled: the shape stays. The critique session measures the contra
 
 ## Critique
 Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/acts/report.md`).
+
+## Cut
+Acceptance 2 asked that a blocked full-width act on touch keep its shape as an act (outline or hairline), not a bare grey slab. It is not delivered: the filled Button's blocked fill and shape are unchanged, only the label moved to `ink-meta`. An AI ruling cut it (`rulings.md` line 81, "Keep the shape. The reason at rest from 140 explains the slab"; the story's Built says "Acceptance 2 is ruled: the shape stays"); the owner did not rule it. The gap is in the code today: the blocked primary and danger acts in react-ui and native-ui `button/index.tsx` still draw the grey fill. Its premise also weakened: 003-140 left the reason's description link unbuilt, though the reason now shows at rest.

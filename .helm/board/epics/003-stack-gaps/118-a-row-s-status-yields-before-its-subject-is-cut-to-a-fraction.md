@@ -1,6 +1,6 @@
 ---
 id: 003-118
-status: done
+status: todo
 sessions: {}
 ---
 # react-ui: a row's status yields before the subject is cut to under half
@@ -26,3 +26,6 @@ Question: take `measure-short` as the quote's floor (the quoted run's `min-w`, t
 
 ## Ruled
 Closed, no change. The subject that names a row is its first part; a `Quoted` later part is the part that yields first (003-142), and the status stays whole and shares overflow with the first part (003-104). A floor on a later quote would pad its slot (touch only, 76 to 162 px of 297) or need a new tier in a shrink ladder already at Tailwind's 10^20 ceiling. An app whose subject must read gives it as the first part of `meta`, or puts the status's words elsewhere.
+
+## Cut
+Both acceptance criteria asked that on a narrow meta line a row keep its first part readable (a floor or a share) with the status yielding below it, and that the showcase hold a status with a quoted subject at the phone's width. Neither is delivered. The story was closed "no change" by an AI ruling recorded in its own Ruled section, resting on the ruling that left `yields` without a flag (`rulings.md` line 75, item 142, "Medium-low, and a 320 px row still cutting the spend is a finding to revisit"); the owner did not rule it. The gap is in the code today: a long status still takes its width whole and a quoted subject still cuts to under half (76 of 297 px at 320 on touch, per the story's Measured section).
