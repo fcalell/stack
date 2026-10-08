@@ -812,3 +812,6 @@ Left for the critique or the user:
 - The generated `Rest` story's region is shorter than the workflow (now about 990 px), so it opens at scale 1 at the first node and shows about five of seven nodes; Fit shows all.
 - Touch (one finger pans, two pinch) runs on d3-zoom's handlers and has no browser story.
 - 04 still describes React Flow behaviour in its body; the epic and research mention it only as not chosen.
+
+## Critique
+Rework: a selected node draws a 2 px ring (a 1 px accent border and a 1 px outline at 0 offset) against the pattern's 1.5 px, in both modes.

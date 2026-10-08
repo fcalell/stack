@@ -1,6 +1,6 @@
 ---
 id: 006-05
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: the canvas on touch at 375, and its overview on every input
@@ -687,3 +687,6 @@ The glyph frames press Fit after the layout shows, so axe may run on the card fo
 - **The text floor** is `round(BODY_SIZE.desktop * TYPE_SCALE.caption.size)` = 11, read from the tokens (`scales.ts` is not an export of ui-core), passed as both the text and the floor, so the threshold is exactly zoom 1.
 - **Not run.** The design critique. The second acceptance box stays unticked: its "connects at scale 0.5" clause has no scenario, since no port exists below the floor.
 - **02's wheel, pinch and touch box is ticked** on `Behaviour/Canvas` `Wheel` and `DragDoesNotSelect`, and `Behaviour/Canvas touch` `Pan` and `Pinch` (light and dark).
+
+## Critique
+Ship, by a fresh critic at 1280 x 800 and 375 x 812 with touch, light and dark (scratchpad `critique/canvas/report.md`).
