@@ -1,6 +1,6 @@
 ---
 id: 003-100
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: DefinitionRows in one Group end their values at one x and align a two-line row's value
@@ -20,3 +20,6 @@ In one Group, DefinitionRows with an end slot (the Stage row's chevron, the Bran
 
 ## Built
 Every DefinitionRow ends in the end square (`DEFINITION_ROW_CHEVRON`): an act's, a link's chevron, or, on a row with neither, an empty one, so every value in a Group ends at one x; the waiting form draws the same square on every row. A two-line row's value already stands on the label's line (the title line holds label and value, the description sits under it) and its act is centred on the row (`ROW` is `items-center`). `apps/showcase/behaviour/definition-row.stories.tsx` (`ValuesEndTogether`, desktop and touch) asserts plain, linked, acted and copyable values end at one right edge, and the described row's value shares the label's middle with its act centred on the row. The cost is one empty square at the end of a Group whose rows all lack an act or link.
+
+## Critique
+Ship, by a fresh critic at 1280, 768, 1440 and 390, light and dark (scratchpad `critique/fields/report.md`).

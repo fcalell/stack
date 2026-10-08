@@ -1,6 +1,6 @@
 ---
 id: 003-117
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a Form in a page, and its TextArea, fill the page's column
@@ -28,3 +28,6 @@ One reading with 003-88 and 003-152, and no prop. The Form's cap is `measure`, n
 - `behaviour/measure.stories.tsx` holds the Form and its field box (the textbox's parent) to the same width as a body and a meta Text at 1280 and at 375 px; it passes. 768 is the desktop set's measure.
 - The Form's fields frame stands under a body paragraph so its edge reads against the column (`showcase/frames/form.tsx`).
 - 003-136's filling `source` TextArea keeps filling its page Form (`HOLDS_FILL`); the story files for the TextArea pass.
+
+## Critique
+Ship, by a fresh critic at 1280, 768, 1440 and 390, light and dark (scratchpad `critique/fields/report.md`).

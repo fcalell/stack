@@ -1,6 +1,6 @@
 ---
 id: 003-130
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a message input's box focuses its text on a press
@@ -23,3 +23,6 @@ The desktop box (`MESSAGE_INPUT_BOX` in ui-core/src/variants.ts, the `div` in pl
 
 ## Built
 No prop. The desktop box and the touch field take a mouse-down that lands on no button or link and focus the text, the caret at its end (react-ui `focusText`); on the phone's native field a press focuses the `TextInput` through a non-accessible `Pressable`. A press on an act, chip or remove act does what it did. Evidence: `behaviour/message-input.stories.tsx` presses the box's padding and the foot row's empty part (focus lands in the text, the caret at its end), then presses Send; the MessageInput stories pass. The critique pressing the box's edges is still to run.
+
+## Critique
+Ship, by a fresh critic at 1280, 768, 1440 and 390, light and dark (scratchpad `critique/fields/report.md`).

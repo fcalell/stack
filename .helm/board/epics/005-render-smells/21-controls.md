@@ -31,3 +31,6 @@ through a stable per-id ref.
 
 ## Progress
 Built; `pnpm check` and `pnpm verify` pass. Web live at 375 touch on a four-option pick sheet: arrow, End and Home keys each commit nothing and render no option (master: one commit, four options), and the tab stop moves correctly. Open: the phone live criterion on the harness.
+
+## Critique
+Unrendered: its criteria show only in the React profiler or on the phone harness; the Select trigger and options render unchanged.

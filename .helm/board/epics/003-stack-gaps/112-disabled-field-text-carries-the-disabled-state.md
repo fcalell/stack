@@ -1,6 +1,6 @@
 ---
 id: 003-112
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: the text around a disabled field carries the disabled state
@@ -26,3 +26,6 @@ The part that carries the look exposes the state: the box `div` each `render={(c
 - `aria-allowed-attr` read in axe-core 4.13.0 source: `aria-disabled` is in `globalAttributes`; the box is a role-less `div` (spec `allowedAriaAttrs` unset, so `aria-allowed-attr-elm` passes) and the Slider root carries Base UI's `role="group"`, which takes the global attributes. No role added.
 - Base UI 1.8.0 `Slider.Root` reads the disabled state from the `Field` context and exposes it as `state.disabled` to `render`, which is why the state is read there and not from a prop.
 - Unverified in a browser: the acceptance criteria stay unticked until the verifier runs the `Disabled` stories.
+
+## Critique
+Ship, by a fresh critic at 1280, 768, 1440 and 390, light and dark (scratchpad `critique/fields/report.md`).

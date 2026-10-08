@@ -1,6 +1,6 @@
 ---
 id: 003-151
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: an Input with an act submits on Enter
@@ -22,3 +22,6 @@ Evidence, Stead repo screens critique unit u9 (Stead 948b7ec, stack 5564217; sho
 
 ## Built
 react-ui `input/index.tsx`: the Input's key handler runs the commit moment, then on Enter with an `act` prevents the native submit and calls `act.onAct()`. native-ui `input/index.tsx`: `onSubmitEditing` commits, then calls `act?.onAct()`. The `act` JSDoc and both `rules.md` pages say so. Evidence: `Behaviour/Input` ActOnEnter passes (tab away presses nothing, Enter once, the act's click once more).
+
+## Critique
+Ship, by a fresh critic at 1280, 768, 1440 and 390, light and dark (scratchpad `critique/fields/report.md`).

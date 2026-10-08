@@ -1,6 +1,6 @@
 ---
 id: 003-136
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a TextArea's height can be asked for, or fill the free height of its page
@@ -23,3 +23,6 @@ Evidence, System critique unit u8 (Stead `948b7ec`, shot `s11-note-edit`): a not
 
 ## Built
 react-ui `text-area/index.tsx`: a `source` TextArea with `ThreadRoom` true (a Place's body without a foot, a Split's main; false in a Section) and `FormStands` `page` marks its box `data-fill`, grows, and gives its value `grow basis-0`, so the box's least height is the value's three lines and the value scrolls inside. The `Form` and `FormField` roots read the mark (`HOLDS_FILL`, `has-data-fill:grow` in `lib/form.ts`) and grow with it. Native keeps growing with its value: the phone's keyboard takes the lower half and a ScrollView page has no free height to fill; the ruling is read as the web page's. Evidence: `Behaviour/TextArea` (source fills the page with Save in view and the long value scrolling inside; empty source fills; prose and a Section's source grow) and the TextArea and Form stories pass.
+
+## Critique
+Ship, by a fresh critic at 1280, 768, 1440 and 390, light and dark (scratchpad `critique/fields/report.md`).

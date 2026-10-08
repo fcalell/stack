@@ -1,6 +1,6 @@
 ---
 id: 003-120
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a DefinitionRow value keeps its word space where the stem and the tail meet
@@ -27,3 +27,6 @@ Evidence, System critique unit u8 (Stead `948b7ec`, shots `usage-1440-light`, St
 
 ## Built
 `valueCut` (ui-core/src/list-state.ts) cuts only a value of one word longer than eight characters (twice the four-character tail); a value with a space, or eight characters or fewer, is one stem with no tail, so no space ends a node and no word is split in two. Both DefinitionRows draw the tail only when it exists, so a value of words is one text node that truncates at its end. `ui-core/test/list-state.test.ts` pins the cut; `apps/showcase/behaviour/definition-row.stories.tsx` (`ValueWords`, desktop and touch) asserts "No history yet", "7.4 GB left", "This machine" and "No" are one node and whole, a long sentence truncates at its end and an identifier keeps `k3Qz`. The General frame holds "No history yet".
+
+## Critique
+Ship, by a fresh critic at 1280, 768, 1440 and 390, light and dark (scratchpad `critique/fields/report.md`).

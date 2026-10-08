@@ -815,3 +815,6 @@ Left for the critique or the user:
 
 ## Critique
 Rework: a selected node draws a 2 px ring (a 1 px accent border and a 1 px outline at 0 offset) against the pattern's 1.5 px, in both modes.
+
+## Ruled
+The owner decides (2026-10-08): a selected node is its 1 px border in the selection colour alone, with no outline over it (the pattern's 1.5 px reference outline is not followed); keyboard focus keeps its own 2 px ring, which shows only while moving by keyboard. A node held by a long press keeps its 2 px outline.

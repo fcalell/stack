@@ -1,6 +1,6 @@
 ---
 id: 003-132
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a waiting Group stands for the static rows it holds (a Slider, a DefinitionRow)
@@ -34,3 +34,6 @@ Evidence, Stead repo screens critique unit u9 (Stead 948b7ec, stack 5564217; sho
 - Open: "a Slider alone" is a Slider that is a loading Section's child (the Section reads it as a part that waits in its own form). A Slider or a DefinitionRow outside any Group or Section has no way to wait, since neither has a `loading` prop (`Meter` has one). That is a consumer-surface option, so it is not built; it waits for a ruling, and until then the first criterion stays open. The fourth criterion's showcase half holds (the Group, Slider and DefinitionRow frames' `Loading` states draw the waiting card beside the loaded one); the critique measures them at 1440 and 390.
 
 Ruled (2026-10-07): no `loading` on `Slider` or `DefinitionRow`; "alone" means a loading Section's own child, which is proven, so the first criterion is ticked on that reading. Both parts say "waits through its Group or Section" in their docs on both platforms. Every criterion but the critique holds, so the status is `review`.
+
+## Critique
+Ship, by a fresh critic at 1280, 768, 1440 and 390, light and dark (scratchpad `critique/fields/report.md`).

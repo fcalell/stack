@@ -1,6 +1,6 @@
 ---
 id: 003-125
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a DefinitionRow's label wraps before it runs under a control at its end
@@ -21,3 +21,6 @@ Stead's review screen holds a Group row, "Only what changed since you last looke
 
 ## Built
 The label wraps by default, with no prop: `LABEL` is `min-w-0 wrap-break-word` in place of `truncate`; a row with nothing under its label gives the label a `py-rows` inset, so a wrapped label has room and a one-line row keeps its height; a control value stands whole at the line's end (`shrink-0 ms-auto`) and the label takes the room it leaves. A string or status value still gives way first. Native drops `numberOfLines` on the label. `apps/showcase/behaviour/definition-row.stories.tsx` (`LabelWraps`, desktop at the pane's 320 px and touch at the phone's 375 px) asserts the sentence label is taller than one line, the switch stays whole inside the row and centred on the label, and a short label's row keeps a plain row's height. The General frame holds the sentence label with a `Switch`.
+
+## Critique
+Ship, by a fresh critic at 1280, 768, 1440 and 390, light and dark (scratchpad `critique/fields/report.md`).
