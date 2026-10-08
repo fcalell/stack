@@ -1859,7 +1859,7 @@ optimizer start.
 The Vitest run sets `maxWorkers: 2` for both browser projects, which caps the story pages one `pnpm stories:test` opens at
 once (each is a renderer, and a wider run exhausts the memory of a 16 GiB machine). The showcase's browser
 scripts (`test-storybook`, `test-screens`) run through `browser-run.sh`, a memory budget per user shared by
-every session and worktree: a run claims its cap (`STACK_BROWSER_MB`, 6 GiB by default) and starts while
+every session and worktree: a run claims its cap (`STACK_BROWSER_MB`, 7 GiB by default: a full run peaks near 6.1) and starts while
 the available memory, less the caps of the runs already admitted, covers it and a reserve
 (`STACK_BROWSER_RESERVE_MB`, 2 GiB); otherwise it waits. Under systemd the run is held to its cap with no
 swap, so one that outgrows it is killed alone instead of exhausting the machine; without `/proc/meminfo`

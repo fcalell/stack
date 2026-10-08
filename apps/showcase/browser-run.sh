@@ -8,7 +8,7 @@
 # Without /proc/meminfo (macOS) the budget is one run at a time.
 set -euo pipefail
 
-cap=${STACK_BROWSER_MB:-6144}
+cap=${STACK_BROWSER_MB:-7168}
 reserve=${STACK_BROWSER_RESERVE_MB:-2048}
 dir="${XDG_RUNTIME_DIR:-/tmp}/stack-browser.d"
 mkdir -p "$dir"
