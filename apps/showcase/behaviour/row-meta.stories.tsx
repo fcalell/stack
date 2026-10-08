@@ -1,5 +1,9 @@
 import { FileRow } from "@fcalell/plugin-react-ui/components/file-row";
+import { Group } from "@fcalell/plugin-react-ui/components/group";
+import { List } from "@fcalell/plugin-react-ui/components/list";
 import { ListRow } from "@fcalell/plugin-react-ui/components/list-row";
+import { Place } from "@fcalell/plugin-react-ui/components/place";
+import { Section } from "@fcalell/plugin-react-ui/components/section";
 import { Status } from "@fcalell/plugin-react-ui/components/status";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect, within } from "storybook/test";
@@ -235,8 +239,9 @@ export const FilePathFloor: StoryObj = {
 	play: floor,
 };
 
-// The same scenarios in a 375 px phone at the touch density.
-function touch(story: StoryObj): StoryObj {
+// The same scenarios in a phone (375 px unless a width is given) at the touch
+// density.
+function touch(story: StoryObj, width = 375): StoryObj {
 	return {
 		...story,
 		tags: ["touch"],
@@ -249,7 +254,7 @@ function touch(story: StoryObj): StoryObj {
 				options: {
 					phone: {
 						name: "Phone",
-						styles: { width: "375px", height: "812px" },
+						styles: { width: `${width}px`, height: "812px" },
 						type: "mobile",
 					},
 				},
@@ -262,6 +267,129 @@ export const MetaYieldsTouch = touch(MetaYields);
 export const MetaStarvedTouch = touch(MetaStarved);
 export const FilePathFloorTouch = touch(FilePathFloor);
 export const TrailingBesideTouch = touch(TrailingBeside);
+
+// A review page's sensitive files: `Place` > `Section` > `List` of `file` rows,
+// each seen or not, with a chip saying why it is listed and its counts, two
+// short names and a long one, at the page's width; the same list again in a
+// `Group`. The name keeps its floor, the chip's label gives way only once the
+// path is at it, and the counts end at the row's inset, so no width stands
+// unused beside them.
+const SENSITIVE = [
+	{
+		path: "biome.json",
+		added: 12,
+		removed: 4,
+		seen: false,
+		label: "what the check reads",
+	},
+	{
+		path: "docs/flags.md",
+		added: 3,
+		removed: 0,
+		seen: true,
+		label: "what the check reads",
+	},
+	{
+		path: `docs/billing/${NAME}`,
+		added: 2,
+		removed: 1,
+		seen: false,
+		label: "what the check reads",
+	},
+];
+
+function Review(props: { width: number; grouped?: boolean }) {
+	const files = (
+		<List
+			items={SENSITIVE}
+			file={{
+				key: (f) => f.path,
+				path: (f) => f.path,
+				added: (f) => f.added,
+				removed: (f) => f.removed,
+				seen: (f) => f.seen,
+				chip: (f) => ({ family: "amber", label: f.label }),
+				href: (f) => `#${f.path}`,
+			}}
+		/>
+	);
+	return (
+		<div
+			style={{
+				width: props.width,
+				height: 700,
+				display: "flex",
+				flexDirection: "column",
+			}}
+		>
+			<Place title="Review">
+				<Section title="Sensitive changes" description="1 of 3 opened">
+					{props.grouped ? <Group>{files}</Group> : files}
+				</Section>
+			</Place>
+		</div>
+	);
+}
+
+const reviewed: Play = async ({ canvas }) => {
+	for (const file of SENSITIVE) {
+		const row = canvas.getByRole("link", { name: file.path }).parentElement;
+		const path = row?.querySelector<HTMLElement>(".font-mono");
+		const counts = row?.lastElementChild;
+		const chip = counts?.previousElementSibling;
+		const name = path?.lastElementChild;
+		const stem = name?.firstElementChild;
+		const tail = name?.lastElementChild;
+		if (!row || !path || !counts || !chip || !stem || !tail || !name)
+			throw new Error("a file row lacks a part");
+		const inset = Number.parseFloat(getComputedStyle(row).paddingRight);
+		const gap = Number.parseFloat(getComputedStyle(row).columnGap);
+		const floor = Number.parseFloat(getComputedStyle(path).minWidth);
+		await expect(row.scrollWidth).toBeLessThanOrEqual(row.clientWidth);
+		await expect(Math.abs(right(row) - inset - right(counts))).toBeLessThan(1);
+		await expect(
+			counts.getBoundingClientRect().left - right(chip),
+		).toBeLessThan(gap + 1);
+		if (file.path.includes("/billing/")) {
+			const chars = tail.textContent?.length ?? 1;
+			await expect(clipped(tail as HTMLElement)).toBe(false);
+			await expect(stem.clientWidth).toBeGreaterThanOrEqual(
+				(tail.clientWidth / chars) * 4 - 0.5,
+			);
+		} else {
+			await expect(clipped(stem as HTMLElement)).toBe(false);
+			await expect(clipped(tail as HTMLElement)).toBe(false);
+		}
+		const label = within(chip as HTMLElement).getByText(file.label);
+		if (clipped(label))
+			await expect(path.getBoundingClientRect().width).toBeLessThanOrEqual(
+				floor + 0.5,
+			);
+	}
+};
+
+export const ReviewFloor320: StoryObj = {
+	render: () => <Review width={320} />,
+	play: reviewed,
+};
+export const ReviewFloor390: StoryObj = {
+	render: () => <Review width={390} />,
+	play: reviewed,
+};
+export const ReviewFloor768: StoryObj = {
+	render: () => <Review width={768} />,
+	play: reviewed,
+};
+export const ReviewGroupFloor320: StoryObj = {
+	render: () => <Review width={320} grouped />,
+	play: reviewed,
+};
+export const ReviewFloorTouch320 = touch(ReviewFloor320, 320);
+export const ReviewFloorTouch390 = touch(ReviewFloor390, 390);
+export const ReviewGroupFloorTouch390 = touch(
+	{ render: () => <Review width={390} grouped />, play: reviewed },
+	390,
+);
 export const ChevronEndsTouch = touch(ChevronEnds);
 
 // A status label draws whole while its line has room and truncates, within its

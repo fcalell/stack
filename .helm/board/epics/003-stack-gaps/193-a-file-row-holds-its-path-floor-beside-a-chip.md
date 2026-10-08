@@ -1,6 +1,6 @@
 ---
 id: 003-193
-status: backlog
+status: todo
 sessions: {}
 ---
 # react-ui: a file row holds its path floor beside a chip in a page's list
@@ -17,3 +17,27 @@ Stead's review screen lists its sensitive files as `List` `file` rows with a chi
 
 ## Open questions
 - [ ] Why the floor holds in the frame and not in the page: the stack session finds it.
+
+## Ruled
+Not a contract gap yet. The floor is `minWidth: ${floor}ch` on the `Path` element, which a flex item cannot undercut, and the row's free width goes to the path first. The first deliverable is a story composing Stead's review tree (`Place` > `Section` > `List` of `file` rows with `seen`, a chip and counts, and the same list in a `Group`); fix at the shared layer only if it fails. If it passes, the close is "by design, no stack code" and the cause is in Stead.
+
+## Built
+`apps/showcase/behaviour/row-meta.stories.tsx` gains `ReviewFloor320`, `ReviewFloor390`, `ReviewFloor768`, `ReviewGroupFloor320` and the touch forms `ReviewFloorTouch320`, `ReviewFloorTouch390`, `ReviewGroupFloorTouch390`. Each lists `biome.json`, `docs/flags.md` and a long `docs/billing/…` name, seen or not, with the `what the check reads` chip and counts. The play asserts no row overflow, the counts' right edge at the row's right inset, the chip-to-counts gap, the short names whole, the long name's tail whole with its stem at least four characters, and a cut chip label only once the path stands at its floor. The 18 stories of the file pass in a scoped run (peak 1638 MiB). No stack code changed.
+
+Measured, in px, for `biome.json` (the other rows agree):
+
+| Frame | Row | Path (floor) | Chip | Counts to the row's edge |
+| --- | --- | --- | --- | --- |
+| 320, desktop | 296 | 70 (70) | label cut | 12 (the inset) |
+| 390, desktop | 366 | 115.8 (70) | 120.2 whole | 12 |
+| 768, desktop | 744 | 493.8 (70) | 120.2 whole | 12 |
+| 320, desktop, in a `Group` | 270 | 70 (70) | label cut | 16 |
+| 320, touch | 320 | 90 (90) | label cut | 16 |
+| 390, touch | 390 | 90 (90) | 132 | 16 |
+
+The long name keeps its tail `ces.md` whole at every width and its stem grows with the room (28 at 320, 74 at 390, 196 at 768). "b…" is not drawn, and no width stands unused beside the counts, at any of these.
+
+The native `FileRow` has the same structure (`pathCut` floor as `minWidth`, path `grow` with a 10^7 shrink weight, counts `shrink-0`); no phone render was run for it, so native is unverified.
+
+## Open
+Closed "by design, no stack code" on the evidence above; the owner confirms or rules otherwise. Not delivered: the criteria stay unticked because the ruling narrows the first box to the reproduction, and the second asks the critique to measure the stories at 320 and 390, which no critique session has run. What Stead's tree must differ in: its path element is narrower than its own floor and about 80 px stand unused beside the counts, so its row's content box is narrower than the row (a wrapper, a padding or a width on the row), or its `path` is not the row's flex child. Stead reads `getBoundingClientRect` of the row, its path span and its counts in its own 390 render.
