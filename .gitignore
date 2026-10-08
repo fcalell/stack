@@ -45,3 +45,6 @@ pnpm-debug.log*
 .claude/worktrees/
 .playwright-mcp/
 
+
+# Claude Code per-machine settings
+.claude/settings.local.json
