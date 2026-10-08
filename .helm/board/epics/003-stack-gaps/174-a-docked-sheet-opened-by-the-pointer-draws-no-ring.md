@@ -1,6 +1,6 @@
 ---
 id: 003-174
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a docked Sheet opened by the pointer draws no ring on its Close
@@ -16,3 +16,6 @@ Measure a real pointer open: a `Place` whose foot is a button, a real click open
 
 ## Ruled
 Not a defect. Close takes focus whichever way the sheet opens, and the ring follows the browser's `:focus-visible` heuristic: drawn when the sheet is open at mount (no input yet: the critic's frame, `behaviour-sheet--docked-title-outranks-its-body`) or after the keyboard, never after a pointer. A page with a field in its body focuses the field. No code change.
+
+## Ruled
+The owner keeps it: a docked Sheet with no field in its body opens with focus on Close, its only control.
