@@ -14,7 +14,7 @@ import { structuredPatch } from "diff";
 import { useMemo } from "react";
 import type { Closed } from "../../lib/closed.ts";
 
-const FRAME = "flex flex-col min-w-0 overflow-hidden";
+const FRAME = "flex flex-col shrink-0 min-w-0 overflow-hidden";
 const TABLE = "w-full border-collapse";
 // A wrapped line hangs one inset under its first visual line, which the
 // negative indent pulls back to the cell's start.

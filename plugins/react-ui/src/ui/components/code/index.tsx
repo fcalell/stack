@@ -21,7 +21,7 @@ import { useWords } from "../../lib/words.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 
-const FRAME = "flex flex-col min-w-0 overflow-hidden";
+const FRAME = "flex flex-col shrink-0 min-w-0 overflow-hidden";
 const HEAD = "flex items-center";
 const TITLE = "grow min-w-0 truncate";
 const BODY = "flex min-w-0";

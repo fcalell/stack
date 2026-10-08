@@ -15,7 +15,7 @@ import { GroupContext, type GroupHost } from "../../lib/group.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 import { DefinitionWait } from "../definition-row/wait.tsx";
 
-const BOX = "flex flex-col overflow-hidden";
+const BOX = "flex flex-col shrink-0 overflow-hidden";
 // A waiting Group with no List of its own draws three waiting setting rows:
 // a label over a description, a switch at the end.
 const SETTING: DefinitionShape = {

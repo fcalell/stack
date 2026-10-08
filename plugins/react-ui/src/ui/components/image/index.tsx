@@ -16,7 +16,7 @@ import { Icon } from "../icon/index.tsx";
 import { IconButtonBase } from "../icon-button/base.tsx";
 import { SheetBase } from "../sheet/base.tsx";
 
-const FRAME = "block relative overflow-hidden";
+const FRAME = "block relative shrink-0 overflow-hidden";
 // A press moves the frame's hairline, the pointer's step lighter than the
 // press's; the ring is the base layer's.
 const PRESS = "hover:border-edge-hover active:border-ink-body";

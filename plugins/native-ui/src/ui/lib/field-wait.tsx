@@ -1,5 +1,6 @@
 import type { FieldShape } from "@fcalell/ui-core/list-state";
 import { formField, skeleton, skeletonRow } from "@fcalell/ui-core/variants";
+import { Children, Fragment, isValidElement, type ReactNode } from "react";
 import { View } from "react-native";
 import { cn } from "./cn";
 import { Strut } from "./strut";
@@ -74,4 +75,26 @@ export function FieldWait({
 			{block}
 		</View>
 	);
+}
+
+// A body's children with its direct bars (`bar`, through fragments) taken out
+// while `lift` is set: each bar leaves a null at its place, so the other
+// children keep their keys, and so their state, across the lift. The bars
+// stand after the waiting fields.
+export function liftBars(
+	children: ReactNode,
+	bar: unknown,
+	lift: boolean,
+): { bars: ReactNode[]; rest: ReactNode[] } {
+	const bars: ReactNode[] = [];
+	const walk = (nodes: ReactNode): ReactNode[] =>
+		Children.toArray(nodes).map((node) => {
+			if (!isValidElement<{ children?: ReactNode }>(node)) return node;
+			if (node.type === Fragment)
+				return <Fragment key={node.key}>{walk(node.props.children)}</Fragment>;
+			if (node.type !== bar || !lift) return node;
+			bars.push(node);
+			return null;
+		});
+	return { bars, rest: walk(children) };
 }

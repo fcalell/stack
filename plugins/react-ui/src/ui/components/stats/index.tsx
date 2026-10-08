@@ -13,7 +13,7 @@ import { follow } from "../../lib/navigate.ts";
 import { CountLinks } from "../meter/count-links.tsx";
 import { StatsWait } from "./wait.tsx";
 
-const CLIP = "overflow-hidden";
+const CLIP = "shrink-0 overflow-hidden";
 // Each cell draws its own top and start hairline; the card's edge is drawn over
 // them, so the outer ones are the edge's own.
 const CELLS = "flex flex-wrap";

@@ -15,7 +15,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useId, useMemo, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { FieldWait } from "../../lib/field-wait.tsx";
+import { FieldWait, liftBars } from "../../lib/field-wait.tsx";
 import { FormContext, FormStands } from "../../lib/form.ts";
 import { ThreadRoom } from "../../lib/frame.ts";
 import { DEEPER, HeadingContext } from "../../lib/heading.ts";
@@ -103,7 +103,7 @@ export interface SectionProps extends Closed {
 	onToggle?: (open: boolean) => void;
 	/** The section's one act, at the head's end: a labelled act or an icon act. */
 	act?: Act | IconAct;
-	/** The count (when there is one) and the body wait: a Group or a List in the body draws its own skeleton rows, a Prose, Thread, Code, Form, Meter or Slider its own waiting form, and skeleton fields stand in for fields and for any other body. */
+	/** The count (when there is one) and the body wait: a Group or a List in the body draws its own skeleton rows, a Prose, Thread, Code, Form, Meter or Slider its own waiting form, and skeleton fields stand in for fields and for any other body, a direct ActionBar beside them waiting after them. */
 	loading?: boolean;
 	/** The body: a Group, a List, or the rows a Form lays out. */
 	children?: ReactNode;
@@ -148,6 +148,8 @@ export function Section({
 		count: shown,
 		fields,
 	} = sectionState(parts, { count, loading });
+	// A loading body stands its direct bars after the skeleton fields, waiting.
+	const { bars, rest } = liftBars(children, ActionBar, fields > 0);
 	const host = useMemo(
 		() => (blocked === undefined ? undefined : { press }),
 		[blocked, press],
@@ -278,10 +280,11 @@ export function Section({
 						<div className={fields > 0 ? BODY_WAITS : BODY_SHOWN}>
 							<LoadingContext value={loading === true}>
 								<SectionContext value={true}>
-									<ThreadRoom value={false}>{children}</ThreadRoom>
+									<ThreadRoom value={false}>{rest}</ThreadRoom>
 								</SectionContext>
 							</LoadingContext>
 						</div>
+						<LoadingContext value={loading === true}>{bars}</LoadingContext>
 					</HeadingContext>
 				</Collapsible.Panel>
 			)}

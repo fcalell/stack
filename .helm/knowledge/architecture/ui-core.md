@@ -1363,7 +1363,11 @@ a tick with no animation, never jumped to full.
   off the field's element by the platform's `fieldWaitOf` in `form-field`: the Section's walker
   hands it the `FormField` elements it counts (`fieldNodes`), the Form its own. The
   Section's walker does not read through a Form: counting its fields would hide the body and with
-  it the `ActionBar`'s waiting form. Outside the rule nothing is read: a
+  it the `ActionBar`'s waiting form. A direct `ActionBar` beside counted fields (no `Form`) is
+  lifted out of the hidden body (`liftBars` in `lib/field-wait`, through fragments, a null left at
+  its place so the other children keep their keys) and stands after the skeleton fields under
+  `LoadingContext`, waiting as its own form at the loaded bar's height; loaded, it stands in its
+  children's order, mounted anew. Outside the rule nothing is read: a
   collection inside an app's own component (a `ui/` wrapper around a List) draws itself but adds
   no count and no busy state to the head, and the Lists inside a QueryBoundary's body are not
   counted (its queries still make the head busy). The body stays mounted in every form, hidden
@@ -1380,7 +1384,10 @@ a tick with no animation, never jumped to full.
   once between them (web: the rows stand in the card directly, under `GROUP`'s `divide-*`;
   phone: each row after the first draws it on its wrapper, as the Group does its children), its
   failed and empty EmptyStates in the card at `EMPTY_CARD` (the card their frame, in place of
-  `EMPTY_FRAME`). A busy List makes the Group busy, for the card is its box. A waiting Group
+  `EMPTY_FRAME`). A busy List makes the Group busy, for the card is its box. The web card,
+  like each other block frame that hides its overflow (`Code`, `Diff`, `ProseDiff`, `Image`, `Stats`), never shrinks (`shrink-0`): its `overflow-hidden` gives a flex item a zero automatic
+  minimum, so in a column that scrolls (a Split's list, a Sheet's body) it would give up
+  height and clip its rows; native's `flexShrink` default is 0. A waiting Group
   (its `loading`, or a loading Section's) renders its body once and, when no part registered
   (a List, a Meter, a Slider, a DefinitionRow register through `useGroupPart`, however deep),
   swaps it for setting skeletons before paint (`groupWait`), the Section's mechanism; with a part

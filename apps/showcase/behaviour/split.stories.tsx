@@ -2,18 +2,24 @@ import { ActionBar } from "@fcalell/plugin-react-ui/components/action-bar";
 import { Banner } from "@fcalell/plugin-react-ui/components/banner";
 import { Code } from "@fcalell/plugin-react-ui/components/code";
 import { DefinitionRow } from "@fcalell/plugin-react-ui/components/definition-row";
+import { Diff } from "@fcalell/plugin-react-ui/components/diff";
 import { EmptyState } from "@fcalell/plugin-react-ui/components/empty-state";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
+import { Image } from "@fcalell/plugin-react-ui/components/image";
 import { ItemHeader } from "@fcalell/plugin-react-ui/components/item-header";
 import { List } from "@fcalell/plugin-react-ui/components/list";
+import { Message } from "@fcalell/plugin-react-ui/components/message";
 import { MessageInput } from "@fcalell/plugin-react-ui/components/message-input";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Prose } from "@fcalell/plugin-react-ui/components/prose";
+import { ProseDiff } from "@fcalell/plugin-react-ui/components/prose-diff";
 import { Screen } from "@fcalell/plugin-react-ui/components/screen";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
 import { Split } from "@fcalell/plugin-react-ui/components/split";
+import { Stats } from "@fcalell/plugin-react-ui/components/stats";
 import { Thread } from "@fcalell/plugin-react-ui/components/thread";
 import { Toolbar } from "@fcalell/plugin-react-ui/components/toolbar";
+import { SCREEN } from "@fcalell/plugin-react-ui/showcase/frames/image";
 import { BREAKPOINT_PX } from "@fcalell/ui-core/tokens";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { type ReactNode, useState } from "react";
@@ -971,3 +977,77 @@ export const PaneStaysClosedUnasked: StoryObj = {
 		await screen.findByRole("dialog", { name: "Details" });
 	},
 };
+
+const CHECK = Array.from({ length: 10 }, (_, line) => `line ${line + 1}`).join(
+	"\n",
+);
+
+// Blocks that stand in a column with a frame that hides its overflow: three
+// Groups and the frames of Code, Diff, ProseDiff, Message, Image and Stats.
+function Blocks() {
+	return (
+		<>
+			{[0, 1, 2].map((key) => (
+				<Group key={key}>
+					<Rows />
+				</Group>
+			))}
+			<Code text={CHECK} />
+			<Diff
+				label="a.ts"
+				before={CHECK}
+				after={CHECK.replace("line 5", "five")}
+			/>
+			<ProseDiff
+				before="The deploy ships on Friday after the freeze lifts, with the migration first."
+				after="The deploy ships on Monday after the freeze lifts, with the migration first."
+			/>
+			<Message
+				author="system"
+				body="Deployed"
+				detail={{ row: { title: "Deploy 41", meta: ["main", "2 min ago"] } }}
+			/>
+			<Image src={SCREEN} alt="A page" aspect={16 / 10} />
+			<Stats
+				items={[
+					{ label: "Deploys", value: 41 },
+					{ label: "Failed", value: 3 },
+				]}
+			/>
+		</>
+	);
+}
+
+// A list pane shorter than the blocks in it scrolls, and no block gives up
+// height to the scroll: each keeps its content's height.
+const keepsItsRows: StoryObj = {
+	render: () => (
+		<div
+			style={{
+				width: 390,
+				maxWidth: "100%",
+				height: 420,
+				display: "flex",
+				flexDirection: "column",
+			}}
+		>
+			<Split list={<Blocks />} />
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const list = must(canvasElement.querySelector("nav"));
+		await waitFor(() =>
+			expect(list.scrollHeight).toBeGreaterThan(list.clientHeight),
+		);
+		const clipped = [...list.children]
+			.map((block, at) => ({ at, block }))
+			.filter(({ block }) => block.scrollHeight > block.clientHeight + 1)
+			.map(
+				({ at, block }) => `${at}: ${block.clientHeight}/${block.scrollHeight}`,
+			);
+		await expect(clipped).toEqual([]);
+	},
+};
+
+export const GroupsKeepTheirRows = keepsItsRows;
+export const GroupsKeepTheirRowsTouch = touch(keepsItsRows);

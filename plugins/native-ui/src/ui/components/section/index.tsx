@@ -14,7 +14,7 @@ import { type ReactNode, useContext, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { FieldWait, LABEL_LINE } from "../../lib/field-wait";
+import { FieldWait, LABEL_LINE, liftBars } from "../../lib/field-wait";
 import { FormContext, FormStands } from "../../lib/form";
 import { ThreadRoom } from "../../lib/frame";
 import { Ink } from "../../lib/ink";
@@ -132,6 +132,8 @@ export function Section({
 		count: shown,
 		fields,
 	} = sectionState(parts, { count, loading });
+	// A loading body stands its direct bars after the skeleton fields, waiting.
+	const { bars, rest } = liftBars(children, ActionBar, fields > 0);
 	// The description waits as a bar only when the Section says it will have
 	// one: an empty string, which is no line once loaded.
 	let sentence: ReactNode = null;
@@ -249,12 +251,13 @@ export function Section({
 					>
 						<LoadingContext.Provider value={loading === true}>
 							<SectionContext.Provider value={true}>
-								<ThreadRoom.Provider value={false}>
-									{children}
-								</ThreadRoom.Provider>
+								<ThreadRoom.Provider value={false}>{rest}</ThreadRoom.Provider>
 							</SectionContext.Provider>
 						</LoadingContext.Provider>
 					</View>
+					<LoadingContext.Provider value={loading === true}>
+						{bars}
+					</LoadingContext.Provider>
 				</View>
 			)}
 		</View>

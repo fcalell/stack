@@ -2,7 +2,9 @@ import { Banner } from "@fcalell/plugin-react-ui/components/banner";
 import { Button } from "@fcalell/plugin-react-ui/components/button";
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Gate } from "@fcalell/plugin-react-ui/components/gate";
+import { Group } from "@fcalell/plugin-react-ui/components/group";
 import { Input } from "@fcalell/plugin-react-ui/components/input";
+import { List } from "@fcalell/plugin-react-ui/components/list";
 import { MessageInput } from "@fcalell/plugin-react-ui/components/message-input";
 import { OptionList } from "@fcalell/plugin-react-ui/components/option-list";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
@@ -363,6 +365,45 @@ export const SectionInModalSheet: StoryObj = {
 		expect(sized(screen.getByText("Details"))).toBe("13px 600");
 	},
 };
+
+// A modal Sheet's body shorter than its Groups scrolls, and each Group keeps
+// the height of its rows.
+export const GroupsInTheBodyKeepTheirRows: StoryObj = {
+	parameters: { layout: "fullscreen" },
+	render: () => (
+		<Sheet open onClose={() => {}} title="Usage">
+			{[0, 1, 2, 3, 4, 5].map((key) => (
+				<Group key={key}>
+					<List
+						items={USAGE}
+						row={{ key: (name) => name, title: (name) => name }}
+					/>
+				</Group>
+			))}
+		</Sheet>
+	),
+	play: async () => {
+		const dialog = await screen.findByRole("dialog", { name: "Usage" });
+		const groups = [...dialog.querySelectorAll(".rounded-card")];
+		const body = groups[0]?.parentElement;
+		if (!body) throw new Error("no Group is drawn");
+		await waitFor(() =>
+			expect(body.scrollHeight).toBeGreaterThan(body.clientHeight),
+		);
+		await expect(groups).toHaveLength(6);
+		const clipped = groups.filter(
+			(group) => group.scrollHeight > group.clientHeight + 1,
+		);
+		await expect(clipped).toEqual([]);
+	},
+};
+export const GroupsInTheBodyKeepTheirRowsTouch: StoryObj = {
+	...GroupsInTheBodyKeepTheirRows,
+	tags: ["touch"],
+	globals: { density: "touch" },
+};
+
+const USAGE = ["Builds", "Bandwidth", "Storage", "Seats"];
 
 const OPTIONS = [
 	{ value: "prod", label: "Production", description: "Serves traffic" },

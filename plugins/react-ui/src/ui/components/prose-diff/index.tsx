@@ -12,7 +12,7 @@ import { diffWords } from "diff";
 import { type ReactNode, useMemo } from "react";
 import type { Closed } from "../../lib/closed.ts";
 
-const FRAME = "flex flex-col min-w-0 overflow-hidden";
+const FRAME = "flex flex-col shrink-0 min-w-0 overflow-hidden";
 const WAIT = "flex flex-col";
 const LINE = "flex items-center h-lh";
 // The loading lines, each bar at the length of the line it stands in for.

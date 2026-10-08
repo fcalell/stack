@@ -18,6 +18,7 @@ import {
 	Bodies,
 	Commands,
 	Described,
+	Profile,
 } from "@fcalell/plugin-react-ui/showcase/frames/section";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { type ReactNode, useState } from "react";
@@ -186,6 +187,20 @@ const fields: StoryObj = {
 	),
 	play: async ({ canvas }) => {
 		await expect(canvas.queryByRole("textbox")).toBeNull();
+	},
+};
+
+// A loading Section over fields and a bar, with no Form, waits as one skeleton
+// field per field and the bar's waiting form, at the loaded Section's height.
+const bar: StoryObj = {
+	render: () => <Pair loaded={<Profile />} waiting={<Profile loading />} />,
+	play: async ({ canvas }) => {
+		const { waiting } = await stand(canvas);
+		await expect(
+			within(waiting).getByRole("region", { name: "Profile" }),
+		).toHaveAttribute("aria-busy", "true");
+		await expect(within(waiting).queryAllByRole("textbox")).toHaveLength(0);
+		await expect(within(waiting).queryAllByRole("button")).toHaveLength(0);
 	},
 };
 
@@ -504,6 +519,7 @@ export const GroupOfOwnRows = fallback;
 export const SectionOverItsParts = bodies;
 export const SectionOverFields = fields;
 export const SectionOverItsForm = form;
+export const SectionOverFieldsAndItsBar = bar;
 export const SectionFormKeepsItsFields = refetch;
 export const SectionOverEachKindOfField = fieldKinds;
 export const SectionOverItsFormOfEachKind = fieldKindsInForm;
@@ -549,6 +565,7 @@ export const SliderAloneAndInAGroupTouch = touch(sliders);
 export const DefinitionRowsInACardTouch = touch(facts);
 export const SectionOverItsPartsTouch = touch(bodies);
 export const SectionOverItsFormTouch = touch(form);
+export const SectionOverFieldsAndItsBarTouch = touch(bar);
 export const SectionOverEachKindOfFieldTouch = touch(fieldKinds);
 export const SectionOverItsFormOfEachKindTouch = touch(fieldKindsInForm);
 export const SectionOverAGroupTouch = touch(sectionGroup);

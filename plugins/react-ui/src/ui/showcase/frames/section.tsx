@@ -89,6 +89,21 @@ export function Commands(props: { loading?: boolean }) {
 	);
 }
 
+/** A section whose body is two fields and a bar, with no `Form`, loaded and waiting. */
+export function Profile(props: { loading?: boolean }) {
+	return (
+		<Section title="Profile" loading={props.loading}>
+			<FormField label="Workspace name">
+				<Input value="Acme Inc" onChange={act} />
+			</FormField>
+			<FormField label="Workspace URL">
+				<Input value="acme-inc" onChange={act} />
+			</FormField>
+			<ActionBar acts={[{ label: "Save", onAct: act }]} />
+		</Section>
+	);
+}
+
 /** A head with its description, loaded and waiting for it (`description=""`). */
 export function Described(props: { loading?: boolean }) {
 	return (
@@ -119,7 +134,7 @@ function Members(props: { blocked?: boolean }) {
 // touched form with its reason shown; `loading` the waiting count over a
 // Group's and a List's own skeleton rows, a Prose, a Thread and a Code each
 // waiting in its own form beside the loaded Section (a List as a waiting QueryBoundary's
-// loading form too), a Section over a Form waiting as the Form's skeleton fields and bar,
+// loading form too), a Section over a Form, or over fields and a bar with no Form, waiting as skeleton fields and the bar's waiting form,
 // and the section's skeleton fields standing in for a body of fields in a Form. At rest the cell picks the form: the icon act a
 // column's head, `SECTION.in.form` a section of fields in a Form, the chevron an open and a folded section over a List, the
 // destructive act a section over a List whose act removes it, the skeleton cells the loading form, every other cell the section over a Group, then a Section holding two Sections, which name themselves a level below it.
@@ -167,6 +182,8 @@ export function drawSection(frame: ShowcaseFrame) {
 				<Described loading />
 				<Commands />
 				<Commands loading />
+				<Profile />
+				<Profile loading />
 				<Form>
 					<Section title="Profile" loading>
 						<FormField label="Workspace name">

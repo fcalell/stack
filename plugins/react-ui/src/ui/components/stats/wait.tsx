@@ -10,7 +10,7 @@ import {
 	skeleton,
 } from "@fcalell/ui-core/variants";
 
-const CLIP = "overflow-hidden";
+const CLIP = "shrink-0 overflow-hidden";
 const CELLS = "flex flex-wrap";
 const EDGE = "pointer-events-none";
 const CELL = "flex flex-col min-w-0 grow basis-1/2 page-tablet:basis-0";
