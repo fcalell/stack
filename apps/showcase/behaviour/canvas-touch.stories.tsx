@@ -359,6 +359,43 @@ const panBeforeTheLift: Story = {
 export const PanBeforeTheLiftLight = mode("light", panBeforeTheLift);
 export const PanBeforeTheLiftDark = mode("dark", panBeforeTheLift);
 
+// A page that stalls for longer than the press once the next finger is down,
+// as a loaded machine does: its lift timer fires before it handles what the
+// finger did meanwhile.
+function stallsAfterTheTouch() {
+	document.addEventListener(
+		"pointerdown",
+		() =>
+			setTimeout(() => {
+				for (const end = performance.now() + HOLD; performance.now() < end; );
+			}),
+		{ once: true },
+	);
+}
+
+// (a') The same drag on a stalled page: the move's time is inside the press, so
+// the node goes back and the drag pans.
+const panThroughAStall: Story = {
+	...phone(true, false),
+	play: async ({ args, canvas, canvasElement }) => {
+		const region = await laidOut(canvas, args.moved);
+		const plan = card(region, "plan");
+		const reports = calls(args.moved).length;
+		const stood = { x: left(plan), y: top(plan) };
+		const before = viewport(canvasElement);
+		const from = centre(rect(plan));
+		stallsAfterTheTouch();
+		await drag(from, shift(from, 40, 70));
+		await panned(canvasElement, before, { x: 40, y: 70 });
+		await expect({ x: left(plan), y: top(plan) }).toEqual(stood);
+		await expect(getComputedStyle(plan).outlineStyle).toBe("none");
+		await expect(calls(args.moved)).toHaveLength(reports);
+		await expect(args.selected).not.toHaveBeenCalled();
+	},
+};
+export const PanThroughAStallLight = mode("light", panThroughAStall);
+export const PanThroughAStallDark = mode("dark", panThroughAStall);
+
 // (b) A hold then a drift past the slop cancels the lift and pans, and the
 // time that would have lifted it passes without one.
 const driftCancels: Story = {
@@ -392,8 +429,9 @@ export const DriftCancelsLight = mode("light", driftCancels);
 export const DriftCancelsDark = mode("dark", driftCancels);
 
 // (c) A hold on a node, then a second finger on the ground before the lift: the
-// press is cancelled, the pinch zooms, and the node never lifts.
-const secondFingerBeforeTheLift: Story = {
+// press is cancelled, the pinch zooms, and the node never lifts, on a stalled
+// page too.
+const secondFingerBeforeTheLift = (stalled: boolean): Story => ({
 	...phone(true, false),
 	play: async ({ args, canvas, canvasElement }) => {
 		const region = await laidOut(canvas, args.moved);
@@ -404,6 +442,7 @@ const secondFingerBeforeTheLift: Story = {
 		const from = centre(rect(plan));
 		const ground = groundPoint(region);
 		const finger = hand();
+		if (stalled) stallsAfterTheTouch();
 		await finger.down(0, from, 0);
 		try {
 			await wait(LIFT_MS / 8);
@@ -425,14 +464,22 @@ const secondFingerBeforeTheLift: Story = {
 		await expect(calls(args.moved)).toHaveLength(reports);
 		await expect(args.selected).not.toHaveBeenCalled();
 	},
-};
+});
 export const SecondFingerBeforeTheLiftLight = mode(
 	"light",
-	secondFingerBeforeTheLift,
+	secondFingerBeforeTheLift(false),
 );
 export const SecondFingerBeforeTheLiftDark = mode(
 	"dark",
-	secondFingerBeforeTheLift,
+	secondFingerBeforeTheLift(false),
+);
+export const SecondFingerThroughAStallLight = mode(
+	"light",
+	secondFingerBeforeTheLift(true),
+);
+export const SecondFingerThroughAStallDark = mode(
+	"dark",
+	secondFingerBeforeTheLift(true),
 );
 
 // (d) A lift, then a second finger: the node drops where it is and reports

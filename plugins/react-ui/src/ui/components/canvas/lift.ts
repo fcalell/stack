@@ -53,6 +53,8 @@ interface Press {
 	// is d3-zoom's, and the click that follows it selects nothing.
 	moved: boolean;
 	timer: number | undefined;
+	// The event time at which the press has held long enough to lift.
+	due: number;
 	// Set when the node lifts: where it stood and where the finger was.
 	hold: { start: CanvasPoint; from: CanvasPoint } | null;
 	// The node's latest position while held.
@@ -126,6 +128,18 @@ export function useLift(args: {
 		setLifted(false);
 	};
 
+	// A page slower than the press lifts the node on its timer before it handles
+	// an event the finger made earlier, and an event's `timeStamp` is the
+	// input's, not the handler's: the node goes back as it stood.
+	const unlift = (state: Press) => {
+		if (!state.hold || state.dropped) return;
+		state.target.releasePointerCapture(state.pointer);
+		starving(false);
+		latest.current.at(latest.current.id, null);
+		state.hold = null;
+		setLifted(false);
+	};
+
 	const down = (event: PointerEvent<HTMLElement>) => {
 		if (event.pointerType === "mouse" || event.button !== 0 || press.current)
 			return;
@@ -137,12 +151,14 @@ export function useLift(args: {
 			now: client(event),
 			moved: false,
 			timer: undefined,
+			due: event.timeStamp + LIFT_MS,
 			hold: null,
 			point: client(event),
 			dropped: false,
 			// A second finger anywhere ends the press, or drops the node.
 			other: (landing) => {
 				if (landing.pointerId === state.pointer) return;
+				if (landing.timeStamp < state.due) unlift(state);
 				state.moved = true;
 				window.clearTimeout(state.timer);
 				settle(state, state.point);
@@ -169,6 +185,11 @@ export function useLift(args: {
 		const state = press.current;
 		if (!state || event.pointerId !== state.pointer) return;
 		const point = client(event);
+		if (
+			event.timeStamp < state.due &&
+			Math.hypot(point.x - state.from.x, point.y - state.from.y) > SLOP
+		)
+			unlift(state);
 		if (state.hold) {
 			if (state.dropped) return;
 			const { id, at, viewport } = latest.current;

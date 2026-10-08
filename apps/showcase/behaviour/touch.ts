@@ -13,6 +13,17 @@ type Phase = "touchStart" | "touchMove" | "touchEnd";
 //
 // Events go out in the order they are asked for, even when a caller does not
 // wait for one before asking for the next.
+//
+// A touch and a move carry the hand's own time, which the page reads as the
+// event's `timeStamp`: a touch and its first move are a frame apart there
+// however long the machine takes to deliver the second after the first (Chrome
+// takes a round trip per event, and a loaded machine takes longer than a long
+// press). The hand's time starts at its first finger down and advances by a
+// frame per event and by what `wait` waits. A `touchEnd` carries none: Chrome
+// does not recognise a tap whose end is stamped.
+const FRAME_MS = 16;
+let start = 0;
+let elapsed = 0;
 let sent: Promise<unknown> = Promise.resolve();
 function send(
 	type: Phase,
@@ -24,19 +35,30 @@ function send(
 		id,
 		...toPage(point),
 	}));
+	if (type === "touchStart" && down.size === 1) {
+		start = Date.now();
+		elapsed = 0;
+	}
+	const timestamp = type === "touchEnd" ? undefined : (start + elapsed) / 1000;
+	elapsed += FRAME_MS;
 	sent = sent
 		.catch(() => undefined)
-		.then(() => dispatch(type, touchPoints, frames));
+		.then(() => dispatch(type, touchPoints, timestamp, frames));
 	return sent;
 }
 
 async function dispatch(
 	type: Phase,
 	touchPoints: { id: number; x: number; y: number }[],
+	timestamp: number | undefined,
 	frames: number,
 ) {
 	const { cdp } = await import("vitest/browser");
-	await cdp().send("Input.dispatchTouchEvent", { type, touchPoints });
+	await cdp().send("Input.dispatchTouchEvent", {
+		type,
+		touchPoints,
+		timestamp,
+	});
 	for (let frame = 0; frame < frames; frame++)
 		await new Promise((done) => requestAnimationFrame(() => done(undefined)));
 }
@@ -48,8 +70,11 @@ async function dispatch(
 const SETTLED = 2;
 
 // Real time, never a fake clock: a long press is measured by the page's own
-// timer.
-export const wait = (ms: number) => new Promise((done) => setTimeout(done, ms));
+// timer. The hand's time advances by the same `ms`.
+export const wait = (ms: number) => {
+	elapsed += ms;
+	return new Promise((done) => setTimeout(done, ms));
+};
 
 const between = (
 	from: Point,
