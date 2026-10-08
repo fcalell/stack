@@ -1,6 +1,6 @@
 ---
 id: 003-192
-status: todo
+status: review
 sessions: {}
 ---
 # react-ui: a Split opens its pane from the app below wide
