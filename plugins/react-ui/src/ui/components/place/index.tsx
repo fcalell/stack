@@ -30,10 +30,12 @@ import {
 	ActRoom,
 	DetailsSheet,
 	FootPlace,
+	FootRegion,
 	PageTitle,
 	PlaceRoute,
 	ShellSwitcher,
 	ThreadRoom,
+	useFootRegion,
 } from "../../lib/frame.ts";
 import { HeadingContext } from "../../lib/heading.ts";
 import { DistanceContext, useTouch } from "../../lib/media.ts";
@@ -89,11 +91,8 @@ const BLEED = "flex flex-col grow min-h-0";
 const BODY_WRAP = "relative flex flex-col grow min-h-0";
 // What the body and the docked foot share: the head stands outside it, so the
 // foot's bound is the whole of it and the body keeps the rest. With a foot
-// it is a size container, which a docked sheet bounds its body by (`cqh`) and
-// which its flex height sizes, never its content: a Place with a foot stands
-// in a column of its own height. Without one it fits its content.
+// its measured height bounds a docked sheet's body (`FootRegion`).
 const REGION = "flex flex-col grow min-h-0";
-const REGION_FOOTED = "[container-type:size]";
 // The foot stays under the body, which scrolls past it, and spans it; a field
 // keeps its own measure column inside, which the foot centres at every density,
 // so a selection bar wider than the screen's measure stands centred on touch too.
@@ -211,6 +210,7 @@ export function Place({
 	const stop = useScrolls(bodyNode);
 	const [sheet] = useState(() => Dialog.createHandle<unknown>());
 	const dock = useRef<HTMLDivElement>(null);
+	const region = useFootRegion();
 	useFootFocus(dock);
 	const fit = touch ? "body" : "bar";
 	const back =
@@ -347,14 +347,16 @@ export function Place({
 							className={cn(PLACE, PAGE)}
 						>
 							{head}
-							<div className={cn(REGION, foot && REGION_FOOTED)}>
+							<div ref={foot ? region.ref : undefined} className={REGION}>
 								<div className={BODY_WRAP}>
 									{body}
 									{layer}
 								</div>
 								{foot ? (
 									<div ref={dock} className={cn(FOOT_DOCKED, DOCKED)}>
-										<FootPlace value="docked">{foot}</FootPlace>
+										<FootPlace value="docked">
+											<FootRegion value={region.height}>{foot}</FootRegion>
+										</FootPlace>
 									</div>
 								) : null}
 							</div>

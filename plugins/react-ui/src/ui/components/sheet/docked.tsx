@@ -21,7 +21,7 @@ import {
 import { backGlyph } from "../../lib/back.ts";
 import { focusFirst } from "../../lib/focus.ts";
 import { FormStands } from "../../lib/form.ts";
-import { FootPlace } from "../../lib/frame.ts";
+import { FootPlace, FootRegion } from "../../lib/frame.ts";
 import { useTouch } from "../../lib/media.ts";
 import { ActFailed, ReasonKept } from "../../lib/reason.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
@@ -47,12 +47,12 @@ const TITLE = "min-w-0 wrap-break-word";
 // The body takes a tab stop only while it scrolls with nothing tabbable inside.
 const BODY =
 	"flex flex-col min-h-0 overflow-y-auto overscroll-contain focus-visible:-outline-offset-2";
-// In a foot the body scrolls past two fifths of the foot's region (`cqh` of the
-// Thread's or the Place's size container) and keeps three rows whatever the
-// head, the foot line and the log hold, so a body shorter than three rows pads
-// to them. The contract's cells hold no arbitrary value, so both bounds
-// restate the region's fraction and the row size here.
-const BODY_DOCKED = "min-h-[calc(var(--spacing-row)_*_3)] max-h-[40cqh]";
+// In a foot the body scrolls past this share of the foot's region (`FootRegion`,
+// zero outside a docked foot, where the body has no bound) and keeps these rows
+// whatever the head, the foot line and the log hold, so a shorter body pads to
+// them.
+const BODY_SHARE = 0.4;
+const BODY_ROWS = 3;
 const FOOT = "shrink-0";
 const FOOT_ROW = "flex items-center justify-end";
 const FOOT_STACK = "flex flex-col";
@@ -84,7 +84,7 @@ export function SheetDocked({
 	children,
 }: SheetDockedProps) {
 	const touch = useTouch();
-	const bounded = use(FootPlace) === "docked";
+	const region = use(FootRegion);
 	const words = useWords();
 	const titleId = useId();
 	const root = useRef<HTMLElement>(null);
@@ -173,7 +173,15 @@ export function SheetDocked({
 				<div
 					ref={setBody}
 					tabIndex={stop ? 0 : undefined}
-					className={cn(SHEET_DOCKED_BODY, BODY, bounded && BODY_DOCKED)}
+					style={
+						region > 0
+							? {
+									minHeight: `calc(var(--spacing-row) * ${BODY_ROWS})`,
+									maxHeight: BODY_SHARE * region,
+								}
+							: undefined
+					}
+					className={cn(SHEET_DOCKED_BODY, BODY)}
 				>
 					<FootPlace value={null}>
 						<FormStands value="sheet">{children}</FormStands>

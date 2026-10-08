@@ -83,11 +83,10 @@ export function Waiting(props: { fit: ActionBarFit }) {
 
 export function drawActionBar(frame: ShowcaseFrame) {
 	// The meta cell is the selection count: a publish page's bar docked at
-	// its foot, the act pending in `loading` and blocked in `disabled`. A Place
-	// with a foot stands in a column of its own height.
+	// its foot, the act pending in `loading` and blocked in `disabled`.
 	if (frame.cell.name === "TEXT.role.meta") {
 		const page = <Publish state={frame.state} />;
-		return <Column height="h-185">{page}</Column>;
+		return <Column>{page}</Column>;
 	}
 	const { fit, acts, reason } = drawnOf(frame.cell.name);
 	const last = acts.length - 1;

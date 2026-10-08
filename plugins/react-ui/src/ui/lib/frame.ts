@@ -1,6 +1,11 @@
 import type { Dialog } from "@base-ui/react/dialog";
 import type { LinkAct, Switcher } from "@fcalell/ui-core/descriptors";
-import { createContext, type ReactNode } from "react";
+import {
+	createContext,
+	type ReactNode,
+	useLayoutEffect,
+	useState,
+} from "react";
 
 // What the frame molecules hand each other. The Shell hands its switcher to
 // the Place, which draws its trigger at the start of its touch top bar.
@@ -70,3 +75,27 @@ export const PageTitle = createContext<string | undefined>(undefined);
 // `Sheet` in a foot draws its docked form, which resets it to `null` for what
 // it holds, so a sheet opened from inside is the modal one.
 export const FootPlace = createContext<"docked" | "inline" | null>(null);
+
+// The height of the region a docked foot shares with what stands over it (a
+// filling Thread or a footed Place), in whole pixels: a docked `Sheet` bounds
+// its body by a fraction of it. Container units cannot give it: a size
+// container takes no height from its content, so the region would collapse in
+// a column of auto height. Zero until measured and outside a docked region,
+// where the body is unbounded.
+export const FootRegion = createContext(0);
+
+/** The region's measured height and the ref to put on it. */
+export function useFootRegion() {
+	const [node, ref] = useState<HTMLElement | null>(null);
+	const [height, setHeight] = useState(0);
+	useLayoutEffect(() => {
+		if (!node) return;
+		const measure = () =>
+			setHeight(Math.round(node.getBoundingClientRect().height));
+		measure();
+		const resize = new ResizeObserver(measure);
+		resize.observe(node);
+		return () => resize.disconnect();
+	}, [node]);
+	return { height, ref };
+}

@@ -162,11 +162,6 @@ export const OVERLAYS: readonly string[] = [
 	// A docked foot names the anchor the toasts' layer stands above.
 	"[anchor-name:--docked-foot]",
 	"bottom-[anchor(--docked-foot_top,0px)]",
-	// The region a docked foot shares with the log is a size container, and a
-	// docked Sheet's body is bounded by it and by three rows.
-	"[container-type:size]",
-	"max-h-[40cqh]",
-	"min-h-[calc(var(--spacing-row)_*_3)]",
 	// A page's head reads its Split's marks: the back act with a record, the
 	// Details act with a pane, no head beside a record, the Toolbar leaving
 	// with the list.

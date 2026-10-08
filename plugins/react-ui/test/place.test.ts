@@ -38,14 +38,16 @@ test("a Place read from across a room holds nothing that opens a layer", () => {
 	assert.ok(ROSTER.layout.Place?.props.includes("distance"));
 });
 
-// A size container sizes by its flex height, never its content: a footless
-// Place in a column of auto height would collapse to its head and its content
-// would overflow onto what stands below.
-test("a Place region is a size container only while a foot docks", () => {
-	const source = readFileSync(
-		new URL("../src/ui/components/place/index.tsx", import.meta.url),
-		"utf8",
-	);
-	assert.doesNotMatch(source, /const REGION = "[^"]*container-type/);
-	assert.match(source, /cn\(REGION, foot && REGION_FOOTED\)/);
+// A size container takes no height from its content, so a footed Place or a
+// filling Thread in a column of auto height would collapse to its head: the
+// regions are measured (`FootRegion`), never size containers.
+test("a Place and a Thread region are not size containers", () => {
+	for (const file of ["place", "thread"]) {
+		const source = readFileSync(
+			new URL(`../src/ui/components/${file}/index.tsx`, import.meta.url),
+			"utf8",
+		);
+		assert.doesNotMatch(source, /container-type/);
+		assert.match(source, /<FootRegion value=\{region\.height\}>/);
+	}
 });

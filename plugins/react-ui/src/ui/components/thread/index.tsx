@@ -31,9 +31,11 @@ import type { Closed } from "../../lib/closed.ts";
 import { useFootFocus } from "../../lib/focus.ts";
 import {
 	FootPlace,
+	FootRegion,
 	PageTitle,
 	ThreadBleeds,
 	ThreadRoom,
+	useFootRegion,
 } from "../../lib/frame.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 import { useTouch } from "../../lib/media.ts";
@@ -46,9 +48,8 @@ import type { QueryLike } from "../query-boundary/index.tsx";
 import { Latest } from "./latest.tsx";
 
 const STACK = "flex flex-col";
-// A size container: a docked sheet bounds its body by a fraction of this
-// region (`cqh`), which its flex height gives it, never its content.
-const FILL = "flex flex-col grow min-h-0 [container-type:size]";
+// With a foot its measured height bounds a docked sheet's body (`FootRegion`).
+const FILL = "flex flex-col grow min-h-0";
 // In a Split's main the Thread bleeds through the inset the record's head
 // keeps, under the head's hairline.
 const BLEED = "-mx-page";
@@ -233,6 +234,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 	const content = useRef<HTMLDivElement>(null);
 	const dock = useRef<HTMLDivElement>(null);
 	useFootFocus(dock);
+	const region = useFootRegion();
 	const atEnd = useRef(true);
 	// The log's box and content heights as the follow last saw them. A scroll
 	// event that reads other heights came with a resize (the foot changed, a
@@ -284,6 +286,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 		);
 	return (
 		<div
+			ref={foot ? region.ref : undefined}
 			data-fill
 			className={cn(FILL, bleeds && THREAD_UNDER_HEAD, bleeds && BLEED)}
 		>
@@ -315,7 +318,9 @@ export function Thread<T>(props: ThreadProps<T>) {
 			{foot ? (
 				<div ref={dock} className={cn(FOOT_DOCKED, DOCKED, centres)}>
 					<FootPlace value="docked">
-						<div className={cn(column, FOOT_COLUMN)}>{foot}</div>
+						<FootRegion value={region.height}>
+							<div className={cn(column, FOOT_COLUMN)}>{foot}</div>
+						</FootRegion>
 					</FootPlace>
 				</div>
 			) : null}
