@@ -12,6 +12,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { Runs } from "../../lib/code.tsx";
 import { focusFirst } from "../../lib/focus.ts";
 import { FormStands } from "../../lib/form.ts";
 import { PageTitle } from "../../lib/frame.ts";
@@ -121,20 +122,7 @@ export function Gate({
 											</h1>
 											{description ? (
 												<p className={cn(text({ role: "meta" }), WRAPS)}>
-													{description.map((run, at) =>
-														typeof run === "string" ? (
-															// biome-ignore lint/suspicious/noArrayIndexKey: a run is its position
-															<span key={at}>{run}</span>
-														) : (
-															<span
-																// biome-ignore lint/suspicious/noArrayIndexKey: a run is its position
-																key={at}
-																className={textStrong({ role: "meta" })}
-															>
-																{run.strong}
-															</span>
-														),
-													)}
+													<Runs runs={description} />
 												</p>
 											) : null}
 										</div>

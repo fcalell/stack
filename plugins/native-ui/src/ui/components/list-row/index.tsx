@@ -3,9 +3,10 @@ import type {
 	ChangeKind,
 	ChipMark,
 	MenuItem,
-	Part,
 	RowEntry,
 	RowLeading,
+	RowPart,
+	RowTitle,
 	RowTrailing,
 	StatusMark,
 } from "@fcalell/ui-core/descriptors";
@@ -37,11 +38,18 @@ import { ageShort } from "../../lib/age";
 import { useClock } from "../../lib/clock";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { CodeCut, Runs } from "../../lib/code";
 import { FieldDisabled, FieldError, InlineField } from "../../lib/field";
 import { GroundContext } from "../../lib/ground";
 import { Ink } from "../../lib/ink";
 import { navigate, usePathname } from "../../lib/navigate";
-import { joinParts, META_CUT, partRuns, partText } from "../../lib/parts";
+import {
+	isCoded,
+	leadRuns,
+	META_CUT,
+	partRuns,
+	partText,
+} from "../../lib/parts";
 import { ReasonHostContext, usePressed } from "../../lib/reason";
 import type { Route } from "../../lib/route";
 import { useTouched } from "../../lib/touched";
@@ -89,6 +97,7 @@ const TICK = "size-target";
 const TEXT = "flex-1 min-w-0";
 const LINE = "flex-row items-center min-w-0";
 const TITLE = "grow shrink";
+const TITLE_CODE = "flex-row items-center grow shrink min-w-0";
 const LINE_WHOLE = "flex-row items-start min-w-0";
 // A step is one body line's box tall (the step lists' 19 of the references,
 // at the type scale's rung).
@@ -116,9 +125,12 @@ const TRAILING_BAR = "w-figures";
 const META_LINE = "flex-row items-center min-w-0 overflow-hidden";
 const META_PARTS = "flex-row grow shrink min-w-0";
 const META_FIRST = "shrink min-w-0";
+const META_FIRST_CODE = "flex-row shrink min-w-0";
 const META_LATER = "flex-row grow w-0 overflow-hidden";
 const META_RUN = "shrink min-w-0";
 const META_QUOTED = "shrink-10000000 min-w-0";
+const META_CODE = "flex-row shrink-10000000 min-w-0";
+const SEPARATOR = "shrink-0";
 const STATUS_MARK = "shrink min-w-0";
 // The chip stands in a slot that shows it whole or not at all: a flex line
 // always keeps its first item, so a zero-width start item takes that place and
@@ -150,10 +162,13 @@ export interface ListRowProps<V extends string | null = string> extends Closed {
 	// takes its hit box.
 	leading?: RowLeading;
 	// What the row names, at body 500; at 400 in the meta ink while `dim`, and
-	// wrapped whole at 400 while `wrap`.
-	title: Part;
-	// The line under the title, its parts joined by a middle dot.
-	meta?: readonly Part[];
+	// wrapped whole at 400 while `wrap`. Runs of words and `{ code }` draw the
+	// code in the inline code style; a title that is one `{ code }` cuts in its
+	// middle, keeping its start and its end.
+	title: RowTitle;
+	// The line under the title, its parts joined by a middle dot; a `{ code }`
+	// part cuts in its middle, keeping its start and its end.
+	meta?: readonly RowPart[];
 	// A value at the title line's end (an age, a count, a word), or a pick
 	// that applies at once.
 	trailing?: RowTrailing<V>;
@@ -375,7 +390,7 @@ export function ListRow<V extends string | null = string>({
 	const lines = wrap ? "whole" : stacked;
 	// A model-written name (`Quoted`) wraps in a row that has a second line, so
 	// its closing quote is never cut away; its row grows by the lines it wraps.
-	const quotedWraps = lined && typeof title !== "string";
+	const quotedWraps = lined && typeof title === "object" && "quoted" in title;
 	// A wrapped title and an entry's input are lines under the title's first, so
 	// the parts beside them stand on that first line.
 	const top = wrap || entry !== undefined;
@@ -386,8 +401,13 @@ export function ListRow<V extends string | null = string>({
 	// A blocked tick's reason follows the first part inside the span that yields
 	// last, so the part that names the item stays whole ahead of it.
 	const [first, ...rest] = meta ?? [];
-	const lead: Part[] = first === undefined ? [] : [first];
+	const lead: RowPart[] = first === undefined ? [] : [first];
 	if (blocked !== undefined) lead.push(blocked);
+	// A first part that is one span of code, alone on its line, cuts in its
+	// middle; beside a blocked reason it is a run in a sentence.
+	const [only] = lead;
+	const coded = lead.length === 1 && only && isCoded(only) ? only : undefined;
+	const metaRole = text({ role: "meta" });
 	// A waiting row (its List was given the items while it loads) draws the bar
 	// in the value's place; the app's slot is not read for it.
 	let value: ReactNode = null;
@@ -407,12 +427,22 @@ export function ListRow<V extends string | null = string>({
 				</RNText>
 			</First>
 		);
-	const titled = (
+	const titleRole = rowTitle({ form: rowTitleForm(wrap, dim) });
+	let shown: ReactNode = named;
+	if (typeof title === "object" && !isCoded(title) && !("quoted" in title))
+		shown = <Runs runs={title} />;
+	// A title that is one span of code stands in a line of its own, so its stem
+	// truncates and its tail keeps the room it needs.
+	const titled = isCoded(title) ? (
+		<View className={TITLE_CODE}>
+			<CodeCut code={title.code} role={titleRole} />
+		</View>
+	) : (
 		<RNText
 			numberOfLines={wrap || quotedWraps ? undefined : 1}
-			className={cn(rowTitle({ form: rowTitleForm(wrap, dim) }), TITLE)}
+			className={cn(titleRole, TITLE)}
 		>
-			{named}
+			{shown}
 		</RNText>
 	);
 	const titleLine = (
@@ -522,27 +552,46 @@ export function ListRow<V extends string | null = string>({
 					<View className={cn(ROW_META_LINE, META_LINE)}>
 						{lead.length === 0 ? null : (
 							<View className={META_PARTS}>
-								<RNText
-									numberOfLines={1}
-									className={cn(text({ role: "meta" }), META_FIRST)}
-								>
-									{joinParts(lead, META_CUT)}
-								</RNText>
+								{coded ? (
+									<View className={META_FIRST_CODE}>
+										<CodeCut code={coded.code} role={metaRole} />
+									</View>
+								) : (
+									<RNText
+										numberOfLines={1}
+										className={cn(metaRole, META_FIRST)}
+									>
+										<Runs runs={leadRuns(lead, META_CUT)} />
+									</RNText>
+								)}
 								{rest.length ? (
 									<View className={META_LATER}>
-										{partRuns(rest, META_CUT).map((run, at) => (
-											<RNText
-												// biome-ignore lint/suspicious/noArrayIndexKey: the runs come from parts that never reorder, so position is the identity
-												key={at}
-												numberOfLines={1}
-												className={cn(
-													text({ role: "meta" }),
-													run.quoted ? META_QUOTED : META_RUN,
-												)}
-											>
-												{`\u00A0· ${run.text}`}
-											</RNText>
-										))}
+										{partRuns(rest, META_CUT).map((run, at) =>
+											run.kind === "code" ? (
+												<View
+													// biome-ignore lint/suspicious/noArrayIndexKey: the runs come from parts that never reorder, so position is the identity
+													key={at}
+													className={META_CODE}
+												>
+													<RNText className={cn(metaRole, SEPARATOR)}>
+														{" · "}
+													</RNText>
+													<CodeCut code={run.text} role={metaRole} />
+												</View>
+											) : (
+												<RNText
+													// biome-ignore lint/suspicious/noArrayIndexKey: the runs come from parts that never reorder, so position is the identity
+													key={at}
+													numberOfLines={1}
+													className={cn(
+														metaRole,
+														run.kind === "quoted" ? META_QUOTED : META_RUN,
+													)}
+												>
+													{` · ${run.text}`}
+												</RNText>
+											),
+										)}
 									</View>
 								) : null}
 							</View>

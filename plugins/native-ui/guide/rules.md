@@ -100,8 +100,8 @@ label in the sheet and on the trigger; `status` stays for a work state that move
 
 A page with no sidebar or tab bar beside it (sign-in, a consent step) is a `Gate`, never a
 `Place`, a `Screen` or a hand-built centred `View`. It takes `title` (the page's one header),
-`description` (a meta line as a `Sentence` from `@fcalell/ui-core/descriptors`: runs, each a string or
-`{ strong }` at weight 500, never a node or one string), `step` (`{ at, of }`, a `StepCount` between
+`description` (a meta line as a `Sentence` from `@fcalell/ui-core/descriptors`: runs, each a string,
+`{ strong }` at weight 500 or `{ code }` in the inline code style, never a node or one string), `step` (`{ at, of }`, a `StepCount` between
 the mark and the title), `mark` (`{ name, src? }`, the product's image at the avatar's size, its
 `name` standing in its place while the image fails or `src` is absent), `banner` (a `Banner`, first in the column) and
 `children`, the step's body (a `Form`, a `Group`, an `OptionList`, a `List`, `Section`s). It is a root
@@ -219,7 +219,7 @@ its work's steps are `steps` (a `StatusMark` each, the running one in `running`)
 in the meta line's place, so give `meta` back once the act settles. A title read whole (a note,
 a memory) is `wrap`: it wraps to every line at 400 with its leading, trailing and acts on the
 first line, and a `List`'s `row` map takes it as one boolean for every row. A `{ quoted }` title
-marks a model-written name and wraps whole in a row with a second line; `wrap` is for text a person approved. A row's trailing age is the ISO
+marks a model-written name and wraps whole in a row with a second line; `wrap` is for text a person approved. A flag, a path or an identifier in a title is a `{ code }` run: the title is then an array of runs (`[{ code: "--strict" }, " turns strict mode on."]`; backticks in a string are never parsed) that draws the code in the inline code style and truncates at its end as one title; a title that is a single `{ code: path }` is one value that cuts in its middle, keeping its start and its end, so the end of a path stays readable. A `meta` part that is `{ code }` cuts the same way. A row's trailing age is the ISO
 moment itself, `trailing: { age: item.madeAt }`: the row words it short ("2 min") and keeps it
 current, so pass the moment, never a worded string.
 

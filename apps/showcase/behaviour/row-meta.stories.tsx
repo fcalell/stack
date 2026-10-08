@@ -272,3 +272,75 @@ export const StatusRoom: StoryObj = {
 	),
 	play: statusRoom,
 };
+
+// Code in a row: a title of runs draws the code in the inline code style and
+// truncates at its end; a path that is a whole title or a whole meta part cuts
+// in its middle and keeps its end. Desktop and touch, at 320 and 360.
+const SENTENCE = "turns strict mode on for every package in the workspace";
+const PATH = "packages/server/src/worker/plugins/registry.ts";
+const CWD = "/tmp/stead-fx-u9/repo-one/packages/server";
+
+function Codes() {
+	return (
+		<>
+			<ListRow
+				title={[{ code: "--strict" }, ` ${SENTENCE}`]}
+				meta={["criterion"]}
+				href="#strict"
+			/>
+			<ListRow
+				title={{ code: PATH }}
+				trailing={{ value: "9 min" }}
+				href="#path"
+			/>
+			<ListRow
+				title="Sensitive path"
+				meta={["sensitive", { code: CWD }]}
+				href="#cwd"
+			/>
+		</>
+	);
+}
+
+const rowOf = (frame: ReturnType<typeof within>, name: string) => {
+	const row = frame.getByRole("link", { name }).parentElement;
+	if (!row) throw new Error("the row has no box");
+	return row;
+};
+
+const coded: Play = async ({ canvas }) => {
+	for (const frame of frames(canvas)) {
+		const runs = rowOf(frame, `--strict ${SENTENCE}`);
+		const code = frame.getByText("--strict");
+		await expect(code.tagName).toBe("CODE");
+		const title = code.parentElement;
+		if (!title) throw new Error("the code has no title");
+		await expect(title.textContent).toBe(`--strict ${SENTENCE}`);
+		await expect(clipped(title)).toBe(true);
+		await expect(right(code)).toBeLessThanOrEqual(right(runs) + 0.5);
+
+		const whole = rowOf(frame, PATH);
+		const tail = frame.getByText("y.ts");
+		const stem = frame.getByText(PATH.slice(0, -4));
+		await expect(clipped(stem)).toBe(true);
+		await expect(clipped(tail)).toBe(false);
+		await expect(right(tail)).toBeLessThanOrEqual(right(whole) + 0.5);
+		await expect(clipped(frame.getByText("9 min"))).toBe(false);
+
+		const meta = rowOf(frame, "Sensitive path");
+		const end = frame.getByText("rver");
+		const start = frame.getByText(CWD.slice(0, -4));
+		await expect(clipped(start)).toBe(true);
+		await expect(clipped(end)).toBe(false);
+		for (const element of meta.querySelectorAll("*")) {
+			await expect(right(element)).toBeLessThanOrEqual(right(meta) + 0.5);
+		}
+	}
+};
+
+export const CodeRuns: StoryObj = {
+	render: () => <Widths>{() => <Codes />}</Widths>,
+	play: coded,
+};
+
+export const CodeRunsTouch = touch(CodeRuns);

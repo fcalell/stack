@@ -4,8 +4,9 @@ import type {
 	ChipMark,
 	IconName,
 	MenuItem,
-	Part as MetaPart,
 	RowEntry,
+	RowPart,
+	RowTitle,
 	RowTrailing,
 	StatusMark,
 } from "@fcalell/ui-core/descriptors";
@@ -243,8 +244,8 @@ const STAGES: Stage[] = [
 // spend as the row's trailing value, which stays whole while the quote cuts.
 interface Work {
 	id: string;
-	title: string;
-	meta: MetaPart[];
+	title: RowTitle;
+	meta: RowPart[];
 	trailing: string;
 }
 
@@ -275,6 +276,23 @@ const WORKS: Work[] = [
 			{ quoted: "Sync the shelf between devices and offline" },
 		],
 		trailing: "8 min · $0.12",
+	},
+	// Code in a title: runs that truncate at their end, a path that is the
+	// whole title or a whole meta part cutting in its middle.
+	{
+		id: "strict",
+		title: [{ code: "--strict" }, " turns strict mode on in every package"],
+		meta: [
+			"criterion",
+			{ code: "packages/server/src/worker/plugins/registry.ts" },
+		],
+		trailing: "2 min",
+	},
+	{
+		id: "path",
+		title: { code: "packages/server/src/worker/plugins/registry.ts" },
+		meta: ["sensitive", { code: "/tmp/stead-fx-u9/repo-one/packages/server" }],
+		trailing: "9 min",
 	},
 ];
 

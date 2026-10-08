@@ -6,9 +6,10 @@ import type {
 	ChangeKind,
 	ChipMark,
 	MenuItem,
-	Part,
 	RowEntry,
 	RowLeading,
+	RowPart,
+	RowTitle,
 	RowTrailing,
 	StatusMark,
 } from "@fcalell/ui-core/descriptors";
@@ -38,10 +39,17 @@ import { type KeyboardEvent, type ReactNode, use, useMemo } from "react";
 import { ageShort } from "../../lib/age.ts";
 import { useClock } from "../../lib/clock.ts";
 import type { Closed } from "../../lib/closed.ts";
+import { CodeCut, Runs } from "../../lib/code.tsx";
 import { InlineField } from "../../lib/field.ts";
 import { GroundContext } from "../../lib/ground.ts";
 import { follow, navigate, useRoute } from "../../lib/navigate.ts";
-import { joinParts, META_CUT, partRuns, partText } from "../../lib/parts.ts";
+import {
+	isCoded,
+	leadRuns,
+	META_CUT,
+	partRuns,
+	partText,
+} from "../../lib/parts.ts";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { TrailingWait } from "../../lib/trailing-wait.ts";
@@ -98,6 +106,9 @@ const TEXT = "flex flex-col grow min-w-0";
 const LINE = "flex items-center min-w-0";
 const TITLE = "truncate grow";
 const TITLE_WHOLE = "grow min-w-0 wrap-break-word";
+// A title that is one span of code stands in a flex line, so its stem
+// truncates and its tail keeps the room it needs.
+const TITLE_CODE = "flex items-center grow min-w-0";
 const LINE_WHOLE = "flex items-start min-w-0";
 const TRAILING = "shrink-0";
 // A trailing value waiting: four figures, a count's or an age's width.
@@ -127,6 +138,7 @@ const TITLE_BEFORE_VALUE = "basis-1/2";
 const META_LINE = "flex items-center min-w-0 overflow-hidden";
 const META_PARTS = "flex grow shrink min-w-0";
 const META_FIRST = "min-w-0 truncate";
+const META_FIRST_CODE = "flex min-w-0";
 // The later parts take no width of their own and truncate into the room the
 // marks leave, but show at least `figures` of it or none: they stand in a slot
 // that wraps its text under its one line, clipped away, when the room is less,
@@ -138,6 +150,8 @@ const LATER_START = "w-0 h-full";
 const LATER_TEXT = "flex grow basis-figures min-w-0 overflow-hidden";
 const LATER_RUN = "min-w-0 truncate";
 const LATER_QUOTED = "min-w-0 truncate shrink-10000000";
+const LATER_CODE = "flex min-w-0 shrink-10000000";
+const SEPARATOR = "shrink-0";
 // A step is one body line's box tall (the step lists' 19 of the references,
 // at the type scale's rung), its label truncating before its mark does.
 const STEPS = "flex flex-col min-w-0";
@@ -171,10 +185,10 @@ export interface ListRowProps<V extends string | null = string> extends Closed {
 	change?: ChangeKind;
 	/** A glyph, a status's mark (its dot, or the spinner while `running`), an avatar, or a tick that chooses the row (disabled while `blocked`, its reason leading the meta line), in one slot at the avatar's size; a tick takes its hit box. */
 	leading?: RowLeading;
-	/** What the row names, at body 500; at 400 in the meta ink while `dim`, and wrapped whole at 400 while `wrap`. */
-	title: Part;
-	/** The line under the title, its parts joined by a middle dot. */
-	meta?: readonly Part[];
+	/** What the row names, at body 500; at 400 in the meta ink while `dim`, and wrapped whole at 400 while `wrap`. Runs of words and `{ code }` draw the code in the inline code style; a title that is one `{ code }` cuts in its middle, keeping its start and its end. */
+	title: RowTitle;
+	/** The line under the title, its parts joined by a middle dot; a `{ code }` part cuts in its middle, keeping its start and its end. */
+	meta?: readonly RowPart[];
 	/** A value at the title line's end (an age, a count, a word), or a pick that applies at once. */
 	trailing?: RowTrailing<V>;
 	/** A work state on the meta line; a waiting act is told by its tone. */
@@ -370,7 +384,7 @@ export function ListRow<V extends string | null = string>({
 	const lines = wrap ? "whole" : stacked;
 	// A model-written name (`Quoted`) wraps in a row that has a second line, so
 	// its closing quote is never cut away; its row grows by the lines it wraps.
-	const quotedWraps = lined && typeof title !== "string";
+	const quotedWraps = lined && typeof title === "object" && "quoted" in title;
 	// A wrapped title and an entry's input are lines under the title's first, so
 	// the parts beside them stand on that first line.
 	const top = wrap || entry !== undefined;
@@ -382,8 +396,12 @@ export function ListRow<V extends string | null = string>({
 	// A blocked tick's reason follows the first part inside the span that yields
 	// last, so the part that names the item stays whole ahead of it.
 	const [first, ...rest] = meta ?? [];
-	const lead: Part[] = first === undefined ? [] : [first];
+	const lead: RowPart[] = first === undefined ? [] : [first];
 	if (blocked !== undefined) lead.push(blocked);
+	// A first part that is one span of code, alone on its line, cuts in its
+	// middle; beside a blocked reason it is a run in a sentence.
+	const [only] = lead;
+	const coded = lead.length === 1 && only && isCoded(only) ? only : undefined;
 	// A waiting row (its List was given the items while it loads) draws the bar
 	// in the value's place; the app's slot is not read for it.
 	let value: ReactNode = null;
@@ -407,15 +425,23 @@ export function ListRow<V extends string | null = string>({
 	// A value beside a one-line title is whole or gone: the title holds half its
 	// line before the value takes a place on it.
 	const titles = value !== null && !top && !quotedWraps;
+	let shown: ReactNode = named;
+	let titleBox = wrap || quotedWraps ? TITLE_WHOLE : TITLE;
+	if (isCoded(title)) {
+		shown = <CodeCut code={title.code} />;
+		titleBox = TITLE_CODE;
+	} else if (typeof title === "object" && !("quoted" in title)) {
+		shown = <Runs runs={title} />;
+	}
 	const titled = (
 		<span
 			className={cn(
 				rowTitle({ form: rowTitleForm(wrap, dim) }),
-				wrap || quotedWraps ? TITLE_WHOLE : TITLE,
+				titleBox,
 				titles && TITLE_BEFORE_VALUE,
 			)}
 		>
-			{named}
+			{shown}
 		</span>
 	);
 	const titleLine = (
@@ -562,22 +588,44 @@ export function ListRow<V extends string | null = string>({
 					<span className={cn(ROW_META_LINE, META_LINE)}>
 						{lead.length === 0 ? null : (
 							<span className={META_PARTS}>
-								<span className={cn(text({ role: "meta" }), META_FIRST)}>
-									{joinParts(lead, META_CUT)}
+								<span
+									className={cn(
+										text({ role: "meta" }),
+										coded ? META_FIRST_CODE : META_FIRST,
+									)}
+								>
+									{coded ? (
+										<CodeCut code={coded.code} />
+									) : (
+										<Runs runs={leadRuns(lead, META_CUT)} />
+									)}
 								</span>
 								{rest.length ? (
 									<span className={cn(text({ role: "meta" }), LATER)}>
 										<span aria-hidden className={LATER_START} />
 										<span className={LATER_TEXT}>
-											{partRuns(rest, META_CUT).map((run, at) => (
-												<span
-													// biome-ignore lint/suspicious/noArrayIndexKey: the runs come from parts that never reorder, so position is the identity
-													key={at}
-													className={run.quoted ? LATER_QUOTED : LATER_RUN}
-												>
-													{` · ${run.text}`}
-												</span>
-											))}
+											{partRuns(rest, META_CUT).map((run, at) =>
+												run.kind === "code" ? (
+													<span
+														// biome-ignore lint/suspicious/noArrayIndexKey: the runs come from parts that never reorder, so position is the identity
+														key={at}
+														className={LATER_CODE}
+													>
+														<span className={SEPARATOR}>{" · "}</span>
+														<CodeCut code={run.text} />
+													</span>
+												) : (
+													<span
+														// biome-ignore lint/suspicious/noArrayIndexKey: the runs come from parts that never reorder, so position is the identity
+														key={at}
+														className={
+															run.kind === "quoted" ? LATER_QUOTED : LATER_RUN
+														}
+													>
+														{` · ${run.text}`}
+													</span>
+												),
+											)}
 										</span>
 									</span>
 								) : null}

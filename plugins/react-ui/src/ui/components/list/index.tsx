@@ -8,9 +8,10 @@ import type {
 	Lock,
 	MenuItem,
 	MeterMark,
-	Part,
 	RowEntry,
 	RowLeading,
+	RowPart,
+	RowTitle,
 	RowTrailing,
 	StatusMark,
 } from "@fcalell/ui-core/descriptors";
@@ -115,7 +116,7 @@ export interface RowSlots<T, V extends string | null = string> {
 	/** The item's React key, unique in the list. */
 	key: (item: T) => string;
 	/** The row's title. */
-	title: (item: T) => Part;
+	title: (item: T) => RowTitle;
 	/** The item's children, which makes the list a tree: they draw one level in under it, and its fold act folds them (open by default, the list holds the state). Every item's `key` is unique across the whole tree. */
 	children?: (item: T) => readonly T[] | undefined;
 	/** Where the row stands in a change set, its change mark; a row of the set that is untouched is `unchanged`. */
@@ -123,7 +124,7 @@ export interface RowSlots<T, V extends string | null = string> {
 	/** The rows' leading mark, one kind for every row of the list. */
 	leading?: LeadingSlot<T>;
 	/** The row's meta line. */
-	meta?: (item: T) => readonly Part[] | undefined;
+	meta?: (item: T) => readonly RowPart[] | undefined;
 	/** The row's trailing value or pick. */
 	trailing?: (item: T) => RowTrailing<V> | undefined;
 	/** The row's status mark. */

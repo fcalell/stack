@@ -132,7 +132,7 @@ graph, compiles it with the Tailwind CLI in `scripts/fixture/`, and holds the co
 - **A page outside the shell.** `Gate` is the layout frame of a sign-in or a consent step:
   one column at the `auth` width on the surface, centred across and down the viewport, holding a
   `banner`, the `mark` (`{ name, src? }`), an optional `step` (`StepCount`), the `title` (the page's one
-  `h1`), a `description` (a `Sentence`: runs with `{ strong }` parts) and the body. It mounts the
+  `h1`), a `description` (a `Sentence`: runs with `{ strong }` and `{ code }` parts) and the body. It mounts the
   same `FrameHost` as the `Shell` (`components/shell/host.tsx`: the `toast()` queue, the `confirm()`
   decisions, the popup layer). The first field of a step takes focus as the page opens and as `title`
   changes (`focusFirst` in `./lib/focus`), and it sets `FormStands` to `auth`, so an `ActionBar` with

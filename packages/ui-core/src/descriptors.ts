@@ -57,6 +57,21 @@ export interface Quoted {
 
 export type Part = string | Quoted;
 
+// A span of code (a flag, a path, an identifier), drawn in the inline code
+// style the way `Prose` draws a backtick span. As a row's whole title or a
+// whole `meta` part it is one value that cuts in its middle, keeping its
+// start and its end (`valueCut`); a run inside a sentence never does.
+export interface Coded {
+	code: string;
+}
+
+// A `meta` part of a row: a `Part` or a span of code.
+export type RowPart = Part | Coded;
+
+// A row's title: a `Part`, one span of code, or runs of plain words and code
+// that truncate at their end as one title.
+export type RowTitle = RowPart | readonly (string | Coded)[];
+
 // A row's marks: a status (its dot beside its word) and a data value's chip
 // on its family, each with its label; a row holds at most one of each.
 export interface StatusMark {
@@ -346,8 +361,8 @@ export interface StageEnd {
 
 // A meta line as data: runs of plain words, a part at strong weight (the
 // address a sentence names) a `{ strong }` run, the way a nested `Text strong`
-// draws.
-export type Sentence = readonly (string | { strong: string })[];
+// draws, and a span of code a `{ code }` run.
+export type Sentence = readonly (string | { strong: string } | Coded)[];
 
 // The product's mark a `Gate` leads with: its `name`, which draws in the place
 // of the image at `src` while that fails or `src` is absent.

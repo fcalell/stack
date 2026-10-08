@@ -538,7 +538,8 @@ a tick with no animation, never jumped to full.
   text shrinks to nothing on its own line, so its box never passes the slot. A model-written later
   part (`Quoted`) stands in a span of its own that yields ahead of the plain parts, which is the
   one way a row says which part gives way: the age and spend that must read whole are its
-  `trailing`. A row that opens (`href` or `onOpen`) ends in a chevron (`ROW_CHEVRON`, the square of an icon act) after
+  `trailing`. A `Coded` later part (`{ code }`) stands in a span of its own at the same tier and
+  cuts in its middle like a definition value (`valueCut`, shared by both platforms). A row that opens (`href` or `onOpen`) ends in a chevron (`ROW_CHEVRON`, the square of an icon act) after
   its trailing value, unless its end holds an `act`, the more menu, a pick or a tree's fold. A value
   trailing a one-line title is whole or gone the same way: the title's basis is half its line, so
   a value wider than what that leaves wraps under the line and is clipped away, and the title then

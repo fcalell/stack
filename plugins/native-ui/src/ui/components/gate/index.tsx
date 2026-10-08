@@ -14,6 +14,7 @@ import { Image, Text as RNText, type TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { Runs } from "../../lib/code";
 import { FieldClaim } from "../../lib/field";
 import { FormStands } from "../../lib/form";
 import { PageTitle } from "../../lib/frame";
@@ -121,19 +122,7 @@ export function Gate({
 											</RNText>
 											{description ? (
 												<RNText className={text({ role: "meta" })}>
-													{description.map((run, at) =>
-														typeof run === "string" ? (
-															run
-														) : (
-															<RNText
-																// biome-ignore lint/suspicious/noArrayIndexKey: a run is its position
-																key={at}
-																className={textStrong({ role: "meta" })}
-															>
-																{run.strong}
-															</RNText>
-														),
-													)}
+													<Runs runs={description} />
 												</RNText>
 											) : null}
 										</View>
