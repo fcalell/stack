@@ -1,6 +1,6 @@
 ---
 id: 003-179
-status: review
+status: todo
 sessions: {}
 ---
 # react-ui: a loading Section counts the fields in its Form
@@ -12,9 +12,9 @@ Stead's repo settings hold one form among their sections, `Section > Form`, as t
 A loading `Section` reads its body by the depth rule (`plugin-react-ui/src/ui/lib/section.ts`, `sectionPartsOf`): direct children, a direct `Group`'s children and a direct `QueryBoundary`'s props. A `Form` is none of the known kinds, so its fields are never counted; the body counts as "any other body" and `sectionState` (`ui-core/src/list-state.ts`) stands `FALLBACK_FIELDS`, three skeleton fields, under a four-field form. The rules make `Section > Form` the shape of one form among sections (story 003-107), so the most common form body is the one the Section cannot count. 003-131 taught the Section to read a `Prose`, `Thread`, `Code`, `Meter` or `Slider` body; it left fields inside a `Form` as they were. The app cannot count them for the Section: `Section` takes no field count, and wrapping or copying the walker is a local copy of a stack module. Seen at stack `74a0e3d`.
 
 ## Acceptance criteria
-- [x] A loading `Section` whose body is a `Form` stands one skeleton field per `FormField` the `Form` holds, and its `ActionBar`'s waiting form, at the loaded section's height.
-- [x] A loading `Section` holding fields directly, a `Group` or a `List` is unchanged.
-- [x] The Section showcase holds a loading `Section > Form` beside the loaded one, and the critique measures both heights.
+- [ ] A loading `Section` whose body is a `Form` stands one skeleton field per `FormField` the `Form` holds, and its `ActionBar`'s waiting form, at the loaded section's height.
+- [ ] A loading `Section` holding fields directly, a `Group` or a `List` is unchanged.
+- [ ] The Section showcase holds a loading `Section > Form` beside the loaded one, and the critique measures both heights.
 
 ## Open questions
 - [x] Its shape (the walker reading through a `Form`, the `Form` taking the Section's loading itself, or another): the stack session decides.
@@ -28,3 +28,9 @@ The Form waits for itself; the Section's walker does not read through a Form (co
 Evidence: `behaviour/waiting.stories.tsx` holds `SectionOverItsForm` (+ Touch) and `SectionFormKeepsItsFields`. A loading `Section > Form` of four fields and a one-act bar measures 378 px loaded and 378 px waiting at 1200 px wide, 492 and 492 at 375 px touch. The waiting form holds five skeleton blocks (four fields, one bar) and no textbox or button, and a typed input is the same node after the wait. The scoped run (`--changed master`) passed 257 of 258, the one failure being a defect in the new story's own assertion (a hidden input is still in the DOM), fixed and rerun green (23/23); peak 3464 MiB. `pnpm check` turbo 45/45; the three `verify`s pass.
 
 Limits: a field with a description, or a switch or checkbox field, is not measured (the Section's own skeleton field has the same limit). Fields plus an `ActionBar` as direct Section children still hide the bar's waiting form (out of scope).
+
+## Open
+- The height match is measured only for label-plus-control fields (378 px desktop, 492 px touch, loaded and waiting equal). A field with a description and a switch or checkbox field are not measured: the ruling left them to report.
+- A loading `Group` or `List` body has no story of its own; only `SectionOverFields` reruns.
+- Out of scope by the ruling, still a gap: fields plus an `ActionBar` as direct Section children (no Form) hide the bar's waiting form. The owner decides whether it is this story or another.
+- The critique has not measured the frame; the native form is not rendered.
