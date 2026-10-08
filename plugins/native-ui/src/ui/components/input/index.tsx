@@ -42,10 +42,13 @@ export type InputKind =
 
 export interface InputProps extends Closed {
 	kind?: InputKind;
+	/** The value (text; one line, scrolls in the field). */
 	value: string;
 	onChange: (value: string) => void;
 	onCommit?: (value: string) => void;
+	/** The hint drawn while the value is empty; never the field's name (a short phrase; truncates). */
 	placeholder?: string;
+	/** A `number`'s unit, drawn after the value (a word; one line). */
 	unit?: string;
 	act?: IconAct;
 }

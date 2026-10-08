@@ -46,9 +46,9 @@ const BAR = "w-full";
 
 /** Text a machine reads, in mono, whole. */
 export interface CodeProps extends Closed {
-	/** The text, its lines split on newlines. */
+	/** The text, its lines split on newlines (text; wraps at any width). */
 	text: string;
-	/** What the text is (a file's name, the tool it goes into), in a head over it; it names the text and its acts. */
+	/** What the text is (a file's name, the tool it goes into), in a head over it; it names the text and its acts (a short phrase; truncates). */
 	title?: string;
 	/** Shows only the last lines, this many, behind an act that reveals the earlier ones. */
 	tail?: number;

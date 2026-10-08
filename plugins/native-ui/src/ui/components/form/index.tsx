@@ -9,6 +9,7 @@ import { ActionBar } from "../action-bar";
 import { Section } from "../section";
 
 export interface FormProps extends Closed {
+	/** The fields, then its `ActionBar`, whose filled act submits the form. A form among a screen's other sections is `Section > Form`, so every section's head-to-body gap stays the pair step; `Section`s inside the form are the whole screen's, all at the fields step. */
 	children?: ReactNode;
 }
 

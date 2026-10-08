@@ -44,7 +44,7 @@ const CLOSE_HIT = "flex pointer-events-auto";
 interface ImageBase extends Closed {
 	/** The picture's address. */
 	src: string;
-	/** What the picture shows: the button's accessible name, the failed form's words and the full view's name. */
+	/** What the picture shows: the button's accessible name, the failed form's words and the full view's name (a sentence; wraps in the failed form). */
 	alt: string;
 	/** The tile at its box, a skeleton. */
 	loading?: boolean;

@@ -81,13 +81,12 @@ const KINDS: SectionKinds = {
 };
 
 export interface SectionProps extends Closed {
+	/** The heading (a short phrase; truncates). */
 	title: Part;
 	// A total the body's lists do not hold; without it a List in the body
 	// counts its items here.
 	count?: number;
-	// A sentence under the title. While the Section loads, `""` stands one
-	// meta-height bar where the sentence will be and an undefined `description`
-	// stands none; loaded, `""` draws no line, as an undefined one.
+	/** Under the title (a sentence; wraps). While the Section loads, `""` stands one meta-height bar where the sentence will be and an undefined `description` stands none; loaded, `""` draws no line, as an undefined one. */
 	description?: string;
 	// Set, the title folds the body, and this is its initial fold: `true`
 	// starts folded, `false` open; later changes are not read.

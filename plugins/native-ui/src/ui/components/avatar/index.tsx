@@ -7,6 +7,7 @@ import { cn } from "../../lib/cn";
 const CIRCLE = "items-center justify-center overflow-hidden";
 
 export interface AvatarProps extends Closed {
+	/** The person's name: the accessible name, and the initials of its first two words without an image (a short phrase; only the initials draw). */
 	name: string;
 	src?: string;
 }

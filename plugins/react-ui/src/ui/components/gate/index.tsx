@@ -39,9 +39,9 @@ const IMAGE = "shrink-0 object-contain";
 
 /** A page outside the shell: what the product is, where the flow stands, what this step is. */
 export interface GateProps extends Closed {
-	/** The page's one `h1`. */
+	/** The page's one `h1` (a short phrase; wraps). */
 	title: string;
-	/** A meta line under the title, as runs: `{ strong }` runs draw at weight 500 (the address the step names). */
+	/** A meta line under the title, as runs: `{ strong }` runs draw at weight 500 (the address the step names) (a sentence; wraps). */
 	description?: Sentence;
 	/** Where an onboarding flow stands, a `StepCount` between the mark and the title. */
 	step?: { at: number; of: number };

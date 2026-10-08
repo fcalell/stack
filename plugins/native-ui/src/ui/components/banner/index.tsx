@@ -47,6 +47,7 @@ export interface BannerProps extends Closed {
 	// What it tells: news (`note`, the default), a caution (`warn`), or a
 	// failure (`danger`).
 	kind?: BannerKind;
+	/** The text beside the glyph (a sentence; wraps). */
 	sentence: string;
 	// The one act it offers, under the line; a blocked act's reason under it.
 	act?: Act;

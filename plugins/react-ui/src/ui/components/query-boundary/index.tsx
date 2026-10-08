@@ -36,7 +36,7 @@ export interface QueryBoundaryProps<Q extends Queries = Queries>
 	extends Closed {
 	/** The query, or a tuple of them. */
 	query: Q;
-	/** What failed to load, over the retry act. */
+	/** What failed to load, over the retry act (a sentence; wraps). */
 	sentence: string;
 	/** The body, drawn with the data once every query has it. */
 	children: (data: QueryData<Q>) => ReactNode;

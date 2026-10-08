@@ -44,7 +44,7 @@ const MARKS: Record<DiffLine["kind"], string> = {
 };
 
 interface DiffBase extends Closed {
-	/** What the diff shows (the file's path), its table's accessible name. */
+	/** What the diff shows (the file's path), its table's accessible name (a short phrase; read aloud, never drawn). */
 	label: string;
 	/** The lines wait: the hunk header's bar and eight lines' bars stand in for them, a fixed count, since the lines are unknown before the data. */
 	loading?: boolean;
@@ -60,9 +60,9 @@ export type DiffProps =
 	  })
 	| (DiffBase & {
 			hunks?: never;
-			/** The text before the change. */
+			/** The text before the change (text; its lines wrap). */
 			before: string;
-			/** The text after it. */
+			/** The text after it (text; its lines wrap). */
 			after: string;
 	  });
 

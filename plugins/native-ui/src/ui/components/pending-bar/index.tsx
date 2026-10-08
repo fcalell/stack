@@ -71,7 +71,7 @@ function Fill(props: { run: PendingRun; now: number }) {
 }
 
 export interface PendingBarProps extends Closed {
-	// What is happening.
+	/** What is happening, announced as it changes (a short phrase; truncates). */
 	sentence: string;
 	// When the work ends: the track fills toward it and shows the time left;
 	// unset, a spinner turns.

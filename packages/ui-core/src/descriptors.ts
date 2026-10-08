@@ -22,8 +22,10 @@ export type IconName = keyof typeof icons;
 // `destructive` (the hairline form) otherwise. A promise its `onAct`
 // returns keeps the bar's filled act pending until it settles.
 export interface Act {
+	// The act's visible text (a short phrase; truncates).
 	label: string;
 	onAct: () => unknown;
+	// Why the act cannot run (a sentence; wraps).
 	blocked?: string;
 	loading?: boolean;
 	destructive?: boolean;
@@ -35,6 +37,7 @@ export interface Act {
 // An act that goes to a route: a link on the web and a press that navigates on
 // the phone. A `Missing`'s way back is one; it is no create act.
 export interface LinkAct {
+	// The link's visible text (a short phrase; truncates).
 	label: string;
 	href: Route;
 }
@@ -43,6 +46,7 @@ export interface LinkAct {
 // is an `Act`'s: the act is running, inert, its glyph swapped for the spinner.
 export interface IconAct {
 	icon: IconName;
+	// The act's accessible name (a short phrase; read aloud, never drawn).
 	label: string;
 	onAct: () => void;
 	loading?: boolean;
@@ -52,6 +56,7 @@ export interface IconAct {
 // role; cut at 40 characters in a `meta` part, wrapped whole in a title (in a
 // row with a second line).
 export interface Quoted {
+	// The model-written name (a short phrase; cut at 40 characters in a `meta` part, wraps whole in a title with a second line).
 	quoted: string;
 }
 
@@ -76,11 +81,13 @@ export type RowTitle = RowPart | readonly (string | Coded)[];
 // on its family, each with its label; a row holds at most one of each.
 export interface StatusMark {
 	state: StatusState;
+	// The state's word (a word; truncates when its line is out of room).
 	label: string;
 }
 
 export interface ChipMark {
 	family: ChipFamily;
+	// The value (a word; truncates past the short measure, 18 characters).
 	label: string;
 }
 
@@ -100,7 +107,9 @@ export interface ChipMark {
 // work state that moves.
 export interface Option<V extends string | null = string> {
 	value: V;
+	// The option's text (a short phrase; truncates; a row pick's pill holds a word, truncating past the short measure, 18 characters).
 	label: string;
+	// Under the label (a short phrase; truncates).
 	description?: string;
 	recommended?: boolean;
 	status?: StatusState;
@@ -111,6 +120,7 @@ export interface Option<V extends string | null = string> {
 
 // Options under a group label, in a `Picker`'s list and its searchable sheet.
 export interface OptionGroup<V extends string | null = string> {
+	// The group's heading (a short phrase; truncates).
 	label: string;
 	options: Option<V>[];
 }
@@ -124,11 +134,14 @@ export type RowLeading =
 			icon: IconName;
 	  }
 	| { status: StatusState }
+	// The avatar's `name` is a short phrase: read aloud, only its initials draw.
 	| { avatar: { name: string; src?: string } }
 	| {
 			check: {
 				checked: boolean;
 				onChange: (checked: boolean) => void;
+				// Why the row cannot be ticked (a short phrase; it leads the meta
+				// line, which truncates).
 				blocked?: string;
 			};
 	  };
@@ -136,6 +149,7 @@ export type RowLeading =
 // A pick that applies at once where a value stands (a row's trailing, a
 // record's status fact), drawn as a `Picker` at the row fit.
 export interface OptionPick<V extends string | null = string> {
+	// What is picked, the trigger's name (a short phrase; read aloud, never drawn on the trigger).
 	label: string;
 	options: readonly Option<V>[] | readonly OptionGroup<V>[];
 	value?: NoInfer<V>;
@@ -145,6 +159,7 @@ export interface OptionPick<V extends string | null = string> {
 // A pick of several: the options ticked in the list, which stays open while
 // the viewer picks, and the chosen ones drawn as removable chips.
 export interface MultiPick<V extends string | null = string> {
+	// What is picked, the trigger's name (a short phrase; read aloud, never drawn on the trigger).
 	label: string;
 	options: readonly Option<V>[] | readonly OptionGroup<V>[];
 	value: readonly NoInfer<V>[];
@@ -161,10 +176,12 @@ export type EitherValue<V extends string | null = string> =
 // with the act that switches to typing, or the typed value, whose field ends
 // with the act that switches back to the pick.
 export interface EitherPick<V extends string | null = string> {
+	// What is picked, the trigger's name (a short phrase; read aloud, never drawn on the trigger).
 	label: string;
 	options: readonly Option<V>[] | readonly OptionGroup<V>[];
 	value: EitherValue<NoInfer<V>>;
 	onChange: (value: EitherValue<NoInfer<V>>) => void;
+	// The hint drawn while the typed value is empty (a short phrase; truncates).
 	placeholder?: string;
 }
 
@@ -181,6 +198,7 @@ export type RuleTerms<V extends string | null = string> =
 	| { from: RuleValue<V>; to: RuleValue<V>; field?: never }
 	| {
 			field: OptionPick<V>;
+			// The fixed words between the field and the value (a word; wraps).
 			operator: string;
 			value: RuleValue<V>;
 			from?: never;
@@ -200,6 +218,7 @@ export interface Rule<V extends string | null = string> {
 export type RowTrailing<V extends string | null = string> =
 	| { age: string }
 	| { count: number }
+	// A word: whole or gone on the web (the row leaves it once the title would hold under half its line), kept whole on the phone.
 	| { value: string }
 	| { pick: OptionPick<V> };
 
@@ -208,16 +227,20 @@ export type RowTrailing<V extends string | null = string> =
 // input and `error` is the line under it; once the act settles the row is
 // given its result as `meta` or `status` in place of the entry.
 export interface RowEntry {
+	// The input's accessible name (a short phrase; read aloud, never drawn).
 	label: string;
 	field: FieldControl<string>;
+	// The hint drawn while the input is empty (a short phrase; truncates).
 	placeholder?: string;
 	act: Act;
+	// The line under the input (a sentence; wraps).
 	error?: string;
 }
 
 // A `FormField` whose question is answered: it folds to one summary row with
 // `answer` and an Edit act that `onEdit` hears; clearing it reopens the field.
 export interface Answered {
+	// The answer in the summary row (a short phrase; truncates).
 	answer: string;
 	onEdit: () => void;
 }
@@ -226,6 +249,7 @@ export interface Answered {
 // request that holds it ("Held by CR-12, Ana"). With `href` the whole
 // reason is a link to what holds it.
 export interface Lock {
+	// Why the fact cannot change here (a sentence; wraps).
 	reason: string;
 	href?: Route;
 }
@@ -233,6 +257,8 @@ export interface Lock {
 // What a definition shows as data: words or a status. Each platform's
 // `DefinitionValue` adds its own node (a control that changes the fact in
 // place); ui-core holds no node type.
+// A string is a word or a short phrase: it truncates at its end, an
+// identifier of one word over eight characters cuts in its middle.
 export type DefinitionData = string | { status: StatusState; label?: string };
 
 // What a typing control inside a bound `FormField` takes: the field's value,
@@ -248,6 +274,7 @@ export interface FieldControl<V> {
 // A form field by name: its value, its change handler and its error line.
 // A `FormField` given one draws the error and hands the control the rest.
 export interface FieldBinding<V> extends FieldControl<V> {
+	// The line that takes the description's place (a sentence; wraps).
 	readonly error: string | undefined;
 }
 
@@ -258,6 +285,7 @@ export interface FieldBinding<V> extends FieldControl<V> {
 // the act ready again, when it rejects. Dismissing the sheet runs nothing.
 // `destructive` draws the act as a destructive button.
 export interface ConfirmAct {
+	// The act's visible text (a short phrase; truncates).
 	label: string;
 	onAct: () => Promise<unknown>;
 	destructive?: boolean;
@@ -266,8 +294,11 @@ export interface ConfirmAct {
 // The value the viewer must type before the act enables (a name the act
 // removes), the field's label, and the act's `blocked` reason until then.
 export interface ConfirmName {
+	// The name to type, compared with the typed text and never drawn (text).
 	value: string;
+	// The field's label (a short phrase; wraps).
 	label: string;
+	// Why the act is blocked until then (a sentence; wraps).
 	blocked: string;
 }
 
@@ -275,9 +306,12 @@ export interface ConfirmName {
 // decision's own words for leaving it ("Keep editing", "Stay"). The way out
 // runs nothing; Escape, the scrim and the sheet's close dismiss alike.
 export interface Confirmation {
+	// The sheet's heading (a short phrase; wraps).
 	title: string;
+	// What the decision asks (a sentence; wraps).
 	sentence: string;
 	act: ConfirmAct;
+	// The way out's text (a short phrase; truncates).
 	cancel?: string;
 	confirmName?: ConfirmName;
 }
@@ -286,10 +320,12 @@ export interface Confirmation {
 // that removes or ends something, and `blocked`, the reason it cannot be
 // taken, drawn under its label while the act is disabled.
 export interface MenuItem {
+	// The act's text (a short phrase; truncates).
 	label: string;
 	onAct: () => void;
 	icon?: IconName;
 	destructive?: boolean;
+	// Why the act cannot be taken (a sentence; wraps).
 	blocked?: string;
 }
 
@@ -316,6 +352,7 @@ export type Route = RouteRegistry extends { route: infer R extends string }
 // the whole a link to `href`. Shared by every molecule that carries counts (a
 // `Meter`'s line under its bar, a stat strip's cell): zero is a count, drawn.
 export interface CountLink {
+	// What is counted (a word; wraps).
 	label: string;
 	value: number;
 	href: Route;
@@ -326,9 +363,12 @@ export interface CountLink {
 // whole cell a link to `href` or sub-counts that are links of their own, never
 // both, since a cell inside a link cannot hold links.
 export type StatSpec = {
+	// What the figure counts (a short phrase; wraps).
 	label: string;
 	value: number;
+	// What the figure counts, beside it (a word; wraps).
 	unit?: string;
+	// Under the figure (a sentence; wraps).
 	meta?: string;
 } & (
 	| { counts?: readonly CountLink[]; href?: never }
@@ -348,6 +388,7 @@ export type StepState = "done" | "current" | "later";
 // One stage of a rail of fixed states: its label and where the rail stands at
 // it. A done or current stage may carry the moment it was reached or began
 // (`at`, an ISO moment); a later one has none to give.
+// The `label` is a short phrase: it wraps.
 export type Stage =
 	| { label: string; state: Exclude<StepState, "later">; at?: string }
 	| { label: string; state: "later"; at?: never };
@@ -355,18 +396,22 @@ export type Stage =
 // How a rail ended short of its last stage: the terminal row that stands in
 // place of every stage after the last done one, its reason under its label.
 export interface StageEnd {
+	// The terminal row's text (a short phrase; wraps).
 	label: string;
+	// Why the rail ended (a sentence; wraps).
 	reason: string;
 }
 
 // A meta line as data: runs of plain words, a part at strong weight (the
 // address a sentence names) a `{ strong }` run, the way a nested `Text strong`
-// draws, and a span of code a `{ code }` run.
+// draws, and a span of code a `{ code }` run. Its runs together are a
+// sentence: it wraps.
 export type Sentence = readonly (string | { strong: string } | Coded)[];
 
 // The product's mark a `Gate` leads with: its `name`, which draws in the place
 // of the image at `src` while that fails or `src` is absent.
 export interface GateMark {
+	// The product's name (a short phrase; wraps).
 	name: string;
 	src?: string;
 }
@@ -374,6 +419,7 @@ export interface GateMark {
 // A place in the shell: a route, a label, an icon, an optional count.
 export interface PlaceSpec {
 	route: Route;
+	// The place's name (a word; truncates).
 	label: string;
 	icon: IconName;
 	count?: number;
@@ -382,12 +428,14 @@ export interface PlaceSpec {
 // One line of a diff hunk; `before` and `after` are line numbers.
 export interface DiffLine {
 	kind: "context" | "added" | "removed";
+	// The line's code (text; wraps under itself).
 	text: string;
 	before?: number;
 	after?: number;
 }
 
 export interface Hunk {
+	// The hunk's header (text; wraps), in git's form: `@@ -1,3 +1,4 @@`.
 	header: string;
 	lines: DiffLine[];
 }
@@ -413,12 +461,15 @@ export interface PickedFile {
 // image's address), a thumbnail that opens full size.
 export interface Attachment {
 	id: string;
+	// The file's name: the chip's label (a word; truncates past the short
+	// measure, 18 characters), or a thumbnail's accessible name.
 	name: string;
 	src?: string;
 }
 
 // A sentence and an act under a message input.
 export interface Notice {
+	// What it says (a sentence; wraps).
 	sentence: string;
 	act?: Act;
 }
@@ -479,6 +530,7 @@ export type CellEdit = CellInput | CellPick | CellCheck;
 
 interface ColumnBase {
 	key: string;
+	// The column's head (a short phrase; truncates).
 	label: string;
 	width?: ColumnWidth;
 	align?: "start" | "end";
@@ -505,12 +557,15 @@ export type TableColumn<T = never> = (
 
 export interface StatusCell {
 	status: StatusState;
+	// The word, when the state's own word does not say it (a word; truncates
+	// when its line is out of room).
 	label?: string;
 }
 
 // A `change` cell's value: what it was and what it is. A null `before` is a
 // value added, a null `after` a value removed.
 export interface ChangeCell {
+	// Each value is a short phrase; it truncates.
 	before: string | null;
 	after: string | null;
 }
@@ -518,6 +573,8 @@ export interface ChangeCell {
 // A cell's value, by its column's kind: a string (`text`, `source`, `chip`,
 // `age`), a number, a boolean (`check`), a status or a change; null is an
 // empty cell.
+// A string cell is a short phrase: it truncates (a `chip` cell a word,
+// truncating past the short measure, 18 characters).
 export type TableCell =
 	| string
 	| number
@@ -546,6 +603,7 @@ export interface ChosenCount {
 export interface TableChoice<T> {
 	chosen: readonly string[];
 	onChange: (ids: string[]) => void;
+	// Each reason is a short phrase; it truncates under the leading cell.
 	blocked?: (item: T) => string | undefined;
 	moved?: (item: T) => string | undefined;
 }
@@ -576,6 +634,7 @@ export interface TableRowSlots<T> {
 	id: (item: T) => string;
 	href?: (item: T) => Route | undefined;
 	locked?: (item: T) => readonly string[] | undefined;
+	// The warning's label (a short phrase; truncates).
 	warning?: (item: T) => string | undefined;
 	change?: (item: T) => ChangeKind | undefined;
 }
@@ -593,12 +652,16 @@ export interface CanvasPoint {
 export interface CanvasNode {
 	id: string;
 	icon: IconName;
+	// Over the title (a short phrase; truncates).
 	overline?: string;
+	// The node's name (a short phrase; truncates).
 	title: string;
+	// Under the title (a short phrase; truncates).
 	line?: string;
 	number?: number;
 	count?: number;
 	status?: StatusMark;
+	// What is wrong with the node, in `line`'s place (a short phrase; truncates).
 	problem?: string;
 	off?: boolean;
 	position?: CanvasPoint;
@@ -610,6 +673,7 @@ export interface CanvasEdge {
 	id: string;
 	from: string;
 	to: string;
+	// Drawn on the edge in a chip (a word; truncates past the short measure, 18 characters).
 	label?: string;
 	handoff?: boolean;
 }
@@ -618,6 +682,7 @@ export interface CanvasEdge {
 // group.
 export interface CanvasGroup {
 	id: string;
+	// The frame's heading (a short phrase; truncates).
 	head: string;
 	holds: readonly string[];
 }

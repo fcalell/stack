@@ -9,11 +9,11 @@ const STACK = "min-w-0";
 const FIGURE = "flex-row items-baseline";
 
 export interface StatProps extends Closed {
-	// What the figure counts, read after it ("need you").
+	/** What the figure counts, read after it ("need you") (a short phrase; wraps). */
 	label: string;
 	// The figure; zero is a count, drawn.
 	value: number;
-	// What the figure counts, muted beside it.
+	/** What the figure counts, muted beside it (a word; wraps). */
 	unit?: string;
 	// The figure and its label as bars in their line boxes.
 	loading?: boolean;

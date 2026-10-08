@@ -47,7 +47,9 @@ const FIGURE_WAIT = "opacity-0 tabular-nums";
 
 // One fact under the title: words, a status, words that open a sheet, a status that
 // moves (a pick whose options carry states), a count beside its word, or the state of a save
-// that runs as the record is typed, a failed one with its retry.
+// that runs as the record is typed, a failed one with its retry. Each string
+// is a short phrase: the facts line wraps between facts, a `Quoted` part is cut
+// at 40 characters.
 export type Fact =
 	| Part
 	| { status: StatusState; label?: string }
@@ -57,9 +59,9 @@ export type Fact =
 	| { save: "saving" | "saved" | "failed"; onRetry: () => void };
 
 export interface ItemHeaderProps extends Closed {
-	// The parts that place the record, joined by a middle dot over the title.
+	/** The parts that place the record, joined by a middle dot over the title (each a short phrase; one line, truncates). */
 	overline?: readonly Part[];
-	// The record's name, wrapping in full.
+	/** The record's name (a short phrase; wraps in full). */
 	title: Part;
 	// The facts in a wrapping line under the title.
 	facts?: readonly Fact[];

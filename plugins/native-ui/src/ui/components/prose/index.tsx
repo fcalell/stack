@@ -56,8 +56,7 @@ function paragraphsOf(lines: number): readonly (readonly string[])[] {
 }
 
 export interface ProseProps extends Closed {
-	// The text, in markdown: headings, paragraphs, lists, quotes, rules,
-	// inline code, links and fenced code.
+	/** The text, in markdown: headings, paragraphs, lists, quotes, rules, inline code, links and fenced code (text; wraps). */
 	markdown: string;
 	// The text waits: `true` stands two paragraphs of line boxes in for it, and
 	// a number from 1 stands that many lines of one paragraph (its last half

@@ -65,6 +65,7 @@ interface DefinitionRowBase extends Closed {
 	// Where the fact stands in a change set: its mark at the row's start, ahead
 	// of the label.
 	change?: ChangeKind;
+	/** What the fact is (a short phrase; wraps to the room its value leaves). */
 	label: string;
 	// The fact: words, a status, or a control that changes it in place.
 	value?: DefinitionValue;
@@ -78,7 +79,7 @@ export type DefinitionRowProps = DefinitionRowBase &
 	(
 		| {
 				locked?: never;
-				// A sentence under the label and the value, at the row's width.
+				/** Under the label and the value, at the row's width (a sentence; wraps). */
 				description?: string;
 				// The row's one icon act at its end.
 				act?: IconAct;

@@ -89,6 +89,7 @@ const SCROLL_ROOM = <View className={FLOATING_ACT_ROOM} />;
 const FOOT_ROOM_ELEMENT = <View className={PAGE_BODY_OVER_FOOT} />;
 
 interface PlaceBase extends Closed {
+	/** The page's title, its one header (a short phrase; wraps, truncates beside a `context`). */
 	title: string;
 	context?: Switcher;
 	actions?: IconAct[];

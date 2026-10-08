@@ -9,7 +9,7 @@ import type { Closed } from "../../lib/closed.ts";
 import { isSeveral, PickerBase } from "./base.tsx";
 
 interface Shared<V extends string | null> extends Closed {
-	/** What is picked: the trigger's name, and the touch sheet's title. */
+	/** What is picked: the trigger's name, and the touch sheet's title (a short phrase; read aloud on the trigger, wraps as the sheet's title). */
 	label: string;
 	/** The choices, flat or under group labels; an option may carry a status, an avatar or a chip. */
 	options: readonly Option<V>[] | readonly OptionGroup<V>[];

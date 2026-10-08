@@ -9,6 +9,7 @@ import { useWords } from "../../lib/words";
 import { Icon } from "../icon";
 
 export interface ChipProps extends Closed {
+	/** The value (a word; truncates past the short measure, 18 characters). */
 	label: string;
 	family: ChipFamily;
 	onRemove?: () => void;

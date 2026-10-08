@@ -6,9 +6,9 @@ import { EmptyStateBase } from "./base";
 export interface EmptyStateProps extends Closed {
 	// The glyph in the mark's disc.
 	icon?: IconName;
-	// The line over the sentence.
+	/** The line over the sentence (a short phrase; wraps). */
 	title?: string;
-	// What is missing and what the act makes.
+	/** What is missing and what the act makes (a sentence; wraps). */
 	sentence: string;
 	// The way to make the first one.
 	act?: Act;

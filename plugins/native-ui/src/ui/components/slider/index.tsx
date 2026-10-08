@@ -23,7 +23,7 @@ import { SliderWait } from "./wait";
 
 /** A number picked along a range, its label over the track. */
 export interface SliderProps extends Closed {
-	/** What it sets, drawn over the track and naming the thumb. */
+	/** What it sets, drawn over the track and naming the thumb (a short phrase; truncates). */
 	label: string;
 	/** The value, between `min` and `max`. */
 	value: number;

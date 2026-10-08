@@ -43,8 +43,7 @@ const CLOSE_LAYER = "absolute inset-0 items-end";
 
 interface ImageBase extends Closed {
 	src: string;
-	// What the picture shows: the button's name, the failed form's words and
-	// the full view's name.
+	/** What the picture shows: the button's accessible name, the failed form's words and the full view's name (a sentence; wraps in the failed form). */
 	alt: string;
 	// The tile at its box, a skeleton.
 	loading?: boolean;

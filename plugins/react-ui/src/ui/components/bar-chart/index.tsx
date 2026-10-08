@@ -134,7 +134,7 @@ export interface BarSlots<T> {
 	value: (item: T) => number;
 	/** The bar's parts' values by the chart's `keys`; a key it lacks is 0. */
 	parts?: (item: T) => Readonly<Record<string, number>> | undefined;
-	/** The time drawn under the bar. */
+	/** The time drawn under the bar (a word; never wraps). */
 	at?: (item: T) => string | undefined;
 }
 
@@ -143,7 +143,7 @@ type ChartSource<T> =
 	| {
 			/** The query whose items the bars draw, oldest first. */
 			query: QueryLike<readonly T[]>;
-			/** What failed to load, over the retry act. */
+			/** What failed to load, over the retry act (a sentence; wraps). */
 			sentence: string;
 			/** What the chart draws when the query answers with no item. */
 			empty: ListEmpty;
@@ -164,9 +164,9 @@ type ChartSource<T> =
 /** Columns over time: one bar per item, stacked by one dimension when `keys` names its parts. */
 export type BarChartProps<T = unknown> = Closed &
 	ChartSource<T> & {
-		/** What the chart counts, which names the plot. */
+		/** What the chart counts, which names the plot (a short phrase; read aloud, never drawn). */
 		label: string;
-		/** The names a bar's parts stack by, bottom first: present, the chart is stacked and draws them as its legend in every form, each name holding its series mark. */
+		/** The names a bar's parts stack by, bottom first (each a word; the legend wraps between names): present, the chart is stacked and draws them as its legend in every form, each name holding its series mark. */
 		keys?: readonly string[];
 		/** The bar slots, read from each item. */
 		bar: BarSlots<T>;

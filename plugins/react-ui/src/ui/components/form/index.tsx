@@ -12,7 +12,7 @@ const STACK = "flex flex-col";
 
 /** Fields and the acts that submit them. */
 export interface FormProps extends Closed {
-	/** The fields, or the `Section`s that hold them, then its `ActionBar`, whose filled act submits the form. */
+	/** The fields, then its `ActionBar`, whose filled act submits the form. A form among a page's other sections is `Section > Form`, so every section's head-to-body gap stays the pair step; `Section`s inside the form are the whole page's, all at the fields step. */
 	children?: ReactNode;
 }
 

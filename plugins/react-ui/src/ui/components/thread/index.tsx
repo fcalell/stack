@@ -75,15 +75,15 @@ export interface MessageSlots<T> {
 	key: (item: T) => string;
 	/** Who said it: `you`, `other` or `system`. */
 	author: (item: T) => "you" | "other" | "system";
-	/** Who said it, by name: drawn over `other`'s reply, yours draws none; a system line takes none. */
+	/** Who said it, by name: drawn over `other`'s reply, yours draws none; a system line takes none (a short phrase; wraps). */
 	name?: (item: T) => string | undefined;
-	/** What was said: plain text for `you` and `system`, markdown for `other`. */
+	/** What was said (text; wraps): plain text for `you` and `system`, markdown for `other`. */
 	body: (item: T) => string;
 	/** When it was said, an ISO moment. */
 	at?: (item: T) => string | undefined;
 	/** What came with a turn: its attachments, one row over its bubble or reply; a system line takes none. */
 	attachments?: (item: T) => readonly Attachment[] | undefined;
-	/** Where a turn came from ("by voice", "Kitchen"), before its time; a system line takes none. */
+	/** Where a turn came from ("by voice", "Kitchen"), before its time; a system line takes none (each a short phrase; the line wraps at its dots). */
 	meta?: (item: T) => readonly Part[] | undefined;
 	/** What a system line opens: the line becomes the act; a turn takes none. */
 	onOpen?: (item: T) => (() => void) | undefined;
@@ -96,7 +96,7 @@ type ThreadSource<T> =
 	| {
 			/** The query whose items the messages draw, oldest first. */
 			query: QueryLike<readonly T[]>;
-			/** What failed to load, over the retry act. */
+			/** What failed to load, over the retry act (a sentence; wraps). */
 			sentence: string;
 			/** What the log draws when the query answers with no message: what to ask. */
 			empty: ListEmpty;

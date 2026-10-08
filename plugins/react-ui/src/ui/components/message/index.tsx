@@ -57,7 +57,7 @@ const REPLY_BARS = ["w-full", "w-full", "w-2/3"] as const;
 const TIME_BAR = "w-figures";
 
 interface MessageBase extends Closed {
-	/** What was said: plain text for `you` and `system`, markdown for `other`. */
+	/** What was said (text; wraps): plain text for `you` and `system`, markdown for `other`. */
 	body: string;
 	/** When it was said, an ISO moment: drawn as the time today, else the date and time. */
 	at?: string;
@@ -70,11 +70,11 @@ export type MessageProps =
 	| (MessageBase & {
 			/** `you`, a bubble at the column's end; `other`, a reply read as Prose under its name. */
 			author: "you" | "other";
-			/** Who said it: drawn over `other`'s reply; yours draws none. */
+			/** Who said it: drawn over `other`'s reply; yours draws none (a short phrase; wraps). */
 			name?: string;
 			/** What came with it, one row over the bubble (yours at the column's end) or the reply: an attachment with `src` a thumbnail that opens full size, one without a chip of its name. */
 			attachments?: readonly Attachment[];
-			/** Where it came from ("by voice", "Kitchen"), joined by a middle dot before the time. */
+			/** Where it came from ("by voice", "Kitchen"), joined by a middle dot before the time (each a short phrase; the line wraps at its dots). */
 			meta?: readonly Part[];
 			onOpen?: never;
 			detail?: never;

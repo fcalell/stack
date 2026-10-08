@@ -61,15 +61,15 @@ const CHEVRON = "flex shrink-0 items-center justify-center text-ink-meta";
 // ends at one x.
 const NO_END = "shrink-0";
 
-/** What a definition shows: words, a status, or an in-place control. */
+/** What a definition shows: a string (a word or a short phrase), a status, or an in-place control. */
 export type DefinitionValue = DefinitionData | ReactNode;
 
 interface DefinitionRowBase extends Closed {
 	/** Where the fact stands in a change set: its mark at the row's start, ahead of the label. */
 	change?: ChangeKind;
-	/** What the fact is. */
+	/** What the fact is (a short phrase; wraps to the room its value leaves). */
 	label: string;
-	/** The fact: words, a status, or a control that changes it in place. */
+	/** The fact: a string (a word or a short phrase; truncates at its end, an identifier of one word over eight characters cuts in its middle), a status, or a control that changes it in place. */
 	value?: DefinitionValue;
 	/** Words that are copied whole (an identifier): drawn in the code role with a copy act. */
 	copyable?: boolean;
@@ -80,7 +80,7 @@ export type DefinitionRowProps = DefinitionRowBase &
 	(
 		| {
 				locked?: never;
-				/** A sentence under the label and the value, at the row's width. */
+				/** Under the label and the value, at the row's width (a sentence; wraps). */
 				description?: string;
 				/** The row's one icon act at its end. */
 				act?: IconAct;

@@ -12,17 +12,17 @@ export interface SheetProps extends Closed {
 	open: boolean;
 	/** Hears Escape, a press outside, the close act and Cancel. */
 	onClose: () => void;
-	/** The sheet's heading, which names it. */
+	/** The sheet's heading, which names it (a short phrase; wraps). */
 	title: string;
-	/** A sentence under the title. */
+	/** Under the title (a sentence; wraps). */
 	description?: string;
 	/** A second page's way back: the back act stands first in the head, on touch in the close act's place. */
 	back?: () => void;
 	/** The act that completes the task: after Cancel in the foot on the desktop, at the head's end on touch. A promise its `onAct` returns keeps it pending until it settles. */
 	submit?: Act;
-	/** A sentence in the foot, beside the submit on the desktop. */
+	/** In the foot, beside the submit on the desktop (a sentence; wraps). */
 	foot?: string;
-	/** The sentence the `submit`'s last run failed with: a one-line error in the line a blocked reason keeps under the act (under the head's submit on touch), the act ready again. Clear it to dismiss; a blocked `submit`'s reason stands before it. */
+	/** What the `submit`'s last run failed with (a sentence; wraps): an error in the line a blocked reason keeps under the act (under the head's submit on touch), the act ready again. Clear it to dismiss; a blocked `submit`'s reason stands before it. */
 	failed?: string;
 	/** What the desktop side sheet holds: a form (the default) or a record's pane. */
 	fit?: SheetFit;

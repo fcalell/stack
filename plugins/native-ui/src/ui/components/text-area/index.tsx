@@ -15,9 +15,11 @@ import { useTouched } from "../../lib/touched";
 
 export interface TextAreaProps extends Closed {
 	kind?: "prose" | "source";
+	/** The value (text; wraps). */
 	value: string;
 	onChange: (value: string) => void;
 	onCommit?: (value: string) => void;
+	/** The hint drawn while the value is empty; never the field's name (a short phrase; wraps). */
 	placeholder?: string;
 	budget?: number;
 }

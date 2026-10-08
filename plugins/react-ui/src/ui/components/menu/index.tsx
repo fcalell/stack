@@ -4,7 +4,7 @@ import { MenuBase } from "./base.tsx";
 
 /** A menu of acts behind the more act. */
 export interface MenuProps extends Closed {
-	/** The trigger's accessible name, and the touch sheet's title. */
+	/** The trigger's accessible name, and the touch sheet's title (a short phrase; read aloud on the trigger, wraps as the sheet's title). */
 	label: string;
 	/** The acts in order; the destructive ones stand last under a hairline. */
 	items: readonly MenuItem[];

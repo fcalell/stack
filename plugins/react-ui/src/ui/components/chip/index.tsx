@@ -13,7 +13,7 @@ const REMOVE =
 
 /** A data value's tag on its family's soft ground. */
 export interface ChipProps extends Closed {
-	/** The value; it truncates past the chip label's width. */
+	/** The value (a word; truncates past the short measure, 18 characters). */
 	label: string;
 	/** The family of values it belongs to, one hue per family across screens. */
 	family: ChipFamily;

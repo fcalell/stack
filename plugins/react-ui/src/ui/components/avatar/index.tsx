@@ -9,7 +9,7 @@ const IMAGE = "shrink-0 object-cover";
 
 /** A person's circle. */
 export interface AvatarProps extends Closed {
-	/** The person's name: the accessible name, and the initials without an image. */
+	/** The person's name: the accessible name, and the initials of its first two words without an image (a short phrase; only the initials draw). */
 	name: string;
 	/** The image's URL; without it, or when it fails to load, the circle draws the name's initials. */
 	src?: string;

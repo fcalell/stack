@@ -3,7 +3,7 @@ import type { Closed } from "../../lib/closed";
 import { EmptyStateBase } from "../empty-state/base";
 
 export interface FailedProps extends Closed {
-	// What failed to load, over the act.
+	/** What failed to load, over the act (a sentence; wraps). */
 	sentence: string;
 	// The way to try again: an act that runs a function, never a link.
 	act: Act;

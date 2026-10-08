@@ -18,6 +18,7 @@ export interface ToastData extends ToastOptions {
 
 export const toasts = Toast.createToastManager<ToastData>();
 
+/** Queues a toast: `sentence` is what happened (a sentence; wraps). */
 export function toast(sentence: string, options: ToastOptions = {}): void {
 	toasts.add({
 		description: sentence,

@@ -65,7 +65,7 @@ function Fill(props: { run: PendingRun; now: number }) {
 
 /** Work the page waits on, in an ActionBar's place. */
 export interface PendingBarProps extends Closed {
-	/** What is happening, announced as it changes. */
+	/** What is happening, announced as it changes (a short phrase; truncates). */
 	sentence: string;
 	/** When the work ends: the track fills toward it and shows the time left; unset, a spinner turns. */
 	until?: Date;

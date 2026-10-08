@@ -43,7 +43,7 @@ const NOTICE_TEXT = "flex-1 min-w-0";
 const ATTACH_SLOT = "shrink-0";
 
 export interface MessageInputProps extends Closed {
-	// The text being written.
+	/** The text being written (text; wraps). */
 	value: string;
 	// Hears every keystroke's value.
 	onChange: (value: string) => void;
@@ -57,7 +57,7 @@ export interface MessageInputProps extends Closed {
 	onAttach?: (files: readonly PickedFile[]) => void;
 	// Removes an attachment by its id: each carries its remove act.
 	onDetach?: (id: string) => void;
-	// The hint drawn while the text is empty; never the field's name.
+	/** The hint drawn while the text is empty; never the field's name (a short phrase; wraps). */
 	placeholder?: string;
 	// A sentence under the input, with its one act.
 	notice?: Notice;

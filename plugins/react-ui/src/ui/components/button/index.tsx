@@ -66,7 +66,7 @@ export interface ButtonProps extends Closed {
 	fit?: ButtonFit;
 	/** A glyph before the label, in the label's ink. */
 	icon?: IconName;
-	/** The visible word, and the act's accessible name. */
+	/** The visible text, and the act's accessible name (a short phrase; truncates). */
 	label: string;
 	/** A number after the label, in the label's ink. */
 	count?: number;
@@ -76,7 +76,7 @@ export interface ButtonProps extends Closed {
 	onAct?: () => void;
 	/** The act is running: inert, its glyph and label hidden under a spinner, its name kept. */
 	loading?: boolean;
-	/** Why the act cannot run: it is inert, and shows this sentence under itself once pressed or once its form or sheet is touched. */
+	/** Why the act cannot run (a sentence; wraps): it is inert, and shows this under itself once pressed or once its form or sheet is touched. */
 	blocked?: string;
 }
 

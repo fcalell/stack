@@ -6,7 +6,7 @@ import { StatusBase } from "./base.tsx";
 export interface StatusProps extends Closed {
 	/** The state the mark and the default word name. */
 	state: StatusState;
-	/** The word, when the state's own word does not say it. */
+	/** The word, when the state's own word does not say it (a word; truncates when its line is out of room). */
 	label?: string;
 }
 

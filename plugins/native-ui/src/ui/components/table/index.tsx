@@ -140,6 +140,7 @@ const NUMBER_BAR = "w-1/4";
 type TableSource<T> =
 	| {
 			query: QueryLike<readonly T[]>;
+			/** What failed to load, over the retry act (a sentence; wraps). */
 			sentence: string;
 			items?: never;
 			loading?: never;

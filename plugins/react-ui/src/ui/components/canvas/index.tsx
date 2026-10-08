@@ -49,7 +49,7 @@ import { ActFoot, ZoomStack } from "./zoom.tsx";
 
 /** A graph of nodes and edges on a pannable, zoomable ground. */
 export interface CanvasProps extends Closed {
-	/** What the graph is, read as its region's name. */
+	/** What the graph is, read as its region's name (a short phrase; read aloud, never drawn). */
 	label: string;
 	/** The nodes; the canvas places those that carry no position. */
 	nodes: readonly CanvasNode[];

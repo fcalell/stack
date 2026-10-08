@@ -10,6 +10,7 @@ const Line = createContext<TextRole | undefined>(undefined);
 export interface TextProps extends Closed {
 	role?: TextRole;
 	strong?: boolean;
+	/** The text (text; wraps). */
 	children?: ReactNode;
 }
 

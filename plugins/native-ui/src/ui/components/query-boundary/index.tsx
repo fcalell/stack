@@ -33,6 +33,7 @@ export type QueryData<Q extends Queries> = Q extends readonly AnyQuery[]
 export interface QueryBoundaryProps<Q extends Queries = Queries>
 	extends Closed {
 	query: Q;
+	/** What failed to load, over the retry act (a sentence; wraps). */
 	sentence: string;
 	children: (data: QueryData<Q>) => ReactNode;
 	// The body's loaded form in skeleton, drawn while any query is pending.

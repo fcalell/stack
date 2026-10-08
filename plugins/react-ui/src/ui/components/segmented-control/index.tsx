@@ -25,12 +25,13 @@ const LABEL = "truncate";
 /** One of a segmented control's options. */
 export interface Segment {
 	value: string;
+	/** The option's text (a word; truncates). */
 	label: string;
 }
 
 /** A view switch over two to four options, one chosen. */
 export interface SegmentedControlProps extends Closed {
-	/** What the options switch, names the group. */
+	/** What the options switch, names the group (a short phrase; read aloud, never drawn). */
 	label: string;
 	/** The options in order. */
 	options: readonly Segment[];

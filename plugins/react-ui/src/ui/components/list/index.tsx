@@ -115,7 +115,7 @@ function leadingOf<T>(slot: LeadingSlot<T>, item: T): RowLeading {
 export interface RowSlots<T, V extends string | null = string> {
 	/** The item's React key, unique in the list. */
 	key: (item: T) => string;
-	/** The row's title. */
+	/** The row's title (a short phrase; truncates at its end, wraps whole while `wrap`). */
 	title: (item: T) => RowTitle;
 	/** The item's children, which makes the list a tree: they draw one level in under it, and its fold act folds them (open by default, the list holds the state). Every item's `key` is unique across the whole tree. */
 	children?: (item: T) => readonly T[] | undefined;
@@ -123,15 +123,15 @@ export interface RowSlots<T, V extends string | null = string> {
 	change?: (item: T) => ChangeKind | undefined;
 	/** The rows' leading mark, one kind for every row of the list. */
 	leading?: LeadingSlot<T>;
-	/** The row's meta line. */
+	/** The row's meta line (each part a short phrase; one line, the later parts truncating first). */
 	meta?: (item: T) => readonly RowPart[] | undefined;
 	/** The row's trailing value or pick. */
 	trailing?: (item: T) => RowTrailing<V> | undefined;
 	/** The row's status mark. */
 	status?: (item: T) => StatusMark | undefined;
-	/** What is wrong with the row, a warning mark. */
+	/** What is wrong with the row, a warning mark (a short phrase; truncates). */
 	warning?: (item: T) => string | undefined;
-	/** What the row holds, a lock mark. */
+	/** What the row holds, a lock mark (a short phrase; truncates). */
 	lock?: (item: T) => string | undefined;
 	/** The row's chip mark. */
 	chip?: (item: T) => ChipMark | undefined;
@@ -159,7 +159,7 @@ export interface RowSlots<T, V extends string | null = string> {
 export interface FileSlots<T> {
 	/** The item's React key, unique in the list. */
 	key: (item: T) => string;
-	/** The file's path. */
+	/** The file's path (a path: the directory gives way first, then the name's middle). */
 	path: (item: T) => string;
 	/** Lines added. */
 	added: (item: T) => number;
@@ -180,7 +180,7 @@ export interface FileSlots<T> {
 interface MeterSlotsBase<T> {
 	/** The item's React key, unique in the list. */
 	key: (item: T) => string;
-	/** What is measured. */
+	/** What is measured (a short phrase; truncates). */
 	label: (item: T) => string;
 	/** How much is used. */
 	value: (item: T) => number;
@@ -194,7 +194,7 @@ interface MeterSlotsBase<T> {
 export type MeterSlots<T> = MeterSlotsBase<T> &
 	(
 		| {
-				/** The line under the bar. */
+				/** The line under the bar (a sentence; wraps). */
 				meta?: (item: T) => string | undefined;
 				counts?: never;
 		  }
@@ -208,9 +208,9 @@ export type MeterSlots<T> = MeterSlotsBase<T> &
 interface DefinitionSlotsBase<T> {
 	/** The item's React key, unique in the list. */
 	key: (item: T) => string;
-	/** What the fact is. */
+	/** What the fact is (a short phrase; wraps to the room its value leaves). */
 	label: (item: T) => string;
-	/** The fact: words, a status, or a control that changes it in place. */
+	/** The fact: a string (a word or a short phrase; truncates at its end, an identifier of one word over eight characters cuts in its middle), a status, or a control that changes it in place. */
 	value?: (item: T) => DefinitionValue | undefined;
 	/** Where the fact stands in a change set, its change mark. */
 	change?: (item: T) => ChangeKind | undefined;
@@ -223,7 +223,7 @@ export type DefinitionSlots<T> = DefinitionSlotsBase<T> &
 	(
 		| {
 				locked?: never;
-				/** A sentence under the label and the value. */
+				/** Under the label and the value (a sentence; wraps). */
 				description?: (item: T) => string | undefined;
 				/** The row's one icon act at its end. */
 				act?: (item: T) => IconAct | undefined;
@@ -253,7 +253,7 @@ export type ListSource<T> =
 	| {
 			/** The query whose items the rows draw. */
 			query: QueryLike<readonly T[]>;
-			/** What failed to load, over the retry act. */
+			/** What failed to load, over the retry act (a sentence; wraps). */
 			sentence: string;
 			/** What the list draws when the query answers with no item. */
 			empty: ListEmpty;

@@ -20,11 +20,12 @@ const LABEL = "shrink";
 
 export interface Segment {
 	value: string;
+	/** The option's text (a word; truncates). */
 	label: string;
 }
 
 export interface SegmentedControlProps extends Closed {
-	// What the options switch, the group's name.
+	/** What the options switch, the group's name (a short phrase; read aloud, never drawn). */
 	label: string;
 	options: readonly Segment[];
 	value: string;

@@ -145,7 +145,7 @@ export function Details(props: {
 }
 
 interface PlaceBase extends Closed {
-	/** The page's title, its one `h1`. */
+	/** The page's title, its one `h1` (a short phrase; truncates). */
 	title: string;
 	/** The context the page is read in (a change set, a version): a pick beside the title, its option's chip on its trigger, `act` ending its list. */
 	context?: Switcher;

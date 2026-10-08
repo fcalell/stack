@@ -63,9 +63,9 @@ const SUMMARY_ANSWER = "min-w-0 grow truncate";
 interface FormFieldBase extends Closed {
 	/** Where the field stands in a change set: its mark ahead of the field, on its label's line. */
 	change?: ChangeKind;
-	/** The control's name, drawn over it (beside a switch or a checkbox). */
+	/** The control's name, drawn over it (beside a switch or a checkbox) (a short phrase; wraps, truncates in an answered field's summary row). */
 	label: string;
-	/** A sentence under the control; disabled, it is the reason. */
+	/** Under the control; disabled, it is the reason (a sentence; wraps). */
 	description?: string;
 	/** The control takes no input: the label in the disabled ink, the control its disabled form. */
 	disabled?: boolean;
@@ -79,7 +79,7 @@ export type FormFieldProps<V = unknown> = FormFieldBase &
 		| {
 				/** Unbound. */
 				field?: never;
-				/** The message that takes the description's place, the control drawn in error. */
+				/** The message that takes the description's place, the control drawn in error (a sentence; wraps). */
 				error?: string;
 				/** The control. */
 				children?: ReactNode;

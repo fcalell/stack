@@ -39,6 +39,7 @@ const BODY_WRAP = "relative flex-1";
 const BODY_CONTENT = "grow";
 
 export interface ScreenProps extends Closed {
+	/** The page's title, its one header (a short phrase; wraps). */
 	title: string;
 	back?: Route;
 	actions?: IconAct[];

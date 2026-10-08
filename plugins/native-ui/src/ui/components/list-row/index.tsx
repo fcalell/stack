@@ -161,23 +161,17 @@ export interface ListRowProps<V extends string | null = string> extends Closed {
 	// reason leading the meta line), in one slot at the avatar's size; a tick
 	// takes its hit box.
 	leading?: RowLeading;
-	// What the row names, at body 500; at 400 in the meta ink while `dim`, and
-	// wrapped whole at 400 while `wrap`. Runs of words and `{ code }` draw the
-	// code in the inline code style; a title that is one `{ code }` cuts in its
-	// middle, keeping its start and its end.
+	/** What the row names (a short phrase; truncates at its end, wraps whole while `wrap`), at body 500; at 400 in the meta ink while `dim`, and at 400 while `wrap`. Runs of words and `{ code }` draw the code in the inline code style; a title that is one `{ code }` cuts in its middle, keeping its start and its end. */
 	title: RowTitle;
-	// The line under the title, its parts joined by a middle dot; a `{ code }`
-	// part cuts in its middle, keeping its start and its end.
+	/** The line under the title, its parts (each a short phrase) joined by a middle dot on one line, the later parts truncating first; a `{ code }` part cuts in its middle, keeping its start and its end. */
 	meta?: readonly RowPart[];
-	// A value at the title line's end (an age, a count, a word), or a pick
-	// that applies at once.
+	/** A value at the title line's end (an age, a count, a word: kept whole, the title truncating first), or a pick that applies at once. */
 	trailing?: RowTrailing<V>;
 	// A work state on the meta line; a waiting act is told by its tone.
 	status?: StatusMark;
-	// What is wrong with the row, on the meta line after the status: a warn
-	// glyph and the sentence. The act that clears it is the row's `act`.
+	/** What is wrong with the row, on the meta line after the status: a warn glyph and its label (a short phrase; truncates). The act that clears it is the row's `act`. */
 	warning?: string;
-	// What the row holds, on the meta line after the warning: a lock glyph.
+	/** What the row holds, on the meta line after the warning: a lock glyph and its label (a short phrase; truncates). */
 	lock?: string;
 	// A data value's chip on the meta line.
 	chip?: ChipMark;

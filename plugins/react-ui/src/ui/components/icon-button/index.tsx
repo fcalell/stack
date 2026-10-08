@@ -9,7 +9,7 @@ export interface IconButtonProps extends Closed {
 	icon: IconName;
 	/** What it sits in: a body (the default), a bar, or a field's end. */
 	fit?: IconButtonFit;
-	/** The act's accessible name; never drawn. */
+	/** The act's accessible name (a short phrase; read aloud, never drawn). */
 	label: string;
 	/** Runs the act. */
 	onAct: () => void;

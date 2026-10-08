@@ -40,7 +40,7 @@ const TOAST_BOX = "absolute inset-x-0 top-0";
 // it draws `full`. It hosts `toast()` and `confirm()` as the Shell does, and
 // draws no word of its own.
 export interface GateProps extends Closed {
-	// The page's one header.
+	/** The page's one header (a short phrase; wraps). */
 	title: string;
 	// A meta line under the title, as runs: `{ strong }` runs draw at weight
 	// 500.

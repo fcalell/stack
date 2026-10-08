@@ -30,7 +30,7 @@ const TRACK = "overflow-hidden";
 const TICK = "absolute";
 
 interface MeterBase extends Closed {
-	/** What is measured. */
+	/** What is measured (a short phrase; truncates). */
 	label: string;
 	/** How much is used; past `max` the meter is over. */
 	value: number;
@@ -45,7 +45,7 @@ interface MeterBase extends Closed {
 /** The one line under the bar: words, or counts that are links, never both. */
 type MeterLine =
 	| {
-			/** A line under the bar: the value in words, when it resets. */
+			/** A line under the bar: the value in words, when it resets (a sentence; wraps). */
 			meta?: string;
 			counts?: never;
 	  }

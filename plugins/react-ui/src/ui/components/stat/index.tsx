@@ -9,11 +9,11 @@ const FIGURE = "flex items-baseline";
 
 /** One figure with its label: the focal point of a screen. */
 export interface StatProps extends Closed {
-	/** What the figure counts, read after it ("need you"). */
+	/** What the figure counts, read after it ("need you") (a short phrase; wraps). */
 	label: string;
 	/** The figure; zero is a count, drawn. */
 	value: number;
-	/** What the figure counts, muted beside it. */
+	/** What the figure counts, muted beside it (a word; wraps). */
 	unit?: string;
 	/** The figure and its label as bars in their line boxes. */
 	loading?: boolean;

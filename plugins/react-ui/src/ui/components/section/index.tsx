@@ -95,11 +95,11 @@ function partText(part: Part): string {
 
 /** A titled region of a page over its rows. */
 export interface SectionProps extends Closed {
-	/** The heading. */
+	/** The heading (a short phrase; truncates). */
 	title: Part;
 	/** A total the body's lists do not hold, in the muted ink after the title; without it a List in the body counts its items there. */
 	count?: number;
-	/** A sentence under the title. While the Section loads, `""` stands one meta-height bar where the sentence will be and an undefined `description` stands none; loaded, `""` draws no line, as an undefined one. */
+	/** Under the title (a sentence; wraps). While the Section loads, `""` stands one meta-height bar where the sentence will be and an undefined `description` stands none; loaded, `""` draws no line, as an undefined one. */
 	description?: string;
 	/** Set, the title folds the body, and this is its initial fold: `true` starts folded, `false` open; later changes are not read. */
 	folded?: boolean;

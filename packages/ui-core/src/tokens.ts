@@ -1002,7 +1002,7 @@ export const RING_OFFSET_PX = 2;
 export const ICON_STROKE = { line: 2, mark: 3.5 } as const;
 export type IconStroke = keyof typeof ICON_STROKE;
 
-// The measure of a short label (a chip's, a status word, a skeleton label's
+// The measure of a short label (a chip's, a row pick's value, a skeleton label's
 // lane), the widths of lifted layers, each at its pattern's range (a layer
 // never stretches to its container), and the fixed regions of a frame (the sidebar, a split's list column and record
 // pane, a board column, a canvas node, the auth column, an empty state's column) and the

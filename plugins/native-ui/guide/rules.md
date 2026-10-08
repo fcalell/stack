@@ -265,6 +265,10 @@ the `Form`'s first child: the object's glyph as `leading`, its name as `title`, 
 </Form>
 ```
 
+A `Form` holds fields and its `ActionBar`. One form among a screen's sections is `Section > Form`, so
+every section's head-to-body gap stays the pair step. `Section`s inside a `Form` (`Form > Section`)
+stand at the fields step, so that shape is for a screen every section of which is in the form.
+
 ## Collections take data
 
 A collection takes data and draws its states. A `List` takes its `query` (or static `items`) and one
@@ -434,6 +438,26 @@ draws the not-found form when every failed query answers not found.
 
 A word a component draws on its own comes from `nativeUi({ words })`, read with
 `useWords()` from `@fcalell/plugin-native-ui/lib/words`; every sentence is a prop.
+
+## A text prop takes one of four sizes
+
+Every string prop's doc ends in the size of text it takes and what the component does past it. The
+sizes are fixed, the same as on the web:
+
+| Size | Is | Past it |
+| --- | --- | --- |
+| a word | one word: a state, a unit, a figure's noun | a slot that bounds it (a `Chip`, a row pick's pill) holds the short measure, 18 characters, and truncates |
+| a short phrase | a few words on one line: a title, a label, a name | takes the room its line leaves, then truncates with an ellipsis, or wraps where its doc says it wraps |
+| a sentence | one sentence, in a slot built to wrap: a description, a banner, an empty state, an error | wraps |
+| text | running content of any length: markdown, a message body, code | wraps whole |
+
+A component cuts or wraps past the size and never grows its slot, so a sentence in a word slot is
+cut or crowded: a sentence as a `Chip`'s `label` loses everything past 18 characters, a sentence as a `Status`'s `label` crowds its line and truncates when the line is out of room, and a sentence as a `DefinitionRow`'s
+`value` shares the row with its label and truncates at its end. Give a slot the size its doc names,
+and put a sentence in the prop that takes one (`description`). A string that is an identifier cuts in
+its middle, keeping its start and its end: a `DefinitionRow` value of one word over eight
+characters, and a title or meta part that is `{ code }`. A string that is no text (an `href`, a
+`src`, an id, a key, a file name, an Intl unit) is documented by what it is.
 
 ## The app's `ui/`
 

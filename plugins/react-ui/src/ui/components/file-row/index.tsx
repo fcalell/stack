@@ -51,7 +51,7 @@ const COUNT = "text-end";
 
 /** A changed file in a review's list. */
 export interface FileRowProps extends Closed {
-	/** The file's path; the directory gives way first when it is too long, then the name's middle down to its floor, then the chip's label. */
+	/** The file's path (a path: the directory gives way first when it is too long, then the name's middle down to its floor, then the chip's label). */
 	path: string;
 	/** Lines added; zero draws nothing. */
 	added: number;

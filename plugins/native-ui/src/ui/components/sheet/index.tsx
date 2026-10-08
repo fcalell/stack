@@ -10,20 +10,18 @@ export interface SheetProps extends Closed {
 	open: boolean;
 	// Hears the close act, a press on the scrim and the drag down.
 	onClose: () => void;
-	// The sheet's heading, which names it.
+	/** The sheet's heading, which names it (a short phrase; wraps). */
 	title: string;
+	/** Under the title (a sentence; wraps). */
 	description?: string;
 	// A second page's way back, in the close act's place.
 	back?: () => void;
 	// The act that completes the task, at the head's end where a keyboard
 	// would cover a bar; a blocked one's reason under the head.
 	submit?: Act;
-	// A sentence in the foot.
+	/** In the foot (a sentence; wraps). */
 	foot?: string;
-	// The sentence the submit's last run failed with: a one-line error in the
-	// line a blocked reason keeps (under the head's submit, or under the docked
-	// foot's act), the act ready again. Clear it to dismiss; a blocked
-	// submit's reason stands before it.
+	/** What the `submit`'s last run failed with (a sentence; wraps): an error in the line a blocked reason keeps (under the head's submit, or under the docked foot's act), the act ready again. Clear it to dismiss; a blocked `submit`'s reason stands before it. */
 	failed?: string;
 	// What the desktop side sheet holds; on the phone a pane's title steps
 	// down to body 500.

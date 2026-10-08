@@ -93,7 +93,7 @@ type OptionSource<T, V extends string> =
 			options: readonly Option<V>[] | readonly OptionGroup<V>[];
 			/** The options wait: skeleton rows stand in for them. */
 			loading?: boolean;
-			/** The sentence the card holds with no option; without it an empty set draws an empty card. */
+			/** The card's line with no option; without it an empty set draws an empty card (a sentence; wraps). */
 			empty?: string;
 			query?: never;
 			option?: never;
@@ -104,9 +104,9 @@ type OptionSource<T, V extends string> =
 			query: QueryLike<readonly T[]>;
 			/** One function per check row slot, each called with a loaded item; the slots given are the shape the waiting rows draw. */
 			option: OptionSlots<T, V>;
-			/** What failed to load, beside the retry act. */
+			/** What failed to load, beside the retry act (a sentence; wraps). */
 			sentence: string;
-			/** The sentence the card holds when the query answers with no item. */
+			/** The card's line when the query answers with no item (a sentence; wraps). */
 			empty: string;
 			options?: never;
 			loading?: never;

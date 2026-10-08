@@ -26,6 +26,7 @@ function emit(): void {
 	for (const listener of listeners) listener();
 }
 
+/** Queues a toast: `sentence` is what happened (a sentence; wraps). */
 export function toast(sentence: string, options: ToastOptions = {}): void {
 	const id = nextId++;
 	entries = [...entries, { id, sentence, ...options }];

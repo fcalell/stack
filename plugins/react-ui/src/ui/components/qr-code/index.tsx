@@ -45,7 +45,7 @@ function modules(code: ReturnType<typeof qrcode>): string {
 
 /** A value a phone scans. */
 export interface QrCodeProps extends Closed {
-	/** What the code carries (a link, a pairing secret), at most 2,331 bytes as UTF-8 (the largest code at its error correction); also its accessible name. */
+	/** What the code carries (a link, a pairing secret), at most 2,331 bytes as UTF-8 (the largest code at its error correction); also its accessible name (text; drawn as a code, never as text). */
 	value: string;
 	/** The tile at its size, the code's square a skeleton. */
 	loading?: boolean;

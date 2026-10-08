@@ -14,7 +14,7 @@ export interface TextProps extends Closed {
 	role?: TextRole;
 	/** Emphasis at weight 500, never a size change. */
 	strong?: boolean;
-	/** The text. */
+	/** The text (text; wraps). */
 	children?: ReactNode;
 }
 

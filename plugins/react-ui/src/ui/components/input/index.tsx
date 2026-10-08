@@ -77,15 +77,15 @@ const SURFACE: Record<InputKind, FieldKind> = {
 export interface InputProps extends Closed {
 	/** What is typed: `text` (the default), `search` (a toolbar box with its glyph), `secret`, `source` (mono, a machine reads it), `number` (with `unit`), or `email`. */
 	kind?: InputKind;
-	/** The value. */
+	/** The value (text; one line, scrolls in the field). */
 	value: string;
 	/** Hears every keystroke's value. */
 	onChange: (value: string) => void;
 	/** Hears the value once the viewer is done with it: on leaving the field or on Enter, only when it changed since focus; Escape then puts back the value at focus and leaves the field. */
 	onCommit?: (value: string) => void;
-	/** The hint drawn while the value is empty; never the field's name. */
+	/** The hint drawn while the value is empty; never the field's name (a short phrase; truncates). */
 	placeholder?: string;
-	/** A `number`'s unit, drawn after the value. */
+	/** A `number`'s unit, drawn after the value (a word; one line). */
 	unit?: string;
 	/** An icon act inside the field's end (copy, reveal, add); Enter in the field presses it. */
 	act?: IconAct;

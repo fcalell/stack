@@ -92,6 +92,7 @@ function leadingOf<T>(slot: LeadingSlot<T>, item: T): RowLeading {
 export interface RowSlots<T, V extends string | null = string> {
 	// The item's React key, unique in the list.
 	key: (item: T) => string;
+	/** The row's title (a short phrase; truncates at its end, wraps whole while `wrap`). */
 	title: (item: T) => RowTitle;
 	// The item's children, which makes the list a tree: they draw one level in
 	// under it, and its fold act folds them (open by default, the list holds
@@ -102,12 +103,13 @@ export interface RowSlots<T, V extends string | null = string> {
 	change?: (item: T) => ChangeKind | undefined;
 	// The rows' leading mark, one kind for every row of the list.
 	leading?: LeadingSlot<T>;
+	/** The row's meta line (each part a short phrase; one line, the later parts truncating first). */
 	meta?: (item: T) => readonly RowPart[] | undefined;
 	trailing?: (item: T) => RowTrailing<V> | undefined;
 	status?: (item: T) => StatusMark | undefined;
-	// What is wrong with the row, a warning mark.
+	/** What is wrong with the row, a warning mark (a short phrase; truncates). */
 	warning?: (item: T) => string | undefined;
-	// What the row holds, a lock mark.
+	/** What the row holds, a lock mark (a short phrase; truncates). */
 	lock?: (item: T) => string | undefined;
 	chip?: (item: T) => ChipMark | undefined;
 	// The row's input and its act, in the meta line's place; the waiting rows
@@ -134,6 +136,7 @@ export interface RowSlots<T, V extends string | null = string> {
 // One function per `FileRow` slot, each called with a loaded item.
 export interface FileSlots<T> {
 	key: (item: T) => string;
+	/** The file's path (a path: the directory gives way first, then the name's middle). */
 	path: (item: T) => string;
 	added: (item: T) => number;
 	removed: (item: T) => number;
@@ -146,6 +149,7 @@ export interface FileSlots<T> {
 
 interface MeterSlotsBase<T> {
 	key: (item: T) => string;
+	/** What is measured (a short phrase; truncates). */
 	label: (item: T) => string;
 	value: (item: T) => number;
 	max: (item: T) => number;
@@ -165,7 +169,9 @@ export type MeterSlots<T> = MeterSlotsBase<T> &
 
 interface DefinitionSlotsBase<T> {
 	key: (item: T) => string;
+	/** What the fact is (a short phrase; wraps to the room its value leaves). */
 	label: (item: T) => string;
+	/** The fact: a string (a word or a short phrase; truncates at its end, an identifier of one word over eight characters cuts in its middle), a status, or a control that changes it in place. */
 	value?: (item: T) => DefinitionValue | undefined;
 	// Where the fact stands in a change set, its change mark.
 	change?: (item: T) => ChangeKind | undefined;
@@ -182,6 +188,7 @@ export type DefinitionSlots<T> = DefinitionSlotsBase<T> &
 	(
 		| {
 				locked?: never;
+				/** Under the label and the value (a sentence; wraps). */
 				description?: (item: T) => string | undefined;
 				act?: (item: T) => IconAct | undefined;
 				href?: (item: T) => Route | undefined;
@@ -207,7 +214,7 @@ export type ListEmpty = Pick<
 export type ListSource<T> =
 	| {
 			query: QueryLike<readonly T[]>;
-			// What failed to load, over the retry act.
+			/** What failed to load, over the retry act (a sentence; wraps). */
 			sentence: string;
 			empty: ListEmpty;
 			items?: never;

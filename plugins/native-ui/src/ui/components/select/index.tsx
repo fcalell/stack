@@ -21,6 +21,7 @@ export interface SelectProps<V extends string | null = string> extends Closed {
 	value?: NoInfer<V>;
 	onChange: (value: NoInfer<V>) => void;
 	options: readonly Option<V>[] | readonly OptionGroup<V>[];
+	/** The hint drawn while nothing is chosen; never the field's name (a short phrase; truncates). */
 	placeholder?: string;
 }
 

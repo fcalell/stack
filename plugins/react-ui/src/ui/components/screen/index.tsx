@@ -60,7 +60,7 @@ const BODY =
 
 /** A pushed page. */
 export interface ScreenProps extends Closed {
-	/** The page's title, its one `h1`; beside a Split's main, a heading at the level where it stands, at every width. */
+	/** The page's title, its one `h1`; beside a Split's main, a heading at the level where it stands, at every width (a short phrase; truncates). */
 	title: string;
 	/** The route the back act returns to; none draws no back act. */
 	back?: string;

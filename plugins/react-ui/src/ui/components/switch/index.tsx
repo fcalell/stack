@@ -22,7 +22,7 @@ export interface SwitchProps extends Closed {
 	checked: boolean;
 	/** Hears the next value when the viewer flips it. */
 	onChange: (checked: boolean) => void;
-	/** Its name; the row around it draws the visible label. */
+	/** Its name; the row around it draws the visible label (a short phrase; read aloud, never drawn). */
 	label: string;
 }
 

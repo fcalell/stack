@@ -8,6 +8,7 @@ import { IconButtonBase } from "./base";
 export interface IconButtonProps extends Closed {
 	icon: IconName;
 	fit?: IconButtonFit;
+	/** The act's accessible name (a short phrase; read aloud, never drawn). */
 	label: string;
 	onAct: () => void;
 	loading?: boolean;

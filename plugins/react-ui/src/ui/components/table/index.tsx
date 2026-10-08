@@ -185,7 +185,7 @@ type TableSource<T> =
 	| {
 			/** The query whose items the rows draw. */
 			query: QueryLike<readonly T[]>;
-			/** What failed to load, over the retry act. */
+			/** What failed to load, over the retry act (a sentence; wraps). */
 			sentence: string;
 			items?: never;
 			loading?: never;

@@ -4,7 +4,7 @@ import { EmptyStateBase } from "../empty-state/base.tsx";
 
 /** What a page, a Section or a Group says of a read that failed, with the act that tries it again. */
 export interface FailedProps extends Closed {
-	/** What failed to load, over the act. */
+	/** What failed to load, over the act (a sentence; wraps). */
 	sentence: string;
 	/** The way to try again: an act that runs a function, never a link. */
 	act: Act;

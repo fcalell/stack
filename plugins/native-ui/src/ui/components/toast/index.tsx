@@ -62,7 +62,7 @@ const MARK: Record<ToastState, IconName> = {
 };
 
 export interface ToastProps extends Closed {
-	// What happened.
+	/** What happened (a sentence; wraps). */
 	sentence: string;
 	// How the act it reports ended: its glyph in the state's ink.
 	state?: ToastState;

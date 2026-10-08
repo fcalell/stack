@@ -76,7 +76,7 @@ function paragraphsOf(
 
 /** Markdown read at the measure. */
 export interface ProseProps extends Closed {
-	/** The text, in markdown: headings, paragraphs, lists, quotes, rules, inline code, links and fenced code. */
+	/** The text, in markdown: headings, paragraphs, lists, quotes, rules, inline code, links and fenced code (text; wraps). */
 	markdown: string;
 	/** The text waits: `true` stands two paragraphs of line boxes in for it, and a number from 1 stands that many lines of one paragraph (its last half the measure), so a one-line text waits as one line. 0 or `false` is not waiting, so `loading={lines?.length}` reads the loaded text at 0. Unset, a loading `Section` or `Group` around it makes it wait as two paragraphs: it hands down a boolean, so set the count on the Prose itself. */
 	loading?: boolean | number;

@@ -145,7 +145,7 @@ export interface BarSlots<T> {
 	value: (item: T) => number;
 	// The bar's parts' values by the chart's `keys`; a key it lacks is 0.
 	parts?: (item: T) => Readonly<Record<string, number>> | undefined;
-	// The time drawn under the bar.
+	/** The time drawn under the bar (a word; truncates). */
 	at?: (item: T) => string | undefined;
 }
 
@@ -153,7 +153,7 @@ export interface BarSlots<T> {
 type ChartSource<T> =
 	| {
 			query: QueryLike<readonly T[]>;
-			// What failed to load, over the retry act.
+			/** What failed to load, over the retry act (a sentence; wraps). */
 			sentence: string;
 			empty: ListEmpty;
 			items?: never;
@@ -173,12 +173,9 @@ type ChartSource<T> =
 // names its parts.
 export type BarChartProps<T = unknown> = Closed &
 	ChartSource<T> & {
-		// What the chart counts: the web names its plot by it, the phone draws
-		// no name for the plot.
+		/** What the chart counts: the web names its plot by it, the phone draws no name for the plot (a short phrase; never drawn on the phone). */
 		label: string;
-		// The names a bar's parts stack by, bottom first: present, the chart is
-		// stacked and draws them as its legend in every form, each name holding
-		// its series mark.
+		/** The names a bar's parts stack by, bottom first (each a word; the legend wraps between names): present, the chart is stacked and draws them as its legend in every form, each name holding its series mark. */
 		keys?: readonly string[];
 		bar: BarSlots<T>;
 		// What the values count (`requests`, `minutes`), drawn after the total; a

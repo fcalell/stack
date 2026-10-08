@@ -81,11 +81,13 @@ export interface ButtonProps extends Closed {
 	act?: ButtonAct;
 	fit?: ButtonFit;
 	icon?: IconName;
+	/** The visible text, and the act's accessible name (a short phrase; truncates). */
 	label: string;
 	count?: number;
 	wait?: number;
 	onAct?: () => void;
 	loading?: boolean;
+	/** Why the act cannot run: it is inert, and shows this under itself once pressed or once its form or sheet is touched (a sentence; wraps). */
 	blocked?: string;
 }
 

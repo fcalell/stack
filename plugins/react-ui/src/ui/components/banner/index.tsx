@@ -38,7 +38,7 @@ const GLYPHS: Record<BannerKind, IconName> = {
 export interface BannerProps extends Closed {
 	/** What it tells: news (`note`, the default), a caution (`warn`), or a failure (`danger`, announced at once). */
 	kind?: BannerKind;
-	/** The sentence. */
+	/** The text beside the glyph (a sentence; wraps). */
 	sentence: string;
 	/** The one act it offers, at the line's end; a blocked act's reason draws on the banner's own line, under it. */
 	act?: Act;

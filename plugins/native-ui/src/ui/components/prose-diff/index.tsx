@@ -21,9 +21,9 @@ const LINE = "flex-row items-center";
 const BARS = ["w-full", "w-full", "w-full", "w-1/2"] as const;
 
 export interface ProseDiffProps extends Closed {
-	// The text before the edit.
+	/** The text before the edit (text; wraps). */
 	before: string;
-	// The text after it.
+	/** The text after it (text; wraps). */
 	after: string;
 	// The text waits: four line boxes stand in for it.
 	loading?: boolean;

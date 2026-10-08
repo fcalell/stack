@@ -61,11 +61,11 @@ const STATUS_BAR = "flex min-w-0";
 export interface FactSlots<T> {
 	/** The item's React key, unique in the comparison. */
 	key: (item: T) => string;
-	/** The fact's label. */
+	/** The fact's label (a short phrase; wraps). */
 	label: (item: T) => string;
-	/** The fact's value under each column, in the columns' order. */
+	/** The fact's value under each column, in the columns' order (each a short phrase; wraps). */
 	values: (item: T) => readonly string[];
-	/** The chips beside the fact's label. */
+	/** The chips beside the fact's label (each a word; truncates past the short measure, 18 characters). */
 	chips?: (item: T) => readonly string[] | undefined;
 	/** The fact's verdict, drawn after the label and its chips; a passing fact returns undefined, or a done mark where the screen reads the pass out. */
 	status?: (item: T) => StatusMark | undefined;
@@ -74,9 +74,9 @@ export interface FactSlots<T> {
 /** Facts set side by side across two or three columns, from a query or from items. */
 export type ComparisonProps<T = unknown> = Closed &
 	ListSource<T> & {
-		/** What the columns compare, the table's accessible name. */
+		/** What the columns compare, the table's accessible name (a short phrase; read aloud, never drawn). */
 		label: string;
-		/** The compared things' labels, heading the columns, known before the data. */
+		/** The compared things' labels, heading the columns, known before the data (each a short phrase; wraps). */
 		columns: readonly string[];
 		/** The fact slots. */
 		row: FactSlots<T>;
