@@ -70,7 +70,7 @@ pnpm stories:test   # every story in a headless browser: axe on each, the play t
 The test run is desktop density at a 1280 by 800 viewport; touch is a toolbar toggle. Every story
 runs every axe rule except the document-structure ones (landmarks, heading order, skip links;
 `.storybook/preview.tsx` lists them and why). Playwright's bundled browser is the default. Where
-none is installed (NixOS), point `CHROME_PATH` at a Chrome:
+none is installed, point `CHROME_PATH` at a Chrome:
 `CHROME_PATH=$(which google-chrome-stable) pnpm stories:test`.
 
 `.storybook/` holds the roster's own config: the story globs, `rosterPlugin` and the generator of

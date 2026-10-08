@@ -1840,7 +1840,7 @@ same way (`vitest.config.ts` calls it, then `loadConfigFromFile`). Nothing is ad
 What stays in `.storybook/` is the roster's own: `rosterPlugin` (added to the derived config by
 `main.ts`' `viteFinal` and by Vitest's config), the story globs and the generated modules below.
 
-- The browser provider launches Playwright's own browser; where none is installed (NixOS),
+- The browser provider launches Playwright's own browser; where none is installed,
   `CHROME_PATH` names a Chrome to launch. `@storybook/addon-vitest` needs no
   `setProjectAnnotations` file since Storybook 10.3.
 
@@ -1907,6 +1907,6 @@ does not name, a literal that duplicates a cell, an off-contract utility, or a d
   leaves room for.
 - A product cannot draw in the platform font: `fonts.sans` unset is IBM Plex Sans,
   and the platform stack only stands behind the named family and its metric fallback face.
-- Comparison's `hyphens-auto` is unverified: the Nix Playwright browsers ship no hyphenation
+- Comparison's `hyphens-auto` is unverified: the Playwright browsers the run uses ship no hyphenation
   dictionaries, so a value wider than its column breaks mid-letter there.
 - Native Diff and Comparison name a `list`-role container (React Native has no table role).
