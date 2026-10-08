@@ -22,4 +22,4 @@ No new surface. A list standing alone at a deeper route is a pushed `Screen` who
 Evidence: `behaviour/split.stories.tsx` `TreeAloneGoesUp` and `TreeRecordGoesToTree` (desktop and `Touch`: the one visible Back act leads to the parent, then to the tree).
 
 ## Critique
-Rework: the tree-alone Split (desktop and Touch stories) overflows the 390 px viewport by 1 px; the back act renders.
+Rework: the tree-alone Split (desktop and Touch stories) overflows the viewport by 71 px at 320 and 1 px at 390; its page head and containers end at x 391 at every width. The back act renders.
