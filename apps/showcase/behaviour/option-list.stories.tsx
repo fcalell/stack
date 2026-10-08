@@ -49,7 +49,7 @@ const LONG = [
 function Sized(props: { width: number; loading?: boolean }) {
 	const [value, setValue] = useState<string[]>([]);
 	return (
-		<div style={{ width: props.width }}>
+		<div style={{ width: props.width, maxWidth: "100%" }}>
 			<OptionList
 				options={props.loading ? [] : LONG}
 				loading={props.loading}

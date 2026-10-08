@@ -25,7 +25,7 @@ is the viewport less the 240 px sidebar. The list and the main stand together fr
 viewport. Below them one region stands at a time.
 
 A record the open record links to opens beside it: the `Split`'s `beside` holds a `Screen` whose
-`back` is the open record's route. From `wide` it stands beside the main, its back act a Close;
+`back` is the open record's route. From `wide` it stands beside the main, its back act a Close at the head's end;
 below `wide` it stands in the main's place with its back act, and below `tablet` its head is the
 page's only head, its back act to the main. The record's title is an `h1` and its sections start at `h2`, at every width. The body's first child, an `ItemHeader`, stands a pair, not a sections gap, above an `ActionBar` or a `Banner` directly after it (a `Place`, a `Screen` or a `Split`'s `main`) and, in a `Split`'s `main` when it has no facts line, above the record's first section (not above a `Thread`). The body reads its own children, a fragment seen through: a head or bar reached through a wrapper component keeps the sections step.
 

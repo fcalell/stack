@@ -123,7 +123,7 @@ export interface SheetBaseProps {
 	tall?: boolean;
 	/** An act pends: the close act is inert and says so. */
 	busy?: boolean;
-	/** What the sheet opens focused on: its first field (a confirm's typed name), or the element a ref holds (a pick's option). */
+	/** What the sheet opens focused on: its first field (a confirm's typed name), or the element a ref holds (a pick's option); a decision with neither opens on its first act, the way out. */
 	focus?: "field" | RefObject<HTMLElement | null>;
 	/** Ties a trigger elsewhere (a `Dialog.Trigger`) to the sheet. */
 	handle?: Dialog.Handle<unknown>;
@@ -352,11 +352,20 @@ export function SheetBase({
 				>
 					<Dialog.Popup
 						ref={popup}
-						// A field takes no ref (its props are closed), so the popup finds it.
+						// A field and an act take no ref (their props are closed), so the
+						// popup finds them. A decision opens on its way out: on touch the
+						// stack draws the filled act first, so the first tabbable is not it.
 						initialFocus={
 							focus === "field"
 								? () => popup.current?.querySelector("input") ?? true
-								: focus
+								: (focus ??
+									(acts
+										? () =>
+												[
+													...(popup.current?.querySelectorAll("button") ?? []),
+												].find((act) => act.textContent === acts[0]?.label) ??
+												true
+										: undefined))
 						}
 						role={form === "centred" ? "alertdialog" : "dialog"}
 						aria-label={view ? title : undefined}

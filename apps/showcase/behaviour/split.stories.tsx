@@ -14,6 +14,7 @@ import { Section } from "@fcalell/plugin-react-ui/components/section";
 import { Split } from "@fcalell/plugin-react-ui/components/split";
 import { Thread } from "@fcalell/plugin-react-ui/components/thread";
 import { Toolbar } from "@fcalell/plugin-react-ui/components/toolbar";
+import { BREAKPOINT_PX } from "@fcalell/ui-core/tokens";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { type ReactNode, useState } from "react";
 import { expect, waitFor } from "storybook/test";
@@ -389,7 +390,9 @@ export const BesideAtThePhone = touch(besideAtThePhone);
 // A record beside the main is a head of its own: its title is an h1 and its
 // sections h2 at every width, so below `tablet`, where the Place's head is
 // undrawn, the record's h1 is the one visible; from `tablet` the Place's h1
-// stands first.
+// stands first. The record's regions follow the frame the story stands in, which
+// a narrow viewport caps below its nominal width; at `wide` the title stands at
+// the sections' gutter, its Close act ending the line.
 function headings(width: number): StoryObj {
 	return {
 		render: () => (
@@ -421,10 +424,23 @@ function headings(width: number): StoryObj {
 			await expect(h1s.length).toBeGreaterThan(0);
 			await expect(drawn[0]?.tagName).toBe("H1");
 			const title = (el: Element) => el.textContent;
-			if (width < 768) await expect(h1s.map(title)).toEqual(["History"]);
+			const frame = must(canvasElement.firstElementChild).clientWidth;
+			if (frame < BREAKPOINT_PX.tablet)
+				await expect(h1s.map(title)).toEqual(["History"]);
 			else await expect(h1s.map(title)).toEqual(["System", "History"]);
 			const entries = drawn.find((el) => title(el) === "Entries");
 			await expect(entries?.tagName).toBe("H2");
+			if (frame < BREAKPOINT_PX.wide) return;
+			const record = must(h1s.find((el) => title(el) === "History"));
+			await expect(record.getBoundingClientRect().left).toBe(
+				must(entries).getBoundingClientRect().left,
+			);
+			const close = must(
+				canvasElement.querySelector<HTMLElement>('a[aria-label="Close"]'),
+			);
+			await expect(close.getBoundingClientRect().left).toBeGreaterThan(
+				record.getBoundingClientRect().left,
+			);
 		},
 	};
 }

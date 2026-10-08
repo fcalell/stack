@@ -31,3 +31,6 @@ An option's label always wraps: no option, no prop, no token. A label is the who
 
 ## Critique (second round)
 Ship, by a fresh critic at 1280, 390 (touch) and the widths the story names, light and dark (scratchpad `critique/r2-sheet/report.md`).
+
+## Rework (second round nit)
+`Behaviour/OptionList`'s sized frames take `max-width: 100%`, so a 375 frame no longer overflows a 375 viewport by the story padding.

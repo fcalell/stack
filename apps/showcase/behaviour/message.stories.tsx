@@ -7,7 +7,7 @@ const noop = () => {};
 export default {
 	title: "Behaviour/Message",
 	render: () => (
-		<div style={{ width: 480 }}>
+		<div style={{ width: 480, maxWidth: "100%" }}>
 			<Message
 				author="system"
 				body="Proposed a redeploy"

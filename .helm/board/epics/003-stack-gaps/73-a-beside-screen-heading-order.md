@@ -28,3 +28,6 @@ Ruled (rulings-6): a beside Screen titles at `h1` and its sections at `h2` at ev
 
 ## Critique (second round)
 Ship, by a fresh critic at 320, 390, 768, 1280 and 1440, light and dark (scratchpad `critique/r2-layout/report.md`).
+
+## Rework (second round nit)
+`BesideHeadings768`'s play compared the nominal 768 with the Place's head, which hides below `tablet` of the frame; a narrow viewport caps the frame, so the play failed at viewports narrower than 784. The play reads the frame's own width (`canvasElement.firstElementChild`) against `BREAKPOINT_PX.tablet`.

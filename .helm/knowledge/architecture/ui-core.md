@@ -643,8 +643,8 @@ a tick with no animation, never jumped to full.
   sharing what the list leaves half each (`SPLIT_BESIDE`, `grow basis-0`: a structural fraction,
   never a width token; the web parts them by the beside's start hairline, an overlay from `wide`).
   The main's inset sits on a box inside its scroll, never on the shared box, because a `basis-0`
-  item still counts its own padding against its share; the Screen's back act draws as Close to the
-  same route, and the pane leaves for the Details act at every width, which the Split's
+  item still counts its own padding against its share; the Screen's back act draws as Close, last in
+  its head, to the same route, and the pane leaves for the Details act at every width, which the Split's
   `data-beside` mark shows. Below `wide` the beside record stands in the main's place with its back
   act, a pushed page inside the Split. Below `tablet` (the web) and on the phone, where it stands
   alone, its head is the page's one: the Place reads the Split's `data-beside` mark (the web) or its

@@ -42,7 +42,7 @@ const SCREEN_BESIDE = "flex flex-col grow min-h-0";
 const SECTIONS_BESIDE = "@container/page flex flex-col shrink-0 grow";
 const ALONE = "page-tablet:hidden";
 // Beside, the back act draws as Close to the same route from `wide` of the
-// page, where the main stands with it.
+// page, where the main stands with it, at the head's end.
 const BACK = "flex page-wide:hidden";
 const CLOSE = "flex page-max-wide:hidden";
 // Below `tablet` of the page the beside record's head stands alone, in the
@@ -72,7 +72,7 @@ export interface ScreenProps extends Closed {
 	children?: ReactNode;
 }
 
-/** A page pushed over a place: the back act first and no filled act. Its head draws one hairline: on the desktop it stands in the shell's column under one strip; on touch the top bar (back, actions, more) stands over the title and the screen covers the tab bar. A Split inside decides its regions by the screen's width and its pane's Details act stands in its head, drawn below `wide` of it; while its record stands alone (below `tablet`) the back act returns to the Split's `back` when it names one. As a Split's `beside` record it stands in its page: its title is an `h1` and its sections start at `h2` at every width; it covers no tab bar, and from `wide` of the page its back act draws as Close. Below `tablet` of the page its head stands alone in the Place's stead, one top bar with its back act to the main, and draws the Details act of the Split's pane while it is open; its body keeps the room of the act floating over it. */
+/** A page pushed over a place: the back act first and no filled act. Its head draws one hairline: on the desktop it stands in the shell's column under one strip; on touch the top bar (back, actions, more) stands over the title and the screen covers the tab bar. A Split inside decides its regions by the screen's width and its pane's Details act stands in its head, drawn below `wide` of it; while its record stands alone (below `tablet`) the back act returns to the Split's `back` when it names one. As a Split's `beside` record it stands in its page: its title is an `h1` and its sections start at `h2` at every width; it covers no tab bar, and from `wide` of the page its back act draws as Close, the head's last act, so the title stands at the page's gutter. Below `tablet` of the page its head stands alone in the Place's stead, one top bar with its back act to the main, and draws the Details act of the Split's pane while it is open; its body keeps the room of the act floating over it. */
 export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	const touch = useTouch();
 	const words = useWords();
@@ -122,14 +122,9 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	) : (
 		goBack
 	);
-	const backAct = beside ? (
-		<>
-			{goBack ? <span className={BACK}>{goBack}</span> : null}
-			{close}
-		</>
-	) : (
-		standing
-	);
+	const backAct = beside
+		? goBack && <span className={BACK}>{goBack}</span>
+		: standing;
 	const acts = (actions ?? []).map((action) => (
 		<IconButton key={action.label} {...action} fit={fit} />
 	));
@@ -175,6 +170,7 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 				{details}
 				{besideDetails}
 				{overflow}
+				{beside ? close : null}
 			</div>
 			{touch ? heading : null}
 		</header>

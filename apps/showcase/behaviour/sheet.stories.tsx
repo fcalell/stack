@@ -58,8 +58,8 @@ export const Modal: StoryObj = {
 };
 
 // A decision (`confirm()`, drawn as a sheet by the Gate or Shell hosting it)
-// takes focus when it asks, Escape dismisses it, and focus returns to the act that
-// asked.
+// takes focus on its way out (Cancel) when it asks, Escape dismisses it, and
+// focus returns to the act that asked.
 export const Decision: StoryObj = {
 	parameters: { layout: "fullscreen" },
 	render: () => (
@@ -90,13 +90,17 @@ export const Decision: StoryObj = {
 		await waitFor(() =>
 			expect(dialog).toContainElement(document.activeElement as HTMLElement),
 		);
+		await waitFor(() =>
+			expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus(),
+		);
 		await userEvent.keyboard("{Escape}");
 		await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
 		await waitFor(() => expect(trigger).toHaveFocus());
 	},
 };
 
-// The same decision at touch density is an alertdialog too.
+// The same decision at touch density is an alertdialog too, and opens on Cancel
+// though the stack draws the filled act first.
 export const DecisionTouch: StoryObj = {
 	...Decision,
 	tags: ["touch"],
