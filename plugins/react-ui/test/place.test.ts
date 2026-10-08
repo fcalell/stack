@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { ROSTER } from "@fcalell/ui-core/roster";
 import type { PlaceProps } from "../src/ui/components/place/index.tsx";
@@ -35,4 +36,16 @@ test("a Place read from across a room holds nothing that opens a layer", () => {
 	};
 	void [room, picked];
 	assert.ok(ROSTER.layout.Place?.props.includes("distance"));
+});
+
+// A size container sizes by its flex height, never its content: a footless
+// Place in a column of auto height would collapse to its head and its content
+// would overflow onto what stands below.
+test("a Place region is a size container only while a foot docks", () => {
+	const source = readFileSync(
+		new URL("../src/ui/components/place/index.tsx", import.meta.url),
+		"utf8",
+	);
+	assert.doesNotMatch(source, /const REGION = "[^"]*container-type/);
+	assert.match(source, /cn\(REGION, foot && REGION_FOOTED\)/);
 });

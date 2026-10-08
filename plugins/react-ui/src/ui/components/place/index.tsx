@@ -88,9 +88,12 @@ const BODY =
 const BLEED = "flex flex-col grow min-h-0";
 const BODY_WRAP = "relative flex flex-col grow min-h-0";
 // What the body and the docked foot share: the head stands outside it, so the
-// foot's bound is the whole of it and the body keeps the rest. A size
-// container: a docked sheet bounds its body by a fraction of it (`cqh`).
-const REGION = "flex flex-col grow min-h-0 [container-type:size]";
+// foot's bound is the whole of it and the body keeps the rest. With a foot
+// it is a size container, which a docked sheet bounds its body by (`cqh`) and
+// which its flex height sizes, never its content: a Place with a foot stands
+// in a column of its own height. Without one it fits its content.
+const REGION = "flex flex-col grow min-h-0";
+const REGION_FOOTED = "[container-type:size]";
 // The foot stays under the body, which scrolls past it, and spans it; a field
 // keeps its own measure column inside, which the foot centres at every density,
 // so a selection bar wider than the screen's measure stands centred on touch too.
@@ -344,7 +347,7 @@ export function Place({
 							className={cn(PLACE, PAGE)}
 						>
 							{head}
-							<div className={REGION}>
+							<div className={cn(REGION, foot && REGION_FOOTED)}>
 								<div className={BODY_WRAP}>
 									{body}
 									{layer}

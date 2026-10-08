@@ -25,10 +25,17 @@ export const MORE: MenuItem[] = [
 ];
 
 // A frame drawn at the showcase's width on the column's ground, the way a
-// page stands in the shell's column.
-export function Column(props: { children: ReactNode }) {
+// page stands in the shell's column, which has a height of its own when the
+// page docks a foot.
+export function Column(props: { children: ReactNode; height?: string }) {
 	return (
-		<div className={cn(SHELL_COLUMN, "flex flex-col w-screen max-w-full")}>
+		<div
+			className={cn(
+				SHELL_COLUMN,
+				"flex flex-col w-screen max-w-full",
+				props.height,
+			)}
+		>
 			{props.children}
 		</div>
 	);
@@ -198,7 +205,7 @@ export function drawPlace(frame: ShowcaseFrame) {
 		);
 	if (cell === "ICON_BUTTON.fit.body")
 		return (
-			<Column>
+			<Column height="h-185">
 				<Home />
 			</Column>
 		);

@@ -610,8 +610,9 @@ a tick with no animation, never jumped to full.
   foot line past two fifths of the region (a structural fraction, never a size token) and keeps three
   `row` sizes at least, a shorter body padding to that floor, each page opening at the body's top. The
   contract's cells hold no arbitrary value, so each platform restates the bounds in its overlay: the
-  web makes the Thread's and the Place's region a size container (`[container-type:size]`, which its
-  flex height sizes, never its content) and the body reads `max-h-[40cqh]` and
+  web makes the Thread's region, and the Place's while it docks a foot, a size container
+  (`[container-type:size]`, which its flex height sizes, never its content, so a Place with a foot
+  stands in a column of its own height; a footless one fits its content) and the body reads `max-h-[40cqh]` and
   `min-h-[calc(var(--spacing-row)*3)]`; the phone reads the `Lifted` region's height from `onLayout`
   (`FootRegion`) and gives the body `maxHeight` of 0.4 of it and `minHeight` of three `--spacing-row`.
   Inline among sections the body has no bound, since the page scrolls. Its states are its
