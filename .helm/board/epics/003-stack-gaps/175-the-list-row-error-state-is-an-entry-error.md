@@ -1,6 +1,6 @@
 ---
 id: 003-175
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: the ListRow error story draws a row that differs from rest
@@ -17,3 +17,6 @@ A row's `error` state is its entry's error line (`FIELD.state.error`, `FIELD_ERR
 
 ## Built
 `plugins/react-ui/src/ui/showcase/frames/list-row.tsx`: `drawListRow` draws the `SOURCES` rows with an `error` in the `error` state, and `part()` lost its `failing` argument and field with the five filters that fed it. Evidence: `shared/ListRow` Error story in the browser run.
+
+## Critique (second round)
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/r2-components/report.md`).

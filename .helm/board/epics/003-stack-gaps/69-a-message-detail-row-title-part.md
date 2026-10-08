@@ -1,6 +1,6 @@
 ---
 id: 003-69
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a message detail row's title is a Part
@@ -23,3 +23,6 @@ No source change on either platform. A showcase thread frame gains a quoted deta
 
 ## Critique
 Unrendered: the rows critique did not capture the Message or Thread detail row.
+
+## Critique (second round)
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/r2-components/report.md`).

@@ -1,6 +1,6 @@
 ---
 id: 003-177
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: the loading Section frame's Members group waits as the rows it stands for
@@ -16,3 +16,6 @@ Rows whose shape is known are a `List`: its waiting rows follow its row map. The
 
 ## Built
 `plugins/react-ui/src/ui/showcase/frames/section.tsx`: the loading cell's Members Group holds `<StandInList />`. Evidence: `layout/Section` Loading story in the browser run.
+
+## Critique (second round)
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/r2-components/report.md`).

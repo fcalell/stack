@@ -1,6 +1,6 @@
 ---
 id: 004-09
-status: review
+status: done
 sessions: {}
 ---
 # react-ui, native-ui: a set of meters from data draws its own four states
@@ -36,3 +36,6 @@ Partial: the Meter rest and loading forms hold; no story draws the meter set's f
 
 ## Rework
 The meter set's failed and empty forms are drawn: the `layout-list` frames (`frames/list.tsx`) hold a "Plan limits" Group whose List takes `meter` from a query, so the loading, error (sentence and Retry), empty (`No limits`) and loaded forms render in every state. Evidence: `layout/List` stories in the browser run.
+
+## Critique (second round)
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/r2-components/report.md`).

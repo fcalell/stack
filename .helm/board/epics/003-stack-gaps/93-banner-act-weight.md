@@ -1,6 +1,6 @@
 ---
 id: 003-93
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a banner's act reads as a grey-outlined box on the tint
@@ -29,3 +29,6 @@ Rework: the info Banner act's "Read more" label falls under the 4.5:1 text floor
 
 ## Rework
 The info banner's act label fell to 4.48:1 on hover and 4.26:1 on press in light (rest 4.96), under the 4.5 text floor (`critique/acts`). `accent-ink` now holds 4.5:1 on `accent-soft` under `wash-press`, the darkest ground a quiet act takes there, as the light `danger` holds under it on a group: its light lightness is declared 0.505 where it was 0.52 (`packages/ui-core/src/tokens.ts`; `verify` c11 reads the new default; `.helm/knowledge/architecture/ui-core.md` names the hold; `DESIGN.md` is regenerated). Evidence: `ui-core verify` 34/34 (220 pairs at their floor), `Shared/Banner` stories in the browser run.
+
+## Critique (second round)
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/r2-components/report.md`).

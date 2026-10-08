@@ -1,6 +1,6 @@
 ---
 id: 003-176
-status: review
+status: done
 sessions: {}
 ---
 # showcase: the Slider Thumb story waits for the thumb
@@ -16,3 +16,6 @@ The play finds the thumb with `findByRole`, which waits for it.
 
 ## Built
 `apps/showcase/behaviour/slider.stories.tsx`: `const thumb = await canvas.findByRole("slider", { name: "Timeout" })`. Evidence: the `Behaviour/Slider` story file passes in the browser run.
+
+## Critique (second round)
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/r2-components/report.md`).

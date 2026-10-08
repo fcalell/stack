@@ -1,6 +1,6 @@
 ---
 id: 003-66
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: an add field or a slider inside a Group's card
@@ -28,3 +28,6 @@ Partial: the Slider half ships (its item's start inset is 16, the rows' 16); no 
 
 ## Rework
 The field half is drawn: `Behaviour/List` `FieldInAGroup` stands a `FormField` over a List of rows in a Group and asserts the field's item inset equals the rows' and the group's hairline stands between them; the `layout-list` frames also draw the field as the first item of the "Allowed hosts" Group in every state. Evidence: `behaviour/list.stories.tsx` in the browser run.
+
+## Critique (second round)
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/r2-components/report.md`).
