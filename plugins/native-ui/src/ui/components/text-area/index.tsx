@@ -7,6 +7,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { useContext, useRef, useState } from "react";
 import { Text as RNText, TextInput, View } from "react-native";
+import { useCaretAtEnd } from "../../lib/caret";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FieldDisabled, FieldError, useFieldName } from "../../lib/field";
@@ -22,6 +23,8 @@ export interface TextAreaProps extends Closed {
 	/** The hint drawn while the value is empty; never the field's name (a short phrase; wraps). */
 	placeholder?: string;
 	budget?: number;
+	/** Takes the focus when it mounts, with the caret at the end of its value: pass it for a field that replaces what the viewer was reading. A field on a form that loads with the page leaves it off. */
+	autoFocus?: boolean;
 }
 
 function wordCount(value: string): number {
@@ -41,9 +44,11 @@ export function TextArea({
 	onCommit,
 	placeholder,
 	budget,
+	autoFocus,
 }: TextAreaProps) {
 	const [moment] = useState(() => commitMoment<string>());
 	const input = useRef<TextInput>(null);
+	const caret = useCaretAtEnd(autoFocus, value);
 	const commit = (next: string) => onCommit?.(next);
 	const { touch } = useTouched();
 	const name = useFieldName();
@@ -62,6 +67,8 @@ export function TextArea({
 		>
 			<TextInput
 				ref={input}
+				autoFocus={autoFocus}
+				{...caret}
 				accessibilityLabel={name}
 				accessibilityState={{ disabled }}
 				editable={!disabled}

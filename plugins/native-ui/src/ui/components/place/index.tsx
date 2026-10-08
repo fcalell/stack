@@ -2,6 +2,7 @@ import type {
 	Act,
 	IconAct,
 	MenuItem,
+	Route,
 	Switcher,
 } from "@fcalell/ui-core/descriptors";
 import {
@@ -101,6 +102,9 @@ interface PlaceBase extends Closed {
 	actions?: IconAct[];
 	more?: MenuItem[];
 	bleed?: boolean;
+	// The route of the view this page stands under (an epic's board under the
+	// board of epics): its back act leads there while no record stands alone.
+	up?: Route;
 	children?: ReactNode;
 }
 
@@ -127,7 +131,9 @@ export type PlaceProps = PlaceBase & PlaceEnd & PlaceDistance;
 // under the body's end, the body scrolling past it, and a Thread in such a body stands among its sections. A foot is a
 // field (a `MessageInput`) or a selection bar (an `ActionBar` with `chosen`), whose count stands over the full-width act.
 // A Split standing as its direct child gets its Details act in its head, and a record the Split shows alone puts a back
-// act to the place's route (or to the Split's `back`) in the switcher's stead; while a record stands beside
+// act to the place's route (or to the Split's `back`) in the switcher's stead; a page whose list stands at a route
+// deeper than the place's own names the view above it as `up`, whose back act leads the top bar in the switcher's
+// stead while no record stands alone; while a record stands beside
 // the main, the Place draws no head, that record's head the page's one. The
 // Shell's tab bar stands under it all, and its toasts over the body.
 export function Place({
@@ -138,6 +144,7 @@ export function Place({
 	act,
 	more,
 	bleed,
+	up,
 	foot,
 	children,
 }: PlaceProps) {
@@ -172,6 +179,13 @@ export function Place({
 				fit="body"
 				label={words.back}
 				onAct={() => navigate(list)}
+			/>
+		) : up !== undefined ? (
+			<IconButton
+				icon="ChevronLeft"
+				fit="body"
+				label={words.back}
+				onAct={() => navigate(up)}
 			/>
 		) : switcher && !far ? (
 			<SwitcherPick switcher={switcher} />

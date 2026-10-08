@@ -15,7 +15,9 @@ import { TURN, TURNS } from "./thread.tsx";
 // `wide`, on the main cell. `empty` opens nothing, so the main holds the
 // empty state; every other frame opens the first record. The record's
 // head (no facts line, so a pair above its first section), the empty state
-// and the rows are context; the list holds three Sections a sections gap apart. The `fills` cell opens
+// and the rows are context. The page stands under another view (`up`), whose
+// back act leads the strip, or the top bar on touch, while the list stands
+// alone and gives way below `tablet` to the record's; the list holds three Sections a sections gap apart. The `fills` cell opens
 // a conversation: the record's head over a Thread filling the main, its
 // `empty` frame a conversation with no message yet.
 export function drawSplit(frame: ShowcaseFrame) {
@@ -25,7 +27,7 @@ export function drawSplit(frame: ShowcaseFrame) {
 	const empty = frame.state === "empty";
 	return (
 		<Column>
-			<Place title="Issues" bleed>
+			<Place title="Issues" bleed up="#">
 				<Split
 					list={
 						<>

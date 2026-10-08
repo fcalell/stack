@@ -4,6 +4,7 @@ import type {
 	Act,
 	IconAct,
 	MenuItem,
+	Route,
 	Switcher,
 } from "@fcalell/ui-core/descriptors";
 import {
@@ -159,6 +160,8 @@ interface PlaceBase extends Closed {
 	more?: MenuItem[];
 	/** The body runs edge to edge with no inset, and its child scrolls itself. */
 	bleed?: boolean;
+	/** The route of the view this page stands under (an epic's board under the board of epics): its back act leads there while no record stands alone. */
+	up?: Route;
 	/** The page's sections. */
 	children?: ReactNode;
 }
@@ -190,7 +193,7 @@ type PlaceDistance =
 /** A page in the shell. */
 export type PlaceProps = PlaceBase & PlaceEnd & PlaceDistance;
 
-/** A page under a head and its hairline: on the desktop the title, its `context` pick and its acts share one strip, on touch the pick stands on the title line under the top bar; on touch the top bar (the shell's switcher, the actions, more) stands over the title and the act floats over the body's end, lifted. A `foot` docks at the page's bottom at both densities a sections gap under the body's end, the body scrolling under it, above the tab bar on touch; it spans the body, and a `MessageInput` keeps its own measure column inside it. A Place is the size container what stands in it decides its structure by (a Split its regions, a Table its grid): a Thread in its body fills it, unless the Place has a `foot`, where it stands among the sections; it draws the Details act of a Split's pane, below `wide` of its width, and with a record open a back act to the place's route (or to the `back` of the Split standing as its direct child), drawn below `tablet` first: before the title in the strip, in the switcher's stead in the top bar. While a record stands beside the main, below `tablet` the Place draws no head: that record's head is the page's one. With `distance` `room` it draws the room set and the touch structure, without the shell's switcher. */
+/** A page under a head and its hairline: on the desktop the title, its `context` pick and its acts share one strip, on touch the pick stands on the title line under the top bar; on touch the top bar (the shell's switcher, the actions, more) stands over the title and the act floats over the body's end, lifted. A `foot` docks at the page's bottom at both densities a sections gap under the body's end, the body scrolling under it, above the tab bar on touch; it spans the body, and a `MessageInput` keeps its own measure column inside it. A Place is the size container what stands in it decides its structure by (a Split its regions, a Table its grid): a Thread in its body fills it, unless the Place has a `foot`, where it stands among the sections; it draws the Details act of a Split's pane, below `wide` of its width, and with a record open a back act to the place's route (or to the `back` of the Split standing as its direct child), drawn below `tablet` first: before the title in the strip, in the switcher's stead in the top bar. A page whose list stands at a route deeper than the place's own names the view above it as `up`: a back act to it leads the strip, or the top bar in the switcher's stead, at every width, giving way below `tablet` with a record open to the record's back act. While a record stands beside the main, below `tablet` the Place draws no head: that record's head is the page's one. With `distance` `room` it draws the room set and the touch structure, without the shell's switcher. */
 export function Place({
 	title,
 	distance,
@@ -199,6 +202,7 @@ export function Place({
 	act,
 	more,
 	bleed,
+	up,
 	foot,
 	children,
 }: PlaceProps) {
@@ -233,16 +237,36 @@ export function Place({
 				/>
 			</span>
 		) : null;
+	// The view above leads the strip or the top bar where the record's back act
+	// is not shown; on touch it takes the switcher's place, which stays on the
+	// places' own level.
+	const upAct =
+		up !== undefined ? (
+			<span
+				className={cn(
+					LIST_BACK_REPLACED,
+					touch && single && PAGE_TOP_BAR_START,
+				)}
+			>
+				<IconButtonLink
+					icon={backGlyph(touch)}
+					fit={fit}
+					label={words.back}
+					href={up}
+				/>
+			</span>
+		) : null;
 	// On touch the shell's switcher leads the top bar, giving the back act its
 	// place where the back act shows; on the desktop it stands in the sidebar.
 	const pick =
 		switcher && !far ? <SwitcherPick switcher={switcher} touch /> : null;
 	const lead =
-		!touch || !pick ? null : back ? (
+		upAct ??
+		(!touch || !pick ? null : back ? (
 			<span className={LIST_BACK_REPLACED}>{pick}</span>
 		) : (
 			pick
-		);
+		));
 	const acts = (actions ?? []).map((action) => (
 		<IconButton key={action.label} {...action} fit={fit} />
 	));

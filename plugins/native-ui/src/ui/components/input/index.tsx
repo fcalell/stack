@@ -14,6 +14,7 @@ import {
 	Text as RNText,
 	TextInput,
 } from "react-native";
+import { useCaretAtEnd } from "../../lib/caret";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import {
@@ -51,6 +52,8 @@ export interface InputProps extends Closed {
 	/** A `number`'s unit, drawn after the value (a word; one line). */
 	unit?: string;
 	act?: IconAct;
+	/** Takes the focus when it mounts, with the caret at the end of its value: pass it for a field that replaces what the viewer was reading. A field on a form that loads with the page leaves it off. */
+	autoFocus?: boolean;
 }
 
 const SURFACE: Record<InputKind, FieldKind> = {
@@ -96,6 +99,7 @@ export function Input({
 	placeholder,
 	unit,
 	act,
+	autoFocus,
 }: InputProps) {
 	const words = useWords();
 	const [moment] = useState(() => commitMoment<string>());
@@ -109,6 +113,7 @@ export function Input({
 	const inline = useContext(InlineField);
 	const input = useRef<TextInput>(null);
 	const column = useFieldClaim(input);
+	const caret = useCaretAtEnd(autoFocus, value);
 	// A placeholder's colour is a prop, never a class: `FIELD_PLACEHOLDER`'s ink.
 	const placeholderInk = useTokenColor("--color-ink-meta");
 	const which = kind ?? "text";
@@ -138,7 +143,8 @@ export function Input({
 			) : null}
 			<TextInput
 				ref={input}
-				autoFocus={focused || cell !== undefined || inline?.focus}
+				autoFocus={autoFocus || focused || cell !== undefined || inline?.focus}
+				{...caret}
 				accessibilityLabel={
 					cell?.label ??
 					inline?.label ??

@@ -1,4 +1,5 @@
 import { ActionBar } from "@fcalell/plugin-react-ui/components/action-bar";
+import { Button } from "@fcalell/plugin-react-ui/components/button";
 import { Form } from "@fcalell/plugin-react-ui/components/form";
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
@@ -101,5 +102,54 @@ export const SectionedGrows: StoryObj = {
 		await expect(field.getBoundingClientRect().height).toBeLessThan(
 			innerHeight / 2,
 		);
+	},
+};
+
+const NOTE = "A note the operator reads,\nthen edits.";
+
+// The text, then the field the Edit act swaps in for it.
+function Swap() {
+	const [editing, setEditing] = useState(false);
+	const [value, setValue] = useState(NOTE);
+	if (!editing)
+		return (
+			<div>
+				<p>{value}</p>
+				<Button label="Edit" onAct={() => setEditing(true)} />
+			</div>
+		);
+	return (
+		<FormField label="Note">
+			<TextArea value={value} onChange={setValue} autoFocus />
+		</FormField>
+	);
+}
+
+// A field that replaces what the viewer was reading takes the focus as it
+// mounts, the caret at the end of its text, and typing keeps the caret where
+// the viewer puts it.
+export const AutoFocusTakesTheFocusAtTheEnd: StoryObj = {
+	render: () => <Swap />,
+	play: async ({ canvas, userEvent }) => {
+		await userEvent.click(canvas.getByRole("button", { name: "Edit" }));
+		const field = canvas.getByRole("textbox", { name: "Note" });
+		await waitFor(() => expect(document.activeElement).toBe(field));
+		if (!(field instanceof HTMLTextAreaElement))
+			throw new Error("the field is not a textarea");
+		await expect(field.selectionStart).toBe(NOTE.length);
+		await expect(field.selectionEnd).toBe(NOTE.length);
+		field.setSelectionRange(2, 2);
+		await userEvent.keyboard("X");
+		await expect(field.value).toBe(`${NOTE.slice(0, 2)}X${NOTE.slice(2)}`);
+		await expect(field.selectionStart).toBe(3);
+	},
+};
+
+// A field on a form that loads with the page leaves the focus where it was.
+export const LoadedFieldKeepsTheFocus: StoryObj = {
+	render: () => <Page kind="prose" value="One line." />,
+	play: async ({ canvas }) => {
+		const field = canvas.getByRole("textbox", { name: "Source" });
+		await expect(document.activeElement).not.toBe(field);
 	},
 };

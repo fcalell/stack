@@ -486,8 +486,13 @@ a tick with no animation, never jumped to full.
   (`splitOf` on the web, `useSplitHead` on native); a Screen's own back act stays while the list
   stands beside the record, so a tree standing alone at a deeper route is a pushed Screen whose `back` is
   the route above it, holding `<Split back={treeRoute}>`: the Screen's back act leads up (`LIST_BACK_REPLACED`
-  hides it) once a record is open and the Split's `back` takes its place. No second route on Split and no
-  back act on Place.
+  hides it) once a record is open and the Split's `back` takes its place. A Place whose list stands deeper and
+  keeps its toolbar and actions names the route above it as `up` (not a Split field: the back act is the Place's,
+  and the Split's `back` already means where the list stands alone, which a record returns to; not derivable, since
+  the place's route can redirect to a lead): its back act is the Screen's span (`LIST_BACK_REPLACED`, first in the
+  strip) and on touch takes the switcher's place in the top bar, the switcher staying on the places' own level;
+  below `tablet` with a record open the record's back act shows instead (native: the record's back, else `up`,
+  else the switcher).
 - A molecule whose structure follows density keeps one constant per structure, never a density axis:
   the page's head (`PAGE_HEAD`, one hairline at both densities) holds the desktop strip
   (`PAGE_TOP_BAR` with the title and acts in one row) or the touch one (`PAGE_TOP_BAR` over the
@@ -1016,7 +1021,12 @@ a tick with no animation, never jumped to full.
   `URL.revokeObjectURL(file.src)` once it drops the attachment.
 - Focus at mount is declarative on native: a typing control (`Input`, `InputOtp`) takes
   `autoFocus` from `FieldFocus`, which the caller that knows no other field holds focus sets (a
-  confirm's typed name), never a mount effect reading the focused input.
+  confirm's typed name), never a mount effect reading the focused input. An `Input` or `TextArea` the
+  app opens in place of what the viewer read takes `autoFocus` (the platform's own word, off by
+  default so a field on a form that loads with the page keeps the page's focus): it focuses on
+  mount and ends the text under the caret (web: a ref sets the selection, since a programmatic
+  focus leaves a textarea's caret at the start; native: `selection` for the first render only).
+  Rejected: a field that guesses a swap from a mount after an interaction.
 - What an agent made or did stands in a thread as a system Message's `detail` (`MessageDetail`,
   exactly one of three, the others typed `?: never`): `row`, one `ListRow` (its `title` a `Part`) on the group ground in a
   hairline card on the surface (`MESSAGE_CARD`), its slots the row's (the kind leads as the icon or

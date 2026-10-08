@@ -7,6 +7,7 @@ import {
 	textAreaBudget,
 } from "@fcalell/ui-core/variants";
 import { use } from "react";
+import { caretAtEnd } from "../../lib/caret.ts";
 import type { Closed } from "../../lib/closed.ts";
 import { useCommit } from "../../lib/commit.ts";
 import { FormStands } from "../../lib/form.ts";
@@ -46,6 +47,8 @@ export interface TextAreaProps extends Closed {
 	placeholder?: string;
 	/** A word budget: draws the count against it, in the error ink once over. */
 	budget?: number;
+	/** Takes the focus when it mounts, with the caret at the end of its value: pass it for a field that replaces what the viewer was reading. A field on a form that loads with the page leaves it off. */
+	autoFocus?: boolean;
 }
 
 /** A field box that grows with its value, the budget's count under the value. A `source` one in a page's `Form` fills the free height of the page instead, three lines at least, and scrolls inside. */
@@ -56,6 +59,7 @@ export function TextArea({
 	onCommit,
 	placeholder,
 	budget,
+	autoFocus,
 }: TextAreaProps) {
 	const source = kind === "source";
 	const fills = source && use(ThreadRoom) && use(FormStands) === "page";
@@ -69,6 +73,8 @@ export function TextArea({
 			autoCapitalize={source ? "off" : undefined}
 			spellCheck={source ? false : undefined}
 			placeholder={placeholder}
+			autoFocus={autoFocus}
+			ref={autoFocus ? caretAtEnd : undefined}
 			// Base UI's Field wires the control; the render function hands over its
 			// props and state so the box around the value draws that state. A
 			// disabled box carries `aria-disabled` itself, so the budget outside the

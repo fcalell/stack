@@ -17,7 +17,7 @@ stands at a deeper route names it as `back` (`<Split back={treeRoute} …>`), wh
 returns to, whether its page is a `Place` or a pushed `Screen`, and a missing read in it leads to,
 ahead of the `Screen`'s own `back`. A list that stands alone at a deeper route is a pushed `Screen`
 whose `back` is the route above it, holding `<Split back={treeRoute} …>`: the `Screen`'s back act
-leads up while the list stands alone, and the `Split`'s `back` takes its place once a record is open.
+leads up while the list stands alone, and the `Split`'s `back` takes its place once a record is open. A `Place` whose list stands at a deeper route and keeps its toolbar and actions names the route above it as `up` (`<Place up={boardRoute} …>`): its back act leads there at every width while no record stands alone, in the switcher's stead on touch, and gives way to the record's back act once one is open.
 
 An app that selects a record opens the pane's sheet by passing `open` with `onClose` (the two stand
 together): `<Split open={selected} onClose={() => setSelected(false)} …>`. The phone stands the pane
@@ -213,7 +213,7 @@ an `IconAct` (`{ icon, label, onAct, loading? }`; `loading` is an `Act`'s: the a
 `@fcalell/ui-core/descriptors`. An icon is an `IconName`, a Lucide glyph's PascalCase name.
 `children` is open only where the roster gives it. A `Form`'s `ActionBar` filled act runs its
 `onAct`; an `ActionBar` draws its last blocked act's `blocked` reason under the acts at rest, at meta size. To keep the bar's place while the server works, give the `ActionBar` a `pending` (a `PendingBar`'s `sentence`, `until`, `act`): the pending form stands over the bar at the bar's own loaded height, so nothing below moves when it is set or cleared; a `PendingBar` alone is for a place that held no bar. A `FormField` takes a `FieldBinding` from the
-app's own form state. A `Form` that stands edited asks once, "Discard your edit?" or Keep editing, when its screen is left (the back, a swipe, a navigate that removes it), so the app writes no `beforeRemove` guard of its own; pressing the filled act ends the edit, so an act that navigates is never asked, and a rejected act puts the edit back. An `Input` with an `act` presses that act on the keyboard's return. A `confirm()` takes a `Confirmation`, its `cancel` the way out's own label ("Keep editing") where the `cancel` word is not the decision's.
+app's own form state. A `Form` that stands edited asks once, "Discard your edit?" or Keep editing, when its screen is left (the back, a swipe, a navigate that removes it), so the app writes no `beforeRemove` guard of its own; pressing the filled act ends the edit, so an act that navigates is never asked, and a rejected act puts the edit back. An `Input` with an `act` presses that act on the keyboard's return. A field that replaces what the viewer was reading (an edit swapped in for rendered text) takes `autoFocus`, which focuses it as it mounts with the caret at the end of its text; a field on a form that loads with the page leaves it off. A `confirm()` takes a `Confirmation`, its `cancel` the way out's own label ("Keep editing") where the `cancel` word is not the decision's.
 
 A row's marks are named props on the meta line, at most one each, in order: `status`, `warning`
 (what is wrong, a string), `lock` (what it holds, a string, a glyph) and `chip`; the

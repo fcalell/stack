@@ -266,6 +266,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"placeholder",
 				"unit",
 				"act",
+				"autoFocus",
 			],
 			draws: [
 				"FIELD",
@@ -334,7 +335,15 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		TextArea: {
-			props: ["kind", "value", "onChange", "onCommit", "placeholder", "budget"],
+			props: [
+				"kind",
+				"value",
+				"onChange",
+				"onCommit",
+				"placeholder",
+				"budget",
+				"autoFocus",
+			],
 			draws: [
 				"TEXT_AREA",
 				"TEXT_AREA_BUDGET",
@@ -560,6 +569,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// A `distance` of `room` draws the page for a screen read from across a
 		// room: the touch structure at the room set (`DENSITIES`), one column that
 		// never splits, holding no `context`, `more` or `foot`, whose layers open outside it.
+		// An `up` is the route of the view the page stands under: its back act
+		// leads the strip or the top bar there while no record stands alone.
 		Place: {
 			props: [
 				"title",
@@ -569,6 +580,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"act",
 				"more",
 				"bleed",
+				"up",
 				"foot",
 				"children",
 			],

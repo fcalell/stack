@@ -1,6 +1,6 @@
 ---
 id: 003-210
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: a field that opens for editing takes the focus
@@ -12,9 +12,16 @@ Stead's knowledge page swaps its rendered text for a source `TextArea` when the 
 `TextArea` (`components/text-area/index.tsx`) takes `kind`, `value`, `onChange`, `onCommit`, `placeholder` and `budget`: no `autoFocus`, no ref. `Input` focuses itself only inside its cell and inline contexts (`autoFocus={cell?.starts || inline?.focus}`), and `FormField` focuses only an answered field that unfolds. The app's one way left is a DOM query and `.focus()` at the call site, a local reach into the roster's markup. Unchanged at stack `HEAD` past `74a0e3d`.
 
 ## Acceptance criteria
-- [ ] A `TextArea` (and an `Input`) the app opens for editing in place of what it shows takes the focus when it mounts, with the caret at the text's end, on both platforms.
-- [ ] A field on a form that loads with the page does not take the focus.
-- [ ] The showcase holds an edit-in-place swap whose field takes the focus, checked by a behaviour story.
+- [x] A `TextArea` (and an `Input`) the app opens for editing in place of what it shows takes the focus when it mounts, with the caret at the text's end, on both platforms.
+- [x] A field on a form that loads with the page does not take the focus.
+- [x] The showcase holds an edit-in-place swap whose field takes the focus, checked by a behaviour story.
 
 ## Open questions
-- [ ] Its shape (an `autoFocus` prop, a field that focuses when its region swaps it in, or another): the stack session decides.
+- [x] Its shape (an `autoFocus` prop, a field that focuses when its region swaps it in, or another): the stack session decides.
+
+## Ruled
+`autoFocus?: boolean` on `Input` and `TextArea` (both platforms), off by default: nothing a field knows tells an edit swap from a page load, so the app says it. The caret ends the text.
+
+## Built
+react-ui: `autoFocus` goes to the element (React focuses on mount) and a stable ref (`lib/caret.ts`, `caretAtEnd`) sets the selection to the text's end once on mount, skipping a type with no selection (`email`); `Input` keeps its cell and inline sources (`autoFocus ?? (cell?.starts || inline?.focus)`). native-ui: `autoFocus` on the `TextInput` and `selection` at the end for the first render only (`lib/caret.ts`, `useCaretAtEnd`). The roster entries, both `rules.md` and `ui-core.md` state it.
+Evidence: `apps/showcase/behaviour/text-area.stories.tsx` (`AutoFocusTakesTheFocusAtTheEnd`: after the Edit act the field is `document.activeElement`, the caret at the end, and typing mid-text keeps the caret; `LoadedFieldKeepsTheFocus`) and `input.stories.tsx` (the same two) pass. The native side is checked by type-check and `verify` only (no native run exists in the repo).

@@ -10,6 +10,7 @@ import {
 	fieldValue,
 } from "@fcalell/ui-core/variants";
 import { type KeyboardEvent, type MouseEvent, use } from "react";
+import { caretAtEnd } from "../../lib/caret.ts";
 import type { Closed } from "../../lib/closed.ts";
 import { useCommit } from "../../lib/commit.ts";
 import { CellField, FieldDisabled, InlineField } from "../../lib/field.ts";
@@ -89,6 +90,8 @@ export interface InputProps extends Closed {
 	unit?: string;
 	/** An icon act inside the field's end (copy, reveal, add); Enter in the field presses it. */
 	act?: IconAct;
+	/** Takes the focus when it mounts, with the caret at the end of its value: pass it for a field that replaces what the viewer was reading. A field on a form that loads with the page leaves it off. */
+	autoFocus?: boolean;
 }
 
 /** A field box on the surface: hairline at rest, `edge-hover` under the pointer, the ring on focus, `edge-error` when its `FormField` is in error, the disabled fill when it is disabled. In a `Table` cell it stands at the bar fit, named by the cell; in a `ListRow`'s entry or a `Rules` term, named by its label. */
@@ -100,6 +103,7 @@ export function Input({
 	placeholder,
 	unit,
 	act,
+	autoFocus,
 }: InputProps) {
 	const words = useWords();
 	const which = kind ?? "text";
@@ -129,7 +133,8 @@ export function Input({
 			placeholder={placeholder ?? (search ? words.search : undefined)}
 			aria-label={search ? words.search : (cell?.label ?? inline?.label)}
 			tabIndex={cell ? -1 : undefined}
-			autoFocus={cell?.starts || inline?.focus}
+			autoFocus={autoFocus ?? (cell?.starts || inline?.focus)}
+			ref={autoFocus ? caretAtEnd : undefined}
 			// Base UI's Field wires the control (its id, label, description and
 			// validity); the render function hands over its props and state so the
 			// box around the value draws that state. A disabled box carries

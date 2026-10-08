@@ -1,5 +1,10 @@
+import { Button } from "@fcalell/plugin-react-ui/components/button";
+import { List } from "@fcalell/plugin-react-ui/components/list";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
+import { Section } from "@fcalell/plugin-react-ui/components/section";
 import { Shell } from "@fcalell/plugin-react-ui/components/shell";
+import { Split } from "@fcalell/plugin-react-ui/components/split";
+import { Toolbar } from "@fcalell/plugin-react-ui/components/toolbar";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect } from "storybook/test";
 
@@ -116,3 +121,147 @@ function story(width: number): StoryObj {
 
 export const ActsShareTheTitleRowAt320 = story(320);
 export const ActsShareTheTitleRowAt390 = story(390);
+
+// A Place whose list stands at a route deeper than its own names the view
+// above it as `up`: its back act leads the strip, or the top bar, at every
+// width with its toolbar and actions kept, and gives way to the record's back
+// act below `tablet` once a record is open.
+function Epic(props: { open: boolean; up?: string }) {
+	return (
+		<div style={{ height: 700, display: "flex", flexDirection: "column" }}>
+			<Place
+				title="Code"
+				bleed
+				up={props.up}
+				actions={ACTIONS}
+				act={{ label: "New story", onAct: noop }}
+			>
+				<Split
+					back="/work/code/epics/x"
+					list={
+						<>
+							<Toolbar>
+								<Button label="Lead" fit="bar" onAct={noop} />
+							</Toolbar>
+							<List
+								items={["Ana", "Ben"]}
+								row={{ key: String, title: String }}
+							/>
+						</>
+					}
+					main={
+						props.open ? (
+							<Section title="Card">
+								<p>The card.</p>
+							</Section>
+						) : undefined
+					}
+				/>
+			</Place>
+		</div>
+	);
+}
+
+function shown(el: Element | null | undefined): boolean {
+	return el != null && getComputedStyle(el).display !== "none";
+}
+
+// The back acts the page shows, in document order.
+function shownBacks(root: Element) {
+	return [...root.querySelectorAll("a[aria-label='Back']")].filter(
+		(el) => shown(el) && shown(el.parentElement),
+	);
+}
+
+function backs(canvasElement: HTMLElement) {
+	return shownBacks(canvasElement).map((el) => el.getAttribute("href"));
+}
+
+function must<T extends Element>(el: T | null | undefined): T {
+	if (!el) throw new Error("the element is not drawn");
+	return el;
+}
+
+// The head holds the page's actions and the list its toolbar.
+function kept(canvasElement: HTMLElement) {
+	const header = must(canvasElement.querySelector("header"));
+	must(header.querySelector("[aria-label='Filter']"));
+	const lead = [...canvasElement.querySelectorAll("button")].find(
+		(button) => button.textContent === "Lead",
+	);
+	must(lead);
+	return header;
+}
+
+export const UpLeadsTheStrip: StoryObj = {
+	render: () => <Epic open={false} up="/work/code" />,
+	play: async ({ canvasElement }) => {
+		await expect(backs(canvasElement)).toEqual(["/work/code"]);
+		const header = kept(canvasElement);
+		const up = must(shownBacks(header)[0]);
+		const title = must(header.querySelector("h1"));
+		const box = up.getBoundingClientRect();
+		console.log(
+			`strip: up ${box.width}x${box.height} at ${box.left}, title from ${title.getBoundingClientRect().left}`,
+		);
+		await expect(box.right).toBeLessThanOrEqual(
+			title.getBoundingClientRect().left,
+		);
+	},
+};
+
+export const UpWithARecordBesideTheList: StoryObj = {
+	render: () => <Epic open up="/work/code" />,
+	play: async ({ canvasElement }) => {
+		await expect(backs(canvasElement)).toEqual(["/work/code"]);
+	},
+};
+
+export const OwnRouteDrawsNoUp: StoryObj = {
+	render: () => <Epic open={false} />,
+	play: async ({ canvasElement }) => {
+		await expect(backs(canvasElement)).toEqual([]);
+	},
+};
+
+export const UpLeadsTheTopBar390: StoryObj = {
+	...viewport(390),
+	render: () => <Epic open={false} up="/work/code" />,
+	play: async ({ canvasElement }) => {
+		await expect(backs(canvasElement)).toEqual(["/work/code"]);
+		const header = kept(canvasElement);
+		const up = must(shownBacks(header)[0]);
+		const box = up.getBoundingClientRect();
+		console.log(`top bar: up ${box.width}x${box.height} at ${box.left}`);
+		await expect(box.width).toBeGreaterThanOrEqual(44);
+		await expect(box.height).toBeGreaterThanOrEqual(44);
+		await expect(box.left).toBeLessThanOrEqual(16);
+	},
+};
+
+export const UpGivesWayToTheRecordBack390: StoryObj = {
+	...viewport(390),
+	render: () => <Epic open up="/work/code" />,
+	play: async ({ canvasElement }) => {
+		await expect(backs(canvasElement)).toEqual(["/work/code/epics/x"]);
+	},
+};
+
+// Under a shell the touch top bar leads with the view above, not the switcher.
+export const UpTakesTheSwitcherPlace390: StoryObj = {
+	...viewport(390),
+	render: () => (
+		<Shell
+			places={[{ route: "/work", label: "Work", icon: "Rocket" }]}
+			switcher={SWITCHER}
+		>
+			<Epic open={false} up="/work/code" />
+		</Shell>
+	),
+	play: async ({ canvasElement }) => {
+		await expect(backs(canvasElement)).toEqual(["/work/code"]);
+		await expect(
+			canvasElement.querySelector("header [aria-label^='Workspaces']"),
+		).toBeNull();
+	},
+};
