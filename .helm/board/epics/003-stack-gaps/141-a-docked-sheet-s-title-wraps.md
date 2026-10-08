@@ -1,6 +1,6 @@
 ---
 id: 003-141
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a docked Sheet's title wraps whole
@@ -29,3 +29,6 @@ Rework: a docked Sheet's title is 13/500 (16/500 touch) over a Section heading o
 ## Rework
 
 The head is `[back] [title over description] [close]` with `items-start`: the title is a wrapping `h2`, the description its sibling in one column a pair below, and the back and close acts each stand in a box one heading line tall (`h-lh` on the web, the `--leading-heading` height on the phone), so a short title is centred with its act and a wrapped one keeps the act at the first line. The touch title-to-description gap is a pair (8) where it was 18. Files: both `sheet/docked.tsx`. Evidence: `DockedTitleWraps` and `DockedTitleOutranksItsBodyTouch`. The sheet behaviour and Sheet stories pass, 17 of 17.
+
+## Critique (second round)
+Ship, by a fresh critic at 1280, 390 (touch) and the widths the story names, light and dark (scratchpad `critique/r2-sheet/report.md`).

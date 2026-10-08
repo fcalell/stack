@@ -1,6 +1,6 @@
 ---
 id: 005-04
-status: review
+status: done
 sessions: {}
 ---
 # react-ui, native-ui: toasts stand above a docked foot without the Shell measuring it
@@ -40,3 +40,6 @@ Unrendered: no story draws a toast over a docked foot.
 ## Rework
 
 `Behaviour/Shell` `ToastStandsAboveTheFoot` raises a toast over a Place's docked `MessageInput` and asserts it stands above the input, before and after the input grows a line.
+
+## Critique (second round)
+Ship, by a fresh critic at 1280, 390 (touch) and the widths the story names, light and dark (scratchpad `critique/r2-sheet/report.md`).

@@ -1,6 +1,6 @@
 ---
 id: 003-114
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: closing a docked Sheet hands focus to the input that returns
@@ -26,3 +26,6 @@ A Sheet docked in a Place's or a Thread's foot hands focus to the `MessageInput`
 
 ## Critique
 Unrendered: not captured by the sheet critique (Menu in the Shell; the axe guard exception is not a render; the docked focus return).
+
+## Critique (second round)
+Ship, by a fresh critic at 1280, 390 (touch) and the widths the story names, light and dark (scratchpad `critique/r2-sheet/report.md`).

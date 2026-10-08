@@ -1,6 +1,6 @@
 ---
 id: 003-113
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: an open non-modal popup carries focus guards axe rejects
@@ -23,3 +23,6 @@ One recorded exception, as 003-75 decided for the menu: `[data-base-ui-focus-gua
 
 ## Critique
 Unrendered: not captured by the sheet critique (Menu in the Shell; the axe guard exception is not a render; the docked focus return).
+
+## Approved
+Not a render: its change is the axe run's exclusion of the focus guards. The full stories run passes with it (377 of 377), and the second sheet critique finds the guards in the DOM as recorded.

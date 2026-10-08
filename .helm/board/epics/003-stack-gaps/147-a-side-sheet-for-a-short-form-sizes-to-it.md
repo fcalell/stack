@@ -1,6 +1,6 @@
 ---
 id: 003-147
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a desktop side Sheet for a short form is not a full-height drawer
@@ -28,3 +28,6 @@ Rework: at 4x the side sheet's foot draws a square corner about 2 px past the 8 
 ## Rework
 
 The side sheet's foot follows the box's radius (`rounded-bl-sheet` on the desktop foot, `sheet/base.tsx`), so its raised ground ends at the 8 px corner. Judged by the critique at 4x.
+
+## Critique (second round)
+Ship, by a fresh critic at 1280, 390 (touch) and the widths the story names, light and dark (scratchpad `critique/r2-sheet/report.md`).

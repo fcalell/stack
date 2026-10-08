@@ -31,3 +31,6 @@ Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/sh
 ## Rework
 
 A confirm is an `alertdialog` at every density: `SheetBase` reads `form === "centred"` for the role, not the desktop-only `centred`. `Behaviour/Sheet` `DecisionTouch` (tag `touch`) asserts it.
+
+## Critique (second round)
+Ship, by a fresh critic at 1280, 390 (touch) and the widths the story names, light and dark (scratchpad `critique/r2-sheet/report.md`).

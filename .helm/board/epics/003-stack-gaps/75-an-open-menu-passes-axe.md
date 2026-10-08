@@ -1,6 +1,6 @@
 ---
 id: 003-75
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: an open menu passes aria-hidden-focus and region
@@ -28,3 +28,6 @@ Unrendered: not captured by the sheet critique (Menu in the Shell; the axe guard
 ## Rework
 
 `Behaviour/Shell` `MenuStandsInTheLandmark` opens a Place's more menu in the Shell and asserts the popup stands inside `main`.
+
+## Critique (second round)
+Ship, by a fresh critic at 1280, 390 (touch) and the widths the story names, light and dark (scratchpad `critique/r2-sheet/report.md`).

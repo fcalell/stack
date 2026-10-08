@@ -1,6 +1,6 @@
 ---
 id: 003-63
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a form docked in a conversation's foot
@@ -29,3 +29,6 @@ Rework: a docked Sheet's title is 13/500 (16/500 touch) over a Section heading o
 ## Rework
 
 The docked title takes the `heading` role (15/600, 18/600 touch), the modal Sheet's, and a `Section` in a sheet's body reads nested (13/600, 16/600 touch) through `FormStands`, so the container's name outranks its contents (ruling 5). Web `sheet/docked.tsx` and `section/index.tsx`; phone the same two files. The same Section rule reads in the modal Sheet's body (`SectionInModalSheet`); the pane fit's 13/500 title over 13/600 sections is an open item for the critique. Evidence: `Behaviour/Sheet` `DockedTitleOutranksItsBody`, `DockedTitleOutranksItsBodyTouch` and `SectionInModalSheet`. The sheet behaviour and Sheet stories pass, 17 of 17.
+
+## Critique (second round)
+Ship, by a fresh critic at 1280, 390 (touch) and the widths the story names, light and dark (scratchpad `critique/r2-sheet/report.md`).

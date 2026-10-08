@@ -1,6 +1,6 @@
 ---
 id: 003-166
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a Menu opened by the pointer draws no focus ring on its popup
@@ -17,3 +17,6 @@ The popup is not a control: its rows carry the keyboard's ring and wash. The pop
 
 ## Built
 `POPUP` in `plugins/react-ui/src/ui/components/menu/base.tsx` gains `outline-none`. `PointerOpenDrawsNoRing` asserts the popup's computed `outline-style`.
+
+## Critique (second round)
+Ship, by a fresh critic at 1280, 390 (touch) and the widths the story names, light and dark (scratchpad `critique/r2-sheet/report.md`).

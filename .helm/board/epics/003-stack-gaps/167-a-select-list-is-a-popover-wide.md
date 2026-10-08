@@ -1,6 +1,6 @@
 ---
 id: 003-167
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a Select's list stands at the popover's width, not the trigger's alone
@@ -16,3 +16,6 @@ The list is a popover: `SELECT_POPOVER` (`w-popover`, held by Select, as `PICKER
 
 ## Built
 `SELECT_POPOVER` in `packages/ui-core/src/variants.ts`, drawn and held by `Select` in the roster; `select/index.tsx` composes it with `min-w-(--anchor-width)`. DESIGN.md regenerated.
+
+## Critique (second round)
+Ship, by a fresh critic at 1280, 390 (touch) and the widths the story names, light and dark (scratchpad `critique/r2-sheet/report.md`).

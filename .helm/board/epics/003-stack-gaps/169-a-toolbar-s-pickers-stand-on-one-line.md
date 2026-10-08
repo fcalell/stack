@@ -1,6 +1,6 @@
 ---
 id: 003-169
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a Toolbar's two Pickers stand on one line when there is room
@@ -16,3 +16,6 @@ The two bar Pickers in a Toolbar stand on two lines at 1280 (y 22 and 58) with r
 
 ## Built
 `fit="bar"` is gone from the Toolbar frame (`showcase/frames/toolbar.tsx`) and the `Pair` story (`behaviour/picker.stories.tsx`); `Start` asserts one line.
+
+## Critique (second round)
+Ship, by a fresh critic at 1280, 390 (touch) and the widths the story names, light and dark (scratchpad `critique/r2-sheet/report.md`).

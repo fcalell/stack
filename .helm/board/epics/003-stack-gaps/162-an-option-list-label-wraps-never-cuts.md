@@ -1,6 +1,6 @@
 ---
 id: 003-162
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: an OptionList option's label wraps to the measure instead of cutting to one line
@@ -28,3 +28,6 @@ An option's label always wraps: no option, no prop, no token. A label is the who
 - ui-core `roster.ts`: OptionList `draws` gains `ROW.lines.whole`; DESIGN.md regenerated.
 - `apps/showcase/behaviour/option-list.stories.tsx`: `LabelWraps375`, `LabelWraps390`, `LabelWraps768`, `LabelWraps1440` (tick inside the first line box, row height == lines * line + 2 * pair), `ShortRowKeepsWaitingHeight375/768/1440` (a short label's row height equals the waiting row's).
 - Evidence: `pnpm check` turbo part, the three `verify` runs and Biome pass. The option-list behaviour stories pass, 9 of 9; a one-line unmarked row is as tall as its waiting row at 375, 768 and 1440, so no contract gap.
+
+## Critique (second round)
+Ship, by a fresh critic at 1280, 390 (touch) and the widths the story names, light and dark (scratchpad `critique/r2-sheet/report.md`).
