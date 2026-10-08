@@ -418,11 +418,12 @@ item, since a message draws again only when its item changes; its `foot` is a `M
 In a `Place`'s body, or in a `Split`'s `main` under the record's `ItemHeader`, it fills what holds
 it: its log scrolls and the input docks at the foot. It stands there as the body's direct child,
 or as `main` (in a fragment under the record's `ItemHeader`), never inside a component of the
-app's, so the frame knows it from its first render. A part above the Thread (a `Banner`, an `ActionBar`) stands as its sibling in the same region, in that fragment, never wrapped together with it; wrapped, the region keeps its scrolling form. What a system line names stands under it as
+app's, so the frame knows it from its first render. A part above the Thread (a `Banner`, an `ActionBar`) stands as its sibling in the same region, in that fragment, never wrapped together with it; wrapped, the region keeps its scrolling form. In a `Place`'s body the Thread alone runs edge to edge: each part above it keeps the page inset at the sides and the top and stands the body's gap from the log. What a system line names stands under it as
 its `detail`, a `MessageDetail`, exactly one of: a `row` (a `ListRow`'s slots, its `title` a `Part` so a `Quoted` one draws its quotes, in a hairline card,
 opening its record), a free act's `code` under its verb, or a `fold` of lines the line opens in
 place; never a `ListRow` or a `Code` between the messages.
 
+On touch a `MessageInput`'s Send and Stop are icon acts (named "Send" and "Stop"), so the field keeps its width beside the paperclip; the desktop labels Send.
 A `MessageInput`'s `onAttach` hears `PickedFile`s: the paperclip's dialog, a file pasted into the
 text and a file dropped on the input all come through it. A paste brings the clipboard's files
 only when it holds no text, so copied text with an image beside it pastes as the text. Turn each

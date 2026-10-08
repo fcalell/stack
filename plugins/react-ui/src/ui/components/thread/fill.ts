@@ -4,9 +4,13 @@
 // classes only and the contract holds no platform overlay; react-ui's
 // `fill.test.ts` holds each to the cell it marks.
 
-// A Place's body under the mark draws no `PAGE_BODY` inset.
-export const BODY_FILLED =
-	"[&:has(>[data-fill])]:p-0 [&:has(>[data-fill])]:gap-0";
+// A Place's body under the mark draws no `PAGE_BODY` inset and keeps its gap.
+export const BODY_FILLED = "[&:has(>[data-fill])]:p-0";
+// A part above the Thread in that body (a Banner, a head paired with one)
+// keeps the inset the body gave up at the sides and the top, and stands the
+// body's gap from the log, so the Thread alone runs edge to edge.
+export const PART_ABOVE_FILLED =
+	"[&:has(>[data-fill])>:not([data-fill])]:mx-page [&:has(>[data-fill])>:first-child:not([data-fill])]:mt-page";
 // A Split's main under the mark turns its `SPLIT_MAIN` `rest` form into its
 // `fills` one: the Thread spans the main, so the record's column cap goes.
 export const MAIN_FILLED =

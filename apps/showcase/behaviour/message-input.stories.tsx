@@ -53,3 +53,36 @@ export const BoxFocusesText: StoryObj = {
 		await expect(onSend).toHaveBeenCalledOnce();
 	},
 };
+
+// On touch Attach, Stop and Send are three icon acts, so the field keeps the
+// rest of a 292 px frame beside them (a labelled Send left it 77 px).
+export const FieldKeepsRoomAtANarrowPhone: StoryObj = {
+	tags: ["touch"],
+	globals: { density: "touch" },
+	render: () => (
+		<div style={{ width: 292 }}>
+			<MessageInput
+				value=""
+				onChange={() => {}}
+				onAttach={() => {}}
+				placeholder="Reply"
+				working
+				onSend={onSend}
+				onStop={() => {}}
+				notice={{ sentence: "A message sent now waits for the answer." }}
+			/>
+		</div>
+	),
+	play: async ({ canvas }) => {
+		const field = await canvas.findByRole("textbox", { name: "Message" });
+		const [attach, stop, send] = ["Attach", "Stop", "Send"].map((name) =>
+			canvas.getByRole("button", { name }).getBoundingClientRect(),
+		);
+		await expect(stop?.width).toBe(attach?.width);
+		await expect(send?.width).toBe(attach?.width);
+		const box = field.closest("div[class*='border']");
+		if (!(box instanceof HTMLElement))
+			throw new Error("the field is not drawn");
+		await expect(box.getBoundingClientRect().width).toBeGreaterThanOrEqual(120);
+	},
+};

@@ -768,44 +768,71 @@ export const ThreadKeepsInputAsBannerToggles: StoryObj = {
 	},
 };
 
-// A Banner sibling above a Thread in a Place body: its measured insets (left, right, top, banner to log) are asserted flush so a
-// failure prints them.
-export const PlaceBodyBannerMeasured: StoryObj = {
-	parameters: { layout: "fullscreen" },
-	render: () => (
-		<Page width={768}>
-			<Place title="Chats" bleed>
-				<Banner kind="warn" sentence="The run is paused." />
-				<Thread
-					items={LONG}
-					message={{
-						key: (turn) => turn.id,
-						author: (turn) => turn.author,
-						body: (turn) => turn.body,
-					}}
-					foot={
-						<MessageInput
-							value=""
-							onChange={noop}
-							placeholder="Reply"
-							onSend={noop}
-						/>
-					}
-				/>
-			</Place>
-		</Page>
-	),
-	play: async ({ canvas }) => {
-		const banner = await canvas.findByRole("status");
-		const log = await canvas.findByRole("log");
-		for (let at = 0; at < 10; at++) await frame();
-		const body = must(banner.parentElement).getBoundingClientRect();
-		const b = banner.getBoundingClientRect();
-		await expect({
-			left: b.left - body.left,
-			right: body.right - b.right,
-			top: b.top - body.top,
-			toLog: log.getBoundingClientRect().top - b.bottom,
-		}).toEqual({ left: 0, right: 0, top: 0, toLog: 0 });
-	},
-};
+// A Banner above a Thread in a Place body with no foot keeps the page inset at
+// its sides and top and stands the body's gap from the log, which runs the
+// body edge to edge, scrolls inside it and stays at its end.
+function placeBanner(width: number): StoryObj {
+	return {
+		parameters: { layout: "fullscreen" },
+		render: () => (
+			<Page width={width}>
+				<Place title="Chats">
+					<Banner kind="warn" sentence="The run is paused." />
+					<Thread
+						items={LONG}
+						message={{
+							key: (turn) => turn.id,
+							author: (turn) => turn.author,
+							body: (turn) => turn.body,
+						}}
+						foot={
+							<MessageInput
+								value=""
+								onChange={noop}
+								placeholder="Reply"
+								onSend={noop}
+							/>
+						}
+					/>
+				</Place>
+			</Page>
+		),
+		play: async ({ canvas, canvasElement }) => {
+			const banner = await canvas.findByRole("status");
+			const log = await canvas.findByRole("log");
+			const send = await canvas.findByRole("button", { name: "Send" });
+			for (let at = 0; at < 10; at++) await frame();
+			const body = must(banner.parentElement);
+			const edge = body.getBoundingClientRect();
+			const b = banner.getBoundingClientRect();
+			const l = log.getBoundingClientRect();
+			const inset = token(canvasElement, "pl-page", "paddingLeft");
+			await expect({
+				left: b.left - edge.left,
+				right: edge.right - b.right,
+				top: b.top - edge.top,
+				toLog: l.top - b.bottom,
+			}).toEqual({
+				left: inset,
+				right: inset,
+				top: inset,
+				toLog: token(canvasElement, "pb-sections", "paddingBottom"),
+			});
+			await expect([l.left - edge.left, edge.right - l.right]).toEqual([0, 0]);
+			await expect(body.scrollHeight).toBeLessThanOrEqual(body.clientHeight);
+			await expect(log.scrollHeight).toBeGreaterThan(log.clientHeight);
+			await waitFor(() =>
+				expect(
+					log.scrollHeight - log.scrollTop - log.clientHeight,
+				).toBeLessThan(4),
+			);
+			await expect(send.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+				edge.bottom,
+			);
+		},
+	};
+}
+
+export const PlaceBodyBanner375 = touch(placeBanner(375));
+export const PlaceBodyBanner768 = placeBanner(768);
+export const PlaceBodyBanner1440 = placeBanner(1440);

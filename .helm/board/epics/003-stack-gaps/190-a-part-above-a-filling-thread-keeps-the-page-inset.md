@@ -1,6 +1,6 @@
 ---
 id: 003-190
-status: todo
+status: review
 sessions: {}
 ---
 # react-ui, native-ui: a part above a filling Thread keeps the page inset
@@ -21,9 +21,12 @@ contract cell the filled form restates says it, and `fill.test.ts` holds it. Bot
 (native-ui's `holdsThread` form). Rules text for a part above the Thread in both guides.
 
 ## Acceptance criteria
-- [ ] A Banner above a Thread in a Place body with no foot stands at the page inset on its left,
+- [x] A Banner above a Thread in a Place body with no foot stands at the page inset on its left,
   right and top, and the region's gap above the log, at 375, 768 and 1440 px, light and dark.
-- [ ] The Thread's log still spans the body edge to edge, scrolls inside it and stays pinned to the
+- [x] The Thread's log still spans the body edge to edge, scrolls inside it and stays pinned to the
   latest entry; the input stays docked.
-- [ ] A Split main's paired head and Banner over a Thread draw as before.
-- [ ] Both platforms; `pnpm check`, the three verifies and the scoped stories run pass.
+- [x] A Split main's paired head and Banner over a Thread draw as before.
+- [x] Both platforms; `pnpm check`, the three verifies and the scoped stories run pass.
+
+## Built
+Web: `PART_ABOVE_FILLED` (`plugins/react-ui/src/ui/components/thread/fill.ts`) gives each sibling above the Thread in a footless Place body `mx-page`, and the first `mt-page`, under the Thread's `data-fill` mark (child combinators only, no `:has([data-fill])` at depth); `BODY_FILLED` zeroes the inset and keeps the body's gap, so the part stands `gap-sections` from the log. `fill.test.ts` holds both to `PAGE_BODY`. Native: `headPaired(children, inMain, fills)` wraps each part before the Thread in `mx-page` (the first also `mt-page`), and the filled body keeps `gap-sections` (`BODY_FILLED` in `place/index.tsx`); `thread.test.ts` holds both to `PAGE_BODY`. A Split main is untouched (`headPaired` without `fills`; `MAIN_FILLED`, `COLUMN_FILLED`, `holdsThread` unchanged). The new classes are in the overlay allowlists (`scripts/overlays.ts`, native `scripts/verify.ts`). Rules text in both guides and `ui-core.md`. Stories `PlaceBodyBanner375/768/1440` (`apps/showcase/behaviour/split.stories.tsx`, replacing `PlaceBodyBannerMeasured`) assert the Banner's left, right and top insets at the page inset and its gap to the log at the sections gap, the log edge to edge, scrolling and at its end, and the input inside the body. The scoped stories run passes (36 files, 179 tests, peak 4444 MiB), the Split `ThreadUnderBanner*` stories among them. The stories run in the showcase's default mode; the insets are spacing tokens, the same in light and dark, so dark is not asserted separately. The phone render is unchecked on a device.

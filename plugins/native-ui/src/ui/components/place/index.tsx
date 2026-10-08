@@ -64,6 +64,9 @@ const CONTEXT = "shrink-0 flex-row";
 // The body scrolls under the fixed head; a bleeding body leaves scrolling
 // to its child, which keeps the act's room.
 const BODY = "flex-1";
+// A filling Thread's body draws no inset and keeps `PAGE_BODY`'s gap, which a
+// part above the Thread stands from the log.
+const BODY_FILLED = "flex-1 gap-sections";
 const BODY_WRAP = "relative flex-1";
 // The body's content fills the scroll, so an EmptyState alone centres in it.
 const BODY_CONTENT = "grow";
@@ -248,7 +251,7 @@ export function Place({
 										className={BODY}
 										contentContainerClassName={
 											fill
-												? BODY
+												? BODY_FILLED
 												: cn(
 														PAGE_BODY,
 														foot !== undefined && PAGE_BODY_OVER_FOOT,
@@ -257,7 +260,7 @@ export function Place({
 										}
 									>
 										<ThreadRoom.Provider value={fill}>
-											{headPaired(children)}
+											{headPaired(children, false, fill)}
 										</ThreadRoom.Provider>
 										{room}
 									</Scroll>

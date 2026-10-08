@@ -21,7 +21,6 @@ import { Pressable, Text as RNText, TextInput, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FieldDisabled } from "../../lib/field";
-import { ActInert } from "../../lib/form";
 import { FootReturn } from "../../lib/frame";
 import { pickedFromDocument, pickedFromImage } from "../../lib/picked";
 import { useTokenColor } from "../../lib/theme";
@@ -74,7 +73,7 @@ export interface MessageInputProps extends Closed {
 
 // One row: the attach act, the field growing upward to eight lines (its
 // attachments over the text), Stop's icon act while an answer comes and
-// Send; the notice under it in the same columns, its sentence at the field's
+// Send's icon act; the notice under it in the same columns, its sentence at the field's
 // text.
 export function MessageInput({
 	value,
@@ -162,7 +161,7 @@ export function MessageInput({
 						)}
 					/>
 				</Pressable>
-				{/* Stop is an icon act, so the field keeps its width; its glyph is the stop square in a ring, never a bare square a checkbox would read as. */}
+				{/* Stop and Send are icon acts, so the field keeps its width; Stop's glyph is the stop square in a ring, never a bare square a checkbox would read as. */}
 				{working ? (
 					<IconButtonBase
 						icon="CircleStop"
@@ -172,9 +171,13 @@ export function MessageInput({
 						disabled={!onStop}
 					/>
 				) : null}
-				<ActInert.Provider value={!sendable}>
-					<Button act="primary" fit="bar" label={words.send} onAct={onSend} />
-				</ActInert.Provider>
+				<IconButtonBase
+					icon="Send"
+					fit="bar"
+					label={words.send}
+					onAct={onSend}
+					disabled={!sendable}
+				/>
 			</View>
 			{notice ? (
 				<View className={cn(MESSAGE_INPUT_ROW, NOTICE)}>

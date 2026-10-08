@@ -877,7 +877,7 @@ a tick with no animation, never jumped to full.
   `enabled` off) with its content held to its height, so a Thread arriving late remounts nothing
   beside it. Rejected: a Thread telling its frame in a layout effect, which commits the frame twice
   and, on native, swapped the body's scroll for a view and remounted every sibling. A filled Place's
-  floating act would stand over the docked input: accepted while no Place has both. A part above a Thread is its sibling in the region, and the head pairs with a Banner after it as with an ActionBar. Rejected: the region reading the mark at any depth (`data-fill` is also the source TextArea's and the Canvas's, nested regions would match each other's Thread, and an app wrapper is no flex column, so the Thread would still not fill it), and a Thread slot or a roster part for what a sibling does. A Split's main
+  floating act would stand over the docked input: accepted while no Place has both. A part above a Thread is its sibling in the region, and the head pairs with a Banner after it as with an ActionBar. In a Place's body the Thread alone runs edge to edge: the web reads the mark for each sibling above it (`PART_ABOVE_FILLED`, the `PAGE_BODY` inset at the sides and the top as margins, the body keeping its gap), and native's `headPaired(…, fills)` wraps each part before the Thread in the same inset; `fill.test.ts` and native's `thread.test.ts` hold both to `PAGE_BODY`. Rejected: the region reading the mark at any depth (`data-fill` is also the source TextArea's and the Canvas's, nested regions would match each other's Thread, and an app wrapper is no flex column, so the Thread would still not fill it), and a Thread slot or a roster part for what a sibling does. A Split's main
   gives it room too, so a Thread under a record's `ItemHeader` fills the main the same way: the main
   stops scrolling, keeping the page inset around the head alone (`SPLIT_MAIN {state: fills}`; the
   web spells it as the `rest` cell less its gap and foot under the fill mark), and the Thread bleeds
@@ -916,8 +916,9 @@ a tick with no animation, never jumped to full.
   reject unhandled.
 - A `MessageInput` sends while an answer streams: `working` sets Stop before Send and leaves Send
   live, so Send and Enter send whenever the text is non-empty. Stop is the secondary bar Button on
-  the desktop and an icon act at the bar fit (`ICON_BUTTON.fit.bar`, `CircleStop`) on touch, so the
-  touch field gives up only a compact square. Lucide draws no filled stop square, and a bare
+  the desktop and an icon act at the bar fit (`ICON_BUTTON.fit.bar`, `CircleStop`) on touch, and
+  Send the primary bar Button on the desktop and an icon act (`Send`) on touch, named "Send", so the
+  touch field gives up only a compact square for each. Lucide draws no filled stop square, and a bare
   `Square` beside the field reads as an unchecked box. What becomes of a message sent while an
   answer runs is the consumer's sentence in `notice`; the input takes no prop for it. On native,
   Send and Stop never touch focus: the keyboard stays up because no tap takes it, the Place and

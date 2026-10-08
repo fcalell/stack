@@ -49,7 +49,7 @@ import { Menu } from "../menu/index.tsx";
 import { PickerBase } from "../picker/base.tsx";
 import { SwitcherPick } from "../shell/switcher.tsx";
 import { splitOf } from "../split/index.tsx";
-import { BODY_FILLED } from "../thread/fill.ts";
+import { BODY_FILLED, PART_ABOVE_FILLED } from "../thread/fill.ts";
 
 // The column clips what stands past its sides, so its docked foot's shadow
 // never falls on the region beside it; its top stays open for the lift.
@@ -328,7 +328,11 @@ export function Place({
 		<div
 			ref={setBodyNode}
 			tabIndex={stop ? 0 : undefined}
-			className={cn(PAGE_BODY, BODY, foot ? PAGE_BODY_OVER_FOOT : BODY_FILLED)}
+			className={cn(
+				PAGE_BODY,
+				BODY,
+				foot ? PAGE_BODY_OVER_FOOT : cn(BODY_FILLED, PART_ABOVE_FILLED),
+			)}
 		>
 			<ThreadRoom value={!foot}>{headPaired(children)}</ThreadRoom>
 			{floating ? (

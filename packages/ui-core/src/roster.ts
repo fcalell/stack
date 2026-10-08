@@ -2569,7 +2569,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// chooses (and, on the web, a paste or a drop on the input); the
 		// consumer turns a file into an `Attachment` and passes it back, a
 		// thumbnail with its remove act at its corner when it has `src`. While
-		// `working`, Stop stands before Send (an icon act on touch) and Send
+		// `working`, Stop stands before Send (both icon acts on touch) and Send
 		// still sends; the notice says what becomes of a message sent then.
 		MessageInput: {
 			props: [

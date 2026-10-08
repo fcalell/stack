@@ -90,7 +90,7 @@ export interface MessageInputProps extends Closed {
 	disabled?: boolean;
 }
 
-/** On the desktop one box (its attachments, the text growing to eight lines and scrolling past them, then the attach act, Stop while an answer comes, and Send), the notice under it at the text's x; on touch one row (attach, the field growing upward, Stop's icon act while an answer comes, Send), the notice under it in the same columns. A press anywhere in the box or field that is no act focuses the text, the caret at its end. */
+/** On the desktop one box (its attachments, the text growing to eight lines and scrolling past them, then the attach act, Stop while an answer comes, and Send), the notice under it at the text's x; on touch one row (attach, the field growing upward, Stop's icon act while an answer comes, Send's icon act), the notice under it in the same columns. A press anywhere in the box or field that is no act focuses the text, the caret at its end. */
 export function MessageInput({
 	value,
 	onChange,
@@ -219,8 +219,9 @@ export function MessageInput({
 			className={cn(fieldValue({ kind: "text" }), MESSAGE_INPUT_VALUE, VALUE)}
 		/>
 	);
-	// On touch Stop is an icon act, so the field keeps its width; its glyph is
-	// the stop square in a ring, never a bare square a checkbox would read as.
+	// On touch Stop and Send are icon acts, so the field keeps its width; Stop's
+	// glyph is the stop square in a ring, never a bare square a checkbox would
+	// read as.
 	let stopAct: ReactNode = null;
 	if (working && touch)
 		stopAct = (
@@ -241,9 +242,19 @@ export function MessageInput({
 	const acts = (
 		<div className={cn(touch ? MESSAGE_INPUT_ROW : MESSAGE_INPUT_FOOT, ACTS)}>
 			{stopAct}
-			<ActInert value={!sendable}>
-				<Button act="primary" fit="bar" label={words.send} onAct={send} />
-			</ActInert>
+			{touch ? (
+				<IconButtonBase
+					icon="Send"
+					fit="bar"
+					label={words.send}
+					onClick={send}
+					disabled={!sendable}
+				/>
+			) : (
+				<ActInert value={!sendable}>
+					<Button act="primary" fit="bar" label={words.send} onAct={send} />
+				</ActInert>
+			)}
 		</div>
 	);
 	const act = notice?.act ? (

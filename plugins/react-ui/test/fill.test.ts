@@ -5,13 +5,20 @@ import {
 	BODY_FILLED,
 	COLUMN_FILLED,
 	MAIN_FILLED,
+	PART_ABOVE_FILLED,
 } from "../src/ui/components/thread/fill.ts";
 
 const MARK = "[&:has(>[data-fill])]:";
 const GROUP_MARK = "group-[:has(>[data-fill])]/main:";
+const PART_MARKS = [
+	"[&:has(>[data-fill])>:not([data-fill])]:",
+	"[&:has(>[data-fill])>:first-child:not([data-fill])]:",
+];
 
 // The sides an inset class sets: `p-*`, `px-*` and `py-*` spread to the sides
 // they cover, and a `0` takes a side away; a `max-w` is a cap, `none` its end.
+// A part's margin stands in the inset the body gave up, so `mx-*` and `mt-*`
+// read as the sides they keep.
 const SIDES: Record<string, readonly string[]> = {
 	p: ["pt", "pr", "pb", "pl"],
 	px: ["pr", "pl"],
@@ -20,6 +27,8 @@ const SIDES: Record<string, readonly string[]> = {
 	pr: ["pr"],
 	pb: ["pb"],
 	pl: ["pl"],
+	mx: ["pr", "pl"],
+	mt: ["pt"],
 	gap: ["gap"],
 	"max-w": ["max-w"],
 };
@@ -40,11 +49,12 @@ function insets(...cells: string[]): Record<string, string> {
 }
 
 // The classes a marked form applies once its mark stands.
-const unmarked = (form: string, mark: string) =>
+const unmarked = (form: string, ...marks: string[]) =>
 	form
 		.split(" ")
 		.map((name) => {
-			assert.ok(name.startsWith(mark), `${name} stands under the fill mark`);
+			const mark = marks.find((one) => name.startsWith(one));
+			assert.ok(mark, `${name} stands under the fill mark`);
 			return name.slice(mark.length);
 		})
 		.join(" ");
@@ -56,8 +66,16 @@ test("a Split's main under the fill mark turns its `rest` cell into its `fills` 
 	);
 });
 
-test("a Place's body under the fill mark draws no `PAGE_BODY` inset", () => {
-	assert.deepEqual(insets(PAGE_BODY, unmarked(BODY_FILLED, MARK)), {});
+test("a Place's body under the fill mark draws no `PAGE_BODY` inset and keeps its gap", () => {
+	assert.deepEqual(insets(PAGE_BODY, unmarked(BODY_FILLED, MARK)), {
+		gap: insets(PAGE_BODY).gap,
+	});
+});
+
+test("a part above the Thread keeps the `PAGE_BODY` inset at the sides and the top, the Thread alone bleeding", () => {
+	const { gap, pb, ...kept } = insets(PAGE_BODY);
+	assert.ok(gap && pb, "PAGE_BODY sets a gap and a bottom inset");
+	assert.deepEqual(insets(unmarked(PART_ABOVE_FILLED, ...PART_MARKS)), kept);
 });
 
 test("a record's head under its main's fill mark stands in `THREAD_COLUMN`, centred", () => {

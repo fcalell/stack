@@ -177,6 +177,8 @@ export const OVERLAYS: readonly string[] = [
 	// A region reads the mark of a Thread filling it: no inset, the log
 	// scrolling; the record's head over it stands in the Thread's column.
 	"[&:has(>[data-fill])]:p-0",
+	"[&:has(>[data-fill])>:not([data-fill])]:mx-page",
+	"[&:has(>[data-fill])>:first-child:not([data-fill])]:mt-page",
 	"[&:has(>[data-fill])]:gap-0",
 	"[&:has(>[data-fill])]:pb-0",
 	"[&:has(>[data-fill])]:max-w-none",
