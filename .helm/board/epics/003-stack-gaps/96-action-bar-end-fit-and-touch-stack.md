@@ -1,6 +1,6 @@
 ---
 id: 003-96
-status: todo
+status: done
 sessions: {}
 ---
 # react-ui: an ActionBar's acts stand by the content they act on, and on touch stay above the tab bar
@@ -31,3 +31,6 @@ Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/ac
 
 ## Cut
 Acceptance 2 asked that on touch a save/discard pair not read as two stacked full-width bars, and that the last act sit fully above the tab bar. The stack is kept as it was; only the tab-bar half was checked (the reserve did not reproduce in a Shell Place). An AI ruling cut the pair half (`rulings.md`, item 2, line 21, "Leave the Save and Discard stack alone"; the story's Ruled and Built repeat it); the owner did not rule it. The gap is in the code today: an ActionBar still stacks a pair as two full-width acts on touch, and desktop got no bar rule either (the bar follows the capped column from 003-88).
+
+## Owner ruling
+The owner accepts the cut: on touch a pair of acts stacks at 44 px as the system's rule; criterion 2 reads "the last act sits above the tab bar". Discard can be `quiet`.

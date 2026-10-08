@@ -1,6 +1,6 @@
 ---
 id: 003-155
-status: todo
+status: done
 sessions: {}
 ---
 # react-ui: a Place's title can read per density, so a System section's record reads "‹ Repos +" at the phone
@@ -26,3 +26,6 @@ Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/sh
 
 ## Cut
 The acceptance asked that a Place or Split give a title for the phone different from the desktop's, or export the density read, and that the Place showcase hold the two titles at 390 and 1440. Neither is delivered. An AI ruling cut it (scratchpad `rulings.md`, item 8, lines 53 to 58, "Reject `touchTitle`. Also reject exporting `useTouch`"; the owner did not rule it, and the ruling itself escalated the desktop title to the owner), and the story's Ruled section repeats it. The gap is in the code today: `useTouch` is not exported from the package index (it is reachable only as the `lib/media` subpath), and a Place takes one `title` at every density.
+
+## Owner ruling
+The owner accepts the cut: the app titles its Place with the section's name ("Repos") at every density; no per-density title and no `useTouch` export.

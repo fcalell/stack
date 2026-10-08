@@ -1,6 +1,6 @@
 ---
 id: 003-193
-status: done
+status: todo
 sessions: {}
 ---
 # react-ui: a file row holds its path floor beside a chip in a page's list
@@ -41,3 +41,6 @@ The native `FileRow` has the same structure (`pathCut` floor as `minWidth`, path
 
 ## Owner ruling
 The owner closes it: by design, no stack code. The reproduction stories in `behaviour/row-meta.stories.tsx` (`ReviewFloor*`) hold the floor and spend the row's width at 320, 390 and 768. Stead measures the row, its path span and its counts in its own 390 render to find the wrapper or width that narrows its row.
+
+## Owner ruling
+Reopened on Stead's measurement (stack 74a0e3d, 390x844 touch, IBM Plex Mono 15 px, chromium over CDP): the path span sits at its `min-width: 10ch`, computed 90.0006 px, but ten glyphs advance 90.0156 px; the tail "me.json" takes 63.0156, leaving 26.98 for a head "bio" that needs 27.0156, so `text-overflow` draws "b…". A `min-width` of `calc(10ch + 0.1px)` in the live DOM draws "biome.json" and "docs/flags.md" whole; 320 cuts "f… gs.md" the same way. The stack reproduction passes because Storybook's mono advance differs from Plex Mono's. The "80 px unused" is the counts' empty lane (36 + 8 gap), by design. To build: a floor that covers the glyph advance, and the `ReviewFloor` plays asserting the stem with the app's mono font loaded.
