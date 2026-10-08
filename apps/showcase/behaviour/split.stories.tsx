@@ -11,6 +11,7 @@ import { Prose } from "@fcalell/plugin-react-ui/components/prose";
 import { Screen } from "@fcalell/plugin-react-ui/components/screen";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
 import { Split } from "@fcalell/plugin-react-ui/components/split";
+import { Thread } from "@fcalell/plugin-react-ui/components/thread";
 import { Toolbar } from "@fcalell/plugin-react-ui/components/toolbar";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import type { ReactNode } from "react";
@@ -28,11 +29,17 @@ function Rows() {
 }
 
 // A page `width` px wide: the container its regions query.
-function Page(props: { width: number; children: ReactNode }) {
+function Page(props: {
+	width: number;
+	// Never wider than the screen it stands on.
+	fluid?: boolean;
+	children: ReactNode;
+}) {
 	return (
 		<div
 			style={{
 				width: props.width,
+				maxWidth: props.fluid ? "100%" : undefined,
 				height: 700,
 				display: "flex",
 				flexDirection: "column",
@@ -199,7 +206,14 @@ export const TopsAndWash: StoryObj = {
 					list={
 						<Section title="Open">
 							<Group>
-								<Rows />
+								<List
+									items={NAMES}
+									row={{
+										...ROWS,
+										onOpen: noop,
+										selected: (name) => name === NAMES[1],
+									}}
+								/>
 							</Group>
 						</Section>
 					}
@@ -220,7 +234,20 @@ export const TopsAndWash: StoryObj = {
 		const group = must(
 			must(list).querySelector("[class*='rounded-card']"),
 		).getBoundingClientRect();
-		for (const row of must(list).querySelectorAll("[class*='min-h-row']")) {
+		const rows = [...must(list).querySelectorAll("[class*='min-h-row']")];
+		// The wash is drawn: the open record's row at rest, the first row under
+		// the pointer, the second at rest still clear.
+		const wash = (row: Element | undefined) =>
+			getComputedStyle(must(row)).backgroundColor;
+		const clear = "rgba(0, 0, 0, 0)";
+		await expect(wash(rows[0])).toBe(clear);
+		await expect(wash(rows[1])).not.toBe(clear);
+		await expect(wash(rows[2])).toBe(clear);
+		// A synthetic pointer sets no `:hover`, so the hover wash is read off
+		// the rule the open rows carry.
+		await expect(rows[0]?.className).toContain("hover:bg-wash-hover");
+		await expect(rows[1]?.className).toContain("hover:bg-wash-selected-hover");
+		for (const row of rows) {
 			const box = row.getBoundingClientRect();
 			await expect(box.left).toBeGreaterThanOrEqual(group.left + 1);
 			await expect(box.right).toBeLessThanOrEqual(group.right - 1);
@@ -338,7 +365,9 @@ const besideAtThePhone: StoryObj = {
 	play: async ({ canvasElement }) => {
 		const heads = [...canvasElement.querySelectorAll("header")].filter(shown);
 		await expect(heads).toHaveLength(1);
-		const gutter = token(canvasElement, "px-page", "paddingLeft");
+		const gutter =
+			must(canvasElement.firstElementChild).getBoundingClientRect().left +
+			token(canvasElement, "px-page", "paddingLeft");
 		const title = must(
 			[...canvasElement.querySelectorAll("h1, h2")].find(
 				(el) => el.textContent === "History",
@@ -356,12 +385,59 @@ const besideAtThePhone: StoryObj = {
 
 export const BesideAtThePhone = touch(besideAtThePhone);
 
+// A record beside the main is a head of its own: its title is an h1 and its
+// sections h2 at every width, so below `tablet`, where the Place's head is
+// undrawn, the record's h1 is the one visible; from `tablet` the Place's h1
+// stands first.
+function headings(width: number): StoryObj {
+	return {
+		render: () => (
+			<Page width={width} fluid>
+				<Place title="System" bleed>
+					<Split
+						list={<Rows />}
+						main={
+							<Section title="Page">
+								<Rows />
+							</Section>
+						}
+						beside={
+							<Screen title="History" back="/page">
+								<Section title="Entries">
+									<Rows />
+								</Section>
+							</Screen>
+						}
+					/>
+				</Place>
+			</Page>
+		),
+		play: async ({ canvasElement }) => {
+			const drawn = [
+				...canvasElement.querySelectorAll("h1, h2, h3, h4, h5, h6"),
+			].filter((el) => el.getClientRects().length > 0);
+			const h1s = drawn.filter((el) => el.tagName === "H1");
+			await expect(h1s.length).toBeGreaterThan(0);
+			await expect(drawn[0]?.tagName).toBe("H1");
+			const title = (el: Element) => el.textContent;
+			if (width < 768) await expect(h1s.map(title)).toEqual(["History"]);
+			else await expect(h1s.map(title)).toEqual(["System", "History"]);
+			const entries = drawn.find((el) => title(el) === "Entries");
+			await expect(entries?.tagName).toBe("H2");
+		},
+	};
+}
+
+export const BesideHeadings390 = touch(headings(390));
+export const BesideHeadings768 = headings(768);
+export const BesideHeadings1440 = headings(1440);
+
 // A list standing alone at a deeper route is a pushed Screen holding
 // `<Split back>`: the Screen's back act leads up while the list stands alone,
 // and the Split's `back` takes its place once a record is open.
 function Tree(props: { open: boolean }) {
 	return (
-		<Page width={375}>
+		<Page width={375} fluid>
 			<Screen title="Knowledge" back="/repos/x">
 				<Split
 					back="/repos/x/knowledge"
@@ -389,6 +465,8 @@ export const TreeAloneGoesUp: StoryObj = {
 	render: () => <Tree open={false} />,
 	play: async ({ canvasElement }) => {
 		await expect(backs(canvasElement)).toEqual(["/repos/x"]);
+		const root = document.documentElement;
+		await expect(root.scrollWidth).toBeLessThanOrEqual(root.clientWidth);
 	},
 };
 
@@ -464,3 +542,91 @@ export const RecordHoldsTheMeasure: StoryObj = {
 		await expect(last.right).toBeCloseTo(end, 0);
 	},
 };
+
+// A Thread filling a Split's main inside a column that has no height of its
+// own (the showcase frame's form): the Place takes its height from its
+// content, the log keeps room to read and the docked input ends inside it.
+const ASKED = [
+	{ id: "a", author: "you", body: "Why did the last deploy of api fail?" },
+	{
+		id: "b",
+		author: "other",
+		body: "The migration `0042_add_invoices` timed out, so the release stopped before it served traffic.",
+	},
+	{ id: "c", author: "you", body: "Open it and hold the redeploy." },
+] as const;
+
+function Conversation(props: { width: number }) {
+	return (
+		<div
+			data-column
+			style={{
+				display: "flex",
+				flexDirection: "column",
+				width: props.width,
+			}}
+		>
+			<Place title="Chats" bleed>
+				<Split
+					list={<Rows />}
+					main={
+						<>
+							<ItemHeader
+								title="Why did the last deploy of api fail?"
+								facts={["Ana Ruiz", "Today"]}
+							/>
+							<Thread
+								items={ASKED}
+								message={{
+									key: (turn) => turn.id,
+									author: (turn) => turn.author,
+									body: (turn) => turn.body,
+								}}
+								foot={
+									<MessageInput
+										value=""
+										onChange={noop}
+										placeholder="Reply"
+										onSend={noop}
+									/>
+								}
+							/>
+						</>
+					}
+				/>
+			</Place>
+		</div>
+	);
+}
+
+const frame = () =>
+	new Promise<void>((done) => requestAnimationFrame(() => done()));
+
+function fills(width: number): StoryObj {
+	return {
+		parameters: { layout: "fullscreen" },
+		render: () => <Conversation width={width} />,
+		play: async ({ canvas, canvasElement }) => {
+			const log = await canvas.findByRole("log");
+			const send = await canvas.findByRole("button", { name: "Send" });
+			const column = must(canvasElement.querySelector("[data-column]"));
+			for (let at = 0; at < 10; at++) await frame();
+			const box = column.getBoundingClientRect();
+			await expect(box.height).toBeGreaterThanOrEqual(400);
+			await expect(log.getBoundingClientRect().height).toBeGreaterThanOrEqual(
+				150,
+			);
+			await expect(send.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+				box.bottom,
+			);
+			const field = canvas.getByRole("textbox", { name: "Message" });
+			await expect(field.getBoundingClientRect().width).toBeGreaterThanOrEqual(
+				100,
+			);
+		},
+	};
+}
+
+export const ThreadFillsMain375 = touch(fills(375));
+export const ThreadFillsMain768 = fills(768);
+export const ThreadFillsMain1280 = fills(1280);

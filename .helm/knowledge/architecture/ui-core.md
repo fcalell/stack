@@ -648,9 +648,11 @@ a tick with no animation, never jumped to full.
   alone, its head is the page's one: the Place reads the Split's `data-beside` mark (the web) or its
   `beside` prop (native), and draws no head, so one top bar holds one back act, to the main, and the
   list is reached by going back from the main; the Split hands the Details act to that head through
-  `Beside`. The Split hands the Screen `Beside`: the Screen covers no tab bar, its title is a
-  heading at the level where it stands at every width, and where its head stands alone the Place
-  draws no `h1`; the record keeps its level, since a body's levels cannot swap by container query, and on the web its body's sections, not its root, are the `page` container, so its
+  `Beside`. The Split hands the Screen `Beside`: the Screen covers no tab bar, its title is an
+  `h1` and its sections start at `h2` at every width, so where its head stands alone the Place's
+  head, `h1` included, stays in the DOM undrawn (`display: none`) and the record's `h1` is the one
+  visible; a heading's tag cannot swap by container query, so two heads (two `h1`s) stand side by
+  side from `wide`. On the web its body's sections, not its root, are the `page` container, so its
   head's acts and the floating act's room read the outer page's width and what stands in its body
   reads its own. Rejected: the record in the pane (the pane is the open record's details, at
   forty-five characters), a `Sheet` (an overlay over the scrim with no back to the main), and a

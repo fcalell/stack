@@ -23,3 +23,7 @@ Evidence: `behaviour/split.stories.tsx` `TreeAloneGoesUp` and `TreeRecordGoesToT
 
 ## Critique
 Rework: the tree-alone Split (desktop and Touch stories) overflows the viewport by 71 px at 320 and 1 px at 390; its page head and containers end at x 391 at every width. The back act renders.
+
+## Rework
+The overflow is the stories' own harness: `Page` is a fixed 375 px, which with Storybook's 16 px padding ends at x 391 at every viewport. The `Tree` stories stand in `Page width={375} fluid` (never wider than the screen), and `TreeAloneGoesUp` asserts the document does not scroll sideways. The Screen and Split hold no overflow of their own.
+Evidence: `behaviour/split.stories.tsx` `TreeAloneGoesUp`, `TreeAloneGoesUpTouch`, `TreeRecordGoesToTree` pass.

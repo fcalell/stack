@@ -37,8 +37,8 @@ function Editing() {
 					))}
 					<ActionBar
 						acts={[
-							{ label: "Save", onAct: noop },
 							{ label: "Discard", onAct: noop },
+							{ label: "Save", onAct: noop },
 						]}
 					/>
 				</Form>
@@ -75,9 +75,95 @@ export const BodyEndsAboveTheTabBar: StoryObj = {
 		const bar = canvas
 			.getByRole("navigation", { name: "Places" })
 			.getBoundingClientRect();
-		const discard = canvas
-			.getByRole("button", { name: "Discard" })
+		const save = canvas
+			.getByRole("button", { name: "Save" })
 			.getBoundingClientRect();
-		await expect(discard.bottom).toBeLessThanOrEqual(bar.top);
+		await expect(save.bottom).toBeLessThanOrEqual(bar.top);
+	},
+};
+
+type Rgba = [number, number, number, number];
+
+// A CSS colour in any syntax as sRGB, read back off a canvas pixel.
+function rgba(color: string): Rgba {
+	const context = document.createElement("canvas").getContext("2d", {
+		willReadFrequently: true,
+	});
+	if (!context) throw new Error("no canvas context");
+	context.clearRect(0, 0, 1, 1);
+	context.fillStyle = color;
+	context.fillRect(0, 0, 1, 1);
+	const [r = 0, g = 0, b = 0, a = 0] = context.getImageData(0, 0, 1, 1).data;
+	return [r, g, b, a / 255];
+}
+
+function over(top: Rgba, under: Rgba): Rgba {
+	const alpha = top[3] + under[3] * (1 - top[3]);
+	const mix = (at: 0 | 1 | 2) =>
+		alpha === 0
+			? 0
+			: (top[at] * top[3] + under[at] * under[3] * (1 - top[3])) / alpha;
+	return [mix(0), mix(1), mix(2), alpha];
+}
+
+// The ground an element reads on: every ancestor's background laid over the
+// page's, so a translucent wash counts as what it sits on.
+function ground(el: Element): Rgba {
+	let flat: Rgba = [255, 255, 255, 1];
+	const chain: Element[] = [];
+	for (let at: Element | null = el; at; at = at.parentElement) chain.push(at);
+	for (const node of chain.reverse())
+		flat = over(rgba(getComputedStyle(node).backgroundColor), flat);
+	return flat;
+}
+
+function luminance([r, g, b]: Rgba): number {
+	const [lr = 0, lg = 0, lb = 0] = [r, g, b].map((channel) => {
+		const c = channel / 255;
+		return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+	});
+	return 0.2126 * lr + 0.7152 * lg + 0.0722 * lb;
+}
+
+function contrast(el: Element): number {
+	const under = ground(el);
+	const ink = over(rgba(getComputedStyle(el).color), under);
+	const [hi = 0, lo = 0] = [luminance(ink), luminance(under)].sort(
+		(a, b) => b - a,
+	);
+	return (hi + 0.05) / (lo + 0.05);
+}
+
+// The sidebar's place labels in dark at the desktop width, the current place
+// among them, read on the ground they stand on: 4.5:1 at rest and selected.
+export const PlaceLabelsReadInDark: StoryObj = {
+	parameters: { layout: "fullscreen" },
+	render: () => (
+		<div className="dark" style={{ background: "var(--color-canvas)" }}>
+			<Shell
+				places={[
+					{ route: location.pathname, label: "Overview", icon: "House" },
+					{ route: "/members", label: "Members", icon: "Users" },
+				]}
+			>
+				<Place title="Overview">
+					<p>The page.</p>
+				</Place>
+			</Shell>
+		</div>
+	),
+	play: async ({ canvas }) => {
+		const nav = await canvas.findByRole("navigation", { name: "Places" });
+		const links = [...nav.querySelectorAll("a")];
+		await expect(links.map((el) => el.textContent?.trim())).toEqual([
+			"Overview",
+			"Members",
+		]);
+		for (const link of links) {
+			const label = link.querySelector("span:last-child") ?? link;
+			const ratio = contrast(label);
+			console.log(`${link.textContent} ${ratio.toFixed(2)}`);
+			await expect(ratio).toBeGreaterThanOrEqual(4.5);
+		}
 	},
 };

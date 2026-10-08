@@ -25,3 +25,6 @@ Evidence: `behaviour/split.stories.tsx` `BesideAtThePhone` (touch, 375 px: one v
 
 ## Critique
 Rework: the render holds (one head, edges at the gutter), but `BesideAtThePhone`'s play fails at every width (expected 32 to be 16): it compares an absolute left with the gutter while Storybook pads the page by 16 px.
+
+## Rework
+`BesideAtThePhone` measures against its own frame: the expected left is the Page's left plus the `px-page` gutter. The story passes.

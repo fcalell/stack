@@ -34,3 +34,6 @@ Built; `pnpm check` and `pnpm verify` pass. Web live at 1440 and 375: a Place re
 
 ## Critique
 Rework (blocker): `layout-split` `fills` frame (a Thread filling a Split's main) is 277/216/292 px tall at 1280/768/390 against 585/307/403 for `rest`; the log is about 0 px, the docked MessageInput is cut, and at 390 no Thread draws.
+
+## Rework
+Fixed by 003-165 (the Thread's size container is gone); no component change. `behaviour/split.stories.tsx` `ThreadFillsMain375`, `ThreadFillsMain768` and `ThreadFillsMain1280` put a Thread in a Split's main in an auto-height column and assert the column is at least 400 px, the log at least 150 px, Send inside the column and the field at least 100 px wide; they pass.

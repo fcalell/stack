@@ -23,3 +23,6 @@ The stop stands only while the region scrolls and holds nothing tabbable, which 
 
 ## Critique
 Unrendered: no story draws a scrolling Screen body with nothing tabbable inside.
+
+## Rework
+`behaviour/screen.stories.tsx` `BodyTakesTheTabStop` draws a 300 px Screen of text lines and asserts the body takes `tabindex=0` and Tab reaches it.

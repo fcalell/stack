@@ -25,3 +25,6 @@ Evidence: `behaviour/split.stories.tsx` `TopsAndWash` (list and main headings at
 
 ## Critique
 Rework: the list and main tops are equal (y 90); the list's wash is unjudged, since the story's rows draw no hover or selected state.
+
+## Rework
+`TopsAndWash` draws the Group's rows as openable, with the second the open record. Its play asserts the selected row is washed and the others clear, that the open rows carry the hover and selected-hover washes (a synthetic pointer sets no `:hover`, so those are read off the classes), and that every row stays inside the Group's border. The story passes.

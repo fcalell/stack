@@ -39,3 +39,4 @@ Owner render: `atom/Count` Rest; `atom/Button` Rest and Loading (every act, ligh
 
 ## Critique
 Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/shell/report.md`).
+The dark 1280 tab labels probed 1.07 and 1.21: a probe artefact of the translucent row ground. `behaviour/shell.stories.tsx` `PlaceLabelsReadInDark` composites the ground and asserts 4.5:1 at rest and selected; it passes.

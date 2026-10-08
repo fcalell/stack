@@ -19,7 +19,7 @@ import {
 	DetailsSheet,
 	PageTitle,
 } from "../../lib/frame.ts";
-import { HeadingContext, screenLevels } from "../../lib/heading.ts";
+import { HeadingContext } from "../../lib/heading.ts";
 import { useTouch } from "../../lib/media.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
 import { useWords } from "../../lib/words.tsx";
@@ -60,7 +60,7 @@ const BODY =
 
 /** A pushed page. */
 export interface ScreenProps extends Closed {
-	/** The page's title, its one `h1`; beside a Split's main, a heading at the level where it stands, at every width (a short phrase; truncates). */
+	/** The page's title, an `h1` at every width, beside a Split's main too (a short phrase; truncates). */
 	title: string;
 	/** The route the back act returns to; none draws no back act. */
 	back?: string;
@@ -72,14 +72,13 @@ export interface ScreenProps extends Closed {
 	children?: ReactNode;
 }
 
-/** A page pushed over a place: the back act first and no filled act. Its head draws one hairline: on the desktop it stands in the shell's column under one strip; on touch the top bar (back, actions, more) stands over the title and the screen covers the tab bar. A Split inside decides its regions by the screen's width and its pane's Details act stands in its head, drawn below `wide` of it; while its record stands alone (below `tablet`) the back act returns to the Split's `back` when it names one. As a Split's `beside` record it stands in its page: its title is a heading at the level where it stands at every width, it covers no tab bar, and from `wide` of the page its back act draws as Close. Below `tablet` of the page its head stands alone in the Place's stead, one top bar with its back act to the main, and draws the Details act of the Split's pane while it is open; its body keeps the room of the act floating over it. */
+/** A page pushed over a place: the back act first and no filled act. Its head draws one hairline: on the desktop it stands in the shell's column under one strip; on touch the top bar (back, actions, more) stands over the title and the screen covers the tab bar. A Split inside decides its regions by the screen's width and its pane's Details act stands in its head, drawn below `wide` of it; while its record stands alone (below `tablet`) the back act returns to the Split's `back` when it names one. As a Split's `beside` record it stands in its page: its title is an `h1` and its sections start at `h2` at every width; it covers no tab bar, and from `wide` of the page its back act draws as Close. Below `tablet` of the page its head stands alone in the Place's stead, one top bar with its back act to the main, and draws the Details act of the Split's pane while it is open; its body keeps the room of the act floating over it. */
 export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	const touch = useTouch();
 	const words = useWords();
 	const frame = use(Beside);
 	const beside = frame !== null;
 	const room = use(ActRoom);
-	const level = use(HeadingContext);
 	// A pushed screen holds the details sheet of a Split inside, as a Place
 	// does; beside, the Place around holds it.
 	const [own] = useState(() => Dialog.createHandle<unknown>());
@@ -88,8 +87,6 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	const [bodyNode, setBodyNode] = useState<HTMLDivElement | null>(null);
 	const stop = useScrolls(bodyNode);
 	const fit = touch ? "body" : "bar";
-	const levels = screenLevels(beside, level);
-	const Heading = `h${levels.title}` as const;
 	// While a Split's record inside stands alone the back act returns to the
 	// list: where the Split says it stands, else the screen's own `back`.
 	const list = splitOf(children)?.back;
@@ -154,9 +151,9 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 		besideDetails !== null;
 	const titleClass = cn(text({ role: "title" }), TITLE, touch && PAGE_TITLE);
 	const heading = (
-		<Heading id={titleId} className={titleClass}>
+		<h1 id={titleId} className={titleClass}>
 			{title}
-		</Heading>
+		</h1>
 	);
 	// The head is one tree on both densities, so crossing the density line
 	// keeps its acts, their focus and an open sheet's trigger. Only the
@@ -186,7 +183,7 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 		<DetailsSheet value={sheet}>
 			<BackRoute value={back}>
 				<PageTitle value={titleId}>
-					<HeadingContext value={levels.body}>
+					<HeadingContext value={2}>
 						<div
 							data-screen={beside ? undefined : ""}
 							className={beside ? SCREEN_BESIDE : SCREEN}
