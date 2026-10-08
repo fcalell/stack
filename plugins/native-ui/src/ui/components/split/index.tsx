@@ -37,7 +37,7 @@ const REGION = "flex-1";
 // sideways, which its bleeding rows meet the title across.
 const LIST = "px-page";
 
-export interface SplitProps extends Closed {
+interface SplitRegions extends Closed {
 	list?: ReactNode;
 	main?: ReactNode;
 	beside?: ReactNode;
@@ -45,6 +45,15 @@ export interface SplitProps extends Closed {
 	empty?: ReactNode;
 	back?: Route;
 }
+
+// `open` asks the pane's sheet open; `onClose` hears every close of it (its
+// close act, the scrim, a Details act's sheet too), and an app that asked
+// clears `open`. The two stand together.
+type SplitOpening =
+	| { open?: undefined; onClose?: undefined }
+	| { open: boolean; onClose: () => void };
+
+export type SplitProps = SplitRegions & SplitOpening;
 
 // One region at a time, each scrolling itself in a bleeding Place: the list,
 // or the open record once `main` is set, whose Place then leads its top bar
@@ -55,13 +64,21 @@ export interface SplitProps extends Closed {
 // replaces the main, its head the page's one (the Place draws none) with its
 // back act to the main and the Details act in its top bar. With a record
 // and a pane open, its Place or Screen draws a Details act that opens the pane
-// as a sheet. It stands as its page's direct child, where the page reads its
+// as a sheet, as does the app's `open`. It stands as its page's direct child, where the page reads its
 // props (`useSplitHead`); deeper it draws as a plain region and no head draws its
 // acts. `empty` is the desktop's, so the phone never draws it. `back` is the
 // route where the list stands alone: the record's back act returns to it, in
 // a Place and in a pushed Screen, and so does a missing read in its regions,
 // in the place's route's and the Screen's `back`'s stead.
-export function Split({ list, main, beside, pane, back }: SplitProps) {
+export function Split({
+	list,
+	main,
+	beside,
+	pane,
+	back,
+	open: asked,
+	onClose,
+}: SplitProps) {
 	const words = useWords();
 	const title = useContext(PageTitle);
 	// The regions lead back to the list's route, outranking the route the
@@ -127,8 +144,11 @@ export function Split({ list, main, beside, pane, back }: SplitProps) {
 			{region}
 			<Sheet
 				fit="pane"
-				open={sheet && open}
-				onClose={() => setOpen(false)}
+				open={sheet && (open || asked === true)}
+				onClose={() => {
+					setOpen(false);
+					onClose?.();
+				}}
 				title={words.details}
 			>
 				{pane}

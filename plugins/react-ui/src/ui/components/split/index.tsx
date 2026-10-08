@@ -8,7 +8,14 @@ import {
 	SPLIT_PANE,
 	splitMain,
 } from "@fcalell/ui-core/variants";
-import { Children, isValidElement, type ReactNode, use, useState } from "react";
+import {
+	Children,
+	isValidElement,
+	type ReactNode,
+	use,
+	useEffect,
+	useState,
+} from "react";
 import type { Closed } from "../../lib/closed.ts";
 import {
 	ActRoom,
@@ -66,8 +73,22 @@ const EMPTY = "flex grow min-w-0 items-center justify-center";
 const PANE =
 	"flex flex-col shrink-0 overflow-y-auto focus-visible:-outline-offset-2 page-max-wide:hidden";
 
-/** A list beside the record it opens. */
-export interface SplitProps extends Closed {
+// Whether the node is not displayed, read off its width: the pane's `aside`
+// is `display: none` from `wide` down, where the pane is a sheet.
+function useUndisplayed(node: HTMLElement | null): boolean {
+	const [undisplayed, setUndisplayed] = useState(false);
+	useEffect(() => {
+		if (!node) return;
+		const resize = new ResizeObserver(([entry]) =>
+			setUndisplayed(entry?.contentRect.width === 0),
+		);
+		resize.observe(node);
+		return () => resize.disconnect();
+	}, [node]);
+	return node !== null && undisplayed;
+}
+
+interface SplitRegions extends Closed {
 	/** The records, a `List`. */
 	list?: ReactNode;
 	/** The open record; none means nothing is open. */
@@ -82,6 +103,21 @@ export interface SplitProps extends Closed {
 	back?: Route;
 }
 
+/** A Split opens its pane's sheet only when the app asks, and hears every close; the two stand together. */
+type SplitOpening =
+	| {
+			open?: undefined;
+			onClose?: undefined;
+	  }
+	| {
+			/** Asks the pane open as a sheet where the pane is not beside the main: below `wide`, or beside a `beside` record. From `wide` it draws nothing. */
+			open: boolean;
+			/** Hears every close of the sheet (its close act, Escape, the scrim, a Details act's sheet too); an app that asked clears `open`. */
+			onClose: () => void;
+	  };
+
+export type SplitProps = SplitRegions & SplitOpening;
+
 /** The props of the Split standing as a page's direct child, which the page reads in render. */
 export function splitOf(children: ReactNode): SplitProps | undefined {
 	const split = Children.toArray(children).find(
@@ -91,14 +127,23 @@ export function splitOf(children: ReactNode): SplitProps | undefined {
 }
 
 /** The list at its width inside a hairline beside the main, decided by its page's width: from `wide` the pane stands beside the main, below it the Details act its Place or Screen draws opens the pane as a sheet. Below `tablet` one region stands at a time: the list, or the open record, whose Place then leads its strip or top bar with a back act to the list: the place's route, or the Split's `back` where the list stands deeper, which a missing read in its regions leads back to as well, and which a pushed Screen's back act leads to in their stead while the record stands alone. A record the main opened (`beside`) stands beside the main from `wide`, the two sharing what the list leaves, its back act drawn as Close and the pane behind the Details act at every width; below `wide` it stands in the main's place with its back act to the main, and below `tablet` its head stands alone, the Place drawing none. A Thread in the main fills it: the main stops scrolling, the record's head stays at the page inset over the Thread's log, which scrolls, and its input docks at the main's foot. It sits in a bleeding Place, whose strip heads it. */
-export function Split({ list, main, beside, pane, empty, back }: SplitProps) {
+export function Split({
+	list,
+	main,
+	beside,
+	pane,
+	empty,
+	back,
+	open,
+	onClose,
+}: SplitProps) {
 	const words = useWords();
 	const title = use(PageTitle);
 	const room = use(ActRoom);
 	// The regions lead back to the list's route, outranking the route the
 	// Screen around leads back to; unset, they keep the one they stand under.
 	const outer = use(BackRoute);
-	const [open, setOpen] = useState(false);
+	const [detailsOpen, setDetailsOpen] = useState(false);
 	// The page around holds the sheet's handle, so its Details act stands from
 	// its first frame.
 	const [own] = useState(() => Dialog.createHandle<unknown>());
@@ -112,6 +157,10 @@ export function Split({ list, main, beside, pane, empty, back }: SplitProps) {
 	const opened = main !== undefined;
 	const detailed = opened && pane !== undefined;
 	const besides = opened && beside !== undefined;
+	const stacked = useUndisplayed(paneNode);
+	// The app's ask applies where the pane is a sheet: always beside a record,
+	// else while the aside is not displayed.
+	const asked = open === true && (besides || stacked);
 	const record = cn(MAIN, besides && MAIN_SHARED);
 	const inset = cn(
 		splitMain({ state: "rest" }),
@@ -183,9 +232,12 @@ export function Split({ list, main, beside, pane, empty, back }: SplitProps) {
 				) : null}
 				<SheetBase
 					handle={sheet}
-					open={detailed && open}
-					onOpen={() => setOpen(true)}
-					onClose={() => setOpen(false)}
+					open={detailed && (detailsOpen || asked)}
+					onOpen={() => setDetailsOpen(true)}
+					onClose={() => {
+						setDetailsOpen(false);
+						onClose?.();
+					}}
 					title={words.details}
 					fit="pane"
 				>

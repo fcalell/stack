@@ -24,6 +24,13 @@ is the viewport less the 240 px sidebar. The list and the main stand together fr
 (768) wide, a 1008 px viewport; `beside` and `pane` stand from a page `wide` (1200) wide, a 1440 px
 viewport. Below them one region stands at a time.
 
+An app that selects a record opens the pane's sheet by passing `open` with `onClose` (the two stand
+together): `<Split open={selected} onClose={() => setSelected(false)} …>`. `open` stands the pane as
+its side sheet where the pane is not beside the main, below `wide` or beside a `beside` record, and
+draws nothing from `wide`, where the pane stands beside the main; `onClose` hears every close (the
+close act, Escape, the scrim, the Details act's sheet too), and the app clears `open` in it. A `Split`
+without them opens its sheet from the Details act alone.
+
 A record the open record links to opens beside it: the `Split`'s `beside` holds a `Screen` whose
 `back` is the open record's route. From `wide` it stands beside the main, its back act a Close at the head's end;
 below `wide` it stands in the main's place with its back act, and below `tablet` its head is the

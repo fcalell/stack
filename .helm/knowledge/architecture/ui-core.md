@@ -451,7 +451,17 @@ a tick with no animation, never jumped to full.
   Toolbar sorts its children by type), so its head draws the back act with a record, the Details act
   with a pane and no head beside a record from the first frame, and holds the Details sheet's open
   state (`DetailsOpen`), which closes with the pane it opened on. A Split standing deeper draws as a
-  plain region and no head draws its acts. Rejected: a registration the Place reads in render from a
+  plain region and no head draws its acts. A Split's sheet also opens from the app: `open` and
+  `onClose` stand as a typed pair on `SplitProps` (`open` asks, `onClose` hears every close,
+  the Details act's sheet too, so the app's selection agrees). The sheet is open when the pane
+  exists and either the Details act or `open` asks. On the web `open` applies only where the pane
+  is a sheet: always beside a `beside` record, else while the pane's `aside` is not displayed
+  (a `ResizeObserver` reads its width at 0 below `wide`), so from `wide` it draws no sheet over
+  the beside pane and the Split needs no container-width read in JS. The phone is always the
+  sheet, so `open` applies at once. Rejected: a handle the app holds (a second state beside the
+  Split's own Dialog handle, whose export is public surface) and the sheet opening whenever
+  `pane` changes (a list tap sets `pane` without wanting a sheet; the Details act is the
+  opt-in). Rejected: a registration the Place reads in render from a
   host object, since the Place's head renders before the Split in the same pass and a Split inside a
   component that re-renders alone (a selection in that component's state) would leave the head
   stale. Each region keeps its own keyed scroll, so a record opens at its top after a scrolled list.

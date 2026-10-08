@@ -19,6 +19,12 @@ ahead of the `Screen`'s own `back`. A list that stands alone at a deeper route i
 whose `back` is the route above it, holding `<Split back={treeRoute} …>`: the `Screen`'s back act
 leads up while the list stands alone, and the `Split`'s `back` takes its place once a record is open.
 
+An app that selects a record opens the pane's sheet by passing `open` with `onClose` (the two stand
+together): `<Split open={selected} onClose={() => setSelected(false)} …>`. The phone stands the pane
+as a sheet at every width, so `open` opens it at once; `onClose` hears every close (the close act,
+the scrim, the Details act's sheet too), and the app clears `open` in it. A `Split` without them opens
+its sheet from the Details act alone.
+
 A record the open record links to opens beside it: the `Split`'s `beside` holds a `Screen` whose
 `back` is the open record's route. On the phone it stands in the open record's stead, its back
 act in its top bar, its head the page's only head. The body's first child, an `ItemHeader`, stands a pair, not a sections gap, above an `ActionBar` or a `Banner` directly after it (a `Place`, a `Screen` or a `Split`'s `main`) and, in a `Split`'s `main` when it has no facts line, above the record's first section (not above a `Thread`). The body reads its own children, a fragment seen through: a head or bar reached through a wrapper component keeps the sections step.

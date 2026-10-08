@@ -17,7 +17,7 @@ import { Toolbar } from "@fcalell/plugin-react-ui/components/toolbar";
 import { BREAKPOINT_PX } from "@fcalell/ui-core/tokens";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { type ReactNode, useState } from "react";
-import { expect, waitFor } from "storybook/test";
+import { expect, screen, waitFor, within } from "storybook/test";
 
 const NAMES = ["Ana Ruiz", "Ben Kaya", "Ema Okafor", "Rui Alves", "Zoe Park"];
 const ROWS = {
@@ -836,3 +836,138 @@ function placeBanner(width: number): StoryObj {
 export const PlaceBodyBanner375 = touch(placeBanner(375));
 export const PlaceBodyBanner768 = placeBanner(768);
 export const PlaceBodyBanner1440 = placeBanner(1440);
+
+// An app that selects a record asks the pane's sheet open (`open`) and hears
+// every close (`onClose`), the Details act's too. `closes` counts them.
+function AppOpens(props: { width: number; beside: boolean }) {
+	const [open, setOpen] = useState(true);
+	const [closes, setCloses] = useState(0);
+	return (
+		<>
+			<output data-closes>{closes}</output>
+			<Page width={props.width} fluid>
+				<Place title="Now" bleed>
+					<Split
+						list={<Rows />}
+						main={
+							<Section title="Review">
+								<Rows />
+							</Section>
+						}
+						pane={
+							<Section title="Properties">
+								<Rows />
+							</Section>
+						}
+						beside={
+							props.beside ? (
+								<Screen title="File" back="/review">
+									<Rows />
+								</Screen>
+							) : undefined
+						}
+						open={open}
+						onClose={() => {
+							setOpen(false);
+							setCloses((count) => count + 1);
+						}}
+					/>
+				</Place>
+			</Page>
+		</>
+	);
+}
+
+const closesOf = (canvasElement: HTMLElement) =>
+	must(canvasElement.querySelector("[data-closes]")).textContent;
+
+// The sheet's box as the viewport sees it, in px.
+function sheetBox(dialog: HTMLElement) {
+	const box = dialog.getBoundingClientRect();
+	return {
+		left: box.left,
+		right: box.right,
+		bottom: box.bottom,
+		width: box.width,
+		viewport: { width: innerWidth, height: innerHeight },
+	};
+}
+
+// Asked below `wide`, the pane stands as the sheet at the opening, closes by
+// its close act and Escape with `onClose` hearing each, and the Details act
+// opens it again with its close heard as well.
+function appOpens(width: number, side: boolean): StoryObj {
+	return {
+		parameters: { layout: "fullscreen" },
+		render: () => <AppOpens width={width} beside={false} />,
+		play: async ({ canvas, canvasElement, userEvent }) => {
+			const dialog = await screen.findByRole("dialog", { name: "Details" });
+			await expect(shown(canvasElement.querySelector("aside"))).toBe(false);
+			// A side sheet hangs at the viewport's end, a bottom sheet fills its
+			// width at the bottom edge.
+			await waitFor(() => {
+				const box = sheetBox(dialog);
+				if (side) {
+					expect(box.right).toBe(box.viewport.width);
+					expect(box.width).toBeLessThan(box.viewport.width);
+				} else {
+					expect(box.left).toBe(0);
+					expect(box.width).toBe(box.viewport.width);
+					expect(box.bottom).toBe(box.viewport.height);
+				}
+			});
+			await userEvent.click(
+				within(dialog).getByRole("button", { name: "Close" }),
+			);
+			await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+			await expect(closesOf(canvasElement)).toBe("1");
+			await userEvent.click(canvas.getByRole("button", { name: "Details" }));
+			await screen.findByRole("dialog", { name: "Details" });
+			await userEvent.keyboard("{Escape}");
+			await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+			await expect(closesOf(canvasElement)).toBe("2");
+		},
+	};
+}
+
+export const AppOpensPane375 = touch(appOpens(375, false));
+export const AppOpensPane768 = appOpens(768, true);
+
+// From `wide` the pane stands beside the main and the app's ask draws no sheet.
+export const AppOpensPaneFromWide: StoryObj = {
+	parameters: { layout: "fullscreen" },
+	render: () => <AppOpens width={1200} beside={false} />,
+	play: async ({ canvasElement }) => {
+		const aside = await waitFor(() =>
+			must(canvasElement.querySelector("aside")),
+		);
+		await expect(shown(aside)).toBe(true);
+		for (let at = 0; at < 10; at++) await frame();
+		await expect(screen.queryByRole("dialog")).toBeNull();
+		await expect(closesOf(canvasElement)).toBe("0");
+	},
+};
+
+// Beside a record the pane is a sheet at every width, so the ask applies from
+// `wide` too.
+export const AppOpensPaneBesideARecord: StoryObj = {
+	parameters: { layout: "fullscreen" },
+	render: () => <AppOpens width={1200} beside />,
+	play: async ({ canvasElement }) => {
+		const dialog = await screen.findByRole("dialog", { name: "Details" });
+		await expect(canvasElement.querySelector("aside")).toBeNull();
+		await expect(sheetBox(dialog).right).toBe(innerWidth);
+	},
+};
+
+// A Split that never asks opens its sheet from the Details act alone.
+export const PaneStaysClosedUnasked: StoryObj = {
+	parameters: { layout: "fullscreen" },
+	render: () => <Opened width={768} beside={false} />,
+	play: async ({ canvas, userEvent }) => {
+		for (let at = 0; at < 10; at++) await frame();
+		await expect(screen.queryByRole("dialog")).toBeNull();
+		await userEvent.click(canvas.getByRole("button", { name: "Details" }));
+		await screen.findByRole("dialog", { name: "Details" });
+	},
+};

@@ -719,9 +719,19 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// `back` names the route the list stands at. A record the main opened (`beside`, a Screen) stands beside the
 		// main from `wide`, the pane then behind the Details act at every width,
 		// and in the main's place below it; below `tablet` its head stands alone,
-		// the Place drawing none.
+		// the Place drawing none. The app's `open` asks the pane's sheet where
+		// the pane is not beside the main, and `onClose` hears every close.
 		Split: {
-			props: ["list", "main", "beside", "pane", "empty", "back"],
+			props: [
+				"list",
+				"main",
+				"beside",
+				"pane",
+				"empty",
+				"back",
+				"open",
+				"onClose",
+			],
 			draws: [
 				"SPLIT_LIST",
 				"SPLIT_LIST_STACK",
