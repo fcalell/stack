@@ -1712,6 +1712,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"TEXT_STRONG.role.meta",
 				"ROW.lines.one",
 				"ROW.lines.two",
+				"ROW.lines.whole",
 				"ROW.state.rest",
 				"ROW.state.highlighted",
 				"ROW.state.pressed",

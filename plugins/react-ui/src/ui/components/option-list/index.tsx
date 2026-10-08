@@ -51,13 +51,16 @@ const GROUP = "flex flex-col";
 // The row is the label of its box or radio: a press anywhere toggles or
 // chooses it.
 const OPTION = "flex items-center hover:bg-wash-hover active:bg-wash-press";
+// A label is the whole text of a choice: it wraps, and an unmarked row keeps
+// the one-line row's height as its floor.
+const OPTION_WHOLE = "min-h-row";
 const LINE = "flex grow min-w-0 items-start";
 // The box stands on its label's first line, a box one body line tall; the
 // row is its target.
 const BOX_LINE = "flex shrink-0 items-center h-lh";
-const LABEL = "min-w-0 grow truncate";
+const LABEL = "min-w-0 grow wrap-break-word";
 const TEXT = "flex flex-col min-w-0 grow";
-const TITLE = "truncate";
+const TITLE = "wrap-break-word";
 const DESCRIPTION_LINE = "flex flex-wrap items-center min-w-0";
 // The radio is the box's size in its label's line, its dot centred; it is
 // the focused element, so the base focus ring draws on it.
@@ -309,7 +312,11 @@ export function OptionList<V extends string = string, T = unknown>(
 					<Fragment key={option.value}>
 						{/* biome-ignore lint/a11y/noLabelWithoutControl: the Checkbox or the radio inside is its control */}
 						<label
-							className={cn(row({ lines: marked ? "two" : "one" }), OPTION)}
+							className={cn(
+								row({ lines: marked ? "two" : "whole" }),
+								OPTION,
+								!marked && OPTION_WHOLE,
+							)}
 						>
 							<span className={cn(OPTION_LINE, LINE)}>
 								<span className={cn(lineBox({ role: "body" }), BOX_LINE)}>

@@ -47,6 +47,9 @@ import type { QueryLike } from "../query-boundary";
 // The row is the target of its box or radio: a press anywhere toggles or
 // chooses it.
 const OPTION = "flex-row items-center active:bg-wash-press";
+// A label is the whole text of a choice: it wraps, and an unmarked row keeps
+// the one-line row's height as its floor.
+const OPTION_WHOLE = "min-h-row";
 const LINE = "flex-1 min-w-0 flex-row items-start";
 // The box stands on its label's first line, beside a zero-width line of the
 // body role.
@@ -311,7 +314,11 @@ export function OptionList<V extends string = string, T = unknown>(
 								accessibilityLabel={option.label}
 								accessibilityState={{ checked: chosen }}
 								onPress={() => choose<V>(props, option.value)}
-								className={cn(row({ lines: marked ? "two" : "one" }), OPTION)}
+								className={cn(
+									row({ lines: marked ? "two" : "whole" }),
+									OPTION,
+									!marked && OPTION_WHOLE,
+								)}
 							>
 								<View className={cn(OPTION_LINE, LINE)}>
 									<View className={BOX_LINE}>
@@ -339,10 +346,7 @@ export function OptionList<V extends string = string, T = unknown>(
 									</View>
 									{marked ? (
 										<View className={TEXT}>
-											<RNText
-												numberOfLines={1}
-												className={text({ role: "body" })}
-											>
+											<RNText className={text({ role: "body" })}>
 												{option.label}
 											</RNText>
 											<View className={cn(ROW_META_LINE, DESCRIPTION_LINE)}>
@@ -357,10 +361,7 @@ export function OptionList<V extends string = string, T = unknown>(
 											</View>
 										</View>
 									) : (
-										<RNText
-											numberOfLines={1}
-											className={cn(text({ role: "body" }), LABEL)}
-										>
+										<RNText className={cn(text({ role: "body" }), LABEL)}>
 											{option.label}
 										</RNText>
 									)}
