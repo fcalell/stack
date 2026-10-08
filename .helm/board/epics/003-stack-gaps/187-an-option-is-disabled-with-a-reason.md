@@ -47,3 +47,6 @@ The owner rules: a query-driven `OptionList`'s `option` map gains a `blocked` sl
 ## Open
 - The touch sheet and the native rows are not exercised by any story; native is not rendered. The `Select`, `Picker`, `MultiPick` and `OptionList` box stays unticked until a native render or a touch-sheet story exists.
 - The critique has not measured the Picker frame at 320 and 1440.
+
+## Owner ruling
+Second ruling: a touch-sheet story is added (a blocked option at a touch viewport). The native rows stay unticked until a native render exists.

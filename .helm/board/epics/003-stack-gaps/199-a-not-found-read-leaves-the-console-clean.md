@@ -18,3 +18,6 @@ A procedure's `ApiError("NOT_FOUND")` is answered with HTTP 404, and the browser
 
 ## Open questions
 - [ ] Its shape (the client's read answering not found in a body with a success status, an option on the procedure, or another): the stack session decides.
+
+## Owner ruling
+The owner ships the wire shape: a matched GET read that is not found answers 200 with the stack not-found header, and stack's client rebuilds the 404 before decoding. Non-stack clients and request logs see a 200; POSTs, 500s and unmatched routes are unchanged.

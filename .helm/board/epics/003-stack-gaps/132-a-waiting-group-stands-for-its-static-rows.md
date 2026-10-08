@@ -1,6 +1,6 @@
 ---
 id: 003-132
-status: todo
+status: done
 sessions: {}
 ---
 # react-ui: a waiting Group stands for the static rows it holds (a Slider, a DefinitionRow)
@@ -40,3 +40,6 @@ Ship, by a fresh critic at 1280, 768, 1440 and 390, light and dark (scratchpad `
 
 ## Cut
 Criterion 1 asked that a waiting `Slider` draw its form "in a Group and alone", and the Goal that a Slider or DefinitionRow outside any Group or Section be able to wait. It is delivered only through a loading Group or Section: neither part has a `loading` prop (`Meter` does), so a Slider or DefinitionRow standing alone, or an app's own rows in a Group, still cannot wait by count or shape. The story's own Ruled note (2026-10-07) cut it, reading "alone" as a loading Section's child; no ruling file exists and the owner did not rule it. The gap is in the code today (`slider/index.tsx` and the DefinitionRow take no `loading`); the critique half of criterion 4 is also still open.
+
+## Owner ruling
+The owner accepts the cut. A Slider or DefinitionRow waits through its Group or Section.

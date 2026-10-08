@@ -1,6 +1,6 @@
 ---
 id: 003-136
-status: todo
+status: done
 sessions: {}
 ---
 # react-ui: a TextArea's height can be asked for, or fill the free height of its page
@@ -29,3 +29,6 @@ Ship, by a fresh critic at 1280, 768, 1440 and 390, light and dark (scratchpad `
 
 ## Cut
 The acceptance asked that a `kind="source"` TextArea in a page Form fill the free height, three lines at least, and that the showcase and critique hold it at 390 and 1440. It is delivered on the web only. The phone keeps growing with its value: the builder cut it in the story's Built note ("Native keeps growing ... the ruling is read as the web page's"), with no ruling file. The `rows` and `fill` props were cut by an AI ruling (`rulings.md` line 73, "No `rows` and no `fill` prop"). The gap is in the code today: native-ui `text-area/index.tsx` has no fill form, so the phone's source field still opens as a three-line window.
+
+## Owner ruling
+The owner accepts the cut. Criteria 1 and 3 read "web"; on the phone a source TextArea grows with its value.

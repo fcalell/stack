@@ -1,6 +1,6 @@
 ---
 id: 003-118
-status: todo
+status: done
 sessions: {}
 ---
 # react-ui: a row's status yields before the subject is cut to under half
@@ -29,3 +29,6 @@ Closed, no change. The subject that names a row is its first part; a `Quoted` la
 
 ## Cut
 Both acceptance criteria asked that on a narrow meta line a row keep its first part readable (a floor or a share) with the status yielding below it, and that the showcase hold a status with a quoted subject at the phone's width. Neither is delivered. The story was closed "no change" by an AI ruling recorded in its own Ruled section, resting on the ruling that left `yields` without a flag (`rulings.md` line 75, item 142, "Medium-low, and a 320 px row still cutting the spend is a finding to revisit"); the owner did not rule it. The gap is in the code today: a long status still takes its width whole and a quoted subject still cuts to under half (76 of 297 px at 320 on touch, per the story's Measured section).
+
+## Owner ruling
+The owner accepts the cut. An app whose subject must read gives it as the first part of `meta`, as the ListRow rule says.

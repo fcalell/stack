@@ -36,3 +36,6 @@ Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/da
 
 ## Cut
 The Approach asked that only the live form mount (a Table at 375 holds only the list form), and the first live criterion states it. It is not delivered: both the Grid and the phone-width list mount and CSS hides one, so every sort, selection or data change renders and diffs the rows twice. The builder took the Approach's own fallback in the story's Progress ("the CSS form switch stays with a `// TODO:`"); the owner did not rule it. The gap is in the code today: `plugins/react-ui/src/ui/components/table/index.tsx` line 91 holds the `// TODO:` for the two mounted forms. The phone live criterion on the harness is also still open.
+
+## Owner ruling
+The owner rules build: the Table chooses its form from the page width through one external store, so only the live form mounts, and the `// TODO:` goes.

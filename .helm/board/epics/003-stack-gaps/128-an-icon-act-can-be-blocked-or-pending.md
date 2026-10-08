@@ -1,6 +1,6 @@
 ---
 id: 003-128
-status: todo
+status: done
 sessions: {}
 ---
 # ui-core: an icon act stands blocked or pending
@@ -35,3 +35,6 @@ Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/ac
 
 ## Cut
 The title and Goal asked that an icon act stand blocked or pending, and the first criterion that it can be drawn blocked or pending everywhere an `IconAct` stands. Only pending (`loading`) is delivered; `blocked` is not built. An AI ruling cut it (`rulings.md` item 7, lines 48 to 52, "Add `loading?: boolean` only ... Do not add `blocked` yet"; the story's Ruled repeats it); the owner did not rule it. The gap is in the code today: `IconAct` in `packages/ui-core/src/descriptors.ts` has `icon`, `label`, `onAct` and `loading` and no `blocked`, so Stead's Previous and Next file cannot stand inert for a non-pending reason.
+
+## Owner ruling
+The owner accepts the cut. The story reads "pending" only; `blocked` lands with its first consumer.

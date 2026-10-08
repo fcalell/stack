@@ -1,6 +1,6 @@
 ---
 id: 005-22
-status: todo
+status: review
 sessions: {}
 ---
 # react-ui, native-ui: a List's rows read the route once and keep their keys
@@ -34,3 +34,6 @@ Unrendered: its profiler and phone criteria cannot be drawn in Storybook.
 
 ## Cut
 The Goal's second bullet and the Approach asked that `ListRow` and `FileRow` be memoised on primitives so selecting a row re-renders only the rows whose `current` changed, and the first live criterion measures exactly that. It is not delivered: rows are not memoised, so every row redraws on a navigation (12 on the deploys page). It was cut by the builder or an AI session in the story's own Progress ("Cut (decided 2026-10-05, the recommended answer)"), not by the owner; no ruling file. The gap is in the code today: `list-row/index.tsx` has no `memo`, and List still builds each row's props inline. The phone criterion on the harness is also still open.
+
+## Owner ruling
+The owner accepts the cut: the criterion reads "one location listener, a selection marks the row current"; rows are memoised only when a profiled page shows a row cost. The phone criterion stays open.

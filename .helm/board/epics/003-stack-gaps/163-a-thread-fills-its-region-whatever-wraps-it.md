@@ -1,6 +1,6 @@
 ---
 id: 003-163
-status: todo
+status: review
 sessions: {}
 ---
 # react-ui: a Thread fills the space its region gives it whatever wraps it
@@ -27,3 +27,6 @@ A filling Thread marks its root `data-fill`, and the regions read the mark with 
 
 ## Cut
 The story's title and Goal asked that a Thread fill its region whatever wraps it (a Thread inside a wrapper element or an app component), and the original first criterion named "direct child or inside a wrapper". Only the direct-child form is delivered; a wrapped Thread is unsupported on both platforms. An AI ruling cut it (scratchpad `rulings-7.md`, lines 1 to 8, "Reject all three options as framed. The app's wrapper is the unsupported thing"; the Open question and first criterion were rewritten to match); the owner did not rule it. The gap is in the code today: the regions read `:has(>[data-fill])` and native `holdsThread` reads element types, so a wrapped Thread leaves the region scrolling as a whole. The measured-at-390 showcase and the phone check are also still owed.
+
+## Owner ruling
+The owner accepts the cut: a Thread fills its region as the region's direct child (a part above it a sibling), as the rules say. The 390 measure and the phone check still run.

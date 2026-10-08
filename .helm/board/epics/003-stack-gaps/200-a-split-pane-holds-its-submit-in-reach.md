@@ -18,3 +18,6 @@ A `Sheet` keeps its `submit` reachable: in the foot on the desktop and at the he
 
 ## Open questions
 - [ ] Its shape (a `submit` on the Split's pane, the pane reading a `Form`'s `ActionBar`, or another): the stack session decides.
+
+## Owner ruling
+The owner rules 200 web-only as written; the phone's Details sheet reaching its submit is 003-292.

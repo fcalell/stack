@@ -19,3 +19,6 @@ Stead's workflow canvas stands in a `Split`'s main under an `ItemHeader` and, wh
 
 ## Open questions
 - [ ] Its shape (a minimum-height prop on `Canvas`, a canvas-aware form of `Split`'s main, or another) and the share: the stack session decides.
+
+## Owner ruling
+The owner rules the floor as half the column the canvas stands in (`min-h-1/2`, about 278 px at 375x667). If the percentage does not resolve in the browser, the shape becomes a ui-core size token for a share of the viewport.

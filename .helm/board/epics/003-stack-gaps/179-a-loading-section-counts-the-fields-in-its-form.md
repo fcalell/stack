@@ -36,3 +36,6 @@ Measured before the fix, a loading Section over one field against the loaded one
 
 ## Owner ruling
 The owner rules: fields plus an `ActionBar` as direct Section children (no Form) go to 003-290. To build here: the height match measured for a field with a description and for a switch and a checkbox field, and a loading `Group` and `List` body each with a story; a kind that does not match is fixed in `FieldWait`. Then the critique; the native form is not rendered.
+
+## Owner ruling
+Second ruling: the field kinds left (Slider, Select, OptionList, SegmentedControl, and folded fields) go to 003-293. 179 waits on the critique; the native form is not rendered.

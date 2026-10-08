@@ -35,3 +35,6 @@ Distance from the count's end to the bar's end on the last tab: 320, -7.2 px for
 ## Open
 - "99+" is as wide as "444" (three characters at one width): on the last of five tabs the count still ends 7.2 px past the bar at 320 and 0.2 px past it at 390, so the ruling's aim (the count clears the bar's edge at 320) is not met. At 320 the last tab is 64 px, its glyph ends at 44 and "99+" is 19.2 px, so with an 8 px step no cap length fits ("9+" ends 0.8 px past). Recommended answer: the count stands on the glyph's top-right corner, its start half a count-width inside the glyph's edge, a badge, with the label unmoved. The owner decides.
 - The critique has not measured the Shell frame (the second acceptance box).
+
+## Owner ruling
+Second ruling: "99+" is as wide as "444" and still overruns the last tab at 320 (even "9+" would, by 0.8 px). The tab count stands on the glyph's top-right corner as a badge, its start half the count's width inside the glyph's edge, the label unmoved; the 99+ cap stays. To build.

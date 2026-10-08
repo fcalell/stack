@@ -20,3 +20,6 @@ Stead's New workflow sheet and its "What the workflow gains" confirm sheet (gith
 
 ## Open questions
 - [ ] Its shape (a title-column floor, the submit label wrapping, the submit dropping to the foot or a second head line on touch): the stack session decides.
+
+## Owner ruling
+The owner accepts both readings: the submit drops to its own end line when it does not fit beside the title (its 44 px and its whole name kept), and "unchanged" for a wide submit holds wherever the title's floor still fits beside it.
