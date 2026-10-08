@@ -11,6 +11,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import {
 	type ReactNode,
+	use,
 	useEffect,
 	useId,
 	useLayoutEffect,
@@ -33,8 +34,8 @@ import { useWords } from "../../lib/words.tsx";
 import { ActionBar } from "../action-bar/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 
-// The sheet fills its foot, which bounds it: the head and the foot keep their
-// height and the body scrolls in what is left. The foot centres what it holds,
+// The sheet fills its foot: the head and the foot keep their height and the
+// body, bounded below, scrolls in what is left. The foot centres what it holds,
 // so the sheet spans it.
 const ROOT = "flex flex-col w-full min-h-0";
 const HEAD = "flex items-start shrink-0";
@@ -46,6 +47,12 @@ const TITLE = "min-w-0 wrap-break-word";
 // The body takes a tab stop only while it scrolls with nothing tabbable inside.
 const BODY =
 	"flex flex-col min-h-0 overflow-y-auto overscroll-contain focus-visible:-outline-offset-2";
+// In a foot the body scrolls past two fifths of the foot's region (`cqh` of the
+// Thread's or the Place's size container) and keeps three rows whatever the
+// head, the foot line and the log hold, so a body shorter than three rows pads
+// to them. The contract's cells hold no arbitrary value, so both bounds
+// restate the region's fraction and the row size here.
+const BODY_DOCKED = "min-h-[calc(var(--spacing-row)_*_3)] max-h-[40cqh]";
 const FOOT = "shrink-0";
 const FOOT_ROW = "flex items-center justify-end";
 const FOOT_STACK = "flex flex-col";
@@ -77,6 +84,7 @@ export function SheetDocked({
 	children,
 }: SheetDockedProps) {
 	const touch = useTouch();
+	const bounded = use(FootPlace) === "docked";
 	const words = useWords();
 	const titleId = useId();
 	const root = useRef<HTMLElement>(null);
@@ -165,7 +173,7 @@ export function SheetDocked({
 				<div
 					ref={setBody}
 					tabIndex={stop ? 0 : undefined}
-					className={cn(SHEET_DOCKED_BODY, BODY)}
+					className={cn(SHEET_DOCKED_BODY, BODY, bounded && BODY_DOCKED)}
 				>
 					<FootPlace value={null}>
 						<FormStands value="sheet">{children}</FormStands>

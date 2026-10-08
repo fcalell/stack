@@ -598,13 +598,19 @@ a tick with no animation, never jumped to full.
   Section a page holds is a `heading` and a counter ("Question 2 of 4") never outranks the question;
   the foot holds the `foot` line beside the `submit` bar (over it on touch); the
   head-end submit and Cancel of the modal form are gone, since the dock stands above the keyboard and
-  the close act is in the head. The docked foot fits its content and is bounded: `FOOT_DOCKED` carries
-  `max-h-3/5 min-h-0`, a structural fraction of the region the log and the foot share (a filling
-  Thread's own column; the web Place's body and `foot` stand in one region under the head, so the head
-  is never counted; the phone's `Lifted` is that region) at every density (the accepted fractions are
-  structural, never a size token), so the log keeps two fifths of it and the
-  Sheet scrolls its body between its pinned head and foot only past the bound, each page opening at the
-  body's top; inline among sections it has no bound, since the page scrolls. Its states are its
+  the close act is in the head. The docked foot fits its content up to the region the log and the foot
+  share (a filling Thread's own column; the web Place's body and `foot` stand in one region under the
+  head, so the head is never counted; the phone's `Lifted` is that region): `FOOT_DOCKED` carries
+  `max-h-full min-h-0`, so the log gives way to the foot and the foot is never capped below the
+  sheet's pinned parts. The Sheet bounds its own body instead: it scrolls between its pinned head and
+  foot line past two fifths of the region (a structural fraction, never a size token) and keeps three
+  `row` sizes at least, a shorter body padding to that floor, each page opening at the body's top. The
+  contract's cells hold no arbitrary value, so each platform restates the bounds in its overlay: the
+  web makes the Thread's and the Place's region a size container (`[container-type:size]`, which its
+  flex height sizes, never its content) and the body reads `max-h-[40cqh]` and
+  `min-h-[calc(var(--spacing-row)*3)]`; the phone reads the `Lifted` region's height from `onLayout`
+  (`FootRegion`) and gives the body `maxHeight` of 0.4 of it and `minHeight` of three `--spacing-row`.
+  Inline among sections the body has no bound, since the page scrolls. Its states are its
   submit's: pending, blocked (the reason stands at rest under the act), and failed (the act ready again, the
   `Sheet`'s `failed` sentence in that same kept line: `ActFailed` around the bar hands it to the
   `ActionBar`, which draws it in `FIELD_ERROR_LINE`, the field error's cell and ink, in place of the

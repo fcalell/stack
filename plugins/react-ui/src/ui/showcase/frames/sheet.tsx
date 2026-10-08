@@ -1,7 +1,8 @@
 import { cn } from "@fcalell/ui-core/cn";
 import type { Act, Option } from "@fcalell/ui-core/descriptors";
-import { SHELL_COLUMN } from "@fcalell/ui-core/variants";
+import { SHELL_BANNER, SHELL_COLUMN } from "@fcalell/ui-core/variants";
 import { useEffect, useRef, useState } from "react";
+import { Banner } from "../../components/banner/index.tsx";
 import { FormField } from "../../components/form-field/index.tsx";
 import { Input } from "../../components/input/index.tsx";
 import { MessageInput } from "../../components/message-input/index.tsx";
@@ -61,9 +62,10 @@ const QUESTIONS: Question[] = [
 
 // A conversation filling its page with a four-question sheet docked in its
 // foot: each page a Section of one radio list, Back in the head from the
-// second, Next on the first three and Send on the last. The foot fits the page
-// up to three fifths of the frame, so a question taller than that scrolls in
-// it; closing returns the input. Send's states open on the last page: blocked
+// second, Next on the first three and Send on the last, at a phone's height
+// (844) under a banner. The body scrolls past two fifths of the region under
+// the banner and keeps three rows, the log giving way; closing returns the
+// input. Send's states open on the last page: blocked
 // before the last question is answered (its reason shown once pressed),
 // pending while it works, and failed, the act ready again with the error line
 // under it saying why, in the line the reason keeps.
@@ -102,9 +104,16 @@ function DockedQuestions({ state }: { state: ShowcaseFrame["state"] }) {
 			ref={frame}
 			className={cn(
 				SHELL_COLUMN,
-				"flex flex-col h-185 w-screen max-w-full overflow-hidden",
+				"flex flex-col h-211 w-screen max-w-full overflow-hidden",
 			)}
 		>
+			<div className={SHELL_BANNER}>
+				<Banner
+					kind="warn"
+					sentence="You have used 46 of your 50 answers this month. Upgrade to keep asking."
+					act={{ label: "Upgrade", onAct: act }}
+				/>
+			</div>
 			<Place title="Assistant">
 				<Thread
 					items={TURNS}

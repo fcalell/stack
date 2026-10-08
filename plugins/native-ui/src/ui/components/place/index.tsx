@@ -27,6 +27,7 @@ import {
 	ActRoom,
 	DetailsOpen,
 	FootPlace,
+	FootRegion,
 	FootReturn,
 	PageTitle,
 	PlaceRoute,
@@ -34,6 +35,7 @@ import {
 	ShellSwitcher,
 	ShellTabs,
 	ThreadRoom,
+	useFootRegion,
 } from "../../lib/frame";
 import { Lifted, Scroll } from "../../lib/hosts";
 import { navigate } from "../../lib/navigate";
@@ -137,6 +139,7 @@ export function Place({
 	const route = useContext(PlaceRoute);
 	// The claim a docked sheet leaves the foot for the input that returns.
 	const claim = useRef(false);
+	const region = useFootRegion();
 	// What the head shows of the Split in the body, read off its props: a
 	// record beside the main stands alone, its head the page's one.
 	const split = useSplitHead(children);
@@ -223,6 +226,7 @@ export function Place({
 							behavior="padding"
 							automaticOffset
 							enabled={foot !== undefined}
+							onLayout={region.onLayout}
 							className={BODY}
 						>
 							<View className={BODY_WRAP}>
@@ -279,9 +283,11 @@ export function Place({
 							{foot ? (
 								<View className={cn(FOOT_DOCKED, DOCKED)}>
 									<FootPlace.Provider value="docked">
-										<FootReturn.Provider value={claim}>
-											{foot}
-										</FootReturn.Provider>
+										<FootRegion.Provider value={region.height}>
+											<FootReturn.Provider value={claim}>
+												{foot}
+											</FootReturn.Provider>
+										</FootRegion.Provider>
 									</FootPlace.Provider>
 								</View>
 							) : null}

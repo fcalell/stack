@@ -400,8 +400,9 @@ A `Sheet` passed as a `Thread`'s or a `Place`'s `foot` docks there, derived from
 no prop, no scrim. The head keeps the back act before one column, the title (a label, so a Section
 inside leads it; it wraps to its whole text, the close act at its first line) and the close act over the `description`, so both lines share a start;
 the body scrolls between the head and the foot, which hold their height (the `foot` line over the `submit`),
-and the docked foot fits what it holds up to three fifths of the region it shares with the log, so
-the log keeps two fifths of it and a body taller than that scrolls. A blocked `submit`’s reason stands
+and the body scrolls past two fifths of the region it shares with the log, and keeps three rows
+whatever the head, the foot line and the log hold (a shorter body pads to them), the head, foot
+line and submit sitting on top and the log giving way. A blocked `submit`’s reason stands
 at rest under the act in the foot; a failed run is the `failed`
 sentence in that same line, in the field error’s cell and ink, the act ready again and no `Banner`:
 clear `failed` when the act runs again, and a blocked `submit`’s reason stands before it. The modal

@@ -838,13 +838,13 @@ export const PAGE_BODY = "gap-sections p-page";
 // region of its own under what scrolls past it, a raised surface (a step in
 // dark, the float shadow in light) inside a hairline, at the page inset at the
 // sides and an acts gap above and below what it holds (a selection bar stands
-// in its height range, a field at its own), fitting what it holds up to three
-// fifths of the region it shares with what stands over it (the log and the
-// foot, never the head: a structural fraction, never a size token), so that
-// keeps two fifths, with the room to shrink to it: a docked `Sheet` fills it,
-// its body scrolling only past the bound.
+// in its height range, a field at its own), fitting what it holds up to the
+// region it shares with what stands over it (the log and the foot, never the
+// head), so the log gives way to it: a docked `Sheet` fills it and bounds its
+// own body (two fifths of the region, three rows at least), so the foot is
+// never capped below the sheet's pinned parts and that floor.
 export const FOOT_DOCKED =
-	"border-t border-edge-raised bg-raised shadow-float px-page py-acts max-h-3/5 min-h-0";
+	"border-t border-edge-raised bg-raised shadow-float px-page py-acts max-h-full min-h-0";
 export const PAGE_BODY_OVER_FOOT = "pb-sections";
 // A touch Place's act, floating over the body's end on a layer at the page
 // inset, lifted off what scrolls under it as a Thread's Latest act is, and

@@ -31,9 +31,11 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import {
 	FootPlace,
+	FootRegion,
 	FootReturn,
 	ThreadBleeds,
 	ThreadRoom,
+	useFootRegion,
 } from "../../lib/frame";
 import { Lifted } from "../../lib/hosts";
 import { LoadingContext } from "../../lib/loading";
@@ -244,6 +246,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 	const log = useRef<ScrollView>(null);
 	// The claim a docked sheet leaves the foot for the input that returns.
 	const claim = useRef(false);
+	const region = useFootRegion();
 	// The reader is scrolled up: the Latest act stands over the foot.
 	const [away, setAway] = useState(false);
 	// Back to the newest message, at the log's origin.
@@ -275,6 +278,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 		<Lifted
 			behavior="padding"
 			automaticOffset
+			onLayout={region.onLayout}
 			className={cn(FILL, bleeds && THREAD_UNDER_HEAD, bleeds && BLEED)}
 		>
 			<View className={REGION}>
@@ -302,7 +306,9 @@ export function Thread<T>(props: ThreadProps<T>) {
 			{foot ? (
 				<View className={cn(FOOT_DOCKED, DOCKED)}>
 					<FootPlace.Provider value="docked">
-						<FootReturn.Provider value={claim}>{foot}</FootReturn.Provider>
+						<FootRegion.Provider value={region.height}>
+							<FootReturn.Provider value={claim}>{foot}</FootReturn.Provider>
+						</FootRegion.Provider>
 					</FootPlace.Provider>
 				</View>
 			) : null}

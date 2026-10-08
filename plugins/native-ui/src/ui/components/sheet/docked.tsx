@@ -12,9 +12,10 @@ import { Text as RNText, type TextInput, View } from "react-native";
 import { cn } from "../../lib/cn";
 import { FieldClaim, FieldNameContext } from "../../lib/field";
 import { FormStands } from "../../lib/form";
-import { FootPlace, FootReturn } from "../../lib/frame";
+import { FootPlace, FootRegion, FootReturn } from "../../lib/frame";
 import { Scroll, type ScrollRef } from "../../lib/hosts";
 import { ActFailed, ReasonKept } from "../../lib/reason";
+import { useCSSVariable } from "../../lib/theme";
 import { TouchedContext, usePageTurn, useTouchState } from "../../lib/touched";
 import { useWords } from "../../lib/words";
 import { ActionBar } from "../action-bar";
@@ -31,6 +32,13 @@ const HEAD_ROW = "flex-row items-start";
 const TITLE_SLOT = "flex-1 flex-row items-center min-w-0 min-h-control";
 const TITLE = "shrink";
 const BODY = "shrink";
+// In a foot the body scrolls past two fifths of the foot's region and keeps
+// three rows, so a body shorter than three rows pads to them. Yoga has no
+// container units: the region's height comes from its layout (`FootRegion`,
+// zero outside a docked foot, where the body has no bound) and the row from its
+// token.
+const BODY_SHARE = 0.4;
+const BODY_ROWS = 3;
 const FOOT = "shrink-0";
 const FOOT_LINE = "flex-row items-center min-w-0";
 
@@ -50,8 +58,8 @@ export interface SheetDockedProps {
 // A `Sheet` standing in a Thread's or a Place's foot: no scrim or modal, the
 // foot's raised cell its surface. The head holds the back act before one
 // column, the title and the close act over the description, so both lines
-// share a start; the body scrolls between the head and the foot, which hold
-// their height, and each page opens at its top; the foot holds the line over
+// share a start; the body, bounded, scrolls between the head and the foot, which
+// hold their height, and each page opens at its top; the foot holds the line over
 // the submit, and under it one kept line for a blocked reason or a failed
 // run's sentence. The first field of each page takes focus as it mounts, and
 // leaving sets the foot's claim for the input that returns. Closed it draws
@@ -69,6 +77,12 @@ export function SheetDocked({
 }: SheetDockedProps) {
 	const words = useWords();
 	const claim = useContext(FootReturn);
+	const region = useContext(FootRegion);
+	const row = Number.parseFloat(String(useCSSVariable("--spacing-row") ?? 0));
+	const bound =
+		region > 0
+			? { maxHeight: BODY_SHARE * region, minHeight: BODY_ROWS * row }
+			: undefined;
 	const held = useRef<TextInput>(null);
 	const scroll = useRef<ScrollRef>(null);
 	const [touchedValue, setTouched] = useTouchState();
@@ -130,6 +144,7 @@ export function SheetDocked({
 							<Scroll
 								ref={scroll}
 								className={BODY}
+								style={bound}
 								contentContainerClassName={SHEET_DOCKED_BODY}
 							>
 								<FormStands.Provider value="sheet">

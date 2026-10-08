@@ -87,8 +87,9 @@ const BODY =
 const BLEED = "flex flex-col grow min-h-0";
 const BODY_WRAP = "relative flex flex-col grow min-h-0";
 // What the body and the docked foot share: the head stands outside it, so the
-// foot's bound is a fraction of it and the body keeps the rest.
-const REGION = "flex flex-col grow min-h-0";
+// foot's bound is the whole of it and the body keeps the rest. A size
+// container: a docked sheet bounds its body by a fraction of it (`cqh`).
+const REGION = "flex flex-col grow min-h-0 [container-type:size]";
 // The foot stays under the body, which scrolls past it, and spans it; a field
 // keeps its own measure column inside, which the foot centres at every density,
 // so a selection bar wider than the screen's measure stands centred on touch too.

@@ -5,8 +5,9 @@ import {
 	type RefObject,
 	useContext,
 	useRef,
+	useState,
 } from "react";
-import type { View } from "react-native";
+import type { LayoutChangeEvent, View } from "react-native";
 import type { Route } from "./route";
 
 // What the frame molecules hand each other. The Shell hands its switcher to
@@ -112,6 +113,19 @@ export const PageTitle = createContext<string | undefined>(undefined);
 // `Sheet` in a foot draws its docked form, which resets it to `null` for what
 // it holds, so a sheet opened from inside is the modal one.
 export const FootPlace = createContext<"docked" | "inline" | null>(null);
+
+// The height of the region a docked foot shares with what stands over it (a
+// filling Thread's or a Place's `Lifted` column), read off that column's
+// layout: a docked `Sheet` bounds its body by a fraction of it, and Yoga has no
+// container units. Zero until the first layout.
+export const FootRegion = createContext(0);
+
+export function useFootRegion() {
+	const [height, setHeight] = useState(0);
+	const onLayout = (event: LayoutChangeEvent) =>
+		setHeight(event.nativeEvent.layout.height);
+	return { height, onLayout };
+}
 
 // The claim a docked foot region holds for the input that returns: a docked
 // `Sheet` leaving the region sets it, and the `MessageInput` that mounts in

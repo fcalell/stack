@@ -1,9 +1,12 @@
+import { Banner } from "@fcalell/plugin-react-ui/components/banner";
 import { Button } from "@fcalell/plugin-react-ui/components/button";
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Gate } from "@fcalell/plugin-react-ui/components/gate";
 import { Input } from "@fcalell/plugin-react-ui/components/input";
 import { MessageInput } from "@fcalell/plugin-react-ui/components/message-input";
+import { OptionList } from "@fcalell/plugin-react-ui/components/option-list";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
+import { Section } from "@fcalell/plugin-react-ui/components/section";
 import { Sheet } from "@fcalell/plugin-react-ui/components/sheet";
 import { Thread } from "@fcalell/plugin-react-ui/components/thread";
 import { confirm } from "@fcalell/plugin-react-ui/lib/confirm";
@@ -253,5 +256,132 @@ export const SideSheetFitsItsContent: StoryObj = {
 		const box = dialog.getBoundingClientRect();
 		expect(box.top).toBe(0);
 		expect(box.height).toBeLessThan(window.innerHeight / 2);
+	},
+};
+
+const OPTIONS = [
+	{ value: "prod", label: "Production", description: "Serves traffic" },
+	{ value: "staging", label: "Staging", description: "Mirrors production" },
+	{ value: "preview", label: "Preview", description: "One per pull request" },
+	{ value: "local", label: "Local", description: "Your machine" },
+];
+
+// A two-page docked question under a banner, in a phone's 390 px column (the
+// touch project draws at 375 x 812, so the column carries its own height).
+function BannerQuestion({ height }: { height: number }) {
+	const [at, setAt] = useState(0);
+	const [value, setValue] = useState<string | null>(null);
+	return (
+		<div
+			style={{ display: "flex", flexDirection: "column", width: 390, height }}
+		>
+			<div style={{ padding: "var(--spacing-page)" }}>
+				<Banner
+					kind="warn"
+					sentence="You have used 46 of your 50 answers this month. Upgrade to keep asking."
+					act={{ label: "Upgrade", onAct: () => {} }}
+				/>
+			</div>
+			<Place title="Assistant">
+				<Thread
+					items={TURNS}
+					message={{
+						key: (turn) => turn.id,
+						author: () => "you",
+						body: (turn) => turn.body,
+					}}
+					foot={
+						<Sheet
+							open
+							onClose={() => {}}
+							back={at > 0 ? () => setAt(0) : undefined}
+							title={at === 0 ? "Question 1 of 2" : "Review"}
+							description="Before I redeploy"
+							submit={{
+								label: at === 0 ? "Next" : "Send",
+								onAct: () => setAt(1),
+							}}
+							foot={at === 0 ? undefined : "Your answers go with the redeploy."}
+						>
+							<Section title={at === 0 ? "Which environment?" : "Your answers"}>
+								{at === 0 ? (
+									<OptionList
+										options={OPTIONS}
+										value={value}
+										onChange={setValue}
+									/>
+								) : (
+									<p>Production</p>
+								)}
+							</Section>
+						</Sheet>
+					}
+				/>
+			</Place>
+		</div>
+	);
+}
+
+// The sheet's body is the scroller around what the page holds.
+function bodyOf(inside: HTMLElement) {
+	let el = inside.parentElement;
+	while (el && getComputedStyle(el).overflowY !== "auto") el = el.parentElement;
+	if (!el) throw new Error("nothing scrolls around the page");
+	return el;
+}
+
+// The question's body keeps its floor of three rows, where the old cap left it
+// 84 px: the log gives way, standing above the foot in what is left, and the
+// body scrolls past two fifths of the region. The review page, shorter than
+// three rows, pads to the floor.
+export const DockedBodyKeepsThreeRows: StoryObj = {
+	tags: ["touch"],
+	globals: { density: "touch" },
+	parameters: { layout: "fullscreen" },
+	render: () => <BannerQuestion height={844} />,
+	play: async ({ canvas, userEvent }) => {
+		const body = bodyOf(await canvas.findByRole("radiogroup"));
+		const log = canvas.getByRole("log");
+		const region = log.parentElement?.parentElement;
+		if (!region) throw new Error("the log has no region");
+		const row = Number.parseFloat(
+			getComputedStyle(document.documentElement).getPropertyValue(
+				"--spacing-row",
+			),
+		);
+		expect(row).toBe(48);
+		const height = body.getBoundingClientRect().height;
+		expect(height).toBeGreaterThanOrEqual(3 * row - 1);
+		expect(height).toBeLessThanOrEqual(
+			0.4 * region.getBoundingClientRect().height + 1,
+		);
+		expect(body.scrollHeight).toBeGreaterThan(body.clientHeight);
+		expect(log.getBoundingClientRect().height).toBeGreaterThan(0);
+		const sheet = body.parentElement?.getBoundingClientRect();
+		expect(sheet?.bottom).toBeLessThanOrEqual(
+			region.getBoundingClientRect().bottom + 1,
+		);
+		await userEvent.click(canvas.getByRole("button", { name: "Next" }));
+		const short = bodyOf(await canvas.findByText("Production"));
+		expect(short.getBoundingClientRect().height).toBeGreaterThanOrEqual(
+			3 * row - 1,
+		);
+		expect(short.scrollHeight).toBeLessThanOrEqual(short.clientHeight);
+	},
+};
+
+// With room, a page shorter than two fifths of the region is its content's
+// height, does not scroll, and leaves the log more than the body.
+export const DockedWithRoomFitsItsPage: StoryObj = {
+	tags: ["touch"],
+	globals: { density: "touch" },
+	parameters: { layout: "fullscreen" },
+	render: () => <BannerQuestion height={1600} />,
+	play: async ({ canvas }) => {
+		const body = bodyOf(await canvas.findByRole("radiogroup"));
+		expect(body.scrollHeight).toBeLessThanOrEqual(body.clientHeight);
+		expect(
+			canvas.getByRole("log").getBoundingClientRect().height,
+		).toBeGreaterThan(body.clientHeight);
 	},
 };
