@@ -1,6 +1,6 @@
 ---
 id: 003-64
-status: review
+status: done
 sessions: {}
 ---
 # api: an app names its own entities for reads and writes

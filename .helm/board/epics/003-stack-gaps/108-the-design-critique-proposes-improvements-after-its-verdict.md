@@ -1,6 +1,6 @@
 ---
 id: 003-108
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: the design critique proposes improvements after its verdict

@@ -1,6 +1,6 @@
 ---
 id: 005-07
-status: review
+status: done
 sessions: {}
 ---
 # native-ui: a sheet knows it stands full height before it presents

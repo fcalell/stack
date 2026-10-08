@@ -1,6 +1,6 @@
 ---
 id: 005-11
-status: review
+status: done
 sessions: {}
 ---
 # native-ui: a Thread's log starts at its end

@@ -1,6 +1,6 @@
 ---
 id: 003-87
-status: review
+status: done
 sessions: {}
 ---
 # api: the client's invalidateForWrites and meta.reads typed over Entity

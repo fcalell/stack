@@ -1,6 +1,6 @@
 ---
 id: 005-17
-status: review
+status: done
 sessions: {}
 ---
 # react-ui, native-ui: a context value changes only when what it holds changes

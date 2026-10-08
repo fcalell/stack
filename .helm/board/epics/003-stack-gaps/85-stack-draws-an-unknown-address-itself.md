@@ -1,6 +1,6 @@
 ---
 id: 003-85
-status: review
+status: done
 sessions: {}
 ---
 # plugin-react, plugin-expo: stack draws an unknown address itself

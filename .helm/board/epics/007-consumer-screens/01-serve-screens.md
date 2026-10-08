@@ -1,6 +1,6 @@
 ---
 id: 007-01
-status: review
+status: done
 sessions: {}
 ---
 # stack: serve every route of a consumer app in each query state

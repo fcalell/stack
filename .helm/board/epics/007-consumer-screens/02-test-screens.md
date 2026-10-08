@@ -1,6 +1,6 @@
 ---
 id: 007-02
-status: review
+status: done
 sessions: {}
 ---
 # stack: check every served screen headlessly

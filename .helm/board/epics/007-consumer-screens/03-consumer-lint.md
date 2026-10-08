@@ -1,6 +1,6 @@
 ---
 id: 007-03
-status: review
+status: done
 sessions: {}
 ---
 # stack: the consumer's check rejects what the web rules forbid

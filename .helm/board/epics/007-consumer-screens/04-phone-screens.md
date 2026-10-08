@@ -1,6 +1,6 @@
 ---
 id: 007-04
-status: review
+status: done
 sessions: {}
 ---
 # stack: the phone half of the screen workbench

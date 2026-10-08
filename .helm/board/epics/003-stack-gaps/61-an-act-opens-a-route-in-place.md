@@ -1,6 +1,6 @@
 ---
 id: 003-61
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a link or an act opens a route without a document load

@@ -1,6 +1,6 @@
 ---
 id: 003-107
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: every text prop says the size of text it takes
