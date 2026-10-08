@@ -119,7 +119,7 @@ export interface ChipMark {
 // removable.
 export interface Option<V extends string | null = string> {
 	value: V;
-	// The option's text (a short phrase; truncates; a row pick's pill holds a word, truncating past the short measure, 18 characters).
+	// The option's text (a short phrase; truncates; a row pick's value holds a word, truncating past the short measure, 18 characters).
 	label: string;
 	// Under the label (a short phrase; truncates).
 	description?: string;

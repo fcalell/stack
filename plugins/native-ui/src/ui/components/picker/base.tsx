@@ -8,8 +8,8 @@ import {
 	fieldValue,
 	PICKER_EMPTY,
 	PICKER_VALUE,
-	PILL_ACT,
 	picker,
+	WORD_ACT,
 } from "@fcalell/ui-core/variants";
 import { type ReactElement, type ReactNode, useContext, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
@@ -196,7 +196,7 @@ export function PickerBase<V extends string | null = string>(
 			onPress={() => setOpen(true)}
 			className={
 				row
-					? cn(PILL_ACT, picker({ fit }), ROW_TRIGGER, open && ROW_OPEN)
+					? cn(WORD_ACT, picker({ fit }), ROW_TRIGGER, open && ROW_OPEN)
 					: cn(
 							field({ fit: "bar" }),
 							picker({ fit }),

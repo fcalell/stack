@@ -30,7 +30,7 @@ const THUMB =
 const WASH =
 	"absolute inset-0 not-in-data-disabled:group-hover:bg-wash-hover not-in-data-disabled:group-active:bg-wash-press";
 const GAP = "shrink-0 size-thumb";
-const REST = "grow";
+const REST = "grow group-data-disabled:bg-edge";
 
 /** A number picked along a range, its label over the track. */
 export interface SliderProps extends Closed {

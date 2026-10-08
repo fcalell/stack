@@ -13,7 +13,7 @@ interface Shared<V extends string | null> extends Closed {
 	label: string;
 	options: readonly Option<V>[] | readonly OptionGroup<V>[];
 	// Where it stands: a field box (the default), a field box filling its
-	// column (`bar`), or a row's trailing value in a pill.
+	// column (`bar`), or a row's trailing value in a control-radius box.
 	fit?: PickerFit;
 	// The act that makes a new option, ending the list under a hairline.
 	act?: IconAct;
@@ -43,7 +43,7 @@ export type PickerProps<V extends string | null = string> =
 
 // A pick that applies at once, outside a form: the field box showing the
 // chosen label (the empty choice in the placeholder's ink), or a row's value
-// and a chevron in a pill; with no value either shows `label` in the
+// and a chevron in a control-radius box; with no value either shows `label` in the
 // placeholder's ink, and an option carrying a state shows as its status, one
 // carrying a glyph leads with it. A tap opens the sheet of options titled
 // `label`, `act` under a hairline after them.

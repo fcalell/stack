@@ -181,7 +181,7 @@ export function drawPicker(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
 	const row =
 		cell.startsWith("PICKER.fit.row") ||
-		cell === "PILL_ACT" ||
+		cell === "WORD_ACT" ||
 		cell === "PICKER_VALUE" ||
 		cell.startsWith("ICON.fit.meta") ||
 		cell.startsWith("ROW.");

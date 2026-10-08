@@ -356,13 +356,13 @@ export const STATUS = "gap-inside";
 // the spinner's ink, read through `statusContentTone`).
 export const STATUS_SPINNER = "text-accent-ink";
 export const STATUS_LABEL = "text-meta leading-meta font-normal text-ink-meta";
-// Words that act in a pill with no boundary at rest: a row's pick and a
-// status that moves (Picker), a header fact that opens a sheet or retries a
-// save (ItemHeader), whose status region takes the pill's shape for its
-// focus ring. It pulls back by its own padding on the side that
-// meets plain text (an overlay), so its words sit where static words do.
-// Shared by both drawers.
-export const PILL_ACT = "rounded-full px-inside min-h-target";
+// Words that act in a control-radius box with no boundary at rest: a row's
+// pick and a status that moves (Picker), a header fact that opens a sheet,
+// goes to a route or retries a save (ItemHeader), whose status region takes
+// the box's shape for its focus ring. It pulls back by its own padding on the
+// side that meets plain text (an overlay), so its words sit where static
+// words do. Shared by both drawers.
+export const WORD_ACT = "rounded-control px-inside min-h-target";
 // A remove act's round hit box, the chip's height: a chip's and a
 // thumbnail's (`IMAGE_REMOVE`). Unheld, drawn by each that has one.
 export const REMOVE_HIT = "min-h-chip min-w-chip rounded-full";
@@ -401,13 +401,15 @@ export const SLIDER_VALUE =
 	"tabular-nums text-meta leading-meta font-normal text-ink-meta";
 export const SLIDER_TRACK = "w-full min-h-target";
 export const SLIDER_FILL = "h-track rounded-full bg-toggle-on";
-export const SLIDER_REST = "h-track rounded-full bg-edge";
+// The unfilled rail is the control's part, in the thumb's boundary ink, so it
+// reads as a track beside the hairline of the group it stands in.
+export const SLIDER_REST = "h-track rounded-full bg-edge-strong";
 export const SLIDER_THUMB =
 	"size-thumb rounded-full border border-edge-strong bg-surface";
 // A picker's empty choice and its control with no value: a placeholder's
 // look.
 export const PICKER_EMPTY = "text-ink-meta";
-// The value a row's pick shows in its pill (`PICKER {fit: row}`), bounded as a
+// The value a row's pick shows in its box (`PICKER {fit: row}`), bounded as a
 // status' label is so a long one truncates before the title beside it does;
 // the field fit's value is `FIELD_VALUE`'s.
 export const PICKER_VALUE =
@@ -909,9 +911,10 @@ export const LIST = "gap-rows -mx-control-x";
 // A tree's list: its rows abut, so a level's rail runs unbroken down them.
 export const LIST_TREE = "-mx-control-x";
 // A list whose row map declares a `meta` line (two-line rows): its rows abut
-// under a full-width hairline once between them. `divide-*` is a child
-// selector uniwind drops, so native draws that hairline per row.
-export const LIST_DIVIDED = "-mx-control-x divide-y divide-edge";
+// under a full-width hairline once between them. A child selector is one
+// uniwind drops, so native draws that hairline per row and the web draws it
+// as an overlay on this box.
+export const LIST_DIVIDED = "-mx-control-x";
 // A tree row's level: one `indent` step in, its hairline rail on the end, so
 // the rail falls under the middle of the parent's fold lane. A row draws one
 // per level of its depth.

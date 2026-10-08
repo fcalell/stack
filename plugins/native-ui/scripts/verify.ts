@@ -145,6 +145,7 @@ const NATIVE_OVERLAYS = [
 	"active:no-underline",
 	"bg-act-accent-pending",
 	"bg-act-danger-pending",
+	"bg-edge",
 	"bg-fill-disabled",
 	"bg-ink-disabled",
 	"bg-switch-off-hover",

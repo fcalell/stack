@@ -168,3 +168,57 @@ export const HeadWithFactsInMain: StoryObj = {
 		);
 	},
 };
+
+function Facts(props: { width: number }) {
+	return (
+		<Page width={props.width}>
+			<Place title="Workflows">
+				<ItemHeader
+					title="Triage the inbox"
+					facts={[
+						{ label: "Outside content", onOpen: noop },
+						{ label: "Open the run", href: "/runs/42" },
+					]}
+				/>
+			</Place>
+		</Page>
+	);
+}
+
+// A fact that goes to a route is an anchor to it, announced as a link, with
+// the chevron and the box of the fact that opens a sheet beside it, which
+// stays a button that marks a dialog.
+async function factsGo(canvasElement: HTMLElement, density: string) {
+	await expect(document.documentElement.dataset.density).toBe(density);
+	const link = must(
+		[...canvasElement.querySelectorAll("a")].find((el) =>
+			el.textContent?.includes("Open the run"),
+		),
+	);
+	const sheet = must(
+		[...canvasElement.querySelectorAll("button")].find((el) =>
+			el.textContent?.includes("Outside content"),
+		),
+	);
+	await expect(link.getAttribute("href")).toBe("/runs/42");
+	await expect(link.hasAttribute("aria-haspopup")).toBe(false);
+	await expect(link.querySelector("svg")).not.toBeNull();
+	await expect(sheet.getAttribute("aria-haspopup")).toBe("dialog");
+	await expect(getComputedStyle(link).borderRadius).toBe(
+		getComputedStyle(sheet).borderRadius,
+	);
+	await expect(rect(link).height).toBe(rect(sheet).height);
+}
+
+export const FactToARoute: StoryObj = {
+	render: () => <Facts width={1280} />,
+	play: async ({ canvasElement }) => factsGo(canvasElement, "desktop"),
+};
+
+export const FactToARouteTouch = touch(
+	{
+		render: () => <Facts width={390} />,
+		play: async ({ canvasElement }) => factsGo(canvasElement, "touch"),
+	},
+	390,
+);

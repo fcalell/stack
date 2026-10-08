@@ -88,9 +88,13 @@ function Runs(props: { meta: boolean }) {
 const edge = (element: Element | undefined) =>
 	element ? getComputedStyle(element).borderBottomWidth : undefined;
 
-// A row map that declares `meta` parts its rows by one hairline between them;
-// a map without it draws none, and a List in a Group leaves the group's
-// hairline the only one.
+const after = (element: Element | undefined) =>
+	element ? getComputedStyle(element, "::after") : undefined;
+
+// A row map that declares `meta` parts its rows by one hairline between them,
+// drawn on each row but the last as a bar across the row's whole width (its
+// ends at the row's, no curve) under the row's rounded wash; a map without it
+// draws none, and a List in a Group leaves the group's hairline the only one.
 export const Separators: StoryObj = {
 	render: () => (
 		<>
@@ -113,9 +117,26 @@ export const Separators: StoryObj = {
 		];
 		const two = rows("two-line");
 		await expect(two).toHaveLength(2);
-		await expect(edge(two[0])).toBe("1px");
-		await expect(edge(two[1])).toBe("0px");
-		for (const row of rows("one-line")) await expect(edge(row)).toBe("0px");
+		const [first, last] = two;
+		const line = after(first);
+		await expect(edge(first)).toBe("0px");
+		await expect(line?.position).toBe("absolute");
+		await expect(line?.height).toBe("1px");
+		await expect(line?.left).toBe("0px");
+		await expect(line?.right).toBe("0px");
+		await expect(line?.bottom).toBe("0px");
+		await expect(line?.width).toBe(`${first?.getBoundingClientRect().width}px`);
+		await expect(line?.borderTopLeftRadius).toBe("0px");
+		await expect(line?.backgroundColor).not.toBe("rgba(0, 0, 0, 0)");
+		await expect(edge(last)).toBe("0px");
+		await expect(after(last)?.content).toBe("none");
+		await expect(first && getComputedStyle(first).borderTopLeftRadius).toBe(
+			"6px",
+		);
+		for (const row of rows("one-line")) {
+			await expect(edge(row)).toBe("0px");
+			await expect(after(row)?.content).toBe("none");
+		}
 		const grouped = rows("grouped");
 		await expect(grouped).toHaveLength(2);
 		await expect(edge(grouped[0])).toBe("1px");

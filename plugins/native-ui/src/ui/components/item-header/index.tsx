@@ -7,18 +7,19 @@ import {
 	ITEM_FACT,
 	ITEM_FACTS,
 	ITEM_HEADER,
-	PILL_ACT,
 	SKELETON_LINES,
 	skeleton,
 	skeletonRow,
 	text,
+	WORD_ACT,
 } from "@fcalell/ui-core/variants";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
-
+import { navigate } from "../../lib/navigate";
 import { joinParts, META_CUT, partText } from "../../lib/parts";
+import type { Route } from "../../lib/route";
 import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 import { Count } from "../count";
@@ -45,7 +46,7 @@ const FACTS_LINE_WAIT = "flex-row items-center";
 const COUNT_WAIT = "shrink-0 flex-row items-center";
 const FIGURE_WAIT = "opacity-0 tabular-nums";
 
-// One fact under the title: words, a status, words that open a sheet, a status that
+// One fact under the title: words, a status, words that open a sheet or go to a route, a status that
 // moves (a pick whose options carry states), a count beside its word, or the state of a save
 // that runs as the record is typed, a failed one with its retry. Each string
 // is a short phrase: the facts line wraps between facts, a `Quoted` part is cut
@@ -54,6 +55,7 @@ export type Fact =
 	| Part
 	| { status: StatusState; label?: string }
 	| { label: Part; onOpen: () => void }
+	| { label: Part; href: Route; onOpen?: never }
 	| { pick: OptionPick }
 	| { count: number; label: string }
 	| { save: "saving" | "saved" | "failed"; onRetry: () => void };
@@ -71,7 +73,8 @@ export interface ItemHeaderProps extends Closed {
 
 function factKey(fact: Fact): string {
 	if (typeof fact === "object" && "pick" in fact) return fact.pick.label;
-	if (typeof fact === "object" && "onOpen" in fact) return partText(fact.label);
+	if (typeof fact === "object" && ("onOpen" in fact || "href" in fact))
+		return partText(fact.label);
 	if (typeof fact === "object" && "status" in fact)
 		return `${fact.status} ${fact.label ?? ""}`;
 	if (typeof fact === "object" && "count" in fact)
@@ -83,11 +86,11 @@ function factKey(fact: Fact): string {
 // The save fact holds its widest form's room (the failed form, a status and a
 // retry, drawn unseen in the flow) under the live form, so the facts line wraps
 // the same as the save moves between its states. Like the pick it pulls back
-// at both ends by a pill's padding.
+// at both ends by a control box's padding.
 const SAVE = "flex-row -mx-inside";
 const SAVE_FORM = "absolute inset-0 flex-row items-center";
 const SAVE_ROOM = "flex-row items-center opacity-0";
-const SAVE_PILL = cn(PILL_ACT, ITEM_FACT, FACT);
+const SAVE_WORDS = cn(WORD_ACT, ITEM_FACT, FACT);
 
 function Retry() {
 	const words = useWords();
@@ -113,15 +116,15 @@ function SaveFact({
 	return (
 		<View className={SAVE}>
 			<View className={SAVE_ROOM}>
-				<View className={SAVE_PILL}>
+				<View className={SAVE_WORDS}>
 					<Status state="failed" label={words.notSaved} />
 				</View>
-				<View className={cn(PILL_ACT, ITEM_FACT, ACT)}>
+				<View className={cn(WORD_ACT, ITEM_FACT, ACT)}>
 					<Retry />
 				</View>
 			</View>
 			<View className={SAVE_FORM}>
-				<View className={SAVE_PILL}>
+				<View className={SAVE_WORDS}>
 					{save === "failed" ? (
 						<Status state="failed" label={said} />
 					) : (
@@ -132,7 +135,7 @@ function SaveFact({
 					<Pressable
 						accessibilityRole="button"
 						onPress={onRetry}
-						className={cn(PILL_ACT, ITEM_FACT, ACT)}
+						className={cn(WORD_ACT, ITEM_FACT, ACT)}
 					>
 						<Retry />
 					</Pressable>
@@ -143,12 +146,29 @@ function SaveFact({
 }
 
 function FactPart({ fact }: { fact: Fact }) {
+	if (typeof fact === "object" && "href" in fact) {
+		const { href } = fact;
+		return (
+			<Pressable
+				accessibilityRole="link"
+				onPress={() => navigate(href)}
+				className={cn(WORD_ACT, ITEM_FACT, OPEN)}
+			>
+				<RNText className={text({ role: "meta" })}>
+					{partText(fact.label, META_CUT)}
+				</RNText>
+				<Ink.Provider value="ink-meta">
+					<Icon name="ChevronRight" fit="meta" />
+				</Ink.Provider>
+			</Pressable>
+		);
+	}
 	if (typeof fact === "object" && "onOpen" in fact)
 		return (
 			<Pressable
 				accessibilityRole="button"
 				onPress={fact.onOpen}
-				className={cn(PILL_ACT, ITEM_FACT, OPEN)}
+				className={cn(WORD_ACT, ITEM_FACT, OPEN)}
 			>
 				<RNText className={text({ role: "meta" })}>
 					{partText(fact.label, META_CUT)}

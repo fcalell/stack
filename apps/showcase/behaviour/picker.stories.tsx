@@ -5,6 +5,7 @@ import { Toolbar } from "@fcalell/plugin-react-ui/components/toolbar";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { expect, screen, waitFor, within } from "storybook/test";
+import { hover } from "./mouse.ts";
 import { focused } from "./support.ts";
 
 const ROLES = [
@@ -121,6 +122,67 @@ export const RowEnd: StoryObj = {
 		});
 	},
 };
+
+// A row's trailing pick is a control: its box, and so its hover wash, its press
+// and open fill and its focus ring, stands at the control radius (6 px), never
+// a pill.
+function rowRadius(touch: boolean): StoryObj {
+	return {
+		render: () => <Trailing />,
+		...(touch
+			? {
+					tags: ["touch"],
+					globals: {
+						density: "touch",
+						viewport: { value: "phone", isRotated: false },
+					},
+					parameters: {
+						viewport: {
+							options: {
+								phone: {
+									name: "Phone",
+									styles: { width: "390px", height: "812px" },
+									type: "mobile",
+								},
+							},
+						},
+					},
+				}
+			: {}),
+		play: async ({ canvas, userEvent }) => {
+			// On touch the pick opens a sheet, so its trigger is a button.
+			const trigger = canvas.getByRole(touch ? "button" : "combobox", {
+				name: /Ben's role/,
+			});
+			const radius = () => getComputedStyle(trigger).borderTopLeftRadius;
+			await expect(radius()).toBe("6px");
+			if (!touch) {
+				// The focus ring is the box's own outline, which follows its radius.
+				await userEvent.tab();
+				await expect(trigger).toHaveFocus();
+				await expect(getComputedStyle(trigger).outlineStyle).toBe("solid");
+				await expect(getComputedStyle(trigger).outlineWidth).toBe("2px");
+				const rest = getComputedStyle(trigger).backgroundColor;
+				const box = trigger.getBoundingClientRect();
+				await hover({
+					x: box.left + box.width / 2,
+					y: box.top + box.height / 2,
+				});
+				await waitFor(() =>
+					expect(getComputedStyle(trigger).backgroundColor).not.toBe(rest),
+				);
+				await expect(radius()).toBe("6px");
+			}
+			await userEvent.click(trigger);
+			await screen.findByRole("listbox");
+			await expect(trigger).toHaveAttribute("data-popup-open");
+			await expect(radius()).toBe("6px");
+		},
+	};
+}
+
+export const RowRadius = rowRadius(false);
+export const RowRadiusTouch = rowRadius(true);
 
 const AGENTS = [
 	{ value: "writer", label: "Writer", description: "Drafts the brief" },

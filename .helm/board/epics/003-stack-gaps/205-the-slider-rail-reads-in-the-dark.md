@@ -1,6 +1,6 @@
 ---
 id: 003-205
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: the Slider's rail reads against the dark surface
@@ -13,8 +13,16 @@ The slider's unfilled rail is `SLIDER_REST = "h-track rounded-full bg-edge"` (ui
 
 ## Acceptance criteria
 - [ ] The unfilled rail reads as a track in dark and in light at both densities, its contrast against the surface measured by the critique, with the filled part and the thumb unchanged.
-- [ ] A disabled Slider keeps its disabled look.
-- [ ] The Slider showcase measures the rail's height and contrast at value 0 in dark.
+- [x] A disabled Slider keeps its disabled look.
+- [x] The Slider showcase measures the rail's height and contrast at value 0 in dark.
 
 ## Open questions
-- [ ] Its shape (a stronger rail ink, a taller desktop rail, or both): the stack session decides.
+- [x] Its shape (a stronger rail ink, a taller desktop rail, or both): the stack session decides.
+
+## Ruled
+
+`SLIDER_REST` is `h-track rounded-full bg-edge-strong`: the thumb's own boundary ink, not a taller rail and not a new token. Density sizes (2 px desktop, 4 px touch), the fill and the thumb are unchanged. A disabled slider keeps the rail at the old hairline (`group-data-disabled:bg-edge` on the web, `disabled && "bg-edge"` on native).
+
+## Built
+
+`SLIDER_REST` in `packages/ui-core/src/variants.ts`; the disabled rail in both `slider/index.tsx`. Evidence: `behaviour/slider.stories.tsx` `RailLight`, `RailDark`, `RailTouchLight`, `RailTouchDark`, `RailDisabled` and `RailDisabledLight` pass. At value 0 the rail is 2px (desktop) and 4px (touch), its background equals `bg-edge-strong`, and its contrast against the surface is 3.52:1 bare and 3.80:1 in a Group in light, 4.45:1 bare and 4.08:1 in a Group in dark, each at or over 3:1; a disabled rail equals `bg-edge`. Left for the critique: the first box (the rail reads as a track, its contrast measured by the critique).

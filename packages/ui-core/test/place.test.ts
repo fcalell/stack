@@ -7,7 +7,7 @@ import {
 	ACTION_BAR_SELECTION,
 	FOOT_DOCKED,
 	PAGE_BODY,
-	PILL_ACT,
+	WORD_ACT,
 } from "../src/variants.ts";
 
 const entry = (name: string) =>
@@ -45,5 +45,6 @@ test("a selection bar's column stands at the pattern's table-wide width", () => 
 test("the bar's choose-all act is at the filled act's radius, not a pill", () => {
 	assert.match(ACTION_BAR_ALL, /\brounded-control\b/);
 	assert.doesNotMatch(ACTION_BAR_ALL, /\brounded-full\b/);
-	assert.match(PILL_ACT, /\brounded-full\b/);
+	assert.match(WORD_ACT, /\brounded-control\b/);
+	assert.doesNotMatch(WORD_ACT, /\brounded-full\b/);
 });

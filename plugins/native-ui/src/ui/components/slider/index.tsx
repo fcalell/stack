@@ -155,7 +155,7 @@ export function Slider({
 					{active ? <View className="absolute inset-0 bg-wash-press" /> : null}
 				</View>
 				<View
-					className={cn(SLIDER_REST, "grow")}
+					className={cn(SLIDER_REST, "grow", disabled && "bg-edge")}
 					style={{ flexGrow: max - value }}
 				/>
 			</View>

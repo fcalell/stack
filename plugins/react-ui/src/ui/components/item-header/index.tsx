@@ -3,6 +3,7 @@ import { cn } from "@fcalell/ui-core/cn";
 import type {
 	OptionPick,
 	Part,
+	Route,
 	StatusState,
 } from "@fcalell/ui-core/descriptors";
 import {
@@ -10,17 +11,18 @@ import {
 	ITEM_FACTS,
 	ITEM_HEADER,
 	lineBox,
-	PILL_ACT,
 	SKELETON_LINES,
 	skeleton,
 	skeletonRow,
 	text,
+	WORD_ACT,
 } from "@fcalell/ui-core/variants";
 import { use, useRef } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { OverThread } from "../../lib/frame.ts";
 import { HeadingContext } from "../../lib/heading.ts";
 import { useTouch } from "../../lib/media.ts";
+import { follow } from "../../lib/navigate.ts";
 import { joinParts, META_CUT, partText } from "../../lib/parts.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Count } from "../count/index.tsx";
@@ -53,11 +55,12 @@ const FACTS_LINE_WAIT = "flex items-center";
 const COUNT_WAIT = "inline-flex shrink-0 items-center";
 const FIGURE_WAIT = "opacity-0 tabular-nums";
 
-/** One fact under the title: words, a status, words that open a sheet, a status that moves (a pick whose options carry states), a count beside its word, or the state of a save that runs as the record is typed, a failed one with its retry (each string a short phrase; the facts line wraps between facts, a `Quoted` part is cut at 40 characters). */
+/** One fact under the title: words, a status, words that open a sheet or go to a route, a status that moves (a pick whose options carry states), a count beside its word, or the state of a save that runs as the record is typed, a failed one with its retry (each string a short phrase; the facts line wraps between facts, a `Quoted` part is cut at 40 characters). */
 export type Fact<V extends string | null = string> =
 	| Part
 	| { status: StatusState; label?: string }
 	| { label: Part; onOpen: () => void }
+	| { label: Part; href: Route; onOpen?: never }
 	| { pick: OptionPick<V> }
 	| { count: number; label: string }
 	| { save: "saving" | "saved" | "failed"; onRetry: () => void };
@@ -77,7 +80,8 @@ export interface ItemHeaderProps<V extends string | null = string>
 
 function factKey<V extends string | null>(fact: Fact<V>): string {
 	if (typeof fact === "object" && "pick" in fact) return fact.pick.label;
-	if (typeof fact === "object" && "onOpen" in fact) return partText(fact.label);
+	if (typeof fact === "object" && ("onOpen" in fact || "href" in fact))
+		return partText(fact.label);
 	if (typeof fact === "object" && "status" in fact)
 		return `${fact.status} ${fact.label ?? ""}`;
 	if (typeof fact === "object" && "count" in fact)
@@ -90,12 +94,12 @@ function factKey<V extends string | null>(fact: Fact<V>): string {
 // it holds its widest form's room (the failed form, a status and a retry, drawn
 // unseen under the live one), so the line wraps the same as the save moves
 // between its states; from `tablet` it takes the live form's own width. Like
-// the pick it pulls back at both ends by a pill's padding.
+// the pick it pulls back at both ends by a control box's padding.
 const SAVE = "inline-grid -mx-inside";
 const SAVE_FORM = "col-start-1 row-start-1 inline-flex items-center";
 const SAVE_ROOM =
 	"col-start-1 row-start-1 items-center invisible hidden max-tablet:inline-flex";
-const SAVE_PILL = cn(PILL_ACT, ITEM_FACT, FACT);
+const SAVE_WORDS = cn(WORD_ACT, ITEM_FACT, FACT);
 
 function Retry() {
 	const words = useWords();
@@ -126,15 +130,15 @@ function SaveFact({
 	return (
 		<span className={SAVE}>
 			<span aria-hidden className={SAVE_ROOM}>
-				<span className={SAVE_PILL}>
+				<span className={SAVE_WORDS}>
 					<Status state="failed" label={words.notSaved} />
 				</span>
-				<span className={cn(PILL_ACT, ITEM_FACT, ACT)}>
+				<span className={cn(WORD_ACT, ITEM_FACT, ACT)}>
 					<Retry />
 				</span>
 			</span>
 			<span className={SAVE_FORM}>
-				<span ref={region} tabIndex={-1} role="status" className={SAVE_PILL}>
+				<span ref={region} tabIndex={-1} role="status" className={SAVE_WORDS}>
 					{save === "failed" ? (
 						<Status state="failed" label={words.notSaved} />
 					) : (
@@ -142,7 +146,7 @@ function SaveFact({
 					)}
 				</span>
 				{save === "failed" ? (
-					<BaseButton onClick={retry} className={cn(PILL_ACT, ITEM_FACT, ACT)}>
+					<BaseButton onClick={retry} className={cn(WORD_ACT, ITEM_FACT, ACT)}>
 						<Retry />
 					</BaseButton>
 				) : null}
@@ -152,12 +156,25 @@ function SaveFact({
 }
 
 function FactPart<V extends string | null>({ fact }: { fact: Fact<V> }) {
+	if (typeof fact === "object" && "href" in fact)
+		return (
+			<a
+				href={fact.href}
+				onClick={follow}
+				className={cn(WORD_ACT, ITEM_FACT, OPEN)}
+			>
+				<span className={text({ role: "meta" })}>
+					{partText(fact.label, META_CUT)}
+				</span>
+				<Icon name="ChevronRight" fit="meta" />
+			</a>
+		);
 	if (typeof fact === "object" && "onOpen" in fact)
 		return (
 			<BaseButton
 				onClick={fact.onOpen}
 				aria-haspopup="dialog"
-				className={cn(PILL_ACT, ITEM_FACT, OPEN)}
+				className={cn(WORD_ACT, ITEM_FACT, OPEN)}
 			>
 				<span className={text({ role: "meta" })}>
 					{partText(fact.label, META_CUT)}

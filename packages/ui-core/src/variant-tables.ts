@@ -622,7 +622,7 @@ export const SEGMENT_LABEL = matrix({
 // The pick's trigger by where it stands: a field box (`FIELD` at the bar
 // fit) in a toolbar, a field box that fills its column in a rule row (`bar`:
 // its value, or the chips of a several pick, wrap inside it), or a row's
-// trailing value in a `PILL_ACT`, its ink the meta ink for the chevron beside
+// trailing value in a `WORD_ACT` box, its ink the meta ink for the chevron beside
 // the value.
 export const PICKER = matrix({
 	base: "",

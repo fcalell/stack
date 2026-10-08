@@ -67,6 +67,11 @@ const STACK = "flex flex-col";
 // A tree in a Group has no box of its own: it stands as the card's rows, the
 // card's hairline falling once between them.
 const GROUP_TREE = "contents divide-y divide-edge";
+// A divided list's hairline is a pseudo-element on each row but the last, not
+// the row's border, so it runs straight across the row's whole width under the
+// row's rounded wash.
+const DIVIDER =
+	"[&>:not(:last-child)]:relative [&>:not(:last-child)]:after:absolute [&>:not(:last-child)]:after:inset-x-0 [&>:not(:last-child)]:after:bottom-0 [&>:not(:last-child)]:after:h-px [&>:not(:last-child)]:after:bg-edge";
 
 // A tree's keyboard: the container's role and the keys and focus its rows'
 // `treeitem` stops send up.
@@ -345,7 +350,7 @@ export function List<T, V extends string | null = string>(
 	// a `meta`) abut under a hairline.
 	const flat =
 		props.row?.meta !== undefined && props.row.children === undefined
-			? LIST_DIVIDED
+			? cn(LIST_DIVIDED, DIVIDER)
 			: LIST;
 	const frame = (rows: ReactNode, nav?: TreeNav, abut = nav !== undefined) => {
 		let box = rows;

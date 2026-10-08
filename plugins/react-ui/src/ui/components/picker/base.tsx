@@ -21,7 +21,6 @@ import {
 	PICKER_EMPTY,
 	PICKER_POPOVER,
 	PICKER_VALUE,
-	PILL_ACT,
 	POPOVER,
 	picker,
 	ROW_LEADING,
@@ -30,6 +29,7 @@ import {
 	SELECT_GROUP,
 	text,
 	textStrong,
+	WORD_ACT,
 } from "@fcalell/ui-core/variants";
 import {
 	type ComponentProps,
@@ -487,7 +487,7 @@ export function PickerBase<V extends string | null = string>(
 				tabIndex={cell ? -1 : handed.tabIndex}
 				className={
 					fit === "row"
-						? cn(PILL_ACT, picker({ fit }), ROW_TRIGGER, open && ROW_OPEN)
+						? cn(WORD_ACT, picker({ fit }), ROW_TRIGGER, open && ROW_OPEN)
 						: cn(
 								field({ fit: "bar" }),
 								picker({ fit }),

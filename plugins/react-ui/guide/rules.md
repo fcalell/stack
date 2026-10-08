@@ -34,7 +34,7 @@ without them opens its sheet from the Details act alone.
 A record the open record links to opens beside it: the `Split`'s `beside` holds a `Screen` whose
 `back` is the open record's route. From `wide` it stands beside the main, its back act a Close at the head's end;
 below `wide` it stands in the main's place with its back act, and below `tablet` its head is the
-page's only head, its back act to the main. The record's title is an `h1` and its sections start at `h2`, at every width. The body's first child, an `ItemHeader`, stands a pair, not a sections gap, above an `ActionBar` or a `Banner` directly after it (a `Place`, a `Screen` or a `Split`'s `main`) and, in a `Split`'s `main` when it has no facts line, above the record's first section (not above a `Thread`). The body reads its own children, a fragment seen through: a head or bar reached through a wrapper component keeps the sections step.
+page's only head, its back act to the main. The record's title is an `h1` and its sections start at `h2`, at every width. The body's first child, an `ItemHeader`, stands a pair, not a sections gap, above an `ActionBar` or a `Banner` directly after it (a `Place`, a `Screen` or a `Split`'s `main`) and, in a `Split`'s `main` when it has no facts line, above the record's first section (not above a `Thread`). The body reads its own children, a fragment seen through: a head or bar reached through a wrapper component keeps the sections step. An `ItemHeader` fact that opens a sheet is `{ label, onOpen }` and one that goes to another route is `{ label, href }`: each draws the words and a chevron, the second as a link.
 
 ```tsx
 <Split list={rows} main={<Item />} beside={<Screen title="Run 12" back={itemRoute}><Run /></Screen>} />
@@ -516,7 +516,7 @@ sizes are fixed:
 
 | Size | Is | Past it |
 | --- | --- | --- |
-| a word | one word: a state, a unit, a figure's noun | a slot that bounds it (a `Chip`, a row pick's pill) holds the short measure, 18 characters, and truncates |
+| a word | one word: a state, a unit, a figure's noun | a slot that bounds it (a `Chip`, a row pick's value) holds the short measure, 18 characters, and truncates |
 | a short phrase | a few words on one line: a title, a label, a name | takes the room its line leaves, then truncates with an ellipsis, or wraps where its doc says it wraps |
 | a sentence | one sentence, in a slot built to wrap: a description, a banner, an empty state, an error | wraps |
 | text | running content of any length: markdown, a message body, code | wraps whole |

@@ -581,7 +581,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"PAGE_TOP_BAR_END",
 				"PAGE_TITLE",
 				"TEXT.role.title",
-				"PILL_ACT",
+				"WORD_ACT",
 				"PICKER_VALUE",
 				"ICON.fit.meta",
 				"CHIP",
@@ -1394,9 +1394,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// Loading, each line keeps its line box and the facts line the height
 		// of the status that moves on it. A fact in words that opens a sheet is its
-		// words and a chevron in a `PILL_ACT`, a button named by the fact. A save
-		// fact is the status region (a pill, so its ring is one) and, failed, a
-		// retry in a `PILL_ACT` led by a retry glyph; where the facts wrap (below
+		// words and a chevron in a `WORD_ACT`, a button named by the fact; one that goes to
+		// a route is the same box as a link. A save
+		// fact is the status region (one box, so its ring is one) and, failed, a
+		// retry in a `WORD_ACT` led by a retry glyph; where the facts wrap (below
 		// `tablet`) it holds the failed form's room in every state, so the line
 		// never wraps differently as a save moves.
 		ItemHeader: {
@@ -1406,7 +1407,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"THREAD_COLUMN",
 				"ITEM_FACTS",
 				"ITEM_FACT",
-				"PILL_ACT",
+				"WORD_ACT",
 				"ICON.fit.meta",
 				"TEXT.role.meta",
 				"TEXT.role.title",
@@ -1579,7 +1580,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		// The pick outside a form that applies at once: a field box, or (a row's
-		// trailing, `fit: row`) its value and a chevron in a `PILL_ACT`; either
+		// trailing, `fit: row`) its value and a chevron in a `WORD_ACT`; either
 		// opens a popover of rows (a sheet of rows on touch), a search field
 		// above six options; an option may lead with its avatar, and one act
 		// (the act that makes a new option) ends the list under a hairline. At
@@ -1597,7 +1598,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ROW_LEADING",
 				"AVATAR",
 				"AVATAR_LABEL",
-				"PILL_ACT",
+				"WORD_ACT",
 				"PICKER_VALUE",
 				"ICON.fit.meta",
 				"CHIP",

@@ -77,3 +77,8 @@ export async function click(point: Point) {
 	await send("mousePressed", point, true);
 	await send("mouseReleased", point, false);
 }
+
+// The pointer rests at `point`, so a `:hover` wash is drawn.
+export async function hover(point: Point) {
+	await send("mouseMoved", point, false);
+}

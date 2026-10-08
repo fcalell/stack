@@ -53,7 +53,9 @@ its rationale.
   light and toward the page in dark. A labelled act's fill takes no 3:1 ground floor in any state,
   since its label names it; a toggle on (`toggle-on`, drawn by the switch, the checkbox and the
   slider) has no label, so it and its hover are measured at 3:1 on every ground and its hover
-  lightens in dark, away from the near-black ground.
+  lightens in dark, away from the near-black ground. The slider's unfilled rail is `edge-strong`, the
+  thumb's own boundary ink, so a 2 px rail reads as part of the control and not as the hairline of the
+  group beside it; a disabled slider's rail returns to `edge`.
 - Color roles name the place they draw: surfaces (`canvas`, `surface`, `group`, `raised`, `edge`,
   `edge-raised`, `edge-strong`, `grid` the canvas's dot grid at 1.5:1 on `canvas`, `scrim`), three inks (`ink-body`, `ink-meta`, `ink-faint` for
   disabled text only), the accent (`accent`, `on-accent`, `accent-soft`, `accent-ink` for a link and
@@ -293,10 +295,10 @@ a tick with no animation, never jumped to full.
   an axis because the act is given, not pointed at.
 - The Picker's trigger takes `PICKER {fit}`: `field`, the field box at the bar fit; `bar`, the same
   box filling the column a `Rules` row gives it; or `row`, a list row's trailing pick, its value
-  (`PICKER_VALUE`) and chevron in a `PILL_ACT` that pulls back by its own padding at the row's end
+  (`PICKER_VALUE`) and chevron in a `WORD_ACT` that pulls back by its own padding at the row's end
   (`-me-inside`). A field or bar trigger yields only past its line (a Toolbar's acts row yields
   inside the strip), so a value wider than the line truncates before the chevron. The Picker's `fit` prop picks it, and a `ListRow`'s trailing pick (`RowTrailing`'s
-  `pick`) passes `row`. `PILL_ACT` is shared: the Picker's row-fit trigger and the `ItemHeader`'s
+  `pick`) passes `row`. `WORD_ACT` is shared: the Picker's row-fit trigger and the `ItemHeader`'s
   opening fact draw it.
 - A pick of several is the Picker given an array `value` (`MultiPick`), never a second component:
   the list's rows tick, it stays open while the viewer picks (Base UI's `multiple` on the select
@@ -359,9 +361,11 @@ a tick with no animation, never jumped to full.
   pick moves). The Place and the Picker hold `CHIP` and `CHIP_LABEL`; a chip column's option (the
   Picker's `chip` family) draws its own chip alone and ignores `Option.chip`.
 - A header fact in words that opens a sheet is `{ label: Part; onOpen }` on `ItemHeader`: the words
-  in the meta ink and a trailing `ChevronRight` at the meta fit in a `PILL_ACT`, pulled back at its
+  in the meta ink and a trailing `ChevronRight` at the meta fit in a `WORD_ACT`, pulled back at its
   start as a pick fact is, a button named by the fact (`aria-haspopup="dialog"` on the web); the consumer's `onOpen` opens its own
-  `Sheet`. The chevron stays because on touch there is no hover and an unmarked opening fact cannot
+  `Sheet`. A fact that goes to another route is `{ label: Part; href: Route }`, one or the other
+  per fact: the same words, chevron and box, drawn as an anchor (the router's navigation on the web,
+  a link `Pressable` on the phone) with no `aria-haspopup`, so it is announced as a link. The chevron stays because on touch there is no hover and an unmarked opening fact cannot
   be found; it is the form a system `Message` line takes with `onOpen`. Rejected: `Status` with
   `onOpen` (a status carries a hue, a fact in words none), a `Button` beside the facts (a second
   control for one fact) and a `Link` (the accent hue).
@@ -369,15 +373,15 @@ a tick with no animation, never jumped to full.
   "saved" | "failed"; onRetry }`, which stack owns so the words (`saving`, `saved`, `notSaved`,
   `retry`) are not the consumer's to spell. `saving` and `saved` are meta-ink
   words; `failed` is the `failed` Status with `notSaved`, then `retry` as words in a
-  `PILL_ACT` led by a `RotateCcw` glyph (a button named by the fact, in the meta ink as an opening
-  fact is; the glyph is what tells it from the facts beside it, and it stays words in a pill, never a
+  `WORD_ACT` led by a `RotateCcw` glyph (a button named by the fact, in the meta ink as an opening
+  fact is; the glyph is what tells it from the facts beside it, and it stays words in a box, never a
   `Button`, so the head keeps one height), so the fact stands at the target height (`ITEM_FACT`,
   `min-h-target`) in all three states and the head keeps the loading head's height as the save moves.
   Where the facts wrap (below `tablet` on the web, always on the phone) the fact also holds the
   failed form's room in every state, the failed form drawn invisible in the one grid cell the live form
   stands in (a stacked, transparent copy on the phone), so the line wraps the same in all three and the
   head never gains a line when a save fails; from `tablet` it takes the live form's own width, so
-  "Saved" leaves no gap after it. The words stand in one pill, drawn as a pill so its focus ring is
+  "Saved" leaves no gap after it. The words stand in one box, so its focus ring is
   one, which keeps one key across the states and takes the focus a pressed Retry leaves as that act
   gives way to the saving words (`tabIndex={-1}` and `focus()` on the web), so a keyboard user keeps
   their place. The fact stands from the record's open, `saved` at rest. Rejected: a generic fact
@@ -1199,8 +1203,8 @@ a tick with no animation, never jumped to full.
   `ROW.lines`: the negative of the form's `py`, so `-my-rows` on a two-line row and `-my-pair` on a
   wrapped one), and the tree's list drops the row gap (`LIST_TREE`), so a rail is unbroken from row
   to row. A flat list whose `row` map declares `meta` (two-line rows) abuts its rows too and parts
-  them with one full-width hairline (`LIST_DIVIDED`, `divide-y` on the web and `between` per row on
-  the phone); a Group's own hairline falls once instead, and a tree draws none. On the web the tree is a real tree, the WAI-ARIA tree pattern: the list is `role="tree"`,
+  them with one full-width hairline (`LIST_DIVIDED`: on the web a pseudo-element on each row but the last, a react-ui overlay, so it
+  stays straight under a row's rounded wash; `between` per row on the phone); a Group's own hairline falls once instead, and a tree draws none. On the web the tree is a real tree, the WAI-ARIA tree pattern: the list is `role="tree"`,
   each row a `treeitem` (the row's own element: named by its title,
   `aria-level` its depth plus one, `aria-expanded` on a branch, `aria-current` at its `href`) and the
   tree holds one tab stop, roving to the row last focused (`treeStop`; the hit link and the fold act

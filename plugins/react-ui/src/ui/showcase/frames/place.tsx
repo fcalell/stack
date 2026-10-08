@@ -165,7 +165,7 @@ export function drawPlace(frame: ShowcaseFrame) {
 			</Opened>
 		);
 	if (
-		cell === "PILL_ACT" ||
+		cell === "WORD_ACT" ||
 		cell === "PICKER_VALUE" ||
 		cell === "ICON.fit.meta" ||
 		cell.startsWith("CHIP")
