@@ -1,6 +1,6 @@
 ---
 id: 003-106
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a record's ItemHeader title outranks its Section titles
@@ -36,3 +36,6 @@ Both parts draw the same role, so nothing in the app can separate them without a
 With no facts line a head in a Split's main stands a pair above what follows, not a sections step. The parent owns the step: `headPaired` (`item-header/pair.tsx` in both plugins) gathers a leading `ItemHeader` and its next sibling into one `gap-pair` column when the head has no facts and the next sibling is not a Thread (a Fragment is seen through; a head behind a wrapper component is not paired). The Split's main calls it with `inMain`; the head carries no overlay, and `group/main` stays only for the Thread column. A head with facts keeps the sections step and its facts at `ITEM_FACTS`. The loading head keeps its structure. The Split frame's main holds an `ItemHeader` over its first Section.
 Measured at 1200 (desktop): the title draws 18/600 over the Section title's 15/600; a bare head's title stands 6 px above its first Section, a head with facts 32 px. An item screen (a `Screen` body, `PAGE_BODY`) keeps the sections step, since the rule is the Split main's.
 Evidence: `behaviour/item-header.stories.tsx` measures a bare head in a Split main at 1440 (its first Section a `pair` below it) and a head with facts (a `sections` step); with `stories/ItemHeader.stories.ts`, `stories/Split.stories.ts` and `behaviour/split.stories.tsx` they pass; `ui-core`, `plugin-react-ui` and `plugin-native-ui` verify pass.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/section/report.md`).

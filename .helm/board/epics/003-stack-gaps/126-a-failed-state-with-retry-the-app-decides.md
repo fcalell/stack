@@ -1,6 +1,6 @@
 ---
 id: 003-126
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a failed state the app decides draws Retry as the hairline act, not the create act
@@ -29,3 +29,6 @@ Shape: a public roster part, `Failed` (shared, on both platforms), with `sentenc
 - Showcase: the `EmptyState` frame draws the create form over the failed form, each alone on a page, and a `Failed` frame draws the page, Section, Group and body forms on the cells they own.
 - Proof: `packages/ui-core/test/failed.test.ts` (the roster part on both platforms, the cells it draws and not the create act, `EmptyState` still drawing it) and the behaviour story `apps/showcase/behaviour/failed.stories.tsx` (Retry runs the function each press and draws no plus beside the alert mark; the `EmptyState` beside it keeps its plus). The story was not run in a browser by the building session.
 - Not proven: the third criterion. The showcase holds the failed form beside the create form, but a render judged by the critique has not been run, and a design critique is run by a session that played no part in the work. The status stays `backlog` until it is.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/section/report.md`).

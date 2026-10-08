@@ -1,6 +1,6 @@
 ---
 id: 003-145
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a Section's count chip draws smaller than body
@@ -20,3 +20,6 @@ Stead's Work board draws each Section's count in a pill at 13 px type and 20 px 
 
 ## Ruled
 By design. `caption` is 0.846 of the body: 11 px on the desktop (13 × 0.846) and 14 on touch (16 × 0.846), inside the rubric's 10 to 12 range at the density the chip is judged at. Rendered in a Section at 1200 px, the chip's figure draws 11 px in a 20 px pill (the 16 to 22 range). The 13 px in the story's evidence is the body size, so the reading was of another element. The caption step stays and the chip takes no role of its own.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/section/report.md`).

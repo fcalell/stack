@@ -1,6 +1,6 @@
 ---
 id: 003-101
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a folded Section's toggle reads as a disclosure, not a heading
@@ -20,3 +20,6 @@ Stead's item screens end in a folded Section ("Provenance", "Activity"; `item-de
 ## Built
 A folded Section (`folded` set) names itself at `SECTION_NESTED_TITLE` (body 600) in place of the heading role, and its chevron stands before the name, so the glyph, not the text, sits at the toggle's `-ms-inside` overhang on the page inset. The toggle keeps `min-h-target`. The chevron stays in the toggle's meta ink and steps to the body ink under the pointer or the press; the title stays in the nested title's body ink. Both plugins.
 Owner render: `layout/Section` Rest, a folded one beside an open one.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/section/report.md`).

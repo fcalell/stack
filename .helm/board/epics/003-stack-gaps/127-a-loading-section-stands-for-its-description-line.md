@@ -1,6 +1,6 @@
 ---
 id: 003-127
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a loading Section stands for the description line it will have
@@ -23,3 +23,6 @@ Stead's review screen waits as the loaded one stands, and its Check, Criteria an
 Not built: the shape is a consumer-surface choice, so it waits for a ruling. The part cannot derive that a description line stands, since the app does not know it before the read. Options: (a) `description=""` while the Section loads stands one meta-height bar and draws nothing loaded (an empty string draws no line today), so no prop changes, and an app writes `description={read?.tally ?? ""}`; (b) `description` also takes `true`, a marker the type carries for the waiting case; (c) a separate prop. Recommended: (a), the way a List reads the slots its map declares and a waiting form stands for them; its cost is that the convention is implicit, so the Section's `description` doc and the rules page say it. The Section's waiting form keeps the real text out of the accessibility tree because it draws a bar and no string.
 
 Ruled and built (2026-10-07): `description=""` on a loading Section stands one meta-height bar (a line box at the meta role, half the measure, `aria-hidden`, so no string reaches the accessibility tree). Loaded, `""` draws no line, as today. An undefined `description` draws nothing in either state, so `""` and `undefined` differ only while loading. A non-empty `description` draws its text as before. No prop or type changes (`description?: string`); the convention is documented on both platforms' Section `description`, in the roster note, in `ui-core.md` and in both `rules.md` pages (`description={read?.tally ?? ""}` keeps the head's height). The Section frame's `Loading` state holds a described head waiting beside the loaded one; the critique measures them. Proven at 1280 and in a 375 px phone: the waiting head equals the loaded head, and a loading Section with no description matches its loaded self.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/section/report.md`).

@@ -1,6 +1,6 @@
 ---
 id: 003-123
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a waiting Prose stands for the lines the text will have
@@ -23,3 +23,6 @@ Stead's Action item draws "Why it waits" as a `Prose` of one sentence (github.co
 Not built: the shape is a consumer-surface choice, so it waits for a ruling. Built meanwhile (003-131, 003-132): the waiting contract every part follows, that a part draws its waiting form when its own `loading` or the `LoadingContext` of the loading Group or Section holding it is set, and builds the form from the props it is given. `Prose` now takes that inherited loading, so a loading Section over a `Prose` shows the Prose's own form; its form is still the fixed two paragraphs. The count of lines is a fact the app has and the part cannot derive (`markdown` is empty or stale while it waits), so it needs a prop: a `lines` count on `Prose` read while it waits (an absent count keeps the two paragraphs), or `loading` taking the count (`loading={1}`; `true` the default). Recommended: `loading` as the count, the same rule as 003-139's acts, and no new name.
 
 Ruled and built (2026-10-07): `loading` stays a boolean on every part, except where the loaded size is a count of drawn units the app knows and the part cannot derive. `Prose` takes `loading?: boolean | number`: `true` is the two paragraphs, a number from 1 is that many lines of one paragraph (the last half the measure), and `0`, a count under 1 and `false` are not waiting (`loading={rows?.length}` is the trap: it reads the loaded text at 0). One ui-core helper, `waitCount(own, inherited, fallback)` in `list-state`, returns undefined when not waiting and the count when waiting, and both platforms call it. A loading Group or Section hands down a boolean through `LoadingContext`, so an inheriting Prose draws the default; a count is set on the Prose itself. The roster notes it, the `ui-core.md` canon states the rule, and both `rules.md` pages and the prop docs say it. The Prose frame's `Loading` state holds a one-line Section waiting beside the loaded one; the critique measures them. Proven in `apps/showcase/behaviour/waiting.stories.tsx` at 1280 and in a 375 px phone: the one-line Section's height equals the loaded one's, `0` shows the loaded text.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/section/report.md`).

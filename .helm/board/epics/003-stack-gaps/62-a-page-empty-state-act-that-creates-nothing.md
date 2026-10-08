@@ -1,6 +1,6 @@
 ---
 id: 003-62
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a page's empty state whose act creates nothing
@@ -22,3 +22,6 @@ Component count 62 -> 63. Stack drawing an unknown address itself is filed as st
 
 ## Open questions
 - [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/section/report.md`).

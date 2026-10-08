@@ -1,6 +1,6 @@
 ---
 id: 003-131
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a loading Section with a Prose or Thread body stands for that body, not for form fields
@@ -31,3 +31,6 @@ A loading `Section` decides how its body waits from the direct children it knows
 - Built on both platforms; the roster, `.helm/knowledge/architecture/ui-core.md` and both rules pages say it.
 - Not covered: a waiting `Prose` is still its two paragraphs, so a Section over a one-line text changes height on load (003-123); a Thread's waiting form is its three messages. The Code Section holds its loaded height at both densities (the fold's row and `tail` lines); the Prose and Thread Sections do not, by the count of lines and messages the data has.
 - Proven in `apps/showcase/behaviour/waiting.stories.tsx` under the browser lock: the waiting Prose is visible with no text, the Thread draws its three waiting messages, the Code Section's height equals the loaded Section's, at 1280 and in a 375 px phone. The third criterion's showcase half holds (the Section frame's `Loading` state draws a Notes, a Thread and a Check Section waiting beside the loaded ones); the critique measures them.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/section/report.md`).

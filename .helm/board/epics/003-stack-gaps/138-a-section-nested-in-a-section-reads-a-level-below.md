@@ -1,6 +1,6 @@
 ---
 id: 003-138
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a Section nested in a Section reads a level below its parent
@@ -22,3 +22,6 @@ Nothing in the app separates them: both are `Section` titles, drawn by the same 
 A Section read inside another Section (`SectionContext`, no prop) draws its title at `SECTION_NESTED_TITLE` (new cell: body size and line, weight 600, `ink-body`) in both plugins; a top-level Section keeps the `heading` role. The screen draws no new size. The Section frame holds a "Memory" Section over "Workspace" and "Code" Sections.
 Measured at 1200 (desktop): the outer title draws 15/600, the inner 13/600.
 Evidence: `stories/Section.stories.ts` passes; `ui-core`, `plugin-react-ui` and `plugin-native-ui` verify pass. The 64 px of blank under the first title in the story's evidence is the Place body's rhythm and is not changed here.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/section/report.md`).

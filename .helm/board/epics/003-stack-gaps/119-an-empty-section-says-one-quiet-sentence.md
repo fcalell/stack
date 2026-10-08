@@ -1,6 +1,6 @@
 ---
 id: 003-119
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: an empty Section says one quiet sentence, not a framed box
@@ -20,3 +20,6 @@ Stead's Now with nothing waiting draws "Nothing needs you." in a hairline box ab
 
 ## Built
 No prop. `EmptyStateBase` (both platforms) draws a Section's empty state, when it has only a `sentence` (no title, mark, act or children, not a chart's fill), as one meta sentence at the Section's text edge, unframed; with any of those it stays framed, and in a Group it stays the card. The EmptyState frame's Section cell holds "Nothing needs you." under the framed Webhooks Section. Evidence: the EmptyState, Failed, Missing, Prose and Thread stories pass. The critique's judgement of both forms is still to run.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/section/report.md`).
