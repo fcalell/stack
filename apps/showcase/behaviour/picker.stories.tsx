@@ -276,6 +276,70 @@ function blocks(width: number): StoryObj {
 export const Blocked320 = blocks(320);
 export const Blocked1440 = blocks(1440);
 
+// The touch sheet's rows are buttons: a blocked row is aria-disabled, shows
+// its reason in its own ink at the described row's height and picks nothing;
+// the sheet opens on the chosen row. A blocked option in a pick of several's
+// value is an enabled row with no reason, and once unticked it is blocked again.
+export const BlockedSheet: StoryObj = {
+	render: () => <Agents width={320} />,
+	tags: ["touch"],
+	globals: {
+		density: "touch",
+		viewport: { value: "narrow", isRotated: false },
+	},
+	parameters: {
+		viewport: {
+			options: {
+				narrow: {
+					name: "Narrow",
+					styles: { width: "320px", height: "700px" },
+					type: "mobile",
+				},
+			},
+		},
+	},
+	play: async ({ canvas, userEvent }) => {
+		const trigger = canvas.getByRole("button", { name: "Agent" });
+		await userEvent.click(trigger);
+		const list = await screen.findByRole("listbox", { name: "Agent" });
+		const [writer, reviewer, editor, planner] =
+			within(list).getAllByRole("option");
+		await expect(reviewer).toHaveAttribute("aria-disabled", "true");
+		await expect(editor).toHaveAttribute("aria-disabled", "true");
+		await expect(writer).not.toHaveAttribute("aria-disabled");
+		await expect(planner).not.toHaveAttribute("aria-disabled");
+		const reason = within(list).getByText("Lacks brief.flag");
+		await expect(getComputedStyle(reason).color).not.toBe(
+			getComputedStyle(within(list).getByText("Drafts the brief")).color,
+		);
+		await expect(reviewer?.getBoundingClientRect().height).toBeCloseTo(
+			writer?.getBoundingClientRect().height ?? 0,
+			1,
+		);
+		await waitFor(() => expect(focused()).toBe(writer));
+		await userEvent.click(reviewer as HTMLElement);
+		await expect(screen.getByRole("listbox")).toBeInTheDocument();
+		await expect(trigger).toHaveTextContent("Writer");
+		await userEvent.click(planner as HTMLElement);
+		await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
+		await expect(trigger).toHaveTextContent("Planner");
+
+		await userEvent.click(canvas.getByRole("button", { name: "Agents" }));
+		const several = await screen.findByRole("listbox", { name: "Agents" });
+		const [, , chosen] = within(several).getAllByRole("option");
+		await expect(chosen).toHaveAttribute("aria-selected", "true");
+		await expect(chosen).not.toHaveAttribute("aria-disabled");
+		await expect(within(several).queryByText("Asks for edit")).toBeNull();
+		await userEvent.click(chosen as HTMLElement);
+		await waitFor(() =>
+			expect(chosen).toHaveAttribute("aria-disabled", "true"),
+		);
+		await within(several).findByText("Asks for edit");
+		await userEvent.click(chosen as HTMLElement);
+		await expect(chosen).toHaveAttribute("aria-selected", "false");
+	},
+};
+
 function Pair() {
 	const [repo, setRepo] = useState("web");
 	const [lead, setLead] = useState("ana");

@@ -44,9 +44,12 @@ The owner rules: a query-driven `OptionList`'s `option` map gains a `blocked` sl
 - `OptionSlots.blocked` (`ui-core/src/list-state.ts`): a function of the loaded item returning the reason or `undefined`, as the other slots; `optionsOf` carries it into `Option.blocked`, so both platforms' `OptionList` draw and act on it with no change of their own (they read `optionsOf`). It leaves the waiting shape unchanged. Unit test in `test/option-list.test.ts`; both `guide/rules.md` pages and `ui-core.md` list the slot.
 - Evidence: `behaviour/option-list.stories.tsx` `BlockedFromData320`, `BlockedFromData1440` (check rows) and `BlockedRadiosFromData1440` read the three agents from a query through the `option` map and pass the same checks as the static set (disabled, no click, reason in its own ink, row height equal to the described row's, chosen blocked option enabled and removable then blocked again): 16 of 16 in the file; the run peaked at 2954 MiB.
 
-## Open
-- The touch sheet and the native rows are not exercised by any story; native is not rendered. The `Select`, `Picker`, `MultiPick` and `OptionList` box stays unticked until a native render or a touch-sheet story exists.
-- The critique has not measured the Picker frame at 320 and 1440.
-
 ## Owner ruling
 Second ruling: a touch-sheet story is added (a blocked option at a touch viewport). The native rows stay unticked until a native render exists.
+
+## Built (the touch sheet)
+`behaviour/picker.stories.tsx` `BlockedSheet` opens the touch sheet at a 320 px viewport and the touch density. A blocked row is `aria-disabled` and the enabled rows are not; its reason is in a different ink from a described row's description, at the same row height; the sheet opens focused on the chosen row; a press on the blocked row picks nothing and keeps the sheet open; a press on an enabled row picks and closes it. In the pick of several, the blocked chosen option is an enabled, ticked row with no reason; pressing it unticks it and it is blocked again with its reason, and pressing it again picks nothing. Passes with the rest of the Picker and Shell files (17 of 17; peak 2442 MiB).
+
+## Open
+- The native rows (`OptionList` and the shared `PickSheet`) are not rendered by any story; the `Select`, `Picker`, `MultiPick` and `OptionList` box stays unticked until a native render exists. The web touch sheet is now exercised.
+- The critique has not measured the Picker frame at 320 and 1440.

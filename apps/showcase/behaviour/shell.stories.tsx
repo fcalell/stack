@@ -240,9 +240,9 @@ const COUNTED: PlaceSpec[] = [
 ];
 
 // A tab's count of one and two figures reads as it is, a count past 99 reads
-// "99+"; each starts one step right of its glyph's edge and the label stays
-// centred under the glyph. The distance to the bar's end is logged: the last
-// tab's count ends past it at 320 and 390.
+// "99+"; each stands on its glyph's top-right corner, its start half its width
+// inside the glyph's edge, and the label stays centred under the glyph. Every
+// count ends inside the bar, the last tab's at 320 included.
 const TAB_WIDTHS = { 320: "narrow", 390: "phone", 768: "tablet" } as const;
 
 const tabCount = (width: keyof typeof TAB_WIDTHS, mode: "light" | "dark") => {
@@ -288,18 +288,14 @@ const tabCount = (width: keyof typeof TAB_WIDTHS, mode: "light" | "dark") => {
 				const label = overlay?.closest("a")?.lastElementChild;
 				if (!overlay || !glyph || !label)
 					throw new Error("the tab is not drawn");
-				const step = Number.parseFloat(
-					getComputedStyle(overlay).marginInlineStart,
-				);
 				const box = figure.getBoundingClientRect();
 				const glyphBox = glyph.getBoundingClientRect();
 				const labelBox = label.getBoundingClientRect();
-				const gap = box.left - glyphBox.right;
 				console.log(
-					`${width} ${mode} count ${count}: gap ${gap}, to the bar's end ${bar.right - box.right}`,
+					`${width} ${mode} count ${count}: start ${box.left - glyphBox.right} past the glyph's edge, width ${box.width}, to the bar's end ${bar.right - box.right}`,
 				);
-				await expect(step).toBeGreaterThan(0);
-				await expect(gap).toBeCloseTo(step, 1);
+				await expect(box.left - glyphBox.right).toBeCloseTo(-box.width / 2, 1);
+				await expect(box.right).toBeLessThanOrEqual(bar.right);
 				await expect(labelBox.left + labelBox.width / 2).toBeCloseTo(
 					glyphBox.left + glyphBox.width / 2,
 					1,

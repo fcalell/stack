@@ -40,7 +40,7 @@ const CONTENT = "flex-1";
 const TABS = "flex-row";
 const TAB = "flex-col-reverse items-center justify-center min-w-0 flex-1";
 const TAB_GLYPH = "relative";
-const TAB_COUNT = "absolute top-0 left-full ms-inside";
+const TAB_COUNT = "absolute top-0 left-full -translate-x-1/2";
 const TAB_LABEL = "max-w-full";
 // A tab bar holds five tabs at most: past five places, four and More.
 const TAB_ROOM = 5;
@@ -139,7 +139,8 @@ function MorePage({ places }: { places: readonly PlaceSpec[] }) {
 	);
 }
 
-// The places: glyph over label, the count over the glyph's end; past five
+// The places: glyph over label, the count a badge on the glyph's top-right
+// corner, its start half its width inside the glyph's edge; past five
 // places, four and a More tab, selected while its page stands or the current
 // place is among the rest.
 // A tab holds its label ahead of its glyph and stacks them reversed, and
