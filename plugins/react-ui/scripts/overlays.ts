@@ -472,7 +472,6 @@ export const OVERLAYS: readonly string[] = [
 	"w-max",
 	"z-1",
 	"isolate",
-	"page-tablet:flex",
 	"group-hover/sort:flex",
 	"group-focus-visible/sort:flex",
 	"group-hover/row:bg-wash-hover",

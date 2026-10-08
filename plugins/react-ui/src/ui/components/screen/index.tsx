@@ -182,6 +182,7 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 					<HeadingContext value={2}>
 						<div
 							data-screen={beside ? undefined : ""}
+							data-page={beside ? undefined : ""}
 							className={beside ? SCREEN_BESIDE : SCREEN}
 						>
 							{head}
@@ -191,7 +192,7 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 									tabIndex={stop ? 0 : undefined}
 									className={BODY}
 								>
-									<div className={cn(PAGE_BODY, SECTIONS_BESIDE)}>
+									<div data-page="" className={cn(PAGE_BODY, SECTIONS_BESIDE)}>
 										{headPaired(children)}
 									</div>
 									{room ? <div className={ALONE}>{room}</div> : null}

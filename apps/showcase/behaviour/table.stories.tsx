@@ -60,6 +60,48 @@ export default {
 	),
 } satisfies Meta;
 
+// A page `width` px wide: the container the Table's form is chosen by.
+function Sized(props: { width: number }) {
+	return (
+		<div
+			style={{
+				width: props.width,
+				height: 700,
+				display: "flex",
+				flexDirection: "column",
+			}}
+		>
+			<Place title="Cron tasks">
+				<Table
+					columns={COLUMNS}
+					items={TASKS}
+					row={{ id: (task) => task.id }}
+					onOpen={open}
+				/>
+			</Place>
+		</div>
+	);
+}
+
+// Only the live form is in the document: from `tablet` (768) of its page the
+// grid, below it the list.
+export const FromTablet: StoryObj = {
+	render: () => <Sized width={768} />,
+	play: async ({ canvas, canvasElement }) => {
+		await expect(canvas.getByRole("grid")).toBeInTheDocument();
+		await expect(canvas.getAllByText("Nightly backup")).toHaveLength(1);
+		await expect(canvasElement.querySelectorAll("table")).toHaveLength(1);
+	},
+};
+
+export const BelowTablet: StoryObj = {
+	render: () => <Sized width={767} />,
+	play: async ({ canvas, canvasElement }) => {
+		await expect(canvas.getAllByText("Nightly backup")).toHaveLength(1);
+		await expect(canvasElement.querySelectorAll("table")).toHaveLength(0);
+	},
+};
+
 // A grid with a cell cursor: one Tab stop, the arrow keys move it by cell,
 // Home and End to the row's ends, Ctrl+End to the last cell.
 export const Grid: StoryObj = {

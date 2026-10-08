@@ -795,7 +795,7 @@ a tick with no animation, never jumped to full.
   rows (the touch List's waiting rows); failed, the failed EmptyState with `sentence` and Retry, and
   missing, the missing form, each under the header on the grid and alone on touch; empty, `empty`;
   then its rows. It counts once in the Section around it, which reads the Table's own props, and
-  mounts its touch List with no `SectionContext`, since on the web both forms are mounted. A row
+  mounts its touch List with no `SectionContext`, since the Table reports to the Section once. A row
   with `href` is its leading cell's link (`tabindex -1`, so a new tab opens it); a row's `locked`
   names the columns it draws read only (an owner's role), and in an editable table a cell it locks
   (one its column would edit) ends in the lock mark. A column's own
@@ -880,9 +880,10 @@ a tick with no animation, never jumped to full.
   focus on the cursor's own cell sets nothing. On the phone a row's two halves (the frozen leading
   cell and the cells that scroll) wash together on a press, so both read one store of the pressed
   row's id, each only whether it is the pressed one; a sortable header washes through the
-  Pressable's own pressed state. The web mounts both forms and CSS hides one, since the switch is
-  the page's container width, which no store reads: a sort, a selection or a data change renders the
-  rows twice until Place and Screen hand their page's width to one external store.
+  Pressable's own pressed state. The web mounts only the live form: a Table finds its page (the
+  `data-page` mark of a Place or a Screen) in the layout phase and reads whether the page is `tablet`
+  wide through one external store (`usePageTablet`), so the choice re-renders before paint; a Table
+  outside a page draws the list.
 - A thread is a molecule (`Thread`), a collection: its Messages from `query` (with `sentence`) or
   `items` (waiting on `loading`) through the `message` map, one function per `Message` slot (`key`,
   `author`, `name`, `body`, `at`, `attachments` and `meta` for a turn, `onOpen` returning a system

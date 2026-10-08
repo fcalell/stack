@@ -67,6 +67,7 @@ import { PageTitle } from "../../lib/frame.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 import { useTouch } from "../../lib/media.ts";
 import { follow, navigate } from "../../lib/navigate.ts";
+import { usePageTablet } from "../../lib/page.ts";
 import { SectionContext } from "../../lib/section.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Checkbox } from "../checkbox/index.tsx";
@@ -86,15 +87,10 @@ import { Status } from "../status/index.tsx";
 
 // The table fills what its page's body leaves, so an empty one's EmptyState
 // centres under the header. From `tablet` of its page the grid stands; below
-// it the rows are a list under the sort's pick.
+// it the rows are a list under the sort's pick. Only the live form mounts,
+// chosen from the page's width (`usePageTablet`).
 const ROOT = "flex flex-col grow";
-// TODO: both forms mount and CSS hides one, so a sort, a selection or a data
-// change renders the rows twice and the hidden form stays in the document.
-// The switch is the page's container width, which no store reads; mount only
-// the live form once Place and Screen hand their page's width to one
-// external store.
-const GRID = "hidden page-tablet:flex flex-col grow";
-const LIST_FORM = "flex flex-col grow page-tablet:hidden";
+const FORM = "flex flex-col grow";
 // The grid is its own stacking context, so its frozen column stands over its
 // cells alone, never over a sheet or a floating act.
 const FRAME = "flex flex-col isolate";
@@ -265,6 +261,7 @@ function editOf(
 export function Table<T>(props: TableProps<T>) {
 	const { columns, selected, onOpen, onEdit, empty } = props;
 	const words = useWords();
+	const [place, wide] = usePageTablet();
 	const [sort, setSort] = useState<Sort>();
 	const base = {
 		query: props.query,
@@ -298,8 +295,11 @@ export function Table<T>(props: TableProps<T>) {
 	else if (state === "empty") slot = empty;
 	const under =
 		slot === null ? null : <div className={cn(TABLE_EMPTY, EMPTY)}>{slot}</div>;
-	return (
-		<div className={ROOT}>
+	// The form is unknown until the root is placed in its page; placing it
+	// re-renders before paint.
+	let form: ReactNode = null;
+	if (wide) {
+		form = (
 			<Grid
 				columns={columns}
 				rows={records}
@@ -313,7 +313,10 @@ export function Table<T>(props: TableProps<T>) {
 			>
 				{under}
 			</Grid>
-			<div className={LIST_FORM}>
+		);
+	} else if (wide === false) {
+		form = (
+			<div className={FORM}>
 				{slot ?? (
 					// The Table reports to the Section around it once; its touch
 					// List is its own part, not a list of the Section.
@@ -333,6 +336,11 @@ export function Table<T>(props: TableProps<T>) {
 					</SectionContext>
 				)}
 			</div>
+		);
+	}
+	return (
+		<div ref={place} className={ROOT}>
+			{form}
 		</div>
 	);
 }
@@ -793,7 +801,7 @@ function Grid(props: {
 	const reach = tickable(rows).length > 0;
 
 	return (
-		<div className={GRID}>
+		<div className={FORM}>
 			<div ref={frame} className={cn(TABLE_FRAME, FRAME, touch && SCROLLS)}>
 				<table
 					// biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: a table whose keyboard is a cell cursor is the WAI-ARIA grid

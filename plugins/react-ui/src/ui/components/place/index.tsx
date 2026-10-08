@@ -56,7 +56,8 @@ import { BODY_FILLED, PART_ABOVE_FILLED } from "../thread/fill.ts";
 const PLACE = "flex flex-col grow min-h-0";
 // A page is the size container what stands in it decides its structure by
 // (a Split its regions, a Table its grid); the acts a Split's marks show hide by the
-// same widths.
+// same widths. It marks itself `data-page`, which a Table reads its width by
+// (`usePageTablet`).
 const PAGE = "@container/page group/page";
 // The head's acts for a Split, drawn from the first frame and shown by the
 // marks its root carries (`DetailsSheet`): the back act to the list below
@@ -359,6 +360,7 @@ export function Place({
 						<div
 							data-density={far ? "room" : undefined}
 							data-foot={foot ? "" : undefined}
+							data-page=""
 							className={cn(PLACE, PAGE)}
 						>
 							{head}
