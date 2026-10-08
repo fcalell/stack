@@ -1,6 +1,6 @@
 ---
 id: 003-124
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a Split's list standing alone keeps its bottom room over a docked foot
@@ -22,3 +22,6 @@ Stead's Now is a `Place` with a `foot` (the ask field, docked) holding a `Split`
 ## Built
 A Split under a Place with a `foot` ends its list a sections gap above the foot at every width. The web Place marks its root `data-foot`; the Split's list reads it (`LIST_FOOT` in `split/index.tsx`: `group-data-foot/page:pb-sections`, and the same under `page-max-tablet:` where `LIST_ALONE` zeroes the inset). Native: a bleeding Place with a `foot` hands its Split a `PAGE_BODY_OVER_FOOT` room through `ActRoom`, as it hands the floating act's room. A Place with no foot is unchanged.
 Evidence: `behaviour/split.stories.tsx` `ListOverFoot` and `ListWithoutFoot` (desktop and `Touch`) measure the gap against the `sections` token and zero.
+
+## Critique
+Ship, by a fresh critic at 1280, 768, 1440 and 390, light and dark (scratchpad `critique/split/report.md`).

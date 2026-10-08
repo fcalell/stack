@@ -1,6 +1,6 @@
 ---
 id: 003-115
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a Split's `wide` stands at a 1440 px viewport beside the shell's sidebar
@@ -22,3 +22,6 @@ Stead sets three screens from `wide` (design/07-interface.md, 1440 px): the revi
 ## Built
 `wide` is 1200 (it was 1440) in `tokens.ts`: it is read only through the page container, which in the Shell is the viewport less the 240 px sidebar, so `beside` and `pane` stand from a 1440 viewport. DESIGN.md regenerated; `graph.test.ts` pins 1200; the Split rule (`rules.md`) and `ui-core.md` state both thresholds.
 Evidence: `behaviour/split.stories.tsx` `BesideFromWide`, `BesideBelowWide`, `PaneFromWide`, `PaneBelowWide` (pages 1200 and 1199 px).
+
+## Critique
+Ship, by a fresh critic at 1280, 768, 1440 and 390, light and dark (scratchpad `critique/split/report.md`).

@@ -1,6 +1,6 @@
 ---
 id: 003-82
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: sections in a Split's list and in a Sheet's body stand a sections gap apart
@@ -21,3 +21,6 @@ The list keeps its `py-inside` top inset; a critique glances at a Section head 8
 
 ## Open questions
 - [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Critique
+Ship, by a fresh critic at 1280, 768, 1440 and 390, light and dark (scratchpad `critique/split/report.md`).

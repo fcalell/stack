@@ -22,3 +22,6 @@ Nothing in the app can set the list's inset: geometry classes go on host element
 ## Decided
 Already satisfied at HEAD. `SPLIT_LIST_STACK` gives the list `pt-page`, the same inset as `SPLIT_MAIN` and `SPLIT_PANE` (the story's `py-inside` is story 82's earlier form), so the first content of the list and of the main share one top. A row's wash cannot leave its Group: the Group clips its rows (`overflow-hidden`) and a bare list's bleed (`-mx-control-x`) stays inside the list column's `px-page`. No change to the shape; `SPLIT_MAIN`'s measure is 88's.
 Evidence: `behaviour/split.stories.tsx` `TopsAndWash` (list and main headings at one top; every row inside the Group's border).
+
+## Critique
+Rework: the list and main tops are equal (y 90); the list's wash is unjudged, since the story's rows draw no hover or selected state.

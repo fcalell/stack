@@ -1,6 +1,6 @@
 ---
 id: 003-81
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a Thread among Sections shares their column
@@ -21,3 +21,6 @@ Rejected: the inline Thread at the region's full width. `overlays.ts` gains `ite
 
 ## Open questions
 - [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Critique
+Ship, by a fresh critic at 1280, 768, 1440 and 390, light and dark (scratchpad `critique/split/report.md`).

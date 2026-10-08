@@ -1,6 +1,6 @@
 ---
 id: 003-68
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a place's list that stands below the place's root
@@ -21,3 +21,6 @@ Both platforms; cells unchanged, only the back act's target moves. The roster, `
 
 ## Open questions
 - [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Critique
+Ship, by a fresh critic at 1280, 768, 1440 and 390, light and dark (scratchpad `critique/split/report.md`).

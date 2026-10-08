@@ -22,3 +22,6 @@ Stead opens a page's History as a `Screen` in `Split`'s `beside` (github.com/fca
 ## Decided
 Not reproducible at HEAD. The Place's head hides below `tablet` beside a record (`HEAD_BESIDE`, `data-beside`), the Screen's head is the page's one, and its title and body start at the page's gutter (16 on touch). The Screen draws one inset, not two. The `place` hide rule needs no change. Stead's report (stack at `5564217`, which already held `HEAD_BESIDE`) is most likely a build that predates it or a Shell-only difference; a Stead render at the current stack settles it.
 Evidence: `behaviour/split.stories.tsx` `BesideAtThePhone` (touch, 375 px: one visible `header`, the Screen's title and its first row at the `page` inset).
+
+## Critique
+Rework: the render holds (one head, edges at the gutter), but `BesideAtThePhone`'s play fails at every width (expected 32 to be 16): it compares an absolute left with the gutter while Storybook pads the page by 16 px.

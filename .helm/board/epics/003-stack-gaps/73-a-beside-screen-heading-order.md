@@ -21,3 +21,6 @@ The Screen loses `ALONE`, `TITLE_UNDER` and its twin `h1`: one `Heading` at `lev
 
 ## Open questions
 - [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Critique
+Rework: at 390 no h1 has a box; the Place's `h1` stands in a display:none head with no twin, so the top visible heading is the h2 "History". At 768 and 1440 an h1 stands.

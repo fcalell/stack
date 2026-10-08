@@ -31,3 +31,6 @@ that marks itself. The phone body keeps one element type in every form. `ThreadF
 
 ## Progress
 Built; `pnpm check` and `pnpm verify` pass. Web live at 1440 and 375: a Place renders in one commit on mount, and the assistant's log is filled and at its end from its first frame. The web's marked forms stay in the overlay (the contract forbids platform conditionals in cells), held to the cells by `fill.test.ts`. A Thread stands as the body's or the main's direct child. `apps/phone` gains an Ask place for the phone check. Open: the phone live criterion on the harness.
+
+## Critique
+Rework (blocker): `layout-split` `fills` frame (a Thread filling a Split's main) is 277/216/292 px tall at 1280/768/390 against 585/307/403 for `rest`; the log is about 0 px, the docked MessageInput is cut, and at 390 no Thread draws.

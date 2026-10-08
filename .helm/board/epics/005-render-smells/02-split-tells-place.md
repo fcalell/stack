@@ -32,3 +32,6 @@ or slots, never from a layout effect or a post-paint state push; a registration 
 
 ## Progress
 Built; `pnpm check` and `pnpm verify` pass. Web live, every frame from document start: a deep-linked record at 375 has its back and Details acts and no Toolbar in its first frame, and each width keeps its acts in every frame. Phone (the recommended option, b): a Split stands as its page's direct child and the page reads its props in render; a deeper Split draws as a plain region. Open: the phone live criterion on the harness.
+
+## Critique
+Unrendered: first paint is a live trace criterion; the settled head holds.

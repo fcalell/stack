@@ -1,6 +1,6 @@
 ---
 id: 003-88
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a record in a Split's main reads at the measure
@@ -30,3 +30,6 @@ The cell holds it. `SPLIT_MAIN rest` caps the padded record at the derived size 
 - Native reads the same cell through `splitMain`, so a tablet-width record caps the same way; the head pairing (`item-header/pair.tsx`) wraps children inside the capped column unchanged.
 - Docs: `ui-core.md`, `ui-core/README.md`, both rules pages; `DESIGN.md` regenerated.
 - Evidence: `behaviour/split.stories.tsx` `RecordHoldsTheMeasure` (1440 page: the padded record is `measure-inset` wide at the main's start, the ItemHeader, Group, Code, Prose and ActionBar all end at inset + measure, the last act's right edge on that line) passes; `ui-core`, `react-ui` and `native-ui` verify pass.
+
+## Critique
+Ship, by a fresh critic at 1280, 768, 1440 and 390, light and dark (scratchpad `critique/split/report.md`).

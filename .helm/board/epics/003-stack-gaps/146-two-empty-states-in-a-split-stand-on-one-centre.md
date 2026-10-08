@@ -1,6 +1,6 @@
 ---
 id: 003-146
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: the list's empty state and the Split's main empty state share a centre
@@ -20,3 +20,6 @@ Split centres its `empty` main by `EMPTY = "flex grow min-w-0 items-center justi
 ## Built
 The two empty states stood 10 px apart because the list's bottom inset was `pb-inside` (6) where the main's is `p-page` (24). `SPLIT_LIST` now takes `pb-page`, so the list and the main centre on one line (the Toolbar stands above the Split, as in Stead's Work, so it is in neither region). The Split rule is unchanged.
 Evidence: `behaviour/split.stories.tsx` `EmptyCentres` (two EmptyStates, headings share one top).
+
+## Critique
+Ship, by a fresh critic at 1280, 768, 1440 and 390, light and dark (scratchpad `critique/split/report.md`).
