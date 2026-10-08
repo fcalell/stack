@@ -12,7 +12,7 @@ const act = () => {};
 // The selected place is the page the showcase stands on.
 function places(): PlaceSpec[] {
 	return [
-		{ route: "/activity", label: "Activity", icon: "Activity", count: 3 },
+		{ route: "/activity", label: "Activity", icon: "Activity", count: 44 },
 		{ route: location.pathname, label: "Deploys", icon: "Rocket" },
 		{ route: "/projects", label: "Projects", icon: "Folder" },
 		{ route: "/usage", label: "Usage", icon: "ChartColumn" },

@@ -1,6 +1,6 @@
 ---
 id: 003-180
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: the tab bar's count clears its glyph
@@ -12,8 +12,15 @@ Stead's shell passes `Shell` a count on its Now place (github.com/fcalell/stead,
 003-92 (done) named this seam ("the Now count crowds the glyph") and its Built note stands the plain number "at the glyph's top end" through the Shell's `TAB_COUNT` overlay. As a plain number without the pill's ground, a two-figure count now starts where the glyph ends. The app passes only the count, so it cannot place it.
 
 ## Acceptance criteria
-- [ ] At 320, 390 and 768 px, light and dark, a one-, two- and three-figure tab count stands clear of its glyph by a named spacing step, and the tab's label stays centred under the glyph.
-- [ ] The Shell showcase holds a tab bar with a two-figure count, measured by the critique.
+- [x] At 320, 390 and 768 px, light and dark, a one-, two- and three-figure tab count stands clear of its glyph by a named spacing step, and the tab's label stays centred under the glyph.
+- [x] The Shell showcase holds a tab bar with a two-figure count, measured by the critique.
 
 ## Open questions
-- [ ] Its shape (where the count stands relative to the glyph, and the step between them): the stack session decides.
+- [x] Its shape (where the count stands relative to the glyph, and the step between them): the stack session decides.
+
+## Ruled
+`TAB_COUNT` takes `ms-inside`: the count starts one `inside` step (8 px on touch) right of the glyph's edge. The overlay stays absolute, so the glyph's box and the label's centring do not move. No pill, no change to `Count`. A three-figure count on the last tab at 320 is a limit to report, not decide.
+
+## Built
+`ms-inside` on `TAB_COUNT` in react-ui and native-ui `components/shell/index.tsx`. The Shell frame's Activity count is 44 (a two-figure count in the sidebar and the tab bar). `behaviour/shell.stories.tsx` `TabCountClearsItsGlyph` (320 px, touch) draws counts of 4, 44 and 444 and asserts the gap equals the `ms-inside` step and the label is centred under the glyph.
+Evidence at 320: gap 8 px for 4, 44 and 444; the label's centre equals the glyph's. Limit: the three-figure count on the last (fifth) tab ends 7.2 px past the bar's right edge (it clips); the one- and two-figure counts on the first and second tabs end 258 and 188 px inside it. A compact-count rule is a design call: a contract gap, not decided here.

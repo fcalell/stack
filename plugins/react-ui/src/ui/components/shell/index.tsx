@@ -55,7 +55,7 @@ const TABS = "flex pb-safe group-has-data-screen/column:hidden";
 const TAB =
 	"flex flex-col items-center justify-center min-w-0 grow basis-0 focus-visible:-outline-offset-2";
 const TAB_GLYPH = "relative flex";
-const TAB_COUNT = "absolute top-0 left-full flex";
+const TAB_COUNT = "absolute top-0 left-full ms-inside flex";
 const TAB_LABEL = "max-w-full truncate";
 // A tab bar holds five tabs at most: past five places, four and More.
 const TAB_ROOM = 5;
@@ -185,8 +185,9 @@ function MorePage(props: { places: readonly PlaceSpec[] }) {
 }
 
 // The touch shell's places: glyph over label, the count over the glyph's
-// end; past five places, four and a More tab, which opens the page of the
-// rest and is selected while it stands or the current place is among them.
+// end, one `inside` step clear of it; past five places, four and a More tab,
+// which opens the page of the rest and is selected while it stands or the
+// current place is among them.
 function TabBar(props: {
 	places: readonly PlaceSpec[];
 	route: string | undefined;
