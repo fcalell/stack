@@ -239,60 +239,80 @@ const COUNTED: PlaceSpec[] = [
 	{ route: "/e", label: "Activity", icon: "Activity", count: 444 },
 ];
 
-// A tab's count of one, two and three figures starts one step right of its
-// glyph's edge and the label stays centred under the glyph; the last tab's
-// distance to the bar's end at 320 is logged.
-export const TabCountClearsItsGlyph: StoryObj = {
-	render: () => (
-		<Shell places={COUNTED}>
-			<Place title="Overview">
-				<p>The page.</p>
-			</Place>
-		</Shell>
-	),
-	tags: ["touch"],
-	globals: {
-		density: "touch",
-		viewport: { value: "narrow", isRotated: false },
-	},
-	parameters: {
-		layout: "fullscreen",
-		viewport: {
-			options: {
-				narrow: {
-					name: "Narrow",
-					styles: { width: "320px", height: "640px" },
-					type: "mobile",
+// A tab's count of one and two figures reads as it is, a count past 99 reads
+// "99+"; each starts one step right of its glyph's edge and the label stays
+// centred under the glyph. The distance to the bar's end is logged: the last
+// tab's count ends past it at 320 and 390.
+const TAB_WIDTHS = { 320: "narrow", 390: "phone", 768: "tablet" } as const;
+
+const tabCount = (width: keyof typeof TAB_WIDTHS, mode: "light" | "dark") => {
+	const story: StoryObj = {
+		render: () => (
+			<div
+				className={mode === "dark" ? "dark" : undefined}
+				style={{ background: "var(--color-canvas)" }}
+			>
+				<Shell places={COUNTED}>
+					<Place title="Overview">
+						<p>The page.</p>
+					</Place>
+				</Shell>
+			</div>
+		),
+		tags: ["touch"],
+		globals: {
+			density: "touch",
+			viewport: { value: TAB_WIDTHS[width], isRotated: false },
+		},
+		parameters: {
+			layout: "fullscreen",
+			viewport: {
+				options: {
+					[TAB_WIDTHS[width]]: {
+						name: TAB_WIDTHS[width],
+						styles: { width: `${width}px`, height: "800px" },
+						type: "mobile",
+					},
 				},
 			},
 		},
-	},
-	play: async ({ canvas }) => {
-		const bar = canvas
-			.getByRole("navigation", { name: "Places" })
-			.getBoundingClientRect();
-		for (const count of ["4", "44", "444"]) {
-			const figure = canvas.getByText(count, { exact: true });
-			const overlay = figure.parentElement;
-			const glyph = overlay?.parentElement;
-			const label = overlay?.closest("a")?.lastElementChild;
-			if (!overlay || !glyph || !label) throw new Error("the tab is not drawn");
-			const step = Number.parseFloat(
-				getComputedStyle(overlay).marginInlineStart,
-			);
-			const figureBox = figure.getBoundingClientRect();
-			const glyphBox = glyph.getBoundingClientRect();
-			const labelBox = label.getBoundingClientRect();
-			const gap = figureBox.left - glyphBox.right;
-			console.log(
-				`count ${count}: gap ${gap}, to the bar's end ${bar.right - figureBox.right}`,
-			);
-			await expect(step).toBeGreaterThan(0);
-			await expect(gap).toBeCloseTo(step, 1);
-			await expect(labelBox.left + labelBox.width / 2).toBeCloseTo(
-				glyphBox.left + glyphBox.width / 2,
-				1,
-			);
-		}
-	},
+		play: async ({ canvas }) => {
+			const bar = canvas
+				.getByRole("navigation", { name: "Places" })
+				.getBoundingClientRect();
+			await expect(canvas.queryByText("444")).toBeNull();
+			for (const count of ["4", "44", "99+"]) {
+				const figure = canvas.getByText(count, { exact: true });
+				const overlay = figure.parentElement;
+				const glyph = overlay?.parentElement;
+				const label = overlay?.closest("a")?.lastElementChild;
+				if (!overlay || !glyph || !label)
+					throw new Error("the tab is not drawn");
+				const step = Number.parseFloat(
+					getComputedStyle(overlay).marginInlineStart,
+				);
+				const box = figure.getBoundingClientRect();
+				const glyphBox = glyph.getBoundingClientRect();
+				const labelBox = label.getBoundingClientRect();
+				const gap = box.left - glyphBox.right;
+				console.log(
+					`${width} ${mode} count ${count}: gap ${gap}, to the bar's end ${bar.right - box.right}`,
+				);
+				await expect(step).toBeGreaterThan(0);
+				await expect(gap).toBeCloseTo(step, 1);
+				await expect(labelBox.left + labelBox.width / 2).toBeCloseTo(
+					glyphBox.left + glyphBox.width / 2,
+					1,
+				);
+			}
+		},
+	};
+	return story;
 };
+
+export const TabCountClearsItsGlyph = tabCount(320, "light");
+export const TabCountClearsItsGlyphDark = tabCount(320, "dark");
+export const TabCountClearsItsGlyph390 = tabCount(390, "light");
+export const TabCountClearsItsGlyph390Dark = tabCount(390, "dark");
+export const TabCountClearsItsGlyph768 = tabCount(768, "light");
+export const TabCountClearsItsGlyph768Dark = tabCount(768, "dark");

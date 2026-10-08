@@ -106,6 +106,7 @@ import {
 	TYPE_ROLES,
 	TYPE_SCALE,
 	type TypeRole,
+	tabCount,
 	WIDTH_VALUE,
 	WIDTHS,
 	WORD_KEYS,
@@ -752,7 +753,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(BREAKPOINTS.length, 3, "breakpoint count");
 	requireEqual(WORD_KEYS.length, 70, "word count");
 	requireEqual(COUNTED_WORD_KEYS.length, 1, "counted word count");
-	requireEqual(SLOT_WORD_KEYS.length, 3, "slot word count");
+	requireEqual(SLOT_WORD_KEYS.length, 4, "slot word count");
 	requireEqual(
 		[...CHART_SERIES].sort().join(" "),
 		[...CHIP_HUES].sort().join(" "),
@@ -2167,6 +2168,15 @@ check("c31", "words: English is total and the schema is closed", () => {
 		filled(ENGLISH.chosenOf, { count: "3", of: "8" }),
 		"3 of 8 chosen",
 		"a filled selection count",
+	);
+	requireEqual(
+		[
+			tabCount(ENGLISH, 99),
+			tabCount(ENGLISH, 100),
+			tabCount(ENGLISH, 444),
+		].join(" "),
+		"99 99+ 99+",
+		"a tab count past the ceiling",
 	);
 	requireEqual(
 		filled(ENGLISH.wrongType, { name: "a.pdf", types: "CSV, HAR" }),

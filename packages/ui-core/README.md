@@ -155,11 +155,11 @@ beside `theme`: the seven `Status` words, `recommended`, `copy`, `copied`, `down
 `notifications`, `code`, `added`, `removed`, `sort`, `message`,
 `copyFailed`, `downloadFailed`, `latest`, `missing`, `chooseFile`, `typeValue`,
 `pickValue`, `locked`, `photos`, `files`, `changed`, `unchanged`, `stale`, `chooseAll`,
-`chooseNone`, `noMatches`, `imageFiles`, `audioFiles`, `videoFiles`, `textFiles`, `expand`, `collapse`, `zoomIn`, `zoomOut`, `fit`, `arrange`, `off`, `notFound`, `nowhere`, `discardEdit`, `keepEditing`, `discard`, `editUnsaved`, the counted `earlierLines`, and the slot words `wrongType`, `stepOf` and
-`chosenOf`. A counted word is `{ one, other }`, each form spelling `{count}` where the number
+`chooseNone`, `noMatches`, `imageFiles`, `audioFiles`, `videoFiles`, `textFiles`, `expand`, `collapse`, `zoomIn`, `zoomOut`, `fit`, `arrange`, `off`, `notFound`, `nowhere`, `discardEdit`, `keepEditing`, `discard`, `editUnsaved`, the counted `earlierLines`, and the slot words `wrongType`, `stepOf`, `chosenOf` and
+`countOver`. A counted word is `{ one, other }`, each form spelling `{count}` where the number
 stands, drawn through `counted(word, count)` (`one` at a count of one, `other` at any other). A slot
 word spells each of its named slots as `{name}` where the value stands (`wrongType` `{name}` and `{types}`, `stepOf`
-`{at}` and `{of}`, `chosenOf` `{count}` and `{of}`), drawn through `filled(word, values)`; the
+`{at}` and `{of}`, `chosenOf` `{count}` and `{of}`, `countOver` `{max}`), drawn through `filled(word, values)`; a tab bar's count past `TAB_COUNT_MAX` (99) reads as `countOver` ("99+") through `tabCount(words, count)`; the
 schema rejects a translation that drops a slot. `Words` requires every key and `wordsSchema` is
 closed, so a translation that misses a word fails `tsc` and the schema, never the interface.
 `ENGLISH` is the default. A sentence that belongs to the consumer is a prop on the molecule that

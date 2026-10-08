@@ -4,6 +4,7 @@ import type {
 	Switcher,
 } from "@fcalell/ui-core/descriptors";
 import { placeAt } from "@fcalell/ui-core/route";
+import { tabCount } from "@fcalell/ui-core/tokens";
 import {
 	type ContentTone,
 	type PlaceTabState,
@@ -173,7 +174,9 @@ function TabBar({
 					key={spec.route}
 					icon={spec.icon}
 					label={spec.label}
-					count={spec.count}
+					count={
+						spec.count === undefined ? undefined : tabCount(words, spec.count)
+					}
 					selected={!more && spec.route === route}
 					onAct={() => {
 						onPlace();
@@ -202,7 +205,7 @@ function Tab({
 }: {
 	icon: IconName;
 	label: string;
-	count?: number;
+	count?: string;
 	selected: boolean;
 	onAct: () => void;
 }) {

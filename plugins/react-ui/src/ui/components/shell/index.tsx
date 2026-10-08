@@ -1,6 +1,7 @@
 import { cn } from "@fcalell/ui-core/cn";
 import type { PlaceSpec, Switcher } from "@fcalell/ui-core/descriptors";
 import { placeAt } from "@fcalell/ui-core/route";
+import { tabCount } from "@fcalell/ui-core/tokens";
 import {
 	placeRow,
 	placeRowGlyph,
@@ -222,7 +223,7 @@ function TabBar(props: {
 									<Icon name={spec.icon} fit="control" />
 									{spec.count === undefined ? null : (
 										<span className={TAB_COUNT}>
-											<Count value={spec.count} />
+											<Count value={tabCount(words, spec.count)} />
 										</span>
 									)}
 								</>

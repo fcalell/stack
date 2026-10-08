@@ -6,8 +6,8 @@ import type { Closed } from "../../lib/closed.ts";
 
 /** A number in the muted ink. */
 export interface CountProps extends Closed {
-	/** The number. */
-	value: number;
+	/** The number, or its drawn form where it is capped (`tabCount`). */
+	value: number | string;
 }
 
 /** A number in the muted ink, its figures at one width; in a `Button` it draws in the act's ink. */

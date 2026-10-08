@@ -8,7 +8,7 @@ import { useInk } from "../../lib/ink";
 import { useTokenColor } from "../../lib/theme";
 
 export interface CountProps extends Closed {
-	value: number;
+	value: number | string;
 }
 
 // A number in the muted ink, its figures at one width. In a `Button` it draws

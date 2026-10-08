@@ -2722,4 +2722,4 @@ Durations are read as `duration-<rung>`; every rung is 0 under `prefers-reduced-
 - Do draw one `title` per screen, no `heading` inside a row, no `caption` sentence; emphasis is weight, never size.
 - Do keep text at 4.5:1 or more on its fill; the contract measures every pair it draws.
 - Do time motion with a duration rung and a contract curve; don't write a literal duration.
-- Do take every word a component draws from `words`; a sentence is a prop. A counted word (`earlierLines`) is `{ one, other }`, each form spelling `{count}` where the number stands, drawn through `counted(word, count)`. A slot word (`wrongType`, `stepOf`, `chosenOf`) spells its named slots as `{name}` where each value stands, drawn through `filled(word, values)`.
+- Do take every word a component draws from `words`; a sentence is a prop. A counted word (`earlierLines`) is `{ one, other }`, each form spelling `{count}` where the number stands, drawn through `counted(word, count)`. A slot word (`wrongType`, `stepOf`, `chosenOf`, `countOver`) spells its named slots as `{name}` where each value stands, drawn through `filled(word, values)`.

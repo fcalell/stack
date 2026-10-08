@@ -207,7 +207,7 @@ Every word a molecule draws on its own (the seven `Status` words, `recommended`,
 `message`, `copyFailed`, `downloadFailed`, `latest`,
 `missing`, `chooseFile`, `typeValue`, `pickValue`, `locked`, `photos`, `files`,
 `changed`, `unchanged`, `stale`, `chooseAll`, `chooseNone`, `noMatches`, `imageFiles`, `audioFiles`, `videoFiles`, `textFiles`, `expand`, `collapse`, `zoomIn`, `zoomOut`, `fit`, `arrange`, `off`, `notFound`, `nowhere`, `discardEdit`, `keepEditing`, `discard`, `editUnsaved`, the counted
-`earlierLines`, and the slot words `wrongType`, `stepOf` and `chosenOf`) comes from `words`, a closed
+`earlierLines`, and the slot words `wrongType`, `stepOf`, `chosenOf` and `countOver`) comes from `words`, a closed
 typed object with English defaults. The `Words` type requires every key and `wordsSchema` is strict,
 so a translation missing a word fails `tsc` and the schema. It is a plugin option beside `theme`;
 each plugin contributes a `WordsProvider` into the generated entry through its platform's
@@ -548,6 +548,10 @@ a tick with no animation, never jumped to full.
   `PLACE_TAB` with `PLACE_TAB_LABEL`, the tab bar tab, is selected by ink alone (`ink-meta` idle,
   `ink-body` selected, the selected label at 500); its box carries the ink for the glyph inside it,
   as a labelled act's fill does, and the label repeats it because a native Text inherits none.
+  A tab's count is the plain number at the glyph's top end, one `inside` step right of the
+  glyph's edge, and past `TAB_COUNT_MAX` (99) it reads `countOver` ("99+", `tabCount(words, n)`,
+  handed to `Count` as its drawn form); the sidebar's `Count` draws the number whole. "99+" is as
+  wide as a three-figure number, so on the last of five tabs it still ends past the bar at 320 and 390.
 - A row names what holds it: `ROW`'s `ground` axis is `list` (a list or a popover, the row
   inset as a rounded wash) or `group` (edge to edge at the card's inset), and its `lines` what
   it stands for (`one`, `two` a title over its meta, `setting` a label over its description).

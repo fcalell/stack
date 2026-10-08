@@ -1296,6 +1296,7 @@ export const SLOT_WORDS = {
 	wrongType: ["name", "types"],
 	stepOf: ["at", "of"],
 	chosenOf: ["count", "of"],
+	countOver: ["max"],
 } as const satisfies Record<string, readonly string[]>;
 export type SlotWordKey = keyof typeof SLOT_WORDS;
 // `Object.keys` widens to `string`; the keys are the record's own.
@@ -1383,6 +1384,7 @@ export const ENGLISH: Words = {
 	wrongType: "{name} isn't one of {types}",
 	stepOf: "Step {at} of {of}",
 	chosenOf: "{count} of {of} chosen",
+	countOver: "{max}+",
 };
 
 // A slot word with its values: `filled(words.stepOf, { at, of })`.
@@ -1391,6 +1393,17 @@ export function filled(word: string, values: Record<string, string>): string {
 		/\{(\w+)\}/g,
 		(slot, name: string) => values[name] ?? slot,
 	);
+}
+
+// The most a tab's count draws; a count past it reads as the slot word
+// `countOver` ("99+"), so the count stays inside the bar at the narrowest width.
+export const TAB_COUNT_MAX = 99;
+
+// A tab's count as drawn: `tabCount(words, 44)` is "44", `tabCount(words, 444)` "99+".
+export function tabCount(words: Words, count: number): string {
+	return count > TAB_COUNT_MAX
+		? filled(words.countOver, { max: String(TAB_COUNT_MAX) })
+		: String(count);
 }
 
 // An act's word over what it acts on, the word alone when there is nothing
