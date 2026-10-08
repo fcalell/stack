@@ -1,6 +1,6 @@
 ---
 id: 003-99
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a desktop Sheet's head has even room and one height
@@ -21,3 +21,6 @@ The desktop side sheet's head row is a two-line row tall (`min-h-row-2`, local t
 
 ## Open questions
 - [ ] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/sheet/report.md`).

@@ -1,6 +1,6 @@
 ---
 id: 003-91
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a sheet's touch head keeps its title whole beside its submit
@@ -20,3 +20,6 @@ A sheet's title wraps to its whole text beside the acts at every density (`trunc
 
 ## Open questions
 - [ ] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/sheet/report.md`).

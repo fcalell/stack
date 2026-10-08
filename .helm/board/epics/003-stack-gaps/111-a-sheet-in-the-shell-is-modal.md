@@ -1,6 +1,6 @@
 ---
 id: 003-111
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a Sheet opened inside the Shell or a Gate is modal
@@ -24,3 +24,6 @@ A Sheet or a `confirm()` decision opened in a running app leaves the page behind
 - `SheetBase` computes `scoped = container !== undefined && !use(PortalHosted)` and passes `modal={!scoped}`, `disablePointerDismissal={scoped}`. A Stage or a frame's own `PortalContainer` stays scoped; a sheet in the Shell or a Gate is modal, the scrim dismisses, and Base UI's `markOthers` keeps `[aria-live]`, so toasts stay announced.
 - Menu, picker and select read `PortalContainer` for placement only and are unchanged.
 - Unverified in a browser: the acceptance criteria stay unticked until the verifier proves them.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/sheet/report.md`).

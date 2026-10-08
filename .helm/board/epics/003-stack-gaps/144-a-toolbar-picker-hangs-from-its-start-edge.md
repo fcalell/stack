@@ -1,6 +1,6 @@
 ---
 id: 003-144
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a Picker in a toolbar's start hangs its list from its start edge
@@ -20,3 +20,6 @@ Stead's Work toolbar sets its Repo and Lead pickers at the start of the line; on
 
 ## Built
 `PickerBase` loses `align` (react-ui `picker/base.tsx`); both desktop lists (`Select.Positioner`, `Combobox.Positioner`) take `align="start"`, which was already the table cell's and the two internal callers' (`Place.context`, `ItemHeader` pick fact), so those drop their `align="start"`. The Shell's switcher and a row-trailing pick now hang from their start too and shift back inside the viewport on a collision. Evidence: `Behaviour/Picker` Start passes for a short and a searching list; the Picker, Toolbar, Table, ItemHeader, Place, Shell and Split stories pass.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/sheet/report.md`).

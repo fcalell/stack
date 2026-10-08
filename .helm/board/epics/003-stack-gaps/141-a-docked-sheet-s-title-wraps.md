@@ -22,3 +22,6 @@ The docked head's title is a `min-h-control` slot centring its text (a short tit
 
 ## Open questions
 - [ ] Its shape (a component, a variant, a token, an option): the stack session decides, whether the title wraps freely or clamps at a line count with the full text available.
+
+## Critique
+Rework: a docked Sheet's title is 13/500 (16/500 touch) over a Section heading of 15/600 (18/600) in its own body, so the body outranks the sheet; the touch gap from title to description is 18 px against about 4 in the modal head.

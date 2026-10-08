@@ -20,3 +20,6 @@ Base UI's `FloatingPortal` renders the guards only for an open, non-modal popup 
 
 ## Decided while building (2026-10-07), by the building session
 One recorded exception, as 003-75 decided for the menu: `[data-base-ui-focus-guard]` is excluded from axe once where each run is configured, `a11y.context.exclude` in the showcase preview (`.storybook/focus-guard.ts`, spread into the story-level excludes that replace it, since Storybook overwrites arrays) and in the screens floors (`floors.ts`), each with a `// TODO:` naming the limit (Base UI 1.8.0 draws focusable `aria-hidden` guards on purpose, no prop) and the trigger (a release whose guards are not focusable or not hidden). Modal popups and an upstream issue are not taken.
+
+## Critique
+Unrendered: not captured by the sheet critique (Menu in the Shell; the axe guard exception is not a render; the docked focus return).

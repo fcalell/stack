@@ -23,3 +23,6 @@ A Sheet docked in a Place's or a Thread's foot hands focus to the `MessageInput`
 - Removing the focused element fires neither event, so the hold survives the commit that swaps the sheet for the input. The after-commit effect, when `held.current` and `document.activeElement === document.body`, resets it and calls `focusFirst(region.current, "input, textarea")`.
 - `trackHold` is tested under node with a fake document (`test/focus.test.ts`). `DockedInThreadFoot` in `apps/showcase/behaviour/sheet.stories.tsx` is the Thread twin of `DockedInFoot`.
 - Unverified in a browser: the acceptance criteria stay unticked until the verifier proves them.
+
+## Critique
+Unrendered: not captured by the sheet critique (Menu in the Shell; the axe guard exception is not a render; the docked focus return).

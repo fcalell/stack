@@ -1,6 +1,6 @@
 ---
 id: 003-133
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a searchable Picker says "No matches" only when the search matches nothing
@@ -21,3 +21,6 @@ Stead's Quiet hours draws two `Picker`s of 25 options (None and the 24 hours) as
 
 ## Built
 `PickSearch` (react-ui `picker/base.tsx`) draws `<Combobox.Empty><NoMatches>{words.noMatches}</NoMatches></Combobox.Empty>`: Base UI nulls the children when anything matches, so the row (and its padding) is not drawn, and the `Empty` root stays mounted but draws nothing. The native sheet already drew the line only for a miss. Evidence: `Behaviour/Picker` Search (no line open, the line on a typed miss, gone after backspacing) passes.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/sheet/report.md`).

@@ -22,3 +22,6 @@ Both platforms, with a showcase Thread holding a two-page docked Sheet at 375 x 
 
 ## Open questions
 - [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Critique
+Rework: a docked Sheet's title is 13/500 (16/500 touch) over a Section heading of 15/600 (18/600) in its own body, so the body outranks the sheet; the touch gap from title to description is 18 px against about 4 in the modal head.

@@ -21,3 +21,6 @@ No `fit` value (ruled). The desktop side sheet is its content's height with the 
 
 ## Open questions
 - [ ] Its shape (a component, a variant, a token, an option): the stack session decides, whether `fit` gains a value or the Sheet decides by its body.
+
+## Critique
+Rework: at 4x the side sheet's foot draws a square corner about 2 px past the 8 px bottom-left radius. The look (a 640 x 222 card at the top end, the page dimmed below) is the owner's earlier ruling.

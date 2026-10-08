@@ -21,3 +21,6 @@ Split in two. `region` (a fix, web only): the Shell renders a popup layer as the
 
 ## Open questions
 - [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Critique
+Unrendered: not captured by the sheet critique (Menu in the Shell; the axe guard exception is not a render; the docked focus return).

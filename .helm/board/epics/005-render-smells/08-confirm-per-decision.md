@@ -32,3 +32,6 @@ Decided (the recommended answer, applied 2026-10-04): the reset is per decision 
 
 ## Progress
 Built; `pnpm check` and `pnpm verify` pass. Web live: a typed confirm keeps its text and its act's look through the whole exit (Cancel and Escape), and a queued second decision opens on the first frame with an empty field, at 375 and 1440. SheetBase also resets on a new page (an unkeyed confirm stays open from one decision to the next). Open: the phone live criterion on the harness.
+
+## Critique
+Unrendered: the exit cannot be sampled with transitions off; the loading frame keeps the typed name with a pending act.

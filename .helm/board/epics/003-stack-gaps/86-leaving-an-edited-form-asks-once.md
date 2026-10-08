@@ -1,6 +1,6 @@
 ---
 id: 003-86
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: leaving an edited form asks once
@@ -25,3 +25,6 @@ The shape is `Form` behaviour: no prop, variant, token or component, and the app
 - Web: `blockLeave` in `lib/navigate.ts` registers the bound router's `history.block` (async `blockerFn`, truthy holds; `enableBeforeUnload` true only while the form asks), verified against @tanstack/history 1.162.4. Unbound it is a `beforeunload` listener only. Phone: `useNavigation().addListener("beforeRemove")` prevents, asks, and a discard dispatches `event.data.action`; type-checked only, no device.
 - Limits: a `Form` inside a sheet asks nothing; two edited forms on one page each ask; on the phone a tab switch removes no screen and so asks nothing.
 - Proof: the ui-core, react-ui (`test/navigate.test.ts`, `test/leave.test.ts`) and native-ui (`test/leave.test.ts`) node tests, and `apps/showcase/behaviour/form-leave.stories.tsx` (not run in a browser by this session).
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/sheet/report.md`).

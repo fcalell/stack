@@ -1,6 +1,6 @@
 ---
 id: 003-129
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a docked Sheet's body keeps a floor of rows
@@ -31,3 +31,6 @@ The foot is no longer capped at three fifths: `FOOT_DOCKED` is `max-h-full min-h
 - Docs: the Sheet rule in both `rules.md`, `ui-core.md`, the `FOOT_DOCKED` comment and the Thread JSDoc.
 - Evidence: `behaviour/sheet.stories.tsx` `DockedBodyKeepsThreeRows` (390 x 844 column under a banner, touch: the body is at least three rows (144 px) and at most two fifths of the region, the log has height, the sheet ends inside the region, the review page pads to three rows) and `DockedWithRoomFitsItsPage` (1600 px column: the body does not scroll and the log is taller) pass in the touch project, with the rest of `sheet`, `not-found` and `failed`. `pnpm check` turbo, the three `verify` runs and Biome pass. Native is typechecked and `verify`d only: Yoga's min-versus-max on the body Scroll and `onLayout` on `KeyboardAvoidingView` (read from its source) are not run on a device.
 - Left: the critique of the render (measuring the body and the Latest act's clearance) belongs to a session outside this work.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/sheet/report.md`).

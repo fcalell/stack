@@ -1,6 +1,6 @@
 ---
 id: 003-71
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a picker's field trigger fits a narrow toolbar
@@ -20,3 +20,6 @@ A field-fit trigger in a Form keeps its look, since shrink only acts on overflow
 
 ## Open questions
 - [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/sheet/report.md`).
