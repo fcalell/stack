@@ -27,6 +27,7 @@ import {
 	SPACING_ROLES,
 	STACK_ORDER,
 	STRONG_WEIGHT,
+	TEXT_MEASURE_CHARACTERS,
 	TRACKED_ROLES,
 	TYPE_ROLES,
 	TYPE_SCALE,
@@ -171,6 +172,9 @@ const SIZE_USE: Record<(typeof SIZES)[number], string> = {
 		"one body line's box: a part on a wrapped title's first line is pinned to it",
 	"icon-inset":
 		"the gap between an icon act's box and its glyph: half of what the control has over its icon, which a bar of acts reaches across so the glyphs stand at its edges",
+	measure: `the width of running text: ${TEXT_MEASURE_CHARACTERS} characters at the sans face's figure advance of the body size, one width for every role of text`,
+	"measure-inset":
+		"the width of a column that holds the measure inside the page inset on both sides: a Split's open record",
 };
 
 const RADIUS_USE: Record<(typeof RADIUS_ROLES)[number], string> = {
@@ -453,7 +457,7 @@ function body(resolved: ResolvedTheme): string[] {
 			]),
 		),
 		"",
-		`Tracking: ${TRACKED_ROLES.map((role) => `${code(role)} ${resolved.tracking[role]}`).join(", ")}; the rest 0. \`sans\` is ${code(resolved.fonts.sans)}; \`mono\` is ${code(resolved.fonts.mono)}. Each named family is followed by its metric fallback face. Running text wraps at \`measure\`, ${resolved.widths.measure}; native, which has no \`ch\`, draws it at ${resolved.nativeMeasures.measure} (its characters at the sans face's figure advance of the touch body size, so a consumer face with a wider "0" overflows it).`,
+		`Tracking: ${TRACKED_ROLES.map((role) => `${code(role)} ${resolved.tracking[role]}`).join(", ")}; the rest 0. \`sans\` is ${code(resolved.fonts.sans)}; \`mono\` is ${code(resolved.fonts.mono)}. Each named family is followed by its metric fallback face. Running text wraps at \`measure\`, ${TEXT_MEASURE_CHARACTERS} characters at the sans face's figure advance of the body size, rounded up: ${resolved.sizes.desktop.measure} on the desktop, ${resolved.sizes.touch.measure} on touch, one width for every role of text (so a consumer face with a wider "0" overflows it).`,
 		"",
 		"## Layout",
 		"",
@@ -485,17 +489,14 @@ function body(resolved: ResolvedTheme): string[] {
 		"",
 		`An icon's stroke is a weight on Lucide's 24-unit grid, so it scales with the icon: \`line\` ${ICON_STROKE.line}, an icon's own, and \`mark\` ${ICON_STROKE.mark}, a mark that carries meaning at the meta size (a checkbox's tick and dash, a change mark's glyph), which at ${resolved.sizes.desktop["icon-meta"]} draws ${(ICON_STROKE.mark * sizePx("desktop", "icon-meta")) / 24} px where \`line\` draws 1 px across two pixel rows at half coverage. No component spells a stroke number.`,
 		"",
-		`Widths of lifted layers, never stretched to their container, and of a frame's fixed regions: ${WIDTHS.filter(
-			(width) => width !== "measure",
-		)
-			.map((width) =>
+		`Widths of lifted layers, never stretched to their container, and of a frame's fixed regions: ${WIDTHS.map(
+			(width) =>
 				width === "measure-short"
 					? `${code(width)} ${resolved.widths[width]} (native ${resolved.nativeMeasures[width]}, at the body size, so a label's own size is lost there)`
 					: `${code(width)} ${resolved.widths[width]}`,
-			)
-			.join(
-				", ",
-			)}. Breakpoints: ${BREAKPOINTS.map((bp) => `${code(bp)} ${resolved.breakpoints[bp]}`).join(", ")}; they are the only responsive variants, of the viewport (\`tablet:\`) and, on the web, of a page's width (\`page-tablet:\`, \`page-max-tablet:\`), by which a Split decides its regions.`,
+		).join(
+			", ",
+		)}. Breakpoints: ${BREAKPOINTS.map((bp) => `${code(bp)} ${resolved.breakpoints[bp]}`).join(", ")}; they are the only responsive variants, of the viewport (\`tablet:\`) and, on the web, of a page's width (\`page-tablet:\`, \`page-max-tablet:\`), by which a Split decides its regions.`,
 		"",
 		"## Elevation & Depth",
 		"",

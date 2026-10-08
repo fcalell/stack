@@ -1,8 +1,13 @@
+import { ActionBar } from "@fcalell/plugin-react-ui/components/action-bar";
+import { Code } from "@fcalell/plugin-react-ui/components/code";
+import { DefinitionRow } from "@fcalell/plugin-react-ui/components/definition-row";
 import { EmptyState } from "@fcalell/plugin-react-ui/components/empty-state";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
+import { ItemHeader } from "@fcalell/plugin-react-ui/components/item-header";
 import { List } from "@fcalell/plugin-react-ui/components/list";
 import { MessageInput } from "@fcalell/plugin-react-ui/components/message-input";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
+import { Prose } from "@fcalell/plugin-react-ui/components/prose";
 import { Screen } from "@fcalell/plugin-react-ui/components/screen";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
 import { Split } from "@fcalell/plugin-react-ui/components/split";
@@ -396,3 +401,66 @@ export const TreeRecordGoesToTree: StoryObj = {
 
 export const TreeAloneGoesUpTouch = touch(TreeAloneGoesUp);
 export const TreeRecordGoesToTreeTouch = touch(TreeRecordGoesToTree);
+
+// The open record stands in one column at the measure, at the main's start: a
+// Group, a Code and a Prose end at one x, and an end-fit ActionBar's acts end
+// there too, not at the main's far edge.
+function Record() {
+	return (
+		<Page width={1440}>
+			<Place title="Now" bleed>
+				<Split
+					list={<Rows />}
+					main={
+						<>
+							<ItemHeader title="Review the deploy" facts={["Ana Ruiz"]} />
+							<Section title="Where it goes">
+								<Group>
+									<DefinitionRow label="From" value="main" />
+									<DefinitionRow label="To" value="production" />
+								</Group>
+							</Section>
+							<Code text={"pnpm check\npnpm verify"} />
+							<Prose markdown="A paragraph of the record, read at the measure." />
+							<ActionBar
+								acts={[
+									{ label: "Stop", onAct: noop },
+									{ label: "Approve", onAct: noop },
+								]}
+							/>
+						</>
+					}
+				/>
+			</Place>
+		</Page>
+	);
+}
+
+// A token's width in px, read off a probe wearing its class.
+function width(root: Element, className: string): number {
+	const probe = document.createElement("div");
+	probe.className = className;
+	root.append(probe);
+	const size = probe.getBoundingClientRect().width;
+	probe.remove();
+	return size;
+}
+
+export const RecordHoldsTheMeasure: StoryObj = {
+	render: () => <Record />,
+	play: async ({ canvasElement }) => {
+		const main = must(regions(canvasElement)[1]);
+		const inset = must(main.firstElementChild);
+		const column = inset.getBoundingClientRect();
+		const measure = width(canvasElement, "w-measure");
+		await expect(column.width).toBe(width(canvasElement, "w-measure-inset"));
+		await expect(column.left).toBe(main.getBoundingClientRect().left);
+		const end =
+			column.left + token(canvasElement, "px-page", "paddingLeft") + measure;
+		for (const part of inset.children)
+			await expect(part.getBoundingClientRect().right).toBeCloseTo(end, 0);
+		const acts = canvasElement.querySelectorAll("button");
+		const last = must(acts[acts.length - 1]).getBoundingClientRect();
+		await expect(last.right).toBeCloseTo(end, 0);
+	},
+};

@@ -8,6 +8,7 @@ import { Group } from "../../components/group/index.tsx";
 import { Input } from "../../components/input/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import { Switch } from "../../components/switch/index.tsx";
+import { Text } from "../../components/text/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 
 const change = () => {};
@@ -73,20 +74,26 @@ export function drawForm(frame: ShowcaseFrame) {
 	const loading = frame.state === "loading";
 	const drawn =
 		name === "FORM.holds.fields" ? (
-			<Form>
-				<Labelled
-					label="Project name"
-					value="acme-web"
-					description="Lowercase letters, digits and dashes."
-				/>
-				<Labelled label="Region" value="Frankfurt, eu-central-1" />
-				<ActionBar
-					acts={[
-						{ label: "Cancel", onAct: change },
-						{ label: "Create project", onAct: never },
-					]}
-				/>
-			</Form>
+			<div className="flex flex-col gap-fields">
+				<Text>
+					A project holds one app and its deploys. The form below stands as wide
+					as this paragraph, the page's column.
+				</Text>
+				<Form>
+					<Labelled
+						label="Project name"
+						value="acme-web"
+						description="Lowercase letters, digits and dashes."
+					/>
+					<Labelled label="Region" value="Frankfurt, eu-central-1" />
+					<ActionBar
+						acts={[
+							{ label: "Cancel", onAct: change },
+							{ label: "Create project", onAct: never },
+						]}
+					/>
+				</Form>
+			</div>
 		) : (
 			<Form>
 				<Section

@@ -21,8 +21,8 @@ Twenty-one subpaths:
   outside `@theme`: the hairline, the focus ring's width and offset, the layers' order
   (`--layer-<layer>`) and the light shadows. `modeTokens` is one mode's colors and its two shadows.
   `densityTokens` is one density's type scale, spacing roles and sizes (the room's in canvas units);
-  `roomTokens` and `roomScope` are the room set scaled. `nativeMeasureTokens` is native's two
-  measures in px over `themeTokens`' `ch`. `reducedMotionTokens` is every duration at 0ms.
+  `roomTokens` and `roomScope` are the room set scaled. `nativeMeasureTokens` is native's short
+  measure in px over `themeTokens`' `ch`. `reducedMotionTokens` is every duration at 0ms.
   `shadowUtilities` is the declaration of each `shadow-*` utility, reading its mode's variable.
   `raisedGroundTokens` is what a raised ground (`RAISED_GROUNDS`: `group`, `raised`) declares for
   everything inside it, the hairline read through `edge-raised`.
@@ -316,8 +316,12 @@ width, derived: twenty body line boxes; `thumb` is the switch's knob, so neither
 that name), `line-body` 20 / 24 (one body line's box, derived: the height a part standing on a
 wrapped title's first line is pinned to, so a taller part overflows it centred), `hairline` 1 / 1 (a
 field box's border, which an act inside it reaches across so its hit stands at the box's height)
-and `chips-inset` 3 / 9 (the inset above and below the chips of a pick of several, derived: half of
-what the compact control has over a chip, less the border). On touch every target is at least 44. A cell says `min-h`, never `h`: a
+`chips-inset` 3 / 9 (the inset above and below the chips of a pick of several, derived: half of
+what the compact control has over a chip, less the border), `measure` 453 / 557 (the width of
+running text, derived: 58 characters at the sans face's figure advance of the body size, so every
+role of text stands at one width) and `measure-inset` 501 / 589 (the measure and the page inset on
+both sides: the width a padded column stands at so its content is the measure, a Split's open
+record). On touch every target is at least 44. A cell says `min-h`, never `h`: a
 label must be able to grow its control under OS font scaling. A minimum height is the floor of
 something pressed (a control, a field, a target, a chip, a row), the set height of a bar (`strip`, a
 page's strip and its touch top bar), an intrinsic size (one body line's box, `line-body`, which a
@@ -341,12 +345,12 @@ status, a switch). One hairline of 1 px draws region edges, row splits and field
 the control's own edge; inside a list it is drawn inward.
 
 Widths are a short label's measure (a chip's label, a status word, a skeleton label's lane), the
-lifted layers' ranges, the one measure for running text and the fixed regions of a frame, as
-`--container-*`: `measure-short` 18ch, `popover` 240, `toast` 360, `dialog` 520, `sheet` 640,
-`measure` 58ch (native has no `ch`, so `nativeMeasureTokens` declares the two measures in px at
-`SANS_ADVANCE`, Plex Sans's 0.6 em "0", of the touch body size, rounded up: 173 and 557; there a
+lifted layers' ranges and the fixed regions of a frame, as
+`--container-*`: `measure-short` 18ch, `popover` 240, `toast` 360, `dialog` 520, `sheet` 640
+(native has no `ch`, so `nativeMeasureTokens` declares the short measure in px at
+`SANS_ADVANCE`, Plex Sans's 0.6 em "0", of the touch body size, rounded up: 173; there a
 short label's cap is the body's 18 characters whatever its own size, and a consumer face with a
-wider "0" overflows them); a layer never stretches to its container. The regions: `sidebar` 240 (the
+wider "0" overflows it); a layer never stretches to its container. The regions: `sidebar` 240 (the
 Shell's places), `list` 360 and `pane` 320 (a split's list column and record pane), `column` 300 (a
 board column), `node` 240 (a canvas node), `auth` 400 (the sign-in column), `empty` 320 (an empty state's column), `selection` 1060 (a selection bar's column, the pattern's table-wide bar). A width never
 takes a spacing role's or a size's name, since `w-*` reads `--spacing-*` first. A skeleton bar alone
@@ -377,7 +381,7 @@ web's `touch:` variant is emitted over the same condition, and inside a room sco
 `roomTokens(scale)`, its values canvas units that `scale` turns into the platform's: the web's
 `roomScope` is each as `calc(N * var(--room-unit))` under `[data-density="room"]`, native scales the
 same record by `roomUnitFor(width, height)` into uniwind's `ScopedVariables` (`roomMeasureTokens`
-its two measures, `roomRingTokens` the web's ring).
+its short measure, `roomRingTokens` the web's ring).
 
 ## Motion
 

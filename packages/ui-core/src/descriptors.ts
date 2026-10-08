@@ -432,9 +432,17 @@ export type MessageDetail =
 
 // ── Table ───────────────────────────────────────────────────────────
 
-// A column's width: a measure in characters of its text, or a fraction of the
-// table's width. A column with neither shares what the others leave.
-export type ColumnWidth = Measure | "1/4" | "1/3" | "1/2" | "2/3" | "3/4";
+// A column's width: the short measure of a label, the measure of running
+// text, or a fraction of the table's width. A column with none shares what the
+// others leave.
+export type ColumnWidth =
+	| Measure
+	| "measure"
+	| "1/4"
+	| "1/3"
+	| "1/2"
+	| "2/3"
+	| "3/4";
 
 // How a cell edits in place: typed into the `Input` of its column's kind,
 // picked from options, or ticked. A picked cell is cleared by an option

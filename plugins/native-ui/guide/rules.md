@@ -416,7 +416,7 @@ the top of its body, its first field taking focus. A `Sheet` among a `Thread`'s 
 A column is a width and the region around it aligns it: a docked foot (a `Place`'s `foot`, a
 `Thread`'s input) centres a selection bar's column. A region that holds a page's sections (a
 `Place`'s body, a `Split`'s list and record, a `Sheet`'s body) stands them a sections gap apart:
-never wrap sections in a `View` to space them. A `Split`'s list stands its first section at the page inset, as the record does, so both start on one line.
+never wrap sections in a `View` to space them. A `Split`'s list stands its first section at the page inset, as the record does, so both start on one line. A `Split`'s open record stands in one column at the measure, at its start, so its parts end where a `Prose` does.
 
 A `BarChart` takes data the same way, its `bar` map reading each item's `key`, `value`,
 `parts` (by its declared `keys`) and `at`; its failed and empty forms stand at the chart's height.

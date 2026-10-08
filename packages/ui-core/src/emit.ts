@@ -193,7 +193,7 @@ export function roomTokens<T>(scale: (units: number) => T): Record<string, T> {
 	return tokens;
 }
 
-// Native's two measures in the room: the px `nativeMeasureTokens` declares,
+// Native's short measure in the room: the px `nativeMeasureTokens` declares,
 // scaled. Native reads no `ch`, so there they scale with the room instead of
 // following the type.
 export function roomMeasureTokens<T>(
@@ -277,8 +277,8 @@ export function shadowUtilities(): Record<
 	return utilities;
 }
 
-// Native's two measures over the web's `ch`: uniwind reads no `ch`, so native
-// declares them in px at the sans figure advance of the touch body size, a
+// Native's short measure over the web's `ch`: uniwind reads no `ch`, so native
+// declares it in px at the sans figure advance of the touch body size, a
 // label's own size lost.
 export function nativeMeasureTokens(
 	resolved: ResolvedTheme,

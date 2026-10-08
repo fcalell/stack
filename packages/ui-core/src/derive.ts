@@ -78,7 +78,7 @@ export interface ResolvedTheme {
 	sizes: Record<PixelDensity, Record<Size, string>>;
 	radii: Record<RadiusRole, string>;
 	widths: Record<Width, string>;
-	// Native's two measures in px, since uniwind reads no `ch`.
+	// Native's short measure in px, since uniwind reads no `ch`.
 	nativeMeasures: Record<Measure, string>;
 	breakpoints: Record<Breakpoint, string>;
 	// The two family stacks: the knob's family, its metric fallback face, then

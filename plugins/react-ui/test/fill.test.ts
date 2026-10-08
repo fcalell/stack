@@ -11,7 +11,7 @@ const MARK = "[&:has(>[data-fill])]:";
 const GROUP_MARK = "group-[:has(>[data-fill])]/main:";
 
 // The sides an inset class sets: `p-*`, `px-*` and `py-*` spread to the sides
-// they cover, and a `0` takes a side away.
+// they cover, and a `0` takes a side away; a `max-w` is a cap, `none` its end.
 const SIDES: Record<string, readonly string[]> = {
 	p: ["pt", "pr", "pb", "pl"],
 	px: ["pr", "pl"],
@@ -21,17 +21,19 @@ const SIDES: Record<string, readonly string[]> = {
 	pb: ["pb"],
 	pl: ["pl"],
 	gap: ["gap"],
+	"max-w": ["max-w"],
 };
 
 function insets(...cells: string[]): Record<string, string> {
 	const set: Record<string, string> = {};
 	for (const name of cells.join(" ").split(" ").filter(Boolean)) {
-		const at = name.indexOf("-");
-		const sides = SIDES[name.slice(0, at)];
+		const [, property = "", value = ""] =
+			/^(max-w|[a-z]+)-(.+)$/.exec(name) ?? [];
+		const sides = SIDES[property];
 		assert.ok(sides, `${name} is no inset`);
 		for (const side of sides) {
-			if (name.slice(at + 1) === "0") delete set[side];
-			else set[side] = name.slice(at + 1);
+			if (value === "0" || value === "none") delete set[side];
+			else set[side] = value;
 		}
 	}
 	return set;

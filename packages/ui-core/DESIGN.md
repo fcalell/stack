@@ -291,6 +291,8 @@ spacing:
   chips-inset: "3px"
   line-body: "20px"
   icon-inset: "8px"
+  measure: "453px"
+  measure-inset: "501px"
 components:
   text-display:
     typography: "{typography.display}"
@@ -2456,7 +2458,7 @@ A chart's series take the chart fills in order: `chart-teal`, `chart-violet`, `c
 | `caption` | 11px / 16px | 14px / 22px | 14 / 22 | 400 | `ink-meta` | text inside a small component (a chip, a key hint), never a sentence |
 | `code` | 12px / 18px | 15px / 22px | 15 / 22 | 400 | `ink-body` | what a machine reads |
 
-Tracking: `display` -0.02em, `title` -0.01em, `heading` -0.005em, `caption` 0.01em; the rest 0. `sans` is `"IBM Plex Sans", "IBM Plex Sans Fallback", ui-sans-serif, system-ui, sans-serif`; `mono` is `"IBM Plex Mono", "IBM Plex Mono Fallback", ui-monospace, "SFMono-Regular", Menlo, monospace`. Each named family is followed by its metric fallback face. Running text wraps at `measure`, 58ch; native, which has no `ch`, draws it at 557px (its characters at the sans face's figure advance of the touch body size, so a consumer face with a wider "0" overflows it).
+Tracking: `display` -0.02em, `title` -0.01em, `heading` -0.005em, `caption` 0.01em; the rest 0. `sans` is `"IBM Plex Sans", "IBM Plex Sans Fallback", ui-sans-serif, system-ui, sans-serif`; `mono` is `"IBM Plex Mono", "IBM Plex Mono Fallback", ui-monospace, "SFMono-Regular", Menlo, monospace`. Each named family is followed by its metric fallback face. Running text wraps at `measure`, 58 characters at the sans face's figure advance of the body size, rounded up: 453px on the desktop, 557px on touch, one width for every role of text (so a consumer face with a wider "0" overflows it).
 
 ## Layout
 
@@ -2518,6 +2520,8 @@ Sizes are heights and squares in the same namespace. Density is a theme and neve
 | `chips-inset` | 3px | 9px | 9 | the inset above and below the chips of a pick of several: half of what the compact control has over a chip, less the border |
 | `line-body` | 20px | 24px | 24 | one body line's box: a part on a wrapped title's first line is pinned to it |
 | `icon-inset` | 8px | 12px | 12 | the gap between an icon act's box and its glyph: half of what the control has over its icon, which a bar of acts reaches across so the glyphs stand at its edges |
+| `measure` | 453px | 557px | 557 | the width of running text: 58 characters at the sans face's figure advance of the body size, one width for every role of text |
+| `measure-inset` | 501px | 589px | 653 | the width of a column that holds the measure inside the page inset on both sides: a Split's open record |
 
 An icon's stroke is a weight on Lucide's 24-unit grid, so it scales with the icon: `line` 2, an icon's own, and `mark` 3.5, a mark that carries meaning at the meta size (a checkbox's tick and dash, a change mark's glyph), which at 12px draws 1.75 px where `line` draws 1 px across two pixel rows at half coverage. No component spells a stroke number.
 
@@ -2638,7 +2642,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Place` | `title`, `body`, `meta`, `caption` | `ink-body`, `ink-meta`, `edge`, `edge-raised`, `surface`, `raised`, `act-accent`, `on-act-accent`, `wash-hover`, `wash-press`, `danger`, `chip-` | `control`, `full` | `acts`, `page`, `sections`, `inside`, `control-x`, `rows`, `pair` | `strip`, `control`, `control-compact`, `popover`, `list`, `measure`, `target`, `icon-meta`, `chip`, `measure-short`, `icon-inset` | `float` |
 | `Gate` | `title`, `meta` | `ink-body`, `ink-meta`, `surface` | none | `page`, `sections`, `fields`, `pair` | `auth`, `avatar` | none |
 | `Screen` | `title` | `ink-body`, `ink-meta`, `edge` | `control` | `acts`, `page`, `sections`, `pair` | `strip`, `control`, `control-compact`, `icon-inset` | none |
-| `Split` | none | `edge`, `ink-meta`, `surface` | `control` | `inside`, `page`, `sections` | `list`, `pane`, `control-compact` | none |
+| `Split` | none | `edge`, `ink-meta`, `surface` | `control` | `inside`, `page`, `sections` | `list`, `pane`, `control-compact`, `measure-inset` | none |
 | `Section` | `heading`, `meta`, `body`, `caption` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `danger` | `row`, `control`, `chip` | `pair`, `fields`, `inside`, `control-x` | `icon`, `control-compact`, `skeleton`, `field`, `target` | none |
 | `Group` | none | `edge`, `surface` | `card` | none | none | none |
 | `List` | none | `edge` | none | `rows`, `control-x` | none | none |

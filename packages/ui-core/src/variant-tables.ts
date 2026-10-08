@@ -1150,15 +1150,18 @@ export const PLACE_TAB_LABEL = matrix({
 
 // ── Split ───────────────────────────────────────────────────────────
 
-// The record beside the list: its sections apart at the page inset, or, with
-// nothing open, the empty state alone at the inset. While a Thread fills it,
-// the inset holds the record's head alone: the Thread bleeds through the
-// sides, its log and its docked foot carrying the page inset themselves.
+// The record beside the list: its sections apart at the page inset, in a
+// column that holds the measure inside that inset and stands at the main's
+// start (so a Section, a Group, a Code and an ActionBar end where a Prose
+// does), or, with nothing open, the empty state alone at the inset. While a
+// Thread fills it, the inset holds the record's head alone: the Thread bleeds
+// through the sides, its log and its docked foot carrying the page inset
+// themselves.
 export const SPLIT_MAIN = matrix({
 	base: "",
 	variants: {
 		state: {
-			rest: "gap-sections p-page",
+			rest: "gap-sections p-page max-w-measure-inset",
 			empty: "p-page",
 			fills: "px-page pt-page",
 		},

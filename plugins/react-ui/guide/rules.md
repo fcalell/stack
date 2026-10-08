@@ -454,7 +454,7 @@ A column is a width and the region around it aligns it. A filling `Thread`'s log
 (a `Place`'s `foot`, a filling `Thread`'s input) centre their measure column, and a selection bar's;
 a `Thread` among sections keeps their start, at the measure, as a `Text` paragraph does. A region
 that holds a page's sections (a `Place`'s body, a `Split`'s list, main and pane, a `Sheet`'s body)
-stands them a sections gap apart: never wrap sections in a `div` to space them. A `Split`'s list stands its first section at the page inset, as the record does, so both start on one line.
+stands them a sections gap apart: never wrap sections in a `div` to space them. A `Split`'s list stands its first section at the page inset, as the record does, so both start on one line. A `Split`'s open record stands in one column at the measure, at the main's start: its sections, groups, code blocks and action bar end where a `Prose` or a `Form` does, so never cap one with a host class.
 
 A `BarChart` takes data the same way, its `bar` map reading each item's `key`, `value`,
 `parts` (by its declared `keys`) and `at`; its failed and empty forms stand at the chart's height.

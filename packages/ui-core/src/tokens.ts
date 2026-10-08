@@ -702,9 +702,11 @@ export const STRONG_WEIGHT: FontWeight = "medium";
 export const MONO_ADVANCE = 0.6;
 
 // The sans family's figure advance in em: IBM Plex Sans's "0", 600 over
-// its 1000 em. Native has no `ch` unit, so its two measures are derived from
-// it at the touch body size: a label's own size is lost there (a caption's
-// cap is the body's), and a named sans with a wider "0" overflows them.
+// its 1000 em. The measure of running text is derived from it at each
+// density's body size, and native, which has no `ch` unit, derives its short
+// measure the same way at the touch body size: a label's own size is lost
+// there (a caption's cap is the body's), and a named sans with a wider "0"
+// overflows them.
 export const SANS_ADVANCE = 0.6;
 
 // ── Space ───────────────────────────────────────────────────────────
@@ -812,7 +814,9 @@ export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
 // one body line's box: the height a part standing on a wrapped title's first
 // line is pinned to, so a taller part overflows it centred, and `icon-inset`
 // the gap between an icon act's box and its glyph, which a bar of acts reaches
-// across so the glyphs stand at its edges (`thumb` is the switch's knob).
+// across so the glyphs stand at its edges (`thumb` is the switch's knob),
+// `measure` the width of running text and `measure-inset` the width of a
+// column that holds the measure inside the page inset on both sides.
 export const SIZES = [
 	"control",
 	"control-compact",
@@ -852,6 +856,8 @@ export const SIZES = [
 	"chips-inset",
 	"line-body",
 	"icon-inset",
+	"measure",
+	"measure-inset",
 ] as const;
 export type Size = (typeof SIZES)[number];
 
@@ -863,7 +869,10 @@ export type Size = (typeof SIZES)[number];
 // provenance lines it stands beside); an image's height cap, twenty; the
 // hairline; the chips inset, half of what the compact control has over a chip
 // less the hairline; one body line box; the icon inset, half of what the
-// control has over its icon.
+// control has over its icon; the measure, `TEXT_MEASURE_CHARACTERS` at
+// `SANS_ADVANCE` of the body size, rounded up to the pixel, so every role of
+// text stands at one width where `ch` would give each its own; the measure
+// inset, the measure and the page inset on both sides.
 export type DerivedSize =
 	| "switch-travel"
 	| "text-area"
@@ -874,7 +883,9 @@ export type DerivedSize =
 	| "hairline"
 	| "chips-inset"
 	| "line-body"
-	| "icon-inset";
+	| "icon-inset"
+	| "measure"
+	| "measure-inset";
 
 // The room set is the touch one, in canvas units: every target is then at
 // least 44 of 960, the 32 the ten-foot guidance asks, and 88 at 1920.
@@ -993,8 +1004,7 @@ export type IconStroke = keyof typeof ICON_STROKE;
 
 // The measure of a short label (a chip's, a status word, a skeleton label's
 // lane), the widths of lifted layers, each at its pattern's range (a layer
-// never stretches to its container), the one measure for running text, and
-// the fixed regions of a frame (the sidebar, a split's list column and record
+// never stretches to its container), and the fixed regions of a frame (the sidebar, a split's list column and record
 // pane, a board column, a canvas node, the auth column, an empty state's column) and the
 // column a selection bar's count and acts stand in, the selection-bar
 // pattern's table-wide width.
@@ -1005,7 +1015,6 @@ export const WIDTHS = [
 	"toast",
 	"dialog",
 	"sheet",
-	"measure",
 	"sidebar",
 	"list",
 	"pane",
@@ -1020,13 +1029,15 @@ export type Width = (typeof WIDTHS)[number];
 // The widths counted in characters of the label's own font: `ch` on the
 // web; native draws them in px at `SANS_ADVANCE` of the touch body size,
 // rounded up to the pixel.
-export const MEASURES = ["measure-short", "measure"] as const;
+export const MEASURES = ["measure-short"] as const;
 export type Measure = (typeof MEASURES)[number];
 
 export const MEASURE_CHARACTERS: Record<Measure, number> = {
 	"measure-short": 18,
-	measure: 58,
 };
+
+// Running text's characters per line, the `measure` size.
+export const TEXT_MEASURE_CHARACTERS = 58;
 
 export const WIDTH_VALUE: Record<Width, string> = {
 	"measure-short": `${MEASURE_CHARACTERS["measure-short"]}ch`,
@@ -1034,7 +1045,6 @@ export const WIDTH_VALUE: Record<Width, string> = {
 	toast: "360px",
 	dialog: "520px",
 	sheet: "640px",
-	measure: `${MEASURE_CHARACTERS.measure}ch`,
 	sidebar: "240px",
 	list: "360px",
 	pane: "320px",

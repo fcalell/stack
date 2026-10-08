@@ -100,12 +100,18 @@ its rationale.
   which the switch's knob holds: `size-*` and `max-w-*` read one `--spacing-*` namespace. A size
   counted in figures is px at `MONO_ADVANCE` (Plex Mono's 0.6 em), never a `ch` width, because
   uniwind has no `ch` unit and native draws the figures too; a named mono with a wider advance
-  overflows it. The two measures are `ch` on the web (`measure-short` 18ch, `measure` 58ch), so each
-  label keeps 18 characters of its own font; native has no `ch`, so `nativeMeasureTokens` declares
-  them in px at `SANS_ADVANCE` (Plex Sans's "0", 0.6 em) of the touch body size, rounded up (173 and
-  557). That is a native limit: there every short label's cap is the body's 18 characters whatever
-  its role (a chip's caption included, and `SKELETON_LANE`'s role axis draws one width), and a named
-  sans with a wider "0" overflows them. An icon's stroke is `ICON_STROKE`, a constant beside the
+  overflows it. The short measure is `ch` on the web (`measure-short`, 18ch), so each label keeps 18
+  characters of its own font; native has no `ch`, so `nativeMeasureTokens` declares it in px at
+  `SANS_ADVANCE` (Plex Sans's "0", 0.6 em) of the touch body size, rounded up (173). That is a native
+  limit: there every short label's cap is the body's 18 characters whatever its role (a chip's
+  caption included, and `SKELETON_LANE`'s role axis draws one width), and a named sans with a wider
+  "0" overflows it. The running-text measure is a derived size, never a `ch` width: `measure` is 58
+  characters at `SANS_ADVANCE` of the density's body size, rounded up (453 on the desktop, 557 on
+  touch and in the room), so a meta line, a body paragraph and a form stand at one width where `ch`
+  resolves in the element's own font and gave a meta line a narrower column than the body
+  beside it. `measure-inset` is that width plus the page inset on both sides, the width a padded
+  column stands at so its content is the measure (a Split's open record, `SPLIT_MAIN rest`). An
+  icon's stroke is `ICON_STROKE`, a constant beside the
   sizes rather than a class or an `ICON` axis cell: the web's Lucide and native's Lucide and
   `react-native-svg` all take `strokeWidth` as a number prop, so one value in `tokens` reaches
   both platforms the same way and no class has to resolve to a stroke. `line` (2) is an icon's own weight, `mark` (3.5) the weight
@@ -146,7 +152,7 @@ its rationale.
   48 canvas units all round (one role serves both axes, so it costs the height 42 units over the 27
   the guidance allows top and bottom; the Place's head stands that inset from the top too,
   `PAGE_HEAD_ROOM`, since `PAGE_HEAD` pads the sides alone). The radii, the fixed widths (every
-  width but the two `ch` measures, which follow the type), the hairline and the ring scale by `u`
+  width but the short `ch` measure, which follows the type), the hairline and the ring scale by `u`
   too: a 1 px hairline vanishes at three metres, a 6 px radius on an 88 px control reads square, and
   a pane must hold the characters it holds on a phone. Motion is unchanged, and focus is the
   existing ring, scaled (no scale transform: the roster draws focus as a ring everywhere, and a
@@ -249,7 +255,7 @@ a tick with no animation, never jumped to full.
 - The emitted `app.css` carries every contract utility whether or not a source spells it: react-ui
   contributes one `@source inline()` pattern per utility family over the token lists (colours as
   fill, ink, border, outline and divider; spacing roles as paddings, gaps and widths; sizes as
-  heights, widths, minimums, paddings and an x translation; widths; type roles; tracking; radii;
+  heights, widths, minimums, maximum widths, paddings and an x translation; widths; type roles; tracking; radii;
   shadows; durations; easings). Tailwind reads source text, and the showcase's foundations page
   builds its classes from the token names. The cost is the whole contract in every consumer's sheet,
   about 7.5 kB gzipped.
@@ -667,7 +673,13 @@ a tick with no animation, never jumped to full.
   stands centred on a wide touch screen too, and what else it holds spans it (`w-full`). A region that holds a page's sections stands them a sections gap apart
   (`PAGE_BODY`, `SPLIT_MAIN rest`, `SPLIT_PANE`, `SHEET_BODY`, and a Split's list by
   `SPLIT_LIST_STACK`, which the phone's list reads as well, with the list's top inset), so no wrapper restates the gap; a
-  `Form` is one child, so the gap shows only between a sheet's sections.
+  `Form` is one child, so the gap shows only between a sheet's sections. A Split's open record is
+  one such column at the measure: `SPLIT_MAIN rest` caps its padded box at `measure-inset`, so the
+  content standing inside the page inset is `measure` wide and at the main's start, and a Section,
+  a Group, a Code and an ActionBar end where a Prose or a Form does (an end-fit bar's acts stand
+  at that column's end, not the main's far edge). No part opts out: a Table or a Canvas in a
+  Split's main stands in the column until a first consumer decides otherwise. A filling Thread
+  lifts the cap under its mark (`MAIN_FILLED`).
 - A class with no look is structural, an overlay the web's class sweep classifies: a stacking
   order inside one component (`z-1`, a frozen table column over the cells that scroll under it,
   inside `isolate`, the grid its own stacking context so the column never stands over a sheet),
@@ -849,7 +861,7 @@ a tick with no animation, never jumped to full.
   combinator), so the body's form follows the Thread from its first paint with no state in the
   frame. The marked forms restate contract cells in the web overlay (`thread/fill.ts`), since
   Tailwind reads literal classes only and the contract holds no platform overlay (ui-core's c21):
-  the body's `PAGE_BODY` inset zeroed, the Split main's `rest` cell turned into its `fills` one, and
+  the body's `PAGE_BODY` inset zeroed, the Split main's `rest` cell (gap, foot inset and column cap) turned into its `fills` one, and
   `THREAD_COLUMN` under the main's mark. react-ui's `fill.test.ts` holds each to its cell by
   resolving the insets side by side, so a cell that changes without its marked form fails `pnpm
   check`. Native has no such selector: by contract the Thread stands as the body's direct child (as

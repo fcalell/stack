@@ -27,7 +27,7 @@ const SWITCH_VALUE = `${SWITCH} ms-auto`;
 // A fact's label bar four figures wide, a short label's, starting where the
 // label text does; its value bar at the line's end in the room the value
 // takes. An identifier (`code`) fills the room the label leaves up to the
-// measure, in the code role's characters, where the loaded value, cut to the
+// measure, where the loaded value, cut to the
 // room, fills it; any other value is a short word, half its lane.
 const LABEL_BAR = "w-figures shrink-0";
 const CODE_LANE = "flex basis-0 grow min-w-0 max-w-measure ms-auto justify-end";

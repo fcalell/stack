@@ -229,7 +229,10 @@ function Type(props: { view: View }) {
 				</div>
 			))}
 			<div data-role="measure" className="flex flex-col gap-rows">
-				<Label name="body at measure" value={THEME.widths.measure} />
+				<Label
+					name="body at measure"
+					value={THEME.sizes[props.view.density].measure}
+				/>
 				<p className={cn(text({ role: "body" }), "max-w-measure")}>{RUNNING}</p>
 			</div>
 		</>

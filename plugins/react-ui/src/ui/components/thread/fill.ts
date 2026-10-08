@@ -8,9 +8,9 @@
 export const BODY_FILLED =
 	"[&:has(>[data-fill])]:p-0 [&:has(>[data-fill])]:gap-0";
 // A Split's main under the mark turns its `SPLIT_MAIN` `rest` form into its
-// `fills` one.
+// `fills` one: the Thread spans the main, so the record's column cap goes.
 export const MAIN_FILLED =
-	"[&:has(>[data-fill])]:gap-0 [&:has(>[data-fill])]:pb-0";
+	"[&:has(>[data-fill])]:gap-0 [&:has(>[data-fill])]:pb-0 [&:has(>[data-fill])]:max-w-none";
 // The record's head stands in `THREAD_COLUMN`, centred over the log's column,
 // under its main's mark (`group/main`).
 export const COLUMN_FILLED =

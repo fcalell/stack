@@ -14,6 +14,7 @@ import {
 	SPACING_RATIO,
 	SPACING_ROLES,
 	type SpacingRole,
+	TEXT_MEASURE_CHARACTERS,
 	TYPE_ROLES,
 	TYPE_SCALE,
 	type TypeRole,
@@ -62,8 +63,18 @@ export function spacingFor(density: Density): Record<SpacingRole, string> {
 	return out;
 }
 
+// Running text's width in px: its characters at the sans figure advance of the
+// density's body size, rounded up, so every role of text stands at one width.
+function measureOf(density: Density): number {
+	return Math.ceil(TEXT_MEASURE_CHARACTERS * SANS_ADVANCE * BODY_SIZE[density]);
+}
+
 export function sizePx(density: Density, size: Size): number {
 	const px = SIZE_PX[density];
+	if (size === "measure") return measureOf(density);
+	if (size === "measure-inset") {
+		return measureOf(density) + 2 * spacingOf(density, "page");
+	}
 	if (size === "switch-travel") {
 		return px["switch-w"] - px.thumb - 2 * px["switch-inset"];
 	}
@@ -89,8 +100,8 @@ export function sizesFor(density: Density): Record<Size, string> {
 	return out;
 }
 
-// Native's measure in px: its characters at the sans figure advance of the
-// touch body size, rounded up, since uniwind reads no `ch`.
+// Native's short measure in px: its characters at the sans figure advance of
+// the touch body size, rounded up, since uniwind reads no `ch`.
 export function nativeMeasurePx(measure: Measure): number {
 	return Math.ceil(
 		MEASURE_CHARACTERS[measure] * SANS_ADVANCE * BODY_SIZE.touch,

@@ -100,6 +100,7 @@ import {
 	SPACING_ROLES,
 	STACK_ORDER,
 	STATUS_STATES,
+	TEXT_MEASURE_CHARACTERS,
 	TRACKED_ROLES,
 	type TrackedRole,
 	TYPE_ROLES,
@@ -741,10 +742,10 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(TYPE_ROLES.length, 8, "type role count");
 	requireEqual(SPACING_ROLES.length, 11, "spacing role count");
 	requireEqual(GAP_ROLES.length, 6, "gap role count");
-	requireEqual(SIZES.length, 38, "size count");
+	requireEqual(SIZES.length, 40, "size count");
 	requireEqual(RADIUS_ROLES.length, 7, "radius role count");
 	requireEqual(SHADOW_LEVELS.length, 2, "shadow level count");
-	requireEqual(WIDTHS.length, 14, "width count");
+	requireEqual(WIDTHS.length, 13, "width count");
 	requireEqual(BREAKPOINTS.length, 3, "breakpoint count");
 	requireEqual(WORD_KEYS.length, 70, "word count");
 	requireEqual(COUNTED_WORD_KEYS.length, 1, "counted word count");
@@ -901,6 +902,12 @@ check("c06", "every scale is its ratio of the base", () => {
 			"chips-inset": (px["control-compact"] - px.chip) / 2 - HAIRLINE_PX,
 			"line-body": Number.parseInt(tokens["--leading-body"] ?? "", 10),
 			"icon-inset": (px.control - px["icon-control"]) / 2,
+			measure: Math.ceil(
+				TEXT_MEASURE_CHARACTERS * SANS_ADVANCE * BODY_SIZE[density],
+			),
+			"measure-inset":
+				Math.ceil(TEXT_MEASURE_CHARACTERS * SANS_ADVANCE * BODY_SIZE[density]) +
+				2 * SPACE_BASE * spacing.page,
 		};
 		for (const size of SIZES) {
 			requireEqual(
@@ -910,7 +917,7 @@ check("c06", "every scale is its ratio of the base", () => {
 			);
 		}
 	}
-	// Native's measures: their characters at the sans figure advance of the
+	// Native's short measure: its characters at the sans figure advance of the
 	// touch body, since uniwind reads no `ch`.
 	const native = nativeMeasureTokens(base);
 	for (const [measure, characters] of Object.entries(MEASURE_CHARACTERS)) {
@@ -1060,6 +1067,7 @@ check(
 			"--text-display--line-height",
 			"--leading-display",
 			"--spacing-page",
+			"--spacing-measure-inset",
 		]);
 		const unit1 = roomTokens((units) => units);
 		for (const [key, value] of Object.entries(canvas)) {

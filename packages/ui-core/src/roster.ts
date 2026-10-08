@@ -731,7 +731,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				colors: ["edge", "ink-meta", "surface"],
 				radii: ["control"],
 				spacing: ["inside", "page", "sections"],
-				sizes: ["list", "pane", "control-compact"],
+				sizes: ["list", "pane", "control-compact", "measure-inset"],
 			},
 		},
 		// The fold toggle is the title line; a blocked act's reason stands on
@@ -2429,6 +2429,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				// A column stands at the measure its descriptor names.
 				sizes: [
 					...MEASURES,
+					"measure",
 					"row",
 					"row-2",
 					"target",

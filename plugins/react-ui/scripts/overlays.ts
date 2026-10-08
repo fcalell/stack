@@ -184,6 +184,7 @@ export const OVERLAYS: readonly string[] = [
 	"[&:has(>[data-fill])]:p-0",
 	"[&:has(>[data-fill])]:gap-0",
 	"[&:has(>[data-fill])]:pb-0",
+	"[&:has(>[data-fill])]:max-w-none",
 	"[&:has(>[data-fill])]:shrink",
 	"[&:has(>[data-fill])]:min-h-0",
 	"group-[:has(>[data-fill])]/main:w-full",
