@@ -1,6 +1,6 @@
 ---
 id: 003-103
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a blocked Button's label reads, and a full-width blocked act is not a grey placeholder
@@ -24,3 +24,6 @@ A blocked or disabled filled Button's label draws in `ink-meta` (an existing lev
 ## Built
 In `plugins/react-ui/src/ui/components/button/index.tsx` and `plugins/native-ui/src/ui/components/button/index.tsx` the primary and danger acts take `ink-meta` for the blocked label (and, on the web, the fill's `currentColor` glyph; on native the `Ink` tone); the hairline and quiet acts keep `ink-disabled`. Passes with the Button and ActionBar generated stories; the contrast reading belongs to the critique.
 Acceptance 2 is ruled: the shape stays. The critique session measures the contrast.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/acts/report.md`).

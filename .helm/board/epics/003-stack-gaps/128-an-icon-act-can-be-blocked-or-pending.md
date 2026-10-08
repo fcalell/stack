@@ -1,6 +1,6 @@
 ---
 id: 003-128
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: an icon act stands blocked or pending
@@ -29,3 +29,6 @@ Evidence, Stead repo screens critique unit u9 (Stead 948b7ec, stack 5564217; sho
 - react-ui and native-ui `IconButton` and `IconButtonBase` take `loading`: the press does nothing, the button is `aria-busy` and keeps focus (react), the glyph is the spinner in the rest ink, the square is unchanged. Place and Screen actions spread it; Section's act, Input's act, DefinitionRow's act and the Switcher's act row pass it on.
 - Showcase: the `ICON_BUTTON` frames draw the `loading` state; `behaviour/icon-button.stories.tsx` `Loading` asserts inert, busy, no glyph and the same size as a resting act. Generated `IconButton` stories pass.
 - Both `rules.md` name `loading` on `IconAct`.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/acts/report.md`).

@@ -23,3 +23,6 @@ The app passes only `act`; the button's variant is the Banner's. Reference banne
 No variant: the Banner draws its act as the existing `quiet` Button at the bar fit, in the kind's ink (`bannerGlyph`'s class on the label and the box, so a spinner or glyph follows) at the label's weight 500, with no hairline or fill. The Banner hands the ink through `ActInk` (`lib/act-ink.ts`, both platforms); a quiet Button reads it, and a blocked or pending act keeps its own look. The 44 px touch target is the bar fit's `control-compact`. The roster's Banner draws `BUTTON.act.quiet` and owns no `edge`.
 Evidence: `ui-core verify`, `plugin-react-ui verify`, `plugin-native-ui verify` and `pnpm check` pass; `shared/Banner` Rest and Disabled pass in the browser run.
 Owner render: `shared/Banner` Rest (note, warn, danger) and Disabled, light and dark.
+
+## Critique
+Rework: the info Banner act's "Read more" label falls under the 4.5:1 text floor on hover (4.48:1) and press (4.26:1) in light; rest is 4.96:1. The act's look (no outline, the kind's ink) holds.

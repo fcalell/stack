@@ -1,6 +1,6 @@
 ---
 id: 003-97
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: dark danger fill, soft banner tints, light warn dot and dark message bubble tones
@@ -34,3 +34,6 @@ A meter's near fill is `chip-amber` too: a bar fill is a mark (3:1), and `warn` 
 No new dot, bubble or tint token. `on-danger` had no drawing cell left and is deleted (the token, its contrast holds and its docs); `on-act-danger` carries the filled danger act.
 Evidence: `ui-core verify` (34/34, 225 contrast pairs), both plugin verifies and `pnpm check` pass; `atom/Button`, `shared/Banner`, `atom/Status`, `content/Message` pass in the browser run.
 Owner render, dark: `atom/Button` Rest, Disabled and Loading (danger act); `shared/Banner` Rest and Disabled (warn and danger tints); `content/Diff`, `content/ProseDiff` and `content/Comparison` Rest (removed lines on `danger-soft`); `content/Message` Rest and `content/Thread` Rest (bubble); the Foundations page's colour rows. Light: `atom/Status` Rest (attention dot), plus the same `shared/ListRow` status cells.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/acts/report.md`).

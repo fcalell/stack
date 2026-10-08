@@ -1,6 +1,6 @@
 ---
 id: 003-150
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: an ActionBar that follows an ItemHeader stands a pair under it, not a sections gap
@@ -22,3 +22,6 @@ A Place or Screen body is `gap-sections p-page` (`PAGE_BODY` in ui-core variants
 The parent decides the step from its children (the head takes no act prop and the bar no placement). `headPaired` (`item-header/pair.tsx`, both plugins) gathers a leading `ItemHeader` and an `ActionBar` directly after it into one `gap-pair` column; `Place`, `Screen` and a `Split`'s main call it, and the body's sections step stands after the pair. A Thread after the head is never paired, so it stays the body's direct child (the `[&:has(>[data-fill])]` selectors read it). The limit is stated in both `rules.md` pages: a Fragment is seen through, a head or bar behind a wrapper component keeps the sections step.
 The ItemHeader showcase frame draws a record page with a head, a bar and a Section. `behaviour/item-header.stories.tsx` measures head-to-bar at the pair step and bar-to-Section at the sections step, at 1440 (desktop) and 390 (touch density).
 Evidence: `behaviour/item-header.stories.tsx`, `behaviour/split.stories.tsx`, `behaviour/action-bar.stories.tsx` and the generated `ItemHeader`, `Split`, `Place` and `Screen` stories pass; `ui-core`, `plugin-react-ui` and `plugin-native-ui` verify pass.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/acts/report.md`).

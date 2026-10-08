@@ -1,6 +1,6 @@
 ---
 id: 003-96
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: an ActionBar's acts stand by the content they act on, and on touch stay above the tab bar
@@ -25,3 +25,6 @@ Desktop: the bar follows its column, which 003-88 caps, so no bar rule is added.
 - Desktop: an end-fit bar in a Split's main ends at the record column's end (`SPLIT_MAIN rest`, 003-88); `behaviour/split.stories.tsx` `RecordHoldsTheMeasure` holds the last act's right edge to the column.
 - Touch: the reserve did not reproduce. The Shell's tab bar is a sibling under the Place in the column (web `Shell`, native `Place` draws `ShellTabs` under its `Lifted` body), so a scrolled body ends above it. `behaviour/shell.stories.tsx` `BodyEndsAboveTheTabBar` (375 px Shell, a twelve-field Form over Save and Discard, scrolled to its end) holds the last act's bottom above the bar's top and passes; nothing was changed for it. If Stead's `page-edit-375-light` still shows the act under the bar, the page stands outside a Shell Place (a pushed Screen covers the tab bar by design) and the shot needs naming.
 - The Save and Discard stack is left alone, by the ruling.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/acts/report.md`).

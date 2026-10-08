@@ -1,6 +1,6 @@
 ---
 id: 003-121
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: an end-fit ActionBar wraps its acts before its first one is cut off
@@ -26,3 +26,6 @@ Bug, not a new shape: the end-fit acts row takes `flex-wrap min-w-0 max-w-full`,
 ## Built
 `ACTS.end` in `plugins/react-ui/src/ui/components/action-bar/index.tsx` is `flex flex-wrap items-center justify-end min-w-0 max-w-full`; the touch stack is unchanged (native stacks always). The ActionBar frame draws a four-act bar in a `w-list` column in the `BUTTON.fit.body` rest cell, and `apps/showcase/behaviour/action-bar.stories.tsx` (`WrapsInsideItsContainer`) asserts every act inside the column and the filled act on a lower row. Passes with the ActionBar and Button generated stories, waiting, form-leave and sheet behaviour stories; `pnpm check` build, types and tests pass.
 The critique session measures the four-act bar's left edge.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/acts/report.md`).

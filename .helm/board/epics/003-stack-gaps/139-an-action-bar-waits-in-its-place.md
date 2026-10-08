@@ -1,6 +1,6 @@
 ---
 id: 003-139
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: an ActionBar has a waiting form that keeps the bar's place
@@ -25,3 +25,6 @@ Evidence, card critique unit u7 (Stead `c9c9e5a`, shot `h/jl-1440-light`): the j
 Not built: the shape is a consumer-surface choice, so it waits for a ruling. `ActionBar` takes `acts` (labels the app lacks before the read) and nothing for a wait. Its form follows the contract of 003-131 and 003-132 (a waiting bar draws act-shaped bars at the loaded geometry: the field-high box, the bar's `fit` and end, the touch stack, no text, inside the bar's `PENDING_TRACK` height), but the app has to say how many acts the bar will hold, since the touch stack is one row per act. Options: (a) `loading` on `ActionBar` as a count (`loading={2}`), `true` standing for one act; (b) `loading` as a boolean and a named count (`waits`); (c) `acts` given with empty labels, which puts nothing readable in the tree but breaks the `Act` type's `label`. Recommended: (a), one rule with 003-123 (`loading` is a count where the part's loaded size is a count).
 
 Ruled and built (2026-10-07): `ActionBar` takes `loading?: boolean | number` by the rule of 003-123: `true` is one act, a number from 1 the count of acts, `0` and `false` not waiting. `acts` is given as `[]` while waiting. It waits on `LoadingContext` too, like the other parts, and a Section reads it among the parts that wait in their own form; the context carries a boolean, so an inheriting bar draws one act and a count is set on the bar itself. A waiting bar is `n` act-shaped bars and no text: at the end each stands in the control's box (`min-h-control`, a short label's width, the skeleton `bar` filling it), across each is the skeleton `field` at the field's height, and on touch they stack one per row. `waitCount` is the shared helper. Roster: `loading` in `props` and the skeleton cells drawn. The ActionBar frame's `Loading` state holds the bar waiting at 1 and 2 acts beside the loaded one; the critique measures them. Proven at 1280 and in a 375 px phone: each count and fit equals the loaded bar's height. Gap noted: no skeleton kind stands at the control's height (`bar` is the compact one, `field` the field's), so the end fit's host takes `min-h-control` as a verified overlay class and the bar fills it.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/acts/report.md`).

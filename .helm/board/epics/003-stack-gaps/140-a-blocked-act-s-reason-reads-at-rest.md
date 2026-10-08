@@ -1,6 +1,6 @@
 ---
 id: 003-140
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a blocked act's reason reads at rest
@@ -27,3 +27,6 @@ The ActionBar draws the last blocked act's reason at rest at meta size under the
 `ActionBar` (react-ui and native-ui) draws `acts.findLast(blocked)`'s reason as a `Reason shown` line under the acts, in place of the failure line; the docked foot's failure line still holds its height through `ReasonKept`. The `disabled` frames no longer wrap the bar in a touched context, and `apps/showcase/behaviour/action-bar.stories.tsx` (`BlockedReasonAtRest`) asserts the reason visible under the act with no press. The rules pages and the ui-core knowledge entry state the at-rest reason. Passes with the ActionBar and Button generated stories and the sheet behaviour stories. The `aria-describedby` the story names is not present in the Button, so no description link changed; the reason is a visible line next to the act.
 Acceptance 3 is ruled out: no reserved-height prop, unblocking only removes a line below. Acceptance 4 waits on the critique session.
 Acceptance 2 is ruled out: screen readers are not a target, so no description link is built for one alone; the reason is a visible line under the act.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/acts/report.md`).
