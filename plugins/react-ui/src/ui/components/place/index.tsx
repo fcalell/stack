@@ -19,6 +19,8 @@ import {
 	PAGE_HEAD_ROOM,
 	PAGE_TITLE,
 	PAGE_TOP_BAR,
+	PAGE_TOP_BAR_END,
+	PAGE_TOP_BAR_START,
 	PAGE_TOP_BAR_TOUCH,
 	text,
 } from "@fcalell/ui-core/variants";
@@ -72,8 +74,12 @@ const HEAD = "flex flex-col";
 // its head the page's one, so the Place draws none.
 const HEAD_BESIDE = "page-max-tablet:group-has-data-beside/page:hidden";
 const ROW = "flex items-center";
+const ACTS = "flex items-center gap-acts";
 const SPACER = "grow";
 const TITLE = "min-w-0 grow truncate";
+// On touch with no switcher the title shares its row with the acts and wraps
+// before them.
+const TITLE_WRAP = "min-w-0 grow";
 // With a context the title and its pick stand on one line a pair apart, the
 // line taking the spacer's room; the pick's list hangs from its start.
 const TITLE_LINE = "flex min-w-0 grow flex-wrap items-center gap-pair";
@@ -213,9 +219,13 @@ export function Place({
 	const region = useFootRegion();
 	useFootFocus(dock);
 	const fit = touch ? "body" : "bar";
+	// With no switcher the touch top bar is the title's row, as the strip is on
+	// the desktop; a room Place and one with a switcher keep the bar over the
+	// title.
+	const single = !touch || (!far && !switcher);
 	const back =
 		list !== undefined ? (
-			<span className={LIST_BACK}>
+			<span className={cn(LIST_BACK, touch && single && PAGE_TOP_BAR_START)}>
 				<IconButtonLink
 					icon={backGlyph(touch)}
 					fit={fit}
@@ -228,11 +238,12 @@ export function Place({
 	// place where the back act shows; on the desktop it stands in the sidebar.
 	const pick =
 		switcher && !far ? <SwitcherPick switcher={switcher} touch /> : null;
-	const lead = !touch ? null : back ? (
-		<span className={LIST_BACK_REPLACED}>{pick}</span>
-	) : (
-		pick
-	);
+	const lead =
+		!touch || !pick ? null : back ? (
+			<span className={LIST_BACK_REPLACED}>{pick}</span>
+		) : (
+			pick
+		);
 	const acts = (actions ?? []).map((action) => (
 		<IconButton key={action.label} {...action} fit={fit} />
 	));
@@ -245,8 +256,8 @@ export function Place({
 			id={titleId}
 			className={cn(
 				text({ role: "title" }),
-				context ? TITLE_FIT : TITLE,
-				touch && !context && PAGE_TITLE,
+				context ? TITLE_FIT : touch && single ? TITLE_WRAP : TITLE,
+				touch && !single && !context && PAGE_TITLE,
 			)}
 		>
 			{title}
@@ -255,7 +266,7 @@ export function Place({
 	// The pick stands right after the title on the title line, on touch under
 	// the top bar as on the desktop in the strip.
 	const line = context ? (
-		<div className={cn(TITLE_LINE, touch && PAGE_TITLE)}>
+		<div className={cn(TITLE_LINE, touch && !single && PAGE_TITLE)}>
 			{heading}
 			<span className={CONTEXT}>
 				<PickerBase {...context} fit="row" />
@@ -288,10 +299,10 @@ export function Place({
 	// it: the act's height over the page inset, since such a region keeps no
 	// inset of its own.
 	const room = floating ? <FloatingActRoom /> : null;
-	// On touch a top bar with nothing else in it stands only while the Split's
-	// marks show its back or Details act; on the desktop the
-	// strip always holds the title.
-	const bar = !touch || lead !== null || acts.length > 0 || overflow !== null;
+	// A top bar over the title with nothing else in it stands only while the
+	// Split's marks show its back or Details act; the row holding the title
+	// always stands.
+	const bar = single || lead !== null || acts.length > 0 || overflow !== null;
 	// The head is one tree on both densities, so crossing the density line
 	// keeps its acts, their focus and an open sheet's trigger. Only the
 	// title's place, the spacer and the strip's act differ, each a slot that
@@ -301,20 +312,22 @@ export function Place({
 			<div
 				className={cn(
 					PAGE_TOP_BAR,
-					touch && PAGE_TOP_BAR_TOUCH,
+					touch && !single && PAGE_TOP_BAR_TOUCH,
 					bar ? ROW : ROW_MARKED,
 				)}
 			>
 				{back}
 				{lead}
-				{touch ? null : line}
-				{touch ? <span className={SPACER} /> : null}
-				{acts}
-				{details}
-				{overflow}
-				{touch ? null : button}
+				{single ? line : null}
+				{single ? null : <span className={SPACER} />}
+				<span className={cn(ACTS, touch && single && PAGE_TOP_BAR_END)}>
+					{acts}
+					{details}
+					{overflow}
+					{touch ? null : button}
+				</span>
 			</div>
-			{touch ? line : null}
+			{single ? null : line}
 		</header>
 	);
 	// A Thread in the body fills it, as a bleeding body's child does: no

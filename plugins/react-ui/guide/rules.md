@@ -86,7 +86,7 @@ square and takes none.
 A page read in a context (Live, one change set, a past version) takes `context` on its `Place`: a
 `Switcher`, the same descriptor the shell's switcher takes (`label`, `options`, `value`,
 `onChange`, and `act` ending the list with the way to open a new context). It draws a pick beside
-the title, on touch under the top bar as on the desktop in the strip. An option's `chip`
+the title, on touch under the top bar (or on the title's row where there is no shell switcher) as on the desktop in the strip. An option's `chip`
 (`{ family, label }`) is its kind (Draft, Ready), drawn after its label in the list and on the
 trigger; `status` stays for a work state that moves. Never a `Picker` of your own beside the
 `title`, and never the kind in the label.

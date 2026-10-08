@@ -836,6 +836,10 @@ export const PAGE_TOP_BAR = "gap-acts min-h-strip";
 // The touch top bar reaches across the page inset by an icon act's inset, so
 // its first and last glyphs stand at the title's start and the inset's end.
 export const PAGE_TOP_BAR_TOUCH = "-mx-icon-inset";
+// With no switcher the bar is the title's row: the back act reaches the page
+// inset by its start, the acts by their end, and the title stands at the inset.
+export const PAGE_TOP_BAR_START = "-ms-icon-inset";
+export const PAGE_TOP_BAR_END = "-me-icon-inset";
 // The touch title over the head's hairline, a pair apart from it.
 export const PAGE_TITLE = "pb-pair";
 export const PAGE_BODY = "gap-sections p-page";

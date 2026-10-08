@@ -573,6 +573,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"PAGE_HEAD_ROOM",
 				"PAGE_TOP_BAR",
 				"PAGE_TOP_BAR_TOUCH",
+				"PAGE_TOP_BAR_START",
+				"PAGE_TOP_BAR_END",
 				"PAGE_TITLE",
 				"TEXT.role.title",
 				"PILL_ACT",

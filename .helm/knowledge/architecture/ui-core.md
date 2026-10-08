@@ -479,7 +479,7 @@ a tick with no animation, never jumped to full.
   (`PAGE_TOP_BAR_TOUCH`) reaches across the page inset by `icon-inset`, half of what the control has
   over its icon, so its first and last icon glyphs stand at the title's start and the inset's end;
   the switcher's trigger keeps the same inset as its padding, so its avatar stands there too, and a
-  bar holding nothing draws no strip. A Place's title is a strip over a hairline and the body
+  bar holding nothing draws no strip. A touch Place with no shell switcher has no bar over its title: the back act (when shown), the title, then the actions, Details and more stand on one 44 px row, the title wrapping before the acts (`PAGE_TOP_BAR_START` and `PAGE_TOP_BAR_END` reach the back act and the acts to the page inset); a Place with a switcher, a room Place and a Screen keep the bar. A Place's title is a strip over a hairline and the body
   starts a page inset under it, where a Section's title is a line of the body a pair over its
   content; the two rhythms are not one, and a Place's title is the section's name at every density
   (the app never forks it by density).

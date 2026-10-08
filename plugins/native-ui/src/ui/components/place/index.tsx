@@ -16,6 +16,8 @@ import {
 	PAGE_HEAD_ROOM,
 	PAGE_TITLE,
 	PAGE_TOP_BAR,
+	PAGE_TOP_BAR_END,
+	PAGE_TOP_BAR_START,
 	PAGE_TOP_BAR_TOUCH,
 	text,
 } from "@fcalell/ui-core/variants";
@@ -54,6 +56,7 @@ import { ToastRoom } from "../toast/room";
 const PLACE = "flex-1";
 const TOP_BAR = "flex-row items-center";
 const SPACER = "flex-1";
+const ACTS = "flex-row items-center gap-acts";
 const TITLE = "min-w-0 grow";
 // With a context the title and its pick stand on one line a pair apart.
 const TITLE_LINE = "flex-row flex-wrap items-center gap-pair";
@@ -174,8 +177,33 @@ export function Place({
 			<SwitcherPick switcher={switcher} />
 		) : null;
 	const acts = [...(actions ?? []), ...(split.details ? [split.details] : [])];
-	// A top bar with nothing in it is not drawn.
-	const bar = lead != null || acts.length > 0 || Boolean(more?.length);
+	// With no switcher the top bar is the title's row; a room Place and one
+	// with a switcher keep the bar over the title, and draw none while it
+	// holds nothing.
+	const single = !switcher && !far;
+	const bar =
+		single || lead != null || acts.length > 0 || Boolean(more?.length);
+	const heading = context ? (
+		<View className={cn(TITLE_LINE, single ? TITLE : PAGE_TITLE)}>
+			<RNText
+				accessibilityRole="header"
+				numberOfLines={1}
+				className={cn(text({ role: "title" }), TITLE_FIT)}
+			>
+				{title}
+			</RNText>
+			<View className={CONTEXT}>
+				<Picker {...context} fit="row" />
+			</View>
+		</View>
+	) : (
+		<RNText
+			accessibilityRole="header"
+			className={cn(text({ role: "title" }), TITLE, !single && PAGE_TITLE)}
+		>
+			{title}
+		</RNText>
+	);
 	const room = act ? SCROLL_ROOM : null;
 	// A region scrolling inside a bleeding body keeps no page inset under its
 	// last row, so its room is the act's height over the page inset, or a
@@ -192,39 +220,29 @@ export function Place({
 							<View className={cn(PAGE_HEAD, far && PAGE_HEAD_ROOM)}>
 								{bar ? (
 									<View
-										className={cn(PAGE_TOP_BAR, PAGE_TOP_BAR_TOUCH, TOP_BAR)}
+										className={cn(
+											PAGE_TOP_BAR,
+											!single && PAGE_TOP_BAR_TOUCH,
+											TOP_BAR,
+										)}
 									>
-										{lead}
-										<View className={SPACER} />
-										{acts.map((action) => (
-											<IconButton key={action.label} {...action} fit="body" />
-										))}
-										{more?.length ? (
-											<Menu label={words.more} items={more} />
-										) : null}
-									</View>
-								) : null}
-								{context ? (
-									<View className={cn(TITLE_LINE, PAGE_TITLE)}>
-										<RNText
-											accessibilityRole="header"
-											numberOfLines={1}
-											className={cn(text({ role: "title" }), TITLE_FIT)}
-										>
-											{title}
-										</RNText>
-										<View className={CONTEXT}>
-											<Picker {...context} fit="row" />
+										{lead && single ? (
+											<View className={PAGE_TOP_BAR_START}>{lead}</View>
+										) : (
+											lead
+										)}
+										{single ? heading : <View className={SPACER} />}
+										<View className={cn(ACTS, single && PAGE_TOP_BAR_END)}>
+											{acts.map((action) => (
+												<IconButton key={action.label} {...action} fit="body" />
+											))}
+											{more?.length ? (
+												<Menu label={words.more} items={more} />
+											) : null}
 										</View>
 									</View>
-								) : (
-									<RNText
-										accessibilityRole="header"
-										className={cn(text({ role: "title" }), TITLE, PAGE_TITLE)}
-									>
-										{title}
-									</RNText>
-								)}
+								) : null}
+								{single ? null : heading}
 							</View>
 						)}
 						<Lifted
