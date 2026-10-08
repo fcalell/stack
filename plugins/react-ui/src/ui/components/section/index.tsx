@@ -11,11 +11,11 @@ import {
 	SECTION_TOGGLE,
 	section,
 	skeleton,
-	skeletonRow,
 	text,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useId, useMemo, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { FieldWait } from "../../lib/field-wait.tsx";
 import { FormContext, FormStands } from "../../lib/form.ts";
 import { ThreadRoom } from "../../lib/frame.ts";
 import { DEEPER, HeadingContext } from "../../lib/heading.ts";
@@ -34,6 +34,7 @@ import { Reason } from "../button/reason.tsx";
 import { Code } from "../code/index.tsx";
 import { Comparison } from "../comparison/index.tsx";
 import { Count } from "../count/index.tsx";
+import { Form } from "../form/index.tsx";
 import { FormField } from "../form-field/index.tsx";
 import { Group } from "../group/index.tsx";
 import { Icon } from "../icon/index.tsx";
@@ -72,18 +73,13 @@ const BODY_WAITS = "hidden";
 // count's type sets the width.
 const COUNT_WAIT = "inline-flex shrink-0 items-center";
 const FIGURE_WAIT = "opacity-0 tabular-nums";
-const FIELD_WAIT = "flex flex-col";
-// The label line at the length of a field label.
-const LABEL_WAIT = "w-1/4";
-// The label's bar stands in the label's line box, at its line height.
-const LABEL_LINE = "flex items-center h-lh";
 // The description's bar stands in the meta line's box, at the sentence's half measure.
 const DESCRIPTION_LINE = "flex items-center h-lh";
 // The components the Section reads its body by (`sectionPartsOf`).
 const KINDS: SectionKinds = {
 	lists: [List, Table],
 	waits: [BarChart, Comparison],
-	forms: [ActionBar, Code, Meter, Prose, Slider, Thread],
+	forms: [ActionBar, Code, Form, Meter, Prose, Slider, Thread],
 	boundary: QueryBoundary,
 	group: Group,
 	field: FormField,
@@ -107,7 +103,7 @@ export interface SectionProps extends Closed {
 	onToggle?: (open: boolean) => void;
 	/** The section's one act, at the head's end: a labelled act or an icon act. */
 	act?: Act | IconAct;
-	/** The count (when there is one) and the body wait: a Group or a List in the body draws its own skeleton rows, a Prose, Thread, Code, Meter or Slider its own waiting form, and skeleton fields stand in for fields and for any other body. */
+	/** The count (when there is one) and the body wait: a Group or a List in the body draws its own skeleton rows, a Prose, Thread, Code, Form, Meter or Slider its own waiting form, and skeleton fields stand in for fields and for any other body. */
 	loading?: boolean;
 	/** The body: a Group, a List, or the rows a Form lays out. */
 	children?: ReactNode;
@@ -274,20 +270,7 @@ export function Section({
 							? Array.from(
 									{ length: fields },
 									(_, index) => `field-${index}`,
-								).map((key) => (
-									<div
-										key={key}
-										aria-hidden
-										className={cn(skeletonRow({ kind: "field" }), FIELD_WAIT)}
-									>
-										<span className={cn(lineBox({ role: "body" }), LABEL_LINE)}>
-											<span
-												className={cn(skeleton({ kind: "line" }), LABEL_WAIT)}
-											/>
-										</span>
-										<span className={skeleton({ kind: "field" })} />
-									</div>
-								))
+								).map((key) => <FieldWait key={key} />)
 							: null}
 						<div className={fields > 0 ? BODY_WAITS : BODY_SHOWN}>
 							<LoadingContext value={loading === true}>

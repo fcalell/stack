@@ -11,10 +11,11 @@ import { Areas } from "@fcalell/plugin-react-ui/showcase/frames/list";
 import { Sentence } from "@fcalell/plugin-react-ui/showcase/frames/prose";
 import {
 	Bodies,
+	Commands,
 	Described,
 } from "@fcalell/plugin-react-ui/showcase/frames/section";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { expect, waitFor, within } from "storybook/test";
 
 // A waiting part stands as its loaded form stands, so the screen does not
@@ -279,6 +280,48 @@ const described: StoryObj = {
 	},
 };
 
+// A loading Section whose body is a Form waits as the Form's own fields and
+// its bar: one skeleton field per FormField at the loaded Section's height.
+const form: StoryObj = {
+	render: () => <Pair loaded={<Commands />} waiting={<Commands loading />} />,
+	play: async ({ canvas }) => {
+		const { waiting } = await stand(canvas);
+		await expect(
+			within(waiting).getByRole("region", { name: "Commands" }),
+		).toHaveAttribute("aria-busy", "true");
+		await expect(within(waiting).queryAllByRole("textbox")).toHaveLength(0);
+		await expect(within(waiting).queryAllByRole("button")).toHaveLength(0);
+		await expect(
+			waiting.querySelectorAll("form div[aria-hidden]"),
+		).toHaveLength(5);
+	},
+};
+
+// The Form's fields stay mounted while they wait: the same input stands
+// again once the Section has loaded.
+function Refetch() {
+	const [loading, setLoading] = useState(false);
+	return (
+		<>
+			<button type="button" onClick={() => setLoading(!loading)}>
+				Toggle
+			</button>
+			<Commands loading={loading} />
+		</>
+	);
+}
+const refetch: StoryObj = {
+	render: () => <Refetch />,
+	play: async ({ canvas, userEvent }) => {
+		const input = canvas.getByDisplayValue("pnpm build");
+		await userEvent.click(canvas.getByRole("button", { name: "Toggle" }));
+		await expect(input).not.toBeVisible();
+		await userEvent.click(canvas.getByRole("button", { name: "Toggle" }));
+		await expect(input).toBeVisible();
+		await expect(canvas.getByDisplayValue("pnpm build")).toBe(input);
+	},
+};
+
 // A List given its items while it loads stands as the loaded rows with their
 // titles, only the trailing counts waiting at the loaded rows' height.
 const known: StoryObj = {
@@ -298,6 +341,8 @@ export const DefinitionRowsInACard = facts;
 export const GroupOfOwnRows = fallback;
 export const SectionOverItsParts = bodies;
 export const SectionOverFields = fields;
+export const SectionOverItsForm = form;
+export const SectionFormKeepsItsFields = refetch;
 
 // The same scenarios in a 375 px phone at the touch density.
 function touch(story: StoryObj): StoryObj {
@@ -337,3 +382,4 @@ export const ListOfKnownRowsTouch = touch(known);
 export const SliderAloneAndInAGroupTouch = touch(sliders);
 export const DefinitionRowsInACardTouch = touch(facts);
 export const SectionOverItsPartsTouch = touch(bodies);
+export const SectionOverItsFormTouch = touch(form);

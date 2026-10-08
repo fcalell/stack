@@ -1,6 +1,6 @@
 ---
 id: 003-179
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: a loading Section counts the fields in its Form
@@ -12,9 +12,19 @@ Stead's repo settings hold one form among their sections, `Section > Form`, as t
 A loading `Section` reads its body by the depth rule (`plugin-react-ui/src/ui/lib/section.ts`, `sectionPartsOf`): direct children, a direct `Group`'s children and a direct `QueryBoundary`'s props. A `Form` is none of the known kinds, so its fields are never counted; the body counts as "any other body" and `sectionState` (`ui-core/src/list-state.ts`) stands `FALLBACK_FIELDS`, three skeleton fields, under a four-field form. The rules make `Section > Form` the shape of one form among sections (story 003-107), so the most common form body is the one the Section cannot count. 003-131 taught the Section to read a `Prose`, `Thread`, `Code`, `Meter` or `Slider` body; it left fields inside a `Form` as they were. The app cannot count them for the Section: `Section` takes no field count, and wrapping or copying the walker is a local copy of a stack module. Seen at stack `74a0e3d`.
 
 ## Acceptance criteria
-- [ ] A loading `Section` whose body is a `Form` stands one skeleton field per `FormField` the `Form` holds, and its `ActionBar`'s waiting form, at the loaded section's height.
-- [ ] A loading `Section` holding fields directly, a `Group` or a `List` is unchanged.
-- [ ] The Section showcase holds a loading `Section > Form` beside the loaded one, and the critique measures both heights.
+- [x] A loading `Section` whose body is a `Form` stands one skeleton field per `FormField` the `Form` holds, and its `ActionBar`'s waiting form, at the loaded section's height.
+- [x] A loading `Section` holding fields directly, a `Group` or a `List` is unchanged.
+- [x] The Section showcase holds a loading `Section > Form` beside the loaded one, and the critique measures both heights.
 
 ## Open questions
-- [ ] Its shape (the walker reading through a `Form`, the `Form` taking the Section's loading itself, or another): the stack session decides.
+- [x] Its shape (the walker reading through a `Form`, the `Form` taking the Section's loading itself, or another): the stack session decides.
+
+## Ruled
+The Form waits for itself; the Section's walker does not read through a Form (counting its fields would hide the body and with it the `ActionBar`'s waiting form). `Form` reads `LoadingContext` and stands one skeleton field per `FormField` (through fragments), the field kept mounted hidden; `Section`'s `KINDS.forms` gains `Form`, so a loading `Section > Form` counts no skeleton fields and shows its body. The skeleton field markup is one `lib/field-wait.tsx` per platform, shared by `Section` and `Form`. No new prop or token. Latent, out of scope: fields plus an `ActionBar` as direct Section children still hide the bar's waiting form.
+
+## Built
+`Form` (react-ui and native-ui `components/form/index.tsx`) reads `LoadingContext` and stands a skeleton field per `FormField` (through fragments), the field kept mounted in a hidden wrapper; its `ActionBar` waits on its own through the same context. `Section`'s `KINDS.forms` gains `Form`. The skeleton field is `FieldWait` in a new `lib/field-wait.tsx` per platform (a subpath entry in each `package.json`, as every lib module is), used by `Section` and `Form`. Rules (both platforms), `ui-core.md` and the Section showcase frame (`Commands`, in the loading cell) follow.
+
+Evidence: `behaviour/waiting.stories.tsx` holds `SectionOverItsForm` (+ Touch) and `SectionFormKeepsItsFields`. A loading `Section > Form` of four fields and a one-act bar measures 378 px loaded and 378 px waiting at 1200 px wide, 492 and 492 at 375 px touch. The waiting form holds five skeleton blocks (four fields, one bar) and no textbox or button, and a typed input is the same node after the wait. The scoped run (`--changed master`) passed 257 of 258, the one failure being a defect in the new story's own assertion (a hidden input is still in the DOM), fixed and rerun green (23/23); peak 3464 MiB. `pnpm check` turbo 45/45; the three `verify`s pass.
+
+Limits: a field with a description, or a switch or checkbox field, is not measured (the Section's own skeleton field has the same limit). Fields plus an `ActionBar` as direct Section children still hide the bar's waiting form (out of scope).

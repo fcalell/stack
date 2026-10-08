@@ -8,13 +8,13 @@ import {
 	SECTION_TOGGLE,
 	section,
 	skeleton,
-	skeletonRow,
 	text,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useContext, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { FieldWait, LABEL_LINE } from "../../lib/field-wait";
 import { FormContext, FormStands } from "../../lib/form";
 import { ThreadRoom } from "../../lib/frame";
 import { Ink } from "../../lib/ink";
@@ -32,6 +32,7 @@ import { Button } from "../button";
 import { Code } from "../code";
 import { Comparison } from "../comparison";
 import { Count } from "../count";
+import { Form } from "../form";
 import { FormField } from "../form-field";
 import { Group } from "../group";
 import { Icon } from "../icon";
@@ -60,11 +61,6 @@ const ACT_SLOT = "flex-row items-center shrink-0";
 // count's type sets the width.
 const COUNT_WAIT = "shrink-0 flex-row items-center";
 const FIGURE_WAIT = "opacity-0 tabular-nums";
-// The label line at the length of a field label.
-const LABEL_WAIT = "w-1/4";
-// The label's bar stands in the label's line box: a strut sets the line's
-// height, as the web's `h-lh` does.
-const LABEL_LINE = "flex-row items-center";
 const BODY_FOLDED = "hidden";
 // The body's own wrapper stays mounted, hidden, while skeleton fields stand
 // in for it.
@@ -74,7 +70,7 @@ const BODY_WAITS = "hidden";
 const KINDS: SectionKinds = {
 	lists: [List, Table],
 	waits: [BarChart, Comparison],
-	forms: [ActionBar, Code, Meter, Prose, Slider, Thread],
+	forms: [ActionBar, Code, Form, Meter, Prose, Slider, Thread],
 	boundary: QueryBoundary,
 	group: Group,
 	field: FormField,
@@ -246,17 +242,7 @@ export function Section({
 						? Array.from(
 								{ length: fields },
 								(_, index) => `field-${index}`,
-							).map((key) => (
-								<View key={key} className={skeletonRow({ kind: "field" })}>
-									<View className={LABEL_LINE}>
-										<Strut role="body" />
-										<View
-											className={cn(skeleton({ kind: "line" }), LABEL_WAIT)}
-										/>
-									</View>
-									<View className={skeleton({ kind: "field" })} />
-								</View>
-							))
+							).map((key) => <FieldWait key={key} />)
 						: null}
 					<View
 						className={cn(section({ in: within }), fields > 0 && BODY_WAITS)}

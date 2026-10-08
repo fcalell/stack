@@ -1286,7 +1286,12 @@ a tick with no animation, never jumped to full.
   three when none. The parts that wait in their own form are the platform walker's `forms` (a
   Prose, a Thread, a Code, a Meter, a Slider): a loading Section hands them its loading through
   `LoadingContext` and shows its body, so a body of one of them stands at that part's waiting form
-  and not at three fields; a field beside one keeps the skeleton fields. Outside the rule nothing is read: a
+  and not at three fields; a field beside one keeps the skeleton fields. A `Form` is one of them
+  but waits through the same context rather than by being counted: it reads `LoadingContext` and
+  stands a skeleton field (`lib/field-wait`, the markup the Section's counted fields share) for
+  each `FormField` it holds, through fragments, with the field mounted hidden in its place. The
+  Section's walker does not read through a Form: counting its fields would hide the body and with
+  it the `ActionBar`'s waiting form. Outside the rule nothing is read: a
   collection inside an app's own component (a `ui/` wrapper around a List) draws itself but adds
   no count and no busy state to the head, and the Lists inside a QueryBoundary's body are not
   counted (its queries still make the head busy). The body stays mounted in every form, hidden

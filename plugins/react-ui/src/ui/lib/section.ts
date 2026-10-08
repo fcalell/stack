@@ -20,7 +20,7 @@ export interface SectionKinds {
 	lists: readonly unknown[];
 	// Each waits alone (a BarChart, a Comparison).
 	waits: readonly unknown[];
-	// Each draws its own waiting form (a Prose, a Thread, a Code, a Meter, a
+	// Each draws its own waiting form (a Prose, a Thread, a Code, a Form, a Meter, a
 	// Slider).
 	forms: readonly unknown[];
 	boundary: unknown;

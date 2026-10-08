@@ -1,4 +1,5 @@
 import { createLeave } from "@fcalell/ui-core/leave";
+import { ActionBar } from "../../components/action-bar/index.tsx";
 import { Code } from "../../components/code/index.tsx";
 import { Form } from "../../components/form/index.tsx";
 import { FormField } from "../../components/form-field/index.tsx";
@@ -65,6 +66,29 @@ export function Bodies(props: { loading?: boolean }) {
 	);
 }
 
+/** A section whose body is one `Form` of four fields and its bar, loaded and waiting. */
+export function Commands(props: { loading?: boolean }) {
+	return (
+		<Section title="Commands" loading={props.loading}>
+			<Form>
+				<FormField label="Install">
+					<Input value="pnpm install" onChange={act} />
+				</FormField>
+				<FormField label="Build">
+					<Input value="pnpm build" onChange={act} />
+				</FormField>
+				<FormField label="Test">
+					<Input value="pnpm test" onChange={act} />
+				</FormField>
+				<FormField label="Start">
+					<Input value="pnpm start" onChange={act} />
+				</FormField>
+				<ActionBar acts={[{ label: "Save", onAct: act }]} />
+			</Form>
+		</Section>
+	);
+}
+
 /** A head with its description, loaded and waiting for it (`description=""`). */
 export function Described(props: { loading?: boolean }) {
 	return (
@@ -95,8 +119,8 @@ function Members(props: { blocked?: boolean }) {
 // touched form with its reason shown; `loading` the waiting count over a
 // Group's and a List's own skeleton rows, a Prose, a Thread and a Code each
 // waiting in its own form beside the loaded Section (a List as a waiting QueryBoundary's
-// loading form too), and the section's skeleton fields standing in
-// for a body of fields in a Form. At rest the cell picks the form: the icon act a
+// loading form too), a Section over a Form waiting as the Form's skeleton fields and bar,
+// and the section's skeleton fields standing in for a body of fields in a Form. At rest the cell picks the form: the icon act a
 // column's head, `SECTION.in.form` a section of fields in a Form, the chevron an open and a folded section over a List, the
 // destructive act a section over a List whose act removes it, the skeleton cells the loading form, every other cell the section over a Group, then a Section holding two Sections, which name themselves a level below it.
 export function drawSection(frame: ShowcaseFrame) {
@@ -141,6 +165,8 @@ export function drawSection(frame: ShowcaseFrame) {
 				<Bodies loading />
 				<Described />
 				<Described loading />
+				<Commands />
+				<Commands loading />
 				<Form>
 					<Section title="Profile" loading>
 						<FormField label="Workspace name">

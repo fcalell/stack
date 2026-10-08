@@ -11,6 +11,7 @@
 		"./app": "./src/ui/app/index.tsx",
 		"./components/*": "./src/ui/components/*/index.tsx",
 		"./lib/code": "./src/ui/lib/code.tsx",
+		"./lib/field-wait": "./src/ui/lib/field-wait.tsx",
 		"./lib/glyph": "./src/ui/lib/glyph.tsx",
 		"./lib/hosts": "./src/ui/lib/hosts.tsx",
 		"./lib/not-found": "./src/ui/lib/not-found.tsx",
