@@ -1,6 +1,6 @@
 ---
 id: 004-05
-status: review
+status: done
 sessions: {}
 ---
 # react-ui, native-ui: a Table takes its query and reads its cells from the item
@@ -44,3 +44,6 @@ Web and phone take the same props. Needs a query (a record set is the table's co
 ## Progress
 Built on web and phone; `pnpm check` and `pnpm verify` pass. The web mounts the grid and the touch List together, so the touch List stands under an empty `SectionContext` to keep the Section from counting rows twice. Open: the live check (web per batch, phone on the harness).
 The web live criteria pass and the web design critique's findings are fixed, measured at 1440 and 375.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/data/report.md`).

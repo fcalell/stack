@@ -1,6 +1,6 @@
 ---
 id: 003-98
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a bar chart's axis lines up with its gridlines and carries zero, x labels and a quieter fill
@@ -29,3 +29,6 @@ Evidence: `apps/showcase/behaviour/bar-chart.stories.tsx` measures each tick's c
 No existing step of a hue is both quieter and holds 3:1 on `surface` and `group` in both modes: `chip-<hue>` is the loud mark, `-soft` is under 1.5:1, and `-ink` is darker (light) or lighter (dark) than the mark, not quieter. So `chart-<hue>` is a new six-colour family (`COLOR_GROUPS.chart`): each is its chip hue at about 60 % of the mark's chroma, at the lightness nearest the mark's that holds 3:1 on `surface` and `group` (light L 0.61 to 0.63, dark L 0.53 to 0.555). `CHART_FILL` reads `bg-chart-<hue>` for bars, stacked parts and the legend dots; the chip marks stay the chips'. `ui-core verify` measures each `chart-<hue>` at 3:1 on both grounds in both modes, and BarChart owns the `chart-` family.
 Evidence: `ui-core verify` 34/34 and both plugin verifies pass; `content/BarChart` Rest, Loading, Error, Empty and `behaviour/bar-chart` pass in the browser run.
 Owner render: `content/BarChart` Rest (single series teal, stacked violet, amber, pink, green, red), light and dark.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/data/report.md`).

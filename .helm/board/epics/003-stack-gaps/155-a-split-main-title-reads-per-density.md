@@ -1,6 +1,6 @@
 ---
 id: 003-155
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a Place's title can read per density, so a System section's record reads "‹ Repos +" at the phone
@@ -20,3 +20,6 @@ The Place's `title` is one string at every density, and the app cannot make it d
 
 ## Ruled
 No `touchTitle` and no exported `useTouch`: either lets an app fork its UI per density, which the system decides. The app titles its Place with the section's name at every density (`Repos`), and the sidebar item and the tab carry `System`, which reads "‹ Repos +" on the phone with no new surface. `plugins/react-ui/guide/rules.md` and `plugins/native-ui/guide/rules.md` state it: a Place's title is the page's name at every density.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/shell/report.md`).

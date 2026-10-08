@@ -30,3 +30,6 @@ Web and phone alike. Depends on 004-04.
 
 ## Progress
 Built on web and phone; `pnpm check` and `pnpm verify` pass. Open: the live criteria (web per batch, phone on the harness).
+
+## Critique
+Partial: the Meter rest and loading forms hold; no story draws the meter set's failed and empty forms, so those are unjudged.

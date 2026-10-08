@@ -1,6 +1,6 @@
 ---
 id: 005-19
-status: review
+status: done
 sessions: {}
 ---
 # react-ui, native-ui: markdown, diffs and QR codes derive once per input
@@ -26,3 +26,6 @@ messages.
 
 ## Progress
 Built; `pnpm check` and `pnpm verify` pass. Measured on the web without the React Compiler (a consumer's copy is not compiled) at 1440: Diff, ProseDiff, Prose and QrCode keep their derivations through an unrelated parent re-render, and a keystroke or a Send in the assistant renders only the new Message and the two system lines (master: all six). Open: a system line still re-renders, since the Thread builds its `onOpen` and `detail` per render (a follow-up in 005-17); the phone live criterion on the harness.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/data/report.md`).

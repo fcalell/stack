@@ -37,3 +37,6 @@ scale) is the stack session's call.
   gap is filed. The field specimens' `<p>` also took no ink (they inherited the page's), now
   `text({ role: "body" })`.
 - `stack screens test --all`: 17 files, 170 tests passed.
+
+## Critique
+Unrendered: the width specimen lives at the showcase route `/foundations`, which the static Storybook does not hold.

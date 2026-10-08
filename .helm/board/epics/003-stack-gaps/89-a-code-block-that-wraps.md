@@ -1,6 +1,6 @@
 ---
 id: 003-89
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a code block that wraps
@@ -21,3 +21,6 @@ Evidence, Stead repo screens critique unit u9 (Stead 948b7ec, stack 5564217; sho
 
 ## Built
 `Code` keeps its line breaks and wraps a long line anywhere (`whitespace-pre-wrap wrap-anywhere`), with no `wrap` prop and no sideways scroll, on both platforms: react-ui's text drops `overflow-x-auto` and its scroll-driven tab stop (the text is focusable by script alone, where the fold lands), native-ui's text is a plain `Text` in a `View` instead of a horizontal `ScrollView`. The consumers read right: `Prose`'s fenced block is a `Code`; `Diff` and `ProseDiff` do not use it (a diff already wraps under itself). A waiting `Code` is the three bars it was, and its height on load changes by the lines that wrap (noted in ui-core.md). Evidence: `behaviour/code.stories.tsx` (a 320 px frame, a 130 character key: nothing scrolls, the text is whole), and the Code, Prose and Thread stories pass.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/data/report.md`).

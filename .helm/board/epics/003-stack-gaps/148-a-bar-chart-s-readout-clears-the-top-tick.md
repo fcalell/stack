@@ -1,6 +1,6 @@
 ---
 id: 003-148
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a bar chart's readout keeps clear of its top tick at touch
@@ -21,3 +21,6 @@ Stead's brief loop chart (`routes/work/-components/card.tsx`, a `BarChart` with 
 ## Built
 The body stands half a meta line below the head, so the top tick, centred on the plot's top edge (003-98), keeps the pair gap between its box and the head's last line at every density. The web reads the half line as `pt-[calc(1lh/2)]` on a body in the meta line box (`plugins/react-ui/src/ui/components/bar-chart/index.tsx`); the phone as `tickReach("touch")` px, `./chart`'s half meta line (`packages/ui-core/src/chart.ts`, `plugins/native-ui/.../bar-chart/index.tsx`). No prop. The loading form takes the same top room.
 Evidence: `apps/showcase/behaviour/bar-chart.stories.tsx` measures the top tick's box against the head's bottom (at least the pair gap) in the desktop run (1280) and the touch run (375); both pass, with `stories/BarChart.stories.ts` (the roster states, a11y run included). `packages/ui-core/test/chart.test.ts` pins `tickReach`.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/data/report.md`).

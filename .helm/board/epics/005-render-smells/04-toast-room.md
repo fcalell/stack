@@ -33,3 +33,6 @@ act's room is 01's.
 
 ## Progress
 Built; `pnpm check` and `pnpm verify` pass. Web live on the assistant at 375 and 1440: as the input grows seven heights, no frame has the toast over the foot, the gap constant in the same frame. Web uses CSS anchor positioning (Baseline since January 2026). Phone: one box measure remains, an accepted limit with a `// TODO:` (the layer stands after the sheet host, outside the page tree). Open: the phone live criterion on the harness.
+
+## Critique
+Unrendered: no story draws a toast over a docked foot.

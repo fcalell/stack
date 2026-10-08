@@ -1,6 +1,6 @@
 ---
 id: 003-154
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a bar chart's readout can be a currency figure, not a spelled unit
@@ -24,3 +24,6 @@ No new prop: `ChartUnit` widens with `{ currency: "USD" }`. The chart has no spo
 ## Built
 `ChartUnit` gains `{ currency }` and `./chart` gains `currencyOf`; `unitOf` returns nothing for a currency (`packages/ui-core/src/chart.ts`). Both BarCharts write the head's and the keys' figures through the currency formatter, exact ("$30.97"), and the axis whole when its step is whole ("$8"), compact from five figures; no word follows the figure. The phone prefixes the currency symbol to its `compact` figure past five figures (a TODO names the limit). The `Spend` section of the Bar chart frame (`CHART_BAND` at rest) holds a week of spend in dollars.
 Evidence: `apps/showcase/behaviour/bar-chart.stories.tsx` reads "$40.22" and "$30.97" in the head and "$8", "$6", "$4", "$2", "$0" on the axis in the desktop and the touch run; both pass. `packages/ui-core/test/chart.test.ts` pins `currencyOf` and `unitOf`.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/data/report.md`).

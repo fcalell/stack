@@ -20,3 +20,6 @@ Stead's System shows a repo's knowledge tree as the list at `/system/repos/<repo
 ## Ruled
 No new surface. A list standing alone at a deeper route is a pushed `Screen` whose `back` is the route above it, holding `<Split back={treeRoute}>`: the Screen's back act leads up while the list stands alone, and `LIST_BACK_REPLACED` swaps in the Split's `back` once a record is open. Both rules pages and `ui-core.md` say so; native reads the same through `Screen`'s `exit`.
 Evidence: `behaviour/split.stories.tsx` `TreeAloneGoesUp` and `TreeRecordGoesToTree` (desktop and `Touch`: the one visible Back act leads to the parent, then to the tree).
+
+## Critique
+Rework: the tree-alone Split (desktop and Touch stories) overflows the 390 px viewport by 1 px; the back act renders.

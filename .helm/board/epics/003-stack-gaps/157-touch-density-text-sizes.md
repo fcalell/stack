@@ -1,6 +1,6 @@
 ---
 id: 003-157
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: the touch density keeps a screen to six text sizes
@@ -20,3 +20,6 @@ The roles an app uses (title, heading, body, meta, label) are all stack's; the t
 
 ## Ruled
 By design. The touch scale's text roles stand at 22, 18, 16, 15 and 14 (five sizes) against 18, 15, 13, 12 and 11 on the desktop (five), so a density keeps the count; `figure` and `display` are the stat roles on either. The seven in the evidence counts size and weight pairs (16/400 and 16/500, 14/400 and 14/500 each as two). Nothing in the scale changes. The critique counts distinct pixel sizes (`guide/design-critique.md` step 2, `guide/judging.md` Type), and the type-scale tables in `README.md` and `DESIGN.md` list both densities' size and line per role.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/data/report.md`).

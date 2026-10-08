@@ -20,3 +20,6 @@ The stop stands only while the region scrolls and holds nothing tabbable, which 
 
 ## Open questions
 - [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Critique
+Unrendered: no story draws a scrolling Screen body with nothing tabbable inside.

@@ -33,3 +33,6 @@ Decided (the recommended answer, applied 2026-10-04): an age ticks live from one
 
 ## Progress
 Built; `pnpm check` and `pnpm verify` pass. Web live at 375: the clock reads 1:30 in the first frame of a 90 s until and steps each second, the fill moves every frame (or once a tick under reduced motion), no timer runs past until, and ages step on their own. `useClock` (lib/clock) and `useReducedMotion` (lib/media) are public lib subpaths. Open: the phone live criterion on the harness.
+
+## Critique
+Partial: every state the story feeds renders correctly; its timing criteria (throttled Escape, copy timing, the clock past `until`) were not driven.

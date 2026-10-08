@@ -1,6 +1,6 @@
 ---
 id: 003-80
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a bar chart of a level, not a sum
@@ -21,3 +21,6 @@ Roster props, `DESIGN.md`, `b-roster` and `b7` change; both rules pages and the 
 
 ## Open questions
 - [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/data/report.md`).

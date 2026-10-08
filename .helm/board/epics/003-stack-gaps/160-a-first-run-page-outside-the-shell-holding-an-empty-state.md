@@ -1,6 +1,6 @@
 ---
 id: 003-160
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a first-run page outside the shell holding only an EmptyState
@@ -34,3 +34,6 @@ The first run is a `Gate` with no `title`: it draws no lead and provides no `Pag
 - `DESIGN.md` regenerated: no change (it carries no Gate prose).
 
 Evidence: `apps/showcase/behaviour/gate.stories.tsx` `FirstRunCentred` (1440) and `FirstRunCentredOnTouch` (390, touch density) assert exactly one `h1` (the EmptyState's) and the column centred across and down within 1 px; they pass with the Gate, EmptyState and Failed stories and the Failed and not-found behaviour stories; `pnpm --filter showcase test-screens` passes (17 files, 170 tests, `/welcome` among them); `pnpm check` and the three `verify` runs pass.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/shell/report.md`).

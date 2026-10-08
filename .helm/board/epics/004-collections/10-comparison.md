@@ -1,6 +1,6 @@
 ---
 id: 004-10
-status: review
+status: done
 sessions: {}
 ---
 # react-ui, native-ui: a Comparison declares its columns and draws its own four states
@@ -34,3 +34,6 @@ values, as today. Needs `items` mostly (a slice of the page's query, its pending
 ## Progress
 Built on web and phone; `pnpm check` and `pnpm verify` pass. The chips bar's width (`w-1/5`) is the implementer's choice, for the design critique. Open: the live check (web per batch, phone on the harness).
 The web live criteria pass and the web design critique's findings are fixed, measured at 1440 and 375.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/data/report.md`).

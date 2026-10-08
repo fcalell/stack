@@ -1,6 +1,6 @@
 ---
 id: 003-76
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a page outside the shell at the auth width
@@ -46,3 +46,6 @@ The showcase draws it at `/layout?place=sign-in` and `?place=connect` and in the
 ## Open questions
 - [x] Its shape (a component, a variant, a token, an option): the stack session decides. A component.
 
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/shell/report.md`).

@@ -1,6 +1,6 @@
 ---
 id: 003-92
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: the Shell's banner, sidebar and tab bar sit off the spacing rhythm
@@ -36,3 +36,6 @@ A count is the muted-ink number everywhere: one `Count`, one `COUNT` cell, no pi
 `COUNT` is `text-ink-meta` (it lost its ground, `min-h-chip`, `min-w-chip`, `px-inside` and `rounded-full`); `COUNT_LABEL` keeps the caption type and tabular figures but no colour, so a count in a filled act can take the act's. `Count` inside a `Button` (an internal `InAct` context the button sets around its count and `wait`) draws in the button's own ink (web: currentColor of the act; native: the `Ink` the button provides, blocked and banner inks included). That is the label's ink in every `act` and state, so the count holds the contrast the label already holds (`on-act-accent` on `act-accent`, `on-act-danger` on `act-danger`, `ink-meta` on `fill-disabled`, the unfilled acts on the page); `ui-core verify` gates those pairs, light and dark. The waiting count (`skeleton({ kind: "count" })`, Section's and ItemHeader's `COUNT_WAIT`) is a `h-skeleton` bar one figure wide, its width set by an unseen caption figure, so loaded and waiting rows keep their height. The Shell's `TAB_COUNT` overlay stands the plain number at the glyph's top end. Doc comments no longer say pill.
 Evidence: `pnpm check`, the three verifies and the `Button`, `Count`, `Section`, `ItemHeader`, `Shell`, `Meter`, `Canvas` and waiting stories in the browser run.
 Owner render: `atom/Count` Rest; `atom/Button` Rest and Loading (every act, light and dark); `layout/Shell` Rest (sidebar count, tab count); `layout/Section` Rest and Loading (tally, waiting bar); `shared/ItemHeader` Rest and Loading (count fact, waiting bar).
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/shell/report.md`).

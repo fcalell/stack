@@ -24,3 +24,6 @@ button's removal cannot drop focus; the `requestAnimationFrame` goes.
 
 ## Progress
 Built; `pnpm check` and `pnpm verify` pass. Web live at 1440: two copies a second apart hold Copied until 2 s after the second; a keyboard unfold moves focus fold, fold, text with no frame on the body. Open: the phone live criterion on the harness.
+
+## Critique
+Partial: every state the story feeds renders correctly; its timing criteria (throttled Escape, copy timing, the clock past `until`) were not driven.

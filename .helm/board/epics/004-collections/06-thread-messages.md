@@ -1,6 +1,6 @@
 ---
 id: 004-06
-status: review
+status: done
 sessions: {}
 ---
 # react-ui, native-ui: a Thread's messages from data draw their own four states
@@ -34,3 +34,6 @@ held locally while an answer streams, as the showcase's are).
 ## Progress
 Built on web and phone; `pnpm check` and `pnpm verify` pass. Open for the critique: the failed and empty forms take the page EmptyState form and stand at the log's top; the showcase cannot reach the empty form (`useFixture` has no empty mode). Open: the live check (web per batch, phone on the harness).
 The web live criteria pass and the web design critique's findings are fixed, measured at 1440 and 375.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/data/report.md`).

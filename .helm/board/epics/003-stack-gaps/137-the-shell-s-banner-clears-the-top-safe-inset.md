@@ -1,6 +1,6 @@
 ---
 id: 003-137
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: the Shell's banner clears the top safe inset
@@ -23,3 +23,6 @@ The web Shell's column pads its top by the safe-area inset (`pt-safe`, `padding-
 
 ## Ruled
 The web frame draws a zero inset and adds no override variable: a test-only variable is a second mechanism for one number, and the criterion is a viewing condition the web frame cannot set. The class is gated by the overlay allowlist.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/shell/report.md`).

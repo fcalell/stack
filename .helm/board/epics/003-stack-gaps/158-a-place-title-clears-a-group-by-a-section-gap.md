@@ -1,6 +1,6 @@
 ---
 id: 003-158
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: the gap under a Place's title above a Group matches a Section title's
@@ -20,3 +20,6 @@ The Place body's gap and a Section's title gap are separate tokens; a Group plac
 
 ## Decided
 The difference is a named rule, not a token to align. A Place's title is a strip over the head's hairline and its body starts a page inset under it; a Section's title is a line of the body a pair over its content. A Group or List directly in a Place's body therefore stands a page inset under the hairline, and a list that should read as a section's own wants a `Section`. The rule is in `plugins/react-ui/guide/rules.md`, `plugins/native-ui/guide/rules.md` and `.helm/knowledge/architecture/ui-core.md`. No component changed.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/shell/report.md`).

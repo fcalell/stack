@@ -31,3 +31,6 @@ or slots, never from a layout effect or a post-paint state push; a registration 
 
 ## Progress
 Built; `pnpm check` and `pnpm verify` pass. Web live at 375 touch, frame by frame: no Screen frame draws the tab bar, and a toast standing as an act Place remounts never covers the act. Phone: the tab bar is a slot each Place draws; the toast layer is still placed by one measure, left to 005-04. Open: the phone live criterion on the harness.
+
+## Critique
+Unrendered: the first frame is not capturable from a static render; the end state (no tab bar under a pushed Screen) holds.

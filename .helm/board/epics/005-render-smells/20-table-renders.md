@@ -1,6 +1,6 @@
 ---
 id: 005-20
-status: review
+status: done
 sessions: {}
 ---
 # react-ui, native-ui: a Table re-renders only the rows and cells that changed
@@ -30,3 +30,6 @@ stay in CSS, it stays with a `// TODO:` naming the 2x ceiling.
 
 ## Progress
 Built; `pnpm check` and `pnpm verify` pass. Web live at 1440: a pointer move re-renders 1 to 3 cells and no row (master: all 30 cells and 5 rows), a key move 2 cells. Not met: at 375 both forms still mount; the CSS form switch stays with a `// TODO:` until the page width is known before paint (the story's allowed fallback). Open: the phone live criterion on the harness.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/data/report.md`).

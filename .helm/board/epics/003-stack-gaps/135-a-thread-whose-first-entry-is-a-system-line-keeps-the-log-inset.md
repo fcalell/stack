@@ -1,6 +1,6 @@
 ---
 id: 003-135
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a Thread whose first entry is a system line keeps the log's top inset
@@ -25,3 +25,6 @@ The log's top inset is intact (`THREAD_LOG` `pt-page`): a log that fits starts i
 
 ## Built
 A system line over its card is one entry a pair apart: `MESSAGE_ENTRY` (`gap-pair`, ui-core `variants.ts`, listed in the Message roster entry) wraps the line and the card in `plugins/react-ui/src/ui/components/message/index.tsx` and `plugins/native-ui/src/ui/components/message/index.tsx`. The log's top inset stays by design (a log opens at its end). The Thread frame (turns t8, t9) and the Message frame already draw a line over a card; `apps/showcase/behaviour/message.stories.tsx` (`LineOverCard`) asserts the gap equals the pair step. `pnpm check` (turbo), `ui-core`, `plugin-react-ui` and `plugin-native-ui` `verify`, and the Message and Thread component stories plus `LineOverCard` pass.
+
+## Critique
+Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/data/report.md`).
