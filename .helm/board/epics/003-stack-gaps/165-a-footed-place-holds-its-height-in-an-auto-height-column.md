@@ -1,6 +1,6 @@
 ---
 id: 003-165
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a Place with a docked foot keeps its height in a column of auto height
@@ -26,3 +26,6 @@ A size container takes no height from its content, and no CSS gives a nested des
 
 ## Built
 `FootRegion` and `useFootRegion` (`plugin-react-ui/src/ui/lib/frame.ts`) measure the footed Place's region and the Thread's fill (layout-effect read, then a ResizeObserver, whole pixels, state only on change). The docked Sheet's body takes a min height of three rows and a max height of two fifths of the measured region as an inline style; `REGION_FOOTED`, `BODY_DOCKED` and both `container-type: size` are gone, and the Place comment no longer asks for a column of its own height. The Place and ActionBar frames no longer pin `h-185`, and `Column` lost its `height` prop. `behaviour/place-foot.stories.tsx` draws a footed Place in an auto-height column at 375, 768 and 1440 px in both modes: foot inside the column, the sibling below not overlapped, heights settled, axe clean. Evidence: the sheet, place, action-bar, thread and split stories, `DockedBodyKeepsThreeRows` and `DockedWithRoomFitsItsPage` pass; `pnpm check` turbo part and the three `verify` runs pass.
+
+## Critique (second round)
+Ship, by a fresh critic at 320, 390, 768, 1280 and 1440, light and dark (scratchpad `critique/r2-layout/report.md`).

@@ -28,3 +28,6 @@ Rework: the render holds (one head, edges at the gutter), but `BesideAtThePhone`
 
 ## Rework
 `BesideAtThePhone` measures against its own frame: the expected left is the Page's left plus the `px-page` gutter. The story passes.
+
+## Critique (second round)
+Rework: at 1280 and 1440 a beside record's title stands 36 px off the page gutter (x 960.5 against 924.5 for the list's "Entries" and its rows), its close act before it on the same line; the criterion asks one gutter at every width. At 390 it holds (one head, back over the title, both at x 32).

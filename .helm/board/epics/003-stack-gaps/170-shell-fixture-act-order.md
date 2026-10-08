@@ -1,6 +1,6 @@
 ---
 id: 003-170
-status: review
+status: done
 sessions: {}
 ---
 # showcase: the Behaviour/Shell fixture orders its acts with the filled act last
@@ -17,3 +17,6 @@ The fixture lists `[Discard, Save]`, and `BodyEndsAboveTheTabBar` measures `Save
 
 ## Built
 `apps/showcase/behaviour/shell.stories.tsx`: the acts are `[Discard, Save]` and the play reads `Save`. Evidence: the `Behaviour/Shell` stories pass in the browser run.
+
+## Critique (second round)
+Ship, by a fresh critic at 320, 390, 768, 1280 and 1440, light and dark (scratchpad `critique/r2-layout/report.md`).

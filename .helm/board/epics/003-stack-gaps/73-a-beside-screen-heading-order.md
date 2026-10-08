@@ -1,6 +1,6 @@
 ---
 id: 003-73
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a beside record's headings follow its title below wide
@@ -25,3 +25,6 @@ Rework: at 390 no h1 has a box; the Place's `h1` stands in a display:none head w
 
 ## Rework
 Ruled (rulings-6): a beside Screen titles at `h1` and its sections at `h2` at every width. A hidden twin `h1` duplicates content, a ResizeObserver swap breaks 005-02/03 and re-renders the subtree after paint, and a CSS-only swap needs two title nodes. At 390 the Place's head is `display: none`, so the record's `h1` is the one visible and `page-has-heading-one` passes; from `tablet` two heads stand, so two `h1`s, the price of a fixed tree. Evidence: `behaviour/split.stories.tsx` `BesideHeadings390`, `BesideHeadings768`, `BesideHeadings1440` (a visible `h1`, the first visible heading an `h1`, the record's sections `h2`).
+
+## Critique (second round)
+Ship, by a fresh critic at 320, 390, 768, 1280 and 1440, light and dark (scratchpad `critique/r2-layout/report.md`).

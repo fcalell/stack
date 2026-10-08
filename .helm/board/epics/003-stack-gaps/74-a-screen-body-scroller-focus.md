@@ -1,6 +1,6 @@
 ---
 id: 003-74
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a Screen's scrolling body is reachable by keyboard
@@ -26,3 +26,6 @@ Unrendered: no story draws a scrolling Screen body with nothing tabbable inside.
 
 ## Rework
 `behaviour/screen.stories.tsx` `BodyTakesTheTabStop` draws a 300 px Screen of text lines and asserts the body takes `tabindex=0` and Tab reaches it.
+
+## Critique (second round)
+Ship, by a fresh critic at 320, 390, 768, 1280 and 1440, light and dark (scratchpad `critique/r2-layout/report.md`).

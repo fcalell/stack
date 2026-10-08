@@ -1,6 +1,6 @@
 ---
 id: 003-94
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a Split's list and main start at one top, and the list's wash stays in its column
@@ -28,3 +28,6 @@ Rework: the list and main tops are equal (y 90); the list's wash is unjudged, si
 
 ## Rework
 `TopsAndWash` draws the Group's rows as openable, with the second the open record. Its play asserts the selected row is washed and the others clear, that the open rows carry the hover and selected-hover washes (a synthetic pointer sets no `:hover`, so those are read off the classes), and that every row stays inside the Group's border. The story passes.
+
+## Critique (second round)
+Ship, by a fresh critic at 320, 390, 768, 1280 and 1440, light and dark (scratchpad `critique/r2-layout/report.md`).

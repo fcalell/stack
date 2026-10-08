@@ -1,6 +1,6 @@
 ---
 id: 003-84
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a list standing alone at a deeper route draws its own back act
@@ -27,3 +27,6 @@ Rework: the tree-alone Split (desktop and Touch stories) overflows the viewport 
 ## Rework
 The overflow is the stories' own harness: `Page` is a fixed 375 px, which with Storybook's 16 px padding ends at x 391 at every viewport. The `Tree` stories stand in `Page width={375} fluid` (never wider than the screen), and `TreeAloneGoesUp` asserts the document does not scroll sideways. The Screen and Split hold no overflow of their own.
 Evidence: `behaviour/split.stories.tsx` `TreeAloneGoesUp`, `TreeAloneGoesUpTouch`, `TreeRecordGoesToTree` pass.
+
+## Critique (second round)
+Ship, by a fresh critic at 320, 390, 768, 1280 and 1440, light and dark (scratchpad `critique/r2-layout/report.md`).
