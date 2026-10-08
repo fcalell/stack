@@ -1,4 +1,6 @@
+import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
+import { Input } from "@fcalell/plugin-react-ui/components/input";
 import { List } from "@fcalell/plugin-react-ui/components/list";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect, waitFor } from "storybook/test";
@@ -118,5 +120,30 @@ export const Separators: StoryObj = {
 		await expect(grouped).toHaveLength(2);
 		await expect(edge(grouped[0])).toBe("1px");
 		await expect(edge(grouped[0]?.firstElementChild ?? undefined)).toBe("0px");
+	},
+};
+
+// A FormField in a Group stands as one of the card's items: at the card's
+// inset, the same as the rows beside it, with the group's one hairline between.
+export const FieldInAGroup: StoryObj = {
+	render: () => (
+		<div data-testid="card">
+			<Group>
+				<FormField label="Add host">
+					<Input value="" onChange={() => {}} />
+				</FormField>
+				<Runs meta={false} />
+			</Group>
+		</div>
+	),
+	play: async ({ canvas }) => {
+		const card = canvas.getByTestId("card").firstElementChild;
+		const label = canvas.getByText("Add host").getBoundingClientRect().left;
+		const title = canvas.getByText("Deploy api").getBoundingClientRect().left;
+		await expect(label).toBeGreaterThan(
+			card?.getBoundingClientRect().left ?? 0,
+		);
+		await expect(label).toBe(title);
+		await expect(edge(card?.children[0])).toBe("1px");
 	},
 };

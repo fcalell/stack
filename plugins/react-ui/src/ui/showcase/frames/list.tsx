@@ -68,6 +68,11 @@ const HOSTS = [
 	{ id: "h2", name: "api.example.org" },
 ];
 
+const LIMITS = [
+	{ id: "seats", label: "Seats", value: 4, max: 12 },
+	{ id: "builds", label: "Build minutes", value: 4000, max: 6000 },
+];
+
 const refetch = () => {};
 
 // Rows whose titles are known before their counts: loading, they stand as
@@ -96,13 +101,13 @@ export function Areas(props: { loading?: boolean }) {
 	);
 }
 
-// Every cell draws four Lists in the frame's state, each in a Section on a
+// Every cell draws five Lists in the frame's state, each in a Section on a
 // page as it ships: notes (a title over a meta line, no leading), deploys
 // (an avatar leading, an age trailing), each waiting in its own rows' slots,
 // its empty and failed forms framed in the Section; host keys, facts
 // from data in a Group (a label over its fingerprint, copied), the Section's
 // head carrying no count; and allowed hosts, an add field over a List in a
-// Group, the field live while the rows wait.
+// Group, the field live while the rows wait; and plan limits, meters from data in a Group.
 export function drawList(frame: ShowcaseFrame) {
 	return (
 		<Column>
@@ -181,6 +186,25 @@ export function drawList(frame: ShowcaseFrame) {
 							row={{
 								key: (host) => host.id,
 								title: (host) => host.name,
+							}}
+						/>
+					</Group>
+				</Section>
+				<Section title="Plan limits">
+					<Group>
+						<List
+							query={queryOf(frame.state, LIMITS)}
+							sentence="The limits did not load."
+							empty={{
+								title: "No limits",
+								sentence: "The limits of your plan land here.",
+							}}
+							meter={{
+								key: (limit) => limit.id,
+								label: (limit) => limit.label,
+								value: (limit) => limit.value,
+								max: (limit) => limit.max,
+								meta: (limit) => `${limit.value} of ${limit.max}`,
 							}}
 						/>
 					</Group>

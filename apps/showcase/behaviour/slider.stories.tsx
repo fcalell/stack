@@ -29,7 +29,7 @@ export default {
 // either end, and reports its value.
 export const Thumb: StoryObj = {
 	play: async ({ canvas, userEvent }) => {
-		const thumb = canvas.getByRole("slider", { name: "Timeout" });
+		const thumb = await canvas.findByRole("slider", { name: "Timeout" });
 		await userEvent.tab();
 		await expect(thumb).toHaveFocus();
 		await expect(thumb).toHaveAttribute("aria-valuenow", "30");

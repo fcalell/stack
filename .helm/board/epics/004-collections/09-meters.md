@@ -33,3 +33,6 @@ Built on web and phone; `pnpm check` and `pnpm verify` pass. Open: the live crit
 
 ## Critique
 Partial: the Meter rest and loading forms hold; no story draws the meter set's failed and empty forms, so those are unjudged.
+
+## Rework
+The meter set's failed and empty forms are drawn: the `layout-list` frames (`frames/list.tsx`) hold a "Plan limits" Group whose List takes `meter` from a query, so the loading, error (sentence and Retry), empty (`No limits`) and loaded forms render in every state. Evidence: `layout/List` stories in the browser run.

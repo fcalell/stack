@@ -818,3 +818,6 @@ Rework: a selected node draws a 2 px ring (a 1 px accent border and a 1 px outli
 
 ## Ruled
 The owner decides (2026-10-08): a selected node is its 1 px border in the selection colour alone, with no outline over it (the pattern's 1.5 px reference outline is not followed); keyboard focus keeps its own 2 px ring, which shows only while moving by keyboard. A node held by a long press keeps its 2 px outline.
+
+## Rework
+The owner's ruling above is built: a selected node is its 1 px border in the selection colour alone. `canvas/node.tsx` drops the `SELECTED` outline from the node and the zoomed-out glyph; the focus ring and the held outline stay. `packages/ui-core/guide/patterns/node-canvas.md`'s two range lines say stack draws a 1 px selection border where the references draw 1.5. `behaviour/canvas.stories.tsx` reads a selection as the border in the selection colour (`selected`) in place of a 1px outline. The `outline-1` overlay entry is removed. Evidence: `plugin-react-ui verify` 13/13, the canvas stories in the browser run.

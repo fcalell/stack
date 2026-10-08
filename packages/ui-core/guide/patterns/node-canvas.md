@@ -5,7 +5,7 @@ executions behind it. Read the measurements as the [references](../references.md
 
 ## Range
 
-dot grid 14–20 at 1 px on a canvas one step off; nodes radius 6–10 hairline, 44–130 tall (media to 400); eyebrow 10–11 + title 12–13/500; ports 8 hollow; edges 1–1.5 grey, dashed only for a handoff to another owner, an inactive edge dimmed; an edge's label a chip near its source; a group 1 px dashed radius 8 with a head row; selection a 1.5 px accent outline; zoom stack 28–36 buttons; accent only on selection and run. A run or scenario keeps every node in place: the taken path at full ink with its status marks, the rest in disabled ink. A problem marks its node in the danger hue and is named outside the canvas.
+dot grid 14–20 at 1 px on a canvas one step off; nodes radius 6–10 hairline, 44–130 tall (media to 400); eyebrow 10–11 + title 12–13/500; ports 8 hollow; edges 1–1.5 grey, dashed only for a handoff to another owner, an inactive edge dimmed; an edge's label a chip near its source; a group 1 px dashed radius 8 with a head row; selection a 1.5 px accent outline (stack draws a 1 px selection border where the references draw 1.5); zoom stack 28–36 buttons; accent only on selection and run. A run or scenario keeps every node in place: the taken path at full ink with its status marks, the rest in disabled ink. A problem marks its node in the danger hue and is named outside the canvas.
 
 ## References
 
@@ -38,4 +38,4 @@ nodes. A canvas at 375 px is judged by the rubric's floors alone.
 
 DESIGN.md: none of the shortlisted apps has a file.
 
-The references span: dot grid 14–20 px at 1 px dots on a canvas one step off white or `#0b0d12`; nodes radius 6–10 on 1 px hairline, 44–130 px tall for logic nodes, up to 400 for media; eyebrow 10–11 + title 12–13/500; ports 8 px hollow circles; edges 1–1.5 px grey (dashed for inactive, brand-green for data); selection is a 1.5 px accent outline; zoom stack of 28–36 px buttons bottom-left or a bottom pill toolbar; accent only on selection and the run/publish act.
+The references span: dot grid 14–20 px at 1 px dots on a canvas one step off white or `#0b0d12`; nodes radius 6–10 on 1 px hairline, 44–130 px tall for logic nodes, up to 400 for media; eyebrow 10–11 + title 12–13/500; ports 8 px hollow circles; edges 1–1.5 px grey (dashed for inactive, brand-green for data); selection is a 1.5 px accent outline (stack draws a 1 px selection border where the references draw 1.5); zoom stack of 28–36 px buttons bottom-left or a bottom pill toolbar; accent only on selection and the run/publish act.

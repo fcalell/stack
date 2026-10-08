@@ -33,7 +33,6 @@ import type { Viewport } from "./viewport.ts";
 // The glyph draws in the node's own ink: it would else take the ink the page
 // resolved before the mode scope it stands in.
 const BOX = "absolute flex items-center text-start text-ink-body select-none";
-const SELECTED = "outline-1 outline-selected-outline";
 // A node held by a long press draws the selection's colour at the focus ring's width.
 const HELD = "outline-2 outline-selected-outline";
 const HOVERED = "hover:border-edge-hover";
@@ -237,7 +236,7 @@ export function NodeView({
 	const classes = cn(
 		canvasNode({ state: look.state }),
 		BOX,
-		lift.lifted ? HELD : look.state === "selected" && SELECTED,
+		lift.lifted && HELD,
 		onSelect && look.state === "rest" && HOVERED,
 		onSelect && FOCUSED,
 		draggable && GRAB,
@@ -500,7 +499,6 @@ export function NodeView({
 					GLYPH,
 					GLYPH_INK[look.tone],
 					FOCUSED,
-					look.state === "selected" && SELECTED,
 				)}
 			>
 				<Icon name={node.icon} fit="body" />

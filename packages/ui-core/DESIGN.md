@@ -19,7 +19,7 @@ colors:
   accent: "oklch(0.52 0.19 264)"
   on-accent: "oklch(1 0 0)"
   accent-soft: "oklch(0.95 0.023 264)"
-  accent-ink: "oklch(0.52 0.19 264)"
+  accent-ink: "oklch(0.505 0.19 264)"
   ok: "oklch(0.49 0.129 150)"
   ok-soft: "oklch(0.965 0.04 150)"
   warn: "oklch(0.48 0.099 70)"
@@ -75,8 +75,8 @@ colors:
   skeleton: "oklch(0.2 0.008 264 / 0.09)"
   fill-disabled: "oklch(0.2 0.008 264 / 0.06)"
   fill-neutral: "oklch(0.2 0.008 264 / 0.08)"
-  ring: "oklch(0.52 0.19 264)"
-  selected-outline: "oklch(0.52 0.19 264)"
+  ring: "oklch(0.505 0.19 264)"
+  selected-outline: "oklch(0.505 0.19 264)"
   edge-hover: "oklch(0.61 0.01 264)"
   edge-error: "oklch(0.515 0.19 25)"
   ink-error: "oklch(0.515 0.19 25)"
@@ -111,7 +111,7 @@ colors:
   accent-dark: "oklch(0.54 0.19 264)"
   on-accent-dark: "oklch(1 0 0)"
   accent-soft-dark: "oklch(0.29 0.06 264)"
-  accent-ink-dark: "oklch(0.72 0.13 264)"
+  accent-ink-dark: "oklch(0.725 0.13 264)"
   ok-dark: "oklch(0.64 0.17 150)"
   ok-soft-dark: "oklch(0.28 0.05 150)"
   warn-dark: "oklch(0.75 0.15 80)"
@@ -167,8 +167,8 @@ colors:
   skeleton-dark: "oklch(0.97 0.002 264 / 0.09)"
   fill-disabled-dark: "oklch(0.97 0.002 264 / 0.06)"
   fill-neutral-dark: "oklch(0.97 0.002 264 / 0.08)"
-  ring-dark: "oklch(0.72 0.13 264)"
-  selected-outline-dark: "oklch(0.72 0.13 264)"
+  ring-dark: "oklch(0.725 0.13 264)"
+  selected-outline-dark: "oklch(0.725 0.13 264)"
   edge-hover-dark: "oklch(0.575 0.01 264)"
   edge-error-dark: "oklch(0.71 0.178 25)"
   ink-error-dark: "oklch(0.71 0.178 25)"
@@ -2364,7 +2364,7 @@ Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fi
 | `accent` | `oklch(0.52 0.19 264)` | `oklch(0.54 0.19 264)` | the filled act |
 | `on-accent` | `oklch(1 0 0)` | `oklch(1 0 0)` | text on `accent` |
 | `accent-soft` | `oklch(0.95 0.023 264)` | `oklch(0.29 0.06 264)` | a tinted tile |
-| `accent-ink` | `oklch(0.52 0.19 264)` | `oklch(0.72 0.13 264)` | a link, the focus ring, a selection outline |
+| `accent-ink` | `oklch(0.505 0.19 264)` | `oklch(0.725 0.13 264)` | a link, the focus ring, a selection outline |
 | `ok` | `oklch(0.49 0.129 150)` | `oklch(0.64 0.17 150)` | the `done` mark, an added line's ink |
 | `ok-soft` | `oklch(0.965 0.04 150)` | `oklch(0.28 0.05 150)` | the ground under an `ok` mark, an added line |
 | `warn` | `oklch(0.48 0.099 70)` | `oklch(0.75 0.15 80)` | a caution's ink: a banner's glyph and act, a change mark |
@@ -2420,8 +2420,8 @@ Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fi
 | `skeleton` | `oklch(0.2 0.008 264 / 0.09)` | `oklch(0.97 0.002 264 / 0.09)` | a loading bar |
 | `fill-disabled` | `oklch(0.2 0.008 264 / 0.06)` | `oklch(0.97 0.002 264 / 0.06)` | a disabled act's or chip's box |
 | `fill-neutral` | `oklch(0.2 0.008 264 / 0.08)` | `oklch(0.97 0.002 264 / 0.08)` | a resting neutral ground: a grey chip, a message bubble |
-| `ring` | `oklch(0.52 0.19 264)` | `oklch(0.72 0.13 264)` | the focus ring |
-| `selected-outline` | `oklch(0.52 0.19 264)` | `oklch(0.72 0.13 264)` | a selected tile's outline |
+| `ring` | `oklch(0.505 0.19 264)` | `oklch(0.725 0.13 264)` | the focus ring |
+| `selected-outline` | `oklch(0.505 0.19 264)` | `oklch(0.725 0.13 264)` | a selected tile's outline |
 | `edge-hover` | `oklch(0.61 0.01 264)` | `oklch(0.575 0.01 264)` | a field's boundary under the pointer |
 | `edge-error` | `oklch(0.515 0.19 25)` | `oklch(0.71 0.178 25)` | a field's boundary in error |
 | `ink-error` | `oklch(0.515 0.19 25)` | `oklch(0.71 0.178 25)` | an error message |

@@ -25,3 +25,6 @@ Both platforms, after 65. A critique judges the item's vertical inset (`p-card`)
 
 ## Critique
 Partial: the Slider half ships (its item's start inset is 16, the rows' 16); no story draws a FormField inside a Group, so the field half is unrendered.
+
+## Rework
+The field half is drawn: `Behaviour/List` `FieldInAGroup` stands a `FormField` over a List of rows in a Group and asserts the field's item inset equals the rows' and the group's hairline stands between them; the `layout-list` frames also draw the field as the first item of the "Allowed hosts" Group in every state. Evidence: `behaviour/list.stories.tsx` in the browser run.

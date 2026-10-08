@@ -26,3 +26,6 @@ Owner render: `shared/Banner` Rest (note, warn, danger) and Disabled, light and 
 
 ## Critique
 Rework: the info Banner act's "Read more" label falls under the 4.5:1 text floor on hover (4.48:1) and press (4.26:1) in light; rest is 4.96:1. The act's look (no outline, the kind's ink) holds.
+
+## Rework
+The info banner's act label fell to 4.48:1 on hover and 4.26:1 on press in light (rest 4.96), under the 4.5 text floor (`critique/acts`). `accent-ink` now holds 4.5:1 on `accent-soft` under `wash-press`, the darkest ground a quiet act takes there, as the light `danger` holds under it on a group: its light lightness is declared 0.505 where it was 0.52 (`packages/ui-core/src/tokens.ts`; `verify` c11 reads the new default; `.helm/knowledge/architecture/ui-core.md` names the hold; `DESIGN.md` is regenerated). Evidence: `ui-core verify` 34/34 (220 pairs at their floor), `Shared/Banner` stories in the browser run.

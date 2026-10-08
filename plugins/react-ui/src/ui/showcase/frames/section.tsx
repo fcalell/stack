@@ -18,6 +18,7 @@ import { Labelled } from "./form.tsx";
 import {
 	STAND_IN_ROW,
 	STAND_INS,
+	StandInList,
 	StandInRows,
 	Wide,
 } from "./layout-context.tsx";
@@ -121,7 +122,7 @@ export function drawSection(frame: ShowcaseFrame) {
 					loading
 				>
 					<Group>
-						<StandInRows ground="group" />
+						<StandInList />
 					</Group>
 				</Section>
 				<Section title="In progress" folded={false} act={add} loading>

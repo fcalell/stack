@@ -752,21 +752,15 @@ const MEMBERS: Member[] = [
 
 // A part is one List of the rows a cell names, drawn in the frame's state: its
 // rows at rest, its waiting rows loading (over the loaded ones when `pair`
-// sets the skeleton against what it stands in for), the rows that failed in
-// error, the first row current when selected. A part with no failed row
-// (`failing` unset) draws the deploys' failed ones in error.
+// sets the skeleton against what it stands in for), the first row current when
+// selected. A row's error is its entry's error line, which every cell draws
+// in error.
 interface Part {
 	draw: (state: DrawnState, pair: boolean) => ReactNode;
-	failing: boolean;
 }
 
-function part<T>(
-	items: () => T[],
-	row: RowSlots<T>,
-	failing?: (item: T) => boolean,
-): Part {
+function part<T>(items: () => T[], row: RowSlots<T>): Part {
 	return {
-		failing: failing !== undefined,
 		draw: (state, pair) => {
 			const all = items();
 			if (state === "loading" || (pair && state === "rest"))
@@ -776,8 +770,6 @@ function part<T>(
 						{pair ? <List items={all} row={row} /> : null}
 					</>
 				);
-			if (state === "error")
-				return <List items={failing ? all.filter(failing) : all} row={row} />;
 			const first = all[0];
 			return (
 				<List
@@ -796,11 +788,7 @@ function part<T>(
 const WORK_PART = part(() => WORKS, WORK_ROW);
 
 const PARTS = {
-	deploys: part(
-		() => DEPLOYS,
-		DEPLOY_ROW,
-		(deploy) => deploy.status.state === "failed",
-	),
+	deploys: part(() => DEPLOYS, DEPLOY_ROW),
 	services: part(() => SERVICES, SERVICE_ROW),
 	issues: part(issues, ISSUE_ROW),
 	invites: part(() => INVITES, INVITE_ROW),
@@ -813,37 +801,16 @@ const PARTS = {
 		),
 	},
 	steps: part(() => STEPS, STEP_ROW),
-	sources: part(
-		() => SOURCES,
-		SOURCE_ROW,
-		(source) => source.entry.error !== undefined,
-	),
-	entries: part(
-		() => ENTRIES,
-		ENTRY_ROW,
-		(entry) => entry.status.state === "failed",
-	),
+	sources: part(() => SOURCES, SOURCE_ROW),
+	entries: part(() => ENTRIES, ENTRY_ROW),
 	changes: part(() => CHANGES, CHANGE_ROW),
 	ticks: part(() => TICKS, TICK_ROW),
-	hops: part(
-		() => HOPS,
-		HOP_ROW,
-		(hop) => hop.status.state === "failed",
-	),
-	// The tree's one root holds the failed leaf, so error draws the whole tree.
-	legs: part(
-		() => LEGS,
-		LEG_ROW,
-		() => true,
-	),
+	hops: part(() => HOPS, HOP_ROW),
+	legs: part(() => LEGS, LEG_ROW),
 	imports: part(() => IMPORTS, IMPORT_ROW),
 	memories: part(() => MEMORIES, MEMORY_ROW),
 	notes: part(() => NOTES, NOTE_ROW),
-	members: part(
-		() => MEMBERS,
-		MEMBER_ROW,
-		(member) => member.status?.state === "failed",
-	),
+	members: part(() => MEMBERS, MEMBER_ROW),
 };
 
 // The part a cell names, by the cell's name or its family's: the first match
@@ -887,9 +854,16 @@ const waits = (cell: string) =>
 export function drawListRow(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
 	const named = CELL_PARTS.find(([prefix]) => cell.startsWith(prefix));
-	let chosen = PARTS[named?.[1] ?? "issues"];
-	if (frame.state === "error" && !chosen.failing) chosen = PARTS.deploys;
-	const drawn = chosen.draw(frame.state, waits(cell));
+	const chosen = PARTS[named?.[1] ?? "issues"];
+	const drawn =
+		frame.state === "error" ? (
+			<List
+				items={SOURCES.filter((source) => source.entry.error !== undefined)}
+				row={SOURCE_ROW}
+			/>
+		) : (
+			chosen.draw(frame.state, waits(cell))
+		);
 	return (
 		<Page>{cell === "ROW.ground.group" ? <Group>{drawn}</Group> : drawn}</Page>
 	);

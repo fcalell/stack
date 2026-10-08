@@ -781,9 +781,20 @@ function outline(element: Element): string {
 	return style.outlineStyle === "none" ? "none" : style.outlineWidth;
 }
 
+// A selected node is its 1px border in the selection colour alone: the colour
+// is read from a probe that stands where the node does.
+function selected(element: Element): boolean {
+	const probe = document.createElement("div");
+	probe.style.border = "1px solid var(--color-selected-outline)";
+	element.parentElement?.append(probe);
+	const colour = getComputedStyle(probe).borderTopColor;
+	probe.remove();
+	return getComputedStyle(element).borderTopColor === colour;
+}
+
 // A synthetic click is a script focus, which Chromium counts as a keyboard one,
-// so the focus ring (2px) covers the selection's outline (1px). The selection's
-// own outline is read once focus has left the node.
+// so the focus ring covers the node. The selection is read once focus has left
+// the node.
 async function clicked(
 	userEvent: Parameters<NonNullable<StoryObj["play"]>>[0]["userEvent"],
 	button: Element,
@@ -856,8 +867,8 @@ export const Off: StoryObj = {
 
 // A problem is its first words in place of the line, in the ink a rest line has
 // (status colour belongs to a mark), on a danger border with a danger dot in the
-// trailing column; selecting the node takes the border for the selection's
-// outline and keeps the words and the dot.
+// trailing column; selecting the node takes the danger border for the selection's
+// border and keeps the words and the dot.
 export const Problem: StoryObj = {
 	render: () => <Stated graph={PROBLEM} label="Problem" />,
 	play: async ({ canvas, userEvent }) => {
@@ -873,7 +884,8 @@ export const Problem: StoryObj = {
 		await expect(build.querySelector(".rounded-full")).not.toBeNull();
 		await expect(plan.querySelector(".rounded-full")).toBeNull();
 		await clicked(userEvent, build);
-		await expect(outline(build)).toBe("1px");
+		await expect(selected(build)).toBe(true);
+		await expect(outline(build)).toBe("none");
 		await expect(build).toHaveTextContent("Missing the target");
 		await expect(build.querySelector(".rounded-full")).not.toBeNull();
 	},
@@ -919,8 +931,8 @@ export const Run: StoryObj = {
 			"Running",
 		);
 		for (const node of RUN.nodes)
-			await expect(outline(stateButton(region, RUN, node.id))).toBe(
-				node.id === RUN.path?.at ? "1px" : "none",
+			await expect(selected(stateButton(region, RUN, node.id))).toBe(
+				node.id === RUN.path?.at,
 			);
 		const rest = edgeOf(region, "build-check");
 		await expect(edgeOf(region, "gate-plan").ink).not.toBe(rest.ink);
@@ -938,7 +950,7 @@ export const Scenario: StoryObj = {
 	play: async ({ canvas }) => {
 		const region = await standing(canvas, "Scenario");
 		const failed = stateButton(region, SCENARIO, "b2");
-		await expect(outline(failed)).toBe("1px");
+		await expect(selected(failed)).toBe(true);
 		await expect(failed).toHaveTextContent("Failed");
 		const begin = ink(titleText(stateButton(region, SCENARIO, "begin")));
 		const merge = ink(titleText(stateButton(region, SCENARIO, "merge")));
@@ -955,7 +967,7 @@ export const Scenario: StoryObj = {
 	},
 };
 
-// A dimmed node is still a button: it takes the click, the outline, and keeps
+// A dimmed node is still a button: it takes the click, the selection, and keeps
 // its dimmed ink.
 export const SelectsOverAPath: StoryObj<{ heard: Select }> = {
 	parameters: DIMMED_NODES,
@@ -967,7 +979,7 @@ export const SelectsOverAPath: StoryObj<{ heard: Select }> = {
 		const before = ink(titleText(handoff));
 		await clicked(userEvent, handoff);
 		await expect(args.heard).toHaveBeenCalledWith("handoff");
-		await waitFor(() => expect(outline(handoff)).toBe("1px"));
+		await waitFor(() => expect(selected(handoff)).toBe(true));
 		await expect(ink(titleText(handoff))).toBe(before);
 	},
 };

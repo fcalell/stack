@@ -43,7 +43,7 @@ its rationale.
   holds at the knob's hue, and clamps every accent value's chroma inside sRGB at its lightness, so a
   re-hued accent keeps its luminance and its contrasts (the verify sweeps all 360 hues of the
   accent, of the cast, and of the two together) and loses saturation rather than clipping. The sheet
-  carries the held value at its own hue: `accent-ink` holds 4.5:1 on `group` and `accent-soft`, the
+  carries the held value at its own hue: `accent-ink` holds 4.5:1 on `group` and on `accent-soft` under `wash-press` (a banner act's pressed label), the
   dark `accent` 3:1 on `group` (a checked box, an on switch), `edge-strong` 3:1 on `surface` under
   `wash-press` and `wash-selected` in both modes (an unticked box on a pressed or selected row), the
   light `danger` 4.5:1 under `wash-press` on `group` (a destructive act's pressed label), the dark `act-danger` 4.5:1 under `on-act-danger` (the filled danger act: in

@@ -420,17 +420,17 @@ export const COLORS: Record<ColorName, ColorDeclaration> = {
 	"accent-soft": { light: accent(0.95, 0.023), dark: accent(0.29, 0.06) },
 	"accent-ink": {
 		light: {
-			...accent(0.52, 0.19),
+			...accent(0.505, 0.19),
 			holds: [
 				{ on: "group", ratio: 4.5 },
-				{ on: "accent-soft", ratio: 4.5 },
+				{ on: "accent-soft", under: "wash-press", ratio: 4.5 },
 			],
 		},
 		dark: {
 			...accent(0.72, 0.13),
 			holds: [
 				{ on: "group", ratio: 4.5 },
-				{ on: "accent-soft", ratio: 4.5 },
+				{ on: "accent-soft", under: "wash-press", ratio: 4.5 },
 			],
 		},
 	},

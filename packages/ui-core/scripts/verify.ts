@@ -1369,10 +1369,10 @@ check(
 		assert(short.length === 0, `under the floor: ${summary(short)}`);
 		// The green accent is where the declared lightness falls short on a
 		// light group, so there the contract lowers it; at the default hue it
-		// is the declared 0.52.
+		// is the declared 0.505.
 		requireEqual(
 			oklch(color("light", "accent-ink"))[0],
-			0.52,
+			0.505,
 			"accent-ink at the default hue",
 		);
 		assert(
