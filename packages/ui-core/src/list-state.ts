@@ -685,6 +685,16 @@ export function toggled<V extends string | null>(
 		: [...values, value];
 }
 
+// Why an option cannot be chosen now: its `blocked` reason, only while it is
+// not in the value. A chosen blocked option is an ordinary chosen one, so the
+// viewer can always remove it.
+export function optionBlocked(
+	option: Option<string | null>,
+	chosen: boolean,
+): string | undefined {
+	return chosen ? undefined : option.blocked;
+}
+
 // A press on an option: one choice hears it unless it is already chosen; a
 // set hears itself with the option toggled.
 export function choose<V extends string>(

@@ -31,7 +31,12 @@ const OWNERS = [
 	{ value: "ana", label: "Ana Ruiz", description: "ana@acme.app" },
 	{ value: "ben", label: "Ben Kaya", description: "ben@acme.app" },
 	{ value: "chen", label: "Chen Wu", description: "chen@acme.app" },
-	{ value: "dana", label: "Dana Moss", description: "dana@acme.app" },
+	{
+		value: "dana",
+		label: "Dana Moss",
+		description: "dana@acme.app",
+		blocked: "On leave until June",
+	},
 	{ value: "ema", label: "Ema Okafor", description: "ema@acme.app" },
 	{ value: "felix", label: "Felix Varga", description: "felix@acme.app" },
 ];
@@ -109,10 +114,13 @@ function Triggers() {
 }
 
 // The bar fit fills its column: a pick, and a pick of several holding its
-// values as chips (two, then none).
+// values as chips (two, none, then a blocked option in the value).
 function Bars() {
 	const [roles, setRoles] = useState<Role[]>(["admin", "member"]);
 	const [reviewers, setReviewers] = useState<(string | null)[]>([]);
+	// Dana is blocked and chosen: her chip removes, and her row draws as any
+	// chosen one.
+	const [approvers, setApprovers] = useState<(string | null)[]>(["dana"]);
 	return (
 		<div className="flex w-popover max-w-full flex-col gap-pair">
 			<Picker
@@ -135,6 +143,13 @@ function Bars() {
 				options={OWNERS.slice(1)}
 				value={reviewers}
 				onChange={setReviewers}
+			/>
+			<Picker
+				fit="bar"
+				label="Approvers"
+				options={OWNERS.slice(1)}
+				value={approvers}
+				onChange={setApprovers}
 			/>
 		</div>
 	);

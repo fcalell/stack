@@ -385,7 +385,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// The trigger is the field box; the open list is a popover of rows under
 		// group labels (meta at 500), the highlighted row under the hover wash
-		// and the chosen one ticked, a description in meta under an option.
+		// and the chosen one ticked, a description in meta under an option; an
+		// option's `blocked` reason replaces it in the disabled ink and the row
+		// takes no pick, until it is chosen.
 		Select: {
 			props: ["value", "onChange", "options", "placeholder"],
 			draws: [
@@ -396,6 +398,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"POPOVER",
 				"SELECT_POPOVER",
 				"SELECT_GROUP",
+				"ROW.lines.one",
+				"ROW.lines.two",
 				"ROW.state.rest",
 				"ROW.state.highlighted",
 				"ROW.state.pressed",
@@ -426,7 +430,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				],
 				radii: ["control", "row", "popover"],
 				spacing: ["inside", "control-x", "pair", "rows", "float"],
-				sizes: ["field", "control-compact", "row", "popover"],
+				sizes: ["field", "control-compact", "row", "row-2", "popover"],
 				elevation: ["float"],
 			},
 		},
@@ -1568,7 +1572,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// the `bar` fit the field box fills its column. An option's `chip` draws
 		// after its label in the list and on the trigger. Its `value` an array
 		// makes it a pick of several: the rows tick and the list stays open, and
-		// the box holds one removable neutral chip per value.
+		// the box holds one removable neutral chip per value. An option's
+		// `blocked` reason replaces its description in the disabled ink and
+		// the option takes no pick, until it is in the value.
 		Picker: {
 			props: ["label", "options", "value", "onChange", "fit", "act"],
 			draws: [
@@ -1608,12 +1614,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ICON.fit.body",
 			],
 			holds: ["PICKER", "PICKER_VALUE", "PICKER_EMPTY", "PICKER_POPOVER"],
-			states: [...PRESS, "selected"],
+			states: [...PRESS, "selected", "disabled"],
 			owns: {
 				roles: ["body", "meta", "caption"],
 				colors: [
 					"ink-body",
 					"ink-meta",
+					"ink-disabled",
 					"surface",
 					"edge",
 					"edge-hover",
@@ -1701,6 +1708,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// recommended mark on its description line; the children under a
 		// chosen option at its label's start. From a query, its failed line
 		// (`sentence` beside Retry) and its `empty` sentence stand in the card.
+		// An option's `blocked` reason replaces its description in the disabled
+		// ink and its box or radio is disabled, until it is in the value.
 		OptionList: {
 			props: [
 				"options",
@@ -1756,7 +1765,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"OPTION_RADIO",
 				"OPTION_RADIO_DOT",
 			],
-			states: [...PRESS, "loading", "error", "empty", "selected"],
+			states: [...PRESS, "loading", "error", "empty", "selected", "disabled"],
 			owns: {
 				roles: ["body", "meta", "caption"],
 				colors: [
@@ -1765,6 +1774,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"edge-strong",
 					"ink-body",
 					"ink-meta",
+					"ink-disabled",
+					"fill-disabled",
 					"toggle-on",
 					"on-accent",
 					"ring",

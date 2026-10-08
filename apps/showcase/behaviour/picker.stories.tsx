@@ -4,7 +4,7 @@ import { Picker } from "@fcalell/plugin-react-ui/components/picker";
 import { Toolbar } from "@fcalell/plugin-react-ui/components/toolbar";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
-import { expect, screen, waitFor } from "storybook/test";
+import { expect, screen, waitFor, within } from "storybook/test";
 import { focused } from "./support.ts";
 
 const ROLES = [
@@ -121,6 +121,98 @@ export const RowEnd: StoryObj = {
 		});
 	},
 };
+
+const AGENTS = [
+	{ value: "writer", label: "Writer", description: "Drafts the brief" },
+	{ value: "reviewer", label: "Reviewer", blocked: "Lacks brief.flag" },
+	{ value: "editor", label: "Editor", blocked: "Asks for edit" },
+	{ value: "planner", label: "Planner" },
+];
+
+function Agents(props: { width: number }) {
+	const [agent, setAgent] = useState("writer");
+	const [agents, setAgents] = useState(["editor"]);
+	return (
+		<div
+			style={{ width: props.width, maxWidth: "100%" }}
+			className="flex flex-col gap-pair"
+		>
+			<Picker
+				fit="bar"
+				label="Agent"
+				options={AGENTS}
+				value={agent}
+				onChange={setAgent}
+			/>
+			<Picker
+				fit="bar"
+				label="Agents"
+				options={AGENTS}
+				value={agents}
+				onChange={setAgents}
+			/>
+		</div>
+	);
+}
+
+// A blocked option's reason replaces its description in the disabled ink, the
+// arrows reach it but Enter and a press pick nothing; in a pick of several a
+// blocked option in the value is a chip that removes, and once removed it is
+// blocked again.
+function blocks(width: number): StoryObj {
+	return {
+		render: () => <Agents width={width} />,
+		play: async ({ canvas, userEvent }) => {
+			const trigger = canvas.getByRole("combobox", { name: "Agent" });
+			await userEvent.click(trigger);
+			const list = await screen.findByRole("listbox");
+			const options = screen.getAllByRole("option");
+			const [writer, reviewer, editor, planner] = options;
+			await expect(reviewer).toHaveAttribute("aria-disabled", "true");
+			await expect(writer).not.toHaveAttribute("aria-disabled");
+			const reason = within(list).getByText("Lacks brief.flag");
+			await expect(getComputedStyle(reason).color).not.toBe(
+				getComputedStyle(within(list).getByText("Drafts the brief")).color,
+			);
+			await expect(reviewer?.getBoundingClientRect().height).toBeCloseTo(
+				writer?.getBoundingClientRect().height ?? 0,
+				1,
+			);
+			await waitFor(() => expect(list).toContainElement(focused()));
+			await userEvent.keyboard("{ArrowDown}");
+			await waitFor(() => expect(reviewer).toHaveAttribute("data-highlighted"));
+			await userEvent.keyboard("{Enter}");
+			await expect(screen.getByRole("listbox")).toBeInTheDocument();
+			await expect(trigger).toHaveTextContent("Writer");
+			await userEvent.keyboard("{ArrowDown}{ArrowDown}");
+			await waitFor(() => expect(planner).toHaveAttribute("data-highlighted"));
+			await userEvent.keyboard("{Enter}");
+			await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
+			await expect(trigger).toHaveTextContent("Planner");
+			await userEvent.click(trigger);
+			await screen.findByRole("listbox");
+			await userEvent.click(editor as HTMLElement);
+			await userEvent.click(reviewer as HTMLElement);
+			await expect(screen.getByRole("listbox")).toBeInTheDocument();
+			await expect(trigger).toHaveTextContent("Planner");
+			await userEvent.keyboard("{Escape}");
+			await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
+			const remove = canvas.getByRole("button", { name: "Remove Editor" });
+			await userEvent.click(remove);
+			await waitFor(() =>
+				expect(
+					canvas.queryByRole("button", { name: "Remove Editor" }),
+				).toBeNull(),
+			);
+			await userEvent.click(canvas.getByRole("combobox", { name: "Agents" }));
+			const several = await screen.findByRole("listbox");
+			await within(several).findByText("Asks for edit");
+		},
+	};
+}
+
+export const Blocked320 = blocks(320);
+export const Blocked1440 = blocks(1440);
 
 function Pair() {
 	const [repo, setRepo] = useState("web");

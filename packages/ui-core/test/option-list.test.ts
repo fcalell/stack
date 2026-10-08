@@ -6,6 +6,7 @@ import {
 	isOneChoice,
 	type OneChoice,
 	type OptionSlots,
+	optionBlocked,
 	optionShape,
 	optionsOf,
 	optionsShape,
@@ -138,4 +139,15 @@ test("the OptionList holds its radio: a ring at the box size, the chosen one in 
 		"size-check rounded-full border border-toggle-on",
 	);
 	assert.equal(OPTION_RADIO_DOT, "size-dot rounded-full bg-toggle-on");
+});
+
+test("an option is blocked only while it is not in the value", () => {
+	const option = {
+		value: "reviewer",
+		label: "Reviewer",
+		blocked: "lacks brief.flag",
+	};
+	assert.equal(optionBlocked(option, false), "lacks brief.flag");
+	assert.equal(optionBlocked(option, true), undefined);
+	assert.equal(optionBlocked({ value: "dev", label: "Dev" }, false), undefined);
 });

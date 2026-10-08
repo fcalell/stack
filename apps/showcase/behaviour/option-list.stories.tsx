@@ -137,3 +137,76 @@ export const Checks: StoryObj = {
 		await waitFor(() => expect(apply).not.toBeChecked());
 	},
 };
+
+const AGENTS = [
+	{ value: "writer", label: "Writer", description: "Drafts the brief" },
+	{ value: "reviewer", label: "Reviewer", blocked: "Lacks brief.flag" },
+	{ value: "editor", label: "Editor", blocked: "Asks for edit" },
+];
+
+function Agents(props: { width: number; several: boolean }) {
+	const [many, setMany] = useState<string[]>(["editor"]);
+	const [one, setOne] = useState<string | null>("editor");
+	return (
+		<div style={{ width: props.width, maxWidth: "100%" }}>
+			{props.several ? (
+				<OptionList options={AGENTS} value={many} onChange={setMany} />
+			) : (
+				<OptionList options={AGENTS} value={one} onChange={setOne} />
+			)}
+		</div>
+	);
+}
+
+const ink = (element: Element) => getComputedStyle(element).color;
+
+// A box is a button, a radio a span: each says disabled its own way.
+const disabled = (element: HTMLElement) =>
+	element.hasAttribute("disabled") ||
+	element.getAttribute("aria-disabled") === "true";
+
+// A blocked option takes no press and leads its meta line with its reason in
+// the disabled ink, in a two-line row; a blocked option in the value draws and
+// acts as any chosen one (no reason), and once removed is blocked again.
+function blocks(width: number, several: boolean): StoryObj {
+	const role = several ? "checkbox" : "radio";
+	return {
+		render: () => <Agents width={width} several={several} />,
+		play: async ({ canvas, userEvent }) => {
+			const [writer, reviewer, editor] = canvas.getAllByRole(role);
+			if (!writer || !reviewer || !editor) throw new Error("no options");
+			await expect(disabled(reviewer)).toBe(true);
+			await expect(disabled(editor)).toBe(false);
+			await expect(editor).toBeChecked();
+			await expect(canvas.queryByText("Asks for edit")).toBeNull();
+			const reason = canvas.getByText("Lacks brief.flag");
+			await expect(ink(reason)).not.toBe(
+				ink(canvas.getByText("Drafts the brief")),
+			);
+			await expect(ink(canvas.getByText("Reviewer"))).toBe(ink(reason));
+			const rowOf = (box: HTMLElement) => {
+				const row = box.closest("label");
+				if (!row) throw new Error("no row");
+				return row.getBoundingClientRect().height;
+			};
+			await expect(rowOf(reviewer)).toBeCloseTo(rowOf(writer), 1);
+			await userEvent.click(reviewer);
+			await userEvent.click(canvas.getByText("Reviewer"));
+			await expect(reviewer).not.toBeChecked();
+			await userEvent.click(editor);
+			if (!several) {
+				await expect(editor).toBeChecked();
+				return;
+			}
+			await waitFor(() => expect(editor).not.toBeChecked());
+			await expect(disabled(editor)).toBe(true);
+			await canvas.findByText("Asks for edit");
+			await expect(rowOf(editor)).toBeCloseTo(rowOf(writer), 1);
+		},
+	};
+}
+
+export const BlockedChecks320 = blocks(320, true);
+export const BlockedChecks1440 = blocks(1440, true);
+export const BlockedRadios320 = blocks(320, false);
+export const BlockedRadios1440 = blocks(1440, false);

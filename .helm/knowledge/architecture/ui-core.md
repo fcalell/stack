@@ -394,6 +394,17 @@ a tick with no animation, never jumped to full.
   under reduced motion: it is a progress indicator, the one motion that says work is under way,
   and a still arc reads as a stalled one; reduced motion stills the transitions around it. Rejected:
   spinning `active`, which would turn a row that stands for days.
+- An option that cannot be chosen now is `Option.blocked`, a reason named as `Act.blocked` and
+  `RowLeading.check.blocked` are. One predicate, `optionBlocked(option, chosen)` in `list-state.ts`,
+  both platforms read: an option is blocked only while it is not in the value, so a chosen blocked
+  option draws and acts as any chosen one (chip remove, unticking, the trigger) with no second code
+  path. The reason replaces the description in `ink-disabled`, the label goes `ink-disabled`, the row
+  is a two-line row and keeps its place (the app orders its list); on the web Base UI's `disabled`
+  gives the pointer block and the disabled semantics, and its select list lets the arrows reach a
+  disabled row as a menu's does, where Enter and a press pick nothing. Rejected: `disabled` (a bare boolean leaves the
+  viewer to guess), a `description` or `chip` standing in for the reason (neither stops a pick), and
+  filtering the option out (the viewer loses the sight of it). `SegmentedControl`'s options are not
+  `Option`.
 - The Shell's switcher is a pick: a `Switcher` is an `OptionPick` whose options carry their avatars
   (`Option.avatar`, leading the option row as a status's dot does) plus `act`, the act that makes a
   new one, which the Picker draws under a hairline (`HAIRLINE`) after the options as a `ROW` (the

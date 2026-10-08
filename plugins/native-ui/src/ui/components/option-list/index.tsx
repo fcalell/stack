@@ -8,6 +8,7 @@ import {
 	type OptionChoice,
 	type OptionShape,
 	type OptionSlots,
+	optionBlocked,
 	optionShape,
 	optionsOf,
 	optionsShape,
@@ -34,7 +35,7 @@ import { Fragment, type ReactNode, useContext } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { GroupName, LabelTarget } from "../../lib/field";
+import { FieldDisabled, GroupName, LabelTarget } from "../../lib/field";
 import { navigate } from "../../lib/navigate";
 import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
@@ -46,7 +47,11 @@ import type { QueryLike } from "../query-boundary";
 
 // The row is the target of its box or radio: a press anywhere toggles or
 // chooses it.
-const OPTION = "flex-row items-center active:bg-wash-press";
+const OPTION = "flex-row items-center";
+const PRESS = "active:bg-wash-press";
+// A blocked option's label and reason, and its radio's disabled ring.
+const BLOCKED_INK = "text-ink-disabled";
+const RADIO_BLOCKED = "border-edge bg-fill-disabled";
 // A label is the whole text of a choice: it wraps, and an unmarked row keeps
 // the one-line row's height as its floor.
 const OPTION_WHOLE = "min-h-row";
@@ -306,17 +311,24 @@ export function OptionList<V extends string = string, T = unknown>(
 				{group.label ? <GroupLabel>{group.label}</GroupLabel> : null}
 				{group.options.map((option) => {
 					const chosen = chosenValues.includes(option.value);
-					const marked = option.description || option.recommended;
+					const blocked = optionBlocked(option, chosen);
+					const meta = blocked ?? option.description;
+					const marked = meta || option.recommended;
 					return (
 						<Fragment key={option.value}>
 							<Pressable
 								accessibilityRole={one ? "radio" : "checkbox"}
 								accessibilityLabel={option.label}
-								accessibilityState={{ checked: chosen }}
+								accessibilityState={{
+									checked: chosen,
+									disabled: blocked !== undefined,
+								}}
+								disabled={blocked !== undefined}
 								onPress={() => choose<V>(props, option.value)}
 								className={cn(
 									row({ lines: marked ? "two" : "whole" }),
 									OPTION,
+									blocked === undefined && PRESS,
 									!marked && OPTION_WHOLE,
 								)}
 							>
@@ -330,29 +342,42 @@ export function OptionList<V extends string = string, T = unknown>(
 														state: chosen ? "checked" : "unchecked",
 													}),
 													RADIO,
+													blocked !== undefined && RADIO_BLOCKED,
 												)}
 											>
 												{chosen ? <View className={OPTION_RADIO_DOT} /> : null}
 											</View>
 										) : (
 											<LabelTarget.Provider value>
-												<Checkbox
-													checked={chosen}
-													onChange={() => choose<V>(props, option.value)}
-													label={option.label}
-												/>
+												<FieldDisabled.Provider value={blocked !== undefined}>
+													<Checkbox
+														checked={chosen}
+														onChange={() => choose<V>(props, option.value)}
+														label={option.label}
+													/>
+												</FieldDisabled.Provider>
 											</LabelTarget.Provider>
 										)}
 									</View>
 									{marked ? (
 										<View className={TEXT}>
-											<RNText className={text({ role: "body" })}>
+											<RNText
+												className={cn(
+													text({ role: "body" }),
+													blocked !== undefined && BLOCKED_INK,
+												)}
+											>
 												{option.label}
 											</RNText>
 											<View className={cn(ROW_META_LINE, DESCRIPTION_LINE)}>
-												{option.description ? (
-													<RNText className={text({ role: "meta" })}>
-														{option.description}
+												{meta ? (
+													<RNText
+														className={cn(
+															text({ role: "meta" }),
+															blocked !== undefined && BLOCKED_INK,
+														)}
+													>
+														{meta}
 													</RNText>
 												) : null}
 												{option.recommended ? (

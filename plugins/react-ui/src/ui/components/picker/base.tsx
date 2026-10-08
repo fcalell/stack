@@ -7,7 +7,7 @@ import type {
 	Option,
 	OptionGroup,
 } from "@fcalell/ui-core/descriptors";
-import { toggled } from "@fcalell/ui-core/list-state";
+import { optionBlocked, toggled } from "@fcalell/ui-core/list-state";
 import type { ChipFamily } from "@fcalell/ui-core/tokens";
 import {
 	CHIPS_RUN,
@@ -91,7 +91,8 @@ const GROUP = "flex flex-col";
 // The highlight washes the option under the pointer or the keyboard; the
 // keyboard's highlight rings it inset as well, the wash alone being no focus
 // cue, and the pointer's draws the wash alone.
-const OPTION = "flex items-center active:bg-wash-press";
+const OPTION = "flex items-center";
+const PRESS = "active:bg-wash-press";
 const OPTION_NO_FOCUS = "outline-none";
 const KEYBOARD_RING = "outline-2 -outline-offset-2 outline-ring";
 // A touch option is a button: its text at the start, its focus the
@@ -100,6 +101,8 @@ const OPTION_BUTTON =
 	"text-start focus-visible:bg-wash-hover focus-visible:-outline-offset-2";
 const OPTION_TEXT = "flex flex-col min-w-0 grow";
 const LINE = "truncate";
+// A blocked option's label and reason; it takes no press wash.
+const BLOCKED_INK = "text-ink-disabled";
 const TICK = "flex shrink-0 text-ink-body";
 // A glyph leads an option in the row's leading slot.
 const LEADING = "flex shrink-0 items-center justify-center";
@@ -143,6 +146,14 @@ interface Grouped<V extends string | null> {
 	items: readonly Option<V>[];
 }
 
+// Whether an option is in the value: the set of a pick of several, else the
+// one value.
+const inValue = <V extends string | null>(
+	several: Several<V> | undefined,
+	value: V | undefined,
+	one: V,
+) => (several ? several.value.includes(one) : one === value);
+
 function groupsOf<V extends string | null>(
 	options: PickerProps<V>["options"],
 ): Grouped<V>[] {
@@ -164,11 +175,16 @@ const asChip = (
 const optionRow = (
 	option: Option<string | null>,
 	ground: RowGround,
+	chosen: boolean,
 	chip?: ChipFamily,
 	highlighted = false,
 ) =>
 	row({
-		lines: option.description && !asChip(option, chip) ? "two" : "one",
+		lines:
+			(optionBlocked(option, chosen) ?? option.description) &&
+			!asChip(option, chip)
+				? "two"
+				: "one",
 		state: highlighted ? "highlighted" : "rest",
 		ground,
 	});
@@ -178,9 +194,12 @@ const optionRow = (
 // carrying an avatar with its avatar, and its chip after the text.
 function OptionText(props: {
 	option: Option<string | null>;
+	chosen: boolean;
 	chip?: ChipFamily;
 }) {
 	const { option, chip } = props;
+	const blocked = optionBlocked(option, props.chosen);
+	const meta = blocked ?? option.description;
 	if (asChip(option, chip))
 		return (
 			<span className={CHIP_SLOT}>
@@ -204,13 +223,20 @@ function OptionText(props: {
 						text({ role: "body" }),
 						option.value === null && PICKER_EMPTY,
 						LINE,
+						blocked !== undefined && BLOCKED_INK,
 					)}
 				>
 					{option.label}
 				</span>
-				{option.description ? (
-					<span className={cn(text({ role: "meta" }), LINE)}>
-						{option.description}
+				{meta ? (
+					<span
+						className={cn(
+							text({ role: "meta" }),
+							LINE,
+							blocked !== undefined && BLOCKED_INK,
+						)}
+					>
+						{meta}
 					</span>
 				) : null}
 			</span>
@@ -627,30 +653,45 @@ function PickList<V extends string | null>(
 											render={<GroupLabel>{group.label}</GroupLabel>}
 										/>
 									) : null}
-									{group.items.map((option) => (
-										<Select.Item
-											key={String(option.value)}
-											value={option.value}
-											label={option.label}
-											className={(state) =>
-												cn(
-													optionRow(
-														option,
-														"list",
-														props.chip,
-														state.highlighted,
-													),
-													OPTION,
-													optionFocus(state.highlighted, keyboard.keyed),
-												)
-											}
-										>
-											<OptionText option={option} chip={props.chip} />
-											<Select.ItemIndicator className={TICK}>
-												<Icon name="Check" fit="body" />
-											</Select.ItemIndicator>
-										</Select.Item>
-									))}
+									{group.items.map((option) => {
+										const chosen = inValue(
+											props.several,
+											props.value,
+											option.value,
+										);
+										const blocked = optionBlocked(option, chosen);
+										return (
+											<Select.Item
+												key={String(option.value)}
+												value={option.value}
+												label={option.label}
+												disabled={blocked !== undefined}
+												className={(state) =>
+													cn(
+														optionRow(
+															option,
+															"list",
+															chosen,
+															props.chip,
+															state.highlighted,
+														),
+														OPTION,
+														blocked === undefined && PRESS,
+														optionFocus(state.highlighted, keyboard.keyed),
+													)
+												}
+											>
+												<OptionText
+													option={option}
+													chosen={chosen}
+													chip={props.chip}
+												/>
+												<Select.ItemIndicator className={TICK}>
+													<Icon name="Check" fit="body" />
+												</Select.ItemIndicator>
+											</Select.Item>
+										);
+									})}
 								</Select.Group>
 							))}
 						</Select.List>
@@ -736,29 +777,44 @@ function PickSearch<V extends string | null>(
 										/>
 									) : null}
 									<Combobox.Collection>
-										{(option: Option<V>) => (
-											<Combobox.Item
-												key={String(option.value)}
-												value={option}
-												className={(state) =>
-													cn(
-														optionRow(
-															option,
-															"list",
-															props.chip,
-															state.highlighted,
-														),
-														OPTION,
-														optionFocus(state.highlighted, keyboard.keyed),
-													)
-												}
-											>
-												<OptionText option={option} chip={props.chip} />
-												<Combobox.ItemIndicator className={TICK}>
-													<Icon name="Check" fit="body" />
-												</Combobox.ItemIndicator>
-											</Combobox.Item>
-										)}
+										{(option: Option<V>) => {
+											const chosen = inValue(
+												props.several,
+												props.current?.value,
+												option.value,
+											);
+											const blocked = optionBlocked(option, chosen);
+											return (
+												<Combobox.Item
+													key={String(option.value)}
+													value={option}
+													disabled={blocked !== undefined}
+													className={(state) =>
+														cn(
+															optionRow(
+																option,
+																"list",
+																chosen,
+																props.chip,
+																state.highlighted,
+															),
+															OPTION,
+															blocked === undefined && PRESS,
+															optionFocus(state.highlighted, keyboard.keyed),
+														)
+													}
+												>
+													<OptionText
+														option={option}
+														chosen={chosen}
+														chip={props.chip}
+													/>
+													<Combobox.ItemIndicator className={TICK}>
+														<Icon name="Check" fit="body" />
+													</Combobox.ItemIndicator>
+												</Combobox.Item>
+											);
+										}}
 									</Combobox.Collection>
 								</Combobox.Group>
 							)}
@@ -857,13 +913,15 @@ function PickRows<V extends string | null>(
 		}))
 		.filter((group) => group.items.length > 0);
 	// The options are one tab stop that the arrows move: it starts on the chosen
-	// one, else the first, and follows focus in the DOM, so a move re-renders
-	// no option.
-	const values = shown.flatMap((group) => group.items.map((o) => o.value));
-	const isChosen = (one: V) =>
-		props.several ? props.several.value.includes(one) : one === props.value;
-	const kept = values.find(isChosen);
-	const stop = kept !== undefined ? kept : values[0];
+	// one, else the first that can be chosen, and follows focus in the DOM, so a
+	// move re-renders no option.
+	const listed = shown.flatMap((group) => group.items);
+	const isChosen = (one: V) => inValue(props.several, props.value, one);
+	const kept = listed.find((option) => isChosen(option.value));
+	const free = listed.find(
+		(option) => optionBlocked(option, false) === undefined,
+	);
+	const stop = (kept ?? free ?? listed[0])?.value;
 	return (
 		<div className={SHEET_ROWS}>
 			{props.searching ? (
@@ -889,6 +947,7 @@ function PickRows<V extends string | null>(
 						{group.label ? <GroupLabel>{group.label}</GroupLabel> : null}
 						{group.items.map((option) => {
 							const chosen = isChosen(option.value);
+							const blocked = optionBlocked(option, chosen);
 							const stands = option.value === stop;
 							return (
 								<button
@@ -897,15 +956,23 @@ function PickRows<V extends string | null>(
 									type="button"
 									role="option"
 									aria-selected={chosen}
+									aria-disabled={blocked !== undefined || undefined}
 									tabIndex={stands ? 0 : -1}
-									onClick={() => props.pick(option.value)}
+									onClick={() => {
+										if (blocked === undefined) props.pick(option.value);
+									}}
 									className={cn(
-										optionRow(option, "group", props.chip),
+										optionRow(option, "group", chosen, props.chip),
 										OPTION,
+										blocked === undefined && PRESS,
 										OPTION_BUTTON,
 									)}
 								>
-									<OptionText option={option} chip={props.chip} />
+									<OptionText
+										option={option}
+										chosen={chosen}
+										chip={props.chip}
+									/>
 									{chosen ? (
 										<span className={TICK}>
 											<Icon name="Check" fit="body" />

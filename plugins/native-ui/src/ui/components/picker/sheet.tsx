@@ -3,6 +3,7 @@ import type {
 	Option,
 	OptionGroup,
 } from "@fcalell/ui-core/descriptors";
+import { optionBlocked } from "@fcalell/ui-core/list-state";
 import type { ChipFamily } from "@fcalell/ui-core/tokens";
 import {
 	HAIRLINE,
@@ -35,7 +36,10 @@ export type PickOptions<V extends string | null> =
 // them, which stands a pair under the head.
 const ROWS = "pt-pair pb-card";
 const SEARCH_SLOT = "px-card pt-pair";
-const OPTION = "flex-row items-center active:bg-wash-press";
+const OPTION = "flex-row items-center";
+const PRESS = "active:bg-wash-press";
+// A blocked option's label and reason.
+const BLOCKED_INK = "text-ink-disabled";
 const OPTION_TEXT = "flex-1 min-w-0";
 const TICK = "shrink-0";
 // A glyph leads an option in the row's leading slot.
@@ -99,11 +103,15 @@ const asChip = (
 // after the text; a chip column's option is its chip alone.
 function OptionText({
 	option,
+	chosen,
 	chip,
 }: {
 	option: Option<string | null>;
+	chosen: boolean;
 	chip?: ChipFamily;
 }) {
+	const blocked = optionBlocked(option, chosen);
+	const meta = blocked ?? option.description;
 	if (asChip(option, chip))
 		return (
 			<View className={CHIP_SLOT}>
@@ -129,13 +137,20 @@ function OptionText({
 					className={cn(
 						text({ role: "body" }),
 						option.value === null && PICKER_EMPTY,
+						blocked !== undefined && BLOCKED_INK,
 					)}
 				>
 					{option.label}
 				</RNText>
-				{option.description ? (
-					<RNText numberOfLines={1} className={text({ role: "meta" })}>
-						{option.description}
+				{meta ? (
+					<RNText
+						numberOfLines={1}
+						className={cn(
+							text({ role: "meta" }),
+							blocked !== undefined && BLOCKED_INK,
+						)}
+					>
+						{meta}
 					</RNText>
 				) : null}
 			</View>
@@ -240,12 +255,17 @@ export function PickSheet<V extends string | null>({
 							const chosen = set
 								? set.includes(option.value)
 								: option.value === value;
+							const blocked = optionBlocked(option, chosen);
 							return (
 								<Pressable
 									key={String(option.value)}
 									accessibilityRole={set ? "checkbox" : "radio"}
 									accessibilityLabel={option.label}
-									accessibilityState={{ checked: chosen }}
+									accessibilityState={{
+										checked: chosen,
+										disabled: blocked !== undefined,
+									}}
+									disabled={blocked !== undefined}
 									onPress={() => {
 										if (!set) onClose();
 										onChange(option.value);
@@ -253,15 +273,16 @@ export function PickSheet<V extends string | null>({
 									className={cn(
 										row({
 											lines:
-												option.description && !asChip(option, chip)
+												(blocked ?? option.description) && !asChip(option, chip)
 													? "two"
 													: "one",
 											ground: "group",
 										}),
 										OPTION,
+										blocked === undefined && PRESS,
 									)}
 								>
-									<OptionText option={option} chip={chip} />
+									<OptionText option={option} chosen={chosen} chip={chip} />
 									{chosen ? (
 										<View className={TICK}>
 											<Ink.Provider value="ink-body">
@@ -295,7 +316,7 @@ export function PickSheet<V extends string | null>({
 								onClose();
 								act.onAct();
 							}}
-							className={cn(row({ ground: "group" }), OPTION)}
+							className={cn(row({ ground: "group" }), OPTION, PRESS)}
 						>
 							<View className={ACT_GLYPH}>
 								<Ink.Provider value="ink-meta">

@@ -1,6 +1,7 @@
 import { Select as Control } from "@base-ui/react/select";
 import { cn } from "@fcalell/ui-core/cn";
 import type { Option, OptionGroup } from "@fcalell/ui-core/descriptors";
+import { optionBlocked } from "@fcalell/ui-core/list-state";
 import {
 	FIELD_GLYPH,
 	FIELD_PLACEHOLDER,
@@ -37,6 +38,7 @@ const GROUP_LABEL = "px-control-x pt-pair";
 const ITEM = "flex items-center outline-none";
 const ITEM_TEXT = "flex flex-col min-w-0 grow";
 const LINE = "truncate";
+const BLOCKED_INK = "text-ink-disabled";
 const INDICATOR = "flex shrink-0 text-ink-body";
 
 /** One choice among options, the control a `FormField` labels, describes and marks in error. `V` is read off the options, so an enum's options pick that enum. */
@@ -142,41 +144,54 @@ export function Select<V extends string | null = string>({
 										{group.label}
 									</Control.GroupLabel>
 								) : null}
-								{group.options.map((option) => (
-									<Control.Item
-										key={String(option.value)}
-										value={option.value}
-										label={option.label}
-										className={(state) =>
-											cn(
-												row({
-													state: state.highlighted ? "highlighted" : "rest",
-												}),
-												ITEM,
-											)
-										}
-									>
-										<span className={ITEM_TEXT}>
-											<Control.ItemText
-												className={cn(
-													fieldValue({ kind: "text" }),
-													option.value === null && FIELD_PLACEHOLDER,
-													LINE,
-												)}
-											>
-												{option.label}
-											</Control.ItemText>
-											{option.description ? (
-												<span className={cn(text({ role: "meta" }), LINE)}>
-													{option.description}
-												</span>
-											) : null}
-										</span>
-										<Control.ItemIndicator className={INDICATOR}>
-											<Icon name="Check" fit="body" />
-										</Control.ItemIndicator>
-									</Control.Item>
-								))}
+								{group.options.map((option) => {
+									const blocked = optionBlocked(option, option.value === value);
+									const meta = blocked ?? option.description;
+									return (
+										<Control.Item
+											key={String(option.value)}
+											value={option.value}
+											label={option.label}
+											disabled={blocked !== undefined}
+											className={(state) =>
+												cn(
+													row({
+														lines: blocked === undefined ? "one" : "two",
+														state: state.highlighted ? "highlighted" : "rest",
+													}),
+													ITEM,
+												)
+											}
+										>
+											<span className={ITEM_TEXT}>
+												<Control.ItemText
+													className={cn(
+														fieldValue({ kind: "text" }),
+														option.value === null && FIELD_PLACEHOLDER,
+														LINE,
+														blocked !== undefined && BLOCKED_INK,
+													)}
+												>
+													{option.label}
+												</Control.ItemText>
+												{meta ? (
+													<span
+														className={cn(
+															text({ role: "meta" }),
+															LINE,
+															blocked !== undefined && BLOCKED_INK,
+														)}
+													>
+														{meta}
+													</span>
+												) : null}
+											</span>
+											<Control.ItemIndicator className={INDICATOR}>
+												<Icon name="Check" fit="body" />
+											</Control.ItemIndicator>
+										</Control.Item>
+									);
+								})}
 							</Control.Group>
 						))}
 					</Control.Popup>

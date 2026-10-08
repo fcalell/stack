@@ -1,3 +1,4 @@
+import { Field } from "@base-ui/react/field";
 import { Radio } from "@base-ui/react/radio";
 import { RadioGroup } from "@base-ui/react/radio-group";
 import { cn } from "@fcalell/ui-core/cn";
@@ -12,6 +13,7 @@ import {
 	type OptionChoice,
 	type OptionShape,
 	type OptionSlots,
+	optionBlocked,
 	optionShape,
 	optionsOf,
 	optionsShape,
@@ -49,8 +51,11 @@ import type { QueryLike } from "../query-boundary/index.tsx";
 const LIST = "flex flex-col";
 const GROUP = "flex flex-col";
 // The row is the label of its box or radio: a press anywhere toggles or
-// chooses it.
-const OPTION = "flex items-center hover:bg-wash-hover active:bg-wash-press";
+// chooses it, except while it is blocked.
+const OPTION = "flex items-center";
+const PRESS = "hover:bg-wash-hover active:bg-wash-press";
+// A blocked option's label and reason.
+const BLOCKED_INK = "text-ink-disabled";
 // A label is the whole text of a choice: it wraps, and an unmarked row keeps
 // the one-line row's height as its floor.
 const OPTION_WHOLE = "min-h-row";
@@ -58,13 +63,17 @@ const LINE = "flex grow min-w-0 items-start";
 // The box stands on its label's first line, a box one body line tall; the
 // row is its target.
 const BOX_LINE = "flex shrink-0 items-center h-lh";
+// The field wrapper that disables the box is a flex box itself, so the box
+// stays a flex item on the line.
+const FIELD = "flex";
 const LABEL = "min-w-0 grow wrap-break-word";
 const TEXT = "flex flex-col min-w-0 grow";
 const TITLE = "wrap-break-word";
 const DESCRIPTION_LINE = "flex flex-wrap items-center min-w-0";
 // The radio is the box's size in its label's line, its dot centred; it is
 // the focused element, so the base focus ring draws on it.
-const RADIO = "relative inline-flex shrink-0 items-center justify-center";
+const RADIO =
+	"relative inline-flex shrink-0 items-center justify-center data-disabled:border-edge data-disabled:bg-fill-disabled";
 const CHILDREN = "flex";
 const INDENT = "shrink-0";
 const CHILDREN_BODY = "flex flex-col grow min-w-0";
@@ -306,7 +315,9 @@ export function OptionList<V extends string = string, T = unknown>(
 			{group.label ? <GroupLabel>{group.label}</GroupLabel> : null}
 			{group.options.map((option, place) => {
 				const chosen = chosenValues.includes(option.value);
-				const marked = option.description || option.recommended;
+				const blocked = optionBlocked(option, chosen);
+				const meta = blocked ?? option.description;
+				const marked = meta || option.recommended;
 				const target = { labelledBy: `${ids}-${at}-${place}` };
 				return (
 					<Fragment key={option.value}>
@@ -315,6 +326,7 @@ export function OptionList<V extends string = string, T = unknown>(
 							className={cn(
 								row({ lines: marked ? "two" : "whole" }),
 								OPTION,
+								blocked === undefined && PRESS,
 								!marked && OPTION_WHOLE,
 							)}
 						>
@@ -323,6 +335,7 @@ export function OptionList<V extends string = string, T = unknown>(
 									{one ? (
 										<Radio.Root
 											value={option.value}
+											disabled={blocked !== undefined}
 											aria-labelledby={target.labelledBy}
 											className={cn(
 												optionRadio({
@@ -335,11 +348,16 @@ export function OptionList<V extends string = string, T = unknown>(
 										</Radio.Root>
 									) : (
 										<LabelTarget value={target}>
-											<Checkbox
-												checked={chosen}
-												onChange={() => choose<V>(props, option.value)}
-												label={option.label}
-											/>
+											<Field.Root
+												disabled={blocked !== undefined}
+												className={FIELD}
+											>
+												<Checkbox
+													checked={chosen}
+													onChange={() => choose<V>(props, option.value)}
+													label={option.label}
+												/>
+											</Field.Root>
 										</LabelTarget>
 									)}
 								</span>
@@ -347,14 +365,23 @@ export function OptionList<V extends string = string, T = unknown>(
 									<span className={TEXT}>
 										<span
 											id={target.labelledBy}
-											className={cn(text({ role: "body" }), TITLE)}
+											className={cn(
+												text({ role: "body" }),
+												TITLE,
+												blocked !== undefined && BLOCKED_INK,
+											)}
 										>
 											{option.label}
 										</span>
 										<span className={cn(ROW_META_LINE, DESCRIPTION_LINE)}>
-											{option.description ? (
-												<span className={text({ role: "meta" })}>
-													{option.description}
+											{meta ? (
+												<span
+													className={cn(
+														text({ role: "meta" }),
+														blocked !== undefined && BLOCKED_INK,
+													)}
+												>
+													{meta}
 												</span>
 											) : null}
 											{option.recommended ? (

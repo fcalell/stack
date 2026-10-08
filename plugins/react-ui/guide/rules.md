@@ -409,7 +409,11 @@ An `OptionList` holds a static set in `options`. Options from a query take `quer
 `empty` (a sentence) and an `option` map over the check row: `value`, `label`, `description`,
 `recommended` and `group`; it waits, fails and empties inside its card. Its `value` picks the
 form: a set (`onChange` hears the set) draws check rows, one value or `null` (`onChange` hears
-the value) radio rows, one answer among a few described options.
+the value) radio rows, one answer among a few described options. An option that cannot be chosen
+now carries `blocked`, a short reason that replaces its description in the disabled ink (in an
+`OptionList`, a `Select` and a `Picker`, a `MultiPick` included): it takes no pick and keeps its
+place in the list. Once the option is in the value it draws and acts as any chosen one and stays
+removable, so `blocked` never traps a value.
 
 A `Thread` takes its `query` (or `items`) the same way through a `message` map (`key`,
 `author`, `name`, `body`, `at`, `attachments`, `meta`, `onOpen`, `detail`), each reading only its

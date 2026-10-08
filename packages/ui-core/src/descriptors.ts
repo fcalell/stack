@@ -105,6 +105,10 @@ export interface ChipMark {
 // An option carrying `chip` draws it after its label, in the list and on the
 // trigger: the option's kind (a context's Draft, Ready), where `status` is a
 // work state that moves.
+// An option carrying `blocked` cannot be chosen while it is not in the value:
+// its reason replaces the description under its label, both in the disabled
+// ink. In the value it draws and acts as any chosen option, so it stays
+// removable.
 export interface Option<V extends string | null = string> {
 	value: V;
 	// The option's text (a short phrase; truncates; a row pick's pill holds a word, truncating past the short measure, 18 characters).
@@ -116,6 +120,8 @@ export interface Option<V extends string | null = string> {
 	avatar?: { src?: string };
 	icon?: IconName;
 	chip?: ChipMark;
+	// Why the option cannot be chosen (a short phrase; truncates).
+	blocked?: string;
 }
 
 // Options under a group label, in a `Picker`'s list and its searchable sheet.
