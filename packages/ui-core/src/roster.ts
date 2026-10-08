@@ -1489,6 +1489,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SHEET_DOCKED_HEAD",
 				"SHEET_DOCKED_BODY",
 				"SHEET_DOCKED_FOOT",
+				"SHEET_DOCKED_FLOOR",
 				"THREAD_COLUMN",
 				"SCRIM",
 				"TEXT.role.heading",
@@ -1513,6 +1514,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SHEET_DOCKED_HEAD",
 				"SHEET_DOCKED_BODY",
 				"SHEET_DOCKED_FOOT",
+				"SHEET_DOCKED_FLOOR",
 			],
 			states: ["rest", "disabled", "loading", "error"],
 			owns: {
@@ -1547,6 +1549,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"control",
 					"control-compact",
 					"row-2",
+					"docked-floor",
 				],
 				elevation: ["modal"],
 			},

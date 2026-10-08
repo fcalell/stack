@@ -529,6 +529,8 @@ export const SHEET_FOOT =
 export const SHEET_DOCKED_HEAD = "gap-pair";
 export const SHEET_DOCKED_BODY = "gap-sections py-card";
 export const SHEET_DOCKED_FOOT = "gap-acts";
+// In a foot the body keeps its floor whatever the head, the foot line and the log hold.
+export const SHEET_DOCKED_FLOOR = "min-h-docked-floor";
 // An empty state: its column at the empty width (the mark, the text, the
 // act a fields gap apart), the title over the sentence a pair apart, and in a
 // Section a hairline frame at the card inset around it; in a Group the card

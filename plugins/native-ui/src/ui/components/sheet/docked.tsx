@@ -1,4 +1,5 @@
 import type { Act } from "@fcalell/ui-core/descriptors";
+import { SHEET_DOCKED_BODY_SHARE } from "@fcalell/ui-core/tokens";
 import {
 	SHEET_DOCKED_BODY,
 	SHEET_DOCKED_FOOT,
@@ -37,8 +38,6 @@ const BODY = "shrink";
 // container units: the region's height comes from its layout (`FootRegion`,
 // zero outside a docked foot, where the body has no bound) and the row from its
 // token.
-const BODY_SHARE = 0.4;
-const BODY_ROWS = 3;
 const FOOT = "shrink-0";
 const FOOT_LINE = "flex-row items-center min-w-0";
 
@@ -78,10 +77,12 @@ export function SheetDocked({
 	const words = useWords();
 	const claim = useContext(FootReturn);
 	const region = useContext(FootRegion);
-	const row = Number.parseFloat(String(useCSSVariable("--spacing-row") ?? 0));
+	const floor = Number.parseFloat(
+		String(useCSSVariable("--spacing-docked-floor") ?? 0),
+	);
 	const bound =
 		region > 0
-			? { maxHeight: BODY_SHARE * region, minHeight: BODY_ROWS * row }
+			? { maxHeight: SHEET_DOCKED_BODY_SHARE * region, minHeight: floor }
 			: undefined;
 	const held = useRef<TextInput>(null);
 	const scroll = useRef<ScrollRef>(null);

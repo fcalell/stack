@@ -280,6 +280,7 @@ spacing:
   track: "2px"
   otp: "44px"
   text-area: "60px"
+  docked-floor: "96px"
   meter: "6px"
   chart: "128px"
   qr: "160px"
@@ -2187,6 +2188,8 @@ components:
     padding: "{spacing.card}"
     backgroundColor: "{colors.raised-dark}"
     rounded: "{rounded.sheet}"
+  sheet-docked-floor:
+    height: "{spacing.docked-floor}"
   sheet-foot:
     backgroundColor: "{colors.raised}"
   sheet-foot-dark:
@@ -2509,6 +2512,7 @@ Sizes are heights and squares in the same namespace. Density is a theme and neve
 | `track` | 2px | 4px | 4 | a slider's track thickness |
 | `otp` | 44px | 48px | 48 | a one-time-code box's largest side; the box is square and shrinks with its row |
 | `text-area` | 60px | 72px | 72 | a text area's least value height: three body line boxes |
+| `docked-floor` | 96px | 144px | 144 | a docked sheet's body floor: three rows |
 | `meter` | 6px | 8px | 8 | a meter's bar |
 | `chart` | 128px | 192px | 192 | a chart's plot, its gridlines four bands |
 | `qr` | 160px | 240px | 240 | a QR code's square, its quiet zone inside it |
@@ -2546,6 +2550,8 @@ A card at rest has a hairline and no shadow. Two levels lift a layer, each per m
 ## Components
 
 The front matter's components are the matrix cells: one entry per axis value of each family, a family's label layer folded into it, and one per single cell. Borders, weights, gaps and side paddings stay in the class strings. Every component the roster ships, the families, family cells and single cells it draws and the states it has:
+
+A docked sheet's body keeps `docked-floor` (144px on touch, 96px on the desktop) at least and scrolls past 40% of its foot's region.
 
 | Component | Layer | Draws | States |
 | --- | --- | --- | --- |
@@ -2585,7 +2591,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `FormField` | shared | `FORM_FIELD`, `GROUP_ITEM`, `FIELD_ERROR_LINE`, `FORM_FIELD_SUMMARY`, `FORM_FIELD_SUMMARY_GLYPH`, `CHANGE_MARK`, `ICON.fit.body`, `ICON.fit.meta`, `ICON_BUTTON.fit.bar`, `LINE_BOX.role.body`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta` | rest, disabled, error |
 | `ItemHeader` | shared | `ITEM_HEADER`, `THREAD_COLUMN`, `ITEM_FACTS`, `ITEM_FACT`, `PILL_ACT`, `ICON.fit.meta`, `TEXT.role.meta`, `TEXT.role.title`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `COUNT`, `COUNT_LABEL`, `LINE_BOX.role.meta`, `LINE_BOX.role.title`, `SKELETON_LINES`, `SKELETON_ROW.kind.facts`, `SKELETON.kind.line`, `SKELETON.kind.count` | rest, loading |
 | `SegmentedControl` | shared | `SEGMENTED_CONTROL`, `SEGMENT`, `SEGMENT_LABEL` | rest, hover, focus, active, selected |
-| `Sheet` | shared | `SHEET`, `SHEET_SIDE`, `SHEET_CENTERED`, `SHEET_HEAD`, `SHEET_HEAD_ROW`, `SHEET_BODY`, `SHEET_FOOT`, `SHEET_DOCKED_HEAD`, `SHEET_DOCKED_BODY`, `SHEET_DOCKED_FOOT`, `THREAD_COLUMN`, `SCRIM`, `TEXT.role.heading`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `FIELD_ERROR_LINE`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body`, `BUTTON.act.primary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.primary` | rest, disabled, loading, error |
+| `Sheet` | shared | `SHEET`, `SHEET_SIDE`, `SHEET_CENTERED`, `SHEET_HEAD`, `SHEET_HEAD_ROW`, `SHEET_BODY`, `SHEET_FOOT`, `SHEET_DOCKED_HEAD`, `SHEET_DOCKED_BODY`, `SHEET_DOCKED_FOOT`, `SHEET_DOCKED_FLOOR`, `THREAD_COLUMN`, `SCRIM`, `TEXT.role.heading`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `FIELD_ERROR_LINE`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body`, `BUTTON.act.primary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.primary` | rest, disabled, loading, error |
 | `Picker` | shared | `PICKER`, `HAIRLINE`, `ROW_LEADING`, `AVATAR`, `AVATAR_LABEL`, `PILL_ACT`, `PICKER_VALUE`, `ICON.fit.meta`, `CHIP`, `CHIP_LABEL`, `FIELD.fit.bar`, `FIELD.trailing.none`, `FIELD.state.rest`, `FIELD_VALUE.kind.text`, `FIELD_VALUE.kind.search`, `FIELD_PLACEHOLDER`, `FIELD_GLYPH`, `CHIPS_RUN`, `CHIPS_TRIGGER`, `ICON.fit.control`, `PICKER_EMPTY`, `POPOVER`, `PICKER_POPOVER`, `SELECT_GROUP`, `ROW.lines.one`, `ROW.lines.two`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.list`, `ROW.ground.group`, `TEXT.role.body`, `TEXT.role.meta`, `ICON.fit.body` | rest, hover, focus, active, selected |
 | `Menu` | shared | `MENU`, `MENU_GROUP`, `MENU_LABEL`, `POPOVER`, `ROW.lines.one`, `ROW.lines.two`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.list`, `TEXT.role.body`, `TEXT.role.meta`, `ICON.fit.body`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest, hover, focus, active |
 | `OptionList` | shared | `OPTION_LIST`, `SELECT_GROUP`, `OPTION_GROUP_LABEL`, `TEXT.role.meta`, `TEXT_STRONG.role.meta`, `ROW.lines.one`, `ROW.lines.two`, `ROW.lines.whole`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.list`, `OPTION_LINE`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `CHECKBOX`, `CHECKBOX_MARK`, `OPTION_RADIO`, `OPTION_RADIO_DOT`, `TEXT.role.body`, `ROW_TITLE_LINE`, `ROW_META_LINE`, `CHIP.family.neutral`, `CHIP_LABEL.family.neutral`, `OPTION_CHILDREN`, `OPTION_INDENT`, `SKELETON.kind.check`, `SKELETON.kind.radio`, `SKELETON.kind.line`, `SKELETON_LANE`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary` | rest, hover, focus, active, loading, error, empty, selected |
@@ -2656,7 +2662,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `FormField` | `body`, `meta` | `ink-body`, `ink-meta`, `ink-error`, `ink-disabled`, `ok`, `warn`, `chip-amber`, `danger` | `control` | `pair`, `fields`, `inside`, `card` | `row`, `icon`, `icon-meta`, `control-compact` | none |
 | `ItemHeader` | `body`, `meta`, `title`, `caption` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `accent-ink`, `ok`, `warn`, `chip-amber`, `danger` | `control`, `chip`, `full` | `pair`, `sections`, `inside`, `fields`, `control-x` | `skeleton`, `target`, `control-compact`, `dot`, `spinner`, `icon-meta`, `measure-short`, `measure` | none |
 | `SegmentedControl` | `body` | `group`, `ink-body`, `ink-meta`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `ring` | `control` | `control-x` | `control-compact` | none |
-| `Sheet` | `heading`, `body`, `meta` | `scrim`, `raised`, `edge-raised`, `edge`, `ink-body`, `ink-meta`, `ink-error`, `act-accent`, `on-act-accent` | `sheet`, `control` | `pair`, `card`, `acts`, `fields`, `sections`, `inside`, `control-x`, `page` | `sheet`, `pane`, `dialog`, `measure`, `control`, `control-compact`, `row-2` | `modal` |
+| `Sheet` | `heading`, `body`, `meta` | `scrim`, `raised`, `edge-raised`, `edge`, `ink-body`, `ink-meta`, `ink-error`, `act-accent`, `on-act-accent` | `sheet`, `control` | `pair`, `card`, `acts`, `fields`, `sections`, `inside`, `control-x`, `page` | `sheet`, `pane`, `dialog`, `measure`, `control`, `control-compact`, `row-2`, `docked-floor` | `modal` |
 | `Picker` | `body`, `meta`, `caption` | `ink-body`, `ink-meta`, `surface`, `edge`, `edge-hover`, `raised`, `avatar-`, `chip-`, `edge-raised`, `wash-hover`, `wash-press`, `ring` | `full`, `control`, `popover`, `row` | `inside`, `pair`, `float`, `rows`, `control-x`, `card` | `target`, `control-compact`, `popover`, `avatar`, `chip`, `chips-inset`, `hairline`, `measure-short`, `row`, `row-2`, `icon-meta`, `icon`, `icon-control` | `float` |
 | `Menu` | `body`, `meta` | `raised`, `edge-raised`, `edge`, `ink-body`, `ink-meta`, `ink-disabled`, `danger`, `wash-hover`, `wash-press` | `popover`, `row`, `control` | `pair`, `float`, `rows`, `inside`, `control-x` | `popover`, `row`, `row-2`, `icon`, `control`, `control-compact` | `float` |
 | `OptionList` | `body`, `meta`, `caption` | `surface`, `edge`, `edge-strong`, `ink-body`, `ink-meta`, `toggle-on`, `on-accent`, `ring`, `wash-hover`, `wash-press`, `skeleton`, `chip-` | `card`, `row`, `chip`, `full`, `control` | `pair`, `float`, `rows`, `control-x`, `inside` | `row`, `row-2`, `check`, `dot`, `icon-meta`, `chip`, `measure-short`, `skeleton`, `control-compact` | none |

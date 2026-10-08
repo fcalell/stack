@@ -79,6 +79,7 @@ export function sizePx(density: Density, size: Size): number {
 		return px["switch-w"] - px.thumb - 2 * px["switch-inset"];
 	}
 	if (size === "text-area") return 3 * leadingOf(density, "body");
+	if (size === "docked-floor") return 3 * px.row;
 	if (size === "figures") {
 		return Math.ceil(4 * MONO_ADVANCE * sizeOf(density, "code"));
 	}

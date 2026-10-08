@@ -1,7 +1,9 @@
 import { cn } from "@fcalell/ui-core/cn";
 import type { Act } from "@fcalell/ui-core/descriptors";
+import { SHEET_DOCKED_BODY_SHARE } from "@fcalell/ui-core/tokens";
 import {
 	SHEET_DOCKED_BODY,
+	SHEET_DOCKED_FLOOR,
 	SHEET_DOCKED_FOOT,
 	SHEET_DOCKED_HEAD,
 	SHEET_HEAD_ROW,
@@ -47,12 +49,6 @@ const TITLE = "min-w-0 wrap-break-word";
 // The body takes a tab stop only while it scrolls with nothing tabbable inside.
 const BODY =
 	"flex flex-col min-h-0 overflow-y-auto overscroll-contain focus-visible:-outline-offset-2";
-// In a foot the body scrolls past this share of the foot's region (`FootRegion`,
-// zero outside a docked foot, where the body has no bound) and keeps these rows
-// whatever the head, the foot line and the log hold, so a shorter body pads to
-// them.
-const BODY_SHARE = 0.4;
-const BODY_ROWS = 3;
 const FOOT = "shrink-0";
 const FOOT_ROW = "flex items-center justify-end";
 const FOOT_STACK = "flex flex-col";
@@ -175,13 +171,14 @@ export function SheetDocked({
 					tabIndex={stop ? 0 : undefined}
 					style={
 						region > 0
-							? {
-									minHeight: `calc(var(--spacing-row) * ${BODY_ROWS})`,
-									maxHeight: BODY_SHARE * region,
-								}
+							? { maxHeight: SHEET_DOCKED_BODY_SHARE * region }
 							: undefined
 					}
-					className={cn(SHEET_DOCKED_BODY, BODY)}
+					className={cn(
+						SHEET_DOCKED_BODY,
+						BODY,
+						region > 0 && SHEET_DOCKED_FLOOR,
+					)}
 				>
 					<FootPlace value={null}>
 						<FormStands value="sheet">{children}</FormStands>

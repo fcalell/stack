@@ -554,6 +554,9 @@ export const CHART_SERIES = [
 // is over.
 export const METER_NEAR = 0.9;
 
+// The share of its foot's region past which a docked sheet's body scrolls.
+export const SHEET_DOCKED_BODY_SHARE = 0.4;
+
 // ── Type ────────────────────────────────────────────────────────────
 
 // Two rules decide which role a piece of text takes. Size follows structure,
@@ -845,6 +848,7 @@ export const SIZES = [
 	"track",
 	"otp",
 	"text-area",
+	"docked-floor",
 	"meter",
 	"chart",
 	"qr",
@@ -863,7 +867,7 @@ export type Size = (typeof SIZES)[number];
 
 // Derived and declared nowhere: the thumb's travel, the track less the thumb
 // and its inset on both sides; a text area's least value height, three body
-// line boxes; `figures`, four tabular figures at the code size at
+// line boxes; a docked sheet's body floor, three rows; `figures`, four tabular figures at the code size at
 // `MONO_ADVANCE`, rounded up to the pixel; a message input's tallest text,
 // eight body line boxes; an image thumbnail's side, four body line boxes (the
 // provenance lines it stands beside); an image's height cap, twenty; the
@@ -876,6 +880,7 @@ export type Size = (typeof SIZES)[number];
 export type DerivedSize =
 	| "switch-travel"
 	| "text-area"
+	| "docked-floor"
 	| "figures"
 	| "message-input"
 	| "image-tile"
