@@ -509,6 +509,15 @@ export interface SectionParts {
 	forms: number;
 }
 
+// What a waiting field is told of the field it stands in for, known before
+// its data: the form its control gives it (a switch at its label's end, a
+// checkbox on its label's first line, any other under the label) and whether
+// a description stands under it.
+export interface FieldShape {
+	holds: "field" | "switch" | "checkbox";
+	described: boolean;
+}
+
 export interface SectionState {
 	// The head is busy: the Section loads or any part of its body waits.
 	busy: boolean;

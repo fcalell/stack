@@ -33,7 +33,7 @@ import { Code } from "../code";
 import { Comparison } from "../comparison";
 import { Count } from "../count";
 import { Form } from "../form";
-import { FormField } from "../form-field";
+import { FormField, fieldWaitOf } from "../form-field";
 import { Group } from "../group";
 import { Icon } from "../icon";
 import { IconButton } from "../icon-button";
@@ -125,12 +125,13 @@ export function Section({
 	// List or a Table counts there unless the Section has its own count, and a
 	// loading body with no rows waits as skeleton fields while it stays
 	// mounted, hidden, so what it holds (a field's text) outlives the wait.
+	const parts = sectionPartsOf(children, KINDS);
 	const {
 		busy,
 		counted,
 		count: shown,
 		fields,
-	} = sectionState(sectionPartsOf(children, KINDS), { count, loading });
+	} = sectionState(parts, { count, loading });
 	// The description waits as a bar only when the Section says it will have
 	// one: an empty string, which is no line once loaded.
 	let sentence: ReactNode = null;
@@ -238,12 +239,11 @@ export function Section({
 			{/* A section without children draws no body. */}
 			{children === undefined || children === null ? null : (
 				<View className={cn(section({ in: within }), !open && BODY_FOLDED)}>
-					{fields > 0
-						? Array.from(
-								{ length: fields },
-								(_, index) => `field-${index}`,
-							).map((key) => <FieldWait key={key} />)
-						: null}
+					{Array.from({ length: fields }, (_, index) => `field-${index}`).map(
+						(key, index) => (
+							<FieldWait key={key} {...fieldWaitOf(parts.fieldNodes[index])} />
+						),
+					)}
 					<View
 						className={cn(section({ in: within }), fields > 0 && BODY_WAITS)}
 					>

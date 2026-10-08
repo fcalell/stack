@@ -14,7 +14,7 @@ import { useLeaveGuard } from "../../lib/leave";
 import { LoadingContext } from "../../lib/loading";
 import { TouchedContext, useTouchState } from "../../lib/touched";
 import { ActionBar } from "../action-bar";
-import { FormField } from "../form-field";
+import { FormField, fieldWaitOf } from "../form-field";
 import { Section } from "../section";
 
 // A field's wrapper stays mounted, as the field in it, while its waiting form
@@ -35,7 +35,7 @@ function waitFields(children: ReactNode, waiting: boolean): ReactNode[] {
 		if (node.type !== FormField) return node;
 		return (
 			<Fragment key={node.key}>
-				{waiting ? <FieldWait /> : null}
+				{waiting ? <FieldWait {...fieldWaitOf(node)} /> : null}
 				<View className={waiting ? FIELD_WAITS : undefined}>{node}</View>
 			</Fragment>
 		);

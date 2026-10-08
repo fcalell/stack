@@ -35,7 +35,7 @@ import { Code } from "../code/index.tsx";
 import { Comparison } from "../comparison/index.tsx";
 import { Count } from "../count/index.tsx";
 import { Form } from "../form/index.tsx";
-import { FormField } from "../form-field/index.tsx";
+import { FormField, fieldWaitOf } from "../form-field/index.tsx";
 import { Group } from "../group/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
@@ -141,12 +141,13 @@ export function Section({
 	// List or a Table counts there unless the Section has its own count, and a
 	// loading body with no rows waits as skeleton fields while it stays
 	// mounted, hidden, so what it holds (a field's text) outlives the wait.
+	const parts = sectionPartsOf(children, KINDS);
 	const {
 		busy,
 		counted,
 		count: shown,
 		fields,
-	} = sectionState(sectionPartsOf(children, KINDS), { count, loading });
+	} = sectionState(parts, { count, loading });
 	const host = useMemo(
 		() => (blocked === undefined ? undefined : { press }),
 		[blocked, press],
@@ -266,12 +267,14 @@ export function Section({
 					className={cn(section({ in: within }), BODY)}
 				>
 					<HeadingContext value={DEEPER[level]}>
-						{fields > 0
-							? Array.from(
-									{ length: fields },
-									(_, index) => `field-${index}`,
-								).map((key) => <FieldWait key={key} />)
-							: null}
+						{Array.from({ length: fields }, (_, index) => `field-${index}`).map(
+							(key, index) => (
+								<FieldWait
+									key={key}
+									{...fieldWaitOf(parts.fieldNodes[index])}
+								/>
+							),
+						)}
 						<div className={fields > 0 ? BODY_WAITS : BODY_SHOWN}>
 							<LoadingContext value={loading === true}>
 								<SectionContext value={true}>

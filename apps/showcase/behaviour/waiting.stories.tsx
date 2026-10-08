@@ -1,10 +1,15 @@
 import { ActionBar } from "@fcalell/plugin-react-ui/components/action-bar";
+import { Checkbox } from "@fcalell/plugin-react-ui/components/checkbox";
+import { DefinitionRow } from "@fcalell/plugin-react-ui/components/definition-row";
+import { Form } from "@fcalell/plugin-react-ui/components/form";
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
 import { Input } from "@fcalell/plugin-react-ui/components/input";
+import { List } from "@fcalell/plugin-react-ui/components/list";
 import { Prose } from "@fcalell/plugin-react-ui/components/prose";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
 import { Slider } from "@fcalell/plugin-react-ui/components/slider";
+import { Switch } from "@fcalell/plugin-react-ui/components/switch";
 import { Facts } from "@fcalell/plugin-react-ui/showcase/frames/definition-row";
 import { Static } from "@fcalell/plugin-react-ui/showcase/frames/group";
 import { Areas } from "@fcalell/plugin-react-ui/showcase/frames/list";
@@ -297,6 +302,79 @@ const form: StoryObj = {
 	},
 };
 
+// Each kind of field a Section reads: a label over a control, a switch, a
+// checkbox, each with and without a description. A waiting field stands at
+// its loaded field's height.
+const KINDS = [
+	["plain", <Input key="p" value="Acme" onChange={change} />],
+	[
+		"described",
+		<Input key="d" value="Acme" onChange={change} />,
+		"Shown to members.",
+	],
+	["switch", <Switch key="s" checked onChange={change} label="Two-factor" />],
+	[
+		"switch described",
+		<Switch key="sd" checked onChange={change} label="Two-factor" />,
+		"Members sign in with a second step.",
+	],
+	["checkbox", <Checkbox key="c" checked onChange={change} label="Trust" />],
+	[
+		"checkbox described",
+		<Checkbox key="cd" checked onChange={change} label="Trust" />,
+		"Skips the second step for thirty days.",
+	],
+] as const;
+const kindField = ([name, control, description]: (typeof KINDS)[number]) => (
+	<FormField key={name} label="Setting" description={description}>
+		{control}
+	</FormField>
+);
+function kinds(loading?: boolean) {
+	return KINDS.map((kind) => (
+		<Section key={kind[0]} title={kind[0]} loading={loading}>
+			{kindField(kind)}
+		</Section>
+	));
+}
+const fieldKinds: StoryObj = {
+	render: () => <Pair loaded={kinds()} waiting={kinds(true)} />,
+	play: async ({ canvas }) => {
+		const sections = (id: string) => [
+			...canvas.getByTestId(id).querySelectorAll("section"),
+		];
+		// The kinds whose waiting section is not its loaded section's height.
+		const apart = () =>
+			sections("loaded")
+				.map((section, at) => [
+					KINDS[at]?.[0],
+					Math.round(height(section)),
+					Math.round(height(sections("waiting")[at] as Element)),
+				])
+				.filter(([, here, there]) => here !== there);
+		await waitFor(() => expect(sections("waiting")).toHaveLength(KINDS.length));
+		await waitFor(() => expect(apart()).toEqual([]));
+	},
+};
+
+// The same kinds as the fields of one Form: each waits as the field it holds,
+// so the Section stands at its loaded height.
+const formKinds = (loading?: boolean) => (
+	<Section title="Settings" loading={loading}>
+		<Form>{KINDS.map(kindField)}</Form>
+	</Section>
+);
+const fieldKindsInForm: StoryObj = {
+	render: () => <Pair loaded={formKinds()} waiting={formKinds(true)} />,
+	play: async ({ canvas }) => {
+		const { waiting } = await stand(canvas);
+		await expect(within(waiting).queryAllByRole("button")).toHaveLength(0);
+		await expect(
+			waiting.querySelectorAll("form div[aria-hidden]"),
+		).toHaveLength(KINDS.length);
+	},
+};
+
 // The Form's fields stay mounted while they wait: the same input stands
 // again once the Section has loaded.
 function Refetch() {
@@ -335,6 +413,90 @@ const known: StoryObj = {
 	},
 };
 
+// A loading Section whose body is a Group stands no skeleton fields: the
+// Group waits in its own rows, one per DefinitionRow it holds, at the loaded
+// section's height.
+const groupBody = (loading?: boolean) => (
+	<Section title="Workspace" loading={loading}>
+		<Group>
+			<DefinitionRow label="Plan" value="Business" />
+			<DefinitionRow
+				label="Region"
+				description="Where the workspace runs."
+				value="Frankfurt"
+				href="#region"
+			/>
+			<DefinitionRow
+				label="Notify on failure"
+				value={<Switch checked onChange={change} label="Notify on failure" />}
+			/>
+		</Group>
+	</Section>
+);
+const sectionGroup: StoryObj = {
+	render: () => <Pair loaded={groupBody()} waiting={groupBody(true)} />,
+	play: async ({ canvas }) => {
+		const { loaded, waiting } = await stand(canvas);
+		// The body's wrapper holds the Group's card, which holds the rows.
+		const rows = (box: Element) =>
+			box.querySelector("section > div:last-child > div")?.firstElementChild;
+		await expect(waiting.querySelector("section")).toHaveAttribute(
+			"aria-busy",
+			"true",
+		);
+		await expect(rows(waiting)?.children).toHaveLength(3);
+		await expect(rows(waiting)?.children).toHaveLength(
+			rows(loaded)?.children.length ?? 0,
+		);
+		await expect(within(waiting).queryByText("Business")).toBeNull();
+		await expect(within(loaded).getByText("Business")).toBeVisible();
+	},
+};
+
+// A loading Section whose body is a List stands no skeleton fields: the List
+// draws its own waiting rows (four, whatever its items will be) and the head's
+// count waits, so the Section stands at the height of four loaded rows.
+const listBody = (loading?: boolean) => (
+	<Section title="Areas" loading={loading}>
+		<List
+			items={[
+				{ id: "a1", name: "Notes" },
+				{ id: "a2", name: "Deploys" },
+				{ id: "a3", name: "Hosts" },
+				{ id: "a4", name: "Mail" },
+			]}
+			row={{
+				key: (area) => area.id,
+				title: (area) => area.name,
+				href: (area) => `#${area.id}`,
+			}}
+		/>
+	</Section>
+);
+const sectionList: StoryObj = {
+	render: () => <Pair loaded={listBody()} waiting={listBody(true)} />,
+	play: async ({ canvas }) => {
+		const { loaded, waiting } = await stand(canvas);
+		const rows = (box: Element) => [
+			...(box.querySelector("section > div:last-child > div > div")?.children ??
+				[]),
+		];
+		await expect(waiting.querySelector("section")).toHaveAttribute(
+			"aria-busy",
+			"true",
+		);
+		await expect(rows(waiting)).toHaveLength(4);
+		for (const row of rows(waiting)) {
+			await expect(row).toHaveAttribute("aria-hidden", "true");
+			await expect(
+				Math.abs(height(row) - height(rows(loaded)[0] as Element)),
+			).toBeLessThan(1);
+		}
+		await expect(within(waiting).queryByText("Notes")).toBeNull();
+		await expect(within(waiting).queryAllByRole("link")).toHaveLength(0);
+	},
+};
+
 export const GroupOfStaticParts = group;
 export const SliderAloneAndInAGroup = sliders;
 export const DefinitionRowsInACard = facts;
@@ -343,6 +505,10 @@ export const SectionOverItsParts = bodies;
 export const SectionOverFields = fields;
 export const SectionOverItsForm = form;
 export const SectionFormKeepsItsFields = refetch;
+export const SectionOverEachKindOfField = fieldKinds;
+export const SectionOverItsFormOfEachKind = fieldKindsInForm;
+export const SectionOverAGroup = sectionGroup;
+export const SectionOverAList = sectionList;
 
 // The same scenarios in a 375 px phone at the touch density.
 function touch(story: StoryObj): StoryObj {
@@ -383,3 +549,7 @@ export const SliderAloneAndInAGroupTouch = touch(sliders);
 export const DefinitionRowsInACardTouch = touch(facts);
 export const SectionOverItsPartsTouch = touch(bodies);
 export const SectionOverItsFormTouch = touch(form);
+export const SectionOverEachKindOfFieldTouch = touch(fieldKinds);
+export const SectionOverItsFormOfEachKindTouch = touch(fieldKindsInForm);
+export const SectionOverAGroupTouch = touch(sectionGroup);
+export const SectionOverAListTouch = touch(sectionList);

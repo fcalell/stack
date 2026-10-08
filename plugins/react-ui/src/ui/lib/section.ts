@@ -4,6 +4,7 @@ import {
 	createContext,
 	Fragment,
 	isValidElement,
+	type ReactElement,
 	type ReactNode,
 } from "react";
 
@@ -46,15 +47,16 @@ interface BoundaryProps {
 // as its direct children (a fragment is transparent), inside a direct Group,
 // or as a direct QueryBoundary's props, whose loading form stands in its
 // place while it waits. Anything deeper (inside an app's own component, a
-// QueryBoundary's body) is not read.
+// QueryBoundary's body) is not read. The fields come as their elements, so a
+// waiting field can follow the one it stands in for.
 export function sectionPartsOf(
 	children: ReactNode,
 	kinds: SectionKinds,
-): SectionParts {
+): SectionParts & { fieldNodes: ReactElement[] } {
 	const lists: SectionParts["lists"][number][] = [];
 	const waits: boolean[] = [];
 	let groups = 0;
-	let fields = 0;
+	const fieldNodes: ReactElement[] = [];
 	let forms = 0;
 	const walk = (node: ReactNode, inGroup: boolean) => {
 		for (const child of Children.toArray(node)) {
@@ -86,9 +88,16 @@ export function sectionPartsOf(
 				groups += 1;
 				walk(props.children, true);
 			} else if (kinds.forms.includes(type)) forms += 1;
-			else if (type === kinds.field) fields += 1;
+			else if (type === kinds.field) fieldNodes.push(child);
 		}
 	};
 	walk(children, false);
-	return { lists, waits, groups, fields, forms };
+	return {
+		lists,
+		waits,
+		groups,
+		fields: fieldNodes.length,
+		forms,
+		fieldNodes,
+	};
 }

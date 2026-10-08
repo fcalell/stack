@@ -1310,7 +1310,11 @@ a tick with no animation, never jumped to full.
   and not at three fields; a field beside one keeps the skeleton fields. A `Form` is one of them
   but waits through the same context rather than by being counted: it reads `LoadingContext` and
   stands a skeleton field (`lib/field-wait`, the markup the Section's counted fields share) for
-  each `FormField` it holds, through fragments, with the field mounted hidden in its place. The
+  each `FormField` it holds, through fragments, with the field mounted hidden in its place. A
+  skeleton field takes the form of the field it stands for (`FieldShape` in `./list-state`: a
+  switch's box at the label's end, a checkbox's on the label's line, a description's bar), read
+  off the field's element by the platform's `fieldWaitOf` in `form-field`: the Section's walker
+  hands it the `FormField` elements it counts (`fieldNodes`), the Form its own. The
   Section's walker does not read through a Form: counting its fields would hide the body and with
   it the `ActionBar`'s waiting form. Outside the rule nothing is read: a
   collection inside an app's own component (a `ui/` wrapper around a List) draws itself but adds

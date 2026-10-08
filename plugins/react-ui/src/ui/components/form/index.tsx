@@ -15,7 +15,7 @@ import { useLeaveGuard } from "../../lib/leave.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 import { TouchedContext, useTouchState } from "../../lib/touched.ts";
 import { ActionBar } from "../action-bar/index.tsx";
-import { FormField } from "../form-field/index.tsx";
+import { FormField, fieldWaitOf } from "../form-field/index.tsx";
 import { Section } from "../section/index.tsx";
 
 const STACK = "flex flex-col";
@@ -38,7 +38,7 @@ function waitFields(children: ReactNode, waiting: boolean): ReactNode[] {
 		if (node.type !== FormField) return node;
 		return (
 			<Fragment key={node.key}>
-				{waiting ? <FieldWait /> : null}
+				{waiting ? <FieldWait {...fieldWaitOf(node)} /> : null}
 				<div className={waiting ? FIELD_WAITS : FIELD_SHOWN}>{node}</div>
 			</Fragment>
 		);

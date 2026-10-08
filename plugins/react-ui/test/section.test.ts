@@ -52,6 +52,7 @@ test("a Section reads the collections standing as its children, in a fragment, i
 	assert.equal(parts.groups, 1);
 	// The direct field, the Group's field and the waiting boundary's loading form.
 	assert.equal(parts.fields, 3);
+	assert.equal(parts.fieldNodes.length, 3);
 	// The Prose is a part with its own waiting form.
 	assert.equal(parts.forms, 1);
 });
@@ -74,6 +75,7 @@ test("a list taking a definition map is flagged for ui-core, which counts it as 
 		groups: 1,
 		fields: 0,
 		forms: 0,
+		fieldNodes: [],
 	});
 });
 
@@ -92,6 +94,7 @@ test("nothing deeper is read: an app's own component, a settled QueryBoundary's 
 		groups: 1,
 		fields: 0,
 		forms: 0,
+		fieldNodes: [],
 	});
 });
 
@@ -119,6 +122,6 @@ test("no registration, no layout effect in lib/section.ts", () => {
 		new URL("../src/ui/components/section/index.tsx", import.meta.url),
 		"utf8",
 	);
-	assert.match(section, /sectionState\(sectionPartsOf\(children, KINDS\)/);
+	assert.match(section, /sectionPartsOf\(children, KINDS\)/);
 	assert.doesNotMatch(section, /loadingNow|setFields|useLayoutEffect/);
 });

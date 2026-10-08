@@ -4,6 +4,7 @@ import type {
 	FieldBinding,
 	FieldControl,
 } from "@fcalell/ui-core/descriptors";
+import type { FieldShape } from "@fcalell/ui-core/list-state";
 import {
 	FIELD_ERROR_LINE,
 	FORM_FIELD_SUMMARY,
@@ -120,6 +121,20 @@ function formOf(control: ReactNode) {
 	if (type === Slider) return "slider";
 	if (type === OptionList || type === SegmentedControl) return "group";
 	return "field";
+}
+
+// The form a `FormField` element waits as, read off its props before its data:
+// a loading `Section` and a `Form` stand it for each field they hold. An
+// answered field folds to one summary row, which it waits as a plain field.
+export function fieldWaitOf(node: ReactNode): FieldShape {
+	if (!isValidElement<FormFieldProps>(node))
+		return { holds: "field", described: false };
+	const { answered, description } = node.props;
+	const form = answered ? "field" : formOf(fieldControl(node.props));
+	return {
+		holds: form === "switch" || form === "checkbox" ? form : "field",
+		described: Boolean(description),
+	};
 }
 
 // The field itself: the label over its control, a switch at the label's end and a
