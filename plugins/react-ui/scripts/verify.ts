@@ -200,6 +200,7 @@ const CLASS_ROOTS = [
 	"bottom",
 	"top",
 	"translate",
+	"origin",
 	"aspect",
 	"transition",
 	"duration",

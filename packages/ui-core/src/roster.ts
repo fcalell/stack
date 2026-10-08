@@ -3032,6 +3032,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"onConnect",
 				"act",
 				"loading",
+				"empty",
 			],
 			platforms: ["web"],
 			draws: [
@@ -3080,7 +3081,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"CANVAS_GROUP_HEAD",
 				"CANVAS_ZOOM",
 			],
-			states: ["rest", "selected", "loading"],
+			states: ["rest", "selected", "loading", "empty"],
 			owns: {
 				roles: ["body", "meta", "caption"],
 				colors: [
@@ -3119,6 +3120,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"icon-meta",
 					"icon",
 					"measure-short",
+					"measure",
 					"spinner",
 					"skeleton",
 				],

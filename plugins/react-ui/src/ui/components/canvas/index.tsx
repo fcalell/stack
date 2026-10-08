@@ -15,6 +15,7 @@ import {
 	useCallback,
 	useEffect,
 	useEffectEvent,
+	useId,
 	useLayoutEffect,
 	useMemo,
 	useRef,
@@ -22,6 +23,7 @@ import {
 } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { useTouch } from "../../lib/media.ts";
+import { Caption } from "./caption.tsx";
 import { ConnectionLine } from "./connection.tsx";
 import { EdgeLayer } from "./edges.tsx";
 import {
@@ -68,6 +70,8 @@ export interface CanvasProps extends Closed {
 	act?: Act;
 	/** Stands the ground and three node-shaped bars in place of the graph while the data is read; `nodes`, every handler and the `act` are then ignored. */
 	loading?: boolean;
+	/** A sentence centred under the graph in the meta ink at the text floor at any zoom, taking no pointer; the app passes it or `undefined`. */
+	empty?: string;
 }
 
 const NO_EDGES: readonly CanvasEdge[] = [];
@@ -102,7 +106,9 @@ function CanvasGraph({
 	onMove,
 	onConnect,
 	act,
+	empty,
 }: Omit<CanvasProps, "loading">) {
+	const caption = useId();
 	const region = useRef<HTMLElement>(null);
 	const viewport = useViewport(region);
 	const touch = useTouch();
@@ -287,6 +293,7 @@ function CanvasGraph({
 		<section
 			ref={region}
 			aria-label={label}
+			aria-describedby={empty ? caption : undefined}
 			data-fill
 			onKeyDown={clear}
 			onClick={onSelect ? ground : undefined}
@@ -294,6 +301,14 @@ function CanvasGraph({
 		>
 			<Grid />
 			<div data-layer className={LAYER}>
+				{empty ? (
+					<Caption
+						id={caption}
+						text={empty}
+						bounds={routed.bounds}
+						gap={space.pair}
+					/>
+				) : null}
 				{groups.map((group) => {
 					const frame = routed.frames.get(group.id);
 					return frame ? (

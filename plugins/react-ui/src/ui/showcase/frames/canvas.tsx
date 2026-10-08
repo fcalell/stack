@@ -106,6 +106,8 @@ function Overview({ graph, first }: { graph: Graph; first?: string }) {
 	);
 }
 
+export const EMPTY = "Add a node, or drag from the trigger's port.";
+
 // What each cell draws: the cell is the tone or state its frame is there to
 // judge, and the canvas draws every state its graph holds. The confirm node of
 // the journey is selected in the `selected` frame of the first.
@@ -122,12 +124,22 @@ const DRAWN: Record<string, { label: string; graph: Graph }> = {
 // plan node selected, and with a problem.
 export function drawCanvas(frame: ShowcaseFrame) {
 	const { name } = frame.cell;
-	if (frame.state === "loading")
-		return name === "CANVAS_NODE.state.rest" ? (
+	if (frame.state === "loading" || frame.state === "empty") {
+		if (name !== "CANVAS_NODE.state.rest") return undefined;
+		return (
 			<div className={STAGE}>
-				<Canvas label="Workflow" nodes={[]} loading />
+				{frame.state === "loading" ? (
+					<Canvas label="Workflow" nodes={[]} loading />
+				) : (
+					<Canvas
+						label="Workflow"
+						nodes={WORKFLOW.nodes.slice(0, 1)}
+						empty={EMPTY}
+					/>
+				)}
 			</div>
-		) : undefined;
+		);
+	}
 	if (name.startsWith("CANVAS_NODE_GLYPH.state.")) {
 		if (frame.state !== "rest") return undefined;
 		const state = name.slice(name.lastIndexOf(".") + 1);

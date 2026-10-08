@@ -1630,7 +1630,11 @@ a tick with no animation, never jumped to full.
   nodes. The canvas owns everything else. `loading` swaps the whole graph component for a hookless
   `CanvasWait` (the ground and grid it shares with the graph, three `canvasNode` cards of skeletons
   in a centred column), so no viewport, layout or ELK runs while waiting and no zoom stack or act
-  stands (both are overlays, so omitting them moves nothing). `d3-zoom` on the region gives pan, the Ctrl or Cmd wheel
+  stands (both are overlays, so omitting them moves nothing). `empty` is a string, not a slot or a
+  `words` entry (it is app copy, and the app decides when it stands): the layer's first child
+  centres it under the graph's bounds and holds its size through `--canvas-unzoom`, so it
+  stays at the text floor, and `pointer-events-none` lets a drag through it pan and a tap on it
+  reach the ground. `d3-zoom` on the region gives pan, the Ctrl or Cmd wheel
   and pinch, and its transform lands on one layer by script, so a pan renders no React tree; a
   plain wheel pans through the canvas's own listener, since d3-zoom's wheel always zooms. The layer
   holds, bottom to top, the group frames, one SVG of every edge with its chips over it, and the

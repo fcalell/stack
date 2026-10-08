@@ -167,6 +167,17 @@ arrives. Pass `nodes={[]}` meanwhile: `nodes`, the handlers and the `act` are ig
 loading form draws no zoom stack, no act, no node button and no drag. Do not stand `nodes={[]}`
 for a wait: it reads as an empty graph.
 
+## An empty graph
+
+`empty` is a sentence the canvas draws centred under the graph, a `pair` below its bottom edge, in
+the meta ink at the text floor at any zoom. It follows the pan and zoom, takes no pointer (a drag
+through it pans, a tap on it clears the selection) and is the region's accessible description.
+The sentence is your copy and you decide when it stands: pass it or `undefined`.
+
+```tsx
+<Canvas label="Workflow" nodes={nodes} empty={nodes.length < 2 ? "Add a node, or drag from the trigger's port." : undefined} />
+```
+
 ## Where it stands
 
 The canvas has no height of its own: it fills the region it stands in. Stand it as a `Split`'s

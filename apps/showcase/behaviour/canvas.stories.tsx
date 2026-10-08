@@ -6,6 +6,7 @@ import { showcaseFrames } from "@fcalell/plugin-react-ui/showcase/cells";
 import { Frame } from "@fcalell/plugin-react-ui/showcase/frame";
 import {
 	drawCanvas,
+	EMPTY,
 	JOURNEY,
 	OFF,
 	PROBLEM,
@@ -1089,6 +1090,50 @@ export const Loading: StoryObj = {
 	},
 };
 
+// An `empty` sentence stands centred under the graph's bounds, a `pair` below
+// its bottom edge, holds its size on screen at any zoom, takes no pointer, and
+// describes the region.
+export const EmptyText: StoryObj = {
+	render: () => (
+		<div className={STAGE}>
+			<Canvas
+				label="Workflow"
+				nodes={WORKFLOW.nodes.slice(0, 1)}
+				empty={EMPTY}
+			/>
+		</div>
+	),
+	play: async ({ canvas, userEvent }) => {
+		const region = await canvas.findByRole("region", { name: "Workflow" });
+		await waitFor(
+			() => expect(getComputedStyle(region).opacity).toBe("1"),
+			LAID,
+		);
+		const text = canvas.getByText(EMPTY);
+		const node = region.querySelector("[data-layer] > div") as HTMLElement;
+		await expect(region).toHaveAccessibleDescription(EMPTY);
+		await expect(getComputedStyle(text).pointerEvents).toBe("none");
+		const standing = () => ({
+			x:
+				rect(text).left +
+				rect(text).width / 2 -
+				(rect(node).left + rect(node).width / 2),
+			gap: rect(text).top - rect(node).bottom,
+			height: rect(text).height,
+		});
+		const first = standing();
+		await expect(Math.abs(first.x)).toBeLessThan(1);
+		await expect(first.gap).toBeGreaterThan(0);
+		await userEvent.click(canvas.getByRole("button", { name: "Zoom out" }));
+		await userEvent.click(canvas.getByRole("button", { name: "Zoom out" }));
+		await waitFor(() => expect(viewport(region).scale).toBeLessThan(1));
+		await expect(rect(text).height).toBeCloseTo(first.height, 0);
+		await expect(rect(text).width).toBeLessThanOrEqual(
+			parseFloat(getComputedStyle(text).maxWidth) + 1,
+		);
+	},
+};
+
 // Each generated canvas frame's stage, but the glyph's (which `Canvas overview`
 // checks, fitted under the text floor), holds its whole graph at scale 1: the
 // drawing (frames, chips, nodes) and every node's button lie inside the pane
@@ -1100,7 +1145,7 @@ function framesHoldTheirGraph(density: "desktop" | "touch"): StoryObj {
 			frame.component === "Canvas" &&
 			frame.mode === "light" &&
 			frame.density === density &&
-			frame.state !== "loading" &&
+			(frame.state === "rest" || frame.state === "selected") &&
 			!frame.cell.name.startsWith("CANVAS_NODE_GLYPH") &&
 			drawCanvas(frame) !== undefined,
 	);
