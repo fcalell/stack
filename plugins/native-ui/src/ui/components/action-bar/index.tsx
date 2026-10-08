@@ -43,10 +43,14 @@ const ALL_LIVE = "active:bg-wash-press";
 const ALL_INERT = "text-ink-disabled";
 // A kept failure line holds its height while nothing failed.
 const KEPT = "opacity-0";
-// A pending bar stands over the bar it replaces, which keeps its place in the
-// flow unseen: the held place is the loaded bar's height.
+// A pending bar and the bar it replaces share one row: each is the row's width
+// and the second is pulled back over the first, so the row is the taller of the
+// two. A percentage margin resolves against the row's width; Tailwind has no
+// negative percentage margin class, so the pull is a style.
+const HOLD = "flex-row";
+const CELL = "w-full";
+const OVER = { marginLeft: "-100%" } as const;
 const GHOST = "opacity-0";
-const OVER = "absolute top-0 inset-x-0";
 // A kept failure line's text while nothing failed: a no-break space holds the
 // line's height.
 const NO_FAILURE = " ";
@@ -221,16 +225,16 @@ export function ActionBar({
 	);
 	if (pending === undefined) return bar(false);
 	return (
-		<View>
+		<View className={HOLD}>
 			<View
 				pointerEvents="none"
 				accessibilityElementsHidden
 				importantForAccessibility="no-hide-descendants"
-				className={GHOST}
+				className={cn(CELL, GHOST)}
 			>
 				{bar(true)}
 			</View>
-			<View className={OVER}>
+			<View className={CELL} style={OVER}>
 				<PendingBar {...pending} />
 			</View>
 		</View>

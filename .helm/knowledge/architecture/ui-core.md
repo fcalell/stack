@@ -502,9 +502,10 @@ a tick with no animation, never jumped to full.
   (a PendingBar's props) keeps the bar's height through the swap: no count reproduces a bar whose acts
   wrap by their label widths, so the loaded bar is the measure. On the web it stays drawn in one grid
   cell with the PendingBar, `invisible`, `inert` and `aria-hidden`, its acts inert and none the
-  form's submit; on the phone it stays in flow at zero opacity with the PendingBar `absolute` over it,
-  so a pending form taller than the bar (its own `act` over one act) overlays what is below, the
-  frame being unmeasurable after paint. A Section's `description` is a
+  form's submit; on the phone both stand in one row, each the row's width and the PendingBar
+  pulled back over the bar by a `-100%` margin (a percentage margin resolves against the row's
+  width), so Yoga sizes the row to the taller of the two with no measurement; the bar is at zero
+  opacity, `pointerEvents="none"` and hidden from accessibility. A Section's `description` is a
   declaration of the same kind: while the Section loads, `""` stands one meta-height bar where the
   sentence will be and an undefined `description` stands none (loaded, both draw no line), because
   the app knows a description is coming and not its words.
