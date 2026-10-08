@@ -13,11 +13,9 @@ import {
 	skeletonRow,
 	text,
 } from "@fcalell/ui-core/variants";
-import { useContext } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { ThreadBleeds, ThreadRoom } from "../../lib/frame";
 import { Ink } from "../../lib/ink";
 
 import { joinParts, META_CUT, partText } from "../../lib/parts";
@@ -46,9 +44,6 @@ const FACTS_LINE_WAIT = "flex-row items-center";
 // The waiting count is a bar one figure wide, set by an unseen figure.
 const COUNT_WAIT = "shrink-0 flex-row items-center";
 const FIGURE_WAIT = "opacity-0 tabular-nums";
-// A head with no facts line in a Split's main stands a pair above what follows:
-// it pulls the main's sections gap back and pads the pair in.
-const BARE = "-mb-sections pb-pair";
 
 // One fact under the title: words, a status, words that open a sheet, a status that
 // moves (a pick whose options carry states), a count beside its word, or the state of a save
@@ -203,11 +198,6 @@ export function ItemHeader({
 	facts,
 	loading,
 }: ItemHeaderProps) {
-	// `ThreadBleeds` stands in a Split's record region; a filling Thread there
-	// (`ThreadRoom`) leaves no gap to pull back.
-	const bleeds = useContext(ThreadBleeds);
-	const room = useContext(ThreadRoom);
-	const inMain = bleeds && !room;
 	if (loading)
 		return (
 			<View accessibilityState={{ busy: true }} className={ITEM_HEADER}>
@@ -227,7 +217,7 @@ export function ItemHeader({
 			</View>
 		);
 	return (
-		<View className={cn(ITEM_HEADER, inMain && !facts?.length && BARE)}>
+		<View className={ITEM_HEADER}>
 			{overline && overline.length > 0 ? (
 				<RNText numberOfLines={1} className={text({ role: "meta" })}>
 					{joinParts(overline, META_CUT)}

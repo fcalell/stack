@@ -25,6 +25,7 @@ import { useScrolls } from "../../lib/scrolls.ts";
 import { useWords } from "../../lib/words.tsx";
 import { IconButtonLink } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
+import { headPaired } from "../item-header/pair.tsx";
 import { Menu } from "../menu/index.tsx";
 import { DETAILS, Details, ROW_MARKED } from "../place/index.tsx";
 import { splitOf } from "../split/index.tsx";
@@ -198,7 +199,7 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 									className={BODY}
 								>
 									<div className={cn(PAGE_BODY, SECTIONS_BESIDE)}>
-										{children}
+										{headPaired(children)}
 									</div>
 									{room ? <div className={ALONE}>{room}</div> : null}
 								</div>
@@ -208,7 +209,7 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 									tabIndex={stop ? 0 : undefined}
 									className={cn(PAGE_BODY, BODY)}
 								>
-									{children}
+									{headPaired(children)}
 								</div>
 							)}
 						</div>

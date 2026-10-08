@@ -1,10 +1,13 @@
 import type { Option } from "@fcalell/ui-core/descriptors";
 import type { StatusState } from "@fcalell/ui-core/tokens";
 import { useEffect, useState } from "react";
+import { ActionBar } from "../../components/action-bar/index.tsx";
 import { ItemHeader } from "../../components/item-header/index.tsx";
+import { Place } from "../../components/place/index.tsx";
+import { Section } from "../../components/section/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
-import { Wide } from "./layout-context.tsx";
-import { Opened } from "./place.tsx";
+import { StandInRows, Wide } from "./layout-context.tsx";
+import { Column, Opened } from "./place.tsx";
 
 const move = () => {};
 
@@ -53,11 +56,32 @@ function SavingHead() {
 	);
 }
 
+// A record page: its head with its act right under it, a pair
+// apart, and the sections after them a sections step below.
+function Record() {
+	return (
+		<Column>
+			<Place title="Imports">
+				<ItemHeader
+					overline={OVERLINE}
+					title="Re-run the nightly import"
+					facts={[moving("active"), ...REST]}
+				/>
+				<ActionBar acts={[{ label: "Pause the import", onAct: move }]} />
+				<Section title="Stages">
+					<StandInRows ground="list" />
+				</Section>
+			</Place>
+		</Column>
+	);
+}
+
 // Every cell draws the head in the frame's state: at rest a title that
 // wraps over one that does not, the lines a pair apart in both, the first
 // fact a status that moves; loading the bars in each line's box. A
 // `STATUS_DOT.state` cell stands on that state. A third head carries a save
-// fact that cycles its three states, a fourth a fact in words that opens.
+// fact that cycles its three states, a fourth a fact in words that opens; a
+// record page holds a head with its act under it.
 export function drawItemHeader(frame: ShowcaseFrame) {
 	const [family, , value] = frame.cell.name.split(".");
 	// The third segment of a `STATUS_DOT.state` cell is a state key.
@@ -88,6 +112,7 @@ export function drawItemHeader(frame: ShowcaseFrame) {
 					facts={[{ label: "Outside content", onOpen: move }, ...REST]}
 				/>
 			</Wide>
+			<Record />
 		</Opened>
 	);
 }

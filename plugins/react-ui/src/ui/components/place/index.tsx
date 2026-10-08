@@ -42,6 +42,7 @@ import { useWords } from "../../lib/words.tsx";
 import { Button } from "../button/index.tsx";
 import { IconButtonBase, IconButtonLink } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
+import { headPaired } from "../item-header/pair.tsx";
 import { Menu } from "../menu/index.tsx";
 import { PickerBase } from "../picker/base.tsx";
 import { SwitcherPick } from "../shell/switcher.tsx";
@@ -326,7 +327,7 @@ export function Place({
 			tabIndex={stop ? 0 : undefined}
 			className={cn(PAGE_BODY, BODY, foot ? PAGE_BODY_OVER_FOOT : BODY_FILLED)}
 		>
-			<ThreadRoom value={!foot}>{children}</ThreadRoom>
+			<ThreadRoom value={!foot}>{headPaired(children)}</ThreadRoom>
 			{floating ? (
 				<div aria-hidden className={cn(FLOATING_ACT_ROOM, ACT_ROOM)} />
 			) : null}

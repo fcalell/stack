@@ -43,6 +43,7 @@ import { RoomScope } from "../../lib/room";
 import { useWords } from "../../lib/words";
 import { Button } from "../button";
 import { IconButton } from "../icon-button";
+import { headPaired } from "../item-header/pair";
 import { Menu } from "../menu";
 import { Picker } from "../picker";
 import { SwitcherPick } from "../shell/switcher";
@@ -255,7 +256,7 @@ export function Place({
 										}
 									>
 										<ThreadRoom.Provider value={fill}>
-											{children}
+											{headPaired(children)}
 										</ThreadRoom.Provider>
 										{room}
 									</Scroll>

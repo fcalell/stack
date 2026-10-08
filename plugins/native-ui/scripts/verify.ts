@@ -193,7 +193,6 @@ const NATIVE_OVERLAYS = [
 	"opacity-0",
 	"overflow-hidden",
 	"pb-card",
-	"pb-pair",
 	"pb-page",
 	"pt-float",
 	"pt-pair",

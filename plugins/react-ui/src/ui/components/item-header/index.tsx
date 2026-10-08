@@ -52,12 +52,6 @@ const FACTS_LINE_WAIT = "flex items-center";
 // The waiting count is a bar one figure wide, set by an unseen figure.
 const COUNT_WAIT = "inline-flex shrink-0 items-center";
 const FIGURE_WAIT = "opacity-0 tabular-nums";
-// With no facts line a head in a Split's main (`group/main`) stands a pair, not
-// a sections step, above what follows: it pulls the main's gap back and pads
-// the pair in, unless a Thread fills the main (no gap there). The contract
-// holds no variant, so the overlay is the head's.
-const BARE =
-	"group-[:not(:has(>[data-fill]))]/main:-mb-sections group-[:not(:has(>[data-fill]))]/main:pb-pair";
 
 /** One fact under the title: words, a status, words that open a sheet, a status that moves (a pick whose options carry states), a count beside its word, or the state of a save that runs as the record is typed, a failed one with its retry. */
 export type Fact<V extends string | null = string> =
@@ -231,7 +225,7 @@ export function ItemHeader<V extends string | null = string>({
 			</div>
 		);
 	return (
-		<header className={cn(ITEM_HEADER, HEAD, column, !facts?.length && BARE)}>
+		<header className={cn(ITEM_HEADER, HEAD, column)}>
 			{overline && overline.length > 0 ? (
 				<p className={cn(text({ role: "meta" }), OVERLINE)}>
 					{joinParts(overline, META_CUT)}

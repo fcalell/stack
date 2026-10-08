@@ -24,6 +24,7 @@ import { navigate } from "../../lib/navigate";
 import type { Route } from "../../lib/route";
 import { useWords } from "../../lib/words";
 import { IconButton } from "../icon-button";
+import { headPaired } from "../item-header/pair";
 import { Menu } from "../menu";
 import { useSplitHead } from "../split";
 import { ToastRoom } from "../toast/room";
@@ -109,7 +110,9 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 							className={BODY}
 							contentContainerClassName={cn(PAGE_BODY, BODY_CONTENT)}
 						>
-							<BackRoute.Provider value={back}>{children}</BackRoute.Provider>
+							<BackRoute.Provider value={back}>
+								{headPaired(children)}
+							</BackRoute.Provider>
 							{beside ? room : null}
 						</Scroll>
 						{beside ? null : <ToastRoom />}

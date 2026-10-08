@@ -22,6 +22,7 @@ import {
 } from "../../lib/frame.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
 import { useWords } from "../../lib/words.tsx";
+import { headPaired } from "../item-header/pair.tsx";
 import { SheetBase } from "../sheet/base.tsx";
 import { MAIN_FILLED } from "../thread/fill.ts";
 
@@ -152,7 +153,7 @@ export function Split({ list, main, beside, pane, empty, back }: SplitProps) {
 						<div className={inset}>
 							<ThreadRoom value>
 								<ThreadBleeds value>
-									<OverThread value>{main}</OverThread>
+									<OverThread value>{headPaired(main, true)}</OverThread>
 								</ThreadBleeds>
 							</ThreadRoom>
 							{room ? <div className={ALONE}>{room}</div> : null}

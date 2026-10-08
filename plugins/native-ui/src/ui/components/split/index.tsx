@@ -27,6 +27,7 @@ import {
 import { Scroll } from "../../lib/hosts";
 import type { Route } from "../../lib/route";
 import { useWords } from "../../lib/words";
+import { headPaired } from "../item-header/pair";
 import { Sheet } from "../sheet";
 import { holdsThread } from "../thread";
 
@@ -114,7 +115,9 @@ export function Split({ list, main, beside, pane, back }: SplitProps) {
 				}
 			>
 				<ThreadRoom.Provider value={fill}>
-					<ThreadBleeds.Provider value>{main}</ThreadBleeds.Provider>
+					<ThreadBleeds.Provider value>
+						{headPaired(main, true)}
+					</ThreadBleeds.Provider>
 				</ThreadRoom.Provider>
 				{room}
 			</Scroll>
