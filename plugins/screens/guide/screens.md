@@ -8,7 +8,7 @@ right. The app writes no story, harness or workbench config; a new route is a ne
 ```bash
 stack add screens   # once: installs the workbench and its packages into the app
 stack screens dev   # serves the workbench (--port 6006)
-stack screens test  # checks every screen headlessly (--all: not only the changed ones)
+stack screens test  # checks the screens a changed file reaches (--changed <ref>: since a ref; --all: every screen)
 ```
 
 ## The states
@@ -69,7 +69,10 @@ children through `<Outlet />`; without it a screen under the parent shows an emp
 `stack screens test` fails a screen with an axe violation (every rule, the page-level ones and
 `target-size` included), a horizontal overflow at 320, 390, 768, 1280 or 1440 px, or a console error
 or warning, naming the screen, state and mode. It runs the
-screens a changed file reaches; `--all` runs every one.
+screens a file with uncommitted changes reaches; `--changed <ref>` runs those a file changed since
+that git ref reaches (a batch committed in a worktree runs `--changed master`), and `--all` runs
+every one. A change under the `src/` of a workspace package the app links, outside the
+directories its source exports serve, reruns every screen: it reaches no screen's module graph.
 
 ## Limits
 

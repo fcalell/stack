@@ -1,9 +1,12 @@
 import { fileURLToPath } from "node:url";
-import { writeStorybookConfig } from "@fcalell/plugin-screens/node";
+import {
+	workspaceTriggers,
+	writeStorybookConfig,
+} from "@fcalell/plugin-screens/node";
 import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
 import { playwright } from "@vitest/browser-playwright";
 import { loadConfigFromFile, mergeConfig } from "vite";
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 import { rosterPlugin } from "./.storybook/roster-plugin.ts";
 import stackConfig from "./stack.config.ts";
 
@@ -24,6 +27,13 @@ if (!loaded) throw new Error("the Storybook Vite config did not load");
 export default defineConfig({
 	...mergeConfig(loaded.config, { plugins: [rosterPlugin()] }),
 	test: {
+		// A change to a linked package's compiled side (`dist/` is gitignored) or to
+		// what generate writes reaches no story's module graph, so it reruns every
+		// story.
+		forceRerunTriggers: [
+			...configDefaults.forceRerunTriggers,
+			...workspaceTriggers(dirname),
+		],
 		// Memory: each parallel page is one renderer, so at most two open at once
 		// across both projects. Set here, not per project: projects with different
 		// `maxWorkers` cannot share one run.

@@ -239,8 +239,13 @@ export const screens = plugin("screens", {
 				all: {
 					type: "boolean" as const,
 					description:
-						"Run every screen, not only those a file with uncommitted changes reaches",
+						"Run every screen, not only those a changed file reaches",
 					default: false,
+				},
+				changed: {
+					type: "string" as const,
+					description:
+						"Run the screens a file changed since this git ref reaches (default: uncommitted changes)",
 				},
 			},
 			handler: async (ctx, flags) => {
@@ -251,7 +256,12 @@ export const screens = plugin("screens", {
 					".stack/screens.vitest.config.ts",
 					// A clean tree has nothing to run, which is no failure.
 					"--passWithNoTests",
-					...(flags.all ? [] : ["--changed"]),
+					...(flags.all
+						? []
+						: [
+								"--changed",
+								...(typeof flags.changed === "string" ? [flags.changed] : []),
+							]),
 				]);
 			},
 		},

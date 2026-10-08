@@ -157,9 +157,10 @@ export function renderStorybookMain(options: { floors: boolean }): string {
 // project. Each parallel page is one renderer, so two open at most.
 export function renderVitestConfig(): string {
 	return `import { fileURLToPath } from "node:url";
+import { workspaceTriggers } from "@fcalell/plugin-screens/node";
 import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
 import { playwright } from "@vitest/browser-playwright";
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 import screens from "./screens.vite.config.ts";
 
 // Playwright's own browser is the default; where none is installed (NixOS),
@@ -169,6 +170,12 @@ const chrome = process.env.CHROME_PATH;
 export default defineConfig({
 	...screens,
 	test: {
+		// A change to a linked package's compiled side reaches no screen's module
+		// graph, so it reruns every screen.
+		forceRerunTriggers: [
+			...configDefaults.forceRerunTriggers,
+			...workspaceTriggers(fileURLToPath(new URL("..", import.meta.url))),
+		],
 		projects: [
 			{
 				extends: true,

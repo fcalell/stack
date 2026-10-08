@@ -82,7 +82,7 @@ proxy or port) and returns its path, for Storybook's `viteConfigPath` and Vite's
   origin or a worker path fails (`onUnhandledRequest`).
 - **The worker.** `/mockServiceWorker.js` is served by `screensPlugin` from MSW's package.
 - **The test run.** `stack screens test` generates, then runs the app's `vitest run --config
-  .stack/screens.vitest.config.ts` (`--changed` unless `--all`, `--passWithNoTests`). The config
+  .stack/screens.vitest.config.ts` (`--changed [<ref>]` unless `--all`, `--passWithNoTests`). The config
   spreads `.stack/screens.vite.config.ts`, so the run's host is the workbench's, and runs the Storybook
   test plugin on `.stack/screens-test/`, whose `main.ts` adds `./floors`: axe with every rule on
   (`region`, which the a11y addon turns off, and `target-size`, which axe leaves off), the overflow

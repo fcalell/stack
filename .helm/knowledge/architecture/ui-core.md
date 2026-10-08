@@ -1865,9 +1865,26 @@ once (each is a renderer, and a wider run exhausts the memory of a 16 GiB machin
 scripts (`test-storybook`, `test-screens`) run through `browser-run.sh`, a memory budget per user shared by
 every session and worktree: a run claims its cap (`STACK_BROWSER_MB`, 7 GiB by default: a full run peaks near 6.1) and starts while
 the available memory, less the caps of the runs already admitted, covers it and a reserve
-(`STACK_BROWSER_RESERVE_MB`, 2 GiB); otherwise it waits. Under systemd the run is held to its cap with no
-swap, so one that outgrows it is killed alone instead of exhausting the machine; without `/proc/meminfo`
-the budget is one run at a time. A file subset goes through the script too
+(`STACK_BROWSER_RESERVE_MB`, 2 GiB); otherwise it waits, and a cap plus reserve above `MemTotal` is
+refused at once with the three numbers, since no wait admits it. Under systemd the run is held to its cap with no
+swap, so one that outgrows it is killed alone instead of exhausting the machine, and the script prints the
+run's peak (the scope's `memory.peak`) when it ends; without `/proc/meminfo`
+the budget is one run at a time. A run scoped with `--changed <ref>` peaks lower: a `bar-chart`
+component edit selects 70 of the 202 story files and peaked at 4.7 GiB (`browser-run: peak 4784 MiB`),
+so a scoped run's cap is set from the printed peak.
+
+A change reaches a story file only through its module graph, which `dist/` and generated files do not
+join: `@fcalell/ui-core` and react-ui's `.`, `./node/*` and `./density` resolve to gitignored `dist/`,
+and the theme and token CSS and the derived Vite configs are written to `.stack/`. So the roster's
+`vitest.config.ts` and the generated screens config both add `workspaceTriggers(<app dir>)`
+(`@fcalell/plugin-screens/node`) to Vitest's default `forceRerunTriggers`: for each workspace package
+the app links (a dependency that resolves outside `node_modules`), every file under its `src/` that no
+source export serves, derived from the package's `exports` (react-ui's `./components/*` serves
+`src/ui/components/`, `./globals.css` serves `src/ui`). A change to one of those files reruns every
+story and every screen; an edit to a served component reruns only the files that reach it. A published
+consumer links nothing, so only Vitest's defaults apply. `vitest run --changed <ref>` and
+`stack screens test --changed <ref>` diff `<ref>...HEAD` plus uncommitted edits, so a batch committed in
+a worktree runs both with `--changed master`. A file subset goes through the script too
 (`pnpm --filter showcase test-storybook <files>`); `vitest` called directly bypasses the budget, and any
 other browser (a script driving Playwright) runs as `apps/showcase/browser-run.sh <command>` with its own cap.
 
