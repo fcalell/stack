@@ -1,6 +1,6 @@
 ---
 id: 003-187
-status: review
+status: todo
 sessions: {}
 ---
 # ui-core: an Option disabled with a reason
@@ -18,9 +18,9 @@ Stead's workflow canvas sets an agent node's agents in a `Picker`, and design/07
 ## Acceptance criteria
 - [x] A blocked option takes no pointer, touch or key; its reason leads its meta line; a blocked option that is in the value is drawn and operable as any chosen one.
 - [x] A disabled option already in the value stays shown as chosen and removable, as a chip and in the list.
-- [x] `Select`, `Picker`, `MultiPick` and `OptionList` all honour it, on both platforms.
+- [ ] `Select`, `Picker`, `MultiPick` and `OptionList` all honour it, on both platforms.
 - [x] A picker with no disabled option is unchanged.
-- [x] The Picker showcase holds a list with enabled and disabled options (the frame's owner list and a pick of several holding a blocked chosen option), measured by the critique at 320 and 1440 px: the critique is run by a session that played no part in the work and is not run here.
+- [ ] The Picker showcase holds a list with enabled and disabled options (the frame's owner list and a pick of several holding a blocked chosen option), measured by the critique at 320 and 1440 px: the critique is run by a session that played no part in the work and is not run here.
 
 ## Open questions
 - [x] Its shape: `blocked?: string`, named as `Act` and `RowLeading.check` name it.
@@ -36,3 +36,9 @@ Stead's workflow canvas sets an agent node's agents in a `Picker`, and design/07
 - Base UI's select list lets the arrow keys reach a disabled row (as the menu's does); Enter and a press on it pick nothing.
 - `guide/rules.md` of both platforms and `ui-core.md` state it. The Picker showcase frame holds a blocked owner and a pick of several with a blocked chosen chip.
 - Evidence: `behaviour/option-list.stories.tsx` (BlockedChecks and BlockedRadios at 320 and 1440), `behaviour/picker.stories.tsx` and `behaviour/select.stories.tsx` (Blocked at 320 and 1440) pass with the existing stories in the three files (23 of 23): a blocked row is disabled, takes no click or Enter, its reason is in a different ink from the description and its row height equals the described row's; the chosen blocked option is enabled, shows no reason, and once unticked or removed is blocked again with its reason.
+
+## Open
+- A query-driven `OptionList`'s `option` map has no `blocked` slot, so an option read from data cannot be blocked; only static `options`, `Picker` and `Select` take it. The owner decides whether the map gains the slot.
+- The arrow keys still land on a blocked option in the Select and Picker lists (Base UI 1.8 passes no disabled indices); Enter and a press pick nothing. Skipping it would need a stack-side handler.
+- The touch sheet and the native rows are not exercised by any story; native is not rendered.
+- The critique has not measured the frame at 320 and 1440.
