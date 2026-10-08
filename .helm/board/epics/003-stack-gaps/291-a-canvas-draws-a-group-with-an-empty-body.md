@@ -25,3 +25,6 @@ An empty group (no present node and no group) is a leaf of the graph: ELK lays i
 
 ## Open
 A graph whose nodes all carry a `position` runs no layout, so an empty group has no place and is not drawn; this is the state after a consumer stores `onMove`'s positions and reloads. Question for the owner: where does an empty group stand when the consumer places the nodes? Recommended: the layout places it as a leaf below the positioned nodes' bounds (one row, left-aligned, in path order), since the consumer cannot position it (no `onMove` for a group).
+
+## Owner ruling
+When every node carries a `position` (no layout runs), the empty groups stand as one row below the positioned nodes' bounds, left-aligned, in path order. No new surface: an empty group takes no `position` and `onMove` never hears it. To build.
