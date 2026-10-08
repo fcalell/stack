@@ -235,7 +235,7 @@ a memory) is `wrap`: it wraps to every line at 400 with its leading, trailing an
 first line, and a `List`'s `row` map takes it as one boolean for every row. A `{ quoted }` title
 marks a model-written name and wraps whole in a row with a second line; `wrap` is for text a person approved. A flag, a path or an identifier in a title is a `{ code }` run: the title is then an array of runs (`[{ code: "--strict" }, " turns strict mode on."]`; backticks in a string are never parsed) that draws the code in the inline code style and truncates at its end as one title; a title that is a single `{ code: path }` is one value that cuts in its middle, keeping its start and its end, so the end of a path stays readable. A `meta` part that is `{ code }` cuts the same way. A row's trailing age is the ISO
 moment itself, `trailing: { age: item.madeAt }`: the row words it short ("2 min") and keeps it
-current, so pass the moment, never a worded string.
+current, so pass the moment, never a worded string. A spend or other short value that goes with the age is its `beside`, `trailing: { age: run.startedAt, beside: "$0.12" }`: it stands after the age in the same trailing, and the age keeps ticking.
 
 Rows that branch (a journey's choice points and their legs) are a tree: the `List`'s `row` map gives
 `children`, each item's children, and the List draws a rail per level, a fold act on every parent

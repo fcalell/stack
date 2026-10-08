@@ -326,7 +326,13 @@ function Age(props: { moment: string }) {
 }
 
 function trailingWord(trailing: RowTrailing<string | null>): ReactNode {
-	if ("age" in trailing) return <Age moment={trailing.age} />;
+	if ("age" in trailing)
+		return (
+			<>
+				<Age moment={trailing.age} />
+				{trailing.beside === undefined ? null : ` · ${trailing.beside}`}
+			</>
+		);
 	if ("count" in trailing) return String(trailing.count);
 	if ("value" in trailing) return trailing.value;
 	return "";

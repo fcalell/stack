@@ -246,14 +246,14 @@ interface Work {
 	id: string;
 	title: RowTitle;
 	meta: RowPart[];
-	trailing: string;
+	trailing: RowTrailing;
 }
 
 const WORK_ROW: RowSlots<Work> = {
 	key: (work) => work.id,
 	title: (work) => work.title,
 	meta: (work) => work.meta,
-	trailing: (work) => ({ value: work.trailing }),
+	trailing: (work) => work.trailing,
 	href: (work) => `#${work.id}`,
 };
 
@@ -266,7 +266,7 @@ const WORKS: Work[] = [
 			{ quoted: "Let a signed-in account approve a new device from the first" },
 			"pass 1",
 		],
-		trailing: "18 min · $0.42",
+		trailing: { age: ago(18), beside: "$0.42" },
 	},
 	{
 		id: "sync",
@@ -275,7 +275,7 @@ const WORKS: Work[] = [
 			"blocked by",
 			{ quoted: "Sync the shelf between devices and offline" },
 		],
-		trailing: "8 min · $0.12",
+		trailing: { age: ago(8), beside: "$0.12" },
 	},
 	// Code in a title: runs that truncate at their end, a path that is the
 	// whole title or a whole meta part cutting in its middle.
@@ -286,13 +286,13 @@ const WORKS: Work[] = [
 			"criterion",
 			{ code: "packages/server/src/worker/plugins/registry.ts" },
 		],
-		trailing: "2 min",
+		trailing: { age: ago(2) },
 	},
 	{
 		id: "path",
 		title: { code: "packages/server/src/worker/plugins/registry.ts" },
 		meta: ["sensitive", { code: "/tmp/stead-fx-u9/repo-one/packages/server" }],
-		trailing: "9 min",
+		trailing: { age: ago(9) },
 	},
 ];
 

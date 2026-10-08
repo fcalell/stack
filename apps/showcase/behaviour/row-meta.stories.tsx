@@ -10,6 +10,8 @@ import { expect, within } from "storybook/test";
 const TITLE = "Sign-in from a second device";
 const QUOTE = "Let a signed-in account approve a new device from the first one";
 const NAME = "payment-terms-and-late-invoices.md";
+const EIGHTEEN_MIN_AGO = new Date(Date.now() - 18 * 60_000).toISOString();
+const THREE_MIN_AGO = new Date(Date.now() - 3 * 60_000).toISOString();
 
 export default {
 	title: "Behaviour/RowMeta",
@@ -20,7 +22,7 @@ function Work() {
 		<ListRow
 			title={TITLE}
 			meta={["implementing", { quoted: QUOTE }, "pass 1"]}
-			trailing={{ value: "18 min · $0.42" }}
+			trailing={{ age: EIGHTEEN_MIN_AGO, beside: "$0.42" }}
 			href="#work"
 		/>
 	);
@@ -193,6 +195,41 @@ export const MetaStarved: StoryObj = {
 	play: starved,
 };
 
+// A live row's age and spend are one trailing unit in a 335 px column: both
+// stand whole beside the status, or neither does, and the row does not overflow.
+function Underway() {
+	return (
+		<div data-testid="column" style={{ width: 335 }} className="max-w-full">
+			<ListRow
+				title="Morning summary"
+				meta={["Stead", "at Collect"]}
+				status={{ state: "waiting", label: "Waiting on an item" }}
+				trailing={{ age: THREE_MIN_AGO, beside: "$0.12" }}
+				href="#underway"
+			/>
+		</div>
+	);
+}
+
+const together: Play = async ({ canvas }) => {
+	const row = canvas.getByRole("link", {
+		name: /Morning summary/,
+	}).parentElement;
+	if (!row) throw new Error("the row has no box");
+	const pair = canvas.queryByText("3 min · $0.12");
+	const age = canvas.queryByText(/3 min/);
+	await expect(age === null).toBe(pair === null);
+	if (pair) {
+		await expect(clipped(pair)).toBe(false);
+		await expect(right(pair)).toBeLessThanOrEqual(right(row) + 0.5);
+	}
+};
+
+export const TrailingBeside: StoryObj = {
+	render: () => <Underway />,
+	play: together,
+};
+
 export const FilePathFloor: StoryObj = {
 	render: () => <Widths>{() => <Files />}</Widths>,
 	play: floor,
@@ -224,6 +261,7 @@ function touch(story: StoryObj): StoryObj {
 export const MetaYieldsTouch = touch(MetaYields);
 export const MetaStarvedTouch = touch(MetaStarved);
 export const FilePathFloorTouch = touch(FilePathFloor);
+export const TrailingBesideTouch = touch(TrailingBeside);
 export const ChevronEndsTouch = touch(ChevronEnds);
 
 // A status label draws whole while its line has room and truncates, within its

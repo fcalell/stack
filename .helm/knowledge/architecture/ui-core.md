@@ -226,7 +226,8 @@ the document's language, in one helper over ui-core's `ageWords` (`./clock`, its
 walk from a moment to a value and unit). A row's trailing age is that moment too (`RowTrailing`'s
 `age`): the `ListRow` words it short ("2 min", `Intl.NumberFormat` `unitDisplay: "short"` through
 `ageShort`) and ticks it from the clock, so a caller and a Table pass the moment and run no
-clock plumbing; a moment after now keeps the long form, since a short "2 min" cannot say "in". Every `Intl` formatter
+clock plumbing (the `age` form's optional `beside` is a static short value, a spend, drawn after the
+age in the one trailing, so only the age node redraws on a tick); a moment after now keeps the long form, since a short "2 min" cannot say "in". Every `Intl` formatter
 either plugin uses (an age, a moment, a meter's figures, a chart's ticks, a slider's value, the
 phone's `compact`) comes from ui-core's `formatterFor(kind, lang, options)` (`./format`), built once
 per kind, language and options at module scope, since building one costs far more than formatting

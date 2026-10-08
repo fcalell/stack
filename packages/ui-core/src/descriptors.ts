@@ -214,9 +214,11 @@ export interface Rule<V extends string | null = string> {
 
 // A list row's trailing: a value that cannot change (an age, a count, a
 // word), or a pick. An `age` is an ISO moment: the row words it short ("2 min")
-// and keeps it current from the shared clock.
+// and keeps it current from the shared clock. Its `beside` is a short value (a
+// spend, "$0.12") drawn after the age, whole or gone with it; a row that waits
+// draws the same bar for it, since the loaded width is not derivable.
 export type RowTrailing<V extends string | null = string> =
-	| { age: string }
+	| { age: string; beside?: string }
 	| { count: number }
 	// A word: whole or gone on the web (the row leaves it once the title would hold under half its line), kept whole on the phone.
 	| { value: string }
