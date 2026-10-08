@@ -48,7 +48,7 @@ import type { QueryLike } from "../query-boundary/index.tsx";
 import { Latest } from "./latest.tsx";
 
 const STACK = "flex flex-col";
-// With a foot its measured height bounds a docked sheet's body (`FootRegion`).
+// With a foot its measurement bounds a docked sheet's body (`FootRegion`).
 const FILL = "flex flex-col grow min-h-0";
 // In a Split's main the Thread bleeds through the inset the record's head
 // keeps, under the head's hairline.
@@ -65,7 +65,9 @@ const DOCKED = "flex flex-col shrink-0 [anchor-name:--docked-foot]";
 // scrolls inside it.
 const FOOT_COLUMN = "flex flex-col min-h-0";
 // The region over the foot: the log, and the Latest act floating at its foot.
-const REGION = "relative flex flex-col grow min-h-0";
+// It clips its height, so where a docked foot leaves it no room nothing it
+// holds paints over the foot's head or the header.
+const REGION = "relative flex flex-col grow min-h-0 overflow-y-clip";
 // The log is at its end while its last pixel shows; a reader who scrolled
 // up keeps their place as a message arrives.
 const AT_END = 1;
@@ -122,6 +124,8 @@ export type ThreadProps<T = unknown> = Closed &
 		message: MessageSlots<T>;
 		/** The `MessageInput` under the messages, drawn in every state. */
 		foot?: ReactNode;
+		/** A reply from the other author is on its way: the loaded log ends on one waiting message of theirs, until it is cleared. */
+		replying?: boolean;
 	};
 
 // One message from its item, its Message by its author: a system line takes
@@ -200,12 +204,17 @@ function logOf<T>(
 	if (state === "empty" && props.empty)
 		return <EmptyStateBase tone="rest" {...props.empty} />;
 	const items = (props.query ? props.query.data : props.items) ?? [];
-	return items.map((item) => (
-		<ThreadItem key={props.message.key(item)} item={item} slots={slots} />
-	));
+	return [
+		...items.map((item) => (
+			<ThreadItem key={props.message.key(item)} item={item} slots={slots} />
+		)),
+		props.replying ? (
+			<Message key="replying" author="other" body="" loading />
+		) : null,
+	];
 }
 
-/** The messages, a log region so an arriving one is announced, a sections gap apart, one rung above a reply's block gap, and the input a sections gap under them; on the desktop each stands in a measure-wide column its region centres, on touch in the screen's column. In a Place's body it fills the page, and in a Split's main the main under the record's head: the log scrolls at the page inset, opening at the newest message and following each that arrives while the reader is at the end, the input docked at the foot, which holds a docked `Sheet` as well, its body scrolling past two fifths of the region and keeping three rows, the log giving way; while the reader is scrolled up, a Latest act floats centred above the foot and returns to the newest message. It draws its collection's states, the input under each: while its query is pending, `loading` is set or a loading `Section` holds it, Message's loading forms (another's reply, yours, another's reply), the log at its end; a failed query, the failed EmptyState with `sentence` and Retry in the log's column; a query that answers not found, the form saying it no longer exists with Back; no message, `empty` in the log; then one Message per item. */
+/** The messages, a log region so an arriving one is announced, a sections gap apart, one rung above a reply's block gap, and the input a sections gap under them; on the desktop each stands in a measure-wide column its region centres, on touch in the screen's column. In a Place's body it fills the page, and in a Split's main the main under the record's head: the log scrolls at the page inset, opening at the newest message and following each that arrives while the reader is at the end, the input docked at the foot, which holds a docked `Sheet` as well, its body scrolling past two fifths of the region and keeping three rows, the log keeping two rows of its own while the body can give and the foot's head and submit never giving; while the reader is scrolled up, a Latest act floats centred above the foot and returns to the newest message. It draws its collection's states, the input under each: while its query is pending, `loading` is set or a loading `Section` holds it, Message's loading forms (another's reply, yours, another's reply), the log at its end; a failed query, the failed EmptyState with `sentence` and Retry in the log's column; a query that answers not found, the form saying it no longer exists with Back; no message, `empty` in the log; then one Message per item, and with `replying` set one waiting Message of the other author after them, followed and pinned to as any message is, replaced in place when the reply's item arrives and `replying` clears. */
 export function Thread<T>(props: ThreadProps<T>) {
 	const { foot } = props;
 	const words = useWords();
@@ -234,7 +243,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 	const content = useRef<HTMLDivElement>(null);
 	const dock = useRef<HTMLDivElement>(null);
 	useFootFocus(dock);
-	const region = useFootRegion();
+	const region = useFootRegion(dock, true);
 	const atEnd = useRef(true);
 	// The log's box and content heights as the follow last saw them. A scroll
 	// event that reads other heights came with a resize (the foot changed, a
@@ -318,7 +327,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 			{foot ? (
 				<div ref={dock} className={cn(FOOT_DOCKED, DOCKED, centres)}>
 					<FootPlace value="docked">
-						<FootRegion value={region.height}>
+						<FootRegion value={region.value}>
 							<div className={cn(column, FOOT_COLUMN)}>{foot}</div>
 						</FootRegion>
 					</FootPlace>

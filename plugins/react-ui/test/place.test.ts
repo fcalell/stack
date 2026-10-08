@@ -48,6 +48,6 @@ test("a Place and a Thread region are not size containers", () => {
 			"utf8",
 		);
 		assert.doesNotMatch(source, /container-type/);
-		assert.match(source, /<FootRegion value=\{region\.height\}>/);
+		assert.match(source, /<FootRegion value=\{region\.value\}>/);
 	}
 });

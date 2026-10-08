@@ -746,7 +746,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(TYPE_ROLES.length, 8, "type role count");
 	requireEqual(SPACING_ROLES.length, 11, "spacing role count");
 	requireEqual(GAP_ROLES.length, 6, "gap role count");
-	requireEqual(SIZES.length, 41, "size count");
+	requireEqual(SIZES.length, 42, "size count");
 	requireEqual(RADIUS_ROLES.length, 7, "radius role count");
 	requireEqual(SHADOW_LEVELS.length, 2, "shadow level count");
 	requireEqual(WIDTHS.length, 13, "width count");
@@ -897,6 +897,7 @@ check("c06", "every scale is its ratio of the base", () => {
 			"switch-travel": px["switch-w"] - px.thumb - 2 * px["switch-inset"],
 			"text-area": 3 * Number.parseInt(tokens["--leading-body"] ?? "", 10),
 			"docked-floor": 3 * px.row,
+			"docked-log-floor": 2 * px.row,
 			figures: Math.ceil(
 				4 * MONO_ADVANCE * Number.parseInt(tokens["--text-code"] ?? "", 10),
 			),

@@ -534,7 +534,7 @@ export const SHEET_FOOT =
 export const SHEET_DOCKED_HEAD = "gap-pair";
 export const SHEET_DOCKED_BODY = "gap-sections py-card";
 export const SHEET_DOCKED_FOOT = "gap-acts";
-// In a foot the body keeps its floor whatever the head, the foot line and the log hold.
+// In a foot the body's content keeps its floor whatever the head, the foot line and the log hold; the scroller around it, bounded by `dockedBodyMax`, gives below it where the region is short.
 export const SHEET_DOCKED_FLOOR = "min-h-docked-floor";
 // An empty state: its column at the empty width (the mark, the text, the
 // act a fields gap apart), the title over the sentence a pair apart, and in a
@@ -845,16 +845,17 @@ export const PAGE_TOP_BAR_END = "-me-icon-inset";
 export const PAGE_TITLE = "pb-pair";
 export const PAGE_BODY = "gap-sections p-page";
 // A docked foot (a Place's `foot`, a filling Thread's input) is one cell: a
-// region of its own under what scrolls past it, a raised surface (a step in
-// dark, the float shadow in light) inside a hairline, at the page inset at the
+// region of its own under what scrolls past it, a raised surface (the raised
+// step under a hairline), at the page inset at the
 // sides and an acts gap above and below what it holds (a selection bar stands
 // in its height range, a field at its own), fitting what it holds up to the
 // region it shares with what stands over it (the log and the foot, never the
 // head), so the log gives way to it: a docked `Sheet` fills it and bounds its
-// own body (two fifths of the region, three rows at least), so the foot is
-// never capped below the sheet's pinned parts and that floor.
+// own body (two fifths of the region, three rows at least, and the log its
+// two-row floor while the body can give), so the foot is never capped below the
+// sheet's pinned parts.
 export const FOOT_DOCKED =
-	"border-t border-edge-raised bg-raised shadow-float px-page py-acts max-h-full min-h-0";
+	"border-t border-edge-raised bg-raised px-page py-acts max-h-full min-h-0";
 export const PAGE_BODY_OVER_FOOT = "pb-sections";
 // A touch Place's act, floating over the body's end on a layer at the page
 // inset, lifted off what scrolls under it as a Thread's Latest act is, and

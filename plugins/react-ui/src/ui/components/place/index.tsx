@@ -53,9 +53,7 @@ import { SwitcherPick } from "../shell/switcher.tsx";
 import { splitOf } from "../split/index.tsx";
 import { BODY_FILLED, PART_ABOVE_FILLED } from "../thread/fill.ts";
 
-// The column clips what stands past its sides, so its docked foot's shadow
-// never falls on the region beside it; its top stays open for the lift.
-const PLACE = "flex flex-col grow min-h-0 overflow-x-clip";
+const PLACE = "flex flex-col grow min-h-0";
 // A page is the size container what stands in it decides its structure by
 // (a Split its regions, a Table its grid); the acts a Split's marks show hide by the
 // same widths.
@@ -97,7 +95,7 @@ const BLEED = "flex flex-col grow min-h-0";
 const BODY_WRAP = "relative flex flex-col grow min-h-0";
 // What the body and the docked foot share: the head stands outside it, so the
 // foot's bound is the whole of it and the body keeps the rest. With a foot
-// its measured height bounds a docked sheet's body (`FootRegion`).
+// its measurement bounds a docked sheet's body (`FootRegion`).
 const REGION = "flex flex-col grow min-h-0";
 // The foot stays under the body, which scrolls past it, and spans it; a field
 // keeps its own measure column inside, which the foot centres at every density,
@@ -216,7 +214,7 @@ export function Place({
 	const stop = useScrolls(bodyNode);
 	const [sheet] = useState(() => Dialog.createHandle<unknown>());
 	const dock = useRef<HTMLDivElement>(null);
-	const region = useFootRegion();
+	const region = useFootRegion(dock, false);
 	useFootFocus(dock);
 	const fit = touch ? "body" : "bar";
 	// With no switcher the touch top bar is the title's row, as the strip is on
@@ -372,7 +370,7 @@ export function Place({
 								{foot ? (
 									<div ref={dock} className={cn(FOOT_DOCKED, DOCKED)}>
 										<FootPlace value="docked">
-											<FootRegion value={region.height}>{foot}</FootRegion>
+											<FootRegion value={region.value}>{foot}</FootRegion>
 										</FootPlace>
 									</div>
 								) : null}

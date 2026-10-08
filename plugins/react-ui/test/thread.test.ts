@@ -19,3 +19,14 @@ test("a Place or Split chooses its body by the filling Thread's mark: no `Thread
 	assert.match(source("components/place/index.tsx"), /BODY_FILLED/);
 	assert.match(source("components/split/index.tsx"), /MAIN_FILLED/);
 });
+
+test("`replying` ends only the loaded log on one waiting message of the other author", () => {
+	const code = source("components/thread/index.tsx");
+	const loaded = code.indexOf('state === "empty" && props.empty');
+	const replying = code.indexOf('<Message key="replying" author="other"');
+	assert.ok(
+		loaded > 0 && replying > loaded,
+		"after every other state returned",
+	);
+	assert.match(code, /props\.replying \? \(/);
+});

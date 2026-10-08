@@ -140,7 +140,7 @@ export const OVERLAYS: readonly string[] = [
 	"active:underline",
 	// Place, Screen, Split
 	"min-h-0",
-	"overflow-x-clip",
+	"overflow-y-clip",
 	"overflow-y-auto",
 	"pointer-events-none",
 	"pointer-events-auto",

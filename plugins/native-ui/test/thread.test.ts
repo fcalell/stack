@@ -45,3 +45,14 @@ test("a part above a filling Thread keeps `PAGE_BODY`'s inset at the sides and t
 	);
 	assert.ok(classes("components/place/index.tsx", "BODY_FILLED").includes(gap));
 });
+
+test("`replying` ends only the loaded log on one waiting message of the other author", () => {
+	const code = source("components/thread/index.tsx");
+	const loaded = code.indexOf('state === "empty" && props.empty');
+	const replying = code.indexOf('<Message key="replying" author="other"');
+	assert.ok(
+		loaded > 0 && replying > loaded,
+		"after every other state returned",
+	);
+	assert.match(code, /props\.replying \? \(/);
+});

@@ -1,5 +1,5 @@
 import type { Act } from "@fcalell/ui-core/descriptors";
-import { SHEET_DOCKED_BODY_SHARE } from "@fcalell/ui-core/tokens";
+import { dockedBodyMax } from "@fcalell/ui-core/tokens";
 import {
 	SHEET_DOCKED_BODY,
 	SHEET_DOCKED_FOOT,
@@ -7,12 +7,12 @@ import {
 	SHEET_HEAD_ROW,
 	text,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, useContext, useEffect, useRef } from "react";
+import { type ReactNode, useContext, useEffect, useRef, useState } from "react";
 import { Text as RNText, type TextInput, View } from "react-native";
 import { cn } from "../../lib/cn";
 import { FieldClaim, FieldNameContext } from "../../lib/field";
 import { FormStands } from "../../lib/form";
-import { FootPlace, FootRegion, FootReturn } from "../../lib/frame";
+import { FootPlace, FootRegion, FootReturn, tokenPx } from "../../lib/frame";
 import { Scroll, type ScrollRef } from "../../lib/hosts";
 import { ActFailed, ReasonKept } from "../../lib/reason";
 import { useCSSVariable } from "../../lib/theme";
@@ -32,11 +32,12 @@ const HEAD_MAIN = "flex-1 min-w-0";
 const FIRST_LINE = "shrink-0 justify-center items-center";
 const TITLE = "shrink";
 const BODY = "shrink";
-// In a foot the body scrolls past two fifths of the foot's region and keeps
-// three rows, so a body shorter than three rows pads to them. Yoga has no
-// container units: the region's height comes from its layout (`FootRegion`,
-// zero outside a docked foot, where the body has no bound) and the row from its
-// token.
+// In a foot the body scrolls past two fifths of the foot's region and its
+// content keeps three rows, so a body shorter than three rows pads to them
+// while the scroller itself yields below them where the region is short. Yoga
+// has no container units: the region's height comes from its layout
+// (`FootRegion`, zero outside a docked foot, where the body has no bound), the
+// head and foot from theirs, and the row from its token.
 const FOOT = "shrink-0";
 const FOOT_LINE = "flex-row items-center min-w-0";
 
@@ -76,12 +77,20 @@ export function SheetDocked({
 	const words = useWords();
 	const claim = useContext(FootReturn);
 	const region = useContext(FootRegion);
-	const floor = Number.parseFloat(
-		String(useCSSVariable("--spacing-docked-floor") ?? 0),
-	);
+	const floor = tokenPx(useCSSVariable("--spacing-docked-floor"));
+	// The head's and the foot's heights, which the sheet pins.
+	const [head, setHead] = useState(0);
+	const [pinFoot, setPinFoot] = useState(0);
 	const bound =
-		region > 0
-			? { maxHeight: SHEET_DOCKED_BODY_SHARE * region, minHeight: floor }
+		region.height > 0
+			? {
+					maxHeight: dockedBodyMax({
+						region: region.height,
+						pinned: region.chrome + head + (foot || submit ? pinFoot : 0),
+						floor,
+						logFloor: region.logFloor,
+					}),
+				}
 			: undefined;
 	const line = {
 		height: Number.parseFloat(String(useCSSVariable("--leading-heading") ?? 0)),
@@ -108,7 +117,10 @@ export function SheetDocked({
 				<FootPlace.Provider value={null}>
 					<FieldClaim.Provider value={held}>
 						<View className={ROOT}>
-							<View className={cn(SHEET_HEAD_ROW, HEAD)}>
+							<View
+								className={cn(SHEET_HEAD_ROW, HEAD)}
+								onLayout={(event) => setHead(event.nativeEvent.layout.height)}
+							>
 								{back ? (
 									<View className={FIRST_LINE} style={line}>
 										<IconButton
@@ -146,13 +158,21 @@ export function SheetDocked({
 								className={BODY}
 								style={bound}
 								contentContainerClassName={SHEET_DOCKED_BODY}
+								contentContainerStyle={
+									region.height > 0 ? { minHeight: floor } : undefined
+								}
 							>
 								<FormStands.Provider value="sheet">
 									{children}
 								</FormStands.Provider>
 							</Scroll>
 							{foot || submit ? (
-								<View className={cn(SHEET_DOCKED_FOOT, FOOT)}>
+								<View
+									className={cn(SHEET_DOCKED_FOOT, FOOT)}
+									onLayout={(event) =>
+										setPinFoot(event.nativeEvent.layout.height)
+									}
+								>
 									{foot ? (
 										<View className={FOOT_LINE}>
 											<RNText className={text({ role: "meta" })}>{foot}</RNText>

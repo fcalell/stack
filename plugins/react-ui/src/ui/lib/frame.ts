@@ -3,6 +3,7 @@ import type { LinkAct, Switcher } from "@fcalell/ui-core/descriptors";
 import {
 	createContext,
 	type ReactNode,
+	type RefObject,
 	useLayoutEffect,
 	useState,
 } from "react";
@@ -76,26 +77,74 @@ export const PageTitle = createContext<string | undefined>(undefined);
 // it holds, so a sheet opened from inside is the modal one.
 export const FootPlace = createContext<"docked" | "inline" | null>(null);
 
-// The height of the region a docked foot shares with what stands over it (a
-// filling Thread or a footed Place), in whole pixels: a docked `Sheet` bounds
-// its body by a fraction of it. Container units cannot give it: a size
-// container takes no height from its content, so the region would collapse in
-// a column of auto height. Zero until measured and outside a docked region,
-// where the body is unbounded.
-export const FootRegion = createContext(0);
+// What a docked foot's region hands the docked `Sheet` in it, in whole pixels:
+// `height` is the region the foot shares with what stands over it (a filling
+// Thread or a footed Place), `chrome` the foot's own block padding and border,
+// and `logFloor` what the region keeps for a log above the foot (zero where
+// none shares it). Container units cannot give the height: a size container
+// takes no height from its content, so the region would collapse in a column
+// of auto height. All zero until measured and outside a docked region, where
+// the body is unbounded.
+export interface FootRegionValue {
+	height: number;
+	chrome: number;
+	logFloor: number;
+}
+export const FootRegion = createContext<FootRegionValue>({
+	height: 0,
+	chrome: 0,
+	logFloor: 0,
+});
 
-/** The region's measured height and the ref to put on it. */
-export function useFootRegion() {
+const BLOCK_SIDES = [
+	"paddingTop",
+	"paddingBottom",
+	"borderTopWidth",
+	"borderBottomWidth",
+] as const;
+
+/** The region's measured value and the ref to put on it. `dock` is the foot's own node; `logged` is whether a log shares the region with it. */
+export function useFootRegion(
+	dock: RefObject<HTMLElement | null>,
+	logged: boolean,
+) {
 	const [node, ref] = useState<HTMLElement | null>(null);
-	const [height, setHeight] = useState(0);
+	const [value, setValue] = useState<FootRegionValue>({
+		height: 0,
+		chrome: 0,
+		logFloor: 0,
+	});
 	useLayoutEffect(() => {
 		if (!node) return;
-		const measure = () =>
-			setHeight(Math.round(node.getBoundingClientRect().height));
+		const measure = () => {
+			const style = dock.current ? getComputedStyle(dock.current) : null;
+			const next = {
+				height: Math.round(node.getBoundingClientRect().height),
+				chrome: style
+					? BLOCK_SIDES.reduce(
+							(sum, side) => sum + Number.parseFloat(style[side]),
+							0,
+						)
+					: 0,
+				logFloor:
+					logged && style
+						? Number.parseFloat(
+								style.getPropertyValue("--spacing-docked-log-floor"),
+							)
+						: 0,
+			};
+			setValue((last) =>
+				last.height === next.height &&
+				last.chrome === next.chrome &&
+				last.logFloor === next.logFloor
+					? last
+					: next,
+			);
+		};
 		measure();
 		const resize = new ResizeObserver(measure);
 		resize.observe(node);
 		return () => resize.disconnect();
-	}, [node]);
-	return { height, ref };
+	}, [node, dock, logged]);
+	return { value, ref };
 }

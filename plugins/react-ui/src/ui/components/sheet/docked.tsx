@@ -1,6 +1,6 @@
 import { cn } from "@fcalell/ui-core/cn";
 import type { Act } from "@fcalell/ui-core/descriptors";
-import { SHEET_DOCKED_BODY_SHARE } from "@fcalell/ui-core/tokens";
+import { dockedBodyMax } from "@fcalell/ui-core/tokens";
 import {
 	lineBox,
 	SHEET_DOCKED_BODY,
@@ -47,8 +47,11 @@ const HEAD_MAIN = "flex flex-col grow min-w-0";
 const FIRST_LINE = "flex shrink-0 items-center h-lh";
 const TITLE = "min-w-0 wrap-break-word";
 // The body takes a tab stop only while it scrolls with nothing tabbable inside.
+// Its three-row floor is on the content it scrolls, so the body itself yields
+// below it where the region is short.
 const BODY =
-	"flex flex-col min-h-0 overflow-y-auto overscroll-contain focus-visible:-outline-offset-2";
+	"min-h-0 overflow-y-auto overscroll-contain focus-visible:-outline-offset-2";
+const CONTENT = "flex flex-col";
 const FOOT = "shrink-0";
 const FOOT_ROW = "flex items-center justify-end";
 const FOOT_STACK = "flex flex-col";
@@ -85,6 +88,9 @@ export function SheetDocked({
 	const titleId = useId();
 	const root = useRef<HTMLElement>(null);
 	const [body, setBody] = useState<HTMLDivElement | null>(null);
+	// What the sheet pins besides its body (its head and foot) and the body's
+	// floor, measured off the sheet.
+	const [pinned, setPinned] = useState({ parts: 0, floor: 0 });
 	const stop = useScrolls(body);
 	const [touchedValue, setTouched] = useTouchState();
 	const page = usePageTurn(open, title, description, () => setTouched(false));
@@ -93,6 +99,27 @@ export function SheetDocked({
 	useLayoutEffect(() => {
 		if (body) body.scrollTop = 0;
 	}, [page, body]);
+	useLayoutEffect(() => {
+		const sheet = root.current;
+		if (!sheet || !body) return;
+		const measure = () => {
+			const parts = Math.round(
+				sheet.getBoundingClientRect().height -
+					body.getBoundingClientRect().height,
+			);
+			const floor = Number.parseFloat(
+				getComputedStyle(sheet).getPropertyValue("--spacing-docked-floor"),
+			);
+			setPinned((last) =>
+				last.parts === parts && last.floor === floor ? last : { parts, floor },
+			);
+		};
+		measure();
+		const resize = new ResizeObserver(measure);
+		resize.observe(sheet);
+		resize.observe(body);
+		return () => resize.disconnect();
+	}, [body]);
 	// Each page takes focus in its first tabbable once it has settled (a radio
 	// group sets its tab stop after the commit), whatever held it: an act that
 	// relabels or leaves drops focus to the document, which a page with nothing
@@ -107,6 +134,15 @@ export function SheetDocked({
 		return () => cancelAnimationFrame(frame);
 	}, [open, page, body]);
 	if (!open) return null;
+	const maxHeight =
+		region.height > 0
+			? dockedBodyMax({
+					region: region.height,
+					pinned: region.chrome + pinned.parts,
+					floor: pinned.floor,
+					logFloor: region.logFloor,
+				})
+			: undefined;
 	const iconFit = touch ? "body" : "bar";
 	const line = foot ? (
 		<p className={cn(text({ role: "meta" }), FOOT_LINE)}>{foot}</p>
@@ -163,20 +199,20 @@ export function SheetDocked({
 				<div
 					ref={setBody}
 					tabIndex={stop ? 0 : undefined}
-					style={
-						region > 0
-							? { maxHeight: SHEET_DOCKED_BODY_SHARE * region }
-							: undefined
-					}
-					className={cn(
-						SHEET_DOCKED_BODY,
-						BODY,
-						region > 0 && SHEET_DOCKED_FLOOR,
-					)}
+					style={maxHeight === undefined ? undefined : { maxHeight }}
+					className={BODY}
 				>
-					<FootPlace value={null}>
-						<FormStands value="sheet">{children}</FormStands>
-					</FootPlace>
+					<div
+						className={cn(
+							SHEET_DOCKED_BODY,
+							CONTENT,
+							region.height > 0 && SHEET_DOCKED_FLOOR,
+						)}
+					>
+						<FootPlace value={null}>
+							<FormStands value="sheet">{children}</FormStands>
+						</FootPlace>
+					</div>
 				</div>
 				{line || bar ? (
 					<div

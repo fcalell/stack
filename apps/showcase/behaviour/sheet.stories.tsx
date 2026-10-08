@@ -132,6 +132,10 @@ function Docked() {
 }
 
 const TURNS = [{ id: "t1", body: "Why did the last deploy fail?" }];
+const LONG_TURNS = Array.from({ length: 12 }, (_, at) => ({
+	id: `t${at}`,
+	body: `Why did deploy ${at + 1} of the api fail?`,
+}));
 
 function DockedThread() {
 	const foot = useDockedFoot();
@@ -367,15 +371,25 @@ const OPTIONS = [
 	{ value: "local", label: "Local", description: "Your machine" },
 ];
 
-// A two-page docked question under a banner, in a phone's 390 px column (the
-// touch project draws at 375 x 812, so the column carries its own height).
-function BannerQuestion({ height }: { height: number }) {
+// A two-page docked question under a banner, in a phone's column (the touch
+// project draws at 375 x 812, so the column carries its own size).
+function BannerQuestion({
+	height,
+	width = 390,
+	tabs = 0,
+	long = false,
+}: {
+	height: number;
+	width?: number;
+	// The height of a tab bar the shell draws under the page.
+	tabs?: number;
+	// A log long enough to scroll.
+	long?: boolean;
+}) {
 	const [at, setAt] = useState(0);
 	const [value, setValue] = useState<string | null>(null);
 	return (
-		<div
-			style={{ display: "flex", flexDirection: "column", width: 390, height }}
-		>
+		<div style={{ display: "flex", flexDirection: "column", width, height }}>
 			<div style={{ padding: "var(--spacing-page)" }}>
 				<Banner
 					kind="warn"
@@ -385,7 +399,7 @@ function BannerQuestion({ height }: { height: number }) {
 			</div>
 			<Place title="Assistant">
 				<Thread
-					items={TURNS}
+					items={long ? LONG_TURNS : TURNS}
 					message={{
 						key: (turn) => turn.id,
 						author: () => "you",
@@ -419,6 +433,9 @@ function BannerQuestion({ height }: { height: number }) {
 					}
 				/>
 			</Place>
+			{tabs > 0 ? (
+				<nav aria-label="Tabs" style={{ height: tabs, flexShrink: 0 }} />
+			) : null}
 		</div>
 	);
 }
@@ -457,7 +474,9 @@ export const DockedBodyKeepsThreeRows: StoryObj = {
 			0.4 * region.getBoundingClientRect().height + 1,
 		);
 		expect(body.scrollHeight).toBeGreaterThan(body.clientHeight);
-		expect(log.getBoundingClientRect().height).toBeGreaterThan(0);
+		expect(visible(log).height).toBeGreaterThanOrEqual(
+			sizeOf("docked-log-floor"),
+		);
 		const sheet = body.parentElement?.getBoundingClientRect();
 		expect(sheet?.bottom).toBeLessThanOrEqual(
 			region.getBoundingClientRect().bottom + 1,
@@ -468,6 +487,143 @@ export const DockedBodyKeepsThreeRows: StoryObj = {
 			3 * row - 1,
 		);
 		expect(short.scrollHeight).toBeLessThanOrEqual(short.clientHeight);
+	},
+};
+
+// The foot's region, the log's and the dock's shared column, and the touch
+// token a size is.
+function footRegion(log: HTMLElement) {
+	const region = log.parentElement?.parentElement;
+	if (!region) throw new Error("the log has no region");
+	return region;
+}
+
+// What of the log shows: its region clips it, so a log box taller than the room
+// it is left (its padding alone is) shows only the region's height.
+function visible(log: HTMLElement) {
+	const region = log.parentElement;
+	if (!region) throw new Error("the log has no region");
+	return region.getBoundingClientRect();
+}
+
+function sizeOf(name: string) {
+	return Number.parseFloat(
+		getComputedStyle(document.documentElement).getPropertyValue(
+			`--spacing-${name}`,
+		),
+	);
+}
+
+// The shell's touch tab bar under the page.
+const TABS = 57;
+
+// A short viewport under a banner: the pinned parts stay inside the foot's
+// region, above the tab bar, on both pages; the log prints nowhere over the
+// sheet's head and nothing it holds leaves the region. Where `yields`, the
+// region cannot hold the body's three rows and the body gives below them.
+function shortViewport(
+	width: number,
+	height: number,
+	yields = false,
+): StoryObj {
+	return {
+		render: () => <BannerQuestion width={width} height={height} tabs={TABS} />,
+		play: async ({ canvas, userEvent }) => {
+			const body = bodyOf(await canvas.findByRole("radiogroup"));
+			const log = canvas.getByRole("log");
+			const region = footRegion(log).getBoundingClientRect();
+			const head = canvas.getByRole("heading", { name: "Question 1 of 2" });
+			const submit = canvas.getByRole("button", { name: "Next" });
+			const tabs = canvas.getByRole("navigation", { name: "Tabs" });
+			expect(submit.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+				region.bottom + 1,
+			);
+			expect(submit.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+				tabs.getBoundingClientRect().top + 1,
+			);
+			expect(visible(log).bottom).toBeLessThanOrEqual(
+				head.getBoundingClientRect().top + 1,
+			);
+			expect(visible(log).top).toBeGreaterThanOrEqual(region.top - 1);
+			expect(body.scrollHeight).toBeGreaterThan(body.clientHeight);
+			if (yields)
+				expect(body.getBoundingClientRect().height).toBeLessThan(
+					sizeOf("docked-floor"),
+				);
+			await userEvent.click(submit);
+			const done = await canvas.findByRole("button", { name: "Send" });
+			expect(done.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+				footRegion(canvas.getByRole("log")).getBoundingClientRect().bottom + 1,
+			);
+		},
+	};
+}
+
+// The `touch` tag is spelled in each story: Storybook's index reads tags from
+// the literal, not from a call.
+export const DockedShortPhone: StoryObj = {
+	tags: ["touch"],
+	globals: { density: "touch" },
+	parameters: { layout: "fullscreen" },
+	...shortViewport(320, 640),
+};
+export const DockedShortPhoneTall: StoryObj = {
+	tags: ["touch"],
+	globals: { density: "touch" },
+	parameters: { layout: "fullscreen" },
+	...shortViewport(390, 667),
+};
+// Shorter still, where the three rows cannot stand: the body gives below them.
+export const DockedShortestPhone: StoryObj = {
+	tags: ["touch"],
+	globals: { density: "touch" },
+	parameters: { layout: "fullscreen" },
+	...shortViewport(320, 560, true),
+};
+
+// A reader scrolled up in a log the foot leaves no room: the Latest act stands
+// in the region's clip, so it covers neither the header nor the sheet's head.
+export const DockedLatestStaysInItsRegion: StoryObj = {
+	tags: ["touch"],
+	globals: { density: "touch" },
+	parameters: { layout: "fullscreen" },
+	render: () => <BannerQuestion width={320} height={560} tabs={TABS} long />,
+	play: async ({ canvas }) => {
+		const log = await canvas.findByRole("log");
+		log.scrollTop = 0;
+		const latest = await canvas.findByRole("button", { name: "Latest" });
+		const box = latest.getBoundingClientRect();
+		const at = document.elementFromPoint(
+			box.left + box.width / 2,
+			box.top + box.height / 2,
+		);
+		expect(at && latest.contains(at)).toBe(false);
+		const status = canvas.getByRole("heading", { name: "Assistant" });
+		expect(status.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+			visible(log).top + 1,
+		);
+	},
+};
+
+// Under a banner where two fifths of the region would leave the log less than
+// its floor: the body gave toward its own floor first, so the log keeps two
+// rows and the body stays between its three rows and its cap.
+export const DockedLeavesTheLogItsFloor: StoryObj = {
+	tags: ["touch"],
+	globals: { density: "touch" },
+	parameters: { layout: "fullscreen" },
+	render: () => <BannerQuestion height={645} tabs={TABS} />,
+	play: async ({ canvas }) => {
+		const body = bodyOf(await canvas.findByRole("radiogroup"));
+		const log = canvas.getByRole("log");
+		const region = footRegion(log).getBoundingClientRect();
+		const grown = body.getBoundingClientRect().height;
+		expect(sizeOf("docked-log-floor")).toBe(2 * sizeOf("row"));
+		expect(visible(log).height).toBeGreaterThanOrEqual(
+			sizeOf("docked-log-floor") - 1,
+		);
+		expect(grown).toBeGreaterThanOrEqual(sizeOf("docked-floor") - 1);
+		expect(grown).toBeLessThan(0.4 * region.height - 1);
 	},
 };
 

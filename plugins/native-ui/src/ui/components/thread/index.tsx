@@ -54,7 +54,9 @@ const FILL = "flex-1";
 // keeps, under the head's hairline.
 const BLEED = "-mx-page";
 // The region over the foot: the log, and the Latest act floating at its foot.
-const REGION = "relative flex-1";
+// It clips what it holds, so where a docked foot leaves it no room nothing
+// paints over the foot's head or the header.
+const REGION = "relative flex-1 overflow-hidden";
 const LOG = "flex-1";
 // The log is drawn upside down, its newest message at its origin (see
 // `INVERTED`), so `THREAD_LOG`'s top and bottom insets swap, and a short log
@@ -125,6 +127,8 @@ export type ThreadProps<T = unknown> = Closed &
 		message: MessageSlots<T>;
 		// The `MessageInput` under the messages, drawn in every state.
 		foot?: ReactNode;
+		/** A reply from the other author is on its way: the loaded log ends on one waiting message of theirs, until it is cleared. */
+		replying?: boolean;
 	};
 
 // One message from its item, its Message by its author: a system line takes
@@ -203,9 +207,14 @@ function logOf<T>(
 	if (state === "empty" && props.empty)
 		return <EmptyStateBase tone="rest" {...props.empty} />;
 	const items = (props.query ? props.query.data : props.items) ?? [];
-	return items.map((item) => (
-		<ThreadItem key={props.message.key(item)} item={item} slots={slots} />
-	));
+	return [
+		...items.map((item) => (
+			<ThreadItem key={props.message.key(item)} item={item} slots={slots} />
+		)),
+		props.replying ? (
+			<Message key="replying" author="other" body="" loading />
+		) : null,
+	];
 }
 
 // The messages a sections gap apart, one rung above a reply's block gap, and
@@ -221,7 +230,9 @@ function logOf<T>(
 // another's reply), the log at its end; a failed query, the failed
 // EmptyState with `sentence` and Retry in the log; a query that answers not
 // found, the form saying it no longer exists with Back; no message, `empty`
-// in the log; then one Message per item.
+// in the log; then one Message per item, and with `replying` set one waiting
+// Message of the other author after them, followed as any message is and
+// replaced in place when the reply's item arrives and `replying` clears.
 export function Thread<T>(props: ThreadProps<T>) {
 	const { foot } = props;
 	const words = useWords();
@@ -245,7 +256,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 	const log = useRef<ScrollView>(null);
 	// The claim a docked sheet leaves the foot for the input that returns.
 	const claim = useRef(false);
-	const region = useFootRegion();
+	const region = useFootRegion(true);
 	// The reader is scrolled up: the Latest act stands over the foot.
 	const [away, setAway] = useState(false);
 	// Back to the newest message, at the log's origin.
@@ -305,7 +316,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 			{foot ? (
 				<View className={cn(FOOT_DOCKED, DOCKED)}>
 					<FootPlace.Provider value="docked">
-						<FootRegion.Provider value={region.height}>
+						<FootRegion.Provider value={region.value}>
 							<FootReturn.Provider value={claim}>{foot}</FootReturn.Provider>
 						</FootRegion.Provider>
 					</FootPlace.Provider>

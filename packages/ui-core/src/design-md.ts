@@ -155,6 +155,7 @@ const SIZE_USE: Record<(typeof SIZES)[number], string> = {
 	otp: "a one-time-code box's largest side; the box is square and shrinks with its row",
 	"text-area": "a text area's least value height: three body line boxes",
 	"docked-floor": "a docked sheet's body floor: three rows",
+	"docked-log-floor": "the log's floor above a docked foot: two rows",
 	meter: "a meter's bar",
 	chart: "a chart's plot, its gridlines four bands",
 	qr: "a QR code's square, its quiet zone inside it",
@@ -519,7 +520,7 @@ function body(resolved: ResolvedTheme): string[] {
 		"",
 		"The front matter's components are the matrix cells: one entry per axis value of each family, a family's label layer folded into it, and one per single cell. Borders, weights, gaps and side paddings stay in the class strings. Every component the roster ships, the families, family cells and single cells it draws and the states it has:",
 		"",
-		`A docked sheet's body keeps ${code("docked-floor")} (${resolved.sizes.touch["docked-floor"]} on touch, ${resolved.sizes.desktop["docked-floor"]} on the desktop) at least and scrolls past ${SHEET_DOCKED_BODY_SHARE * 100}% of its foot's region.`,
+		`A docked sheet's body keeps ${code("docked-floor")} (${resolved.sizes.touch["docked-floor"]} on touch, ${resolved.sizes.desktop["docked-floor"]} on the desktop) at least and scrolls past ${SHEET_DOCKED_BODY_SHARE * 100}% of its foot's region. A docked foot leaves the log above it ${code("docked-log-floor")} (${resolved.sizes.touch["docked-log-floor"]} on touch, ${resolved.sizes.desktop["docked-log-floor"]} on the desktop): where the region is short the body gives to that floor first, then to its own floor and below it, then the log goes, and the sheet's head, foot line and submit never give.`,
 		"",
 		...table(
 			["Component", "Layer", "Draws", "States"],

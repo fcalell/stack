@@ -80,6 +80,7 @@ export function sizePx(density: Density, size: Size): number {
 	}
 	if (size === "text-area") return 3 * leadingOf(density, "body");
 	if (size === "docked-floor") return 3 * px.row;
+	if (size === "docked-log-floor") return 2 * px.row;
 	if (size === "figures") {
 		return Math.ceil(4 * MONO_ADVANCE * sizeOf(density, "code"));
 	}

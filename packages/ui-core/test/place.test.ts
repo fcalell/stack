@@ -30,11 +30,11 @@ test("the docked foot stands at the page inset the sections scroll at", () => {
 	assert.match(PAGE_BODY, /\bp-page\b/);
 });
 
-test("the docked foot is a region of its own: a hairline on a raised surface", () => {
+test("the docked foot is a region of its own: a hairline on a raised surface, flat", () => {
 	assert.match(FOOT_DOCKED, /\bborder-t\b/);
 	assert.match(FOOT_DOCKED, /\bborder-edge-raised\b/);
 	assert.match(FOOT_DOCKED, /\bbg-raised\b/);
-	assert.match(FOOT_DOCKED, /\bshadow-float\b/);
+	assert.doesNotMatch(FOOT_DOCKED, /\bshadow-/);
 });
 
 test("a selection bar's column stands at the pattern's table-wide width", () => {

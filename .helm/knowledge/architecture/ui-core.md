@@ -600,9 +600,9 @@ a tick with no animation, never jumped to full.
   an act floating over what scrolls is a lifted layer, the one shadow it carries.
 - A field that stays in view while a Place's sections scroll (an ask box over a home) is the Place's
   `foot`, an explicit slot: it docks under the body at both densities on the `FOOT_DOCKED` cell (the
-  page inset at the sides, an acts gap above and below, a raised surface under a hairline, the
-  selection-bar pattern's "raised surface": a step over the body in dark, the `float` shadow in
-  light, so the body that scrolls to its edge never cuts into what it holds and a selection bar
+  page inset at the sides, an acts gap above and below, the raised step under a hairline and no
+  shadow, since a foot is a region of the page and `float` lifts layers only, so the body that
+  scrolls to its edge never cuts into what it holds and a selection bar
   stands in its 38–52 height range; held by no entry; a filling Thread's own input docks on the
   same cell, so one docked composer draws one foot), the body scrolling past it, above the tab bar on touch and, on native, lifted over the keyboard
   (the body and the foot share one `KeyboardAvoidingView`, `Lifted`). The body ends a sections gap
@@ -611,10 +611,7 @@ a tick with no animation, never jumped to full.
   too: the web Place marks `data-foot` and the list reads it at every width, native hands the Split
   a sections-gap room as it hands the floating act's); the foot spans the body at every density, whatever it holds (the
   Place never reads its element type), and a docked `MessageInput` keeps its own measure column
-  (`THREAD_COLUMN`) inside it on the desktop, the column a Thread's input stands in. Its `float`
-  shadow stays in the foot's own column: the web Place clips its sides (`overflow-x-clip`, its top
-  open for the lift), as the scrolling region a Thread's foot stands in does, so the shadow never
-  darkens the sidebar beside it. It names the
+  (`THREAD_COLUMN`) inside it on the desktop, the column a Thread's input stands in. It names the
   Shell's toasts' anchor as a filling Thread's input does. `act` and `foot` are exclusive in the
   props type: the foot's Send is the screen's one filled act, so a floating act beside it would be a
   second. A Place with a `foot` gives a Thread no room to fill (`ThreadRoom`), so a Thread in its
@@ -643,14 +640,25 @@ a tick with no animation, never jumped to full.
   head, so the head is never counted; the phone's `Lifted` is that region): `FOOT_DOCKED` carries
   `max-h-full min-h-0`, so the log gives way to the foot and the foot is never capped below the
   sheet's pinned parts. The Sheet bounds its own body instead: it scrolls between its pinned head and
-  foot line past two fifths of the region (a structural fraction, never a size token) and keeps three
-  `row` sizes at least, a shorter body padding to that floor, each page opening at the body's top. The
-  contract's cells hold no arbitrary value, so each platform restates the bounds in its overlay: the
-  web makes the Thread's region, and the Place's while it docks a foot, a size container
-  (`[container-type:size]`, which its flex height sizes, never its content, so a Place with a foot
-  stands in a column of its own height; a footless one fits its content) and the body reads `max-h-[40cqh]` and
-  `min-h-[calc(var(--spacing-row)*3)]`; the phone reads the `Lifted` region's height from `onLayout`
-  (`FootRegion`) and gives the body `maxHeight` of 0.4 of it and `minHeight` of three `--spacing-row`.
+  foot line past two fifths of the region (a structural fraction, never a size token), and its content
+  keeps three `row` sizes (`docked-floor`) at least, a shorter body padding to that floor, each page
+  opening at the body's top. The floor is on the content, not on the scroller, so the scroller yields
+  to it by flex shrink where the region is short: the head, the foot line, the submit and the kept
+  reason line never give, and the body scrolls below its three rows. The log keeps its own floor,
+  `docked-log-floor` (two `row` sizes), and the body's cap is one formula (`dockedBodyMax`, with
+  `region` the foot's region, `pinned` the dock's chrome plus the sheet's head and foot, `F` the body
+  floor and `L` the log floor): `room = region - pinned`, `cap = max(F, 0.4 * region)`, `bodyMax =
+  max(0, max(min(F, room), min(cap, room - L)))`. With room it is `cap`; short of room it falls to
+  `room - L` (the log keeps `L`) down to `F`, then to `room` (the log goes first, then the body below
+  `F`). The region owner hands the sheet `FootRegion` (`height`, `chrome`, `logFloor`: a Thread's
+  `logFloor` is `docked-log-floor`, a Place's is 0, since its docked region has no log); the sheet
+  measures what it pins. The contract's cells hold no arbitrary value, so each platform restates the
+  bound in its overlay by measuring: the web reads the region's height with a `ResizeObserver`
+  (`useFootRegion`) and the pinned parts as the sheet's height less its scroller's, the phone reads
+  the `Lifted` region's height and the head and foot `View`s from `onLayout`. A Thread's log region
+  clips its height (`overflow-y-clip`; native `overflow-hidden`), so where a docked foot leaves it
+  little room nothing the log draws, nor the Latest act at its foot, paints over the foot's head or
+  the header.
   Inline among sections the body has no bound, since the page scrolls. Its states are its
   submit's: pending, blocked (the reason stands at rest under the act), and failed (the act ready again, the
   `Sheet`'s `failed` sentence in that same kept line: `ActFailed` around the bar hands it to the
@@ -879,7 +887,14 @@ a tick with no animation, never jumped to full.
   order (`WAITING_MESSAGES`: another's reply, yours, another's reply), for each author is the item's
   and unknown before the data, each at its loaded height (yours its bubble over its time's bar,
   `figures` wide, as the loaded bubble stands over its time); failed, the failed EmptyState with
-  `sentence` and Retry; no message, `empty`; each in the log's column. On the desktop both stand in
+  `sentence` and Retry; no message, `empty`; each in the log's column. A reply on its way is the
+  Thread's boolean `replying`, outside the `query`/`items` source union: the loaded log ends on one
+  loading Message of the other author, after the items, followed and pinned to as any message is and
+  replaced in place when the app adds the reply's item and clears the flag. It is a prop and not a
+  `loading` slot on `MessageSlots`, since a per-item slot needs an item and the app would invent a
+  placeholder `body`, `author` and `key` for something that is not a message yet; the Thread's own
+  `loading` stays the log being on its way (three waiting messages), and every other state ignores
+  `replying`. On the desktop both stand in
   a measure-wide column (`THREAD_COLUMN`, held by no entry: a `MessageInput` and a record's
   `ItemHeader` over a filling Thread stand in it too), on touch in the screen's. The column is a
   width alone (below, column rule); a filling Thread's log and its docked foot centre it, and a

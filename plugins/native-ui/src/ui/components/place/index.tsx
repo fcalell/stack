@@ -147,7 +147,7 @@ export function Place({
 	const route = useContext(PlaceRoute);
 	// The claim a docked sheet leaves the foot for the input that returns.
 	const claim = useRef(false);
-	const region = useFootRegion();
+	const region = useFootRegion(false);
 	// What the head shows of the Split in the body, read off its props: a
 	// record beside the main stands alone, its head the page's one.
 	const split = useSplitHead(children);
@@ -306,7 +306,7 @@ export function Place({
 							{foot ? (
 								<View className={cn(FOOT_DOCKED, DOCKED)}>
 									<FootPlace.Provider value="docked">
-										<FootRegion.Provider value={region.height}>
+										<FootRegion.Provider value={region.value}>
 											<FootReturn.Provider value={claim}>
 												{foot}
 											</FootReturn.Provider>

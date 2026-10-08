@@ -4,11 +4,13 @@ import {
 	type ReactNode,
 	type RefObject,
 	useContext,
+	useMemo,
 	useRef,
 	useState,
 } from "react";
 import type { LayoutChangeEvent, View } from "react-native";
 import type { Route } from "./route";
+import { useCSSVariable } from "./theme";
 
 // What the frame molecules hand each other. The Shell hands its switcher to
 // each Place, which draws its trigger at the start of its top bar; a Screen
@@ -114,17 +116,45 @@ export const PageTitle = createContext<string | undefined>(undefined);
 // it holds, so a sheet opened from inside is the modal one.
 export const FootPlace = createContext<"docked" | "inline" | null>(null);
 
-// The height of the region a docked foot shares with what stands over it (a
-// filling Thread's or a Place's `Lifted` column), read off that column's
-// layout: a docked `Sheet` bounds its body by a fraction of it, and Yoga has no
-// container units. Zero until the first layout.
-export const FootRegion = createContext(0);
+// What a docked foot's region hands the docked `Sheet` in it: `height` is the
+// region the foot shares with what stands over it (a filling Thread's or a
+// Place's `Lifted` column), read off that column's layout since Yoga has no
+// container units; `chrome` the foot's own block padding and border;
+// `logFloor` what the region keeps for a log above the foot (zero where none
+// shares it). All zero until the first layout.
+export interface FootRegionValue {
+	height: number;
+	chrome: number;
+	logFloor: number;
+}
+export const FootRegion = createContext<FootRegionValue>({
+	height: 0,
+	chrome: 0,
+	logFloor: 0,
+});
 
-export function useFootRegion() {
+// `logged` is whether a log shares the region with the foot.
+export function useFootRegion(logged: boolean) {
 	const [height, setHeight] = useState(0);
 	const onLayout = (event: LayoutChangeEvent) =>
 		setHeight(event.nativeEvent.layout.height);
-	return { height, onLayout };
+	const acts = tokenPx(useCSSVariable("--spacing-acts"));
+	const hairline = tokenPx(useCSSVariable("--spacing-hairline"));
+	const logFloor = tokenPx(useCSSVariable("--spacing-docked-log-floor"));
+	const value = useMemo(
+		() => ({
+			height,
+			chrome: 2 * acts + hairline,
+			logFloor: logged ? logFloor : 0,
+		}),
+		[height, acts, hairline, logFloor, logged],
+	);
+	return { value, onLayout };
+}
+
+// A size token as the layout reads it, zero while it is unset.
+export function tokenPx(value: unknown): number {
+	return Number.parseFloat(String(value ?? 0));
 }
 
 // The claim a docked foot region holds for the input that returns: a docked

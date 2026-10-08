@@ -395,7 +395,10 @@ removable, so `blocked` never traps a value.
 A `Thread` takes its `query` (or `items`) the same way through a `message` map (`key`,
 `author`, `name`, `body`, `at`, `attachments`, `meta`, `onOpen`, `detail`), each reading only its
 item, since a message draws again only when its item changes; its `foot` is a `MessageInput`, or a
-`Sheet` docked in its place.
+`Sheet` docked in its place. While a reply from the other author is on its way, set `replying`:
+the loaded log ends on one waiting message of theirs, followed as any message is; clear it in the
+render that adds the reply's item, which stands where the waiting message stood. A `Thread`'s own
+`loading` stays the log being on its way, three waiting messages.
 In a `Place`'s body, or in a `Split`'s `main` under the record's `ItemHeader`, it fills what holds
 it: its log scrolls and the input docks at the foot. It stands there as the body's direct child,
 or as `main` (in a fragment under the record's `ItemHeader`), never inside a component of the
@@ -436,9 +439,11 @@ A `Sheet` passed as a `Thread`'s or a `Place`'s `foot` docks there, derived from
 no prop, no scrim. The head keeps the back act before one column, the title (the `heading` role, so a Section
 inside reads a level below; it wraps to its whole text, the close act at its first line) over the `description`, with the close act at the title's first line;
 the body scrolls between the head and the foot, which hold their height (the `foot` line over the `submit`),
-and the body scrolls past two fifths of the region it shares with the log, and keeps three rows
-whatever the head, the foot line and the log hold (a shorter body pads to them), the head, foot
-line and submit sitting on top and the log giving way. A blocked `submit`’s reason stands
+and the body scrolls past two fifths of the region it shares with the log, and its content keeps
+three rows whatever the head, the foot line and the log hold (a shorter body pads to them). The log
+keeps two rows of its own above the foot while the body can give; where the region is short the body
+gives first to the log's two rows, then to its three, then the log goes, and the head, foot line and
+submit never give: the submit stays inside the foot. A blocked `submit`’s reason stands
 at rest under the act in the foot; a failed run is the `failed`
 sentence in that same line, in the field error’s cell and ink, the act ready again and no `Banner`:
 clear `failed` when the act runs again, and a blocked `submit`’s reason stands before it. The modal

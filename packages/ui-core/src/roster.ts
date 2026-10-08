@@ -2941,6 +2941,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"items",
 				"loading",
 				"foot",
+				"replying",
 			],
 			draws: [
 				"THREAD",
@@ -2956,7 +2957,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				colors: ["raised", "edge", "edge-raised"],
 				radii: ["control"],
 				spacing: ["sections", "page", "pair", "acts"],
-				sizes: ["measure"],
+				sizes: ["measure", "docked-log-floor"],
 				elevation: ["float"],
 			},
 		},

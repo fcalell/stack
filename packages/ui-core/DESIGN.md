@@ -281,6 +281,7 @@ spacing:
   otp: "44px"
   text-area: "60px"
   docked-floor: "96px"
+  docked-log-floor: "64px"
   meter: "6px"
   chart: "128px"
   qr: "160px"
@@ -2517,6 +2518,7 @@ Sizes are heights and squares in the same namespace. Density is a theme and neve
 | `otp` | 44px | 48px | 48 | a one-time-code box's largest side; the box is square and shrinks with its row |
 | `text-area` | 60px | 72px | 72 | a text area's least value height: three body line boxes |
 | `docked-floor` | 96px | 144px | 144 | a docked sheet's body floor: three rows |
+| `docked-log-floor` | 64px | 96px | 96 | the log's floor above a docked foot: two rows |
 | `meter` | 6px | 8px | 8 | a meter's bar |
 | `chart` | 128px | 192px | 192 | a chart's plot, its gridlines four bands |
 | `qr` | 160px | 240px | 240 | a QR code's square, its quiet zone inside it |
@@ -2555,7 +2557,7 @@ A card at rest has a hairline and no shadow. Two levels lift a layer, each per m
 
 The front matter's components are the matrix cells: one entry per axis value of each family, a family's label layer folded into it, and one per single cell. Borders, weights, gaps and side paddings stay in the class strings. Every component the roster ships, the families, family cells and single cells it draws and the states it has:
 
-A docked sheet's body keeps `docked-floor` (144px on touch, 96px on the desktop) at least and scrolls past 40% of its foot's region.
+A docked sheet's body keeps `docked-floor` (144px on touch, 96px on the desktop) at least and scrolls past 40% of its foot's region. A docked foot leaves the log above it `docked-log-floor` (96px on touch, 64px on the desktop): where the region is short the body gives to that floor first, then to its own floor and below it, then the log goes, and the sheet's head, foot line and submit never give.
 
 | Component | Layer | Draws | States |
 | --- | --- | --- | --- |
@@ -2691,7 +2693,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Stats` | `figure`, `meta` | `edge`, `surface`, `ink-body`, `ink-meta`, `accent-ink`, `skeleton`, `wash-hover`, `wash-press` | `card`, `chip` | `pair`, `inside`, `card` | `skeleton`, `target` | none |
 | `Stat` | `display`, `meta` | `ink-body`, `ink-meta`, `skeleton` | `chip` | `pair`, `inside` | `skeleton` | none |
 | `BarChart` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `chart-` | `full`, `chip` | `fields`, `inside`, `pair` | `chart`, `dot`, `skeleton`, `figures` | none |
-| `Thread` | none | `raised`, `edge`, `edge-raised` | `control` | `sections`, `page`, `pair`, `acts` | `measure` | `float` |
+| `Thread` | none | `raised`, `edge`, `edge-raised` | `control` | `sections`, `page`, `pair`, `acts` | `measure`, `docked-log-floor` | `float` |
 | `QrCode` | none | `edge`, `surface`, `ink-body`, `skeleton` | `card` | none | `qr` | none |
 | `Image` | `meta` | `edge`, `edge-hover`, `ink-body`, `skeleton`, `group`, `ink-meta`, `raised`, `scrim` | `control`, `card` | `page`, `inside` | `image-tile`, `image-cap`, `icon`, `control` | `float` |
 | `Canvas` | `body`, `meta`, `caption` | `skeleton`, `canvas`, `group`, `surface`, `edge`, `edge-strong`, `edge-error`, `selected-outline`, `edge-hover`, `grid`, `ring`, `ink-body`, `ink-meta`, `ink-disabled`, `fill-neutral`, `accent-ink`, `ok`, `warn`, `chip-amber`, `danger`, `chip-` | `card`, `control`, `full`, `chip` | `inside`, `pair`, `control-x`, `sections` | `node`, `port`, `target`, `row-2`, `control`, `dot`, `chip`, `icon-meta`, `icon`, `measure-short`, `measure`, `spinner`, `skeleton` | none |

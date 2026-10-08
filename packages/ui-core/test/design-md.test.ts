@@ -21,6 +21,9 @@ test("DESIGN.md states the docked sheet's body floor and share", () => {
 	const md = designMd(deriveTheme());
 	assert.ok(md.includes("A docked sheet's body keeps `docked-floor` ("));
 	assert.ok(
+		md.includes("A docked foot leaves the log above it `docked-log-floor` ("),
+	);
+	assert.ok(
 		md.includes(
 			`scrolls past ${SHEET_DOCKED_BODY_SHARE * 100}% of its foot's region.`,
 		),
