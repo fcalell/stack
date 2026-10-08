@@ -5,6 +5,8 @@ import { useWords } from "../../lib/words.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import {
 	type Graph,
+	HOLLOW,
+	HOLLOW_ALONE,
 	JOURNEY,
 	OFF,
 	PROBLEM,
@@ -16,6 +18,8 @@ import {
 
 export type { Graph };
 export {
+	HOLLOW,
+	HOLLOW_ALONE,
 	JOURNEY,
 	LIFT_MS,
 	OFF,
@@ -49,6 +53,8 @@ export const WORKFLOW_STAGE =
 	"flex flex-col h-[86rem] w-[56rem] max-w-full bg-surface p-page";
 export const JOURNEY_STAGE =
 	"flex flex-col h-[58rem] w-[56rem] max-w-full bg-surface p-page";
+export const ALONE_STAGE =
+	"flex flex-col h-[16rem] w-[56rem] max-w-full bg-surface p-page";
 
 // Read-only but for the selection, which a click or Escape moves.
 function Selectable({
@@ -119,7 +125,7 @@ const DRAWN: Record<string, { label: string; graph: Graph }> = {
 
 // The canvas draws in these cells: the workflow at rest (the journey with its
 // confirm node selected, and waiting), the workflow with its loop group at rest
-// and selected, a problem, an off node, a status per
+// and selected, beside a loop with an empty body between two steps and alone, a problem, an off node, a status per
 // state, a run over the workflow, a scenario over the journey, and the glyph a
 // node is under the text floor, which is the workflow fitted: at rest, with its
 // plan node selected, and with a problem.
@@ -153,13 +159,28 @@ export function drawCanvas(frame: ShowcaseFrame) {
 	}
 	if (name.startsWith("CANVAS_GROUP.state.")) {
 		if (frame.state !== "rest") return undefined;
+		const first = name.endsWith(".selected") ? "loop" : undefined;
 		return (
-			<Selectable
-				label="Workflow"
-				graph={WORKFLOW}
-				stage={WORKFLOW_STAGE}
-				first={name.endsWith(".selected") ? "loop" : undefined}
-			/>
+			<>
+				<Selectable
+					label="Workflow"
+					graph={WORKFLOW}
+					stage={WORKFLOW_STAGE}
+					first={first}
+				/>
+				<Selectable
+					label="Hollow loop"
+					graph={HOLLOW}
+					stage={STAGE}
+					first={first}
+				/>
+				<Selectable
+					label="Lone loop"
+					graph={HOLLOW_ALONE}
+					stage={ALONE_STAGE}
+					first={first}
+				/>
+			</>
 		);
 	}
 	if (name === "CANVAS_NODE.state.rest") {

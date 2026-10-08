@@ -162,8 +162,14 @@ by its text (at least a target tall) that calls `onSelect(group.id)`, and `selec
 group, which draws its frame in the selection's outline. Node ids and group ids share one
 namespace. The frame's body takes no pointer, so a drag from it pans, and a group does not move:
 its frame follows its holds. The heads take their Tab stops first, outer before inner, then the
-nodes in path order. Under the text floor a head draws nothing and is no stop. A group holding no
-present node has no frame, so it cannot be chosen.
+nodes in path order. Under the text floor a head draws nothing and is no stop.
+
+A group holding no present node (an empty loop) is a leaf of the graph: the layout stands it in
+its place in the path, as a frame of its head and padding at a node's width, and an edge may name
+its id as `from` or `to`, so its edges meet it. Its head is a button as any group's. It is no
+node: it takes no port, no drag and no connection, and `onMove` never hears it. The layout
+places it, so it stands while no node has a `position`. A group that holds an empty group frames
+it, and an edge naming a group that holds a node is ignored.
 
 An `act` stands at the foot's centre; it adds, it never removes.
 
@@ -189,7 +195,9 @@ The sentence is your copy and you decide when it stands: pass it or `undefined`.
 ## Where it stands
 
 The canvas has no height of its own: it fills the region it stands in. Stand it as a `Split`'s
-`main` or in a `Place`'s body, never inside a component of your own that sizes it.
+`main` or in a `Place`'s body, never inside a component of your own that sizes it. Below `tablet`
+it keeps at least half of the column it stands in: the column scrolls past it, so a head and
+banners above it scroll away and never shrink it.
 
 ## Check
 

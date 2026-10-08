@@ -153,7 +153,10 @@ interface LayoutArgs {
 	nodes: readonly CanvasNode[];
 	edges: readonly CanvasEdge[];
 	groups: readonly CanvasGroup[];
+	// `pathOrder` of the nodes and the empty groups, which are leaves the layout
+	// places and no node: they take no position of the consumer's and no `onMove`.
 	order: readonly string[];
+	hollow: readonly string[];
 	sizes: ReadonlyMap<string, Size>;
 	region: RefObject<HTMLElement | null>;
 	viewport: Viewport;
@@ -174,6 +177,7 @@ interface LayoutArgs {
 }
 
 export interface Layout {
+	// The nodes' boxes.
 	boxes: ReadonlyMap<string, Box>;
 	routed: Routes;
 	space: Space;
@@ -193,6 +197,7 @@ export function useLayout({
 	edges,
 	groups,
 	order,
+	hollow,
 	sizes,
 	region,
 	viewport,
@@ -206,7 +211,9 @@ export function useLayout({
 	glyph,
 }: LayoutArgs): Layout {
 	const key = graphKey(nodes, edges, groups);
-	const placing = nodes.length > 0 && nodes.every((node) => !node.position);
+	const placing =
+		(nodes.length > 0 || hollow.length > 0) &&
+		nodes.every((node) => !node.position);
 	const measured = nodes.every((node) => sizes.has(node.id));
 	const read = useMeasures(probe, probeKey);
 	const measures = probed ? read : NONE;
@@ -273,14 +280,14 @@ export function useLayout({
 		reported.current = laid;
 		for (const id of order) {
 			const at = laid.positions.get(id);
-			if (at) onMove(id, at);
+			if (at && !hollow.includes(id)) onMove(id, at);
 		}
 		// The consumer's positions commit before the frame.
 		if (laid.arranged)
 			requestAnimationFrame(() => {
 				if (latest.current) viewport.fit(latest.current.bounds);
 			});
-	}, [laid, onMove, order, viewport]);
+	}, [laid, onMove, order, hollow, viewport]);
 
 	const chip = Math.max(
 		0,
@@ -294,6 +301,17 @@ export function useLayout({
 	);
 	const back = useMemo(() => backEdges(order, edges), [order, edges]);
 	const { pad, pair, port } = space;
+	const head = measures?.head ?? 0;
+	// An empty group stands where the layout put it, at the size of its head and
+	// padding. Under the floor it keeps its frame, as every frame does.
+	const holes = useMemo(() => {
+		const out = new Map<string, Box>();
+		for (const id of hollow) {
+			const at = computed?.get(id);
+			if (at) out.set(id, { ...at, width: WIDTH, height: head + 2 * pad });
+		}
+		return out;
+	}, [hollow, computed, head, pad]);
 	// Under the floor a node is its glyph, so the routes and the frames follow
 	// the glyph's box, centred on the card's, and not the card's. ELK's positions
 	// and the cards' sizes stay as they are. The side moves in steps of a `pair`,
@@ -302,10 +320,9 @@ export function useLayout({
 		routeSide(view.k, glyph, spacing("pair")),
 	);
 	const solids = useMemo(
-		() => (side > 0 ? glyphBoxes(boxes, side) : boxes),
-		[boxes, side],
+		() => new Map([...(side > 0 ? glyphBoxes(boxes, side) : boxes), ...holes]),
+		[boxes, holes, side],
 	);
-	const head = measures?.head ?? 0;
 	const labels = measures?.labels;
 	const reach = measures?.reach;
 	const routed = useMemo(
@@ -355,7 +372,7 @@ export function useLayout({
 		viewport.set(
 			openTransform(
 				routed.bounds,
-				boxes.get(order[0] ?? ""),
+				boxes.get(order[0] ?? "") ?? holes.get(order[0] ?? ""),
 				{ width: element.clientWidth, height: element.clientHeight },
 				spacing("page"),
 				viewport.clearance(),
@@ -369,6 +386,7 @@ export function useLayout({
 		measures,
 		routed,
 		boxes,
+		holes,
 		order,
 		region,
 		viewport,

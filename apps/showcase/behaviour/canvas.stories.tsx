@@ -5,8 +5,11 @@ import { Split } from "@fcalell/plugin-react-ui/components/split";
 import { showcaseFrames } from "@fcalell/plugin-react-ui/showcase/cells";
 import { Frame } from "@fcalell/plugin-react-ui/showcase/frame";
 import {
+	ALONE_STAGE,
 	drawCanvas,
 	EMPTY,
+	HOLLOW,
+	HOLLOW_ALONE,
 	JOURNEY,
 	OFF,
 	PROBLEM,
@@ -25,7 +28,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { expect, fn, spyOn, waitFor } from "storybook/test";
 import { FOCUS_GUARD } from "../.storybook/focus-guard.ts";
-import { lowestZoom, room } from "./canvas-support.ts";
+import { hollowHeld, lowestZoom, room } from "./canvas-support.ts";
 import { click as mouseClick, drag as mouseDrag, type Point } from "./mouse.ts";
 
 const ORDER = pathOrder(WORKFLOW.nodes, WORKFLOW.edges);
@@ -1242,22 +1245,24 @@ function framesHoldTheirGraph(density: "desktop" | "touch"): StoryObj {
 			const drawnFrames = [...canvasElement.querySelectorAll("[data-cell]")];
 			await expect(drawnFrames).toHaveLength(frames.length);
 			for (const frame of drawnFrames) {
-				const region = frame.querySelector("section");
-				const layer = frame.querySelector("[data-layer]");
-				if (!region || !layer) throw new Error(`no canvas in ${frame.id}`);
-				await waitFor(
-					() => expect(getComputedStyle(region).opacity).toBe("1"),
-					LAID,
-				);
-				await expect(viewport(frame).scale).toBe(1);
-				const pane = rect(region);
-				const buttons = [...nodeButtons(frame)];
-				await expect(buttons.length).toBeGreaterThanOrEqual(
+				const regions = [...frame.querySelectorAll("section")];
+				if (regions.length === 0) throw new Error(`no canvas in ${frame.id}`);
+				for (const region of regions) {
+					const layer = region.querySelector("[data-layer]");
+					if (!layer) throw new Error(`no layer in ${frame.id}`);
+					await waitFor(
+						() => expect(getComputedStyle(region).opacity).toBe("1"),
+						LAID,
+					);
+					await expect(viewport(region).scale).toBe(1);
+					const pane = rect(region);
+					for (const button of nodeButtons(region))
+						await expect(holds(pane, rect(button))).toBe(true);
+					await expect(holds(pane, drawn(layer))).toBe(true);
+				}
+				await expect([...nodeButtons(frame)].length).toBeGreaterThanOrEqual(
 					JOURNEY.nodes.length - 1,
 				);
-				for (const button of buttons)
-					await expect(holds(pane, rect(button))).toBe(true);
-				await expect(holds(pane, drawn(layer))).toBe(true);
 			}
 		},
 	};
@@ -1265,6 +1270,72 @@ function framesHoldTheirGraph(density: "desktop" | "touch"): StoryObj {
 
 export const FramesHoldTheirGraphAtDesktop = framesHoldTheirGraph("desktop");
 export const FramesHoldTheirGraphAtTouch = framesHoldTheirGraph("touch");
+
+// ── A group with an empty body ──────────────────────────────────────
+
+// A group holding no present node is a frame at the size of its head and
+// padding, in its place in the path with its edges meeting it, and alone on a
+// canvas of no node; its head chooses it as any group's does, and it is no
+// node, so `onMove` never hears it.
+export const HollowGroup: StoryObj<{ heard: Select; moved: Moved }> = {
+	args: { heard: fn(), moved: fn() },
+	globals: { viewport: { value: "w1440", isRotated: false } },
+	parameters: {
+		layout: "fullscreen",
+		viewport: {
+			options: {
+				w1440: {
+					name: "1440",
+					styles: { width: "1440px", height: "900px" },
+					type: "desktop",
+				},
+			},
+		},
+	},
+	render: (args) => (
+		<>
+			<div className={STAGE}>
+				<Canvas
+					label="Hollow loop"
+					nodes={HOLLOW.nodes}
+					edges={HOLLOW.edges}
+					groups={HOLLOW.groups}
+					onSelect={args.heard}
+					onMove={args.moved}
+				/>
+			</div>
+			<div className={ALONE_STAGE}>
+				<Canvas
+					label="Lone loop"
+					nodes={HOLLOW_ALONE.nodes}
+					groups={HOLLOW_ALONE.groups}
+					onSelect={args.heard}
+				/>
+			</div>
+		</>
+	),
+	play: async ({ args, canvas, userEvent }) => {
+		const between = await canvas.findByRole("region", { name: "Hollow loop" });
+		const alone = await canvas.findByRole("region", { name: "Lone loop" });
+		for (const region of [between, alone])
+			await waitFor(
+				() => expect(getComputedStyle(region).opacity).toBe("1"),
+				LAID,
+			);
+		hollowHeld(between, { id: "loop", into: "plan-loop", out: "loop-handoff" });
+		hollowHeld(alone, { id: "loop" });
+		await waitFor(() =>
+			expect(args.moved).toHaveBeenCalledTimes(HOLLOW.nodes.length),
+		);
+		await expect(
+			(args.moved as ReturnType<typeof fn>).mock.calls.map(([id]) => id),
+		).not.toContain("loop");
+		await userEvent.click(headOf(between, "loop"));
+		await expect(args.heard).toHaveBeenLastCalledWith("loop");
+		await userEvent.click(headOf(alone, "loop"));
+		await expect(args.heard).toHaveBeenCalledTimes(2);
+	},
+};
 
 // ── Editing by pointer ──────────────────────────────────────────────
 

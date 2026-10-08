@@ -3036,7 +3036,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// A graph of nodes and edges on a pannable ground, the web's alone: the
 		// phone has no pointer to drag a node or draw an edge with. Selection
-		// recolours the node's outline; a `path` dims what a run did not take.
+		// recolours the node's outline; a `path` dims what a run did not take. A
+		// group holding no present node is a leaf an edge may name.
 		Canvas: {
 			props: [
 				"label",

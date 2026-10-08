@@ -177,6 +177,22 @@ export const JOURNEY: Graph = {
 	edges: BRANCHES,
 };
 
+// A loop whose body is empty stands in its place in the path, between two
+// nodes, and its edges name it; and one with nothing around it.
+export const HOLLOW: Graph = {
+	nodes: WORKFLOW.nodes.filter(({ id }) => id === "plan" || id === "handoff"),
+	edges: [
+		{ id: "plan-loop", from: "plan", to: "loop" },
+		{ id: "loop-handoff", from: "loop", to: "handoff" },
+	],
+	groups: [{ id: "loop", head: "Until green", holds: [] }],
+};
+export const HOLLOW_ALONE: Graph = {
+	nodes: [],
+	edges: [],
+	groups: HOLLOW.groups,
+};
+
 // The states a node and an edge draw, each over one of the two graphs: the
 // graph's nodes with a mark added to those named. Fixtures hold no position,
 // so the canvas places them.

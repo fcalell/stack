@@ -70,9 +70,27 @@ export function groupTree(
 	};
 }
 
+// The groups that hold no present node and no group: leaves of the graph,
+// which the layout places and an edge may name. A group holding only such a
+// group is no leaf; it frames them.
+export function emptyGroups(
+	groups: readonly CanvasGroup[],
+	nodeIds: ReadonlySet<string>,
+): string[] {
+	const tree = groupTree(groups, nodeIds);
+	return groups
+		.map((group) => group.id)
+		.filter(
+			(id) =>
+				tree.nodes.get(id)?.length === 0 && tree.groups.get(id)?.length === 0,
+		);
+}
+
 // A group's frame: the rectangle of everything it holds, grown by `pad` on
 // three sides and by `pad + head` on top, its left side by `left` where the
-// group has an entry (`leftPads`). A group holding no box has no frame.
+// group has an entry (`leftPads`). A group with a box of its own (an empty
+// group, placed by the layout) is that box. A group holding no box has no
+// frame.
 // `reach` holds the right edge a group's content must reach (before its
 // padding), where a back edge's corridor and label stand inside it.
 export function groupBoxes(
@@ -89,6 +107,11 @@ export function groupBoxes(
 	const out = new Map<string, Box>();
 	const frame = (id: string): Box | undefined => {
 		if (out.has(id)) return out.get(id);
+		const own = boxes.get(id);
+		if (own) {
+			out.set(id, own);
+			return own;
+		}
 		const parts = [
 			...(tree.nodes.get(id) ?? []).map((node) => boxes.get(node)),
 			...(tree.groups.get(id) ?? []).map(frame),
@@ -298,6 +321,8 @@ export function routeEdges(input: RouteInput): Routes {
 	const ring = input.ports
 		? input.port / 2 + (ARROW - ARROW_REF) + PIXEL_CENTRE
 		: 0;
+	// An empty group takes no port, so its edges end on its frame.
+	const framed = new Set(groups.map((group) => group.id));
 	const tree = groupTree(groups, new Set(boxes.keys()));
 	const reach = new Map<string, number>();
 	let frames = groupBoxes(groups, boxes, { pad, head, left }, reach);
@@ -422,7 +447,7 @@ export function routeEdges(input: RouteInput): Routes {
 			y: source.y + source.height,
 		};
 		const to = { x: target.x + target.width / 2, y: target.y };
-		const end = { x: to.x, y: to.y - ring };
+		const end = { x: to.x, y: to.y - (framed.has(edge.to) ? 0 : ring) };
 		let bend: number | undefined;
 		if (from.x !== to.x && to.y >= from.y + 2 * pair) {
 			// The bend stands in the middle of the layer gap under the source: up

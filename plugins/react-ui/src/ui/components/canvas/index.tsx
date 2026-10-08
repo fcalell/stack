@@ -33,7 +33,7 @@ import {
 	TEXT_FLOOR,
 	UNZOOM_VAR,
 } from "./floor.ts";
-import type { Size } from "./geometry.ts";
+import { emptyGroups, type Size } from "./geometry.ts";
 import { GROUND, Grid } from "./ground.tsx";
 import { GroupFrame } from "./group.tsx";
 import { isGround } from "./hit.ts";
@@ -54,7 +54,7 @@ export interface CanvasProps extends Closed {
 	nodes: readonly CanvasNode[];
 	/** The links between nodes, each drawn as an arrow from `from` to `to`. */
 	edges?: readonly CanvasEdge[];
-	/** Frames around the nodes they hold. */
+	/** Frames around the nodes they hold; a group holding none is a frame of its head alone that an edge may name, placed by the layout while no node has a position. */
 	groups?: readonly CanvasGroup[];
 	/** The selected node's or group's id. */
 	selected?: string;
@@ -120,7 +120,15 @@ function CanvasGraph({
 	);
 	const [sizes, setSizes] = useState(NO_SIZES);
 	const [probe, setProbe] = useState<HTMLElement | null>(null);
-	const order = useMemo(() => pathOrder(nodes, edges), [nodes, edges]);
+	// An empty group is a leaf an edge may name, so it stands in the path.
+	const hollow = useMemo(
+		() => emptyGroups(groups, new Set(nodes.map((node) => node.id))),
+		[groups, nodes],
+	);
+	const order = useMemo(
+		() => pathOrder([...nodes, ...hollow.map((id) => ({ id }))], edges),
+		[nodes, hollow, edges],
+	);
 	const chipped = edges.filter(
 		(edge) => edge.label !== undefined || edge.handoff,
 	);
@@ -139,6 +147,7 @@ function CanvasGraph({
 		edges,
 		groups,
 		order,
+		hollow,
 		sizes,
 		region,
 		viewport,

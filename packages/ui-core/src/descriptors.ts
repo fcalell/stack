@@ -684,7 +684,8 @@ export interface CanvasNode {
 }
 
 // An edge from one node's id to another's, its `label` drawn on it; a
-// `handoff` edge carries its glyph beside the label.
+// `handoff` edge carries its glyph beside the label. An end may name a group
+// that holds nothing present, which stands in the path as a node does.
 export interface CanvasEdge {
 	id: string;
 	from: string;
@@ -695,7 +696,7 @@ export interface CanvasEdge {
 }
 
 // A frame round the nodes and groups it `holds`, by id; a group may hold a
-// group.
+// group. A group holding nothing present is a frame of its head alone.
 export interface CanvasGroup {
 	id: string;
 	// The frame's heading (a short phrase; truncates).

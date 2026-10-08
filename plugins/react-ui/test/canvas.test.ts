@@ -26,6 +26,7 @@ import {
 	cleanPoints,
 	crisp,
 	crosses,
+	emptyGroups,
 	groupBoxes,
 	groupTree,
 	leftPads,
@@ -1480,4 +1481,111 @@ test("fitTransform stands the bounds clear of the chrome on the left and the bot
 	assert.equal(tall.k, (300 - 16 - 90) / 1000);
 	// A small graph keeps its own size.
 	assert.equal(fitTransform(box(0, 0, 50, 50), pane, 16, clear).k, 1);
+});
+
+test("emptyGroups names the groups holding no present node and no group, and not the group that frames one", () => {
+	const groups: CanvasGroup[] = [
+		{ id: "loop", head: "Loop", holds: ["gone", "a"] },
+		{ id: "bare", head: "Bare", holds: ["gone"] },
+		{ id: "frame", head: "Frame", holds: ["bare"] },
+		{ id: "none", head: "None", holds: [] },
+	];
+	assert.deepEqual(emptyGroups(groups, new Set(["a"])), ["bare", "none"]);
+	assert.deepEqual(emptyGroups(groups, new Set()), ["loop", "bare", "none"]);
+});
+
+test("groupBoxes frames an empty group by its own box, and the group that holds only empty groups around it", () => {
+	const groups: CanvasGroup[] = [
+		{ id: "frame", head: "F", holds: ["bare"] },
+		{ id: "bare", head: "B", holds: [] },
+	];
+	const boxes = new Map([["bare", box(100, 100, 240, 74)]]);
+	const frames = groupBoxes(groups, boxes, { pad: 10, head: 30 });
+	assert.deepEqual(frames.get("bare"), box(100, 100, 240, 74));
+	assert.deepEqual(frames.get("frame"), {
+		x: 90,
+		y: 60,
+		width: 260,
+		height: 124,
+	});
+});
+
+test("real ELK stands an empty group between its neighbours as a leaf of its head and padding, and its edges meet it", async () => {
+	const nodes = ["a", "b"].map(node);
+	const groups: CanvasGroup[] = [{ id: "loop", head: "Loop", holds: [] }];
+	const edges = [
+		{ id: "in", from: "a", to: "loop" },
+		{ id: "out", from: "loop", to: "b" },
+	];
+	const order = pathOrder([...nodes, { id: "loop" }], edges);
+	assert.deepEqual(order, ["a", "loop", "b"]);
+	const output = await new ELK().layout(
+		elkGraph({
+			nodes,
+			edges,
+			groups,
+			order,
+			sizes: new Map(
+				nodes.map((n) => [n.id, { width: WIDTH, height: HEIGHT }]),
+			),
+			head: HEAD,
+			pad: PAD,
+			gaps: GAPS,
+		}),
+	);
+	assert.deepEqual(
+		(output.children ?? []).map((child) => child.id),
+		["n:a", "n:loop", "n:b"],
+	);
+	const leaf = output.children?.find((child) => child.id === "n:loop");
+	assert.equal(leaf?.width, WIDTH);
+	assert.equal(leaf?.height, HEAD + 2 * PAD);
+	const sized = (id: string, height: number): [string, Box] => {
+		const at = fromElk(output).get(id);
+		assert.ok(at);
+		return [id, { ...at, width: WIDTH, height }];
+	};
+	const boxes = new Map([
+		sized("a", HEIGHT),
+		sized("loop", HEAD + 2 * PAD),
+		sized("b", HEIGHT),
+	]);
+	const a = boxes.get("a");
+	const hollow = boxes.get("loop");
+	const b = boxes.get("b");
+	assert.ok(a && hollow && b);
+	assert.ok(a.y + a.height <= hollow.y && hollow.y + hollow.height <= b.y);
+	const routed = routeEdges(alone({ boxes, edges, groups }));
+	assert.deepEqual(routed.frames.get("loop"), hollow);
+	assert.deepEqual(routed.routes.get("in")?.points.at(-1), {
+		x: hollow.x + hollow.width / 2,
+		y: hollow.y,
+	});
+	assert.deepEqual(routed.routes.get("out")?.points[0], {
+		x: hollow.x + hollow.width / 2,
+		y: hollow.y + hollow.height,
+	});
+});
+
+test("an edge naming a group with a node is ignored, and an empty group's edge ends on its frame with ports on", () => {
+	const framed = routeEdges(
+		alone({
+			boxes: new Map([["a", box(0, 0)]]),
+			edges: [{ id: "x", from: "a", to: "loop" }],
+			groups: [{ id: "loop", head: "Loop", holds: ["a"] }],
+		}),
+	);
+	assert.equal(framed.routes.size, 0);
+	const routed = routeEdges(
+		alone({
+			boxes: new Map([
+				["a", box(0, 0, 240, 56)],
+				["loop", box(0, 200, 240, 74)],
+			]),
+			edges: [{ id: "in", from: "a", to: "loop" }],
+			groups: [{ id: "loop", head: "Loop", holds: [] }],
+			ports: true,
+		}),
+	);
+	assert.deepEqual(routed.routes.get("in")?.points.at(-1), { x: 120, y: 200 });
 });

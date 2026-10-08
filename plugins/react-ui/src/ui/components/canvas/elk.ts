@@ -7,7 +7,7 @@ import type {
 } from "@fcalell/ui-core/descriptors";
 import { WIDTH_VALUE } from "@fcalell/ui-core/tokens";
 import type { ElkNode } from "elkjs/lib/elk-api.js";
-import { ARROW, groupTree, type Size } from "./geometry.ts";
+import { ARROW, emptyGroups, groupTree, type Size } from "./geometry.ts";
 
 // The input to ELK and the read of its output: pure, so node tests run them.
 // Ids carry their kind, so a node, a group and an edge sharing a string never
@@ -25,7 +25,7 @@ export interface ElkInput {
 	nodes: readonly Pick<CanvasNode, "id">[];
 	edges: readonly Pick<CanvasEdge, "id" | "from" | "to">[];
 	groups: readonly CanvasGroup[];
-	// `pathOrder` of the nodes and edges.
+	// `pathOrder` of the nodes, the empty groups and the edges.
 	order: readonly string[];
 	sizes: ReadonlyMap<string, Size>;
 	// A group's head height and the padding around what it holds.
@@ -48,10 +48,12 @@ const sides = (top: number, left: number, rest: number) =>
 
 export function elkGraph(input: ElkInput): ElkNode {
 	const { nodes, edges, groups, order, sizes, head, pad, left, gaps } = input;
-	const ids = new Set(nodes.map((node) => node.id));
+	const width = Number.parseFloat(WIDTH_VALUE.node);
+	// An empty group is a leaf of its head and padding, which an edge may name.
+	const empty = emptyGroups(groups, new Set(nodes.map((node) => node.id)));
+	const ids = new Set([...nodes.map((node) => node.id), ...empty]);
 	const rank = new Map(order.map((id, index) => [id, index]));
 	const tree = groupTree(groups, ids);
-	const width = Number.parseFloat(WIDTH_VALUE.node);
 
 	// Where a group stands among its siblings: its first member's place.
 	const firsts = new Map<string, number>();
@@ -69,7 +71,7 @@ export function elkGraph(input: ElkInput): ElkNode {
 	const leaf = (id: string): ElkNode => ({
 		id: `n:${id}`,
 		width,
-		height: sizes.get(id)?.height ?? 0,
+		height: empty.includes(id) ? head + 2 * pad : (sizes.get(id)?.height ?? 0),
 	});
 	const frame = (id: string): ElkNode => {
 		const members = [

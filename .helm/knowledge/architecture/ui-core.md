@@ -1696,7 +1696,12 @@ a tick with no animation, never jumped to full.
   `expo-clipboard` is; its config plugin only sets an iCloud container, so the component needs none.
 - `Canvas` (web only) draws a graph on two libraries that react-ui carries as its own
   dependencies, so a consumer installs neither: `d3-zoom` is the viewport and `elkjs` places the
-  nodes. The canvas owns everything else. `loading` swaps the whole graph component for a hookless
+  nodes. The canvas owns everything else. Below `tablet` its ground (loaded or waiting) keeps
+  `min-h-1/2`, half the content box of the region it fills (a Split's main inset, a Place's
+  bleeding body, a pushed Screen), so the column scrolls past it and the head and banners above it
+  scroll away rather than shrink it; the percentage resolves because the inset is a flex item of
+  the scroller, whose post-flex size is definite, so a viewport-share token is not needed
+  (`canvas-touch` holds it at 375 × 667 and 390 × 844). `loading` swaps the whole graph component for a hookless
   `CanvasWait` (the ground and grid it shares with the graph, three `canvasNode` cards of skeletons
   in a centred column), so no viewport, layout or ELK runs while waiting and no zoom stack or act
   stands (both are overlays, so omitting them moves nothing). `empty` is a string, not a slot or a
@@ -1715,8 +1720,14 @@ a tick with no animation, never jumped to full.
   pans, and `CANVAS_GROUP_HEAD` carries `min-h-target`, so the probe lays the frame out with the
   taller head), `CANVAS_GROUP` is a `state` matrix whose `selected` recolours the dash, the heads
   take their Tab stops before the nodes (frames render first), and under the text floor the head is
-  no button. A group holds no `onMove` (a frame follows its holds) and a group with no present
-  node has no frame, so it cannot be chosen. ELK runs only when no
+  no button. A group holds no `onMove` (a frame follows its holds). A group holding no present node
+  and no group is a leaf of the graph (`emptyGroups`), not a frame computed from members: ELK lays
+  it out as a leaf of a node's width and a head plus two paddings high, an edge may name it as
+  `from` or `to` (so it stands in `pathOrder` and its edges meet its frame, with no port ring), its
+  head is a button as any group's, and it takes no port, drag, connection or `onMove`. A group
+  holding only empty groups frames them, and an edge naming a group that holds a node is still
+  ignored. ELK places it, so it stands while no node has a position (a consumer's positions
+  leave it unplaced). ELK runs only when no
   node has a position, and is given the forward edges alone, to layer the nodes: it does not break
   a cycle inside a group, and it never sees a label or draws an edge. The canvas routes every edge
   itself from the final boxes (`geometry.ts`, pure): a forward edge bends in the middle of the layer

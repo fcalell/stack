@@ -3,8 +3,10 @@ import { CANVAS_GROUND } from "@fcalell/ui-core/variants";
 import { useId } from "react";
 import { DOT, PITCH } from "./viewport.ts";
 
+// Under `tablet` the region keeps half of the column it stands in, so the
+// column scrolls past it and the head and banners above it scroll away.
 const REGION =
-	"relative flex flex-col grow min-h-0 min-w-0 overflow-hidden touch-none";
+	"relative flex flex-col grow min-h-0 page-max-tablet:min-h-1/2 min-w-0 overflow-hidden touch-none";
 const GRID = "absolute inset-0 size-full text-grid";
 
 /** The region a canvas stands in, loaded or waiting. */

@@ -4,6 +4,7 @@ import {
 	WORKFLOW,
 } from "@fcalell/plugin-react-ui/showcase/frames/canvas";
 import { pathOrder } from "@fcalell/ui-core/canvas";
+import { WIDTH_VALUE } from "@fcalell/ui-core/tokens";
 import type { Point } from "./mouse.ts";
 
 // What the canvas's touch and overview stories read the page by. The first
@@ -212,6 +213,73 @@ const away = (at: Point, box: DOMRect) =>
 		Math.max(box.top - at.y, 0, at.y - box.bottom),
 	);
 
+// An edge's route: its line, and its first and last points in the layer's flow
+// coordinates.
+export function routeEnds(
+	root: Element,
+	id: string,
+): { line: SVGPathElement; start: Point; end: Point } {
+	const line = root.querySelector(`[data-edge="${id}"] > path`);
+	if (!(line instanceof SVGPathElement))
+		throw new Error(`no route for the edge ${id}`);
+	const numbers = (line.getAttribute("d") ?? "").match(/-?\d+(?:\.\d+)?/g);
+	if (!numbers || numbers.length < 4)
+		throw new Error(`an unreadable route for ${id}`);
+	const [x0, y0] = numbers.map(Number);
+	return {
+		line,
+		start: { x: x0 ?? 0, y: y0 ?? 0 },
+		end: { x: Number(numbers.at(-2)), y: Number(numbers.at(-1)) },
+	};
+}
+
+// A group with an empty body, read off the DOM: its frame stands (and draws a
+// head button) at the head's height and the padding twice, a node's width wide;
+// the node before it in the path (the first button) stands above it and the
+// node after it (the second) below, and its edges meet it: the route into it
+// ends on the frame's top centre, the route out starts at its bottom centre.
+export function hollowHeld(
+	root: Element,
+	{ id, into, out }: { id: string; into?: string; out?: string },
+) {
+	const frame = root.querySelector(`[data-group="${id}"]`);
+	const head = frame?.querySelector("button");
+	if (!frame || !head) throw new Error(`no frame with a head for ${id}`);
+	const { scale, x, y } = viewport(root);
+	const pane = rect(root.querySelector("section") ?? root);
+	const box = rect(frame);
+	const measured = (label: string, found: number, wanted: number) => {
+		if (Math.abs(found - wanted) > 1.5)
+			throw new Error(`${label}: ${found.toFixed(1)}, wanted ${wanted}`);
+	};
+	measured(
+		"the frame's width",
+		box.width,
+		Number.parseFloat(WIDTH_VALUE.node) * scale,
+	);
+	measured(
+		"the frame's height",
+		box.height,
+		(rect(head).height + 2 * px("card")) * scale,
+	);
+	if (box.left < pane.left || box.right > pane.right || box.top < pane.top)
+		throw new Error("the frame stands outside the canvas");
+	const route = (edge: string, end: "start" | "end", at: Point) => {
+		const found = routeEnds(root, edge)[end];
+		measured(`${edge} ${end} x`, pane.left + x + found.x * scale, at.x);
+		measured(`${edge} ${end} y`, pane.top + y + found.y * scale, at.y);
+	};
+	if (into) route(into, "end", { x: box.left + box.width / 2, y: box.top });
+	if (out) route(out, "start", { x: box.left + box.width / 2, y: box.bottom });
+	if (into && out) {
+		const [first, second] = [
+			...root.querySelectorAll("[data-layer] > button"),
+		].map(rect);
+		if (!first || !second || first.bottom > box.top || second.top < box.bottom)
+			throw new Error("the group stands between its neighbours in the path");
+	}
+}
+
 // Under the text floor the routes and the frames follow the glyphs: every
 // edge's two ends lie on or within a `pair` of their glyphs' rects, a frame
 // holds its glyphs by the group padding, and every route is long enough to read
@@ -231,18 +299,10 @@ export function routesFollowTheGlyphs(root: Element, graph: Graph) {
 		y: pane.top + view.y + y * view.scale,
 	});
 	for (const edge of graph.edges) {
-		const line = root.querySelector(`[data-edge="${edge.id}"] > path`);
-		if (!(line instanceof SVGPathElement))
-			throw new Error(`no route for the edge ${edge.id}`);
-		const numbers = (line.getAttribute("d") ?? "").match(/-?\d+(?:\.\d+)?/g);
-		if (!numbers || numbers.length < 4)
-			throw new Error(`an unreadable route for ${edge.id}`);
-		const [x0, y0] = numbers.map(Number);
-		const x1 = Number(numbers.at(-2));
-		const y1 = Number(numbers.at(-1));
+		const { line, start, end } = routeEnds(root, edge.id);
 		const ends: [Point, string][] = [
-			[onScreen(x0 ?? 0, y0 ?? 0), edge.from],
-			[onScreen(x1, y1), edge.to],
+			[onScreen(start.x, start.y), edge.from],
+			[onScreen(end.x, end.y), edge.to],
 		];
 		for (const [at, id] of ends) {
 			const gap = away(at, rect(glyph(root, id)));

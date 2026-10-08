@@ -1,6 +1,14 @@
+import { Banner } from "@fcalell/plugin-react-ui/components/banner";
 import { Canvas } from "@fcalell/plugin-react-ui/components/canvas";
+import { ItemHeader } from "@fcalell/plugin-react-ui/components/item-header";
+import { List } from "@fcalell/plugin-react-ui/components/list";
+import { Place } from "@fcalell/plugin-react-ui/components/place";
+import { Split } from "@fcalell/plugin-react-ui/components/split";
 import {
+	ALONE_STAGE,
 	type Graph,
+	HOLLOW,
+	HOLLOW_ALONE,
 	LIFT_MS,
 	PROBLEM,
 	SLOP,
@@ -22,6 +30,7 @@ import {
 	clear,
 	glyphs,
 	groundPoint,
+	hollowHeld,
 	LAID,
 	left,
 	lowestZoom,
@@ -907,3 +916,173 @@ const clearMarks: Story = {
 };
 export const MarksClearTheIconLight = mode("light", clearMarks);
 export const MarksClearTheIconDark = mode("dark", clearMarks);
+
+// ── The canvas keeps half its column ────────────────────────────────
+
+// A canvas under a head and two banners in a Split's main: the main is one
+// column that scrolls as a page, and the canvas keeps half of it whatever
+// stands above it, the head and the banners scrolling away over it.
+function Under(props: Heard & { height: number }) {
+	return (
+		<div
+			style={{
+				height: props.height,
+				display: "flex",
+				flexDirection: "column",
+			}}
+		>
+			<Place title="Workflows" bleed>
+				<Split
+					list={
+						<List
+							items={["Nightly"]}
+							row={{ key: (name) => name, title: (name) => name }}
+						/>
+					}
+					main={
+						<>
+							<ItemHeader
+								title="Nightly release"
+								facts={[
+									"Ana Ruiz",
+									"Saved today at 09:41",
+									"Run 4 of 6",
+									"Parked on the check step",
+									"Owner: Release team",
+								]}
+							/>
+							<Banner
+								kind="danger"
+								sentence="The save was refused: two steps have no way out, and the check step has no owner. Fix both before the workflow can run again, or restore the last saved version from the history and make the change again from there, one step at a time."
+							/>
+							<Banner
+								kind="warn"
+								sentence="The workflow is empty on its third branch, and the run is parked until someone looks at it. The last run stopped at the check step after two retries, and nothing after it has run since the branch was added to the workflow."
+							/>
+							<Canvas
+								label="Workflow"
+								nodes={WORKFLOW.nodes}
+								edges={WORKFLOW.edges}
+								groups={WORKFLOW.groups}
+								onSelect={props.selected}
+							/>
+						</>
+					}
+				/>
+			</Place>
+		</div>
+	);
+}
+
+function screenAt(width: number, height: number): Story {
+	const name = `w${width}x${height}`;
+	return {
+		render: (args: Heard) => <Under {...args} height={height} />,
+		globals: { density: "touch", viewport: { value: name, isRotated: false } },
+		parameters: {
+			layout: "fullscreen",
+			viewport: {
+				options: {
+					[name]: {
+						name,
+						styles: { width: `${width}px`, height: `${height}px` },
+						type: "mobile",
+					},
+				},
+			},
+		},
+		play: async ({ args, canvas, canvasElement }) => {
+			const region = await laidOut(canvas);
+			const column =
+				canvasElement.querySelector<HTMLElement>("[data-split] > div");
+			const inset = region.parentElement;
+			if (!column || !inset) throw new Error("no main");
+			// The floor: half the room the inset leaves its content, and the column
+			// scrolls past it, so the head and the banners are not what the canvas
+			// shrinks to make room for.
+			const style = getComputedStyle(inset);
+			const half =
+				(rect(inset).height -
+					Number.parseFloat(style.paddingTop) -
+					Number.parseFloat(style.paddingBottom)) /
+				2;
+			await expect(rect(region).height).toBeGreaterThanOrEqual(half - 1);
+			await expect(column.scrollHeight).toBeGreaterThan(column.clientHeight);
+			await expect(column.scrollTop).toBe(0);
+
+			// A finger on the canvas pans the graph and the page stays.
+			const ground = groundPoint(region);
+			const before = viewport(canvasElement);
+			await drag(ground, shift(ground, -40, 30));
+			await panned(canvasElement, before, { x: -40, y: 30 });
+			await expect(column.scrollTop).toBe(0);
+			await expect(args.selected).not.toHaveBeenCalled();
+
+			// A finger on the head scrolls the page and the graph stays.
+			const head = column.querySelector("h1, h2, h3");
+			if (!head) throw new Error("no head");
+			const from = centre(rect(head));
+			const held = viewport(canvasElement);
+			await drag(from, shift(from, 0, -60));
+			await waitFor(() => expect(column.scrollTop).toBeGreaterThan(30));
+			await expect(viewport(canvasElement)).toEqual(held);
+			await expect(rect(region).height).toBeGreaterThanOrEqual(half - 1);
+		},
+	};
+}
+
+export const KeepsHalfAt375x667Light = mode("light", screenAt(375, 667));
+export const KeepsHalfAt375x667Dark = mode("dark", screenAt(375, 667));
+export const KeepsHalfAt390x844Light = mode("light", screenAt(390, 844));
+export const KeepsHalfAt390x844Dark = mode("dark", screenAt(390, 844));
+
+// ── A group with an empty body ──────────────────────────────────────
+
+// At 375 an empty group stands between its neighbours with its edges meeting
+// it, and alone, at the touch density; a tap on its head chooses it.
+const hollow: Story = {
+	render: (args: Heard) => (
+		<>
+			<div className={STAGE}>
+				<Canvas
+					label="Hollow loop"
+					nodes={HOLLOW.nodes}
+					edges={HOLLOW.edges}
+					groups={HOLLOW.groups}
+					onSelect={args.selected}
+					onMove={args.moved}
+				/>
+			</div>
+			<div className={ALONE_STAGE}>
+				<Canvas
+					label="Lone loop"
+					nodes={HOLLOW_ALONE.nodes}
+					groups={HOLLOW_ALONE.groups}
+					onSelect={args.selected}
+				/>
+			</div>
+		</>
+	),
+	play: async ({ args, canvas }) => {
+		const between = await canvas.findByRole("region", { name: "Hollow loop" });
+		const alone = await canvas.findByRole("region", { name: "Lone loop" });
+		for (const region of [between, alone])
+			await waitFor(
+				() => expect(getComputedStyle(region).opacity).toBe("1"),
+				LAID,
+			);
+		hollowHeld(between, { id: "loop", into: "plan-loop", out: "loop-handoff" });
+		hollowHeld(alone, { id: "loop" });
+		await waitFor(() =>
+			expect(args.moved).toHaveBeenCalledTimes(HOLLOW.nodes.length),
+		);
+		await expect(calls(args.moved).map(([id]) => id)).not.toContain("loop");
+		const head = between.querySelector("[data-group] > button");
+		if (!head) throw new Error("no head");
+		await tap(centre(rect(head)));
+		await waitFor(() => expect(args.selected).toHaveBeenCalledTimes(1));
+		await expect(args.selected).toHaveBeenLastCalledWith("loop");
+	},
+};
+export const HollowGroupLight = mode("light", hollow);
+export const HollowGroupDark = mode("dark", hollow);
