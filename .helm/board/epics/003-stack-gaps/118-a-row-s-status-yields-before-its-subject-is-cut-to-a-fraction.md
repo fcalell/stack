@@ -1,6 +1,6 @@
 ---
 id: 003-118
-status: backlog
+status: done
 sessions: {}
 ---
 # react-ui: a row's status yields before the subject is cut to under half
@@ -23,3 +23,6 @@ ListRow's meta line holds that "the status and the glyphs keep their width" and 
 ## Measured
 Not built. The quoted subject as the later meta part ("Rename the flag to --strict across every message of the repo", status "Waiting for you"), the quote span in a row of 320 and 360 px: desktop 135 and 175 px of the 237 it needs (status 81 px); touch 76 and 116 px of the 297 it needs (status 102 px). `measure-short` is 126 px desktop and 162 px touch. The later parts take no width of their own (`w-0`, growing into what the lead and the marks leave), so a status that shrinks, whatever its weight, changes nothing for the quote: the quote gets what the lead and the status leave. A floor on the quote needs a `min-w` on the quoted run, which pads a short quote with empty room inside the later slot, or a restructure of the slot. 003-104 lets an uncapped status share the overflow with the first part.
 Question: take `measure-short` as the quote's floor (the quoted run's `min-w`, the status mark at a shrink weight above the plain parts)? Recommended: no; it moves the touch row at 320 px from 76 to 162 px of 297 and nothing on the desktop, for a padded box.
+
+## Ruled
+Closed, no change. The subject that names a row is its first part; a `Quoted` later part is the part that yields first (003-142), and the status stays whole and shares overflow with the first part (003-104). A floor on a later quote would pad its slot (touch only, 76 to 162 px of 297) or need a new tier in a shrink ladder already at Tailwind's 10^20 ceiling. An app whose subject must read gives it as the first part of `meta`, or puts the status's words elsewhere.
