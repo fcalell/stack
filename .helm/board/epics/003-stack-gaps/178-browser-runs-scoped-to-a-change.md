@@ -1,6 +1,6 @@
 ---
 id: 003-178
-status: review
+status: done
 sessions: {}
 ---
 # showcase, plugin-screens: a browser run checks what a change reaches, and a run that can never fit fails at once
@@ -50,7 +50,7 @@ a guess.
   reserve and `MemTotal`.
 - [x] A run through `browser-run.sh` prints its peak; a scoped run's measured peak is recorded in the
   knowledge base's showcase section beside the full run's.
-- [ ] `pnpm check` passes (verified); the full stories run and `stack screens test --all` still pass (run by the orchestrator after merge).
+- [x] `pnpm check` passes; the full stories run (400 of 400, peak 4873 MiB) and `stack screens test --all` (180 of 180, peak 3186 MiB) pass on master `691676ae`.
 
 ## Built
 - `workspaceTriggers(cwd)` in `plugins/screens/src/node/triggers.ts`, exported from
