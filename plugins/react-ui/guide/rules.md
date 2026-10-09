@@ -484,7 +484,9 @@ foot line and submit never give: the submit stays inside the foot. A blocked
 failed run is the `failed` sentence in that same line, in the field error’s cell and ink, the act
 ready again and no `Banner`: clear `failed` when the act runs again, and a blocked `submit`’s reason
 stands before it. The modal `Sheet` takes `failed` too, in the foot’s bar line on the desktop and
-under the head’s submit on touch. Pass
+under the head’s submit on touch. On touch that submit stands in the title's row and the title wraps whole inside three fifths of it
+(two lines at 25 characters); a submit that does not fit beside that column drops whole, at its 44 px, to a second head line at the
+row's end. Pass
 the same `<Sheet>` as the modal from a page and as the `foot` of a conversation; closing it (render
 the `MessageInput` in its place) returns focus to the input, and each page (a new `title`) opens at
 the top of its body with focus in its first field. A `Sheet` among a `Thread`'s sections draws the same form with no bound.

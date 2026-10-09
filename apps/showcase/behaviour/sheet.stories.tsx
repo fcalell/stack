@@ -215,46 +215,141 @@ export const DockedTitleWraps: StoryObj = {
 	},
 };
 
-// The touch head holds the close act, the title and the submit in one row: a
-// title longer than its room wraps whole and the submit stays beside it.
-export const TouchHeadKeepsItsTitle: StoryObj = {
-	tags: ["touch"],
-	globals: { density: "touch", viewport: { value: "phone", isRotated: false } },
-	parameters: {
-		viewport: {
-			options: {
-				phone: {
-					name: "Phone",
-					styles: { width: "375px", height: "812px" },
-					type: "mobile",
+// The touch head holds the close act, the title and the submit in one wrapping
+// row. The title column is at most three fifths of the row and wraps whole in
+// it (two lines at 25 characters); a submit that does not fit beside that
+// column drops whole to a second line at the row's end, 44 tall, and one that
+// fits stays in the row at the close act's height.
+function touchHead(
+	title: string,
+	label: string,
+	width: number,
+	beside: boolean,
+): StoryObj {
+	return {
+		tags: ["touch"],
+		globals: {
+			density: "touch",
+			viewport: { value: "phone", isRotated: false },
+		},
+		parameters: {
+			viewport: {
+				options: {
+					phone: {
+						name: "Phone",
+						styles: { width: `${width}px`, height: "812px" },
+						type: "mobile",
+					},
 				},
 			},
 		},
-	},
-	render: () => (
-		<Sheet
-			open
-			onClose={() => {}}
-			title="New thread with the code reviewer"
-			submit={{ label: "Open the thread", onAct: () => {} }}
-		>
-			<p>Body</p>
-		</Sheet>
-	),
-	play: async () => {
-		const title = await screen.findByText("New thread with the code reviewer");
-		const line = Number.parseFloat(getComputedStyle(title).lineHeight);
-		expect(title.scrollWidth).toBeLessThanOrEqual(title.clientWidth);
-		expect(title.getBoundingClientRect().height).toBeGreaterThan(line * 1.5);
-		const submit = screen.getByRole("button", { name: "Open the thread" });
-		expect(submit.getBoundingClientRect().right).toBeLessThanOrEqual(
-			window.innerWidth,
-		);
-		expect(submit.getBoundingClientRect().left).toBeGreaterThanOrEqual(
-			title.getBoundingClientRect().right,
-		);
-	},
-};
+		render: () => (
+			<Sheet
+				open
+				onClose={() => {}}
+				title={title}
+				submit={{ label, onAct: () => {} }}
+			>
+				<p>Body</p>
+			</Sheet>
+		),
+		play: async () => {
+			const name = await screen.findByText(title);
+			const line = Number.parseFloat(getComputedStyle(name).lineHeight);
+			const at = name.getBoundingClientRect();
+			expect(name.scrollWidth).toBeLessThanOrEqual(name.clientWidth);
+			expect(at.height).toBeLessThanOrEqual(line * 2 + 1);
+			const close = screen
+				.getByRole("button", { name: "Close" })
+				.getBoundingClientRect();
+			const submit = screen
+				.getByRole("button", { name: label })
+				.getBoundingClientRect();
+			const dialog = screen.getByRole("dialog").getBoundingClientRect();
+			expect(submit.height).toBeCloseTo(44, 0);
+			expect(submit.right).toBeLessThanOrEqual(window.innerWidth);
+			expect(
+				Math.abs(dialog.right - submit.right - (close.left - dialog.left)),
+			).toBeLessThanOrEqual(1);
+			if (beside) {
+				expect(submit.left).toBeGreaterThanOrEqual(at.right);
+				expect(Math.abs(submit.top - close.top)).toBeLessThanOrEqual(1);
+			} else {
+				expect(submit.top).toBeGreaterThanOrEqual(at.bottom);
+			}
+		},
+	};
+}
+
+export const TouchHeadKeepsItsTitle: StoryObj = touchHead(
+	"New thread with the code reviewer",
+	"Open the thread",
+	375,
+	false,
+);
+
+export const TouchHeadLongSubmit375: StoryObj = touchHead(
+	"New workflow",
+	"Make the workflow",
+	375,
+	false,
+);
+
+export const TouchHeadLongSubmitFits390: StoryObj = touchHead(
+	"New workflow",
+	"Make the workflow",
+	390,
+	true,
+);
+
+export const TouchHeadGains375: StoryObj = touchHead(
+	"What the workflow gains",
+	"Save with these gains",
+	375,
+	false,
+);
+
+export const TouchHeadGains390: StoryObj = touchHead(
+	"What the workflow gains",
+	"Save with these gains",
+	390,
+	false,
+);
+
+export const TouchHeadLongTitle375: StoryObj = touchHead(
+	"Review the workflow gains",
+	"Save with these gains",
+	375,
+	false,
+);
+
+export const TouchHeadLongTitle390: StoryObj = touchHead(
+	"Review the workflow gains",
+	"Save with these gains",
+	390,
+	false,
+);
+
+export const TouchHeadDone375: StoryObj = touchHead(
+	"Rename domain",
+	"Done",
+	375,
+	true,
+);
+
+export const TouchHeadDone390: StoryObj = touchHead(
+	"Rename domain",
+	"Done",
+	390,
+	true,
+);
+
+export const TouchHeadShortTitleOpen375: StoryObj = touchHead(
+	"New thread",
+	"Open the thread",
+	375,
+	true,
+);
 
 // A desktop side sheet for a short form is its content's height, hung from
 // the top at the end edge.

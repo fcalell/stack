@@ -523,6 +523,10 @@ export const SHEET_HEAD = "gap-pair px-card py-pair border-b border-edge";
 // The head's row: the lead act, the title over the description, the end act,
 // the title centred on the acts, which set the row's height.
 export const SHEET_HEAD_ROW = "gap-acts";
+// A touch head with a submit wraps its row: the title holds at most three
+// fifths of it (a structural fraction, never a width), so a submit that does
+// not fit beside that column drops whole to a second line at the row's end.
+export const SHEET_HEAD_TITLE = "max-w-3/5";
 export const SHEET_BODY = "gap-sections p-card";
 export const SHEET_FOOT =
 	"gap-acts px-card py-card border-t border-edge bg-raised";

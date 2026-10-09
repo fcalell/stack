@@ -677,7 +677,10 @@ a tick with no animation, never jumped to full.
   nothing; no `Banner`). `failed` is the `Sheet`'s prop and
   not an `Act` field, since only a sheet's one submit has a line to fail in; the modal `Sheet` takes
   it too, in the foot bar's line on the desktop and under the head's submit on touch (the phone's
-  modal only the latter). On the desktop the docked Sheet holds
+  modal only the latter). The modal Sheet's touch head wraps its row (`SHEET_HEAD_TITLE`, the title
+  at most three fifths of it, a structural fraction): the submit that does not fit beside the title
+  drops whole to a second line at the row's end, so a long act word is never truncated and the title
+  never falls to a stack of fragments. On the desktop the docked Sheet holds
   `THREAD_COLUMN` in the foot that centres it. Focus: each page (a new `title`) takes the body's first
   tabbable on the web once the page has settled (a radio group sets its tab stop after the commit),
   so an act that relabels or leaves never drops focus to the document; on the phone the first

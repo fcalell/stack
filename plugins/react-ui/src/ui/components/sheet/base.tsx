@@ -10,6 +10,7 @@ import {
 	SHEET_FOOT,
 	SHEET_HEAD,
 	SHEET_HEAD_ROW,
+	SHEET_HEAD_TITLE,
 	type SheetFit,
 	sheetSide,
 	text,
@@ -82,6 +83,10 @@ const BOX_TALL = "grow";
 const BOX_FLOAT = "max-w-full";
 const HEAD = "flex flex-col";
 const HEAD_ROW = "flex items-center";
+// A touch head's submit that does not fit beside the title column drops to a
+// second line; its wrapper holds it at the row's end on either line.
+const HEAD_ROW_WRAP = "flex-wrap";
+const HEAD_SUBMIT = "ms-auto";
 const TITLE_BLOCK = "flex flex-col grow min-w-0";
 const TITLE_SLOT = "flex items-center min-w-0";
 const TITLE = "min-w-0 wrap-break-word";
@@ -207,13 +212,15 @@ export function SheetBase({
 	const headSubmit =
 		touch && submit ? (
 			<ReasonHostContext value={host}>
-				<Button
-					fit="bar"
-					label={submit.label}
-					onAct={runSubmit}
-					loading={submit.loading === true || running}
-					blocked={submit.blocked}
-				/>
+				<div className={HEAD_SUBMIT}>
+					<Button
+						fit="bar"
+						label={submit.label}
+						onAct={runSubmit}
+						loading={submit.loading === true || running}
+						blocked={submit.blocked}
+					/>
+				</div>
 			</ReasonHostContext>
 		) : null;
 	const start = touch ? (lead ?? close) : lead;
@@ -241,10 +248,11 @@ export function SheetBase({
 				SHEET_HEAD_ROW,
 				HEAD_ROW,
 				!(touch || centred) && HEAD_ROW_TALL,
+				headSubmit && HEAD_ROW_WRAP,
 			)}
 		>
 			{start}
-			<div className={TITLE_BLOCK}>
+			<div className={cn(TITLE_BLOCK, headSubmit && SHEET_HEAD_TITLE)}>
 				{titled}
 				{touch ? null : said}
 			</div>

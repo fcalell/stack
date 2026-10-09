@@ -8,6 +8,7 @@ import {
 	SHEET_FOOT,
 	SHEET_HEAD,
 	SHEET_HEAD_ROW,
+	SHEET_HEAD_TITLE,
 	type SheetFit,
 	text,
 	textStrong,
@@ -67,7 +68,12 @@ import { TextArea } from "../text-area";
 // The modal layer over the app while the sheet is open.
 const LAYER = "absolute inset-0";
 const HEAD_ROW = "flex-row items-center";
+// A head with a submit wraps its row: a submit that does not fit beside the
+// title column drops to a second line, held at the row's end by its wrapper.
+const HEAD_ROW_WRAP = "flex-wrap";
+const HEAD_SUBMIT = "ms-auto";
 const TITLE_BLOCK = "flex-1 min-w-0";
+const TITLE_BLOCK_SUBMIT = "grow min-w-0";
 const TITLE_SLOT = "flex-row items-center min-w-0";
 const TITLE = "shrink";
 const REASON = "text-right";
@@ -212,7 +218,7 @@ function Head() {
 	return (
 		<RaisedGround>
 			<View className={SHEET_HEAD}>
-				<View className={cn(SHEET_HEAD_ROW, HEAD_ROW)}>
+				<View className={cn(SHEET_HEAD_ROW, HEAD_ROW, submit && HEAD_ROW_WRAP)}>
 					{back ? (
 						<IconButton
 							icon="ChevronLeft"
@@ -230,7 +236,11 @@ function Head() {
 							disabled={busy}
 						/>
 					)}
-					<View className={TITLE_BLOCK}>
+					<View
+						className={
+							submit ? cn(TITLE_BLOCK_SUBMIT, SHEET_HEAD_TITLE) : TITLE_BLOCK
+						}
+					>
 						<View accessibilityRole="header" className={TITLE_SLOT}>
 							<RNText
 								className={cn(
@@ -246,13 +256,15 @@ function Head() {
 					</View>
 					{submit ? (
 						<ReasonHostContext.Provider value={host}>
-							<Button
-								fit="bar"
-								label={submit.label}
-								onAct={() => void submit.onAct()}
-								loading={submit.loading}
-								blocked={submit.blocked}
-							/>
+							<View className={HEAD_SUBMIT}>
+								<Button
+									fit="bar"
+									label={submit.label}
+									onAct={() => void submit.onAct()}
+									loading={submit.loading}
+									blocked={submit.blocked}
+								/>
+							</View>
 						</ReasonHostContext.Provider>
 					) : null}
 				</View>
