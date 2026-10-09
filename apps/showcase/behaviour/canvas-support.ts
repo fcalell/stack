@@ -345,3 +345,30 @@ export function routesFollowTheGlyphs(root: Element, graph: Graph) {
 		}
 	}
 }
+
+// Empty groups of a graph whose nodes all carry a position, read off the DOM:
+// no layout runs, so they stand in one row below the lowest node, their left
+// edge on the nodes' leftmost, one after another in the order of `ids`.
+export function hollowRow(root: Element, ids: readonly string[]) {
+	const cards = [...root.querySelectorAll("[data-layer] > button")].map(rect);
+	const frames = ids.map((id) => {
+		const frame = root.querySelector(`[data-group="${id}"]`);
+		if (!frame) throw new Error(`no frame for ${id}`);
+		return rect(frame);
+	});
+	const [first] = frames;
+	if (!first || cards.length === 0) throw new Error("no row to read");
+	const lowest = Math.max(...cards.map((c) => c.bottom));
+	const leftmost = Math.min(...cards.map((c) => c.left));
+	if (Math.abs(first.left - leftmost) > 1.5)
+		throw new Error(`the row starts at ${first.left}, nodes at ${leftmost}`);
+	frames.forEach((frame, index) => {
+		if (frame.top <= lowest)
+			throw new Error(`${ids[index]} does not stand below the nodes`);
+		if (Math.abs(frame.top - first.top) > 1.5)
+			throw new Error(`${ids[index]} is not in the row`);
+		const before = frames[index - 1];
+		if (before && frame.left <= before.right)
+			throw new Error(`${ids[index]} is not after ${ids[index - 1]}`);
+	});
+}

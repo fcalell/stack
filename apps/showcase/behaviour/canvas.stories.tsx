@@ -10,6 +10,7 @@ import {
 	EMPTY,
 	HOLLOW,
 	HOLLOW_ALONE,
+	HOLLOW_PLACED,
 	JOURNEY,
 	OFF,
 	PROBLEM,
@@ -28,7 +29,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { expect, fn, spyOn, waitFor } from "storybook/test";
 import { FOCUS_GUARD } from "../.storybook/focus-guard.ts";
-import { hollowHeld, lowestZoom, room } from "./canvas-support.ts";
+import { hollowHeld, hollowRow, lowestZoom, room } from "./canvas-support.ts";
 import { click as mouseClick, drag as mouseDrag, type Point } from "./mouse.ts";
 
 const ORDER = pathOrder(WORKFLOW.nodes, WORKFLOW.edges);
@@ -1334,6 +1335,52 @@ export const HollowGroup: StoryObj<{ heard: Select; moved: Moved }> = {
 		await expect(args.heard).toHaveBeenLastCalledWith("loop");
 		await userEvent.click(headOf(alone, "loop"));
 		await expect(args.heard).toHaveBeenCalledTimes(2);
+	},
+};
+
+// Every node carries a position, so no layout runs: the empty groups stand in
+// one row below the nodes, left-aligned with them, in path order (the one an
+// edge names first), the edge meets its frame, a head chooses its group, and
+// `onMove` hears nothing.
+export const HollowGroupPlaced: StoryObj<{ heard: Select; moved: Moved }> = {
+	args: { heard: fn(), moved: fn() },
+	globals: { viewport: { value: "w1440", isRotated: false } },
+	parameters: {
+		layout: "fullscreen",
+		viewport: {
+			options: {
+				w1440: {
+					name: "1440",
+					styles: { width: "1440px", height: "900px" },
+					type: "desktop",
+				},
+			},
+		},
+	},
+	render: (args) => (
+		<div className={STAGE}>
+			<Canvas
+				label="Placed loop"
+				nodes={HOLLOW_PLACED.nodes}
+				edges={HOLLOW_PLACED.edges}
+				groups={HOLLOW_PLACED.groups}
+				onSelect={args.heard}
+				onMove={args.moved}
+			/>
+		</div>
+	),
+	play: async ({ args, canvas, userEvent }) => {
+		const placed = await canvas.findByRole("region", { name: "Placed loop" });
+		await waitFor(
+			() => expect(getComputedStyle(placed).opacity).toBe("1"),
+			LAID,
+		);
+		hollowHeld(placed, { id: "loop", into: "handoff-loop" });
+		hollowHeld(placed, { id: "retry" });
+		hollowRow(placed, ["loop", "retry"]);
+		await expect(args.moved).not.toHaveBeenCalled();
+		await userEvent.click(headOf(placed, "retry"));
+		await expect(args.heard).toHaveBeenLastCalledWith("retry");
 	},
 };
 

@@ -168,8 +168,9 @@ A group holding no present node (an empty loop) is a leaf of the graph: the layo
 its place in the path, as a frame of its head and padding at a node's width, and an edge may name
 its id as `from` or `to`, so its edges meet it. Its head is a button as any group's. It is no
 node: it takes no port, no drag and no connection, and `onMove` never hears it. The layout
-places it, so it stands while no node has a `position`. A group that holds an empty group frames
-it, and an edge naming a group that holds a node is ignored.
+places it. When every node has a `position` no layout runs, and the empty groups stand in one row
+below the nodes' bounds, left-aligned with them, in path order; an empty group takes no
+`position`. A group that holds an empty group frames it, and an edge naming a group that holds a node is ignored.
 
 An `act` stands at the foot's centre; it adds, it never removes.
 

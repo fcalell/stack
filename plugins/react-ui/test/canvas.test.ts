@@ -29,6 +29,7 @@ import {
 	emptyGroups,
 	groupBoxes,
 	groupTree,
+	hollowRow,
 	leftPads,
 	PIXEL_CENTRE,
 	type Route,
@@ -1492,6 +1493,17 @@ test("emptyGroups names the groups holding no present node and no group, and not
 	];
 	assert.deepEqual(emptyGroups(groups, new Set(["a"])), ["bare", "none"]);
 	assert.deepEqual(emptyGroups(groups, new Set()), ["loop", "bare", "none"]);
+});
+
+test("hollowRow stands the ids in one row below the nodes' bounds, left-aligned with them, in the order given, and stands none without a node", () => {
+	const nodes = [box(40, 10, 100, 50), box(200, 90, 100, 70)];
+	const size = { width: 240, height: 74 };
+	const row = hollowRow(["a", "b", "c"], nodes, size, { gap: 16, drop: 60 });
+	assert.deepEqual([...row.keys()], ["a", "b", "c"]);
+	assert.deepEqual(row.get("a"), { x: 40, y: 220, ...size });
+	assert.deepEqual(row.get("b"), { x: 296, y: 220, ...size });
+	assert.deepEqual(row.get("c"), { x: 552, y: 220, ...size });
+	assert.equal(hollowRow(["a"], [], size, { gap: 16, drop: 60 }).size, 0);
 });
 
 test("groupBoxes frames an empty group by its own box, and the group that holds only empty groups around it", () => {

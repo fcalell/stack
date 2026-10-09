@@ -1738,8 +1738,9 @@ a tick with no animation, never jumped to full.
   `from` or `to` (so it stands in `pathOrder` and its edges meet its frame, with no port ring), its
   head is a button as any group's, and it takes no port, drag, connection or `onMove`. A group
   holding only empty groups frames them, and an edge naming a group that holds a node is still
-  ignored. ELK places it, so it stands while no node has a position (a consumer's positions
-  leave it unplaced). ELK runs only when no
+  ignored. ELK places it; where every node has a position no layout runs and the empty groups
+  stand in one row below the nodes' bounds, left-aligned, in path order (`hollowRow`; an empty group
+  takes no position, so a consumer cannot place it). ELK runs only when no
   node has a position, and is given the forward edges alone, to layer the nodes: it does not break
   a cycle inside a group, and it never sees a label or draws an edge. The canvas routes every edge
   itself from the final boxes (`geometry.ts`, pure): a forward edge bends in the middle of the layer

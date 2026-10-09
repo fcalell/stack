@@ -9,6 +9,7 @@ import {
 	type Graph,
 	HOLLOW,
 	HOLLOW_ALONE,
+	HOLLOW_PLACED,
 	LIFT_MS,
 	PROBLEM,
 	SLOP,
@@ -31,6 +32,7 @@ import {
 	glyphs,
 	groundPoint,
 	hollowHeld,
+	hollowRow,
 	LAID,
 	left,
 	lowestZoom,
@@ -1086,3 +1088,37 @@ const hollow: Story = {
 };
 export const HollowGroupLight = mode("light", hollow);
 export const HollowGroupDark = mode("dark", hollow);
+
+// At 375 the row of empty groups below positioned nodes stands as at 1440, and
+// a tap on a head chooses its group.
+const hollowPlaced: Story = {
+	render: (args: Heard) => (
+		<div className={STAGE}>
+			<Canvas
+				label="Placed loop"
+				nodes={HOLLOW_PLACED.nodes}
+				edges={HOLLOW_PLACED.edges}
+				groups={HOLLOW_PLACED.groups}
+				onSelect={args.selected}
+				onMove={args.moved}
+			/>
+		</div>
+	),
+	play: async ({ args, canvas }) => {
+		const placed = await canvas.findByRole("region", { name: "Placed loop" });
+		await waitFor(
+			() => expect(getComputedStyle(placed).opacity).toBe("1"),
+			LAID,
+		);
+		hollowHeld(placed, { id: "loop", into: "handoff-loop" });
+		hollowRow(placed, ["loop", "retry"]);
+		await expect(args.moved).not.toHaveBeenCalled();
+		const head = placed.querySelector('[data-group="loop"] > button');
+		if (!head) throw new Error("no head");
+		await tap(centre(rect(head)));
+		await waitFor(() => expect(args.selected).toHaveBeenCalledTimes(1));
+		await expect(args.selected).toHaveBeenLastCalledWith("loop");
+	},
+};
+export const HollowGroupPlacedLight = mode("light", hollowPlaced);
+export const HollowGroupPlacedDark = mode("dark", hollowPlaced);

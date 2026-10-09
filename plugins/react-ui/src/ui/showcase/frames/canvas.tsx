@@ -7,6 +7,7 @@ import {
 	type Graph,
 	HOLLOW,
 	HOLLOW_ALONE,
+	HOLLOW_PLACED,
 	JOURNEY,
 	OFF,
 	PROBLEM,
@@ -20,6 +21,7 @@ export type { Graph };
 export {
 	HOLLOW,
 	HOLLOW_ALONE,
+	HOLLOW_PLACED,
 	JOURNEY,
 	LIFT_MS,
 	OFF,
@@ -171,6 +173,12 @@ export function drawCanvas(frame: ShowcaseFrame) {
 				<Selectable
 					label="Hollow loop"
 					graph={HOLLOW}
+					stage={STAGE}
+					first={first}
+				/>
+				<Selectable
+					label="Placed loop"
+					graph={HOLLOW_PLACED}
 					stage={STAGE}
 					first={first}
 				/>

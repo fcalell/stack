@@ -86,6 +86,34 @@ export function emptyGroups(
 		);
 }
 
+// Where the empty groups stand when no layout places them (every node carries
+// a position): one row of `size` boxes `drop` below the nodes' bounds,
+// left-aligned with them and `gap` apart, in the order of `ids`. No node box,
+// no row.
+export function hollowRow(
+	ids: readonly string[],
+	nodes: Iterable<Box>,
+	size: Size,
+	{ gap, drop }: { gap: number; drop: number },
+): Map<string, Box> {
+	let left = Number.POSITIVE_INFINITY;
+	let bottom = Number.NEGATIVE_INFINITY;
+	for (const box of nodes) {
+		left = Math.min(left, box.x);
+		bottom = Math.max(bottom, box.y + box.height);
+	}
+	const out = new Map<string, Box>();
+	if (left === Number.POSITIVE_INFINITY) return out;
+	ids.forEach((id, index) => {
+		out.set(id, {
+			x: left + index * (size.width + gap),
+			y: bottom + drop,
+			...size,
+		});
+	});
+	return out;
+}
+
 // A group's frame: the rectangle of everything it holds, grown by `pad` on
 // three sides and by `pad + head` on top, its left side by `left` where the
 // group has an entry (`leftPads`). A group with a box of its own (an empty

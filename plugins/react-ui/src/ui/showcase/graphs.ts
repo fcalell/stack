@@ -192,6 +192,22 @@ export const HOLLOW_ALONE: Graph = {
 	edges: [],
 	groups: HOLLOW.groups,
 };
+// The consumer placed every node, so no layout runs: the empty groups stand in
+// one row below the nodes in path order, the one an edge names first.
+export const HOLLOW_PLACED: Graph = {
+	nodes: HOLLOW.nodes.map((node, index) => ({
+		...node,
+		position: { x: 0, y: index * 240 },
+	})),
+	edges: [
+		{ id: "plan-handoff", from: "plan", to: "handoff" },
+		{ id: "handoff-loop", from: "handoff", to: "loop" },
+	],
+	groups: [
+		{ id: "retry", head: "Retry", holds: [] },
+		{ id: "loop", head: "Until green", holds: [] },
+	],
+};
 
 // The states a node and an edge draw, each over one of the two graphs: the
 // graph's nodes with a mark added to those named. Fixtures hold no position,

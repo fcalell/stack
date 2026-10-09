@@ -20,6 +20,7 @@ import { elkGraph, fromElk, type Gaps, graphKey, layerGap } from "./elk.ts";
 import { glyphBoxes, routeSide } from "./floor.ts";
 import {
 	type Box,
+	hollowRow,
 	leftPads,
 	type Routes,
 	routeEdges,
@@ -303,15 +304,25 @@ export function useLayout({
 	const { pad, pair, port } = space;
 	const head = measures?.head ?? 0;
 	// An empty group stands where the layout put it, at the size of its head and
-	// padding. Under the floor it keeps its frame, as every frame does.
+	// padding. Where no layout ran (every node has a position) the ones left
+	// stand in one row below the nodes, in path order. Under the floor it keeps
+	// its frame, as every frame does.
+	const { node: across, layer: down } = space.gaps;
 	const holes = useMemo(() => {
+		const size = { width: WIDTH, height: head + 2 * pad };
 		const out = new Map<string, Box>();
 		for (const id of hollow) {
 			const at = computed?.get(id);
-			if (at) out.set(id, { ...at, width: WIDTH, height: head + 2 * pad });
+			if (at) out.set(id, { ...at, ...size });
 		}
+		const unplaced = order.filter((id) => hollow.includes(id) && !out.has(id));
+		const row = hollowRow(unplaced, boxes.values(), size, {
+			gap: across,
+			drop: down,
+		});
+		for (const [id, box] of row) out.set(id, box);
 		return out;
-	}, [hollow, computed, head, pad]);
+	}, [hollow, order, computed, boxes, head, pad, across, down]);
 	// Under the floor a node is its glyph, so the routes and the frames follow
 	// the glyph's box, centred on the card's, and not the card's. ELK's positions
 	// and the cards' sizes stay as they are. The side moves in steps of a `pair`,
