@@ -17,6 +17,7 @@ import {
 	useState,
 } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { FormStands } from "../../lib/form.ts";
 import {
 	ActRoom,
 	BackRoute,
@@ -227,7 +228,7 @@ export function Split({
 						aria-label={words.details}
 						className={cn(SPLIT_PANE, PANE)}
 					>
-						{pane}
+						<FormStands value="pane">{pane}</FormStands>
 					</aside>
 				) : null}
 				<SheetBase

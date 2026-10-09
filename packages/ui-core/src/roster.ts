@@ -885,15 +885,16 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				spacing: ["rows", "control-x"],
 			},
 		},
-		// A Form in a sheet stands on the sheet's column, uncapped.
+		// A Form in a sheet or a Split's pane stands on that column, uncapped; its
+		// bar stays at the end of the sheet's body or the pane (web).
 		Form: {
 			props: ["children"],
 			draws: ["FORM", "FORM_FOOT"],
 			holds: ["FORM", "FORM_FOOT"],
 			states: ["rest", "loading"],
 			owns: {
-				colors: ["edge"],
-				spacing: ["fields", "sections"],
+				colors: ["edge", "surface", "raised"],
+				spacing: ["fields", "sections", "page", "card"],
 				sizes: ["measure"],
 			},
 		},

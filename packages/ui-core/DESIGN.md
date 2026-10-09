@@ -2658,7 +2658,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Section` | `heading`, `meta`, `body`, `caption` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `danger` | `row`, `control`, `chip` | `pair`, `fields`, `inside`, `control-x` | `icon`, `control-compact`, `skeleton`, `field`, `target` | none |
 | `Group` | none | `edge`, `surface` | `card` | none | none | none |
 | `List` | none | `edge` | none | `rows`, `control-x` | none | none |
-| `Form` | none | `edge` | none | `fields`, `sections` | `measure` | none |
+| `Form` | none | `edge`, `surface`, `raised` | none | `fields`, `sections`, `page`, `card` | `measure` | none |
 | `Toolbar` | none | `edge` | none | `pair`, `page`, `inside`, `acts` | none | none |
 | `ActionBar` | `meta`, `body` | `ink-meta`, `ink-body`, `ink-disabled`, `ink-error`, `edge`, `danger`, `act-accent`, `on-act-accent`, `act-danger`, `on-act-danger`, `wash-hover`, `wash-press`, `skeleton` | `control`, `full` | `pair`, `acts`, `inside`, `control-x` | `control`, `field`, `target`, `selection`, `control-compact`, `measure-short` | none |
 | `Columns` | none | none | none | `fields`, `page`, `sections` | `column` | none |

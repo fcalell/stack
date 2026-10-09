@@ -1,5 +1,5 @@
 import { cn } from "@fcalell/ui-core/cn";
-import { FORM_FOOT, form } from "@fcalell/ui-core/variants";
+import { FORM_FOOT, type FormIn, form } from "@fcalell/ui-core/variants";
 import {
 	Children,
 	Fragment,
@@ -23,6 +23,15 @@ const STACK = "flex flex-col";
 // stands in its place, so what it holds (a typed text) outlives the wait.
 const FIELD_SHOWN = "contents";
 const FIELD_WAITS = "hidden";
+// In a Split's pane or a sheet's body, which scroll, the bar stays at the
+// scroller's bottom edge. A sticky box sticks inside the scroller's padding, so
+// the negative offset reaches the edge; the negative margin and matching
+// padding run its ground and hairline across the scroller's inset, so what
+// scrolls under it shows in no gutter.
+const FOOT_STUCK: Partial<Record<FormIn, string>> = {
+	pane: "sticky -bottom-page bg-surface -mx-page px-page -mb-page pb-page",
+	sheet: "sticky -bottom-card bg-raised -mx-card px-card -mb-card pb-card",
+};
 
 // Each `FormField` among the nodes (through fragments) stands as a waiting
 // field while a loading `Section` or `Group` surrounds the form.
@@ -62,6 +71,7 @@ export function Form({ children }: FormProps) {
 	const sectioned = nodes.some(
 		(node) => isValidElement(node) && node.type === Section,
 	);
+	const stuck = FOOT_STUCK[within];
 	return (
 		<FormContext value={setPending}>
 			<TouchedContext value={touch}>
@@ -76,10 +86,10 @@ export function Form({ children }: FormProps) {
 						HOLDS_FILL,
 					)}
 				>
-					{sectioned
+					{sectioned || stuck
 						? nodes.map((node) =>
 								isValidElement(node) && node.type === ActionBar ? (
-									<div key={node.key} className={FORM_FOOT}>
+									<div key={node.key} className={cn(FORM_FOOT, stuck)}>
 										{node}
 									</div>
 								) : (

@@ -1,5 +1,7 @@
 import { text } from "@fcalell/ui-core/variants";
 import { useState } from "react";
+import { ActionBar } from "../../components/action-bar/index.tsx";
+import { Form } from "../../components/form/index.tsx";
 import { ItemHeader } from "../../components/item-header/index.tsx";
 import { MessageInput } from "../../components/message-input/index.tsx";
 import { Place } from "../../components/place/index.tsx";
@@ -7,6 +9,7 @@ import { Section } from "../../components/section/index.tsx";
 import { Split } from "../../components/split/index.tsx";
 import { Thread } from "../../components/thread/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
+import { Labelled } from "./form.tsx";
 import { StandInList, StandInRows } from "./layout-context.tsx";
 import { Column } from "./place.tsx";
 import { TURN, TURNS } from "./thread.tsx";
@@ -17,7 +20,8 @@ import { TURN, TURNS } from "./thread.tsx";
 // head (no facts line, so a pair above its first section), the empty state
 // and the rows are context. The page stands under another view (`up`), whose
 // back act leads the strip, or the top bar on touch, while the list stands
-// alone and gives way below `tablet` to the record's; the list holds three Sections a sections gap apart. The `fills` cell opens
+// alone and gives way below `tablet` to the record's; the list holds three Sections a sections gap apart. The pane is a long `Form` whose
+// bar stays at the pane's end (the Details sheet's below `wide`). The `fills` cell opens
 // a conversation: the record's head over a Thread filling the main, its
 // `empty` frame a conversation with no message yet.
 export function drawSplit(frame: ShowcaseFrame) {
@@ -52,15 +56,43 @@ export function drawSplit(frame: ShowcaseFrame) {
 							</>
 						)
 					}
-					pane={
-						<Section title="Properties">
-							<StandInRows ground="list" />
-						</Section>
-					}
+					pane={<NodeForm />}
 					empty={<p className={text({ role: "meta" })}>No issue open</p>}
 				/>
 			</Place>
 		</Column>
+	);
+}
+
+const noop = () => {};
+
+const FIELDS = [
+	["Name", "Review the diff"],
+	["Model", "Large, 200k context"],
+	["Instruction", "Read the change and list what could break."],
+	["Tools", "Search, read file"],
+	["Input", "The pull request's diff"],
+	["Output", "A list of findings"],
+	["Retries", "2"],
+	["Timeout", "90 seconds"],
+	["On failure", "Stop the run"],
+	["Owner", "Ana Ruiz"],
+] as const;
+
+// The pane holds a form long enough to scroll, its bar at the pane's end.
+function NodeForm() {
+	return (
+		<Form>
+			{FIELDS.map(([label, value]) => (
+				<Labelled key={label} label={label} value={value} />
+			))}
+			<ActionBar
+				acts={[
+					{ label: "Remove the node", destructive: true, onAct: noop },
+					{ label: "Apply", onAct: noop },
+				]}
+			/>
+		</Form>
 	);
 }
 

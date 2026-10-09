@@ -326,6 +326,12 @@ A `Form` holds fields and its `ActionBar`. One form among a page's sections is `
 every section's head-to-body gap stays the pair step. `Section`s inside a `Form` (`Form > Section`)
 stand at the fields step, so that shape is for a page every section of which is in the form.
 
+A `Form` in a `Split`'s `pane` (beside the main from `wide`, or in its Details sheet) or in a
+`Sheet`'s body keeps its `ActionBar` at the scroller's bottom edge, over a ground and hairline that
+run across the scroller's inset, so a long form never puts its submit below the fold. Pass the pane
+a `Form` and nothing else: the pane has no `submit` of its own. With room the bar stands at the
+form's end, where it stood.
+
 ## Collections take data
 
 A collection takes data and draws its states. A `List` takes its `query` (or static `items`) and one

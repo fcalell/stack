@@ -691,6 +691,15 @@ a tick with no animation, never jumped to full.
   Rejected: a `Thread` `form` prop or a `DockedForm` component (a second component for the same
   regions, switched by the app per place), and a `Form` that pins its own bar in a foot (no head for
   the title and close act, and it restates the Sheet's regions).
+- A long `Form` in a scroller keeps its bar in reach without leaving the Form. A Split's pane
+  provides `FormStands` `pane` (`FORM in.pane`, no cell of its own, uncapped like `sheet`) and a
+  sheet's body `sheet`; the web Form wraps its `ActionBar` in its foot there (`sticky bottom-0`,
+  the host's ground, and a negative margin with matching padding across the scroller's inset, an
+  overlay since positioning and the bleed are platform overlays), so the bar stays at the
+  scroller's bottom edge and stands at the form's end when the form fits. The pane takes no
+  `submit` and nothing lifts the bar out of the Form, so its pending state, Enter-to-submit and
+  `SubmitContext` stay the Form's. The phone's Details sheet has no `sticky`; its bar scrolls with
+  the body.
 - A record the main opened is the Split's `beside`: a `Screen` whose `back` is the main's route,
   given by the consumer because the route's depth differs by surface and no component can derive it.
   From `wide` of the page the list, the main and the beside record stand together, main and beside

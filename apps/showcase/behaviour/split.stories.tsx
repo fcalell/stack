@@ -4,8 +4,11 @@ import { Code } from "@fcalell/plugin-react-ui/components/code";
 import { DefinitionRow } from "@fcalell/plugin-react-ui/components/definition-row";
 import { Diff } from "@fcalell/plugin-react-ui/components/diff";
 import { EmptyState } from "@fcalell/plugin-react-ui/components/empty-state";
+import { Form } from "@fcalell/plugin-react-ui/components/form";
+import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
 import { Image } from "@fcalell/plugin-react-ui/components/image";
+import { Input } from "@fcalell/plugin-react-ui/components/input";
 import { ItemHeader } from "@fcalell/plugin-react-ui/components/item-header";
 import { List } from "@fcalell/plugin-react-ui/components/list";
 import { Message } from "@fcalell/plugin-react-ui/components/message";
@@ -1051,3 +1054,106 @@ const keepsItsRows: StoryObj = {
 
 export const GroupsKeepTheirRows = keepsItsRows;
 export const GroupsKeepTheirRowsTouch = touch(keepsItsRows);
+
+const NODE_FIELDS = Array.from({ length: 14 }, (_, at) => `Field ${at + 1}`);
+
+// The pane holds a form long enough to scroll, with its bar after the fields.
+function NodePane(props: { width: number }) {
+	const [open, setOpen] = useState(true);
+	return (
+		<Page width={props.width} fluid>
+			<Place title="Now" bleed>
+				<Split
+					list={<Rows />}
+					main={
+						<Section title="Review">
+							<Rows />
+						</Section>
+					}
+					pane={
+						<Form>
+							{NODE_FIELDS.map((label) => (
+								<FormField key={label} label={label}>
+									<Input value="Value" onChange={noop} />
+								</FormField>
+							))}
+							<ActionBar
+								acts={[
+									{ label: "Remove the node", destructive: true, onAct: noop },
+									{ label: "Apply", onAct: noop },
+								]}
+							/>
+						</Form>
+					}
+					open={open}
+					onClose={() => setOpen(false)}
+				/>
+			</Place>
+		</Page>
+	);
+}
+
+// The nearest ancestor that scrolls.
+function scrollerOf(el: Element): HTMLElement {
+	for (let up = el.parentElement; up; up = up.parentElement)
+		if (getComputedStyle(up).overflowY === "auto") return up;
+	throw new Error("nothing around the form scrolls");
+}
+
+// A long form in a Split's pane keeps its bar at the scroller's bottom edge
+// with the scroll at the top and at the end, from `wide` in the pane and below
+// it in the Details sheet.
+function keepsItsBar(width: number, sheet: boolean): StoryObj {
+	return {
+		parameters: { layout: "fullscreen" },
+		render: () => <NodePane width={width} />,
+		play: async ({ canvasElement }) => {
+			const scope = sheet
+				? within(await screen.findByRole("dialog", { name: "Details" }))
+				: within(must(canvasElement.querySelector("aside")));
+			const submit = await scope.findByRole("button", { name: "Apply" });
+			const form = must(submit.closest("form"));
+			const foot = must(form.lastElementChild);
+			const scroller = scrollerOf(form);
+			await expect(shown(scroller)).toBe(true);
+			await waitFor(() =>
+				expect(scroller.scrollHeight).toBeGreaterThan(scroller.clientHeight),
+			);
+			const inReach = async (end: boolean) => {
+				scroller.scrollTop = end ? scroller.scrollHeight : 0;
+				await frame();
+				const bar = foot.getBoundingClientRect();
+				const room = scroller.getBoundingClientRect();
+				await expect(bar.bottom).toBeLessThanOrEqual(room.bottom + 0.5);
+				await expect(bar.top).toBeGreaterThanOrEqual(room.top);
+				await expect(submit.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+					room.bottom,
+				);
+				return { bar, room };
+			};
+			const top = await inReach(false);
+			// The bar covers the scroller's bottom inset, so nothing shows under it.
+			await expect(top.bar.bottom).toBeCloseTo(top.room.bottom, 0);
+			const inner = top.room.left + scroller.clientLeft;
+			await expect(top.bar.left).toBeCloseTo(inner, 0);
+			await expect(top.bar.right).toBeCloseTo(inner + scroller.clientWidth, 0);
+			const end = await inReach(true);
+			await expect(end.bar.bottom).toBeCloseTo(end.room.bottom, 0);
+		},
+	};
+}
+
+export const PaneFormKeepsItsBar1440 = keepsItsBar(1440, false);
+export const PaneFormKeepsItsBar390 = touch(keepsItsBar(390, true));
+
+// A pane with no form is the section it was: nothing in it sticks.
+export const PaneWithoutFormSticksNothing: StoryObj = {
+	render: () => <Opened width={1200} beside={false} />,
+	play: async ({ canvasElement }) => {
+		const aside = must(canvasElement.querySelector("aside"));
+		const sticks = [...aside.querySelectorAll("*")].filter(
+			(el) => getComputedStyle(el).position === "sticky",
+		);
+		await expect(sticks).toEqual([]);
+	},
+};
