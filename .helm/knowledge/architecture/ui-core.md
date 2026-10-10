@@ -582,10 +582,11 @@ a tick with no animation, never jumped to full.
   `PLACE_TAB` with `PLACE_TAB_LABEL`, the tab bar tab, is selected by ink alone (`ink-meta` idle,
   `ink-body` selected, the selected label at 500); its box carries the ink for the glyph inside it,
   as a labelled act's fill does, and the label repeats it because a native Text inherits none.
-  A tab's count is the plain number as a badge on the glyph's top-right corner, its start at the
-  glyph box's edge (a hairline in at most, where the last tab's "99+" at 320 asks it) so its figures
-  never reach the glyph's ink, on a ring of the bar's own ground (`SHELL_TAB_COUNT`: `bg-canvas` and a
-  2 px `outline-canvas`; an absolute overlay, so the glyph's box and the label's centring do not move), and past `TAB_COUNT_MAX` (99) it reads `countOver` ("99+", `tabCount(words, n)`,
+  A tab's count is the plain number as a badge above the glyph box's top-right corner: its bottom
+  edge at the box's top (the space above holds no ink) and its start at the box's right edge, a
+  hairline in at most (where the last tab's "99+" at 320 asks it), so it paints nothing inside the
+  glyph's box, no ring or ground over the strokes, and the glyph's ink is the same with and without it
+  (an absolute overlay, so the glyph's box and the label's centring do not move), and past `TAB_COUNT_MAX` (99) it reads `countOver` ("99+", `tabCount(words, n)`,
   handed to `Count` as its drawn form); the sidebar's `Count` draws the number whole. The badge
   stands inside the bar on the last of five tabs at 320, 390 and 768.
 - A row names what holds it: `ROW`'s `ground` axis is `list` (a list or a popover, the row

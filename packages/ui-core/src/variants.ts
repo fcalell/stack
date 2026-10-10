@@ -828,10 +828,6 @@ export const SWITCHER_SLOT = "p-float";
 export const SHELL_PLACES = "gap-rows p-float";
 // The shell on touch: the tab bar on the canvas under a hairline, a pair
 // above its glyphs so they centre on the header strip's line.
-// A tab's count is a badge on its glyph's corner: on a ring of the bar's own
-// ground, so where it meets the glyph the two never read as ink on ink.
-export const SHELL_TAB_COUNT =
-	"rounded-full bg-canvas outline-2 outline-canvas";
 export const SHELL_TAB_BAR = "px-float pt-pair bg-canvas border-t border-edge";
 // A page outside the shell, a Gate: the surface ground at the page inset, one
 // column at the `auth` width (a column cell is a width; the region centres

@@ -14,7 +14,6 @@ import {
 	SHELL_PLACES,
 	SHELL_SIDEBAR,
 	SHELL_TAB_BAR,
-	SHELL_TAB_COUNT,
 	SWITCHER_SLOT,
 	text,
 } from "@fcalell/ui-core/variants";
@@ -62,7 +61,7 @@ const TABS = "flex pb-safe group-has-data-screen/column:hidden";
 const TAB =
 	"flex flex-col items-center justify-center min-w-0 grow basis-0 focus-visible:-outline-offset-2";
 const TAB_GLYPH = "relative flex";
-const TAB_COUNT = "absolute top-0 left-full -ms-hairline flex";
+const TAB_COUNT = "absolute bottom-full left-full -ms-hairline flex";
 const TAB_LABEL = "max-w-full truncate";
 // A tab bar holds five tabs at most: past five places, four and More.
 const TAB_ROOM = 5;
@@ -235,7 +234,7 @@ function TabBar(props: {
 								<>
 									<Icon name={spec.icon} fit="control" />
 									{spec.count === undefined ? null : (
-										<span className={cn(SHELL_TAB_COUNT, TAB_COUNT)}>
+										<span className={TAB_COUNT}>
 											<Count value={tabCount(words, spec.count)} />
 										</span>
 									)}

@@ -180,6 +180,7 @@ const NATIVE_OVERLAYS = [
 	"justify-start",
 	"left-0",
 	"left-full",
+	"bottom-full",
 	"max-w-4/5",
 	"max-w-full",
 	"max-w-measure",
