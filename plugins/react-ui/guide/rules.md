@@ -434,12 +434,16 @@ place in the list. Once the option is in the value it draws and acts as any chos
 removable, so `blocked` never traps a value.
 
 A `Thread` takes its `query` (or `items`) the same way through a `message` map (`key`,
-`author`, `name`, `body`, `at`, `attachments`, `meta`, `onOpen`, `detail`), each reading only its
+`author`, `name`, `body`, `at`, `attachments`, `meta`, `streaming`, `onOpen`, `detail`), each reading only its
 item, since a message draws again only when its item changes; its `foot` is a `MessageInput`, or a
 `Sheet` docked in its place. While a reply from the other author is on its way, set `replying`:
 the loaded log ends on one waiting message of theirs, followed as any message is; clear it in the
 render that adds the reply's item, which stands where the waiting message stood. A `Thread`'s own
-`loading` stays the log being on its way, three waiting messages.
+`loading` stays the log being on its way, three waiting messages. Set `streaming` on the reply (an
+`other` turn, a `Message` prop and a `message` slot) while its text is still growing: a marker left
+open at its end (an emphasis, a strong run, a code span, a link, a fence) draws in its own form from
+its first character and the closing marker changes nothing drawn; a finished reply leaves an
+unmatched marker as text.
 In a `Place`'s body, or in a `Split`'s `main` under the record's `ItemHeader`, it fills what holds
 it: its log scrolls and the input docks at the foot. It stands there as the body's direct child,
 or as `main` (in a fragment under the record's `ItemHeader`), never inside a component of the
@@ -497,9 +501,9 @@ the same `<Sheet>` as the modal from a page and as the `foot` of a conversation;
 the `MessageInput` in its place) returns focus to the input, and each page (a new `title`) opens at
 the top of its body with focus in its first field. A `Sheet` among a `Thread`'s sections draws the same form with no bound.
 
-A column is a width and the region around it aligns it. A filling `Thread`'s log and a docked foot
+A column is a width and the region around it aligns it. A filling `Thread`'s log in a `Place`'s body and a docked foot
 (a `Place`'s `foot`, a filling `Thread`'s input) centre their measure column, and a selection bar's;
-a `Thread` among sections keeps their start, at the measure, as a `Text` paragraph does. A region
+a `Thread` among sections keeps their start, at the measure, as a `Text` paragraph does. A `Thread` filling a `Split`'s main stands as a record there does: its `ItemHeader` and messages start at the main's start (the messages at the measure) and its input spans the main within the page inset; an inline `Thread` is unchanged. A region
 that holds a page's sections (a `Place`'s body, a `Split`'s list, main and pane, a `Sheet`'s body)
 stands them a sections gap apart: never wrap sections in a `div` to space them. A `Split`'s list stands its first section at the page inset, as the record does, so both start on one line. A `Split`'s open record stands in one column at the measure, at the main's start: its sections, groups, code blocks and action bar end where a `Prose` or a `Form` does, so never cap one with a host class.
 

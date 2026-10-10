@@ -5,6 +5,7 @@ import type {
 	MessageDetail,
 	Part,
 } from "@fcalell/ui-core/descriptors";
+import { closeOpenRuns } from "@fcalell/ui-core/streaming";
 import {
 	lineBox,
 	MESSAGE_BUBBLE,
@@ -76,6 +77,8 @@ export type MessageProps =
 			attachments?: readonly Attachment[];
 			/** Where it came from ("by voice", "Kitchen"), joined by a middle dot before the time (each a short phrase; the line wraps at its dots). */
 			meta?: readonly Part[];
+			/** The reply is still arriving: a marker left open at its end (an emphasis, a strong run, a code span, a link, a fence) is drawn in its own form from its first character, and its closing marker changes nothing already drawn; unset or `false`, an unmatched marker is text. Yours is always whole. */
+			streaming?: boolean;
 			onOpen?: never;
 			detail?: never;
 	  })
@@ -87,6 +90,7 @@ export type MessageProps =
 			/** What stands under the line, one of three: a row in a hairline card that opens its record, a free act's arguments in the code role, or lines the line opens in place (it takes no `onOpen` then). */
 			detail?: MessageDetail;
 			name?: never;
+			streaming?: never;
 			attachments?: never;
 			meta?: never;
 	  });
@@ -276,7 +280,9 @@ export const Message = memo(function Message(props: MessageProps) {
 				</p>
 			) : null}
 			{attached}
-			{body ? <Prose markdown={body} /> : null}
+			{body ? (
+				<Prose markdown={props.streaming ? closeOpenRuns(body) : body} />
+			) : null}
 		</article>
 	);
 });

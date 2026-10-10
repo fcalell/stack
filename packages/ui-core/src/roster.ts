@@ -2541,6 +2541,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"at",
 				"attachments",
 				"meta",
+				"streaming",
 				"onOpen",
 				"detail",
 				"loading",
