@@ -5,11 +5,15 @@ import {
 	skeleton,
 	skeletonLane,
 } from "@fcalell/ui-core/variants";
+import { useLayoutEffect, useRef, useState } from "react";
 import { spacing } from "../../lib/media.ts";
 import { layerGap } from "./elk.ts";
 import { GROUND, Grid, useBleed } from "./ground.tsx";
+import { openTransform, type Transform, whole } from "./view.ts";
+import { clearanceOf } from "./viewport.ts";
+import { ZoomRoom } from "./zoom.tsx";
 
-const STAND = "absolute inset-0 flex flex-col items-center justify-center";
+const STAND = "absolute left-0 top-0 flex flex-col";
 const NODE = "flex items-center";
 const COLUMN = "flex flex-col flex-1 min-w-0";
 const LINE = "flex items-center h-lh";
@@ -23,21 +27,62 @@ const LINES = [
 	{ part: "line", bar: "w-1/2" },
 ] as const;
 
-/** A Canvas waiting: its ground and grid, and three node-shaped cards (an icon beside an overline, a title and a line bar) stacked at the gap a loaded path keeps, with no zoom stack, act or handler. Outside the package's exports. */
+// Where a loaded canvas opens a graph of these bounds: the opening view of the
+// layout (`openTransform`), in the room the pane and the zoom stack leave.
+function opening(region: HTMLElement, stand: HTMLElement): Transform {
+	const first = stand.firstElementChild;
+	const width = stand.offsetWidth;
+	return whole(
+		openTransform(
+			{ x: 0, y: 0, width, height: stand.offsetHeight },
+			{
+				x: 0,
+				y: 0,
+				width,
+				height: first instanceof HTMLElement ? first.offsetHeight : 0,
+			},
+			{ width: region.clientWidth, height: region.clientHeight },
+			spacing("page"),
+			clearanceOf(region),
+		),
+	);
+}
+
+/** A Canvas waiting: its ground and grid, and three node-shaped cards (an icon beside an overline, a title and a line bar) stacked at the gap a loaded path keeps, standing where the loaded chain opens (the same opening view, in the room the unseen zoom stack leaves), with no zoom stack, act or handler. Outside the package's exports. */
 export function CanvasWait({ label }: { label: string }) {
 	const bleed = useBleed();
+	const region = useRef<HTMLElement>(null);
+	const stand = useRef<HTMLDivElement>(null);
+	const [view, setView] = useState<Transform | null>(null);
+	// The view is set before paint and again when the pane resizes.
+	useLayoutEffect(() => {
+		const pane = region.current;
+		const column = stand.current;
+		if (!pane || !column) return;
+		const set = () => setView(opening(pane, column));
+		set();
+		const watch = new ResizeObserver(set);
+		watch.observe(pane);
+		return () => watch.disconnect();
+	}, []);
 	return (
 		<section
+			ref={region}
 			aria-label={label}
 			aria-busy
 			data-fill
 			className={cn(GROUND, bleed)}
 		>
 			<Grid />
+			<ZoomRoom />
 			<div
+				ref={stand}
 				aria-hidden
-				// The layer gap is a run-time size of the page's tokens, the loaded path's own.
-				style={{ gap: layerGap(spacing("sections"), 0, spacing("pair")) }}
+				style={{
+					// The layer gap is a run-time size of the page's tokens, the loaded path's own.
+					gap: layerGap(spacing("sections"), 0, spacing("pair")),
+					transform: view ? `translate(${view.x}px, ${view.y}px)` : undefined,
+				}}
 				className={STAND}
 			>
 				{NODES.map((key) => (

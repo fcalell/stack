@@ -80,6 +80,24 @@ const pans = (event: MouseEvent | TouchEvent | WheelEvent): boolean => {
 	);
 };
 
+// What the canvas's own chrome takes from the pane: a part marked
+// `data-clear` with the edge it stands against, `left` or `bottom`, and
+// a `pair` of air beyond it.
+export function clearanceOf(element: HTMLElement | null): Clearance {
+	if (!element) return NO_CLEARANCE;
+	const pane = element.getBoundingClientRect();
+	const pair = spacing("pair");
+	const out = { left: 0, bottom: 0, stack: 0 };
+	for (const part of element.querySelectorAll<HTMLElement>("[data-clear]")) {
+		const box = part.getBoundingClientRect();
+		if (part.dataset.clear === "left") {
+			out.left = Math.max(out.left, box.right - pane.left + pair);
+			out.stack = Math.max(out.stack, pane.bottom - box.top + pair);
+		} else out.bottom = Math.max(out.bottom, pane.bottom - box.top + pair);
+	}
+	return out;
+}
+
 function make(region: RefObject<HTMLElement | null>) {
 	const listeners = new Set<() => void>();
 	let current: Transform = { x: 0, y: 0, k: 1 };
@@ -131,25 +149,6 @@ function make(region: RefObject<HTMLElement | null>) {
 		height: region.current?.clientHeight ?? 0,
 	});
 
-	// What the canvas's own chrome takes from the pane: a part marked
-	// `data-clear` with the edge it stands against, `left` or `bottom`, and
-	// a `pair` of air beyond it.
-	const clearance = (): Clearance => {
-		const element = region.current;
-		if (!element) return NO_CLEARANCE;
-		const pane = element.getBoundingClientRect();
-		const pair = spacing("pair");
-		const out = { left: 0, bottom: 0, stack: 0 };
-		for (const part of element.querySelectorAll<HTMLElement>("[data-clear]")) {
-			const box = part.getBoundingClientRect();
-			if (part.dataset.clear === "left") {
-				out.left = Math.max(out.left, box.right - pane.left + pair);
-				out.stack = Math.max(out.stack, pane.bottom - box.top + pair);
-			} else out.bottom = Math.max(out.bottom, pane.bottom - box.top + pair);
-		}
-		return out;
-	};
-
 	// The scale moves by `factor` about the pane's centre.
 	const zoomBy = (factor: number) => {
 		const [low, high] = behaviour.scaleExtent();
@@ -185,7 +184,7 @@ function make(region: RefObject<HTMLElement | null>) {
 					zoomIdentity.translate(x, y).scale(Math.min(high, Math.max(low, k))),
 				);
 		},
-		clearance,
+		clearance: () => clearanceOf(region.current),
 		reserve(next) {
 			foot = next;
 		},
@@ -196,7 +195,7 @@ function make(region: RefObject<HTMLElement | null>) {
 					bounds,
 					pane(),
 					spacing("page"),
-					clearance(),
+					clearanceOf(region.current),
 					foot ?? undefined,
 				),
 			);

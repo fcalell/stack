@@ -1146,10 +1146,10 @@ export const StateKeepsTheLayout: StoryObj = {
 };
 
 // A waiting canvas stands the loaded one's ground and grid with three
-// node-shaped cards stacked at its centre, and is busy and inert: no button, no
-// zoom stack, no act, however the page handlers read.
-export const Loading: StoryObj = {
-	render: () => (
+// node-shaped cards where the loaded chain opens, and is busy and inert: no
+// button, no zoom stack, no act, however the page handlers read.
+function Waiting() {
+	return (
 		<>
 			<div className={STAGE} data-testid="loaded">
 				<Canvas label="Loaded" nodes={WORKFLOW.nodes} edges={WORKFLOW.edges} />
@@ -1173,68 +1173,130 @@ export const Loading: StoryObj = {
 				/>
 			</div>
 		</>
-	),
-	play: async ({ canvas }) => {
-		const waiting = await canvas.findByRole("region", { name: "Waiting" });
-		const loaded = await canvas.findByRole("region", { name: "Loaded" });
+	);
+}
+
+// The buttons a canvas draws: the unseen zoom room's one does not count.
+const buttonsOf = (pane: Element) =>
+	[...pane.querySelectorAll("button")].filter(
+		(button) => !button.closest("[data-clear]"),
+	);
+
+// The waiting canvas's cards and the same three nodes loaded in a path with no
+// chip, each box read from its own pane.
+async function boxes(canvas: ReturnType<typeof within>) {
+	const waiting = await canvas.findByRole("region", { name: "Waiting" });
+	const loaded = await canvas.findByRole("region", { name: "Loaded" });
+	const chain = await canvas.findByRole("region", { name: "Chain" });
+	for (const region of [loaded, chain])
 		await waitFor(
-			() => expect(getComputedStyle(loaded).opacity).toBe("1"),
+			() => expect(getComputedStyle(region).opacity).toBe("1"),
 			LAID,
 		);
+	const cards = [
+		...(waiting.querySelector("[aria-hidden]:not(svg):not([data-clear])")
+			?.children ?? []),
+	];
+	const inPane = (pane: Element, box: DOMRect) => ({
+		left: box.left - rect(pane).left,
+		top: box.top - rect(pane).top,
+		width: box.width,
+		height: box.height,
+	});
+	return {
+		waiting,
+		loaded,
+		cards,
+		skeleton: cards.map((card) => inPane(waiting, rect(card))),
+		nodes: WORKFLOW.nodes
+			.slice(0, 3)
+			.map((one) =>
+				inPane(
+					chain,
+					rect(
+						within(chain)
+							.getByText(one.title)
+							.closest("[data-layer] > div") as Element,
+					),
+				),
+			),
+	};
+}
+
+export const Loading: StoryObj = {
+	render: () => <Waiting />,
+	play: async ({ canvas }) => {
+		const { waiting, loaded, cards, skeleton, nodes } = await boxes(canvas);
 		await expect(waiting).toHaveAttribute("aria-busy", "true");
-		await expect(waiting.querySelectorAll("button")).toHaveLength(0);
+		await expect(buttonsOf(waiting)).toHaveLength(0);
 		await expect(waiting.querySelector("[data-grid]")).not.toBeNull();
 		await expect(getComputedStyle(waiting).backgroundColor).toBe(
 			getComputedStyle(loaded).backgroundColor,
 		);
-		const cards = [
-			...(waiting.querySelector("[aria-hidden]:not(svg)")?.children ?? []),
-		];
 		await expect(cards).toHaveLength(3);
-		const node = rect(
-			within(loaded)
-				.getByText(WORKFLOW.nodes[0]?.title ?? "")
-				.closest("[data-layer] > div") as Element,
-		);
-		const pane = rect(waiting);
-		// The same three nodes loaded in a path with no chip: each card is that
-		// node's size and the cards keep the gap the nodes keep.
-		const chain = await canvas.findByRole("region", { name: "Chain" });
-		await waitFor(
-			() => expect(getComputedStyle(chain).opacity).toBe("1"),
-			LAID,
-		);
-		const loadedNodes = WORKFLOW.nodes
-			.slice(0, 3)
-			.map((one) =>
-				rect(
-					within(chain)
-						.getByText(one.title)
-						.closest("[data-layer] > div") as Element,
-				),
-			);
-		for (const [index, card] of cards.entries()) {
-			const here = loadedNodes[index];
-			const after = loadedNodes[index + 1];
-			const next = cards[index + 1];
-			await expect(rect(card).height).toBeCloseTo(here?.height ?? 0, 1);
+		for (const [index, card] of skeleton.entries()) {
+			const here = nodes[index];
+			const after = nodes[index + 1];
+			const next = skeleton[index + 1];
+			await expect(card.height).toBeCloseTo(here?.height ?? 0, 1);
+			await expect(card.width).toBeCloseTo(here?.width ?? 0, 0);
 			if (next && here && after)
-				await expect(rect(next).top - rect(card).bottom).toBeCloseTo(
-					after.top - here.bottom,
+				await expect(next.top - (card.top + card.height)).toBeCloseTo(
+					after.top - (here.top + here.height),
 					1,
 				);
-		}
-		for (const card of cards) {
-			await expect(rect(card).width).toBeCloseTo(node.width, 0);
-			await expect(
-				Math.abs(
-					rect(card).left + rect(card).width / 2 - (pane.left + pane.width / 2),
-				),
-			).toBeLessThan(1);
 		}
 		await expect(rect(waiting).height).toBe(rect(loaded).height);
 	},
 };
+
+// The arrival moves nothing: each skeleton card's box stands within a pixel of
+// the loaded chain's node, at every width and in both modes.
+const arrives = (
+	width: number,
+	height: number,
+	density: "desktop" | "touch",
+	mode: "light" | "dark",
+): StoryObj => {
+	const name = `w${width}x${height}`;
+	return {
+		render: () => <Waiting />,
+		globals: { density, viewport: { value: name, isRotated: false } },
+		parameters: {
+			mode,
+			layout: "fullscreen",
+			viewport: {
+				options: {
+					[name]: {
+						name,
+						styles: { width: `${width}px`, height: `${height}px` },
+						type: width < 600 ? "mobile" : "desktop",
+					},
+				},
+			},
+		},
+		play: async ({ canvas }) => {
+			const { waiting, skeleton, nodes } = await boxes(canvas);
+			await expect(waiting).toHaveAttribute("aria-busy", "true");
+			await expect(buttonsOf(waiting)).toHaveLength(0);
+			await expect(skeleton).toHaveLength(3);
+			for (const [index, card] of skeleton.entries()) {
+				const node = nodes[index];
+				for (const edge of ["left", "top", "width", "height"] as const)
+					await expect(Math.abs(card[edge] - (node?.[edge] ?? 0))).toBeLessThan(
+						1,
+					);
+			}
+		},
+	};
+};
+
+export const ArrivesInPlaceAt375Light = arrives(375, 812, "touch", "light");
+export const ArrivesInPlaceAt375Dark = arrives(375, 812, "touch", "dark");
+export const ArrivesInPlaceAt768Light = arrives(768, 1024, "desktop", "light");
+export const ArrivesInPlaceAt768Dark = arrives(768, 1024, "desktop", "dark");
+export const ArrivesInPlaceAt1440Light = arrives(1440, 900, "desktop", "light");
+export const ArrivesInPlaceAt1440Dark = arrives(1440, 900, "desktop", "dark");
 
 // An `empty` sentence stands centred under the graph's bounds, a `pair` below
 // its bottom edge at any zoom, holds its size on screen, takes no pointer, and
