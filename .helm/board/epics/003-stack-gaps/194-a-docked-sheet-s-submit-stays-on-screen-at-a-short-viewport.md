@@ -39,3 +39,9 @@ The floor stops being a minimum on the scroller and becomes a minimum on the bod
 - The last acceptance box (the Thread showcase's two-page docked Sheet at 320 x 640 and 390 x 667, the submit's bottom measured against the tab bar's top) waits on a design critique run by a session that played no part in the work. The stories assert the same two measures (submit bottom against the region's bottom and against a stand-in tab bar's top).
 
 Native unrendered: the native-ui change is type-checked and verified, not rendered on a phone.
+
+## Review
+Rework, not accepted. Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique (blocker, focus visible): at 320x560 the log's Latest button (y 165-209) is clipped above the log top (217) yet focusable, and a Tab to it rings nothing visible. Submit is clear of the tab bar by 38 px at 320x640, 390x667 and 320x560 (that box is met). Nit: at 320x640 the body's last row sits flush against the submit (0 px gap).
+
+## Owner ruling
+The owner rules rework (blocker): Latest is never focusable while out of view. At 320x560, 320x640 and 390x667 the Latest button's box is inside the log's visible box, or the button is not rendered or is inert whenever the log is shorter than the button plus its inset. A Tab to it draws a visible 2 px ring in every one of those viewports. Submit stays clear of the tab bar (38 px now). The body's last row keeps at least the section gap above the submit (0 px at 320x640 now).

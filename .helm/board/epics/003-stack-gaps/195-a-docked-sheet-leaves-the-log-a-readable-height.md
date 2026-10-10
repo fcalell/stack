@@ -1,6 +1,6 @@
 ---
 id: 003-195
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a docked Sheet leaves the log above it a readable height
@@ -14,7 +14,7 @@ Stead's question sheet docks in a conversation's foot and design/07-interface.md
 ## Acceptance criteria
 - [x] With a docked Sheet open in a filling Thread, the log keeps a floor (a stated number of its own lines or rows, in the contract beside `docked-floor`) at 390 x 844 under a banner, the body giving way down to its own floor before the log goes below it.
 - [x] A docked Sheet with room is unchanged.
-- [ ] The Thread showcase holds the docked Sheet at 390 x 844 under a banner and the critique measures the log's height against the floor.
+- [x] The Thread showcase holds the docked Sheet at 390 x 844 under a banner and the critique measures the log's height against the floor.
 
 ## Open questions
 - [x] Its shape (a log floor as a contract value like `docked-floor`, a lower body floor on touch, or the sheet's head collapsing): the stack session decides, with 003-194.
@@ -32,3 +32,6 @@ A log floor as a contract size, `docked-log-floor`, two rows (96 px on touch, 64
 - The last acceptance box (the Thread showcase's docked Sheet at 390 x 844 under a banner, the log's height measured against the floor by the critique) waits on a design critique run by a session that played no part in the work. The stories assert the log at or over `docked-log-floor` and the body at or over `docked-floor`.
 
 Native unrendered: the native-ui change is type-checked and verified, not rendered on a phone.
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique pass: the log at its floor where the order allows (96 px at 390x645; 77 px at 320x640, below the floor by the ruled order).

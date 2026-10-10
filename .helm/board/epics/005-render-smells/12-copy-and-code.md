@@ -28,3 +28,9 @@ Open: the timing criteria wait for the live critique.
 
 ## Critique
 Partial: every state the story feeds renders correctly; its timing criteria (throttled Escape, copy timing, the clock past `until`) were not driven.
+
+## Review
+Rework, not accepted. Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique partial: the copy timing was never driven. The web timing box stays open; the phone box stays open.
+
+## Owner ruling
+The owner rules rework: prove timing in behaviour stories with a test clock, not a CPU throttle. Web: two copies 1 s apart show Copied at +1.9 s after the second and gone by +2.1 s; a keyboard unfold keeps focus on fold, then text, document.body never active. The web box ticks on a pass; the phone box stays open.

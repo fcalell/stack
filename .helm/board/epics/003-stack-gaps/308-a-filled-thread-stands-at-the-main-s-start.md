@@ -1,6 +1,6 @@
 ---
 id: 003-308
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a filled Thread and its header stand at the main's start
@@ -13,7 +13,7 @@ Stead's card thread on the board ("New story", `packages/server/src/app/routes/w
 
 ## Acceptance criteria
 - [x] A filled Thread's header and its messages start at the main's start, the messages at the measure, as a record in the main does (003-88).
-- [ ] Its input follows 003-307.
+- [x] Its input follows 003-307.
 
 ## Open questions
 - [x] Its shape: the stack session decides.
@@ -31,3 +31,6 @@ Awaiting the batch browser run: the first acceptance box stays unticked.
 
 ## Browser run
 `FilledThreadStandsAtStart1280` passes (thread-fill.stories.tsx, 1 of 1): the item header and every message share one left edge at the log's inset plus the page inset, each message no wider than the measure.
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. No critique unit this round; the behaviour and screens suites hold it.

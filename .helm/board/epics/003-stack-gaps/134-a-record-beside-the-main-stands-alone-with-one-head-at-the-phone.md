@@ -1,6 +1,6 @@
 ---
 id: 003-134
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a record beside the main stands alone at the phone with one head, at the page's gutter
@@ -14,7 +14,7 @@ Stead opens a page's History as a `Screen` in `Split`'s `beside` (github.com/fca
 ## Acceptance criteria
 - [x] A `Split` with a record `beside` the main draws one head at 390 px: one back act and one title, the Screen's.
 - [x] A beside Screen's title and body start at the page's gutter at every width, the same left edge as the banner above and the list.
-- [ ] The Split showcase holds a beside record at the phone width and the critique measures the head's height and the left edges.
+- [x] The Split showcase holds a beside record at the phone width and the critique measures the head's height and the left edges.
 
 ## Open questions
 - [x] Its shape (a component, a variant, a token, an option): the stack session decides, whether the hide rule is repaired or the Screen takes the Place's head as its own.
@@ -38,3 +38,6 @@ Measured on the rendered story (`behaviour-split--beside-headings-1440`, Playwri
 
 ## Browser run (003-304 follow-up)
 `BesideAtThePhone` passes after 003-304 made a touch Screen one row: the head is one visible `header`, the back act then the title on one line (title left at or after the back act's right edge), and the first row's name at the page gutter. The old assertion, title at the gutter, belongs to the two-row head 003-304 deliberately replaced (test updated).
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique pass: beside a record at the phone one 45 px header, Back 44 at x20, h1 at x72; Entries and rows at the gutter x32 at 320 and 390; at 1280 and 1440 h1, Entries and rows share one x.

@@ -32,3 +32,9 @@ A boolean `replying?: boolean` on `ThreadProps` (both platforms), outside the `q
 - The last acceptance box (a log ending on a waiting reply at 390 and 1280, measured by the critique) waits on a design critique run by a session that played no part in the work. The repo holds no native story host, so the native draw is pinned by its source test and `verify` only.
 
 Native unrendered: the native-ui change is type-checked and verified, not rendered on a phone.
+
+## Review
+Rework, not accepted. Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique (rework): the waiting message (94 px at 1280, 104 at 390) against the reply that replaces it (22 / 48 px): the log jumps 72 / 56 px; the waiting form leads with an author-line bar the unbubbled reply lacks. The structure box is met (the log ends on one aria-busy article, pinned to the end).
+
+## Owner ruling
+The owner rules rework: the waiting message draws as the reply it becomes: no author-line bar (the unbubbled reply has none), one skeleton line at the body line height, the same left edge and top. Acceptance at 390 and 1280: the entry's top y is identical waiting and with a one-line reply (the 72/56 px jump becomes 0); a longer reply only adds its extra lines. The log stays pinned to the end, aria-busy, one article.

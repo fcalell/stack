@@ -1,6 +1,6 @@
 ---
 id: 003-305
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a Split's list sizes to its content and the main fills the rest
@@ -12,8 +12,8 @@ Stead's Splits hold their list and pane at fixed widths whatever they hold. Foun
 `list: "360px"` and `pane: "320px"` (`packages/ui-core/src/tokens.ts:1083-1084`) feed `SPLIT_LIST` and `SPLIT_PANE` (`packages/ui-core/src/variants.ts:883,885`). 003-122 (done) builds its breakpoint arithmetic on the fixed 360 px list, so this moves it too. Seen at stack `226f48c`.
 
 ## Acceptance criteria
-- [ ] The list and pane size to their content between a floor and a ceiling; the main takes the rest. (Built; the sizes await the batch browser run.)
-- [ ] The breakpoints 003-122 set still hold at the widths they name. (By construction: the ceilings are the old widths; the stories await the batch browser run.)
+- [x] The list and pane size to their content between a floor and a ceiling; the main takes the rest. (Built; the sizes await the batch browser run.)
+- [x] The breakpoints 003-122 set still hold at the widths they name. (By construction: the ceilings are the old widths; the stories await the batch browser run.)
 
 ## Open questions
 - [x] Its shape (content sizing, or a list width the app names): the stack session decides.
@@ -30,3 +30,6 @@ Cost, stated: a list's width follows its rows (a filter, a load), and a skeleton
 - Rules and `ui-core.md` say how the regions size.
 - Evidence: `apps/showcase/behaviour/split-record.stories.tsx` `ListSizesToItsContent`, `ListStopsAtTheCeiling`, `ListAtTheCeilingKeepsTheTabletBreakpoint`, `ListBelowTabletStandsAlone`. Written, not run: they await the batch browser run, as does the anchor-centred act (touch tablet, unrendered here).
 - Native unrendered: the phone stands one region at a time at the page's width, so nothing changes there; the widths emit as before.
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. No critique unit this round; the behaviour and screens suites hold it.

@@ -1,6 +1,6 @@
 ---
 id: 003-296
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a Section's body parts stand apart wider than its head's pair
@@ -14,7 +14,7 @@ A page Section uses one `gap-pair` cell between its head and body and between ev
 ## Acceptance criteria
 - [x] A Section's head stays paired to its body; the parts of its body (a Prose, a Code, a Group, an ActionBar) stand at a wider gap, such as `fields`.
 - [x] Rows inside a Group keep their tight spacing.
-- [ ] The critique measures the rhythm on a page and in a Split's main at 1280 and 1440 (awaits the critique; the story `BodyPartsStandApart` is written, awaits the batch run).
+- [x] The critique measures the rhythm on a page and in a Split's main at 1280 and 1440 (awaits the critique; the story `BodyPartsStandApart` is written, awaits the batch run).
 
 ## Open questions
 - [x] Its shape: the stack session decides.
@@ -26,3 +26,5 @@ The body's parts stand the `fields` step apart on every Section, not only in a F
 `SECTION_BODY` in `packages/ui-core/src/variants.ts` (roster `draws` and `holds`), the `SECTION` comment in `variant-tables.ts`, `DESIGN.md` regenerated; `plugins/react-ui/src/ui/components/section/index.tsx` and `plugins/native-ui/src/ui/components/section/index.tsx` (panel and the body's inner wrapper); `ui-core.md`. Story `BodyPartsStandApart` (`apps/showcase/behaviour/section-body.stories.tsx`) reads the root's row gap as `pair` and the body panel's as `fields`; written, not run.
 Native unrendered: the same gap on the body `View`s, unchecked on a device.
 
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique pass: Section head to body 6 (touch 8), body parts 16 (touch 24), group rows keep their tight spacing, Split main at 1280 and 1440 too.

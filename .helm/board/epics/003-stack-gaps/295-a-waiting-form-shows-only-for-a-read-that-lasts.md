@@ -1,6 +1,6 @@
 ---
 id: 003-295
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a waiting form shows only for a read that lasts
@@ -26,3 +26,6 @@ Fixed numbers, not a token or an option: `WAIT_DELAY` 200 ms and `WAIT_MIN` 500 
 `ui-core/src/wait.ts` (`WAIT_DELAY`, `WAIT_MIN`, `waitStep`, `test/wait.test.ts`, export `./wait`). Web: `useWait` and `VEIL` in `plugins/react-ui/src/ui/lib/loading.ts`; `QueryBoundary` returns its `loading` inside a `contents invisible` wrapper while veiled and keeps it drawn while held; `Group` and `Section` read their own `loading` through it (a `Section` veils its description line, count and body, the title and act stay). Native: the same hook in `plugins/native-ui/src/ui/lib/loading.ts`, in `QueryBoundary`, `Group` and `Section`. Rules text in both guides and `ui-core.md`. Stories `apps/showcase/behaviour/waiting-late.stories.tsx` (`Fast`, `Slow`, `Held`, `Own50`) are written and type-check; not run (browser batch). The existing waiting stories measure skeleton boxes at once: the veil keeps their boxes, but a role query on a veiled form misses until the delay passes, so they may need a `waitFor` in the batch run. Native unrendered: the veil and the hook are unchecked on a device.
 
 Browser run: `waiting-late.stories.tsx` 4 of 4 pass, `waiting.stories.tsx` 33 of 33, `option-list.stories.tsx` 16 of 16. The run found `useWait` letting the loaded body draw for one render when a read settled inside the minimum (the held state was set in an effect); the hook now keeps the form drawn from the same render (`waiting || drawn`), on both platforms. The waiting stories that read a veiled form (`Bodies`) now wait for the 200 ms delay before asserting it is visible.
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. No critique unit this round; the behaviour and screens suites hold it.

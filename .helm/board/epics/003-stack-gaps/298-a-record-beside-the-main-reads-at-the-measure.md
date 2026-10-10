@@ -1,6 +1,6 @@
 ---
 id: 003-298
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a record beside the main reads at the measure
@@ -31,3 +31,6 @@ No new surface: a `beside` Screen's body composes `PAGE_BODY` with one new cell,
 
 ## Browser run
 `BesideRecordHoldsTheMeasure` passes (split-record.stories.tsx, 8 of 8). The first run failed by 1 px because the test compared the column's left with the region's border box; the region has a `page-wide:border-l` hairline, so the test now adds the region's `borderLeftWidth` (test fix, the column starts inside the hairline).
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. No critique unit this round; the behaviour and screens suites hold it.

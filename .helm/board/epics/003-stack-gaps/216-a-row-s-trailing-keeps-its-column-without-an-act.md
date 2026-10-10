@@ -1,6 +1,6 @@
 ---
 id: 003-216
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a List's trailing values keep one column whether a row has an act or not
@@ -14,7 +14,7 @@ A ListRow draws its `more` act after its trailing value, and a row without one g
 ## Acceptance criteria
 - [x] In a List whose row map declares `more` (or another trailing act), every row's trailing value ends at one x whether or not that row has the act, at every density.
 - [x] A List with no act on any row is unchanged.
-- [ ] The ListRow showcase holds a list with one actless row among rows with acts, measured by the critique at 320, 390 and 1440 (the story `TrailingKeepsItsColumn` is written, awaits the batch run and the critique).
+- [x] The ListRow showcase holds a list with one actless row among rows with acts, measured by the critique at 320, 390 and 1440 (the story `TrailingKeepsItsColumn` is written, awaits the batch run and the critique).
 
 ## Open questions
 - [x] Its shape: the stack session decides.
@@ -26,3 +26,5 @@ The List reserves the more act's square for the rows that have none: it reads it
 `plugins/react-ui/src/ui/lib/acts-room.ts` and `plugins/native-ui/src/ui/lib/acts-room.ts` (the context), `list/index.tsx` on both platforms (computes `room` once from the loaded items and wraps the frame), `list-row/index.tsx` on both (`blank`). The rules pages and `ui-core.md` say it. Story `TrailingKeepsItsColumn` (`apps/showcase/behaviour/list-acts.stories.tsx`) holds three versions, the first with no more act, and asserts the three ages end at one x; written, not run.
 Native unrendered: the same blank square in a `View`, unchecked on a device.
 
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique pass: trailing ages end on one x at every width and density; an actless row keeps a 28/44 blank square.

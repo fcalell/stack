@@ -1,6 +1,6 @@
 ---
 id: 003-192
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a Split opens its pane from the app below wide
@@ -18,7 +18,7 @@ design/07-interface.md "### A workflow: the canvas", Interactions: "A tap on a n
 - [x] A Split can be told to open its pane: below `wide` the pane stands as its side sheet when the app asks, and closing it (its close act, Escape, the scrim) is heard by the app, so the app's selection can clear; from `wide` the pane stands beside the main as today.
 - [x] The Details act stands and works as today, and agrees with the app's state.
 - [x] A Split that never asks is unchanged.
-- [ ] The Split showcase holds a pane opened by the app below `wide` (375 and 768 px) and its close, measured by the critique.
+- [x] The Split showcase holds a pane opened by the app below `wide` (375 and 768 px) and its close, measured by the critique.
 
 ## Open questions
 - [x] Its shape (`open` and `onClose` props, a handle the app holds, or the pane opening whenever it changes from `undefined`): the stack session decides.
@@ -40,3 +40,6 @@ Native unrendered: the native-ui change is type-checked and verified, not render
 
 ## Browser run
 `AppOpensPane375/768/FromWide/BesideARecord` and `PaneStaysClosedUnasked` pass. `AppOpensPane768` first failed: the reopened side sheet's focused Close act showed its 003-301 tooltip and the tooltip took the Escape, leaving the sheet open (a keyboard user would have needed two presses). Fixed in code: `Named` in `icon-button/base.tsx` lets an Escape that hides the tooltip propagate (`allowPropagation`), so the sheet closes on the one press; the tooltip stories still pass.
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique pass: the app-opened pane stands as the phone bottom sheet, the tablet side sheet and beside a record; one Escape closes it and focus returns to Details; onClose is counted.

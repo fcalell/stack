@@ -1,6 +1,6 @@
 ---
 id: 003-301
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: an icon act names itself in a tooltip
@@ -28,3 +28,6 @@ Open: Base UI opens a tooltip on keyboard focus at once (the delay applies to ho
 `plugins/react-ui/src/ui/components/icon-button/base.tsx` (`Named`), `TOOLTIP` in `packages/ui-core/src/variants.ts`, the `IconButton` roster entry (`draws`, `holds`, `owns`) in `roster.ts`, `DESIGN.md` regenerated, the overlay allowlist (`aria-expanded:` for the pressed look). Rules text in `plugins/react-ui/guide/rules.md` and `ui-core.md`. Stories `apps/showcase/behaviour/tooltip.stories.tsx` (`Rest`, `Focus`) cover hover after the delay, Escape, keyboard focus and a menu trigger's tooltip leaving as the menu opens; written, type-check, not run. Touch is not asserted in a story (no coarse-pointer harness in the behaviour stories). Escape inside a sheet may close the sheet as well as the tooltip; unmeasured.
 - Browser run: `tooltip.stories.tsx` (`Rest`, `Focus`) pass. The open question is answered: Escape inside a sheet did not close it, because a dialog hands its first act (Close) focus and the focus tooltip took the first Escape (Base UI blocks the dialog's dismiss while a child tooltip is open). `Named` now cancels a `trigger-focus` open whose focus a dialog handed (the focus did not come from inside the dialog); Tab within the dialog still shows the name. `sheet.stories.tsx` `Modal` holds it.
 - Escape with a name shown (Tab within a sheet to its Close act) still reaches the sheet: the tooltip's Escape propagates (`allowPropagation` in `onOpenChange`), so one press hides the name and closes the sheet (`split.stories.tsx` `AppOpensPane768`).
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. No critique unit this round; the behaviour and screens suites hold it.

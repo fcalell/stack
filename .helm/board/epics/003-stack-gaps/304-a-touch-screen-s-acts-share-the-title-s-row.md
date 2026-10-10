@@ -1,6 +1,6 @@
 ---
 id: 003-304
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a touch Screen's acts share the title's row
@@ -29,3 +29,6 @@ react-ui `components/screen/index.tsx`: the touch head is one `flex-wrap` row (b
 `pnpm check` turbo part 45/45; `verify` passes in ui-core (34/34), react-ui (13/13) and native-ui (19/19). The stories are written, type-check and were not run (the batch browser run measures them).
 
 Native unrendered: the native-ui change is type-checked and verified, not rendered on a phone; Yoga's wrap with a percent `minWidth` is untested.
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. No critique unit this round; the behaviour and screens suites hold it.

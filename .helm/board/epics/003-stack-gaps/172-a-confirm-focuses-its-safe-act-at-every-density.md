@@ -1,6 +1,6 @@
 ---
 id: 003-172
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a confirm opens on its safe act at every density
@@ -17,3 +17,6 @@ A decision (`SheetBase` given `acts`) with no `focus` of its own opens on its fi
 
 ## Built
 `plugins/react-ui/src/ui/components/sheet/base.tsx`: `Dialog.Popup`'s `initialFocus` finds the button named for `acts[0]` when `acts` is given and `focus` is not; the `focus` prop's comment says so. `apps/showcase/behaviour/sheet.stories.tsx`: `Decision` (and `DecisionTouch`, which spreads it) waits for Cancel to hold focus.
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. No critique unit this round; the behaviour and screens suites hold it.

@@ -1,6 +1,6 @@
 ---
 id: 003-193
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a file row holds its path floor beside a chip in a page's list
@@ -13,7 +13,7 @@ Stead's review screen lists its sensitive files as `List` `file` rows with a chi
 
 ## Acceptance criteria
 - [x] A file row with a chip and counts, in a `Section` of a page at 320, 390 and 768 px, draws its path at no less than the floor 003-116 states, and spends the row's free width before cutting the path or the chip.
-- [ ] The showcase's file path floor stories hold a checked row with counts in a page Section, measured by the critique at 320 and 390.
+- [x] The showcase's file path floor stories hold a checked row with counts in a page Section, measured by the critique at 320 and 390.
 
 ## Open questions
 - [x] Why the floor holds in the frame and not in the page: the stack session finds it.
@@ -52,3 +52,6 @@ The floor is the name's characters in `ch` rounded up to the pixel: `minWidth: r
 `plugins/react-ui/src/ui/components/file-row/index.tsx` sets the path's floor to `round(up, ${floor}ch, 1px)`. The `ReviewFloor*` frame in `apps/showcase/behaviour/row-meta.stories.tsx` draws at `text-rendering: geometricPrecision` (fractional advances, as macOS and Windows draw), the play awaits IBM Plex Mono 400 and 500 loaded, and reads each name's stem and tail by their laid-out width against their box, not by `scrollWidth`. On the old floor 5 of the 20 stories of the file fail (`ReviewFloor320`, `ReviewGroupFloor320`, `ReviewFloorTouch320`, `ReviewFloorTouch390`, `ReviewGroupFloorTouch390`: at 12 px the floor is 72.0006 px against 72.0156 px drawn); on the fix all 20 pass.
 
 The native `FileRow` floor is `floor * (--spacing-figures / 4)`, and `figures` is four code figures at `MONO_ADVANCE` rounded up to the pixel, so its floor already covers its glyphs; no phone render was run, so native is unverified.
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique: the path floor holds (biome.json whole, 78/90 px), but `docs/flags.md` drops `docs/` silently at 320 (desktop and touch) and 390 touch (span under 1 px, no ellipsis) and the chip label is cut at 320. Filed as 003-311.

@@ -14,7 +14,7 @@ Not a repeat of 003-118: that story asked the status to yield before the subject
 ## Acceptance criteria
 - [ ] A row whose status words can be said shorter draws the short words when the meta line is out of room for the long ones, so a status is never left as a clipped fragment of its first word, on both platforms.
 - [x] A row with room, and a status with no short form, are unchanged.
-- [ ] The ListRow showcase holds a status with a short form on a line too narrow for it, at 320, 390 and the 440 px list column, measured by the critique.
+- [x] The ListRow showcase holds a status with a short form on a line too narrow for it, at 320, 390 and the 440 px list column, measured by the critique.
 
 ## Open questions
 - [x] Its shape (a `short` label on the status mark, a moment the row words itself as the trailing age does, or a floor in characters under which the status yields to the first part): the stack session decides.
@@ -30,3 +30,6 @@ Not a repeat of 003-118: that story asked the status to yield before the subject
 - Showcase: `behaviour/list-row-status.stories.tsx` (`StatusShort`, `StatusShortResizes`, `StatusLong` and touch twins): at 440, 390 and 320 the drawn words are whole (the long form where it fits, `5 min ago` at 320, the long label still in the tree), a line resized through 440, 400, 360, 330 and back draws one form per width, a row with room and a status with no short form keep the long words (cut as before where they do not fit). Scoped stories run: the `list-row`, `row-meta`, `status`, `list.stories` and `table` files, all passed.
 - The phone's measure is unchecked on a device (the twin is the fallback the ruling names); the native verify suite and type-check pass.
 Native unrendered: short status on a narrow line, on both platforms.
+
+## Review
+Web accepted 2026-10-10; waits on the native render. Critique (nit only): status words are never clipped (short form at 390 and 320); at 440 the long form fits by dropping `· main` whole, which leaves a blank stripe of about 32 px before the status dot, filed as 003-313. The first box names both platforms and stays open. Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass.

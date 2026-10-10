@@ -1,6 +1,6 @@
 ---
 id: 003-199
-status: review
+status: done
 sessions: {}
 ---
 # api: a not-found read does not log an error in the browser console
@@ -32,3 +32,6 @@ A matched GET read whose oRPC answer is 404 leaves the worker as a 200 carrying 
 - `plugins/api/guide/client.md`, `procedures.md`: one sentence each on the wire.
 - Evidence: `plugins/api/test/not-found-read.test.ts` passes under `pnpm check` (the worker's 200 plus header for a GET read, 404 for a POST, a 500 and an unmatched route untouched, the CORS expose header, the client over the worker rejecting with an error `isNotFound` accepts, a failed read not a not found). The `Read` and `Failure` stories in `apps/showcase/behaviour/not-found.stories.tsx` pass (4 tests in the file, peak 1511 MiB): `Read` draws the Missing form through `createClient` over a fetch answering 200 plus the header, with no Retry and no `console.error`; `Failure` (a 500) draws the failed form and Retry reads again.
 - Real network: the showcase's own worker under `wrangler dev` (assets and `/rpc` on one origin) and headless Chromium open `/deploys/zzz`, a deploy `deploys.get` answers not found, reading every console message through `page.on("console")`. On master's worker the browser logs `Failed to load resource: the server responded with a status of 404 (Not Found)` for `/rpc/deploys/get` (twice, one per request) and draws the Missing form. With this change `/rpc/deploys/get` answers 200 with `x-stack-not-found: 1`, the console holds no message at all, and the Missing form is drawn with no Retry.
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. No critique unit this round; the behaviour and screens suites hold it.

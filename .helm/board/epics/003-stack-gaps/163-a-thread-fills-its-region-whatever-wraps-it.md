@@ -1,6 +1,6 @@
 ---
 id: 003-163
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a Thread fills the space its region gives it whatever wraps it
@@ -14,8 +14,8 @@ A filling Thread marks its root `data-fill`, and the regions read the mark with 
 ## Acceptance criteria
 - [x] A Thread fills a Place body or a Split's main at 375, 768 and 1440 px as the region's direct child, with a part above it as its sibling, with the log scrolling inside the region and pinned to the latest entry and the input docked at the foot.
 - [x] A part placed above the Thread in the same region (a banner, an item header) stays at its place while the log scrolls.
-- [ ] A region with no Thread keeps its scrolling form.
-- [ ] The Thread showcase holds a Thread under a banner in a Split's main, measured at 390 and 1440.
+- [x] A region with no Thread keeps its scrolling form.
+- [x] The Thread showcase holds a Thread under a banner in a Split's main, measured at 390 and 1440.
 
 ## Open questions
 - [x] Ruled: no new surface. A part above a Thread is a sibling in the region's fragment, the Thread its direct child; the head pairs with a Banner after it. A wrapped Thread is unsupported on both platforms.
@@ -30,3 +30,6 @@ The story's title and Goal asked that a Thread fill its region whatever wraps it
 
 ## Owner ruling
 The owner accepts the cut: a Thread fills its region as the region's direct child (a part above it a sibling), as the rules say. The 390 measure and the phone check still run.
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique pass: a Thread under a banner at 390 and 1440, banner pair gap 8/6, the log scrolls on its own, main scrollHeight == clientHeight; a region without a Thread keeps its scrolling form.

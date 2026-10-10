@@ -45,3 +45,6 @@ The owner rules build: the Table chooses its form from the page width through on
 
 ## Open
 The phone live criterion on the harness (a row tap re-renders only that row) is not run; the owner's ruling covers the web form only. The story stays `todo` until it is.
+
+## Review
+Web accepted 2026-10-10 on the owner's ruling and the suite; waits on the native render (the phone box stays open). Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass.

@@ -1,6 +1,6 @@
 ---
 id: 003-309
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a record's header in a Split's main holds its own acts
@@ -12,7 +12,7 @@ Stead puts an open record's ends (End the thread, Delete the thread, a card's Dr
 `ItemHeader` takes only overline, title, facts and loading (`plugins/react-ui/src/ui/components/item-header/index.tsx`), and `Split` has no slot for its main's acts (`split/index.tsx:92-105`); only a `beside` `Screen` has `actions` and `more`. Seen at stack `226f48c`.
 
 ## Acceptance criteria
-- [ ] A record in a Split's main can carry its acts and a more in its header, on the header's first line at the end. (Built; the position awaits the batch browser run.)
+- [x] A record in a Split's main can carry its acts and a more in its header, on the header's first line at the end. (Built; the position awaits the batch browser run.)
 - [x] Below `tablet`, where the record stands alone with the Place's back act, the acts stay reachable in one place, not two.
 - [x] Native the same.
 
@@ -28,3 +28,6 @@ Props on `ItemHeader`: `actions` (icon acts) and `more` (menu items), the names 
 - Rules (react-ui, native-ui) and `ui-core.md` say where a record's acts stand and that they are not also the Place's.
 - Evidence: `apps/showcase/behaviour/split-record.stories.tsx` `RecordActsOnTheOverlineLine`, `RecordActsOnTheTitleLine`, `RecordActsStayInOnePlaceBelowTablet`. Written, not run: they await the batch browser run.
 - Native unrendered: the row is `flex-row` with the text `flex-1` and the acts `shrink-0`.
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. No critique unit this round; the behaviour and screens suites hold it.

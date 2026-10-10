@@ -1,6 +1,6 @@
 ---
 id: 003-212
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a Sheet opened from a pick's closing act returns focus to the pick
@@ -13,7 +13,7 @@ A `Sheet` returns focus to the element that opened it. A pick's closing act (`Pi
 
 ## Acceptance criteria
 - [x] A Sheet opened from a Picker's or a Menu's act returns focus to that picker's or menu's trigger when it closes without leaving the page, at every density.
-- [ ] A Sheet whose submit navigates leaves focus where the destination's rules put it, not on the body.
+- [x] A Sheet whose submit navigates leaves focus where the destination's rules put it, not on the body.
 - [x] The showcase holds a Picker whose closing act opens a Sheet, checked by a behaviour story on close.
 
 ## Open questions
@@ -31,3 +31,6 @@ A `Sheet` returns focus to the element that opened it. A pick's closing act (`Pi
 
 Native unrendered: native-ui has no keyboard focus order to move (touch and screen reader focus follow the platform), so the web mechanism has no native twin.
 - Browser run: `apps/showcase/behaviour/sheet.stories.tsx` 32 of 32 pass (`OpenedByAPicksAct` among them; its Escape step needed the tooltip fix of 003-301 below).
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. No critique unit this round; the behaviour and screens suites hold it.

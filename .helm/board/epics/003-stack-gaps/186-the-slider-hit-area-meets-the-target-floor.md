@@ -1,6 +1,6 @@
 ---
 id: 003-186
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: the Slider's hit area meets the target floor
@@ -17,3 +17,6 @@ Measure the thumb, its track control (`min-h-target`, the element Base UI takes 
 
 ## Ruled
 Not a defect, no code. The drawn thumb is a mark on a full-width target; the target floor applies to the control, which meets it. The stories run's axe pass also checks `target-size` on every slider story.
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. No critique unit this round; the behaviour and screens suites hold it.

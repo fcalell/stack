@@ -1,6 +1,6 @@
 ---
 id: 003-306
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a short Sheet draws centred on the desktop
@@ -29,3 +29,6 @@ The line falls at the viewport and is drawn once per open (owner ruling). A desk
 - `apps/showcase/behaviour/sheet.stories.tsx`: `SideSheetFitsItsContent` becomes `ShortSheetIsACentredCard` (centred on both axes, under half the viewport, foot inside, border on all sides) and `LongFormStaysASideSheet` (24 fields at 1440x900: full height, right edge, foot on screen). Written and type-checked, not run (they await the batch browser run, as does the measured line itself).
 - Gate: `pnpm check` type-check and tests pass; its Biome step cannot see files under `.claude/worktrees` (every path ignored), so the changed files were format-checked by hand. `pnpm verify` passes in ui-core (34/34) and react-ui (13/13).
 - Browser run: `apps/showcase/behaviour/sheet.stories.tsx` 32 of 32 pass (`ShortSheetIsACentredCard`, `LongFormStaysASideSheet`). The first browser run found the long form 4 px down mid-slide: the measuring frame mounted with the centred sheet's rise (`translate-y-pair`), which the switch to the side sheet inherited; `SheetBase` now plays no motion on the measuring frame (`measuring`), so the form it settles on is the one that enters.
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. No critique unit this round; the behaviour and screens suites hold it.

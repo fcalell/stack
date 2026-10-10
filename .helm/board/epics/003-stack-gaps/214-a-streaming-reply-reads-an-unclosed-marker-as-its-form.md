@@ -1,6 +1,6 @@
 ---
 id: 003-214
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a reply that is still streaming does not draw its unclosed Markdown marker as text
@@ -14,7 +14,7 @@ A `Message` of the `other` author draws its `body` as markdown through `Prose`, 
 ## Acceptance criteria
 - [x] A reply marked as still arriving draws an unclosed emphasis, strong, code span or link run in its own form from its first character, and the closing marker changes nothing already drawn, on both platforms.
 - [x] A finished reply, and a `Message` that is not marked, read as before (an unmatched marker stays text).
-- [ ] The Message or Thread showcase holds a reply streamed through an open marker, measured at 390 and 1280 by the critique.
+- [x] The Message or Thread showcase holds a reply streamed through an open marker, measured at 390 and 1280 by the critique.
 
 ## Open questions
 - [x] Its shape (a `streaming` flag on the `other` message, a Prose prop, or the lexer completing a trailing run on its own): the stack session decides.
@@ -28,3 +28,9 @@ A `streaming` flag on the `other` `Message` (and a Thread `message` slot of the 
 - Docs: both rules pages, `ui-core.md`, `ui-core/README.md`; `DESIGN.md` regenerated; `verify` passes in ui-core, react-ui, native-ui.
 - Evidence: `apps/showcase/behaviour/message-streaming.stories.tsx` (open strong, em and code span drawn; a finished reply keeps its `*`) written, not run; the showcase criterion (measured at 390 and 1280 by the critique) stays for the batch.
 - Native unrendered: same function through `Prose`.
+
+## Owner ruling
+The owner rules the closing-marker clause ("the closing marker changes nothing already drawn") covered by the unit test, as a story has no arriving-text control to render it.
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique pass: an open strong, em or code run is drawn in its form while streaming; a finished reply keeps a stray `*` as text. The closing-marker criterion is covered by the unit test (owner ruling above); a story has no arriving-text control to render it.

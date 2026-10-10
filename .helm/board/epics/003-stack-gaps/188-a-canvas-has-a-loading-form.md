@@ -33,3 +33,9 @@ The canvas guide (`plugin-react-ui/guide/canvas.md`) names no loading form.
 
 ## Owner ruling
 The owner confirms the narrowing: while loading, no zoom stack and no foot are drawn (both are overlays, so nothing moves when the nodes arrive).
+
+## Review
+Rework, not accepted. Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique (rework): the loading form is 592 px, as the loaded frame, aria-busy, no zoom stack; but the skeleton nodes are 240x56 against the loaded 240x74 (18 px, 24% short, so nodes jump on arrival) and the skeleton gap is 32 against the loaded 40.
+
+## Owner ruling
+The owner rules rework: the skeleton node takes the loaded canvasNode cell's size (240x74, read from the same cell, no second constant), and the column gap is the loaded gap, 40. Acceptance at 375, 768 and 1440, light and dark: skeleton node heights and gaps equal the loaded canvas's; the frame stays 592 px, aria-busy, no zoom stack.

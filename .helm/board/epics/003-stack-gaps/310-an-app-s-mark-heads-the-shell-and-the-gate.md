@@ -1,6 +1,6 @@
 ---
 id: 003-310
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: an app's mark heads the Shell's sidebar and the Gate, and is its icon
@@ -40,3 +40,6 @@ Showcase: the app's config sets `icon: "/mark.svg"` and sign-in and connect pass
 
 Native unrendered: the Gate loses its `mark` prop, no new native surface.
 - Browser run: `mark.stories.tsx` 7 of 7 pass. The two "without a mark" stories failed because the showcase's own providers mount `MarkProvider` with its icon around every story; `MarkProvider` now takes `mark: AppMark | null` (null scopes a subtree to no mark, the context's own empty value) and the stories mount `null`.
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. No critique unit this round; the behaviour and screens suites hold it.

@@ -1,6 +1,6 @@
 ---
 id: 003-211
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a Split takes the keyboard to the record it opens
@@ -12,9 +12,9 @@ Stead's Now place is a `Split` whose list holds every item that needs the operat
 `Split` (`components/split/index.tsx`) and `Place` hold no skip act, no landmark prop and no focus move on open; the one focus helper, `focusFirst` in `lib/focus.ts`, serves the foot region (`useFootFocus`). `reference.md` rules skip links out as screen-reader work ("screen readers are not a target"); this is the keyboard alone, which the canvas and the sheets already serve (focus moves into an opened sheet and back). The app moving focus by hand needs a ref and a `.focus()` into the roster's markup.
 
 ## Acceptance criteria
-- [ ] When a list row opens a record in `main`, the next Tab from the row (or the open itself) reaches the record's head or first control, not the list's next row, at every width the list and main stand side by side; Shift+Tab returns to the row.
+- [x] When a list row opens a record in `main`, the next Tab from the row (or the open itself) reaches the record's head or first control, not the list's next row, at every width the list and main stand side by side; Shift+Tab returns to the row.
 - [x] Walking the list row by row with the keyboard alone, without opening, is unchanged.
-- [ ] The Split showcase holds a long list with an open record, checked by a behaviour story counting the Tab stops to the record.
+- [x] The Split showcase holds a long list with an open record, checked by a behaviour story counting the Tab stops to the record.
 
 ## Open questions
 - [x] Its shape (focus moved to the record's head on open, a skip act after the list, or another): the stack session decides.
@@ -30,3 +30,9 @@ Stead's Now place is a `Split` whose list holds every item that needs the operat
 - Below `tablet` the list is hidden when a record opens, so the open lands on the record the same way.
 
 Native unrendered: native-ui has no keyboard focus order to move (touch and screen reader focus follow the platform), so the web mechanism has no native twin.
+
+## Owner ruling
+The owner rules the Shift+Tab clause: "Shift+Tab returns to the row" reads "Shift+Tab returns to the list". The criterion is met on that reading.
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. No critique unit this round; the behaviour and screens suites hold it.

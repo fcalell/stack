@@ -33,3 +33,9 @@ A Canvas with one node and no edge has nowhere to say that the graph is not yet 
 
 ## Owner ruling
 The owner confirms the narrowing: the text stands under the graph's bounds, not at the view's centre, since a lone trigger node holds the centre.
+
+## Review
+Rework, not accepted. Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique (rework): the empty text is 13 px meta ink under the node with aria-describedby; at 375 (263 px pane) the caption (max-w-measure 248) runs from 84 to 332 px, past the pane's 319 edge, so "...the trigger's port." is cut, as is the 240 px node. Nit: the gap under the node shrinks to 2 px when zoomed out.
+
+## Owner ruling
+The owner rules rework: caption width = min(measure, pane width - 2 page insets), and it wraps; the initial fit places the lone node and the caption wholly inside the canvas box. Acceptance at 375 (263 px pane) and 1440: caption and node edges inside the pane (0 px clipped), caption at the floor size. The same fit fixes the pane overflow of 003-291 at 375. Nit: the gap under the node never shrinks below `pair` when zoomed out (2 px now).

@@ -1,6 +1,6 @@
 ---
 id: 003-198
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a touch Sheet's head keeps a readable title column beside a long submit
@@ -37,3 +37,6 @@ After: the title is 205.8 px (3/5 of the row) on at most 2 lines in every long-s
 Stories in `apps/showcase/behaviour/sheet.stories.tsx` (`touchHead`: `TouchHeadKeepsItsTitle`, `TouchHeadLongSubmit375`, `TouchHeadLongSubmitFits390`, `TouchHeadGains375`, `TouchHeadGains390`, `TouchHeadLongTitle375`, `TouchHeadLongTitle390`, `TouchHeadDone375`, `TouchHeadDone390`, `TouchHeadShortTitleOpen375`) measure title lines, the submit's top against the title's, its 44 px and its end edge. The sheet, place-foot, split, table and form-leave story files pass (80 tests, peak 2384 MiB). `pnpm check` turbo part 45/45; the three `verify` runs pass. The third box waits on the critique.
 
 Native unrendered. The native head is held by `verify` and type-check only; Yoga's wrap with a percent `max-w` is not rendered.
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. No critique unit this round; the behaviour and screens suites hold it.

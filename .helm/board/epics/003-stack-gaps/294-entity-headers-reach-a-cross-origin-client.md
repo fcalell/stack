@@ -1,6 +1,6 @@
 ---
 id: 003-294
-status: review
+status: done
 sessions: {}
 ---
 # plugin-api: the entity headers reach a cross-origin client
@@ -24,3 +24,6 @@ Built to the ruling as written.
 
 ## Built
 `STACK_EXPOSED_HEADERS` in `plugins/api/src/wire.ts` lists the three headers the client reads; `plugins/api/src/worker/index.ts` hands it to `cors({ exposeHeaders })`, so a browser on another origin reads `x-stack-reads` and `x-stack-writes` as well as `x-stack-not-found`. `plugins/api/test/exposed-headers.test.ts` holds three things: every `STACK_*_HEADER` the wire exports is in the list (a header added to `wire.ts` fails the test until it joins), a request from an allowed origin answers `Access-Control-Expose-Headers` naming all three, and a request with no `Origin` carries no CORS header. The test passes under `node --test`.
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. No critique unit this round; the behaviour and screens suites hold it.

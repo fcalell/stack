@@ -1,6 +1,6 @@
 ---
 id: 003-297
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: the desktop's small sizes reach a comfortable floor
@@ -32,3 +32,6 @@ The owner's ruling: the whole desktop scale steps up one rung, `BODY_SIZE.deskto
 - Evidence: `pnpm check` and `pnpm verify` in ui-core (34/34), react-ui and native-ui pass. Native unrendered: the phone keeps the touch set, so nothing changes there.
 - Any frame that now clips (a 52 row, a 28 target in a dense toolbar, a 488 measure) is a new gap for the critique. Browser runs (stories, screens) await the batch.
 - Browser run (canvas files, Chromium 141): `canvas.stories.tsx` 49/49, `canvas-overview.stories.tsx` 21/21, `canvas-touch.stories.tsx` 54/54 pass (124 of 124 over the three files). The run moved three things the desktop step made stale: a port's hit is the desktop `target`, 28 (`PortGeometry` read 24); the `TALL` canvas stage is 80rem, because the workflow's nodes are 74 tall and no longer fit 72rem at scale 1 (`OpensCentred`); a glyph's spinner mark is 14 (`icon-meta`) over a 16 icon, so the marks' offset takes the glyph border's pixel back (`MARK`, `-mr-px`, `-mt-px`, `-mb-px` in `canvas/node.tsx`) and clears the icon again (`MarksClearTheIcon`).
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. No critique unit this round; the behaviour and screens suites hold it.

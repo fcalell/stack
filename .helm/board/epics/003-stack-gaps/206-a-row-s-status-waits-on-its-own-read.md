@@ -29,3 +29,9 @@ A `status` may be `{ loading: true }` (`RowStatus`, ui-core `descriptors.ts`, ta
 - Showcase: `behaviour/list-row-status.stories.tsx` (`StatusWaits`, `StatusWaitsKnown` and their touch twins) draws a `List` whose Agents status waits, in a 390 and a 440 px column, in a plain list and in a `known` list: the waiting row is as tall as its answered self, the rows under it keep their top and height after the answer, a row with no status stays a line shorter. Scoped stories run: the `list-row`, `row-meta`, `status`, `list.stories` and `table` files, all passed.
 - The phone's render is unchecked on a device; the native verify suite and type-check pass.
 Native unrendered: status waits, on both platforms.
+
+## Review
+Rework, not accepted. Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique (rework): row height is held waiting and loaded (52/64), but the waiting bar starts at x=16 against the loaded status text at x=28 on desktop and x=32 on touch, and is 140/162 px wide against the narrow loaded "2 running".
+
+## Owner ruling
+The owner rules rework: the waiting bar starts at the loaded status text's x (28 desktop, 32 touch) and is at most `measure-short` wide; the row height stays 52/64. Acceptance at 390 and 1280: the bar's left edge equals the arriving status text's left edge, no horizontal shift on arrival. The native box stays open.

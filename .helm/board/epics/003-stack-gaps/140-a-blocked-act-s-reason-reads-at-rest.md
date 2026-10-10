@@ -36,3 +36,9 @@ The acceptance asked that the reason stay the act's description for assistive te
 
 ## Owner ruling
 The owner accepts the cut for now: no held line height. The critique measures the unblock at touch and desktop, light and dark; a held height is built only if the critique flags the jump.
+
+## Review
+Rework, not accepted. Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique: the reason draws at rest (13/15 px, contrast 6.9-9.1:1); aria-describedby is not delivered (cut by the builder); the held line height was cut on the condition that the critique flags the jump, and the jump is real: unblocking removes a line, the bar goes 58 -> 32 px on desktop (26 px) and 126 -> 96 touch (30 px). Its blocked-reason case from 003-183 joins this rework.
+
+## Owner ruling
+The owner rules rework, build it, no prop and no reserved-height option. An ActionBar holds its reason line once that line has drawn, for the bar's lifetime: a bar that has ever shown a blocked act's reason keeps the line's box, empty and aria-hidden, when the act unblocks (the first blocked appearance may still add a line). Acceptance at 1280 and 390, light and dark: after unblocking, the bar's height and the offset of everything below differ by 0 px (the critique saw 58 -> 32 desktop, 126 -> 96 touch). Add a blocked-then-pending swap story: a pending bar replacing a bar that holds a reason line keeps that bar's height (closes the gap on 003-183). `aria-describedby` stays cut.

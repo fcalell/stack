@@ -11,7 +11,7 @@ A `Section` whose direct children are `FormField`s and an `ActionBar` (no `Form`
 ## Acceptance criteria
 - [ ] A loading `Section` holding `FormField`s and an `ActionBar` as direct children stands one skeleton field per field and the bar's waiting form, at the loaded section's height, on both platforms.
 - [x] A loading `Section` of fields alone, a `Form`, a `Group` or a `List` is unchanged.
-- [ ] The Section showcase holds the form loading beside loaded, measured by the critique.
+- [x] The Section showcase holds the form loading beside loaded, measured by the critique.
 
 ## Open questions
 - [x] Its shape (the Section drawing a direct bar's waiting form after the skeleton fields, or another): the stack session decides; a narrowing goes to the owner before the build.
@@ -27,3 +27,6 @@ Evidence: `behaviour/waiting.stories.tsx` holds `SectionOverFieldsAndItsBar` (+ 
 The first criterion is measured on the web; the native twin has no render run here and waits on the critique, as does the showcase measure.
 
 Native unrendered: the native-ui change is type-checked and verified, not rendered on a phone.
+
+## Review
+Web accepted 2026-10-10; waits on the native render. Critique pass: loaded and waiting heights equal (222/284/284); the waiting bar is 151 against 55 px, the same nit as 003-179, dropped. The first box names both platforms and stays open. Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass.

@@ -26,3 +26,6 @@ Stead's knowledge page swaps its rendered text for a source `TextArea` when the 
 react-ui: `autoFocus` goes to the element (React focuses on mount) and a stable ref (`lib/caret.ts`, `caretAtEnd`) sets the selection to the text's end once on mount, skipping a type with no selection (`email`); `Input` keeps its cell and inline sources (`autoFocus ?? (cell?.starts || inline?.focus)`). native-ui: `autoFocus` on the `TextInput` and `selection` at the end for the first render only (`lib/caret.ts`, `useCaretAtEnd`). The roster entries, both `rules.md` and `ui-core.md` state it.
 Evidence: `apps/showcase/behaviour/text-area.stories.tsx` (`AutoFocusTakesTheFocusAtTheEnd`: after the Edit act the field is `document.activeElement`, the caret at the end, and typing mid-text keeps the caret; `LoadedFieldKeepsTheFocus`) and `input.stories.tsx` (the same two) pass. The native side is checked by type-check and `verify` only (no native run exists in the repo).
 Native unrendered: field takes focus with caret at end, on both platforms.
+
+## Review
+Web accepted 2026-10-10; waits on the native render. The first box names both platforms and stays open; the web edit-in-place swap is ticked. Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass.

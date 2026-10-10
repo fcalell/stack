@@ -12,7 +12,7 @@ Stead's shell passes `Shell` a count on its Now place (github.com/fcalell/stead,
 003-92 (done) named this seam ("the Now count crowds the glyph") and its Built note stands the plain number "at the glyph's top end" through the Shell's `TAB_COUNT` overlay. As a plain number without the pill's ground, a two-figure count now starts where the glyph ends. The app passes only the count, so it cannot place it.
 
 ## Acceptance criteria
-- [x] At 320, 390 and 768 px, light and dark, a one-, two- and three-figure tab count stands on its glyph's top-right corner as a badge (the owner's second ruling), its start half its width inside the glyph's edge and its end inside the bar, and the tab's label stays centred under the glyph.
+- [ ] At 320, 390 and 768 px, light and dark, a one-, two- and three-figure tab count stands on its glyph's top-right corner as a badge (the owner's second ruling), its start half its width inside the glyph's edge and its end inside the bar, and the tab's label stays centred under the glyph.
 - [ ] The Shell showcase holds a tab bar with a two-figure count, measured by the critique.
 
 ## Open questions
@@ -43,3 +43,9 @@ Evidence (identical in light and dark): the start is -4.07, -8.14 and -12.21 px 
 - The critique has not measured the Shell frame (the second acceptance box).
 
 Native unrendered: the native-ui change is type-checked and verified, not rendered on a phone.
+
+## Review
+Rework, not accepted. Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique (blocker, legibility): the tab count overlaps the glyph's strokes by 4.3 px ("4"), 8.5 ("44") and 12.8 ("99+") at 320 and 390, same ink, no ground or gap; "44" reads "#4". Cause: the second ruling (start half the count's width inside the glyph edge). The count stays inside the bar (13 px from the end at 320). The first box was ticked on the second ruling and is unticked.
+
+## Owner ruling
+The owner withdraws the second ruling (start half the count's width inside the glyph edge): it overlaps the glyph's ink by 4.3, 8.5 and 12.8 px. New rule: the count never touches the glyph's ink; it stands on the glyph's top-right corner starting at the glyph box's edge (overlap 0-2 px at most); it sits on a ground-coloured ring (the bar's ground, at least 2 px) so contact never reads as ink on ink; the bar's end is the second limit: on the last tab at 320 "99+" ends at least 0 px (aim at least 4) inside the bar, and if not the count steps toward the glyph, never past the ink. The 99+ cap and the unmoved label stay. Acceptance: 4, 44 and 99+ at 320, 390 and 768, light and dark: overlap with the glyph ink 0 px; "44" does not read "#4".

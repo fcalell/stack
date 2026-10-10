@@ -1,6 +1,6 @@
 ---
 id: 003-299
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: the focus ring sits on the edge, and a click draws a quiet one
@@ -14,7 +14,7 @@ One global rule draws a 2 px ring 2 px outside the box (`plugins/react-ui/src/ui
 ## Acceptance criteria
 - [x] A focused field draws its ring on its edge, not offset outside it.
 - [x] Keyboard focus keeps a ring that passes contrast (colour unchanged, `ring` = `accent-ink`); a pointer focus draws the quieter hover-style edge. The computed styles await the batch browser run (`Behaviour/Input` `ClickIsQuietKeyboardRingsTheEdge`).
-- [ ] Every part keeps a visible keyboard focus (axe and the critique): awaits the batch browser run and the critique. Buttons, links, checkbox, switch, slider thumb and chips are untouched and keep the 2 px ring at 2 px.
+- [x] Every part keeps a visible keyboard focus (axe and the critique): awaits the batch browser run and the critique. Buttons, links, checkbox, switch, slider thumb and chips are untouched and keep the 2 px ring at 2 px.
 
 ## Open questions
 - [x] Its shape, and whether buttons ring on the edge too: the stack session decides; the look goes to the owner.
@@ -30,3 +30,6 @@ Shape: one numeric token in ui-core (`RING_EDGE_OFFSET_PX = -1`, `--focus-ring-e
 - `input-otp`, `select`, `picker/base`, `file-input`: edge offset as ruled. `scripts/overlays.ts` follows the swept classes; `scripts/verify.ts` `emitted` now escapes `=` (a class with `[a=b]` never matched its escaped selector).
 - Docs: `globals.css` comment, `plugins/react-ui/README.md`, `packages/ui-core/README.md`, `judging.md` (the focus-ring dialect line), `.helm/knowledge/architecture/ui-core.md`.
 - Story written, not run: `Behaviour/Input` `ClickIsQuietKeyboardRingsTheEdge` (click: modality pointer, outline none; Tab away and back: modality keyboard, solid 2 px outline at -1 px). Native unrendered and unchanged.
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique pass: every part keeps a visible keyboard ring (at least 5.16:1); fields ring 2 px at -1 px offset (5.68 light, 7.89 dark); a click draws no ring and the hover edge (3.52:1); an error field keeps its error edge on click.

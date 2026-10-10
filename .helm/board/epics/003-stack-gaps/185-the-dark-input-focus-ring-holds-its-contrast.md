@@ -1,6 +1,6 @@
 ---
 id: 003-185
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: the dark Input focus ring holds its computed contrast
@@ -16,3 +16,6 @@ Keyboard-focus (Tab, Shift+Tab) the dark frame's Input in `atom-input--rest` and
 
 ## Ruled
 Probe artifact, no code. The 1.78 sample (rgb(5,57,163) over (22,24,26)) is the light frame's ring colour, not the dark one. The ring token holds in the error field too.
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. No critique unit this round; the behaviour and screens suites hold it.

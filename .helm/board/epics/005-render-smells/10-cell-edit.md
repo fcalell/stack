@@ -33,3 +33,9 @@ Open: the timing criteria wait for the live critique.
 
 ## Critique
 Partial: every state the story feeds renders correctly; its timing criteria (throttled Escape, copy timing, the clock past `until`) were not driven.
+
+## Review
+Rework, not accepted. Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique partial: the story's timing criteria (throttled Escape) were never driven; a CPU throttle proves nothing about timing. The web timing box stays open; the phone box stays open.
+
+## Owner ruling
+The owner rules rework: prove timing in behaviour stories with a test clock, not a CPU throttle. Web: Escape with a parent whose commit resolves after 100 ms leaves the old value (commit called 0 times) and focus on the cell; the role cell's list is open in the edit's first rendered state (no closed-list frame). The web box ticks on a pass; the phone box stays open.

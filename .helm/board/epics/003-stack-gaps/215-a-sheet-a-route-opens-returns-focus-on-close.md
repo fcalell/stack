@@ -1,6 +1,6 @@
 ---
 id: 003-215
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a Sheet a route opens returns focus somewhere when it closes
@@ -29,3 +29,6 @@ A `Sheet` returns focus to the element that opened it; a sheet a route mounts op
 
 Native unrendered: native-ui has no keyboard focus order to move (touch and screen reader focus follow the platform), so the web mechanism has no native twin.
 - Browser run: `apps/showcase/behaviour/sheet.stories.tsx` 32 of 32 pass (`OpenedByARoute` among them).
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. No critique unit this round; the behaviour and screens suites hold it.

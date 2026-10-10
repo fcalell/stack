@@ -28,3 +28,9 @@ Stead's Underway rows read a run's node and its spend so far, with the age since
 - `rules.md` (both platforms) and `ui-core.md` name `{ age, beside }`.
 - Showcase: the ListRow `works` frame and `behaviour/row-meta.stories.tsx` pass `{ age, beside }` in place of a frozen `value` string; `TrailingBeside` (and a touch twin) holds a live age and spend in a 335 px column and checks they are whole or gone together.
 Native unrendered: live age beside a value, on both platforms.
+
+## Review
+Rework, not accepted. Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique: the trailing "3 min · $0.12" stands whole beside the chevron and is live (clock +5 min reads 8 min), but the ListRow showcase (`shared-listrow--rest`) does not draw the `works` age+spend row (ROW_META_LINE, frames/list-row.tsx:269); only the behaviour story renders it. A showcase gap.
+
+## Owner ruling
+The owner rules rework: add the `works` age+spend row (ROW_META_LINE) to the `shared-listrow--rest` showcase frame (`plugins/react-ui/src/ui/showcase/frames/list-row.tsx`) at 320 and 1440 in a 335 px column. The native box stays open.

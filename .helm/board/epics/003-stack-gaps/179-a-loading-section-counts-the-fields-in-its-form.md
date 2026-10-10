@@ -1,6 +1,6 @@
 ---
 id: 003-179
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a loading Section counts the fields in its Form
@@ -14,7 +14,7 @@ A loading `Section` reads its body by the depth rule (`plugin-react-ui/src/ui/li
 ## Acceptance criteria
 - [x] A loading `Section` whose body is a `Form` stands one skeleton field per `FormField` the `Form` holds, and its `ActionBar`'s waiting form, at the loaded section's height.
 - [x] A loading `Section` holding fields directly, a `Group` or a `List` is unchanged.
-- [ ] The Section showcase holds a loading `Section > Form` beside the loaded one, and the critique measures both heights.
+- [x] The Section showcase holds a loading `Section > Form` beside the loaded one, and the critique measures both heights.
 
 ## Open questions
 - [x] Its shape (the walker reading through a `Form`, the `Form` taking the Section's loading itself, or another): the stack session decides.
@@ -41,3 +41,6 @@ The owner rules: fields plus an `ActionBar` as direct Section children (no Form)
 Second ruling: the field kinds left (Slider, Select, OptionList, SegmentedControl, and folded fields) go to 003-293. 179 waits on the critique; the native form is not rendered.
 
 Native unrendered: the native-ui change is type-checked and verified, not rendered on a phone.
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique pass: loaded and waiting heights equal (386/492/492 at 1280/390/320), hidden inputs not tabbable. The waiting bar's skeleton (151x32 against the loaded Save 55x32) is dropped, not filed.

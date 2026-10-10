@@ -1,6 +1,6 @@
 ---
 id: 003-202
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a Canvas keeps a share of the phone's viewport while the head and banners scroll away above it
@@ -15,7 +15,7 @@ Stead's workflow canvas stands in a `Split`'s main under an `ItemHeader` and, wh
 - [x] Under `tablet` a `Canvas` keeps at least a share of the viewport's height whatever stands above it in its column (an `ItemHeader`, `Banner`s), the head and Banners scrolling away above it as the page scrolls.
 - [x] A touch pan on the canvas pans the graph and a touch pan on the head above it scrolls the page, at 375x667 and 390x844.
 - [x] From `tablet` the canvas is unchanged.
-- [ ] The Canvas showcase holds a canvas under a head and two Banners at 375x667, measured by the critique.
+- [x] The Canvas showcase holds a canvas under a head and two Banners at 375x667, measured by the critique.
 
 ## Open questions
 - [x] Its shape (a minimum-height prop on `Canvas`, a canvas-aware form of `Split`'s main, or another) and the share: the stack session decides.
@@ -28,3 +28,6 @@ No prop. The ground gains `page-max-tablet:min-h-1/2`: half the content box of t
 
 ## Built
 `ground.tsx` carries the floor (`REGION`; loaded and waiting grounds alike); `scripts/overlays.ts` lists the class; `guide/canvas.md` and `ui-core.md` state it. `canvas-touch.stories.tsx` `KeepsHalfAt375x667` and `KeepsHalfAt390x844` (light and dark) render a Place with a Split whose main holds an ItemHeader, two Banners and a Canvas: the canvas is at least half the inset's content box, the column scrolls (`scrollHeight > clientHeight`), a finger on the canvas pans the graph with the column's scrollTop at 0, and a finger on the head scrolls the column with the graph unmoved. Without the class the same story fails (142 px against 302 px at 375x667, 343 against 390 at 390x844). The canvas stories at 1280 pass unchanged. Canvas is web only; no native form exists. The critique box (the showcase measured at 375x667) waits on the critique.
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique pass: the canvas keeps at least half the column (303 of 622 px at 375x667, min-height 50%); head and banners scroll away.

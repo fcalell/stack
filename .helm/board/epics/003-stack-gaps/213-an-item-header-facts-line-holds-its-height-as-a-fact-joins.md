@@ -1,6 +1,6 @@
 ---
 id: 003-213
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: an ItemHeader's facts line holds one height whatever kinds of fact it carries
@@ -14,7 +14,7 @@ Stead's conversation head is an `ItemHeader` whose facts are the thread's status
 ## Acceptance criteria
 - [x] An `ItemHeader` whose facts line gains or loses a fact that opens, a pick or a count keeps the head's height, on both platforms and at every density, so what stands under it does not move (the web height awaits the batch browser run).
 - [x] A head whose facts are all text or status is unchanged where no fact that opens can join; a head with no facts line is unchanged.
-- [ ] The ItemHeader showcase holds a head whose second fact joins after the first, measured at 390 and 1280 by the critique (the story `FactJoins` is written, awaits the batch run and the critique).
+- [x] The ItemHeader showcase holds a head whose second fact joins after the first, measured at 390 and 1280 by the critique (the story `FactJoins` is written, awaits the batch run and the critique).
 
 ## Open questions
 - [x] Its shape (the facts line always standing at the tallest fact's height, a fact that opens drawn at the text line with its hit box reaching beyond it as an icon act does, or another): the stack session decides.
@@ -26,3 +26,5 @@ The second shape: the facts line stands at the meta line's height, and a fact th
 ui-core: `ITEM_FACT` is `gap-inside`, `SKELETON_ROW.kind.facts` is `gap-x-fields` (the comments say the line's height), `factReach` in `packages/ui-core/src/chart.ts`. react-ui: `plugins/react-ui/src/ui/components/item-header/index.tsx` gives the opening fact, the pick and the save fact `REACH` (`leading-meta -my-[calc((var(--spacing-target)-1lh)/2)]`, an overlay: the `lh` unit is the web's) and the loading facts row a meta line box (`min-h-lh`). native-ui: `plugins/native-ui/src/ui/components/item-header/index.tsx` gives the same facts `style={REACH}` (`marginVertical: -factReach("touch")`) and the loading row a meta `Strut`. `ui-core.md` says the line's height and the reach. Story `FactJoins` (`apps/showcase/behaviour/item-header-facts.stories.tsx`) joins an opening fact to a status and asserts the head's height is unchanged; written, not run. The wrapped second line of facts below `tablet` keeps the `gap-y-pair` step; its hit boxes overhang into it by the reach.
 Native unrendered: the reach is arithmetic on the contract's px, unchecked on a device.
 
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique pass: the facts line holds the meta line height: desktop head 50 = 24+6+20, fact 28 reaching 4 px; touch 58 = 28+8+22, reach 11 px (nit: the touch reach overlaps the title's bottom by about 3 px).

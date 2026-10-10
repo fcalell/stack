@@ -1,6 +1,6 @@
 ---
 id: 003-203
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: an ItemHeader fact that goes to another route
@@ -14,7 +14,7 @@ An `ItemHeader` fact is a string, a status, or `{ label, onOpen }`, which draws 
 ## Acceptance criteria
 - [x] An `ItemHeader` fact can name a route it goes to, drawn and announced as a link (a router navigation, its chevron as a row that opens draws one), at every width.
 - [x] A fact that opens a sheet is unchanged.
-- [ ] The ItemHeader showcase holds a fact that goes to a route beside one that opens a sheet, measured by the critique.
+- [x] The ItemHeader showcase holds a fact that goes to a route beside one that opens a sheet, measured by the critique.
 
 ## Open questions
 - [x] Its shape (an `href` on a fact, or another): the stack session decides.
@@ -28,3 +28,6 @@ An `ItemHeader` fact is a string, a status, or `{ label, onOpen }`, which draws 
 `Fact` gains `{ label: Part; href: Route; onOpen?: never }` in `plugins/react-ui/src/ui/components/item-header/index.tsx` and `plugins/native-ui/src/ui/components/item-header/index.tsx` (`FactPart`, `factKey`). The roster comment, both `rules.md` and `ui-core.md` describe it. Evidence: `behaviour/item-header.stories.tsx` `FactToARoute` (1280) and `FactToARouteTouch` (390) assert the route fact is an `a` with its `href`, has no `aria-haspopup`, draws the chevron, shares the radius and height of the sheet fact beside it, and the sheet fact is still a button with `aria-haspopup="dialog"`. The generated ItemHeader frame holds both facts; its Rest and Loading stories pass with axe. Left for the critique: the third box (the showcase measured by the critique).
 
 Native unrendered: the native-ui change is type-checked and verified, not rendered on a phone.
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique pass: the route fact is an `<a href>`, the sheet fact a button with aria-haspopup; same radius, type and chevron; 28/44 tall.

@@ -1,6 +1,6 @@
 ---
 id: 003-300
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: opening a Picker or Select moves nothing on the page
@@ -23,3 +23,6 @@ Base UI's `Select.Root` defaults to `modal` (page scroll locked, outside pointer
 ## Built
 `plugins/react-ui/src/ui/components/picker/base.tsx` (`Select.Root`, `Combobox.Root`), `select/index.tsx`. `ui-core.md` says no roster popup locks the page. Story `apps/showcase/behaviour/popups.stories.tsx` (`Opens`): a page 250vh tall, opens and closes a Picker, a Select and a Menu and asserts the root's width, gutter and overflow styles and each control's box unchanged (layout shift 0); written, type-checks, not run. The cause is unmeasured in a browser: the fix follows the Base UI lock's source (gutter and overflow set on the root), so the batch run is the proof. Picker changes are the `modal` prop only; focus return for a Sheet opened from a Picker act (003-212) is untouched.
 - Browser run: `popups.stories.tsx` `Opens` passes (the layout shift is 0). The first run failed on axe, not layout: the story's bare `Select` had no name; it now stands in a `Field.Root` with a label, as `select.stories.tsx` does.
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. No critique unit this round; the behaviour and screens suites hold it.

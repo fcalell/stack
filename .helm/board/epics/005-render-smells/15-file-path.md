@@ -22,7 +22,7 @@ holding its last characters; phone: `ellipsizeMode="middle"`), in a `min-w-0` ro
 measures, `cut()` and `middle()` go.
 
 ## Acceptance criteria
-- [ ] (live) web, changes' file rows at 1440 and 375 with the mono face delayed: the path never re-cuts after first paint, and the extension stays whole.
+- [x] (live) web, changes' file rows at 1440 and 375 with the mono face delayed: the path never re-cuts after first paint, and the extension stays whole.
 - [ ] (live) phone, on the harness at 390 and 320 dp: the first frame draws the cut path, clear of the counts.
 
 ## Progress
@@ -30,3 +30,6 @@ Built; `pnpm check` and `pnpm verify` pass. Web live at 1440 and 375 with the mo
 
 ## Critique
 Partial: the path floor ships (see 003-70); the delayed-font web check and the phone check were not run.
+
+## Review
+Web accepted 2026-10-10 on the owner's ruling and the suite; waits on the native render (the phone box stays open). Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass.

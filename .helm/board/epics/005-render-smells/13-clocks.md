@@ -37,3 +37,9 @@ Open: the timing criteria wait for the live critique.
 
 ## Critique
 Partial: every state the story feeds renders correctly; its timing criteria (throttled Escape, copy timing, the clock past `until`) were not driven.
+
+## Review
+Rework, not accepted. Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique partial: the clock past `until` was never driven. The web timing box stays open; the phone box stays open.
+
+## Owner ruling
+The owner rules rework: prove timing in behaviour stories with a test clock, not a CPU throttle. Web: with `until` set after mount, the fill advances monotonically, the clock text is non-empty in the first second, nothing ticks past 0:00, and an age at "just now" reads "1 minute ago" after the clock moves 60 s. The web box ticks on a pass; the phone box stays open.

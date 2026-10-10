@@ -1,6 +1,6 @@
 ---
 id: 003-307
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a filled Thread's input spans the main
@@ -31,3 +31,6 @@ Awaiting the batch browser run: the first acceptance box (measured at 1280) stay
 
 ## Browser run
 `FilledThreadStandsAtStart1280` passes (thread-fill.stories.tsx, 1 of 1): the input's column spans from the log's inset plus the page inset to the right inset. Test fixes: the heading is picked by its name (the Place's h1 is also a heading), and the input is the foot's column (`max-w-measure` ancestor), not the textarea inside its card, which the card's padding offsets by 13 px.
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. No critique unit this round; the behaviour and screens suites hold it.

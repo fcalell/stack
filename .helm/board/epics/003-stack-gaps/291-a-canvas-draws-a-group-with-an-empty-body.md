@@ -1,6 +1,6 @@
 ---
 id: 003-291
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a Canvas draws a group with an empty body
@@ -12,7 +12,7 @@ A Canvas group holding no present node gets no frame (`groupBoxes` in `canvas/ge
 - [x] A group with no present node draws its frame and head at a size the layout gives an empty body, in its place in the path, and its edges meet it.
 - [x] With `onSelect` its head is a button as any group's (003-191).
 - [x] A Canvas whose groups all hold nodes is unchanged.
-- [ ] The Canvas showcase holds an empty group at 375 and 1440 px, measured by the critique.
+- [x] The Canvas showcase holds an empty group at 375 and 1440 px, measured by the critique.
 
 ## Open questions
 - [x] Its shape (the empty body's size, and how ELK places it): the stack session decides; a narrowing goes to the owner before the build.
@@ -25,3 +25,6 @@ An empty group (no present node and no group) is a leaf of the graph: ELK lays i
 
 ## Owner ruling
 When every node carries a `position` (no layout runs), the empty groups stand as one row below the positioned nodes' bounds, left-aligned, in path order. No new surface: an empty group takes no `position` and `onMove` never hears it. To build.
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique (nit only): an empty group draws a 240x64 dashed frame and its edges meet it; at the 263 px pane (375) the second Placed loop and the Lone loop frames stand past the pane edge and the zoom stack sits 3 px from the Lone frame's bottom, which the fit ruled on 003-189 fixes.

@@ -31,3 +31,9 @@ Not measured: the critique's call on a back-plus-title row (the Split stories wi
 The owner keeps the ruled shape: a back act with no switcher stands on the title row. The critique judges the back-plus-title row; the native form is not rendered.
 
 Native unrendered: the native-ui change is type-checked and verified, not rendered on a phone.
+
+## Review
+Rework, not accepted. Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique: a wrapping title butts the touch head's edges: a 3-line h1 of 84 px in an 85 px head at 390, 140 in 141 at 320; the acts are centred vertically in the tall head, not on the first line; the h1 column is 144 of 320 px. The single-row form is met (head 45, acts 44, h1 at x16).
+
+## Owner ruling
+The owner rules rework; the shape stays. When the title wraps, the head gets block padding of at least one `inside` step (8 px) above and below the title block (a 3-line h1 at least 100 px in a head at least 116 px at 390; the same relation at 320). The acts align to the first title line (the 44 px act centred on the first line box, top-anchored), not the head's centre. The h1 column stays at least 2/5 of the row. The single-row form is unchanged (head 45, acts 44, h1 at x16). Put it in the shared title cell (TITLE_WRAP / PAGE_TITLE_FLOOR) so the Screen (003-304) inherits it; add one wrapped-title Screen story; 003-304's Screen stories stay green.

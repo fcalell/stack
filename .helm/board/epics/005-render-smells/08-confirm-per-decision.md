@@ -27,7 +27,7 @@ render.
 Decided (the recommended answer, applied 2026-10-04): the reset is per decision id at render, with `ConfirmSheet` unkeyed, so a queued second decision never remounts an open sheet.
 
 ## Acceptance criteria
-- [ ] (live) web, members' remove (a name-confirm) at 375: after Delete, the field keeps the typed name and the act its look until the sheet is gone; with two decisions queued, the second opens empty.
+- [x] (live) web, members' remove (a name-confirm) at 375: after Delete, the field keeps the typed name and the act its look until the sheet is gone; with two decisions queued, the second opens empty.
 - [ ] (live) phone, on the harness: the Notes `confirm()` opens in the first commit after the call, and its content holds through the slide-out.
 
 ## Progress
@@ -35,3 +35,6 @@ Built; `pnpm check` and `pnpm verify` pass. Web live: a typed confirm keeps its 
 
 ## Critique
 Unrendered: the exit cannot be sampled with transitions off; the loading frame keeps the typed name with a pending act.
+
+## Review
+Web accepted 2026-10-10 on the owner's ruling and the suite; waits on the native render (the phone box stays open). Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass.

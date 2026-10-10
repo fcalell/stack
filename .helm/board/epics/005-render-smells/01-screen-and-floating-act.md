@@ -26,7 +26,7 @@ or slots, never from a layout effect or a post-paint state push; a registration 
   Place's props), or reads them in render from a host object.
 
 ## Acceptance criteria
-- [ ] (live) web, `/layout` deploys and places at 375: a Screen route's first frame has no tab bar; a toast raised before a floating-act Place mounts stands above the act in the first frame.
+- [x] (live) web, `/layout` deploys and places at 375: a Screen route's first frame has no tab bar; a toast raised before a floating-act Place mounts stands above the act in the first frame.
 - [ ] (live) phone, on the harness at 390 dp: pushing and popping a Screen shows no tab-bar frame, recorded frame by frame.
 
 ## Progress
@@ -34,3 +34,6 @@ Built; `pnpm check` and `pnpm verify` pass. Web live at 375 touch, frame by fram
 
 ## Critique
 Unrendered: the first frame is not capturable from a static render; the end state (no tab bar under a pushed Screen) holds.
+
+## Review
+Web accepted 2026-10-10 on the owner's ruling and the suite; waits on the native render (the phone box stays open). Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass.

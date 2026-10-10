@@ -1,6 +1,6 @@
 ---
 id: 003-200
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a Split's pane keeps its form's submit in reach
@@ -14,7 +14,7 @@ A `Sheet` keeps its `submit` reachable: in the foot on the desktop and at the he
 ## Acceptance criteria
 - [x] A form in a `Split`'s pane keeps its submit act in reach at every width: from `wide` in the pane, and in the Details sheet below it, as a `Sheet`'s submit stands, so a long form never puts it below the fold.
 - [x] A pane with no form is unchanged.
-- [ ] The Split showcase holds a pane with a long form at 390 and 1440, measured by the critique.
+- [x] The Split showcase holds a pane with a long form at 390 and 1440, measured by the critique.
 
 ## Open questions
 - [x] Its shape (a `submit` on the Split's pane, the pane reading a `Form`'s `ActionBar`, or another): the stack session decides.
@@ -31,3 +31,6 @@ The pane reads the Form: a `Form` in the pane or in its Details sheet keeps its 
 Evidence: behaviour stories `PaneFormKeepsItsBar1440` (the aside) and `PaneFormKeepsItsBar390` (the Details sheet) assert the bar inside the scroller and flush with its bottom, left and right edges at scroll top and end; `PaneWithoutFormSticksNothing` holds a pane with no form. The split, sheet, action-bar, form-leave, waiting, text-area, gate, place and screen story files pass (122 tests) and the scoped screens run passes (180 tests).
 
 The third box (the critique measuring the frame at 390 and 1440) waits on the critique; at 390 the frame's Details act opens the sheet.
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique pass: the sticky bar is flush at both scroll extremes in the desktop pane and the touch sheet; hairline top, no shadow.

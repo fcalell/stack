@@ -1,6 +1,6 @@
 ---
 id: 003-303
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a zoomed-out canvas zooms in finer steps and still names its nodes
@@ -48,3 +48,6 @@ Reverses 006-02's "every zoom under 1 is the glyph alone" and its step; keeps 00
 - Evidence: `pnpm check` and `pnpm verify` in ui-core and react-ui (tails in the report). On the workflow's fixture sizes the overview floor is 0.5 at both densities. The behaviour stories and the critique of the name frames await the owner's batch browser run. The frame stage `OVERVIEW_STAGE` (60rem) is sized by estimate from the fixture's height, so its fit may land outside the band in a density: the story would say so.
 - Native: not applicable (the canvas is web only).
 - Browser run: `canvas-overview.stories.tsx` 21/21 pass. Fixed on the way: `minZoomFor` now counts the `pair` the routing boxes round up by (`routeSide`), so the route between the two nearest glyphs reads `2 * pair` at the lowest zoom (it read 10.6 against 12 on the workflow once 003-297 changed the node sizes; `RoutesFollowTheGlyphs`); its unit tests and the stories' `lowestZoom` follow. `NameFramesAtDesktop` excludes a dimmed name's button from axe as the state stories do for a dimmed node's text (`CANVAS_NODE_NAME.tone.dimmed`: disabled ink on an enabled button; `.storybook/state-stories.tsx` too). `PressDoesNotPan` presses with the browser's mouse held (`mouse.ts` `press`), since Chromium 141 does not read `focusVisible: false`, and reads the focus before the click that selects the node (a page's selection reveals it).
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. No critique unit this round; the behaviour and screens suites hold it.
