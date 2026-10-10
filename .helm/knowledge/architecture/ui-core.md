@@ -190,7 +190,7 @@ its rationale.
   shadows in `@utility` rules reading `var(--shadow-<level>)`, because the `--shadow-*` theme
   namespace does not resolve into RN's `boxShadow` and a shadow is per mode. The web keys each
   mode on a class scope, `.dark` on the root and `.light` below it restoring the light set, so a
-  light subtree renders light under a dark page; `rootTokens` puts the hairline, the ring, the
+  light subtree renders light under a dark page; `rootTokens` puts the hairline, the ring (its offset, and `--focus-ring-edge-offset`, -1 px, for a field box that rings on its edge), the
   layers' order and the light shadows on `:root` outside `@theme`: no theme utility reads them,
   and a layer is read by the arbitrary `z-(--layer-<layer>)`, since `z-*` reads no theme namespace.
 - Fonts split by fact: the theme names the families (`--font-sans`, `--font-mono`, each ahead of its

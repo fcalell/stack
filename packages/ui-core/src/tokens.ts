@@ -1021,10 +1021,13 @@ export const RADIUS_PX: Record<RadiusRole, number> = {
 
 // One hairline width for region edges, row splits and field boundaries. The
 // focus ring is `ring`, drawn outside the box at an offset so it never
-// covers the control's own edge; inside a list it is drawn inward.
+// covers the control's own edge; inside a list it is drawn inward. A bordered
+// box that takes typing or choosing rings on its edge instead: the offset is
+// the hairline pulled back, so the ring is centred on the 1 px edge.
 export const HAIRLINE_PX = 1;
 export const RING_PX = 2;
 export const RING_OFFSET_PX = 2;
+export const RING_EDGE_OFFSET_PX = -1;
 
 // An icon's stroke, in units of Lucide's 24-unit grid, so it scales with the
 // icon: `line` is an icon's own weight (Lucide's default), `mark` the weight

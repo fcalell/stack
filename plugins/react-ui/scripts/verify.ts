@@ -386,7 +386,7 @@ const built = tailwindBuild(
 // rather than by a fixed delimiter.
 function emitted(css: string, name: string): boolean {
 	const escaped = name
-		.replace(/[.[\]()/%:!,&>*]/g, (char) => `\\${char}`)
+		.replace(/[.[\]()/%:!,&>*=]/g, (char) => `\\${char}`)
 		.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 	return new RegExp(`\\.${escaped}(?![\\w\\\\-])`).test(css);
 }

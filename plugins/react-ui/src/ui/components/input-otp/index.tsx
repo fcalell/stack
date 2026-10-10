@@ -2,6 +2,7 @@ import { Input as Control } from "@base-ui/react/input";
 import { cn } from "@fcalell/ui-core/cn";
 import { OTP, OTP_DIGIT, otpBox, text } from "@fcalell/ui-core/variants";
 import type { Closed } from "../../lib/closed.ts";
+import { useModality } from "../../lib/modality.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Spinner } from "../spinner/index.tsx";
 
@@ -14,7 +15,7 @@ const ROW = "relative flex items-center";
 const INPUT = "peer absolute inset-0 opacity-0";
 const BOX = "flex items-center justify-center";
 const BOX_FOCUS =
-	"peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring";
+	"peer-focus-visible:not-in-data-[modality=pointer]:outline-2 peer-focus-visible:not-in-data-[modality=pointer]:outline-offset-(--focus-ring-edge-offset) peer-focus-visible:not-in-data-[modality=pointer]:outline-ring";
 const DIGIT = "text-center";
 const LINE = "flex items-center gap-inside";
 
@@ -40,6 +41,7 @@ export function InputOtp({
 	onComplete,
 	loading,
 }: InputOtpProps) {
+	useModality();
 	const words = useWords();
 	const active = Math.min(value.length, length - 1);
 	return (

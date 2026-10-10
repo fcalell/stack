@@ -14,16 +14,12 @@ import {
 import { type ChangeEvent, type DragEvent, use, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { FieldDisabled, FieldRefusal } from "../../lib/field.ts";
+import { BOX_FOCUS, useModality } from "../../lib/modality.ts";
 import { pickedFrom } from "../../lib/picked.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
-import {
-	BOX,
-	BOX_DISABLED,
-	BOX_FOCUS,
-	BOX_HOVER_VALUE,
-} from "../input/index.tsx";
+import { BOX, BOX_DISABLED, BOX_HOVER_VALUE } from "../input/index.tsx";
 
 // The native file input lies over the whole box, unseen: a press anywhere
 // opens the system dialog and the keyboard reaches it, so the box rings on its
@@ -35,7 +31,7 @@ const VALUE = "min-w-0 grow truncate";
 const SIZE = "shrink-0";
 const DISABLED = "text-ink-disabled";
 // A file over the box draws the focus ring, the box being where it lands.
-const OVER = "outline-2 outline-offset-2 outline-ring";
+const OVER = "outline-2 outline-offset-(--focus-ring-edge-offset) outline-ring";
 
 const BYTES = {
 	style: "unit",
@@ -56,6 +52,7 @@ export interface FileInputProps extends Closed {
 
 /** A field box that is the act: empty it reads Choose file, chosen it shows the file's name and size with an act that removes it. A file dropped on the box is taken as one chosen; a file of another type is refused into its `FormField`'s error line, which clears on the next pick. */
 export function FileInput({ value, onChange, accept }: FileInputProps) {
+	useModality();
 	const words = useWords();
 	const refuse = use(FieldRefusal);
 	const [over, setOver] = useState(false);

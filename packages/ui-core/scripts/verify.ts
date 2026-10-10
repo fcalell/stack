@@ -1096,8 +1096,10 @@ check(
 				...ring,
 				...measures,
 			})) {
+				// The edge offset pulls the ring back over the hairline: negative.
 				assert(
-					Number.isFinite(value) && value > 0,
+					Number.isFinite(value) &&
+						(key === "--focus-ring-edge-offset" ? value < 0 : value > 0),
 					`${key} at u = ${unit} is ${value}`,
 				);
 			}
@@ -1114,6 +1116,11 @@ check(
 				ring["--focus-ring-offset"],
 				2 * unit,
 				`ring offset at u = ${unit}`,
+			);
+			requireEqual(
+				ring["--focus-ring-edge-offset"],
+				-unit,
+				`ring edge offset at u = ${unit}`,
 			);
 		}
 		// 1920 × 1080, u = 2, against the ten-foot range.
