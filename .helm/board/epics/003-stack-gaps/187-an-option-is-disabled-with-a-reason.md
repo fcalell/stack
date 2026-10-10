@@ -1,6 +1,6 @@
 ---
 id: 003-187
-status: todo
+status: review
 sessions: {}
 ---
 # ui-core: an Option disabled with a reason
@@ -74,3 +74,6 @@ Finding A (searchable Picker, `shared-picker--rest` Owner at 1440): a key landin
 Finding B (touch sheet, 320): the sheet's option button carried `focus-visible:bg-wash-hover`, so an arrow onto the `aria-disabled` row drew the 5 % fill with the ring. The wash is now added only to a row that can be chosen (`OPTION_FOCUS_WASH`); a blocked row keeps the ring alone.
 
 Stories in `behaviour/picker.stories.tsx`: `BlockedSearch1440` (a searchable list, the key lands on the blocked row: outline width above 0, background equal to a rest row's; an enabled row the key lands on keeps its wash); `BlockedSheet` gains the arrow onto the blocked row (focus there, outline width above 0, background equal to an enabled row's). Both failed before the fix. Browser run: picker (10), select, menu, option-list, row-meta and section-more pass. Native unrendered.
+
+## Re-review
+Final re-critique (1440 and 320 touch, light and dark, real pointer and keys): pass on the web. A blocked row draws no fill from pointer hover or a key in the searchable and plain Picker, the Select, the Menu and the touch sheet; a key landing on it shows the 2 px ring (in the searchable Picker while DOM focus stays on the input); enabled rows are unchanged. Nit, pre-existing by ruling: the Select's enabled key row shows the wash alone and a blocked one the ring alone. Stays in review for the native box.
