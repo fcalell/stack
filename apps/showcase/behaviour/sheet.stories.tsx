@@ -353,23 +353,94 @@ export const TouchHeadShortTitleOpen375: StoryObj = touchHead(
 	true,
 );
 
-// A desktop side sheet for a short form is its content's height, hung from
-// the top at the end edge.
-export const SideSheetFitsItsContent: StoryObj = {
-	parameters: { layout: "fullscreen" },
+const DESKTOP_900 = {
+	globals: { viewport: { value: "w1440", isRotated: false } },
+	parameters: {
+		layout: "fullscreen",
+		viewport: {
+			options: {
+				w1440: {
+					name: "1440",
+					styles: { width: "1440px", height: "900px" },
+					type: "desktop",
+				},
+			},
+		},
+	},
+} satisfies StoryObj;
+
+// A desktop Sheet whose content at natural height fits the viewport is a card
+// centred over the page at the dialog's width, its foot on screen.
+export const ShortSheetIsACentredCard: StoryObj = {
+	...DESKTOP_900,
 	render: () => <Page />,
 	play: async ({ canvas, userEvent }) => {
 		await userEvent.click(
 			canvas.getByRole("button", { name: "Rename domain" }),
 		);
 		const dialog = await screen.findByRole("dialog", { name: "Rename domain" });
-		// The enter plays first: the sheet slides in from the end edge.
+		// The enter plays first: the card rises a pair as it fades.
+		await waitFor(() => {
+			const box = dialog.getBoundingClientRect();
+			expect(
+				Math.abs(box.left + box.width / 2 - window.innerWidth / 2),
+			).toBeLessThan(1.5);
+			expect(
+				Math.abs(box.top + box.height / 2 - window.innerHeight / 2),
+			).toBeLessThan(1.5);
+		});
+		const box = dialog.getBoundingClientRect();
+		expect(box.width).toBeLessThan(window.innerWidth / 2);
+		expect(box.height).toBeLessThan(window.innerHeight / 2);
+		const save = screen.getByRole("button", { name: "Save" });
+		expect(save.getBoundingClientRect().bottom).toBeLessThanOrEqual(box.bottom);
+		expect(getComputedStyle(dialog).borderTopWidth).toBe("1px");
+	},
+};
+
+function LongPage() {
+	const [open, setOpen] = useState(false);
+	return (
+		<>
+			<button type="button" onClick={() => setOpen(true)}>
+				Rename domain
+			</button>
+			<Sheet
+				open={open}
+				onClose={() => setOpen(false)}
+				title="Rename domain"
+				submit={{ label: "Save", onAct: () => setOpen(false) }}
+			>
+				{Array.from({ length: 24 }, (_, i) => (
+					<FormField key={i} label={`Field ${i + 1}`}>
+						<Input value="" onChange={() => {}} />
+					</FormField>
+				))}
+			</Sheet>
+		</>
+	);
+}
+
+// A form past the viewport stays the full-height side sheet at the end edge,
+// its body scrolling between the head and the foot, which stay on screen.
+export const LongFormStaysASideSheet: StoryObj = {
+	...DESKTOP_900,
+	render: () => <LongPage />,
+	play: async ({ canvas, userEvent }) => {
+		await userEvent.click(
+			canvas.getByRole("button", { name: "Rename domain" }),
+		);
+		const dialog = await screen.findByRole("dialog", { name: "Rename domain" });
 		await waitFor(() =>
 			expect(dialog.getBoundingClientRect().right).toBe(window.innerWidth),
 		);
 		const box = dialog.getBoundingClientRect();
 		expect(box.top).toBe(0);
-		expect(box.height).toBeLessThan(window.innerHeight / 2);
+		expect(box.height).toBe(window.innerHeight);
+		const save = screen.getByRole("button", { name: "Save" });
+		expect(save.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+			window.innerHeight,
+		);
 	},
 };
 

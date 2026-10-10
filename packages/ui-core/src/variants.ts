@@ -981,7 +981,9 @@ export type CheckboxState = keyof (typeof CHECKBOX)["variants"]["state"];
 export type SegmentState = keyof (typeof SEGMENT)["variants"]["state"];
 export type RowLines = keyof (typeof ROW)["variants"]["lines"];
 export type RowGround = keyof (typeof ROW)["variants"]["ground"];
-export type SheetFit = keyof (typeof SHEET_SIDE)["variants"]["fit"];
+// What a Sheet is told it holds; the desktop's short sheet is the Sheet's own choice.
+export type SheetFit = Exclude<SheetSideFit, "short">;
+export type SheetSideFit = keyof (typeof SHEET_SIDE)["variants"]["fit"];
 export type ImageFit = keyof (typeof IMAGE)["variants"]["fit"];
 export type ImageState = keyof (typeof IMAGE)["variants"]["state"];
 export type FormIn = keyof (typeof FORM)["variants"]["in"];

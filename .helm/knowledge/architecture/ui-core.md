@@ -1820,9 +1820,17 @@ a tick with no animation, never jumped to full.
   nothing. A `Form` in a sheet asks nothing (the sheet closes on its own acts), and two edited
   forms on one page each ask. Rejected: a prop or a `Form` variant (every edited form wants it),
   a capture-phase anchor interceptor (a router push and a back never reach it) and block-then-replay.
-- A desktop side sheet is its content's height up to the viewport's, hung from the top at the end
-  edge: a short form is a card, a long one the full height with its body scrolling. No `fit` value
-  says it. A sheet's title wraps beside its acts at every density and never ends in an ellipsis.
+- A desktop Sheet at the default `fit` is a centred card (`sheetSide` `fit: short`: `w-dialog`,
+  `rounded-sheet`, a border on all four sides, `LAYER_CENTRED` and `CENTRED_MOTION`) when its
+  content at natural height (head, body and foot, no cap) is at most the layer's height less the
+  page inset above and below, and the full-height side sheet otherwise. The popup mounts as the
+  card and a layout effect on its first mount measures it before paint, switching to the side
+  sheet in the same commit; the answer is held until the sheet is gone, so a form that grows stays
+  a card with its body scrolling between a pinned head and foot, a side sheet that shrinks stays
+  one, and a wizard keeps its first page's form. `fit: short` is the Sheet's own choice, outside the
+  public `SheetFit`; `fit="pane"` and `form="centred"` (`SHEET_CENTERED`, a decision's cell) are
+  unchanged, and touch is the bottom sheet. This reverses 003-147's card hung at the end edge. A
+  sheet's title wraps beside its acts at every density and never ends in an ellipsis. A sheet's title wraps beside its acts at every density and never ends in an ellipsis.
 - A sheet knows what it holds before it presents. A sheet stands full height when it holds a
   `TextArea` (which grows with its value) or a menu that searches (a pick past six options, whose
   list would else jump as the filter narrows), read in render: on the phone off the elements it is

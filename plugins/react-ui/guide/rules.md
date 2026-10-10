@@ -496,6 +496,7 @@ row's end. Pass
 the same `<Sheet>` as the modal from a page and as the `foot` of a conversation; closing it (render
 the `MessageInput` in its place) returns focus to the input, and each page (a new `title`) opens at
 the top of its body with focus in its first field. A `Sheet` among a `Thread`'s sections draws the same form with no bound.
+On the desktop a `Sheet` is a card centred over the page when its content at natural height fits the viewport less the page inset above and below, and the full-height side sheet at the end otherwise, with no prop: it is measured once as it opens and held until it closes, so a form that grows stays a card with its body scrolling between the head and the foot, and a side sheet that shrinks stays a side sheet. The foot is always on screen. `fit="pane"` and a decision keep their own forms; touch is the bottom sheet.
 
 Keyboard focus follows the work without a prop. A `Sheet` returns focus to what opened it; when that
 is gone (an act of a `Picker` or `Menu`, which unmounts with its popup, returns to that popup's

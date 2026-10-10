@@ -302,6 +302,8 @@ export const OVERLAYS: readonly string[] = [
 	// Sheet, Menu, Toast
 	"z-(--layer-sheet)",
 	"rounded-bl-sheet",
+	"rounded-b-sheet",
+	"py-page",
 	"z-(--layer-popover)",
 	"relative",
 	"absolute",
