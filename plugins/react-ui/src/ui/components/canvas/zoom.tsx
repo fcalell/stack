@@ -66,6 +66,22 @@ export function ZoomStack({
 	);
 }
 
+// The room the zoom stack takes, held by a waiting canvas that draws none: the
+// stack's frame around one icon act, `invisible` (unfocusable, out of the
+// accessibility tree), so an opening view clears
+// what a loaded canvas's clears and nothing moves when the graph arrives.
+export function ZoomRoom() {
+	return (
+		<div
+			aria-hidden
+			data-clear="left"
+			className={cn(CANVAS_ZOOM, STACK, "invisible")}
+		>
+			<IconButtonBase icon="ZoomIn" fit="body" label="" tabIndex={-1} />
+		</div>
+	);
+}
+
 // The canvas's act, at the foot's centre. It adds, never removes, so its
 // `destructive` and `quiet` flags are not read. A fit stays clear of it
 // (`data-clear`).

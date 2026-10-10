@@ -1788,10 +1788,15 @@ a tick with no animation, never jumped to full.
   bleeding body, a pushed Screen), so the column scrolls past it and the head and banners above it
   scroll away rather than shrink it; the percentage resolves because the inset is a flex item of
   the scroller, whose post-flex size is definite, so a viewport-share token is not needed
-  (`canvas-touch` holds it at 375 × 667 and 390 × 844). `loading` swaps the whole graph component for a hookless
+  (`canvas-touch` holds it at 375 × 667 and 390 × 844). `loading` swaps the whole graph component for
   `CanvasWait` (the ground and grid it shares with the graph, three `canvasNode` cards of skeletons
-  in a centred column), so no viewport, layout or ELK runs while waiting and no zoom stack or act
-  stands (both are overlays, so omitting them moves nothing). `empty` is a string, not a slot or a
+  in a column), so no viewport, layout or ELK runs while waiting and no zoom stack or act
+  stands (both are overlays, so omitting them moves nothing). The column stands where a loaded
+  chain opens: the wait measures its pane and column and takes `openTransform` (the loaded
+  canvas's opening view) with `clearanceOf`, the room the zoom stack leaves, held by an unseen
+  `ZoomRoom` of the stack's frame, so the arrival moves no card (`canvas.stories` holds it at 375,
+  768 and 1440, both modes). Only the stack's width is held: an `act` or a foot, which a loaded
+  canvas keeps clear of, is not. `empty` is a string, not a slot or a
   `words` entry (it is app copy, and the app decides when it stands): the layer's first child
   centres it under the graph's bounds and holds its size through `--canvas-unzoom`, so it
   stays at the text floor, and `pointer-events-none` lets a drag through it pan and a tap on it

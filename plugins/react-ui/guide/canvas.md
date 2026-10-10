@@ -184,7 +184,7 @@ An `act` stands at the foot's centre; it adds, it never removes.
 
 ## Loading
 
-`loading` stands the ground and its grid with three node-shaped skeletons (a loaded node's size, at the gap a loaded path keeps), busy to assistive
+`loading` stands the ground and its grid with three node-shaped skeletons (a loaded node's size, at the gap a loaded path keeps, standing where a loaded chain opens), busy to assistive
 technology, while the data is read, so the page below the head does not move when the graph
 arrives. Pass `nodes={[]}` meanwhile: `nodes`, the handlers and the `act` are ignored, and the
 loading form draws no zoom stack, no act, no node button and no drag. Do not stand `nodes={[]}`
