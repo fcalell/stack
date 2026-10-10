@@ -196,7 +196,7 @@ The sentence is your copy and you decide when it stands: pass it or `undefined`.
 ## Where it stands
 
 The canvas has no height of its own: it fills the region it stands in. Stand it as a `Split`'s
-`main` or in a `Place`'s body, never inside a component of your own that sizes it. Below `tablet`
+`main` (it then runs to the main's edges under the record's head, a hairline between them) or in a `Place`'s body, never inside a component of your own that sizes it. Below `tablet`
 it keeps at least half of the column it stands in: the column scrolls past it, so a head and
 banners above it scroll away and never shrink it.
 

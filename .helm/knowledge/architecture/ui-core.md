@@ -957,7 +957,10 @@ a tick with no animation, never jumped to full.
   messages meet; the Split hands its main `OverThread` and the `ItemHeader` stands in the Thread's
   column on the desktop under the main's fill mark (`group/main`). The input docks at the main's
   foot and names the toasts' anchor as in a Place. The bleeding Place's act still floats over the
-  list, and where the record stands alone its room stands under the input. While a filling Thread's
+  list, and where the record stands alone its room stands under the input. A Canvas in the main
+  takes the same form (its `data-fill` mark, the `CANVAS_UNDER_HEAD`: the `-mx-page` bleed and the
+  hairline, read by `useBleed` from `ThreadRoom` and `ThreadBleeds`), so it reaches the main's
+  edges under the record's head. While a filling Thread's
   reader is scrolled up (the log's `atEnd` false), a secondary `Button` (`ArrowDown`, the word
   `latest`) floats centred at the foot of the log's region, a pair above the foot, on a lifted
   ground at its radius (`THREAD_LATEST`: `bg-raised`, `shadow-float`, since the secondary act draws

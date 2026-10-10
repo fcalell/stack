@@ -34,7 +34,7 @@ import {
 	UNZOOM_VAR,
 } from "./floor.ts";
 import { emptyGroups, type Size } from "./geometry.ts";
-import { GROUND, Grid } from "./ground.tsx";
+import { GROUND, Grid, useBleed } from "./ground.tsx";
 import { GroupFrame } from "./group.tsx";
 import { isGround } from "./hit.ts";
 import { EdgeLabel } from "./label.tsx";
@@ -112,6 +112,7 @@ function CanvasGraph({
 	const region = useRef<HTMLElement>(null);
 	const viewport = useViewport(region);
 	const touch = useTouch();
+	const bleed = useBleed();
 	// One flag for the whole canvas, true while the smallest text a node draws
 	// renders under the text floor: a crossing renders once, and a pan or a zoom
 	// within a side renders nothing.
@@ -306,7 +307,7 @@ function CanvasGraph({
 			data-fill
 			onKeyDown={clear}
 			onClick={onSelect ? ground : undefined}
-			className={cn(GROUND, !ready && HIDDEN)}
+			className={cn(GROUND, bleed, !ready && HIDDEN)}
 		>
 			<Grid />
 			<div data-layer className={LAYER}>

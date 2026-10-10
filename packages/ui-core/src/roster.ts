@@ -3073,6 +3073,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"CANVAS_GROUP",
 				"CANVAS_GROUP_HEAD",
 				"CANVAS_ZOOM",
+				"CANVAS_UNDER_HEAD",
 				"ICON.fit.meta",
 				"ICON.fit.body",
 				"ICON_BUTTON.fit.body",
@@ -3102,6 +3103,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"CANVAS_GROUP",
 				"CANVAS_GROUP_HEAD",
 				"CANVAS_ZOOM",
+				"CANVAS_UNDER_HEAD",
 			],
 			states: ["rest", "selected", "loading", "empty"],
 			owns: {
@@ -3130,7 +3132,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"chip-",
 				],
 				radii: ["card", "control", "full", "chip"],
-				spacing: ["inside", "pair", "control-x", "sections"],
+				spacing: ["inside", "pair", "control-x", "sections", "page"],
 				sizes: [
 					"node",
 					"port",
