@@ -39,3 +39,6 @@ Rework, not accepted. Suite 2026-10-10: behaviour 422/422 in Chromium, `stack sc
 
 ## Owner ruling
 The owner rules rework: the skeleton node takes the loaded canvasNode cell's size (240x74, read from the same cell, no second constant), and the column gap is the loaded gap, 40. Acceptance at 375, 768 and 1440, light and dark: skeleton node heights and gaps equal the loaded canvas's; the frame stays 592 px, aria-busy, no zoom stack.
+
+## Built (rework)
+The skeleton card takes the loaded node's text parts (`canvasNodeText` overline, title and line in each lane, so its height is the loaded card's, 74 px with an overline, from the same cell and no second constant) and the column gap is `layerGap(sections, 0, pair)`, the gap a loaded path with no chip keeps (`canvas/wait.tsx`; the roster draws drop the unused body lane and line box). The `Loading` behaviour story now renders a loaded three-node chain beside the wait and asserts each card's height and the gap between cards equal the loaded nodes' to a tenth of a pixel, the frame the loaded height, aria-busy, no button. Browser run: `canvas.stories.tsx` 50/50, `canvas-overview` and `canvas-touch` 75/75, `stories/Canvas.stories.ts` 4/4 (Chromium). The 375, 768 and 1440 critique boxes stay for the critique.

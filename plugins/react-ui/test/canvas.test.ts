@@ -592,7 +592,7 @@ test("openTransform centres a graph that fits and opens a larger one at its firs
 
 test("openTransform stays clear of the chrome a fit does: centred in the room, and a larger graph's first node at the room's top centre", () => {
 	const pane = { width: 400, height: 300 };
-	const clear = { left: 80, bottom: 70 };
+	const clear = { left: 80, bottom: 70, stack: 0 };
 	// The room is x 80 to 384 and y 16 to 230: 304 wide, 214 high.
 	const bounds = box(10, 20, 100, 50);
 	const fits = openTransform(bounds, bounds, pane, 16, clear);
@@ -1531,10 +1531,10 @@ test("fitTransform stands the bounds clear of the chrome on the left and the bot
 	const bounds = box(0, 0, 1000, 200);
 	// No chrome, or chrome inside the inset, is the plain fit.
 	assert.deepEqual(
-		fitTransform(bounds, pane, 16, { left: 10, bottom: 10 }),
+		fitTransform(bounds, pane, 16, { left: 10, bottom: 10, stack: 0 }),
 		fitTransform(bounds, pane, 16),
 	);
-	const clear = { left: 60, bottom: 90 };
+	const clear = { left: 60, bottom: 90, stack: 0 };
 	const fit = fitTransform(bounds, pane, 16, clear);
 	// The scale fits the room left: 400 - 16 - 60 wide.
 	assert.equal(fit.k, (400 - 16 - 60) / 1000);
@@ -1549,6 +1549,37 @@ test("fitTransform stands the bounds clear of the chrome on the left and the bot
 	assert.equal(tall.k, (300 - 16 - 90) / 1000);
 	// A small graph keeps its own size.
 	assert.equal(fitTransform(box(0, 0, 50, 50), pane, 16, clear).k, 1);
+});
+
+test("a fit with a foot holds the bounds and the text under them whole in the pane", () => {
+	const node = box(0, 0, 240, 74);
+	const foot = { gap: 8, height: 60, width: 231 };
+	// A 263 px pane with chrome 68 px in from the left reaching 180 px up: the
+	// text is as wide as the room between the insets, so it centres on the pane
+	// and the room ends above the chrome. The node keeps its own size.
+	const pane = { width: 263, height: 400 };
+	const clear = { left: 68, bottom: 16, stack: 180 };
+	const at = openTransform(node, node, pane, 16, clear, foot);
+	assert.equal(at.k, 1);
+	assert.equal(at.x + 120, pane.width / 2);
+	const bottom = at.y + 74 + foot.gap + foot.height;
+	assert.ok(at.y >= 16 - 1e-9);
+	assert.ok(bottom <= pane.height - 180 + 1e-9);
+	assert.deepEqual(fitTransform(node, pane, 16, clear, foot), at);
+	// A narrow pane scales the node to the pane, never under it.
+	const small = openTransform(
+		node,
+		node,
+		{ width: 200, height: 400 },
+		16,
+		clear,
+		{ ...foot, width: 168 },
+	);
+	assert.equal(small.k, 200 / 240);
+	// A lone box the room cannot hold but the pane can opens as a fit.
+	const lone = openTransform(node, node, pane, 16, clear);
+	assert.equal(lone.k, 1);
+	assert.ok(lone.x >= 0 && lone.x + 240 <= pane.width);
 });
 
 test("emptyGroups names the groups holding no present node and no group, and not the group that frames one", () => {

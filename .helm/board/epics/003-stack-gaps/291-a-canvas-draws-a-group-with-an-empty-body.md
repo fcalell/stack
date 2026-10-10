@@ -28,3 +28,6 @@ When every node carries a `position` (no layout runs), the empty groups stand as
 
 ## Review
 Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique (nit only): an empty group draws a 240x64 dashed frame and its edges meet it; at the 263 px pane (375) the second Placed loop and the Lone loop frames stand past the pane edge and the zoom stack sits 3 px from the Lone frame's bottom, which the fit ruled on 003-189 fixes.
+
+## Built (rework)
+The lone-box opening fit of 003-189 (`openTransform` in `canvas/view.ts`) stands a single frame the room cannot hold but the pane can inside the pane at 375, clear of the zoom stack. Covered by the unit test `a fit with a foot ...`; the critique re-measures the Placed and Lone loop frames.

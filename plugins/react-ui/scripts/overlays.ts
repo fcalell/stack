@@ -461,7 +461,7 @@ export const OVERLAYS: readonly string[] = [
 	"page-tablet:basis-0",
 	// Canvas
 	"page-max-tablet:min-h-1/2",
-	"gap-sections",
+	"max-w-[min(var(--spacing-measure),calc(100cqw_-_2*var(--spacing-page)))]",
 	"origin-top",
 	"outline-selected-outline",
 	"overflow-visible",
