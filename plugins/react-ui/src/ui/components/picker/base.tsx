@@ -617,6 +617,9 @@ function PickList<V extends string | null>(
 	const keyboard = useKeyed(props.trigger);
 	return (
 		<Select.Root
+			// Not modal: a modal select locks the page's scroll, which changes the
+			// root's overflow and gutter and moves the page as the list opens.
+			modal={false}
 			multiple={props.several !== undefined}
 			value={props.several ? [...props.several.value] : (props.value ?? null)}
 			onValueChange={(next) => {
@@ -724,6 +727,7 @@ function PickSearch<V extends string | null>(
 	const keyboard = useKeyed(props.trigger);
 	return (
 		<Combobox.Root
+			modal={false}
 			items={props.groups}
 			autoHighlight
 			multiple={props.several !== undefined}

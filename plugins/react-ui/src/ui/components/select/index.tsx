@@ -80,6 +80,9 @@ export function Select<V extends string | null = string>({
 	);
 	return (
 		<Control.Root
+			// Not modal: a modal select locks the page's scroll and moves the page
+			// as the list opens (as a Menu's popover, it leaves the page alone).
+			modal={false}
 			items={items}
 			value={value ?? null}
 			onValueChange={(next) => onChange(next as V)}
