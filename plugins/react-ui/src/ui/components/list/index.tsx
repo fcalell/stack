@@ -39,6 +39,7 @@ import {
 	use,
 	useState,
 } from "react";
+import { ActsRoom } from "../../lib/acts-room.ts";
 import type { Closed } from "../../lib/closed.ts";
 import { useGroupPart } from "../../lib/group.ts";
 import { LoadingContext } from "../../lib/loading.ts";
@@ -352,6 +353,9 @@ export function List<T, V extends string | null = string>(
 		props.row?.meta !== undefined && props.row.children === undefined
 			? cn(LIST_DIVIDED, DIVIDER)
 			: LIST;
+	// Whether a row of the loaded list has a more act: the rows without one then
+	// keep its square, so every row's end stands at one x.
+	let room = false;
 	const frame = (rows: ReactNode, nav?: TreeNav, abut = nav !== undefined) => {
 		let box = rows;
 		if (ground === "group" && nav)
@@ -370,7 +374,11 @@ export function List<T, V extends string | null = string>(
 					{rows}
 				</div>
 			);
-		return <ListedRoute value={at}>{box}</ListedRoute>;
+		return (
+			<ListedRoute value={at}>
+				<ActsRoom value={room}>{box}</ActsRoom>
+			</ListedRoute>
+		);
 	};
 	if (state === "pending" && !known) {
 		return frame(
@@ -434,6 +442,16 @@ export function List<T, V extends string | null = string>(
 			/>
 		);
 		const { children } = row;
+		const { more } = row;
+		if (more !== undefined) {
+			const every =
+				children === undefined
+					? items
+					: treeRows(items, { key: row.key, children }, []).map(
+							(each) => each.item,
+						);
+			room = every.some((item) => more(item)?.length);
+		}
 		if (children === undefined)
 			return frame(
 				<TrailingWait value={known}>{items.map(rowOf)}</TrailingWait>,

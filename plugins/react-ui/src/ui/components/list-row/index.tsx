@@ -43,6 +43,7 @@ import {
 	useMemo,
 	useState,
 } from "react";
+import { ActsRoom } from "../../lib/acts-room.ts";
 import { ageShort } from "../../lib/age.ts";
 import { useClock } from "../../lib/clock.ts";
 import type { Closed } from "../../lib/closed.ts";
@@ -175,6 +176,8 @@ const CHIP_MARK = "flex shrink-0";
 const ACTS = "relative flex shrink-0 items-center";
 // The chevron draws in the ink of the slot (currentColor), as a definition
 // row's does.
+// The more act's square, left blank in a row that has none beside rows that do.
+const BLANK = "shrink-0";
 const CHEVRON = "flex shrink-0 items-center justify-center text-ink-meta";
 // The entry stands above the hit: the input and its act, the field filling
 // the room the act leaves.
@@ -369,6 +372,7 @@ export function ListRow<V extends string | null = string>({
 	const ground = use(GroundContext);
 	const tree = use(TreeContext);
 	const waits = use(TrailingWait);
+	const room = use(ActsRoom);
 	const at = useRoute();
 	const named = partText(title);
 	const current = selected || (href !== undefined && isCurrent(href, at));
@@ -381,6 +385,9 @@ export function ListRow<V extends string | null = string>({
 		!more?.length &&
 		!(trailing && "pick" in trailing) &&
 		!tree?.fold;
+	// A row of a list where another has a more act, with no more act and no
+	// chevron of its own, keeps that act's square blank.
+	const blank = room && !more?.length && !chevron;
 	const marked =
 		status !== undefined ||
 		warning !== undefined ||
@@ -671,10 +678,13 @@ export function ListRow<V extends string | null = string>({
 					</span>
 				</First>
 			) : null}
-			{act || more?.length ? (
+			{act || more?.length || blank ? (
 				<First on={top}>
 					<span className={cn(ROW_ACTS, ACTS, under && ACTS_UNDER)}>
 						{act ? <ActButton act={act} host={actReason.host} /> : null}
+						{blank ? (
+							<span aria-hidden className={cn(ROW_CHEVRON, BLANK)} />
+						) : null}
 						{more?.length ? (
 							<MenuBase
 								label={`${words.more} ${named}`}
