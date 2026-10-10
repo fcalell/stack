@@ -535,7 +535,7 @@ given, so drive it from the boundary or the Section around it, never from a raw 
 Every `IconButton`, and every icon act a molecule draws (a Place's `actions`, a Section's icon act,
 a menu's more act, a sheet's close, the canvas's zoom stack), shows its `label` in a tooltip after
 a pointer rests on it for 500 ms, and as the keyboard reaches it; Escape, a press or leaving hides
-it. Touch draws none. The label stays the accessible name, so never repeat it as a `title`.
+it (Escape still reaches the sheet the act stands in, which closes on that one press). Touch draws none. The label stays the accessible name, so never repeat it as a `title`.
 
 ## Words are the config's, sentences are props
 

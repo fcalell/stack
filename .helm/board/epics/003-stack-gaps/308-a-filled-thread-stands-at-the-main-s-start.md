@@ -12,7 +12,7 @@ Stead's card thread on the board ("New story", `packages/server/src/app/routes/w
 `COLUMN_FILLED` centres a filling Thread's column (`plugins/react-ui/src/ui/components/thread/fill.ts:20-21`, `mx-auto max-w-measure`), and `ItemHeader` takes it (`item-header/index.tsx:219`). 003-81 (done) kept the centring for a filling Thread on purpose; this reverses that half of it. Seen at stack `226f48c`.
 
 ## Acceptance criteria
-- [ ] A filled Thread's header and its messages start at the main's start, the messages at the measure, as a record in the main does (003-88).
+- [x] A filled Thread's header and its messages start at the main's start, the messages at the measure, as a record in the main does (003-88).
 - [ ] Its input follows 003-307.
 
 ## Open questions
@@ -28,3 +28,6 @@ Both halves follow the main's mark: `COLUMN_FILLED` loses `mx-auto` (the header 
 - Native unrendered: the phone has no centred column.
 
 Awaiting the batch browser run: the first acceptance box stays unticked.
+
+## Browser run
+`FilledThreadStandsAtStart1280` passes (thread-fill.stories.tsx, 1 of 1): the item header and every message share one left edge at the log's inset plus the page inset, each message no wider than the measure.

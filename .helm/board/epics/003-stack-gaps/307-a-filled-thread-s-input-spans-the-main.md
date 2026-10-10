@@ -12,7 +12,7 @@ In Stead's Chats the thread's input stands in a measure-wide column centred in t
 `MessageInput` and the Thread's log both take `THREAD_COLUMN`, `w-full max-w-measure` (`packages/ui-core/src/variants.ts:739`; `plugins/react-ui/src/ui/components/message-input/index.tsx:109-111`, `thread/index.tsx:237`). 003-81 (done) and 003-163 (review) shape the column; neither spans the input. Seen at stack `226f48c`.
 
 ## Acceptance criteria
-- [ ] A Thread filling a Split's main docks its input across the main's width, within the page inset.
+- [x] A Thread filling a Split's main docks its input across the main's width, within the page inset.
 - [x] Its messages keep the measure.
 - [x] An inline Thread is unchanged.
 
@@ -28,3 +28,6 @@ The filled form's default, no option: a Thread filling a Split's main docks its 
 - Native unrendered: the phone's column is the screen's, so the input already spans.
 
 Awaiting the batch browser run: the first acceptance box (measured at 1280) stays unticked.
+
+## Browser run
+`FilledThreadStandsAtStart1280` passes (thread-fill.stories.tsx, 1 of 1): the input's column spans from the log's inset plus the page inset to the right inset. Test fixes: the heading is picked by its name (the Place's h1 is also a heading), and the input is the foot's column (`max-w-measure` ancestor), not the textarea inside its card, which the card's padding offsets by 13 px.
