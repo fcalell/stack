@@ -184,7 +184,7 @@ An `act` stands at the foot's centre; it adds, it never removes.
 
 ## Loading
 
-`loading` stands the ground and its grid with three node-shaped skeletons, busy to assistive
+`loading` stands the ground and its grid with three node-shaped skeletons (a loaded node's size, at the gap a loaded path keeps), busy to assistive
 technology, while the data is read, so the page below the head does not move when the graph
 arrives. Pass `nodes={[]}` meanwhile: `nodes`, the handlers and the `act` are ignored, and the
 loading form draws no zoom stack, no act, no node button and no drag. Do not stand `nodes={[]}`
@@ -193,7 +193,7 @@ for a wait: it reads as an empty graph.
 ## An empty graph
 
 `empty` is a sentence the canvas draws centred under the graph, a `pair` below its bottom edge, in
-the meta ink at the text floor at any zoom. It follows the pan and zoom, takes no pointer (a drag
+the meta ink at the text floor at any zoom, never closer to the graph than a `pair`. It wraps within the pane less a page inset on each side, and the opening view and Fit hold the graph and the sentence whole in the pane. It follows the pan and zoom, takes no pointer (a drag
 through it pans, a tap on it clears the selection) and is the region's accessible description.
 The sentence is your copy and you decide when it stands: pass it or `undefined`.
 

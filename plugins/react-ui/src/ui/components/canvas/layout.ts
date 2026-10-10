@@ -387,6 +387,7 @@ export function useLayout({
 				{ width: element.clientWidth, height: element.clientHeight },
 				spacing("page"),
 				viewport.clearance(),
+				viewport.reserved() ?? undefined,
 			),
 		);
 		setReady(true);

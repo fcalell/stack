@@ -3102,9 +3102,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			draws: [
 				"SKELETON.kind.icon",
 				"SKELETON.kind.line",
-				"SKELETON_LANE.role.body",
 				"SKELETON_LANE.role.meta",
-				"LINE_BOX.role.body",
 				"LINE_BOX.role.meta",
 				"CANVAS_GROUND",
 				"CANVAS_NODE",

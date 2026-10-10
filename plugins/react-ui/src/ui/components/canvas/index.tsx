@@ -334,6 +334,7 @@ function CanvasGraph({
 						text={empty}
 						bounds={routed.bounds}
 						gap={space.pair}
+						viewport={viewport}
 					/>
 				) : null}
 				{groups.map((group) => {

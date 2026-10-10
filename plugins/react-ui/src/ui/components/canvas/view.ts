@@ -88,9 +88,60 @@ export function centredTransform(box: Box, k: number, pane: Size): Transform {
 export interface Clearance {
 	left: number;
 	bottom: number;
+	// How far the part against the left edge reaches up from the pane's bottom.
+	stack: number;
 }
 
-export const NO_CLEARANCE: Clearance = { left: 0, bottom: 0 };
+export const NO_CLEARANCE: Clearance = { left: 0, bottom: 0, stack: 0 };
+
+// What stands under the graph at its own size on screen at any zoom: a text of
+// `width` by `height` a `gap` below the bounds' bottom edge. A fit holds it, with
+// the bounds, whole in the pane.
+export interface Foot {
+	gap: number;
+	height: number;
+	width: number;
+}
+
+const NO_FOOT: Foot = { gap: 0, height: 0, width: 0 };
+
+// The transform that stands the bounds and their foot whole in the pane, inset
+// on every side: the foot is centred under the bounds, whose centre moves from
+// the room's centre only as far as the foot needs to stay inside the pane, and
+// when the foot reaches into the chrome on the left the room ends above it.
+function footTransform(
+	bounds: Box,
+	pane: Size,
+	inset: number,
+	clear: Clearance,
+	foot: Foot,
+): Transform {
+	// The bounds keep their own size while the pane holds them, edge to edge at
+	// the most, so a node a few pixels wider than the room stays a whole card.
+	const across = Math.min(1, pane.width / bounds.width);
+	const span = Math.max(bounds.width * across, foot.width);
+	const area = room(pane, inset, clear);
+	const low = inset + span / 2;
+	const high = pane.width - inset - span / 2;
+	const centre =
+		low > high
+			? pane.width / 2
+			: Math.min(Math.max(area.x + area.width / 2, low), high);
+	const hits = centre - span / 2 < clear.left;
+	const bottom = Math.max(inset, clear.bottom, hits ? clear.stack : 0);
+	const height = pane.height - inset - bottom;
+	const k = Math.min(
+		across,
+		(height - inset - foot.gap - foot.height) / bounds.height,
+	);
+	const top =
+		inset + (height - inset - (bounds.height * k + foot.gap + foot.height)) / 2;
+	return {
+		k,
+		x: centre - (bounds.x + bounds.width / 2) * k,
+		y: top - bounds.y * k,
+	};
+}
 
 // The part of the pane a fit may fill: inset on every side, and past the
 // chrome on the left and the bottom.
@@ -113,7 +164,9 @@ export function fitTransform(
 	pane: Size,
 	inset: number,
 	clear: Clearance = NO_CLEARANCE,
+	foot?: Foot,
 ): Transform {
+	if (foot) return footTransform(bounds, pane, inset, clear, foot);
 	const area = room(pane, inset, clear);
 	const k = Math.min(1, area.width / bounds.width, area.height / bounds.height);
 	const centre = centredTransform(bounds, k, area);
@@ -129,8 +182,15 @@ export function openTransform(
 	pane: Size,
 	inset: number,
 	clear: Clearance = NO_CLEARANCE,
+	foot?: Foot,
 ): Transform {
+	if (foot) return footTransform(bounds, pane, inset, clear, foot);
 	const area = room(pane, inset, clear);
+	// A graph of one box that the room cannot hold but the pane can opens as a
+	// fit does, so its card stands whole and clear of the chrome.
+	const lone = first?.width === bounds.width && first.height === bounds.height;
+	if (lone && bounds.width <= pane.width && bounds.width > area.width)
+		return footTransform(bounds, pane, inset, clear, NO_FOOT);
 	const fits = bounds.width <= area.width && bounds.height <= area.height;
 	if (fits || !first) {
 		const centre = centredTransform(bounds, 1, area);
