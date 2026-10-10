@@ -284,10 +284,11 @@ export const StatusShortTouch = touch(StatusShort);
 export const StatusShortResizesTouch = touch(StatusShortResizes);
 export const StatusLongTouch = touch(StatusLong);
 
-// A part the meta line has no room for goes whole, and the status follows the
-// first part a gap apart rather than stand off it across the room the part
-// would have held. The remotes run from a few letters to a path: at every
-// width some row drops `main` with the first part whole.
+// A part the meta line has no room for goes whole; the status still stands at
+// the line's end, so every row's status ends at one x, and the room the part
+// leaves before it is under the `figures` the later parts show at least. The
+// remotes run from a few letters to a path: at every width some row drops
+// `main` with the first part whole.
 const REMOTES = Array.from(
 	{ length: 14 },
 	(_, at) => `/tmp/fx9/${"r".repeat(at * 3)}`,
@@ -332,6 +333,8 @@ const inkRight = (element: Element) => {
 const drops: Play = async ({ canvas }) => {
 	for (const column of canvas.getAllByTestId("column")) {
 		let dropped = 0;
+		const edges: number[] = [];
+		let widest = -1;
 		for (const remote of REMOTES) {
 			const row = within(column).getByRole("link", {
 				name: remote,
@@ -343,11 +346,11 @@ const drops: Play = async ({ canvas }) => {
 			const later = parts?.children[1];
 			if (!row || !line || !parts || !status || !first || !later)
 				throw new Error("a row lacks a part");
-			const gap = Number.parseFloat(getComputedStyle(line).columnGap);
 			const inside = within(status as HTMLElement);
 			await expect(
 				clipped(inside.queryByText(SHORT) ?? inside.getByText(LONG)),
 			).toBe(false);
+			edges.push(status.getBoundingClientRect().right);
 			// Wrapped away under its slot's one line: its text stands below the
 			// slot's top.
 			const text = later.lastElementChild;
@@ -357,11 +360,18 @@ const drops: Play = async ({ canvas }) => {
 				later.getBoundingClientRect().top + 1;
 			if (!gone) continue;
 			dropped += 1;
-			await expect(
-				status.getBoundingClientRect().left - inkRight(first),
-			).toBeLessThanOrEqual(gap + 1);
+			const figures = Number.parseFloat(getComputedStyle(text).flexBasis);
+			await expect(figures).toBeGreaterThan(0);
+			// The gap step stands before the status in every row; the rest is the
+			// room the dropped part left.
+			const gap = Number.parseFloat(getComputedStyle(line).columnGap);
+			const left = status.getBoundingClientRect().left - inkRight(first) - gap;
+			widest = Math.max(widest, left);
+			await expect(left).toBeLessThan(figures);
 		}
 		await expect(dropped).toBeGreaterThan(0);
+		for (const edge of edges)
+			await expect(Math.abs(edge - edges[0])).toBeLessThanOrEqual(1);
 	}
 };
 

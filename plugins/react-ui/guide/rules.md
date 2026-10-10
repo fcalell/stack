@@ -344,7 +344,7 @@ every item fills it. Pending, it waits in those slots; failed, it shows
 `sentence` and Retry; empty, `empty`, with the act that fills it. Rows share one `leading` kind
 (`avatar`, `icon` or `status`) or none. The first meta part names the item. A row's meta line
 yields from its end, in this strict order: the later parts truncate (they show at least a short word
-of room or none, and the marks then follow the first part a gap apart rather than stand off it across the room the part would have held; a `{ quoted }` part cuts ahead of the plain ones, so a long quote or reason yields
+of room or none, and the room a dropped part leaves falls before the status, which stands at the line's end, under `figures`; a `{ quoted }` part cuts ahead of the plain ones, so a long quote or reason yields
 and an age and spend that must read are the row's `trailing`, `{ age, beside: "$0.42" }`), then the chip leaves whole, then the lock's label truncates, then the warning's,
 and last the first part truncates; the status and the glyphs stay whole. A value trailing a title
 (an age, an ISO moment the row words short and keeps current, with a short `beside` value such as a spend drawn after it, `{ age, beside: "$0.12" }`) is whole or gone, the age and its `beside` together: it leaves once the title would hold under half its line. A row that opens (`href` or `onOpen`) ends in a chevron after its trailing value; a row with an `act`, `more`, a trailing pick or a tree's fold draws none, and neither does a static row. In a list where some rows declare `more`, the rows without one keep its square blank, so every row's trailing value ends at one x; give `more` only to the rows that have acts. Below `tablet`
