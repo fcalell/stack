@@ -99,7 +99,9 @@ and `style` as `?: never`) and declares exactly the roster's prop names.
   `focus-visible:`; a disabled control `disabled:` or `aria-disabled:`, a pending act
   `aria-busy:`. The focus ring is the base `:focus-visible` rule in `globals.css`
   (`--focus-ring` in `--color-ring` at `--focus-ring-offset`), so a component spells nothing for
-  it; a control inside a control rings inset with `focus-visible:-outline-offset-2`.
+  it; a control inside a control rings inset with `focus-visible:-outline-offset-2`. A field box
+  (Input, TextArea, the OTP boxes, MessageInput, the Select and Picker trigger) rings on its edge
+  (`--focus-ring-edge-offset`, -1 px), for the keyboard alone: a click draws the hover edge.
 - **Behaviour.** `@base-ui/react` supplies behaviour and accessibility (a button, a switch, a
   checkbox, a slider, a field, a select) through its per-component subpaths
   (`@base-ui/react/switch`); its parts take the component's classes, never Base UI's look.

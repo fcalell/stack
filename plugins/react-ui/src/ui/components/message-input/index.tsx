@@ -35,6 +35,11 @@ import type { Closed } from "../../lib/closed.ts";
 import { FieldDisabled } from "../../lib/field.ts";
 import { ActInert } from "../../lib/form.ts";
 import { useTouch } from "../../lib/media.ts";
+import {
+	BOX_FOCUS,
+	POINTER_FOCUS_EDGE,
+	useModality,
+} from "../../lib/modality.ts";
 import { attachedFrom } from "../../lib/picked.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Button } from "../button/index.tsx";
@@ -47,9 +52,7 @@ const ROOT = "flex flex-col w-full";
 const STACK = "flex flex-col";
 // The box draws the field's states, as `Input`'s does: the acts inside it
 // answer their own pointer and ring on their own focus.
-const BOX_HOVER = "not-has-[button:hover]:hover:border-edge-hover";
-const BOX_FOCUS =
-	"not-has-[button:focus-visible]:has-focus-visible:outline-2 not-has-[button:focus-visible]:has-focus-visible:outline-offset-2 not-has-[button:focus-visible]:has-focus-visible:outline-ring";
+const BOX_HOVER = `not-has-[button:hover]:hover:border-edge-hover ${POINTER_FOCUS_EDGE}`;
 const BOX_DISABLED = "bg-fill-disabled";
 const FIELD_BOX = "flex flex-col justify-center grow min-w-0";
 const VALUE =
@@ -105,6 +108,7 @@ export function MessageInput({
 	onStop,
 	disabled,
 }: MessageInputProps) {
+	useModality();
 	const words = useWords();
 	const touch = useTouch();
 	// A docked foot spans the page body, so the field keeps its own measure

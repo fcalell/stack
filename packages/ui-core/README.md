@@ -343,7 +343,9 @@ control), `row` 6 (a menu item, a highlighted row), `card` 8 (a card, a toast), 
 `sheet` 8 (a sheet's leading corners, a centred sheet), `full` (a dot, an avatar, the pill chip or
 status, a switch). One hairline of 1 px draws region edges, row splits and field boundaries, as
 `--hairline`. The focus ring is `ring`, 2 px at a 2 px offset outside the box, so it never covers
-the control's own edge; inside a list it is drawn inward.
+the control's own edge; inside a list it is drawn inward. A bordered box that takes typing or
+choosing (a field, the Select and Picker trigger) rings on its edge: `RING_EDGE_OFFSET_PX`, -1 px,
+centres the ring on the hairline.
 
 Widths are a short label's measure (a chip's label, a status word, a skeleton label's lane), the
 lifted layers' ranges and the fixed regions of a frame, as

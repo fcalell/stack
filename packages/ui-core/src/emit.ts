@@ -18,6 +18,7 @@ import {
 	type PixelDensity,
 	RADIUS_PX,
 	RADIUS_ROLES,
+	RING_EDGE_OFFSET_PX,
 	RING_OFFSET_PX,
 	RING_PX,
 	ROOM_CANVAS,
@@ -99,6 +100,7 @@ export function rootTokens(resolved: ResolvedTheme): Record<string, string> {
 		"--hairline": `${HAIRLINE_PX}px`,
 		"--focus-ring": `${RING_PX}px`,
 		"--focus-ring-offset": `${RING_OFFSET_PX}px`,
+		"--focus-ring-edge-offset": `${RING_EDGE_OFFSET_PX}px`,
 	};
 	STACK_ORDER.forEach((layer, at) => {
 		tokens[`--layer-${layer}`] = String(at + 1);
@@ -214,6 +216,7 @@ export function roomRingTokens<T>(
 	return {
 		"--focus-ring": scale(RING_PX),
 		"--focus-ring-offset": scale(RING_OFFSET_PX),
+		"--focus-ring-edge-offset": scale(RING_EDGE_OFFSET_PX),
 	};
 }
 

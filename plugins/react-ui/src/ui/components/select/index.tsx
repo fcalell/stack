@@ -24,7 +24,7 @@ import { BOX, BOX_DISABLED, BOX_HOVER } from "../input/index.tsx";
 // Base UI moves focus into the list while it is open, so the trigger keeps
 // the ring on its open state.
 const TRIGGER_OPEN =
-	"data-popup-open:outline-2 data-popup-open:outline-offset-2 data-popup-open:outline-ring";
+	"data-popup-open:outline-2 data-popup-open:outline-offset-(--focus-ring-edge-offset) data-popup-open:outline-ring focus-visible:outline-offset-(--focus-ring-edge-offset)";
 // The value starts at the start, as an input's does, not at the button's centre.
 const VALUE = "min-w-0 grow truncate text-start";
 const VALUE_DISABLED = "text-ink-disabled";
