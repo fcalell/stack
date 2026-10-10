@@ -17,6 +17,7 @@ import {
 	useState,
 } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { useRecordFocus } from "../../lib/focus.ts";
 import { FormStands } from "../../lib/form.ts";
 import {
 	ActRoom,
@@ -152,6 +153,7 @@ export function Split({
 	const [listNode, setListNode] = useState<HTMLElement | null>(null);
 	const [mainNode, setMainNode] = useState<HTMLElement | null>(null);
 	const [paneNode, setPaneNode] = useState<HTMLElement | null>(null);
+	useRecordFocus(listNode, mainNode);
 	const listStop = useScrolls(listNode);
 	const mainStop = useScrolls(mainNode);
 	const paneStop = useScrolls(paneNode);

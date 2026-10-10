@@ -497,6 +497,12 @@ the same `<Sheet>` as the modal from a page and as the `foot` of a conversation;
 the `MessageInput` in its place) returns focus to the input, and each page (a new `title`) opens at
 the top of its body with focus in its first field. A `Sheet` among a `Thread`'s sections draws the same form with no bound.
 
+Keyboard focus follows the work without a prop. A `Sheet` returns focus to what opened it; when that
+is gone (an act of a `Picker` or `Menu`, which unmounts with its popup, returns to that popup's
+trigger) or nothing opened it (a route mounted the sheet open), a close by the keyboard leaves focus
+on the first control of the page it returns to, never the body. A row of a `Split`'s list that opens
+a record hands the keyboard to the record's first control, so the next Tab is not the list's next row.
+
 A column is a width and the region around it aligns it. A filling `Thread`'s log and a docked foot
 (a `Place`'s `foot`, a filling `Thread`'s input) centre their measure column, and a selection bar's;
 a `Thread` among sections keeps their start, at the measure, as a `Text` paragraph does. A region

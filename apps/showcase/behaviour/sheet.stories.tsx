@@ -7,6 +7,7 @@ import { Input } from "@fcalell/plugin-react-ui/components/input";
 import { List } from "@fcalell/plugin-react-ui/components/list";
 import { MessageInput } from "@fcalell/plugin-react-ui/components/message-input";
 import { OptionList } from "@fcalell/plugin-react-ui/components/option-list";
+import { Picker } from "@fcalell/plugin-react-ui/components/picker";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
 import { Sheet } from "@fcalell/plugin-react-ui/components/sheet";
@@ -15,6 +16,7 @@ import { confirm } from "@fcalell/plugin-react-ui/lib/confirm";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { expect, screen, waitFor } from "storybook/test";
+import { focused } from "./support.ts";
 
 function Page() {
 	const [open, setOpen] = useState(false);
@@ -776,5 +778,76 @@ export const DockedWithRoomFitsItsPage: StoryObj = {
 		expect(
 			canvas.getByRole("log").getBoundingClientRect().height,
 		).toBeGreaterThan(body.clientHeight);
+	},
+};
+
+const REPOS = [
+	{ value: "api", label: "api" },
+	{ value: "web", label: "web" },
+];
+
+function PickOpensSheet() {
+	const [repo, setRepo] = useState("api");
+	const [open, setOpen] = useState(false);
+	return (
+		<>
+			<Picker
+				label="Repo"
+				options={REPOS}
+				value={repo}
+				onChange={setRepo}
+				act={{ icon: "Plus", label: "New epic", onAct: () => setOpen(true) }}
+			/>
+			<Sheet open={open} onClose={() => setOpen(false)} title="New epic">
+				<p>Name it</p>
+			</Sheet>
+		</>
+	);
+}
+
+// A Sheet a pick's closing act opens: the act unmounts with the popup, so on
+// close focus returns to the picker's trigger, not the body.
+export const OpenedByAPicksAct: StoryObj = {
+	render: () => <PickOpensSheet />,
+	play: async ({ canvas, userEvent }) => {
+		const trigger = canvas.getByRole("combobox", { name: /Repo/ });
+		await userEvent.click(trigger);
+		await userEvent.click(await screen.findByRole("button", { name: /New epic/ }));
+		await screen.findByRole("dialog", { name: "New epic" });
+		await userEvent.keyboard("{Escape}");
+		await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+		await waitFor(() => expect(trigger).toHaveFocus());
+	},
+};
+
+function RouteOpensSheet() {
+	const [route, setRoute] = useState<"item" | "list">("item");
+	return (
+		<Place title={route === "item" ? "Item" : "Items"}>
+			<Button label="Add" onAct={() => {}} />
+			{route === "item" ? (
+				<Sheet open onClose={() => setRoute("list")} title="Question">
+					<p>Which one?</p>
+				</Sheet>
+			) : null}
+		</Place>
+	);
+}
+
+// A Sheet its route mounts open, closed by Escape as the route leaves: focus
+// lands on the page it returns to, never the body.
+export const OpenedByARoute: StoryObj = {
+	parameters: { layout: "fullscreen" },
+	render: () => <RouteOpensSheet />,
+	play: async ({ canvas, canvasElement, userEvent }) => {
+		await screen.findByRole("dialog", { name: "Question" });
+		await userEvent.keyboard("{Escape}");
+		await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+		await waitFor(() =>
+			expect(canvasElement.querySelector("[data-page]")).toContainElement(
+				focused(),
+			),
+		);
+		await expect(canvas.getByRole("button", { name: "Add" })).toBeVisible();
 	},
 };
