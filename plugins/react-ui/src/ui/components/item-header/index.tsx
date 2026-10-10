@@ -32,17 +32,22 @@ import { Status } from "../status/index.tsx";
 import { COLUMN_FILLED } from "../thread/fill.ts";
 
 const HEAD = "flex flex-col";
+// A fact that acts keeps its target-height hit box and reaches past the facts
+// line's text line above and below it (`factReach`), so the line holds the
+// meta line's height whichever kinds of fact it carries. Its own meta leading
+// is the `lh` it reads.
+const REACH = "leading-meta -my-[calc((var(--spacing-target)-1lh)/2)]";
 const OVERLINE = "truncate";
 const FACTS = "flex flex-wrap items-center";
 const FACT = "inline-flex items-center";
 // A pick in the facts line pulls back at its start as well as its end, so its
 // dot and word sit where a plain fact's would.
-const PICK = "inline-flex -ms-inside";
+const PICK = cn("inline-flex -ms-inside", REACH);
 // A fact that acts washes at the pointer, its words in the meta ink; one that
 // opens pulls back at its start as a pick does.
 const ACT =
 	"inline-flex items-center text-ink-meta hover:bg-wash-hover active:bg-wash-press";
-const OPEN = cn(ACT, "-ms-inside");
+const OPEN = cn(ACT, "-ms-inside", REACH);
 // A loading line stands in its text's line box, so the loading head keeps
 // the loaded head's height.
 const LINE_WAIT = "flex items-center h-lh";
@@ -50,7 +55,7 @@ const LINE_WAIT = "flex items-center h-lh";
 // loading head reserves it.
 const WRAP_WAIT = "hidden max-tablet:flex items-center h-lh";
 const FACTS_WAIT = "flex flex-col";
-const FACTS_LINE_WAIT = "flex items-center";
+const FACTS_LINE_WAIT = "flex items-center min-h-lh";
 // The waiting count is a bar one figure wide, set by an unseen figure.
 const COUNT_WAIT = "inline-flex shrink-0 items-center";
 const FIGURE_WAIT = "opacity-0 tabular-nums";
@@ -95,7 +100,7 @@ function factKey<V extends string | null>(fact: Fact<V>): string {
 // unseen under the live one), so the line wraps the same as the save moves
 // between its states; from `tablet` it takes the live form's own width. Like
 // the pick it pulls back at both ends by a control box's padding.
-const SAVE = "inline-grid -mx-inside";
+const SAVE = cn("inline-grid -mx-inside", REACH);
 const SAVE_FORM = "col-start-1 row-start-1 inline-flex items-center";
 const SAVE_ROOM =
 	"col-start-1 row-start-1 items-center invisible hidden max-tablet:inline-flex";
@@ -227,7 +232,13 @@ export function ItemHeader<V extends string | null = string>({
 					<span className={cn(skeleton({ kind: "line" }), "w-1/2")} />
 				</span>
 				<span className={cn(SKELETON_LINES, FACTS_WAIT)}>
-					<span className={cn(skeletonRow({ kind: "facts" }), FACTS_LINE_WAIT)}>
+					<span
+						className={cn(
+							skeletonRow({ kind: "facts" }),
+							lineBox({ role: "meta" }),
+							FACTS_LINE_WAIT,
+						)}
+					>
 						<span className={cn(skeleton({ kind: "line" }), "w-1/3")} />
 						<span className={cn(skeleton({ kind: "count" }), COUNT_WAIT)}>
 							<span className={cn(text({ role: "caption" }), FIGURE_WAIT)}>

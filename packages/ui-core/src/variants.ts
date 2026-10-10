@@ -475,12 +475,13 @@ export const DEFINITION_ROW_CHEVRON = "size-control-compact";
 export const LOCK_GLYPH = "shrink-0 text-ink-meta";
 // A record's head: the overline, the title and the facts line a pair apart;
 // the facts wrap at the fields rhythm, a counted fact its word beside its
-// count. A fact that acts or changes (a pick, an opening fact, a save) stands
-// at the target height, as the loading line does, so the head keeps one height
-// whichever fact the line holds.
+// count. The line stands at the meta line's height whichever facts it holds:
+// a fact that acts or changes (a pick, an opening fact, a save) keeps its
+// target-height hit box and reaches past the line above and below it
+// (`factReach`), so a fact that opens joining the line moves nothing under it.
 export const ITEM_HEADER = "gap-pair";
 export const ITEM_FACTS = "gap-x-fields gap-y-pair";
-export const ITEM_FACT = "gap-inside min-h-target";
+export const ITEM_FACT = "gap-inside";
 // A folded question: one row at the row height, its glyph (in the `ok` ink),
 // its label, its answer and its edit act an inside apart.
 export const FORM_FIELD_SUMMARY = "gap-inside min-h-row";
@@ -893,6 +894,10 @@ export const SPLIT_BESIDE = "grow basis-0";
 // (a web overlay pulls it back).
 export const SECTION_HEAD = "gap-pair";
 export const SECTION_HEAD_ROW = "gap-fields";
+// A section's body: its parts (a Prose, a Code, a Group, an ActionBar) stand
+// at the fields rhythm, wider than the head's pair; rows inside a Group keep
+// the Group's own tight spacing.
+export const SECTION_BODY = "gap-fields";
 export const SECTION_TITLE = "gap-inside";
 export const SECTION_TOGGLE = "gap-inside min-h-target px-inside rounded-row";
 // A Section inside a Section, or a folded one, names itself a level below an

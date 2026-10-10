@@ -1184,10 +1184,10 @@ export const SPLIT_MAIN = matrix({
 
 // ── Section ─────────────────────────────────────────────────────────
 
-// A section's rhythm follows where it sits: on a page (over a Group, a List,
-// a column's cards) the head sits over the body and the body's children
-// stack at the pair rhythm; in a form both are the fields rhythm. The same
-// cell spaces the section (head to body) and its body (child to child).
+// A section's head-to-body step follows where it sits: on a page (over a
+// Group, a List, a column's cards) the head is paired to the body; in a form
+// it is the fields rhythm. The body's own parts stand apart at the fields
+// rhythm wherever the section sits (`SECTION_BODY`).
 export const SECTION = matrix({
 	base: "",
 	variants: {
@@ -1290,15 +1290,14 @@ export const SKELETON = matrix({
 
 // A loading row at the height of the row it stands in for: a group's setting
 // row, a form's field (a label line over the field's box at the label's
-// gap), a record's facts line (at the height of the status that opens on
-// it), or a one-line row in a list or in a group (a file row's).
+// gap), a record's facts line (at the meta line's height), or a one-line row in a list or in a group (a file row's).
 export const SKELETON_ROW = matrix({
 	base: "",
 	variants: {
 		kind: {
 			setting: "gap-fields min-h-row-setting px-card py-pair",
 			field: "gap-pair",
-			facts: "gap-x-fields min-h-target",
+			facts: "gap-x-fields",
 			"one-line": "gap-inside min-h-row px-control-x",
 			"one-line-group": "gap-inside min-h-row px-card",
 		},

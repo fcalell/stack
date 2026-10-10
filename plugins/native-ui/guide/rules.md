@@ -308,7 +308,7 @@ of the plain ones, so a long quote or reason yields and an age and spend that mu
 row's `trailing`), then the chip leaves whole,
 then the warning's label truncates, and last the first part truncates; the status and the glyphs
 stay whole. A row that opens (`href` or `onOpen`) ends in a chevron after its trailing value; a row
-with an `act`, `more`, a trailing pick or a tree's fold draws none, and neither does a static row.
+with an `act`, `more`, a trailing pick or a tree's fold draws none, and neither does a static row. In a list where some rows declare `more`, the rows without one keep its square blank, so every row's trailing value ends at one x; give `more` only to the rows that have acts.
 A row with an `act` stands its acts on a line under its text, at the row's end, so give
 `act` the next step and let the row decide where it stands. A table's `selected` row washes in its
 list form as in its grid. A file row's `change` (a `ChangeKind`) draws the
