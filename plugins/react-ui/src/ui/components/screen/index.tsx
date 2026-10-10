@@ -5,6 +5,7 @@ import {
 	PAGE_BODY,
 	PAGE_BODY_BESIDE,
 	PAGE_HEAD,
+	PAGE_HEAD_WRAPS,
 	PAGE_TITLE_FLOOR,
 	PAGE_TOP_BAR,
 	PAGE_TOP_BAR_END,
@@ -25,6 +26,7 @@ import { HeadingContext } from "../../lib/heading.ts";
 import { useTouch } from "../../lib/media.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
 import { useWords } from "../../lib/words.tsx";
+import { useWraps } from "../../lib/wraps.ts";
 import { IconButtonLink } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 import { headPaired } from "../item-header/pair.tsx";
@@ -55,7 +57,7 @@ const HEAD = "flex flex-col";
 // On touch the row is the title's: it wraps, so acts that do not fit beside the
 // back act, the title's floor and the gaps drop whole to a second line.
 const ROW = "flex items-center";
-const ROW_TOUCH = "flex-wrap";
+const ROW_TOUCH = "flex flex-wrap items-start";
 const ACTS = "flex shrink-0 items-center gap-acts ms-auto";
 const TITLE = "min-w-0 grow truncate";
 // The body fills the screen, so an EmptyState alone in it centres, and
@@ -154,8 +156,9 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 		text({ role: "title" }),
 		touch ? cn(TITLE_WRAP, PAGE_TITLE_FLOOR) : TITLE,
 	);
+	const [titleRef, wrapped] = useWraps();
 	const heading = (
-		<h1 id={titleId} className={titleClass}>
+		<h1 id={titleId} ref={touch ? titleRef : undefined} className={titleClass}>
 			{title}
 		</h1>
 	);
@@ -163,8 +166,10 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	// keeps its acts, their focus and an open sheet's trigger. The acts are one
 	// span at the row's end; it reaches the page inset by its end on touch.
 	const head = (
-		<header className={cn(PAGE_HEAD, HEAD)}>
-			<div className={cn(PAGE_TOP_BAR, ROW, touch && ROW_TOUCH)}>
+		<header
+			className={cn(PAGE_HEAD, touch && wrapped && PAGE_HEAD_WRAPS, HEAD)}
+		>
+			<div className={cn(PAGE_TOP_BAR, touch ? ROW_TOUCH : ROW)}>
 				{backAct}
 				{heading}
 				<span className={cn(ACTS, touch && PAGE_TOP_BAR_END)}>

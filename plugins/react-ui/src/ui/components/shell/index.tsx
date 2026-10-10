@@ -14,6 +14,7 @@ import {
 	SHELL_PLACES,
 	SHELL_SIDEBAR,
 	SHELL_TAB_BAR,
+	SHELL_TAB_COUNT,
 	SWITCHER_SLOT,
 	text,
 } from "@fcalell/ui-core/variants";
@@ -61,7 +62,7 @@ const TABS = "flex pb-safe group-has-data-screen/column:hidden";
 const TAB =
 	"flex flex-col items-center justify-center min-w-0 grow basis-0 focus-visible:-outline-offset-2";
 const TAB_GLYPH = "relative flex";
-const TAB_COUNT = "absolute top-0 left-full -translate-x-1/2 flex";
+const TAB_COUNT = "absolute top-0 left-full -ms-hairline flex";
 const TAB_LABEL = "max-w-full truncate";
 // A tab bar holds five tabs at most: past five places, four and More.
 const TAB_ROOM = 5;
@@ -197,8 +198,8 @@ function MorePage(props: { places: readonly PlaceSpec[] }) {
 }
 
 // The touch shell's places: glyph over label, the count a badge on the
-// glyph's top-right corner, its start half its width inside the glyph's edge;
-// past five places, four and a More tab,
+// glyph's top-right corner, its start at the glyph box's edge (clear of the
+// glyph's ink) on a ring of the bar's ground; past five places, four and a More tab,
 // which opens the page of the rest and is selected while it stands or the
 // current place is among them.
 function TabBar(props: {
@@ -234,7 +235,7 @@ function TabBar(props: {
 								<>
 									<Icon name={spec.icon} fit="control" />
 									{spec.count === undefined ? null : (
-										<span className={TAB_COUNT}>
+										<span className={cn(SHELL_TAB_COUNT, TAB_COUNT)}>
 											<Count value={tabCount(words, spec.count)} />
 										</span>
 									)}

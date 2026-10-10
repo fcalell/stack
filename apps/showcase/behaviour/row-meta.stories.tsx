@@ -5,6 +5,9 @@ import { ListRow } from "@fcalell/plugin-react-ui/components/list-row";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
 import { Status } from "@fcalell/plugin-react-ui/components/status";
+import { showcaseFrames } from "@fcalell/plugin-react-ui/showcase/cells";
+import { Frame } from "@fcalell/plugin-react-ui/showcase/frame";
+import { drawListRow } from "@fcalell/plugin-react-ui/showcase/frames/list-row";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect, within } from "storybook/test";
 
@@ -538,3 +541,41 @@ export const CodeRuns: StoryObj = {
 };
 
 export const CodeRunsTouch = touch(CodeRuns);
+
+// The ListRow showcase's rest frame holds the work rows: a live age with its
+// spend in the trailing, in a 335 px column (narrower where the screen is).
+const WORK_FRAMES = showcaseFrames().filter(
+	(frame) =>
+		frame.component === "ListRow" &&
+		frame.cell.name === "ROW.lines.two" &&
+		frame.state === "rest" &&
+		frame.mode === "light",
+);
+
+export const ShowcaseHoldsAgeBesideSpend: StoryObj = {
+	render: () => (
+		<div>
+			{WORK_FRAMES.filter((frame) => frame.density === "desktop").map(
+				(frame) => (
+					<Frame key={frame.id} frame={frame} draw={drawListRow} />
+				),
+			)}
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const spend = within(canvasElement).getByText(/\$0\.42/);
+		await expect(spend.textContent).toMatch(/\d+ min · \$0\.42/);
+		await expect(spend.scrollWidth).toBeLessThanOrEqual(spend.clientWidth);
+		const column = canvasElement.querySelector<HTMLElement>(
+			"[class*='w-[335px]']",
+		);
+		await expect(column?.getBoundingClientRect().width).toBeLessThanOrEqual(
+			335,
+		);
+	},
+};
+
+export const ShowcaseHoldsAgeBesideSpendTouch = touch(
+	ShowcaseHoldsAgeBesideSpend,
+	320,
+);

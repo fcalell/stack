@@ -534,7 +534,7 @@ a tick with no animation, never jumped to full.
   (`PAGE_TOP_BAR_TOUCH`) reaches across the page inset by `icon-inset`, half of what the control has
   over its icon, so its first and last icon glyphs stand at the title's start and the inset's end;
   the switcher's trigger keeps the same inset as its padding, so its avatar stands there too, and a
-  bar holding nothing draws no strip. A touch Place with no shell switcher has no bar over its title: the back act (when shown), the title, then the actions, Details and more stand on one 44 px row, the title wrapping before the acts (`PAGE_TOP_BAR_START` and `PAGE_TOP_BAR_END` reach the back act and the acts to the page inset); a Place with a switcher and a room Place keep the bar. A touch Screen, pushed or beside, is always that one row: back act (when shown), title, then one acts span (`actions`, Details, `more`), with no bar over the title; the row wraps, the title keeps `PAGE_TITLE_FLOOR` (two fifths of the row) and the acts span, `shrink-0 ms-auto`, drops whole to a second line at the row's end at 44 px when it does not fit beside the back act, the floor and the gaps (at 320 with three acts it wraps, at 390 it fits). The desktop strip and a beside Screen at a narrow desktop page are unchanged. A Place's title is a strip over a hairline and the body
+  bar holding nothing draws no strip. A touch Place with no shell switcher has no bar over its title: the back act (when shown), the title, then the actions, Details and more stand on one 44 px row, the title wrapping before the acts (`PAGE_TOP_BAR_START` and `PAGE_TOP_BAR_END` reach the back act and the acts to the page inset); a Place with a switcher and a room Place keep the bar. A touch Screen, pushed or beside, is always that one row: back act (when shown), title, then one acts span (`actions`, Details, `more`), with no bar over the title; the row wraps, the title keeps `PAGE_TITLE_FLOOR` (two fifths of the row, `basis-0` so it wraps beside the back act and the acts rather than pushing them down); the title carries a step of block padding above and below its lines (`PAGE_TITLE_BLOCK`, shared by the Place's title row and the Screen's, so a single line still fills the 44 px strip), the head takes a step more over the row while the title wraps (`PAGE_HEAD_WRAPS`, a measured fact, `useWraps`), and the row hangs its items from the top so a 44 px act centres on the title's first line and the acts span, `shrink-0 ms-auto`, drops whole to a second line at the row's end at 44 px when it does not fit beside the back act, the floor and the gaps (at 320 with three acts it wraps, at 390 it fits). The desktop strip and a beside Screen at a narrow desktop page are unchanged. A Place's title is a strip over a hairline and the body
   starts a page inset under it, where a Section's title is a line of the body a pair over its
   content; the two rhythms are not one, and a Place's title is the section's name at every density
   (the app never forks it by density).
@@ -582,9 +582,10 @@ a tick with no animation, never jumped to full.
   `PLACE_TAB` with `PLACE_TAB_LABEL`, the tab bar tab, is selected by ink alone (`ink-meta` idle,
   `ink-body` selected, the selected label at 500); its box carries the ink for the glyph inside it,
   as a labelled act's fill does, and the label repeats it because a native Text inherits none.
-  A tab's count is the plain number as a badge on the glyph's top-right corner, its start half
-  its own width inside the glyph's edge (an absolute overlay, so the glyph's box and the label's
-  centring do not move), and past `TAB_COUNT_MAX` (99) it reads `countOver` ("99+", `tabCount(words, n)`,
+  A tab's count is the plain number as a badge on the glyph's top-right corner, its start at the
+  glyph box's edge (a hairline in at most, where the last tab's "99+" at 320 asks it) so its figures
+  never reach the glyph's ink, on a ring of the bar's own ground (`SHELL_TAB_COUNT`: `bg-canvas` and a
+  2 px `outline-canvas`; an absolute overlay, so the glyph's box and the label's centring do not move), and past `TAB_COUNT_MAX` (99) it reads `countOver` ("99+", `tabCount(words, n)`,
   handed to `Count` as its drawn form); the sidebar's `Count` draws the number whole. The badge
   stands inside the bar on the last of five tabs at 320, 390 and 768.
 - A row names what holds it: `ROW`'s `ground` axis is `list` (a list or a popover, the row
@@ -1168,8 +1169,10 @@ a tick with no animation, never jumped to full.
   `StatusMark` itself, which other parts consume; `loading` is the roster's one waiting word, where
   a sentinel string or a second per-item slot would be an untyped meaning or a second function for
   one state). A waiting status counts as a mark, so the row is the two-line row from its first frame,
-  and stands as a `skeleton` line bar `w-measure-short` in a box the meta line's height (`LINE_BOX`
-  `meta`, `h-lh`; a `Strut` on the phone) where the `Status` will draw, yielding to the first part
+  and stands as the `Status`'s own waiting form (`StatusBase waiting="short"`): a `skeleton` line bar
+  at most `w-measure-short` wide, starting at the loaded word's x (the unseen dot's room and the
+  status's gap in), in a box the meta line's height (`LINE_BOX` `meta`, `h-lh`; a `Strut` on the
+  phone), so nothing shifts sideways when the word arrives, yielding to the first part
   as the status does, so nothing moves when it answers; it works in a `known` List and in a plain
   `ListRow`. `StatusMark.short` is the status's words said shorter ("5 min ago"), drawn in the
   label's place only on a `ListRow`'s meta line and only while the long form would be cut; `label`

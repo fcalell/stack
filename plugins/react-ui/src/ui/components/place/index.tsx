@@ -18,7 +18,9 @@ import {
 	PAGE_BODY_OVER_FOOT,
 	PAGE_HEAD,
 	PAGE_HEAD_ROOM,
+	PAGE_HEAD_WRAPS,
 	PAGE_TITLE,
+	PAGE_TITLE_BLOCK,
 	PAGE_TOP_BAR,
 	PAGE_TOP_BAR_END,
 	PAGE_TOP_BAR_START,
@@ -44,6 +46,7 @@ import { HeadingContext } from "../../lib/heading.ts";
 import { DistanceContext, useTouch } from "../../lib/media.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
 import { useWords } from "../../lib/words.tsx";
+import { useWraps } from "../../lib/wraps.ts";
 import { Button } from "../button/index.tsx";
 import { IconButtonBase, IconButtonLink } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
@@ -74,12 +77,16 @@ const HEAD = "flex flex-col";
 // its head the page's one, so the Place draws none.
 const HEAD_BESIDE = "page-max-tablet:group-has-data-beside/page:hidden";
 const ROW = "flex items-center";
+// With the title in the row the items hang from its top, so an act centres on
+// the title's first line.
+const ROW_FIRST = "flex items-start";
 const ACTS = "flex items-center gap-acts";
 const SPACER = "grow";
 const TITLE = "min-w-0 grow truncate";
 // On touch with no switcher the title shares its row with the acts and wraps
-// before them.
-export const TITLE_WRAP = "min-w-0 grow";
+// before them, a step of block padding above and below its lines so a wrapped
+// title never butts the head's edges (`PAGE_TITLE_BLOCK`).
+export const TITLE_WRAP = `min-w-0 grow ${PAGE_TITLE_BLOCK}`;
 // With a context the title and its pick stand on one line a pair apart, the
 // line taking the spacer's room; the pick's list hangs from its start.
 const TITLE_LINE = "flex min-w-0 grow flex-wrap items-center gap-pair";
@@ -275,9 +282,11 @@ export function Place({
 	const overflow = more?.length ? (
 		<Menu label={words.more} items={more} />
 	) : null;
+	const [titleRef, wrapped] = useWraps();
 	const heading = (
 		<h1
 			id={titleId}
+			ref={touch && single ? titleRef : undefined}
 			className={cn(
 				text({ role: "title" }),
 				context ? TITLE_FIT : touch && single ? TITLE_WRAP : TITLE,
@@ -290,7 +299,13 @@ export function Place({
 	// The pick stands right after the title on the title line, on touch under
 	// the top bar as on the desktop in the strip.
 	const line = context ? (
-		<div className={cn(TITLE_LINE, touch && !single && PAGE_TITLE)}>
+		<div
+			className={cn(
+				TITLE_LINE,
+				touch && !single && PAGE_TITLE,
+				touch && single && PAGE_TITLE_BLOCK,
+			)}
+		>
 			{heading}
 			<span className={CONTEXT}>
 				<PickerBase {...context} fit="row" />
@@ -332,12 +347,20 @@ export function Place({
 	// title's place, the spacer and the strip's act differ, each a slot that
 	// holds `null` where it does not draw, so the acts after it never shift.
 	const head = (
-		<header className={cn(PAGE_HEAD, far && PAGE_HEAD_ROOM, HEAD, HEAD_BESIDE)}>
+		<header
+			className={cn(
+				PAGE_HEAD,
+				far && PAGE_HEAD_ROOM,
+				touch && single && wrapped && PAGE_HEAD_WRAPS,
+				HEAD,
+				HEAD_BESIDE,
+			)}
+		>
 			<div
 				className={cn(
 					PAGE_TOP_BAR,
 					touch && !single && PAGE_TOP_BAR_TOUCH,
-					bar ? ROW : ROW_MARKED,
+					bar ? (touch && single ? ROW_FIRST : ROW) : ROW_MARKED,
 				)}
 			>
 				{back}

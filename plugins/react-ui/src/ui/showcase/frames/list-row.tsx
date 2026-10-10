@@ -793,11 +793,11 @@ const PARTS = {
 	issues: part(issues, ISSUE_ROW),
 	invites: part(() => INVITES, INVITE_ROW),
 	stages: part(() => STAGES, STAGE_ROW),
-	// At the pane's width, the phone's narrowest.
+	// In a 335 px column (a list beside a record), shrinking to a narrower screen.
 	works: {
 		...WORK_PART,
 		draw: (state: DrawnState, pair: boolean) => (
-			<div className="w-pane max-w-full">{WORK_PART.draw(state, pair)}</div>
+			<div className="w-[335px] max-w-full">{WORK_PART.draw(state, pair)}</div>
 		),
 	},
 	steps: part(() => STEPS, STEP_ROW),
@@ -823,7 +823,6 @@ const CELL_PARTS: ReadonlyArray<readonly [string, keyof typeof PARTS]> = [
 	["ROW_TITLE.form.dim", "hops"],
 	["ROW_TITLE", "deploys"],
 	["ROW_STEP", "imports"],
-	["ROW_META_LINE", "works"],
 	["TREE_", "legs"],
 	["CHANGE_MARK", "changes"],
 	["CHECKBOX", "ticks"],
@@ -855,6 +854,10 @@ export function drawListRow(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
 	const named = CELL_PARTS.find(([prefix]) => cell.startsWith(prefix));
 	const chosen = PARTS[named?.[1] ?? "issues"];
+	// `ROW_META_LINE` is no family cell, so it has no frame of its own: the
+	// two-line row's frame holds the work items too at rest (a live age and a
+	// spend in the trailing, a quote that yields).
+	const meta = cell === "ROW.lines.two" && frame.state === "rest";
 	const drawn =
 		frame.state === "error" ? (
 			<List
@@ -865,6 +868,9 @@ export function drawListRow(frame: ShowcaseFrame) {
 			chosen.draw(frame.state, waits(cell))
 		);
 	return (
-		<Page>{cell === "ROW.ground.group" ? <Group>{drawn}</Group> : drawn}</Page>
+		<Page>
+			{cell === "ROW.ground.group" ? <Group>{drawn}</Group> : drawn}
+			{meta ? PARTS.works.draw("rest", false) : null}
+		</Page>
 	);
 }

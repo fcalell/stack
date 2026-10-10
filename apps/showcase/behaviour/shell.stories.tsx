@@ -240,8 +240,9 @@ const COUNTED: PlaceSpec[] = [
 ];
 
 // A tab's count of one and two figures reads as it is, a count past 99 reads
-// "99+"; each stands on its glyph's top-right corner, its start half its width
-// inside the glyph's edge, and the label stays centred under the glyph. Every
+// "99+"; each stands on its glyph's top-right corner, starting at the glyph
+// box's edge (a hairline in at most) so it never touches the glyph's ink, on a ring of the bar's
+// ground (at least 2 px), and the label stays centred under the glyph. Every
 // count ends inside the bar, the last tab's at 320 included.
 const TAB_WIDTHS = { 320: "narrow", 390: "phone", 768: "tablet" } as const;
 
@@ -277,9 +278,8 @@ const tabCount = (width: keyof typeof TAB_WIDTHS, mode: "light" | "dark") => {
 			},
 		},
 		play: async ({ canvas }) => {
-			const bar = canvas
-				.getByRole("navigation", { name: "Places" })
-				.getBoundingClientRect();
+			const nav = canvas.getByRole("navigation", { name: "Places" });
+			const bar = nav.getBoundingClientRect();
 			await expect(canvas.queryByText("444")).toBeNull();
 			for (const count of ["4", "44", "99+"]) {
 				const figure = canvas.getByText(count, { exact: true });
@@ -291,11 +291,43 @@ const tabCount = (width: keyof typeof TAB_WIDTHS, mode: "light" | "dark") => {
 				const box = figure.getBoundingClientRect();
 				const glyphBox = glyph.getBoundingClientRect();
 				const labelBox = label.getBoundingClientRect();
-				console.log(
-					`${width} ${mode} count ${count}: start ${box.left - glyphBox.right} past the glyph's edge, width ${box.width}, to the bar's end ${bar.right - box.right}`,
+				// The glyph's ink: its strokes' union, a half stroke out.
+				const svg = glyph.querySelector("svg");
+				if (!svg) throw new Error("the glyph is not drawn");
+				const strokes = [...svg.children].map((child) =>
+					child.getBoundingClientRect(),
 				);
-				await expect(box.left - glyphBox.right).toBeCloseTo(-box.width / 2, 1);
+				const half =
+					(Number.parseFloat(getComputedStyle(svg).strokeWidth) / 24) *
+					svg.getBoundingClientRect().width *
+					0.5;
+				const ink = {
+					right: Math.max(...strokes.map((r) => r.right)) + half,
+					top: Math.min(...strokes.map((r) => r.top)) - half,
+					bottom: Math.max(...strokes.map((r) => r.bottom)) + half,
+				};
+				const ring = getComputedStyle(overlay);
+				console.log(
+					`${width} ${mode} count ${count}: start ${box.left - glyphBox.right} past the glyph's edge, ink gap ${box.left - ink.right}, width ${box.width}, to the bar's end ${bar.right - box.right}, ring ${ring.outlineWidth} ${ring.outlineColor}`,
+				);
+				// The count stands at the glyph box's edge, a hairline in where the bar's
+				// end asks it, and its figures never reach the glyph's ink (the strokes'
+				// union, a sub-pixel of antialiasing aside).
+				await expect(box.left).toBeGreaterThanOrEqual(ink.right - 0.25);
+				await expect(box.left - glyphBox.right).toBeLessThanOrEqual(2);
+				await expect(box.left - glyphBox.right).toBeGreaterThanOrEqual(-2);
 				await expect(box.right).toBeLessThanOrEqual(bar.right);
+				await expect(box.top).toBeGreaterThanOrEqual(glyphBox.top - 2);
+				// The ring is the bar's ground, so contact never reads ink on ink.
+				await expect(
+					Number.parseFloat(ring.outlineWidth),
+				).toBeGreaterThanOrEqual(2);
+				await expect(ring.outlineColor).toBe(
+					getComputedStyle(nav).backgroundColor,
+				);
+				await expect(ring.backgroundColor).toBe(
+					getComputedStyle(nav).backgroundColor,
+				);
 				await expect(labelBox.left + labelBox.width / 2).toBeCloseTo(
 					glyphBox.left + glyphBox.width / 2,
 					1,
