@@ -6,6 +6,7 @@ import type {
 } from "@fcalell/ui-core/descriptors";
 import { sectionState } from "@fcalell/ui-core/list-state";
 import {
+	SECTION_ACTS,
 	SECTION_BODY,
 	SECTION_HEAD,
 	SECTION_HEAD_ROW,
@@ -64,6 +65,7 @@ const TITLE_BLOCK = "grow min-w-0";
 const TITLE_LINE = "flex-row items-center min-w-0";
 const TOGGLE =
 	"flex-row items-center grow min-w-0 -ms-inside active:bg-wash-press";
+// The act and the more stand a row's act gap apart (`SECTION_ACTS`, as ListRow's).
 const ACT_SLOT = "flex-row items-center shrink-0";
 // The waiting count is a bar one figure wide: an unseen figure at the
 // count's type sets the width.
@@ -235,7 +237,7 @@ export function Section({
 						{sentence}
 					</View>
 					{act || more?.length ? (
-						<View className={ACT_SLOT}>
+						<View className={cn(SECTION_ACTS, ACT_SLOT)}>
 							{act === undefined ? null : "icon" in act ? (
 								<IconButton
 									icon={act.icon}

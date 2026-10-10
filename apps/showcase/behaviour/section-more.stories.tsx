@@ -54,6 +54,13 @@ function head(width: number): StoryObj {
 			// The more follows the act at the head's end, inside the frame.
 			await expect(m.left).toBeGreaterThanOrEqual(e.right - 0.5);
 			await expect(m.right).toBeLessThanOrEqual(width + 0.5);
+			// The act and the more stand the act gap apart, as a ListRow's do: the
+			// slot's own gap (never 0), so the more's wash does not meet the act.
+			const gap = Number.parseFloat(
+				getComputedStyle(must(edit.parentElement)).columnGap,
+			);
+			await expect(gap).toBeGreaterThan(0);
+			await expect(m.left - e.right).toBeGreaterThanOrEqual(gap - 0.5);
 			// The title keeps a readable measure.
 			await expect(t.width).toBeGreaterThan(Math.min(width, 375) * 0.4);
 			// The act and the more stand together on one line.

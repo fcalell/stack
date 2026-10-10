@@ -2624,7 +2624,7 @@ A docked sheet's body keeps `docked-floor` (144px on touch, 96px on the desktop)
 | `Gate` | layout | `GATE`, `GATE_COLUMN`, `GATE_FLOW`, `GATE_LEAD`, `GATE_HEAD`, `GATE_MARK`, `GATE_MARK_ROW`, `TEXT.role.title`, `TEXT.role.meta`, `TEXT.role.body`, `TEXT_STRONG.role.body` | rest |
 | `Screen` | layout | `PAGE_HEAD`, `PAGE_TOP_BAR`, `PAGE_TOP_BAR_START`, `PAGE_TOP_BAR_END`, `PAGE_TITLE_FLOOR`, `PAGE_TITLE_BLOCK`, `PAGE_HEAD_WRAPS`, `TEXT.role.title`, `PAGE_BODY`, `PAGE_BODY_BESIDE`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
 | `Split` | layout | `SPLIT_LIST`, `SPLIT_LIST_STACK`, `SPLIT_MAIN`, `SPLIT_BESIDE`, `SPLIT_PANE`, `ICON_BUTTON.fit.bar` | rest, empty |
-| `Section` | layout | `SECTION`, `SECTION_HEAD`, `SECTION_HEAD_ROW`, `SECTION_BODY`, `SECTION_TITLE`, `SECTION_TOGGLE`, `SECTION_NESTED_TITLE`, `TEXT.role.heading`, `TEXT.role.meta`, `ICON.fit.body`, `COUNT`, `COUNT_LABEL`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive`, `ICON_BUTTON.fit.bar`, `SKELETON.kind.count`, `SKELETON.kind.line`, `SKELETON.kind.field`, `SKELETON_ROW.kind.field`, `TEXT.role.caption`, `LINE_BOX.role.body` | rest, hover, focus, active, disabled, loading |
+| `Section` | layout | `SECTION`, `SECTION_HEAD`, `SECTION_HEAD_ROW`, `SECTION_ACTS`, `SECTION_BODY`, `SECTION_TITLE`, `SECTION_TOGGLE`, `SECTION_NESTED_TITLE`, `TEXT.role.heading`, `TEXT.role.meta`, `ICON.fit.body`, `COUNT`, `COUNT_LABEL`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive`, `ICON_BUTTON.fit.bar`, `SKELETON.kind.count`, `SKELETON.kind.line`, `SKELETON.kind.field`, `SKELETON_ROW.kind.field`, `TEXT.role.caption`, `LINE_BOX.role.body` | rest, hover, focus, active, disabled, loading |
 | `Group` | layout | `GROUP` | rest, loading |
 | `List` | layout | `LIST`, `LIST_TREE`, `LIST_DIVIDED` | rest, loading, error, empty |
 | `Form` | layout | `FORM`, `FORM_FOOT` | rest, loading |
@@ -2695,7 +2695,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Gate` | `title`, `meta`, `body` | `ink-body`, `ink-meta`, `surface` | none | `page`, `sections`, `fields`, `pair`, `inside` | `auth`, `avatar` | none |
 | `Screen` | `title` | `ink-body`, `ink-meta`, `edge` | `control` | `acts`, `page`, `sections`, `pair`, `inside` | `strip`, `control`, `control-compact`, `icon-inset`, `measure-inset` | none |
 | `Split` | none | `edge`, `ink-meta`, `surface` | `control` | `inside`, `page`, `sections` | `list`, `pane`, `region-min`, `control-compact`, `measure-inset` | none |
-| `Section` | `heading`, `meta`, `body`, `caption` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `danger` | `row`, `control`, `chip` | `pair`, `fields`, `inside`, `control-x` | `icon`, `control-compact`, `skeleton`, `field`, `target` | none |
+| `Section` | `heading`, `meta`, `body`, `caption` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `danger` | `row`, `control`, `chip` | `pair`, `fields`, `inside`, `control-x`, `acts` | `icon`, `control-compact`, `skeleton`, `field`, `target` | none |
 | `Group` | none | `edge`, `surface` | `card` | none | none | none |
 | `List` | none | `edge` | none | `rows`, `control-x` | none | none |
 | `Form` | none | `edge`, `surface`, `raised` | none | `fields`, `sections`, `page`, `card` | `measure` | none |
