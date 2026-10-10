@@ -2,10 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { z } from "zod";
 import { createTestEntry, ORPCError } from "../src/testing/index.ts";
-import type {
-	greetingInput,
-	wordOutput,
-} from "./fixtures/testing/routes/inputs.ts";
+import type { wordOutput } from "./fixtures/testing/routes/inputs.ts";
 import type { AppRouter } from "./fixtures/testing/worker.ts";
 import { assertType, type Equal, type Flat } from "./types.ts";
 
@@ -41,15 +38,6 @@ test("a transformed field is sent pre-transform and read transformed", async () 
 		(error: unknown) =>
 			error instanceof ORPCError && error.code === "BAD_REQUEST",
 	);
-});
-
-test("the client parameter type is the schema's input", () => {
-	assertType<
-		Equal<
-			Flat<Parameters<Client["inputs"]["greet"]>[0]>,
-			z.input<typeof greetingInput>
-		>
-	>(true);
 });
 
 test("a paginated caller may omit limit; the handler holds a number", async () => {

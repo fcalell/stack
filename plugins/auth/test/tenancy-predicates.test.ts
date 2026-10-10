@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { test } from "node:test";
+import { before, test } from "node:test";
 import { browser, CookieJar, createTables } from "@fcalell/auth-testing";
 import { createProcedure } from "@fcalell/plugin-api/procedure";
 import createWorker, { type AppBuilder } from "@fcalell/plugin-api/runtime";
@@ -240,8 +240,14 @@ async function setup() {
 	return { as };
 }
 
+// No test below writes a row another reads (each sign-in mints its own
+// session), so they share one worker and database.
+let as: Awaited<ReturnType<typeof setup>>["as"];
+before(async () => {
+	({ as } = await setup());
+});
+
 test("an expired membership answers NOT_FOUND on a scoped procedure and the organization lookup", async () => {
-	const { as } = await setup();
 	const calls = [
 		["probe/organization", { organizationId: "acme" }],
 		["auth/scope/organization/bySlug", { slug: "acme" }],
@@ -256,7 +262,6 @@ test("an expired membership answers NOT_FOUND on a scoped procedure and the orga
 });
 
 test("a restricted member reaches only the projects of their rows", async () => {
-	const { as } = await setup();
 	for (const [user, invisible] of [
 		["rex", 404],
 		["ada", 200],
@@ -284,7 +289,6 @@ test("a restricted member reaches only the projects of their rows", async () => 
 });
 
 test("a level below an invisible level is refused", async () => {
-	const { as } = await setup();
 	assert.equal(pageScope.where, null);
 	const rex = await as("rex");
 	assert.deepEqual(await rex("probe/page", { pageId: "page-a" }), {
@@ -295,7 +299,6 @@ test("a level below an invisible level is refused", async () => {
 });
 
 test("a standard is visible through a head or draft binding to a visible project", async () => {
-	const { as } = await setup();
 	const rex = await as("rex");
 	const status = async (standardId: string) =>
 		(await rex("probe/standard", { standardId })).status;
@@ -311,14 +314,12 @@ test("a standard is visible through a head or draft binding to a visible project
 });
 
 test("an invisible row answers NOT_FOUND before can runs", async () => {
-	const { as } = await setup();
 	const rex = await as("rex");
 	assert.equal((await rex("probe/rename", { projectId: "p-b" })).status, 404);
 	assert.equal((await rex("probe/rename", { projectId: "p-a" })).status, 403);
 });
 
 test("an invisible row and a missing row answer the same response", async () => {
-	const { as } = await setup();
 	const rex = await as("rex");
 	const invisible = await rex("probe/project", { projectId: "p-b" });
 	const missing = await rex("probe/project", { projectId: "nope" });

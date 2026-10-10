@@ -45,8 +45,15 @@ async function artifacts(
 	return new Map(files.map((f) => [f.path, f.content]));
 }
 
+// The default options' artifacts, built once for every test that reads them.
+let built: Promise<Map<string, string>> | undefined;
+const defaults = () => {
+	built ??= artifacts();
+	return built;
+};
+
 test("app.css imports Tailwind without detection, then the web sheet, then the contract", async () => {
-	const css = (await artifacts()).get(".stack/app.css") ?? "";
+	const css = (await defaults()).get(".stack/app.css") ?? "";
 	assert.match(css, /^@import "tailwindcss" source\(none\);/);
 	assert.match(css, /@import "@fcalell\/plugin-react-ui\/globals\.css";/);
 	assert.match(css, /@source "\.\.\/src";/);
@@ -77,13 +84,13 @@ test("app.css imports Tailwind without detection, then the web sheet, then the c
 		/@media \(prefers-reduced-motion: reduce\) \{\n:root \{\n\t--transition-duration-instant: 0ms;/,
 	);
 	assert.match(
-		(await artifacts()).get(".stack/entry.tsx") ?? "",
+		(await defaults()).get(".stack/entry.tsx") ?? "",
 		/import "\.\/app\.css";/,
 	);
 });
 
 test("IBM Plex is the default pair, and a theme's own sans wins", async () => {
-	const css = (await artifacts()).get(".stack/app.css") ?? "";
+	const css = (await defaults()).get(".stack/app.css") ?? "";
 	assert.match(
 		css,
 		/--font-sans: "IBM Plex Sans", "IBM Plex Sans Fallback", ui-sans-serif/,
@@ -102,7 +109,7 @@ test("IBM Plex is the default pair, and a theme's own sans wins", async () => {
 });
 
 test("a fine pointer at tablet width draws the desktop set, and data-density pins either", async () => {
-	const desktop = (await artifacts()).get(".stack/app.css") ?? "";
+	const desktop = (await defaults()).get(".stack/app.css") ?? "";
 	assert.match(
 		desktop,
 		/:root\[data-density="desktop"\] \{\n\t--text-display: 36px;/,
@@ -118,7 +125,7 @@ test("a fine pointer at tablet width draws the desktop set, and data-density pin
 });
 
 test("a Place declaring a room scales the room set from its own unit", async () => {
-	const css = (await artifacts()).get(".stack/app.css") ?? "";
+	const css = (await defaults()).get(".stack/app.css") ?? "";
 	assert.match(
 		css,
 		/\[data-density="room"\] \{\n\t--room-unit: max\(1px, min\(100vw \/ 960, 100dvh \/ 540\)\);/,
@@ -160,12 +167,12 @@ test("the vite config runs Tailwind, the fonts and the mode script", async () =>
 });
 
 test("the dev server pre-bundles the roster's .tsx subpaths", async () => {
-	const config = (await artifacts()).get(".stack/vite.config.ts") ?? "";
+	const config = (await defaults()).get(".stack/vite.config.ts") ?? "";
 	assert.match(config, /optimizeDeps: \{ extensions: \["\.tsx"\] \}/);
 });
 
 test("the vite config carries the canvas plugin that serves its worker module", async () => {
-	const config = (await artifacts()).get(".stack/vite.config.ts") ?? "";
+	const config = (await defaults()).get(".stack/vite.config.ts") ?? "";
 	assert.match(
 		config,
 		/import \{ canvasPlugin \} from "@fcalell\/plugin-react-ui\/node\/canvas";/,
@@ -174,7 +181,7 @@ test("the vite config carries the canvas plugin that serves its worker module", 
 });
 
 test("words mount a provider only when given", async () => {
-	const bare = (await artifacts()).get(".stack/virtual-providers.tsx");
+	const bare = (await defaults()).get(".stack/virtual-providers.tsx");
 	assert.doesNotMatch(bare ?? "", /WordsProvider/);
 	const words = (
 		await artifacts({ words: { ...ENGLISH, back: "Zurück" } })
@@ -188,7 +195,7 @@ test("words mount a provider only when given", async () => {
 });
 
 test("the entry hands the router to react-ui's navigation, and not without routes", async () => {
-	const entry = (await artifacts()).get(".stack/entry.tsx") ?? "";
+	const entry = (await defaults()).get(".stack/entry.tsx") ?? "";
 	assert.match(
 		entry,
 		/import \{ bindRouter \} from "@fcalell\/plugin-react-ui\/lib\/navigate";/,
@@ -202,7 +209,7 @@ test("the entry hands the router to react-ui's navigation, and not without route
 });
 
 test("the entry sets react-ui's page for an unknown address on the router before render, and not without routes", async () => {
-	const entry = (await artifacts()).get(".stack/entry.tsx") ?? "";
+	const entry = (await defaults()).get(".stack/entry.tsx") ?? "";
 	assert.match(
 		entry,
 		/import \{ bindNotFound \} from "@fcalell\/plugin-react-ui\/lib\/not-found";/,

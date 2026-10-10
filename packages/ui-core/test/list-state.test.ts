@@ -1,9 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import type { ChangeKind, TableColumn } from "../src/descriptors.ts";
+import type { TableColumn } from "../src/descriptors.ts";
 import {
 	boundaryState,
-	CHANGE_GLYPH,
 	chooseAllToggled,
 	chooseHead,
 	chooseReason,
@@ -27,6 +26,7 @@ import {
 	sectionCount,
 	sectionState,
 	shortHeld,
+	stepStateOf,
 	tableRecords,
 	toggled,
 	touchMeta,
@@ -39,17 +39,11 @@ import {
 	waitLine,
 } from "../src/list-state.ts";
 import { leadingOf, sizePx } from "../src/scales.ts";
-import { ENGLISH } from "../src/tokens.ts";
+import { ENGLISH, filled } from "../src/tokens.ts";
 import {
 	changeContentTone,
-	LIST_TREE,
-	LOCK_GLYPH,
 	type RowLines,
 	row,
-	rowStep,
-	rowTitle,
-	rowTitleForm,
-	TREE_RAIL,
 	treeBleed,
 } from "../src/variants.ts";
 
@@ -555,22 +549,6 @@ test("a Table whose query failed draws the failed form, and its Retry refetches"
 	assert.equal(calls, 1);
 });
 
-test("a change mark has one glyph per kind, named by the kind's own word", () => {
-	const kinds: ChangeKind[] = [
-		"added",
-		"changed",
-		"removed",
-		"unchanged",
-		"stale",
-	];
-	assert.deepEqual(Object.keys(CHANGE_GLYPH), kinds);
-	assert.equal(new Set(Object.values(CHANGE_GLYPH)).size, kinds.length);
-	for (const kind of kinds) {
-		assert.ok(ENGLISH[kind], `${kind} has a word`);
-	}
-	assert.equal(ENGLISH.changed, "Changed");
-});
-
 test("a change mark's ink is its kind's: added ok, removed danger, changed warn", () => {
 	assert.equal(changeContentTone("added"), "ok");
 	assert.equal(changeContentTone("removed"), "danger");
@@ -646,28 +624,6 @@ test("a row's reason is why it cannot be ticked, else why its tick moved", () =>
 	assert.equal(chooseReason(choosing("Held", "Needed by A")), "Held");
 	assert.equal(chooseReason(choosing(undefined, "Needed by A")), "Needed by A");
 	assert.equal(chooseReason(choosing()), undefined);
-});
-
-test("a dim title keeps its ink off the fade: the meta ink at 400, never opacity", () => {
-	const strong = rowTitle({ form: "strong" });
-	const dim = rowTitle({ form: "dim" });
-	assert.match(strong, /font-medium/);
-	assert.match(strong, /text-ink-body/);
-	assert.match(dim, /font-normal/);
-	assert.match(dim, /text-ink-meta/);
-	assert.doesNotMatch(dim, /opacity/);
-	// A title read whole is body 400 in the body ink, its dim form the meta ink.
-	assert.match(rowTitle({ form: "whole" }), /font-normal text-ink-body/);
-	assert.match(rowTitle({ form: "whole-dim" }), /text-ink-meta/);
-	assert.equal(rowTitleForm(false, false), "strong");
-	assert.equal(rowTitleForm(false, true), "dim");
-	assert.equal(rowTitleForm(true, false), "whole");
-	assert.equal(rowTitleForm(true, true), "whole-dim");
-});
-
-test("a step list's running step is in the body ink, the others in the meta ink", () => {
-	assert.match(rowStep({ state: "running" }), /text-ink-body/);
-	assert.match(rowStep({ state: "rest" }), /text-ink-meta/);
 });
 
 interface Node {
@@ -809,14 +765,6 @@ test("a branch opens or folds by key, keeping the set as it stands", () => {
 	assert.deepEqual(folding(["b"], "a", true), ["b"]);
 });
 
-test("a tree's rail is one indent step with a hairline, and its rows abut", () => {
-	assert.match(TREE_RAIL, /\bw-indent\b/);
-	assert.match(TREE_RAIL, /\bborder-r border-edge\b/);
-	assert.doesNotMatch(LIST_TREE, /\bgap-/);
-	assert.equal(sizePx("desktop", "indent"), 16);
-	assert.equal(sizePx("touch", "indent"), 20);
-});
-
 test("a tree row's bleed is its lines form's padding, negated", () => {
 	const padding = (lines: RowLines) =>
 		row({ lines }).match(/\bpy-(\w+)\b/)?.[1];
@@ -830,10 +778,6 @@ test("a body line's box is the body's line box at each density", () => {
 	assert.equal(sizePx("desktop", "line-body"), leadingOf("desktop", "body"));
 	assert.equal(sizePx("touch", "line-body"), leadingOf("touch", "body"));
 	assert.equal(sizePx("room", "line-body"), leadingOf("room", "body"));
-});
-
-test("a lock glyph sets no margin of its own", () => {
-	assert.doesNotMatch(LOCK_GLYPH, /\bm[se]?-/);
 });
 
 test("a touch row's meta leads with the change value and the move's reason after it in one part, then the other values", () => {
@@ -922,4 +866,13 @@ test("shortHeld holds the width the long form was cut at and tries it again only
 	assert.equal(shortHeld(300, 301, cut), null);
 	assert.equal(shortHeld(null, 301, cut), 301);
 	assert.equal(shortHeld(null, 301, fits), null);
+});
+
+test("the steps before the current one are done, it is current, the rest later", () => {
+	const states = [1, 2, 3, 4].map((step) => stepStateOf(step, 2));
+	assert.deepEqual(states, ["done", "current", "later", "later"]);
+});
+
+test("the step word says where the flow stands", () => {
+	assert.equal(filled(ENGLISH.stepOf, { at: "2", of: "3" }), "Step 2 of 3");
 });

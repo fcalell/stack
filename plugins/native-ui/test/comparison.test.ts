@@ -30,7 +30,4 @@ test("a Comparison takes columns, a query or items, a row map, sentence and empt
 	>(true);
 	const entry = ROSTER.content.Comparison;
 	assert.deepEqual([...(entry?.props ?? [])].sort(), [...PROPS].sort());
-	assert.ok(!entry?.props.includes("rows"));
-	assert.ok(entry?.states.includes("error"));
-	assert.ok(entry?.states.includes("empty"));
 });

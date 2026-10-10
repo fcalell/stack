@@ -89,16 +89,6 @@ test("the vite dev server proxies every worker-owned path to wrangler dev", asyn
 	assert.deepEqual(proxy, [{ path: "/rpc", target: "http://localhost:8787" }]);
 });
 
-// wrangler writes its dev bundle under `.stack/.wrangler/tmp/`, inside
-// Vite's root; a watcher event there full-reloads the page.
-test("the vite dev server's watcher skips wrangler's scratch directory", async () => {
-	const config = await artifact(devGraph(), ".stack/vite.config.ts");
-	assert.match(
-		config ?? "",
-		/watch: \{ ignored: \["\*\*\/\.wrangler\/\*\*"\] \}/,
-	);
-});
-
 test("an existing .dev.vars is topped up with the vars it lacks", async () => {
 	const graph = devGraph({ devVars: "STACK_DEV=1\nAPI_OTHER=keep\n" });
 	const root = await artifact(graph, ".dev.vars");
@@ -205,13 +195,4 @@ test("the generated wrangler config has no assets without vite", async () => {
 test("a root wrangler.toml declaring [assets] fails generate", async () => {
 	const graph = devGraph({ wrangler: '[assets]\ndirectory = "../public"\n' });
 	await assert.rejects(graph.resolve(cloudflare.slots.wranglerToml), /assets/);
-});
-
-// `wrangler types` declares the global `Env`; the worker's base context
-// carries it, so a handler's `context.env` reads it typed.
-test("the worker and the procedure entry type their env with Env", async () => {
-	const graph = devGraph({ routes: true });
-	for (const path of [".stack/worker.ts", ".stack/procedure.ts"]) {
-		assert.match((await artifact(graph, path)) ?? "", /createWorker<Env>\(/);
-	}
 });

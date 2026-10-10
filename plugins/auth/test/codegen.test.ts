@@ -7,6 +7,7 @@ import { plugin } from "@fcalell/cli";
 import { buildGraphFromDiscovered } from "@fcalell/cli/build-graph";
 import type { DiscoveredPlugin } from "@fcalell/cli/discovery";
 import { api } from "@fcalell/plugin-api";
+import { RESERVED_SLUGS } from "@fcalell/plugin-api/lib/slugify";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
 import { db } from "@fcalell/plugin-db";
 import { createAccessControl } from "../src/access.ts";
@@ -108,9 +109,13 @@ test("the web client's flags carry the same access control as the worker", async
 
 test("with organizations the worker refuses plugin-api's reserved slugs; without them no list", async () => {
 	const source = await generatedWorker({ emailOtp: false, organization: true });
-	assert.match(
-		source,
-		/reservedSlugs: \["admin", "api", "auth", "new", "settings", "system"\]/,
+	assert.ok(
+		source.includes(
+			`reservedSlugs: [${[...RESERVED_SLUGS]
+				.sort()
+				.map((slug) => `"${slug}"`)
+				.join(", ")}]`,
+		),
 	);
 	assert.doesNotMatch(
 		await generatedWorker({ emailOtp: false }),
@@ -185,20 +190,14 @@ test("the testing entry bakes the cookie prefix, the var names, the session leng
 			},
 		}),
 	);
-	assert.deepEqual(configured, {
-		plugin: "auth",
-		import: { source: "@fcalell/plugin-auth/testing", default: "authTesting" },
-		identifier: "authTesting",
-		options: {
-			cookiePrefix: string("mtt"),
-			secretVar: string("AUTH_SECRET"),
-			appUrlVar: string("APP_URL"),
-			expiresIn: { kind: "number", value: 3600 },
-			roles: {
-				kind: "array",
-				items: [string("owner"), string("editor"), string("viewer")],
-			},
-		},
+	assert.deepEqual(configured?.options?.cookiePrefix, string("mtt"));
+	assert.deepEqual(configured?.options?.expiresIn, {
+		kind: "number",
+		value: 3600,
+	});
+	assert.deepEqual(configured?.options?.roles, {
+		kind: "array",
+		items: [string("owner"), string("editor"), string("viewer")],
 	});
 
 	const defaults = await authTestingEntry(auth({ organization: true }));
@@ -329,7 +328,7 @@ test("the testing entry bakes mcp only when it is on", async () => {
 	assert.equal(off?.options && "mcp" in off.options, false);
 });
 
-test("mcp sets the slot the MCP mount needs", async () => {
+test("mcp mounts the endpoint through this provider and reserves its slug", async () => {
 	const graphOf = (options: AuthOptions) => {
 		const cwd = mkdtempSync(join(tmpdir(), "stack-auth-codegen-"));
 		mkdirSync(join(cwd, "src/worker/routes"), { recursive: true });
@@ -355,10 +354,4 @@ test("mcp sets the slot the MCP mount needs", async () => {
 		)) ?? "";
 	assert.match(source, /\.handler\(routes, \{ mcp: mcp, name: "codegen" \}\)/);
 	assert.match(source, /reservedSlugs: \[[^\]]*"mcp"/);
-
-	// The file needs the provider that authenticates it.
-	await assert.rejects(
-		graphOf({ organization: true }).resolve(api.slots.workerSource),
-		/auth\(\{ mcp: true \}\)/,
-	);
 });

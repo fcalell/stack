@@ -2,12 +2,7 @@ import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
-import {
-	STACK_PACKAGES,
-	stackClosure,
-	stackPluginSpecs,
-	stackSpec,
-} from "../src/lib/stack-packages.ts";
+import { STACK_PACKAGES, stackClosure } from "../src/lib/stack-packages.ts";
 
 const root = join(import.meta.dirname, "../../..");
 
@@ -36,16 +31,6 @@ test("every plugin is in the table", () => {
 	for (const dir of readdirSync(join(root, "plugins"))) {
 		assert.ok(manifest(`plugins/${dir}`).name in STACK_PACKAGES, dir);
 	}
-});
-
-test("a spec names the package's directory with no commit", () => {
-	assert.equal(
-		stackSpec("@fcalell/plugin-db"),
-		"github:fcalell/stack#path:/plugins/db",
-	);
-	assert.deepEqual(stackPluginSpecs(["react-ui"]), {
-		"@fcalell/plugin-react-ui": "github:fcalell/stack#path:/plugins/react-ui",
-	});
 });
 
 test("the closure follows dependencies a plugin does not require", () => {

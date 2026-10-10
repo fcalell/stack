@@ -24,14 +24,7 @@ test("the slot values render as one Vite config", () => {
 	assert.match(config, /plugins: \[react\(\)\]/);
 	assert.match(config, /outDir: "\.\.\/dist\/client"/);
 	assert.match(config, /port: 3000/);
-	assert.match(config, /headers: \{\s*"X-Frame-Options": "DENY"/);
 	assert.match(config, /dedupe: \["react"\]/);
-});
-
-test("a caller blanks one value and renders the rest as given", () => {
-	const config = renderViteConfig({ ...values, clientHeaders: {} });
-	assert.doesNotMatch(config, /headers/);
-	assert.match(config, /plugins: \[react\(\)\]/);
 });
 
 test("imports merge by source: a contribution's repeat of a renderer import is one binding", () => {

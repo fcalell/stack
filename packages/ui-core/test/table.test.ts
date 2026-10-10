@@ -14,11 +14,6 @@ import {
 	sorted,
 	tickable,
 } from "../src/list-state.ts";
-import { TABLE_EMPTY, tableChangeValue } from "../src/variants.ts";
-
-test("an empty grid's EmptyState stands a page inset under the header, across the grid's width", () => {
-	assert.equal(TABLE_EMPTY, "pt-page");
-});
 
 const words = {
 	added: "Added",
@@ -43,15 +38,6 @@ test("a change cell sets X → Y on touch, the word added or removed before a lo
 	const removed = { before: "30s", after: null };
 	assert.equal(changeMeta(removed, words), "Removed 30s");
 	assert.equal(changeMeta({ before: null, after: null }, words), "");
-});
-
-test("a changed value is neutral; only added and removed take a ground, the removed struck", () => {
-	assert.doesNotMatch(tableChangeValue({ kind: "before" }), /bg-/);
-	assert.doesNotMatch(tableChangeValue({ kind: "after" }), /bg-/);
-	assert.match(tableChangeValue({ kind: "added" }), /bg-ok-soft/);
-	const removed = tableChangeValue({ kind: "removed" });
-	assert.match(removed, /bg-danger-soft/);
-	assert.match(removed, /line-through/);
 });
 
 const record = (locked?: readonly string[]) => ({

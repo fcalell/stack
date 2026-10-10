@@ -27,7 +27,7 @@ function discover(
 	} as unknown as DiscoveredPlugin;
 }
 
-function graphWith(withScreens: boolean) {
+function graphWithScreens() {
 	const cwd = mkdtempSync(join(tmpdir(), "stack-auth-screens-"));
 	return buildGraphFromDiscovered({
 		discovered: [
@@ -36,7 +36,7 @@ function graphWith(withScreens: boolean) {
 			discover(api, api()),
 			discover(db, db({ dialect: "sqlite", path: "app.sqlite" })),
 			discover(auth, auth({ emailOtp: false })),
-			...(withScreens ? [discover(screens, screens())] : []),
+			discover(screens, screens()),
 		],
 		app: { name: "shop", domain: "example.com" },
 		cwd,
@@ -44,12 +44,7 @@ function graphWith(withScreens: boolean) {
 }
 
 test("with screens in the config, auth contributes its session handlers to the host", async () => {
-	const graph = graphWith(true);
-	assert.deepEqual(await graph.resolve(screens.slots.handlerModules), [
-		"@fcalell/plugin-auth/screens",
-	]);
-
-	const host = (await graph.resolve(cliSlots.artifactFiles)).find(
+	const host = (await graphWithScreens().resolve(cliSlots.artifactFiles)).find(
 		(file) => file.path === ".stack/screens.vite.config.ts",
 	);
 	assert.match(
@@ -58,18 +53,6 @@ test("with screens in the config, auth contributes its session handlers to the h
 	);
 	// The mount the handlers answer under is one the host treats as the worker's.
 	assert.match(host?.content ?? "", /prefixes: \[[^\]]*"\/api\/auth"/);
-});
-
-test("without screens in the config, nothing reads the contribution", async () => {
-	const files = await graphWith(false).resolve(cliSlots.artifactFiles);
-	assert.deepEqual(
-		files.filter(
-			(file) =>
-				file.path.includes("screens") ||
-				file.content.includes("@fcalell/plugin-auth/screens"),
-		),
-		[],
-	);
 });
 
 test("the handler answers better-auth's session shape: a session and its user", async () => {

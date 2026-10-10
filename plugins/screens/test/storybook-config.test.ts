@@ -26,12 +26,9 @@ test("the component host's config is the app's own without the router plugin", a
 	assert.doesNotMatch(host, /tanstackRouter/);
 	assert.match(host, /react\(\{/);
 	assert.match(host, /providersPlugin\(\)/);
-	assert.match(host, /dedupe: \["react", "react-dom"\]/);
 
-	// The host's adaptations: no frame-blocking headers, no proxy, no port, and
-	// the optimizer start.
-	assert.doesNotMatch(host, /X-Frame-Options|frame-ancestors/);
-	assert.doesNotMatch(host, /port:|proxy:/);
+	// The host's own plugin (the adaptations it shares with the screens host
+	// are checked in graph.test.ts).
 	assert.match(
 		host,
 		/import \{ storybookHost \} from "@fcalell\/plugin-screens\/vite";/,

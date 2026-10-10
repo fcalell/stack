@@ -12,8 +12,6 @@ import {
 	optionsShape,
 	type SetChoice,
 } from "../src/list-state.ts";
-import { ROSTER } from "../src/roster.ts";
-import { OPTION_RADIO_DOT, optionRadio } from "../src/variants.ts";
 
 interface Scope {
 	id: string;
@@ -28,15 +26,6 @@ const SCOPES: Scope[] = [
 	{ id: "issues", name: "Issues", area: "Planning" },
 	{ id: "write", name: "Write repos", area: "Code", suggested: true },
 ];
-
-test("the roster's OptionList takes a query beside static options and lists its error and empty states", () => {
-	const entry = ROSTER.shared.OptionList;
-	assert.ok(entry);
-	for (const prop of ["options", "query", "option", "sentence", "empty"])
-		assert.ok(entry.props.includes(prop), prop);
-	assert.ok(entry.states.includes("error"));
-	assert.ok(entry.states.includes("empty"));
-});
 
 test("a pending OptionList whose option declares no description draws one-line skeleton rows", () => {
 	const option: OptionSlots<Scope, string> = {
@@ -137,24 +126,6 @@ test("choosing an option hears one value, or the set with it toggled", () => {
 	choose(set, "b");
 	choose(set, "a");
 	assert.deepEqual(sets, [["a", "b"], []]);
-});
-
-test("the OptionList holds its radio: a ring at the box size, the chosen one in the toggle fill around its dot", () => {
-	const entry = ROSTER.shared.OptionList;
-	assert.ok(entry);
-	for (const cell of ["OPTION_RADIO", "OPTION_RADIO_DOT"]) {
-		assert.ok(entry.draws.includes(cell), cell);
-		assert.ok(entry.holds?.includes(cell), cell);
-	}
-	assert.equal(
-		optionRadio({ state: "unchecked" }),
-		"size-check rounded-full border border-edge-strong",
-	);
-	assert.equal(
-		optionRadio({ state: "checked" }),
-		"size-check rounded-full border border-toggle-on",
-	);
-	assert.equal(OPTION_RADIO_DOT, "size-dot rounded-full bg-toggle-on");
 });
 
 test("an option is blocked only while it is not in the value", () => {

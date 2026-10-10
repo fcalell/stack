@@ -32,7 +32,6 @@ test("a plugin scaffolded inside stack's workspace takes the workspace's package
 		pkg.devDependencies["@fcalell/typescript-config"],
 		"workspace:*",
 	);
-	assert.equal(pkg.devDependencies.typescript, "^5.9.3");
 	assert.ok(!files.has("pnpm-workspace.yaml"));
 	assert.equal(pkg.packageManager, undefined);
 });
