@@ -9,6 +9,7 @@ import type {
 import { sectionState } from "@fcalell/ui-core/list-state";
 import {
 	lineBox,
+	SECTION_ACTS,
 	SECTION_BODY,
 	SECTION_HEAD,
 	SECTION_HEAD_ROW,
@@ -71,6 +72,7 @@ const TITLE = "truncate";
 // ink under the pointer.
 const TOGGLE =
 	"flex items-center grow min-w-0 -ms-inside text-start text-ink-meta hover:bg-wash-hover hover:text-ink-body active:bg-wash-press active:text-ink-body";
+// The act and the more stand a row's act gap apart (`SECTION_ACTS`, as ListRow's).
 const ACT_SLOT = "flex items-center shrink-0";
 const BODY = "flex flex-col";
 // The body's own wrapper: its children flow in the body's rhythm, and it
@@ -253,7 +255,7 @@ export function Section({
 						{sentence}
 					</div>
 					{act || more?.length ? (
-						<div className={ACT_SLOT}>
+						<div className={cn(SECTION_ACTS, ACT_SLOT)}>
 							{act === undefined ? null : "icon" in act ? (
 								<IconButton
 									icon={act.icon}

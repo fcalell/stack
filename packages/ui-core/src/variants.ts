@@ -947,6 +947,9 @@ export const SPLIT_BESIDE = "grow basis-0";
 // (a web overlay pulls it back).
 export const SECTION_HEAD = "gap-pair";
 export const SECTION_HEAD_ROW = "gap-fields";
+// The head's act and its more stand the gap a list row's do (`ROW_ACTS`), so the
+// more's wash does not meet the act's border.
+export const SECTION_ACTS = "gap-acts";
 // A section's body: its parts (a Prose, a Code, a Group, an ActionBar) stand
 // at the fields rhythm, wider than the head's pair; rows inside a Group keep
 // the Group's own tight spacing.
