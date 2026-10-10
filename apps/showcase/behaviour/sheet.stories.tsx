@@ -411,8 +411,8 @@ function LongPage() {
 				title="Rename domain"
 				submit={{ label: "Save", onAct: () => setOpen(false) }}
 			>
-				{Array.from({ length: 24 }, (_, i) => (
-					<FormField key={i} label={`Field ${i + 1}`}>
+				{Array.from({ length: 24 }, (_, i) => `Field ${i + 1}`).map((label) => (
+					<FormField key={label} label={label}>
 						<Input value="" onChange={() => {}} />
 					</FormField>
 				))}
