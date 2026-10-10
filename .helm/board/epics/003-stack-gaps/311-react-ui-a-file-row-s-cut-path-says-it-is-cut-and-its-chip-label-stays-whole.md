@@ -12,7 +12,7 @@ Found by the critique of 003-193.
 
 ## Acceptance criteria
 - [x] A directory that gives way keeps at least a leading ellipsis or is gone whole, never a sub-pixel span: at 320 and 390 every checked row shows the directory with an ellipsis or the name alone with no empty span.
-- [x] The chip label is never cut at 320: the chip takes its label whole or the counts yield first. (Awaits the critique's eye: the counts yield to their text first, then the label truncates with an ellipsis; `biome.json` at 320 cannot hold the label whole, see Built.)
+- [ ] The chip label is never cut at 320: the chip takes its label whole or the counts yield first. (Not met: the counts yield to their text first, then the label truncates with an ellipsis; `biome.json` at 320 cannot hold the label whole, see Built.)
 - [x] The tail stays whole as before.
 - [x] The floor stories (biome.json 78/90 px) pass.
 
