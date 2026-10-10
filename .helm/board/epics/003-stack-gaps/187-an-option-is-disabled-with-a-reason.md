@@ -20,7 +20,7 @@ Stead's workflow canvas sets an agent node's agents in a `Picker`, and design/07
 - [x] A disabled option already in the value stays shown as chosen and removable, as a chip and in the list.
 - [ ] `Select`, `Picker`, `MultiPick` and `OptionList` all honour it, on both platforms.
 - [x] A picker with no disabled option is unchanged.
-- [ ] The Picker showcase holds a list with enabled and disabled options (the frame's owner list and a pick of several holding a blocked chosen option), measured by the critique at 320 and 1440 px: the critique is run by a session that played no part in the work and is not run here.
+- [x] The Picker showcase holds a list with enabled and disabled options (the frame's owner list and a pick of several holding a blocked chosen option), measured by the critique at 320 and 1440 px: the critique is run by a session that played no part in the work and is not run here.
 
 ## Open questions
 - [x] Its shape: `blocked?: string`, named as `Act` and `RowLeading.check` name it.
@@ -53,3 +53,6 @@ Second ruling: a touch-sheet story is added (a blocked option at a touch viewpor
 ## Open
 - The native rows (`OptionList` and the shared `PickSheet`) are not rendered by any story; the `Select`, `Picker`, `MultiPick` and `OptionList` box stays unticked until a native render exists. The web touch sheet is now exercised.
 - The critique has not measured the Picker frame at 320 and 1440.
+
+## Review
+Fresh critique of the Picker frame (`shared-picker--rest`, 1440 desktop and 320 touch sheet, light and dark): the owner list's blocked row (Dana Moss, "On leave until June") is a two-line row of 52 px (touch 64 px), equal to the described rows; label and reason share the disabled ink (3.04:1 light, 2.73:1 dark, within the disabled exemption); a click (1440) or press (320) on it picks nothing and keeps the list open. The pick of several draws a "Dana Moss ×" chip, and Dana's row is ticked, enabled and shows no reason; rows 52/64 px; no overflow at 320. Finding: at 1440 hovering the blocked row highlights it with the 5 % hover fill as an enabled row (caused here; the touch sheet does not). Nit, pre-existing: desktop chip remove targets are 22x22 px, inside the spacing exception.
