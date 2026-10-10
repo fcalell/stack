@@ -607,7 +607,7 @@ a tick with no animation, never jumped to full.
   than overprint (the marks are described under `warning` below). The later parts take no width of
   their own (`w-0`, growing into the room the marks leave) and show at least `figures` of it or
   none, in the chip's wrapping slot, so a bare separator and an ellipsis never draw; the slot's
-  text shrinks to nothing on its own line, so its box never passes the slot. A model-written later
+  text shrinks to nothing on its own line, so its box never passes the slot. With a mark on the line and the room under `figures` the parts are dropped whole and the room they would have held goes to the line's end: the parts' box stops growing and the marks follow the first part a `ROW_META_LINE` gap apart (react-ui `useDropped`, read off the line's geometry, which the slot does not move, so it never rests on the form drawn), not a blank stripe where the part was; the phone's later parts never drop, they truncate. A model-written later
   part (`Quoted`) stands in a span of its own that yields ahead of the plain parts, which is the
   one way a row says which part gives way: the age and spend that must read whole are its
   `trailing`. A `Coded` later part (`{ code }`) stands in a span of its own at the same tier and
