@@ -326,6 +326,8 @@ A `Form` holds fields and its `ActionBar`. One form among a page's sections is `
 every section's head-to-body gap stays the pair step. `Section`s inside a `Form` (`Form > Section`)
 stand at the fields step, so that shape is for a page every section of which is in the form.
 
+A `Section`'s head ends in its `act`, then its `more` (a `MenuItem[]`, destructive ones marked, shaped as a `ListRow`'s): a block's other acts (move, remove) stay on its head row beside the title, which never moves, and a foldable Section's more does not fold it. With a labelled `act` the pair wraps under the title on touch together.
+
 A `Form` in a `Split`'s `pane` (beside the main from `wide`, or in its Details sheet) or in a
 `Sheet`'s body keeps its `ActionBar` at the scroller's bottom edge, over a ground and hairline that
 run across the scroller's inset, so a long form never puts its submit below the fold. Pass the pane

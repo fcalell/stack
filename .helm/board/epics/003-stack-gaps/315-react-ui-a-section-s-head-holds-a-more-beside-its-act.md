@@ -1,6 +1,6 @@
 ---
 id: 003-315
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: a Section's head holds a more beside its act
@@ -12,10 +12,18 @@ Stead's composer draws each prompt block as a `Section` titled by the block, wit
 `Section` takes `act?: Act | IconAct` and nothing else at the head's end (`plugins/react-ui/src/ui/components/section/index.tsx:106`). `ListRow` already carries `more?: readonly MenuItem[]` after its act (`list-row/index.tsx:221-222`), the shape a Section's head could follow. Seen at stack `0138667b`.
 
 ## Acceptance criteria
-- [ ] A `Section` can carry a more (a menu of acts, destructive ones marked) at its head's end, after its act, on the head row that never moves.
-- [ ] With both an act and a more, at 375 the head keeps the title readable, wrapping the act under the title as the touch rule already does.
-- [ ] A foldable Section's more does not fold or open it.
+- [x] A `Section` can carry a more (a menu of acts, destructive ones marked) at its head's end, after its act, on the head row that never moves.
+- [x] With both an act and a more, at 375 the head keeps the title readable, wrapping the act under the title as the touch rule already does.
+- [x] A foldable Section's more does not fold or open it.
 - [ ] Native the same.
 
 ## Open questions
-- [ ] Whether the more is a prop on `Section` or a menu `act` kind: the stack session decides.
+- [x] Whether the more is a prop on `Section` or a menu `act` kind: the stack session decides.
+
+
+## Ruled
+`more?: readonly MenuItem[]` is a prop on `Section`, shaped as `ListRow.more` (the menu's own item descriptor, its `destructive` mark and `blocked` reason). A menu kind of `act` would widen the `Act` descriptor every act-bearing component shares, for one head; the prop adds one prop on one component and no new type.
+
+## Built
+Web (`plugins/react-ui/src/ui/components/section/index.tsx`) and native (`plugins/native-ui/src/ui/components/section/index.tsx`): the head's end slot holds the act, then `MenuBase` (labelled `More <title>`, its touch sheet titled by the Section), so the pair wraps under the title together on touch and the head row never moves. The more sits outside the fold toggle. `more` joins the Section roster (`packages/ui-core/src/roster.ts`); rules in both guides and `ui-core.md`. Stories `HeadHoldsActAndMore375/1440`, `FoldableMoreDoesNotToggle`, `DestructiveItemIsMarked` (`apps/showcase/behaviour/section-more.stories.tsx`) pass in Chromium (4 tests), as do the Section-bearing stories `section-body`, `waiting`, `waiting-late`, `list-row-status`, `row-meta` (70 tests). `pnpm check` and the three verifies pass.
+Native unrendered: the menu and the wrap are the web's by construction and unchecked on a device, so the native box stays open.

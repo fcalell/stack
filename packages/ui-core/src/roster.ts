@@ -811,6 +811,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"folded",
 				"onToggle",
 				"act",
+				"more",
 				"loading",
 				"children",
 			],

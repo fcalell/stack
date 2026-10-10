@@ -1419,6 +1419,7 @@ a tick with no animation, never jumped to full.
   Form) and the body's own parts (a Prose, a Code, a Group, an ActionBar) stand the `fields` step apart
   (`SECTION_BODY`) wherever the Section sits, so a dense run of parts reads as parts; a Group keeps its
   rows' own tight spacing.
+- A Section's head ends in its `act` then its `more` (`MenuItem[]`, a prop shaped as `ListRow.more`, drawn by `MenuBase` titled by the Section; not a menu kind of `act`, which would widen the shared `Act` descriptor). Both stand in one end slot, so they wrap under the title together on touch; the more sits outside a foldable Section's toggle and never folds it.
 - A Section reads its body's collections off its own children in render, so nothing registers and
   the head (its count, its busy state) and the loading body land in the first paint with no
   second commit. By the depth rule, a Section's collections stand as its direct children (a
