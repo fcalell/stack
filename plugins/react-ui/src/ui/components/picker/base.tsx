@@ -98,9 +98,9 @@ const PRESS = "active:bg-wash-press";
 const OPTION_NO_FOCUS = "outline-none";
 const KEYBOARD_RING = "outline-2 -outline-offset-2 outline-ring";
 // A touch option is a button: its text at the start, its focus the
-// keyboard's highlight and its ring.
-const OPTION_BUTTON =
-	"text-start focus-visible:bg-wash-hover focus-visible:-outline-offset-2";
+// keyboard's highlight and its ring; a blocked one takes the ring alone.
+const OPTION_BUTTON = "text-start focus-visible:-outline-offset-2";
+const OPTION_FOCUS_WASH = "focus-visible:bg-wash-hover";
 const OPTION_TEXT = "flex flex-col min-w-0 grow";
 const LINE = "truncate";
 // A blocked option's label and reason; it takes no press wash.
@@ -565,12 +565,21 @@ export function PickerBase<V extends string | null = string>(
 
 // Whether the keyboard moved the highlight last: a key on the trigger or in
 // the popup (an Enter that opens it among them) sets it, the pointer clears it.
+// A searchable list's keys land on its input, which keeps them from the popup:
+// `landed` is the same for those keys, read by the blocked row alone (an
+// enabled row there marks the key's position with the wash).
 function useKeyed(trigger: PickParts<string | null>["trigger"]) {
 	const [keyed, setKeyed] = useState(false);
+	const [landed, setLanded] = useState(false);
 	const keys = () => setKeyed(true);
-	const pointer = () => setKeyed(false);
+	const pointer = () => {
+		setKeyed(false);
+		setLanded(false);
+	};
 	return {
 		keyed,
+		landed,
+		input: { onKeyDown: () => setLanded(true) },
 		trigger: (handed: ComponentProps<"button">) =>
 			trigger({
 				...handed,
@@ -766,6 +775,7 @@ function PickSearch<V extends string | null>(
 						<div className={cn(field({ fit: "bar" }), FIELD_GLYPH, SEARCH)}>
 							<Icon name="Search" fit="control" />
 							<Combobox.Input
+								{...keyboard.input}
 								placeholder={words.search}
 								aria-label={words.search}
 								className={cn(fieldValue({ kind: "search" }), SEARCH_VALUE)}
@@ -807,7 +817,13 @@ function PickSearch<V extends string | null>(
 															),
 															OPTION,
 															blocked === undefined && PRESS,
-															optionFocus(state.highlighted, keyboard.keyed),
+															// A blocked row has no wash to mark the key's position, so the key landing on it rings it.
+															optionFocus(
+																state.highlighted,
+																blocked === undefined
+																	? keyboard.keyed
+																	: keyboard.landed,
+															),
 														)
 													}
 												>
@@ -973,6 +989,7 @@ function PickRows<V extends string | null>(
 										OPTION,
 										blocked === undefined && PRESS,
 										OPTION_BUTTON,
+										blocked === undefined && OPTION_FOCUS_WASH,
 									)}
 								>
 									<OptionText

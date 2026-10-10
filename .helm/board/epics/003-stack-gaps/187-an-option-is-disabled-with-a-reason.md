@@ -67,3 +67,10 @@ Fresh critique of the Picker frame (`shared-picker--rest`, 1440 desktop and 320 
 - Stories: `behaviour/picker.stories.tsx` and `select.stories.tsx` Blocked (1440 for the pointer; both widths for the key): a key landing on the blocked row shows an outline and a background equal to a rest row's; at 1440 the real pointer over it leaves the background equal to a rest row's. `menu.stories.tsx` `BlockedItem` asserts the same for the Menu's blocked item and that Enter leaves the menu open.
 - `rules.md` (react-ui) and `ui-core.md` state it. No ui-core cell changed for this part; DESIGN.md is unchanged.
 - Native unrendered; the native rows and the critique stay open, status stays review.
+
+## Built (rework 2)
+Finding A (searchable Picker, `shared-picker--rest` Owner at 1440): a key landing on a blocked row drew no ring because a searchable list's keys land on its input, which keeps them from the popup, so `keyed` never rose; and the enabled rows there mark the key's position with the wash alone. `useKeyed` in `picker/base.tsx` gains `landed`/`input` (a key on the input sets it, the pointer clears it); the `Combobox.Item` of a blocked row reads `landed` for its ring, an enabled row reads `keyed` as before.
+
+Finding B (touch sheet, 320): the sheet's option button carried `focus-visible:bg-wash-hover`, so an arrow onto the `aria-disabled` row drew the 5 % fill with the ring. The wash is now added only to a row that can be chosen (`OPTION_FOCUS_WASH`); a blocked row keeps the ring alone.
+
+Stories in `behaviour/picker.stories.tsx`: `BlockedSearch1440` (a searchable list, the key lands on the blocked row: outline width above 0, background equal to a rest row's; an enabled row the key lands on keeps its wash); `BlockedSheet` gains the arrow onto the blocked row (focus there, outline width above 0, background equal to an enabled row's). Both failed before the fix. Browser run: picker (10), select, menu, option-list, row-meta and section-more pass. Native unrendered.
