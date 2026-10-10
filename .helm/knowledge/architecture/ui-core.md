@@ -1800,7 +1800,8 @@ a tick with no animation, never jumped to full.
   canvas's opening view) with `clearanceOf`, the room the zoom stack leaves, held by an unseen
   `ZoomRoom` of the stack's frame, so the arrival moves no card (`canvas.stories` holds it at 375,
   768 and 1440, both modes). Only the stack's width is held: an `act` or a foot, which a loaded
-  canvas keeps clear of, is not. `empty` is a string, not a slot or a
+  canvas keeps clear of, is not; nor is the graph's shape: a graph that overflows (opening
+  top-anchored) or has a wider pitch opens by its own rule, so its first node can move on arrival. `empty` is a string, not a slot or a
   `words` entry (it is app copy, and the app decides when it stands): the layer's first child
   centres it under the graph's bounds and holds its size through `--canvas-unzoom`, so it
   stays at the text floor, and `pointer-events-none` lets a drag through it pan and a tap on it
