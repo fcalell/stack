@@ -85,7 +85,16 @@ function Named(props: { label: string; children: ReactElement }) {
 	const touch = useTouch();
 	const container = use(PortalContainer);
 	return (
-		<Tooltip.Root disabled={touch} disableHoverablePopup>
+		<Tooltip.Root
+			disabled={touch}
+			disableHoverablePopup
+			onOpenChange={(open, details) => {
+				// Escape hides the name and still reaches what the act sits in: a
+				// sheet opened on its close act closes on the one press.
+				if (!open && details.reason === "escape-key")
+					details.allowPropagation();
+			}}
+		>
 			<Tooltip.Trigger delay={SHOW_AFTER} render={props.children} />
 			<Tooltip.Portal container={container}>
 				<Tooltip.Positioner

@@ -12,7 +12,7 @@ Stead's Add a repo opens as a `Screen` in a Split's `beside` (`packages/server/s
 003-88 (done) capped a record in the Split's main (`SPLIT_MAIN` `rest` `max-w-measure-inset`, `packages/ui-core/src/variant-tables.ts:1177`). A `beside` Screen's body is `PAGE_BODY` with `SECTIONS_BESIDE` and no cap (`plugins/react-ui/src/ui/components/screen/index.tsx:195`, `packages/ui-core/src/variants.ts:852,889`). Seen at stack `226f48c`.
 
 ## Acceptance criteria
-- [ ] A record beside the main holds the same `measure-inset` column as one in the main: every block ends on one line. (Built; the measure awaits the batch browser run.)
+- [x] A record beside the main holds the same `measure-inset` column as one in the main: every block ends on one line. (Proved by the browser run.)
 - [x] Native reads the same cell.
 
 ## Open questions
@@ -28,3 +28,6 @@ No new surface: a `beside` Screen's body composes `PAGE_BODY` with one new cell,
 - Rules (react-ui, native-ui) and `ui-core.md` say the beside record holds the main's column.
 - Evidence: `apps/showcase/behaviour/split-record.stories.tsx` `BesideRecordHoldsTheMeasure` (2000 px page; column width is `measure-inset`, starts at the region, every block ends at the Prose's end). Written, not run: it awaits the batch browser run.
 - Native unrendered: the phone is narrower than the measure, so the cap is a no-op there until a wider surface; the cell is the same.
+
+## Browser run
+`BesideRecordHoldsTheMeasure` passes (split-record.stories.tsx, 8 of 8). The first run failed by 1 px because the test compared the column's left with the region's border box; the region has a `page-wide:border-l` hairline, so the test now adds the region's `borderLeftWidth` (test fix, the column starts inside the hairline).

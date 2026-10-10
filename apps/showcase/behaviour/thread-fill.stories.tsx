@@ -74,8 +74,11 @@ export const FilledThreadStandsAtStart1280: StoryObj = {
 	play: async ({ canvas }) => {
 		const log = await canvas.findByRole("log");
 		const field = canvas.getByRole("textbox", { name: "Message" });
-		const input = must(field.closest("[class*='w-full']"));
-		const heading = canvas.getByRole("heading");
+		// The input's column: the foot's, which the main's mark frees of the cap.
+		const input = must(field.closest("[class*='max-w-measure']"));
+		const heading = canvas.getByRole("heading", {
+			name: "Why did the last deploy of api fail?",
+		});
 		const inset = log.getBoundingClientRect();
 		const probe = document.createElement("div");
 		probe.className = "px-page w-measure";

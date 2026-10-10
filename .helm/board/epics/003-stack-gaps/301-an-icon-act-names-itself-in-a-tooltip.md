@@ -26,3 +26,6 @@ Open: Base UI opens a tooltip on keyboard focus at once (the delay applies to ho
 
 ## Built
 `plugins/react-ui/src/ui/components/icon-button/base.tsx` (`Named`), `TOOLTIP` in `packages/ui-core/src/variants.ts`, the `IconButton` roster entry (`draws`, `holds`, `owns`) in `roster.ts`, `DESIGN.md` regenerated, the overlay allowlist (`aria-expanded:` for the pressed look). Rules text in `plugins/react-ui/guide/rules.md` and `ui-core.md`. Stories `apps/showcase/behaviour/tooltip.stories.tsx` (`Rest`, `Focus`) cover hover after the delay, Escape, keyboard focus and a menu trigger's tooltip leaving as the menu opens; written, type-check, not run. Touch is not asserted in a story (no coarse-pointer harness in the behaviour stories). Escape inside a sheet may close the sheet as well as the tooltip; unmeasured.
+
+## Browser run
+`tooltip.stories.tsx` (`Rest`, `Focus`) pass. The open question about Escape inside a sheet measured: the tooltip of the focused Close act took the Escape and the sheet stayed open. Fixed: the tooltip's Escape now propagates (`allowPropagation` in `onOpenChange`), so Escape hides the name and closes the sheet at once (`split.stories.tsx` `AppOpensPane768`).

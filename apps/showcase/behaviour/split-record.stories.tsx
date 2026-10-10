@@ -125,7 +125,11 @@ export const BesideRecordHoldsTheMeasure: StoryObj = {
 		const column = must(beside.querySelector("[data-page]"));
 		const box = column.getBoundingClientRect();
 		await expect(box.width).toBe(width(canvasElement, "w-measure-inset"));
-		await expect(box.left).toBe(beside.getBoundingClientRect().left);
+		// The region's start is inside its hairline (from `wide`).
+		await expect(box.left).toBe(
+			beside.getBoundingClientRect().left +
+				Number.parseFloat(getComputedStyle(beside).borderLeftWidth),
+		);
 		const end =
 			box.left + pad(canvasElement) + width(canvasElement, "w-measure");
 		for (const part of column.children)

@@ -30,3 +30,6 @@ Evidence: `behaviour/split.stories.tsx` `TreeAloneGoesUp`, `TreeAloneGoesUpTouch
 
 ## Critique (second round)
 Ship, by a fresh critic at 320, 390, 768, 1280 and 1440, light and dark (scratchpad `critique/r2-layout/report.md`).
+
+## Browser run (003-304 follow-up)
+`TreeAloneGoesUp{,Touch}` and `TreeRecordGoesToTree{,Touch}` pass. 003-304 wrapped the Screen's back acts in spans, so the test's `shown(parent)` read the wrapper, not the span that hides; it now reads `checkVisibility()` through the ancestors (test fix, same assertion: one visible Back act leading to the parent, then to the tree).

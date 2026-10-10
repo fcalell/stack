@@ -386,7 +386,14 @@ const besideAtThePhone: StoryObj = {
 				(el) => el.textContent === "History",
 			),
 		);
-		await expect(title.getBoundingClientRect().left).toBe(gutter);
+		// On touch the head is one row (003-304): the back act reaches the page
+		// inset by its start and the title follows it on the same line.
+		const back = must(heads[0]?.querySelector("a[aria-label='Back']"));
+		const row = back.getBoundingClientRect();
+		await expect(title.getBoundingClientRect().left).toBeGreaterThanOrEqual(
+			row.right,
+		);
+		await expect(title.getBoundingClientRect().top).toBeLessThan(row.bottom);
 		const name = must(
 			[...must(regions(canvasElement)[2]).querySelectorAll("*")].find(
 				(el) => el.children.length === 0 && el.textContent === NAMES[0],
@@ -484,8 +491,10 @@ function Tree(props: { open: boolean }) {
 }
 
 function backs(canvasElement: HTMLElement) {
+	// A back act hides through the mark on a wrapper around it (the Screen's
+	// back acts sit in a span), so its visibility reads through its ancestors.
 	return [...canvasElement.querySelectorAll("a[aria-label='Back']")]
-		.filter((el) => shown(el) && shown(el.parentElement))
+		.filter((el) => el.checkVisibility())
 		.map((el) => el.getAttribute("href"));
 }
 
