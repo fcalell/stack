@@ -416,7 +416,7 @@ a tick with no animation, never jumped to full.
   path. The reason replaces the description in `ink-disabled`, the label goes `ink-disabled`, the row
   is a two-line row and keeps its place (the app orders its list); on the web Base UI's `disabled`
   gives the pointer block and the disabled semantics, and its select list lets the arrows reach a
-  disabled row as a menu's does, where Enter and a press pick nothing. Rejected: `disabled` (a bare boolean leaves the
+  disabled row as a menu's does, where Enter and a press pick nothing; a blocked row (a `Menu`'s blocked item too) never draws the highlight wash, from the pointer or a key landing on it, and the keyboard ring still shows (the callbacks pass `highlighted` only when not blocked). Rejected: `disabled` (a bare boolean leaves the
   viewer to guess), a `description` or `chip` standing in for the reason (neither stops a pick), and
   filtering the option out (the viewer loses the sight of it). `SegmentedControl`'s options are not
   `Option`.
@@ -1815,7 +1815,7 @@ a tick with no animation, never jumped to full.
   one namespace (`holds` mixes both), so the same `onSelect` and `selected` choose a group, with no
   `onSelectGroup`: only the head is a `<button>` (the frame's body keeps `pointer-events-none` and
   pans, and `CANVAS_GROUP_HEAD` carries `min-h-target`, so the probe lays the frame out with the
-  taller head), `CANVAS_GROUP` is a `state` matrix whose `selected` recolours the dash and doubles its line to 2 px (one accent hairline reads faint in dark; `accent-ink` holds 3:1 on `canvas`), the head carries a transparent border (`CANVAS_GROUP_HEAD`) that the button steps to `edge-hover` on hover, as a node's does (a platform overlay), the heads
+  taller head), `CANVAS_GROUP` is a `state` matrix whose `selected` recolours the dash and doubles its line to 2 px as an inset dashed outline over the same 1 px border box, so selecting moves nothing inside the frame (one accent hairline reads faint in dark; `accent-ink` holds 3:1 on `canvas`), the head carries a transparent border (`CANVAS_GROUP_HEAD`) that the button steps to `edge-hover` on hover, as a node's does (a platform overlay), the heads
   take their Tab stops before the nodes (frames render first), and under the text floor the head is
   no button. A group holds no `onMove` (a frame follows its holds). A group holding no present node
   and no group is a leaf of the graph (`emptyGroups`), not a frame computed from members: ELK lays

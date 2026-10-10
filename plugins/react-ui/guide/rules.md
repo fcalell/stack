@@ -433,7 +433,9 @@ the value) radio rows, one answer among a few described options. An option that 
 now carries `blocked`, a short reason that replaces its description in the disabled ink (in an
 `OptionList`, a `Select` and a `Picker`, a `MultiPick` included): it takes no pick and keeps its
 place in the list. Once the option is in the value it draws and acts as any chosen one and stays
-removable, so `blocked` never traps a value.
+removable, so `blocked` never traps a value. A blocked row (and a `Menu`'s blocked item) draws no
+highlight fill from the pointer or from a key landing on it; a key landing on it still shows the
+keyboard ring, and it presses and picks nothing.
 
 A `Thread` takes its `query` (or `items`) the same way through a `message` map (`key`,
 `author`, `name`, `body`, `at`, `attachments`, `meta`, `streaming`, `onOpen`, `detail`), each reading only its

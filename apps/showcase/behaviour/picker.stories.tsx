@@ -5,7 +5,7 @@ import { Toolbar } from "@fcalell/plugin-react-ui/components/toolbar";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { expect, screen, waitFor, within } from "storybook/test";
-import { hover } from "./mouse.ts";
+import { hover, type Point } from "./mouse.ts";
 import { focused } from "./support.ts";
 
 const ROLES = [
@@ -243,6 +243,13 @@ function blocks(width: number): StoryObj {
 			await waitFor(() => expect(list).toContainElement(focused()));
 			await userEvent.keyboard("{ArrowDown}");
 			await waitFor(() => expect(reviewer).toHaveAttribute("data-highlighted"));
+			// A key landing on a blocked row shows the ring and no fill.
+			await expect(getComputedStyle(reviewer as Element).outlineStyle).not.toBe(
+				"none",
+			);
+			await expect(getComputedStyle(reviewer as Element).backgroundColor).toBe(
+				getComputedStyle(planner as Element).backgroundColor,
+			);
 			await userEvent.keyboard("{Enter}");
 			await expect(screen.getByRole("listbox")).toBeInTheDocument();
 			await expect(trigger).toHaveTextContent("Writer");
@@ -257,6 +264,18 @@ function blocks(width: number): StoryObj {
 			await userEvent.click(reviewer as HTMLElement);
 			await expect(screen.getByRole("listbox")).toBeInTheDocument();
 			await expect(trigger).toHaveTextContent("Planner");
+			// The pointer on a blocked row draws no highlight fill, as on a rest row.
+			if (width >= 1440) {
+				const box = (reviewer as Element).getBoundingClientRect();
+				const at: Point = {
+					x: box.left + box.width / 2,
+					y: box.top + box.height / 2,
+				};
+				await hover(at);
+				await expect(
+					getComputedStyle(reviewer as Element).backgroundColor,
+				).toBe(getComputedStyle(planner as Element).backgroundColor);
+			}
 			await userEvent.keyboard("{Escape}");
 			await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
 			const remove = canvas.getByRole("button", { name: "Remove Editor" });

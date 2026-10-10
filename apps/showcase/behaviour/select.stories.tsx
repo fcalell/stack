@@ -3,6 +3,7 @@ import { Select } from "@fcalell/plugin-react-ui/components/select";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { expect, screen, waitFor } from "storybook/test";
+import { hover } from "./mouse.ts";
 import { focused } from "./support.ts";
 
 const REGIONS = [
@@ -104,12 +105,32 @@ function blocks(width: number): StoryObj {
 			await waitFor(() => expect(list).toContainElement(focused()));
 			await userEvent.keyboard("{ArrowUp}");
 			await waitFor(() => expect(ireland).toHaveAttribute("data-highlighted"));
+			// A key landing on a blocked row shows the ring and no fill.
+			await waitFor(() =>
+				expect(getComputedStyle(ireland as Element).outlineStyle).not.toBe(
+					"none",
+				),
+			);
+			await expect(getComputedStyle(ireland as Element).backgroundColor).toBe(
+				getComputedStyle(oregon as Element).backgroundColor,
+			);
 			await userEvent.keyboard("{Enter}");
 			await expect(screen.getByRole("listbox")).toBeInTheDocument();
 			await expect(trigger).toHaveTextContent("Virginia");
 			await userEvent.click(ireland as HTMLElement);
 			await expect(screen.getByRole("listbox")).toBeInTheDocument();
 			await expect(trigger).toHaveTextContent("Virginia");
+			// The pointer on a blocked row draws no highlight fill, as on a rest row.
+			if (width >= 1440) {
+				const box = (ireland as Element).getBoundingClientRect();
+				await hover({
+					x: box.left + box.width / 2,
+					y: box.top + box.height / 2,
+				});
+				await expect(getComputedStyle(ireland as Element).backgroundColor).toBe(
+					getComputedStyle(oregon as Element).backgroundColor,
+				);
+			}
 			await userEvent.click(oregon as HTMLElement);
 			await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
 			await expect(trigger).toHaveTextContent("Oregon");
