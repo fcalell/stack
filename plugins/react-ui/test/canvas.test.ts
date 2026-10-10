@@ -1331,17 +1331,17 @@ test("a glyph is the control size of its density", () => {
 	assert.equal(glyphSize(true), 44);
 });
 
-test("minZoomFor keeps two glyphs a gap of 2 * pair apart by the larger axis of their centres, within the scale extent", () => {
+test("minZoomFor keeps two glyphs a gap of 2 * pair apart by the larger axis of their centres, less the pair their routing boxes round up by, within the scale extent", () => {
 	const at = (x: number, y: number) => box(x - 100, y - 20, 200, 40);
 	// Centres 200 apart across and 120 apart down: the larger gap decides.
 	const pair = [at(0, 0), at(200, 120)];
-	assert.equal(minZoomFor(pair, 32, PAIR), (32 + 2 * PAIR) / 200);
-	assert.equal(minZoomFor(pair, 44, PAIR), (44 + 2 * PAIR) / 200);
+	assert.equal(minZoomFor(pair, 32, PAIR), (32 + 2 * PAIR) / (200 - PAIR));
+	assert.equal(minZoomFor(pair, 44, PAIR), (44 + 2 * PAIR) / (200 - PAIR));
 	assert.equal(minZoomFor(pair, 32, 0), 32 / 200);
 	// The nearest pair of three decides.
 	assert.equal(
 		minZoomFor([at(0, 0), at(400, 0), at(400, 160)], 32, PAIR),
-		(32 + 2 * PAIR) / 160,
+		(32 + 2 * PAIR) / (160 - PAIR),
 	);
 	// Never above 1, never under the extent's floor; one node or none gives it.
 	assert.equal(minZoomFor([at(0, 0), at(10, 0)], 32, PAIR), 1);
@@ -1362,7 +1362,7 @@ test("minZoomFor on the workflow keeps every pair of glyphs a gap of 2 * pair ap
 					Math.abs(one.x + one.width / 2 - (two.x + two.width / 2)),
 					Math.abs(one.y + one.height / 2 - (two.y + two.height / 2)),
 				);
-				assert.ok(gap * k >= glyph + 2 * PAIR - 1e-9);
+				assert.ok((gap - PAIR) * k >= glyph + 2 * PAIR - 1e-9);
 			}
 		});
 	}

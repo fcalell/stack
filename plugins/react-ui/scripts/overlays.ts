@@ -478,6 +478,7 @@ export const OVERLAYS: readonly string[] = [
 	"-bottom-px",
 	"-top-inside",
 	"-bottom-inside",
+	"-mb-px",
 	"cursor-crosshair",
 	"cursor-default",
 	"bg-edge-strong",

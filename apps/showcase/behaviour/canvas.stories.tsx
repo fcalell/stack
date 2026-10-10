@@ -31,7 +31,12 @@ import { useState } from "react";
 import { expect, fn, spyOn, waitFor } from "storybook/test";
 import { FOCUS_GUARD } from "../.storybook/focus-guard.ts";
 import { hollowHeld, hollowRow, lowestZoom, room } from "./canvas-support.ts";
-import { click as mouseClick, drag as mouseDrag, type Point } from "./mouse.ts";
+import {
+	click as mouseClick,
+	drag as mouseDrag,
+	press as mousePress,
+	type Point,
+} from "./mouse.ts";
 
 const ORDER = pathOrder(WORKFLOW.nodes, WORKFLOW.edges);
 
@@ -298,7 +303,9 @@ export const PanToFocused: StoryObj = {
 // A press focuses a node's button without a keyboard, and panning then would
 // move a node that stands partly in view out from under the pointer: only a
 // keyboard focus pans. A synthetic click is a script focus, which Chromium
-// counts as a keyboard one, so the press is a focus that asks not to show it.
+// counts as a keyboard one (and `focusVisible: false` is read only from 144),
+// so the press is the browser's own mouse, held at a point of the node in view
+// (the click that ends it selects the node, which a page's selection reveals).
 export const PressDoesNotPan: StoryObj = {
 	render: () => <Workflow />,
 	play: async ({ canvas, canvasElement }) => {
@@ -317,10 +324,16 @@ export const PressDoesNotPan: StoryObj = {
 		await waitFor(() => expect(rect(node).top).toBeLessThan(rect(region).top));
 		await expect(holds(rect(region), rect(node))).toBe(false);
 		const before = viewport(canvasElement);
-		node.focus({ focusVisible: false } as FocusOptions);
-		await expect(node).toHaveFocus();
-		await expect(node.matches(":focus-visible")).toBe(false);
-		await expect(viewport(canvasElement)).toEqual(before);
+		const seen = rect(node);
+		const edge = rect(region).top;
+		await mousePress(
+			{ x: seen.left + seen.width / 2, y: edge + (seen.bottom - edge) / 2 },
+			async () => {
+				await expect(node).toHaveFocus();
+				await expect(node.matches(":focus-visible")).toBe(false);
+				await expect(viewport(canvasElement)).toEqual(before);
+			},
+		);
 	},
 };
 
@@ -746,9 +759,14 @@ export const SplitMain: StoryObj = {
 		await expect(filled.top).toBeGreaterThanOrEqual(rect(head).bottom);
 		await expect(filled.height).toBeGreaterThan(0);
 		const list = canvasElement.querySelector("[data-split] > nav");
-		await expect(list && rect(list).width).toBeCloseTo(
+		// The list sizes to its content (003-305): short names stand at the
+		// region minimum, and never past the list's own width.
+		const width = list ? rect(list).width : 0;
+		await expect(width).toBeGreaterThanOrEqual(
+			Number.parseFloat(WIDTH_VALUE["region-min"]),
+		);
+		await expect(width).toBeLessThanOrEqual(
 			Number.parseFloat(WIDTH_VALUE.list),
-			0,
 		);
 	},
 };
@@ -1825,7 +1843,7 @@ export const HandlersMove = handlers(true, false);
 export const HandlersConnect = handlers(false, true);
 export const HandlersBoth = handlers(true, true);
 
-// At the desktop a port's ring is 8 and its hit 24, centred on the node's top
+// At the desktop a port's ring is 8 and its hit 28 (the desktop target, 003-297), centred on the node's top
 // or bottom edge, where a route starts or ends.
 export const PortGeometry: StoryObj<Heard> = {
 	...edit(false, true),
@@ -1851,7 +1869,7 @@ export const PortGeometry: StoryObj<Heard> = {
 				const ring = portOf(region, node.id, kind).firstElementChild;
 				const dot = ring ? rect(ring) : new DOMRect();
 				await expect([dot.width, dot.height]).toEqual([8, 8]);
-				await expect([hit.width, hit.height]).toEqual([24, 24]);
+				await expect([hit.width, hit.height]).toEqual([28, 28]);
 				await expect(around(centre(hit).x, centre(dot).x, 0.01)).toBe(true);
 				await expect(around(centre(hit).y, centre(dot).y, 0.01)).toBe(true);
 				await expect(around(centre(dot).x, box.left + box.width / 2, 1)).toBe(

@@ -38,10 +38,12 @@ export function glyphSize(touch: boolean): number {
 }
 
 // The lowest zoom at which no two glyphs of `glyph` px stand closer than `2 * pair`
-// px: the glyph and that gap over the smallest distance between two node
-// centres, measured as the larger of the two axes' gaps (two squares touch when
-// both gaps are under their size). The gap leaves the edges between glyphs a
-// stretch to draw.
+// px, with every route between two of them as long as that gap: the glyph and the
+// gap over the smallest distance between two node centres, measured as the
+// larger of the two axes' gaps (two squares touch when both gaps are under their
+// size). A route runs between the nodes' routing boxes (`routeSide`), each up to
+// `pair` flow units wider than its glyph, so the distance counts less that
+// rounding and the edges between glyphs keep a stretch to draw.
 export function minZoomFor(
 	boxes: readonly Box[],
 	glyph: number,
@@ -59,7 +61,9 @@ export function minZoomFor(
 				),
 			);
 	});
-	return Math.min(1, Math.max(lowest, (glyph + 2 * pair) / nearest));
+	const room = nearest - pair;
+	if (room <= 0) return 1;
+	return Math.min(1, Math.max(lowest, (glyph + 2 * pair) / room));
 }
 
 // The widest a node's name stands on screen at the density: the short measure in
