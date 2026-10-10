@@ -374,7 +374,7 @@ export const ZoomLimits: StoryObj = {
 		await expect(scale()).toBe(2);
 		await expect(zoomIn).toHaveAttribute("aria-disabled", "true");
 		await expect(zoomOut).not.toHaveAttribute("aria-disabled", "true");
-		for (let step = 0; step < 12; step++) await userEvent.click(zoomOut);
+		for (let step = 0; step < 30; step++) await userEvent.click(zoomOut);
 		await expect(
 			Math.abs(scale() - lowestZoom(canvasElement, SIZE_PX.desktop.control)),
 		).toBeLessThan(0.005);
@@ -1217,8 +1217,8 @@ export const EmptyText: StoryObj = {
 	},
 };
 
-// Each generated canvas frame's stage, but the glyph's (which `Canvas overview`
-// checks, fitted under the text floor), holds its whole graph at scale 1: the
+// Each generated canvas frame's stage, but the glyph's and the name's (which
+// `Canvas overview` checks, fitted under the text floor), holds its whole graph at scale 1: the
 // drawing (frames, chips, nodes) and every node's button lie inside the pane
 // the canvas draws in, so the state a frame is there to show is on screen.
 // The two densities size nodes differently, so each is checked.
@@ -1230,6 +1230,7 @@ function framesHoldTheirGraph(density: "desktop" | "touch"): StoryObj {
 			frame.density === density &&
 			(frame.state === "rest" || frame.state === "selected") &&
 			!frame.cell.name.startsWith("CANVAS_NODE_GLYPH") &&
+			!frame.cell.name.startsWith("CANVAS_NODE_NAME") &&
 			drawCanvas(frame) !== undefined,
 	);
 	return {

@@ -1094,6 +1094,22 @@ export const CANVAS_NODE_GLYPH = matrix({
 	defaultVariants: { state: "rest" },
 });
 
+// A node's name in the overview, between the full node and the glyph alone: the
+// caption role in body ink at 500, on the canvas's own ground so an edge never
+// strikes through it, one line cut at the short measure. The tone recolours it as
+// it does the node's words (off meta, dimmed disabled).
+export const CANVAS_NODE_NAME = matrix({
+	base: "max-w-measure-short truncate whitespace-nowrap px-inside bg-canvas text-caption leading-caption tracking-caption font-medium",
+	variants: {
+		tone: {
+			rest: "text-ink-body",
+			off: "text-ink-meta",
+			dimmed: "text-ink-disabled",
+		},
+	},
+	defaultVariants: { tone: "rest" },
+});
+
 // A group's dashed frame: the dash says a group, the outline's colour says it
 // is selected.
 export const CANVAS_GROUP = matrix({

@@ -1560,6 +1560,30 @@ components:
     width: "{spacing.control}"
     rounded: "{rounded.card}"
     backgroundColor: "{colors.group-dark}"
+  canvas-node-name-rest:
+    backgroundColor: "{colors.canvas}"
+    typography: "{typography.caption}"
+    textColor: "{colors.ink-body}"
+  canvas-node-name-rest-dark:
+    backgroundColor: "{colors.canvas-dark}"
+    typography: "{typography.caption}"
+    textColor: "{colors.ink-body-dark}"
+  canvas-node-name-off:
+    backgroundColor: "{colors.canvas}"
+    typography: "{typography.caption}"
+    textColor: "{colors.ink-meta}"
+  canvas-node-name-off-dark:
+    backgroundColor: "{colors.canvas-dark}"
+    typography: "{typography.caption}"
+    textColor: "{colors.ink-meta-dark}"
+  canvas-node-name-dimmed:
+    backgroundColor: "{colors.canvas}"
+    typography: "{typography.caption}"
+    textColor: "{colors.ink-disabled}"
+  canvas-node-name-dimmed-dark:
+    backgroundColor: "{colors.canvas-dark}"
+    typography: "{typography.caption}"
+    textColor: "{colors.ink-disabled-dark}"
   stage-done:
     typography: "{typography.body}"
     textColor: "{colors.ink-body}"
@@ -2626,7 +2650,7 @@ A docked sheet's body keeps `docked-floor` (144px on touch, 96px on the desktop)
 | `Thread` | content | `THREAD`, `THREAD_COLUMN`, `THREAD_LOG`, `THREAD_UNDER_HEAD`, `FOOT_DOCKED`, `THREAD_LATEST` | rest, loading, error, empty |
 | `QrCode` | content | `QR_CODE`, `QR_TILE` | rest, loading |
 | `Image` | content | `IMAGE`, `IMAGE_PICTURE`, `IMAGE_FULL`, `IMAGE_CLOSE`, `IMAGE_FAILED_INK`, `ICON.fit.body`, `ICON_BUTTON.fit.body`, `TEXT.role.meta`, `SCRIM` | rest, hover, focus, active, loading, error |
-| `Canvas` | content, web only | `SKELETON.kind.icon`, `SKELETON.kind.line`, `SKELETON_LANE.role.body`, `SKELETON_LANE.role.meta`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `CANVAS_GROUND`, `CANVAS_NODE`, `CANVAS_NODE_TEXT`, `CANVAS_NODE_GLYPH`, `CANVAS_PORT`, `CANVAS_PORT_HIT`, `CANVAS_GROUP`, `CANVAS_GROUP_HEAD`, `CANVAS_ZOOM`, `ICON.fit.meta`, `ICON.fit.body`, `ICON_BUTTON.fit.body`, `BUTTON.act.quiet`, `BUTTON.fit.body`, `BUTTON_LABEL.act.quiet`, `COUNT`, `COUNT_LABEL`, `CHIP.family.neutral`, `CHIP.trailing.none`, `CHIP_LABEL.family.neutral`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC` | rest, selected, loading, empty |
+| `Canvas` | content, web only | `SKELETON.kind.icon`, `SKELETON.kind.line`, `SKELETON_LANE.role.body`, `SKELETON_LANE.role.meta`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `CANVAS_GROUND`, `CANVAS_NODE`, `CANVAS_NODE_TEXT`, `CANVAS_NODE_GLYPH`, `CANVAS_NODE_NAME`, `CANVAS_PORT`, `CANVAS_PORT_HIT`, `CANVAS_GROUP`, `CANVAS_GROUP_HEAD`, `CANVAS_ZOOM`, `ICON.fit.meta`, `ICON.fit.body`, `ICON_BUTTON.fit.body`, `BUTTON.act.quiet`, `BUTTON.fit.body`, `BUTTON_LABEL.act.quiet`, `COUNT`, `COUNT_LABEL`, `CHIP.family.neutral`, `CHIP.trailing.none`, `CHIP_LABEL.family.neutral`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC` | rest, selected, loading, empty |
 
 A component owns the tokens it may draw: a cell it draws that spells a type role, a colour, a radius, a spacing role, a size or a shadow outside its row is a contract error. A colour ending in `-` is a family (`chip-` is every chip role).
 

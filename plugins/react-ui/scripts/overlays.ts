@@ -476,6 +476,7 @@ export const OVERLAYS: readonly string[] = [
 	"cursor-crosshair",
 	"cursor-default",
 	"bg-edge-strong",
+	"top-1/2",
 	// Table
 	"font-normal",
 	"p-0",
