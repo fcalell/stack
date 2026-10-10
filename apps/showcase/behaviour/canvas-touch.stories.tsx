@@ -22,7 +22,7 @@ import type { CanvasPoint } from "@fcalell/ui-core/descriptors";
 import { SIZE_PX } from "@fcalell/ui-core/tokens";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
-import { expect, fn, waitFor } from "storybook/test";
+import { expect, fn, spyOn, waitFor } from "storybook/test";
 import {
 	apart,
 	around,
@@ -278,6 +278,25 @@ const tapping: Story = {
 export const TapLight = mode("light", tapping);
 export const TapDark = mode("dark", tapping);
 
+// The page's stand-in for a device with a pulse, and for the frame's user
+// activation (`hasBeenActive`), which a synthetic touch never gives.
+function pulse(active: boolean) {
+	const vibrate = fn(() => true);
+	Object.defineProperty(navigator, "vibrate", {
+		configurable: true,
+		value: vibrate,
+	});
+	Object.defineProperty(navigator, "userActivation", {
+		configurable: true,
+		value: { hasBeenActive: active, isActive: active },
+	});
+	return vibrate;
+}
+function unpulse() {
+	Reflect.deleteProperty(navigator, "vibrate");
+	Reflect.deleteProperty(navigator, "userActivation");
+}
+
 // ── 4 Long press ────────────────────────────────────────────────────
 
 // A hold lifts a node, which then follows the finger by the finger's distance
@@ -287,12 +306,9 @@ export const TapDark = mode("dark", tapping);
 const lifting: Story = {
 	...phone(true, false),
 	play: async ({ args, canvas, canvasElement }) => {
-		// A pulse at the lift, where a device has one: the page stands in for it.
-		const vibrate = fn(() => true);
-		Object.defineProperty(navigator, "vibrate", {
-			configurable: true,
-			value: vibrate,
-		});
+		// A pulse at the lift, where a device has one and the page has had a
+		// user activation: the page stands in for both.
+		const vibrate = pulse(true);
 		const region = await laidOut(canvas, args.moved);
 		const plan = card(region, "plan");
 		await expect(reachable(region, plan)).toBe(true);
@@ -341,11 +357,39 @@ const lifting: Story = {
 		await drag(ground, shift(ground, -50, 30));
 		await panned(canvasElement, before.view, { x: -50, y: 30 });
 		await expect(calls(args.moved)).toHaveLength(before.reports + 1);
-		Reflect.deleteProperty(navigator, "vibrate");
+		unpulse();
 	},
 };
 export const LongPressLight = mode("light", lifting);
 export const LongPressDark = mode("dark", lifting);
+
+// A frame with no user activation refuses the pulse and logs the refusal as a
+// console error (Chrome), so the lift makes no call: it draws, follows and
+// reports once on release as it does with one, and logs nothing.
+const liftingUnactivated: Story = {
+	...phone(true, false),
+	play: async ({ args, canvas }) => {
+		const vibrate = pulse(false);
+		const errors = spyOn(console, "error");
+		const region = await laidOut(canvas, args.moved);
+		const plan = card(region, "plan");
+		const reports = calls(args.moved).length;
+		const from = centre(rect(plan));
+		await drag(from, shift(from, 60, 40), {
+			pause: HOLD,
+			hold: async () => {
+				await expect(getComputedStyle(plan).outlineStyle).toBe("solid");
+			},
+		});
+		await expect(calls(args.moved)).toHaveLength(reports + 1);
+		await expect(vibrate).not.toHaveBeenCalled();
+		await expect(errors).not.toHaveBeenCalled();
+		errors.mockRestore();
+		unpulse();
+	},
+};
+export const LongPressUnactivatedLight = mode("light", liftingUnactivated);
+export const LongPressUnactivatedDark = mode("dark", liftingUnactivated);
 
 // ── 5 No gesture takes another's ────────────────────────────────────
 

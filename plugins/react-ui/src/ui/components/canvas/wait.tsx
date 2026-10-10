@@ -5,7 +5,7 @@ import {
 	skeleton,
 	skeletonLane,
 } from "@fcalell/ui-core/variants";
-import { GROUND, Grid } from "./ground.tsx";
+import { GROUND, Grid, useBleed } from "./ground.tsx";
 
 const STAND =
 	"absolute inset-0 flex flex-col items-center justify-center gap-sections";
@@ -17,8 +17,14 @@ const NODES = ["a", "b", "c"];
 
 /** A Canvas waiting: its ground and grid, and three node-shaped cards (an icon, a title bar and a line bar) stacked as the canvas places a path, with no zoom stack, act or handler. Outside the package's exports. */
 export function CanvasWait({ label }: { label: string }) {
+	const bleed = useBleed();
 	return (
-		<section aria-label={label} aria-busy data-fill className={GROUND}>
+		<section
+			aria-label={label}
+			aria-busy
+			data-fill
+			className={cn(GROUND, bleed)}
+		>
 			<Grid />
 			<div aria-hidden className={STAND}>
 				{NODES.map((key) => (

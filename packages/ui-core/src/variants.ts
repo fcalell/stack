@@ -789,6 +789,9 @@ export const IMAGE_REMOVE_DISC = "border border-edge bg-raised";
 // stack's box. The dot grid, the edge strokes and the zoom's buttons (`IconButton`)
 // are not cells.
 export const CANVAS_GROUND = "bg-canvas";
+// A canvas filling a Split's main bleeds through the inset the record's head keeps
+// and stands a page inset under that head over a hairline, as a Thread does.
+export const CANVAS_UNDER_HEAD = "-mx-page mt-page border-t border-edge";
 export const CANVAS_PORT =
 	"size-port rounded-full border border-edge-strong bg-surface";
 export const CANVAS_PORT_HIT = "size-target";

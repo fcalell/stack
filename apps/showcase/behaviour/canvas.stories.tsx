@@ -1,4 +1,5 @@
 import { Canvas } from "@fcalell/plugin-react-ui/components/canvas";
+import { ItemHeader } from "@fcalell/plugin-react-ui/components/item-header";
 import { List } from "@fcalell/plugin-react-ui/components/list";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Split } from "@fcalell/plugin-react-ui/components/split";
@@ -706,8 +707,8 @@ export const PlacedByTheCanvas: StoryObj<{
 	},
 };
 
-// In a Split's main the canvas fills it, and the page's regions keep their
-// widths.
+// In a Split's main the canvas reaches the main's edges on the sides and at
+// the foot, under the record's head, and the page's regions keep their widths.
 export const SplitMain: StoryObj = {
 	parameters: { layout: "fullscreen" },
 	render: () => (
@@ -720,32 +721,29 @@ export const SplitMain: StoryObj = {
 					/>
 				}
 				main={
-					<Canvas
-						label="Workflow"
-						nodes={JOURNEY.nodes}
-						edges={JOURNEY.edges}
-					/>
+					<>
+						<ItemHeader title="Nightly" />
+						<Canvas
+							label="Workflow"
+							nodes={JOURNEY.nodes}
+							edges={JOURNEY.edges}
+						/>
+					</>
 				}
 			/>
 		</Place>
 	),
 	play: async ({ canvas, canvasElement }) => {
 		const region = await canvas.findByRole("region", { name: "Workflow" });
-		const main = region.parentElement;
+		const main = canvasElement.querySelector("[data-split] > div");
 		if (!main) throw new Error("no main");
-		const style = getComputedStyle(main);
 		const box = rect(main);
-		const inner = {
-			left: box.left + Number.parseFloat(style.paddingLeft),
-			top: box.top + Number.parseFloat(style.paddingTop),
-			right: box.right - Number.parseFloat(style.paddingRight),
-			bottom: box.bottom - Number.parseFloat(style.paddingBottom),
-		};
 		const filled = rect(region);
-		await expect(Math.abs(filled.left - inner.left)).toBeLessThan(1);
-		await expect(Math.abs(filled.top - inner.top)).toBeLessThan(1);
-		await expect(Math.abs(filled.right - inner.right)).toBeLessThan(1);
-		await expect(Math.abs(filled.bottom - inner.bottom)).toBeLessThan(1);
+		await expect(Math.abs(filled.left - box.left)).toBeLessThan(1);
+		await expect(Math.abs(filled.right - box.right)).toBeLessThan(1);
+		await expect(Math.abs(filled.bottom - box.bottom)).toBeLessThan(1);
+		const head = await canvas.findByRole("heading", { name: "Nightly" });
+		await expect(filled.top).toBeGreaterThanOrEqual(rect(head).bottom);
 		await expect(filled.height).toBeGreaterThan(0);
 		const list = canvasElement.querySelector("[data-split] > nav");
 		await expect(list && rect(list).width).toBeCloseTo(
