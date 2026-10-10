@@ -50,7 +50,9 @@ const schema = { ...authSchema, ...orgSchema, ...oauthSchema, membership };
 // reconnect is only told apart from the grant before it once the clock has
 // moved into a later second: move it there instead of waiting.
 function laterSecond(): void {
-	mock.timers.enable({ apis: ["Date"], now: Date.now() + 1100 });
+	const now = Date.now();
+	mock.timers.reset();
+	mock.timers.enable({ apis: ["Date"], now: now + 1100 });
 }
 
 afterEach(() => {
@@ -980,6 +982,9 @@ test("refresh rotates and revocation ends it", async () => {
 	const first = await connect(f, b, "bob@example.com");
 	const id = grantId(f, "bob", "acme");
 
+	// A held clock: the replay answers the same pair, `expires_in` included,
+	// however long the rotation took.
+	mock.timers.enable({ apis: ["Date"], now: Date.now() });
 	const rotated = await refresh(b, first.refreshToken);
 	assert.equal(rotated.status, 200);
 	const pair = (await rotated.json()) as {
