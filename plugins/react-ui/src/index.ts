@@ -312,6 +312,36 @@ export const reactUi = plugin("react-ui", {
 			};
 		}),
 
+		// The app's mark, mounted once from the react plugin's icon and the app's
+		// name; an app with no icon mounts none and the Shell and the Gate draw
+		// no mark.
+		react.slots.providers.contribute(
+			async (ctx): Promise<ProviderSpec | undefined> => {
+				const icon = await ctx.resolve(react.slots.icon);
+				if (icon === null) return undefined;
+				const mark = {
+					src: icon.light,
+					...(icon.dark === undefined ? {} : { dark: icon.dark }),
+					name: ctx.app.name,
+				};
+				return {
+					imports: [
+						{
+							source: "@fcalell/plugin-react-ui/lib/mark",
+							named: ["MarkProvider"],
+						},
+					],
+					wrap: {
+						identifier: "MarkProvider",
+						props: Object.entries(literalToProps({ mark })).map(
+							([name, value]) => ({ name, value }),
+						),
+					},
+					order: 1,
+				};
+			},
+		),
+
 		// One query client around the app, inside the words.
 		react.slots.providers.contribute(
 			(): ProviderSpec => ({

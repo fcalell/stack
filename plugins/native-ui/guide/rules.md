@@ -108,8 +108,7 @@ A page with no sidebar or tab bar beside it (sign-in, a consent step) is a `Gate
 `Place`, a `Screen` or a hand-built centred `View`. It takes `title` (the page's one header),
 `description` (a meta line as a `Sentence` from `@fcalell/ui-core/descriptors`: runs, each a string,
 `{ strong }` at weight 500 or `{ code }` in the inline code style, never a node or one string), `step` (`{ at, of }`, a `StepCount` between
-the mark and the title), `mark` (`{ name, src? }`, the product's image at the avatar's size, its
-`name` standing in its place while the image fails or `src` is absent), `banner` (a `Banner`, first in the column) and
+the title), `banner` (a `Banner`, first in the column) and
 `children`, the step's body (a `Form`, a `Group`, an `OptionList`, a `List`, `Section`s). It is a root
 frame as the `Shell` is: one column at most the `auth` width inside the page inset, standing at the
 top, the banner, the lead and the body a sections gap apart, with `toast()` and `confirm()` standing
@@ -120,7 +119,7 @@ it, and a `Form`'s `ActionBar` in it draws `full`. It draws no word of its own.
 A first run (no workspace yet, nothing to show) is a `Gate` with no `title` holding one
 `EmptyState`: the Gate draws no lead and no header, the `EmptyState`'s title is the page's header,
 its `act` the filled one and its secondary act a `<Button act="secondary" />` child, stacked under
-it. The column is centred down on the Gate's ground. `mark`, `step` and `description` come only
+it. The column is centred down on the Gate's ground. `step` and `description` come only
 with a `title`.
 
 ```tsx
@@ -133,7 +132,6 @@ with a `title`.
 
 ```tsx
 <Gate
-  mark={{ src: "https://example.com/mark.png", name: "Acme" }}
   step={{ at: 1, of: 2 }}
   title="Choose a workspace"
   description={["Signed in as ", { strong: "ana@acme.dev" }]}
@@ -147,7 +145,7 @@ with a `title`.
 
 A flow of two to four steps shows where it stands as a `StepCount`: `at` (counted from one) and
 `of`. It draws a segment per step and "Step n of m", never a hand-built bar or a row of dots. It
-heads the step's screen, whether that is a `Place`, a sheet page or, as its `step`, a `Gate`, which draws it between the mark and the title.
+heads the step's screen, whether that is a `Place`, a sheet page or, as its `step`, a `Gate`, which draws it above the title.
 
 ```tsx
 <StepCount at={2} of={3} />

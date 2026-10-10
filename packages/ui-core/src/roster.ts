@@ -663,17 +663,18 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// A page outside the shell (sign-in, a consent step), a root frame as the
 		// Shell is: one centred column at the `auth` width, a `Banner` first, then
-		// the lead (the product's mark, an optional `StepCount`, the title, the
+		// the lead (the app's mark, a lockup of its logo and name the app gives the
+		// UI plugin once, an optional `StepCount`, the title, the
 		// page's one `h1`, and the description, runs with the strong one at 500, a
 		// pair under it), then the step's body a sections gap under it. It hosts
 		// `toast()` and `confirm()`. On touch it spans the viewport inside the page
 		// inset and a typed step stands at the top. The first field of a step takes
 		// focus, and a `Form`'s `ActionBar` in it draws `full`. The title is
 		// optional: without it the Gate is a first run, drawing no lead and no `h1`
-		// of its own (`mark`, `step` and `description` come only with a title), its
+		// of its own (`step` and `description` come only with a title, the mark beside them), its
 		// one `EmptyState` the page's `h1`, the column centred down at every width.
 		Gate: {
-			props: ["title", "description", "step", "mark", "banner", "children"],
+			props: ["title", "description", "step", "banner", "children"],
 			draws: [
 				"GATE",
 				"GATE_COLUMN",
@@ -681,9 +682,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"GATE_LEAD",
 				"GATE_HEAD",
 				"GATE_MARK",
+				"GATE_MARK_ROW",
 				"TEXT.role.title",
 				"TEXT.role.meta",
-				"TEXT_STRONG.role.meta",
+				"TEXT.role.body",
+				"TEXT_STRONG.role.body",
 			],
 			holds: [
 				"GATE",
@@ -692,12 +695,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"GATE_LEAD",
 				"GATE_HEAD",
 				"GATE_MARK",
+				"GATE_MARK_ROW",
 			],
 			states: ["rest"],
 			owns: {
-				roles: ["title", "meta"],
+				roles: ["title", "meta", "body"],
 				colors: ["ink-body", "ink-meta", "surface"],
-				spacing: ["page", "sections", "fields", "pair"],
+				spacing: ["page", "sections", "fields", "pair", "inside"],
 				sizes: ["auth", "avatar"],
 			},
 		},
@@ -999,6 +1003,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SHELL_SIDEBAR",
 				"SHELL_COLUMN",
 				"SHELL_BANNER",
+				"SHELL_MARK",
+				"SHELL_MARK_ROW",
+				"GATE_MARK",
 				"SWITCHER_SLOT",
 				"SWITCHER",
 				"SHELL_PLACES",
@@ -1018,6 +1025,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			holds: [
 				"SHELL_SIDEBAR",
 				"SHELL_BANNER",
+				"SHELL_MARK",
+				"SHELL_MARK_ROW",
 				"SWITCHER_SLOT",
 				"SWITCHER",
 				"SHELL_PLACES",
@@ -1052,6 +1061,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"icon-control",
 					"popover",
 					"icon-inset",
+					"avatar",
 				],
 			},
 		},

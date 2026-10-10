@@ -120,21 +120,22 @@ A page with no sidebar or tab bar beside it (sign-in, a consent step) is a `Gate
 `Place`, a `Screen` or a hand-built centred `div`. It takes `title` (the page's one `h1`),
 `description` (a meta line as a `Sentence` from `@fcalell/ui-core/descriptors`: runs, each a string,
 `{ strong }` at weight 500 or `{ code }` in the inline code style, never a node or one string), `step` (`{ at, of }`, a `StepCount` between
-the mark and the title), `mark` (`{ name, src? }`, the product's image at the avatar's size, its
-`name` standing in its place while the image fails or `src` is absent), `banner` (a `Banner`, first in the column) and
+the mark and the title), `banner` (a `Banner`, first in the column) and
 `children`, the step's body (a `Form`, a `Group`, an `OptionList`, a `List`, `Section`s). It is a root
 frame as the `Shell` is: one column at most the `auth` width, centred across and down the viewport
 (a typed step at the top on touch, spanning the viewport inside the page inset), the banner, the lead and the body
 a sections gap apart, with `toast()` and `confirm()` standing in it. The body's `Section`s title a
 level under the `h1`. The first field of a step takes focus as the page opens and as `title`
 changes (a step with no field leaves focus where it is), and a `Form`'s `ActionBar` in it draws
-`full`. It draws no word of its own.
+`full`. The app's mark leads it when it has a `title`: no prop, the lockup of the app's `react({ icon })` (the
+logo at the avatar's size, then the app's name at the body role and 500), and with no icon none is drawn;
+a logo that fails to load leaves the name. It draws no word of its own.
 
 A first run (no workspace yet, nothing to show) is a `Gate` with no `title` holding one
 `EmptyState`: the Gate draws no lead and no `h1`, the `EmptyState`'s title is the page's `h1`, its
 `act` the filled one and its secondary act a `<Button act="secondary" />` child, stacked under it.
-The column is centred down at every width, touch included, on the Gate's ground. `mark`, `step`
-and `description` come only with a `title`.
+The column is centred down at every width, touch included, on the Gate's ground. `step`
+and `description` come only with a `title`, and the mark with them.
 
 ```tsx
 <Gate>
@@ -146,7 +147,6 @@ and `description` come only with a `title`.
 
 ```tsx
 <Gate
-  mark={{ src: "/mark.svg", name: "Acme" }}
   step={{ at: 1, of: 2 }}
   title="Choose a workspace"
   description={["Signed in as ", { strong: "ana@acme.dev" }]}

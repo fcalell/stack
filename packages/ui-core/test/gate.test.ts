@@ -19,7 +19,6 @@ test("the gate is a layout frame at the auth width", () => {
 		"title",
 		"description",
 		"step",
-		"mark",
 		"banner",
 		"children",
 	]);

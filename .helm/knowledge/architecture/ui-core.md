@@ -417,6 +417,20 @@ a tick with no animation, never jumped to full.
   the same rows. The Shell hands its `Switcher` descriptor down (`ShellSwitcher`), and each Place
   draws the touch trigger from it, so the context changes only when the switcher does and a Shell
   state change re-renders no Place. A Picker stands outside a form; a form's pick is `Select`.
+- The app's mark is a config, not a prop (`react({ icon })`, 003-310). The react plugin derives the
+  `icon` slot (`{ light, dark? }`, null with no icon) and react-ui contributes `MarkProvider`
+  (`lib/mark.tsx`, order 1, beside the words) carrying `{ src, dark?, name: app.name }`; a `Shell`
+  and a `Gate` read it (`useMark`), so no screen passes a logo. A string icon is the logo in both
+  modes; `{ light, dark }` is two, each drawn under the theme's own scope (web overlays in
+  `lib/mark.tsx`, `[.dark_&]:hidden` and `hidden [.dark_&]:block`, not `<img>` media, so the mode
+  toggle moves the logo with the theme; the selector is any `.dark` ancestor, so a `.light` frame inside a
+  dark page still draws the dark form). The lockup is the logo at the
+  avatar's size and the name at `TEXT.body` 500, truncating, `alt=""` since the name stands beside
+  it; a failed logo leaves the name, an app with no icon draws neither. The desktop sidebar heads
+  with it (`SHELL_MARK` the sidebar's float, `SHELL_MARK_ROW` a place row's inset and height, so
+  the logo stands over the places' glyphs; a row, not a link), above the switcher; touch is
+  unchanged. The phone's app icon stays `expo()`'s concern, so `GateMark` and the Gate's `mark` prop
+  are gone from both platforms and native's Gate draws no mark.
 - On touch the places past the tab bar are a page, not a menu: the More tab opens a `Place` of
   `ListRow`s (each place's glyph leading, its count trailing, its route), and while a Place's act
   floats the toasts stand above it by the act's room; while a foot docks (a Place's `foot`, a
@@ -1474,14 +1488,14 @@ a tick with no animation, never jumped to full.
   across, and down by an auto margin while it fits, never `justify-center`, which clips the top of a
   column taller than the viewport, and at the top on touch), whose banner, lead and body stand a
   `sections` gap apart (`GATE_FLOW`): the `banner` (a `Banner`, first at the column's width), then
-  the lead (`GATE_LEAD`, a `fields` gap apart): the `mark`, the `StepCount`, and the head
+  the lead (`GATE_LEAD`, a `fields` gap apart): the app's mark, the `StepCount`, and the head
   (`GATE_HEAD`, a `pair` apart), the `title` at the `title` role, the page's one `h1`, its body's
   `Section`s a level under, and the `description`. The `description` is a `Sentence`
   (`./descriptors`: runs, each a string or `{ strong }` at 500, the way a nested `Text strong`
-  draws), data because composed regions are data; a lone string is no `Sentence`. The `mark` is a
-  `GateMark` (`{ name, src? }`): the product's image at the avatar's size (`GATE_MARK`,
-  `size-avatar`), and its `name` at meta and 500 in its place while the image fails or `src` is
-  absent. It is not an `Image`, which opens a full view. On touch it spans the viewport inside the
+  draws), data because composed regions are data; a lone string is no `Sentence`. The mark is no
+  prop: it is the app's lockup (see "The app's mark"), a row (`GATE_MARK_ROW`) of the logo at the
+  avatar's size (`GATE_MARK`, `size-avatar`) and the app's name at body and 500, drawn when the
+  Gate has a `title` and the app has an icon. It is not an `Image`, which opens a full view. On touch it spans the viewport inside the
   page inset; on the phone it keeps the safe area and its keyboard-aware scroll keeps the focused
   field and the submit act in view. It draws no word of its own. It sets `FormStands` to `auth`
   (`FORM in.auth`, no cell of its own: the column is the form's, as a sheet's body is), so an

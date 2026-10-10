@@ -22,6 +22,7 @@ import {
 	topLevelSegments,
 } from "./node/routes.ts";
 import {
+	type AppIcon,
 	type Mount,
 	type ReactOptions,
 	type RouterOptions,
@@ -96,6 +97,18 @@ const htmlHead = slot.list<HtmlInjection>({
 const htmlBodyEnd = slot.list<HtmlInjection>({
 	source: SOURCE,
 	name: "htmlBodyEnd",
+});
+
+// The app's icon, from the `icon` option: the favicon links read it, and a
+// UI plugin that draws the app's mark reads the same value. Null when none.
+const icon = slot.derived({
+	source: SOURCE,
+	name: "icon",
+	compute: (_inputs, ctx: ContributionCtx<ReactOptions>): AppIcon | null => {
+		const given = ctx.options.icon;
+		if (given === undefined) return null;
+		return typeof given === "string" ? { light: given } : given;
+	},
 });
 
 // Resolved routes directory, relative to the project root. `null` means
@@ -192,6 +205,18 @@ const homeScaffold = slot.value<ScaffoldSpec | null>({
 	},
 });
 
+// One icon link per colour scheme, its type inferred from an `.svg` file.
+function iconLink(href: string, scheme: "light" | "dark"): HtmlInjection {
+	const link: HtmlInjection = {
+		kind: "link",
+		rel: "icon",
+		href,
+		media: `(prefers-color-scheme: ${scheme})`,
+	};
+	if (/\.svg(?:[?#].*)?$/i.test(href)) link.type = "image/svg+xml";
+	return link;
+}
+
 export const react = plugin("react", {
 	label: "React",
 
@@ -232,6 +257,7 @@ export const react = plugin("react", {
 		htmlShell,
 		htmlHead,
 		htmlBodyEnd,
+		icon,
 		routesDir,
 		routerOptions,
 		routerPlugin,
@@ -371,11 +397,15 @@ export const react = plugin("react", {
 			if (!themeColor) return undefined;
 			return { kind: "meta", name: "theme-color", content: themeColor };
 		}),
-		self.slots.htmlHead.contribute((): HtmlInjection | undefined => {
+		self.slots.htmlHead.contribute(async (ctx): Promise<HtmlInjection[]> => {
 			// With no icon the browser asks for `/favicon.ico` by itself; an
 			// empty data URL makes it request nothing.
-			const { icon } = self.options;
-			return { kind: "link", rel: "icon", href: icon ?? "data:," };
+			const icon = await ctx.resolve(self.slots.icon);
+			if (icon === null) return [{ kind: "link", rel: "icon", href: "data:," }];
+			if (icon.dark === undefined) {
+				return [{ kind: "link", rel: "icon", href: icon.light }];
+			}
+			return [iconLink(icon.light, "light"), iconLink(icon.dark, "dark")];
 		}),
 		self.slots.htmlBodyEnd.contribute(
 			async (ctx): Promise<HtmlInjection | undefined> => {
@@ -415,4 +445,4 @@ export const react = plugin("react", {
 	],
 });
 
-export type { Mount, ReactOptions, RouterOptions } from "./types.ts";
+export type { AppIcon, Mount, ReactOptions, RouterOptions } from "./types.ts";

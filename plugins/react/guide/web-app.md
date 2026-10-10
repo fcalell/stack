@@ -10,7 +10,7 @@ app writes routes and the code they import.
 // stack.config.ts
 plugins: [
   vite(),
-  react({ title: "Acme", description: "Projects for teams", icon: "/favicon.svg", themeColor: "#0b0b0f" }),
+  react({ title: "Acme", description: "Projects for teams", icon: "/mark.svg", themeColor: "#0b0b0f" }),
   reactUi(),
 ],
 ```
@@ -21,7 +21,7 @@ plugins: [
 | --- | --- | --- |
 | `title` | `app.name` | The document's `<title>` |
 | `description` | none | `<meta name="description">` |
-| `icon` | none | `<link rel="icon">`: a URL, usually a file in `public/` (`"/favicon.svg"`); with none the link is `data:,`, so the browser requests no `/favicon.ico` |
+| `icon` | none | The app's icon and logo: a URL, usually a file in `public/` (`"/mark.svg"`), or `{ light, dark }` for one per colour scheme. It is the page's `<link rel="icon">` (a pair is two links, each under its `prefers-color-scheme`) and, with `reactUi()`, the mark that heads the desktop sidebar and the `Gate` beside the app's name (`app.name`), in `light` or `dark` by the theme's mode; with none the link is `data:,` (the browser requests no `/favicon.ico`) and no mark is drawn |
 | `themeColor` | none | `<meta name="theme-color">` |
 | `lang` | `"en"` | `<html lang>` |
 | `routes` | `{ dir: "src/app/routes" }` | The routes directory, from the app's root |

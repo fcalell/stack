@@ -11,8 +11,6 @@ const node = createElement("b");
 test("a gate takes its head as data", () => {
 	gate({ title: "Sign in" });
 	gate({ title: "x", step: { at: 1, of: 2 } });
-	gate({ title: "x", mark: { src: "/mark.svg", name: "Acme" } });
-	gate({ title: "x", mark: { name: "Acme" } });
 	gate({
 		title: "x",
 		description: ["We sent a code to ", { strong: "ana@acme.dev" }],
@@ -21,8 +19,8 @@ test("a gate takes its head as data", () => {
 	gate({ title: "x", description: node });
 	// @ts-expect-error: a description is runs, never one string
 	gate({ title: "x", description: "Signed in as ana" });
-	// @ts-expect-error: the mark names itself
-	gate({ title: "x", mark: { src: "/mark.svg" } });
+	// @ts-expect-error: the mark is the app's icon, not a prop
+	gate({ title: "x", mark: { src: "/mark.svg", name: "Acme" } });
 	// no title: a first run, the EmptyState's title is the page's h1
 	gate({});
 	gate({ children: node });
@@ -30,8 +28,6 @@ test("a gate takes its head as data", () => {
 	gate({ description: ["x"] });
 	// @ts-expect-error: a lead comes only with a title
 	gate({ step: { at: 1, of: 2 } });
-	// @ts-expect-error: a lead comes only with a title
-	gate({ mark: { name: "Acme" } });
 	// @ts-expect-error: the product is the mark's name
 	gate({ title: "x", product: "Acme" });
 	// @ts-expect-error: the act is a Place's
@@ -44,7 +40,6 @@ test("a gate takes its head as data", () => {
 		"title",
 		"description",
 		"step",
-		"mark",
 		"banner",
 		"children",
 	]);

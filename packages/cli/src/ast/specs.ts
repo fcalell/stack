@@ -127,6 +127,10 @@ export type HtmlInjection =
 			href: string;
 			as?: string;
 			crossorigin?: string;
+			// The media query the link applies under, and the MIME type of what
+			// it points at (an icon per colour scheme).
+			media?: string;
+			type?: string;
 	  }
 	| { kind: "meta"; name?: string; property?: string; content: string }
 	| { kind: "title"; value: string }

@@ -1,14 +1,13 @@
 import { cn } from "@fcalell/ui-core/cn";
-import type { GateMark, Sentence } from "@fcalell/ui-core/descriptors";
+import type { Sentence } from "@fcalell/ui-core/descriptors";
 import {
 	GATE,
 	GATE_COLUMN,
 	GATE_FLOW,
 	GATE_HEAD,
 	GATE_LEAD,
-	GATE_MARK,
+	GATE_MARK_ROW,
 	text,
-	textStrong,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
@@ -17,6 +16,7 @@ import { focusFirst } from "../../lib/focus.ts";
 import { FormStands } from "../../lib/form.ts";
 import { PageTitle } from "../../lib/frame.ts";
 import { HeadingContext } from "../../lib/heading.ts";
+import { Lockup, useMark } from "../../lib/mark.tsx";
 import { useScrolls } from "../../lib/scrolls.ts";
 import { FrameHost, FrameMain } from "../shell/host.tsx";
 import { StepCount } from "../step-count/index.tsx";
@@ -37,7 +37,6 @@ const LEAD = "flex flex-col";
 const HEAD = "flex flex-col";
 // An unbroken run (an address) wraps inside the column's width.
 const WRAPS = "wrap-anywhere";
-const IMAGE = "shrink-0 object-contain";
 
 interface GateBase extends Closed {
 	/** A `Banner` standing first in the column, at its width. */
@@ -56,51 +55,23 @@ export type GateProps = GateBase &
 				description?: Sentence;
 				/** Where an onboarding flow stands, a `StepCount` between the mark and the title. */
 				step?: { at: number; of: number };
-				/** The product's mark, drawn at the avatar's size; its `name` stands in its place while the image fails or `src` is absent. */
-				mark?: GateMark;
 		  }
 		| {
 				title?: undefined;
 				description?: never;
 				step?: never;
-				mark?: never;
 		  }
 	);
 
-function Mark({ src, name }: GateMark) {
-	const [failed, setFailed] = useState<string>();
-	// Keyed by the address that failed, so a new `src` is tried again.
-	if (src && src !== failed)
-		return (
-			<img
-				src={src}
-				alt={name}
-				onError={() => setFailed(src)}
-				className={cn(GATE_MARK, IMAGE)}
-			/>
-		);
-	return (
-		<p
-			className={cn(
-				text({ role: "meta" }),
-				textStrong({ role: "meta" }),
-				WRAPS,
-			)}
-		>
-			{name}
-		</p>
-	);
-}
-
-/** A root frame for a page outside the shell (sign-in, a consent step): one centred column at the `auth` width on the surface. The banner stands first, then the lead (the mark, the `StepCount`, the title and the description a pair under it), then the body a sections gap under it. On touch it spans the viewport inside the page inset and a typed step stands at the top. The first field of a step takes focus as the page opens and as `title` changes, and a `Form`'s `ActionBar` in it draws `full`. It hosts `toast()` and `confirm()` as the `Shell` does, and its body's `Section`s title a level under the `h1`. With no `title` it is a first run: no lead and no `h1` of its own, its one `EmptyState` is the page's `h1`, and the column stands centred down at every width, touch included. It draws no word of its own. */
+/** A root frame for a page outside the shell (sign-in, a consent step): one centred column at the `auth` width on the surface. The banner stands first, then the lead (the app's mark when the app has an icon, the `StepCount`, the title and the description a pair under it), then the body a sections gap under it. On touch it spans the viewport inside the page inset and a typed step stands at the top. The first field of a step takes focus as the page opens and as `title` changes, and a `Form`'s `ActionBar` in it draws `full`. It hosts `toast()` and `confirm()` as the `Shell` does, and its body's `Section`s title a level under the `h1`. With no `title` it is a first run: no lead and no `h1` of its own, its one `EmptyState` is the page's `h1`, and the column stands centred down at every width, touch included. It draws no word of its own. */
 export function Gate({
 	title,
 	description,
 	step,
-	mark,
 	banner,
 	children,
 }: GateProps) {
+	const mark = useMark();
 	const titleId = useId();
 	const body = useRef<HTMLDivElement>(null);
 	const [pageNode, setPageNode] = useState<HTMLDivElement | null>(null);
@@ -134,7 +105,9 @@ export function Gate({
 									{banner}
 									{title === undefined ? null : (
 										<div className={cn(GATE_LEAD, LEAD)}>
-											{mark ? <Mark src={mark.src} name={mark.name} /> : null}
+											{mark ? (
+												<Lockup mark={mark} className={GATE_MARK_ROW} />
+											) : null}
 											{step ? <StepCount at={step.at} of={step.of} /> : null}
 											<div className={cn(GATE_HEAD, HEAD)}>
 												<h1
