@@ -476,6 +476,7 @@ export function ListRow<V extends string | null = string>({
 	if (href !== undefined)
 		hit = (
 			<a
+				data-hit=""
 				href={href}
 				onClick={follow}
 				aria-label={named}
@@ -487,6 +488,7 @@ export function ListRow<V extends string | null = string>({
 	else if (onOpen)
 		hit = (
 			<BaseButton
+				data-hit=""
 				aria-label={named}
 				onClick={onOpen}
 				aria-current={!tree && current ? "true" : undefined}

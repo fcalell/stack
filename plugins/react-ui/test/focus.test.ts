@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { isTabbable, trackHold } from "../src/ui/lib/focus.ts";
+import {
+	claimOpener,
+	expandedTrigger,
+	isTabbable,
+	rememberOpener,
+	trackHold,
+} from "../src/ui/lib/focus.ts";
 
 interface Fake {
 	tabIndex: number;
@@ -75,4 +81,25 @@ test("a region not yet mounted holds nothing, and the cleanup removes both liste
 	assert.equal(hold.current, false);
 	stop();
 	assert.equal(doc.count(), 0);
+});
+
+test("an opener is claimed once, within its window", () => {
+	const trigger = {} as HTMLElement;
+	rememberOpener(trigger, 1000);
+	assert.equal(claimOpener(1500), trigger);
+	assert.equal(claimOpener(1500), null);
+	rememberOpener(trigger, 1000);
+	assert.equal(claimOpener(3000), null);
+});
+
+test("the open popup's trigger is the last expanded one", () => {
+	const first = {} as HTMLElement;
+	const last = {} as HTMLElement;
+	const doc = {
+		querySelectorAll: () => ({
+			length: 2,
+			item: (at: number) => [first, last][at] ?? null,
+		}),
+	} as unknown as Pick<Document, "querySelectorAll">;
+	assert.equal(expandedTrigger(doc), last);
 });

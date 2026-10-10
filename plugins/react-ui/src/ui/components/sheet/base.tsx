@@ -26,6 +26,7 @@ import {
 	useState,
 } from "react";
 import { backGlyph } from "../../lib/back.ts";
+import { useReturnFocus } from "../../lib/focus.ts";
 import { FormStands } from "../../lib/form.ts";
 import { useTouch } from "../../lib/media.ts";
 import { PortalContainer, PortalHosted } from "../../lib/portal.ts";
@@ -167,6 +168,7 @@ export function SheetBase({
 	const [pressedUnder, setPressedUnder] = useState<string>();
 	const [running, setRunning] = useState(false);
 	const popup = useRef<HTMLDivElement>(null);
+	useReturnFocus(open, popup);
 	const [bodyNode, setBodyNode] = useState<HTMLDivElement | null>(null);
 	const stop = useScrolls(bodyNode);
 	const blocked = submit?.blocked !== undefined;

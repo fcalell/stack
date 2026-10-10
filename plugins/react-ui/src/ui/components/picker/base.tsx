@@ -43,6 +43,7 @@ import {
 } from "react";
 import { arrowsOver } from "../../lib/arrows.ts";
 import { CellField } from "../../lib/field.ts";
+import { expandedTrigger, rememberOpener } from "../../lib/focus.ts";
 import { spacing, useTouch } from "../../lib/media.ts";
 import { PortalContainer } from "../../lib/portal.ts";
 import { useWords } from "../../lib/words.tsx";
@@ -264,6 +265,7 @@ function PickAct(props: {
 				aria-busy={act.loading || undefined}
 				onClick={() => {
 					if (act.loading) return;
+					rememberOpener(expandedTrigger(document));
 					props.done();
 					act.onAct();
 				}}
