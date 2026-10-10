@@ -34,11 +34,8 @@ function Framed(props: { mark?: AppMark }) {
 			<Place title="Overview" />
 		</Shell>
 	);
-	return props.mark ? (
-		<MarkProvider mark={props.mark}>{shell}</MarkProvider>
-	) : (
-		shell
-	);
+	// No mark is a scope of its own: the app's providers mount the showcase's icon.
+	return <MarkProvider mark={props.mark ?? null}>{shell}</MarkProvider>;
 }
 
 function sidebar(canvasElement: HTMLElement): HTMLElement {
@@ -102,11 +99,7 @@ export const TouchDrawsNoLockup: StoryObj = {
 
 function Step(props: { mark?: AppMark }) {
 	const gate = <Gate title="Sign in" />;
-	return props.mark ? (
-		<MarkProvider mark={props.mark}>{gate}</MarkProvider>
-	) : (
-		gate
-	);
+	return <MarkProvider mark={props.mark ?? null}>{gate}</MarkProvider>;
 }
 
 // The Gate leads with the lockup when it has a title: the logo and the name

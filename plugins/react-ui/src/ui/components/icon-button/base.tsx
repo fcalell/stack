@@ -81,11 +81,34 @@ export function IconButtonBase({
 // reaching it, hidden by Escape, a press or leaving. The label stays the
 // element's accessible name (the tooltip adds none), and touch draws none: a
 // press there is not a rest, and the name would cover the act under the finger.
+// Focus a dialog hands its own first act (its close) shows no name: the name
+// would take the first Escape, which belongs to the dialog; Tab inside it does.
+function handedByDialog(event: Event): boolean {
+	if (!(event instanceof FocusEvent) || !(event.target instanceof Element))
+		return false;
+	const dialog = event.target.closest('[role="dialog"]');
+	if (!dialog) return false;
+	return !(
+		event.relatedTarget instanceof Node && dialog.contains(event.relatedTarget)
+	);
+}
+
 function Named(props: { label: string; children: ReactElement }) {
 	const touch = useTouch();
 	const container = use(PortalContainer);
 	return (
-		<Tooltip.Root disabled={touch} disableHoverablePopup>
+		<Tooltip.Root
+			disabled={touch}
+			disableHoverablePopup
+			onOpenChange={(open, details) => {
+				if (
+					open &&
+					details.reason === "trigger-focus" &&
+					handedByDialog(details.event)
+				)
+					details.cancel();
+			}}
+		>
 			<Tooltip.Trigger delay={SHOW_AFTER} render={props.children} />
 			<Tooltip.Portal container={container}>
 				<Tooltip.Positioner

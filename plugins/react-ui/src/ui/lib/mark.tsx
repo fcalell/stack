@@ -14,10 +14,14 @@ export interface AppMark {
 
 // The app's mark. The generated providers mount the context with the app's
 // icon (`react({ icon })`) and its name; an app with no icon mounts none, so
-// the Shell and the Gate draw no mark.
+// the Shell and the Gate draw no mark. A subtree can be scoped to none with
+// `mark={null}` (a frame under an app that has an icon, drawing the bare form).
 const MarkContext = createContext<AppMark | null>(null);
 
-export function MarkProvider(props: { mark: AppMark; children: ReactNode }) {
+export function MarkProvider(props: {
+	mark: AppMark | null;
+	children: ReactNode;
+}) {
 	return <MarkContext value={props.mark}>{props.children}</MarkContext>;
 }
 

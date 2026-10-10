@@ -12,9 +12,9 @@ Stead's question round opens as a modal `Sheet` when its item's route loads, wit
 A `Sheet` returns focus to the element that opened it; a sheet a route mounts open has none. 003-212 covers a sheet opened from a pick's act that unmounts; here nothing opened it. `Sheet` takes no return target, and the app moving focus by hand needs a ref and a `.focus()` into the roster's markup.
 
 ## Acceptance criteria
-- [ ] A Sheet mounted open by its route, closed by the keyboard, leaves focus on a named place of the page it returns to (its main region's head or first control), never the body, at every density.
+- [x] A Sheet mounted open by its route, closed by the keyboard, leaves focus on a named place of the page it returns to (its main region's head or first control), never the body, at every density.
 - [x] A Sheet opened by an act is unchanged.
-- [ ] The showcase holds a route-opened Sheet, checked by a behaviour story on close.
+- [x] The showcase holds a route-opened Sheet, checked by a behaviour story on close.
 
 ## Open questions
 - [x] Its shape (a return target on `Sheet`, focus to the destination's head on a closing navigation, or another): the stack session decides.
@@ -28,3 +28,4 @@ A `Sheet` returns focus to the element that opened it; a sheet a route mounts op
 - Story `OpenedByARoute` in `apps/showcase/behaviour/sheet.stories.tsx`, written, not run.
 
 Native unrendered: native-ui has no keyboard focus order to move (touch and screen reader focus follow the platform), so the web mechanism has no native twin.
+- Browser run: `apps/showcase/behaviour/sheet.stories.tsx` 32 of 32 pass (`OpenedByARoute` among them).

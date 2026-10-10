@@ -233,6 +233,9 @@ export function SheetBase({
 	const sized = !(touch || view || form) && fit !== "pane";
 	const [line, settle] = useShortOrSide(open, sized, popup);
 	const short = sized && line !== "side";
+	// The frame the sheet is measured in plays no motion: the form it settles
+	// on enters, not the one it was measured as.
+	const measuring = sized && line === undefined;
 	// A decision draws no close act: its acts dismiss it.
 	const close = acts ? null : (
 		<Dialog.Close
@@ -390,7 +393,7 @@ export function SheetBase({
 							BOX,
 							BOX_FLOAT,
 							BOX_SIDE,
-							CENTRED_MOTION,
+							!measuring && CENTRED_MOTION,
 						)
 					: cn(sheetSide({ fit }), BOX, BOX_FLOAT, BOX_SIDE, SIDE_MOTION);
 	const layer =
