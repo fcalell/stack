@@ -1,6 +1,6 @@
 ---
 id: 003-189
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a Canvas draws an empty text at its centre
@@ -19,7 +19,7 @@ A Canvas with one node and no edge has nowhere to say that the graph is not yet 
 - [x] A Canvas can carry a short text drawn at the centre of its view, over the ground and under the nodes' controls, in the meta ink, that takes no pointer, so a drag through it pans and a tap on the ground clears the selection.
 - [x] The text is in the region's accessible description, and stays readable at the text floor whatever the zoom.
 - [x] A Canvas without the text is unchanged.
-- [ ] The Canvas showcase holds a canvas of one node with the text at 375 and 1440 px in both modes, measured by the critique.
+- [x] The Canvas showcase holds a canvas of one node with the text at 375 and 1440 px in both modes, measured by the critique.
 
 ## Open questions
 - [x] Its shape (an `empty` sentence prop, or a slot): the stack session decides.
@@ -71,3 +71,5 @@ Acceptance at 375 (263 px pane, the roster frames' desktop density) in Lone, Hol
 Stories: new `behaviour/canvas-fit-roster.stories.tsx` (`LoopFramesAt375DesktopLight/Dark`): the showcase's CANVAS_GROUP loop frames at the desktop density in a stage that leaves the canvas a 263 px pane (asserted: the pane is 263 px), Hollow, Placed and Lone loop: the loop group and the first node 0 px clipped, inside 0 to 263, the group 11.5 px from each edge (within the region's 1 px border). The 1440 stories (`canvas-fit`, 6) and the 375 touch stories (`canvas-fit-touch`, 6, with the pan to the Placed second group) are unchanged and pass.
 Browser run: `canvas-fit-roster` 2/2, `canvas-fit` and `canvas-fit-touch` 12/12 and `shell`, `canvas` (50/50), `canvas-overview`, `canvas-touch`, `stories/Canvas` 153 of 153 together; `stack screens test --all` 180 of 180. `pnpm check` and the three verifies pass. Canvas is web only.
 
+## Re-review (round 3)
+The r3 critique passes every round-3 box: at 375 (263 px pane) the first node and the loop group of 003-291's Hollow, Placed and Lone frames stand at x 11.5-251.5, 0 px clipped, light and dark; 1440 unchanged with all content inside; node text at or above the 12 px floor at scale 1; the zoom stack 92-268 px clear at 375 and beside the content at 1440; the empty canvas's caption 0 px clipped at 375 and 1440. 003-291's frames close with it. The owner accepts. Done.

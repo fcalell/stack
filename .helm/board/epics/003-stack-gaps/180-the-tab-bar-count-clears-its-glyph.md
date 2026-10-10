@@ -1,6 +1,6 @@
 ---
 id: 003-180
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: the tab bar's count clears its glyph
@@ -12,8 +12,8 @@ Stead's shell passes `Shell` a count on its Now place (github.com/fcalell/stead,
 003-92 (done) named this seam ("the Now count crowds the glyph") and its Built note stands the plain number "at the glyph's top end" through the Shell's `TAB_COUNT` overlay. As a plain number without the pill's ground, a two-figure count now starts where the glyph ends. The app passes only the count, so it cannot place it.
 
 ## Acceptance criteria
-- [ ] At 320, 390 and 768 px, light and dark, a one-, two- and three-figure ("99+") tab count stands above its glyph box's top-right corner (its bottom edge at the box's top, its start at the box's right edge, at most 2 px left of it), paints nothing inside the glyph's box, so a pixel diff of the glyph's region with and without the count is 0 px; "44" does not read "#4"; the last tab's count ends 0 px or more inside the bar; the tab and its label do not grow in height (the owner's round-2 ruling, which replaces the ring).
-- [ ] The Shell showcase holds a tab bar with a two-figure count, measured by the critique.
+- [x] At 320, 390 and 768 px, light and dark, a one-, two- and three-figure ("99+") tab count stands inside the bar below its top hairline at the glyph box's top-right corner (its start at the box's right edge, at most 2 px left of it) and paints nothing inside the glyph's box: the glyph diff with and without the count is 0 whole pixels (pixels the glyph box holds only in part on a fractional box edge, and per-channel noise of 4 levels or less, are counted apart); nothing paints on or above the hairline; "44" does not read "#4"; the last tab's count ends 0 px or more inside the bar; the tab and its label do not grow in height (the owner's round-3 ruling, which replaces the round-2 lift and the ring).
+- [x] The Shell showcase holds a tab bar with a two-figure count, measured by the critique.
 
 ## Open questions
 - [x] Its shape (where the count stands relative to the glyph, and the step between them): the stack session decides.
@@ -47,11 +47,11 @@ Round 3: the hairline does not give way (that would change the bar's contract fo
 Acceptance (4, 44, 99+ at 320/390/768, light and dark, 18 cases):
 - [x] the digit ink's top is at or below the bar's top border's bottom edge: a pixel scan of the hairline row finds 0 digit pixels on it;
 - [x] 0 px of the count's ink or line box above the bar's top edge; its box does not overlap the main area;
-- [x] glyph diff 0 px (unchanged);
+- [x] glyph diff 0 whole pixels (pixels the glyph box holds only in part on a fractional box edge, and per-channel noise of 4 levels or less, are counted apart);
 - [x] the last-tab "99+" still ends >= 0 px inside the bar;
 - [x] tab height 48 px with and without a count, labels unmoved;
 - [x] "44" does not read "#4";
-- [ ] the Shell frame with a two-figure count is measured by the critique (the second box above); the browser run measures it (`ShellFrameTabCount`).
+- [x] the Shell frame with a two-figure count is measured by the critique (the second box above); the browser run measures it (`ShellFrameTabCount`).
 
 ## Built (rework, round 3)
 Placement: `TAB_COUNT` (react-ui `components/shell/index.tsx`) is `absolute -top-pair left-full -ms-[calc(var(--spacing-hairline)/2)] flex`, and `SHELL_TAB_BAR` (ui-core `variants.ts`) gains `overflow-hidden`, so the bar clips the badge. The bar leaves 9 px (8 px of padding and the 1 px hairline) above the glyph box and the caption count's line box is 22 px, so the count cannot stand wholly above the glyph box inside the bar; the ruling's fallback holds: the count's line box starts a `pair` (8 px) above the glyph box's top (745..767 against the bar's top 743 with its 1 px border, so 1 px under the inner top edge), and its start is at the glyph box's right edge, half a hairline in (the "99+" on the last of five tabs at 320 overshoots the bar by 0.45 px without it; a whole hairline put the ink into the glyph box's whole pixels at 768). native-ui: `-top-pair left-full -ms-hairline` (a hairline; unrendered). `ui-core.md` states it; the react-ui and native-ui verify allowlists follow the class change (`bottom-full` out, `-top-pair`).
@@ -87,3 +87,6 @@ The ring is gone: `SHELL_TAB_COUNT` (ui-core cell, roster entry and `DESIGN.md` 
 `behaviour/shell.stories.tsx` `TabCountClearsItsGlyph` (six stories: 320, 390, 768 px, light and dark; counts 4, 44 and 444 drawn "99+") asserts per count: the count's bottom at or above the glyph box's top (0.01 px), its left within 2 px of and not right of the box's right edge, its right inside the bar's, top inside the viewport, no outline and no background; the tab's height unchanged with the count hidden; the label centred; and a pixel check: `page.elementLocator(glyph).screenshot` (Chromium) of the glyph box with and without the count (`visibility: hidden`), diffed in the play through `createImageBitmap` and an `OffscreenCanvas`, must differ in 0 pixels. Mutating the cell back to `top-0` makes the six stories fail.
 Evidence: bottom 0 px from the glyph box's top, start -1 px (a hairline in), ink gap 0.67 px for "4" (8.55 px wide); "99+" on the last tab keeps the earlier 0.55 px inside the bar at 320 (390: 8.8 px, 768 far inside), since its x is unchanged. Gates: shell stories 10 of 10 (shell and Picker files), `stack screens test --all` 180 of 180, `pnpm verify` in ui-core (34/34), react-ui (13/13), native-ui (19/19), Biome on the changed paths.
 Open for the critique: the count now rises one count height above the glyph box into the tab bar's top padding and hairline, so it may draw over the bar's top border; the critique judges that. Native unrendered: the native-ui change (`bottom-full` on the absolute count) is type-checked and verified, not rendered on a phone.
+
+## Re-review (round 3)
+The r3 critique passes every round-3 box: 0 count pixels on the hairline row and in the 40 px above the bar in all 18 cases (4, 44, 99+ at 320, 390 and 768, light and dark) and the Shell frame twins; 0 whole glyph pixels changed (2-3 antialiased edge pixels for 4 and 44 at 320 and 390, on the glyph box's fractional edge; 0 in the Shell frame); 99+ ends 0.05 px inside the bar at 320; tabs 48 px, labels unmoved; "44" reads 44; contrast 6.92:1 light, 9.06:1 dark. The owner accepts: the edge pixels and the test's 4-level noise tolerance meet "glyph diff 0", reworded above. Native is type-checked only; no box names the phone. Done.
