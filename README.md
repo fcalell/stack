@@ -122,8 +122,8 @@ The scaffold produces a `plugin()`-based skeleton and a runtime stub exported fr
 ## Repository commands
 
 ```bash
-pnpm check            # Build, type-check, test every package, then lint (Biome)
-pnpm turbo run build  # Compile every package's src/ to dist/
+pnpm check            # Type-check and test every package, then lint (Biome)
+pnpm build            # Compile every package's src/ to dist/ and build the apps
 pnpm showcase         # Build the showcase's dependencies and serve it on :3000
 pnpm stories          # Storybook for the roster, on :6006
 pnpm stories:test     # Every story in a headless browser, axe on each

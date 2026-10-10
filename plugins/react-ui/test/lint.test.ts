@@ -81,19 +81,36 @@ before(async () => {
 
 after(() => rmSync(app, { recursive: true, force: true }));
 
-function lint(path: string, source: string): { ok: boolean; output: string } {
-	writeFileSync(join(app, path), source);
+// The diagnostics of each file, from one Biome run over all of them: a run
+// costs far more than the files it reads.
+function lintAll(files: Record<string, string>): Map<string, string[]> {
+	for (const [path, source] of Object.entries(files)) {
+		writeFileSync(join(app, path), source);
+	}
+	let output: string;
 	try {
-		const output = execFileSync(
+		output = execFileSync(
 			binPath(pkgDir, "biome"),
-			["lint", "--max-diagnostics=50", path],
+			[
+				"lint",
+				"--reporter=github",
+				"--max-diagnostics=none",
+				...Object.keys(files),
+			],
 			{ cwd: app, encoding: "utf8", stdio: "pipe" },
 		);
-		return { ok: true, output };
 	} catch (error) {
-		const { stdout, stderr } = error as { stdout: string; stderr: string };
-		return { ok: false, output: `${stdout}${stderr}` };
+		output = (error as { stdout: string }).stdout;
 	}
+	const diagnostics = new Map(
+		Object.keys(files).map((path): [string, string[]] => [path, []]),
+	);
+	for (const [, file, message] of output.matchAll(
+		/^::(?:error|warning)[^:]*?file=([^,]+),[^:]*::(.*)$/gm,
+	)) {
+		diagnostics.get(file ?? "")?.push(message ?? "");
+	}
+	return diagnostics;
 }
 
 const heading = (text: string) => text.replaceAll("`", "");
@@ -156,16 +173,62 @@ const SECTION: Record<(typeof LINT_RULES)[number], string> = {
 	"no-map-rows": "Collections take data",
 };
 
+const offenderPath = (rule: string, index: number) =>
+	`src/app/${rule}-${index}.tsx`;
+
+// The page's own examples: every tsx block, each as one export.
+const EXAMPLES = [...rules.matchAll(/```tsx\n([\s\S]*?)```/g)].map(
+	(m) => m[1] ?? "",
+);
+
+const GEOMETRY = `export const A = () => (
+	<div className="flex min-h-0 min-w-0 flex-1 flex-col items-start justify-between gap-rows p-0 top-0 inset-0 w-full h-full size-full w-1/2">
+		<span className="truncate md:flex touch:grid [&>svg]:size-full data-[open]:flex min-[400px]:flex" />
+		<div className="border-0 bg-none rounded-none shadow-none transition-none" />
+		<Foo render={<div className="flex" />} title="x" />
+		<div style={{ width: "var(--x)" }} data-state="open" />
+		<List items={rows.map((r) => ({ key: r }))} row={{ key: (r) => r, title: (r) => r }} />
+	</div>
+);\n`;
+
+const OUTSIDE_APP = `export const A = () => <div className="bg-surface" />;\n`;
+
+// Every snippet the tests below read, linted once, on first read (after the
+// scratch consumer stands).
+let snippets: Map<string, string[]> | undefined;
+function linted(path: string): string[] | undefined {
+	snippets ??= lintSnippets();
+	return snippets.get(path);
+}
+
+function lintSnippets(): Map<string, string[]> {
+	const files: Record<string, string> = {
+		"src/app/examples.tsx": `${EXAMPLES.map(
+			(block, index) => `export const E${index} = () => (<>\n${block}</>);`,
+		).join("\n")}\n`,
+		"src/app/geometry.tsx": GEOMETRY,
+		"src/worker/outside.tsx": OUTSIDE_APP,
+		"src/app/inside.tsx": OUTSIDE_APP,
+	};
+	for (const rule of LINT_RULES) {
+		for (const [index, jsx] of OFFENDERS[rule].entries()) {
+			files[offenderPath(rule, index)] = `export const A = () => ${jsx};\n`;
+		}
+	}
+	return lintAll(files);
+}
+
 for (const rule of LINT_RULES) {
 	test(`${rule} fails its offenders and names its section of the rules page`, () => {
 		assert.ok(SECTIONS.includes(SECTION[rule]), SECTION[rule]);
 		for (const [index, jsx] of OFFENDERS[rule].entries()) {
-			const result = lint(
-				`src/app/${rule}-${index}.tsx`,
-				`export const A = () => ${jsx};\n`,
+			const messages = linted(offenderPath(rule, index)) ?? [];
+			assert.ok(
+				messages.some((message) =>
+					message.includes(`(rules.md: ${SECTION[rule]})`),
+				),
+				`${jsx}\n${messages.join("\n")}`,
 			);
-			assert.equal(result.ok, false, jsx);
-			assert.ok(result.output.includes(`(rules.md: ${SECTION[rule]})`), jsx);
 		}
 	});
 }
@@ -185,35 +248,14 @@ test("each rule is a file of lint/ that the rules page's table lists, and nothin
 });
 
 test("the legal geometry of the rules page passes", () => {
-	// The page's own examples: every tsx block, each as one export.
-	const blocks = [...rules.matchAll(/```tsx\n([\s\S]*?)```/g)].map(
-		(m) => m[1] ?? "",
-	);
-	assert.ok(blocks.length > 10);
-	const examples = blocks
-		.map((block, index) => `export const E${index} = () => (<>\n${block}</>);`)
-		.join("\n");
-	assert.deepEqual(lint("src/app/examples.tsx", `${examples}\n`).ok, true);
-
-	const geometry = lint(
-		"src/app/geometry.tsx",
-		`export const A = () => (
-	<div className="flex min-h-0 min-w-0 flex-1 flex-col items-start justify-between gap-rows p-0 top-0 inset-0 w-full h-full size-full w-1/2">
-		<span className="truncate md:flex touch:grid [&>svg]:size-full data-[open]:flex min-[400px]:flex" />
-		<div className="border-0 bg-none rounded-none shadow-none transition-none" />
-		<Foo render={<div className="flex" />} title="x" />
-		<div style={{ width: "var(--x)" }} data-state="open" />
-		<List items={rows.map((r) => ({ key: r }))} row={{ key: (r) => r, title: (r) => r }} />
-	</div>
-);\n`,
-	);
-	assert.deepEqual(geometry, { ok: true, output: geometry.output });
+	assert.ok(EXAMPLES.length > 10);
+	assert.deepEqual(linted("src/app/examples.tsx"), []);
+	assert.deepEqual(linted("src/app/geometry.tsx"), []);
 });
 
 test("the rules run on the app's directory only", () => {
-	const offender = `export const A = () => <div className="bg-surface" />;\n`;
-	assert.equal(lint("src/worker/outside.tsx", offender).ok, true);
-	assert.equal(lint("src/app/inside.tsx", offender).ok, false);
+	assert.deepEqual(linted("src/worker/outside.tsx"), []);
+	assert.notDeepEqual(linted("src/app/inside.tsx"), []);
 });
 
 test("the sources the rules run on follow the routes directory", async () => {

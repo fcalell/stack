@@ -41,7 +41,9 @@ adds `.tsx` to `optimizeDeps.extensions`.
 A sibling `@fcalell/*` import resolves through its `exports`, so type-checking and tests need the
 dependencies' `dist`: turbo runs `^build` before `check-types` and `test`, and the package's own
 `build` before its `check-types` (a source entry's self-name import). Root `pnpm check` is
-`turbo run build check-types test`, then Biome.
+`turbo run check-types test`, then `biome check` (read-only; `pnpm lint` writes the fixes). The
+apps' `check-types` and `test` depend on their `generate` (the `.stack/` files), not their
+`build`, so the gate never runs a production bundle; `pnpm build` does.
 
 ## Tests
 
@@ -49,6 +51,14 @@ A package with tests keeps them in `test/*.test.ts`, lists `test` in its tsconfi
 and runs them with `"test": "node --test 'test/**/*.test.ts'"` (node's own glob: node 24 loads a
 bare directory argument as a module). Turbo's `test` task depends on `^build`, so a change in a
 dependency re-runs its dependents. A package without tests has no script and turbo skips it.
+
+A test earns its place by failing on a regression nothing else catches. It never restates the
+source: a constant, class string, English word or table copied into an assertion, a source file
+grepped for its own text, a re-export a named import already proves. Type-level assertions
+(`assertType`, `@ts-expect-error`) live in `test/*.types.ts`, outside the runner's glob and inside
+the tsconfig's `include`, so `check-types` enforces them without a node process. A test pays for
+real work once per file (one TypeScript program, one Biome run, one schema's DDL) and never sleeps
+on the wall clock: it moves a mocked one.
 
 Tests import their own package's `src/` by relative path and run under plain node with type
 stripping, so everything they import from it (runtime code and codegen alike) stays erasable-only (no parameter properties, no enums) and names the `.ts` file

@@ -1,3 +1,4 @@
+import type { ServerResponse } from "node:http";
 import { serve, upgradeWebSocket } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
@@ -167,6 +168,16 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 		stops.length = 0;
 	}
 
+	// close() ends only the keep-alive sockets idle at that moment; a socket
+	// whose response was still finishing would otherwise hold it open until
+	// the keep-alive timeout, so each response that ends during shutdown
+	// closes the sockets it left idle.
+	function closeIdle(): void {
+		if (server && "closeIdleConnections" in server) {
+			server.closeIdleConnections();
+		}
+	}
+
 	async function stop(): Promise<void> {
 		if (shuttingDown) return;
 		shuttingDown = true;
@@ -179,9 +190,7 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 		await new Promise<void>((resolve, reject) => {
 			if (!server) return resolve();
 			server.close((error) => (error ? reject(error) : resolve()));
-			if ("closeIdleConnections" in server) {
-				server.closeIdleConnections();
-			}
+			closeIdle();
 		});
 		server = null;
 	}
@@ -207,6 +216,11 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 						resolve();
 					},
 				);
+				server.on("request", (_request, response: ServerResponse) => {
+					response.once("finish", () => {
+						if (shuttingDown) setImmediate(closeIdle);
+					});
+				});
 			});
 			process.once("SIGINT", () => void shutdown());
 			process.once("SIGTERM", () => void shutdown());

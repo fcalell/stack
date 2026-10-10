@@ -3,6 +3,7 @@ import {
 	mkdirSync,
 	mkdtempSync,
 	readdirSync,
+	rmSync,
 	symlinkSync,
 	writeFileSync,
 } from "node:fs";
@@ -131,7 +132,11 @@ function diagnostics(dir: string): string[] {
 			`${where}${ts.flattenDiagnosticMessageText(d.messageText, "\n")}`,
 		);
 	});
-	ts.createSolutionBuilder(host, [join(dir, "tsconfig.json")], {}).build();
+	try {
+		ts.createSolutionBuilder(host, [join(dir, "tsconfig.json")], {}).build();
+	} finally {
+		rmSync(dir, { recursive: true, force: true });
+	}
 	return found;
 }
 
@@ -145,11 +150,7 @@ const split = () =>
 		nativeTypes: [],
 	});
 
-test("an app with a worker type-checks each tree with its own globals", () => {
-	assert.deepEqual(diagnostics(consumer(split(), GLOBALS)), []);
-});
-
-test("the app types a procedure's input and output through the worker's declarations", () => {
+test("an app with a worker type-checks each tree with its own globals, and types a procedure through the worker's declarations", () => {
 	assert.deepEqual(
 		diagnostics(consumer(split(), { ...GLOBALS, ...ROUTER })),
 		[],

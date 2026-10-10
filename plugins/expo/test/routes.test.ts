@@ -23,16 +23,41 @@ function expoRouterDir(): string {
 	return dirname(server.resolve("expo-router/package.json"));
 }
 
-// The type errors of `probe` checked beside the generated routes, one line
-// each.
-function typeErrors(probe: string): string[] {
+const PROBES = {
+	known: `import type { Href } from "expo-router";
+const home: Href = "/";
+const list: Href = "/projects";
+const record: Href = "/projects/12";
+const query: Href = "/projects?sort=name";
+void [home, list, record, query];
+`,
+	missing: `import type { Href } from "expo-router";
+const missing: Href = "/settings";
+void missing;
+`,
+};
+
+// The type errors of each probe checked beside the generated routes, one
+// line each. Every probe goes in one program: building one costs seconds.
+let checked: Record<keyof typeof PROBES, string[]> | undefined;
+function typeErrors(probe: keyof typeof PROBES): string[] {
+	checked ??= checkProbes();
+	return checked[probe];
+}
+
+function checkProbes(): Record<keyof typeof PROBES, string[]> {
 	const dir = mkdtempSync(join(tmpdir(), "stack-expo-routes-"));
 	try {
 		const routes = join(dir, "routes.d.ts");
-		const file = join(dir, "probe.ts");
 		writeFileSync(routes, buildRoutesDts(ROOT, APP_DIR));
-		writeFileSync(file, probe);
-		const program = ts.createProgram([routes, file], {
+		const files = Object.fromEntries(
+			Object.entries(PROBES).map(([name, text]) => {
+				const file = join(dir, `${name}.ts`);
+				writeFileSync(file, text);
+				return [name, file];
+			}),
+		) as Record<keyof typeof PROBES, string>;
+		const program = ts.createProgram([routes, ...Object.values(files)], {
 			strict: true,
 			noEmit: true,
 			skipLibCheck: true,
@@ -43,35 +68,25 @@ function typeErrors(probe: string): string[] {
 			baseUrl: dir,
 			paths: { "expo-router": [expoRouterDir()] },
 		});
-		return ts
-			.getPreEmitDiagnostics(program)
-			.filter((diagnostic) => diagnostic.file?.fileName === file)
-			.map((diagnostic) =>
-				ts.flattenDiagnosticMessageText(diagnostic.messageText, " "),
-			);
+		const diagnostics = ts.getPreEmitDiagnostics(program);
+		const errorsIn = (file: string) =>
+			diagnostics
+				.filter((diagnostic) => diagnostic.file?.fileName === file)
+				.map((diagnostic) =>
+					ts.flattenDiagnosticMessageText(diagnostic.messageText, " "),
+				);
+		return { known: errorsIn(files.known), missing: errorsIn(files.missing) };
 	} finally {
 		rmSync(dir, { recursive: true, force: true });
 	}
 }
 
 test("a route file's path type-checks as an href", () => {
-	assert.deepEqual(
-		typeErrors(`import type { Href } from "expo-router";
-const home: Href = "/";
-const list: Href = "/projects";
-const record: Href = "/projects/12";
-const query: Href = "/projects?sort=name";
-void [home, list, record, query];
-`),
-		[],
-	);
+	assert.deepEqual(typeErrors("known"), []);
 });
 
 test("a path with no route file does not type-check as an href", () => {
-	const errors = typeErrors(`import type { Href } from "expo-router";
-const missing: Href = "/settings";
-void missing;
-`);
+	const errors = typeErrors("missing");
 	assert.equal(errors.length, 1);
 	assert.match(errors[0] ?? "", /"\/settings"/);
 });

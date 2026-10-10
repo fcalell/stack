@@ -6,6 +6,10 @@
 			"dependsOn": ["^build"],
 			"outputs": ["dist/**", ".stack/**"]
 		},
+		"generate": {
+			"dependsOn": ["^build"],
+			"outputs": [".stack/**"]
+		},
 		"dev": {
 			"interactive": true,
 			"cache": false

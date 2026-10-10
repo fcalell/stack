@@ -9,7 +9,6 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, mock, test } from "node:test";
-import { setTimeout as sleep } from "node:timers/promises";
 import { createTables } from "@fcalell/auth-testing";
 import createWorker from "@fcalell/plugin-api/runtime";
 import {
@@ -46,6 +45,13 @@ const unexpired = defineMembership(
 	sql`not exists (select 1 from ${membership} where ${membership.memberId} = ${orgSchema.member.id} and ${membership.expiresAt} <= cast(unixepoch('subsecond') * 1000 as integer))`,
 );
 const schema = { ...authSchema, ...orgSchema, ...oauthSchema, membership };
+
+// Token `iat` and a consent's `createdAt` count whole seconds, so a
+// reconnect is only told apart from the grant before it once the clock has
+// moved into a later second: move it there instead of waiting.
+function laterSecond(): void {
+	mock.timers.enable({ apis: ["Date"], now: Date.now() + 1100 });
+}
 
 afterEach(() => {
 	mock.restoreAll();
@@ -1007,7 +1013,7 @@ test("refresh rotates and revocation ends it", async () => {
 
 	// Reconnecting the same client to the same organization starts a new grant:
 	// the pre-revoke tokens stay dead.
-	await sleep(1100);
+	laterSecond();
 	const second = await connect(f, b, "bob@example.com");
 	assert.ok(
 		!((await verify(f, bearer(second.accessToken))) instanceof Response),
@@ -1096,7 +1102,7 @@ test("removing a member deletes their grants there", async () => {
 	);
 
 	// A reconnect after they rejoin does not revive the old token.
-	await sleep(1100);
+	laterSecond();
 	f.client
 		.insert(orgSchema.member)
 		.values({

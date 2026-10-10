@@ -17,6 +17,7 @@ Foundation config. All other presets extend this.
 - `strict: true`, `isolatedModules: true`, `skipLibCheck: true`
 - `target: ES2022`, `module: node18`, `moduleResolution: node16`
 - `noUncheckedIndexedAccess: true`
+- `incremental: true`, its build info under `node_modules/.cache/tsc/`, so a re-check reads only what changed
 
 ### `node-tsx.json`
 
@@ -43,6 +44,7 @@ nothing, so the package keeps its `lib` and `jsx`.
 - `module: nodenext`, `moduleResolution: nodenext`: an extensionless relative import fails the build
 - `rewriteRelativeImportExtensions: true`: sources import with `.ts`, output imports `.js`
 - `declaration`, `declarationMap`, `sourceMap`, `verbatimModuleSyntax`, `isolatedModules`
+- `incremental: false`: a build always emits, so a removed `dist` comes back whatever the build info says
 
 ## Usage
 
