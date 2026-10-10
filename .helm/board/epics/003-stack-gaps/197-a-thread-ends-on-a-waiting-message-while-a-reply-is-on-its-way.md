@@ -38,3 +38,6 @@ Rework, not accepted. Suite 2026-10-10: behaviour 422/422 in Chromium, `stack sc
 
 ## Owner ruling
 The owner rules rework: the waiting message draws as the reply it becomes: no author-line bar (the unbubbled reply has none), one skeleton line at the body line height, the same left edge and top. Acceptance at 390 and 1280: the entry's top y is identical waiting and with a one-line reply (the 72/56 px jump becomes 0); a longer reply only adds its extra lines. The log stays pinned to the end, aria-busy, one article.
+
+## Built (rework)
+`WaitingReply` (`plugins/{react,native}-ui/src/ui/components/message/waiting.tsx`, internal) is what `replying` draws: the unbubbled `other` article with one skeleton line in a body line box and no author-line bar. `Message loading` is unchanged, so the Thread's own `loading` keeps its three-message form. `apps/showcase/behaviour/thread.stories.tsx`: `WaitingHoldsTheOneLineReplysBox1280/390` assert the waiting entry's top (in the log's content), left and height equal those of a one-line reply that replaces it (0 px), `WaitingOnlyGrowsByALongerRepliesLines1280/390` assert the same top and left with a multi-line reply only taller, all with the log pinned at its end; the earlier three stories pass unchanged (thread.stories 7 of 7). The entry stays one `aria-busy` article. Native unrendered. The critique box stays open.

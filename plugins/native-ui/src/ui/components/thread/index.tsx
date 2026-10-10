@@ -44,6 +44,7 @@ import { useWords } from "../../lib/words";
 import { EmptyStateBase } from "../empty-state/base";
 import type { ListEmpty } from "../list";
 import { Message } from "../message";
+import { WaitingReply } from "../message/waiting";
 import { Missing } from "../missing";
 import type { QueryLike } from "../query-boundary";
 import { ToastRoom } from "../toast/room";
@@ -216,9 +217,7 @@ function logOf<T>(
 		...items.map((item) => (
 			<ThreadItem key={props.message.key(item)} item={item} slots={slots} />
 		)),
-		props.replying ? (
-			<Message key="replying" author="other" body="" loading />
-		) : null,
+		props.replying ? <WaitingReply key="replying" /> : null,
 	];
 }
 

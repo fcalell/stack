@@ -662,7 +662,7 @@ a tick with no animation, never jumped to full.
   the frame around its foot: `docked` in a Place's foot and a filling Thread's, `inline` in a Thread
   among sections; a `Sheet` anywhere else is the modal one, and the docked form resets it for what it
   holds). No prop, no new roster part: the Sheet draws `SHEET_DOCKED_HEAD`,
-  `SHEET_DOCKED_BODY` (the sections gap and the card inset above and below) and `SHEET_DOCKED_FOOT`
+  `SHEET_DOCKED_BODY` (the sections gap, the card inset above and a sections gap below, so the last row clears the submit by the gap rows keep) and `SHEET_DOCKED_FOOT`
   inside the foot's raised cell, so none carries a surface, radius, shadow, hairline or side inset and
   all three share the foot's edge. The head holds the back act before one column: the title
   over the description, so the two lines share a start whether the back act stands or not, the back and

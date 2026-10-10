@@ -550,10 +550,10 @@ export const SHEET_FOOT =
 // side inset of their own, so all three share the foot's edge; the head's back
 // act stands before one column, so the title and the description share one
 // start: the title over the description a pair apart; the body keeps its sections a
-// sections gap apart and the card inset above and below, the foot's line
+// sections gap apart, the card inset above and a sections gap below (the last row clears the submit by the gap the rows keep), the foot's line
 // beside or over the acts an acts gap apart.
 export const SHEET_DOCKED_HEAD = "gap-pair";
-export const SHEET_DOCKED_BODY = "gap-sections py-card";
+export const SHEET_DOCKED_BODY = "gap-sections pt-card pb-sections";
 export const SHEET_DOCKED_FOOT = "gap-acts";
 // In a foot the body's content keeps its floor whatever the head, the foot line and the log hold; the scroller around it, bounded by `dockedBodyMax`, gives below it where the region is short.
 export const SHEET_DOCKED_FLOOR = "min-h-docked-floor";

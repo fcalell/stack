@@ -43,6 +43,7 @@ import { useWords } from "../../lib/words.tsx";
 import { EmptyStateBase } from "../empty-state/base.tsx";
 import type { ListEmpty } from "../list/index.tsx";
 import { Message } from "../message/index.tsx";
+import { WaitingReply } from "../message/waiting.tsx";
 import { Missing } from "../missing/index.tsx";
 import type { QueryLike } from "../query-boundary/index.tsx";
 import { INPUT_FILLED, LOG_AT_START } from "./fill.ts";
@@ -212,9 +213,7 @@ function logOf<T>(
 		...items.map((item) => (
 			<ThreadItem key={props.message.key(item)} item={item} slots={slots} />
 		)),
-		props.replying ? (
-			<Message key="replying" author="other" body="" loading />
-		) : null,
+		props.replying ? <WaitingReply key="replying" /> : null,
 	];
 }
 

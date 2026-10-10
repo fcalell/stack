@@ -790,29 +790,90 @@ export const DockedShortestPhone: StoryObj = {
 	...shortViewport(320, 560, true),
 };
 
-// A reader scrolled up in a log the foot leaves no room: the Latest act stands
-// in the region's clip, so it covers neither the header nor the sheet's head.
-export const DockedLatestStaysInItsRegion: StoryObj = {
-	tags: ["touch"],
-	globals: { density: "touch" },
-	parameters: { layout: "fullscreen" },
-	render: () => <BannerQuestion width={320} height={560} tabs={TABS} long />,
-	play: async ({ canvas }) => {
-		const log = await canvas.findByRole("log");
-		log.scrollTop = 0;
-		const latest = await canvas.findByRole("button", { name: "Latest" });
-		const box = latest.getBoundingClientRect();
-		const at = document.elementFromPoint(
-			box.left + box.width / 2,
-			box.top + box.height / 2,
-		);
-		expect(at && latest.contains(at)).toBe(false);
-		const status = canvas.getByRole("heading", { name: "Assistant" });
-		expect(status.getBoundingClientRect().bottom).toBeLessThanOrEqual(
-			visible(log).top + 1,
-		);
-	},
-};
+// A reader scrolled up in a log the foot leaves little room: the Latest act is
+// reachable only while its whole box stands inside the log's visible box. Tab
+// to it draws the 2 px ring wholly inside the region; where the log is shorter
+// than the act and its inset the act is out of the tab order and the tree.
+function latestReachable(width: number, height: number): StoryObj {
+	return {
+		tags: ["touch"],
+		globals: { density: "touch" },
+		parameters: { layout: "fullscreen" },
+		render: () => (
+			<BannerQuestion width={width} height={height} tabs={TABS} long />
+		),
+		play: async ({ canvas, userEvent }) => {
+			const log = await canvas.findByRole("log");
+			log.scrollTop = 0;
+			const status = canvas.getByRole("heading", { name: "Assistant" });
+			expect(status.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+				visible(log).top + 1,
+			);
+			const shown = visible(log);
+			const found = canvas.queryByRole("button", { name: "Latest" });
+			if (found === null) {
+				// Not in the tab order: a Tab from the log lands on no Latest act.
+				log.focus();
+				await userEvent.tab();
+				expect(document.activeElement?.textContent).not.toContain("Latest");
+				return;
+			}
+			const box = found.getBoundingClientRect();
+			expect(box.top).toBeGreaterThanOrEqual(shown.top);
+			expect(box.bottom).toBeLessThanOrEqual(shown.bottom + 1);
+			log.focus();
+			await userEvent.tab();
+			expect(document.activeElement).toBe(found);
+			const style = getComputedStyle(found);
+			expect(style.outlineStyle).toBe("solid");
+			expect(Number.parseFloat(style.outlineWidth)).toBe(2);
+			const ring = Number.parseFloat(style.outlineOffset) + 2;
+			expect(box.top - ring).toBeGreaterThanOrEqual(shown.top - 1);
+		},
+	};
+}
+export const DockedLatestStaysInItsRegion: StoryObj = latestReachable(320, 560);
+export const DockedLatestReachableShortPhone: StoryObj = latestReachable(
+	320,
+	640,
+);
+export const DockedLatestReachableShortPhoneTall: StoryObj = latestReachable(
+	390,
+	667,
+);
+
+// The body's last row keeps the section gap above the submit.
+function lastRowKeepsTheGap(width: number, height: number): StoryObj {
+	return {
+		tags: ["touch"],
+		globals: { density: "touch" },
+		parameters: { layout: "fullscreen" },
+		render: () => <BannerQuestion width={width} height={height} tabs={TABS} />,
+		play: async ({ canvas }) => {
+			const group = await canvas.findByRole("radiogroup");
+			const body = bodyOf(group);
+			body.scrollTop = body.scrollHeight;
+			const last = group.lastElementChild;
+			const submit = canvas.getByRole("button", { name: "Next" });
+			const gap =
+				submit.getBoundingClientRect().top -
+				(last?.getBoundingClientRect().bottom ?? 0);
+			expect(gap).toBeGreaterThanOrEqual(sizeOf("sections") - 1);
+		},
+	};
+}
+export const DockedLastRowKeepsTheSectionGap320: StoryObj = lastRowKeepsTheGap(
+	320,
+	640,
+);
+export const DockedLastRowKeepsTheSectionGap390: StoryObj = lastRowKeepsTheGap(
+	390,
+	667,
+);
+export const DockedLastRowKeepsTheSectionGap560: StoryObj = lastRowKeepsTheGap(
+	320,
+	560,
+);
 
 // Under a banner where two fifths of the region would leave the log less than
 // its floor: the body gave toward its own floor first, so the log keeps two

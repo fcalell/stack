@@ -14,7 +14,7 @@ Stead's review screen blocks Approve while a sensitive file is unopened, and the
 ## Acceptance criteria
 - [x] A blocked act in an ActionBar shows its reason at rest, in the bar (under the stack on touch, beside or under the acts at the end on desktop), at meta size, without a press or hover.
 - [ ] The reason stays the act's description for assistive technology and the press still announces nothing twice.
-- [ ] The bar holds the line's height whether or not an act is blocked where the app asks for it, so unblocking moves nothing.
+- [x] The bar holds the line's height whether or not an act is blocked where the app asks for it, so unblocking moves nothing.
 - [ ] The ActionBar showcase holds a blocked act with its reason at rest and the critique measures it at touch and desktop, light and dark.
 
 ## Open questions
@@ -42,3 +42,6 @@ Rework, not accepted. Suite 2026-10-10: behaviour 422/422 in Chromium, `stack sc
 
 ## Owner ruling
 The owner rules rework, build it, no prop and no reserved-height option. An ActionBar holds its reason line once that line has drawn, for the bar's lifetime: a bar that has ever shown a blocked act's reason keeps the line's box, empty and aria-hidden, when the act unblocks (the first blocked appearance may still add a line). Acceptance at 1280 and 390, light and dark: after unblocking, the bar's height and the offset of everything below differ by 0 px (the critique saw 58 -> 32 desktop, 126 -> 96 touch). Add a blocked-then-pending swap story: a pending bar replacing a bar that holds a reason line keeps that bar's height (closes the gap on 003-183). `aria-describedby` stays cut.
+
+## Built (rework)
+`ActionBar` (react-ui and native-ui) keeps the last reason it drew in state (`held`); when the act unblocks the bar draws the same line with the held text, invisible (`Reason kept`, `visibility: hidden`, so out of the tree and the tab order), for the bar's lifetime. A bar that never showed a reason draws no line. No prop. `apps/showcase/behaviour/action-bar.stories.tsx`: `UnblockingKeepsTheReasonLine` (+`Touch`) asserts bar height and the offset of what stands below are identical (0 px) after unblocking and that the kept line is not visible and no alert; `PendingReplacingABlockedBarKeepsItsHeight` (+`Touch`) is the blocked-then-pending swap (a pending bar replacing a bar holding a reason line keeps that bar's height and the offset below); `AnUnblockedBarThatNeverBlockedHasNoLine`. The line holds the reason's own text invisibly rather than an empty box so a reason that wraps on touch holds its two lines too (an empty box would hold one). Height is theme independent; run at 1280 (storybook) and 390 (touch). action-bar.stories 11 of 11, sheet/thread/waiting/form-leave/place-foot/section-body/item-header/split-record stories green (113 tests), `pnpm check`, ui-core/react-ui/native-ui `verify` pass. Native unrendered. Criterion 4 waits on the critique.

@@ -32,3 +32,6 @@ Native unrendered: ActionBar pending keeps the bar height, native side.
 
 ## Review
 Web accepted 2026-10-10; waits on the native render. Critique pass with a gap: the pending bar keeps the replaced bar's height at 1/2/3/4 acts, desktop and touch, the offset of what stands below is unchanged, and the ghost acts are inert; cosmetic: a stacked bar leaves up to about 180 px blank below the pending bar. Box 1 stays open: it mixes native with a blocked act's reason line, which no story renders; that case moves into the 003-140 rework (a blocked-then-pending swap story). Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass.
+
+## Built (rework)
+The blocked-reason case moved into 003-140: `PendingReplacingABlockedBarKeepsItsHeight` (and `Touch`) in `apps/showcase/behaviour/action-bar.stories.tsx` swaps a bar that holds a reason line for a pending bar and asserts the bar's height and the offset below are unchanged (web, 1280 and 390). Box 1 stays open only for the native render.

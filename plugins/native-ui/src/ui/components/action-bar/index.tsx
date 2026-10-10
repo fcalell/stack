@@ -158,7 +158,10 @@ export function ActionBar({
 	// The last blocked act's reason takes the line a failure would draw in.
 	const reason = acts.findLast((act) => act.blocked !== undefined)?.blocked;
 	const [running, setRunning] = useState(false);
+	// The reason this bar last drew: once a line has drawn the bar keeps its box.
+	const [held, setHeld] = useState<string>();
 	const { leave } = useTouched();
+	if (reason !== undefined && held !== reason) setHeld(reason);
 	const busy = running || acts.some((act) => act.loading);
 	const waits = waitCount(loading, useContext(LoadingContext), 1);
 	const lastAt = acts.length - 1;
@@ -216,9 +219,16 @@ export function ActionBar({
 			{reason === undefined ? null : (
 				<RNText className={text({ role: "meta" })}>{reason}</RNText>
 			)}
-			{reason !== undefined || !(kept || failed !== undefined) ? null : (
-				<RNText className={cn(FIELD_ERROR_LINE, failed === undefined && KEPT)}>
-					{failed ?? NO_FAILURE}
+			{reason !== undefined ||
+			!(held !== undefined || kept || failed !== undefined) ? null : (
+				<RNText
+					accessibilityElementsHidden={failed === undefined}
+					importantForAccessibility={
+						failed === undefined ? "no-hide-descendants" : "auto"
+					}
+					className={cn(FIELD_ERROR_LINE, failed === undefined && KEPT)}
+				>
+					{failed ?? held ?? NO_FAILURE}
 				</RNText>
 			)}
 		</View>
