@@ -2,9 +2,10 @@ import type { IconAct, MenuItem } from "@fcalell/ui-core/descriptors";
 import {
 	PAGE_BODY,
 	PAGE_HEAD,
-	PAGE_TITLE,
+	PAGE_TITLE_FLOOR,
 	PAGE_TOP_BAR,
-	PAGE_TOP_BAR_TOUCH,
+	PAGE_TOP_BAR_END,
+	PAGE_TOP_BAR_START,
 	text,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useContext } from "react";
@@ -30,8 +31,10 @@ import { useSplitHead } from "../split";
 import { ToastRoom } from "../toast/room";
 
 const SCREEN = "flex-1";
-const TOP_BAR = "relative flex-row items-center";
-const SPACER = "flex-1";
+// The bar is the title's row: it wraps, so acts that do not fit beside the back
+// act, the title's floor and the gaps drop whole to a second line.
+const TOP_BAR = "relative flex-row flex-wrap items-center";
+const ACTS = "shrink-0 flex-row items-center gap-acts ms-auto";
 const TITLE = "min-w-0 grow";
 const BODY = "flex-1";
 const BODY_WRAP = "relative flex-1";
@@ -47,8 +50,9 @@ export interface ScreenProps extends Closed {
 	children?: ReactNode;
 }
 
-// A page pushed over a place: the top bar (back, the actions, more) over the
-// title, the body scrolling under it, no filled act; it draws no tab bar, so
+// A page pushed over a place: one row (the back act, the title wrapping, then
+// the actions and more as one span, which drops whole to a second line when
+// it does not fit), the body scrolling under it, no filled act; it draws no tab bar, so
 // it covers the Shell's from its first frame, and clears the home indicator
 // itself, the toasts standing over its body. A Split standing as its direct
 // child gets its Details act in its head. As a Split's `beside` record it stands in the main's stead in
@@ -72,8 +76,6 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 		...(split.details ? [split.details] : []),
 		...(frame?.details ? [frame.details] : []),
 	];
-	// A top bar with nothing in it is not drawn.
-	const bar = exit !== undefined || acts.length > 0 || Boolean(more?.length);
 	return (
 		<DetailsOpen.Provider value={split.held}>
 			<PageTitle.Provider value={title}>
@@ -82,29 +84,30 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 					className={SCREEN}
 				>
 					<View className={PAGE_HEAD}>
-						{bar ? (
-							<View className={cn(PAGE_TOP_BAR, PAGE_TOP_BAR_TOUCH, TOP_BAR)}>
-								{exit === undefined ? null : (
+						<View className={cn(PAGE_TOP_BAR, TOP_BAR)}>
+							{exit === undefined ? null : (
+								<View className={PAGE_TOP_BAR_START}>
 									<IconButton
 										icon="ChevronLeft"
 										fit="body"
 										label={words.back}
 										onAct={() => navigate(exit)}
 									/>
-								)}
-								<View className={SPACER} />
+								</View>
+							)}
+							<RNText
+								accessibilityRole="header"
+								className={cn(text({ role: "title" }), TITLE, PAGE_TITLE_FLOOR)}
+							>
+								{title}
+							</RNText>
+							<View className={cn(ACTS, PAGE_TOP_BAR_END)}>
 								{acts.map((action) => (
 									<IconButton key={action.label} {...action} fit="body" />
 								))}
 								{more?.length ? <Menu label={words.more} items={more} /> : null}
 							</View>
-						) : null}
-						<RNText
-							accessibilityRole="header"
-							className={cn(text({ role: "title" }), TITLE, PAGE_TITLE)}
-						>
-							{title}
-						</RNText>
+						</View>
 					</View>
 					<View className={BODY_WRAP}>
 						<Scroll

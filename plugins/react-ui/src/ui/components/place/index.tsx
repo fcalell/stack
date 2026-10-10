@@ -79,7 +79,7 @@ const SPACER = "grow";
 const TITLE = "min-w-0 grow truncate";
 // On touch with no switcher the title shares its row with the acts and wraps
 // before them.
-const TITLE_WRAP = "min-w-0 grow";
+export const TITLE_WRAP = "min-w-0 grow";
 // With a context the title and its pick stand on one line a pair apart, the
 // line taking the spacer's room; the pick's list hangs from its start.
 const TITLE_LINE = "flex min-w-0 grow flex-wrap items-center gap-pair";

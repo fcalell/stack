@@ -847,6 +847,10 @@ export const PAGE_TOP_BAR_TOUCH = "-mx-icon-inset";
 // inset by its start, the acts by their end, and the title stands at the inset.
 export const PAGE_TOP_BAR_START = "-ms-icon-inset";
 export const PAGE_TOP_BAR_END = "-me-icon-inset";
+// A touch Screen's title row wraps: the title holds at least two fifths of it (a
+// structural fraction, never a width), so acts that do not fit beside it, the
+// back act and the gaps drop whole to a second line at the row's end.
+export const PAGE_TITLE_FLOOR = "min-w-2/5";
 // The touch title over the head's hairline, a pair apart from it.
 export const PAGE_TITLE = "pb-pair";
 export const PAGE_BODY = "gap-sections p-page";
