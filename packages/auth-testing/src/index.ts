@@ -5,12 +5,21 @@
 // `@fcalell/plugin-auth/testing`. Never published.
 import { createHash, webcrypto } from "node:crypto";
 import { sql } from "@fcalell/plugin-db/orm";
-import {
-	generateSQLiteDrizzleJson,
-	generateSQLiteMigration,
-} from "drizzle-kit/api";
 
 // ── Tables ──────────────────────────────────────────────────────────
+
+// The DDL per schema object: a test file builds a fresh database per test
+// from the same schema, and diffing it costs more than the test. drizzle-kit
+// loads on first use, sparing the files that only sign in.
+const ddl = new WeakMap<Record<string, unknown>, Promise<string[]>>();
+
+async function statementsFor(schema: Record<string, unknown>) {
+	const kit = await import("drizzle-kit/api");
+	return kit.generateSQLiteMigration(
+		await kit.generateSQLiteDrizzleJson({}),
+		await kit.generateSQLiteDrizzleJson(schema),
+	);
+}
 
 // Creates every table the schema modules declare, with the DDL drizzle-kit
 // generates for them against an empty database.
@@ -18,11 +27,12 @@ export async function createTables(
 	db: { run(query: ReturnType<typeof sql.raw>): unknown },
 	schema: Record<string, unknown>,
 ): Promise<void> {
-	const statements = await generateSQLiteMigration(
-		await generateSQLiteDrizzleJson({}),
-		await generateSQLiteDrizzleJson(schema),
-	);
-	for (const statement of statements) db.run(sql.raw(statement));
+	let statements = ddl.get(schema);
+	if (!statements) {
+		statements = statementsFor(schema);
+		ddl.set(schema, statements);
+	}
+	for (const statement of await statements) db.run(sql.raw(statement));
 }
 
 // ── Cookies ─────────────────────────────────────────────────────────

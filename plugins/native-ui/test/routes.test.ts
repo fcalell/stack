@@ -25,23 +25,41 @@ declare module "expo-router" {
 }
 `;
 
-// The type errors of a ListRow's and a Screen's props naming these routes,
-// checked under this package's compiler options beside the app's
-// routes.
-function typeErrors(href: string, back: string): string[] {
-	const dir = mkdtempSync(join(tmpdir(), "stack-native-routes-"));
-	try {
-		const routes = join(dir, "routes.d.ts");
-		const probe = join(dir, "probe.ts");
-		writeFileSync(routes, ROUTES);
-		writeFileSync(
-			probe,
-			`import type { ListRowProps } from ${JSON.stringify(join(COMPONENTS, "list-row/index.tsx"))};
+// One probe file of a ListRow's and a Screen's props naming these routes.
+function probeOf(href: string, back: string): string {
+	return `import type { ListRowProps } from ${JSON.stringify(join(COMPONENTS, "list-row/index.tsx"))};
 import type { ScreenProps } from ${JSON.stringify(join(COMPONENTS, "screen/index.tsx"))};
 export const row: ListRowProps = { title: "Row", href: ${JSON.stringify(href)} };
 export const screen: ScreenProps = { title: "Probe", back: ${JSON.stringify(back)} };
-`,
-		);
+`;
+}
+
+const PROBES = {
+	known: probeOf("/notes", "/"),
+	missing: probeOf("/missing", "/nope"),
+};
+
+// The type errors of each probe, checked under this package's compiler
+// options beside the app's routes. Every probe goes in one program: building
+// one costs seconds.
+let checked: Record<keyof typeof PROBES, string[]> | undefined;
+function typeErrors(probe: keyof typeof PROBES): string[] {
+	checked ??= checkProbes();
+	return checked[probe];
+}
+
+function checkProbes(): Record<keyof typeof PROBES, string[]> {
+	const dir = mkdtempSync(join(tmpdir(), "stack-native-routes-"));
+	try {
+		const routes = join(dir, "routes.d.ts");
+		writeFileSync(routes, ROUTES);
+		const files = Object.fromEntries(
+			Object.entries(PROBES).map(([name, text]) => {
+				const file = join(dir, `${name}.ts`);
+				writeFileSync(file, text);
+				return [name, file];
+			}),
+		) as Record<keyof typeof PROBES, string>;
 		const config = ts.getParsedCommandLineOfConfigFile(
 			join(ROOT, "tsconfig.json"),
 			{},
@@ -53,30 +71,32 @@ export const screen: ScreenProps = { title: "Probe", back: ${JSON.stringify(back
 				"expo-router/package.json",
 			),
 		);
-		const program = ts.createProgram([routes, probe], {
+		const program = ts.createProgram([routes, ...Object.values(files)], {
 			...config.options,
 			noEmit: true,
 			skipLibCheck: true,
 			baseUrl: dir,
 			paths: { "expo-router": [expoRouter] },
 		});
-		return ts
-			.getPreEmitDiagnostics(program)
-			.filter((diagnostic) => diagnostic.file?.fileName === probe)
-			.map((diagnostic) =>
-				ts.flattenDiagnosticMessageText(diagnostic.messageText, " "),
-			);
+		const diagnostics = ts.getPreEmitDiagnostics(program);
+		const errorsIn = (file: string) =>
+			diagnostics
+				.filter((diagnostic) => diagnostic.file?.fileName === file)
+				.map((diagnostic) =>
+					ts.flattenDiagnosticMessageText(diagnostic.messageText, " "),
+				);
+		return { known: errorsIn(files.known), missing: errorsIn(files.missing) };
 	} finally {
 		rmSync(dir, { recursive: true, force: true });
 	}
 }
 
 test("a ListRow href and a Screen back naming the app's routes type-check", () => {
-	assert.deepEqual(typeErrors("/notes", "/"), []);
+	assert.deepEqual(typeErrors("known"), []);
 });
 
 test("a ListRow href and a Screen back naming a route the app does not have fail the type-check", () => {
-	const errors = typeErrors("/missing", "/nope");
+	const errors = typeErrors("missing");
 	assert.equal(errors.length, 2, errors.join("\n"));
 	assert.ok(errors.some((error) => error.includes('"/missing"')));
 	assert.ok(errors.some((error) => error.includes('"/nope"')));

@@ -22,8 +22,10 @@ function discover(
 	} as unknown as DiscoveredPlugin;
 }
 
-test("the generated entry imports the uniwind stylesheet beside it", async () => {
-	const { graph } = buildGraphFromDiscovered({
+// The graph for the default options, built once for every test that reads it.
+let built: ReturnType<typeof buildGraphFromDiscovered>["graph"] | undefined;
+function defaultGraph() {
+	built ??= buildGraphFromDiscovered({
 		discovered: [
 			discover(api, api()),
 			discover(expo, expo()),
@@ -31,7 +33,12 @@ test("the generated entry imports the uniwind stylesheet beside it", async () =>
 		],
 		app: { name: "My App", domain: "example.com" },
 		cwd: mkdtempSync(join(tmpdir(), "stack-native-ui-entry-")),
-	});
+	}).graph;
+	return built;
+}
+
+test("the generated entry imports the uniwind stylesheet beside it", async () => {
+	const graph = defaultGraph();
 	const entry = await graph.resolve(expo.slots.entrySource);
 	assert.match(entry ?? "", /^import "\.\/global\.css";$/m);
 });
@@ -59,15 +66,7 @@ test("the words, Query and Auth providers wrap the sheets' provider", async () =
 // the routes directory, which stack writes as a re-export of the Shell-aware
 // page native-ui ships.
 test("the app's `+not-found` route re-exports native-ui's page", async () => {
-	const { graph } = buildGraphFromDiscovered({
-		discovered: [
-			discover(api, api()),
-			discover(expo, expo()),
-			discover(nativeUi, nativeUi()),
-		],
-		app: { name: "My App", domain: "example.com" },
-		cwd: mkdtempSync(join(tmpdir(), "stack-native-ui-entry-")),
-	});
+	const graph = defaultGraph();
 	const route = await graph.resolve(expo.slots.notFoundFile);
 	assert.equal(route?.path, "src/app/+not-found.tsx");
 	assert.match(

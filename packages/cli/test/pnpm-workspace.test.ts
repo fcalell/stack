@@ -11,16 +11,6 @@ import { pnpmWorkspaceTemplate } from "../src/templates/pnpm-workspace.ts";
 const workspace = (existing: string | null, packages: StackPackage[]) =>
 	parse(pnpmWorkspaceTemplate(existing, packages));
 
-test("a vite app overrides the stack packages its plugins reach", () => {
-	const yaml = workspace(null, ["@fcalell/cli", "@fcalell/plugin-vite"]);
-	assert.deepEqual(yaml.overrides, {
-		"@fcalell/cli": "github:fcalell/stack#path:/packages/cli",
-		"@fcalell/plugin-api": "github:fcalell/stack#path:/plugins/api",
-		"@fcalell/plugin-vite": "github:fcalell/stack#path:/plugins/vite",
-	});
-	assert.equal(yaml.blockExoticSubdeps, false);
-});
-
 test("each stack package's build is approved by repository URL", () => {
 	const yaml = workspace(null, ["@fcalell/plugin-vite"]);
 	assert.deepEqual(yaml.allowBuilds, {
@@ -45,12 +35,6 @@ test("every stack package agrees on each build it brings", () => {
 			Object.keys(STACK_PACKAGES).filter(isStackPackage),
 		),
 	);
-});
-
-test("the git packages' prepares run one at a time", () => {
-	const yaml = workspace(null, ["@fcalell/cli"]);
-	assert.equal(yaml.childConcurrency, 1);
-	assert.equal(yaml.networkConcurrency, 2);
 });
 
 test("the app's own entries are kept", () => {

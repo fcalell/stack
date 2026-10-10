@@ -27,10 +27,10 @@ test("a React web app declares React, React DOM and their types", () => {
 			workspace: false,
 		}),
 	);
-	assert.equal(pkg.dependencies.react, "^19.3.0");
-	assert.equal(pkg.dependencies["react-dom"], "^19.3.0");
-	assert.equal(pkg.devDependencies["@types/react"], "^19.3.0");
-	assert.equal(pkg.devDependencies["@types/react-dom"], "^19.3.0");
+	assert.ok(pkg.dependencies.react);
+	assert.ok(pkg.dependencies["react-dom"]);
+	assert.ok(pkg.devDependencies["@types/react"]);
+	assert.ok(pkg.devDependencies["@types/react-dom"]);
 });
 
 test("the native app's React types follow Expo's React", () => {

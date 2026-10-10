@@ -4,7 +4,7 @@
 self-contained feature unit per domain) and `apps/` (`showcase`, a private consumer that renders
 the roster's Storybook and the foundations and layout pages). The CLI owns orchestration and the slot graph; every
 feature lives in the plugin that owns its domain (see
-[philosophy](../product/philosophy.md)). Per-change gate: `pnpm check` (build, type-check,
+[philosophy](../product/philosophy.md)). Per-change gate: `pnpm check` (type-check,
 every package's `node --test`, Biome lint).
 
 ## Packages

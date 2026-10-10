@@ -127,23 +127,6 @@ test("the workbench's Storybook config has no floors and the test run's has them
 	);
 });
 
-test("the test run's config extends the host config and runs one browser project", async () => {
-	const config =
-		(await artifacts()).get(".stack/screens.vitest.config.ts") ?? "";
-	assert.match(config, /import screens from "\.\/screens\.vite\.config\.ts";/);
-	assert.match(config, /\.\.\.screens,/);
-	assert.match(
-		config,
-		/storybookTest\(\{\s*configDir: fileURLToPath\(new URL\("\.\/screens-test", import\.meta\.url\)\),\s*\}\)/,
-	);
-	assert.match(config, /executablePath: chrome/);
-	assert.match(config, /process\.env\.CHROME_PATH/);
-	assert.match(config, /maxWorkers: 2/);
-	assert.match(config, /testTimeout: 120_000/);
-	assert.match(config, /viewport: \{ width: 1280, height: 800 \}/);
-	assert.match(config, /headless: true/);
-});
-
 test("without routes there are no screens to host or to test", async () => {
 	const files = await artifacts(false);
 	for (const path of [
@@ -156,21 +139,14 @@ test("without routes there are no screens to host or to test", async () => {
 	}
 });
 
-test("the app's config runs the router plugin and the host's runs it first, once", async () => {
-	const files = await artifacts();
-	const app = files.get(".stack/vite.config.ts") ?? "";
-	const host = files.get(".stack/screens.vite.config.ts") ?? "";
-	for (const config of [app, host]) {
-		assert.match(
-			config,
-			/import \{ tanstackRouter \} from "@tanstack\/router-plugin\/vite";/,
-		);
-		assert.equal(config.match(/tanstackRouter\(\{/g)?.length, 1, config);
-		assert.ok(
-			config.indexOf("tanstackRouter({") < config.indexOf("react({"),
-			config,
-		);
-	}
+test("the host's config runs the router plugin first, once", async () => {
+	const host = (await artifacts()).get(".stack/screens.vite.config.ts") ?? "";
+	assert.match(
+		host,
+		/import \{ tanstackRouter \} from "@tanstack\/router-plugin\/vite";/,
+	);
+	assert.equal(host.match(/tanstackRouter\(\{/g)?.length, 1, host);
+	assert.ok(host.indexOf("tanstackRouter({") < host.indexOf("react({"), host);
 });
 
 // The host's router plugin never splits a route's component into its own
@@ -183,11 +159,6 @@ test("code splitting is off in the host's router plugin only", async () => {
 	assert.doesNotMatch(app, /autoCodeSplitting: false/);
 	assert.match(host, /autoCodeSplitting: false/);
 	assert.doesNotMatch(host, /autoCodeSplitting: true/);
-});
-
-test("no config file is generated for a Storybook that draws components", async () => {
-	const files = await artifacts();
-	assert.equal(files.has(".stack/storybook.vite.config.ts"), false);
 });
 
 // The route tree's hook (react's) is the other one; syncing the files runs

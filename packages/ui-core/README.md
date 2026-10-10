@@ -104,9 +104,9 @@ The package's `DESIGN.md`, shipped in its `files` so a consumer reads it under
 format](https://github.com/google-labs-code/design.md): the default theme's tokens as front matter,
 each matrix cell and single cell as a component (dark values and their components suffixed `-dark`),
 and the roster with the cells each component draws, its states and the tokens it owns.
-`src/design-md.ts` emits it and `pnpm --filter @fcalell/ui-core design-md` writes it. The package's
-`test` fails when the committed file differs from the emitter's output or when `design.md lint`
-reports an error, so it is never edited by hand.
+`src/design-md.ts` emits it and `pnpm --filter @fcalell/ui-core design-md` writes it, then fails
+when `design.md lint` reports an error. The package's `test` fails when the committed file differs
+from the emitter's output, so it is never edited by hand.
 
 ## The knobs
 

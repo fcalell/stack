@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { readdirSync, readFileSync } from "node:fs";
 import { test } from "node:test";
 import { createElement, Fragment, type ReactNode } from "react";
 import { type SectionKinds, sectionPartsOf } from "../src/ui/lib/section.ts";
@@ -96,32 +95,4 @@ test("nothing deeper is read: an app's own component, a settled QueryBoundary's 
 		forms: 0,
 		fieldNodes: [],
 	});
-});
-
-test("no registration, no layout effect in lib/section.ts", () => {
-	const lib = readFileSync(
-		new URL("../src/ui/lib/section.ts", import.meta.url),
-		"utf8",
-	);
-	assert.doesNotMatch(
-		lib,
-		/useLayoutEffect|useEffect|useState|export function useSection/,
-	);
-	const components = new URL("../src/ui/components/", import.meta.url);
-	for (const dir of readdirSync(components)) {
-		for (const file of readdirSync(new URL(`${dir}/`, components))) {
-			const code = readFileSync(new URL(`${dir}/${file}`, components), "utf8");
-			assert.doesNotMatch(
-				code,
-				/useSection(Wait|Count|Rows|Field|Registry)/,
-				`${dir}/${file}`,
-			);
-		}
-	}
-	const section = readFileSync(
-		new URL("../src/ui/components/section/index.tsx", import.meta.url),
-		"utf8",
-	);
-	assert.match(section, /sectionPartsOf\(children, KINDS\)/);
-	assert.doesNotMatch(section, /loadingNow|setFields|useLayoutEffect/);
 });

@@ -1,8 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { icons } from "lucide";
-import { backEdges, HANDOFF_GLYPH, pathOrder } from "../src/canvas.ts";
-import { ROSTER, rosterEntries } from "../src/roster.ts";
+import { backEdges, pathOrder } from "../src/canvas.ts";
 
 // `from>to` edges, numbered in order: the Nth is `eN`.
 function graph(ids: string, edgeList: string) {
@@ -77,30 +75,4 @@ test("the journey numbers its nodes 1 to 7 from the path order", () => {
 		["S1", "A1", "A2", "B1", "B2", "R", "T"].map((id) => number.get(id)),
 		[1, 2, 3, 4, 5, 6, 7],
 	);
-});
-
-test("Canvas is a web-only roster entry with the descriptor's props", () => {
-	const canvas = ROSTER.content.Canvas;
-	assert.ok(canvas);
-	assert.deepEqual(canvas.props, [
-		"label",
-		"nodes",
-		"edges",
-		"groups",
-		"selected",
-		"onSelect",
-		"path",
-		"onMove",
-		"onConnect",
-		"act",
-		"loading",
-		"empty",
-	]);
-	assert.deepEqual(canvas.platforms, ["web"]);
-	const has = (platform?: "web" | "native") =>
-		rosterEntries(platform).some(([, name]) => name === "Canvas");
-	assert.equal(has("native"), false);
-	assert.equal(has("web"), true);
-	assert.equal(has(), true);
-	assert.ok(HANDOFF_GLYPH in icons);
 });

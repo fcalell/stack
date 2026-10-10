@@ -6,7 +6,7 @@
 		"declaration": true,
 		"declarationMap": true,
 		"esModuleInterop": true,
-		"incremental": false,
+		"incremental": true,
 		"isolatedModules": true,
 		"lib": ["ESNext"],
 		"module": "node18",
@@ -16,6 +16,7 @@
 		"resolveJsonModule": true,
 		"skipLibCheck": true,
 		"strict": true,
-		"target": "ES2022"
+		"target": "ES2022",
+		"tsBuildInfoFile": "${configDir}/node_modules/.cache/tsc/tsbuildinfo.json"
 	}
 }

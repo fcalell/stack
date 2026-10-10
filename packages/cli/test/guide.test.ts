@@ -4,6 +4,7 @@ import { buildGraphFromDiscovered } from "../src/lib/build-graph.ts";
 import { cliSlots } from "../src/lib/cli-slots.ts";
 import { plugin } from "../src/lib/create-plugin.ts";
 import type { DiscoveredPlugin } from "../src/lib/discovery.ts";
+import { cliGuide } from "../src/lib/guide.ts";
 
 function discover(...factories: DiscoveredPlugin["factory"][]) {
 	return factories.map((factory) => ({
@@ -46,10 +47,9 @@ test("the index lists each plugin's pages under its name, by its package", async
 			"",
 			"## cli",
 			"",
-			"- Shaping, scoping or estimating a feature → node_modules/@fcalell/cli/guide/provided.md",
-			"- Adding a plugin or changing an option in `stack.config.ts` → node_modules/@fcalell/cli/guide/config.md",
-			"- Running a `stack` command, or deciding which one a change needs → node_modules/@fcalell/cli/guide/commands.md",
-			"- A part the app needs that stack lacks: a component, variant, token, option or procedure feature → node_modules/@fcalell/cli/guide/gap.md",
+			...cliGuide.map(
+				(g) => `- ${g.trigger} → node_modules/@fcalell/cli/guide/${g.page}.md`,
+			),
 			"",
 			"## data",
 			"",

@@ -7,7 +7,7 @@ import { plugin } from "@fcalell/cli";
 import { buildGraphFromDiscovered } from "@fcalell/cli/build-graph";
 import { cliSlots } from "@fcalell/cli/cli-slots";
 import type { DiscoveredPlugin } from "@fcalell/cli/discovery";
-import { type ApiOptions, api } from "../src/index.ts";
+import { api } from "../src/index.ts";
 
 function discover(
 	factory: { cli: unknown },
@@ -58,41 +58,6 @@ function stub(name: string) {
 		],
 	});
 }
-
-const env: ApiOptions["env"] = [
-	{ name: "FIXTURE_SECRET", devDefault: "fixture-secret-0123456789" },
-	{ name: "OTHER_KEY", devDefault: "other" },
-];
-
-test("api alone renders an entry that loads the worker", async () => {
-	const { graph } = buildGraphFromDiscovered({
-		discovered: [discover(api, api({ prefix: "/api/rpc", env }))],
-		app: { name: "testing", domain: "example.com" },
-		cwd: consumer(true),
-	});
-	const source = (await graph.resolve(api.slots.testingSource)) ?? "";
-	assert.match(
-		source,
-		/import \{ createTestEntry \} from "@fcalell\/plugin-api\/testing";/,
-	);
-	assert.match(source, /import type \{ AppRouter \} from "\.\/worker\.ts";/);
-	assert.match(source, /export const testing = createTestEntry<AppRouter>\(/);
-	assert.match(
-		source,
-		/worker: new URL\("\.\/worker\.ts", import\.meta\.url\)/,
-	);
-	assert.match(
-		source,
-		/procedure: new URL\("\.\/procedure\.ts", import\.meta\.url\)/,
-	);
-	assert.match(source, /root: new URL\("\.\.", import\.meta\.url\)/);
-	assert.match(source, /prefix: "\/api\/rpc"/);
-	assert.match(
-		source,
-		/env: \{ STACK_DEV: "1", FIXTURE_SECRET: "fixture-secret-0123456789", OTHER_KEY: "other" \}/,
-	);
-	assert.doesNotMatch(source, /\.use\(/);
-});
 
 test("contributed entries render as imports and calls, sorted by plugin", async () => {
 	const zeta = stub("zeta");

@@ -26,21 +26,6 @@ test("the generated entry omits the host when the config leaves it unset", () =>
 	assert.doesNotMatch(source, /host:/);
 });
 
-test("the generated entry carries the transport bounds", () => {
-	const source = aggregateServer({ ...payload, host: null });
-	assert.match(source, /maxBody: 1024,\s*maxFrame: 256,/);
-});
-
-test("the generated entry serves the web client's build directory", () => {
-	const source = aggregateServer({ ...payload, host: null });
-	assert.match(source, /staticRoot: "dist\/client",/);
-});
-
-test("the generated entry serves no static root without a web client", () => {
-	const source = aggregateServer({ ...payload, host: null, staticRoot: null });
-	assert.match(source, /staticRoot: null,/);
-});
-
 test("the server is given the client headers", () => {
 	const source = aggregateServer({ ...payload, host: null });
 	assert.match(

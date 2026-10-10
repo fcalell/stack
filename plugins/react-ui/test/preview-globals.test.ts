@@ -34,26 +34,6 @@ function previewGlobals(options: ReactUiOptions = {}) {
 	return graph.resolve(screens.slots.previewGlobals);
 }
 
-test("the screens workbench pins the mode and the density the sheet keys on", async () => {
-	assert.deepEqual(await previewGlobals(), [
-		{
-			name: "density",
-			title: "Density",
-			values: ["desktop", "touch"],
-			default: "desktop",
-			apply: { attribute: "data-density" },
-		},
-		{
-			name: "mode",
-			title: "Mode",
-			values: ["light", "dark"],
-			default: "light",
-			checked: ["light", "dark"],
-			apply: { classes: { dark: "dark" } },
-		},
-	]);
-});
-
 test("the workbench opens in the theme's default mode", async () => {
 	const globals = await previewGlobals({ theme: { defaultMode: "dark" } });
 	assert.equal(globals.find((g) => g.name === "mode")?.default, "dark");

@@ -6,6 +6,7 @@
 		"module": "nodenext",
 		"moduleResolution": "nodenext",
 		"noEmit": false,
+		"incremental": false,
 		"declaration": true,
 		"declarationMap": true,
 		"sourceMap": true,

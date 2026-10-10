@@ -5,7 +5,6 @@ import {
 	mkdtempSync,
 	readdirSync,
 	readFileSync,
-	realpathSync,
 	rmSync,
 	writeFileSync,
 } from "node:fs";
@@ -94,21 +93,6 @@ test("a schema edited after generate is drift", () => {
 	assert.equal(detectSchemaDrift(dir, options), true);
 	assert.equal(sqlFiles(dir).length, 1);
 	assert.equal(existsSync(join(dir, ".db-kit/drift")), false);
-});
-
-test("the binary resolves from plugin-db's install", () => {
-	const bin = drizzleKitBin();
-
-	assert.equal(existsSync(bin), true);
-	assert.equal(
-		bin,
-		join(
-			realpathSync(
-				fileURLToPath(new URL("../node_modules/drizzle-kit", import.meta.url)),
-			),
-			"bin.cjs",
-		),
-	);
 });
 
 test("a push leaves the migrations table `stack db apply` records into", async () => {

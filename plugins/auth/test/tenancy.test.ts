@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { test } from "node:test";
+import { before, test } from "node:test";
 import { browser, CookieJar, createTables } from "@fcalell/auth-testing";
 import { createProcedure } from "@fcalell/plugin-api/procedure";
 import createWorker, { type AppBuilder } from "@fcalell/plugin-api/runtime";
@@ -173,8 +173,14 @@ async function setup() {
 	return { as };
 }
 
+// No test below writes a row another reads (each sign-in mints its own
+// session), so they share one worker and database.
+let as: Awaited<ReturnType<typeof setup>>["as"];
+before(async () => {
+	({ as } = await setup());
+});
+
 test("a member reaches their organization by id, with their role in context", async () => {
-	const { as } = await setup();
 	const ada = await as("ada");
 	assert.deepEqual(
 		await ada("probe/organization", { organizationId: "acme" }),
@@ -186,7 +192,6 @@ test("a member reaches their organization by id, with their role in context", as
 });
 
 test("another organization and an unknown id answer the same NOT_FOUND", async () => {
-	const { as } = await setup();
 	const grace = await as("grace");
 	const ada = await as("ada");
 	const foreign = await grace("probe/organization", { organizationId: "acme" });
@@ -196,7 +201,6 @@ test("another organization and an unknown id answer the same NOT_FOUND", async (
 });
 
 test("can checks the role in the organization the input names", async () => {
-	const { as } = await setup();
 	const ada = await as("ada");
 	assert.equal(
 		(await ada("probe/rename", { organizationId: "acme" })).status,
@@ -209,7 +213,6 @@ test("can checks the role in the organization the input names", async () => {
 });
 
 test("org rules follow the organization in the input, with no active organization", async () => {
-	const { as } = await setup();
 	const ada = await as("ada");
 	const owner = await ada("auth/orgRules", { organizationId: "acme" });
 	const plain = await ada("auth/orgRules", { organizationId: "beta" });
@@ -219,7 +222,6 @@ test("org rules follow the organization in the input, with no active organizatio
 });
 
 test("a page resolves its project and organization from the rows", async () => {
-	const { as } = await setup();
 	const ada = await as("ada");
 	assert.deepEqual(await ada("probe/page", { pageId: "home-beta" }), {
 		status: 200,
@@ -228,7 +230,6 @@ test("a page resolves its project and organization from the rows", async () => {
 });
 
 test("a page in an organization the caller is no member of answers NOT_FOUND", async () => {
-	const { as } = await setup();
 	const grace = await as("grace");
 	assert.equal(
 		(await grace("probe/page", { pageId: "home-acme" })).status,
@@ -249,7 +250,6 @@ test("a scope's parent column must be on its own table", () => {
 });
 
 test("the organization's slug resolves to it and the caller's membership", async () => {
-	const { as } = await setup();
 	const ada = await as("ada");
 	const found = await ada("auth/scope/organization/bySlug", { slug: "acme" });
 	assert.equal(found.status, 200);
@@ -267,7 +267,6 @@ test("the organization's slug resolves to it and the caller's membership", async
 });
 
 test("a slug below the organization resolves within its parent", async () => {
-	const { as } = await setup();
 	const ada = await as("ada");
 	const found = await ada("auth/scope/project/bySlug", {
 		slug: "site",
@@ -293,7 +292,6 @@ test("a slug below the organization resolves within its parent", async () => {
 });
 
 test("a lookup reads its chain's tables and the membership", async () => {
-	const { as } = await setup();
 	const ada = await as("ada");
 	const organizationLookup = await ada("auth/scope/organization/bySlug", {
 		slug: "acme",
@@ -307,7 +305,6 @@ test("a lookup reads its chain's tables and the membership", async () => {
 });
 
 test("a scope without a slug has no lookup", async () => {
-	const { as } = await setup();
 	const ada = await as("ada");
 	assert.equal(
 		(await ada("auth/scope/page/bySlug", { slug: "home", parentId: "p-acme" }))

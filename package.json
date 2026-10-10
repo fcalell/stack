@@ -4,7 +4,8 @@
 	"scripts": {
 		"lint": "biome check --write --unsafe",
 		"check-types": "turbo run check-types",
-		"check": "turbo run build check-types test && pnpm lint",
+		"build": "turbo run build",
+		"check": "turbo run check-types test && biome check",
 		"showcase": "turbo run build --filter=showcase^... && pnpm --filter showcase dev",
 		"clear": "pnpm -r --if-present run clear && rm -rf node_modules .turbo",
 		"stories": "turbo run build --filter=showcase^... && pnpm --filter showcase generate && pnpm --filter showcase storybook",
@@ -16,6 +17,6 @@
 	},
 	"packageManager": "pnpm@11.28.4",
 	"engines": {
-		"node": ">=22.20"
+		"node": ">=24"
 	}
 }

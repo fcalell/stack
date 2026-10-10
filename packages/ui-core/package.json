@@ -109,10 +109,10 @@
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
-		"test": "node --test 'test/**/*.test.ts' && design.md lint DESIGN.md",
+		"test": "node --test 'test/**/*.test.ts'",
 		"verify": "tsx scripts/verify.ts",
 		"clear": "rm -rf dist node_modules .turbo",
-		"design-md": "tsx scripts/design-md.ts"
+		"design-md": "tsx scripts/design-md.ts && design.md lint DESIGN.md"
 	},
 	"dependencies": {
 		"class-variance-authority": "^0.7.1",

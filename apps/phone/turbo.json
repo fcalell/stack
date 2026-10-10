@@ -5,8 +5,11 @@
 		"build": {
 			"outputs": [".stack/**"]
 		},
+		"check-types": {
+			"dependsOn": ["^build", "generate"]
+		},
 		"test": {
-			"dependsOn": ["^build", "build"]
+			"dependsOn": ["^build", "generate"]
 		}
 	}
 }

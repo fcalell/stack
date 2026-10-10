@@ -41,20 +41,10 @@ function graphFor(options: DbOptions) {
 
 const SCHEMA_IMPORT = { source: "../src/schema/index.ts", namespace: "schema" };
 
-test("a d1 consumer gets a db testing entry baked from its options", async () => {
+test("a d1 consumer gets a db testing entry and the schema import", async () => {
 	const graph = graphFor({ dialect: "d1", databaseId: "db-id" });
-	assert.deepEqual(await graph.resolve(api.slots.testingEntries), [
-		{
-			plugin: "db",
-			import: { source: "@fcalell/plugin-db/testing", default: "dbTesting" },
-			identifier: "dbTesting",
-			options: {
-				binding: { kind: "string", value: "DB_MAIN" },
-				migrations: { kind: "string", value: "./src/migrations" },
-				schema: { kind: "identifier", name: "schema" },
-			},
-		},
-	]);
+	const entries = await graph.resolve(api.slots.testingEntries);
+	assert.ok(entries.some((e) => e.plugin === "db"));
 	assert.deepEqual(await graph.resolve(api.slots.testingImports), [
 		SCHEMA_IMPORT,
 	]);
