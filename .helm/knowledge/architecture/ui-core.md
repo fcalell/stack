@@ -375,8 +375,11 @@ a tick with no animation, never jumped to full.
   words; `failed` is the `failed` Status with `notSaved`, then `retry` as words in a
   `WORD_ACT` led by a `RotateCcw` glyph (a button named by the fact, in the meta ink as an opening
   fact is; the glyph is what tells it from the facts beside it, and it stays words in a box, never a
-  `Button`, so the head keeps one height), so the fact stands at the target height (`ITEM_FACT`,
-  `min-h-target`) in all three states and the head keeps the loading head's height as the save moves.
+  `Button`, so the head keeps one height), so the fact keeps its target-height hit box (`WORD_ACT`) in
+  all three states and the head keeps the loading head's height as the save moves. The facts line is
+  one meta line tall whichever kinds of fact it holds: a fact that acts (an opening fact, a pick, a
+  save) reaches past the line above and below it by `factReach` (the web reads `(target - 1lh) / 2`, the
+  phone the px), so an opening fact joining a status moves nothing under the head.
   Where the facts wrap (below `tablet` on the web, always on the phone) the fact also holds the
   failed form's room in every state, the failed form drawn invisible in the one grid cell the live form
   stands in (a stacked, transparent copy on the phone), so the line wraps the same in all three and the
@@ -583,7 +586,10 @@ a tick with no animation, never jumped to full.
   one way a row says which part gives way: the age and spend that must read whole are its
   `trailing`. A `Coded` later part (`{ code }`) stands in a span of its own at the same tier and
   cuts in its middle like a definition value (`valueCut`, shared by both platforms). A row that opens (`href` or `onOpen`) ends in a chevron (`ROW_CHEVRON`, the square of an icon act) after
-  its trailing value, unless its end holds an `act`, the more menu, a pick or a tree's fold. A value
+  its trailing value, unless its end holds an `act`, the more menu, a pick or a tree's fold. In a List
+  whose row map declares `more`, a row with none (and no chevron) keeps the more act's square blank
+  (`ActsRoom`, set by the List from its loaded items, tree rows included), so every row's trailing value
+  ends at one x; a List with no `more` is unchanged. A labelled `act` is not reserved: its width is its label's. A value
   trailing a one-line title is whole or gone the same way: the title's basis is half its line, so
   a value wider than what that leaves wraps under the line and is clipped away, and the title then
   takes the whole line (a 320 px table row shows its name, not its age). Both rules are the web's: the phone's later parts and values still truncate with an ellipsis. Every row keeps one height, so its waiting form matches it by
@@ -1374,6 +1380,10 @@ a tick with no animation, never jumped to full.
   the EmptyState absolutely over the boxes at `opacity-0`), so the Section does not move, and the
   EmptyState's frame fills that box with its content centred in it (`EmptyStateBase`'s internal
   `fill`), so nothing floats above or below it.
+- A Section's rhythm has two steps: its head is paired to its body (`SECTION`, `pair` on a page, `fields` in a
+  Form) and the body's own parts (a Prose, a Code, a Group, an ActionBar) stand the `fields` step apart
+  (`SECTION_BODY`) wherever the Section sits, so a dense run of parts reads as parts; a Group keeps its
+  rows' own tight spacing.
 - A Section reads its body's collections off its own children in render, so nothing registers and
   the head (its count, its busy state) and the loading body land in the first paint with no
   second commit. By the depth rule, a Section's collections stand as its direct children (a

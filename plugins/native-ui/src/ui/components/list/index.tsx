@@ -29,6 +29,7 @@ import {
 import { LIST, LIST_DIVIDED, LIST_TREE } from "@fcalell/ui-core/variants";
 import { type ReactElement, useContext, useState } from "react";
 import { View } from "react-native";
+import { ActsRoom } from "../../lib/acts-room";
 import type { Closed } from "../../lib/closed";
 import { between, useGroupPart } from "../../lib/group";
 import { LoadingContext } from "../../lib/loading";
@@ -293,7 +294,13 @@ export function List<T, V extends string | null = string>(
 	// A tree's rows abut, so its rails run unbroken.
 	const divided =
 		props.row?.meta !== undefined && props.row.children === undefined;
-	const frame = (rows: readonly ReactElement[], tree = false) => {
+	// Whether a row of the loaded list has a more act: the rows without one then
+	// keep its square, so every row's end stands at one x.
+	let room = false;
+	const frame = (rows: readonly ReactElement[], tree = false) => (
+		<ActsRoom.Provider value={room}>{stand(rows, tree)}</ActsRoom.Provider>
+	);
+	const stand = (rows: readonly ReactElement[], tree: boolean) => {
 		if (ground !== "group" && !divided)
 			return <View className={tree ? LIST_TREE : LIST}>{rows}</View>;
 		const lines = rows.map((row, index) => (
@@ -368,6 +375,16 @@ export function List<T, V extends string | null = string>(
 			/>
 		);
 		const { children } = row;
+		const { more } = row;
+		if (more !== undefined) {
+			const every =
+				children === undefined
+					? items
+					: treeRows(items, { key: row.key, children }, []).map(
+							(each) => each.item,
+						);
+			room = every.some((item) => more(item)?.length);
+		}
 		if (children === undefined)
 			return (
 				<TrailingWait.Provider value={known}>

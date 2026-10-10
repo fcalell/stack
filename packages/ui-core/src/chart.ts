@@ -2,7 +2,7 @@
 // platforms read this one scale and head instead of a copy each.
 
 import { leadingOf } from "./scales.ts";
-import type { Density } from "./tokens.ts";
+import { type Density, SIZE_PX } from "./tokens.ts";
 
 // Four bands, the last one's bottom the baseline.
 export const BANDS = 4;
@@ -12,6 +12,15 @@ export const BANDS = 4;
 // the phone, with no `lh` unit, as this number of px.
 export function tickReach(density: Density): number {
 	return leadingOf(density, "meta") / 2;
+}
+
+// How far a fact of an ItemHeader that acts reaches past the facts line's
+// text line above and below it: its hit box stands at the target height and
+// the line at the meta line's, so the line keeps one height whichever kinds
+// of fact it holds. The web reads it as `(target - 1lh) / 2`; the phone, with
+// no `lh` unit, as this number of px.
+export function factReach(density: Density): number {
+	return (SIZE_PX[density].target - leadingOf(density, "meta")) / 2;
 }
 
 export interface ChartScale {

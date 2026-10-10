@@ -4,6 +4,7 @@ import type { Act, IconAct, Part } from "@fcalell/ui-core/descriptors";
 import { sectionState } from "@fcalell/ui-core/list-state";
 import {
 	lineBox,
+	SECTION_BODY,
 	SECTION_HEAD,
 	SECTION_HEAD_ROW,
 	SECTION_NESTED_TITLE,
@@ -207,6 +208,7 @@ export function Section({
 			<div className={cn(SECTION_HEAD, HEAD)}>
 				<div
 					className={cn(
+						SECTION_BODY,
 						SECTION_HEAD_ROW,
 						HEAD_ROW,
 						act && !("icon" in act) && WRAP,
@@ -266,7 +268,7 @@ export function Section({
 				<Collapsible.Panel
 					id={bodyId}
 					keepMounted
-					className={cn(section({ in: within }), BODY)}
+					className={cn(SECTION_BODY, BODY)}
 				>
 					<HeadingContext value={DEEPER[level]}>
 						{Array.from({ length: fields }, (_, index) => `field-${index}`).map(

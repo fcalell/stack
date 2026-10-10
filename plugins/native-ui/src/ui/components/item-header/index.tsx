@@ -1,3 +1,4 @@
+import { factReach } from "@fcalell/ui-core/chart";
 import type {
 	OptionPick,
 	Part,
@@ -28,6 +29,11 @@ import { Picker } from "../picker";
 import { Status } from "../status";
 
 const FACTS = "flex-row flex-wrap items-center";
+// A fact that acts keeps its target-height hit box and reaches past the facts
+// line's text line above and below it (`factReach`, in px: the phone has no
+// `lh` unit), so the line holds the meta line's height whichever kinds of fact
+// it carries.
+const REACH = { marginVertical: -factReach("touch") } as const;
 const FACT = "flex-row items-center";
 // A pick in the facts line pulls back at its start as well as its end, so its
 // dot and word sit where a plain fact's would.
@@ -114,7 +120,7 @@ function SaveFact({
 	const words = useWords();
 	const said = save === "failed" ? words.notSaved : words[save];
 	return (
-		<View className={SAVE}>
+		<View style={REACH} className={SAVE}>
 			<View className={SAVE_ROOM}>
 				<View className={SAVE_WORDS}>
 					<Status state="failed" label={words.notSaved} />
@@ -152,6 +158,7 @@ function FactPart({ fact }: { fact: Fact }) {
 			<Pressable
 				accessibilityRole="link"
 				onPress={() => navigate(href)}
+				style={REACH}
 				className={cn(WORD_ACT, ITEM_FACT, OPEN)}
 			>
 				<RNText className={text({ role: "meta" })}>
@@ -168,6 +175,7 @@ function FactPart({ fact }: { fact: Fact }) {
 			<Pressable
 				accessibilityRole="button"
 				onPress={fact.onOpen}
+				style={REACH}
 				className={cn(WORD_ACT, ITEM_FACT, OPEN)}
 			>
 				<RNText className={text({ role: "meta" })}>
@@ -180,7 +188,7 @@ function FactPart({ fact }: { fact: Fact }) {
 		);
 	if (typeof fact === "object" && "pick" in fact)
 		return (
-			<View className={PICK}>
+			<View style={REACH} className={PICK}>
 				<Picker {...fact.pick} fit="row" />
 			</View>
 		);
@@ -227,6 +235,7 @@ export function ItemHeader({
 				<LineWait role="title" bar="w-1/2" />
 				<View className={SKELETON_LINES}>
 					<View className={cn(skeletonRow({ kind: "facts" }), FACTS_LINE_WAIT)}>
+						<Strut role="meta" />
 						<View className={cn(skeleton({ kind: "line" }), "w-1/3")} />
 						<View className={cn(skeleton({ kind: "count" }), COUNT_WAIT)}>
 							<RNText className={cn(text({ role: "caption" }), FIGURE_WAIT)}>

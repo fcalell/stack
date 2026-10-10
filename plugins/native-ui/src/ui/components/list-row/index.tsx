@@ -35,6 +35,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useContext, useMemo, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
+import { ActsRoom } from "../../lib/acts-room";
 import { ageShort } from "../../lib/age";
 import { useClock } from "../../lib/clock";
 import type { Closed } from "../../lib/closed";
@@ -142,6 +143,8 @@ const CHIP_START = "w-0 h-full";
 const CHIP_MARK = "shrink-0";
 const ACTS = "relative flex-row shrink-0 items-center";
 const CHEVRON = "shrink-0 items-center justify-center";
+// The more act's square, left blank in a row that has none beside rows that do.
+const BLANK = "shrink-0";
 // The entry takes the touch itself: the input filling the room its act leaves.
 const ENTRY = "flex-row items-center min-w-0";
 const ENTRY_FIELD = "flex-1 min-w-0";
@@ -367,6 +370,7 @@ export function ListRow<V extends string | null = string>({
 	const ground = useContext(GroundContext);
 	const tree = useContext(TreeContext);
 	const waits = useContext(TrailingWait);
+	const room = useContext(ActsRoom);
 	const pathname = usePathname();
 	const named = partText(title);
 	const current = selected || (href !== undefined && isCurrent(href, pathname));
@@ -379,6 +383,9 @@ export function ListRow<V extends string | null = string>({
 		!more?.length &&
 		!(trailing && "pick" in trailing) &&
 		!tree?.fold;
+	// A row of a list where another has a more act, with no more act and no
+	// chevron of its own, keeps that act's square blank.
+	const blank = room && !more?.length && !chevron;
 	const marked =
 		status !== undefined ||
 		warning !== undefined ||
@@ -634,10 +641,11 @@ export function ListRow<V extends string | null = string>({
 					</View>
 				</First>
 			) : null}
-			{act || more?.length ? (
+			{act || more?.length || blank ? (
 				<First on={top}>
 					<View className={cn(ROW_ACTS, ACTS, under && ACTS_UNDER)}>
 						{act ? <ActButton act={act} host={actReason.host} /> : null}
+						{blank ? <View className={cn(ROW_CHEVRON, BLANK)} /> : null}
 						{more?.length ? (
 							<MenuBase
 								label={`${words.more} ${named}`}

@@ -1,6 +1,7 @@
 import type { Act, IconAct, Part } from "@fcalell/ui-core/descriptors";
 import { sectionState } from "@fcalell/ui-core/list-state";
 import {
+	SECTION_BODY,
 	SECTION_HEAD,
 	SECTION_HEAD_ROW,
 	SECTION_NESTED_TITLE,
@@ -179,6 +180,7 @@ export function Section({
 			<View className={SECTION_HEAD}>
 				<View
 					className={cn(
+						SECTION_BODY,
 						SECTION_HEAD_ROW,
 						HEAD_ROW,
 						act && !("icon" in act) && WRAP,
@@ -240,15 +242,13 @@ export function Section({
 			</View>
 			{/* A section without children draws no body. */}
 			{children === undefined || children === null ? null : (
-				<View className={cn(section({ in: within }), !open && BODY_FOLDED)}>
+				<View className={cn(SECTION_BODY, !open && BODY_FOLDED)}>
 					{Array.from({ length: fields }, (_, index) => `field-${index}`).map(
 						(key, index) => (
 							<FieldWait key={key} {...fieldWaitOf(parts.fieldNodes[index])} />
 						),
 					)}
-					<View
-						className={cn(section({ in: within }), fields > 0 && BODY_WAITS)}
-					>
+					<View className={cn(SECTION_BODY, fields > 0 && BODY_WAITS)}>
 						<LoadingContext.Provider value={loading === true}>
 							<SectionContext.Provider value={true}>
 								<ThreadRoom.Provider value={false}>{rest}</ThreadRoom.Provider>
