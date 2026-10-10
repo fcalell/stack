@@ -398,20 +398,25 @@ const review =
 					(drawn(tail) / chars) * 4 - 0.5,
 				);
 			} else await expect(whole(stem)).toBe(true);
-			// A directory that gives way keeps its ellipsis: never a span too narrow
-			// to draw one (the cut says it is a cut), or a name alone.
+			// A directory that gives way reads as cut: its box holds its first
+			// character and an ellipsis, measured as a probe in the same font (a
+			// one-character box draws a clipped sliver, never the ellipsis), and
+			// the text it holds is still whole or cut by the box's own overflow.
 			const directory =
 				name === path.firstElementChild ? null : path.firstElementChild;
 			if (directory && !whole(directory)) {
 				const probe = document.createElement("span");
 				probe.style.cssText = "position:absolute;visibility:hidden";
-				probe.textContent = "\u2026";
-				path.append(probe);
-				const ellipsis = probe.getBoundingClientRect().width;
+				probe.textContent = `${directory.textContent?.[0]}\u2026`;
+				directory.append(probe);
+				const lead = probe.getBoundingClientRect().width;
 				probe.remove();
 				await expect(
 					directory.getBoundingClientRect().width,
-				).toBeGreaterThanOrEqual(ellipsis - 0.5);
+				).toBeGreaterThanOrEqual(lead - 0.5);
+				await expect(directory.scrollWidth).toBeGreaterThan(
+					directory.clientWidth,
+				);
 			}
 			// The chip's label is cut only once the path stands at its floor and the
 			// counts at their text; where the room allows it, it is whole.
@@ -450,7 +455,13 @@ export const ReviewGroupFloor320: StoryObj = {
 	play: reviewed,
 };
 export const ReviewFloorTouch320 = touch(ReviewFloor320, 320);
-export const ReviewFloorTouch390 = touch(ReviewFloor390, 390);
+// On touch the directory's lead is 22 px (two 11 px characters), which leaves
+// the long billing row's label 5 px short of whole at 390: it may cut there,
+// by the same rule as at 320 (only once the path stands at its floor).
+export const ReviewFloorTouch390 = touch(
+	{ render: () => <Review width={390} />, play: reviewed },
+	390,
+);
 export const ReviewGroupFloorTouch390 = touch(
 	{ render: () => <Review width={390} grouped />, play: reviewed },
 	390,

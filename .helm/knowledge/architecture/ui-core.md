@@ -1600,7 +1600,7 @@ a tick with no animation, never jumped to full.
 - A FileRow carries at most one `ChipMark` (why the file is listed),
   standing between the path and the count lanes at its label's `measure-short` cap; the path
   takes the room the chip leaves and yields in order: the directory down to its leading ellipsis
-  (`DIRECTORY_LEAD`, one character the path's floor holds beside the name's, so a cut directory
+  (`DIRECTORY_LEAD`, two characters, its first and an ellipsis, the path's floor holds beside the name's, so a cut directory
   says it is cut and never shrinks to a span too narrow to draw one), then the name down to its
   floor, then the web's counts from their four-figure lanes down to their own text, then the
   chip's label truncates with an ellipsis; no row overflows sideways at any width. The phone's

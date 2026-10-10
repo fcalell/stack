@@ -1051,12 +1051,12 @@ export function stagesShown<T extends { state: string }>(
 // The characters a file name keeps at its start and before its extension.
 const NAME_LEAD = 3;
 
-// The room a file row's directory keeps beside the name's floor: one character,
-// which a box that narrow draws as its ellipsis alone. A directory that gives
-// way is cut to a leading ellipsis, never to a span too narrow to draw one, so
-// the cut says it is a cut. Both platforms add it to the path's floor when the
-// path has a directory.
-export const DIRECTORY_LEAD = 1;
+// The room a file row's directory keeps beside the name's floor: two
+// characters, its first and the ellipsis after it ("d…"). The engine keeps a
+// cut box's first character before the ellipsis, so a one-character box draws
+// a clipped sliver of the next glyph and no ellipsis; two read as cut. Both
+// platforms add it to the path's floor when the path has a directory.
+export const DIRECTORY_LEAD = 2;
 
 // A file row's name, cut: its end (`tail`, never cut) is the extension and the
 // NAME_LEAD characters before it (twice that without an extension), but its

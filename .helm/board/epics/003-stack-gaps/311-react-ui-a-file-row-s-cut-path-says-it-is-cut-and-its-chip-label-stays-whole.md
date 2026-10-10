@@ -17,7 +17,7 @@ Found by the critique of 003-193.
 - [x] The floor stories (biome.json 78/90 px) pass.
 
 ## Ruled
-The directory keeps one character beside the name's floor (`DIRECTORY_LEAD` in `list-state`, both platforms add it to the path's floor when the path has a directory). A box that narrow draws its ellipsis alone, so a directory that gives way says it is cut; "gone whole" is not available in CSS. The directory's own `min-width` holds it and the path's floor is the sum of the two roundings; the name is now a shrinkable item (the directory weighs 10^4 against its 1), so a long name no longer starves the directory to nothing.
+The directory keeps two characters (rework; first built as one) beside the name's floor (`DIRECTORY_LEAD` in `list-state`, both platforms add it to the path's floor when the path has a directory). The first character and the ellipsis after it ("d…"), so a directory that gives way says it is cut; "gone whole" is not available in CSS. The directory's own `min-width` holds it and the path's floor is the sum of the two roundings; the name is now a shrinkable item (the directory weighs 10^4 against its 1), so a long name no longer starves the directory to nothing.
 
 The counts yield before the chip's label: on the web each lane (`FILE_COUNT_YIELD`: `basis-figures shrink-1000 min-w-min`) goes from its four figures down to its own text once the path stands at its floor. The counts' block is `display: contents` so the lanes are items of the row (a flex container's own width ignores its items' basis). The phone's lanes keep their width (its flex items do not shrink), so native takes only the directory floor.
 
@@ -30,3 +30,10 @@ Measured, px (desktop 320, row 296): `docs/flags.md` directory 8.6 (the ellipsis
 
 ## Owner ruling
 The chip label yields last, as `guide/rules.md` already orders the file row (the path to its floor, then the label truncates; the row never overflows): a chip label is a word slot whose narrowest-width failure is the ellipsis (precedent 003-118, 003-193). Hiding the counts drops data, a second chip form is new surface, a wrapped row breaks the one-line row height; the box is reworded to the rule and met as built.
+
+## Built (rework)
+Review finding: at 320 the one-character directory box drew the first letter and a clipped sliver, not an ellipsis (`docs/flags.md` read "dflags.md" on desktop, "d.flags.md" on touch); the engine keeps a cut box's first character before the ellipsis, so a one-character box can never draw one. `DIRECTORY_LEAD` is now 2 in `packages/ui-core/src/list-state.ts`: the first character and the ellipsis after it ("d…"). Both platforms already add it to the path's floor, so no other code changed (the web comment in `file-row/index.tsx` and `ui-core.md` say two). The floor stories (biome.json 79/91 px) and the counts, then path, then label yield order hold. Native unrendered: the phone's floor takes the same constant.
+
+`behaviour/row-meta.stories.tsx`: the `ReviewFloor*` play now measures a probe in the directory's own font holding its first character and an ellipsis, and asserts a cut directory's box is at least that wide and overflows its text (a sliver box fails). Browser run: row-meta and section-more, 26 tests, pass.
+
+Cost, flagged: on touch the lead is 22 px, which leaves the long billing row's label (137 px) 5 px short of whole at 390 (132 px), so `ReviewFloorTouch390` allows the cut under the same rule as at 320 (only once the path stands at its floor and the counts at their text). Desktop 390 and 768 and touch 768 stay whole. The owner may rule whether that row's label must stay whole at touch 390 (it would need a lead under two characters, which CSS cannot draw).

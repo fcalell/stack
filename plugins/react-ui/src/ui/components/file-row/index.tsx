@@ -87,12 +87,12 @@ function split(path: string): [string, string] {
 }
 
 // The path fits by layout: the directory takes the room the name leaves,
-// ellipsized at its end, so it gives way first, down to its one character;
+// ellipsized at its end, so it gives way first, down to its first character and an ellipsis;
 // then the name's stem truncates before its
 // kept end, a cut in its middle, down to the name's floor, below which the
-// chip's label truncates. A directory keeps one character beside the name's
-// floor (its own `min-width`, in the path's), so what gives way draws its
-// ellipsis (a leading "…") and the cut says it is a cut. The floor is its characters in `ch` rounded up to the
+// chip's label truncates. A directory keeps two characters beside the name's
+// floor (its own `min-width`, in the path's): its first and the ellipsis after
+// it ("d…"), so what gives way says it is cut. The floor is its characters in `ch` rounded up to the
 // pixel: `ch` is the advance of "0" and a run of text can advance a 64th of a
 // pixel per glyph past it, so an exact floor leaves the name's last character
 // short and `text-overflow` cuts it.
