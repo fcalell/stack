@@ -7,9 +7,9 @@ import {
 } from "@fcalell/ui-core/variants";
 import { useContext } from "react";
 import { View } from "react-native";
-import { cn } from "../../lib/cn";
-import { GroundContext } from "../../lib/ground";
-import { Strut } from "../../lib/strut";
+import { cn } from "./cn";
+import { GroundContext } from "./ground";
+import { Strut } from "./strut";
 
 const HEAD = "flex-row items-center justify-between";
 // A loading line stands in its text's line box: a zero-width line of the
@@ -21,8 +21,7 @@ const TRACK_WAIT = "flex-row items-center";
 const BAR = "w-full";
 
 // A Slider waiting: its label's and value's bars in their line boxes over a
-// bar in the track's box, at the loaded Slider's height. Outside the
-// package's exports.
+// bar in the track's box, at the loaded Slider's height.
 export function SliderWait() {
 	// In a Group the slider is one of its items, at the card's inset.
 	const item = useContext(GroundContext) === "group" && GROUP_ITEM;

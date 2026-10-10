@@ -4,7 +4,7 @@ import type {
 	FieldBinding,
 	FieldControl,
 } from "@fcalell/ui-core/descriptors";
-import type { FieldShape } from "@fcalell/ui-core/list-state";
+import { type FieldShape, optionsWaitOf } from "@fcalell/ui-core/list-state";
 import {
 	FIELD_ERROR_LINE,
 	FORM_FIELD_SUMMARY,
@@ -40,7 +40,7 @@ import { useWords } from "../../lib/words";
 import { Checkbox, type CheckboxProps } from "../checkbox";
 import { Icon } from "../icon";
 import { IconButton } from "../icon-button";
-import { OptionList } from "../option-list";
+import { OptionList, type OptionListProps } from "../option-list";
 import { SegmentedControl } from "../segmented-control";
 import { Slider } from "../slider";
 import { ChangeMark } from "../status/change";
@@ -119,21 +119,38 @@ function formOf(control: ReactNode) {
 	if (type === Switch) return "switch";
 	if (type === Checkbox) return "checkbox";
 	if (type === Slider) return "slider";
-	if (type === OptionList || type === SegmentedControl) return "group";
+	if (type === OptionList) return "options";
+	if (type === SegmentedControl) return "segments";
 	return "field";
 }
 
 // The form a `FormField` element waits as, read off its props before its data:
 // a loading `Section` and a `Form` stand it for each field they hold. An
-// answered field folds to one summary row, which it waits as a plain field.
+// answered field folds to one summary row, whatever its control; a list of
+// options carries the rows its source declares.
 export function fieldWaitOf(node: ReactNode): FieldShape {
 	if (!isValidElement<FormFieldProps>(node))
 		return { holds: "field", described: false };
 	const { answered, description } = node.props;
-	const form = answered ? "field" : formOf(fieldControl(node.props));
+	const described = Boolean(description);
+	if (answered) return { holds: "folded", described };
+	const control = fieldControl(node.props);
+	const form = formOf(control);
+	if (form === "options" && isValidElement<OptionListProps>(control))
+		return {
+			holds: "options",
+			described,
+			options: optionsWaitOf(control.props),
+		};
 	return {
-		holds: form === "switch" || form === "checkbox" ? form : "field",
-		described: Boolean(description),
+		holds:
+			form === "switch" ||
+			form === "checkbox" ||
+			form === "slider" ||
+			form === "segments"
+				? form
+				: "field",
+		described,
 	};
 }
 
@@ -198,7 +215,7 @@ function FieldBody<V>(props: FormFieldProps<V>) {
 		);
 	// A group takes no field context: its label names the group, never the
 	// controls inside.
-	if (form === "group")
+	if (form === "options" || form === "segments")
 		return (
 			<View className={cn(formField({ holds: "field" }), STACK)}>
 				<RNText className={labelClass}>{label}</RNText>

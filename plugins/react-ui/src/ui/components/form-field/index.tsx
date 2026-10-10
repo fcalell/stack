@@ -6,7 +6,7 @@ import type {
 	FieldBinding,
 	FieldControl,
 } from "@fcalell/ui-core/descriptors";
-import type { FieldShape } from "@fcalell/ui-core/list-state";
+import { type FieldShape, optionsWaitOf } from "@fcalell/ui-core/list-state";
 import {
 	FIELD_ERROR_LINE,
 	FORM_FIELD_SUMMARY,
@@ -36,7 +36,7 @@ import { useWords } from "../../lib/words.tsx";
 import { Checkbox } from "../checkbox/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
-import { OptionList } from "../option-list/index.tsx";
+import { OptionList, type OptionListProps } from "../option-list/index.tsx";
 import { SegmentedControl } from "../segmented-control/index.tsx";
 import { Select } from "../select/index.tsx";
 import { Slider } from "../slider/index.tsx";
@@ -116,21 +116,39 @@ function formOf(control: ReactNode) {
 	if (type === Checkbox) return "checkbox";
 	if (type === Slider) return "slider";
 	if (type === Select) return "trigger";
-	if (type === OptionList || type === SegmentedControl) return "group";
+	if (type === OptionList) return "options";
+	if (type === SegmentedControl) return "segments";
 	return "field";
 }
 
 // The form a `FormField` element waits as, read off its props before its data:
 // a loading `Section` and a `Form` stand it for each field they hold. An
-// answered field folds to one summary row, which it waits as a plain field.
+// answered field folds to one summary row, whatever its control; a Select's
+// trigger waits as the plain field; a list of options carries the rows its
+// source declares.
 export function fieldWaitOf(node: ReactNode): FieldShape {
 	if (!isValidElement<FormFieldProps>(node))
 		return { holds: "field", described: false };
 	const { answered, description } = node.props;
-	const form = answered ? "field" : formOf(controlOf(node.props));
+	const described = Boolean(description);
+	if (answered) return { holds: "folded", described };
+	const control = controlOf(node.props);
+	const form = formOf(control);
+	if (form === "options" && isValidElement<OptionListProps>(control))
+		return {
+			holds: "options",
+			described,
+			options: optionsWaitOf(control.props),
+		};
 	return {
-		holds: form === "switch" || form === "checkbox" ? form : "field",
-		described: Boolean(description),
+		holds:
+			form === "switch" ||
+			form === "checkbox" ||
+			form === "slider" ||
+			form === "segments"
+				? form
+				: "field",
+		described,
 	};
 }
 
@@ -222,7 +240,7 @@ function FieldBody<V>(props: FormFieldProps<V>) {
 				/>
 			</div>
 		);
-	if (form === "group")
+	if (form === "options" || form === "segments")
 		return (
 			<div ref={root} className={cn(formField({ holds: "field" }), STACK)}>
 				<p

@@ -5,11 +5,12 @@ import {
 	isValidElement,
 	type ReactNode,
 	useContext,
+	useLayoutEffect,
 } from "react";
 import { View } from "react-native";
 import type { Closed } from "../../lib/closed";
-import { FieldWait } from "../../lib/field-wait";
-import { FormContext, FormStands } from "../../lib/form";
+import { FieldWait, liftBars } from "../../lib/field-wait";
+import { FootSlotContext, FormContext, FormStands } from "../../lib/form";
 import { useLeaveGuard } from "../../lib/leave";
 import { LoadingContext } from "../../lib/loading";
 import { TouchedContext, useTouchState } from "../../lib/touched";
@@ -50,7 +51,9 @@ export interface FormProps extends Closed {
 // One column, at most a line of running text wide on a page and the sheet's
 // width in a sheet: fields apart at the fields rhythm, or sections at the sections rhythm with
 // the `ActionBar` under a hairline across the form; the bar sits in flow, so
-// it scrolls with the fields and the keyboard never covers it. Its filled act
+// it scrolls with the fields and the keyboard never covers it; in a sheet it
+// is the sheet's foot instead (the form hands it up), pinned while the fields
+// scroll and at the content's end when they do not. Its filled act
 // runs its `onAct` (native has no implicit submission); while that promise
 // pends the act is pending and the others ignore the press. A blocked act
 // says its reason once a field has taken input. While the
@@ -65,7 +68,25 @@ export function Form({ children }: FormProps) {
 	const [touch] = useTouchState();
 	// A sheet's form is the sheet's: it closes on its own act and asks nothing.
 	useLeaveGuard(touch.leave, within !== "sheet");
-	const nodes = waitFields(children, useContext(LoadingContext));
+	const loading = useContext(LoadingContext);
+	// In a sheet the form's direct bars leave its body for the sheet's foot,
+	// which draws them in the form's own contexts.
+	const slot = useContext(FootSlotContext);
+	const lifted = slot !== null && within === "sheet";
+	const { bars, rest } = liftBars(children, ActionBar, lifted);
+	const nodes = waitFields(rest, loading);
+	const foot =
+		lifted && bars.length > 0 ? (
+			<FormContext.Provider value>
+				<TouchedContext.Provider value={touch}>
+					<LoadingContext.Provider value={loading}>
+						{bars}
+					</LoadingContext.Provider>
+				</TouchedContext.Provider>
+			</FormContext.Provider>
+		) : null;
+	useLayoutEffect(() => slot?.set(foot));
+	useLayoutEffect(() => () => slot?.set(null), [slot]);
 	const sectioned = nodes.some(
 		(node) => isValidElement(node) && node.type === Section,
 	);
