@@ -1,3 +1,4 @@
+import { Field } from "@base-ui/react/field";
 import { Menu } from "@fcalell/plugin-react-ui/components/menu";
 import { Picker } from "@fcalell/plugin-react-ui/components/picker";
 import { Select } from "@fcalell/plugin-react-ui/components/select";
@@ -19,7 +20,12 @@ function Page() {
 	return (
 		<div style={{ minHeight: "250vh" }}>
 			<Picker label="Pick" options={OPTIONS} value={pick} onChange={setPick} />
-			<Select value={select} onChange={setSelect} options={OPTIONS} />
+			<Field.Root>
+				<Field.Label nativeLabel={false} render={<div />}>
+					Choose
+				</Field.Label>
+				<Select value={select} onChange={setSelect} options={OPTIONS} />
+			</Field.Root>
 			<Menu label="More" items={[{ label: "Rename", onAct: act }]} />
 		</div>
 	);
