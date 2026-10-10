@@ -1618,7 +1618,7 @@ a tick with no animation, never jumped to full.
   cut in its middle, its end kept (the web: a truncating stem of at least three characters
   before an unshrinking tail of the extension and the three characters before it, the path
   box's `min-width` the floor in `ch` and its shrink weight 10^7 against the chip's 1, as
-  ListRow's meta line, the counts' lanes 10^3 with `FILE_COUNT_YIELD`, each a flex item of the row; the phone: `ellipsizeMode="middle"`, the floor in px at a quarter of
+  ListRow's meta line, the counts' lanes 10^5 with `FILE_COUNT_YIELD`, each a flex item of the row; the phone: `ellipsizeMode="middle"`, the floor in px at a quarter of
   `figures` per character, the same weights). The chip's
   cells and size are FileRow's own in the roster, composed from `Chip`, with no token of its own.
 - Code, Diff and ProseDiff stand in one frame on the surface inside a hairline (`CONTENT_FRAME`),

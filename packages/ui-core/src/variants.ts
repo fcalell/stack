@@ -633,11 +633,11 @@ export const FILE_COUNTS =
 	"gap-inside tabular-nums text-meta leading-meta font-normal";
 // The web's counts give way once the path stands at its floor, before the
 // chip's label truncates: each lane, a flex item of the row (its block stands
-// as `display: contents`), shrinks at a weight (10^3) between the path's (10^7)
+// as `display: contents`), shrinks at a weight (10^5) between the path's (10^7)
 // and the chip's (1), from its four figures down to its own text. A lane keeps
 // four figures while the row has the room, so the lanes line up down a list.
 // (A phone's flex items do not shrink: its lanes keep their width.)
-export const FILE_COUNT_YIELD = "basis-figures shrink-1000 min-w-min";
+export const FILE_COUNT_YIELD = "basis-figures shrink-100000 min-w-min";
 // Comparison: its own row, not a list row, so a wrapped value keeps its air;
 // the label beside its chips.
 export const COMPARISON_ROW = "gap-pair min-h-row py-inside px-card";

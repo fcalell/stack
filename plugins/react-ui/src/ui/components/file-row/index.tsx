@@ -37,7 +37,7 @@ const HIT_LIST = "rounded-row touch:rounded-none";
 const MARK = "flex shrink-0";
 const LEADING = "flex shrink-0 items-center justify-center text-ink-meta";
 // The path takes the overflow first (its shrink weight is 10^7, then the
-// counts' lanes 10^3 (`FILE_COUNT_YIELD`), against the chip's 1, the weight of a mark's label in ListRow's meta line), down to its floor, a `min-width`
+// counts' lanes 10^5 (`FILE_COUNT_YIELD`), against the chip's 1, the weight of a mark's label in ListRow's meta line), down to its floor, a `min-width`
 // in `ch` (the path is mono) from its name; it clips what its floor holds.
 const PATH = "flex grow shrink-10000000 overflow-hidden";
 const DIRECTORY = "shrink-10000 truncate";

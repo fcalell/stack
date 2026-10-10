@@ -363,9 +363,16 @@ const drawn = (element: Element) => {
 };
 const whole = (element: Element) =>
 	drawn(element) <= element.getBoundingClientRect().width;
+// A label is drawn whole only if its text fits its box to the sub-pixel:
+// Chromium draws the ellipsis when the text is a hundredth of a pixel wider
+// than the box, which `scrollWidth` (a rounded integer) never reports.
+const labelWhole = (element: HTMLElement) =>
+	!clipped(element) && whole(element);
 
+// `mayCut` names the rows whose chip label may truncate at the width (the row
+// is at its floor there and the label cannot be whole beside it).
 const review =
-	(wholeChip: boolean): Play =>
+	(mayCut: (path: string) => boolean): Play =>
 	async ({ canvas }) => {
 		await mono();
 		for (const file of SENSITIVE) {
@@ -421,8 +428,8 @@ const review =
 			// The chip's label is cut only once the path stands at its floor and the
 			// counts at their text; where the room allows it, it is whole.
 			const label = within(chip as HTMLElement).getByText(file.label);
-			if (clipped(label)) {
-				await expect(wholeChip).toBe(false);
+			if (!labelWhole(label)) {
+				await expect(mayCut(file.path)).toBe(true);
 				await expect(path.getBoundingClientRect().width).toBeLessThanOrEqual(
 					floor + 0.5,
 				);
@@ -433,10 +440,16 @@ const review =
 			}
 		}
 	};
-const reviewed = review(false);
+// At 320 `biome.json` cannot hold its label beside its floor and the counts,
+// nor can the long billing row; `docs/flags.md` can.
+const reviewed = review((path) => !path.endsWith("flags.md"));
+// Any row may cut (the touch lead takes room, a Group takes more).
+const reviewedAny = review(() => true);
 // A page's width at which the chip's label has room whole beside the path's
 // floor and the counts yielded.
-const reviewedWhole = review(true);
+const reviewedWhole = review(() => false);
+// Touch 390: the long billing row's label is 5 px short beside the lead.
+const reviewedBilling = review((path) => path.includes("/billing/"));
 
 export const ReviewFloor320: StoryObj = {
 	render: () => <Review width={320} />,
@@ -452,18 +465,21 @@ export const ReviewFloor768: StoryObj = {
 };
 export const ReviewGroupFloor320: StoryObj = {
 	render: () => <Review width={320} grouped />,
-	play: reviewed,
+	play: reviewedAny,
 };
-export const ReviewFloorTouch320 = touch(ReviewFloor320, 320);
+export const ReviewFloorTouch320 = touch(
+	{ render: () => <Review width={320} />, play: reviewedAny },
+	320,
+);
 // On touch the directory's lead is 22 px (two 11 px characters), which leaves
 // the long billing row's label 5 px short of whole at 390: it may cut there,
 // by the same rule as at 320 (only once the path stands at its floor).
 export const ReviewFloorTouch390 = touch(
-	{ render: () => <Review width={390} />, play: reviewed },
+	{ render: () => <Review width={390} />, play: reviewedBilling },
 	390,
 );
 export const ReviewGroupFloorTouch390 = touch(
-	{ render: () => <Review width={390} grouped />, play: reviewed },
+	{ render: () => <Review width={390} grouped />, play: reviewedAny },
 	390,
 );
 export const ChevronEndsTouch = touch(ChevronEnds);
