@@ -96,7 +96,8 @@ function story(width: number): StoryObj {
 			const end = more.getBoundingClientRect();
 			const first = filter.getBoundingClientRect();
 			const lines = Math.round(
-				text.height / Number.parseFloat(getComputedStyle(title).lineHeight),
+				(text.height - 16) /
+					Number.parseFloat(getComputedStyle(title).lineHeight),
 			);
 			console.log(
 				`${width}: head ${head.height}, title ${text.height} (${lines} lines) from ${text.left} to ${text.right}, filter ${first.width}x${first.height} from ${first.left}, more ${end.width}x${end.height} ending ${end.right} of ${head.right}, section ${section.getBoundingClientRect().left}; one-line head ${short.getBoundingClientRect().height}; shelled head ${shelled.getBoundingClientRect().height}`,
@@ -115,6 +116,47 @@ function story(width: number): StoryObj {
 			await expect(end.top).toBeGreaterThanOrEqual(head.top);
 			await expect(end.bottom).toBeLessThanOrEqual(head.bottom);
 			await expect(lines).toBeGreaterThan(1);
+			// A wrapped title is padded a step above and below its lines (8 px), the
+			// head a step more; the acts hang from the first line, not the head's
+			// middle; the title keeps two fifths of the row.
+			const line = Number.parseFloat(getComputedStyle(title).lineHeight);
+			const step = Number.parseFloat(getComputedStyle(title).paddingTop);
+			console.log(
+				`${width}: step ${step}, line ${line}, filter centre ${first.top + first.height / 2}, first line centre ${text.top + step + line / 2}`,
+			);
+			await expect(step).toBeGreaterThanOrEqual(8);
+			await expect(text.height).toBeGreaterThanOrEqual(lines * line + 2 * step);
+			await expect(head.height).toBeGreaterThanOrEqual(text.height + 2 * step);
+			if (lines >= 3) {
+				await expect(text.height).toBeGreaterThanOrEqual(100);
+				await expect(head.height).toBeGreaterThanOrEqual(116);
+			}
+			await expect(first.top + first.height / 2).toBeCloseTo(
+				text.top + step + line / 2,
+				0,
+			);
+			await expect(end.top + end.height / 2).toBeCloseTo(
+				first.top + first.height / 2,
+				0,
+			);
+			await expect(text.width).toBeGreaterThanOrEqual(
+				(head.width - 32) * 0.4 - 1,
+			);
+			// The one-line form is unchanged: head 45, acts 44, centred on the line.
+			const shortHead = short.getBoundingClientRect();
+			const shortTitle = short.querySelector("h1")?.getBoundingClientRect();
+			const shortAct = short
+				.querySelector("[aria-label='Filter']")
+				?.getBoundingClientRect();
+			if (!shortTitle || !shortAct)
+				throw new Error("the short Place is not drawn");
+			await expect(shortHead.height).toBeCloseTo(45, 0);
+			await expect(shortAct.height).toBeCloseTo(44, 0);
+			await expect(shortTitle.left).toBeCloseTo(16, 0);
+			await expect(shortAct.top + shortAct.height / 2).toBeCloseTo(
+				shortTitle.top + shortTitle.height / 2,
+				0,
+			);
 		},
 	};
 }

@@ -3,6 +3,7 @@ import {
 	PAGE_BODY,
 	PAGE_BODY_BESIDE,
 	PAGE_HEAD,
+	PAGE_TITLE_BLOCK,
 	PAGE_TITLE_FLOOR,
 	PAGE_TOP_BAR,
 	PAGE_TOP_BAR_END,
@@ -34,7 +35,7 @@ import { ToastRoom } from "../toast/room";
 const SCREEN = "flex-1";
 // The bar is the title's row: it wraps, so acts that do not fit beside the back
 // act, the title's floor and the gaps drop whole to a second line.
-const TOP_BAR = "relative flex-row flex-wrap items-center";
+const TOP_BAR_FIRST = "relative flex-row flex-wrap items-start";
 const ACTS = "shrink-0 flex-row items-center gap-acts ms-auto";
 const TITLE = "min-w-0 grow";
 const BODY = "flex-1";
@@ -86,7 +87,7 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 					className={SCREEN}
 				>
 					<View className={PAGE_HEAD}>
-						<View className={cn(PAGE_TOP_BAR, TOP_BAR)}>
+						<View className={cn(PAGE_TOP_BAR, TOP_BAR_FIRST)}>
 							{exit === undefined ? null : (
 								<View className={PAGE_TOP_BAR_START}>
 									<IconButton
@@ -99,7 +100,12 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 							)}
 							<RNText
 								accessibilityRole="header"
-								className={cn(text({ role: "title" }), TITLE, PAGE_TITLE_FLOOR)}
+								className={cn(
+									text({ role: "title" }),
+									TITLE,
+									PAGE_TITLE_FLOOR,
+									PAGE_TITLE_BLOCK,
+								)}
 							>
 								{title}
 							</RNText>

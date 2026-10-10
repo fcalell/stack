@@ -123,3 +123,57 @@ export const ActsShareTheTitleRow3At320 = row(320, 3, true);
 export const ActsShareTheTitleRow3At390 = row(390, 3, false);
 export const ActsShareTheTitleRow4At320 = row(320, 4, true);
 export const ActsShareTheTitleRow4At390 = row(390, 4);
+
+// A touch Screen whose title wraps pads it a step above and below its lines and
+// its head a step more; the back act and the acts hang from the first line.
+function wrapped(width: number): StoryObj {
+	return {
+		...viewport(width),
+		render: () => (
+			<Screen
+				title="A deploy history title long enough to wrap onto several lines of the head before any act of the screen"
+				back="/system"
+				actions={TOOLS.slice(0, 1)}
+			>
+				<p>The first section.</p>
+			</Screen>
+		),
+		play: async ({ canvasElement }) => {
+			const head = canvasElement.querySelector("header");
+			const title = head?.querySelector("h1");
+			const back = head?.querySelector("[aria-label='Back']");
+			const act = head?.querySelector("[aria-label='Filter']");
+			if (!head || !title || !back || !act)
+				throw new Error("the Screen is not drawn");
+			const rect = head.getBoundingClientRect();
+			const text = title.getBoundingClientRect();
+			const style = getComputedStyle(title);
+			const line = Number.parseFloat(style.lineHeight);
+			const step = Number.parseFloat(style.paddingTop);
+			const lines = Math.round((text.height - 2 * step) / line);
+			const first = act.getBoundingClientRect();
+			const arrow = back.getBoundingClientRect();
+			console.log(
+				`${width}: head ${rect.height}, title ${text.height} (${lines} lines), act centre ${first.top + first.height / 2}, back centre ${arrow.top + arrow.height / 2}, first line centre ${text.top + step + line / 2}`,
+			);
+			await expect(lines).toBeGreaterThanOrEqual(3);
+			await expect(step).toBeGreaterThanOrEqual(8);
+			await expect(text.height).toBeGreaterThanOrEqual(100);
+			await expect(rect.height).toBeGreaterThanOrEqual(text.height + 2 * step);
+			await expect(first.top + first.height / 2).toBeCloseTo(
+				text.top + step + line / 2,
+				0,
+			);
+			await expect(arrow.top + arrow.height / 2).toBeCloseTo(
+				text.top + step + line / 2,
+				0,
+			);
+			await expect(text.width).toBeGreaterThanOrEqual(
+				(rect.width - 32) * 0.4 - 1,
+			);
+		},
+	};
+}
+
+export const WrappedTitleKeepsItsBlockAt320 = wrapped(320);
+export const WrappedTitleKeepsItsBlockAt390 = wrapped(390);

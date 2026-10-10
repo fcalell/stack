@@ -828,6 +828,10 @@ export const SWITCHER_SLOT = "p-float";
 export const SHELL_PLACES = "gap-rows p-float";
 // The shell on touch: the tab bar on the canvas under a hairline, a pair
 // above its glyphs so they centre on the header strip's line.
+// A tab's count is a badge on its glyph's corner: on a ring of the bar's own
+// ground, so where it meets the glyph the two never read as ink on ink.
+export const SHELL_TAB_COUNT =
+	"rounded-full bg-canvas outline-2 outline-canvas";
 export const SHELL_TAB_BAR = "px-float pt-pair bg-canvas border-t border-edge";
 // A page outside the shell, a Gate: the surface ground at the page inset, one
 // column at the `auth` width (a column cell is a width; the region centres
@@ -875,7 +879,14 @@ export const PAGE_TOP_BAR_END = "-me-icon-inset";
 // A touch Screen's title row wraps: the title holds at least two fifths of it (a
 // structural fraction, never a width), so acts that do not fit beside it, the
 // back act and the gaps drop whole to a second line at the row's end.
-export const PAGE_TITLE_FLOOR = "min-w-2/5";
+export const PAGE_TITLE_FLOOR = "min-w-2/5 basis-0";
+// The title row's title carries a step of block padding above and below its
+// lines (one `inside` step), so a single line fills the strip's height as it did
+// and a wrapped title never butts the head's edges. A head whose title wraps
+// takes a step more over the row. The row anchors its items to the top (a
+// platform overlay), so a 44 px act centres on the title's first line.
+export const PAGE_TITLE_BLOCK = "py-inside";
+export const PAGE_HEAD_WRAPS = "py-inside";
 // The touch title over the head's hairline, a pair apart from it.
 export const PAGE_TITLE = "pb-pair";
 export const PAGE_BODY = "gap-sections p-page";
