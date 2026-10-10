@@ -55,8 +55,15 @@ export const WORKFLOW_STAGE =
 	"flex flex-col h-[86rem] w-[56rem] max-w-full bg-surface p-page";
 export const JOURNEY_STAGE =
 	"flex flex-col h-[58rem] w-[56rem] max-w-full bg-surface p-page";
+// A canvas opens at the text floor (scale 1), so a stage is as tall as the
+// drawing at scale 1 plus the zoom stack under it: a lone group (touch, the
+// taller) with the page insets, a `pair` of air and the stack.
 export const ALONE_STAGE =
-	"flex flex-col h-[16rem] w-[56rem] max-w-full bg-surface p-page";
+	"flex flex-col h-[22rem] w-[56rem] max-w-full bg-surface p-page";
+// The placed loop's: its two positioned nodes, the row of empty groups below
+// and the stack under the row's first group.
+export const PLACED_STAGE =
+	"flex flex-col h-[44rem] w-[56rem] max-w-full bg-surface p-page";
 // The overview's: a pane the workflow fits at about two thirds, between the
 // overview floor and the full node, in either density.
 export const OVERVIEW_STAGE =
@@ -199,7 +206,7 @@ export function drawCanvas(frame: ShowcaseFrame) {
 				<Selectable
 					label="Placed loop"
 					graph={HOLLOW_PLACED}
-					stage={STAGE}
+					stage={PLACED_STAGE}
 					first={first}
 				/>
 				<Selectable

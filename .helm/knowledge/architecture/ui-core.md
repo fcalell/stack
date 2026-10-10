@@ -1823,7 +1823,7 @@ a tick with no animation, never jumped to full.
   it, so one route serves a computed layout and a stored one. A group's left padding grows so its
   head text ends a `pair` before the first column an edge crosses the head band at, and ELK's
   Brandes-Köpf placement is balanced so a parent stands over its children. A graph that fits at scale 1 opens
-  centred, a larger one at scale 1 with its first node in path order at the top centre; Fit is
+  centred, a larger one at scale 1 (the text floor first: a first view is never zoomed out) with its first node in path order and the group holding it wholly in the pane at the top, on the room's centre line clamped to the page insets (the left inset when it is as wide as the pane); Fit is
   capped at scale 1 and leaves the room the zoom stack and the act take (each marks itself `data-clear` with the edge it stands against, which the viewport reads off the DOM), and the opening view stands in that same room through the one `clearance` read. ELK's worker is its own file imported with `?worker`, which cannot survive
   Vite's pre-bundling of this package's `.tsx` entries: the module holding the import
   (`lib/canvas-layout`) is reached from a dynamic import by the package's own name, so a graph the

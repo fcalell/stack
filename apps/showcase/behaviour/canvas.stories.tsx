@@ -14,6 +14,7 @@ import {
 	HOLLOW_PLACED,
 	JOURNEY,
 	OFF,
+	PLACED_STAGE,
 	PROBLEM,
 	RUN,
 	SCENARIO,
@@ -612,7 +613,9 @@ export const OpensCentred: StoryObj = {
 };
 
 // A graph larger than the room opens at scale 1 with its first node's top
-// centre on the room's centre line, a page inset below the pane's top.
+// centre on the room's centre line, a page inset below the pane's top, as far
+// as a page inset on each side of the pane allows (003-189 round 2: the first
+// node stands whole, so the centre line gives way to the pane's insets).
 export const OpensAtTheFirstNode: StoryObj = {
 	render: () => (
 		<div className={SMALL}>
@@ -639,12 +642,16 @@ export const OpensAtTheFirstNode: StoryObj = {
 		if (!button) throw new Error("no node");
 		const space = room(region);
 		const box = rect(button);
+		const pane = rect(region);
+		const low = pane.left + page();
+		const high = pane.right - page() - box.width;
+		const line = space.left + space.width / 2 - box.width / 2;
 		await expect(
-			Math.abs(box.left + box.width / 2 - (space.left + space.width / 2)),
+			Math.abs(
+				box.left - (low > high ? low : Math.min(Math.max(line, low), high)),
+			),
 		).toBeLessThan(1);
-		await expect(Math.abs(box.top - (rect(region).top + page()))).toBeLessThan(
-			1,
-		);
+		await expect(Math.abs(box.top - (pane.top + page()))).toBeLessThan(1);
 	},
 };
 
@@ -1463,7 +1470,7 @@ export const HollowGroupPlaced: StoryObj<{ heard: Select; moved: Moved }> = {
 		},
 	},
 	render: (args) => (
-		<div className={STAGE}>
+		<div className={PLACED_STAGE}>
 			<Canvas
 				label="Placed loop"
 				nodes={HOLLOW_PLACED.nodes}
