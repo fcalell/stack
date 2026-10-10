@@ -1160,7 +1160,7 @@ export const PaneWithoutFormSticksNothing: StoryObj = {
 	},
 };
 
-const LONG = Array.from({ length: 44 }, (_, i) => `Item ${i + 1}`);
+const NOW_ITEMS = Array.from({ length: 44 }, (_, i) => `Item ${i + 1}`);
 
 function OpensARecord(props: { width: number }) {
 	const [open, setOpen] = useState<string>();
@@ -1170,7 +1170,7 @@ function OpensARecord(props: { width: number }) {
 				<Split
 					list={
 						<List
-							items={LONG}
+							items={NOW_ITEMS}
 							row={{
 								key: (name: string) => name,
 								title: (name: string) => name,
@@ -1210,7 +1210,9 @@ function opensTheKeyboard(width: number): StoryObj {
 			const main = must(canvasElement.querySelector("[data-split]"))
 				.children[1];
 			await waitFor(() => expect(main).toContainElement(focused()));
-			await expect(canvas.getByRole("button", { name: "Approve" })).toHaveFocus();
+			await expect(
+				canvas.getByRole("button", { name: "Approve" }),
+			).toHaveFocus();
 			await userEvent.tab({ shift: true });
 			await expect(must(canvasElement.querySelector("nav"))).toContainElement(
 				focused(),

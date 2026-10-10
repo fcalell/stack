@@ -28,9 +28,7 @@ export const OpenMarkersDrawTheirForm: StoryObj = {
 		await expect(streamed?.querySelector("em")?.textContent).toContain(
 			"redeploy",
 		);
-		await expect(streamed?.querySelector("code")?.textContent).toBe(
-			"npm test",
-		);
+		await expect(streamed?.querySelector("code")?.textContent).toBe("npm test");
 		await expect(finished?.querySelector("em")).toBeNull();
 		await expect(canvas.getByText(/A \*finished reply/)).toBeVisible();
 	},

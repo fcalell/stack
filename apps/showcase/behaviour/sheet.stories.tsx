@@ -812,7 +812,9 @@ export const OpenedByAPicksAct: StoryObj = {
 	play: async ({ canvas, userEvent }) => {
 		const trigger = canvas.getByRole("combobox", { name: /Repo/ });
 		await userEvent.click(trigger);
-		await userEvent.click(await screen.findByRole("button", { name: /New epic/ }));
+		await userEvent.click(
+			await screen.findByRole("button", { name: /New epic/ }),
+		);
 		await screen.findByRole("dialog", { name: "New epic" });
 		await userEvent.keyboard("{Escape}");
 		await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
