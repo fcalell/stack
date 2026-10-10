@@ -30,6 +30,8 @@ import {
 	belowFloor,
 	glyphSize,
 	minZoomFor,
+	nameCap,
+	overviewFloorFor,
 	TEXT_FLOOR,
 	UNZOOM_VAR,
 } from "./floor.ts";
@@ -160,6 +162,21 @@ function CanvasGraph({
 		ports: Boolean(onConnect),
 		glyph: glyphSize(touch),
 	});
+
+	// The zoom under which a node is its glyph alone: the overview's floor, raised
+	// until no two overview forms (glyph, a `pair`, the name at its cap) overlap
+	// with a stretch between them for an edge; 1 for a graph with no overview.
+	const overview = useMemo(() => {
+		const glyph = glyphSize(touch);
+		return overviewFloorFor(
+			[...boxes.values()],
+			glyph,
+			glyph + space.pair + nameCap(touch),
+			2 * space.pair,
+		);
+	}, [boxes, touch, space.pair]);
+	// The second flag, beside `below`: true while the canvas is under that floor.
+	const bare = useViewportValue(viewport, (view) => view.k < overview);
 
 	// The lowest zoom at which no two glyphs stand closer than the gap the edges
 	// between them need.
@@ -353,6 +370,7 @@ function CanvasGraph({
 							lifted={live.has(id)}
 							targeted={link?.target === id}
 							below={below}
+							bare={bare}
 							edit={edit}
 							onSelect={onSelect}
 							onSize={resized}

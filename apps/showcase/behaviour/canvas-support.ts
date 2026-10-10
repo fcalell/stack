@@ -175,7 +175,7 @@ export function marksClearTheIcon(root: Element) {
 	if (forms.length === 0) throw new Error("no glyph is drawn");
 	for (const form of forms) {
 		const icon = form.querySelector("svg");
-		const marks = [...form.querySelectorAll(":scope > span")];
+		const marks = [...form.querySelectorAll(":scope > span:not([data-name])")];
 		if (!icon || marks.length !== 2)
 			throw new Error("a glyph holds its icon and two marks");
 		for (const mark of marks)
@@ -198,6 +198,10 @@ export async function tabKey() {
 	await cdp().send("Input.dispatchKeyEvent", { type: "keyUp", ...key });
 	await new Promise((done) => requestAnimationFrame(() => done(undefined)));
 }
+
+// The names the overview draws beside the glyphs, in path order.
+export const names = (root: Element) =>
+	root.querySelectorAll<HTMLElement>("[data-layer] button > [data-name]");
 
 // A node's glyph button, by its id.
 export function glyph(root: Element, id: string): HTMLElement {

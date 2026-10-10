@@ -103,14 +103,22 @@ node selects it as a click does.
 Every zoom button, the `act`, each glyph and each port is at least 44 px at the touch density, at
 any zoom: a port's hit is drawn at that size whatever the scale.
 
-On every input, pointer and finger alike, a node under zoom 1 is its glyph alone: the icon in a
+On every input, pointer and finger alike, a node under zoom 1 is its glyph: the icon in a
 box of the density's `control` size, its border the state's (a selection or a problem), its
 status as a dot on the box's top right corner, and a problem as a danger dot on its bottom right
-corner, straddling the border so neither covers the icon. It carries the node's `title` as its tooltip. Group heads and edge labels
-draw nothing there, so an overview never shows text under the caption size. A click, a tap or
-Enter on a glyph zooms to that node at its own size and chooses nothing. Edges and group frames
-follow the glyphs, so an edge ends on its glyph, and zooming out stops where two glyphs would stand
-closer than two `pair`, so the edges between them still draw. Keep `problem` and `status` words short and put the detail in your
+corner, straddling the border so neither covers the icon. From zoom 1 down to half the glyph
+carries the node's `title` beside it, on one line at the caption size, in body ink at 500, cut at the
+short measure, on the canvas's own ground so an edge never strikes through it; the name is
+drawn at the same size at any zoom, so the overview never shows text under the caption size.
+Under half the glyph stands alone, with the `title` as its tooltip. A graph whose nodes stand too
+close for their names to clear each other at half raises that zoom to the lowest at which they
+clear, and one that cannot clear them under zoom 1 has no named overview: the glyph alone. Group
+heads and edge labels draw nothing under zoom 1. A click, a tap or Enter on a glyph or its name
+zooms to that node at its own size and chooses nothing. A zoom step is a fifth of the scale.
+Edges and group frames follow the glyphs, so an edge ends on its glyph, and zooming out stops
+where two glyphs would stand closer than two `pair`, so the edges between them still draw.
+Give each node its own `title`: beside the icon it is the overview's only mark of one node of a
+kind from another. Keep `problem` and `status` words short and put the detail in your
 sheet: a glyph shows the mark, and the words are one tap away.
 
 ## States

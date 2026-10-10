@@ -42,7 +42,7 @@ export interface Viewport {
 	screenToFlow(point: CanvasPoint): CanvasPoint;
 }
 
-const STEP = 1.5;
+const STEP = 1.2;
 // One wheel event moves the scale by at most the zoom stack's step, in d3's
 // log2 measure; a trackpad pinch's small deltas stay proportional below it.
 const MOST = Math.log2(STEP);

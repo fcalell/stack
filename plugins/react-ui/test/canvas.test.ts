@@ -15,6 +15,9 @@ import {
 	glyphBoxes,
 	glyphSize,
 	minZoomFor,
+	nameCap,
+	OVERVIEW_FLOOR,
+	overviewFloorFor,
 	routeSide,
 	TEXT_FLOOR,
 } from "../src/ui/components/canvas/floor.ts";
@@ -442,6 +445,9 @@ test("Canvas draws its state fixtures in cells of showcaseFrames", () => {
 		"STATUS_DOT.state.active/rest",
 		"CANVAS_NODE_TEXT.tone.dimmed/rest",
 		"CANVAS_NODE_TEXT.tone.dimmed/selected",
+		"CANVAS_NODE_NAME.tone.rest/rest",
+		"CANVAS_NODE_NAME.tone.off/rest",
+		"CANVAS_NODE_NAME.tone.dimmed/rest",
 	])
 		assert.ok(cells.has(cell), cell);
 });
@@ -1357,6 +1363,67 @@ test("minZoomFor on the workflow keeps every pair of glyphs a gap of 2 * pair ap
 					Math.abs(one.y + one.height / 2 - (two.y + two.height / 2)),
 				);
 				assert.ok(gap * k >= glyph + 2 * PAIR - 1e-9);
+			}
+		});
+	}
+});
+
+test("the overview floor is a half, and a name is capped at the short measure of the caption", () => {
+	assert.equal(OVERVIEW_FLOOR, 0.5);
+	// 18 characters at 0.6 of an 11 px caption, rounded up; the touch caption is larger.
+	assert.equal(nameCap(false), 119);
+	assert.ok(nameCap(true) > nameCap(false));
+});
+
+test("overviewFloorFor keeps two overview forms apart by the nearer of the two axes, never under the overview floor", () => {
+	const at = (x: number, y: number) => box(x - 100, y - 20, 200, 40);
+	const form = 32 + PAIR + 119;
+	const air = 2 * PAIR;
+	// Far apart: the floor stands at the overview's own.
+	assert.equal(
+		overviewFloorFor([at(0, 0), at(2000, 2000)], 32, form, air),
+		OVERVIEW_FLOOR,
+	);
+	assert.equal(overviewFloorFor([at(0, 0)], 32, form, air), OVERVIEW_FLOOR);
+	assert.equal(overviewFloorFor([], 32, form, air), OVERVIEW_FLOOR);
+	// Side by side 400 apart, level: the width over the distance.
+	assert.equal(
+		overviewFloorFor([at(0, 0), at(400, 0)], 32, form, air),
+		Math.max(OVERVIEW_FLOOR, (form + air) / 400),
+	);
+	// Stacked 100 apart, in one column: the glyph over the distance.
+	assert.equal(
+		overviewFloorFor([at(0, 0), at(0, 100)], 32, form, air),
+		Math.max(OVERVIEW_FLOOR, (32 + air) / 100),
+	);
+	// Offset on both axes: the nearer zoom that clears one of them.
+	const offset = overviewFloorFor([at(0, 0), at(300, 120)], 32, form, air);
+	assert.equal(
+		offset,
+		Math.max(OVERVIEW_FLOOR, Math.min((form + air) / 300, (32 + air) / 120)),
+	);
+	// Too close to clear above zoom 1, or coincident: no overview, the floor is 1.
+	assert.equal(overviewFloorFor([at(0, 0), at(30, 20)], 32, form, air), 1);
+	assert.equal(overviewFloorFor([at(0, 0), at(0, 0)], 32, form, air), 1);
+});
+
+test("on the workflow the overview forms clear each other at their floor, at both densities", async () => {
+	const boxes = [...(await placed(WORKFLOW)).boxes.values()];
+	for (const touch of [false, true]) {
+		const glyph = glyphSize(touch);
+		const form = glyph + PAIR + nameCap(touch);
+		const floor = overviewFloorFor(boxes, glyph, form, 2 * PAIR);
+		assert.ok(floor >= OVERVIEW_FLOOR && floor <= 1);
+		if (floor === 1) continue;
+		boxes.forEach((one, index) => {
+			for (const two of boxes.slice(index + 1)) {
+				const across =
+					Math.abs(one.x + one.width / 2 - (two.x + two.width / 2)) * floor;
+				const down =
+					Math.abs(one.y + one.height / 2 - (two.y + two.height / 2)) * floor;
+				assert.ok(
+					across >= form + 2 * PAIR - 1e-9 || down >= glyph + 2 * PAIR - 1e-9,
+				);
 			}
 		});
 	}

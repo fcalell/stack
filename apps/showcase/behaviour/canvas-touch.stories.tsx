@@ -604,8 +604,8 @@ async function glyphForm(root: Element) {
 	});
 }
 
-// Zoomed out below 1 by a pinch and by the zoom stack, the nodes are glyphs at
-// three scales; a glyph never lifts, a pinch past the lowest zoom stops at it,
+// Zoomed out below 1 by a pinch and by the zoom stack, the nodes are glyphs
+// (named down to half, alone under it) at three scales; a glyph never lifts, a pinch past the lowest zoom stops at it,
 // and a tap on a glyph zooms to that node at its own size and chooses nothing.
 const overview: Story = {
 	...phone(true, false),
@@ -693,6 +693,8 @@ const crossing: Story = {
 			await userEvent.click(zoomIn);
 			const ground = groundPoint(region);
 			await drag(ground, shift(ground, -30, 20));
+			// A pinch takes the scale off the stack's steps, which pass through 1 itself.
+			await pinch(centre(rect(region)), 200, 190);
 			await userEvent.click(zoomOut);
 			await expect(viewport(canvasElement).scale).toBeGreaterThan(1);
 			await expect(records()).toBe(0);
@@ -700,7 +702,7 @@ const crossing: Story = {
 			await userEvent.click(zoomOut);
 			await expect(viewport(canvasElement).scale).toBeLessThan(1);
 			await expect(records()).toBeGreaterThan(0);
-			// Within the lower side.
+			// Within the lower side, the overview.
 			await userEvent.click(zoomOut);
 			await drag(ground, shift(ground, 20, -10));
 			await expect(records()).toBe(0);
@@ -788,7 +790,8 @@ const ports: Story = {
 		await atLeast(portOf("plan", "out"));
 		await atLeast(portOf("plan", "in"));
 		await wired();
-		await userEvent.click(canvas.getByRole("button", { name: "Zoom in" }));
+		for (let step = 0; step < 3; step++)
+			await userEvent.click(canvas.getByRole("button", { name: "Zoom in" }));
 		await expect(viewport(canvasElement).scale).toBe(2);
 		await atLeast(portOf("plan", "out"));
 		await atLeast(portOf("plan", "in"));
@@ -863,7 +866,8 @@ export const RoutesFollowTheGlyphsDark = mode("dark", follow);
 
 // ── 9 The glyph's state ─────────────────────────────────────────────
 
-const marks = (glyph: Element) => glyph.querySelectorAll(":scope > span");
+const marks = (glyph: Element) =>
+	glyph.querySelectorAll(":scope > span:not([data-name])");
 
 // A problem's glyph draws its border in the danger hue and holds the danger
 // dot; a status glyph holds a dot.
