@@ -12,6 +12,11 @@ import type { Closed } from "../../lib/closed.ts";
 import { useCommit } from "../../lib/commit.ts";
 import { FormStands } from "../../lib/form.ts";
 import { ThreadRoom } from "../../lib/frame.ts";
+import {
+	BOX_FOCUS,
+	POINTER_FOCUS_EDGE,
+	useModality,
+} from "../../lib/modality.ts";
 
 // The box draws the field's states, as `Input`'s does.
 const BOX = "flex flex-col";
@@ -20,9 +25,7 @@ const BOX = "flex flex-col";
 // and the value scrolls inside past its room.
 const BOX_FILLS = "grow";
 const VALUE_FILLS = "grow basis-0";
-const BOX_HOVER = "hover:border-edge-hover";
-const BOX_FOCUS =
-	"has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ring";
+const BOX_HOVER = `hover:border-edge-hover ${POINTER_FOCUS_EDGE}`;
 const BOX_DISABLED = "bg-fill-disabled";
 const VALUE =
 	"block w-full resize-none field-sizing-content outline-none placeholder:text-ink-meta disabled:text-ink-disabled";
@@ -61,6 +64,7 @@ export function TextArea({
 	budget,
 	autoFocus,
 }: TextAreaProps) {
+	useModality();
 	const source = kind === "source";
 	const fills = source && use(ThreadRoom) && use(FormStands) === "page";
 	const commit = useCommit(value, onChange, onCommit, false);

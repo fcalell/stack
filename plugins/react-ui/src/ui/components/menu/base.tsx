@@ -12,6 +12,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useState } from "react";
 import { arrowsOver } from "../../lib/arrows.ts";
+import { expandedTrigger, rememberOpener } from "../../lib/focus.ts";
 import { spacing, useTouch } from "../../lib/media.ts";
 import { PortalContainer } from "../../lib/portal.ts";
 import { Icon } from "../icon/index.tsx";
@@ -167,6 +168,7 @@ export function MenuBase({
 									aria-disabled={item.blocked !== undefined || undefined}
 									onClick={() => {
 										if (item.blocked !== undefined) return;
+										rememberOpener(expandedTrigger(document));
 										setOpen(false);
 										item.onAct();
 									}}
@@ -206,7 +208,10 @@ export function MenuBase({
 								<Control.Item
 									key={item.label}
 									label={item.label}
-									onClick={item.onAct}
+									onClick={() => {
+										rememberOpener(expandedTrigger(document));
+										item.onAct();
+									}}
 									disabled={item.blocked !== undefined}
 									className={(state) => rowOf(item, state.highlighted)}
 								>

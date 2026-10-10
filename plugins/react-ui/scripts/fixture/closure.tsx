@@ -652,7 +652,7 @@ export const closure = (
 		<StepCount at={1} of={3} class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<StepCount at={1} of={3} classList={{}} />
-		<Gate title="x" mark={{ name: "x" }} />
+		<Gate title="x" />
 		<Gate step={{ at: 1, of: 2 }} title="x" description={["x", { strong: "y" }]} banner={<Banner sentence="x" />}>x</Gate>
 		{/* @ts-expect-error: a description is runs, never a node */}
 		<Gate title="x" description={<b />} />

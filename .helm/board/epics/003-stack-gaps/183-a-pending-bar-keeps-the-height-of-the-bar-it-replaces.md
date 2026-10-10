@@ -14,7 +14,7 @@ Stead's item screens swap their `ActionBar` for a `PendingBar` in the same place
 ## Acceptance criteria
 - [ ] An `ActionBar` given `pending` stands the pending form at the bar's own loaded height at every density (stacked acts on touch, wrapped rows on the desktop, a blocked act's reason line included), so nothing below it moves when `pending` is set or cleared; the ghost acts take no focus, press or announcement, and Enter in a form field does not submit through them. (Web verified by the stories; native by construction, the reason line and pending-with-own-act limit measured as below.)
 - [x] A `PendingBar` standing alone is unchanged.
-- [ ] The showcase holds the swap (`pending` set and clear) for a one-, two- and three-act bar at 390 and 1280, plus a four-act desktop bar that wraps, measured by the critique (the frame holds them; the critique is a separate session).
+- [x] The showcase holds the swap (`pending` set and clear) for a one-, two- and three-act bar at 390 and 1280, plus a four-act desktop bar that wraps, measured by the critique (the frame holds them; the critique is a separate session).
 
 ## Open questions
 - [x] Its shape: ruled, `ActionBar` takes `pending`.
@@ -29,3 +29,12 @@ Neither shape: a count on `PendingBar` cannot reproduce a desktop bar whose acts
 - Showcase: the ActionBar frame holds the swap for one, two and three acts and the wrapped four-act bar (`Swaps`). `behaviour/action-bar.stories.tsx` asserts the pending box equals the loaded box in height (within half a pixel) and that the line below keeps its offset, on the desktop and touch density, and that the ghost acts are absent from the accessible tree and Enter in a field submits nothing. Scoped stories run: 105 files, 404 tests passed, peak 4890 MiB.
 - Out of scope: `Act.loading` is unchanged; the same latent gap for a Section holding fields directly plus an `ActionBar` (003-179) stays.
 Native unrendered: ActionBar pending keeps the bar height, native side.
+
+## Review
+Web accepted 2026-10-10; waits on the native render. Critique pass with a gap: the pending bar keeps the replaced bar's height at 1/2/3/4 acts, desktop and touch, the offset of what stands below is unchanged, and the ghost acts are inert; cosmetic: a stacked bar leaves up to about 180 px blank below the pending bar. Box 1 stays open: it mixes native with a blocked act's reason line, which no story renders; that case moves into the 003-140 rework (a blocked-then-pending swap story). Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass.
+
+## Built (rework)
+The blocked-reason case moved into 003-140: `PendingReplacingABlockedBarKeepsItsHeight` (and `Touch`) in `apps/showcase/behaviour/action-bar.stories.tsx` swaps a bar that holds a reason line for a pending bar and asserts the bar's height and the offset below are unchanged (web, 1280 and 390). Box 1 stays open only for the native render.
+
+## Re-review
+Web accepted 2026-10-10; waits on the native render. The blocked-then-pending swap passes on web: the pending bar replacing a blocked bar keeps 58/126, 0 px. Box 1 mixes web and native, so it stays open.

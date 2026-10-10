@@ -7,6 +7,7 @@ import { Input } from "@fcalell/plugin-react-ui/components/input";
 import { List } from "@fcalell/plugin-react-ui/components/list";
 import { MessageInput } from "@fcalell/plugin-react-ui/components/message-input";
 import { OptionList } from "@fcalell/plugin-react-ui/components/option-list";
+import { Picker } from "@fcalell/plugin-react-ui/components/picker";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
 import { Sheet } from "@fcalell/plugin-react-ui/components/sheet";
@@ -15,6 +16,7 @@ import { confirm } from "@fcalell/plugin-react-ui/lib/confirm";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { expect, screen, waitFor } from "storybook/test";
+import { focused } from "./support.ts";
 
 function Page() {
 	const [open, setOpen] = useState(false);
@@ -351,23 +353,94 @@ export const TouchHeadShortTitleOpen375: StoryObj = touchHead(
 	true,
 );
 
-// A desktop side sheet for a short form is its content's height, hung from
-// the top at the end edge.
-export const SideSheetFitsItsContent: StoryObj = {
-	parameters: { layout: "fullscreen" },
+const DESKTOP_900 = {
+	globals: { viewport: { value: "w1440", isRotated: false } },
+	parameters: {
+		layout: "fullscreen",
+		viewport: {
+			options: {
+				w1440: {
+					name: "1440",
+					styles: { width: "1440px", height: "900px" },
+					type: "desktop",
+				},
+			},
+		},
+	},
+} satisfies StoryObj;
+
+// A desktop Sheet whose content at natural height fits the viewport is a card
+// centred over the page at the dialog's width, its foot on screen.
+export const ShortSheetIsACentredCard: StoryObj = {
+	...DESKTOP_900,
 	render: () => <Page />,
 	play: async ({ canvas, userEvent }) => {
 		await userEvent.click(
 			canvas.getByRole("button", { name: "Rename domain" }),
 		);
 		const dialog = await screen.findByRole("dialog", { name: "Rename domain" });
-		// The enter plays first: the sheet slides in from the end edge.
+		// The enter plays first: the card rises a pair as it fades.
+		await waitFor(() => {
+			const box = dialog.getBoundingClientRect();
+			expect(
+				Math.abs(box.left + box.width / 2 - window.innerWidth / 2),
+			).toBeLessThan(1.5);
+			expect(
+				Math.abs(box.top + box.height / 2 - window.innerHeight / 2),
+			).toBeLessThan(1.5);
+		});
+		const box = dialog.getBoundingClientRect();
+		expect(box.width).toBeLessThan(window.innerWidth / 2);
+		expect(box.height).toBeLessThan(window.innerHeight / 2);
+		const save = screen.getByRole("button", { name: "Save" });
+		expect(save.getBoundingClientRect().bottom).toBeLessThanOrEqual(box.bottom);
+		expect(getComputedStyle(dialog).borderTopWidth).toBe("1px");
+	},
+};
+
+function LongPage() {
+	const [open, setOpen] = useState(false);
+	return (
+		<>
+			<button type="button" onClick={() => setOpen(true)}>
+				Rename domain
+			</button>
+			<Sheet
+				open={open}
+				onClose={() => setOpen(false)}
+				title="Rename domain"
+				submit={{ label: "Save", onAct: () => setOpen(false) }}
+			>
+				{Array.from({ length: 24 }, (_, i) => `Field ${i + 1}`).map((label) => (
+					<FormField key={label} label={label}>
+						<Input value="" onChange={() => {}} />
+					</FormField>
+				))}
+			</Sheet>
+		</>
+	);
+}
+
+// A form past the viewport stays the full-height side sheet at the end edge,
+// its body scrolling between the head and the foot, which stay on screen.
+export const LongFormStaysASideSheet: StoryObj = {
+	...DESKTOP_900,
+	render: () => <LongPage />,
+	play: async ({ canvas, userEvent }) => {
+		await userEvent.click(
+			canvas.getByRole("button", { name: "Rename domain" }),
+		);
+		const dialog = await screen.findByRole("dialog", { name: "Rename domain" });
 		await waitFor(() =>
 			expect(dialog.getBoundingClientRect().right).toBe(window.innerWidth),
 		);
 		const box = dialog.getBoundingClientRect();
 		expect(box.top).toBe(0);
-		expect(box.height).toBeLessThan(window.innerHeight / 2);
+		expect(box.height).toBe(window.innerHeight);
+		const save = screen.getByRole("button", { name: "Save" });
+		expect(save.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+			window.innerHeight,
+		);
 	},
 };
 
@@ -384,8 +457,8 @@ function pairGap(title: HTMLElement, description: HTMLElement) {
 	);
 }
 
-// A docked title is the container's name: the `heading` role (15/600), over a
-// Section in its body that reads a level below (13/600), and the description
+// A docked title is the container's name: the `heading` role (16/600), over a
+// Section in its body that reads a level below (14/600), and the description
 // follows the title a pair below.
 export const DockedTitleOutranksItsBody: StoryObj = {
 	parameters: { layout: "fullscreen" },
@@ -411,8 +484,8 @@ export const DockedTitleOutranksItsBody: StoryObj = {
 			name: "Question 1 of 2",
 		});
 		const section = canvas.getByText("Which environment?");
-		expect(sized(title)).toBe("15px 600");
-		expect(sized(section)).toBe("13px 600");
+		expect(sized(title)).toBe("16px 600");
+		expect(sized(section)).toBe("14px 600");
 		const pair = Number.parseFloat(
 			getComputedStyle(document.documentElement).getPropertyValue(
 				"--spacing-pair",
@@ -456,8 +529,8 @@ export const SectionInModalSheet: StoryObj = {
 		// The modal head styles the span inside its heading.
 		const text = title.firstElementChild;
 		if (!(text instanceof HTMLElement)) throw new Error("no title text");
-		expect(sized(text)).toBe("15px 600");
-		expect(sized(screen.getByText("Details"))).toBe("13px 600");
+		expect(sized(text)).toBe("16px 600");
+		expect(sized(screen.getByText("Details"))).toBe("14px 600");
 	},
 };
 
@@ -717,29 +790,90 @@ export const DockedShortestPhone: StoryObj = {
 	...shortViewport(320, 560, true),
 };
 
-// A reader scrolled up in a log the foot leaves no room: the Latest act stands
-// in the region's clip, so it covers neither the header nor the sheet's head.
-export const DockedLatestStaysInItsRegion: StoryObj = {
-	tags: ["touch"],
-	globals: { density: "touch" },
-	parameters: { layout: "fullscreen" },
-	render: () => <BannerQuestion width={320} height={560} tabs={TABS} long />,
-	play: async ({ canvas }) => {
-		const log = await canvas.findByRole("log");
-		log.scrollTop = 0;
-		const latest = await canvas.findByRole("button", { name: "Latest" });
-		const box = latest.getBoundingClientRect();
-		const at = document.elementFromPoint(
-			box.left + box.width / 2,
-			box.top + box.height / 2,
-		);
-		expect(at && latest.contains(at)).toBe(false);
-		const status = canvas.getByRole("heading", { name: "Assistant" });
-		expect(status.getBoundingClientRect().bottom).toBeLessThanOrEqual(
-			visible(log).top + 1,
-		);
-	},
-};
+// A reader scrolled up in a log the foot leaves little room: the Latest act is
+// reachable only while its whole box stands inside the log's visible box. Tab
+// to it draws the 2 px ring wholly inside the region; where the log is shorter
+// than the act and its inset the act is out of the tab order and the tree.
+function latestReachable(width: number, height: number): StoryObj {
+	return {
+		tags: ["touch"],
+		globals: { density: "touch" },
+		parameters: { layout: "fullscreen" },
+		render: () => (
+			<BannerQuestion width={width} height={height} tabs={TABS} long />
+		),
+		play: async ({ canvas, userEvent }) => {
+			const log = await canvas.findByRole("log");
+			log.scrollTop = 0;
+			const status = canvas.getByRole("heading", { name: "Assistant" });
+			expect(status.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+				visible(log).top + 1,
+			);
+			const shown = visible(log);
+			const found = canvas.queryByRole("button", { name: "Latest" });
+			if (found === null) {
+				// Not in the tab order: a Tab from the log lands on no Latest act.
+				log.focus();
+				await userEvent.tab();
+				expect(document.activeElement?.textContent).not.toContain("Latest");
+				return;
+			}
+			const box = found.getBoundingClientRect();
+			expect(box.top).toBeGreaterThanOrEqual(shown.top);
+			expect(box.bottom).toBeLessThanOrEqual(shown.bottom + 1);
+			log.focus();
+			await userEvent.tab();
+			expect(document.activeElement).toBe(found);
+			const style = getComputedStyle(found);
+			expect(style.outlineStyle).toBe("solid");
+			expect(Number.parseFloat(style.outlineWidth)).toBe(2);
+			const ring = Number.parseFloat(style.outlineOffset) + 2;
+			expect(box.top - ring).toBeGreaterThanOrEqual(shown.top - 1);
+		},
+	};
+}
+export const DockedLatestStaysInItsRegion: StoryObj = latestReachable(320, 560);
+export const DockedLatestReachableShortPhone: StoryObj = latestReachable(
+	320,
+	640,
+);
+export const DockedLatestReachableShortPhoneTall: StoryObj = latestReachable(
+	390,
+	667,
+);
+
+// The body's last row keeps the section gap above the submit.
+function lastRowKeepsTheGap(width: number, height: number): StoryObj {
+	return {
+		tags: ["touch"],
+		globals: { density: "touch" },
+		parameters: { layout: "fullscreen" },
+		render: () => <BannerQuestion width={width} height={height} tabs={TABS} />,
+		play: async ({ canvas }) => {
+			const group = await canvas.findByRole("radiogroup");
+			const body = bodyOf(group);
+			body.scrollTop = body.scrollHeight;
+			const last = group.lastElementChild;
+			const submit = canvas.getByRole("button", { name: "Next" });
+			const gap =
+				submit.getBoundingClientRect().top -
+				(last?.getBoundingClientRect().bottom ?? 0);
+			expect(gap).toBeGreaterThanOrEqual(sizeOf("sections") - 1);
+		},
+	};
+}
+export const DockedLastRowKeepsTheSectionGap320: StoryObj = lastRowKeepsTheGap(
+	320,
+	640,
+);
+export const DockedLastRowKeepsTheSectionGap390: StoryObj = lastRowKeepsTheGap(
+	390,
+	667,
+);
+export const DockedLastRowKeepsTheSectionGap560: StoryObj = lastRowKeepsTheGap(
+	320,
+	560,
+);
 
 // Under a banner where two fifths of the region would leave the log less than
 // its floor: the body gave toward its own floor first, so the log keeps two
@@ -776,5 +910,78 @@ export const DockedWithRoomFitsItsPage: StoryObj = {
 		expect(
 			canvas.getByRole("log").getBoundingClientRect().height,
 		).toBeGreaterThan(body.clientHeight);
+	},
+};
+
+const REPOS = [
+	{ value: "api", label: "api" },
+	{ value: "web", label: "web" },
+];
+
+function PickOpensSheet() {
+	const [repo, setRepo] = useState("api");
+	const [open, setOpen] = useState(false);
+	return (
+		<>
+			<Picker
+				label="Repo"
+				options={REPOS}
+				value={repo}
+				onChange={setRepo}
+				act={{ icon: "Plus", label: "New epic", onAct: () => setOpen(true) }}
+			/>
+			<Sheet open={open} onClose={() => setOpen(false)} title="New epic">
+				<p>Name it</p>
+			</Sheet>
+		</>
+	);
+}
+
+// A Sheet a pick's closing act opens: the act unmounts with the popup, so on
+// close focus returns to the picker's trigger, not the body.
+export const OpenedByAPicksAct: StoryObj = {
+	render: () => <PickOpensSheet />,
+	play: async ({ canvas, userEvent }) => {
+		const trigger = canvas.getByRole("combobox", { name: /Repo/ });
+		await userEvent.click(trigger);
+		await userEvent.click(
+			await screen.findByRole("button", { name: /New epic/ }),
+		);
+		await screen.findByRole("dialog", { name: "New epic" });
+		await userEvent.keyboard("{Escape}");
+		await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+		await waitFor(() => expect(trigger).toHaveFocus());
+	},
+};
+
+function RouteOpensSheet() {
+	const [route, setRoute] = useState<"item" | "list">("item");
+	return (
+		<Place title={route === "item" ? "Item" : "Items"}>
+			<Button label="Add" onAct={() => {}} />
+			{route === "item" ? (
+				<Sheet open onClose={() => setRoute("list")} title="Question">
+					<p>Which one?</p>
+				</Sheet>
+			) : null}
+		</Place>
+	);
+}
+
+// A Sheet its route mounts open, closed by Escape as the route leaves: focus
+// lands on the page it returns to, never the body.
+export const OpenedByARoute: StoryObj = {
+	parameters: { layout: "fullscreen" },
+	render: () => <RouteOpensSheet />,
+	play: async ({ canvas, canvasElement, userEvent }) => {
+		await screen.findByRole("dialog", { name: "Question" });
+		await userEvent.keyboard("{Escape}");
+		await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+		await waitFor(() =>
+			expect(canvasElement.querySelector("[data-page]")).toContainElement(
+				focused(),
+			),
+		);
+		await expect(canvas.getByRole("button", { name: "Add" })).toBeVisible();
 	},
 };

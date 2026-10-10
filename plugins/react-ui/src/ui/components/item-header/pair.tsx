@@ -7,6 +7,7 @@ import {
 } from "react";
 import { ActionBar } from "../action-bar/index.tsx";
 import { Banner } from "../banner/index.tsx";
+import { Canvas } from "../canvas/index.tsx";
 import { Thread } from "../thread/index.tsx";
 import { ItemHeader, type ItemHeaderProps } from "./index.tsx";
 
@@ -30,7 +31,7 @@ function leaves(node: ReactNode, path = ""): ReactNode[] {
 	return drawn;
 }
 
-/** A body's children with a leading `ItemHeader` and the sibling after it gathered into one pair column, so the body's sections step stands after the pair. The head pairs with an `ActionBar` or a `Banner` directly after it (its act, its notice), facts or not, and, in a Split's main (`inMain`), with whatever follows when it has no facts line (its title over the record's first part), a Thread excepted, which fills the main as its direct child. A head, bar or banner behind a wrapper component is not paired. */
+/** A body's children with a leading `ItemHeader` and the sibling after it gathered into one pair column, so the body's sections step stands after the pair. The head pairs with an `ActionBar` or a `Banner` directly after it (its act, its notice), facts or not, and, in a Split's main (`inMain`), with whatever follows when it has no facts line (its title over the record's first part), a Thread or a Canvas excepted, which fill the main as its direct child. A head, bar or banner behind a wrapper component is not paired. */
 export function headPaired(children: ReactNode, inMain = false): ReactNode {
 	const drawn = leaves(children);
 	const [head, next, ...rest] = drawn;
@@ -42,7 +43,8 @@ export function headPaired(children: ReactNode, inMain = false): ReactNode {
 		inMain &&
 		isValidElement(next) &&
 		!head.props.facts?.length &&
-		next.type !== Thread;
+		next.type !== Thread &&
+		next.type !== Canvas;
 	// One keyed list in both forms, so a Thread keeps its place when a Banner joins the head.
 	if (!apart && !bare) return <>{drawn}</>;
 	return (

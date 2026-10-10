@@ -27,7 +27,7 @@ or slots, never from a layout effect or a post-paint state push; a registration 
   `<Scroll>` has its own key; the Details state resets with the record it belongs to.
 
 ## Acceptance criteria
-- [ ] (live) web, a deep link to a places record at 375: the first frame has the back and Details acts and no list Toolbar.
+- [x] (live) web, a deep link to a places record at 375: the first frame has the back and Details acts and no list Toolbar.
 - [ ] (live) phone, on the harness: a deep-linked record paints its final head first; a record opens at its top after a scrolled list; Details stays closed on the next record.
 
 ## Progress
@@ -35,3 +35,6 @@ Built; `pnpm check` and `pnpm verify` pass. Web live, every frame from document 
 
 ## Critique
 Unrendered: first paint is a live trace criterion; the settled head holds.
+
+## Review
+Web accepted 2026-10-10 on the owner's ruling and the suite; waits on the native render (the phone box stays open). Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass.

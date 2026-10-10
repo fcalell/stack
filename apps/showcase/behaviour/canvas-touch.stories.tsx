@@ -11,6 +11,7 @@ import {
 	HOLLOW_ALONE,
 	HOLLOW_PLACED,
 	LIFT_MS,
+	PLACED_STAGE,
 	PROBLEM,
 	SLOP,
 	STAGE,
@@ -22,7 +23,7 @@ import type { CanvasPoint } from "@fcalell/ui-core/descriptors";
 import { SIZE_PX } from "@fcalell/ui-core/tokens";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
-import { expect, fn, waitFor } from "storybook/test";
+import { expect, fn, spyOn, waitFor } from "storybook/test";
 import {
 	apart,
 	around,
@@ -278,6 +279,25 @@ const tapping: Story = {
 export const TapLight = mode("light", tapping);
 export const TapDark = mode("dark", tapping);
 
+// The page's stand-in for a device with a pulse, and for the frame's user
+// activation (`hasBeenActive`), which a synthetic touch never gives.
+function pulse(active: boolean) {
+	const vibrate = fn(() => true);
+	Object.defineProperty(navigator, "vibrate", {
+		configurable: true,
+		value: vibrate,
+	});
+	Object.defineProperty(navigator, "userActivation", {
+		configurable: true,
+		value: { hasBeenActive: active, isActive: active },
+	});
+	return vibrate;
+}
+function unpulse() {
+	Reflect.deleteProperty(navigator, "vibrate");
+	Reflect.deleteProperty(navigator, "userActivation");
+}
+
 // ── 4 Long press ────────────────────────────────────────────────────
 
 // A hold lifts a node, which then follows the finger by the finger's distance
@@ -287,12 +307,9 @@ export const TapDark = mode("dark", tapping);
 const lifting: Story = {
 	...phone(true, false),
 	play: async ({ args, canvas, canvasElement }) => {
-		// A pulse at the lift, where a device has one: the page stands in for it.
-		const vibrate = fn(() => true);
-		Object.defineProperty(navigator, "vibrate", {
-			configurable: true,
-			value: vibrate,
-		});
+		// A pulse at the lift, where a device has one and the page has had a
+		// user activation: the page stands in for both.
+		const vibrate = pulse(true);
 		const region = await laidOut(canvas, args.moved);
 		const plan = card(region, "plan");
 		await expect(reachable(region, plan)).toBe(true);
@@ -341,11 +358,39 @@ const lifting: Story = {
 		await drag(ground, shift(ground, -50, 30));
 		await panned(canvasElement, before.view, { x: -50, y: 30 });
 		await expect(calls(args.moved)).toHaveLength(before.reports + 1);
-		Reflect.deleteProperty(navigator, "vibrate");
+		unpulse();
 	},
 };
 export const LongPressLight = mode("light", lifting);
 export const LongPressDark = mode("dark", lifting);
+
+// A frame with no user activation refuses the pulse and logs the refusal as a
+// console error (Chrome), so the lift makes no call: it draws, follows and
+// reports once on release as it does with one, and logs nothing.
+const liftingUnactivated: Story = {
+	...phone(true, false),
+	play: async ({ args, canvas }) => {
+		const vibrate = pulse(false);
+		const errors = spyOn(console, "error");
+		const region = await laidOut(canvas, args.moved);
+		const plan = card(region, "plan");
+		const reports = calls(args.moved).length;
+		const from = centre(rect(plan));
+		await drag(from, shift(from, 60, 40), {
+			pause: HOLD,
+			hold: async () => {
+				await expect(getComputedStyle(plan).outlineStyle).toBe("solid");
+			},
+		});
+		await expect(calls(args.moved)).toHaveLength(reports + 1);
+		await expect(vibrate).not.toHaveBeenCalled();
+		await expect(errors).not.toHaveBeenCalled();
+		errors.mockRestore();
+		unpulse();
+	},
+};
+export const LongPressUnactivatedLight = mode("light", liftingUnactivated);
+export const LongPressUnactivatedDark = mode("dark", liftingUnactivated);
 
 // ── 5 No gesture takes another's ────────────────────────────────────
 
@@ -604,8 +649,8 @@ async function glyphForm(root: Element) {
 	});
 }
 
-// Zoomed out below 1 by a pinch and by the zoom stack, the nodes are glyphs at
-// three scales; a glyph never lifts, a pinch past the lowest zoom stops at it,
+// Zoomed out below 1 by a pinch and by the zoom stack, the nodes are glyphs
+// (named down to half, alone under it) at three scales; a glyph never lifts, a pinch past the lowest zoom stops at it,
 // and a tap on a glyph zooms to that node at its own size and chooses nothing.
 const overview: Story = {
 	...phone(true, false),
@@ -693,6 +738,8 @@ const crossing: Story = {
 			await userEvent.click(zoomIn);
 			const ground = groundPoint(region);
 			await drag(ground, shift(ground, -30, 20));
+			// A pinch takes the scale off the stack's steps, which pass through 1 itself.
+			await pinch(centre(rect(region)), 200, 190);
 			await userEvent.click(zoomOut);
 			await expect(viewport(canvasElement).scale).toBeGreaterThan(1);
 			await expect(records()).toBe(0);
@@ -700,7 +747,7 @@ const crossing: Story = {
 			await userEvent.click(zoomOut);
 			await expect(viewport(canvasElement).scale).toBeLessThan(1);
 			await expect(records()).toBeGreaterThan(0);
-			// Within the lower side.
+			// Within the lower side, the overview.
 			await userEvent.click(zoomOut);
 			await drag(ground, shift(ground, 20, -10));
 			await expect(records()).toBe(0);
@@ -788,7 +835,8 @@ const ports: Story = {
 		await atLeast(portOf("plan", "out"));
 		await atLeast(portOf("plan", "in"));
 		await wired();
-		await userEvent.click(canvas.getByRole("button", { name: "Zoom in" }));
+		for (let step = 0; step < 3; step++)
+			await userEvent.click(canvas.getByRole("button", { name: "Zoom in" }));
 		await expect(viewport(canvasElement).scale).toBe(2);
 		await atLeast(portOf("plan", "out"));
 		await atLeast(portOf("plan", "in"));
@@ -863,7 +911,8 @@ export const RoutesFollowTheGlyphsDark = mode("dark", follow);
 
 // ── 9 The glyph's state ─────────────────────────────────────────────
 
-const marks = (glyph: Element) => glyph.querySelectorAll(":scope > span");
+const marks = (glyph: Element) =>
+	glyph.querySelectorAll(":scope > span:not([data-name])");
 
 // A problem's glyph draws its border in the danger hue and holds the danger
 // dot; a status glyph holds a dot.
@@ -1093,7 +1142,7 @@ export const HollowGroupDark = mode("dark", hollow);
 // a tap on a head chooses its group.
 const hollowPlaced: Story = {
 	render: (args: Heard) => (
-		<div className={STAGE}>
+		<div className={PLACED_STAGE}>
 			<Canvas
 				label="Placed loop"
 				nodes={HOLLOW_PLACED.nodes}

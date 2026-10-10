@@ -38,9 +38,10 @@ Twenty-one subpaths:
 - `@fcalell/ui-core/descriptors`: `IconName`, `Act`, `IconAct`, `Part`, `StatusMark`, `RowStatus`, `ChipMark`,
   `Option`, `OptionGroup`, `PlaceSpec`, `Switcher`, `Hunk`, `FieldBinding`, `Confirmation`,
   `MenuItem`, `RowEntry`, `Lock`, `Answered`, `TableColumn`, `TableRowSlots`, `CellEdit`, `Stage`,
-  `StageEnd`, `Sentence`, `Coded`, `RowTitle`, `GateMark` and the other framework-free types a prop carries.
+  `StageEnd`, `Sentence`, `Coded`, `RowTitle` and the other framework-free types a prop carries.
 - `@fcalell/ui-core/rules`: what the Rules editor and the Picker decide before they draw, free of
   any framework: `termSet`, `pairSet`, `termLabel`, `isTyped` and `marked` (with `PICKED_GLYPH`).
+- `@fcalell/ui-core/streaming`: `closeOpenRuns`, a still-arriving reply's Markdown with the runs open at its end closed, free of any framework.
 - `@fcalell/ui-core/list-state`: what a collection decides before it draws, free of any framework:
   a `List`'s or `Table`'s state and waiting shape (`listState`, `rowShape`), a table's records,
   sort and tick logic (`tableRecords`, `sorted`, `tickable`), a tree's visible rows (`treeRows`),
@@ -294,32 +295,32 @@ insets.
 Thirty-seven sizes per density sit in the same `--spacing-*` namespace, so a cell names them as it
 names a role (`min-h-control`, `size-avatar`), and nothing is spaced by them. Desktop then touch:
 `control` 32 / 44 (a button, a segmented control), `control-compact` 28 / 44 (a menu item, a toolbar
-control), `field` 38 / 48 (a form input), `row` 32 / 48 (a one-line row), `row-2` 48 / 64 (a
+control), `field` 38 / 48 (a form input), `row` 32 / 48 (a one-line row), `row-2` 52 / 64 (a
 two-line row), `row-setting` 64 / 72 (a setting row), `strip` 40 / 44 (a page header bar: a Place's
-or Screen's title and acts), `target` 24 / 44 (the least hit area of any interactive part), `indent`
+or Screen's title and acts), `target` 28 / 44 (the least hit area of any interactive part), `indent`
 16 / 20 (a tree row's step in, one per level, a hairline rail on its end), `dot` 6 / 8, `port` 8 / 8 (a canvas
-port's drawn size, over the dot), `chip` 20 /
-24, `avatar` 24 / 32, `spinner` 14 / 18 (the `icon` rung), `switch-w` 28 / 40, `switch-h` 16 / 24,
-`thumb` 12 / 20, `switch-inset` 2 / 2, `switch-travel` 12 / 16 (the thumb's travel, derived:
-`switch-w` less `thumb` and both insets), `skeleton` 12 / 12, `icon-meta` 12 / 14 (an icon beside
-meta or caption text), `icon` 14 / 18 (beside body text), `icon-control` 16 / 20 (inside a control),
-`check` 16 / 20 (a checkbox's box), `track` 2 / 4 (a slider's track thickness), `otp` 44 / 48 (a
-one-time-code box, square), `text-area` 60 / 72 (a text area's least value height, derived: three
+port's drawn size, over the dot), `chip` 22 /
+24, `avatar` 24 / 32, `spinner` 14 / 18 (the `icon` rung), `switch-w` 32 / 40, `switch-h` 18 / 24,
+`thumb` 14 / 20, `switch-inset` 2 / 2, `switch-travel` 14 / 16 (the thumb's travel, derived:
+`switch-w` less `thumb` and both insets), `skeleton` 12 / 12, `icon-meta` 14 / 14 (an icon beside
+meta or caption text), `icon` 16 / 18 (beside body text), `icon-control` 18 / 20 (inside a control),
+`check` 18 / 20 (a checkbox's box), `track` 2 / 4 (a slider's track thickness), `otp` 44 / 48 (a
+one-time-code box, square), `text-area` 66 / 72 (a text area's least value height, derived: three
 body line boxes), `meter` 6 / 8 (a meter's bar), `chart` 128 / 192 (a chart's plot, its gridlines
-four bands), `qr` 160 / 240 (a QR code's square, its quiet zone inside it), `figures` 29 / 36 (four
+four bands), `qr` 160 / 240 (a QR code's square, its quiet zone inside it), `figures` 32 / 36 (four
 tabular figures at the code size: a diff's number columns, a file row's count lanes; derived at
-`MONO_ADVANCE`, Plex Mono's 0.6 em, rounded up, since native has no `ch`), `message-input` 160 / 192
+`MONO_ADVANCE`, Plex Mono's 0.6 em, rounded up, since native has no `ch`), `message-input` 176 / 192
 (a message input's tallest text, derived: eight body line boxes, the text scrolling past it),
-`image-tile` 80 / 96 (an image thumbnail's side, derived: four body line boxes, the lines of
-provenance it stands beside), `image-cap` 400 / 480 (the tallest an image grows at its container's
+`image-tile` 88 / 96 (an image thumbnail's side, derived: four body line boxes, the lines of
+provenance it stands beside), `image-cap` 440 / 480 (the tallest an image grows at its container's
 width, derived: twenty body line boxes; `thumb` is the switch's knob, so neither image size takes
-that name), `line-body` 20 / 24 (one body line's box, derived: the height a part standing on a
+that name), `line-body` 22 / 24 (one body line's box, derived: the height a part standing on a
 wrapped title's first line is pinned to, so a taller part overflows it centred), `hairline` 1 / 1 (a
 field box's border, which an act inside it reaches across so its hit stands at the box's height)
-`chips-inset` 3 / 9 (the inset above and below the chips of a pick of several, derived: half of
-what the compact control has over a chip, less the border), `measure` 453 / 557 (the width of
+`chips-inset` 2 / 9 (the inset above and below the chips of a pick of several, derived: half of
+what the compact control has over a chip, less the border), `measure` 488 / 557 (the width of
 running text, derived: 58 characters at the sans face's figure advance of the body size, so every
-role of text stands at one width) and `measure-inset` 501 / 589 (the measure and the page inset on
+role of text stands at one width) and `measure-inset` 536 / 589 (the measure and the page inset on
 both sides: the width a padded column stands at so its content is the measure, a Split's open
 record). On touch every target is at least 44. A cell says `min-h`, never `h`: a
 label must be able to grow its control under OS font scaling. A minimum height is the floor of
@@ -331,8 +332,8 @@ never from another component's size.
 
 An icon's stroke is `ICON_STROKE` in `tokens`, a weight in units of Lucide's 24-unit grid, so it
 scales with the icon: `line` 2 (an icon's own) and `mark` 3.5, for a mark that carries meaning at
-the meta icon size, which it draws 1.75 px at 12 px where `line` draws 1 px across two pixel rows
-at half coverage and a mark's contrast falls under the 3:1 floor. The checkbox's tick and dash and
+the meta icon size, which it draws 2.04 px at 14 px where `line` draws 1.17 px across two pixel rows
+at partial coverage and a mark's contrast falls under the 3:1 floor. The checkbox's tick and dash and
 a change mark's glyph read `mark`; every other icon reads `line`. Both platforms pass the value as
 the glyph's `strokeWidth`, and each plugin's verify fails a stroke weight spelled anywhere else.
 
@@ -342,7 +343,9 @@ control), `row` 6 (a menu item, a highlighted row), `card` 8 (a card, a toast), 
 `sheet` 8 (a sheet's leading corners, a centred sheet), `full` (a dot, an avatar, the pill chip or
 status, a switch). One hairline of 1 px draws region edges, row splits and field boundaries, as
 `--hairline`. The focus ring is `ring`, 2 px at a 2 px offset outside the box, so it never covers
-the control's own edge; inside a list it is drawn inward.
+the control's own edge; inside a list it is drawn inward. A bordered box that takes typing or
+choosing (a field, the Select and Picker trigger) rings on its edge: `RING_EDGE_OFFSET_PX`, -1 px,
+centres the ring on the hairline.
 
 Widths are a short label's measure (a chip's label, a status word, a skeleton label's lane), the
 lifted layers' ranges and the fixed regions of a frame, as
@@ -351,7 +354,7 @@ lifted layers' ranges and the fixed regions of a frame, as
 `SANS_ADVANCE`, Plex Sans's 0.6 em "0", of the touch body size, rounded up: 173; there a
 short label's cap is the body's 18 characters whatever its own size, and a consumer face with a
 wider "0" overflows it); a layer never stretches to its container. The regions: `sidebar` 240 (the
-Shell's places), `list` 360 and `pane` 320 (a split's list column and record pane), `column` 300 (a
+Shell's places), `list` 360 and `pane` 320 (the ceilings of a split's list column and record pane, which size to their content between `region-min` 240 and the ceiling), `column` 300 (a
 board column), `node` 240 (a canvas node), `auth` 400 (the sign-in column), `empty` 320 (an empty state's column), `selection` 1060 (a selection bar's column, the pattern's table-wide bar). A width never
 takes a spacing role's or a size's name, since `w-*` reads `--spacing-*` first. A skeleton bar alone
 may take a fraction width (`w-1/12`, `w-1/5`, `w-1/4`, `w-1/3`, `w-1/2`, `w-2/3`, `w-3/4`) to stand

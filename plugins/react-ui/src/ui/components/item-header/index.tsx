@@ -1,6 +1,8 @@
 import { Button as BaseButton } from "@base-ui/react/button";
 import { cn } from "@fcalell/ui-core/cn";
 import type {
+	IconAct,
+	MenuItem,
 	OptionPick,
 	Part,
 	Route,
@@ -10,6 +12,8 @@ import {
 	ITEM_FACT,
 	ITEM_FACTS,
 	ITEM_HEADER,
+	ITEM_HEADER_ACTS,
+	ITEM_HEADER_LINE,
 	lineBox,
 	SKELETON_LINES,
 	skeleton,
@@ -27,22 +31,33 @@ import { joinParts, META_CUT, partText } from "../../lib/parts.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Count } from "../count/index.tsx";
 import { Icon } from "../icon/index.tsx";
+import { IconButton } from "../icon-button/index.tsx";
+import { Menu } from "../menu/index.tsx";
 import { PickerBase } from "../picker/base.tsx";
 import { Status } from "../status/index.tsx";
 import { COLUMN_FILLED } from "../thread/fill.ts";
 
 const HEAD = "flex flex-col";
+// A fact that acts keeps its target-height hit box and reaches past the facts
+// line's text line above and below it (`factReach`), so the line holds the
+// meta line's height whichever kinds of fact it carries. Its own meta leading
+// is the `lh` it reads.
+const REACH = "leading-meta -my-[calc((var(--spacing-target)-1lh)/2)]";
 const OVERLINE = "truncate";
+// The first line holds the acts at its end: the line's text takes the rest.
+const LINE = "flex items-center";
+const LINE_TEXT = "min-w-0 grow";
+const ACTS = "flex items-center shrink-0";
 const FACTS = "flex flex-wrap items-center";
 const FACT = "inline-flex items-center";
 // A pick in the facts line pulls back at its start as well as its end, so its
 // dot and word sit where a plain fact's would.
-const PICK = "inline-flex -ms-inside";
+const PICK = cn("inline-flex -ms-inside", REACH);
 // A fact that acts washes at the pointer, its words in the meta ink; one that
 // opens pulls back at its start as a pick does.
 const ACT =
 	"inline-flex items-center text-ink-meta hover:bg-wash-hover active:bg-wash-press";
-const OPEN = cn(ACT, "-ms-inside");
+const OPEN = cn(ACT, "-ms-inside", REACH);
 // A loading line stands in its text's line box, so the loading head keeps
 // the loaded head's height.
 const LINE_WAIT = "flex items-center h-lh";
@@ -50,7 +65,7 @@ const LINE_WAIT = "flex items-center h-lh";
 // loading head reserves it.
 const WRAP_WAIT = "hidden max-tablet:flex items-center h-lh";
 const FACTS_WAIT = "flex flex-col";
-const FACTS_LINE_WAIT = "flex items-center";
+const FACTS_LINE_WAIT = "flex items-center min-h-lh";
 // The waiting count is a bar one figure wide, set by an unseen figure.
 const COUNT_WAIT = "inline-flex shrink-0 items-center";
 const FIGURE_WAIT = "opacity-0 tabular-nums";
@@ -74,7 +89,11 @@ export interface ItemHeaderProps<V extends string | null = string>
 	title: Part;
 	/** The facts in a wrapping line under the title. */
 	facts?: readonly Fact<V>[];
-	/** Bars in each line's box stand in for the head, at its height. */
+	/** The record's icon acts, in order, at the end of the head's first line (the overline's, else the title's), at every width: below `tablet` they stay here and the Place's strip or top bar holds none of them (for a record in a Split's main; a pushed `Screen` has its own). */
+	actions?: IconAct[];
+	/** The acts past the actions, in a menu under the more act after them. */
+	more?: MenuItem[];
+	/** Bars in each line's box stand in for the head, at its height. No acts draw while it stands. */
 	loading?: boolean;
 }
 
@@ -95,7 +114,7 @@ function factKey<V extends string | null>(fact: Fact<V>): string {
 // unseen under the live one), so the line wraps the same as the save moves
 // between its states; from `tablet` it takes the live form's own width. Like
 // the pick it pulls back at both ends by a control box's padding.
-const SAVE = "inline-grid -mx-inside";
+const SAVE = cn("inline-grid -mx-inside", REACH);
 const SAVE_FORM = "col-start-1 row-start-1 inline-flex items-center";
 const SAVE_ROOM =
 	"col-start-1 row-start-1 items-center invisible hidden max-tablet:inline-flex";
@@ -204,13 +223,16 @@ function FactPart<V extends string | null>({ fact }: { fact: Fact<V> }) {
 	);
 }
 
-/** The overline, the title at the title role and the facts, a pair apart whether the title wraps or not. The title is a heading at the level where the header stands. With no facts line it stands a pair, not a sections step, above what follows in a Split's main. Over a Thread filling a Split's main it stands in the Thread's column on the desktop. */
+/** The overline, the title at the title role and the facts, a pair apart whether the title wraps or not, and the record's acts and more at the end of the first line. The title is a heading at the level where the header stands. With no facts line it stands a pair, not a sections step, above what follows in a Split's main. Over a Thread filling a Split's main it stands in the Thread's column on the desktop. */
 export function ItemHeader<V extends string | null = string>({
 	overline,
 	title,
 	facts,
+	actions,
+	more,
 	loading,
 }: ItemHeaderProps<V>) {
+	const words = useWords();
 	const level = use(HeadingContext);
 	const Heading = `h${level}` as const;
 	// The column is a structure that follows density, as the Thread's is.
@@ -227,7 +249,13 @@ export function ItemHeader<V extends string | null = string>({
 					<span className={cn(skeleton({ kind: "line" }), "w-1/2")} />
 				</span>
 				<span className={cn(SKELETON_LINES, FACTS_WAIT)}>
-					<span className={cn(skeletonRow({ kind: "facts" }), FACTS_LINE_WAIT)}>
+					<span
+						className={cn(
+							skeletonRow({ kind: "facts" }),
+							lineBox({ role: "meta" }),
+							FACTS_LINE_WAIT,
+						)}
+					>
 						<span className={cn(skeleton({ kind: "line" }), "w-1/3")} />
 						<span className={cn(skeleton({ kind: "count" }), COUNT_WAIT)}>
 							<span className={cn(text({ role: "caption" }), FIGURE_WAIT)}>
@@ -241,14 +269,40 @@ export function ItemHeader<V extends string | null = string>({
 				</span>
 			</div>
 		);
+	const fit = touch ? "body" : "bar";
+	const acts =
+		(actions?.length ?? 0) > 0 || (more?.length ?? 0) > 0 ? (
+			<div className={cn(ITEM_HEADER_ACTS, ACTS)}>
+				{actions?.map((action) => (
+					<IconButton key={action.label} {...action} fit={fit} />
+				))}
+				{more?.length ? <Menu label={words.more} items={more} /> : null}
+			</div>
+		) : null;
+	const overlined = overline && overline.length > 0;
+	const overlineLine = overlined ? (
+		<p className={cn(text({ role: "meta" }), OVERLINE, acts && LINE_TEXT)}>
+			{joinParts(overline, META_CUT)}
+		</p>
+	) : null;
+	const heading = (
+		<Heading
+			className={cn(text({ role: "title" }), acts && !overlined && LINE_TEXT)}
+		>
+			{partText(title)}
+		</Heading>
+	);
 	return (
 		<header className={cn(ITEM_HEADER, HEAD, column)}>
-			{overline && overline.length > 0 ? (
-				<p className={cn(text({ role: "meta" }), OVERLINE)}>
-					{joinParts(overline, META_CUT)}
-				</p>
-			) : null}
-			<Heading className={text({ role: "title" })}>{partText(title)}</Heading>
+			{acts ? (
+				<div className={cn(ITEM_HEADER_LINE, LINE)}>
+					{overlined ? overlineLine : heading}
+					{acts}
+				</div>
+			) : (
+				overlineLine
+			)}
+			{acts && !overlined ? null : heading}
 			{facts && facts.length > 0 ? (
 				<div className={cn(ITEM_FACTS, FACTS)}>
 					{facts.map((fact) => (

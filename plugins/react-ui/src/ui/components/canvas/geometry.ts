@@ -540,7 +540,7 @@ export function routeEdges(input: RouteInput): Routes {
 	return { routes, frames, bounds: union(parts) };
 }
 
-function union(boxes: readonly Box[]): Box {
+export function union(boxes: readonly Box[]): Box {
 	if (boxes.length === 0) return { x: 0, y: 0, width: 0, height: 0 };
 	const left = Math.min(...boxes.map((box) => box.x));
 	const top = Math.min(...boxes.map((box) => box.y));

@@ -191,48 +191,48 @@ colors:
 typography:
   display:
     fontFamily: "\"IBM Plex Sans\", \"IBM Plex Sans Fallback\", ui-sans-serif, system-ui, sans-serif"
-    fontSize: "36px"
+    fontSize: "39px"
     fontWeight: 500
-    lineHeight: "40px"
+    lineHeight: "42px"
     letterSpacing: "-0.02em"
   figure:
     fontFamily: "\"IBM Plex Sans\", \"IBM Plex Sans Fallback\", ui-sans-serif, system-ui, sans-serif"
-    fontSize: "22px"
+    fontSize: "24px"
     fontWeight: 500
-    lineHeight: "26px"
+    lineHeight: "28px"
   title:
     fontFamily: "\"IBM Plex Sans\", \"IBM Plex Sans Fallback\", ui-sans-serif, system-ui, sans-serif"
-    fontSize: "18px"
+    fontSize: "19px"
     fontWeight: 600
     lineHeight: "24px"
     letterSpacing: "-0.01em"
   heading:
     fontFamily: "\"IBM Plex Sans\", \"IBM Plex Sans Fallback\", ui-sans-serif, system-ui, sans-serif"
-    fontSize: "15px"
+    fontSize: "16px"
     fontWeight: 600
     lineHeight: "20px"
     letterSpacing: "-0.005em"
   body:
     fontFamily: "\"IBM Plex Sans\", \"IBM Plex Sans Fallback\", ui-sans-serif, system-ui, sans-serif"
+    fontSize: "14px"
+    fontWeight: 400
+    lineHeight: "22px"
+  meta:
+    fontFamily: "\"IBM Plex Sans\", \"IBM Plex Sans Fallback\", ui-sans-serif, system-ui, sans-serif"
     fontSize: "13px"
     fontWeight: 400
     lineHeight: "20px"
-  meta:
+  caption:
     fontFamily: "\"IBM Plex Sans\", \"IBM Plex Sans Fallback\", ui-sans-serif, system-ui, sans-serif"
     fontSize: "12px"
     fontWeight: 400
     lineHeight: "18px"
-  caption:
-    fontFamily: "\"IBM Plex Sans\", \"IBM Plex Sans Fallback\", ui-sans-serif, system-ui, sans-serif"
-    fontSize: "11px"
-    fontWeight: 400
-    lineHeight: "16px"
     letterSpacing: "0.01em"
   code:
     fontFamily: "\"IBM Plex Mono\", \"IBM Plex Mono Fallback\", ui-monospace, \"SFMono-Regular\", Menlo, monospace"
-    fontSize: "12px"
+    fontSize: "13px"
     fontWeight: 400
-    lineHeight: "18px"
+    lineHeight: "20px"
 rounded:
   chip: "4px"
   control: "6px"
@@ -257,44 +257,44 @@ spacing:
   control-compact: "28px"
   field: "38px"
   row: "32px"
-  row-2: "48px"
+  row-2: "52px"
   row-setting: "64px"
   strip: "40px"
-  target: "24px"
+  target: "28px"
   indent: "16px"
   dot: "6px"
   port: "8px"
-  chip: "20px"
+  chip: "22px"
   avatar: "24px"
   spinner: "14px"
-  switch-w: "28px"
-  switch-h: "16px"
-  thumb: "12px"
+  switch-w: "32px"
+  switch-h: "18px"
+  thumb: "14px"
   switch-inset: "2px"
-  switch-travel: "12px"
+  switch-travel: "14px"
   skeleton: "12px"
-  icon-meta: "12px"
-  icon: "14px"
-  icon-control: "16px"
-  check: "16px"
+  icon-meta: "14px"
+  icon: "16px"
+  icon-control: "18px"
+  check: "18px"
   track: "2px"
   otp: "44px"
-  text-area: "60px"
+  text-area: "66px"
   docked-floor: "96px"
   docked-log-floor: "64px"
   meter: "6px"
   chart: "128px"
   qr: "160px"
-  figures: "29px"
-  message-input: "160px"
-  image-tile: "80px"
-  image-cap: "400px"
+  figures: "32px"
+  message-input: "176px"
+  image-tile: "88px"
+  image-cap: "440px"
   hairline: "1px"
-  chips-inset: "3px"
-  line-body: "20px"
-  icon-inset: "8px"
-  measure: "453px"
-  measure-inset: "501px"
+  chips-inset: "2px"
+  line-body: "22px"
+  icon-inset: "7px"
+  measure: "488px"
+  measure-inset: "536px"
 components:
   text-display:
     typography: "{typography.display}"
@@ -1316,6 +1316,12 @@ components:
     backgroundColor: "{colors.raised}"
   sheet-side-pane-dark:
     backgroundColor: "{colors.raised-dark}"
+  sheet-side-short:
+    backgroundColor: "{colors.raised}"
+    rounded: "{rounded.sheet}"
+  sheet-side-short-dark:
+    backgroundColor: "{colors.raised-dark}"
+    rounded: "{rounded.sheet}"
   prose-marker-bullet:
     width: "{spacing.icon}"
     typography: "{typography.body}"
@@ -1560,6 +1566,30 @@ components:
     width: "{spacing.control}"
     rounded: "{rounded.card}"
     backgroundColor: "{colors.group-dark}"
+  canvas-node-name-rest:
+    backgroundColor: "{colors.canvas}"
+    typography: "{typography.caption}"
+    textColor: "{colors.ink-body}"
+  canvas-node-name-rest-dark:
+    backgroundColor: "{colors.canvas-dark}"
+    typography: "{typography.caption}"
+    textColor: "{colors.ink-body-dark}"
+  canvas-node-name-off:
+    backgroundColor: "{colors.canvas}"
+    typography: "{typography.caption}"
+    textColor: "{colors.ink-meta}"
+  canvas-node-name-off-dark:
+    backgroundColor: "{colors.canvas-dark}"
+    typography: "{typography.caption}"
+    textColor: "{colors.ink-meta-dark}"
+  canvas-node-name-dimmed:
+    backgroundColor: "{colors.canvas}"
+    typography: "{typography.caption}"
+    textColor: "{colors.ink-disabled}"
+  canvas-node-name-dimmed-dark:
+    backgroundColor: "{colors.canvas-dark}"
+    typography: "{typography.caption}"
+    textColor: "{colors.ink-disabled-dark}"
   stage-done:
     typography: "{typography.body}"
     textColor: "{colors.ink-body}"
@@ -1803,8 +1833,6 @@ components:
     backgroundColor: "{colors.skeleton-dark}"
   skeleton-row-setting:
     height: "{spacing.row-setting}"
-  skeleton-row-facts:
-    height: "{spacing.target}"
   skeleton-row-one-line:
     height: "{spacing.row}"
   skeleton-row-one-line-group:
@@ -1990,8 +2018,6 @@ components:
     backgroundColor: "{colors.raised}"
   image-remove-disc-dark:
     backgroundColor: "{colors.raised-dark}"
-  item-fact:
-    height: "{spacing.target}"
   link-target:
     height: "{spacing.target}"
   lock-glyph:
@@ -2202,6 +2228,10 @@ components:
     backgroundColor: "{colors.surface}"
   shell-column-dark:
     backgroundColor: "{colors.surface-dark}"
+  shell-mark:
+    padding: "{spacing.float}"
+  shell-mark-row:
+    height: "{spacing.row}"
   shell-places:
     padding: "{spacing.float}"
   shell-sidebar:
@@ -2324,6 +2354,16 @@ components:
     backgroundColor: "{colors.raised-dark}"
   toasts:
     padding: "{spacing.page}"
+  tooltip:
+    backgroundColor: "{colors.raised}"
+    rounded: "{rounded.control}"
+    typography: "{typography.meta}"
+    textColor: "{colors.ink-body}"
+  tooltip-dark:
+    backgroundColor: "{colors.raised-dark}"
+    rounded: "{rounded.control}"
+    typography: "{typography.meta}"
+    textColor: "{colors.ink-body-dark}"
   tree-lane:
     width: "{spacing.control-compact}"
   tree-rail:
@@ -2453,20 +2493,20 @@ A chart's series take the chart fills in order: `chart-teal`, `chart-violet`, `c
 
 ## Typography
 
-8 roles, named by place. Two rules decide the role: size follows structure, never emphasis (the primary line of anything is `body`, a secondary line is `meta`, emphasis inside a line is weight 500, never a size change); and a size role names a place once (`title` a page's or a record's name, once per page or record; `heading` a section's or a card's name, never inside a row; `caption` text inside a small component, never a sentence; `code` what a machine reads; `figure` a count's number in a strip of them). There is no label role: a field label and a row's leading cell are `body` at 500, a table header is `meta` at 500. The scale moves with density (desktop body 13, touch body 16, room body 16 canvas units); nothing else moves it, except that in the room `display` stands five times the body (a glanceable figure, not a stat inside a page).
+8 roles, named by place. Two rules decide the role: size follows structure, never emphasis (the primary line of anything is `body`, a secondary line is `meta`, emphasis inside a line is weight 500, never a size change); and a size role names a place once (`title` a page's or a record's name, once per page or record; `heading` a section's or a card's name, never inside a row; `caption` text inside a small component, never a sentence; `code` what a machine reads; `figure` a count's number in a strip of them). There is no label role: a field label and a row's leading cell are `body` at 500, a table header is `meta` at 500. The scale moves with density (desktop body 14, touch body 16, room body 16 canvas units); nothing else moves it, except that in the room `display` stands five times the body (a glanceable figure, not a stat inside a page).
 
 | Role | Desktop | Touch | Room | Weight | Ink | Place |
 | --- | --- | --- | --- | --- | --- | --- |
-| `display` | 36px / 40px | 44px / 48px | 80 / 88 | 500 | `ink-body` | a display number, one per screen, in tabular figures |
-| `figure` | 22px / 26px | 27px / 32px | 27 / 32 | 500 | `ink-body` | a count's number in a strip of them, in tabular figures |
-| `title` | 18px / 24px | 22px / 28px | 22 / 28 | 600 | `ink-body` | a page's or a record's name, once per page or record |
-| `heading` | 15px / 20px | 18px / 24px | 18 / 24 | 600 | `ink-body` | a section's or a card's name, never inside a row |
-| `body` | 13px / 20px | 16px / 24px | 16 / 24 | 400 | `ink-body` | the primary line of anything: prose, a row, a field, a menu item |
-| `meta` | 12px / 18px | 15px / 22px | 15 / 22 | 400 | `ink-meta` | a secondary line, a description, a table header at 500 |
-| `caption` | 11px / 16px | 14px / 22px | 14 / 22 | 400 | `ink-meta` | text inside a small component (a chip, a key hint), never a sentence |
-| `code` | 12px / 18px | 15px / 22px | 15 / 22 | 400 | `ink-body` | what a machine reads |
+| `display` | 39px / 42px | 44px / 48px | 80 / 88 | 500 | `ink-body` | a display number, one per screen, in tabular figures |
+| `figure` | 24px / 28px | 27px / 32px | 27 / 32 | 500 | `ink-body` | a count's number in a strip of them, in tabular figures |
+| `title` | 19px / 24px | 22px / 28px | 22 / 28 | 600 | `ink-body` | a page's or a record's name, once per page or record |
+| `heading` | 16px / 20px | 18px / 24px | 18 / 24 | 600 | `ink-body` | a section's or a card's name, never inside a row |
+| `body` | 14px / 22px | 16px / 24px | 16 / 24 | 400 | `ink-body` | the primary line of anything: prose, a row, a field, a menu item |
+| `meta` | 13px / 20px | 15px / 22px | 15 / 22 | 400 | `ink-meta` | a secondary line, a description, a table header at 500 |
+| `caption` | 12px / 18px | 14px / 22px | 14 / 22 | 400 | `ink-meta` | text inside a small component (a chip, a key hint), never a sentence |
+| `code` | 13px / 20px | 15px / 22px | 15 / 22 | 400 | `ink-body` | what a machine reads |
 
-Tracking: `display` -0.02em, `title` -0.01em, `heading` -0.005em, `caption` 0.01em; the rest 0. `sans` is `"IBM Plex Sans", "IBM Plex Sans Fallback", ui-sans-serif, system-ui, sans-serif`; `mono` is `"IBM Plex Mono", "IBM Plex Mono Fallback", ui-monospace, "SFMono-Regular", Menlo, monospace`. Each named family is followed by its metric fallback face. Running text wraps at `measure`, 58 characters at the sans face's figure advance of the body size, rounded up: 453px on the desktop, 557px on touch, one width for every role of text (so a consumer face with a wider "0" overflows it).
+Tracking: `display` -0.02em, `title` -0.01em, `heading` -0.005em, `caption` 0.01em; the rest 0. `sans` is `"IBM Plex Sans", "IBM Plex Sans Fallback", ui-sans-serif, system-ui, sans-serif`; `mono` is `"IBM Plex Mono", "IBM Plex Mono Fallback", ui-monospace, "SFMono-Regular", Menlo, monospace`. Each named family is followed by its metric fallback face. Running text wraps at `measure`, 58 characters at the sans face's figure advance of the body size, rounded up: 488px on the desktop, 557px on touch, one width for every role of text (so a consumer face with a wider "0" overflows it).
 
 ## Layout
 
@@ -2486,7 +2526,7 @@ Spacing roles are multiples of a 4 px base, picked per density, named by what th
 | `sections` | 32px | 40px | 40 | between sections of a page |
 | `page` | 24px | 16px | 48 | the page inset |
 
-Sizes are heights and squares in the same namespace. Density is a theme and never a knob: the web draws the desktop set where the primary pointer is fine and the viewport is at least `tablet` wide (768px) and the touch set everywhere else, native draws the touch set, and a `data-density` attribute on the web root pins either. A molecule whose structure follows density (an action bar at natural width on the desktop, full width on touch) reads it through the web's `touch:` variant, the same rule (a `data-density="touch"` pin, or no `desktop` pin where the pointer is not fine or the viewport is narrower than `tablet`); native is the touch set, so its molecules draw the touch structure with no variant. The room is the one set a screen declares (`Place`'s `distance`), since no query detects how far a screen is read from: the touch set drawn on a 960 × 540 canvas, so the Room columns are canvas units, each multiplied by the room unit `u = max(1px, min(100vw / 960, 100dvh / 540))` (native computes it from the window's size), 2 px at 1920 × 1080. The room's `page` is 48 all round (the ten-foot safe area), its radii, fixed widths, hairline and ring scale by `u` too, and its structure is the touch one (`touch:` matches inside it). A room page holds one column and never splits, because breakpoints stay px while its widths scale, and it holds no menu, picker or sheet, whose layers open outside it. It keeps the app's mode, and a screen read from across a room runs dark. Two limits: `vw` sizes ignore browser zoom, and a scaled size is fractional, outside the even-pixel rule. Every touch target is at least 44px; on the desktop every interactive part keeps a 24px hit area whatever it draws.
+Sizes are heights and squares in the same namespace. Density is a theme and never a knob: the web draws the desktop set where the primary pointer is fine and the viewport is at least `tablet` wide (768px) and the touch set everywhere else, native draws the touch set, and a `data-density` attribute on the web root pins either. A molecule whose structure follows density (an action bar at natural width on the desktop, full width on touch) reads it through the web's `touch:` variant, the same rule (a `data-density="touch"` pin, or no `desktop` pin where the pointer is not fine or the viewport is narrower than `tablet`); native is the touch set, so its molecules draw the touch structure with no variant. The room is the one set a screen declares (`Place`'s `distance`), since no query detects how far a screen is read from: the touch set drawn on a 960 × 540 canvas, so the Room columns are canvas units, each multiplied by the room unit `u = max(1px, min(100vw / 960, 100dvh / 540))` (native computes it from the window's size), 2 px at 1920 × 1080. The room's `page` is 48 all round (the ten-foot safe area), its radii, fixed widths, hairline and ring scale by `u` too, and its structure is the touch one (`touch:` matches inside it). A room page holds one column and never splits, because breakpoints stay px while its widths scale, and it holds no menu, picker or sheet, whose layers open outside it. It keeps the app's mode, and a screen read from across a room runs dark. Two limits: `vw` sizes ignore browser zoom, and a scaled size is fractional, outside the even-pixel rule. Every touch target is at least 44px; on the desktop every interactive part keeps a 28px hit area whatever it draws.
 
 | Size | Desktop | Touch | Room | Is |
 | --- | --- | --- | --- | --- |
@@ -2494,48 +2534,48 @@ Sizes are heights and squares in the same namespace. Density is a theme and neve
 | `control-compact` | 28px | 44px | 44 | a menu item, a toolbar control |
 | `field` | 38px | 48px | 48 | a form input |
 | `row` | 32px | 48px | 48 | a one-line row |
-| `row-2` | 48px | 64px | 64 | a two-line row |
+| `row-2` | 52px | 64px | 64 | a two-line row |
 | `row-setting` | 64px | 72px | 72 | a setting row: label and description beside a control |
 | `strip` | 40px | 44px | 44 | a page header bar: a Place's or Screen's title and acts |
-| `target` | 24px | 44px | 44 | the least hit area of any interactive part |
+| `target` | 28px | 44px | 44 | the least hit area of any interactive part |
 | `indent` | 16px | 20px | 20 | a tree row's step in: one per level, a hairline rail on its end |
 | `dot` | 6px | 8px | 8 | a status or chip mark |
 | `port` | 8px | 8px | 8 | a canvas port's drawn size |
-| `chip` | 20px | 24px | 24 | a chip's height |
+| `chip` | 22px | 24px | 24 | a chip's height |
 | `avatar` | 24px | 32px | 32 | an avatar's side |
 | `spinner` | 14px | 18px | 18 | the spinner inside a pending act |
-| `switch-w` | 28px | 40px | 40 | a switch's width |
-| `switch-h` | 16px | 24px | 24 | a switch's height |
-| `thumb` | 12px | 20px | 20 | a switch's knob |
+| `switch-w` | 32px | 40px | 40 | a switch's width |
+| `switch-h` | 18px | 24px | 24 | a switch's height |
+| `thumb` | 14px | 20px | 20 | a switch's knob |
 | `switch-inset` | 2px | 2px | 2 | the knob's inset from its track |
-| `switch-travel` | 12px | 16px | 16 | the knob's travel: the width less the knob and both insets |
+| `switch-travel` | 14px | 16px | 16 | the knob's travel: the width less the knob and both insets |
 | `skeleton` | 12px | 12px | 12 | a skeleton bar's height |
-| `icon-meta` | 12px | 14px | 14 | an icon beside meta or caption text |
-| `icon` | 14px | 18px | 18 | an icon beside body text |
-| `icon-control` | 16px | 20px | 20 | an icon inside a control |
-| `check` | 16px | 20px | 20 | a checkbox's box |
+| `icon-meta` | 14px | 14px | 14 | an icon beside meta or caption text |
+| `icon` | 16px | 18px | 18 | an icon beside body text |
+| `icon-control` | 18px | 20px | 20 | an icon inside a control |
+| `check` | 18px | 20px | 20 | a checkbox's box |
 | `track` | 2px | 4px | 4 | a slider's track thickness |
 | `otp` | 44px | 48px | 48 | a one-time-code box's largest side; the box is square and shrinks with its row |
-| `text-area` | 60px | 72px | 72 | a text area's least value height: three body line boxes |
+| `text-area` | 66px | 72px | 72 | a text area's least value height: three body line boxes |
 | `docked-floor` | 96px | 144px | 144 | a docked sheet's body floor: three rows |
 | `docked-log-floor` | 64px | 96px | 96 | the log's floor above a docked foot: two rows |
 | `meter` | 6px | 8px | 8 | a meter's bar |
 | `chart` | 128px | 192px | 192 | a chart's plot, its gridlines four bands |
 | `qr` | 160px | 240px | 240 | a QR code's square, its quiet zone inside it |
-| `figures` | 29px | 36px | 36 | four tabular figures at the code size: a diff's number columns, a file row's count lanes |
-| `message-input` | 160px | 192px | 192 | a message input's tallest text: eight body line boxes, scrolling past it |
-| `image-tile` | 80px | 96px | 96 | an image thumbnail's side: four body line boxes, the lines of provenance it stands beside |
-| `image-cap` | 400px | 480px | 480 | the tallest an image grows at its container's width: twenty body line boxes |
+| `figures` | 32px | 36px | 36 | four tabular figures at the code size: a diff's number columns, a file row's count lanes |
+| `message-input` | 176px | 192px | 192 | a message input's tallest text: eight body line boxes, scrolling past it |
+| `image-tile` | 88px | 96px | 96 | an image thumbnail's side: four body line boxes, the lines of provenance it stands beside |
+| `image-cap` | 440px | 480px | 480 | the tallest an image grows at its container's width: twenty body line boxes |
 | `hairline` | 1px | 1px | 1 | a field box's border: an act inside the box reaches across it, so its hit stands at the box's height |
-| `chips-inset` | 3px | 9px | 9 | the inset above and below the chips of a pick of several: half of what the compact control has over a chip, less the border |
-| `line-body` | 20px | 24px | 24 | one body line's box: a part on a wrapped title's first line is pinned to it |
-| `icon-inset` | 8px | 12px | 12 | the gap between an icon act's box and its glyph: half of what the control has over its icon, which a bar of acts reaches across so the glyphs stand at its edges |
-| `measure` | 453px | 557px | 557 | the width of running text: 58 characters at the sans face's figure advance of the body size, one width for every role of text |
-| `measure-inset` | 501px | 589px | 653 | the width of a column that holds the measure inside the page inset on both sides: a Split's open record |
+| `chips-inset` | 2px | 9px | 9 | the inset above and below the chips of a pick of several: half of what the compact control has over a chip, less the border |
+| `line-body` | 22px | 24px | 24 | one body line's box: a part on a wrapped title's first line is pinned to it |
+| `icon-inset` | 7px | 12px | 12 | the gap between an icon act's box and its glyph: half of what the control has over its icon, which a bar of acts reaches across so the glyphs stand at its edges |
+| `measure` | 488px | 557px | 557 | the width of running text: 58 characters at the sans face's figure advance of the body size, one width for every role of text |
+| `measure-inset` | 536px | 589px | 653 | the width of a column that holds the measure inside the page inset on both sides: a Split's open record |
 
-An icon's stroke is a weight on Lucide's 24-unit grid, so it scales with the icon: `line` 2, an icon's own, and `mark` 3.5, a mark that carries meaning at the meta size (a checkbox's tick and dash, a change mark's glyph), which at 12px draws 1.75 px where `line` draws 1 px across two pixel rows at half coverage. No component spells a stroke number.
+An icon's stroke is a weight on Lucide's 24-unit grid, so it scales with the icon: `line` 2, an icon's own, and `mark` 3.5, a mark that carries meaning at the meta size (a checkbox's tick and dash, a change mark's glyph), which at 14px draws 2.0416666666666665 px where `line` draws 1 px across two pixel rows at half coverage. No component spells a stroke number.
 
-Widths of lifted layers, never stretched to their container, and of a frame's fixed regions: `measure-short` 18ch (native 173px, at the body size, so a label's own size is lost there), `popover` 240px, `toast` 360px, `dialog` 520px, `sheet` 640px, `sidebar` 240px, `list` 360px, `pane` 320px, `column` 300px, `node` 240px, `auth` 400px, `empty` 320px, `selection` 1060px. Breakpoints: `tablet` 768px, `desktop` 1024px, `wide` 1200px; they are the only responsive variants, of the viewport (`tablet:`) and, on the web, of a page's width (`page-tablet:`, `page-max-tablet:`), by which a Split decides its regions.
+Widths of lifted layers, never stretched to their container, and of a frame's fixed regions: `measure-short` 18ch (native 173px, at the body size, so a label's own size is lost there), `popover` 240px, `toast` 360px, `dialog` 520px, `sheet` 640px, `sidebar` 240px, `list` 360px, `pane` 320px, `region-min` 240px, `column` 300px, `node` 240px, `auth` 400px, `empty` 320px, `selection` 1060px. Breakpoints: `tablet` 768px, `desktop` 1024px, `wide` 1200px; they are the only responsive variants, of the viewport (`tablet:`) and, on the web, of a page's width (`page-tablet:`, `page-max-tablet:`), by which a Split decides its regions.
 
 ## Elevation & Depth
 
@@ -2564,7 +2604,7 @@ A docked sheet's body keeps `docked-floor` (144px on touch, 96px on the desktop)
 | `Text` | atom | `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body`, `TEXT_STRONG.role.meta` | rest |
 | `Icon` | atom | `ICON` | rest |
 | `Button` | atom | `BUTTON`, `BUTTON_LABEL`, `ICON.fit.control`, `COUNT_LABEL` | rest, hover, focus, active, disabled, loading |
-| `IconButton` | atom | `ICON_BUTTON` | rest, hover, focus, active, loading |
+| `IconButton` | atom | `ICON_BUTTON`, `TOOLTIP` | rest, hover, focus, active, loading |
 | `Count` | atom | `COUNT`, `COUNT_LABEL` | rest |
 | `StepCount` | atom | `STEP_COUNT`, `STEP_COUNT_SEGMENTS`, `STEP_COUNT_SEGMENT`, `TEXT.role.meta` | rest |
 | `Status` | atom | `CHANGE_MARK`, `ICON.fit.meta`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `SKELETON.kind.dot`, `SKELETON.kind.line` | rest |
@@ -2580,22 +2620,22 @@ A docked sheet's body keeps `docked-floor` (144px on touch, 96px on the desktop)
 | `Spinner` | atom | `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC` | rest |
 | `Avatar` | atom | `AVATAR`, `AVATAR_LABEL` | rest |
 | `Link` | atom | `LINK`, `LINK_TARGET` | rest, hover, focus, active |
-| `Place` | layout | `PAGE_HEAD`, `PAGE_HEAD_ROOM`, `PAGE_TOP_BAR`, `PAGE_TOP_BAR_TOUCH`, `PAGE_TOP_BAR_START`, `PAGE_TOP_BAR_END`, `PAGE_TITLE`, `TEXT.role.title`, `WORD_ACT`, `PICKER_VALUE`, `ICON.fit.meta`, `CHIP`, `CHIP_LABEL`, `PAGE_BODY`, `FOOT_DOCKED`, `PAGE_BODY_OVER_FOOT`, `FLOATING_ACT`, `FLOATING_ACT_LIFT`, `FLOATING_ACT_ROOM`, `FLOATING_ACT_FOOT`, `BUTTON.act.primary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.primary`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
-| `Gate` | layout | `GATE`, `GATE_COLUMN`, `GATE_FLOW`, `GATE_LEAD`, `GATE_HEAD`, `GATE_MARK`, `TEXT.role.title`, `TEXT.role.meta`, `TEXT_STRONG.role.meta` | rest |
-| `Screen` | layout | `PAGE_HEAD`, `PAGE_TOP_BAR`, `PAGE_TOP_BAR_TOUCH`, `PAGE_TITLE`, `TEXT.role.title`, `PAGE_BODY`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
+| `Place` | layout | `PAGE_HEAD`, `PAGE_HEAD_ROOM`, `PAGE_TOP_BAR`, `PAGE_TOP_BAR_TOUCH`, `PAGE_TOP_BAR_START`, `PAGE_TOP_BAR_END`, `PAGE_TITLE`, `PAGE_TITLE_BLOCK`, `PAGE_HEAD_WRAPS`, `TEXT.role.title`, `WORD_ACT`, `PICKER_VALUE`, `ICON.fit.meta`, `CHIP`, `CHIP_LABEL`, `PAGE_BODY`, `FOOT_DOCKED`, `PAGE_BODY_OVER_FOOT`, `FLOATING_ACT`, `FLOATING_ACT_LIFT`, `FLOATING_ACT_ROOM`, `FLOATING_ACT_FOOT`, `BUTTON.act.primary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.primary`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
+| `Gate` | layout | `GATE`, `GATE_COLUMN`, `GATE_FLOW`, `GATE_LEAD`, `GATE_HEAD`, `GATE_MARK`, `GATE_MARK_ROW`, `TEXT.role.title`, `TEXT.role.meta`, `TEXT.role.body`, `TEXT_STRONG.role.body` | rest |
+| `Screen` | layout | `PAGE_HEAD`, `PAGE_TOP_BAR`, `PAGE_TOP_BAR_START`, `PAGE_TOP_BAR_END`, `PAGE_TITLE_FLOOR`, `PAGE_TITLE_BLOCK`, `PAGE_HEAD_WRAPS`, `TEXT.role.title`, `PAGE_BODY`, `PAGE_BODY_BESIDE`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
 | `Split` | layout | `SPLIT_LIST`, `SPLIT_LIST_STACK`, `SPLIT_MAIN`, `SPLIT_BESIDE`, `SPLIT_PANE`, `ICON_BUTTON.fit.bar` | rest, empty |
-| `Section` | layout | `SECTION`, `SECTION_HEAD`, `SECTION_HEAD_ROW`, `SECTION_TITLE`, `SECTION_TOGGLE`, `SECTION_NESTED_TITLE`, `TEXT.role.heading`, `TEXT.role.meta`, `ICON.fit.body`, `COUNT`, `COUNT_LABEL`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive`, `ICON_BUTTON.fit.bar`, `SKELETON.kind.count`, `SKELETON.kind.line`, `SKELETON.kind.field`, `SKELETON_ROW.kind.field`, `TEXT.role.caption`, `LINE_BOX.role.body` | rest, hover, focus, active, disabled, loading |
+| `Section` | layout | `SECTION`, `SECTION_HEAD`, `SECTION_HEAD_ROW`, `SECTION_BODY`, `SECTION_TITLE`, `SECTION_TOGGLE`, `SECTION_NESTED_TITLE`, `TEXT.role.heading`, `TEXT.role.meta`, `ICON.fit.body`, `COUNT`, `COUNT_LABEL`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive`, `ICON_BUTTON.fit.bar`, `SKELETON.kind.count`, `SKELETON.kind.line`, `SKELETON.kind.field`, `SKELETON_ROW.kind.field`, `TEXT.role.caption`, `LINE_BOX.role.body` | rest, hover, focus, active, disabled, loading |
 | `Group` | layout | `GROUP` | rest, loading |
 | `List` | layout | `LIST`, `LIST_TREE`, `LIST_DIVIDED` | rest, loading, error, empty |
 | `Form` | layout | `FORM`, `FORM_FOOT` | rest, loading |
 | `Toolbar` | layout | `TOOLBAR`, `TOOLBAR_ROW`, `TOOLBAR_CHIPS` | rest |
 | `ActionBar` | layout | `ACTION_BAR`, `ACTION_BAR_ACTS`, `ACTION_BAR_CHOSEN`, `ACTION_BAR_SELECTION`, `ACTION_BAR_ALL`, `TEXT.role.meta`, `FIELD_ERROR_LINE`, `BUTTON.act.primary`, `BUTTON.act.danger`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.act.quiet`, `BUTTON.fit.body`, `BUTTON.fit.field`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.danger`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive`, `BUTTON_LABEL.act.quiet`, `SKELETON.kind.bar`, `SKELETON.kind.field` | rest, loading, disabled |
 | `Columns` | layout | `COLUMNS`, `COLUMN` | rest |
-| `Shell` | layout | `SHELL_SIDEBAR`, `SHELL_COLUMN`, `SHELL_BANNER`, `SWITCHER_SLOT`, `SWITCHER`, `SHELL_PLACES`, `PLACE_ROW`, `PLACE_ROW_GLYPH`, `SHELL_TAB_BAR`, `PLACE_TAB`, `PLACE_TAB_LABEL`, `TOASTS`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `ICON.fit.body`, `ICON.fit.control`, `COUNT`, `COUNT_LABEL` | rest, hover, focus, active, selected |
+| `Shell` | layout | `SHELL_SIDEBAR`, `SHELL_COLUMN`, `SHELL_BANNER`, `SHELL_MARK`, `SHELL_MARK_ROW`, `GATE_MARK`, `SWITCHER_SLOT`, `SWITCHER`, `SHELL_PLACES`, `PLACE_ROW`, `PLACE_ROW_GLYPH`, `SHELL_TAB_BAR`, `PLACE_TAB`, `PLACE_TAB_LABEL`, `TOASTS`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `ICON.fit.body`, `ICON.fit.control`, `COUNT`, `COUNT_LABEL` | rest, hover, focus, active, selected |
 | `ListRow` | shared | `ROW.lines.one`, `ROW.lines.two`, `ROW.lines.whole`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.state.selected`, `ROW.state.selected-hover`, `ROW.ground.list`, `ROW.ground.group`, `ROW_TITLE`, `ROW_STEPS`, `ROW_STEP`, `TREE_RAIL`, `TREE_LANE`, `TREE_BLEED`, `ROW_LEADING`, `ROW_TITLE_LINE`, `ROW_META_LINE`, `ROW_TRAILING`, `ROW_MARKS`, `ROW_WARNING`, `LOCK_GLYPH`, `ROW_ACTS`, `ROW_CHEVRON`, `CHANGE_MARK`, `CHECKBOX`, `CHECKBOX_MARK`, `TEXT.role.meta`, `ICON.fit.body`, `ICON.fit.meta`, `AVATAR`, `AVATAR_LABEL`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `CHIP`, `CHIP_LABEL`, `ICON_BUTTON.fit.bar`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `FIELD.fit.bar`, `FIELD.trailing.none`, `FIELD.state.rest`, `FIELD.state.error`, `FIELD_VALUE.kind.text`, `FIELD_PLACEHOLDER`, `ROW_ENTRY`, `FIELD_ERROR_LINE`, `SKELETON.kind.avatar`, `SKELETON.kind.icon`, `SKELETON.kind.dot`, `SKELETON.kind.check`, `SKELETON.kind.bar`, `SKELETON_LANE.role.body`, `SKELETON_LANE.role.meta`, `SKELETON.kind.line`, `LINE_BOX.role.body`, `LINE_BOX.role.meta` | rest, hover, focus, active, loading, error, selected |
 | `DefinitionRow` | shared | `ROW.lines.one`, `ROW.lines.setting`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.group`, `DEFINITION_ROW`, `DEFINITION_ROW_CHEVRON`, `ROW_TITLE_LINE`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `TEXT.role.code`, `ICON.fit.body`, `ICON.fit.meta`, `LINK.fit.inline`, `LOCK_GLYPH`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `ICON_BUTTON.fit.bar`, `CHANGE_MARK`, `SKELETON_ROW.kind.one-line-group`, `SKELETON_ROW.kind.setting`, `SKELETON.kind.line`, `SKELETON.kind.icon`, `SKELETON.kind.switch`, `LINE_BOX.role.body`, `LINE_BOX.role.meta` | rest, hover, focus, active, loading |
 | `FormField` | shared | `FORM_FIELD`, `GROUP_ITEM`, `FIELD_ERROR_LINE`, `FORM_FIELD_SUMMARY`, `FORM_FIELD_SUMMARY_GLYPH`, `CHANGE_MARK`, `ICON.fit.body`, `ICON.fit.meta`, `ICON_BUTTON.fit.bar`, `LINE_BOX.role.body`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta` | rest, disabled, error |
-| `ItemHeader` | shared | `ITEM_HEADER`, `THREAD_COLUMN`, `ITEM_FACTS`, `ITEM_FACT`, `WORD_ACT`, `ICON.fit.meta`, `TEXT.role.meta`, `TEXT.role.title`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `COUNT`, `COUNT_LABEL`, `LINE_BOX.role.meta`, `LINE_BOX.role.title`, `SKELETON_LINES`, `SKELETON_ROW.kind.facts`, `SKELETON.kind.line`, `SKELETON.kind.count` | rest, loading |
+| `ItemHeader` | shared | `ITEM_HEADER`, `ITEM_HEADER_LINE`, `ITEM_HEADER_ACTS`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body`, `THREAD_COLUMN`, `ITEM_FACTS`, `ITEM_FACT`, `WORD_ACT`, `ICON.fit.meta`, `TEXT.role.meta`, `TEXT.role.title`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `COUNT`, `COUNT_LABEL`, `LINE_BOX.role.meta`, `LINE_BOX.role.title`, `SKELETON_LINES`, `SKELETON_ROW.kind.facts`, `SKELETON.kind.line`, `SKELETON.kind.count` | rest, loading |
 | `SegmentedControl` | shared | `SEGMENTED_CONTROL`, `SEGMENT`, `SEGMENT_LABEL` | rest, hover, focus, active, selected |
 | `Sheet` | shared | `SHEET`, `SHEET_SIDE`, `SHEET_CENTERED`, `SHEET_HEAD`, `SHEET_HEAD_ROW`, `SHEET_HEAD_TITLE`, `SHEET_BODY`, `SHEET_FOOT`, `SHEET_DOCKED_HEAD`, `SHEET_DOCKED_BODY`, `SHEET_DOCKED_FOOT`, `SHEET_DOCKED_FLOOR`, `THREAD_COLUMN`, `SCRIM`, `TEXT.role.heading`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `FIELD_ERROR_LINE`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body`, `BUTTON.act.primary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.primary` | rest, disabled, loading, error |
 | `Picker` | shared | `PICKER`, `HAIRLINE`, `ROW_LEADING`, `AVATAR`, `AVATAR_LABEL`, `WORD_ACT`, `PICKER_VALUE`, `ICON.fit.meta`, `CHIP`, `CHIP_LABEL`, `FIELD.fit.bar`, `FIELD.trailing.none`, `FIELD.state.rest`, `FIELD_VALUE.kind.text`, `FIELD_VALUE.kind.search`, `FIELD_PLACEHOLDER`, `FIELD_GLYPH`, `CHIPS_RUN`, `CHIPS_TRIGGER`, `ICON.fit.control`, `PICKER_EMPTY`, `POPOVER`, `PICKER_POPOVER`, `SELECT_GROUP`, `ROW.lines.one`, `ROW.lines.two`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.list`, `ROW.ground.group`, `TEXT.role.body`, `TEXT.role.meta`, `ICON.fit.body` | rest, hover, focus, active, selected, disabled |
@@ -2626,7 +2666,7 @@ A docked sheet's body keeps `docked-floor` (144px on touch, 96px on the desktop)
 | `Thread` | content | `THREAD`, `THREAD_COLUMN`, `THREAD_LOG`, `THREAD_UNDER_HEAD`, `FOOT_DOCKED`, `THREAD_LATEST` | rest, loading, error, empty |
 | `QrCode` | content | `QR_CODE`, `QR_TILE` | rest, loading |
 | `Image` | content | `IMAGE`, `IMAGE_PICTURE`, `IMAGE_FULL`, `IMAGE_CLOSE`, `IMAGE_FAILED_INK`, `ICON.fit.body`, `ICON_BUTTON.fit.body`, `TEXT.role.meta`, `SCRIM` | rest, hover, focus, active, loading, error |
-| `Canvas` | content, web only | `SKELETON.kind.icon`, `SKELETON.kind.line`, `SKELETON_LANE.role.body`, `SKELETON_LANE.role.meta`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `CANVAS_GROUND`, `CANVAS_NODE`, `CANVAS_NODE_TEXT`, `CANVAS_NODE_GLYPH`, `CANVAS_PORT`, `CANVAS_PORT_HIT`, `CANVAS_GROUP`, `CANVAS_GROUP_HEAD`, `CANVAS_ZOOM`, `ICON.fit.meta`, `ICON.fit.body`, `ICON_BUTTON.fit.body`, `BUTTON.act.quiet`, `BUTTON.fit.body`, `BUTTON_LABEL.act.quiet`, `COUNT`, `COUNT_LABEL`, `CHIP.family.neutral`, `CHIP.trailing.none`, `CHIP_LABEL.family.neutral`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC` | rest, selected, loading, empty |
+| `Canvas` | content, web only | `SKELETON.kind.icon`, `SKELETON.kind.line`, `SKELETON_LANE.role.meta`, `LINE_BOX.role.meta`, `CANVAS_GROUND`, `CANVAS_NODE`, `CANVAS_NODE_TEXT`, `CANVAS_NODE_GLYPH`, `CANVAS_NODE_NAME`, `CANVAS_PORT`, `CANVAS_PORT_HIT`, `CANVAS_GROUP`, `CANVAS_GROUP_HEAD`, `CANVAS_ZOOM`, `CANVAS_UNDER_HEAD`, `ICON.fit.meta`, `ICON.fit.body`, `ICON_BUTTON.fit.body`, `BUTTON.act.quiet`, `BUTTON.fit.body`, `BUTTON_LABEL.act.quiet`, `COUNT`, `COUNT_LABEL`, `CHIP.family.neutral`, `CHIP.trailing.none`, `CHIP_LABEL.family.neutral`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC` | rest, selected, loading, empty |
 
 A component owns the tokens it may draw: a cell it draws that spells a type role, a colour, a radius, a spacing role, a size or a shadow outside its row is a contract error. A colour ending in `-` is a family (`chip-` is every chip role).
 
@@ -2635,7 +2675,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Text` | `body`, `meta` | `ink-body`, `ink-meta` | none | none | `measure` | none |
 | `Icon` | none | none | none | none | `icon-meta`, `icon`, `icon-control` | none |
 | `Button` | `body`, `meta`, `caption` | `act-`, `on-act-`, `edge`, `ink-body`, `ink-meta`, `danger`, `wash-hover`, `wash-press`, `fill-disabled`, `ink-disabled`, `ring` | `control` | `inside`, `control-x`, `pair` | `control`, `control-compact`, `field`, `icon-control` | none |
-| `IconButton` | none | `ink-meta`, `ink-body`, `wash-hover`, `wash-press`, `ink-disabled`, `ring` | `control` | none | `control`, `control-compact`, `hairline` | none |
+| `IconButton` | `meta` | `ink-meta`, `ink-body`, `wash-hover`, `wash-press`, `ink-disabled`, `ring`, `raised`, `edge-raised` | `control` | `inside`, `pair` | `control`, `control-compact`, `hairline`, `measure-short` | `float` |
 | `Count` | `caption` | `ink-meta` | none | none | none | none |
 | `StepCount` | `meta` | `ink-meta`, `fill-neutral` | `chip` | `pair`, `inside` | `meter` | none |
 | `Status` | `meta` | `accent-ink`, `ink-meta`, `ok`, `warn`, `chip-amber`, `danger`, `skeleton` | `full`, `chip` | `inside` | `dot`, `spinner`, `measure-short`, `skeleton`, `icon`, `icon-meta` | none |
@@ -2652,9 +2692,9 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Avatar` | `caption` | `avatar-` | `full` | none | `avatar` | none |
 | `Link` | none | `accent-ink`, `ring` | none | none | `target` | none |
 | `Place` | `title`, `body`, `meta`, `caption` | `ink-body`, `ink-meta`, `edge`, `edge-raised`, `surface`, `raised`, `act-accent`, `on-act-accent`, `wash-hover`, `wash-press`, `danger`, `chip-` | `control`, `full` | `acts`, `page`, `sections`, `inside`, `control-x`, `rows`, `pair` | `strip`, `control`, `control-compact`, `popover`, `list`, `measure`, `target`, `icon-meta`, `chip`, `measure-short`, `icon-inset` | `float` |
-| `Gate` | `title`, `meta` | `ink-body`, `ink-meta`, `surface` | none | `page`, `sections`, `fields`, `pair` | `auth`, `avatar` | none |
-| `Screen` | `title` | `ink-body`, `ink-meta`, `edge` | `control` | `acts`, `page`, `sections`, `pair` | `strip`, `control`, `control-compact`, `icon-inset` | none |
-| `Split` | none | `edge`, `ink-meta`, `surface` | `control` | `inside`, `page`, `sections` | `list`, `pane`, `control-compact`, `measure-inset` | none |
+| `Gate` | `title`, `meta`, `body` | `ink-body`, `ink-meta`, `surface` | none | `page`, `sections`, `fields`, `pair`, `inside` | `auth`, `avatar` | none |
+| `Screen` | `title` | `ink-body`, `ink-meta`, `edge` | `control` | `acts`, `page`, `sections`, `pair`, `inside` | `strip`, `control`, `control-compact`, `icon-inset`, `measure-inset` | none |
+| `Split` | none | `edge`, `ink-meta`, `surface` | `control` | `inside`, `page`, `sections` | `list`, `pane`, `region-min`, `control-compact`, `measure-inset` | none |
 | `Section` | `heading`, `meta`, `body`, `caption` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `danger` | `row`, `control`, `chip` | `pair`, `fields`, `inside`, `control-x` | `icon`, `control-compact`, `skeleton`, `field`, `target` | none |
 | `Group` | none | `edge`, `surface` | `card` | none | none | none |
 | `List` | none | `edge` | none | `rows`, `control-x` | none | none |
@@ -2662,11 +2702,11 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Toolbar` | none | `edge` | none | `pair`, `page`, `inside`, `acts` | none | none |
 | `ActionBar` | `meta`, `body` | `ink-meta`, `ink-body`, `ink-disabled`, `ink-error`, `edge`, `danger`, `act-accent`, `on-act-accent`, `act-danger`, `on-act-danger`, `wash-hover`, `wash-press`, `skeleton` | `control`, `full` | `pair`, `acts`, `inside`, `control-x` | `control`, `field`, `target`, `selection`, `control-compact`, `measure-short` | none |
 | `Columns` | none | none | none | `fields`, `page`, `sections` | `column` | none |
-| `Shell` | `body`, `caption` | `canvas`, `surface`, `edge`, `ink-body`, `ink-meta`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `ring` | `row`, `control` | `inside`, `control-x`, `rows`, `pair`, `float`, `page` | `row`, `sidebar`, `target`, `icon`, `icon-control`, `popover`, `icon-inset` | none |
+| `Shell` | `body`, `caption` | `canvas`, `surface`, `edge`, `ink-body`, `ink-meta`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `ring` | `row`, `control`, `full` | `inside`, `control-x`, `rows`, `pair`, `float`, `page` | `row`, `sidebar`, `target`, `icon`, `icon-control`, `popover`, `icon-inset`, `avatar` | none |
 | `ListRow` | `body`, `meta`, `caption` | `ink-body`, `ink-meta`, `ink-disabled`, `ink-error`, `surface`, `edge`, `edge-error`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `ring`, `accent-ink`, `ok`, `warn`, `chip-amber`, `danger`, `avatar-`, `chip-`, `skeleton`, `fill-disabled`, `edge-strong`, `toggle-on`, `toggle-on-hover`, `on-accent` | `row`, `full`, `control`, `chip` | `inside`, `rows`, `control-x`, `card`, `acts`, `pair` | `row`, `row-2`, `avatar`, `icon`, `icon-meta`, `dot`, `spinner`, `measure-short`, `chip`, `control-compact`, `skeleton`, `figures`, `check`, `target`, `indent`, `line-body` | none |
 | `DefinitionRow` | `body`, `meta`, `code` | `ink-body`, `ink-meta`, `wash-hover`, `wash-press`, `ring`, `accent-ink`, `ok`, `warn`, `chip-amber`, `danger`, `skeleton` | `full`, `control`, `chip` | `fields`, `card`, `inside`, `pair`, `rows` | `row`, `row-setting`, `control-compact`, `icon`, `icon-meta`, `dot`, `spinner`, `measure-short`, `measure`, `figures`, `skeleton`, `switch-w`, `switch-h`, `target` | none |
 | `FormField` | `body`, `meta` | `ink-body`, `ink-meta`, `ink-error`, `ink-disabled`, `ok`, `warn`, `chip-amber`, `danger` | `control` | `pair`, `fields`, `inside`, `card` | `row`, `icon`, `icon-meta`, `control-compact` | none |
-| `ItemHeader` | `body`, `meta`, `title`, `caption` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `accent-ink`, `ok`, `warn`, `chip-amber`, `danger` | `control`, `chip`, `full` | `pair`, `sections`, `inside`, `fields`, `control-x` | `skeleton`, `target`, `control-compact`, `dot`, `spinner`, `icon-meta`, `measure-short`, `measure` | none |
+| `ItemHeader` | `body`, `meta`, `title`, `caption` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `accent-ink`, `ok`, `warn`, `chip-amber`, `danger` | `control`, `chip`, `full` | `pair`, `sections`, `inside`, `fields`, `control-x`, `acts` | `skeleton`, `target`, `control`, `control-compact`, `icon-inset`, `dot`, `spinner`, `icon-meta`, `measure-short`, `measure` | none |
 | `SegmentedControl` | `body` | `group`, `ink-body`, `ink-meta`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `ring` | `control` | `control-x` | `control-compact` | none |
 | `Sheet` | `heading`, `body`, `meta` | `scrim`, `raised`, `edge-raised`, `edge`, `ink-body`, `ink-meta`, `ink-error`, `act-accent`, `on-act-accent` | `sheet`, `control` | `pair`, `card`, `acts`, `fields`, `sections`, `inside`, `control-x`, `page` | `sheet`, `pane`, `dialog`, `measure`, `control`, `control-compact`, `row-2`, `docked-floor` | `modal` |
 | `Picker` | `body`, `meta`, `caption` | `ink-body`, `ink-meta`, `ink-disabled`, `surface`, `edge`, `edge-hover`, `raised`, `avatar-`, `chip-`, `edge-raised`, `wash-hover`, `wash-press`, `ring` | `full`, `control`, `popover`, `row` | `inside`, `pair`, `float`, `rows`, `control-x`, `card` | `target`, `control-compact`, `popover`, `avatar`, `chip`, `chips-inset`, `hairline`, `measure-short`, `row`, `row-2`, `icon-meta`, `icon`, `icon-control` | `float` |
@@ -2696,7 +2736,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Thread` | none | `raised`, `edge`, `edge-raised` | `control` | `sections`, `page`, `pair`, `acts` | `measure`, `docked-log-floor` | `float` |
 | `QrCode` | none | `edge`, `surface`, `ink-body`, `skeleton` | `card` | none | `qr` | none |
 | `Image` | `meta` | `edge`, `edge-hover`, `ink-body`, `skeleton`, `group`, `ink-meta`, `raised`, `scrim` | `control`, `card` | `page`, `inside` | `image-tile`, `image-cap`, `icon`, `control` | `float` |
-| `Canvas` | `body`, `meta`, `caption` | `skeleton`, `canvas`, `group`, `surface`, `edge`, `edge-strong`, `edge-error`, `selected-outline`, `edge-hover`, `grid`, `ring`, `ink-body`, `ink-meta`, `ink-disabled`, `fill-neutral`, `accent-ink`, `ok`, `warn`, `chip-amber`, `danger`, `chip-` | `card`, `control`, `full`, `chip` | `inside`, `pair`, `control-x`, `sections` | `node`, `port`, `target`, `row-2`, `control`, `dot`, `chip`, `icon-meta`, `icon`, `measure-short`, `measure`, `spinner`, `skeleton` | none |
+| `Canvas` | `body`, `meta`, `caption` | `skeleton`, `canvas`, `group`, `surface`, `edge`, `edge-strong`, `edge-error`, `selected-outline`, `edge-hover`, `grid`, `ring`, `ink-body`, `ink-meta`, `ink-disabled`, `fill-neutral`, `accent-ink`, `ok`, `warn`, `chip-amber`, `danger`, `chip-` | `card`, `control`, `full`, `chip` | `inside`, `pair`, `control-x`, `sections`, `page` | `node`, `port`, `target`, `row-2`, `control`, `dot`, `chip`, `icon-meta`, `icon`, `measure-short`, `measure`, `spinner`, `skeleton` | none |
 
 ### Motion
 

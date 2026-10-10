@@ -16,7 +16,7 @@ import {
 	extractIp,
 	type RateLimitBinding,
 } from "../procedure.ts";
-import { STACK_NOT_FOUND_HEADER } from "../wire.ts";
+import { STACK_EXPOSED_HEADERS, STACK_NOT_FOUND_HEADER } from "../wire.ts";
 import { buildMcpTools, createMcpEndpoint, createMcpRoute } from "./mcp.ts";
 
 export type { InferRouter } from "../types.ts";
@@ -471,7 +471,7 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 							return allowed.includes(requestOrigin) ? requestOrigin : null;
 						},
 						credentials: true,
-						exposeHeaders: [STACK_NOT_FOUND_HEADER],
+						exposeHeaders: [...STACK_EXPOSED_HEADERS],
 					}),
 				);
 			}

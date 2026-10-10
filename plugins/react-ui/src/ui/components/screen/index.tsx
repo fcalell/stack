@@ -3,10 +3,13 @@ import { cn } from "@fcalell/ui-core/cn";
 import type { IconAct, MenuItem } from "@fcalell/ui-core/descriptors";
 import {
 	PAGE_BODY,
+	PAGE_BODY_BESIDE,
 	PAGE_HEAD,
-	PAGE_TITLE,
+	PAGE_HEAD_WRAPS,
+	PAGE_TITLE_FLOOR,
 	PAGE_TOP_BAR,
-	PAGE_TOP_BAR_TOUCH,
+	PAGE_TOP_BAR_END,
+	PAGE_TOP_BAR_START,
 	text,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useId, useState } from "react";
@@ -23,11 +26,12 @@ import { HeadingContext } from "../../lib/heading.ts";
 import { useTouch } from "../../lib/media.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
 import { useWords } from "../../lib/words.tsx";
+import { useWraps } from "../../lib/wraps.ts";
 import { IconButtonLink } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 import { headPaired } from "../item-header/pair.tsx";
 import { Menu } from "../menu/index.tsx";
-import { DETAILS, Details, ROW_MARKED } from "../place/index.tsx";
+import { DETAILS, Details, TITLE_WRAP } from "../place/index.tsx";
 import { splitOf } from "../split/index.tsx";
 
 // A screen is the size container a Split inside decides its regions by.
@@ -35,7 +39,8 @@ import { splitOf } from "../split/index.tsx";
 // while the mark stands in its column, from the first paint.
 const SCREEN = "@container/page group/page flex flex-col grow min-h-0";
 // Beside a Split's main the screen is a region of its page: its head's acts
-// read the page's width, and its body's sections are the container. Where it
+// read the page's width, and its body's sections are the container, in the
+// column the main holds (`PAGE_BODY_BESIDE`: the measure inside the page inset). Where it
 // stands alone (below `tablet` of the page) its body keeps the room of the
 // act floating over it under its sections, as the main does.
 const SCREEN_BESIDE = "flex flex-col grow min-h-0";
@@ -49,8 +54,11 @@ const CLOSE = "flex page-max-wide:hidden";
 // Place's stead, so it draws the Details act of the Split's pane.
 const ALONE_ACT = "flex page-tablet:hidden";
 const HEAD = "flex flex-col";
+// On touch the row is the title's: it wraps, so acts that do not fit beside the
+// back act, the title's floor and the gaps drop whole to a second line.
 const ROW = "flex items-center";
-const SPACER = "grow";
+const ROW_TOUCH = "flex flex-wrap items-start";
+const ACTS = "flex shrink-0 items-center gap-acts ms-auto";
 const TITLE = "min-w-0 grow truncate";
 // The body fills the screen, so an EmptyState alone in it centres, and
 // scrolls under the fixed head, taking a tab stop only while it scrolls with
@@ -72,7 +80,7 @@ export interface ScreenProps extends Closed {
 	children?: ReactNode;
 }
 
-/** A page pushed over a place: the back act first and no filled act. Its head draws one hairline: on the desktop it stands in the shell's column under one strip; on touch the top bar (back, actions, more) stands over the title and the screen covers the tab bar. A Split inside decides its regions by the screen's width and its pane's Details act stands in its head, drawn below `wide` of it; while its record stands alone (below `tablet`) the back act returns to the Split's `back` when it names one. As a Split's `beside` record it stands in its page: its title is an `h1` and its sections start at `h2` at every width; it covers no tab bar, and from `wide` of the page its back act draws as Close, the head's last act, so the title stands at the page's gutter. Below `tablet` of the page its head stands alone in the Place's stead, one top bar with its back act to the main, and draws the Details act of the Split's pane while it is open; its body keeps the room of the act floating over it. */
+/** A page pushed over a place: the back act first and no filled act. Its head draws one hairline: on the desktop it stands in the shell's column under one strip; on touch it is one row (back, the title wrapping, then the actions, Details and more, which drop whole to a second line when they do not fit) and the screen covers the tab bar. A Split inside decides its regions by the screen's width and its pane's Details act stands in its head, drawn below `wide` of it; while its record stands alone (below `tablet`) the back act returns to the Split's `back` when it names one. As a Split's `beside` record it stands in its page: its title is an `h1` and its sections start at `h2` at every width; it covers no tab bar, and from `wide` of the page its back act draws as Close, the head's last act, so the title stands at the page's gutter. Below `tablet` of the page its head stands alone in the Place's stead, one row with its back act to the main, and draws the Details act of the Split's pane while it is open; its body keeps the room of the act floating over it. Beside, its body stands in one column at the measure inside the page inset, at the start of its region, as a record in the main does. */
 export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	const touch = useTouch();
 	const words = useWords();
@@ -87,26 +95,32 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	const [bodyNode, setBodyNode] = useState<HTMLDivElement | null>(null);
 	const stop = useScrolls(bodyNode);
 	const fit = touch ? "body" : "bar";
+	// On touch the back act reaches the page inset by its start.
+	const start = touch ? PAGE_TOP_BAR_START : undefined;
 	// While a Split's record inside stands alone the back act returns to the
 	// list: where the Split says it stands, else the screen's own `back`.
 	const list = splitOf(children)?.back;
 	const goBack =
 		back === undefined ? null : (
-			<IconButtonLink
-				icon={backGlyph(touch)}
-				fit={fit}
-				label={words.back}
-				href={back}
-			/>
+			<span className={start}>
+				<IconButtonLink
+					icon={backGlyph(touch)}
+					fit={fit}
+					label={words.back}
+					href={back}
+				/>
+			</span>
 		);
 	const goList =
 		list === undefined ? null : (
-			<IconButtonLink
-				icon={backGlyph(touch)}
-				fit={fit}
-				label={words.back}
-				href={list}
-			/>
+			<span className={start}>
+				<IconButtonLink
+					icon={backGlyph(touch)}
+					fit={fit}
+					label={words.back}
+					href={list}
+				/>
+			</span>
 		);
 	const close =
 		back === undefined ? null : (
@@ -137,42 +151,35 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	const overflow = more?.length ? (
 		<Menu label={words.more} items={more} />
 	) : null;
-	// On touch a top bar with nothing else in it stands only while the Split's marks show its back or Details act.
-	const bar =
-		!touch ||
-		backAct !== null ||
-		acts.length > 0 ||
-		overflow !== null ||
-		besideDetails !== null;
-	const titleClass = cn(text({ role: "title" }), TITLE, touch && PAGE_TITLE);
+	// On touch the title shares the bar's row, so the row always stands.
+	const titleClass = cn(
+		text({ role: "title" }),
+		touch ? cn(TITLE_WRAP, PAGE_TITLE_FLOOR) : TITLE,
+	);
+	const [titleRef, wrapped] = useWraps();
 	const heading = (
-		<h1 id={titleId} className={titleClass}>
+		<h1 id={titleId} ref={touch ? titleRef : undefined} className={titleClass}>
 			{title}
 		</h1>
 	);
 	// The head is one tree on both densities, so crossing the density line
-	// keeps its acts, their focus and an open sheet's trigger. Only the
-	// title's place and the spacer differ, each a slot that holds `null` where
-	// it does not draw, so the acts after it never shift.
+	// keeps its acts, their focus and an open sheet's trigger. The acts are one
+	// span at the row's end; it reaches the page inset by its end on touch.
 	const head = (
-		<header className={cn(PAGE_HEAD, HEAD)}>
-			<div
-				className={cn(
-					PAGE_TOP_BAR,
-					touch && PAGE_TOP_BAR_TOUCH,
-					bar ? ROW : ROW_MARKED,
-				)}
-			>
+		<header
+			className={cn(PAGE_HEAD, touch && wrapped && PAGE_HEAD_WRAPS, HEAD)}
+		>
+			<div className={cn(PAGE_TOP_BAR, touch ? ROW_TOUCH : ROW)}>
 				{backAct}
-				{touch ? null : heading}
-				{touch ? <span className={SPACER} /> : null}
-				{acts}
-				{details}
-				{besideDetails}
-				{overflow}
-				{beside ? close : null}
+				{heading}
+				<span className={cn(ACTS, touch && PAGE_TOP_BAR_END)}>
+					{acts}
+					{details}
+					{besideDetails}
+					{overflow}
+					{beside ? close : null}
+				</span>
 			</div>
-			{touch ? heading : null}
 		</header>
 	);
 	return (
@@ -192,7 +199,10 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 									tabIndex={stop ? 0 : undefined}
 									className={BODY}
 								>
-									<div data-page="" className={cn(PAGE_BODY, SECTIONS_BESIDE)}>
+									<div
+										data-page=""
+										className={cn(PAGE_BODY, PAGE_BODY_BESIDE, SECTIONS_BESIDE)}
+									>
 										{headPaired(children)}
 									</div>
 									{room ? <div className={ALONE}>{room}</div> : null}

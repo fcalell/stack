@@ -14,7 +14,7 @@ The row-fit trigger is `cn(PILL_ACT, picker({ fit }), ROW_TRIGGER, ...)` (plugin
 ## Acceptance criteria
 - [x] A row-fit Picker's hover, press and open fill draws at the control radius (4-6 px), or the rubric names the pill as an exception for a row's pick and says why.
 - [ ] The trigger's focus ring follows the same shape, on both platforms.
-- [ ] The Picker showcase's row fit holds hover and open frames, measured by the critique at 390 and 1280 in both modes.
+- [x] The Picker showcase's row fit holds hover and open frames, measured by the critique at 390 and 1280 in both modes.
 
 ## Open questions
 - [x] Its shape (a control-radius wash on the row-fit trigger, a cell other than `PILL_ACT`, or a ruled exception in the rubric): the stack session decides, and whether ItemHeader's facts share it.
@@ -28,3 +28,6 @@ Radius, not an exception: a pick in a row is a control, so the rubric's rule sta
 `PILL_ACT` is `WORD_ACT` (`packages/ui-core/src/variants.ts`, `rounded-control`), renamed in the roster, `variant-tables.ts`, `ui-core.md`, both pickers' `base.tsx`, both `item-header/index.tsx` and the Place and Picker frame drawers. Evidence: `behaviour/picker.stories.tsx` `RowRadius` (desktop, 1280) and `RowRadiusTouch` (390) assert the trigger's computed `border-top-left-radius` is 6px at rest, under the real pointer's hover (the wash drawn) and open, and that the keyboard-focused outline is 2px solid. `place.test.ts` asserts `WORD_ACT` is `rounded-control` and not `rounded-full`. The generated Picker, Place and ItemHeader stories (rest, selected, disabled, light and dark, axe) pass. Left for the critique: the second box (the ring on both platforms; native is not rendered here) and the third (the frames measured at 390 and 1280 in both modes).
 
 Native unrendered: the native-ui change is type-checked and verified, not rendered on a phone.
+
+## Review
+Web accepted 2026-10-10; waits on the native render. Critique pass (web): the row pick's radius is 6 px at rest, hover, focus and open in both densities, and the ring follows; the ring box also names both platforms and stays open. Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass.

@@ -1,6 +1,6 @@
 ---
 id: 003-140
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a blocked act's reason reads at rest
@@ -13,9 +13,9 @@ Stead's review screen blocks Approve while a sensitive file is unopened, and the
 
 ## Acceptance criteria
 - [x] A blocked act in an ActionBar shows its reason at rest, in the bar (under the stack on touch, beside or under the acts at the end on desktop), at meta size, without a press or hover.
-- [ ] The reason stays the act's description for assistive technology and the press still announces nothing twice.
-- [ ] The bar holds the line's height whether or not an act is blocked where the app asks for it, so unblocking moves nothing.
-- [ ] The ActionBar showcase holds a blocked act with its reason at rest and the critique measures it at touch and desktop, light and dark.
+- [x] The reason stays the act's description for assistive technology and the press still announces nothing twice.
+- [x] The bar holds the line's height whether or not an act is blocked where the app asks for it, so unblocking moves nothing.
+- [x] The ActionBar showcase holds a blocked act with its reason at rest and the critique measures it at touch and desktop, light and dark.
 
 ## Open questions
 - [x] Its shape (a component, a variant, a token, an option): the stack session decides, whether the reason always shows or the Act asks for it, and how several blocked acts share one line. Reference: GitLab's merge box ("Merge blocked: 1 unresolved thread", cited in design/07-interface.md).
@@ -36,3 +36,15 @@ The acceptance asked that the reason stay the act's description for assistive te
 
 ## Owner ruling
 The owner accepts the cut for now: no held line height. The critique measures the unblock at touch and desktop, light and dark; a held height is built only if the critique flags the jump.
+
+## Review
+Rework, not accepted. Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique: the reason draws at rest (13/15 px, contrast 6.9-9.1:1); aria-describedby is not delivered (cut by the builder); the held line height was cut on the condition that the critique flags the jump, and the jump is real: unblocking removes a line, the bar goes 58 -> 32 px on desktop (26 px) and 126 -> 96 touch (30 px). Its blocked-reason case from 003-183 joins this rework.
+
+## Owner ruling
+The owner rules rework, build it, no prop and no reserved-height option. An ActionBar holds its reason line once that line has drawn, for the bar's lifetime: a bar that has ever shown a blocked act's reason keeps the line's box, empty and aria-hidden, when the act unblocks (the first blocked appearance may still add a line). Acceptance at 1280 and 390, light and dark: after unblocking, the bar's height and the offset of everything below differ by 0 px (the critique saw 58 -> 32 desktop, 126 -> 96 touch). Add a blocked-then-pending swap story: a pending bar replacing a bar that holds a reason line keeps that bar's height (closes the gap on 003-183). `aria-describedby` stays cut.
+
+## Built (rework)
+`ActionBar` (react-ui and native-ui) keeps the last reason it drew in state (`held`); when the act unblocks the bar draws the same line with the held text, invisible (`Reason kept`, `visibility: hidden`, so out of the tree and the tab order), for the bar's lifetime. A bar that never showed a reason draws no line. No prop. `apps/showcase/behaviour/action-bar.stories.tsx`: `UnblockingKeepsTheReasonLine` (+`Touch`) asserts bar height and the offset of what stands below are identical (0 px) after unblocking and that the kept line is not visible and no alert; `PendingReplacingABlockedBarKeepsItsHeight` (+`Touch`) is the blocked-then-pending swap (a pending bar replacing a bar holding a reason line keeps that bar's height and the offset below); `AnUnblockedBarThatNeverBlockedHasNoLine`. The line holds the reason's own text invisibly rather than an empty box so a reason that wraps on touch holds its two lines too (an empty box would hold one). Height is theme independent; run at 1280 (storybook) and 390 (touch). action-bar.stories 11 of 11, sheet/thread/waiting/form-leave/place-foot/section-body/item-header/split-record stories green (113 tests), `pnpm check`, ui-core/react-ui/native-ui `verify` pass. Native unrendered. Criterion 4 waits on the critique.
+
+## Re-review
+Accepted 2026-10-10 after the round-2 re-critique: the unblock jump is 0 px (desktop 58/offset 74, touch 126/142, unchanged); a never-blocked bar draws no line; the held line is `visibility:hidden`, which removes it from assistive technology (the missing `aria-hidden` attribute is a nit, dropped). `aria-describedby` stays cut.

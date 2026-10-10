@@ -1,6 +1,6 @@
 ---
 id: 003-161
-status: review
+status: done
 sessions: {}
 ---
 # plugin-react-ui: a width specimen stays inside a narrow viewport
@@ -40,3 +40,6 @@ scale) is the stack session's call.
 
 ## Critique
 Unrendered: the width specimen lives at the showcase route `/foundations`, which the static Storybook does not hold.
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. No critique unit this round; the behaviour and screens suites hold it.

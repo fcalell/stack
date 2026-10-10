@@ -20,11 +20,13 @@ import { elkGraph, fromElk, type Gaps, graphKey, layerGap } from "./elk.ts";
 import { glyphBoxes, routeSide } from "./floor.ts";
 import {
 	type Box,
+	groupTree,
 	hollowRow,
 	leftPads,
 	type Routes,
 	routeEdges,
 	type Size,
+	union,
 } from "./geometry.ts";
 import { openTransform, type Places, place } from "./view.ts";
 import { useViewportValue, type Viewport } from "./viewport.ts";
@@ -380,13 +382,24 @@ export function useLayout({
 	useLayoutEffect(() => {
 		const element = region.current;
 		if (ready || !element || !measured || !placed || !measures) return;
+		// The first node stands whole with the groups that hold it.
+		const firstId = order[0] ?? "";
+		const parents = groupTree(
+			groups,
+			new Set(nodes.map((node) => node.id)),
+		).parent;
+		const focus = [boxes.get(firstId) ?? holes.get(firstId)];
+		for (let at = parents.get(firstId); at !== undefined; at = parents.get(at))
+			focus.push(routed.frames.get(at));
+		const shown = focus.filter((box): box is Box => box !== undefined);
 		viewport.set(
 			openTransform(
 				routed.bounds,
-				boxes.get(order[0] ?? "") ?? holes.get(order[0] ?? ""),
+				shown.length > 0 ? union(shown) : undefined,
 				{ width: element.clientWidth, height: element.clientHeight },
 				spacing("page"),
 				viewport.clearance(),
+				viewport.reserved() ?? undefined,
 			),
 		);
 		setReady(true);
@@ -399,6 +412,8 @@ export function useLayout({
 		boxes,
 		holes,
 		order,
+		groups,
+		nodes,
 		region,
 		viewport,
 	]);

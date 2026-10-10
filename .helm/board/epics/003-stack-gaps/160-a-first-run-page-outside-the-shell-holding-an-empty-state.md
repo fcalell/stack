@@ -38,3 +38,6 @@ Native unrendered: first-run part, on web and phone.
 
 ## Critique
 Ship, by a fresh critic at 1280 and 390, light and dark (scratchpad `critique/shell/report.md`).
+
+## Review
+Web accepted 2026-10-10; waits on the native render. Box 1 mixes web and phone, so it stays open; its web half is met (the suite). Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass.

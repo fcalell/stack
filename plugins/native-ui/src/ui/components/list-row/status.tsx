@@ -1,5 +1,5 @@
 import type { RowStatus } from "@fcalell/ui-core/descriptors";
-import { lineBox, skeleton } from "@fcalell/ui-core/variants";
+import { lineBox } from "@fcalell/ui-core/variants";
 import { useState } from "react";
 import { Text as RNText, View } from "react-native";
 import { cn } from "../../lib/cn";
@@ -11,10 +11,10 @@ const MARK = "shrink min-w-0";
 // The short form is what the app offered to read whole: it keeps its width and
 // the first part takes the overflow.
 const MARK_SHORT = "shrink-0";
-// A status waiting: a bar a short label wide at the meta line's height, which
-// yields to the first part as the status does.
-const WAIT = "flex-row items-center w-measure-short shrink min-w-0";
-const WAIT_BAR = "grow";
+// A status waiting: the `Status`'s own waiting form, its bar standing where the
+// loaded word does, at the meta line's height; it yields to the first part as
+// the status does.
+const WAIT = "flex-row shrink min-w-0";
 // The long form measured: invisible, over the mark, at the width the visible
 // word was given, so it wraps where the visible one truncates.
 const TWIN = "absolute opacity-0";
@@ -38,7 +38,7 @@ export function RowStatusMark(props: { status: RowStatus; line: number }) {
 				className={WAIT}
 			>
 				<Strut role="meta" />
-				<View className={cn(skeleton({ kind: "line" }), WAIT_BAR)} />
+				<StatusBase waiting="short" />
 			</View>
 		);
 	return (

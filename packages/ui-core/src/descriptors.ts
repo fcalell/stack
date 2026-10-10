@@ -424,14 +424,6 @@ export interface StageEnd {
 // sentence: it wraps.
 export type Sentence = readonly (string | { strong: string } | Coded)[];
 
-// The product's mark a `Gate` leads with: its `name`, which draws in the place
-// of the image at `src` while that fails or `src` is absent.
-export interface GateMark {
-	// The product's name (a short phrase; wraps).
-	name: string;
-	src?: string;
-}
-
 // A place in the shell: a route, a label, an icon, an optional count.
 export interface PlaceSpec {
 	route: Route;

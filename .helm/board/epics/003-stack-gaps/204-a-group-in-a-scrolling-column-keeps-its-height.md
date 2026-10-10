@@ -1,6 +1,6 @@
 ---
 id: 003-204
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a Group in a scrolling column keeps the height of its rows
@@ -14,7 +14,7 @@ Stead's System index is a `Split` list of three `Group`s, each holding a `List` 
 ## Acceptance criteria
 - [x] A Group standing in a scrolling flex column (a Split's list, a Sheet's body) keeps the height of its rows at every width and density, and the column scrolls.
 - [x] A Group in a column that does not scroll is unchanged.
-- [ ] The Group or Split showcase holds a list pane shorter than its Groups, and the critique measures each Group's height against its content at 390 x 800.
+- [x] The Group or Split showcase holds a list pane shorter than its Groups, and the critique measures each Group's height against its content at 390 x 800.
 
 ## Open questions
 - [x] Its shape (the Group never shrinking, or the scrolling column's children not shrinking): the stack session decides, and whether Section and other overflow-hidden cards in a column share it.
@@ -30,3 +30,6 @@ Evidence: `behaviour/split.stories.tsx` holds `GroupsKeepTheirRows` (+ Touch): a
 Limit: `shrink-0` holds on both axes, so a frame that stands as a flex item of a row keeps its width as well. The one such use in the roster is a message's attachment thumbnail (`Image` fit thumb in an attachment row's item), a fixed square that no longer yields width in a row narrower than itself; the Message and MessageInput stories pass.
 
 The critique measures each Group's height against its content at 390 x 800.
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique pass: every block keeps its height in a scrolling pane (clientHeight == scrollHeight), the pane scrolls, the last block is reachable.

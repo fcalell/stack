@@ -1,4 +1,7 @@
+import { factReach } from "@fcalell/ui-core/chart";
 import type {
+	IconAct,
+	MenuItem,
 	OptionPick,
 	Part,
 	StatusState,
@@ -7,6 +10,8 @@ import {
 	ITEM_FACT,
 	ITEM_FACTS,
 	ITEM_HEADER,
+	ITEM_HEADER_ACTS,
+	ITEM_HEADER_LINE,
 	SKELETON_LINES,
 	skeleton,
 	skeletonRow,
@@ -24,10 +29,21 @@ import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 import { Count } from "../count";
 import { Icon } from "../icon";
+import { IconButton } from "../icon-button";
+import { Menu } from "../menu";
 import { Picker } from "../picker";
 import { Status } from "../status";
 
 const FACTS = "flex-row flex-wrap items-center";
+// A fact that acts keeps its target-height hit box and reaches past the facts
+// line's text line above and below it (`factReach`, in px: the phone has no
+// `lh` unit), so the line holds the meta line's height whichever kinds of fact
+// it carries.
+const REACH = { marginVertical: -factReach("touch") } as const;
+// The first line holds the acts at its end: the line's text takes the rest.
+const LINE = "flex-row items-center";
+const LINE_TEXT = "min-w-0 flex-1";
+const ACTS = "flex-row items-center shrink-0";
 const FACT = "flex-row items-center";
 // A pick in the facts line pulls back at its start as well as its end, so its
 // dot and word sit where a plain fact's would.
@@ -67,7 +83,11 @@ export interface ItemHeaderProps extends Closed {
 	title: Part;
 	// The facts in a wrapping line under the title.
 	facts?: readonly Fact[];
-	// Bars in each line's box stand in for the head, at its height.
+	/** The record's icon acts, in order, at the end of the head's first line (the overline's, else the title's): they stay here and the Place's top bar holds none of them. */
+	actions?: IconAct[];
+	/** The acts past the actions, in a menu under the more act after them. */
+	more?: MenuItem[];
+	// Bars in each line's box stand in for the head, at its height. No acts draw while it stands.
 	loading?: boolean;
 }
 
@@ -114,7 +134,7 @@ function SaveFact({
 	const words = useWords();
 	const said = save === "failed" ? words.notSaved : words[save];
 	return (
-		<View className={SAVE}>
+		<View style={REACH} className={SAVE}>
 			<View className={SAVE_ROOM}>
 				<View className={SAVE_WORDS}>
 					<Status state="failed" label={words.notSaved} />
@@ -152,6 +172,7 @@ function FactPart({ fact }: { fact: Fact }) {
 			<Pressable
 				accessibilityRole="link"
 				onPress={() => navigate(href)}
+				style={REACH}
 				className={cn(WORD_ACT, ITEM_FACT, OPEN)}
 			>
 				<RNText className={text({ role: "meta" })}>
@@ -168,6 +189,7 @@ function FactPart({ fact }: { fact: Fact }) {
 			<Pressable
 				accessibilityRole="button"
 				onPress={fact.onOpen}
+				style={REACH}
 				className={cn(WORD_ACT, ITEM_FACT, OPEN)}
 			>
 				<RNText className={text({ role: "meta" })}>
@@ -180,7 +202,7 @@ function FactPart({ fact }: { fact: Fact }) {
 		);
 	if (typeof fact === "object" && "pick" in fact)
 		return (
-			<View className={PICK}>
+			<View style={REACH} className={PICK}>
 				<Picker {...fact.pick} fit="row" />
 			</View>
 		);
@@ -212,14 +234,18 @@ function LineWait({ role, bar }: { role: "meta" | "title"; bar: string }) {
 }
 
 // The overline, the title at the title role and the facts, a pair apart
-// whether the title wraps or not. React Native exposes no heading level, so
-// the title is a header at any depth.
+// whether the title wraps or not, and the record's acts and more at the end of
+// the first line. React Native exposes no heading level, so the title is a
+// header at any depth.
 export function ItemHeader({
 	overline,
 	title,
 	facts,
+	actions,
+	more,
 	loading,
 }: ItemHeaderProps) {
+	const words = useWords();
 	if (loading)
 		return (
 			<View accessibilityState={{ busy: true }} className={ITEM_HEADER}>
@@ -227,6 +253,7 @@ export function ItemHeader({
 				<LineWait role="title" bar="w-1/2" />
 				<View className={SKELETON_LINES}>
 					<View className={cn(skeletonRow({ kind: "facts" }), FACTS_LINE_WAIT)}>
+						<Strut role="meta" />
 						<View className={cn(skeleton({ kind: "line" }), "w-1/3")} />
 						<View className={cn(skeleton({ kind: "count" }), COUNT_WAIT)}>
 							<RNText className={cn(text({ role: "caption" }), FIGURE_WAIT)}>
@@ -238,16 +265,43 @@ export function ItemHeader({
 				</View>
 			</View>
 		);
+	const acts =
+		(actions?.length ?? 0) > 0 || (more?.length ?? 0) > 0 ? (
+			<View className={cn(ITEM_HEADER_ACTS, ACTS)}>
+				{actions?.map((action) => (
+					<IconButton key={action.label} {...action} fit="body" />
+				))}
+				{more?.length ? <Menu label={words.more} items={more} /> : null}
+			</View>
+		) : null;
+	const overlined = overline && overline.length > 0;
+	const overlineLine = overlined ? (
+		<RNText
+			numberOfLines={1}
+			className={cn(text({ role: "meta" }), acts && LINE_TEXT)}
+		>
+			{joinParts(overline, META_CUT)}
+		</RNText>
+	) : null;
+	const heading = (
+		<RNText
+			accessibilityRole="header"
+			className={cn(text({ role: "title" }), acts && !overlined && LINE_TEXT)}
+		>
+			{partText(title)}
+		</RNText>
+	);
 	return (
 		<View className={ITEM_HEADER}>
-			{overline && overline.length > 0 ? (
-				<RNText numberOfLines={1} className={text({ role: "meta" })}>
-					{joinParts(overline, META_CUT)}
-				</RNText>
-			) : null}
-			<RNText accessibilityRole="header" className={text({ role: "title" })}>
-				{partText(title)}
-			</RNText>
+			{acts ? (
+				<View className={cn(ITEM_HEADER_LINE, LINE)}>
+					{overlined ? overlineLine : heading}
+					{acts}
+				</View>
+			) : (
+				overlineLine
+			)}
+			{acts && !overlined ? null : heading}
 			{facts && facts.length > 0 ? (
 				<View className={cn(ITEM_FACTS, FACTS)}>
 					{facts.map((fact) => (

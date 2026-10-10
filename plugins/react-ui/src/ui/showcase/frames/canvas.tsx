@@ -42,7 +42,7 @@ export const STAGE =
 // 1, and too small for the journey. Their classes live here, where the build
 // scans for them.
 export const TALL =
-	"flex flex-col h-[72rem] w-[56rem] max-w-full bg-surface p-page";
+	"flex flex-col h-[80rem] w-[56rem] max-w-full bg-surface p-page";
 export const SMALL = "flex flex-col h-[12rem] w-[20rem] bg-surface p-page";
 
 // The state frames' stages. A canvas opens at scale 1 and shows a graph whole
@@ -55,8 +55,19 @@ export const WORKFLOW_STAGE =
 	"flex flex-col h-[86rem] w-[56rem] max-w-full bg-surface p-page";
 export const JOURNEY_STAGE =
 	"flex flex-col h-[58rem] w-[56rem] max-w-full bg-surface p-page";
+// A canvas opens at the text floor (scale 1), so a stage is as tall as the
+// drawing at scale 1 plus the zoom stack under it: a lone group (touch, the
+// taller) with the page insets, a `pair` of air and the stack.
 export const ALONE_STAGE =
-	"flex flex-col h-[16rem] w-[56rem] max-w-full bg-surface p-page";
+	"flex flex-col h-[22rem] w-[56rem] max-w-full bg-surface p-page";
+// The placed loop's: its two positioned nodes, the row of empty groups below
+// and the stack under the row's first group.
+export const PLACED_STAGE =
+	"flex flex-col h-[44rem] w-[56rem] max-w-full bg-surface p-page";
+// The overview's: a pane the workflow fits at about two thirds, between the
+// overview floor and the full node, in either density.
+export const OVERVIEW_STAGE =
+	"flex flex-col h-[60rem] w-[56rem] max-w-full bg-surface p-page";
 
 // Read-only but for the selection, which a click or Escape moves.
 function Selectable({
@@ -86,16 +97,25 @@ function Selectable({
 	);
 }
 
-// A graph fitted to its stage, which for the workflow is under the text floor,
-// so every node is its glyph alone. The canvas has no prop for a zoom, so the
-// frame presses its Fit once the layout shows.
-function Overview({ graph, first }: { graph: Graph; first?: string }) {
-	const stage = useRef<HTMLDivElement>(null);
+// A graph fitted to its stage, which for the workflow in `STAGE` is under the
+// overview floor, so every node is its glyph alone, and in `OVERVIEW_STAGE` is
+// between that and the full node, so every glyph carries its name. The canvas has
+// no prop for a zoom, so the frame presses its Fit once the layout shows.
+function Overview({
+	graph,
+	first,
+	stage = STAGE,
+}: {
+	graph: Graph;
+	first?: string;
+	stage?: string;
+}) {
+	const host = useRef<HTMLDivElement>(null);
 	const words = useWords();
 	useEffect(() => {
 		let frame = 0;
 		const fit = () => {
-			const region = stage.current?.querySelector("section");
+			const region = host.current?.querySelector("section");
 			if (region && getComputedStyle(region).opacity === "1") {
 				region
 					.querySelector<HTMLElement>(`button[aria-label="${words.fit}"]`)
@@ -108,8 +128,8 @@ function Overview({ graph, first }: { graph: Graph; first?: string }) {
 		return () => cancelAnimationFrame(frame);
 	}, [words.fit]);
 	return (
-		<div ref={stage}>
-			<Selectable label="Workflow" graph={graph} stage={STAGE} first={first} />
+		<div ref={host}>
+			<Selectable label="Workflow" graph={graph} stage={stage} first={first} />
 		</div>
 	);
 }
@@ -130,7 +150,8 @@ const DRAWN: Record<string, { label: string; graph: Graph }> = {
 // and selected, beside a loop with an empty body between two steps and alone, a problem, an off node, a status per
 // state, a run over the workflow, a scenario over the journey, and the glyph a
 // node is under the text floor, which is the workflow fitted: at rest, with its
-// plan node selected, and with a problem.
+// plan node selected, and with a problem; and its overview, the workflow, an off
+// node and a run fitted to a pane where each glyph carries its node's name.
 export function drawCanvas(frame: ShowcaseFrame) {
 	const { name } = frame.cell;
 	if (frame.state === "loading" || frame.state === "empty") {
@@ -159,6 +180,12 @@ export function drawCanvas(frame: ShowcaseFrame) {
 			/>
 		);
 	}
+	if (name.startsWith("CANVAS_NODE_NAME.tone.")) {
+		if (frame.state !== "rest") return undefined;
+		const tone = name.slice(name.lastIndexOf(".") + 1);
+		const graph = tone === "off" ? OFF : tone === "dimmed" ? RUN : WORKFLOW;
+		return <Overview graph={graph} stage={OVERVIEW_STAGE} />;
+	}
 	if (name.startsWith("CANVAS_GROUP.state.")) {
 		if (frame.state !== "rest") return undefined;
 		const first = name.endsWith(".selected") ? "loop" : undefined;
@@ -179,7 +206,7 @@ export function drawCanvas(frame: ShowcaseFrame) {
 				<Selectable
 					label="Placed loop"
 					graph={HOLLOW_PLACED}
-					stage={STAGE}
+					stage={PLACED_STAGE}
 					first={first}
 				/>
 				<Selectable

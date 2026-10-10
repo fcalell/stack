@@ -82,23 +82,23 @@ its rationale.
   wear the accent, so the six are fixed and the accent's band is left out); `Status` with a family
   mode (a state and a data value are two concepts, so two names).
 - Density is a theme, and it moves three scales (the room set, below, scales the radii, the fixed
-  widths, the hairline and the ring too): the type roles (body 13 on the desktop set, 16 on touch,
+  widths, the hairline and the ring too): the type roles (body 14 on the desktop set, 16 on touch,
   each role a ratio rounded to the pixel, its line box to the even pixel), the eleven spacing roles
   (multiples of 4, one rung looser on touch except the float and page insets and the acts gap; a
   list bleeds by `control-x`, so its rows' leading meets the title over it at either density) and
-  the thirty-seven sizes (control 32/44, field 38/48, target 24/44, `indent` 16/20 (a tree row's step
+  the thirty-seven sizes (control 32/44, field 38/48, target 28/44, `indent` 16/20 (a tree row's step
   in), `port` 8/8 (a canvas port's drawn size, over the 6/8 dot), the switch and its derived thumb travel, the avatar, three icon sizes by the text beside
   them, the check, the slider track, the one-time-code box, the meter's bar, the chart's plot, the
   QR square, and six derived from the type: the text area's three body lines, the message input's
-  eight, an image thumbnail's four (`image-tile`, 80/96, the lines of provenance it stands beside),
-  an image's height cap of twenty (`image-cap`, 400/480), one body line's box (`line-body`, 20/24:
+  eight, an image thumbnail's four (`image-tile`, 88/96, the lines of provenance it stands beside),
+  an image's height cap of twenty (`image-cap`, 440/480), one body line's box (`line-body`, 22/24:
   the height a part standing on a wrapped title's first line is pinned to, so a taller part
   overflows it centred, a height set where a `min-h` would grow with its tallest part) and
   `figures`, four tabular figures at the code size, held by a diff's number columns and a file row's
   count lanes), `hairline` (1/1, a field box's border: an act inside a bar-fit box reaches across it
   with `-my-hairline`, so the box stays at the compact control's height, border included) and one
   derived from two sizes: `chips-inset`, what the compact control has over a chip, halved, less the
-  border (3/9, a pick of several's vertical inset). The thumbnail's name is not `thumb`,
+  border (2/9, a pick of several's vertical inset). The thumbnail's name is not `thumb`,
   which the switch's knob holds: `size-*` and `max-w-*` read one `--spacing-*` namespace. A size
   counted in figures is px at `MONO_ADVANCE` (Plex Mono's 0.6 em), never a `ch` width, because
   uniwind has no `ch` unit and native draws the figures too; a named mono with a wider advance
@@ -108,7 +108,7 @@ its rationale.
   limit: there every short label's cap is the body's 18 characters whatever its role (a chip's
   caption included, and `SKELETON_LANE`'s role axis draws one width), and a named sans with a wider
   "0" overflows it. The running-text measure is a derived size, never a `ch` width: `measure` is 58
-  characters at `SANS_ADVANCE` of the density's body size, rounded up (453 on the desktop, 557 on
+  characters at `SANS_ADVANCE` of the density's body size, rounded up (488 on the desktop, 557 on
   touch and in the room), so a meta line, a body paragraph and a form stand at one width where `ch`
   resolves in the element's own font and gave a meta line a narrower column than the body
   beside it. `measure-inset` is that width plus the page inset on both sides, the width a padded
@@ -117,7 +117,7 @@ its rationale.
   sizes rather than a class or an `ICON` axis cell: the web's Lucide and native's Lucide and
   `react-native-svg` all take `strokeWidth` as a number prop, so one value in `tokens` reaches
   both platforms the same way and no class has to resolve to a stroke. `line` (2) is an icon's own weight, `mark` (3.5) the weight
-  of a mark that carries meaning at the meta size, where `line`'s 1 px at 12 px straddles two pixel
+  of a mark that carries meaning at the meta size, where `line`'s 1.17 px at 14 px straddles two pixel
   rows and a mark's hue drops under the 3:1 floor. The checkbox and the change mark (through each
   plugin's internal `IconBase`, whose public `Icon` stays at `line`) read `mark`; each plugin's
   verify fails any other stroke weight literal in `src/ui`. `themeTokens` seeds the touch set on both platforms; the web
@@ -190,7 +190,7 @@ its rationale.
   shadows in `@utility` rules reading `var(--shadow-<level>)`, because the `--shadow-*` theme
   namespace does not resolve into RN's `boxShadow` and a shadow is per mode. The web keys each
   mode on a class scope, `.dark` on the root and `.light` below it restoring the light set, so a
-  light subtree renders light under a dark page; `rootTokens` puts the hairline, the ring, the
+  light subtree renders light under a dark page; `rootTokens` puts the hairline, the ring (its offset, and `--focus-ring-edge-offset`, -1 px, for a field box that rings on its edge), the
   layers' order and the light shadows on `:root` outside `@theme`: no theme utility reads them,
   and a layer is read by the arbitrary `z-(--layer-<layer>)`, since `z-*` reads no theme namespace.
 - Fonts split by fact: the theme names the families (`--font-sans`, `--font-mono`, each ahead of its
@@ -360,6 +360,14 @@ a tick with no animation, never jumped to full.
   descriptors, never nodes), and Draft and Ready as a `status` (they are a kind, not a state the
   pick moves). The Place and the Picker hold `CHIP` and `CHIP_LABEL`; a chip column's option (the
   Picker's `chip` family) draws its own chip alone and ignores `Option.chip`.
+- A record's own acts stand in its `ItemHeader`: `actions` (icon acts at the bar fit, body on touch, as a `Screen`'s)
+  and `more` (a `Menu`) draw at the end of the head's first line, the overline's else the title's (`ITEM_HEADER_LINE`,
+  `ITEM_HEADER_ACTS`: the acts' boxes reach across the line by the icon inset so their glyphs stand on it and the last at
+  the head's end), at every width. They are the same props on both platforms and are not the Place's `actions`/`more`:
+  below `tablet`, where the record stands alone under the Place's back act, the acts stay in the head and the
+  Place's top bar holds none of them, so each act has one place and nothing joins the Place's more. Rejected: a Split
+  `main` slot for acts (the head is the record's, and a Split cannot tell which node is the head) and the acts moving
+  into the Place's more below `tablet` (a record's act would live in two places by width). Loading draws none.
 - A header fact in words that opens a sheet is `{ label: Part; onOpen }` on `ItemHeader`: the words
   in the meta ink and a trailing `ChevronRight` at the meta fit in a `WORD_ACT`, pulled back at its
   start as a pick fact is, a button named by the fact (`aria-haspopup="dialog"` on the web); the consumer's `onOpen` opens its own
@@ -375,8 +383,11 @@ a tick with no animation, never jumped to full.
   words; `failed` is the `failed` Status with `notSaved`, then `retry` as words in a
   `WORD_ACT` led by a `RotateCcw` glyph (a button named by the fact, in the meta ink as an opening
   fact is; the glyph is what tells it from the facts beside it, and it stays words in a box, never a
-  `Button`, so the head keeps one height), so the fact stands at the target height (`ITEM_FACT`,
-  `min-h-target`) in all three states and the head keeps the loading head's height as the save moves.
+  `Button`, so the head keeps one height), so the fact keeps its target-height hit box (`WORD_ACT`) in
+  all three states and the head keeps the loading head's height as the save moves. The facts line is
+  one meta line tall whichever kinds of fact it holds: a fact that acts (an opening fact, a pick, a
+  save) reaches past the line above and below it by `factReach` (the web reads `(target - 1lh) / 2`, the
+  phone the px), so an opening fact joining a status moves nothing under the head.
   Where the facts wrap (below `tablet` on the web, always on the phone) the fact also holds the
   failed form's room in every state, the failed form drawn invisible in the one grid cell the live form
   stands in (a stacked, transparent copy on the phone), so the line wraps the same in all three and the
@@ -417,6 +428,20 @@ a tick with no animation, never jumped to full.
   the same rows. The Shell hands its `Switcher` descriptor down (`ShellSwitcher`), and each Place
   draws the touch trigger from it, so the context changes only when the switcher does and a Shell
   state change re-renders no Place. A Picker stands outside a form; a form's pick is `Select`.
+- The app's mark is a config, not a prop (`react({ icon })`, 003-310). The react plugin derives the
+  `icon` slot (`{ light, dark? }`, null with no icon) and react-ui contributes `MarkProvider`
+  (`lib/mark.tsx`, order 1, beside the words) carrying `{ src, dark?, name: app.name }`; a `Shell`
+  and a `Gate` read it (`useMark`), so no screen passes a logo. A string icon is the logo in both
+  modes; `{ light, dark }` is two, each drawn under the theme's own scope (web overlays in
+  `lib/mark.tsx`, `[.dark_&]:hidden` and `hidden [.dark_&]:block`, not `<img>` media, so the mode
+  toggle moves the logo with the theme; the selector is any `.dark` ancestor, so a `.light` frame inside a
+  dark page still draws the dark form). The lockup is the logo at the
+  avatar's size and the name at `TEXT.body` 500, truncating, `alt=""` since the name stands beside
+  it; a failed logo leaves the name, an app with no icon draws neither. The desktop sidebar heads
+  with it (`SHELL_MARK` the sidebar's float, `SHELL_MARK_ROW` a place row's inset and height, so
+  the logo stands over the places' glyphs; a row, not a link), above the switcher; touch is
+  unchanged. The phone's app icon stays `expo()`'s concern, so `GateMark` and the Gate's `mark` prop
+  are gone from both platforms and native's Gate draws no mark.
 - On touch the places past the tab bar are a page, not a menu: the More tab opens a `Place` of
   `ListRow`s (each place's glyph leading, its count trailing, its route), and while a Place's act
   floats the toasts stand above it by the act's room; while a foot docks (a Place's `foot`, a
@@ -509,7 +534,7 @@ a tick with no animation, never jumped to full.
   (`PAGE_TOP_BAR_TOUCH`) reaches across the page inset by `icon-inset`, half of what the control has
   over its icon, so its first and last icon glyphs stand at the title's start and the inset's end;
   the switcher's trigger keeps the same inset as its padding, so its avatar stands there too, and a
-  bar holding nothing draws no strip. A touch Place with no shell switcher has no bar over its title: the back act (when shown), the title, then the actions, Details and more stand on one 44 px row, the title wrapping before the acts (`PAGE_TOP_BAR_START` and `PAGE_TOP_BAR_END` reach the back act and the acts to the page inset); a Place with a switcher, a room Place and a Screen keep the bar. A Place's title is a strip over a hairline and the body
+  bar holding nothing draws no strip. A touch Place with no shell switcher has no bar over its title: the back act (when shown), the title, then the actions, Details and more stand on one 44 px row, the title wrapping before the acts (`PAGE_TOP_BAR_START` and `PAGE_TOP_BAR_END` reach the back act and the acts to the page inset); a Place with a switcher and a room Place keep the bar. A touch Screen, pushed or beside, is always that one row: back act (when shown), title, then one acts span (`actions`, Details, `more`), with no bar over the title; the row wraps, the title keeps `PAGE_TITLE_FLOOR` (two fifths of the row, `basis-0` so it wraps beside the back act and the acts rather than pushing them down); the title carries a step of block padding above and below its lines (`PAGE_TITLE_BLOCK`, shared by the Place's title row and the Screen's, so a single line still fills the 44 px strip), the head takes a step more over the row while the title wraps (`PAGE_HEAD_WRAPS`, a measured fact, `useWraps`), and the row hangs its items from the top so a 44 px act centres on the title's first line and the acts span, `shrink-0 ms-auto`, drops whole to a second line at the row's end at 44 px when it does not fit beside the back act, the floor and the gaps (at 320 with three acts it wraps, at 390 it fits). The desktop strip and a beside Screen at a narrow desktop page are unchanged. A Place's title is a strip over a hairline and the body
   starts a page inset under it, where a Section's title is a line of the body a pair over its
   content; the two rhythms are not one, and a Place's title is the section's name at every density
   (the app never forks it by density).
@@ -557,9 +582,13 @@ a tick with no animation, never jumped to full.
   `PLACE_TAB` with `PLACE_TAB_LABEL`, the tab bar tab, is selected by ink alone (`ink-meta` idle,
   `ink-body` selected, the selected label at 500); its box carries the ink for the glyph inside it,
   as a labelled act's fill does, and the label repeats it because a native Text inherits none.
-  A tab's count is the plain number as a badge on the glyph's top-right corner, its start half
-  its own width inside the glyph's edge (an absolute overlay, so the glyph's box and the label's
-  centring do not move), and past `TAB_COUNT_MAX` (99) it reads `countOver` ("99+", `tabCount(words, n)`,
+  A tab's count is the plain number as a badge at the glyph box's top-right corner, inside the bar:
+  its line box starts a `pair` above the box's top (one px under the bar's inner top edge, so the
+  hairline strikes no digit and nothing paints above the bar, which clips: `SHELL_TAB_BAR` is
+  `overflow-hidden`) and its start is at the box's right edge, half a hairline in (the last tab's "99+" at 320
+  asks more than 0.45 px to end inside the bar), so it paints nothing inside the whole pixels of the
+  glyph's box, no ring or ground over the strokes, and the glyph's ink is the same with and without it
+  (an absolute overlay, so the glyph's box and the label's centring do not move), and past `TAB_COUNT_MAX` (99) it reads `countOver` ("99+", `tabCount(words, n)`,
   handed to `Count` as its drawn form); the sidebar's `Count` draws the number whole. The badge
   stands inside the bar on the last of five tabs at 320, 390 and 768.
 - A row names what holds it: `ROW`'s `ground` axis is `list` (a list or a popover, the row
@@ -583,7 +612,10 @@ a tick with no animation, never jumped to full.
   one way a row says which part gives way: the age and spend that must read whole are its
   `trailing`. A `Coded` later part (`{ code }`) stands in a span of its own at the same tier and
   cuts in its middle like a definition value (`valueCut`, shared by both platforms). A row that opens (`href` or `onOpen`) ends in a chevron (`ROW_CHEVRON`, the square of an icon act) after
-  its trailing value, unless its end holds an `act`, the more menu, a pick or a tree's fold. A value
+  its trailing value, unless its end holds an `act`, the more menu, a pick or a tree's fold. In a List
+  whose row map declares `more`, a row with none (and no chevron) keeps the more act's square blank
+  (`ActsRoom`, set by the List from its loaded items, tree rows included), so every row's trailing value
+  ends at one x; a List with no `more` is unchanged. A labelled `act` is not reserved: its width is its label's. A value
   trailing a one-line title is whole or gone the same way: the title's basis is half its line, so
   a value wider than what that leaves wraps under the line and is clipped away, and the title then
   takes the whole line (a 320 px table row shows its name, not its age). Both rules are the web's: the phone's later parts and values still truncate with an ellipsis. Every row keeps one height, so its waiting form matches it by
@@ -634,7 +666,7 @@ a tick with no animation, never jumped to full.
   the frame around its foot: `docked` in a Place's foot and a filling Thread's, `inline` in a Thread
   among sections; a `Sheet` anywhere else is the modal one, and the docked form resets it for what it
   holds). No prop, no new roster part: the Sheet draws `SHEET_DOCKED_HEAD`,
-  `SHEET_DOCKED_BODY` (the sections gap and the card inset above and below) and `SHEET_DOCKED_FOOT`
+  `SHEET_DOCKED_BODY` (the sections gap, the card inset above and a sections gap below, so the last row clears the submit by the gap rows keep) and `SHEET_DOCKED_FOOT`
   inside the foot's raised cell, so none carries a surface, radius, shadow, hairline or side inset and
   all three share the foot's edge. The head holds the back act before one column: the title
   over the description, so the two lines share a start whether the back act stands or not, the back and
@@ -698,8 +730,17 @@ a tick with no animation, never jumped to full.
   overlay since positioning and the bleed are platform overlays), so the bar stays at the
   scroller's bottom edge and stands at the form's end when the form fits. The pane takes no
   `submit` and nothing lifts the bar out of the Form, so its pending state, Enter-to-submit and
-  `SubmitContext` stay the Form's. The phone's Details sheet has no `sticky`; its bar scrolls with
-  the body.
+  `SubmitContext` stay the Form's. The phone has no `sticky`: a native `Form` in any sheet
+  (`FormStands` `sheet`) lifts its direct `ActionBar` (`liftBars`, through fragments) into the
+  sheet's own foot slot, a store the sheet subscribes to (as it does its parts) so setting it never
+  re-renders the Form. The Form sets the slot each render in a layout effect, the bar wrapped in
+  the Form's `FormContext`, `TouchedContext` and `LoadingContext` (the blocked reason and the
+  touched state still work in the footer's tree), and clears it on unmount; the sheet is `footed`
+  when `foot`, `acts` or the slot is set and the foot draws the sheet's `acts`, then the slot's bar.
+  Uncapped the foot stands at the content's end, where the bar stood, so a short form is unchanged;
+  capped or full height it moves into gorhom's footer and stays on screen while the fields scroll.
+  A sheet-level `submit` would not do: a Form's bar can hold several acts. A docked sheet has no
+  slot, and its Form's bar stays in flow.
 - A record the main opened is the Split's `beside`: a `Screen` whose `back` is the main's route,
   given by the consumer because the route's depth differs by surface and no component can derive it.
   From `wide` of the page the list, the main and the beside record stand together, main and beside
@@ -719,14 +760,21 @@ a tick with no animation, never jumped to full.
   visible; a heading's tag cannot swap by container query, so two heads (two `h1`s) stand side by
   side from `wide`. On the web its body's sections, not its root, are the `page` container, so its
   head's acts and the floating act's room read the outer page's width and what stands in its body
-  reads its own. Rejected: the record in the pane (the pane is the open record's details, at
+  reads its own. Its body holds the column the main holds (`PAGE_BODY_BESIDE`, `max-w-measure-inset` over `PAGE_BODY`; `SPLIT_MAIN` is held by Split, so Screen composes its own cell). Rejected: the record in the pane (the pane is the open record's details, at
   forty-five characters), a `Sheet` (an overlay over the scrim with no back to the main), and a
   width token for the beside record.
 - A bar at a phone's bottom edge clears the home indicator with the web emit's `pb-safe`
   (`padding-bottom: env(safe-area-inset-bottom)`, non-zero under the document's
   `viewport-fit=cover`), an overlay the tab bar spells beside `SHELL_TAB_BAR`; native pads the
   same inset from `react-native-safe-area-context`.
-- A frame's fixed regions are widths (`sidebar`, `list`, `pane`, `column`, `node` a canvas node, `auth`, `empty` an empty
+- A Split's list and pane size to their content between `region-min` and a ceiling (`list`, `pane`): `SPLIT_LIST` and
+  `SPLIT_PANE` spell `min-w-region-min max-w-<ceiling>` and no `w-`, the list shrink-0 so its flex basis is its
+  content. The ceilings are the old fixed widths, so 003-122's arithmetic (a main of at least a page less the list at its
+  ceiling) holds as the least the main gets. Rejected: a list width the app names (a consumer option, and an app
+  cannot know its rows' width). The touch Place's floating act centres on the list by the list's CSS anchor
+  (`--split-list`), since no width token is the list's width any more. A width that follows its rows moves as a
+  filter or a load changes them, and a skeleton's percentage bars give the floor: the cost of content sizing.
+- A frame's fixed regions are widths (`sidebar`, `list` and `pane` the ceilings of a split's content-sized regions, `region-min` their floor, `column`, `node` a canvas node, `auth`, `empty` an empty
   state's column, `selection` a selection bar's column), so a region keeps its measure at any viewport. A skeleton bar alone takes a
   fraction width (`w-1/12`, `w-1/5`, `w-1/4` to `w-3/4`) to stand at its text's length: structural,
   a closed list in the web verify's overlay acceptance, never a token; a chart column's share of its
@@ -920,8 +968,8 @@ a tick with no animation, never jumped to full.
   `replying`. On the desktop both stand in
   a measure-wide column (`THREAD_COLUMN`, held by no entry: a `MessageInput` and a record's
   `ItemHeader` over a filling Thread stand in it too), on touch in the screen's. The column is a
-  width alone (below, column rule); a filling Thread's log and its docked foot centre it, and a
-  Thread among sections keeps their start. A Thread
+  width alone (below, column rule); a filling Thread's log in a Place's body and its docked foot centre it, and a
+  Thread among sections keeps their start. Filling a Split's main the Thread stands as a record there does: the log (`LOG_AT_START`) and the `ItemHeader` (`COLUMN_FILLED`) start at the main's start, the messages at the measure, and the input (`INPUT_FILLED`) spans the main within the page inset, each a mark variant on `group/main` in `thread/fill.ts` that a Thread outside a main never meets. A Thread
   in a Place's body fills the page at every width, decided by where it stands, from its first
   render: the frame hands it `ThreadRoom`, and the body draws no inset and leaves scrolling to it,
   its log scrolls at the page inset (`THREAD_LOG`), opening at the newest message and following each
@@ -957,7 +1005,10 @@ a tick with no animation, never jumped to full.
   messages meet; the Split hands its main `OverThread` and the `ItemHeader` stands in the Thread's
   column on the desktop under the main's fill mark (`group/main`). The input docks at the main's
   foot and names the toasts' anchor as in a Place. The bleeding Place's act still floats over the
-  list, and where the record stands alone its room stands under the input. While a filling Thread's
+  list, and where the record stands alone its room stands under the input. A Canvas in the main
+  takes the same form (its `data-fill` mark, the `CANVAS_UNDER_HEAD`: the `-mx-page` bleed and the
+  hairline, read by `useBleed` from `ThreadRoom` and `ThreadBleeds`), so it reaches the main's
+  edges under the record's head. While a filling Thread's
   reader is scrolled up (the log's `atEnd` false), a secondary `Button` (`ArrowDown`, the word
   `latest`) floats centred at the foot of the log's region, a pair above the foot, on a lifted
   ground at its radius (`THREAD_LATEST`: `bg-raised`, `shadow-float`, since the secondary act draws
@@ -969,7 +1020,7 @@ a tick with no animation, never jumped to full.
 - A content molecule derives once per input: `Prose` lexes and folds its markdown, `Diff` runs its
   patch, `ProseDiff` its word diff and runs, and `QrCode` its encoding and module path, each
   memoised on its text and skipped while it waits (a waiting QR tile draws a version 2 code's 25
-  modules and encodes nothing). `Message` is memoised on its props, and the Thread draws each item
+  modules and encodes nothing). A streaming `other` message (`streaming`, a Thread `message` slot too) draws `closeOpenRuns(body)` from `@fcalell/ui-core/streaming` (a pure function both platforms run), which closes the runs open at the text's end (fence, emphasis, strong, strike, code span, link text and target), so the closing marker changes nothing drawn; unset, an unmatched marker stays text. `Message` is memoised on its props, and the Thread draws each item
   through a memoised item that renders again only when its item does: every slot reads the item, and
   a system line's `onOpen` and a detail row's `onOpen` call the thread's latest slots when pressed,
   so a thread's re-render (a keystroke in its input, a message arriving) skips every message already
@@ -1121,8 +1172,10 @@ a tick with no animation, never jumped to full.
   `StatusMark` itself, which other parts consume; `loading` is the roster's one waiting word, where
   a sentinel string or a second per-item slot would be an untyped meaning or a second function for
   one state). A waiting status counts as a mark, so the row is the two-line row from its first frame,
-  and stands as a `skeleton` line bar `w-measure-short` in a box the meta line's height (`LINE_BOX`
-  `meta`, `h-lh`; a `Strut` on the phone) where the `Status` will draw, yielding to the first part
+  and stands as the `Status`'s own waiting form (`StatusBase waiting="short"`): a `skeleton` line bar
+  at most `w-measure-short` wide, starting at the loaded word's x (the unseen dot's room and the
+  status's gap in), in a box the meta line's height (`LINE_BOX` `meta`, `h-lh`; a `Strut` on the
+  phone), so nothing shifts sideways when the word arrives, yielding to the first part
   as the status does, so nothing moves when it answers; it works in a `known` List and in a plain
   `ListRow`. `StatusMark.short` is the status's words said shorter ("5 min ago"), drawn in the
   label's place only on a `ListRow`'s meta line and only while the long form would be cut; `label`
@@ -1189,7 +1242,7 @@ a tick with no animation, never jumped to full.
   StatusMark[]`, `RowSlots.steps`, per item) stands in the meta line's place while the row's act
   pends (the entry's rank: `entry`, then `steps`, then `meta` and the marks; the consumer gives
   `meta` back once the act settles), one line each (`ROW_STEPS`, a pair gap, and `ROW_STEP`, each
-  line one body line's box tall, `line-body`, 20 at the desktop body size: the loading-and-pending
+  line one body line's box tall, `line-body`, 22 at the desktop body size: the loading-and-pending
   page's range for a step list is 19 to 20, its 19 one approximate preview reading): the
   status mark (`StatusDot`, the spinner while `running`, the same cells as `Status`) and the label
   at meta size, the running step in `ink-body` and the others in `ink-meta`; each mark carries its
@@ -1362,6 +1415,10 @@ a tick with no animation, never jumped to full.
   the EmptyState absolutely over the boxes at `opacity-0`), so the Section does not move, and the
   EmptyState's frame fills that box with its content centred in it (`EmptyStateBase`'s internal
   `fill`), so nothing floats above or below it.
+- A Section's rhythm has two steps: its head is paired to its body (`SECTION`, `pair` on a page, `fields` in a
+  Form) and the body's own parts (a Prose, a Code, a Group, an ActionBar) stand the `fields` step apart
+  (`SECTION_BODY`) wherever the Section sits, so a dense run of parts reads as parts; a Group keeps its
+  rows' own tight spacing.
 - A Section reads its body's collections off its own children in render, so nothing registers and
   the head (its count, its busy state) and the loading body land in the first paint with no
   second commit. By the depth rule, a Section's collections stand as its direct children (a
@@ -1382,8 +1439,14 @@ a tick with no animation, never jumped to full.
   stands a skeleton field (`lib/field-wait`, the markup the Section's counted fields share) for
   each `FormField` it holds, through fragments, with the field mounted hidden in its place. A
   skeleton field takes the form of the field it stands for (`FieldShape` in `./list-state`: a
-  switch's box at the label's end, a checkbox's on the label's line, a description's bar), read
-  off the field's element by the platform's `fieldWaitOf` in `form-field`: the Section's walker
+  switch's box at the label's end, a checkbox's on the label's line, a slider's own head over its
+  track (`lib/slider-wait`), an option list's card of waiting rows (`lib/option-wait`: a static
+  list one row per option under a group label's bar per group, a query list four rows in the slots
+  its `option` map declares; the `children` under a chosen option are unknown before data and not
+  counted), a segmented control's track, an answered field's one summary row, a description's
+  bar; a Select's trigger waits as the plain field, measured), read
+  off the field's element by the platform's `fieldWaitOf` in `form-field` (an `answered` field
+  outranks its control; the lib files import no component): the Section's walker
   hands it the `FormField` elements it counts (`fieldNodes`), the Form its own. The
   Section's walker does not read through a Form: counting its fields would hide the body and with
   it the `ActionBar`'s waiting form. A direct `ActionBar` beside counted fields (no `Form`) is
@@ -1438,7 +1501,7 @@ a tick with no animation, never jumped to full.
   carrying counts takes it and composes `Link`, never spelling it: the line of links is
   `COUNT_LINKS`, one cell the Meter and the Stats cell both draw through one private `CountLinks`
   part per platform. Each count is a `fit="standalone"` link: it stands alone on its line, so it
-  takes the `target` box (`LINK_TARGET`, 24 / 44; the web's anchor carries it, the phone's link is a
+  takes the `target` box (`LINK_TARGET`, 28 / 44; the web's anchor carries it, the phone's link is a
   pressable of that height with its words centred, since a text's own box takes no touch past its
   words) rather than the inline fit's line-high one. A waiting meter or strip cell stands at the
   loaded height by the line it declares (`WaitLine` in `./list-state`: `counts`, a target-high
@@ -1474,14 +1537,14 @@ a tick with no animation, never jumped to full.
   across, and down by an auto margin while it fits, never `justify-center`, which clips the top of a
   column taller than the viewport, and at the top on touch), whose banner, lead and body stand a
   `sections` gap apart (`GATE_FLOW`): the `banner` (a `Banner`, first at the column's width), then
-  the lead (`GATE_LEAD`, a `fields` gap apart): the `mark`, the `StepCount`, and the head
+  the lead (`GATE_LEAD`, a `fields` gap apart): the app's mark, the `StepCount`, and the head
   (`GATE_HEAD`, a `pair` apart), the `title` at the `title` role, the page's one `h1`, its body's
   `Section`s a level under, and the `description`. The `description` is a `Sentence`
   (`./descriptors`: runs, each a string or `{ strong }` at 500, the way a nested `Text strong`
-  draws), data because composed regions are data; a lone string is no `Sentence`. The `mark` is a
-  `GateMark` (`{ name, src? }`): the product's image at the avatar's size (`GATE_MARK`,
-  `size-avatar`), and its `name` at meta and 500 in its place while the image fails or `src` is
-  absent. It is not an `Image`, which opens a full view. On touch it spans the viewport inside the
+  draws), data because composed regions are data; a lone string is no `Sentence`. The mark is no
+  prop: it is the app's lockup (see "The app's mark"), a row (`GATE_MARK_ROW`) of the logo at the
+  avatar's size (`GATE_MARK`, `size-avatar`) and the app's name at body and 500, drawn when the
+  Gate has a `title` and the app has an icon. It is not an `Image`, which opens a full view. On touch it spans the viewport inside the
   page inset; on the phone it keeps the safe area and its keyboard-aware scroll keeps the focused
   field and the submit act in view. It draws no word of its own. It sets `FormStands` to `auth`
   (`FORM in.auth`, no cell of its own: the column is the form's, as a sheet's body is), so an
@@ -1607,7 +1670,7 @@ a tick with no animation, never jumped to full.
   label at 500 and its reason in meta. The marks carry the hue (the current ring's accent, the
   cross's danger) and a label's ink is its own in every state. `STAGE {state}` is the label's cell, the row's
   gap, the words' bottom inset and a minimum row of the two-line row's height (`STAGE_ROW`,
-  `STAGE_WORDS`; `row-2`, 48 / 64, the state rail's 28–56 and 48–70) carry the room between stages,
+  `STAGE_WORDS`; `row-2`, 52 / 64, the state rail's 28–56 and 48–70) carry the room between stages,
   so a later row of one meta line keeps the pace of a done one. The rail runs through each mark's
   line box in two halves around the mark, so it breaks nowhere. Each mark stands on its label's first line (a later label is meta, so its mark is
   on a meta line) and draws its state as its glyph, so `words` gains none. Stages is static data, so it has no waiting
@@ -1679,7 +1742,18 @@ a tick with no animation, never jumped to full.
   verify fails a component that imports a held cell outside its holder's directory. A popup trigger
   renders the icon act's base (`icon-button/base.tsx`, which the `./components/*` export does not
   reach), taking the trigger's props through Base UI's `render`; on native a trigger is a press, and
-  renders `IconButton` itself. A cell no entry holds is shared, spelled by each component that draws
+  renders `IconButton` itself. The icon act's base also names the act: it wraps itself in a Base UI
+  Tooltip (`TOOLTIP`, held by `IconButton`; 500 ms hover rest, keyboard focus, Escape and a press
+  hide it, none on touch), so every icon act, popup triggers and the canvas zoom stack among
+  them, gets it with no app change. The trigger's pressed look reads `aria-expanded`, not
+  `data-popup-open`, which the tooltip's own trigger also sets. No popup of the roster locks the
+  page: `Select` and `Picker` pass `modal={false}` (Base UI's select defaults to a scroll lock that
+  changes the root's overflow and gutter and moves the page as the list opens), as `Menu` does; a
+  sheet is modal by design. A waiting form shows only for a read that lasts: `WAIT_DELAY` 200 ms
+  before it is drawn, `WAIT_MIN` 500 ms once drawn (`@fcalell/ui-core/wait`, one decision both
+  platforms run), at `QueryBoundary` and a `Section`'s or `Group`'s own `loading`; during the
+  delay the form stands undrawn in its place (`invisible` / `opacity-0`), so the page keeps its
+  height. A cell no entry holds is shared, spelled by each component that draws
   it: the type roles, the field box (`Input`, `Select`, `TextArea`, the Picker's field fit, the
   touch `MessageInput`), the row with its leading slot and its title and meta lines (`ListRow`,
   `FileRow`), the content frame, `FIGURES`, the option group and its label (`SELECT_GROUP`,
@@ -1752,7 +1826,7 @@ a tick with no animation, never jumped to full.
   it, so one route serves a computed layout and a stored one. A group's left padding grows so its
   head text ends a `pair` before the first column an edge crosses the head band at, and ELK's
   Brandes-Köpf placement is balanced so a parent stands over its children. A graph that fits at scale 1 opens
-  centred, a larger one at scale 1 with its first node in path order at the top centre; Fit is
+  centred, a larger one at scale 1 (the text floor first: a first view is never zoomed out) with its first node in path order and the group holding it wholly in the pane at the top, on the room's centre line clamped to the page insets (centred in the pane when it is wider than the pane less its two insets); Fit is
   capped at scale 1 and leaves the room the zoom stack and the act take (each marks itself `data-clear` with the edge it stands against, which the viewport reads off the DOM), and the opening view stands in that same room through the one `clearance` read. ELK's worker is its own file imported with `?worker`, which cannot survive
   Vite's pre-bundling of this package's `.tsx` entries: the module holding the import
   (`lib/canvas-layout`) is reached from a dynamic import by the package's own name, so a graph the
@@ -1767,7 +1841,7 @@ a tick with no animation, never jumped to full.
   which outlives selection taking the border; an edge is on a path by its own id and dims beside an
   off node. The dimmed edge draws `grid`, the dot grid's ink: `edge` is fainter than the grid
   (1.19:1 and 1.41:1 on `canvas`) and `ink-faint` stands within 0.05 of lightness of
-  `edge-strong`, so neither tells a dimmed edge from the grid or from a taken one. A state recolours and never moves a node or reruns the layout (`graphKey` reads structure only). Editing is controlled: the canvas holds only a drag's live position, a landed node's spot and a connection in progress, and reports through `onMove` and `onConnect`. A node's pointer handlers and its ports live in `NodeView`, and a port is hit-tested through `elementsFromPoint` on the laid-out DOM, never by geometry, which is also how the in port a dragged link would end on is found (pointer capture holds `:hover`), so it can fill with ink. A dragged node lifts in z-order only, with no shadow. Where ports show, the router ends a forward edge above its target by the port's radius, the arrowhead tip's overhang and a pixel centre, so the tip stands on the ring's outer top and the ring never covers the arrowhead. On touch the canvas lifts a node by a long press over `NodeView`'s own pointer handlers (d3-zoom reads its filter once, at `touchstart`, and has no cancel, so a lift starves its gesture of touch moves with `document` capture listeners until the finger ends, and lets `touchend` close it; the lifted node draws the selection's colour at the focus ring's width, 2 px, and pulses the device with `navigator.vibrate?.(10)`; the lift timer runs on the page's clock but the press is judged on the events' own `timeStamp`, so a page that stalled past the press and lifted the node before it handled a move or a second finger stamped inside the press puts the node back), and a port's hit holds its size on screen through `--canvas-unzoom`, a variable the region keeps at `1 / zoom` by script. One flag for the whole canvas, derived on every input from the zoom against the caption's text floor (zoom 1) and re-rendered once per crossing, makes each node its glyph alone under the floor: `CANVAS_NODE_GLYPH` at the density's `control` size (its button carries `title={node.title}`, the one name it spells, which axe's `button-name` accepts), over the card's own box (which keeps its place, so nothing laid out moves), its marks straddling the glyph's right corners (`-top-inside`, `-bottom-inside`) clear of the icon, with group heads and edge labels drawing nothing. Under the floor the routes and the group frames follow the glyph, not the card: each node's routing box is a square of the glyph's size over the zoom (rounded up to a `pair` in the flow, so the routes are drawn again only as that side steps, not on every wheel tick) on the card's centre, while ELK's positions and the cards' sizes stay as they are. The lowest zoom rises (`minZoomFor`) to where two glyphs would stand `2 * pair` apart on screen, so the edges between them still draw; the act may cover the last glyph there, which is a bound and not a chosen view.
+  `edge-strong`, so neither tells a dimmed edge from the grid or from a taken one. A state recolours and never moves a node or reruns the layout (`graphKey` reads structure only). Editing is controlled: the canvas holds only a drag's live position, a landed node's spot and a connection in progress, and reports through `onMove` and `onConnect`. A node's pointer handlers and its ports live in `NodeView`, and a port is hit-tested through `elementsFromPoint` on the laid-out DOM, never by geometry, which is also how the in port a dragged link would end on is found (pointer capture holds `:hover`), so it can fill with ink. A dragged node lifts in z-order only, with no shadow. Where ports show, the router ends a forward edge above its target by the port's radius, the arrowhead tip's overhang and a pixel centre, so the tip stands on the ring's outer top and the ring never covers the arrowhead. On touch the canvas lifts a node by a long press over `NodeView`'s own pointer handlers (d3-zoom reads its filter once, at `touchstart`, and has no cancel, so a lift starves its gesture of touch moves with `document` capture listeners until the finger ends, and lets `touchend` close it; the lifted node draws the selection's colour at the focus ring's width, 2 px, and pulses the device with `navigator.vibrate?.(10)`; the lift timer runs on the page's clock but the press is judged on the events' own `timeStamp`, so a page that stalled past the press and lifted the node before it handled a move or a second finger stamped inside the press puts the node back), and a port's hit holds its size on screen through `--canvas-unzoom`, a variable the region keeps at `1 / zoom` by script. Two flags for the whole canvas, derived on every input from the zoom and re-rendered once per crossing, make each node its glyph under the text floor (the caption's size, zoom 1) and its glyph alone under the overview floor: bands are zoom 1 and up the full node, `OVERVIEW_FLOOR` (0.5, in `floor.ts`) up to 1 the overview, under it the glyph alone, and a zoom step is 1.2 (a wheel tick moves at most that). The overview draws the node's `title` (the one name it has, no new prop) at the glyph's inline end, vertically centred, one line: `CANVAS_NODE_NAME`, the caption role in body ink at 500 cut at `measure-short` on a `canvas` chip so an edge never strikes through it, inside the glyph's own scaled button so it holds the floor size on screen at any zoom, `pair` out of the glyph clear of the marks; the whole is the zoom target, and status and problem marks stay on the glyph. A graph raises the overview floor to the lowest zoom at which no two overview forms (glyph, a `pair`, the name at its cap) stand closer than two `pair` (`overviewFloorFor`, on the `minZoomFor` principle, by the nearer of the two axes' gaps), and one that cannot clear them under 1 has no overview: the glyph alone from zoom 1, as before. The cap, not the name's own width, decides, so the floor moves with the graph's layout and not its words. Under the floor `CANVAS_NODE_GLYPH` at the density's `control` size (its button carries `title={node.title}`, the whole name where the overview cuts it and the only one under the overview floor, which axe's `button-name` accepts), over the card's own box (which keeps its place, so nothing laid out moves), its marks straddling the glyph's right corners (`-top-inside`, `-bottom-inside`, each less the border's pixel, so a mark stands `inside` past the glyph's outer edge) clear of the icon, with group heads and edge labels drawing nothing. Under the floor the routes and the group frames follow the glyph, not the card: each node's routing box is a square of the glyph's size over the zoom (rounded up to a `pair` in the flow, so the routes are drawn again only as that side steps, not on every wheel tick) on the card's centre, while ELK's positions and the cards' sizes stay as they are. The lowest zoom rises (`minZoomFor`) to where two glyphs would stand `2 * pair` apart on screen, less the `pair` their routing boxes round up by, so the route between them still draws that long; the act may cover the last glyph there, which is a bound and not a chosen view.
 - A `FormField` folds an answered question by `answered` (`{ answer, onEdit }`): one summary row
   at the row height (`FORM_FIELD_SUMMARY`: a `Check` in the `ok` ink, the label in body 500, the
   answer truncated in meta, a trailing `Pencil` `IconButton` at the bar fit named by the `edit`
@@ -1820,9 +1894,17 @@ a tick with no animation, never jumped to full.
   nothing. A `Form` in a sheet asks nothing (the sheet closes on its own acts), and two edited
   forms on one page each ask. Rejected: a prop or a `Form` variant (every edited form wants it),
   a capture-phase anchor interceptor (a router push and a back never reach it) and block-then-replay.
-- A desktop side sheet is its content's height up to the viewport's, hung from the top at the end
-  edge: a short form is a card, a long one the full height with its body scrolling. No `fit` value
-  says it. A sheet's title wraps beside its acts at every density and never ends in an ellipsis.
+- A desktop Sheet at the default `fit` is a centred card (`sheetSide` `fit: short`: `w-dialog`,
+  `rounded-sheet`, a border on all four sides, `LAYER_CENTRED` and `CENTRED_MOTION`) when its
+  content at natural height (head, body and foot, no cap) is at most the layer's height less the
+  page inset above and below, and the full-height side sheet otherwise. The popup mounts as the
+  card and a layout effect on its first mount measures it before paint, switching to the side
+  sheet in the same commit; the answer is held until the sheet is gone, so a form that grows stays
+  a card with its body scrolling between a pinned head and foot, a side sheet that shrinks stays
+  one, and a wizard keeps its first page's form. `fit: short` is the Sheet's own choice, outside the
+  public `SheetFit`; `fit="pane"` and `form="centred"` (`SHEET_CENTERED`, a decision's cell) are
+  unchanged, and touch is the bottom sheet. This reverses 003-147's card hung at the end edge. A
+  sheet's title wraps beside its acts at every density and never ends in an ellipsis. A sheet's title wraps beside its acts at every density and never ends in an ellipsis.
 - A sheet knows what it holds before it presents. A sheet stands full height when it holds a
   `TextArea` (which grows with its value) or a menu that searches (a pick past six options, whose
   list would else jump as the filter narrows), read in render: on the phone off the elements it is

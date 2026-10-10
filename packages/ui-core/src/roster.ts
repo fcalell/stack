@@ -143,10 +143,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		IconButton: {
 			props: ["icon", "fit", "label", "onAct", "loading"],
-			draws: ["ICON_BUTTON"],
-			holds: ["ICON_BUTTON"],
+			draws: ["ICON_BUTTON", "TOOLTIP"],
+			holds: ["ICON_BUTTON", "TOOLTIP"],
 			states: [...PRESS, "loading"],
 			owns: {
+				roles: ["meta"],
 				colors: [
 					"ink-meta",
 					"ink-body",
@@ -154,9 +155,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"wash-press",
 					"ink-disabled",
 					"ring",
+					"raised",
+					"edge-raised",
 				],
 				radii: ["control"],
-				sizes: ["control", "control-compact", "hairline"],
+				spacing: ["inside", "pair"],
+				elevation: ["float"],
+				sizes: ["control", "control-compact", "hairline", "measure-short"],
 			},
 		},
 		Count: {
@@ -592,6 +597,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"PAGE_TOP_BAR_START",
 				"PAGE_TOP_BAR_END",
 				"PAGE_TITLE",
+				"PAGE_TITLE_BLOCK",
+				"PAGE_HEAD_WRAPS",
 				"TEXT.role.title",
 				"WORD_ACT",
 				"PICKER_VALUE",
@@ -663,17 +670,18 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// A page outside the shell (sign-in, a consent step), a root frame as the
 		// Shell is: one centred column at the `auth` width, a `Banner` first, then
-		// the lead (the product's mark, an optional `StepCount`, the title, the
+		// the lead (the app's mark, a lockup of its logo and name the app gives the
+		// UI plugin once, an optional `StepCount`, the title, the
 		// page's one `h1`, and the description, runs with the strong one at 500, a
 		// pair under it), then the step's body a sections gap under it. It hosts
 		// `toast()` and `confirm()`. On touch it spans the viewport inside the page
 		// inset and a typed step stands at the top. The first field of a step takes
 		// focus, and a `Form`'s `ActionBar` in it draws `full`. The title is
 		// optional: without it the Gate is a first run, drawing no lead and no `h1`
-		// of its own (`mark`, `step` and `description` come only with a title), its
+		// of its own (`step` and `description` come only with a title, the mark beside them), its
 		// one `EmptyState` the page's `h1`, the column centred down at every width.
 		Gate: {
-			props: ["title", "description", "step", "mark", "banner", "children"],
+			props: ["title", "description", "step", "banner", "children"],
 			draws: [
 				"GATE",
 				"GATE_COLUMN",
@@ -681,9 +689,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"GATE_LEAD",
 				"GATE_HEAD",
 				"GATE_MARK",
+				"GATE_MARK_ROW",
 				"TEXT.role.title",
 				"TEXT.role.meta",
-				"TEXT_STRONG.role.meta",
+				"TEXT.role.body",
+				"TEXT_STRONG.role.body",
 			],
 			holds: [
 				"GATE",
@@ -692,12 +702,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"GATE_LEAD",
 				"GATE_HEAD",
 				"GATE_MARK",
+				"GATE_MARK_ROW",
 			],
 			states: ["rest"],
 			owns: {
-				roles: ["title", "meta"],
+				roles: ["title", "meta", "body"],
 				colors: ["ink-body", "ink-meta", "surface"],
-				spacing: ["page", "sections", "fields", "pair"],
+				spacing: ["page", "sections", "fields", "pair", "inside"],
 				sizes: ["auth", "avatar"],
 			},
 		},
@@ -708,10 +719,14 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			draws: [
 				"PAGE_HEAD",
 				"PAGE_TOP_BAR",
-				"PAGE_TOP_BAR_TOUCH",
-				"PAGE_TITLE",
+				"PAGE_TOP_BAR_START",
+				"PAGE_TOP_BAR_END",
+				"PAGE_TITLE_FLOOR",
+				"PAGE_TITLE_BLOCK",
+				"PAGE_HEAD_WRAPS",
 				"TEXT.role.title",
 				"PAGE_BODY",
+				"PAGE_BODY_BESIDE",
 				"ICON_BUTTON.fit.bar",
 				"ICON_BUTTON.fit.body",
 			],
@@ -720,8 +735,14 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				roles: ["title"],
 				colors: ["ink-body", "ink-meta", "edge"],
 				radii: ["control"],
-				spacing: ["acts", "page", "sections", "pair"],
-				sizes: ["strip", "control", "control-compact", "icon-inset"],
+				spacing: ["acts", "page", "sections", "pair", "inside"],
+				sizes: [
+					"strip",
+					"control",
+					"control-compact",
+					"icon-inset",
+					"measure-inset",
+				],
 			},
 		},
 		// Below `wide` the Split adds a Details act to the Place's actions that
@@ -764,7 +785,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				colors: ["edge", "ink-meta", "surface"],
 				radii: ["control"],
 				spacing: ["inside", "page", "sections"],
-				sizes: ["list", "pane", "control-compact", "measure-inset"],
+				sizes: [
+					"list",
+					"pane",
+					"region-min",
+					"control-compact",
+					"measure-inset",
+				],
 			},
 		},
 		// The fold toggle is the title line; a blocked act's reason stands on
@@ -791,6 +818,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SECTION",
 				"SECTION_HEAD",
 				"SECTION_HEAD_ROW",
+				"SECTION_BODY",
 				"SECTION_TITLE",
 				"SECTION_TOGGLE",
 				"SECTION_NESTED_TITLE",
@@ -816,6 +844,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SECTION",
 				"SECTION_HEAD",
 				"SECTION_HEAD_ROW",
+				"SECTION_BODY",
 				"SECTION_TITLE",
 				"SECTION_TOGGLE",
 			],
@@ -999,6 +1028,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SHELL_SIDEBAR",
 				"SHELL_COLUMN",
 				"SHELL_BANNER",
+				"SHELL_MARK",
+				"SHELL_MARK_ROW",
+				"GATE_MARK",
 				"SWITCHER_SLOT",
 				"SWITCHER",
 				"SHELL_PLACES",
@@ -1018,6 +1050,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			holds: [
 				"SHELL_SIDEBAR",
 				"SHELL_BANNER",
+				"SHELL_MARK",
+				"SHELL_MARK_ROW",
 				"SWITCHER_SLOT",
 				"SWITCHER",
 				"SHELL_PLACES",
@@ -1042,7 +1076,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"wash-selected-hover",
 					"ring",
 				],
-				radii: ["row", "control"],
+				radii: ["row", "control", "full"],
 				spacing: ["inside", "control-x", "rows", "pair", "float", "page"],
 				sizes: [
 					"row",
@@ -1052,6 +1086,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"icon-control",
 					"popover",
 					"icon-inset",
+					"avatar",
 				],
 			},
 		},
@@ -1405,6 +1440,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				sizes: ["row", "icon", "icon-meta", "control-compact"],
 			},
 		},
+		// A record's acts (icon acts, then a more) stand at the end of the head's
+		// first line, the overline's else the title's, at every width: below
+		// `tablet` the record stands alone and its acts stay in its head, not
+		// also in the Place's strip or top bar. Loading draws none.
 		// Loading, each line keeps its line box and the facts line the height
 		// of the status that moves on it. A fact in words that opens a sheet is its
 		// words and a chevron in a `WORD_ACT`, a button named by the fact; one that goes to
@@ -1414,9 +1453,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// `tablet`) it holds the failed form's room in every state, so the line
 		// never wraps differently as a save moves.
 		ItemHeader: {
-			props: ["overline", "title", "facts", "loading"],
+			props: ["overline", "title", "facts", "actions", "more", "loading"],
 			draws: [
 				"ITEM_HEADER",
+				"ITEM_HEADER_LINE",
+				"ITEM_HEADER_ACTS",
+				"ICON_BUTTON.fit.bar",
+				"ICON_BUTTON.fit.body",
 				"THREAD_COLUMN",
 				"ITEM_FACTS",
 				"ITEM_FACT",
@@ -1459,11 +1502,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"danger",
 				],
 				radii: ["control", "chip", "full"],
-				spacing: ["pair", "sections", "inside", "fields", "control-x"],
+				spacing: ["pair", "sections", "inside", "fields", "control-x", "acts"],
 				sizes: [
 					"skeleton",
 					"target",
+					"control",
 					"control-compact",
+					"icon-inset",
 					"dot",
 					"spinner",
 					"icon-meta",
@@ -2541,6 +2586,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"at",
 				"attachments",
 				"meta",
+				"streaming",
 				"onOpen",
 				"detail",
 				"loading",
@@ -3060,19 +3106,19 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			draws: [
 				"SKELETON.kind.icon",
 				"SKELETON.kind.line",
-				"SKELETON_LANE.role.body",
 				"SKELETON_LANE.role.meta",
-				"LINE_BOX.role.body",
 				"LINE_BOX.role.meta",
 				"CANVAS_GROUND",
 				"CANVAS_NODE",
 				"CANVAS_NODE_TEXT",
 				"CANVAS_NODE_GLYPH",
+				"CANVAS_NODE_NAME",
 				"CANVAS_PORT",
 				"CANVAS_PORT_HIT",
 				"CANVAS_GROUP",
 				"CANVAS_GROUP_HEAD",
 				"CANVAS_ZOOM",
+				"CANVAS_UNDER_HEAD",
 				"ICON.fit.meta",
 				"ICON.fit.body",
 				"ICON_BUTTON.fit.body",
@@ -3097,11 +3143,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"CANVAS_NODE",
 				"CANVAS_NODE_TEXT",
 				"CANVAS_NODE_GLYPH",
+				"CANVAS_NODE_NAME",
 				"CANVAS_PORT",
 				"CANVAS_PORT_HIT",
 				"CANVAS_GROUP",
 				"CANVAS_GROUP_HEAD",
 				"CANVAS_ZOOM",
+				"CANVAS_UNDER_HEAD",
 			],
 			states: ["rest", "selected", "loading", "empty"],
 			owns: {
@@ -3130,7 +3178,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"chip-",
 				],
 				radii: ["card", "control", "full", "chip"],
-				spacing: ["inside", "pair", "control-x", "sections"],
+				spacing: ["inside", "pair", "control-x", "sections", "page"],
 				sizes: [
 					"node",
 					"port",

@@ -89,3 +89,27 @@ export const LoadedFieldKeepsTheFocus: StoryObj = {
 		await expect(document.activeElement).not.toBe(field);
 	},
 };
+
+// A click on a field draws no ring: the box takes the hover edge and the caret
+// carries focus. Tab back to it rings the box on its edge, centred on the 1 px
+// hairline (an offset of -1 px), and the hover edge gives way to the ring.
+export const ClickIsQuietKeyboardRingsTheEdge: StoryObj = {
+	play: async ({ canvas, userEvent }) => {
+		const field = canvas.getByPlaceholderText("Add a host");
+		const box = field.parentElement as HTMLElement;
+		await userEvent.click(field);
+		await expect(field).toHaveFocus();
+		await expect(document.documentElement.dataset.modality).toBe("pointer");
+		await expect(getComputedStyle(box).outlineStyle).toBe("none");
+		const hover = getComputedStyle(box).borderTopColor;
+		await userEvent.tab();
+		await userEvent.tab({ shift: true });
+		await expect(field).toHaveFocus();
+		await expect(document.documentElement.dataset.modality).toBe("keyboard");
+		const ring = getComputedStyle(box);
+		await expect(ring.outlineStyle).toBe("solid");
+		await expect(ring.outlineWidth).toBe("2px");
+		await expect(ring.outlineOffset).toBe("-1px");
+		await expect(hover).not.toBe("");
+	},
+};

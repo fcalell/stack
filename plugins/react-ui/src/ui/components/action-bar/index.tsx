@@ -142,12 +142,15 @@ export function ActionBar({
 	const words = useWords();
 	const pend = use(FormContext);
 	const [running, setRunning] = useState(false);
+	// The reason this bar last drew: once a line has drawn the bar keeps its box.
+	const [held, setHeld] = useState<string>();
 	const { leave } = useTouched();
 	const kept = use(ReasonKept);
 	const failed = use(ActFailed);
 	// The last blocked act's reason stands at rest under the acts, in the line
 	// a failure would draw in.
 	const reason = acts.findLast((act) => act.blocked !== undefined)?.blocked;
+	if (reason !== undefined && held !== reason) setHeld(reason);
 	const busy = running || acts.some((act) => act.loading);
 	const lastAt = acts.length - 1;
 	const waits = waitCount(loading, use(LoadingContext), 1);
@@ -255,9 +258,10 @@ export function ActionBar({
 				buttons(ghost)
 			)}
 			{reason === undefined ? null : <Reason shown>{reason}</Reason>}
-			{reason !== undefined || !(kept || failed !== undefined) ? null : (
-				<Reason kept={kept} failed shown={failed !== undefined}>
-					{failed ?? NO_FAILURE}
+			{reason !== undefined ||
+			!(held !== undefined || kept || failed !== undefined) ? null : (
+				<Reason kept failed shown={failed !== undefined}>
+					{failed ?? held ?? NO_FAILURE}
 				</Reason>
 			)}
 		</div>

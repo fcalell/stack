@@ -26,7 +26,7 @@ uses `() => spacing('pair')`. The Slider's width is a ref beside `latest`. Each 
 through a stable per-id ref.
 
 ## Acceptance criteria
-- [ ] (live) web, members' role Select on touch at 375: an arrow key re-renders no option it did not move between (React profiler).
+- [x] (live) web, members' role Select on touch at 375: an arrow key re-renders no option it did not move between (React profiler).
 - [ ] (live) phone, on the harness: typing in a MessageInput with chips re-renders no chip.
 
 ## Progress
@@ -34,3 +34,6 @@ Built; `pnpm check` and `pnpm verify` pass. Web live at 375 touch on a four-opti
 
 ## Critique
 Unrendered: its criteria show only in the React profiler or on the phone harness; the Select trigger and options render unchanged.
+
+## Review
+Web accepted 2026-10-10 on the owner's ruling and the suite; waits on the native render (the phone box stays open). Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass.

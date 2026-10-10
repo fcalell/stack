@@ -2,7 +2,9 @@ import type { PlaceSpec, Switcher } from "@fcalell/ui-core/descriptors";
 import { Banner } from "../../components/banner/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { Shell } from "../../components/shell/index.tsx";
+import { MarkProvider } from "../../lib/mark.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
+import { MARK } from "./gate.tsx";
 import { StandInList } from "./layout-context.tsx";
 import { ACTIONS, Column, MORE, Opened } from "./place.tsx";
 import { Deployment } from "./screen.tsx";
@@ -44,19 +46,22 @@ const BANNER = (
 	/>
 );
 
+// The app has an icon, so the desktop sidebar heads with its mark.
 function Frame() {
 	return (
 		<Column>
-			<Shell places={places()} banner={BANNER} switcher={SWITCHER}>
-				<Place
-					title="Deploys"
-					actions={ACTIONS}
-					more={MORE}
-					act={{ label: "Deploy", onAct: act }}
-				>
-					<StandInList />
-				</Place>
-			</Shell>
+			<MarkProvider mark={MARK}>
+				<Shell places={places()} banner={BANNER} switcher={SWITCHER}>
+					<Place
+						title="Deploys"
+						actions={ACTIONS}
+						more={MORE}
+						act={{ label: "Deploy", onAct: act }}
+					>
+						<StandInList />
+					</Place>
+				</Shell>
+			</MarkProvider>
 		</Column>
 	);
 }

@@ -8,7 +8,7 @@ import {
 	skeleton,
 } from "@fcalell/ui-core/variants";
 import { use } from "react";
-import { GroundContext } from "../../lib/ground.ts";
+import { GroundContext } from "./ground.ts";
 
 const BOX = "flex flex-col justify-center";
 const HEAD = "flex items-center justify-between";
@@ -18,7 +18,7 @@ const VALUE_WAIT = "justify-end shrink-0";
 const TRACK_WAIT = "flex items-center";
 const BAR = "w-full";
 
-/** A Slider waiting: its label's and value's bars in their line boxes over a bar in the track's box, at the loaded Slider's height. Outside the package's exports. */
+/** A Slider waiting: its label's and value's bars in their line boxes over a bar in the track's box, at the loaded Slider's height. */
 export function SliderWait() {
 	// In a Group the slider is one of its items, at the card's inset.
 	const item = use(GroundContext) === "group" && GROUP_ITEM;

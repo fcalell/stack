@@ -1,6 +1,6 @@
 ---
 id: 003-188
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a Canvas has a loading form
@@ -19,7 +19,7 @@ The canvas guide (`plugin-react-ui/guide/canvas.md`) names no loading form.
 - [x] A Canvas can stand loading: its ground, grid, zoom stack and foot as loaded, and node-shaped skeletons at a believable layout, with no node button, drag or connection while it waits.
 - [x] The loading form announces itself as busy to assistive technology and is not read as an empty graph.
 - [x] A Canvas given nodes is unchanged.
-- [ ] The Canvas showcase holds the loading form at 375, 768 and 1440 px in both modes, measured by the critique against the loaded canvas's frame.
+- [x] The Canvas showcase holds the loading form at 375, 768 and 1440 px in both modes, measured by the critique against the loaded canvas's frame.
 
 ## Open questions
 - [x] Its shape (a `loading` prop, or a skeleton export the app places in the same frame): the stack session decides.
@@ -33,3 +33,15 @@ The canvas guide (`plugin-react-ui/guide/canvas.md`) names no loading form.
 
 ## Owner ruling
 The owner confirms the narrowing: while loading, no zoom stack and no foot are drawn (both are overlays, so nothing moves when the nodes arrive).
+
+## Review
+Rework, not accepted. Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique (rework): the loading form is 592 px, as the loaded frame, aria-busy, no zoom stack; but the skeleton nodes are 240x56 against the loaded 240x74 (18 px, 24% short, so nodes jump on arrival) and the skeleton gap is 32 against the loaded 40.
+
+## Owner ruling
+The owner rules rework: the skeleton node takes the loaded canvasNode cell's size (240x74, read from the same cell, no second constant), and the column gap is the loaded gap, 40. Acceptance at 375, 768 and 1440, light and dark: skeleton node heights and gaps equal the loaded canvas's; the frame stays 592 px, aria-busy, no zoom stack.
+
+## Built (rework)
+The skeleton card takes the loaded node's text parts (`canvasNodeText` overline, title and line in each lane, so its height is the loaded card's, 74 px with an overline, from the same cell and no second constant) and the column gap is `layerGap(sections, 0, pair)`, the gap a loaded path with no chip keeps (`canvas/wait.tsx`; the roster draws drop the unused body lane and line box). The `Loading` behaviour story now renders a loaded three-node chain beside the wait and asserts each card's height and the gap between cards equal the loaded nodes' to a tenth of a pixel, the frame the loaded height, aria-busy, no button. Browser run: `canvas.stories.tsx` 50/50, `canvas-overview` and `canvas-touch` 75/75, `stories/Canvas.stories.ts` 4/4 (Chromium). The 375, 768 and 1440 critique boxes stay for the critique.
+
+## Re-review
+Accepted 2026-10-10 after the round-2 re-critique: the skeleton node is 240x74 as loaded (touch 240x86), the gap 40 (touch 48), the frame equal. The arrival shift (skeleton column centred, the loaded chain 20 px further right: 27.5 px sideways and 111 px down at 375) was never ruled; it is filed as 003-314.

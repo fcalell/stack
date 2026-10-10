@@ -131,7 +131,8 @@ export const px = (role: string): number =>
 
 // The lowest zoom at which two glyphs of `glyph` px stand `2 * pair` apart,
 // read off the laid-out cards: the glyph and that gap over the smallest centre
-// distance (the larger of the two axes) in the layer's own units.
+// distance (the larger of the two axes) in the layer's own units, less the pair
+// the routing boxes round up by (`minZoomFor`).
 export function lowestZoom(root: Element, glyph: number): number {
 	const scale = viewport(root).scale;
 	const boxes = [...cards(root)].map((each) => centre(rect(each)));
@@ -143,7 +144,11 @@ export function lowestZoom(root: Element, glyph: number): number {
 				Math.max(Math.abs(one.x - two.x), Math.abs(one.y - two.y)) / scale,
 			);
 	});
-	return Math.min(1, Math.max(0.1, (glyph + 2 * px("pair")) / nearest));
+	const pair = px("pair");
+	return Math.min(
+		1,
+		Math.max(0.1, (glyph + 2 * pair) / Math.max(nearest - pair, 1e-9)),
+	);
 }
 
 // After Fit, and after Arrange's fit, no node's box (and no glyph) meets the
@@ -175,7 +180,7 @@ export function marksClearTheIcon(root: Element) {
 	if (forms.length === 0) throw new Error("no glyph is drawn");
 	for (const form of forms) {
 		const icon = form.querySelector("svg");
-		const marks = [...form.querySelectorAll(":scope > span")];
+		const marks = [...form.querySelectorAll(":scope > span:not([data-name])")];
 		if (!icon || marks.length !== 2)
 			throw new Error("a glyph holds its icon and two marks");
 		for (const mark of marks)
@@ -198,6 +203,10 @@ export async function tabKey() {
 	await cdp().send("Input.dispatchKeyEvent", { type: "keyUp", ...key });
 	await new Promise((done) => requestAnimationFrame(() => done(undefined)));
 }
+
+// The names the overview draws beside the glyphs, in path order.
+export const names = (root: Element) =>
+	root.querySelectorAll<HTMLElement>("[data-layer] button > [data-name]");
 
 // A node's glyph button, by its id.
 export function glyph(root: Element, id: string): HTMLElement {

@@ -88,6 +88,8 @@ function buildElement(
 			if (injection.crossorigin !== undefined) {
 				attrs.crossorigin = injection.crossorigin;
 			}
+			if (injection.media) attrs.media = injection.media;
+			if (injection.type) attrs.type = injection.type;
 			return new HTMLElement("link", {}, serializeAttrs(attrs));
 		}
 		case "meta": {

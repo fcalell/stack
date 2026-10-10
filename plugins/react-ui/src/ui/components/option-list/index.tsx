@@ -11,7 +11,6 @@ import {
 	listState,
 	type OneChoice,
 	type OptionChoice,
-	type OptionShape,
 	type OptionSlots,
 	optionBlocked,
 	optionShape,
@@ -32,14 +31,13 @@ import {
 	ROW_META_LINE,
 	row,
 	SELECT_GROUP,
-	skeleton,
-	skeletonLane,
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
 import { Fragment, type ReactNode, use, useId } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { GroupName, LabelTarget } from "../../lib/field.ts";
+import { OptionWait } from "../../lib/option-wait.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { Button } from "../button/index.tsx";
 import { ButtonLink } from "../button/link.tsx";
@@ -77,26 +75,10 @@ const RADIO =
 const CHILDREN = "flex";
 const INDENT = "shrink-0";
 const CHILDREN_BODY = "flex flex-col grow min-w-0";
-// Loading, each row keeps its height: a box-sized skeleton on the label's
-// line, and a bar at a label's length in a short label's lane on each line
-// the row draws.
-const LABEL_WAIT = "flex items-center";
-const LINE_WAIT = "flex items-center h-lh";
-const BAR_ROOM = "flex grow min-w-0";
-const ROW_WAIT = "flex items-center";
-const LABEL_BAR = "w-1/3";
-const ROW_BARS = [
-	["w-1/3", "w-1/2"],
-	["w-2/3", "w-1/3"],
-	["w-2/3", "w-1/2"],
-	["w-1/2", "w-1/4"],
-] as const;
 // The failed, missing and empty lines: the sentence, and Retry or Back at its
 // end.
 const NOTE = "flex items-center";
 const SENTENCE = "min-w-0 grow";
-// The zero-width space gives an empty line its line box.
-const EMPTY_LINE = "​";
 
 /** Where an OptionList's options come from. */
 type OptionSource<T, V extends string> =
@@ -157,72 +139,6 @@ function GroupLabel(props: { children: ReactNode }) {
 	);
 }
 
-// The waiting rows in the slots the options declare, each led by the mark
-// its form draws (a box, or a radio's ring): a group label's bar over them
-// when they stand under labels, a description bar under each label when they
-// are described.
-function Wait(props: { shape: OptionShape; mark: "check" | "radio" }) {
-	const { shape, mark } = props;
-	return (
-		<div aria-hidden className={cn(SELECT_GROUP, GROUP)}>
-			{shape.group ? (
-				<p
-					className={cn(
-						OPTION_GROUP_LABEL,
-						lineBox({ role: "meta" }),
-						LABEL_WAIT,
-					)}
-				>
-					{EMPTY_LINE}
-					<span className={cn(skeletonLane({ role: "meta" }), BAR_ROOM)}>
-						<span className={cn(skeleton({ kind: "line" }), LABEL_BAR)} />
-					</span>
-				</p>
-			) : null}
-			{ROW_BARS.map(([label, description], at) => (
-				<div
-					// biome-ignore lint/suspicious/noArrayIndexKey: fixed stand-ins
-					key={at}
-					className={cn(
-						row({ lines: shape.description ? "two" : "one" }),
-						ROW_WAIT,
-					)}
-				>
-					<span className={cn(OPTION_LINE, LINE)}>
-						<span className={cn(lineBox({ role: "body" }), BOX_LINE)}>
-							<span className={skeleton({ kind: mark })} />
-						</span>
-						<span className={TEXT}>
-							<span className={cn(lineBox({ role: "body" }), LINE_WAIT)}>
-								<span className={cn(skeletonLane({ role: "body" }), BAR_ROOM)}>
-									<span className={cn(skeleton({ kind: "line" }), label)} />
-								</span>
-							</span>
-							{shape.description ? (
-								<span
-									className={cn(
-										ROW_META_LINE,
-										lineBox({ role: "meta" }),
-										LINE_WAIT,
-									)}
-								>
-									<span
-										className={cn(skeletonLane({ role: "meta" }), BAR_ROOM)}
-									>
-										<span
-											className={cn(skeleton({ kind: "line" }), description)}
-										/>
-									</span>
-								</span>
-							) : null}
-						</span>
-					</span>
-				</div>
-			))}
-		</div>
-	);
-}
-
 /** Option rows on a hairline card, each the Checkbox (several choices) or the radio (one choice, a radiogroup) on its label's first line, a description and the recommended mark on the line under it; the row under the pointer washes, the checked box or the ringed dot is the choice. The children stand under the first chosen option. From a query it draws its states in the card: waiting rows in the slots `option` declares, a failed line with `sentence` and Retry, a line saying it no longer exists with Back (never Retry) when the query answers not found, the `empty` sentence, then the rows. */
 export function OptionList<V extends string = string, T = unknown>(
 	props: Closed & OptionListBase<V, T> & OneChoice<V>,
@@ -261,7 +177,7 @@ export function OptionList<V extends string = string, T = unknown>(
 	);
 	if (state === "pending")
 		return frame(
-			<Wait
+			<OptionWait
 				shape={
 					props.option ? optionShape(props.option) : optionsShape(props.options)
 				}

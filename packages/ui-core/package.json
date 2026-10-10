@@ -87,6 +87,14 @@
 			"types": "./dist/list-state.d.ts",
 			"default": "./dist/list-state.js"
 		},
+		"./streaming": {
+			"types": "./dist/streaming.d.ts",
+			"default": "./dist/streaming.js"
+		},
+		"./wait": {
+			"types": "./dist/wait.d.ts",
+			"default": "./dist/wait.js"
+		},
 		"./rules": {
 			"types": "./dist/rules.d.ts",
 			"default": "./dist/rules.js"

@@ -1158,7 +1158,7 @@ export const closure = (
 		<StepCount at={1} of={3} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<StepCount at={1} of={3} placeholderTextColorClassName="text-ink-body" />
-		<Gate title="a" mark={{ name: "a" }} />
+		<Gate title="a" />
 		<Gate step={{ at: 1, of: 2 }} title="a" description={["a", { strong: "b" }]} banner={<Banner sentence="a" />}><Text>a</Text></Gate>
 		{/* @ts-expect-error: a description is runs, never a node */}
 		<Gate title="a" description={<Text>a</Text>} />

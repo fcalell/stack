@@ -1,6 +1,6 @@
 ---
 id: 003-215
-status: backlog
+status: done
 sessions: {}
 ---
 # react-ui: a Sheet a route opens returns focus somewhere when it closes
@@ -12,9 +12,23 @@ Stead's question round opens as a modal `Sheet` when its item's route loads, wit
 A `Sheet` returns focus to the element that opened it; a sheet a route mounts open has none. 003-212 covers a sheet opened from a pick's act that unmounts; here nothing opened it. `Sheet` takes no return target, and the app moving focus by hand needs a ref and a `.focus()` into the roster's markup.
 
 ## Acceptance criteria
-- [ ] A Sheet mounted open by its route, closed by the keyboard, leaves focus on a named place of the page it returns to (its main region's head or first control), never the body, at every density.
-- [ ] A Sheet opened by an act is unchanged.
-- [ ] The showcase holds a route-opened Sheet, checked by a behaviour story on close.
+- [x] A Sheet mounted open by its route, closed by the keyboard, leaves focus on a named place of the page it returns to (its main region's head or first control), never the body, at every density.
+- [x] A Sheet opened by an act is unchanged.
+- [x] The showcase holds a route-opened Sheet, checked by a behaviour story on close.
 
 ## Open questions
-- [ ] Its shape (a return target on `Sheet`, focus to the destination's head on a closing navigation, or another): the stack session decides.
+- [x] Its shape (a return target on `Sheet`, focus to the destination's head on a closing navigation, or another): the stack session decides.
+
+## Ruled
+- Shape: no return target on `Sheet`. A sheet with no opener that closes with focus lost hands it to the first control of the page it returns to (`[data-page]`, the head's first control), shared with 003-212 in `useReturnFocus`.
+
+## Built
+- `useReturnFocus` / `focusPage` in `plugins/react-ui/src/ui/lib/focus.ts`, called by `SheetBase`; a sheet mounted open has no opener, and the route unmounting it still lands focus on the destination page.
+- A sheet opened by an act is unchanged: its opener, when it stands, is still the target.
+- Story `OpenedByARoute` in `apps/showcase/behaviour/sheet.stories.tsx`, written, not run.
+
+Native unrendered: native-ui has no keyboard focus order to move (touch and screen reader focus follow the platform), so the web mechanism has no native twin.
+- Browser run: `apps/showcase/behaviour/sheet.stories.tsx` 32 of 32 pass (`OpenedByARoute` among them).
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. No critique unit this round; the behaviour and screens suites hold it.

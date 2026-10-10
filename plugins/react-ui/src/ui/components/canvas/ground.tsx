@@ -1,16 +1,24 @@
 import { cn } from "@fcalell/ui-core/cn";
-import { CANVAS_GROUND } from "@fcalell/ui-core/variants";
-import { useId } from "react";
+import { CANVAS_GROUND, CANVAS_UNDER_HEAD } from "@fcalell/ui-core/variants";
+import { use, useId } from "react";
+import { ThreadBleeds, ThreadRoom } from "../../lib/frame.ts";
 import { DOT, PITCH } from "./viewport.ts";
 
 // Under `tablet` the region keeps half of the column it stands in, so the
 // column scrolls past it and the head and banners above it scroll away.
 const REGION =
-	"relative flex flex-col grow min-h-0 page-max-tablet:min-h-1/2 min-w-0 overflow-hidden touch-none";
+	"@container/canvas relative flex flex-col grow min-h-0 page-max-tablet:min-h-1/2 min-w-0 overflow-hidden touch-none";
 const GRID = "absolute inset-0 size-full text-grid";
 
 /** The region a canvas stands in, loaded or waiting. */
 export const GROUND = cn(CANVAS_GROUND, REGION);
+
+/** The class a canvas's ground takes where it fills a Split's main: the sides bleed through the inset the record's head keeps and a hairline parts it from that head, as a filling Thread's does. Nothing elsewhere. */
+export function useBleed() {
+	const fills = use(ThreadRoom);
+	const bleeds = use(ThreadBleeds);
+	return fills && bleeds ? CANVAS_UNDER_HEAD : undefined;
+}
 
 // The dot grid at scale 1, which is how a waiting canvas draws it. A loaded
 // canvas's viewport rewrites the pattern's attributes with each pan and zoom.

@@ -56,7 +56,9 @@
 
 	/* The ring is drawn outside the box at an offset, so it never covers the
 	   control's own edge. Components spell nothing for it; a control inside a
-	   control rings inset with `focus-visible:-outline-offset-2`. */
+	   control rings inset with `focus-visible:-outline-offset-2`. A bordered box
+	   that takes typing or choosing rings on its edge instead
+	   (`--focus-ring-edge-offset`), and for the keyboard alone (`lib/modality.ts`). */
 	:focus-visible {
 		outline: var(--focus-ring) solid var(--color-ring);
 		outline-offset: var(--focus-ring-offset);

@@ -1,6 +1,6 @@
 ---
 id: 003-134
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a record beside the main stands alone at the phone with one head, at the page's gutter
@@ -14,7 +14,7 @@ Stead opens a page's History as a `Screen` in `Split`'s `beside` (github.com/fca
 ## Acceptance criteria
 - [x] A `Split` with a record `beside` the main draws one head at 390 px: one back act and one title, the Screen's.
 - [x] A beside Screen's title and body start at the page's gutter at every width, the same left edge as the banner above and the list.
-- [ ] The Split showcase holds a beside record at the phone width and the critique measures the head's height and the left edges.
+- [x] The Split showcase holds a beside record at the phone width and the critique measures the head's height and the left edges.
 
 ## Open questions
 - [x] Its shape (a component, a variant, a token, an option): the stack session decides, whether the hide rule is repaired or the Screen takes the Place's head as its own.
@@ -35,3 +35,9 @@ Rework: at 1280 and 1440 a beside record's title stands 36 px off the page gutte
 ## Rework (second round)
 Beside a Split's main from `wide` the Screen's Close act is the head's last act, after the title and its acts; the back act before the title stands only below `wide`. The title starts at the sections' gutter, and the DOM order is the drawn order. Evidence: `behaviour/split.stories.tsx` `BesideHeadings1440` asserts the record's `h1` and its first section heading share a left edge and the Close act stands after the title (the play measures its own frame, so it holds under any viewport).
 Measured on the rendered story (`behaviour-split--beside-headings-1440`, Playwright through `browser-run.sh`, light and dark identical): at a 1280 viewport (frame 1248) the record title's left edge is 844.5, the first section heading "Entries" 844.5 and the sections' gutter 844.5 (the title stood 36 px off, at 880.5, before); at 1440 (frame 1408) all three are 924.5. Close is the one act in the head, 28 px wide at 1212 to 1240 (1372 to 1400), after the title's right edge (1204; 1364) and the head's last element. The inverted left-edge assertion fails in the stories run ("expected 804.5 not to be 804.5" in `BesideHeadings1440`; the guard is a frame of at least `wide`, 1200), so the `wide` branch executes there.
+
+## Browser run (003-304 follow-up)
+`BesideAtThePhone` passes after 003-304 made a touch Screen one row: the head is one visible `header`, the back act then the title on one line (title left at or after the back act's right edge), and the first row's name at the page gutter. The old assertion, title at the gutter, belongs to the two-row head 003-304 deliberately replaced (test updated).
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique pass: beside a record at the phone one 45 px header, Back 44 at x20, h1 at x72; Entries and rows at the gutter x32 at 320 and 390; at 1280 and 1440 h1, Entries and rows share one x.

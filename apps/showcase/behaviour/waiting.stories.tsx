@@ -6,8 +6,11 @@ import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
 import { Input } from "@fcalell/plugin-react-ui/components/input";
 import { List } from "@fcalell/plugin-react-ui/components/list";
+import { OptionList } from "@fcalell/plugin-react-ui/components/option-list";
 import { Prose } from "@fcalell/plugin-react-ui/components/prose";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
+import { SegmentedControl } from "@fcalell/plugin-react-ui/components/segmented-control";
+import { Select } from "@fcalell/plugin-react-ui/components/select";
 import { Slider } from "@fcalell/plugin-react-ui/components/slider";
 import { Switch } from "@fcalell/plugin-react-ui/components/switch";
 import { Facts } from "@fcalell/plugin-react-ui/showcase/frames/definition-row";
@@ -159,12 +162,13 @@ const bodies: StoryObj = {
 		const prose = waiting
 			.getByRole("region", { name: "Notes" })
 			.querySelector("div[aria-busy]");
-		await expect(prose).toBeVisible();
+		// The waiting form is drawn once the read has lasted its delay.
+		await waitFor(() => expect(prose).toBeVisible());
 		await expect(waiting.queryByText(/Moves the billing/)).toBeNull();
 		const thread = waiting.getByRole("region", { name: "Thread" });
 		await expect(thread.querySelectorAll("article[aria-busy]")).toHaveLength(3);
 		for (const message of thread.querySelectorAll("article[aria-busy]"))
-			await expect(message).toBeVisible();
+			await waitFor(() => expect(message).toBeVisible());
 		const check = (box: typeof waiting) =>
 			box.getByRole("region", { name: "Check" });
 		await waitFor(() =>
@@ -318,8 +322,42 @@ const form: StoryObj = {
 };
 
 // Each kind of field a Section reads: a label over a control, a switch, a
-// checkbox, each with and without a description. A waiting field stands at
-// its loaded field's height.
+// checkbox, each with and without a description, then a select, a slider, a
+// radio list (flat, grouped and described, from a query's slots), segments
+// and an answered field's summary row. A waiting field stands at its loaded
+// field's height.
+const ROLES = [
+	{ value: "owner", label: "Owner" },
+	{ value: "editor", label: "Editor" },
+	{ value: "viewer", label: "Viewer" },
+];
+const PLANS = [
+	{ value: "free", label: "Free", description: "For a trial." },
+	{ value: "team", label: "Team", description: "For a company." },
+];
+const ZONES = [
+	{ label: "Europe", options: [{ value: "fra", label: "Frankfurt" }] },
+	{
+		label: "Americas",
+		options: [
+			{ value: "iad", label: "Virginia" },
+			{ value: "sfo", label: "San Francisco" },
+		],
+	},
+];
+// A query list waits as four rows, so the loaded list holds four.
+const SCOPE_QUERY = {
+	data: [
+		{ id: "read", name: "Read", about: "View repositories." },
+		{ id: "write", name: "Write", about: "Push to repositories." },
+		{ id: "admin", name: "Admin", about: "Manage repositories." },
+		{ id: "hooks", name: "Hooks", about: "Receive repository events." },
+	],
+	isPending: false,
+	isError: false,
+	refetch: change,
+};
+const FOLDED = { answer: "Acme", onEdit: change };
 const KINDS = [
 	["plain", <Input key="p" value="Acme" onChange={change} />],
 	[
@@ -339,9 +377,73 @@ const KINDS = [
 		<Checkbox key="cd" checked onChange={change} label="Trust" />,
 		"Skips the second step for thirty days.",
 	],
+	[
+		"select",
+		<Select key="se" value="editor" onChange={change} options={ROLES} />,
+	],
+	["slider", slider],
+	["slider described", slider, "Kept back from the monthly spend."],
+	[
+		"options",
+		<OptionList key="o" value="editor" onChange={change} options={ROLES} />,
+	],
+	[
+		"options described",
+		<OptionList key="od" value="team" onChange={change} options={PLANS} />,
+		"Changes at the next invoice.",
+	],
+	[
+		"options grouped",
+		<OptionList key="og" value={["fra"]} onChange={change} options={ZONES} />,
+	],
+	[
+		"options from a query",
+		<OptionList
+			key="oq"
+			value={[]}
+			onChange={change}
+			query={SCOPE_QUERY}
+			option={{
+				value: (scope) => scope.id,
+				label: (scope) => scope.name,
+				description: (scope) => scope.about,
+			}}
+			sentence="Scopes did not load."
+			empty="No scopes."
+		/>,
+	],
+	[
+		"segments",
+		<SegmentedControl
+			key="sg"
+			label="View"
+			value="list"
+			onChange={change}
+			options={[
+				{ value: "list", label: "List" },
+				{ value: "board", label: "Board" },
+			]}
+		/>,
+	],
+	[
+		"answered",
+		<Input key="a" value="Acme" onChange={change} />,
+		undefined,
+		FOLDED,
+	],
 ] as const;
-const kindField = ([name, control, description]: (typeof KINDS)[number]) => (
-	<FormField key={name} label="Setting" description={description}>
+const kindField = ([
+	name,
+	control,
+	description,
+	answered,
+]: (typeof KINDS)[number]) => (
+	<FormField
+		key={name}
+		label="Setting"
+		description={description}
+		answered={answered}
+	>
 		{control}
 	</FormField>
 );
@@ -384,9 +486,14 @@ const fieldKindsInForm: StoryObj = {
 	play: async ({ canvas }) => {
 		const { waiting } = await stand(canvas);
 		await expect(within(waiting).queryAllByRole("button")).toHaveLength(0);
-		await expect(
-			waiting.querySelectorAll("form div[aria-hidden]"),
-		).toHaveLength(KINDS.length);
+		// One waiting form per field: the hidden fields' own waits and the
+		// rows inside a waiting form are no second one.
+		const waits = [...waiting.querySelectorAll("form div[aria-hidden]")].filter(
+			(wait) =>
+				!wait.closest(".hidden") &&
+				!wait.parentElement?.closest("[aria-hidden]"),
+		);
+		await expect(waits).toHaveLength(KINDS.length);
 	},
 };
 

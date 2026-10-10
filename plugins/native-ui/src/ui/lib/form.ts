@@ -1,5 +1,5 @@
 import type { FormIn } from "@fcalell/ui-core/variants";
-import { createContext } from "react";
+import { createContext, type ReactNode } from "react";
 
 // Whether a `Form` holds this part: what puts a `Section` on the fields
 // rhythm.
@@ -15,3 +15,16 @@ export const ActInert = createContext(false);
 // anywhere else the form stands on a page's, at most a line of
 // running text wide.
 export const FormStands = createContext<FormIn>("page");
+
+// A sheet's foot slot: where a `Form` standing in a sheet hands its
+// `ActionBar`, which the sheet's foot draws after its own acts, pinned while
+// the fields scroll. A store the sheet subscribes to, so setting it never
+// re-renders the form. Null where no sheet foot takes it (a docked sheet, a
+// page), and the bar stays in the form's flow.
+export interface FootSlot {
+	get: () => ReactNode;
+	set: (bar: ReactNode) => void;
+	subscribe: (listener: () => void) => () => void;
+}
+
+export const FootSlotContext = createContext<FootSlot | null>(null);

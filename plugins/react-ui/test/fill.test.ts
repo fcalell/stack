@@ -78,6 +78,6 @@ test("a part above the Thread keeps the `PAGE_BODY` inset at the sides and the t
 	assert.deepEqual(insets(unmarked(PART_ABOVE_FILLED, ...PART_MARKS)), kept);
 });
 
-test("a record's head under its main's fill mark stands in `THREAD_COLUMN`, centred", () => {
-	assert.equal(unmarked(COLUMN_FILLED, GROUP_MARK), `${THREAD_COLUMN} mx-auto`);
+test("a record's head under its main's fill mark stands in `THREAD_COLUMN` at its start", () => {
+	assert.equal(unmarked(COLUMN_FILLED, GROUP_MARK), THREAD_COLUMN);
 });

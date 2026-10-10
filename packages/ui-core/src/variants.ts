@@ -18,6 +18,7 @@ import {
 	CANVAS_GROUP,
 	CANVAS_NODE,
 	CANVAS_NODE_GLYPH,
+	CANVAS_NODE_NAME,
 	CANVAS_NODE_TEXT,
 	CHANGE_MARK,
 	CHART_BAND,
@@ -178,6 +179,7 @@ export const canvasGroup = build(CANVAS_GROUP);
 export const canvasNode = build(CANVAS_NODE);
 export const canvasNodeText = build(CANVAS_NODE_TEXT);
 export const canvasNodeGlyph = build(CANVAS_NODE_GLYPH);
+export const canvasNodeName = build(CANVAS_NODE_NAME);
 export const placeRow = build(PLACE_ROW);
 export const placeRowGlyph = build(PLACE_ROW_GLYPH);
 export const placeTab = build(PLACE_TAB);
@@ -286,6 +288,7 @@ export const FAMILIES: readonly Family[] = [
 	family("CANVAS_NODE", CANVAS_NODE, canvasNode),
 	family("CANVAS_NODE_TEXT", CANVAS_NODE_TEXT, canvasNodeText),
 	family("CANVAS_NODE_GLYPH", CANVAS_NODE_GLYPH, canvasNodeGlyph),
+	family("CANVAS_NODE_NAME", CANVAS_NODE_NAME, canvasNodeName),
 	family("STAGE", STAGE, stage),
 	family("STAGE_MARK", STAGE_MARK, stageMark),
 	family("STAGE_RAIL", STAGE_RAIL, stageRail),
@@ -431,6 +434,11 @@ export const RULE_CARD = "px-card py-pair";
 // by the float inset so a row's wash sits just inside the edge.
 export const POPOVER =
 	"gap-pair p-float bg-raised border border-edge-raised rounded-popover shadow-float";
+// An icon act's name, shown on a rest or the keyboard: the popover's ground and
+// hairline round one line of meta ink, the width of its words up to a short
+// measure.
+export const TOOLTIP =
+	"px-inside py-pair bg-raised border border-edge-raised rounded-control shadow-float text-meta leading-meta font-normal text-ink-body max-w-measure-short";
 export const HAIRLINE = "border-edge";
 // The check or the dash on a checked box, at the meta glyph's size.
 export const CHECKBOX_MARK = "size-icon-meta text-on-accent";
@@ -475,12 +483,19 @@ export const DEFINITION_ROW_CHEVRON = "size-control-compact";
 export const LOCK_GLYPH = "shrink-0 text-ink-meta";
 // A record's head: the overline, the title and the facts line a pair apart;
 // the facts wrap at the fields rhythm, a counted fact its word beside its
-// count. A fact that acts or changes (a pick, an opening fact, a save) stands
-// at the target height, as the loading line does, so the head keeps one height
-// whichever fact the line holds.
+// count. The line stands at the meta line's height whichever facts it holds:
+// a fact that acts or changes (a pick, an opening fact, a save) keeps its
+// target-height hit box and reaches past the line above and below it
+// (`factReach`), so a fact that opens joining the line moves nothing under it.
 export const ITEM_HEADER = "gap-pair";
 export const ITEM_FACTS = "gap-x-fields gap-y-pair";
-export const ITEM_FACT = "gap-inside min-h-target";
+// A record's acts in a Split's main stand at the end of the head's first line
+// (the overline, else the title), the line the height of its text: the acts'
+// boxes reach across it by the icon inset, so their glyphs stand on the line
+// and the last one at the head's end.
+export const ITEM_HEADER_LINE = "gap-acts";
+export const ITEM_HEADER_ACTS = "gap-acts -my-icon-inset -me-icon-inset";
+export const ITEM_FACT = "gap-inside";
 // A folded question: one row at the row height, its glyph (in the `ok` ink),
 // its label, its answer and its edit act an inside apart.
 export const FORM_FIELD_SUMMARY = "gap-inside min-h-row";
@@ -535,10 +550,10 @@ export const SHEET_FOOT =
 // side inset of their own, so all three share the foot's edge; the head's back
 // act stands before one column, so the title and the description share one
 // start: the title over the description a pair apart; the body keeps its sections a
-// sections gap apart and the card inset above and below, the foot's line
+// sections gap apart, the card inset above and a sections gap below (the last row clears the submit by the gap the rows keep), the foot's line
 // beside or over the acts an acts gap apart.
 export const SHEET_DOCKED_HEAD = "gap-pair";
-export const SHEET_DOCKED_BODY = "gap-sections py-card";
+export const SHEET_DOCKED_BODY = "gap-sections pt-card pb-sections";
 export const SHEET_DOCKED_FOOT = "gap-acts";
 // In a foot the body's content keeps its floor whatever the head, the foot line and the log hold; the scroller around it, bounded by `dockedBodyMax`, gives below it where the region is short.
 export const SHEET_DOCKED_FLOOR = "min-h-docked-floor";
@@ -786,6 +801,9 @@ export const IMAGE_REMOVE_DISC = "border border-edge bg-raised";
 // stack's box. The dot grid, the edge strokes and the zoom's buttons (`IconButton`)
 // are not cells.
 export const CANVAS_GROUND = "bg-canvas";
+// A canvas filling a Split's main bleeds through the inset the record's head keeps
+// and stands a page inset under that head over a hairline, as a Thread does.
+export const CANVAS_UNDER_HEAD = "-mx-page mt-page border-t border-edge";
 export const CANVAS_PORT =
 	"size-port rounded-full border border-edge-strong bg-surface";
 export const CANVAS_PORT_HIT = "size-target";
@@ -809,8 +827,10 @@ export const SHELL_BANNER = "p-page";
 export const SWITCHER_SLOT = "p-float";
 export const SHELL_PLACES = "gap-rows p-float";
 // The shell on touch: the tab bar on the canvas under a hairline, a pair
-// above its glyphs so they centre on the header strip's line.
-export const SHELL_TAB_BAR = "px-float pt-pair bg-canvas border-t border-edge";
+// above its glyphs so they centre on the header strip's line. The bar clips
+// its tabs' count badges: nothing paints above its hairline.
+export const SHELL_TAB_BAR =
+	"px-float pt-pair bg-canvas border-t border-edge overflow-hidden";
 // A page outside the shell, a Gate: the surface ground at the page inset, one
 // column at the `auth` width (a column cell is a width; the region centres
 // it) whose banner, lead and body stand a sections gap apart. The lead (the
@@ -822,6 +842,13 @@ export const GATE_FLOW = "gap-sections";
 export const GATE_LEAD = "gap-fields";
 export const GATE_HEAD = "gap-pair";
 export const GATE_MARK = "size-avatar";
+// The app's mark is a lockup, the logo (`GATE_MARK`, the avatar's size) and the
+// app's name a row apart: in the Gate a row of the lead; in the desktop sidebar
+// a row under the sidebar's float, a place row's inset and height, so the logo
+// stands over the places' glyphs.
+export const GATE_MARK_ROW = "gap-inside";
+export const SHELL_MARK = "p-float";
+export const SHELL_MARK_ROW = "gap-inside min-h-row px-control-x";
 // The switcher's trigger in a touch top bar, which reaches across the page
 // inset (`PAGE_TOP_BAR_TOUCH`) by the inset it keeps; in the sidebar it is a
 // `PLACE_ROW` with the name at body 500.
@@ -847,9 +874,24 @@ export const PAGE_TOP_BAR_TOUCH = "-mx-icon-inset";
 // inset by its start, the acts by their end, and the title stands at the inset.
 export const PAGE_TOP_BAR_START = "-ms-icon-inset";
 export const PAGE_TOP_BAR_END = "-me-icon-inset";
+// A touch Screen's title row wraps: the title holds at least two fifths of it (a
+// structural fraction, never a width), so acts that do not fit beside it, the
+// back act and the gaps drop whole to a second line at the row's end.
+export const PAGE_TITLE_FLOOR = "min-w-2/5 basis-0";
+// The title row's title carries a step of block padding above and below its
+// lines (one `inside` step), so a single line fills the strip's height as it did
+// and a wrapped title never butts the head's edges. A head whose title wraps
+// takes a step more over the row. The row anchors its items to the top (a
+// platform overlay), so a 44 px act centres on the title's first line.
+export const PAGE_TITLE_BLOCK = "py-inside";
+export const PAGE_HEAD_WRAPS = "py-inside";
 // The touch title over the head's hairline, a pair apart from it.
 export const PAGE_TITLE = "pb-pair";
 export const PAGE_BODY = "gap-sections p-page";
+// A record the main opened (a `Screen` in a Split's `beside`) holds the column
+// the main holds (`SPLIT_MAIN` `rest`): the measure inside the page inset, at
+// its region's start, so both end where a Prose does.
+export const PAGE_BODY_BESIDE = "max-w-measure-inset";
 // A docked foot (a Place's `foot`, a filling Thread's input) is one cell: a
 // region of its own under what scrolls past it, a raised surface (the raised
 // step under a hairline), at the page inset at the
@@ -873,16 +915,21 @@ export const FLOATING_ACT_ROOM = "min-h-control";
 // page inset under its last row, so its room is the act's height over the
 // page inset.
 export const FLOATING_ACT_FOOT = "pb-page";
-// A split: the list at its width inside a hairline, the pane at its width at
-// `wide` of its page. Below `tablet` the list stands alone and draws neither.
+// A split: the list inside a hairline, the pane at `wide` of its page, each
+// sized to its content between `region-min` and its ceiling (`list`, `pane`;
+// the ceilings are the widths the breakpoints are reckoned against, so the main
+// never has less than they leave), and the main takes the rest. Below `tablet`
+// the list stands alone and draws neither.
 // A list holding sections stands them a sections gap apart, as a page body
 // does, the first at the page inset under the strip's hairline at every
 // width, where the record's first line stands: the rhythm is its own cell,
 // which the phone's list reads as well. Its bottom inset is the record's, so
 // an empty list and an empty main centre on one line.
-export const SPLIT_LIST = "w-list pb-page px-page border-r border-edge";
+export const SPLIT_LIST =
+	"min-w-region-min max-w-list pb-page px-page border-r border-edge";
 export const SPLIT_LIST_STACK = "gap-sections pt-page";
-export const SPLIT_PANE = "gap-sections w-pane p-page border-l border-edge";
+export const SPLIT_PANE =
+	"gap-sections min-w-region-min max-w-pane p-page border-l border-edge";
 // A record the main opened: from `wide` of its page the main and it share what
 // the list leaves, half each, a structural fraction and never a width token;
 // below `wide` it stands in the main's place, and on the phone it replaces it.
@@ -893,6 +940,10 @@ export const SPLIT_BESIDE = "grow basis-0";
 // (a web overlay pulls it back).
 export const SECTION_HEAD = "gap-pair";
 export const SECTION_HEAD_ROW = "gap-fields";
+// A section's body: its parts (a Prose, a Code, a Group, an ActionBar) stand
+// at the fields rhythm, wider than the head's pair; rows inside a Group keep
+// the Group's own tight spacing.
+export const SECTION_BODY = "gap-fields";
 export const SECTION_TITLE = "gap-inside";
 export const SECTION_TOGGLE = "gap-inside min-h-target px-inside rounded-row";
 // A Section inside a Section, or a folded one, names itself a level below an
@@ -977,7 +1028,9 @@ export type CheckboxState = keyof (typeof CHECKBOX)["variants"]["state"];
 export type SegmentState = keyof (typeof SEGMENT)["variants"]["state"];
 export type RowLines = keyof (typeof ROW)["variants"]["lines"];
 export type RowGround = keyof (typeof ROW)["variants"]["ground"];
-export type SheetFit = keyof (typeof SHEET_SIDE)["variants"]["fit"];
+// What a Sheet is told it holds; the desktop's short sheet is the Sheet's own choice.
+export type SheetFit = Exclude<SheetSideFit, "short">;
+export type SheetSideFit = keyof (typeof SHEET_SIDE)["variants"]["fit"];
 export type ImageFit = keyof (typeof IMAGE)["variants"]["fit"];
 export type ImageState = keyof (typeof IMAGE)["variants"]["state"];
 export type FormIn = keyof (typeof FORM)["variants"]["in"];

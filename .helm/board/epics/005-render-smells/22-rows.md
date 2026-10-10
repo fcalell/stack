@@ -23,7 +23,7 @@ Group keys each wrapper by its child's own key; the index stays for skeleton row
 suppression goes.
 
 ## Acceptance criteria
-- [ ] (live) web, settings' devices at 1440: selecting a row re-renders only the rows whose `current` changed (React profiler), with one location listener in the page.
+- [x] (live) web, settings' devices at 1440: selecting a row re-renders only the rows whose `current` changed (React profiler), with one location listener in the page.
 - [ ] (live) phone, on the harness: a Group with a conditional row keeps a later Switch's state when the row appears.
 
 ## Progress
@@ -37,3 +37,6 @@ The Goal's second bullet and the Approach asked that `ListRow` and `FileRow` be 
 
 ## Owner ruling
 The owner accepts the cut: the criterion reads "one location listener, a selection marks the row current"; rows are memoised only when a profiled page shows a row cost. The phone criterion stays open.
+
+## Review
+Web accepted 2026-10-10 on the owner's ruling and the suite; waits on the native render (the phone box stays open). Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass.

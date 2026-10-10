@@ -15,7 +15,13 @@ export const PART_ABOVE_FILLED =
 // `fills` one: the Thread spans the main, so the record's column cap goes.
 export const MAIN_FILLED =
 	"[&:has(>[data-fill])]:gap-0 [&:has(>[data-fill])]:pb-0 [&:has(>[data-fill])]:max-w-none";
-// The record's head stands in `THREAD_COLUMN`, centred over the log's column,
-// under its main's mark (`group/main`).
+// The record's head stands in `THREAD_COLUMN` at the main's start, over the
+// log's column, under its main's mark (`group/main`).
 export const COLUMN_FILLED =
-	"group-[:has(>[data-fill])]/main:w-full group-[:has(>[data-fill])]/main:max-w-measure group-[:has(>[data-fill])]/main:mx-auto";
+	"group-[:has(>[data-fill])]/main:w-full group-[:has(>[data-fill])]/main:max-w-measure";
+// The log's messages keep the measure but stand at the main's start, as a
+// record in the main does, not centred in it.
+export const LOG_AT_START = "group-[:has(>[data-fill])]/main:items-start";
+// The input (and the foot that holds it) spans the main within the page
+// inset; the messages above keep the measure.
+export const INPUT_FILLED = "group-[:has(>[data-fill])]/main:max-w-none";

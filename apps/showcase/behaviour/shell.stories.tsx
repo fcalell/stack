@@ -6,6 +6,9 @@ import { MessageInput } from "@fcalell/plugin-react-ui/components/message-input"
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Shell } from "@fcalell/plugin-react-ui/components/shell";
 import { toast } from "@fcalell/plugin-react-ui/lib/toast";
+import { showcaseFrames } from "@fcalell/plugin-react-ui/showcase/cells";
+import { Frame } from "@fcalell/plugin-react-ui/showcase/frame";
+import { drawShell } from "@fcalell/plugin-react-ui/showcase/frames/shell";
 import type { PlaceSpec } from "@fcalell/ui-core/descriptors";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
@@ -239,16 +242,173 @@ const COUNTED: PlaceSpec[] = [
 	{ route: "/e", label: "Activity", icon: "Activity", count: 444 },
 ];
 
+// The pixels of an element, as the browser paints them.
+async function pixels(element: Element): Promise<ImageData> {
+	const { page } = await import("vitest/browser");
+	const shot = await page.elementLocator(element).screenshot({
+		base64: true,
+		save: false,
+	});
+	const bytes = Uint8Array.from(
+		atob(typeof shot === "string" ? shot : shot.base64),
+		(c) => c.charCodeAt(0),
+	);
+	const bitmap = await createImageBitmap(
+		new Blob([bytes], { type: "image/png" }),
+	);
+	const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+	const context = canvas.getContext("2d", { willReadFrequently: true });
+	if (!context) throw new Error("no canvas context");
+	context.drawImage(bitmap, 0, 0);
+	return context.getImageData(0, 0, bitmap.width, bitmap.height);
+}
+
+// The pixels that differ between two shots of a box, split into those wholly
+// inside the box that the count changed, the edge pixels the box holds only in
+// part (a box on a fractional edge: the shot rounds it out, and the pixel it
+// half holds belongs to the neighbour as much as to the box), and `noise`:
+// raster jitter of at most `NOISE` levels in a channel on a stroke far from
+// the count's ink (the browser rasterises a stroke a hair differently once the
+// count's text is a layer beside it), which no eye or contrast floor reads.
+const NOISE = 4;
+function changed(before: ImageData, after: ImageData, box: DOMRect) {
+	const x0 = Math.floor(box.left);
+	const y0 = Math.floor(box.top);
+	let inside = 0;
+	let edge = 0;
+	let noise = 0;
+	for (let y = 0; y < before.height; y++)
+		for (let x = 0; x < before.width; x++) {
+			const at = (y * before.width + x) * 4;
+			const most = Math.max(
+				Math.abs((before.data[at] ?? 0) - (after.data[at] ?? 0)),
+				Math.abs((before.data[at + 1] ?? 0) - (after.data[at + 1] ?? 0)),
+				Math.abs((before.data[at + 2] ?? 0) - (after.data[at + 2] ?? 0)),
+				Math.abs((before.data[at + 3] ?? 0) - (after.data[at + 3] ?? 0)),
+			);
+			if (most === 0) continue;
+			const whole =
+				x0 + x >= box.left - 1e-6 &&
+				x0 + x + 1 <= box.right + 1e-6 &&
+				y0 + y >= box.top - 1e-6 &&
+				y0 + y + 1 <= box.bottom + 1e-6;
+			if (!whole) edge++;
+			else if (most <= NOISE) noise++;
+			else inside++;
+		}
+	return { inside, edge, noise };
+}
+
+// Where a tab's count paints, read off the pixels (003-180 round 3): the
+// page's pixels with the count and with it hidden differ exactly where the count
+// paints. None of that may be above the bar's top edge or on its hairline's
+// row, and the digit ink starts right of the glyph's own ink.
+async function inkOf(root: Element, nav: Element, overlay: HTMLElement) {
+	const border = Number.parseFloat(getComputedStyle(nav).borderTopWidth);
+	// The screenshot may scroll the page: read the boxes as it was taken.
+	const withCount = await pixels(root);
+	const rootBox = root.getBoundingClientRect();
+	const bar = nav.getBoundingClientRect();
+	const own = overlay.getBoundingClientRect();
+	overlay.style.visibility = "hidden";
+	const without = await pixels(root);
+	overlay.style.visibility = "";
+	await expect(root.getBoundingClientRect().top).toBe(rootBox.top);
+	await expect(without.width).toBe(withCount.width);
+	await expect(without.height).toBe(withCount.height);
+	const scale = withCount.width / rootBox.width;
+	const barTop = Math.round((bar.top - rootBox.top) * scale);
+	const barInner = Math.round((bar.top - rootBox.top + border) * scale);
+	let above = 0;
+	let hairline = 0;
+	let top = Number.POSITIVE_INFINITY;
+	let left = Number.POSITIVE_INFINITY;
+	let bottom = 0;
+	let total = 0;
+	for (let y = 0; y < withCount.height; y++)
+		for (let x = 0; x < withCount.width; x++) {
+			const at = (y * withCount.width + x) * 4;
+			if (
+				withCount.data[at] === without.data[at] &&
+				withCount.data[at + 1] === without.data[at + 1] &&
+				withCount.data[at + 2] === without.data[at + 2] &&
+				withCount.data[at + 3] === without.data[at + 3]
+			)
+				continue;
+			// Only the count's own box holds its ink.
+			const px = x / scale + rootBox.left;
+			const py = y / scale + rootBox.top;
+			if (
+				px < own.left - 1 ||
+				px > own.right + 1 ||
+				py < own.top - 1 ||
+				py > own.bottom + 1
+			)
+				continue;
+			total++;
+			if (y < barTop) above++;
+			else if (y < barInner) hairline++;
+			top = Math.min(top, y);
+			bottom = Math.max(bottom, y);
+			left = Math.min(left, x);
+		}
+	return {
+		total,
+		above,
+		hairline,
+		inkTop: top / scale + rootBox.top,
+		inkBottom: (bottom + 1) / scale + rootBox.top,
+		inkLeft: left / scale + rootBox.left,
+	};
+}
+
+// The count's box and ink stand inside the bar, under its hairline, at the
+// glyph box's top-right corner: no ink on the hairline's row or above the bar,
+// no box over the main area, the ink right of the glyph's own ink.
+async function badgeInTheBar(
+	root: Element,
+	nav: Element,
+	figure: HTMLElement,
+	glyphInkRight: number,
+) {
+	const overlay = figure.parentElement;
+	const glyph = overlay?.parentElement;
+	if (!overlay || !glyph) throw new Error("the tab is not drawn");
+	const ink = await inkOf(root, nav, overlay);
+	const bar = nav.getBoundingClientRect();
+	const border = Number.parseFloat(getComputedStyle(nav).borderTopWidth);
+	const box = figure.getBoundingClientRect();
+	const glyphBox = glyph.getBoundingClientRect();
+	console.log(
+		`count ${figure.textContent}: ink ${ink.total} px, ${ink.above} above the bar, ${ink.hairline} on the hairline, ink y ${ink.inkTop}..${ink.inkBottom}, bar top ${bar.top}, box ${box.top}..${box.bottom}, glyph box top ${glyphBox.top}`,
+	);
+	await expect(ink.total).toBeGreaterThan(0);
+	await expect(ink.hairline).toBe(0);
+	await expect(ink.above).toBe(0);
+	await expect(ink.inkTop).toBeGreaterThanOrEqual(bar.top + border);
+	// The count's line box stands inside the bar: none of it over the main area.
+	await expect(box.top).toBeGreaterThanOrEqual(bar.top + border - 0.01);
+	await expect(box.bottom).toBeLessThanOrEqual(bar.bottom);
+	// At the glyph box's top-right corner, clear of the glyph's ink.
+	await expect(box.left).toBeGreaterThanOrEqual(glyphBox.right - 2);
+	await expect(box.left).toBeLessThanOrEqual(glyphBox.right);
+	// (the diff's first column is a whole pixel: it holds the ink's partial cover)
+	await expect(ink.inkLeft).toBeGreaterThanOrEqual(glyphInkRight - 1);
+}
+
 // A tab's count of one and two figures reads as it is, a count past 99 reads
-// "99+"; each stands on its glyph's top-right corner, its start half its width
-// inside the glyph's edge, and the label stays centred under the glyph. Every
-// count ends inside the bar, the last tab's at 320 included.
+// "99+"; each stands above the glyph box's top-right corner (its bottom edge at
+// the box's top, its start at the box's right edge, a hairline in at most) and
+// paints nothing inside the glyph's box, so the glyph's ink is the same with
+// and without it, and the label stays centred under the glyph. Every count
+// ends inside the bar, the last tab's at 320 included, and no tab grows.
 const TAB_WIDTHS = { 320: "narrow", 390: "phone", 768: "tablet" } as const;
 
 const tabCount = (width: keyof typeof TAB_WIDTHS, mode: "light" | "dark") => {
 	const story: StoryObj = {
 		render: () => (
 			<div
+				data-story-root=""
 				className={mode === "dark" ? "dark" : undefined}
 				style={{ background: "var(--color-canvas)" }}
 			>
@@ -277,9 +437,8 @@ const tabCount = (width: keyof typeof TAB_WIDTHS, mode: "light" | "dark") => {
 			},
 		},
 		play: async ({ canvas }) => {
-			const bar = canvas
-				.getByRole("navigation", { name: "Places" })
-				.getBoundingClientRect();
+			const nav = canvas.getByRole("navigation", { name: "Places" });
+			const bar = nav.getBoundingClientRect();
 			await expect(canvas.queryByText("444")).toBeNull();
 			for (const count of ["4", "44", "99+"]) {
 				const figure = canvas.getByText(count, { exact: true });
@@ -291,11 +450,59 @@ const tabCount = (width: keyof typeof TAB_WIDTHS, mode: "light" | "dark") => {
 				const box = figure.getBoundingClientRect();
 				const glyphBox = glyph.getBoundingClientRect();
 				const labelBox = label.getBoundingClientRect();
-				console.log(
-					`${width} ${mode} count ${count}: start ${box.left - glyphBox.right} past the glyph's edge, width ${box.width}, to the bar's end ${bar.right - box.right}`,
+				// The glyph's ink: its strokes' union, a half stroke out.
+				const svg = glyph.querySelector("svg");
+				if (!svg) throw new Error("the glyph is not drawn");
+				const strokes = [...svg.children].map((child) =>
+					child.getBoundingClientRect(),
 				);
-				await expect(box.left - glyphBox.right).toBeCloseTo(-box.width / 2, 1);
+				const half =
+					(Number.parseFloat(getComputedStyle(svg).strokeWidth) / 24) *
+					svg.getBoundingClientRect().width *
+					0.5;
+				const ink = {
+					right: Math.max(...strokes.map((r) => r.right)) + half,
+					top: Math.min(...strokes.map((r) => r.top)) - half,
+					bottom: Math.max(...strokes.map((r) => r.bottom)) + half,
+				};
+				const root = nav.closest("[data-story-root]");
+				if (!root) throw new Error("no story root");
+				await badgeInTheBar(root, nav, figure, ink.right);
+				const ring = getComputedStyle(overlay);
+				console.log(
+					`${width} ${mode} count ${count}: bottom ${box.bottom - glyphBox.top} from the glyph box's top, start ${box.left - glyphBox.right}, ink gap ${box.left - ink.right}, width ${box.width}, to the bar's end ${bar.right - box.right}`,
+				);
+				// The count starts at the glyph box's right edge, a hairline in at most
+				// (round 3: its line box is inside the bar, not above the glyph box).
+				await expect(box.left).toBeGreaterThanOrEqual(glyphBox.right - 2);
+				await expect(box.left).toBeLessThanOrEqual(glyphBox.right);
 				await expect(box.right).toBeLessThanOrEqual(bar.right);
+				// No ring or ground: nothing of the count paints inside the glyph's box.
+				await expect(Number.parseFloat(ring.outlineWidth) || 0).toBe(0);
+				await expect(ring.backgroundColor).toBe("rgba(0, 0, 0, 0)");
+				// The glyph's ink with the count equals the ink without it, pixel for
+				// pixel, and hiding the count moves no tab's height.
+				const tab = overlay.closest("a");
+				if (!tab) throw new Error("the tab is not drawn");
+				const height = tab.getBoundingClientRect().height;
+				// The tab is 48 px with the count, and hiding it moves no label.
+				await expect(height).toBe(48);
+				const labelAt = label.getBoundingClientRect();
+				const withCount = await pixels(glyph);
+				overlay.style.visibility = "hidden";
+				const without = await pixels(glyph);
+				await expect(tab.getBoundingClientRect().height).toBe(height);
+				await expect(label.getBoundingClientRect().top).toBe(labelAt.top);
+				await expect(label.getBoundingClientRect().left).toBe(labelAt.left);
+				overlay.style.visibility = "";
+				await expect(without.width).toBe(withCount.width);
+				await expect(without.height).toBe(withCount.height);
+				const { inside, edge, noise } = changed(withCount, without, glyphBox);
+				const differ = inside;
+				console.log(
+					`${width} ${mode} count ${count}: glyph pixels changed ${inside} (${edge} on the edge pixels the box only half holds, ${noise} of at most ${NOISE} levels)`,
+				);
+				await expect(differ).toBe(0);
 				await expect(labelBox.left + labelBox.width / 2).toBeCloseTo(
 					glyphBox.left + glyphBox.width / 2,
 					1,
@@ -312,3 +519,72 @@ export const TabCountClearsItsGlyph390 = tabCount(390, "light");
 export const TabCountClearsItsGlyph390Dark = tabCount(390, "dark");
 export const TabCountClearsItsGlyph768 = tabCount(768, "light");
 export const TabCountClearsItsGlyph768Dark = tabCount(768, "dark");
+
+// The showcase's own Shell frame (touch, the tab bar's idle tab) holds Activity
+// with a two-figure count (44): measured as the critique measures it, at the
+// phone width, in both modes: the count is inside the bar under its hairline,
+// 0 px of ink on the hairline's row or above the bar, and the glyph's pixels do
+// not change.
+const shellFrame = (mode: "light" | "dark"): StoryObj => ({
+	tags: ["touch"],
+	globals: { density: "touch", viewport: { value: "phone", isRotated: false } },
+	parameters: {
+		mode,
+		layout: "fullscreen",
+		viewport: {
+			options: {
+				phone: {
+					name: "phone",
+					styles: { width: "390px", height: "800px" },
+					type: "mobile",
+				},
+			},
+		},
+	},
+	render: () => {
+		const frame = showcaseFrames().find(
+			(each) =>
+				each.component === "Shell" &&
+				each.cell.name === "PLACE_TAB.state.idle" &&
+				each.state === "rest" &&
+				each.mode === mode &&
+				each.density === "touch",
+		);
+		if (!frame) throw new Error("no Shell tab frame");
+		return (
+			<div data-story-root="">
+				<Frame frame={frame} draw={drawShell} />
+			</div>
+		);
+	},
+	play: async ({ canvas }) => {
+		const nav = await canvas.findByRole("navigation", { name: "Places" });
+		const root = nav.closest("[data-story-root]");
+		if (!root) throw new Error("no story root");
+		const figure = canvas.getByText("44", { exact: true });
+		const glyph = figure.parentElement?.parentElement;
+		const svg = glyph?.querySelector("svg");
+		if (!glyph || !svg) throw new Error("the tab is not drawn");
+		const half =
+			(Number.parseFloat(getComputedStyle(svg).strokeWidth) / 24) *
+			svg.getBoundingClientRect().width *
+			0.5;
+		const inkRight =
+			Math.max(
+				...[...svg.children].map(
+					(child) => child.getBoundingClientRect().right,
+				),
+			) + half;
+		await badgeInTheBar(root, nav, figure, inkRight);
+		const before = await pixels(glyph);
+		const overlay = figure.parentElement as HTMLElement;
+		overlay.style.visibility = "hidden";
+		const after = await pixels(glyph);
+		overlay.style.visibility = "";
+		const { inside } = changed(before, after, glyph.getBoundingClientRect());
+		const differ = inside;
+		await expect(differ).toBe(0);
+	},
+});
+export const ShellFrameTabCount = shellFrame("light");
+export const ShellFrameTabCountDark = shellFrame("dark");

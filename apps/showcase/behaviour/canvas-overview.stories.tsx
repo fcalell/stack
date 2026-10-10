@@ -14,6 +14,7 @@ import { SIZE_PX } from "@fcalell/ui-core/tokens";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { expect, fn, waitFor } from "storybook/test";
+import { FOCUS_GUARD } from "../.storybook/focus-guard.ts";
 import {
 	apart,
 	around,
@@ -28,6 +29,7 @@ import {
 	lowestZoom,
 	MARKED,
 	marksClearTheIcon,
+	names,
 	ORDER,
 	rect,
 	routesFollowTheGlyphs,
@@ -38,7 +40,9 @@ import {
 } from "./canvas-support.ts";
 import { click, drag, type Point } from "./mouse.ts";
 
-// The canvas overview on a pointer: the desktop density, a mouse, both modes
+// The canvas overview on a pointer: below zoom 1 a node is its glyph with its
+// name beside it, and below half of that (the graph's overview floor) its glyph
+// alone. The desktop density, a mouse, both modes
 // (`FooLight` and `FooDark`). The generated frames and the stories of
 // `canvas.stories.tsx` run under the same preview.
 type Moved = (id: string, at: CanvasPoint) => void;
@@ -54,6 +58,9 @@ const calls = (spy: unknown) => (spy as Spy<Moved>).mock.calls;
 const DESKTOP = SIZE_PX.desktop.control;
 // The caption role's size at the desktop body size: the text floor.
 const FLOOR = 11;
+// The zoom under which a node is its glyph alone, for a graph whose overview
+// forms clear each other at it (the workflow does).
+const OVERVIEW_FLOOR = 0.5;
 
 function Page(props: Heard & { stage: string; act?: boolean; graph?: Graph }) {
 	const graph = props.graph ?? WORKFLOW;
@@ -143,7 +150,8 @@ const wheel = (target: Element, deltaY: number) =>
 
 // The text a person can read in the layer, each node's size on screen: the
 // computed font size times the layer's scale, for every text node that is not
-// hidden.
+// hidden. A glyph holds its size at any zoom, so a name beside it is read at its
+// own computed size.
 function readable(root: Element): number[] {
 	const layer = root.querySelector("[data-layer]");
 	if (!layer) throw new Error("no layer");
@@ -155,7 +163,8 @@ function readable(root: Element): number[] {
 		if (!parent || !text.textContent?.trim()) continue;
 		const style = getComputedStyle(parent);
 		if (style.visibility === "hidden") continue;
-		sizes.push(Number.parseFloat(style.fontSize) * scale);
+		const held = parent.closest("[data-layer] > div > button") !== null;
+		sizes.push(Number.parseFloat(style.fontSize) * (held ? 1 : scale));
 	}
 	return sizes;
 }
@@ -169,18 +178,64 @@ async function glyphForm(root: Element) {
 		await expect(rect(form).height).toBeGreaterThan(DESKTOP - 0.5);
 	}
 	for (const each of cards(root)) await expect(each).not.toBeVisible();
+	return forms;
+}
+
+// The glyph alone: no two overlap and no text is visible at all.
+async function bareForm(root: Element) {
+	const forms = await glyphForm(root);
 	forms.forEach((one, index) => {
 		for (const two of forms.slice(index + 1))
 			expect(apart(rect(one), rect(two))).toBe(true);
 	});
+	await expect(names(root)).toHaveLength(0);
 	await expect(readable(root)).toHaveLength(0);
+}
+
+// The overview: each glyph carries its node's title, one line at the caption
+// size (the text floor, whatever the zoom), no wider than the short measure,
+// centred on the glyph and starting after it; and no two glyphs with their
+// names overlap, so two nodes of one kind read apart.
+async function overviewForm(root: Element) {
+	const forms = await glyphForm(root);
+	const shown = [...names(root)];
+	await expect(shown).toHaveLength(WORKFLOW.nodes.length);
+	const wholes: DOMRect[] = [];
+	forms.forEach((form, index) => {
+		const name = shown[index];
+		if (!name) throw new Error("a glyph with no name");
+		const glyph = rect(form);
+		const text = rect(name);
+		expect(name.textContent).toBe(
+			WORKFLOW.nodes.find((each) => each.id === ORDER[index])?.title,
+		);
+		expect(text.left).toBeGreaterThanOrEqual(glyph.right - 0.5);
+		expect(Math.abs(centre(text).y - centre(glyph).y)).toBeLessThan(1);
+		const style = getComputedStyle(name);
+		expect(Number.parseFloat(style.fontSize)).toBeGreaterThanOrEqual(
+			FLOOR - 0.01,
+		);
+		expect(style.fontWeight).toBe("500");
+		expect(text.height).toBeLessThan(glyph.height);
+		wholes.push(
+			new DOMRect(glyph.left, glyph.top, text.right - glyph.left, glyph.height),
+		);
+	});
+	wholes.forEach((one, index) => {
+		for (const two of wholes.slice(index + 1))
+			expect(apart(one, two)).toBe(true);
+	});
+	await expect(Math.min(...readable(root))).toBeGreaterThanOrEqual(
+		FLOOR - 0.01,
+	);
 }
 
 // ── 1 Overview on a pointer ─────────────────────────────────────────
 
 // At a zoom of 1 or more every node is its card, with no text under the caption
 // size; zoomed out below 1 every node is a glyph button of the desktop control
-// size at three scales, no two overlap, and no text is visible at all.
+// size with its name beside it at the caption size, down to half; under half it
+// is the glyph alone, with no text at all. A zoom step is a fifth.
 const overview: Story = {
 	...page(TALL),
 	play: async ({ args, canvas, canvasElement, userEvent }) => {
@@ -193,24 +248,38 @@ const overview: Story = {
 			FLOOR - 0.01,
 		);
 
-		// Just under 1, by a wheel.
+		// Just under 1, by a wheel: the overview.
 		wheel(region, 8);
 		await waitFor(() => expect(scale()).toBeLessThan(1));
 		await expect(scale()).toBeGreaterThan(0.8);
-		await glyphForm(canvasElement);
-		// Half of that, by the stack and a wheel.
-		const under = scale();
-		await userEvent.click(canvas.getByRole("button", { name: "Zoom out" }));
-		wheel(region, 20);
-		await waitFor(() => expect(scale()).toBeLessThan(under * 0.6));
-		await glyphForm(canvasElement);
-		// The lowest zoom, by the stack alone.
+		await overviewForm(canvasElement);
+
+		// A step on the stack is a fifth of the scale.
 		const zoomOut = canvas.getByRole("button", { name: "Zoom out" });
-		for (let step = 0; step < 12; step++) await userEvent.click(zoomOut);
+		const before = scale();
+		await userEvent.click(zoomOut);
+		await expect(around(scale(), before / 1.2, 0.002)).toBe(true);
+
+		// Down the stack to the last zoom that names its nodes, which is the
+		// overview floor or above it, and the first that does not.
+		let named = scale();
+		await overviewForm(canvasElement);
+		while (scale() / 1.2 >= OVERVIEW_FLOOR) {
+			await userEvent.click(zoomOut);
+			named = scale();
+			await overviewForm(canvasElement);
+		}
+		await expect(named).toBeGreaterThanOrEqual(OVERVIEW_FLOOR);
+		await userEvent.click(zoomOut);
+		await expect(scale()).toBeLessThan(OVERVIEW_FLOOR);
+		await bareForm(canvasElement);
+
+		// The lowest zoom, by the stack alone.
+		for (let step = 0; step < 30; step++) await userEvent.click(zoomOut);
 		const lowest = lowestZoom(canvasElement, DESKTOP);
 		await expect(around(scale(), lowest, 0.005)).toBe(true);
 		await expect(zoomOut).toHaveAttribute("aria-disabled", "true");
-		await glyphForm(canvasElement);
+		await bareForm(canvasElement);
 	},
 };
 export const OverviewLight = mode("light", overview);
@@ -321,7 +390,7 @@ const crossing: Story = {
 			const zoomOut = canvas.getByRole("button", { name: "Zoom out" });
 			await userEvent.click(zoomIn);
 			wheel(region, -10);
-			await waitFor(() => expect(scale()).toBeGreaterThan(1.5));
+			await waitFor(() => expect(scale()).toBeGreaterThan(1.3));
 			await userEvent.click(zoomOut);
 			await expect(scale()).toBeGreaterThan(1);
 			await expect(records()).toBe(0);
@@ -388,8 +457,9 @@ export const OpensClearOfTheChromeDark = mode("dark", opens);
 
 // ── The routes follow the glyph ─────────────────────────────────────
 
-// Under the floor an edge ends on its glyphs and a group frame holds its glyphs
-// by the padding, at a zoom just under 1 and at the lowest zoom, where every
+// Under the floor an edge ends on its glyphs (named or alone) and a group frame
+// holds its glyphs by the padding, at a zoom just under 1 and at the lowest
+// zoom, where every
 // route still has a stretch to read.
 const follow: Story = {
 	...page(TALL),
@@ -399,7 +469,7 @@ const follow: Story = {
 		await waitFor(() => expect(viewport(canvasElement).scale).toBeLessThan(1));
 		await waitFor(() => routesFollowTheGlyphs(canvasElement, WORKFLOW));
 		const zoomOut = canvas.getByRole("button", { name: "Zoom out" });
-		for (let step = 0; step < 12; step++) await userEvent.click(zoomOut);
+		for (let step = 0; step < 30; step++) await userEvent.click(zoomOut);
 		await expect(zoomOut).toHaveAttribute("aria-disabled", "true");
 		await waitFor(() => routesFollowTheGlyphs(canvasElement, WORKFLOW));
 	},
@@ -504,3 +574,61 @@ function glyphFrames(density: "desktop" | "touch"): StoryObj {
 }
 export const GlyphFramesAtDesktop = glyphFrames("desktop");
 export const GlyphFramesAtTouch = glyphFrames("touch");
+
+// ── The name frames ─────────────────────────────────────────────────
+
+// Each generated name frame holds its graph in the overview: every glyph names
+// its node, inside the pane, none cut by it.
+// A dimmed node's name draws disabled ink on purpose, as its text does, and sits in an enabled
+// button: the exclusion `.storybook/state-stories.tsx` gives the state stories.
+export const NameFramesAtDesktop: StoryObj = {
+	globals: { density: "desktop" },
+	parameters: {
+		a11y: {
+			context: {
+				exclude: [
+					FOCUS_GUARD,
+					'[data-cell^="Canvas/CANVAS_NODE_NAME.tone.dimmed/"] [data-layer] button',
+				],
+			},
+		},
+	},
+	render: () => {
+		const frames = showcaseFrames().filter(
+			(frame) =>
+				frame.component === "Canvas" &&
+				frame.mode === "light" &&
+				frame.density === "desktop" &&
+				frame.cell.name.startsWith("CANVAS_NODE_NAME") &&
+				drawCanvas(frame) !== undefined,
+		);
+		return (
+			<div className="flex flex-col gap-pair">
+				{frames.map((frame) => (
+					<Frame key={frame.id} frame={frame} draw={drawCanvas} />
+				))}
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const drawn = [...canvasElement.querySelectorAll("[data-cell]")];
+		await expect(drawn.length).toBeGreaterThan(0);
+		for (const frame of drawn) {
+			const region = frame.querySelector("section");
+			if (!region) throw new Error(`no canvas in ${frame.id}`);
+			await waitFor(() => expect(names(frame).length).toBeGreaterThan(0), LAID);
+			const pane = rect(region);
+			await expect(names(frame)).toHaveLength(glyphs(frame).length);
+			for (const name of names(frame)) {
+				await expect(name).toBeVisible();
+				const box = rect(name);
+				await expect(
+					box.left >= pane.left &&
+						box.right <= pane.right &&
+						box.top >= pane.top &&
+						box.bottom <= pane.bottom,
+				).toBe(true);
+			}
+		}
+	},
+};

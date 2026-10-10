@@ -16,7 +16,7 @@ import type { Closed } from "../../lib/closed.ts";
 import { GroundContext } from "../../lib/ground.ts";
 import { useGroupPart } from "../../lib/group.ts";
 import { LoadingContext } from "../../lib/loading.ts";
-import { SliderWait } from "./wait.tsx";
+import { SliderWait } from "../../lib/slider-wait.tsx";
 
 const BOX = "flex flex-col justify-center";
 const HEAD = "flex items-center justify-between";

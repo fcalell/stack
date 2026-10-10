@@ -15,7 +15,7 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { GroundContext } from "../../lib/ground";
 import { between, GroupContext, type GroupHost } from "../../lib/group";
-import { LoadingContext } from "../../lib/loading";
+import { LoadingContext, useWait, VEIL } from "../../lib/loading";
 import { DefinitionWait } from "../definition-row/wait";
 
 const BOX = "overflow-hidden";
@@ -42,7 +42,10 @@ export interface GroupProps extends Closed {
 // for children none of them answers for.
 export function Group({ loading, children }: GroupProps) {
 	const inherited = useContext(LoadingContext);
-	const waiting = loading ?? inherited;
+	// Its own `loading` waits as a read that lasts does (drawn after a delay, held
+	// a minimum); one inherited from a Section arrives already so.
+	const late = useWait(loading === true);
+	const waiting = loading === undefined ? inherited : late.waiting;
 	// A waiting body draws the waiting forms of the parts that register (however
 	// deep: a List, a Meter, a Slider, a DefinitionRow); with none, setting
 	// skeletons. The body renders once to learn, and the swap lands in a
@@ -73,7 +76,7 @@ export function Group({ loading, children }: GroupProps) {
 	return (
 		<View
 			accessibilityState={{ busy: loading === true }}
-			className={cn(GROUP, BOX)}
+			className={cn(GROUP, BOX, late.veiled && VEIL)}
 		>
 			<LoadingContext.Provider value={waiting}>
 				<GroupContext.Provider value={host}>

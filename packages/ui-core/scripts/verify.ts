@@ -125,6 +125,7 @@ import {
 	CANVAS_GROUP,
 	CANVAS_NODE,
 	CANVAS_NODE_GLYPH,
+	CANVAS_NODE_NAME,
 	CANVAS_NODE_TEXT,
 	CHANGE_MARK,
 	CHART_BAND,
@@ -209,6 +210,7 @@ import {
 	canvasGroup,
 	canvasNode,
 	canvasNodeGlyph,
+	canvasNodeName,
 	canvasNodeText,
 	changeMark,
 	chartBand,
@@ -560,6 +562,7 @@ const MATRICES: readonly Registration[] = [
 	["CANVAS_NODE", CANVAS_NODE, canvasNode],
 	["CANVAS_NODE_TEXT", CANVAS_NODE_TEXT, canvasNodeText],
 	["CANVAS_NODE_GLYPH", CANVAS_NODE_GLYPH, canvasNodeGlyph],
+	["CANVAS_NODE_NAME", CANVAS_NODE_NAME, canvasNodeName],
 	["STAGE", STAGE, stage],
 	["STAGE_MARK", STAGE_MARK, stageMark],
 	["STAGE_RAIL", STAGE_RAIL, stageRail],
@@ -722,7 +725,7 @@ check("c02", "package.json shape", () => {
 		Object.keys(pkg.exports ?? {})
 			.sort()
 			.join(" "),
-		"./canvas ./chart ./clock ./cn ./commit ./derive ./descriptors ./emit ./file ./format ./harness ./leave ./list-state ./manifest ./reason ./roster ./route ./rules ./schema ./tokens ./variants",
+		"./canvas ./chart ./clock ./cn ./commit ./derive ./descriptors ./emit ./file ./format ./harness ./leave ./list-state ./manifest ./reason ./roster ./route ./rules ./schema ./streaming ./tokens ./variants ./wait",
 		"export subpaths",
 	);
 	assert(pkg.peerDependencies?.zod, "zod is not a peerDependency");
@@ -749,7 +752,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(SIZES.length, 42, "size count");
 	requireEqual(RADIUS_ROLES.length, 7, "radius role count");
 	requireEqual(SHADOW_LEVELS.length, 2, "shadow level count");
-	requireEqual(WIDTHS.length, 13, "width count");
+	requireEqual(WIDTHS.length, 14, "width count");
 	requireEqual(BREAKPOINTS.length, 3, "breakpoint count");
 	requireEqual(WORD_KEYS.length, 70, "word count");
 	requireEqual(COUNTED_WORD_KEYS.length, 1, "counted word count");
@@ -1022,14 +1025,14 @@ check(
 		}
 		requireEqual(fine["--spacing-control"], "32px", "desktop control");
 		requireEqual(touch["--spacing-control"], "44px", "touch control");
-		requireEqual(fine["--spacing-target"], "24px", "desktop target");
+		requireEqual(fine["--spacing-target"], "28px", "desktop target");
 		requireEqual(touch["--spacing-target"], "44px", "touch target");
-		// A one-line body row lands on the row height with its padding: 20 + 2 × 6.
-		requireEqual(
-			Number.parseInt(fine["--leading-body"] ?? "", 10) +
-				2 * Number.parseInt(fine["--spacing-inside"] ?? "", 10),
-			32,
-			"desktop body line plus inside",
+		// A one-line body row holds its line box with room to spare: the line
+		// is under the row height (22 in 32), so the row's min-height decides.
+		assert(
+			Number.parseInt(fine["--leading-body"] ?? "", 10) <=
+				Number.parseInt(fine["--spacing-row"] ?? "", 10),
+			"desktop body line fits the row",
 		);
 		return "touch 44/48/38 seeded, desktop 32/28/38 beside it, the type scale moves with them";
 	},
@@ -1093,8 +1096,10 @@ check(
 				...ring,
 				...measures,
 			})) {
+				// The edge offset pulls the ring back over the hairline: negative.
 				assert(
-					Number.isFinite(value) && value > 0,
+					Number.isFinite(value) &&
+						(key === "--focus-ring-edge-offset" ? value < 0 : value > 0),
 					`${key} at u = ${unit} is ${value}`,
 				);
 			}
@@ -1111,6 +1116,11 @@ check(
 				ring["--focus-ring-offset"],
 				2 * unit,
 				`ring offset at u = ${unit}`,
+			);
+			requireEqual(
+				ring["--focus-ring-edge-offset"],
+				-unit,
+				`ring edge offset at u = ${unit}`,
 			);
 		}
 		// 1920 × 1080, u = 2, against the ten-foot range.

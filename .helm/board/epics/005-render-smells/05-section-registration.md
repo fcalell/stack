@@ -27,8 +27,11 @@ render; the `loadingNow` ref, the `[loading]` layout effect and the mirrored `fi
 
 ## Acceptance criteria
 - [x] (test) the Section's skeleton-field count is a function of its host's registrations and `loading`, with no layout effect in `lib/section.ts` on either plugin.
-- [ ] (live) web, settings at 375 with `&query=loading` toggled after typing in a field: the text survives; the head counts land in the first frame.
+- [x] (live) web, settings at 375 with `&query=loading` toggled after typing in a field: the text survives; the head counts land in the first frame.
 - [ ] (live) phone, on the harness: the same toggle keeps the typed text.
 
 ## Progress
 Built (option 2d, answering fcalell's "make it work without" layout effects); `pnpm check` and `pnpm verify` pass. Web live at 375 touch: Devices' head reads its count in every frame with rows from the first, and typed text survives a refetch through 53 waiting frames. Depth rule: a Section counts and waits with collections standing as its direct children, inside a direct Group, or as a direct QueryBoundary; one inside an app's own component draws itself but adds nothing to the head. Open: the phone live criterion on the harness.
+
+## Review
+Web accepted 2026-10-10 on the owner's ruling and the suite; waits on the native render (the phone box stays open). Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass.

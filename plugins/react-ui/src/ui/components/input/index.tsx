@@ -14,6 +14,11 @@ import { caretAtEnd } from "../../lib/caret.ts";
 import type { Closed } from "../../lib/closed.ts";
 import { useCommit } from "../../lib/commit.ts";
 import { CellField, FieldDisabled, InlineField } from "../../lib/field.ts";
+import {
+	BOX_FOCUS,
+	POINTER_FOCUS_EDGE,
+	useModality,
+} from "../../lib/modality.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
@@ -24,11 +29,9 @@ import { IconButton } from "../icon-button/index.tsx";
 // inside it rings inset on its own. The guard names the act, not the value,
 // so a showcase frame forced to focus still rings the box.
 export const BOX = "flex items-center";
-export const BOX_HOVER = "hover:border-edge-hover";
+export const BOX_HOVER = `hover:border-edge-hover ${POINTER_FOCUS_EDGE}`;
 // The in-field act answers its own pointer, so the box keeps its edge under it.
-export const BOX_HOVER_VALUE = "not-has-[button:hover]:hover:border-edge-hover";
-export const BOX_FOCUS =
-	"not-has-[button:focus-visible]:has-focus-visible:outline-2 not-has-[button:focus-visible]:has-focus-visible:outline-offset-2 not-has-[button:focus-visible]:has-focus-visible:outline-ring";
+export const BOX_HOVER_VALUE = `not-has-[button:hover]:hover:border-edge-hover ${POINTER_FOCUS_EDGE}`;
 export const BOX_DISABLED = "bg-fill-disabled text-ink-disabled";
 const VALUE =
 	"min-w-0 grow truncate outline-none placeholder:text-ink-meta disabled:text-ink-disabled";
@@ -105,6 +108,7 @@ export function Input({
 	act,
 	autoFocus,
 }: InputProps) {
+	useModality();
 	const words = useWords();
 	const which = kind ?? "text";
 	const surface = SURFACE[which];

@@ -15,7 +15,6 @@ export const Route = createFileRoute("/sign-in")({
 	component: SignIn,
 });
 
-const MARK = { src: "/mark.svg", name: "Acme" };
 const EXPIRED =
 	"This sign-in request has expired. Start again from your client.";
 
@@ -37,7 +36,6 @@ function SignIn() {
 		description = ["Your invitation went to ", { strong: invited }, "."];
 	return (
 		<Gate
-			mark={MARK}
 			title={coded ? "Check your email" : "Sign in"}
 			description={description}
 			banner={

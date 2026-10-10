@@ -11,12 +11,13 @@ interface Args {
 
 // A node off a run's path draws disabled ink on purpose (the pattern page's rule: the rest of a
 // run in disabled ink), about 3:1. Axe exempts only a disabled control, and these are enabled
-// buttons, so their text is left out of the check. Only the dimmed frames, only Canvas. The
+// buttons, so their text is left out of the check. Only the dimmed frames (a node's text, a glyph's name), only Canvas. The
 // exclusion is the whole node, not `color-contrast` alone: a per-story `config.rules` entry
 // replaces the preview's document-rule list (arrays do not merge), so scoping the rule would copy it.
 const UNCHECKED: Record<string, string[]> = {
 	Canvas: [
 		'[data-cell^="Canvas/CANVAS_NODE_TEXT.tone.dimmed/"] [data-layer] button',
+		'[data-cell^="Canvas/CANVAS_NODE_NAME.tone.dimmed/"] [data-layer] button',
 	],
 };
 

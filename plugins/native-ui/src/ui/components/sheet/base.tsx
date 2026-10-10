@@ -47,7 +47,7 @@ import { scheduleOnRN } from "react-native-worklets";
 import { useResolveClassNames, withUniwind } from "uniwind";
 import { cn } from "../../lib/cn";
 import { FieldNameContext } from "../../lib/field";
-import { FormStands } from "../../lib/form";
+import { type FootSlot, FootSlotContext, FormStands } from "../../lib/form";
 import { timing } from "../../lib/motion";
 import { RaisedGround } from "../../lib/raised";
 import { type ReasonHost, ReasonHostContext } from "../../lib/reason";
@@ -124,21 +124,21 @@ interface Parts {
 	setFootHeight: (height: number) => void;
 }
 
-// One sheet's parts, which its layer reads: gorhom draws the layer in its
-// provider's host and pushes it only when the modal itself re-renders.
-interface PartsStore {
-	get: () => Parts;
-	set: (parts: Parts) => void;
+// A value a sheet's layer reads: gorhom draws the layer in its provider's
+// host and pushes it only when the modal itself re-renders.
+interface Store<T> {
+	get: () => T;
+	set: (value: T) => void;
 	subscribe: (listener: () => void) => () => void;
 }
 
-function partsStore(initial: Parts): PartsStore {
+function store<T>(initial: T): Store<T> {
 	let current = initial;
 	const listeners = new Set<() => void>();
 	return {
 		get: () => current,
-		set: (parts) => {
-			current = parts;
+		set: (value) => {
+			current = value;
 			for (const listener of listeners) listener();
 		},
 		subscribe: (listener) => {
@@ -158,24 +158,26 @@ function useParts(): Parts {
 
 // gorhom draws the sheet outside the tree that opens it, so the sheet's
 // contexts start at the container it draws everything in.
-function layerOf(store: PartsStore) {
+function layerOf(parts: Store<Parts>, foot: FootSlot) {
 	return function Layer({ children }: PropsWithChildren) {
-		const parts = useSyncExternalStore(store.subscribe, store.get);
+		const current = useSyncExternalStore(parts.subscribe, parts.get);
 		return (
-			<PartsContext.Provider value={parts}>
-				<FieldNameContext.Provider value={parts.title}>
-					<TouchedContext.Provider value={parts.touched}>
-						<FormStands.Provider value="sheet">
-							<View
-								accessibilityViewIsModal
-								pointerEvents="box-none"
-								className={LAYER}
-							>
-								{children}
-							</View>
-						</FormStands.Provider>
-					</TouchedContext.Provider>
-				</FieldNameContext.Provider>
+			<PartsContext.Provider value={current}>
+				<FootSlotContext.Provider value={foot}>
+					<FieldNameContext.Provider value={current.title}>
+						<TouchedContext.Provider value={current.touched}>
+							<FormStands.Provider value="sheet">
+								<View
+									accessibilityViewIsModal
+									pointerEvents="box-none"
+									className={LAYER}
+								>
+									{children}
+								</View>
+							</FormStands.Provider>
+						</TouchedContext.Provider>
+					</FieldNameContext.Provider>
+				</FootSlotContext.Provider>
 			</PartsContext.Provider>
 		);
 	};
@@ -285,10 +287,19 @@ function Head() {
 	);
 }
 
-// The foot's line over a decision's acts, at the content's end or held by
-// gorhom's footer; either place reports its height.
+const NO_SUBSCRIBE = () => () => {};
+const NO_BAR = () => null;
+
+// The foot's line over a decision's acts, then the bar a `Form` handed up,
+// at the content's end or held by gorhom's footer; either place reports its
+// height.
 function Foot() {
 	const { foot, acts, setFootHeight } = useParts();
+	const slot = useContext(FootSlotContext);
+	const bar = useSyncExternalStore(
+		slot?.subscribe ?? NO_SUBSCRIBE,
+		slot?.get ?? NO_BAR,
+	);
 	const insets = useSafeAreaInsets();
 	const { paddingBottom } = useResolveClassNames(FOOT_END);
 	const footEnd = typeof paddingBottom === "number" ? paddingBottom : 0;
@@ -304,6 +315,7 @@ function Foot() {
 				</View>
 			) : null}
 			{acts ? <ActionBar acts={acts} /> : null}
+			{bar}
 		</View>
 	);
 }
@@ -493,13 +505,24 @@ export function SheetBase({
 		setCapped,
 		setFootHeight,
 	};
-	const [{ store, Layer }] = useState(() => {
-		const created = partsStore(parts);
-		return { store: created, Layer: layerOf(created) };
+	const [{ partsStore, slot, Layer }] = useState(() => {
+		const created = store<Parts>(parts);
+		const bar = store<ReactNode>(null);
+		return {
+			partsStore: created,
+			slot: bar,
+			Layer: layerOf(created, bar),
+		};
 	});
-	useLayoutEffect(() => store.set(parts));
+	useLayoutEffect(() => partsStore.set(parts));
+	// A form in the sheet hands its bar up: the sheet re-renders only as the
+	// bar appears or goes, never as the form renders.
+	const handed = useSyncExternalStore(
+		slot.subscribe,
+		() => slot.get() !== null,
+	);
 	const footed =
-		form === undefined && (foot !== undefined || acts !== undefined);
+		form === undefined && (foot !== undefined || acts !== undefined || handed);
 	const fixed = footed && (tall || capped);
 	let end: { paddingBottom: number } | undefined;
 	if (!footed) end = { paddingBottom: insets.bottom };

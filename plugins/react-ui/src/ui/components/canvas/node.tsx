@@ -5,6 +5,7 @@ import {
 	CANVAS_PORT_HIT,
 	canvasNode,
 	canvasNodeGlyph,
+	canvasNodeName,
 	canvasNodeText,
 } from "@fcalell/ui-core/variants";
 import {
@@ -67,9 +68,16 @@ const GLYPH_BOX =
 	"absolute flex items-center justify-center pointer-events-none";
 const GLYPH =
 	"relative flex items-center justify-center pointer-events-auto select-none";
-const MARK = "absolute flex -right-inside";
-const MARK_TOP = "-top-inside";
-const MARK_BOTTOM = "-bottom-inside";
+// The overview's name, at the glyph's inline end and centred on it. It stands a
+// `pair` out, clear of the marks that straddle the glyph's corners, and scales
+// with the glyph, so it keeps the floor size on screen at any zoom.
+const NAME = "absolute start-full top-1/2 -translate-y-1/2 ms-pair";
+// An absolute mark is placed from the glyph's padding box, inside its border, so
+// each offset takes the border's pixel back to stand `inside` past the glyph's
+// outer edge.
+const MARK = "absolute flex -right-inside -mr-px";
+const MARK_TOP = "-top-inside -mt-px";
+const MARK_BOTTOM = "-bottom-inside -mb-px";
 const GLYPH_INK = {
 	rest: "text-ink-body",
 	off: "text-ink-meta",
@@ -146,7 +154,8 @@ export interface NodeEdit {
 // A node: its glyph, its text column and its trailing figure, placed in flow
 // coordinates. With `onSelect` it is one button named by its visible text;
 // without, the same box, drawn and not operated. Under the text floor (`below`)
-// the card keeps its box and draws nothing, and a glyph button stands over it.
+// the card keeps its box and draws nothing, and a glyph button stands over it;
+// until the canvas is `bare` the glyph carries its node's name.
 // This is the one place a node's pointer handlers live.
 export function NodeView({
 	node,
@@ -156,6 +165,7 @@ export function NodeView({
 	lifted,
 	targeted,
 	below,
+	bare,
 	edit,
 	onSelect,
 	onSize,
@@ -172,6 +182,8 @@ export function NodeView({
 	targeted: boolean;
 	// The canvas is under the text floor: the node is its glyph alone.
 	below: boolean;
+	// The canvas is under the overview's floor: the glyph carries no name.
+	bare: boolean;
 	edit: NodeEdit;
 	onSelect?: (id: string | null) => void;
 	onSize: (id: string, size: Size) => void;
@@ -481,7 +493,7 @@ export function NodeView({
 		>
 			<button
 				type="button"
-				// The one name the glyph carries: a native tooltip, which also names the button for axe and voice control.
+				// The name the glyph carries alone, and whole where the overview cuts it: a native tooltip, which also names the button for axe and voice control.
 				title={node.title}
 				onClick={(event) => {
 					refocus.current = event.detail === 0;
@@ -502,6 +514,14 @@ export function NodeView({
 				)}
 			>
 				<Icon name={node.icon} fit="body" />
+				{bare ? null : (
+					<span
+						data-name
+						className={cn(canvasNodeName({ tone: look.tone }), NAME)}
+					>
+						{node.title}
+					</span>
+				)}
 				{look.status && node.status ? (
 					<span className={cn(MARK, MARK_TOP)}>
 						<StatusDot state={node.status.state} />

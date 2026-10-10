@@ -13,6 +13,7 @@ import {
 	type Clearance,
 	centredTransform,
 	EXTENT,
+	type Foot,
 	fitTransform,
 	inside,
 	NO_CLEARANCE,
@@ -33,6 +34,9 @@ export interface Viewport {
 	fit(bounds: Box): void;
 	// What the canvas's own chrome takes from the pane, which a fit and the opening view stay clear of.
 	clearance(): Clearance;
+	// The text standing under the graph, which a fit and the opening view hold with it; `null` once it goes.
+	reserve(foot: Foot | null): void;
+	reserved(): Foot | null;
 	// Pans only, at the zoom it has, and nothing when the box is already in
 	// view; given a zoom it always moves, to that zoom, the box centred.
 	centreOn(box: Box, zoom?: number): void;
@@ -42,7 +46,7 @@ export interface Viewport {
 	screenToFlow(point: CanvasPoint): CanvasPoint;
 }
 
-const STEP = 1.5;
+const STEP = 1.2;
 // One wheel event moves the scale by at most the zoom stack's step, in d3's
 // log2 measure; a trackpad pinch's small deltas stay proportional below it.
 const MOST = Math.log2(STEP);
@@ -80,6 +84,7 @@ function make(region: RefObject<HTMLElement | null>) {
 	const listeners = new Set<() => void>();
 	let current: Transform = { x: 0, y: 0, k: 1 };
 	let layer: HTMLElement | null = null;
+	let foot: Foot | null = null;
 	let pattern: SVGPatternElement | null = null;
 
 	// The layer and the grid move by script, so a pan renders no React tree.
@@ -134,12 +139,13 @@ function make(region: RefObject<HTMLElement | null>) {
 		if (!element) return NO_CLEARANCE;
 		const pane = element.getBoundingClientRect();
 		const pair = spacing("pair");
-		const out = { left: 0, bottom: 0 };
+		const out = { left: 0, bottom: 0, stack: 0 };
 		for (const part of element.querySelectorAll<HTMLElement>("[data-clear]")) {
 			const box = part.getBoundingClientRect();
-			if (part.dataset.clear === "left")
+			if (part.dataset.clear === "left") {
 				out.left = Math.max(out.left, box.right - pane.left + pair);
-			else out.bottom = Math.max(out.bottom, pane.bottom - box.top + pair);
+				out.stack = Math.max(out.stack, pane.bottom - box.top + pair);
+			} else out.bottom = Math.max(out.bottom, pane.bottom - box.top + pair);
 		}
 		return out;
 	};
@@ -180,8 +186,20 @@ function make(region: RefObject<HTMLElement | null>) {
 				);
 		},
 		clearance,
+		reserve(next) {
+			foot = next;
+		},
+		reserved: () => foot,
 		fit(bounds) {
-			viewport.set(fitTransform(bounds, pane(), spacing("page"), clearance()));
+			viewport.set(
+				fitTransform(
+					bounds,
+					pane(),
+					spacing("page"),
+					clearance(),
+					foot ?? undefined,
+				),
+			);
 		},
 		centreOn(box, zoom) {
 			const size = pane();

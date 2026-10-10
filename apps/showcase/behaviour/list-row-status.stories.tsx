@@ -87,6 +87,23 @@ const waits: Play = async ({ canvas }) => {
 			return { top: top(row), height: height(row) };
 		});
 	});
+	// The waiting bar starts where the arriving word does and is a short label
+	// wide at most.
+	const barLeft = columns.map((column) => {
+		const bar = within(column)
+			.getByRole("link", { name: "Agents" })
+			.parentElement?.querySelector(".h-lh .bg-skeleton");
+		if (!bar) throw new Error("the status is not waiting");
+		const probe = document.createElement("div");
+		probe.className = "w-measure-short";
+		column.append(probe);
+		const measure = probe.getBoundingClientRect().width;
+		probe.remove();
+		expect(bar.getBoundingClientRect().width).toBeLessThanOrEqual(
+			measure + 0.5,
+		);
+		return bar.getBoundingClientRect().left;
+	});
 	for (const [at, column] of columns.entries()) {
 		const bars = (name: string) =>
 			within(column)
@@ -104,6 +121,12 @@ const waits: Play = async ({ canvas }) => {
 	await userEvent.click(canvas.getByRole("button", { name: "Answer" }));
 	for (const [at, column] of columns.entries()) {
 		await expect(within(column).getByText("2 running")).toBeVisible();
+		console.log(
+			`bar left ${barLeft[at]}, word left ${within(column).getByText("2 running").getBoundingClientRect().left}`,
+		);
+		await expect(
+			within(column).getByText("2 running").getBoundingClientRect().left,
+		).toBeCloseTo(barLeft[at] ?? Number.NaN, 1);
 		const rows = within(column).getAllByRole("link");
 		for (const [index, link] of rows.entries()) {
 			const row = link.parentElement;

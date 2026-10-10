@@ -24,7 +24,7 @@ const REPLY: Turn = {
 };
 
 // A conversation whose last turn is the operator's, a reply on its way.
-function Replying({ height }: { height: number }) {
+function Replying({ height, reply = REPLY }: { height: number; reply?: Turn }) {
 	const [items, setItems] = useState(TURNS);
 	const [replying, setReplying] = useState(true);
 	const [text, setText] = useState("");
@@ -47,7 +47,7 @@ function Replying({ height }: { height: number }) {
 			<button
 				type="button"
 				onClick={() => {
-					setItems((last) => [...last, REPLY]);
+					setItems((last) => [...last, reply]);
 					setReplying(false);
 				}}
 			>
@@ -126,4 +126,77 @@ export const StreamedReplyReplacesIt: StoryObj = {
 		expect(turns[turns.length - 1]?.textContent).toContain(REPLY.body);
 		await waitFor(() => expect(atEnd(log)).toBe(true));
 	},
+};
+
+// The waiting message draws as the reply it becomes: no author line, one line at
+// the body line height, the same left edge and top, so the swap moves nothing;
+// a longer reply only adds its extra lines.
+const ONE_LINE: Turn = { id: "reply", author: "other", body: "Done." };
+const LONG_REPLY: Turn = {
+	id: "reply",
+	author: "other",
+	body: "First line of a longer answer.\n\nSecond paragraph of the same answer, which runs on to a further line because it says a great deal more than the first.",
+};
+const slot = (log: HTMLElement) => {
+	const turns = log.querySelectorAll("article");
+	const last = turns[turns.length - 1] as HTMLElement;
+	const box = last.getBoundingClientRect();
+	const at = log.getBoundingClientRect();
+	return {
+		top: box.top - at.top + log.scrollTop,
+		left: box.left - at.left,
+		height: box.height,
+	};
+};
+function swapsInPlace(reply: Turn, grows: boolean): StoryObj {
+	return {
+		parameters: { layout: "fullscreen" },
+		render: () => <Replying height={720} reply={reply} />,
+		play: async ({ canvas, userEvent }) => {
+			const log = await canvas.findByRole("log");
+			await waitFor(() => expect(waiting(log)).toHaveLength(1));
+			const last = log.querySelectorAll("article");
+			// No author line: the waiting entry holds a single line.
+			expect(last[last.length - 1]?.children).toHaveLength(1);
+			const before = slot(log);
+			await userEvent.click(
+				canvas.getByRole("button", { name: "Stream the reply" }),
+			);
+			await canvas.findByText(reply.body.split("\n")[0] ?? "");
+			const after = slot(log);
+			expect(after.top).toBeCloseTo(before.top, 0);
+			expect(after.left).toBeCloseTo(before.left, 0);
+			if (grows) expect(after.height).toBeGreaterThan(before.height);
+			else expect(after.height).toBeCloseTo(before.height, 0);
+			await waitFor(() => expect(atEnd(log)).toBe(true));
+		},
+	};
+}
+export const WaitingHoldsTheOneLineReplysBox1280: StoryObj = swapsInPlace(
+	ONE_LINE,
+	false,
+);
+export const WaitingOnlyGrowsByALongerRepliesLines1280: StoryObj = swapsInPlace(
+	LONG_REPLY,
+	true,
+);
+export const WaitingHoldsTheOneLineReplysBox390: StoryObj = {
+	...swapsInPlace(ONE_LINE, false),
+	tags: ["touch"],
+	globals: { density: "touch" },
+	render: () => (
+		<div style={{ width: 390 }}>
+			<Replying height={844} reply={ONE_LINE} />
+		</div>
+	),
+};
+export const WaitingOnlyGrowsByALongerRepliesLines390: StoryObj = {
+	...swapsInPlace(LONG_REPLY, true),
+	tags: ["touch"],
+	globals: { density: "touch" },
+	render: () => (
+		<div style={{ width: 390 }}>
+			<Replying height={844} reply={LONG_REPLY} />
+		</div>
+	),
 };

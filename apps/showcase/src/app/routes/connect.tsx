@@ -11,7 +11,6 @@ export const Route = createFileRoute("/connect")({
 	component: Connect,
 });
 
-const MARK = { src: "/mark.svg", name: "Acme" };
 const EXPIRED =
 	"This connection request has expired. Start it again from your client.";
 
@@ -22,7 +21,6 @@ function Connect() {
 	const email = request.data?.email;
 	return (
 		<Gate
-			mark={MARK}
 			step={{ at: 1, of: 2 }}
 			title="Choose a workspace"
 			description={email ? ["Signed in as ", { strong: email }] : undefined}

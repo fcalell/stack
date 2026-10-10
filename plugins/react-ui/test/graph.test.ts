@@ -112,11 +112,11 @@ test("a fine pointer at tablet width draws the desktop set, and data-density pin
 	const desktop = (await defaults()).get(".stack/app.css") ?? "";
 	assert.match(
 		desktop,
-		/:root\[data-density="desktop"\] \{\n\t--text-display: 36px;/,
+		/:root\[data-density="desktop"\] \{\n\t--text-display: 39px;/,
 	);
 	assert.match(
 		desktop,
-		/@media \(pointer: fine\) and \(width >= 768px\) \{\n:root \{\n\t--text-display: 36px;/,
+		/@media \(pointer: fine\) and \(width >= 768px\) \{\n:root \{\n\t--text-display: 39px;/,
 	);
 	assert.match(
 		desktop,
@@ -192,6 +192,23 @@ test("words mount a provider only when given", async () => {
 		words ?? "",
 		/earlierLines: \{ one: "Show \{count\} earlier line", other: "Show \{count\} earlier lines" \}/,
 	);
+});
+
+test("the app's icon mounts the mark provider with its name, and an app with no icon mounts none", async () => {
+	const bare = (await artifacts()).get(".stack/virtual-providers.tsx");
+	assert.doesNotMatch(bare ?? "", /MarkProvider/);
+	const single = (await artifacts({}, { icon: "/mark.svg" })).get(
+		".stack/virtual-providers.tsx",
+	);
+	assert.match(single ?? "", /from "@fcalell\/plugin-react-ui\/lib\/mark"/);
+	assert.match(single ?? "", /src: "\/mark\.svg"/);
+	assert.match(single ?? "", /name: "shop"/);
+	assert.doesNotMatch(single ?? "", /dark:/);
+	const pair = (
+		await artifacts({}, { icon: { light: "/a.svg", dark: "/b.svg" } })
+	).get(".stack/virtual-providers.tsx");
+	assert.match(pair ?? "", /src: "\/a\.svg"/);
+	assert.match(pair ?? "", /dark: "\/b\.svg"/);
 });
 
 test("the entry hands the router to react-ui's navigation, and not without routes", async () => {

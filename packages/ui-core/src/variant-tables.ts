@@ -754,15 +754,18 @@ export const MENU_LABEL = matrix({
 
 // ── Sheet ───────────────────────────────────────────────────────────
 
-// The side sheet on the desktop, raised at its end with its leading corners
-// rounded. `fit` is what it holds: a form at the sheet's width, or a
-// Split's record pane at the pane's (the Split passes it).
+// The sheet on the desktop, raised over the scrim. `fit` is what it holds: a
+// form at the sheet's width, hung at the end with its leading corners rounded;
+// a Split's record pane at the pane's (the Split passes it); or a short form
+// as a card at the dialog's width, centred, its hairline and radius on all
+// four sides (the Sheet chooses it by measuring its content).
 export const SHEET_SIDE = matrix({
-	base: "bg-raised border-l border-edge-raised rounded-l-sheet shadow-modal",
+	base: "bg-raised border-edge-raised shadow-modal",
 	variants: {
 		fit: {
-			form: "w-sheet",
-			pane: "w-pane",
+			form: "w-sheet border-l rounded-l-sheet",
+			pane: "w-pane border-l rounded-l-sheet",
+			short: "w-dialog border rounded-sheet",
 		},
 	},
 	defaultVariants: { fit: "form" },
@@ -1094,6 +1097,22 @@ export const CANVAS_NODE_GLYPH = matrix({
 	defaultVariants: { state: "rest" },
 });
 
+// A node's name in the overview, between the full node and the glyph alone: the
+// caption role in body ink at 500, on the canvas's own ground so an edge never
+// strikes through it, one line cut at the short measure. The tone recolours it as
+// it does the node's words (off meta, dimmed disabled).
+export const CANVAS_NODE_NAME = matrix({
+	base: "max-w-measure-short truncate whitespace-nowrap px-inside bg-canvas text-caption leading-caption tracking-caption font-medium",
+	variants: {
+		tone: {
+			rest: "text-ink-body",
+			off: "text-ink-meta",
+			dimmed: "text-ink-disabled",
+		},
+	},
+	defaultVariants: { tone: "rest" },
+});
+
 // A group's dashed frame: the dash says a group, the outline's colour says it
 // is selected.
 export const CANVAS_GROUP = matrix({
@@ -1169,7 +1188,8 @@ export const PLACE_TAB_LABEL = matrix({
 // does), or, with nothing open, the empty state alone at the inset. While a
 // Thread fills it, the inset holds the record's head alone: the Thread bleeds
 // through the sides, its log and its docked foot carrying the page inset
-// themselves.
+// themselves. A record the main opened (`beside`) draws its body in the same
+// `rest` cell, so both end where a Prose does.
 export const SPLIT_MAIN = matrix({
 	base: "",
 	variants: {
@@ -1184,10 +1204,10 @@ export const SPLIT_MAIN = matrix({
 
 // ── Section ─────────────────────────────────────────────────────────
 
-// A section's rhythm follows where it sits: on a page (over a Group, a List,
-// a column's cards) the head sits over the body and the body's children
-// stack at the pair rhythm; in a form both are the fields rhythm. The same
-// cell spaces the section (head to body) and its body (child to child).
+// A section's head-to-body step follows where it sits: on a page (over a
+// Group, a List, a column's cards) the head is paired to the body; in a form
+// it is the fields rhythm. The body's own parts stand apart at the fields
+// rhythm wherever the section sits (`SECTION_BODY`).
 export const SECTION = matrix({
 	base: "",
 	variants: {
@@ -1290,15 +1310,14 @@ export const SKELETON = matrix({
 
 // A loading row at the height of the row it stands in for: a group's setting
 // row, a form's field (a label line over the field's box at the label's
-// gap), a record's facts line (at the height of the status that opens on
-// it), or a one-line row in a list or in a group (a file row's).
+// gap), a record's facts line (at the meta line's height), or a one-line row in a list or in a group (a file row's).
 export const SKELETON_ROW = matrix({
 	base: "",
 	variants: {
 		kind: {
 			setting: "gap-fields min-h-row-setting px-card py-pair",
 			field: "gap-pair",
-			facts: "gap-x-fields min-h-target",
+			facts: "gap-x-fields",
 			"one-line": "gap-inside min-h-row px-control-x",
 			"one-line-group": "gap-inside min-h-row px-card",
 		},

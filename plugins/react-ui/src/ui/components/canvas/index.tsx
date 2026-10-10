@@ -30,11 +30,13 @@ import {
 	belowFloor,
 	glyphSize,
 	minZoomFor,
+	nameCap,
+	overviewFloorFor,
 	TEXT_FLOOR,
 	UNZOOM_VAR,
 } from "./floor.ts";
 import { emptyGroups, type Size } from "./geometry.ts";
-import { GROUND, Grid } from "./ground.tsx";
+import { GROUND, Grid, useBleed } from "./ground.tsx";
 import { GroupFrame } from "./group.tsx";
 import { isGround } from "./hit.ts";
 import { EdgeLabel } from "./label.tsx";
@@ -112,6 +114,7 @@ function CanvasGraph({
 	const region = useRef<HTMLElement>(null);
 	const viewport = useViewport(region);
 	const touch = useTouch();
+	const bleed = useBleed();
 	// One flag for the whole canvas, true while the smallest text a node draws
 	// renders under the text floor: a crossing renders once, and a pan or a zoom
 	// within a side renders nothing.
@@ -160,6 +163,21 @@ function CanvasGraph({
 		ports: Boolean(onConnect),
 		glyph: glyphSize(touch),
 	});
+
+	// The zoom under which a node is its glyph alone: the overview's floor, raised
+	// until no two overview forms (glyph, a `pair`, the name at its cap) overlap
+	// with a stretch between them for an edge; 1 for a graph with no overview.
+	const overview = useMemo(() => {
+		const glyph = glyphSize(touch);
+		return overviewFloorFor(
+			[...boxes.values()],
+			glyph,
+			glyph + space.pair + nameCap(touch),
+			2 * space.pair,
+		);
+	}, [boxes, touch, space.pair]);
+	// The second flag, beside `below`: true while the canvas is under that floor.
+	const bare = useViewportValue(viewport, (view) => view.k < overview);
 
 	// The lowest zoom at which no two glyphs stand closer than the gap the edges
 	// between them need.
@@ -306,7 +324,7 @@ function CanvasGraph({
 			data-fill
 			onKeyDown={clear}
 			onClick={onSelect ? ground : undefined}
-			className={cn(GROUND, !ready && HIDDEN)}
+			className={cn(GROUND, bleed, !ready && HIDDEN)}
 		>
 			<Grid />
 			<div data-layer className={LAYER}>
@@ -316,6 +334,7 @@ function CanvasGraph({
 						text={empty}
 						bounds={routed.bounds}
 						gap={space.pair}
+						viewport={viewport}
 					/>
 				) : null}
 				{groups.map((group) => {
@@ -353,6 +372,7 @@ function CanvasGraph({
 							lifted={live.has(id)}
 							targeted={link?.target === id}
 							below={below}
+							bare={bare}
 							edit={edit}
 							onSelect={onSelect}
 							onSize={resized}

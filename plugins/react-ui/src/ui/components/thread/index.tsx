@@ -43,8 +43,10 @@ import { useWords } from "../../lib/words.tsx";
 import { EmptyStateBase } from "../empty-state/base.tsx";
 import type { ListEmpty } from "../list/index.tsx";
 import { Message } from "../message/index.tsx";
+import { WaitingReply } from "../message/waiting.tsx";
 import { Missing } from "../missing/index.tsx";
 import type { QueryLike } from "../query-boundary/index.tsx";
+import { INPUT_FILLED, LOG_AT_START } from "./fill.ts";
 import { Latest } from "./latest.tsx";
 
 const STACK = "flex flex-col";
@@ -88,6 +90,8 @@ export interface MessageSlots<T> {
 	attachments?: (item: T) => readonly Attachment[] | undefined;
 	/** Where a turn came from ("by voice", "Kitchen"), before its time; a system line takes none (each a short phrase; the line wraps at its dots). */
 	meta?: (item: T) => readonly Part[] | undefined;
+	/** The reply is still arriving: an `other` turn whose open Markdown marker at its end draws in its own form (see `Message`); a turn of yours or a system line takes none. */
+	streaming?: (item: T) => boolean | undefined;
 	/** What a system line opens: the line becomes the act; a turn takes none. */
 	onOpen?: (item: T) => (() => void) | undefined;
 	/** What stands under a system line (a row, a free act's code, a fold); a turn takes none. */
@@ -153,6 +157,7 @@ function ThreadItemBase<T>({
 				at={at}
 				attachments={read.attachments?.(item)}
 				meta={read.meta?.(item)}
+				streaming={author === "other" ? read.streaming?.(item) : undefined}
 			/>
 		);
 	const opens = read.onOpen?.(item) !== undefined;
@@ -208,13 +213,11 @@ function logOf<T>(
 		...items.map((item) => (
 			<ThreadItem key={props.message.key(item)} item={item} slots={slots} />
 		)),
-		props.replying ? (
-			<Message key="replying" author="other" body="" loading />
-		) : null,
+		props.replying ? <WaitingReply key="replying" /> : null,
 	];
 }
 
-/** The messages, a log region so an arriving one is announced, a sections gap apart, one rung above a reply's block gap, and the input a sections gap under them; on the desktop each stands in a measure-wide column its region centres, on touch in the screen's column. In a Place's body it fills the page, and in a Split's main the main under the record's head: the log scrolls at the page inset, opening at the newest message and following each that arrives while the reader is at the end, the input docked at the foot, which holds a docked `Sheet` as well, its body scrolling past two fifths of the region and keeping three rows, the log keeping two rows of its own while the body can give and the foot's head and submit never giving; while the reader is scrolled up, a Latest act floats centred above the foot and returns to the newest message. It draws its collection's states, the input under each: while its query is pending, `loading` is set or a loading `Section` holds it, Message's loading forms (another's reply, yours, another's reply), the log at its end; a failed query, the failed EmptyState with `sentence` and Retry in the log's column; a query that answers not found, the form saying it no longer exists with Back; no message, `empty` in the log; then one Message per item, and with `replying` set one waiting Message of the other author after them, followed and pinned to as any message is, replaced in place when the reply's item arrives and `replying` clears. */
+/** The messages, a log region so an arriving one is announced, a sections gap apart, one rung above a reply's block gap, and the input a sections gap under them; on the desktop each stands in a measure-wide column its region centres (filling a Split's main the log starts at the main's start and the input spans the main), on touch in the screen's column. In a Place's body it fills the page, and in a Split's main the main under the record's head: the log scrolls at the page inset, opening at the newest message and following each that arrives while the reader is at the end, the input docked at the foot, which holds a docked `Sheet` as well, its body scrolling past two fifths of the region and keeping three rows, the log keeping two rows of its own while the body can give and the foot's head and submit never giving; while the reader is scrolled up, a Latest act floats centred above the foot and returns to the newest message. It draws its collection's states, the input under each: while its query is pending, `loading` is set or a loading `Section` holds it, Message's loading forms (another's reply, yours, another's reply), the log at its end; a failed query, the failed EmptyState with `sentence` and Retry in the log's column; a query that answers not found, the form saying it no longer exists with Back; no message, `empty` in the log; then one Message per item, and with `replying` set one waiting Message of the other author after them, followed and pinned to as any message is, replaced in place when the reply's item arrives and `replying` clears. */
 export function Thread<T>(props: ThreadProps<T>) {
 	const { foot } = props;
 	const words = useWords();
@@ -316,7 +319,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 						atEnd.current = end;
 						setAway(!end);
 					}}
-					className={cn(THREAD_LOG, SCROLLS, centres)}
+					className={cn(THREAD_LOG, SCROLLS, centres, centres && LOG_AT_START)}
 				>
 					<div ref={content} className={cn(THREAD, column, STACK)}>
 						{children}
@@ -328,7 +331,9 @@ export function Thread<T>(props: ThreadProps<T>) {
 				<div ref={dock} className={cn(FOOT_DOCKED, DOCKED, centres)}>
 					<FootPlace value="docked">
 						<FootRegion value={region.value}>
-							<div className={cn(column, FOOT_COLUMN)}>{foot}</div>
+							<div className={cn(column, FOOT_COLUMN, column && INPUT_FILLED)}>
+								{foot}
+							</div>
 						</FootRegion>
 					</FootPlace>
 				</div>

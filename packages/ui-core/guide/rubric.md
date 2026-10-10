@@ -11,13 +11,13 @@ under `patterns/`), are the floor a unit must clear before the judged questions
 ## System constants (hold on every screen)
 
 Every size below is the desktop density's. The touch density scales each size by its density
-ratio (body 13 → 16, chip 20 → 24, dot 6 → 8, control 32 → 44) and is measured against the
+ratio (body 14 → 16, chip 22 → 24, dot 6 → 8, control 32 → 44) and is measured against the
 scaled number, never the desktop one.
 
 | Tell | Number |
 | --- | --- |
-| body type | 12–13 px at desktop density; never below 12 at any density |
-| muted second size | 11–12 px, one step below body, never bold |
+| body type | 13–14 px at desktop density; never below 12 at any density |
+| muted second size | 12–13 px, one step below body, never bold |
 | heading inside a page | 13–16 px at 500–600; page title 16–28 at 500–600 |
 | sizes on one screen | ≤ 6, and ≤ 3 inside any one molecule, an atom's own sizes not counted against its molecule |
 | desktop control height | 24–32 px (inputs 32–38 in forms, 34–40 in auth screens) |
@@ -29,9 +29,9 @@ scaled number, never the desktop one.
 | ink | three levels; no fourth grey |
 | selection | grey or tinted fill, or a 1 px outline; accent fill never; a tab bar's selected tab is ink alone, its label body ink at 500 and its glyph body ink |
 | accent | one filled act per screen at most; otherwise only focus rings, links, selection outlines, the `active` status dot and the `running` status spinner, and a checked control's fill (a checked box, an on switch, a slider's fill), which is a control state, never a selection |
-| chip | 16–22 px tall, 10–12 px type, radius 3–4 outlined or pill filled; hue by family, fixed |
+| chip | 16–24 px tall, 11–12 px type, radius 3–4 outlined or pill filled; hue by family, fixed |
 | status colour | confined to the icon, dot or chip, never the row's text |
-| kbd hint | 18–22 px chip, radius 4, hairline, or plain muted 11 px text |
+| kbd hint | 18–22 px chip, radius 4, hairline, or plain muted 12 px text |
 | skeleton | 12 px bars, radius 4, at the real column widths inside the real row heights; a row's text starts where the loaded row's does, so within one list every row leads with one kind of mark (avatar, glyph or status dot) or none does; a collection of unknown length waits with a fixed number of rows; the list's height may change only by the difference in row count: each waiting row matches its loaded row's height and text start, measured row by row, and any per-row difference is a finding, except that a loaded row whose text wraps grows by its wrapped lines, its waiting row matching its one-line form |
 | pending act | keeps its width and height, swaps the label for a 14–16 px spinner |
 

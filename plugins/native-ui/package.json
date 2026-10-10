@@ -15,10 +15,12 @@
 		"./lib/glyph": "./src/ui/lib/glyph.tsx",
 		"./lib/hosts": "./src/ui/lib/hosts.tsx",
 		"./lib/not-found": "./src/ui/lib/not-found.tsx",
+		"./lib/option-wait": "./src/ui/lib/option-wait.tsx",
 		"./lib/parts": "./src/ui/lib/parts.tsx",
 		"./lib/raised": "./src/ui/lib/raised.tsx",
 		"./lib/room": "./src/ui/lib/room.tsx",
 		"./lib/strut": "./src/ui/lib/strut.tsx",
+		"./lib/slider-wait": "./src/ui/lib/slider-wait.tsx",
 		"./lib/words": "./src/ui/lib/words.tsx",
 		"./lib/*": "./src/ui/lib/*.ts"
 	},

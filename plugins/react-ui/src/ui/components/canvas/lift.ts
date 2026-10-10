@@ -174,8 +174,10 @@ export function useLift(args: {
 			state.point = start;
 			state.target.setPointerCapture(state.pointer);
 			starving(true);
-			// A progressive enhancement: a pulse says the node is in hand where a device has one.
-			navigator.vibrate?.(10);
+			// A progressive enhancement: a pulse says the node is in hand where a device has
+			// one and the page has had a user activation, without which Chrome refuses the
+			// call and logs the refusal as a console error.
+			if (navigator.userActivation?.hasBeenActive) navigator.vibrate?.(10);
 			at(id, start);
 			setLifted(true);
 		}, LIFT_MS);

@@ -32,3 +32,6 @@ Drop the shadow. A foot is a region of the page (the rubric: "region separation:
 - The last acceptance box (the Thread, Place and Sheet frames' Built stories showing the flat foot in both modes on both platforms) waits on a design critique run by a session that played no part in the work, which also checks that the hairline alone separates foot from log in light mode. The repo holds no native story host (`apps/phone` is a consumer); the native foot is the same class string.
 
 Native unrendered: the native-ui change is type-checked and verified, not rendered on a phone.
+
+## Review
+Web accepted 2026-10-10; waits on the native render. The box for both platforms stays open. Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass.

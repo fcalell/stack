@@ -1,4 +1,10 @@
-import { BODY_SIZE, SIZE_PX, TYPE_SCALE } from "@fcalell/ui-core/tokens";
+import {
+	BODY_SIZE,
+	MEASURE_CHARACTERS,
+	SANS_ADVANCE,
+	SIZE_PX,
+	TYPE_SCALE,
+} from "@fcalell/ui-core/tokens";
 import type { Box } from "./geometry.ts";
 import { EXTENT } from "./view.ts";
 
@@ -8,6 +14,12 @@ import { EXTENT } from "./view.ts";
 export const TEXT_FLOOR = Math.round(
 	BODY_SIZE.desktop * TYPE_SCALE.caption.size,
 );
+
+// Between the full node (zoom 1 and up) and the glyph alone, a node under zoom 1
+// is its overview: the glyph with its name beside it, at the floor size. This is
+// the lowest zoom the overview stands at before a graph raises it; under it a
+// node is its glyph alone. Raised, never lowered, by `overviewFloorFor`.
+export const OVERVIEW_FLOOR = 0.5;
 
 // The variable the region keeps at `1 / zoom`, and the style that holds a part
 // of the layer at its own size on screen: a coordinate of the layer, known at
@@ -26,10 +38,12 @@ export function glyphSize(touch: boolean): number {
 }
 
 // The lowest zoom at which no two glyphs of `glyph` px stand closer than `2 * pair`
-// px: the glyph and that gap over the smallest distance between two node
-// centres, measured as the larger of the two axes' gaps (two squares touch when
-// both gaps are under their size). The gap leaves the edges between glyphs a
-// stretch to draw.
+// px, with every route between two of them as long as that gap: the glyph and the
+// gap over the smallest distance between two node centres, measured as the
+// larger of the two axes' gaps (two squares touch when both gaps are under their
+// size). A route runs between the nodes' routing boxes (`routeSide`), each up to
+// `pair` flow units wider than its glyph, so the distance counts less that
+// rounding and the edges between glyphs keep a stretch to draw.
 export function minZoomFor(
 	boxes: readonly Box[],
 	glyph: number,
@@ -47,7 +61,52 @@ export function minZoomFor(
 				),
 			);
 	});
-	return Math.min(1, Math.max(lowest, (glyph + 2 * pair) / nearest));
+	const room = nearest - pair;
+	if (room <= 0) return 1;
+	return Math.min(1, Math.max(lowest, (glyph + 2 * pair) / room));
+}
+
+// The widest a node's name stands on screen at the density: the short measure in
+// characters of the caption, at the sans advance. It is the cap, not the name's
+// own width, so the floor a graph needs does not move with its words.
+export function nameCap(touch: boolean): number {
+	const caption = Math.round(
+		BODY_SIZE[touch ? "touch" : "desktop"] * TYPE_SCALE.caption.size,
+	);
+	return Math.ceil(
+		MEASURE_CHARACTERS["measure-short"] * SANS_ADVANCE * caption,
+	);
+}
+
+// The zoom under which a graph's nodes are their glyphs alone: the overview's
+// floor, at least `OVERVIEW_FLOOR` and the lowest zoom at which no two overview
+// forms stand closer than `air`. A form is its glyph, the `gap` after it and
+// its name at the cap, `width` px wide in all, `glyph` px high; on screen two
+// forms clear each other when their centres stand `width + air` apart across or
+// `glyph + air` apart down, and each pair asks the nearer of the two zooms
+// that reach one of them. A pair whose centres coincide, or a floor of 1 or more,
+// leaves the graph no overview: the floor is then 1, the full node's own.
+export function overviewFloorFor(
+	boxes: readonly Box[],
+	glyph: number,
+	width: number,
+	air: number,
+): number {
+	let need = 0;
+	boxes.forEach((one, index) => {
+		for (const two of boxes.slice(index + 1)) {
+			const across = Math.abs(one.x + one.width / 2 - (two.x + two.width / 2));
+			const down = Math.abs(one.y + one.height / 2 - (two.y + two.height / 2));
+			need = Math.max(
+				need,
+				Math.min(
+					across === 0 ? Number.POSITIVE_INFINITY : (width + air) / across,
+					down === 0 ? Number.POSITIVE_INFINITY : (glyph + air) / down,
+				),
+			);
+		}
+	});
+	return Math.min(1, Math.max(OVERVIEW_FLOOR, need));
 }
 
 // The side, in flow units, of the box a node's edges and frames route to under

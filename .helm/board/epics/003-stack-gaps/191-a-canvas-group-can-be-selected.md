@@ -1,6 +1,6 @@
 ---
 id: 003-191
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a Canvas group can be selected
@@ -20,7 +20,7 @@ The canvas guide (`plugin-react-ui/guide/canvas.md`) says a group is a frame onl
 - [x] Dragging from the frame's body still pans, and the head is at least 44 px on touch at any zoom, as a node is.
 - [x] ~~A group head under the text floor stays a 44 px target, as nodes do.~~ Rejected by the owner: under the floor the head draws nothing, and a target with no face is no control.
 - [x] A Canvas with no `onSelect` or no group is unchanged.
-- [ ] The Canvas showcase holds a selectable group at 375 and 1440 px in both modes, measured by the critique.
+- [x] The Canvas showcase holds a selectable group at 375 and 1440 px in both modes, measured by the critique.
 
 ## Open questions
 - [x] Its shape (group ids in the same `onSelect`, or a separate `onSelectGroup`; the head only, or the whole frame edge): the stack session decides.
@@ -34,3 +34,6 @@ The same `onSelect` and `selected`, no `onSelectGroup`: node and group ids share
 
 ## Owner ruling
 The owner confirms: no 44 px head under the text floor; heads take their tab stops first (outer before inner), then the nodes in path order. A loop with an empty body draws no frame and is reached by 003-291.
+
+## Review
+Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. Critique nits only: the group head is selectable, Tab and Escape work, the focus ring is 2 px; the head has no hover look where nodes do, and the dark selected dashed line is subtle. Filed as 003-312. Selection not exposed to assistive technology is dropped (screen readers are not a target by earlier ruling).

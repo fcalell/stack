@@ -4,6 +4,7 @@ import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Input } from "@fcalell/plugin-react-ui/components/input";
 import { Swaps } from "@fcalell/plugin-react-ui/showcase/frames/action-bar";
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { useState } from "react";
 import { expect } from "storybook/test";
 
 const act = () => {};
@@ -121,6 +122,75 @@ const heldActs: StoryObj = {
 	},
 };
 
+// A bar that has drawn a blocked act's reason keeps the line's box once the act
+// unblocks, so the bar's height and the offset of what stands below differ by 0.
+const REASON = "1 sensitive file not yet opened.";
+function Unblocks(props: { pending?: boolean }) {
+	const [blocked, setBlocked] = useState<string | undefined>(REASON);
+	return (
+		<div>
+			<div data-testid="bar">
+				<ActionBar
+					acts={[
+						{ label: "Cancel", onAct: act },
+						{ label: "Approve", onAct: act, blocked },
+					]}
+					pending={
+						props.pending && blocked === undefined
+							? { sentence: "Approving" }
+							: undefined
+					}
+				/>
+			</div>
+			<p data-testid="below">Provenance</p>
+			<button type="button" onClick={() => setBlocked(undefined)}>
+				Open the file
+			</button>
+		</div>
+	);
+}
+const heldLine: StoryObj = {
+	render: () => <Unblocks />,
+	play: async ({ canvas, userEvent }) => {
+		const box = (id: string) => canvas.getByTestId(id).getBoundingClientRect();
+		const before = { bar: box("bar").height, below: box("below").top };
+		await expect(canvas.getByText(REASON)).toBeVisible();
+		await userEvent.click(
+			canvas.getByRole("button", { name: "Open the file" }),
+		);
+		await expect(canvas.getByRole("button", { name: "Approve" })).toBeEnabled();
+		await expect(box("bar").height).toBe(before.bar);
+		await expect(box("below").top).toBe(before.below);
+		// The kept line is not seen and not read.
+		await expect(canvas.getByText(REASON)).not.toBeVisible();
+		await expect(canvas.queryByRole("alert")).toBeNull();
+	},
+};
+// A bar that never showed a reason draws no line.
+const noLineNoHold: StoryObj = {
+	render: () => <ActionBar acts={[{ label: "Approve", onAct: act }]} />,
+	play: async ({ canvasElement }) => {
+		await expect(canvasElement.querySelector("p")).toBeNull();
+	},
+};
+// A pending bar replacing a bar that holds a reason line keeps that bar's height.
+const pendingHoldsLine: StoryObj = {
+	render: () => <Unblocks pending />,
+	play: async ({ canvas, userEvent }) => {
+		const box = (id: string) => canvas.getByTestId(id).getBoundingClientRect();
+		const before = { bar: box("bar").height, below: box("below").top };
+		await userEvent.click(
+			canvas.getByRole("button", { name: "Open the file" }),
+		);
+		await expect(canvas.getByText("Approving")).toBeVisible();
+		await expect(box("bar").height).toBe(before.bar);
+		await expect(box("below").top).toBe(before.below);
+	},
+};
+export const UnblockingKeepsTheReasonLine = heldLine;
+export const AnUnblockedBarThatNeverBlockedHasNoLine = noLineNoHold;
+export const PendingReplacingABlockedBarKeepsItsHeight = pendingHoldsLine;
+
 export const SwapKeepsTheBarsHeight = swapsInPlace;
 export const PendingHoldsTheActsInert = heldActs;
 
@@ -149,3 +219,6 @@ function touch(story: StoryObj): StoryObj {
 
 export const SwapKeepsTheBarsHeightTouch = touch(swapsInPlace);
 export const PendingHoldsTheActsInertTouch = touch(heldActs);
+export const UnblockingKeepsTheReasonLineTouch = touch(heldLine);
+export const PendingReplacingABlockedBarKeepsItsHeightTouch =
+	touch(pendingHoldsLine);

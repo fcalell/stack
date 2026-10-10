@@ -15,6 +15,9 @@ import {
 	glyphBoxes,
 	glyphSize,
 	minZoomFor,
+	nameCap,
+	OVERVIEW_FLOOR,
+	overviewFloorFor,
 	routeSide,
 	TEXT_FLOOR,
 } from "../src/ui/components/canvas/floor.ts";
@@ -442,6 +445,9 @@ test("Canvas draws its state fixtures in cells of showcaseFrames", () => {
 		"STATUS_DOT.state.active/rest",
 		"CANVAS_NODE_TEXT.tone.dimmed/rest",
 		"CANVAS_NODE_TEXT.tone.dimmed/selected",
+		"CANVAS_NODE_NAME.tone.rest/rest",
+		"CANVAS_NODE_NAME.tone.off/rest",
+		"CANVAS_NODE_NAME.tone.dimmed/rest",
 	])
 		assert.ok(cells.has(cell), cell);
 });
@@ -586,7 +592,7 @@ test("openTransform centres a graph that fits and opens a larger one at its firs
 
 test("openTransform stays clear of the chrome a fit does: centred in the room, and a larger graph's first node at the room's top centre", () => {
 	const pane = { width: 400, height: 300 };
-	const clear = { left: 80, bottom: 70 };
+	const clear = { left: 80, bottom: 70, stack: 0 };
 	// The room is x 80 to 384 and y 16 to 230: 304 wide, 214 high.
 	const bounds = box(10, 20, 100, 50);
 	const fits = openTransform(bounds, bounds, pane, 16, clear);
@@ -1312,12 +1318,12 @@ test("elkGraph ignores the positions the nodes carry", () => {
 });
 
 test("the text floor is the caption's size, and a zoom is below it under exactly zoom 1", () => {
-	assert.equal(TEXT_FLOOR, 11);
+	assert.equal(TEXT_FLOOR, 12);
 	assert.equal(belowFloor(1, TEXT_FLOOR, TEXT_FLOOR), false);
 	assert.equal(belowFloor(1 - 1e-9, TEXT_FLOOR, TEXT_FLOOR), true);
 	assert.equal(belowFloor(2, TEXT_FLOOR, TEXT_FLOOR), false);
-	assert.equal(belowFloor(0.5, 22, 11), false);
-	assert.equal(belowFloor(0.49, 22, 11), true);
+	assert.equal(belowFloor(0.5, 24, 12), false);
+	assert.equal(belowFloor(0.49, 24, 12), true);
 });
 
 test("a glyph is the control size of its density", () => {
@@ -1325,17 +1331,17 @@ test("a glyph is the control size of its density", () => {
 	assert.equal(glyphSize(true), 44);
 });
 
-test("minZoomFor keeps two glyphs a gap of 2 * pair apart by the larger axis of their centres, within the scale extent", () => {
+test("minZoomFor keeps two glyphs a gap of 2 * pair apart by the larger axis of their centres, less the pair their routing boxes round up by, within the scale extent", () => {
 	const at = (x: number, y: number) => box(x - 100, y - 20, 200, 40);
 	// Centres 200 apart across and 120 apart down: the larger gap decides.
 	const pair = [at(0, 0), at(200, 120)];
-	assert.equal(minZoomFor(pair, 32, PAIR), (32 + 2 * PAIR) / 200);
-	assert.equal(minZoomFor(pair, 44, PAIR), (44 + 2 * PAIR) / 200);
+	assert.equal(minZoomFor(pair, 32, PAIR), (32 + 2 * PAIR) / (200 - PAIR));
+	assert.equal(minZoomFor(pair, 44, PAIR), (44 + 2 * PAIR) / (200 - PAIR));
 	assert.equal(minZoomFor(pair, 32, 0), 32 / 200);
 	// The nearest pair of three decides.
 	assert.equal(
 		minZoomFor([at(0, 0), at(400, 0), at(400, 160)], 32, PAIR),
-		(32 + 2 * PAIR) / 160,
+		(32 + 2 * PAIR) / (160 - PAIR),
 	);
 	// Never above 1, never under the extent's floor; one node or none gives it.
 	assert.equal(minZoomFor([at(0, 0), at(10, 0)], 32, PAIR), 1);
@@ -1356,7 +1362,68 @@ test("minZoomFor on the workflow keeps every pair of glyphs a gap of 2 * pair ap
 					Math.abs(one.x + one.width / 2 - (two.x + two.width / 2)),
 					Math.abs(one.y + one.height / 2 - (two.y + two.height / 2)),
 				);
-				assert.ok(gap * k >= glyph + 2 * PAIR - 1e-9);
+				assert.ok((gap - PAIR) * k >= glyph + 2 * PAIR - 1e-9);
+			}
+		});
+	}
+});
+
+test("the overview floor is a half, and a name is capped at the short measure of the caption", () => {
+	assert.equal(OVERVIEW_FLOOR, 0.5);
+	// 18 characters at 0.6 of a 12 px caption, rounded up; the touch caption is larger.
+	assert.equal(nameCap(false), 130);
+	assert.ok(nameCap(true) > nameCap(false));
+});
+
+test("overviewFloorFor keeps two overview forms apart by the nearer of the two axes, never under the overview floor", () => {
+	const at = (x: number, y: number) => box(x - 100, y - 20, 200, 40);
+	const form = 32 + PAIR + 130;
+	const air = 2 * PAIR;
+	// Far apart: the floor stands at the overview's own.
+	assert.equal(
+		overviewFloorFor([at(0, 0), at(2000, 2000)], 32, form, air),
+		OVERVIEW_FLOOR,
+	);
+	assert.equal(overviewFloorFor([at(0, 0)], 32, form, air), OVERVIEW_FLOOR);
+	assert.equal(overviewFloorFor([], 32, form, air), OVERVIEW_FLOOR);
+	// Side by side 400 apart, level: the width over the distance.
+	assert.equal(
+		overviewFloorFor([at(0, 0), at(400, 0)], 32, form, air),
+		Math.max(OVERVIEW_FLOOR, (form + air) / 400),
+	);
+	// Stacked 100 apart, in one column: the glyph over the distance.
+	assert.equal(
+		overviewFloorFor([at(0, 0), at(0, 100)], 32, form, air),
+		Math.max(OVERVIEW_FLOOR, (32 + air) / 100),
+	);
+	// Offset on both axes: the nearer zoom that clears one of them.
+	const offset = overviewFloorFor([at(0, 0), at(300, 120)], 32, form, air);
+	assert.equal(
+		offset,
+		Math.max(OVERVIEW_FLOOR, Math.min((form + air) / 300, (32 + air) / 120)),
+	);
+	// Too close to clear above zoom 1, or coincident: no overview, the floor is 1.
+	assert.equal(overviewFloorFor([at(0, 0), at(30, 20)], 32, form, air), 1);
+	assert.equal(overviewFloorFor([at(0, 0), at(0, 0)], 32, form, air), 1);
+});
+
+test("on the workflow the overview forms clear each other at their floor, at both densities", async () => {
+	const boxes = [...(await placed(WORKFLOW)).boxes.values()];
+	for (const touch of [false, true]) {
+		const glyph = glyphSize(touch);
+		const form = glyph + PAIR + nameCap(touch);
+		const floor = overviewFloorFor(boxes, glyph, form, 2 * PAIR);
+		assert.ok(floor >= OVERVIEW_FLOOR && floor <= 1);
+		if (floor === 1) continue;
+		boxes.forEach((one, index) => {
+			for (const two of boxes.slice(index + 1)) {
+				const across =
+					Math.abs(one.x + one.width / 2 - (two.x + two.width / 2)) * floor;
+				const down =
+					Math.abs(one.y + one.height / 2 - (two.y + two.height / 2)) * floor;
+				assert.ok(
+					across >= form + 2 * PAIR - 1e-9 || down >= glyph + 2 * PAIR - 1e-9,
+				);
 			}
 		});
 	}
@@ -1464,10 +1531,10 @@ test("fitTransform stands the bounds clear of the chrome on the left and the bot
 	const bounds = box(0, 0, 1000, 200);
 	// No chrome, or chrome inside the inset, is the plain fit.
 	assert.deepEqual(
-		fitTransform(bounds, pane, 16, { left: 10, bottom: 10 }),
+		fitTransform(bounds, pane, 16, { left: 10, bottom: 10, stack: 0 }),
 		fitTransform(bounds, pane, 16),
 	);
-	const clear = { left: 60, bottom: 90 };
+	const clear = { left: 60, bottom: 90, stack: 0 };
 	const fit = fitTransform(bounds, pane, 16, clear);
 	// The scale fits the room left: 400 - 16 - 60 wide.
 	assert.equal(fit.k, (400 - 16 - 60) / 1000);
@@ -1482,6 +1549,81 @@ test("fitTransform stands the bounds clear of the chrome on the left and the bot
 	assert.equal(tall.k, (300 - 16 - 90) / 1000);
 	// A small graph keeps its own size.
 	assert.equal(fitTransform(box(0, 0, 50, 50), pane, 16, clear).k, 1);
+});
+
+test("a fit with a foot holds the bounds and the text under them whole in the pane", () => {
+	const node = box(0, 0, 240, 74);
+	const foot = { gap: 8, height: 60, width: 231 };
+	// A 263 px pane with chrome 68 px in from the left reaching 180 px up: the
+	// text is as wide as the room between the insets, so it centres on the pane
+	// and the room ends above the chrome. The node keeps its own size.
+	const pane = { width: 263, height: 400 };
+	const clear = { left: 68, bottom: 16, stack: 180 };
+	const at = openTransform(node, node, pane, 16, clear, foot);
+	assert.equal(at.k, 1);
+	assert.equal(at.x + 120, pane.width / 2);
+	const bottom = at.y + 74 + foot.gap + foot.height;
+	assert.ok(at.y >= 16 - 1e-9);
+	assert.ok(bottom <= pane.height - 180 + 1e-9);
+	assert.deepEqual(fitTransform(node, pane, 16, clear, foot), at);
+	// A narrow pane scales the node to the pane, never under it.
+	const small = openTransform(
+		node,
+		node,
+		{ width: 200, height: 400 },
+		16,
+		clear,
+		{ ...foot, width: 168 },
+	);
+	assert.equal(small.k, 200 / 240);
+	// A lone box the room cannot hold but the pane can opens as a fit.
+	const lone = openTransform(node, node, pane, 16, clear);
+	assert.equal(lone.k, 1);
+	assert.ok(lone.x >= 0 && lone.x + 240 <= pane.width);
+});
+
+test("openTransform opens at the text floor: scale 1 whatever the pane, the first box whole against the page insets", () => {
+	const clear = { left: 68, bottom: 16, stack: 180 };
+	// A lone frame the room cannot hold, in a pane too short for the stack under
+	// it: it still opens at scale 1 (the old fit shrank it to 0.447), at the
+	// top inset, centred when the pane is not wide enough for insets on both sides.
+	const frame = box(0, 0, 240, 64);
+	const pane = { width: 263, height: 224 };
+	const lone = openTransform(frame, frame, pane, 16, clear);
+	// 263 - 240 = 23: centred, 11.5 px each side (the inset would clip 1 px).
+	assert.deepEqual(lone, { k: 1, x: 11.5, y: 16 });
+	// A first box that fits between the insets keeps the room's centre line.
+	const wide = openTransform(
+		box(0, 0, 1000, 1000),
+		box(0, 0, 100, 40),
+		{
+			width: 400,
+			height: 300,
+		},
+		16,
+	);
+	assert.equal(wide.k, 1);
+	assert.equal(wide.x + 50, 200);
+	// The room's centre line would put it past the right inset: it stops there.
+	const right = openTransform(
+		box(0, 0, 1000, 1000),
+		box(700, 0, 240, 40),
+		{ width: 300, height: 300 },
+		16,
+		{ left: 100, bottom: 16, stack: 0 },
+	);
+	assert.equal(right.x + 940, 300 - 16);
+	// The first node with its group frame: its top stands at the inset; a frame
+	// wider than the pane less its insets is centred (here wider than the pane: at 0).
+	const framed = openTransform(
+		box(0, 0, 400, 900),
+		box(-20, -30, 280, 200),
+		{ width: 263, height: 400 },
+		16,
+	);
+	assert.equal(framed.k, 1);
+	assert.equal(framed.x - 20, 0);
+	assert.equal(framed.y - 30, 16);
 });
 
 test("emptyGroups names the groups holding no present node and no group, and not the group that frames one", () => {

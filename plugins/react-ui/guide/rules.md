@@ -22,7 +22,7 @@ stands alone at a deeper route is a pushed `Screen` whose `back` is the route ab
 A `Split` reads its regions against its page's width, not the viewport's, and in the `Shell` the page
 is the viewport less the 240 px sidebar. The list and the main stand together from a page `tablet`
 (768) wide, a 1008 px viewport; `beside` and `pane` stand from a page `wide` (1200) wide, a 1440 px
-viewport. Below them one region stands at a time.
+viewport. Below them one region stands at a time. The list and the pane size to their content, between a floor (`region-min`, 240) and a ceiling (`list` 360, `pane` 320), and the main takes the rest: the breakpoints are reckoned against the ceilings, so the main never has less than they leave. A list of short rows stands at the floor; a list's width follows its rows as they change, so never set one.
 
 An app that selects a record opens the pane's sheet by passing `open` with `onClose` (the two stand
 together): `<Split open={selected} onClose={() => setSelected(false)} …>`. `open` stands the pane as
@@ -34,7 +34,7 @@ without them opens its sheet from the Details act alone.
 A record the open record links to opens beside it: the `Split`'s `beside` holds a `Screen` whose
 `back` is the open record's route. From `wide` it stands beside the main, its back act a Close at the head's end;
 below `wide` it stands in the main's place with its back act, and below `tablet` its head is the
-page's only head, its back act to the main. The record's title is an `h1` and its sections start at `h2`, at every width. The body's first child, an `ItemHeader`, stands a pair, not a sections gap, above an `ActionBar` or a `Banner` directly after it (a `Place`, a `Screen` or a `Split`'s `main`) and, in a `Split`'s `main` when it has no facts line, above the record's first section (not above a `Thread`). The body reads its own children, a fragment seen through: a head or bar reached through a wrapper component keeps the sections step. An `ItemHeader` fact that opens a sheet is `{ label, onOpen }` and one that goes to another route is `{ label, href }`: each draws the words and a chevron, the second as a link.
+page's only head, its back act to the main. On touch a `Screen`, pushed or beside, is one row: the back act, the title wrapping, then the actions, Details and more; when the acts do not fit beside the title's floor they drop whole to a second line at the row's end. The record's title is an `h1` and its sections start at `h2`, at every width. Its body stands in the same column as a record in the main, at the measure inside the page inset at the region's start, so its sections, groups, code blocks and action bar end where a `Prose` does. The body's first child, an `ItemHeader`, stands a pair, not a sections gap, above an `ActionBar` or a `Banner` directly after it (a `Place`, a `Screen` or a `Split`'s `main`) and, in a `Split`'s `main` when it has no facts line, above the record's first section (not above a `Thread`). The body reads its own children, a fragment seen through: a head or bar reached through a wrapper component keeps the sections step. A record in a `Split`'s `main` carries its own acts: `ItemHeader`'s `actions` (icon acts) and `more` (the acts past them, in a menu) stand at the end of the head's first line, the overline's else the title's, at every width. Below `tablet`, where the record stands alone under the `Place`'s back act, they stay in the head: put them there and not also in the `Place`'s `actions` or `more`, so each act has one place. A `Place`'s own `actions` and `more` are the page's, not the record's. An `ItemHeader` fact that opens a sheet is `{ label, onOpen }` and one that goes to another route is `{ label, href }`: each draws the words and a chevron, the second as a link.
 
 ```tsx
 <Split list={rows} main={<Item />} beside={<Screen title="Run 12" back={itemRoute}><Run /></Screen>} />
@@ -120,21 +120,22 @@ A page with no sidebar or tab bar beside it (sign-in, a consent step) is a `Gate
 `Place`, a `Screen` or a hand-built centred `div`. It takes `title` (the page's one `h1`),
 `description` (a meta line as a `Sentence` from `@fcalell/ui-core/descriptors`: runs, each a string,
 `{ strong }` at weight 500 or `{ code }` in the inline code style, never a node or one string), `step` (`{ at, of }`, a `StepCount` between
-the mark and the title), `mark` (`{ name, src? }`, the product's image at the avatar's size, its
-`name` standing in its place while the image fails or `src` is absent), `banner` (a `Banner`, first in the column) and
+the mark and the title), `banner` (a `Banner`, first in the column) and
 `children`, the step's body (a `Form`, a `Group`, an `OptionList`, a `List`, `Section`s). It is a root
 frame as the `Shell` is: one column at most the `auth` width, centred across and down the viewport
 (a typed step at the top on touch, spanning the viewport inside the page inset), the banner, the lead and the body
 a sections gap apart, with `toast()` and `confirm()` standing in it. The body's `Section`s title a
 level under the `h1`. The first field of a step takes focus as the page opens and as `title`
 changes (a step with no field leaves focus where it is), and a `Form`'s `ActionBar` in it draws
-`full`. It draws no word of its own.
+`full`. The app's mark leads it when it has a `title`: no prop, the lockup of the app's `react({ icon })` (the
+logo at the avatar's size, then the app's name at the body role and 500), and with no icon none is drawn;
+a logo that fails to load leaves the name. It draws no word of its own.
 
 A first run (no workspace yet, nothing to show) is a `Gate` with no `title` holding one
 `EmptyState`: the Gate draws no lead and no `h1`, the `EmptyState`'s title is the page's `h1`, its
 `act` the filled one and its secondary act a `<Button act="secondary" />` child, stacked under it.
-The column is centred down at every width, touch included, on the Gate's ground. `mark`, `step`
-and `description` come only with a `title`.
+The column is centred down at every width, touch included, on the Gate's ground. `step`
+and `description` come only with a `title`, and the mark with them.
 
 ```tsx
 <Gate>
@@ -146,7 +147,6 @@ and `description` come only with a `title`.
 
 ```tsx
 <Gate
-  mark={{ src: "/mark.svg", name: "Acme" }}
   step={{ at: 1, of: 2 }}
   title="Choose a workspace"
   description={["Signed in as ", { strong: "ana@acme.dev" }]}
@@ -237,7 +237,7 @@ A row's marks are named props on the meta line, at most one each, in order: `sta
 (what is wrong, a string), `lock` (what it holds, a string, its label shown from `tablet`) and
 `chip`; the act that clears a warning is the row's `act`. A `status` whose own read has not
 answered is `{ loading: true }` (a `RowStatus`, from a `List`'s `row` map or a `ListRow`): the row is the two-line row from its first
-frame and the status stands as a bar of its height, so the row keeps its height when it answers.
+frame and the status stands as a bar of its height starting where the word will, so the row keeps its height and the word its place when it answers.
 A status the app can say shorter gives `short` ("5 min ago") beside its `label`: the row draws
 `short` in the label's place while the label would be cut on its meta line (the short form keeps its width, the first part taking the overflow), and `label` stays its
 name; stack never shortens a label itself.
@@ -345,7 +345,7 @@ yields from its end, in this strict order: the later parts truncate (they show a
 of room or none; a `{ quoted }` part cuts ahead of the plain ones, so a long quote or reason yields
 and an age and spend that must read are the row's `trailing`, `{ age, beside: "$0.42" }`), then the chip leaves whole, then the lock's label truncates, then the warning's,
 and last the first part truncates; the status and the glyphs stay whole. A value trailing a title
-(an age, an ISO moment the row words short and keeps current, with a short `beside` value such as a spend drawn after it, `{ age, beside: "$0.12" }`) is whole or gone, the age and its `beside` together: it leaves once the title would hold under half its line. A row that opens (`href` or `onOpen`) ends in a chevron after its trailing value; a row with an `act`, `more`, a trailing pick or a tree's fold draws none, and neither does a static row. Below `tablet`
+(an age, an ISO moment the row words short and keeps current, with a short `beside` value such as a spend drawn after it, `{ age, beside: "$0.12" }`) is whole or gone, the age and its `beside` together: it leaves once the title would hold under half its line. A row that opens (`href` or `onOpen`) ends in a chevron after its trailing value; a row with an `act`, `more`, a trailing pick or a tree's fold draws none, and neither does a static row. In a list where some rows declare `more`, the rows without one keep its square blank, so every row's trailing value ends at one x; give `more` only to the rows that have acts. Below `tablet`
 a row with an `act` stands its acts on a line under its text, at the row's end, so give `act` the
 next step and let the row decide where it stands. A table's `selected` row washes in its list form
 as in its grid. A file row's `change` (a `ChangeKind`) draws the
@@ -358,7 +358,7 @@ the Section's head. A `definition` list adds no count to a Section's head (facts
 collection a viewer counts), though it still makes the head busy while it waits. A `Group` holds static
 rows, and items that are no row (a `Meter`, a `FormField`, a `Slider`) which stand at the card's inset with its hairline between and keep their labels (an add field over a `List` is a `FormField` in the `Group`); rows from data in a card are a `List` placed in the `Group`, drawing its states on the card,
 never a `.map` of `ListRow`s, `DefinitionRow`s or `Meter`s. A `definition` list stands in a `Group`,
-as a `DefinitionRow` does. A waiting `Group` (its `loading`, or a loading `Section`'s) draws one waiting form per `Meter`, `Slider` and `DefinitionRow` it holds, at the loaded card's height (a row's form follows the `description`, `act`, `href`, `locked` or control it is given), and three setting rows for rows of your own. A loading `Section` whose body is a `Prose`, a `Thread`, a `Code`, a `Meter` or a `Slider` draws that part's waiting form, and skeleton fields stand in only for fields and for any other body. A loading `Section` whose body is a `Form` waits as the Form's own fields and its `ActionBar`'s waiting form (a `Form` waits whenever a loading `Section` or `Group` is around it, one skeleton field per `FormField`, the fields kept mounted so typed text outlives the wait). A loading `Section` of `FormField`s and an `ActionBar` with no `Form` stands one skeleton field per field and the bar in its waiting form after them, the fields kept mounted, hidden. A skeleton field stands in the form of the field it stands for, at its height: a label bar over the control's box, a switch's box at the label's end, a checkbox's on the label's line, and a bar under the label or the control for a `description`. `Slider` and `DefinitionRow` wait through their `Group` or `Section` and take no `loading` of their own. `loading` is a boolean everywhere except where the loaded size is a count you know and the part cannot derive: a `Prose` takes `loading={lines}` (`true` is two paragraphs) and an `ActionBar` takes `loading={acts}` (`true` is one act, and give `acts` as `[]`). Both take a number from 1; `0` and `false` are not waiting, so `loading={rows?.length}` reads the loaded form when it is 0. A loading `Group` or `Section` hands down a boolean, so a `Prose` or `ActionBar` inside it draws the default; set the count on the part itself. A loading `Section` given `description=""` stands a bar where its sentence will be (an undefined `description` stands none, and loaded `""` draws no line, so `description={read?.tally ?? ""}` keeps the head's height). A `List` given `items` and `loading` with a `row` map that has a `trailing` slot (no tree) stands as the loaded rows with their trailing values waiting. A `definition` row's string value that does not fit its room, when it is one word of more than eight characters, cuts in its
+as a `DefinitionRow` does. A waiting `Group` (its `loading`, or a loading `Section`'s) draws one waiting form per `Meter`, `Slider` and `DefinitionRow` it holds, at the loaded card's height (a row's form follows the `description`, `act`, `href`, `locked` or control it is given), and three setting rows for rows of your own. A loading `Section` whose body is a `Prose`, a `Thread`, a `Code`, a `Meter` or a `Slider` draws that part's waiting form, and skeleton fields stand in only for fields and for any other body. A loading `Section` whose body is a `Form` waits as the Form's own fields and its `ActionBar`'s waiting form (a `Form` waits whenever a loading `Section` or `Group` is around it, one skeleton field per `FormField`, the fields kept mounted so typed text outlives the wait). A loading `Section` of `FormField`s and an `ActionBar` with no `Form` stands one skeleton field per field and the bar in its waiting form after them, the fields kept mounted, hidden. A skeleton field stands in the form of the field it stands for, at its height: a label bar over the control's box, a switch's box at the label's end, a checkbox's on the label's line, a bar under the label or the control for a `description`; a `Slider` keeps its own head over its track, an `OptionList` its card of rows (one per static option, four for a query), a `SegmentedControl` its track, an `answered` field its one summary row, a `Select` the plain field. `Slider` and `DefinitionRow` wait through their `Group` or `Section` and take no `loading` of their own. `loading` is a boolean everywhere except where the loaded size is a count you know and the part cannot derive: a `Prose` takes `loading={lines}` (`true` is two paragraphs) and an `ActionBar` takes `loading={acts}` (`true` is one act, and give `acts` as `[]`). Both take a number from 1; `0` and `false` are not waiting, so `loading={rows?.length}` reads the loaded form when it is 0. A loading `Group` or `Section` hands down a boolean, so a `Prose` or `ActionBar` inside it draws the default; set the count on the part itself. A loading `Section` given `description=""` stands a bar where its sentence will be (an undefined `description` stands none, and loaded `""` draws no line, so `description={read?.tally ?? ""}` keeps the head's height). A `List` given `items` and `loading` with a `row` map that has a `trailing` slot (no tree) stands as the loaded rows with their trailing values waiting. A `definition` row's string value that does not fit its room, when it is one word of more than eight characters, cuts in its
 middle (its start and its last four characters stay, `SHA256:uNiV…k3Qz`) on one line (any other value truncates at its end); the whole value
 stays its read text and, with `copyable`, what the copy act copies, so a value never needs a wrapper
 that truncates it.
@@ -434,12 +434,16 @@ place in the list. Once the option is in the value it draws and acts as any chos
 removable, so `blocked` never traps a value.
 
 A `Thread` takes its `query` (or `items`) the same way through a `message` map (`key`,
-`author`, `name`, `body`, `at`, `attachments`, `meta`, `onOpen`, `detail`), each reading only its
+`author`, `name`, `body`, `at`, `attachments`, `meta`, `streaming`, `onOpen`, `detail`), each reading only its
 item, since a message draws again only when its item changes; its `foot` is a `MessageInput`, or a
 `Sheet` docked in its place. While a reply from the other author is on its way, set `replying`:
 the loaded log ends on one waiting message of theirs, followed as any message is; clear it in the
 render that adds the reply's item, which stands where the waiting message stood. A `Thread`'s own
-`loading` stays the log being on its way, three waiting messages.
+`loading` stays the log being on its way, three waiting messages. Set `streaming` on the reply (an
+`other` turn, a `Message` prop and a `message` slot) while its text is still growing: a marker left
+open at its end (an emphasis, a strong run, a code span, a link, a fence) draws in its own form from
+its first character and the closing marker changes nothing drawn; a finished reply leaves an
+unmatched marker as text.
 In a `Place`'s body, or in a `Split`'s `main` under the record's `ItemHeader`, it fills what holds
 it: its log scrolls and the input docks at the foot. It stands there as the body's direct child,
 or as `main` (in a fragment under the record's `ItemHeader`), never inside a component of the
@@ -496,10 +500,17 @@ row's end. Pass
 the same `<Sheet>` as the modal from a page and as the `foot` of a conversation; closing it (render
 the `MessageInput` in its place) returns focus to the input, and each page (a new `title`) opens at
 the top of its body with focus in its first field. A `Sheet` among a `Thread`'s sections draws the same form with no bound.
+On the desktop a `Sheet` is a card centred over the page when its content at natural height fits the viewport less the page inset above and below, and the full-height side sheet at the end otherwise, with no prop: it is measured once as it opens and held until it closes, so a form that grows stays a card with its body scrolling between the head and the foot, and a side sheet that shrinks stays a side sheet. The foot is always on screen. `fit="pane"` and a decision keep their own forms; touch is the bottom sheet.
 
-A column is a width and the region around it aligns it. A filling `Thread`'s log and a docked foot
+Keyboard focus follows the work without a prop. A `Sheet` returns focus to what opened it; when that
+is gone (an act of a `Picker` or `Menu`, which unmounts with its popup, returns to that popup's
+trigger) or nothing opened it (a route mounted the sheet open), a close by the keyboard leaves focus
+on the first control of the page it returns to, never the body. A row of a `Split`'s list that opens
+a record hands the keyboard to the record's first control, so the next Tab is not the list's next row.
+
+A column is a width and the region around it aligns it. A filling `Thread`'s log in a `Place`'s body and a docked foot
 (a `Place`'s `foot`, a filling `Thread`'s input) centre their measure column, and a selection bar's;
-a `Thread` among sections keeps their start, at the measure, as a `Text` paragraph does. A region
+a `Thread` among sections keeps their start, at the measure, as a `Text` paragraph does. A `Thread` filling a `Split`'s main stands as a record there does: its `ItemHeader` and messages start at the main's start (the messages at the measure) and its input spans the main within the page inset; an inline `Thread` is unchanged. A region
 that holds a page's sections (a `Place`'s body, a `Split`'s list, main and pane, a `Sheet`'s body)
 stands them a sections gap apart: never wrap sections in a `div` to space them. A `Split`'s list stands its first section at the page inset, as the record does, so both start on one line. A `Split`'s open record stands in one column at the measure, at the main's start: its sections, groups, code blocks and action bar end where a `Prose` or a `Form` does, so never cap one with a host class.
 
@@ -511,6 +522,20 @@ A `unit` that takes a plural is `{ one: "flag", other: "flags" }`, never a bare 
 
 Any other region reading a query sits in its own `QueryBoundary`, naming its loading form; it
 draws the not-found form when every failed query answers not found.
+
+A waiting form shows only for a read that lasts. `QueryBoundary`, and a `Section` or `Group` given
+`loading` itself, draw nothing until the read has run 200 ms (the waiting form stands undrawn in its
+place, so the page keeps its height) and, once drawn, keep it 500 ms (`WAIT_DELAY`, `WAIT_MIN` in
+`@fcalell/ui-core/wait`). A read the local server answers in a few milliseconds draws no skeleton.
+These two numbers are fixed, not options; a part's own `loading` (a `List`, a `Meter`) is drawn as
+given, so drive it from the boundary or the Section around it, never from a raw `isPending`.
+
+## An icon act names itself
+
+Every `IconButton`, and every icon act a molecule draws (a Place's `actions`, a Section's icon act,
+a menu's more act, a sheet's close, the canvas's zoom stack), shows its `label` in a tooltip after
+a pointer rests on it for 500 ms, and as the keyboard reaches it; Escape, a press or leaving hides
+it (Escape still reaches the sheet the act stands in, which closes on that one press). Touch draws none. The label stays the accessible name, so never repeat it as a `title`.
 
 ## Words are the config's, sentences are props
 

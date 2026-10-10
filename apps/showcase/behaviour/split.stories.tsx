@@ -1,5 +1,6 @@
 import { ActionBar } from "@fcalell/plugin-react-ui/components/action-bar";
 import { Banner } from "@fcalell/plugin-react-ui/components/banner";
+import { Button } from "@fcalell/plugin-react-ui/components/button";
 import { Code } from "@fcalell/plugin-react-ui/components/code";
 import { DefinitionRow } from "@fcalell/plugin-react-ui/components/definition-row";
 import { Diff } from "@fcalell/plugin-react-ui/components/diff";
@@ -27,6 +28,7 @@ import { BREAKPOINT_PX } from "@fcalell/ui-core/tokens";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { type ReactNode, useState } from "react";
 import { expect, screen, waitFor, within } from "storybook/test";
+import { focused } from "./support.ts";
 
 const NAMES = ["Ana Ruiz", "Ben Kaya", "Ema Okafor", "Rui Alves", "Zoe Park"];
 const ROWS = {
@@ -384,7 +386,14 @@ const besideAtThePhone: StoryObj = {
 				(el) => el.textContent === "History",
 			),
 		);
-		await expect(title.getBoundingClientRect().left).toBe(gutter);
+		// On touch the head is one row (003-304): the back act reaches the page
+		// inset by its start and the title follows it on the same line.
+		const back = must(heads[0]?.querySelector("a[aria-label='Back']"));
+		const row = back.getBoundingClientRect();
+		await expect(title.getBoundingClientRect().left).toBeGreaterThanOrEqual(
+			row.right,
+		);
+		await expect(title.getBoundingClientRect().top).toBeLessThan(row.bottom);
 		const name = must(
 			[...must(regions(canvasElement)[2]).querySelectorAll("*")].find(
 				(el) => el.children.length === 0 && el.textContent === NAMES[0],
@@ -482,8 +491,10 @@ function Tree(props: { open: boolean }) {
 }
 
 function backs(canvasElement: HTMLElement) {
+	// A back act hides through the mark on a wrapper around it (the Screen's
+	// back acts sit in a span), so its visibility reads through its ancestors.
 	return [...canvasElement.querySelectorAll("a[aria-label='Back']")]
-		.filter((el) => shown(el) && shown(el.parentElement))
+		.filter((el) => el.checkVisibility())
 		.map((el) => el.getAttribute("href"));
 }
 
@@ -1157,3 +1168,67 @@ export const PaneWithoutFormSticksNothing: StoryObj = {
 		await expect(sticks).toEqual([]);
 	},
 };
+
+const NOW_ITEMS = Array.from({ length: 44 }, (_, i) => `Item ${i + 1}`);
+
+function OpensARecord(props: { width: number }) {
+	const [open, setOpen] = useState<string>();
+	return (
+		<Page width={props.width}>
+			<Place title="Now" bleed>
+				<Split
+					list={
+						<List
+							items={NOW_ITEMS}
+							row={{
+								key: (name: string) => name,
+								title: (name: string) => name,
+								onOpen: (name: string) => setOpen(name),
+							}}
+						/>
+					}
+					main={
+						open === undefined ? undefined : (
+							<>
+								<ItemHeader title={open} />
+								<Section title="Activity">
+									<Button label="Approve" onAct={noop} />
+								</Section>
+							</>
+						)
+					}
+				/>
+			</Place>
+		</Page>
+	);
+}
+
+// A row that opens a record hands the keyboard to the record: the open lands
+// on the record's first control (one Tab stop from the row, not the list's 44),
+// Shift+Tab leaves it for the list, and walking the list without opening is as
+// before.
+function opensTheKeyboard(width: number): StoryObj {
+	return {
+		render: () => <OpensARecord width={width} />,
+		play: async ({ canvas, canvasElement, userEvent }) => {
+			const rows = canvas.getAllByRole("button", { name: /^Item \d+$/ });
+			rows[0]?.focus();
+			await userEvent.tab();
+			await expect(rows[1]).toHaveFocus();
+			await userEvent.keyboard("{Enter}");
+			const main = must(canvasElement.querySelector("[data-split]"))
+				.children[1];
+			await waitFor(() => expect(main).toContainElement(focused()));
+			await expect(
+				canvas.getByRole("button", { name: "Approve" }),
+			).toHaveFocus();
+			await userEvent.tab({ shift: true });
+			await expect(must(canvasElement.querySelector("nav"))).toContainElement(
+				focused(),
+			);
+		},
+	};
+}
+
+export const OpenTakesTheKeyboard1280 = opensTheKeyboard(1280);
+export const OpenTakesTheKeyboard768 = opensTheKeyboard(768);

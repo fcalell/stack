@@ -16,6 +16,7 @@ import {
 	PAGE_HEAD,
 	PAGE_HEAD_ROOM,
 	PAGE_TITLE,
+	PAGE_TITLE_BLOCK,
 	PAGE_TOP_BAR,
 	PAGE_TOP_BAR_END,
 	PAGE_TOP_BAR_START,
@@ -56,6 +57,9 @@ import { ToastRoom } from "../toast/room";
 
 const PLACE = "flex-1";
 const TOP_BAR = "flex-row items-center";
+// With the title in the row the items hang from its top, so an act centres on
+// the title's first line.
+const TOP_BAR_FIRST = "flex-row items-start";
 const SPACER = "flex-1";
 const ACTS = "flex-row items-center gap-acts";
 const TITLE = "min-w-0 grow";
@@ -198,7 +202,12 @@ export function Place({
 	const bar =
 		single || lead != null || acts.length > 0 || Boolean(more?.length);
 	const heading = context ? (
-		<View className={cn(TITLE_LINE, single ? TITLE : PAGE_TITLE)}>
+		<View
+			className={cn(
+				TITLE_LINE,
+				single ? cn(TITLE, PAGE_TITLE_BLOCK) : PAGE_TITLE,
+			)}
+		>
 			<RNText
 				accessibilityRole="header"
 				numberOfLines={1}
@@ -213,7 +222,11 @@ export function Place({
 	) : (
 		<RNText
 			accessibilityRole="header"
-			className={cn(text({ role: "title" }), TITLE, !single && PAGE_TITLE)}
+			className={cn(
+				text({ role: "title" }),
+				TITLE,
+				single ? PAGE_TITLE_BLOCK : PAGE_TITLE,
+			)}
 		>
 			{title}
 		</RNText>
@@ -237,7 +250,7 @@ export function Place({
 										className={cn(
 											PAGE_TOP_BAR,
 											!single && PAGE_TOP_BAR_TOUCH,
-											TOP_BAR,
+											single ? TOP_BAR_FIRST : TOP_BAR,
 										)}
 									>
 										{lead && single ? (

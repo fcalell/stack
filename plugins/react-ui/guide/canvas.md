@@ -52,8 +52,8 @@ A plain wheel pans, Ctrl or Cmd with the wheel zooms (a trackpad pinch is a Ctrl
 pans, even from a node (with `onMove` a drag from a node moves that node instead), one finger pans
 and two pinch. The zoom stack at the bottom left zooms in, zooms out and fits: Fit shows the whole
 graph, never larger than its own size and clear of the zoom stack and the `act`. A graph that fits at its own size opens centred in the room the zoom stack and the `act` leave,
-so no node opens under them; a larger one opens at its own size with its first node, in path
-order, at the top centre of that room.
+so no node opens under them; a larger one opens at its own size (the text floor comes first, so a graph never opens zoomed out) with its first node, in path
+order, and the group that holds it whole at the top: on the centre line of that room as far as a page inset on each side allows, centred in the pane when it is wider than the pane less a page inset on each side. The rest may stand past the right or bottom edge, a pan away.
 
 ## Where the nodes stand
 
@@ -103,14 +103,22 @@ node selects it as a click does.
 Every zoom button, the `act`, each glyph and each port is at least 44 px at the touch density, at
 any zoom: a port's hit is drawn at that size whatever the scale.
 
-On every input, pointer and finger alike, a node under zoom 1 is its glyph alone: the icon in a
+On every input, pointer and finger alike, a node under zoom 1 is its glyph: the icon in a
 box of the density's `control` size, its border the state's (a selection or a problem), its
 status as a dot on the box's top right corner, and a problem as a danger dot on its bottom right
-corner, straddling the border so neither covers the icon. It carries the node's `title` as its tooltip. Group heads and edge labels
-draw nothing there, so an overview never shows text under the caption size. A click, a tap or
-Enter on a glyph zooms to that node at its own size and chooses nothing. Edges and group frames
-follow the glyphs, so an edge ends on its glyph, and zooming out stops where two glyphs would stand
-closer than two `pair`, so the edges between them still draw. Keep `problem` and `status` words short and put the detail in your
+corner, straddling the border so neither covers the icon. From zoom 1 down to half the glyph
+carries the node's `title` beside it, on one line at the caption size, in body ink at 500, cut at the
+short measure, on the canvas's own ground so an edge never strikes through it; the name is
+drawn at the same size at any zoom, so the overview never shows text under the caption size.
+Under half the glyph stands alone, with the `title` as its tooltip. A graph whose nodes stand too
+close for their names to clear each other at half raises that zoom to the lowest at which they
+clear, and one that cannot clear them under zoom 1 has no named overview: the glyph alone. Group
+heads and edge labels draw nothing under zoom 1. A click, a tap or Enter on a glyph or its name
+zooms to that node at its own size and chooses nothing. A zoom step is a fifth of the scale.
+Edges and group frames follow the glyphs, so an edge ends on its glyph, and zooming out stops
+where two glyphs would stand closer than two `pair`, so the edges between them still draw.
+Give each node its own `title`: beside the icon it is the overview's only mark of one node of a
+kind from another. Keep `problem` and `status` words short and put the detail in your
 sheet: a glyph shows the mark, and the words are one tap away.
 
 ## States
@@ -176,7 +184,7 @@ An `act` stands at the foot's centre; it adds, it never removes.
 
 ## Loading
 
-`loading` stands the ground and its grid with three node-shaped skeletons, busy to assistive
+`loading` stands the ground and its grid with three node-shaped skeletons (a loaded node's size, at the gap a loaded path keeps), busy to assistive
 technology, while the data is read, so the page below the head does not move when the graph
 arrives. Pass `nodes={[]}` meanwhile: `nodes`, the handlers and the `act` are ignored, and the
 loading form draws no zoom stack, no act, no node button and no drag. Do not stand `nodes={[]}`
@@ -185,7 +193,7 @@ for a wait: it reads as an empty graph.
 ## An empty graph
 
 `empty` is a sentence the canvas draws centred under the graph, a `pair` below its bottom edge, in
-the meta ink at the text floor at any zoom. It follows the pan and zoom, takes no pointer (a drag
+the meta ink at the text floor at any zoom, never closer to the graph than a `pair`. It wraps within the pane less a page inset on each side, and the opening view and Fit hold the graph and the sentence whole in the pane. It follows the pan and zoom, takes no pointer (a drag
 through it pans, a tap on it clears the selection) and is the region's accessible description.
 The sentence is your copy and you decide when it stands: pass it or `undefined`.
 
@@ -196,7 +204,7 @@ The sentence is your copy and you decide when it stands: pass it or `undefined`.
 ## Where it stands
 
 The canvas has no height of its own: it fills the region it stands in. Stand it as a `Split`'s
-`main` or in a `Place`'s body, never inside a component of your own that sizes it. Below `tablet`
+`main` (it then runs to the main's edges under the record's head, a hairline between them) or in a `Place`'s body, never inside a component of your own that sizes it. Below `tablet`
 it keeps at least half of the column it stands in: the column scrolls past it, so a head and
 banners above it scroll away and never shrink it.
 

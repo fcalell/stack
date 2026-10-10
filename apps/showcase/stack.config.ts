@@ -10,7 +10,7 @@ export default defineConfig({
 	app: { name: "showcase", domain: "showcase.localhost" },
 	plugins: [
 		vite(),
-		react({ title: "Showcase", icon: "/favicon.svg" }),
+		react({ title: "Showcase", icon: "/mark.svg" }),
 		reactUi(),
 		api(),
 		screens(),
