@@ -87,6 +87,10 @@
 			"types": "./dist/list-state.d.ts",
 			"default": "./dist/list-state.js"
 		},
+		"./wait": {
+			"types": "./dist/wait.d.ts",
+			"default": "./dist/wait.js"
+		},
 		"./rules": {
 			"types": "./dist/rules.d.ts",
 			"default": "./dist/rules.js"

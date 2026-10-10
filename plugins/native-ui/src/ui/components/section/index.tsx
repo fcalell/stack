@@ -18,7 +18,7 @@ import { FieldWait, LABEL_LINE, liftBars } from "../../lib/field-wait";
 import { FormContext, FormStands } from "../../lib/form";
 import { ThreadRoom } from "../../lib/frame";
 import { Ink } from "../../lib/ink";
-import { LoadingContext } from "../../lib/loading";
+import { LoadingContext, useWait, VEIL } from "../../lib/loading";
 import { partText } from "../../lib/parts";
 import {
 	SectionContext,
@@ -110,9 +110,15 @@ export function Section({
 	folded,
 	onToggle,
 	act,
-	loading,
+	loading: asked,
 	children,
 }: SectionProps) {
+	// The wait is a read that lasts: drawn after a delay and held a minimum; the
+	// head's title and act stay, what waits in the head and the body is undrawn
+	// meanwhile.
+	const late = useWait(asked === true);
+	const loading = asked === undefined ? undefined : late.waiting;
+	const veil = late.veiled ? VEIL : undefined;
 	const within = useContext(FormContext) ? "form" : "page";
 	// A Section inside a Section names itself a level below its parent.
 	const nested = useContext(SectionContext);
@@ -140,7 +146,7 @@ export function Section({
 	if (description) sentence = <Text role="meta">{description}</Text>;
 	else if (loading === true && description === "")
 		sentence = (
-			<View className={LABEL_LINE}>
+			<View className={cn(LABEL_LINE, veil)}>
 				<Strut role="meta" />
 				<View className={cn(skeleton({ kind: "line" }), "w-1/2")} />
 			</View>
@@ -149,7 +155,7 @@ export function Section({
 	let tally: ReactNode = null;
 	if (counted && busy)
 		tally = (
-			<View className={cn(skeleton({ kind: "count" }), COUNT_WAIT)}>
+			<View className={cn(skeleton({ kind: "count" }), COUNT_WAIT, veil)}>
 				<RNText className={cn(text({ role: "caption" }), FIGURE_WAIT)}>
 					0
 				</RNText>
@@ -240,7 +246,9 @@ export function Section({
 			</View>
 			{/* A section without children draws no body. */}
 			{children === undefined || children === null ? null : (
-				<View className={cn(section({ in: within }), !open && BODY_FOLDED)}>
+				<View
+					className={cn(section({ in: within }), !open && BODY_FOLDED, veil)}
+				>
 					{Array.from({ length: fields }, (_, index) => `field-${index}`).map(
 						(key, index) => (
 							<FieldWait key={key} {...fieldWaitOf(parts.fieldNodes[index])} />

@@ -19,7 +19,7 @@ import { FieldWait, liftBars } from "../../lib/field-wait.tsx";
 import { FormContext, FormStands } from "../../lib/form.ts";
 import { ThreadRoom } from "../../lib/frame.ts";
 import { DEEPER, HeadingContext } from "../../lib/heading.ts";
-import { LoadingContext } from "../../lib/loading.ts";
+import { LoadingContext, useWait, VEIL } from "../../lib/loading.ts";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import {
 	SectionContext,
@@ -117,9 +117,15 @@ export function Section({
 	folded,
 	onToggle,
 	act,
-	loading,
+	loading: asked,
 	children,
 }: SectionProps) {
+	// The wait is a read that lasts: drawn after a delay and held a minimum; the
+	// head's title and act stay, what waits in the head and the body is undrawn
+	// meanwhile.
+	const late = useWait(asked === true);
+	const loading = asked === undefined ? undefined : late.waiting;
+	const veil = late.veiled ? VEIL : undefined;
 	const level = use(HeadingContext);
 	// A Section inside a Section names itself a level below its parent.
 	const nested = use(SectionContext);
@@ -162,7 +168,7 @@ export function Section({
 		sentence = (
 			<span
 				aria-hidden
-				className={cn(lineBox({ role: "meta" }), DESCRIPTION_LINE)}
+				className={cn(lineBox({ role: "meta" }), DESCRIPTION_LINE, veil)}
 			>
 				<span className={cn(skeleton({ kind: "line" }), "w-1/2")} />
 			</span>
@@ -171,7 +177,10 @@ export function Section({
 	let tally: ReactNode = null;
 	if (counted && busy)
 		tally = (
-			<span aria-hidden className={cn(skeleton({ kind: "count" }), COUNT_WAIT)}>
+			<span
+				aria-hidden
+				className={cn(skeleton({ kind: "count" }), COUNT_WAIT, veil)}
+			>
 				<span className={cn(text({ role: "caption" }), FIGURE_WAIT)}>0</span>
 			</span>
 		);
@@ -266,7 +275,7 @@ export function Section({
 				<Collapsible.Panel
 					id={bodyId}
 					keepMounted
-					className={cn(section({ in: within }), BODY)}
+					className={cn(section({ in: within }), BODY, veil)}
 				>
 					<HeadingContext value={DEEPER[level]}>
 						{Array.from({ length: fields }, (_, index) => `field-${index}`).map(

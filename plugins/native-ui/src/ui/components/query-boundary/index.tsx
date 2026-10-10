@@ -1,6 +1,8 @@
 import { boundaryState } from "@fcalell/ui-core/list-state";
 import type { ReactNode } from "react";
+import { View } from "react-native";
 import type { Closed } from "../../lib/closed";
+import { useWait, VEIL } from "../../lib/loading";
 import { useWords } from "../../lib/words";
 import { Failed } from "../failed";
 import { Missing } from "../missing";
@@ -41,7 +43,7 @@ export interface QueryBoundaryProps<Q extends Queries = Queries>
 }
 
 // The states of a compound body that reads queries; a collection takes its
-// own query instead (a `List`). While any query is pending, `loading`; in a
+// own query instead (a `List`). While any query is pending, `loading`, drawn only once the read has lasted about 200 ms and then for at least 500 ms (a faster read draws no waiting form); in a
 // Section the Section is busy and its count waits. When every failed query
 // answers not found, the rest EmptyState saying it no longer exists with Back
 // (to the enclosing Screen's back, else the Place's route), never Retry; when
@@ -56,8 +58,11 @@ export function QueryBoundary<Q extends Queries>({
 	const words = useWords();
 	const several = Array.isArray(query);
 	const queries = (several ? query : [query]) as readonly AnyQuery[];
-	const pending = queries.some((entry) => entry.isPending);
-	if (pending) return <>{loading}</>;
+	const late = useWait(queries.some((entry) => entry.isPending));
+	// While the read runs the delay the waiting form stands undrawn, holding its
+	// place; one that settled inside the minimum keeps it drawn.
+	if (late.waiting)
+		return late.veiled ? <View className={VEIL}>{loading}</View> : loading;
 	const state = boundaryState(queries);
 	if (state === "missing") return <Missing />;
 	if (state === "failed") {
