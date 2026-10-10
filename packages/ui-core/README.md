@@ -41,6 +41,7 @@ Twenty-one subpaths:
   `StageEnd`, `Sentence`, `Coded`, `RowTitle`, `GateMark` and the other framework-free types a prop carries.
 - `@fcalell/ui-core/rules`: what the Rules editor and the Picker decide before they draw, free of
   any framework: `termSet`, `pairSet`, `termLabel`, `isTyped` and `marked` (with `PICKED_GLYPH`).
+- `@fcalell/ui-core/streaming`: `closeOpenRuns`, a still-arriving reply's Markdown with the runs open at its end closed, free of any framework.
 - `@fcalell/ui-core/list-state`: what a collection decides before it draws, free of any framework:
   a `List`'s or `Table`'s state and waiting shape (`listState`, `rowShape`), a table's records,
   sort and tick logic (`tableRecords`, `sorted`, `tickable`), a tree's visible rows (`treeRows`),

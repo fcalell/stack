@@ -1,6 +1,6 @@
 ---
 id: 003-308
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: a filled Thread and its header stand at the main's start
@@ -16,4 +16,15 @@ Stead's card thread on the board ("New story", `packages/server/src/app/routes/w
 - [ ] Its input follows 003-307.
 
 ## Open questions
-- [ ] Its shape: the stack session decides.
+- [x] Its shape: the stack session decides.
+
+## Ruled
+Both halves follow the main's mark: `COLUMN_FILLED` loses `mx-auto` (the header stands in `THREAD_COLUMN` at the main's start, at the page inset its part-above margin gives), and the log under the mark stands its column at the start (`LOG_AT_START`, `items-start` over `items-center`). A Place-body Thread keeps the centring.
+
+## Built
+- `thread/fill.ts`: `COLUMN_FILLED` without `mx-auto`, `LOG_AT_START`; `thread/index.tsx` applies it to the log. `plugins/react-ui/scripts/overlays.ts` allowlist updated; `test/fill.test.ts` holds the header to `THREAD_COLUMN`.
+- Docs: both rules pages, `ui-core.md`, the Thread doc comment.
+- Evidence: `FilledThreadStandsAtStart1280` (header and messages at one left edge, messages no wider than the measure) written, not run.
+- Native unrendered: the phone has no centred column.
+
+Awaiting the batch browser run: the first acceptance box stays unticked.

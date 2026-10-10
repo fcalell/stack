@@ -41,6 +41,7 @@ import { Button } from "../button/index.tsx";
 import { IconButtonBase } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 import { Attachments } from "../message/attachments.tsx";
+import { INPUT_FILLED } from "../thread/fill.ts";
 
 const ROOT = "flex flex-col w-full";
 const STACK = "flex flex-col";
@@ -108,7 +109,7 @@ export function MessageInput({
 	const touch = useTouch();
 	// A docked foot spans the page body, so the field keeps its own measure
 	// column on the desktop.
-	const column = !touch && THREAD_COLUMN;
+	const column = !touch && cn(THREAD_COLUMN, INPUT_FILLED);
 	const empty = value.trim() === "";
 	const sendable = !empty && !disabled;
 	const textField = useRef<HTMLTextAreaElement>(null);

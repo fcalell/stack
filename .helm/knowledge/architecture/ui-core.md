@@ -929,8 +929,8 @@ a tick with no animation, never jumped to full.
   `replying`. On the desktop both stand in
   a measure-wide column (`THREAD_COLUMN`, held by no entry: a `MessageInput` and a record's
   `ItemHeader` over a filling Thread stand in it too), on touch in the screen's. The column is a
-  width alone (below, column rule); a filling Thread's log and its docked foot centre it, and a
-  Thread among sections keeps their start. A Thread
+  width alone (below, column rule); a filling Thread's log in a Place's body and its docked foot centre it, and a
+  Thread among sections keeps their start. Filling a Split's main the Thread stands as a record there does: the log (`LOG_AT_START`) and the `ItemHeader` (`COLUMN_FILLED`) start at the main's start, the messages at the measure, and the input (`INPUT_FILLED`) spans the main within the page inset, each a mark variant on `group/main` in `thread/fill.ts` that a Thread outside a main never meets. A Thread
   in a Place's body fills the page at every width, decided by where it stands, from its first
   render: the frame hands it `ThreadRoom`, and the body draws no inset and leaves scrolling to it,
   its log scrolls at the page inset (`THREAD_LOG`), opening at the newest message and following each
@@ -978,7 +978,7 @@ a tick with no animation, never jumped to full.
 - A content molecule derives once per input: `Prose` lexes and folds its markdown, `Diff` runs its
   patch, `ProseDiff` its word diff and runs, and `QrCode` its encoding and module path, each
   memoised on its text and skipped while it waits (a waiting QR tile draws a version 2 code's 25
-  modules and encodes nothing). `Message` is memoised on its props, and the Thread draws each item
+  modules and encodes nothing). A streaming `other` message (`streaming`, a Thread `message` slot too) draws `closeOpenRuns(body)` from `@fcalell/ui-core/streaming` (a pure function both platforms run), which closes the runs open at the text's end (fence, emphasis, strong, strike, code span, link text and target), so the closing marker changes nothing drawn; unset, an unmatched marker stays text. `Message` is memoised on its props, and the Thread draws each item
   through a memoised item that renders again only when its item does: every slot reads the item, and
   a system line's `onOpen` and a detail row's `onOpen` call the thread's latest slots when pressed,
   so a thread's re-render (a keystroke in its input, a message arriving) skips every message already

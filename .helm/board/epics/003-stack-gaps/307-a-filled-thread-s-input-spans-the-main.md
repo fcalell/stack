@@ -1,6 +1,6 @@
 ---
 id: 003-307
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: a filled Thread's input spans the main
@@ -13,8 +13,18 @@ In Stead's Chats the thread's input stands in a measure-wide column centred in t
 
 ## Acceptance criteria
 - [ ] A Thread filling a Split's main docks its input across the main's width, within the page inset.
-- [ ] Its messages keep the measure.
-- [ ] An inline Thread is unchanged.
+- [x] Its messages keep the measure.
+- [x] An inline Thread is unchanged.
 
 ## Open questions
-- [ ] Its shape (the filled form's default or an option): the stack session decides.
+- [x] Its shape (the filled form's default or an option): the stack session decides.
+
+## Ruled
+The filled form's default, no option: a Thread filling a Split's main docks its input across the main within the page inset (the foot already carries `px-page`), the messages keep the measure. The cap goes under the main's fill mark (`group/main`), so a Place-body Thread and an inline Thread read as before. A docked `Sheet` in the foot keeps its own measure column.
+
+## Built
+- `plugins/react-ui/src/ui/components/thread/fill.ts`: `INPUT_FILLED` (`max-w-none` under the main's mark). `thread/index.tsx` adds it to the foot's column; `message-input/index.tsx` adds it beside its `THREAD_COLUMN`.
+- Evidence: `apps/showcase/behaviour/thread-fill.stories.tsx` `FilledThreadStandsAtStart1280` (input left and right edges at the log's inset) written, not run.
+- Native unrendered: the phone's column is the screen's, so the input already spans.
+
+Awaiting the batch browser run: the first acceptance box (measured at 1280) stays unticked.

@@ -91,6 +91,10 @@ export interface MessageSlots<T> {
 	attachments?: (item: T) => readonly Attachment[] | undefined;
 	/** Where a turn came from ("by voice", "Kitchen"), before its time; a system line takes none (each a short phrase; the line wraps at its dots). */
 	meta?: (item: T) => readonly Part[] | undefined;
+	// The reply is still arriving: an `other` turn whose open Markdown
+	// marker at its end draws in its own form; a turn of yours or a system
+	// line takes none.
+	streaming?: (item: T) => boolean | undefined;
 	// What a system line opens: the line becomes the act; a turn takes none.
 	onOpen?: (item: T) => (() => void) | undefined;
 	// What stands under a system line (a row, a free act's code, a fold); a
@@ -156,6 +160,7 @@ function ThreadItemBase<T>({
 				at={at}
 				attachments={read.attachments?.(item)}
 				meta={read.meta?.(item)}
+				streaming={author === "other" ? read.streaming?.(item) : undefined}
 			/>
 		);
 	const opens = read.onOpen?.(item) !== undefined;
