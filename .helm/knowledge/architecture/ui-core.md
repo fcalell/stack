@@ -82,23 +82,23 @@ its rationale.
   wear the accent, so the six are fixed and the accent's band is left out); `Status` with a family
   mode (a state and a data value are two concepts, so two names).
 - Density is a theme, and it moves three scales (the room set, below, scales the radii, the fixed
-  widths, the hairline and the ring too): the type roles (body 13 on the desktop set, 16 on touch,
+  widths, the hairline and the ring too): the type roles (body 14 on the desktop set, 16 on touch,
   each role a ratio rounded to the pixel, its line box to the even pixel), the eleven spacing roles
   (multiples of 4, one rung looser on touch except the float and page insets and the acts gap; a
   list bleeds by `control-x`, so its rows' leading meets the title over it at either density) and
-  the thirty-seven sizes (control 32/44, field 38/48, target 24/44, `indent` 16/20 (a tree row's step
+  the thirty-seven sizes (control 32/44, field 38/48, target 28/44, `indent` 16/20 (a tree row's step
   in), `port` 8/8 (a canvas port's drawn size, over the 6/8 dot), the switch and its derived thumb travel, the avatar, three icon sizes by the text beside
   them, the check, the slider track, the one-time-code box, the meter's bar, the chart's plot, the
   QR square, and six derived from the type: the text area's three body lines, the message input's
-  eight, an image thumbnail's four (`image-tile`, 80/96, the lines of provenance it stands beside),
-  an image's height cap of twenty (`image-cap`, 400/480), one body line's box (`line-body`, 20/24:
+  eight, an image thumbnail's four (`image-tile`, 88/96, the lines of provenance it stands beside),
+  an image's height cap of twenty (`image-cap`, 440/480), one body line's box (`line-body`, 22/24:
   the height a part standing on a wrapped title's first line is pinned to, so a taller part
   overflows it centred, a height set where a `min-h` would grow with its tallest part) and
   `figures`, four tabular figures at the code size, held by a diff's number columns and a file row's
   count lanes), `hairline` (1/1, a field box's border: an act inside a bar-fit box reaches across it
   with `-my-hairline`, so the box stays at the compact control's height, border included) and one
   derived from two sizes: `chips-inset`, what the compact control has over a chip, halved, less the
-  border (3/9, a pick of several's vertical inset). The thumbnail's name is not `thumb`,
+  border (2/9, a pick of several's vertical inset). The thumbnail's name is not `thumb`,
   which the switch's knob holds: `size-*` and `max-w-*` read one `--spacing-*` namespace. A size
   counted in figures is px at `MONO_ADVANCE` (Plex Mono's 0.6 em), never a `ch` width, because
   uniwind has no `ch` unit and native draws the figures too; a named mono with a wider advance
@@ -108,7 +108,7 @@ its rationale.
   limit: there every short label's cap is the body's 18 characters whatever its role (a chip's
   caption included, and `SKELETON_LANE`'s role axis draws one width), and a named sans with a wider
   "0" overflows it. The running-text measure is a derived size, never a `ch` width: `measure` is 58
-  characters at `SANS_ADVANCE` of the density's body size, rounded up (453 on the desktop, 557 on
+  characters at `SANS_ADVANCE` of the density's body size, rounded up (488 on the desktop, 557 on
   touch and in the room), so a meta line, a body paragraph and a form stand at one width where `ch`
   resolves in the element's own font and gave a meta line a narrower column than the body
   beside it. `measure-inset` is that width plus the page inset on both sides, the width a padded
@@ -117,7 +117,7 @@ its rationale.
   sizes rather than a class or an `ICON` axis cell: the web's Lucide and native's Lucide and
   `react-native-svg` all take `strokeWidth` as a number prop, so one value in `tokens` reaches
   both platforms the same way and no class has to resolve to a stroke. `line` (2) is an icon's own weight, `mark` (3.5) the weight
-  of a mark that carries meaning at the meta size, where `line`'s 1 px at 12 px straddles two pixel
+  of a mark that carries meaning at the meta size, where `line`'s 1.17 px at 14 px straddles two pixel
   rows and a mark's hue drops under the 3:1 floor. The checkbox and the change mark (through each
   plugin's internal `IconBase`, whose public `Icon` stays at `line`) read `mark`; each plugin's
   verify fails any other stroke weight literal in `src/ui`. `themeTokens` seeds the touch set on both platforms; the web
@@ -1236,7 +1236,7 @@ a tick with no animation, never jumped to full.
   StatusMark[]`, `RowSlots.steps`, per item) stands in the meta line's place while the row's act
   pends (the entry's rank: `entry`, then `steps`, then `meta` and the marks; the consumer gives
   `meta` back once the act settles), one line each (`ROW_STEPS`, a pair gap, and `ROW_STEP`, each
-  line one body line's box tall, `line-body`, 20 at the desktop body size: the loading-and-pending
+  line one body line's box tall, `line-body`, 22 at the desktop body size: the loading-and-pending
   page's range for a step list is 19 to 20, its 19 one approximate preview reading): the
   status mark (`StatusDot`, the spinner while `running`, the same cells as `Status`) and the label
   at meta size, the running step in `ink-body` and the others in `ink-meta`; each mark carries its
@@ -1495,7 +1495,7 @@ a tick with no animation, never jumped to full.
   carrying counts takes it and composes `Link`, never spelling it: the line of links is
   `COUNT_LINKS`, one cell the Meter and the Stats cell both draw through one private `CountLinks`
   part per platform. Each count is a `fit="standalone"` link: it stands alone on its line, so it
-  takes the `target` box (`LINK_TARGET`, 24 / 44; the web's anchor carries it, the phone's link is a
+  takes the `target` box (`LINK_TARGET`, 28 / 44; the web's anchor carries it, the phone's link is a
   pressable of that height with its words centred, since a text's own box takes no touch past its
   words) rather than the inline fit's line-high one. A waiting meter or strip cell stands at the
   loaded height by the line it declares (`WaitLine` in `./list-state`: `counts`, a target-high
@@ -1664,7 +1664,7 @@ a tick with no animation, never jumped to full.
   label at 500 and its reason in meta. The marks carry the hue (the current ring's accent, the
   cross's danger) and a label's ink is its own in every state. `STAGE {state}` is the label's cell, the row's
   gap, the words' bottom inset and a minimum row of the two-line row's height (`STAGE_ROW`,
-  `STAGE_WORDS`; `row-2`, 48 / 64, the state rail's 28–56 and 48–70) carry the room between stages,
+  `STAGE_WORDS`; `row-2`, 52 / 64, the state rail's 28–56 and 48–70) carry the room between stages,
   so a later row of one meta line keeps the pace of a done one. The rail runs through each mark's
   line box in two halves around the mark, so it breaks nowhere. Each mark stands on its label's first line (a later label is meta, so its mark is
   on a meta line) and draws its state as its glyph, so `words` gains none. Stages is static data, so it has no waiting

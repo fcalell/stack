@@ -89,6 +89,6 @@ test("a currency is a unit with no word, and a word names no currency", () => {
 });
 
 test("the top tick reaches half a meta line above the plot", () => {
-	assert.equal(tickReach("desktop"), 9);
+	assert.equal(tickReach("desktop"), 10);
 	assert.equal(tickReach("touch"), 11);
 });
