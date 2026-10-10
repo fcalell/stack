@@ -228,6 +228,7 @@ const CLASS_EXACT = [
 	"flex",
 	"grid",
 	"block",
+	"contents",
 	"field-sizing-content",
 	"hidden",
 	"truncate",

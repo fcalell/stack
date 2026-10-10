@@ -12,7 +12,7 @@ import {
 import type { Closed } from "../../lib/closed.ts";
 import { GroundContext } from "../../lib/ground.ts";
 import { GroupContext, type GroupHost } from "../../lib/group.ts";
-import { LoadingContext } from "../../lib/loading.ts";
+import { LoadingContext, useWait, VEIL } from "../../lib/loading.ts";
 import { DefinitionWait } from "../definition-row/wait.tsx";
 
 const BOX = "flex flex-col shrink-0 overflow-hidden";
@@ -37,7 +37,10 @@ export interface GroupProps extends Closed {
 /** Rows in a hairline card on the surface, the hairline drawn once between them, so no row carries one. A List in it draws its rows, its waiting rows and its failed and empty forms on the card. */
 export function Group({ loading, children }: GroupProps) {
 	const inherited = use(LoadingContext);
-	const waiting = loading ?? inherited;
+	// Its own `loading` waits as a read that lasts does (drawn after a delay, held
+	// a minimum); one inherited from a Section arrives already so.
+	const late = useWait(loading === true);
+	const waiting = loading === undefined ? inherited : late.waiting;
 	// A waiting body draws the waiting forms of the parts that register (however
 	// deep: a List, a Meter, a Slider, a DefinitionRow); with none, setting
 	// skeletons. The body renders once to learn, and the swap lands in a
@@ -59,7 +62,10 @@ export function Group({ loading, children }: GroupProps) {
 		setSettings(waiting && groupWait(parts.current) === "settings");
 	}, [waiting]);
 	return (
-		<div aria-busy={loading || undefined} className={cn(GROUP, BOX)}>
+		<div
+			aria-busy={loading || undefined}
+			className={cn(GROUP, BOX, late.veiled && VEIL)}
+		>
 			{waiting && settings ? (
 				SETTINGS.map((index) => (
 					<DefinitionWait key={index} shape={SETTING} index={index} />

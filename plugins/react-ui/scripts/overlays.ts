@@ -145,8 +145,8 @@ export const OVERLAYS: readonly string[] = [
 	"overflow-y-auto",
 	"pointer-events-none",
 	"pointer-events-auto",
-	"data-popup-open:bg-wash-press",
-	"data-popup-open:text-ink-body",
+	"aria-expanded:bg-wash-press",
+	"aria-expanded:text-ink-body",
 	"text-danger",
 	"overscroll-contain",
 	"page-tablet:hidden",
@@ -440,6 +440,8 @@ export const OVERLAYS: readonly string[] = [
 	"col-start-1",
 	"row-start-1",
 	"invisible",
+	// QueryBoundary
+	"contents",
 	"flex-1",
 	"self-start",
 	// Gate

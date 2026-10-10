@@ -523,6 +523,20 @@ A `unit` that takes a plural is `{ one: "flag", other: "flags" }`, never a bare 
 Any other region reading a query sits in its own `QueryBoundary`, naming its loading form; it
 draws the not-found form when every failed query answers not found.
 
+A waiting form shows only for a read that lasts. `QueryBoundary`, and a `Section` or `Group` given
+`loading` itself, draw nothing until the read has run 200 ms (the waiting form stands undrawn in its
+place, so the page keeps its height) and, once drawn, keep it 500 ms (`WAIT_DELAY`, `WAIT_MIN` in
+`@fcalell/ui-core/wait`). A read the local server answers in a few milliseconds draws no skeleton.
+These two numbers are fixed, not options; a part's own `loading` (a `List`, a `Meter`) is drawn as
+given, so drive it from the boundary or the Section around it, never from a raw `isPending`.
+
+## An icon act names itself
+
+Every `IconButton`, and every icon act a molecule draws (a Place's `actions`, a Section's icon act,
+a menu's more act, a sheet's close, the canvas's zoom stack), shows its `label` in a tooltip after
+a pointer rests on it for 500 ms, and as the keyboard reaches it; Escape, a press or leaving hides
+it. Touch draws none. The label stays the accessible name, so never repeat it as a `title`.
+
 ## Words are the config's, sentences are props
 
 A word a component draws on its own comes from `reactUi({ words })`, read with

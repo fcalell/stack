@@ -1,6 +1,7 @@
 import { boundaryState } from "@fcalell/ui-core/list-state";
 import type { ReactNode } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { useWait } from "../../lib/loading.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Failed } from "../failed/index.tsx";
 import { Missing } from "../missing/index.tsx";
@@ -14,6 +15,9 @@ export interface QueryLike<TData> {
 	error?: unknown;
 	refetch: () => unknown;
 }
+
+// The undrawn waiting form stands in no box of its own.
+const VEILED = "contents invisible";
 
 type AnyQuery = QueryLike<unknown>;
 
@@ -44,7 +48,7 @@ export interface QueryBoundaryProps<Q extends Queries = Queries>
 	loading: ReactNode;
 }
 
-/** The states of a compound body that reads queries; a collection takes its own query instead (a `List`). While any query is pending, `loading`; in a Section the Section is busy and its count waits. When every failed query answers not found, the rest EmptyState saying it no longer exists with Back (to the enclosing Screen's back, else the Place's route), never Retry; when one fails otherwise, the failed EmptyState with `sentence` and Retry, which refetches the failed queries; then the children with the data. */
+/** The states of a compound body that reads queries; a collection takes its own query instead (a `List`). While any query is pending, `loading`, drawn only once the read has lasted about 200 ms and then for at least 500 ms (a faster read draws no waiting form); in a Section the Section is busy and its count waits. When every failed query answers not found, the rest EmptyState saying it no longer exists with Back (to the enclosing Screen's back, else the Place's route), never Retry; when one fails otherwise, the failed EmptyState with `sentence` and Retry, which refetches the failed queries; then the children with the data. */
 export function QueryBoundary<Q extends Queries>({
 	query,
 	sentence,
@@ -56,8 +60,11 @@ export function QueryBoundary<Q extends Queries>({
 	const queries = (
 		Array.isArray(query) ? query : [query]
 	) as readonly AnyQuery[];
-	const pending = queries.some((entry) => entry.isPending);
-	if (pending) return loading;
+	const late = useWait(queries.some((entry) => entry.isPending));
+	// While the read runs the delay the waiting form stands undrawn, holding its
+	// place; one that settled inside the minimum keeps it drawn.
+	if (late.waiting)
+		return late.veiled ? <div className={VEILED}>{loading}</div> : loading;
 	const state = boundaryState(queries);
 	if (state === "missing") return <Missing />;
 	if (state === "failed")

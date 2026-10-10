@@ -434,6 +434,11 @@ export const RULE_CARD = "px-card py-pair";
 // by the float inset so a row's wash sits just inside the edge.
 export const POPOVER =
 	"gap-pair p-float bg-raised border border-edge-raised rounded-popover shadow-float";
+// An icon act's name, shown on a rest or the keyboard: the popover's ground and
+// hairline round one line of meta ink, the width of its words up to a short
+// measure.
+export const TOOLTIP =
+	"px-inside py-pair bg-raised border border-edge-raised rounded-control shadow-float text-meta leading-meta font-normal text-ink-body max-w-measure-short";
 export const HAIRLINE = "border-edge";
 // The check or the dash on a checked box, at the meta glyph's size.
 export const CHECKBOX_MARK = "size-icon-meta text-on-accent";
