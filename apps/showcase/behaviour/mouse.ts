@@ -82,3 +82,16 @@ export async function click(point: Point) {
 export async function hover(point: Point) {
 	await send("mouseMoved", point, false);
 }
+
+// A press at `point` with the button held while `hold` runs, then released
+// there. A node takes focus at the press, before the click that would select
+// it, so `hold` reads what the focus alone did.
+export async function press(point: Point, hold: () => Promise<void> | void) {
+	await send("mouseMoved", point, false);
+	await send("mousePressed", point, true);
+	try {
+		await hold();
+	} finally {
+		await send("mouseReleased", point, false);
+	}
+}

@@ -24,3 +24,4 @@ The call is gated on `navigator.userActivation?.hasBeenActive`, the least surfac
 
 ## Built
 `lift.ts` calls `navigator.vibrate?.(10)` only when `navigator.userActivation?.hasBeenActive`; the outline, the follow and the one `onMove` on release do not read it. Behaviour stories (`apps/showcase/behaviour/canvas-touch.stories.tsx`): `LongPress*` now stubs `userActivation.hasBeenActive` true beside its vibrate stub and still asserts one pulse of 10; the new `LongPressUnactivated*` stubs it false, spies `console.error`, lifts and drops a node, and asserts the outline, one `onMove`, no vibrate call and no console error. Written and type-checked, not run: they await the batch browser run.
+- Browser run: `canvas-touch.stories.tsx` 54/54 pass after the batch's fixes.

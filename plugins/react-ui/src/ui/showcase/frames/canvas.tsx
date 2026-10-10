@@ -42,7 +42,7 @@ export const STAGE =
 // 1, and too small for the journey. Their classes live here, where the build
 // scans for them.
 export const TALL =
-	"flex flex-col h-[72rem] w-[56rem] max-w-full bg-surface p-page";
+	"flex flex-col h-[80rem] w-[56rem] max-w-full bg-surface p-page";
 export const SMALL = "flex flex-col h-[12rem] w-[20rem] bg-surface p-page";
 
 // The state frames' stages. A canvas opens at scale 1 and shows a graph whole

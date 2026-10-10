@@ -14,6 +14,7 @@ import { SIZE_PX } from "@fcalell/ui-core/tokens";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { expect, fn, waitFor } from "storybook/test";
+import { FOCUS_GUARD } from "../.storybook/focus-guard.ts";
 import {
 	apart,
 	around,
@@ -578,8 +579,20 @@ export const GlyphFramesAtTouch = glyphFrames("touch");
 
 // Each generated name frame holds its graph in the overview: every glyph names
 // its node, inside the pane, none cut by it.
+// A dimmed node's name draws disabled ink on purpose, as its text does, and sits in an enabled
+// button: the exclusion `.storybook/state-stories.tsx` gives the state stories.
 export const NameFramesAtDesktop: StoryObj = {
 	globals: { density: "desktop" },
+	parameters: {
+		a11y: {
+			context: {
+				exclude: [
+					FOCUS_GUARD,
+					'[data-cell^="Canvas/CANVAS_NODE_NAME.tone.dimmed/"] [data-layer] button',
+				],
+			},
+		},
+	},
 	render: () => {
 		const frames = showcaseFrames().filter(
 			(frame) =>

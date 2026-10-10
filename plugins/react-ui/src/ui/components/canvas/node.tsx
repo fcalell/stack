@@ -72,9 +72,12 @@ const GLYPH =
 // `pair` out, clear of the marks that straddle the glyph's corners, and scales
 // with the glyph, so it keeps the floor size on screen at any zoom.
 const NAME = "absolute start-full top-1/2 -translate-y-1/2 ms-pair";
-const MARK = "absolute flex -right-inside";
-const MARK_TOP = "-top-inside";
-const MARK_BOTTOM = "-bottom-inside";
+// An absolute mark is placed from the glyph's padding box, inside its border, so
+// each offset takes the border's pixel back to stand `inside` past the glyph's
+// outer edge.
+const MARK = "absolute flex -right-inside -mr-px";
+const MARK_TOP = "-top-inside -mt-px";
+const MARK_BOTTOM = "-bottom-inside -mb-px";
 const GLYPH_INK = {
 	rest: "text-ink-body",
 	off: "text-ink-meta",

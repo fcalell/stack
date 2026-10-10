@@ -131,7 +131,8 @@ export const px = (role: string): number =>
 
 // The lowest zoom at which two glyphs of `glyph` px stand `2 * pair` apart,
 // read off the laid-out cards: the glyph and that gap over the smallest centre
-// distance (the larger of the two axes) in the layer's own units.
+// distance (the larger of the two axes) in the layer's own units, less the pair
+// the routing boxes round up by (`minZoomFor`).
 export function lowestZoom(root: Element, glyph: number): number {
 	const scale = viewport(root).scale;
 	const boxes = [...cards(root)].map((each) => centre(rect(each)));
@@ -143,7 +144,11 @@ export function lowestZoom(root: Element, glyph: number): number {
 				Math.max(Math.abs(one.x - two.x), Math.abs(one.y - two.y)) / scale,
 			);
 	});
-	return Math.min(1, Math.max(0.1, (glyph + 2 * px("pair")) / nearest));
+	const pair = px("pair");
+	return Math.min(
+		1,
+		Math.max(0.1, (glyph + 2 * pair) / Math.max(nearest - pair, 1e-9)),
+	);
 }
 
 // After Fit, and after Arrange's fit, no node's box (and no glyph) meets the
