@@ -12,7 +12,7 @@ Found by the critique of 003-193.
 
 ## Acceptance criteria
 - [x] A directory that gives way keeps at least a leading ellipsis or is gone whole, never a sub-pixel span: at 320 and 390 every checked row shows the directory with an ellipsis or the name alone with no empty span.
-- [x] The chip label yields last: the counts go down to their text first, then the path to its floor (the directory kept as an ellipsis), and only then does the chip's label truncate with an ellipsis; the row never overflows, the tail stays whole, and at 390 and wider the label is whole. At 320 (desktop, touch, in a Group) `biome.json` cannot hold the 129 px label whole beside its floor (79) and the counts' text (45), so the label truncates there by design.
+- [x] The chip label yields last: the counts go down to their text first, then the path to its floor (the directory kept as an ellipsis), and only then does the chip's label truncate with an ellipsis; the row never overflows, the tail stays whole, and at 390 desktop and at 768 the label is whole. At 320 (desktop, touch, in a Group) `biome.json` cannot hold the 129 px label whole beside its floor (79) and the counts' text (45), so the label truncates there by design; at touch 390 the long `docs/billing/…` row's label is 5 px short (137 needed, 132 left beside the two-character directory lead), cut by the same order.
 - [x] The tail stays whole as before.
 - [x] The floor stories (biome.json 78/90 px) pass.
 
@@ -37,3 +37,6 @@ Review finding: at 320 the one-character directory box drew the first letter and
 `behaviour/row-meta.stories.tsx`: the `ReviewFloor*` play now measures a probe in the directory's own font holding its first character and an ellipsis, and asserts a cut directory's box is at least that wide and overflows its text (a sliver box fails). Browser run: row-meta and section-more, 26 tests, pass.
 
 Cost, flagged: on touch the lead is 22 px, which leaves the long billing row's label (137 px) 5 px short of whole at 390 (132 px), so `ReviewFloorTouch390` allows the cut under the same rule as at 320 (only once the path stands at its floor and the counts at their text). Desktop 390 and 768 and touch 768 stay whole. The owner may rule whether that row's label must stay whole at touch 390 (it would need a lead under two characters, which CSS cannot draw).
+
+## Ruled (rework)
+The directory's visible cut mark wins over a whole label at touch 390: a cut directory needs its first character and the ellipsis (CSS keeps one grapheme before the ellipsis), and the label truncating last is the order the owner ruled; the box is reworded to the widths where the label is whole.
