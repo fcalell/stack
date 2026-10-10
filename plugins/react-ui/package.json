@@ -31,6 +31,8 @@
 		"./lib/code": "./src/ui/lib/code.tsx",
 		"./lib/field-wait": "./src/ui/lib/field-wait.tsx",
 		"./lib/not-found": "./src/ui/lib/not-found.tsx",
+		"./lib/option-wait": "./src/ui/lib/option-wait.tsx",
+		"./lib/slider-wait": "./src/ui/lib/slider-wait.tsx",
 		"./lib/words": "./src/ui/lib/words.tsx",
 		"./lib/*": "./src/ui/lib/*.ts",
 		"./showcase/foundations": "./src/ui/showcase/foundations.tsx",

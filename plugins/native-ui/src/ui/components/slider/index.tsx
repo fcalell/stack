@@ -19,7 +19,7 @@ import { FieldDisabled } from "../../lib/field";
 import { GroundContext } from "../../lib/ground";
 import { useGroupPart } from "../../lib/group";
 import { LoadingContext } from "../../lib/loading";
-import { SliderWait } from "./wait";
+import { SliderWait } from "../../lib/slider-wait";
 
 /** A number picked along a range, its label over the track. */
 export interface SliderProps extends Closed {

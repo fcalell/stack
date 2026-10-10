@@ -6,7 +6,6 @@ import {
 	listState,
 	type OneChoice,
 	type OptionChoice,
-	type OptionShape,
 	type OptionSlots,
 	optionBlocked,
 	optionShape,
@@ -26,8 +25,6 @@ import {
 	ROW_META_LINE,
 	row,
 	SELECT_GROUP,
-	skeleton,
-	skeletonLane,
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
@@ -37,6 +34,7 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FieldDisabled, GroupName, LabelTarget } from "../../lib/field";
 import { navigate } from "../../lib/navigate";
+import { OptionWait } from "../../lib/option-wait";
 import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 import { Button } from "../button";
@@ -67,20 +65,6 @@ const RADIO = "shrink-0 items-center justify-center";
 const CHILDREN = "flex-row";
 const INDENT = "shrink-0";
 const CHILDREN_BODY = "flex-1 min-w-0";
-// Loading, each row keeps its height: a box-sized skeleton on the label's
-// line, and a bar at a label's length in a short label's lane on each line
-// the row draws, a strut setting each line's height.
-const LABEL_WAIT = "flex-row items-center";
-const STRUT_BAR = "flex-row items-center grow min-w-0";
-const BAR_ROOM = "flex-row grow min-w-0";
-const ROW_WAIT = "flex-row items-center";
-const LABEL_BAR = "w-1/3";
-const ROW_BARS = [
-	["w-1/3", "w-1/2"],
-	["w-2/3", "w-1/3"],
-	["w-2/3", "w-1/2"],
-	["w-1/2", "w-1/4"],
-] as const;
 // The failed, missing and empty lines: the sentence, and Retry or Back at its
 // end.
 const NOTE = "flex-row items-center";
@@ -150,68 +134,6 @@ function GroupLabel({ children }: { children: string }) {
 	);
 }
 
-// The waiting rows in the slots the options declare, each led by the mark
-// its form draws (a box, or a radio's ring): a group label's bar over them
-// when they stand under labels, a description bar under each label when they
-// are described.
-function Wait({
-	shape,
-	mark,
-}: {
-	shape: OptionShape;
-	mark: "check" | "radio";
-}) {
-	return (
-		<View className={SELECT_GROUP}>
-			{shape.group ? (
-				<View className={cn(OPTION_GROUP_LABEL, LABEL_WAIT)}>
-					<Strut role="meta" />
-					<View className={cn(skeletonLane({ role: "meta" }), BAR_ROOM)}>
-						<View className={cn(skeleton({ kind: "line" }), LABEL_BAR)} />
-					</View>
-				</View>
-			) : null}
-			{ROW_BARS.map(([label, description], at) => (
-				<View
-					// biome-ignore lint/suspicious/noArrayIndexKey: fixed stand-ins
-					key={at}
-					className={cn(
-						row({ lines: shape.description ? "two" : "one" }),
-						ROW_WAIT,
-					)}
-				>
-					<View className={cn(OPTION_LINE, LINE)}>
-						<View className={BOX_LINE}>
-							<Strut role="body" />
-							<View className={skeleton({ kind: mark })} />
-						</View>
-						<View className={TEXT}>
-							<View className={STRUT_BAR}>
-								<Strut role="body" />
-								<View className={cn(skeletonLane({ role: "body" }), BAR_ROOM)}>
-									<View className={cn(skeleton({ kind: "line" }), label)} />
-								</View>
-							</View>
-							{shape.description ? (
-								<View className={cn(ROW_META_LINE, STRUT_BAR)}>
-									<Strut role="meta" />
-									<View
-										className={cn(skeletonLane({ role: "meta" }), BAR_ROOM)}
-									>
-										<View
-											className={cn(skeleton({ kind: "line" }), description)}
-										/>
-									</View>
-								</View>
-							) : null}
-						</View>
-					</View>
-				</View>
-			))}
-		</View>
-	);
-}
-
 // Option rows on a hairline card, each the Checkbox (several choices) or the
 // radio (one choice, a radiogroup) on its label's
 // first line, a description and the recommended mark on the line under it;
@@ -255,7 +177,7 @@ export function OptionList<V extends string = string, T = unknown>(
 	);
 	if (state === "pending")
 		return frame(
-			<Wait
+			<OptionWait
 				shape={
 					props.option ? optionShape(props.option) : optionsShape(props.options)
 				}

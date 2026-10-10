@@ -10,6 +10,7 @@ import {
 	optionShape,
 	optionsOf,
 	optionsShape,
+	optionsWaitOf,
 	type SetChoice,
 } from "../src/list-state.ts";
 import { ROSTER } from "../src/roster.ts";
@@ -60,6 +61,39 @@ test("a static set waits in the shape its options hold", () => {
 			{ label: "G", options: [{ value: "a", label: "A", description: "d" }] },
 		]),
 		{ description: true, group: true },
+	);
+});
+
+test("a waiting field's option list stands the rows its source declares", () => {
+	assert.deepEqual(
+		optionsWaitOf({
+			options: [
+				{ value: "a", label: "A" },
+				{ value: "b", label: "B", description: "d" },
+			],
+		}),
+		{ rows: [2], described: true, grouped: false },
+	);
+	assert.deepEqual(
+		optionsWaitOf({
+			options: [
+				{ label: "G", options: [{ value: "a", label: "A" }] },
+				{
+					label: "H",
+					options: [
+						{ value: "b", label: "B" },
+						{ value: "c", label: "C" },
+					],
+				},
+			],
+		}),
+		{ rows: [1, 2], described: false, grouped: true },
+	);
+	assert.deepEqual(
+		optionsWaitOf({
+			option: { description: (scope: Scope) => scope.about },
+		}),
+		{ rows: [4], described: true, grouped: false },
 	);
 });
 

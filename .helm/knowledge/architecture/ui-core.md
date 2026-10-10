@@ -698,8 +698,17 @@ a tick with no animation, never jumped to full.
   overlay since positioning and the bleed are platform overlays), so the bar stays at the
   scroller's bottom edge and stands at the form's end when the form fits. The pane takes no
   `submit` and nothing lifts the bar out of the Form, so its pending state, Enter-to-submit and
-  `SubmitContext` stay the Form's. The phone's Details sheet has no `sticky`; its bar scrolls with
-  the body.
+  `SubmitContext` stay the Form's. The phone has no `sticky`: a native `Form` in any sheet
+  (`FormStands` `sheet`) lifts its direct `ActionBar` (`liftBars`, through fragments) into the
+  sheet's own foot slot, a store the sheet subscribes to (as it does its parts) so setting it never
+  re-renders the Form. The Form sets the slot each render in a layout effect, the bar wrapped in
+  the Form's `FormContext`, `TouchedContext` and `LoadingContext` (the blocked reason and the
+  touched state still work in the footer's tree), and clears it on unmount; the sheet is `footed`
+  when `foot`, `acts` or the slot is set and the foot draws the sheet's `acts`, then the slot's bar.
+  Uncapped the foot stands at the content's end, where the bar stood, so a short form is unchanged;
+  capped or full height it moves into gorhom's footer and stays on screen while the fields scroll.
+  A sheet-level `submit` would not do: a Form's bar can hold several acts. A docked sheet has no
+  slot, and its Form's bar stays in flow.
 - A record the main opened is the Split's `beside`: a `Screen` whose `back` is the main's route,
   given by the consumer because the route's depth differs by surface and no component can derive it.
   From `wide` of the page the list, the main and the beside record stand together, main and beside
@@ -1382,8 +1391,14 @@ a tick with no animation, never jumped to full.
   stands a skeleton field (`lib/field-wait`, the markup the Section's counted fields share) for
   each `FormField` it holds, through fragments, with the field mounted hidden in its place. A
   skeleton field takes the form of the field it stands for (`FieldShape` in `./list-state`: a
-  switch's box at the label's end, a checkbox's on the label's line, a description's bar), read
-  off the field's element by the platform's `fieldWaitOf` in `form-field`: the Section's walker
+  switch's box at the label's end, a checkbox's on the label's line, a slider's own head over its
+  track (`lib/slider-wait`), an option list's card of waiting rows (`lib/option-wait`: a static
+  list one row per option under a group label's bar per group, a query list four rows in the slots
+  its `option` map declares; the `children` under a chosen option are unknown before data and not
+  counted), a segmented control's track, an answered field's one summary row, a description's
+  bar; a Select's trigger waits as the plain field, measured), read
+  off the field's element by the platform's `fieldWaitOf` in `form-field` (an `answered` field
+  outranks its control; the lib files import no component): the Section's walker
   hands it the `FormField` elements it counts (`fieldNodes`), the Form its own. The
   Section's walker does not read through a Form: counting its fields would hide the body and with
   it the `ActionBar`'s waiting form. A direct `ActionBar` beside counted fields (no `Form`) is

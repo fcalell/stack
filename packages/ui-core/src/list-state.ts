@@ -511,12 +511,35 @@ export interface SectionParts {
 
 // What a waiting field is told of the field it stands in for, known before
 // its data: the form its control gives it (a switch at its label's end, a
-// checkbox on its label's first line, any other under the label) and whether
-// a description stands under it.
+// checkbox on its label's first line, a slider that labels itself, an option
+// list's card of rows, segments, an answered field's one summary row, any
+// other under the label) and whether a description stands under it. A list
+// of options also carries the rows it will draw.
 export interface FieldShape {
-	holds: "field" | "switch" | "checkbox";
+	holds:
+		| "field"
+		| "switch"
+		| "checkbox"
+		| "slider"
+		| "options"
+		| "segments"
+		| "folded";
 	described: boolean;
+	options?: OptionsWait;
 }
+
+// An option list's waiting card: the rows under each group label (one entry
+// when ungrouped), whether a row draws a description line, and whether a
+// label's bar stands over each group.
+export interface OptionsWait {
+	rows: number[];
+	described: boolean;
+	grouped: boolean;
+}
+
+// The rows a query's waiting option list stands: its options are unknown
+// before the data.
+export const OPTION_WAIT_ROWS = 4;
 
 export interface SectionState {
 	// The head is busy: the Section loads or any part of its body waits.
@@ -601,6 +624,32 @@ export function optionsShape(
 			group.options.some((option) => option.description !== undefined),
 		),
 		group: isGrouped(options),
+	};
+}
+
+// An option list's waiting card, read off its props before any data: a static
+// set stands one row per option (under a group label's bar per group), a
+// query the four rows its `option` map's slots shape.
+export function optionsWaitOf(source: {
+	options?: readonly Option<string>[] | readonly OptionGroup<string>[];
+	option?: { description?: unknown; group?: unknown };
+}): OptionsWait {
+	const { options, option } = source;
+	if (options === undefined || option !== undefined) {
+		const shape = optionShape(option ?? {});
+		return {
+			rows: [OPTION_WAIT_ROWS],
+			described: shape.description,
+			grouped: shape.group,
+		};
+	}
+	const shape = optionsShape(options);
+	return {
+		rows: isGrouped(options)
+			? options.map((group) => group.options.length)
+			: [options.length],
+		described: shape.description,
+		grouped: shape.group,
 	};
 }
 
