@@ -11,6 +11,7 @@ import {
 	HOLLOW_ALONE,
 	HOLLOW_PLACED,
 	LIFT_MS,
+	PLACED_STAGE,
 	PROBLEM,
 	SLOP,
 	STAGE,
@@ -1141,7 +1142,7 @@ export const HollowGroupDark = mode("dark", hollow);
 // a tap on a head chooses its group.
 const hollowPlaced: Story = {
 	render: (args: Heard) => (
-		<div className={STAGE}>
+		<div className={PLACED_STAGE}>
 			<Canvas
 				label="Placed loop"
 				nodes={HOLLOW_PLACED.nodes}

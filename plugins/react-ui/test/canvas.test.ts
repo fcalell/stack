@@ -1582,6 +1582,48 @@ test("a fit with a foot holds the bounds and the text under them whole in the pa
 	assert.ok(lone.x >= 0 && lone.x + 240 <= pane.width);
 });
 
+test("openTransform opens at the text floor: scale 1 whatever the pane, the first box whole against the page insets", () => {
+	const clear = { left: 68, bottom: 16, stack: 180 };
+	// A lone frame the room cannot hold, in a pane too short for the stack under
+	// it: it still opens at scale 1 (the old fit shrank it to 0.447), at the
+	// top-left inset when the pane is not wide enough for insets on both sides.
+	const frame = box(0, 0, 240, 64);
+	const pane = { width: 263, height: 224 };
+	const lone = openTransform(frame, frame, pane, 16, clear);
+	assert.deepEqual(lone, { k: 1, x: 16, y: 16 });
+	// A first box that fits between the insets keeps the room's centre line.
+	const wide = openTransform(
+		box(0, 0, 1000, 1000),
+		box(0, 0, 100, 40),
+		{
+			width: 400,
+			height: 300,
+		},
+		16,
+	);
+	assert.equal(wide.k, 1);
+	assert.equal(wide.x + 50, 200);
+	// The room's centre line would put it past the right inset: it stops there.
+	const right = openTransform(
+		box(0, 0, 1000, 1000),
+		box(700, 0, 240, 40),
+		{ width: 300, height: 300 },
+		16,
+		{ left: 100, bottom: 16, stack: 0 },
+	);
+	assert.equal(right.x + 940, 300 - 16);
+	// The first node with its group frame: the frame's top and left stand at the insets.
+	const framed = openTransform(
+		box(0, 0, 400, 900),
+		box(-20, -30, 280, 200),
+		{ width: 263, height: 400 },
+		16,
+	);
+	assert.equal(framed.k, 1);
+	assert.equal(framed.x - 20, 16);
+	assert.equal(framed.y - 30, 16);
+});
+
 test("emptyGroups names the groups holding no present node and no group, and not the group that frames one", () => {
 	const groups: CanvasGroup[] = [
 		{ id: "loop", head: "Loop", holds: ["gone", "a"] },

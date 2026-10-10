@@ -103,8 +103,6 @@ export interface Foot {
 	width: number;
 }
 
-const NO_FOOT: Foot = { gap: 0, height: 0, width: 0 };
-
 // The transform that stands the bounds and their foot whole in the pane, inset
 // on every side: the foot is centred under the bounds, whose centre moves from
 // the room's centre only as far as the foot needs to stay inside the pane, and
@@ -173,9 +171,15 @@ export function fitTransform(
 	return { k, x: centre.x + area.x, y: centre.y + area.y };
 }
 
-// What a graph opens at, in the room the pane leaves (as a fit does): centred
-// at scale 1 when it fits there, else at scale 1 with the first node's top
-// centre on the room's centre line, `inset` below its top.
+// What a graph opens at, in the room the pane leaves (as a fit does). The text
+// floor comes first: the scale is the larger of the floor's (a node at its own
+// size, 1) and the one that fits the bounds, and a fit never exceeds 1, so a
+// graph opens at 1. It is centred in the room when it fits there. Else the
+// floor wins and `first` (the first node with the group that holds it) stands
+// whole at the top, its top `inset` below the pane's top, on the room's centre
+// line as far as the pane's insets allow and against the left inset when it is
+// as wide as the pane; whatever else the graph holds may reach past the right
+// or bottom edge, a pan or a zoom away.
 export function openTransform(
 	bounds: Box,
 	first: Box | undefined,
@@ -186,19 +190,17 @@ export function openTransform(
 ): Transform {
 	if (foot) return footTransform(bounds, pane, inset, clear, foot);
 	const area = room(pane, inset, clear);
-	// A graph of one box that the room cannot hold but the pane can opens as a
-	// fit does, so its card stands whole and clear of the chrome.
-	const lone = first?.width === bounds.width && first.height === bounds.height;
-	if (lone && bounds.width <= pane.width && bounds.width > area.width)
-		return footTransform(bounds, pane, inset, clear, NO_FOOT);
 	const fits = bounds.width <= area.width && bounds.height <= area.height;
 	if (fits || !first) {
 		const centre = centredTransform(bounds, 1, area);
 		return { k: 1, x: centre.x + area.x, y: centre.y + area.y };
 	}
+	const low = inset - first.x;
+	const high = pane.width - inset - (first.x + first.width);
+	const middle = area.x + area.width / 2 - (first.x + first.width / 2);
 	return {
 		k: 1,
-		x: area.x + area.width / 2 - (first.x + first.width / 2),
+		x: low > high ? low : Math.min(Math.max(middle, low), high),
 		y: area.y - first.y,
 	};
 }

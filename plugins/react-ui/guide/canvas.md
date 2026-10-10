@@ -52,8 +52,8 @@ A plain wheel pans, Ctrl or Cmd with the wheel zooms (a trackpad pinch is a Ctrl
 pans, even from a node (with `onMove` a drag from a node moves that node instead), one finger pans
 and two pinch. The zoom stack at the bottom left zooms in, zooms out and fits: Fit shows the whole
 graph, never larger than its own size and clear of the zoom stack and the `act`. A graph that fits at its own size opens centred in the room the zoom stack and the `act` leave,
-so no node opens under them; a larger one opens at its own size with its first node, in path
-order, at the top centre of that room.
+so no node opens under them; a larger one opens at its own size (the text floor comes first, so a graph never opens zoomed out) with its first node, in path
+order, and the group that holds it whole at the top: on the centre line of that room as far as a page inset on each side allows, against the left inset when it is as wide as the pane. The rest may stand past the right or bottom edge, a pan away.
 
 ## Where the nodes stand
 
