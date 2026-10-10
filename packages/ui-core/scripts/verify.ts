@@ -1025,14 +1025,14 @@ check(
 		}
 		requireEqual(fine["--spacing-control"], "32px", "desktop control");
 		requireEqual(touch["--spacing-control"], "44px", "touch control");
-		requireEqual(fine["--spacing-target"], "24px", "desktop target");
+		requireEqual(fine["--spacing-target"], "28px", "desktop target");
 		requireEqual(touch["--spacing-target"], "44px", "touch target");
-		// A one-line body row lands on the row height with its padding: 20 + 2 × 6.
-		requireEqual(
-			Number.parseInt(fine["--leading-body"] ?? "", 10) +
-				2 * Number.parseInt(fine["--spacing-inside"] ?? "", 10),
-			32,
-			"desktop body line plus inside",
+		// A one-line body row holds its line box with room to spare: the line
+		// is under the row height (22 in 32), so the row's min-height decides.
+		assert(
+			Number.parseInt(fine["--leading-body"] ?? "", 10) <=
+				Number.parseInt(fine["--spacing-row"] ?? "", 10),
+			"desktop body line fits the row",
 		);
 		return "touch 44/48/38 seeded, desktop 32/28/38 beside it, the type scale moves with them";
 	},

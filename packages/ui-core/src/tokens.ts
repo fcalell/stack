@@ -621,7 +621,7 @@ export type FontWeight = "regular" | "medium" | "semibold";
 // The body size per density, the one base of the scale: 16 is also the
 // input size below which iOS Safari zooms on focus.
 export const BODY_SIZE: Record<Density, number> = {
-	desktop: 13,
+	desktop: 14,
 	touch: 16,
 	room: 16,
 };
@@ -823,9 +823,9 @@ export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
 
 // Heights and squares, in the `--spacing-*` namespace so a cell names them as
 // it names a role (`min-h-control`, `size-avatar`). Desktop: control 32,
-// compact 28 (menus, toolbars), field 38, one-line row 32, two-line row 48,
+// compact 28 (menus, toolbars), field 38, one-line row 32, two-line row 52,
 // setting row 64, strip 40 (a page header bar: the title and its acts),
-// target 24, indent 16 (a tree row's step in, one per level). `port` is a canvas
+// target 28, indent 16 (a tree row's step in, one per level). `port` is a canvas
 // port's drawn size, 8 at every density, so it stands over the 6 dot. Touch: every
 // target at least 44, indent 20. An
 // icon is sized by what it sits beside: `icon-meta` meta or caption text,
@@ -963,25 +963,25 @@ export const SIZE_PX: Record<
 		"control-compact": 28,
 		field: 38,
 		row: 32,
-		"row-2": 48,
+		"row-2": 52,
 		"row-setting": 64,
 		strip: 40,
-		target: 24,
+		target: 28,
 		indent: 16,
 		dot: 6,
 		port: 8,
-		chip: 20,
+		chip: 22,
 		avatar: 24,
 		spinner: 14,
-		"switch-w": 28,
-		"switch-h": 16,
-		thumb: 12,
+		"switch-w": 32,
+		"switch-h": 18,
+		thumb: 14,
 		"switch-inset": 2,
 		skeleton: 12,
-		"icon-meta": 12,
-		icon: 14,
-		"icon-control": 16,
-		check: 16,
+		"icon-meta": 14,
+		icon: 16,
+		"icon-control": 18,
+		check: 18,
 		track: 2,
 		otp: 44,
 		meter: 6,
@@ -1029,9 +1029,9 @@ export const RING_OFFSET_PX = 2;
 // An icon's stroke, in units of Lucide's 24-unit grid, so it scales with the
 // icon: `line` is an icon's own weight (Lucide's default), `mark` the weight
 // of a mark that carries meaning at the meta icon size (a checkbox's tick or
-// dash, a change mark's glyph), where `line` draws 1 px at 12 px, straddling
-// two pixel rows at half coverage. `mark` is 3.5 units, 1.75 px at 12 px and
-// 2.04 px at 14 px. Both platforms pass it as the glyph's `strokeWidth`; no
+// dash, a change mark's glyph), where `line` draws 1.17 px at 14 px, straddling
+// two pixel rows at partial coverage. `mark` is 3.5 units, 2.04 px at 14 px
+// (the meta icon size at either density). Both platforms pass it as the glyph's `strokeWidth`; no
 // component spells a stroke literal.
 export const ICON_STROKE = { line: 2, mark: 3.5 } as const;
 export type IconStroke = keyof typeof ICON_STROKE;

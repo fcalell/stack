@@ -295,32 +295,32 @@ insets.
 Thirty-seven sizes per density sit in the same `--spacing-*` namespace, so a cell names them as it
 names a role (`min-h-control`, `size-avatar`), and nothing is spaced by them. Desktop then touch:
 `control` 32 / 44 (a button, a segmented control), `control-compact` 28 / 44 (a menu item, a toolbar
-control), `field` 38 / 48 (a form input), `row` 32 / 48 (a one-line row), `row-2` 48 / 64 (a
+control), `field` 38 / 48 (a form input), `row` 32 / 48 (a one-line row), `row-2` 52 / 64 (a
 two-line row), `row-setting` 64 / 72 (a setting row), `strip` 40 / 44 (a page header bar: a Place's
-or Screen's title and acts), `target` 24 / 44 (the least hit area of any interactive part), `indent`
+or Screen's title and acts), `target` 28 / 44 (the least hit area of any interactive part), `indent`
 16 / 20 (a tree row's step in, one per level, a hairline rail on its end), `dot` 6 / 8, `port` 8 / 8 (a canvas
-port's drawn size, over the dot), `chip` 20 /
-24, `avatar` 24 / 32, `spinner` 14 / 18 (the `icon` rung), `switch-w` 28 / 40, `switch-h` 16 / 24,
-`thumb` 12 / 20, `switch-inset` 2 / 2, `switch-travel` 12 / 16 (the thumb's travel, derived:
-`switch-w` less `thumb` and both insets), `skeleton` 12 / 12, `icon-meta` 12 / 14 (an icon beside
-meta or caption text), `icon` 14 / 18 (beside body text), `icon-control` 16 / 20 (inside a control),
-`check` 16 / 20 (a checkbox's box), `track` 2 / 4 (a slider's track thickness), `otp` 44 / 48 (a
-one-time-code box, square), `text-area` 60 / 72 (a text area's least value height, derived: three
+port's drawn size, over the dot), `chip` 22 /
+24, `avatar` 24 / 32, `spinner` 14 / 18 (the `icon` rung), `switch-w` 32 / 40, `switch-h` 18 / 24,
+`thumb` 14 / 20, `switch-inset` 2 / 2, `switch-travel` 14 / 16 (the thumb's travel, derived:
+`switch-w` less `thumb` and both insets), `skeleton` 12 / 12, `icon-meta` 14 / 14 (an icon beside
+meta or caption text), `icon` 16 / 18 (beside body text), `icon-control` 18 / 20 (inside a control),
+`check` 18 / 20 (a checkbox's box), `track` 2 / 4 (a slider's track thickness), `otp` 44 / 48 (a
+one-time-code box, square), `text-area` 66 / 72 (a text area's least value height, derived: three
 body line boxes), `meter` 6 / 8 (a meter's bar), `chart` 128 / 192 (a chart's plot, its gridlines
-four bands), `qr` 160 / 240 (a QR code's square, its quiet zone inside it), `figures` 29 / 36 (four
+four bands), `qr` 160 / 240 (a QR code's square, its quiet zone inside it), `figures` 32 / 36 (four
 tabular figures at the code size: a diff's number columns, a file row's count lanes; derived at
-`MONO_ADVANCE`, Plex Mono's 0.6 em, rounded up, since native has no `ch`), `message-input` 160 / 192
+`MONO_ADVANCE`, Plex Mono's 0.6 em, rounded up, since native has no `ch`), `message-input` 176 / 192
 (a message input's tallest text, derived: eight body line boxes, the text scrolling past it),
-`image-tile` 80 / 96 (an image thumbnail's side, derived: four body line boxes, the lines of
-provenance it stands beside), `image-cap` 400 / 480 (the tallest an image grows at its container's
+`image-tile` 88 / 96 (an image thumbnail's side, derived: four body line boxes, the lines of
+provenance it stands beside), `image-cap` 440 / 480 (the tallest an image grows at its container's
 width, derived: twenty body line boxes; `thumb` is the switch's knob, so neither image size takes
-that name), `line-body` 20 / 24 (one body line's box, derived: the height a part standing on a
+that name), `line-body` 22 / 24 (one body line's box, derived: the height a part standing on a
 wrapped title's first line is pinned to, so a taller part overflows it centred), `hairline` 1 / 1 (a
 field box's border, which an act inside it reaches across so its hit stands at the box's height)
-`chips-inset` 3 / 9 (the inset above and below the chips of a pick of several, derived: half of
-what the compact control has over a chip, less the border), `measure` 453 / 557 (the width of
+`chips-inset` 2 / 9 (the inset above and below the chips of a pick of several, derived: half of
+what the compact control has over a chip, less the border), `measure` 488 / 557 (the width of
 running text, derived: 58 characters at the sans face's figure advance of the body size, so every
-role of text stands at one width) and `measure-inset` 501 / 589 (the measure and the page inset on
+role of text stands at one width) and `measure-inset` 536 / 589 (the measure and the page inset on
 both sides: the width a padded column stands at so its content is the measure, a Split's open
 record). On touch every target is at least 44. A cell says `min-h`, never `h`: a
 label must be able to grow its control under OS font scaling. A minimum height is the floor of

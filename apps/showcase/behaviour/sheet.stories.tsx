@@ -457,8 +457,8 @@ function pairGap(title: HTMLElement, description: HTMLElement) {
 	);
 }
 
-// A docked title is the container's name: the `heading` role (15/600), over a
-// Section in its body that reads a level below (13/600), and the description
+// A docked title is the container's name: the `heading` role (16/600), over a
+// Section in its body that reads a level below (14/600), and the description
 // follows the title a pair below.
 export const DockedTitleOutranksItsBody: StoryObj = {
 	parameters: { layout: "fullscreen" },
@@ -484,8 +484,8 @@ export const DockedTitleOutranksItsBody: StoryObj = {
 			name: "Question 1 of 2",
 		});
 		const section = canvas.getByText("Which environment?");
-		expect(sized(title)).toBe("15px 600");
-		expect(sized(section)).toBe("13px 600");
+		expect(sized(title)).toBe("16px 600");
+		expect(sized(section)).toBe("14px 600");
 		const pair = Number.parseFloat(
 			getComputedStyle(document.documentElement).getPropertyValue(
 				"--spacing-pair",
@@ -529,8 +529,8 @@ export const SectionInModalSheet: StoryObj = {
 		// The modal head styles the span inside its heading.
 		const text = title.firstElementChild;
 		if (!(text instanceof HTMLElement)) throw new Error("no title text");
-		expect(sized(text)).toBe("15px 600");
-		expect(sized(screen.getByText("Details"))).toBe("13px 600");
+		expect(sized(text)).toBe("16px 600");
+		expect(sized(screen.getByText("Details"))).toBe("14px 600");
 	},
 };
 

@@ -1318,12 +1318,12 @@ test("elkGraph ignores the positions the nodes carry", () => {
 });
 
 test("the text floor is the caption's size, and a zoom is below it under exactly zoom 1", () => {
-	assert.equal(TEXT_FLOOR, 11);
+	assert.equal(TEXT_FLOOR, 12);
 	assert.equal(belowFloor(1, TEXT_FLOOR, TEXT_FLOOR), false);
 	assert.equal(belowFloor(1 - 1e-9, TEXT_FLOOR, TEXT_FLOOR), true);
 	assert.equal(belowFloor(2, TEXT_FLOOR, TEXT_FLOOR), false);
-	assert.equal(belowFloor(0.5, 22, 11), false);
-	assert.equal(belowFloor(0.49, 22, 11), true);
+	assert.equal(belowFloor(0.5, 24, 12), false);
+	assert.equal(belowFloor(0.49, 24, 12), true);
 });
 
 test("a glyph is the control size of its density", () => {
@@ -1370,14 +1370,14 @@ test("minZoomFor on the workflow keeps every pair of glyphs a gap of 2 * pair ap
 
 test("the overview floor is a half, and a name is capped at the short measure of the caption", () => {
 	assert.equal(OVERVIEW_FLOOR, 0.5);
-	// 18 characters at 0.6 of an 11 px caption, rounded up; the touch caption is larger.
-	assert.equal(nameCap(false), 119);
+	// 18 characters at 0.6 of a 12 px caption, rounded up; the touch caption is larger.
+	assert.equal(nameCap(false), 130);
 	assert.ok(nameCap(true) > nameCap(false));
 });
 
 test("overviewFloorFor keeps two overview forms apart by the nearer of the two axes, never under the overview floor", () => {
 	const at = (x: number, y: number) => box(x - 100, y - 20, 200, 40);
-	const form = 32 + PAIR + 119;
+	const form = 32 + PAIR + 130;
 	const air = 2 * PAIR;
 	// Far apart: the floor stands at the overview's own.
 	assert.equal(

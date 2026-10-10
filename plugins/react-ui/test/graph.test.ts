@@ -112,11 +112,11 @@ test("a fine pointer at tablet width draws the desktop set, and data-density pin
 	const desktop = (await defaults()).get(".stack/app.css") ?? "";
 	assert.match(
 		desktop,
-		/:root\[data-density="desktop"\] \{\n\t--text-display: 36px;/,
+		/:root\[data-density="desktop"\] \{\n\t--text-display: 39px;/,
 	);
 	assert.match(
 		desktop,
-		/@media \(pointer: fine\) and \(width >= 768px\) \{\n:root \{\n\t--text-display: 36px;/,
+		/@media \(pointer: fine\) and \(width >= 768px\) \{\n:root \{\n\t--text-display: 39px;/,
 	);
 	assert.match(
 		desktop,
