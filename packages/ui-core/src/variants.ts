@@ -631,6 +631,13 @@ export const PROSE_DIFF_TEXT = "max-w-measure";
 export const FILE_PATH = "text-code leading-code font-mono";
 export const FILE_COUNTS =
 	"gap-inside tabular-nums text-meta leading-meta font-normal";
+// The web's counts give way once the path stands at its floor, before the
+// chip's label truncates: each lane, a flex item of the row (its block stands
+// as `display: contents`), shrinks at a weight (10^5) between the path's (10^7)
+// and the chip's (1), from its four figures down to its own text. A lane keeps
+// four figures while the row has the room, so the lanes line up down a list.
+// (A phone's flex items do not shrink: its lanes keep their width.)
+export const FILE_COUNT_YIELD = "basis-figures shrink-100000 min-w-min";
 // Comparison: its own row, not a list row, so a wrapped value keeps its air;
 // the label beside its chips.
 export const COMPARISON_ROW = "gap-pair min-h-row py-inside px-card";
@@ -808,7 +815,7 @@ export const CANVAS_PORT =
 	"size-port rounded-full border border-edge-strong bg-surface";
 export const CANVAS_PORT_HIT = "size-target";
 export const CANVAS_GROUP_HEAD =
-	"gap-inside px-control-x py-inside min-h-target rounded-t-card bg-group text-meta leading-meta font-normal text-ink-meta";
+	"gap-inside px-control-x py-inside min-h-target rounded-t-card border border-transparent bg-group text-meta leading-meta font-normal text-ink-meta";
 export const CANVAS_ZOOM = "rounded-control border border-edge bg-surface";
 
 // ── Layout ──────────────────────────────────────────────────────────
@@ -940,6 +947,9 @@ export const SPLIT_BESIDE = "grow basis-0";
 // (a web overlay pulls it back).
 export const SECTION_HEAD = "gap-pair";
 export const SECTION_HEAD_ROW = "gap-fields";
+// The head's act and its more stand the gap a list row's do (`ROW_ACTS`), so the
+// more's wash does not meet the act's border.
+export const SECTION_ACTS = "gap-acts";
 // A section's body: its parts (a Prose, a Code, a Group, an ActionBar) stand
 // at the fields rhythm, wider than the head's pair; rows inside a Group keep
 // the Group's own tight spacing.

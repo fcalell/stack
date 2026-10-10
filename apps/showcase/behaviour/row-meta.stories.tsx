@@ -363,41 +363,93 @@ const drawn = (element: Element) => {
 };
 const whole = (element: Element) =>
 	drawn(element) <= element.getBoundingClientRect().width;
+// A label is drawn whole only if its text fits its box to the sub-pixel:
+// Chromium draws the ellipsis when the text is a hundredth of a pixel wider
+// than the box, which `scrollWidth` (a rounded integer) never reports.
+const labelWhole = (element: HTMLElement) =>
+	!clipped(element) && whole(element);
 
-const reviewed: Play = async ({ canvas }) => {
-	await mono();
-	for (const file of SENSITIVE) {
-		const row = canvas.getByRole("link", { name: file.path }).parentElement;
-		const path = row?.querySelector<HTMLElement>(".font-mono");
-		const counts = row?.lastElementChild;
-		const chip = counts?.previousElementSibling;
-		const name = path?.lastElementChild;
-		const stem = name?.firstElementChild;
-		const tail = name?.lastElementChild;
-		if (!row || !path || !counts || !chip || !stem || !tail || !name)
-			throw new Error("a file row lacks a part");
-		const inset = Number.parseFloat(getComputedStyle(row).paddingRight);
-		const gap = Number.parseFloat(getComputedStyle(row).columnGap);
-		const floor = Number.parseFloat(getComputedStyle(path).minWidth);
-		await expect(row.scrollWidth).toBeLessThanOrEqual(row.clientWidth);
-		await expect(Math.abs(right(row) - inset - right(counts))).toBeLessThan(1);
-		await expect(
-			counts.getBoundingClientRect().left - right(chip),
-		).toBeLessThan(gap + 1);
-		await expect(whole(tail)).toBe(true);
-		if (file.path.includes("/billing/")) {
-			const chars = tail.textContent?.length ?? 1;
-			await expect(stem.clientWidth).toBeGreaterThanOrEqual(
-				(drawn(tail) / chars) * 4 - 0.5,
+// `mayCut` names the rows whose chip label may truncate at the width (the row
+// is at its floor there and the label cannot be whole beside it).
+const review =
+	(mayCut: (path: string) => boolean): Play =>
+	async ({ canvas }) => {
+		await mono();
+		for (const file of SENSITIVE) {
+			const row = canvas.getByRole("link", { name: file.path }).parentElement;
+			const path = row?.querySelector<HTMLElement>(".font-mono");
+			// The counts' block stands aside (`display: contents`): its lanes are
+			// the row's items.
+			const counts = row?.lastElementChild;
+			const lanes = [...(counts?.children ?? [])];
+			const chip = counts?.previousElementSibling;
+			const name = path?.lastElementChild;
+			const stem = name?.firstElementChild;
+			const tail = name?.lastElementChild;
+			if (!row || !path || !counts || !chip || !stem || !tail || !name)
+				throw new Error("a file row lacks a part");
+			const inset = Number.parseFloat(getComputedStyle(row).paddingRight);
+			const gap = Number.parseFloat(getComputedStyle(row).columnGap);
+			const floor = Number.parseFloat(getComputedStyle(path).minWidth);
+			await expect(row.scrollWidth).toBeLessThanOrEqual(row.clientWidth);
+			await expect(Math.abs(right(row) - inset - right(lanes[1]))).toBeLessThan(
+				1,
 			);
-		} else await expect(whole(stem)).toBe(true);
-		const label = within(chip as HTMLElement).getByText(file.label);
-		if (clipped(label))
-			await expect(path.getBoundingClientRect().width).toBeLessThanOrEqual(
-				floor + 0.5,
-			);
-	}
-};
+			await expect(
+				lanes[0].getBoundingClientRect().left - right(chip),
+			).toBeLessThan(gap + 1);
+			await expect(whole(tail)).toBe(true);
+			if (file.path.includes("/billing/")) {
+				const chars = tail.textContent?.length ?? 1;
+				await expect(stem.clientWidth).toBeGreaterThanOrEqual(
+					(drawn(tail) / chars) * 4 - 0.5,
+				);
+			} else await expect(whole(stem)).toBe(true);
+			// A directory that gives way reads as cut: its box holds its first
+			// character and an ellipsis, measured as a probe in the same font (a
+			// one-character box draws a clipped sliver, never the ellipsis), and
+			// the text it holds is still whole or cut by the box's own overflow.
+			const directory =
+				name === path.firstElementChild ? null : path.firstElementChild;
+			if (directory && !whole(directory)) {
+				const probe = document.createElement("span");
+				probe.style.cssText = "position:absolute;visibility:hidden";
+				probe.textContent = `${directory.textContent?.[0]}\u2026`;
+				directory.append(probe);
+				const lead = probe.getBoundingClientRect().width;
+				probe.remove();
+				await expect(
+					directory.getBoundingClientRect().width,
+				).toBeGreaterThanOrEqual(lead - 0.5);
+				await expect(directory.scrollWidth).toBeGreaterThan(
+					directory.clientWidth,
+				);
+			}
+			// The chip's label is cut only once the path stands at its floor and the
+			// counts at their text; where the room allows it, it is whole.
+			const label = within(chip as HTMLElement).getByText(file.label);
+			if (!labelWhole(label)) {
+				await expect(mayCut(file.path)).toBe(true);
+				await expect(path.getBoundingClientRect().width).toBeLessThanOrEqual(
+					floor + 0.5,
+				);
+				for (const lane of lanes)
+					await expect(lane.getBoundingClientRect().width).toBeLessThanOrEqual(
+						drawn(lane) + 0.5,
+					);
+			}
+		}
+	};
+// At 320 `biome.json` cannot hold its label beside its floor and the counts,
+// nor can the long billing row; `docs/flags.md` can.
+const reviewed = review((path) => !path.endsWith("flags.md"));
+// Any row may cut (the touch lead takes room, a Group takes more).
+const reviewedAny = review(() => true);
+// A page's width at which the chip's label has room whole beside the path's
+// floor and the counts yielded.
+const reviewedWhole = review(() => false);
+// Touch 390: the long billing row's label is 5 px short beside the lead.
+const reviewedBilling = review((path) => path.includes("/billing/"));
 
 export const ReviewFloor320: StoryObj = {
 	render: () => <Review width={320} />,
@@ -405,20 +457,29 @@ export const ReviewFloor320: StoryObj = {
 };
 export const ReviewFloor390: StoryObj = {
 	render: () => <Review width={390} />,
-	play: reviewed,
+	play: reviewedWhole,
 };
 export const ReviewFloor768: StoryObj = {
 	render: () => <Review width={768} />,
-	play: reviewed,
+	play: reviewedWhole,
 };
 export const ReviewGroupFloor320: StoryObj = {
 	render: () => <Review width={320} grouped />,
-	play: reviewed,
+	play: reviewedAny,
 };
-export const ReviewFloorTouch320 = touch(ReviewFloor320, 320);
-export const ReviewFloorTouch390 = touch(ReviewFloor390, 390);
+export const ReviewFloorTouch320 = touch(
+	{ render: () => <Review width={320} />, play: reviewedAny },
+	320,
+);
+// On touch the directory's lead is 22 px (two 11 px characters), which leaves
+// the long billing row's label 5 px short of whole at 390: it may cut there,
+// by the same rule as at 320 (only once the path stands at its floor).
+export const ReviewFloorTouch390 = touch(
+	{ render: () => <Review width={390} />, play: reviewedBilling },
+	390,
+);
 export const ReviewGroupFloorTouch390 = touch(
-	{ render: () => <Review width={390} grouped />, play: reviewed },
+	{ render: () => <Review width={390} grouped />, play: reviewedAny },
 	390,
 );
 export const ChevronEndsTouch = touch(ChevronEnds);

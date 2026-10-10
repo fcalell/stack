@@ -5,7 +5,7 @@ import { Toolbar } from "@fcalell/plugin-react-ui/components/toolbar";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { expect, screen, waitFor, within } from "storybook/test";
-import { hover } from "./mouse.ts";
+import { hover, type Point } from "./mouse.ts";
 import { focused } from "./support.ts";
 
 const ROLES = [
@@ -243,6 +243,13 @@ function blocks(width: number): StoryObj {
 			await waitFor(() => expect(list).toContainElement(focused()));
 			await userEvent.keyboard("{ArrowDown}");
 			await waitFor(() => expect(reviewer).toHaveAttribute("data-highlighted"));
+			// A key landing on a blocked row shows the ring and no fill.
+			await expect(getComputedStyle(reviewer as Element).outlineStyle).not.toBe(
+				"none",
+			);
+			await expect(getComputedStyle(reviewer as Element).backgroundColor).toBe(
+				getComputedStyle(planner as Element).backgroundColor,
+			);
 			await userEvent.keyboard("{Enter}");
 			await expect(screen.getByRole("listbox")).toBeInTheDocument();
 			await expect(trigger).toHaveTextContent("Writer");
@@ -257,6 +264,18 @@ function blocks(width: number): StoryObj {
 			await userEvent.click(reviewer as HTMLElement);
 			await expect(screen.getByRole("listbox")).toBeInTheDocument();
 			await expect(trigger).toHaveTextContent("Planner");
+			// The pointer on a blocked row draws no highlight fill, as on a rest row.
+			if (width >= 1440) {
+				const box = (reviewer as Element).getBoundingClientRect();
+				const at: Point = {
+					x: box.left + box.width / 2,
+					y: box.top + box.height / 2,
+				};
+				await hover(at);
+				await expect(
+					getComputedStyle(reviewer as Element).backgroundColor,
+				).toBe(getComputedStyle(planner as Element).backgroundColor);
+			}
 			await userEvent.keyboard("{Escape}");
 			await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
 			const remove = canvas.getByRole("button", { name: "Remove Editor" });
@@ -272,6 +291,57 @@ function blocks(width: number): StoryObj {
 		},
 	};
 }
+
+// A searchable list (a pick past six options) marks the key's position with
+// the wash on enabled rows; a blocked row takes no wash, so a key landing on it
+// shows the ring alone, on the same ground as a rest row.
+const SEARCHED = OWNERS.map((owner) =>
+	owner.value === "dana" ? { ...owner, blocked: "On leave until June" } : owner,
+);
+export const BlockedSearch1440: StoryObj = {
+	render: () => {
+		const [owner, setOwner] = useState("ana");
+		return (
+			<div style={{ width: 1440, maxWidth: "100%" }}>
+				<Picker
+					fit="bar"
+					label="Owner"
+					options={SEARCHED}
+					value={owner}
+					onChange={setOwner}
+				/>
+			</div>
+		);
+	},
+	play: async ({ canvas, userEvent }) => {
+		const trigger = canvas.getByRole("combobox", { name: "Owner" });
+		await userEvent.click(trigger);
+		const list = await screen.findByRole("listbox");
+		await expect(
+			within(list).getByRole("option", { name: /Dana/ }),
+		).toBeVisible();
+		await userEvent.keyboard("{ArrowDown}{ArrowDown}{ArrowDown}");
+		const dana = within(list).getByRole("option", { name: /Dana/ });
+		const rest = within(list).getByRole("option", { name: /Felix/ });
+		await waitFor(() => expect(dana).toHaveAttribute("data-highlighted"));
+		await expect(dana).toHaveAttribute("aria-disabled", "true");
+		await expect(
+			Number.parseFloat(getComputedStyle(dana).outlineWidth),
+		).toBeGreaterThan(0);
+		await expect(getComputedStyle(dana).outlineStyle).not.toBe("none");
+		await expect(getComputedStyle(dana).backgroundColor).toBe(
+			getComputedStyle(rest).backgroundColor,
+		);
+		// An enabled row the key lands on keeps its wash and its ring.
+		await userEvent.keyboard("{ArrowDown}");
+		const ema = within(list).getByRole("option", { name: /Ema/ });
+		await waitFor(() => expect(ema).toHaveAttribute("data-highlighted"));
+		await expect(getComputedStyle(ema).backgroundColor).not.toBe(
+			getComputedStyle(rest).backgroundColor,
+		);
+		await userEvent.keyboard("{Escape}");
+	},
+};
 
 export const Blocked320 = blocks(320);
 export const Blocked1440 = blocks(1440);
@@ -317,6 +387,18 @@ export const BlockedSheet: StoryObj = {
 			1,
 		);
 		await waitFor(() => expect(focused()).toBe(writer));
+		// An arrow onto a blocked row rings it and draws no fill.
+		await userEvent.keyboard("{ArrowDown}");
+		await waitFor(() => expect(focused()).toBe(reviewer));
+		await expect(
+			Number.parseFloat(getComputedStyle(reviewer as Element).outlineWidth),
+		).toBeGreaterThan(0);
+		await expect(getComputedStyle(reviewer as Element).outlineStyle).not.toBe(
+			"none",
+		);
+		await expect(getComputedStyle(reviewer as Element).backgroundColor).toBe(
+			getComputedStyle(planner as Element).backgroundColor,
+		);
 		await userEvent.click(reviewer as HTMLElement);
 		await expect(screen.getByRole("listbox")).toBeInTheDocument();
 		await expect(trigger).toHaveTextContent("Writer");

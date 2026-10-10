@@ -326,6 +326,8 @@ A `Form` holds fields and its `ActionBar`. One form among a page's sections is `
 every section's head-to-body gap stays the pair step. `Section`s inside a `Form` (`Form > Section`)
 stand at the fields step, so that shape is for a page every section of which is in the form.
 
+A `Section`'s head ends in its `act`, then its `more` (a `MenuItem[]`, destructive ones marked, shaped as a `ListRow`'s): a block's other acts (move, remove) stay on its head row beside the title, which never moves, and a foldable Section's more does not fold it. With a labelled `act` the pair wraps under the title on touch together.
+
 A `Form` in a `Split`'s `pane` (beside the main from `wide`, or in its Details sheet) or in a
 `Sheet`'s body keeps its `ActionBar` at the scroller's bottom edge, over a ground and hairline that
 run across the scroller's inset, so a long form never puts its submit below the fold. Pass the pane
@@ -342,7 +344,7 @@ every item fills it. Pending, it waits in those slots; failed, it shows
 `sentence` and Retry; empty, `empty`, with the act that fills it. Rows share one `leading` kind
 (`avatar`, `icon` or `status`) or none. The first meta part names the item. A row's meta line
 yields from its end, in this strict order: the later parts truncate (they show at least a short word
-of room or none; a `{ quoted }` part cuts ahead of the plain ones, so a long quote or reason yields
+of room or none, and the room a dropped part leaves falls before the status, which stands at the line's end, under `figures`; a `{ quoted }` part cuts ahead of the plain ones, so a long quote or reason yields
 and an age and spend that must read are the row's `trailing`, `{ age, beside: "$0.42" }`), then the chip leaves whole, then the lock's label truncates, then the warning's,
 and last the first part truncates; the status and the glyphs stay whole. A value trailing a title
 (an age, an ISO moment the row words short and keeps current, with a short `beside` value such as a spend drawn after it, `{ age, beside: "$0.12" }`) is whole or gone, the age and its `beside` together: it leaves once the title would hold under half its line. A row that opens (`href` or `onOpen`) ends in a chevron after its trailing value; a row with an `act`, `more`, a trailing pick or a tree's fold draws none, and neither does a static row. In a list where some rows declare `more`, the rows without one keep its square blank, so every row's trailing value ends at one x; give `more` only to the rows that have acts. Below `tablet`
@@ -351,7 +353,7 @@ next step and let the row decide where it stands. A table's `selected` row washe
 as in its grid. A file row's `change` (a `ChangeKind`) draws the
 change mark ahead of its glyph, and its `chip` says why it is listed; the path yields to it down to
 its name's floor (the whole name when it is short, else its first three characters, an ellipsis
-and its end, never clipped mid-glyph), and below that the chip's label truncates with an ellipsis; the row never overflows sideways. A Section counts them and waits with them when they stand as its direct children,
+and its end, never clipped mid-glyph), and below that the counts yield to their text, then the chip's label truncates with an ellipsis; the row never overflows sideways. A Section counts them and waits with them when they stand as its direct children,
 inside a direct `Group`, or as a direct `QueryBoundary`'s query; a collection inside the app's own
 component, or inside a `QueryBoundary`'s body, draws itself but adds no count and no busy state to
 the Section's head. A `definition` list adds no count to a Section's head (facts are not a
@@ -431,7 +433,9 @@ the value) radio rows, one answer among a few described options. An option that 
 now carries `blocked`, a short reason that replaces its description in the disabled ink (in an
 `OptionList`, a `Select` and a `Picker`, a `MultiPick` included): it takes no pick and keeps its
 place in the list. Once the option is in the value it draws and acts as any chosen one and stays
-removable, so `blocked` never traps a value.
+removable, so `blocked` never traps a value. A blocked row (and a `Menu`'s blocked item) draws no
+highlight fill from the pointer or from a key landing on it; a key landing on it still shows the
+keyboard ring, and it presses and picks nothing.
 
 A `Thread` takes its `query` (or `items`) the same way through a `message` map (`key`,
 `author`, `name`, `body`, `at`, `attachments`, `meta`, `streaming`, `onOpen`, `detail`), each reading only its

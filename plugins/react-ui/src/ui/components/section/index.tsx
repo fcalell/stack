@@ -1,9 +1,15 @@
 import { Collapsible } from "@base-ui/react/collapsible";
 import { cn } from "@fcalell/ui-core/cn";
-import type { Act, IconAct, Part } from "@fcalell/ui-core/descriptors";
+import type {
+	Act,
+	IconAct,
+	MenuItem,
+	Part,
+} from "@fcalell/ui-core/descriptors";
 import { sectionState } from "@fcalell/ui-core/list-state";
 import {
 	lineBox,
+	SECTION_ACTS,
 	SECTION_BODY,
 	SECTION_HEAD,
 	SECTION_HEAD_ROW,
@@ -28,6 +34,7 @@ import {
 	sectionPartsOf,
 } from "../../lib/section.ts";
 import { useTouched } from "../../lib/touched.ts";
+import { useWords } from "../../lib/words.tsx";
 import { ActionBar } from "../action-bar/index.tsx";
 import { BarChart } from "../bar-chart/index.tsx";
 import { Button } from "../button/index.tsx";
@@ -41,6 +48,7 @@ import { Group } from "../group/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 import { List } from "../list/index.tsx";
+import { MenuBase } from "../menu/base.tsx";
 import { Meter } from "../meter/index.tsx";
 import { Prose } from "../prose/index.tsx";
 import { QueryBoundary } from "../query-boundary/index.tsx";
@@ -64,6 +72,7 @@ const TITLE = "truncate";
 // ink under the pointer.
 const TOGGLE =
 	"flex items-center grow min-w-0 -ms-inside text-start text-ink-meta hover:bg-wash-hover hover:text-ink-body active:bg-wash-press active:text-ink-body";
+// The act and the more stand a row's act gap apart (`SECTION_ACTS`, as ListRow's).
 const ACT_SLOT = "flex items-center shrink-0";
 const BODY = "flex flex-col";
 // The body's own wrapper: its children flow in the body's rhythm, and it
@@ -104,13 +113,15 @@ export interface SectionProps extends Closed {
 	onToggle?: (open: boolean) => void;
 	/** The section's one act, at the head's end: a labelled act or an icon act. */
 	act?: Act | IconAct;
+	/** The section's other acts, in a menu under the more act after its act (destructive ones marked); the head row never moves, and a foldable section's more does not fold it. */
+	more?: readonly MenuItem[];
 	/** The count (when there is one) and the body wait: a Group or a List in the body draws its own skeleton rows, a Prose, Thread, Code, Form, Meter or Slider its own waiting form, and skeleton fields stand in for fields and for any other body, a direct ActionBar beside them waiting after them. */
 	loading?: boolean;
 	/** The body: a Group, a List, or the rows a Form lays out. */
 	children?: ReactNode;
 }
 
-/** A heading with its count, description and act over its body; the title folds the body when `folded` is set. A blocked act's reason draws under the head row, which never moves. */
+/** A heading with its count, description, act and more act over its body; the title folds the body when `folded` is set. A blocked act's reason draws under the head row, which never moves. */
 export function Section({
 	title,
 	count,
@@ -118,6 +129,7 @@ export function Section({
 	folded,
 	onToggle,
 	act,
+	more,
 	loading: asked,
 	children,
 }: SectionProps) {
@@ -138,6 +150,7 @@ export function Section({
 	const titleId = useId();
 	const bodyId = useId();
 	const { touched } = useTouched();
+	const words = useWords();
 	const blocked =
 		act !== undefined && "blocked" in act ? act.blocked : undefined;
 	// `folded` is the initial fold: the section holds its fold from there.
@@ -241,9 +254,9 @@ export function Section({
 						)}
 						{sentence}
 					</div>
-					{act ? (
-						<div className={ACT_SLOT}>
-							{"icon" in act ? (
+					{act || more?.length ? (
+						<div className={cn(SECTION_ACTS, ACT_SLOT)}>
+							{act === undefined ? null : "icon" in act ? (
 								<IconButton
 									icon={act.icon}
 									fit="bar"
@@ -263,6 +276,13 @@ export function Section({
 									/>
 								</ReasonHostContext>
 							)}
+							{more?.length ? (
+								<MenuBase
+									label={`${words.more} ${partText(title)}`}
+									title={partText(title)}
+									items={more}
+								/>
+							) : null}
 						</div>
 					) : null}
 				</div>

@@ -1,6 +1,6 @@
 ---
 id: 003-187
-status: todo
+status: review
 sessions: {}
 ---
 # ui-core: an Option disabled with a reason
@@ -19,8 +19,9 @@ Stead's workflow canvas sets an agent node's agents in a `Picker`, and design/07
 - [x] A blocked option takes no pointer, touch or key; its reason leads its meta line; a blocked option that is in the value is drawn and operable as any chosen one.
 - [x] A disabled option already in the value stays shown as chosen and removable, as a chip and in the list.
 - [ ] `Select`, `Picker`, `MultiPick` and `OptionList` all honour it, on both platforms.
+- [x] A blocked option row draws no highlight fill, from the pointer or from a key landing on it; a key landing on it still shows the keyboard ring, and it presses and picks nothing (the Select and Picker lists and the Menu's blocked items).
 - [x] A picker with no disabled option is unchanged.
-- [ ] The Picker showcase holds a list with enabled and disabled options (the frame's owner list and a pick of several holding a blocked chosen option), measured by the critique at 320 and 1440 px: the critique is run by a session that played no part in the work and is not run here.
+- [x] The Picker showcase holds a list with enabled and disabled options (the frame's owner list and a pick of several holding a blocked chosen option), measured by the critique at 320 and 1440 px: the critique is run by a session that played no part in the work and is not run here.
 
 ## Open questions
 - [x] Its shape: `blocked?: string`, named as `Act` and `RowLeading.check` name it.
@@ -53,3 +54,26 @@ Second ruling: a touch-sheet story is added (a blocked option at a touch viewpor
 ## Open
 - The native rows (`OptionList` and the shared `PickSheet`) are not rendered by any story; the `Select`, `Picker`, `MultiPick` and `OptionList` box stays unticked until a native render exists. The web touch sheet is now exercised.
 - The critique has not measured the Picker frame at 320 and 1440.
+
+## Owner ruling
+Third ruling: a blocked option row draws no highlight fill, from the pointer or from a key landing on it; a key landing on it still shows the keyboard ring, and it presses and picks nothing. Same in the Select and Picker lists and the Menu's blocked items.
+
+## Review
+Fresh critique of the Picker frame (`shared-picker--rest`, 1440 desktop and 320 touch sheet, light and dark): the owner list's blocked row (Dana Moss, "On leave until June") is a two-line row of 52 px (touch 64 px), equal to the described rows; label and reason share the disabled ink (3.04:1 light, 2.73:1 dark, within the disabled exemption); a click (1440) or press (320) on it picks nothing and keeps the list open. The pick of several draws a "Dana Moss ×" chip, and Dana's row is ticked, enabled and shows no reason; rows 52/64 px; no overflow at 320. Finding: at 1440 hovering the blocked row highlights it with the 5 % hover fill as an enabled row (caused here; the touch sheet does not). Nit, pre-existing: desktop chip remove targets are 22x22 px, inside the spacing exception.
+
+## Built (rework)
+- `select/index.tsx` (the `Select` has its own list): the highlight wash is passed only when the row is not blocked, and a blocked row a key lands on draws the ring (the Select drew none before, its wash being the only marker), through a `keyed` state set by a key in the popup and cleared by the pointer and on open or close.
+- `picker/base.tsx`: the `Select.Item` and `Combobox.Item` className callbacks pass `state.highlighted && blocked === undefined` to the row (no wash), and keep `optionFocus(state.highlighted, keyboard.keyed)` for the ring. `menu/base.tsx` `rowOf` uses `highlighted && !blocked`. `option-list` already draws no hover wash on a blocked row (`PRESS` only while not blocked); nothing to change there.
+- Stories: `behaviour/picker.stories.tsx` and `select.stories.tsx` Blocked (1440 for the pointer; both widths for the key): a key landing on the blocked row shows an outline and a background equal to a rest row's; at 1440 the real pointer over it leaves the background equal to a rest row's. `menu.stories.tsx` `BlockedItem` asserts the same for the Menu's blocked item and that Enter leaves the menu open.
+- `rules.md` (react-ui) and `ui-core.md` state it. No ui-core cell changed for this part; DESIGN.md is unchanged.
+- Native unrendered; the native rows and the critique stay open, status stays review.
+
+## Built (rework 2)
+Finding A (searchable Picker, `shared-picker--rest` Owner at 1440): a key landing on a blocked row drew no ring because a searchable list's keys land on its input, which keeps them from the popup, so `keyed` never rose; and the enabled rows there mark the key's position with the wash alone. `useKeyed` in `picker/base.tsx` gains `landed`/`input` (a key on the input sets it, the pointer clears it); the `Combobox.Item` of a blocked row reads `landed` for its ring, an enabled row reads `keyed` as before.
+
+Finding B (touch sheet, 320): the sheet's option button carried `focus-visible:bg-wash-hover`, so an arrow onto the `aria-disabled` row drew the 5 % fill with the ring. The wash is now added only to a row that can be chosen (`OPTION_FOCUS_WASH`); a blocked row keeps the ring alone.
+
+Stories in `behaviour/picker.stories.tsx`: `BlockedSearch1440` (a searchable list, the key lands on the blocked row: outline width above 0, background equal to a rest row's; an enabled row the key lands on keeps its wash); `BlockedSheet` gains the arrow onto the blocked row (focus there, outline width above 0, background equal to an enabled row's). Both failed before the fix. Browser run: picker (10), select, menu, option-list, row-meta and section-more pass. Native unrendered.
+
+## Re-review
+Final re-critique (1440 and 320 touch, light and dark, real pointer and keys): pass on the web. A blocked row draws no fill from pointer hover or a key in the searchable and plain Picker, the Select, the Menu and the touch sheet; a key landing on it shows the 2 px ring (in the searchable Picker while DOM focus stays on the input); enabled rows are unchanged. Nit, pre-existing by ruling: the Select's enabled key row shows the wash alone and a blocked one the ring alone. Stays in review for the native box.

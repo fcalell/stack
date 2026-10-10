@@ -142,7 +142,8 @@ const TITLE_BEFORE_VALUE = "basis-1/2";
 // (`./marks.tsx`, `./lock.tsx` and the chip's slot below; Tailwind reads no
 // bare number from 10^21), which holds an earlier part's share of the overflow
 // to a few thousandths of a pixel, against the layout's 1/64 px. The parts'
-// box grows into the room the marks leave.
+// box grows into the room the marks leave, so the status stands at the line's
+// end; the room a dropped part leaves falls before it.
 const META_LINE = "flex items-center min-w-0 overflow-hidden";
 const META_PARTS = "flex grow shrink min-w-0";
 const META_FIRST = "min-w-0 truncate";

@@ -167,7 +167,8 @@ const [selected, setSelected] = useState<string>();
 
 A group is a frame; with `onSelect` its head is a selectable control. The head is a button named
 by its text (at least a target tall) that calls `onSelect(group.id)`, and `selected` may name a
-group, which draws its frame in the selection's outline. Node ids and group ids share one
+group, which draws its frame in the selection's outline (a heavier dashed line). The head
+shows hover as a node does. Node ids and group ids share one
 namespace. The frame's body takes no pointer, so a drag from it pans, and a group does not move:
 its frame follows its holds. The heads take their Tab stops first, outer before inner, then the
 nodes in path order. Under the text floor a head draws nothing and is no stop.
@@ -184,9 +185,9 @@ An `act` stands at the foot's centre; it adds, it never removes.
 
 ## Loading
 
-`loading` stands the ground and its grid with three node-shaped skeletons (a loaded node's size, at the gap a loaded path keeps), busy to assistive
+`loading` stands the ground and its grid with three node-shaped skeletons (a loaded node's size, at the gap a loaded path keeps, standing where a loaded chain opens), busy to assistive
 technology, while the data is read, so the page below the head does not move when the graph
-arrives. Pass `nodes={[]}` meanwhile: `nodes`, the handlers and the `act` are ignored, and the
+arrives. The wait stands the opening view of a three-node chain; a graph that overflows or has a different pitch opens by its own rule, so its first node can move on arrival. Pass `nodes={[]}` meanwhile: `nodes`, the handlers and the `act` are ignored, and the
 loading form draws no zoom stack, no act, no node button and no drag. Do not stand `nodes={[]}`
 for a wait: it reads as an empty graph.
 

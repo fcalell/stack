@@ -423,6 +423,7 @@ export const COLORS: Record<ColorName, ColorDeclaration> = {
 			...accent(0.505, 0.19),
 			holds: [
 				{ on: "group", ratio: 4.5 },
+				{ on: "canvas", ratio: 3 },
 				{ on: "accent-soft", under: "wash-press", ratio: 4.5 },
 			],
 		},
@@ -430,6 +431,7 @@ export const COLORS: Record<ColorName, ColorDeclaration> = {
 			...accent(0.72, 0.13),
 			holds: [
 				{ on: "group", ratio: 4.5 },
+				{ on: "canvas", ratio: 3 },
 				{ on: "accent-soft", under: "wash-press", ratio: 4.5 },
 			],
 		},

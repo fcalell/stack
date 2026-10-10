@@ -1,6 +1,12 @@
-import type { Act, IconAct, Part } from "@fcalell/ui-core/descriptors";
+import type {
+	Act,
+	IconAct,
+	MenuItem,
+	Part,
+} from "@fcalell/ui-core/descriptors";
 import { sectionState } from "@fcalell/ui-core/list-state";
 import {
+	SECTION_ACTS,
 	SECTION_BODY,
 	SECTION_HEAD,
 	SECTION_HEAD_ROW,
@@ -27,6 +33,7 @@ import {
 	sectionPartsOf,
 } from "../../lib/section";
 import { Strut } from "../../lib/strut";
+import { useWords } from "../../lib/words";
 import { ActionBar } from "../action-bar";
 import { BarChart } from "../bar-chart";
 import { Button } from "../button";
@@ -39,6 +46,7 @@ import { Group } from "../group";
 import { Icon } from "../icon";
 import { IconButton } from "../icon-button";
 import { List } from "../list";
+import { MenuBase } from "../menu/base";
 import { Meter } from "../meter";
 import { Prose } from "../prose";
 import { QueryBoundary } from "../query-boundary";
@@ -57,6 +65,7 @@ const TITLE_BLOCK = "grow min-w-0";
 const TITLE_LINE = "flex-row items-center min-w-0";
 const TOGGLE =
 	"flex-row items-center grow min-w-0 -ms-inside active:bg-wash-press";
+// The act and the more stand a row's act gap apart (`SECTION_ACTS`, as ListRow's).
 const ACT_SLOT = "flex-row items-center shrink-0";
 // The waiting count is a bar one figure wide: an unseen figure at the
 // count's type sets the width.
@@ -92,6 +101,9 @@ export interface SectionProps extends Closed {
 	// open.
 	onToggle?: (open: boolean) => void;
 	act?: Act | IconAct;
+	// The section's other acts, in a menu under the more act after its act
+	// (destructive ones marked); a foldable section's more does not fold it.
+	more?: readonly MenuItem[];
 	loading?: boolean;
 	children?: ReactNode;
 }
@@ -111,6 +123,7 @@ export function Section({
 	folded,
 	onToggle,
 	act,
+	more,
 	loading: asked,
 	children,
 }: SectionProps) {
@@ -120,6 +133,7 @@ export function Section({
 	const late = useWait(asked === true);
 	const loading = asked === undefined ? undefined : late.waiting;
 	const veil = late.veiled ? VEIL : undefined;
+	const words = useWords();
 	const within = useContext(FormContext) ? "form" : "page";
 	// A Section inside a Section names itself a level below its parent.
 	const nested = useContext(SectionContext);
@@ -222,9 +236,9 @@ export function Section({
 						)}
 						{sentence}
 					</View>
-					{act ? (
-						<View className={ACT_SLOT}>
-							{"icon" in act ? (
+					{act || more?.length ? (
+						<View className={cn(SECTION_ACTS, ACT_SLOT)}>
+							{act === undefined ? null : "icon" in act ? (
 								<IconButton
 									icon={act.icon}
 									fit="bar"
@@ -242,6 +256,13 @@ export function Section({
 									blocked={act.blocked}
 								/>
 							)}
+							{more?.length ? (
+								<MenuBase
+									label={`${words.more} ${partText(title)}`}
+									title={partText(title)}
+									items={more}
+								/>
+							) : null}
 						</View>
 					) : null}
 				</View>

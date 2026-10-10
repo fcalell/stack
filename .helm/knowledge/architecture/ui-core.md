@@ -416,7 +416,7 @@ a tick with no animation, never jumped to full.
   path. The reason replaces the description in `ink-disabled`, the label goes `ink-disabled`, the row
   is a two-line row and keeps its place (the app orders its list); on the web Base UI's `disabled`
   gives the pointer block and the disabled semantics, and its select list lets the arrows reach a
-  disabled row as a menu's does, where Enter and a press pick nothing. Rejected: `disabled` (a bare boolean leaves the
+  disabled row as a menu's does, where Enter and a press pick nothing; a blocked row (a `Menu`'s blocked item too) never draws the highlight wash, from the pointer or a key landing on it, and the keyboard ring still shows (the callbacks pass `highlighted` only when not blocked). Rejected: `disabled` (a bare boolean leaves the
   viewer to guess), a `description` or `chip` standing in for the reason (neither stops a pick), and
   filtering the option out (the viewer loses the sight of it). `SegmentedControl`'s options are not
   `Option`.
@@ -607,7 +607,7 @@ a tick with no animation, never jumped to full.
   than overprint (the marks are described under `warning` below). The later parts take no width of
   their own (`w-0`, growing into the room the marks leave) and show at least `figures` of it or
   none, in the chip's wrapping slot, so a bare separator and an ellipsis never draw; the slot's
-  text shrinks to nothing on its own line, so its box never passes the slot. A model-written later
+  text shrinks to nothing on its own line, so its box never passes the slot. The status stands at the line's end, so a list's statuses share one right edge; the room a dropped part leaves falls before it and is under `figures`, since a part that would leave more shows (`basis-figures`); the phone's later parts never drop, they truncate. A model-written later
   part (`Quoted`) stands in a span of its own that yields ahead of the plain parts, which is the
   one way a row says which part gives way: the age and spend that must read whole are its
   `trailing`. A `Coded` later part (`{ code }`) stands in a span of its own at the same tier and
@@ -1419,6 +1419,7 @@ a tick with no animation, never jumped to full.
   Form) and the body's own parts (a Prose, a Code, a Group, an ActionBar) stand the `fields` step apart
   (`SECTION_BODY`) wherever the Section sits, so a dense run of parts reads as parts; a Group keeps its
   rows' own tight spacing.
+- A Section's head ends in its `act` then its `more` (`MenuItem[]`, a prop shaped as `ListRow.more`, drawn by `MenuBase` titled by the Section; not a menu kind of `act`, which would widen the shared `Act` descriptor). Both stand in one end slot, so they wrap under the title together on touch; the more sits outside a foldable Section's toggle and never folds it.
 - A Section reads its body's collections off its own children in render, so nothing registers and
   the head (its count, its busy state) and the loading body land in the first paint with no
   second commit. By the depth rule, a Section's collections stand as its direct children (a
@@ -1598,8 +1599,12 @@ a tick with no animation, never jumped to full.
   The chip never carries it.
 - A FileRow carries at most one `ChipMark` (why the file is listed),
   standing between the path and the count lanes at its label's `measure-short` cap; the path
-  takes the room the chip leaves and yields in order: the directory down to nothing, then the
-  name down to its floor, then the chip's label truncates with an ellipsis; the counts never yield, and no row overflows sideways at any width. The floor is
+  takes the room the chip leaves and yields in order: the directory down to its leading ellipsis
+  (`DIRECTORY_LEAD`, two characters, its first and an ellipsis, the path's floor holds beside the name's, so a cut directory
+  says it is cut and never shrinks to a span too narrow to draw one), then the name down to its
+  floor, then the web's counts from their four-figure lanes down to their own text, then the
+  chip's label truncates with an ellipsis; no row overflows sideways at any width. The phone's
+  counts keep their lanes. The floor is
   the whole name when it is short (at most twice the three-character lead, the extension and
   one character), else its cut form: the first three characters, an ellipsis, then its end (`pathCut` in
   `list-state`, one source for both platforms). The path splits after its last slash, the slash
@@ -1608,12 +1613,12 @@ a tick with no animation, never jumped to full.
   chip is why the row is listed, so it stays present, and a cut path gives up its directory
   first, keeping its file name, and its record opens in full a press away. The path fits by layout,
   never by measure, so it draws cut in its first frame and never re-cuts when the mono face
-  loads: the name takes its width up to the whole box (`max-w-full`, no shrink) and the
-  directory the room it leaves, ellipsized at its end down to nothing; past the box the name is
+  loads: the directory takes the room the name leaves, ellipsized at its end down to its
+  one-character floor (its shrink weight 10^4 against the name's 1); past that the name is
   cut in its middle, its end kept (the web: a truncating stem of at least three characters
   before an unshrinking tail of the extension and the three characters before it, the path
   box's `min-width` the floor in `ch` and its shrink weight 10^7 against the chip's 1, as
-  ListRow's meta line; the phone: `ellipsizeMode="middle"`, the floor in px at a quarter of
+  ListRow's meta line, the counts' lanes 10^5 with `FILE_COUNT_YIELD`, each a flex item of the row; the phone: `ellipsizeMode="middle"`, the floor in px at a quarter of
   `figures` per character, the same weights). The chip's
   cells and size are FileRow's own in the roster, composed from `Chip`, with no token of its own.
 - Code, Diff and ProseDiff stand in one frame on the surface inside a hairline (`CONTENT_FRAME`),
@@ -1787,10 +1792,16 @@ a tick with no animation, never jumped to full.
   bleeding body, a pushed Screen), so the column scrolls past it and the head and banners above it
   scroll away rather than shrink it; the percentage resolves because the inset is a flex item of
   the scroller, whose post-flex size is definite, so a viewport-share token is not needed
-  (`canvas-touch` holds it at 375 × 667 and 390 × 844). `loading` swaps the whole graph component for a hookless
+  (`canvas-touch` holds it at 375 × 667 and 390 × 844). `loading` swaps the whole graph component for
   `CanvasWait` (the ground and grid it shares with the graph, three `canvasNode` cards of skeletons
-  in a centred column), so no viewport, layout or ELK runs while waiting and no zoom stack or act
-  stands (both are overlays, so omitting them moves nothing). `empty` is a string, not a slot or a
+  in a column), so no viewport, layout or ELK runs while waiting and no zoom stack or act
+  stands (both are overlays, so omitting them moves nothing). The column stands where a loaded
+  chain opens: the wait measures its pane and column and takes `openTransform` (the loaded
+  canvas's opening view) with `clearanceOf`, the room the zoom stack leaves, held by an unseen
+  `ZoomRoom` of the stack's frame, so the arrival moves no card (`canvas.stories` holds it at 375,
+  768 and 1440, both modes). Only the stack's width is held: an `act` or a foot, which a loaded
+  canvas keeps clear of, is not; nor is the graph's shape: a graph that overflows (opening
+  top-anchored) or has a wider pitch opens by its own rule, so its first node can move on arrival. `empty` is a string, not a slot or a
   `words` entry (it is app copy, and the app decides when it stands): the layer's first child
   centres it under the graph's bounds and holds its size through `--canvas-unzoom`, so it
   stays at the text floor, and `pointer-events-none` lets a drag through it pan and a tap on it
@@ -1804,7 +1815,7 @@ a tick with no animation, never jumped to full.
   one namespace (`holds` mixes both), so the same `onSelect` and `selected` choose a group, with no
   `onSelectGroup`: only the head is a `<button>` (the frame's body keeps `pointer-events-none` and
   pans, and `CANVAS_GROUP_HEAD` carries `min-h-target`, so the probe lays the frame out with the
-  taller head), `CANVAS_GROUP` is a `state` matrix whose `selected` recolours the dash, the heads
+  taller head), `CANVAS_GROUP` is a `state` matrix whose `selected` recolours the dash and doubles its line to 2 px as an inset dashed outline over the same 1 px border box, so selecting moves nothing inside the frame (one accent hairline reads faint in dark; `accent-ink` holds 3:1 on `canvas`), the head carries a transparent border (`CANVAS_GROUP_HEAD`) that the button steps to `edge-hover` on hover, as a node's does (a platform overlay), the heads
   take their Tab stops before the nodes (frames render first), and under the text floor the head is
   no button. A group holds no `onMove` (a frame follows its holds). A group holding no present node
   and no group is a leaf of the graph (`emptyGroups`), not a frame computed from members: ELK lays
