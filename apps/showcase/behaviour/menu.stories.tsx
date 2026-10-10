@@ -1,6 +1,7 @@
 import { Menu } from "@fcalell/plugin-react-ui/components/menu";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect, screen, waitFor } from "storybook/test";
+import { hover } from "./mouse.ts";
 import { focused } from "./support.ts";
 
 const act = () => {};
@@ -52,5 +53,43 @@ export const PointerOpenDrawsNoRing: StoryObj = {
 		await userEvent.click(canvas.getByRole("button", { name: "More" }));
 		const menu = await screen.findByRole("menu");
 		expect(getComputedStyle(menu).outlineStyle).toBe("none");
+	},
+};
+
+// A blocked item draws no highlight fill, from the pointer or from a key
+// landing on it; a key landing on it still shows the ring, and it acts on
+// nothing.
+export const BlockedItem: StoryObj = {
+	render: () => (
+		<Menu
+			label="More"
+			items={[
+				{ label: "Duplicate", onAct: act },
+				{ label: "Archive", onAct: act, blocked: "Already archived" },
+				{ label: "Rename", onAct: act },
+			]}
+		/>
+	),
+	play: async ({ canvas, userEvent }) => {
+		await userEvent.tab();
+		await userEvent.keyboard("{Enter}");
+		await screen.findByRole("menu");
+		const [, archive, rename] = screen.getAllByRole("menuitem");
+		await userEvent.keyboard("{ArrowDown}");
+		await waitFor(() => expect(archive).toHaveFocus());
+		await expect(getComputedStyle(archive as Element).outlineStyle).not.toBe(
+			"none",
+		);
+		await expect(getComputedStyle(archive as Element).backgroundColor).toBe(
+			getComputedStyle(rename as Element).backgroundColor,
+		);
+		const box = (archive as Element).getBoundingClientRect();
+		await hover({ x: box.left + box.width / 2, y: box.top + box.height / 2 });
+		await expect(getComputedStyle(archive as Element).backgroundColor).toBe(
+			getComputedStyle(rename as Element).backgroundColor,
+		);
+		await userEvent.keyboard("{Enter}");
+		await expect(screen.getByRole("menu")).toBeInTheDocument();
+		await expect(canvas.getByRole("button", { name: "More" })).toBeVisible();
 	},
 };

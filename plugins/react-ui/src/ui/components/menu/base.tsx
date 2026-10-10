@@ -95,7 +95,7 @@ function rowOf(item: MenuItem, highlighted: boolean): string {
 	return cn(
 		row({
 			lines: blocked ? "two" : "one",
-			state: highlighted ? "highlighted" : "rest",
+			state: highlighted && !blocked ? "highlighted" : "rest",
 		}),
 		ITEM,
 		!blocked && PRESS,

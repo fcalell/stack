@@ -14,7 +14,7 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import { use } from "react";
+import { use, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { spacing } from "../../lib/media.ts";
 import { PortalContainer } from "../../lib/portal.ts";
@@ -35,7 +35,10 @@ const POSITIONER = "z-(--layer-popover)";
 const OPTION_GROUP = "flex flex-col";
 const GROUP_LABEL = "px-control-x pt-pair";
 // The highlight wash marks the keyboard's option, so a row draws no ring.
-const ITEM = "flex items-center outline-none";
+const ITEM = "flex items-center";
+const ITEM_NO_RING = "outline-none";
+// A blocked row draws no wash, so a key landing on it is marked by the ring.
+const ITEM_RING = "outline-2 -outline-offset-2 outline-ring";
 const ITEM_TEXT = "flex flex-col min-w-0 grow";
 const LINE = "truncate";
 const BLOCKED_INK = "text-ink-disabled";
@@ -71,6 +74,8 @@ export function Select<V extends string | null = string>({
 	placeholder,
 }: SelectProps<V>) {
 	const container = use(PortalContainer);
+	// Whether a key moved the highlight last; the pointer and a (re)opening clear it.
+	const [keyed, setKeyed] = useState(false);
 	const groups = groupsOf(options);
 	const items = groups.flatMap((group) =>
 		group.options.map((option) => ({
@@ -83,6 +88,7 @@ export function Select<V extends string | null = string>({
 			// Not modal: a modal select locks the page's scroll and moves the page
 			// as the list opens (as a Menu's popover, it leaves the page alone).
 			modal={false}
+			onOpenChange={() => setKeyed(false)}
 			items={items}
 			value={value ?? null}
 			onValueChange={(next) => onChange(next as V)}
@@ -130,7 +136,11 @@ export function Select<V extends string | null = string>({
 					// over its field.
 					sideOffset={() => spacing("pair")}
 				>
-					<Control.Popup className={cn(POPOVER, SELECT_POPOVER, POPUP)}>
+					<Control.Popup
+						className={cn(POPOVER, SELECT_POPOVER, POPUP)}
+						onKeyDown={() => setKeyed(true)}
+						onPointerMove={() => setKeyed(false)}
+					>
 						{groups.map((group, at) => (
 							<Control.Group
 								key={group.label ?? at}
@@ -160,9 +170,15 @@ export function Select<V extends string | null = string>({
 												cn(
 													row({
 														lines: blocked === undefined ? "one" : "two",
-														state: state.highlighted ? "highlighted" : "rest",
+														state:
+															state.highlighted && blocked === undefined
+																? "highlighted"
+																: "rest",
 													}),
 													ITEM,
+													state.highlighted && blocked !== undefined && keyed
+														? ITEM_RING
+														: ITEM_NO_RING,
 												)
 											}
 										>
