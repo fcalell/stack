@@ -143,10 +143,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		IconButton: {
 			props: ["icon", "fit", "label", "onAct", "loading"],
-			draws: ["ICON_BUTTON"],
-			holds: ["ICON_BUTTON"],
+			draws: ["ICON_BUTTON", "TOOLTIP"],
+			holds: ["ICON_BUTTON", "TOOLTIP"],
 			states: [...PRESS, "loading"],
 			owns: {
+				roles: ["meta"],
 				colors: [
 					"ink-meta",
 					"ink-body",
@@ -154,9 +155,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"wash-press",
 					"ink-disabled",
 					"ring",
+					"raised",
+					"edge-raised",
 				],
 				radii: ["control"],
-				sizes: ["control", "control-compact", "hairline"],
+				spacing: ["inside", "pair"],
+				elevation: ["float"],
+				sizes: ["control", "control-compact", "hairline", "measure-short"],
 			},
 		},
 		Count: {

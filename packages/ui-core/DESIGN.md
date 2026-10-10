@@ -2324,6 +2324,16 @@ components:
     backgroundColor: "{colors.raised-dark}"
   toasts:
     padding: "{spacing.page}"
+  tooltip:
+    backgroundColor: "{colors.raised}"
+    rounded: "{rounded.control}"
+    typography: "{typography.meta}"
+    textColor: "{colors.ink-body}"
+  tooltip-dark:
+    backgroundColor: "{colors.raised-dark}"
+    rounded: "{rounded.control}"
+    typography: "{typography.meta}"
+    textColor: "{colors.ink-body-dark}"
   tree-lane:
     width: "{spacing.control-compact}"
   tree-rail:
@@ -2564,7 +2574,7 @@ A docked sheet's body keeps `docked-floor` (144px on touch, 96px on the desktop)
 | `Text` | atom | `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body`, `TEXT_STRONG.role.meta` | rest |
 | `Icon` | atom | `ICON` | rest |
 | `Button` | atom | `BUTTON`, `BUTTON_LABEL`, `ICON.fit.control`, `COUNT_LABEL` | rest, hover, focus, active, disabled, loading |
-| `IconButton` | atom | `ICON_BUTTON` | rest, hover, focus, active, loading |
+| `IconButton` | atom | `ICON_BUTTON`, `TOOLTIP` | rest, hover, focus, active, loading |
 | `Count` | atom | `COUNT`, `COUNT_LABEL` | rest |
 | `StepCount` | atom | `STEP_COUNT`, `STEP_COUNT_SEGMENTS`, `STEP_COUNT_SEGMENT`, `TEXT.role.meta` | rest |
 | `Status` | atom | `CHANGE_MARK`, `ICON.fit.meta`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `SKELETON.kind.dot`, `SKELETON.kind.line` | rest |
@@ -2635,7 +2645,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Text` | `body`, `meta` | `ink-body`, `ink-meta` | none | none | `measure` | none |
 | `Icon` | none | none | none | none | `icon-meta`, `icon`, `icon-control` | none |
 | `Button` | `body`, `meta`, `caption` | `act-`, `on-act-`, `edge`, `ink-body`, `ink-meta`, `danger`, `wash-hover`, `wash-press`, `fill-disabled`, `ink-disabled`, `ring` | `control` | `inside`, `control-x`, `pair` | `control`, `control-compact`, `field`, `icon-control` | none |
-| `IconButton` | none | `ink-meta`, `ink-body`, `wash-hover`, `wash-press`, `ink-disabled`, `ring` | `control` | none | `control`, `control-compact`, `hairline` | none |
+| `IconButton` | `meta` | `ink-meta`, `ink-body`, `wash-hover`, `wash-press`, `ink-disabled`, `ring`, `raised`, `edge-raised` | `control` | `inside`, `pair` | `control`, `control-compact`, `hairline`, `measure-short` | `float` |
 | `Count` | `caption` | `ink-meta` | none | none | none | none |
 | `StepCount` | `meta` | `ink-meta`, `fill-neutral` | `chip` | `pair`, `inside` | `meter` | none |
 | `Status` | `meta` | `accent-ink`, `ink-meta`, `ok`, `warn`, `chip-amber`, `danger`, `skeleton` | `full`, `chip` | `inside` | `dot`, `spinner`, `measure-short`, `skeleton`, `icon`, `icon-meta` | none |
