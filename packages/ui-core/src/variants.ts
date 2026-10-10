@@ -840,6 +840,13 @@ export const GATE_FLOW = "gap-sections";
 export const GATE_LEAD = "gap-fields";
 export const GATE_HEAD = "gap-pair";
 export const GATE_MARK = "size-avatar";
+// The app's mark is a lockup, the logo (`GATE_MARK`, the avatar's size) and the
+// app's name a row apart: in the Gate a row of the lead; in the desktop sidebar
+// a row under the sidebar's float, a place row's inset and height, so the logo
+// stands over the places' glyphs.
+export const GATE_MARK_ROW = "gap-inside";
+export const SHELL_MARK = "p-float";
+export const SHELL_MARK_ROW = "gap-inside min-h-row px-control-x";
 // The switcher's trigger in a touch top bar, which reaches across the page
 // inset (`PAGE_TOP_BAR_TOUCH`) by the inset it keeps; in the sidebar it is a
 // `PLACE_ROW` with the name at body 500.

@@ -15,6 +15,15 @@ export const STACK_WRITES_HEADER = "x-stack-writes";
 // reads it. The client puts the 404 back before oRPC decodes the body.
 export const STACK_NOT_FOUND_HEADER = "x-stack-not-found";
 
+// Every header the client reads off an answer. A browser hides a response header
+// from a client on another origin unless `Access-Control-Expose-Headers` names
+// it, so the worker's `cors()` exposes this list and a header added above joins it.
+export const STACK_EXPOSED_HEADERS = [
+	STACK_READS_HEADER,
+	STACK_WRITES_HEADER,
+	STACK_NOT_FOUND_HEADER,
+] as const;
+
 // What an entity name may contain. Names reach `Headers.set` comma-joined, and
 // comma is the client-side split delimiter, so `procedure()` and the
 // `api({ entities })` config parse share this one pattern.

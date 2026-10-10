@@ -113,6 +113,30 @@ test("an app with no icon emits an icon link that requests nothing", async () =>
 	assert.match(html, /<link rel="icon" href="data:,"/);
 });
 
+test("an icon pair emits a link per colour scheme and the slot carries the pair", async () => {
+	const icon = { light: "/mark.svg", dark: "/mark-dark.svg" };
+	const html = (await artifacts({ icon })).get(".stack/index.html") ?? "";
+	assert.match(
+		html,
+		/<link rel="icon" href="\/mark\.svg" media="\(prefers-color-scheme: light\)" type="image\/svg\+xml"/,
+	);
+	assert.match(
+		html,
+		/<link rel="icon" href="\/mark-dark\.svg" media="\(prefers-color-scheme: dark\)" type="image\/svg\+xml"/,
+	);
+	assert.deepEqual(await graph({ icon }).resolve(react.slots.icon), icon);
+});
+
+test("a single icon is the slot's light form and no icon is null", async () => {
+	assert.deepEqual(
+		await graph({ icon: "/icon.png" }).resolve(react.slots.icon),
+		{
+			light: "/icon.png",
+		},
+	);
+	assert.equal(await graph({}).resolve(react.slots.icon), null);
+});
+
 test("a custom routes directory reaches the router plugin and the scaffolds", async () => {
 	const g = graph({ routes: { dir: "src/pages" } });
 	const files = await g.resolve(cliSlots.artifactFiles);

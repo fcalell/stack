@@ -30,6 +30,7 @@
 		"./components/*": "./src/ui/components/*/index.tsx",
 		"./lib/code": "./src/ui/lib/code.tsx",
 		"./lib/field-wait": "./src/ui/lib/field-wait.tsx",
+		"./lib/mark": "./src/ui/lib/mark.tsx",
 		"./lib/not-found": "./src/ui/lib/not-found.tsx",
 		"./lib/option-wait": "./src/ui/lib/option-wait.tsx",
 		"./lib/slider-wait": "./src/ui/lib/slider-wait.tsx",

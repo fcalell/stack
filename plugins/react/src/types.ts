@@ -19,7 +19,10 @@ export const reactOptionsSchema = z.object({
 		.optional(),
 	title: z.string().optional(),
 	description: z.string().optional(),
-	icon: z.string().optional(),
+	// The page's icon and the app's mark: one file, or one per colour scheme.
+	icon: z
+		.union([z.string(), z.object({ light: z.string(), dark: z.string() })])
+		.optional(),
 	themeColor: z.string().optional(),
 	lang: z.string().optional(),
 });
@@ -27,6 +30,14 @@ export const reactOptionsSchema = z.object({
 export type ReactOptions = z.input<typeof reactOptionsSchema>;
 
 // ── Codegen payload types (owned by plugin-react) ───────────────────
+
+// The app's icon as the options give it, read by the page's favicon links and
+// by a UI plugin that draws the mark: the file in the light scheme, and the
+// file in the dark one when the app gave a pair. Null when the app has none.
+export interface AppIcon {
+	light: string;
+	dark?: string;
+}
 
 // The options of TanStack's router plugin, as data: the app's config runs the
 // plugin on them as they are and a host that draws the screens changes one.

@@ -9,6 +9,8 @@ import {
 	placeTabLabel,
 	SHELL_BANNER,
 	SHELL_COLUMN,
+	SHELL_MARK,
+	SHELL_MARK_ROW,
 	SHELL_PLACES,
 	SHELL_SIDEBAR,
 	SHELL_TAB_BAR,
@@ -18,6 +20,7 @@ import {
 import { type ReactNode, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { PlaceRoute, ShellHome, ShellSwitcher } from "../../lib/frame.ts";
+import { Lockup, useMark } from "../../lib/mark.tsx";
 import { useTouch } from "../../lib/media.ts";
 import { follow, isRoute, useRoute } from "../../lib/navigate.ts";
 import { useWords } from "../../lib/words.tsx";
@@ -50,6 +53,8 @@ const ROW_BOX = "flex items-center focus-visible:-outline-offset-2";
 const ROW_PRESS = "hover:bg-wash-hover active:bg-wash-press";
 const ROW_SELECTED_PRESS = "hover:bg-wash-selected-hover";
 const GLYPH = "flex shrink-0";
+// The app's mark is no link: a row at the places' inset, filling the sidebar.
+const ROW_MARK = "grow min-w-0";
 const LABEL = "truncate grow";
 
 const TABS = "flex pb-safe group-has-data-screen/column:hidden";
@@ -73,10 +78,11 @@ export interface ShellProps extends Closed {
 	children?: ReactNode;
 }
 
-/** The frame: on the desktop the sidebar (the switcher, then the places) beside the column; on touch the column over the tab bar, the switcher at the head of each Place's top bar, and past five places four tabs and More, which opens a page of the rest; on both, the current place's route handed down for a Place's back act, a pushed Screen covering the tab bar, the `toast()` queue standing over the page's foot (at the end on the desktop, centred on touch; above a floating act or a docked foot) and the first `confirm()` decision as a sheet. */
+/** The frame: on the desktop the sidebar (the app's mark when the app has an icon, the switcher, then the places) beside the column; on touch the column over the tab bar, the switcher at the head of each Place's top bar, and past five places four tabs and More, which opens a page of the rest; on both, the current place's route handed down for a Place's back act, a pushed Screen covering the tab bar, the `toast()` queue standing over the page's foot (at the end on the desktop, centred on touch; above a floating act or a docked foot) and the first `confirm()` decision as a sheet. */
 export function Shell({ places, banner, switcher, children }: ShellProps) {
 	const touch = useTouch();
 	const words = useWords();
+	const mark = useMark();
 	const at = useRoute();
 	// The More page stands at the route it opened on: going to a place closes it.
 	const [moreAt, setMoreAt] = useState<string>();
@@ -94,6 +100,11 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 	// keeps the page.
 	const sidebar = touch ? null : (
 		<nav aria-label={words.places} className={cn(SHELL_SIDEBAR, SIDEBAR)}>
+			{mark ? (
+				<div className={cn(SHELL_MARK, SLOT)}>
+					<Lockup mark={mark} className={cn(SHELL_MARK_ROW, ROW_MARK)} />
+				</div>
+			) : null}
 			{switcher ? (
 				<div className={cn(SWITCHER_SLOT, SLOT)}>
 					<SwitcherPick switcher={switcher} touch={false} />

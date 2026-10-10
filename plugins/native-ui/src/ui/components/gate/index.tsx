@@ -1,16 +1,14 @@
-import type { GateMark, Sentence } from "@fcalell/ui-core/descriptors";
+import type { Sentence } from "@fcalell/ui-core/descriptors";
 import {
 	GATE,
 	GATE_COLUMN,
 	GATE_FLOW,
 	GATE_HEAD,
 	GATE_LEAD,
-	GATE_MARK,
 	text,
-	textStrong,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, useRef, useState } from "react";
-import { Image, Text as RNText, type TextInput, View } from "react-native";
+import { type ReactNode, useRef } from "react";
+import { Text as RNText, type TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
@@ -34,7 +32,7 @@ const TOAST_BOX = "absolute inset-x-0 top-0";
 
 // A page outside the shell, a root frame as the Shell is: one column at the
 // `auth` width inside the page inset on the surface, the banner, the lead (the
-// mark, the `StepCount`, the title and the description a pair under it), then
+// `StepCount`, the title and the description a pair under it), then
 // the body a sections gap under it. It keeps the safe area and scrolls over
 // the keyboard, so the focused field and the submit act stay in view. An
 // `Input` or `InputOtp` that mounts in it takes focus unless one holds it,
@@ -58,51 +56,21 @@ export type GateProps = GateBase &
 				// A meta line under the title, as runs: `{ strong }` runs draw at
 				// weight 500.
 				description?: Sentence;
-				// Where an onboarding flow stands, a `StepCount` between the mark
-				// and the title.
+				// Where an onboarding flow stands, a `StepCount` before the
+				// title.
 				step?: { at: number; of: number };
-				// The product's mark at the avatar's size; its `name` stands in its
-				// place while the image fails or `src` is absent.
-				mark?: GateMark;
 		  }
 		| {
 				title?: undefined;
 				description?: never;
 				step?: never;
-				mark?: never;
 		  }
 	);
-
-function Mark({ src, name }: GateMark) {
-	const [failed, setFailed] = useState<string>();
-	// Keyed by the address that failed, so a new `src` is tried again.
-	if (src && src !== failed)
-		return (
-			<Image
-				source={{ uri: src }}
-				accessible
-				accessibilityRole="image"
-				accessibilityLabel={name}
-				accessibilityIgnoresInvertColors
-				resizeMode="contain"
-				onError={() => setFailed(src)}
-				className={GATE_MARK}
-			/>
-		);
-	return (
-		<RNText
-			className={cn(text({ role: "meta" }), textStrong({ role: "meta" }))}
-		>
-			{name}
-		</RNText>
-	);
-}
 
 export function Gate({
 	title,
 	description,
 	step,
-	mark,
 	banner,
 	children,
 }: GateProps) {
@@ -132,7 +100,6 @@ export function Gate({
 									{banner}
 									{title === undefined ? null : (
 										<View className={GATE_LEAD}>
-											{mark ? <Mark src={mark.src} name={mark.name} /> : null}
 											{step ? <StepCount at={step.at} of={step.of} /> : null}
 											<View className={GATE_HEAD}>
 												<RNText
