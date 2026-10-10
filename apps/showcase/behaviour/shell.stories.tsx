@@ -239,11 +239,33 @@ const COUNTED: PlaceSpec[] = [
 	{ route: "/e", label: "Activity", icon: "Activity", count: 444 },
 ];
 
+// The pixels of an element, as the browser paints them.
+async function pixels(element: Element): Promise<ImageData> {
+	const { page } = await import("vitest/browser");
+	const shot = await page.elementLocator(element).screenshot({
+		base64: true,
+		save: false,
+	});
+	const bytes = Uint8Array.from(
+		atob(typeof shot === "string" ? shot : shot.base64),
+		(c) => c.charCodeAt(0),
+	);
+	const bitmap = await createImageBitmap(
+		new Blob([bytes], { type: "image/png" }),
+	);
+	const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+	const context = canvas.getContext("2d", { willReadFrequently: true });
+	if (!context) throw new Error("no canvas context");
+	context.drawImage(bitmap, 0, 0);
+	return context.getImageData(0, 0, bitmap.width, bitmap.height);
+}
+
 // A tab's count of one and two figures reads as it is, a count past 99 reads
-// "99+"; each stands on its glyph's top-right corner, starting at the glyph
-// box's edge (a hairline in at most) so it never touches the glyph's ink, on a ring of the bar's
-// ground (at least 2 px), and the label stays centred under the glyph. Every
-// count ends inside the bar, the last tab's at 320 included.
+// "99+"; each stands above the glyph box's top-right corner (its bottom edge at
+// the box's top, its start at the box's right edge, a hairline in at most) and
+// paints nothing inside the glyph's box, so the glyph's ink is the same with
+// and without it, and the label stays centred under the glyph. Every count
+// ends inside the bar, the last tab's at 320 included, and no tab grows.
 const TAB_WIDTHS = { 320: "narrow", 390: "phone", 768: "tablet" } as const;
 
 const tabCount = (width: keyof typeof TAB_WIDTHS, mode: "light" | "dark") => {
@@ -308,26 +330,43 @@ const tabCount = (width: keyof typeof TAB_WIDTHS, mode: "light" | "dark") => {
 				};
 				const ring = getComputedStyle(overlay);
 				console.log(
-					`${width} ${mode} count ${count}: start ${box.left - glyphBox.right} past the glyph's edge, ink gap ${box.left - ink.right}, width ${box.width}, to the bar's end ${bar.right - box.right}, ring ${ring.outlineWidth} ${ring.outlineColor}`,
+					`${width} ${mode} count ${count}: bottom ${box.bottom - glyphBox.top} from the glyph box's top, start ${box.left - glyphBox.right}, ink gap ${box.left - ink.right}, width ${box.width}, to the bar's end ${bar.right - box.right}`,
 				);
-				// The count stands at the glyph box's edge, a hairline in where the bar's
-				// end asks it, and its figures never reach the glyph's ink (the strokes'
-				// union, a sub-pixel of antialiasing aside).
-				await expect(box.left).toBeGreaterThanOrEqual(ink.right - 0.25);
-				await expect(box.left - glyphBox.right).toBeLessThanOrEqual(2);
-				await expect(box.left - glyphBox.right).toBeGreaterThanOrEqual(-2);
+				// The count stands above the glyph box's top edge and starts at its right
+				// edge, a hairline in at most: its box and the glyph's overlap by 0 px.
+				await expect(box.bottom).toBeLessThanOrEqual(glyphBox.top + 0.01);
+				await expect(box.left).toBeGreaterThanOrEqual(glyphBox.right - 2);
+				await expect(box.left).toBeLessThanOrEqual(glyphBox.right);
 				await expect(box.right).toBeLessThanOrEqual(bar.right);
-				await expect(box.top).toBeGreaterThanOrEqual(glyphBox.top - 2);
-				// The ring is the bar's ground, so contact never reads ink on ink.
-				await expect(
-					Number.parseFloat(ring.outlineWidth),
-				).toBeGreaterThanOrEqual(2);
-				await expect(ring.outlineColor).toBe(
-					getComputedStyle(nav).backgroundColor,
+				await expect(box.top).toBeGreaterThanOrEqual(0);
+				// No ring or ground: nothing of the count paints inside the glyph's box.
+				await expect(Number.parseFloat(ring.outlineWidth) || 0).toBe(0);
+				await expect(ring.backgroundColor).toBe("rgba(0, 0, 0, 0)");
+				// The glyph's ink with the count equals the ink without it, pixel for
+				// pixel, and hiding the count moves no tab's height.
+				const tab = overlay.closest("a");
+				if (!tab) throw new Error("the tab is not drawn");
+				const height = tab.getBoundingClientRect().height;
+				const withCount = await pixels(glyph);
+				overlay.style.visibility = "hidden";
+				const without = await pixels(glyph);
+				await expect(tab.getBoundingClientRect().height).toBe(height);
+				overlay.style.visibility = "";
+				await expect(without.width).toBe(withCount.width);
+				await expect(without.height).toBe(withCount.height);
+				let differ = 0;
+				for (let at = 0; at < withCount.data.length; at += 4)
+					if (
+						withCount.data[at] !== without.data[at] ||
+						withCount.data[at + 1] !== without.data[at + 1] ||
+						withCount.data[at + 2] !== without.data[at + 2] ||
+						withCount.data[at + 3] !== without.data[at + 3]
+					)
+						differ++;
+				console.log(
+					`${width} ${mode} count ${count}: glyph pixels changed ${differ}`,
 				);
-				await expect(ring.backgroundColor).toBe(
-					getComputedStyle(nav).backgroundColor,
-				);
+				await expect(differ).toBe(0);
 				await expect(labelBox.left + labelBox.width / 2).toBeCloseTo(
 					glyphBox.left + glyphBox.width / 2,
 					1,

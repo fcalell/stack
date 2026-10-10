@@ -1037,7 +1037,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"PLACE_ROW",
 				"PLACE_ROW_GLYPH",
 				"SHELL_TAB_BAR",
-				"SHELL_TAB_COUNT",
 				"PLACE_TAB",
 				"PLACE_TAB_LABEL",
 				"TOASTS",

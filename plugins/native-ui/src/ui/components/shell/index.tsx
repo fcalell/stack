@@ -13,7 +13,6 @@ import {
 	SHELL_BANNER,
 	SHELL_COLUMN,
 	SHELL_TAB_BAR,
-	SHELL_TAB_COUNT,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useMemo, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
@@ -41,7 +40,7 @@ const CONTENT = "flex-1";
 const TABS = "flex-row";
 const TAB = "flex-col-reverse items-center justify-center min-w-0 flex-1";
 const TAB_GLYPH = "relative";
-const TAB_COUNT = "absolute top-0 left-full -ms-hairline";
+const TAB_COUNT = "absolute bottom-full left-full -ms-hairline";
 const TAB_LABEL = "max-w-full";
 // A tab bar holds five tabs at most: past five places, four and More.
 const TAB_ROOM = 5;
@@ -230,7 +229,7 @@ function Tab({
 					<Icon name={icon} fit="control" />
 				</Ink.Provider>
 				{count === undefined ? null : (
-					<View className={cn(SHELL_TAB_COUNT, TAB_COUNT)}>
+					<View className={TAB_COUNT}>
 						<Count value={count} />
 					</View>
 				)}
