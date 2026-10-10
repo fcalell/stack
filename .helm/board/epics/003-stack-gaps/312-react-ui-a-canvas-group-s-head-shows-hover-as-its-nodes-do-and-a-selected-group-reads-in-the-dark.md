@@ -1,6 +1,6 @@
 ---
 id: 003-312
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a canvas group's head shows hover as its nodes do, and a selected group reads in the dark
@@ -26,3 +26,6 @@ Fresh critique (web; 375 touch and 1440 desktop, light and dark, real pointer): 
 
 ## Built (rework)
 Selecting a group moved the head's text 1 px right and down and narrowed the head 336 to 334 (the frame's border went 1 px to 2 px). `CANVAS_GROUP.state.selected` now keeps the 1 px border box (`border-transparent`) and draws the second pixel as an inset dashed outline (`outline-2 -outline-offset-2 outline-dashed outline-selected-outline`), still a 2 px dashed line in `accent-ink`, held at 3:1 on `canvas`; nothing inside the frame moves. `ui-core.md` states it. `behaviour/canvas-group-kit.tsx` now reads the selected line from the outline (2 px, dashed, 3:1 on the ground) and asserts the head text's and the head's boxes (left, top, width, height) equal within 0.5 px at rest and selected. `canvas/wait.tsx` untouched.
+
+## Re-review
+Fresh re-critique (1440 desktop and 375 touch, light and dark, real pointer): pass. The head's text and head boxes are identical at rest and selected to 0.00 px; the selected line is a 2 px dashed outline over the unchanged 1 px border at 5.68:1 (light) and 7.89:1 (dark); hover still equals a node's `edge-hover` and holds while selected.

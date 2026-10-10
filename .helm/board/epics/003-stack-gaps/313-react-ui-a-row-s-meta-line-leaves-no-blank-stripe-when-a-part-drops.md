@@ -1,6 +1,6 @@
 ---
 id: 003-313
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a row's meta line leaves no blank stripe when a part drops
@@ -24,3 +24,6 @@ The first build stopped the parts' box growing while the later parts were droppe
 ## Built (rework)
 Ruling (b) applied. `useDropped` (`lib/dropped.ts`), the `dropped`/`marks` locals, `META_PARTS_DROPPED`, `LATER_DROPPED` and the `grow-0` safelist entry are gone (nothing else used `grow-0`); the parts' box grows into the room the marks leave again, so the status stands at the line's end. `rules.md` (list-row text) and `ui-core.md` say the status stands at the line's end and a dropped part's room falls before it, under `figures`.
 Story `list-row-status` (`MetaDrops`, `MetaDropsTouch`, 14 remotes at 440, 390 and 320): every row's status right edge within 1 px, status word whole, at least one row drops per width, and on a dropped row (status left less the first part's ink right less the line's gap step) is under the resolved `figures`. Widest room measured: pointer 31.3 / 28.3 / 29.9 px at 440 / 390 / 320 against `figures` 32; touch 34.9 / 34.9 / 31.0 against 36. Chromium: `list-row-status`, `row-meta`, `list`, `list-acts`, `waiting`, `place` pass (79 tests). Native unaffected.
+
+## Re-review
+Fresh re-critique (columns 440, 390, 320, pointer and touch, light and dark): pass. The status's right edge is the same x on all 14 rows in every column (spread 0.00 px), no status clipped; the widest room a dropped part leaves beyond the gap step is 31.3 px against `figures` 32 (pointer) and 35.4 px against 36 (touch). Nit, pre-existing: at 390 pointer one row cuts `main` to "m…" instead of dropping it whole.

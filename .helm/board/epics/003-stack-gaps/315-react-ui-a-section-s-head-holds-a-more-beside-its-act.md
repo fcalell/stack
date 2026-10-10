@@ -30,3 +30,6 @@ Native unrendered: the menu and the wrap are the web's by construction and unche
 
 ## Built (rework)
 Nit: at desktop the head's Edit act and More stood 0 px apart (Edit right 1396 = More left 1396), so More's hover fill met Edit's border. The head's act slot now carries `SECTION_ACTS` (`gap-acts`, the spacing token a ListRow's act and more share through `ROW_ACTS`; a component may not import a cell another holds, so Section has its own cell, `acts` added to its owned spacing) on web and native (`section/index.tsx` in both plugins); no literal. `HeadHoldsActAndMore375/1440` assert the pair stand the slot's gap (above 0) apart; at 375 touch they still wrap together under the title. Browser run: section-more (4 tests) passes. Native unrendered.
+
+## Re-review
+Fresh re-critique (1440 desktop and 375 touch, light and dark): pass. Edit and More stand 8 px apart at 1440 (both 28 px), More's hover fill clear of Edit's border; at 375 touch both wrap together under the title, 8 px apart, 44 px tall. Stays in review for the native box (no native render yet).
