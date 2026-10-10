@@ -708,8 +708,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			draws: [
 				"PAGE_HEAD",
 				"PAGE_TOP_BAR",
-				"PAGE_TOP_BAR_TOUCH",
-				"PAGE_TITLE",
+				"PAGE_TOP_BAR_START",
+				"PAGE_TOP_BAR_END",
+				"PAGE_TITLE_FLOOR",
 				"TEXT.role.title",
 				"PAGE_BODY",
 				"ICON_BUTTON.fit.bar",
