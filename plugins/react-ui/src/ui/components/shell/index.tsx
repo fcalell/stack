@@ -61,7 +61,11 @@ const TABS = "flex pb-safe group-has-data-screen/column:hidden";
 const TAB =
 	"flex flex-col items-center justify-center min-w-0 grow basis-0 focus-visible:-outline-offset-2";
 const TAB_GLYPH = "relative flex";
-const TAB_COUNT = "absolute bottom-full left-full -ms-hairline flex";
+// Half a hairline under the glyph box's edge: the last tab's "99+" at 320 ends
+// inside the bar (it asks more than 0.45 px), and the count's ink stays out of
+// the glyph box's whole pixels.
+const TAB_COUNT =
+	"absolute -top-pair left-full -ms-[calc(var(--spacing-hairline)/2)] flex";
 const TAB_LABEL = "max-w-full truncate";
 // A tab bar holds five tabs at most: past five places, four and More.
 const TAB_ROOM = 5;
@@ -196,9 +200,10 @@ function MorePage(props: { places: readonly PlaceSpec[] }) {
 	);
 }
 
-// The touch shell's places: glyph over label, the count a badge on the
-// glyph's top-right corner, its start at the glyph box's edge (clear of the
-// glyph's ink) on a ring of the bar's ground; past five places, four and a More tab,
+// The touch shell's places: glyph over label, the count a badge at the
+// glyph box's top-right corner inside the bar (its line box from a pair above
+// the box's top, so under the bar's hairline, its start at the box's right
+// edge, clear of the glyph's ink; the bar clips it); past five places, four and a More tab,
 // which opens the page of the rest and is selected while it stands or the
 // current place is among them.
 function TabBar(props: {

@@ -247,7 +247,7 @@ export const OVERLAYS: readonly string[] = [
 	"pt-safe",
 	"text-left",
 	"top-0",
-	"bottom-full",
+	"-top-pair",
 	"left-full",
 	"max-w-full",
 	// DefinitionRow, ItemHeader

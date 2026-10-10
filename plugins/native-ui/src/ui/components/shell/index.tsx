@@ -40,7 +40,7 @@ const CONTENT = "flex-1";
 const TABS = "flex-row";
 const TAB = "flex-col-reverse items-center justify-center min-w-0 flex-1";
 const TAB_GLYPH = "relative";
-const TAB_COUNT = "absolute bottom-full left-full -ms-hairline";
+const TAB_COUNT = "absolute -top-pair left-full -ms-hairline";
 const TAB_LABEL = "max-w-full";
 // A tab bar holds five tabs at most: past five places, four and More.
 const TAB_ROOM = 5;

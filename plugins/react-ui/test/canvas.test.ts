@@ -1586,11 +1586,12 @@ test("openTransform opens at the text floor: scale 1 whatever the pane, the firs
 	const clear = { left: 68, bottom: 16, stack: 180 };
 	// A lone frame the room cannot hold, in a pane too short for the stack under
 	// it: it still opens at scale 1 (the old fit shrank it to 0.447), at the
-	// top-left inset when the pane is not wide enough for insets on both sides.
+	// top inset, centred when the pane is not wide enough for insets on both sides.
 	const frame = box(0, 0, 240, 64);
 	const pane = { width: 263, height: 224 };
 	const lone = openTransform(frame, frame, pane, 16, clear);
-	assert.deepEqual(lone, { k: 1, x: 16, y: 16 });
+	// 263 - 240 = 23: centred, 11.5 px each side (the inset would clip 1 px).
+	assert.deepEqual(lone, { k: 1, x: 11.5, y: 16 });
 	// A first box that fits between the insets keeps the room's centre line.
 	const wide = openTransform(
 		box(0, 0, 1000, 1000),
@@ -1612,7 +1613,8 @@ test("openTransform opens at the text floor: scale 1 whatever the pane, the firs
 		{ left: 100, bottom: 16, stack: 0 },
 	);
 	assert.equal(right.x + 940, 300 - 16);
-	// The first node with its group frame: the frame's top and left stand at the insets.
+	// The first node with its group frame: its top stands at the inset; a frame
+	// wider than the pane less its insets is centred (here wider than the pane: at 0).
 	const framed = openTransform(
 		box(0, 0, 400, 900),
 		box(-20, -30, 280, 200),
@@ -1620,7 +1622,7 @@ test("openTransform opens at the text floor: scale 1 whatever the pane, the firs
 		16,
 	);
 	assert.equal(framed.k, 1);
-	assert.equal(framed.x - 20, 16);
+	assert.equal(framed.x - 20, 0);
 	assert.equal(framed.y - 30, 16);
 });
 

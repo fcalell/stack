@@ -646,9 +646,11 @@ export const OpensAtTheFirstNode: StoryObj = {
 		const low = pane.left + page();
 		const high = pane.right - page() - box.width;
 		const line = space.left + space.width / 2 - box.width / 2;
+		// Wider than the pane less its two insets (003-189 round 3): centred.
+		const centred = pane.left + Math.max(0, (pane.width - box.width) / 2);
 		await expect(
 			Math.abs(
-				box.left - (low > high ? low : Math.min(Math.max(line, low), high)),
+				box.left - (low > high ? centred : Math.min(Math.max(line, low), high)),
 			),
 		).toBeLessThan(1);
 		await expect(Math.abs(box.top - (pane.top + page()))).toBeLessThan(1);

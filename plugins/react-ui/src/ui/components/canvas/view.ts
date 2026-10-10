@@ -177,8 +177,9 @@ export function fitTransform(
 // graph opens at 1. It is centred in the room when it fits there. Else the
 // floor wins and `first` (the first node with the group that holds it) stands
 // whole at the top, its top `inset` below the pane's top, on the room's centre
-// line as far as the pane's insets allow and against the left inset when it is
-// as wide as the pane; whatever else the graph holds may reach past the right
+// line as far as the pane's insets allow and centred in the pane when it is
+// wider than the pane less its two insets (against the left edge when wider
+// than the pane); whatever else the graph holds may reach past the right
 // or bottom edge, a pan or a zoom away.
 export function openTransform(
 	bounds: Box,
@@ -200,7 +201,10 @@ export function openTransform(
 	const middle = area.x + area.width / 2 - (first.x + first.width / 2);
 	return {
 		k: 1,
-		x: low > high ? low : Math.min(Math.max(middle, low), high),
+		x:
+			low > high
+				? Math.max(0, (pane.width - first.width) / 2) - first.x
+				: Math.min(Math.max(middle, low), high),
 		y: area.y - first.y,
 	};
 }

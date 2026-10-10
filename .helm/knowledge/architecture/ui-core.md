@@ -582,9 +582,11 @@ a tick with no animation, never jumped to full.
   `PLACE_TAB` with `PLACE_TAB_LABEL`, the tab bar tab, is selected by ink alone (`ink-meta` idle,
   `ink-body` selected, the selected label at 500); its box carries the ink for the glyph inside it,
   as a labelled act's fill does, and the label repeats it because a native Text inherits none.
-  A tab's count is the plain number as a badge above the glyph box's top-right corner: its bottom
-  edge at the box's top (the space above holds no ink) and its start at the box's right edge, a
-  hairline in at most (where the last tab's "99+" at 320 asks it), so it paints nothing inside the
+  A tab's count is the plain number as a badge at the glyph box's top-right corner, inside the bar:
+  its line box starts a `pair` above the box's top (one px under the bar's inner top edge, so the
+  hairline strikes no digit and nothing paints above the bar, which clips: `SHELL_TAB_BAR` is
+  `overflow-hidden`) and its start is at the box's right edge, half a hairline in (the last tab's "99+" at 320
+  asks more than 0.45 px to end inside the bar), so it paints nothing inside the whole pixels of the
   glyph's box, no ring or ground over the strokes, and the glyph's ink is the same with and without it
   (an absolute overlay, so the glyph's box and the label's centring do not move), and past `TAB_COUNT_MAX` (99) it reads `countOver` ("99+", `tabCount(words, n)`,
   handed to `Count` as its drawn form); the sidebar's `Count` draws the number whole. The badge
@@ -1824,7 +1826,7 @@ a tick with no animation, never jumped to full.
   it, so one route serves a computed layout and a stored one. A group's left padding grows so its
   head text ends a `pair` before the first column an edge crosses the head band at, and ELK's
   Brandes-Köpf placement is balanced so a parent stands over its children. A graph that fits at scale 1 opens
-  centred, a larger one at scale 1 (the text floor first: a first view is never zoomed out) with its first node in path order and the group holding it wholly in the pane at the top, on the room's centre line clamped to the page insets (the left inset when it is as wide as the pane); Fit is
+  centred, a larger one at scale 1 (the text floor first: a first view is never zoomed out) with its first node in path order and the group holding it wholly in the pane at the top, on the room's centre line clamped to the page insets (centred in the pane when it is wider than the pane less its two insets); Fit is
   capped at scale 1 and leaves the room the zoom stack and the act take (each marks itself `data-clear` with the edge it stands against, which the viewport reads off the DOM), and the opening view stands in that same room through the one `clearance` read. ELK's worker is its own file imported with `?worker`, which cannot survive
   Vite's pre-bundling of this package's `.tsx` entries: the module holding the import
   (`lib/canvas-layout`) is reached from a dynamic import by the package's own name, so a graph the

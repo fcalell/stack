@@ -827,8 +827,10 @@ export const SHELL_BANNER = "p-page";
 export const SWITCHER_SLOT = "p-float";
 export const SHELL_PLACES = "gap-rows p-float";
 // The shell on touch: the tab bar on the canvas under a hairline, a pair
-// above its glyphs so they centre on the header strip's line.
-export const SHELL_TAB_BAR = "px-float pt-pair bg-canvas border-t border-edge";
+// above its glyphs so they centre on the header strip's line. The bar clips
+// its tabs' count badges: nothing paints above its hairline.
+export const SHELL_TAB_BAR =
+	"px-float pt-pair bg-canvas border-t border-edge overflow-hidden";
 // A page outside the shell, a Gate: the surface ground at the page inset, one
 // column at the `auth` width (a column cell is a width; the region centres
 // it) whose banner, lead and body stand a sections gap apart. The lead (the
