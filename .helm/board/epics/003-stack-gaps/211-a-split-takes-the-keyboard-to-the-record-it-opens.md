@@ -36,3 +36,7 @@ The owner rules the Shift+Tab clause: "Shift+Tab returns to the row" reads "Shif
 
 ## Review
 Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `pnpm check` and every verify pass. No critique unit this round; the behaviour and screens suites hold it.
+
+## Flake
+`OpenTakesTheKeyboard1280` failed in 6 of 6 runs of `behaviour/split.stories.tsx` and not when run alone (it appeared intermittent only across the full suite). The cause was not `useRecordFocus` (its focus calls were correct) nor the story: it was `focusPage` in `lib/focus.ts`, the retry chain of `useReturnFocus`. When the previous story's docked Sheet (`PaneWithoutFormSticksNothing`) unmounted, its settle step ran `focusPage`, which retried every 100 ms for 0.5 s and focused the first control of any `[data-page]`, even after focus had moved on. In the next story it pulled focus to Item 1 after the Tab to Item 2, or after the Shift+Tab that had landed on the body. The same race hits a user: a sheet closes, they Tab on within half a second, and a late retry steals focus back to the page's head.
+Fix (code): `focusPage` watches `focusin` and stops retrying as soon as any element takes focus, so it only claims focus nobody has taken. The story is unchanged. Before: 6 of 6 full-file runs failed; after: 10 of 10 pass (44 of 44).

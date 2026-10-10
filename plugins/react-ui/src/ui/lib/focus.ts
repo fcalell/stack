@@ -91,11 +91,29 @@ export function claimOpener(now = Date.now()): HTMLElement | null {
 }
 
 // Focus on the page a sheet left standing: its head's, or its first control,
-// retried while a route is still drawing the page.
+// retried while a route is still drawing the page. The retries are for focus
+// nobody has taken: once any element takes focus (a viewer's Tab, a field that
+// autofocuses, another region's hand-off) the sheet's claim is over, so a late
+// retry never pulls focus off where the viewer has since moved it.
 export function focusPage(tries = 5): void {
-	for (const page of document.querySelectorAll<HTMLElement>("[data-page]"))
-		if (focusFirst(page)) return;
-	if (tries > 0) setTimeout(() => focusPage(tries - 1), 100);
+	// Our own focus lands here too, which ends the chain on success.
+	let moved = false;
+	const note = () => {
+		moved = true;
+	};
+	document.addEventListener("focusin", note, true);
+	const attempt = (left: number) => {
+		if (!moved) {
+			for (const page of document.querySelectorAll<HTMLElement>("[data-page]"))
+				if (focusFirst(page)) break;
+			if (!moved && left > 0) {
+				setTimeout(() => attempt(left - 1), 100);
+				return;
+			}
+		}
+		document.removeEventListener("focusin", note, true);
+	};
+	attempt(tries);
 }
 
 // A sheet that closes with its focus inside it and nowhere to fall back to
