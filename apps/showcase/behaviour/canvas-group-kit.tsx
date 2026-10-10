@@ -95,6 +95,21 @@ export function group(mode: "light" | "dark"): StoryObj {
 			await hover(away);
 			const rest = getComputedStyle(head).borderTopColor;
 			const nodeRest = getComputedStyle(node).borderTopColor;
+			const text = head.firstElementChild;
+			if (!text) throw new Error("no head text");
+			// Boxes are read against the frame's corner: a selection may pan the view.
+			const inside = (element: Element) => {
+				const box = rect(element);
+				const corner = rect(frame);
+				return {
+					left: box.left - corner.left,
+					top: box.top - corner.top,
+					width: box.width,
+					height: box.height,
+				};
+			};
+			const textRest = inside(text);
+			const headRest = inside(head);
 			await hover(centreOf(node));
 			await waitFor(() =>
 				expect(getComputedStyle(node).borderTopColor).not.toBe(nodeRest),
@@ -110,12 +125,23 @@ export function group(mode: "light" | "dark"): StoryObj {
 			// still shows its hover.
 			await click(centreOf(head));
 			await waitFor(() =>
-				expect(getComputedStyle(frame).borderTopWidth).toBe("2px"),
+				expect(getComputedStyle(frame).outlineWidth).toBe("2px"),
 			);
-			await expect(getComputedStyle(frame).borderTopStyle).toBe("dashed");
+			await expect(getComputedStyle(frame).outlineStyle).toBe("dashed");
 			await expect(
-				contrast(getComputedStyle(frame).borderTopColor, ground),
+				contrast(getComputedStyle(frame).outlineColor, ground),
 			).toBeGreaterThanOrEqual(3);
+			// Selecting moves nothing inside the frame: the head and its text keep
+			// their boxes.
+			for (const [now, was] of [
+				[inside(text), textRest],
+				[inside(head), headRest],
+			] as const) {
+				for (const side of ["left", "top", "width", "height"] as const)
+					await expect(Math.abs(now[side] - was[side])).toBeLessThanOrEqual(
+						0.5,
+					);
+			}
 			await hover(away);
 			await hover(centreOf(head));
 			await waitFor(() =>
