@@ -42,3 +42,6 @@ The owner rules rework: prove timing in behaviour stories with a test clock, not
 
 ## Built (rework)
 The web timing criteria are driven in `apps/showcase/behaviour/table-edit.stories.tsx` on a held test clock (`behaviour/clock.ts`: `Date.now` and the page's timers stand still until the story advances them; no CPU throttle). The parent's commit lands 100 ms after it is called. `EscapeCommitsNothing`: typed text, Escape, then the cell holds focus in the same turn, the input is gone, and after 1000 ms of clock `onEdit` was called 0 times and the old value stands. `EnterCommitsOnce`: the control, one commit and the value landing 100 ms later. `PickMountsOpen`: a MutationObserver records each role-cell trigger's `aria-expanded` as it first appears: only `"true"`, with the listbox visible (no closed-list frame). 3 of 3 pass in Chromium; the `table`, `code`, `row-meta` and `list` stories still pass. No code change was needed; the criterion's 6x CPU throttle is replaced by the clock per the owner's ruling. Phone box stays open (native not rendered).
+
+## Re-review
+Web accepted 2026-10-10 on the test-clock behaviour stories; the phone box stays open and waits on the native render.

@@ -37,3 +37,6 @@ The owner rules rework: prove timing in behaviour stories with a test clock, not
 
 ## Built (rework)
 Driven in `apps/showcase/behaviour/code-copy.stories.tsx` on the held test clock (`behaviour/clock.ts`). `CopiedHoldsFromTheLastCopy`: copy, +1 s, copy again; Copied still shows at +1.9 s after the second and is gone at +2.1 s. `CopiedClearsAfterTwoSeconds`: one copy holds 1.9 s and clears by 2.1 s. `UnfoldKeepsFocus`: a keyboard unfold of a `tail` Code, sampling `document.activeElement` at every DOM mutation and every animation frame: it is only ever the fold button, then the text, which ends focused; the body is never active. 3 of 3 pass in Chromium. No code change was needed. Phone box stays open (native not rendered).
+
+## Re-review
+Web accepted 2026-10-10 on the test-clock behaviour stories; the phone box stays open and waits on the native render.

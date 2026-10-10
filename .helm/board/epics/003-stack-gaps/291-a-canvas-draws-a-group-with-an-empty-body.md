@@ -31,3 +31,6 @@ Suite 2026-10-10: behaviour 422/422 in Chromium, `stack screens test` 180/180, `
 
 ## Built (rework)
 The lone-box opening fit of 003-189 (`openTransform` in `canvas/view.ts`) stands a single frame the room cannot hold but the pane can inside the pane at 375, clear of the zoom stack. Covered by the unit test `a fit with a foot ...`; the critique re-measures the Placed and Lone loop frames.
+
+## Re-review
+Stays done: its own criterion is met. The fit defect at 375 (the Hollow and Placed loops clipped 8 px on the right, the Placed second group outside the pane, its group bottom 7 px past the zoom stack top, the Lone loop opening at scale 0.447) is carried by 003-189's round-2 rework, with 291's frames as its acceptance.

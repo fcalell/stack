@@ -1,6 +1,6 @@
 ---
 id: 003-181
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a touch Place's more act shares the title's row
@@ -14,7 +14,7 @@ Stead's Now page is a `Place` titled "Now" with its `more` (github.com/fcalell/s
 ## Acceptance criteria
 - [x] At 320 and 390 px, a touch `Place` with no back act stands its `more` on the title's row, with the title wrapping before them, and keeps the 44 px targets.
 - [x] A Place or Screen with a back act is unchanged (changed by the ruling, see Ruled: a back act with no switcher stands ahead of the title on the row).
-- [ ] The Place showcase holds both, measured by the critique.
+- [x] The Place showcase holds both, measured by the critique.
 
 ## Open questions
 - [x] Its shape: the stack session decides.
@@ -43,3 +43,6 @@ The touch title row's title carries a step of block padding (`PAGE_TITLE_BLOCK`,
 Evidence (`behaviour/place.stories.tsx` `ActsShareTheTitleRowAt320`/`At390` extended; `behaviour/screen.stories.tsx` new `WrappedTitleKeepsItsBlockAt320`/`At390`): at 390 the Place's title (the long one, 3 lines of 28 plus 2 x 8) is 100 px in a 117 px head; at 320 a 5-line title is 156 px in a 173 px head; the Filter and More acts' centres are at 30 px, the first line's centre, in both; the h1 column is at least 2/5 of the row; the one-line Place is unchanged (head 45, acts 44, h1 at x16, act centred on the line). The Screen story's wrapped title is at least 3 lines, at least 100 px, in a head at least a step taller than it, the back act and the act centred on the first line, the title at least 2/5 of the row. Place, Screen, Shell, Split, split-record, Sheet, item-header, place-foot, not-found, failed, form-leave, thread, table, list files all pass in the final runs.
 Note on the ruling's figures: the 3-line h1 is 100 px with its padding and the head 117 px (the head's own step and the border included), meeting "h1 at least 100 in a head at least 116".
 Native unrendered: the native-ui change is type-checked and verified, not rendered on a phone.
+
+## Re-review
+Accepted 2026-10-10 after the round-2 re-critique: a 3-line title is 100 px in a 117 px head at 390, a 5-line title 156 in 173 at 320, the acts offset 0 from the first line, the one-line form unchanged (45 px, x16); 003-304 inherits it.

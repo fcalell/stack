@@ -14,7 +14,7 @@ A `List` waits in two forms (`list-row/wait.tsx`, `trailing-wait.ts`, the List's
 ## Acceptance criteria
 - [x] A known row whose status is on its way stands its status line as a waiting bar at the loaded row's height, starting where the loaded word does, and draws the status in place when it arrives, on both platforms (the phone's render unchecked).
 - [x] A row with no status, and a row whose status is known, are unchanged.
-- [ ] The ListRow showcase holds a known list with one row's status waiting, at 390 and 1280, measured by the critique.
+- [x] The ListRow showcase holds a known list with one row's status waiting, at 390 and 1280, measured by the critique.
 
 ## Open questions
 - [x] Its shape (a waiting status from the row map, a per-item loading slot, or another): the stack session decides.
@@ -40,3 +40,6 @@ The owner rules rework: the waiting bar starts at the loaded status text's x (28
 The waiting status is now the `Status`'s own waiting form: `StatusBase` takes `waiting="short"` (react-ui and native-ui `status/base.tsx`), which keeps the dot's room unseen (a `statusDot` cell, `invisible` / `opacity-0`) and the status's `gap-inside`, then a `skeleton` line bar `w-measure-short` wide at most; the list row's `RowStatusMark` draws it in its meta-line-tall box (`h-lh`; a `Strut` on the phone), so the bar's left edge is the loaded word's, 28 px on the desktop and 32 on touch, and it is no wider than a short label. Row heights stay (52 and 64). `ui-core.md` and both `rules.md` say so.
 `behaviour/list-row-status.stories.tsx` `waits` (`StatusWaits`, `StatusWaitsKnown` and the touch twins, 390 and 440 px columns) additionally asserts the bar is at most a `w-measure-short` probe wide and that, once the read answers, "2 running" starts at the bar's left edge (`toBeCloseTo`, 1 digit), with the heights and tops unchanged as before. The four stories and the file's other six pass.
 Native box stays open (native unrendered).
+
+## Re-review
+Web accepted 2026-10-10; waits on the native render. The waiting bar's left equals the arriving word's left (28 / 32), the rows 52 / 64. The native render is unchecked.

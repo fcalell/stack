@@ -1,6 +1,6 @@
 ---
 id: 003-194
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a docked Sheet's pinned parts stay on screen at a short viewport
@@ -18,7 +18,7 @@ Stead's question sheet docks in a conversation's foot (github.com/fcalell/stead,
 - [x] A docked Sheet's submit act stands wholly inside its foot's region, above the shell's tab bar, at 320 x 640 and 390 x 667 with a banner up, the body's floor giving way below three rows when the region cannot hold it.
 - [x] No log text prints over the sheet's head, and the Latest act does not cover the header's status, at 320 x 640 with the banner up.
 - [x] A docked Sheet with room (390 x 844) is unchanged.
-- [ ] The Thread showcase holds a two-page docked Sheet under a banner at 320 x 640 and 390 x 667, and the critique measures the submit's bottom against the tab bar's top.
+- [x] The Thread showcase holds a two-page docked Sheet under a banner at 320 x 640 and 390 x 667, and the critique measures the submit's bottom against the tab bar's top.
 
 ## Open questions
 - [x] Its shape (the floor yielding to the pinned parts, the foot line moving into the body on touch, or a page-level scroll that keeps the foot): the stack session decides.
@@ -51,3 +51,6 @@ The owner rules rework (blocker): Latest is never focusable while out of view. A
 - `packages/ui-core/src/variants.ts`: `SHEET_DOCKED_BODY` is `gap-sections pt-card pb-sections`, so the body's last row ends a sections gap (40 px touch) above the submit when scrolled to its end (it was 21 px: card inset plus the row's own padding); ui-core.md updated.
 - `apps/showcase/behaviour/sheet.stories.tsx`: `DockedLatestStaysInItsRegion` (320x560: the act is out of the tab order and a Tab from the log lands on no Latest act), `DockedLatestReachableShortPhone` (320x640) and `DockedLatestReachableShortPhoneTall` (390x667) (the box inside the log's visible box, a Tab lands on it, a solid 2 px outline wholly inside the region), `DockedLastRowKeepsTheSectionGap320/390/560` (last row to submit at least the sections gap). sheet.stories 37 of 37 (with the unchanged `DockedShort*` submit-vs-tab-bar stories), the related thread, waiting, place-foot, form-leave stories green, `pnpm check` and the three `verify` suites pass.
 - Note: the critique's 0 px at 320x640 is the body's visible edge against the submit while the body is scrolled to its top (the body is a clipped scroller, flush with the foot); the measured scrolled-to-end gap was 21 px and is now 40 px. Submit clearance of the tab bar is unchanged (the `DockedShort*` stories). The Thread-showcase critique box stays open.
+
+## Re-review
+Accepted 2026-10-10 after the round-2 re-critique: Latest is hidden and inert at 320x560, ringed wholly inside the log at 320x640 and 390x667, the submit stands 38 px clear of the tab bar, the last row 45 px above the submit scrolled to the end.

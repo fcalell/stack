@@ -14,7 +14,7 @@ Stead's Underway rows read a run's node and its spend so far, with the age since
 ## Acceptance criteria
 - [x] A row's trailing holds a live age and a short value (a spend) together: the age kept current from the shared clock, both whole or gone together as a trailing is today, on both platforms.
 - [x] A trailing of one age, count, value or pick is unchanged.
-- [ ] The ListRow showcase holds a live row with an age and a spend at 320 and 1440 px in a 335 px column, measured by the critique.
+- [x] The ListRow showcase holds a live row with an age and a spend at 320 (the frame's 256 px column) and 1440 (335 px), measured by the critique.
 
 ## Open questions
 - [x] Its shape (a value beside an age in `trailing`, or another): the stack session decides.
@@ -38,3 +38,6 @@ The owner rules rework: add the `works` age+spend row (ROW_META_LINE) to the `sh
 ## Built (rework)
 `ROW_META_LINE` is no family cell, so the showcase drew no frame for it (the `["ROW_META_LINE", "works"]` mapping in `frames/list-row.tsx` never matched). The `ROW.lines.two` frame in the `rest` state now draws the `works` part after its own rows: the work items with a live age and spend in the trailing (`{ age, beside }`), in a 335 px column (`w-[335px] max-w-full`, so it narrows to a 320 screen); the dead mapping is removed and the part's column is 335 px, not the pane's 320. `behaviour/row-meta.stories.tsx` `ShowcaseHoldsAgeBesideSpend` (desktop) and `ShowcaseHoldsAgeBesideSpendTouch` (320 px, touch) draw that frame through `Frame` and `drawListRow` and assert the trailing reads "N min · $0.42" whole inside a column of at most 335 px. Both pass with the rest of the row-meta file.
 Native box stays open.
+
+## Re-review
+Web accepted 2026-10-10; waits on the native render. The frame draws the age and spend row whole; at 320 the column is the frame's 256 px (insets), the stricter case, at 1440 the 335 px column holds it; both rows are whole or gone. The native box stays open.

@@ -46,3 +46,6 @@ The owner rules rework: prove timing in behaviour stories with a test clock, not
 
 ## Built (rework)
 Driven in `apps/showcase/behaviour/clocks.stories.tsx` on the held test clock (`behaviour/clock.ts`), the parts mounted inside the play so every timer they start is the clock's. `BarCountsDownWhateverTheParent`: `until` set after mount, in a parent rendering every 100 ms with a fresh `Date` each time: the clock reads 0:30 before any tick, one 1 s interval runs (not restarted), the fill is one 30 s animation whose width is monotonic from under 2 px to the full track, the text counts 0:29 down to 0:00 second by second, and past `until` no interval runs and 5 s more still reads 0:00. `AgeTurnsOnItsOwn`: a Table age cell made at "now" has no "minute" at +30 s and reads "1 minute ago" at +60 s with nothing else rendering it. 2 of 2 pass in Chromium. No code change was needed (a first run read "60 seconds ago" only because the story built its moment from the real clock, not the held one). Phone box stays open (native not rendered).
+
+## Re-review
+Web accepted 2026-10-10 on the test-clock behaviour stories; the phone box stays open and waits on the native render.

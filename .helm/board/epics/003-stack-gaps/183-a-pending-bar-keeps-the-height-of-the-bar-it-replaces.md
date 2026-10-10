@@ -35,3 +35,6 @@ Web accepted 2026-10-10; waits on the native render. Critique pass with a gap: t
 
 ## Built (rework)
 The blocked-reason case moved into 003-140: `PendingReplacingABlockedBarKeepsItsHeight` (and `Touch`) in `apps/showcase/behaviour/action-bar.stories.tsx` swaps a bar that holds a reason line for a pending bar and asserts the bar's height and the offset below are unchanged (web, 1280 and 390). Box 1 stays open only for the native render.
+
+## Re-review
+Web accepted 2026-10-10; waits on the native render. The blocked-then-pending swap passes on web: the pending bar replacing a blocked bar keeps 58/126, 0 px. Box 1 mixes web and native, so it stays open.

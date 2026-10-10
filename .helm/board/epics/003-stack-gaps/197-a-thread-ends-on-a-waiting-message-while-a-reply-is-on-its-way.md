@@ -1,6 +1,6 @@
 ---
 id: 003-197
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: a Thread ends on a waiting message while a reply is on its way
@@ -14,7 +14,7 @@ Stead's conversation draws a working turn as a loading `Message`, the log's last
 ## Acceptance criteria
 - [x] A loaded `Thread` can end on one waiting message from the other author, inside its log, followed and pinned to as a new message is, and replaced in place by the reply when it streams.
 - [x] A Thread with no waiting entry is unchanged; the Thread's own `loading` keeps its three-message form.
-- [ ] The Thread showcase holds a log ending on a waiting reply at 390 and 1280, measured by the critique.
+- [x] The Thread showcase holds a log ending on a waiting reply at 390 and 1280, measured by the critique.
 
 ## Open questions
 - [x] Its shape (a `loading` slot on `MessageSlots`, a Thread prop for a pending reply, or another): the stack session decides.
@@ -41,3 +41,6 @@ The owner rules rework: the waiting message draws as the reply it becomes: no au
 
 ## Built (rework)
 `WaitingReply` (`plugins/{react,native}-ui/src/ui/components/message/waiting.tsx`, internal) is what `replying` draws: the unbubbled `other` article with one skeleton line in a body line box and no author-line bar. `Message loading` is unchanged, so the Thread's own `loading` keeps its three-message form. `apps/showcase/behaviour/thread.stories.tsx`: `WaitingHoldsTheOneLineReplysBox1280/390` assert the waiting entry's top (in the log's content), left and height equal those of a one-line reply that replaces it (0 px), `WaitingOnlyGrowsByALongerRepliesLines1280/390` assert the same top and left with a multi-line reply only taller, all with the log pinned at its end; the earlier three stories pass unchanged (thread.stories 7 of 7). The entry stays one `aria-busy` article. Native unrendered. The critique box stays open.
+
+## Re-review
+Accepted 2026-10-10 after the round-2 re-critique: the waiting entry's top and left jump 0 px against a one-line reply; a longer reply only grows.
