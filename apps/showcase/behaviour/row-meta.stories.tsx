@@ -364,40 +364,74 @@ const drawn = (element: Element) => {
 const whole = (element: Element) =>
 	drawn(element) <= element.getBoundingClientRect().width;
 
-const reviewed: Play = async ({ canvas }) => {
-	await mono();
-	for (const file of SENSITIVE) {
-		const row = canvas.getByRole("link", { name: file.path }).parentElement;
-		const path = row?.querySelector<HTMLElement>(".font-mono");
-		const counts = row?.lastElementChild;
-		const chip = counts?.previousElementSibling;
-		const name = path?.lastElementChild;
-		const stem = name?.firstElementChild;
-		const tail = name?.lastElementChild;
-		if (!row || !path || !counts || !chip || !stem || !tail || !name)
-			throw new Error("a file row lacks a part");
-		const inset = Number.parseFloat(getComputedStyle(row).paddingRight);
-		const gap = Number.parseFloat(getComputedStyle(row).columnGap);
-		const floor = Number.parseFloat(getComputedStyle(path).minWidth);
-		await expect(row.scrollWidth).toBeLessThanOrEqual(row.clientWidth);
-		await expect(Math.abs(right(row) - inset - right(counts))).toBeLessThan(1);
-		await expect(
-			counts.getBoundingClientRect().left - right(chip),
-		).toBeLessThan(gap + 1);
-		await expect(whole(tail)).toBe(true);
-		if (file.path.includes("/billing/")) {
-			const chars = tail.textContent?.length ?? 1;
-			await expect(stem.clientWidth).toBeGreaterThanOrEqual(
-				(drawn(tail) / chars) * 4 - 0.5,
+const review =
+	(wholeChip: boolean): Play =>
+	async ({ canvas }) => {
+		await mono();
+		for (const file of SENSITIVE) {
+			const row = canvas.getByRole("link", { name: file.path }).parentElement;
+			const path = row?.querySelector<HTMLElement>(".font-mono");
+			// The counts' block stands aside (`display: contents`): its lanes are
+			// the row's items.
+			const counts = row?.lastElementChild;
+			const lanes = [...(counts?.children ?? [])];
+			const chip = counts?.previousElementSibling;
+			const name = path?.lastElementChild;
+			const stem = name?.firstElementChild;
+			const tail = name?.lastElementChild;
+			if (!row || !path || !counts || !chip || !stem || !tail || !name)
+				throw new Error("a file row lacks a part");
+			const inset = Number.parseFloat(getComputedStyle(row).paddingRight);
+			const gap = Number.parseFloat(getComputedStyle(row).columnGap);
+			const floor = Number.parseFloat(getComputedStyle(path).minWidth);
+			await expect(row.scrollWidth).toBeLessThanOrEqual(row.clientWidth);
+			await expect(Math.abs(right(row) - inset - right(lanes[1]))).toBeLessThan(
+				1,
 			);
-		} else await expect(whole(stem)).toBe(true);
-		const label = within(chip as HTMLElement).getByText(file.label);
-		if (clipped(label))
-			await expect(path.getBoundingClientRect().width).toBeLessThanOrEqual(
-				floor + 0.5,
-			);
-	}
-};
+			await expect(
+				lanes[0].getBoundingClientRect().left - right(chip),
+			).toBeLessThan(gap + 1);
+			await expect(whole(tail)).toBe(true);
+			if (file.path.includes("/billing/")) {
+				const chars = tail.textContent?.length ?? 1;
+				await expect(stem.clientWidth).toBeGreaterThanOrEqual(
+					(drawn(tail) / chars) * 4 - 0.5,
+				);
+			} else await expect(whole(stem)).toBe(true);
+			// A directory that gives way keeps its ellipsis: never a span too narrow
+			// to draw one (the cut says it is a cut), or a name alone.
+			const directory =
+				name === path.firstElementChild ? null : path.firstElementChild;
+			if (directory && !whole(directory)) {
+				const probe = document.createElement("span");
+				probe.style.cssText = "position:absolute;visibility:hidden";
+				probe.textContent = "\u2026";
+				path.append(probe);
+				const ellipsis = probe.getBoundingClientRect().width;
+				probe.remove();
+				await expect(
+					directory.getBoundingClientRect().width,
+				).toBeGreaterThanOrEqual(ellipsis - 0.5);
+			}
+			// The chip's label is cut only once the path stands at its floor and the
+			// counts at their text; where the room allows it, it is whole.
+			const label = within(chip as HTMLElement).getByText(file.label);
+			if (clipped(label)) {
+				await expect(wholeChip).toBe(false);
+				await expect(path.getBoundingClientRect().width).toBeLessThanOrEqual(
+					floor + 0.5,
+				);
+				for (const lane of lanes)
+					await expect(lane.getBoundingClientRect().width).toBeLessThanOrEqual(
+						drawn(lane) + 0.5,
+					);
+			}
+		}
+	};
+const reviewed = review(false);
+// A page's width at which the chip's label has room whole beside the path's
+// floor and the counts yielded.
+const reviewedWhole = review(true);
 
 export const ReviewFloor320: StoryObj = {
 	render: () => <Review width={320} />,
@@ -405,11 +439,11 @@ export const ReviewFloor320: StoryObj = {
 };
 export const ReviewFloor390: StoryObj = {
 	render: () => <Review width={390} />,
-	play: reviewed,
+	play: reviewedWhole,
 };
 export const ReviewFloor768: StoryObj = {
 	render: () => <Review width={768} />,
-	play: reviewed,
+	play: reviewedWhole,
 };
 export const ReviewGroupFloor320: StoryObj = {
 	render: () => <Review width={320} grouped />,

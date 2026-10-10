@@ -409,6 +409,7 @@ export const OVERLAYS: readonly string[] = [
 	"pb-card",
 	"focus-visible:-outline-offset-2",
 	"shrink-10000000",
+	"shrink-10000",
 	"page-max-tablet:flex-wrap",
 	"page-max-tablet:basis-0",
 	"page-max-tablet:basis-full",

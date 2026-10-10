@@ -2291,6 +2291,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"CHIP",
 				"CHIP_LABEL",
 				"FILE_COUNT",
+				"FILE_COUNT_YIELD",
 				"FILE_COUNTS",
 				"FILE_PATH",
 				"FILE_PATH_PART",
@@ -2311,7 +2312,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SKELETON_ROW.kind.one-line",
 				"SKELETON_ROW.kind.one-line-group",
 			],
-			holds: ["FILE_PATH", "FILE_PATH_PART", "FILE_COUNTS", "FILE_COUNT"],
+			holds: [
+				"FILE_PATH",
+				"FILE_PATH_PART",
+				"FILE_COUNTS",
+				"FILE_COUNT",
+				"FILE_COUNT_YIELD",
+			],
 			states: [...PRESS, "selected", "loading"],
 			owns: {
 				roles: ["code", "meta", "caption"],

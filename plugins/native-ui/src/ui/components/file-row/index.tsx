@@ -3,7 +3,7 @@ import type {
 	ChipMark,
 	IconName,
 } from "@fcalell/ui-core/descriptors";
-import { pathCut } from "@fcalell/ui-core/list-state";
+import { DIRECTORY_LEAD, pathCut } from "@fcalell/ui-core/list-state";
 import { isCurrent } from "@fcalell/ui-core/route";
 
 import {
@@ -90,7 +90,8 @@ function split(path: string): [string, string] {
 // The path fits by layout: the name takes its width up to the whole box and
 // the directory the room it leaves, ellipsized at its end, so the directory
 // gives way first, down to nothing; then the name is cut in its middle, its
-// end (the extension) kept, down to its floor, below which the chip's label
+// end (the extension) kept, down to its floor, which holds one character of a
+// directory so what gives way draws its ellipsis, below which the chip's label
 // truncates. Yoga has no `ch`: the floor is its characters at a quarter of
 // `figures`, four code figures.
 function Path({ path }: { path: string }) {
@@ -101,7 +102,9 @@ function Path({ path }: { path: string }) {
 		<View
 			pointerEvents="none"
 			className={PATH}
-			style={{ minWidth: pathCut(name).floor * advance }}
+			style={{
+				minWidth: (pathCut(name).floor + (dir ? DIRECTORY_LEAD : 0)) * advance,
+			}}
 		>
 			{dir ? (
 				<RNText

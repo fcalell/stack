@@ -1051,6 +1051,13 @@ export function stagesShown<T extends { state: string }>(
 // The characters a file name keeps at its start and before its extension.
 const NAME_LEAD = 3;
 
+// The room a file row's directory keeps beside the name's floor: one character,
+// which a box that narrow draws as its ellipsis alone. A directory that gives
+// way is cut to a leading ellipsis, never to a span too narrow to draw one, so
+// the cut says it is a cut. Both platforms add it to the path's floor when the
+// path has a directory.
+export const DIRECTORY_LEAD = 1;
+
 // A file row's name, cut: its end (`tail`, never cut) is the extension and the
 // NAME_LEAD characters before it (twice that without an extension), but its
 // stem keeps its first NAME_LEAD characters, so a short name never loses its

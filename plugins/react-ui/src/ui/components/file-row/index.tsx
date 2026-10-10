@@ -5,9 +5,10 @@ import type {
 	ChipMark,
 	IconName,
 } from "@fcalell/ui-core/descriptors";
-import { pathCut } from "@fcalell/ui-core/list-state";
+import { DIRECTORY_LEAD, pathCut } from "@fcalell/ui-core/list-state";
 import { isCurrent } from "@fcalell/ui-core/route";
 import {
+	FILE_COUNT_YIELD,
 	FILE_COUNTS,
 	FILE_PATH,
 	fileCount,
@@ -35,18 +36,19 @@ const HIT_LIST = "rounded-row touch:rounded-none";
 // The change mark stands in its own lane at the row's start, ahead of the glyph.
 const MARK = "flex shrink-0";
 const LEADING = "flex shrink-0 items-center justify-center text-ink-meta";
-// The path takes the overflow first (its shrink weight is 10^7 against the
-// chip's 1, the weight of a mark's label in ListRow's meta line), down to its floor, a `min-width`
+// The path takes the overflow first (its shrink weight is 10^7, then the
+// counts' lanes 10^3 (`FILE_COUNT_YIELD`), against the chip's 1, the weight of a mark's label in ListRow's meta line), down to its floor, a `min-width`
 // in `ch` (the path is mono) from its name; it clips what its floor holds.
 const PATH = "flex grow shrink-10000000 overflow-hidden";
-const DIRECTORY = "min-w-0 truncate";
-const NAME = "flex shrink-0 max-w-full min-w-0";
+const DIRECTORY = "shrink-10000 truncate";
+const NAME = "flex min-w-0 shrink";
 const STEM = "min-w-0 truncate";
 const PART = "shrink-0";
 // The chip stands at its label's measure cap while the path holds above its
 // floor; below it the chip's label truncates.
 const CHIP = "flex min-w-0 shrink";
-const COUNTS = "flex shrink-0 items-center";
+// The counts' block carries their type and stands aside: each lane is an item of the row.
+const COUNTS = "contents";
 const COUNT = "text-end";
 
 /** A changed file in a review's list. */
@@ -84,24 +86,32 @@ function split(path: string): [string, string] {
 	return [path.slice(0, slash), path.slice(slash)];
 }
 
-// The path fits by layout: the name takes its width up to the whole box and
-// the directory the room it leaves, ellipsized at its end, so the directory
-// gives way first, down to nothing; then the name's stem truncates before its
+// The path fits by layout: the directory takes the room the name leaves,
+// ellipsized at its end, so it gives way first, down to its one character;
+// then the name's stem truncates before its
 // kept end, a cut in its middle, down to the name's floor, below which the
-// chip's label truncates. The floor is its characters in `ch` rounded up to the
+// chip's label truncates. A directory keeps one character beside the name's
+// floor (its own `min-width`, in the path's), so what gives way draws its
+// ellipsis (a leading "…") and the cut says it is a cut. The floor is its characters in `ch` rounded up to the
 // pixel: `ch` is the advance of "0" and a run of text can advance a 64th of a
 // pixel per glyph past it, so an exact floor leaves the name's last character
 // short and `text-overflow` cuts it.
 function Path(props: { path: string }) {
 	const [dir, name] = split(props.path);
 	const { stem, tail, floor } = pathCut(name);
+	// Each part's floor rounds up on its own, so their sum is the path's floor.
+	const lead = `round(up, ${DIRECTORY_LEAD}ch, 1px)`;
+	const room = `round(up, ${floor}ch, 1px)`;
 	return (
 		<span
 			className={cn(FILE_PATH, PATH)}
-			style={{ minWidth: `round(up, ${floor}ch, 1px)` }}
+			style={{ minWidth: dir ? `calc(${room} + ${lead})` : room }}
 		>
 			{dir ? (
-				<span className={cn(filePathPart({ part: "directory" }), DIRECTORY)}>
+				<span
+					className={cn(filePathPart({ part: "directory" }), DIRECTORY)}
+					style={{ minWidth: lead }}
+				>
 					{dir}
 				</span>
 			) : null}
@@ -172,10 +182,18 @@ export function FileRow({
 				</span>
 			) : null}
 			<span className={cn(FILE_COUNTS, COUNTS)}>
-				<span className={cn(fileCount({ kind: "added" }), COUNT)}>
+				<span
+					className={cn(fileCount({ kind: "added" }), FILE_COUNT_YIELD, COUNT)}
+				>
 					{added > 0 ? `+${added}` : null}
 				</span>
-				<span className={cn(fileCount({ kind: "removed" }), COUNT)}>
+				<span
+					className={cn(
+						fileCount({ kind: "removed" }),
+						FILE_COUNT_YIELD,
+						COUNT,
+					)}
+				>
 					{removed > 0 ? `−${removed}` : null}
 				</span>
 			</span>
