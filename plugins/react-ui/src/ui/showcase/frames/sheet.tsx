@@ -164,7 +164,7 @@ function DockedQuestions({ state }: { state: ShowcaseFrame["state"] }) {
 	);
 }
 
-// A short form: one field, so the side sheet is its content's height.
+// A short form: one field, so the desktop sheet is a centred sheet.
 function OneField() {
 	const [value, setValue] = useState("production");
 	return (

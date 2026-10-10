@@ -30,7 +30,7 @@ export interface SheetProps extends Closed {
 	children?: ReactNode;
 }
 
-/** On the desktop a side sheet at the end over the scrim, its content's height up to the viewport's, its head (the title over the description beside the close act) over the body and the foot; on touch a bottom sheet with the close act first and the submit at the head's end, a blocked submit's reason under the head. Passed as a `Thread`'s or a `Place`'s `foot` it docks there with no scrim: the back act, the title over the description and the close act in the head, the body scrolling under the foot's bound, the `foot` line beside the `submit` in the foot, at both densities; Escape calls `onClose`, and closing hands focus to the input that returns. */
+/** On the desktop centred over the scrim when its content fits the viewport less the page inset, else a side sheet at the end the full height (decided as it opens), its head (the title over the description beside the close act) over the body and the foot; on touch a bottom sheet with the close act first and the submit at the head's end, a blocked submit's reason under the head. Passed as a `Thread`'s or a `Place`'s `foot` it docks there with no scrim: the back act, the title over the description and the close act in the head, the body scrolling under the foot's bound, the `foot` line beside the `submit` in the foot, at both densities; Escape calls `onClose`, and closing hands focus to the input that returns. */
 export function Sheet({
 	open,
 	onClose,

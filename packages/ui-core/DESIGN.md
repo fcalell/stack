@@ -1316,6 +1316,12 @@ components:
     backgroundColor: "{colors.raised}"
   sheet-side-pane-dark:
     backgroundColor: "{colors.raised-dark}"
+  sheet-side-short:
+    backgroundColor: "{colors.raised}"
+    rounded: "{rounded.sheet}"
+  sheet-side-short-dark:
+    backgroundColor: "{colors.raised-dark}"
+    rounded: "{rounded.sheet}"
   prose-marker-bullet:
     width: "{spacing.icon}"
     typography: "{typography.body}"
