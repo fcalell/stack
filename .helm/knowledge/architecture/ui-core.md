@@ -1804,7 +1804,7 @@ a tick with no animation, never jumped to full.
   one namespace (`holds` mixes both), so the same `onSelect` and `selected` choose a group, with no
   `onSelectGroup`: only the head is a `<button>` (the frame's body keeps `pointer-events-none` and
   pans, and `CANVAS_GROUP_HEAD` carries `min-h-target`, so the probe lays the frame out with the
-  taller head), `CANVAS_GROUP` is a `state` matrix whose `selected` recolours the dash, the heads
+  taller head), `CANVAS_GROUP` is a `state` matrix whose `selected` recolours the dash and doubles its line to 2 px (one accent hairline reads faint in dark; `accent-ink` holds 3:1 on `canvas`), the head carries a transparent border (`CANVAS_GROUP_HEAD`) that the button steps to `edge-hover` on hover, as a node's does (a platform overlay), the heads
   take their Tab stops before the nodes (frames render first), and under the text floor the head is
   no button. A group holds no `onMove` (a frame follows its holds). A group holding no present node
   and no group is a leaf of the graph (`emptyGroups`), not a frame computed from members: ELK lays

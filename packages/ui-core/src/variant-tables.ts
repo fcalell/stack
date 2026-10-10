@@ -1113,14 +1113,15 @@ export const CANVAS_NODE_NAME = matrix({
 	defaultVariants: { tone: "rest" },
 });
 
-// A group's dashed frame: the dash says a group, the outline's colour says it
-// is selected.
+// A group's dashed frame: the dash says a group, the outline's colour and a
+// second pixel of line say it is selected (one dashed hairline in the accent
+// reads faint on the dark ground).
 export const CANVAS_GROUP = matrix({
 	base: "rounded-card border border-dashed",
 	variants: {
 		state: {
 			rest: "border-edge-strong",
-			selected: "border-selected-outline",
+			selected: "border-2 border-selected-outline",
 		},
 	},
 	defaultVariants: { state: "rest" },

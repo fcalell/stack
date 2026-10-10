@@ -8,6 +8,7 @@ const HEAD = "flex items-center";
 const HEAD_TEXT = "min-w-0 truncate";
 const HIDDEN = "invisible";
 const CONTROL = "pointer-events-auto text-start";
+const HOVERED = "hover:border-edge-hover";
 const FOCUSED = "focus-visible:outline-2 focus-visible:outline-ring";
 
 // A group's dashed frame and its head, standing in flow coordinates around
@@ -59,7 +60,7 @@ export function GroupFrame({
 					type="button"
 					onClick={() => onSelect(id)}
 					onFocus={focused}
-					className={cn(classes, CONTROL, FOCUSED)}
+					className={cn(classes, CONTROL, HOVERED, FOCUSED)}
 				>
 					{text}
 				</button>

@@ -808,7 +808,7 @@ export const CANVAS_PORT =
 	"size-port rounded-full border border-edge-strong bg-surface";
 export const CANVAS_PORT_HIT = "size-target";
 export const CANVAS_GROUP_HEAD =
-	"gap-inside px-control-x py-inside min-h-target rounded-t-card bg-group text-meta leading-meta font-normal text-ink-meta";
+	"gap-inside px-control-x py-inside min-h-target rounded-t-card border border-transparent bg-group text-meta leading-meta font-normal text-ink-meta";
 export const CANVAS_ZOOM = "rounded-control border border-edge bg-surface";
 
 // ── Layout ──────────────────────────────────────────────────────────
