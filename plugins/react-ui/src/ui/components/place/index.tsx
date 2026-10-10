@@ -112,9 +112,10 @@ const ACT_LAYER =
 	"absolute inset-0 flex flex-col items-center justify-end pointer-events-none";
 const ACT_HIT = "flex pointer-events-auto";
 // From `tablet` of its page a Split's list stands at the body's start, and
-// the layer covers its column alone, so the act centres on the list.
+// the layer covers its column alone, so the act centres on the list: the list
+// sizes to its content, so the layer takes its edges from the list's anchor.
 const BESIDE_LIST =
-	"page-tablet:group-has-data-split/page:right-auto page-tablet:group-has-data-split/page:w-list";
+	"page-tablet:group-has-data-split/page:left-[anchor(--split-list_left,0px)] page-tablet:group-has-data-split/page:right-[anchor(--split-list_right,0px)]";
 
 // The floating act's room under what scrolls past it, or the toasts that
 // stand above it: the act's height over the page inset it floats at.

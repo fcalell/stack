@@ -1169,7 +1169,8 @@ export const PLACE_TAB_LABEL = matrix({
 // does), or, with nothing open, the empty state alone at the inset. While a
 // Thread fills it, the inset holds the record's head alone: the Thread bleeds
 // through the sides, its log and its docked foot carrying the page inset
-// themselves.
+// themselves. A record the main opened (`beside`) draws its body in the same
+// `rest` cell, so both end where a Prose does.
 export const SPLIT_MAIN = matrix({
 	base: "",
 	variants: {

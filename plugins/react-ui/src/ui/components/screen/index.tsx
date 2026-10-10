@@ -3,6 +3,7 @@ import { cn } from "@fcalell/ui-core/cn";
 import type { IconAct, MenuItem } from "@fcalell/ui-core/descriptors";
 import {
 	PAGE_BODY,
+	PAGE_BODY_BESIDE,
 	PAGE_HEAD,
 	PAGE_TITLE,
 	PAGE_TOP_BAR,
@@ -35,7 +36,8 @@ import { splitOf } from "../split/index.tsx";
 // while the mark stands in its column, from the first paint.
 const SCREEN = "@container/page group/page flex flex-col grow min-h-0";
 // Beside a Split's main the screen is a region of its page: its head's acts
-// read the page's width, and its body's sections are the container. Where it
+// read the page's width, and its body's sections are the container, in the
+// column the main holds (`PAGE_BODY_BESIDE`: the measure inside the page inset). Where it
 // stands alone (below `tablet` of the page) its body keeps the room of the
 // act floating over it under its sections, as the main does.
 const SCREEN_BESIDE = "flex flex-col grow min-h-0";
@@ -72,7 +74,7 @@ export interface ScreenProps extends Closed {
 	children?: ReactNode;
 }
 
-/** A page pushed over a place: the back act first and no filled act. Its head draws one hairline: on the desktop it stands in the shell's column under one strip; on touch the top bar (back, actions, more) stands over the title and the screen covers the tab bar. A Split inside decides its regions by the screen's width and its pane's Details act stands in its head, drawn below `wide` of it; while its record stands alone (below `tablet`) the back act returns to the Split's `back` when it names one. As a Split's `beside` record it stands in its page: its title is an `h1` and its sections start at `h2` at every width; it covers no tab bar, and from `wide` of the page its back act draws as Close, the head's last act, so the title stands at the page's gutter. Below `tablet` of the page its head stands alone in the Place's stead, one top bar with its back act to the main, and draws the Details act of the Split's pane while it is open; its body keeps the room of the act floating over it. */
+/** A page pushed over a place: the back act first and no filled act. Its head draws one hairline: on the desktop it stands in the shell's column under one strip; on touch the top bar (back, actions, more) stands over the title and the screen covers the tab bar. A Split inside decides its regions by the screen's width and its pane's Details act stands in its head, drawn below `wide` of it; while its record stands alone (below `tablet`) the back act returns to the Split's `back` when it names one. As a Split's `beside` record it stands in its page: its title is an `h1` and its sections start at `h2` at every width; it covers no tab bar, and from `wide` of the page its back act draws as Close, the head's last act, so the title stands at the page's gutter. Below `tablet` of the page its head stands alone in the Place's stead, one top bar with its back act to the main, and draws the Details act of the Split's pane while it is open; its body keeps the room of the act floating over it. Beside, its body stands in one column at the measure inside the page inset, at the start of its region, as a record in the main does. */
 export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	const touch = useTouch();
 	const words = useWords();
@@ -192,7 +194,10 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 									tabIndex={stop ? 0 : undefined}
 									className={BODY}
 								>
-									<div data-page="" className={cn(PAGE_BODY, SECTIONS_BESIDE)}>
+									<div
+										data-page=""
+										className={cn(PAGE_BODY, PAGE_BODY_BESIDE, SECTIONS_BESIDE)}
+									>
 										{headPaired(children)}
 									</div>
 									{room ? <div className={ALONE}>{room}</div> : null}

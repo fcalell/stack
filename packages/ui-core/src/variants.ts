@@ -480,6 +480,12 @@ export const LOCK_GLYPH = "shrink-0 text-ink-meta";
 // whichever fact the line holds.
 export const ITEM_HEADER = "gap-pair";
 export const ITEM_FACTS = "gap-x-fields gap-y-pair";
+// A record's acts in a Split's main stand at the end of the head's first line
+// (the overline, else the title), the line the height of its text: the acts'
+// boxes reach across it by the icon inset, so their glyphs stand on the line
+// and the last one at the head's end.
+export const ITEM_HEADER_LINE = "gap-acts";
+export const ITEM_HEADER_ACTS = "gap-acts -my-icon-inset -me-icon-inset";
 export const ITEM_FACT = "gap-inside min-h-target";
 // A folded question: one row at the row height, its glyph (in the `ok` ink),
 // its label, its answer and its edit act an inside apart.
@@ -850,6 +856,10 @@ export const PAGE_TOP_BAR_END = "-me-icon-inset";
 // The touch title over the head's hairline, a pair apart from it.
 export const PAGE_TITLE = "pb-pair";
 export const PAGE_BODY = "gap-sections p-page";
+// A record the main opened (a `Screen` in a Split's `beside`) holds the column
+// the main holds (`SPLIT_MAIN` `rest`): the measure inside the page inset, at
+// its region's start, so both end where a Prose does.
+export const PAGE_BODY_BESIDE = "max-w-measure-inset";
 // A docked foot (a Place's `foot`, a filling Thread's input) is one cell: a
 // region of its own under what scrolls past it, a raised surface (the raised
 // step under a hairline), at the page inset at the
@@ -873,16 +883,21 @@ export const FLOATING_ACT_ROOM = "min-h-control";
 // page inset under its last row, so its room is the act's height over the
 // page inset.
 export const FLOATING_ACT_FOOT = "pb-page";
-// A split: the list at its width inside a hairline, the pane at its width at
-// `wide` of its page. Below `tablet` the list stands alone and draws neither.
+// A split: the list inside a hairline, the pane at `wide` of its page, each
+// sized to its content between `region-min` and its ceiling (`list`, `pane`;
+// the ceilings are the widths the breakpoints are reckoned against, so the main
+// never has less than they leave), and the main takes the rest. Below `tablet`
+// the list stands alone and draws neither.
 // A list holding sections stands them a sections gap apart, as a page body
 // does, the first at the page inset under the strip's hairline at every
 // width, where the record's first line stands: the rhythm is its own cell,
 // which the phone's list reads as well. Its bottom inset is the record's, so
 // an empty list and an empty main centre on one line.
-export const SPLIT_LIST = "w-list pb-page px-page border-r border-edge";
+export const SPLIT_LIST =
+	"min-w-region-min max-w-list pb-page px-page border-r border-edge";
 export const SPLIT_LIST_STACK = "gap-sections pt-page";
-export const SPLIT_PANE = "gap-sections w-pane p-page border-l border-edge";
+export const SPLIT_PANE =
+	"gap-sections min-w-region-min max-w-pane p-page border-l border-edge";
 // A record the main opened: from `wide` of its page the main and it share what
 // the list leaves, half each, a structural fraction and never a width token;
 // below `wide` it stands in the main's place, and on the phone it replaces it.

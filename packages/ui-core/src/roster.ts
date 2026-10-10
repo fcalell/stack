@@ -712,6 +712,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"PAGE_TITLE",
 				"TEXT.role.title",
 				"PAGE_BODY",
+				"PAGE_BODY_BESIDE",
 				"ICON_BUTTON.fit.bar",
 				"ICON_BUTTON.fit.body",
 			],
@@ -721,7 +722,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				colors: ["ink-body", "ink-meta", "edge"],
 				radii: ["control"],
 				spacing: ["acts", "page", "sections", "pair"],
-				sizes: ["strip", "control", "control-compact", "icon-inset"],
+				sizes: [
+					"strip",
+					"control",
+					"control-compact",
+					"icon-inset",
+					"measure-inset",
+				],
 			},
 		},
 		// Below `wide` the Split adds a Details act to the Place's actions that
@@ -764,7 +771,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				colors: ["edge", "ink-meta", "surface"],
 				radii: ["control"],
 				spacing: ["inside", "page", "sections"],
-				sizes: ["list", "pane", "control-compact", "measure-inset"],
+				sizes: [
+					"list",
+					"pane",
+					"region-min",
+					"control-compact",
+					"measure-inset",
+				],
 			},
 		},
 		// The fold toggle is the title line; a blocked act's reason stands on
@@ -1405,6 +1418,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				sizes: ["row", "icon", "icon-meta", "control-compact"],
 			},
 		},
+		// A record's acts (icon acts, then a more) stand at the end of the head's
+		// first line, the overline's else the title's, at every width: below
+		// `tablet` the record stands alone and its acts stay in its head, not
+		// also in the Place's strip or top bar. Loading draws none.
 		// Loading, each line keeps its line box and the facts line the height
 		// of the status that moves on it. A fact in words that opens a sheet is its
 		// words and a chevron in a `WORD_ACT`, a button named by the fact; one that goes to
@@ -1414,9 +1431,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// `tablet`) it holds the failed form's room in every state, so the line
 		// never wraps differently as a save moves.
 		ItemHeader: {
-			props: ["overline", "title", "facts", "loading"],
+			props: ["overline", "title", "facts", "actions", "more", "loading"],
 			draws: [
 				"ITEM_HEADER",
+				"ITEM_HEADER_LINE",
+				"ITEM_HEADER_ACTS",
+				"ICON_BUTTON.fit.bar",
+				"ICON_BUTTON.fit.body",
 				"THREAD_COLUMN",
 				"ITEM_FACTS",
 				"ITEM_FACT",
@@ -1459,11 +1480,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"danger",
 				],
 				radii: ["control", "chip", "full"],
-				spacing: ["pair", "sections", "inside", "fields", "control-x"],
+				spacing: ["pair", "sections", "inside", "fields", "control-x", "acts"],
 				sizes: [
 					"skeleton",
 					"target",
+					"control",
 					"control-compact",
+					"icon-inset",
 					"dot",
 					"spinner",
 					"icon-meta",

@@ -1041,7 +1041,8 @@ export type IconStroke = keyof typeof ICON_STROKE;
 // never stretches to its container), and the fixed regions of a frame (the sidebar, a split's list column and record
 // pane, a board column, a canvas node, the auth column, an empty state's column) and the
 // column a selection bar's count and acts stand in, the selection-bar
-// pattern's table-wide width.
+// pattern's table-wide width. A split's list and pane size to their content:
+// `list` and `pane` are their ceilings and `region-min` their shared floor.
 // A width name never repeats a size name: `max-w-*` reads `--spacing-*` first.
 export const WIDTHS = [
 	"measure-short",
@@ -1052,6 +1053,7 @@ export const WIDTHS = [
 	"sidebar",
 	"list",
 	"pane",
+	"region-min",
 	"column",
 	"node",
 	"auth",
@@ -1082,6 +1084,7 @@ export const WIDTH_VALUE: Record<Width, string> = {
 	sidebar: "240px",
 	list: "360px",
 	pane: "320px",
+	"region-min": "240px",
 	column: "300px",
 	node: "240px",
 	auth: "400px",

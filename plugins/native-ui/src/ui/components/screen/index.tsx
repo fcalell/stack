@@ -1,6 +1,7 @@
 import type { IconAct, MenuItem } from "@fcalell/ui-core/descriptors";
 import {
 	PAGE_BODY,
+	PAGE_BODY_BESIDE,
 	PAGE_HEAD,
 	PAGE_TITLE,
 	PAGE_TOP_BAR,
@@ -54,7 +55,8 @@ export interface ScreenProps extends Closed {
 // child gets its Details act in its head. As a Split's `beside` record it stands in the main's stead in
 // the Place, which keeps the tab bar and the toasts' box; it keeps the
 // floating act's room under its body, and, its head the page's one, draws the
-// Details act of the Split's pane while it is open.
+// Details act of the Split's pane while it is open. Its body stands in the
+// main's column (`PAGE_BODY_BESIDE`: the measure inside the page inset).
 export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	const words = useWords();
 	const frame = useContext(Beside);
@@ -109,7 +111,11 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 					<View className={BODY_WRAP}>
 						<Scroll
 							className={BODY}
-							contentContainerClassName={cn(PAGE_BODY, BODY_CONTENT)}
+							contentContainerClassName={cn(
+								PAGE_BODY,
+								beside && PAGE_BODY_BESIDE,
+								BODY_CONTENT,
+							)}
 						>
 							<BackRoute.Provider value={back}>
 								{headPaired(children)}
