@@ -28,7 +28,7 @@ Decided (the recommended answer, applied 2026-10-04): an age ticks live from one
 
 ## Acceptance criteria
 - [x] (test) the bar's share and clock text, and an age's words, are functions of their times and now, shared by both plugins.
-- [ ] (live) web, deploys' PendingBar at 375: the fill moves smoothly, the clock is right in the first second, and nothing ticks past 0:00; a "just now" age turns to "1 minute ago" on its own.
+- [x] (live) web, deploys' PendingBar at 375: the fill moves smoothly, the clock is right in the first second, and nothing ticks past 0:00; a "just now" age turns to "1 minute ago" on its own.
 - [ ] (live) phone, on the harness: the same on a PendingBar whose `until` is set after mount.
 
 ## Progress
@@ -43,3 +43,6 @@ Rework, not accepted. Suite 2026-10-10: behaviour 422/422 in Chromium, `stack sc
 
 ## Owner ruling
 The owner rules rework: prove timing in behaviour stories with a test clock, not a CPU throttle. Web: with `until` set after mount, the fill advances monotonically, the clock text is non-empty in the first second, nothing ticks past 0:00, and an age at "just now" reads "1 minute ago" after the clock moves 60 s. The web box ticks on a pass; the phone box stays open.
+
+## Built (rework)
+Driven in `apps/showcase/behaviour/clocks.stories.tsx` on the held test clock (`behaviour/clock.ts`), the parts mounted inside the play so every timer they start is the clock's. `BarCountsDownWhateverTheParent`: `until` set after mount, in a parent rendering every 100 ms with a fresh `Date` each time: the clock reads 0:30 before any tick, one 1 s interval runs (not restarted), the fill is one 30 s animation whose width is monotonic from under 2 px to the full track, the text counts 0:29 down to 0:00 second by second, and past `until` no interval runs and 5 s more still reads 0:00. `AgeTurnsOnItsOwn`: a Table age cell made at "now" has no "minute" at +30 s and reads "1 minute ago" at +60 s with nothing else rendering it. 2 of 2 pass in Chromium. No code change was needed (a first run read "60 seconds ago" only because the story built its moment from the real clock, not the held one). Phone box stays open (native not rendered).
