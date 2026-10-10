@@ -59,7 +59,7 @@ export function tokenSources(): CssSourceInline[] {
 		`{bg,text,border,outline,divide}-${set(COLOR_NAMES)}`,
 		`{p,px,py,pt,pb,pl,pr,gap,gap-x,gap-y,w}-${set(SPACING_ROLES)}`,
 		`{h,w,min-h,min-w,max-w,size,p,translate-x}-${set(SIZES)}`,
-		`{w,max-w}-${set(WIDTHS)}`,
+		`{w,min-w,max-w}-${set(WIDTHS)}`,
 		`{text,leading}-${set(TYPE_ROLES)}`,
 		`tracking-${set(TRACKED_ROLES)}`,
 		`rounded-${set(RADIUS_ROLES)}`,

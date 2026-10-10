@@ -40,11 +40,13 @@ import { MAIN_FILLED } from "../thread/fill.ts";
 const SPLIT = "flex min-w-0 grow min-h-0";
 // The list, the main and the pane each take a tab stop only while they scroll
 // with nothing tabbable inside.
+// It names itself the anchor the Place's floating act centres on, since the
+// list sizes to its content.
 const LIST =
-	"flex flex-col shrink-0 overflow-y-auto focus-visible:-outline-offset-2";
+	"flex flex-col shrink-0 overflow-y-auto [anchor-name:--split-list] focus-visible:-outline-offset-2";
 // Below `tablet` the list stands alone: the page's width, with no hairline.
 const LIST_ALONE =
-	"page-max-tablet:w-full page-max-tablet:pb-0 page-max-tablet:border-r-0";
+	"page-max-tablet:w-full page-max-tablet:max-w-none page-max-tablet:pb-0 page-max-tablet:border-r-0";
 // Over a docked foot (the Place marks `data-foot`) the list ends a sections
 // gap above it at every width, below `tablet` too, where it has no inset.
 const LIST_FOOT =
@@ -128,7 +130,7 @@ export function splitOf(children: ReactNode): SplitProps | undefined {
 	return isValidElement<SplitProps>(split) ? split.props : undefined;
 }
 
-/** The list at its width inside a hairline beside the main, decided by its page's width: from `wide` the pane stands beside the main, below it the Details act its Place or Screen draws opens the pane as a sheet. Below `tablet` one region stands at a time: the list, or the open record, whose Place then leads its strip or top bar with a back act to the list: the place's route, or the Split's `back` where the list stands deeper, which a missing read in its regions leads back to as well, and which a pushed Screen's back act leads to in their stead while the record stands alone. A record the main opened (`beside`) stands beside the main from `wide`, the two sharing what the list leaves, its back act drawn as Close and the pane behind the Details act at every width; below `wide` it stands in the main's place with its back act to the main, and below `tablet` its head stands alone, the Place drawing none. A Thread in the main fills it: the main stops scrolling, the record's head stays at the page inset over the Thread's log, which scrolls, and its input docks at the main's foot. It sits in a bleeding Place, whose strip heads it. */
+/** The list inside a hairline beside the main, sized to its content between a floor and a ceiling (the pane likewise) and the main taking the rest, decided by its page's width: from `wide` the pane stands beside the main, below it the Details act its Place or Screen draws opens the pane as a sheet. Below `tablet` one region stands at a time: the list, or the open record, whose Place then leads its strip or top bar with a back act to the list: the place's route, or the Split's `back` where the list stands deeper, which a missing read in its regions leads back to as well, and which a pushed Screen's back act leads to in their stead while the record stands alone. A record the main opened (`beside`) stands beside the main from `wide`, the two sharing what the list leaves, its back act drawn as Close and the pane behind the Details act at every width; below `wide` it stands in the main's place with its back act to the main, and below `tablet` its head stands alone, the Place drawing none. A Thread in the main fills it: the main stops scrolling, the record's head stays at the page inset over the Thread's log, which scrolls, and its input docks at the main's foot. It sits in a bleeding Place, whose strip heads it. */
 export function Split({
 	list,
 	main,

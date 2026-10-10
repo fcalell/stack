@@ -152,10 +152,12 @@ export const OVERLAYS: readonly string[] = [
 	"page-tablet:hidden",
 	"page-max-tablet:hidden",
 	"page-max-tablet:w-full",
+	"page-max-tablet:max-w-none",
+	"[anchor-name:--split-list]",
 	"page-max-tablet:pb-0",
 	"page-max-tablet:border-r-0",
-	"page-tablet:group-has-data-split/page:right-auto",
-	"page-tablet:group-has-data-split/page:w-list",
+	"page-tablet:group-has-data-split/page:left-[anchor(--split-list_left,0px)]",
+	"page-tablet:group-has-data-split/page:right-[anchor(--split-list_right,0px)]",
 	// The Shell's column reads the page's marks: a pushed Screen hides the tab
 	// bar, a floating act shows its room under the toasts.
 	"group-has-data-screen/column:hidden",

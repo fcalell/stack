@@ -352,7 +352,7 @@ lifted layers' ranges and the fixed regions of a frame, as
 `SANS_ADVANCE`, Plex Sans's 0.6 em "0", of the touch body size, rounded up: 173; there a
 short label's cap is the body's 18 characters whatever its own size, and a consumer face with a
 wider "0" overflows it); a layer never stretches to its container. The regions: `sidebar` 240 (the
-Shell's places), `list` 360 and `pane` 320 (a split's list column and record pane), `column` 300 (a
+Shell's places), `list` 360 and `pane` 320 (the ceilings of a split's list column and record pane, which size to their content between `region-min` 240 and the ceiling), `column` 300 (a
 board column), `node` 240 (a canvas node), `auth` 400 (the sign-in column), `empty` 320 (an empty state's column), `selection` 1060 (a selection bar's column, the pattern's table-wide bar). A width never
 takes a spacing role's or a size's name, since `w-*` reads `--spacing-*` first. A skeleton bar alone
 may take a fraction width (`w-1/12`, `w-1/5`, `w-1/4`, `w-1/3`, `w-1/2`, `w-2/3`, `w-3/4`) to stand

@@ -360,6 +360,14 @@ a tick with no animation, never jumped to full.
   descriptors, never nodes), and Draft and Ready as a `status` (they are a kind, not a state the
   pick moves). The Place and the Picker hold `CHIP` and `CHIP_LABEL`; a chip column's option (the
   Picker's `chip` family) draws its own chip alone and ignores `Option.chip`.
+- A record's own acts stand in its `ItemHeader`: `actions` (icon acts at the bar fit, body on touch, as a `Screen`'s)
+  and `more` (a `Menu`) draw at the end of the head's first line, the overline's else the title's (`ITEM_HEADER_LINE`,
+  `ITEM_HEADER_ACTS`: the acts' boxes reach across the line by the icon inset so their glyphs stand on it and the last at
+  the head's end), at every width. They are the same props on both platforms and are not the Place's `actions`/`more`:
+  below `tablet`, where the record stands alone under the Place's back act, the acts stay in the head and the
+  Place's top bar holds none of them, so each act has one place and nothing joins the Place's more. Rejected: a Split
+  `main` slot for acts (the head is the record's, and a Split cannot tell which node is the head) and the acts moving
+  into the Place's more below `tablet` (a record's act would live in two places by width). Loading draws none.
 - A header fact in words that opens a sheet is `{ label: Part; onOpen }` on `ItemHeader`: the words
   in the meta ink and a trailing `ChevronRight` at the meta fit in a `WORD_ACT`, pulled back at its
   start as a pick fact is, a button named by the fact (`aria-haspopup="dialog"` on the web); the consumer's `onOpen` opens its own
@@ -734,14 +742,21 @@ a tick with no animation, never jumped to full.
   visible; a heading's tag cannot swap by container query, so two heads (two `h1`s) stand side by
   side from `wide`. On the web its body's sections, not its root, are the `page` container, so its
   head's acts and the floating act's room read the outer page's width and what stands in its body
-  reads its own. Rejected: the record in the pane (the pane is the open record's details, at
+  reads its own. Its body holds the column the main holds (`PAGE_BODY_BESIDE`, `max-w-measure-inset` over `PAGE_BODY`; `SPLIT_MAIN` is held by Split, so Screen composes its own cell). Rejected: the record in the pane (the pane is the open record's details, at
   forty-five characters), a `Sheet` (an overlay over the scrim with no back to the main), and a
   width token for the beside record.
 - A bar at a phone's bottom edge clears the home indicator with the web emit's `pb-safe`
   (`padding-bottom: env(safe-area-inset-bottom)`, non-zero under the document's
   `viewport-fit=cover`), an overlay the tab bar spells beside `SHELL_TAB_BAR`; native pads the
   same inset from `react-native-safe-area-context`.
-- A frame's fixed regions are widths (`sidebar`, `list`, `pane`, `column`, `node` a canvas node, `auth`, `empty` an empty
+- A Split's list and pane size to their content between `region-min` and a ceiling (`list`, `pane`): `SPLIT_LIST` and
+  `SPLIT_PANE` spell `min-w-region-min max-w-<ceiling>` and no `w-`, the list shrink-0 so its flex basis is its
+  content. The ceilings are the old fixed widths, so 003-122's arithmetic (a main of at least a page less the list at its
+  ceiling) holds as the least the main gets. Rejected: a list width the app names (a consumer option, and an app
+  cannot know its rows' width). The touch Place's floating act centres on the list by the list's CSS anchor
+  (`--split-list`), since no width token is the list's width any more. A width that follows its rows moves as a
+  filter or a load changes them, and a skeleton's percentage bars give the floor: the cost of content sizing.
+- A frame's fixed regions are widths (`sidebar`, `list` and `pane` the ceilings of a split's content-sized regions, `region-min` their floor, `column`, `node` a canvas node, `auth`, `empty` an empty
   state's column, `selection` a selection bar's column), so a region keeps its measure at any viewport. A skeleton bar alone takes a
   fraction width (`w-1/12`, `w-1/5`, `w-1/4` to `w-3/4`) to stand at its text's length: structural,
   a closed list in the web verify's overlay acceptance, never a token; a chart column's share of its
