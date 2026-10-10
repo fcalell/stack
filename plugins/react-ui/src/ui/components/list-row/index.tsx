@@ -41,6 +41,7 @@ import {
 	type ReactNode,
 	use,
 	useMemo,
+	useRef,
 	useState,
 } from "react";
 import { ActsRoom } from "../../lib/acts-room.ts";
@@ -48,6 +49,7 @@ import { ageShort } from "../../lib/age.ts";
 import { useClock } from "../../lib/clock.ts";
 import type { Closed } from "../../lib/closed.ts";
 import { CodeCut, Runs } from "../../lib/code.tsx";
+import { useDropped } from "../../lib/dropped.ts";
 import { InlineField } from "../../lib/field.ts";
 import { GroundContext } from "../../lib/ground.ts";
 import { follow, navigate, useRoute } from "../../lib/navigate.ts";
@@ -142,9 +144,14 @@ const TITLE_BEFORE_VALUE = "basis-1/2";
 // (`./marks.tsx`, `./lock.tsx` and the chip's slot below; Tailwind reads no
 // bare number from 10^21), which holds an earlier part's share of the overflow
 // to a few thousandths of a pixel, against the layout's 1/64 px. The parts'
-// box grows into the room the marks leave.
+// box grows into the room the marks leave, unless the later parts are dropped
+// whole (`useDropped`): then the marks follow the first part.
 const META_LINE = "flex items-center min-w-0 overflow-hidden";
 const META_PARTS = "flex grow shrink min-w-0";
+// With the later parts dropped whole the room they would hold is no part of
+// the line: the box takes its first part's width and the marks follow it a gap
+// apart, rather than stand off it across a blank stripe where the parts were.
+const META_PARTS_DROPPED = "flex shrink min-w-0";
 const META_FIRST = "min-w-0 truncate";
 const META_FIRST_CODE = "flex min-w-0";
 // The later parts take no width of their own and truncate into the room the
@@ -153,6 +160,7 @@ const META_FIRST_CODE = "flex min-w-0";
 // so a bare separator and an ellipsis never draw. The text's basis is the
 // `figures` that decides the wrap, and it can shrink to nothing, so a text
 // wrapped away has a box no wider than the slot.
+const LATER_DROPPED = "grow-0";
 const LATER = "flex flex-wrap grow w-0 min-w-0 h-lh overflow-hidden";
 const LATER_START = "w-0 h-full";
 const LATER_TEXT = "flex grow basis-figures min-w-0 overflow-hidden";
@@ -418,6 +426,18 @@ export function ListRow<V extends string | null = string>({
 	const [first, ...rest] = meta ?? [];
 	const lead: RowPart[] = first === undefined ? [] : [first];
 	if (blocked !== undefined) lead.push(blocked);
+	const leadBox = useRef<HTMLSpanElement>(null);
+	const laterText = useRef<HTMLSpanElement>(null);
+	const marks = [status, warning, lock, chip].filter(
+		(mark) => mark !== undefined,
+	).length;
+	const dropped = useDropped(
+		rest.length && lead.length ? metaLine : null,
+		leadBox,
+		laterText,
+		marks,
+		JSON.stringify([status, warning, lock, chip?.label]),
+	);
 	// A first part that is one span of code, alone on its line, cuts in its
 	// middle; beside a blocked reason it is a run in a sentence.
 	const [only] = lead;
@@ -609,8 +629,9 @@ export function ListRow<V extends string | null = string>({
 					{titleLine}
 					<span ref={setMetaLine} className={cn(ROW_META_LINE, META_LINE)}>
 						{lead.length === 0 ? null : (
-							<span className={META_PARTS}>
+							<span className={dropped ? META_PARTS_DROPPED : META_PARTS}>
 								<span
+									ref={leadBox}
 									className={cn(
 										text({ role: "meta" }),
 										coded ? META_FIRST_CODE : META_FIRST,
@@ -623,9 +644,15 @@ export function ListRow<V extends string | null = string>({
 									)}
 								</span>
 								{rest.length ? (
-									<span className={cn(text({ role: "meta" }), LATER)}>
+									<span
+										className={cn(
+											text({ role: "meta" }),
+											LATER,
+											dropped && LATER_DROPPED,
+										)}
+									>
 										<span aria-hidden className={LATER_START} />
-										<span className={LATER_TEXT}>
+										<span ref={laterText} className={LATER_TEXT}>
 											{partRuns(rest, META_CUT).map((run, at) =>
 												run.kind === "code" ? (
 													<span
