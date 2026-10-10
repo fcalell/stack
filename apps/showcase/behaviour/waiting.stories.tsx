@@ -162,12 +162,13 @@ const bodies: StoryObj = {
 		const prose = waiting
 			.getByRole("region", { name: "Notes" })
 			.querySelector("div[aria-busy]");
-		await expect(prose).toBeVisible();
+		// The waiting form is drawn once the read has lasted its delay.
+		await waitFor(() => expect(prose).toBeVisible());
 		await expect(waiting.queryByText(/Moves the billing/)).toBeNull();
 		const thread = waiting.getByRole("region", { name: "Thread" });
 		await expect(thread.querySelectorAll("article[aria-busy]")).toHaveLength(3);
 		for (const message of thread.querySelectorAll("article[aria-busy]"))
-			await expect(message).toBeVisible();
+			await waitFor(() => expect(message).toBeVisible());
 		const check = (box: typeof waiting) =>
 			box.getByRole("region", { name: "Check" });
 		await waitFor(() =>
@@ -344,8 +345,14 @@ const ZONES = [
 		],
 	},
 ];
+// A query list waits as four rows, so the loaded list holds four.
 const SCOPE_QUERY = {
-	data: [{ id: "read", name: "Read", about: "View repositories." }],
+	data: [
+		{ id: "read", name: "Read", about: "View repositories." },
+		{ id: "write", name: "Write", about: "Push to repositories." },
+		{ id: "admin", name: "Admin", about: "Manage repositories." },
+		{ id: "hooks", name: "Hooks", about: "Receive repository events." },
+	],
 	isPending: false,
 	isError: false,
 	refetch: change,

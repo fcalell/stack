@@ -20,7 +20,6 @@ export function useWait(waiting: boolean): {
 	veiled: boolean;
 } {
 	const [drawn, setDrawn] = useState(false);
-	const [held, setHeld] = useState(false);
 	const since = useRef(0);
 	useEffect(() => {
 		const step = waitStep(
@@ -28,7 +27,6 @@ export function useWait(waiting: boolean): {
 			drawn ? since.current : undefined,
 			Date.now(),
 		);
-		if (step.kind === "drawn") setHeld(false);
 		if (step.kind === "gone") setDrawn(false);
 		if (step.kind === "delay") {
 			const timer = setTimeout(() => {
@@ -38,14 +36,12 @@ export function useWait(waiting: boolean): {
 			return () => clearTimeout(timer);
 		}
 		if (step.kind === "hold") {
-			setHeld(true);
 			const timer = setTimeout(() => {
-				setHeld(false);
 				setDrawn(false);
 			}, step.after);
 			return () => clearTimeout(timer);
 		}
 		return undefined;
 	}, [waiting, drawn]);
-	return { waiting: waiting || held, veiled: waiting && !drawn };
+	return { waiting: waiting || drawn, veiled: waiting && !drawn };
 }

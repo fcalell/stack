@@ -22,10 +22,10 @@ export function useWait(waiting: boolean): {
 	waiting: boolean;
 	veiled: boolean;
 } {
-	// The delay has run and the form is drawn.
+	// The delay has run and the form is drawn; it stays set after the read
+	// settles until the minimum has passed, so the form never gives way to the
+	// loaded body for a render in between.
 	const [drawn, setDrawn] = useState(false);
-	// The read settled while the form was drawn, inside its minimum.
-	const [held, setHeld] = useState(false);
 	const since = useRef(0);
 	useEffect(() => {
 		const step = waitStep(
@@ -33,7 +33,6 @@ export function useWait(waiting: boolean): {
 			drawn ? since.current : undefined,
 			performance.now(),
 		);
-		if (step.kind === "drawn") setHeld(false);
 		if (step.kind === "gone") setDrawn(false);
 		if (step.kind === "delay") {
 			const timer = setTimeout(() => {
@@ -43,14 +42,12 @@ export function useWait(waiting: boolean): {
 			return () => clearTimeout(timer);
 		}
 		if (step.kind === "hold") {
-			setHeld(true);
 			const timer = setTimeout(() => {
-				setHeld(false);
 				setDrawn(false);
 			}, step.after);
 			return () => clearTimeout(timer);
 		}
 		return undefined;
 	}, [waiting, drawn]);
-	return { waiting: waiting || held, veiled: waiting && !drawn };
+	return { waiting: waiting || drawn, veiled: waiting && !drawn };
 }

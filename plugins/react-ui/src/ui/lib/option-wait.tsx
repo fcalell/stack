@@ -23,6 +23,9 @@ const LABEL_WAIT = "flex items-center";
 const LINE_WAIT = "flex items-center h-lh";
 const BAR_ROOM = "flex grow min-w-0";
 const ROW_WAIT = "flex items-center";
+// The loaded row of an unmarked option: its line and the pair padding, never
+// under the one-line row's height.
+const ROW_WHOLE = "min-h-row";
 const LABEL_BAR = "w-1/3";
 const ROW_BARS = [
 	["w-1/3", "w-1/2"],
@@ -70,8 +73,9 @@ export function OptionWait(props: {
 								// biome-ignore lint/suspicious/noArrayIndexKey: fixed stand-ins
 								key={at}
 								className={cn(
-									row({ lines: shape.description ? "two" : "one" }),
+									row({ lines: shape.description ? "two" : "whole" }),
 									ROW_WAIT,
+									!shape.description && ROW_WHOLE,
 								)}
 							>
 								<span className={cn(OPTION_LINE, LINE)}>
