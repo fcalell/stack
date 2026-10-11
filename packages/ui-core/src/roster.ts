@@ -670,14 +670,15 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// A page outside the shell (sign-in, a consent step), a root frame as the
 		// Shell is: one centred column at the `auth` width, a `Banner` first, then
-		// the lead (the app's mark, a lockup of its logo and name the app gives the
-		// UI plugin once, an optional `StepCount`, the title, the
-		// page's one `h1`, and the description, runs with the strong one at 500, a
-		// pair under it), then the step's body a sections gap under it. It hosts
+		// the step a sections gap under it: the app's mark (a lockup of its logo
+		// and name the app gives the UI plugin once; a drawn lockup 40 tall), an
+		// optional `StepCount`, the title (the page's one `h1`), the description
+		// (runs with the strong one at 500) and the step's body, a fields gap
+		// between every part. It hosts
 		// `toast()` and `confirm()`. On touch it spans the viewport inside the page
 		// inset and a typed step stands at the top. The first field of a step takes
 		// focus, and a `Form`'s `ActionBar` in it draws `full`. The title is
-		// optional: without it the Gate is a first run, drawing no lead and no `h1`
+		// optional: without it the Gate is a first run, drawing no step stack and no `h1`
 		// of its own (`step` and `description` come only with a title, the mark beside them), its
 		// one `EmptyState` the page's `h1`, the column centred down at every width.
 		Gate: {
@@ -686,8 +687,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"GATE",
 				"GATE_COLUMN",
 				"GATE_FLOW",
-				"GATE_LEAD",
-				"GATE_HEAD",
+				"GATE_STEP",
 				"GATE_MARK",
 				"GATE_MARK_ROW",
 				"GATE_LOGO",
@@ -700,8 +700,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"GATE",
 				"GATE_COLUMN",
 				"GATE_FLOW",
-				"GATE_LEAD",
-				"GATE_HEAD",
+				"GATE_STEP",
 				"GATE_MARK",
 				"GATE_MARK_ROW",
 				"GATE_LOGO",
@@ -710,8 +709,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			owns: {
 				roles: ["title", "meta", "body"],
 				colors: ["ink-body", "ink-meta", "surface"],
-				spacing: ["page", "sections", "fields", "pair", "inside"],
-				sizes: ["auth", "avatar"],
+				spacing: ["page", "sections", "fields", "inside"],
+				sizes: ["auth", "avatar", "gate-mark"],
 			},
 		},
 		// A pushed page: the back act first, no act; on touch its toasts stand
@@ -1035,8 +1034,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SHELL_BANNER",
 				"SHELL_MARK",
 				"SHELL_MARK_ROW",
+				"SHELL_LOGO",
 				"GATE_MARK",
-				"GATE_LOGO",
 				"SWITCHER_SLOT",
 				"SWITCHER",
 				"SHELL_PLACES",

@@ -140,6 +140,7 @@ const SIZE_USE: Record<(typeof SIZES)[number], string> = {
 	port: "a canvas port's drawn size",
 	chip: "a chip's height",
 	avatar: "an avatar's side",
+	"gate-mark": "the Gate's drawn lockup's height, 40 at every density",
 	spinner: "the spinner inside a pending act",
 	"switch-w": "a switch's width",
 	"switch-h": "a switch's height",

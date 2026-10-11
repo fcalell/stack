@@ -444,7 +444,8 @@ a tick with no animation, never jumped to full.
   are gone from both platforms and native's Gate draws no mark.
   An app with a drawn wordmark gives `react({ logo })` (003-317), a string or `{ light, dark }` that
   rides the `icon` slot as `logo` and the provider as `logo`/`logoDark`. The lockup then draws that
-  one image in place of the icon and the name text, in the same row: `GATE_LOGO`, the avatar's height
+  one image in place of the icon and the name text, in the same row: `GATE_LOGO` in the Gate, `gate-mark`
+  (40 px at every density) tall, and `SHELL_LOGO` in the sidebar, the avatar's height, each
   with `w-auto` (its own proportion) and `max-w-full` (held to the row, `object-left` on the web), its
   `alt` the app's name and the dark form under the same `.dark` scope. A logo that fails to load
   leaves the icon and the name.
@@ -1542,11 +1543,11 @@ a tick with no animation, never jumped to full.
   `HeadingContext` of 2 and a `main` landmark. It draws, on the surface at the page inset (`GATE`),
   one column `w-full max-w-auth` (`GATE_COLUMN`, a width and nothing else; the region centres it,
   across, and down by an auto margin while it fits, never `justify-center`, which clips the top of a
-  column taller than the viewport, and at the top on touch), whose banner, lead and body stand a
+  column taller than the viewport, and at the top on touch), whose banner and step stand a
   `sections` gap apart (`GATE_FLOW`): the `banner` (a `Banner`, first at the column's width), then
-  the lead (`GATE_LEAD`, a `fields` gap apart): the app's mark, the `StepCount`, and the head
-  (`GATE_HEAD`, a `pair` apart), the `title` at the `title` role, the page's one `h1`, its body's
-  `Section`s a level under, and the `description`. The `description` is a `Sentence`
+  the step (`GATE_STEP`, a `fields` gap between every part, so none is nearer another): the app's mark, the
+  `StepCount`, the `title` at the `title` role, the page's one `h1`, its body's `Section`s a level
+  under, the `description`, and the body (a first run has no step stack: its wrapper draws no box). The `description` is a `Sentence`
   (`./descriptors`: runs, each a string or `{ strong }` at 500, the way a nested `Text strong`
   draws), data because composed regions are data; a lone string is no `Sentence`. The mark is no
   prop: it is the app's lockup (see "The app's mark"), a row (`GATE_MARK_ROW`) of the logo at the

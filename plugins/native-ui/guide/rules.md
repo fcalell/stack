@@ -111,13 +111,13 @@ A page with no sidebar or tab bar beside it (sign-in, a consent step) is a `Gate
 the title), `banner` (a `Banner`, first in the column) and
 `children`, the step's body (a `Form`, a `Group`, an `OptionList`, a `List`, `Section`s). It is a root
 frame as the `Shell` is: one column at most the `auth` width inside the page inset, standing at the
-top, the banner, the lead and the body a sections gap apart, with `toast()` and `confirm()` standing
+top, the banner and the step a sections gap apart (the step's count, title, description and body one fields gap apart), with `toast()` and `confirm()` standing
 in it. It keeps the safe area and scrolls over the keyboard. An `Input` or `InputOtp` that mounts in
 it takes focus unless a typing control of the column holds it, so the first field of a step takes
 it, and a `Form`'s `ActionBar` in it draws `full`. It draws no word of its own.
 
 A first run (no workspace yet, nothing to show) is a `Gate` with no `title` holding one
-`EmptyState`: the Gate draws no lead and no header, the `EmptyState`'s title is the page's header,
+`EmptyState`: the Gate draws no step stack and no header, the `EmptyState`'s title is the page's header,
 its `act` the filled one and its secondary act a `<Button act="secondary" />` child, stacked under
 it. The column is centred down on the Gate's ground. `step` and `description` come only
 with a `title`.

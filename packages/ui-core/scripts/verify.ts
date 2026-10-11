@@ -749,7 +749,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(TYPE_ROLES.length, 8, "type role count");
 	requireEqual(SPACING_ROLES.length, 11, "spacing role count");
 	requireEqual(GAP_ROLES.length, 6, "gap role count");
-	requireEqual(SIZES.length, 42, "size count");
+	requireEqual(SIZES.length, 43, "size count");
 	requireEqual(RADIUS_ROLES.length, 7, "radius role count");
 	requireEqual(SHADOW_LEVELS.length, 2, "shadow level count");
 	requireEqual(WIDTHS.length, 14, "width count");

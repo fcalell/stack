@@ -266,6 +266,7 @@ spacing:
   port: "8px"
   chip: "22px"
   avatar: "24px"
+  gate-mark: "40px"
   spinner: "14px"
   switch-w: "32px"
   switch-h: "18px"
@@ -1988,7 +1989,7 @@ components:
     backgroundColor: "{colors.surface-dark}"
     padding: "{spacing.page}"
   gate-logo:
-    height: "{spacing.avatar}"
+    height: "{spacing.gate-mark}"
   gate-mark:
     height: "{spacing.avatar}"
     width: "{spacing.avatar}"
@@ -2230,6 +2231,8 @@ components:
     backgroundColor: "{colors.surface}"
   shell-column-dark:
     backgroundColor: "{colors.surface-dark}"
+  shell-logo:
+    height: "{spacing.avatar}"
   shell-mark:
     padding: "{spacing.float}"
   shell-mark-row:
@@ -2545,6 +2548,7 @@ Sizes are heights and squares in the same namespace. Density is a theme and neve
 | `port` | 8px | 8px | 8 | a canvas port's drawn size |
 | `chip` | 22px | 24px | 24 | a chip's height |
 | `avatar` | 24px | 32px | 32 | an avatar's side |
+| `gate-mark` | 40px | 40px | 40 | the Gate's drawn lockup's height, 40 at every density |
 | `spinner` | 14px | 18px | 18 | the spinner inside a pending act |
 | `switch-w` | 32px | 40px | 40 | a switch's width |
 | `switch-h` | 18px | 24px | 24 | a switch's height |
@@ -2623,7 +2627,7 @@ A docked sheet's body keeps `docked-floor` (144px on touch, 96px on the desktop)
 | `Avatar` | atom | `AVATAR`, `AVATAR_LABEL` | rest |
 | `Link` | atom | `LINK`, `LINK_TARGET` | rest, hover, focus, active |
 | `Place` | layout | `PAGE_HEAD`, `PAGE_HEAD_ROOM`, `PAGE_TOP_BAR`, `PAGE_TOP_BAR_TOUCH`, `PAGE_TOP_BAR_START`, `PAGE_TOP_BAR_END`, `PAGE_TITLE`, `PAGE_TITLE_BLOCK`, `PAGE_HEAD_WRAPS`, `TEXT.role.title`, `WORD_ACT`, `PICKER_VALUE`, `ICON.fit.meta`, `CHIP`, `CHIP_LABEL`, `PAGE_BODY`, `FOOT_DOCKED`, `PAGE_BODY_OVER_FOOT`, `FLOATING_ACT`, `FLOATING_ACT_LIFT`, `FLOATING_ACT_ROOM`, `FLOATING_ACT_FOOT`, `BUTTON.act.primary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.primary`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
-| `Gate` | layout | `GATE`, `GATE_COLUMN`, `GATE_FLOW`, `GATE_LEAD`, `GATE_HEAD`, `GATE_MARK`, `GATE_MARK_ROW`, `GATE_LOGO`, `TEXT.role.title`, `TEXT.role.meta`, `TEXT.role.body`, `TEXT_STRONG.role.body` | rest |
+| `Gate` | layout | `GATE`, `GATE_COLUMN`, `GATE_FLOW`, `GATE_STEP`, `GATE_MARK`, `GATE_MARK_ROW`, `GATE_LOGO`, `TEXT.role.title`, `TEXT.role.meta`, `TEXT.role.body`, `TEXT_STRONG.role.body` | rest |
 | `Screen` | layout | `PAGE_HEAD`, `PAGE_TOP_BAR`, `PAGE_TOP_BAR_START`, `PAGE_TOP_BAR_END`, `PAGE_TITLE_FLOOR`, `PAGE_TITLE_BLOCK`, `PAGE_HEAD_WRAPS`, `TEXT.role.title`, `PAGE_BODY`, `PAGE_BODY_BESIDE`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
 | `Split` | layout | `SPLIT_LIST`, `SPLIT_LIST_STACK`, `SPLIT_MAIN`, `SPLIT_BESIDE`, `SPLIT_PANE`, `ICON_BUTTON.fit.bar` | rest, empty |
 | `Section` | layout | `SECTION`, `SECTION_HEAD`, `SECTION_HEAD_ROW`, `SECTION_ACTS`, `SECTION_BODY`, `SECTION_TITLE`, `SECTION_TOGGLE`, `SECTION_NESTED_TITLE`, `TEXT.role.heading`, `TEXT.role.meta`, `ICON.fit.body`, `COUNT`, `COUNT_LABEL`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive`, `ICON_BUTTON.fit.bar`, `SKELETON.kind.count`, `SKELETON.kind.line`, `SKELETON.kind.field`, `SKELETON_ROW.kind.field`, `TEXT.role.caption`, `LINE_BOX.role.body` | rest, hover, focus, active, disabled, loading |
@@ -2633,7 +2637,7 @@ A docked sheet's body keeps `docked-floor` (144px on touch, 96px on the desktop)
 | `Toolbar` | layout | `TOOLBAR`, `TOOLBAR_ROW`, `TOOLBAR_CHIPS` | rest |
 | `ActionBar` | layout | `ACTION_BAR`, `ACTION_BAR_ACTS`, `ACTION_BAR_CHOSEN`, `ACTION_BAR_SELECTION`, `ACTION_BAR_ALL`, `TEXT.role.meta`, `FIELD_ERROR_LINE`, `BUTTON.act.primary`, `BUTTON.act.danger`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.act.quiet`, `BUTTON.fit.body`, `BUTTON.fit.field`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.danger`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive`, `BUTTON_LABEL.act.quiet`, `SKELETON.kind.bar`, `SKELETON.kind.field` | rest, loading, disabled |
 | `Columns` | layout | `COLUMNS`, `COLUMN` | rest |
-| `Shell` | layout | `SHELL_SIDEBAR`, `SHELL_COLUMN`, `SHELL_BANNER`, `SHELL_MARK`, `SHELL_MARK_ROW`, `GATE_MARK`, `GATE_LOGO`, `SWITCHER_SLOT`, `SWITCHER`, `SHELL_PLACES`, `PLACE_ROW`, `PLACE_ROW_GLYPH`, `SHELL_TAB_BAR`, `PLACE_TAB`, `PLACE_TAB_LABEL`, `TOASTS`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `ICON.fit.body`, `ICON.fit.control`, `COUNT`, `COUNT_LABEL` | rest, hover, focus, active, selected |
+| `Shell` | layout | `SHELL_SIDEBAR`, `SHELL_COLUMN`, `SHELL_BANNER`, `SHELL_MARK`, `SHELL_MARK_ROW`, `SHELL_LOGO`, `GATE_MARK`, `SWITCHER_SLOT`, `SWITCHER`, `SHELL_PLACES`, `PLACE_ROW`, `PLACE_ROW_GLYPH`, `SHELL_TAB_BAR`, `PLACE_TAB`, `PLACE_TAB_LABEL`, `TOASTS`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `ICON.fit.body`, `ICON.fit.control`, `COUNT`, `COUNT_LABEL` | rest, hover, focus, active, selected |
 | `ListRow` | shared | `ROW.lines.one`, `ROW.lines.two`, `ROW.lines.whole`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.state.selected`, `ROW.state.selected-hover`, `ROW.ground.list`, `ROW.ground.group`, `ROW_TITLE`, `ROW_STEPS`, `ROW_STEP`, `TREE_RAIL`, `TREE_LANE`, `TREE_BLEED`, `ROW_LEADING`, `ROW_TITLE_LINE`, `ROW_META_LINE`, `ROW_TRAILING`, `ROW_MARKS`, `ROW_WARNING`, `LOCK_GLYPH`, `ROW_ACTS`, `ROW_CHEVRON`, `CHANGE_MARK`, `CHECKBOX`, `CHECKBOX_MARK`, `TEXT.role.meta`, `ICON.fit.body`, `ICON.fit.meta`, `AVATAR`, `AVATAR_LABEL`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `CHIP`, `CHIP_LABEL`, `ICON_BUTTON.fit.bar`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `FIELD.fit.bar`, `FIELD.trailing.none`, `FIELD.state.rest`, `FIELD.state.error`, `FIELD_VALUE.kind.text`, `FIELD_PLACEHOLDER`, `ROW_ENTRY`, `FIELD_ERROR_LINE`, `SKELETON.kind.avatar`, `SKELETON.kind.icon`, `SKELETON.kind.dot`, `SKELETON.kind.check`, `SKELETON.kind.bar`, `SKELETON_LANE.role.body`, `SKELETON_LANE.role.meta`, `SKELETON.kind.line`, `LINE_BOX.role.body`, `LINE_BOX.role.meta` | rest, hover, focus, active, loading, error, selected |
 | `DefinitionRow` | shared | `ROW.lines.one`, `ROW.lines.setting`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.group`, `DEFINITION_ROW`, `DEFINITION_ROW_CHEVRON`, `ROW_TITLE_LINE`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `TEXT.role.code`, `ICON.fit.body`, `ICON.fit.meta`, `LINK.fit.inline`, `LOCK_GLYPH`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `ICON_BUTTON.fit.bar`, `CHANGE_MARK`, `SKELETON_ROW.kind.one-line-group`, `SKELETON_ROW.kind.setting`, `SKELETON.kind.line`, `SKELETON.kind.icon`, `SKELETON.kind.switch`, `LINE_BOX.role.body`, `LINE_BOX.role.meta` | rest, hover, focus, active, loading |
 | `FormField` | shared | `FORM_FIELD`, `GROUP_ITEM`, `FIELD_ERROR_LINE`, `FORM_FIELD_SUMMARY`, `FORM_FIELD_SUMMARY_GLYPH`, `CHANGE_MARK`, `ICON.fit.body`, `ICON.fit.meta`, `ICON_BUTTON.fit.bar`, `LINE_BOX.role.body`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta` | rest, disabled, error |
@@ -2694,7 +2698,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Avatar` | `caption` | `avatar-` | `full` | none | `avatar` | none |
 | `Link` | none | `accent-ink`, `ring` | none | none | `target` | none |
 | `Place` | `title`, `body`, `meta`, `caption` | `ink-body`, `ink-meta`, `edge`, `edge-raised`, `surface`, `raised`, `act-accent`, `on-act-accent`, `wash-hover`, `wash-press`, `danger`, `chip-` | `control`, `full` | `acts`, `page`, `sections`, `inside`, `control-x`, `rows`, `pair` | `strip`, `control`, `control-compact`, `popover`, `list`, `measure`, `target`, `icon-meta`, `chip`, `measure-short`, `icon-inset` | `float` |
-| `Gate` | `title`, `meta`, `body` | `ink-body`, `ink-meta`, `surface` | none | `page`, `sections`, `fields`, `pair`, `inside` | `auth`, `avatar` | none |
+| `Gate` | `title`, `meta`, `body` | `ink-body`, `ink-meta`, `surface` | none | `page`, `sections`, `fields`, `inside` | `auth`, `avatar`, `gate-mark` | none |
 | `Screen` | `title` | `ink-body`, `ink-meta`, `edge` | `control` | `acts`, `page`, `sections`, `pair`, `inside` | `strip`, `control`, `control-compact`, `icon-inset`, `measure-inset` | none |
 | `Split` | none | `edge`, `ink-meta`, `surface` | `control` | `inside`, `page`, `sections` | `list`, `pane`, `region-min`, `control-compact`, `measure-inset` | none |
 | `Section` | `heading`, `meta`, `body`, `caption` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `danger` | `row`, `control`, `chip` | `pair`, `fields`, `inside`, `control-x`, `acts` | `icon`, `control-compact`, `skeleton`, `field`, `target` | none |

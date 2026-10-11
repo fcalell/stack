@@ -29,10 +29,10 @@ const BROKEN: AppMark = { src: "data:image/svg+xml,<", name: MARK.name };
 // The frame draws the page as the Shell's frames draw theirs, a viewport tall.
 const BOX = "flex flex-col gap-pair";
 
-// The held cells the frame names: the page, the column, its rhythm, the lead,
-// the head and the mark; each case adds what it draws.
+// The held cells the frame names: the page, the column, its rhythm, the step
+// and the mark; each case adds what it draws.
 const CELLS =
-	"GATE · GATE_COLUMN · GATE_FLOW · GATE_LEAD · GATE_HEAD · GATE_MARK · GATE_MARK_ROW";
+	"GATE · GATE_COLUMN · GATE_FLOW · GATE_STEP · GATE_MARK · GATE_MARK_ROW";
 // What a cell's case adds, by cell.
 const CASES: Record<string, string> = {
 	"TEXT_STRONG.role.body": "a mark whose logo fails: its name alone",

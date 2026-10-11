@@ -3,8 +3,7 @@ import {
 	GATE,
 	GATE_COLUMN,
 	GATE_FLOW,
-	GATE_HEAD,
-	GATE_LEAD,
+	GATE_STEP,
 	text,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useRef } from "react";
@@ -31,14 +30,14 @@ const CENTRED = "justify-center";
 const TOAST_BOX = "absolute inset-x-0 top-0";
 
 // A page outside the shell, a root frame as the Shell is: one column at the
-// `auth` width inside the page inset on the surface, the banner, the lead (the
-// `StepCount`, the title and the description a pair under it), then
-// the body a sections gap under it. It keeps the safe area and scrolls over
+// `auth` width inside the page inset on the surface, the banner, then the
+// step a sections gap under it: the `StepCount`, the title, the description
+// and the body, a fields gap between each. It keeps the safe area and scrolls over
 // the keyboard, so the focused field and the submit act stay in view. An
 // `Input` or `InputOtp` that mounts in it takes focus unless one holds it,
 // each step claiming afresh as its field mounts, and a `Form`'s `ActionBar` in
 // it draws `full`. It hosts `toast()` and `confirm()` as the Shell does, and
-// draws no word of its own. With no `title` it is a first run: no lead and no
+// draws no word of its own. With no `title` it is a first run: no step stack and no
 // header of its own, its one `EmptyState` is the page's header, and the column
 // stands centred down.
 interface GateBase extends Closed {
@@ -98,25 +97,25 @@ export function Gate({
 									className={cn(GATE_COLUMN, GATE_FLOW)}
 								>
 									{banner}
-									{title === undefined ? null : (
-										<View className={GATE_LEAD}>
+									{title === undefined ? (
+										children
+									) : (
+										<View className={GATE_STEP}>
 											{step ? <StepCount at={step.at} of={step.of} /> : null}
-											<View className={GATE_HEAD}>
-												<RNText
-													accessibilityRole="header"
-													className={text({ role: "title" })}
-												>
-													{title}
+											<RNText
+												accessibilityRole="header"
+												className={text({ role: "title" })}
+											>
+												{title}
+											</RNText>
+											{description ? (
+												<RNText className={text({ role: "meta" })}>
+													<Runs runs={description} />
 												</RNText>
-												{description ? (
-													<RNText className={text({ role: "meta" })}>
-														<Runs runs={description} />
-													</RNText>
-												) : null}
-											</View>
+											) : null}
+											{children}
 										</View>
 									)}
-									{children}
 								</View>
 							</Scroll>
 							<View

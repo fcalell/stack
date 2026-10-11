@@ -4,9 +4,9 @@ import {
 	GATE,
 	GATE_COLUMN,
 	GATE_FLOW,
-	GATE_HEAD,
-	GATE_LEAD,
+	GATE_LOGO,
 	GATE_MARK_ROW,
+	GATE_STEP,
 	text,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
@@ -33,8 +33,7 @@ const PAGE =
 	"flex flex-col items-center grow min-h-0 overflow-y-auto focus-visible:-outline-offset-2";
 const COLUMN = "flex flex-col my-auto";
 const COLUMN_TYPED = "touch:my-0";
-const LEAD = "flex flex-col";
-const HEAD = "flex flex-col";
+const STEP = "flex flex-col";
 // An unbroken run (an address) wraps inside the column's width.
 const WRAPS = "wrap-anywhere";
 
@@ -49,7 +48,7 @@ interface GateBase extends Closed {
 export type GateProps = GateBase &
 	(
 		| {
-				/** The page's one `h1` (a short phrase; wraps). Absent, the Gate is a first run: it draws no lead and its one `EmptyState` is the page's `h1`. */
+				/** The page's one `h1` (a short phrase; wraps). Absent, the Gate is a first run: it draws no step stack and its one `EmptyState` is the page's `h1`. */
 				title: string;
 				/** A meta line under the title, as runs: `{ strong }` runs draw at weight 500 (the address the step names) (a sentence; wraps). */
 				description?: Sentence;
@@ -63,7 +62,7 @@ export type GateProps = GateBase &
 		  }
 	);
 
-/** A root frame for a page outside the shell (sign-in, a consent step): one centred column at the `auth` width on the surface. The banner stands first, then the lead (the app's mark when the app has an icon, the `StepCount`, the title and the description a pair under it), then the body a sections gap under it. On touch it spans the viewport inside the page inset and a typed step stands at the top. The first field of a step takes focus as the page opens and as `title` changes, and a `Form`'s `ActionBar` in it draws `full`. It hosts `toast()` and `confirm()` as the `Shell` does, and its body's `Section`s title a level under the `h1`. With no `title` it is a first run: no lead and no `h1` of its own, its one `EmptyState` is the page's `h1`, and the column stands centred down at every width, touch included. It draws no word of its own. */
+/** A root frame for a page outside the shell (sign-in, a consent step): one centred column at the `auth` width on the surface. The banner stands first, then the step a sections gap under it: the app's mark when the app has an icon (a drawn lockup stands 40 px tall at every density), the `StepCount`, the title, the description and the body, one fields gap between each. On touch it spans the viewport inside the page inset and a typed step stands at the top. The first field of a step takes focus as the page opens and as `title` changes, and a `Form`'s `ActionBar` in it draws `full`. It hosts `toast()` and `confirm()` as the `Shell` does, and its body's `Section`s title a level under the `h1`. With no `title` it is a first run: no step stack and no `h1` of its own, its one `EmptyState` is the page's `h1`, and the column stands centred down at every width, touch included. It draws no word of its own. */
 export function Gate({
 	title,
 	description,
@@ -103,28 +102,32 @@ export function Gate({
 									)}
 								>
 									{banner}
-									{title === undefined ? null : (
-										<div className={cn(GATE_LEAD, LEAD)}>
+									{title === undefined ? (
+										<FormStands value="auth">{children}</FormStands>
+									) : (
+										<div className={cn(GATE_STEP, STEP)}>
 											{mark ? (
-												<Lockup mark={mark} className={GATE_MARK_ROW} />
+												<Lockup
+													mark={mark}
+													logo={GATE_LOGO}
+													className={GATE_MARK_ROW}
+												/>
 											) : null}
 											{step ? <StepCount at={step.at} of={step.of} /> : null}
-											<div className={cn(GATE_HEAD, HEAD)}>
-												<h1
-													id={titleId}
-													className={cn(text({ role: "title" }), WRAPS)}
-												>
-													{title}
-												</h1>
-												{description ? (
-													<p className={cn(text({ role: "meta" }), WRAPS)}>
-														<Runs runs={description} />
-													</p>
-												) : null}
-											</div>
+											<h1
+												id={titleId}
+												className={cn(text({ role: "title" }), WRAPS)}
+											>
+												{title}
+											</h1>
+											{description ? (
+												<p className={cn(text({ role: "meta" }), WRAPS)}>
+													<Runs runs={description} />
+												</p>
+											) : null}
+											<FormStands value="auth">{children}</FormStands>
 										</div>
 									)}
-									<FormStands value="auth">{children}</FormStands>
 								</div>
 							</div>
 						</FrameMain>

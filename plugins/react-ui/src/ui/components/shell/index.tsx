@@ -9,6 +9,7 @@ import {
 	placeTabLabel,
 	SHELL_BANNER,
 	SHELL_COLUMN,
+	SHELL_LOGO,
 	SHELL_MARK,
 	SHELL_MARK_ROW,
 	SHELL_PLACES,
@@ -106,7 +107,11 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 		<nav aria-label={words.places} className={cn(SHELL_SIDEBAR, SIDEBAR)}>
 			{mark ? (
 				<div className={cn(SHELL_MARK, SLOT)}>
-					<Lockup mark={mark} className={cn(SHELL_MARK_ROW, ROW_MARK)} />
+					<Lockup
+						mark={mark}
+						logo={SHELL_LOGO}
+						className={cn(SHELL_MARK_ROW, ROW_MARK)}
+					/>
 				</div>
 			) : null}
 			{switcher ? (

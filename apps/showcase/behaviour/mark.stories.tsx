@@ -71,6 +71,7 @@ export const SidebarHeadsWithTheMark: StoryObj = {
 		if (!name) throw new Error("the sidebar draws no name");
 		const box = img.getBoundingClientRect();
 		await expect(box.width).toBe(box.height);
+		await expect(box.height).toBe(24);
 		await expect(name.getBoundingClientRect().left).toBeGreaterThanOrEqual(
 			box.right,
 		);
@@ -173,8 +174,8 @@ export const DarkFormFollowsTheMode: StoryObj = {
 };
 
 // An app with a drawn lockup draws that image alone: the app's name is its alt
-// and no name text stands beside it; its height is the avatar's and its width
-// follows its own proportion.
+// and no name text stands beside it; it stands 40 px tall at every density,
+// left on the column's edge, and its width follows its own proportion.
 export const GateDrawsTheLogoAlone: StoryObj = {
 	render: () => <Step mark={{ ...SINGLE, logo: LOGO.logo }} />,
 	play: async ({ canvas, canvasElement }) => {
@@ -185,12 +186,69 @@ export const GateDrawsTheLogoAlone: StoryObj = {
 			expect(img.getBoundingClientRect().width).toBeGreaterThan(0),
 		);
 		const box = img.getBoundingClientRect();
+		await expect(box.height).toBe(40);
 		await expect(box.width / box.height).toBeCloseTo(5, 0);
+		const title = canvas.getByRole("heading", { name: "Sign in" });
+		await expect(box.left).toBe(title.getBoundingClientRect().left);
 		await expect(
 			Array.from(canvasElement.querySelectorAll("span")).find(
 				(el) => el.textContent === "Acme",
 			),
 		).toBeUndefined();
+	},
+};
+
+// On touch the drawn lockup in the Gate is still 40 px tall; the sidebar's
+// avatar height grows with the density, the Gate's does not.
+export const GateLogoIsTheSameHeightOnTouch: StoryObj = {
+	render: () => <Step mark={{ ...SINGLE, logo: LOGO.logo }} />,
+	globals: { density: "touch" },
+	play: async ({ canvas }) => {
+		const img = canvas.getByRole("img", { name: "Acme" });
+		await waitFor(() =>
+			expect(img.getBoundingClientRect().width).toBeGreaterThan(0),
+		);
+		await expect(img.getBoundingClientRect().height).toBe(40);
+	},
+};
+
+// A Gate with a title stands its parts one gap apart: the lockup, the step
+// count, the title, the description and the body, each the `fields` gap
+// from the next (16 px on the desktop).
+export const GateStandsItsPartsAnEvenGapApart: StoryObj = {
+	render: () => (
+		<MarkProvider mark={{ ...SINGLE, logo: LOGO.logo }}>
+			<Gate
+				title="Sign in"
+				description={["Welcome back to Acme."]}
+				step={{ at: 1, of: 3 }}
+			>
+				<p>Body</p>
+			</Gate>
+		</MarkProvider>
+	),
+	play: async ({ canvas }) => {
+		const img = canvas.getByRole("img", { name: "Acme" });
+		await waitFor(() =>
+			expect(img.getBoundingClientRect().width).toBeGreaterThan(0),
+		);
+		const stack = canvas.getByRole("heading", {
+			name: "Sign in",
+		}).parentElement;
+		if (!stack) throw new Error("the step is not drawn");
+		const gap = Number.parseFloat(getComputedStyle(stack).rowGap);
+		await expect(gap).toBe(16);
+		const rects = Array.from(stack.children, (part) =>
+			part.getBoundingClientRect(),
+		);
+		// The lockup, the count, the title, the description and the body.
+		await expect(rects).toHaveLength(5);
+		const gaps = rects.slice(1).map((rect, i) => {
+			const above = rects[i];
+			if (!above) throw new Error("a part is not drawn");
+			return rect.top - above.bottom;
+		});
+		await expect(gaps).toEqual([gap, gap, gap, gap]);
 	},
 };
 

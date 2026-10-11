@@ -827,7 +827,8 @@ export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
 // it names a role (`min-h-control`, `size-avatar`). Desktop: control 32,
 // compact 28 (menus, toolbars), field 38, one-line row 32, two-line row 52,
 // setting row 64, strip 40 (a page header bar: the title and its acts),
-// target 28, indent 16 (a tree row's step in, one per level). `port` is a canvas
+// target 28, indent 16 (a tree row's step in, one per level), `gate-mark` 40 at
+// every density (the Gate's drawn lockup). `port` is a canvas
 // port's drawn size, 8 at every density, so it stands over the 6 dot. Touch: every
 // target at least 44, indent 20. An
 // icon is sized by what it sits beside: `icon-meta` meta or caption text,
@@ -862,6 +863,7 @@ export const SIZES = [
 	"port",
 	"chip",
 	"avatar",
+	"gate-mark",
 	"spinner",
 	"switch-w",
 	"switch-h",
@@ -939,6 +941,7 @@ const TOUCH_SIZES: Record<Exclude<Size, DerivedSize>, number> = {
 	port: 8,
 	chip: 24,
 	avatar: 32,
+	"gate-mark": 40,
 	spinner: 18,
 	"switch-w": 40,
 	"switch-h": 24,
@@ -974,6 +977,7 @@ export const SIZE_PX: Record<
 		port: 8,
 		chip: 22,
 		avatar: 24,
+		"gate-mark": 40,
 		spinner: 14,
 		"switch-w": 32,
 		"switch-h": 18,

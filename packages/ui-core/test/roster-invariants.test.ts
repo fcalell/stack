@@ -10,8 +10,7 @@ test("the gate's cells are held by the Gate alone", () => {
 		"GATE",
 		"GATE_COLUMN",
 		"GATE_FLOW",
-		"GATE_LEAD",
-		"GATE_HEAD",
+		"GATE_STEP",
 		"GATE_MARK",
 		"GATE_LOGO",
 	]) {

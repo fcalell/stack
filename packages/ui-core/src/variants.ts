@@ -840,23 +840,25 @@ export const SHELL_TAB_BAR =
 	"px-float pt-pair bg-canvas border-t border-edge overflow-hidden";
 // A page outside the shell, a Gate: the surface ground at the page inset, one
 // column at the `auth` width (a column cell is a width; the region centres
-// it) whose banner, lead and body stand a sections gap apart. The lead (the
-// mark, the count and the head) is a fields gap apart, the head's title and
-// description a pair apart, and the mark the avatar's size.
+// it) whose banner and step stand a sections gap apart. A step with a title
+// is one stack, a fields gap between every part: the mark, the count, the
+// title, the description and the body. The mark is the avatar's size, and a
+// drawn lockup in the Gate stands taller, at `gate-mark`.
 export const GATE = "bg-surface p-page";
 export const GATE_COLUMN = "w-full max-w-auth";
 export const GATE_FLOW = "gap-sections";
-export const GATE_LEAD = "gap-fields";
-export const GATE_HEAD = "gap-pair";
+export const GATE_STEP = "gap-fields";
 export const GATE_MARK = "size-avatar";
 // The app's mark is a lockup, the logo (`GATE_MARK`, the avatar's size) and the
-// app's name a row apart: in the Gate a row of the lead; in the desktop sidebar
+// app's name a row apart: in the Gate a row of the step; in the desktop sidebar
 // a row under the sidebar's float, a place row's inset and height, so the logo
 // stands over the places' glyphs.
 export const GATE_MARK_ROW = "gap-inside";
-// An app's drawn lockup stands in the row in place of the logo and the name:
-// the avatar's height, its width from its own proportion, held to the row.
-export const GATE_LOGO = "h-avatar w-auto max-w-full";
+// An app's drawn lockup stands in the row in place of the logo and the name,
+// its width from its own proportion, held to the row: in the Gate `gate-mark`
+// tall at every density, in the sidebar (`SHELL_LOGO`) the avatar's height.
+export const GATE_LOGO = "h-gate-mark w-auto max-w-full";
+export const SHELL_LOGO = "h-avatar w-auto max-w-full";
 export const SHELL_MARK = "p-float";
 export const SHELL_MARK_ROW = "gap-inside min-h-row px-control-x";
 // The switcher's trigger in a touch top bar, which reaches across the page
