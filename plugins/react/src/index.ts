@@ -100,14 +100,18 @@ const htmlBodyEnd = slot.list<HtmlInjection>({
 });
 
 // The app's icon, from the `icon` option: the favicon links read it, and a
-// UI plugin that draws the app's mark reads the same value. Null when none.
+// UI plugin that draws the app's mark reads the same value, with the app's
+// drawn lockup (`logo`) when it gave one. Null when no icon.
 const icon = slot.derived({
 	source: SOURCE,
 	name: "icon",
 	compute: (_inputs, ctx: ContributionCtx<ReactOptions>): AppIcon | null => {
 		const given = ctx.options.icon;
 		if (given === undefined) return null;
-		return typeof given === "string" ? { light: given } : given;
+		const icon = typeof given === "string" ? { light: given } : given;
+		const logo = ctx.options.logo;
+		if (logo === undefined) return icon;
+		return { ...icon, logo: typeof logo === "string" ? { light: logo } : logo };
 	},
 });
 

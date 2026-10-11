@@ -129,7 +129,8 @@ level under the `h1`. The first field of a step takes focus as the page opens an
 changes (a step with no field leaves focus where it is), and a `Form`'s `ActionBar` in it draws
 `full`. The app's mark leads it when it has a `title`: no prop, the lockup of the app's `react({ icon })` (the
 logo at the avatar's size, then the app's name at the body role and 500), and with no icon none is drawn;
-a logo that fails to load leaves the name. It draws no word of its own.
+a logo that fails to load leaves the name. An app that gives `react({ logo })` (its drawn lockup) has that one image
+in place of the icon and the name, at the avatar's height and held to the column. It draws no word of its own.
 
 A first run (no workspace yet, nothing to show) is a `Gate` with no `title` holding one
 `EmptyState`: the Gate draws no lead and no `h1`, the `EmptyState`'s title is the page's `h1`, its

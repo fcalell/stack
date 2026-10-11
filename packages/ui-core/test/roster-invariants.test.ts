@@ -13,6 +13,7 @@ test("the gate's cells are held by the Gate alone", () => {
 		"GATE_LEAD",
 		"GATE_HEAD",
 		"GATE_MARK",
+		"GATE_LOGO",
 	]) {
 		const holders = rosterEntries()
 			.filter(([, , entry]) => entry.holds?.includes(cell))

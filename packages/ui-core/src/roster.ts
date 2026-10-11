@@ -690,6 +690,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"GATE_HEAD",
 				"GATE_MARK",
 				"GATE_MARK_ROW",
+				"GATE_LOGO",
 				"TEXT.role.title",
 				"TEXT.role.meta",
 				"TEXT.role.body",
@@ -703,6 +704,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"GATE_HEAD",
 				"GATE_MARK",
 				"GATE_MARK_ROW",
+				"GATE_LOGO",
 			],
 			states: ["rest"],
 			owns: {
@@ -1034,6 +1036,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SHELL_MARK",
 				"SHELL_MARK_ROW",
 				"GATE_MARK",
+				"GATE_LOGO",
 				"SWITCHER_SLOT",
 				"SWITCHER",
 				"SHELL_PLACES",

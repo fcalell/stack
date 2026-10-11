@@ -174,6 +174,7 @@ react({
   title: "My App",            // <title>; defaults to app.name
   description: "…",           // <meta name="description">
   icon: "/icon.svg",          // <link rel="icon"> and the mark of the Shell's sidebar and the Gate; or { light, dark }
+  logo: "/logo.svg",          // the app's drawn lockup (symbol and name), drawn in the mark's place; or { light, dark }
   themeColor: "#0b0b0f",      // <meta name="theme-color">
   lang: "en",                 // <html lang>; defaults to "en"
   routes: { dir: "src/app/routes" }, // the default; `false` turns file routing off

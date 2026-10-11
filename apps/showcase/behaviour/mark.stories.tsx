@@ -22,6 +22,18 @@ const PAIR: AppMark = {
 };
 const SINGLE: AppMark = { src: logo("#2f3a45"), name: "Acme" };
 const BROKEN: AppMark = { src: "data:image/svg+xml,<", name: "Acme" };
+// A drawn lockup: the symbol and the name as letters, wider than it is tall.
+const drawn = (ground: string) =>
+	`data:image/svg+xml,${encodeURIComponent(
+		`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 32" width="160" height="32"><rect width="160" height="32" fill="${ground}"/></svg>`,
+	)}`;
+const LOGO: AppMark = {
+	...SINGLE,
+	logo: drawn("#2f3a45"),
+	logoDark: drawn("#9fb7c9"),
+};
+// The lockup fails to load; the icon and the name stand instead.
+const LOGO_BROKEN: AppMark = { ...SINGLE, logo: "data:image/svg+xml,<" };
 
 export default {
 	title: "Behaviour/Mark",
@@ -157,5 +169,95 @@ export const DarkFormFollowsTheMode: StoryObj = {
 		await expect(shown(canvasElement)).toEqual([PAIR.src]);
 		canvasElement.firstElementChild?.setAttribute("class", "dark");
 		await expect(shown(canvasElement)).toEqual([PAIR.dark]);
+	},
+};
+
+// An app with a drawn lockup draws that image alone: the app's name is its alt
+// and no name text stands beside it; its height is the avatar's and its width
+// follows its own proportion.
+export const GateDrawsTheLogoAlone: StoryObj = {
+	render: () => <Step mark={{ ...SINGLE, logo: LOGO.logo }} />,
+	play: async ({ canvas, canvasElement }) => {
+		const images = canvasElement.querySelectorAll("img");
+		await expect(images).toHaveLength(1);
+		const img = canvas.getByRole("img", { name: "Acme" });
+		await waitFor(() =>
+			expect(img.getBoundingClientRect().width).toBeGreaterThan(0),
+		);
+		const box = img.getBoundingClientRect();
+		await expect(box.width / box.height).toBeCloseTo(5, 0);
+		await expect(
+			Array.from(canvasElement.querySelectorAll("span")).find(
+				(el) => el.textContent === "Acme",
+			),
+		).toBeUndefined();
+	},
+};
+
+// In the sidebar the lockup keeps the row's inset and rhythm, and never
+// outgrows the sidebar: a logo wider than the row is held to it.
+export const SidebarLogoIsHeldToTheRow: StoryObj = {
+	render: () => (
+		<Framed
+			mark={{
+				...SINGLE,
+				logo: `data:image/svg+xml,${encodeURIComponent(
+					'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2000 32" width="2000" height="32"><rect width="2000" height="32" fill="#2f3a45"/></svg>',
+				)}`,
+			}}
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		const nav = sidebar(canvasElement);
+		const img = nav.querySelector("img");
+		if (!img) throw new Error("the sidebar draws no logo");
+		await waitFor(() =>
+			expect(img.getBoundingClientRect().width).toBeGreaterThan(0),
+		);
+		const box = img.getBoundingClientRect();
+		const navBox = nav.getBoundingClientRect();
+		await expect(box.right).toBeLessThanOrEqual(navBox.right);
+		await expect(box.left).toBeGreaterThanOrEqual(navBox.left);
+		const glyph = nav.querySelector("a svg");
+		if (!glyph) throw new Error("the first place is not drawn");
+		await expect(box.left).toBe(glyph.getBoundingClientRect().left);
+	},
+};
+
+function DarkLogo(props: { dark: boolean }) {
+	return (
+		<div className={props.dark ? "dark" : "light"}>
+			<MarkProvider mark={LOGO}>
+				<Gate title="Sign in" />
+			</MarkProvider>
+		</div>
+	);
+}
+
+// A drawn lockup with a dark form draws the light image in the light mode and
+// the dark one under the theme's `.dark` scope.
+export const LogoDarkFormFollowsTheMode: StoryObj = {
+	render: () => <DarkLogo dark={false} />,
+	play: async ({ canvasElement }) => {
+		const shown = (host: Element) =>
+			Array.from(host.querySelectorAll("img"))
+				.filter((img) => getComputedStyle(img).display !== "none")
+				.map((img) => img.getAttribute("src"));
+		await expect(shown(canvasElement)).toEqual([LOGO.logo]);
+		canvasElement.firstElementChild?.setAttribute("class", "dark");
+		await expect(shown(canvasElement)).toEqual([LOGO.logoDark]);
+	},
+};
+
+// A lockup that fails to load leaves the icon and the name.
+export const FailedLogoFallsBackToIconAndName: StoryObj = {
+	render: () => <Step mark={LOGO_BROKEN} />,
+	play: async ({ canvas, canvasElement }) => {
+		await waitFor(() =>
+			expect(canvasElement.querySelector("img")?.getAttribute("src")).toBe(
+				SINGLE.src,
+			),
+		);
+		await expect(canvas.getByText("Acme")).toBeVisible();
 	},
 };

@@ -209,6 +209,27 @@ test("the app's icon mounts the mark provider with its name, and an app with no 
 	).get(".stack/virtual-providers.tsx");
 	assert.match(pair ?? "", /src: "\/a\.svg"/);
 	assert.match(pair ?? "", /dark: "\/b\.svg"/);
+	assert.doesNotMatch(pair ?? "", /logo/);
+});
+
+test("the app's logo rides the mark provider beside the icon", async () => {
+	const single = (
+		await artifacts({}, { icon: "/mark.svg", logo: "/logo.svg" })
+	).get(".stack/virtual-providers.tsx");
+	assert.match(single ?? "", /src: "\/mark\.svg"/);
+	assert.match(single ?? "", /logo: "\/logo\.svg"/);
+	assert.doesNotMatch(single ?? "", /logoDark/);
+	const pair = (
+		await artifacts(
+			{},
+			{
+				icon: "/mark.svg",
+				logo: { light: "/logo.svg", dark: "/logo-dark.svg" },
+			},
+		)
+	).get(".stack/virtual-providers.tsx");
+	assert.match(pair ?? "", /logo: "\/logo\.svg"/);
+	assert.match(pair ?? "", /logoDark: "\/logo-dark\.svg"/);
 });
 
 test("the entry hands the router to react-ui's navigation, and not without routes", async () => {

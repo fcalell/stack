@@ -854,6 +854,9 @@ export const GATE_MARK = "size-avatar";
 // a row under the sidebar's float, a place row's inset and height, so the logo
 // stands over the places' glyphs.
 export const GATE_MARK_ROW = "gap-inside";
+// An app's drawn lockup stands in the row in place of the logo and the name:
+// the avatar's height, its width from its own proportion, held to the row.
+export const GATE_LOGO = "h-avatar w-auto max-w-full";
 export const SHELL_MARK = "p-float";
 export const SHELL_MARK_ROW = "gap-inside min-h-row px-control-x";
 // The switcher's trigger in a touch top bar, which reaches across the page

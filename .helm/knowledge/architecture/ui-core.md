@@ -442,6 +442,12 @@ a tick with no animation, never jumped to full.
   the logo stands over the places' glyphs; a row, not a link), above the switcher; touch is
   unchanged. The phone's app icon stays `expo()`'s concern, so `GateMark` and the Gate's `mark` prop
   are gone from both platforms and native's Gate draws no mark.
+  An app with a drawn wordmark gives `react({ logo })` (003-317), a string or `{ light, dark }` that
+  rides the `icon` slot as `logo` and the provider as `logo`/`logoDark`. The lockup then draws that
+  one image in place of the icon and the name text, in the same row: `GATE_LOGO`, the avatar's height
+  with `w-auto` (its own proportion) and `max-w-full` (held to the row, `object-left` on the web), its
+  `alt` the app's name and the dark form under the same `.dark` scope. A logo that fails to load
+  leaves the icon and the name.
 - On touch the places past the tab bar are a page, not a menu: the More tab opens a `Place` of
   `ListRow`s (each place's glyph leading, its count trailing, its route), and while a Place's act
   floats the toasts stand above it by the act's room; while a foot docks (a Place's `foot`, a

@@ -137,6 +137,28 @@ test("a single icon is the slot's light form and no icon is null", async () => {
 	assert.equal(await graph({}).resolve(react.slots.icon), null);
 });
 
+test("a logo rides the icon slot as a string or a pair, leaves the favicon alone, and is absent without one", async () => {
+	const one = await graph({ icon: "/mark.svg", logo: "/logo.svg" }).resolve(
+		react.slots.icon,
+	);
+	assert.deepEqual(one, { light: "/mark.svg", logo: { light: "/logo.svg" } });
+	const logo = { light: "/logo.svg", dark: "/logo-dark.svg" };
+	const pair = { icon: { light: "/a.svg", dark: "/b.svg" }, logo };
+	assert.deepEqual(await graph(pair).resolve(react.slots.icon), {
+		light: "/a.svg",
+		dark: "/b.svg",
+		logo,
+	});
+	const html = (await artifacts(pair)).get(".stack/index.html") ?? "";
+	assert.doesNotMatch(html, /logo/);
+	assert.deepEqual(
+		await graph({ icon: "/mark.svg" }).resolve(react.slots.icon),
+		{
+			light: "/mark.svg",
+		},
+	);
+});
+
 test("a custom routes directory reaches the router plugin and the scaffolds", async () => {
 	const g = graph({ routes: { dir: "src/pages" } });
 	const files = await g.resolve(cliSlots.artifactFiles);

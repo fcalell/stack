@@ -23,6 +23,12 @@ export const reactOptionsSchema = z.object({
 	icon: z
 		.union([z.string(), z.object({ light: z.string(), dark: z.string() })])
 		.optional(),
+	// The app's drawn lockup (symbol and name in one image), the Shell's and
+	// the Gate's mark in place of `icon` beside the app's name: one file, or
+	// one per colour scheme.
+	logo: z
+		.union([z.string(), z.object({ light: z.string(), dark: z.string() })])
+		.optional(),
 	themeColor: z.string().optional(),
 	lang: z.string().optional(),
 });
@@ -34,9 +40,11 @@ export type ReactOptions = z.input<typeof reactOptionsSchema>;
 // The app's icon as the options give it, read by the page's favicon links and
 // by a UI plugin that draws the mark: the file in the light scheme, and the
 // file in the dark one when the app gave a pair. Null when the app has none.
+// `logo` is the app's drawn lockup, present only when the app gave one.
 export interface AppIcon {
 	light: string;
 	dark?: string;
+	logo?: { light: string; dark?: string };
 }
 
 // The options of TanStack's router plugin, as data: the app's config runs the

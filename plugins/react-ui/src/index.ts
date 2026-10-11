@@ -322,6 +322,14 @@ export const reactUi = plugin("react-ui", {
 				const mark = {
 					src: icon.light,
 					...(icon.dark === undefined ? {} : { dark: icon.dark }),
+					...(icon.logo === undefined
+						? {}
+						: {
+								logo: icon.logo.light,
+								...(icon.logo.dark === undefined
+									? {}
+									: { logoDark: icon.logo.dark }),
+							}),
 					name: ctx.app.name,
 				};
 				return {
