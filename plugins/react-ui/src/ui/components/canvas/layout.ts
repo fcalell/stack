@@ -17,18 +17,16 @@ import {
 } from "react";
 import { spacing } from "../../lib/media.ts";
 import { elkGraph, fromElk, type Gaps, graphKey, layerGap } from "./elk.ts";
-import { glyphBoxes, routeSide } from "./floor.ts";
+import { glyphBoxes, minZoomFor, routeSide } from "./floor.ts";
 import {
 	type Box,
-	groupTree,
 	hollowRow,
 	leftPads,
 	type Routes,
 	routeEdges,
 	type Size,
-	union,
 } from "./geometry.ts";
-import { openTransform, type Places, place } from "./view.ts";
+import { fitTransform, type Places, place, type Transform } from "./view.ts";
 import { useViewportValue, type Viewport } from "./viewport.ts";
 
 // The sizes a layout is drawn by, from the spacing roles at the density in
@@ -186,6 +184,9 @@ export interface Layout {
 	space: Space;
 	// The graph is placed and the first view set, so it may show.
 	ready: boolean;
+	// Puts the whole graph in the room the pane leaves, at the scale that holds
+	// it: the Fit act's view and the one the graph opens at.
+	fit: () => void;
 	// Runs the layout again, every position ignored, and fits the view to it.
 	arrange: () => void;
 }
@@ -275,9 +276,9 @@ export function useLayout({
 		run(key, true);
 	};
 
-	// What the router drew last, so Arrange fits the bounds the consumer's
-	// positions produced and not the ones the run was asked from.
-	const latest = useRef<Routes | null>(null);
+	// The latest fit, so Arrange fits the bounds the consumer's positions
+	// produced and not the ones the run was asked from.
+	const latest = useRef<(() => void) | null>(null);
 	useEffect(() => {
 		if (!onMove || !laid || reported.current === laid) return;
 		reported.current = laid;
@@ -288,9 +289,9 @@ export function useLayout({
 		// The consumer's positions commit before the frame.
 		if (laid.arranged)
 			requestAnimationFrame(() => {
-				if (latest.current) viewport.fit(latest.current.bounds);
+				latest.current?.();
 			});
-	}, [laid, onMove, order, hollow, viewport]);
+	}, [laid, onMove, order, hollow]);
 
 	const chip = Math.max(
 		0,
@@ -332,22 +333,23 @@ export function useLayout({
 	const side = useViewportValue(viewport, (view) =>
 		routeSide(view.k, glyph, spacing("pair")),
 	);
-	const solids = useMemo(
-		() => new Map([...(side > 0 ? glyphBoxes(boxes, side) : boxes), ...holes]),
-		[boxes, holes, side],
-	);
 	const labels = measures?.labels;
 	const reach = measures?.reach;
-	const routed = useMemo(
-		() =>
-			routeEdges({
-				boxes: solids,
+	// What a graph routes to and frames at a routing side: the cards' boxes above
+	// the floor (side 0), the glyphs' squares under it, where a group's head draws
+	// at its own size on screen, so the band it covers and the padding round the
+	// glyphs grow by what the zoom takes: the side's step over the glyph.
+	const routeAt = useCallback(
+		(at: number) => {
+			const grow = at > 0 ? at / glyph : 1;
+			return routeEdges({
+				boxes: new Map([...(at > 0 ? glyphBoxes(boxes, at) : boxes), ...holes]),
 				edges,
 				back,
 				groups,
 				labels: labels ?? NONE.labels,
-				head,
-				pad,
+				head: head * grow,
+				pad: pad * grow,
 				left: leftPads(groups, reach ?? NONE.reach, {
 					pad,
 					pair,
@@ -355,11 +357,13 @@ export function useLayout({
 				}),
 				pair,
 				// A glyph draws no port.
-				ports: ports && side === 0,
+				ports: ports && at === 0,
 				port,
-			}),
+			});
+		},
 		[
-			solids,
+			boxes,
+			holes,
 			edges,
 			back,
 			groups,
@@ -367,56 +371,61 @@ export function useLayout({
 			reach,
 			head,
 			pad,
+			glyph,
 			pair,
 			ports,
-			side,
 			port,
 		],
 	);
+	const routed = useMemo(() => routeAt(side), [routeAt, side]);
 
+	// The view that holds the whole graph. Under the floor the frames and the
+	// routes follow the zoom (a head and a padding keep their size on screen),
+	// so the bounds depend on the scale they are fitted to: the fit is taken
+	// again at the scale it gave, down until the bounds at that scale fit it.
+	const fitted = useCallback((): Transform | null => {
+		const element = region.current;
+		if (!element) return null;
+		const pane = { width: element.clientWidth, height: element.clientHeight };
+		const view = (bounds: Box) =>
+			fitTransform(
+				bounds,
+				pane,
+				spacing("page"),
+				viewport.clearance(),
+				viewport.reserved() ?? undefined,
+			);
+		const stand = (k: number) =>
+			view(routeAt(routeSide(k, glyph, spacing("pair"))).bounds);
+		let at = view(routeAt(0).bounds);
+		for (let step = 0; step < 6; step++) {
+			const next = stand(at.k);
+			if (next.k >= at.k - 1e-3) return next;
+			at = next;
+		}
+		return at;
+	}, [region, viewport, routeAt, glyph]);
+	const fit = useCallback(() => {
+		const view = fitted();
+		if (!view) return;
+		// The lowest scale is the one these boxes allow, which the canvas sets after
+		// it renders: a view set before it (the opening one) must not meet the last
+		// graph's.
+		viewport.limit(minZoomFor([...boxes.values()], glyph, spacing("pair")));
+		viewport.set(view);
+	}, [fitted, viewport, boxes, glyph]);
 	useLayoutEffect(() => {
-		latest.current = routed;
-	}, [routed]);
+		latest.current = fit;
+	}, [fit]);
 
 	const placed = !placing || laid !== null;
 	useLayoutEffect(() => {
 		const element = region.current;
 		if (ready || !element || !measured || !placed || !measures) return;
-		// The first node stands whole with the groups that hold it.
-		const firstId = order[0] ?? "";
-		const parents = groupTree(
-			groups,
-			new Set(nodes.map((node) => node.id)),
-		).parent;
-		const focus = [boxes.get(firstId) ?? holes.get(firstId)];
-		for (let at = parents.get(firstId); at !== undefined; at = parents.get(at))
-			focus.push(routed.frames.get(at));
-		const shown = focus.filter((box): box is Box => box !== undefined);
-		viewport.set(
-			openTransform(
-				routed.bounds,
-				shown.length > 0 ? union(shown) : undefined,
-				{ width: element.clientWidth, height: element.clientHeight },
-				spacing("page"),
-				viewport.clearance(),
-				viewport.reserved() ?? undefined,
-			),
-		);
+		// The graph opens as Fit shows it: whole in the room the pane leaves.
+		fit();
 		setReady(true);
-	}, [
-		ready,
-		measured,
-		placed,
-		measures,
-		routed,
-		boxes,
-		holes,
-		order,
-		groups,
-		nodes,
-		region,
-		viewport,
-	]);
+	}, [ready, measured, placed, measures, region, fit]);
 
-	return { boxes, routed, space, ready, arrange };
+	return { boxes, routed, space, ready, fit, arrange };
 }

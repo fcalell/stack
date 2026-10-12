@@ -8,12 +8,10 @@ import {
 import type { StoryObj } from "@storybook/react-vite";
 import { expect, waitFor, within } from "storybook/test";
 import {
-	allInside,
 	atTheFloor,
 	captionHeld,
 	clearOfTheStack,
-	frameOf,
-	whole,
+	opensFitted,
 } from "./canvas-fit.ts";
 import { LAID } from "./canvas-support.ts";
 
@@ -58,14 +56,9 @@ export async function opened(canvas: Canvas, name: string) {
 	return region;
 }
 
-// The three loop frames open at the floor with the first node and its group
-// whole and clear of the zoom stack. `everything` adds that all of the graph
-// stands in the pane, which holds where it fits at the floor.
-export function loops(
-	mode: Mode,
-	density: Density,
-	everything: boolean,
-): StoryObj {
+// The three loop frames open as Fit shows them: every part whole in the pane,
+// the group heads drawn, clear of the zoom stack.
+export function loops(mode: Mode, density: Density): StoryObj {
 	return {
 		parameters: { mode },
 		render: () => <Frame frame={loopFrame(mode, density)} draw={drawCanvas} />,
@@ -73,23 +66,14 @@ export function loops(
 			const hollow = await opened(canvas, "Hollow loop");
 			const placed = await opened(canvas, "Placed loop");
 			const lone = await opened(canvas, "Lone loop");
-			const first = (region: Element) => {
-				const card = region.querySelector("[data-layer] > button");
-				if (!card) throw new Error("no first node");
-				return card;
-			};
 			for (const [label, region] of [
 				["Hollow loop", hollow],
 				["Placed loop", placed],
 				["Lone loop", lone],
 			] as const) {
-				atTheFloor(region, label);
-				whole(region, label, frameOf(region, "loop"));
+				opensFitted(region, label);
 				clearOfTheStack(region, label);
-				if (everything) allInside(region, label);
 			}
-			whole(hollow, "Hollow loop", first(hollow));
-			whole(placed, "Placed loop", first(placed));
 		},
 	};
 }

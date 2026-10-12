@@ -1569,27 +1569,27 @@ components:
     backgroundColor: "{colors.group-dark}"
   canvas-node-name-rest:
     backgroundColor: "{colors.canvas}"
-    typography: "{typography.caption}"
+    typography: "{typography.meta}"
     textColor: "{colors.ink-body}"
   canvas-node-name-rest-dark:
     backgroundColor: "{colors.canvas-dark}"
-    typography: "{typography.caption}"
+    typography: "{typography.meta}"
     textColor: "{colors.ink-body-dark}"
   canvas-node-name-off:
     backgroundColor: "{colors.canvas}"
-    typography: "{typography.caption}"
+    typography: "{typography.meta}"
     textColor: "{colors.ink-meta}"
   canvas-node-name-off-dark:
     backgroundColor: "{colors.canvas-dark}"
-    typography: "{typography.caption}"
+    typography: "{typography.meta}"
     textColor: "{colors.ink-meta-dark}"
   canvas-node-name-dimmed:
     backgroundColor: "{colors.canvas}"
-    typography: "{typography.caption}"
+    typography: "{typography.meta}"
     textColor: "{colors.ink-disabled}"
   canvas-node-name-dimmed-dark:
     backgroundColor: "{colors.canvas-dark}"
-    typography: "{typography.caption}"
+    typography: "{typography.meta}"
     textColor: "{colors.ink-disabled-dark}"
   stage-done:
     typography: "{typography.body}"

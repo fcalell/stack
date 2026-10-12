@@ -4,7 +4,6 @@ import { CANVAS_ZOOM } from "@fcalell/ui-core/variants";
 import { useWords } from "../../lib/words.tsx";
 import { Button } from "../button/index.tsx";
 import { IconButtonBase } from "../icon-button/base.tsx";
-import type { Box } from "./geometry.ts";
 import { EXTENT } from "./view.ts";
 import { useViewportValue, type Viewport } from "./viewport.ts";
 
@@ -20,12 +19,12 @@ const ACT = "pointer-events-auto";
 // names to the viewport.
 export function ZoomStack({
 	viewport,
-	bounds,
+	onFit,
 	minZoom,
 	onArrange,
 }: {
 	viewport: Viewport;
-	bounds: Box;
+	onFit: () => void;
 	minZoom: number;
 	onArrange?: () => void;
 }) {
@@ -52,7 +51,7 @@ export function ZoomStack({
 				icon="Maximize"
 				fit="body"
 				label={words.fit}
-				onClick={() => viewport.fit(bounds)}
+				onClick={onFit}
 			/>
 			{onArrange ? (
 				<IconButtonBase

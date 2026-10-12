@@ -145,7 +145,7 @@ function CanvasGraph({
 		to: CanvasPoint;
 		target: string | null;
 	} | null>(null);
-	const { boxes, routed, space, ready, arrange } = useLayout({
+	const { boxes, routed, space, ready, fit, arrange } = useLayout({
 		nodes,
 		edges,
 		groups,
@@ -386,7 +386,7 @@ function CanvasGraph({
 			</div>
 			<ZoomStack
 				viewport={viewport}
-				bounds={routed.bounds}
+				onFit={fit}
 				minZoom={minZoom}
 				onArrange={onMove ? arrange : undefined}
 			/>

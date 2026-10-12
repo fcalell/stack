@@ -152,7 +152,7 @@ export function groupBoxes(
 			reach.get(id) ?? -Infinity,
 		);
 		const bottom = Math.max(...parts.map((box) => box.y + box.height));
-		const inset = lefts.get(id) ?? pad;
+		const inset = Math.max(lefts.get(id) ?? pad, pad);
 		const box = {
 			x: left - inset,
 			y: top - pad - head,

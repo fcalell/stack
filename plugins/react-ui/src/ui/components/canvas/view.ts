@@ -156,7 +156,8 @@ function room(pane: Size, inset: number, clear: Clearance): Box {
 
 // The transform that stands the bounds whole in the room the pane leaves,
 // centred there, at the scale that fits and never above 1: a small graph keeps
-// its own size.
+// its own size. It is the Fit act's view and the view a graph opens at, so
+// what opens is what Fit gives back.
 export function fitTransform(
 	bounds: Box,
 	pane: Size,
@@ -169,42 +170,4 @@ export function fitTransform(
 	const k = Math.min(1, area.width / bounds.width, area.height / bounds.height);
 	const centre = centredTransform(bounds, k, area);
 	return { k, x: centre.x + area.x, y: centre.y + area.y };
-}
-
-// What a graph opens at, in the room the pane leaves (as a fit does). The text
-// floor comes first: the scale is the larger of the floor's (a node at its own
-// size, 1) and the one that fits the bounds, and a fit never exceeds 1, so a
-// graph opens at 1. It is centred in the room when it fits there. Else the
-// floor wins and `first` (the first node with the group that holds it) stands
-// whole at the top, its top `inset` below the pane's top, on the room's centre
-// line as far as the pane's insets allow and centred in the pane when it is
-// wider than the pane less its two insets (against the left edge when wider
-// than the pane); whatever else the graph holds may reach past the right
-// or bottom edge, a pan or a zoom away.
-export function openTransform(
-	bounds: Box,
-	first: Box | undefined,
-	pane: Size,
-	inset: number,
-	clear: Clearance = NO_CLEARANCE,
-	foot?: Foot,
-): Transform {
-	if (foot) return footTransform(bounds, pane, inset, clear, foot);
-	const area = room(pane, inset, clear);
-	const fits = bounds.width <= area.width && bounds.height <= area.height;
-	if (fits || !first) {
-		const centre = centredTransform(bounds, 1, area);
-		return { k: 1, x: centre.x + area.x, y: centre.y + area.y };
-	}
-	const low = inset - first.x;
-	const high = pane.width - inset - (first.x + first.width);
-	const middle = area.x + area.width / 2 - (first.x + first.width / 2);
-	return {
-		k: 1,
-		x:
-			low > high
-				? Math.max(0, (pane.width - first.width) / 2) - first.x
-				: Math.min(Math.max(middle, low), high),
-		y: area.y - first.y,
-	};
 }

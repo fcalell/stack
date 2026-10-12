@@ -156,7 +156,10 @@ export function lowestZoom(root: Element, glyph: number): number {
 export function clear(root: Element) {
 	const chrome = [...root.querySelectorAll("[data-clear]")].map(rect);
 	if (chrome.length !== 2) throw new Error("the stack and the act stand");
-	for (const node of [...cards(root), ...glyphs(root)].map(rect))
+	// What is drawn: the cards at their own size, the glyphs under the floor (the
+	// cards keep their boxes there, unseen).
+	const drawn = viewport(root).scale < 1 ? glyphs(root) : cards(root);
+	for (const node of [...drawn].map(rect))
 		for (const part of chrome)
 			if (!apart(node, part))
 				throw new Error(
@@ -299,10 +302,14 @@ export function routesFollowTheGlyphs(root: Element, graph: Graph) {
 	const view = viewport(root);
 	const pane = rect(region);
 	const pair = px("pair");
-	const pad = px("card") * view.scale;
+	// The frame's padding and its head hold their size on screen under the floor
+	// (they grow by the zoom's inverse), up to the step the routing box rounds to.
+	const pad = px("card");
 	// The frame's boxes round a glyph up to a step of a `pair` in the flow, half
-	// of it on each side, and a pixel is the stroke's and the border's.
-	const slack = (pair * view.scale) / 2 + 1.5;
+	// of it on each side, and a pixel is the stroke's and the border's; the
+	// padding's growth is that step over the glyph, of the padding.
+	const slack =
+		(pair * view.scale) / 2 + 1.5 + (pad * pair * view.scale) / px("control");
 	const onScreen = (x: number, y: number): Point => ({
 		x: pane.left + view.x + x * view.scale,
 		y: pane.top + view.y + y * view.scale,
@@ -349,7 +356,7 @@ export function routesFollowTheGlyphs(root: Element, graph: Graph) {
 				box.bottom < held.bottom + pad - 1.5
 			)
 				throw new Error(
-					`the frame of ${group.id} does not hold the glyph of ${id} by the padding`,
+					`the frame of ${group.id} does not hold the glyph of ${id} by the padding: frame ${JSON.stringify(box)} glyph ${JSON.stringify(held)} pad ${pad} scale ${view.scale}`,
 				);
 		}
 	}

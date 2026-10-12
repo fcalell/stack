@@ -14,7 +14,6 @@ import {
 	centredTransform,
 	EXTENT,
 	type Foot,
-	fitTransform,
 	inside,
 	NO_CLEARANCE,
 	type Transform,
@@ -31,7 +30,6 @@ export interface Viewport {
 	zoomOut(): void;
 	// Instant, within the scale extent.
 	set(transform: Transform): void;
-	fit(bounds: Box): void;
 	// What the canvas's own chrome takes from the pane, which a fit and the opening view stay clear of.
 	clearance(): Clearance;
 	// The text standing under the graph, which a fit and the opening view hold with it; `null` once it goes.
@@ -189,17 +187,6 @@ function make(region: RefObject<HTMLElement | null>) {
 			foot = next;
 		},
 		reserved: () => foot,
-		fit(bounds) {
-			viewport.set(
-				fitTransform(
-					bounds,
-					pane(),
-					spacing("page"),
-					clearanceOf(region.current),
-					foot ?? undefined,
-				),
-			);
-		},
 		centreOn(box, zoom) {
 			const size = pane();
 			if (zoom === undefined) {

@@ -57,6 +57,9 @@ const calls = (spy: unknown) => (spy as Spy<Moved>).mock.calls;
 const DESKTOP = SIZE_PX.desktop.control;
 // The caption role's size at the desktop body size: the text floor.
 const FLOOR = 11;
+// What a name beside a glyph and a group's head hold on screen at any zoom: the
+// rubric's 12 px (the meta role, over the caption's 11.8).
+const NAME_FLOOR = 12;
 // The zoom under which a node is its glyph alone, for a graph whose overview
 // forms clear each other at it (the workflow does).
 const OVERVIEW_FLOOR = 0.5;
@@ -180,7 +183,8 @@ async function glyphForm(root: Element) {
 	return forms;
 }
 
-// The glyph alone: no two overlap and no text is visible at all.
+// The glyph alone: no two overlap and the only text visible is each group's
+// head, at its own size on screen.
 async function bareForm(root: Element) {
 	const forms = await glyphForm(root);
 	forms.forEach((one, index) => {
@@ -188,7 +192,10 @@ async function bareForm(root: Element) {
 			expect(apart(rect(one), rect(two))).toBe(true);
 	});
 	await expect(names(root)).toHaveLength(0);
-	await expect(readable(root)).toHaveLength(0);
+	const heads = readable(root);
+	await expect(heads).toHaveLength(WORKFLOW.groups?.length ?? 0);
+	for (const size of heads)
+		await expect(size).toBeGreaterThanOrEqual(NAME_FLOOR - 0.01);
 }
 
 // The overview: each glyph carries its node's title, one line at the caption
@@ -212,7 +219,7 @@ async function overviewForm(root: Element) {
 		expect(Math.abs(centre(text).y - centre(glyph).y)).toBeLessThan(1);
 		const style = getComputedStyle(name);
 		expect(Number.parseFloat(style.fontSize)).toBeGreaterThanOrEqual(
-			FLOOR - 0.01,
+			NAME_FLOOR - 0.01,
 		);
 		expect(style.fontWeight).toBe("500");
 		expect(text.height).toBeLessThan(glyph.height);
@@ -225,7 +232,7 @@ async function overviewForm(root: Element) {
 			expect(apart(one, two)).toBe(true);
 	});
 	await expect(Math.min(...readable(root))).toBeGreaterThanOrEqual(
-		FLOOR - 0.01,
+		NAME_FLOOR - 0.01,
 	);
 }
 
@@ -320,6 +327,8 @@ const activate: Story = {
 		await userEvent.click(zoomOut);
 		await expect(scale()).toBeLessThan(1);
 		(document.activeElement as HTMLElement | null)?.blur();
+		// A group's head stays a button under the floor and comes first.
+		for (const _ of WORKFLOW.groups ?? []) await userEvent.tab();
 		for (const id of ORDER.slice(0, 3)) {
 			await userEvent.tab();
 			await expect(glyphs(canvasElement)[ORDER.indexOf(id)]).toHaveFocus();
@@ -417,7 +426,17 @@ export const OncePerCrossingDark = mode("dark", crossing);
 const fits: Story = {
 	...page(STAGE, true),
 	play: async ({ args, canvas, canvasElement, userEvent }) => {
-		const region = await laidOut(canvas, args.moved);
+		// The stage cannot hold the workflow at its own size, so it opens fitted
+		// with every node a glyph: laid out is the canvas shown.
+		const region = await canvas.findByRole("region", { name: "Workflow" });
+		await waitFor(
+			() => expect(args.moved).toHaveBeenCalledTimes(WORKFLOW.nodes.length),
+			LAID,
+		);
+		await waitFor(
+			() => expect(getComputedStyle(region).opacity).toBe("1"),
+			LAID,
+		);
 		await userEvent.click(canvas.getByRole("button", { name: "Fit" }));
 		await waitFor(() => expect(viewport(canvasElement).scale).toBeLessThan(1));
 		clear(canvasElement);

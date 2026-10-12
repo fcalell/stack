@@ -9,7 +9,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { spacing } from "../../lib/media.ts";
 import { layerGap } from "./elk.ts";
 import { GROUND, Grid, useBleed } from "./ground.tsx";
-import { openTransform, type Transform, whole } from "./view.ts";
+import { fitTransform, type Transform, whole } from "./view.ts";
 import { clearanceOf } from "./viewport.ts";
 import { ZoomRoom } from "./zoom.tsx";
 
@@ -28,19 +28,11 @@ const LINES = [
 ] as const;
 
 // Where a loaded canvas opens a graph of these bounds: the opening view of the
-// layout (`openTransform`), in the room the pane and the zoom stack leave.
+// layout (`fitTransform`), in the room the pane and the zoom stack leave.
 function opening(region: HTMLElement, stand: HTMLElement): Transform {
-	const first = stand.firstElementChild;
-	const width = stand.offsetWidth;
 	return whole(
-		openTransform(
-			{ x: 0, y: 0, width, height: stand.offsetHeight },
-			{
-				x: 0,
-				y: 0,
-				width,
-				height: first instanceof HTMLElement ? first.offsetHeight : 0,
-			},
+		fitTransform(
+			{ x: 0, y: 0, width: stand.offsetWidth, height: stand.offsetHeight },
 			{ width: region.clientWidth, height: region.clientHeight },
 			spacing("page"),
 			clearanceOf(region),
@@ -48,7 +40,7 @@ function opening(region: HTMLElement, stand: HTMLElement): Transform {
 	);
 }
 
-/** A Canvas waiting: its ground and grid, and three node-shaped cards (an icon beside an overline, a title and a line bar) stacked at the gap a loaded path keeps, standing where the loaded chain opens (the same opening view, in the room the unseen zoom stack leaves), with no zoom stack, act or handler. Outside the package's exports. */
+/** A Canvas waiting: its ground and grid, and three node-shaped cards (an icon beside an overline, a title and a line bar) stacked at the gap a loaded path keeps, standing where the loaded chain opens (the same opening view as Fit's, in the room the unseen zoom stack leaves), with no zoom stack, act or handler. Outside the package's exports. */
 export function CanvasWait({ label }: { label: string }) {
 	const bleed = useBleed();
 	const region = useRef<HTMLElement>(null);

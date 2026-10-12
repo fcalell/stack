@@ -6,7 +6,7 @@ import {
 import type { StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { expect, waitFor } from "storybook/test";
-import { LAID, rect } from "./canvas-support.ts";
+import { LAID, ORDER, rect } from "./canvas-support.ts";
 import { click, hover, type Point } from "./mouse.ts";
 
 // 003-312: a group's head draws the hover form a node draws (its border steps
@@ -72,8 +72,23 @@ export function group(mode: "light" | "dark"): StoryObj {
 		play: async ({ canvas, canvasElement }) => {
 			const region = await canvas.findByRole("region", { name: "Workflow" });
 			await waitFor(
+				() => expect(getComputedStyle(region).opacity).toBe("1"),
+				LAID,
+			);
+			// A pane that cannot hold the workflow at its own size opens it fitted,
+			// every node a glyph: a press on the first node of the group brings its
+			// card back, and the group's head with it.
+			const held = WORKFLOW.groups?.[0]?.holds[0] ?? "";
+			const at = ORDER.indexOf(held);
+			const glyph = region.querySelectorAll<HTMLElement>(
+				"[data-layer] > div:not([data-group]) > button",
+			)[at];
+			if (glyph) await click(centreOf(glyph));
+			await waitFor(
 				() =>
-					expect(region.querySelector("[data-layer] > button")).toBeVisible(),
+					expect(
+						region.querySelectorAll("[data-layer] > button")[at],
+					).toBeVisible(),
 				LAID,
 			);
 			const id = WORKFLOW.groups?.[0]?.id;
@@ -82,7 +97,9 @@ export function group(mode: "light" | "dark"): StoryObj {
 				`[data-group="${id}"] > button`,
 			);
 			const frame = head?.parentElement;
-			const node = region.querySelector<HTMLElement>("[data-layer] > button");
+			const node = region.querySelectorAll<HTMLElement>(
+				"[data-layer] > button",
+			)[at];
 			if (!head || !frame || !node) throw new Error("no head, frame or node");
 			const ground = getComputedStyle(region).backgroundColor;
 			await expect(channels(ground)[3]).toBe(255);

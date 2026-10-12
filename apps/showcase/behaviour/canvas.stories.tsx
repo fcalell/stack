@@ -18,11 +18,11 @@ import {
 	PROBLEM,
 	RUN,
 	SCENARIO,
-	SMALL,
 	STAGE,
 	STATUSES,
 	TALL,
 	WORKFLOW,
+	WORKFLOW_STAGE,
 } from "@fcalell/plugin-react-ui/showcase/frames/canvas";
 import { pathOrder } from "@fcalell/ui-core/canvas";
 import type { CanvasNode, CanvasPoint } from "@fcalell/ui-core/descriptors";
@@ -53,7 +53,7 @@ type Select = (id: string | null) => void;
 function Workflow(props: { heard?: Select }) {
 	const [selected, setSelected] = useState<string>();
 	return (
-		<div className={STAGE}>
+		<div className={WORKFLOW_STAGE}>
 			<Canvas
 				label="Workflow"
 				nodes={WORKFLOW.nodes}
@@ -78,7 +78,7 @@ function Outside(props: { id: string; label: string }) {
 			<button type="button" onClick={() => setSelected(props.id)}>
 				{props.label}
 			</button>
-			<div className={STAGE}>
+			<div className={WORKFLOW_STAGE}>
 				<Canvas
 					label="Workflow"
 					nodes={WORKFLOW.nodes}
@@ -491,7 +491,7 @@ async function drag(
 
 export const ReadOnly: StoryObj = {
 	render: () => (
-		<div className={STAGE}>
+		<div className={WORKFLOW_STAGE}>
 			<Canvas
 				label="Workflow"
 				nodes={WORKFLOW.nodes}
@@ -543,7 +543,7 @@ export const DragDoesNotSelect: StoryObj<{ heard: Select }> = {
 	},
 };
 
-const page = () =>
+const _page = () =>
 	Number.parseFloat(
 		getComputedStyle(document.documentElement).getPropertyValue(
 			"--spacing-page",
@@ -611,54 +611,70 @@ export const OpensCentred: StoryObj = {
 	},
 };
 
-// A graph larger than the room opens at scale 1 with its first node's top
-// centre on the room's centre line, a page inset below the pane's top, as far
-// as a page inset on each side of the pane allows (003-189 round 2: the first
-// node stands whole, so the centre line gives way to the pane's insets).
-export const OpensAtTheFirstNode: StoryObj = {
+// A graph larger than the room opens as Fit shows it (003-324): whole in the
+// room the zoom stack leaves, at the scale that holds it, its groups and their
+// heads drawn at their own size on screen, none cut at an edge. Before, it
+// opened at scale 1 with the first node at the top and the rest past the edge.
+export const OpensFitted: StoryObj = {
 	render: () => (
-		<div className={SMALL}>
+		<div className={STAGE}>
 			<Canvas
-				label="Journey"
-				nodes={JOURNEY.nodes}
-				edges={JOURNEY.edges}
+				label="Workflow"
+				nodes={WORKFLOW.nodes}
+				edges={WORKFLOW.edges}
+				groups={WORKFLOW.groups}
 				onSelect={fn()}
 			/>
 		</div>
 	),
-	play: async ({ canvas, canvasElement }) => {
-		const region = await canvas.findByRole("region", { name: "Journey" });
-		const first = JOURNEY.nodes[0];
+	play: async ({ canvas, canvasElement, userEvent }) => {
+		const region = await canvas.findByRole("region", { name: "Workflow" });
 		await waitFor(
-			() =>
-				expect(
-					canvas.getByRole("button", { name: new RegExp(first?.title ?? "") }),
-				).toBeVisible(),
+			() => expect(getComputedStyle(region).opacity).toBe("1"),
 			LAID,
 		);
-		await expect(viewport(canvasElement).scale).toBe(1);
-		const button = nodeButtons(canvasElement)[0];
-		if (!button) throw new Error("no node");
-		const space = room(region);
-		const box = rect(button);
+		await expect(viewport(canvasElement).scale).toBeLessThan(1);
 		const pane = rect(region);
-		const low = pane.left + page();
-		const high = pane.right - page() - box.width;
-		const line = space.left + space.width / 2 - box.width / 2;
-		// Wider than the pane less its two insets (003-189 round 3): centred.
-		const centred = pane.left + Math.max(0, (pane.width - box.width) / 2);
+		const space = room(region);
+		// Every glyph and every frame stands in the room: no group is cut.
+		const parts = canvasElement.querySelectorAll(
+			"[data-layer] > div:not([data-group]) > button, [data-group]",
+		);
+		await expect(parts.length).toBe(
+			WORKFLOW.nodes.length + (WORKFLOW.groups?.length ?? 0),
+		);
+		for (const part of parts) await expect(holds(pane, rect(part))).toBe(true);
+		for (const frame of canvasElement.querySelectorAll("[data-group]"))
+			await expect(holds(space, rect(frame))).toBe(true);
+		// A group's head stays, as a button at its own size on screen: its height
+		// is its layout height and its text holds the 12 px floor.
+		const group = WORKFLOW.groups?.[0];
+		if (!group) throw new Error("no group");
+		const head = headOf(canvasElement, group.id);
+		await expect(getComputedStyle(head).visibility).toBe("visible");
+		await expect(head).toHaveTextContent(group.head);
+		await expect(Math.abs(rect(head).height - head.offsetHeight)).toBeLessThan(
+			1,
+		);
 		await expect(
-			Math.abs(
-				box.left - (low > high ? centred : Math.min(Math.max(line, low), high)),
+			Number.parseFloat(
+				getComputedStyle(head.firstElementChild ?? head).fontSize,
 			),
-		).toBeLessThan(1);
-		await expect(Math.abs(box.top - (pane.top + page()))).toBeLessThan(1);
+		).toBeGreaterThanOrEqual(12);
+		// What opens is what Fit gives: the Fit act does not move the view by more
+		// than a pixel.
+		const opened = viewport(canvasElement);
+		await userEvent.click(canvas.getByRole("button", { name: "Fit" }));
+		const fitted = viewport(canvasElement);
+		await expect(Math.abs(fitted.scale - opened.scale)).toBeLessThan(0.01);
+		await expect(Math.abs(fitted.x - opened.x)).toBeLessThan(2);
+		await expect(Math.abs(fitted.y - opened.y)).toBeLessThan(2);
 	},
 };
 
 const PLACED: CanvasNode[] = WORKFLOW.nodes.map((node, index) => ({
 	...node,
-	position: { x: (index % 2) * 300, y: index * 120 },
+	position: { x: (index % 2) * 300, y: Math.floor(index / 2) * 120 },
 }));
 
 // The canvas places nodes only when none has a position, and loads ELK's
@@ -703,7 +719,7 @@ export const PlacedByTheCanvas: StoryObj<{
 }> = {
 	args: { moved: fn() },
 	render: (args) => (
-		<div className={STAGE}>
+		<div className={WORKFLOW_STAGE}>
 			<Canvas
 				label="Workflow"
 				nodes={WORKFLOW.nodes}
@@ -821,8 +837,7 @@ export const Silent: StoryObj = {
 		for (const name of ["Workflow", "Journey"]) {
 			const region = await canvas.findByRole("region", { name });
 			await waitFor(
-				() =>
-					expect(region.querySelector("[data-layer] > button")).toBeVisible(),
+				() => expect(getComputedStyle(region).opacity).toBe("1"),
 				LAID,
 			);
 		}
@@ -999,14 +1014,20 @@ export const Problem: StoryObj = {
 	},
 };
 
-// A status is its dot (a spinner while it runs) and its word.
+// A node's status, which its dot names: the dot's accessible name, or none.
+const statusOf = (button: Element) =>
+	button.querySelector('[role="img"]')?.getAttribute("aria-label") ?? null;
+
+// A status is its dot (a spinner while it runs), named by its word: the word
+// itself would take the title's width.
 export const Statuses: StoryObj = {
 	render: () => <Stated graph={STATUSES} label="Statuses" />,
 	play: async ({ canvas }) => {
 		const region = await standing(canvas, "Statuses");
 		for (const node of STATUSES.nodes) {
 			const button = stateButton(region, STATUSES, node.id);
-			await expect(button).toHaveTextContent(node.status?.label ?? "none");
+			await expect(statusOf(button)).toBe(node.status?.label ?? null);
+			await expect(button).not.toHaveTextContent(node.status?.label ?? "\0");
 			const spinning = button.querySelector(".animate-spin") !== null;
 			await expect(spinning).toBe(node.status?.state === "running");
 			if (node.status?.state !== "running")
@@ -1014,10 +1035,62 @@ export const Statuses: StoryObj = {
 		}
 		const check = stateButton(region, STATUSES, "check");
 		await expect(check).toHaveTextContent("3");
-		await expect(check).toHaveTextContent("Failed");
-		await expect(stateButton(region, STATUSES, "build")).toHaveTextContent(
+		await expect(statusOf(check)).toBe("Failed");
+		await expect(statusOf(stateButton(region, STATUSES, "build"))).toBe(
 			"Running",
 		);
+	},
+};
+
+// A node's status never takes the title's width: a long word stands as the dot
+// named by it (and a tooltip), a `short` word beside the dot where the app
+// gives one, so the title of a 240 px node is whole.
+const STALE: CanvasNode[] = [
+	{
+		id: "glossary",
+		icon: "BookOpen",
+		overline: "Page",
+		title: "Glossary of the terms",
+		status: { state: "waiting", label: "May be out of date" },
+	},
+	{
+		id: "terms",
+		icon: "BookOpen",
+		overline: "Page",
+		title: "Glossary of the terms",
+		status: { state: "waiting", label: "May be out of date", short: "Stale" },
+	},
+];
+
+export const LongStatusKeepsTheTitle: StoryObj = {
+	render: () => (
+		<div className={STAGE}>
+			<Canvas label="Pages" nodes={STALE} onSelect={fn()} />
+		</div>
+	),
+	play: async ({ canvas, canvasElement }) => {
+		const region = await canvas.findByRole("region", { name: "Pages" });
+		await waitFor(() => expect(nodeButtons(region)[0]).toBeVisible(), LAID);
+		const [long, short] = [...nodeButtons(canvasElement)];
+		if (!long || !short) throw new Error("no nodes");
+		for (const card of [long, short]) {
+			const title = within(card).getByText("Glossary of the terms");
+			// The title is whole, and fills the node less its icon, gaps and mark.
+			await expect(title.scrollWidth).toBeLessThanOrEqual(title.clientWidth);
+		}
+		// The long word is the dot's name, not a drawn word.
+		await expect(long).not.toHaveTextContent("May be out of date");
+		await expect(
+			within(long).getByRole("img", { name: "May be out of date" }),
+		).toBeVisible();
+		await expect(
+			rect(long.querySelector("[title]") as Element).width,
+		).toBeLessThan(24);
+		// The short word is drawn beside its dot, the long one still its name.
+		await expect(within(short).getByText("Stale")).toBeVisible();
+		const wide = (card: HTMLElement) =>
+			rect(within(card).getByText("Glossary of the terms")).width;
+		await expect(wide(long)).toBeGreaterThan(wide(short));
 	},
 };
 
@@ -1032,12 +1105,10 @@ export const Run: StoryObj = {
 		const start = stateButton(region, RUN, "start");
 		const handoff = stateButton(region, RUN, "handoff");
 		await expect(ink(titleText(handoff))).not.toBe(ink(titleText(start)));
-		await expect(handoff).not.toHaveTextContent(/Done|Running/);
+		await expect(statusOf(handoff)).toBeNull();
 		for (const id of taken.slice(0, 5))
-			await expect(stateButton(region, RUN, id)).toHaveTextContent("Done");
-		await expect(stateButton(region, RUN, "review")).toHaveTextContent(
-			"Running",
-		);
+			await expect(statusOf(stateButton(region, RUN, id))).toBe("Done");
+		await expect(statusOf(stateButton(region, RUN, "review"))).toBe("Running");
 		for (const node of RUN.nodes)
 			await expect(selected(stateButton(region, RUN, node.id))).toBe(
 				node.id === RUN.path?.at,
@@ -1059,14 +1130,14 @@ export const Scenario: StoryObj = {
 		const region = await standing(canvas, "Scenario");
 		const failed = stateButton(region, SCENARIO, "b2");
 		await expect(selected(failed)).toBe(true);
-		await expect(failed).toHaveTextContent("Failed");
+		await expect(statusOf(failed)).toBe("Failed");
 		const begin = ink(titleText(stateButton(region, SCENARIO, "begin")));
 		const merge = ink(titleText(stateButton(region, SCENARIO, "merge")));
 		await expect(merge).not.toBe(begin);
 		for (const id of ["merge", "finish", "a1", "a2", "c1"]) {
 			const button = stateButton(region, SCENARIO, id);
 			await expect(ink(titleText(button))).toBe(merge);
-			await expect(button).not.toHaveTextContent(/Passed|Failed/);
+			await expect(statusOf(button)).toBeNull();
 		}
 		for (const node of SCENARIO.nodes) {
 			const button = stateButton(region, SCENARIO, node.id);
@@ -1135,7 +1206,7 @@ export const StateKeepsTheLayout: StoryObj = {
 			canvas.getByRole("button", { name: "Start the run" }),
 		);
 		await waitFor(() =>
-			expect(stateButton(region, RUN, "review")).toHaveTextContent("Running"),
+			expect(statusOf(stateButton(region, RUN, "review"))).toBe("Running"),
 		);
 		await new Promise((done) => setTimeout(done, 500));
 		await expect(requests()).toBe(before.requests);
@@ -1598,7 +1669,7 @@ function Editable(
 			>
 				Append a node
 			</button>
-			<div className={STAGE}>
+			<div className={WORKFLOW_STAGE}>
 				<Canvas
 					label="Workflow"
 					nodes={nodes}
@@ -1809,6 +1880,8 @@ export const Arranges: StoryObj<Heard> = {
 		}
 		await expect(calls(args.moved)).toHaveLength(count + 2);
 		const arrange = canvas.getByRole("button", { name: "Arrange" });
+		// The stage is as tall as the graph, so the stack stands below the fold.
+		arrange.scrollIntoView({ block: "center" });
 		await mouseClick(at(arrange));
 		await waitFor(
 			() => expect(calls(args.moved)).toHaveLength(2 * count + 2),

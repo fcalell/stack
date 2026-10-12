@@ -466,6 +466,7 @@ export const OVERLAYS: readonly string[] = [
 	"page-max-tablet:min-h-1/2",
 	"max-w-[min(var(--spacing-measure),calc(100cqw_-_2*var(--spacing-page)))]",
 	"origin-top",
+	"origin-top-left",
 	"outline-selected-outline",
 	"overflow-visible",
 	"text-grid",

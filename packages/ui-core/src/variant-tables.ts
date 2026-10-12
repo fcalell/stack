@@ -1099,11 +1099,12 @@ export const CANVAS_NODE_GLYPH = matrix({
 });
 
 // A node's name in the overview, between the full node and the glyph alone: the
-// caption role in body ink at 500, on the canvas's own ground so an edge never
-// strikes through it, one line cut at the short measure. The tone recolours it as
+// meta role (above the 12 px floor the caption role, 11.8 px, draws under) in
+// body ink at 500, on the canvas's own ground so an edge never strikes through
+// it, one line cut at the short measure. The tone recolours it as
 // it does the node's words (off meta, dimmed disabled).
 export const CANVAS_NODE_NAME = matrix({
-	base: "max-w-measure-short truncate whitespace-nowrap px-inside bg-canvas text-caption leading-caption tracking-caption font-medium",
+	base: "max-w-measure-short truncate whitespace-nowrap px-inside bg-canvas text-meta leading-meta font-medium",
 	variants: {
 		tone: {
 			rest: "text-ink-body",

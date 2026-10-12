@@ -51,9 +51,9 @@ const numbered = nodes.map((node) => ({ ...node, number: numbers.get(node.id) })
 A plain wheel pans, Ctrl or Cmd with the wheel zooms (a trackpad pinch is a Ctrl wheel), a drag
 pans, even from a node (with `onMove` a drag from a node moves that node instead), one finger pans
 and two pinch. The zoom stack at the bottom left zooms in, zooms out and fits: Fit shows the whole
-graph, never larger than its own size and clear of the zoom stack and the `act`. A graph that fits at its own size opens centred in the room the zoom stack and the `act` leave,
-so no node opens under them; a larger one opens at its own size (the text floor comes first, so a graph never opens zoomed out) with its first node, in path
-order, and the group that holds it whole at the top: on the centre line of that room as far as a page inset on each side allows, centred in the pane when it is wider than the pane less a page inset on each side. The rest may stand past the right or bottom edge, a pan away.
+graph, never larger than its own size and clear of the zoom stack and the `act`. A graph opens as Fit shows it: centred in the room the zoom stack and the `act` leave, at its own
+size where it fits there, else at the scale that holds the whole graph, groups and all, so none is cut at an
+edge (every node is then its glyph or glyph and name, and a group's head stays, below).
 
 ## Where the nodes stand
 
@@ -107,13 +107,14 @@ On every input, pointer and finger alike, a node under zoom 1 is its glyph: the 
 box of the density's `control` size, its border the state's (a selection or a problem), its
 status as a dot on the box's top right corner, and a problem as a danger dot on its bottom right
 corner, straddling the border so neither covers the icon. From zoom 1 down to half the glyph
-carries the node's `title` beside it, on one line at the caption size, in body ink at 500, cut at the
+carries the node's `title` beside it, on one line at the meta size (12 px or more), in body ink at 500, cut at the
 short measure, on the canvas's own ground so an edge never strikes through it; the name is
-drawn at the same size at any zoom, so the overview never shows text under the caption size.
+drawn at the same size at any zoom, so the overview never shows text under the 12 px floor.
 Under half the glyph stands alone, with the `title` as its tooltip. A graph whose nodes stand too
 close for their names to clear each other at half raises that zoom to the lowest at which they
 clear, and one that cannot clear them under zoom 1 has no named overview: the glyph alone. Group
-heads and edge labels draw nothing under zoom 1. A click, a tap or Enter on a glyph or its name
+heads stay under zoom 1, drawn at their own size on screen (a button a target tall, the meta role's size, cut to
+the frame's width), and edge labels draw nothing. A click, a tap or Enter on a glyph or its name
 zooms to that node at its own size and chooses nothing. A zoom step is a fifth of the scale.
 Edges and group frames follow the glyphs, so an edge ends on its glyph, and zooming out stops
 where two glyphs would stand closer than two `pair`, so the edges between them still draw.
@@ -132,8 +133,9 @@ A node says its state in its own text or mark, never by colour alone.
   its words in place of the line, in the ink a line has. The dot stays when the node is selected,
   which takes the border. Pass the first words only, and name the whole problem outside the canvas
   in a `Banner` and a `List`. A node with a `problem` and a `status` draws both marks.
-- `status` is a `StatusMark` (`{ state, label }`): a dot and its word, a spinner while the state
-  is `running`, in the node's trailing column. Keep the label short.
+- `status` is a `StatusMark` (`{ state, label, short? }`): a dot (a spinner while the state is
+  `running`) in the node's trailing column, named by its `label` and read as a tooltip, so a long word
+  never takes the title's width; with a `short` ("Stale") the node draws that word beside the dot.
 - `path` (`nodes`, `edges`, `at`) is what a run or a scenario took. A node the path leaves out
   draws every part in disabled ink and no status or problem mark, an edge it leaves out dims, and `at` is outlined
   as a selection is. An edge is on the path by its own id, never by its ends.
@@ -171,7 +173,7 @@ group, which draws its frame in the selection's outline (a heavier dashed line).
 shows hover as a node does. Node ids and group ids share one
 namespace. The frame's body takes no pointer, so a drag from it pans, and a group does not move:
 its frame follows its holds. The heads take their Tab stops first, outer before inner, then the
-nodes in path order. Under the text floor a head draws nothing and is no stop.
+nodes in path order. Under the text floor a head draws at its own size on screen and stays a stop.
 
 A group holding no present node (an empty loop) is a leaf of the graph: the layout stands it in
 its place in the path, as a frame of its head and padding at a node's width, and an edge may name

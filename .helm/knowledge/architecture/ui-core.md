@@ -1851,9 +1851,15 @@ a tick with no animation, never jumped to full.
   growing on the right to hold the corridor and its chip. A chip stands beside its edge, never on
   it, so one route serves a computed layout and a stored one. A group's left padding grows so its
   head text ends a `pair` before the first column an edge crosses the head band at, and ELK's
-  Brandes-Köpf placement is balanced so a parent stands over its children. A graph that fits at scale 1 opens
-  centred, a larger one at scale 1 (the text floor first: a first view is never zoomed out) with its first node in path order and the group holding it wholly in the pane at the top, on the room's centre line clamped to the page insets (centred in the pane when it is wider than the pane less its two insets); Fit is
-  capped at scale 1 and leaves the room the zoom stack and the act take (each marks itself `data-clear` with the edge it stands against, which the viewport reads off the DOM), and the opening view stands in that same room through the one `clearance` read. ELK's worker is its own file imported with `?worker`, which cannot survive
+  Brandes-Köpf placement is balanced so a parent stands over its children. A graph opens as Fit
+  shows it (003-324; it opened at scale 1 with the first node at the top and the rest past the edge, the text floor first, until
+  Stead's critique found groups cut at the edge at every width): centred at its own size where it fits the room, else at the scale
+  that holds the whole graph. Fit is capped at scale 1 and leaves the room the zoom stack and the act take (each marks itself `data-clear` with the edge it stands against, which the viewport reads off the DOM), and the opening view stands in that same room through the one `clearance` read.
+  Under the floor the frames follow the glyphs, so the bounds depend on the scale they are fitted to (a group's head and padding keep their
+  size on screen, growing in the flow by the zoom's inverse, `grow` in `layout.ts`): the fit is taken again at the scale it gave, down until the bounds at that scale fit it
+  (`fitted`, at most six rounds), by the opening view and by Fit alike, and the lowest scale is set from the boxes before the view is (a stale `limit` had clamped a first view to 1).
+  A group's head under the floor draws at its own size on screen (`UNZOOM` about the frame's top left, its width the frame's on screen), is still a button and a Tab stop,
+  and a node's name in the overview is the meta role (12.9 px, over the caption's 11.8 that fell under the rubric's 12 px floor). A node's status is its dot, named by its label, or its `short` word beside it: the long word took a third of the node and cut the title. ELK's worker is its own file imported with `?worker`, which cannot survive
   Vite's pre-bundling of this package's `.tsx` entries: the module holding the import
   (`lib/canvas-layout`) is reached from a dynamic import by the package's own name, so a graph the
   consumer placed loads neither ELK nor its worker, and the generated Vite config carries

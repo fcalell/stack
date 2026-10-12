@@ -21,8 +21,8 @@ import {
 import { useWords } from "../../lib/words.tsx";
 import { Count } from "../count/index.tsx";
 import { Icon } from "../icon/index.tsx";
+import { StatusBase } from "../status/base.tsx";
 import { StatusDot } from "../status/dot.tsx";
-import { Status } from "../status/index.tsx";
 import { UNZOOM } from "./floor.ts";
 import type { Size } from "./geometry.ts";
 import { hit } from "./hit.ts";
@@ -53,6 +53,7 @@ const PORT_OUT = "cursor-crosshair";
 const COLUMN = "flex flex-col flex-1 min-w-0";
 const LINE = "truncate";
 const TRAILING = "flex flex-col items-end shrink-0";
+const MARKED = "flex items-center";
 // A port's hit stands centred on the node's border edge (a pixel outside the
 // padding box it is placed in), where a route starts or ends: a line of no
 // height along the edge centres the hit across it and takes no pointer.
@@ -230,9 +231,22 @@ export function NodeView({
 	const figure = node.number ?? node.count;
 	const lines = { line: node.line, off: words.off, problem: node.problem };
 	const body = lines[look.shows];
+	// A node's status is its mark: the dot, named by its label (a native tooltip
+	// says it too), or the short word beside it when the app gave one. The long
+	// word would take its width from the title.
 	const status =
 		look.status && node.status ? (
-			<Status state={node.status.state} label={node.status.label} />
+			node.status.short === undefined ? (
+				<span title={node.status.label} className={MARKED}>
+					<StatusDot state={node.status.state} label={node.status.label} />
+				</span>
+			) : (
+				<StatusBase
+					state={node.status.state}
+					label={node.status.label}
+					short={node.status.short}
+				/>
+			)
 		) : null;
 	const part = (name: "overline" | "title" | "line", value: string) => (
 		<span className={cn(canvasNodeText({ part: name, tone: look.tone }), LINE)}>

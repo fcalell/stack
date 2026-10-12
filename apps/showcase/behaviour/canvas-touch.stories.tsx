@@ -39,6 +39,7 @@ import {
 	lowestZoom,
 	MARKED,
 	marksClearTheIcon,
+	ORDER,
 	rect,
 	routesFollowTheGlyphs,
 	shift,
@@ -169,6 +170,12 @@ async function laidOut(canvas: Context["canvas"], moved?: unknown) {
 			() => expect(moved).toHaveBeenCalledTimes(WORKFLOW.nodes.length),
 			LAID,
 		);
+	// A pane that cannot hold the graph at its own size opens it fitted, every
+	// node a glyph (the first view is Fit's); the scenarios work on cards, so a
+	// tap on the plan's glyph brings it to its own size, centred.
+	await waitFor(() => expect(getComputedStyle(region).opacity).toBe("1"), LAID);
+	const glyph = glyphs(region)[ORDER.indexOf("plan")];
+	if (glyph) await tap(centre(rect(glyph)));
 	await waitFor(() => expect(card(region, "plan")).toBeVisible(), LAID);
 	return region;
 }
@@ -874,14 +881,23 @@ const fits: Story = {
 export const FitClearsTheChromeLight = mode("light", fits);
 export const FitClearsTheChromeDark = mode("dark", fits);
 
-// The first view takes the room a fit does, so no node opens under the zoom
-// stack or the act, in a 375 px phone, on a pane that holds the graph in that
-// room.
+// The first view is Fit's, so no node opens under the zoom stack or the act, in
+// a 375 px phone, on a pane that cannot hold the graph at its own size: it
+// opens fitted, every node a glyph, none under the chrome.
 const opens: Story = {
 	...phone(true, false, undefined, WORKFLOW_STAGE),
 	play: async ({ args, canvas, canvasElement }) => {
-		await laidOut(canvas, args.moved);
-		await expect(viewport(canvasElement).scale).toBe(1);
+		const region = await canvas.findByRole("region", { name: "Workflow" });
+		await waitFor(
+			() => expect(args.moved).toHaveBeenCalledTimes(WORKFLOW.nodes.length),
+			LAID,
+		);
+		await waitFor(
+			() => expect(getComputedStyle(region).opacity).toBe("1"),
+			LAID,
+		);
+		await expect(viewport(canvasElement).scale).toBeLessThan(1);
+		await expect(glyphs(region)).toHaveLength(WORKFLOW.nodes.length);
 		clear(canvasElement);
 	},
 };

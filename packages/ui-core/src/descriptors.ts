@@ -84,8 +84,9 @@ export interface StatusMark {
 	// The state's word (a word; truncates when its line is out of room).
 	label: string;
 	// The word said shorter ("5 min ago"); a row's meta line draws it in place
-	// of `label` when the line is out of room for the long form. `label` stays
-	// the name.
+	// of `label` when the line is out of room for the long form, and a canvas
+	// node draws it beside its dot (which alone otherwise stands for the status,
+	// named by `label`). `label` stays the name.
 	short?: string;
 }
 

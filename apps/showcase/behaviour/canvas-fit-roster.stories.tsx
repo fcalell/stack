@@ -2,15 +2,14 @@ import { Frame } from "@fcalell/plugin-react-ui/showcase/frame";
 import { drawCanvas } from "@fcalell/plugin-react-ui/showcase/frames/canvas";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect } from "storybook/test";
-import { clipped, frameOf } from "./canvas-fit.ts";
+import { clipped, frameOf, opensFitted } from "./canvas-fit.ts";
 import { loopFrame, opened } from "./canvas-fit-kit.tsx";
 import { rect } from "./canvas-support.ts";
 
-// 003-189 round 3 (with 003-291's frames): the roster frames at 375 px at the
-// desktop density, where the pane is 263 px and the first node with its loop
-// group (240 px) is wider than the pane less two page insets. The floor scale
-// wins, so the box is centred in the pane, not anchored at the inset: 11.5 px
-// each side, 0 px clipped. Both modes.
+// 003-189 round 3 (with 003-291's frames), then 003-324: the roster frames at
+// 375 px at the desktop density, where the pane is 263 px and the loop group
+// (240 px) is wider than the pane less two page insets. The canvas opens as Fit
+// shows it, whole in the pane. Both modes.
 export default {
 	title: "Behaviour/Canvas fit roster",
 	globals: { viewport: { value: "phone", isRotated: false } },
@@ -45,28 +44,11 @@ function loops(mode: "light" | "dark"): StoryObj {
 				region.scrollIntoView({ block: "center" });
 				const pane = rect(region);
 				await expect(Math.round(pane.width)).toBe(263);
+				// The 240 px loop is wider than the pane less two page insets, and
+				// opens whole in it, as Fit shows it: nothing reaches past the pane.
+				opensFitted(region, name);
 				const group = rect(frameOf(region, "loop"));
-				const card = region.querySelector("[data-layer] > button");
-				// The Lone loop is an empty group alone: its frame is the first box.
-				if (!card && name !== "Lone loop")
-					throw new Error(`${name} has no first node`);
-				for (const [what, box] of [
-					["the loop group", group],
-					...(card ? [["the first node", rect(card)] as const] : []),
-				] as const) {
-					if (clipped(box, pane) > 0.5)
-						throw new Error(
-							`${name}: ${what} reaches ${clipped(box, pane).toFixed(1)} px past the pane`,
-						);
-					if (box.left < pane.left - 0.01 || box.right > pane.right + 0.01)
-						throw new Error(`${name}: ${what} is not inside 0 to 263`);
-				}
-				// The 240 px box is centred: 11.5 px each side.
-				// (within the region's 1 px border)
-				const left = group.left - pane.left;
-				const right = pane.right - group.right;
-				await expect(Math.abs(left - 11.5)).toBeLessThanOrEqual(1);
-				await expect(Math.abs(left - right)).toBeLessThanOrEqual(1);
+				await expect(clipped(group, pane)).toBeLessThan(0.5);
 			}
 		},
 	};

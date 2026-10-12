@@ -67,15 +67,14 @@ export function minZoomFor(
 }
 
 // The widest a node's name stands on screen at the density: the short measure in
-// characters of the caption, at the sans advance. It is the cap, not the name's
-// own width, so the floor a graph needs does not move with its words.
+// characters of the name's own role (meta), at the sans advance. It is the cap,
+// not the name's own width, so the floor a graph needs does not move with its
+// words.
 export function nameCap(touch: boolean): number {
-	const caption = Math.round(
-		BODY_SIZE[touch ? "touch" : "desktop"] * TYPE_SCALE.caption.size,
+	const meta = Math.round(
+		BODY_SIZE[touch ? "touch" : "desktop"] * TYPE_SCALE.meta.size,
 	);
-	return Math.ceil(
-		MEASURE_CHARACTERS["measure-short"] * SANS_ADVANCE * caption,
-	);
+	return Math.ceil(MEASURE_CHARACTERS["measure-short"] * SANS_ADVANCE * meta);
 }
 
 // The zoom under which a graph's nodes are their glyphs alone: the overview's
