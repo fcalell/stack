@@ -75,111 +75,36 @@ each checklist before its step runs.
 
 ### 1. Research the checklists
 
-The questions under steps 2 and 3 are a first draft, written from what one screen showed. This step
-makes them as complete as the known faults and the established practice allow, before any
-component or screen is checked.
-
-Read in full, and for each source answer: which fault or rule does it name that the draft misses?
-How would a question about it be answered (a grep, a read, a measure on the render)?
-
-- **Ours:** the ask and the problem above; `.helm/knowledge/product/philosophy.md`;
-  `.helm/knowledge/architecture/ui-core.md`; ui-core's guide (`rubric.md`, `judging.md`,
-  `design-critique.md`, `screen.md`, `patterns/loading-and-pending.md` and every other pattern
-  page); `research/render-smells.md` and epic 005's stories; `research/skeleton-loading.md`;
-  Stead's `design/evidence.md` and `design/07-interface.md`.
-- **Established practice,** checked against current docs, not memory:
-  - React's pages on `Children` and `cloneElement` and their listed alternatives, and "You Might Not
-    Need an Effect";
-  - Every Layout's axioms: spacing owned by the parent, intrinsic sizing, the Stack and Sidebar
-    primitives;
-  - web.dev on Cumulative Layout Shift and its causes;
-  - TanStack Query on placeholder and previous data, and TanStack Router on pending components;
-  - composition and slot APIs in Radix, React Aria and Ark;
-  - the component API and contribution guides of GitHub Primer, Shopify Polaris and Adobe
-    Spectrum on props, variants and booleans;
-  - container queries against media queries;
-  - WAI-ARIA Authoring Practices on overlays and focus;
-  - React Native and Expo parity with the web.
-
-**Coverage check.** Every fault in the problem above and every complaint in the ask is caught by
-at least one question. Every question names how it is answered.
-
-**Report:** the final checklists for steps 2 and 3, each question with its source and its method;
-then the candidates dropped, each with its reason.
+Done 2026-10-12: the confirmed checklists, their sources and methods, the coverage check and the
+dropped candidates are [ui-cleanup-checklists.md](./ui-cleanup-checklists.md). Renders run at 320
+(touch), 1280 and 1920 (desktop, fine pointer), each in light and dark, at a height of 800, and
+measure on web only: native has no render harness and answers the read and grep questions.
 
 ### 2. Component review
 
 **Scope, named in full:** each of the 66 components in `ui-core/src/roster.ts`, on web
-(`plugin-react-ui`) and native (`plugin-native-ui`), and each helper under `react-ui/src/ui/lib`
-and its native mirror that a component uses to lay out, measure, wait or read its children
-(`section.ts`, `field-wait.tsx`, `frame.ts`, `item-header/pair.tsx`, `thread/fill.ts` and the
-rest the review finds).
+(`plugin-react-ui`) and native (`plugin-native-ui`; `Canvas` is web-only, so 65 there), and each
+helper a component uses to lay out, measure, wait or read its children: every file under each
+plugin's `src/ui/lib/` (the two are not mirrors) and every helper inside a component's folder
+(`item-header/pair.tsx`, `thread/fill.ts`, `canvas/*`, each `wait.tsx`). The full list is the
+checklists page's 0.2.
 
-**Questions per component (draft):**
+**Questions:** the checklists page's section 2, 58 questions in seven groups (tree and flow, size
+and position, loading, behaviour and API, parity and cost, helpers, effects).
 
-- Tree and flow:
-  1. Does it read its children (`Children`, `cloneElement`, `.type`, Fragments seen through)?
-  2. Does its form change by a context, or by a `data-*` mark?
-  3. Does a child decide the parent's layout (a mark, a registration in a context, a portal back
-     into the parent)?
-  4. Does it set a margin or spacing outside itself that the parent's gap should own?
-  5. Does it render a wrapper with no layout or meaning, or a Fragment callers must see through?
-  6. Does it work only inside a given parent or around a given child? Which, and what breaks outside?
-- Size and position:
-  7. Every fixed size, min, max and arbitrary value it sets on itself or its children: is each a
-     token or a literal?
-  8. Does it read the viewport where its container should decide?
-  9. Does it measure in JavaScript (`getBoundingClientRect`, `ResizeObserver`, a layout effect)?
-  10. Does it position absolutely or fixed, portal, clip overflow or scroll on its own? Can focus
-      scroll that container? Does its clipping hide content that overflows by a layout error?
-  11. Does it render once, or paint a first frame and then move?
-  12. A surface inside another: is its radius the outer radius less the inset? A number that
-      changes in place: are its digits tabular?
-- Loading:
-  13. Does it have a loading form, and where does that form's size come from?
-  14. Does the loading form match the loaded form's size and structure, measured in the showcase?
-  15. Does it remount on a data change (a changing `key`, a conditional swap)?
-  16. Do its empty and error forms stand at the loaded form's size?
-- Behaviour and API:
-  17. How many behaviours, props and variant values does it have?
-  18. How many of each does Stead use?
-  19. Which props combine into states that are invalid or never used?
-  20. Which props are layout a parent's flex or grid would do (`bleed`, `inset`, `fill`, `in`)?
-  21. Does it import routing, a query or app state that belongs to its caller?
-  22. What logic would go?
-- Parity and cost:
-  23. Does native take the same props and behave the same? Each difference.
-  24. Which showcase stories, behaviour tests and guide pages encode a behaviour that would go?
-  25. Which Stead call sites change, and how many?
-  26. Does the cut lose a role, a label or a focus order?
-  27. Does focus stay visible, never under a sticky or fixed element, and does it return to the
-      trigger when an overlay closes?
-
-**Report:** one row per component and helper, a column per question, each answer with its path
-and lines; then the components grouped into families sharing a cause, each family with its
+**Report:** the checklists page's columns (4.1): one row per component and helper, a column per
+question, each answer with its path and lines; then the components grouped into families sharing a cause, each family with its
 proposed cut.
 
 ### 3. Loading study
 
-**Scope, named in full:** every route in Stead's app, in every state the fixture seeds, at 375,
-768 and 1440px, under the fixture's slow and fail controls.
+**Scope, named in full:** every route in Stead's app (44 route files), in every state the fixture
+seeds (`full`, `empty`, `first`), at 320, 1280 and 1920 in light and dark, under the fixture's
+slow, fail and socket controls (`/fixture/delay`, `/fixture/fail`, `/fixture/socket`). The full
+matrix is the checklists page's section 3.
 
-**Inspections per screen and region (draft):**
-
-1. Total layout shift, from the browser's `layout-shift` entries until the screen settles, and
-   each shift's source element.
-2. The skeleton's box against the loaded box: width, height, row or item count.
-3. How long the skeleton shows; a flash under about 200ms.
-4. During a refetch, is the stale data kept, or does the region drop back to its skeleton?
-5. Which elements remount on a refetch (node identity kept or not), the canvas first: are node
-   positions, the viewport and the selection kept?
-6. Between Panes, does only the changed Pane load, or the whole page?
-7. Are scroll position and focus kept across load, refetch and navigation?
-8. Request waterfalls (queries waiting on each other without need) and duplicate requests.
-9. Error and empty states: their size against the loaded state; does a retry shift the layout?
-10. Late fonts or icons shifting the layout.
-11. An overlay opening (popover, sheet, picker): its first frame's position, and any scroll of an
-    ancestor. The grants picker first, in a real Chrome.
+**Questions:** the checklists page's section 3, 20 per screen and region, with its definition of
+settled and the harness rules Stead's evidence logged.
 
 **Report:** a table per screen, each fault with its numbers and its cause traced to the stack
 component or the Stead code behind it; dated lines in Stead's `design/evidence.md`; a summary here.
@@ -216,11 +141,11 @@ ui-core's tokens, never from a second policy file:
   focus, focus hidden under a sticky bar) is checked; the grants picker gets one.
 - **Dark mode.** The floors run in light and dark, as the rubric judges. This about doubles the
   floors' time, which the cut in widths below pays for.
-- **Three widths, derived:** the narrowest phone (320), `tablet` (768, the narrowest width where
-  every Pane shows) and the viewport where a page's `wide` opens (1440, `wide` plus the sidebar),
-  each the hardest point of its layout. They come from `BREAKPOINT_PX` and the sidebar's width in
-  place of `overflow.ts`'s fixed five; `rubric.md`, `design-critique.md` and Stead's review plans
-  use the same three.
+- **Three widths:** the narrowest phone (320, touch), a laptop (1280, desktop: the list and main
+  stand together and `wide` is closed) and a desktop monitor (1920: `wide` open, every region
+  shown, the only width where a cap leaves dead space), in place of `overflow.ts`'s fixed five;
+  `rubric.md`, `design-critique.md` and Stead's review plans (`drive.mjs`, 375/768/1440 today)
+  move to the same three.
 - **Findings an agent can act on:** the rule, the element, the measured value, the expected value
   and the fix.
 - **False-pass tests.** Each check, grep or render, has a test showing it catches a bad case
@@ -247,7 +172,10 @@ The first family's design, decided before the review and open to what it finds.
   and as Back where it stands alone), a body that scrolls (`flex-1 min-h-0 overflow-y-auto`,
   page inset, its direct children always a `sections` gap apart, nothing paired), and an
   optional `foot` docked under the body (an ask box, a message input). Each Pane is the size
-  container (`@container/page`) its content's container queries read.
+  container (`@container/page`) its content's container queries read. Open: a size container
+  in an `auto` track draws 0 px wide, its content not counted (measured in Chromium 1194: a Pane
+  holding 300 px of content, `container-type: inline-size`, drew 0; without it, 300), so every
+  Pane but the last needs a width of its own, or no containment; the frame pass decides which.
 - **Content width.** A Pane's body content stands within `measure` (58ch, 488px on the desktop),
   aligned left under its title, so a label stays near its value, a field near the size of what it
   holds, a Save near the fields it saves. `wide` lifts the limit for content whose meaning is its
@@ -322,6 +250,8 @@ their families. None is a decided cut.
   behaviour tests, the guides and knowledge pages, the Stead port. Haiku takes only small edits
   whose answer is already clear. Parallel agents work in their own worktrees; the shared roster and
   `DESIGN.md` are merged one at a time.
-- Superseded: epic 005's open stories 01 (screen and floating act), 02 (split tells place) and 05
-  (section registration), and its 2026-10-04 ruling that a frame learns what its children need
+- Superseded: epic 005's stories 01 (screen and floating act), 02 (split tells place) and 05
+  (section registration), in review with only their phone box open, the `data-fill` and
+  `ThreadRoom` mechanism story 03 built (its `fill.test.ts` and `ThreadFillsMain*` stories go
+  with it), and its 2026-10-04 ruling that a frame learns what its children need
   through props or slots. A frame needs to know nothing about its children.

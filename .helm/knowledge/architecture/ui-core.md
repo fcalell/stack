@@ -1751,7 +1751,7 @@ a tick with no animation, never jumped to full.
   Rejected: optional `value` and `onChange` on every control read from the field's context, which
   would compile a control with no value anywhere and could not type a boolean field against an
   `Input`.
-- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 65 components in four
+- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 66 components in four
   layers (atoms, layout molecules, shared molecules, content molecules) with their prop names, the
   cells each draws (a whole matrix family, one family cell as `FAMILY.axis.value`, or a single cell)
   and the states it has a form for, the same in both plugins; an entry with `platforms` ships on
