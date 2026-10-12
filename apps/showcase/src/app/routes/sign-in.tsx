@@ -1,5 +1,4 @@
 import { useMutation, useQuery } from "@fcalell/plugin-api/tanstack-query";
-import { ActionBar } from "@fcalell/plugin-react-ui/components/action-bar";
 import { Banner } from "@fcalell/plugin-react-ui/components/banner";
 import { Form } from "@fcalell/plugin-react-ui/components/form";
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
@@ -43,12 +42,10 @@ function SignIn() {
 			}
 		>
 			{coded ? (
-				<Form key="code">
-					<FormField label="Code">
-						<InputOtp length={6} value={code} onChange={setCode} />
-					</FormField>
-					<ActionBar
-						acts={[
+				<Form
+					key="code"
+					bar={{
+						acts: [
 							{ label: "Back", onAct: () => setAt("email") },
 							{
 								label: "Resend",
@@ -61,23 +58,29 @@ function SignIn() {
 								blocked:
 									code.length === 6 ? undefined : "Enter the 6-digit code.",
 							},
-						]}
-					/>
+						],
+					}}
+				>
+					<FormField label="Code">
+						<InputOtp length={6} value={code} onChange={setCode} />
+					</FormField>
 				</Form>
 			) : (
-				<Form key="email">
-					<FormField label="Email">
-						<Input kind="email" value={email} onChange={setTyped} />
-					</FormField>
-					<ActionBar
-						acts={[
+				<Form
+					key="email"
+					bar={{
+						acts: [
 							{
 								label: "Continue",
 								onAct: () => setAt("code"),
 								blocked: email.includes("@") ? undefined : "Enter your email.",
 							},
-						]}
-					/>
+						],
+					}}
+				>
+					<FormField label="Email">
+						<Input kind="email" value={email} onChange={setTyped} />
+					</FormField>
 				</Form>
 			)}
 		</Gate>

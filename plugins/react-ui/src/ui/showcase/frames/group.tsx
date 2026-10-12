@@ -2,7 +2,6 @@ import { DefinitionRow } from "../../components/definition-row/index.tsx";
 import { Group } from "../../components/group/index.tsx";
 import { Meter } from "../../components/meter/index.tsx";
 import { Slider } from "../../components/slider/index.tsx";
-import { Switch } from "../../components/switch/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { StandInRows, Wide } from "./layout-context.tsx";
 
@@ -37,7 +36,7 @@ export function Static(props: { loading?: boolean }) {
 			/>
 			<DefinitionRow
 				label="Notify on failure"
-				value={<Switch checked onChange={noop} label="Notify on failure" />}
+				switch={{ checked: true, onChange: noop }}
 			/>
 		</Group>
 	);

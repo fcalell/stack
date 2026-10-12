@@ -1,5 +1,4 @@
 import { useMutation } from "@fcalell/plugin-api/tanstack-query";
-import { ActionBar } from "@fcalell/plugin-react-ui/components/action-bar";
 import { Form } from "@fcalell/plugin-react-ui/components/form";
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
@@ -29,7 +28,19 @@ function Verify() {
 	return (
 		<Place>
 			<Pane title="Verify domain" back="/domains" cover>
-				<Form>
+				<Form
+					bar={{
+						acts: [
+							{
+								label: "Verify",
+								onAct: async () => {
+									await verify.mutateAsync({ name: DOMAIN, code });
+									toast(`${DOMAIN} verified`, { state: "done" });
+								},
+							},
+						],
+					}}
+				>
 					<Group>
 						<ListRow
 							leading={{ icon: "Globe" }}
@@ -47,17 +58,6 @@ function Verify() {
 					<Link href="#record" fit="standalone">
 						Show the DNS record again
 					</Link>
-					<ActionBar
-						acts={[
-							{
-								label: "Verify",
-								onAct: async () => {
-									await verify.mutateAsync({ name: DOMAIN, code });
-									toast(`${DOMAIN} verified`, { state: "done" });
-								},
-							},
-						]}
-					/>
 				</Form>
 			</Pane>
 		</Place>

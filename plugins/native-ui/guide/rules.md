@@ -99,7 +99,7 @@ frame as the `Shell` is: one column at most the `auth` width inside the page ins
 top, the banner and the step a sections gap apart (the step's count, title, description and body one fields gap apart), with `toast()` and `confirm()` standing
 in it. It keeps the safe area and scrolls over the keyboard. An `Input` or `InputOtp` that mounts in
 it takes focus unless a typing control of the column holds it, so the first field of a step takes
-it, and a `Form`'s `ActionBar` in it draws `full`. It draws no word of its own.
+it, and a `Form`'s `bar` in it draws `full`. It draws no word of its own.
 
 A first run (no workspace yet, nothing to show) is a `Gate` with no `title` holding one
 `EmptyState`: the Gate draws no step stack and no header, the `EmptyState`'s title is the page's header,
@@ -196,7 +196,7 @@ A composed region is data its molecule draws: an `Act` (`{ label, onAct, destruc
 act as words in the meta ink with no hairline, a resend or a skip, never its filled act),
 an `IconAct` (`{ icon, label, onAct, loading? }`; `loading` is an `Act`'s: the act is running, inert, its glyph swapped for the spinner at the same size), a row's `StatusMark` and `ChipMark`, a menu's `MenuItem`s, a `PlaceSpec`, all from
 `@fcalell/ui-core/descriptors`. An icon is an `IconName`, a Lucide glyph's PascalCase name.
-`children` is open only where the roster gives it. A `Form`'s `ActionBar` filled act runs its
+`children` is open only where the roster gives it. A `Form`'s `bar` (the `ActionBar`'s own props) filled act runs its
 `onAct`; an `ActionBar` draws its last blocked act's `blocked` reason under the acts at rest, at meta size. To keep the bar's place while the server works, give the `ActionBar` a `pending` (a `PendingBar`'s `sentence`, `until`, `act`): the pending form stands over the bar at the bar's own loaded height, so nothing below moves when it is set or cleared; a `PendingBar` alone is for a place that held no bar. A `FormField` takes a `FieldBinding` from the
 app's own form state. A `Form` that stands edited asks once, "Discard your edit?" or Keep editing, when its screen is left (the back, a swipe, a navigate that removes it), so the app writes no `beforeRemove` guard of its own; pressing the filled act ends the edit, so an act that navigates is never asked, and a rejected act puts the edit back. An `Input` with an `act` presses that act on the keyboard's return. A field that replaces what the viewer was reading (an edit swapped in for rendered text) takes `autoFocus`, which focuses it as it mounts with the caret at the end of its text; a field on a form that loads with the page leaves it off. A `confirm()` takes a `Confirmation`, its `cancel` the way out's own label ("Keep editing") where the `cancel` word is not the decision's.
 
@@ -275,9 +275,31 @@ the `Form`'s first child: the object's glyph as `leading`, its name as `title`, 
 </Form>
 ```
 
-A `Form` holds fields and its `ActionBar`. In any sheet the form's direct `ActionBar` stands as the sheet's foot, at the content's end for a short form and pinned above the keyboard while a long form's fields scroll. One form among a screen's sections is `Section > Form`, so
-every section's head-to-body gap stays the pair step. `Section`s inside a `Form` (`Form > Section`)
-stand at the fields step, so that shape is for a screen every section of which is in the form.
+A `Form`'s structure is its props, one of two: `children`, a flat run of `FormField`s a fields step
+apart, or `groups`, `{ title, description?, lead?, fields, loading? }[]`, each drawn as a titled
+group (the title a header, the group a labelled accessibility group), the groups a sections step apart and each
+group's `description`, `lead` (a note, a `Banner`) and `fields` a fields step apart. A form never takes
+both, and never a `Section` or an `ActionBar` as a child: its `bar` is the `ActionBar`'s own props,
+which the form draws in its foot and whose filled act submits it. In any sheet the form's `bar`
+stands as the sheet's foot, at the content's end for a short form and pinned above the keyboard while
+a long form's fields scroll. One form among a screen's sections is `Section > Form`, so every section's
+head-to-body gap stays the pair step; a form of several titled parts under one Save is `groups`. A
+group given `loading` is busy and its fields wait as a loading `Section`'s do.
+
+A `FormField` takes its control as exactly one descriptor, the component's own props less the label
+the field supplies: `switch` (at the label's end), `checkbox` (ahead of it), `slider`, `select`,
+`options` (an `OptionList`'s) or `segments`; any other control (an `Input`, a `TextArea`, a
+`Picker`) is its `children`. The descriptor sets the field's form, so the field never reads what
+its child is.
+
+```tsx
+<FormField label="Failed deploys" description="An email the moment a deploy fails."
+  switch={{ checked: failed, onChange: setFailed }} />
+<FormField label="Workspace name"><Input value={name} onChange={setName} /></FormField>
+```
+
+A `DefinitionRow` shows an in-place `switch` (the Switch's own props, named by the row's label) in
+place of its `value`, never both.
 
 A `Section`'s head ends in its `act`, then its `more` (a `MenuItem[]`, destructive ones marked, shaped as a `ListRow`'s): a block's other acts (move, remove) stay on its head row beside the title, which never moves, and a foldable Section's more does not fold it. With a labelled `act` the pair wraps under the title on touch together.
 
@@ -301,14 +323,12 @@ A row with an `act` stands its acts on a line under its text, at the row's end, 
 list form as in its grid. A file row's `change` (a `ChangeKind`) draws the
 change mark ahead of its glyph, and its `chip` says why it is listed; the path yields to it down to
 its name's floor (the whole name when it is short, else its first three characters, an ellipsis
-and its end, never clipped mid-glyph), and below that the chip's label truncates with an ellipsis; the row never overflows sideways. A Section counts them and waits with them when they stand as its direct children,
-inside a direct `Group`, or as a direct `QueryBoundary`'s query; a collection inside the app's own
-component, or inside a `QueryBoundary`'s body, draws itself but adds no count and no busy state to
-the Section's head. A `definition` list adds no count to a Section's head (facts are not a
-collection a viewer counts), though it still makes the head busy while it waits. A `Group` holds static
+and its end, never clipped mid-glyph), and below that the chip's label truncates with an ellipsis; the row never overflows sideways. A `Section` reads nothing of its body: its head is busy exactly while its `loading` is set and
+its count is exactly its `count`, so pass `count={rows.length}` and `loading={query.isPending}` from the
+read the body draws. A collection in the body draws its own states and its own busy state. A `Group` holds static
 rows, and items that are no row (a `Meter`, a `FormField`, a `Slider`) which stand at the card's inset with its hairline between and keep their labels (an add field over a `List` is a `FormField` in the `Group`); rows from data in a card are a `List` placed in the `Group`, drawing its states on the card,
 never a `.map` of `ListRow`s, `DefinitionRow`s or `Meter`s. A `definition` list stands in a `Group`,
-as a `DefinitionRow` does. A waiting `Group` (its `loading`, or a loading `Section`'s) draws one waiting form per `Meter`, `Slider` and `DefinitionRow` it holds, at the loaded card's height (a row's form follows the `description`, `act`, `href`, `locked` or control it is given), and three setting rows for rows of your own. A loading `Section` whose body is a `Prose`, a `Thread`, a `Code`, a `Meter` or a `Slider` draws that part's waiting form, and skeleton fields stand in only for fields and for any other body. A loading `Section` whose body is a `Form` waits as the Form's own fields and its `ActionBar`'s waiting form (a `Form` waits whenever a loading `Section` or `Group` is around it, one skeleton field per `FormField`, the fields kept mounted so typed text outlives the wait). A loading `Section` of `FormField`s and an `ActionBar` with no `Form` stands one skeleton field per field and the bar in its waiting form after them, the fields kept mounted, hidden. A skeleton field stands in the form of the field it stands for, at its height: a label bar over the control's box, a switch's box at the label's end, a checkbox's on the label's line, a bar under the label or the control for a `description`; a `Slider` keeps its own head over its track, an `OptionList` its card of rows (one per static option, four for a query), a `SegmentedControl` its track, an `answered` field its one summary row, a `Select` the plain field. `Slider` and `DefinitionRow` wait through their `Group` or `Section` and take no `loading` of their own. `loading` is a boolean everywhere except where the loaded size is a count you know and the part cannot derive: a `Prose` takes `loading={lines}` (`true` is two paragraphs) and an `ActionBar` takes `loading={acts}` (`true` is one act, and give `acts` as `[]`). Both take a number from 1; `0` and `false` are not waiting, so `loading={rows?.length}` reads the loaded form when it is 0. A loading `Group` or `Section` hands down a boolean, so a `Prose` or `ActionBar` inside it draws the default; set the count on the part itself. A loading `Section` given `description=""` stands a bar where its sentence will be (an undefined `description` stands none, and loaded `""` draws no line, so `description={read?.tally ?? ""}` keeps the head's height). A `List` given `items` and `loading` with a `row` map that has a `trailing` slot (no tree) stands as the loaded rows with their trailing values waiting. A `definition` row's string value that does not fit its room, when it is one word of more than eight characters, cuts in its
+as a `DefinitionRow` does. A waiting `Group` (its `loading`, or a loading `Section`'s) draws one waiting form per `Meter`, `Slider` and `DefinitionRow` it holds, at the loaded card's height (a row's form follows the `description`, `act`, `href`, `locked` or control it is given), and three setting rows for rows of your own. Each part of a loading `Section`'s body draws its own waiting form: a `Prose`, a `Thread`, a `Code`, a `Meter`, a `Slider`, a `DefinitionRow`, a `FormField` and an `ActionBar` (a `Form`'s `bar` included) each wait where they stand, a `FormField` kept mounted, hidden, so typed text outlives the wait; any other body, an app's own component, draws as it is. A skeleton field stands in the form of the field it stands for, at its height: a label bar over the control's box, a switch's box at the label's end, a checkbox's on the label's line, a bar under the label or the control for a `description`; a `Slider` keeps its own head over its track, an `OptionList` its card of rows (one per static option, four for a query), a `SegmentedControl` its track, an `answered` field its one summary row, a `Select` the plain field. `Slider` and `DefinitionRow` wait through their `Group` or `Section` and take no `loading` of their own. `loading` is a boolean everywhere except where the loaded size is a count you know and the part cannot derive: a `Prose` takes `loading={lines}` (`true` is two paragraphs) and an `ActionBar` takes `loading={acts}` (`true` is one act, and give `acts` as `[]`). Both take a number from 1; `0` and `false` are not waiting, so `loading={rows?.length}` reads the loaded form when it is 0. A loading `Group` or `Section` hands down a boolean, so a `Prose` or `ActionBar` inside it draws the default; set the count on the part itself. A loading `Section` given `description=""` stands a bar where its sentence will be (an undefined `description` stands none, and loaded `""` draws no line, so `description={read?.tally ?? ""}` keeps the head's height). A `List` given `items` and `loading` with a `row` map that has a `trailing` slot (no tree) stands as the loaded rows with their trailing values waiting. A `definition` row's string value that does not fit its room, when it is one word of more than eight characters, cuts in its
 middle (its start and its last four characters stay, `SHA256:uNiV…k3Qz`) on one line (any other value truncates at its end); the whole value
 stays its read text and, with `copyable`, what the copy act copies, so a value never needs a wrapper
 that truncates it.

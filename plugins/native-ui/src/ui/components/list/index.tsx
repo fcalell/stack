@@ -34,7 +34,6 @@ import type { Closed } from "../../lib/closed";
 import { between, useGroupPart } from "../../lib/group";
 import { LoadingContext } from "../../lib/loading";
 import type { Route } from "../../lib/route";
-import { SectionContext } from "../../lib/section";
 import { TrailingWait } from "../../lib/trailing-wait";
 import { TreeContext } from "../../lib/tree";
 import { useWords } from "../../lib/words";
@@ -255,29 +254,27 @@ export type ListProps<T = unknown, V extends string | null = string> = Closed &
 // Rows on the ground at the rows rhythm, with no box and no hairlines: a
 // feed. It draws its collection's four states: while its query is pending,
 // `loading` is set or a loading Section around it waits, waiting rows stand
-// in the slots its map declares (a Section around a pending query busy, its
-// count waiting); a query that answers not found draws the rest EmptyState
+// in the slots its map declares (busy itself while it
+// waits); a query that answers not found draws the rest EmptyState
 // saying it no longer exists with Back, never Retry; a failed query draws the
 // failed EmptyState with `sentence` and Retry; no item draws `empty`; then
 // one row per item. In a Group its rows, waiting rows and failed, missing and
 // empty forms stand on the card, the hairline once between rows; a
 // `definition` list (facts from data: DefinitionRows) stands in a Group, and
-// adds no count to a Section's head.
+// carries no count of its own.
 export function List<T, V extends string | null = string>(
 	props: ListProps<T, V>,
 ) {
 	const words = useWords();
 	// The keys of the tree's folded branches; every branch starts open.
 	const [folded, setFolded] = useState<readonly string[]>([]);
-	const base = {
+	const input = {
 		query: props.query,
 		items: props.items,
 		loading: props.loading,
 		sectionLoading: useContext(LoadingContext),
-		inSection: false,
 		hasEmpty: props.empty !== undefined,
 	};
-	const input = { ...base, inSection: useContext(SectionContext) };
 	const ground = listGround(useGroupPart());
 	const state = listState(input);
 	// Items given while the list loads (a row map with a trailing slot, no tree):

@@ -9,13 +9,10 @@ import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
 import { Input } from "@fcalell/plugin-react-ui/components/input";
 import { ListRow } from "@fcalell/plugin-react-ui/components/list-row";
-import { OptionList } from "@fcalell/plugin-react-ui/components/option-list";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
-import { Select } from "@fcalell/plugin-react-ui/components/select";
 import { Sheet } from "@fcalell/plugin-react-ui/components/sheet";
-import { Switch } from "@fcalell/plugin-react-ui/components/switch";
 import { Table } from "@fcalell/plugin-react-ui/components/table";
 import { confirm } from "@fcalell/plugin-react-ui/lib/confirm";
 import { toast } from "@fcalell/plugin-react-ui/lib/toast";
@@ -152,16 +149,19 @@ function Invite(props: { open: boolean; onClose: () => void }) {
 				<FormField label="Email">
 					<Input value={email} onChange={setEmail} />
 				</FormField>
-				<FormField label="Role" description="What they can change.">
-					<Select options={ROLES} value={role} onChange={setRole} />
-				</FormField>
-				<FormField label="Permissions">
-					<OptionList
-						options={PERMISSIONS}
-						value={permissions}
-						onChange={setPermissions}
-					/>
-				</FormField>
+				<FormField
+					label="Role"
+					description="What they can change."
+					select={{ options: ROLES, value: role, onChange: setRole }}
+				/>
+				<FormField
+					label="Permissions"
+					options={{
+						options: PERMISSIONS,
+						value: permissions,
+						onChange: setPermissions,
+					}}
+				/>
 			</Form>
 		</Sheet>
 	);
@@ -208,28 +208,24 @@ function Record(props: {
 								: "What they can change."
 						}
 						disabled={draft.role === "owner"}
-					>
-						<Select
-							options={
-								draft.role === "owner" ? ROLE_OPTIONS : ROLE_OPTIONS.slice(1)
-							}
-							value={draft.role}
-							onChange={(role) => edit({ role })}
-						/>
-					</FormField>
+						select={{
+							options:
+								draft.role === "owner" ? ROLE_OPTIONS : ROLE_OPTIONS.slice(1),
+							value: draft.role,
+							onChange: (role) => edit({ role }),
+						}}
+					/>
 					<FormField label="Team">
 						<Input value={draft.team} onChange={(team) => edit({ team })} />
 					</FormField>
 					<FormField
 						label="Deploys"
 						description="Promotes previews and deploys to production."
-					>
-						<Switch
-							checked={draft.deploys}
-							onChange={(deploys) => edit({ deploys })}
-							label="Deploys"
-						/>
-					</FormField>
+						switch={{
+							checked: draft.deploys,
+							onChange: (deploys) => edit({ deploys }),
+						}}
+					/>
 				</Form>
 			) : null}
 		</Sheet>

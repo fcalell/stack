@@ -3,9 +3,7 @@ import {
 	useQuery,
 	useQueryClient,
 } from "@fcalell/plugin-api/tanstack-query";
-import { ActionBar } from "@fcalell/plugin-react-ui/components/action-bar";
 import { Banner } from "@fcalell/plugin-react-ui/components/banner";
-import { Checkbox } from "@fcalell/plugin-react-ui/components/checkbox";
 import { EmptyState } from "@fcalell/plugin-react-ui/components/empty-state";
 import { Form } from "@fcalell/plugin-react-ui/components/form";
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
@@ -16,11 +14,6 @@ import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { QrCode } from "@fcalell/plugin-react-ui/components/qr-code";
 import { QueryBoundary } from "@fcalell/plugin-react-ui/components/query-boundary";
-import { Section } from "@fcalell/plugin-react-ui/components/section";
-import { SegmentedControl } from "@fcalell/plugin-react-ui/components/segmented-control";
-import { Select } from "@fcalell/plugin-react-ui/components/select";
-import { Slider } from "@fcalell/plugin-react-ui/components/slider";
-import { Switch } from "@fcalell/plugin-react-ui/components/switch";
 import { TextArea } from "@fcalell/plugin-react-ui/components/text-area";
 import { toast } from "@fcalell/plugin-react-ui/lib/toast";
 import { createFileRoute } from "@tanstack/react-router";
@@ -107,13 +100,14 @@ function Settings() {
 					budget={120}
 				/>
 			</FormField>
-			<FormField label="Default region">
-				<Select
-					value={region}
-					onChange={(next) => setTyped({ ...typed, region: next })}
-					options={REGIONS}
-				/>
-			</FormField>
+			<FormField
+				label="Default region"
+				select={{
+					value: region,
+					onChange: (next) => setTyped({ ...typed, region: next }),
+					options: REGIONS,
+				}}
+			/>
 		</>
 	);
 	return (
@@ -128,124 +122,9 @@ function Settings() {
 					},
 				]}
 			>
-				<Form>
-					<Section
-						title="General"
-						description="How the workspace appears to its members."
-						loading={workspace.isFetching}
-					>
-						<QueryBoundary
-							query={workspace}
-							sentence="General settings did not load."
-							loading={general}
-						>
-							{() => general}
-						</QueryBoundary>
-					</Section>
-					<Section
-						title="Email"
-						description="What the workspace tells you about."
-					>
-						<FormField
-							label="Failed deploys"
-							description="An email the moment a deploy fails."
-						>
-							<Switch
-								checked={failed}
-								onChange={setFailed}
-								label="Failed deploys"
-							/>
-						</FormField>
-						<FormField
-							label="Weekly summary"
-							description="Every Monday, deploys and usage."
-						>
-							<Checkbox
-								checked={weekly}
-								onChange={setWeekly}
-								label="Weekly summary"
-							/>
-						</FormField>
-						<FormField
-							label="Digest"
-							description="How often the digest arrives."
-						>
-							<SegmentedControl
-								label="Digest"
-								options={DIGESTS}
-								value={digest}
-								onChange={setDigest}
-							/>
-						</FormField>
-						<Slider
-							label="Error rate alert"
-							value={threshold}
-							onChange={setThreshold}
-							min={1}
-							max={20}
-							unit="percent"
-						/>
-					</Section>
-					<Section
-						title="Devices"
-						description="Scan the code with the Acme app on your phone to get deploy alerts there."
-					>
-						<QrCode value="https://acme.dev/pair/7KQ2XM" />
-						<Group>
-							<List
-								query={paired}
-								sentence="Paired devices did not load."
-								empty={{
-									icon: "Smartphone",
-									title: "No devices",
-									sentence: "A phone that scans the code shows here.",
-								}}
-								row={{
-									key: (device) => device,
-									leading: { icon: () => "Smartphone" },
-									title: (device) => device,
-									meta: () => ["Paired Sep 12"],
-									more: (device) => [
-										{
-											label: "Unpair",
-											icon: "Unlink",
-											destructive: true,
-											onAct: async () => {
-												await unpair.mutateAsync({ name: device });
-												toast(`${device} unpaired`, { state: "done" });
-											},
-										},
-									],
-								}}
-							/>
-						</Group>
-					</Section>
-					<Banner
-						kind="warn"
-						sentence="Build images change on Oct 12: Node 20 leaves the list."
-						act={{ label: "Read more", onAct: act }}
-					/>
-					<Section title="Builds" description="What every deploy builds on.">
-						<FormField
-							label="Build image"
-							description="New deploys build on it; running ones keep theirs."
-						>
-							<Select options={IMAGES} value={image} onChange={setImage} />
-						</FormField>
-					</Section>
-					<Section
-						title="Webhooks"
-						description="Where Acme posts deploy events."
-					>
-						<EmptyState
-							icon="Webhook"
-							title="No endpoints"
-							sentence="Add an endpoint to receive an event each time a deploy finishes."
-							act={{ label: "Add endpoint", onAct: act }}
-						/>
-					</Section>
-					<ActionBar
-						acts={[
+				<Form
+					bar={{
+						acts: [
 							{ label: "Cancel", onAct: act },
 							{
 								label: "Save",
@@ -263,9 +142,130 @@ function Settings() {
 									toast("Settings saved", { state: "done" });
 								},
 							},
-						]}
-					/>
-				</Form>
+						],
+					}}
+					groups={[
+						{
+							title: "General",
+							description: "How the workspace appears to its members.",
+							loading: workspace.isFetching,
+							fields: (
+								<QueryBoundary
+									query={workspace}
+									sentence="General settings did not load."
+									loading={general}
+								>
+									{() => general}
+								</QueryBoundary>
+							),
+						},
+						{
+							title: "Email",
+							description: "What the workspace tells you about.",
+							fields: (
+								<>
+									<FormField
+										label="Failed deploys"
+										description="An email the moment a deploy fails."
+										switch={{ checked: failed, onChange: setFailed }}
+									/>
+									<FormField
+										label="Weekly summary"
+										description="Every Monday, deploys and usage."
+										checkbox={{ checked: weekly, onChange: setWeekly }}
+									/>
+									<FormField
+										label="Digest"
+										description="How often the digest arrives."
+										segments={{
+											options: DIGESTS,
+											value: digest,
+											onChange: setDigest,
+										}}
+									/>
+									<FormField
+										label="Error rate alert"
+										slider={{
+											value: threshold,
+											onChange: setThreshold,
+											min: 1,
+											max: 20,
+											unit: "percent",
+										}}
+									/>
+								</>
+							),
+						},
+						{
+							title: "Devices",
+							description:
+								"Scan the code with the Acme app on your phone to get deploy alerts there.",
+							fields: (
+								<>
+									<QrCode value="https://acme.dev/pair/7KQ2XM" />
+									<Group>
+										<List
+											query={paired}
+											sentence="Paired devices did not load."
+											empty={{
+												icon: "Smartphone",
+												title: "No devices",
+												sentence: "A phone that scans the code shows here.",
+											}}
+											row={{
+												key: (device) => device,
+												leading: { icon: () => "Smartphone" },
+												title: (device) => device,
+												meta: () => ["Paired Sep 12"],
+												more: (device) => [
+													{
+														label: "Unpair",
+														icon: "Unlink",
+														destructive: true,
+														onAct: async () => {
+															await unpair.mutateAsync({ name: device });
+															toast(`${device} unpaired`, { state: "done" });
+														},
+													},
+												],
+											}}
+										/>
+									</Group>
+								</>
+							),
+						},
+						{
+							title: "Builds",
+							description: "What every deploy builds on.",
+							lead: (
+								<Banner
+									kind="warn"
+									sentence="Build images change on Oct 12: Node 20 leaves the list."
+									act={{ label: "Read more", onAct: act }}
+								/>
+							),
+							fields: (
+								<FormField
+									label="Build image"
+									description="New deploys build on it; running ones keep theirs."
+									select={{ options: IMAGES, value: image, onChange: setImage }}
+								/>
+							),
+						},
+						{
+							title: "Webhooks",
+							description: "Where Acme posts deploy events.",
+							fields: (
+								<EmptyState
+									icon="Webhook"
+									title="No endpoints"
+									sentence="Add an endpoint to receive an event each time a deploy finishes."
+									act={{ label: "Add endpoint", onAct: act }}
+								/>
+							),
+						},
+					]}
+				/>
 			</Pane>
 		</Place>
 	);

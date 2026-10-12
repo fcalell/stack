@@ -696,10 +696,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// The fold toggle is the title line; a blocked act's reason stands on
 		// its own line under the head row.
-		// Its rhythm is `SECTION.in`: `form` inside a Form, `page`
-		// elsewhere. Loading, a Group or a List in its body draws its own
-		// skeleton rows and a Prose, Thread, Code, Meter or Slider its own waiting
-		// form; the Section draws its own over a body of fields.
+		// Its head is busy exactly when `loading` is set and its count is exactly
+		// `count`; it reads nothing of its body. Loading, each part of the body
+		// draws its own waiting form: a Group or a List its skeleton rows, a
+		// Prose, Thread, Code, Meter, Slider, DefinitionRow, FormField or
+		// ActionBar its own.
 		// While it loads, `description=""` stands one meta-height bar where the
 		// sentence will be, and an undefined `description` stands none; loaded, `""`
 		// draws no line, as an undefined one.
@@ -737,10 +738,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ICON_BUTTON.fit.bar",
 				"SKELETON.kind.count",
 				"SKELETON.kind.line",
-				"SKELETON.kind.field",
-				"SKELETON_ROW.kind.field",
 				"TEXT.role.caption",
-				"LINE_BOX.role.body",
+				"LINE_BOX.role.meta",
 			],
 			holds: [
 				"SECTION",
@@ -793,7 +792,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// and fold. A `row` map with a `meta` line (no tree) abuts its rows under
 		// a full-width hairline (`LIST_DIVIDED`), outside a Group, whose own
 		// hairline falls once between rows. A `definition` list stands in a
-		// Group and adds no count to a Section's head: facts are not a
+		// Group and carries no count of its own: facts are not a
 		// collection a viewer counts.
 		// Given `items` while `loading`, a `row` map with a `trailing` slot (no tree)
 		// stands as loaded rows with the trailing values waiting.
@@ -817,16 +816,31 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				spacing: ["rows", "control-x"],
 			},
 		},
-		// A Form in a sheet stands on that column, uncapped; its
-		// bar stays at the end of the sheet's body or the pane (web).
+		// Its structure is its props, one of `children` (a flat run of FormFields
+		// a fields step apart) or `groups` (each a fieldset with a legend, its
+		// description, lead and fields a fields step apart, the groups a
+		// sections step apart; a group's `loading` waits its fields as a
+		// loading Section's do). `bar` is the ActionBar's own props, drawn in its
+		// foot: under a hairline across a form of groups, stuck to the edge of a
+		// sheet's body (web), the sheet's pinned foot (phone). A Form in a sheet
+		// stands on that column, uncapped.
 		Form: {
-			props: ["children"],
-			draws: ["FORM", "FORM_FOOT"],
-			holds: ["FORM", "FORM_FOOT"],
+			props: ["children", "groups", "bar"],
+			draws: [
+				"FORM",
+				"FORM_FOOT",
+				"FORM_GROUP",
+				"FORM_LEGEND",
+				"SECTION_NESTED_TITLE",
+				"TEXT.role.heading",
+				"TEXT.role.meta",
+			],
+			holds: ["FORM", "FORM_FOOT", "FORM_GROUP", "FORM_LEGEND"],
 			states: ["rest", "loading"],
 			owns: {
-				colors: ["edge", "surface", "raised"],
-				spacing: ["fields", "sections", "page", "card"],
+				roles: ["heading", "body", "meta"],
+				colors: ["edge", "ink-body", "ink-meta", "raised"],
+				spacing: ["fields", "sections", "pair", "card"],
 				sizes: ["measure"],
 			},
 		},
@@ -1203,13 +1217,16 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// chevron's at the end when declared. A one-word string value of more than eight characters too long for its
 		// room cuts in its middle (`valueCut`), the whole value its text. A waiting Group's setting rows are
 		// the same wait with a description and the switch's box at the end; a row in
-		// a waiting Group or Section draws it from the props it is given.
+		// a waiting Group or Section draws it from the props it is given (a
+		// `switch` stands as the switch's box). `switch` is the Switch's own props,
+		// named by the row's label and drawn centred beside it in place of `value`.
 		DefinitionRow: {
 			props: [
 				"change",
 				"label",
 				"description",
 				"value",
+				"switch",
 				"copyable",
 				"locked",
 				"act",
@@ -1299,6 +1316,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// description, error or disabled form.
 		// A `change` draws the change mark in a lane ahead of the label (on a
 		// checkbox's line, ahead of the box), the kind's word its name.
+		// The control is the one descriptor set (`switch`, `checkbox`, `slider`,
+		// `select`, `options`, `segments`: the component's own props less the
+		// label the field supplies), whose form the field draws, or `children`
+		// for any other control. Inside a loading Section or Group it draws its
+		// own waiting form in the control's form, the field kept mounted, hidden.
 		FormField: {
 			props: [
 				"change",
@@ -1308,6 +1330,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"disabled",
 				"answered",
 				"field",
+				"switch",
+				"checkbox",
+				"slider",
+				"select",
+				"options",
+				"segments",
 				"children",
 			],
 			draws: [

@@ -13,7 +13,6 @@ import {
 	skeleton,
 	skeletonRow,
 } from "@fcalell/ui-core/variants";
-import { Children, Fragment, isValidElement, type ReactNode } from "react";
 import { GroundContext } from "./ground.ts";
 import { OptionWait } from "./option-wait.tsx";
 import { SliderWait } from "./slider-wait.tsx";
@@ -57,8 +56,8 @@ const OPTIONS_UNKNOWN: OptionsWait = {
 // checkbox's on the label's first line, a slider's own head over its track,
 // an option list's card of rows, a segmented control's track, an answered
 // field's one summary row, and a description's bar under the label or the
-// control. A loading `Section` stands it for each field it counts and a
-// `Form` for each of its own, so the two never differ.
+// control. A `FormField` stands it in its own place while a loading `Section` or `Group`
+// around it waits.
 export function FieldWait({
 	holds = "field",
 	described = false,
@@ -162,26 +161,4 @@ export function FieldWait({
 			)}
 		</div>
 	);
-}
-
-// A body's children with its direct bars (`bar`, through fragments) taken out
-// while `lift` is set: each bar leaves a null at its place, so the other
-// children keep their keys, and so their state, across the lift. The bars
-// stand after the waiting fields.
-export function liftBars(
-	children: ReactNode,
-	bar: unknown,
-	lift: boolean,
-): { bars: ReactNode[]; rest: ReactNode[] } {
-	const bars: ReactNode[] = [];
-	const walk = (nodes: ReactNode): ReactNode[] =>
-		Children.toArray(nodes).map((node) => {
-			if (!isValidElement<{ children?: ReactNode }>(node)) return node;
-			if (node.type === Fragment)
-				return <Fragment key={node.key}>{walk(node.props.children)}</Fragment>;
-			if (node.type !== bar || !lift) return node;
-			bars.push(node);
-			return null;
-		});
-	return { bars, rest: walk(children) };
 }

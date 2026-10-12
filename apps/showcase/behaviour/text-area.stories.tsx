@@ -1,4 +1,3 @@
-import { ActionBar } from "@fcalell/plugin-react-ui/components/action-bar";
 import { Button } from "@fcalell/plugin-react-ui/components/button";
 import { Form } from "@fcalell/plugin-react-ui/components/form";
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
@@ -27,9 +26,8 @@ function Page(props: { kind: "prose" | "source"; value: string }) {
 		<div className="flex flex-col h-dvh">
 			<Place>
 				<Pane title="Edit page">
-					<Form>
+					<Form bar={{ acts: [{ label: "Save", onAct: act }] }}>
 						<Source {...props} />
-						<ActionBar acts={[{ label: "Save", onAct: act }]} />
 					</Form>
 				</Pane>
 			</Place>
@@ -43,9 +41,8 @@ function Sectioned(props: { value: string }) {
 			<Place>
 				<Pane title="Edit page">
 					<Section title="Source">
-						<Form>
+						<Form bar={{ acts: [{ label: "Save", onAct: act }] }}>
 							<Source kind="source" value={props.value} />
-							<ActionBar acts={[{ label: "Save", onAct: act }]} />
 						</Form>
 					</Section>
 				</Pane>

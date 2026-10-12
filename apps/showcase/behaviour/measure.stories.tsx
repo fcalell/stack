@@ -1,4 +1,3 @@
-import { ActionBar } from "@fcalell/plugin-react-ui/components/action-bar";
 import { Form } from "@fcalell/plugin-react-ui/components/form";
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
@@ -26,11 +25,10 @@ function Page() {
 				<Pane title="Rules">
 					<Text>{LONG}</Text>
 					<Text {...META}>{LONG}</Text>
-					<Form>
+					<Form bar={{ acts: [{ label: "Save", onAct: noop }] }}>
 						<FormField label="Rule">
 							<TextArea value={value} onChange={setValue} />
 						</FormField>
-						<ActionBar acts={[{ label: "Save", onAct: noop }]} />
 					</Form>
 				</Pane>
 			</Place>

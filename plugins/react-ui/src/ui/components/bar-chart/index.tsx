@@ -33,7 +33,6 @@ import {
 import { type ReactNode, use } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { LoadingContext } from "../../lib/loading.ts";
-import { SectionContext } from "../../lib/section.ts";
 import { useWords } from "../../lib/words.tsx";
 import { EmptyStateBase } from "../empty-state/base.tsx";
 import type { ListEmpty } from "../list/index.tsx";
@@ -184,19 +183,17 @@ interface Bar {
 	at?: string;
 }
 
-/** The total (the last bar with `level`) at body 500 with its unit, the parts' keys under it, then the axis beside the plot, its four gridlines a hairline each with its tick centred on it and the baseline with its 0, the columns in the chip marks by part, a time under each bar that has one. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, its boxes in skeleton at their loaded size with the keys standing (a Section around a pending query busy); a query that answers not found draws the rest EmptyState saying it no longer exists with Back (never Retry), a failed query the failed EmptyState with `sentence` and Retry, and no item `empty`, each at the chart's loaded height; then one bar per item. */
+/** The total (the last bar with `level`) at body 500 with its unit, the parts' keys under it, then the axis beside the plot, its four gridlines a hairline each with its tick centred on it and the baseline with its 0, the columns in the chip marks by part, a time under each bar that has one. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, its boxes in skeleton at their loaded size with the keys standing; a query that answers not found draws the rest EmptyState saying it no longer exists with Back (never Retry), a failed query the failed EmptyState with `sentence` and Retry, and no item `empty`, each at the chart's loaded height; then one bar per item. */
 export function BarChart<T>(props: BarChartProps<T>) {
 	const { label, keys, unit, level } = props;
 	const words = useWords();
-	const base = {
+	const input = {
 		query: props.query,
 		items: props.items,
 		loading: props.loading,
 		sectionLoading: use(LoadingContext),
-		inSection: false,
 		hasEmpty: props.empty !== undefined,
 	};
-	const input = { ...base, inSection: use(SectionContext) };
 	const state = listState(input);
 	if (state === "pending")
 		return <Loading keys={keys} busy={listBusy(input)} />;

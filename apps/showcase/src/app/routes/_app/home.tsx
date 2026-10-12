@@ -49,7 +49,11 @@ function Home() {
 					/>
 				}
 			>
-				<Section title="Tasks">
+				<Section
+					title="Tasks"
+					count={tasks.data?.length}
+					loading={tasks.isPending}
+				>
 					<Group>
 						<List
 							query={tasks}

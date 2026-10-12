@@ -26,7 +26,11 @@ function Stage(props: { stage: (typeof STAGES)[number] }) {
 		orpc.projects.list.queryOptions({ input: { stage } }),
 	);
 	return (
-		<Section title={title}>
+		<Section
+			title={title}
+			count={projects.data?.length}
+			loading={projects.isPending}
+		>
 			<Group>
 				<List
 					query={projects}

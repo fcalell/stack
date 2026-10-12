@@ -6,7 +6,6 @@ import { Place } from "../../components/place/index.tsx";
 import type { QueryLike } from "../../components/query-boundary/index.tsx";
 import { QueryBoundary } from "../../components/query-boundary/index.tsx";
 import { Section } from "../../components/section/index.tsx";
-import { Switch } from "../../components/switch/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { Column } from "./place.tsx";
 
@@ -76,13 +75,7 @@ export function drawQueryBoundary(frame: ShowcaseFrame) {
 											key={setting.label}
 											label={setting.label}
 											description={setting.description}
-											value={
-												<Switch
-													checked={setting.on}
-													onChange={refetch}
-													label={setting.label}
-												/>
-											}
+											switch={{ checked: setting.on, onChange: refetch }}
 										/>
 									))}
 								</Group>

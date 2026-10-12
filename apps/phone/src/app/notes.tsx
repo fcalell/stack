@@ -54,7 +54,11 @@ export default function Notes() {
 				title="Notes"
 				actions={[{ icon: "Plus", label: newNote.label, onAct: newNote.onAct }]}
 			>
-				<Section title="Recent">
+				<Section
+					title="Recent"
+					count={notes.data?.length}
+					loading={notes.isPending}
+				>
 					<List
 						query={notes}
 						sentence="Notes did not load."

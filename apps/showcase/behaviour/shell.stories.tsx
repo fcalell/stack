@@ -1,4 +1,3 @@
-import { ActionBar } from "@fcalell/plugin-react-ui/components/action-bar";
 import { Form } from "@fcalell/plugin-react-ui/components/form";
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Input } from "@fcalell/plugin-react-ui/components/input";
@@ -40,16 +39,17 @@ function Editing() {
 		<Shell places={PLACES}>
 			<Place>
 				<Pane title="Edit page">
-					<Form>
+					<Form
+						bar={{
+							acts: [
+								{ label: "Discard", onAct: noop },
+								{ label: "Save", onAct: noop },
+							],
+						}}
+					>
 						{FIELDS.map((label) => (
 							<Field key={label} label={label} />
 						))}
-						<ActionBar
-							acts={[
-								{ label: "Discard", onAct: noop },
-								{ label: "Save", onAct: noop },
-							]}
-						/>
 					</Form>
 				</Pane>
 			</Place>

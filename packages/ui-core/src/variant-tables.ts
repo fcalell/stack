@@ -1188,21 +1188,6 @@ export const PLACE_TAB_LABEL = matrix({
 
 // ── Section ─────────────────────────────────────────────────────────
 
-// A section's head-to-body step follows where it sits: on a page (over a
-// Group, a List, a column's cards) the head is paired to the body; in a form
-// it is the fields rhythm. The body's own parts stand apart at the fields
-// rhythm wherever the section sits (`SECTION_BODY`).
-export const SECTION = matrix({
-	base: "",
-	variants: {
-		in: {
-			page: "gap-pair",
-			form: "gap-fields",
-		},
-	},
-	defaultVariants: { in: "page" },
-});
-
 // ── Form ────────────────────────────────────────────────────────────
 
 // A form's one column: its children fields apart, or sections apart when it
@@ -1219,7 +1204,6 @@ export const FORM = matrix({
 		},
 		in: {
 			page: "max-w-measure",
-			pane: "",
 			sheet: "",
 			auth: "",
 		},

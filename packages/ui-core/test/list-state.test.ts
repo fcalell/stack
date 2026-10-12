@@ -14,7 +14,6 @@ import {
 	groupWait,
 	type ListInput,
 	listBusy,
-	listCount,
 	listGround,
 	listState,
 	listWaits,
@@ -23,8 +22,6 @@ import {
 	pathCut,
 	retryOf,
 	rowShape,
-	sectionCount,
-	sectionState,
 	shortHeld,
 	stepStateOf,
 	tableRecords,
@@ -50,7 +47,6 @@ import {
 const refetch = () => {};
 const base: ListInput = {
 	sectionLoading: false,
-	inSection: false,
 	hasEmpty: true,
 };
 const query = (
@@ -104,7 +100,6 @@ test("a query that answers not found draws its missing form, never its failure",
 		listState({ ...base, query: { ...notFound, isError: false, data: [1] } }),
 		"loaded",
 	);
-	assert.equal(listCount({ ...base, query: notFound }), undefined);
 });
 
 test("a QueryBoundary draws its missing form only when every failed query answers not found", () => {
@@ -134,20 +129,12 @@ test("items draw loaded", () => {
 	assert.equal(listState({ ...base, items: [1, 2] }), "loaded");
 });
 
-test("a list is busy while its own items wait, except in a Section", () => {
+test("a list is busy while its own items wait", () => {
 	assert.equal(
 		listBusy({ ...base, query: query(true, false, undefined) }),
 		true,
 	);
 	assert.equal(listBusy({ ...base, items: [], loading: true }), true);
-	assert.equal(
-		listBusy({
-			...base,
-			query: query(true, false, undefined),
-			inSection: true,
-		}),
-		false,
-	);
 	assert.equal(listBusy({ ...base, items: [1], sectionLoading: true }), false);
 });
 
@@ -282,15 +269,12 @@ test("a waiting definition row's shape comes from the keys a `definition` map de
 	assert.deepEqual(calls, []);
 });
 
-test("a list's own items wait on its query or on `loading`, and a Section registers either", () => {
+test("a list's own items wait on its query or on `loading`", () => {
 	assert.equal(
 		listWaits({ ...base, query: query(true, false, undefined) }),
 		true,
 	);
-	assert.equal(
-		listWaits({ ...base, items: [], loading: true, inSection: true }),
-		true,
-	);
+	assert.equal(listWaits({ ...base, items: [], loading: true }), true);
 	assert.equal(listWaits({ ...base, items: [1], sectionLoading: true }), false);
 	assert.equal(listWaits({ ...base, query: query(false, false, [1]) }), false);
 });
@@ -305,101 +289,6 @@ test("Retry refetches the query", () => {
 	assert.equal(calls, 0);
 	retry();
 	assert.equal(calls, 1);
-});
-
-test("a list reports its item count once its items answer, none while they wait or fail", () => {
-	assert.equal(
-		listCount({ ...base, query: query(true, false, undefined) }),
-		undefined,
-	);
-	assert.equal(
-		listCount({ ...base, query: query(false, true, undefined) }),
-		undefined,
-	);
-	assert.equal(listCount({ ...base, query: query(false, false, [1, 2]) }), 2);
-	assert.equal(listCount({ ...base, query: query(false, false, []) }), 0);
-	assert.equal(listCount({ ...base, items: [1, 2, 3] }), 3);
-	assert.equal(listCount({ ...base, items: [1, 2], loading: true }), undefined);
-});
-
-test("a Section shows its own count, else its lists' total once every list has answered, and none for an empty collection", () => {
-	assert.equal(sectionCount(11, [3, undefined]), 11);
-	assert.equal(sectionCount(undefined, []), undefined);
-	assert.equal(sectionCount(undefined, [3, 2]), 5);
-	assert.equal(sectionCount(undefined, [3, undefined]), undefined);
-	assert.equal(sectionCount(undefined, [0]), undefined);
-	assert.equal(sectionCount(undefined, [0, 0]), undefined);
-	assert.equal(sectionCount(0, [3]), undefined);
-});
-
-test("a Section's head and loading body follow from its own props and the parts its body holds", () => {
-	const none = { lists: [], waits: [], groups: 0, fields: 0, forms: 0 };
-	const answered = { isPending: false, isError: false, data: [1, 2] };
-	const waiting = { isPending: true, isError: false, data: undefined };
-	// Its lists' total once each answers, none while one waits.
-	assert.deepEqual(
-		sectionState({ ...none, lists: [{ query: answered }, { items: [1] }] }, {}),
-		{ busy: false, counted: true, count: 3, fields: 0 },
-	);
-	assert.deepEqual(
-		sectionState(
-			{ ...none, lists: [{ query: answered }, { query: waiting }] },
-			{},
-		),
-		{ busy: true, counted: true, count: undefined, fields: 0 },
-	);
-	// A list of facts (`definition`) waits alone: it makes the head busy, adds
-	// no count and is no body of rows.
-	assert.deepEqual(
-		sectionState(
-			{
-				...none,
-				lists: [{ items: [1] }, { query: waiting, definition: true }],
-			},
-			{},
-		),
-		{ busy: true, counted: true, count: 1, fields: 0 },
-	);
-	assert.deepEqual(
-		sectionState(
-			{ ...none, lists: [{ items: [1], definition: true }] },
-			{ loading: true },
-		),
-		{ busy: true, counted: false, count: undefined, fields: 3 },
-	);
-	// Its own count wins; another waiter makes the head busy.
-	assert.deepEqual(sectionState({ ...none, waits: [true] }, { count: 11 }), {
-		busy: true,
-		counted: true,
-		count: 11,
-		fields: 0,
-	});
-	// Loading: a body of rows waits as its own rows, fields as one skeleton
-	// each, any other body as three; a loading Section's lists count none yet.
-	assert.equal(
-		sectionState({ ...none, groups: 1 }, { loading: true }).fields,
-		0,
-	);
-	assert.equal(
-		sectionState({ ...none, fields: 2 }, { loading: true }).fields,
-		2,
-	);
-	assert.equal(sectionState(none, { loading: true }).fields, 3);
-	// A part that waits in its own form (a Prose, a Thread, a Code) stands for
-	// the body, so no skeleton fields do; a field beside it keeps them.
-	assert.equal(
-		sectionState({ ...none, forms: 1 }, { loading: true }).fields,
-		0,
-	);
-	assert.equal(
-		sectionState({ ...none, forms: 1, fields: 2 }, { loading: true }).fields,
-		2,
-	);
-	assert.equal(sectionState({ ...none, fields: 2 }, {}).fields, 0);
-	assert.equal(
-		sectionState({ ...none, lists: [{ items: [1] }] }, { loading: true }).count,
-		undefined,
-	);
 });
 
 test("a List in a Group draws group rows; the same List outside draws list rows", () => {
@@ -542,9 +431,8 @@ test("a Table whose query failed draws the failed form, and its Retry refetches"
 			calls++;
 		},
 	};
-	const input = { ...base, query: failed, inSection: true };
+	const input = { ...base, query: failed };
 	assert.equal(listState(input), "failed");
-	assert.equal(listCount(input), undefined);
 	retryOf(failed)();
 	assert.equal(calls, 1);
 });

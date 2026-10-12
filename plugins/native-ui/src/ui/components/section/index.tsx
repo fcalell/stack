@@ -4,8 +4,8 @@ import type {
 	MenuItem,
 	Part,
 } from "@fcalell/ui-core/descriptors";
-import { sectionState } from "@fcalell/ui-core/list-state";
 import {
+	SECTION,
 	SECTION_ACTS,
 	SECTION_BODY,
 	SECTION_HEAD,
@@ -13,7 +13,6 @@ import {
 	SECTION_NESTED_TITLE,
 	SECTION_TITLE,
 	SECTION_TOGGLE,
-	section,
 	skeleton,
 	text,
 } from "@fcalell/ui-core/variants";
@@ -21,38 +20,20 @@ import { type ReactNode, useContext, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { FieldWait, LABEL_LINE, liftBars } from "../../lib/field-wait";
-import { FormContext, FormStands } from "../../lib/form";
+import { LABEL_LINE } from "../../lib/field-wait";
+import { FormStands } from "../../lib/form";
 import { Ink } from "../../lib/ink";
 import { LoadingContext, useWait, VEIL } from "../../lib/loading";
 import { partText } from "../../lib/parts";
-import {
-	SectionContext,
-	type SectionKinds,
-	sectionPartsOf,
-} from "../../lib/section";
+import { SectionContext } from "../../lib/section";
 import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
-import { ActionBar } from "../action-bar";
-import { BarChart } from "../bar-chart";
 import { Button } from "../button";
-import { Code } from "../code";
-import { Comparison } from "../comparison";
 import { Count } from "../count";
-import { Form } from "../form";
-import { FormField, fieldWaitOf } from "../form-field";
-import { Group } from "../group";
 import { Icon } from "../icon";
 import { IconButton } from "../icon-button";
-import { List } from "../list";
 import { MenuBase } from "../menu/base";
-import { Meter } from "../meter";
-import { Prose } from "../prose";
-import { QueryBoundary } from "../query-boundary";
-import { Slider } from "../slider";
-import { Table } from "../table";
 import { Text } from "../text";
-import { Thread } from "../thread";
 
 const BOX = "min-w-0";
 const HEAD_ROW = "flex-row items-center";
@@ -71,25 +52,13 @@ const ACT_SLOT = "flex-row items-center shrink-0";
 const COUNT_WAIT = "shrink-0 flex-row items-center";
 const FIGURE_WAIT = "opacity-0 tabular-nums";
 const BODY_FOLDED = "hidden";
-// The body's own wrapper stays mounted, hidden, while skeleton fields stand
-// in for it.
-const BODY_WAITS = "hidden";
-
-// The components the Section reads its body by (`sectionPartsOf`).
-const KINDS: SectionKinds = {
-	lists: [List, Table],
-	waits: [BarChart, Comparison],
-	forms: [ActionBar, Code, Form, Meter, Prose, Slider, Thread],
-	boundary: QueryBoundary,
-	group: Group,
-	field: FormField,
-};
 
 export interface SectionProps extends Closed {
 	/** The heading (a short phrase; truncates). */
 	title: Part;
-	// A total the body's lists do not hold; without it a List in the body
-	// counts its items here.
+	// The body's total, in the muted ink after the title; none is drawn
+	// without it, at zero (the body's empty state says so) or, as a waiting
+	// bar, while the section loads.
 	count?: number;
 	/** Under the title (a sentence; wraps). While the Section loads, `""` stands one meta-height bar where the sentence will be and an undefined `description` stands none; loaded, `""` draws no line, as an undefined one. */
 	description?: string;
@@ -103,16 +72,18 @@ export interface SectionProps extends Closed {
 	// The section's other acts, in a menu under the more act after its act
 	// (destructive ones marked); a foldable section's more does not fold it.
 	more?: readonly MenuItem[];
+	// The head is busy and the body waits: each part of the body draws its own
+	// waiting form (a Group or a List its skeleton rows, a Prose, Thread, Code,
+	// Meter, Slider, DefinitionRow, FormField or ActionBar its own); the
+	// section reads nothing else, so a body no part answers for draws as it is.
 	loading?: boolean;
 	children?: ReactNode;
 }
 
 // A heading with its count, description and act over its body; the title
-// folds the body when `folded` is set. Inside a Form it takes the fields
-// rhythm. A loading section hands its loading to a Group or a List in its
-// body, which draws its own skeleton rows, and to a Prose, Thread, Code,
-// Meter or Slider, which draws its own waiting form; fields wait as one
-// skeleton field each, and any other body as three. A blocked act says its reason under itself once pressed
+// folds the body when `folded` is set. A loading section hands its loading to
+// its body, whose parts each draw their own waiting form. A blocked act says
+// its reason under itself once pressed
 // or once its form or sheet is touched, as a `Button` does. React Native
 // exposes no heading level, so the title is a header at any depth.
 export function Section({
@@ -133,27 +104,15 @@ export function Section({
 	const loading = asked === undefined ? undefined : late.waiting;
 	const veil = late.veiled ? VEIL : undefined;
 	const words = useWords();
-	const within = useContext(FormContext) ? "form" : "page";
 	// A Section inside a Section names itself a level below its parent.
 	const nested = useContext(SectionContext);
 	// A section in a sheet's body reads a level below the sheet's title.
 	const stood = useContext(FormStands) === "sheet";
 	// `folded` is the initial fold: the section holds its fold from there.
 	const [open, setOpen] = useState(folded !== true);
-	// The Section reads its body's collections off its children in render (by
-	// the depth rule, `sectionPartsOf`): a waiting one makes the head busy, a
-	// List or a Table counts there unless the Section has its own count, and a
-	// loading body with no rows waits as skeleton fields while it stays
-	// mounted, hidden, so what it holds (a field's text) outlives the wait.
-	const parts = sectionPartsOf(children, KINDS);
-	const {
-		busy,
-		counted,
-		count: shown,
-		fields,
-	} = sectionState(parts, { count, loading });
-	// A loading body stands its direct bars after the skeleton fields, waiting.
-	const { bars, rest } = liftBars(children, ActionBar, fields > 0);
+	// The head is busy exactly while the section loads; its count is the one it
+	// is given.
+	const busy = loading === true;
 	// The description waits as a bar only when the Section says it will have
 	// one: an empty string, which is no line once loaded.
 	let sentence: ReactNode = null;
@@ -167,7 +126,7 @@ export function Section({
 		);
 	// A count waits with the body.
 	let tally: ReactNode = null;
-	if (counted && busy)
+	if (count !== undefined && busy)
 		tally = (
 			<View className={cn(skeleton({ kind: "count" }), COUNT_WAIT, veil)}>
 				<RNText className={cn(text({ role: "caption" }), FIGURE_WAIT)}>
@@ -175,7 +134,7 @@ export function Section({
 				</RNText>
 			</View>
 		);
-	else if (shown !== undefined) tally = <Count value={shown} />;
+	else if (count !== undefined && count !== 0) tally = <Count value={count} />;
 	const name = (
 		<>
 			<RNText
@@ -192,10 +151,7 @@ export function Section({
 		</>
 	);
 	return (
-		<View
-			accessibilityState={{ busy }}
-			className={cn(section({ in: within }), BOX)}
-		>
+		<View accessibilityState={{ busy }} className={cn(SECTION, BOX)}>
 			<View className={SECTION_HEAD}>
 				<View
 					className={cn(
@@ -269,20 +225,10 @@ export function Section({
 			{/* A section without children draws no body. */}
 			{children === undefined || children === null ? null : (
 				<View className={cn(SECTION_BODY, !open && BODY_FOLDED, veil)}>
-					{Array.from({ length: fields }, (_, index) => `field-${index}`).map(
-						(key, index) => (
-							<FieldWait key={key} {...fieldWaitOf(parts.fieldNodes[index])} />
-						),
-					)}
-					<View className={cn(SECTION_BODY, fields > 0 && BODY_WAITS)}>
-						<LoadingContext.Provider value={loading === true}>
-							<SectionContext.Provider value={true}>
-								{rest}
-							</SectionContext.Provider>
-						</LoadingContext.Provider>
-					</View>
 					<LoadingContext.Provider value={loading === true}>
-						{bars}
+						<SectionContext.Provider value={true}>
+							{children}
+						</SectionContext.Provider>
 					</LoadingContext.Provider>
 				</View>
 			)}

@@ -18,7 +18,6 @@ import {
 	textStrong,
 } from "@fcalell/ui-core/variants";
 import {
-	isValidElement,
 	type ReactNode,
 	use,
 	useEffect,
@@ -29,19 +28,24 @@ import {
 } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { FieldRefusal, GroupName, LabelTarget } from "../../lib/field.ts";
+import { FieldWait } from "../../lib/field-wait.tsx";
 import { focusFirst } from "../../lib/focus.ts";
 import { HOLDS_FILL } from "../../lib/form.ts";
 import { GroundContext } from "../../lib/ground.ts";
+import { LoadingContext } from "../../lib/loading.ts";
 import { useWords } from "../../lib/words.tsx";
-import { Checkbox } from "../checkbox/index.tsx";
+import { Checkbox, type CheckboxProps } from "../checkbox/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 import { OptionList, type OptionListProps } from "../option-list/index.tsx";
-import { SegmentedControl } from "../segmented-control/index.tsx";
-import { Select } from "../select/index.tsx";
-import { Slider } from "../slider/index.tsx";
+import {
+	SegmentedControl,
+	type SegmentedControlProps,
+} from "../segmented-control/index.tsx";
+import { Select, type SelectProps } from "../select/index.tsx";
+import { Slider, type SliderProps } from "../slider/index.tsx";
 import { ChangeMark } from "../status/change.tsx";
-import { Switch } from "../switch/index.tsx";
+import { Switch, type SwitchProps } from "../switch/index.tsx";
 
 const STACK = "flex flex-col min-w-0";
 const BESIDE = "flex items-center min-w-0";
@@ -55,6 +59,8 @@ const BOX_LINE = "flex shrink-0 items-center h-lh";
 const MARKED = "flex items-start gap-inside min-w-0";
 const MARKED_BODY = "grow min-w-0";
 const DISABLED = "text-ink-disabled";
+// A field waiting stands its waiting form in its place and hides itself.
+const HIDDEN = "hidden";
 // Base UI's field names and describes the checkbox through its label.
 const FIELD_TARGET = {};
 const SUMMARY = "flex items-center min-w-0";
@@ -74,90 +80,131 @@ interface FormFieldBase extends Closed {
 	answered?: Answered;
 }
 
-/** One control with its label, its description and its error. Unbound, the consumer gives the error and the control; bound, the form's field gives both, and the control is a function of the field's value: `{(control) => <Input {...control} />}`. */
-export type FormFieldProps<V = unknown> = FormFieldBase &
+// The control descriptors, each the component's own props less what the field
+// supplies (its label). Exactly one is set, or `children` draws any other
+// control.
+interface Controls<S extends string | null, O extends string, T> {
+	switch: Omit<SwitchProps, "label">;
+	checkbox: Omit<CheckboxProps, "label">;
+	slider: Omit<SliderProps, "label">;
+	select: SelectProps<S>;
+	options: OptionListProps<O, T>;
+	segments: Omit<SegmentedControlProps, "label">;
+}
+type ControlKind = keyof Controls<string, string, unknown>;
+type Never<C> = { [K in keyof C]?: never };
+type OneOf<C> = {
+	[K in keyof C]: Pick<C, K> & Never<Omit<C, K>>;
+}[keyof C];
+
+/** One control with its label, its description and its error. The control is the one descriptor set (`switch`, `checkbox`, `slider`, `select`, `options`, `segments`: the component's own props, less the label the field supplies), which the field draws in its form: a switch at the label's end, a checkbox ahead of it, any other under it; or any other control as `children`. Unbound, the consumer gives the error and the control; bound, the form's field gives both, and the control is a function of the field's value: `{(control) => <Input {...control} />}`. */
+export type FormFieldProps<
+	V = unknown,
+	S extends string | null = string,
+	O extends string = string,
+	T = unknown,
+> = FormFieldBase &
 	(
-		| {
+		| (OneOf<Controls<S, O, T>> & {
 				/** Unbound. */
 				field?: never;
 				/** The message that takes the description's place, the control drawn in error (a sentence; wraps). */
 				error?: string;
-				/** The control. */
-				children?: ReactNode;
-		  }
-		| {
-				/** The form's field: its value, its change handler and its error. */
-				field: FieldBinding<V>;
-				error?: never;
-				/** The control, handed the field's value and change handler. */
-				children: (control: FieldControl<V>) => ReactNode;
-		  }
+				children?: never;
+		  })
+		| (Never<Controls<S, O, T>> &
+				(
+					| {
+							/** Unbound. */
+							field?: never;
+							/** The message that takes the description's place, the control drawn in error (a sentence; wraps). */
+							error?: string;
+							/** Any other control (an Input, a TextArea, a Picker). */
+							children?: ReactNode;
+					  }
+					| {
+							/** The form's field: its value, its change handler and its error. */
+							field: FieldBinding<V>;
+							error?: never;
+							/** The control, handed the field's value and change handler. */
+							children: (control: FieldControl<V>) => ReactNode;
+					  }
+				))
 	);
 
-// The control a field holds: its children, or, bound, its children drawn from
-// the field's value.
-function controlOf<V>(props: FormFieldProps<V>): ReactNode {
-	return props.field
-		? props.children({
-				value: props.field.value,
-				onChange: props.field.onChange,
-				onCommit: props.field.onCommit,
-			})
-		: props.children;
+// The props a field body reads, its descriptors at their widest.
+type Body = FormFieldBase & {
+	field?: FieldBinding<unknown>;
+	error?: string;
+	children?: ReactNode | ((control: FieldControl<unknown>) => ReactNode);
+} & Partial<Controls<string | null, string, unknown>>;
+
+// The one descriptor set, if any.
+function kindOf(props: Body): ControlKind | undefined {
+	if (props.switch) return "switch";
+	if (props.checkbox) return "checkbox";
+	if (props.slider) return "slider";
+	if (props.select) return "select";
+	if (props.options) return "options";
+	if (props.segments) return "segments";
+	return undefined;
 }
 
-// What the control is decides the field's form: a switch at the label's end,
-// a checkbox ahead of it on its first line, any other under its label; a
+// The field's form follows which descriptor is set: a switch at the label's
+// end, a checkbox ahead of it on its first line, any other under its label; a
 // slider's head is its own label; a group of controls is named by the label
 // and holds controls named on their own.
-function formOf(control: ReactNode) {
-	const type = isValidElement(control) ? control.type : undefined;
-	if (type === Switch) return "switch";
-	if (type === Checkbox) return "checkbox";
-	if (type === Slider) return "slider";
-	if (type === Select) return "trigger";
-	if (type === OptionList) return "options";
-	if (type === SegmentedControl) return "segments";
-	return "field";
+type Form = "field" | ControlKind;
+
+// The control a field draws: the descriptor's component, or its children,
+// bound drawn from the field's value.
+function controlOf(props: Body, kind: ControlKind | undefined): ReactNode {
+	const { label } = props;
+	if (props.switch) return <Switch {...props.switch} label={label} />;
+	if (props.checkbox) return <Checkbox {...props.checkbox} label={label} />;
+	if (props.slider) return <Slider {...props.slider} label={label} />;
+	if (props.select) return <Select {...props.select} />;
+	if (props.options) return <OptionList {...props.options} />;
+	if (props.segments)
+		return <SegmentedControl {...props.segments} label={label} />;
+	if (kind !== undefined) return null;
+	const { field, children } = props;
+	if (typeof children !== "function") return children;
+	return field
+		? children({
+				value: field.value,
+				onChange: field.onChange,
+				onCommit: field.onCommit,
+			})
+		: null;
 }
 
-// The form a `FormField` element waits as, read off its props before its data:
-// a loading `Section` and a `Form` stand it for each field they hold. An
+// The form a field waits as, read off its own props before its data: an
 // answered field folds to one summary row, whatever its control; a Select's
 // trigger waits as the plain field; a list of options carries the rows its
 // source declares.
-export function fieldWaitOf(node: ReactNode): FieldShape {
-	if (!isValidElement<FormFieldProps>(node))
-		return { holds: "field", described: false };
-	const { answered, description } = node.props;
-	const described = Boolean(description);
-	if (answered) return { holds: "folded", described };
-	const control = controlOf(node.props);
-	const form = formOf(control);
-	if (form === "options" && isValidElement<OptionListProps>(control))
+function waitOf(props: Body): FieldShape {
+	const described = Boolean(props.description);
+	if (props.answered) return { holds: "folded", described };
+	if (props.options)
 		return {
 			holds: "options",
 			described,
-			options: optionsWaitOf(control.props),
+			options: optionsWaitOf(props.options),
 		};
-	return {
-		holds:
-			form === "switch" ||
-			form === "checkbox" ||
-			form === "slider" ||
-			form === "segments"
-				? form
-				: "field",
-		described,
-	};
+	if (props.switch) return { holds: "switch", described };
+	if (props.checkbox) return { holds: "checkbox", described };
+	if (props.slider) return { holds: "slider", described };
+	if (props.segments) return { holds: "segments", described };
+	return { holds: "field", described };
 }
 
 // The field itself: the label over its control, the description (meta) under
 // it and the error in the description's place; a switch stands at the label's
 // end and a checkbox on its first line. Base UI's field wires the label, the
 // description, the error, the validity and the disabled state into the control.
-function FieldBody<V>(props: FormFieldProps<V>) {
-	const { label, description, disabled, answered } = props;
+function FieldBody(props: Body & { gone?: boolean }) {
+	const { label, description, disabled, answered, gone } = props;
 	const words = useWords();
 	const folded = answered !== undefined;
 	// What a control refused (a file of the wrong type) stands in the error
@@ -165,8 +212,10 @@ function FieldBody<V>(props: FormFieldProps<V>) {
 	const [refused, refuse] = useState<string>();
 	const error = refused ?? (props.field ? props.field.error : props.error);
 	// A folded field draws no control, so the consumer's function is not called.
-	const control = folded ? null : controlOf(props);
-	const form = formOf(control);
+	const kind = kindOf(props);
+	const control = folded ? null : controlOf(props, kind);
+	const form: Form = kind ?? "field";
+	const hidden = gone ? HIDDEN : undefined;
 	const root = useRef<HTMLDivElement>(null);
 	const wasFolded = useRef(folded);
 	// The field unfolding hands focus to its control, which it owns; folding
@@ -192,8 +241,8 @@ function FieldBody<V>(props: FormFieldProps<V>) {
 	const named = (
 		<Field.Label
 			// A trigger is a button: a label element would press it.
-			nativeLabel={form !== "trigger"}
-			render={form === "trigger" ? <div /> : undefined}
+			nativeLabel={form !== "select"}
+			render={form === "select" ? <div /> : undefined}
 			className={cn(
 				text({ role: "body" }),
 				textStrong({ role: "body" }),
@@ -216,7 +265,7 @@ function FieldBody<V>(props: FormFieldProps<V>) {
 	// controls inside.
 	if (answered)
 		return (
-			<div ref={root} className={cn(FORM_FIELD_SUMMARY, SUMMARY)}>
+			<div ref={root} className={cn(FORM_FIELD_SUMMARY, SUMMARY, hidden)}>
 				<span className={cn(FORM_FIELD_SUMMARY_GLYPH, SUMMARY_GLYPH)}>
 					<Icon name="Check" />
 				</span>
@@ -242,7 +291,10 @@ function FieldBody<V>(props: FormFieldProps<V>) {
 		);
 	if (form === "options" || form === "segments")
 		return (
-			<div ref={root} className={cn(formField({ holds: "field" }), STACK)}>
+			<div
+				ref={root}
+				className={cn(formField({ holds: "field" }), STACK, hidden)}
+			>
 				<p
 					id={labelId}
 					className={cn(
@@ -265,6 +317,7 @@ function FieldBody<V>(props: FormFieldProps<V>) {
 		formField({ holds }),
 		holds === "switch" ? BESIDE : holds === "checkbox" ? AHEAD : STACK,
 		HOLDS_FILL,
+		hidden,
 	);
 	return (
 		<Field.Root
@@ -295,28 +348,50 @@ function FieldBody<V>(props: FormFieldProps<V>) {
 	);
 }
 
-/** The label (body 500) over its control, the description (meta) under it and the error in the description's place; a switch stands at the label's end and a checkbox on its first line. Base UI's field wires the label, the description, the error, the validity and the disabled state into the control. A `change` draws the change mark ahead of the field, on its label's line. In a `Group` it stands as one of the card's items at the card's inset, the group's hairline between, its label kept. */
-export function FormField<V>(props: FormFieldProps<V>) {
-	const { change, ...body } = props;
+/** The label (body 500) over its control, the description (meta) under it and the error in the description's place; a switch stands at the label's end and a checkbox on its first line. Base UI's field wires the label, the description, the error, the validity and the disabled state into the control. A `change` draws the change mark ahead of the field, on its label's line. In a `Group` it stands as one of the card's items at the card's inset, the group's hairline between, its label kept. In a loading `Section` or `Group` it draws its own waiting form, in the form of its control, and keeps the field mounted, hidden, so what it holds (a typed text) outlives the wait. */
+export function FormField<
+	V,
+	S extends string | null = string,
+	O extends string = string,
+	T = unknown,
+>(props: FormFieldProps<V, S, O, T>) {
+	const { change, ...rest } = props;
+	// The descriptors are read at their widest: a `Select` over `S` is one over
+	// `string | null` to the field that draws it.
+	const body = rest as Body;
+	const waiting = use(LoadingContext);
 	const item = use(GroundContext) === "group" && GROUP_ITEM;
-	const field = <FieldBody<V> {...body} />;
+	// The root the field draws hides, never a wrapper, so a Group's hairline
+	// (a child selector) still falls between its items.
+	const gone = waiting ? HIDDEN : undefined;
+	const field = (
+		<FieldBody {...body} gone={waiting && !item && change === undefined} />
+	);
 	const marked =
 		change === undefined ? (
 			field
 		) : (
-			<div className={MARKED}>
+			<div className={cn(MARKED, !item && gone)}>
 				<span className={cn(lineBox({ role: "body" }), BOX_LINE)}>
 					<ChangeMark kind={change} />
 				</span>
 				<div className={MARKED_BODY}>{field}</div>
 			</div>
 		);
-	if (!item) return marked;
 	// The field is the card's one item: what it holds (a Slider) is no second
 	// item, so its control stands on the list ground.
-	return (
-		<div className={item}>
+	const shown = item ? (
+		<div className={cn(item, gone)}>
 			<GroundContext value="list">{marked}</GroundContext>
 		</div>
+	) : (
+		marked
+	);
+	const wait = waiting ? <FieldWait {...waitOf(body)} /> : null;
+	return (
+		<>
+			{item && wait ? <div className={item}>{wait}</div> : wait}
+			{shown}
+		</>
 	);
 }

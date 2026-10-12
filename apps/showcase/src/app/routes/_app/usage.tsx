@@ -44,7 +44,12 @@ function Usage() {
 	return (
 		<Place>
 			<Pane title="Usage">
-				<Section title="This month" description="Team plan, resets on Oct 31.">
+				<Section
+					title="This month"
+					description="Team plan, resets on Oct 31."
+					count={meters.data?.length}
+					loading={meters.isPending}
+				>
 					<Group>
 						<List
 							query={meters}
@@ -63,7 +68,11 @@ function Usage() {
 						/>
 					</Group>
 				</Section>
-				<Section title="Requests" description="Per day this week, by project.">
+				<Section
+					title="Requests"
+					description="Per day this week, by project."
+					loading={requests.isPending}
+				>
 					<BarChart
 						label="Requests per day this week, by project"
 						keys={PROJECTS}
@@ -74,7 +83,11 @@ function Usage() {
 						unit="requests"
 					/>
 				</Section>
-				<Section title="Build minutes" description="Per day, the last 30 days.">
+				<Section
+					title="Build minutes"
+					description="Per day, the last 30 days."
+					loading={minutes.isPending}
+				>
 					<BarChart
 						label="Build minutes per day, Sep 3 to Oct 2"
 						query={minutes}
@@ -84,7 +97,11 @@ function Usage() {
 						unit="minutes"
 					/>
 				</Section>
-				<Section title="Cron runs" description="Per day this week.">
+				<Section
+					title="Cron runs"
+					description="Per day this week."
+					loading={cron.isPending}
+				>
 					<BarChart
 						label="Cron runs per day this week"
 						query={cron}
@@ -97,6 +114,7 @@ function Usage() {
 				<Section
 					title="Plan"
 					description="What moving to Business changes."
+					loading={plan.isPending}
 					act={{
 						label: "Move to Business",
 						onAct: () =>

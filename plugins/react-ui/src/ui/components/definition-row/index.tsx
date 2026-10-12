@@ -16,7 +16,7 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import { isValidElement, type ReactNode, use } from "react";
+import { type ReactNode, use } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { useCopy } from "../../lib/copy.ts";
 import { useGroupPart } from "../../lib/group.ts";
@@ -29,6 +29,7 @@ import { Link } from "../link/index.tsx";
 import { LockMark } from "../list-row/lock.tsx";
 import { ChangeMark } from "../status/change.tsx";
 import { Status } from "../status/index.tsx";
+import { Switch, type SwitchProps } from "../switch/index.tsx";
 import { DefinitionWait } from "./wait.tsx";
 
 const ROW = "relative flex items-center";
@@ -64,22 +65,32 @@ const CHEVRON = "flex shrink-0 items-center justify-center text-ink-meta";
 // ends at one x.
 const NO_END = "shrink-0";
 
-/** What a definition shows: a string (a word or a short phrase), a status, or an in-place control. */
-export type DefinitionValue = DefinitionData | ReactNode;
+/** What a definition shows: a string (a word or a short phrase) or a status. */
+export type DefinitionValue = DefinitionData;
 
 interface DefinitionRowBase extends Closed {
 	/** Where the fact stands in a change set: its mark at the row's start, ahead of the label. */
 	change?: ChangeKind;
 	/** What the fact is (a short phrase; wraps to the room its value leaves). */
 	label: string;
-	/** The fact: a string (a word or a short phrase; truncates at its end, an identifier of one word over eight characters cuts in its middle), a status, or a control that changes it in place. */
-	value?: DefinitionValue;
 	/** Words that are copied whole (an identifier): drawn in the code role with a copy act. */
 	copyable?: boolean;
 }
 
+/** The fact's value: a string (a word or a short phrase; truncates at its end, an identifier of one word over eight characters cuts in its middle) or a status; or a `switch` that changes it in place (the Switch's own props, named by the row's label), never both. */
+type DefinitionRowValue =
+	| {
+			value?: DefinitionValue;
+			switch?: never;
+	  }
+	| {
+			value?: never;
+			switch: Omit<SwitchProps, "label">;
+	  };
+
 /** A labelled fact in a Group: editable here, or locked with its reason. */
 export type DefinitionRowProps = DefinitionRowBase &
+	DefinitionRowValue &
 	(
 		| {
 				locked?: never;
@@ -103,17 +114,18 @@ export type DefinitionRowProps = DefinitionRowBase &
 	);
 
 function isStatus(
-	value: DefinitionValue,
+	value: DefinitionValue | undefined,
 ): value is { status: StatusState; label?: string } {
 	return typeof value === "object" && value !== null && "status" in value;
 }
 
-/** The change mark at the start, the label at body 500, wrapping to the room its value leaves, with the value at the line's end (an identifier too long for its room cut in its middle, the whole value still its text; a control whole, centred beside the label), the description under both; an icon act, or a link's chevron in the act's square, at the row's end, the square empty on a row with neither, so every value in a Group ends at one x. A locked row draws a lock after its value and its reason under both in the description's place, the whole line a link with an `href`. It waits through its Group or Section, drawing the form of the row it is given. */
+/** The change mark at the start, the label at body 500, wrapping to the room its value leaves, with the value at the line's end (an identifier too long for its room cut in its middle, the whole value still its text; a `switch` whole, centred beside the label), the description under both; an icon act, or a link's chevron in the act's square, at the row's end, the square empty on a row with neither, so every value in a Group ends at one x. A locked row draws a lock after its value and its reason under both in the description's place, the whole line a link with an `href`. It waits through its Group or Section, drawing the form of the row it is given. */
 export function DefinitionRow({
 	change,
 	label,
 	description,
 	value,
+	switch: toggle,
 	copyable,
 	locked,
 	act,
@@ -136,7 +148,7 @@ export function DefinitionRow({
 		});
 		return (
 			<DefinitionWait
-				shape={isValidElement(value) ? { ...shape, end: "switch" } : shape}
+				shape={toggle ? { ...shape, end: "switch" } : shape}
 				index={0}
 			/>
 		);
@@ -158,8 +170,12 @@ export function DefinitionRow({
 				<Status state={value.status} label={value.label} />
 			</span>
 		);
-	else if (value !== undefined && value !== null)
-		shown = <span className={CONTROL}>{value}</span>;
+	else if (toggle)
+		shown = (
+			<span className={CONTROL}>
+				<Switch {...toggle} label={label} />
+			</span>
+		);
 	let end: ReactNode;
 	if (copied !== undefined || act)
 		end = (

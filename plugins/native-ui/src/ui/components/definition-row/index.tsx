@@ -14,7 +14,7 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import { isValidElement, type ReactNode, useContext } from "react";
+import { type ReactNode, useContext } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
@@ -31,6 +31,7 @@ import { Link } from "../link";
 import { LockMark } from "../list-row/lock";
 import { Status } from "../status";
 import { ChangeMark } from "../status/change";
+import { Switch, type SwitchProps } from "../switch";
 import { DefinitionWait } from "./wait";
 
 const ROW = "relative flex-row items-center";
@@ -59,7 +60,7 @@ const CHEVRON = "shrink-0 items-center justify-center";
 // ends at one x.
 const NO_END = "shrink-0";
 
-export type DefinitionValue = DefinitionData | ReactNode;
+export type DefinitionValue = DefinitionData;
 
 interface DefinitionRowBase extends Closed {
 	// Where the fact stands in a change set: its mark at the row's start, ahead
@@ -67,15 +68,26 @@ interface DefinitionRowBase extends Closed {
 	change?: ChangeKind;
 	/** What the fact is (a short phrase; wraps to the room its value leaves). */
 	label: string;
-	// The fact: words, a status, or a control that changes it in place.
-	value?: DefinitionValue;
 	// Words that are copied whole (an identifier): drawn in the code role with
 	// a copy act.
 	copyable?: boolean;
 }
 
+// The fact's value: words or a status; or a `switch` that changes it in
+// place (the Switch's own props, named by the row's label), never both.
+type DefinitionRowValue =
+	| {
+			value?: DefinitionValue;
+			switch?: never;
+	  }
+	| {
+			value?: never;
+			switch: Omit<SwitchProps, "label">;
+	  };
+
 // A labelled fact in a Group: editable here, or locked with its reason.
 export type DefinitionRowProps = DefinitionRowBase &
+	DefinitionRowValue &
 	(
 		| {
 				locked?: never;
@@ -100,7 +112,7 @@ export type DefinitionRowProps = DefinitionRowBase &
 	);
 
 function isStatus(
-	value: DefinitionValue,
+	value: DefinitionValue | undefined,
 ): value is { status: StatusState; label?: string } {
 	return typeof value === "object" && value !== null && "status" in value;
 }
@@ -118,6 +130,7 @@ export function DefinitionRow({
 	label,
 	description,
 	value,
+	switch: toggle,
 	copyable,
 	locked,
 	act,
@@ -125,7 +138,7 @@ export function DefinitionRow({
 	onOpen,
 }: DefinitionRowProps) {
 	// In a waiting Group or Section the row draws its waiting form, built from
-	// what it is given: a control as its value stands as the switch's box.
+	// what it is given: a `switch` stands as the switch's box.
 	const waiting = useContext(LoadingContext);
 	useGroupPart();
 	if (waiting) {
@@ -140,7 +153,7 @@ export function DefinitionRow({
 		});
 		return (
 			<DefinitionWait
-				shape={isValidElement(value) ? { ...shape, end: "switch" } : shape}
+				shape={toggle ? { ...shape, end: "switch" } : shape}
 				index={0}
 			/>
 		);
@@ -170,8 +183,12 @@ export function DefinitionRow({
 				<Status state={value.status} label={value.label} />
 			</View>
 		);
-	else if (value !== undefined && value !== null)
-		shown = <View className={CONTROL}>{value}</View>;
+	else if (toggle)
+		shown = (
+			<View className={CONTROL}>
+				<Switch {...toggle} label={label} />
+			</View>
+		);
 	let end: ReactNode;
 	if (copied !== undefined || act)
 		end = (

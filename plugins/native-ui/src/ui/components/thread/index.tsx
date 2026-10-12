@@ -236,7 +236,6 @@ export function Thread<T>(props: ThreadProps<T>) {
 		items: props.items,
 		loading: props.loading,
 		sectionLoading: useContext(LoadingContext),
-		inSection: false,
 		hasEmpty: props.empty !== undefined,
 	};
 	// The latest slots, which each drawn message reads when its item changes

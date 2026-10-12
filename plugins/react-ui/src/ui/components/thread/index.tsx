@@ -212,7 +212,6 @@ export function Thread<T>(props: ThreadProps<T>) {
 		items: props.items,
 		loading: props.loading,
 		sectionLoading: use(LoadingContext),
-		inSection: false,
 		hasEmpty: props.empty !== undefined,
 	};
 	const busy = listBusy(input) || undefined;

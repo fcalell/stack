@@ -463,7 +463,7 @@ The canon binds every component either UI plugin ships:
    with no hairline (`BUTTON {act: quiet}`), never the bar's filled act. An `Act` names no glyph; an `IconAct` is an
    icon-only act whose label is its accessible name, never drawn (a create act is one, with the
    `Plus` icon, among a `Pane`'s `actions`). A `Form` has no submit handler: its
-   `ActionBar`'s filled act submits it (on the web Enter in a field runs it), that act's `onAct` is
+   `bar`'s (the `ActionBar`'s own props) filled act submits it (on the web Enter in a field runs it), that act's `onAct` is
    the one handler, and while the promise it returns pends the act is pending, the bar's other acts
    ignore the press and the form is busy. A `confirm()` is the same shape: its `Confirmation`'s act
    runs the work, pending while its promise pends (the sheet's other acts inert), the sheet closing

@@ -34,14 +34,11 @@ export interface ListInput {
 	loading?: boolean;
 	// A loading Section around the list waits.
 	sectionLoading: boolean;
-	// A Section around the list takes its busy state.
-	inSection: boolean;
 	// The list has an empty form to draw.
 	hasEmpty: boolean;
 }
 
-// The list's own items wait: its query is pending or `loading` is set. A
-// Section around registers it as a waiter.
+// The list's own items wait: its query is pending or `loading` is set.
 export function listWaits(input: ListInput): boolean {
 	return input.query?.isPending === true || input.loading === true;
 }
@@ -80,20 +77,9 @@ export function listState(input: ListInput): ListState {
 	return "loaded";
 }
 
-// The item count a list reports to the Section around it: its items' length
-// once they answer, none while they wait or once its query fails or answers
-// not found.
-export function listCount(input: ListInput): number | undefined {
-	const state = listState(input);
-	if (state === "pending" || state === "failed" || state === "missing")
-		return undefined;
-	return (input.query ? input.query.data : input.items)?.length ?? 0;
-}
-
-// Busy while its own items wait outside a Section; in one, the Section is
-// busy once.
+// Busy while its own items wait.
 export function listBusy(input: ListInput): boolean {
-	return listWaits(input) && !input.inSection;
+	return listWaits(input);
 }
 
 // The failed form's Retry: it refetches the query.
@@ -469,46 +455,6 @@ export function factShape(
 	};
 }
 
-// The count a Section shows: its own `count` when it has one (a total its
-// lists do not hold), else its lists' total once every list has answered (a
-// list still waiting, failed or missing gives none), else none; an empty collection
-// shows none, its empty state saying so.
-export function sectionCount(
-	own: number | undefined,
-	lists: readonly (number | undefined)[],
-): number | undefined {
-	if (own !== undefined) return own === 0 ? undefined : own;
-	if (lists.length === 0) return undefined;
-	let total = 0;
-	for (const value of lists) {
-		if (value === undefined) return undefined;
-		total += value;
-	}
-	return total === 0 ? undefined : total;
-}
-
-// What a Section reads off its body in render, by the depth rule: the
-// collections standing as its direct children, inside a direct Group, or as
-// a direct QueryBoundary's props. Nothing deeper registers or is read.
-export interface SectionParts {
-	// Each List or Table: it waits, and it counts and is a body of rows unless
-	// `definition` is set (its `definition` map is given). A List of facts is
-	// no collection a viewer counts: it waits alone, like a chart.
-	lists: readonly (Pick<ListInput, "query" | "items" | "loading"> & {
-		definition?: boolean;
-	})[];
-	// Each other waiter: a QueryBoundary's queries, a BarChart's or a
-	// Comparison's own items, whether they wait.
-	waits: readonly boolean[];
-	// Each Group, a body of rows with or without a List of its own.
-	groups: number;
-	// Each FormField.
-	fields: number;
-	// Each part that draws its own waiting form while the Section loads (a
-	// Prose, a Thread, a Code, a Meter, a Slider).
-	forms: number;
-}
-
 // What a waiting field is told of the field it stands in for, known before
 // its data: the form its control gives it (a switch at its label's end, a
 // checkbox on its label's first line, a slider that labels itself, an option
@@ -540,59 +486,6 @@ export interface OptionsWait {
 // The rows a query's waiting option list stands: its options are unknown
 // before the data.
 export const OPTION_WAIT_ROWS = 4;
-
-export interface SectionState {
-	// The head is busy: the Section loads or any part of its body waits.
-	busy: boolean;
-	// The head has a count to show or to wait as.
-	counted: boolean;
-	// The count shown (`sectionCount`).
-	count: number | undefined;
-	// How many skeleton fields stand in for the body.
-	fields: number;
-}
-
-// A loading body of fields waits as one skeleton per field, or as three
-// when it holds none (content no part knows how to wait as).
-const FALLBACK_FIELDS = 3;
-
-// The Section's head and loading body, decided from its own props and the
-// parts its body holds: busy while it loads or a part waits; its own count,
-// else the total of its lists that are no `definition` list, once each
-// answers; and, while it loads with no body of rows (which waits as its own
-// skeleton rows) and no part that waits in its own form beside no field, one
-// skeleton field per field, or three.
-export function sectionState(
-	parts: SectionParts,
-	own: { count?: number; loading?: boolean },
-): SectionState {
-	const loading = own.loading === true;
-	const inputOf = (list: SectionParts["lists"][number]): ListInput => ({
-		query: list.query,
-		items: list.items,
-		loading: list.loading,
-		sectionLoading: loading,
-		inSection: true,
-		hasEmpty: false,
-	});
-	const counting = parts.lists.filter((list) => !list.definition);
-	const rows = counting.length + parts.groups;
-	return {
-		busy:
-			loading ||
-			parts.lists.some((list) => listWaits(inputOf(list))) ||
-			parts.waits.some(Boolean),
-		counted: own.count !== undefined || counting.length > 0,
-		count: sectionCount(
-			own.count,
-			counting.map((list) => listCount(inputOf(list))),
-		),
-		fields:
-			!loading || rows > 0 || (parts.forms > 0 && parts.fields === 0)
-				? 0
-				: parts.fields || FALLBACK_FIELDS,
-	};
-}
 
 // The slots a waiting OptionList's check rows draw, known before any option:
 // a description bar under each label, and a group label's bar over the rows.
