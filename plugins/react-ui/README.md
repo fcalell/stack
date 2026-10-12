@@ -138,8 +138,9 @@ graph, compiles it with the Tailwind CLI in `scripts/fixture/`, and holds the co
   `h1`), a `description` (a `Sentence`: runs with `{ strong }` and `{ code }` parts) and the body. It mounts the
   same `FrameHost` as the `Shell` (`components/shell/host.tsx`: the `toast()` queue, the `confirm()`
   decisions). The first field of a step takes focus as the page opens and as `title`
-  changes (`focusFirst` in `./lib/focus`), and it sets `FormStands` to `auth`, so an `ActionBar` with
-  no `fit` reads `full`.
+  changes (`focusFirst` in `./lib/focus`). Its `form` (a `Form`'s props) is drawn in the column by the
+  Gate (`components/form/base.tsx`, `in` the auth column), its `bar` set `full`; a first run's `empty`
+  is drawn by `lib/empty.tsx`.
 
 ## The showcase
 

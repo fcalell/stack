@@ -15,7 +15,6 @@ import { Chip } from "@fcalell/plugin-react-ui/components/chip";
 import { Columns } from "@fcalell/plugin-react-ui/components/columns";
 import { Count } from "@fcalell/plugin-react-ui/components/count";
 import { DefinitionRow } from "@fcalell/plugin-react-ui/components/definition-row";
-import { EmptyState } from "@fcalell/plugin-react-ui/components/empty-state";
 import { Failed } from "@fcalell/plugin-react-ui/components/failed";
 import { FileInput } from "@fcalell/plugin-react-ui/components/file-input";
 import { Form } from "@fcalell/plugin-react-ui/components/form";
@@ -462,15 +461,6 @@ export const closure = (
 		<ItemHeader overline={["x"]} class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<ItemHeader overline={["x"]} classList={{}} />
-		<EmptyState sentence="x" />
-		{/* @ts-expect-error: closed channel */}
-		<EmptyState sentence="x" className="x" />
-		{/* @ts-expect-error: closed channel */}
-		<EmptyState sentence="x" style={{ flex: 1 }} />
-		{/* @ts-expect-error: closed channel */}
-		<EmptyState sentence="x" class="x" />
-		{/* @ts-expect-error: closed channel */}
-		<EmptyState sentence="x" classList={{}} />
 		<Failed sentence="x" act={{ label: "x", onAct: () => {} }} />
 		{/* @ts-expect-error: a Failed's act runs a function, never a link */}
 		<Failed sentence="x" act={{ label: "x", href: "/" }} />

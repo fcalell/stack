@@ -2186,12 +2186,6 @@ components:
     backgroundColor: "{colors.scrim}"
   scrim-dark:
     backgroundColor: "{colors.scrim-dark}"
-  section-nested-title:
-    typography: "{typography.body}"
-    textColor: "{colors.ink-body}"
-  section-nested-title-dark:
-    typography: "{typography.body}"
-    textColor: "{colors.ink-body-dark}"
   section-toggle:
     height: "{spacing.target}"
     rounded: "{rounded.row}"
@@ -2622,12 +2616,12 @@ A docked sheet's body keeps `docked-floor` (144px on touch, 96px on the desktop)
 | `Avatar` | atom | `AVATAR`, `AVATAR_LABEL` | rest |
 | `Link` | atom | `LINK`, `LINK_TARGET` | rest, hover, focus, active |
 | `Place` | layout | none | rest |
-| `Pane` | layout | `PAGE_HEAD`, `PAGE_HEAD_ROOM`, `PAGE_TOP_BAR`, `PAGE_TOP_BAR_START`, `PAGE_TOP_BAR_END`, `PAGE_TITLE_FLOOR`, `PAGE_TITLE_BLOCK`, `PAGE_HEAD_WRAPS`, `TEXT.role.title`, `PAGE_BODY`, `FOOT_DOCKED`, `PAGE_BODY_OVER_FOOT`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
-| `Gate` | layout | `GATE`, `GATE_COLUMN`, `GATE_FLOW`, `GATE_STEP`, `GATE_MARK`, `GATE_MARK_ROW`, `GATE_LOGO`, `TEXT.role.title`, `TEXT.role.meta`, `TEXT.role.body`, `TEXT_STRONG.role.body` | rest |
-| `Section` | layout | `SECTION`, `SECTION_HEAD`, `SECTION_HEAD_ROW`, `SECTION_ACTS`, `SECTION_BODY`, `SECTION_TITLE`, `SECTION_TOGGLE`, `SECTION_NESTED_TITLE`, `TEXT.role.heading`, `TEXT.role.meta`, `ICON.fit.body`, `COUNT`, `COUNT_LABEL`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive`, `ICON_BUTTON.fit.bar`, `SKELETON.kind.count`, `SKELETON.kind.line`, `TEXT.role.caption`, `LINE_BOX.role.meta` | rest, hover, focus, active, disabled, loading |
+| `Pane` | layout | `PAGE_HEAD`, `PAGE_HEAD_ROOM`, `PAGE_TOP_BAR`, `PAGE_TOP_BAR_START`, `PAGE_TOP_BAR_END`, `PAGE_TITLE_FLOOR`, `PAGE_TITLE_BLOCK`, `PAGE_HEAD_WRAPS`, `TEXT.role.title`, `PAGE_BODY`, `FOOT_DOCKED`, `PAGE_BODY_OVER_FOOT`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body`, `EMPTY_COLUMN`, `EMPTY_TEXT`, `EMPTY_MARK`, `ICON.fit.control`, `TEXT.role.heading`, `TEXT.role.meta` | rest, empty |
+| `Gate` | layout | `GATE`, `GATE_COLUMN`, `GATE_FLOW`, `GATE_STEP`, `GATE_MARK`, `GATE_MARK_ROW`, `GATE_LOGO`, `TEXT.role.title`, `TEXT.role.meta`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `EMPTY_COLUMN`, `EMPTY_TEXT`, `EMPTY_MARK`, `ICON.fit.control`, `BUTTON.act.primary`, `BUTTON.fit.body`, `BUTTON_LABEL.act.primary` | rest, empty |
+| `Section` | layout | `SECTION`, `SECTION_HEAD`, `SECTION_HEAD_ROW`, `SECTION_ACTS`, `SECTION_BODY`, `SECTION_TITLE`, `SECTION_TOGGLE`, `TEXT.role.heading`, `TEXT.role.meta`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `EMPTY_COLUMN`, `EMPTY_TEXT`, `EMPTY_FRAME`, `EMPTY_MARK`, `ICON.fit.control`, `ICON.fit.body`, `COUNT`, `COUNT_LABEL`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive`, `ICON_BUTTON.fit.bar`, `SKELETON.kind.count`, `SKELETON.kind.line`, `TEXT.role.caption`, `LINE_BOX.role.meta` | rest, hover, focus, active, disabled, loading, empty |
 | `Group` | layout | `GROUP` | rest, loading |
 | `List` | layout | `LIST`, `LIST_TREE`, `LIST_DIVIDED` | rest, loading, error, empty |
-| `Form` | layout | `FORM`, `FORM_FOOT`, `FORM_GROUP`, `FORM_LEGEND`, `SECTION_NESTED_TITLE`, `TEXT.role.heading`, `TEXT.role.meta` | rest, loading |
+| `Form` | layout | `FORM`, `FORM_FOOT`, `FORM_GROUP`, `FORM_LEGEND`, `TEXT.role.heading`, `TEXT.role.meta` | rest, loading |
 | `Toolbar` | layout | `TOOLBAR`, `TOOLBAR_ROW`, `TOOLBAR_CHIPS` | rest |
 | `ActionBar` | layout | `ACTION_BAR`, `ACTION_BAR_ACTS`, `ACTION_BAR_CHOSEN`, `ACTION_BAR_SELECTION`, `ACTION_BAR_ALL`, `TEXT.role.meta`, `FIELD_ERROR_LINE`, `BUTTON.act.primary`, `BUTTON.act.danger`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.act.quiet`, `BUTTON.fit.body`, `BUTTON.fit.field`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.danger`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive`, `BUTTON_LABEL.act.quiet`, `SKELETON.kind.bar`, `SKELETON.kind.field` | rest, loading, disabled |
 | `Columns` | layout | `COLUMNS` | rest |
@@ -2641,7 +2635,6 @@ A docked sheet's body keeps `docked-floor` (144px on touch, 96px on the desktop)
 | `Picker` | shared | `PICKER`, `HAIRLINE`, `ROW_LEADING`, `AVATAR`, `AVATAR_LABEL`, `WORD_ACT`, `PICKER_VALUE`, `ICON.fit.meta`, `CHIP`, `CHIP_LABEL`, `FIELD.fit.bar`, `FIELD.trailing.none`, `FIELD.state.rest`, `FIELD_VALUE.kind.text`, `FIELD_VALUE.kind.search`, `FIELD_PLACEHOLDER`, `FIELD_GLYPH`, `CHIPS_RUN`, `CHIPS_TRIGGER`, `ICON.fit.control`, `PICKER_EMPTY`, `POPOVER`, `PICKER_POPOVER`, `SELECT_GROUP`, `ROW.lines.one`, `ROW.lines.two`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.list`, `ROW.ground.group`, `TEXT.role.body`, `TEXT.role.meta`, `ICON.fit.body` | rest, hover, focus, active, selected, disabled |
 | `Menu` | shared | `MENU`, `MENU_GROUP`, `MENU_LABEL`, `POPOVER`, `ROW.lines.one`, `ROW.lines.two`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.list`, `TEXT.role.body`, `TEXT.role.meta`, `ICON.fit.body`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest, hover, focus, active |
 | `OptionList` | shared | `OPTION_LIST`, `SELECT_GROUP`, `OPTION_GROUP_LABEL`, `TEXT.role.meta`, `TEXT_STRONG.role.meta`, `ROW.lines.one`, `ROW.lines.two`, `ROW.lines.whole`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.list`, `OPTION_LINE`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `CHECKBOX`, `CHECKBOX_MARK`, `OPTION_RADIO`, `OPTION_RADIO_DOT`, `TEXT.role.body`, `ROW_TITLE_LINE`, `ROW_META_LINE`, `CHIP.family.neutral`, `CHIP_LABEL.family.neutral`, `OPTION_CHILDREN`, `OPTION_INDENT`, `SKELETON.kind.check`, `SKELETON.kind.radio`, `SKELETON.kind.line`, `SKELETON_LANE`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary` | rest, hover, focus, active, loading, error, empty, selected, disabled |
-| `EmptyState` | shared | `EMPTY_COLUMN`, `EMPTY_TEXT`, `EMPTY_FRAME`, `EMPTY_CARD`, `EMPTY_MARK`, `ICON.fit.control`, `TEXT.role.title`, `TEXT.role.heading`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `BUTTON.act.primary`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.secondary` | rest |
 | `Missing` | shared | `EMPTY_COLUMN`, `EMPTY_TEXT`, `EMPTY_FRAME`, `EMPTY_CARD`, `TEXT.role.meta`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.secondary` | rest |
 | `Failed` | shared | `EMPTY_COLUMN`, `EMPTY_TEXT`, `EMPTY_FRAME`, `EMPTY_CARD`, `EMPTY_MARK`, `ICON.fit.control`, `TEXT.role.meta`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.secondary` | rest |
 | `QueryBoundary` | shared | none | rest, loading, error |
@@ -2691,9 +2684,9 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Spinner` | none | none | `full` | none | `spinner` | none |
 | `Avatar` | `caption` | `avatar-` | `full` | none | `avatar` | none |
 | `Link` | none | `accent-ink`, `ring` | none | none | `target` | none |
-| `Pane` | `title` | `ink-body`, `ink-meta`, `edge`, `edge-raised`, `raised`, `wash-hover`, `wash-press` | `control` | `acts`, `page`, `sections`, `pair`, `inside` | `strip`, `control`, `control-compact`, `icon-inset`, `measure`, `target`, `list`, `region-min` | none |
-| `Gate` | `title`, `meta`, `body` | `ink-body`, `ink-meta`, `surface` | none | `page`, `sections`, `fields`, `inside` | `auth`, `avatar`, `gate-mark` | none |
-| `Section` | `heading`, `meta`, `body`, `caption` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `danger` | `row`, `control`, `chip` | `pair`, `fields`, `inside`, `control-x`, `acts` | `icon`, `control-compact`, `skeleton`, `field`, `target` | none |
+| `Pane` | `title`, `heading`, `meta` | `ink-body`, `ink-meta`, `edge`, `edge-raised`, `raised`, `wash-hover`, `wash-press`, `fill-neutral` | `control`, `full` | `acts`, `page`, `sections`, `pair`, `inside`, `fields` | `strip`, `control`, `control-compact`, `icon-inset`, `measure`, `target`, `list`, `region-min`, `empty`, `icon-control` | none |
+| `Gate` | `title`, `meta`, `body` | `ink-body`, `ink-meta`, `surface`, `fill-neutral`, `act-accent`, `on-act-accent` | `full`, `control` | `page`, `sections`, `fields`, `inside`, `pair`, `acts`, `control-x` | `auth`, `avatar`, `gate-mark`, `empty`, `control`, `control-compact`, `icon-control` | none |
+| `Section` | `heading`, `meta`, `body`, `caption` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `danger`, `fill-neutral` | `row`, `control`, `chip`, `card`, `full` | `pair`, `fields`, `inside`, `control-x`, `acts`, `card` | `icon`, `control-compact`, `skeleton`, `field`, `target`, `empty`, `control`, `icon-control` | none |
 | `Group` | none | `edge`, `surface` | `card` | none | none | none |
 | `List` | none | `edge` | none | `rows`, `control-x` | none | none |
 | `Form` | `heading`, `body`, `meta` | `edge`, `ink-body`, `ink-meta`, `raised` | none | `fields`, `sections`, `pair`, `card` | `measure` | none |
@@ -2710,7 +2703,6 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Picker` | `body`, `meta`, `caption` | `ink-body`, `ink-meta`, `ink-disabled`, `surface`, `edge`, `edge-hover`, `raised`, `avatar-`, `chip-`, `edge-raised`, `wash-hover`, `wash-press`, `ring` | `full`, `control`, `popover`, `row` | `inside`, `pair`, `float`, `rows`, `control-x`, `card` | `target`, `control-compact`, `popover`, `avatar`, `chip`, `chips-inset`, `hairline`, `measure-short`, `row`, `row-2`, `icon-meta`, `icon`, `icon-control` | `float` |
 | `Menu` | `body`, `meta` | `raised`, `edge-raised`, `edge`, `ink-body`, `ink-meta`, `ink-disabled`, `danger`, `wash-hover`, `wash-press` | `popover`, `row`, `control` | `pair`, `float`, `rows`, `inside`, `control-x` | `popover`, `row`, `row-2`, `icon`, `control`, `control-compact` | `float` |
 | `OptionList` | `body`, `meta`, `caption` | `surface`, `edge`, `edge-strong`, `ink-body`, `ink-meta`, `ink-disabled`, `fill-disabled`, `toggle-on`, `on-accent`, `ring`, `wash-hover`, `wash-press`, `skeleton`, `chip-` | `card`, `row`, `chip`, `full`, `control` | `pair`, `float`, `rows`, `control-x`, `inside` | `row`, `row-2`, `check`, `dot`, `icon-meta`, `chip`, `measure-short`, `skeleton`, `control-compact` | none |
-| `EmptyState` | `title`, `heading`, `body`, `meta` | `fill-neutral`, `ink-body`, `ink-meta`, `danger`, `edge`, `act-accent`, `on-act-accent` | `full`, `card`, `control` | `fields`, `pair`, `card`, `inside`, `control-x`, `acts` | `empty`, `control`, `control-compact`, `icon-control` | none |
 | `Missing` | `body`, `meta` | `edge`, `ink-body`, `ink-meta` | `card`, `control` | `fields`, `pair`, `card`, `inside`, `control-x` | `empty`, `control`, `control-compact` | none |
 | `Failed` | `body`, `meta` | `fill-neutral`, `ink-body`, `ink-meta`, `danger`, `edge` | `full`, `card`, `control` | `fields`, `pair`, `card`, `inside`, `control-x` | `empty`, `control`, `control-compact`, `icon-control` | none |
 | `Toast` | `body` | `raised`, `edge-raised`, `edge`, `ink-body`, `ink-meta`, `ok`, `warn`, `chip-amber`, `danger` | `card`, `control` | `card`, `pair`, `inside`, `control-x` | `toast`, `icon`, `control-compact` | `float` |

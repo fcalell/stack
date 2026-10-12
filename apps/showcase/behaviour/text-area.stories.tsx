@@ -53,39 +53,31 @@ function Sectioned(props: { value: string }) {
 
 export default { title: "Behaviour/TextArea" } satisfies Meta;
 
-// A source field in a page's form fills the free height of the page with its
-// act in view, and a long value scrolls inside the field, not the page.
-export const SourceFillsPage: StoryObj = {
+// A source field never fills the page: it is as tall as its value, and the
+// page's body scrolls past it to the act under it.
+export const SourceGrowsWithItsValue: StoryObj = {
 	render: () => <Page kind="source" value={LINES.join("\n")} />,
 	play: async ({ canvas }) => {
 		const field = canvas.getByRole("textbox", { name: "Source" });
-		const save = canvas.getByRole("button", { name: "Save" });
 		await waitFor(() =>
-			expect(field.getBoundingClientRect().height).toBeGreaterThan(
-				innerHeight / 2,
-			),
+			expect(field.getBoundingClientRect().height).toBeGreaterThan(innerHeight),
 		);
-		await expect(save.getBoundingClientRect().bottom).toBeLessThanOrEqual(
-			innerHeight,
-		);
-		await expect(field.scrollHeight).toBeGreaterThan(field.clientHeight);
+		await expect(field.scrollHeight).toBeLessThanOrEqual(field.clientHeight);
 	},
 };
 
-// An empty source field still fills the page.
-export const EmptySourceFillsPage: StoryObj = {
+// An empty source field keeps its three lines, whatever room the page leaves.
+export const EmptySourceKeepsItsThreeLines: StoryObj = {
 	render: () => <Page kind="source" value="" />,
 	play: async ({ canvas }) => {
 		const field = canvas.getByRole("textbox", { name: "Source" });
-		await waitFor(() =>
-			expect(field.getBoundingClientRect().height).toBeGreaterThan(
-				innerHeight / 2,
-			),
+		await expect(field.getBoundingClientRect().height).toBeLessThan(
+			innerHeight / 3,
 		);
 	},
 };
 
-// Prose, or a field among a page's sections, grows with its value.
+// Prose grows with its value.
 export const ProseGrows: StoryObj = {
 	render: () => <Page kind="prose" value="One line." />,
 	play: async ({ canvas }) => {

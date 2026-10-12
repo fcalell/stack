@@ -17,7 +17,6 @@ import { useContext, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { FormStands } from "../../lib/form";
 import { LoadingContext } from "../../lib/loading";
 import {
 	ActFailed,
@@ -66,7 +65,7 @@ function kindOf(act: Act, last: boolean): ButtonAct {
 export interface ActionBarProps extends Closed {
 	acts: Act[];
 	// Where the bar stands: at its container's end (the default), or across it
-	// (the default inside a `Gate`).
+	// (a `Gate`'s form draws its bar so).
 	fit?: ActionBarFit;
 	// A selection bar's count, "N of M chosen" at meta over the acts (a
 	// `Table`'s `choose` set against its rows), with
@@ -150,9 +149,7 @@ export function ActionBar({
 	loading,
 	pending,
 }: ActionBarProps) {
-	// Inside a `Gate` a bar with no `fit` stands across the column.
-	const inColumn = useContext(FormStands) === "auth";
-	const where = fit ?? (inColumn ? "full" : "end");
+	const where = fit ?? "end";
 	const kept = useContext(ReasonKept);
 	const failed = useContext(ActFailed);
 	// The last blocked act's reason takes the line a failure would draw in.

@@ -1,5 +1,4 @@
 import { Button } from "@fcalell/plugin-react-ui/components/button";
-import { EmptyState } from "@fcalell/plugin-react-ui/components/empty-state";
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Gate } from "@fcalell/plugin-react-ui/components/gate";
 import { Input } from "@fcalell/plugin-react-ui/components/input";
@@ -20,20 +19,22 @@ function Step() {
 
 function FirstRun() {
 	return (
-		<Gate>
-			<EmptyState
-				icon="Rocket"
-				title="Deploy your first app"
-				sentence="Connect a repository and Acme builds and deploys every push to main."
-				act={{ label: "Connect a repository", onAct: () => {} }}
-			>
-				<Button
-					act="secondary"
-					label="Start from a template"
-					onAct={() => {}}
-				/>
-			</EmptyState>
-		</Gate>
+		<Gate
+			empty={{
+				icon: "Rocket",
+				title: "Deploy your first app",
+				sentence:
+					"Connect a repository and Acme builds and deploys every push to main.",
+				act: { label: "Connect a repository", onAct: () => {} },
+				children: (
+					<Button
+						act="secondary"
+						label="Start from a template"
+						onAct={() => {}}
+					/>
+				),
+			}}
+		/>
 	);
 }
 
@@ -52,7 +53,7 @@ export const FirstField: StoryObj = {
 	},
 };
 
-// An untitled Gate is a first run: its EmptyState's title is the page's one
+// An untitled Gate is a first run: its `empty` title is the page's one
 // h1, and the column stands centred across and down the viewport.
 async function expectCentred(canvasElement: HTMLElement, width: number) {
 	const { page } = await import("vitest/browser");

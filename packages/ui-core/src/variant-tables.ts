@@ -1194,7 +1194,8 @@ export const PLACE_TAB_LABEL = matrix({
 // holds sections (each section's fields then at the fields rhythm). On a page
 // the column is at most a line of running text wide, so its fields, banners
 // and act end together; in a sheet the sheet is the column, in a `Gate` the
-// gate's.
+// gate's. `in` is the drawer's alone: a Form placed alone is the page's, and
+// a Sheet's or a Gate's `form` draws its own.
 export const FORM = matrix({
 	base: "",
 	variants: {

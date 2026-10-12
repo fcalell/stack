@@ -635,7 +635,7 @@ export const COMPARISON_LABEL = "gap-inside";
 // the row's height behind a transparent side border, so the `Input` that
 // edits it in place (the field's bar fit) puts its text where the cell's
 // stands. The frozen leading column's cell stands on the surface. An empty
-// grid's EmptyState stands a page inset under its header, across its width.
+// grid's empty form stands a page inset under its header, across its width.
 // A change cell's values and the arrow between them stand an inside gap
 // apart, the arrow in the meta ink (the values' inks are `TABLE_CHANGE_VALUE`).
 export const TABLE_FRAME = "-mx-control-x";
@@ -902,11 +902,6 @@ export const SECTION_ACTS = "gap-acts";
 export const SECTION_BODY = "gap-fields";
 export const SECTION_TITLE = "gap-inside";
 export const SECTION_TOGGLE = "gap-inside min-h-target px-inside rounded-row";
-// A Section inside a Section, or a folded one, names itself a level below an
-// open top-level title: the body size at the heading's weight, so the screen
-// draws no new size.
-export const SECTION_NESTED_TITLE =
-	"text-body leading-body font-semibold text-ink-body";
 // A group: a hairline card on the surface drawing the hairline between its
 // rows once, so no row carries one. `divide-*` is a child selector uniwind
 // drops, so native draws that hairline per row.

@@ -1,4 +1,3 @@
-import { Form } from "@fcalell/plugin-react-ui/components/form";
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Gate } from "@fcalell/plugin-react-ui/components/gate";
 import { Input } from "@fcalell/plugin-react-ui/components/input";
@@ -48,9 +47,10 @@ let router: ReturnType<typeof makeRouter>;
 function Edit() {
 	const [name, setName] = useState("Acme");
 	return (
-		<Gate title="Rename domain">
-			<Form
-				bar={{
+		<Gate
+			title="Rename domain"
+			form={{
+				bar: {
 					acts: [
 						{
 							label: "Save",
@@ -59,13 +59,14 @@ function Edit() {
 							},
 						},
 					],
-				}}
-			>
-				<FormField label="Name">
-					<Input value={name} onChange={setName} />
-				</FormField>
-			</Form>
-		</Gate>
+				},
+				children: (
+					<FormField label="Name">
+						<Input value={name} onChange={setName} />
+					</FormField>
+				),
+			}}
+		/>
 	);
 }
 

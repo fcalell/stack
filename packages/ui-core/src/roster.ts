@@ -580,7 +580,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// title; the actions and more) and a body that scrolls, its children a
 		// sections gap apart within the measure (the Pane's width when `wide`).
 		// A `foot` (a field or a selection bar) docks under the body and spans
-		// it; a `MessageInput` keeps its own measure column. A `cover` Pane spans
+		// it; a `MessageInput` keeps its own measure column. A `sheet` docks there
+		// in the foot's place while it is open, the Pane measuring the foot's
+		// region for it. `empty` stands in place of the children: centred in
+		// what the body leaves, or at its top over the empty state's own children
+		// (the mark, the title at the heading role over the sentence at meta, the
+		// act the filled one with the plus). A `cover` Pane spans
 		// its Place, the Panes before it hidden. On a record's Pane the title is the
 		// record's name (a `Part`, the generic word for the kind while it loads)
 		// and the actions and more are the record's acts.
@@ -591,6 +596,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"actions",
 				"more",
 				"foot",
+				"sheet",
+				"empty",
 				"cover",
 				"wide",
 				"children",
@@ -610,6 +617,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"PAGE_BODY_OVER_FOOT",
 				"ICON_BUTTON.fit.bar",
 				"ICON_BUTTON.fit.body",
+				"EMPTY_COLUMN",
+				"EMPTY_TEXT",
+				"EMPTY_MARK",
+				"ICON.fit.control",
+				"TEXT.role.heading",
+				"TEXT.role.meta",
 			],
 			holds: [
 				"PAGE_HEAD",
@@ -623,9 +636,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"PAGE_BODY",
 				"PAGE_BODY_OVER_FOOT",
 			],
-			states: ["rest"],
+			states: ["rest", "empty"],
 			owns: {
-				roles: ["title"],
+				roles: ["title", "heading", "meta"],
 				colors: [
 					"ink-body",
 					"ink-meta",
@@ -634,9 +647,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"raised",
 					"wash-hover",
 					"wash-press",
+					"fill-neutral",
 				],
-				radii: ["control"],
-				spacing: ["acts", "page", "sections", "pair", "inside"],
+				radii: ["control", "full"],
+				spacing: ["acts", "page", "sections", "pair", "inside", "fields"],
 				sizes: [
 					"strip",
 					"control",
@@ -646,6 +660,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"target",
 					"list",
 					"region-min",
+					"empty",
+					"icon-control",
 				],
 			},
 		},
@@ -658,12 +674,23 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// between every part. It hosts
 		// `toast()` and `confirm()`. On touch it spans the viewport inside the page
 		// inset and a typed step stands at the top. The first field of a step takes
-		// focus, and a `Form`'s `ActionBar` in it draws `full`. The title is
+		// focus, and its `form` (a Form's props, drawn after the children) draws its
+		// `ActionBar` `full`. The title is
 		// optional: without it the Gate is a first run, drawing no step stack and no `h1`
-		// of its own (`step` and `description` come only with a title, the mark beside them), its
-		// one `EmptyState` the page's `h1`, the column centred down at every width.
+		// of its own (`step`, `description` and `form` come only with a title, the mark beside them), its
+		// `empty` the page's `h1` (the mark, the title at the title role over the
+		// sentence, the act the filled one and its children stacked across the
+		// column), the column centred down at every width.
 		Gate: {
-			props: ["title", "description", "step", "banner", "children"],
+			props: [
+				"title",
+				"description",
+				"step",
+				"banner",
+				"form",
+				"empty",
+				"children",
+			],
 			draws: [
 				"GATE",
 				"GATE_COLUMN",
@@ -676,6 +703,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"TEXT.role.meta",
 				"TEXT.role.body",
 				"TEXT_STRONG.role.body",
+				"EMPTY_COLUMN",
+				"EMPTY_TEXT",
+				"EMPTY_MARK",
+				"ICON.fit.control",
+				"BUTTON.act.primary",
+				"BUTTON.fit.body",
+				"BUTTON_LABEL.act.primary",
 			],
 			holds: [
 				"GATE",
@@ -686,12 +720,36 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"GATE_MARK_ROW",
 				"GATE_LOGO",
 			],
-			states: ["rest"],
+			states: ["rest", "empty"],
 			owns: {
 				roles: ["title", "meta", "body"],
-				colors: ["ink-body", "ink-meta", "surface"],
-				spacing: ["page", "sections", "fields", "inside"],
-				sizes: ["auth", "avatar", "gate-mark"],
+				colors: [
+					"ink-body",
+					"ink-meta",
+					"surface",
+					"fill-neutral",
+					"act-accent",
+					"on-act-accent",
+				],
+				radii: ["full", "control"],
+				spacing: [
+					"page",
+					"sections",
+					"fields",
+					"inside",
+					"pair",
+					"acts",
+					"control-x",
+				],
+				sizes: [
+					"auth",
+					"avatar",
+					"gate-mark",
+					"empty",
+					"control",
+					"control-compact",
+					"icon-control",
+				],
 			},
 		},
 		// The fold toggle is the title line; a blocked act's reason stands on
@@ -703,7 +761,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// ActionBar its own.
 		// While it loads, `description=""` stands one meta-height bar where the
 		// sentence will be, and an undefined `description` stands none; loaded, `""`
-		// draws no line, as an undefined one.
+		// draws no line, as an undefined one. `empty` stands in its body's place in
+		// a hairline frame (the mark, the title at body 500 over the sentence at
+		// meta, the act the hairline one), or as one quiet sentence at meta when
+		// only the sentence is given. The title is the heading size, folded or not,
+		// and no Section stands in a Section.
 		Section: {
 			props: [
 				"title",
@@ -714,6 +776,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"act",
 				"more",
 				"loading",
+				"empty",
 				"children",
 			],
 			draws: [
@@ -724,9 +787,15 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SECTION_BODY",
 				"SECTION_TITLE",
 				"SECTION_TOGGLE",
-				"SECTION_NESTED_TITLE",
 				"TEXT.role.heading",
 				"TEXT.role.meta",
+				"TEXT.role.body",
+				"TEXT_STRONG.role.body",
+				"EMPTY_COLUMN",
+				"EMPTY_TEXT",
+				"EMPTY_FRAME",
+				"EMPTY_MARK",
+				"ICON.fit.control",
 				"ICON.fit.body",
 				"COUNT",
 				"COUNT_LABEL",
@@ -750,7 +819,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SECTION_TITLE",
 				"SECTION_TOGGLE",
 			],
-			states: [...PRESS, "disabled", "loading"],
+			states: [...PRESS, "disabled", "loading", "empty"],
 			owns: {
 				roles: ["heading", "meta", "body", "caption"],
 				colors: [
@@ -762,10 +831,20 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"wash-press",
 					"ring",
 					"danger",
+					"fill-neutral",
 				],
-				radii: ["row", "control", "chip"],
-				spacing: ["pair", "fields", "inside", "control-x", "acts"],
-				sizes: ["icon", "control-compact", "skeleton", "field", "target"],
+				radii: ["row", "control", "chip", "card", "full"],
+				spacing: ["pair", "fields", "inside", "control-x", "acts", "card"],
+				sizes: [
+					"icon",
+					"control-compact",
+					"skeleton",
+					"field",
+					"target",
+					"empty",
+					"control",
+					"icon-control",
+				],
 			},
 		},
 		// Waiting, each Meter, Slider and DefinitionRow in it draws its own waiting
@@ -784,7 +863,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// A collection: its rows from `query` or `items` through one item map
 		// (`row` for ListRows, `file` for FileRows, `meter` for Meters,
 		// `definition` for DefinitionRows), its waiting rows the row's own in
-		// the slots the map declares, its failed and empty EmptyStates its own.
+		// the slots the map declares, its failed and empty forms its own.
 		// In a Group its rows and forms stand on the card, the card their box.
 		// A `row` map with `children` makes it a tree: the rows abut
 		// (`LIST_TREE`), each level one step in, and the List owns which
@@ -821,9 +900,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// description, lead and fields a fields step apart, the groups a
 		// sections step apart; a group's `loading` waits its fields as a
 		// loading Section's do). `bar` is the ActionBar's own props, drawn in its
-		// foot: under a hairline across a form of groups, stuck to the edge of a
-		// sheet's body (web), the sheet's pinned foot (phone). A Form in a sheet
-		// stands on that column, uncapped.
+		// foot: under a hairline across a form of groups. A Form placed alone is
+		// the page's, at most a measure wide; a Sheet's or a Gate's `form` (these
+		// props) stands on their column, uncapped, a Sheet's bar stuck to the edge
+		// of its body (web), in the sheet's pinned foot (phone), a Gate's across
+		// the column.
 		Form: {
 			props: ["children", "groups", "bar"],
 			draws: [
@@ -831,7 +912,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"FORM_FOOT",
 				"FORM_GROUP",
 				"FORM_LEGEND",
-				"SECTION_NESTED_TITLE",
 				"TEXT.role.heading",
 				"TEXT.role.meta",
 			],
@@ -1467,7 +1547,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// `fit` is the desktop side sheet's: a form, or a record's details.
 		// On touch the submit stands at the head row's end and a blocked
 		// submit's reason or a `failed` sentence under the head.
-		// Passed as a Thread's or a Place's `foot` it docks there, drawing the
+		// `form` is a Form's props, drawn after the children in the sheet's
+		// column (its `bar` stuck to the edge of the body on the web, in the pinned
+		// foot on the phone); the sheet's `submit` and the form's `bar` are two
+		// ways to complete the task, one given. Always the modal sheet: a Pane's or
+		// a Thread's `sheet` (these props) docks there instead, drawing the
 		// docked head and foot inside the foot's raised cell with no scrim. The
 		// docked foot's states are its submit's: pending (`loading`), blocked
 		// (`disabled`), and failed (`error`, the act ready again, the `failed`
@@ -1484,6 +1568,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"foot",
 				"failed",
 				"fit",
+				"form",
 				"children",
 			],
 			draws: [
@@ -1799,61 +1884,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				],
 			},
 		},
-		// Its column at the empty width: the mark (the control disc holding
-		// `icon` at the control fit), the title at the role of where it stands
-		// (heading on a page, body 500 in a Section, title on a first run) and
-		// the act; in a Section a hairline frame around it, in a Group the
-		// card's; a Section's with only a sentence is that sentence at meta, unframed.
-		EmptyState: {
-			props: ["icon", "title", "sentence", "act", "children"],
-			draws: [
-				"EMPTY_COLUMN",
-				"EMPTY_TEXT",
-				"EMPTY_FRAME",
-				"EMPTY_CARD",
-				"EMPTY_MARK",
-				"ICON.fit.control",
-				"TEXT.role.title",
-				"TEXT.role.heading",
-				"TEXT.role.body",
-				"TEXT_STRONG.role.body",
-				"TEXT.role.meta",
-				"BUTTON.act.primary",
-				"BUTTON.act.secondary",
-				"BUTTON.fit.bar",
-				"BUTTON.fit.body",
-				"BUTTON_LABEL.act.primary",
-				"BUTTON_LABEL.act.secondary",
-			],
-			holds: [
-				"EMPTY_COLUMN",
-				"EMPTY_TEXT",
-				"EMPTY_FRAME",
-				"EMPTY_CARD",
-				"EMPTY_MARK",
-			],
-			states: ["rest"],
-			owns: {
-				roles: ["title", "heading", "body", "meta"],
-				colors: [
-					"fill-neutral",
-					"ink-body",
-					"ink-meta",
-					"danger",
-					"edge",
-					"act-accent",
-					"on-act-accent",
-				],
-				radii: ["full", "card", "control"],
-				spacing: ["fields", "pair", "card", "inside", "control-x", "acts"],
-				sizes: ["empty", "control", "control-compact", "icon-control"],
-			},
-		},
-		// The EmptyState's missing form, at rest ink with no mark: the sentence
-		// at meta (the `missing` word unless given) and the way back, the
-		// hairline act with no plus (the Back of the Pane unless
-		// given), in the EmptyState's frames, so it draws the EmptyState's
-		// cells less the create act and the title role.
+		// The missing form, at rest ink with no mark: the sentence at meta (the
+		// `missing` word unless given) and the way back, the hairline act with no
+		// plus (the Back of the Pane unless given), in a hairline frame at the
+		// empty width, the mark's, the frame's and the text's cells.
 		Missing: {
 			props: ["sentence", "act"],
 			draws: [
@@ -1876,10 +1910,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				sizes: ["empty", "control", "control-compact"],
 			},
 		},
-		// The EmptyState's failed form: the alert mark in the danger ink, the
-		// sentence at meta and the act that runs a function (never a link), the
-		// hairline act with no plus, in the EmptyState's frames, so it draws the
-		// EmptyState's cells less the create act and the title role. The form a
+		// The failed form: the alert mark in the danger ink, the sentence at meta
+		// and the act that runs a function (never a link), the hairline act with
+		// no plus, in a hairline frame at the empty width. The form a
 		// QueryBoundary draws for a failed query, for a read that is no query.
 		Failed: {
 			props: ["sentence", "act"],
@@ -2279,7 +2312,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// on touch the label stands on its own line over the values. A
 		// collection: its facts from `query` or `items` through a `row` map, its
 		// head from the declared `columns`, so its waiting facts draw a bar per
-		// column under the real head; its failed and empty EmptyStates its own.
+		// column under the real head; its failed and empty forms its own.
 		// A fact's `status` is its verdict, a Status in the label's line after
 		// its chips; a passing fact gives none, or a done one where the screen
 		// wants the pass read.
@@ -2859,7 +2892,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// `label` names the plot on the web; `keys` names the stack's parts in
 		// order, so the legend and each part's mark stand before the data does;
 		// `level` says the bars are a level, so its head draws the last bar, not
-		// the sum. Its failed and empty EmptyStates are its own, at its loaded
+		// the sum. Its failed and empty forms are its own, at its loaded
 		// height.
 		BarChart: {
 			props: [
@@ -2923,8 +2956,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// A collection: its Messages from `query` or `items` through the
 		// `message` map, its waiting turns the Message's own loading forms, its
-		// failed and empty EmptyStates its own in the log; a MessageInput, or a
-		// Sheet docked in its place, its `foot`, drawn in every state. While a filling Thread's reader is scrolled
+		// failed and empty forms its own in the log; a MessageInput, or its `sheet`
+		// docked in its place while it is open, its `foot`, drawn in every state. While a filling Thread's reader is scrolled
 		// up, a secondary Latest act floats over the log above the foot.
 		Thread: {
 			props: [
@@ -2935,6 +2968,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"items",
 				"loading",
 				"foot",
+				"sheet",
 				"replying",
 			],
 			draws: ["THREAD", "THREAD_COLUMN", "FOOT_DOCKED", "THREAD_LATEST"],

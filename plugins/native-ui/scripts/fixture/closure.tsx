@@ -40,7 +40,6 @@ import { SegmentedControl } from "@fcalell/plugin-native-ui/components/segmented
 import { Sheet } from "@fcalell/plugin-native-ui/components/sheet";
 import { Picker } from "@fcalell/plugin-native-ui/components/picker";
 import { OptionList } from "@fcalell/plugin-native-ui/components/option-list";
-import { EmptyState } from "@fcalell/plugin-native-ui/components/empty-state";
 import { Failed } from "@fcalell/plugin-native-ui/components/failed";
 import { Missing } from "@fcalell/plugin-native-ui/components/missing";
 import { Toast } from "@fcalell/plugin-native-ui/components/toast";
@@ -670,21 +669,6 @@ export const closure = (
 		<OptionList options={[]} value={[]} onChange={noop} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<OptionList options={[]} value={[]} onChange={noop} placeholderTextColorClassName="text-ink-body" />
-		<EmptyState sentence="a" />
-		{/* @ts-expect-error: closed channel */}
-		<EmptyState sentence="a" className="x" />
-		{/* @ts-expect-error: closed channel */}
-		<EmptyState sentence="a" style={{ flex: 1 }} />
-		{/* @ts-expect-error: closed channel */}
-		<EmptyState sentence="a" class="x" />
-		{/* @ts-expect-error: closed channel */}
-		<EmptyState sentence="a" classList={{}} />
-		{/* @ts-expect-error: closed channel */}
-		<EmptyState sentence="a" colorClassName="text-ink-body" />
-		{/* @ts-expect-error: closed channel */}
-		<EmptyState sentence="a" selectionColorClassName="text-ink-body" />
-		{/* @ts-expect-error: closed channel */}
-		<EmptyState sentence="a" placeholderTextColorClassName="text-ink-body" />
 		<Failed sentence="a" act={{ label: "a", onAct: () => {} }} />
 		{/* @ts-expect-error: a Failed's act runs a function, never a link */}
 		<Failed sentence="a" act={{ label: "a", href: "/" }} />
@@ -820,7 +804,7 @@ export const closure = (
 		<Diff label="x" hunks={[]} before="a" after="b" />
 		<Code text="a" title="a" copy />
 		<ListRow title="a" more={[{ label: "a", onAct: noop }]} />
-		<Table columns={columns} items={[]} row={{ id: String }} selected="a" onOpen={noop} onEdit={noop} empty={null} loading />
+		<Table columns={columns} items={[]} row={{ id: String }} selected="a" onOpen={noop} onEdit={noop} loading />
 		{/* @ts-expect-error: a status column never edits */}
 		<Table columns={[{ key: "a", label: "a", kind: "status", edit: { control: "input" }, cell: () => null }]} items={[]} row={{ id: String }} />
 		{/* @ts-expect-error: closed channel */}

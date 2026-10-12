@@ -8,7 +8,6 @@ import type {
 } from "@fcalell/ui-core/descriptors";
 import { type ReactNode, useLayoutEffect, useRef, useState } from "react";
 import { ActionBar } from "../../components/action-bar/index.tsx";
-import { EmptyState } from "../../components/empty-state/index.tsx";
 import { Pane } from "../../components/pane/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import type { QueryLike } from "../../components/query-boundary/index.tsx";
@@ -291,13 +290,12 @@ function Tasks(props: {
 		setTasks((current) =>
 			current.map((task) => (task.id === id ? { ...task, [at]: value } : task)),
 		);
-	const empty = (
-		<EmptyState
-			icon="CalendarClock"
-			title="No cron tasks yet"
-			sentence="A cron task runs on a schedule, a nightly backup or a weekly digest."
-		/>
-	);
+	const empty = {
+		icon: "CalendarClock" as const,
+		title: "No cron tasks yet",
+		sentence:
+			"A cron task runs on a schedule, a nightly backup or a weekly digest.",
+	};
 	const publishing = props.publish !== undefined;
 	const publishAct = {
 		label:

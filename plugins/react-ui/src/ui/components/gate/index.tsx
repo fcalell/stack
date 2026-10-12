@@ -12,12 +12,14 @@ import {
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { Runs } from "../../lib/code.tsx";
+import { EmptyBase, type EmptyProps } from "../../lib/empty.tsx";
 import { focusFirst } from "../../lib/focus.ts";
-import { FormStands } from "../../lib/form.ts";
 import { PageTitle } from "../../lib/frame.ts";
 import { HeadingContext } from "../../lib/heading.ts";
 import { Lockup, useMark } from "../../lib/mark.tsx";
 import { useScrolls } from "../../lib/scrolls.ts";
+import { FormBody } from "../form/base.tsx";
+import type { FormProps } from "../form/index.tsx";
 import { FrameHost, FrameMain } from "../shell/host.tsx";
 import { StepCount } from "../step-count/index.tsx";
 
@@ -40,7 +42,7 @@ const WRAPS = "wrap-anywhere";
 interface GateBase extends Closed {
 	/** A `Banner` standing first in the column, at its width. */
 	banner?: ReactNode;
-	/** The step's body: a `Form`, a `Group`, an `OptionList`, a `List`, `Section`s; a first run's one `EmptyState`. */
+	/** The step's body, ahead of the `form`: a `Group`, an `OptionList`, a `List`, `Section`s. */
 	children?: ReactNode;
 }
 
@@ -48,26 +50,34 @@ interface GateBase extends Closed {
 export type GateProps = GateBase &
 	(
 		| {
-				/** The page's one `h1` (a short phrase; wraps). Absent, the Gate is a first run: it draws no step stack and its one `EmptyState` is the page's `h1`. */
+				/** The page's one `h1` (a short phrase; wraps). Absent, the Gate is a first run: it draws no step stack and its `empty` is the page's `h1`. */
 				title: string;
 				/** A meta line under the title, as runs: `{ strong }` runs draw at weight 500 (the address the step names) (a sentence; wraps). */
 				description?: Sentence;
 				/** Where an onboarding flow stands, a `StepCount` between the mark and the title. */
 				step?: { at: number; of: number };
+				/** The step's form, drawn after the body in the column: its `bar` stands across it. */
+				form?: FormProps;
+				empty?: never;
 		  }
 		| {
 				title?: undefined;
 				description?: never;
 				step?: never;
+				form?: never;
+				/** The first run's one empty state, its title the page's `h1`: the mark, the title over the sentence, the act and its `children` stacked across the column. */
+				empty?: EmptyProps;
 		  }
 	);
 
-/** A root frame for a page outside the shell (sign-in, a consent step): one centred column at the `auth` width on the surface. The banner stands first, then the step a sections gap under it: the app's mark when the app has an icon (a drawn lockup stands 40 px tall at every density), the `StepCount`, the title, the description and the body, one fields gap between each. On touch it spans the viewport inside the page inset and a typed step stands at the top. The first field of a step takes focus as the page opens and as `title` changes, and a `Form`'s `ActionBar` in it draws `full`. It hosts `toast()` and `confirm()` as the `Shell` does, and its body's `Section`s title a level under the `h1`. With no `title` it is a first run: no step stack and no `h1` of its own, its one `EmptyState` is the page's `h1`, and the column stands centred down at every width, touch included. It draws no word of its own. */
+/** A root frame for a page outside the shell (sign-in, a consent step): one centred column at the `auth` width on the surface. The banner stands first, then the step a sections gap under it: the app's mark when the app has an icon (a drawn lockup stands 40 px tall at every density), the `StepCount`, the title, the description and the body, one fields gap between each. On touch it spans the viewport inside the page inset and a typed step stands at the top. The first field of a step takes focus as the page opens and as `title` changes, and the `form`'s `ActionBar` draws `full`. It hosts `toast()` and `confirm()` as the `Shell` does, and its body's `Section`s title a level under the `h1`. With no `title` it is a first run: no step stack and no `h1` of its own, its `empty` is the page's `h1`, and the column stands centred down at every width, touch included. It draws no word of its own. */
 export function Gate({
 	title,
 	description,
 	step,
 	banner,
+	form,
+	empty,
 	children,
 }: GateProps) {
 	const mark = useMark();
@@ -103,7 +113,12 @@ export function Gate({
 								>
 									{banner}
 									{title === undefined ? (
-										<FormStands value="auth">{children}</FormStands>
+										<>
+											{empty ? (
+												<EmptyBase fit="first" tone="rest" {...empty} />
+											) : null}
+											{children}
+										</>
 									) : (
 										<div className={cn(GATE_STEP, STEP)}>
 											{mark ? (
@@ -125,7 +140,15 @@ export function Gate({
 													<Runs runs={description} />
 												</p>
 											) : null}
-											<FormStands value="auth">{children}</FormStands>
+											{children}
+											{form ? (
+												<FormBody
+													key={title}
+													{...form}
+													bar={form.bar && { fit: "full", ...form.bar }}
+													in="auth"
+												/>
+											) : null}
 										</div>
 									)}
 								</div>

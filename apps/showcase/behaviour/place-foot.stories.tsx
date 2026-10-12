@@ -1,6 +1,5 @@
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
-import { Sheet } from "@fcalell/plugin-react-ui/components/sheet";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect } from "storybook/test";
 
@@ -31,18 +30,13 @@ function AutoColumn({
 				<Place>
 					<Pane
 						title="Release"
-						foot={
-							<Sheet
-								open
-								onClose={() => {}}
-								title="Publish"
-								submit={{ label: "Publish", onAct: () => {} }}
-							>
-								{LINES.map((line) => (
-									<p key={line}>{line}</p>
-								))}
-							</Sheet>
-						}
+						sheet={{
+							open: true,
+							onClose: () => {},
+							title: "Publish",
+							submit: { label: "Publish", onAct: () => {} },
+							children: LINES.map((line) => <p key={line}>{line}</p>),
+						}}
 					>
 						<p>The page.</p>
 					</Pane>

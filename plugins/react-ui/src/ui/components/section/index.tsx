@@ -13,7 +13,6 @@ import {
 	SECTION_BODY,
 	SECTION_HEAD,
 	SECTION_HEAD_ROW,
-	SECTION_NESTED_TITLE,
 	SECTION_TITLE,
 	SECTION_TOGGLE,
 	skeleton,
@@ -21,11 +20,10 @@ import {
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useId, useMemo, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { FormStands } from "../../lib/form.ts";
+import { EmptyBase, type EmptyProps } from "../../lib/empty.tsx";
 import { DEEPER, HeadingContext } from "../../lib/heading.ts";
 import { LoadingContext, useWait, VEIL } from "../../lib/loading.ts";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
-import { SectionContext } from "../../lib/section.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Button } from "../button/index.tsx";
@@ -78,11 +76,13 @@ export interface SectionProps extends Closed {
 	more?: readonly MenuItem[];
 	/** The head is busy and the body waits: the count (when there is one) is undrawn, and each part of the body draws its own waiting form (a Group or a List its skeleton rows, a Prose, Thread, Code, Meter, Slider, DefinitionRow, FormField or ActionBar its own); the section reads nothing else, so a body no part answers for draws as it is. */
 	loading?: boolean;
-	/** The body: a Group, a List, a Form or any other parts. */
+	/** The section holds nothing yet: this stands in its body's place, framed, or as one quiet sentence when only the sentence is given. */
+	empty?: EmptyProps;
+	/** The body: a Group, a List, a Form or any other parts; none stand while `empty` is set. */
 	children?: ReactNode;
 }
 
-/** A heading with its count, description, act and more act over its body; the title folds the body when `folded` is set. A blocked act's reason draws under the head row, which never moves. */
+/** A heading with its count, description, act and more act over its body; the title folds the body when `folded` is set, at the heading size folded or not. A blocked act's reason draws under the head row, which never moves. No Section stands in a Section: the body's parts are rows, groups, fields and prose. */
 export function Section({
 	title,
 	count,
@@ -92,6 +92,7 @@ export function Section({
 	act,
 	more,
 	loading: asked,
+	empty,
 	children,
 }: SectionProps) {
 	// The wait is a read that lasts: drawn after a delay and held a minimum; the
@@ -101,10 +102,6 @@ export function Section({
 	const loading = asked === undefined ? undefined : late.waiting;
 	const veil = late.veiled ? VEIL : undefined;
 	const level = use(HeadingContext);
-	// A Section inside a Section names itself a level below its parent.
-	const nested = use(SectionContext);
-	// A section in a sheet's body reads a level below the sheet's title.
-	const stood = use(FormStands) === "sheet";
 	const Heading = `h${level}` as const;
 	const titleId = useId();
 	const bodyId = useId();
@@ -144,19 +141,16 @@ export function Section({
 		) : null;
 	const name = (
 		<>
-			<span
-				id={titleId}
-				className={cn(
-					nested || stood || folded !== undefined
-						? SECTION_NESTED_TITLE
-						: text({ role: "heading" }),
-					TITLE,
-				)}
-			>
+			<span id={titleId} className={cn(text({ role: "heading" }), TITLE)}>
 				{partText(title)}
 			</span>
 			{tally}
 		</>
+	);
+	const body = empty ? (
+		<EmptyBase fit="frame" tone="rest" {...empty} />
+	) : (
+		children
 	);
 	return (
 		<Collapsible.Root
@@ -236,16 +230,14 @@ export function Section({
 				)}
 			</div>
 			{/* Kept mounted while folded, so its `aria-controls` resolves in either state (Base UI names it only while open) and what the body holds (a field's text, a fold inside) keeps its state. A section without children draws no body. */}
-			{children === undefined || children === null ? null : (
+			{body === undefined || body === null ? null : (
 				<Collapsible.Panel
 					id={bodyId}
 					keepMounted
 					className={cn(SECTION_BODY, BODY, veil)}
 				>
 					<HeadingContext value={DEEPER[level]}>
-						<LoadingContext value={loading === true}>
-							<SectionContext value={true}>{children}</SectionContext>
-						</LoadingContext>
+						<LoadingContext value={loading === true}>{body}</LoadingContext>
 					</HeadingContext>
 				</Collapsible.Panel>
 			)}

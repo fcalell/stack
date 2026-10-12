@@ -1,6 +1,5 @@
 import { useMutation, useQuery } from "@fcalell/plugin-api/tanstack-query";
 import { Banner } from "@fcalell/plugin-react-ui/components/banner";
-import { Form } from "@fcalell/plugin-react-ui/components/form";
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Gate } from "@fcalell/plugin-react-ui/components/gate";
 import { Input } from "@fcalell/plugin-react-ui/components/input";
@@ -40,49 +39,50 @@ function SignIn() {
 			banner={
 				request.isError ? <Banner kind="warn" sentence={EXPIRED} /> : undefined
 			}
-		>
-			{coded ? (
-				<Form
-					key="code"
-					bar={{
-						acts: [
-							{ label: "Back", onAct: () => setAt("email") },
-							{
-								label: "Resend",
-								onAct: () => sendCode.mutateAsync({ email }),
-								quiet: true,
+			form={
+				coded
+					? {
+							bar: {
+								acts: [
+									{ label: "Back", onAct: () => setAt("email") },
+									{
+										label: "Resend",
+										onAct: () => sendCode.mutateAsync({ email }),
+										quiet: true,
+									},
+									{
+										label: "Verify",
+										onAct: () => verify.mutateAsync({ email, code }),
+										blocked:
+											code.length === 6 ? undefined : "Enter the 6-digit code.",
+									},
+								],
 							},
-							{
-								label: "Verify",
-								onAct: () => verify.mutateAsync({ email, code }),
-								blocked:
-									code.length === 6 ? undefined : "Enter the 6-digit code.",
+							children: (
+								<FormField label="Code">
+									<InputOtp length={6} value={code} onChange={setCode} />
+								</FormField>
+							),
+						}
+					: {
+							bar: {
+								acts: [
+									{
+										label: "Continue",
+										onAct: () => setAt("code"),
+										blocked: email.includes("@")
+											? undefined
+											: "Enter your email.",
+									},
+								],
 							},
-						],
-					}}
-				>
-					<FormField label="Code">
-						<InputOtp length={6} value={code} onChange={setCode} />
-					</FormField>
-				</Form>
-			) : (
-				<Form
-					key="email"
-					bar={{
-						acts: [
-							{
-								label: "Continue",
-								onAct: () => setAt("code"),
-								blocked: email.includes("@") ? undefined : "Enter your email.",
-							},
-						],
-					}}
-				>
-					<FormField label="Email">
-						<Input kind="email" value={email} onChange={setTyped} />
-					</FormField>
-				</Form>
-			)}
-		</Gate>
+							children: (
+								<FormField label="Email">
+									<Input kind="email" value={email} onChange={setTyped} />
+								</FormField>
+							),
+						}
+			}
+		/>
 	);
 }

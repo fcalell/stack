@@ -120,45 +120,46 @@ function DockedQuestions({ state }: { state: ShowcaseFrame["state"] }) {
 					<Thread
 						items={TURNS}
 						message={TURN}
-						foot={
-							open && question ? (
-								<Sheet
-									open
-									onClose={close}
-									back={at > 0 ? () => setAt(at - 1) : undefined}
-									title={`Question ${at + 1} of ${QUESTIONS.length}`}
-									description="Before I redeploy"
-									submit={{
-										label: last ? "Send" : "Next",
-										onAct: last ? close : () => setAt(at + 1),
-										loading: (last && state === "loading") || undefined,
-										blocked:
-											last && state === "disabled"
-												? "Choose who hears about it first."
+						foot={input}
+						sheet={
+							open && question
+								? {
+										open: true,
+										onClose: close,
+										back: at > 0 ? () => setAt(at - 1) : undefined,
+										title: `Question ${at + 1} of ${QUESTIONS.length}`,
+										description: "Before I redeploy",
+										submit: {
+											label: last ? "Send" : "Next",
+											onAct: last ? close : () => setAt(at + 1),
+											loading: (last && state === "loading") || undefined,
+											blocked:
+												last && state === "disabled"
+													? "Choose who hears about it first."
+													: undefined,
+										},
+										foot: last
+											? "Your answers go with the redeploy."
+											: undefined,
+										failed:
+											last && state === "error"
+												? "Couldn't send your answers. Try again."
 												: undefined,
-									}}
-									foot={last ? "Your answers go with the redeploy." : undefined}
-									failed={
-										last && state === "error"
-											? "Couldn't send your answers. Try again."
-											: undefined
+										children: (
+											<Section title={question.title}>
+												<OptionList
+													options={question.options}
+													value={answers[at] ?? null}
+													onChange={(next) =>
+														setAnswers(
+															answers.map((was, i) => (i === at ? next : was)),
+														)
+													}
+												/>
+											</Section>
+										),
 									}
-								>
-									<Section title={question.title}>
-										<OptionList
-											options={question.options}
-											value={answers[at] ?? null}
-											onChange={(next) =>
-												setAnswers(
-													answers.map((was, i) => (i === at ? next : was)),
-												)
-											}
-										/>
-									</Section>
-								</Sheet>
-							) : (
-								input
-							)
+								: undefined
 						}
 					/>
 				</Pane>

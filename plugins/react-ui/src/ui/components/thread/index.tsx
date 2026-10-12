@@ -22,30 +22,26 @@ import {
 	useState,
 } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { EmptyBase } from "../../lib/empty.tsx";
 import { useFootFocus } from "../../lib/focus.ts";
-import {
-	FootPlace,
-	FootRegion,
-	PageTitle,
-	useFootRegion,
-} from "../../lib/frame.ts";
+import { PageTitle, useFootRegion } from "../../lib/frame.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
 import { useWords } from "../../lib/words.tsx";
-import { EmptyStateBase } from "../empty-state/base.tsx";
 import type { ListEmpty } from "../list/index.tsx";
 import { Message } from "../message/index.tsx";
 import { WaitingReply } from "../message/waiting.tsx";
-import { Missing } from "../missing/index.tsx";
+import { MissingBase } from "../missing/base.tsx";
 import type { QueryLike } from "../query-boundary/index.tsx";
+import { SheetDocked } from "../sheet/docked.tsx";
+import type { SheetProps } from "../sheet/index.tsx";
 import { Latest } from "./latest.tsx";
 
 const STACK = "flex flex-col";
 // The thread fills what it stands in by plain flex: in a Pane's body, whose
 // height is definite, it takes the free height and its log scrolls; among
 // sections it stands at its content's height. The input stands a sections
-// gap under the log. With a foot its measurement bounds a docked sheet's body
-// (`FootRegion`).
+// gap under the log. With a foot its measurement bounds a docked sheet's body.
 const FILL = "flex flex-col grow min-h-0";
 // The region over the foot: the log, and the Latest act floating at its foot.
 // It clips its height, so where the foot leaves it no room nothing it holds
@@ -114,6 +110,8 @@ export type ThreadProps<T = unknown> = Closed &
 		message: MessageSlots<T>;
 		/** The `MessageInput` under the messages, drawn in every state. */
 		foot?: ReactNode;
+		/** A task over the input: while it is `open` it docks in the foot in the input's place, the log keeping two rows above it, and closing hands focus back to the input. */
+		sheet?: SheetProps;
 		/** A reply from the other author is on its way: the loaded log ends on one waiting message of theirs, until it is cleared. */
 		replying?: boolean;
 	};
@@ -172,7 +170,7 @@ function ThreadItemBase<T>({
 const ThreadItem = memo(ThreadItemBase) as typeof ThreadItemBase;
 
 // What the log holds in the thread's state: the waiting turns, the failed
-// or the empty EmptyState, or the messages oldest first.
+// or the empty form, or the messages oldest first.
 function logOf<T>(
 	props: ThreadProps<T>,
 	state: ListState,
@@ -183,17 +181,18 @@ function logOf<T>(
 		return WAITING_MESSAGES.map(({ key, author }) => (
 			<Message key={key} author={author} body="" loading />
 		));
-	if (state === "missing") return <Missing />;
+	if (state === "missing") return <MissingBase fit="page" />;
 	if (state === "failed" && props.query !== undefined)
 		return (
-			<EmptyStateBase
+			<EmptyBase
+				fit="page"
 				tone="failed"
 				sentence={props.sentence}
 				act={{ label: retry, onAct: retryOf(props.query) }}
 			/>
 		);
 	if (state === "empty" && props.empty)
-		return <EmptyStateBase tone="rest" {...props.empty} />;
+		return <EmptyBase fit="page" tone="rest" {...props.empty} />;
 	const items = (props.query ? props.query.data : props.items) ?? [];
 	return [
 		...items.map((item) => (
@@ -203,9 +202,9 @@ function logOf<T>(
 	];
 }
 
-/** The messages, a log region so an arriving one is announced, a sections gap apart, one rung above a reply's block gap, and the input a sections gap under them. It fills what it stands in by plain flex: in a Pane's body it takes the free height and the log scrolls, opening at the newest message and following each that arrives while the reader is at the end, the input under it, which holds a docked `Sheet` as well, its body scrolling past two fifths of the region and keeping three rows, the log keeping two rows of its own while the body can give and the foot's head and submit never giving; while the reader is scrolled up, a Latest act floats centred above the input and returns to the newest message. Among sections it stands at its content's height. It draws its collection's states, the input under each: while its query is pending, `loading` is set or a loading `Section` holds it, Message's loading forms (another's reply, yours, another's reply), the log at its end; a failed query, the failed EmptyState with `sentence` and Retry; a query that answers not found, the form saying it no longer exists with Back; no message, `empty` in the log; then one Message per item, and with `replying` set one waiting Message of the other author after them, followed and pinned to as any message is, replaced in place when the reply's item arrives and `replying` clears. */
+/** The messages, a log region so an arriving one is announced, a sections gap apart, one rung above a reply's block gap, and the input a sections gap under them. It fills what it stands in by plain flex: in a Pane's body it takes the free height and the log scrolls, opening at the newest message and following each that arrives while the reader is at the end, the input under it, which a docked `sheet` takes the place of, its body scrolling past two fifths of the region and keeping three rows, the log keeping two rows of its own while the body can give and the foot's head and submit never giving; while the reader is scrolled up, a Latest act floats centred above the input and returns to the newest message. Among sections it stands at its content's height. It draws its collection's states, the input under each: while its query is pending, `loading` is set or a loading `Section` holds it, Message's loading forms (another's reply, yours, another's reply), the log at its end; a failed query, the failed form with `sentence` and Retry; a query that answers not found, the form saying it no longer exists with Back; no message, `empty` in the log; then one Message per item, and with `replying` set one waiting Message of the other author after them, followed and pinned to as any message is, replaced in place when the reply's item arrives and `replying` clears. */
 export function Thread<T>(props: ThreadProps<T>) {
-	const { foot } = props;
+	const { sheet } = props;
 	const words = useWords();
 	const input = {
 		query: props.query,
@@ -228,6 +227,11 @@ export function Thread<T>(props: ThreadProps<T>) {
 	const dock = useRef<HTMLDivElement>(null);
 	useFootFocus(dock);
 	const region = useFootRegion(dock, true);
+	const foot = sheet?.open ? (
+		<SheetDocked {...sheet} region={region.value} />
+	) : (
+		props.foot
+	);
 	const atEnd = useRef(true);
 	// The log's box and content heights as the follow last saw them. A scroll
 	// event that reads other heights came with a resize (the foot changed, a
@@ -293,9 +297,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 			</div>
 			{foot ? (
 				<div ref={dock} className={FOOT}>
-					<FootPlace value="docked">
-						<FootRegion value={region.value}>{foot}</FootRegion>
-					</FootPlace>
+					{foot}
 				</div>
 			) : null}
 		</div>

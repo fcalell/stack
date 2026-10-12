@@ -41,6 +41,7 @@ import {
 } from "react";
 import { ActsRoom } from "../../lib/acts-room.ts";
 import type { Closed } from "../../lib/closed.ts";
+import { EmptyBase, type EmptyProps } from "../../lib/empty.tsx";
 import { useGroupPart } from "../../lib/group.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 import { ListedRoute, useRoute } from "../../lib/navigate.ts";
@@ -52,15 +53,13 @@ import {
 	type DefinitionValue,
 } from "../definition-row/index.tsx";
 import { DefinitionWait } from "../definition-row/wait.tsx";
-import { EmptyStateBase } from "../empty-state/base.tsx";
-import type { EmptyStateProps } from "../empty-state/index.tsx";
 import { FileRow } from "../file-row/index.tsx";
 import { FileWait } from "../file-row/wait.tsx";
 import { ListRow } from "../list-row/index.tsx";
 import { RowWait, WAITING_ROWS } from "../list-row/wait.tsx";
 import { Meter } from "../meter/index.tsx";
 import { MeterWait } from "../meter/wait.tsx";
-import { Missing } from "../missing/index.tsx";
+import { MissingBase } from "../missing/base.tsx";
 import type { QueryLike } from "../query-boundary/index.tsx";
 
 const STACK = "flex flex-col";
@@ -248,11 +247,8 @@ export type DefinitionSlots<T> = DefinitionSlotsBase<T> &
 		  }
 	);
 
-/** What an empty list draws: an EmptyState's mark, title, sentence and the act that fills the list. */
-export type ListEmpty = Pick<
-	EmptyStateProps,
-	"icon" | "title" | "sentence" | "act"
->;
+/** What an empty list draws: a mark, a title, a sentence and the act that fills the list. */
+export type ListEmpty = Pick<EmptyProps, "icon" | "title" | "sentence" | "act">;
 
 /** Where a list's items come from. */
 export type ListSource<T> =
@@ -313,7 +309,7 @@ export type ListProps<T = unknown, V extends string | null = string> = Closed &
 	ListSource<T> &
 	ListKind<T, V>;
 
-/** Rows on the ground at the rows rhythm, with no box and no hairlines: a feed. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, waiting rows stand in the slots its map declares (busy itself while it waits); a query that answers not found draws the rest EmptyState saying it no longer exists with Back, never Retry; a failed query draws the failed EmptyState with `sentence` and Retry; no item draws `empty`; then one row per item. In a Group its rows, waiting rows and failed, missing and empty forms stand on the card, the hairline once between rows; a `definition` list (facts from data: DefinitionRows) stands in a Group, and carries no count of its own. */
+/** Rows on the ground at the rows rhythm, with no box and no hairlines: a feed. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, waiting rows stand in the slots its map declares (busy itself while it waits); a query that answers not found draws the missing form saying it no longer exists with Back, never Retry; a failed query draws the failed form with `sentence` and Retry; no item draws `empty`; then one row per item. In a Group its rows, waiting rows and failed, missing and empty forms stand on the card, the hairline once between rows; a `definition` list (facts from data: DefinitionRows) stands in a Group, and carries no count of its own. */
 export function List<T, V extends string | null = string>(
 	props: ListProps<T, V>,
 ) {
@@ -400,10 +396,11 @@ export function List<T, V extends string | null = string>(
 			props.row?.children !== undefined,
 		);
 	}
-	if (state === "missing") return <Missing />;
+	if (state === "missing") return <MissingBase fit="frame" />;
 	if (state === "failed" && props.query !== undefined) {
 		return (
-			<EmptyStateBase
+			<EmptyBase
+				fit="frame"
 				tone="failed"
 				sentence={props.sentence}
 				act={{ label: words.retry, onAct: retryOf(props.query) }}
@@ -411,7 +408,7 @@ export function List<T, V extends string | null = string>(
 		);
 	}
 	if (state === "empty" && props.empty)
-		return <EmptyStateBase tone="rest" {...props.empty} />;
+		return <EmptyBase fit="frame" tone="rest" {...props.empty} />;
 	const items = (props.query ? props.query.data : props.items) ?? [];
 	if (props.row) {
 		const { row } = props;

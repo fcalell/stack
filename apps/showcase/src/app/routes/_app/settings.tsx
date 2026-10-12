@@ -4,7 +4,6 @@ import {
 	useQueryClient,
 } from "@fcalell/plugin-api/tanstack-query";
 import { Banner } from "@fcalell/plugin-react-ui/components/banner";
-import { EmptyState } from "@fcalell/plugin-react-ui/components/empty-state";
 import { Form } from "@fcalell/plugin-react-ui/components/form";
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
@@ -14,6 +13,7 @@ import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { QrCode } from "@fcalell/plugin-react-ui/components/qr-code";
 import { QueryBoundary } from "@fcalell/plugin-react-ui/components/query-boundary";
+import { Section } from "@fcalell/plugin-react-ui/components/section";
 import { TextArea } from "@fcalell/plugin-react-ui/components/text-area";
 import { toast } from "@fcalell/plugin-react-ui/lib/toast";
 import { createFileRoute } from "@tanstack/react-router";
@@ -252,19 +252,18 @@ function Settings() {
 								/>
 							),
 						},
-						{
-							title: "Webhooks",
-							description: "Where Acme posts deploy events.",
-							fields: (
-								<EmptyState
-									icon="Webhook"
-									title="No endpoints"
-									sentence="Add an endpoint to receive an event each time a deploy finishes."
-									act={{ label: "Add endpoint", onAct: act }}
-								/>
-							),
-						},
 					]}
+				/>
+				<Section
+					title="Webhooks"
+					description="Where Acme posts deploy events."
+					empty={{
+						icon: "Webhook",
+						title: "No endpoints",
+						sentence:
+							"Add an endpoint to receive an event each time a deploy finishes.",
+						act: { label: "Add endpoint", onAct: act },
+					}}
 				/>
 			</Pane>
 		</Place>

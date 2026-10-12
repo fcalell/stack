@@ -1,6 +1,6 @@
 import { text } from "@fcalell/ui-core/variants";
 import { Banner } from "../../components/banner/index.tsx";
-import { Form } from "../../components/form/index.tsx";
+import { Button } from "../../components/button/index.tsx";
 import { Gate } from "../../components/gate/index.tsx";
 import { Group } from "../../components/group/index.tsx";
 import { confirm } from "../../lib/confirm.ts";
@@ -60,6 +60,21 @@ const disconnect = () =>
 // raise a toast and a decision, which the gate's own host draws.
 export function drawGate(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
+	if (frame.state === "empty")
+		return (
+			<Gate
+				empty={{
+					icon: "Rocket",
+					title: "Deploy your first app",
+					sentence:
+						"Connect a repository and Acme builds and deploys every push to main.",
+					act: { label: "Connect a repository", onAct: act },
+					children: (
+						<Button act="secondary" label="Start from a template" onAct={act} />
+					),
+				}}
+			/>
+		);
 	const raises = cell === "TEXT.role.meta";
 	const named = cell === "TEXT_STRONG.role.body";
 	const note = CASES[cell];
@@ -74,12 +89,8 @@ export function drawGate(frame: ShowcaseFrame) {
 					title="Choose a workspace"
 					description={["Signed in as ", { strong: "ana@acme.dev" }]}
 					banner={<Banner kind="warn" sentence="This request has expired." />}
-				>
-					<Group>
-						<StandInRows ground="group" />
-					</Group>
-					<Form
-						bar={{
+					form={{
+						bar: {
 							acts: raises
 								? [
 										{ label: "Remind me later", onAct: remind, quiet: true },
@@ -90,8 +101,12 @@ export function drawGate(frame: ShowcaseFrame) {
 										},
 									]
 								: [{ label: "Continue", onAct: act }],
-						}}
-					/>
+						},
+					}}
+				>
+					<Group>
+						<StandInRows ground="group" />
+					</Group>
 				</Gate>
 			</MarkProvider>
 		</div>

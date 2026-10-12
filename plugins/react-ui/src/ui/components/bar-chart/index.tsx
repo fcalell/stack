@@ -32,9 +32,9 @@ import {
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { EmptyBase } from "../../lib/empty.tsx";
 import { LoadingContext } from "../../lib/loading.ts";
 import { useWords } from "../../lib/words.tsx";
-import { EmptyStateBase } from "../empty-state/base.tsx";
 import type { ListEmpty } from "../list/index.tsx";
 import { MissingBase } from "../missing/base.tsx";
 import type { QueryLike } from "../query-boundary/index.tsx";
@@ -67,7 +67,7 @@ const TIME_TEXT = "whitespace-nowrap";
 const LINE = "flex items-center h-lh";
 const TIMES_WAIT = "flex justify-between";
 const BAR = "w-full";
-// A failed or empty chart's EmptyState stands over the loaded boxes, held
+// A failed or empty chart's form stands over the loaded boxes, held
 // unseen, so it takes the chart's loaded height, its frame filling it.
 const STAND = "grid";
 const LAYER = "col-start-1 row-start-1";
@@ -183,7 +183,7 @@ interface Bar {
 	at?: string;
 }
 
-/** The total (the last bar with `level`) at body 500 with its unit, the parts' keys under it, then the axis beside the plot, its four gridlines a hairline each with its tick centred on it and the baseline with its 0, the columns in the chip marks by part, a time under each bar that has one. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, its boxes in skeleton at their loaded size with the keys standing; a query that answers not found draws the rest EmptyState saying it no longer exists with Back (never Retry), a failed query the failed EmptyState with `sentence` and Retry, and no item `empty`, each at the chart's loaded height; then one bar per item. */
+/** The total (the last bar with `level`) at body 500 with its unit, the parts' keys under it, then the axis beside the plot, its four gridlines a hairline each with its tick centred on it and the baseline with its 0, the columns in the chip marks by part, a time under each bar that has one. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, its boxes in skeleton at their loaded size with the keys standing; a query that answers not found draws the missing form saying it no longer exists with Back (never Retry), a failed query the failed form with `sentence` and Retry, and no item `empty`, each at the chart's loaded height; then one bar per item. */
 export function BarChart<T>(props: BarChartProps<T>) {
 	const { label, keys, unit, level } = props;
 	const words = useWords();
@@ -200,13 +200,14 @@ export function BarChart<T>(props: BarChartProps<T>) {
 	if (state === "missing")
 		return (
 			<Stand keys={keys}>
-				<MissingBase fill />
+				<MissingBase fit="frame" fill />
 			</Stand>
 		);
 	if (state === "failed" && props.query !== undefined)
 		return (
 			<Stand keys={keys}>
-				<EmptyStateBase
+				<EmptyBase
+					fit="frame"
 					fill
 					tone="failed"
 					sentence={props.sentence}
@@ -217,7 +218,7 @@ export function BarChart<T>(props: BarChartProps<T>) {
 	if (state === "empty" && props.empty)
 		return (
 			<Stand keys={keys}>
-				<EmptyStateBase fill tone="rest" {...props.empty} />
+				<EmptyBase fit="frame" fill tone="rest" {...props.empty} />
 			</Stand>
 		);
 	const { bar } = props;
@@ -394,7 +395,7 @@ function Key(props: { name: string; at: number; children: ReactNode }) {
 	);
 }
 
-// A failed, missing or empty chart: its EmptyState over the loaded boxes,
+// A failed, missing or empty chart: its form over the loaded boxes,
 // held unseen.
 function Stand(props: { keys?: readonly string[]; children: ReactNode }) {
 	return (

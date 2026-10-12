@@ -31,6 +31,7 @@ import { type ReactElement, useContext, useState } from "react";
 import { View } from "react-native";
 import { ActsRoom } from "../../lib/acts-room";
 import type { Closed } from "../../lib/closed";
+import { EmptyBase, type EmptyProps } from "../../lib/empty";
 import { between, useGroupPart } from "../../lib/group";
 import { LoadingContext } from "../../lib/loading";
 import type { Route } from "../../lib/route";
@@ -39,15 +40,13 @@ import { TreeContext } from "../../lib/tree";
 import { useWords } from "../../lib/words";
 import { DefinitionRow, type DefinitionValue } from "../definition-row";
 import { DefinitionWait } from "../definition-row/wait";
-import type { EmptyStateProps } from "../empty-state";
-import { EmptyStateBase } from "../empty-state/base";
 import { FileRow } from "../file-row";
 import { FileWait } from "../file-row/wait";
 import { ListRow } from "../list-row";
 import { RowWait, WAITING_ROWS } from "../list-row/wait";
 import { Meter } from "../meter";
 import { MeterWait } from "../meter/wait";
-import { Missing } from "../missing";
+import { MissingBase } from "../missing/base";
 import type { QueryLike } from "../query-boundary";
 
 const WAITING = Array.from({ length: WAITING_ROWS }, (_, index) => index);
@@ -204,12 +203,9 @@ export type DefinitionSlots<T> = DefinitionSlotsBase<T> &
 		  }
 	);
 
-// What an empty list draws: an EmptyState's mark, title, sentence and the
+// What an empty list draws: a mark, title, sentence and the
 // act that fills the list.
-export type ListEmpty = Pick<
-	EmptyStateProps,
-	"icon" | "title" | "sentence" | "act"
->;
+export type ListEmpty = Pick<EmptyProps, "icon" | "title" | "sentence" | "act">;
 
 // Where a list's items come from.
 export type ListSource<T> =
@@ -255,9 +251,9 @@ export type ListProps<T = unknown, V extends string | null = string> = Closed &
 // feed. It draws its collection's four states: while its query is pending,
 // `loading` is set or a loading Section around it waits, waiting rows stand
 // in the slots its map declares (busy itself while it
-// waits); a query that answers not found draws the rest EmptyState
+// waits); a query that answers not found draws the missing form
 // saying it no longer exists with Back, never Retry; a failed query draws the
-// failed EmptyState with `sentence` and Retry; no item draws `empty`; then
+// failed form with `sentence` and Retry; no item draws `empty`; then
 // one row per item. In a Group its rows, waiting rows and failed, missing and
 // empty forms stand on the card, the hairline once between rows; a
 // `definition` list (facts from data: DefinitionRows) stands in a Group, and
@@ -333,10 +329,11 @@ export function List<T, V extends string | null = string>(
 			props.row?.children !== undefined,
 		);
 	}
-	if (state === "missing") return <Missing />;
+	if (state === "missing") return <MissingBase fit="frame" />;
 	if (state === "failed" && props.query !== undefined) {
 		return (
-			<EmptyStateBase
+			<EmptyBase
+				fit="frame"
 				tone="failed"
 				sentence={props.sentence}
 				act={{ label: words.retry, onAct: retryOf(props.query) }}
@@ -344,7 +341,7 @@ export function List<T, V extends string | null = string>(
 		);
 	}
 	if (state === "empty" && props.empty)
-		return <EmptyStateBase tone="rest" {...props.empty} />;
+		return <EmptyBase fit="frame" tone="rest" {...props.empty} />;
 	const items = (props.query ? props.query.data : props.items) ?? [];
 	if (props.row) {
 		const { row } = props;

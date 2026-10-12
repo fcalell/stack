@@ -22,11 +22,10 @@ import {
 import { type ReactNode, use, useId, useRef, useState } from "react";
 import { backGlyph } from "../../lib/back.ts";
 import type { Closed } from "../../lib/closed.ts";
+import { EmptyBase, type EmptyProps } from "../../lib/empty.tsx";
 import { useFootFocus, usePaneFocus } from "../../lib/focus.ts";
 import {
 	BackRoute,
-	FootPlace,
-	FootRegion,
 	PageTitle,
 	ShellSwitcher,
 	useFootRegion,
@@ -40,6 +39,8 @@ import { useWraps } from "../../lib/wraps.ts";
 import { IconButtonLink } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 import { Menu } from "../menu/index.tsx";
+import { SheetDocked } from "../sheet/docked.tsx";
+import type { SheetProps } from "../sheet/index.tsx";
 import { SwitcherPick } from "../shell/switcher.tsx";
 
 // A Pane is a column of its Place's row and the size container what stands
@@ -77,7 +78,7 @@ const BODY =
 const MEASURED = "*:max-w-measure";
 // What the body and the docked foot share: the head stands outside it, so the
 // foot's bound is the whole of it and the body keeps the rest. With a foot its
-// measurement bounds a docked sheet's body (`FootRegion`).
+// measurement bounds a docked sheet's body.
 const REGION = "flex flex-col grow min-h-0";
 // The foot stays under the body, which scrolls past it, and spans it; a field
 // keeps its own measure column inside, which the foot centres at every density.
@@ -97,21 +98,27 @@ export interface PaneProps extends Closed {
 	more?: MenuItem[];
 	/** The field (a `MessageInput`) or the selection bar (an `ActionBar` with `chosen`) docked at the Pane's foot, the body scrolling under it. */
 	foot?: ReactNode;
+	/** A task over the foot: while it is `open` the sheet docks there in the foot's place, the body scrolling above it, and closing hands focus back to the foot's input. */
+	sheet?: SheetProps;
+	/** The Pane holds nothing yet: this stands in place of its body, centred in what the body leaves, or at the body's top over its own `children`. */
+	empty?: EmptyProps;
 	/** The Pane spans its Place, the Panes before it hidden, mounted. */
 	cover?: boolean;
 	/** What it holds stands at the Pane's width, not the measure: a `Canvas`, a code `Diff`. */
 	wide?: boolean;
-	/** The Pane's sections, a sections gap apart. */
+	/** The Pane's sections, a sections gap apart; none stand while `empty` is set. */
 	children?: ReactNode;
 }
 
-/** A column of a Place: a bar over one hairline (the back act, the title, the actions and more; on touch the shell's switcher leads where there is no back act) and a body that scrolls, its children a sections gap apart within the measure at its start (the Pane's width with `wide`), a Thread or a Canvas in it filling it; a `foot` docks under the body. Each Pane but the last holds the list width, giving way to its floor; the last takes the rest. Below `tablet` of its Place only the last stands; a `cover` Pane spans its Place, the Panes before it hidden and mounted. Its back act draws as Back where it stands alone and as Close where a Pane stands before it. On a record's Pane the title is the record's name, the actions and more its acts, and the record's place and facts stand in an `ItemHeader` at the body's top. */
+/** A column of a Place: a bar over one hairline (the back act, the title, the actions and more; on touch the shell's switcher leads where there is no back act) and a body that scrolls, its children a sections gap apart within the measure at its start (the Pane's width with `wide`), a Thread or a Canvas in it filling it; a `foot` docks under the body, a `sheet` in its place while it is open, and `empty` stands in place of the children. Each Pane but the last holds the list width, giving way to its floor; the last takes the rest. Below `tablet` of its Place only the last stands; a `cover` Pane spans its Place, the Panes before it hidden and mounted. Its back act draws as Back where it stands alone and as Close where a Pane stands before it. On a record's Pane the title is the record's name, the actions and more its acts, and the record's place and facts stand in an `ItemHeader` at the body's top. */
 export function Pane({
 	title,
 	back,
 	actions,
 	more,
 	foot,
+	sheet,
+	empty,
 	cover,
 	wide,
 	children,
@@ -131,6 +138,11 @@ export function Pane({
 	// Thread in it gives way to a docked sheet only down to two rows.
 	const region = useFootRegion(dock, true, body);
 	useFootFocus(dock);
+	const docked = sheet?.open ? (
+		<SheetDocked {...sheet} region={region.value} />
+	) : (
+		foot
+	);
 	const fit = touch ? "body" : "bar";
 	const start = touch ? PAGE_TOP_BAR_START : undefined;
 	const goBack =
@@ -212,7 +224,7 @@ export function Pane({
 						className={PANE}
 					>
 						{head}
-						<div ref={foot ? region.ref : undefined} className={REGION}>
+						<div ref={docked ? region.ref : undefined} className={REGION}>
 							<div
 								ref={(node) => {
 									body.current = node;
@@ -223,16 +235,18 @@ export function Pane({
 									PAGE_BODY,
 									BODY,
 									!wide && MEASURED,
-									foot && PAGE_BODY_OVER_FOOT,
+									docked && PAGE_BODY_OVER_FOOT,
 								)}
 							>
-								{children}
+								{empty ? (
+									<EmptyBase fit="page" tone="rest" {...empty} />
+								) : (
+									children
+								)}
 							</div>
-							{foot ? (
+							{docked ? (
 								<div ref={dock} className={cn(FOOT_DOCKED, DOCKED)}>
-									<FootPlace value="docked">
-										<FootRegion value={region.value}>{foot}</FootRegion>
-									</FootPlace>
+									{docked}
 								</div>
 							) : null}
 						</div>

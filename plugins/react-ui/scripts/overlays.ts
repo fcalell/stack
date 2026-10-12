@@ -254,7 +254,7 @@ export const OVERLAYS: readonly string[] = [
 	"leading-meta",
 	"min-h-lh",
 	"-my-[calc((var(--spacing-target)-1lh)/2)]",
-	// EmptyState, QueryBoundary, Banner, PendingBar
+	// QueryBoundary, Banner, PendingBar
 	"self-center",
 	"text-center",
 	"items-start",
