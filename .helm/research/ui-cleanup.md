@@ -99,7 +99,10 @@ How would a question about it be answered (a grep, a read, a measure on the rend
     Spectrum on props, variants and booleans;
   - container queries against media queries;
   - WAI-ARIA Authoring Practices on overlays and focus;
-  - React Native and Expo parity with the web.
+  - React Native and Expo parity with the web;
+  - lintapple (`github.com/gholtzap/lintapple`, 0.1.21): its rules, its `AGENTS.md` and its
+    false-pass tests. Its rules missing from the draft: clipping that hides a layout error, focus
+    obscured, focus returned when a dialog closes, nested radius, tabular digits, late fonts.
 
 **Coverage check.** Every fault in the problem above and every complaint in the ask is caught by
 at least one question. Every question names how it is answered.
@@ -198,6 +201,29 @@ instead of prose (no `Children` or `cloneElement` under `components/`, no arbitr
 class, no margin on a component's root, no measuring outside a closed list). Stack's
 `.helm/agents/index.md` points "edit or create a ui component" at it. Its questions are step 2's
 that found real faults; a question that found none is dropped.
+
+The rubric's measurable numbers move from the critic's hand into `stack screens test`, read from
+ui-core's tokens, never from a second policy file:
+
+- **Checks on the render.** One walk of the page's elements at each width the floors already
+  visit, after the resize settles, so it adds no resize: type sizes and the count per screen,
+  control and row heights, gaps and insets, radii (nested ones included), clipping that hides a
+  layout error, late fonts, tabular digits on changing numbers. Contrast stays axe's. Estimated at
+  25 to 150 ms a screen; timed with `stack screens test --all` on the showcase before and after.
+- **States after input.** Behaviour stories run the same checks at the end of their play
+  functions, so a state reached by a click or a key (an open picker, a closed dialog's returned
+  focus, focus hidden under a sticky bar) is checked; the grants picker gets one.
+- **Dark mode.** The floors run in light and dark, as the rubric judges. This about doubles the
+  floors' time, which the cut in widths below pays for.
+- **Three widths, derived:** the narrowest phone (320), `tablet` (768, the narrowest width where
+  every Pane shows) and the viewport where a page's `wide` opens (1440, `wide` plus the sidebar),
+  each the hardest point of its layout. They come from `BREAKPOINT_PX` and the sidebar's width in
+  place of `overflow.ts`'s fixed five; `rubric.md`, `design-critique.md` and Stead's review plans
+  use the same three.
+- **Findings an agent can act on:** the rule, the element, the measured value, the expected value
+  and the fix, after lintapple's report.
+- **False-pass tests.** Each check, grep or render, has a test showing it catches a bad case
+  (`display: contents`, a hidden element, zero height), so none passes by never matching.
 
 ## The frame
 
