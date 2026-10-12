@@ -1,7 +1,5 @@
 import { Button } from "../../components/button/index.tsx";
-import { Chip } from "../../components/chip/index.tsx";
 import { IconButton } from "../../components/icon-button/index.tsx";
-import { Input } from "../../components/input/index.tsx";
 import { Picker } from "../../components/picker/index.tsx";
 import { Toolbar } from "../../components/toolbar/index.tsx";
 
@@ -30,8 +28,13 @@ const SCOPES = [
 export function drawToolbar() {
 	return (
 		<div className="flex flex-col gap-sections">
-			<Toolbar>
-				<Input kind="search" value="deploy" onChange={change} />
+			<Toolbar
+				search={{ value: "deploy", onChange: change }}
+				chips={[
+					{ family: "neutral", label: "Region: Frankfurt", onRemove: change },
+					{ family: "neutral", label: "Owner: Ana Ruiz", onRemove: change },
+				]}
+			>
 				<Button
 					act="secondary"
 					fit="bar"
@@ -53,8 +56,6 @@ export function drawToolbar() {
 					label="Display"
 					onAct={change}
 				/>
-				<Chip family="neutral" label="Region: Frankfurt" onRemove={change} />
-				<Chip family="neutral" label="Owner: Ana Ruiz" onRemove={change} />
 			</Toolbar>
 			<Toolbar>
 				<Picker

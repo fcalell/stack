@@ -933,8 +933,6 @@ export const TREE_RAIL = "w-indent border-r border-edge";
 // The lane every row of a tree reserves ahead of its leading, as wide as the
 // fold act's square: a branch's fold act stands in it, a leaf leaves it empty.
 export const TREE_LANE = "w-control-compact";
-// A board's column at its width.
-export const COLUMN = "w-column";
 // A form's foot: its action bar under a hairline across the form, drawn when
 // the form holds groups (and, in a sheet, stuck to the body's edge).
 export const FORM_FOOT = "border-t border-edge pt-fields";

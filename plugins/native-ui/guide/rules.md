@@ -190,6 +190,15 @@ mode, and a screen across a room reads best dark, so run the app dark (`defaultM
 </Place>
 ```
 
+## A toolbar takes descriptors
+
+A `Toolbar` over a list takes `search` (`{ value, onChange, placeholder }`, the search box it draws),
+`chips` (the applied filters, each `{ family, label, onRemove }`, removable chips it draws in a row
+under the acts) and as `children` the acts at the bar fit: a filter's `Button` with its count, an
+`IconButton`, a `Picker`. It reads none of its children: a search `Input` or a `Chip` passed as a
+child stands in the acts' row like any act, so the search and the filters go in the two props. Never
+a filled act: the create act is the `Pane`'s.
+
 ## Data, never nodes
 
 A composed region is data its molecule draws: an `Act` (`{ label, onAct, destructive?, quiet? }`; `quiet` draws an `ActionBar`'s
@@ -464,6 +473,10 @@ row's end. Pass
 the same `<Sheet>` as the modal from a page and as the `foot` of a conversation; closing it (render
 the `MessageInput` in its place) returns focus to the input, and each page (a new `title`) opens at
 the top of its body, its first field taking focus. A `Sheet` among a `Thread`'s sections draws the same form with no bound.
+The modal `Sheet` is as tall as its content, growing with it up to the screen under the top inset and
+scrolling its body past that, so a `TextArea` that grows grows the sheet a line at a time; its foot (the
+`foot` line, the `submit`'s bar) stands above the keyboard. It takes no height prop; a pick that
+searches is the one sheet that stands tall from its first frame.
 
 A column is a width and the region around it aligns it: a docked foot (a `Pane`'s `foot`, a
 `Thread`'s input) centres a selection bar's column. A region that holds a page's sections (a

@@ -1,15 +1,16 @@
 import { cn } from "@fcalell/ui-core/cn";
-import { COLUMN, type ColumnsFit, columns } from "@fcalell/ui-core/variants";
-import { Children, isValidElement, type ReactNode, use } from "react";
+import { type ColumnsFit, columns } from "@fcalell/ui-core/variants";
+import { type ReactNode, use } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { PageTitle } from "../../lib/frame.ts";
 
-// The board's row bleeds to the Pane's edge and insets its columns back to
-// the page inset, so it scrolls sideways edge to edge; the body clips past
-// that edge, so its focus ring draws inside it.
+// The board is a grid of one row: each child stands in a track at the column
+// width, the tracks sized by the grid and not by a wrapper each. The row
+// bleeds to the Pane's edge and insets its columns back to the page inset, so
+// it scrolls sideways edge to edge; the body clips past that edge, so its
+// focus ring draws inside it.
 const BOARD =
-	"flex items-start overflow-x-auto -mx-page focus-visible:-outline-offset-2";
-const COLUMN_BOX = "flex flex-col shrink-0";
+	"grid grid-flow-col items-start overflow-x-auto -mx-page auto-cols-(--container-column) focus-visible:-outline-offset-2";
 // The half fit stacks in one column, then stands two to a row from the
 // Pane's desktop width.
 const HALF = "grid grid-cols-1 page-desktop:grid-cols-2";
@@ -40,14 +41,7 @@ export function Columns({ fit, children }: ColumnsProps) {
 			tabIndex={0}
 			className={cn(columns({ fit: place }), BOARD)}
 		>
-			{Children.toArray(children).map((column) => (
-				<div
-					key={isValidElement(column) ? column.key : null}
-					className={cn(COLUMN, COLUMN_BOX)}
-				>
-					{column}
-				</div>
-			))}
+			{children}
 		</div>
 	);
 }

@@ -1,5 +1,5 @@
-import { COLUMN, type ColumnsFit, columns } from "@fcalell/ui-core/variants";
-import { Children, isValidElement, type ReactNode } from "react";
+import { type ColumnsFit, columns } from "@fcalell/ui-core/variants";
+import type { ReactNode } from "react";
 import { ScrollView, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
@@ -8,7 +8,6 @@ import { cn } from "../../lib/cn";
 // the page inset, so it scrolls sideways edge to edge.
 const BLEED = "-mx-page";
 const ROW = "flex-row items-start";
-const COLUMN_BOX = "shrink-0";
 
 export interface ColumnsProps extends Closed {
 	// `board` (the default) scrolls sideways; `half` stacks, as the phone is
@@ -30,14 +29,7 @@ export function Columns({ fit, children }: ColumnsProps) {
 			className={BLEED}
 			contentContainerClassName={cn(columns({ fit: place }), ROW)}
 		>
-			{Children.toArray(children).map((column) => (
-				<View
-					key={isValidElement(column) ? column.key : null}
-					className={cn(COLUMN, COLUMN_BOX)}
-				>
-					{column}
-				</View>
-			))}
+			{children}
 		</ScrollView>
 	);
 }

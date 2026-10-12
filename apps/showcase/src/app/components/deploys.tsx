@@ -1,12 +1,10 @@
 import { useMutation, useQuery } from "@fcalell/plugin-api/tanstack-query";
 import { Banner } from "@fcalell/plugin-react-ui/components/banner";
 import { Button } from "@fcalell/plugin-react-ui/components/button";
-import { Chip } from "@fcalell/plugin-react-ui/components/chip";
 import { Code } from "@fcalell/plugin-react-ui/components/code";
 import { DefinitionRow } from "@fcalell/plugin-react-ui/components/definition-row";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
 import { IconButton } from "@fcalell/plugin-react-ui/components/icon-button";
-import { Input } from "@fcalell/plugin-react-ui/components/input";
 import { ItemHeader } from "@fcalell/plugin-react-ui/components/item-header";
 import { List } from "@fcalell/plugin-react-ui/components/list";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
@@ -340,8 +338,13 @@ export function DeployList() {
 				},
 			]}
 		>
-			<Toolbar>
-				<Input kind="search" value="" onChange={act} />
+			<Toolbar
+				search={{ value: "", onChange: act }}
+				chips={[
+					{ family: "neutral", label: "Branch: main", onRemove: act },
+					{ family: "neutral", label: "Author: Ana Ruiz", onRemove: act },
+				]}
+			>
 				<Button
 					act="secondary"
 					fit="bar"
@@ -363,8 +366,6 @@ export function DeployList() {
 					label="Display"
 					onAct={act}
 				/>
-				<Chip family="neutral" label="Branch: main" onRemove={act} />
-				<Chip family="neutral" label="Author: Ana Ruiz" onRemove={act} />
 			</Toolbar>
 			<DeployRows query={query} />
 		</Pane>

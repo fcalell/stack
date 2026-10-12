@@ -100,6 +100,22 @@ export interface ChipMark {
 	label: string;
 }
 
+// A toolbar's search: the `search` `Input`'s value and the keystrokes it
+// hears, with the hint it draws while empty (the field's name is the slot word
+// `search`).
+export interface ToolbarSearch {
+	value: string;
+	onChange: (value: string) => void;
+	// The hint drawn while the value is empty (a short phrase; truncates).
+	placeholder?: string;
+}
+
+// An applied filter in a toolbar: a removable chip.
+export interface ToolbarChip extends ChipMark {
+	// Removes the filter.
+	onRemove: () => void;
+}
+
 // `V` narrows the value to an enum's literals, so a `Picker` over them
 // picks that enum. An option whose value is `null` is the empty choice (a
 // "Not set"), and it is the only way `null` joins `V`: a pick is nullable

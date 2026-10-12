@@ -152,11 +152,18 @@ Carried from pass 1 to the pass that owns it:
 
 - Pass 4: `Form`'s `FOOT_STUCK.pane` is dead; `Sheet`'s `fit="pane"` and `TextArea`'s
   `data-fill` and `HOLDS_FILL` remain, each a form chosen by where it stands.
+- Pass 4: native `Group` still wraps each row to draw the hairline between them (React Native
+  has no sibling selector); each row drawing its own from its ground goes with "a row's ground
+  comes from its parent's surface". Native `Columns` sets no column width, which a column
+  would carry as its own prop.
 - Pass 5: `Pane`'s title still measures its wrap with `useWraps` on touch.
 - Step 5: a Pane and a Section of one name are two region landmarks of one name (axe
   `landmark-unique` on Stead's knowledge page, the page Pane "Architecture" beside the tree's
   Section "Architecture").
-- A device run: the native Pane's keyboard and its nested scroll are untested on a phone.
+- A device run: the native Pane's keyboard and its nested scroll are untested on a phone; so is
+  the native sheet, content-tall and growing to its cap since pass 3 (decided 2026-10-12, its
+  foot gorhom's footer on `bottomInset`, which may step rather than slide as the keyboard rises,
+  and whose height lands one reaction after the content's).
 
 ### 5. Structure rubric and checks
 
