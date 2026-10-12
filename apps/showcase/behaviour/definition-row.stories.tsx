@@ -171,6 +171,48 @@ function touch(story: StoryObj): StoryObj {
 	};
 }
 
+// A status value stays whole: the label wraps to the room it leaves, a status
+// wider than three quarters of the line is the one that is cut,
+// and nothing passes the row.
+const SENTENCE = "Watches paused for usage, resuming at 1:17 PM tomorrow";
+
+const statusWhole: Play = async ({ canvas }) => {
+	const whole = canvas.getByText("Fetched 3 min ago");
+	await expect(whole.scrollWidth).toBeLessThanOrEqual(whole.clientWidth);
+	const label = canvas.getByText("Last fetch of the remote's refs");
+	await expect(box(label).height).toBeGreaterThan(
+		box(canvas.getByText("Branch")).height * 1.5,
+	);
+	await expect(box(label).right).toBeLessThanOrEqual(box(whole).left + 0.5);
+	const long = canvas.getByText(SENTENCE);
+	await expect(long.scrollWidth).toBeGreaterThan(long.clientWidth);
+	const row = rowOf(long);
+	await expect(box(long).right).toBeLessThanOrEqual(box(row).right + 0.5);
+	await expect(box(rowOf(label)).right).toBeGreaterThanOrEqual(
+		box(whole).right - 0.5,
+	);
+};
+
+export const StatusValueStaysWhole: StoryObj = {
+	render: () => (
+		<Pane>
+			<Group>
+				<DefinitionRow label="Branch" value="main" />
+				<DefinitionRow
+					label="Last fetch of the remote's refs"
+					value={{ status: "done", label: "Fetched 3 min ago" }}
+				/>
+				<DefinitionRow
+					label="Usage"
+					value={{ status: "waiting", label: SENTENCE }}
+				/>
+			</Group>
+		</Pane>
+	),
+	play: statusWhole,
+};
+
 export const ValueWordsTouch = touch(ValueWords);
 export const ValuesEndTogetherTouch = touch(ValuesEndTogether);
 export const LabelWrapsTouch = touch(LabelWraps);
+export const StatusValueStaysWholeTouch = touch(StatusValueStaysWhole);

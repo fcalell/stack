@@ -133,9 +133,9 @@ const TITLE_BEFORE_VALUE = "basis-1/2";
 // lock's label, the warning's label and last the first part, which names the
 // item and truncates with an ellipsis; the glyphs keep their width, and past
 // them the line clips at the row's edge rather than overprint. The status
-// stands in the first part's tier: the two share the overflow in proportion to
-// their widths, so a long status never takes the line from the subject, nor
-// the subject from the status. The shrink weights are the order: a flex line takes the
+// stays whole before all of them (`./status.tsx`): it takes no share of the
+// overflow, and is held to the line less the first part's floor, so only a
+// status wider than that is cut. The shrink weights are the order: a flex line takes the
 // overflow from each item in proportion to its weight times its own width, and
 // `truncate` draws its ellipsis on any overflow, however small, so a part that
 // still fits must take none of it: the weights run 1, 10^7, 10^14 and 10^20
@@ -654,7 +654,11 @@ export function ListRow<V extends string | null = string>({
 								) : null}
 							</span>
 						)}
-						{status ? <RowStatusMark status={status} line={metaLine} /> : null}
+						{status ? <RowStatusMark
+								status={status}
+								line={metaLine}
+								beside={lead.length > 0}
+							/> : null}
 						{warning !== undefined ? <WarningMark label={warning} /> : null}
 						{lock !== undefined ? <LockMark reason={lock} labelled /> : null}
 						{chip ? (

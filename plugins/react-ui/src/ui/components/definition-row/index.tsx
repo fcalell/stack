@@ -45,11 +45,14 @@ const LINE = "flex items-center min-w-0";
 const ALONE = "py-rows";
 // The label wraps to the room its value leaves.
 const LABEL = "min-w-0 wrap-break-word";
-// A string or a status gives way first: it takes the room the label leaves,
-// ending at the line's end; an identifier too long for it cuts in its middle, its stem
+// A string gives way first: it takes the room the label leaves, ending at the
+// line's end; an identifier too long for it cuts in its middle, its stem
 // truncating to the room and its tail standing whole (`valueCut`); words are
 // one text run that truncates at its end.
 const VALUE = "flex basis-0 grow min-w-0 justify-end";
+// A status stays whole and the label wraps to the room it leaves, a quarter of
+// the line at least: a status wider than three quarters of it is cut.
+const VALUE_STATUS = "flex shrink-0 min-w-0 ms-auto max-w-3/4";
 const STEM = "min-w-0 truncate";
 const TAIL = "shrink-0";
 // A control stands whole at the line's end, the label wrapping beside it.
@@ -151,7 +154,7 @@ export function DefinitionRow({
 		);
 	} else if (isStatus(value))
 		shown = (
-			<span className={VALUE}>
+			<span className={VALUE_STATUS}>
 				<Status state={value.status} label={value.label} />
 			</span>
 		);

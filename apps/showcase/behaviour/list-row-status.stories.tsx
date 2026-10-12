@@ -191,11 +191,15 @@ function Repo(props: { short?: string; meta?: string[] }) {
 }
 
 const WIDTHS = [440, 390, 320];
+// The status stays whole beside the first part, which keeps a floor, so the
+// long words are cut (and the short form draws) only where the line is less
+// than the words and that floor.
+const NARROW = [440, 320, 220];
 
 function Narrow(props: { short?: string }) {
 	return (
 		<div className="flex flex-col gap-sections">
-			{WIDTHS.map((width) => (
+			{NARROW.map((width) => (
 				<div
 					key={width}
 					data-testid="column"
@@ -265,7 +269,7 @@ export const StatusLong: StoryObj = {
 			<div data-testid="room" style={{ width: 600 }} className="max-w-full">
 				<Repo short={SHORT} meta={["origin", "main"]} />
 			</div>
-			<div data-testid="plain" style={{ width: 320 }} className="max-w-full">
+			<div data-testid="plain" style={{ width: 220 }} className="max-w-full">
 				<Repo />
 			</div>
 		</div>

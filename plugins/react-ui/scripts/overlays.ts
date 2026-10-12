@@ -364,6 +364,8 @@ export const OVERLAYS: readonly string[] = [
 	"min-w-icon-meta",
 	"shrink-100000000000000",
 	"shrink-100000000000000000000",
+	"max-w-3/4",
+	"max-w-[calc(100%-var(--spacing-figures))]",
 	"size-control-compact",
 	"border-t",
 	"pt-float",

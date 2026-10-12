@@ -531,6 +531,70 @@ export const StatusRoom: StoryObj = {
 	play: statusRoom,
 };
 
+// A row's status stays whole beside the parts that name the item: the later
+// parts, then the first part, yield to it, and only a status wider than the
+// whole line truncates, within the row. Desktop and touch, in a 320 px pane
+// and a 360 px list.
+const REMOTE = "/tmp/sc3/remotes/a-repository-with-a-name-long-enough-to-wrap";
+
+function Statuses() {
+	return (
+		<>
+			<ListRow
+				title="a-repository-with-a-name-long-enough-to-wrap"
+				meta={[REMOTE]}
+				status={{ state: "done", label: "Fetched 3 minutes ago" }}
+				href="#remote"
+			/>
+			<ListRow
+				title="Rename the flag"
+				meta={["Rename the flag to --strict across every message", "round 1"]}
+				status={{ state: "waiting", label: "Waiting for you" }}
+				href="#flag"
+			/>
+			<ListRow
+				title="Usage"
+				meta={["System"]}
+				status={{
+					state: "waiting",
+					label: "Watches paused for usage \u00b7 resumes 1:17 PM tomorrow",
+				}}
+				href="#usage-long"
+			/>
+		</>
+	);
+}
+
+const statusWhole: Play = async ({ canvas }) => {
+	for (const frame of frames(canvas)) {
+		for (const name of [REMOTE.split("/").pop(), "Rename the flag"]) {
+			const row = frame.getByRole("link", { name }).parentElement;
+			if (!row) throw new Error("the row has no box");
+			for (const element of row.querySelectorAll("*")) {
+				await expect(right(element)).toBeLessThanOrEqual(right(row) + 0.5);
+			}
+		}
+		await expect(clipped(frame.getByText("Fetched 3 minutes ago"))).toBe(false);
+		await expect(clipped(frame.getByText(REMOTE))).toBe(true);
+		await expect(clipped(frame.getByText("Waiting for you"))).toBe(false);
+		await expect(
+			clipped(frame.getByText(/^Rename the flag to --strict/)),
+		).toBe(true);
+		const long = frame.getByRole("link", { name: "Usage" }).parentElement;
+		if (!long) throw new Error("the row has no box");
+		await expect(clipped(frame.getByText(/^Watches paused/))).toBe(true);
+		for (const element of long.querySelectorAll("*")) {
+			await expect(right(element)).toBeLessThanOrEqual(right(long) + 0.5);
+		}
+	}
+};
+
+export const StatusStaysWhole: StoryObj = {
+	render: () => <Widths>{() => <Statuses />}</Widths>,
+	play: statusWhole,
+};
+export const StatusStaysWholeTouch = touch(StatusStaysWhole);
+
 // Code in a row: a title of runs draws the code in the inline code style and
 // truncates at its end; a path that is a whole title or a whole meta part cuts
 // in its middle and keeps its end. Desktop and touch, at 320 and 360.

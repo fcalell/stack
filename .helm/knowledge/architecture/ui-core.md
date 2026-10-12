@@ -610,7 +610,7 @@ a tick with no animation, never jumped to full.
   centred in it, so the titles of a list share one x whatever leads them; its meta line
   (`ROW_META_LINE`) is one line that yields in order: the later parts truncate first, then the chip,
   the lock's label, the warning's label and last the first part (naming the item, with an ellipsis);
-  the status truncates with it only when the line is out of room, the glyphs keep their width, and past them the line clips at the row's edge rather
+  the status stays whole before all of them (on the web it takes no share of the overflow and is held to the line less the first part's floor, `figures`, so only a status wider than that is cut; the phone's still shares the first part's tier), the glyphs keep their width, and past them the line clips at the row's edge rather
   than overprint (the marks are described under `warning` below). The later parts take no width of
   their own (`w-0`, growing into the room the marks leave) and show at least `figures` of it or
   none, in the chip's wrapping slot, so a bare separator and an ellipsis never draw; the slot's
@@ -1153,7 +1153,7 @@ a tick with no animation, never jumped to full.
   few thousandths of a pixel against the layout's 1/64 px, and Tailwind reads no bare number from
   10^21) so the order holds: the later meta parts (they take no width of their own), then the chip, then the lock's
   label, then the warning's label, and last the first part, which names the item and truncates with
-  an ellipsis (the status shares the first part's tier and truncates, uncapped, only when the line is out of room); every glyph keeps its width, and past them the line clips at the
+  an ellipsis (the status stays whole on the web, `shrink-0` and held to the line less `figures`, which the first part keeps; the phone's shares the first part's tier and truncates, uncapped, only when the line is out of room); every glyph keeps its width, and past them the line clips at the
   row's edge rather than overprint. The chip is shown whole or not at all: it stands in a slot one
   line tall that wraps (a start item as wide as nothing and as tall as the slot holds the first
   line a flex line always keeps, so a chip wider than the room the slot is left wraps under the
@@ -1186,9 +1186,13 @@ a tick with no animation, never jumped to full.
   as the status does, so nothing moves when it answers; it works in a `known` List and in a plain
   `ListRow`. `StatusMark.short` is the status's words said shorter ("5 min ago"), drawn in the
   label's place only on a `ListRow`'s meta line and only while the long form would be cut; `label`
-  stays the name (read by assistive tech beside the visible short form). The short form is what the
-  app offered to read whole, so it takes no part in the meta line's shared overflow (`shrink-0`):
-  the first part yields for it, where the long form shares the overflow with the first part.
+  stays the name (read by assistive tech beside the visible short form). On the web the long form
+  is whole too wherever the line holds it beside the first part's floor, so the short form draws only
+  where it would not (the long form is cut); on the phone the short form is what the app offered to
+  read whole, so it takes no part in the meta line's shared overflow (`shrink-0`): the first part
+  yields for it, where the long form shares the overflow with the first part. A `DefinitionRow`'s
+  status value stays whole as well, the label wrapping to the room it leaves, held to three quarters
+  of the line.
   Stack cannot reword an
   app's sentence and a floor in characters leaves a fragment, so the app offers the words. The long
   form is the first paint, measured before paint (web: a layout effect reads the label's
