@@ -109,8 +109,10 @@ export const COLOR_GROUPS = {
 		"chip-neutral-ink",
 	],
 	// a chart series' fill: the chip hue, quieter, holding 3:1 on `surface` and
-	// `group`
-	chart: CHIP_HUES.map((hue) => `chart-${hue}` as const),
+	// `group`; the seventh is the neutral family's grey
+	chart: ([...CHIP_HUES, "neutral"] as const).map(
+		(hue) => `chart-${hue}` as const,
+	),
 	// the fill and the initial on it
 	avatars: AVATAR_STEPS.flatMap(
 		(step) => [`avatar-${step}`, `avatar-${step}-ink`] as const,
@@ -302,7 +304,7 @@ function chipColors(): Record<ChipColor, ColorDeclaration> {
 // lightness the nearest to the mark's that holds 3:1 on `surface` and `group`
 // (light: the lightest that holds; dark: the darkest).
 const CHART: Record<
-	ChipHue,
+	ChipHue | "neutral",
 	{ light: [number, number]; dark: [number, number] }
 > = {
 	red: { light: [0.63, 0.12], dark: [0.55, 0.088] },
@@ -311,10 +313,17 @@ const CHART: Record<
 	teal: { light: [0.61, 0.061], dark: [0.53, 0.071] },
 	violet: { light: [0.63, 0.12], dark: [0.55, 0.12] },
 	pink: { light: [0.63, 0.12], dark: [0.555, 0.12] },
+	// The seventh series: no seventh hue stands outside the accent's 215–290
+	// band the chip hues leave free, so it is the neutral family's grey, in the
+	// cast hue at the neutrals' chroma, at the lightness that holds 3:1.
+	neutral: { light: [0.62, 0.012], dark: [0.57, 0.01] },
 };
 
-function chartColors(): Record<`chart-${ChipHue}`, ColorDeclaration> {
-	const out = {} as Record<`chart-${ChipHue}`, ColorDeclaration>;
+function chartColors(): Record<
+	`chart-${ChipHue | "neutral"}`,
+	ColorDeclaration
+> {
+	const out = {} as Record<`chart-${ChipHue | "neutral"}`, ColorDeclaration>;
 	for (const family of CHIP_HUES) {
 		const { hue } = CHIP[family];
 		const { light, dark } = CHART[family];
@@ -323,6 +332,10 @@ function chartColors(): Record<`chart-${ChipHue}`, ColorDeclaration> {
 			dark: { l: dark[0], c: dark[1], hue },
 		};
 	}
+	out["chart-neutral"] = {
+		light: neutral(CHART.neutral.light[0], CHART.neutral.light[1]),
+		dark: neutral(CHART.neutral.dark[0], CHART.neutral.dark[1]),
+	};
 	return out;
 }
 
@@ -541,8 +554,9 @@ export const COLORS: Record<ColorName, ColorDeclaration> = {
 	"switch-thumb": { alias: "on-accent" },
 };
 
-// The order a chart's series take the chip marks (`chip-<hue>`): one series
-// takes the first.
+// The order a chart's series take the chart fills (`chart-<hue>`, the chip
+// hues, then the neutral grey): one series takes the first, and a seventh stands
+// apart from the six hues, which fill the wheel outside the accent's band.
 export const CHART_SERIES = [
 	"teal",
 	"violet",
@@ -550,7 +564,8 @@ export const CHART_SERIES = [
 	"pink",
 	"green",
 	"red",
-] as const satisfies readonly ChipHue[];
+	"neutral",
+] as const satisfies readonly (ChipHue | "neutral")[];
 
 // The share of its max at or above which a meter is near; above the max it
 // is over.

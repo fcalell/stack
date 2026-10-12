@@ -66,7 +66,7 @@ its rationale.
   `selected-outline`, `edge-hover`, `edge-error`, `ink-error`, `ink-disabled`), the two act fills
   (`act-accent`, `act-danger`) with their states, and the switch's five with the shared `toggle-on`.
   `COLOR_GROUPS` holds the roles by those groups and `COLOR_NAMES` is its flattening. A chart's
-  series take the `chart-<hue>` fills in `CHART_SERIES` order (the chip hue at about 60 % of the mark's chroma, each holding 3:1 on `surface` and `group`, so a bar reads as data and a chip mark stays the chip's) and a meter's level turns on `METER_NEAR`,
+  series take the `chart-<hue>` fills in `CHART_SERIES` order (the six chip hues at about 60 % of the mark's chroma, then `neutral`, a grey in the cast hue: no seventh hue stands outside the accent's 215 to 290 band the six leave free, 003-328; each holding 3:1 on `surface` and `group`, so a bar reads as data and a chip mark stays the chip's) and a meter's level turns on `METER_NEAR`,
   contract data the cells are keyed by (`CHART_FILL {series}`, `METER_FILL {level}`; `levelOf` in
   `./list-state` reads it, a meter's `mark` standing in for `METER_NEAR`), so both platforms draw
   the same series colour and the same level for a value. The dark hairline is two tokens because the

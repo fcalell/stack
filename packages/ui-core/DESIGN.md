@@ -52,6 +52,7 @@ colors:
   chart-teal: "oklch(0.61 0.061 195)"
   chart-violet: "oklch(0.63 0.12 305)"
   chart-pink: "oklch(0.63 0.12 350)"
+  chart-neutral: "oklch(0.62 0.012 264)"
   avatar-1: "oklch(0.88 0.062 20)"
   avatar-1-ink: "oklch(0.38 0.1 20)"
   avatar-2: "oklch(0.88 0.07 60)"
@@ -144,6 +145,7 @@ colors:
   chart-teal-dark: "oklch(0.53 0.071 195)"
   chart-violet-dark: "oklch(0.55 0.12 305)"
   chart-pink-dark: "oklch(0.555 0.12 350)"
+  chart-neutral-dark: "oklch(0.57 0.01 264)"
   avatar-1-dark: "oklch(0.4 0.08 20)"
   avatar-1-ink-dark: "oklch(0.92 0.04 20)"
   avatar-2-dark: "oklch(0.4 0.08 60)"
@@ -1443,6 +1445,10 @@ components:
     backgroundColor: "{colors.chart-red}"
   chart-fill-red-dark:
     backgroundColor: "{colors.chart-red-dark}"
+  chart-fill-neutral:
+    backgroundColor: "{colors.chart-neutral}"
+  chart-fill-neutral-dark:
+    backgroundColor: "{colors.chart-neutral-dark}"
   qr-code-rest:
     textColor: "{colors.ink-body}"
   qr-code-rest-dark:
@@ -2395,7 +2401,7 @@ One closed token contract, the approved foundations sheet, drawn by two UI plugi
 
 ## Colors
 
-Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fixed chroma per role (the cast knob moves the hue, never the chroma, so no contrast moves), one accent hue (its chroma is held inside sRGB at any hue), three status hues, six hued chip families and a neutral one (`fill-neutral` under `ink-body`, no mark), six chart fills, eight avatar steps. A wash is the body ink at an alpha, so it sits on any surface as one more step. Inside a group or a lifted layer the container re-points `edge` to `edge-raised`, so a part never picks between them.
+Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fixed chroma per role (the cast knob moves the hue, never the chroma, so no contrast moves), one accent hue (its chroma is held inside sRGB at any hue), three status hues, six hued chip families and a neutral one (`fill-neutral` under `ink-body`, no mark), seven chart fills (the six hues and a grey), eight avatar steps. A wash is the body ink at an alpha, so it sits on any surface as one more step. Inside a group or a lifted layer the container re-points `edge` to `edge-raised`, so a part never picks between them.
 
 | Role | Light | Dark | Draws |
 | --- | --- | --- | --- |
@@ -2447,6 +2453,7 @@ Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fi
 | `chart-teal` | `oklch(0.61 0.061 195)` | `oklch(0.53 0.071 195)` | a chart series' fill: the chip hue, quieter, at 3:1 on `surface` and `group` |
 | `chart-violet` | `oklch(0.63 0.12 305)` | `oklch(0.55 0.12 305)` | a chart series' fill: the chip hue, quieter, at 3:1 on `surface` and `group` |
 | `chart-pink` | `oklch(0.63 0.12 350)` | `oklch(0.555 0.12 350)` | a chart series' fill: the chip hue, quieter, at 3:1 on `surface` and `group` |
+| `chart-neutral` | `oklch(0.62 0.012 264)` | `oklch(0.57 0.01 264)` | a chart series' fill: the chip hue, quieter, at 3:1 on `surface` and `group` |
 | `avatar-1` | `oklch(0.88 0.062 20)` | `oklch(0.4 0.08 20)` | an `Avatar`'s fill and the initial on it, one step per name |
 | `avatar-1-ink` | `oklch(0.38 0.1 20)` | `oklch(0.92 0.04 20)` | an `Avatar`'s fill and the initial on it, one step per name |
 | `avatar-2` | `oklch(0.88 0.07 60)` | `oklch(0.4 0.08 60)` | an `Avatar`'s fill and the initial on it, one step per name |
@@ -2494,7 +2501,7 @@ Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fi
 
 Status colors: `active` is `accent-ink`, `running` is `accent-ink` drawn as a spinner in the dot's place, `waiting` and `idle` are `ink-meta`, `done` is `ok`, `attention` is `chip-amber`, `failed` is `danger`.
 
-A chart's series take the chart fills in order: `chart-teal`, `chart-violet`, `chart-amber`, `chart-pink`, `chart-green`, `chart-red`; one series takes the first. A meter at or above 0.9 of its max is near, and above its max is over.
+A chart's series take the chart fills in order: `chart-teal`, `chart-violet`, `chart-amber`, `chart-pink`, `chart-green`, `chart-red`, `chart-neutral`; one series takes the first, a seventh the grey. A meter at or above 0.9 of its max is near, and above its max is over.
 
 ## Typography
 

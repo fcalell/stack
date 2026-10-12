@@ -983,6 +983,7 @@ export const CHART_FILL = matrix({
 			pink: "bg-chart-pink",
 			green: "bg-chart-green",
 			red: "bg-chart-red",
+			neutral: "bg-chart-neutral",
 		},
 	},
 	defaultVariants: { series: "teal" },

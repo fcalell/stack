@@ -744,7 +744,7 @@ check("c02", "package.json shape", () => {
 });
 
 check("c03", "tokens.ts declares the contract", () => {
-	requireEqual(COLOR_NAMES.length, 92, "color count");
+	requireEqual(COLOR_NAMES.length, 93, "color count");
 	requireEqual(new Set(COLOR_NAMES).size, COLOR_NAMES.length, "unique colors");
 	requireEqual(TYPE_ROLES.length, 8, "type role count");
 	requireEqual(SPACING_ROLES.length, 11, "spacing role count");
@@ -759,8 +759,8 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(SLOT_WORD_KEYS.length, 4, "slot word count");
 	requireEqual(
 		[...CHART_SERIES].sort().join(" "),
-		[...CHIP_HUES].sort().join(" "),
-		"the chart series are the chip hues",
+		[...CHIP_HUES, "neutral"].sort().join(" "),
+		"the chart series are the chip hues and the neutral grey",
 	);
 	assert(METER_NEAR > 0 && METER_NEAR < 1, "METER_NEAR is a share of the max");
 	for (const name of COLOR_NAMES) {
@@ -1428,12 +1428,12 @@ check(
 			});
 		requireEqual(
 			literals("light").join(" "),
-			"canvas group edge edge-raised edge-strong grid scrim ink-body ink-meta ink-faint",
+			"canvas group edge edge-raised edge-strong grid scrim ink-body ink-meta ink-faint chart-neutral",
 			"the light cast literals",
 		);
 		requireEqual(
 			literals("dark").join(" "),
-			"canvas surface group raised edge edge-raised edge-strong grid ink-body ink-meta ink-faint",
+			"canvas surface group raised edge edge-raised edge-strong grid ink-body ink-meta ink-faint chart-neutral",
 			"the dark cast literals",
 		);
 		// A cast re-hues each cast literal at its declared chroma; a role that

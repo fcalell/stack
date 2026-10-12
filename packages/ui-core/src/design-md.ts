@@ -428,7 +428,7 @@ function body(resolved: ResolvedTheme): string[] {
 		"",
 		"## Colors",
 		"",
-		"Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fixed chroma per role (the cast knob moves the hue, never the chroma, so no contrast moves), one accent hue (its chroma is held inside sRGB at any hue), three status hues, six hued chip families and a neutral one (`fill-neutral` under `ink-body`, no mark), six chart fills, eight avatar steps. A wash is the body ink at an alpha, so it sits on any surface as one more step. Inside a group or a lifted layer the container re-points `edge` to `edge-raised`, so a part never picks between them.",
+		"Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fixed chroma per role (the cast knob moves the hue, never the chroma, so no contrast moves), one accent hue (its chroma is held inside sRGB at any hue), three status hues, six hued chip families and a neutral one (`fill-neutral` under `ink-body`, no mark), seven chart fills (the six hues and a grey), eight avatar steps. A wash is the body ink at an alpha, so it sits on any surface as one more step. Inside a group or a lifted layer the container re-points `edge` to `edge-raised`, so a part never picks between them.",
 		"",
 		...table(
 			["Role", "Light", "Dark", "Draws"],
@@ -442,7 +442,7 @@ function body(resolved: ResolvedTheme): string[] {
 		"",
 		"Status colors: `active` is `accent-ink`, `running` is `accent-ink` drawn as a spinner in the dot's place, `waiting` and `idle` are `ink-meta`, `done` is `ok`, `attention` is `chip-amber`, `failed` is `danger`.",
 		"",
-		`A chart's series take the chart fills in order: ${CHART_SERIES.map((hue) => code(`chart-${hue}`)).join(", ")}; one series takes the first. A meter at or above ${METER_NEAR} of its max is near, and above its max is over.`,
+		`A chart's series take the chart fills in order: ${CHART_SERIES.map((hue) => code(`chart-${hue}`)).join(", ")}; one series takes the first, a seventh the grey. A meter at or above ${METER_NEAR} of its max is near, and above its max is over.`,
 		"",
 		"## Typography",
 		"",

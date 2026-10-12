@@ -206,10 +206,14 @@ default the greys and the accent read as one palette.
   between neighbours so the set separates by lightness as well as hue.
 - The seventh chip family, `neutral`, has no hue and no mark: `chip-neutral-soft` is `fill-neutral`
   and `chip-neutral-ink` is `ink-body`, the applied filter and any tag without a category.
-- A chart's series take the six `chart-<hue>` fills (`chart-red` and its five) in `CHART_SERIES`
-  order: `teal`, `violet`, `amber`, `pink`, `green`, `red`; one series takes the first. Each is its
-  chip hue at about 60 % of the mark's chroma, at the lightness nearest the mark's that holds 3:1
-  on `surface` and `group`, so a bar reads as data and the chip marks stay the chips'. A meter at or above `METER_NEAR` (0.9) of its
+- A chart's series take the seven `chart-<hue>` fills (`chart-red` and its six) in `CHART_SERIES`
+  order: `teal`, `violet`, `amber`, `pink`, `green`, `red`, `neutral`; one series takes the first.
+  Each hue is its chip hue at about 60 % of the mark's chroma, at the lightness nearest the mark's
+  that holds 3:1 on `surface` and `group`, so a bar reads as data and the chip marks stay the chips'.
+  The seventh, `chart-neutral`, is a grey (the cast hue at the neutrals' chroma): no seventh hue
+  stands outside the accent's 215 to 290 band the six leave free, so a seventh series is told from
+  the hues by having none (Stead's usage chart of seven stages drew a hue twice on a six-colour
+  cycle). A chart past seven series repeats the cycle. A meter at or above `METER_NEAR` (0.9) of its
   max is near, and above its max is over.
 - Eight avatars at 40 to 50° spacing: `avatar-1` the fill and `avatar-1-ink` the initial on it,
   through `avatar-8` and `avatar-8-ink`; a pastel fill under a hue-darkened initial in light, a

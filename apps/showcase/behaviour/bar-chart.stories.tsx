@@ -129,3 +129,69 @@ export const CurrencyReadoutAndAxisTouch: StoryObj = {
 		},
 	},
 };
+
+// Seven series stand apart: each key's dot in the legend and each stacked part
+// has its own fill, so no two read as one (Stead's usage chart of seven stages
+// drew the first hue twice on a six-colour cycle). Both modes.
+const STAGES = [
+	"Brief",
+	"Plan",
+	"Build",
+	"Check",
+	"Adversary",
+	"Review",
+	"Land",
+] as const;
+
+function Stages() {
+	const items = [
+		{
+			day: "Mon",
+			spend: 7,
+			parts: Object.fromEntries(STAGES.map((stage) => [stage, 1])),
+		},
+	];
+	return (
+		<div className="w-sheet max-w-full">
+			<BarChart
+				label="Spend per stage"
+				keys={[...STAGES]}
+				items={items}
+				bar={bar}
+				unit={{ currency: "USD" }}
+			/>
+		</div>
+	);
+}
+
+const sevenSeries = (mode: "light" | "dark"): StoryObj => ({
+	parameters: { mode },
+	render: () => <Stages />,
+	play: async ({ canvasElement }) => {
+		// A key's dot is the round mark before its name.
+		const dotOf = (stage: string) => {
+			const name = [...canvasElement.querySelectorAll("span")].find(
+				(span) => span.children.length === 0 && span.textContent === stage,
+			);
+			const dot = name?.previousElementSibling;
+			if (!(dot instanceof HTMLElement)) throw new Error(`no dot for ${stage}`);
+			return dot;
+		};
+		await waitFor(() => dotOf(STAGES[STAGES.length - 1] ?? ""));
+		const dots = STAGES.map(
+			(stage) => getComputedStyle(dotOf(stage)).backgroundColor,
+		);
+		await expect(new Set(dots).size).toBe(STAGES.length);
+		const parts = [
+			...canvasElement.querySelectorAll<HTMLElement>(
+				'[role=img] [class*="bg-chart-"]',
+			),
+		].map((part) => getComputedStyle(part).backgroundColor);
+		await expect(parts.length).toBeGreaterThanOrEqual(STAGES.length);
+		await expect(new Set(parts.slice(0, STAGES.length)).size).toBe(
+			STAGES.length,
+		);
+	},
+});
+export const SevenSeriesStandApartLight = sevenSeries("light");
+export const SevenSeriesStandApartDark = sevenSeries("dark");
