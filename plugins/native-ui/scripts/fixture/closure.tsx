@@ -572,21 +572,21 @@ export const closure = (
 		<FormField label="a" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<FormField label="a" placeholderTextColorClassName="text-ink-body" />
-		<ItemHeader title="a" />
+		<ItemHeader overline={["a"]} />
 		{/* @ts-expect-error: closed channel */}
-		<ItemHeader title="a" className="x" />
+		<ItemHeader overline={["a"]} className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<ItemHeader title="a" style={{ flex: 1 }} />
+		<ItemHeader overline={["a"]} style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<ItemHeader title="a" class="x" />
+		<ItemHeader overline={["a"]} class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<ItemHeader title="a" classList={{}} />
+		<ItemHeader overline={["a"]} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<ItemHeader title="a" colorClassName="text-ink-body" />
+		<ItemHeader overline={["a"]} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<ItemHeader title="a" selectionColorClassName="text-ink-body" />
+		<ItemHeader overline={["a"]} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<ItemHeader title="a" placeholderTextColorClassName="text-ink-body" />
+		<ItemHeader overline={["a"]} placeholderTextColorClassName="text-ink-body" />
 		<SegmentedControl label="a" options={[]} value="a" onChange={noop} />
 		{/* @ts-expect-error: closed channel */}
 		<SegmentedControl label="a" options={[]} value="a" onChange={noop} className="x" />

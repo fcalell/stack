@@ -1,7 +1,6 @@
 import { ItemHeader } from "@fcalell/plugin-react-ui/components/item-header";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
-import { BREAKPOINT_PX } from "@fcalell/ui-core/tokens";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import type { ReactNode } from "react";
 import { expect } from "storybook/test";
@@ -60,9 +59,8 @@ function Facts(props: { width: number }) {
 	return (
 		<Page width={props.width}>
 			<Place>
-				<Pane title="Workflows">
+				<Pane title="Triage the inbox">
 					<ItemHeader
-						title="Triage the inbox"
 						facts={[
 							{ label: "Outside content", onOpen: noop },
 							{ label: "Open the run", href: "/runs/42" },
@@ -111,78 +109,3 @@ export const FactToARouteTouch = touch(
 	},
 	390,
 );
-
-function WithActs(props: { width: number; overline: boolean }) {
-	return (
-		<Page width={props.width}>
-			<Place>
-				<Pane title="Chats">
-					<ItemHeader
-						overline={props.overline ? ["Stead", "Thread 12"] : undefined}
-						title="Why the last deploy failed"
-						facts={["Ana Ruiz"]}
-						actions={[{ icon: "Square", label: "End the thread", onAct: noop }]}
-						more={[
-							{
-								label: "Delete the thread",
-								onAct: noop,
-								destructive: true,
-							},
-						]}
-					/>
-				</Pane>
-			</Place>
-		</Page>
-	);
-}
-
-// A record's acts stand on its header's first line at the end: the overline's
-// when it has one, else the title's.
-async function onFirstLine(canvasElement: HTMLElement, overline: boolean) {
-	const header = must(
-		[...canvasElement.querySelectorAll("header")].find((el) =>
-			el.textContent?.includes("Why the last deploy failed"),
-		),
-	);
-	const first = must(
-		overline ? header.querySelector("p") : header.querySelector("h2, h3"),
-	).getBoundingClientRect();
-	const buttons = [...header.querySelectorAll("button")];
-	await expect(buttons.length).toBe(2);
-	for (const button of buttons) {
-		const box = button.getBoundingClientRect();
-		const middle = box.top + box.height / 2;
-		await expect(middle).toBeGreaterThanOrEqual(first.top);
-		await expect(middle).toBeLessThanOrEqual(first.bottom);
-		await expect(box.left).toBeGreaterThanOrEqual(first.right - 1);
-	}
-	const last = must(buttons[1]).getBoundingClientRect();
-	await expect(last.right).toBeGreaterThanOrEqual(
-		header.getBoundingClientRect().right - 1,
-	);
-}
-
-export const ActsOnTheOverlineLine: StoryObj = {
-	render: () => <WithActs width={1440} overline />,
-	play: ({ canvasElement }) => onFirstLine(canvasElement, true),
-};
-
-export const ActsOnTheTitleLine: StoryObj = {
-	render: () => <WithActs width={1440} overline={false} />,
-	play: ({ canvasElement }) => onFirstLine(canvasElement, false),
-};
-
-// Below `tablet` the record's acts stay in its head: one set, reachable in that
-// one place.
-export const ActsStayInOnePlaceBelowTablet: StoryObj = {
-	render: () => <WithActs width={BREAKPOINT_PX.tablet - 1} overline />,
-	play: async ({ canvasElement }) => {
-		const ends = canvasElement.querySelectorAll(
-			'button[aria-label="End the thread"]',
-		);
-		await expect(ends.length).toBe(1);
-		await expect(
-			must(ends[0]).closest("header")?.querySelector("h2, h3"),
-		).not.toBeNull();
-	},
-};

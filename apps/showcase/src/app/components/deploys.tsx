@@ -105,7 +105,7 @@ function DeployRows(props: { query: QueryLike<Deploy[]> }) {
 	);
 }
 
-// The open deploy's body: its head, what it waits on, its facts.
+// The open deploy's body: its place and facts, what it waits on, its sections.
 function Record(props: { deploy: OpenDeploy; file?: string }) {
 	const { deploy } = props;
 	const [state, setState] = useState(deploy.state);
@@ -115,7 +115,6 @@ function Record(props: { deploy: OpenDeploy; file?: string }) {
 		<>
 			<ItemHeader
 				overline={["acme-web", ENVIRONMENTS[deploy.environment].label]}
-				title={deploy.message}
 				facts={[
 					{
 						pick: {
@@ -379,11 +378,11 @@ export function DeployRecord(props: { deployId: string; file?: string }) {
 		orpc.deploys.get.queryOptions({ input: { id: props.deployId } }),
 	);
 	return (
-		<Pane title="Deploy" back="/deploys">
+		<Pane title={open.data?.message ?? "Deploy"} back="/deploys">
 			<QueryBoundary
 				query={open}
 				sentence="The deploy did not load."
-				loading={<ItemHeader title="" loading />}
+				loading={<ItemHeader loading />}
 			>
 				{(deploy) => (
 					<Record key={deploy.id} deploy={deploy} file={props.file} />

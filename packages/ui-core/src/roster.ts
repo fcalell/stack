@@ -581,7 +581,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// sections gap apart within the measure (the Pane's width when `wide`).
 		// A `foot` (a field or a selection bar) docks under the body and spans
 		// it; a `MessageInput` keeps its own measure column. A `cover` Pane spans
-		// its Place, the Panes before it hidden.
+		// its Place, the Panes before it hidden. On a record's Pane the title is the
+		// record's name (a `Part`, the generic word for the kind while it loads)
+		// and the actions and more are the record's acts.
 		Pane: {
 			props: [
 				"title",
@@ -1342,33 +1344,24 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				sizes: ["row", "icon", "icon-meta", "control-compact"],
 			},
 		},
-		// A record's acts (icon acts, then a more) stand at the end of the head's
-		// first line, the overline's else the title's, at every width: below
-		// `tablet` the record stands alone and its acts stay in its head, not
-		// also in the Pane's bar. Loading draws none.
-		// Loading, each line keeps its line box and the facts line the height
-		// of the status that moves on it. A fact in words that opens a sheet is its
-		// words and a chevron in a `WORD_ACT`, a button named by the fact; one that goes to
-		// a route is the same box as a link. A save
+		// The record's place and facts under the Pane's bar, which holds the
+		// record's name and acts. Loading, each line keeps its line box and the
+		// facts line the height of the status that moves on it. A fact in words
+		// that opens a sheet is its words and a chevron in a `WORD_ACT`, a button
+		// named by the fact; one that goes to a route is the same box as a link. A save
 		// fact is the status region (one box, so its ring is one) and, failed, a
 		// retry in a `WORD_ACT` led by a retry glyph; where the facts wrap (below
 		// `tablet`) it holds the failed form's room in every state, so the line
 		// never wraps differently as a save moves.
 		ItemHeader: {
-			props: ["overline", "title", "facts", "actions", "more", "loading"],
+			props: ["overline", "facts", "loading"],
 			draws: [
 				"ITEM_HEADER",
-				"ITEM_HEADER_LINE",
-				"ITEM_HEADER_ACTS",
-				"ICON_BUTTON.fit.bar",
-				"ICON_BUTTON.fit.body",
-				"THREAD_COLUMN",
 				"ITEM_FACTS",
 				"ITEM_FACT",
 				"WORD_ACT",
 				"ICON.fit.meta",
 				"TEXT.role.meta",
-				"TEXT.role.title",
 				"STATUS",
 				"STATUS_DOT",
 				"STATUS_SPINNER",
@@ -1379,7 +1372,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"COUNT",
 				"COUNT_LABEL",
 				"LINE_BOX.role.meta",
-				"LINE_BOX.role.title",
 				"SKELETON_LINES",
 				"SKELETON_ROW.kind.facts",
 				"SKELETON.kind.line",
@@ -1388,7 +1380,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			holds: ["ITEM_HEADER", "ITEM_FACTS", "ITEM_FACT"],
 			states: ["rest", "loading"],
 			owns: {
-				roles: ["body", "meta", "title", "caption"],
+				roles: ["body", "meta", "caption"],
 				colors: [
 					"ink-body",
 					"ink-meta",
@@ -1404,13 +1396,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"danger",
 				],
 				radii: ["control", "chip", "full"],
-				spacing: ["pair", "sections", "inside", "fields", "control-x", "acts"],
+				spacing: ["pair", "sections", "inside", "fields", "control-x"],
 				sizes: [
 					"skeleton",
 					"target",
 					"control",
 					"control-compact",
-					"icon-inset",
 					"dot",
 					"spinner",
 					"icon-meta",

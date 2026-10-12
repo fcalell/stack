@@ -430,15 +430,15 @@ export const closure = (
 		<DefinitionRow label="x" class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<DefinitionRow label="x" classList={{}} />
-		<ItemHeader title="x" />
+		<ItemHeader overline={["x"]} />
 		{/* @ts-expect-error: closed channel */}
-		<ItemHeader title="x" className="x" />
+		<ItemHeader overline={["x"]} className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<ItemHeader title="x" style={{ flex: 1 }} />
+		<ItemHeader overline={["x"]} style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<ItemHeader title="x" class="x" />
+		<ItemHeader overline={["x"]} class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<ItemHeader title="x" classList={{}} />
+		<ItemHeader overline={["x"]} classList={{}} />
 		<EmptyState sentence="x" />
 		{/* @ts-expect-error: closed channel */}
 		<EmptyState sentence="x" className="x" />

@@ -184,7 +184,7 @@ function RecordBody({
 		<QueryBoundary
 			query={record}
 			sentence="The record did not load."
-			loading={<ItemHeader title="" loading />}
+			loading={<ItemHeader loading />}
 		>
 			{(data) => <p>{data.name}</p>}
 		</QueryBoundary>

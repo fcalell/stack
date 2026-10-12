@@ -350,11 +350,12 @@ a tick with no animation, never jumped to full.
   moves), and a context pick on the Pane (no screen used one). The Picker holds `CHIP` and
   `CHIP_LABEL`; a chip column's option (the Picker's `chip` family) draws its own chip alone and
   ignores `Option.chip`.
-- A record's own acts stand in its `ItemHeader`: `actions` (icon acts at the bar fit, body on touch)
-  and `more` (a `Menu`) draw at the end of the head's first line, the overline's else the title's (`ITEM_HEADER_LINE`,
-  `ITEM_HEADER_ACTS`: the acts' boxes reach across the line by the icon inset so their glyphs stand on it and the last at
-  the head's end), at every width. They are the same props on both platforms and are not the Pane's
-  `actions`/`more`, which stand in its bar, so each act has one place. Loading draws none.
+- A record's name and acts stand in its Pane's bar: `title` is a `Part` (the record's name; while the
+  record loads the app passes the generic word for the kind, read from the query outside the
+  `QueryBoundary`, so the Pane has no `loading` of its own) and the record's acts are the Pane's
+  `actions`/`more`, passed once it has loaded, so each act has one place on both platforms.
+  `ItemHeader` takes the record's place (`overline`) and its `facts` under the bar and draws no
+  heading and no acts.
 - A header fact in words that opens a sheet is `{ label: Part; onOpen }` on `ItemHeader`: the words
   in the meta ink and a trailing `ChevronRight` at the meta fit in a `WORD_ACT`, pulled back at its
   start as a pick fact is, a button named by the fact (`aria-haspopup="dialog"` on the web); the consumer's `onOpen` opens its own

@@ -59,13 +59,13 @@ export default function ProjectScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const query = useQuery(orpc.projects.get.queryOptions({ input: { id } }));
   return (
-    <Pane title="Project" back="/projects">
+    <Pane title={query.data?.name ?? "Project"} back="/projects">
       <QueryBoundary
         query={query}
         sentence="The project could not load."
-        loading={<ItemHeader title="" loading />}
+        loading={<ItemHeader loading />}
       >
-        {(project) => <ItemHeader title={project.name} />}
+        {(project) => <ItemHeader overline={[project.team]} facts={[project.owner]} />}
       </QueryBoundary>
     </Pane>
   );

@@ -1001,9 +1001,8 @@ function Under(props: Heard & { height: number }) {
 			}}
 		>
 			<Place>
-				<Pane title="Workflows" wide>
+				<Pane title="Nightly release" wide>
 					<ItemHeader
-						title="Nightly release"
 						facts={[
 							"Ana Ruiz",
 							"Saved today at 09:41",
@@ -1079,7 +1078,7 @@ function screenAt(width: number, height: number): Story {
 			await expect(args.selected).not.toHaveBeenCalled();
 
 			// A finger on the head scrolls the page and the graph stays.
-			const head = column.querySelector("h1, h2, h3");
+			const head = column.firstElementChild;
 			if (!head) throw new Error("no head");
 			const from = centre(rect(head));
 			const held = viewport(canvasElement);

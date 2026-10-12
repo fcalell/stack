@@ -1,5 +1,4 @@
 import { Canvas } from "@fcalell/plugin-react-ui/components/canvas";
-import { ItemHeader } from "@fcalell/plugin-react-ui/components/item-header";
 import { List } from "@fcalell/plugin-react-ui/components/list";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
@@ -769,7 +768,6 @@ export const FillsWidePane: StoryObj = {
 				/>
 			</Pane>
 			<Pane title="Nightly" back="/workflows" wide>
-				<ItemHeader title="Nightly" />
 				<Canvas label="Workflow" nodes={JOURNEY.nodes} edges={JOURNEY.edges} />
 			</Pane>
 		</Place>
@@ -794,7 +792,7 @@ export const FillsWidePane: StoryObj = {
 		);
 		const head = await canvas.findByRole("heading", {
 			name: "Nightly",
-			level: 2,
+			level: 1,
 		});
 		await expect(filled.top).toBeGreaterThanOrEqual(rect(head).bottom);
 		await expect(filled.height).toBeGreaterThan(0);

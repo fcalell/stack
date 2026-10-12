@@ -58,8 +58,13 @@ column. The `Pane`'s title is an `h1` and its sections start at `h2`. A `Pane` i
 container, so what stands in it reads its width (a `Table` whether it is `tablet` wide); the `Place`
 is the `place` container the `Pane`s read.
 
-An `ItemHeader` fact that opens a sheet is `{ label, onOpen }` and one that goes to another route is
-`{ label, href }`: each draws the words and a chevron, the second as a link.
+A record's name and acts are its `Pane`'s bar: `title` is the record's name (while it loads, the
+generic word for its kind, `Deploy`, read from the query outside the `QueryBoundary`) and
+`actions` and `more` are its acts, passed once it has loaded. An `ItemHeader` at the top of the body
+holds what the bar does not: the record's place (`overline`, its project, key or cycle) and its
+`facts` in a wrapping line; its `loading` stands bars at the loaded height. A fact that opens a
+sheet is `{ label, onOpen }` and one that goes to another route is `{ label, href }`: each draws the
+words and a chevron, the second as a link.
 
 The first `Pane`'s `title` is the page's name at every density: a place that draws one section of
 a larger area titles itself with the section's name (`Repos`, not `System`), which the sidebar item
@@ -86,7 +91,7 @@ shadow, weight, tone, transition or state is a look, and a numeric dimension is 
 
 Every colour, size, radius and spacing is a contract token; never an arbitrary value
 (`h-[34px]`), a literal colour or a raw pixel size. Copy renders through `Text` (`body` or `meta`,
-with `strong`) or the molecule that owns its role (`title` is `Pane`'s, `Gate`'s and `ItemHeader`'s, `heading`
+with `strong`) or the molecule that owns its role (`title` is `Pane`'s and `Gate`'s, `heading`
 `Section`'s (a `Section` inside a `Section` names itself at `body` semibold, a level below), `figure` `Stats`', `display` `Stat`'s); colour comes through a component's props.
 
 ## A picture is an `Image`

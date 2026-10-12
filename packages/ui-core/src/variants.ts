@@ -478,7 +478,7 @@ export const DEFINITION_ROW_CHEVRON = "size-control-compact";
 // head or on a row's meta line: the meta ink; what it follows stands an inside
 // gap from it.
 export const LOCK_GLYPH = "shrink-0 text-ink-meta";
-// A record's head: the overline, the title and the facts line a pair apart;
+// A record's head under the Pane's bar: the overline and the facts line a pair apart;
 // the facts wrap at the fields rhythm, a counted fact its word beside its
 // count. The line stands at the meta line's height whichever facts it holds:
 // a fact that acts or changes (a pick, an opening fact, a save) keeps its
@@ -486,12 +486,6 @@ export const LOCK_GLYPH = "shrink-0 text-ink-meta";
 // (`factReach`), so a fact that opens joining the line moves nothing under it.
 export const ITEM_HEADER = "gap-pair";
 export const ITEM_FACTS = "gap-x-fields gap-y-pair";
-// A record's acts stand at the end of the head's first line
-// (the overline, else the title), the line the height of its text: the acts'
-// boxes reach across it by the icon inset, so their glyphs stand on the line
-// and the last one at the head's end.
-export const ITEM_HEADER_LINE = "gap-acts";
-export const ITEM_HEADER_ACTS = "gap-acts -my-icon-inset -me-icon-inset";
 export const ITEM_FACT = "gap-inside";
 // A folded question: one row at the row height, its glyph (in the `ok` ink),
 // its label, its answer and its edit act an inside apart.

@@ -1,8 +1,6 @@
 import { Button as BaseButton } from "@base-ui/react/button";
 import { cn } from "@fcalell/ui-core/cn";
 import type {
-	IconAct,
-	MenuItem,
 	OptionPick,
 	Part,
 	Route,
@@ -12,8 +10,6 @@ import {
 	ITEM_FACT,
 	ITEM_FACTS,
 	ITEM_HEADER,
-	ITEM_HEADER_ACTS,
-	ITEM_HEADER_LINE,
 	lineBox,
 	SKELETON_LINES,
 	skeleton,
@@ -21,17 +17,13 @@ import {
 	text,
 	WORD_ACT,
 } from "@fcalell/ui-core/variants";
-import { use, useRef } from "react";
+import { useRef } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { HeadingContext } from "../../lib/heading.ts";
-import { useTouch } from "../../lib/media.ts";
 import { follow } from "../../lib/navigate.ts";
 import { joinParts, META_CUT, partText } from "../../lib/parts.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Count } from "../count/index.tsx";
 import { Icon } from "../icon/index.tsx";
-import { IconButton } from "../icon-button/index.tsx";
-import { Menu } from "../menu/index.tsx";
 import { PickerBase } from "../picker/base.tsx";
 import { Status } from "../status/index.tsx";
 
@@ -42,10 +34,6 @@ const HEAD = "flex flex-col";
 // is the `lh` it reads.
 const REACH = "leading-meta -my-[calc((var(--spacing-target)-1lh)/2)]";
 const OVERLINE = "truncate";
-// The first line holds the acts at its end: the line's text takes the rest.
-const LINE = "flex items-center";
-const LINE_TEXT = "min-w-0 grow";
-const ACTS = "flex items-center shrink-0";
 const FACTS = "flex flex-wrap items-center";
 const FACT = "inline-flex items-center";
 // A pick in the facts line pulls back at its start as well as its end, so its
@@ -68,7 +56,7 @@ const FACTS_LINE_WAIT = "flex items-center min-h-lh";
 const COUNT_WAIT = "inline-flex shrink-0 items-center";
 const FIGURE_WAIT = "opacity-0 tabular-nums";
 
-/** One fact under the title: words, a status, words that open a sheet or go to a route, a status that moves (a pick whose options carry states), a count beside its word, or the state of a save that runs as the record is typed, a failed one with its retry (each string a short phrase; the facts line wraps between facts, a `Quoted` part is cut at 40 characters). */
+/** One fact in the head's facts line: words, a status, words that open a sheet or go to a route, a status that moves (a pick whose options carry states), a count beside its word, or the state of a save that runs as the record is typed, a failed one with its retry (each string a short phrase; the facts line wraps between facts, a `Quoted` part is cut at 40 characters). */
 export type Fact<V extends string | null = string> =
 	| Part
 	| { status: StatusState; label?: string }
@@ -78,20 +66,14 @@ export type Fact<V extends string | null = string> =
 	| { count: number; label: string }
 	| { save: "saving" | "saved" | "failed"; onRetry: () => void };
 
-/** A record's head. */
+/** A record's place and facts under the Pane's bar, which holds the record's name and acts. */
 export interface ItemHeaderProps<V extends string | null = string>
 	extends Closed {
-	/** The parts that place the record (its project, key, cycle), joined by a middle dot over the title (each a short phrase; one line, truncates). */
+	/** The parts that place the record (its project, key, cycle), joined by a middle dot (each a short phrase; one line, truncates). */
 	overline?: readonly Part[];
-	/** The record's name (a short phrase; wraps in full). */
-	title: Part;
-	/** The facts in a wrapping line under the title. */
+	/** The facts in a wrapping line under the overline. */
 	facts?: readonly Fact<V>[];
-	/** The record's icon acts, in order, at the end of the head's first line (the overline's, else the title's), at every width. */
-	actions?: IconAct[];
-	/** The acts past the actions, in a menu under the more act after them. */
-	more?: MenuItem[];
-	/** Bars in each line's box stand in for the head, at its height. No acts draw while it stands. */
+	/** Bars in each line's box stand in for the head, at its height. */
 	loading?: boolean;
 }
 
@@ -221,27 +203,17 @@ function FactPart<V extends string | null>({ fact }: { fact: Fact<V> }) {
 	);
 }
 
-/** The overline, the title at the title role and the facts, a pair apart whether the title wraps or not, and the record's acts and more at the end of the first line. The title is a heading at the level where the header stands. */
+/** The record's place (the overline) and its facts, a pair apart, under the Pane's bar: the bar holds the record's name and acts, so the head holds neither. */
 export function ItemHeader<V extends string | null = string>({
 	overline,
-	title,
 	facts,
-	actions,
-	more,
 	loading,
 }: ItemHeaderProps<V>) {
-	const words = useWords();
-	const level = use(HeadingContext);
-	const Heading = `h${level}` as const;
-	const fit = useTouch() ? "body" : "bar";
 	if (loading)
 		return (
 			<div aria-busy className={cn(ITEM_HEADER, HEAD)}>
 				<span className={cn(lineBox({ role: "meta" }), LINE_WAIT)}>
 					<span className={cn(skeleton({ kind: "line" }), "w-1/4")} />
-				</span>
-				<span className={cn(lineBox({ role: "title" }), LINE_WAIT)}>
-					<span className={cn(skeleton({ kind: "line" }), "w-1/2")} />
 				</span>
 				<span className={cn(SKELETON_LINES, FACTS_WAIT)}>
 					<span
@@ -264,39 +236,13 @@ export function ItemHeader<V extends string | null = string>({
 				</span>
 			</div>
 		);
-	const acts =
-		(actions?.length ?? 0) > 0 || (more?.length ?? 0) > 0 ? (
-			<div className={cn(ITEM_HEADER_ACTS, ACTS)}>
-				{actions?.map((action) => (
-					<IconButton key={action.label} {...action} fit={fit} />
-				))}
-				{more?.length ? <Menu label={words.more} items={more} /> : null}
-			</div>
-		) : null;
-	const overlined = overline && overline.length > 0;
-	const overlineLine = overlined ? (
-		<p className={cn(text({ role: "meta" }), OVERLINE, acts && LINE_TEXT)}>
-			{joinParts(overline, META_CUT)}
-		</p>
-	) : null;
-	const heading = (
-		<Heading
-			className={cn(text({ role: "title" }), acts && !overlined && LINE_TEXT)}
-		>
-			{partText(title)}
-		</Heading>
-	);
 	return (
-		<header className={cn(ITEM_HEADER, HEAD)}>
-			{acts ? (
-				<div className={cn(ITEM_HEADER_LINE, LINE)}>
-					{overlined ? overlineLine : heading}
-					{acts}
-				</div>
-			) : (
-				overlineLine
-			)}
-			{acts && !overlined ? null : heading}
+		<div className={cn(ITEM_HEADER, HEAD)}>
+			{overline && overline.length > 0 ? (
+				<p className={cn(text({ role: "meta" }), OVERLINE)}>
+					{joinParts(overline, META_CUT)}
+				</p>
+			) : null}
 			{facts && facts.length > 0 ? (
 				<div className={cn(ITEM_FACTS, FACTS)}>
 					{facts.map((fact) => (
@@ -304,6 +250,6 @@ export function ItemHeader<V extends string | null = string>({
 					))}
 				</div>
 			) : null}
-		</header>
+		</div>
 	);
 }

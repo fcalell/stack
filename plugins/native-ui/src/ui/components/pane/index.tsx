@@ -1,4 +1,4 @@
-import type { IconAct, MenuItem } from "@fcalell/ui-core/descriptors";
+import type { IconAct, MenuItem, Part } from "@fcalell/ui-core/descriptors";
 import {
 	FOOT_DOCKED,
 	PAGE_BODY,
@@ -28,6 +28,7 @@ import {
 } from "../../lib/frame";
 import { Lifted, Scroll } from "../../lib/hosts";
 import { navigate } from "../../lib/navigate";
+import { partText } from "../../lib/parts";
 import type { Route } from "../../lib/route";
 import { useWords } from "../../lib/words";
 import { IconButton } from "../icon-button";
@@ -53,11 +54,11 @@ const DOCKED = "shrink-0 items-center";
 
 /** A page of a `Place`: on the phone one screen. */
 export interface PaneProps extends Closed {
-	/** The page's title, its one header (a short phrase; wraps). */
-	title: string;
+	/** The page's title, its one header (a short phrase; wraps). On a record's Pane it is the record's name; while the record loads the app passes the generic word for the kind ("Deploy"). */
+	title: Part;
 	/** The route the Pane returns to: a Back act leads its bar. None leaves the shell's switcher there. */
 	back?: Route;
-	/** Icon acts after the title, in order; a create act is one of them. */
+	/** Icon acts after the title, in order; a create act is one of them, and on a record's Pane the record's acts. */
 	actions?: IconAct[];
 	/** The acts past the actions, in a menu under the more act. */
 	more?: MenuItem[];
@@ -71,7 +72,7 @@ export interface PaneProps extends Closed {
 	children?: ReactNode;
 }
 
-/** A page of a Place, on the phone one screen: a bar (the back act where `back` is set, else the shell's switcher; the title wrapping; then the actions and more, which drop whole to a second line when they do not fit), a body that scrolls, its children a sections gap apart, and a `foot` that docks under the body over the keyboard. The toasts stand over the body, above the foot. `cover` and `wide` are the web's: on the phone a Pane is always the whole screen and its column the screen's width, so both change nothing. */
+/** A page of a Place, on the phone one screen: a bar (the back act where `back` is set, else the shell's switcher; the title wrapping; then the actions and more, which drop whole to a second line when they do not fit), a body that scrolls, its children a sections gap apart, and a `foot` that docks under the body over the keyboard. On a record's Pane the title is the record's name, the actions and more its acts, and the record's place and facts stand in an `ItemHeader` at the body's top. The toasts stand over the body, above the foot. `cover` and `wide` are the web's: on the phone a Pane is always the whole screen and its column the screen's width, so both change nothing. */
 export function Pane({
 	title,
 	back,
@@ -81,6 +82,7 @@ export function Pane({
 	children,
 }: PaneProps) {
 	const words = useWords();
+	const name = partText(title);
 	const far = useContext(DistanceContext);
 	const switcher = useContext(ShellSwitcher);
 	// The claim a docked sheet leaves the foot for the input that returns.
@@ -99,7 +101,7 @@ export function Pane({
 		) : null;
 	return (
 		<BackRoute.Provider value={back}>
-			<PageTitle.Provider value={title}>
+			<PageTitle.Provider value={name}>
 				<View className={PANE}>
 					<View className={cn(PAGE_HEAD, far && PAGE_HEAD_ROOM)}>
 						<View className={cn(PAGE_TOP_BAR, TOP_BAR)}>
@@ -113,7 +115,7 @@ export function Pane({
 									PAGE_TITLE_BLOCK,
 								)}
 							>
-								{title}
+								{name}
 							</RNText>
 							<View className={cn(ACTS, PAGE_TOP_BAR_END)}>
 								{(actions ?? []).map((action) => (

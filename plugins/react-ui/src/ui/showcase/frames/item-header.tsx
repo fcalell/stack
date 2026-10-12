@@ -51,24 +51,22 @@ function SavingHead() {
 	return (
 		<ItemHeader
 			overline={OVERLINE}
-			title="Describe the meaning of this field"
 			facts={[{ save, onRetry: () => setSave(NEXT.failed) }, ...REST]}
 		/>
 	);
 }
 
-// A record page: its head, its act and the sections after them, a sections
-// step apart.
+// A record page: the record's name and acts in the Pane's bar, its head under
+// it, its act and the sections after them, a sections step apart.
 function Record() {
 	return (
 		<Column>
 			<Place>
-				<Pane title="Imports">
-					<ItemHeader
-						overline={OVERLINE}
-						title="Re-run the nightly import"
-						facts={[moving("active"), ...REST]}
-					/>
+				<Pane
+					title="Re-run the nightly import"
+					actions={[{ icon: "Pencil", label: "Edit", onAct: move }]}
+				>
+					<ItemHeader overline={OVERLINE} facts={[moving("active"), ...REST]} />
 					<ActionBar acts={[{ label: "Pause the import", onAct: move }]} />
 					<Section title="Stages">
 						<StandInRows ground="list" />
@@ -79,12 +77,12 @@ function Record() {
 	);
 }
 
-// Every cell draws the head in the frame's state: at rest a title that
-// wraps over one that does not, the lines a pair apart in both, the first
-// fact a status that moves; loading the bars in each line's box. A
-// `STATUS_DOT.state` cell stands on that state. A third head carries a save
-// fact that cycles its three states, a fourth a fact in words that opens
-// beside one that goes to a route; a record page holds a head with its act under it.
+// Every cell draws the head in the frame's state: at rest the lines a pair
+// apart, the first fact a status that moves; loading the bars in each line's
+// box. A `STATUS_DOT.state` cell stands on that state. A third head carries a
+// save fact that cycles its three states, a fourth a fact in words that opens
+// beside one that goes to a route; a record page holds a head under the
+// Pane's bar, which names the record and holds its acts, with its act under it.
 export function drawItemHeader(frame: ShowcaseFrame) {
 	const [family, , value] = frame.cell.name.split(".");
 	// The third segment of a `STATUS_DOT.state` cell is a state key.
@@ -92,7 +90,7 @@ export function drawItemHeader(frame: ShowcaseFrame) {
 	if (frame.state === "loading")
 		return (
 			<Wide>
-				<ItemHeader title="" loading />
+				<ItemHeader loading />
 			</Wide>
 		);
 	return (
@@ -100,18 +98,12 @@ export function drawItemHeader(frame: ShowcaseFrame) {
 			<Wide>
 				<ItemHeader
 					overline={OVERLINE}
-					title="Retry failed webhooks with exponential backoff and a dead-letter queue after five attempts"
 					facts={[moving("attention"), ...REST]}
 				/>
-				<ItemHeader
-					overline={OVERLINE}
-					title="Fix invoice rounding"
-					facts={[moving(state), ...REST]}
-				/>
+				<ItemHeader overline={OVERLINE} facts={[moving(state), ...REST]} />
 				<SavingHead />
 				<ItemHeader
 					overline={OVERLINE}
-					title="Read the vendor's onboarding email"
 					facts={[
 						{ label: "Outside content", onOpen: move },
 						{ label: "Open the run", href: "/runs/42" },

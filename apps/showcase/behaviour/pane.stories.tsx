@@ -577,7 +577,7 @@ export const TopsAndWash: StoryObj = {
 function Parts() {
 	return (
 		<>
-			<ItemHeader title="Review the deploy" facts={["Ana Ruiz"]} />
+			<ItemHeader facts={["Ana Ruiz"]} />
 			<Section title="Where it goes">
 				<Group>
 					<DefinitionRow label="From" value="main" />
@@ -608,7 +608,7 @@ function record(wide: boolean): StoryObj {
 					<Pane title="Now">
 						<Rows />
 					</Pane>
-					<Pane title="Review" back="/now" wide={wide}>
+					<Pane title="Review the deploy" back="/now" wide={wide}>
 						<Parts />
 					</Pane>
 				</Place>
@@ -798,7 +798,7 @@ export const ThreadFillsPane375 = touch(fills(375));
 export const ThreadFillsPane768 = fills(768);
 export const ThreadFillsPane1280 = fills(1280);
 
-function Notified(props: { width: number; facts: boolean; banner: boolean }) {
+function Notified(props: { width: number; banner: boolean }) {
 	const [text, setText] = useState("");
 	return (
 		<Page width={props.width}>
@@ -806,11 +806,8 @@ function Notified(props: { width: number; facts: boolean; banner: boolean }) {
 				<Pane title="Chats">
 					<Rows />
 				</Pane>
-				<Pane title="Chat" back="/chats">
-					<ItemHeader
-						title="Why did the last deploy of api fail?"
-						facts={props.facts ? ["Ana Ruiz", "Today"] : undefined}
-					/>
+				<Pane title="Why did the last deploy of api fail?" back="/chats">
+					<ItemHeader facts={["Ana Ruiz", "Today"]} />
 					{props.banner ? (
 						<Banner kind="warn" sentence="The run is paused." />
 					) : null}
@@ -835,16 +832,16 @@ function Notified(props: { width: number; facts: boolean; banner: boolean }) {
 // A part above the Thread is a sibling of it in the body, a sections gap from
 // it, and the Thread stays the body's direct child, so the log scrolls inside
 // the body whose form stays filled.
-function notified(width: number, facts: boolean): StoryObj {
+function notified(width: number): StoryObj {
 	return {
 		parameters: { layout: "fullscreen" },
-		render: () => <Notified width={width} facts={facts} banner />,
+		render: () => <Notified width={width} banner />,
 		play: async ({ canvas, canvasElement }) => {
 			const log = await canvas.findByRole("log");
 			const send = await canvas.findByRole("button", { name: "Send" });
 			const record = must(panes(canvasElement)[1]);
 			const body = bodyOf(record);
-			const head = must(body.querySelector("header"));
+			const head = must(body.firstElementChild);
 			const banner = await canvas.findByRole("status");
 			for (let at = 0; at < 10; at++) await frame();
 			await expect(body.scrollHeight).toBeLessThanOrEqual(body.clientHeight);
@@ -878,10 +875,9 @@ function notified(width: number, facts: boolean): StoryObj {
 	};
 }
 
-export const ThreadUnderBanner375 = touch(notified(375, true));
-export const ThreadUnderBanner768 = notified(768, true);
-export const ThreadUnderBanner1440 = notified(1440, true);
-export const ThreadUnderBannerNoFacts1440 = notified(1440, false);
+export const ThreadUnderBanner375 = touch(notified(375));
+export const ThreadUnderBanner768 = notified(768);
+export const ThreadUnderBanner1440 = notified(1440);
 
 // The banner coming and going keeps the Thread mounted, so its typed input stays.
 export const ThreadKeepsInputAsBannerToggles: StoryObj = {
@@ -893,7 +889,7 @@ export const ThreadKeepsInputAsBannerToggles: StoryObj = {
 				<button type="button" onClick={() => setBanner((on) => !on)}>
 					Toggle
 				</button>
-				<Notified width={768} facts banner={banner} />
+				<Notified width={768} banner={banner} />
 			</>
 		);
 	},

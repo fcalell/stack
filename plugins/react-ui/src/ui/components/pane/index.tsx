@@ -1,5 +1,10 @@
 import { cn } from "@fcalell/ui-core/cn";
-import type { IconAct, MenuItem, Route } from "@fcalell/ui-core/descriptors";
+import type {
+	IconAct,
+	MenuItem,
+	Part,
+	Route,
+} from "@fcalell/ui-core/descriptors";
 import {
 	FOOT_DOCKED,
 	PAGE_BODY,
@@ -28,6 +33,7 @@ import {
 } from "../../lib/frame.ts";
 import { HeadingContext } from "../../lib/heading.ts";
 import { DistanceContext, useTouch } from "../../lib/media.ts";
+import { partText } from "../../lib/parts.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
 import { useWords } from "../../lib/words.tsx";
 import { useWraps } from "../../lib/wraps.ts";
@@ -81,11 +87,11 @@ const DOCKED =
 
 /** A column of a `Place`. */
 export interface PaneProps extends Closed {
-	/** The Pane's title, an `h1` (a short phrase; truncates on the desktop, wraps on touch). */
-	title: string;
+	/** The Pane's title, an `h1` (a short phrase; truncates on the desktop, wraps on touch). On a record's Pane it is the record's name; while the record loads the app passes the generic word for the kind ("Deploy"). */
+	title: Part;
 	/** The route the Pane returns to: Back where it stands alone, Close where a Pane stands before it. None draws no back act. */
 	back?: Route;
-	/** Icon acts after the title, in order; a create act is one of them. */
+	/** Icon acts after the title, in order; a create act is one of them, and on a record's Pane the record's acts. */
 	actions?: IconAct[];
 	/** The acts past the actions, in a menu under the more act. */
 	more?: MenuItem[];
@@ -99,7 +105,7 @@ export interface PaneProps extends Closed {
 	children?: ReactNode;
 }
 
-/** A column of a Place: a bar over one hairline (the back act, the title, the actions and more; on touch the shell's switcher leads where there is no back act) and a body that scrolls, its children a sections gap apart within the measure at its start (the Pane's width with `wide`), a Thread or a Canvas in it filling it; a `foot` docks under the body. Each Pane but the last holds the list width, giving way to its floor; the last takes the rest. Below `tablet` of its Place only the last stands; a `cover` Pane spans its Place, the Panes before it hidden and mounted. Its back act draws as Back where it stands alone and as Close where a Pane stands before it. */
+/** A column of a Place: a bar over one hairline (the back act, the title, the actions and more; on touch the shell's switcher leads where there is no back act) and a body that scrolls, its children a sections gap apart within the measure at its start (the Pane's width with `wide`), a Thread or a Canvas in it filling it; a `foot` docks under the body. Each Pane but the last holds the list width, giving way to its floor; the last takes the rest. Below `tablet` of its Place only the last stands; a `cover` Pane spans its Place, the Panes before it hidden and mounted. Its back act draws as Back where it stands alone and as Close where a Pane stands before it. On a record's Pane the title is the record's name, the actions and more its acts, and the record's place and facts stand in an `ItemHeader` at the body's top. */
 export function Pane({
 	title,
 	back,
@@ -168,7 +174,7 @@ export function Pane({
 				touch ? cn(TITLE_WRAP, PAGE_TITLE_BLOCK, PAGE_TITLE_FLOOR) : TITLE,
 			)}
 		>
-			{title}
+			{partText(title)}
 		</h1>
 	);
 	// The head is one tree on both densities, so crossing the density line

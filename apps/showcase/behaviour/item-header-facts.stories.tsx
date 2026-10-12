@@ -17,9 +17,8 @@ function must<T extends Element>(el: T | null | undefined): T {
 function Joins() {
 	const [joined, join] = useState(false);
 	return (
-		<div style={{ width: 390 }}>
+		<div data-joins="" style={{ width: 390 }}>
 			<ItemHeader
-				title="Triage the inbox"
 				facts={[
 					{ status: "running", label: "Working" },
 					...(joined ? [{ label: "Read outside content", onOpen: noop }] : []),
@@ -37,7 +36,9 @@ function Joins() {
 export const FactJoins: StoryObj = {
 	render: () => <Joins />,
 	play: async ({ canvas, canvasElement, userEvent }) => {
-		const head = must(canvasElement.querySelector("header"));
+		const head = must(
+			canvasElement.querySelector("[data-joins]")?.firstElementChild,
+		);
 		const before = head.getBoundingClientRect().height;
 		await userEvent.click(canvas.getByRole("button", { name: "Join" }));
 		await expect(
