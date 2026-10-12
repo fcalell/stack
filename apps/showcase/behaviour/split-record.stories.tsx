@@ -11,11 +11,11 @@ import { Section } from "@fcalell/plugin-react-ui/components/section";
 import { Split } from "@fcalell/plugin-react-ui/components/split";
 import { BREAKPOINT_PX } from "@fcalell/ui-core/tokens";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { expect } from "storybook/test";
 
 // A record in a Split: the column a record beside the main reads in, the list
-// and pane sizing to their content, and a record's acts in its own header.
+// holding one width and the pane sizing to its content, and a record's acts in its own header.
 
 const SHORT = ["Ana", "Ben", "Ema"];
 const LONG = [
@@ -150,16 +150,14 @@ function Sized(props: { width: number; names: string[] }) {
 	);
 }
 
-// A list of short rows stands at the floor, one of long rows at the ceiling,
-// and the main takes the rest either way.
-export const ListSizesToItsContent: StoryObj = {
+// The list holds one width, whatever its rows are: short rows, long rows and
+// none loaded stand at the list token, and the main takes the rest either way.
+export const ListHoldsOneWidth: StoryObj = {
 	render: () => <Sized width={1440} names={SHORT} />,
 	play: async ({ canvasElement }) => {
 		const [list, main] = regions(canvasElement);
-		const floor = width(canvasElement, "w-region-min");
 		const box = must(list).getBoundingClientRect();
-		await expect(box.width).toBeGreaterThanOrEqual(floor);
-		await expect(box.width).toBeLessThan(width(canvasElement, "w-list"));
+		await expect(box.width).toBeCloseTo(width(canvasElement, "w-list"), 0);
 		await expect(must(main).getBoundingClientRect().left).toBeCloseTo(
 			box.right,
 			0,
@@ -172,7 +170,66 @@ export const ListSizesToItsContent: StoryObj = {
 	},
 };
 
-export const ListStopsAtTheCeiling: StoryObj = {
+// The list loads and its rows arrive: the list and the main keep their edges.
+function Loads() {
+	const [rows, setRows] = useState<string[] | undefined>(undefined);
+	return (
+		<Page width={1440}>
+			<Place title="Now" bleed>
+				<Split
+					list={
+						rows ? (
+							<Rows names={rows} />
+						) : (
+							<List
+								items={[]}
+								loading
+								row={{
+									key: (name: string) => name,
+									title: (name: string) => name,
+								}}
+							/>
+						)
+					}
+					main={
+						<>
+							<ItemHeader title="Review the deploy" />
+							<button type="button" onClick={() => setRows(LONG)}>
+								Load
+							</button>
+							<button type="button" onClick={() => setRows(SHORT)}>
+								Load short
+							</button>
+						</>
+					}
+				/>
+			</Place>
+		</Page>
+	);
+}
+
+export const ListHoldsItsWidthWhileLoading: StoryObj = {
+	render: () => <Loads />,
+	play: async ({ canvas, canvasElement, userEvent }) => {
+		const edges = () => {
+			const [list, main] = regions(canvasElement);
+			return [
+				must(list).getBoundingClientRect().width,
+				must(main).getBoundingClientRect().left,
+			];
+		};
+		const loading = edges();
+		await expect(loading[0]).toBeCloseTo(width(canvasElement, "w-list"), 0);
+		await userEvent.click(canvas.getByRole("button", { name: "Load" }));
+		await expect(canvas.getByText(/Review the deploy of/)).toBeVisible();
+		await expect(edges()).toEqual(loading);
+		await userEvent.click(canvas.getByRole("button", { name: "Load short" }));
+		await expect(canvas.getByText("Ana")).toBeVisible();
+		await expect(edges()).toEqual(loading);
+	},
+};
+
+export const ListStandsAtTheListWidth: StoryObj = {
 	render: () => <Sized width={1440} names={LONG} />,
 	play: async ({ canvasElement }) => {
 		const [list] = regions(canvasElement);

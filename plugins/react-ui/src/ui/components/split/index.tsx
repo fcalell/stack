@@ -40,13 +40,12 @@ import { MAIN_FILLED } from "../thread/fill.ts";
 const SPLIT = "flex min-w-0 grow min-h-0";
 // The list, the main and the pane each take a tab stop only while they scroll
 // with nothing tabbable inside.
-// It names itself the anchor the Place's floating act centres on, since the
-// list sizes to its content.
+// It names itself the anchor the Place's floating act centres on.
 const LIST =
 	"flex flex-col shrink-0 overflow-y-auto [anchor-name:--split-list] focus-visible:-outline-offset-2";
 // Below `tablet` the list stands alone: the page's width, with no hairline.
 const LIST_ALONE =
-	"page-max-tablet:w-full page-max-tablet:max-w-none page-max-tablet:pb-0 page-max-tablet:border-r-0";
+	"page-max-tablet:w-full page-max-tablet:pb-0 page-max-tablet:border-r-0";
 // Over a docked foot (the Place marks `data-foot`) the list ends a sections
 // gap above it at every width, below `tablet` too, where it has no inset.
 const LIST_FOOT =

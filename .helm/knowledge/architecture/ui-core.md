@@ -774,14 +774,18 @@ a tick with no animation, never jumped to full.
   (`padding-bottom: env(safe-area-inset-bottom)`, non-zero under the document's
   `viewport-fit=cover`), an overlay the tab bar spells beside `SHELL_TAB_BAR`; native pads the
   same inset from `react-native-safe-area-context`.
-- A Split's list and pane size to their content between `region-min` and a ceiling (`list`, `pane`): `SPLIT_LIST` and
-  `SPLIT_PANE` spell `min-w-region-min max-w-<ceiling>` and no `w-`, the list shrink-0 so its flex basis is its
-  content. The ceilings are the old fixed widths, so 003-122's arithmetic (a main of at least a page less the list at its
-  ceiling) holds as the least the main gets. Rejected: a list width the app names (a consumer option, and an app
-  cannot know its rows' width). The touch Place's floating act centres on the list by the list's CSS anchor
-  (`--split-list`), since no width token is the list's width any more. A width that follows its rows moves as a
-  filter or a load changes them, and a skeleton's percentage bars give the floor: the cost of content sizing.
-- A frame's fixed regions are widths (`sidebar`, `list` and `pane` the ceilings of a split's content-sized regions, `region-min` their floor, `column`, `node` a canvas node, `auth`, `empty` an empty
+- A Split's list holds one width, `list` (`SPLIT_LIST` is `w-list`, 003-322), and its pane sizes to its
+  content between `region-min` and `pane` (`SPLIT_PANE` spells `min-w-region-min max-w-pane` and no
+  `w-`, the pane shrink-0 so its flex basis is its content). 003-305 sized the list to its content
+  as well, and Stead's critique (2026-10-11) found the cost: the column moved from 215 to 360 as
+  its rows loaded and between lists (240, 288, 360), so the main reflowed on every load and filter.
+  The list's width is therefore the ceiling it always was, so 003-122's arithmetic (a main of at
+  least a page less the list) holds exactly. Rejected: a list width the app names (a consumer
+  option, and an app cannot know its rows' width), and holding the content-sized width through a
+  skeleton (the loaded rows would still differ list to list). The touch Place's floating act
+  centres on the list by the list's CSS anchor (`--split-list`). The pane still follows its content:
+  a width that follows its rows moves as a load changes them.
+- A frame's fixed regions are widths (`sidebar`, `list` a split's list column, `pane` the ceiling of its content-sized record pane, `region-min` its floor, `column`, `node` a canvas node, `auth`, `empty` an empty
   state's column, `selection` a selection bar's column), so a region keeps its measure at any viewport. A skeleton bar alone takes a
   fraction width (`w-1/12`, `w-1/5`, `w-1/4` to `w-3/4`) to stand at its text's length: structural,
   a closed list in the web verify's overlay acceptance, never a token; a chart column's share of its

@@ -147,7 +147,6 @@ export const OVERLAYS: readonly string[] = [
 	"page-tablet:hidden",
 	"page-max-tablet:hidden",
 	"page-max-tablet:w-full",
-	"page-max-tablet:max-w-none",
 	"[anchor-name:--split-list]",
 	"page-max-tablet:pb-0",
 	"page-max-tablet:border-r-0",

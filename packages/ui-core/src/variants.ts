@@ -927,18 +927,19 @@ export const FLOATING_ACT_ROOM = "min-h-control";
 // page inset under its last row, so its room is the act's height over the
 // page inset.
 export const FLOATING_ACT_FOOT = "pb-page";
-// A split: the list inside a hairline, the pane at `wide` of its page, each
-// sized to its content between `region-min` and its ceiling (`list`, `pane`;
-// the ceilings are the widths the breakpoints are reckoned against, so the main
-// never has less than they leave), and the main takes the rest. Below `tablet`
-// the list stands alone and draws neither.
+// A split: the list inside a hairline, the pane at `wide` of its page. The
+// list holds one width, `list`, whatever it holds or whether it has loaded, so
+// the main never moves as rows arrive or change; the pane sizes to its content
+// between `region-min` and its ceiling (`pane`). The widths are what the
+// breakpoints are reckoned against, so the main never has less than they
+// leave, and the main takes the rest. Below `tablet` the list stands alone and
+// draws neither.
 // A list holding sections stands them a sections gap apart, as a page body
 // does, the first at the page inset under the strip's hairline at every
 // width, where the record's first line stands: the rhythm is its own cell,
 // which the phone's list reads as well. Its bottom inset is the record's, so
 // an empty list and an empty main centre on one line.
-export const SPLIT_LIST =
-	"min-w-region-min max-w-list pb-page px-page border-r border-edge";
+export const SPLIT_LIST = "w-list pb-page px-page border-r border-edge";
 export const SPLIT_LIST_STACK = "gap-sections pt-page";
 export const SPLIT_PANE =
 	"gap-sections min-w-region-min max-w-pane p-page border-l border-edge";

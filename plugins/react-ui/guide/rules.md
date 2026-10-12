@@ -22,7 +22,7 @@ stands alone at a deeper route is a pushed `Screen` whose `back` is the route ab
 A `Split` reads its regions against its page's width, not the viewport's, and in the `Shell` the page
 is the viewport less the 240 px sidebar. The list and the main stand together from a page `tablet`
 (768) wide, a 1008 px viewport; `beside` and `pane` stand from a page `wide` (1200) wide, a 1440 px
-viewport. Below them one region stands at a time. The list and the pane size to their content, between a floor (`region-min`, 240) and a ceiling (`list` 360, `pane` 320), and the main takes the rest: the breakpoints are reckoned against the ceilings, so the main never has less than they leave. A list of short rows stands at the floor; a list's width follows its rows as they change, so never set one.
+viewport. Below them one region stands at a time. The list holds one width (`list`, 360) whatever it holds, loading or loaded, so the main never reflows as its rows arrive or change; the pane sizes to its content, between a floor (`region-min`, 240) and a ceiling (`pane` 320). The main takes the rest: the breakpoints are reckoned against the list and the pane's ceilings, so the main never has less than they leave. Never set a width on either.
 
 An app that selects a record opens the pane's sheet by passing `open` with `onClose` (the two stand
 together): `<Split open={selected} onClose={() => setSelected(false)} …>`. `open` stands the pane as
