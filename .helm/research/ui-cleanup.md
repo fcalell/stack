@@ -126,6 +126,14 @@ guides. Stead's stack pin moves after each pass and its screens are ported in th
    provides it. Native keeps its `FrameHost` host view: React Native has no body.
 3. **Children read by type:** explicit props in place of the walks (Section's `loading`, Toolbar's
    `search`, Form's bars); Columns lays out its children with grid, no wrapper each.
+   Decided 2026-10-12: a Form's structure is its prop, exactly one of `children` (fields, at the
+   fields step) or `groups` (each a `fieldset` with its `legend`, a sections step apart), its
+   bar a `bar` prop; a wizard's `steps` comes later as a third shape. A Section is busy only by
+   `loading` and counts only by `count`; a FormField and an ActionBar draw their own waiting
+   form. Toolbar's `search` and `chips` are descriptors. FormField takes its control as a
+   descriptor per kind (`switch`, `checkbox`, `slider`, `select`, `options`, `segments`, or
+   `children` for any other), and DefinitionRow a `switch` prop, so no prop's element type is
+   read.
 4. **Form by context:** one form per component, a prop where callers need two; a row's ground
    comes from its parent's surface.
 5. **Measuring in JavaScript:** container queries and `flex-wrap`; JavaScript stays for the Canvas
