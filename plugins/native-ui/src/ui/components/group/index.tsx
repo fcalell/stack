@@ -37,12 +37,14 @@ export type GroupItem =
 			key: string;
 			// The row, drawn bare.
 			row: ReactNode;
+			item?: never;
 	  }
 	| {
 			// The entry's React key, unique in the group.
 			key: string;
 			// The item, drawn at the card's inset.
 			item: ReactNode;
+			row?: never;
 	  };
 
 export type GroupProps<

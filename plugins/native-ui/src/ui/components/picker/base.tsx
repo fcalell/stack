@@ -230,6 +230,7 @@ export function PickerBase<V extends string | null = string>(
 				open={open}
 				onClose={() => setOpen(false)}
 				onGone={cell?.done}
+				typing={cell !== undefined}
 				act={act}
 				chip={chip}
 			/>

@@ -21,6 +21,7 @@ import {
 	OPTION_LINE,
 	OPTION_LIST,
 	OPTION_RADIO_DOT,
+	OPTION_ROW,
 	optionRadio,
 	ROW_META_LINE,
 	row,
@@ -188,7 +189,7 @@ export function OptionList<V extends string = string, T = unknown>(
 		);
 	if (state === "missing")
 		return frame(
-			<View className={cn(row({ lines: "one" }), NOTE)}>
+			<View className={cn(row({ lines: "one" }), OPTION_ROW, NOTE)}>
 				<RNText className={cn(text({ role: "meta" }), SENTENCE)}>
 					{words.missing}
 				</RNText>
@@ -204,7 +205,7 @@ export function OptionList<V extends string = string, T = unknown>(
 		);
 	if (state === "failed" && props.query !== undefined)
 		return frame(
-			<View className={cn(row({ lines: "one" }), NOTE)}>
+			<View className={cn(row({ lines: "one" }), OPTION_ROW, NOTE)}>
 				<RNText className={cn(text({ role: "meta" }), SENTENCE)}>
 					{props.sentence}
 				</RNText>
@@ -218,7 +219,7 @@ export function OptionList<V extends string = string, T = unknown>(
 		);
 	if (state === "empty")
 		return frame(
-			<View className={cn(row({ lines: "one" }), NOTE)}>
+			<View className={cn(row({ lines: "one" }), OPTION_ROW, NOTE)}>
 				<RNText className={cn(text({ role: "meta" }), SENTENCE)}>
 					{props.empty}
 				</RNText>
@@ -251,6 +252,7 @@ export function OptionList<V extends string = string, T = unknown>(
 								onPress={() => choose<V>(props, option.value)}
 								className={cn(
 									row({ lines: marked ? "two" : "whole" }),
+									OPTION_ROW,
 									OPTION,
 									blocked === undefined && PRESS,
 									!marked && OPTION_WHOLE,

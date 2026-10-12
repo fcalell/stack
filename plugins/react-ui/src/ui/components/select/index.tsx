@@ -7,6 +7,7 @@ import {
 	FIELD_PLACEHOLDER,
 	field,
 	fieldValue,
+	OPTION_ROW,
 	POPOVER,
 	row,
 	SELECT_GROUP,
@@ -34,7 +35,7 @@ const VALUE_DISABLED = "text-ink-disabled";
 const POPUP = "flex flex-col min-w-(--anchor-width)";
 const POSITIONER = "z-(--layer-popover)";
 const OPTION_GROUP = "flex flex-col";
-const GROUP_LABEL = "px-card pt-pair";
+const GROUP_LABEL = "px-control-x pt-pair";
 // The highlight wash marks the keyboard's option, so a row draws no ring.
 const ITEM = "flex items-center";
 const ITEM_NO_RING = "outline-none";
@@ -177,6 +178,7 @@ export function Select<V extends string | null = string>({
 																? "highlighted"
 																: "rest",
 													}),
+													OPTION_ROW,
 													ITEM,
 													state.highlighted && blocked !== undefined && keyed
 														? ITEM_RING

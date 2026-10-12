@@ -65,7 +65,7 @@ export const OVERLAYS: readonly string[] = [
 	"data-popup-open:outline-offset-(--focus-ring-edge-offset)",
 	"data-popup-open:outline-ring",
 	"focus-visible:outline-offset-(--focus-ring-edge-offset)",
-	"px-card",
+	"px-control-x",
 	"pt-pair",
 	"outline-none",
 	"shrink-0",

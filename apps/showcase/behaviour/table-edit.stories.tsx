@@ -16,6 +16,7 @@ interface Member {
 	name: string;
 	note: string;
 	role: string | null;
+	team: string | null;
 }
 
 const ROLES = [
@@ -23,6 +24,18 @@ const ROLES = [
 	{ value: "member", label: "Member" },
 	{ value: "viewer", label: "Viewer" },
 ];
+
+// Past six options a pick stands a search in its list.
+const TEAMS = [
+	"Billing",
+	"Data",
+	"Design",
+	"Growth",
+	"Infra",
+	"Platform",
+	"Security",
+	"Support",
+].map((label) => ({ value: label.toLowerCase(), label }));
 
 const COLUMNS: TableColumn<Member>[] = [
 	{ key: "name", label: "Name", cell: (member) => member.name },
@@ -38,17 +51,23 @@ const COLUMNS: TableColumn<Member>[] = [
 		edit: { control: "picker", options: ROLES },
 		cell: (member) => member.role,
 	},
+	{
+		key: "team",
+		label: "Team",
+		edit: { control: "picker", options: TEAMS },
+		cell: (member) => member.team,
+	},
 ];
 
 const commits: [string, string, unknown][] = [];
 
-function Members() {
+function Members(props: { room?: boolean }) {
 	const [members, setMembers] = useState<Member[]>([
-		{ id: "ada", name: "Ada", note: "Founder", role: "owner" },
-		{ id: "bo", name: "Bo", note: "Billing", role: "member" },
+		{ id: "ada", name: "Ada", note: "Founder", role: "owner", team: "infra" },
+		{ id: "bo", name: "Bo", note: "Billing", role: "member", team: "data" },
 	]);
 	return (
-		<Place>
+		<Place distance={props.room ? "room" : undefined}>
 			<Pane title="Members">
 				<Table
 					columns={COLUMNS}
@@ -169,3 +188,24 @@ export const PickMountsOpen: StoryObj = {
 		await userEvent.keyboard("{Escape}");
 	},
 };
+
+// A team cell's pick has a search, and it takes focus as the edit opens the
+// list: typing filters the options, in a desktop list and, in a room (the
+// touch structure), in the sheet.
+const searchFocused = (room: boolean): StoryObj => ({
+	render: () => <Members room={room} />,
+	play: async ({ userEvent }) => {
+		cellAt(0, 3).focus();
+		await userEvent.keyboard("{Enter}");
+		const search = await screen.findByRole(room ? "textbox" : "combobox", {
+			name: "Search",
+		});
+		await expect(search).toHaveFocus();
+		await userEvent.keyboard("sec");
+		await expect(await screen.findAllByRole("option")).toHaveLength(1);
+		await userEvent.keyboard("{Escape}");
+	},
+});
+
+export const PickSearchFocused: StoryObj = searchFocused(false);
+export const PickSearchFocusedInRoom: StoryObj = searchFocused(true);

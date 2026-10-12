@@ -27,6 +27,7 @@ import {
 	OPTION_LINE,
 	OPTION_LIST,
 	OPTION_RADIO_DOT,
+	OPTION_ROW,
 	optionRadio,
 	ROW_META_LINE,
 	row,
@@ -188,7 +189,7 @@ export function OptionList<V extends string = string, T = unknown>(
 		);
 	if (state === "missing")
 		return frame(
-			<div className={cn(row({ lines: "one" }), NOTE)}>
+			<div className={cn(row({ lines: "one" }), OPTION_ROW, NOTE)}>
 				<span className={cn(text({ role: "meta" }), SENTENCE)}>
 					{words.missing}
 				</span>
@@ -199,7 +200,7 @@ export function OptionList<V extends string = string, T = unknown>(
 		);
 	if (state === "failed" && props.query !== undefined)
 		return frame(
-			<div className={cn(row({ lines: "one" }), NOTE)}>
+			<div className={cn(row({ lines: "one" }), OPTION_ROW, NOTE)}>
 				<span className={cn(text({ role: "meta" }), SENTENCE)}>
 					{props.sentence}
 				</span>
@@ -213,7 +214,14 @@ export function OptionList<V extends string = string, T = unknown>(
 		);
 	if (state === "empty")
 		return frame(
-			<p className={cn(row({ lines: "one" }), NOTE, text({ role: "meta" }))}>
+			<p
+				className={cn(
+					row({ lines: "one" }),
+					OPTION_ROW,
+					NOTE,
+					text({ role: "meta" }),
+				)}
+			>
 				{props.empty}
 			</p>,
 		);
@@ -243,6 +251,7 @@ export function OptionList<V extends string = string, T = unknown>(
 						<label
 							className={cn(
 								row({ lines: marked ? "two" : "whole" }),
+								OPTION_ROW,
 								OPTION,
 								blocked === undefined && PRESS,
 								!marked && OPTION_WHOLE,

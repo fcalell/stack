@@ -367,7 +367,7 @@ export function ListRowBase<V extends string | null = string>({
 	const under = act !== undefined && !top;
 	const column = cn(TEXT, under && TEXT_UNDER);
 	const [metaLine, setMetaLine] = useState<HTMLSpanElement | null>(null);
-	const inline = useMemo(() => ({ label: entry?.label ?? "" }), [entry?.label]);
+	const inline = { label: entry?.label ?? "" };
 	const entryReason = useReasonLine(entry?.act.blocked);
 	const actReason = useReasonLine(act?.blocked);
 	// A blocked tick's reason follows the first part inside the span that yields

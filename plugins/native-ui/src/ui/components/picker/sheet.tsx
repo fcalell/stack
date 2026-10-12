@@ -180,6 +180,7 @@ export function PickSheet<V extends string | null>({
 	open,
 	onClose,
 	onGone,
+	typing,
 	act,
 	chip,
 }: {
@@ -192,6 +193,8 @@ export function PickSheet<V extends string | null>({
 	onClose: () => void;
 	// Hears the sheet gone, its leave played.
 	onGone?: () => void;
+	// The sheet opened as a table cell's edit started: its search takes focus.
+	typing?: boolean;
 	act?: IconAct;
 	chip?: ChipFamily;
 }) {
@@ -231,7 +234,12 @@ export function PickSheet<V extends string | null>({
 			above={
 				searching ? (
 					<View className={SEARCH_SLOT}>
-						<Input kind="search" value={search} onChange={setSearch} />
+						<Input
+							kind="search"
+							value={search}
+							onChange={setSearch}
+							autoFocus={typing}
+						/>
 					</View>
 				) : undefined
 			}

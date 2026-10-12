@@ -3,6 +3,7 @@ import {
 	menu,
 	menuGroup,
 	menuLabel,
+	OPTION_ROW,
 	row,
 	text,
 } from "@fcalell/ui-core/variants";
@@ -56,6 +57,7 @@ export function MenuRow({
 			onPress={onAct}
 			className={cn(
 				row({ lines: blocked ? "two" : "one", state: "rest" }),
+				OPTION_ROW,
 				ROW,
 				!blocked && PRESS,
 			)}

@@ -18,6 +18,7 @@ import {
 	fieldValue,
 	HAIRLINE,
 	OPTION_GROUP_LABEL,
+	OPTION_ROW,
 	PICKER_EMPTY,
 	PICKER_POPOVER,
 	PICKER_VALUE,
@@ -250,6 +251,8 @@ function OptionText(props: {
 // Pending, its glyph is the spinner and the press does nothing.
 function PickAct(props: {
 	act: IconAct;
+	// The act stands in the popover: rounded at the control's inset, as its options.
+	popover?: boolean;
 	done: () => void;
 	onFocus?: () => void;
 }) {
@@ -267,7 +270,7 @@ function PickAct(props: {
 					props.done();
 					act.onAct();
 				}}
-				className={cn(row(), ACT_ROW)}
+				className={cn(row(), props.popover && OPTION_ROW, ACT_ROW)}
 			>
 				<span className={ACT_GLYPH}>
 					{act.loading ? <Spinner /> : <Icon name={act.icon} />}
@@ -279,9 +282,16 @@ function PickAct(props: {
 }
 
 // What a search that matches nothing says, on a row of the list.
-function NoMatches(props: { children: ReactNode }) {
+function NoMatches(props: { popover?: boolean; children: ReactNode }) {
 	return (
-		<div className={cn(row(), text({ role: "meta" }), NO_MATCHES)}>
+		<div
+			className={cn(
+				row(),
+				props.popover && OPTION_ROW,
+				text({ role: "meta" }),
+				NO_MATCHES,
+			)}
+		>
 			{props.children}
 		</div>
 	);
@@ -510,6 +520,7 @@ export function PickerBase<V extends string | null = string>(
 				value={value}
 				several={several}
 				searching={searching}
+				typing={cell?.starts}
 				open={open}
 				setOpen={setOpen}
 				onGone={cell?.done}
@@ -682,6 +693,7 @@ function PickList<V extends string | null>(
 															props.chip,
 															state.highlighted && blocked === undefined,
 														),
+														OPTION_ROW,
 														OPTION,
 														blocked === undefined && PRESS,
 														optionFocus(state.highlighted, keyboard.keyed),
@@ -705,6 +717,7 @@ function PickList<V extends string | null>(
 						{props.act ? (
 							<PickAct
 								act={props.act}
+								popover
 								done={() => props.setOpen(false)}
 								onFocus={keyboard.leave}
 							/>
@@ -806,6 +819,7 @@ function PickSearch<V extends string | null>(
 																props.chip,
 																state.highlighted && blocked === undefined,
 															),
+															OPTION_ROW,
 															OPTION,
 															blocked === undefined && PRESS,
 															// A blocked row has no wash to mark the key's position, so the key landing on it rings it.
@@ -834,11 +848,12 @@ function PickSearch<V extends string | null>(
 							)}
 						</Combobox.List>
 						<Combobox.Empty>
-							<NoMatches>{words.noMatches}</NoMatches>
+							<NoMatches popover>{words.noMatches}</NoMatches>
 						</Combobox.Empty>
 						{props.act ? (
 							<PickAct
 								act={props.act}
+								popover
 								done={() => props.setOpen(false)}
 								onFocus={keyboard.leave}
 							/>
@@ -864,6 +879,8 @@ function rove(event: FocusEvent<HTMLElement>): void {
 type SheetParts<V extends string | null> = PickParts<V> & {
 	value: V | undefined;
 	searching: boolean;
+	// The sheet opened as a table cell's edit started: its search takes focus.
+	typing?: boolean;
 };
 
 // The touch sheet: the rows edge to edge under the sheet's head, a search
@@ -895,6 +912,7 @@ function PickSheet<V extends string | null>(props: SheetParts<V>) {
 					value={props.value}
 					several={props.several}
 					searching={props.searching}
+					typing={props.typing}
 					setOpen={props.setOpen}
 					pick={props.pick}
 					act={props.act}
@@ -939,7 +957,12 @@ function PickRows<V extends string | null>(
 		<div className={SHEET_ROWS}>
 			{props.searching ? (
 				<div className={SEARCH_SLOT}>
-					<Input kind="search" value={search} onChange={setSearch} />
+					<Input
+						kind="search"
+						value={search}
+						onChange={setSearch}
+						autoFocus={props.typing}
+					/>
 				</div>
 			) : null}
 			<div

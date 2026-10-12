@@ -342,7 +342,7 @@ export function ListRowBase<V extends string | null = string>({
 	const under = act !== undefined && !top;
 	// The meta line's width, which decides a status's short form.
 	const [metaWidth, setMetaWidth] = useState(0);
-	const inline = useMemo(() => ({ label: entry?.label ?? "" }), [entry?.label]);
+	const inline = { label: entry?.label ?? "" };
 	const entryReason = useReasonLine(entry?.act.blocked);
 	const actReason = useReasonLine(act?.blocked);
 	// A blocked tick's reason follows the first part inside the span that yields

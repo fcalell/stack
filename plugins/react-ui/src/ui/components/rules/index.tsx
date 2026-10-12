@@ -53,7 +53,7 @@ function Either<V extends string | null>(props: EitherPick<V>) {
 	const words = useWords();
 	const [typing, setTyping] = useState(false);
 	const marks = useMemo(() => marked(options), [options]);
-	const rule = useMemo(() => ({ label, focus: typing }), [label, typing]);
+	const rule = { label, focus: typing };
 	if (isTyped(value))
 		return (
 			<InputBase

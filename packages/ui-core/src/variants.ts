@@ -386,7 +386,11 @@ export const OTP = "gap-inside";
 // the rows rhythm.
 export const SELECT_GROUP = "gap-rows";
 // An option group's label over its rows, inset to the rows' text.
-export const OPTION_GROUP_LABEL = "px-card pt-pair";
+export const OPTION_GROUP_LABEL = "px-control-x pt-pair";
+// An option's row in a popover or a list of choices (Select, Menu, Picker,
+// OptionList): a rounded wash at the control's inset, in place of the row's own
+// card inset. Unheld, drawn by each that has one.
+export const OPTION_ROW = "px-control-x rounded-row";
 export const OTP_DIGIT =
 	"text-heading leading-heading tracking-heading font-semibold text-ink-body font-mono";
 // A slider: its label line (the label, its value trailing) over the track,
@@ -494,7 +498,7 @@ export const FORM_FIELD_SUMMARY_GLYPH = "text-ok";
 export const OPTION_LIST =
 	"gap-pair p-float rounded-card border border-edge bg-surface";
 export const OPTION_LINE = "gap-inside";
-export const OPTION_CHILDREN = "gap-inside px-card pb-pair";
+export const OPTION_CHILDREN = "gap-inside px-control-x pb-pair";
 export const OPTION_INDENT = "size-check";
 // The chosen radio's dot, centred in its ring.
 export const OPTION_RADIO_DOT = "size-dot rounded-full bg-toggle-on";

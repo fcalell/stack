@@ -6,6 +6,7 @@ import {
 	menu,
 	menuGroup,
 	menuLabel,
+	OPTION_ROW,
 	POPOVER,
 	row,
 	text,
@@ -98,6 +99,7 @@ function rowOf(item: MenuItem, highlighted: boolean): string {
 			lines: blocked ? "two" : "one",
 			state: highlighted && !blocked ? "highlighted" : "rest",
 		}),
+		OPTION_ROW,
 		ITEM,
 		!blocked && PRESS,
 	);

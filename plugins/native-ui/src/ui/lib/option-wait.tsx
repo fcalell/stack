@@ -2,6 +2,7 @@ import type { OptionShape } from "@fcalell/ui-core/list-state";
 import {
 	OPTION_GROUP_LABEL,
 	OPTION_LINE,
+	OPTION_ROW,
 	ROW_META_LINE,
 	row,
 	SELECT_GROUP,
@@ -70,6 +71,7 @@ export function OptionWait({
 								key={at}
 								className={cn(
 									row({ lines: shape.description ? "two" : "whole" }),
+									OPTION_ROW,
 									ROW_WAIT,
 									!shape.description && ROW_WHOLE,
 								)}

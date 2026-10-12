@@ -588,15 +588,19 @@ a tick with no animation, never jumped to full.
   (an absolute overlay, so the glyph's box and the label's centring do not move), and past `TAB_COUNT_MAX` (99) it reads `countOver` ("99+", `tabCount(words, n)`,
   handed to `Count` as its drawn form); the sidebar's `Count` draws the number whole. The badge
   stands inside the bar on the last of five tabs at 320, 390 and 768.
-- A row has one form everywhere: `ROW` is square at the card's inset (`px-card`, no radius, a
-  popover's option rows included, a wash square inside the popover's float inset), and its `lines`
+- A row has one form everywhere: `ROW` is square at the card's inset (`px-card`, no radius), and its `lines`
   say what it stands for (`one`, `two` a title over its meta, `setting` a label over its
   description). There is no `ground` axis: no context tells a row where it stands, so a row is the
-  same in a Group, a List, a menu and a sheet, and a standalone List bleeds the card's inset
+  same in a Group and a List, and a standalone List bleeds the card's inset
   (`LIST`: `-mx-card`) so its rows' text meets the title over it. A Group draws the hairline between
   its entries once (`GROUP`: `divide-y divide-edge`), so no row carries one. That is
   web-only: `divide-*` is a child selector, which uniwind's compiler drops, so native has no
-  divider utility yet and draws the hairline per entry.
+  divider utility yet and draws the hairline per entry. An option's row in a popover or a list of
+  choices (`Select`, `Menu`, `Picker`, `OptionList`) is its own form, `OPTION_ROW` (`px-control-x
+  rounded-row`, a rounded wash at the control's inset), laid over the row's cells in place of its
+  `px-card`: the component says it, no ground tells the row, and `OPTION_GROUP_LABEL` and
+  `OPTION_CHILDREN` stand at the same `control-x` inset. A touch sheet's option rows (the
+  `Picker`'s) stay the row's own form.
 - A row's leading is one slot at the avatar's size (`ROW_LEADING`), the dot, spinner or glyph
   centred in it, so the titles of a list share one x whatever leads them; its meta line
   (`ROW_META_LINE`) is one line that yields in order: the later parts truncate first, then the chip,
