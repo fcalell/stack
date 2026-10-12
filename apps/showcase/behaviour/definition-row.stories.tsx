@@ -1,7 +1,8 @@
 import { DefinitionRow } from "@fcalell/plugin-react-ui/components/definition-row";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { expect } from "storybook/test";
+import { useState } from "react";
+import { expect, screen, waitFor } from "storybook/test";
 
 // A definition row at the pane's 320 px width, at the desktop density and, in
 // a 375 px phone, the touch one: a value of words is one text run, the values
@@ -209,6 +210,53 @@ export const StatusValueStaysWhole: StoryObj = {
 		</Pane>
 	),
 	play: statusWhole,
+};
+
+// A pick row draws the picker at the row's value position, named by the row's
+// label: it opens its options, and a picked option changes the value in place
+// and closes the list.
+const CYCLES = [
+	{ value: "monthly", label: "Monthly" },
+	{ value: "yearly", label: "Yearly" },
+];
+
+function Cycle() {
+	const [cycle, setCycle] = useState("monthly");
+	return (
+		<Pane>
+			<Group>
+				<DefinitionRow label="Plain" value="Value" />
+				<DefinitionRow
+					label="Billing cycle"
+					pick={{
+						label: "Billing cycle",
+						options: CYCLES,
+						value: cycle,
+						onChange: setCycle,
+					}}
+				/>
+			</Group>
+		</Pane>
+	);
+}
+
+const picks: Play = async ({ canvas, userEvent }) => {
+	const trigger = canvas.getByRole("combobox", { name: /Billing cycle/ });
+	await expect(trigger).toHaveTextContent("Monthly");
+	const row = rowOf(canvas.getByText("Billing cycle"));
+	await expect(box(trigger).right).toBeLessThanOrEqual(box(row).right + 0.5);
+	await userEvent.click(trigger);
+	await screen.findByRole("listbox");
+	const options = screen.getAllByRole("option");
+	await expect(options).toHaveLength(2);
+	await userEvent.click(options[1] as HTMLElement);
+	await waitFor(() => expect(trigger).toHaveTextContent("Yearly"));
+	await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
+};
+
+export const ValuePicked: StoryObj = {
+	render: () => <Cycle />,
+	play: picks,
 };
 
 export const ValueWordsTouch = touch(ValueWords);

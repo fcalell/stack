@@ -307,8 +307,9 @@ its child is.
 <FormField label="Workspace name"><Input value={name} onChange={setName} /></FormField>
 ```
 
-A `DefinitionRow` shows an in-place `switch` (the Switch's own props, named by the row's label) in
-place of its `value`, never both.
+A `DefinitionRow` shows an in-place `switch` (the Switch's own props, named by the row's label) or an
+in-place `pick` (an `OptionPick`: `label`, `options`, `value`, `onChange`; the row draws the picker at
+the row fit, named by the row's label) in place of its `value`, never more than one.
 
 A `Section`'s head ends in its `act`, then its `more` (a `MenuItem[]`, destructive ones marked, shaped as a `ListRow`'s): a block's other acts (move, remove) stay on its head row beside the title, which never moves, and a foldable Section's more does not fold it. With a labelled `act` the pair wraps under the title on touch together.
 

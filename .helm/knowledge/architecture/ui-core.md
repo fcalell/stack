@@ -1404,7 +1404,9 @@ a tick with no animation, never jumped to full.
   wait. A FormField's control is exactly one descriptor (`switch`, `checkbox`, `slider`, `select`,
   `options`, `segments`: the component's own props less the label the field supplies) or its
   `children` for any other control, and the field's form comes from which is set; a DefinitionRow
-  likewise takes an explicit `switch` in place of its `value`. `FormIn` is `page`, `sheet`, `auth`
+  likewise takes an explicit `switch` or `pick` (an `OptionPick`, drawn as the Picker at the row fit,
+  named by the row's label, the way an ItemHeader's pick fact is) in place of its `value`; a waiting
+  pick row stands the switch's box where its value stands. `FormIn` is `page`, `sheet`, `auth`
   (`pane` died with the Split's pane foot).
 - `Group` is composition: its children are static rows, or items that are no row (a Meter, a FormField, a Slider) at the card's inset. A set of rows from data is a `List`
   placed in the Group, which registers with it through `GroupContext` (however deep) and draws

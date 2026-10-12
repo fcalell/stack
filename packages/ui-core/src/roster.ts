@@ -1218,8 +1218,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// room cuts in its middle (`valueCut`), the whole value its text. A waiting Group's setting rows are
 		// the same wait with a description and the switch's box at the end; a row in
 		// a waiting Group or Section draws it from the props it is given (a
-		// `switch` stands as the switch's box). `switch` is the Switch's own props,
-		// named by the row's label and drawn centred beside it in place of `value`.
+		// `switch` or a `pick` stands as the switch's box). `switch` is the Switch's
+		// own props, named by the row's label and drawn centred beside it in place
+		// of `value`; `pick` is an `OptionPick` (the ItemHeader's pick fact), drawn
+		// as the Picker at the row fit in the same place, named by the row's label;
+		// `value`, `switch` and `pick` are exclusive.
 		DefinitionRow: {
 			props: [
 				"change",
@@ -1227,6 +1230,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"description",
 				"value",
 				"switch",
+				"pick",
 				"copyable",
 				"locked",
 				"act",

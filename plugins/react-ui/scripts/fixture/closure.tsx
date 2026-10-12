@@ -446,8 +446,13 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<DefinitionRow label="x" classList={{}} />
 		<DefinitionRow label="x" switch={{ checked: true, onChange: () => {} }} />
-		{/* @ts-expect-error: a fact's value is a value or a switch */}
+		{/* @ts-expect-error: a fact's value is a value, a switch or a pick */}
 		<DefinitionRow label="x" value="x" switch={{ checked: true, onChange: () => {} }} />
+		<DefinitionRow label="x" pick={{ label: "x", options: [{ value: "a", label: "A" }], value: "a", onChange: () => {} }} />
+		{/* @ts-expect-error: a fact's value is a value, a switch or a pick */}
+		<DefinitionRow label="x" value="x" pick={{ label: "x", options: [{ value: "a", label: "A" }], onChange: () => {} }} />
+		{/* @ts-expect-error: a fact's value is a value, a switch or a pick */}
+		<DefinitionRow label="x" switch={{ checked: true, onChange: () => {} }} pick={{ label: "x", options: [{ value: "a", label: "A" }], onChange: () => {} }} />
 		<ItemHeader overline={["x"]} />
 		{/* @ts-expect-error: closed channel */}
 		<ItemHeader overline={["x"]} className="x" />

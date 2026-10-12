@@ -552,8 +552,13 @@ export const closure = (
 		<ListRow title="a" placeholderTextColorClassName="text-ink-body" />
 		<DefinitionRow label="a" value="b" />
 		<DefinitionRow label="a" switch={{ checked: true, onChange: noop }} />
-		{/* @ts-expect-error: a fact's value is a value or a switch */}
+		{/* @ts-expect-error: a fact's value is a value, a switch or a pick */}
 		<DefinitionRow label="a" value="b" switch={{ checked: true, onChange: noop }} />
+		<DefinitionRow label="a" pick={{ label: "a", options: [{ value: "a", label: "A" }], value: "a", onChange: noop }} />
+		{/* @ts-expect-error: a fact's value is a value, a switch or a pick */}
+		<DefinitionRow label="a" value="b" pick={{ label: "a", options: [{ value: "a", label: "A" }], onChange: noop }} />
+		{/* @ts-expect-error: a fact's value is a value, a switch or a pick */}
+		<DefinitionRow label="a" switch={{ checked: true, onChange: noop }} pick={{ label: "a", options: [{ value: "a", label: "A" }], onChange: noop }} />
 		{/* @ts-expect-error: closed channel */}
 		<DefinitionRow label="a" value="b" className="x" />
 		{/* @ts-expect-error: closed channel */}

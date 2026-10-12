@@ -5,6 +5,7 @@ import type {
 	DefinitionData,
 	IconAct,
 	Lock,
+	OptionPick,
 	StatusState,
 } from "@fcalell/ui-core/descriptors";
 import { definitionShape, valueCut } from "@fcalell/ui-core/list-state";
@@ -27,6 +28,7 @@ import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 import { Link } from "../link/index.tsx";
 import { LockMark } from "../list-row/lock.tsx";
+import { PickerBase } from "../picker/base.tsx";
 import { ChangeMark } from "../status/change.tsx";
 import { Status } from "../status/index.tsx";
 import { Switch, type SwitchProps } from "../switch/index.tsx";
@@ -77,41 +79,49 @@ interface DefinitionRowBase extends Closed {
 	copyable?: boolean;
 }
 
-/** The fact's value: a string (a word or a short phrase; truncates at its end, an identifier of one word over eight characters cuts in its middle) or a status; or a `switch` that changes it in place (the Switch's own props, named by the row's label), never both. */
-type DefinitionRowValue =
+/** The fact's value: a string (a word or a short phrase; truncates at its end, an identifier of one word over eight characters cuts in its middle) or a status; or a `switch` that changes it in place (the Switch's own props, named by the row's label); or a `pick` that chooses it in place (the options and the change, named by the row's label); never more than one. */
+type DefinitionRowValue<V extends string | null> =
 	| {
 			value?: DefinitionValue;
 			switch?: never;
+			pick?: never;
 	  }
 	| {
 			value?: never;
 			switch: Omit<SwitchProps, "label">;
+			pick?: never;
+	  }
+	| {
+			value?: never;
+			switch?: never;
+			pick: OptionPick<V>;
 	  };
 
 /** A labelled fact in a Group: editable here, or locked with its reason. */
-export type DefinitionRowProps = DefinitionRowBase &
-	DefinitionRowValue &
-	(
-		| {
-				locked?: never;
-				/** Under the label and the value, at the row's width (a sentence; wraps). */
-				description?: string;
-				/** The row's one icon act at its end. */
-				act?: IconAct;
-				/** Where the row goes when opened; a chevron stands at its end. */
-				href?: string;
-				/** Opens what the row names; a chevron stands at its end. */
-				onOpen?: () => void;
-		  }
-		| {
-				/** The value outside its editable context: a lock after it and the reason under it, the whole line a link with an `href`. It takes no description, act or open. */
-				locked: Lock;
-				description?: never;
-				act?: never;
-				href?: never;
-				onOpen?: never;
-		  }
-	);
+export type DefinitionRowProps<V extends string | null = string> =
+	DefinitionRowBase &
+		DefinitionRowValue<V> &
+		(
+			| {
+					locked?: never;
+					/** Under the label and the value, at the row's width (a sentence; wraps). */
+					description?: string;
+					/** The row's one icon act at its end. */
+					act?: IconAct;
+					/** Where the row goes when opened; a chevron stands at its end. */
+					href?: string;
+					/** Opens what the row names; a chevron stands at its end. */
+					onOpen?: () => void;
+			  }
+			| {
+					/** The value outside its editable context: a lock after it and the reason under it, the whole line a link with an `href`. It takes no description, act or open. */
+					locked: Lock;
+					description?: never;
+					act?: never;
+					href?: never;
+					onOpen?: never;
+			  }
+		);
 
 function isStatus(
 	value: DefinitionValue | undefined,
@@ -119,21 +129,22 @@ function isStatus(
 	return typeof value === "object" && value !== null && "status" in value;
 }
 
-/** The change mark at the start, the label at body 500, wrapping to the room its value leaves, with the value at the line's end (an identifier too long for its room cut in its middle, the whole value still its text; a `switch` whole, centred beside the label), the description under both; an icon act, or a link's chevron in the act's square, at the row's end, the square empty on a row with neither, so every value in a Group ends at one x. A locked row draws a lock after its value and its reason under both in the description's place, the whole line a link with an `href`. It waits through its Group or Section, drawing the form of the row it is given. */
-export function DefinitionRow({
+/** The change mark at the start, the label at body 500, wrapping to the room its value leaves, with the value at the line's end (an identifier too long for its room cut in its middle, the whole value still its text; a `switch` or a `pick` whole, centred beside the label), the description under both; an icon act, or a link's chevron in the act's square, at the row's end, the square empty on a row with neither, so every value in a Group ends at one x. A locked row draws a lock after its value and its reason under both in the description's place, the whole line a link with an `href`. It waits through its Group or Section, drawing the form of the row it is given. */
+export function DefinitionRow<V extends string | null = string>({
 	change,
 	label,
 	description,
 	value,
 	switch: toggle,
+	pick,
 	copyable,
 	locked,
 	act,
 	href,
 	onOpen,
-}: DefinitionRowProps) {
+}: DefinitionRowProps<V>) {
 	// In a waiting Group or Section the row draws its waiting form, built from
-	// what it is given: a control as its value stands as the switch's box.
+	// what it is given: a `switch` or a `pick` as its value stands as the switch's box.
 	const waiting = use(LoadingContext);
 	useGroupPart();
 	if (waiting) {
@@ -148,7 +159,7 @@ export function DefinitionRow({
 		});
 		return (
 			<DefinitionWait
-				shape={toggle ? { ...shape, end: "switch" } : shape}
+				shape={toggle || pick ? { ...shape, end: "switch" } : shape}
 				index={0}
 			/>
 		);
@@ -174,6 +185,12 @@ export function DefinitionRow({
 		shown = (
 			<span className={CONTROL}>
 				<Switch {...toggle} label={label} />
+			</span>
+		);
+	else if (pick)
+		shown = (
+			<span className={CONTROL}>
+				<PickerBase {...pick} fit="row" />
 			</span>
 		);
 	let end: ReactNode;

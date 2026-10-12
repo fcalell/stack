@@ -3,6 +3,7 @@ import type {
 	DefinitionData,
 	IconAct,
 	Lock,
+	OptionPick,
 	StatusState,
 } from "@fcalell/ui-core/descriptors";
 import { definitionShape, valueCut } from "@fcalell/ui-core/list-state";
@@ -29,6 +30,7 @@ import { Icon } from "../icon";
 import { IconButton } from "../icon-button";
 import { Link } from "../link";
 import { LockMark } from "../list-row/lock";
+import { Picker } from "../picker";
 import { Status } from "../status";
 import { ChangeMark } from "../status/change";
 import { Switch, type SwitchProps } from "../switch";
@@ -74,42 +76,52 @@ interface DefinitionRowBase extends Closed {
 }
 
 // The fact's value: words or a status; or a `switch` that changes it in
-// place (the Switch's own props, named by the row's label), never both.
-type DefinitionRowValue =
+// place (the Switch's own props, named by the row's label); or a `pick` that
+// chooses it in place (the options and the change, named by the row's label);
+// never more than one.
+type DefinitionRowValue<V extends string | null> =
 	| {
 			value?: DefinitionValue;
 			switch?: never;
+			pick?: never;
 	  }
 	| {
 			value?: never;
 			switch: Omit<SwitchProps, "label">;
+			pick?: never;
+	  }
+	| {
+			value?: never;
+			switch?: never;
+			pick: OptionPick<V>;
 	  };
 
 // A labelled fact in a Group: editable here, or locked with its reason.
-export type DefinitionRowProps = DefinitionRowBase &
-	DefinitionRowValue &
-	(
-		| {
-				locked?: never;
-				/** Under the label and the value, at the row's width (a sentence; wraps). */
-				description?: string;
-				// The row's one icon act at its end.
-				act?: IconAct;
-				// Where the row goes when opened; a chevron stands at its end.
-				href?: Route;
-				onOpen?: () => void;
-		  }
-		| {
-				// The value outside its editable context: a lock after it and the
-				// reason under it, the whole line a link with an `href`. It takes
-				// no description, act or open.
-				locked: Lock;
-				description?: never;
-				act?: never;
-				href?: never;
-				onOpen?: never;
-		  }
-	);
+export type DefinitionRowProps<V extends string | null = string> =
+	DefinitionRowBase &
+		DefinitionRowValue<V> &
+		(
+			| {
+					locked?: never;
+					/** Under the label and the value, at the row's width (a sentence; wraps). */
+					description?: string;
+					// The row's one icon act at its end.
+					act?: IconAct;
+					// Where the row goes when opened; a chevron stands at its end.
+					href?: Route;
+					onOpen?: () => void;
+			  }
+			| {
+					// The value outside its editable context: a lock after it and the
+					// reason under it, the whole line a link with an `href`. It takes
+					// no description, act or open.
+					locked: Lock;
+					description?: never;
+					act?: never;
+					href?: never;
+					onOpen?: never;
+			  }
+		);
 
 function isStatus(
 	value: DefinitionValue | undefined,
@@ -125,20 +137,21 @@ function isStatus(
 // under both in the description's place, the whole line a link with an
 // `href`. It waits through its Group or Section, drawing the form of the row
 // it is given.
-export function DefinitionRow({
+export function DefinitionRow<V extends string | null = string>({
 	change,
 	label,
 	description,
 	value,
 	switch: toggle,
+	pick,
 	copyable,
 	locked,
 	act,
 	href,
 	onOpen,
-}: DefinitionRowProps) {
+}: DefinitionRowProps<V>) {
 	// In a waiting Group or Section the row draws its waiting form, built from
-	// what it is given: a `switch` stands as the switch's box.
+	// what it is given: a `switch` or a `pick` stands as the switch's box.
 	const waiting = useContext(LoadingContext);
 	useGroupPart();
 	if (waiting) {
@@ -153,7 +166,7 @@ export function DefinitionRow({
 		});
 		return (
 			<DefinitionWait
-				shape={toggle ? { ...shape, end: "switch" } : shape}
+				shape={toggle || pick ? { ...shape, end: "switch" } : shape}
 				index={0}
 			/>
 		);
@@ -187,6 +200,12 @@ export function DefinitionRow({
 		shown = (
 			<View className={CONTROL}>
 				<Switch {...toggle} label={label} />
+			</View>
+		);
+	else if (pick)
+		shown = (
+			<View className={CONTROL}>
+				<Picker {...pick} fit="row" />
 			</View>
 		);
 	let end: ReactNode;

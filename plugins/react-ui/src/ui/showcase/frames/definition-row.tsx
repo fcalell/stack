@@ -6,6 +6,17 @@ import { Wide } from "./layout-context.tsx";
 
 const act = () => {};
 
+// A fact picked in place.
+const CYCLE = {
+	label: "Billing cycle",
+	options: [
+		{ value: "monthly", label: "Monthly" },
+		{ value: "yearly", label: "Yearly" },
+	],
+	value: "monthly",
+	onChange: act,
+};
+
 // The facts of a card, as loaded or waiting; a waiting row draws the form of
 // what it is given (a description, an act, a link, a control).
 export function Facts(props: { loading?: boolean }) {
@@ -33,6 +44,7 @@ export function Facts(props: { loading?: boolean }) {
 				label="Notify on failure"
 				switch={{ checked: true, onChange: act }}
 			/>
+			<DefinitionRow label="Billing cycle" pick={CYCLE} />
 		</Group>
 	);
 }
@@ -95,6 +107,7 @@ function General(props: { status: StatusState }) {
 				label="Only what changed since you last looked"
 				switch={{ checked: true, onChange: act }}
 			/>
+			<DefinitionRow label="Billing cycle" pick={CYCLE} />
 		</Group>
 	);
 }
