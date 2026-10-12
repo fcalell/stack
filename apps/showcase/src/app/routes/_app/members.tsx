@@ -3,8 +3,6 @@ import {
 	useQuery,
 	useQueryClient,
 } from "@fcalell/plugin-api/tanstack-query";
-import { EmptyState } from "@fcalell/plugin-react-ui/components/empty-state";
-import { Form } from "@fcalell/plugin-react-ui/components/form";
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
 import { Input } from "@fcalell/plugin-react-ui/components/input";
@@ -144,26 +142,29 @@ function Invite(props: { open: boolean; onClose: () => void }) {
 					toast(`Invitation sent to ${email}`, { state: "done" });
 				},
 			}}
-		>
-			<Form>
-				<FormField label="Email">
-					<Input value={email} onChange={setEmail} />
-				</FormField>
-				<FormField
-					label="Role"
-					description="What they can change."
-					select={{ options: ROLES, value: role, onChange: setRole }}
-				/>
-				<FormField
-					label="Permissions"
-					options={{
-						options: PERMISSIONS,
-						value: permissions,
-						onChange: setPermissions,
-					}}
-				/>
-			</Form>
-		</Sheet>
+			form={{
+				children: (
+					<>
+						<FormField label="Email">
+							<Input value={email} onChange={setEmail} />
+						</FormField>
+						<FormField
+							label="Role"
+							description="What they can change."
+							select={{ options: ROLES, value: role, onChange: setRole }}
+						/>
+						<FormField
+							label="Permissions"
+							options={{
+								options: PERMISSIONS,
+								value: permissions,
+								onChange: setPermissions,
+							}}
+						/>
+					</>
+				),
+			}}
+		/>
 	);
 }
 
@@ -197,38 +198,39 @@ function Record(props: {
 					toast(`${draft?.name} saved`, { state: "done" });
 				},
 			}}
-		>
-			{draft ? (
-				<Form>
-					<FormField
-						label="Role"
-						description={
-							draft.role === "owner"
-								? "The owner's role moves only when another member is made owner."
-								: "What they can change."
-						}
-						disabled={draft.role === "owner"}
-						select={{
-							options:
-								draft.role === "owner" ? ROLE_OPTIONS : ROLE_OPTIONS.slice(1),
-							value: draft.role,
-							onChange: (role) => edit({ role }),
-						}}
-					/>
-					<FormField label="Team">
-						<Input value={draft.team} onChange={(team) => edit({ team })} />
-					</FormField>
-					<FormField
-						label="Deploys"
-						description="Promotes previews and deploys to production."
-						switch={{
-							checked: draft.deploys,
-							onChange: (deploys) => edit({ deploys }),
-						}}
-					/>
-				</Form>
-			) : null}
-		</Sheet>
+			form={{
+				children: draft ? (
+					<>
+						<FormField
+							label="Role"
+							description={
+								draft.role === "owner"
+									? "The owner's role moves only when another member is made owner."
+									: "What they can change."
+							}
+							disabled={draft.role === "owner"}
+							select={{
+								options:
+									draft.role === "owner" ? ROLE_OPTIONS : ROLE_OPTIONS.slice(1),
+								value: draft.role,
+								onChange: (role) => edit({ role }),
+							}}
+						/>
+						<FormField label="Team">
+							<Input value={draft.team} onChange={(team) => edit({ team })} />
+						</FormField>
+						<FormField
+							label="Deploys"
+							description="Promotes previews and deploys to production."
+							switch={{
+								checked: draft.deploys,
+								onChange: (deploys) => edit({ deploys }),
+							}}
+						/>
+					</>
+				) : null,
+			}}
+		/>
 	);
 }
 
@@ -304,13 +306,11 @@ function MemberTable() {
 					if (key === "role" && value === "owner") transfer(member);
 					else update.mutate({ id, ...edited(key, value) });
 				}}
-				empty={
-					<EmptyState
-						icon="Users"
-						title="No members yet"
-						sentence="Invite the people you work with to deploy together."
-					/>
-				}
+				empty={{
+					icon: "Users",
+					title: "No members yet",
+					sentence: "Invite the people you work with to deploy together.",
+				}}
 			/>
 			<Record
 				member={members.find((each) => each.id === open)}

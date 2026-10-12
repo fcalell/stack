@@ -82,3 +82,29 @@ const more: MenuItem[] = [{ label: "Export", onAct: act }];
 	const fills: PaneProps = { title: "Chats", fills: true };
 	void [acting, details, fills];
 }
+
+// a Pane draws its empty state and its docked sheet itself
+{
+	const empty: PaneProps = {
+		title: "Projects",
+		empty: {
+			sentence: "A project holds the deploys of one app.",
+			title: "None",
+		},
+	};
+	const docked: PaneProps = {
+		title: "Assistant",
+		foot: "an ask field",
+		sheet: {
+			open: true,
+			onClose: act,
+			title: "Question",
+			form: { bar: { acts: [{ label: "Send", onAct: act }] } },
+		},
+	};
+	// @ts-expect-error: the empty state needs its sentence
+	const wordless: PaneProps = { title: "Projects", empty: { title: "None" } };
+	// @ts-expect-error: a sheet is a Sheet's props, open and titled
+	const unopened: PaneProps = { title: "Assistant", sheet: { title: "x" } };
+	void [empty, docked, wordless, unopened];
+}

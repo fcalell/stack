@@ -5,6 +5,7 @@ import { MessageInput } from "../../components/message-input/index.tsx";
 import { Pane } from "../../components/pane/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { Section } from "../../components/section/index.tsx";
+import { Text } from "../../components/text/index.tsx";
 import { Thread } from "../../components/thread/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { WORKFLOW } from "../graphs.ts";
@@ -185,7 +186,77 @@ function Home() {
 	);
 }
 
-// The cell picks the form. The title cell draws the Pane's forms in a Place:
+const NEW_PROJECT = { label: "New project", onAct: act };
+const PROJECTS = "A project holds the deploys, domains and logs of one app.";
+
+// A page as tall as the viewport, so an empty Pane's state alone in its body
+// centres in what the body leaves.
+function Empty(props: { children?: ReactNode }) {
+	return (
+		<div className="flex flex-col h-dvh">
+			<Place>
+				<Pane
+					title="Projects"
+					empty={{
+						icon: "FolderPlus",
+						title: "No projects yet",
+						sentence: PROJECTS,
+						act: NEW_PROJECT,
+						children: props.children,
+					}}
+				/>
+			</Place>
+		</div>
+	);
+}
+
+// The empty state's page form: alone it centres in what the body leaves, and
+// with children it stands at the body's top over them.
+function Emptied() {
+	return (
+		<>
+			<Column>
+				<Empty />
+			</Column>
+			<Column>
+				<Empty>
+					<Section
+						title="Start from a template"
+						description="Each one deploys as is."
+					>
+						<Group>
+							<StandInRows ground="group" />
+						</Group>
+					</Section>
+				</Empty>
+			</Column>
+		</>
+	);
+}
+
+// A Pane whose foot is the ask field, and the same Pane with a task docked in
+// its place.
+function Tasked() {
+	const [value, setValue] = useState("");
+	return (
+		<Place>
+			<Pane
+				title="Assistant"
+				foot={<MessageInput value={value} onChange={setValue} onSend={act} />}
+				sheet={{
+					open: true,
+					onClose: act,
+					title: "Question 1 of 1",
+					submit: { label: "Send", onAct: act },
+					children: <Text>Who hears about it?</Text>,
+				}}
+			/>
+		</Place>
+	);
+}
+
+// The cell picks the form; the empty state draws the empty state's page form
+// alone and over children. The title cell draws the Pane's forms in a Place:
 // one, two (a list, then its record), three, a covering one, a wide one
 // holding a Canvas and one holding a Thread. The bar icon act draws one Pane
 // with its more menu open; the body icon act (the touch top bar's) an
@@ -193,6 +264,7 @@ function Home() {
 // since the foot draws no matrix cell of its own.
 export function drawPane(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
+	if (frame.state === "empty") return <Emptied />;
 	if (cell === "TEXT.role.title")
 		return (
 			<>
@@ -215,6 +287,12 @@ export function drawPane(frame: ShowcaseFrame) {
 					<Conversation />
 				</Column>
 			</>
+		);
+	if (cell === "TEXT.role.heading")
+		return (
+			<Column>
+				<Tasked />
+			</Column>
 		);
 	if (cell === "ICON_BUTTON.fit.body")
 		return (

@@ -1,10 +1,10 @@
 import type { Act } from "@fcalell/ui-core/descriptors";
 import type { SheetFit } from "@fcalell/ui-core/variants";
-import { type ReactNode, use } from "react";
+import type { ReactNode } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { FootPlace } from "../../lib/frame.ts";
+import { FormBody } from "../form/base.tsx";
+import type { FormProps } from "../form/index.tsx";
 import { SheetBase } from "./base.tsx";
-import { SheetDocked } from "./docked.tsx";
 
 /** A task over the page. */
 export interface SheetProps extends Closed {
@@ -26,11 +26,13 @@ export interface SheetProps extends Closed {
 	failed?: string;
 	/** What the desktop side sheet holds: a form (the default) or a record's pane. */
 	fit?: SheetFit;
-	/** The body. */
+	/** A form the body ends with, drawn in the sheet's column: its `bar` sticks to the body's foot, and the sheet asks nothing when it closes. Give the form's `bar` or the sheet's `submit` as the act that completes the task, not both. */
+	form?: FormProps;
+	/** The body, ahead of the `form`. */
 	children?: ReactNode;
 }
 
-/** On the desktop centred over the scrim when its content fits the viewport less the page inset, else a side sheet at the end the full height (decided as it opens), its head (the title over the description beside the close act) over the body and the foot; on touch a bottom sheet with the close act first and the submit at the head's end, a blocked submit's reason under the head. Passed as a `Thread`'s or a `Place`'s `foot` it docks there with no scrim: the back act, the title over the description and the close act in the head, the body scrolling under the foot's bound, the `foot` line beside the `submit` in the foot, at both densities; Escape calls `onClose`, and closing hands focus to the input that returns. */
+/** On the desktop centred over the scrim when its content fits the viewport less the page inset, else a side sheet at the end the full height (decided as it opens), its head (the title over the description beside the close act) over the body and the foot; on touch a bottom sheet with the close act first and the submit at the head's end, a blocked submit's reason under the head. Always the modal one: a docked sheet is a `Pane`'s or a `Thread`'s `sheet`. */
 export function Sheet({
 	open,
 	onClose,
@@ -41,23 +43,9 @@ export function Sheet({
 	foot,
 	failed,
 	fit,
+	form,
 	children,
 }: SheetProps) {
-	if (use(FootPlace))
-		return (
-			<SheetDocked
-				open={open}
-				onClose={onClose}
-				title={title}
-				description={description}
-				back={back}
-				submit={submit}
-				foot={foot}
-				failed={failed}
-			>
-				{children}
-			</SheetDocked>
-		);
 	return (
 		<SheetBase
 			open={open}
@@ -70,7 +58,14 @@ export function Sheet({
 			failed={failed}
 			fit={fit}
 		>
-			{children}
+			{form ? (
+				<>
+					{children}
+					<FormBody {...form} in="sheet" />
+				</>
+			) : (
+				children
+			)}
 		</SheetBase>
 	);
 }

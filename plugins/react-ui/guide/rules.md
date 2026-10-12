@@ -92,7 +92,7 @@ shadow, weight, tone, transition or state is a look, and a numeric dimension is 
 Every colour, size, radius and spacing is a contract token; never an arbitrary value
 (`h-[34px]`), a literal colour or a raw pixel size. Copy renders through `Text` (`body` or `meta`,
 with `strong`) or the molecule that owns its role (`title` is `Pane`'s and `Gate`'s, `heading`
-`Section`'s (a `Section` inside a `Section` names itself at `body` semibold, a level below), `figure` `Stats`', `display` `Stat`'s); colour comes through a component's props.
+`Section`'s (one size everywhere, in a sheet too), `figure` `Stats`', `display` `Stat`'s); colour comes through a component's props.
 
 ## A picture is an `Image`
 
@@ -120,30 +120,31 @@ A page with no sidebar or tab bar beside it (sign-in, a consent step) is a `Gate
 `Place` or a hand-built centred `div`. It takes `title` (the page's one `h1`),
 `description` (a meta line as a `Sentence` from `@fcalell/ui-core/descriptors`: runs, each a string,
 `{ strong }` at weight 500 or `{ code }` in the inline code style, never a node or one string), `step` (`{ at, of }`, a `StepCount` between
-the mark and the title), `banner` (a `Banner`, first in the column) and
-`children`, the step's body (a `Form`, a `Group`, an `OptionList`, a `List`, `Section`s). It is a root
+the mark and the title), `banner` (a `Banner`, first in the column), `form` (a `Form`'s props, drawn after
+the body in the auth column) and `children`, the step's body (a `Group`, an `OptionList`, a `List`, `Section`s). It is a root
 frame as the `Shell` is: one column at most the `auth` width, centred across and down the viewport
 (a typed step at the top on touch, spanning the viewport inside the page inset), the banner and the step
 a sections gap apart (the step's mark, count, title, description and body one fields gap apart), with `toast()` and `confirm()` standing in it. The body's `Section`s title a
 level under the `h1`. The first field of a step takes focus as the page opens and as `title`
-changes (a step with no field leaves focus where it is), and a `Form`'s `bar` in it draws
-`full`. The app's mark leads it when it has a `title`: no prop, the lockup of the app's `react({ icon })` (the
+changes (a step with no field leaves focus where it is), and the `form`'s `bar` draws
+`full`; a new `title` is a new step, its form starting afresh. The app's mark leads it when it has a `title`: no prop, the lockup of the app's `react({ icon })` (the
 logo at the avatar's size, then the app's name at the body role and 500), and with no icon none is drawn;
 a logo that fails to load leaves the name. An app that gives `react({ logo })` (its drawn lockup) has that one image
 in place of the icon and the name, 40 px tall at every density (the sidebar's stays at the avatar's height) and held to the column. It draws no word of its own.
 
-A first run (no workspace yet, nothing to show) is a `Gate` with no `title` holding one
-`EmptyState`: the Gate draws no step stack and no `h1`, the `EmptyState`'s title is the page's `h1`, its
-`act` the filled one and its secondary act a `<Button act="secondary" />` child, stacked under it.
+A first run (no workspace yet, nothing to show) is a `Gate` with no `title` and an `empty`
+(`{ icon?, title?, sentence, act?, children? }`): the Gate draws no step stack and no `h1`, the `empty`'s title is the page's `h1`, its
+`act` the filled one and its secondary act a `<Button act="secondary" />` in its `children`, stacked under it.
 The column is centred down at every width, touch included, on the Gate's ground. `step`
 and `description` come only with a `title`, and the mark with them.
 
 ```tsx
-<Gate>
-  <EmptyState icon="Rocket" title="Deploy your first app" sentence="…" act={connect}>
-    <Button act="secondary" label="Start from a template" onAct={fromTemplate} />
-  </EmptyState>
-</Gate>
+<Gate
+  empty={{
+    icon: "Rocket", title: "Deploy your first app", sentence: "…", act: connect,
+    children: <Button act="secondary" label="Start from a template" onAct={fromTemplate} />,
+  }}
+/>
 ```
 
 ```tsx
@@ -241,7 +242,7 @@ act as words in the meta ink with no hairline, a resend or a skip, never its fil
 an `IconAct` (`{ icon, label, onAct, loading? }`; `loading` is an `Act`'s: the act is running, inert, its glyph swapped for the spinner at the same size), a row's `StatusMark` and `ChipMark`, a `PlaceSpec`, all from
 `@fcalell/ui-core/descriptors`. An icon is an `IconName`, a Lucide glyph's PascalCase name.
 `children` is open only where the roster gives it. A `Form` submits through its `bar` (the
-`ActionBar`'s own props), the filled act pending while its promise pends; an `ActionBar` draws its last blocked act's `blocked` reason under the acts at rest, at meta size, and an end bar wraps its acts to a further row (the filled act last) before they leave its container. To keep the bar's place while the server works, give the `ActionBar` a `pending` (a `PendingBar`'s `sentence`, `until`, `act`): the pending form stands over the bar at the bar's own loaded height, so nothing below moves when it is set or cleared; a `PendingBar` alone is for a place that held no bar. A `Form` that stands edited asks once, "Discard your edit?" or Keep editing, when its page is left (a router navigation, the back button, a reload or a closed tab), so the app writes no leave guard of its own; pressing the filled act ends the edit, so an act that navigates is never asked, and a rejected act puts the edit back. A `TextArea` grows with its value, except a `kind="source"` one in a page's `Form` (a `Pane`'s body, not a `Section`), which fills the free height of the page, three lines at least, and scrolls inside. An `Input` with an `act` presses that act on Enter. A field that replaces what the viewer was reading (an edit swapped in for rendered text) takes `autoFocus`, which focuses it as it mounts with the caret at the end of its text; a field on a form that loads with the page leaves it off. A `confirm()` takes a `Confirmation`, its `cancel` the way out's own label ("Keep editing") where the `cancel` word is not the decision's.
+`ActionBar`'s own props), the filled act pending while its promise pends; an `ActionBar` draws its last blocked act's `blocked` reason under the acts at rest, at meta size, and an end bar wraps its acts to a further row (the filled act last) before they leave its container. To keep the bar's place while the server works, give the `ActionBar` a `pending` (a `PendingBar`'s `sentence`, `until`, `act`): the pending form stands over the bar at the bar's own loaded height, so nothing below moves when it is set or cleared; a `PendingBar` alone is for a place that held no bar. A `Form` that stands edited asks once, "Discard your edit?" or Keep editing, when its page is left (a router navigation, the back button, a reload or a closed tab), so the app writes no leave guard of its own; pressing the filled act ends the edit, so an act that navigates is never asked, and a rejected act puts the edit back. A `TextArea` is as tall as its value, three lines at least, whatever it stands in; the page's body scrolls past it. An `Input` with an `act` presses that act on Enter. A field that replaces what the viewer was reading (an edit swapped in for rendered text) takes `autoFocus`, which focuses it as it mounts with the caret at the end of its text; a field on a form that loads with the page leaves it off. A `confirm()` takes a `Confirmation`, its `cancel` the way out's own label ("Keep editing") where the `cancel` word is not the decision's.
 
 An act that is out of reach for a while (a resend after a code is sent) is a `Button` with `wait`, its seconds left, never a `blocked` reason that grows its row: it draws the count in its label, is inert while the count is above zero, and keeps its width at zero. Pass `wait` every tick, `0` once it is live; a `Button` is never wrapped in a context of the roster's own to be inert.
 
@@ -370,9 +371,24 @@ the row fit, named by the row's label) in place of its `value`, never more than 
 
 A `Section`'s head ends in its `act`, then its `more` (a `MenuItem[]`, destructive ones marked, shaped as a `ListRow`'s): a block's other acts (move, remove) stay on its head row beside the title, which never moves, and a foldable Section's more does not fold it. With a labelled `act` the pair wraps under the title on touch together.
 
-A `Form` in a `Sheet`'s body keeps its `ActionBar` at the scroller's bottom edge, over a ground and
+A `Form` placed alone is the page's, at most a line of running text wide. A form in a `Sheet` or a
+`Gate` is that drawer's `form` prop (a `Form`'s props), drawn after its `children` in the sheet's or
+the auth column: a `Sheet`'s `form.bar` stays at the scroller's bottom edge, over a ground and
 hairline that run across the scroller's inset, so a long form never puts its submit below the
-fold. With room the bar stands at the form's end, where it stood.
+fold (with room the bar stands at the form's end), its groups' legends at the heading size and
+the sheet asking nothing when it closes. The sheet's own `submit` and the form's `bar` are two ways to
+complete the task: give one, never both.
+
+A `Section` never stands in a `Section`, and its title is one size (the heading) everywhere, a
+sheet's body and a fold included: a parted page is `Section`s in a `Pane`, a parted form is `groups`.
+
+A `Pane` and a `Section` take `empty` (`{ icon?, title?, sentence, act?, children? }`) for a body
+that holds nothing yet and draw it in place of the body: the `Pane`'s centres in what the body
+leaves (or stands at the body's top over its own `children`), its title at the heading role and its
+act the filled one with the plus; a `Section`'s stands in a hairline frame, its title at body 500 and its
+act the hairline one, or is one quiet sentence at the meta role when only `sentence` is given. A
+`List` and a `Table` draw their own `empty` (a `Table`'s the page form under its header). There is no
+`EmptyState` component to place.
 
 ## Collections take data
 
@@ -415,9 +431,9 @@ with neither there is no act. Pass the `useQuery` result whole so its `error` ar
 opened by an address after it was removed then needs no screen of its own.
 
 A missing state decided from data (a record the loaded list lacks, an address nothing serves) is
-a `Missing`, never an `EmptyState`: its `sentence` defaults to the `missing` word and its `act` is
+a `Missing`, never a Pane's or a Section's `empty`: its `sentence` defaults to the `missing` word and its `act` is
 a `LinkAct` (`{ label, href }`, a way back) defaulting to the same Back, drawn as the hairline
-act with no plus. An `EmptyState`'s act is the create act.
+act with no plus in a hairline frame. An `empty`'s act is the create act.
 
 An address no route serves needs no route of yours: stack sets the router's not-found page, "Not
 found" with "Nothing is at this address." (the `notFound` and `nowhere` words). An address under
@@ -429,7 +445,7 @@ the layout's routes and compose `<Place><Pane title="Not found"><Missing sentenc
 address." act={{ label: "Open Now", href: "/" }} /></Pane></Place>`.
 
 A read that is no query and failed (a mutation that opens a file) is a `Failed`, never an
-`EmptyState` and never a query faked for `QueryBoundary`: its `sentence` says what did not load and
+`empty` and never a query faked for `QueryBoundary`: its `sentence` says what did not load and
 its `act` is a function act (`{ label, onAct }`, Retry), never a `LinkAct`, drawn under the alert
 mark as the hairline act with no plus, the form `QueryBoundary` draws for a failed query. A way back
 that creates nothing is a `Missing`; a read of a query is a `QueryBoundary` or a collection's own `query`.
@@ -482,8 +498,8 @@ keyboard ring, and it presses and picks nothing.
 
 A `Thread` takes its `query` (or `items`) the same way through a `message` map (`key`,
 `author`, `name`, `body`, `at`, `attachments`, `meta`, `streaming`, `onOpen`, `detail`), each reading only its
-item, since a message draws again only when its item changes; its `foot` is a `MessageInput`, or a
-`Sheet` docked in its place. While a reply from the other author is on its way, set `replying`:
+item, since a message draws again only when its item changes; its `foot` is a `MessageInput`, and
+its `sheet` (a `Sheet`'s props) docks in the input's place while it is `open`. While a reply from the other author is on its way, set `replying`:
 the loaded log ends on one waiting message of theirs, followed as any message is; clear it in the
 render that adds the reply's item, which stands where the waiting message stood. A `Thread`'s own
 `loading` stays the log being on its way, three waiting messages. Set `streaming` on the reply (an
@@ -529,9 +545,10 @@ the `Pane`'s `foot`: it docks under the body, which scrolls past it, above the t
 selection bar (an `ActionBar` with `chosen`) docks the same way. A `Thread` in a `Pane` with a
 `foot` leaves its own `foot` empty.
 
-A `Sheet` passed as a `Thread`'s or a `Pane`'s `foot` docks there, derived from where it stands:
-no prop, no scrim. The head keeps the back act before one column, the title (the `heading` role, so a Section
-inside reads a level below; it wraps to its whole text, the close act at its first line) over the `description`, with the close act at the title's first line;
+A `Pane` or a `Thread` takes `sheet` (a `Sheet`'s props) beside its `foot` and draws the docked
+sheet itself, in the foot's place while `sheet.open`, no scrim; a `Sheet` placed anywhere else is
+always the modal one. The head keeps the back act before one column, the title (the `heading` role, a `Section`
+inside at the same size; it wraps to its whole text, the close act at its first line) over the `description`, with the close act at the title's first line;
 the body scrolls between the head and the foot, which hold their height (the `foot` line beside the `submit`,
 over it on touch); the body scrolls past two fifths of the region it shares with the log, and its
 content keeps three rows whatever the head, the foot line and the log hold (a shorter body pads to
@@ -545,10 +562,9 @@ stands before it. The modal `Sheet` takes `failed` too, in the foot’s bar line
 under the head’s submit on touch. On touch that submit stands in the title's row and the title wraps whole inside three fifths of it
 (two lines at 25 characters); a submit that does not fit beside that column drops whole, at its 44 px, to a second head line at the
 row's end. Pass
-the same `<Sheet>` as the modal from a page and as the `foot` of a conversation; closing it (render
-the `MessageInput` in its place) returns focus to the input, and each page (a new `title`) opens at
-the top of its body with focus in its first field. A `Sheet` among a `Thread`'s sections draws the same form with no bound.
-On the desktop a `Sheet` is a card centred over the page when its content at natural height fits the viewport less the page inset above and below, and the full-height side sheet at the end otherwise, with no prop: it is measured once as it opens and held until it closes, so a form that grows stays a card with its body scrolling between the head and the foot, and a side sheet that shrinks stays a side sheet. The foot is always on screen. `fit="pane"` and a decision keep their own forms; touch is the bottom sheet.
+the same props as the modal `<Sheet>` from a page and as the `sheet` of a conversation; closing it (`open` false, the
+`MessageInput` drawing in its place) returns focus to the input, and each page (a new `title`) opens at
+the top of its body with focus in its first field. On the desktop a `Sheet` is a card centred over the page when its content at natural height fits the viewport less the page inset above and below, and the full-height side sheet at the end otherwise, with no prop: it is measured once as it opens and held until it closes, so a form that grows stays a card with its body scrolling between the head and the foot, and a side sheet that shrinks stays a side sheet. The foot is always on screen. `fit="pane"` and a decision keep their own forms; touch is the bottom sheet.
 
 Keyboard focus follows the work without a prop. A `Sheet` returns focus to what opened it; when that
 is gone (an act of a `Picker` or `Menu`, which unmounts with its popup, returns to that popup's

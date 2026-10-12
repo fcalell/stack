@@ -8,8 +8,9 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, useContext } from "react";
+import type { ReactNode } from "react";
 import { Text as RNText, View } from "react-native";
+<<<<<<< HEAD:plugins/native-ui/src/ui/components/empty-state/base.tsx
 import { cn } from "../../lib/cn";
 import { PageTitle } from "../../lib/frame";
 import { Ink } from "../../lib/ink";
@@ -17,6 +18,13 @@ import { navigate } from "../../lib/navigate";
 import { SectionContext } from "../../lib/section";
 import { Button } from "../button";
 import { Icon } from "../icon";
+=======
+import { Button } from "../components/button";
+import { Icon } from "../components/icon";
+import { cn } from "./cn";
+import { Ink } from "./ink";
+import { navigate } from "./navigate";
+>>>>>>> pass4b:plugins/native-ui/src/ui/lib/empty.tsx
 
 // Alone in a page body it fills what the body leaves and centres there;
 // with children it stands at the body's top, centred across it.
@@ -37,9 +45,33 @@ const LINE = "text-center";
 // A first run's acts stretch across the column, its children under the act.
 const ACTS = "gap-acts";
 
-// The empty state every EmptyState, a failed read and a missing one draw.
-// Outside the package's exports: `tone` is the reads' alone.
-export function EmptyStateBase(props: {
+/** What a `Pane`, a `Section` or a first-run `Gate` says while it holds nothing yet. */
+export interface EmptyProps {
+	// The glyph in the mark's disc.
+	icon?: IconName;
+	/** The line over the sentence (a short phrase; wraps). */
+	title?: string;
+	/** What is missing and what the act makes (a sentence; wraps). */
+	sentence: string;
+	// The way to make the first one.
+	act?: Act;
+	// What still stands: under it on a page, in its acts column on a first
+	// run.
+	children?: ReactNode;
+}
+
+// The form an empty state draws, by the drawer that stands it: a `Pane`'s
+// `page` (centred in what the body leaves, or at its top over its children), a
+// first-run `Gate`'s `first`, a `Section`'s or a collection's `frame` (a
+// hairline frame, or one quiet sentence when only that is given) and a
+// `Group`'s `group` (the card its frame).
+export type EmptyFit = "page" | "first" | "frame" | "group";
+
+// The empty state every empty `Pane`, `Section` and collection, a failed read
+// and a missing one draw. Outside the package's exports: `fit` and `tone` are
+// the drawers' alone.
+export function EmptyBase(props: {
+	fit: EmptyFit;
 	tone: "rest" | "failed" | "missing";
 	icon?: IconName;
 	title?: string;
@@ -54,11 +86,16 @@ export function EmptyStateBase(props: {
 	// A Group's List draws it: the card is its frame.
 	grouped?: boolean;
 }) {
+<<<<<<< HEAD:plugins/native-ui/src/ui/components/empty-state/base.tsx
 	// In a Section it stands framed; in a Group the card is its frame.
 	const inGroup = props.grouped === true;
 	const section = useContext(SectionContext);
 	const framed = inGroup || section;
 	const page = useContext(PageTitle) !== undefined;
+=======
+	const { fit } = props;
+	const framed = fit === "frame" || fit === "group";
+>>>>>>> pass4b:plugins/native-ui/src/ui/lib/empty.tsx
 	const glyph = props.tone === "failed" ? "CircleAlert" : props.icon;
 	const mark = glyph ? (
 		<View className={cn(EMPTY_MARK, MARK)}>
@@ -77,8 +114,7 @@ export function EmptyStateBase(props: {
 	// unframed; a title, mark, act or children keep the frame, and a fill keeps
 	// the box it fills.
 	const quiet =
-		section &&
-		!inGroup &&
+		fit === "frame" &&
 		!props.fill &&
 		props.title === undefined &&
 		!mark &&
@@ -86,8 +122,8 @@ export function EmptyStateBase(props: {
 		!props.children;
 	if (quiet)
 		return <RNText className={text({ role: "meta" })}>{props.sentence}</RNText>;
-	// Where it stands picks the form: the title's role and the act's look.
-	if (framed || !page) {
+	// The drawer picks the form: the title's role and the act's look.
+	if (framed || fit === "first") {
 		const title =
 			props.title === undefined ? null : (
 				<RNText
@@ -119,7 +155,7 @@ export function EmptyStateBase(props: {
 			return (
 				<View
 					className={cn(
-						inGroup ? EMPTY_CARD : EMPTY_FRAME,
+						fit === "group" ? EMPTY_CARD : EMPTY_FRAME,
 						FRAME,
 						props.fill && FILL,
 					)}

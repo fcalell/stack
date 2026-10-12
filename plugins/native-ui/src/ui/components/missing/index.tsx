@@ -10,11 +10,10 @@ export interface MissingProps extends Closed {
 	act?: LinkAct;
 }
 
-// The EmptyState's missing form: its rest ink with no mark, the sentence at
-// meta and the way back as the hairline act with no plus, never the create
-// act and never Retry; its frame decided by where it stands, as an
-// EmptyState's. A read that answers not found draws it itself; this is for a
-// missing state decided from data or an address nothing serves.
+// The missing form: its rest ink with no mark, the sentence at meta in a
+// hairline frame and the way back as the hairline act with no plus, never the
+// create act and never Retry. A read that answers not found draws it itself;
+// this is for a missing state decided from data or an address nothing serves.
 export function Missing({ sentence, act }: MissingProps) {
-	return <MissingBase sentence={sentence} act={act} />;
+	return <MissingBase fit="frame" sentence={sentence} act={act} />;
 }

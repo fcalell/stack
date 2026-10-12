@@ -40,7 +40,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { withUniwind } from "uniwind";
 import { cn } from "../../lib/cn";
 import { FieldNameContext } from "../../lib/field";
-import { type FootSlot, FootSlotContext, FormStands } from "../../lib/form";
 import { timing } from "../../lib/motion";
 import { RaisedGround } from "../../lib/raised";
 import { type ReasonHost, ReasonHostContext } from "../../lib/reason";
@@ -51,7 +50,7 @@ import {
 	useTouchState,
 } from "../../lib/touched";
 import { useWords } from "../../lib/words";
-import { ActionBar } from "../action-bar";
+import { ActionBar, type ActionBarProps } from "../action-bar";
 import { Button } from "../button";
 import { IconButton } from "../icon-button";
 import { IconButtonBase } from "../icon-button/base";
@@ -97,6 +96,8 @@ interface Parts {
 	fit?: SheetFit;
 	foot?: string;
 	acts?: Act[];
+	// The form's bar, under the foot's line.
+	bar?: ActionBarProps;
 	above?: ReactNode;
 	busy?: boolean;
 	onClose: () => void;
@@ -142,26 +143,22 @@ function useParts(): Parts {
 
 // gorhom draws the sheet outside the tree that opens it, so the sheet's
 // contexts start at the container it draws everything in.
-function layerOf(parts: Store<Parts>, foot: FootSlot) {
+function layerOf(parts: Store<Parts>) {
 	return function Layer({ children }: PropsWithChildren) {
 		const current = useSyncExternalStore(parts.subscribe, parts.get);
 		return (
 			<PartsContext.Provider value={current}>
-				<FootSlotContext.Provider value={foot}>
-					<FieldNameContext.Provider value={current.title}>
-						<TouchedContext.Provider value={current.touched}>
-							<FormStands.Provider value="sheet">
-								<View
-									accessibilityViewIsModal
-									pointerEvents="box-none"
-									className={LAYER}
-								>
-									{children}
-								</View>
-							</FormStands.Provider>
-						</TouchedContext.Provider>
-					</FieldNameContext.Provider>
-				</FootSlotContext.Provider>
+				<FieldNameContext.Provider value={current.title}>
+					<TouchedContext.Provider value={current.touched}>
+						<View
+							accessibilityViewIsModal
+							pointerEvents="box-none"
+							className={LAYER}
+						>
+							{children}
+						</View>
+					</TouchedContext.Provider>
+				</FieldNameContext.Provider>
 			</PartsContext.Provider>
 		);
 	};
@@ -271,19 +268,11 @@ function Head() {
 	);
 }
 
-const NO_SUBSCRIBE = () => () => {};
-const NO_BAR = () => null;
-
-// The foot's line over a decision's acts, then the bar a `Form` handed up,
-// in gorhom's footer: gorhom measures it with the sheet and keeps it above the
-// keyboard. Nothing in it, it draws nothing and the footer is no height.
+// The foot's line over a decision's acts, then the form's bar, in gorhom's
+// footer: gorhom measures it with the sheet and keeps it above the keyboard.
+// Nothing in it, it draws nothing and the footer is no height.
 function Foot() {
-	const { foot, acts } = useParts();
-	const slot = useContext(FootSlotContext);
-	const bar = useSyncExternalStore(
-		slot?.subscribe ?? NO_SUBSCRIBE,
-		slot?.get ?? NO_BAR,
-	);
+	const { foot, acts, bar } = useParts();
 	if (!foot && !acts && !bar) return null;
 	return (
 		<View className={SHEET_FOOT}>
@@ -293,7 +282,7 @@ function Foot() {
 				</View>
 			) : null}
 			{acts ? <ActionBar acts={acts} /> : null}
-			{bar}
+			{bar ? <ActionBar {...bar} /> : null}
 		</View>
 	);
 }
@@ -327,6 +316,8 @@ export interface SheetBaseProps {
 	fit?: SheetFit;
 	// A decision's acts, the foot's `ActionBar`.
 	acts?: Act[];
+	// A form's bar, the foot's `ActionBar` after the foot's line.
+	bar?: ActionBarProps;
 	// A menu's rows stand under the head with no body inset or foot; a view (an
 	// image's full size) is its children over the whole screen inside the safe
 	// area, with no head, body or foot, so no accessible name of its own (the
@@ -369,6 +360,7 @@ export function SheetBase({
 	failed,
 	fit,
 	acts,
+	bar,
 	form,
 	above,
 	tall: asked,
@@ -426,6 +418,7 @@ export function SheetBase({
 		foot,
 		failed,
 		acts,
+		bar,
 		above,
 		busy,
 		onClose,
@@ -435,10 +428,9 @@ export function SheetBase({
 	};
 	const [{ partsStore, Layer }] = useState(() => {
 		const created = store<Parts>(parts);
-		const bar = store<ReactNode>(null);
 		return {
 			partsStore: created,
-			Layer: layerOf(created, bar),
+			Layer: layerOf(created),
 		};
 	});
 	useLayoutEffect(() => partsStore.set(parts));

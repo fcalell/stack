@@ -23,34 +23,23 @@ export const PlaceRoute = createContext<string | undefined>(undefined);
 // not found leads back; with none a read leads to `PlaceRoute`.
 export const BackRoute = createContext<string | undefined>(undefined);
 
-// The id of the Pane's title, which names what stands in it.
+// The id of the title that names what stands in a Pane or a Gate (the labelling
+// a Thread's log and a Table's grid take).
 export const PageTitle = createContext<string | undefined>(undefined);
 
-// Where the foot a `Sheet` stands in is: `docked` in a Thread's or a Pane's
-// foot, `null` anywhere else. A
-// `Sheet` in a foot draws its docked form, which resets it to `null` for what
-// it holds, so a sheet opened from inside is the modal one.
-export const FootPlace = createContext<"docked" | null>(null);
-
-// What a docked foot's region hands the docked `Sheet` in it, in whole pixels:
+// What a docked foot's region hands the docked `Sheet` it draws, in whole pixels:
 // `height` is the region the foot shares with what stands over it (a Thread
 // or a footed Pane), `chrome` the foot's own block padding and border and
 // the block padding of the body over it,
 // and `logFloor` what the region keeps for a log above the foot (zero where
 // none shares it). Container units cannot give the height: a size container
 // takes no height from its content, so the region would collapse in a column
-// of auto height. All zero until measured and outside a docked region, where
-// the body is unbounded.
+// of auto height. All zero until measured, where the body is unbounded.
 export interface FootRegionValue {
 	height: number;
 	chrome: number;
 	logFloor: number;
 }
-export const FootRegion = createContext<FootRegionValue>({
-	height: 0,
-	chrome: 0,
-	logFloor: 0,
-});
 
 const BLOCK_SIDES = [
 	"paddingTop",

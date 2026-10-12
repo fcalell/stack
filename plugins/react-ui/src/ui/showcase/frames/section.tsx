@@ -132,10 +132,27 @@ function Members(props: { blocked?: boolean }) {
 // loading form too), a Section over a Form, or over fields and a bar with no Form, whose
 // fields and bar each wait in their own form, and a Form's loading group. At rest the cell picks the form: the icon act a
 // column's head, the chevron an open and a folded section over a List, the
-// destructive act a section over a List whose act removes it, the skeleton cells the loading form, every other cell the section over a Group, then a Section holding two Sections, which name themselves a level below it.
+// destructive act a section over a List whose act removes it, the skeleton cells the loading form, every other cell the section over a Group, then a Section with a description over a Group. An empty section is drawn by its `empty` state: framed with a mark, a title and an act, and the quiet sentence alone.
 export function drawSection(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
 	const add = { label: "Add", onAct: act };
+	if (frame.state === "empty")
+		return (
+			<Wide>
+				<Section
+					title="Webhooks"
+					description="Where Acme posts deploy events."
+					empty={{
+						icon: "Webhook",
+						title: "No endpoints",
+						sentence:
+							"Add an endpoint to receive an event each time a deploy finishes.",
+						act: { label: "Add endpoint", onAct: act },
+					}}
+				/>
+				<Section title="Needs you" empty={{ sentence: "Nothing needs you." }} />
+			</Wide>
+		);
 	if (frame.state === "disabled")
 		return (
 			<Wide>
@@ -235,12 +252,18 @@ export function drawSection(frame: ShowcaseFrame) {
 		<Wide>
 			<Members />
 			<Section title="Memory" description="What the workspace remembers.">
+<<<<<<< HEAD
 				<Section title="Workspace">
 					<Group items={STAND_IN_ENTRIES} />
 				</Section>
 				<Section title="Code">
 					<Group items={STAND_IN_ENTRIES} />
 				</Section>
+=======
+				<Group>
+					<StandInRows ground="group" />
+				</Group>
+>>>>>>> pass4b
 			</Section>
 		</Wide>
 	);

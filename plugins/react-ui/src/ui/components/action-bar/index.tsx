@@ -16,12 +16,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { use, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import {
-	ActInert,
-	FormContext,
-	FormStands,
-	SubmitContext,
-} from "../../lib/form.ts";
+import { ActInert, FormContext, SubmitContext } from "../../lib/form.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 import { useTouch } from "../../lib/media.ts";
 import {
@@ -94,7 +89,7 @@ function kindOf(act: Act, last: boolean): ButtonAct {
 export interface ActionBarProps extends Closed {
 	/** The acts in reading order, the one filled act last. Inside a `Form` the filled act submits it. A promise the filled act's `onAct` returns keeps it pending until it settles. */
 	acts: Act[];
-	/** Where the bar stands: at its container's end (the default), or across it with each act at the field's height (the default inside a `Gate`). */
+	/** Where the bar stands: at its container's end (the default), or across it with each act at the field's height (a `Gate`'s form draws its bar so). */
 	fit?: ActionBarFit;
 	/** A selection bar's count, "N of M chosen" at meta at the bar's start (a `Table`'s `choose` set against its rows), with `onAll` a deselect-all act beside it and, below `tablet` of the page where the `Table` draws no head tick, a select-all act; the act's label and its blocked reason stay the act's. Docked as a `Place`'s `foot`, its count and acts in a column centred in the foot, no wider than a table-wide bar. */
 	chosen?: ChosenCount;
@@ -136,8 +131,7 @@ export function ActionBar({
 	loading,
 	pending,
 }: ActionBarProps) {
-	// Inside a `Gate` a bar with no `fit` stands across the column.
-	const where = fit ?? (use(FormStands) === "auth" ? "full" : "end");
+	const where = fit ?? "end";
 	const touch = useTouch();
 	const words = useWords();
 	const pend = use(FormContext);

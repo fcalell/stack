@@ -67,21 +67,11 @@ export const PlaceRoute = createContext<Route | undefined>(undefined);
 // not found leads back; with none a read leads to `PlaceRoute`.
 export const BackRoute = createContext<Route | undefined>(undefined);
 
-// The Pane's title, which names what stands in it and marks an EmptyState
-// there as the page's own.
-export const PageTitle = createContext<string | undefined>(undefined);
-
 // Whether the Place is read from across a room (`distance` `room`): the Pane
 // leaves out the switcher, which the room set has no tab bar for.
 export const DistanceContext = createContext(false);
 
-// Where the foot a `Sheet` stands in is: `docked` in a Thread's or a Pane's
-// foot, `null` anywhere else. A `Sheet` in a foot draws its docked form, which
-// resets it to `null` for what it holds, so a sheet opened from inside is the
-// modal one.
-export const FootPlace = createContext<"docked" | null>(null);
-
-// What a docked foot's region hands the docked `Sheet` in it: `height` is the
+// What a docked foot's region hands the docked `Sheet` it draws: `height` is the
 // region the foot shares with what stands over it (a Thread's or a Pane's
 // `Lifted` column), read off that column's layout since Yoga has no
 // container units; `chrome` the foot's own block padding and border;
@@ -92,11 +82,6 @@ export interface FootRegionValue {
 	chrome: number;
 	logFloor: number;
 }
-export const FootRegion = createContext<FootRegionValue>({
-	height: 0,
-	chrome: 0,
-	logFloor: 0,
-});
 
 // `logged` is whether a log shares the region with the foot.
 export function useFootRegion(logged: boolean) {

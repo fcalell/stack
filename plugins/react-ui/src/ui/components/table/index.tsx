@@ -62,31 +62,39 @@ import {
 import { age } from "../../lib/age.ts";
 import { useClock } from "../../lib/clock.ts";
 import type { Closed } from "../../lib/closed.ts";
+<<<<<<< HEAD
 import type { CellFit } from "../../lib/field.ts";
+=======
+import { EmptyBase } from "../../lib/empty.tsx";
+import { CellField, LabelTarget } from "../../lib/field.ts";
+>>>>>>> pass4b
 import { PageTitle } from "../../lib/frame.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 import { useTouch } from "../../lib/media.ts";
 import { follow, navigate } from "../../lib/navigate.ts";
 import { usePageTablet } from "../../lib/page.ts";
-import { SectionContext } from "../../lib/section.ts";
 import { useWords } from "../../lib/words.tsx";
 import { CheckboxBase } from "../checkbox/base.tsx";
 import { Checkbox } from "../checkbox/index.tsx";
 import { Chip } from "../chip/index.tsx";
-import { EmptyStateBase } from "../empty-state/base.tsx";
 import { Icon } from "../icon/index.tsx";
+<<<<<<< HEAD
 import { InputBase } from "../input/base.tsx";
 import { List, type RowSlots } from "../list/index.tsx";
+=======
+import { Input } from "../input/index.tsx";
+import { List, type ListEmpty, type RowSlots } from "../list/index.tsx";
+>>>>>>> pass4b
 import { LockMark } from "../list-row/lock.tsx";
 import { WarningMark } from "../list-row/marks.tsx";
-import { Missing } from "../missing/index.tsx";
+import { MissingBase } from "../missing/base.tsx";
 import { PickerBase } from "../picker/base.tsx";
 import type { QueryLike } from "../query-boundary/index.tsx";
 import { StatusBase } from "../status/base.tsx";
 import { ChangeMark } from "../status/change.tsx";
 import { Status } from "../status/index.tsx";
 
-// The table fills what its page's body leaves, so an empty one's EmptyState
+// The table fills what its page's body leaves, so an empty one's page form
 // centres under the header. From `tablet` of its page the grid stands; below
 // it the rows are a list under the sort's pick. Only the live form mounts,
 // chosen from the page's width (`usePageTablet`).
@@ -138,8 +146,8 @@ const CHANGE = "flex items-center min-w-0";
 const CHANGE_LEAD = "flex items-start min-w-0";
 const MARK_LINE = "flex shrink-0 items-center h-line-body";
 const TICK = "flex shrink-0 text-ink-body";
-// The empty slot spans the grid: a framed EmptyState stands across it, an
-// unframed one centres in what the page's body leaves.
+// The empty slot spans the grid: its page form centres in what the page's body
+// leaves.
 const EMPTY = "flex flex-col grow";
 // A row that opens washes under the pointer and the press, the open record a
 // step darker under the pointer; its frozen cell repeats the wash over its
@@ -205,8 +213,8 @@ interface TableBase<T> extends Closed {
 	selected?: string;
 	/** The rows the viewer ticks: a tick column leads the grid (its head tick over the rows that can be ticked) and, below `tablet`, each row's leading is its tick. `chosen` is the ticked ids and `onChange` hears the set a tick makes, which the consumer applies its rule to and hands back through `chosen`; `blocked` and `moved` give a row's reason under its leading cell. */
 	choose?: TableChoice<T>;
-	/** What the table holds while it has no rows, an `EmptyState`. */
-	empty?: ReactNode;
+	/** What the table draws while it has no rows: a mark, a title, a sentence and the act that makes the first. */
+	empty?: ListEmpty;
 }
 
 interface Reads {
@@ -258,7 +266,7 @@ function editOf(
 	return column ? cellEdit(column, at === 0, edits, row) : undefined;
 }
 
-/** From `tablet` of its page a grid: a header of sortable acts (the table sorts in its own state: newest or largest first, then turned over, then off) over one row per record, its leading cell the record's name (its row's change mark, when it has one, ahead of it and its warning after it); on touch every column stands at the short measure and the grid scrolls sideways under its frozen leading column. Its keyboard is a cell cursor (one Tab stop, the arrows, Home and End; Enter opens the row from its leading cell or edits an editable cell, Space ticks a check, Escape leaves an edit); a press on a row opens it, a press on an editable value edits it in place: typed in an `Input`, picked in a `Picker`, ticked in a `Checkbox`. Below `tablet` one `ListRow` per record (its leading cell the title, its change the row's mark, its age trailing, its status, warning and chip the marks, the other values its meta line) under the sort's pick. It draws its four states: while its query is pending, `loading` is set or a loading Section around it waits, the header stands over skeleton rows (on touch, the list's waiting rows); a query that answers not found draws the rest EmptyState saying it no longer exists with Back, never Retry, and a failed query the failed EmptyState with `sentence` and Retry, each under the header on the grid; no row draws `empty`; then one row per item. */
+/** From `tablet` of its page a grid: a header of sortable acts (the table sorts in its own state: newest or largest first, then turned over, then off) over one row per record, its leading cell the record's name (its row's change mark, when it has one, ahead of it and its warning after it); on touch every column stands at the short measure and the grid scrolls sideways under its frozen leading column. Its keyboard is a cell cursor (one Tab stop, the arrows, Home and End; Enter opens the row from its leading cell or edits an editable cell, Space ticks a check, Escape leaves an edit); a press on a row opens it, a press on an editable value edits it in place: typed in an `Input`, picked in a `Picker`, ticked in a `Checkbox`. Below `tablet` one `ListRow` per record (its leading cell the title, its change the row's mark, its age trailing, its status, warning and chip the marks, the other values its meta line) under the sort's pick. It draws its four states: while its query is pending, `loading` is set or a loading Section around it waits, the header stands over skeleton rows (on touch, the list's waiting rows); a query that answers not found draws the missing form saying it no longer exists with Back, never Retry, and a failed query the failed form with `sentence` and Retry, each under the header on the grid; no row draws `empty`; then one row per item. */
 export function Table<T>(props: TableProps<T>) {
 	const { columns, selected, onOpen, onEdit, empty } = props;
 	const words = useWords();
@@ -282,16 +290,18 @@ export function Table<T>(props: TableProps<T>) {
 				sort,
 			);
 	let slot: ReactNode = null;
-	if (state === "missing") slot = <Missing />;
+	if (state === "missing") slot = <MissingBase fit="page" />;
 	else if (state === "failed" && props.query)
 		slot = (
-			<EmptyStateBase
+			<EmptyBase
+				fit="page"
 				tone="failed"
 				sentence={props.sentence}
 				act={{ label: words.retry, onAct: retryOf(props.query) }}
 			/>
 		);
-	else if (state === "empty") slot = empty;
+	else if (state === "empty" && empty)
+		slot = <EmptyBase fit="page" tone="rest" {...empty} />;
 	const under =
 		slot === null ? null : <div className={cn(TABLE_EMPTY, EMPTY)}>{slot}</div>;
 	// The form is unknown until the root is placed in its page; placing it
@@ -317,21 +327,18 @@ export function Table<T>(props: TableProps<T>) {
 		form = (
 			<div className={FORM}>
 				{slot ?? (
-					// Its touch List is its own part: no Section stands around it.
-					<SectionContext value={false}>
-						<Phone
-							columns={columns}
-							rows={records}
-							sort={sort}
-							onSort={setSort}
-							selected={selected}
-							onOpen={onOpen}
-							choose={props.choose}
-							loading={waiting}
-							warns={props.row.warning !== undefined}
-							changes={props.row.change !== undefined}
-						/>
-					</SectionContext>
+					<Phone
+						columns={columns}
+						rows={records}
+						sort={sort}
+						onSort={setSort}
+						selected={selected}
+						onOpen={onOpen}
+						choose={props.choose}
+						loading={waiting}
+						warns={props.row.warning !== undefined}
+						changes={props.row.change !== undefined}
+					/>
 				)}
 			</div>
 		);

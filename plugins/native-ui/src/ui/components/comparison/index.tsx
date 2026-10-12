@@ -17,14 +17,19 @@ import { useContext } from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { EmptyBase } from "../../lib/empty";
 import { LoadingContext } from "../../lib/loading";
 import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 import { Chip } from "../chip";
+<<<<<<< HEAD
 import { EmptyStateBase } from "../empty-state/base";
 import { Group, type GroupItem } from "../group";
+=======
+import { Group } from "../group";
+>>>>>>> pass4b
 import type { ListSource } from "../list";
-import { Missing } from "../missing";
+import { MissingBase } from "../missing/base";
 import { Status } from "../status";
 import { StatusBase } from "../status/base";
 
@@ -182,8 +187,8 @@ function Fact<T>(props: {
 // a loading Section around it waits, the head stands over four waiting
 // facts, each a bar per column, a chips bar when `row` declares chips and a
 // status bar when it declares `status`; a
-// query that answers not found draws the rest EmptyState saying it no longer
-// exists with Back, never Retry; a failed query draws the failed EmptyState
+// query that answers not found draws the missing form saying it no longer
+// exists with Back, never Retry; a failed query draws the failed form
 // with `sentence` and Retry; no item draws `empty`; then one row per fact.
 export function Comparison<T>(props: ComparisonProps<T>) {
 	const words = useWords();
@@ -196,10 +201,11 @@ export function Comparison<T>(props: ComparisonProps<T>) {
 	};
 	const state = listState(input);
 	const { columns, row } = props;
-	if (state === "missing") return <Missing />;
+	if (state === "missing") return <MissingBase fit="frame" />;
 	if (state === "failed" && props.query !== undefined) {
 		return (
-			<EmptyStateBase
+			<EmptyBase
+				fit="frame"
 				tone="failed"
 				sentence={props.sentence}
 				act={{ label: words.retry, onAct: retryOf(props.query) }}
@@ -207,7 +213,7 @@ export function Comparison<T>(props: ComparisonProps<T>) {
 		);
 	}
 	if (state === "empty" && props.empty)
-		return <EmptyStateBase tone="rest" {...props.empty} />;
+		return <EmptyBase fit="frame" tone="rest" {...props.empty} />;
 	const items = (props.query ? props.query.data : props.items) ?? [];
 	if (state === "loaded" && items.length === 0) return null;
 	const shape = factShape(columns, row);

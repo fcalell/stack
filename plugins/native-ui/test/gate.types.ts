@@ -18,9 +18,21 @@ gate({
 gate({ title: "x", description: node });
 // @ts-expect-error: a description is runs, never one string
 gate({ title: "x", description: "Signed in as ana" });
-// no title: a first run, the EmptyState's title is the page's header
+// a step's form is data, drawn in the gate's column
+gate({ title: "x", form: { bar: { acts: [act] } } });
+gate({ title: "x", form: { groups: [{ title: "x", fields: node }] } });
+// @ts-expect-error: a form's structure is children or groups, never both
+gate({ title: "x", form: { children: node, groups: [] } });
+// @ts-expect-error: a form comes only with a title
+gate({ form: {} });
+// no title: a first run, its empty state's title is the page's header
 gate({});
 gate({ children: node });
+gate({ empty: { sentence: "x", title: "x", act, children: node } });
+// @ts-expect-error: the first run's empty state needs its sentence
+gate({ empty: { title: "x" } });
+// @ts-expect-error: an empty state is the first run's, a step has its title
+gate({ title: "x", empty: { sentence: "x" } });
 // @ts-expect-error: a lead comes only with a title
 gate({ description: ["x"] });
 // @ts-expect-error: a lead comes only with a title

@@ -1,4 +1,3 @@
-import { EmptyState } from "@fcalell/plugin-react-ui/components/empty-state";
 import { Failed } from "@fcalell/plugin-react-ui/components/failed";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
@@ -6,8 +5,8 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { expect } from "storybook/test";
 
-// The page form of a Place: a failed read's act is the hairline one with no
-// plus, an EmptyState's the filled create act with it. `lucide-plus` is the
+// A failed read's act is the hairline one with no plus, a Pane's `empty` the
+// filled create act with it. `lucide-plus` is the
 // class Lucide gives the Plus glyph.
 function Review() {
 	const [tries, setTries] = useState(0);
@@ -47,18 +46,19 @@ export const Retry: StoryObj = {
 	},
 };
 
-// The EmptyState beside it keeps its create act, with the plus.
+// A Pane's empty state beside it keeps its create act, with the plus.
 export const Create: StoryObj = {
 	render: () => (
 		<Place>
-			<Pane title="Projects">
-				<EmptyState
-					icon="FolderPlus"
-					title="No projects yet"
-					sentence="A project holds the deploys of one app."
-					act={{ label: "New project", onAct: () => {} }}
-				/>
-			</Pane>
+			<Pane
+				title="Projects"
+				empty={{
+					icon: "FolderPlus",
+					title: "No projects yet",
+					sentence: "A project holds the deploys of one app.",
+					act: { label: "New project", onAct: () => {} },
+				}}
+			/>
 		</Place>
 	),
 	play: async ({ canvas }) => {

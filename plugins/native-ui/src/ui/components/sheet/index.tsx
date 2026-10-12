@@ -1,10 +1,10 @@
 import type { Act } from "@fcalell/ui-core/descriptors";
 import type { SheetFit } from "@fcalell/ui-core/variants";
-import { type ReactNode, useContext } from "react";
+import type { ReactNode } from "react";
 import type { Closed } from "../../lib/closed";
-import { FootPlace } from "../../lib/frame";
+import type { FormProps } from "../form";
+import { FormBody } from "../form/base";
 import { SheetBase } from "./base";
-import { SheetDocked } from "./docked";
 
 export interface SheetProps extends Closed {
 	open: boolean;
@@ -26,17 +26,16 @@ export interface SheetProps extends Closed {
 	// What the desktop side sheet holds; on the phone a pane's title steps
 	// down to body 500.
 	fit?: SheetFit;
+	/** A form the body ends with, drawn in the sheet's column: its `bar` stands in the sheet's foot, pinned while the fields scroll, and the sheet asks nothing when it closes. Give the form's `bar` or the sheet's `submit` as the act that completes the task, not both. */
+	form?: FormProps;
+	// The body, ahead of the `form`.
 	children?: ReactNode;
 }
 
 // A bottom sheet over the scrim, content-tall and growing with its content up to the cap: the close act first, the title, the submit
-// at the head's end, the description under them; the body; the foot's line.
-// Passed as a Thread's or a Pane's `foot` it docks there with no scrim: the
-// back act, the title and the close act over the description in the head, the
-// body scrolling under the foot's bound, the foot line over the
-// submit and under it one kept line for a blocked reason or a failed run;
-// `onClose` hears the close act, and closing hands focus to the input
-// that returns.
+// at the head's end, the description under them; the body; the foot's line
+// over the form's bar. Always the modal one: a docked sheet is a Pane's or a
+// Thread's `sheet`.
 export function Sheet({
 	open,
 	onClose,
@@ -47,23 +46,9 @@ export function Sheet({
 	foot,
 	failed,
 	fit,
+	form,
 	children,
 }: SheetProps) {
-	if (useContext(FootPlace))
-		return (
-			<SheetDocked
-				open={open}
-				onClose={onClose}
-				title={title}
-				description={description}
-				back={back}
-				submit={submit}
-				foot={foot}
-				failed={failed}
-			>
-				{children}
-			</SheetDocked>
-		);
 	return (
 		<SheetBase
 			open={open}
@@ -75,8 +60,16 @@ export function Sheet({
 			foot={foot}
 			failed={failed}
 			fit={fit}
+			bar={form?.bar}
 		>
-			{children}
+			{form ? (
+				<>
+					{children}
+					<FormBody {...form} bar={undefined} in="sheet" />
+				</>
+			) : (
+				children
+			)}
 		</SheetBase>
 	);
 }

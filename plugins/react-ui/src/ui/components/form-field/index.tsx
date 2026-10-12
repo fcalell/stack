@@ -29,7 +29,11 @@ import type { Closed } from "../../lib/closed.ts";
 import { FieldRefusal, GroupName } from "../../lib/field.ts";
 import { FieldWait } from "../../lib/field-wait.tsx";
 import { focusFirst } from "../../lib/focus.ts";
+<<<<<<< HEAD
 import { HOLDS_FILL } from "../../lib/form.ts";
+=======
+import { GroundContext } from "../../lib/ground.ts";
+>>>>>>> pass4b
 import { LoadingContext } from "../../lib/loading.ts";
 import { useWords } from "../../lib/words.tsx";
 import { CheckboxBase } from "../checkbox/base.tsx";
@@ -318,7 +322,6 @@ function FieldBody(props: Body & { gone?: boolean }) {
 	const box = cn(
 		formField({ holds }),
 		holds === "switch" ? BESIDE : holds === "checkbox" ? AHEAD : STACK,
-		HOLDS_FILL,
 		hidden,
 	);
 	return (

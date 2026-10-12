@@ -22,22 +22,19 @@ import {
 import { Platform, ScrollView, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import {
-	FootPlace,
-	FootRegion,
-	FootReturn,
-	useFootRegion,
-} from "../../lib/frame";
+import { EmptyBase } from "../../lib/empty";
+import { FootReturn, useFootRegion } from "../../lib/frame";
 import { Lifted } from "../../lib/hosts";
 import { LoadingContext } from "../../lib/loading";
 
 import { useWords } from "../../lib/words";
-import { EmptyStateBase } from "../empty-state/base";
 import type { ListEmpty } from "../list";
 import { Message } from "../message";
 import { WaitingReply } from "../message/waiting";
-import { Missing } from "../missing";
+import { MissingBase } from "../missing/base";
 import type { QueryLike } from "../query-boundary";
+import type { SheetProps } from "../sheet";
+import { SheetDocked } from "../sheet/docked";
 import { Latest } from "./latest";
 
 // The thread fills what it stands in by plain flex: in a Pane's body, whose
@@ -123,6 +120,8 @@ export type ThreadProps<T = unknown> = Closed &
 		message: MessageSlots<T>;
 		// The `MessageInput` under the messages, drawn in every state.
 		foot?: ReactNode;
+		/** A task over the input: while it is `open` it docks in the foot in the input's place, the log keeping two rows above it, and closing hands focus back to the input. */
+		sheet?: SheetProps;
 		/** A reply from the other author is on its way: the loaded log ends on one waiting message of theirs, until it is cleared. */
 		replying?: boolean;
 	};
@@ -181,7 +180,7 @@ function ThreadItemBase<T>({
 const ThreadItem = memo(ThreadItemBase) as typeof ThreadItemBase;
 
 // What the log holds in the thread's state, oldest first, each part keyed:
-// the waiting turns, the failed or the empty EmptyState, or the messages.
+// the waiting turns, the failed or the empty form, or the messages.
 function logOf<T>(
 	props: ThreadProps<T>,
 	state: ListState,
@@ -192,18 +191,19 @@ function logOf<T>(
 		return WAITING_MESSAGES.map(({ key, author }) => (
 			<Message key={key} author={author} body="" loading />
 		));
-	if (state === "missing") return [<Missing key="missing" />];
+	if (state === "missing") return [<MissingBase key="missing" fit="page" />];
 	if (state === "failed" && props.query !== undefined)
 		return [
-			<EmptyStateBase
+			<EmptyBase
 				key="failed"
+				fit="page"
 				tone="failed"
 				sentence={props.sentence}
 				act={{ label: retry, onAct: retryOf(props.query) }}
 			/>,
 		];
 	if (state === "empty" && props.empty)
-		return [<EmptyStateBase key="empty" tone="rest" {...props.empty} />];
+		return [<EmptyBase key="empty" fit="page" tone="rest" {...props.empty} />];
 	const items = (props.query ? props.query.data : props.items) ?? [];
 	const messages = items.map((item) => (
 		<ThreadItem key={props.message.key(item)} item={item} slots={slots} />
@@ -223,13 +223,13 @@ function logOf<T>(
 // collection's states, the input under each: while its query is pending,
 // `loading` is set or a loading `Section` holds it, Message's loading forms (another's reply, yours,
 // another's reply), the log at its end; a failed query, the failed
-// EmptyState with `sentence` and Retry in the log; a query that answers not
+// form with `sentence` and Retry in the log; a query that answers not
 // found, the form saying it no longer exists with Back; no message, `empty`
 // in the log; then one Message per item, and with `replying` set one waiting
 // Message of the other author after them, followed as any message is and
 // replaced in place when the reply's item arrives and `replying` clears.
 export function Thread<T>(props: ThreadProps<T>) {
-	const { foot } = props;
+	const { sheet } = props;
 	const words = useWords();
 	const input = {
 		query: props.query,
@@ -249,6 +249,11 @@ export function Thread<T>(props: ThreadProps<T>) {
 	// The claim a docked sheet leaves the foot for the input that returns.
 	const claim = useRef(false);
 	const region = useFootRegion(true);
+	const foot = sheet?.open ? (
+		<SheetDocked {...sheet} region={region.value} />
+	) : (
+		props.foot
+	);
 	// The reader is scrolled up: the Latest act stands over the foot.
 	const [away, setAway] = useState(false);
 	// Back to the newest message, at the log's origin.
@@ -292,11 +297,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 			</View>
 			{foot ? (
 				<View className={DOCKED}>
-					<FootPlace.Provider value="docked">
-						<FootRegion.Provider value={region.value}>
-							<FootReturn.Provider value={claim}>{foot}</FootReturn.Provider>
-						</FootRegion.Provider>
-					</FootPlace.Provider>
+					<FootReturn.Provider value={claim}>{foot}</FootReturn.Provider>
 				</View>
 			) : null}
 		</Lifted>

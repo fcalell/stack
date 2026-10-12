@@ -63,7 +63,7 @@ in React Native's `Text`.
 
 Every colour, size, radius and spacing is a contract token, never an arbitrary value (`h-[34px]`),
 a literal colour or raw pixels. Copy renders through `Text` (`body` or `meta`, with `strong`) or
-the molecule that owns its role (`title` is `Pane`'s and `Gate`'s, `heading` `Section`'s (a `Section` inside a `Section` names itself at `body` semibold, a level below),
+the molecule that owns its role (`title` is `Pane`'s and `Gate`'s, `heading` `Section`'s (one size everywhere, in a sheet too),
 `figure` `Stats`', `display` `Stat`'s); colour comes through a component's props.
 
 ## A picture is an `Image`
@@ -93,26 +93,27 @@ A page with no sidebar or tab bar beside it (sign-in, a consent step) is a `Gate
 `Place` or a hand-built centred `View`. It takes `title` (the page's one header),
 `description` (a meta line as a `Sentence` from `@fcalell/ui-core/descriptors`: runs, each a string,
 `{ strong }` at weight 500 or `{ code }` in the inline code style, never a node or one string), `step` (`{ at, of }`, a `StepCount` between
-the title), `banner` (a `Banner`, first in the column) and
-`children`, the step's body (a `Form`, a `Group`, an `OptionList`, a `List`, `Section`s). It is a root
+the title), `banner` (a `Banner`, first in the column), `form` (a `Form`'s props, drawn after the
+body in the auth column) and `children`, the step's body (a `Group`, an `OptionList`, a `List`, `Section`s). It is a root
 frame as the `Shell` is: one column at most the `auth` width inside the page inset, standing at the
 top, the banner and the step a sections gap apart (the step's count, title, description and body one fields gap apart), with `toast()` and `confirm()` standing
 in it. It keeps the safe area and scrolls over the keyboard. An `Input` or `InputOtp` that mounts in
 it takes focus unless a typing control of the column holds it, so the first field of a step takes
-it, and a `Form`'s `bar` in it draws `full`. It draws no word of its own.
+it, and the `form`'s `bar` draws `full`; a new `title` is a new step, its form starting afresh. It draws no word of its own.
 
-A first run (no workspace yet, nothing to show) is a `Gate` with no `title` holding one
-`EmptyState`: the Gate draws no step stack and no header, the `EmptyState`'s title is the page's header,
-its `act` the filled one and its secondary act a `<Button act="secondary" />` child, stacked under
+A first run (no workspace yet, nothing to show) is a `Gate` with no `title` and an `empty`
+(`{ icon?, title?, sentence, act?, children? }`): the Gate draws no step stack and no header, the `empty`'s title is the page's header,
+its `act` the filled one and its secondary act a `<Button act="secondary" />` in its `children`, stacked under
 it. The column is centred down on the Gate's ground. `step` and `description` come only
 with a `title`.
 
 ```tsx
-<Gate>
-  <EmptyState icon="Rocket" title="Deploy your first app" sentence="…" act={connect}>
-    <Button act="secondary" label="Start from a template" onAct={fromTemplate} />
-  </EmptyState>
-</Gate>
+<Gate
+  empty={{
+    icon: "Rocket", title: "Deploy your first app", sentence: "…", act: connect,
+    children: <Button act="secondary" label="Start from a template" onAct={fromTemplate} />,
+  }}
+/>
 ```
 
 ```tsx
@@ -297,9 +298,18 @@ group (the title a header, the group a labelled accessibility group; an untitled
 that lead or close the form among titled ones, draws no header), the groups a sections step apart and each
 group's `description`, `lead` (a note, a `Banner`) and `fields` a fields step apart. A form never takes
 both, and never a `Section` or an `ActionBar` as a child: its `bar` is the `ActionBar`'s own props,
-which the form draws in its foot and whose filled act submits it. In any sheet the form's `bar`
-stands as the sheet's foot, at the content's end for a short form and pinned above the keyboard while
-a long form's fields scroll. One form among a screen's sections is `Section > Form`, so every section's
+which the form draws in its foot and whose filled act submits it. A `Form` placed alone is the
+screen's. A form in a `Sheet` or a `Gate` is that drawer's `form` prop (a `Form`'s props), drawn after its
+`children`: a `Sheet`'s `form.bar` stands as the sheet's foot, at the content's end for a short form and
+pinned above the keyboard while a long form's fields scroll, and the sheet asks nothing when it
+closes; the sheet's own `submit` and the form's `bar` are two ways to complete the task: give one,
+never both. A `Section` never stands in a `Section`, and its title is one size (the heading)
+everywhere, a sheet's body included. A `Pane` and a `Section` take `empty` (`{ icon?, title?, sentence, act?,
+children? }`) for a body that holds nothing yet and draw it in place of the body: the `Pane`'s centres
+in what the body leaves (its title at the heading role, its act the filled one with the plus), a
+`Section`'s stands in a hairline frame (its title at body 500, its act the hairline one), or is one
+quiet sentence at the meta role when only `sentence` is given. A `List` and a `Table` draw their
+own `empty`. There is no `EmptyState` component to place. One form among a screen's sections is `Section > Form`, so every section's
 head-to-body gap stays the pair step; a form of several titled parts under one Save is `groups`. A
 group given `loading` is busy and its fields wait as a loading `Section`'s do.
 
@@ -363,9 +373,9 @@ with neither there is no act. Pass the `useQuery` result whole so its `error` ar
 opened by an address after it was removed then needs no screen of its own.
 
 A missing state decided from data (a record the loaded list lacks, an address nothing serves) is
-a `Missing`, never an `EmptyState`: its `sentence` defaults to the `missing` word and its `act` is
+a `Missing`, never a Pane's or a Section's `empty`: its `sentence` defaults to the `missing` word and its `act` is
 a `LinkAct` (`{ label, href }`, a way back) defaulting to the same Back, drawn as the hairline
-act with no plus. An `EmptyState`'s act is the create act.
+act with no plus in a hairline frame. An `empty`'s act is the create act.
 
 An address no route serves needs no route of yours: `stack generate` writes `+not-found.tsx` into
 the routes directory when it holds none, a one-line re-export of stack's page, "Not found" with
@@ -377,7 +387,7 @@ default export composing `<Place><Pane title="Not found"><Missing sentence="Noth
 address." act={{ label: "Open Now", href: "/" }} /></Pane></Place>`.
 
 A read that is no query and failed (a mutation that opens a file) is a `Failed`, never an
-`EmptyState` and never a query faked for `QueryBoundary`: its `sentence` says what did not load and
+`empty` and never a query faked for `QueryBoundary`: its `sentence` says what did not load and
 its `act` is a function act (`{ label, onAct }`, Retry), never a `LinkAct`, drawn under the alert
 mark as the hairline act with no plus, the form `QueryBoundary` draws for a failed query. A way back
 that creates nothing is a `Missing`; a read of a query is a `QueryBoundary` or a collection's own `query`.
@@ -424,8 +434,8 @@ removable, so `blocked` never traps a value.
 
 A `Thread` takes its `query` (or `items`) the same way through a `message` map (`key`,
 `author`, `name`, `body`, `at`, `attachments`, `meta`, `streaming`, `onOpen`, `detail`), each reading only its
-item, since a message draws again only when its item changes; its `foot` is a `MessageInput`, or a
-`Sheet` docked in its place. While a reply from the other author is on its way, set `replying`:
+item, since a message draws again only when its item changes; its `foot` is a `MessageInput`, and
+its `sheet` (a `Sheet`'s props) docks in the input's place while it is `open`. While a reply from the other author is on its way, set `replying`:
 the loaded log ends on one waiting message of theirs, followed as any message is; clear it in the
 render that adds the reply's item, which stands where the waiting message stood. A `Thread`'s own
 `loading` stays the log being on its way, three waiting messages. Set `streaming` on the reply (an
@@ -469,9 +479,10 @@ home's sections) is the `Pane`'s `foot`: it docks under the body, above the tab 
 bar (an `ActionBar` with `chosen`) docks the same way. A `Thread` in a `Pane` with a `foot` leaves
 its own `foot` empty.
 
-A `Sheet` passed as a `Thread`'s or a `Pane`'s `foot` docks there, derived from where it stands:
-no prop, no scrim. The head keeps the back act before one column, the title (the `heading` role, so a Section
-inside reads a level below; it wraps to its whole text, the close act at its first line) over the `description`, with the close act at the title's first line;
+A `Pane` or a `Thread` takes `sheet` (a `Sheet`'s props) beside its `foot` and draws the docked
+sheet itself, in the foot's place while `sheet.open`, no scrim; a `Sheet` placed anywhere else is
+always the modal one. The head keeps the back act before one column, the title (the `heading` role, a Section
+inside at the same size; it wraps to its whole text, the close act at its first line) over the `description`, with the close act at the title's first line;
 the body scrolls between the head and the foot, which hold their height (the `foot` line over the `submit`),
 and the body scrolls past two fifths of the region it shares with the log, and its content keeps
 three rows whatever the head, the foot line and the log hold (a shorter body pads to them). The log
@@ -484,9 +495,9 @@ clear `failed` when the act runs again, and a blocked `submit`’s reason stands
 `Sheet` takes `failed` too, under the head’s submit. That submit stands in the title's row and the title wraps whole inside three fifths
 of it (two lines at 25 characters); a submit that does not fit beside that column drops whole, at its 44 px, to a second head line at the
 row's end. Pass
-the same `<Sheet>` as the modal from a page and as the `foot` of a conversation; closing it (render
-the `MessageInput` in its place) returns focus to the input, and each page (a new `title`) opens at
-the top of its body, its first field taking focus. A `Sheet` among a `Thread`'s sections draws the same form with no bound.
+the same props as the modal `<Sheet>` from a page and as the `sheet` of a conversation; closing it (`open` false, the
+`MessageInput` drawing in its place) returns focus to the input, and each page (a new `title`) opens at
+the top of its body, its first field taking focus.
 The modal `Sheet` is as tall as its content, growing with it up to the screen under the top inset and
 scrolling its body past that, so a `TextArea` that grows grows the sheet a line at a time; its foot (the
 `foot` line, the `submit`'s bar) stands above the keyboard. It takes no height prop; a pick that

@@ -645,19 +645,18 @@ a tick with no animation, never jumped to full.
   docking its input), which hides the dock from the call site; a `MessageInput` docked variant,
   since docking is the frame's, never the field's (the column the field keeps is its own at every
   use, not a docked form).
-- A `Sheet` passed as a Thread's or a Pane's `foot` docks there by derivation (`FootPlace`, set by
-  the frame around its foot: `docked` in a Pane's foot and a filling Thread's, `inline` in a Thread
-  among sections; a `Sheet` anywhere else is the modal one, and the docked form resets it for what it
-  holds). No prop, no new roster part: the Sheet draws `SHEET_DOCKED_HEAD`,
+- A Pane and a Thread take `sheet` (a Sheet's props) beside `foot` and draw the docked sheet
+  themselves, in the foot's place while it is `open` (`SheetDocked`, with the foot's measured region
+  as an internal prop); a `Sheet` placed anywhere is always the modal one. No new roster part: the
+  docked sheet draws `SHEET_DOCKED_HEAD`,
   `SHEET_DOCKED_BODY` (the sections gap, the card inset above and a sections gap below, so the last row clears the submit by the gap rows keep) and `SHEET_DOCKED_FOOT`
   inside the foot's raised cell, so none carries a surface, radius, shadow, hairline or side inset and
   all three share the foot's edge. The head holds the back act before one column: the title
   over the description, so the two lines share a start whether the back act stands or not, the back and
   close acts each in a box one heading line tall at the title's first line (a taller act overflows it
   centred). The title wraps to its whole text (it is often the question the options answer) and is the
-  `heading` role, the modal Sheet's, so a container's name outranks what it holds: a Section in a
-  sheet's body reads nested (`FormStands` is `sheet`), a level below the title, and a counter
-  ("Question 2 of 4") never outranks the question;
+  `heading` role, the modal Sheet's, and a Section in its body names itself at the same size (a
+  Section's title is one size everywhere); a counter ("Question 2 of 4") never outranks the question;
   the foot holds the `foot` line beside the `submit` bar (over it on touch); the
   head-end submit and Cancel of the modal form are gone, since the dock stands above the keyboard and
   the close act is in the head. The docked foot fits its content up to the region the log and the foot
@@ -675,7 +674,7 @@ a tick with no animation, never jumped to full.
   floor and `L` the log floor): `room = region - pinned`, `cap = max(F, 0.4 * region)`, `bodyMax =
   max(0, max(min(F, room), min(cap, room - L)))`. With room it is `cap`; short of room it falls to
   `room - L` (the log keeps `L`) down to `F`, then to `room` (the log goes first, then the body below
-  `F`). The region owner hands the sheet `FootRegion` (`height`, `chrome`, `logFloor`: a Thread's
+  `F`). The region owner hands the sheet its `region` (`FootRegionValue`: `height`, `chrome`, `logFloor`: a Thread's
   `logFloor` is `docked-log-floor`, a Pane's is 0, since its docked region has no log); the sheet
   measures what it pins. The contract's cells hold no arbitrary value, so each platform restates the
   bound in its overlay by measuring: the web reads the region's height with a `ResizeObserver`
@@ -684,7 +683,7 @@ a tick with no animation, never jumped to full.
   clips its height (`overflow-y-clip`; native `overflow-hidden`), so where a docked foot leaves it
   little room nothing the log draws, nor the Latest act at its foot, paints over the foot's head or
   the header.
-  Inline among sections the body has no bound, since the page scrolls. Its states are its
+  Its states are its
   submit's: pending, blocked (the reason stands at rest under the act), and failed (the act ready again, the
   `Sheet`'s `failed` sentence in that same kept line: `ActFailed` around the bar hands it to the
   `ActionBar`, which draws it in `FIELD_ERROR_LINE`, the field error's cell and ink, in place of the
@@ -700,29 +699,29 @@ a tick with no animation, never jumped to full.
   tabbable on the web once the page has settled (a radio group sets its tab stop after the commit),
   so an act that relabels or leaves never drops focus to the document; on the phone the first
   field of the page takes it (a first-mount claim, `FieldClaim`, which the Gate provides too; its `full` bar fit stays the Gate frame's alone), Escape on the web
-  calls `onClose`, and a docked foot, and a Thread's inline one, hands focus to its first typing control when the page that held
+  calls `onClose`, and a docked foot hands focus to its first typing control when the page that held
   it leaves (the web region reads who held focus in the render that swaps the foot; the phone's
   region holds a `FootReturn` claim the leaving Sheet sets and the `MessageInput` that mounts takes).
-  Rejected: a `Thread` `form` prop or a `DockedForm` component (a second component for the same
-  regions, switched by the app per place), and a `Form` that pins its own bar in a foot (no head for
-  the title and close act, and it restates the Sheet's regions).
-- A long `Form` in a scroller keeps its bar in reach without leaving the Form. A sheet's body
-  provides `FormStands` `sheet` (uncapped); the web Form wraps its `bar`'s `ActionBar` in its foot there
-  (`sticky bottom-0`, the host's ground, and a negative margin with matching padding across the
-  scroller's inset, an overlay since positioning and the bleed are platform overlays), so the bar
-  stays at the scroller's bottom edge and stands at the form's end when the form fits. Nothing
-  lifts the bar out of the Form, so its pending state, Enter-to-submit and `SubmitContext` stay the
-  Form's. The phone has no `sticky`: a native `Form` in any sheet
-  (`FormStands` `sheet`) hands the `ActionBar` it draws from its `bar` into the
-  sheet's own foot slot, a store the sheet subscribes to (as it does its parts) so setting it never
-  re-renders the Form. The Form sets the slot each render in a layout effect, the bar wrapped in
-  the Form's `TouchedContext` and `LoadingContext` (the blocked reason and the
-  touched state still work in the footer's tree), and clears it on unmount; the sheet is `footed`
-  when `foot`, `acts` or the slot is set and the foot draws the sheet's `acts`, then the slot's bar.
-  Uncapped the foot stands at the content's end, where the bar stood, so a short form is unchanged;
-  capped or full height it moves into gorhom's footer and stays on screen while the fields scroll.
-  A sheet-level `submit` would not do: a Form's bar can hold several acts. A docked sheet has no
-  slot, and its Form's bar stays in flow.
+  Rejected: a foot derived from a context (`FootPlace`) that made one `Sheet` two components by
+  where it stands, a `DockedForm` component (a second component for the same regions, switched by
+  the app per place), and a `Form` that pins its own bar in a foot (no head for the title and close
+  act, and it restates the Sheet's regions).
+- A long `Form` in a scroller keeps its bar in reach. A `Sheet` and a `Gate` take `form` (a Form's
+  props) and draw its sheet or auth form themselves, through the Form's body (`FormBody`, its `in`
+  prop internal: `page` for a `Form` placed alone, `sheet`, `auth`), so a `Form` alone is always the
+  page's (at most a measure wide, the leave guard on) and nothing reads where it stands. The web sheet's
+  form wraps its `bar`'s `ActionBar` in its foot (`sticky bottom-0`, the host's ground, and a negative
+  margin with matching padding across the scroller's inset, an overlay since positioning and the
+  bleed are platform overlays), so the bar stays at the scroller's bottom edge and stands at the
+  form's end when the form fits. Nothing lifts the bar out of the Form, so its pending state,
+  Enter-to-submit and `SubmitContext` stay the Form's. The phone has no `sticky`: its `Sheet`, holding
+  `form`, draws `form.bar` in its own foot (gorhom's footer) after the foot line, and the form body
+  takes the sheet's touched state, so the footer's blocked reason and the fields share it; capped or
+  full height the bar stays on screen while the fields scroll, and uncapped the foot stands at the
+  content's end, where the bar stood. A docked sheet's form keeps its bar in flow on both platforms. A
+  Gate draws its form's bar `full` itself (`fit`), and a new `title` is a new step, its form keyed
+  afresh. The sheet's own `submit` and the form's `bar` are two ways to complete the task, one given:
+  a Form's bar can hold several acts, so the sheet's `submit` does not stand in for it.
 - A bar at a phone's bottom edge clears the home indicator with the web emit's `pb-safe`
   (`padding-bottom: env(safe-area-inset-bottom)`, non-zero under the document's
   `viewport-fit=cover`), an overlay the tab bar spells beside `SHELL_TAB_BAR`; native pads the
@@ -744,7 +743,7 @@ a tick with no animation, never jumped to full.
 - A column cell is a width and nothing else (`w-full max-w-<width>`: `THREAD_COLUMN`,
   `ACTION_BAR_SELECTION`, `EMPTY_COLUMN`), so a column's alignment is its region's: a region that
   owns its frame's width centres what it holds (a filling Thread's log, a docked foot, the
-  EmptyState's region), and a column standing among sections keeps the region's start, as `Text`
+  empty state's region), and a column standing among sections keeps the region's start, as `Text`
   and `Prose` hold the measure. A Thread's regions spell `items-center` as an overlay on the desktop
   alone, since on touch the column cell is absent and the content spans the region; a Pane's docked foot
   centres at every density on both platforms, so a selection bar wider than the screen's measure
@@ -822,10 +821,10 @@ a tick with no animation, never jumped to full.
   a `row` map (`TableRowSlots<T>`) for the row's own slots. Both forms draw one projection,
   `tableRecords` in `./list-state`, so the grid and the touch List read the same item. It decides
   its state by the List's `listState` and draws each at the leaf: pending, the header over skeleton
-  rows (the touch List's waiting rows); failed, the failed EmptyState with `sentence` and Retry, and
+  rows (the touch List's waiting rows); failed, the failed form with `sentence` and Retry, and
   missing, the missing form, each under the header on the grid and alone on touch; empty, `empty`;
   then its rows. It counts once in the Section around it, which reads the Table's own props, and
-  mounts its touch List with no `SectionContext`, since the Table reports to the Section once. A row
+  reports to the Section once. A row
   with `href` is its leading cell's link (`tabindex -1`, so a new tab opens it); a row's `locked`
   names the columns it draws read only (an owner's role), and in an editable table a cell it locks
   (one its column would edit) ends in the lock mark. A column's own
@@ -842,7 +841,7 @@ a tick with no animation, never jumped to full.
   own press has focused it, unless a press outside the list moved focus on. A loading status cell is
   the Status's own loading form (its internal base: the dot's and the word's skeletons at its gap).
   An empty grid keeps its header and holds its `empty` a page inset under it, across the grid's
-  width as a List's EmptyState fills its column (`TABLE_EMPTY`: no side inset; on touch the form
+  width, in the page form (`TABLE_EMPTY`: no side inset; on touch the form
   stands alone, the List's width). A read-only check cell draws a tick. Where the grid scrolls sideways its
   leading column stays: the frozen cell on the surface
   (`TABLE_FROZEN`), its content carrying its end hairline and the row's wash (`TABLE_FROZEN_CELL`).
@@ -922,7 +921,7 @@ a tick with no animation, never jumped to full.
   authored part, drawn in every state. Pending, the log holds Message's own loading forms in a fixed
   order (`WAITING_MESSAGES`: another's reply, yours, another's reply), for each author is the item's
   and unknown before the data, each at its loaded height (yours its bubble over its time's bar,
-  `figures` wide, as the loaded bubble stands over its time); failed, the failed EmptyState with
+  `figures` wide, as the loaded bubble stands over its time); failed, the failed form with
   `sentence` and Retry; no message, `empty`; each in the log's column. A reply on its way is the
   Thread's boolean `replying`, outside the `query`/`items` source union: the loaded log ends on one
   loading Message of the other author, after the items, followed and pinned to as any message is and
@@ -1068,8 +1067,8 @@ a tick with no animation, never jumped to full.
   bar at the meta line's end, half its own short-label lane (`RowShape.marks`), as the loaded marks
   end that line; a declared `more` keeps the act's room empty. A collection of unknown length waits
   as four rows, and its height change on load is accepted. A failed query draws the failed
-  EmptyState with `sentence` and Retry; no item draws `empty` (an EmptyState's props, its act the
-  one that fills the list). Its decisions (which state, the waiting shape, the count, Retry) and the
+  form with `sentence` and Retry; no item draws `empty` (an empty state's props, its act the
+  one that fills the list, its frame the collection's own). Its decisions (which state, the waiting shape, the count, Retry) and the
   Section's total (`sectionCount`) are ui-core's `./list-state`, which both platforms import, tested
   without rendering.
 - A `ListRow` carries several marks as named props, not a `marks` record: `status`, `warning`,
@@ -1260,13 +1259,13 @@ a tick with no animation, never jumped to full.
   for such a query, and `boundaryState` makes a `QueryBoundary` draw it when every failed query
   answers not found (one that failed otherwise keeps Retry). Every collection that takes `query`
   (List, Table, Thread, Comparison, BarChart) and the boundary draw the missing form
-  (`missing/base.tsx`): the EmptyState at rest ink with no mark, the word `missing`
+  (`missing/base.tsx`): the empty state's frame at rest ink with no mark, the word `missing`
   ("This no longer exists.") and Back, the hairline act with no plus (a Back is no create act,
   as Retry is not; the base's internal `missing` tone carries it), never Retry. The form is
   public as `Missing` (`sentence?`, `act?: LinkAct`) for a missing state decided from data (a
   loaded list lacking the record, an address nothing serves): `LinkAct` is the act that goes to a
   route (`{ label, href }`), the one descriptor both platforms carry, and the act defaults to
-  Back. Rejected: an `EmptyState` flag for the act's kind (a consumer option to pick a look) and
+  Back. Rejected: an empty-state flag for the act's kind (a consumer option to pick a look) and
   deriving it from `href` (a create act that navigates, "Add a repo", keeps its plus). `tone`
   stays internal, as does `fill`. An OptionList
   draws it as its card's line, `missing` beside a secondary Back, as its failed line stands.
@@ -1301,12 +1300,25 @@ a tick with no animation, never jumped to full.
   none).
 - The failed form is public as `Failed` (`sentence`, `act: Act`) for a read that is no query (a
   mutation that opens a file): the alert mark, the hairline act with no plus, drawn by the same
-  `EmptyStateBase` `failed` tone that `QueryBoundary` renders through `Failed` itself, so the two
+  empty state's `failed` tone (`lib/empty`) that `QueryBoundary` renders through `Failed` itself, so the two
   cannot drift. A failed tone's act is the hairline one in every form, a first run's included. Its
   act is a function act, never a `LinkAct` (a way back is a `Missing`). Rejected: `QueryBoundary`
   taking a mutation's result (a boundary reads a query's `isPending`, `error` and `refetch`; a
   fake query is a workaround), `Missing` taking an `Act` (its form has no mark and no Retry) and an
-  `EmptyState` tone (the look option `tone` stays internal).
+  empty-state tone (the look option `tone` stays internal).
+- An empty state is no placed component (`EmptyState` is gone from the roster): a `Pane`, a
+  `Section` and a first-run `Gate` take `empty` (`EmptyProps`: `icon`, `title`, `sentence`, `act`,
+  `children`) and draw it in place of their body, and each collection draws its own. One drawer
+  (`lib/empty`) takes an internal `fit` from whoever stands it, so nothing reads where it stands (the
+  `PageTitle`, `SectionContext` and `GroundContext` reads are gone): `page` (a Pane's, a Thread's log
+  and a Table under its header: centred in what the body leaves, or at its top over its own children;
+  the title at `heading`, the act the filled one with the plus), `first` (a Gate's: the page's `h1` at
+  `title`, the acts stacked across the column), `frame` (a Section's, a List's, a Comparison's, a
+  chart's and `Failed` and `Missing`: the `EMPTY_FRAME` hairline card, the title at body 500 and the
+  act the hairline one, or one quiet sentence at meta when only `sentence` is given) and `group` (the
+  Group's card its frame, `EMPTY_CARD`). `PageTitle` stays the id of the title that labels a Thread's
+  log and a Table's grid, and nothing else. A Pane already draws its `h1`, so its empty state stands
+  at the `heading` role under it.
 - A `Comparison` is a collection of facts with the List's source (`query` with `sentence` and
   `empty`, or `items` waiting on `loading`) and a `row` map over a fact's slots: `key`, `label`,
   `values` (one per column, in order), `chips` and `status`. A fact's `status` is its verdict, a
@@ -1355,10 +1367,10 @@ a tick with no animation, never jumped to full.
   gridline and the baseline carries the 0, so the top tick reaches half a meta line above the plot
   and the body stands that far below the head (`tickReach`; the web's `1lh / 2`). Its `keys` are
   declared, so its pending form is its loaded boxes in skeleton with the
-  legend standing. Its failed and empty EmptyStates stand at its loaded height: the loaded boxes
+  legend standing. Its failed and empty forms stand at its loaded height: the loaded boxes
   are held unseen under them in one cell (the web's grid placement and `invisible`; native lays
-  the EmptyState absolutely over the boxes at `opacity-0`), so the Section does not move, and the
-  EmptyState's frame fills that box with its content centred in it (`EmptyStateBase`'s internal
+  the form absolutely over the boxes at `opacity-0`), so the Section does not move, and the
+  form's frame fills that box with its content centred in it (the empty drawer's internal
   `fill`), so nothing floats above or below it.
 - A Section's rhythm has two steps: its head is paired to its body (`SECTION`, `pair`) and the body's own parts (a Prose, a Code, a Group, an ActionBar) stand the `fields` step apart
   (`SECTION_BODY`) wherever the Section sits, so a dense run of parts reads as parts; a Group keeps its
@@ -1372,7 +1384,7 @@ a tick with no animation, never jumped to full.
   exactly while its `loading` is set (the wait of a read that lasts, `useWait`) and its count is exactly
   its `count` (none at 0, undrawn while busy; the phone draws the waiting chip), so a caller passes
   `count={rows.length}` and `loading={query.isPending}` from the read its body draws. It provides
-  `LoadingContext` and `SectionContext` and each part of the body draws its own waiting form from
+  `LoadingContext` and each part of the body draws its own waiting form from
   the context: a List and a Group their skeleton rows, a Prose, a Thread, a Code, a Meter, a Slider,
   a DefinitionRow their own, an ActionBar (a Form's `bar`) the bar's waiting form, and a FormField a
   skeleton field in the form of its control (`FieldShape` in `./list-state`: a switch's box at the
@@ -1387,8 +1399,8 @@ a tick with no animation, never jumped to full.
   wrapper (a Group's hairline is a child selector, which a wrapper element would take), so what it
   holds (typed text) outlives a refetch. Lost with the walk: a collection's or a QueryBoundary's wait
   making the head busy, a List's or Table's total in the head, and the three fallback skeleton fields
-  for a body no part answers for (an app's own component draws as it is). `SectionContext` says only
-  that a Section stands around (an EmptyState's framed form; a nested Section's title). Rejected:
+  for a body no part answers for (an app's own component draws as it is). `SectionContext` is gone: a Section's `empty` is its own prop and its title one size, and no Section
+  stands in a Section. Rejected:
   registration (a layout effect per collection, a second commit before paint) and a registration
   the head reads in render from a host object (the head renders before the body, so it would
   always be a render pass stale). A List's `aria-busy` is its own now (`listBusy`), the Section's head
@@ -1408,6 +1420,7 @@ a tick with no animation, never jumped to full.
   named by the row's label, the way an ItemHeader's pick fact is) in place of its `value`; a waiting
   pick row stands the switch's box where its value stands. `FormIn` is `page`, `sheet`, `auth`
   (`pane` died with the Split's pane foot).
+<<<<<<< HEAD
 - `Group` is a frame whose structure is its prop, exactly one of `items` or `list` (a union, as a
   Form's `children | groups`), and it reads no children. `items` is `GroupItem[]`, each `{ key, row }`
   (a ListRow, FileRow or DefinitionRow, drawn bare: the row pads itself) or `{ key, item }` (a Meter,
@@ -1424,6 +1437,15 @@ a tick with no animation, never jumped to full.
   tree and a `definition` list take `list` too. A busy List makes the Group busy, for the card is
   its box. Not both: a Meter list in a `list` stands each meter in `LIST_ITEM` (the List's own
   `p-card`), and a FormField beside a List is two Groups. The web card,
+=======
+- `Group` is composition: its children are static rows, or items that are no row (a Meter, a FormField, a Slider) at the card's inset. A set of rows from data is a `List`
+  placed in the Group, which registers with it through `GroupContext` (however deep) and draws
+  on the card: its rows and waiting rows at the group ground (`listGround`), the Group's hairline
+  once between them (web: the rows stand in the card directly, under `GROUP`'s `divide-*`;
+  phone: each row after the first draws it on its wrapper, as the Group does its children), its
+  failed and empty forms in the card at `EMPTY_CARD` (the card their frame, in place of
+  `EMPTY_FRAME`). A busy List makes the Group busy, for the card is its box. The web card,
+>>>>>>> pass4b
   like each other block frame that hides its overflow (`Code`, `Diff`, `ProseDiff`, `Image`, `Stats`), never shrinks (`shrink-0`): its `overflow-hidden` gives a flex item a zero automatic
   minimum, so in a column that scrolls (a Pane's body, a Sheet's body) it would give up
   height and clip its rows; native's `flexShrink` default is 0. A waiting Group
@@ -1496,9 +1518,10 @@ a tick with no animation, never jumped to full.
   avatar's size (`GATE_MARK`, `size-avatar`) and the app's name at body and 500, drawn when the
   Gate has a `title` and the app has an icon. It is not an `Image`, which opens a full view. On touch it spans the viewport inside the
   page inset; on the phone it keeps the safe area and its keyboard-aware scroll keeps the focused
-  field and the submit act in view. It draws no word of its own. It sets `FormStands` to `auth`
-  (`FORM in.auth`, no cell of its own: the column is the form's, as a sheet's body is), so an
-  `ActionBar` in it with no `fit` draws `full` (an explicit `fit` wins). Focus: the first field of a
+  field and the submit act in view. It draws no word of its own. Its `form` prop (a Form's props) is drawn in the
+  column by the Gate (`FORM in.auth`, no cell of its own: the column is the form's, as a sheet's body
+  is), with the bar's `fit` `full` (an explicit `fit` wins); a first run's `empty` is drawn in the
+  first-run form. Focus: the first field of a
   step takes it. On the web the frame runs `focusFirst` (`lib/focus.ts`) over its column's typing
   controls once on mount and again whenever `title` changes, so a sign-in opens on its field and the
   step that replaces the body hands focus to its own; a step with no field leaves focus where it is.
@@ -1681,7 +1704,7 @@ a tick with no animation, never jumped to full.
   Rejected: optional `value` and `onChange` on every control read from the field's context, which
   would compile a control with no value anywhere and could not type a boolean field against an
   `Input`.
-- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 65 components in four
+- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 64 components in four
   layers (atoms, layout molecules, shared molecules, content molecules) with their prop names, the
   cells each draws (a whole matrix family, one family cell as `FAMILY.axis.value`, or a single cell)
   and the states it has a form for, the same in both plugins; an entry with `platforms` ships on
@@ -1895,14 +1918,12 @@ a tick with no animation, never jumped to full.
   the content only once presented, so the sheet opened content-tall and re-snapped after paint, and
   never shrank back), a public height prop, a full-height form sheet, and the sheet reading its
   children.
-- A `kind="source"` TextArea in a page's Form fills the free height of the page: the page is the
-  document the field edits, and a window of a few lines loses its context. The field decides it
-  in render (`FormStands` `page`) and marks its box `data-fill`; the Form and
-  the FormField around it read the mark by `has-data-fill` and grow, and the value takes the rest
-  of its box from a zero flex basis, so the box's least height stays the value's three lines and
-  the value scrolls inside past its room. A TextArea in a Section or a sheet grows with its value.
-  Rejected: `rows` and `fill` props (the page decides the height, not the app), and the phone,
-  where the keyboard takes the lower half and the field keeps growing with its value.
+- A source TextArea never fills: it is as tall as its value, three lines at least, whatever it
+  stands in, and the page's body scrolls past it. It filled the free height of a page's Form until
+  the form-by-context cleanup (`data-fill`, `HOLDS_FILL` and a read of `FormStands` and
+  `SectionContext`: a field choosing its form from where it stood). Rejected: `rows` and `fill` props
+  (the page decides the height, not the app), and the phone, where the keyboard takes the lower half
+  and the field keeps growing with its value.
 - An `Input` with an `act` presses that act on Enter (the key's `commit` moment still fires, a
   blur does not press it), so a field that adds what is typed needs no `Form` around it.
 - A sheet keeps its content until it has left. State that belongs to one opening resets as the next

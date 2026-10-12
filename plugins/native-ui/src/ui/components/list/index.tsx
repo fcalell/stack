@@ -16,9 +16,28 @@ import type {
 	StatusMark,
 } from "@fcalell/ui-core/descriptors";
 import type { Closed } from "../../lib/closed";
+<<<<<<< HEAD
 import type { Route } from "../../lib/route";
 import type { DefinitionValue } from "../definition-row";
 import type { EmptyStateProps } from "../empty-state";
+=======
+import { EmptyBase, type EmptyProps } from "../../lib/empty";
+import { between, useGroupPart } from "../../lib/group";
+import { LoadingContext } from "../../lib/loading";
+import type { Route } from "../../lib/route";
+import { TrailingWait } from "../../lib/trailing-wait";
+import { TreeContext } from "../../lib/tree";
+import { useWords } from "../../lib/words";
+import { DefinitionRow, type DefinitionValue } from "../definition-row";
+import { DefinitionWait } from "../definition-row/wait";
+import { FileRow } from "../file-row";
+import { FileWait } from "../file-row/wait";
+import { ListRow } from "../list-row";
+import { RowWait, WAITING_ROWS } from "../list-row/wait";
+import { Meter } from "../meter";
+import { MeterWait } from "../meter/wait";
+import { MissingBase } from "../missing/base";
+>>>>>>> pass4b
 import type { QueryLike } from "../query-boundary";
 import { ListBase } from "./base";
 
@@ -166,12 +185,9 @@ export type DefinitionSlots<T> = DefinitionSlotsBase<T> &
 		  }
 	);
 
-// What an empty list draws: an EmptyState's mark, title, sentence and the
+// What an empty list draws: a mark, title, sentence and the
 // act that fills the list.
-export type ListEmpty = Pick<
-	EmptyStateProps,
-	"icon" | "title" | "sentence" | "act"
->;
+export type ListEmpty = Pick<EmptyProps, "icon" | "title" | "sentence" | "act">;
 
 // Where a list's items come from.
 export type ListSource<T> =
@@ -217,15 +233,233 @@ export type ListProps<T = unknown, V extends string | null = string> = Closed &
 // feed. It draws its collection's four states: while its query is pending,
 // `loading` is set or a loading Section around it waits, waiting rows stand
 // in the slots its map declares (busy itself while it
-// waits); a query that answers not found draws the rest EmptyState
+// waits); a query that answers not found draws the missing form
 // saying it no longer exists with Back, never Retry; a failed query draws the
+<<<<<<< HEAD
 // failed EmptyState with `sentence` and Retry; no item draws `empty`; then
 // one row per item. A standalone list bleeds the card's inset, so its rows'
 // text meets the title over it; in a Group's `list` it stands on the card, the
 // hairline once between rows. A `definition` list (facts from data:
 // DefinitionRows) stands in a Group, and carries no count of its own.
+=======
+// failed form with `sentence` and Retry; no item draws `empty`; then
+// one row per item. In a Group its rows, waiting rows and failed, missing and
+// empty forms stand on the card, the hairline once between rows; a
+// `definition` list (facts from data: DefinitionRows) stands in a Group, and
+// carries no count of its own.
+>>>>>>> pass4b
 export function List<T, V extends string | null = string>(
 	list: ListProps<T, V>,
 ) {
+<<<<<<< HEAD
 	return <ListBase {...list} />;
+=======
+	const words = useWords();
+	// The keys of the tree's folded branches; every branch starts open.
+	const [folded, setFolded] = useState<readonly string[]>([]);
+	const input = {
+		query: props.query,
+		items: props.items,
+		loading: props.loading,
+		sectionLoading: useContext(LoadingContext),
+		hasEmpty: props.empty !== undefined,
+	};
+	const ground = listGround(useGroupPart());
+	const state = listState(input);
+	// Items given while the list loads (a row map with a trailing slot, no tree):
+	// the rows stand as loaded, their trailing values waiting.
+	const known =
+		state === "pending" &&
+		props.loading === true &&
+		props.row?.trailing !== undefined &&
+		props.row.children === undefined &&
+		(props.items?.length ?? 0) > 0;
+	// In a Group the card is the rows' box: each row after the first draws
+	// the group's hairline above it. Two-line rows (a map with a `meta`) abut
+	// under the same hairline.
+	// A tree's rows abut, so its rails run unbroken.
+	const divided =
+		props.row?.meta !== undefined && props.row.children === undefined;
+	// Whether a row of the loaded list has a more act: the rows without one then
+	// keep its square, so every row's end stands at one x.
+	let room = false;
+	const frame = (rows: readonly ReactElement[], tree = false) => (
+		<ActsRoom.Provider value={room}>{stand(rows, tree)}</ActsRoom.Provider>
+	);
+	const stand = (rows: readonly ReactElement[], tree: boolean) => {
+		if (ground !== "group" && !divided)
+			return <View className={tree ? LIST_TREE : LIST}>{rows}</View>;
+		const lines = rows.map((row, index) => (
+			<View key={row.key ?? index} className={between(index)}>
+				{row}
+			</View>
+		));
+		return ground === "group" ? (
+			lines
+		) : (
+			<View className={LIST_DIVIDED}>{lines}</View>
+		);
+	};
+	if (state === "pending" && !known) {
+		return frame(
+			WAITING.map((index) => {
+				if (props.row)
+					return (
+						<RowWait key={index} shape={rowShape(props.row)} index={index} />
+					);
+				if (props.meter)
+					return <MeterWait key={index} {...meterShape(props.meter)} />;
+				if (props.definition)
+					return (
+						<DefinitionWait
+							key={index}
+							shape={definitionShape(props.definition)}
+							index={index}
+						/>
+					);
+				return <FileWait key={index} {...fileShape(props.file)} />;
+			}),
+			props.row?.children !== undefined,
+		);
+	}
+	if (state === "missing") return <MissingBase fit="frame" />;
+	if (state === "failed" && props.query !== undefined) {
+		return (
+			<EmptyBase
+				fit="frame"
+				tone="failed"
+				sentence={props.sentence}
+				act={{ label: words.retry, onAct: retryOf(props.query) }}
+			/>
+		);
+	}
+	if (state === "empty" && props.empty)
+		return <EmptyBase fit="frame" tone="rest" {...props.empty} />;
+	const items = (props.query ? props.query.data : props.items) ?? [];
+	if (props.row) {
+		const { row } = props;
+		const rowOf = (item: T) => (
+			<ListRow
+				key={row.key(item)}
+				change={row.change?.(item)}
+				leading={row.leading && leadingOf(row.leading, item)}
+				title={row.title(item)}
+				meta={row.meta?.(item)}
+				trailing={known ? undefined : row.trailing?.(item)}
+				status={row.status?.(item)}
+				warning={row.warning?.(item)}
+				lock={row.lock?.(item)}
+				chip={row.chip?.(item)}
+				entry={row.entry?.(item)}
+				steps={row.steps?.(item)}
+				dim={row.dim?.(item)}
+				wrap={row.wrap}
+				act={row.act?.(item)}
+				more={row.more?.(item)}
+				href={row.href?.(item)}
+				selected={row.selected?.(item)}
+				onOpen={row.onOpen ? () => row.onOpen?.(item) : undefined}
+			/>
+		);
+		const { children } = row;
+		const { more } = row;
+		if (more !== undefined) {
+			const every =
+				children === undefined
+					? items
+					: treeRows(items, { key: row.key, children }, []).map(
+							(each) => each.item,
+						);
+			room = every.some((item) => more(item)?.length);
+		}
+		if (children === undefined)
+			return (
+				<TrailingWait.Provider value={known}>
+					{frame(items.map(rowOf))}
+				</TrailingWait.Provider>
+			);
+		// Each row of the tree reads its depth and fold from its own provider.
+		return frame(
+			treeRows(items, { key: row.key, children }, folded).map((each) => (
+				<TreeContext.Provider
+					key={each.key}
+					value={{
+						depth: each.depth,
+						fold: each.branch
+							? {
+									open: each.open,
+									onToggle: () => setFolded((keys) => toggled(keys, each.key)),
+								}
+							: undefined,
+					}}
+				>
+					{rowOf(each.item)}
+				</TreeContext.Provider>
+			)),
+			true,
+		);
+	}
+	if (props.meter) {
+		const { meter } = props;
+		return frame(
+			items.map((item) => (
+				<Meter
+					key={meter.key(item)}
+					label={meter.label(item)}
+					value={meter.value(item)}
+					max={meter.max(item)}
+					mark={meter.mark?.(item)}
+					{...(meter.counts
+						? { counts: meter.counts(item) }
+						: { meta: meter.meta?.(item) })}
+				/>
+			)),
+		);
+	}
+	if (props.definition) {
+		const { definition } = props;
+		return frame(
+			items.map((item) => {
+				const locked = definition.locked?.(item);
+				const key = definition.key(item);
+				const shared = {
+					change: definition.change?.(item),
+					label: definition.label(item),
+					value: definition.value?.(item),
+					copyable: definition.copyable,
+				};
+				if (locked)
+					return <DefinitionRow key={key} {...shared} locked={locked} />;
+				return (
+					<DefinitionRow
+						key={key}
+						{...shared}
+						description={definition.description?.(item)}
+						act={definition.act?.(item)}
+						href={definition.href?.(item)}
+						onOpen={
+							definition.onOpen ? () => definition.onOpen?.(item) : undefined
+						}
+					/>
+				);
+			}),
+		);
+	}
+	const { file } = props;
+	return frame(
+		items.map((item) => (
+			<FileRow
+				key={file.key(item)}
+				path={file.path(item)}
+				added={file.added(item)}
+				removed={file.removed(item)}
+				seen={file.seen?.(item)}
+				change={file.change?.(item)}
+				chip={file.chip?.(item)}
+				href={file.href?.(item)}
+				onOpen={file.onOpen ? () => file.onOpen?.(item) : undefined}
+			/>
+		)),
+	);
+>>>>>>> pass4b
 }

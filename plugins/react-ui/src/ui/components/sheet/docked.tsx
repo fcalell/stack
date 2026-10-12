@@ -13,7 +13,6 @@ import {
 } from "@fcalell/ui-core/variants";
 import {
 	type ReactNode,
-	use,
 	useEffect,
 	useId,
 	useLayoutEffect,
@@ -22,8 +21,7 @@ import {
 } from "react";
 import { backGlyph } from "../../lib/back.ts";
 import { focusFirst } from "../../lib/focus.ts";
-import { FormStands } from "../../lib/form.ts";
-import { FootPlace, FootRegion } from "../../lib/frame.ts";
+import type { FootRegionValue } from "../../lib/frame.ts";
 import { useTouch } from "../../lib/media.ts";
 import { ActFailed, ReasonKept } from "../../lib/reason.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
@@ -34,6 +32,8 @@ import {
 } from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";
 import { ActionBar } from "../action-bar/index.tsx";
+import { FormBody } from "../form/base.tsx";
+import type { FormProps } from "../form/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 
 // The sheet fills its foot: the head and the foot keep their height and the
@@ -57,7 +57,7 @@ const FOOT_ROW = "flex items-center justify-end";
 const FOOT_STACK = "flex flex-col";
 const FOOT_LINE = "grow min-w-0";
 
-/** What a docked `Sheet` draws: the public `Sheet`'s props, standing in a foot. Outside the package's exports. */
+/** What a docked `Sheet` draws: the public `Sheet`'s props, standing in a foot, and the foot's measured `region`. Outside the package's exports: a `Pane` and a `Thread` draw it for their `sheet`. */
 export interface SheetDockedProps {
 	open: boolean;
 	onClose: () => void;
@@ -67,10 +67,13 @@ export interface SheetDockedProps {
 	submit?: Act;
 	foot?: string;
 	failed?: string;
+	form?: FormProps;
+	/** The foot's region, which bounds the body. */
+	region: FootRegionValue;
 	children?: ReactNode;
 }
 
-/** A `Sheet` standing in a Thread's or a Pane's foot: no scrim, portal or dialog, the foot's raised cell its surface. The head holds the back act before one column, the title over the description, with the acts at the title's first line; the body scrolls between the head and the foot, which hold their height; the foot holds the line beside (over, on touch) the submit, and under the submit one kept line for a blocked reason or a failed run's sentence. Escape closes it, and each page opens at its top with focus in its first field. Closed it draws nothing. */
+/** A `Sheet` a Thread or a Pane draws in its foot: no scrim, portal or dialog, the foot's raised cell its surface. The head holds the back act before one column, the title over the description, with the acts at the title's first line; the body scrolls between the head and the foot, which hold their height; the foot holds the line beside (over, on touch) the submit, and under the submit one kept line for a blocked reason or a failed run's sentence. Escape closes it, and each page opens at its top with focus in its first field. Closed it draws nothing. */
 export function SheetDocked({
 	open,
 	onClose,
@@ -80,10 +83,11 @@ export function SheetDocked({
 	submit,
 	foot,
 	failed,
+	form,
+	region,
 	children,
 }: SheetDockedProps) {
 	const touch = useTouch();
-	const region = use(FootRegion);
 	const words = useWords();
 	const titleId = useId();
 	const root = useRef<HTMLElement>(null);
@@ -209,9 +213,8 @@ export function SheetDocked({
 							region.height > 0 && SHEET_DOCKED_FLOOR,
 						)}
 					>
-						<FootPlace value={null}>
-							<FormStands value="sheet">{children}</FormStands>
-						</FootPlace>
+						{children}
+						{form ? <FormBody {...form} in="sheet" /> : null}
 					</div>
 				</div>
 				{line || bar ? (
