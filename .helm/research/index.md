@@ -21,4 +21,7 @@ Working evidence: dated, drains, or gets promoted into `.helm/knowledge/`. Nothi
   or waits on timing, or filing epic 005 (render once).
 - [screens-spike.md](./screens-spike.md): building the screens plugin (epic 007): answering `/rpc` from typed fixtures with MSW, a Storybook config from vite's slots, listing routes.
 - [phone-screens.md](./phone-screens.md): deciding or building the phone half of the screens workbench (story 007-04): React Native Web or on-device Storybook as the host, forcing a query state on a device, checking the floors there.
+- [frame-redesign.md](./frame-redesign.md): working on Place, Pane or anything that replaces
+  Split and Screen, a frame's width or animation, or a pass that removes a component reading its
+  children (loading, Form, Toolbar).
 - [stories-triage.md](./stories-triage.md): reading a failing `pnpm stories:test` (axe or a behaviour play test), changing the page-level rule list, or working stories 003-111 to 003-114.
