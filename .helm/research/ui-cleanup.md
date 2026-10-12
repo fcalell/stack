@@ -156,6 +156,9 @@ guides. Stead's stack pin moves after each pass and its screens are ported in th
    entry, Rules, FormField's and OptionList's checkboxes), the context becomes the consumer's
    internal prop. `DistanceContext` stays, the Place's density for the page as a whole, and so
    does native's `Ink`, React Native's stand-in for inherited `currentColor`.
+   An option row in a popover (Menu, Select, Picker, OptionList) is its own component with its
+   own form, rounded at `control-x` (`OPTION_ROW`). Done: stack `9b488c9`, `ee5ec4d`, `5de889d`,
+   merged with the follow-ups in `c42b3de`; Stead `27ad8c3`.
 5. **Measuring in JavaScript:** container queries and `flex-wrap`; JavaScript stays for the Canvas
    and where the tree differs (the Shell's sidebar or tab bar).
 6. **Overflow:** `min-w-0` and `wrap-anywhere` on text slots.
@@ -170,12 +173,8 @@ guides. Stead's stack pin moves after each pass and its screens are ported in th
 
 Carried from pass 1 to the pass that owns it:
 
-- Pass 4: `Form`'s `FOOT_STUCK.pane` is dead; `Sheet`'s `fit="pane"` and `TextArea`'s
-  `data-fill` and `HOLDS_FILL` remain, each a form chosen by where it stands.
-- Pass 4: native `Group` still wraps each row to draw the hairline between them (React Native
-  has no sibling selector); each row drawing its own from its ground goes with "a row's ground
-  comes from its parent's surface". Native `Columns` sets no column width, which a column
-  would carry as its own prop.
+- Still open from pass 4: native `Columns` sets no column width, which a column would carry as
+  its own prop; a native cell's search no longer ends the edit on blur.
 - Pass 5: `Pane`'s title still measures its wrap with `useWraps` on touch.
 - Step 5: a Pane and a Section of one name are two region landmarks of one name (axe
   `landmark-unique` on Stead's knowledge page, the page Pane "Architecture" beside the tree's
