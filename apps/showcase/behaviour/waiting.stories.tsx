@@ -619,6 +619,41 @@ const sectionList: StoryObj = {
 	},
 };
 
+// A loading Section draws no count: the chip would carry an unseen "0" for a
+// number nobody knows yet. The title stands where it stood and the head keeps
+// its height; the count arrives at the title's end.
+const countBody = (loading?: boolean) => (
+	<Section title="Pages" count={12} loading={loading}>
+		{slider}
+	</Section>
+);
+const sectionCount: StoryObj = {
+	render: () => <Pair loaded={countBody()} waiting={countBody(true)} />,
+	play: async ({ canvas }) => {
+		const { loaded, waiting } = await stand(canvas);
+		await expect(within(loaded).getByText("12")).toBeVisible();
+		// Nothing of a count stands in the waiting head: no text, no chip.
+		await expect(within(waiting).queryByText("0")).toBeNull();
+		await expect(within(waiting).queryByText("12")).toBeNull();
+		await expect(
+			waiting.querySelectorAll("[class*='rounded-full']"),
+		).toHaveLength(0);
+		// The title's box in its Section's.
+		const title = (box: HTMLElement) => {
+			const found = box.querySelector("h2")?.getBoundingClientRect();
+			const outer = box.getBoundingClientRect();
+			return {
+				left: (found?.left ?? 0) - outer.left,
+				top: (found?.top ?? 0) - outer.top,
+				height: found?.height ?? 0,
+			};
+		};
+		await expect(title(waiting).left).toBeCloseTo(title(loaded).left, 0);
+		await expect(title(waiting).top).toBeCloseTo(title(loaded).top, 0);
+		await expect(title(waiting).height).toBeCloseTo(title(loaded).height, 0);
+	},
+};
+
 export const GroupOfStaticParts = group;
 export const SliderAloneAndInAGroup = sliders;
 export const DefinitionRowsInACard = facts;
@@ -632,6 +667,7 @@ export const SectionOverEachKindOfField = fieldKinds;
 export const SectionOverItsFormOfEachKind = fieldKindsInForm;
 export const SectionOverAGroup = sectionGroup;
 export const SectionOverAList = sectionList;
+export const SectionHoldsNoCountWhileWaiting = sectionCount;
 
 // The same scenarios in a 375 px phone at the touch density.
 function touch(story: StoryObj): StoryObj {

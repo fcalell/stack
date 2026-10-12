@@ -79,10 +79,6 @@ const BODY = "flex flex-col";
 // stays mounted, hidden, while skeleton fields stand in for it.
 const BODY_SHOWN = "contents";
 const BODY_WAITS = "hidden";
-// The waiting count is a bar one figure wide: an unseen figure at the
-// count's type sets the width.
-const COUNT_WAIT = "inline-flex shrink-0 items-center";
-const FIGURE_WAIT = "opacity-0 tabular-nums";
 // The description's bar stands in the meta line's box, at the sentence's half measure.
 const DESCRIPTION_LINE = "flex items-center h-lh";
 // The components the Section reads its body by (`sectionPartsOf`).
@@ -187,18 +183,13 @@ export function Section({
 				<span className={cn(skeleton({ kind: "line" }), "w-1/2")} />
 			</span>
 		);
-	// A count waits with the body.
-	let tally: ReactNode = null;
-	if (counted && busy)
-		tally = (
-			<span
-				aria-hidden
-				className={cn(skeleton({ kind: "count" }), COUNT_WAIT, veil)}
-			>
-				<span className={cn(text({ role: "caption" }), FIGURE_WAIT)}>0</span>
-			</span>
-		);
-	else if (shown !== undefined) tally = <Count value={shown} />;
+	// A count is not drawn while its body waits: a skeleton chip would carry an
+	// unseen "0" for a number nobody knows yet, and the count arrives at the
+	// title's end, where it moves nothing.
+	const tally =
+		counted && busy ? null : shown !== undefined ? (
+			<Count value={shown} />
+		) : null;
 	const name = (
 		<>
 			<span
