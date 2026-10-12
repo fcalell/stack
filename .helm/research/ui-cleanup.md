@@ -99,10 +99,7 @@ How would a question about it be answered (a grep, a read, a measure on the rend
     Spectrum on props, variants and booleans;
   - container queries against media queries;
   - WAI-ARIA Authoring Practices on overlays and focus;
-  - React Native and Expo parity with the web;
-  - lintapple (`github.com/gholtzap/lintapple`, 0.1.21): its rules, its `AGENTS.md` and its
-    false-pass tests. Its rules missing from the draft: clipping that hides a layout error, focus
-    obscured, focus returned when a dialog closes, nested radius, tabular digits, late fonts.
+  - React Native and Expo parity with the web.
 
 **Coverage check.** Every fault in the problem above and every complaint in the ask is caught by
 at least one question. Every question names how it is answered.
@@ -134,25 +131,29 @@ rest the review finds).
   8. Does it read the viewport where its container should decide?
   9. Does it measure in JavaScript (`getBoundingClientRect`, `ResizeObserver`, a layout effect)?
   10. Does it position absolutely or fixed, portal, clip overflow or scroll on its own? Can focus
-      scroll that container?
+      scroll that container? Does its clipping hide content that overflows by a layout error?
   11. Does it render once, or paint a first frame and then move?
+  12. A surface inside another: is its radius the outer radius less the inset? A number that
+      changes in place: are its digits tabular?
 - Loading:
-  12. Does it have a loading form, and where does that form's size come from?
-  13. Does the loading form match the loaded form's size and structure, measured in the showcase?
-  14. Does it remount on a data change (a changing `key`, a conditional swap)?
-  15. Do its empty and error forms stand at the loaded form's size?
+  13. Does it have a loading form, and where does that form's size come from?
+  14. Does the loading form match the loaded form's size and structure, measured in the showcase?
+  15. Does it remount on a data change (a changing `key`, a conditional swap)?
+  16. Do its empty and error forms stand at the loaded form's size?
 - Behaviour and API:
-  16. How many behaviours, props and variant values does it have?
-  17. How many of each does Stead use?
-  18. Which props combine into states that are invalid or never used?
-  19. Which props are layout a parent's flex or grid would do (`bleed`, `inset`, `fill`, `in`)?
-  20. Does it import routing, a query or app state that belongs to its caller?
-  21. What logic would go?
+  17. How many behaviours, props and variant values does it have?
+  18. How many of each does Stead use?
+  19. Which props combine into states that are invalid or never used?
+  20. Which props are layout a parent's flex or grid would do (`bleed`, `inset`, `fill`, `in`)?
+  21. Does it import routing, a query or app state that belongs to its caller?
+  22. What logic would go?
 - Parity and cost:
-  22. Does native take the same props and behave the same? Each difference.
-  23. Which showcase stories, behaviour tests and guide pages encode a behaviour that would go?
-  24. Which Stead call sites change, and how many?
-  25. Does the cut lose a role, a label or a focus order?
+  23. Does native take the same props and behave the same? Each difference.
+  24. Which showcase stories, behaviour tests and guide pages encode a behaviour that would go?
+  25. Which Stead call sites change, and how many?
+  26. Does the cut lose a role, a label or a focus order?
+  27. Does focus stay visible, never under a sticky or fixed element, and does it return to the
+      trigger when an overlay closes?
 
 **Report:** one row per component and helper, a column per question, each answer with its path
 and lines; then the components grouped into families sharing a cause, each family with its
@@ -221,7 +222,7 @@ ui-core's tokens, never from a second policy file:
   place of `overflow.ts`'s fixed five; `rubric.md`, `design-critique.md` and Stead's review plans
   use the same three.
 - **Findings an agent can act on:** the rule, the element, the measured value, the expected value
-  and the fix, after lintapple's report.
+  and the fix.
 - **False-pass tests.** Each check, grep or render, has a test showing it catches a bad case
   (`display: contents`, a hidden element, zero height), so none passes by never matching.
 
