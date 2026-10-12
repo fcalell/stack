@@ -1916,7 +1916,7 @@ a tick with no animation, never jumped to full.
   nothing. A `Form` in a sheet asks nothing (the sheet closes on its own acts), and two edited
   forms on one page each ask. Rejected: a prop or a `Form` variant (every edited form wants it),
   a capture-phase anchor interceptor (a router push and a back never reach it) and block-then-replay.
-- A desktop Sheet at the default `fit` is a centred card (`sheetSide` `fit: short`: `w-dialog`,
+- A desktop Sheet at the default `fit` is a centred card (`sheetSide` `fit: short`: `w-sheet`,
   `rounded-sheet`, a border on all four sides, `LAYER_CENTRED` and `CENTRED_MOTION`) when its
   content at natural height (head, body and foot, no cap) is at most the layer's height less the
   page inset above and below, and the full-height side sheet otherwise. The popup mounts as the

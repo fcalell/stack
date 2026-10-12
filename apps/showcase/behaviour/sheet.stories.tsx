@@ -370,7 +370,7 @@ const DESKTOP_900 = {
 } satisfies StoryObj;
 
 // A desktop Sheet whose content at natural height fits the viewport is a card
-// centred over the page at the dialog's width, its foot on screen.
+// centred over the page at the sheet's width, its foot on screen.
 export const ShortSheetIsACentredCard: StoryObj = {
 	...DESKTOP_900,
 	render: () => <Page />,
@@ -390,7 +390,16 @@ export const ShortSheetIsACentredCard: StoryObj = {
 			).toBeLessThan(1.5);
 		});
 		const box = dialog.getBoundingClientRect();
-		expect(box.width).toBeLessThan(window.innerWidth / 2);
+		// The card stands at the sheet's width, in the sheet pattern's 610 to
+		// 730 and not the dialog's 520.
+		const probe = document.createElement("div");
+		probe.className = "w-sheet";
+		document.body.append(probe);
+		const sheet = probe.getBoundingClientRect().width;
+		probe.remove();
+		expect(Math.abs(box.width - sheet)).toBeLessThan(0.5);
+		expect(box.width).toBeGreaterThanOrEqual(610);
+		expect(box.width).toBeLessThanOrEqual(730);
 		expect(box.height).toBeLessThan(window.innerHeight / 2);
 		const save = screen.getByRole("button", { name: "Save" });
 		expect(save.getBoundingClientRect().bottom).toBeLessThanOrEqual(box.bottom);
