@@ -111,30 +111,27 @@ export const DecisionTouch: StoryObj = {
 	globals: { density: "touch" },
 };
 
-// The foot a docked question stands in, then the input that returns.
-function useDockedFoot() {
+// The docked question a foot's input gives way to, then the input that returns.
+function useDocked() {
 	const [open, setOpen] = useState(true);
 	const [text, setText] = useState("");
-	const docked = open ? (
-		<Sheet
-			open
-			onClose={() => setOpen(false)}
-			title="Question 1 of 1"
-			submit={{ label: "Send", onAct: () => setOpen(false) }}
-		>
-			<p>Who hears about it?</p>
-		</Sheet>
-	) : (
-		<MessageInput value={text} onChange={setText} onSend={() => {}} />
-	);
-	return docked;
+	return {
+		foot: <MessageInput value={text} onChange={setText} onSend={() => {}} />,
+		sheet: {
+			open,
+			onClose: () => setOpen(false),
+			title: "Question 1 of 1",
+			submit: { label: "Send", onAct: () => setOpen(false) },
+			children: <p>Who hears about it?</p>,
+		},
+	};
 }
 
 function Docked() {
-	const foot = useDockedFoot();
+	const docked = useDocked();
 	return (
 		<Place>
-			<Pane title="Assistant" foot={foot} />
+			<Pane title="Assistant" {...docked} />
 		</Place>
 	);
 }
@@ -146,7 +143,7 @@ const LONG_TURNS = Array.from({ length: 12 }, (_, at) => ({
 }));
 
 function DockedThread() {
-	const foot = useDockedFoot();
+	const docked = useDocked();
 	return (
 		<Place>
 			<Pane title="Assistant">
@@ -157,7 +154,7 @@ function DockedThread() {
 						author: () => "you",
 						body: (turn) => turn.body,
 					}}
-					foot={foot}
+					{...docked}
 				/>
 			</Pane>
 		</Place>
@@ -179,7 +176,7 @@ const closesToInput: NonNullable<StoryObj["play"]> = async ({
 	await waitFor(() => expect(canvas.getByRole("textbox")).toHaveFocus());
 };
 
-// A Sheet docked in a Pane's foot: Escape closes it and hands focus to the
+// A Pane's docked `sheet`: Escape closes it and hands focus to the foot's
 // input that returns in its place.
 export const DockedInFoot: StoryObj = {
 	parameters: { layout: "fullscreen" },
@@ -187,7 +184,7 @@ export const DockedInFoot: StoryObj = {
 	play: closesToInput,
 };
 
-// The same in a Thread's foot.
+// The same as a Thread's `sheet`.
 export const DockedInThreadFoot: StoryObj = {
 	parameters: { layout: "fullscreen" },
 	render: () => <DockedThread />,
@@ -205,11 +202,12 @@ export const DockedTitleWraps: StoryObj = {
 		<Place>
 			<Pane
 				title="Assistant"
-				foot={
-					<Sheet open onClose={() => {}} title={QUESTION}>
-						<p>Both</p>
-					</Sheet>
-				}
+				sheet={{
+					open: true,
+					onClose: () => {},
+					title: QUESTION,
+					children: <p>Both</p>,
+				}}
 			/>
 		</Place>
 	),
@@ -474,27 +472,26 @@ function pairGap(title: HTMLElement, description: HTMLElement) {
 	);
 }
 
-// A docked title is the container's name: the `heading` role (16/600), over a
-// Section in its body that reads a level below (14/600), and the description
+// A docked title is the container's name at the `heading` role (16/600), a
+// Section in its body names itself at the same size, and the description
 // follows the title a pair below.
-export const DockedTitleOutranksItsBody: StoryObj = {
+export const DockedTitleAndItsSectionShareASize: StoryObj = {
 	parameters: { layout: "fullscreen" },
 	render: () => (
 		<Place>
 			<Pane
 				title="Assistant"
-				foot={
-					<Sheet
-						open
-						onClose={() => {}}
-						title="Question 1 of 2"
-						description="Before I redeploy"
-					>
+				sheet={{
+					open: true,
+					onClose: () => {},
+					title: "Question 1 of 2",
+					description: "Before I redeploy",
+					children: (
 						<Section title="Which environment?">
 							<p>Production</p>
 						</Section>
-					</Sheet>
-				}
+					),
+				}}
 			/>
 		</Place>
 	),
@@ -504,7 +501,7 @@ export const DockedTitleOutranksItsBody: StoryObj = {
 		});
 		const section = canvas.getByText("Which environment?");
 		expect(sized(title)).toBe("16px 600");
-		expect(sized(section)).toBe("14px 600");
+		expect(sized(section)).toBe("16px 600");
 		const pair = Number.parseFloat(
 			getComputedStyle(document.documentElement).getPropertyValue(
 				"--spacing-pair",
@@ -516,9 +513,9 @@ export const DockedTitleOutranksItsBody: StoryObj = {
 	},
 };
 
-// The same at touch: 18/600 over 16/600, the description a pair (8) below.
-export const DockedTitleOutranksItsBodyTouch: StoryObj = {
-	...DockedTitleOutranksItsBody,
+// The same at touch: 18/600 both, the description a pair (8) below.
+export const DockedTitleAndItsSectionShareASizeTouch: StoryObj = {
+	...DockedTitleAndItsSectionShareASize,
 	tags: ["touch"],
 	globals: { density: "touch" },
 	play: async ({ canvas }) => {
@@ -527,14 +524,15 @@ export const DockedTitleOutranksItsBodyTouch: StoryObj = {
 		});
 		const section = canvas.getByText("Which environment?");
 		expect(sized(title)).toBe("18px 600");
-		expect(sized(section)).toBe("16px 600");
+		expect(sized(section)).toBe("18px 600");
 		const gap = pairGap(title, canvas.getByText("Before I redeploy"));
 		expect(gap).toBeGreaterThanOrEqual(6);
 		expect(gap).toBeLessThan(12);
 	},
 };
 
-// A Section in a modal Sheet's body reads under the modal title too.
+// A Section in a modal Sheet's body names itself at the heading size, the
+// sheet's title's.
 export const SectionInModalSheet: StoryObj = {
 	render: () => (
 		<Sheet open onClose={() => {}} title="Rename domain">
@@ -549,7 +547,7 @@ export const SectionInModalSheet: StoryObj = {
 		const text = title.firstElementChild;
 		if (!(text instanceof HTMLElement)) throw new Error("no title text");
 		expect(sized(text)).toBe("16px 600");
-		expect(sized(screen.getByText("Details"))).toBe("14px 600");
+		expect(sized(screen.getByText("Details"))).toBe("16px 600");
 	},
 };
 
@@ -629,19 +627,18 @@ function BannerQuestion({
 			<Place>
 				<Pane
 					title="Assistant"
-					foot={
-						<Sheet
-							open
-							onClose={() => {}}
-							back={at > 0 ? () => setAt(0) : undefined}
-							title={at === 0 ? "Question 1 of 2" : "Review"}
-							description="Before I redeploy"
-							submit={{
-								label: at === 0 ? "Next" : "Send",
-								onAct: () => setAt(1),
-							}}
-							foot={at === 0 ? undefined : "Your answers go with the redeploy."}
-						>
+					sheet={{
+						open: true,
+						onClose: () => {},
+						back: at > 0 ? () => setAt(0) : undefined,
+						title: at === 0 ? "Question 1 of 2" : "Review",
+						description: "Before I redeploy",
+						submit: {
+							label: at === 0 ? "Next" : "Send",
+							onAct: () => setAt(1),
+						},
+						foot: at === 0 ? undefined : "Your answers go with the redeploy.",
+						children: (
 							<Section title={at === 0 ? "Which environment?" : "Your answers"}>
 								{at === 0 ? (
 									<OptionList
@@ -653,8 +650,8 @@ function BannerQuestion({
 									<p>Production</p>
 								)}
 							</Section>
-						</Sheet>
-					}
+						),
+					}}
 				>
 					<Thread
 						items={long ? LONG_TURNS : TURNS}

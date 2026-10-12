@@ -16,8 +16,8 @@ import type {
 	StatusMark,
 } from "@fcalell/ui-core/descriptors";
 import type { Closed } from "../../lib/closed.ts";
+import type { EmptyProps } from "../../lib/empty.tsx";
 import type { DefinitionValue } from "../definition-row/index.tsx";
-import type { EmptyStateProps } from "../empty-state/index.tsx";
 import type { QueryLike } from "../query-boundary/index.tsx";
 import { ListBase } from "./base.tsx";
 
@@ -179,11 +179,8 @@ export type DefinitionSlots<T> = DefinitionSlotsBase<T> &
 		  }
 	);
 
-/** What an empty list draws: an EmptyState's mark, title, sentence and the act that fills the list. */
-export type ListEmpty = Pick<
-	EmptyStateProps,
-	"icon" | "title" | "sentence" | "act"
->;
+/** What an empty list draws: a mark, a title, a sentence and the act that fills the list. */
+export type ListEmpty = Pick<EmptyProps, "icon" | "title" | "sentence" | "act">;
 
 /** Where a list's items come from. */
 export type ListSource<T> =
@@ -244,7 +241,7 @@ export type ListProps<T = unknown, V extends string | null = string> = Closed &
 	ListSource<T> &
 	ListKind<T, V>;
 
-/** Rows on the ground at the rows rhythm, with no box and no hairlines: a feed. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, waiting rows stand in the slots its map declares (busy itself while it waits); a query that answers not found draws the rest EmptyState saying it no longer exists with Back, never Retry; a failed query draws the failed EmptyState with `sentence` and Retry; no item draws `empty`; then one row per item. A standalone list bleeds the card's inset, so its rows' text meets the title over it; in a Group's `list` it stands on the card, the hairline once between rows. A `definition` list (facts from data: DefinitionRows) stands in a Group, and carries no count of its own. */
+/** Rows on the ground at the rows rhythm, with no box and no hairlines: a feed. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, waiting rows stand in the slots its map declares (busy itself while it waits); a query that answers not found draws the missing form saying it no longer exists with Back, never Retry; a failed query draws the failed form with `sentence` and Retry; no item draws `empty`; then one row per item. A standalone list bleeds the card's inset, so its rows' text meets the title over it; in a Group's `list` it stands on the card, the hairline once between rows. A `definition` list (facts from data: DefinitionRows) stands in a Group, and carries no count of its own. */
 export function List<T, V extends string | null = string>(
 	list: ListProps<T, V>,
 ) {

@@ -58,7 +58,7 @@ pending rows in the slots its item map declares, its failure, its "no longer exi
 Back when the read answers not found, its empty state, its items. Any other region that reads a
 query sits in its own `QueryBoundary`, which names its loading form and draws the same failure
 and not-found forms, so the rest stays drawn. A loading form is the loaded form in skeleton at the loaded heights, so
-nothing moves when the data lands; a pending act keeps its box. Empty draws the `EmptyState`,
+nothing moves when the data lands; a pending act keeps its box. Empty is the `Pane`'s or the `Section`'s `empty` (a collection's own),
 with the act that fills it unless the screen's primary act already does. Error draws where the work happened (a field's error, a banner over the
 region, a toast for an act) and keeps what still works.
 

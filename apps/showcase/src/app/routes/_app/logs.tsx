@@ -1,4 +1,3 @@
-import { EmptyState } from "@fcalell/plugin-react-ui/components/empty-state";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { createFileRoute } from "@tanstack/react-router";
@@ -12,14 +11,15 @@ export const Route = createFileRoute("/_app/logs")({
 function Logs() {
 	return (
 		<Place>
-			<Pane title="Logs">
-				<EmptyState
-					icon="Logs"
-					title="No logs yet"
-					sentence="Logs stream here once a deploy serves its first request."
-					act={{ label: "Deploy", onAct: act }}
-				/>
-			</Pane>
+			<Pane
+				title="Logs"
+				empty={{
+					icon: "Logs",
+					title: "No logs yet",
+					sentence: "Logs stream here once a deploy serves its first request.",
+					act: { label: "Deploy", onAct: act },
+				}}
+			/>
 		</Place>
 	);
 }

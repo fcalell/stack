@@ -17,12 +17,12 @@ import {
 } from "@fcalell/ui-core/variants";
 import { type ReactElement, useContext, useState } from "react";
 import { View } from "react-native";
+import { EmptyBase } from "../../lib/empty";
 import { between, useGroupPart } from "../../lib/group";
 import { LoadingContext } from "../../lib/loading";
 import { useWords } from "../../lib/words";
 import { DefinitionRow } from "../definition-row";
 import { DefinitionWait } from "../definition-row/wait";
-import { EmptyStateBase } from "../empty-state/base";
 import { FileRow } from "../file-row";
 import { FileWait } from "../file-row/wait";
 import { ListRowBase, type RowTree } from "../list-row/base";
@@ -66,6 +66,8 @@ export function ListBase<T, V extends string | null = string>(
 	};
 	useGroupPart();
 	const framed = props.framed === true;
+	// A failed, missing or empty form stands on the Group's card when framed.
+	const fit = framed ? "group" : "frame";
 	const state = listState(input);
 	// Items given while the list loads (a row map with a trailing slot, no tree):
 	// the rows stand as loaded, their trailing values waiting.
@@ -120,19 +122,19 @@ export function ListBase<T, V extends string | null = string>(
 			props.row?.children !== undefined,
 		);
 	}
-	if (state === "missing") return <MissingBase grouped={framed} />;
+	if (state === "missing") return <MissingBase fit={fit} />;
 	if (state === "failed" && props.query !== undefined) {
 		return (
-			<EmptyStateBase
+			<EmptyBase
+				fit={fit}
 				tone="failed"
-				grouped={framed}
 				sentence={props.sentence}
 				act={{ label: words.retry, onAct: retryOf(props.query) }}
 			/>
 		);
 	}
 	if (state === "empty" && props.empty)
-		return <EmptyStateBase tone="rest" grouped={framed} {...props.empty} />;
+		return <EmptyBase fit={fit} tone="rest" {...props.empty} />;
 	const items = (props.query ? props.query.data : props.items) ?? [];
 	if (props.row) {
 		const { row } = props;

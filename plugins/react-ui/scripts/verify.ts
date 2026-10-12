@@ -696,6 +696,38 @@ check("b-file-input", "every FileInput stands inside a FormField", () => {
 	return `${drawn} FileInput, each inside a FormField`;
 });
 
+// A Section's title is one size, so a Section inside a Section reads as its
+// sibling and the page's outline flattens: no Section stands in a Section.
+// Read over this package's own sources, as the FileInput check is.
+check("b-section-nest", "no Section stands in a Section", () => {
+	const project = new Project({ skipAddingFilesFromTsConfig: true });
+	const hits: string[] = [];
+	let drawn = 0;
+	const named = (element: Node) =>
+		(Node.isJsxOpeningElement(element) ||
+			Node.isJsxSelfClosingElement(element)) &&
+		element.getTagNameNode().getText() === "Section";
+	for (const path of walk(resolve(pkgDir, "src/ui"), /\.tsx$/)) {
+		const file = project.addSourceFileAtPath(path);
+		const sections = file
+			.getDescendants()
+			.filter(
+				(node) => Node.isJsxElement(node) && named(node.getOpeningElement()),
+			);
+		for (const section of sections) {
+			drawn++;
+			const own = section.getFirstChildByKind(SyntaxKind.JsxOpeningElement);
+			const inner = section
+				.getDescendants()
+				.filter((node) => node !== own && named(node));
+			for (const node of inner)
+				hits.push(`${relative(pkgDir, path)}:${node.getStartLineNumber()}`);
+		}
+	}
+	assert(hits.length === 0, `a Section in a Section:\n  ${hits.join("\n  ")}`);
+	return `${drawn} Sections with a body, none holding another`;
+});
+
 check("b-stroke", "no stroke weight is spelled outside ICON_STROKE", () => {
 	const hits: string[] = [];
 	for (const path of walk(resolve(pkgDir, "src/ui"), /\.(ts|tsx)$/)) {

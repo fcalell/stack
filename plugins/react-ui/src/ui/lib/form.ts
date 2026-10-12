@@ -1,4 +1,3 @@
-import type { FormIn } from "@fcalell/ui-core/variants";
 import { createContext } from "react";
 
 // What a `Form` hands the `ActionBar` inside it: the call that marks the form
@@ -16,16 +15,6 @@ export const SubmitContext = createContext(false);
 // while its text is empty and its desktop Stop without `onStop`. Each is inert and
 // says so, drawn in its disabled form.
 export const ActInert = createContext(false);
-
-// Where a `Form` stands, which bounds its column: a sheet's body, or a
-// `Gate`'s column, is the form's column; anywhere else the form stands on a
-// page's, at most a line of running text wide. An `ActionBar` in a `Gate`
-// reads `auth` and stands across the column.
-export const FormStands = createContext<FormIn>("page");
-
-// A Form, or a FormField, holding a filling TextArea (which marks its box
-// `data-fill`) takes the free height of the region the page gives it.
-export const HOLDS_FILL = "has-data-fill:grow";
 
 // A submit button's press runs the act itself, so the press ends the native
 // submit it would start: a step the act swaps in leaves the form detached,

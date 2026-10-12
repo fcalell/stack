@@ -34,10 +34,10 @@ import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { compact } from "../../lib/compact";
+import { EmptyBase } from "../../lib/empty";
 import { LoadingContext } from "../../lib/loading";
 import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
-import { EmptyStateBase } from "../empty-state/base";
 import type { ListEmpty } from "../list";
 import { MissingBase } from "../missing/base";
 import type { QueryLike } from "../query-boundary";
@@ -74,7 +74,7 @@ const TIME = "items-center flex-1 min-w-0";
 const LINE = "flex-row items-center";
 const TIMES_WAIT = "flex-row justify-between";
 const BAR = "w-full";
-// A failed or empty chart's EmptyState stands over the loaded boxes, held
+// A failed or empty chart's form stands over the loaded boxes, held
 // unseen, so it takes the chart's loaded height.
 const HELD = "opacity-0";
 const OVER = "absolute inset-0";
@@ -202,8 +202,8 @@ interface Bar {
 // collection's four states: while its query is pending, `loading` is set or a
 // loading Section around it waits, its boxes in skeleton at their loaded size
 // with the keys standing; a query
-// that answers not found draws the rest EmptyState saying it no longer exists
-// with Back (never Retry), a failed query the failed EmptyState with
+// that answers not found draws the missing form saying it no longer exists
+// with Back (never Retry), a failed query the failed form with
 // `sentence` and Retry, and no item `empty`, each at the chart's loaded
 // height; then one bar per item.
 export function BarChart<T>(props: BarChartProps<T>) {
@@ -221,13 +221,14 @@ export function BarChart<T>(props: BarChartProps<T>) {
 	if (state === "missing")
 		return (
 			<Stand keys={keys}>
-				<MissingBase fill />
+				<MissingBase fit="frame" fill />
 			</Stand>
 		);
 	if (state === "failed" && props.query !== undefined)
 		return (
 			<Stand keys={keys}>
-				<EmptyStateBase
+				<EmptyBase
+					fit="frame"
 					fill
 					tone="failed"
 					sentence={props.sentence}
@@ -238,7 +239,7 @@ export function BarChart<T>(props: BarChartProps<T>) {
 	if (state === "empty" && props.empty)
 		return (
 			<Stand keys={keys}>
-				<EmptyStateBase fill tone="rest" {...props.empty} />
+				<EmptyBase fit="frame" fill tone="rest" {...props.empty} />
 			</Stand>
 		);
 	const { bar } = props;
@@ -429,9 +430,9 @@ function Key(props: { name: string; at: number; children: ReactNode }) {
 	);
 }
 
-// A failed, missing or empty chart: its EmptyState over the loaded boxes, held
+// A failed, missing or empty chart: its form over the loaded boxes, held
 // unseen. React Native has no grid to stack the two
-// in one cell, so the EmptyState lies over the boxes, which set the height,
+// in one cell, so the empty form lies over the boxes, which set the height,
 // its frame filling them.
 function Stand(props: { keys?: readonly string[]; children: ReactNode }) {
 	return (

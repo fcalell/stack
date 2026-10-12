@@ -10,22 +10,20 @@ import {
 	SECTION_BODY,
 	SECTION_HEAD,
 	SECTION_HEAD_ROW,
-	SECTION_NESTED_TITLE,
 	SECTION_TITLE,
 	SECTION_TOGGLE,
 	skeleton,
 	text,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, useContext, useState } from "react";
+import { type ReactNode, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { EmptyBase, type EmptyProps } from "../../lib/empty";
 import { LABEL_LINE } from "../../lib/field-wait";
-import { FormStands } from "../../lib/form";
 import { Ink } from "../../lib/ink";
 import { LoadingContext, useWait, VEIL } from "../../lib/loading";
 import { partText } from "../../lib/parts";
-import { SectionContext } from "../../lib/section";
 import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 import { Button } from "../button";
@@ -77,6 +75,10 @@ export interface SectionProps extends Closed {
 	// Meter, Slider, DefinitionRow, FormField or ActionBar its own); the
 	// section reads nothing else, so a body no part answers for draws as it is.
 	loading?: boolean;
+	/** The section holds nothing yet: this stands in its body's place, framed, or as one quiet sentence when only the sentence is given. */
+	empty?: EmptyProps;
+	// The body: a Group, a List, a Form or any other parts; none stand while
+	// `empty` is set.
 	children?: ReactNode;
 }
 
@@ -85,7 +87,8 @@ export interface SectionProps extends Closed {
 // its body, whose parts each draw their own waiting form. A blocked act says
 // its reason under itself once pressed
 // or once its form or sheet is touched, as a `Button` does. React Native
-// exposes no heading level, so the title is a header at any depth.
+// exposes no heading level, so the title is a header at any depth. The title
+// is the heading size, folded or not, and no Section stands in a Section.
 export function Section({
 	title,
 	count,
@@ -95,6 +98,7 @@ export function Section({
 	act,
 	more,
 	loading: asked,
+	empty,
 	children,
 }: SectionProps) {
 	// The wait is a read that lasts: drawn after a delay and held a minimum; the
@@ -104,10 +108,6 @@ export function Section({
 	const loading = asked === undefined ? undefined : late.waiting;
 	const veil = late.veiled ? VEIL : undefined;
 	const words = useWords();
-	// A Section inside a Section names itself a level below its parent.
-	const nested = useContext(SectionContext);
-	// A section in a sheet's body reads a level below the sheet's title.
-	const stood = useContext(FormStands) === "sheet";
 	// `folded` is the initial fold: the section holds its fold from there.
 	const [open, setOpen] = useState(folded !== true);
 	// The head is busy exactly while the section loads; its count is the one it
@@ -137,18 +137,16 @@ export function Section({
 	else if (count !== undefined && count !== 0) tally = <Count value={count} />;
 	const name = (
 		<>
-			<RNText
-				numberOfLines={1}
-				className={
-					nested || stood || folded !== undefined
-						? SECTION_NESTED_TITLE
-						: text({ role: "heading" })
-				}
-			>
+			<RNText numberOfLines={1} className={text({ role: "heading" })}>
 				{partText(title)}
 			</RNText>
 			{tally}
 		</>
+	);
+	const body = empty ? (
+		<EmptyBase fit="frame" tone="rest" {...empty} />
+	) : (
+		children
 	);
 	return (
 		<View accessibilityState={{ busy }} className={cn(SECTION, BOX)}>
@@ -223,12 +221,10 @@ export function Section({
 				</View>
 			</View>
 			{/* A section without children draws no body. */}
-			{children === undefined || children === null ? null : (
+			{body === undefined || body === null ? null : (
 				<View className={cn(SECTION_BODY, !open && BODY_FOLDED, veil)}>
 					<LoadingContext.Provider value={loading === true}>
-						<SectionContext.Provider value={true}>
-							{children}
-						</SectionContext.Provider>
+						{body}
 					</LoadingContext.Provider>
 				</View>
 			)}

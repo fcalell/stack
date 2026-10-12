@@ -67,21 +67,20 @@ import { age } from "../../lib/age";
 import { useClock } from "../../lib/clock";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { EmptyBase } from "../../lib/empty";
 import { type CellFit, FieldDisabled } from "../../lib/field";
 import { Ink } from "../../lib/ink";
 import { LoadingContext } from "../../lib/loading";
 import { navigate } from "../../lib/navigate";
-import { SectionContext } from "../../lib/section";
 import { useWords } from "../../lib/words";
 import { Checkbox } from "../checkbox";
 import { CheckboxBase } from "../checkbox/base";
 import { Chip } from "../chip";
-import { EmptyStateBase } from "../empty-state/base";
 import { Icon } from "../icon";
 import { InputBase } from "../input/base";
-import { List, type RowSlots } from "../list";
+import { List, type ListEmpty, type RowSlots } from "../list";
 import { LockMark } from "../list-row/lock";
-import { Missing } from "../missing";
+import { MissingBase } from "../missing/base";
 import { PickerBase } from "../picker/base";
 import type { QueryLike } from "../query-boundary";
 import { StatusBase } from "../status/base";
@@ -120,8 +119,8 @@ const TICK = "shrink-0";
 const CHIP = "shrink min-w-0";
 // An edit fills the cell it stands in.
 const EDIT = "grow min-w-0";
-// The empty slot spans the grid: a framed EmptyState stands across it, an
-// unframed one centres in what the page's body leaves.
+// The empty slot spans the grid: its page form centres in what the page's
+// body leaves.
 const EMPTY = "grow";
 const SORT_BAR = "flex-row items-center justify-end";
 
@@ -166,7 +165,8 @@ interface TableBase<T> extends Closed {
 	// `chosen`; `blocked` and `moved` give a row's reason under its leading
 	// cell.
 	choose?: TableChoice<T>;
-	empty?: ReactNode;
+	/** What the table draws while it has no rows: a mark, a title, a sentence and the act that makes the first. */
+	empty?: ListEmpty;
 }
 
 interface Reads {
@@ -211,8 +211,8 @@ const isEnd = (column: TableColumn) =>
 // first, then turned over, then off. It draws its four states: while its
 // query is pending, `loading` is set or a loading Section around it waits,
 // the header over skeleton rows (below `tablet` the list's waiting rows); a query that answers not found
-// the rest EmptyState saying it no longer exists with Back, never Retry, and
-// a failed query the failed EmptyState with `sentence` and Retry, each under
+// the missing form saying it no longer exists with Back, never Retry, and
+// a failed query the failed form with `sentence` and Retry, each under
 // the header on the grid and alone below `tablet`; no row `empty`; then one row per item.
 export function Table<T>(props: TableProps<T>) {
 	const { columns, selected, onOpen, onEdit, empty } = props;
@@ -237,35 +237,34 @@ export function Table<T>(props: TableProps<T>) {
 				sort,
 			);
 	let slot: ReactNode = null;
-	if (state === "missing") slot = <Missing />;
+	if (state === "missing") slot = <MissingBase fit="page" />;
 	else if (state === "failed" && props.query)
 		slot = (
-			<EmptyStateBase
+			<EmptyBase
+				fit="page"
 				tone="failed"
 				sentence={props.sentence}
 				act={{ label: words.retry, onAct: retryOf(props.query) }}
 			/>
 		);
-	else if (state === "empty") slot = empty;
+	else if (state === "empty" && empty)
+		slot = <EmptyBase fit="page" tone="rest" {...empty} />;
 	if (width < BREAKPOINT_PX.tablet)
 		return (
 			<View className={ROOT}>
 				{slot ?? (
-					// Its touch List is its own part: no Section stands around it.
-					<SectionContext.Provider value={false}>
-						<Phone
-							columns={columns}
-							rows={records}
-							sort={sort}
-							onSort={setSort}
-							selected={selected}
-							onOpen={onOpen}
-							choose={props.choose}
-							loading={waiting}
-							warns={props.row.warning !== undefined}
-							changes={props.row.change !== undefined}
-						/>
-					</SectionContext.Provider>
+					<Phone
+						columns={columns}
+						rows={records}
+						sort={sort}
+						onSort={setSort}
+						selected={selected}
+						onOpen={onOpen}
+						choose={props.choose}
+						loading={waiting}
+						warns={props.row.warning !== undefined}
+						changes={props.row.change !== undefined}
+					/>
 				)}
 			</View>
 		);

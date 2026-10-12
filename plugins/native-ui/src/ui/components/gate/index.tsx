@@ -12,10 +12,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Runs } from "../../lib/code";
+import { EmptyBase, type EmptyProps } from "../../lib/empty";
 import { FieldClaim } from "../../lib/field";
-import { FormStands } from "../../lib/form";
-import { PageTitle } from "../../lib/frame";
 import { Scroll } from "../../lib/hosts";
+import type { FormProps } from "../form";
+import { FormBody } from "../form/base";
 import { FrameHost } from "../shell/host";
 import { StepCount } from "../step-count";
 import { ToastRoom } from "../toast/room";
@@ -35,15 +36,15 @@ const TOAST_BOX = "absolute inset-x-0 top-0";
 // and the body, a fields gap between each. It keeps the safe area and scrolls over
 // the keyboard, so the focused field and the submit act stay in view. An
 // `Input` or `InputOtp` that mounts in it takes focus unless one holds it,
-// each step claiming afresh as its field mounts, and a `Form`'s `ActionBar` in
-// it draws `full`. It hosts `toast()` and `confirm()` as the Shell does, and
+// each step claiming afresh as its field mounts, and its `form`'s `ActionBar`
+// draws `full`. It hosts `toast()` and `confirm()` as the Shell does, and
 // draws no word of its own. With no `title` it is a first run: no step stack and no
-// header of its own, its one `EmptyState` is the page's header, and the column
-// stands centred down.
+// header of its own, its `empty` is the page's header, and the column stands
+// centred down.
 interface GateBase extends Closed {
 	// A `Banner` standing first in the column, at its width.
 	banner?: ReactNode;
-	// The step's body; a first run's one `EmptyState`.
+	// The step's body, ahead of the `form`.
 	children?: ReactNode;
 }
 
@@ -58,11 +59,18 @@ export type GateProps = GateBase &
 				// Where an onboarding flow stands, a `StepCount` before the
 				// title.
 				step?: { at: number; of: number };
+				// The step's form, drawn after the body in the column: its `bar` stands
+				// across it.
+				form?: FormProps;
+				empty?: never;
 		  }
 		| {
 				title?: undefined;
 				description?: never;
 				step?: never;
+				form?: never;
+				// The first run's one empty state, its title the page's header.
+				empty?: EmptyProps;
 		  }
 	);
 
@@ -71,64 +79,75 @@ export function Gate({
 	description,
 	step,
 	banner,
+	form,
+	empty,
 	children,
 }: GateProps) {
 	const held = useRef<TextInput>(null);
 	const insets = useSafeAreaInsets();
 	return (
 		<FrameHost>
-			<PageTitle.Provider value={title}>
-				<FormStands.Provider value="auth">
-					<FieldClaim.Provider value={held}>
-						<View className={FILL}>
-							<Scroll
-								className={FILL}
-								contentContainerClassName={cn(
-									GATE,
-									PAGE,
-									title === undefined && CENTRED,
-								)}
-							>
-								<View
-									style={{
-										paddingTop: insets.top,
-										paddingBottom: insets.bottom,
-									}}
-									className={cn(GATE_COLUMN, GATE_FLOW)}
-								>
-									{banner}
-									{title === undefined ? (
-										children
-									) : (
-										<View className={GATE_STEP}>
-											{step ? <StepCount at={step.at} of={step.of} /> : null}
-											<RNText
-												accessibilityRole="header"
-												className={text({ role: "title" })}
-											>
-												{title}
-											</RNText>
-											{description ? (
-												<RNText className={text({ role: "meta" })}>
-													<Runs runs={description} />
-												</RNText>
-											) : null}
-											{children}
-										</View>
-									)}
+			<FieldClaim.Provider value={held}>
+				<View className={FILL}>
+					<Scroll
+						className={FILL}
+						contentContainerClassName={cn(
+							GATE,
+							PAGE,
+							title === undefined && CENTRED,
+						)}
+					>
+						<View
+							style={{
+								paddingTop: insets.top,
+								paddingBottom: insets.bottom,
+							}}
+							className={cn(GATE_COLUMN, GATE_FLOW)}
+						>
+							{banner}
+							{title === undefined ? (
+								<>
+									{empty ? (
+										<EmptyBase fit="first" tone="rest" {...empty} />
+									) : null}
+									{children}
+								</>
+							) : (
+								<View className={GATE_STEP}>
+									{step ? <StepCount at={step.at} of={step.of} /> : null}
+									<RNText
+										accessibilityRole="header"
+										className={text({ role: "title" })}
+									>
+										{title}
+									</RNText>
+									{description ? (
+										<RNText className={text({ role: "meta" })}>
+											<Runs runs={description} />
+										</RNText>
+									) : null}
+									{children}
+									{form ? (
+										<FormBody
+											key={title}
+											{...form}
+											bar={form.bar && { fit: "full", ...form.bar }}
+											in="auth"
+										/>
+									) : null}
 								</View>
-							</Scroll>
-							<View
-								pointerEvents="none"
-								style={{ bottom: insets.bottom }}
-								className={TOAST_BOX}
-							>
-								<ToastRoom />
-							</View>
+							)}
 						</View>
-					</FieldClaim.Provider>
-				</FormStands.Provider>
-			</PageTitle.Provider>
+					</Scroll>
+					<View
+						pointerEvents="none"
+						style={{ bottom: insets.bottom }}
+						className={TOAST_BOX}
+					>
+						<ToastRoom />
+					</View>
+				</View>
+			</FieldClaim.Provider>
 		</FrameHost>
 	);
 }

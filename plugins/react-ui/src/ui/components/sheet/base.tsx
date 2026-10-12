@@ -29,7 +29,6 @@ import {
 } from "react";
 import { backGlyph } from "../../lib/back.ts";
 import { useReturnFocus } from "../../lib/focus.ts";
-import { FormStands } from "../../lib/form.ts";
 import { useTouch } from "../../lib/media.ts";
 import { PortalContainer } from "../../lib/portal.ts";
 import { ActFailed, ReasonHostContext } from "../../lib/reason.ts";
@@ -453,9 +452,7 @@ export function SheetBase({
 						onChange={touchedValue.touch}
 						className={box}
 					>
-						<TouchedContext value={touchedValue}>
-							<FormStands value="sheet">{content}</FormStands>
-						</TouchedContext>
+						<TouchedContext value={touchedValue}>{content}</TouchedContext>
 					</Dialog.Popup>
 				</Dialog.Viewport>
 			</Dialog.Portal>

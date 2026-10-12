@@ -18,13 +18,13 @@ import {
 } from "@fcalell/ui-core/variants";
 import { use } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { EmptyBase } from "../../lib/empty.tsx";
 import { LoadingContext } from "../../lib/loading.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Chip } from "../chip/index.tsx";
-import { EmptyStateBase } from "../empty-state/base.tsx";
 import { Group, type GroupItem } from "../group/index.tsx";
 import type { ListSource } from "../list/index.tsx";
-import { Missing } from "../missing/index.tsx";
+import { MissingBase } from "../missing/base.tsx";
 import { StatusBase } from "../status/base.tsx";
 import { Status } from "../status/index.tsx";
 
@@ -189,7 +189,7 @@ function Fact<T>(props: {
 	);
 }
 
-/** A Group of its own rows: a head row of `columns` at meta 500, then each fact's label at body 500 (its chips beside it, then its `status` verdict, a Status read out in the row, a passing fact drawing none) and its values in equal columns, a wrapped value keeping its row's air. On touch the label stands on its own line over the values, the verdict on that line. No column is the accent's; nothing is a selection. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, the head stands over four waiting facts, each a bar per column, a chips bar when `row` declares chips and a status bar when it declares `status`; a query that answers not found draws the rest EmptyState saying it no longer exists with Back, never Retry; a failed query draws the failed EmptyState with `sentence` and Retry; no item draws `empty`; then one row per fact. */
+/** A Group of its own rows: a head row of `columns` at meta 500, then each fact's label at body 500 (its chips beside it, then its `status` verdict, a Status read out in the row, a passing fact drawing none) and its values in equal columns, a wrapped value keeping its row's air. On touch the label stands on its own line over the values, the verdict on that line. No column is the accent's; nothing is a selection. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, the head stands over four waiting facts, each a bar per column, a chips bar when `row` declares chips and a status bar when it declares `status`; a query that answers not found draws the missing form saying it no longer exists with Back, never Retry; a failed query draws the failed form with `sentence` and Retry; no item draws `empty`; then one row per fact. */
 export function Comparison<T>(props: ComparisonProps<T>) {
 	const words = useWords();
 	const input = {
@@ -201,10 +201,11 @@ export function Comparison<T>(props: ComparisonProps<T>) {
 	};
 	const state = listState(input);
 	const { columns, row } = props;
-	if (state === "missing") return <Missing />;
+	if (state === "missing") return <MissingBase fit="frame" />;
 	if (state === "failed" && props.query !== undefined) {
 		return (
-			<EmptyStateBase
+			<EmptyBase
+				fit="frame"
 				tone="failed"
 				sentence={props.sentence}
 				act={{ label: words.retry, onAct: retryOf(props.query) }}
@@ -212,7 +213,7 @@ export function Comparison<T>(props: ComparisonProps<T>) {
 		);
 	}
 	if (state === "empty" && props.empty)
-		return <EmptyStateBase tone="rest" {...props.empty} />;
+		return <EmptyBase fit="frame" tone="rest" {...props.empty} />;
 	const items = (props.query ? props.query.data : props.items) ?? [];
 	if (state === "loaded" && items.length === 0) return null;
 	const shape = factShape(columns, row);

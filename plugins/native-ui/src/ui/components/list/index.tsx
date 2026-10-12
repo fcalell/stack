@@ -16,9 +16,9 @@ import type {
 	StatusMark,
 } from "@fcalell/ui-core/descriptors";
 import type { Closed } from "../../lib/closed";
+import type { EmptyProps } from "../../lib/empty";
 import type { Route } from "../../lib/route";
 import type { DefinitionValue } from "../definition-row";
-import type { EmptyStateProps } from "../empty-state";
 import type { QueryLike } from "../query-boundary";
 import { ListBase } from "./base";
 
@@ -166,12 +166,9 @@ export type DefinitionSlots<T> = DefinitionSlotsBase<T> &
 		  }
 	);
 
-// What an empty list draws: an EmptyState's mark, title, sentence and the
+// What an empty list draws: a mark, title, sentence and the
 // act that fills the list.
-export type ListEmpty = Pick<
-	EmptyStateProps,
-	"icon" | "title" | "sentence" | "act"
->;
+export type ListEmpty = Pick<EmptyProps, "icon" | "title" | "sentence" | "act">;
 
 // Where a list's items come from.
 export type ListSource<T> =
@@ -217,9 +214,9 @@ export type ListProps<T = unknown, V extends string | null = string> = Closed &
 // feed. It draws its collection's four states: while its query is pending,
 // `loading` is set or a loading Section around it waits, waiting rows stand
 // in the slots its map declares (busy itself while it
-// waits); a query that answers not found draws the rest EmptyState
+// waits); a query that answers not found draws the missing form
 // saying it no longer exists with Back, never Retry; a failed query draws the
-// failed EmptyState with `sentence` and Retry; no item draws `empty`; then
+// failed form with `sentence` and Retry; no item draws `empty`; then
 // one row per item. A standalone list bleeds the card's inset, so its rows'
 // text meets the title over it; in a Group's `list` it stands on the card, the
 // hairline once between rows. A `definition` list (facts from data:

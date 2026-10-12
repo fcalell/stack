@@ -11,14 +11,15 @@ import { type ReactNode, useContext, useEffect, useRef, useState } from "react";
 import { Text as RNText, type TextInput, View } from "react-native";
 import { cn } from "../../lib/cn";
 import { FieldClaim, FieldNameContext } from "../../lib/field";
-import { FormStands } from "../../lib/form";
-import { FootPlace, FootRegion, FootReturn, tokenPx } from "../../lib/frame";
+import { type FootRegionValue, FootReturn, tokenPx } from "../../lib/frame";
 import { Scroll, type ScrollRef } from "../../lib/hosts";
 import { ActFailed, ReasonKept } from "../../lib/reason";
 import { useCSSVariable } from "../../lib/theme";
 import { TouchedContext, usePageTurn, useTouchState } from "../../lib/touched";
 import { useWords } from "../../lib/words";
 import { ActionBar } from "../action-bar";
+import type { FormProps } from "../form";
+import { FormBody } from "../form/base";
 import { IconButton } from "../icon-button";
 
 // The sheet fills its foot, which bounds it: the head and the foot keep their
@@ -36,12 +37,12 @@ const BODY = "shrink";
 // content keeps three rows, so a body shorter than three rows pads to them
 // while the scroller itself yields below them where the region is short. Yoga
 // has no container units: the region's height comes from its layout
-// (`FootRegion`, zero outside a docked foot, where the body has no bound), the
-// head and foot from theirs, and the row from its token.
+// (the `region` the Pane or Thread measures), the head and foot from theirs,
+// and the row from its token.
 const FOOT = "shrink-0";
 const FOOT_LINE = "flex-row items-center min-w-0";
 
-/** What a docked `Sheet` draws: the public `Sheet`'s props, standing in a foot. Outside the package's exports. */
+/** What a docked `Sheet` draws: the public `Sheet`'s props, standing in a foot, and the foot's measured `region`. Outside the package's exports: a `Pane` and a `Thread` draw it for their `sheet`. */
 export interface SheetDockedProps {
 	open: boolean;
 	onClose: () => void;
@@ -51,10 +52,13 @@ export interface SheetDockedProps {
 	submit?: Act;
 	foot?: string;
 	failed?: string;
+	form?: FormProps;
+	// The foot's region, which bounds the body.
+	region: FootRegionValue;
 	children?: ReactNode;
 }
 
-// A `Sheet` standing in a Thread's or a Pane's foot: no scrim or modal, the
+// A `Sheet` a Thread or a Pane draws in its foot: no scrim or modal, the
 // foot's raised cell its surface. The head holds the back act before one
 // column, the title over the description, with the acts at the title's first
 // line; the body, bounded, scrolls between the head and the foot, which
@@ -72,11 +76,12 @@ export function SheetDocked({
 	submit,
 	foot,
 	failed,
+	form,
+	region,
 	children,
 }: SheetDockedProps) {
 	const words = useWords();
 	const claim = useContext(FootReturn);
-	const region = useContext(FootRegion);
 	const floor = tokenPx(useCSSVariable("--spacing-docked-floor"));
 	// The head's and the foot's heights, which the sheet pins.
 	const [head, setHead] = useState(0);
@@ -114,82 +119,79 @@ export function SheetDocked({
 	return (
 		<TouchedContext.Provider value={touchedValue}>
 			<FieldNameContext.Provider value={title}>
-				<FootPlace.Provider value={null}>
-					<FieldClaim.Provider value={held}>
-						<View className={ROOT}>
-							<View
-								className={cn(SHEET_HEAD_ROW, HEAD)}
-								onLayout={(event) => setHead(event.nativeEvent.layout.height)}
-							>
-								{back ? (
-									<View className={FIRST_LINE} style={line}>
-										<IconButton
-											icon="ChevronLeft"
-											fit="body"
-											label={words.back}
-											onAct={back}
-										/>
-									</View>
-								) : null}
-								<View className={cn(SHEET_DOCKED_HEAD, HEAD_MAIN)}>
-									<RNText
-										accessibilityRole="header"
-										className={cn(text({ role: "heading" }), TITLE)}
-									>
-										{title}
-									</RNText>
-									{description ? (
-										<RNText className={text({ role: "meta" })}>
-											{description}
-										</RNText>
-									) : null}
-								</View>
+				<FieldClaim.Provider value={held}>
+					<View className={ROOT}>
+						<View
+							className={cn(SHEET_HEAD_ROW, HEAD)}
+							onLayout={(event) => setHead(event.nativeEvent.layout.height)}
+						>
+							{back ? (
 								<View className={FIRST_LINE} style={line}>
 									<IconButton
-										icon="X"
+										icon="ChevronLeft"
 										fit="body"
-										label={words.close}
-										onAct={onClose}
+										label={words.back}
+										onAct={back}
 									/>
 								</View>
+							) : null}
+							<View className={cn(SHEET_DOCKED_HEAD, HEAD_MAIN)}>
+								<RNText
+									accessibilityRole="header"
+									className={cn(text({ role: "heading" }), TITLE)}
+								>
+									{title}
+								</RNText>
+								{description ? (
+									<RNText className={text({ role: "meta" })}>
+										{description}
+									</RNText>
+								) : null}
 							</View>
-							<Scroll
-								ref={scroll}
-								className={BODY}
-								style={bound}
-								contentContainerClassName={SHEET_DOCKED_BODY}
-								contentContainerStyle={
-									region.height > 0 ? { minHeight: floor } : undefined
+							<View className={FIRST_LINE} style={line}>
+								<IconButton
+									icon="X"
+									fit="body"
+									label={words.close}
+									onAct={onClose}
+								/>
+							</View>
+						</View>
+						<Scroll
+							ref={scroll}
+							className={BODY}
+							style={bound}
+							contentContainerClassName={SHEET_DOCKED_BODY}
+							contentContainerStyle={
+								region.height > 0 ? { minHeight: floor } : undefined
+							}
+						>
+							{children}
+							{form ? <FormBody {...form} in="sheet" /> : null}
+						</Scroll>
+						{foot || submit ? (
+							<View
+								className={cn(SHEET_DOCKED_FOOT, FOOT)}
+								onLayout={(event) =>
+									setPinFoot(event.nativeEvent.layout.height)
 								}
 							>
-								<FormStands.Provider value="sheet">
-									{children}
-								</FormStands.Provider>
-							</Scroll>
-							{foot || submit ? (
-								<View
-									className={cn(SHEET_DOCKED_FOOT, FOOT)}
-									onLayout={(event) =>
-										setPinFoot(event.nativeEvent.layout.height)
-									}
-								>
-									{foot ? (
-										<View className={FOOT_LINE}>
-											<RNText className={text({ role: "meta" })}>{foot}</RNText>
-										</View>
-									) : null}
-									{submit ? (
-										<ReasonKept.Provider value>
-											<ActFailed.Provider value={failed}>
-												<ActionBar acts={[submit]} />
-											</ActFailed.Provider>
-										</ReasonKept.Provider>
-									) : null}
-								</View>
-							) : null}
-						</View>
-					</FieldClaim.Provider>
-				</FootPlace.Provider>
+								{foot ? (
+									<View className={FOOT_LINE}>
+										<RNText className={text({ role: "meta" })}>{foot}</RNText>
+									</View>
+								) : null}
+								{submit ? (
+									<ReasonKept.Provider value>
+										<ActFailed.Provider value={failed}>
+											<ActionBar acts={[submit]} />
+										</ActFailed.Provider>
+									</ReasonKept.Provider>
+								) : null}
+							</View>
+						) : null}
+					</View>
+				</FieldClaim.Provider>
 			</FieldNameContext.Provider>
 		</TouchedContext.Provider>
 	);
