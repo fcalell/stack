@@ -773,15 +773,16 @@ a tick with no animation, never jumped to full.
   `--layer-<layer>` and read on the web as `z-(--layer-<layer>)`, since Tailwind's `z-*` reads no
   theme namespace. A sheet's scrim and layer, each popover's positioner and the toasts' layer each
   draw theirs, so a toast raised while a sheet or a `confirm()` is open stands over the scrim and
-  its dismiss takes the press. On the web the Shell and the `Gate` each draw a popup layer
-  (`FrameHost`, `components/shell/host.tsx`), an empty element last in `main`, and name it the
-  `PortalContainer` around their whole tree, so every popup (a menu, a picker, a select, a sheet)
-  mounts inside `main`; a popup under neither
-  portals into `<body>` as Base UI does by default. The
-  layer follows the toasts' viewport in DOM order, so by DOM order alone a sheet would stand over
-  the toasts; the `z-(--layer-*)` steps decide. The toasts' layer stays inside `main` for its geometry
+  its dismiss takes the press. On the web every popup (a menu, a picker, a select, a tooltip, a sheet)
+  portals into `<body>` as Base UI does by default, never into the Shell's or the `Gate`'s `main`: a
+  popup mounted in `main` drew its first frame offset by `main`'s origin and made the frame scroll
+  sideways as it opened (verified by `PopupMountsInTheBody`). Only a showcase stage names a
+  `PortalContainer` (`lib/portal`), so its popups draw the stage's mode from its `.dark` class and a
+  sheet in it stays non-modal; in an app a sheet is modal. The sheet's portal follows the root in
+  DOM order and stands on `--layer-sheet`, the toasts' layer inside `main` on `--layer-toasts`, so
+  the `z-(--layer-*)` steps decide. The toasts' layer stays inside `main` for its geometry
   (above the tab bar, the docked foot's anchor), so nothing between it and the
-  root may make a stacking context. Rejected: a literal `z-*` at the call site, and portalling the toasts after
+  root may make a stacking context (verify `b-layers`). Rejected: a literal `z-*` at the call site, and portalling the toasts after
   the sheets (a Base UI portal mounts in the order it opens, and the layer would lose `main`'s
   geometry). React Native's `zIndex` orders siblings only, so native reads the order by tree
   position: gorhom's `BottomSheetModalProvider` draws its sheets after its children, in its own
@@ -1478,7 +1479,7 @@ a tick with no animation, never jumped to full.
   assume the sidebar or tab bar beside it and which carries a back act; a host element at the `auth` width would be a numeric dimension, which the
   rules refuse. Its props are `title`, `description`, `step`, `mark`, `banner` and `children`, the
   style channels closed. It is a root frame as the `Shell` is: it mounts the `FrameHost` both share
-  (the `toast()` queue, the `confirm()` decisions, the popup layer; `components/shell/host.tsx` on
+  (the `toast()` queue, the `confirm()` decisions; `components/shell/host.tsx` on
   each platform), so `toast()` and `confirm()` stand in it, and on the web it sets `PageTitle`, a
   `HeadingContext` of 2 and a `main` landmark. It draws, on the surface at the page inset (`GATE`),
   one column `w-full max-w-auth` (`GATE_COLUMN`, a width and nothing else; the region centres it,

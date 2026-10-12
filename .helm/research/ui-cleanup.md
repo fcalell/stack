@@ -231,8 +231,9 @@ The first family's design, decided before the review and open to what it finds.
 - **No filled act, no Details act** (decided 2026-10-12): a create act is one of a Pane's
   `actions` at both densities; the touch floating act, its room and the toasts' anchor on it go;
   what the Details sheet held is a deeper Pane or sections of the record's Pane. Something
-  chosen on a canvas (a workflow's node, a graph's page) opens by its own route as a deeper
-  Pane, since a Pane closes only by a route.
+  chosen on a canvas (a workflow's node, a graph's page) opens in a sheet over the canvas's
+  Pane (`Sheet fit="pane"`), so the canvas keeps its width; tried 2026-10-12 as a deeper Pane
+  by route, which squeezed the canvas to the list width beside it.
 - **A record's head** (decided 2026-10-12): the record's name and its acts stand in its Pane's
   bar; `ItemHeader` keeps the overline and the facts under it.
 - **Narrow widths.** Below `tablet` only the last Pane shows, with its back act: the same

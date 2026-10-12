@@ -31,7 +31,7 @@ import { backGlyph } from "../../lib/back.ts";
 import { useReturnFocus } from "../../lib/focus.ts";
 import { FormStands } from "../../lib/form.ts";
 import { useTouch } from "../../lib/media.ts";
-import { PortalContainer, PortalHosted } from "../../lib/portal.ts";
+import { PortalContainer } from "../../lib/portal.ts";
 import { ActFailed, ReasonHostContext } from "../../lib/reason.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
 import {
@@ -206,8 +206,9 @@ export function SheetBase({
 	const touch = useTouch();
 	const words = useWords();
 	const container = use(PortalContainer);
-	// A container a host names only places the popup: the sheet stays modal.
-	const scoped = container !== undefined && !use(PortalHosted);
+	// A sheet in a stage (a container is named) stays non-modal beside the
+	// stage's others; in an app it is modal.
+	const scoped = container !== undefined;
 	const titleId = useId();
 	const [touchedValue, setTouched] = useTouchState();
 	const { touched } = touchedValue;

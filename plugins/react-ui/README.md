@@ -108,8 +108,9 @@ and `style` as `?: never`) and declares exactly the roster's prop names.
 - **Composition.** A component that draws another's place takes its pattern, never a copy:
   `Select`'s trigger is `Input`'s box (`BOX`, `BOX_HOVER`, `BOX_DISABLED`, exported from
   `components/input`) and its open list a popover (`POPOVER`) of rows (`ROW`, `highlighted`
-  under Base UI's highlight). A popup mounts in the body unless a `PortalContainer`
-  (`lib/portal`) names an element: a surface that scopes its own mode (a showcase frame).
+  under Base UI's highlight). An app's popups mount in the body; only a
+  showcase stage provides a `PortalContainer` (`lib/portal`), so its popups draw the stage's mode
+  from its `.dark` class.
 - **Words.** A word the component draws on its own comes from `useWords()`; a sentence is a prop.
 
 `Text` is the worked example: a `<p>` in `text({ role })` with the `max-w-measure` overlay.
@@ -136,7 +137,7 @@ graph, compiles it with the Tailwind CLI in `scripts/fixture/`, and holds the co
   `banner`, the `mark` (`{ name, src? }`), an optional `step` (`StepCount`), the `title` (the page's one
   `h1`), a `description` (a `Sentence`: runs with `{ strong }` and `{ code }` parts) and the body. It mounts the
   same `FrameHost` as the `Shell` (`components/shell/host.tsx`: the `toast()` queue, the `confirm()`
-  decisions, the popup layer). The first field of a step takes focus as the page opens and as `title`
+  decisions). The first field of a step takes focus as the page opens and as `title`
   changes (`focusFirst` in `./lib/focus`), and it sets `FormStands` to `auth`, so an `ActionBar` with
   no `fit` reads `full`.
 

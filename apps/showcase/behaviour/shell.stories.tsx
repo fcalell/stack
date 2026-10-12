@@ -4,7 +4,9 @@ import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Input } from "@fcalell/plugin-react-ui/components/input";
 import { MessageInput } from "@fcalell/plugin-react-ui/components/message-input";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
+import { Picker } from "@fcalell/plugin-react-ui/components/picker";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
+import { Sheet } from "@fcalell/plugin-react-ui/components/sheet";
 import { Shell } from "@fcalell/plugin-react-ui/components/shell";
 import { toast } from "@fcalell/plugin-react-ui/lib/toast";
 import { showcaseFrames } from "@fcalell/plugin-react-ui/showcase/cells";
@@ -233,33 +235,94 @@ export const PlaceLabelsReadInDark: StoryObj = {
 	},
 };
 
-function MoreMenu() {
+const GRANTS = [
+	{ value: "owner", label: "Owner" },
+	{ value: "admin", label: "Admin" },
+	{ value: "member", label: "Member" },
+	{ value: "viewer", label: "Viewer" },
+];
+
+function Grants() {
+	const [grant, setGrant] = useState("member");
 	return (
 		<Shell places={PLACES}>
 			<Place>
-				<Pane
-					title="Members"
-					more={[
-						{ label: "Duplicate", onAct: noop },
-						{ label: "Delete", onAct: noop, destructive: true },
-					]}
-				>
-					<p>The page.</p>
+				<Pane title="Members">
+					<Picker
+						label="Grant"
+						options={GRANTS}
+						value={grant}
+						onChange={setGrant}
+					/>
 				</Pane>
 			</Place>
 		</Shell>
 	);
 }
 
-// A Menu opened in the Shell stands inside the page's landmark, so the axe
-// run finds no menu outside a region.
-export const MenuStandsInTheLandmark: StoryObj = {
+type Box = { left: number; top: number; width: number; height: number };
+
+function boxOf(element: Element): Box {
+	const { left, top, width, height } = element.getBoundingClientRect();
+	return { left, top, width, height };
+}
+
+// A popup opened in the Shell mounts in the body, not in `main`, so its
+// positioner measures against the viewport: its first frame stands where it
+// settles (a layer inside `main` drew it offset by `main`'s origin first), and
+// no scroll container of the Shell moves sideways while it opens.
+export const PopupMountsInTheBody: StoryObj = {
 	parameters: { layout: "fullscreen" },
-	render: () => <MoreMenu />,
+	render: () => <Grants />,
 	play: async ({ canvas, userEvent }) => {
-		await userEvent.click(canvas.getByRole("button", { name: "More" }));
-		const menu = await screen.findByRole("menu");
-		expect(menu.closest("main")).not.toBeNull();
+		const trigger = canvas.getByRole("combobox", { name: /Grant/ });
+		const scrolled: Element[] = [];
+		for (let at: Element | null = trigger; at; at = at.parentElement)
+			scrolled.push(at);
+		const farthest = () =>
+			Math.max(...scrolled.map((element) => Math.abs(element.scrollLeft)));
+		// The first animation frame the popup has a box in: the frame it paints.
+		let opening: Box | undefined;
+		const watching = () => {
+			const positioner =
+				document.body.querySelector('[role="listbox"]')?.parentElement;
+			const box = positioner ? boxOf(positioner) : undefined;
+			if (!opening && box && box.width > 0 && box.height > 0) opening = box;
+			if (!opening) requestAnimationFrame(watching);
+		};
+		requestAnimationFrame(watching);
+		let sideways = farthest();
+		let sampling = true;
+		const sample = () => {
+			sideways = Math.max(sideways, farthest());
+			if (sampling) requestAnimationFrame(sample);
+		};
+		sample();
+		await userEvent.click(trigger);
+		const list = await screen.findByRole("listbox");
+		const positioner = list.parentElement as HTMLElement;
+		await waitFor(() => expect(opening).toBeDefined());
+		await waitFor(() =>
+			expect(list).toContainElement(document.activeElement as HTMLElement),
+		);
+		// Settled: the open motion played and the box held for 30 frames.
+		let settled = boxOf(positioner);
+		for (let held = 0; held < 30; held++) {
+			await new Promise((resolve) => requestAnimationFrame(resolve));
+			const now = boxOf(positioner);
+			if (JSON.stringify(now) !== JSON.stringify(settled)) held = 0;
+			settled = now;
+		}
+		sampling = false;
+		for (const key of ["left", "top", "width", "height"] as const)
+			expect(
+				Math.abs((opening as Box)[key] - settled[key]),
+			).toBeLessThanOrEqual(1);
+		expect(sideways).toBe(0);
+		expect(list.closest("main")).toBeNull();
+		const portal = list.closest("body > *");
+		expect(portal).not.toBeNull();
+		expect(portal?.contains(canvas.getByRole("main"))).toBe(false);
 	},
 };
 
@@ -295,6 +358,51 @@ export const ToastStandsAboveTheFoot: StoryObj = {
 		await above();
 		await userEvent.type(input, "one{Shift>}{Enter}{/Shift}two");
 		await waitFor(above);
+	},
+};
+
+function SheetInShell() {
+	const [open, setOpen] = useState(true);
+	return (
+		<Shell places={PLACES}>
+			<Place>
+				<Pane title="Members">
+					<p>The page.</p>
+				</Pane>
+			</Place>
+			<Sheet
+				open={open}
+				onClose={() => setOpen(false)}
+				title="Rename"
+				submit={{ label: "Save", onAct: () => setOpen(false) }}
+			>
+				<p>The sheet.</p>
+			</Sheet>
+		</Shell>
+	);
+}
+
+// The sheet portals into the body while the toasts' layer stands in `main`: a
+// toast raised under an open modal sheet draws over the sheet's scrim and its
+// dismiss takes the press, the sheet staying open.
+export const ToastStandsOverASheet: StoryObj = {
+	parameters: { layout: "fullscreen" },
+	render: () => <SheetInShell />,
+	play: async ({ userEvent }) => {
+		const dialog = await screen.findByRole("dialog", { name: "Rename" });
+		toast("Saved");
+		const sentence = await screen.findByText("Saved");
+		const at = sentence.getBoundingClientRect();
+		const top = document.elementFromPoint(
+			at.left + at.width / 2,
+			at.top + at.height / 2,
+		);
+		expect(top).not.toBeNull();
+		expect(sentence.contains(top) || top?.contains(sentence)).toBe(true);
+		expect(dialog.contains(top)).toBe(false);
+		await userEvent.click(screen.getByLabelText("Dismiss"));
+		await waitFor(() => expect(screen.queryByText("Saved")).toBeNull());
+		expect(screen.getByRole("dialog", { name: "Rename" })).toBeVisible();
 	},
 };
 
