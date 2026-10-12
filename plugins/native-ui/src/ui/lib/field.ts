@@ -30,12 +30,6 @@ export const FieldRefusal = createContext<
 // control takes focus as it mounts.
 export const FieldFocus = createContext(false);
 
-// Set by a row whose label is a toggle's target (a FormField's checkbox
-// form, an OptionList row): the row takes the press and carries the
-// toggle's role and state, and the checkbox inside draws its box alone, with
-// no hit of its own, on the label's line.
-export const LabelTarget = createContext(false);
-
 // Set by a `FormField` around a group of controls (an OptionList, a
 // SegmentedControl): its label, which names the group. No field context
 // reaches the controls inside, so each keeps its own name.
@@ -43,22 +37,24 @@ export const GroupName = createContext<{ label: string } | undefined>(
 	undefined,
 );
 
-// Set by a `Table` around a cell's edit: the control stands in the cell at the
-// field's bar fit, named by the cell (its column, then its row); a number reads
-// end-aligned in tabular figures, as the cell does. The control mounts as the
-// edit starts (a typed one focused, a pick with its sheet open) and `done`
-// hears it end (the field left, the sheet closed).
-export const CellField = createContext<
-	{ label: string; done: () => void } | undefined
->(undefined);
+// A `Table` cell's edit, handed to the control the cell draws: it stands in
+// the cell at the field's bar fit, named by the cell (its column, then its
+// row); a number reads end-aligned in tabular figures, as the cell does. The
+// control mounts as the edit starts (a typed one focused, a pick with its sheet
+// open) and `done` hears it end (the field left, the sheet closed).
+export interface CellFit {
+	label: string;
+	done: () => void;
+}
 
-// Set by a row that holds an `Input` with no `FormField` around it (a
-// `ListRow`'s entry, a `Rules` term's typed value): the input stands at the
-// field's bar fit, named by `label`, and takes focus as it mounts when
-// `focus` says the viewer's own act brought it.
-export const InlineField = createContext<
-	{ label: string; focus?: boolean } | undefined
->(undefined);
+// An `Input` a row draws with no `FormField` around it (a `ListRow`'s entry, a
+// `Rules` term's typed value): it stands at the field's bar fit, named by
+// `label`, and takes focus as it mounts when `focus` says the viewer's own act
+// brought it.
+export interface InlineFit {
+	label: string;
+	focus?: boolean;
+}
 
 // Set by a `Gate` or a docked `Sheet` around its body: the typing
 // control of the region that holds focus, if any. An `Input` or `InputOtp` that

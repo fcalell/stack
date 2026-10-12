@@ -32,13 +32,13 @@ import { Fragment, type ReactNode, useContext } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { FieldDisabled, GroupName, LabelTarget } from "../../lib/field";
+import { FieldDisabled, GroupName } from "../../lib/field";
 import { navigate } from "../../lib/navigate";
 import { OptionWait } from "../../lib/option-wait";
 import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 import { Button } from "../button";
-import { Checkbox } from "../checkbox";
+import { CheckboxBase } from "../checkbox/base";
 import { Chip } from "../chip";
 import { useBackAct } from "../missing/base";
 import type { QueryLike } from "../query-boundary";
@@ -272,15 +272,14 @@ export function OptionList<V extends string = string, T = unknown>(
 												{chosen ? <View className={OPTION_RADIO_DOT} /> : null}
 											</View>
 										) : (
-											<LabelTarget.Provider value>
-												<FieldDisabled.Provider value={blocked !== undefined}>
-													<Checkbox
-														checked={chosen}
-														onChange={() => choose<V>(props, option.value)}
-														label={option.label}
-													/>
-												</FieldDisabled.Provider>
-											</LabelTarget.Provider>
+											<FieldDisabled.Provider value={blocked !== undefined}>
+												<CheckboxBase
+													target
+													checked={chosen}
+													onChange={() => choose<V>(props, option.value)}
+													label={option.label}
+												/>
+											</FieldDisabled.Provider>
 										)}
 									</View>
 									{marked ? (

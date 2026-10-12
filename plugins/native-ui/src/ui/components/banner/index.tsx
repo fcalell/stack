@@ -9,12 +9,11 @@ import {
 	text,
 } from "@fcalell/ui-core/variants";
 import { Text as RNText, View } from "react-native";
-import { ActInk, type ActInkValue } from "../../lib/act-ink";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
 import { Strut } from "../../lib/strut";
-import { Button } from "../button";
+import { type BannerInk, ButtonBase } from "../button/base";
 import { Icon } from "../icon";
 
 const BOX = "justify-center";
@@ -27,13 +26,13 @@ const GLYPH_BOX = "flex-row items-center shrink-0";
 const SENTENCE = "min-w-0 flex-1";
 const ACT_SLOT = "flex-row shrink-0";
 
-const INKS: Record<BannerKind, ActInkValue> = {
+const INKS: Record<BannerKind, BannerInk> = {
 	note: inkOf("note"),
 	warn: inkOf("warn"),
 	danger: inkOf("danger"),
 };
 
-function inkOf(kind: BannerKind): ActInkValue {
+function inkOf(kind: BannerKind): BannerInk {
 	return { label: bannerGlyph({ kind }), tone: bannerContentTone(kind) };
 }
 
@@ -77,16 +76,15 @@ export function Banner({ kind, sentence, act }: BannerProps) {
 				</View>
 				{act ? (
 					<View className={ACT_SLOT}>
-						<ActInk.Provider value={INKS[drawn]}>
-							<Button
-								act="quiet"
-								fit="bar"
-								label={act.label}
-								onAct={act.onAct}
-								loading={act.loading}
-								blocked={act.blocked}
-							/>
-						</ActInk.Provider>
+						<ButtonBase
+							act="quiet"
+							fit="bar"
+							banner={INKS[drawn]}
+							label={act.label}
+							onAct={act.onAct}
+							loading={act.loading}
+							blocked={act.blocked}
+						/>
 					</View>
 				) : null}
 			</View>

@@ -13,7 +13,6 @@ import { FieldDisabled } from "../../lib/field.ts";
 import { spacing, useTouch } from "../../lib/media.ts";
 import { follow } from "../../lib/navigate.ts";
 import { PortalContainer } from "../../lib/portal.ts";
-import { InsetRing } from "../../lib/ring.ts";
 import { Icon } from "../icon/index.tsx";
 import { Spinner } from "../spinner/index.tsx";
 
@@ -42,18 +41,21 @@ export function IconButtonBase({
 	fit,
 	label,
 	loading,
+	inset: framed,
 	...handed
 }: Handed & {
 	icon: IconName;
 	fit?: IconButtonFit;
 	label: string;
 	loading?: boolean;
+	// Its frame clips (a Code's): the focus ring is drawn inset, so the clip never cuts it.
+	inset?: boolean;
 }) {
 	// Inert inside a disabled field, or when its holder says so (a sheet's
 	// close while its act pends), or while it runs.
 	const disabled =
 		useContext(FieldDisabled) || handed.disabled === true || loading === true;
-	const inset = useContext(InsetRing) || fit === "field";
+	const inset = framed || fit === "field";
 	const look = disabled ? DISABLED : PRESS;
 	return (
 		<Named label={label}>

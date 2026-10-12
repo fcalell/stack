@@ -42,7 +42,7 @@ import {
 	useState,
 } from "react";
 import { arrowsOver } from "../../lib/arrows.ts";
-import { CellField } from "../../lib/field.ts";
+import type { CellFit } from "../../lib/field.ts";
 import { expandedTrigger, rememberOpener } from "../../lib/focus.ts";
 import { useQuietGuards } from "../../lib/guards.ts";
 import { spacing, useTouch } from "../../lib/media.ts";
@@ -319,6 +319,8 @@ interface Composed {
 	drawn?: (handed: ComponentProps<"button">, open: boolean) => ReactElement;
 	/** The family a chip column's value and options draw as chips of. */
 	chip?: ChipFamily;
+	/** The `Table` cell it edits in: the pick mounts open as the edit starts, named by the cell. */
+	cell?: CellFit;
 }
 
 // Overloaded as `Picker` is, so a handler's parameter is typed by the value
@@ -335,7 +337,7 @@ export function PickerBase<V extends string | null = string>(
 export function PickerBase<V extends string | null = string>(
 	props: PickerProps<V> & Composed,
 ) {
-	const { label, options, fit = "field", act, drawn, chip } = props;
+	const { label, options, fit = "field", act, drawn, chip, cell } = props;
 	// A pick of several: its value is an array, which `Several` types as one.
 	const several = isSeveral(props) ? props : undefined;
 	const value = isSeveral(props) ? undefined : props.value;
@@ -347,7 +349,6 @@ export function PickerBase<V extends string | null = string>(
 	// gone, its leave played, ends the edit. The list hands focus back to the
 	// cell as it unmounts (after its option's own press has focused it), unless
 	// the close came from focus moving on.
-	const cell = use(CellField);
 	const [open, setOpenState] = useState(cell?.starts ?? false);
 	const back = useRef(true);
 	const setOpen = (next: boolean, details?: { reason: string }) => {

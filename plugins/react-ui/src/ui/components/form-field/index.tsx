@@ -27,14 +27,15 @@ import {
 	useState,
 } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { FieldRefusal, GroupName, LabelTarget } from "../../lib/field.ts";
+import { FieldRefusal, GroupName } from "../../lib/field.ts";
 import { FieldWait } from "../../lib/field-wait.tsx";
 import { focusFirst } from "../../lib/focus.ts";
 import { HOLDS_FILL } from "../../lib/form.ts";
 import { GroundContext } from "../../lib/ground.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 import { useWords } from "../../lib/words.tsx";
-import { Checkbox, type CheckboxProps } from "../checkbox/index.tsx";
+import { CheckboxBase } from "../checkbox/base.tsx";
+import type { CheckboxProps } from "../checkbox/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 import { OptionList, type OptionListProps } from "../option-list/index.tsx";
@@ -161,7 +162,10 @@ type Form = "field" | ControlKind;
 function controlOf(props: Body, kind: ControlKind | undefined): ReactNode {
 	const { label } = props;
 	if (props.switch) return <Switch {...props.switch} label={label} />;
-	if (props.checkbox) return <Checkbox {...props.checkbox} label={label} />;
+	if (props.checkbox)
+		return (
+			<CheckboxBase {...props.checkbox} label={label} target={FIELD_TARGET} />
+		);
 	if (props.slider) return <Slider {...props.slider} label={label} />;
 	if (props.select) return <Select {...props.select} />;
 	if (props.options) return <OptionList {...props.options} />;
@@ -328,7 +332,7 @@ function FieldBody(props: Body & { gone?: boolean }) {
 		>
 			{holds === "checkbox" ? (
 				<span className={cn(lineBox({ role: "body" }), BOX_LINE)}>
-					<LabelTarget value={FIELD_TARGET}>{control}</LabelTarget>
+					{control}
 				</span>
 			) : null}
 			{holds === "field" ? (

@@ -62,7 +62,7 @@ import {
 import { age } from "../../lib/age.ts";
 import { useClock } from "../../lib/clock.ts";
 import type { Closed } from "../../lib/closed.ts";
-import { CellField, LabelTarget } from "../../lib/field.ts";
+import type { CellFit } from "../../lib/field.ts";
 import { PageTitle } from "../../lib/frame.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 import { useTouch } from "../../lib/media.ts";
@@ -70,11 +70,12 @@ import { follow, navigate } from "../../lib/navigate.ts";
 import { usePageTablet } from "../../lib/page.ts";
 import { SectionContext } from "../../lib/section.ts";
 import { useWords } from "../../lib/words.tsx";
+import { CheckboxBase } from "../checkbox/base.tsx";
 import { Checkbox } from "../checkbox/index.tsx";
 import { Chip } from "../chip/index.tsx";
 import { EmptyStateBase } from "../empty-state/base.tsx";
 import { Icon } from "../icon/index.tsx";
-import { Input } from "../input/index.tsx";
+import { InputBase } from "../input/base.tsx";
 import { List, type RowSlots } from "../list/index.tsx";
 import { LockMark } from "../list-row/lock.tsx";
 import { WarningMark } from "../list-row/marks.tsx";
@@ -467,22 +468,13 @@ function TickCell(props: {
 			{/* biome-ignore lint/a11y/noLabelWithoutControl: the Checkbox inside is the control */}
 			<label className={box}>
 				<Field.Root disabled={row.blocked !== undefined}>
-					<CellField
-						value={{
-							label: props.name,
-							starts: false,
-							done: actions.done,
-							home: () => actions.home(index, 0),
-						}}
-					>
-						<LabelTarget value={{}}>
-							<Checkbox
-								checked={props.ticked}
-								onChange={(on) => actions.tick(row, on)}
-								label={props.name}
-							/>
-						</LabelTarget>
-					</CellField>
+					<CheckboxBase
+						cell
+						target={{}}
+						checked={props.ticked}
+						onChange={(on) => actions.tick(row, on)}
+						label={props.name}
+					/>
 				</Field.Root>
 			</label>
 		</td>
@@ -523,12 +515,12 @@ const Cell = memo(function Cell(props: {
 		control !== undefined &&
 		control !== "checkbox" &&
 		(props.editing !== undefined || hovered);
-	const field = (starting: boolean) => ({
+	const field: CellFit = {
 		label: column.label,
-		starts: starting,
+		starts,
 		done: actions.done,
 		home: () => actions.home(index, place),
-	});
+	};
 	const box = cn(
 		TABLE_CELL,
 		CELL,
@@ -565,26 +557,23 @@ const Cell = memo(function Cell(props: {
 			)}
 		>
 			{live ? (
-				<CellField value={field(starts)}>
-					<CellEdit
-						key={starts ? "started" : "shown"}
-						column={column}
-						cell={cell}
-						onEdit={(value) => actions.edit(row, column, value)}
-					/>
-				</CellField>
+				<CellEdit
+					key={starts ? "started" : "shown"}
+					column={column}
+					cell={cell}
+					field={field}
+					onEdit={(value) => actions.edit(row, column, value)}
+				/>
 			) : control === "checkbox" ? (
 				// biome-ignore lint/a11y/noLabelWithoutControl: the Checkbox inside is the control
 				<label className={box}>
-					<CellField value={field(false)}>
-						<LabelTarget value={{}}>
-							<Checkbox
-								checked={cell === true}
-								onChange={(checked) => actions.edit(row, column, checked)}
-								label={column.label}
-							/>
-						</LabelTarget>
-					</CellField>
+					<CheckboxBase
+						cell
+						target={{}}
+						checked={cell === true}
+						onChange={(checked) => actions.edit(row, column, checked)}
+						label={column.label}
+					/>
 				</label>
 			) : (
 				<div className={box}>
@@ -1128,10 +1117,11 @@ function CellValueView(props: {
 }
 
 // A cell's edit in place: the Input of its column's kind, or its Picker. The
-// cell context sets its fit, its name and its tab stop.
+// cell sets its fit, its name and its tab stop.
 function CellEdit(props: {
 	column: TableColumn;
 	cell: TableCell | undefined;
+	field: CellFit;
 	onEdit: (value: CellValue) => void;
 }) {
 	const { column, cell } = props;
@@ -1146,11 +1136,13 @@ function CellEdit(props: {
 				value={typeof cell === "string" || cell === null ? cell : undefined}
 				onChange={props.onEdit}
 				chip={column.kind === "chip" ? column.family : undefined}
+				cell={props.field}
 			/>
 		);
 	const number = column.kind === "number";
 	return (
-		<Input
+		<InputBase
+			cell={props.field}
 			kind={number ? "number" : column.kind === "source" ? "source" : "text"}
 			value={draft}
 			onChange={setDraft}

@@ -36,12 +36,12 @@ import {
 } from "@fcalell/ui-core/variants";
 import { Fragment, type ReactNode, use, useId } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { GroupName, LabelTarget } from "../../lib/field.ts";
+import { GroupName } from "../../lib/field.ts";
 import { OptionWait } from "../../lib/option-wait.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { Button } from "../button/index.tsx";
 import { ButtonLink } from "../button/link.tsx";
-import { Checkbox } from "../checkbox/index.tsx";
+import { CheckboxBase } from "../checkbox/base.tsx";
 import { Chip } from "../chip/index.tsx";
 import { useBackAct } from "../missing/base.tsx";
 import type { QueryLike } from "../query-boundary/index.tsx";
@@ -265,18 +265,17 @@ export function OptionList<V extends string = string, T = unknown>(
 											<Radio.Indicator className={OPTION_RADIO_DOT} />
 										</Radio.Root>
 									) : (
-										<LabelTarget value={target}>
-											<Field.Root
-												disabled={blocked !== undefined}
-												className={FIELD}
-											>
-												<Checkbox
-													checked={chosen}
-													onChange={() => choose<V>(props, option.value)}
-													label={option.label}
-												/>
-											</Field.Root>
-										</LabelTarget>
+										<Field.Root
+											disabled={blocked !== undefined}
+											className={FIELD}
+										>
+											<CheckboxBase
+												target={target}
+												checked={chosen}
+												onChange={() => choose<V>(props, option.value)}
+												label={option.label}
+											/>
+										</Field.Root>
 									)}
 								</span>
 								{marked ? (

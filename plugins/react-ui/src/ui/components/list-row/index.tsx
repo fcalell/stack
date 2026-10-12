@@ -48,7 +48,6 @@ import { ageShort } from "../../lib/age.ts";
 import { useClock } from "../../lib/clock.ts";
 import type { Closed } from "../../lib/closed.ts";
 import { CodeCut, Runs } from "../../lib/code.tsx";
-import { InlineField } from "../../lib/field.ts";
 import { GroundContext } from "../../lib/ground.ts";
 import { follow, navigate, useRoute } from "../../lib/navigate.ts";
 import {
@@ -70,7 +69,7 @@ import { Checkbox } from "../checkbox/index.tsx";
 import { Chip } from "../chip/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButtonBase } from "../icon-button/base.tsx";
-import { Input } from "../input/index.tsx";
+import { InputBase } from "../input/base.tsx";
 import { MenuBase } from "../menu/base.tsx";
 import { Picker } from "../picker/index.tsx";
 import { ChangeMark } from "../status/change.tsx";
@@ -562,19 +561,18 @@ export function ListRow<V extends string | null = string>({
 					className={cn(ROW_ENTRY, TEXT)}
 				>
 					{titleLine}
-					<InlineField value={inline}>
-						<span className={cn(ROW_META_LINE, ENTRY)}>
-							<span className={ENTRY_FIELD}>
-								<Input
-									value={entry.field.value}
-									onChange={entry.field.onChange}
-									onCommit={entry.field.onCommit}
-									placeholder={entry.placeholder}
-								/>
-							</span>
-							<ActButton act={entry.act} host={entryReason.host} />
+					<span className={cn(ROW_META_LINE, ENTRY)}>
+						<span className={ENTRY_FIELD}>
+							<InputBase
+								inline={inline}
+								value={entry.field.value}
+								onChange={entry.field.onChange}
+								onCommit={entry.field.onCommit}
+								placeholder={entry.placeholder}
+							/>
 						</span>
-					</InlineField>
+						<ActButton act={entry.act} host={entryReason.host} />
+					</span>
 					{entry.error ? (
 						<Field.Error match className={FIELD_ERROR_LINE}>
 							{entry.error}

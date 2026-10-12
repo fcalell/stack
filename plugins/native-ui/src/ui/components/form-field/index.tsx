@@ -25,7 +25,6 @@ import {
 	FieldNameContext,
 	FieldRefusal,
 	GroupName,
-	LabelTarget,
 } from "../../lib/field";
 import { FieldWait } from "../../lib/field-wait";
 import { GroundContext } from "../../lib/ground";
@@ -33,7 +32,8 @@ import { Ink } from "../../lib/ink";
 import { LoadingContext } from "../../lib/loading";
 import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
-import { Checkbox, type CheckboxProps } from "../checkbox";
+import type { CheckboxProps } from "../checkbox";
+import { CheckboxBase } from "../checkbox/base";
 import { Icon } from "../icon";
 import { IconButton } from "../icon-button";
 import { OptionList, type OptionListProps } from "../option-list";
@@ -165,7 +165,8 @@ export function fieldControl<V, S extends string | null, O extends string, T>(
 function controlOf(props: Body, kind: ControlKind | undefined): ReactNode {
 	const { label } = props;
 	if (props.switch) return <Switch {...props.switch} label={label} />;
-	if (props.checkbox) return <Checkbox {...props.checkbox} label={label} />;
+	if (props.checkbox)
+		return <CheckboxBase {...props.checkbox} label={label} target />;
 	if (props.slider) return <Slider {...props.slider} label={label} />;
 	if (props.select) return <Select {...props.select} />;
 	if (props.options) return <OptionList {...props.options} />;
@@ -287,7 +288,7 @@ function FieldBody(props: Body & { gone?: boolean }) {
 				<View className={BOX_LINE}>
 					<Strut role="body" />
 					<FieldDisabled.Provider value={disabled}>
-						<LabelTarget.Provider value>{control}</LabelTarget.Provider>
+						{control}
 					</FieldDisabled.Provider>
 				</View>
 				<View className={LABEL_BLOCK}>

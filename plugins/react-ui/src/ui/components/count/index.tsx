@@ -1,8 +1,5 @@
-import { cn } from "@fcalell/ui-core/cn";
-import { COUNT, COUNT_LABEL } from "@fcalell/ui-core/variants";
-import { use } from "react";
-import { InAct } from "../../lib/act-ink.ts";
 import type { Closed } from "../../lib/closed.ts";
+import { CountBase } from "./base.tsx";
 
 /** A number in the muted ink. */
 export interface CountProps extends Closed {
@@ -10,12 +7,7 @@ export interface CountProps extends Closed {
 	value: number | string;
 }
 
-/** A number in the muted ink, its figures at one width; in a `Button` it draws in the act's ink. */
+/** A number in the muted ink, its figures at one width. */
 export function Count({ value }: CountProps) {
-	const inAct = use(InAct);
-	return (
-		<span className={inAct ? COUNT_LABEL : cn(COUNT, COUNT_LABEL)}>
-			{value}
-		</span>
-	);
+	return <CountBase value={value} />;
 }

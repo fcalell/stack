@@ -9,11 +9,10 @@ import {
 	text,
 } from "@fcalell/ui-core/variants";
 import { useMemo } from "react";
-import { ActInk } from "../../lib/act-ink.ts";
 import type { Closed } from "../../lib/closed.ts";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
-import { Button } from "../button/index.tsx";
+import { ButtonBase } from "../button/base.tsx";
 import { Reason } from "../button/reason.tsx";
 import { Icon } from "../icon/index.tsx";
 
@@ -68,18 +67,17 @@ export function Banner({ kind, sentence, act }: BannerProps) {
 				</div>
 				{act ? (
 					<span className={ACT_SLOT}>
-						<ActInk value={bannerGlyph({ kind: drawn })}>
-							<ReasonHostContext value={host}>
-								<Button
-									act="quiet"
-									fit="bar"
-									label={act.label}
-									onAct={act.onAct}
-									loading={act.loading}
-									blocked={blocked}
-								/>
-							</ReasonHostContext>
-						</ActInk>
+						<ReasonHostContext value={host}>
+							<ButtonBase
+								act="quiet"
+								fit="bar"
+								ink={bannerGlyph({ kind: drawn })}
+								label={act.label}
+								onAct={act.onAct}
+								loading={act.loading}
+								blocked={blocked}
+							/>
+						</ReasonHostContext>
 					</span>
 				) : null}
 			</div>

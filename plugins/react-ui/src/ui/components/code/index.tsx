@@ -16,10 +16,9 @@ import { use, useId, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { useCopy } from "../../lib/copy.ts";
 import { LoadingContext } from "../../lib/loading.ts";
-import { InsetRing } from "../../lib/ring.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Icon } from "../icon/index.tsx";
-import { IconButton } from "../icon-button/index.tsx";
+import { IconButtonBase } from "../icon-button/base.tsx";
 
 const FRAME = "flex flex-col shrink-0 min-w-0 overflow-hidden";
 const HEAD = "flex items-center";
@@ -65,22 +64,21 @@ export interface CodeProps extends Closed {
 function DownloadAct(props: { name: string; text: string; file: string }) {
 	const words = useWords();
 	return (
-		<InsetRing value>
-			<IconButton
-				icon="Download"
-				label={named(words.download, props.name)}
-				onAct={() => {
-					const url = URL.createObjectURL(
-						new Blob([props.text], { type: "text/plain" }),
-					);
-					const link = document.createElement("a");
-					link.href = url;
-					link.download = props.file;
-					link.click();
-					setTimeout(() => URL.revokeObjectURL(url));
-				}}
-			/>
-		</InsetRing>
+		<IconButtonBase
+			inset
+			icon="Download"
+			label={named(words.download, props.name)}
+			onClick={() => {
+				const url = URL.createObjectURL(
+					new Blob([props.text], { type: "text/plain" }),
+				);
+				const link = document.createElement("a");
+				link.href = url;
+				link.download = props.file;
+				link.click();
+				setTimeout(() => URL.revokeObjectURL(url));
+			}}
+		/>
 	);
 }
 
@@ -89,13 +87,12 @@ function CopyAct(props: { name?: string; text: string }) {
 	const words = useWords();
 	const [done, copy] = useCopy();
 	return (
-		<InsetRing value>
-			<IconButton
-				icon={done ? "Check" : "Copy"}
-				label={done ? words.copied : named(words.copy, props.name)}
-				onAct={() => copy(props.text)}
-			/>
-		</InsetRing>
+		<IconButtonBase
+			inset
+			icon={done ? "Check" : "Copy"}
+			label={done ? words.copied : named(words.copy, props.name)}
+			onClick={() => copy(props.text)}
+		/>
 	);
 }
 

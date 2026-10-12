@@ -14,14 +14,13 @@ import { useMemo, useState } from "react";
 import { View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { InlineField } from "../../lib/field";
 import { Ink } from "../../lib/ink";
 import { useWords } from "../../lib/words";
 import { Button } from "../button";
 import { Group } from "../group";
 import { Icon } from "../icon";
 import { IconButton } from "../icon-button";
-import { Input } from "../input";
+import { InputBase } from "../input/base";
 import { Picker } from "../picker";
 import { Text } from "../text";
 
@@ -46,21 +45,20 @@ function Either<V extends string | null>(props: EitherPick<V>) {
 	const rule = useMemo(() => ({ label, focus: typing }), [label, typing]);
 	if (isTyped(value))
 		return (
-			<InlineField.Provider value={rule}>
-				<Input
-					value={value.typed}
-					onChange={(typed) => onChange({ typed })}
-					placeholder={placeholder}
-					act={{
-						icon: "ListFilter",
-						label: words.pickValue,
-						onAct: () => {
-							setTyping(false);
-							onChange({});
-						},
-					}}
-				/>
-			</InlineField.Provider>
+			<InputBase
+				inline={rule}
+				value={value.typed}
+				onChange={(typed) => onChange({ typed })}
+				placeholder={placeholder}
+				act={{
+					icon: "ListFilter",
+					label: words.pickValue,
+					onAct: () => {
+						setTyping(false);
+						onChange({});
+					},
+				}}
+			/>
 		);
 	return (
 		<Picker

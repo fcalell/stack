@@ -325,8 +325,8 @@ a tick with no animation, never jumped to full.
   (`EitherPick`): a picked option or a typed value, `EitherValue` `{ picked?: V } | { typed: string
   }`. The picked form is a Picker whose options lead with their own glyph, or `Braces` when they
   carry no leading form (`marked`, with the other Rules and pick logic in `./rules`), and whose list
-  ends with the act `typeValue`; the typed form is an `Input` at the bar fit (read from
-  `InlineField`, the context that names it by the term and focuses it after the viewer's own act)
+  ends with the act `typeValue`; the typed form is an `Input` at the bar fit (an internal
+  `inline` prop on its base, which names it by the term and focuses it after the viewer's own act)
   whose trailing act `pickValue` (`ListFilter`) returns to the pick. The mark of which form it is is
   that leading glyph (a typed value has none and keeps the `text` kind), never Value/Field tabs,
   which would be a second control row over the 28 px row. The arrow is `ArrowRight` at `icon-meta`,
@@ -1168,9 +1168,9 @@ a tick with no animation, never jumped to full.
   (it wins over `meta`, `status` and `chip`), its error under it in the error ink
   (`FIELD_ERROR_LINE`, the cell a `FormField`'s error draws too, held by neither; `ROW_ENTRY` is the
   gap, held by ListRow). The row keeps no state: the consumer gives `meta` or `status` in place of
-  `entry` once the act settles. The Input is named by the entry's `label` and reads its bar fit from
-  an internal context (`InlineField`, shared with a `Rules` term), as a Table cell's does from
-  `CellField`. A blocked act's reason draws on the row's own line, the Button handed a reason host,
+  `entry` once the act settles. The Input is named by the entry's `label` and takes its bar fit from
+  an internal prop (`inline` on `InputBase`, shared with a `Rules` term), as a Table cell's does
+  from `cell`. A blocked act's reason draws on the row's own line, the Button handed a reason host,
   so the act keeps its place. A row with an entry stands its leading, trailing and acts on the
   title's first line (the box `wrap` uses), so the glyph names the line it sits by and not the
   input under it. Rejected: a `Form` or a `FormField` in a `Group` row, which draws a

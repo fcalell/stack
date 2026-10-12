@@ -14,14 +14,13 @@ import {
 } from "@fcalell/ui-core/variants";
 import { useMemo, useRef, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { InlineField } from "../../lib/field.ts";
 import { useTouch } from "../../lib/media.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Button } from "../button/index.tsx";
 import { Group } from "../group/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
-import { Input } from "../input/index.tsx";
+import { InputBase } from "../input/base.tsx";
 import { Picker } from "../picker/index.tsx";
 import { Text } from "../text/index.tsx";
 
@@ -57,21 +56,20 @@ function Either<V extends string | null>(props: EitherPick<V>) {
 	const rule = useMemo(() => ({ label, focus: typing }), [label, typing]);
 	if (isTyped(value))
 		return (
-			<InlineField value={rule}>
-				<Input
-					value={value.typed}
-					onChange={(typed) => onChange({ typed })}
-					placeholder={placeholder}
-					act={{
-						icon: "ListFilter",
-						label: words.pickValue,
-						onAct: () => {
-							setTyping(false);
-							onChange({});
-						},
-					}}
-				/>
-			</InlineField>
+			<InputBase
+				inline={rule}
+				value={value.typed}
+				onChange={(typed) => onChange({ typed })}
+				placeholder={placeholder}
+				act={{
+					icon: "ListFilter",
+					label: words.pickValue,
+					onAct: () => {
+						setTyping(false);
+						onChange({});
+					},
+				}}
+			/>
 		);
 	return (
 		<Picker

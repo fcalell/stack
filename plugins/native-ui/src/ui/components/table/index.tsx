@@ -67,17 +67,18 @@ import { age } from "../../lib/age";
 import { useClock } from "../../lib/clock";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { CellField, FieldDisabled, LabelTarget } from "../../lib/field";
+import { type CellFit, FieldDisabled } from "../../lib/field";
 import { Ink } from "../../lib/ink";
 import { LoadingContext } from "../../lib/loading";
 import { navigate } from "../../lib/navigate";
 import { SectionContext } from "../../lib/section";
 import { useWords } from "../../lib/words";
 import { Checkbox } from "../checkbox";
+import { CheckboxBase } from "../checkbox/base";
 import { Chip } from "../chip";
 import { EmptyStateBase } from "../empty-state/base";
 import { Icon } from "../icon";
-import { Input } from "../input";
+import { InputBase } from "../input/base";
 import { List, type RowSlots } from "../list";
 import { LockMark } from "../list-row/lock";
 import { Missing } from "../missing";
@@ -527,24 +528,24 @@ function Cell(props: {
 				onPress={() => edit(value !== true)}
 				className={box}
 			>
-				<LabelTarget.Provider value>
-					<Checkbox
-						checked={value === true}
-						onChange={edit}
-						label={column.label}
-					/>
-				</LabelTarget.Provider>
+				<CheckboxBase
+					target
+					checked={value === true}
+					onChange={edit}
+					label={column.label}
+				/>
 			</Pressable>
 		);
 	if (control && props.editing)
 		return (
 			<View className={box}>
 				<View className={EDIT}>
-					<CellField.Provider
-						value={{ label: column.label, done: actions.done }}
-					>
-						<CellEdit column={column} cell={value} onEdit={edit} />
-					</CellField.Provider>
+					<CellEdit
+						column={column}
+						cell={value}
+						field={{ label: column.label, done: actions.done }}
+						onEdit={edit}
+					/>
 				</View>
 			</View>
 		);
@@ -928,10 +929,11 @@ function CellValueView(props: {
 }
 
 // A cell's edit in place: the Input of its column's kind, or its Picker. The
-// cell context sets its fit and its name, focuses it or opens its sheet.
+// cell sets its fit and its name, focuses it or opens its sheet.
 function CellEdit(props: {
 	column: TableColumn;
 	cell: TableCell | undefined;
+	field: CellFit;
 	onEdit: (value: CellValue) => void;
 }) {
 	const { column, cell } = props;
@@ -946,11 +948,13 @@ function CellEdit(props: {
 				value={typeof cell === "string" || cell === null ? cell : undefined}
 				onChange={props.onEdit}
 				chip={column.kind === "chip" ? column.family : undefined}
+				cell={props.field}
 			/>
 		);
 	const number = column.kind === "number";
 	return (
-		<Input
+		<InputBase
+			cell={props.field}
 			kind={number ? "number" : column.kind === "source" ? "source" : "text"}
 			value={draft}
 			onChange={setDraft}

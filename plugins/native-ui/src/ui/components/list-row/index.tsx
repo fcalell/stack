@@ -41,7 +41,7 @@ import { useClock } from "../../lib/clock";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { CodeCut, Runs } from "../../lib/code";
-import { FieldDisabled, FieldError, InlineField } from "../../lib/field";
+import { FieldDisabled, FieldError } from "../../lib/field";
 import { GroundContext } from "../../lib/ground";
 import { Ink } from "../../lib/ink";
 import { navigate, usePathname } from "../../lib/navigate";
@@ -64,7 +64,7 @@ import { Checkbox } from "../checkbox";
 import { Chip } from "../chip";
 import { Icon } from "../icon";
 import { IconButtonBase } from "../icon-button/base";
-import { Input } from "../input";
+import { InputBase } from "../input/base";
 import { MenuBase } from "../menu/base";
 import { Picker } from "../picker";
 import { ChangeMark } from "../status/change";
@@ -511,21 +511,20 @@ export function ListRow<V extends string | null = string>({
 			) : entry ? (
 				<View pointerEvents="box-none" className={cn(ROW_ENTRY, TEXT)}>
 					{titleLine}
-					<InlineField.Provider value={inline}>
-						<FieldError.Provider value={Boolean(entry.error)}>
-							<View className={cn(ROW_META_LINE, ENTRY)}>
-								<View className={ENTRY_FIELD}>
-									<Input
-										value={entry.field.value}
-										onChange={entry.field.onChange}
-										onCommit={entry.field.onCommit}
-										placeholder={entry.placeholder}
-									/>
-								</View>
-								<ActButton act={entry.act} host={entryReason.host} />
+					<FieldError.Provider value={Boolean(entry.error)}>
+						<View className={cn(ROW_META_LINE, ENTRY)}>
+							<View className={ENTRY_FIELD}>
+								<InputBase
+									inline={inline}
+									value={entry.field.value}
+									onChange={entry.field.onChange}
+									onCommit={entry.field.onCommit}
+									placeholder={entry.placeholder}
+								/>
 							</View>
-						</FieldError.Provider>
-					</InlineField.Provider>
+							<ActButton act={entry.act} host={entryReason.host} />
+						</View>
+					</FieldError.Provider>
 					{entry.error ? (
 						<RNText className={FIELD_ERROR_LINE}>{entry.error}</RNText>
 					) : null}

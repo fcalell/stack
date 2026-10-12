@@ -20,7 +20,7 @@ import { useQuietGuards } from "../../lib/guards.ts";
 import { spacing } from "../../lib/media.ts";
 import { PortalContainer } from "../../lib/portal.ts";
 import { Icon } from "../icon/index.tsx";
-import { BOX, BOX_DISABLED, BOX_HOVER } from "../input/index.tsx";
+import { BOX, BOX_DISABLED, BOX_HOVER } from "../input/base.tsx";
 
 // Base UI moves focus into the list while it is open, so the trigger keeps
 // the ring on its open state.

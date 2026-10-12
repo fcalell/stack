@@ -11,10 +11,10 @@ import {
 	picker,
 	WORD_ACT,
 } from "@fcalell/ui-core/variants";
-import { type ReactElement, type ReactNode, useContext, useState } from "react";
+import { type ReactElement, type ReactNode, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import { cn } from "../../lib/cn";
-import { CellField } from "../../lib/field";
+import type { CellFit } from "../../lib/field";
 import { Ink } from "../../lib/ink";
 import { Chip } from "../chip";
 import { Icon } from "../icon";
@@ -63,6 +63,8 @@ export function isSeveral<V extends string | null>(
 interface Composed {
 	// The family a chip column's value and options draw as chips of.
 	chip?: ChipFamily;
+	// The `Table` cell it edits in: the pick opens as the edit starts, named by the cell.
+	cell?: CellFit;
 }
 
 // What every pick draws: the public `Picker`, or a composer's pick that says
@@ -80,12 +82,11 @@ export function PickerBase<V extends string | null = string>(
 export function PickerBase<V extends string | null = string>(
 	props: PickerProps<V> & Composed,
 ) {
-	const { label, options, fit = "field", act, chip } = props;
+	const { label, options, fit = "field", act, chip, cell } = props;
 	const several = isSeveral(props) ? props : undefined;
 	const value = isSeveral(props) ? undefined : props.value;
 	// In a table cell the pick opens as its edit starts, and its sheet gone,
 	// its leave played, ends the edit.
-	const cell = useContext(CellField);
 	const [open, setOpen] = useState(cell !== undefined);
 	const groups = useOptionGroups(options);
 	const current = groups.flat.find((option) => option.value === value);

@@ -19,7 +19,7 @@ import { pickedFrom } from "../../lib/picked.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
-import { BOX, BOX_DISABLED, BOX_HOVER_VALUE } from "../input/index.tsx";
+import { BOX, BOX_DISABLED, BOX_HOVER_VALUE } from "../input/base.tsx";
 
 // The native file input lies over the whole box, unseen: a press anywhere
 // opens the system dialog and the keyboard reaches it, so the box rings on its
