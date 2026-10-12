@@ -132,8 +132,9 @@ guides. Stead's stack pin moves after each pass and its screens are ported in th
    `loading` and counts only by `count`; a FormField and an ActionBar draw their own waiting
    form. Toolbar's `search` and `chips` are descriptors. FormField takes its control as a
    descriptor per kind (`switch`, `checkbox`, `slider`, `select`, `options`, `segments`, or
-   `children` for any other), and DefinitionRow a `switch` prop, so no prop's element type is
-   read.
+   `children` for any other), and DefinitionRow a `switch` or a `pick` prop, so no prop's
+   element type is read. A form group may stand untitled, for fields that lead or close a form
+   among titled groups. Done: stack `cb41dc2`, `7514766`, `eea00d6`; Stead `95cbc0c`.
 4. **Form by context:** one form per component, a prop where callers need two; a row's ground
    comes from its parent's surface.
 5. **Measuring in JavaScript:** container queries and `flex-wrap`; JavaScript stays for the Canvas
