@@ -285,8 +285,9 @@ the `Form`'s first child: the object's glyph as `leading`, its name as `title`, 
 ```
 
 A `Form`'s structure is its props, one of two: `children`, a flat run of `FormField`s a fields step
-apart, or `groups`, `{ title, description?, lead?, fields, loading? }[]`, each drawn as a titled
-group (the title a header, the group a labelled accessibility group), the groups a sections step apart and each
+apart, or `groups`, `{ title?, description?, lead?, fields, loading? }[]`, each drawn as a titled
+group (the title a header, the group a labelled accessibility group; an untitled group, for fields
+that lead or close the form among titled ones, draws no header), the groups a sections step apart and each
 group's `description`, `lead` (a note, a `Banner`) and `fields` a fields step apart. A form never takes
 both, and never a `Section` or an `ActionBar` as a child: its `bar` is the `ActionBar`'s own props,
 which the form draws in its foot and whose filled act submits it. In any sheet the form's `bar`

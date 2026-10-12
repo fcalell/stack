@@ -19,8 +19,8 @@ import { Text } from "../text";
 
 // One group of fields a `Form` draws, titled.
 export interface FormGroup {
-	/** The group's name, its heading (a short phrase; wraps). */
-	title: string;
+	/** The group's name, its heading (a short phrase; wraps); without it the group draws no heading, for fields that lead or close the form among titled groups. */
+	title?: string;
 	/** Under the title (a sentence; wraps). */
 	description?: string;
 	/** A note ahead of the fields (a `Banner`, a sentence). */
@@ -69,9 +69,11 @@ function GroupBox(props: { group: FormGroup; heading: string }) {
 			accessibilityState={{ busy: late.waiting }}
 			className={FORM_GROUP}
 		>
-			<RNText accessibilityRole="header" className={cn(heading, FORM_LEGEND)}>
-				{group.title}
-			</RNText>
+			{group.title ? (
+				<RNText accessibilityRole="header" className={cn(heading, FORM_LEGEND)}>
+					{group.title}
+				</RNText>
+			) : null}
 			{group.description ? <Text role="meta">{group.description}</Text> : null}
 			{group.lead}
 			<LoadingContext.Provider value={waiting}>
@@ -125,9 +127,9 @@ export function Form({ children, groups, bar }: FormProps) {
 				})}
 			>
 				{groups
-					? groups.map((group) => (
+					? groups.map((group, index) => (
 							<GroupBox
-								key={group.title}
+								key={group.title ?? index}
 								group={group}
 								heading={
 									within === "sheet"

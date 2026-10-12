@@ -335,8 +335,9 @@ the `Form`'s first child: the object's glyph as `leading`, its name as `title`, 
 ```
 
 A `Form`'s structure is its props, one of two: `children`, a flat run of `FormField`s a fields step
-apart, or `groups`, `{ title, description?, lead?, fields, loading? }[]`, each drawn as a `fieldset`
-with the `title` as its `legend`, the groups a sections step apart and each group's `description`, `lead` (a
+apart, or `groups`, `{ title?, description?, lead?, fields, loading? }[]`, each drawn as a `fieldset`
+with the `title` as its `legend` (an untitled group, for fields that lead or close the form among
+titled ones, draws none), the groups a sections step apart and each group's `description`, `lead` (a
 note, a `Banner`) and `fields` a fields step apart. A form never takes both, and never a `Section`
 or an `ActionBar` as a child: its `bar` is the `ActionBar`'s own props (`acts`, `fit`, `pending`),
 which the form draws in its foot (under a hairline across a form of groups) and whose filled act

@@ -30,8 +30,8 @@ const FOOT_STUCK =
 
 /** One group of fields a `Form` draws as a fieldset. */
 export interface FormGroup {
-	/** The group's name, its legend (a short phrase; wraps). */
-	title: string;
+	/** The group's name, its legend (a short phrase; wraps); without it the group is a fieldset with no legend, for fields that lead or close the form among titled groups. */
+	title?: string;
 	/** Under the title (a sentence; wraps). */
 	description?: string;
 	/** A note ahead of the fields (a `Banner`, a sentence). */
@@ -75,7 +75,9 @@ function GroupBox(props: { group: FormGroup; heading: string }) {
 			aria-busy={late.waiting || undefined}
 			className={cn(FORM_GROUP, GROUP)}
 		>
-			<legend className={cn(heading, FORM_LEGEND)}>{group.title}</legend>
+			{group.title ? (
+				<legend className={cn(heading, FORM_LEGEND)}>{group.title}</legend>
+			) : null}
 			{group.description ? <Text role="meta">{group.description}</Text> : null}
 			{group.lead}
 			<LoadingContext value={waiting}>
@@ -116,9 +118,9 @@ export function Form({ children, groups, bar }: FormProps) {
 					)}
 				>
 					{groups
-						? groups.map((group) => (
+						? groups.map((group, index) => (
 								<GroupBox
-									key={group.title}
+									key={group.title ?? index}
 									group={group}
 									heading={
 										within === "sheet"
