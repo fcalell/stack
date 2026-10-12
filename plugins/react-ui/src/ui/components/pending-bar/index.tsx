@@ -33,7 +33,12 @@ const TRACK = "relative flex items-center grow min-w-0 overflow-hidden";
 const FILL = "absolute bottom-0 left-0";
 // The track's parts stand over the fill.
 const SPINNER_SLOT = "relative flex shrink-0 text-ink-meta";
-const SENTENCE = "relative min-w-0 grow truncate";
+// The sentence wraps in a narrow column, never clips: the track grows by a
+// line. It stands in the control's height with the air a one-line sentence has
+// above and below it, so one line is the control's height and a wrapped one
+// keeps the same air.
+const SENTENCE =
+	"relative min-w-0 grow wrap-break-word py-[calc((var(--spacing-control)-1lh)/2)]";
 const LEFT = "relative shrink-0";
 
 // The elapsed share, moving on its own from where the run stands to full at
@@ -65,7 +70,7 @@ function Fill(props: { run: PendingRun; now: number }) {
 
 /** Work the page waits on, in an ActionBar's place. To keep the bar's height while the server works, give the `ActionBar` a `pending`; a `PendingBar` alone is for a place that held no bar. */
 export interface PendingBarProps extends Closed {
-	/** What is happening, announced as it changes (a short phrase; truncates). */
+	/** What is happening, announced as it changes (a short phrase; wraps in a narrow column). */
 	sentence: string;
 	/** When the work ends: the track fills toward it and shows the time left; unset, a spinner turns. */
 	until?: Date;
