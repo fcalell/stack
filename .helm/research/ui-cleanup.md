@@ -116,10 +116,14 @@ One pass per family, in this order, each cut confirmed by fcalell on 2026-10-12.
 web and native in one commit, with the roster, `DESIGN.md` (regenerated), the showcase and the
 guides. Stead's stack pin moves after each pass and its screens are ported in that step.
 
-1. **Frame:** Place and Pane as designed below.
+1. **Frame:** Place and Pane as designed below. Done: stack `1bf8d50` and `77e2175` (a record's
+   name and acts in its Pane's bar), Stead `355ae28` (pin moved, every place ported, the usage
+   pause carried on the session read so the banner stands in the first frame).
 2. **Overlays:** popups mount in the body (Base UI's default), not in `main`'s layer;
-   `PortalContainer`, `PortalHosted` and `FrameHost`'s layer go; a popup takes its mode from a
-   class.
+   `PortalHosted` and `FrameHost`'s layer go; a popup takes its mode from a class. Refined
+   2026-10-12: `PortalContainer` stays as the one mount point a showcase stage provides, so a
+   state story still draws each cell's open popup in its light or dark stage; no app frame
+   provides it. Native keeps its `FrameHost` host view: React Native has no body.
 3. **Children read by type:** explicit props in place of the walks (Section's `loading`, Toolbar's
    `search`, Form's bars); Columns lays out its children with grid, no wrapper each.
 4. **Form by context:** one form per component, a prop where callers need two; a row's ground
@@ -127,12 +131,24 @@ guides. Stead's stack pin moves after each pass and its screens are ported in th
 5. **Measuring in JavaScript:** container queries and `flex-wrap`; JavaScript stays for the Canvas
    and where the tree differs (the Shell's sidebar or tab bar).
 6. **Overflow:** `min-w-0` and `wrap-anywhere` on text slots.
-7. **Loading:** stack: ListRow's waiting form keeps the loaded row's marks and height. Stead: the
-   usage pause known at first paint, Sections drawn before their data, `useLiveReads` narrowed.
+7. **Loading:** stack: ListRow's waiting form keeps the loaded row's marks and height. Stead:
+   Sections drawn before their data, `useLiveReads` narrowed (the usage pause landed with pass
+   1). A record's Pane carries the kind's word as its title while it loads; a waiting title
+   belongs here.
    Open, designed before the pass: a terminal-like word scramble for text that loads, held to a
    fixed character count in a monospaced face so the line keeps its width, with a still form
    under reduced motion; `judging.md` lets only `transform` and `opacity` animate, so it needs a
    named exception.
+
+Carried from pass 1 to the pass that owns it:
+
+- Pass 4: `Form`'s `FOOT_STUCK.pane` is dead; `Sheet`'s `fit="pane"` and `TextArea`'s
+  `data-fill` and `HOLDS_FILL` remain, each a form chosen by where it stands.
+- Pass 5: `Pane`'s title still measures its wrap with `useWraps` on touch.
+- Step 5: a Pane and a Section of one name are two region landmarks of one name (axe
+  `landmark-unique` on Stead's knowledge page, the page Pane "Architecture" beside the tree's
+  Section "Architecture").
+- A device run: the native Pane's keyboard and its nested scroll are untested on a phone.
 
 ### 5. Structure rubric and checks
 
@@ -203,7 +219,7 @@ The first family's design, decided before the review and open to what it finds.
   Measured with the caps lifted at 1920px, without the limit: pickers 1270px long, a
   `DefinitionRow`'s value or switch 1200px from its label, an `OptionList` box mostly empty, a
   Slider track too long to set, a Form's Save and a Section's act far from what they act on.
-- **Covering.** `<Pane cover>` spans the Place (`grid-column: 1 / -1`) and the Panes before it are
+- **Covering.** `<Pane cover>` takes the Place's width and the Panes before it are
   hidden with `display: none`: mounted, so they keep scroll and typed text, and out of the tab
   order. A pushed page is a covering Pane with `back`.
 - **The tab bar** stands on every web page at touch density (decided 2026-10-12): nothing tells
@@ -214,10 +230,14 @@ The first family's design, decided before the review and open to what it finds.
   children (decided 2026-10-12).
 - **No filled act, no Details act** (decided 2026-10-12): a create act is one of a Pane's
   `actions` at both densities; the touch floating act, its room and the toasts' anchor on it go;
-  what the Details sheet held is a deeper Pane.
+  what the Details sheet held is a deeper Pane or sections of the record's Pane. Something
+  chosen on a canvas (a workflow's node, a graph's page) opens by its own route as a deeper
+  Pane, since a Pane closes only by a route.
+- **A record's head** (decided 2026-10-12): the record's name and its acts stand in its Pane's
+  bar; `ItemHeader` keeps the overline and the facts under it.
 - **Narrow widths.** Below `tablet` only the last Pane shows, with its back act: the same
-  mechanism as covering, every Pane covering the ones before it. Above `tablet` every Pane shows
-  and the grid squeezes the `auto` columns toward their content's minimum.
+  mechanism as covering, every Pane covering the ones before it. Above `tablet` every Pane shows,
+  each but the last shrinking from `list` toward `region-min`.
 - **Filling.** A `Thread` or a `Canvas` fills its Pane with plain flex (`flex-1 min-h-0`, a
   Thread's log scrolling inside it). No prop, no context, no `data-fill` mark. Cost accepted: the
   log's scrollbar stands inside the page inset.
