@@ -238,8 +238,8 @@ export function Section({
 									aria-controls={bodyId}
 									className={cn(SECTION_TOGGLE, TOGGLE)}
 								>
-									<Icon name={open ? "ChevronDown" : "ChevronRight"} />
 									{name}
+									<Icon name={open ? "ChevronDown" : "ChevronRight"} />
 								</Collapsible.Trigger>
 							</Heading>
 						)}

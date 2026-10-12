@@ -1482,7 +1482,7 @@ a tick with no animation, never jumped to full.
   form, a collection's busy state left to the head). Rejected: registration (a layout effect per
   collection, a second commit before paint) and a registration the head reads in render from a
   host object (the head renders before the body, so it would always be a render pass stale).
-  `folded` is the initial fold: the Section holds its fold from there and reads no later change.
+  `folded` is the initial fold: the Section holds its fold from there and reads no later change. A foldable Section's chevron stands after its title (and count) inside the toggle, so every Section's heading starts at one left edge (003-327: with the chevron before it, a folded Section's heading stood 22 px right of an unfolded one's); the phone's Section still leads with it.
   A compound body sits in a `QueryBoundary`, which requires its `loading`.
 - `Group` is composition: its children are static rows, or items that are no row (a Meter, a FormField, a Slider) at the card's inset. A set of rows from data is a `List`
   placed in the Group, which registers with it through `GroupContext` (however deep) and draws
