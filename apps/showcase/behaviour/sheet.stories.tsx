@@ -4,7 +4,6 @@ import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Gate } from "@fcalell/plugin-react-ui/components/gate";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
 import { Input } from "@fcalell/plugin-react-ui/components/input";
-import { List } from "@fcalell/plugin-react-ui/components/list";
 import { MessageInput } from "@fcalell/plugin-react-ui/components/message-input";
 import { OptionList } from "@fcalell/plugin-react-ui/components/option-list";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
@@ -561,12 +560,13 @@ export const GroupsInTheBodyKeepTheirRows: StoryObj = {
 	render: () => (
 		<Sheet open onClose={() => {}} title="Usage">
 			{[0, 1, 2, 3, 4, 5].map((key) => (
-				<Group key={key}>
-					<List
-						items={USAGE}
-						row={{ key: (name) => name, title: (name) => name }}
-					/>
-				</Group>
+				<Group
+					key={key}
+					list={{
+						items: USAGE,
+						row: { key: (name) => name, title: (name) => name },
+					}}
+				/>
 			))}
 		</Sheet>
 	),

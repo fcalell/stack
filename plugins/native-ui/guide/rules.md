@@ -122,7 +122,7 @@ with a `title`.
   description={["Signed in as ", { strong: "ana@acme.dev" }]}
   banner={expired ? <Banner kind="warn" sentence="This request has expired." /> : undefined}
 >
-  <Group><List items={workspaces} row={row} /></Group>
+  <Group list={{ items: workspaces, row }} />
 </Gate>
 ```
 
@@ -272,14 +272,21 @@ the `Form`'s first child: the object's glyph as `leading`, its name as `title`, 
 
 ```tsx
 <Form>
-  <Group>
-    <ListRow
-      leading={{ icon: "Globe" }}
-      title="shop.acme.dev"
-      meta={["acme-web", "Production"]}
-      href={domainRoute}
-    />
-  </Group>
+  <Group
+    items={[
+      {
+        key: "domain",
+        row: (
+          <ListRow
+            leading={{ icon: "Globe" }}
+            title="shop.acme.dev"
+            meta={["acme-web", "Production"]}
+            href={domainRoute}
+          />
+        ),
+      },
+    ]}
+  />
   <FormField label="Code">…</FormField>
 </Form>
 ```
@@ -336,10 +343,15 @@ change mark ahead of its glyph, and its `chip` says why it is listed; the path y
 its name's floor (the whole name when it is short, else its first three characters, an ellipsis
 and its end, never clipped mid-glyph), and below that the chip's label truncates with an ellipsis; the row never overflows sideways. A `Section` reads nothing of its body: its head is busy exactly while its `loading` is set and
 its count is exactly its `count`, so pass `count={rows.length}` and `loading={query.isPending}` from the
-read the body draws. A collection in the body draws its own states and its own busy state. A `Group` holds static
-rows, and items that are no row (a `Meter`, a `FormField`, a `Slider`) which stand at the card's inset with its hairline between and keep their labels (an add field over a `List` is a `FormField` in the `Group`); rows from data in a card are a `List` placed in the `Group`, drawing its states on the card,
-never a `.map` of `ListRow`s, `DefinitionRow`s or `Meter`s. A `definition` list stands in a `Group`,
-as a `DefinitionRow` does. A waiting `Group` (its `loading`, or a loading `Section`'s) draws one waiting form per `Meter`, `Slider` and `DefinitionRow` it holds, at the loaded card's height (a row's form follows the `description`, `act`, `href`, `locked` or control it is given), and three setting rows for rows of your own. Each part of a loading `Section`'s body draws its own waiting form: a `Prose`, a `Thread`, a `Code`, a `Meter`, a `Slider`, a `DefinitionRow`, a `FormField` and an `ActionBar` (a `Form`'s `bar` included) each wait where they stand, a `FormField` kept mounted, hidden, so typed text outlives the wait; any other body, an app's own component, draws as it is. A skeleton field stands in the form of the field it stands for, at its height: a label bar over the control's box, a switch's box at the label's end, a checkbox's on the label's line, a bar under the label or the control for a `description`; a `Slider` keeps its own head over its track, an `OptionList` its card of rows (one per static option, four for a query), a `SegmentedControl` its track, an `answered` field its one summary row, a `Select` the plain field. `Slider` and `DefinitionRow` wait through their `Group` or `Section` and take no `loading` of their own. `loading` is a boolean everywhere except where the loaded size is a count you know and the part cannot derive: a `Prose` takes `loading={lines}` (`true` is two paragraphs) and an `ActionBar` takes `loading={acts}` (`true` is one act, and give `acts` as `[]`). Both take a number from 1; `0` and `false` are not waiting, so `loading={rows?.length}` reads the loaded form when it is 0. A loading `Group` or `Section` hands down a boolean, so a `Prose` or `ActionBar` inside it draws the default; set the count on the part itself. A loading `Section` given `description=""` stands a bar where its sentence will be (an undefined `description` stands none, and loaded `""` draws no line, so `description={read?.tally ?? ""}` keeps the head's height). A `List` given `items` and `loading` with a `row` map that has a `trailing` slot (no tree) stands as the loaded rows with their trailing values waiting. A `definition` row's string value that does not fit its room, when it is one word of more than eight characters, cuts in its
+read the body draws. A collection in the body draws its own states and its own busy state. A `Group`'s structure is its prop,
+exactly one of `items` and `list`. `items` are the card's entries: `{ key, row }` is a `ListRow`, `FileRow` or
+`DefinitionRow` drawn bare (the row pads itself) and `{ key, item }` is a thing that is no row (a `Meter`, a `FormField`, a
+`Slider`) drawn in a box at the card's inset, the group's one hairline between entries and the label kept; an add field over
+a `List` is a `FormField` item in one `Group` and the `List` the `list` of a second. `list` is a `List` the card frames:
+rows from data in a card, drawing their states on the card with no bleed of their own, never a `.map` of `ListRow`s,
+`DefinitionRow`s or `Meter`s. A `definition` list stands in a `Group`'s `list`, as a `DefinitionRow` does in its `items`.
+A row is one form everywhere, square at the card's inset, and a `List` outside a `Group` bleeds that inset, so its rows' text meets the title over it.
+A waiting `Group` (its `loading`, or a loading `Section`'s) draws one waiting form per `Meter`, `Slider` and `DefinitionRow` it holds, at the loaded card's height (a row's form follows the `description`, `act`, `href`, `locked` or control it is given), and three setting rows for rows of your own. Each part of a loading `Section`'s body draws its own waiting form: a `Prose`, a `Thread`, a `Code`, a `Meter`, a `Slider`, a `DefinitionRow`, a `FormField` and an `ActionBar` (a `Form`'s `bar` included) each wait where they stand, a `FormField` kept mounted, hidden, so typed text outlives the wait; any other body, an app's own component, draws as it is. A skeleton field stands in the form of the field it stands for, at its height: a label bar over the control's box, a switch's box at the label's end, a checkbox's on the label's line, a bar under the label or the control for a `description`; a `Slider` keeps its own head over its track, an `OptionList` its card of rows (one per static option, four for a query), a `SegmentedControl` its track, an `answered` field its one summary row, a `Select` the plain field. `Slider` and `DefinitionRow` wait through their `Group` or `Section` and take no `loading` of their own. `loading` is a boolean everywhere except where the loaded size is a count you know and the part cannot derive: a `Prose` takes `loading={lines}` (`true` is two paragraphs) and an `ActionBar` takes `loading={acts}` (`true` is one act, and give `acts` as `[]`). Both take a number from 1; `0` and `false` are not waiting, so `loading={rows?.length}` reads the loaded form when it is 0. A loading `Group` or `Section` hands down a boolean, so a `Prose` or `ActionBar` inside it draws the default; set the count on the part itself. A loading `Section` given `description=""` stands a bar where its sentence will be (an undefined `description` stands none, and loaded `""` draws no line, so `description={read?.tally ?? ""}` keeps the head's height). A `List` given `items` and `loading` with a `row` map that has a `trailing` slot (no tree) stands as the loaded rows with their trailing values waiting. A `definition` row's string value that does not fit its room, when it is one word of more than eight characters, cuts in its
 middle (its start and its last four characters stay, `SHA256:uNiV…k3Qz`) on one line (any other value truncates at its end); the whole value
 stays its read text and, with `copyable`, what the copy act copies, so a value never needs a wrapper
 that truncates it.

@@ -202,7 +202,6 @@ const NATIVE_OVERLAYS = [
 	"py-rows",
 	"relative",
 	"right-0",
-	"rounded-none",
 	"self-center",
 	"self-end",
 	"self-stretch",
@@ -438,7 +437,6 @@ const FAMILIES: Family[] = [
 		axes: {
 			lines: ["one", "two", "setting"],
 			state: ["rest", "pressed", "selected"],
-			ground: ["list", "group"],
 		},
 	},
 	{

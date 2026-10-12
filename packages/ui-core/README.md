@@ -289,7 +289,7 @@ of a bar: a page header, a toolbar, an action bar), `rows` 2 / 4 (between rows i
 list; rows in a hairline list abut), `card` 16 / 16 (a card's inset), `tile` 12 / 16 (a compact
 card's inset: a board card), `float` 4 / 4 (a floating surface's inset: a select's list, a menu, a
 picker popover), `fields` 16 / 24 (between fields), `sections` 32 / 40 (between sections of a page),
-`page` 24 / 16 (the page inset). A list bleeds by `control-x`, so its rows' leading meets the title
+`page` 24 / 16 (the page inset). A list bleeds by `card`, so its rows' text meets the title
 over it. Touch is the same roles one rung looser except the float inset and the acts gap, which
 hold, and the page inset, which a phone narrows; the room is touch's with a `page` of 48 canvas
 units. Six are gap roles, what a container may put between its children: `inside`, `pair`, `acts`,

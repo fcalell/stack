@@ -24,7 +24,6 @@ import {
 	POPOVER,
 	picker,
 	ROW_LEADING,
-	type RowGround,
 	row,
 	SELECT_GROUP,
 	text,
@@ -177,7 +176,6 @@ const asChip = (
 
 const optionRow = (
 	option: Option<string | null>,
-	ground: RowGround,
 	chosen: boolean,
 	chip?: ChipFamily,
 	highlighted = false,
@@ -189,7 +187,6 @@ const optionRow = (
 				? "two"
 				: "one",
 		state: highlighted ? "highlighted" : "rest",
-		ground,
 	});
 
 // An option's label (the empty choice in the placeholder's ink) over its
@@ -253,7 +250,6 @@ function OptionText(props: {
 // Pending, its glyph is the spinner and the press does nothing.
 function PickAct(props: {
 	act: IconAct;
-	ground: RowGround;
 	done: () => void;
 	onFocus?: () => void;
 }) {
@@ -271,7 +267,7 @@ function PickAct(props: {
 					props.done();
 					act.onAct();
 				}}
-				className={cn(row({ ground: props.ground }), ACT_ROW)}
+				className={cn(row(), ACT_ROW)}
 			>
 				<span className={ACT_GLYPH}>
 					{act.loading ? <Spinner /> : <Icon name={act.icon} />}
@@ -283,15 +279,9 @@ function PickAct(props: {
 }
 
 // What a search that matches nothing says, on a row of the list.
-function NoMatches(props: { ground: RowGround; children: ReactNode }) {
+function NoMatches(props: { children: ReactNode }) {
 	return (
-		<div
-			className={cn(
-				row({ ground: props.ground }),
-				text({ role: "meta" }),
-				NO_MATCHES,
-			)}
-		>
+		<div className={cn(row(), text({ role: "meta" }), NO_MATCHES)}>
 			{props.children}
 		</div>
 	);
@@ -688,7 +678,6 @@ function PickList<V extends string | null>(
 													cn(
 														optionRow(
 															option,
-															"list",
 															chosen,
 															props.chip,
 															state.highlighted && blocked === undefined,
@@ -716,7 +705,6 @@ function PickList<V extends string | null>(
 						{props.act ? (
 							<PickAct
 								act={props.act}
-								ground="list"
 								done={() => props.setOpen(false)}
 								onFocus={keyboard.leave}
 							/>
@@ -814,7 +802,6 @@ function PickSearch<V extends string | null>(
 														cn(
 															optionRow(
 																option,
-																"list",
 																chosen,
 																props.chip,
 																state.highlighted && blocked === undefined,
@@ -847,12 +834,11 @@ function PickSearch<V extends string | null>(
 							)}
 						</Combobox.List>
 						<Combobox.Empty>
-							<NoMatches ground="list">{words.noMatches}</NoMatches>
+							<NoMatches>{words.noMatches}</NoMatches>
 						</Combobox.Empty>
 						{props.act ? (
 							<PickAct
 								act={props.act}
-								ground="list"
 								done={() => props.setOpen(false)}
 								onFocus={keyboard.leave}
 							/>
@@ -989,7 +975,7 @@ function PickRows<V extends string | null>(
 										if (blocked === undefined) props.pick(option.value);
 									}}
 									className={cn(
-										optionRow(option, "group", chosen, props.chip),
+										optionRow(option, chosen, props.chip),
 										OPTION,
 										blocked === undefined && PRESS,
 										OPTION_BUTTON,
@@ -1012,15 +998,9 @@ function PickRows<V extends string | null>(
 					</div>
 				))}
 			</div>
-			{shown.length === 0 ? (
-				<NoMatches ground="group">{words.noMatches}</NoMatches>
-			) : null}
+			{shown.length === 0 ? <NoMatches>{words.noMatches}</NoMatches> : null}
 			{props.act ? (
-				<PickAct
-					act={props.act}
-					ground="group"
-					done={() => props.setOpen(false)}
-				/>
+				<PickAct act={props.act} done={() => props.setOpen(false)} />
 			) : null}
 		</div>
 	);

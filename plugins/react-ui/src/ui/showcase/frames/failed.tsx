@@ -58,9 +58,19 @@ export function drawFailed(frame: ShowcaseFrame) {
 				<Place>
 					<Pane title="Settings">
 						<Section title="Webhooks">
-							<Group>
-								<Failed sentence="Webhooks did not load." act={RETRY} />
-							</Group>
+							<Group
+								list={{
+									query: {
+										data: undefined,
+										isPending: false,
+										isError: true,
+										refetch: RETRY.onAct,
+									},
+									sentence: "Webhooks did not load.",
+									empty: { sentence: "No webhooks." },
+									row: { key: String, title: String },
+								}}
+							/>
 						</Section>
 					</Pane>
 				</Place>

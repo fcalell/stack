@@ -418,7 +418,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ROW.state.highlighted",
 				"ROW.state.pressed",
 				"ROW.state.selected",
-				"ROW.ground.list",
 				"TEXT.role.meta",
 				"TEXT_STRONG.role.meta",
 			],
@@ -443,7 +442,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"wash-selected",
 				],
 				radii: ["control", "row", "popover"],
-				spacing: ["inside", "control-x", "pair", "rows", "float"],
+				spacing: ["card", "inside", "control-x", "pair", "rows", "float"],
 				sizes: ["field", "control-compact", "row", "row-2", "popover"],
 				elevation: ["float"],
 			},
@@ -451,7 +450,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		Slider: {
 			props: ["label", "value", "onChange", "min", "max", "step", "unit"],
 			draws: [
-				"GROUP_ITEM",
 				"SLIDER",
 				"SLIDER_HEAD",
 				"SLIDER_LABEL",
@@ -768,24 +766,31 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				sizes: ["icon", "control-compact", "skeleton", "field", "target"],
 			},
 		},
-		// Waiting, each Meter, Slider and DefinitionRow in it draws its own waiting
-		// form at its loaded height; three setting rows stand for children no part
-		// answers for.
+		// Its structure is its props, one of `items` (each entry a `row`, drawn bare
+		// since a row pads itself, or an `item`, a Meter, a FormField or a Slider
+		// drawn in a box at the card's inset: the hairline falls between the
+		// entries) or `list` (a List it frames, drawing its rows and its forms on
+		// the card with no bleed of its own). Waiting, each Meter, Slider,
+		// FormField and DefinitionRow in it draws its own waiting form at its
+		// loaded height; three setting rows stand for entries no part answers for.
 		Group: {
-			props: ["loading", "children"],
-			draws: ["GROUP"],
-			holds: ["GROUP"],
+			props: ["loading", "items", "list"],
+			draws: ["GROUP", "GROUP_ITEM"],
+			holds: ["GROUP", "GROUP_ITEM"],
 			states: ["rest", "loading"],
 			owns: {
 				colors: ["edge", "surface"],
 				radii: ["card"],
+				spacing: ["card"],
 			},
 		},
 		// A collection: its rows from `query` or `items` through one item map
 		// (`row` for ListRows, `file` for FileRows, `meter` for Meters,
 		// `definition` for DefinitionRows), its waiting rows the row's own in
 		// the slots the map declares, its failed and empty EmptyStates its own.
-		// In a Group its rows and forms stand on the card, the card their box.
+		// In a Group (its `list`) its rows and forms stand on the card, the card
+		// their box, with no bleed. A standalone List bleeds the card's inset, so
+		// its rows' text meets the title over it.
 		// A `row` map with `children` makes it a tree: the rows abut
 		// (`LIST_TREE`), each level one step in, and the List owns which
 		// branches are folded (open by default), handing every row its depth
@@ -808,12 +813,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"items",
 				"loading",
 			],
-			draws: ["LIST", "LIST_TREE", "LIST_DIVIDED"],
-			holds: ["LIST", "LIST_TREE", "LIST_DIVIDED"],
+			draws: ["LIST", "LIST_ITEM", "LIST_TREE", "LIST_DIVIDED"],
+			holds: ["LIST", "LIST_ITEM", "LIST_TREE", "LIST_DIVIDED"],
 			states: ["rest", "loading", "error", "empty"],
 			owns: {
 				colors: ["edge"],
-				spacing: ["rows", "control-x"],
+				spacing: ["rows", "card"],
 			},
 		},
 		// Its structure is its props, one of `children` (a flat run of FormFields
@@ -1081,8 +1086,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ROW.state.pressed",
 				"ROW.state.selected",
 				"ROW.state.selected-hover",
-				"ROW.ground.list",
-				"ROW.ground.group",
 				"ROW_TITLE",
 				"ROW_STEPS",
 				"ROW_STEP",
@@ -1243,7 +1246,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ROW.state.rest",
 				"ROW.state.highlighted",
 				"ROW.state.pressed",
-				"ROW.ground.group",
 				"DEFINITION_ROW",
 				"DEFINITION_ROW_CHEVRON",
 				"ROW_TITLE_LINE",
@@ -1264,7 +1266,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SPINNER_ARC",
 				"ICON_BUTTON.fit.bar",
 				"CHANGE_MARK",
-				"SKELETON_ROW.kind.one-line-group",
+				"SKELETON_ROW.kind.one-line",
 				"SKELETON_ROW.kind.setting",
 				"SKELETON.kind.line",
 				"SKELETON.kind.icon",
@@ -1344,7 +1346,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			],
 			draws: [
 				"FORM_FIELD",
-				"GROUP_ITEM",
 				"FIELD_ERROR_LINE",
 				"FORM_FIELD_SUMMARY",
 				"FORM_FIELD_SUMMARY_GLYPH",
@@ -1607,8 +1608,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ROW.state.rest",
 				"ROW.state.highlighted",
 				"ROW.state.pressed",
-				"ROW.ground.list",
-				"ROW.ground.group",
 				"TEXT.role.body",
 				"TEXT.role.meta",
 				"ICON.fit.body",
@@ -1667,7 +1666,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ROW.state.rest",
 				"ROW.state.highlighted",
 				"ROW.state.pressed",
-				"ROW.ground.list",
 				"TEXT.role.body",
 				"TEXT.role.meta",
 				"ICON.fit.body",
@@ -1690,7 +1688,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"wash-press",
 				],
 				radii: ["popover", "row", "control"],
-				spacing: ["pair", "float", "rows", "inside", "control-x"],
+				spacing: ["card", "pair", "float", "rows", "inside", "control-x"],
 				sizes: [
 					"popover",
 					"row",
@@ -1734,7 +1732,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ROW.state.rest",
 				"ROW.state.highlighted",
 				"ROW.state.pressed",
-				"ROW.ground.list",
 				"OPTION_LINE",
 				"LINE_BOX.role.body",
 				"LINE_BOX.role.meta",
@@ -1785,7 +1782,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"chip-",
 				],
 				radii: ["card", "row", "chip", "full", "control"],
-				spacing: ["pair", "float", "rows", "control-x", "inside"],
+				spacing: ["card", "pair", "float", "rows", "control-x", "inside"],
 				sizes: [
 					"row",
 					"row-2",
@@ -2194,7 +2191,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				sizes: ["measure", "skeleton"],
 			},
 		},
-		// A one-line row on its ground, its leading the row's slot, the path cut
+		// A one-line row, its leading the row's slot, the path cut
 		// as text by the component to the room its chip leaves, each count in its
 		// own lane, the change mark in a lane before the glyph. At most one Chip, between
 		// the path and the counts.
@@ -2221,8 +2218,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"FILE_PATH_PART",
 				"ICON.fit.body",
 				"ICON.fit.meta",
-				"ROW.ground.group",
-				"ROW.ground.list",
 				"ROW.lines.one",
 				"ROW.state.highlighted",
 				"ROW.state.pressed",
@@ -2234,7 +2229,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SKELETON.kind.line",
 				"SKELETON_LANE.role.meta",
 				"SKELETON_ROW.kind.one-line",
-				"SKELETON_ROW.kind.one-line-group",
 			],
 			holds: [
 				"FILE_PATH",
@@ -2708,7 +2702,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"LINK.fit.standalone",
 				"METER",
 				"METER_FILL",
-				"GROUP_ITEM",
 				"METER_HEAD",
 				"METER_MARK",
 				"METER_TRACK",

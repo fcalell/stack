@@ -357,28 +357,35 @@ function Members() {
 				</Section>
 				{invited ? (
 					<Section title="Invitations" count={1}>
-						<Group>
-							<ListRow
-								leading={{ status: "waiting" }}
-								title="lea@northwind.io"
-								meta={["Invited 2 d ago by Ana Ruiz"]}
-								status={{ state: "waiting", label: "Pending" }}
-								trailing={{ value: "Member" }}
-								more={[
-									{
-										label: "Resend",
-										icon: "Send",
-										onAct: () => toast("Invitation sent again"),
-									},
-									{
-										label: "Revoke",
-										icon: "UserMinus",
-										destructive: true,
-										onAct: revoke,
-									},
-								]}
-							/>
-						</Group>
+						<Group
+							items={[
+								{
+									key: "lea-northwind-io",
+									row: (
+										<ListRow
+											leading={{ status: "waiting" }}
+											title="lea@northwind.io"
+											meta={["Invited 2 d ago by Ana Ruiz"]}
+											status={{ state: "waiting", label: "Pending" }}
+											trailing={{ value: "Member" }}
+											more={[
+												{
+													label: "Resend",
+													icon: "Send",
+													onAct: () => toast("Invitation sent again"),
+												},
+												{
+													label: "Revoke",
+													icon: "UserMinus",
+													destructive: true,
+													onAct: revoke,
+												},
+											]}
+										/>
+									),
+								},
+							]}
+						/>
 					</Section>
 				) : null}
 				<Invite open={inviting} onClose={() => setInviting(false)} />

@@ -1,6 +1,5 @@
 import { useQuery } from "@fcalell/plugin-api/tanstack-query";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
-import { List } from "@fcalell/plugin-react-ui/components/list";
 import { MessageInput } from "@fcalell/plugin-react-ui/components/message-input";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
@@ -54,18 +53,18 @@ function Home() {
 					count={tasks.data?.length}
 					loading={tasks.isPending}
 				>
-					<Group>
-						<List
-							query={tasks}
-							sentence="Tasks did not load."
-							empty={{ sentence: "No task is open." }}
-							row={{
+					<Group
+						list={{
+							query: tasks,
+							sentence: "Tasks did not load.",
+							empty: { sentence: "No task is open." },
+							row: {
 								key: (task) => task.id,
 								title: (task) => task.title,
 								meta: (task) => [task.meta],
-							}}
-						/>
-					</Group>
+							},
+						}}
+					/>
 				</Section>
 				<Section title="Latest">
 					<Thread

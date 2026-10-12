@@ -9,7 +9,6 @@ import {
 	FIELD_ERROR_LINE,
 	FORM_FIELD_SUMMARY,
 	formField,
-	GROUP_ITEM,
 	summaryContentTone,
 	text,
 	textStrong,
@@ -27,7 +26,6 @@ import {
 	GroupName,
 } from "../../lib/field";
 import { FieldWait } from "../../lib/field-wait";
-import { GroundContext } from "../../lib/ground";
 import { Ink } from "../../lib/ink";
 import { LoadingContext } from "../../lib/loading";
 import { Strut } from "../../lib/strut";
@@ -333,9 +331,7 @@ function FieldBody(props: Body & { gone?: boolean }) {
 // The label (body 500) over its control, the description (meta) under it and
 // the error in the description's place; a switch stands at the label's end
 // and a checkbox on its first line. A `change` draws the change mark ahead of
-// the field, on its label's line. In a `Group` it stands as one of the card's
-// items at the card's inset, the group's hairline between, its label kept. In
-// a loading `Section` or `Group` it draws its own waiting form, in the form of
+// the field, on its label's line. In a loading `Section` or `Group` it draws its own waiting form, in the form of
 // its control, and keeps the field mounted, hidden, so what it holds (a typed
 // text) outlives the wait.
 export function FormField<
@@ -349,16 +345,15 @@ export function FormField<
 	// `string | null` to the field that draws it.
 	const body = rest as Body;
 	const waiting = useContext(LoadingContext);
-	const item = useContext(GroundContext) === "group" && GROUP_ITEM;
+	// The root the field draws hides, never a wrapper, so what a Group's entry
+	// holds beside it stands still.
 	const gone = waiting ? HIDDEN : undefined;
-	const field = (
-		<FieldBody {...body} gone={waiting && !item && change === undefined} />
-	);
+	const field = <FieldBody {...body} gone={waiting && change === undefined} />;
 	const marked =
 		change === undefined ? (
 			field
 		) : (
-			<View className={cn(MARKED, !item && gone)}>
+			<View className={cn(MARKED, gone)}>
 				<View className={BOX_LINE}>
 					<Strut role="body" />
 					<ChangeMark kind={change} />
@@ -366,20 +361,11 @@ export function FormField<
 				<View className={MARKED_BODY}>{field}</View>
 			</View>
 		);
-	// The field is the card's one item: what it holds (a Slider) is no second
-	// item, so its control stands on the list ground.
-	const shown = item ? (
-		<View className={cn(item, gone)}>
-			<GroundContext.Provider value="list">{marked}</GroundContext.Provider>
-		</View>
-	) : (
-		marked
-	);
 	const wait = waiting ? <FieldWait {...waitOf(body)} /> : null;
 	return (
 		<>
-			{item && wait ? <View className={item}>{wait}</View> : wait}
-			{shown}
+			{wait}
+			{marked}
 		</>
 	);
 }

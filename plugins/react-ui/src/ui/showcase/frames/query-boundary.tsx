@@ -66,19 +66,21 @@ export function drawQueryBoundary(frame: ShowcaseFrame) {
 						<QueryBoundary
 							query={query}
 							sentence="Notification settings did not load."
-							loading={<Group loading />}
+							loading={<Group loading items={[]} />}
 						>
 							{() => (
-								<Group>
-									{SETTINGS.map((setting) => (
-										<DefinitionRow
-											key={setting.label}
-											label={setting.label}
-											description={setting.description}
-											switch={{ checked: setting.on, onChange: refetch }}
-										/>
-									))}
-								</Group>
+								<Group
+									items={SETTINGS.map((setting) => ({
+										key: setting.label,
+										row: (
+											<DefinitionRow
+												label={setting.label}
+												description={setting.description}
+												switch={{ checked: setting.on, onChange: refetch }}
+											/>
+										),
+									}))}
+								/>
 							)}
 						</QueryBoundary>
 					</Section>

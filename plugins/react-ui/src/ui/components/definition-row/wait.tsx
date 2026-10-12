@@ -57,7 +57,7 @@ export function DefinitionWait(props: {
 		<div
 			aria-hidden
 			className={cn(
-				skeletonRow({ kind: one ? "one-line-group" : "setting" }),
+				skeletonRow({ kind: one ? "one-line" : "setting" }),
 				DEFINITION_ROW,
 				ROW,
 			)}

@@ -1,7 +1,6 @@
 import { useQuery } from "@fcalell/plugin-api/tanstack-query";
 import { Columns } from "@fcalell/plugin-react-ui/components/columns";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
-import { List } from "@fcalell/plugin-react-ui/components/list";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
@@ -31,21 +30,21 @@ function Stage(props: { stage: (typeof STAGES)[number] }) {
 			count={projects.data?.length}
 			loading={projects.isPending}
 		>
-			<Group>
-				<List
-					query={projects}
-					sentence="Projects did not load."
-					empty={{ sentence: `No project is in ${title}.` }}
-					row={{
+			<Group
+				list={{
+					query: projects,
+					sentence: "Projects did not load.",
+					empty: { sentence: `No project is in ${title}.` },
+					row: {
 						key: (project) => project.name,
 						leading: { icon: () => "Folder" },
 						title: (project) => project.name,
 						meta: (project) => [project.meta],
 						trailing: (project) => ({ age: project.age }),
 						href: (project) => `#${project.name}`,
-					}}
-				/>
-			</Group>
+					},
+				}}
+			/>
 		</Section>
 	);
 }

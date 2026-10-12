@@ -1,14 +1,11 @@
 import {
-	GROUP_ITEM,
 	SLIDER,
 	SLIDER_HEAD,
 	SLIDER_TRACK,
 	skeleton,
 } from "@fcalell/ui-core/variants";
-import { useContext } from "react";
 import { View } from "react-native";
 import { cn } from "./cn";
-import { GroundContext } from "./ground";
 import { Strut } from "./strut";
 
 const HEAD = "flex-row items-center justify-between";
@@ -23,10 +20,8 @@ const BAR = "w-full";
 // A Slider waiting: its label's and value's bars in their line boxes over a
 // bar in the track's box, at the loaded Slider's height.
 export function SliderWait() {
-	// In a Group the slider is one of its items, at the card's inset.
-	const item = useContext(GroundContext) === "group" && GROUP_ITEM;
 	return (
-		<View className={cn(SLIDER, item, "justify-center")}>
+		<View className={cn(SLIDER, "justify-center")}>
 			<View className={cn(SLIDER_HEAD, HEAD)}>
 				<View className={cn(LINE, LABEL_WAIT)}>
 					<Strut role="body" />

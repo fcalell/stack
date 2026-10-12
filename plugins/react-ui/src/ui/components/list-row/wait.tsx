@@ -14,8 +14,7 @@ import {
 	TREE_RAIL,
 	treeBleed,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, use } from "react";
-import { GroundContext } from "../../lib/ground.ts";
+import type { ReactNode } from "react";
 
 // The geometry of the row it stands in for (`./index.tsx`), each line's box
 // at its line's height.
@@ -30,7 +29,6 @@ const ROW_WHOLE = "relative flex items-start";
 const FIRST_LINE = "flex shrink-0 items-center h-line-body";
 const LINE_WHOLE = "flex items-start min-w-0";
 const TITLE_LINES = "flex flex-col grow min-w-0";
-const SQUARE = "touch:rounded-none";
 const LEADING = "flex shrink-0 items-center justify-center";
 // A tree's levels and fold lane, as one box that runs the row's full height
 // (`./index.tsx`); the lane is empty, no row waiting has a branch.
@@ -102,7 +100,6 @@ function TitleBar(props: { width: string }) {
 
 /** A ListRow waiting, the `index`th of a waiting list: a tree's rails (the depths `waitingDepth` gives) and fold lane, empty, the change mark's skeleton in its lane, the leading mark's skeleton by its kind, a bar in the title line (the one-line form when the list wraps its titles, its leading, trailing and acts on it; the trailing's at its end, four figures wide) and one in the meta line (the marks' at its end) or, with an entry, a field's bar and an act's bar in its place, each at its slot's place, a labelled act's bar at the row's end and the more act's room left empty. Outside the package's exports. */
 export function RowWait(props: { shape: RowShape; index: number }) {
-	const ground = use(GroundContext);
 	const { shape } = props;
 	const [title, meta] = BARS[props.index % BARS.length] ?? BARS[0];
 	const stacked = shape.meta || shape.entry ? "two" : "one";
@@ -128,12 +125,10 @@ export function RowWait(props: { shape: RowShape; index: number }) {
 			className={cn(
 				row({
 					lines,
-					ground,
 					state: "rest",
 				}),
 				top ? ROW_WHOLE : ROW,
 				under && ROW_UNDER,
-				ground === "list" && SQUARE,
 			)}
 		>
 			{shape.tree ? (

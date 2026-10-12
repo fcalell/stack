@@ -524,16 +524,16 @@ export const TopsAndWash: StoryObj = {
 			<Place>
 				<Pane title="Now">
 					<Section title="Open">
-						<Group>
-							<List
-								items={NAMES}
-								row={{
+						<Group
+							list={{
+								items: NAMES,
+								row: {
 									...ROWS,
 									onOpen: noop,
 									selected: (name) => name === NAMES[1],
-								}}
-							/>
-						</Group>
+								},
+							}}
+						/>
 					</Section>
 				</Pane>
 				<Pane title="Review" back="/now">
@@ -579,10 +579,12 @@ function Parts() {
 		<>
 			<ItemHeader facts={["Ana Ruiz"]} />
 			<Section title="Where it goes">
-				<Group>
-					<DefinitionRow label="From" value="main" />
-					<DefinitionRow label="To" value="production" />
-				</Group>
+				<Group
+					items={[
+						{ key: "from", row: <DefinitionRow label="From" value="main" /> },
+						{ key: "to", row: <DefinitionRow label="To" value="production" /> },
+					]}
+				/>
 			</Section>
 			<Code text={"pnpm check\npnpm verify"} />
 			<Prose markdown="A paragraph of the record, read at the measure." />
@@ -648,9 +650,7 @@ function Blocks() {
 	return (
 		<>
 			{[0, 1, 2].map((key) => (
-				<Group key={key}>
-					<Rows />
-				</Group>
+				<Group key={key} list={{ items: NAMES, row: ROWS }} />
 			))}
 			<Code text={CHECK} />
 			<Diff

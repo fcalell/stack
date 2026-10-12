@@ -4,7 +4,6 @@ import { formatterFor } from "@fcalell/ui-core/format";
 import { levelOf, waitLine } from "@fcalell/ui-core/list-state";
 import {
 	FIGURES,
-	GROUP_ITEM,
 	METER,
 	METER_HEAD,
 	METER_MARK,
@@ -15,7 +14,6 @@ import {
 } from "@fcalell/ui-core/variants";
 import { use } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { GroundContext } from "../../lib/ground.ts";
 import { useGroupPart } from "../../lib/group.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 import { CountLinks } from "./count-links.tsx";
@@ -58,7 +56,7 @@ type MeterLine =
 /** A share of a limit: how much of a quota is used. */
 export type MeterProps = MeterBase & MeterLine;
 
-/** The label at body 500 with the share in percent at its end, the bar under them filling by the share in the meta ink, amber once near full (at its `mark` when it has one) and `danger` once over, the line under the bar: the meta, or the counts as links. In a `Group` it stands as one of its items at the card's inset, the group's hairline between. */
+/** The label at body 500 with the share in percent at its end, the bar under them filling by the share in the meta ink, amber once near full (at its `mark` when it has one) and `danger` once over, the line under the bar: the meta, or the counts as links. */
 export function Meter({
 	label,
 	value,
@@ -68,8 +66,6 @@ export function Meter({
 	mark,
 	loading,
 }: MeterProps) {
-	// In a Group the meter is one of its items, at the card's inset.
-	const item = use(GroundContext) === "group" && GROUP_ITEM;
 	const inherited = use(LoadingContext);
 	useGroupPart();
 	if (loading ?? inherited)
@@ -81,7 +77,7 @@ export function Meter({
 		maximumFractionDigits: 0,
 	}).format(share);
 	return (
-		<div className={cn(METER, item, STACK)}>
+		<div className={cn(METER, STACK)}>
 			{/* The role's children are presentational: the counts stand outside it, as links. */}
 			{/* biome-ignore lint/a11y/useSemanticElements: a <meter> holds no children */}
 			<div

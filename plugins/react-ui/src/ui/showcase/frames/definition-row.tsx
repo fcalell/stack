@@ -21,31 +21,66 @@ const CYCLE = {
 // what it is given (a description, an act, a link, a control).
 export function Facts(props: { loading?: boolean }) {
 	return (
-		<Group loading={props.loading}>
-			<DefinitionRow label="Plan" value="Business" />
-			<DefinitionRow
-				label="Workspace name"
-				value="Acme"
-				act={{ icon: "Pencil", label: "Rename", onAct: act }}
-			/>
-			<DefinitionRow label="Workspace ID" value="ws_7f3k9q2m4x" copyable />
-			<DefinitionRow
-				label="Custom domain"
-				description="Mail and links go out from it."
-				value={{ status: "done", label: "Verified" }}
-				href="#domain"
-			/>
-			<DefinitionRow
-				label="Contract end"
-				value="31 Dec 2026"
-				locked={{ reason: "Held by CR-12, Ana" }}
-			/>
-			<DefinitionRow
-				label="Notify on failure"
-				switch={{ checked: true, onChange: act }}
-			/>
-			<DefinitionRow label="Billing cycle" pick={CYCLE} />
-		</Group>
+		<Group
+			loading={props.loading}
+			items={[
+				{ key: "plan", row: <DefinitionRow label="Plan" value="Business" /> },
+				{
+					key: "workspace-name",
+					row: (
+						<DefinitionRow
+							label="Workspace name"
+							value="Acme"
+							act={{ icon: "Pencil", label: "Rename", onAct: act }}
+						/>
+					),
+				},
+				{
+					key: "workspace-id",
+					row: (
+						<DefinitionRow
+							label="Workspace ID"
+							value="ws_7f3k9q2m4x"
+							copyable
+						/>
+					),
+				},
+				{
+					key: "custom-domain",
+					row: (
+						<DefinitionRow
+							label="Custom domain"
+							description="Mail and links go out from it."
+							value={{ status: "done", label: "Verified" }}
+							href="#domain"
+						/>
+					),
+				},
+				{
+					key: "contract-end",
+					row: (
+						<DefinitionRow
+							label="Contract end"
+							value="31 Dec 2026"
+							locked={{ reason: "Held by CR-12, Ana" }}
+						/>
+					),
+				},
+				{
+					key: "notify-on-failure",
+					row: (
+						<DefinitionRow
+							label="Notify on failure"
+							switch={{ checked: true, onChange: act }}
+						/>
+					),
+				},
+				{
+					key: "billing-cycle",
+					row: <DefinitionRow label="Billing cycle" pick={CYCLE} />,
+				},
+			]}
+		/>
 	);
 }
 
@@ -65,50 +100,93 @@ function Region() {
 // two locked values, their reason a link to the request that holds one.
 function General(props: { status: StatusState }) {
 	return (
-		<Group>
-			<DefinitionRow
-				label="Workspace name"
-				value="Acme"
-				act={{ icon: "Pencil", label: "Rename", onAct: act }}
-			/>
-			<DefinitionRow
-				label="Workspace ID"
-				description="The API and the CLI address the workspace by it."
-				value="ws_7f3k9q2m4x"
-				copyable
-			/>
-			<Region />
-			<DefinitionRow
-				label="Custom domain"
-				description="Mail and links go out from it."
-				value={{
-					status: props.status,
-					label: props.status === "done" ? "Verified" : undefined,
-				}}
-				href="#domain"
-			/>
-			<DefinitionRow
-				label="Plan"
-				description="Your organisation manages it."
-				value="Business"
-			/>
-			<DefinitionRow
-				label="Contract end"
-				value="31 Dec 2026"
-				locked={{ reason: "Held by CR-12, Ana", href: "#cr-12" }}
-			/>
-			<DefinitionRow
-				label="Billing contact"
-				value="ana@acme.test"
-				locked={{ reason: "Set by your organisation" }}
-			/>
-			<DefinitionRow label="Expected spend" value="No history yet" />
-			<DefinitionRow
-				label="Only what changed since you last looked"
-				switch={{ checked: true, onChange: act }}
-			/>
-			<DefinitionRow label="Billing cycle" pick={CYCLE} />
-		</Group>
+		<Group
+			items={[
+				{
+					key: "workspace-name",
+					row: (
+						<DefinitionRow
+							label="Workspace name"
+							value="Acme"
+							act={{ icon: "Pencil", label: "Rename", onAct: act }}
+						/>
+					),
+				},
+				{
+					key: "workspace-id",
+					row: (
+						<DefinitionRow
+							label="Workspace ID"
+							description="The API and the CLI address the workspace by it."
+							value="ws_7f3k9q2m4x"
+							copyable
+						/>
+					),
+				},
+				{ key: "region2", row: <Region /> },
+				{
+					key: "custom-domain",
+					row: (
+						<DefinitionRow
+							label="Custom domain"
+							description="Mail and links go out from it."
+							value={{
+								status: props.status,
+								label: props.status === "done" ? "Verified" : undefined,
+							}}
+							href="#domain"
+						/>
+					),
+				},
+				{
+					key: "plan",
+					row: (
+						<DefinitionRow
+							label="Plan"
+							description="Your organisation manages it."
+							value="Business"
+						/>
+					),
+				},
+				{
+					key: "contract-end",
+					row: (
+						<DefinitionRow
+							label="Contract end"
+							value="31 Dec 2026"
+							locked={{ reason: "Held by CR-12, Ana", href: "#cr-12" }}
+						/>
+					),
+				},
+				{
+					key: "billing-contact",
+					row: (
+						<DefinitionRow
+							label="Billing contact"
+							value="ana@acme.test"
+							locked={{ reason: "Set by your organisation" }}
+						/>
+					),
+				},
+				{
+					key: "expected-spend",
+					row: <DefinitionRow label="Expected spend" value="No history yet" />,
+				},
+				{
+					key: "only-what-changed-since-you-last-looked",
+					row: (
+						<DefinitionRow
+							label="Only what changed since you last looked"
+							switch={{ checked: true, onChange: act }}
+						/>
+					),
+				},
+				{
+					key: "billing-cycle",
+					row: <DefinitionRow label="Billing cycle" pick={CYCLE} />,
+				},
+			]}
+		/>
 	);
 }
 
@@ -116,22 +194,55 @@ function General(props: { status: StatusState }) {
 // untouched or gone stale.
 function Changes() {
 	return (
-		<Group>
-			<DefinitionRow
-				change="changed"
-				label="Region"
-				value="Frankfurt (eu-central-1)"
-			/>
-			<DefinitionRow change="added" label="Custom domain" value="acme.app" />
-			<DefinitionRow change="removed" label="Fallback region" value="Dublin" />
-			<DefinitionRow
-				change="unchanged"
-				label="Workspace name"
-				description="Shown to every member."
-				value="Acme"
-			/>
-			<DefinitionRow change="stale" label="Plan" value="Business" />
-		</Group>
+		<Group
+			items={[
+				{
+					key: "region",
+					row: (
+						<DefinitionRow
+							change="changed"
+							label="Region"
+							value="Frankfurt (eu-central-1)"
+						/>
+					),
+				},
+				{
+					key: "custom-domain",
+					row: (
+						<DefinitionRow
+							change="added"
+							label="Custom domain"
+							value="acme.app"
+						/>
+					),
+				},
+				{
+					key: "fallback-region",
+					row: (
+						<DefinitionRow
+							change="removed"
+							label="Fallback region"
+							value="Dublin"
+						/>
+					),
+				},
+				{
+					key: "workspace-name",
+					row: (
+						<DefinitionRow
+							change="unchanged"
+							label="Workspace name"
+							description="Shown to every member."
+							value="Acme"
+						/>
+					),
+				},
+				{
+					key: "plan",
+					row: <DefinitionRow change="stale" label="Plan" value="Business" />,
+				},
+			]}
+		/>
 	);
 }
 

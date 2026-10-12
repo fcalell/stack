@@ -150,66 +150,79 @@ export function drawList(frame: ShowcaseFrame) {
 						/>
 					</Section>
 					<Section title="Host keys">
-						<Group>
-							<List
-								query={queryOf(frame.state, HOST_KEYS)}
-								sentence="The host keys did not load."
-								empty={{
+						<Group
+							list={{
+								query: queryOf(frame.state, HOST_KEYS),
+								sentence: "The host keys did not load.",
+								empty: {
 									title: "No host keys",
 									sentence: "The keys the host presents land here.",
 									act: { label: "Scan host", onAct: refetch },
-								}}
-								definition={{
+								},
+								definition: {
 									key: (key) => key.id,
 									label: (key) => key.algorithm,
 									value: (key) => key.fingerprint,
 									copyable: true,
-								}}
-							/>
-						</Group>
+								},
+							}}
+						/>
 					</Section>
 					<Section title="Allowed hosts">
-						<Group>
-							<FormField label="Add host">
-								<Input
-									value=""
-									onChange={refetch}
-									placeholder="docs.example.org"
-									act={{ icon: "Plus", label: "Add host", onAct: refetch }}
-								/>
-							</FormField>
-							<List
-								query={queryOf(frame.state, HOSTS)}
-								sentence="The hosts did not load."
-								empty={{
+						<Group
+							items={[
+								{
+									key: "add-host",
+									item: (
+										<FormField label="Add host">
+											<Input
+												value=""
+												onChange={refetch}
+												placeholder="docs.example.org"
+												act={{
+													icon: "Plus",
+													label: "Add host",
+													onAct: refetch,
+												}}
+											/>
+										</FormField>
+									),
+								},
+							]}
+						/>
+						<Group
+							list={{
+								query: queryOf(frame.state, HOSTS),
+								sentence: "The hosts did not load.",
+								empty: {
 									title: "No hosts",
 									sentence: "Hosts you allow land here.",
-								}}
-								row={{
+								},
+								row: {
 									key: (host) => host.id,
 									title: (host) => host.name,
-								}}
-							/>
-						</Group>
+								},
+							}}
+						/>
 					</Section>
 					<Section title="Plan limits">
-						<Group>
-							<List
-								query={queryOf(frame.state, LIMITS)}
-								sentence="The limits did not load."
-								empty={{
+						<Group
+							list={{
+								query: queryOf(frame.state, LIMITS),
+								sentence: "The limits did not load.",
+								empty: {
 									title: "No limits",
 									sentence: "The limits of your plan land here.",
-								}}
-								meter={{
+								},
+								meter: {
 									key: (limit) => limit.id,
 									label: (limit) => limit.label,
 									value: (limit) => limit.value,
 									max: (limit) => limit.max,
 									meta: (limit) => `${limit.value} of ${limit.max}`,
-								}}
-							/>
-						</Group>
+								},
+							}}
+						/>
 					</Section>
 					{frame.state === "loading" ? (
 						<>

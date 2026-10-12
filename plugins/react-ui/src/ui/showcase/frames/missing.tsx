@@ -53,9 +53,20 @@ export function drawMissing(frame: ShowcaseFrame) {
 				<Place>
 					<Pane title="Settings">
 						<Section title="Webhooks">
-							<Group>
-								<Missing sentence="This endpoint was removed." act={OPEN_NOW} />
-							</Group>
+							<Group
+								list={{
+									query: {
+										data: undefined,
+										isPending: false,
+										isError: true,
+										error: { code: "NOT_FOUND" },
+										refetch: () => {},
+									},
+									sentence: "Webhooks did not load.",
+									empty: { sentence: "No webhooks." },
+									row: { key: String, title: String },
+								}}
+							/>
 						</Section>
 					</Pane>
 				</Place>

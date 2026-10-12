@@ -122,9 +122,11 @@ function Rails(props: { mode: Mode; disabled?: boolean }) {
 			className={`${props.mode} flex flex-col gap-pair p-card w-popover bg-canvas`}
 		>
 			<div data-testid="bare">{drawn}</div>
-			<Group>
-				<div data-testid="grouped">{drawn}</div>
-			</Group>
+			<Group
+				items={[
+					{ key: "slider", item: <div data-testid="grouped">{drawn}</div> },
+				]}
+			/>
 		</div>
 	);
 }

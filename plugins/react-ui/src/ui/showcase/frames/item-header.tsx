@@ -69,7 +69,7 @@ function Record() {
 					<ItemHeader overline={OVERLINE} facts={[moving("active"), ...REST]} />
 					<ActionBar acts={[{ label: "Pause the import", onAct: move }]} />
 					<Section title="Stages">
-						<StandInRows ground="list" />
+						<StandInRows />
 					</Section>
 				</Pane>
 			</Place>

@@ -12,7 +12,7 @@ import {
 	RULES,
 	ruleArrow,
 } from "@fcalell/ui-core/variants";
-import { useMemo, useRef, useState } from "react";
+import { Fragment, useMemo, useRef, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { useTouch } from "../../lib/media.ts";
 import { useWords } from "../../lib/words.tsx";
@@ -176,14 +176,13 @@ export function Rules<V extends string | null = string>({
 		rule.onRemove?.();
 		if (next instanceof HTMLElement) next.focus();
 	};
-	const rows = rules.map((rule) => (
+	const rowOf = (rule: Rule<V>) => (
 		<RuleRow
-			key={rule.id}
 			rule={rule}
 			onRemove={rule.onRemove && removeRule(rule)}
 			touch={touch}
 		/>
-	));
+	);
 	const act = add ? (
 		<Button
 			act="secondary"
@@ -198,10 +197,12 @@ export function Rules<V extends string | null = string>({
 	if (touch)
 		return (
 			<div ref={hold} className={STACK}>
-				{rows.length > 0 ? (
+				{rules.length > 0 ? (
 					// biome-ignore lint/a11y/useSemanticElements: the Group's card sits between the list and its cards, and a `ul` over it cannot hold its `div`
 					<div role="list" className={GROUP_SLOT}>
-						<Group>{rows}</Group>
+						<Group
+							items={rules.map((rule) => ({ key: rule.id, row: rowOf(rule) }))}
+						/>
 					</div>
 				) : null}
 				{act ? <div data-rule-add="">{act}</div> : null}
@@ -209,7 +210,9 @@ export function Rules<V extends string | null = string>({
 		);
 	return (
 		<ul ref={hold} className={cn(RULES, GRID)}>
-			{rows}
+			{rules.map((rule) => (
+				<Fragment key={rule.id}>{rowOf(rule)}</Fragment>
+			))}
 			{act ? (
 				<li data-rule-add="" className={ADD}>
 					{act}

@@ -1,6 +1,6 @@
 import { FileRow } from "@fcalell/plugin-react-ui/components/file-row";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
-import { List } from "@fcalell/plugin-react-ui/components/list";
+import { List, type ListProps } from "@fcalell/plugin-react-ui/components/list";
 import { ListRow } from "@fcalell/plugin-react-ui/components/list-row";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
@@ -303,20 +303,18 @@ const SENSITIVE = [
 ];
 
 function Review(props: { width: number; grouped?: boolean }) {
-	const files = (
-		<List
-			items={SENSITIVE}
-			file={{
-				key: (f) => f.path,
-				path: (f) => f.path,
-				added: (f) => f.added,
-				removed: (f) => f.removed,
-				seen: (f) => f.seen,
-				chip: (f) => ({ family: "amber", label: f.label }),
-				href: (f) => `#${f.path}`,
-			}}
-		/>
-	);
+	const files: ListProps<(typeof SENSITIVE)[number]> = {
+		items: SENSITIVE,
+		file: {
+			key: (f) => f.path,
+			path: (f) => f.path,
+			added: (f) => f.added,
+			removed: (f) => f.removed,
+			seen: (f) => f.seen,
+			chip: (f) => ({ family: "amber", label: f.label }),
+			href: (f) => `#${f.path}`,
+		},
+	};
 	return (
 		<div
 			style={{
@@ -332,7 +330,7 @@ function Review(props: { width: number; grouped?: boolean }) {
 			<Place>
 				<Pane title="Review">
 					<Section title="Sensitive changes" description="1 of 3 opened">
-						{props.grouped ? <Group>{files}</Group> : files}
+						{props.grouped ? <Group list={files} /> : <List {...files} />}
 					</Section>
 				</Pane>
 			</Place>

@@ -270,15 +270,19 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Section title="x" classList={{}} />
 		<Section title="x" act={{ icon: "Plus", label: "x", onAct: () => {} }} />
-		<Group />
+		<Group items={[]} />
+		<Group items={[{ key: "a", row: "x" }, { key: "b", item: "x" }]} />
+		<Group list={{ items: [1], row: { key: String, title: String } }} />
+		{/* @ts-expect-error: a group's structure is items or list, never both */}
+		<Group items={[]} list={{ items: [], row: { key: String, title: String } }} />
 		{/* @ts-expect-error: closed channel */}
-		<Group className="x" />
+		<Group items={[]} className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Group style={{ flex: 1 }} />
+		<Group items={[]} style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<Group class="x" />
+		<Group items={[]} class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Group classList={{}} />
+		<Group items={[]} classList={{}} />
 		<List items={[]} row={{ key: String, title: String }} />
 		{/* @ts-expect-error: a list's rows lead with one kind */}
 		<List items={[1]} row={{ key: String, title: String, leading: { avatar: () => ({ name: "x" }), icon: () => "X" } }} />

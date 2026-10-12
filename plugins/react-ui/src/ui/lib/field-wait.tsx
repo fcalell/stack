@@ -13,7 +13,6 @@ import {
 	skeleton,
 	skeletonRow,
 } from "@fcalell/ui-core/variants";
-import { GroundContext } from "./ground.ts";
 import { OptionWait } from "./option-wait.tsx";
 import { SliderWait } from "./slider-wait.tsx";
 
@@ -92,9 +91,7 @@ export function FieldWait({
 				aria-hidden
 				className={cn(formField({ holds: "field" }), FIELD_WAIT)}
 			>
-				<GroundContext value="list">
-					<SliderWait />
-				</GroundContext>
+				<SliderWait />
 				{note}
 			</div>
 		);

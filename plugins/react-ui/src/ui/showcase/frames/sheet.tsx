@@ -257,7 +257,7 @@ export function drawSheet(frame: ShowcaseFrame) {
 							: undefined
 					}
 				>
-					<StandInRows ground="list" />
+					<StandInRows />
 				</Sheet>
 			</Stage>
 		);
@@ -281,10 +281,10 @@ export function drawSheet(frame: ShowcaseFrame) {
 			<Stage contain>
 				<Sheet open onClose={act} title="Details" fit="pane">
 					<Section title="Properties">
-						<StandInRows ground="list" />
+						<StandInRows />
 					</Section>
 					<Section title="Activity">
-						<StandInRows ground="list" />
+						<StandInRows />
 					</Section>
 				</Sheet>
 			</Stage>

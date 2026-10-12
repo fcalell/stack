@@ -151,34 +151,75 @@ function Record(props: { deploy: OpenDeploy; file?: string }) {
 				</>
 			) : null}
 			<Section title="Summary">
-				<Group>
-					<DefinitionRow label="Commit" value={deploy.commit} copyable />
-					<DefinitionRow
-						label="Branch"
-						value={deploy.branch}
-						href={`#${deploy.branch}`}
-					/>
-					<DefinitionRow
-						label="Region"
-						value="Frankfurt, eu-central-1"
-						act={{ icon: "Pencil", label: "Change region", onAct: act }}
-					/>
-					<DefinitionRow
-						label="Status"
-						value={{ status: state, label: LABELS[state] }}
-					/>
-					<DefinitionRow label="Duration" value="1 min 42 s" />
-				</Group>
+				<Group
+					items={[
+						{
+							key: "commit",
+							row: (
+								<DefinitionRow label="Commit" value={deploy.commit} copyable />
+							),
+						},
+						{
+							key: "branch",
+							row: (
+								<DefinitionRow
+									label="Branch"
+									value={deploy.branch}
+									href={`#${deploy.branch}`}
+								/>
+							),
+						},
+						{
+							key: "region",
+							row: (
+								<DefinitionRow
+									label="Region"
+									value="Frankfurt, eu-central-1"
+									act={{ icon: "Pencil", label: "Change region", onAct: act }}
+								/>
+							),
+						},
+						{
+							key: "status",
+							row: (
+								<DefinitionRow
+									label="Status"
+									value={{ status: state, label: LABELS[state] }}
+								/>
+							),
+						},
+						{
+							key: "duration",
+							row: <DefinitionRow label="Duration" value="1 min 42 s" />,
+						},
+					]}
+				/>
 			</Section>
 			<Section title="Domains" count={2}>
-				<Group>
-					<DefinitionRow label="acme.dev" value="Primary" href="#acme.dev" />
-					<DefinitionRow
-						label="www.acme.dev"
-						value="Redirect"
-						href="#www.acme.dev"
-					/>
-				</Group>
+				<Group
+					items={[
+						{
+							key: "acme-dev",
+							row: (
+								<DefinitionRow
+									label="acme.dev"
+									value="Primary"
+									href="#acme.dev"
+								/>
+							),
+						},
+						{
+							key: "www-acme-dev",
+							row: (
+								<DefinitionRow
+									label="www.acme.dev"
+									value="Redirect"
+									href="#www.acme.dev"
+								/>
+							),
+						},
+					]}
+				/>
 			</Section>
 			<Section title="Steps" count={deploy.steps.length}>
 				<StepRows deploy={deploy} />
@@ -227,14 +268,29 @@ export function DeployStep(props: { deployId: string; stepId: string }) {
 			]}
 		>
 			<Section title="Result">
-				<Group>
-					<DefinitionRow
-						label="Status"
-						value={{ status: step.state, label: LABELS[step.state] }}
-					/>
-					<DefinitionRow label="Duration" value={step.took} />
-					<DefinitionRow label="Deploy" value={deploy.commit} copyable />
-				</Group>
+				<Group
+					items={[
+						{
+							key: "status",
+							row: (
+								<DefinitionRow
+									label="Status"
+									value={{ status: step.state, label: LABELS[step.state] }}
+								/>
+							),
+						},
+						{
+							key: "duration",
+							row: <DefinitionRow label="Duration" value={step.took} />,
+						},
+						{
+							key: "deploy",
+							row: (
+								<DefinitionRow label="Deploy" value={deploy.commit} copyable />
+							),
+						},
+					]}
+				/>
 			</Section>
 			<Section title="Log">
 				<Code text={step.log} copy />
@@ -254,15 +310,28 @@ export function DeployDetails(props: { deployId: string }) {
 	return (
 		<>
 			<Section title="About">
-				<Group>
-					<DefinitionRow label="Author" value={deploy.author} />
-					<DefinitionRow label="Started" value="10:42" />
-					<DefinitionRow
-						label="Deploy ID"
-						value={`dpl_${deploy.id}9q2m`}
-						copyable
-					/>
-				</Group>
+				<Group
+					items={[
+						{
+							key: "author",
+							row: <DefinitionRow label="Author" value={deploy.author} />,
+						},
+						{
+							key: "started",
+							row: <DefinitionRow label="Started" value="10:42" />,
+						},
+						{
+							key: "deploy-id",
+							row: (
+								<DefinitionRow
+									label="Deploy ID"
+									value={`dpl_${deploy.id}9q2m`}
+									copyable
+								/>
+							),
+						},
+					]}
+				/>
 			</Section>
 			<Section
 				title="Removal"

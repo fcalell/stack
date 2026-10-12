@@ -7,7 +7,7 @@ import { confirm } from "../../lib/confirm.ts";
 import { type AppMark, MarkProvider } from "../../lib/mark.tsx";
 import { toast } from "../../lib/toast.ts";
 import type { ShowcaseFrame } from "../cells.ts";
-import { StandInRows } from "./layout-context.tsx";
+import { STAND_IN_ENTRIES } from "./layout-context.tsx";
 
 const act = () => {};
 
@@ -75,9 +75,7 @@ export function drawGate(frame: ShowcaseFrame) {
 					description={["Signed in as ", { strong: "ana@acme.dev" }]}
 					banner={<Banner kind="warn" sentence="This request has expired." />}
 				>
-					<Group>
-						<StandInRows ground="group" />
-					</Group>
+					<Group items={STAND_IN_ENTRIES} />
 					<Form
 						bar={{
 							acts: raises

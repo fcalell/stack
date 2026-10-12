@@ -810,13 +810,11 @@ const PARTS = {
 	imports: part(() => IMPORTS, IMPORT_ROW),
 	memories: part(() => MEMORIES, MEMORY_ROW),
 	notes: part(() => NOTES, NOTE_ROW),
-	members: part(() => MEMBERS, MEMBER_ROW),
 };
 
 // The part a cell names, by the cell's name or its family's: the first match
 // wins, a cell naming no part draws a list Pane's rows (the first row current).
 const CELL_PARTS: ReadonlyArray<readonly [string, keyof typeof PARTS]> = [
-	["ROW.ground.group", "members"],
 	["ROW.lines.one", "services"],
 	["ROW.lines.whole", "memories"],
 	["ROW_TITLE.form.whole", "memories"],
@@ -858,6 +856,8 @@ export function drawListRow(frame: ShowcaseFrame) {
 	// two-line row's frame holds the work items too at rest (a live age and a
 	// spend in the trailing, a quote that yields).
 	const meta = cell === "ROW.lines.two" && frame.state === "rest";
+	// The rows of a card: the same rows, on a Group's card.
+	const grouped = cell === "ROW.lines.one" && frame.state === "rest";
 	const drawn =
 		frame.state === "error" ? (
 			<List
@@ -869,8 +869,9 @@ export function drawListRow(frame: ShowcaseFrame) {
 		);
 	return (
 		<Page>
-			{cell === "ROW.ground.group" ? <Group>{drawn}</Group> : drawn}
+			{drawn}
 			{meta ? PARTS.works.draw("rest", false) : null}
+			{grouped ? <Group list={{ items: MEMBERS, row: MEMBER_ROW }} /> : null}
 		</Page>
 	);
 }

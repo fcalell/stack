@@ -86,8 +86,8 @@ const sliders: StoryObj = {
 	render: () => (
 		<>
 			<Pair
-				loaded={<Group>{slider}</Group>}
-				waiting={<Group loading>{slider}</Group>}
+				loaded={<Group items={[{ key: "slider", item: slider }]} />}
+				waiting={<Group loading items={[{ key: "slider", item: slider }]} />}
 			/>
 			<Pair
 				loaded={<Section title="Session">{slider}</Section>}
@@ -126,15 +126,9 @@ const facts: StoryObj = {
 const fallback: StoryObj = {
 	render: () => (
 		<Pair
-			loaded={
-				<Group>
-					<div>Own row</div>
-				</Group>
-			}
+			loaded={<Group items={[{ key: "div0", row: <div>Own row</div> }]} />}
 			waiting={
-				<Group loading>
-					<div>Own row</div>
-				</Group>
+				<Group loading items={[{ key: "div0", row: <div>Own row</div> }]} />
 			}
 		/>
 	),
@@ -542,19 +536,31 @@ const known: StoryObj = {
 // section's height.
 const groupBody = (loading?: boolean) => (
 	<Section title="Workspace" loading={loading}>
-		<Group>
-			<DefinitionRow label="Plan" value="Business" />
-			<DefinitionRow
-				label="Region"
-				description="Where the workspace runs."
-				value="Frankfurt"
-				href="#region"
-			/>
-			<DefinitionRow
-				label="Notify on failure"
-				switch={{ checked: true, onChange: change }}
-			/>
-		</Group>
+		<Group
+			items={[
+				{ key: "plan", row: <DefinitionRow label="Plan" value="Business" /> },
+				{
+					key: "region",
+					row: (
+						<DefinitionRow
+							label="Region"
+							description="Where the workspace runs."
+							value="Frankfurt"
+							href="#region"
+						/>
+					),
+				},
+				{
+					key: "notify-on-failure",
+					row: (
+						<DefinitionRow
+							label="Notify on failure"
+							switch={{ checked: true, onChange: change }}
+						/>
+					),
+				},
+			]}
+		/>
 	</Section>
 );
 const sectionGroup: StoryObj = {

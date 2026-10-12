@@ -9,7 +9,6 @@ import { Form } from "@fcalell/plugin-react-ui/components/form";
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
 import { Input } from "@fcalell/plugin-react-ui/components/input";
-import { List } from "@fcalell/plugin-react-ui/components/list";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { QrCode } from "@fcalell/plugin-react-ui/components/qr-code";
@@ -203,16 +202,16 @@ function Settings() {
 							fields: (
 								<>
 									<QrCode value="https://acme.dev/pair/7KQ2XM" />
-									<Group>
-										<List
-											query={paired}
-											sentence="Paired devices did not load."
-											empty={{
+									<Group
+										list={{
+											query: paired,
+											sentence: "Paired devices did not load.",
+											empty: {
 												icon: "Smartphone",
 												title: "No devices",
 												sentence: "A phone that scans the code shows here.",
-											}}
-											row={{
+											},
+											row: {
 												key: (device) => device,
 												leading: { icon: () => "Smartphone" },
 												title: (device) => device,
@@ -228,9 +227,9 @@ function Settings() {
 														},
 													},
 												],
-											}}
-										/>
-									</Group>
+											},
+										}}
+									/>
 								</>
 							),
 						},

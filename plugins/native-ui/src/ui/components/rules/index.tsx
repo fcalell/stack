@@ -135,11 +135,12 @@ export function Rules<V extends string | null = string>({
 		<View className={STACK}>
 			{rules.length > 0 ? (
 				<View role="list" className={GROUP_SLOT}>
-					<Group>
-						{rules.map((rule) => (
-							<RuleRow key={rule.id} rule={rule} />
-						))}
-					</Group>
+					<Group
+						items={rules.map((rule) => ({
+							key: rule.id,
+							row: <RuleRow rule={rule} />,
+						}))}
+					/>
 				</View>
 			) : null}
 			{add ? (

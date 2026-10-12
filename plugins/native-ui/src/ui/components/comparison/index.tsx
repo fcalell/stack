@@ -13,7 +13,7 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, useContext } from "react";
+import { useContext } from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
@@ -22,7 +22,7 @@ import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 import { Chip } from "../chip";
 import { EmptyStateBase } from "../empty-state/base";
-import { Group } from "../group";
+import { Group, type GroupItem } from "../group";
 import type { ListSource } from "../list";
 import { Missing } from "../missing";
 import { Status } from "../status";
@@ -211,31 +211,33 @@ export function Comparison<T>(props: ComparisonProps<T>) {
 	const items = (props.query ? props.query.data : props.items) ?? [];
 	if (state === "loaded" && items.length === 0) return null;
 	const shape = factShape(columns, row);
-	const facts: ReactNode =
+	const facts: GroupItem[] =
 		state === "pending"
-			? LABEL_BARS.map((width, index) => (
-					<FactWait key={width + String(index)} shape={shape} index={index} />
-				))
-			: items.map((item) => (
-					<Fact key={row.key(item)} item={item} row={row} columns={columns} />
-				));
+			? LABEL_BARS.map((width, index) => ({
+					key: width + String(index),
+					row: <FactWait shape={shape} index={index} />,
+				}))
+			: items.map((item) => ({
+					key: row.key(item),
+					row: <Fact item={item} row={row} columns={columns} />,
+				}));
+	const header = (
+		<View className={cn(COMPARISON_ROW, ROW)}>
+			{columns.map((column) => (
+				<RNText
+					key={column}
+					className={cn(
+						text({ role: "meta" }),
+						textStrong({ role: "meta" }),
+						COLUMN,
+					)}
+				>
+					{column}
+				</RNText>
+			))}
+		</View>
+	);
 	return (
-		<Group loading={false}>
-			<View className={cn(COMPARISON_ROW, ROW)}>
-				{columns.map((column) => (
-					<RNText
-						key={column}
-						className={cn(
-							text({ role: "meta" }),
-							textStrong({ role: "meta" }),
-							COLUMN,
-						)}
-					>
-						{column}
-					</RNText>
-				))}
-			</View>
-			{facts}
-		</Group>
+		<Group loading={false} items={[{ key: "head", row: header }, ...facts]} />
 	);
 }

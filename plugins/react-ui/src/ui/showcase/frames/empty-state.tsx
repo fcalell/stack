@@ -8,7 +8,7 @@ import { Pane } from "../../components/pane/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
-import { StandInRows } from "./layout-context.tsx";
+import { STAND_IN_ENTRIES } from "./layout-context.tsx";
 import { Column } from "./place.tsx";
 
 const act = () => {};
@@ -94,9 +94,7 @@ export function drawEmptyState(frame: ShowcaseFrame) {
 						title="Start from a template"
 						description="Each one deploys as is."
 					>
-						<Group>
-							<StandInRows ground="group" />
-						</Group>
+						<Group items={STAND_IN_ENTRIES} />
 					</Section>
 				</EmptyState>
 			</Page>
