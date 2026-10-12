@@ -1,7 +1,6 @@
 import { showcaseFrames } from "@fcalell/plugin-react-ui/showcase/cells";
 import { type Draw, Frame } from "@fcalell/plugin-react-ui/showcase/frame";
 import type { StoryObj } from "@storybook/react-vite";
-import { FOCUS_GUARD } from "./focus-guard.ts";
 
 const FRAMES = showcaseFrames();
 
@@ -44,7 +43,7 @@ export function stateStories(component: string, draw?: Draw) {
 				layout: "padded",
 				...(UNCHECKED[component] && {
 					a11y: {
-						context: { exclude: [FOCUS_GUARD, ...UNCHECKED[component]] },
+						context: { exclude: [...UNCHECKED[component]] },
 					},
 				}),
 			},

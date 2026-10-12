@@ -577,9 +577,9 @@ const statusWhole: Play = async ({ canvas }) => {
 		await expect(clipped(frame.getByText("Fetched 3 minutes ago"))).toBe(false);
 		await expect(clipped(frame.getByText(REMOTE))).toBe(true);
 		await expect(clipped(frame.getByText("Waiting for you"))).toBe(false);
-		await expect(
-			clipped(frame.getByText(/^Rename the flag to --strict/)),
-		).toBe(true);
+		await expect(clipped(frame.getByText(/^Rename the flag to --strict/))).toBe(
+			true,
+		);
 		const long = frame.getByRole("link", { name: "Usage" }).parentElement;
 		if (!long) throw new Error("the row has no box");
 		await expect(clipped(frame.getByText(/^Watches paused/))).toBe(true);

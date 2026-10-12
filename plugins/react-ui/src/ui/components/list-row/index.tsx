@@ -654,11 +654,13 @@ export function ListRow<V extends string | null = string>({
 								) : null}
 							</span>
 						)}
-						{status ? <RowStatusMark
+						{status ? (
+							<RowStatusMark
 								status={status}
 								line={metaLine}
 								beside={lead.length > 0}
-							/> : null}
+							/>
+						) : null}
 						{warning !== undefined ? <WarningMark label={warning} /> : null}
 						{lock !== undefined ? <LockMark reason={lock} labelled /> : null}
 						{chip ? (

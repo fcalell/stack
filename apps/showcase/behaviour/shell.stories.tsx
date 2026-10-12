@@ -133,9 +133,7 @@ export const TabBarHoldsItsHeight: StoryObj = {
 			tab.getBoundingClientRect().height +
 			parseFloat(style.paddingTop) +
 			parseFloat(style.borderTopWidth);
-		await expect(tab.getBoundingClientRect().height).toBeGreaterThanOrEqual(
-			48,
-		);
+		await expect(tab.getBoundingClientRect().height).toBeGreaterThanOrEqual(48);
 		await expect(bar.getBoundingClientRect().height).toBeGreaterThanOrEqual(
 			natural,
 		);

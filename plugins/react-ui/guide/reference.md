@@ -75,14 +75,7 @@ transition duration is 0 ms.
 
 ## Auditing with axe
 
-Run every axe rule except the document-structure ones (landmarks, heading order, skip links): screen readers are not a target. Exclude `[data-base-ui-focus-guard]` from an audit, as in
-`new AxeBuilder({ page }).exclude("[data-base-ui-focus-guard]")`. Base UI 1.8.0 draws its focus
-guards, the spans that relay Tab between a trigger and its portaled popup, as focusable and
-`aria-hidden` by design, so `aria-hidden-focus` flags each one; no prop turns them off. Each guard
-moves focus on `onFocus`, so no focus rests on hidden content. Drop the exclude once Base UI ships
-guards that are not focusable or not hidden. The showcase excludes it once in its Storybook preview
-(`a11y.context`) and the screens floors do the same, so a consumer screen with an open popup is
-judged alike.
+Run every axe rule except the document-structure ones (landmarks, heading order, skip links): screen readers are not a target. Exclude nothing for an open popup: a Menu, a Picker or a Select takes `aria-hidden` off the focus guards Base UI draws around it (the spans that relay Tab between a trigger and its portaled popup, focusable and `aria-hidden` in Base UI 1.8.0, which `aria-hidden-focus` would flag; each moves focus the moment it takes it, so nothing rests on one), so an open menu audits clean.
 
 ## Safe areas
 

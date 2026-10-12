@@ -2051,20 +2051,23 @@ A page is not one of them: the places above are the app's routes, and the workbe
 the document it is; `stack screens test` checks it.
 
 A failing assertion is a finding in the component: it stays failing until the component is fixed,
-never weakened or skipped, and nothing is excluded from axe beyond the document-structure rules, Base UI's
-focus guards, and the node buttons of a canvas that draws a run's path: `Canvas`'s dimmed frames
+never weakened or skipped, and nothing is excluded from axe beyond the document-structure rules and
+the node buttons of a canvas that draws a run's path: `Canvas`'s dimmed frames
 (`.storybook/state-stories.tsx`) and the behaviour stories that draw a `path`. An open non-modal
 popup (Menu, Select, Picker, a Screen's more menu) has `[data-base-ui-focus-guard]` spans around
-it, focusable and `aria-hidden` by Base UI's design with no prop to drop them, which
-`aria-hidden-focus` flags and which no one rests on (a Tab onto one
-hands focus into or past the popup). The selector is excluded once where each run is configured:
-the preview's `a11y.context` (`.storybook/focus-guard.ts`) and the screens floors' (`floors.ts`),
-each with a `// TODO:` to drop it on a Base UI release whose guards are not focusable or not hidden. A node off the path
+it, focusable and `aria-hidden` by Base UI's design with no prop to drop them, so
+`aria-hidden-focus` flagged each open menu (serious, on every desktop menu) until Stead's critique
+(2026-10-11) asked for an open menu that audits clean (003-323). Menu, Picker and Select call
+`useQuietGuards` (`lib/guards.ts`), one document observer for every mounted popup that takes
+`aria-hidden` off the guards as they appear: they stay in the tab order, so the Tab relay into and
+past the popup holds (each guard moves focus the moment it takes it), and they are empty spans with
+no role, which assistive tech passes over. Nothing is excluded for them any more. Rejected:
+`tabindex="-1"` on the guards (it breaks the relay), a role on them (`presentation` on a focusable
+span is its own axe finding), and patching Base UI. A node off the path
 draws disabled ink (about 3:1) by the pattern's rule, and axe exempts only a disabled control, which
 these enabled buttons are. The exclusion leaves those nodes out of every rule, since a per-story
 `config.rules` entry replaces the preview's document-structure list and would copy it. A story-level
-`context.exclude` replaces the preview's too (Storybook overwrites arrays), so these entries spread
-the focus-guard selector in.
+`context.exclude` replaces the preview's too (Storybook overwrites arrays).
 
 Storybook runs on `.stack/storybook.vite.config.ts` (by `viteConfigPath`), which `.storybook/main.ts`
 writes at start by calling `writeStorybookConfig({ config, cwd })` from

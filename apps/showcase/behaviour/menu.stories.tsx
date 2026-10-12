@@ -56,6 +56,26 @@ export const PointerOpenDrawsNoRing: StoryObj = {
 	},
 };
 
+// An open menu leaves no focus guard hidden from assistive tech: Base UI's
+// guards stay in the tab order (they relay Tab) and drop `aria-hidden`, which
+// is what axe's `aria-hidden-focus` flags; the run that follows this story,
+// with the menu open and nothing excluded, is the check.
+export const OpenMenuHasNoHiddenFocusable: StoryObj = {
+	play: async ({ canvas, userEvent }) => {
+		await userEvent.click(canvas.getByRole("button", { name: "More" }));
+		await screen.findByRole("menu");
+		const guards = [...document.querySelectorAll("[data-base-ui-focus-guard]")];
+		await expect(guards.length).toBeGreaterThan(0);
+		await waitFor(() =>
+			expect(
+				document.querySelectorAll("[data-base-ui-focus-guard][aria-hidden]"),
+			).toHaveLength(0),
+		);
+		for (const guard of guards)
+			await expect(guard).toHaveAttribute("tabindex", "0");
+	},
+};
+
 // A blocked item draws no highlight fill, from the pointer or from a key
 // landing on it; a key landing on it still shows the ring, and it acts on
 // nothing.

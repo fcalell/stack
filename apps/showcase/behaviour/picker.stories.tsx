@@ -54,6 +54,21 @@ export const Popover: StoryObj = {
 	},
 };
 
+// The same for an open picker: no focus guard is `aria-hidden`.
+export const OpenPickerHasNoHiddenFocusable: StoryObj = {
+	play: async ({ canvas, userEvent }) => {
+		await userEvent.click(canvas.getByRole("combobox", { name: /Role/ }));
+		await screen.findByRole("listbox");
+		const guards = [...document.querySelectorAll("[data-base-ui-focus-guard]")];
+		await expect(guards.length).toBeGreaterThan(0);
+		await waitFor(() =>
+			expect(
+				document.querySelectorAll("[data-base-ui-focus-guard][aria-hidden]"),
+			).toHaveLength(0),
+		);
+	},
+};
+
 const OWNERS = [
 	{ value: "ana", label: "Ana Ruiz" },
 	{ value: "ben", label: "Ben Kaya" },

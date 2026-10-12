@@ -16,6 +16,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { use, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { useQuietGuards } from "../../lib/guards.ts";
 import { spacing } from "../../lib/media.ts";
 import { PortalContainer } from "../../lib/portal.ts";
 import { Icon } from "../icon/index.tsx";
@@ -74,6 +75,7 @@ export function Select<V extends string | null = string>({
 	placeholder,
 }: SelectProps<V>) {
 	const container = use(PortalContainer);
+	useQuietGuards();
 	// Whether a key moved the highlight last; the pointer and a (re)opening clear it.
 	const [keyed, setKeyed] = useState(false);
 	const groups = groupsOf(options);

@@ -14,7 +14,6 @@ import { SIZE_PX } from "@fcalell/ui-core/tokens";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { expect, fn, waitFor } from "storybook/test";
-import { FOCUS_GUARD } from "../.storybook/focus-guard.ts";
 import {
 	apart,
 	around,
@@ -587,7 +586,6 @@ export const NameFramesAtDesktop: StoryObj = {
 		a11y: {
 			context: {
 				exclude: [
-					FOCUS_GUARD,
 					'[data-cell^="Canvas/CANVAS_NODE_NAME.tone.dimmed/"] [data-layer] button',
 				],
 			},

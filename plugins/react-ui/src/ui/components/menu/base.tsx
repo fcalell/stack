@@ -13,6 +13,7 @@ import {
 import { type ReactNode, use, useState } from "react";
 import { arrowsOver } from "../../lib/arrows.ts";
 import { expandedTrigger, rememberOpener } from "../../lib/focus.ts";
+import { useQuietGuards } from "../../lib/guards.ts";
 import { spacing, useTouch } from "../../lib/media.ts";
 import { PortalContainer } from "../../lib/portal.ts";
 import { Icon } from "../icon/index.tsx";
@@ -135,6 +136,7 @@ export function MenuBase({
 }) {
 	const touch = useTouch();
 	const container = use(PortalContainer);
+	useQuietGuards();
 	const [open, setOpen] = useState(false);
 	const [sheet] = useState(() => Dialog.createHandle<unknown>());
 	if (touch) {

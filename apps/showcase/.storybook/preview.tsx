@@ -1,7 +1,6 @@
 import "../.stack/app.css";
 import Providers from "virtual:stack-providers";
 import type { Preview } from "@storybook/react-vite";
-import { FOCUS_GUARD } from "./focus-guard.ts";
 
 // Axe runs every rule on every story except the ones that judge a document as
 // a whole (its landmarks, heading order, bypass blocks): a story is a frame,
@@ -49,7 +48,6 @@ const preview: Preview = {
 	parameters: {
 		a11y: {
 			test: "error",
-			context: { exclude: [FOCUS_GUARD] },
 			config: {
 				rules: DOCUMENT_RULES.map((id) => ({ id, enabled: false })),
 			},

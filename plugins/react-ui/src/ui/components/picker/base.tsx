@@ -44,6 +44,7 @@ import {
 import { arrowsOver } from "../../lib/arrows.ts";
 import { CellField } from "../../lib/field.ts";
 import { expandedTrigger, rememberOpener } from "../../lib/focus.ts";
+import { useQuietGuards } from "../../lib/guards.ts";
 import { spacing, useTouch } from "../../lib/media.ts";
 import { PortalContainer } from "../../lib/portal.ts";
 import { useWords } from "../../lib/words.tsx";
@@ -626,6 +627,7 @@ function PickList<V extends string | null>(
 	props: PickParts<V> & { value: V | undefined; finalFocus: FinalFocus },
 ) {
 	const container = use(PortalContainer);
+	useQuietGuards();
 	const keyboard = useKeyed(props.trigger);
 	return (
 		<Select.Root
@@ -735,6 +737,7 @@ function PickSearch<V extends string | null>(
 	},
 ) {
 	const container = use(PortalContainer);
+	useQuietGuards();
 	const words = useWords();
 	const keyboard = useKeyed(props.trigger);
 	return (
