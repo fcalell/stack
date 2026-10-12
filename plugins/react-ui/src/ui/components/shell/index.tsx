@@ -58,7 +58,10 @@ const GLYPH = "flex shrink-0";
 const ROW_MARK = "grow min-w-0";
 const LABEL = "truncate grow";
 
-const TABS = "flex pb-safe group-has-data-screen/column:hidden";
+// The bar holds its height on a page of any length: it clips its tabs'
+// badges (`overflow-hidden`), which lets a flex item shrink below its content,
+// so it is told not to share the column's overflow with the page.
+const TABS = "flex shrink-0 pb-safe group-has-data-screen/column:hidden";
 const TAB =
 	"flex flex-col items-center justify-center min-w-0 grow basis-0 focus-visible:-outline-offset-2";
 const TAB_GLYPH = "relative flex";

@@ -87,6 +87,61 @@ export const BodyEndsAboveTheTabBar: StoryObj = {
 	},
 };
 
+const LONG = Array.from({ length: 160 }, (_, at) => `Field ${at + 1}`);
+
+// On touch the tab bar holds its natural height on a page of any length: the
+// page's body scrolls and the bar never gives up a share of its height to it.
+export const TabBarHoldsItsHeight: StoryObj = {
+	render: () => (
+		<Shell places={PLACES}>
+			<Place title="Edit page">
+				<Form>
+					{LONG.map((label) => (
+						<Field key={label} label={label} />
+					))}
+				</Form>
+			</Place>
+		</Shell>
+	),
+	tags: ["touch"],
+	globals: {
+		density: "touch",
+		viewport: { value: "phone", isRotated: false },
+	},
+	parameters: {
+		viewport: {
+			options: {
+				phone: {
+					name: "Phone",
+					styles: { width: "375px", height: "812px" },
+					type: "mobile",
+				},
+			},
+		},
+	},
+	play: async ({ canvas, canvasElement }) => {
+		const bar = canvas.getByRole("navigation", { name: "Places" });
+		const body = canvasElement.querySelector("form")?.parentElement;
+		if (!body) throw new Error("the page body is not drawn");
+		await expect(body.scrollHeight).toBeGreaterThan(body.clientHeight * 3);
+		const tab = bar.querySelector("a");
+		if (!tab) throw new Error("no tab is drawn");
+		const style = getComputedStyle(bar);
+		// The bar is its tabs and its top padding and hairline, the bottom
+		// safe inset aside: nothing is lost to the page's length.
+		const natural =
+			tab.getBoundingClientRect().height +
+			parseFloat(style.paddingTop) +
+			parseFloat(style.borderTopWidth);
+		await expect(tab.getBoundingClientRect().height).toBeGreaterThanOrEqual(
+			48,
+		);
+		await expect(bar.getBoundingClientRect().height).toBeGreaterThanOrEqual(
+			natural,
+		);
+	},
+};
+
 type Rgba = [number, number, number, number];
 
 // A CSS colour in any syntax as sRGB, read back off a canvas pixel.
