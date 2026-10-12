@@ -9,6 +9,7 @@ import type {
 import { type ReactNode, useLayoutEffect, useRef, useState } from "react";
 import { ActionBar } from "../../components/action-bar/index.tsx";
 import { EmptyState } from "../../components/empty-state/index.tsx";
+import { Pane } from "../../components/pane/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import type { QueryLike } from "../../components/query-boundary/index.tsx";
 import { Table } from "../../components/table/index.tsx";
@@ -311,38 +312,39 @@ function Tasks(props: {
 	// `onAll` clears the rows, and chooses them all below `tablet` of the page,
 	// where the table draws no head tick.
 	const tickable = shown.filter((task) => task.id !== "purge");
-	const placed = publishing
-		? {
-				foot: (
-					<ActionBar
-						chosen={{
-							count: chosen.length,
-							of: tickable.length,
-							onAll: (all) =>
-								setChosen(ruled(all ? tickable.map((task) => task.id) : [])),
-						}}
-						acts={[publishAct]}
-					/>
-				),
-			}
-		: { act: { label: "New task", onAct: act } };
+	const foot = publishing ? (
+		<ActionBar
+			chosen={{
+				count: chosen.length,
+				of: tickable.length,
+				onAll: (all) =>
+					setChosen(ruled(all ? tickable.map((task) => task.id) : [])),
+			}}
+			acts={[publishAct]}
+		/>
+	) : undefined;
+	const actions = publishing
+		? undefined
+		: [{ icon: "Plus" as const, label: "New task", onAct: act }];
 	return (
-		<Place title="Cron tasks" {...placed}>
-			{part.readOnly ? (
-				<Table columns={columns} items={shown} row={row} onOpen={act} />
-			) : (
-				<Table
-					columns={columns}
-					query={queryOf(props.state, shown)}
-					sentence="Cron tasks did not load."
-					row={row}
-					selected={props.state === "selected" ? part.rows[0] : undefined}
-					choose={choose}
-					empty={empty}
-					onOpen={act}
-					onEdit={change}
-				/>
-			)}
+		<Place>
+			<Pane title="Cron tasks" actions={actions} foot={foot}>
+				{part.readOnly ? (
+					<Table columns={columns} items={shown} row={row} onOpen={act} />
+				) : (
+					<Table
+						columns={columns}
+						query={queryOf(props.state, shown)}
+						sentence="Cron tasks did not load."
+						row={row}
+						selected={props.state === "selected" ? part.rows[0] : undefined}
+						choose={choose}
+						empty={empty}
+						onOpen={act}
+						onEdit={change}
+					/>
+				)}
+			</Pane>
 		</Place>
 	);
 }

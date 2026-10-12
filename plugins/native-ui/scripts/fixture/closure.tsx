@@ -22,8 +22,7 @@ import { Spinner } from "@fcalell/plugin-native-ui/components/spinner";
 import { Avatar } from "@fcalell/plugin-native-ui/components/avatar";
 import { Link } from "@fcalell/plugin-native-ui/components/link";
 import { Place } from "@fcalell/plugin-native-ui/components/place";
-import { Screen } from "@fcalell/plugin-native-ui/components/screen";
-import { Split } from "@fcalell/plugin-native-ui/components/split";
+import { Pane } from "@fcalell/plugin-native-ui/components/pane";
 import { Section } from "@fcalell/plugin-native-ui/components/section";
 import { Group } from "@fcalell/plugin-native-ui/components/group";
 import { List } from "@fcalell/plugin-native-ui/components/list";
@@ -336,54 +335,39 @@ export const closure = (
 		<Link href="https://x" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<Link href="https://x" placeholderTextColorClassName="text-ink-body" />
-		<Place title="a" />
-		<Place title="a" more={[{ label: "a", onAct: noop, destructive: true }]} />
+		<Place />
+		<Place distance="room" />
 		{/* @ts-expect-error: closed channel */}
-		<Place title="a" className="x" />
+		<Place className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Place title="a" style={{ flex: 1 }} />
+		<Place style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<Place title="a" class="x" />
+		<Place class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Place title="a" classList={{}} />
+		<Place classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Place title="a" colorClassName="text-ink-body" />
+		<Place colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Place title="a" selectionColorClassName="text-ink-body" />
+		<Place selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Place title="a" placeholderTextColorClassName="text-ink-body" />
-		<Screen title="a" back="/" />
-		<Screen title="a" more={[{ label: "a", onAct: noop, destructive: true }]} />
+		<Place placeholderTextColorClassName="text-ink-body" />
+		<Pane title="a" />
+		<Pane title="a" back="/" cover wide />
+		<Pane title="a" more={[{ label: "a", onAct: noop, destructive: true }]} />
 		{/* @ts-expect-error: closed channel */}
-		<Screen title="a" back="/" className="x" />
+		<Pane title="a" className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Screen title="a" back="/" style={{ flex: 1 }} />
+		<Pane title="a" style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<Screen title="a" back="/" class="x" />
+		<Pane title="a" class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Screen title="a" back="/" classList={{}} />
+		<Pane title="a" classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Screen title="a" back="/" colorClassName="text-ink-body" />
+		<Pane title="a" colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Screen title="a" back="/" selectionColorClassName="text-ink-body" />
+		<Pane title="a" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Screen title="a" back="/" placeholderTextColorClassName="text-ink-body" />
-		<Split main={<Text />} />
-		<Split main={<Text />} back="/" />
-		{/* @ts-expect-error: closed channel */}
-		<Split main={<Text />} className="x" />
-		{/* @ts-expect-error: closed channel */}
-		<Split main={<Text />} style={{ flex: 1 }} />
-		{/* @ts-expect-error: closed channel */}
-		<Split main={<Text />} class="x" />
-		{/* @ts-expect-error: closed channel */}
-		<Split main={<Text />} classList={{}} />
-		{/* @ts-expect-error: closed channel */}
-		<Split main={<Text />} colorClassName="text-ink-body" />
-		{/* @ts-expect-error: closed channel */}
-		<Split main={<Text />} selectionColorClassName="text-ink-body" />
-		{/* @ts-expect-error: closed channel */}
-		<Split main={<Text />} placeholderTextColorClassName="text-ink-body" />
+		<Pane title="a" placeholderTextColorClassName="text-ink-body" />
 		<Section title="a" />
 		<Section title="a" act={{ icon: "Plus", label: "a", onAct: noop }} />
 		{/* @ts-expect-error: closed channel */}
@@ -812,7 +796,6 @@ export const closure = (
 		{/* @ts-expect-error: hunks and two texts exclude each other */}
 		<Diff label="x" hunks={[]} before="a" after="b" />
 		<Code text="a" title="a" copy />
-		<Place title="a" bleed />
 		<ListRow title="a" more={[{ label: "a", onAct: noop }]} />
 		<Table columns={columns} items={[]} row={{ id: String }} selected="a" onOpen={noop} onEdit={noop} empty={null} loading />
 		{/* @ts-expect-error: a status column never edits */}

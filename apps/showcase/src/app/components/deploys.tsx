@@ -4,21 +4,18 @@ import { Button } from "@fcalell/plugin-react-ui/components/button";
 import { Chip } from "@fcalell/plugin-react-ui/components/chip";
 import { Code } from "@fcalell/plugin-react-ui/components/code";
 import { DefinitionRow } from "@fcalell/plugin-react-ui/components/definition-row";
-import { EmptyState } from "@fcalell/plugin-react-ui/components/empty-state";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
 import { IconButton } from "@fcalell/plugin-react-ui/components/icon-button";
 import { Input } from "@fcalell/plugin-react-ui/components/input";
 import { ItemHeader } from "@fcalell/plugin-react-ui/components/item-header";
 import { List } from "@fcalell/plugin-react-ui/components/list";
+import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { PendingBar } from "@fcalell/plugin-react-ui/components/pending-bar";
-import { Place } from "@fcalell/plugin-react-ui/components/place";
 import {
 	QueryBoundary,
 	type QueryLike,
 } from "@fcalell/plugin-react-ui/components/query-boundary";
-import { Screen } from "@fcalell/plugin-react-ui/components/screen";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
-import { Split } from "@fcalell/plugin-react-ui/components/split";
 import { Toolbar } from "@fcalell/plugin-react-ui/components/toolbar";
 import { age } from "@fcalell/plugin-react-ui/lib/age";
 import { confirm } from "@fcalell/plugin-react-ui/lib/confirm";
@@ -26,7 +23,6 @@ import { navigate } from "@fcalell/plugin-react-ui/lib/navigate";
 import { toast } from "@fcalell/plugin-react-ui/lib/toast";
 import type { ChipMark, MenuItem, Option } from "@fcalell/ui-core/descriptors";
 import type { StatusState } from "@fcalell/ui-core/tokens";
-import { skipToken } from "@tanstack/react-query";
 import { useState } from "react";
 import type { AppRouter } from "../../../.stack/worker";
 import { act } from "../lib/act.ts";
@@ -36,7 +32,6 @@ import { DeployChanges } from "./deploy-changes.tsx";
 type Deploys = AppRouter["deploys"];
 type Deploy = Deploys["list"]["__output"][number];
 type OpenDeploy = Deploys["get"]["__output"];
-type Step = OpenDeploy["steps"][number];
 
 const ENVIRONMENTS: Record<Deploy["environment"], ChipMark> = {
 	production: { family: "teal", label: "Production" },
@@ -110,7 +105,7 @@ function DeployRows(props: { query: QueryLike<Deploy[]> }) {
 	);
 }
 
-// The open deploy: its head, what it waits on, its facts.
+// The open deploy's body: its head, what it waits on, its facts.
 function Record(props: { deploy: OpenDeploy; file?: string }) {
 	const { deploy } = props;
 	const [state, setState] = useState(deploy.state);
@@ -212,12 +207,18 @@ function StepRows(props: { deploy: OpenDeploy }) {
 	);
 }
 
-// A step the deploy opened, beside it from `wide`: a Screen whose back is the
-// deploy's route.
-function StepScreen(props: { deploy: OpenDeploy; step: Step }) {
-	const { deploy, step } = props;
+// A step the deploy opened, the Pane after the deploy: its Close returns to
+// the deploy's route.
+export function DeployStep(props: { deployId: string; stepId: string }) {
+	const open = useQuery(
+		orpc.deploys.get.queryOptions({ input: { id: props.deployId } }),
+	);
+	const deploy = open.data;
+	const step = deploy?.steps.find((each) => each.id === props.stepId);
+	if (!deploy || !step) return null;
 	return (
-		<Screen
+		<Pane
+			key={step.id}
 			title={step.name}
 			back={`/deploys/${deploy.id}`}
 			actions={[
@@ -228,7 +229,7 @@ function StepScreen(props: { deploy: OpenDeploy; step: Step }) {
 				},
 			]}
 		>
-			<Section title="Summary">
+			<Section title="Result">
 				<Group>
 					<DefinitionRow
 						label="Status"
@@ -241,17 +242,21 @@ function StepScreen(props: { deploy: OpenDeploy; step: Step }) {
 			<Section title="Log">
 				<Code text={step.log} copy />
 			</Section>
-		</Screen>
+		</Pane>
 	);
 }
 
-// The open deploy's details, the Split's pane (a sheet below `wide`).
-function Details(props: { deploy: OpenDeploy }) {
-	const { deploy } = props;
+// The open deploy's details, sections of the deploy's own Pane.
+export function DeployDetails(props: { deployId: string }) {
+	const open = useQuery(
+		orpc.deploys.get.queryOptions({ input: { id: props.deployId } }),
+	);
 	const remove = useMutation(orpc.deploys.remove.mutationOptions());
+	const deploy = open.data;
+	if (!deploy) return null;
 	return (
 		<>
-			<Section title="Deploy">
+			<Section title="About">
 				<Group>
 					<DefinitionRow label="Author" value={deploy.author} />
 					<DefinitionRow label="Started" value="10:42" />
@@ -293,37 +298,25 @@ function Details(props: { deploy: OpenDeploy }) {
 	);
 }
 
-// The Deploys place, one page at three routes: the list alone, a deploy open
-// beside it, and a step of that deploy opened beside the deploy. The deploy is
-// read by its id, so an address after its removal draws the missing form.
-export function Deploys(props: {
-	deployId?: string;
-	stepId?: string;
-	file?: string;
-}) {
-	const { deployId, stepId, file } = props;
+// The Deploys place's first Pane: the deploys, a row opening one beside it.
+export function DeployList() {
 	const query = useQuery(orpc.deploys.list.queryOptions());
-	const open = useQuery(
-		orpc.deploys.get.queryOptions({
-			input: deployId === undefined ? skipToken : { id: deployId },
-		}),
-	);
-	const opened = open.data?.steps.find((each) => each.id === stepId);
 	const removePreviews = useMutation(
 		orpc.deploys.removePreviews.mutationOptions(),
 	);
 	return (
-		<Place
+		<Pane
 			title="Deploys"
-			act={{
-				label: "Deploy",
-				onAct: () =>
-					toast("Deploy started", {
-						state: "done",
-						act: { label: "View", onAct: act },
-					}),
-			}}
 			actions={[
+				{
+					icon: "Plus",
+					label: "Deploy",
+					onAct: () =>
+						toast("Deploy started", {
+							state: "done",
+							act: { label: "View", onAct: act },
+						}),
+				},
 				{ icon: "RefreshCw", label: "Refresh", onAct: () => query.refetch() },
 			]}
 			more={[
@@ -347,7 +340,6 @@ export function Deploys(props: {
 						}),
 				},
 			]}
-			bleed
 		>
 			<Toolbar>
 				<Input kind="search" value="" onChange={act} />
@@ -375,35 +367,29 @@ export function Deploys(props: {
 				<Chip family="neutral" label="Branch: main" onRemove={act} />
 				<Chip family="neutral" label="Author: Ana Ruiz" onRemove={act} />
 			</Toolbar>
-			<Split
-				list={<DeployRows query={query} />}
-				main={
-					deployId === undefined ? undefined : (
-						<QueryBoundary
-							query={open}
-							sentence="The deploy did not load."
-							loading={<ItemHeader title="" loading />}
-						>
-							{(deploy) => (
-								<Record key={deploy.id} deploy={deploy} file={file} />
-							)}
-						</QueryBoundary>
-					)
-				}
-				beside={
-					open.data && opened ? (
-						<StepScreen key={opened.id} deploy={open.data} step={opened} />
-					) : undefined
-				}
-				pane={open.data ? <Details deploy={open.data} /> : undefined}
-				empty={
-					<EmptyState
-						icon="Rocket"
-						title="No deploy open"
-						sentence="Pick a deploy from the list to read its build and its domains."
-					/>
-				}
-			/>
-		</Place>
+			<DeployRows query={query} />
+		</Pane>
+	);
+}
+
+// The deploy opened beside the list, read by its id, so an address after its
+// removal draws the missing form. Its Close returns to the list.
+export function DeployRecord(props: { deployId: string; file?: string }) {
+	const open = useQuery(
+		orpc.deploys.get.queryOptions({ input: { id: props.deployId } }),
+	);
+	return (
+		<Pane title="Deploy" back="/deploys">
+			<QueryBoundary
+				query={open}
+				sentence="The deploy did not load."
+				loading={<ItemHeader title="" loading />}
+			>
+				{(deploy) => (
+					<Record key={deploy.id} deploy={deploy} file={props.file} />
+				)}
+			</QueryBoundary>
+			<DeployDetails deployId={props.deployId} />
+		</Pane>
 	);
 }

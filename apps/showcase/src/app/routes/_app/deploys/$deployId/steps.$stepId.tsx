@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Deploys } from "../../../../components/deploys.tsx";
+import { DeployStep } from "../../../../components/deploys.tsx";
 
 export const Route = createFileRoute("/_app/deploys/$deployId/steps/$stepId")({
 	component: OpenStep,
@@ -7,5 +7,5 @@ export const Route = createFileRoute("/_app/deploys/$deployId/steps/$stepId")({
 
 function OpenStep() {
 	const { deployId, stepId } = Route.useParams();
-	return <Deploys deployId={deployId} stepId={stepId} />;
+	return <DeployStep deployId={deployId} stepId={stepId} />;
 }

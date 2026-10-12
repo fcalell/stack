@@ -23,7 +23,7 @@ const STACK = "flex flex-col";
 // stands in its place, so what it holds (a typed text) outlives the wait.
 const FIELD_SHOWN = "contents";
 const FIELD_WAITS = "hidden";
-// In a Split's pane or a sheet's body, which scroll, the bar stays at the
+// In a sheet's body, which scrolls, the bar stays at the
 // scroller's bottom edge. A sticky box sticks inside the scroller's padding, so
 // the negative offset reaches the edge; the negative margin and matching
 // padding run its ground and hairline across the scroller's inset, so what

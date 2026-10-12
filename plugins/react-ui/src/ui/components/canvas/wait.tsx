@@ -8,7 +8,7 @@ import {
 import { useLayoutEffect, useRef, useState } from "react";
 import { spacing } from "../../lib/media.ts";
 import { layerGap } from "./elk.ts";
-import { GROUND, Grid, useBleed } from "./ground.tsx";
+import { GROUND, Grid } from "./ground.tsx";
 import { fitTransform, type Transform, whole } from "./view.ts";
 import { clearanceOf } from "./viewport.ts";
 import { ZoomRoom } from "./zoom.tsx";
@@ -42,7 +42,6 @@ function opening(region: HTMLElement, stand: HTMLElement): Transform {
 
 /** A Canvas waiting: its ground and grid, and three node-shaped cards (an icon beside an overline, a title and a line bar) stacked at the gap a loaded path keeps, standing where the loaded chain opens (the same opening view as Fit's, in the room the unseen zoom stack leaves), with no zoom stack, act or handler. Outside the package's exports. */
 export function CanvasWait({ label }: { label: string }) {
-	const bleed = useBleed();
 	const region = useRef<HTMLElement>(null);
 	const stand = useRef<HTMLDivElement>(null);
 	const [view, setView] = useState<Transform | null>(null);
@@ -58,13 +57,7 @@ export function CanvasWait({ label }: { label: string }) {
 		return () => watch.disconnect();
 	}, []);
 	return (
-		<section
-			ref={region}
-			aria-label={label}
-			aria-busy
-			data-fill
-			className={cn(GROUND, bleed)}
-		>
+		<section ref={region} aria-label={label} aria-busy className={GROUND}>
 			<Grid />
 			<ZoomRoom />
 			<div

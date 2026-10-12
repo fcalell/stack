@@ -1,36 +1,84 @@
+import type { IconAct, MenuItem } from "@fcalell/ui-core/descriptors";
+import type { PaneProps } from "../src/ui/components/pane/index.tsx";
 import type { PlaceProps } from "../src/ui/components/place/index.tsx";
 
 const act = () => {};
+const create: IconAct = { icon: "Plus", label: "New", onAct: act };
+const more: MenuItem[] = [{ label: "Export", onAct: act }];
 
-// a Place docks a field as its `foot`
+// a Place holds its Pane and states only the distance it is read from
 {
-	const home: PlaceProps = { title: "Home", foot: "an ask field" };
-	void home;
+	const page: PlaceProps = { children: "the Pane" };
+	const room: PlaceProps = { distance: "room", children: "the Pane" };
+	const bare: PlaceProps = {};
+	void [page, room, bare];
 }
 
-// a Place takes its filled act or a foot, never both
+// a Place draws no bar: the old head props are gone
 {
-	const acting: PlaceProps = {
+	// @ts-expect-error: the title is the Pane's
+	const titled: PlaceProps = { title: "Deploys" };
+	// @ts-expect-error: a create act is one of a Pane's actions
+	const acting: PlaceProps = { act: { label: "Deploy", onAct: act } };
+	// @ts-expect-error: the field docks at a Pane's foot
+	const footed: PlaceProps = { foot: "an ask field" };
+	// @ts-expect-error: a way back is a Pane's `back`
+	const upped: PlaceProps = { up: "/system" };
+	// @ts-expect-error: a Place offers no bleed
+	const bled: PlaceProps = { bleed: true };
+	// @ts-expect-error: a context's picker is gone
+	const context: PlaceProps = { context: { label: "Set", options: [] } };
+	void [titled, acting, footed, upped, bled, context];
+}
+
+// a Place's distance is the room or nothing
+{
+	// @ts-expect-error: only the room is a distance
+	const near: PlaceProps = { distance: "desk" };
+	void near;
+}
+
+// a Pane takes a title, and the acts, field and flags that make it a page
+{
+	const bare: PaneProps = { title: "Deploys" };
+	const page: PaneProps = {
 		title: "Deploys",
-		act: { label: "Deploy", onAct: act },
-	};
-	// @ts-expect-error: the foot's send is the screen's one filled act
-	const both: PlaceProps = {
-		title: "Home",
-		act: { label: "New", onAct: act },
+		actions: [create],
+		more,
 		foot: "an ask field",
+		children: "the sections",
 	};
-	void [acting, both];
+	const record: PaneProps = { title: "dpl_7Hp9aK", back: "/deploys" };
+	const web: PaneProps = { title: "Workflow", cover: true, wide: true };
+	void [bare, page, record, web];
 }
 
-// a Place read from across a room holds nothing that opens a layer
+// a Pane without a title is no Pane
 {
-	const room: PlaceProps = { title: "Deploys", distance: "room" };
-	// @ts-expect-error: a context's picker opens outside the room scope
-	const picked: PlaceProps = {
+	// @ts-expect-error: the title names the Pane and heads its bar
+	const untitled: PaneProps = { actions: [create] };
+	void untitled;
+}
+
+// a Pane's back is a route, its acts descriptors
+{
+	// @ts-expect-error: back is a route, not a handler
+	const handler: PaneProps = { title: "Deploys", back: act };
+	// @ts-expect-error: an action is an icon act, not a bare label
+	const label: PaneProps = { title: "Deploys", actions: ["New"] };
+	void [handler, label];
+}
+
+// a Pane keeps no filled act, Details act or fill mark
+{
+	const acting: PaneProps = {
 		title: "Deploys",
-		distance: "room",
-		context: { label: "Set", options: [], onChange: act },
+		// @ts-expect-error: a create act is one of the actions
+		act: { label: "New", onAct: act },
 	};
-	void [room, picked];
+	// @ts-expect-error: the Details sheet is a deeper Pane
+	const details: PaneProps = { title: "Deploys", details: "more" };
+	// @ts-expect-error: the Pane's body holds a Thread by plain flex, no mark
+	const fills: PaneProps = { title: "Chats", fills: true };
+	void [acting, details, fills];
 }

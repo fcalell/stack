@@ -1,7 +1,7 @@
 import { BREAKPOINT_PX } from "@fcalell/ui-core/tokens";
 import { useCallback, useState, useSyncExternalStore } from "react";
 
-// A page (a `Place` or a `Screen`) marks its size container `data-page`. A
+// A page (a `Pane`) marks its size container `data-page`. A
 // molecule whose tree differs by the page's width (the Table's grid or list)
 // reads it here, so a CSS `page-tablet:` switch never mounts both forms.
 // Placed on the molecule's root, it finds its page in the layout phase, where

@@ -42,8 +42,8 @@ export function FrameHost({ children }: { children: ReactNode }) {
 	);
 }
 
-/** The frame's `main`: its page, the toasts' layer over it (with `beside` standing among the toasts), and the popup layer. */
-export function FrameMain(props: { beside?: ReactNode; children: ReactNode }) {
+/** The frame's `main`: its page, the toasts' layer over it, and the popup layer. */
+export function FrameMain(props: { children: ReactNode }) {
 	const words = useWords();
 	const setLayer = use(PopupLayer);
 	return (
@@ -54,7 +54,6 @@ export function FrameMain(props: { beside?: ReactNode; children: ReactNode }) {
 				className={cn(TOASTS, TOASTS_LAYER)}
 			>
 				<ToastList />
-				{props.beside}
 			</ToastControl.Viewport>
 			<div ref={setLayer} />
 		</main>

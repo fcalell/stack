@@ -1,9 +1,8 @@
 import { Banner } from "@fcalell/plugin-react-ui/components/banner";
 import { Canvas } from "@fcalell/plugin-react-ui/components/canvas";
 import { ItemHeader } from "@fcalell/plugin-react-ui/components/item-header";
-import { List } from "@fcalell/plugin-react-ui/components/list";
+import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
-import { Split } from "@fcalell/plugin-react-ui/components/split";
 import {
 	ALONE_STAGE,
 	type Graph,
@@ -174,6 +173,9 @@ async function laidOut(canvas: Context["canvas"], moved?: unknown) {
 	// node a glyph (the first view is Fit's); the scenarios work on cards, so a
 	// tap on the plan's glyph brings it to its own size, centred.
 	await waitFor(() => expect(getComputedStyle(region).opacity).toBe("1"), LAID);
+	// A page whose head and banners stand over the canvas may leave it below the
+	// fold at first: the finger needs it in view.
+	region.scrollIntoView({ block: "nearest" });
 	const glyph = glyphs(region)[ORDER.indexOf("plan")];
 	if (glyph) await tap(centre(rect(glyph)));
 	await waitFor(() => expect(card(region, "plan")).toBeVisible(), LAID);
@@ -986,7 +988,7 @@ export const MarksClearTheIconDark = mode("dark", clearMarks);
 
 // ── The canvas keeps half its column ────────────────────────────────
 
-// A canvas under a head and two banners in a Split's main: the main is one
+// A canvas under a head and two banners in a wide Pane: the body is one
 // column that scrolls as a page, and the canvas keeps half of it whatever
 // stands above it, the head and the banners scrolling away over it.
 function Under(props: Heard & { height: number }) {
@@ -998,44 +1000,34 @@ function Under(props: Heard & { height: number }) {
 				flexDirection: "column",
 			}}
 		>
-			<Place title="Workflows" bleed>
-				<Split
-					list={
-						<List
-							items={["Nightly"]}
-							row={{ key: (name) => name, title: (name) => name }}
-						/>
-					}
-					main={
-						<>
-							<ItemHeader
-								title="Nightly release"
-								facts={[
-									"Ana Ruiz",
-									"Saved today at 09:41",
-									"Run 4 of 6",
-									"Parked on the check step",
-									"Owner: Release team",
-								]}
-							/>
-							<Banner
-								kind="danger"
-								sentence="The save was refused: two steps have no way out, and the check step has no owner. Fix both before the workflow can run again, or restore the last saved version from the history and make the change again from there, one step at a time."
-							/>
-							<Banner
-								kind="warn"
-								sentence="The workflow is empty on its third branch, and the run is parked until someone looks at it. The last run stopped at the check step after two retries, and nothing after it has run since the branch was added to the workflow."
-							/>
-							<Canvas
-								label="Workflow"
-								nodes={WORKFLOW.nodes}
-								edges={WORKFLOW.edges}
-								groups={WORKFLOW.groups}
-								onSelect={props.selected}
-							/>
-						</>
-					}
-				/>
+			<Place>
+				<Pane title="Workflows" wide>
+					<ItemHeader
+						title="Nightly release"
+						facts={[
+							"Ana Ruiz",
+							"Saved today at 09:41",
+							"Run 4 of 6",
+							"Parked on the check step",
+							"Owner: Release team",
+						]}
+					/>
+					<Banner
+						kind="danger"
+						sentence="The save was refused: two steps have no way out, and the check step has no owner. Fix both before the workflow can run again, or restore the last saved version from the history and make the change again from there, one step at a time."
+					/>
+					<Banner
+						kind="warn"
+						sentence="The workflow is empty on its third branch, and the run is parked until someone looks at it. The last run stopped at the check step after two retries, and nothing after it has run since the branch was added to the workflow."
+					/>
+					<Canvas
+						label="Workflow"
+						nodes={WORKFLOW.nodes}
+						edges={WORKFLOW.edges}
+						groups={WORKFLOW.groups}
+						onSelect={props.selected}
+					/>
+				</Pane>
 			</Place>
 		</div>
 	);
@@ -1060,10 +1052,11 @@ function screenAt(width: number, height: number): Story {
 		},
 		play: async ({ args, canvas, canvasElement }) => {
 			const region = await laidOut(canvas);
-			const column =
-				canvasElement.querySelector<HTMLElement>("[data-split] > div");
-			const inset = region.parentElement;
-			if (!column || !inset) throw new Error("no main");
+			const column = region.parentElement;
+			const inset = column;
+			if (!column || !inset) throw new Error("no body");
+			// The first layout brought the canvas into view; the page starts at its top.
+			column.scrollTop = 0;
 			// The floor: half the room the inset leaves its content, and the column
 			// scrolls past it, so the head and the banners are not what the canvas
 			// shrinks to make room for.

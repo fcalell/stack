@@ -71,7 +71,7 @@ export interface ActionBarProps extends Closed {
 	// A selection bar's count, "N of M chosen" at meta over the acts (a
 	// `Table`'s `choose` set against its rows), with
 	// `onAll` a select-all and a deselect-all act beside it. Docked as a
-	// `Place`'s `foot`, its column centred in it.
+	// `Pane`'s `foot`, its column centred in it.
 	chosen?: ChosenCount;
 	// The acts wait: a count of act-shaped bars, `true` standing for one (the
 	// acts are unknown before the read, so give `acts` as `[]`). A number from 1
@@ -137,8 +137,8 @@ function Chosen({ chosen }: { chosen: ChosenCount }) {
 }
 
 // The acts that close a form, a sheet or a confirm, stacked across the
-// container with the filled act on top. A Screen pins it above the home
-// indicator; a Form or a Sheet keeps it in flow. A promise the filled act's
+// container with the filled act on top. A Pane's `foot` docks it; a Form
+// or a Sheet keeps it in flow. A promise the filled act's
 // `onAct` returns keeps it pending until it settles, and the others ignore
 // the press meanwhile. The last blocked act's reason stands at rest under the
 // acts, so the act keeps its row and stretches as a live one does. With `chosen` the count

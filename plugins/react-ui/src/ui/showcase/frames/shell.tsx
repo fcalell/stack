@@ -1,13 +1,14 @@
 import type { PlaceSpec, Switcher } from "@fcalell/ui-core/descriptors";
 import { Banner } from "../../components/banner/index.tsx";
+import { Pane } from "../../components/pane/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { Shell } from "../../components/shell/index.tsx";
 import { MarkProvider } from "../../lib/mark.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { MARK } from "./gate.tsx";
 import { StandInList } from "./layout-context.tsx";
+import { Deployment } from "./pane.tsx";
 import { ACTIONS, Column, MORE, Opened } from "./place.tsx";
-import { Deployment } from "./screen.tsx";
 
 const act = () => {};
 
@@ -52,13 +53,17 @@ function Frame() {
 		<Column>
 			<MarkProvider mark={MARK}>
 				<Shell places={places()} banner={BANNER} switcher={SWITCHER}>
-					<Place
-						title="Deploys"
-						actions={ACTIONS}
-						more={MORE}
-						act={{ label: "Deploy", onAct: act }}
-					>
-						<StandInList />
+					<Place>
+						<Pane
+							title="Deploys"
+							actions={[
+								...ACTIONS,
+								{ icon: "Plus" as const, label: "Deploy", onAct: act },
+							]}
+							more={MORE}
+						>
+							<StandInList />
+						</Pane>
 					</Place>
 				</Shell>
 			</MarkProvider>
@@ -69,7 +74,7 @@ function Frame() {
 // The Shell holding a Place, one frame per state on the resting row glyph
 // (the sidebar's) and the idle tab (the tab bar's); the body name cell at
 // rest draws the switcher's pick open, and on touch the selected tab at rest
-// the Shell holding a pushed Screen, which covers the tab bar. The other
+// the Shell holding a covering Pane, under which the tab bar stands. The other
 // cells are drawn inside those frames.
 export function drawShell(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;

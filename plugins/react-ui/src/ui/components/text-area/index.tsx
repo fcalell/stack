@@ -11,12 +11,12 @@ import { caretAtEnd } from "../../lib/caret.ts";
 import type { Closed } from "../../lib/closed.ts";
 import { useCommit } from "../../lib/commit.ts";
 import { FormStands } from "../../lib/form.ts";
-import { ThreadRoom } from "../../lib/frame.ts";
 import {
 	BOX_FOCUS,
 	POINTER_FOCUS_EDGE,
 	useModality,
 } from "../../lib/modality.ts";
+import { SectionContext } from "../../lib/section.ts";
 
 // The box draws the field's states, as `Input`'s does.
 const BOX = "flex flex-col";
@@ -66,7 +66,9 @@ export function TextArea({
 }: TextAreaProps) {
 	useModality();
 	const source = kind === "source";
-	const fills = source && use(ThreadRoom) && use(FormStands) === "page";
+	// A source field fills the page form it stands in; among a page's sections
+	// it grows with its value.
+	const fills = source && !use(SectionContext) && use(FormStands) === "page";
 	const commit = useCommit(value, onChange, onCommit, false);
 	const count = budget === undefined ? undefined : wordCount(value);
 	return (

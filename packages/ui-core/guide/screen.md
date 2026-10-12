@@ -25,8 +25,9 @@ at the calibre of the anchor apps in [references](./references.md), each noted w
 Open the platform's rules page (`node_modules/@fcalell/plugin-react-ui/guide/rules.md`, or
 `plugin-native-ui`'s), `node_modules/@fcalell/ui-core/DESIGN.md` for cells, states and tokens,
 and each component's `src/ui/components/<dir>/index.tsx` for its props. Map each part to one
-component: the frame (`Shell`, `Place` in the shell, `Screen` pushed over it, `Split` for a list
-beside its record, `Gate` for a page outside the shell: sign-in, a consent step), the rhythm (`Section` over a `Group` or a `List`), each control and text role.
+component: the frame (`Shell`, `Place` in the shell holding a `Pane` for each step into a list and
+its record, a `cover` `Pane` pushed over it, `Gate` for a page outside the shell: sign-in, a
+consent step), the rhythm (`Section` over a `Group` or a `List`), each control and text role.
 
 A part no component composes (a component, variant, token or state the roster lacks) is a gap:
 leave it out, compose the rest, and file it by `node_modules/@fcalell/cli/guide/gap.md`.

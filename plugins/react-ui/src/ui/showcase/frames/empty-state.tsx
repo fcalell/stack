@@ -4,6 +4,7 @@ import { EmptyState } from "../../components/empty-state/index.tsx";
 import { Failed } from "../../components/failed/index.tsx";
 import { Gate } from "../../components/gate/index.tsx";
 import { Group } from "../../components/group/index.tsx";
+import { Pane } from "../../components/pane/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
@@ -19,7 +20,9 @@ const PROJECTS = "A project holds the deploys, domains and logs of one app.";
 function Tall(props: { title: string; children: ReactNode }) {
 	return (
 		<div className="flex flex-col h-dvh">
-			<Place title={props.title}>{props.children}</Place>
+			<Place>
+				<Pane title={props.title}>{props.children}</Pane>
+			</Place>
 		</div>
 	);
 }
@@ -45,21 +48,23 @@ export function drawEmptyState(frame: ShowcaseFrame) {
 	)
 		return (
 			<Column>
-				<Place title="Settings">
-					<Section
-						title="Webhooks"
-						description="Where Acme posts deploy events."
-					>
-						<EmptyState
-							icon="Webhook"
-							title="No endpoints"
-							sentence="Add an endpoint to receive an event each time a deploy finishes."
-							act={{ label: "Add endpoint", onAct: act }}
-						/>
-					</Section>
-					<Section title="Needs you">
-						<EmptyState sentence="Nothing needs you." />
-					</Section>
+				<Place>
+					<Pane title="Settings">
+						<Section
+							title="Webhooks"
+							description="Where Acme posts deploy events."
+						>
+							<EmptyState
+								icon="Webhook"
+								title="No endpoints"
+								sentence="Add an endpoint to receive an event each time a deploy finishes."
+								act={{ label: "Add endpoint", onAct: act }}
+							/>
+						</Section>
+						<Section title="Needs you">
+							<EmptyState sentence="Nothing needs you." />
+						</Section>
+					</Pane>
 				</Place>
 			</Column>
 		);

@@ -130,26 +130,29 @@ export function touchVariant(): CssBlock {
 	};
 }
 
-// A page (a Place or a Screen) is the `page` size container, and
+// A Pane is the `page` size container and a Place the `place` one:
 // `page-<breakpoint>:` / `page-max-<breakpoint>:` draw from or below a
-// breakpoint's width of it, so a molecule inside decides its regions by the
-// page's width rather than the viewport's.
+// breakpoint's width of the Pane, so a molecule inside decides its form by
+// the room its Pane has rather than the viewport's, and `place-…:` by the
+// Place's, which is how a Pane knows whether its Place stands it alone.
 export function pageVariants(): CssBlock[] {
-	return BREAKPOINTS.flatMap((bp) => {
-		const px = `${BREAKPOINT_PX[bp]}px`;
-		return [
-			{
-				kind: "variant",
-				name: `page-${bp}`,
-				content: `@container page (width >= ${px}) {\n\t@slot;\n}`,
-			},
-			{
-				kind: "variant",
-				name: `page-max-${bp}`,
-				content: `@container page (width < ${px}) {\n\t@slot;\n}`,
-			},
-		];
-	});
+	return (["page", "place"] as const).flatMap((container) =>
+		BREAKPOINTS.flatMap((bp): CssBlock[] => {
+			const px = `${BREAKPOINT_PX[bp]}px`;
+			return [
+				{
+					kind: "variant",
+					name: `${container}-${bp}`,
+					content: `@container ${container} (width >= ${px}) {\n\t@slot;\n}`,
+				},
+				{
+					kind: "variant",
+					name: `${container}-max-${bp}`,
+					content: `@container ${container} (width < ${px}) {\n\t@slot;\n}`,
+				},
+			];
+		}),
+	);
 }
 
 // `pb-safe` keeps a bottom bar clear of the home indicator and `pt-safe` the

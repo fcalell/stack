@@ -11,9 +11,6 @@ const ROW = "flex flex-wrap items-center";
 // line truncates its value instead of holding the row at its full label.
 const ACTS = "min-w-0";
 const SEARCH = "flex grow min-w-0 touch:w-full";
-// Below `tablet` of its page, with a record standing alone (its Split marked
-// `data-record`), the strip leaves with the list it works on.
-const BEHIND = "page-max-tablet:group-has-data-record/page:hidden";
 
 /** A strip of controls over a list. */
 export interface ToolbarProps extends Closed {
@@ -32,7 +29,7 @@ export function Toolbar({ children }: ToolbarProps) {
 		else acts.push(child);
 	}
 	return (
-		<div className={cn(TOOLBAR, STRIP, BEHIND)}>
+		<div className={cn(TOOLBAR, STRIP)}>
 			<div className={cn(TOOLBAR_ROW, ROW)}>
 				{search.length > 0 ? <div className={SEARCH}>{search}</div> : null}
 				{acts.length > 0 ? (

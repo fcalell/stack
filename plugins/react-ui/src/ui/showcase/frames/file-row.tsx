@@ -26,7 +26,7 @@ const FILE: FileSlots<File> = {
 	chip: (file) => file.chip,
 };
 
-// Board 51's review list at the Split's list width, the long path cut.
+// Board 51's review list at a list Pane's width, the long path cut.
 const REVIEW: File[] = [
 	{
 		path: "src/billing/invoice.ts",

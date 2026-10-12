@@ -9,17 +9,10 @@ import {
 	retryOf,
 	WAITING_MESSAGES,
 } from "@fcalell/ui-core/list-state";
+import { THREAD } from "@fcalell/ui-core/variants";
 import {
-	FOOT_DOCKED,
-	THREAD,
-	THREAD_LOG,
-	THREAD_UNDER_HEAD,
-} from "@fcalell/ui-core/variants";
-import {
-	Children,
-	Fragment,
-	isValidElement,
 	memo,
+	type ReactElement,
 	type ReactNode,
 	type RefObject,
 	useContext,
@@ -33,8 +26,6 @@ import {
 	FootPlace,
 	FootRegion,
 	FootReturn,
-	ThreadBleeds,
-	ThreadRoom,
 	useFootRegion,
 } from "../../lib/frame";
 import { Lifted } from "../../lib/hosts";
@@ -47,23 +38,23 @@ import { Message } from "../message";
 import { WaitingReply } from "../message/waiting";
 import { Missing } from "../missing";
 import type { QueryLike } from "../query-boundary";
-import { ToastRoom } from "../toast/room";
 import { Latest } from "./latest";
 
-const FILL = "flex-1";
-// In a Split's main the Thread bleeds through the inset the record's head
-// keeps, under the head's hairline.
-const BLEED = "-mx-page";
+// The thread fills what it stands in by plain flex: in a Pane's body, whose
+// content grows to the screen, it takes the free height and its log scrolls.
+// The input stands a sections gap under the log.
+const FILL = "flex-1 min-h-0";
 // The region over the foot: the log, and the Latest act floating at its foot.
 // It clips what it holds, so where a docked foot leaves it no room nothing
 // paints over the foot's head or the header.
 const REGION = "relative flex-1 overflow-hidden";
 const LOG = "flex-1";
 // The log is drawn upside down, its newest message at its origin (see
-// `INVERTED`), so `THREAD_LOG`'s top and bottom insets swap, and a short log
-// stands at its layout end, the top of the screen.
-const UPSIDE_DOWN = "grow justify-end pt-sections pb-page";
-const DOCKED = "shrink-0 items-center";
+// `INVERTED`), so a short log stands at its layout end, the top of the
+// region. The Pane's inset is the log's: it draws none of its own.
+const UPSIDE_DOWN = "grow justify-end";
+// What the foot holds shrinks to its bound, so a docked form scrolls inside it.
+const DOCKED = "shrink-0 min-h-0";
 // The log is at its end while its newest point shows.
 const AT_END = 1;
 // The log and each message in it turn upside down, as React Native's
@@ -189,46 +180,46 @@ function ThreadItemBase<T>({
 // the base's own type.
 const ThreadItem = memo(ThreadItemBase) as typeof ThreadItemBase;
 
-// What the log holds in the thread's state: the waiting turns, the failed
-// or the empty EmptyState, or the messages oldest first.
+// What the log holds in the thread's state, oldest first, each part keyed:
+// the waiting turns, the failed or the empty EmptyState, or the messages.
 function logOf<T>(
 	props: ThreadProps<T>,
 	state: ListState,
 	retry: string,
 	slots: RefObject<MessageSlots<T>>,
-): ReactNode {
+): ReactElement[] {
 	if (state === "pending")
 		return WAITING_MESSAGES.map(({ key, author }) => (
 			<Message key={key} author={author} body="" loading />
 		));
-	if (state === "missing") return <Missing />;
+	if (state === "missing") return [<Missing key="missing" />];
 	if (state === "failed" && props.query !== undefined)
-		return (
+		return [
 			<EmptyStateBase
+				key="failed"
 				tone="failed"
 				sentence={props.sentence}
 				act={{ label: retry, onAct: retryOf(props.query) }}
-			/>
-		);
+			/>,
+		];
 	if (state === "empty" && props.empty)
-		return <EmptyStateBase tone="rest" {...props.empty} />;
+		return [<EmptyStateBase key="empty" tone="rest" {...props.empty} />];
 	const items = (props.query ? props.query.data : props.items) ?? [];
-	return [
-		...items.map((item) => (
-			<ThreadItem key={props.message.key(item)} item={item} slots={slots} />
-		)),
-		props.replying ? <WaitingReply key="replying" /> : null,
-	];
+	const messages = items.map((item) => (
+		<ThreadItem key={props.message.key(item)} item={item} slots={slots} />
+	));
+	return props.replying
+		? [...messages, <WaitingReply key="replying" />]
+		: messages;
 }
 
 // The messages a sections gap apart, one rung above a reply's block gap, and
-// the input a sections gap under them, in the screen's column (native draws
-// the touch structure, so no measure-wide column). In a Place's body it
-// fills the page, and in a Split's record the record under its head: the log scrolls at the page inset, opening at the newest
-// message and following each that arrives while the reader is at the end,
-// the input docked at the foot over the keyboard; while the reader is scrolled
-// up, a Latest act floats centred above the foot and returns to the newest
-// message. It draws its
+// the input a sections gap under them. It fills what it stands in (a Pane's
+// body) by plain flex: the log scrolls inside it at the Pane's inset, opening
+// at the newest message and following each that arrives while the reader is at
+// the end, the input docked at the foot over the keyboard; while the reader is
+// scrolled up, a Latest act floats centred above the foot and returns to the
+// newest message. It draws its
 // collection's states, the input under each: while its query is pending,
 // `loading` is set or a loading `Section` holds it, Message's loading forms (another's reply, yours,
 // another's reply), the log at its end; a failed query, the failed
@@ -255,8 +246,6 @@ export function Thread<T>(props: ThreadProps<T>) {
 	const state = listState(input);
 	const children = logOf(props, state, words.retry, slots);
 
-	const fill = useContext(ThreadRoom);
-	const bleeds = useContext(ThreadBleeds);
 	const log = useRef<ScrollView>(null);
 	// The claim a docked sheet leaves the foot for the input that returns.
 	const claim = useRef(false);
@@ -268,32 +257,19 @@ export function Thread<T>(props: ThreadProps<T>) {
 		setAway(false);
 		log.current?.scrollTo({ y: 0, animated: false });
 	};
-	if (!fill)
-		return (
-			<View className={THREAD}>
-				{children}
-				{foot ? (
-					<FootPlace.Provider value="inline">
-						<FootReturn.Provider value={claim}>{foot}</FootReturn.Provider>
-					</FootPlace.Provider>
-				) : null}
-			</View>
-		);
 	// Newest first, each upside down inside the upside-down log, so it reads
 	// the right way up with the newest at the bottom.
-	const cells = Children.toArray(children)
-		.reverse()
-		.map((child) => (
-			<View key={isValidElement(child) ? child.key : null} style={INVERTED}>
-				{child}
-			</View>
-		));
+	const cells = children.reverse().map((child) => (
+		<View key={child.key} style={INVERTED}>
+			{child}
+		</View>
+	));
 	return (
 		<Lifted
 			behavior="padding"
 			automaticOffset
 			onLayout={region.onLayout}
-			className={cn(FILL, bleeds && THREAD_UNDER_HEAD, bleeds && BLEED)}
+			className={cn(FILL, THREAD)}
 		>
 			<View className={REGION}>
 				<ScrollView
@@ -309,16 +285,14 @@ export function Thread<T>(props: ThreadProps<T>) {
 						setAway(event.nativeEvent.contentOffset.y > AT_END)
 					}
 					className={LOG}
-					contentContainerClassName={cn(THREAD, THREAD_LOG, UPSIDE_DOWN)}
+					contentContainerClassName={cn(THREAD, UPSIDE_DOWN)}
 				>
 					{cells}
 				</ScrollView>
 				<Latest onBack={away ? toLatest : null} />
-				{/* The page's toasts stand over the log, above the docked input. */}
-				<ToastRoom />
 			</View>
 			{foot ? (
-				<View className={cn(FOOT_DOCKED, DOCKED)}>
+				<View className={DOCKED}>
 					<FootPlace.Provider value="docked">
 						<FootRegion.Provider value={region.value}>
 							<FootReturn.Provider value={claim}>{foot}</FootReturn.Provider>
@@ -327,18 +301,5 @@ export function Thread<T>(props: ThreadProps<T>) {
 				</View>
 			) : null}
 		</Lifted>
-	);
-}
-
-// Whether a Thread stands in a frame's region as its direct child, or in a
-// fragment there (a record's head over its conversation): the region then
-// gives it the rest of its height from its first render, its element type
-// unchanged, so nothing in it remounts when the Thread arrives.
-export function holdsThread(node: ReactNode): boolean {
-	return Children.toArray(node).some(
-		(child) =>
-			isValidElement<{ children?: ReactNode }>(child) &&
-			(child.type === Thread ||
-				(child.type === Fragment && holdsThread(child.props.children))),
 	);
 }

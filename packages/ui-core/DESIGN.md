@@ -1702,10 +1702,6 @@ components:
     rounded: "{rounded.row}"
     textColor: "{colors.ink-body-dark}"
     typography: "{typography.caption}"
-  split-main-rest:
-    padding: "{spacing.page}"
-  split-main-empty:
-    padding: "{spacing.page}"
   step-count-segment-done:
     height: "{spacing.meter}"
     rounded: "{rounded.chip}"
@@ -1972,12 +1968,6 @@ components:
     typography: "{typography.meta}"
   file-path:
     typography: "{typography.code}"
-  floating-act:
-    padding: "{spacing.page}"
-  floating-act-lift:
-    rounded: "{rounded.control}"
-  floating-act-room:
-    height: "{spacing.control}"
   foot-docked:
     backgroundColor: "{colors.raised}"
   foot-docked-dark:
@@ -2300,8 +2290,6 @@ components:
     rounded: "{rounded.full}"
   spinner-track:
     rounded: "{rounded.full}"
-  split-pane:
-    padding: "{spacing.page}"
   stage-check:
     textColor: "{colors.canvas}"
   stage-check-dark:
@@ -2548,7 +2536,7 @@ Sizes are heights and squares in the same namespace. Density is a theme and neve
 | `row` | 32px | 48px | 48 | a one-line row |
 | `row-2` | 52px | 64px | 64 | a two-line row |
 | `row-setting` | 64px | 72px | 72 | a setting row: label and description beside a control |
-| `strip` | 40px | 44px | 44 | a page header bar: a Place's or Screen's title and acts |
+| `strip` | 40px | 44px | 44 | a Pane's header bar: its title and acts |
 | `target` | 28px | 44px | 44 | the least hit area of any interactive part |
 | `indent` | 16px | 20px | 20 | a tree row's step in: one per level, a hairline rail on its end |
 | `dot` | 6px | 8px | 8 | a status or chip mark |
@@ -2584,11 +2572,11 @@ Sizes are heights and squares in the same namespace. Density is a theme and neve
 | `line-body` | 22px | 24px | 24 | one body line's box: a part on a wrapped title's first line is pinned to it |
 | `icon-inset` | 7px | 12px | 12 | the gap between an icon act's box and its glyph: half of what the control has over its icon, which a bar of acts reaches across so the glyphs stand at its edges |
 | `measure` | 488px | 557px | 557 | the width of running text: 58 characters at the sans face's figure advance of the body size, one width for every role of text |
-| `measure-inset` | 536px | 589px | 653 | the width of a column that holds the measure inside the page inset on both sides: a Split's open record |
+| `measure-inset` | 536px | 589px | 653 | the width of a column that holds the measure inside the page inset on both sides |
 
 An icon's stroke is a weight on Lucide's 24-unit grid, so it scales with the icon: `line` 2, an icon's own, and `mark` 3.5, a mark that carries meaning at the meta size (a checkbox's tick and dash, a change mark's glyph), which at 14px draws 2.0416666666666665 px where `line` draws 1 px across two pixel rows at half coverage. No component spells a stroke number.
 
-Widths of lifted layers, never stretched to their container, and of a frame's fixed regions: `measure-short` 18ch (native 173px, at the body size, so a label's own size is lost there), `popover` 240px, `toast` 360px, `dialog` 520px, `sheet` 640px, `sidebar` 240px, `list` 360px, `pane` 320px, `region-min` 240px, `column` 300px, `node` 240px, `auth` 400px, `empty` 320px, `selection` 1060px. Breakpoints: `tablet` 768px, `desktop` 1024px, `wide` 1200px; they are the only responsive variants, of the viewport (`tablet:`) and, on the web, of a page's width (`page-tablet:`, `page-max-tablet:`), by which a Split decides its regions.
+Widths of lifted layers, never stretched to their container, and of a frame's fixed regions: `measure-short` 18ch (native 173px, at the body size, so a label's own size is lost there), `popover` 240px, `toast` 360px, `dialog` 520px, `sheet` 640px, `sidebar` 240px, `list` 360px, `pane` 320px, `region-min` 240px, `column` 300px, `node` 240px, `auth` 400px, `empty` 320px, `selection` 1060px. Breakpoints: `tablet` 768px, `desktop` 1024px, `wide` 1200px; they are the only responsive variants, of the viewport (`tablet:`) and, on the web, of a Pane's width (`page-tablet:`, `page-max-tablet:`) and of a Place's (`place-max-tablet:`), by which a Place stands its last Pane alone.
 
 ## Elevation & Depth
 
@@ -2633,10 +2621,9 @@ A docked sheet's body keeps `docked-floor` (144px on touch, 96px on the desktop)
 | `Spinner` | atom | `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC` | rest |
 | `Avatar` | atom | `AVATAR`, `AVATAR_LABEL` | rest |
 | `Link` | atom | `LINK`, `LINK_TARGET` | rest, hover, focus, active |
-| `Place` | layout | `PAGE_HEAD`, `PAGE_HEAD_ROOM`, `PAGE_TOP_BAR`, `PAGE_TOP_BAR_TOUCH`, `PAGE_TOP_BAR_START`, `PAGE_TOP_BAR_END`, `PAGE_TITLE`, `PAGE_TITLE_BLOCK`, `PAGE_HEAD_WRAPS`, `TEXT.role.title`, `WORD_ACT`, `PICKER_VALUE`, `ICON.fit.meta`, `CHIP`, `CHIP_LABEL`, `PAGE_BODY`, `FOOT_DOCKED`, `PAGE_BODY_OVER_FOOT`, `FLOATING_ACT`, `FLOATING_ACT_LIFT`, `FLOATING_ACT_ROOM`, `FLOATING_ACT_FOOT`, `BUTTON.act.primary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.primary`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
+| `Place` | layout | none | rest |
+| `Pane` | layout | `PAGE_HEAD`, `PAGE_HEAD_ROOM`, `PAGE_TOP_BAR`, `PAGE_TOP_BAR_START`, `PAGE_TOP_BAR_END`, `PAGE_TITLE_FLOOR`, `PAGE_TITLE_BLOCK`, `PAGE_HEAD_WRAPS`, `TEXT.role.title`, `PAGE_BODY`, `FOOT_DOCKED`, `PAGE_BODY_OVER_FOOT`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
 | `Gate` | layout | `GATE`, `GATE_COLUMN`, `GATE_FLOW`, `GATE_STEP`, `GATE_MARK`, `GATE_MARK_ROW`, `GATE_LOGO`, `TEXT.role.title`, `TEXT.role.meta`, `TEXT.role.body`, `TEXT_STRONG.role.body` | rest |
-| `Screen` | layout | `PAGE_HEAD`, `PAGE_TOP_BAR`, `PAGE_TOP_BAR_START`, `PAGE_TOP_BAR_END`, `PAGE_TITLE_FLOOR`, `PAGE_TITLE_BLOCK`, `PAGE_HEAD_WRAPS`, `TEXT.role.title`, `PAGE_BODY`, `PAGE_BODY_BESIDE`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
-| `Split` | layout | `SPLIT_LIST`, `SPLIT_LIST_STACK`, `SPLIT_MAIN`, `SPLIT_BESIDE`, `SPLIT_PANE`, `ICON_BUTTON.fit.bar` | rest, empty |
 | `Section` | layout | `SECTION`, `SECTION_HEAD`, `SECTION_HEAD_ROW`, `SECTION_ACTS`, `SECTION_BODY`, `SECTION_TITLE`, `SECTION_TOGGLE`, `SECTION_NESTED_TITLE`, `TEXT.role.heading`, `TEXT.role.meta`, `ICON.fit.body`, `COUNT`, `COUNT_LABEL`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive`, `ICON_BUTTON.fit.bar`, `SKELETON.kind.count`, `SKELETON.kind.line`, `SKELETON.kind.field`, `SKELETON_ROW.kind.field`, `TEXT.role.caption`, `LINE_BOX.role.body` | rest, hover, focus, active, disabled, loading |
 | `Group` | layout | `GROUP` | rest, loading |
 | `List` | layout | `LIST`, `LIST_TREE`, `LIST_DIVIDED` | rest, loading, error, empty |
@@ -2676,10 +2663,10 @@ A docked sheet's body keeps `docked-floor` (144px on touch, 96px on the desktop)
 | `Stats` | content | `LINK_TARGET`, `COUNT_LINKS`, `FIGURES`, `LINE_BOX.role.figure`, `LINE_BOX.role.meta`, `LINK.fit.standalone`, `SKELETON.kind.line`, `STATS`, `STATS_CELL`, `STATS_EDGE`, `STATS_FIGURE`, `TEXT.role.figure`, `TEXT.role.meta` | rest, loading |
 | `Stat` | content | `LINE_BOX.role.display`, `LINE_BOX.role.meta`, `SKELETON.kind.line`, `STAT`, `STAT_FIGURE`, `TEXT.role.display`, `TEXT.role.meta` | rest, loading |
 | `BarChart` | content | `CHART`, `CHART_BAND`, `CHART_BODY`, `CHART_FILL`, `CHART_GRID`, `CHART_HEAD`, `CHART_KEY`, `CHART_KEYS`, `CHART_KEY_DOT`, `CHART_MAIN`, `CHART_PART_SPLIT`, `CHART_TICK_LANE`, `CHART_TOTAL`, `FIGURES`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `SKELETON.kind.chart`, `SKELETON.kind.line`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body` | rest, loading, error, empty |
-| `Thread` | content | `THREAD`, `THREAD_COLUMN`, `THREAD_LOG`, `THREAD_UNDER_HEAD`, `FOOT_DOCKED`, `THREAD_LATEST` | rest, loading, error, empty |
+| `Thread` | content | `THREAD`, `THREAD_COLUMN`, `FOOT_DOCKED`, `THREAD_LATEST` | rest, loading, error, empty |
 | `QrCode` | content | `QR_CODE`, `QR_TILE` | rest, loading |
 | `Image` | content | `IMAGE`, `IMAGE_PICTURE`, `IMAGE_FULL`, `IMAGE_CLOSE`, `IMAGE_FAILED_INK`, `ICON.fit.body`, `ICON_BUTTON.fit.body`, `TEXT.role.meta`, `SCRIM` | rest, hover, focus, active, loading, error |
-| `Canvas` | content, web only | `SKELETON.kind.icon`, `SKELETON.kind.line`, `SKELETON_LANE.role.meta`, `LINE_BOX.role.meta`, `CANVAS_GROUND`, `CANVAS_NODE`, `CANVAS_NODE_TEXT`, `CANVAS_NODE_GLYPH`, `CANVAS_NODE_NAME`, `CANVAS_PORT`, `CANVAS_PORT_HIT`, `CANVAS_GROUP`, `CANVAS_GROUP_HEAD`, `CANVAS_ZOOM`, `CANVAS_UNDER_HEAD`, `ICON.fit.meta`, `ICON.fit.body`, `ICON_BUTTON.fit.body`, `BUTTON.act.quiet`, `BUTTON.fit.body`, `BUTTON_LABEL.act.quiet`, `COUNT`, `COUNT_LABEL`, `CHIP.family.neutral`, `CHIP.trailing.none`, `CHIP_LABEL.family.neutral`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC` | rest, selected, loading, empty |
+| `Canvas` | content, web only | `SKELETON.kind.icon`, `SKELETON.kind.line`, `SKELETON_LANE.role.meta`, `LINE_BOX.role.meta`, `CANVAS_GROUND`, `CANVAS_NODE`, `CANVAS_NODE_TEXT`, `CANVAS_NODE_GLYPH`, `CANVAS_NODE_NAME`, `CANVAS_PORT`, `CANVAS_PORT_HIT`, `CANVAS_GROUP`, `CANVAS_GROUP_HEAD`, `CANVAS_ZOOM`, `ICON.fit.meta`, `ICON.fit.body`, `ICON_BUTTON.fit.body`, `BUTTON.act.quiet`, `BUTTON.fit.body`, `BUTTON_LABEL.act.quiet`, `COUNT`, `COUNT_LABEL`, `CHIP.family.neutral`, `CHIP.trailing.none`, `CHIP_LABEL.family.neutral`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC` | rest, selected, loading, empty |
 
 A component owns the tokens it may draw: a cell it draws that spells a type role, a colour, a radius, a spacing role, a size or a shadow outside its row is a contract error. A colour ending in `-` is a family (`chip-` is every chip role).
 
@@ -2704,10 +2691,8 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Spinner` | none | none | `full` | none | `spinner` | none |
 | `Avatar` | `caption` | `avatar-` | `full` | none | `avatar` | none |
 | `Link` | none | `accent-ink`, `ring` | none | none | `target` | none |
-| `Place` | `title`, `body`, `meta`, `caption` | `ink-body`, `ink-meta`, `edge`, `edge-raised`, `surface`, `raised`, `act-accent`, `on-act-accent`, `wash-hover`, `wash-press`, `danger`, `chip-` | `control`, `full` | `acts`, `page`, `sections`, `inside`, `control-x`, `rows`, `pair` | `strip`, `control`, `control-compact`, `popover`, `list`, `measure`, `target`, `icon-meta`, `chip`, `measure-short`, `icon-inset` | `float` |
+| `Pane` | `title` | `ink-body`, `ink-meta`, `edge`, `edge-raised`, `raised`, `wash-hover`, `wash-press` | `control` | `acts`, `page`, `sections`, `pair`, `inside` | `strip`, `control`, `control-compact`, `icon-inset`, `measure`, `target`, `list`, `region-min` | none |
 | `Gate` | `title`, `meta`, `body` | `ink-body`, `ink-meta`, `surface` | none | `page`, `sections`, `fields`, `inside` | `auth`, `avatar`, `gate-mark` | none |
-| `Screen` | `title` | `ink-body`, `ink-meta`, `edge` | `control` | `acts`, `page`, `sections`, `pair`, `inside` | `strip`, `control`, `control-compact`, `icon-inset`, `measure-inset` | none |
-| `Split` | none | `edge`, `ink-meta`, `surface` | `control` | `inside`, `page`, `sections` | `list`, `pane`, `region-min`, `control-compact`, `measure-inset` | none |
 | `Section` | `heading`, `meta`, `body`, `caption` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `danger` | `row`, `control`, `chip` | `pair`, `fields`, `inside`, `control-x`, `acts` | `icon`, `control-compact`, `skeleton`, `field`, `target` | none |
 | `Group` | none | `edge`, `surface` | `card` | none | none | none |
 | `List` | none | `edge` | none | `rows`, `control-x` | none | none |

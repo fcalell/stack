@@ -7,45 +7,66 @@ and never restyles them.
 
 ## Pick the component first
 
-Find the roster component that owns the shape: the frame (`Shell`, `Place`, `Screen`, `Split`, `Gate`),
+Find the roster component that owns the shape: the frame (`Shell`, `Place`, `Pane`, `Gate`),
 the rhythm (`Section`, `Group`, `List`), the row (`ListRow`, `DefinitionRow`, `FormField`), the
-control, the text role (`Text`). A host element that rebuilds one of these is drift. A `Split` is
-its page's frame region: it stands as the bleeding `Place`'s (or `Screen`'s) direct child, never
-inside a component of the app's, so the page's head draws its back and Details acts. Its back act
-returns to the place's route; a list that stands at a deeper route names it as `back`
-(`<Split back={treeRoute} …>`), which an open record returns to, whether its page is a `Place` or a
-pushed `Screen`, and a missing read in it leads to, ahead of the `Screen`'s own `back`. A list that
-stands alone at a deeper route is a pushed `Screen` whose `back` is the route above it, holding
-`<Split back={treeRoute} …>`: the `Screen`'s back act leads up while the list stands alone, and the
-`Split`'s `back` takes its place once a record is open. A `Place` whose list stands at a deeper route and keeps its toolbar and actions names the route above it as `up` (`<Place up={boardRoute} …>`): its back act leads there at every width while no record stands alone, in the switcher's stead on touch, and gives way to the record's back act once one is open.
+control, the text role (`Text`). A host element that rebuilds one of these is drift.
 
-A `Split` reads its regions against its page's width, not the viewport's, and in the `Shell` the page
-is the viewport less the 240 px sidebar. The list and the main stand together from a page `tablet`
-(768) wide, a 1008 px viewport; `beside` and `pane` stand from a page `wide` (1200) wide, a 1440 px
-viewport. Below them one region stands at a time. The list holds one width (`list`, 360) whatever it holds, loading or loaded, so the main never reflows as its rows arrive or change; the pane sizes to its content, between a floor (`region-min`, 240) and a ceiling (`pane` 320). The main takes the rest: the breakpoints are reckoned against the list and the pane's ceilings, so the main never has less than they leave. Never set a width on either.
-
-An app that selects a record opens the pane's sheet by passing `open` with `onClose` (the two stand
-together): `<Split open={selected} onClose={() => setSelected(false)} …>`. `open` stands the pane as
-its side sheet where the pane is not beside the main, below `wide` or beside a `beside` record, and
-draws nothing from `wide`, where the pane stands beside the main; `onClose` hears every close (the
-close act, Escape, the scrim, the Details act's sheet too), and the app clears `open` in it. A `Split`
-without them opens its sheet from the Details act alone.
-
-A record the open record links to opens beside it: the `Split`'s `beside` holds a `Screen` whose
-`back` is the open record's route. From `wide` it stands beside the main, its back act a Close at the head's end;
-below `wide` it stands in the main's place with its back act, and below `tablet` its head is the
-page's only head, its back act to the main. On touch a `Screen`, pushed or beside, is one row: the back act, the title wrapping, then the actions, Details and more; when the acts do not fit beside the title's floor they drop whole to a second line at the row's end. The record's title is an `h1` and its sections start at `h2`, at every width. Its body stands in the same column as a record in the main, at the measure inside the page inset at the region's start, so its sections, groups, code blocks and action bar end where a `Prose` does. The body's first child, an `ItemHeader`, stands a pair, not a sections gap, above an `ActionBar` or a `Banner` directly after it (a `Place`, a `Screen` or a `Split`'s `main`) and, in a `Split`'s `main` when it has no facts line, above the record's first section (not above a `Thread`). The body reads its own children, a fragment seen through: a head or bar reached through a wrapper component keeps the sections step. A record in a `Split`'s `main` carries its own acts: `ItemHeader`'s `actions` (icon acts) and `more` (the acts past them, in a menu) stand at the end of the head's first line, the overline's else the title's, at every width. Below `tablet`, where the record stands alone under the `Place`'s back act, they stay in the head: put them there and not also in the `Place`'s `actions` or `more`, so each act has one place. A `Place`'s own `actions` and `more` are the page's, not the record's. An `ItemHeader` fact that opens a sheet is `{ label, onOpen }` and one that goes to another route is `{ label, href }`: each draws the words and a chevron, the second as a link.
+A page is a `Place` holding its `Pane`s in order, each deeper one a step into what the one before
+it lists. The `Place` draws no bar and reads none of its children; each `Pane` draws its own bar
+and body:
 
 ```tsx
-<Split list={rows} main={<Item />} beside={<Screen title="Run 12" back={itemRoute}><Run /></Screen>} />
+<Place>
+  <Pane title="Agents" actions={[newAgent]}>…</Pane>
+  {open && <Pane title="Stead" back={agentsRoute}>…</Pane>}
+</Place>
 ```
 
-A `Place`'s `title` is the page's name at every density: a place that draws one section of a larger
-area titles itself with the section's name (`Repos`, not `System`), which the sidebar item or the tab
-carries; the app never picks another title for the phone. A `Group` or `List` standing directly in a
-`Place`'s body stands a page inset under the head's hairline, where a `Section`'s title stands a pair
-over its body: the page's title is a strip over a hairline, the section's a line of the body, and a
-list that should read as a section's own wants a `Section`.
+A `Pane`'s bar holds its `back` act, its `title` (the `h1`, a short phrase), its `actions` (icon
+acts; a create act is one, an `IconAct` with the `Plus` icon) and `more` (the acts past them, in a
+menu). There is no filled act and no Details act. On touch the shell's switcher leads the bar of a
+`Pane` with no `back`, and the bar is one row: the leading act, the title wrapping, then the
+actions and `more`; when the acts do not fit beside the title's floor they drop whole to a second
+line at the row's end.
+
+`back` is the route the `Pane` returns to. It draws as Back where the `Pane` stands alone (below
+`tablet` of its `Place`, first in it, or covering it) and as Close, at the bar's end, where another
+`Pane` stands before it. A list at a deeper route names the route above it as `back` on the first
+`Pane`; an open record is a `Pane` after the list whose `back` is the list's route; a read inside a
+`Pane` that answers not found leads to that `back`.
+
+A `Place` reads its own width, not the viewport's, and in the `Shell` that is the viewport less the
+240 px sidebar. Each `Pane` but the last holds one width (`list`, 360) whatever it holds, loading or
+loaded, and gives way to its floor (`region-min`, 240) as the `Place` narrows, so a `Pane` never
+moves as its rows arrive; the last takes the rest, and a hairline stands between them. Below `tablet`
+(768) of the `Place`, a 1008 px viewport in the `Shell`, only the last `Pane` stands. A `cover`
+`Pane` spans its `Place` and the `Pane`s before it are hidden. Hidden `Pane`s stay mounted, so they
+keep their scroll and typed text, and out of the tab order. Never set a width on a `Pane`.
+
+The shape of a page is its `Pane`s. A list and the record it opens are two; with nothing open the
+list's `Pane` is the last and takes the room. A record the open record links to is one more `Pane`
+after it, and what a record's details held is a deeper `Pane`, never a sheet. A page pushed over the
+current one (a form, a step) is a `cover` `Pane` with `back`. A `Pane` that opens from a press in
+another takes the keyboard on its first control, so the next Tab is not the list's next row.
+
+A `Pane`'s body scrolls under its bar. Its children stand a `sections` gap apart at the page inset,
+within `measure` (58 characters, 488 px on the desktop) aligned to the start, so a label stays near
+its value and a Save near the fields it saves: never wrap sections in a `div` to space them, and
+never cap one with a host class. `wide` lifts the limit for a `Pane` whose content is that wide
+thing (a `Canvas`, a code `Diff`); a wide table in a reading `Pane` scrolls sideways inside its
+column. The `Pane`'s title is an `h1` and its sections start at `h2`. A `Pane` is the `page` size
+container, so what stands in it reads its width (a `Table` whether it is `tablet` wide); the `Place`
+is the `place` container the `Pane`s read.
+
+An `ItemHeader` fact that opens a sheet is `{ label, onOpen }` and one that goes to another route is
+`{ label, href }`: each draws the words and a chevron, the second as a link.
+
+The first `Pane`'s `title` is the page's name at every density: a place that draws one section of
+a larger area titles itself with the section's name (`Repos`, not `System`), which the sidebar item
+or the tab carries; the app never picks another title for the phone. A `Group` or `List` standing
+directly in a `Pane`'s body stands a page inset under the bar's hairline, where a `Section`'s title
+stands a pair over its body: the `Pane`'s title is a bar over a hairline, the section's a line of
+the body, and a list that should read as a section's own wants a `Section`.
 
 ## Classes are geometry, on host elements only
 
@@ -65,7 +86,7 @@ shadow, weight, tone, transition or state is a look, and a numeric dimension is 
 
 Every colour, size, radius and spacing is a contract token; never an arbitrary value
 (`h-[34px]`), a literal colour or a raw pixel size. Copy renders through `Text` (`body` or `meta`,
-with `strong`) or the molecule that owns its role (`title` is `Place`'s, `Screen`'s, `Gate`'s and `ItemHeader`'s, `heading`
+with `strong`) or the molecule that owns its role (`title` is `Pane`'s, `Gate`'s and `ItemHeader`'s, `heading`
 `Section`'s (a `Section` inside a `Section` names itself at `body` semibold, a level below), `figure` `Stats`', `display` `Stat`'s); colour comes through a component's props.
 
 ## A picture is an `Image`
@@ -88,36 +109,10 @@ square and takes none.
 <Image src={shot.url} alt={shot.title} aspect={shot.width / shot.height} />
 ```
 
-## A page read in a context names it beside its title
-
-A page read in a context (Live, one change set, a past version) takes `context` on its `Place`: a
-`Switcher`, the same descriptor the shell's switcher takes (`label`, `options`, `value`,
-`onChange`, and `act` ending the list with the way to open a new context). It draws a pick beside
-the title, on touch under the top bar (or on the title's row where there is no shell switcher) as on the desktop in the strip. An option's `chip`
-(`{ family, label }`) is its kind (Draft, Ready), drawn after its label in the list and on the
-trigger; `status` stays for a work state that moves. Never a `Picker` of your own beside the
-`title`, and never the kind in the label.
-
-```tsx
-<Place
-  title="Billing"
-  context={{
-    label: "Context",
-    value: context,
-    onChange: setContext,
-    options: [
-      { value: "live", label: "Live" },
-      { value: "billing", label: "Billing limits", chip: { family: "amber", label: "Draft" } },
-    ],
-    act: { icon: "Plus", label: "New change set", onAct: openNew },
-  }}
-/>
-```
-
 ## A page outside the shell is a `Gate`
 
 A page with no sidebar or tab bar beside it (sign-in, a consent step) is a `Gate`, never a
-`Place`, a `Screen` or a hand-built centred `div`. It takes `title` (the page's one `h1`),
+`Place` or a hand-built centred `div`. It takes `title` (the page's one `h1`),
 `description` (a meta line as a `Sentence` from `@fcalell/ui-core/descriptors`: runs, each a string,
 `{ strong }` at weight 500 or `{ code }` in the inline code style, never a node or one string), `step` (`{ at, of }`, a `StepCount` between
 the mark and the title), `banner` (a `Banner`, first in the column) and
@@ -161,7 +156,7 @@ and `description` come only with a `title`, and the mark with them.
 
 A flow of two to four steps shows where it stands as a `StepCount`: `at` (counted from one) and
 `of`. It draws a segment per step and "Step n of m", never a hand-built bar or a row of dots. It
-heads the step's page, whether that is a `Place`, a sheet page or, as its `step`, a `Gate`, which draws it between the mark and the title.
+heads the step's page, whether that is a `Pane`, a sheet page or, as its `step`, a `Gate`, which draws it between the mark and the title.
 
 ```tsx
 <StepCount at={2} of={3} />
@@ -210,16 +205,18 @@ A screen read from across a room (a television, a wall display) takes `distance=
 on a 960 × 540 canvas, scaled to the screen by its width and height (`min(100vw / 960, 100dvh /
 540)`, never under one pixel): at 1920 × 1080 the body is 32, the title 44, a control 88 and a
 `Stat`'s figure 160, five times its label. It holds one column of `Columns`, `Stats` and one `Stat`
-and never splits, since breakpoints stay px while its widths scale, and it takes no `context`,
-`more` or `foot`, whose layers open outside it. Set it on the screen's one page, never on a part of
+and never splits, since breakpoints stay px while its widths scale (its last `Pane` stands alone),
+and its `Pane` takes no `more` or `foot`, whose layers open outside it. Set it on the screen's one page, never on a part of
 a page, and never a density of your own: `data-density` is the showcase's pin. Its sizes ignore
 browser zoom, and a scaled size is fractional. The page keeps the app's mode, and a screen across a
 room reads best dark, so run the app dark (`defaultMode: "dark"`).
 
 ```tsx
-<Place title="Deploys" distance="room">
-  <Stat label="need you" value={3} />
-  <Stats items={[{ label: "Deployed", value: 14 }, { label: "Failed", value: 1 }]} />
+<Place distance="room">
+  <Pane title="Deploys">
+    <Stat label="need you" value={3} />
+    <Stats items={[{ label: "Deployed", value: 14 }, { label: "Failed", value: 1 }]} />
+  </Pane>
 </Place>
 ```
 
@@ -230,7 +227,7 @@ act as words in the meta ink with no hairline, a resend or a skip, never its fil
 an `IconAct` (`{ icon, label, onAct, loading? }`; `loading` is an `Act`'s: the act is running, inert, its glyph swapped for the spinner at the same size), a row's `StatusMark` and `ChipMark`, a `PlaceSpec`, all from
 `@fcalell/ui-core/descriptors`. An icon is an `IconName`, a Lucide glyph's PascalCase name.
 `children` is open only where the roster gives it. A `Form` submits through its `ActionBar`'s
-filled act, the act pending while its promise pends; an `ActionBar` draws its last blocked act's `blocked` reason under the acts at rest, at meta size, and an end bar wraps its acts to a further row (the filled act last) before they leave its container. To keep the bar's place while the server works, give the `ActionBar` a `pending` (a `PendingBar`'s `sentence`, `until`, `act`): the pending form stands over the bar at the bar's own loaded height, so nothing below moves when it is set or cleared; a `PendingBar` alone is for a place that held no bar. A `Form` that stands edited asks once, "Discard your edit?" or Keep editing, when its page is left (a router navigation, the back button, a reload or a closed tab), so the app writes no leave guard of its own; pressing the filled act ends the edit, so an act that navigates is never asked, and a rejected act puts the edit back. A `TextArea` grows with its value, except a `kind="source"` one in a page's `Form` (a `Place`'s body or a `Split`'s main, not a `Section`), which fills the free height of the page, three lines at least, and scrolls inside. An `Input` with an `act` presses that act on Enter. A field that replaces what the viewer was reading (an edit swapped in for rendered text) takes `autoFocus`, which focuses it as it mounts with the caret at the end of its text; a field on a form that loads with the page leaves it off. A `confirm()` takes a `Confirmation`, its `cancel` the way out's own label ("Keep editing") where the `cancel` word is not the decision's.
+filled act, the act pending while its promise pends; an `ActionBar` draws its last blocked act's `blocked` reason under the acts at rest, at meta size, and an end bar wraps its acts to a further row (the filled act last) before they leave its container. To keep the bar's place while the server works, give the `ActionBar` a `pending` (a `PendingBar`'s `sentence`, `until`, `act`): the pending form stands over the bar at the bar's own loaded height, so nothing below moves when it is set or cleared; a `PendingBar` alone is for a place that held no bar. A `Form` that stands edited asks once, "Discard your edit?" or Keep editing, when its page is left (a router navigation, the back button, a reload or a closed tab), so the app writes no leave guard of its own; pressing the filled act ends the edit, so an act that navigates is never asked, and a rejected act puts the edit back. A `TextArea` grows with its value, except a `kind="source"` one in a page's `Form` (a `Pane`'s body, not a `Section`), which fills the free height of the page, three lines at least, and scrolls inside. An `Input` with an `act` presses that act on Enter. A field that replaces what the viewer was reading (an edit swapped in for rendered text) takes `autoFocus`, which focuses it as it mounts with the caret at the end of its text; a field on a form that loads with the page leaves it off. A `confirm()` takes a `Confirmation`, its `cancel` the way out's own label ("Keep editing") where the `cancel` word is not the decision's.
 
 An act that is out of reach for a while (a resend after a code is sent) is a `Button` with `wait`, its seconds left, never a `blocked` reason that grows its row: it draws the count in its label, is inert while the count is above zero, and keeps its width at zero. Pass `wait` every tick, `0` once it is live; a `Button` is never wrapped in a context of the roster's own to be inert.
 
@@ -329,11 +326,9 @@ stand at the fields step, so that shape is for a page every section of which is 
 
 A `Section`'s head ends in its `act`, then its `more` (a `MenuItem[]`, destructive ones marked, shaped as a `ListRow`'s): a block's other acts (move, remove) stay on its head row beside the title, which never moves, and a foldable Section's more does not fold it. With a labelled `act` the pair wraps under the title on touch together.
 
-A `Form` in a `Split`'s `pane` (beside the main from `wide`, or in its Details sheet) or in a
-`Sheet`'s body keeps its `ActionBar` at the scroller's bottom edge, over a ground and hairline that
-run across the scroller's inset, so a long form never puts its submit below the fold. Pass the pane
-a `Form` and nothing else: the pane has no `submit` of its own. With room the bar stands at the
-form's end, where it stood.
+A `Form` in a `Sheet`'s body keeps its `ActionBar` at the scroller's bottom edge, over a ground and
+hairline that run across the scroller's inset, so a long form never puts its submit below the
+fold. With room the bar stands at the form's end, where it stood.
 
 ## Collections take data
 
@@ -368,7 +363,7 @@ that truncates it.
 
 A read that answers not found (its query's `error` carries `code: "NOT_FOUND"`, as a stack
 procedure throws it, or `status: 404`) draws "This no longer exists." (the `missing` word) with
-Back, never Retry: Back goes to the enclosing `Screen`'s `back`, else to the place's route, and
+Back, never Retry: Back goes to the enclosing `Pane`'s `back`, else to the place's route, and
 with neither there is no act. Pass the `useQuery` result whole so its `error` arrives; a record
 opened by an address after it was removed then needs no screen of its own.
 
@@ -379,12 +374,12 @@ act with no plus. An `EmptyState`'s act is the create act.
 
 An address no route serves needs no route of yours: stack sets the router's not-found page, "Not
 found" with "Nothing is at this address." (the `notFound` and `nowhere` words). An address under
-one of your routes stands in that route's layout, so under a `Shell` it is a `Place` whose act
+one of your routes stands in that route's layout, so under a `Shell` it is a `Place` holding a `Pane` whose act
 goes to the Shell's first place that is a route; any other miss stands at the root, outside the
 shell, a `Gate` with Back to `/`. A route of your own wins: a catch-all route (`$.tsx`) that
 matches, or a `notFoundComponent` on a route. To own the page under a shell, add `$.tsx` beside
-the layout's routes and compose `<Place title="Not found"><Missing sentence="Nothing is at this
-address." act={{ label: "Open Now", href: "/" }} /></Place>`.
+the layout's routes and compose `<Place><Pane title="Not found"><Missing sentence="Nothing is at this
+address." act={{ label: "Open Now", href: "/" }} /></Pane></Place>`.
 
 A read that is no query and failed (a mutation that opens a file) is a `Failed`, never an
 `EmptyState` and never a query faked for `QueryBoundary`: its `sentence` says what did not load and
@@ -406,7 +401,7 @@ your rule decides what the set becomes (ticking a change under a new parent tick
 return the ruled set through `chosen`. A `blocked` row cannot be ticked and a `moved` row says why
 its tick moved ("Needed by Checkout"), each as a line under the row's name. The table draws no
 count. Its count is the `ActionBar`'s: dock `<ActionBar chosen={{ count, of, onAll }}
-acts={[publish]} />` as the Place's `foot`, and it reads "N of M chosen" at the bar's start beside
+acts={[publish]} />` as the Pane's `foot`, and it reads "N of M chosen" at the bar's start beside
 the one act, whose label you set ("Publish 4 changes") and whose `blocked` reason you give when
 nothing can go. `onAll` puts a "Deselect all" act beside the count, live while any rows are chosen
 (`of` counts the rows that can be chosen), and calls `onAll(false)`. Where the table draws no head
@@ -449,10 +444,12 @@ render that adds the reply's item, which stands where the waiting message stood.
 open at its end (an emphasis, a strong run, a code span, a link, a fence) draws in its own form from
 its first character and the closing marker changes nothing drawn; a finished reply leaves an
 unmatched marker as text.
-In a `Place`'s body, or in a `Split`'s `main` under the record's `ItemHeader`, it fills what holds
-it: its log scrolls and the input docks at the foot. It stands there as the body's direct child,
-or as `main` (in a fragment under the record's `ItemHeader`), never inside a component of the
-app's, so the frame knows it from its first render. A part above the Thread (a `Banner`, an `ActionBar`) stands as its sibling in the same region, in that fragment, never wrapped together with it; wrapped, the region keeps its scrolling form. In a `Place`'s body the Thread alone runs edge to edge: each part above it keeps the page inset at the sides and the top and stands the body's gap from the log. What a system line names stands under it as
+A `Thread` fills what it stands in by plain flex: in a `Pane`'s body it takes the free height, its
+log scrolls, opening at the newest message, and its input docks at its foot a sections gap under
+the log; among sections it stands at its content's height. It stands as the body's direct child,
+never inside a wrapper of the app's that is no flex column, which leaves it its content's height.
+A part above the `Thread` (a `Banner`, an `ActionBar`) is its sibling in the body, a sections gap
+from it. What a system line names stands under it as
 its `detail`, a `MessageDetail`, exactly one of: a `row` (a `ListRow`'s slots, its `title` a `Part` so a `Quoted` one draws its quotes, in a hairline card,
 opening its record), a free act's `code` under its verb, or a `fold` of lines the line opens in
 place; never a `ListRow` or a `Code` between the messages.
@@ -480,13 +477,12 @@ file lands in; outside one the refusal vanishes.
 </FormField>
 ```
 
-A field that stays in view while a `Place`'s sections scroll under it (an ask box over a
-home's sections) is the Place's `foot`: it docks at the Place's bottom, above the tab bar on
-touch; a selection bar (an `ActionBar` with `chosen`) docks the same way. A Place takes a `foot` or
-an `act`, never both, since each holds the screen's filled act. A `Thread` in a Place with a
-`foot` stands among its sections, inline, its `foot` left empty.
+A field that stays in view while a `Pane`'s sections scroll (an ask box over a home's sections) is
+the `Pane`'s `foot`: it docks under the body, which scrolls past it, above the tab bar on touch; a
+selection bar (an `ActionBar` with `chosen`) docks the same way. A `Thread` in a `Pane` with a
+`foot` leaves its own `foot` empty.
 
-A `Sheet` passed as a `Thread`'s or a `Place`'s `foot` docks there, derived from where it stands:
+A `Sheet` passed as a `Thread`'s or a `Pane`'s `foot` docks there, derived from where it stands:
 no prop, no scrim. The head keeps the back act before one column, the title (the `heading` role, so a Section
 inside reads a level below; it wraps to its whole text, the close act at its first line) over the `description`, with the close act at the title's first line;
 the body scrolls between the head and the foot, which hold their height (the `foot` line beside the `submit`,
@@ -510,14 +506,13 @@ On the desktop a `Sheet` is a card centred over the page when its content at nat
 Keyboard focus follows the work without a prop. A `Sheet` returns focus to what opened it; when that
 is gone (an act of a `Picker` or `Menu`, which unmounts with its popup, returns to that popup's
 trigger) or nothing opened it (a route mounted the sheet open), a close by the keyboard leaves focus
-on the first control of the page it returns to, never the body. A row of a `Split`'s list that opens
-a record hands the keyboard to the record's first control, so the next Tab is not the list's next row.
+on the first control of the page it returns to, never the body.
 
-A column is a width and the region around it aligns it. A filling `Thread`'s log in a `Place`'s body and a docked foot
-(a `Place`'s `foot`, a filling `Thread`'s input) centre their measure column, and a selection bar's;
-a `Thread` among sections keeps their start, at the measure, as a `Text` paragraph does. A `Thread` filling a `Split`'s main stands as a record there does: its `ItemHeader` and messages start at the main's start (the messages at the measure) and its input spans the main within the page inset; an inline `Thread` is unchanged. A region
-that holds a page's sections (a `Place`'s body, a `Split`'s list, main and pane, a `Sheet`'s body)
-stands them a sections gap apart: never wrap sections in a `div` to space them. A `Split`'s list stands its first section at the page inset, as the record does, so both start on one line. A `Split`'s open record stands in one column at the measure, at the main's start: its sections, groups, code blocks and action bar end where a `Prose` or a `Form` does, so never cap one with a host class.
+A column is a width and the region around it aligns it. A docked foot (a `Pane`'s `foot`, a
+`Thread`'s input) centres its measure column, and a selection bar's; a `Thread` among sections
+keeps their start, at the measure, as a `Text` paragraph does. A region that holds a page's
+sections (a `Pane`'s body, a `Sheet`'s body) stands them a sections gap apart: never wrap sections
+in a `div` to space them.
 
 A `BarChart` takes data the same way, its `bar` map reading each item's `key`, `value`,
 `parts` (by its declared `keys`) and `at`; its failed and empty forms stand at the chart's height.
@@ -537,7 +532,7 @@ given, so drive it from the boundary or the Section around it, never from a raw 
 
 ## An icon act names itself
 
-Every `IconButton`, and every icon act a molecule draws (a Place's `actions`, a Section's icon act,
+Every `IconButton`, and every icon act a molecule draws (a Pane's `actions`, a Section's icon act,
 a menu's more act, a sheet's close, the canvas's zoom stack), shows its `label` in a tooltip after
 a pointer rests on it for 500 ms, and as the keyboard reaches it; Escape, a press or leaving hides
 it (Escape still reaches the sheet the act stands in, which closes on that one press). Touch draws none. The label stays the accessible name, so never repeat it as a `title`.
@@ -597,9 +592,9 @@ app's `biome.json` extends. The rest stays a rule a reviewer holds.
 | a tone class on a host element | not enforced: `text-*` names a colour and an alignment alike |
 | a class a variable or a function builds | not enforced: only the string literals of the attribute are read |
 | a literal colour or size held in a constant | not enforced: a lint reads the attribute, not where its value came from |
-| a host element that rebuilds a roster shape, or a `Picker` of your own beside a `title` | not enforced: what an element draws is told by its render, which the design critique judges |
+| a host element that rebuilds a roster shape | not enforced: what an element draws is told by its render, which the design critique judges |
 | a wrapper that re-adds a look, or a local copy of a stack component | not enforced: a copy is told by what it draws, never by its name |
-| a `Split` inside an app component, rows indented by a nested `List` | not enforced: where an element stands is no property of its own code |
+| a `Thread` or `Canvas` inside a wrapper of the app's, rows indented by a nested `List` | not enforced: where an element stands is no property of its own code |
 
 ## Done
 

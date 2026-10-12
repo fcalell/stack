@@ -300,8 +300,8 @@ Thirty-seven sizes per density sit in the same `--spacing-*` namespace, so a cel
 names a role (`min-h-control`, `size-avatar`), and nothing is spaced by them. Desktop then touch:
 `control` 32 / 44 (a button, a segmented control), `control-compact` 28 / 44 (a menu item, a toolbar
 control), `field` 38 / 48 (a form input), `row` 32 / 48 (a one-line row), `row-2` 52 / 64 (a
-two-line row), `row-setting` 64 / 72 (a setting row), `strip` 40 / 44 (a page header bar: a Place's
-or Screen's title and acts), `target` 28 / 44 (the least hit area of any interactive part), `indent`
+two-line row), `row-setting` 64 / 72 (a setting row), `strip` 40 / 44 (a page header bar: a Pane's
+title and acts), `target` 28 / 44 (the least hit area of any interactive part), `indent`
 16 / 20 (a tree row's step in, one per level, a hairline rail on its end), `dot` 6 / 8, `port` 8 / 8 (a canvas
 port's drawn size, over the dot), `chip` 22 /
 24, `avatar` 24 / 32, `spinner` 14 / 18 (the `icon` rung), `switch-w` 32 / 40, `switch-h` 18 / 24,
@@ -325,8 +325,7 @@ field box's border, which an act inside it reaches across so its hit stands at t
 what the compact control has over a chip, less the border), `measure` 488 / 557 (the width of
 running text, derived: 58 characters at the sans face's figure advance of the body size, so every
 role of text stands at one width) and `measure-inset` 536 / 589 (the measure and the page inset on
-both sides: the width a padded column stands at so its content is the measure, a Split's open
-record). On touch every target is at least 44. A cell says `min-h`, never `h`: a
+both sides: the width a padded column stands at so its content is the measure). On touch every target is at least 44. A cell says `min-h`, never `h`: a
 label must be able to grow its control under OS font scaling. A minimum height is the floor of
 something pressed (a control, a field, a target, a chip, a row), the set height of a bar (`strip`, a
 page's strip and its touch top bar), an intrinsic size (one body line's box, `line-body`, which a
@@ -453,7 +452,7 @@ The canon binds every component either UI plugin ships:
    an `Icon` sits beside meta, body or a control; a `Button` in a body, a bar or under a field; an
    `IconButton` in a body or a bar; a `Link` inline or standalone; an `ActionBar` at its
    container's end or across it (`full`, its acts at the field's height). The composing molecule
-   sets it (a `Place` passes `bar` to its strip's acts, a field's trailing act `field`, a `Form`
+   sets it (a `Pane` passes `bar` to its bar's acts, a field's trailing act `field`, a `Form`
    under a `Gate` `full`), and a call site may.
 2. A composed region is data: an act is an `Act`, a row's marks a `StatusMark` and a `ChipMark`, a
    place is a `PlaceSpec`, what the shell switches between is a `Switcher` (a pick: options carrying
@@ -461,9 +460,9 @@ The canon binds every component either UI plugin ships:
    owning molecule renders it. An `Act` says what it does, never how it looks: `destructive` marks
    one that removes or ends something, and an `ActionBar` draws it as `danger` when it is the bar's
    one filled act and as `destructive`, the hairline form, otherwise; `quiet` marks one drawn as words in the meta ink
-   with no hairline (`BUTTON {act: quiet}`), never the bar's filled act. An `Act` names no glyph (a
-   `Place`'s act is the page's create act and the `Place` draws it with `Plus`); an `IconAct` is an
-   icon-only act whose label is its accessible name, never drawn. A `Form` has no submit handler: its
+   with no hairline (`BUTTON {act: quiet}`), never the bar's filled act. An `Act` names no glyph; an `IconAct` is an
+   icon-only act whose label is its accessible name, never drawn (a create act is one, with the
+   `Plus` icon, among a `Pane`'s `actions`). A `Form` has no submit handler: its
    `ActionBar`'s filled act submits it (on the web Enter in a field runs it), that act's `onAct` is
    the one handler, and while the promise it returns pends the act is pending, the bar's other acts
    ignore the press and the form is busy. A `confirm()` is the same shape: its `Confirmation`'s act
@@ -479,13 +478,13 @@ The canon binds every component either UI plugin ships:
    matrices do not cover is a matrix cell or a consumer primitive under `ui/`, in that order.
 5. Every word a component draws on its own comes from `words`; every sentence is a prop.
 6. `Text` draws `body` and `meta`, with `strong`; every other type role is drawn by the molecule
-   that owns its place (`title` by `Place`, `Screen` and `Gate`, `heading` by `Section` and `Card`,
+   that owns its place (`title` by `Pane` and `Gate`, `heading` by `Section` and `Card`,
    `caption` by `Chip` and `Kbd`, `code` by `Code`, `display` by `Stat`, `figure` by `Stats`).
    `TEXT` keeps all eight roles as the table those owners draw from.
 
 ## The roster
 
-`ROSTER` in `@fcalell/ui-core/roster` is the closed list: 66 components in four layers (atoms,
+`ROSTER` in `@fcalell/ui-core/roster` is the closed list: 65 components in four layers (atoms,
 layout molecules, shared molecules, content molecules), each with its prop names, the cells it draws
 (`draws`: a `FAMILIES` name for every cell of that family, `FAMILY.axis.value` for one of its cells,
 as `Text` draws `TEXT.role.body`, or a single-cell constant of `./variants`) and the states it has a
@@ -503,7 +502,7 @@ prefix ending in `-` (`chip-` covers every chip role, `chart-` every chart fill)
 namespace left out owns nothing. The verify suite reads every class of every cell the component
 draws (a family at every axis product, a named family cell as the table's base and that cell alone),
 and a class spelling a token its entry does not own fails by name. A molecule that picks a composed
-atom's `fit` or `act` draws those atom cells too (a `Place` draws `BUTTON.fit.bar`), so it owns what
+atom's `fit` or `act` draws those atom cells too (a `Pane` draws `ICON_BUTTON.fit.bar`), so it owns what
 they spell, so a type role, a colour or a size reaches a cell only through the component that owns
 it. It also declares what it holds (`holds`): the families and constants of its own box, which only
 it spells, so every other component draws them by composing it; a cell no entry holds (a type role,

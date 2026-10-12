@@ -24,7 +24,6 @@ import { type ReactNode, use, useId, useMemo, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { FieldWait, liftBars } from "../../lib/field-wait.tsx";
 import { FormContext, FormStands } from "../../lib/form.ts";
-import { ThreadRoom } from "../../lib/frame.ts";
 import { DEEPER, HeadingContext } from "../../lib/heading.ts";
 import { LoadingContext, useWait, VEIL } from "../../lib/loading.ts";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
@@ -301,9 +300,7 @@ export function Section({
 						)}
 						<div className={fields > 0 ? BODY_WAITS : BODY_SHOWN}>
 							<LoadingContext value={loading === true}>
-								<SectionContext value={true}>
-									<ThreadRoom value={false}>{rest}</ThreadRoom>
-								</SectionContext>
+								<SectionContext value={true}>{rest}</SectionContext>
 							</LoadingContext>
 						</div>
 						<LoadingContext value={loading === true}>{bars}</LoadingContext>

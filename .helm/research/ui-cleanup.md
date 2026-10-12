@@ -116,7 +116,7 @@ One pass per family, in this order, each cut confirmed by fcalell on 2026-10-12.
 web and native in one commit, with the roster, `DESIGN.md` (regenerated), the showcase and the
 guides. Stead's stack pin moves after each pass and its screens are ported in that step.
 
-1. **Frame:** Place and Pane as designed below; only the last Pane is the size container.
+1. **Frame:** Place and Pane as designed below.
 2. **Overlays:** popups mount in the body (Base UI's default), not in `main`'s layer;
    `PortalContainer`, `PortalHosted` and `FrameHost`'s layer go; a popup takes its mode from a
    class.
@@ -173,26 +173,27 @@ ui-core's tokens, never from a second policy file:
 The first family's design, decided before the review and open to what it finds.
 
 ```
-<Place>                                   the page: Panes in a grid, no bar of its own
+<Place>                                   the page: Panes in a row, no bar of its own
   <Pane title="System" actions more>  <Group/> …  </Pane>
   <Pane title="Agents" actions>  <Section/> <Section/>  </Pane>
   <Pane title="Stead" back="/system/agents">  <Section/> …  </Pane>
 </Place>
 ```
 
-- **Place** is a grid, `grid-template-columns: auto … minmax(0, 1fr)`: each Pane but the last as
-  wide as its content, the last taking the rest, a hairline between them. It never reads its
+- **Place** is a flex row (decided 2026-10-12, in place of a grid, which cannot size its last
+  track without counting the Panes): each Pane but the last prefers `list` (360) and shrinks to
+  `region-min` (240), never sized by its content, so nothing moves as rows land (step 3's K2); the
+  last takes the rest; a hairline between them. It never reads its
   children. It keeps `distance: "room"` (the TV density). It draws no bar: the first Pane's bar
   carries the page's title, its toolbar, and on the phone the place switcher, so the desktop has
   one row of bars and the phone always one bar.
 - **Pane** is a flex column: a bar (title, actions, more, `back` drawn as Close beside other Panes
   and as Back where it stands alone), a body that scrolls (`flex-1 min-h-0 overflow-y-auto`,
   page inset, its direct children always a `sections` gap apart, nothing paired), and an
-  optional `foot` docked under the body (an ask box, a message input). The last Pane is the size
-  container (`@container/page`) its content's container queries read; the Panes before it are
-  not, because a size container in an `auto` track draws 0 px wide, its content not counted
-  (measured in Chromium 1194: 300 px of content drew 0 with `container-type: inline-size`, 300
-  without).
+  optional `foot` docked under the body (an ask box, a message input). Each Pane is the size
+  container (`@container/page`) its content's container queries read: no Pane is sized by its
+  content, so containment costs nothing (in an `auto` track it would: a size container there
+  draws 0 px wide, measured in Chromium 1194).
 - **Content width.** A Pane's body content stands within `measure` (58ch, 488px on the desktop),
   aligned left under its title, so a label stays near its value, a field near the size of what it
   holds, a Save near the fields it saves. `wide` lifts the limit for content whose meaning is its
@@ -205,6 +206,15 @@ The first family's design, decided before the review and open to what it finds.
 - **Covering.** `<Pane cover>` spans the Place (`grid-column: 1 / -1`) and the Panes before it are
   hidden with `display: none`: mounted, so they keep scroll and typed text, and out of the tab
   order. A pushed page is a covering Pane with `back`.
+- **The tab bar** stands on every web page at touch density (decided 2026-10-12): nothing tells
+  the Shell a Pane covers, so the `data-screen` mark goes; on the phone an expo-router push covers
+  it natively.
+- **Native.** A phone route renders one Pane, pushed in expo-router's stack; the native Place is
+  the place's container holding it, with the same props as the web's and no reading of its
+  children (decided 2026-10-12).
+- **No filled act, no Details act** (decided 2026-10-12): a create act is one of a Pane's
+  `actions` at both densities; the touch floating act, its room and the toasts' anchor on it go;
+  what the Details sheet held is a deeper Pane.
 - **Narrow widths.** Below `tablet` only the last Pane shows, with its back act: the same
   mechanism as covering, every Pane covering the ones before it. Above `tablet` every Pane shows
   and the grid squeezes the `auto` columns toward their content's minimum.

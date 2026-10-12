@@ -1,4 +1,5 @@
 import { Gate } from "@fcalell/plugin-react-ui/components/gate";
+import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Shell } from "@fcalell/plugin-react-ui/components/shell";
 import { type AppMark, MarkProvider } from "@fcalell/plugin-react-ui/lib/mark";
@@ -43,7 +44,9 @@ export default {
 function Framed(props: { mark?: AppMark }) {
 	const shell = (
 		<Shell places={PLACES}>
-			<Place title="Overview" />
+			<Place>
+				<Pane title="Overview" />
+			</Place>
 		</Shell>
 	);
 	// No mark is a scope of its own: the app's providers mount the showcase's icon.

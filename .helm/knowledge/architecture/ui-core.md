@@ -112,7 +112,7 @@ its rationale.
   touch and in the room), so a meta line, a body paragraph and a form stand at one width where `ch`
   resolves in the element's own font and gave a meta line a narrower column than the body
   beside it. `measure-inset` is that width plus the page inset on both sides, the width a padded
-  column stands at so its content is the measure (a Split's open record, `SPLIT_MAIN rest`). An
+  column stands at so its content is the measure. An
   icon's stroke is `ICON_STROKE`, a constant beside the
   sizes rather than a class or an `ICON` axis cell: the web's Lucide and native's Lucide and
   `react-native-svg` all take `strokeWidth` as a number prop, so one value in `tokens` reaches
@@ -134,7 +134,7 @@ its rationale.
   the touch set, so it draws the touch structure with no variant; the variant sits in a web
   molecule's overlay, never a cell. A value that flips by density is the same overlay over the
   desktop cell, never a matrix value. Structure is decided by CSS wherever CSS can, a runtime check
-  (`useTouch`) only where the tree differs (the Shell, Place and Screen). Rejected: a `fine:`
+  (`useTouch`) only where the tree differs (the Shell and Pane). Rejected: a `fine:`
   variant in the cells (an interaction condition in a shared cell, meaningless on native) and one
   type scale at every density (13 on a phone is unreadable and 16 on a desktop row wastes the row).
 - The `room` density is the third set, the one tier a screen declares (`Place.distance: "room"`),
@@ -152,7 +152,7 @@ its rationale.
   room only (`ROOM_TYPE_SIZE`, 80 canvas units, so a glanceable figure stands 5.3× its meta label
   where the references run 5–9×; 2.77 stays right for a stat inside a page), and `page` is 12 rungs,
   48 canvas units all round (one role serves both axes, so it costs the height 42 units over the 27
-  the guidance allows top and bottom; the Place's head stands that inset from the top too,
+  the guidance allows top and bottom; the Pane's head stands that inset from the top too,
   `PAGE_HEAD_ROOM`, since `PAGE_HEAD` pads the sides alone). The radii, the fixed widths (every
   width but the short `ch` measure, which follows the type), the hairline and the ring scale by `u`
   too: a 1 px hairline vanishes at three metres, a 6 px radius on an 88 px control reads square, and
@@ -172,11 +172,12 @@ its rationale.
   a value and never a `calc`. The hairline reaches every border through `--default-border-width:
   var(--hairline)` in `@theme`: Tailwind inlines a theme value into the utility, so only a variable
   reference lets a bare `border` and a `divide` follow the room. A room Place holds one structure
-  and never splits, since breakpoints (px literals, and the `page` container queries that read them)
-  stay px while its widths scale: at 1920 a Place's container sees `wide` with its widths doubled,
-  so a `Split` or a beside column would overflow. It holds one column of `Columns`, `Stats` and
-  `Stat`, with no `context`, `more` or `foot` (their layers portal outside the scope and would draw
-  at the page's density), and `Place` types it so. Two limits stay named: a `vw` size ignores
+  and never splits, since breakpoints (px literals, and the `place` and `page` container queries
+  that read them) stay px while its widths scale: at 1920 a Place's container is wide enough to
+  stand every Pane, with its widths doubled, so a second Pane would overflow; a room Place draws
+  its last Pane alone. That Pane holds one column of `Columns`, `Stats` and `Stat`, with no `more`
+  or `foot` (their layers portal outside the scope and would draw at the page's density): the rules
+  pages state it, since a Place cannot type its Panes' props. Two limits stay named: a `vw` size ignores
   browser zoom (the screen is read from across a room, never zoomed, and the floor keeps it at the
   touch set at least), and `calc` sizes are fractional, so room line boxes leave the even-pixel rule
   (a TV scales the frame anyway). Rejected: a consumer density option or a viewing-distance media
@@ -343,31 +344,17 @@ a tick with no animation, never jumped to full.
   (`Option.status`), its options and its value drawn as the `Status`, as an ItemHeader's moving
   status fact (`{ pick }`) is. Rejected: `Status` with `onOpen`, an act that opened a menu of
   states the mark could not show as the current one.
-- A page read in a context (Live, one change set, a past version) names it by a pick beside its
-  title: `Place.context`, a `Switcher` (an `OptionPick` with its closing `IconAct`, the type the
-  shell's switcher takes), drawn as the Picker at the `row` fit right after the `h1`, a `pair` apart
-  box to box, so its wash and ring never reach the title. Its list hangs from the trigger's start,
-  as every Picker's does (a Picker has no `align`; a list that would leave the viewport shifts
-  back in). Its value is capped at
-  `measure-short` and truncates (`PICKER_VALUE`, as a status label is), so a long label cannot crush
-  the title, and the pick yields first on a short line: the title line wraps, so the pick drops under the
-  title, whole, rather than the title (which truncates only when it alone is wider than the line)
-  or the pick's value, chip and chevron being cut. It stands on the title line under the top bar on touch too, since the context is part
-  of the page's address and the top bar is the shell's switcher. A context's kind (Draft, Ready) is
-  `Option.chip`, the `ChipMark` a `ListRow` carries: the chip draws after the option's label in the
-  list and on the trigger, and `Option.status` keeps meaning a work state that moves. Rejected: a
-  Picker trigger variant or a Place slot for a Picker the consumer built (a Place's props are
-  descriptors, never nodes), and Draft and Ready as a `status` (they are a kind, not a state the
-  pick moves). The Place and the Picker hold `CHIP` and `CHIP_LABEL`; a chip column's option (the
-  Picker's `chip` family) draws its own chip alone and ignores `Option.chip`.
-- A record's own acts stand in its `ItemHeader`: `actions` (icon acts at the bar fit, body on touch, as a `Screen`'s)
+- A pick's kind (Draft, Ready) is `Option.chip`, the `ChipMark` a `ListRow` carries: the chip draws
+  after the option's label in the list and on the trigger, and `Option.status` keeps meaning a work
+  state that moves. Rejected: Draft and Ready as a `status` (they are a kind, not a state the pick
+  moves), and a context pick on the Pane (no screen used one). The Picker holds `CHIP` and
+  `CHIP_LABEL`; a chip column's option (the Picker's `chip` family) draws its own chip alone and
+  ignores `Option.chip`.
+- A record's own acts stand in its `ItemHeader`: `actions` (icon acts at the bar fit, body on touch)
   and `more` (a `Menu`) draw at the end of the head's first line, the overline's else the title's (`ITEM_HEADER_LINE`,
   `ITEM_HEADER_ACTS`: the acts' boxes reach across the line by the icon inset so their glyphs stand on it and the last at
-  the head's end), at every width. They are the same props on both platforms and are not the Place's `actions`/`more`:
-  below `tablet`, where the record stands alone under the Place's back act, the acts stay in the head and the
-  Place's top bar holds none of them, so each act has one place and nothing joins the Place's more. Rejected: a Split
-  `main` slot for acts (the head is the record's, and a Split cannot tell which node is the head) and the acts moving
-  into the Place's more below `tablet` (a record's act would live in two places by width). Loading draws none.
+  the head's end), at every width. They are the same props on both platforms and are not the Pane's
+  `actions`/`more`, which stand in its bar, so each act has one place. Loading draws none.
 - A header fact in words that opens a sheet is `{ label: Part; onOpen }` on `ItemHeader`: the words
   in the meta ink and a trailing `ChevronRight` at the meta fit in a `WORD_ACT`, pulled back at its
   start as a pick fact is, a button named by the fact (`aria-haspopup="dialog"` on the web); the consumer's `onOpen` opens its own
@@ -425,9 +412,9 @@ a tick with no animation, never jumped to full.
   new one, which the Picker draws under a hairline (`HAIRLINE`) after the options as a `ROW` (the
   Picker's `act` prop). The Shell draws its own trigger (a place row, `SWITCHER` on touch) over the
   Picker's list through its internal base. Rejected: a switcher menu of its own, a second list of
-  the same rows. The Shell hands its `Switcher` descriptor down (`ShellSwitcher`), and each Place
+  the same rows. The Shell hands its `Switcher` descriptor down (`ShellSwitcher`), and each Pane
   draws the touch trigger from it, so the context changes only when the switcher does and a Shell
-  state change re-renders no Place. A Picker stands outside a form; a form's pick is `Select`.
+  state change re-renders no Pane. A Picker stands outside a form; a form's pick is `Select`.
 - The app's mark is a config, not a prop (`react({ icon })`, 003-310). The react plugin derives the
   `icon` slot (`{ light, dark? }`, null with no icon) and react-ui contributes `MarkProvider`
   (`lib/mark.tsx`, order 1, beside the words) carrying `{ src, dark?, name: app.name }`; a `Shell`
@@ -450,105 +437,108 @@ a tick with no animation, never jumped to full.
   `alt` the app's name and the dark form under the same `.dark` scope. A logo that fails to load
   leaves the icon and the name.
 - On touch the places past the tab bar are a page, not a menu: the More tab opens a `Place` of
-  `ListRow`s (each place's glyph leading, its count trailing, its route), and while a Place's act
-  floats the toasts stand above it by the act's room; while a foot docks (a Place's `foot`, a
-  filling Thread's input) they stand above the foot by layout as the input grows, with no height
-  reported to the Shell. On the web the docked foot names itself a CSS anchor (`anchor-name:
-  --docked-foot`) and the toasts' layer sets its bottom to that anchor's top (`anchor(--docked-foot
-  top, 0px)`, `main`'s foot without one), so the layer stays one viewport in the Shell's `main` and
-  follows the foot in the frame it grows (anchor positioning is Baseline since January 2026: Chrome
-  125, Safari 26, Firefox 147). Rejected: the viewport moved into the page's column, since the page
-  is a size container, whose layout containment makes a stacking context between the toasts and the
-  root (below), and a Place and a filling Thread inside it would each draw one. A frame never tells
-  the Shell what it is after paint; the Shell learns it before the first frame. On the web the page
-  marks its tree and the Shell's column reads the marks by `group-has-*/column` variants: a pushed
-  Screen's root carries `data-screen`, which hides the tab bar, and a floating act's layer
-  `data-act-floats`, which shows the act's room under the toasts, so both hold from the first paint
-  and across the density line. Native has no such selector, so the frame draws what the Shell would
-  have had to learn: the Shell hands its tab bar to each Place (`ShellTabs`, as it hands the
-  switcher), which draws it under its body, and a pushed Screen draws none and clears the home
-  indicator itself; the region that stands over the page's docked foot draws the box the toasts
-  stand in (`ToastRoom`): a Place's body over its act's room (above its `foot` and the tab bar by
-  layout), a pushed Screen's body, or a filling Thread's log (above its input, and lifted with it
-  over the keyboard), the Place leaving it to a Thread it holds, as its child or its Split's record;
-  the box places the Shell's toasts' layer by measuring itself against its frame's root (the Shell's or the Gate's `FrameHost`)
-  (`ToastFrame`), the one measure left, since the layer stands outside the page's tree (below).
-  Rejected: a registration the Shell reads in render from a host object, since a frame that mounts
-  after the Shell's render (a route that waits first) leaves nothing that renders the Shell's tab
-  bar again. A Split and its page work the same way on the web: the Place (or a pushed Screen) owns
-  the handle of the Split's details sheet (`DetailsSheet`) and always draws the back act to its
-  route and the Details act, and the Split marks its root `data-record`, `data-pane` and
-  `data-beside`; `group-has-*/page` variants on the page's head show the back act below `tablet`
-  with a record, the Details act below `wide` with a pane and at every width beside a record, and
-  hide the head below `tablet` beside a record, while a Toolbar leaves with the list below `tablet`
-  with a record, all from a deep link's first frame. Native has no such selector, so by contract a
-  Split stands as its page's direct child (the page's frame region, stated in both rules pages): the
-  Place or Screen reads the Split element's props among its children in render (`useSplitHead`, as a
-  Toolbar sorts its children by type), so its head draws the back act with a record, the Details act
-  with a pane and no head beside a record from the first frame, and holds the Details sheet's open
-  state (`DetailsOpen`), which closes with the pane it opened on. A Split standing deeper draws as a
-  plain region and no head draws its acts. A Split's sheet also opens from the app: `open` and
-  `onClose` stand as a typed pair on `SplitProps` (`open` asks, `onClose` hears every close,
-  the Details act's sheet too, so the app's selection agrees). The sheet is open when the pane
-  exists and either the Details act or `open` asks. On the web `open` applies only where the pane
-  is a sheet: always beside a `beside` record, else while the pane's `aside` is not displayed
-  (a `ResizeObserver` reads its width at 0 below `wide`), so from `wide` it draws no sheet over
-  the beside pane and the Split needs no container-width read in JS. The phone is always the
-  sheet, so `open` applies at once. Rejected: a handle the app holds (a second state beside the
-  Split's own Dialog handle, whose export is public surface) and the sheet opening whenever
-  `pane` changes (a list tap sets `pane` without wanting a sheet; the Details act is the
-  opt-in). Rejected: a registration the Place reads in render from a
-  host object, since the Place's head renders before the Split in the same pass and a Split inside a
-  component that re-renders alone (a selection in that component's state) would leave the head
-  stale. Each region keeps its own keyed scroll, so a record opens at its top after a scrolled list.
-  The Shell's selected place is a function of the place list, not of one spec: `placeAt(places,
+  `ListRow`s (each place's glyph leading, its count trailing, its route), and while a foot docks (a
+  Pane's `foot`, a filling Thread's input) the toasts stand above the foot by layout as the input
+  grows, with no height reported to the Shell. On the web the docked foot names itself a CSS anchor
+  (`anchor-name: --docked-foot`) and the toasts' layer sets its bottom to that anchor's top
+  (`anchor(--docked-foot top, 0px)`, `main`'s foot without one), so the layer stays one viewport in
+  the Shell's `main` and follows the foot in the frame it grows (anchor positioning is Baseline since
+  January 2026: Chrome 125, Safari 26, Firefox 147). Rejected: the viewport moved into the page's
+  column, since a Pane is a size container, whose layout containment makes a stacking context between
+  the toasts and the root (below), and a Pane and a filling Thread inside it would each draw one. A
+  frame never tells the Shell what it is: the web's tab bar always stands and the Shell reads no mark
+  of the page, and on the phone an expo-router push covers the tab bar natively. Native has no CSS
+  anchor, so the region that stands over the page's docked foot draws the box the toasts stand in
+  (`ToastRoom`): a Pane's body above its foot, or a filling Thread's log above its input, lifted with
+  it over the keyboard; the box places the Shell's toasts' layer by measuring itself against its
+  frame's root (the Shell's or the Gate's `FrameHost`) (`ToastFrame`), the one measure left, since the
+  layer stands outside the page's tree (below). Rejected: a registration the Shell reads in render
+  from a host object, since a frame that mounts after the Shell's render (a route that waits first)
+  leaves nothing that renders the Shell's tab bar again, and a mark the page sets for the Shell's
+  column to read (`data-screen`, a floating act's `data-act-floats`), which made the Shell's layout a
+  function of what a page held.
+- A page is a `Place` of `Pane`s, and the frame reads nothing of what stands in it. `Place` is a
+  flex row (props `distance` and `children`) that draws no bar; `Pane` is a flex column: a bar (the
+  back act, the title, `actions`, `more`), a body, and an optional `foot`. Each Pane says what it is
+  through its own props, never a mark, a context or a walk of its children for a parent to read; the
+  one place a parent's CSS honours a child's intent is a covering Pane, below. Each Pane but the last
+  holds `list` (`w-list`, 360) and shrinks to its floor `region-min` (240), never sized by what it
+  holds; the last takes the rest (`grow basis-0`), and a hairline parts each from the next. A record
+  is the Pane after its list, a record the open record links to one more Pane after it, and with
+  nothing open the list's Pane is the last and takes the room. Rejected: a grid, which cannot size
+  its last track without counting the Panes, and `auto` tracks, which reflow as rows land and collapse
+  under size containment (a size container in an `auto` track draws 0 px wide, its content not
+  counted: measured in Chromium 1194, 300 px of content drew 0 with `container-type: inline-size`
+  and 300 without).
+- Narrow widths and covering are one mechanism, in the Pane's CSS. The Place is a `place` size
+  container (`@container/place`), and below `tablet` of its width (`place-max-tablet:`) every Pane but
+  the last is `display: none`. A Pane marks itself `data-cover` for `cover`, and the Panes before it
+  hide with `:has(~ [data-cover])`: the Pane declares its intent in a prop and the CSS honours it,
+  with no JavaScript. A hidden Pane stays mounted, so its scroll and typed text survive, and stands
+  out of the tab order. A Pane opened from a press in another takes the keyboard on its first
+  control (`usePaneFocus`), so the next Tab is not the list's next row and a Pane the opening hid
+  keeps no focus. A page pushed over the current one (a form, a step) is a covering Pane with `back`.
+- A Pane's back act is `back`, a route: Back where the Pane stands alone (below `tablet` of its
+  Place, first in it, or covering it) and Close, at the bar's end, where a Pane stands before it. The
+  Pane draws both and CSS shows one (`place-max-tablet:`, `group-first/pane`, `group-data-cover/pane`),
+  so a deep link's first frame is right with no JavaScript. A list at a deeper route names the route
+  above it as `back` on its first Pane, which no component can derive (the list and its record share
+  one layout component, and the place's route can redirect to a lead). A Pane provides `PageTitle`
+  (the id its `section` is labelled by), `BackRoute` (its `back`, where a read inside it that answers
+  not found leads) and `HeadingContext` 2, so its title is the `h1` and its sections start at `h2`
+  at every width. It is the `page` size container (`@container/page`) and marks itself `data-page`,
+  which a `Table` finds its page by (`usePageTablet`), so what stands in a Pane reads the Pane's
+  width, not the viewport's. Each Pane's body keeps its own scroll, so a record opens at its top
+  after a scrolled list.
+- There is no filled act and no Details act. A create act is one of a Pane's `actions` at both
+  densities, an `IconAct` with the `Plus` icon. Rejected: the touch floating act, which asked the
+  frame for a room under what scrolls (handed to each region and under the toasts), a layer centred
+  on the list by CSS, and an exclusion against `foot` since both held the screen's filled act; and
+  the Details act with its side sheet, which a Pane after the record replaces (a sheet had no way
+  back to the record, and an `open`/`onClose` pair for the app to keep in step with it).
+- Native draws the same frame with one Pane per route. A phone route renders one Pane, pushed in
+  expo-router's stack, which animates the push and covers the tab bar. The native Place is the place's
+  container: it holds the route's Pane and draws the tab bar under it (the Shell hands the tab bar to
+  the Place as it hands the switcher, `ShellTabs`), with the web's props and no reading of its
+  children. `cover` and `wide` change nothing there, a route being one Pane at the phone's width. A
+  deeper Pane is a route pushed deeper.
+- The Shell's selected place is a function of the place list, not of one spec: `placeAt(places,
   at)` (ui-core's `./route`, string parsing with no `URL`, which React Native only partly has) is
   the place holding the address with the longest pathname, then the most query parameters, and
   the root `/` holds every address, so a record under the root place (`/items/x` under Now)
-  selects the root and hands its Place a route to lead back to, and nested places (`/work` beside
-  `/work/code`) select the deeper one; an address no place claims selects the root. A row's
-  `isCurrent` keeps its own rule (a row linking to `/` is not current everywhere). Rejected: a
+  selects the root and hands its Place a route to lead back to (`PlaceRoute`), and nested places
+  (`/work` beside `/work/code`) select the deeper one; an address no place claims selects the root. A
+  row's `isCurrent` keeps its own rule (a row linking to `/` is not current everywhere). Rejected: a
   `PlaceSpec` prefix list (a consumer option for a derivable fact), and the router's layout match
-  (exact, but a second mechanism per platform for one rule). A Split's list can stand at a route
-  deeper than the place, which no component can derive (the list and its record share one layout
-  component), so `Split.back` names it: the route its record's back act returns to, in a Place and
-  in a pushed Screen alike, and where a missing read in its regions leads back to (the Split hands
-  its regions `BackRoute` as `back`, outranking the enclosing Screen's own), the Screen's `back` or
-  the place's route when unset. The page reads it off its direct child Split as it reads the rest
-  (`splitOf` on the web, `useSplitHead` on native); a Screen's own back act stays while the list
-  stands beside the record, so a tree standing alone at a deeper route is a pushed Screen whose `back` is
-  the route above it, holding `<Split back={treeRoute}>`: the Screen's back act leads up (`LIST_BACK_REPLACED`
-  hides it) once a record is open and the Split's `back` takes its place. A Place whose list stands deeper and
-  keeps its toolbar and actions names the route above it as `up` (not a Split field: the back act is the Place's,
-  and the Split's `back` already means where the list stands alone, which a record returns to; not derivable, since
-  the place's route can redirect to a lead): its back act is the Screen's span (`LIST_BACK_REPLACED`, first in the
-  strip) and on touch takes the switcher's place in the top bar, the switcher staying on the places' own level;
-  below `tablet` with a record open the record's back act shows instead (native: the record's back, else `up`,
-  else the switcher).
+  (exact, but a second mechanism per platform for one rule).
 - A molecule whose structure follows density keeps one constant per structure, never a density axis:
-  the page's head (`PAGE_HEAD`, one hairline at both densities) holds the desktop strip
-  (`PAGE_TOP_BAR` with the title and acts in one row) or the touch one (`PAGE_TOP_BAR` over the
-  title, which keeps `PAGE_TITLE` above the hairline), the sidebar (`SHELL_SIDEBAR`, `PLACE_ROW`)
-  and the tab bar (`SHELL_TAB_BAR`, `PLACE_TAB`), the split's list inside its hairline and the list
-  alone. The web picks the structure under `touch:` or, for a Split, by its page's width: every
-  Place and Screen is the `page` size container and the web's `page-<breakpoint>:` /
-  `page-max-<breakpoint>:` variants, emitted from the breakpoint values, query it, so the Split's
-  regions and the Details and back acts its marks show follow the room the page has beside a sidebar
-  rather than the viewport; native draws the touch one. A bleeding body draws no inset, and whatever
-  stands first in it (a Toolbar, the record, the list) carries its own top inset; a Split's list
-  stands its first section at the page inset (`SPLIT_LIST_STACK`'s `pt-page`) under the strip's
-  hairline at every width, so the list and the record share a top on `wide`. The touch top bar
-  (`PAGE_TOP_BAR_TOUCH`) reaches across the page inset by `icon-inset`, half of what the control has
-  over its icon, so its first and last icon glyphs stand at the title's start and the inset's end;
-  the switcher's trigger keeps the same inset as its padding, so its avatar stands there too, and a
-  bar holding nothing draws no strip. A touch Place with no shell switcher has no bar over its title: the back act (when shown), the title, then the actions, Details and more stand on one 44 px row, the title wrapping before the acts (`PAGE_TOP_BAR_START` and `PAGE_TOP_BAR_END` reach the back act and the acts to the page inset); a Place with a switcher and a room Place keep the bar. A touch Screen, pushed or beside, is always that one row: back act (when shown), title, then one acts span (`actions`, Details, `more`), with no bar over the title; the row wraps, the title keeps `PAGE_TITLE_FLOOR` (two fifths of the row, `basis-0` so it wraps beside the back act and the acts rather than pushing them down); the title carries a step of block padding above and below its lines (`PAGE_TITLE_BLOCK`, shared by the Place's title row and the Screen's, so a single line still fills the 44 px strip), the head takes a step more over the row while the title wraps (`PAGE_HEAD_WRAPS`, a measured fact, `useWraps`), and the row hangs its items from the top so a 44 px act centres on the title's first line and the acts span, `shrink-0 ms-auto`, drops whole to a second line at the row's end at 44 px when it does not fit beside the back act, the floor and the gaps (at 320 with three acts it wraps, at 390 it fits). The desktop strip and a beside Screen at a narrow desktop page are unchanged. A Place's title is a strip over a hairline and the body
-  starts a page inset under it, where a Section's title is a line of the body a pair over its
-  content; the two rhythms are not one, and a Place's title is the section's name at every density
-  (the app never forks it by density).
-  `tablet` and `wide` are read against the page container, which in the Shell is the viewport less the
-  240 px sidebar: the list and the main stand together from a page 768 wide (a 1008 viewport), where the
-  main would otherwise be 168 px at a 768 viewport, and `wide` is 1200 so that `beside` and `pane` stand
-  from a 1440 viewport. `wide` is read only through the page container (no viewport `wide:` is drawn).
+  the Pane's head (`PAGE_HEAD`, one hairline at both densities) holds the desktop bar (`PAGE_TOP_BAR`
+  with the back act, the title and the acts in one row) or the touch one (the same row, wrapping),
+  the sidebar (`SHELL_SIDEBAR`, `PLACE_ROW`) and the tab bar (`SHELL_TAB_BAR`, `PLACE_TAB`). The web
+  picks the structure under `touch:` or, for which Panes stand and what a Pane's content draws, by
+  container width: a Place is the `place` size container and a Pane the `page` one, and the web's
+  `place-<breakpoint>:` / `place-max-<breakpoint>:` and `page-<breakpoint>:` /
+  `page-max-<breakpoint>:` variants, emitted from the breakpoint values (`pageVariants()`), query
+  them, so the page follows the room it has beside a sidebar rather than the viewport; native draws
+  the touch one. On touch the bar is always one 44 px row: the leading act (the back act, else the
+  shell's switcher), the title, then one acts span (`actions`, `more`, the Close act), with no bar
+  over the title. `PAGE_TOP_BAR_START` and `PAGE_TOP_BAR_END` reach the leading act and the acts span
+  across the page inset by `icon-inset`, half of what the control has over its icon, so its first and
+  last icon glyphs stand at the title's start and the inset's end; the switcher's trigger keeps the
+  same inset as its padding, so its avatar stands there too. The row wraps: the title keeps
+  `PAGE_TITLE_FLOOR` (two fifths of the row, `basis-0` so it wraps beside the leading act and the
+  acts rather than pushing them down); the title carries a step of block padding above and below its
+  lines (`PAGE_TITLE_BLOCK`, so a single line still fills the 44 px strip), the head takes a step more
+  over the row while the title wraps (`PAGE_HEAD_WRAPS`, a measured fact, `useWraps`), and the row
+  hangs its items from the top so a 44 px act centres on the title's first line and the acts span,
+  `shrink-0 ms-auto`, drops whole to a second line at the row's end at 44 px when it does not fit
+  beside the leading act, the floor and the gaps (at 320 with three acts it wraps, at 390 it fits).
+  A Pane's title is a bar over a hairline and the body starts a page inset under it, where a
+  Section's title is a line of the body a pair over its content; the two rhythms are not one, and the
+  first Pane's title is the section's name at every density (the app never forks it by density).
+  `tablet` is read against the Place, which in the Shell is the viewport less the 240 px sidebar: the
+  Panes stand together from a Place 768 wide (a 1008 viewport), where the last Pane would otherwise
+  be 168 px at a 768 viewport. `wide` is read only through a container (no viewport `wide:` is drawn).
 - A loading form stands in for what it replaces at that part's size: `SKELETON` by the part
   (`line`, `avatar`, `icon`, `dot`, `check`, `switch`, `count`, `field`, `meter`, `chart`) and
   `SKELETON_ROW` by the row it replaces (`setting`, `field`, `facts`, `one-line`,
@@ -629,7 +619,7 @@ a tick with no animation, never jumped to full.
   construction. A short label (a chip's, a skeleton label's lane) is bounded by the
   one width `measure-short` (18ch, the short sibling of `measure`).
 - A minimum height is the floor of something pressed (a control, a field, a target, a chip, a row),
-  the set height of a bar (`strip` 40 / 44: the page's desktop strip and its touch top bar), an
+  the set height of a bar (`strip` 40 / 44: the Pane's desktop bar and its touch bar), an
   intrinsic size, or the height of what a part swaps with: `PENDING_TRACK` an action bar's
   (`min-h-control`). Any other container takes its height from its content and padding through flex,
   its parts centred on the tallest, never from a height copied from another component to line things
@@ -637,17 +627,7 @@ a tick with no animation, never jumped to full.
   sheet head is the exception: a two-line row tall (`row-2`) with or without its description, so the
   body's first field never jumps between sheets. Rejected: a `header` size, a minimum that made a
   title-only section head as tall as one with an act.
-- A touch Place draws its one floating act; in a Split it centres on the list by CSS alone: a
-  bleeding Place is the `group/page` whose layer, from `tablet` of the page and with a
-  `data-split` inside, narrows to `w-list` at the body's start (below `tablet` it spans whichever
-  region stands alone). The Place hands the act's room (its height over `pb-page`,
-  `FLOATING_ACT_FOOT`, since a region in a bleeding body keeps no page inset) to the Split, which
-  keeps it under the list and, where the record stands alone, under the record; a `beside`
-  Screen keeps it under its sections where it stands alone. Two mounted
-  copies of the act would each keep their own state, so the act is never duplicated. The act is
-  lifted (`FLOATING_ACT_LIFT`, `shadow-float` at the control radius) as a Thread's Latest act is:
-  an act floating over what scrolls is a lifted layer, the one shadow it carries.
-- A field that stays in view while a Place's sections scroll (an ask box over a home) is the Place's
+- A field that stays in view while a Pane's sections scroll (an ask box over a home) is the Pane's
   `foot`, an explicit slot: it docks under the body at both densities on the `FOOT_DOCKED` cell (the
   page inset at the sides, an acts gap above and below, the raised step under a hairline and no
   shadow, since a foot is a region of the page and `float` lifts layers only, so the body that
@@ -656,21 +636,16 @@ a tick with no animation, never jumped to full.
   same cell, so one docked composer draws one foot), the body scrolling past it, above the tab bar on touch and, on native, lifted over the keyboard
   (the body and the foot share one `KeyboardAvoidingView`, `Lifted`). The body ends a sections gap
   over it (`PAGE_BODY_OVER_FOOT`), as a filling Thread's log ends over its input, so the field reads
-  apart from the last section (a bleeding Place's Split list, which keeps no body inset, ends there
-  too: the web Place marks `data-foot` and the list reads it at every width, native hands the Split
-  a sections-gap room as it hands the floating act's); the foot spans the body at every density, whatever it holds (the
-  Place never reads its element type), and a docked `MessageInput` keeps its own measure column
+  apart from the last section; the foot spans the body at every density, whatever it holds (the
+  Pane never reads its element type), and a docked `MessageInput` keeps its own measure column
   (`THREAD_COLUMN`) inside it on the desktop, the column a Thread's input stands in. It names the
-  Shell's toasts' anchor as a filling Thread's input does. `act` and `foot` are exclusive in the
-  props type: the foot's Send is the screen's one filled act, so a floating act beside it would be a
-  second. A Place with a `foot` gives a Thread no room to fill (`ThreadRoom`), so a Thread in its
-  body stands inline among the sections with no foot of its own, and no Latest act stands over the
-  Place's foot. Rejected: a foot derived from a Thread's position (a Thread in the last Section
+  Shell's toasts' anchor as a filling Thread's input does. A Thread in a Pane with a `foot` leaves
+  its own `foot` empty. Rejected: a foot derived from a Thread's position (a Thread in the last Section
   docking its input), which hides the dock from the call site; a `MessageInput` docked variant,
   since docking is the frame's, never the field's (the column the field keeps is its own at every
   use, not a docked form).
-- A `Sheet` passed as a Thread's or a Place's `foot` docks there by derivation (`FootPlace`, set by
-  the frame around its foot: `docked` in a Place's foot and a filling Thread's, `inline` in a Thread
+- A `Sheet` passed as a Thread's or a Pane's `foot` docks there by derivation (`FootPlace`, set by
+  the frame around its foot: `docked` in a Pane's foot and a filling Thread's, `inline` in a Thread
   among sections; a `Sheet` anywhere else is the modal one, and the docked form resets it for what it
   holds). No prop, no new roster part: the Sheet draws `SHEET_DOCKED_HEAD`,
   `SHEET_DOCKED_BODY` (the sections gap, the card inset above and a sections gap below, so the last row clears the submit by the gap rows keep) and `SHEET_DOCKED_FOOT`
@@ -685,7 +660,7 @@ a tick with no animation, never jumped to full.
   the foot holds the `foot` line beside the `submit` bar (over it on touch); the
   head-end submit and Cancel of the modal form are gone, since the dock stands above the keyboard and
   the close act is in the head. The docked foot fits its content up to the region the log and the foot
-  share (a filling Thread's own column; the web Place's body and `foot` stand in one region under the
+  share (a filling Thread's own column; the web Pane's body and `foot` stand in one region under the
   head, so the head is never counted; the phone's `Lifted` is that region): `FOOT_DOCKED` carries
   `max-h-full min-h-0`, so the log gives way to the foot and the foot is never capped below the
   sheet's pinned parts. The Sheet bounds its own body instead: it scrolls between its pinned head and
@@ -700,7 +675,7 @@ a tick with no animation, never jumped to full.
   max(0, max(min(F, room), min(cap, room - L)))`. With room it is `cap`; short of room it falls to
   `room - L` (the log keeps `L`) down to `F`, then to `room` (the log goes first, then the body below
   `F`). The region owner hands the sheet `FootRegion` (`height`, `chrome`, `logFloor`: a Thread's
-  `logFloor` is `docked-log-floor`, a Place's is 0, since its docked region has no log); the sheet
+  `logFloor` is `docked-log-floor`, a Pane's is 0, since its docked region has no log); the sheet
   measures what it pins. The contract's cells hold no arbitrary value, so each platform restates the
   bound in its overlay by measuring: the web reads the region's height with a `ResizeObserver`
   (`useFootRegion`) and the pinned parts as the sheet's height less its scroller's, the phone reads
@@ -730,14 +705,13 @@ a tick with no animation, never jumped to full.
   Rejected: a `Thread` `form` prop or a `DockedForm` component (a second component for the same
   regions, switched by the app per place), and a `Form` that pins its own bar in a foot (no head for
   the title and close act, and it restates the Sheet's regions).
-- A long `Form` in a scroller keeps its bar in reach without leaving the Form. A Split's pane
-  provides `FormStands` `pane` (`FORM in.pane`, no cell of its own, uncapped like `sheet`) and a
-  sheet's body `sheet`; the web Form wraps its `ActionBar` in its foot there (`sticky bottom-0`,
-  the host's ground, and a negative margin with matching padding across the scroller's inset, an
-  overlay since positioning and the bleed are platform overlays), so the bar stays at the
-  scroller's bottom edge and stands at the form's end when the form fits. The pane takes no
-  `submit` and nothing lifts the bar out of the Form, so its pending state, Enter-to-submit and
-  `SubmitContext` stay the Form's. The phone has no `sticky`: a native `Form` in any sheet
+- A long `Form` in a scroller keeps its bar in reach without leaving the Form. A sheet's body
+  provides `FormStands` `sheet` (uncapped); the web Form wraps its `ActionBar` in its foot there
+  (`sticky bottom-0`, the host's ground, and a negative margin with matching padding across the
+  scroller's inset, an overlay since positioning and the bleed are platform overlays), so the bar
+  stays at the scroller's bottom edge and stands at the form's end when the form fits. Nothing
+  lifts the bar out of the Form, so its pending state, Enter-to-submit and `SubmitContext` stay the
+  Form's. The phone has no `sticky`: a native `Form` in any sheet
   (`FormStands` `sheet`) lifts its direct `ActionBar` (`liftBars`, through fragments) into the
   sheet's own foot slot, a store the sheet subscribes to (as it does its parts) so setting it never
   re-renders the Form. The Form sets the slot each render in a layout effect, the bar wrapped in
@@ -748,44 +722,19 @@ a tick with no animation, never jumped to full.
   capped or full height it moves into gorhom's footer and stays on screen while the fields scroll.
   A sheet-level `submit` would not do: a Form's bar can hold several acts. A docked sheet has no
   slot, and its Form's bar stays in flow.
-- A record the main opened is the Split's `beside`: a `Screen` whose `back` is the main's route,
-  given by the consumer because the route's depth differs by surface and no component can derive it.
-  From `wide` of the page the list, the main and the beside record stand together, main and beside
-  sharing what the list leaves half each (`SPLIT_BESIDE`, `grow basis-0`: a structural fraction,
-  never a width token; the web parts them by the beside's start hairline, an overlay from `wide`).
-  The main's inset sits on a box inside its scroll, never on the shared box, because a `basis-0`
-  item still counts its own padding against its share; the Screen's back act draws as Close, last in
-  its head, to the same route, and the pane leaves for the Details act at every width, which the Split's
-  `data-beside` mark shows. Below `wide` the beside record stands in the main's place with its back
-  act, a pushed page inside the Split. Below `tablet` (the web) and on the phone, where it stands
-  alone, its head is the page's one: the Place reads the Split's `data-beside` mark (the web) or its
-  `beside` prop (native), and draws no head, so one top bar holds one back act, to the main, and the
-  list is reached by going back from the main; the Split hands the Details act to that head through
-  `Beside`. The Split hands the Screen `Beside`: the Screen covers no tab bar, its title is an
-  `h1` and its sections start at `h2` at every width, so where its head stands alone the Place's
-  head, `h1` included, stays in the DOM undrawn (`display: none`) and the record's `h1` is the one
-  visible; a heading's tag cannot swap by container query, so two heads (two `h1`s) stand side by
-  side from `wide`. On the web its body's sections, not its root, are the `page` container, so its
-  head's acts and the floating act's room read the outer page's width and what stands in its body
-  reads its own. Its body holds the column the main holds (`PAGE_BODY_BESIDE`, `max-w-measure-inset` over `PAGE_BODY`; `SPLIT_MAIN` is held by Split, so Screen composes its own cell). Rejected: the record in the pane (the pane is the open record's details, at
-  forty-five characters), a `Sheet` (an overlay over the scrim with no back to the main), and a
-  width token for the beside record.
 - A bar at a phone's bottom edge clears the home indicator with the web emit's `pb-safe`
   (`padding-bottom: env(safe-area-inset-bottom)`, non-zero under the document's
   `viewport-fit=cover`), an overlay the tab bar spells beside `SHELL_TAB_BAR`; native pads the
   same inset from `react-native-safe-area-context`.
-- A Split's list holds one width, `list` (`SPLIT_LIST` is `w-list`, 003-322), and its pane sizes to its
-  content between `region-min` and `pane` (`SPLIT_PANE` spells `min-w-region-min max-w-pane` and no
-  `w-`, the pane shrink-0 so its flex basis is its content). 003-305 sized the list to its content
-  as well, and Stead's critique (2026-10-11) found the cost: the column moved from 215 to 360 as
-  its rows loaded and between lists (240, 288, 360), so the main reflowed on every load and filter.
-  The list's width is therefore the ceiling it always was, so 003-122's arithmetic (a main of at
-  least a page less the list) holds exactly. Rejected: a list width the app names (a consumer
-  option, and an app cannot know its rows' width), and holding the content-sized width through a
-  skeleton (the loaded rows would still differ list to list). The touch Place's floating act
-  centres on the list by the list's CSS anchor (`--split-list`). The pane still follows its content:
-  a width that follows its rows moves as a load changes them.
-- A frame's fixed regions are widths (`sidebar`, `list` a split's list column, `pane` the ceiling of its content-sized record pane, `region-min` its floor, `column`, `node` a canvas node, `auth`, `empty` an empty
+- A Pane before the last holds one width, `list` (`w-list`, 003-322), giving way to `region-min`
+  as its Place narrows. 003-305 sized the list to its content, and Stead's critique (2026-10-11)
+  found the cost: the column moved from 215 to 360 as its rows loaded and between lists (240, 288,
+  360), so the last Pane reflowed on every load and filter. The width is therefore the ceiling it always
+  was, so 003-122's arithmetic (a last Pane of at least a page less the list) holds exactly.
+  Rejected: a list width the app names (a consumer option, and an app cannot know its rows' width),
+  and holding the content-sized width through a skeleton (the loaded rows would still differ list to
+  list).
+- A frame's fixed regions are widths (`sidebar`, `list` the width of a Pane before the last, `region-min` its floor, `pane` a side sheet's, `column`, `node` a canvas node, `auth`, `empty` an empty
   state's column, `selection` a selection bar's column), so a region keeps its measure at any viewport. A skeleton bar alone takes a
   fraction width (`w-1/12`, `w-1/5`, `w-1/4` to `w-3/4`) to stand at its text's length: structural,
   a closed list in the web verify's overlay acceptance, never a token; a chart column's share of its
@@ -796,18 +745,21 @@ a tick with no animation, never jumped to full.
   owns its frame's width centres what it holds (a filling Thread's log, a docked foot, the
   EmptyState's region), and a column standing among sections keeps the region's start, as `Text`
   and `Prose` hold the measure. A Thread's regions spell `items-center` as an overlay on the desktop
-  alone, since on touch the column cell is absent and the content spans the region; a Place's docked foot
+  alone, since on touch the column cell is absent and the content spans the region; a Pane's docked foot
   centres at every density on both platforms, so a selection bar wider than the screen's measure
   stands centred on a wide touch screen too, and what else it holds spans it (`w-full`). A region that holds a page's sections stands them a sections gap apart
-  (`PAGE_BODY`, `SPLIT_MAIN rest`, `SPLIT_PANE`, `SHEET_BODY`, and a Split's list by
-  `SPLIT_LIST_STACK`, which the phone's list reads as well, with the list's top inset), so no wrapper restates the gap; a
-  `Form` is one child, so the gap shows only between a sheet's sections. A Split's open record is
-  one such column at the measure: `SPLIT_MAIN rest` caps its padded box at `measure-inset`, so the
-  content standing inside the page inset is `measure` wide and at the main's start, and a Section,
-  a Group, a Code and an ActionBar end where a Prose or a Form does (an end-fit bar's acts stand
-  at that column's end, not the main's far edge). No part opts out: a Table or a Canvas in a
-  Split's main stands in the column until a first consumer decides otherwise. A filling Thread
-  lifts the cap under its mark (`MAIN_FILLED`).
+  (`PAGE_BODY`, `SHEET_BODY`), so no wrapper restates the gap; a
+  `Form` is one child, so the gap shows only between a sheet's sections. A Pane's body is one such
+  column at the measure: its children are capped at `measure` (`*:max-w-measure`), aligned to the
+  start under the title, so a label stays near its value, a field near the size of what it holds and
+  a Save near the fields it saves, and a Section, a Group, a Code and an ActionBar end where a Prose
+  or a Form does (an end-fit bar's acts stand at that column's end, not the Pane's far edge). `wide`
+  lifts the cap for a Pane whose content's meaning is its width: a `Canvas` (the workflow canvas,
+  the knowledge graph) and a code `Diff`; a wide table in a reading Pane scrolls sideways inside
+  the column, so the empty space a reading Pane leaves stands only at the screen's right edge.
+  Measured with the cap lifted at 1920 px: pickers 1270 px long, a `DefinitionRow`'s value or switch
+  1200 px from its label, an `OptionList` box mostly empty, a `Slider` track too long to set, a
+  Form's Save and a Section's act far from what they act on.
 - A class with no look is structural, an overlay the web's class sweep classifies: a stacking
   order inside one component (`z-1`, a frozen table column over the cells that scroll under it,
   inside `isolate`, the grid its own stacking context so the column never stands over a sheet),
@@ -827,7 +779,7 @@ a tick with no animation, never jumped to full.
   portals into `<body>` as Base UI does by default. The
   layer follows the toasts' viewport in DOM order, so by DOM order alone a sheet would stand over
   the toasts; the `z-(--layer-*)` steps decide. The toasts' layer stays inside `main` for its geometry
-  (above the tab bar, the floating act, the docked foot's anchor), so nothing between it and the
+  (above the tab bar, the docked foot's anchor), so nothing between it and the
   root may make a stacking context. Rejected: a literal `z-*` at the call site, and portalling the toasts after
   the sheets (a Base UI portal mounts in the order it opens, and the layer would lose `main`'s
   geometry). React Native's `zIndex` orders siblings only, so native reads the order by tree
@@ -930,7 +882,7 @@ a tick with no animation, never jumped to full.
   column's width); below `tablet` the tick is the `ListRow`'s leading `check` and a moved reason
   follows the change value in its meta. The head tick draws no count, and the table none: "N of M chosen" belongs to the
   selection bar, which reads this selection: an `ActionBar` with `chosen: { count, of, onAll? }`
-  docked as the Place's `foot`. The table draws its head tick from `tablet` of its page and a list
+  docked as the Pane's `foot`. The table draws its head tick from `tablet` of its page and a list
   form below it, so `onAll` puts the choose-all act on the bar wherever the table shows no head tick,
   decided by that same page width and never by touch (a desktop window at 768 has the act, a touch
   grid at 1280 has the tick; on the phone the table is always the list form). Two acts stand beside
@@ -948,7 +900,7 @@ a tick with no animation, never jumped to full.
   the count and the act stay a reading distance apart on a wide screen. The
   act's label ("Publish 4 changes") and its blocked reason stay the consumer's `Act`. The bar is not
   a new component: `ActionBar` already owns the filled act, its pending state, the reason and the
-  touch stacking, and `Place.foot` already docks, scrolls the body under it and stands above the tab
+  touch stacking, and `Pane.foot` already docks, scrolls the body under it and stands above the tab
   bar and the toasts. A grid re-renders only the rows and cells whose state changed: rows and cells
   are memoised components fed per-cell values and one stable set of callbacks. On the web a cell
   holds the pointer's hover itself (an editable cell under the pointer shows its control), so a
@@ -957,7 +909,7 @@ a tick with no animation, never jumped to full.
   cell and the cells that scroll) wash together on a press, so both read one store of the pressed
   row's id, each only whether it is the pressed one; a sortable header washes through the
   Pressable's own pressed state. The web mounts only the live form: a Table finds its page (the
-  `data-page` mark of a Place or a Screen) in the layout phase and reads whether the page is `tablet`
+  `data-page` mark of a Pane) in the layout phase and reads whether the page is `tablet`
   wide through one external store (`usePageTablet`), so the choice re-renders before paint; a Table
   outside a page draws the list.
 - A thread is a molecule (`Thread`), a collection: its Messages from `query` (with `sentence`) or
@@ -979,47 +931,24 @@ a tick with no animation, never jumped to full.
   `replying`. On the desktop both stand in
   a measure-wide column (`THREAD_COLUMN`, held by no entry: a `MessageInput` and a record's
   `ItemHeader` over a filling Thread stand in it too), on touch in the screen's. The column is a
-  width alone (below, column rule); a filling Thread's log in a Place's body and its docked foot centre it, and a
-  Thread among sections keeps their start. Filling a Split's main the Thread stands as a record there does: the log (`LOG_AT_START`) and the `ItemHeader` (`COLUMN_FILLED`) start at the main's start, the messages at the measure, and the input (`INPUT_FILLED`) spans the main within the page inset, each a mark variant on `group/main` in `thread/fill.ts` that a Thread outside a main never meets. A Thread
-  in a Place's body fills the page at every width, decided by where it stands, from its first
-  render: the frame hands it `ThreadRoom`, and the body draws no inset and leaves scrolling to it,
-  its log scrolls at the page inset (`THREAD_LOG`), opening at the newest message and following each
-  that arrives while the reader is at the end, the input docked at the foot (`FOOT_DOCKED`); a Section
-  takes the room back. The phone log's origin is its end: the ScrollView and each message turn
+  width alone (below, column rule); a docked foot centres it, and a Thread among sections keeps
+  their start. A Thread has one structure: it fills what it stands in by plain flex (`grow
+  min-h-0`), decided by no prop, context or mark. In a Pane's body, whose height is definite, it
+  takes the free height: its log scrolls at the page inset (`THREAD_LOG`), opening at the newest
+  message and following each that arrives while the reader is at the end, and the input docks at
+  its foot (`FOOT_DOCKED`) a sections gap under the log; among sections it stands at its content's
+  height. A part above a Thread is its sibling in the body, a sections gap from the log. The phone
+  log's origin is its end: the ScrollView and each message turn
   upside down (as React Native's `VirtualizedList` inverts a list), the messages newest first, so
   its first frame shows the newest message and a keyboard's resize keeps the bottom anchored;
   `maintainVisibleContentPosition` keeps a scrolled-up reader's place as a message arrives at the
   origin, and follows from the end. Its insets swap (`THREAD_LOG`'s top inset at its layout end) and
   a short log stands at its layout end, the top of the screen. Rejected: scrolling to the end from
   `onContentSizeChange` and `onLayout`, which showed the oldest messages for a frame and jumped on
-  each keyboard resize. The web Thread marks its filling root `data-fill` and the region reads the
-  mark with an arbitrary `[&:has(>[data-fill])]` variant (Tailwind 4's `has-[...]` takes no child
-  combinator), so the body's form follows the Thread from its first paint with no state in the
-  frame. The marked forms restate contract cells in the web overlay (`thread/fill.ts`), since
-  Tailwind reads literal classes only and the contract holds no platform overlay (ui-core's c21):
-  the body's `PAGE_BODY` inset zeroed, the Split main's `rest` cell (gap, foot inset and column cap) turned into its `fills` one, and
-  `THREAD_COLUMN` under the main's mark. react-ui's `fill.test.ts` holds each to its cell by
-  resolving the insets side by side, so a cell that changes without its marked form fails `pnpm
-  check`. Native has no such selector: by contract the Thread stands as the body's direct child (as
-  `main`, or in a fragment under the record's `ItemHeader`, in a Split), and the Place or Split
-  reads it among its children in render (`holdsThread`, as a sheet reads a TextArea). The native
-  body keeps one element type in every form, its keyboard-aware scroll stilled (`scrollEnabled` and
-  `enabled` off) with its content held to its height, so a Thread arriving late remounts nothing
-  beside it. Rejected: a Thread telling its frame in a layout effect, which commits the frame twice
-  and, on native, swapped the body's scroll for a view and remounted every sibling. A filled Place's
-  floating act would stand over the docked input: accepted while no Place has both. A part above a Thread is its sibling in the region, and the head pairs with a Banner after it as with an ActionBar. In a Place's body the Thread alone runs edge to edge: the web reads the mark for each sibling above it (`PART_ABOVE_FILLED`, the `PAGE_BODY` inset at the sides and the top as margins, the body keeping its gap), and native's `headPaired(…, fills)` wraps each part before the Thread in the same inset; `fill.test.ts` and native's `thread.test.ts` hold both to `PAGE_BODY`. Rejected: the region reading the mark at any depth (`data-fill` is also the source TextArea's and the Canvas's, nested regions would match each other's Thread, and an app wrapper is no flex column, so the Thread would still not fill it), and a Thread slot or a roster part for what a sibling does. A Split's main
-  gives it room too, so a Thread under a record's `ItemHeader` fills the main the same way: the main
-  stops scrolling, keeping the page inset around the head alone (`SPLIT_MAIN {state: fills}`; the
-  web spells it as the `rest` cell less its gap and foot under the fill mark), and the Thread bleeds
-  through the sides (`-mx-page`, an overlay by `ThreadBleeds`), its log and foot carrying the inset
-  themselves, a page inset under the head over a hairline (`THREAD_UNDER_HEAD`) the scrolling
-  messages meet; the Split hands its main `OverThread` and the `ItemHeader` stands in the Thread's
-  column on the desktop under the main's fill mark (`group/main`). The input docks at the main's
-  foot and names the toasts' anchor as in a Place. The bleeding Place's act still floats over the
-  list, and where the record stands alone its room stands under the input. A Canvas in the main
-  takes the same form (its `data-fill` mark, the `CANVAS_UNDER_HEAD`: the `-mx-page` bleed and the
-  hairline, read by `useBleed` from `ThreadRoom` and `ThreadBleeds`), so it reaches the main's
-  edges under the record's head. While a filling Thread's
+  each keyboard resize; a Thread telling its frame in a layout effect (the frame commits twice),
+  a room the frame hands it (`ThreadRoom`) and a `data-fill` mark on its root for the body to
+  read, each a frame choosing its form from what stands in it. The cost accepted: the log's
+  scrollbar stands inside the page inset. While a filling Thread's
   reader is scrolled up (the log's `atEnd` false), a secondary `Button` (`ArrowDown`, the word
   `latest`) floats centred at the foot of the log's region, a pair above the foot, on a lifted
   ground at its radius (`THREAD_LATEST`: `bg-raised`, `shadow-float`, since the secondary act draws
@@ -1054,8 +983,8 @@ a tick with no animation, never jumped to full.
   touch field gives up only a compact square for each. Lucide draws no filled stop square, and a bare
   `Square` beside the field reads as an unchecked box. What becomes of a message sent while an
   answer runs is the consumer's sentence in `notice`; the input takes no prop for it. On native,
-  Send and Stop never touch focus: the keyboard stays up because no tap takes it, the Place and
-  Screen scroll (`Scroll` in `lib/hosts`) keeping taps on its acts
+  Send and Stop never touch focus: the keyboard stays up because no tap takes it, the Pane's
+  scroll (`Scroll` in `lib/hosts`) keeping taps on its acts
   (`keyboardShouldPersistTaps="handled"`) and a docked foot standing outside any scroll. The web
   input refocuses its text after Send and Stop, which is keyboard focus management there. A removed
   chip hands no focus on.
@@ -1339,10 +1268,9 @@ a tick with no animation, never jumped to full.
   deriving it from `href` (a create act that navigates, "Add a repo", keeps its plus). `tone`
   stays internal, as does `fill`. An OptionList
   draws it as its card's line, `missing` beside a secondary Back, as its failed line stands.
-  Back goes to `BackRoute`, the enclosing `Screen`'s `back` or the `back` of a Split between
-  them and the read (which wins), else to `PlaceRoute`, the route of the place that owns the
+  Back goes to `BackRoute`, the `back` of the Pane around the read, else to `PlaceRoute`, the route of the place that owns the
   address (`placeAt` in `./route`, which the Shell reads, below); with neither it draws no act. Going to a route is navigation, so on the web Back is an anchor
-  in the hairline act's look (the internal `ButtonLink`), as a Place's and a Screen's back and
+  in the hairline act's look (the internal `ButtonLink`), as a Pane's back and
   Close acts are anchors in the icon act's (`IconButtonLink`); native presses through
   `navigate`. On the web every anchor routes in place: its `onClick` is `lib/navigate`'s
   `follow`, which opens a plain primary click on a route of the app through the app's router
@@ -1351,7 +1279,7 @@ a tick with no animation, never jumped to full.
 - An address no route serves is drawn by stack, with no part, option or prop: the `notFound` word
   ("Not found") as the title and the `nowhere` word ("Nothing is at this address.") as the sentence,
   on both platforms through one internal component per platform (`lib/not-found`), not in the roster.
-  Where it stands decides its frame: under a Shell, a `Place` holding the `Missing` form whose act
+  Where it stands decides its frame: under a Shell, a `Place` holding a `Pane` with the `Missing` form whose act
   goes to the Shell's first place that is a route (`ShellHome`, a context the Shell hands down; a
   place that is a spot on its page, `#activity`, leads nowhere from a missing address); outside
   one, a `Gate` with the `back` word as a standalone link to `/`. On the web react-ui contributes
@@ -1492,7 +1420,7 @@ a tick with no animation, never jumped to full.
   failed and empty EmptyStates in the card at `EMPTY_CARD` (the card their frame, in place of
   `EMPTY_FRAME`). A busy List makes the Group busy, for the card is its box. The web card,
   like each other block frame that hides its overflow (`Code`, `Diff`, `ProseDiff`, `Image`, `Stats`), never shrinks (`shrink-0`): its `overflow-hidden` gives a flex item a zero automatic
-  minimum, so in a column that scrolls (a Split's list, a Sheet's body) it would give up
+  minimum, so in a column that scrolls (a Pane's body, a Sheet's body) it would give up
   height and clip its rows; native's `flexShrink` default is 0. A waiting Group
   (its `loading`, or a loading Section's) renders its body once and, when no part registered
   (a List, a Meter, a Slider, a DefinitionRow register through `useGroupPart`, however deep),
@@ -1540,14 +1468,13 @@ a tick with no animation, never jumped to full.
   platforms draw one state per segment, its `StepState` the type a `Stage` takes too), over "Step n
   of m" (the slot word `stepOf`) at meta. `done` and
   `current` fill `ink-meta`, `later` `fill-neutral`, never the accent, which the rubric leaves to
-  checked controls and the active dot. It is an atom, not a prop on `Place`, `Form` or `Sheet`: an
+  checked controls and the active dot. It is an atom, not a prop on `Pane`, `Form` or `Sheet`: an
   onboarding step can be any of the three. The one frame that owns its place is `Gate`, whose
   `step` draws it between the mark and the title. It takes the count alone, not a `Step[]`: onboarding
   steps carry no label or date.
 - `Gate` is the layout frame of a page outside the shell (a sign-in, a consent step), beside
-  `Shell`, `Place`, `Screen` and `Split` rather than a variant of `Place`, whose strip, acts, foot
-  and floating act all assume the sidebar or tab bar beside it, or of `Screen`, which carries a back
-  act and covers a tab bar; a host element at the `auth` width would be a numeric dimension, which the
+  `Shell`, `Place` and `Pane` rather than a variant of `Pane`, whose bar, acts and foot
+  assume the sidebar or tab bar beside it and which carries a back act; a host element at the `auth` width would be a numeric dimension, which the
   rules refuse. Its props are `title`, `description`, `step`, `mark`, `banner` and `children`, the
   style channels closed. It is a root frame as the `Shell` is: it mounts the `FrameHost` both share
   (the `toast()` queue, the `confirm()` decisions, the popup layer; `components/shell/host.tsx` on
@@ -1706,7 +1633,7 @@ a tick with no animation, never jumped to full.
   anywhere (no `wrap` prop, no sideways scroll), so an argument the operator copies reads whole at
   every width and the web's text is focusable by script alone, where the fold lands on it. Its
   height on load changes by the lines that wrap, as a Diff's does. The web's page-frame
-  scrollers (the Place's and Screen's body, the Split's list, main and pane, a sheet's body, the Gate's page) take a
+  scrollers (the Pane's body, a sheet's body, the Gate's page) take a
   tab stop only while they scroll, through `lib/scrolls.ts`, on the vertical axis, with one more condition: a
   region takes the stop only while it scrolls and holds nothing a keyboard reaches (what a keyboard reaches is `isTabbable` of `lib/focus`, the rule a
   docked Sheet's focus hand-back reads), re-measured when its content changes anywhere inside it or
@@ -1751,7 +1678,7 @@ a tick with no animation, never jumped to full.
   Rejected: optional `value` and `onChange` on every control read from the field's context, which
   would compile a control with no value anywhere and could not type a boolean field against an
   `Input`.
-- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 66 components in four
+- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 65 components in four
   layers (atoms, layout molecules, shared molecules, content molecules) with their prop names, the
   cells each draws (a whole matrix family, one family cell as `FAMILY.axis.value`, or a single cell)
   and the states it has a form for, the same in both plugins; an entry with `platforms` ships on
@@ -1783,9 +1710,8 @@ a tick with no animation, never jumped to full.
   `FileRow`), the content frame, `FIGURES`, the option group and its label (`SELECT_GROUP`,
   `OPTION_GROUP_LABEL`: `Select`, `Picker`, `OptionList`), the error line (`FIELD_ERROR_LINE`:
   `FormField`, `ListRow`'s entry), the remove act's round hit box (`REMOVE_HIT`: `Chip`, an
-  attachment's thumbnail), the line box, the popover, the skeleton, the page cells `Place` and
-  `Screen` share, and the toasts' layer (`TOASTS`, which the Shell stands over its page). A Split's
-  details sheet is the `Sheet` at the `pane` fit, composed through the sheet's internal base.
+  attachment's thumbnail), the line box, the popover, the skeleton, and the toasts' layer
+  (`TOASTS`, which the Shell stands over its page).
   `Select`, the single-choice field over `options`, is the field box (`FIELD`) whose open list is a
   popover (`POPOVER`) of rows (`ROW`); on native it opens the same option sheet as `Picker`.
 - `FileInput` is the field box (`FIELD`) that chooses a file. Its value is `PickedFile` (`{ name,
@@ -1807,10 +1733,9 @@ a tick with no animation, never jumped to full.
 - `Canvas` (web only) draws a graph on two libraries that react-ui carries as its own
   dependencies, so a consumer installs neither: `d3-zoom` is the viewport and `elkjs` places the
   nodes. The canvas owns everything else. Below `tablet` its ground (loaded or waiting) keeps
-  `min-h-1/2`, half the content box of the region it fills (a Split's main inset, a Place's
-  bleeding body, a pushed Screen), so the column scrolls past it and the head and banners above it
-  scroll away rather than shrink it; the percentage resolves because the inset is a flex item of
-  the scroller, whose post-flex size is definite, so a viewport-share token is not needed
+  `min-h-1/2`, half the content box of the region it fills (a Pane's body), so the column scrolls past it and the
+  head and banners above it scroll away rather than shrink it; the percentage resolves because the
+  body is a flex item of the Pane, whose post-flex size is definite, so a viewport-share token is not needed
   (`canvas-touch` holds it at 375 × 667 and 390 × 844). `loading` swaps the whole graph component for
   `CanvasWait` (the ground and grid it shares with the graph, three `canvasNode` cards of skeletons
   in a column), so no viewport, layout or ELK runs while waiting and no zoom stack or act
@@ -1892,13 +1817,13 @@ a tick with no animation, never jumped to full.
 - A component that sits in more than one container takes `fit`, a closed enum read off its matrix's
   `fit` axis (`IconFit`, `ButtonFit`, `IconButtonFit`, `LinkFit`, `ActionBarFit`, `FieldFit`,
   `SheetFit`, `PickerFit`, `ColumnsFit`), defaulting to the matrix's default; the composing molecule
-  sets it (a `Place` passes `bar` to its strip's acts, a field's trailing act `field`, a `Form`
-  under a `Gate` `full`, a `Split` its details sheet `pane`) and a call site may.
+  sets it (a `Pane` passes `bar` to its bar's acts, a field's trailing act `field`, a `Form`
+  under a `Gate` `full`) and a call site may.
   `ACTION_BAR`'s two fits carry no cell: `end` and `full` differ in structure (an overlay) and in
   the `Button` fit the bar passes (`body`, `field`), and the matrix exists so the closed type is
   read off an axis like every other fit. `Columns` takes `fit` the same way: `board` (the default)
   is a row of sections at the column width scrolling sideways from the page inset, `half` is two to
-  a row filling the body from the Place's `page-desktop` width and stacking in order below it, at
+  a row filling the body from the Pane's `page-desktop` width and stacking in order below it, at
   the `sections` gap, with no bleed and no column width (a web grid overlay, no scroll region). The
   phone stacks both: it never reaches `desktop`.
 - An `Act` says what it does, never how it looks: `destructive` marks an act that removes or
@@ -1954,7 +1879,7 @@ a tick with no animation, never jumped to full.
   never shrank back), and a public height prop.
 - A `kind="source"` TextArea in a page's Form fills the free height of the page: the page is the
   document the field edits, and a window of a few lines loses its context. The field decides it
-  in render (`ThreadRoom` true, `FormStands` `page`) and marks its box `data-fill`; the Form and
+  in render (`FormStands` `page`) and marks its box `data-fill`; the Form and
   the FormField around it read the mark by `has-data-fill` and grow, and the value takes the rest
   of its box from a zero flex basis, so the box's least height stays the value's three lines and
   the value scrolls inside past its room. A TextArea in a Section or a sheet grows with its value.
@@ -1992,8 +1917,8 @@ a tick with no animation, never jumped to full.
 - Tokens are enforced by ownership: a token names a place, and the component that owns the place
   draws it. A component declares `owns` on its entry, the type roles, colours (a name, or a family
   prefix ending in `-`), radii, spacing roles, sizes and widths, and shadow levels it may draw. A
-  molecule that picks a composed atom's `fit` or `act` (a `Place` its strip act's `BUTTON.fit.bar`,
-  a `Split` its Details act's `ICON_BUTTON.fit.bar`) draws those cells and owns what they spell; a
+  molecule that picks a composed atom's `fit` or `act` (a `Pane` its bar's acts `ICON_BUTTON.fit.bar`)
+  draws those cells and owns what they spell; a
   slot the consumer fills (`children`, a `ReactNode`) draws nothing of its content. The least data
   that makes the check exact: a class is classified by its utility prefix into one namespace and
   looked up by name, so `rounded-chip`, `min-h-chip` and `bg-chip-red-soft` land in three namespaces
@@ -2027,7 +1952,7 @@ resolve. A platform's rules for every `.tsx` are its plugin's own page (react-ui
 `apps/showcase` is a stack consumer. Its routes are the token page and the television page
 (`/foundations`, `/tv`; `/` redirects to `/foundations`) and the places of one app composed from
 the built components: `/deploys` (with `/deploys/$deployId` and `/deploys/$deployId/steps/$stepId`),
-`/projects`, `/usage`, `/domains` (and `/domains/verify`, a Screen over it), `/logs`, `/assistant`,
+`/projects`, `/usage`, `/domains` (and `/domains/verify`, a covering Pane over it), `/logs`, `/assistant`,
 `/members`, `/settings` and `/home` in the Shell (the pathless layout `_app`), and `/sign-in`
 and `/connect` outside it. A place calls typed procedures through the generated client
 (`src/worker/routes/`, each with zod schemas and a stub handler that answers no rows) and draws their
@@ -2052,9 +1977,10 @@ touch is a toolbar toggle, not a test run; `a11y.test` is `error`):
   that owns a widget behaviour the rubric's accessibility floor sets (an overlay's focus in and
   out, Escape and focus kept inside a modal; a composite's arrow keys and typeahead),
   each a play function driving the real component by keyboard. They cover Sheet and a `confirm()`
-  decision, a Sheet docked in a Place's foot, Menu, Select, Picker, OptionList, SegmentedControl,
-  Table, List (tree), Slider, InputOtp and Gate; Screen, Split and Shell move no focus
-  themselves.
+  decision, a Sheet docked in a Pane's foot, Menu, Select, Picker, OptionList, SegmentedControl,
+  Table, List (tree), Slider, InputOtp and Gate; Place and Shell move no focus
+  themselves (a Pane takes the keyboard on its first control when opened from another,
+  `usePaneFocus`).
 - **Component stories**, above.
 
 A page is not one of them: the places above are the app's routes, and the workbench draws each as
@@ -2064,7 +1990,7 @@ A failing assertion is a finding in the component: it stays failing until the co
 never weakened or skipped, and nothing is excluded from axe beyond the document-structure rules and
 the node buttons of a canvas that draws a run's path: `Canvas`'s dimmed frames
 (`.storybook/state-stories.tsx`) and the behaviour stories that draw a `path`. An open non-modal
-popup (Menu, Select, Picker, a Screen's more menu) has `[data-base-ui-focus-guard]` spans around
+popup (Menu, Select, Picker, a Pane's more menu) has `[data-base-ui-focus-guard]` spans around
 it, focusable and `aria-hidden` by Base UI's design with no prop to drop them, so
 `aria-hidden-focus` flagged each open menu (serious, on every desktop menu) until Stead's critique
 (2026-10-11) asked for an open menu that audits clean (003-323). Menu, Picker and Select call

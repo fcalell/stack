@@ -42,7 +42,7 @@ import { QrCode } from "@fcalell/plugin-react-ui/components/qr-code";
 import { Rules } from "@fcalell/plugin-react-ui/components/rules";
 import { QueryBoundary } from "@fcalell/plugin-react-ui/components/query-boundary";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
-import { Screen } from "@fcalell/plugin-react-ui/components/screen";
+import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { List } from "@fcalell/plugin-react-ui/components/list";
 import { ListRow } from "@fcalell/plugin-react-ui/components/list-row";
 import { Menu } from "@fcalell/plugin-react-ui/components/menu";
@@ -54,7 +54,6 @@ import { Sheet } from "@fcalell/plugin-react-ui/components/sheet";
 import { Shell } from "@fcalell/plugin-react-ui/components/shell";
 import { Slider } from "@fcalell/plugin-react-ui/components/slider";
 import { Spinner } from "@fcalell/plugin-react-ui/components/spinner";
-import { Split } from "@fcalell/plugin-react-ui/components/split";
 import { Status } from "@fcalell/plugin-react-ui/components/status";
 import { Switch } from "@fcalell/plugin-react-ui/components/switch";
 import { Text } from "@fcalell/plugin-react-ui/components/text";
@@ -242,34 +241,25 @@ export const closure = (
 		<Link href="#" class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<Link href="#" classList={{}} />
-		<Place title="x" />
+		<Place />
 		{/* @ts-expect-error: closed channel */}
-		<Place title="x" className="x" />
+		<Place className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Place title="x" style={{ flex: 1 }} />
+		<Place style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<Place title="x" class="x" />
+		<Place class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Place title="x" classList={{}} />
-		<Screen title="x" />
+		<Place classList={{}} />
+		<Pane title="x" />
+		<Pane title="x" back="/" cover wide />
 		{/* @ts-expect-error: closed channel */}
-		<Screen title="x" className="x" />
+		<Pane title="x" className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Screen title="x" style={{ flex: 1 }} />
+		<Pane title="x" style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<Screen title="x" class="x" />
+		<Pane title="x" class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Screen title="x" classList={{}} />
-		<Split />
-		<Split back="/" />
-		{/* @ts-expect-error: closed channel */}
-		<Split className="x" />
-		{/* @ts-expect-error: closed channel */}
-		<Split style={{ flex: 1 }} />
-		{/* @ts-expect-error: closed channel */}
-		<Split class="x" />
-		{/* @ts-expect-error: closed channel */}
-		<Split classList={{}} />
+		<Pane title="x" classList={{}} />
 		<Section title="x" />
 		{/* @ts-expect-error: closed channel */}
 		<Section title="x" className="x" />

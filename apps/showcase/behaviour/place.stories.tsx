@@ -1,55 +1,78 @@
-import { Button } from "@fcalell/plugin-react-ui/components/button";
+import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
+import { Input } from "@fcalell/plugin-react-ui/components/input";
 import { List } from "@fcalell/plugin-react-ui/components/list";
+import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
-import { Shell } from "@fcalell/plugin-react-ui/components/shell";
-import { Split } from "@fcalell/plugin-react-ui/components/split";
-import { Toolbar } from "@fcalell/plugin-react-ui/components/toolbar";
+import { BREAKPOINT_PX } from "@fcalell/ui-core/tokens";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { expect } from "storybook/test";
+import { type ReactNode, useState } from "react";
+import { expect, waitFor } from "storybook/test";
+import { focused } from "./support.ts";
 
-const noop = () => {};
-const ACTIONS = [
-	{ icon: "ListFilter" as const, label: "Filter", onAct: noop },
-	{ icon: "RefreshCw" as const, label: "Refresh", onAct: noop },
-];
-const MORE = [{ label: "Copy deploy hook", onAct: noop }];
-const SWITCHER = {
-	label: "Workspaces",
-	options: [
-		{ value: "acme", label: "Acme", avatar: {} },
-		{ value: "globex", label: "Globex", avatar: {} },
-	],
-	value: "acme",
-	onChange: noop,
+const NAMES = ["Ana Ruiz", "Ben Kaya", "Ema Okafor"];
+const ROWS = {
+	key: (name: string) => name,
+	title: (name: string) => name,
 };
+const noop = () => {};
 
 export default { title: "Behaviour/Place" } satisfies Meta;
 
-function Page(props: { title: string }) {
+// A page `width` px wide: the container its Panes query.
+function Page(props: { width: number; children: ReactNode }) {
 	return (
-		<Place title={props.title} actions={ACTIONS} more={MORE}>
-			<p>The first section.</p>
-		</Place>
+		<div
+			style={{
+				width: props.width,
+				height: 700,
+				display: "flex",
+				flexDirection: "column",
+			}}
+		>
+			{props.children}
+		</div>
 	);
 }
 
-function viewport(
-	width: number,
-): Pick<StoryObj, "tags" | "globals" | "parameters"> {
+function must<T extends Element>(el: T | null | undefined): T {
+	if (!el) throw new Error("the element is not drawn");
+	return el;
+}
+
+// The Panes of the place, in order.
+function panes(canvasElement: HTMLElement): HTMLElement[] {
+	return [...canvasElement.querySelectorAll<HTMLElement>("section[data-page]")];
+}
+
+const shown = (el: Element | undefined) =>
+	el !== undefined && getComputedStyle(el).display !== "none";
+
+// A token's width in px, read off a probe wearing its class.
+function width(root: Element, className: string): number {
+	const probe = document.createElement("div");
+	probe.className = className;
+	root.append(probe);
+	const size = probe.getBoundingClientRect().width;
+	probe.remove();
+	return size;
+}
+
+function touch(story: StoryObj): StoryObj {
 	return {
+		...story,
 		tags: ["touch"],
 		globals: {
 			density: "touch",
-			viewport: { value: `w${width}`, isRotated: false },
+			viewport: { value: "phone", isRotated: false },
 		},
 		parameters: {
-			layout: "fullscreen",
+			...story.parameters,
 			viewport: {
 				options: {
-					[`w${width}`]: {
-						name: `${width}`,
-						styles: { width: `${width}px`, height: "700px" },
+					phone: {
+						name: "Phone",
+						styles: { width: "375px", height: "812px" },
 						type: "mobile",
 					},
 				},
@@ -58,252 +81,319 @@ function viewport(
 	};
 }
 
-const LONG = "A deploy title long enough to wrap before the acts";
+// A list and the record it opened: two Panes, the record's back the list.
+function Opened(props: { width: number }) {
+	return (
+		<Page width={props.width}>
+			<Place>
+				<Pane title="Reviews">
+					<List items={NAMES} row={ROWS} />
+				</Pane>
+				<Pane title="Review" back="/reviews">
+					<Section title="Activity">
+						<List items={NAMES} row={ROWS} />
+					</Section>
+				</Pane>
+			</Place>
+		</Page>
+	);
+}
 
-// A touch Place with no shell switcher stands its acts on the title's row:
-// 44 px targets at the row's end, the title at the page's gutter wrapping
-// before them, the first section under a hairline that is no taller than the
-// row. The same Place under a shell switcher keeps the bar over the title.
-function story(width: number): StoryObj {
-	return {
-		...viewport(width),
-		render: () => (
-			<div>
-				<Page title={LONG} />
-				<Page title="Deploys" />
-				<Shell
-					places={[{ route: "/x", label: "Deploys", icon: "Rocket" }]}
-					switcher={SWITCHER}
-				>
-					<Page title="Deploys" />
-				</Shell>
-			</div>
-		),
-		play: async ({ canvasElement }) => {
-			const [single, short, shelled] = [
-				...canvasElement.querySelectorAll("header"),
+// From `tablet` of the Place every Pane stands; below it only the last does,
+// and the Panes before it stay mounted.
+export const PanesStandFromTablet: StoryObj = {
+	render: () => <Opened width={BREAKPOINT_PX.tablet} />,
+	play: async ({ canvasElement }) => {
+		const [list, record] = panes(canvasElement);
+		await expect(shown(list)).toBe(true);
+		await expect(shown(record)).toBe(true);
+	},
+};
+
+export const OnlyTheLastPaneBelowTablet: StoryObj = {
+	render: () => <Opened width={BREAKPOINT_PX.tablet - 1} />,
+	play: async ({ canvasElement }) => {
+		const [list, record] = panes(canvasElement);
+		await expect(shown(list)).toBe(false);
+		await expect(shown(record)).toBe(true);
+		await expect(must(list).isConnected).toBe(true);
+	},
+};
+
+export const OnlyTheLastPaneAtThePhone = touch({
+	render: () => <Opened width={375} />,
+	play: async ({ canvasElement }) => {
+		const [list, record] = panes(canvasElement);
+		await expect(shown(list)).toBe(false);
+		await expect(shown(record)).toBe(true);
+		const heads = [...canvasElement.querySelectorAll("header")].filter((head) =>
+			head.checkVisibility(),
+		);
+		await expect(heads).toHaveLength(1);
+	},
+});
+
+// A Pane before the last holds the list width whatever its rows are; the last
+// takes the rest.
+export const ListPaneHoldsTheListWidth: StoryObj = {
+	render: () => <Opened width={1440} />,
+	play: async ({ canvasElement }) => {
+		const [list, record] = panes(canvasElement);
+		const box = must(list).getBoundingClientRect();
+		await expect(box.width).toBeCloseTo(width(canvasElement, "w-list"), 0);
+		const next = must(record).getBoundingClientRect();
+		await expect(next.left).toBeCloseTo(box.right, 0);
+		await expect(next.right).toBeCloseTo(
+			must(must(list).parentElement).getBoundingClientRect().right,
+			0,
+		);
+	},
+};
+
+// The list loads and its rows arrive: the Panes keep their edges.
+function Loads() {
+	const [rows, setRows] = useState<string[] | undefined>(undefined);
+	return (
+		<Page width={1440}>
+			<Place>
+				<Pane title="Reviews">
+					{rows ? (
+						<List items={rows} row={ROWS} />
+					) : (
+						<List items={[]} loading row={ROWS} />
+					)}
+				</Pane>
+				<Pane title="Review" back="/reviews">
+					<button
+						type="button"
+						onClick={() =>
+							setRows(["Review the deploy of the billing service"])
+						}
+					>
+						Load
+					</button>
+					<button type="button" onClick={() => setRows(NAMES)}>
+						Load short
+					</button>
+				</Pane>
+			</Place>
+		</Page>
+	);
+}
+
+export const ListPaneHoldsItsWidthWhileLoading: StoryObj = {
+	render: () => <Loads />,
+	play: async ({ canvas, canvasElement, userEvent }) => {
+		const edges = () => {
+			const [list, record] = panes(canvasElement);
+			return [
+				must(list).getBoundingClientRect().width,
+				must(record).getBoundingClientRect().left,
 			];
-			if (!single || !short || !shelled)
-				throw new Error("the heads are not drawn");
-			const title = single.querySelector("h1");
-			const filter = single.querySelector("[aria-label='Filter']");
-			const more = single.querySelector("[aria-label='More']");
-			const section = single.nextElementSibling?.querySelector("p");
-			if (!title || !filter || !more || !section)
-				throw new Error("the Place is not drawn");
-			const head = single.getBoundingClientRect();
-			const text = title.getBoundingClientRect();
-			const end = more.getBoundingClientRect();
-			const first = filter.getBoundingClientRect();
-			const lines = Math.round(
-				(text.height - 16) /
-					Number.parseFloat(getComputedStyle(title).lineHeight),
+		};
+		const loading = edges();
+		await expect(loading[0]).toBeCloseTo(width(canvasElement, "w-list"), 0);
+		await userEvent.click(canvas.getByRole("button", { name: "Load" }));
+		await expect(canvas.getByText(/Review the deploy of/)).toBeVisible();
+		await expect(edges()).toEqual(loading);
+		await userEvent.click(canvas.getByRole("button", { name: "Load short" }));
+		await expect(canvas.getByText("Ana Ruiz")).toBeVisible();
+		await expect(edges()).toEqual(loading);
+	},
+};
+
+// A covering Pane hides the Panes before it and keeps them mounted: what was
+// typed in one survives the cover and its return, the hidden Panes out of the
+// tab order meanwhile.
+function Covered() {
+	const [covering, setCovering] = useState(false);
+	const [typed, setTyped] = useState("");
+	return (
+		<Page width={1280}>
+			<Place>
+				<Pane title="Reviews">
+					<List items={NAMES} row={ROWS} />
+				</Pane>
+				<Pane title="Review" back="/reviews">
+					<FormField label="Note">
+						<Input value={typed} onChange={setTyped} />
+					</FormField>
+					<button type="button" onClick={() => setCovering(true)}>
+						Push
+					</button>
+				</Pane>
+				{covering ? (
+					<Pane title="Add a repo" back="/review" cover>
+						<button type="button" onClick={() => setCovering(false)}>
+							Pop
+						</button>
+					</Pane>
+				) : null}
+			</Place>
+		</Page>
+	);
+}
+
+export const CoverHidesThePanesBeforeItAndKeepsThemMounted: StoryObj = {
+	render: () => <Covered />,
+	play: async ({ canvas, canvasElement, userEvent }) => {
+		const field = canvas.getByRole("textbox", { name: "Note" });
+		await userEvent.type(field, "kept");
+		await expect(panes(canvasElement)).toHaveLength(2);
+		await userEvent.click(canvas.getByRole("button", { name: "Push" }));
+		const [list, record, cover] = panes(canvasElement) as [
+			HTMLElement,
+			HTMLElement,
+			HTMLElement,
+		];
+		await expect(shown(list)).toBe(false);
+		await expect(shown(record)).toBe(false);
+		await expect(shown(cover)).toBe(true);
+		// The cover spans the Place.
+		await expect(must(cover).getBoundingClientRect().width).toBeCloseTo(
+			must(cover.parentElement).getBoundingClientRect().width,
+			0,
+		);
+		// Mounted: the same field, its text, out of sight and out of reach.
+		await expect(field.isConnected).toBe(true);
+		await expect(field).toHaveValue("kept");
+		await expect(field.checkVisibility()).toBe(false);
+		await userEvent.click(canvas.getByRole("button", { name: "Pop" }));
+		await waitFor(() => expect(panes(canvasElement)).toHaveLength(2));
+		await expect(shown(panes(canvasElement)[1])).toBe(true);
+		await expect(canvas.getByRole("textbox", { name: "Note" })).toBe(field);
+		await expect(field).toHaveValue("kept");
+	},
+};
+
+// The back act reads Back where its Pane stands alone (below `tablet`, first
+// in the Place, or covering it) and Close where a Pane stands before it.
+const visible = (root: Element, label: string) =>
+	[...root.querySelectorAll<HTMLElement>(`a[aria-label='${label}']`)]
+		.filter((el) => el.checkVisibility())
+		.map((el) => el.getAttribute("href"));
+
+export const RecordClosesBesideTheList: StoryObj = {
+	render: () => <Opened width={1280} />,
+	play: async ({ canvasElement }) => {
+		await expect(visible(canvasElement, "Close")).toEqual(["/reviews"]);
+		await expect(visible(canvasElement, "Back")).toEqual([]);
+	},
+};
+
+export const RecordGoesBackBelowTablet: StoryObj = {
+	render: () => <Opened width={BREAKPOINT_PX.tablet - 1} />,
+	play: async ({ canvasElement }) => {
+		await expect(visible(canvasElement, "Back")).toEqual(["/reviews"]);
+		await expect(visible(canvasElement, "Close")).toEqual([]);
+	},
+};
+
+export const RecordGoesBackAtThePhone = touch({
+	render: () => <Opened width={375} />,
+	play: async ({ canvasElement }) => {
+		await expect(visible(canvasElement, "Back")).toEqual(["/reviews"]);
+		await expect(visible(canvasElement, "Close")).toEqual([]);
+	},
+});
+
+export const CoverGoesBackWhereverItStands: StoryObj = {
+	render: () => (
+		<Page width={1280}>
+			<Place>
+				<Pane title="Reviews">
+					<List items={NAMES} row={ROWS} />
+				</Pane>
+				<Pane title="Add a repo" back="/reviews" cover>
+					<p>The form.</p>
+				</Pane>
+			</Place>
+		</Page>
+	),
+	play: async ({ canvasElement }) => {
+		await expect(visible(canvasElement, "Back")).toEqual(["/reviews"]);
+		await expect(visible(canvasElement, "Close")).toEqual([]);
+	},
+};
+
+export const FirstPaneWithABackGoesBack: StoryObj = {
+	render: () => (
+		<Page width={1280}>
+			<Place>
+				<Pane title="Knowledge" back="/repos/x">
+					<List items={NAMES} row={ROWS} />
+				</Pane>
+			</Place>
+		</Page>
+	),
+	play: async ({ canvasElement }) => {
+		await expect(visible(canvasElement, "Back")).toEqual(["/repos/x"]);
+		await expect(visible(canvasElement, "Close")).toEqual([]);
+	},
+};
+
+const ITEMS = Array.from({ length: 44 }, (_, i) => `Item ${i + 1}`);
+
+// A list whose row opens a record Pane after it.
+function OpensARecord(props: { width: number }) {
+	const [open, setOpen] = useState<string>();
+	return (
+		<Page width={props.width}>
+			<Place>
+				<Pane title="Now">
+					<List
+						items={ITEMS}
+						row={{
+							key: (name: string) => name,
+							title: (name: string) => name,
+							onOpen: (name: string) => setOpen(name),
+						}}
+					/>
+				</Pane>
+				{open === undefined ? null : (
+					<Pane title={open} back="/now">
+						<Section title="Activity">
+							<button type="button" onClick={noop}>
+								Approve
+							</button>
+						</Section>
+					</Pane>
+				)}
+			</Place>
+		</Page>
+	);
+}
+
+// A row that opens a record Pane hands the keyboard to the new Pane's bar: the
+// open lands on its first control (its Close or Back act), one Tab stop from
+// the row, not the list's 44; Shift+Tab leaves it for the list, and walking
+// the list without opening is as before.
+function opensTheKeyboard(width: number): StoryObj {
+	return {
+		render: () => <OpensARecord width={width} />,
+		play: async ({ canvas, canvasElement, userEvent }) => {
+			const rows = canvas.getAllByRole("button", { name: /^Item \d+$/ });
+			rows[0]?.focus();
+			await userEvent.tab();
+			await expect(rows[1]).toHaveFocus();
+			await userEvent.keyboard("{Enter}");
+			await waitFor(() => expect(panes(canvasElement)).toHaveLength(2));
+			const record = must(panes(canvasElement)[1]);
+			await waitFor(() => expect(record).toContainElement(focused()));
+			await expect(must(record.querySelector("header"))).toContainElement(
+				focused(),
 			);
-			console.log(
-				`${width}: head ${head.height}, title ${text.height} (${lines} lines) from ${text.left} to ${text.right}, filter ${first.width}x${first.height} from ${first.left}, more ${end.width}x${end.height} ending ${end.right} of ${head.right}, section ${section.getBoundingClientRect().left}; one-line head ${short.getBoundingClientRect().height}; shelled head ${shelled.getBoundingClientRect().height}`,
-			);
-			await expect(short.getBoundingClientRect().height).toBeLessThan(
-				shelled.getBoundingClientRect().height - 30,
-			);
-			await expect(text.left).toBeCloseTo(
-				section.getBoundingClientRect().left,
-				1,
-			);
-			await expect(text.right).toBeLessThanOrEqual(first.left);
-			await expect(first.height).toBeGreaterThanOrEqual(44);
-			await expect(first.width).toBeGreaterThanOrEqual(44);
-			await expect(end.height).toBeGreaterThanOrEqual(44);
-			await expect(end.top).toBeGreaterThanOrEqual(head.top);
-			await expect(end.bottom).toBeLessThanOrEqual(head.bottom);
-			await expect(lines).toBeGreaterThan(1);
-			// A wrapped title is padded a step above and below its lines (8 px), the
-			// head a step more; the acts hang from the first line, not the head's
-			// middle; the title keeps two fifths of the row.
-			const line = Number.parseFloat(getComputedStyle(title).lineHeight);
-			const step = Number.parseFloat(getComputedStyle(title).paddingTop);
-			console.log(
-				`${width}: step ${step}, line ${line}, filter centre ${first.top + first.height / 2}, first line centre ${text.top + step + line / 2}`,
-			);
-			await expect(step).toBeGreaterThanOrEqual(8);
-			await expect(text.height).toBeGreaterThanOrEqual(lines * line + 2 * step);
-			await expect(head.height).toBeGreaterThanOrEqual(text.height + 2 * step);
-			if (lines >= 3) {
-				await expect(text.height).toBeGreaterThanOrEqual(100);
-				await expect(head.height).toBeGreaterThanOrEqual(116);
-			}
-			await expect(first.top + first.height / 2).toBeCloseTo(
-				text.top + step + line / 2,
-				0,
-			);
-			await expect(end.top + end.height / 2).toBeCloseTo(
-				first.top + first.height / 2,
-				0,
-			);
-			await expect(text.width).toBeGreaterThanOrEqual(
-				(head.width - 32) * 0.4 - 1,
-			);
-			// The one-line form is unchanged: head 45, acts 44, centred on the line.
-			const shortHead = short.getBoundingClientRect();
-			const shortTitle = short.querySelector("h1")?.getBoundingClientRect();
-			const shortAct = short
-				.querySelector("[aria-label='Filter']")
-				?.getBoundingClientRect();
-			if (!shortTitle || !shortAct)
-				throw new Error("the short Place is not drawn");
-			await expect(shortHead.height).toBeCloseTo(45, 0);
-			await expect(shortAct.height).toBeCloseTo(44, 0);
-			await expect(shortTitle.left).toBeCloseTo(16, 0);
-			await expect(shortAct.top + shortAct.height / 2).toBeCloseTo(
-				shortTitle.top + shortTitle.height / 2,
-				0,
-			);
+			const back = focused();
+			await expect(back.getAttribute("aria-label")).toMatch(/^(Back|Close)$/);
+			await expect(back.getAttribute("href")).toBe("/now");
+			// Below `tablet` the list is hidden, so there is no Pane to return to.
+			if (width < BREAKPOINT_PX.tablet) return;
+			await userEvent.tab({ shift: true });
+			await expect(must(panes(canvasElement)[0])).toContainElement(focused());
 		},
 	};
 }
 
-export const ActsShareTheTitleRowAt320 = story(320);
-export const ActsShareTheTitleRowAt390 = story(390);
-
-// A Place whose list stands at a route deeper than its own names the view
-// above it as `up`: its back act leads the strip, or the top bar, at every
-// width with its toolbar and actions kept, and gives way to the record's back
-// act below `tablet` once a record is open.
-function Epic(props: { open: boolean; up?: string }) {
-	return (
-		<div style={{ height: 700, display: "flex", flexDirection: "column" }}>
-			<Place
-				title="Code"
-				bleed
-				up={props.up}
-				actions={ACTIONS}
-				act={{ label: "New story", onAct: noop }}
-			>
-				<Split
-					back="/work/code/epics/x"
-					list={
-						<>
-							<Toolbar>
-								<Button label="Lead" fit="bar" onAct={noop} />
-							</Toolbar>
-							<List
-								items={["Ana", "Ben"]}
-								row={{ key: String, title: String }}
-							/>
-						</>
-					}
-					main={
-						props.open ? (
-							<Section title="Card">
-								<p>The card.</p>
-							</Section>
-						) : undefined
-					}
-				/>
-			</Place>
-		</div>
-	);
-}
-
-function shown(el: Element | null | undefined): boolean {
-	return el != null && getComputedStyle(el).display !== "none";
-}
-
-// The back acts the page shows, in document order.
-function shownBacks(root: Element) {
-	return [...root.querySelectorAll("a[aria-label='Back']")].filter(
-		(el) => shown(el) && shown(el.parentElement),
-	);
-}
-
-function backs(canvasElement: HTMLElement) {
-	return shownBacks(canvasElement).map((el) => el.getAttribute("href"));
-}
-
-function must<T extends Element>(el: T | null | undefined): T {
-	if (!el) throw new Error("the element is not drawn");
-	return el;
-}
-
-// The head holds the page's actions and the list its toolbar.
-function kept(canvasElement: HTMLElement) {
-	const header = must(canvasElement.querySelector("header"));
-	must(header.querySelector("[aria-label='Filter']"));
-	const lead = [...canvasElement.querySelectorAll("button")].find(
-		(button) => button.textContent === "Lead",
-	);
-	must(lead);
-	return header;
-}
-
-export const UpLeadsTheStrip: StoryObj = {
-	render: () => <Epic open={false} up="/work/code" />,
-	play: async ({ canvasElement }) => {
-		await expect(backs(canvasElement)).toEqual(["/work/code"]);
-		const header = kept(canvasElement);
-		const up = must(shownBacks(header)[0]);
-		const title = must(header.querySelector("h1"));
-		const box = up.getBoundingClientRect();
-		console.log(
-			`strip: up ${box.width}x${box.height} at ${box.left}, title from ${title.getBoundingClientRect().left}`,
-		);
-		await expect(box.right).toBeLessThanOrEqual(
-			title.getBoundingClientRect().left,
-		);
-	},
-};
-
-export const UpWithARecordBesideTheList: StoryObj = {
-	render: () => <Epic open up="/work/code" />,
-	play: async ({ canvasElement }) => {
-		await expect(backs(canvasElement)).toEqual(["/work/code"]);
-	},
-};
-
-export const OwnRouteDrawsNoUp: StoryObj = {
-	render: () => <Epic open={false} />,
-	play: async ({ canvasElement }) => {
-		await expect(backs(canvasElement)).toEqual([]);
-	},
-};
-
-export const UpLeadsTheTopBar390: StoryObj = {
-	...viewport(390),
-	render: () => <Epic open={false} up="/work/code" />,
-	play: async ({ canvasElement }) => {
-		await expect(backs(canvasElement)).toEqual(["/work/code"]);
-		const header = kept(canvasElement);
-		const up = must(shownBacks(header)[0]);
-		const box = up.getBoundingClientRect();
-		console.log(`top bar: up ${box.width}x${box.height} at ${box.left}`);
-		await expect(box.width).toBeGreaterThanOrEqual(44);
-		await expect(box.height).toBeGreaterThanOrEqual(44);
-		await expect(box.left).toBeLessThanOrEqual(16);
-	},
-};
-
-export const UpGivesWayToTheRecordBack390: StoryObj = {
-	...viewport(390),
-	render: () => <Epic open up="/work/code" />,
-	play: async ({ canvasElement }) => {
-		await expect(backs(canvasElement)).toEqual(["/work/code/epics/x"]);
-	},
-};
-
-// Under a shell the touch top bar leads with the view above, not the switcher.
-export const UpTakesTheSwitcherPlace390: StoryObj = {
-	...viewport(390),
-	render: () => (
-		<Shell
-			places={[{ route: "/work", label: "Work", icon: "Rocket" }]}
-			switcher={SWITCHER}
-		>
-			<Epic open={false} up="/work/code" />
-		</Shell>
-	),
-	play: async ({ canvasElement }) => {
-		await expect(backs(canvasElement)).toEqual(["/work/code"]);
-		await expect(
-			canvasElement.querySelector("header [aria-label^='Workspaces']"),
-		).toBeNull();
-	},
-};
+export const OpenTakesTheKeyboard1280 = opensTheKeyboard(1280);
+export const OpenTakesTheKeyboard768 = opensTheKeyboard(768);
+export const OpenTakesTheKeyboard700 = opensTheKeyboard(700);

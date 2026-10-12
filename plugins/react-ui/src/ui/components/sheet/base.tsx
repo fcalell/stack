@@ -182,7 +182,7 @@ export interface SheetBaseProps {
 	children?: ReactNode;
 }
 
-/** A sheet over the scrim: on touch raised from the bottom edge, its submit at the head's end where a keyboard would cover a bar and a blocked submit's reason under the head; on the desktop at the end (a form, or a Split's pane at `fit: pane`) with the submit after Cancel in the foot, or centred for a decision. Base UI's dialog traps focus and closes on Escape and on a press outside. */
+/** A sheet over the scrim: on touch raised from the bottom edge, its submit at the head's end where a keyboard would cover a bar and a blocked submit's reason under the head; on the desktop at the end (a form, or a Pane at `fit: pane`) with the submit after Cancel in the foot, or centred for a decision. Base UI's dialog traps focus and closes on Escape and on a press outside. */
 export function SheetBase({
 	open,
 	onClose,

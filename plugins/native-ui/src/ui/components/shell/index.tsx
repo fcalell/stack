@@ -31,6 +31,7 @@ import { useWords } from "../../lib/words";
 import { Count } from "../count";
 import { Icon } from "../icon";
 import { List } from "../list";
+import { Pane } from "../pane";
 import { Place } from "../place";
 import { FrameHost } from "./host";
 
@@ -60,15 +61,14 @@ export interface ShellProps extends Closed {
 }
 
 // The frame on the column's ground: the banner under the status bar, the
-// content, the toast queue over the page's box (its body over its act's room,
-// a docked foot and the tab bar), the `confirm()` decisions as a sheet, and
+// content, the toast queue over the page's box (the Pane's body over its docked foot
+// and the tab bar), the `confirm()` decisions as a sheet, and
 // the tab bar over the home indicator, past five places four and a More tab
 // that opens a page of the rest in the content's place. The switcher's
-// trigger starts each Place's top bar and the tab bar stands under each
-// Place's body, the current place's route handed down for a Place's back act;
-// a pushed Screen draws neither, so it covers the tab bar, and clears the home
-// indicator itself. The sheets' provider, the toasts and the `confirm()` host
-// are `FrameHost`'s.
+// trigger starts the bar of each Pane that has no back act and the tab bar
+// stands under each Place's Pane, the current place's route handed down for a
+// read that answers not found. The sheets' provider, the toasts and the
+// `confirm()` host are `FrameHost`'s.
 export function Shell({ places, banner, switcher, children }: ShellProps) {
 	const insets = useSafeAreaInsets();
 	const pathname = usePathname();
@@ -123,18 +123,20 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 function MorePage({ places }: { places: readonly PlaceSpec[] }) {
 	const words = useWords();
 	return (
-		<Place title={words.more}>
-			<List
-				items={places}
-				row={{
-					key: (spec) => spec.route,
-					leading: { icon: (spec) => spec.icon },
-					title: (spec) => spec.label,
-					trailing: (spec) =>
-						spec.count === undefined ? undefined : { count: spec.count },
-					href: (spec) => spec.route,
-				}}
-			/>
+		<Place>
+			<Pane title={words.more}>
+				<List
+					items={places}
+					row={{
+						key: (spec) => spec.route,
+						leading: { icon: (spec) => spec.icon },
+						title: (spec) => spec.label,
+						trailing: (spec) =>
+							spec.count === undefined ? undefined : { count: spec.count },
+						href: (spec) => spec.route,
+					}}
+				/>
+			</Pane>
 		</Place>
 	);
 }

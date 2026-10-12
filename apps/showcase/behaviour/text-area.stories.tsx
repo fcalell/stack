@@ -2,6 +2,7 @@ import { ActionBar } from "@fcalell/plugin-react-ui/components/action-bar";
 import { Button } from "@fcalell/plugin-react-ui/components/button";
 import { Form } from "@fcalell/plugin-react-ui/components/form";
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
+import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
 import { TextArea } from "@fcalell/plugin-react-ui/components/text-area";
@@ -24,11 +25,13 @@ function Source(props: { kind: "prose" | "source"; value: string }) {
 function Page(props: { kind: "prose" | "source"; value: string }) {
 	return (
 		<div className="flex flex-col h-dvh">
-			<Place title="Edit page">
-				<Form>
-					<Source {...props} />
-					<ActionBar acts={[{ label: "Save", onAct: act }]} />
-				</Form>
+			<Place>
+				<Pane title="Edit page">
+					<Form>
+						<Source {...props} />
+						<ActionBar acts={[{ label: "Save", onAct: act }]} />
+					</Form>
+				</Pane>
 			</Place>
 		</div>
 	);
@@ -37,13 +40,15 @@ function Page(props: { kind: "prose" | "source"; value: string }) {
 function Sectioned(props: { value: string }) {
 	return (
 		<div className="flex flex-col h-dvh">
-			<Place title="Edit page">
-				<Section title="Source">
-					<Form>
-						<Source kind="source" value={props.value} />
-						<ActionBar acts={[{ label: "Save", onAct: act }]} />
-					</Form>
-				</Section>
+			<Place>
+				<Pane title="Edit page">
+					<Section title="Source">
+						<Form>
+							<Source kind="source" value={props.value} />
+							<ActionBar acts={[{ label: "Save", onAct: act }]} />
+						</Form>
+					</Section>
+				</Pane>
 			</Place>
 		</div>
 	);

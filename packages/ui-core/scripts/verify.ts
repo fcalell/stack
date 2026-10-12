@@ -175,7 +175,6 @@ import {
 	SKELETON,
 	SKELETON_LANE,
 	SKELETON_ROW,
-	SPLIT_MAIN,
 	STAGE,
 	STAGE_MARK,
 	STAGE_RAIL,
@@ -262,7 +261,6 @@ import {
 	skeleton,
 	skeletonLane,
 	skeletonRow,
-	splitMain,
 	stage,
 	stageContentTone,
 	stageMark,
@@ -570,7 +568,6 @@ const MATRICES: readonly Registration[] = [
 	["PLACE_ROW_GLYPH", PLACE_ROW_GLYPH, placeRowGlyph],
 	["PLACE_TAB", PLACE_TAB, placeTab],
 	["PLACE_TAB_LABEL", PLACE_TAB_LABEL, placeTabLabel],
-	["SPLIT_MAIN", SPLIT_MAIN, splitMain],
 	["STEP_COUNT_SEGMENT", STEP_COUNT_SEGMENT, stepCountSegment],
 	["SECTION", SECTION, section],
 	["COLUMNS", COLUMNS, columns],
@@ -2090,7 +2087,7 @@ check(
 	"the roster is closed, camelCase, and off the style channels",
 	() => {
 		const entries = rosterEntries();
-		requireEqual(entries.length, 66, "component count");
+		requireEqual(entries.length, 65, "component count");
 		const names = new Set<string>();
 		for (const [, name, { props }] of entries) {
 			assert(/^[A-Z][A-Za-z]+$/.test(name), `${name} is not PascalCase`);

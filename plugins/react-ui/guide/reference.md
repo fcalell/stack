@@ -55,16 +55,15 @@ differs by density reads it itself.
 A screen read from across a room is the one set a page declares, `Place`'s `distance="room"`: its
 `Place` sets `data-density="room"` on itself, so the touch set at a 960 × 540 canvas scaled to the
 window draws inside it (`--room-unit` holds the scale), with the touch structure. A layer that
-portals (a menu, a picker, a sheet) draws outside that scope, which is why a room `Place` takes no
-`context`, `more` or `foot`.
+portals (a menu, a picker, a sheet) draws outside that scope, which is why a room `Place`'s `Pane`
+takes no `more` or `foot`.
 
 ## The page container
 
-A `Place` or a `Screen` is the `page` size container. A `Split` decides its regions by the page's
-width, never the viewport's: one region below `tablet`, the list beside the main from it, the pane
-beside both from `wide`, so a record keeps its room beside the sidebar at any window width. A
-record the main opened (`beside`) stands beside the main from `wide`, the two sharing what the
-list leaves, and in the main's place below it.
+A `Place` is the `place` size container and each `Pane` the `page` one. The `Place` decides which
+`Pane`s stand by its own width, never the viewport's: only the last below `tablet`, every `Pane`
+from it, so a record keeps its room beside the sidebar at any window width. What stands in a `Pane`
+reads the `Pane`'s width.
 
 ## Modes
 

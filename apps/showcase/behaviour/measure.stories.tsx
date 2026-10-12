@@ -1,6 +1,7 @@
 import { ActionBar } from "@fcalell/plugin-react-ui/components/action-bar";
 import { Form } from "@fcalell/plugin-react-ui/components/form";
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
+import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Text } from "@fcalell/plugin-react-ui/components/text";
 import { TextArea } from "@fcalell/plugin-react-ui/components/text-area";
@@ -21,15 +22,17 @@ function Page() {
 	const [value, setValue] = useState("");
 	return (
 		<div className="flex flex-col h-dvh">
-			<Place title="Rules">
-				<Text>{LONG}</Text>
-				<Text {...META}>{LONG}</Text>
-				<Form>
-					<FormField label="Rule">
-						<TextArea value={value} onChange={setValue} />
-					</FormField>
-					<ActionBar acts={[{ label: "Save", onAct: noop }]} />
-				</Form>
+			<Place>
+				<Pane title="Rules">
+					<Text>{LONG}</Text>
+					<Text {...META}>{LONG}</Text>
+					<Form>
+						<FormField label="Rule">
+							<TextArea value={value} onChange={setValue} />
+						</FormField>
+						<ActionBar acts={[{ label: "Save", onAct: noop }]} />
+					</Form>
+				</Pane>
 			</Place>
 		</div>
 	);

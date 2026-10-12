@@ -21,9 +21,10 @@ The routes (`src/app/routes/`) are one app composed from the built components, p
   a `Stats` in one column, dark unless `?mode=light`. It carries no toggles and takes no density:
   the room scale follows the window, so a browser at 1280, 1920 and 3840 wide draws those screens.
 - In the Shell (the pathless layout `_app`): `/deploys`, `/deploys/$deployId` and
-  `/deploys/$deployId/steps/$stepId` (one page at three routes: the list, a deploy open beside it,
-  a step opened beside the deploy; `?file=` names the changed file whose diff is open),
-  `/projects`, `/usage`, `/domains`, `/domains/verify` (a Screen pushed over Domains), `/logs`,
+  `/deploys/$deployId/steps/$stepId` (one `Place` whose layout route holds the list Pane and the
+  router's `Outlet`: a deploy opens as the Panes after the list, a step as the Pane after them;
+  `?file=` names the changed file whose diff is open),
+  `/projects`, `/usage`, `/domains`, `/domains/verify` (a covering Pane pushed over Domains), `/logs`,
   `/assistant`, `/members`, `/settings` and `/home`.
 - Outside the Shell: `/sign-in` (the email step, then the code step)
   and `/connect` (the first of two Connect steps), each a `Gate`.
@@ -59,8 +60,9 @@ The roster is in Storybook, two kinds of story:
 - **Behaviour stories** (`behaviour/*.stories.tsx`, written by hand): the real component driven by
   keyboard, with a play function asserting the rubric's widget-behaviour floor: Sheet (and a
   `confirm()` decision), Menu, Select, Picker, OptionList, SegmentedControl, Table (grid cursor),
-  List (tree), Slider, InputOtp, Toast and Gate, and a Sheet docked in a Place's foot. Screen, Split
-  and Shell own no focus move or key handling of their own, so they have none.
+  List (tree), Slider, InputOtp, Toast and Gate, and a Sheet docked in a Pane's foot; Pane's focus
+  move into a Pane that opens. Place and Shell own no focus move or key handling of their own, so
+  they have none.
 
 ```bash
 pnpm stories        # from the repo root: builds the workspace chain, then Storybook on :6006

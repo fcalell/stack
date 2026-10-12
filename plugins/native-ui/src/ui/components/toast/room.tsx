@@ -6,9 +6,8 @@ const ROOM = "absolute inset-0";
 const BOX = "flex-1";
 
 // The box the Shell's toasts stand in, drawn by the region that stands over
-// the page's docked foot (a Place's body, a filling Thread's log), so the
-// toasts stand above the foot, and the tab bar under it, by layout; above
-// `children` too, the room of an act floating over the region.
+// the page's docked foot (a Pane's body, a Gate's column), so the toasts stand
+// above the foot, and the tab bar under it, by layout.
 export function ToastRoom({ children }: { children?: ReactNode }) {
 	const box = useToastBox();
 	return (

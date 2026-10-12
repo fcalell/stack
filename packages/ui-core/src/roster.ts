@@ -564,108 +564,87 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 	},
 	layout: {
-		// A page in the shell: on the desktop the title and the acts share the
-		// strip, the act a bar-fit primary rightmost; on touch the top bar holds
-		// the acts over the title and the act floats over the body's end. A
-		// `foot` (a field or an action bar, never beside the act) docks under the
-		// scrolling body and spans it; a `MessageInput` keeps its own measure column.
-		// A `context` is a pick beside the title (the page's change set, its
-		// version), a Picker at the row fit that takes the option's chip.
-		// A `distance` of `room` draws the page for a screen read from across a
-		// room: the touch structure at the room set (`DENSITIES`), one column that
-		// never splits, holding no `context`, `more` or `foot`, whose layers open outside it.
-		// An `up` is the route of the view the page stands under: its back act
-		// leads the strip or the top bar there while no record stands alone.
+		// A page in the shell: its Panes in a row, each but the last at the
+		// list width giving way to its floor, the last taking the rest. It draws
+		// no bar of its own. A `distance` of `room` draws the page for a screen
+		// read from across a room: the touch structure at the room set
+		// (`DENSITIES`), its last Pane alone, whose layers open outside it.
 		Place: {
+			props: ["distance", "children"],
+			draws: [],
+			states: ["rest"],
+		},
+		// A column of a Place: its bar over one hairline (the back act, drawn as
+		// Back where the Pane stands alone and as Close where one stands before
+		// it; on touch the shell's switcher leading where there is none; the
+		// title; the actions and more) and a body that scrolls, its children a
+		// sections gap apart within the measure (the Pane's width when `wide`).
+		// A `foot` (a field or a selection bar) docks under the body and spans
+		// it; a `MessageInput` keeps its own measure column. A `cover` Pane spans
+		// its Place, the Panes before it hidden.
+		Pane: {
 			props: [
 				"title",
-				"distance",
-				"context",
+				"back",
 				"actions",
-				"act",
 				"more",
-				"bleed",
-				"up",
 				"foot",
+				"cover",
+				"wide",
 				"children",
 			],
 			draws: [
 				"PAGE_HEAD",
 				"PAGE_HEAD_ROOM",
 				"PAGE_TOP_BAR",
-				"PAGE_TOP_BAR_TOUCH",
 				"PAGE_TOP_BAR_START",
 				"PAGE_TOP_BAR_END",
-				"PAGE_TITLE",
+				"PAGE_TITLE_FLOOR",
 				"PAGE_TITLE_BLOCK",
 				"PAGE_HEAD_WRAPS",
 				"TEXT.role.title",
-				"WORD_ACT",
-				"PICKER_VALUE",
-				"ICON.fit.meta",
-				"CHIP",
-				"CHIP_LABEL",
 				"PAGE_BODY",
 				"FOOT_DOCKED",
 				"PAGE_BODY_OVER_FOOT",
-				"FLOATING_ACT",
-				"FLOATING_ACT_LIFT",
-				"FLOATING_ACT_ROOM",
-				"FLOATING_ACT_FOOT",
-				"BUTTON.act.primary",
-				"BUTTON.fit.bar",
-				"BUTTON.fit.body",
-				"BUTTON_LABEL.act.primary",
 				"ICON_BUTTON.fit.bar",
 				"ICON_BUTTON.fit.body",
 			],
 			holds: [
-				"FLOATING_ACT",
-				"FLOATING_ACT_LIFT",
-				"FLOATING_ACT_ROOM",
-				"FLOATING_ACT_FOOT",
+				"PAGE_HEAD",
+				"PAGE_HEAD_ROOM",
+				"PAGE_TOP_BAR",
+				"PAGE_TOP_BAR_START",
+				"PAGE_TOP_BAR_END",
+				"PAGE_TITLE_FLOOR",
+				"PAGE_TITLE_BLOCK",
+				"PAGE_HEAD_WRAPS",
+				"PAGE_BODY",
+				"PAGE_BODY_OVER_FOOT",
 			],
 			states: ["rest"],
 			owns: {
-				roles: ["title", "body", "meta", "caption"],
+				roles: ["title"],
 				colors: [
 					"ink-body",
 					"ink-meta",
 					"edge",
 					"edge-raised",
-					"surface",
 					"raised",
-					"act-accent",
-					"on-act-accent",
 					"wash-hover",
 					"wash-press",
-					"danger",
-					"chip-",
 				],
-				radii: ["control", "full"],
-				spacing: [
-					"acts",
-					"page",
-					"sections",
-					"inside",
-					"control-x",
-					"rows",
-					"pair",
-				],
+				radii: ["control"],
+				spacing: ["acts", "page", "sections", "pair", "inside"],
 				sizes: [
 					"strip",
 					"control",
 					"control-compact",
-					"popover",
-					"list",
+					"icon-inset",
 					"measure",
 					"target",
-					"icon-meta",
-					"chip",
-					"measure-short",
-					"icon-inset",
+					"list",
+					"region-min",
 				],
-				elevation: ["float"],
 			},
 		},
 		// A page outside the shell (sign-in, a consent step), a root frame as the
@@ -711,88 +690,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				colors: ["ink-body", "ink-meta", "surface"],
 				spacing: ["page", "sections", "fields", "inside"],
 				sizes: ["auth", "avatar", "gate-mark"],
-			},
-		},
-		// A pushed page: the back act first, no act; on touch its toasts stand
-		// at its foot.
-		Screen: {
-			props: ["title", "back", "actions", "more", "children"],
-			draws: [
-				"PAGE_HEAD",
-				"PAGE_TOP_BAR",
-				"PAGE_TOP_BAR_START",
-				"PAGE_TOP_BAR_END",
-				"PAGE_TITLE_FLOOR",
-				"PAGE_TITLE_BLOCK",
-				"PAGE_HEAD_WRAPS",
-				"TEXT.role.title",
-				"PAGE_BODY",
-				"PAGE_BODY_BESIDE",
-				"ICON_BUTTON.fit.bar",
-				"ICON_BUTTON.fit.body",
-			],
-			states: ["rest"],
-			owns: {
-				roles: ["title"],
-				colors: ["ink-body", "ink-meta", "edge"],
-				radii: ["control"],
-				spacing: ["acts", "page", "sections", "pair", "inside"],
-				sizes: [
-					"strip",
-					"control",
-					"control-compact",
-					"icon-inset",
-					"measure-inset",
-				],
-			},
-		},
-		// Below `wide` the Split adds a Details act to the Place's actions that
-		// opens the pane as a sheet; below `tablet` a record it shows alone has
-		// its Place or pushed Screen lead its strip or top bar with a back act to
-		// the list, the place's route (the Screen's `back`) unless the Split's
-		// `back` names the route the list stands at. A record the main opened (`beside`, a Screen) stands beside the
-		// main from `wide`, the pane then behind the Details act at every width,
-		// and in the main's place below it; below `tablet` its head stands alone,
-		// the Place drawing none. The app's `open` asks the pane's sheet where
-		// the pane is not beside the main, and `onClose` hears every close.
-		Split: {
-			props: [
-				"list",
-				"main",
-				"beside",
-				"pane",
-				"empty",
-				"back",
-				"open",
-				"onClose",
-			],
-			draws: [
-				"SPLIT_LIST",
-				"SPLIT_LIST_STACK",
-				"SPLIT_MAIN",
-				"SPLIT_BESIDE",
-				"SPLIT_PANE",
-				"ICON_BUTTON.fit.bar",
-			],
-			holds: [
-				"SPLIT_LIST",
-				"SPLIT_LIST_STACK",
-				"SPLIT_MAIN",
-				"SPLIT_BESIDE",
-				"SPLIT_PANE",
-			],
-			states: ["rest", "empty"],
-			owns: {
-				colors: ["edge", "ink-meta", "surface"],
-				radii: ["control"],
-				spacing: ["inside", "page", "sections"],
-				sizes: [
-					"list",
-					"pane",
-					"region-min",
-					"control-compact",
-					"measure-inset",
-				],
 			},
 		},
 		// The fold toggle is the title line; a blocked act's reason stands on
@@ -918,7 +815,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				spacing: ["rows", "control-x"],
 			},
 		},
-		// A Form in a sheet or a Split's pane stands on that column, uncapped; its
+		// A Form in a sheet stands on that column, uncapped; its
 		// bar stays at the end of the sheet's body or the pane (web).
 		Form: {
 			props: ["children"],
@@ -1448,7 +1345,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// A record's acts (icon acts, then a more) stand at the end of the head's
 		// first line, the overline's else the title's, at every width: below
 		// `tablet` the record stands alone and its acts stay in its head, not
-		// also in the Place's strip or top bar. Loading draws none.
+		// also in the Pane's bar. Loading draws none.
 		// Loading, each line keeps its line box and the facts line the height
 		// of the status that moves on it. A fact in words that opens a sheet is its
 		// words and a chevron in a `WORD_ACT`, a button named by the fact; one that goes to
@@ -1544,7 +1441,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				sizes: ["control-compact"],
 			},
 		},
-		// `fit` is the desktop side sheet's: a form, or a Split's record pane.
+		// `fit` is the desktop side sheet's: a form, or a record's details.
 		// On touch the submit stands at the head row's end and a blocked
 		// submit's reason or a `failed` sentence under the head.
 		// Passed as a Thread's or a Place's `foot` it docks there, drawing the
@@ -1931,7 +1828,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// The EmptyState's missing form, at rest ink with no mark: the sentence
 		// at meta (the `missing` word unless given) and the way back, the
-		// hairline act with no plus (the Back of the Screen or Place unless
+		// hairline act with no plus (the Back of the Pane unless
 		// given), in the EmptyState's frames, so it draws the EmptyState's
 		// cells less the create act and the title role.
 		Missing: {
@@ -3017,15 +2914,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"foot",
 				"replying",
 			],
-			draws: [
-				"THREAD",
-				"THREAD_COLUMN",
-				"THREAD_LOG",
-				"THREAD_UNDER_HEAD",
-				"FOOT_DOCKED",
-				"THREAD_LATEST",
-			],
-			holds: ["THREAD", "THREAD_LOG", "THREAD_UNDER_HEAD", "THREAD_LATEST"],
+			draws: ["THREAD", "THREAD_COLUMN", "FOOT_DOCKED", "THREAD_LATEST"],
+			holds: ["THREAD", "THREAD_LATEST"],
 			states: ["rest", "loading", "error", "empty"],
 			owns: {
 				colors: ["raised", "edge", "edge-raised"],
@@ -3130,7 +3020,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"CANVAS_GROUP",
 				"CANVAS_GROUP_HEAD",
 				"CANVAS_ZOOM",
-				"CANVAS_UNDER_HEAD",
 				"ICON.fit.meta",
 				"ICON.fit.body",
 				"ICON_BUTTON.fit.body",
@@ -3161,7 +3050,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"CANVAS_GROUP",
 				"CANVAS_GROUP_HEAD",
 				"CANVAS_ZOOM",
-				"CANVAS_UNDER_HEAD",
 			],
 			states: ["rest", "selected", "loading", "empty"],
 			owns: {

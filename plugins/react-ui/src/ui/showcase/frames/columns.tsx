@@ -1,5 +1,6 @@
 import { Columns } from "../../components/columns/index.tsx";
 import { Group } from "../../components/group/index.tsx";
+import { Pane } from "../../components/pane/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
@@ -29,16 +30,18 @@ export function drawColumns(frame: ShowcaseFrame) {
 	if (frame.cell.name === "COLUMNS.fit.half")
 		return (
 			<Column>
-				<Place title="Project health">
-					<Columns fit="half">
-						{HEALTH.map(({ title, count }) => (
-							<Section key={title} title={title} count={count}>
-								<Group>
-									<StandInRows ground="group" />
-								</Group>
-							</Section>
-						))}
-					</Columns>
+				<Place>
+					<Pane title="Project health">
+						<Columns fit="half">
+							{HEALTH.map(({ title, count }) => (
+								<Section key={title} title={title} count={count}>
+									<Group>
+										<StandInRows ground="group" />
+									</Group>
+								</Section>
+							))}
+						</Columns>
+					</Pane>
 				</Place>
 			</Column>
 		);

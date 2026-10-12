@@ -1,3 +1,4 @@
+import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { PendingBar } from "@fcalell/plugin-react-ui/components/pending-bar";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Table } from "@fcalell/plugin-react-ui/components/table";
@@ -63,12 +64,14 @@ function Ages() {
 				Mount
 			</button>
 			{at === undefined ? null : (
-				<Place title="Runs">
-					<Table
-						columns={COLUMNS}
-						items={[{ id: "build", at }]}
-						row={{ id: (log) => log.id }}
-					/>
+				<Place>
+					<Pane title="Runs">
+						<Table
+							columns={COLUMNS}
+							items={[{ id: "build", at }]}
+							row={{ id: (log) => log.id }}
+						/>
+					</Pane>
 				</Place>
 			)}
 		</div>

@@ -1,3 +1,4 @@
+import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Table } from "@fcalell/plugin-react-ui/components/table";
 import type { TableColumn } from "@fcalell/ui-core/descriptors";
@@ -47,24 +48,26 @@ function Members() {
 		{ id: "bo", name: "Bo", note: "Billing", role: "member" },
 	]);
 	return (
-		<Place title="Members">
-			<Table
-				columns={COLUMNS}
-				items={members}
-				row={{ id: (member) => member.id }}
-				onEdit={(id, key, value) => {
-					commits.push([id, key, value]);
-					setTimeout(
-						() =>
-							setMembers((all) =>
-								all.map((member) =>
-									member.id === id ? { ...member, [key]: value } : member,
+		<Place>
+			<Pane title="Members">
+				<Table
+					columns={COLUMNS}
+					items={members}
+					row={{ id: (member) => member.id }}
+					onEdit={(id, key, value) => {
+						commits.push([id, key, value]);
+						setTimeout(
+							() =>
+								setMembers((all) =>
+									all.map((member) =>
+										member.id === id ? { ...member, [key]: value } : member,
+									),
 								),
-							),
-						100,
-					);
-				}}
-			/>
+							100,
+						);
+					}}
+				/>
+			</Pane>
 		</Place>
 	);
 }

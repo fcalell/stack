@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Failed } from "../../components/failed/index.tsx";
 import { Group } from "../../components/group/index.tsx";
+import { Pane } from "../../components/pane/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
@@ -16,7 +17,9 @@ function Page(props: { children: ReactNode }) {
 	return (
 		<Column>
 			<div className="flex flex-col h-dvh">
-				<Place title="Review">{props.children}</Place>
+				<Place>
+					<Pane title="Review">{props.children}</Pane>
+				</Place>
 			</div>
 		</Column>
 	);
@@ -37,25 +40,29 @@ export function drawFailed(frame: ShowcaseFrame) {
 	)
 		return (
 			<Column>
-				<Place title="Settings">
-					<Section
-						title="Webhooks"
-						description="Where Acme posts deploy events."
-					>
-						<Failed sentence="Webhooks did not load." act={RETRY} />
-					</Section>
+				<Place>
+					<Pane title="Settings">
+						<Section
+							title="Webhooks"
+							description="Where Acme posts deploy events."
+						>
+							<Failed sentence="Webhooks did not load." act={RETRY} />
+						</Section>
+					</Pane>
 				</Place>
 			</Column>
 		);
 	if (cell === "TEXT.role.meta" || cell === "EMPTY_CARD")
 		return (
 			<Column>
-				<Place title="Settings">
-					<Section title="Webhooks">
-						<Group>
-							<Failed sentence="Webhooks did not load." act={RETRY} />
-						</Group>
-					</Section>
+				<Place>
+					<Pane title="Settings">
+						<Section title="Webhooks">
+							<Group>
+								<Failed sentence="Webhooks did not load." act={RETRY} />
+							</Group>
+						</Section>
+					</Pane>
 				</Place>
 			</Column>
 		);

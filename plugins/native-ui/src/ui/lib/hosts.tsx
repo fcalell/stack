@@ -11,7 +11,7 @@ const AwareScroll = withUniwind(KeyboardAwareScrollView);
 /** What a `Scroll`'s `ref` holds: a `ScrollView`, to scroll it from code. */
 export type ScrollRef = KeyboardAwareScrollViewRef;
 
-// The keyboard-aware scroll pane every Place and Screen scrolls in, wrapped
+// The keyboard-aware scroll pane every Pane scrolls in, wrapped
 // so it takes `className` and `contentContainerClassName` like a core host.
 // The bar in flow at a Form's end is what the keyboard must never cover. A
 // tap on an act in it reaches the act and leaves the keyboard up (a docked
@@ -20,6 +20,6 @@ export function Scroll(props: ComponentProps<typeof AwareScroll>) {
 	return <AwareScroll keyboardShouldPersistTaps="handled" {...props} />;
 }
 
-// The column a docked foot shares with what scrolls over it (a filling
-// Thread's log, a Place's body), lifted over the keyboard.
+// The column a docked foot shares with what scrolls over it (a
+// Thread's log, a Pane's body), lifted over the keyboard.
 export const Lifted = withUniwind(KeyboardAvoidingView);

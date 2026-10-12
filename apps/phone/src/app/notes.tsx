@@ -2,6 +2,7 @@ import { useMutation, useQuery } from "@fcalell/plugin-api/tanstack-query";
 import { FormField } from "@fcalell/plugin-native-ui/components/form-field";
 import { Input } from "@fcalell/plugin-native-ui/components/input";
 import { List } from "@fcalell/plugin-native-ui/components/list";
+import { Pane } from "@fcalell/plugin-native-ui/components/pane";
 import { Place } from "@fcalell/plugin-native-ui/components/place";
 import { Section } from "@fcalell/plugin-native-ui/components/section";
 import { Sheet } from "@fcalell/plugin-native-ui/components/sheet";
@@ -48,37 +49,42 @@ export default function Notes() {
 			},
 		});
 	return (
-		<Place title="Notes" act={newNote}>
-			<Section title="Recent">
-				<List
-					query={notes}
-					sentence="Notes did not load."
-					empty={{ sentence: "No notes yet." }}
-					row={{
-						key: (note) => note.id,
-						title: (note) => note.title,
-						meta: (note) => [age(note.createdAt.toISOString())],
-						more: (note) => [
-							{
-								label: "Delete",
-								icon: "Trash2",
-								destructive: true,
-								onAct: () => ask(note),
-							},
-						],
-					}}
-				/>
-			</Section>
-			<Sheet
-				open={open}
-				onClose={() => setOpen(false)}
-				title="New note"
-				submit={add}
+		<Place>
+			<Pane
+				title="Notes"
+				actions={[{ icon: "Plus", label: newNote.label, onAct: newNote.onAct }]}
 			>
-				<FormField label="Title">
-					<Input value={title} onChange={setTitle} />
-				</FormField>
-			</Sheet>
+				<Section title="Recent">
+					<List
+						query={notes}
+						sentence="Notes did not load."
+						empty={{ sentence: "No notes yet." }}
+						row={{
+							key: (note) => note.id,
+							title: (note) => note.title,
+							meta: (note) => [age(note.createdAt.toISOString())],
+							more: (note) => [
+								{
+									label: "Delete",
+									icon: "Trash2",
+									destructive: true,
+									onAct: () => ask(note),
+								},
+							],
+						}}
+					/>
+				</Section>
+				<Sheet
+					open={open}
+					onClose={() => setOpen(false)}
+					title="New note"
+					submit={add}
+				>
+					<FormField label="Title">
+						<Input value={title} onChange={setTitle} />
+					</FormField>
+				</Sheet>
+			</Pane>
 		</Place>
 	);
 }

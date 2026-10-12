@@ -1,8 +1,8 @@
 import { Canvas } from "@fcalell/plugin-react-ui/components/canvas";
 import { ItemHeader } from "@fcalell/plugin-react-ui/components/item-header";
 import { List } from "@fcalell/plugin-react-ui/components/list";
+import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
-import { Split } from "@fcalell/plugin-react-ui/components/split";
 import { showcaseFrames } from "@fcalell/plugin-react-ui/showcase/cells";
 import { Frame } from "@fcalell/plugin-react-ui/showcase/frame";
 import {
@@ -750,48 +750,59 @@ export const PlacedByTheCanvas: StoryObj<{
 	},
 };
 
-// In a Split's main the canvas reaches the main's edges on the sides and at
-// the foot, under the record's head, and the page's regions keep their widths.
-export const SplitMain: StoryObj = {
+function must<T extends Element>(el: T | null | undefined): T {
+	if (!el) throw new Error("the element is not drawn");
+	return el;
+}
+
+// In a wide Pane the canvas fills the body by plain flex: it stands within the
+// page inset at the sides and at the foot, under the record's head, and the
+// page's Panes keep their widths.
+export const FillsWidePane: StoryObj = {
 	parameters: { layout: "fullscreen" },
 	render: () => (
-		<Place title="Workflows" bleed>
-			<Split
-				list={
-					<List
-						items={["Nightly", "Weekly"]}
-						row={{ key: (name) => name, title: (name) => name }}
-					/>
-				}
-				main={
-					<>
-						<ItemHeader title="Nightly" />
-						<Canvas
-							label="Workflow"
-							nodes={JOURNEY.nodes}
-							edges={JOURNEY.edges}
-						/>
-					</>
-				}
-			/>
+		<Place>
+			<Pane title="Workflows">
+				<List
+					items={["Nightly", "Weekly"]}
+					row={{ key: (name) => name, title: (name) => name }}
+				/>
+			</Pane>
+			<Pane title="Nightly" back="/workflows" wide>
+				<ItemHeader title="Nightly" />
+				<Canvas label="Workflow" nodes={JOURNEY.nodes} edges={JOURNEY.edges} />
+			</Pane>
 		</Place>
 	),
 	play: async ({ canvas, canvasElement }) => {
 		const region = await canvas.findByRole("region", { name: "Workflow" });
-		const main = canvasElement.querySelector("[data-split] > div");
-		if (!main) throw new Error("no main");
-		const box = rect(main);
+		const body = must(region.parentElement);
+		const box = rect(body);
+		const style = getComputedStyle(body);
 		const filled = rect(region);
-		await expect(Math.abs(filled.left - box.left)).toBeLessThan(1);
-		await expect(Math.abs(filled.right - box.right)).toBeLessThan(1);
-		await expect(Math.abs(filled.bottom - box.bottom)).toBeLessThan(1);
-		const head = await canvas.findByRole("heading", { name: "Nightly" });
+		await expect(filled.left).toBeCloseTo(
+			box.left + Number.parseFloat(style.paddingLeft),
+			0,
+		);
+		await expect(filled.right).toBeCloseTo(
+			box.left + body.clientWidth - Number.parseFloat(style.paddingRight),
+			0,
+		);
+		await expect(filled.bottom).toBeCloseTo(
+			box.top + body.clientHeight - Number.parseFloat(style.paddingBottom),
+			0,
+		);
+		const head = await canvas.findByRole("heading", {
+			name: "Nightly",
+			level: 2,
+		});
 		await expect(filled.top).toBeGreaterThanOrEqual(rect(head).bottom);
 		await expect(filled.height).toBeGreaterThan(0);
-		const list = canvasElement.querySelector("[data-split] > nav");
-		// The list sizes to its content (003-305): short names stand at the
-		// region minimum, and never past the list's own width.
-		const width = list ? rect(list).width : 0;
+		const list = must(
+			canvasElement.querySelector<HTMLElement>("section[data-page]"),
+		);
+		// The list holds its width, never past the list's own width.
+		const width = rect(list).width;
 		await expect(width).toBeGreaterThanOrEqual(
 			Number.parseFloat(WIDTH_VALUE["region-min"]),
 		);

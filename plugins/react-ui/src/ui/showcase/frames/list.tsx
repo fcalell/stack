@@ -2,6 +2,7 @@ import { FormField } from "../../components/form-field/index.tsx";
 import { Group } from "../../components/group/index.tsx";
 import { Input } from "../../components/input/index.tsx";
 import { List } from "../../components/list/index.tsx";
+import { Pane } from "../../components/pane/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import { ago } from "../ago.ts";
@@ -111,110 +112,112 @@ export function Areas(props: { loading?: boolean }) {
 export function drawList(frame: ShowcaseFrame) {
 	return (
 		<Column>
-			<Place title="Library">
-				<Section title="Notes">
-					<List
-						query={queryOf(frame.state, NOTES)}
-						sentence="The notes did not load."
-						empty={{
-							title: "No notes",
-							sentence: "Notes you write land here, newest first.",
-							act: { label: "New note", onAct: refetch },
-						}}
-						row={{
-							key: (note) => note.id,
-							title: (note) => note.title,
-							meta: (note) => [note.edited],
-							href: (note) => `#${note.id}`,
-						}}
-					/>
-				</Section>
-				<Section title="Deploys">
-					<List
-						query={queryOf(frame.state, DEPLOYS)}
-						sentence="The deploys did not load."
-						empty={{
-							title: "No deploys",
-							sentence: "Each deploy of the project lands here.",
-							act: { label: "Deploy", onAct: refetch },
-						}}
-						row={{
-							key: (deploy) => deploy.id,
-							leading: { avatar: (deploy) => ({ name: deploy.author }) },
-							title: (deploy) => deploy.message,
-							trailing: (deploy) => ({ age: deploy.age }),
-							href: (deploy) => `#${deploy.id}`,
-						}}
-					/>
-				</Section>
-				<Section title="Host keys">
-					<Group>
+			<Place>
+				<Pane title="Library">
+					<Section title="Notes">
 						<List
-							query={queryOf(frame.state, HOST_KEYS)}
-							sentence="The host keys did not load."
+							query={queryOf(frame.state, NOTES)}
+							sentence="The notes did not load."
 							empty={{
-								title: "No host keys",
-								sentence: "The keys the host presents land here.",
-								act: { label: "Scan host", onAct: refetch },
-							}}
-							definition={{
-								key: (key) => key.id,
-								label: (key) => key.algorithm,
-								value: (key) => key.fingerprint,
-								copyable: true,
-							}}
-						/>
-					</Group>
-				</Section>
-				<Section title="Allowed hosts">
-					<Group>
-						<FormField label="Add host">
-							<Input
-								value=""
-								onChange={refetch}
-								placeholder="docs.example.org"
-								act={{ icon: "Plus", label: "Add host", onAct: refetch }}
-							/>
-						</FormField>
-						<List
-							query={queryOf(frame.state, HOSTS)}
-							sentence="The hosts did not load."
-							empty={{
-								title: "No hosts",
-								sentence: "Hosts you allow land here.",
+								title: "No notes",
+								sentence: "Notes you write land here, newest first.",
+								act: { label: "New note", onAct: refetch },
 							}}
 							row={{
-								key: (host) => host.id,
-								title: (host) => host.name,
+								key: (note) => note.id,
+								title: (note) => note.title,
+								meta: (note) => [note.edited],
+								href: (note) => `#${note.id}`,
 							}}
 						/>
-					</Group>
-				</Section>
-				<Section title="Plan limits">
-					<Group>
+					</Section>
+					<Section title="Deploys">
 						<List
-							query={queryOf(frame.state, LIMITS)}
-							sentence="The limits did not load."
+							query={queryOf(frame.state, DEPLOYS)}
+							sentence="The deploys did not load."
 							empty={{
-								title: "No limits",
-								sentence: "The limits of your plan land here.",
+								title: "No deploys",
+								sentence: "Each deploy of the project lands here.",
+								act: { label: "Deploy", onAct: refetch },
 							}}
-							meter={{
-								key: (limit) => limit.id,
-								label: (limit) => limit.label,
-								value: (limit) => limit.value,
-								max: (limit) => limit.max,
-								meta: (limit) => `${limit.value} of ${limit.max}`,
+							row={{
+								key: (deploy) => deploy.id,
+								leading: { avatar: (deploy) => ({ name: deploy.author }) },
+								title: (deploy) => deploy.message,
+								trailing: (deploy) => ({ age: deploy.age }),
+								href: (deploy) => `#${deploy.id}`,
 							}}
 						/>
-					</Group>
-				</Section>
-				{frame.state === "loading" ? (
-					<>
-						<Areas />
-						<Areas loading />
-					</>
-				) : null}
+					</Section>
+					<Section title="Host keys">
+						<Group>
+							<List
+								query={queryOf(frame.state, HOST_KEYS)}
+								sentence="The host keys did not load."
+								empty={{
+									title: "No host keys",
+									sentence: "The keys the host presents land here.",
+									act: { label: "Scan host", onAct: refetch },
+								}}
+								definition={{
+									key: (key) => key.id,
+									label: (key) => key.algorithm,
+									value: (key) => key.fingerprint,
+									copyable: true,
+								}}
+							/>
+						</Group>
+					</Section>
+					<Section title="Allowed hosts">
+						<Group>
+							<FormField label="Add host">
+								<Input
+									value=""
+									onChange={refetch}
+									placeholder="docs.example.org"
+									act={{ icon: "Plus", label: "Add host", onAct: refetch }}
+								/>
+							</FormField>
+							<List
+								query={queryOf(frame.state, HOSTS)}
+								sentence="The hosts did not load."
+								empty={{
+									title: "No hosts",
+									sentence: "Hosts you allow land here.",
+								}}
+								row={{
+									key: (host) => host.id,
+									title: (host) => host.name,
+								}}
+							/>
+						</Group>
+					</Section>
+					<Section title="Plan limits">
+						<Group>
+							<List
+								query={queryOf(frame.state, LIMITS)}
+								sentence="The limits did not load."
+								empty={{
+									title: "No limits",
+									sentence: "The limits of your plan land here.",
+								}}
+								meter={{
+									key: (limit) => limit.id,
+									label: (limit) => limit.label,
+									value: (limit) => limit.value,
+									max: (limit) => limit.max,
+									meta: (limit) => `${limit.value} of ${limit.max}`,
+								}}
+							/>
+						</Group>
+					</Section>
+					{frame.state === "loading" ? (
+						<>
+							<Areas />
+							<Areas loading />
+						</>
+					) : null}
+				</Pane>
 			</Place>
 		</Column>
 	);

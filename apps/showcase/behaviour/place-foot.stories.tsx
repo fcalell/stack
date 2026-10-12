@@ -1,3 +1,4 @@
+import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Sheet } from "@fcalell/plugin-react-ui/components/sheet";
 import type { Meta, StoryObj } from "@storybook/react-vite";
@@ -27,22 +28,24 @@ function AutoColumn({
 			}}
 		>
 			<div data-column style={{ display: "flex", flexDirection: "column" }}>
-				<Place
-					title="Publish"
-					foot={
-						<Sheet
-							open
-							onClose={() => {}}
-							title="Publish"
-							submit={{ label: "Publish", onAct: () => {} }}
-						>
-							{LINES.map((line) => (
-								<p key={line}>{line}</p>
-							))}
-						</Sheet>
-					}
-				>
-					<p>The page.</p>
+				<Place>
+					<Pane
+						title="Release"
+						foot={
+							<Sheet
+								open
+								onClose={() => {}}
+								title="Publish"
+								submit={{ label: "Publish", onAct: () => {} }}
+							>
+								{LINES.map((line) => (
+									<p key={line}>{line}</p>
+								))}
+							</Sheet>
+						}
+					>
+						<p>The page.</p>
+					</Pane>
 				</Place>
 			</div>
 			<p data-below>Below the column</p>

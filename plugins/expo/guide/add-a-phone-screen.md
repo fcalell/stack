@@ -15,8 +15,9 @@ phone's rules page (`node_modules/@fcalell/plugin-native-ui/guide/rules.md`) to 
 
 ## 2. Add the route
 
-Add the file under `src/app/`: a `Place` for a route a tab opens (and its entry in the root
-layout's `places`), a `Screen` with `back` for a route pushed over one. Page: [routes](./routes.md).
+Add the file under `src/app/`: a `Place` holding one `Pane` for a route a tab opens (and its entry
+in the root layout's `places`), the same with `back` on the `Pane` for a route pushed over one.
+Page: [routes](./routes.md).
 
 **Check:** `pnpm check` passes.
 

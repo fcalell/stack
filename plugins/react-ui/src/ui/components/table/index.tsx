@@ -92,7 +92,7 @@ import { Status } from "../status/index.tsx";
 const ROOT = "flex flex-col grow";
 const FORM = "flex flex-col grow";
 // The grid is its own stacking context, so its frozen column stands over its
-// cells alone, never over a sheet or a floating act.
+// cells alone, never over a sheet.
 const FRAME = "flex flex-col isolate";
 // On touch every column stands at one width and the grid scrolls sideways
 // under its frozen leading column.

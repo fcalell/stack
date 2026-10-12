@@ -23,7 +23,6 @@ import {
 } from "@fcalell/ui-core/variants";
 import { use, useRef } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { OverThread } from "../../lib/frame.ts";
 import { HeadingContext } from "../../lib/heading.ts";
 import { useTouch } from "../../lib/media.ts";
 import { follow } from "../../lib/navigate.ts";
@@ -35,7 +34,6 @@ import { IconButton } from "../icon-button/index.tsx";
 import { Menu } from "../menu/index.tsx";
 import { PickerBase } from "../picker/base.tsx";
 import { Status } from "../status/index.tsx";
-import { COLUMN_FILLED } from "../thread/fill.ts";
 
 const HEAD = "flex flex-col";
 // A fact that acts keeps its target-height hit box and reaches past the facts
@@ -89,7 +87,7 @@ export interface ItemHeaderProps<V extends string | null = string>
 	title: Part;
 	/** The facts in a wrapping line under the title. */
 	facts?: readonly Fact<V>[];
-	/** The record's icon acts, in order, at the end of the head's first line (the overline's, else the title's), at every width: below `tablet` they stay here and the Place's strip or top bar holds none of them (for a record in a Split's main; a pushed `Screen` has its own). */
+	/** The record's icon acts, in order, at the end of the head's first line (the overline's, else the title's), at every width. */
 	actions?: IconAct[];
 	/** The acts past the actions, in a menu under the more act after them. */
 	more?: MenuItem[];
@@ -223,7 +221,7 @@ function FactPart<V extends string | null>({ fact }: { fact: Fact<V> }) {
 	);
 }
 
-/** The overline, the title at the title role and the facts, a pair apart whether the title wraps or not, and the record's acts and more at the end of the first line. The title is a heading at the level where the header stands. With no facts line it stands a pair, not a sections step, above what follows in a Split's main. Over a Thread filling a Split's main it stands in the Thread's column on the desktop. */
+/** The overline, the title at the title role and the facts, a pair apart whether the title wraps or not, and the record's acts and more at the end of the first line. The title is a heading at the level where the header stands. */
 export function ItemHeader<V extends string | null = string>({
 	overline,
 	title,
@@ -235,13 +233,10 @@ export function ItemHeader<V extends string | null = string>({
 	const words = useWords();
 	const level = use(HeadingContext);
 	const Heading = `h${level}` as const;
-	// The column is a structure that follows density, as the Thread's is.
-	const overThread = use(OverThread);
-	const touch = useTouch();
-	const column = overThread && !touch && COLUMN_FILLED;
+	const fit = useTouch() ? "body" : "bar";
 	if (loading)
 		return (
-			<div aria-busy className={cn(ITEM_HEADER, HEAD, column)}>
+			<div aria-busy className={cn(ITEM_HEADER, HEAD)}>
 				<span className={cn(lineBox({ role: "meta" }), LINE_WAIT)}>
 					<span className={cn(skeleton({ kind: "line" }), "w-1/4")} />
 				</span>
@@ -269,7 +264,6 @@ export function ItemHeader<V extends string | null = string>({
 				</span>
 			</div>
 		);
-	const fit = touch ? "body" : "bar";
 	const acts =
 		(actions?.length ?? 0) > 0 || (more?.length ?? 0) > 0 ? (
 			<div className={cn(ITEM_HEADER_ACTS, ACTS)}>
@@ -293,7 +287,7 @@ export function ItemHeader<V extends string | null = string>({
 		</Heading>
 	);
 	return (
-		<header className={cn(ITEM_HEADER, HEAD, column)}>
+		<header className={cn(ITEM_HEADER, HEAD)}>
 			{acts ? (
 				<div className={cn(ITEM_HEADER_LINE, LINE)}>
 					{overlined ? overlineLine : heading}

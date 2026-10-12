@@ -1,6 +1,7 @@
 import { FormField } from "@fcalell/plugin-native-ui/components/form-field";
 import { Input } from "@fcalell/plugin-native-ui/components/input";
 import { MessageInput } from "@fcalell/plugin-native-ui/components/message-input";
+import { Pane } from "@fcalell/plugin-native-ui/components/pane";
 import { Place } from "@fcalell/plugin-native-ui/components/place";
 import { Section } from "@fcalell/plugin-native-ui/components/section";
 import { Thread } from "@fcalell/plugin-native-ui/components/thread";
@@ -58,34 +59,36 @@ export default function Ask() {
 		toast("Answer stopped");
 	};
 	return (
-		<Place title="Ask">
-			<Section title="Topic">
-				<FormField label="Topic">
-					<Input value={topic} onChange={setTopic} />
-				</FormField>
-			</Section>
-			{turns ? (
-				<Thread
-					items={turns}
-					message={{
-						key: (turn) => turn.id,
-						author: (turn) => turn.author,
-						name: (turn) => (turn.author === "other" ? "Stack" : undefined),
-						body: (turn) => turn.body,
-						at: (turn) => turn.at,
-					}}
-					foot={
-						<MessageInput
-							value={value}
-							onChange={setValue}
-							placeholder="Ask about this device"
-							working={working}
-							onSend={send}
-							onStop={stop}
-						/>
-					}
-				/>
-			) : null}
+		<Place>
+			<Pane title="Ask">
+				<Section title="Topic">
+					<FormField label="Topic">
+						<Input value={topic} onChange={setTopic} />
+					</FormField>
+				</Section>
+				{turns ? (
+					<Thread
+						items={turns}
+						message={{
+							key: (turn) => turn.id,
+							author: (turn) => turn.author,
+							name: (turn) => (turn.author === "other" ? "Stack" : undefined),
+							body: (turn) => turn.body,
+							at: (turn) => turn.at,
+						}}
+						foot={
+							<MessageInput
+								value={value}
+								onChange={setValue}
+								placeholder="Ask about this device"
+								working={working}
+								onSend={send}
+								onStop={stop}
+							/>
+						}
+					/>
+				) : null}
+			</Pane>
 		</Place>
 	);
 }

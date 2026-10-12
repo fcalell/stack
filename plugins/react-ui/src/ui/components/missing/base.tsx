@@ -4,7 +4,7 @@ import { BackRoute, PlaceRoute } from "../../lib/frame.ts";
 import { useWords } from "../../lib/words.tsx";
 import { EmptyStateBase } from "../empty-state/base.tsx";
 
-/** The Back link of a read that answers not found: to the enclosing Screen's back, else the Place's route; none with neither. */
+/** The Back link of a read that answers not found: to the enclosing Pane's `back`, else the Place's route; none with neither. */
 export function useBackAct(): LinkAct | undefined {
 	const words = useWords();
 	const screen = use(BackRoute);

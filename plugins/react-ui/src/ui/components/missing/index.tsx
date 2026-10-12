@@ -6,7 +6,7 @@ import { MissingBase } from "./base.tsx";
 export interface MissingProps extends Closed {
 	/** What is not there; the `missing` word ("This no longer exists.") unless given (a sentence; wraps). */
 	sentence?: string;
-	/** The way back, an act to a route; Back to the enclosing Screen's `back`, else the Place's route unless given, none with neither. */
+	/** The way back, an act to a route; Back to the enclosing Pane's `back`, else the Place's route unless given, none with neither. */
 	act?: LinkAct;
 }
 

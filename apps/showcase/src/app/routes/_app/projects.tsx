@@ -2,6 +2,7 @@ import { useQuery } from "@fcalell/plugin-api/tanstack-query";
 import { Columns } from "@fcalell/plugin-react-ui/components/columns";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
 import { List } from "@fcalell/plugin-react-ui/components/list";
+import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
 import { createFileRoute } from "@tanstack/react-router";
@@ -47,12 +48,17 @@ function Stage(props: { stage: (typeof STAGES)[number] }) {
 
 function Projects() {
 	return (
-		<Place title="Projects" act={{ label: "New project", onAct: act }}>
-			<Columns>
-				{STAGES.map((stage) => (
-					<Stage key={stage.stage} stage={stage} />
-				))}
-			</Columns>
+		<Place>
+			<Pane
+				title="Projects"
+				actions={[{ icon: "Plus", label: "New project", onAct: act }]}
+			>
+				<Columns>
+					{STAGES.map((stage) => (
+						<Stage key={stage.stage} stage={stage} />
+					))}
+				</Columns>
+			</Pane>
 		</Place>
 	);
 }

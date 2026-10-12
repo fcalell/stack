@@ -3,6 +3,7 @@ import type { StatusState } from "@fcalell/ui-core/tokens";
 import { useEffect, useState } from "react";
 import { ActionBar } from "../../components/action-bar/index.tsx";
 import { ItemHeader } from "../../components/item-header/index.tsx";
+import { Pane } from "../../components/pane/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
@@ -56,21 +57,23 @@ function SavingHead() {
 	);
 }
 
-// A record page: its head with its act right under it, a pair
-// apart, and the sections after them a sections step below.
+// A record page: its head, its act and the sections after them, a sections
+// step apart.
 function Record() {
 	return (
 		<Column>
-			<Place title="Imports">
-				<ItemHeader
-					overline={OVERLINE}
-					title="Re-run the nightly import"
-					facts={[moving("active"), ...REST]}
-				/>
-				<ActionBar acts={[{ label: "Pause the import", onAct: move }]} />
-				<Section title="Stages">
-					<StandInRows ground="list" />
-				</Section>
+			<Place>
+				<Pane title="Imports">
+					<ItemHeader
+						overline={OVERLINE}
+						title="Re-run the nightly import"
+						facts={[moving("active"), ...REST]}
+					/>
+					<ActionBar acts={[{ label: "Pause the import", onAct: move }]} />
+					<Section title="Stages">
+						<StandInRows ground="list" />
+					</Section>
+				</Pane>
 			</Place>
 		</Column>
 	);

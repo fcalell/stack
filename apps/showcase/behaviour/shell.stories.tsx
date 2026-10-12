@@ -3,6 +3,7 @@ import { Form } from "@fcalell/plugin-react-ui/components/form";
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Input } from "@fcalell/plugin-react-ui/components/input";
 import { MessageInput } from "@fcalell/plugin-react-ui/components/message-input";
+import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Shell } from "@fcalell/plugin-react-ui/components/shell";
 import { toast } from "@fcalell/plugin-react-ui/lib/toast";
@@ -35,18 +36,20 @@ function Field(props: { label: string }) {
 function Editing() {
 	return (
 		<Shell places={PLACES}>
-			<Place title="Edit page">
-				<Form>
-					{FIELDS.map((label) => (
-						<Field key={label} label={label} />
-					))}
-					<ActionBar
-						acts={[
-							{ label: "Discard", onAct: noop },
-							{ label: "Save", onAct: noop },
-						]}
-					/>
-				</Form>
+			<Place>
+				<Pane title="Edit page">
+					<Form>
+						{FIELDS.map((label) => (
+							<Field key={label} label={label} />
+						))}
+						<ActionBar
+							acts={[
+								{ label: "Discard", onAct: noop },
+								{ label: "Save", onAct: noop },
+							]}
+						/>
+					</Form>
+				</Pane>
 			</Place>
 		</Shell>
 	);
@@ -94,12 +97,14 @@ const LONG = Array.from({ length: 160 }, (_, at) => `Field ${at + 1}`);
 export const TabBarHoldsItsHeight: StoryObj = {
 	render: () => (
 		<Shell places={PLACES}>
-			<Place title="Edit page">
-				<Form>
-					{LONG.map((label) => (
-						<Field key={label} label={label} />
-					))}
-				</Form>
+			<Place>
+				<Pane title="Edit page">
+					<Form>
+						{LONG.map((label) => (
+							<Field key={label} label={label} />
+						))}
+					</Form>
+				</Pane>
 			</Place>
 		</Shell>
 	),
@@ -204,8 +209,10 @@ export const PlaceLabelsReadInDark: StoryObj = {
 					{ route: "/members", label: "Members", icon: "Users" },
 				]}
 			>
-				<Place title="Overview">
-					<p>The page.</p>
+				<Place>
+					<Pane title="Overview">
+						<p>The page.</p>
+					</Pane>
 				</Place>
 			</Shell>
 		</div>
@@ -229,14 +236,16 @@ export const PlaceLabelsReadInDark: StoryObj = {
 function MoreMenu() {
 	return (
 		<Shell places={PLACES}>
-			<Place
-				title="Members"
-				more={[
-					{ label: "Duplicate", onAct: noop },
-					{ label: "Delete", onAct: noop, destructive: true },
-				]}
-			>
-				<p>The page.</p>
+			<Place>
+				<Pane
+					title="Members"
+					more={[
+						{ label: "Duplicate", onAct: noop },
+						{ label: "Delete", onAct: noop, destructive: true },
+					]}
+				>
+					<p>The page.</p>
+				</Pane>
 			</Place>
 		</Shell>
 	);
@@ -258,11 +267,13 @@ function ToastOverFoot() {
 	const [text, setText] = useState("");
 	return (
 		<Shell places={PLACES}>
-			<Place
-				title="Assistant"
-				foot={<MessageInput value={text} onChange={setText} onSend={noop} />}
-			>
-				<p>The page.</p>
+			<Place>
+				<Pane
+					title="Assistant"
+					foot={<MessageInput value={text} onChange={setText} onSend={noop} />}
+				>
+					<p>The page.</p>
+				</Pane>
 			</Place>
 		</Shell>
 	);
@@ -466,8 +477,10 @@ const tabCount = (width: keyof typeof TAB_WIDTHS, mode: "light" | "dark") => {
 				style={{ background: "var(--color-canvas)" }}
 			>
 				<Shell places={COUNTED}>
-					<Place title="Overview">
-						<p>The page.</p>
+					<Place>
+						<Pane title="Overview">
+							<p>The page.</p>
+						</Pane>
 					</Place>
 				</Shell>
 			</div>

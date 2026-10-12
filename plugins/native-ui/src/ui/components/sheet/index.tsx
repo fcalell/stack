@@ -31,7 +31,7 @@ export interface SheetProps extends Closed {
 
 // A bottom sheet over the scrim: the close act first, the title, the submit
 // at the head's end, the description under them; the body; the foot's line.
-// Passed as a Thread's or a Place's `foot` it docks there with no scrim: the
+// Passed as a Thread's or a Pane's `foot` it docks there with no scrim: the
 // back act, the title and the close act over the description in the head, the
 // body scrolling under the foot's bound, the foot line over the
 // submit and under it one kept line for a blocked reason or a failed run;

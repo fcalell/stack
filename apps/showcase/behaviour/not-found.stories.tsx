@@ -8,6 +8,7 @@ import {
 import type { Procedure } from "@fcalell/plugin-api/types";
 import { Gate } from "@fcalell/plugin-react-ui/components/gate";
 import { ItemHeader } from "@fcalell/plugin-react-ui/components/item-header";
+import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { QueryBoundary } from "@fcalell/plugin-react-ui/components/query-boundary";
 import { Shell } from "@fcalell/plugin-react-ui/components/shell";
@@ -54,12 +55,20 @@ function routerAt(address: string) {
 	const overview = createRoute({
 		getParentRoute: () => layout,
 		path: "/overview",
-		component: () => <Place title="Overview" />,
+		component: () => (
+			<Place>
+				<Pane title="Overview" />
+			</Place>
+		),
 	});
 	const members = createRoute({
 		getParentRoute: () => layout,
 		path: "/members",
-		component: () => <Place title="Members" />,
+		component: () => (
+			<Place>
+				<Pane title="Members" />
+			</Place>
+		),
 	});
 	const router = createRouter({
 		routeTree: root.addChildren([
@@ -154,8 +163,10 @@ function RecordPlace({ answer }: { answer: () => Response }) {
 	);
 	return (
 		<QueryClientProvider client={queries}>
-			<Place title="Record">
-				<RecordBody orpc={orpc} />
+			<Place>
+				<Pane title="Record">
+					<RecordBody orpc={orpc} />
+				</Pane>
 			</Place>
 		</QueryClientProvider>
 	);

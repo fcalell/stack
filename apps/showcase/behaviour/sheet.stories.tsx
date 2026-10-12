@@ -7,6 +7,7 @@ import { Input } from "@fcalell/plugin-react-ui/components/input";
 import { List } from "@fcalell/plugin-react-ui/components/list";
 import { MessageInput } from "@fcalell/plugin-react-ui/components/message-input";
 import { OptionList } from "@fcalell/plugin-react-ui/components/option-list";
+import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Picker } from "@fcalell/plugin-react-ui/components/picker";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
@@ -132,7 +133,11 @@ function useDockedFoot() {
 
 function Docked() {
 	const foot = useDockedFoot();
-	return <Place title="Assistant" foot={foot} />;
+	return (
+		<Place>
+			<Pane title="Assistant" foot={foot} />
+		</Place>
+	);
 }
 
 const TURNS = [{ id: "t1", body: "Why did the last deploy fail?" }];
@@ -144,16 +149,18 @@ const LONG_TURNS = Array.from({ length: 12 }, (_, at) => ({
 function DockedThread() {
 	const foot = useDockedFoot();
 	return (
-		<Place title="Assistant">
-			<Thread
-				items={TURNS}
-				message={{
-					key: (turn) => turn.id,
-					author: () => "you",
-					body: (turn) => turn.body,
-				}}
-				foot={foot}
-			/>
+		<Place>
+			<Pane title="Assistant">
+				<Thread
+					items={TURNS}
+					message={{
+						key: (turn) => turn.id,
+						author: () => "you",
+						body: (turn) => turn.body,
+					}}
+					foot={foot}
+				/>
+			</Pane>
 		</Place>
 	);
 }
@@ -173,7 +180,7 @@ const closesToInput: NonNullable<StoryObj["play"]> = async ({
 	await waitFor(() => expect(canvas.getByRole("textbox")).toHaveFocus());
 };
 
-// A Sheet docked in a Place's foot: Escape closes it and hands focus to the
+// A Sheet docked in a Pane's foot: Escape closes it and hands focus to the
 // input that returns in its place.
 export const DockedInFoot: StoryObj = {
 	parameters: { layout: "fullscreen" },
@@ -196,14 +203,16 @@ const QUESTION =
 export const DockedTitleWraps: StoryObj = {
 	parameters: { layout: "fullscreen" },
 	render: () => (
-		<Place
-			title="Assistant"
-			foot={
-				<Sheet open onClose={() => {}} title={QUESTION}>
-					<p>Both</p>
-				</Sheet>
-			}
-		/>
+		<Place>
+			<Pane
+				title="Assistant"
+				foot={
+					<Sheet open onClose={() => {}} title={QUESTION}>
+						<p>Both</p>
+					</Sheet>
+				}
+			/>
+		</Place>
 	),
 	play: async ({ canvas }) => {
 		const title = await canvas.findByText(QUESTION);
@@ -472,21 +481,23 @@ function pairGap(title: HTMLElement, description: HTMLElement) {
 export const DockedTitleOutranksItsBody: StoryObj = {
 	parameters: { layout: "fullscreen" },
 	render: () => (
-		<Place
-			title="Assistant"
-			foot={
-				<Sheet
-					open
-					onClose={() => {}}
-					title="Question 1 of 2"
-					description="Before I redeploy"
-				>
-					<Section title="Which environment?">
-						<p>Production</p>
-					</Section>
-				</Sheet>
-			}
-		/>
+		<Place>
+			<Pane
+				title="Assistant"
+				foot={
+					<Sheet
+						open
+						onClose={() => {}}
+						title="Question 1 of 2"
+						description="Before I redeploy"
+					>
+						<Section title="Which environment?">
+							<p>Production</p>
+						</Section>
+					</Sheet>
+				}
+			/>
+		</Place>
 	),
 	play: async ({ canvas }) => {
 		const title = await canvas.findByRole("heading", {
@@ -615,14 +626,9 @@ function BannerQuestion({
 					act={{ label: "Upgrade", onAct: () => {} }}
 				/>
 			</div>
-			<Place title="Assistant">
-				<Thread
-					items={long ? LONG_TURNS : TURNS}
-					message={{
-						key: (turn) => turn.id,
-						author: () => "you",
-						body: (turn) => turn.body,
-					}}
+			<Place>
+				<Pane
+					title="Assistant"
 					foot={
 						<Sheet
 							open
@@ -649,7 +655,16 @@ function BannerQuestion({
 							</Section>
 						</Sheet>
 					}
-				/>
+				>
+					<Thread
+						items={long ? LONG_TURNS : TURNS}
+						message={{
+							key: (turn) => turn.id,
+							author: () => "you",
+							body: (turn) => turn.body,
+						}}
+					/>
+				</Pane>
 			</Place>
 			{tabs > 0 ? (
 				<nav aria-label="Tabs" style={{ height: tabs, flexShrink: 0 }} />
@@ -678,8 +693,7 @@ export const DockedBodyKeepsThreeRows: StoryObj = {
 	play: async ({ canvas, userEvent }) => {
 		const body = bodyOf(await canvas.findByRole("radiogroup"));
 		const log = canvas.getByRole("log");
-		const region = log.parentElement?.parentElement;
-		if (!region) throw new Error("the log has no region");
+		const region = footRegion(log);
 		const row = Number.parseFloat(
 			getComputedStyle(document.documentElement).getPropertyValue(
 				"--spacing-row",
@@ -710,18 +724,20 @@ export const DockedBodyKeepsThreeRows: StoryObj = {
 
 // The foot's region, the log's and the dock's shared column, and the touch
 // token a size is.
+// The region the Pane's body and its docked foot share.
 function footRegion(log: HTMLElement) {
-	const region = log.parentElement?.parentElement;
-	if (!region) throw new Error("the log has no region");
+	const region = log.closest("[data-page]")?.children[1];
+	if (!(region instanceof HTMLElement))
+		throw new Error("the log has no region");
 	return region;
 }
 
-// What of the log shows: its region clips it, so a log box taller than the room
-// it is left (its padding alone is) shows only the region's height.
+// What the log is left: the Pane's body around it, its insets included, the
+// box the docked sheet keeps the log's floor in.
 function visible(log: HTMLElement) {
-	const region = log.parentElement;
-	if (!region) throw new Error("the log has no region");
-	return region.getBoundingClientRect();
+	const body = log.closest("[data-page]")?.children[1]?.firstElementChild;
+	if (!body) throw new Error("the log has no body");
+	return body.getBoundingClientRect();
 }
 
 function sizeOf(name: string) {
@@ -966,13 +982,15 @@ export const OpenedByAPicksAct: StoryObj = {
 function RouteOpensSheet() {
 	const [route, setRoute] = useState<"item" | "list">("item");
 	return (
-		<Place title={route === "item" ? "Item" : "Items"}>
-			<Button label="Add" onAct={() => {}} />
-			{route === "item" ? (
-				<Sheet open onClose={() => setRoute("list")} title="Question">
-					<p>Which one?</p>
-				</Sheet>
-			) : null}
+		<Place>
+			<Pane title={route === "item" ? "Item" : "Items"}>
+				<Button label="Add" onAct={() => {}} />
+				{route === "item" ? (
+					<Sheet open onClose={() => setRoute("list")} title="Question">
+						<p>Which one?</p>
+					</Sheet>
+				) : null}
+			</Pane>
 		</Place>
 	);
 }

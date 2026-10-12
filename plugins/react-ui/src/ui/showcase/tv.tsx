@@ -1,5 +1,6 @@
 import type { StatSpec } from "@fcalell/ui-core/descriptors";
 import { useLayoutEffect } from "react";
+import { Pane } from "../components/pane/index.tsx";
 import { Place } from "../components/place/index.tsx";
 import { Stat } from "../components/stat/index.tsx";
 import { Stats } from "../components/stats/index.tsx";
@@ -23,9 +24,11 @@ export function Tv() {
 	}, []);
 	return (
 		<main className="flex flex-col h-screen">
-			<Place title="Deploys" distance="room">
-				<Stat label="need you" value={3} />
-				<Stats items={TODAY} />
+			<Place distance="room">
+				<Pane title="Deploys">
+					<Stat label="need you" value={3} />
+					<Stats items={TODAY} />
+				</Pane>
 			</Place>
 		</main>
 	);

@@ -46,11 +46,12 @@ With `nativeUi()`, `stack generate` writes `src/app/+not-found.tsx` when the dir
 `+not-found` file: the page for an unmatched address, drawn inside the root layout. It is yours
 from then on: replace its contents to draw another page, and it is never rewritten.
 
-## Places and screens
+## Places and panes
 
-A route a tab opens renders a `Place`. A route pushed over it (a record, a form) renders a
-`Screen` whose `back` is the route it returns to, and the `Screen` covers the tab bar while it
-stands.
+A route a tab opens renders a `Place` holding its `Pane`; the `Place` draws the tab bar under it. A
+route pushed over it (a record, a form) renders its `Pane` alone, with no `Place`, its `back` the
+route it returns to: the stack animates the push and covers the tab bar while it stands. `cover`
+and `wide` change nothing on the phone.
 
 ```tsx
 // src/app/projects/[id].tsx
@@ -58,7 +59,7 @@ export default function ProjectScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const query = useQuery(orpc.projects.get.queryOptions({ input: { id } }));
   return (
-    <Screen title="Project" back="/projects">
+    <Pane title="Project" back="/projects">
       <QueryBoundary
         query={query}
         sentence="The project could not load."
@@ -66,7 +67,7 @@ export default function ProjectScreen() {
       >
         {(project) => <ItemHeader title={project.name} />}
       </QueryBoundary>
-    </Screen>
+    </Pane>
   );
 }
 ```
@@ -81,5 +82,5 @@ as a route file comes or goes, so an `href` to a path no file serves fails the t
 ```tsx
 <Link href="/projects/12">Project 12</Link> // a route file serves it
 <Link href="/settings">Settings</Link> // fails the type-check: no route file
-<Screen title="Settings" back="/setings" /> // fails the type-check too
+<Pane title="Settings" back="/setings" /> // fails the type-check too
 ```

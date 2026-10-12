@@ -7,6 +7,7 @@ import { FormField } from "../../components/form-field/index.tsx";
 import { Input } from "../../components/input/index.tsx";
 import { MessageInput } from "../../components/message-input/index.tsx";
 import { OptionList } from "../../components/option-list/index.tsx";
+import { Pane } from "../../components/pane/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import { ConfirmSheet } from "../../components/sheet/confirm.tsx";
@@ -114,51 +115,53 @@ function DockedQuestions({ state }: { state: ShowcaseFrame["state"] }) {
 					act={{ label: "Upgrade", onAct: act }}
 				/>
 			</div>
-			<Place title="Assistant">
-				<Thread
-					items={TURNS}
-					message={TURN}
-					foot={
-						open && question ? (
-							<Sheet
-								open
-								onClose={close}
-								back={at > 0 ? () => setAt(at - 1) : undefined}
-								title={`Question ${at + 1} of ${QUESTIONS.length}`}
-								description="Before I redeploy"
-								submit={{
-									label: last ? "Send" : "Next",
-									onAct: last ? close : () => setAt(at + 1),
-									loading: (last && state === "loading") || undefined,
-									blocked:
-										last && state === "disabled"
-											? "Choose who hears about it first."
-											: undefined,
-								}}
-								foot={last ? "Your answers go with the redeploy." : undefined}
-								failed={
-									last && state === "error"
-										? "Couldn't send your answers. Try again."
-										: undefined
-								}
-							>
-								<Section title={question.title}>
-									<OptionList
-										options={question.options}
-										value={answers[at] ?? null}
-										onChange={(next) =>
-											setAnswers(
-												answers.map((was, i) => (i === at ? next : was)),
-											)
-										}
-									/>
-								</Section>
-							</Sheet>
-						) : (
-							input
-						)
-					}
-				/>
+			<Place>
+				<Pane title="Assistant">
+					<Thread
+						items={TURNS}
+						message={TURN}
+						foot={
+							open && question ? (
+								<Sheet
+									open
+									onClose={close}
+									back={at > 0 ? () => setAt(at - 1) : undefined}
+									title={`Question ${at + 1} of ${QUESTIONS.length}`}
+									description="Before I redeploy"
+									submit={{
+										label: last ? "Send" : "Next",
+										onAct: last ? close : () => setAt(at + 1),
+										loading: (last && state === "loading") || undefined,
+										blocked:
+											last && state === "disabled"
+												? "Choose who hears about it first."
+												: undefined,
+									}}
+									foot={last ? "Your answers go with the redeploy." : undefined}
+									failed={
+										last && state === "error"
+											? "Couldn't send your answers. Try again."
+											: undefined
+									}
+								>
+									<Section title={question.title}>
+										<OptionList
+											options={question.options}
+											value={answers[at] ?? null}
+											onChange={(next) =>
+												setAnswers(
+													answers.map((was, i) => (i === at ? next : was)),
+												)
+											}
+										/>
+									</Section>
+								</Sheet>
+							) : (
+								input
+							)
+						}
+					/>
+				</Pane>
 			</Place>
 		</div>
 	);
@@ -229,7 +232,7 @@ const typeAndRun = (stage: HTMLElement) =>
 
 // The side sheet (the bottom sheet on touch) in its four states (the failed
 // one a line under the act in the foot, under the head's act on touch) on its
-// form cell, a second page with back on the body icon act cell, the Split's pane on the
+// form cell, a second page with back on the body icon act cell, the pane fit on the
 // pane cell (two Sections in its body, a sections gap apart), and the confirm on the primary act cell: its typed name blocked
 // on `disabled` (the reason shown as the side sheet's is), typed and its act
 // running on `loading`. The rows inside are context. The bar fit cell draws the

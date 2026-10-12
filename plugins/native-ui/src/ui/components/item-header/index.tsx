@@ -83,7 +83,7 @@ export interface ItemHeaderProps extends Closed {
 	title: Part;
 	// The facts in a wrapping line under the title.
 	facts?: readonly Fact[];
-	/** The record's icon acts, in order, at the end of the head's first line (the overline's, else the title's): they stay here and the Place's top bar holds none of them. */
+	/** The record's icon acts, in order, at the end of the head's first line (the overline's, else the title's): they stay here and the Pane's bar holds none of them. */
 	actions?: IconAct[];
 	/** The acts past the actions, in a menu under the more act after them. */
 	more?: MenuItem[];

@@ -2,6 +2,7 @@ import { useContext } from "react";
 import { Gate } from "../components/gate";
 import { Link } from "../components/link";
 import { Missing } from "../components/missing";
+import { Pane } from "../components/pane";
 import { Place } from "../components/place";
 import { ShellHome } from "./frame";
 import { useWords } from "./words";
@@ -22,8 +23,10 @@ export default function NotFound() {
 			</Gate>
 		);
 	return (
-		<Place title={words.notFound}>
-			<Missing sentence={words.nowhere} act={home} />
+		<Place>
+			<Pane title={words.notFound}>
+				<Missing sentence={words.nowhere} act={home} />
+			</Pane>
 		</Place>
 	);
 }

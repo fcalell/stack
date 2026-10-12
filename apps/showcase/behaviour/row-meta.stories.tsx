@@ -2,6 +2,7 @@ import { FileRow } from "@fcalell/plugin-react-ui/components/file-row";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
 import { List } from "@fcalell/plugin-react-ui/components/list";
 import { ListRow } from "@fcalell/plugin-react-ui/components/list-row";
+import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
 import { Status } from "@fcalell/plugin-react-ui/components/status";
@@ -328,10 +329,12 @@ function Review(props: { width: number; grouped?: boolean }) {
 				textRendering: "geometricPrecision",
 			}}
 		>
-			<Place title="Review">
-				<Section title="Sensitive changes" description="1 of 3 opened">
-					{props.grouped ? <Group>{files}</Group> : files}
-				</Section>
+			<Place>
+				<Pane title="Review">
+					<Section title="Sensitive changes" description="1 of 3 opened">
+						{props.grouped ? <Group>{files}</Group> : files}
+					</Section>
+				</Pane>
 			</Place>
 		</div>
 	);

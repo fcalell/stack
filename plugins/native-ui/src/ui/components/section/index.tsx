@@ -23,7 +23,6 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FieldWait, LABEL_LINE, liftBars } from "../../lib/field-wait";
 import { FormContext, FormStands } from "../../lib/form";
-import { ThreadRoom } from "../../lib/frame";
 import { Ink } from "../../lib/ink";
 import { LoadingContext, useWait, VEIL } from "../../lib/loading";
 import { partText } from "../../lib/parts";
@@ -278,7 +277,7 @@ export function Section({
 					<View className={cn(SECTION_BODY, fields > 0 && BODY_WAITS)}>
 						<LoadingContext.Provider value={loading === true}>
 							<SectionContext.Provider value={true}>
-								<ThreadRoom.Provider value={false}>{rest}</ThreadRoom.Provider>
+								{rest}
 							</SectionContext.Provider>
 						</LoadingContext.Provider>
 					</View>

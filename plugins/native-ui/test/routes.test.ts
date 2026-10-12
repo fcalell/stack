@@ -25,12 +25,12 @@ declare module "expo-router" {
 }
 `;
 
-// One probe file of a ListRow's and a Screen's props naming these routes.
+// One probe file of a ListRow's and a Pane's props naming these routes.
 function probeOf(href: string, back: string): string {
 	return `import type { ListRowProps } from ${JSON.stringify(join(COMPONENTS, "list-row/index.tsx"))};
-import type { ScreenProps } from ${JSON.stringify(join(COMPONENTS, "screen/index.tsx"))};
+import type { PaneProps } from ${JSON.stringify(join(COMPONENTS, "pane/index.tsx"))};
 export const row: ListRowProps = { title: "Row", href: ${JSON.stringify(href)} };
-export const screen: ScreenProps = { title: "Probe", back: ${JSON.stringify(back)} };
+export const pane: PaneProps = { title: "Probe", back: ${JSON.stringify(back)} };
 `;
 }
 
@@ -91,11 +91,11 @@ function checkProbes(): Record<keyof typeof PROBES, string[]> {
 	}
 }
 
-test("a ListRow href and a Screen back naming the app's routes type-check", () => {
+test("a ListRow href and a Pane back naming the app's routes type-check", () => {
 	assert.deepEqual(typeErrors("known"), []);
 });
 
-test("a ListRow href and a Screen back naming a route the app does not have fail the type-check", () => {
+test("a ListRow href and a Pane back naming a route the app does not have fail the type-check", () => {
 	const errors = typeErrors("missing");
 	assert.equal(errors.length, 2, errors.join("\n"));
 	assert.ok(errors.some((error) => error.includes('"/missing"')));

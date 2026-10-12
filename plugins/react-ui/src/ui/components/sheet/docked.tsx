@@ -70,7 +70,7 @@ export interface SheetDockedProps {
 	children?: ReactNode;
 }
 
-/** A `Sheet` standing in a Thread's or a Place's foot: no scrim, portal or dialog, the foot's raised cell its surface. The head holds the back act before one column, the title over the description, with the acts at the title's first line; the body scrolls between the head and the foot, which hold their height; the foot holds the line beside (over, on touch) the submit, and under the submit one kept line for a blocked reason or a failed run's sentence. Escape closes it, and each page opens at its top with focus in its first field. Closed it draws nothing. */
+/** A `Sheet` standing in a Thread's or a Pane's foot: no scrim, portal or dialog, the foot's raised cell its surface. The head holds the back act before one column, the title over the description, with the acts at the title's first line; the body scrolls between the head and the foot, which hold their height; the foot holds the line beside (over, on touch) the submit, and under the submit one kept line for a blocked reason or a failed run's sentence. Escape closes it, and each page opens at its top with focus in its first field. Closed it draws nothing. */
 export function SheetDocked({
 	open,
 	onClose,

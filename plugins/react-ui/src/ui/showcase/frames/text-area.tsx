@@ -3,6 +3,7 @@ import { text } from "@fcalell/ui-core/variants";
 import { ActionBar } from "../../components/action-bar/index.tsx";
 import { Form } from "../../components/form/index.tsx";
 import { FormField } from "../../components/form-field/index.tsx";
+import { Pane } from "../../components/pane/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { TextArea } from "../../components/text-area/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
@@ -35,24 +36,26 @@ export function drawTextArea(frame: ShowcaseFrame) {
 		return (
 			<Column>
 				<div className="flex flex-col h-dvh">
-					<Place title="Page source">
-						<Form>
-							<FormField
-								label="Source"
-								disabled={frame.state === "disabled"}
-								error={
-									frame.state === "error" ? "Not valid markdown." : undefined
-								}
-							>
-								<TextArea kind="source" value={SOURCE} onChange={change} />
-							</FormField>
-							<ActionBar
-								acts={[
-									{ label: "Discard", onAct: change },
-									{ label: "Save", onAct: change },
-								]}
-							/>
-						</Form>
+					<Place>
+						<Pane title="Page source">
+							<Form>
+								<FormField
+									label="Source"
+									disabled={frame.state === "disabled"}
+									error={
+										frame.state === "error" ? "Not valid markdown." : undefined
+									}
+								>
+									<TextArea kind="source" value={SOURCE} onChange={change} />
+								</FormField>
+								<ActionBar
+									acts={[
+										{ label: "Discard", onAct: change },
+										{ label: "Save", onAct: change },
+									]}
+								/>
+							</Form>
+						</Pane>
 					</Place>
 				</div>
 			</Column>

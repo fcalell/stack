@@ -68,7 +68,6 @@ import {
 	SKELETON,
 	SKELETON_LANE,
 	SKELETON_ROW,
-	SPLIT_MAIN,
 	STAGE,
 	STAGE_MARK,
 	STAGE_RAIL,
@@ -184,7 +183,6 @@ export const placeRow = build(PLACE_ROW);
 export const placeRowGlyph = build(PLACE_ROW_GLYPH);
 export const placeTab = build(PLACE_TAB);
 export const placeTabLabel = build(PLACE_TAB_LABEL);
-export const splitMain = build(SPLIT_MAIN);
 export const stepCountSegment = build(STEP_COUNT_SEGMENT);
 export const section = build(SECTION);
 export const columns = build(COLUMNS);
@@ -296,7 +294,6 @@ export const FAMILIES: readonly Family[] = [
 	family("PLACE_ROW_GLYPH", PLACE_ROW_GLYPH, placeRowGlyph),
 	family("PLACE_TAB", PLACE_TAB, placeTab),
 	family("PLACE_TAB_LABEL", PLACE_TAB_LABEL, placeTabLabel),
-	family("SPLIT_MAIN", SPLIT_MAIN, splitMain),
 	family("STEP_COUNT_SEGMENT", STEP_COUNT_SEGMENT, stepCountSegment),
 	family("SECTION", SECTION, section),
 	family("COLUMNS", COLUMNS, columns),
@@ -489,7 +486,7 @@ export const LOCK_GLYPH = "shrink-0 text-ink-meta";
 // (`factReach`), so a fact that opens joining the line moves nothing under it.
 export const ITEM_HEADER = "gap-pair";
 export const ITEM_FACTS = "gap-x-fields gap-y-pair";
-// A record's acts in a Split's main stand at the end of the head's first line
+// A record's acts stand at the end of the head's first line
 // (the overline, else the title), the line the height of its text: the acts'
 // boxes reach across it by the icon inset, so their glyphs stand on the line
 // and the last one at the head's end.
@@ -750,21 +747,13 @@ export const CHART_MAIN = "gap-pair";
 export const CHART_PART_SPLIT = "border-b border-transparent bg-clip-padding";
 export const CHART_TICK_LANE = "w-figures";
 // Thread: the messages a sections gap apart, one rung above Prose's block
-// gap, and under them the input; on the desktop the messages and the input
-// each stand in a measure-wide column, as do the record's head over a Thread
-// filling a Split's main and a `MessageInput` (so a Place's docked foot spans
-// the body and the field keeps the column). A column cell is a width and
-// nothing else: the region that owns its frame's width centres it (a filling
-// Thread's log, a docked foot), and among sections it keeps the region's
-// start, as a paragraph's measure does.
+// gap, and under them the input; on the desktop a `MessageInput` stands in a
+// measure-wide column, so a Pane's docked foot spans the body and the field
+// keeps the column. A column cell is a width and nothing else: the region
+// that owns its frame's width centres it (a docked foot), and among sections
+// it keeps the region's start, as a paragraph's measure does.
 export const THREAD = "gap-sections";
 export const THREAD_COLUMN = "w-full max-w-measure";
-// A Thread in a Place's body fills it: the log scrolls under the page's head
-// at the page inset, a sections gap over the input, which docks at the foot.
-export const THREAD_LOG = "px-page pt-page pb-sections";
-// A Thread filling a Split's main stands a page inset under the record's head
-// over a hairline, which the log's messages scroll up to.
-export const THREAD_UNDER_HEAD = "mt-page border-t border-edge";
 // The way back to the newest message, floating over the log a pair above the
 // foot while the reader is scrolled up: a lifted ground under the secondary
 // act's hairline, at its radius.
@@ -808,9 +797,6 @@ export const IMAGE_REMOVE_DISC = "border border-edge bg-raised";
 // stack's box. The dot grid, the edge strokes and the zoom's buttons (`IconButton`)
 // are not cells.
 export const CANVAS_GROUND = "bg-canvas";
-// A canvas filling a Split's main bleeds through the inset the record's head keeps
-// and stands a page inset under that head over a hairline, as a Thread does.
-export const CANVAS_UNDER_HEAD = "-mx-page mt-page border-t border-edge";
 export const CANVAS_PORT =
 	"size-port rounded-full border border-edge-strong bg-surface";
 export const CANVAS_PORT_HIT = "size-target";
@@ -828,7 +814,7 @@ export const CANVAS_ZOOM = "rounded-control border border-edge bg-surface";
 export const SHELL_SIDEBAR = "w-sidebar bg-canvas border-r border-edge";
 export const SHELL_COLUMN = "bg-surface";
 // The column's banner slot: a `Banner` at the page inset all round, so its
-// edge meets the Place title's and the page gap stands under it, above the
+// edge meets the Pane title's and the page gap stands under it, above the
 // header.
 export const SHELL_BANNER = "p-page";
 export const SWITCHER_SLOT = "p-float";
@@ -861,32 +847,27 @@ export const GATE_LOGO = "h-gate-mark w-auto max-w-full";
 export const SHELL_LOGO = "h-avatar w-auto max-w-full";
 export const SHELL_MARK = "p-float";
 export const SHELL_MARK_ROW = "gap-inside min-h-row px-control-x";
-// The switcher's trigger in a touch top bar, which reaches across the page
-// inset (`PAGE_TOP_BAR_TOUCH`) by the inset it keeps; in the sidebar it is a
+// The switcher's trigger leading a touch Pane's bar, which reaches across the
+// page inset (`PAGE_TOP_BAR_START`) by the inset it keeps; in the sidebar it is a
 // `PLACE_ROW` with the name at body 500.
 export const SWITCHER = "gap-inside px-icon-inset min-h-target rounded-control";
 // The toasts' layer over the column (the desktop shell) or at a touch
 // screen's foot, each toast a pair apart.
 export const TOASTS = "p-page gap-pair";
-// A page, a Place's or a Screen's. Its head insets the top bar at the page
-// inset over one hairline: on the desktop the bar holds the title and the
-// acts (the strip); on touch the switcher or the back act, then the acts,
-// over the title. The bar is at a set height, a floor as a row's. The body
-// insets its sections at the page inset; a bleeding body draws none, and
-// whatever stands first in it carries its own top inset.
+// A Pane. Its head insets its bar at the page inset over one hairline: the
+// back act or (on touch) the switcher, the title, then the acts, in one row.
+// The bar is at a set height, a floor as a row's. The body insets its
+// sections at the page inset.
 export const PAGE_HEAD = "px-page border-b border-edge";
-// A room Place stands its head the page inset from the top as it does from
+// A room Pane stands its head the page inset from the top as it does from
 // the sides: the ten-foot safe area is all round.
 export const PAGE_HEAD_ROOM = "pt-page";
 export const PAGE_TOP_BAR = "gap-acts min-h-strip";
-// The touch top bar reaches across the page inset by an icon act's inset, so
-// its first and last glyphs stand at the title's start and the inset's end.
-export const PAGE_TOP_BAR_TOUCH = "-mx-icon-inset";
-// With no switcher the bar is the title's row: the back act reaches the page
-// inset by its start, the acts by their end, and the title stands at the inset.
+// On touch the back act or the switcher reaches the page inset by its start,
+// the acts by their end, and the title stands at the inset.
 export const PAGE_TOP_BAR_START = "-ms-icon-inset";
 export const PAGE_TOP_BAR_END = "-me-icon-inset";
-// A touch Screen's title row wraps: the title holds at least two fifths of it (a
+// A touch Pane's title row wraps: the title holds at least two fifths of it (a
 // structural fraction, never a width), so acts that do not fit beside it, the
 // back act and the gaps drop whole to a second line at the row's end.
 export const PAGE_TITLE_FLOOR = "min-w-2/5 basis-0";
@@ -897,14 +878,8 @@ export const PAGE_TITLE_FLOOR = "min-w-2/5 basis-0";
 // platform overlay), so a 44 px act centres on the title's first line.
 export const PAGE_TITLE_BLOCK = "py-inside";
 export const PAGE_HEAD_WRAPS = "py-inside";
-// The touch title over the head's hairline, a pair apart from it.
-export const PAGE_TITLE = "pb-pair";
 export const PAGE_BODY = "gap-sections p-page";
-// A record the main opened (a `Screen` in a Split's `beside`) holds the column
-// the main holds (`SPLIT_MAIN` `rest`): the measure inside the page inset, at
-// its region's start, so both end where a Prose does.
-export const PAGE_BODY_BESIDE = "max-w-measure-inset";
-// A docked foot (a Place's `foot`, a filling Thread's input) is one cell: a
+// A docked foot (a Pane's `foot`) is one cell: a
 // region of its own under what scrolls past it, a raised surface (the raised
 // step under a hairline), at the page inset at the
 // sides and an acts gap above and below what it holds (a selection bar stands
@@ -917,36 +892,6 @@ export const PAGE_BODY_BESIDE = "max-w-measure-inset";
 export const FOOT_DOCKED =
 	"border-t border-edge-raised bg-raised px-page py-acts max-h-full min-h-0";
 export const PAGE_BODY_OVER_FOOT = "pb-sections";
-// A touch Place's act, floating over the body's end on a layer at the page
-// inset, lifted off what scrolls under it as a Thread's Latest act is, and
-// the room the body keeps under its last row so the act never covers it.
-export const FLOATING_ACT = "p-page";
-export const FLOATING_ACT_LIFT = "rounded-control shadow-float";
-export const FLOATING_ACT_ROOM = "min-h-control";
-// A region scrolling in a bleeding body (a Split's list or record) keeps no
-// page inset under its last row, so its room is the act's height over the
-// page inset.
-export const FLOATING_ACT_FOOT = "pb-page";
-// A split: the list inside a hairline, the pane at `wide` of its page. The
-// list holds one width, `list`, whatever it holds or whether it has loaded, so
-// the main never moves as rows arrive or change; the pane sizes to its content
-// between `region-min` and its ceiling (`pane`). The widths are what the
-// breakpoints are reckoned against, so the main never has less than they
-// leave, and the main takes the rest. Below `tablet` the list stands alone and
-// draws neither.
-// A list holding sections stands them a sections gap apart, as a page body
-// does, the first at the page inset under the strip's hairline at every
-// width, where the record's first line stands: the rhythm is its own cell,
-// which the phone's list reads as well. Its bottom inset is the record's, so
-// an empty list and an empty main centre on one line.
-export const SPLIT_LIST = "w-list pb-page px-page border-r border-edge";
-export const SPLIT_LIST_STACK = "gap-sections pt-page";
-export const SPLIT_PANE =
-	"gap-sections min-w-region-min max-w-pane p-page border-l border-edge";
-// A record the main opened: from `wide` of its page the main and it share what
-// the list leaves, half each, a structural fraction and never a width token;
-// below `wide` it stands in the main's place, and on the phone it replaces it.
-export const SPLIT_BESIDE = "grow basis-0";
 // A section's head (its rhythm is `SECTION`'s): the head row over a blocked
 // act's reason, the title centred on the act, which sets the row's height.
 // The fold toggle's wash overhangs its start only, where its chevron stands

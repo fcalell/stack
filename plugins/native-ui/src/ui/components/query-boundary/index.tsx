@@ -46,7 +46,7 @@ export interface QueryBoundaryProps<Q extends Queries = Queries>
 // own query instead (a `List`). While any query is pending, `loading`, drawn only once the read has lasted about 200 ms and then for at least 500 ms (a faster read draws no waiting form); in a
 // Section the Section is busy and its count waits. When every failed query
 // answers not found, the rest EmptyState saying it no longer exists with Back
-// (to the enclosing Screen's back, else the Place's route), never Retry; when
+// (to the enclosing Pane's back, else the Place's route), never Retry; when
 // one fails otherwise, the failed EmptyState with `sentence` and Retry, which
 // refetches the failed queries; then the children with the data.
 export function QueryBoundary<Q extends Queries>({

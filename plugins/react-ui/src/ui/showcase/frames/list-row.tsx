@@ -130,7 +130,7 @@ const ISSUE_ROW: RowSlots<Issue> = {
 	href: (issue) => issue.href,
 };
 
-// Board 40's issues in a Split's list: the first row current (its href is
+// Board 40's issues in a list Pane: the first row current (its href is
 // the page's own path), the others at their own.
 function issues(): Issue[] {
 	return [
@@ -814,7 +814,7 @@ const PARTS = {
 };
 
 // The part a cell names, by the cell's name or its family's: the first match
-// wins, a cell naming no part draws the Split's list (the first row current).
+// wins, a cell naming no part draws a list Pane's rows (the first row current).
 const CELL_PARTS: ReadonlyArray<readonly [string, keyof typeof PARTS]> = [
 	["ROW.ground.group", "members"],
 	["ROW.lines.one", "services"],

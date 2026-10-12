@@ -756,7 +756,7 @@ export const MENU_LABEL = matrix({
 
 // The sheet on the desktop, raised over the scrim. `fit` is what it holds: a
 // form at the sheet's width, hung at the end with its leading corners rounded;
-// a Split's record pane at the pane's (the Split passes it); or a short form
+// a record's details at the pane's; or a short form
 // as a card at the sheet's width too (the sheet pattern's 610 to 730, not the
 // dialog's), centred, its hairline and radius on all four sides (the Sheet
 // chooses it by measuring its content).
@@ -1186,28 +1186,6 @@ export const PLACE_TAB_LABEL = matrix({
 	defaultVariants: { state: "idle" },
 });
 
-// ── Split ───────────────────────────────────────────────────────────
-
-// The record beside the list: its sections apart at the page inset, in a
-// column that holds the measure inside that inset and stands at the main's
-// start (so a Section, a Group, a Code and an ActionBar end where a Prose
-// does), or, with nothing open, the empty state alone at the inset. While a
-// Thread fills it, the inset holds the record's head alone: the Thread bleeds
-// through the sides, its log and its docked foot carrying the page inset
-// themselves. A record the main opened (`beside`) draws its body in the same
-// `rest` cell, so both end where a Prose does.
-export const SPLIT_MAIN = matrix({
-	base: "",
-	variants: {
-		state: {
-			rest: "gap-sections p-page max-w-measure-inset",
-			empty: "p-page",
-			fills: "px-page pt-page",
-		},
-	},
-	defaultVariants: { state: "rest" },
-});
-
 // ── Section ─────────────────────────────────────────────────────────
 
 // A section's head-to-body step follows where it sits: on a page (over a
@@ -1231,7 +1209,7 @@ export const SECTION = matrix({
 // holds sections (each section's fields then at the fields rhythm). On a page
 // the column is at most a line of running text wide, so its fields, banners
 // and act end together; in a sheet the sheet is the column, in a `Gate` the
-// gate's, and in a Split's pane the pane's.
+// gate's.
 export const FORM = matrix({
 	base: "",
 	variants: {

@@ -64,8 +64,8 @@ The phone draws the touch density set at every width, and the room set inside a 
 declares `distance="room"`: the touch set at a 960 × 540 canvas scaled to the window, which
 `RoomScope` (`lib/room`) computes from the window's size and scopes with uniwind's
 `ScopedVariables`. The roster's structure follows the phone:
-the `Shell` draws a tab bar and no sidebar, `Split` shows the list or the open record alone with
-the pane as a sheet (a record the main opened, `beside`, in the main's stead), `Sheet` is a bottom sheet, `Columns` scrolls sideways at `board` and stacks at `half`, and `Diff` is unified.
+the `Shell` draws a tab bar and no sidebar, a route renders one `Pane` (a record is a deeper route
+pushed in expo-router's stack; `cover` and `wide` change nothing), `Sheet` is a bottom sheet, `Columns` scrolls sideways at `board` and stacks at `half`, and `Diff` is unified.
 The `Table` alone reads the window: from `tablet` wide it is a grid, below it one `ListRow` per
 record.
 

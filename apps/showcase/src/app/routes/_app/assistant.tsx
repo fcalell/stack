@@ -1,5 +1,6 @@
 import { useQuery } from "@fcalell/plugin-api/tanstack-query";
 import { MessageInput } from "@fcalell/plugin-react-ui/components/message-input";
+import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Thread } from "@fcalell/plugin-react-ui/components/thread";
 import { navigate } from "@fcalell/plugin-react-ui/lib/navigate";
@@ -72,69 +73,71 @@ function Assistant() {
 		}, 2400);
 	};
 	return (
-		<Place title="Assistant">
-			<Thread
-				query={query}
-				sentence="The conversation did not load."
-				empty={{
-					title: "Ask about your deploys",
-					sentence:
-						"Why a deploy failed, what changed between two, or how much of the plan is used.",
-				}}
-				message={{
-					key: (turn) => turn.id,
-					author: (turn) => turn.author,
-					name: (turn) =>
-						turn.author === "system" ? undefined : NAME[turn.author],
-					body: (turn) => turn.body,
-					at: (turn) => turn.at,
-					onOpen: (turn) => {
-						const { deploy } = turn;
-						if (deploy === undefined) return undefined;
-						return () => navigate(`/deploys/${deploy}`);
-					},
-				}}
-				foot={
-					<MessageInput
-						value={value}
-						onChange={setValue}
-						attachments={attachments}
-						onAttach={(files) =>
-							setAttachments((all) => [
-								...all,
-								...files.map((file) => ({
-									id: crypto.randomUUID(),
-									name: file.name,
-									src: file.src,
-								})),
-							])
-						}
-						onDetach={(id) => {
-							const gone = attachments.find((each) => each.id === id)?.src;
-							if (gone?.startsWith("blob:")) URL.revokeObjectURL(gone);
-							setAttachments((all) => all.filter((each) => each.id !== id));
-						}}
-						placeholder="Ask about your deploys"
-						notice={working ? QUEUED : notice()}
-						working={working}
-						disabled={query.data === undefined}
-						onSend={() => {
-							say({ author: "you", body: value });
-							setValue("");
-							setAttachments([]);
-							if (working) queued.current = true;
-							else reply();
-						}}
-						onStop={() => {
-							clearTimeout(answer.current);
-							queued.current = false;
-							setWorking(false);
-							say({ author: "system", body: "Answer stopped" });
-							toast("Answer stopped");
-						}}
-					/>
-				}
-			/>
+		<Place>
+			<Pane title="Assistant">
+				<Thread
+					query={query}
+					sentence="The conversation did not load."
+					empty={{
+						title: "Ask about your deploys",
+						sentence:
+							"Why a deploy failed, what changed between two, or how much of the plan is used.",
+					}}
+					message={{
+						key: (turn) => turn.id,
+						author: (turn) => turn.author,
+						name: (turn) =>
+							turn.author === "system" ? undefined : NAME[turn.author],
+						body: (turn) => turn.body,
+						at: (turn) => turn.at,
+						onOpen: (turn) => {
+							const { deploy } = turn;
+							if (deploy === undefined) return undefined;
+							return () => navigate(`/deploys/${deploy}`);
+						},
+					}}
+					foot={
+						<MessageInput
+							value={value}
+							onChange={setValue}
+							attachments={attachments}
+							onAttach={(files) =>
+								setAttachments((all) => [
+									...all,
+									...files.map((file) => ({
+										id: crypto.randomUUID(),
+										name: file.name,
+										src: file.src,
+									})),
+								])
+							}
+							onDetach={(id) => {
+								const gone = attachments.find((each) => each.id === id)?.src;
+								if (gone?.startsWith("blob:")) URL.revokeObjectURL(gone);
+								setAttachments((all) => all.filter((each) => each.id !== id));
+							}}
+							placeholder="Ask about your deploys"
+							notice={working ? QUEUED : notice()}
+							working={working}
+							disabled={query.data === undefined}
+							onSend={() => {
+								say({ author: "you", body: value });
+								setValue("");
+								setAttachments([]);
+								if (working) queued.current = true;
+								else reply();
+							}}
+							onStop={() => {
+								clearTimeout(answer.current);
+								queued.current = false;
+								setWorking(false);
+								say({ author: "system", body: "Answer stopped" });
+								toast("Answer stopped");
+							}}
+						/>
+					}
+				/>
+			</Pane>
 		</Place>
 	);
 }

@@ -10,6 +10,7 @@ import { Group } from "@fcalell/plugin-react-ui/components/group";
 import { Input } from "@fcalell/plugin-react-ui/components/input";
 import { ListRow } from "@fcalell/plugin-react-ui/components/list-row";
 import { OptionList } from "@fcalell/plugin-react-ui/components/option-list";
+import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
 import { Select } from "@fcalell/plugin-react-ui/components/select";
@@ -345,43 +346,47 @@ function Members() {
 			},
 		});
 	return (
-		<Place
-			title="Members"
-			act={{ label: "Invite", onAct: () => setInviting(true) }}
-		>
-			<Section
+		<Place>
+			<Pane
 				title="Members"
-				description="Who works in Acme, and what each can change."
+				actions={[
+					{ icon: "Plus", label: "Invite", onAct: () => setInviting(true) },
+				]}
 			>
-				<MemberTable />
-			</Section>
-			{invited ? (
-				<Section title="Invitations" count={1}>
-					<Group>
-						<ListRow
-							leading={{ status: "waiting" }}
-							title="lea@northwind.io"
-							meta={["Invited 2 d ago by Ana Ruiz"]}
-							status={{ state: "waiting", label: "Pending" }}
-							trailing={{ value: "Member" }}
-							more={[
-								{
-									label: "Resend",
-									icon: "Send",
-									onAct: () => toast("Invitation sent again"),
-								},
-								{
-									label: "Revoke",
-									icon: "UserMinus",
-									destructive: true,
-									onAct: revoke,
-								},
-							]}
-						/>
-					</Group>
+				<Section
+					title="People"
+					description="Who works in Acme, and what each can change."
+				>
+					<MemberTable />
 				</Section>
-			) : null}
-			<Invite open={inviting} onClose={() => setInviting(false)} />
+				{invited ? (
+					<Section title="Invitations" count={1}>
+						<Group>
+							<ListRow
+								leading={{ status: "waiting" }}
+								title="lea@northwind.io"
+								meta={["Invited 2 d ago by Ana Ruiz"]}
+								status={{ state: "waiting", label: "Pending" }}
+								trailing={{ value: "Member" }}
+								more={[
+									{
+										label: "Resend",
+										icon: "Send",
+										onAct: () => toast("Invitation sent again"),
+									},
+									{
+										label: "Revoke",
+										icon: "UserMinus",
+										destructive: true,
+										onAct: revoke,
+									},
+								]}
+							/>
+						</Group>
+					</Section>
+				) : null}
+				<Invite open={inviting} onClose={() => setInviting(false)} />
+			</Pane>
 		</Place>
 	);
 }

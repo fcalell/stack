@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Deploys } from "../../../components/deploys.tsx";
 
+// The list alone: no Pane after it, so it takes the room.
 export const Route = createFileRoute("/_app/deploys/")({
-	component: () => <Deploys />,
+	component: () => null,
 });

@@ -133,7 +133,7 @@ const SIZE_USE: Record<(typeof SIZES)[number], string> = {
 	row: "a one-line row",
 	"row-2": "a two-line row",
 	"row-setting": "a setting row: label and description beside a control",
-	strip: "a page header bar: a Place's or Screen's title and acts",
+	strip: "a Pane's header bar: its title and acts",
 	target: "the least hit area of any interactive part",
 	indent: "a tree row's step in: one per level, a hairline rail on its end",
 	dot: "a status or chip mark",
@@ -178,7 +178,7 @@ const SIZE_USE: Record<(typeof SIZES)[number], string> = {
 		"the gap between an icon act's box and its glyph: half of what the control has over its icon, which a bar of acts reaches across so the glyphs stand at its edges",
 	measure: `the width of running text: ${TEXT_MEASURE_CHARACTERS} characters at the sans face's figure advance of the body size, one width for every role of text`,
 	"measure-inset":
-		"the width of a column that holds the measure inside the page inset on both sides: a Split's open record",
+		"the width of a column that holds the measure inside the page inset on both sides",
 };
 
 const RADIUS_USE: Record<(typeof RADIUS_ROLES)[number], string> = {
@@ -500,7 +500,7 @@ function body(resolved: ResolvedTheme): string[] {
 					: `${code(width)} ${resolved.widths[width]}`,
 		).join(
 			", ",
-		)}. Breakpoints: ${BREAKPOINTS.map((bp) => `${code(bp)} ${resolved.breakpoints[bp]}`).join(", ")}; they are the only responsive variants, of the viewport (\`tablet:\`) and, on the web, of a page's width (\`page-tablet:\`, \`page-max-tablet:\`), by which a Split decides its regions.`,
+		)}. Breakpoints: ${BREAKPOINTS.map((bp) => `${code(bp)} ${resolved.breakpoints[bp]}`).join(", ")}; they are the only responsive variants, of the viewport (\`tablet:\`) and, on the web, of a Pane's width (\`page-tablet:\`, \`page-max-tablet:\`) and of a Place's (\`place-max-tablet:\`), by which a Place stands its last Pane alone.`,
 		"",
 		"## Elevation & Depth",
 		"",

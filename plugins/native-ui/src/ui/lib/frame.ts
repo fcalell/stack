@@ -1,4 +1,4 @@
-import type { IconAct, LinkAct, Switcher } from "@fcalell/ui-core/descriptors";
+import type { LinkAct, Switcher } from "@fcalell/ui-core/descriptors";
 import {
 	createContext,
 	type ReactNode,
@@ -13,13 +13,11 @@ import type { Route } from "./route";
 import { useCSSVariable } from "./theme";
 
 // What the frame molecules hand each other. The Shell hands its switcher to
-// each Place, which draws its trigger at the start of its top bar; a Screen
-// never reads it.
+// each Pane, which draws its trigger at the start of its bar when it has no
+// back act.
 export const ShellSwitcher = createContext<Switcher | undefined>(undefined);
 
-// The Shell hands its tab bar to each Place, which draws it under its body; a
-// pushed Screen never reads it, so it covers the tab bar from its first frame
-// and clears the home indicator itself.
+// The Shell hands its tab bar to each Place, which draws it under its Pane.
 export const ShellTabs = createContext<ReactNode>(null);
 
 // The box the toasts stand in, in the Shell's coordinates.
@@ -30,8 +28,8 @@ export interface ToastBox {
 
 // The Shell's root and its way to place the toasts' layer. The layer stands
 // after the sheets' host, outside the page's tree, so it takes the box the
-// page draws (its body over the act's room, the foot and the tab bar) by
-// measuring that box against the root.
+// Pane draws (its body over its docked foot and the tab bar) by measuring
+// that box against the root.
 export interface ToastFrame {
 	root: RefObject<View | null>;
 	place: (box: ToastBox) => void;
@@ -56,69 +54,36 @@ export function useToastBox() {
 	return { ref: box, onLayout };
 }
 
-// Whether the details sheet of a Split's pane is open, held by the Place or
-// Screen the Split stands in as a direct child, which draws the sheet's
-// Details act in its head from the Split's props; `null` for a Split that
-// stands deeper, which draws as a plain region.
-export interface DetailsState {
-	open: boolean;
-	setOpen: (open: boolean) => void;
-}
-export const DetailsOpen = createContext<DetailsState | null>(null);
-
-// A Split's `beside` record is a Screen standing in its Place in the main's
-// stead, not a page pushed over it, so it covers no tab bar. Its head stands
-// alone, so it draws the Details act of the Split's pane while it is open;
-// `null` outside a `beside`.
-export interface BesideFrame {
-	details?: IconAct;
-}
-export const Beside = createContext<BesideFrame | null>(null);
-
 // The way to the first of the Shell's places that is an address of the app:
 // where the page for an address nothing serves leads. `undefined` outside a
 // Shell, which is how that page knows whether it stands in one.
 export const ShellHome = createContext<LinkAct | undefined>(undefined);
 
-// The route of the Shell's current place: the list a Place returns to from a
-// record its Split shows alone.
+// The route of the Shell's current place, where a read with no Pane's `back`
+// around it leads back.
 export const PlaceRoute = createContext<Route | undefined>(undefined);
 
-// The route a Screen's back act returns to, where a read inside that answers
-// not found leads back; a Split inside hands its `back` in its stead; with none
-// a read leads to `PlaceRoute`.
+// The route a Pane's back act returns to, where a read inside that answers
+// not found leads back; with none a read leads to `PlaceRoute`.
 export const BackRoute = createContext<Route | undefined>(undefined);
 
-// Whether the record of the Place's Split stands alone, read off the Split's
-// props: the Toolbar over the list leaves with the list.
-export const RecordShown = createContext(false);
-
-// Whether a Thread standing here fills the region it stands in, which the
-// Place or Split decides from its children in render (`holdsThread`): the
-// region gives it the rest of its height and no inset, leaving scrolling to
-// its log. False in a Section, where it stands among the page's sections.
-export const ThreadRoom = createContext(false);
-
-// A Split's main keeps the page inset around the record's head, so a Thread
-// filling it bleeds through the sides, its log and foot inset themselves.
-export const ThreadBleeds = createContext(false);
-
-// A bleeding Place hands the room its floating act needs to the regions that
-// scroll inside its body, which keep it under their last row.
-export const ActRoom = createContext<ReactNode>(null);
-
-// The Place's or Screen's title, which names a Split's list.
+// The Pane's title, which names what stands in it and marks an EmptyState
+// there as the page's own.
 export const PageTitle = createContext<string | undefined>(undefined);
 
-// Where the foot a `Sheet` stands in is: `docked` in a filling Thread's or a
-// Place's foot, `inline` in a Thread among sections, `null` anywhere else. A
-// `Sheet` in a foot draws its docked form, which resets it to `null` for what
-// it holds, so a sheet opened from inside is the modal one.
-export const FootPlace = createContext<"docked" | "inline" | null>(null);
+// Whether the Place is read from across a room (`distance` `room`): the Pane
+// leaves out the switcher, which the room set has no tab bar for.
+export const DistanceContext = createContext(false);
+
+// Where the foot a `Sheet` stands in is: `docked` in a Thread's or a Pane's
+// foot, `null` anywhere else. A `Sheet` in a foot draws its docked form, which
+// resets it to `null` for what it holds, so a sheet opened from inside is the
+// modal one.
+export const FootPlace = createContext<"docked" | null>(null);
 
 // What a docked foot's region hands the docked `Sheet` in it: `height` is the
-// region the foot shares with what stands over it (a filling Thread's or a
-// Place's `Lifted` column), read off that column's layout since Yoga has no
+// region the foot shares with what stands over it (a Thread's or a Pane's
+// `Lifted` column), read off that column's layout since Yoga has no
 // container units; `chrome` the foot's own block padding and border;
 // `logFloor` what the region keeps for a log above the foot (zero where none
 // shares it). All zero until the first layout.

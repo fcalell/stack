@@ -28,7 +28,8 @@ import { useWords } from "../../lib/words.tsx";
 import { Count } from "../count/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { List } from "../list/index.tsx";
-import { FloatingActRoom, Place } from "../place/index.tsx";
+import { Pane } from "../pane/index.tsx";
+import { Place } from "../place/index.tsx";
 import { FrameHost, FrameMain } from "./host.tsx";
 import { SwitcherPick } from "./switcher.tsx";
 
@@ -38,17 +39,9 @@ const SIDEBAR = "relative flex flex-col shrink-0";
 const SLOT = "flex";
 const PLACES = "flex flex-col";
 // The column clears the top safe inset, so a banner or a page's head never
-// stands under a notch. It reads the marks the page inside draws: a pushed Screen's
-// `data-screen` hides the tab bar, a floating act's `data-act-floats` lifts
-// the toasts by the act's room. Both hold from the first paint and across
-// the density line, since the page draws them in its own tree.
-const COLUMN = "group/column relative flex flex-col min-w-0 grow pt-safe";
+// stands under a notch.
+const COLUMN = "relative flex flex-col min-w-0 grow pt-safe";
 const BANNER_SLOT = "flex flex-col";
-// The toasts stand at the end on the desktop and centred on touch, above the
-// tab bar and, while a Place's act floats or a foot docks, above the act or
-// the foot. The page is the main landmark, so a page's headers inside it are
-// no banners.
-const ACT_ROOM = "hidden shrink-0 group-has-data-act-floats/column:flex";
 // A place row rings inset, inside the sidebar's inset.
 const ROW_BOX = "flex items-center focus-visible:-outline-offset-2";
 const ROW_PRESS = "hover:bg-wash-hover active:bg-wash-press";
@@ -61,7 +54,7 @@ const LABEL = "truncate grow";
 // The bar holds its height on a page of any length: it clips its tabs'
 // badges (`overflow-hidden`), which lets a flex item shrink below its content,
 // so it is told not to share the column's overflow with the page.
-const TABS = "flex shrink-0 pb-safe group-has-data-screen/column:hidden";
+const TABS = "flex shrink-0 pb-safe";
 const TAB =
 	"flex flex-col items-center justify-center min-w-0 grow basis-0 focus-visible:-outline-offset-2";
 const TAB_GLYPH = "relative flex";
@@ -82,11 +75,11 @@ export interface ShellProps extends Closed {
 	banner?: ReactNode;
 	/** What the app is looking at, and what it can switch to. */
 	switcher?: Switcher;
-	/** The current `Place` or `Screen`. */
+	/** The current `Place`. */
 	children?: ReactNode;
 }
 
-/** The frame: on the desktop the sidebar (the app's mark when the app has an icon, the switcher, then the places) beside the column; on touch the column over the tab bar, the switcher at the head of each Place's top bar, and past five places four tabs and More, which opens a page of the rest; on both, the current place's route handed down for a Place's back act, a pushed Screen covering the tab bar, the `toast()` queue standing over the page's foot (at the end on the desktop, centred on touch; above a floating act or a docked foot) and the first `confirm()` decision as a sheet. */
+/** The frame: on the desktop the sidebar (the app's mark when the app has an icon, the switcher, then the places) beside the column; on touch the column over the tab bar, the switcher leading the bar of each Pane with no way back, and past five places four tabs and More, which opens a page of the rest; on both, the current place's route handed down, the `toast()` queue standing over the page's foot (at the end on the desktop, centred on touch; above a docked foot) and the first `confirm()` decision as a sheet. */
 export function Shell({ places, banner, switcher, children }: ShellProps) {
 	const touch = useTouch();
 	const words = useWords();
@@ -167,13 +160,7 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 					{banner ? (
 						<div className={cn(SHELL_BANNER, BANNER_SLOT)}>{banner}</div>
 					) : null}
-					<FrameMain
-						beside={
-							<div className={ACT_ROOM}>
-								<FloatingActRoom />
-							</div>
-						}
-					>
+					<FrameMain>
 						<ShellHome value={home}>
 							<ShellSwitcher value={switcher}>
 								<PlaceRoute value={route}>{page}</PlaceRoute>
@@ -192,18 +179,20 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 function MorePage(props: { places: readonly PlaceSpec[] }) {
 	const words = useWords();
 	return (
-		<Place title={words.more}>
-			<List
-				items={props.places}
-				row={{
-					key: (spec) => spec.route,
-					leading: { icon: (spec) => spec.icon },
-					title: (spec) => spec.label,
-					trailing: (spec) =>
-						spec.count === undefined ? undefined : { count: spec.count },
-					href: (spec) => spec.route,
-				}}
-			/>
+		<Place>
+			<Pane title={words.more}>
+				<List
+					items={props.places}
+					row={{
+						key: (spec) => spec.route,
+						leading: { icon: (spec) => spec.icon },
+						title: (spec) => spec.label,
+						trailing: (spec) =>
+							spec.count === undefined ? undefined : { count: spec.count },
+						href: (spec) => spec.route,
+					}}
+				/>
+			</Pane>
 		</Place>
 	);
 }

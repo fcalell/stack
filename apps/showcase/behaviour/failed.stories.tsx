@@ -1,5 +1,6 @@
 import { EmptyState } from "@fcalell/plugin-react-ui/components/empty-state";
 import { Failed } from "@fcalell/plugin-react-ui/components/failed";
+import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
@@ -12,11 +13,13 @@ function Review() {
 	const [tries, setTries] = useState(0);
 	return (
 		<>
-			<Place title="Review">
-				<Failed
-					sentence="Could not load the file."
-					act={{ label: "Retry", onAct: () => setTries(tries + 1) }}
-				/>
+			<Place>
+				<Pane title="Review">
+					<Failed
+						sentence="Could not load the file."
+						act={{ label: "Retry", onAct: () => setTries(tries + 1) }}
+					/>
+				</Pane>
 			</Place>
 			<output aria-label="Tries">{tries}</output>
 		</>
@@ -47,13 +50,15 @@ export const Retry: StoryObj = {
 // The EmptyState beside it keeps its create act, with the plus.
 export const Create: StoryObj = {
 	render: () => (
-		<Place title="Projects">
-			<EmptyState
-				icon="FolderPlus"
-				title="No projects yet"
-				sentence="A project holds the deploys of one app."
-				act={{ label: "New project", onAct: () => {} }}
-			/>
+		<Place>
+			<Pane title="Projects">
+				<EmptyState
+					icon="FolderPlus"
+					title="No projects yet"
+					sentence="A project holds the deploys of one app."
+					act={{ label: "New project", onAct: () => {} }}
+				/>
+			</Pane>
 		</Place>
 	),
 	play: async ({ canvas }) => {

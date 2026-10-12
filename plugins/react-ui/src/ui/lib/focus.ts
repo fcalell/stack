@@ -160,62 +160,15 @@ export function useReturnFocus(
 	}, [open, region]);
 }
 
-// Opening a record from the list hands the keyboard to the record: its head's
-// first control, so the Tab after a row's open is not the list's next row. The
-// list's own opening presses (a row's hit, a tree row's Enter) begin it; Tab
-// and the arrows through the list, unopened, are left alone. The record may
-// still be loading, so it waits for the record to draw, up to `SEEK`.
-const SEEK = 2000;
-export function useRecordFocus(
-	list: HTMLElement | null,
-	main: HTMLElement | null,
-) {
-	const record = useRef<HTMLElement | null>(null);
+// A Pane opened from a press in another Pane takes the keyboard: its head's
+// first control, so the Tab after a row's open is not the list's next row,
+// and a Pane hidden by the opening (below `tablet` of the Place) keeps no
+// focus. A Pane drawn with the page, focus on the body, takes nothing.
+export function usePaneFocus(pane: HTMLElement | null) {
 	useEffect(() => {
-		record.current = main;
-	}, [main]);
-	useEffect(() => {
-		const root = list?.parentElement;
-		if (!list || !root) return;
-		let stop: (() => void) | undefined;
-		const seek = () => {
-			stop?.();
-			const watch = new MutationObserver(() => attempt());
-			let timer = 0;
-			let frame = 0;
-			const end = () => {
-				watch.disconnect();
-				clearTimeout(timer);
-				cancelAnimationFrame(frame);
-				stop = undefined;
-			};
-			// Done once focus stands somewhere that is neither the list nor the
-			// body, or the record took it.
-			const attempt = () => {
-				const active = document.activeElement;
-				if (active !== document.body && !list.contains(active)) return end();
-				if (record.current && focusFirst(record.current)) end();
-			};
-			stop = end;
-			watch.observe(root, { childList: true, subtree: true });
-			timer = window.setTimeout(end, SEEK);
-			frame = requestAnimationFrame(attempt);
-		};
-		const press = (event: Event) => {
-			if ((event.target as Element | null)?.closest("[data-hit]")) seek();
-		};
-		const enter = (event: KeyboardEvent) => {
-			const row = (event.target as Element | null)?.closest(
-				'[role="treeitem"]',
-			);
-			if (event.key === "Enter" && row) seek();
-		};
-		list.addEventListener("click", press, true);
-		list.addEventListener("keydown", enter, true);
-		return () => {
-			list.removeEventListener("click", press, true);
-			list.removeEventListener("keydown", enter, true);
-			stop?.();
-		};
-	}, [list]);
+		if (!pane) return;
+		const from = document.activeElement?.closest("[data-page]");
+		if (!from || from === pane || pane.contains(from)) return;
+		focusFirst(pane);
+	}, [pane]);
 }

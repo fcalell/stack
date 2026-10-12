@@ -12,7 +12,7 @@ const TRIGGER = "flex-row items-center min-w-0";
 const NAME = "shrink";
 const GLYPH = "shrink-0";
 
-// The switcher is a pick: its trigger in a Place's top bar, which draws it
+// The switcher is a pick: its trigger in a Pane's bar, which draws it
 // from the Shell's `Switcher`, and the pick's sheet (the options with their
 // avatars under the switcher's label, the current one ticked, the act that
 // makes a new one under a hairline). Outside the package's exports.

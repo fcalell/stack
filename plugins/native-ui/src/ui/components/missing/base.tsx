@@ -4,13 +4,13 @@ import { BackRoute, PlaceRoute } from "../../lib/frame";
 import { useWords } from "../../lib/words";
 import { EmptyStateBase } from "../empty-state/base";
 
-// The Back link of a read that answers not found: to the enclosing Screen's
+// The Back link of a read that answers not found: to the enclosing Pane's
 // back, else the Place's route; none with neither.
 export function useBackAct(): LinkAct | undefined {
 	const words = useWords();
-	const screen = useContext(BackRoute);
+	const pane = useContext(BackRoute);
 	const place = useContext(PlaceRoute);
-	const href = screen ?? place;
+	const href = pane ?? place;
 	if (href === undefined) return undefined;
 	return { label: words.back, href };
 }

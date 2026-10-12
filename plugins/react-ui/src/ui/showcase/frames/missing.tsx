@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Group } from "../../components/group/index.tsx";
 import { Missing } from "../../components/missing/index.tsx";
+import { Pane } from "../../components/pane/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
@@ -16,7 +17,9 @@ function Page(props: { children: ReactNode }) {
 	return (
 		<Column>
 			<div className="flex flex-col h-dvh">
-				<Place title="Not found">{props.children}</Place>
+				<Place>
+					<Pane title="Not found">{props.children}</Pane>
+				</Place>
 			</div>
 		</Column>
 	);
@@ -32,25 +35,29 @@ export function drawMissing(frame: ShowcaseFrame) {
 	if (cell === "BUTTON.act.secondary" || cell === "BUTTON_LABEL.act.secondary")
 		return (
 			<Column>
-				<Place title="Settings">
-					<Section
-						title="Webhooks"
-						description="Where Acme posts deploy events."
-					>
-						<Missing act={BACK} />
-					</Section>
+				<Place>
+					<Pane title="Settings">
+						<Section
+							title="Webhooks"
+							description="Where Acme posts deploy events."
+						>
+							<Missing act={BACK} />
+						</Section>
+					</Pane>
 				</Place>
 			</Column>
 		);
 	if (cell === "BUTTON.fit.bar" || cell === "TEXT.role.meta")
 		return (
 			<Column>
-				<Place title="Settings">
-					<Section title="Webhooks">
-						<Group>
-							<Missing sentence="This endpoint was removed." act={OPEN_NOW} />
-						</Group>
-					</Section>
+				<Place>
+					<Pane title="Settings">
+						<Section title="Webhooks">
+							<Group>
+								<Missing sentence="This endpoint was removed." act={OPEN_NOW} />
+							</Group>
+						</Section>
+					</Pane>
 				</Place>
 			</Column>
 		);

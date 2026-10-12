@@ -2,22 +2,17 @@ import { cn } from "@fcalell/ui-core/cn";
 import type { MenuItem } from "@fcalell/ui-core/descriptors";
 import { SHELL_COLUMN } from "@fcalell/ui-core/variants";
 import { type ReactNode, useEffect, useRef, useState } from "react";
-import { Group } from "../../components/group/index.tsx";
-import { MessageInput } from "../../components/message-input/index.tsx";
+import { Pane } from "../../components/pane/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { Section } from "../../components/section/index.tsx";
-import { Thread } from "../../components/thread/index.tsx";
 import { PortalContainer } from "../../lib/portal.ts";
-import type { ShowcaseFrame } from "../cells.ts";
 import { StandInList } from "./layout-context.tsx";
-import { TURN, TURNS } from "./thread.tsx";
 
 const act = () => {};
 export const ACTIONS = [
 	{ icon: "ListFilter" as const, label: "Filter", onAct: act },
 	{ icon: "RefreshCw" as const, label: "Refresh", onAct: act },
 ];
-const SEARCH = [{ icon: "Search" as const, label: "Search", onAct: act }];
 export const MORE: MenuItem[] = [
 	{ label: "Copy deploy hook", onAct: act },
 	{ label: "Export as CSV", onAct: act },
@@ -66,150 +61,24 @@ export function Opened(props: {
 	);
 }
 
-function Deploys(props: { loading?: boolean }) {
+// A page in the shell: a list Pane and the record it opened, a row with a
+// hairline between them. Place draws no cell of its own, so its frame is the
+// row itself; the Panes' forms are the Pane frame's (`pane.tsx`).
+export function drawPlace() {
 	return (
-		<Place
-			title="Deploys"
-			actions={ACTIONS}
-			more={MORE}
-			act={{
-				label: "Deploy",
-				onAct: act,
-				loading: props.loading,
-			}}
-		>
-			<StandInList />
-		</Place>
+		<Column>
+			<Place>
+				<Pane title="Deploys" actions={ACTIONS} more={MORE}>
+					<Section title="Recent">
+						<StandInList />
+					</Section>
+				</Pane>
+				<Pane title="dpl_7Hp9aK" back="#">
+					<Section title="Properties">
+						<StandInList />
+					</Section>
+				</Pane>
+			</Place>
+		</Column>
 	);
-}
-
-// A spec read in a context: Live, or a change set whose kind is its chip,
-// the list ending with the act that opens a new one.
-function Spec() {
-	const [context, setContext] = useState("billing");
-	return (
-		<Place
-			title="Billing"
-			context={{
-				label: "Context",
-				value: context,
-				onChange: setContext,
-				options: [
-					{ value: "live", label: "Live" },
-					{
-						value: "billing",
-						label: "Billing limits",
-						chip: { family: "amber", label: "Draft" },
-					},
-					{
-						value: "onboarding",
-						label: "Onboarding copy",
-						chip: { family: "green", label: "Ready" },
-					},
-				],
-				act: { icon: "Plus", label: "New change set", onAct: act },
-			}}
-			actions={SEARCH}
-		>
-			<StandInList />
-		</Place>
-	);
-}
-
-// An assistant's home: its sections scrolling under the ask field docked at
-// its foot, the latest exchange inline in the last section.
-function Home() {
-	const [value, setValue] = useState("");
-	return (
-		<Place
-			title="Home"
-			actions={SEARCH}
-			foot={
-				<MessageInput
-					value={value}
-					onChange={setValue}
-					onAttach={act}
-					placeholder="Ask about your deploys"
-					onSend={() => setValue("")}
-				/>
-			}
-		>
-			<Section title="Tasks">
-				<Group>
-					<StandInList />
-				</Group>
-			</Section>
-			<Section title="Latest">
-				<Thread items={TURNS.slice(-2)} message={TURN} />
-			</Section>
-		</Place>
-	);
-}
-
-// The cell picks the form: the title the Place with its actions, more and
-// act; the primary act that act loading; the bar fit a bleeding body under
-// one action; the bar icon act its more menu open; the body icon act (the
-// touch top bar's) an assistant's home under its search act, its ask field
-// docked at its foot, since the foot draws no matrix cell of its own; the
-// pick's pill cells a spec read in a change set (its chip on the trigger),
-// and the chip cells the same with its list open on the desktop. The other
-// cells are the atoms' own.
-export function drawPlace(frame: ShowcaseFrame) {
-	const cell = frame.cell.name;
-	if (cell.startsWith("CHIP") && frame.density === "desktop")
-		return (
-			<Opened popup="listbox">
-				<Column>
-					<Spec />
-				</Column>
-			</Opened>
-		);
-	if (
-		cell === "WORD_ACT" ||
-		cell === "PICKER_VALUE" ||
-		cell === "ICON.fit.meta" ||
-		cell.startsWith("CHIP")
-	)
-		return (
-			<Opened popup="closed">
-				<Column>
-					<Spec />
-				</Column>
-			</Opened>
-		);
-	if (cell === "TEXT.role.title")
-		return (
-			<Column>
-				<Deploys />
-			</Column>
-		);
-	if (cell === "BUTTON.act.primary")
-		return (
-			<Column>
-				<Deploys loading />
-			</Column>
-		);
-	if (cell === "BUTTON.fit.bar")
-		return (
-			<Column>
-				<Place title="Logs" actions={SEARCH} bleed>
-					<StandInList />
-				</Place>
-			</Column>
-		);
-	if (cell === "ICON_BUTTON.fit.body")
-		return (
-			<Column>
-				<Home />
-			</Column>
-		);
-	if (cell === "ICON_BUTTON.fit.bar")
-		return (
-			<Opened>
-				<Column>
-					<Deploys />
-				</Column>
-			</Opened>
-		);
-	return undefined;
 }

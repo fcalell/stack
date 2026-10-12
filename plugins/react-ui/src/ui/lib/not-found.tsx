@@ -3,6 +3,7 @@ import { use } from "react";
 import { Gate } from "../components/gate/index.tsx";
 import { Link } from "../components/link/index.tsx";
 import { Missing } from "../components/missing/index.tsx";
+import { Pane } from "../components/pane/index.tsx";
 import { Place } from "../components/place/index.tsx";
 import { ShellHome } from "./frame.ts";
 import { useWords } from "./words.tsx";
@@ -31,8 +32,10 @@ function NotFound() {
 			</Gate>
 		);
 	return (
-		<Place title={words.notFound}>
-			<Missing sentence={words.nowhere} act={home} />
+		<Place>
+			<Pane title={words.notFound}>
+				<Missing sentence={words.nowhere} act={home} />
+			</Pane>
 		</Place>
 	);
 }

@@ -54,7 +54,7 @@ export interface SheetDockedProps {
 	children?: ReactNode;
 }
 
-// A `Sheet` standing in a Thread's or a Place's foot: no scrim or modal, the
+// A `Sheet` standing in a Thread's or a Pane's foot: no scrim or modal, the
 // foot's raised cell its surface. The head holds the back act before one
 // column, the title over the description, with the acts at the title's first
 // line; the body, bounded, scrolls between the head and the foot, which

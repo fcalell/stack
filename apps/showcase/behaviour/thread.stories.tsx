@@ -1,4 +1,5 @@
 import { MessageInput } from "@fcalell/plugin-react-ui/components/message-input";
+import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Thread } from "@fcalell/plugin-react-ui/components/thread";
 import type { Meta, StoryObj } from "@storybook/react-vite";
@@ -30,19 +31,21 @@ function Replying({ height, reply = REPLY }: { height: number; reply?: Turn }) {
 	const [text, setText] = useState("");
 	return (
 		<div style={{ display: "flex", flexDirection: "column", height }}>
-			<Place title="Assistant">
-				<Thread
-					items={items}
-					replying={replying}
-					message={{
-						key: (turn) => turn.id,
-						author: (turn) => turn.author,
-						body: (turn) => turn.body,
-					}}
-					foot={
-						<MessageInput value={text} onChange={setText} onSend={() => {}} />
-					}
-				/>
+			<Place>
+				<Pane title="Assistant">
+					<Thread
+						items={items}
+						replying={replying}
+						message={{
+							key: (turn) => turn.id,
+							author: (turn) => turn.author,
+							body: (turn) => turn.body,
+						}}
+						foot={
+							<MessageInput value={text} onChange={setText} onSend={() => {}} />
+						}
+					/>
+				</Pane>
 			</Place>
 			<button
 				type="button"
@@ -81,13 +84,19 @@ const endsOnWaiting: NonNullable<StoryObj["play"]> = async ({ canvas }) => {
 	expect(box?.bottom).toBeLessThanOrEqual(
 		log.getBoundingClientRect().bottom + 1,
 	);
-	// The docked foot is a region of the page: a hairline over the log, no shadow.
-	const foot = log.parentElement?.nextElementSibling;
-	if (!foot) throw new Error("the log has no foot");
+	// The docked foot stands a sections gap under the log: no hairline, no shadow.
+	const region = log.parentElement;
+	const foot = region?.nextElementSibling;
+	if (!region || !foot) throw new Error("the log has no foot");
 	expect(getComputedStyle(foot).boxShadow).toBe("none");
+	const probe = document.createElement("div");
+	probe.className = "pb-sections";
+	foot.append(probe);
+	const sections = Number.parseFloat(getComputedStyle(probe).paddingBottom);
+	probe.remove();
 	expect(
-		Number.parseFloat(getComputedStyle(foot).borderTopWidth),
-	).toBeGreaterThan(0);
+		foot.getBoundingClientRect().top - region.getBoundingClientRect().bottom,
+	).toBe(sections);
 };
 
 export const EndsOnWaitingReply1280: StoryObj = {

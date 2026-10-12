@@ -1,3 +1,4 @@
+import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Table } from "@fcalell/plugin-react-ui/components/table";
 import type { TableColumn } from "@fcalell/ui-core/descriptors";
@@ -49,13 +50,15 @@ export default {
 	title: "Behaviour/Table",
 	parameters: { layout: "fullscreen" },
 	render: () => (
-		<Place title="Cron tasks">
-			<Table
-				columns={COLUMNS}
-				items={TASKS}
-				row={{ id: (task) => task.id }}
-				onOpen={open}
-			/>
+		<Place>
+			<Pane title="Cron tasks">
+				<Table
+					columns={COLUMNS}
+					items={TASKS}
+					row={{ id: (task) => task.id }}
+					onOpen={open}
+				/>
+			</Pane>
 		</Place>
 	),
 } satisfies Meta;
@@ -71,13 +74,15 @@ function Sized(props: { width: number }) {
 				flexDirection: "column",
 			}}
 		>
-			<Place title="Cron tasks">
-				<Table
-					columns={COLUMNS}
-					items={TASKS}
-					row={{ id: (task) => task.id }}
-					onOpen={open}
-				/>
+			<Place>
+				<Pane title="Cron tasks">
+					<Table
+						columns={COLUMNS}
+						items={TASKS}
+						row={{ id: (task) => task.id }}
+						onOpen={open}
+					/>
+				</Pane>
 			</Place>
 		</div>
 	);

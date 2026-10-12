@@ -134,61 +134,39 @@ export const OVERLAYS: readonly string[] = [
 	"active:no-underline",
 	"hover:underline",
 	"active:underline",
-	// Place, Screen, Split
+	// Place, Pane: a row of Panes, each but the last at the list width giving
+	// way to its floor, the last taking the rest; below `tablet` of the Place
+	// only the last stands, and a Pane before a covering one is hidden; the
+	// back act draws as Back alone and as Close beside; the body's children
+	// stand within the measure.
 	"min-h-0",
 	"overflow-y-clip",
 	"overflow-y-auto",
-	"pointer-events-none",
-	"pointer-events-auto",
 	"aria-expanded:bg-wash-press",
 	"aria-expanded:text-ink-body",
 	"text-danger",
 	"overscroll-contain",
-	"page-tablet:hidden",
-	"page-max-tablet:hidden",
-	"page-max-tablet:w-full",
-	"[anchor-name:--split-list]",
-	"page-max-tablet:pb-0",
-	"page-max-tablet:border-r-0",
-	"page-tablet:group-has-data-split/page:left-[anchor(--split-list_left,0px)]",
-	"page-tablet:group-has-data-split/page:right-[anchor(--split-list_right,0px)]",
-	// The Shell's column reads the page's marks: a pushed Screen hides the tab
-	// bar, a floating act shows its room under the toasts.
-	"group-has-data-screen/column:hidden",
-	"group-has-data-act-floats/column:flex",
+	"w-list",
+	"min-w-region-min",
+	"border-e",
+	"border-edge",
+	"last:grow",
+	"last:basis-0",
+	"last:min-w-0",
+	"last:border-e-0",
+	"place-max-tablet:not-last:hidden",
+	"[&:has(~[data-cover])]:hidden",
+	"place-max-tablet:flex",
+	"place-max-tablet:hidden",
+	"group-first/pane:flex",
+	"group-first/pane:hidden",
+	"group-data-cover/pane:flex",
+	"group-data-cover/pane:hidden",
+	"*:max-w-measure",
+	"*:not-last:hidden",
 	// A docked foot names the anchor the toasts' layer stands above.
 	"[anchor-name:--docked-foot]",
 	"bottom-[anchor(--docked-foot_top,0px)]",
-	// A page's head reads its Split's marks: the back act with a record, the
-	// Details act with a pane, no head beside a record, the Toolbar leaving
-	// with the list.
-	"page-max-tablet:group-has-data-record/page:flex",
-	"page-max-tablet:group-has-data-record/page:hidden",
-	"page-max-wide:group-has-data-pane/page:flex",
-	"group-has-[[data-pane][data-beside]]/page:flex",
-	"page-max-tablet:group-has-data-beside/page:hidden",
-	// A Split's list reads the Place's docked-foot mark: it ends a sections
-	// gap above the foot.
-	"group-data-foot/page:pb-sections",
-	"page-max-tablet:group-data-foot/page:pb-sections",
-	// A region reads the mark of a Thread filling it: no inset, the log
-	// scrolling; the record's head over it stands in the Thread's column.
-	"[&:has(>[data-fill])]:p-0",
-	"[&:has(>[data-fill])>:not([data-fill])]:mx-page",
-	"[&:has(>[data-fill])>:first-child:not([data-fill])]:mt-page",
-	"[&:has(>[data-fill])]:gap-0",
-	"[&:has(>[data-fill])]:pb-0",
-	"[&:has(>[data-fill])]:max-w-none",
-	"[&:has(>[data-fill])]:shrink",
-	"[&:has(>[data-fill])]:min-h-0",
-	"group-[:has(>[data-fill])]/main:w-full",
-	"group-[:has(>[data-fill])]/main:max-w-measure",
-	"group-[:has(>[data-fill])]/main:items-start",
-	"group-[:has(>[data-fill])]/main:max-w-none",
-	"page-wide:hidden",
-	"page-max-wide:hidden",
-	"border-edge",
-	"page-wide:border-l",
 	// Section, Group, List, Columns
 	"tabular-nums",
 	"flex",
@@ -214,6 +192,7 @@ export const OVERLAYS: readonly string[] = [
 	"[&>:not(:last-child)]:after:h-px",
 	"[&>:not(:last-child)]:after:bg-edge",
 	// Form, Toolbar, ActionBar
+	"page-tablet:hidden",
 	"sticky",
 	"-bottom-page",
 	"-bottom-card",
