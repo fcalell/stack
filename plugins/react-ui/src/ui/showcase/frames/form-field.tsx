@@ -1,9 +1,6 @@
 import { useState } from "react";
-import { Checkbox } from "../../components/checkbox/index.tsx";
 import { FormField } from "../../components/form-field/index.tsx";
 import { Input } from "../../components/input/index.tsx";
-import { Select } from "../../components/select/index.tsx";
-import { Switch } from "../../components/switch/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { Wide } from "./layout-context.tsx";
 
@@ -40,17 +37,16 @@ function Questions() {
 					"region",
 					REGIONS.find((option) => option.value === region)?.label,
 				)}
-			>
-				<Select
-					value={region}
-					onChange={(next) => {
+				select={{
+					value: region,
+					onChange: (next) => {
 						setRegion(next);
 						setEditing(undefined);
-					}}
-					options={REGIONS}
-					placeholder="Choose a region"
-				/>
-			</FormField>
+					},
+					options: REGIONS,
+					placeholder: "Choose a region",
+				}}
+			/>
 			<FormField
 				label="Billing contact"
 				description="Receives every invoice."
@@ -74,23 +70,29 @@ function Changes() {
 			<FormField change="changed" label="Workspace URL">
 				<Input value="acme-inc" onChange={change} />
 			</FormField>
-			<FormField change="added" label="Default region">
-				<Select
-					value="eu-central-1"
-					onChange={change}
-					options={REGIONS}
-					placeholder="Choose a region"
-				/>
-			</FormField>
+			<FormField
+				change="added"
+				label="Default region"
+				select={{
+					value: "eu-central-1",
+					onChange: change,
+					options: REGIONS,
+					placeholder: "Choose a region",
+				}}
+			/>
 			<FormField change="removed" label="Billing contact">
 				<Input value="ana@acme.app" onChange={change} />
 			</FormField>
-			<FormField change="unchanged" label="Require two-factor">
-				<Switch checked onChange={change} label="Require two-factor" />
-			</FormField>
-			<FormField change="stale" label="Trust this browser">
-				<Checkbox checked onChange={change} label="Trust this browser" />
-			</FormField>
+			<FormField
+				change="unchanged"
+				label="Require two-factor"
+				switch={{ checked: true, onChange: change }}
+			/>
+			<FormField
+				change="stale"
+				label="Trust this browser"
+				checkbox={{ checked: true, onChange: change }}
+			/>
 		</>
 	);
 }
@@ -122,21 +124,19 @@ export function drawFormField(frame: ShowcaseFrame) {
 				description="Where new databases are created."
 				error={error ? "Pick where new databases are created." : undefined}
 				disabled={disabled}
-			>
-				<Select
-					value={error ? undefined : "eu-central-1"}
-					onChange={change}
-					options={REGIONS}
-					placeholder="Choose a region"
-				/>
-			</FormField>
+				select={{
+					value: error ? undefined : "eu-central-1",
+					onChange: change,
+					options: REGIONS,
+					placeholder: "Choose a region",
+				}}
+			/>
 			<FormField
 				label="Require two-factor"
 				description="Every member confirms a code at sign-in."
 				disabled={disabled}
-			>
-				<Switch checked onChange={change} label="Require two-factor" />
-			</FormField>
+				switch={{ checked: true, onChange: change }}
+			/>
 			<FormField
 				label={
 					error ? "I accept the data processing terms" : "Trust this browser"
@@ -144,15 +144,8 @@ export function drawFormField(frame: ShowcaseFrame) {
 				description={error ? undefined : "Skip the code here for 30 days."}
 				error={error ? "Accept the terms to continue." : undefined}
 				disabled={disabled}
-			>
-				<Checkbox
-					checked={!error}
-					onChange={change}
-					label={
-						error ? "I accept the data processing terms" : "Trust this browser"
-					}
-				/>
-			</FormField>
+				checkbox={{ checked: !error, onChange: change }}
+			/>
 			{state === "rest" ? <Questions /> : null}
 			{state === "rest" && frame.cell.name.startsWith("CHANGE_MARK") ? (
 				<Changes />

@@ -39,7 +39,7 @@ leave it out, compose the rest, and file it by `node_modules/@fcalell/cli/guide/
 Write the screen under the rules page; never edit `node_modules` or a stack package.
 
 ```tsx
-<Section title="Active">
+<Section title="Active" count={projects.data?.length} loading={projects.isPending}>
   <List
     query={projects}
     sentence="Projects could not load."

@@ -1,7 +1,6 @@
 import type { StatusState } from "@fcalell/ui-core/tokens";
 import { DefinitionRow } from "../../components/definition-row/index.tsx";
 import { Group } from "../../components/group/index.tsx";
-import { Switch } from "../../components/switch/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { Wide } from "./layout-context.tsx";
 
@@ -32,7 +31,7 @@ export function Facts(props: { loading?: boolean }) {
 			/>
 			<DefinitionRow
 				label="Notify on failure"
-				value={<Switch checked onChange={act} label="Notify on failure" />}
+				switch={{ checked: true, onChange: act }}
 			/>
 		</Group>
 	);
@@ -94,7 +93,7 @@ function General(props: { status: StatusState }) {
 			<DefinitionRow label="Expected spend" value="No history yet" />
 			<DefinitionRow
 				label="Only what changed since you last looked"
-				value={<Switch checked onChange={act} label="Only what changed" />}
+				switch={{ checked: true, onChange: act }}
 			/>
 		</Group>
 	);

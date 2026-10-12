@@ -1,18 +1,13 @@
 import { ActionBar } from "@fcalell/plugin-react-ui/components/action-bar";
-import { Checkbox } from "@fcalell/plugin-react-ui/components/checkbox";
 import { DefinitionRow } from "@fcalell/plugin-react-ui/components/definition-row";
 import { Form } from "@fcalell/plugin-react-ui/components/form";
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
 import { Input } from "@fcalell/plugin-react-ui/components/input";
 import { List } from "@fcalell/plugin-react-ui/components/list";
-import { OptionList } from "@fcalell/plugin-react-ui/components/option-list";
 import { Prose } from "@fcalell/plugin-react-ui/components/prose";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
-import { SegmentedControl } from "@fcalell/plugin-react-ui/components/segmented-control";
-import { Select } from "@fcalell/plugin-react-ui/components/select";
 import { Slider } from "@fcalell/plugin-react-ui/components/slider";
-import { Switch } from "@fcalell/plugin-react-ui/components/switch";
 import { Facts } from "@fcalell/plugin-react-ui/showcase/frames/definition-row";
 import { Static } from "@fcalell/plugin-react-ui/showcase/frames/group";
 import { Areas } from "@fcalell/plugin-react-ui/showcase/frames/list";
@@ -358,76 +353,84 @@ const SCOPE_QUERY = {
 	refetch: change,
 };
 const FOLDED = { answer: "Acme", onEdit: change };
+const SLIDER = {
+	value: 80,
+	onChange: change,
+	min: 0,
+	max: 100,
+	step: 5,
+	unit: "percent",
+};
+// Each kind is the control the field is given: a descriptor, or children.
 const KINDS = [
-	["plain", <Input key="p" value="Acme" onChange={change} />],
+	["plain", { children: <Input value="Acme" onChange={change} /> }],
 	[
 		"described",
-		<Input key="d" value="Acme" onChange={change} />,
+		{ children: <Input value="Acme" onChange={change} /> },
 		"Shown to members.",
 	],
-	["switch", <Switch key="s" checked onChange={change} label="Two-factor" />],
+	["switch", { switch: { checked: true, onChange: change } }],
 	[
 		"switch described",
-		<Switch key="sd" checked onChange={change} label="Two-factor" />,
+		{ switch: { checked: true, onChange: change } },
 		"Members sign in with a second step.",
 	],
-	["checkbox", <Checkbox key="c" checked onChange={change} label="Trust" />],
+	["checkbox", { checkbox: { checked: true, onChange: change } }],
 	[
 		"checkbox described",
-		<Checkbox key="cd" checked onChange={change} label="Trust" />,
+		{ checkbox: { checked: true, onChange: change } },
 		"Skips the second step for thirty days.",
 	],
-	[
-		"select",
-		<Select key="se" value="editor" onChange={change} options={ROLES} />,
-	],
-	["slider", slider],
-	["slider described", slider, "Kept back from the monthly spend."],
+	["select", { select: { value: "editor", onChange: change, options: ROLES } }],
+	["slider", { slider: SLIDER }],
+	["slider described", { slider: SLIDER }, "Kept back from the monthly spend."],
 	[
 		"options",
-		<OptionList key="o" value="editor" onChange={change} options={ROLES} />,
+		{ options: { value: "editor", onChange: change, options: ROLES } },
 	],
 	[
 		"options described",
-		<OptionList key="od" value="team" onChange={change} options={PLANS} />,
+		{ options: { value: "team", onChange: change, options: PLANS } },
 		"Changes at the next invoice.",
 	],
 	[
 		"options grouped",
-		<OptionList key="og" value={["fra"]} onChange={change} options={ZONES} />,
+		{ options: { value: ["fra"], onChange: change, options: ZONES } },
 	],
 	[
 		"options from a query",
-		<OptionList
-			key="oq"
-			value={[]}
-			onChange={change}
-			query={SCOPE_QUERY}
-			option={{
-				value: (scope) => scope.id,
-				label: (scope) => scope.name,
-				description: (scope) => scope.about,
-			}}
-			sentence="Scopes did not load."
-			empty="No scopes."
-		/>,
+		{
+			options: {
+				value: [],
+				onChange: change,
+				query: SCOPE_QUERY,
+				option: {
+					value: (scope: (typeof SCOPE_QUERY.data)[number]) => scope.id,
+					label: (scope: (typeof SCOPE_QUERY.data)[number]) => scope.name,
+					description: (scope: (typeof SCOPE_QUERY.data)[number]) =>
+						scope.about,
+				},
+				sentence: "Scopes did not load.",
+				empty: "No scopes.",
+			},
+		},
 	],
 	[
 		"segments",
-		<SegmentedControl
-			key="sg"
-			label="View"
-			value="list"
-			onChange={change}
-			options={[
-				{ value: "list", label: "List" },
-				{ value: "board", label: "Board" },
-			]}
-		/>,
+		{
+			segments: {
+				value: "list",
+				onChange: change,
+				options: [
+					{ value: "list", label: "List" },
+					{ value: "board", label: "Board" },
+				],
+			},
+		},
 	],
 	[
 		"answered",
-		<Input key="a" value="Acme" onChange={change} />,
+		{ children: <Input value="Acme" onChange={change} /> },
 		undefined,
 		FOLDED,
 	],
@@ -443,9 +446,8 @@ const kindField = ([
 		label="Setting"
 		description={description}
 		answered={answered}
-	>
-		{control}
-	</FormField>
+		{...control}
+	/>
 );
 function kinds(loading?: boolean) {
 	return KINDS.map((kind) => (
@@ -550,7 +552,7 @@ const groupBody = (loading?: boolean) => (
 			/>
 			<DefinitionRow
 				label="Notify on failure"
-				value={<Switch checked onChange={change} label="Notify on failure" />}
+				switch={{ checked: true, onChange: change }}
 			/>
 		</Group>
 	</Section>
@@ -559,9 +561,9 @@ const sectionGroup: StoryObj = {
 	render: () => <Pair loaded={groupBody()} waiting={groupBody(true)} />,
 	play: async ({ canvas }) => {
 		const { loaded, waiting } = await stand(canvas);
-		// The body's wrapper holds the Group's card, which holds the rows.
+		// The body holds the Group's card, which holds the rows.
 		const rows = (box: Element) =>
-			box.querySelector("section > div:last-child > div")?.firstElementChild;
+			box.querySelector("section > div:last-child > div");
 		await expect(waiting.querySelector("section")).toHaveAttribute(
 			"aria-busy",
 			"true",
@@ -575,11 +577,11 @@ const sectionGroup: StoryObj = {
 	},
 };
 
-// A loading Section whose body is a List stands no skeleton fields: the List
-// draws its own waiting rows (four, whatever its items will be) and the head's
-// count waits, so the Section stands at the height of four loaded rows.
+// A loading Section whose body is a List: the List draws its own waiting rows
+// (four, whatever its items will be) and the head's count waits, so the
+// Section stands at the height of four loaded rows.
 const listBody = (loading?: boolean) => (
-	<Section title="Areas" loading={loading}>
+	<Section title="Areas" count={4} loading={loading}>
 		<List
 			items={[
 				{ id: "a1", name: "Notes" },
@@ -600,8 +602,7 @@ const sectionList: StoryObj = {
 	play: async ({ canvas }) => {
 		const { loaded, waiting } = await stand(canvas);
 		const rows = (box: Element) => [
-			...(box.querySelector("section > div:last-child > div > div")?.children ??
-				[]),
+			...(box.querySelector("section > div:last-child > div")?.children ?? []),
 		];
 		await expect(waiting.querySelector("section")).toHaveAttribute(
 			"aria-busy",

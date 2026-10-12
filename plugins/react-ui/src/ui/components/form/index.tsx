@@ -1,77 +1,106 @@
 import { cn } from "@fcalell/ui-core/cn";
-import { FORM_FOOT, type FormIn, form } from "@fcalell/ui-core/variants";
 import {
-	Children,
-	Fragment,
-	isValidElement,
-	type ReactNode,
-	use,
-	useState,
-} from "react";
+	FORM_FOOT,
+	FORM_GROUP,
+	FORM_LEGEND,
+	form,
+	SECTION_NESTED_TITLE,
+	text,
+} from "@fcalell/ui-core/variants";
+import { type ReactNode, use, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { FieldWait } from "../../lib/field-wait.tsx";
 import { FormContext, FormStands, HOLDS_FILL } from "../../lib/form.ts";
 import { useLeaveGuard } from "../../lib/leave.ts";
-import { LoadingContext } from "../../lib/loading.ts";
+import { LoadingContext, useWait, VEIL } from "../../lib/loading.ts";
 import { TouchedContext, useTouchState } from "../../lib/touched.ts";
-import { ActionBar } from "../action-bar/index.tsx";
-import { FormField, fieldWaitOf } from "../form-field/index.tsx";
-import { Section } from "../section/index.tsx";
+import { ActionBar, type ActionBarProps } from "../action-bar/index.tsx";
+import { Text } from "../text/index.tsx";
 
 const STACK = "flex flex-col";
-// A field's wrapper stays mounted, as the field in it, while its waiting form
-// stands in its place, so what it holds (a typed text) outlives the wait.
-const FIELD_SHOWN = "contents";
-const FIELD_WAITS = "hidden";
+const GROUP = "flex flex-col min-w-0";
+// The fields stand in the group's own rhythm, wrapped only to carry the veil.
+const FIELDS = "contents";
 // In a sheet's body, which scrolls, the bar stays at the
 // scroller's bottom edge. A sticky box sticks inside the scroller's padding, so
 // the negative offset reaches the edge; the negative margin and matching
 // padding run its ground and hairline across the scroller's inset, so what
 // scrolls under it shows in no gutter.
-const FOOT_STUCK: Partial<Record<FormIn, string>> = {
-	pane: "sticky -bottom-page bg-surface -mx-page px-page -mb-page pb-page",
-	sheet: "sticky -bottom-card bg-raised -mx-card px-card -mb-card pb-card",
-};
+const FOOT_STUCK =
+	"sticky -bottom-card bg-raised -mx-card px-card -mb-card pb-card";
 
-// Each `FormField` among the nodes (through fragments) stands as a waiting
-// field while a loading `Section` or `Group` surrounds the form.
-function waitFields(children: ReactNode, waiting: boolean): ReactNode[] {
-	return Children.toArray(children).map((node) => {
-		if (!isValidElement<{ children?: ReactNode }>(node)) return node;
-		if (node.type === Fragment)
-			return (
-				<Fragment key={node.key}>
-					{waitFields(node.props.children, waiting)}
-				</Fragment>
-			);
-		if (node.type !== FormField) return node;
-		return (
-			<Fragment key={node.key}>
-				{waiting ? <FieldWait {...fieldWaitOf(node)} /> : null}
-				<div className={waiting ? FIELD_WAITS : FIELD_SHOWN}>{node}</div>
-			</Fragment>
-		);
-	});
+/** One group of fields a `Form` draws as a fieldset. */
+export interface FormGroup {
+	/** The group's name, its legend (a short phrase; wraps). */
+	title: string;
+	/** Under the title (a sentence; wraps). */
+	description?: string;
+	/** A note ahead of the fields (a `Banner`, a sentence). */
+	lead?: ReactNode;
+	/** The group's `FormField`s. */
+	fields: ReactNode;
+	/** The group's data is on its way: the group is busy and each `FormField` in it draws its own waiting form, its typed text kept. */
+	loading?: boolean;
 }
 
-/** Fields and the acts that submit them. */
-export interface FormProps extends Closed {
-	/** The fields, then its `ActionBar`, whose filled act submits the form. A form among a page's other sections is `Section > Form`, so every section's head-to-body gap stays the pair step; `Section`s inside the form are the whole page's, all at the fields step. */
-	children?: ReactNode;
+interface FormBase extends Closed {
+	/** The acts that close the form, drawn in its foot; the bar's filled act submits the form. */
+	bar?: ActionBarProps;
 }
 
-/** One column, at most a line of running text wide on a page and the sheet's width in a sheet: fields apart at the fields rhythm, or sections at the sections rhythm with the `ActionBar` under a hairline across the form. Its bar's filled act is the submit button, so Enter in a field runs that act's `onAct`; while its promise pends the act is pending, the others ignore the press and the form is busy. A blocked act says its reason once a field has taken input. Inside a loading `Section` or `Group` each `FormField` waits as a skeleton field and its `ActionBar` as its waiting form, the fields kept mounted, hidden. While the form stands edited, leaving its page (a navigation, the back button, a reload) asks once, "Discard your edit?" or keep editing; pressing the filled act ends the edit, so an act that navigates is not asked, and a rejected act puts the edit back. */
-export function Form({ children }: FormProps) {
+/** Fields and the acts that submit them. The form's structure is its props: `children`, a flat run of `FormField`s, or `groups`, each drawn as a fieldset with a legend; never both. A form among a page's other sections is `Section > Form`, so every section's head-to-body gap stays the pair step. */
+export type FormProps = FormBase &
+	(
+		| {
+				/** A flat run of `FormField`s, a fields step apart. */
+				children?: ReactNode;
+				groups?: never;
+		  }
+		| {
+				children?: never;
+				/** Groups of fields, a sections step apart, each its fieldset and legend with its fields a fields step apart. */
+				groups: readonly FormGroup[];
+		  }
+	);
+
+// One group: its legend, its description and lead, and its fields, which wait
+// together when the group loads. The wait is a read that lasts: drawn after a
+// delay and held a minimum, the fields undrawn meanwhile.
+function GroupBox(props: { group: FormGroup; heading: string }) {
+	const { group, heading } = props;
+	const late = useWait(group.loading === true);
+	// A Section around the form waits its groups too.
+	const waiting = use(LoadingContext) || late.waiting;
+	return (
+		<fieldset
+			aria-busy={late.waiting || undefined}
+			className={cn(FORM_GROUP, GROUP)}
+		>
+			<legend className={cn(heading, FORM_LEGEND)}>{group.title}</legend>
+			{group.description ? <Text role="meta">{group.description}</Text> : null}
+			{group.lead}
+			<LoadingContext value={waiting}>
+				<div className={cn(FIELDS, late.veiled && VEIL)}>{group.fields}</div>
+			</LoadingContext>
+		</fieldset>
+	);
+}
+
+/** One column, at most a line of running text wide on a page and the sheet's width in a sheet: fields apart at the fields rhythm, or `groups` apart at the sections rhythm with the `bar` under a hairline across the form. Its bar's filled act is the submit button, so Enter in a field runs that act's `onAct`; while its promise pends the act is pending, the others ignore the press and the form is busy. A blocked act says its reason once a field has taken input. While the form stands edited, leaving its page (a navigation, the back button, a reload) asks once, "Discard your edit?" or keep editing; pressing the filled act ends the edit, so an act that navigates is not asked, and a rejected act puts the edit back. */
+export function Form({ children, groups, bar }: FormProps) {
 	const within = use(FormStands);
 	const [pending, setPending] = useState(false);
 	const [touch] = useTouchState();
 	// A sheet's form is the sheet's: it closes on its own act and asks nothing.
 	useLeaveGuard(touch.leave, within !== "sheet");
-	const nodes = waitFields(children, use(LoadingContext));
-	const sectioned = nodes.some(
-		(node) => isValidElement(node) && node.type === Section,
-	);
-	const stuck = FOOT_STUCK[within];
+	const stuck = within === "sheet" ? FOOT_STUCK : undefined;
+	const foot =
+		bar === undefined ? null : groups || stuck ? (
+			<div className={cn(FORM_FOOT, stuck)}>
+				<ActionBar {...bar} />
+			</div>
+		) : (
+			<ActionBar {...bar} />
+		);
 	return (
 		<FormContext value={setPending}>
 			<TouchedContext value={touch}>
@@ -81,22 +110,25 @@ export function Form({ children }: FormProps) {
 					onChange={touch.touch}
 					aria-busy={pending || undefined}
 					className={cn(
-						form({ holds: sectioned ? "sections" : "fields", in: within }),
+						form({ holds: groups ? "sections" : "fields", in: within }),
 						STACK,
 						HOLDS_FILL,
 					)}
 				>
-					{sectioned || stuck
-						? nodes.map((node) =>
-								isValidElement(node) && node.type === ActionBar ? (
-									<div key={node.key} className={cn(FORM_FOOT, stuck)}>
-										{node}
-									</div>
-								) : (
-									node
-								),
-							)
-						: nodes}
+					{groups
+						? groups.map((group) => (
+								<GroupBox
+									key={group.title}
+									group={group}
+									heading={
+										within === "sheet"
+											? SECTION_NESTED_TITLE
+											: text({ role: "heading" })
+									}
+								/>
+							))
+						: children}
+					{foot}
 				</form>
 			</TouchedContext>
 		</FormContext>

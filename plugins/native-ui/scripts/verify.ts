@@ -1369,9 +1369,11 @@ check("b-words", "no word is drawn from a literal", () => {
 		const source = withoutComments(readFileSync(path, "utf8"));
 		const name = relative(pkgDir, path);
 		// JSX text: letters between a `>` and a `<`, on one line or on a line of
-		// their own, outside braces.
+		// their own, outside braces. A `>` after a trailing comma closes a
+		// type-parameter list, not a tag. A `>` after a trailing comma closes a
+		// type-parameter list, not a tag.
 		for (const match of source.matchAll(
-			/(?<![=\w])>[ \t]*[^<>{}\n]*[A-Za-z][^<>{}\n]*[ \t]*<|(?<![=\w])>[ \t]*\n[ \t]*[A-Za-z][^<>{}\n]*\n[ \t]*</g,
+			/(?<![=\w])(?<!,\s*)>[ \t]*[^<>{}\n]*[A-Za-z][^<>{}\n]*[ \t]*<|(?<![=\w])(?<!,\s*)>[ \t]*\n[ \t]*[A-Za-z][^<>{}\n]*\n[ \t]*</g,
 		)) {
 			const line = source.slice(0, match.index).split("\n").length;
 			hits.push(`${name}:${line}: JSX text ${JSON.stringify(match[0].trim())}`);

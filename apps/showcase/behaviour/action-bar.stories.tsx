@@ -95,12 +95,9 @@ const swapsInPlace: StoryObj = {
 let pressed = 0;
 const heldActs: StoryObj = {
 	render: () => (
-		<Form>
-			<FormField label="Name">
-				<Input value="Acme" onChange={act} />
-			</FormField>
-			<ActionBar
-				acts={[
+		<Form
+			bar={{
+				acts: [
 					{ label: "Close", onAct: act },
 					{
 						label: "Merge",
@@ -108,9 +105,13 @@ const heldActs: StoryObj = {
 							pressed++;
 						},
 					},
-				]}
-				pending={{ sentence: "Merging", act: { label: "Cancel", onAct: act } }}
-			/>
+				],
+				pending: { sentence: "Merging", act: { label: "Cancel", onAct: act } },
+			}}
+		>
+			<FormField label="Name">
+				<Input value="Acme" onChange={act} />
+			</FormField>
 		</Form>
 	),
 	play: async ({ canvas, userEvent }) => {

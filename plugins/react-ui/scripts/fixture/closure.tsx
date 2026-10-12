@@ -322,6 +322,14 @@ export const closure = (
 		<Form class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<Form classList={{}} />
+		<Form groups={[]} />
+		{/* @ts-expect-error: closed channel */}
+		<Form groups={[]} className="x" />
+		{/* @ts-expect-error: a form's structure is groups or children, never both */}
+		<Form groups={[]}>x</Form>
+		<Form bar={{ acts: [] }} />
+		{/* @ts-expect-error: closed channel */}
+		<Form bar={{ acts: [], className: "x" }} />
 		<Toolbar />
 		{/* @ts-expect-error: closed channel */}
 		<Toolbar className="x" />
@@ -367,6 +375,13 @@ export const closure = (
 		<FormField label="x" class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<FormField label="x" classList={{}} />
+		<FormField label="x" switch={{ checked: true, onChange: () => {} }} />
+		{/* @ts-expect-error: closed channel */}
+		<FormField label="x" switch={{ checked: true, onChange: () => {}, className: "x" }} />
+		{/* @ts-expect-error: a field's control is one descriptor or its children */}
+		<FormField label="x" switch={{ checked: true, onChange: () => {} }}>x</FormField>
+		{/* @ts-expect-error: a field's control is one descriptor or its children */}
+		<FormField label="x" switch={{ checked: true, onChange: () => {} }} checkbox={{ checked: true, onChange: () => {} }} />
 		<SegmentedControl label="x" options={[]} value="x" onChange={() => {}} />
 		{/* @ts-expect-error: closed channel */}
 		<SegmentedControl label="x" options={[]} value="x" onChange={() => {}} className="x" />
@@ -430,6 +445,9 @@ export const closure = (
 		<DefinitionRow label="x" class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<DefinitionRow label="x" classList={{}} />
+		<DefinitionRow label="x" switch={{ checked: true, onChange: () => {} }} />
+		{/* @ts-expect-error: a fact's value is a value or a switch */}
+		<DefinitionRow label="x" value="x" switch={{ checked: true, onChange: () => {} }} />
 		<ItemHeader overline={["x"]} />
 		{/* @ts-expect-error: closed channel */}
 		<ItemHeader overline={["x"]} className="x" />

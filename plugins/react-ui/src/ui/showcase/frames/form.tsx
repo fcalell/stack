@@ -2,11 +2,10 @@ import { Field } from "@base-ui/react/field";
 import { cn } from "@fcalell/ui-core/cn";
 import { text, textStrong } from "@fcalell/ui-core/variants";
 import { type ReactNode, useEffect, useRef } from "react";
-import { ActionBar } from "../../components/action-bar/index.tsx";
 import { Form } from "../../components/form/index.tsx";
+import { FormField } from "../../components/form-field/index.tsx";
 import { Group } from "../../components/group/index.tsx";
 import { Input } from "../../components/input/index.tsx";
-import { Section } from "../../components/section/index.tsx";
 import { Switch } from "../../components/switch/index.tsx";
 import { Text } from "../../components/text/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
@@ -64,8 +63,8 @@ function Submitted(props: { children: ReactNode }) {
 }
 
 // `FORM.holds.fields` draws a create form, `FORM.holds.sections` a settings
-// form of two sections with its bar under the hairline. Loading, the create
-// form presses its submit act and the settings form's first section waits
+// form of two groups with its bar under the hairline. Loading, the create
+// form presses its submit act and the settings form's first group waits
 // over its fields.
 export function drawForm(frame: ShowcaseFrame) {
 	const { name } = frame.cell;
@@ -79,56 +78,69 @@ export function drawForm(frame: ShowcaseFrame) {
 					A project holds one app and its deploys. The form below stands as wide
 					as this paragraph, the page's column.
 				</Text>
-				<Form>
+				<Form
+					bar={{
+						acts: [
+							{ label: "Cancel", onAct: change },
+							{ label: "Create project", onAct: never },
+						],
+					}}
+				>
 					<Labelled
 						label="Project name"
 						value="acme-web"
 						description="Lowercase letters, digits and dashes."
 					/>
 					<Labelled label="Region" value="Frankfurt, eu-central-1" />
-					<ActionBar
-						acts={[
-							{ label: "Cancel", onAct: change },
-							{ label: "Create project", onAct: never },
-						]}
-					/>
 				</Form>
 			</div>
 		) : (
-			<Form>
-				<Section
-					title="General"
-					description="How the workspace appears to its members."
-					loading={loading}
-				>
-					<Labelled label="Workspace name" value="Acme Inc" />
-					<Labelled
-						label="Workspace URL"
-						value="acme-inc"
-						description="Changing it breaks shared links."
-					/>
-				</Section>
-				<Section title="Notifications" description="What you hear about.">
-					<Group>
-						<Setting
-							label="Weekly summary"
-							description="Every Monday"
-							on={false}
-						/>
-						<Setting
-							label="Mentions"
-							description="When someone mentions you"
-							on
-						/>
-					</Group>
-				</Section>
-				<ActionBar
-					acts={[
+			<Form
+				bar={{
+					acts: [
 						{ label: "Discard", onAct: change },
 						{ label: "Save changes", onAct: never },
-					]}
-				/>
-			</Form>
+					],
+				}}
+				groups={[
+					{
+						title: "General",
+						description: "How the workspace appears to its members.",
+						loading,
+						fields: (
+							<>
+								<FormField label="Workspace name">
+									<Input value="Acme Inc" onChange={change} />
+								</FormField>
+								<FormField
+									label="Workspace URL"
+									description="Changing it breaks shared links."
+								>
+									<Input value="acme-inc" onChange={change} />
+								</FormField>
+							</>
+						),
+					},
+					{
+						title: "Notifications",
+						description: "What you hear about.",
+						fields: (
+							<Group>
+								<Setting
+									label="Weekly summary"
+									description="Every Monday"
+									on={false}
+								/>
+								<Setting
+									label="Mentions"
+									description="When someone mentions you"
+									on
+								/>
+							</Group>
+						),
+					},
+				]}
+			/>
 		);
 	return loading && name === "FORM.holds.fields" ? (
 		<Submitted>{drawn}</Submitted>

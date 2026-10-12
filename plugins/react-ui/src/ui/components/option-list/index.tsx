@@ -148,6 +148,9 @@ export function OptionList<V extends string = string, T = unknown>(
 ): ReactNode;
 export function OptionList<V extends string = string, T = unknown>(
 	props: OptionListProps<V, T>,
+): ReactNode;
+export function OptionList<V extends string = string, T = unknown>(
+	props: OptionListProps<V, T>,
 ) {
 	const { children } = props;
 	const words = useWords();
@@ -159,7 +162,6 @@ export function OptionList<V extends string = string, T = unknown>(
 		items: props.options,
 		loading: props.loading,
 		sectionLoading: false,
-		inSection: false,
 		hasEmpty: props.empty !== undefined,
 	};
 	const state = listState(input);

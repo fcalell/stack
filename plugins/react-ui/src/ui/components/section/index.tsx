@@ -6,9 +6,9 @@ import type {
 	MenuItem,
 	Part,
 } from "@fcalell/ui-core/descriptors";
-import { sectionState } from "@fcalell/ui-core/list-state";
 import {
 	lineBox,
+	SECTION,
 	SECTION_ACTS,
 	SECTION_BODY,
 	SECTION_HEAD,
@@ -16,45 +16,25 @@ import {
 	SECTION_NESTED_TITLE,
 	SECTION_TITLE,
 	SECTION_TOGGLE,
-	section,
 	skeleton,
 	text,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useId, useMemo, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { FieldWait, liftBars } from "../../lib/field-wait.tsx";
-import { FormContext, FormStands } from "../../lib/form.ts";
+import { FormStands } from "../../lib/form.ts";
 import { DEEPER, HeadingContext } from "../../lib/heading.ts";
 import { LoadingContext, useWait, VEIL } from "../../lib/loading.ts";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
-import {
-	SectionContext,
-	type SectionKinds,
-	sectionPartsOf,
-} from "../../lib/section.ts";
+import { SectionContext } from "../../lib/section.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";
-import { ActionBar } from "../action-bar/index.tsx";
-import { BarChart } from "../bar-chart/index.tsx";
 import { Button } from "../button/index.tsx";
 import { Reason } from "../button/reason.tsx";
-import { Code } from "../code/index.tsx";
-import { Comparison } from "../comparison/index.tsx";
 import { Count } from "../count/index.tsx";
-import { Form } from "../form/index.tsx";
-import { FormField, fieldWaitOf } from "../form-field/index.tsx";
-import { Group } from "../group/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
-import { List } from "../list/index.tsx";
 import { MenuBase } from "../menu/base.tsx";
-import { Meter } from "../meter/index.tsx";
-import { Prose } from "../prose/index.tsx";
-import { QueryBoundary } from "../query-boundary/index.tsx";
-import { Slider } from "../slider/index.tsx";
-import { Table } from "../table/index.tsx";
 import { Text } from "../text/index.tsx";
-import { Thread } from "../thread/index.tsx";
 
 const BOX = "flex flex-col min-w-0";
 const HEAD = "flex flex-col";
@@ -74,22 +54,8 @@ const TOGGLE =
 // The act and the more stand a row's act gap apart (`SECTION_ACTS`, as ListRow's).
 const ACT_SLOT = "flex items-center shrink-0";
 const BODY = "flex flex-col";
-// The body's own wrapper: its children flow in the body's rhythm, and it
-// stays mounted, hidden, while skeleton fields stand in for it.
-const BODY_SHOWN = "contents";
-const BODY_WAITS = "hidden";
 // The description's bar stands in the meta line's box, at the sentence's half measure.
 const DESCRIPTION_LINE = "flex items-center h-lh";
-// The components the Section reads its body by (`sectionPartsOf`).
-const KINDS: SectionKinds = {
-	lists: [List, Table],
-	waits: [BarChart, Comparison],
-	forms: [ActionBar, Code, Form, Meter, Prose, Slider, Thread],
-	boundary: QueryBoundary,
-	group: Group,
-	field: FormField,
-};
-
 function partText(part: Part): string {
 	return typeof part === "string" ? part : `“${part.quoted}”`;
 }
@@ -98,7 +64,7 @@ function partText(part: Part): string {
 export interface SectionProps extends Closed {
 	/** The heading (a short phrase; truncates). */
 	title: Part;
-	/** A total the body's lists do not hold, in the muted ink after the title; without it a List in the body counts its items there. */
+	/** The body's total, in the muted ink after the title; none is drawn without it, at zero (the body's empty state says so) or while the section loads. */
 	count?: number;
 	/** Under the title (a sentence; wraps). While the Section loads, `""` stands one meta-height bar where the sentence will be and an undefined `description` stands none; loaded, `""` draws no line, as an undefined one. */
 	description?: string;
@@ -110,9 +76,9 @@ export interface SectionProps extends Closed {
 	act?: Act | IconAct;
 	/** The section's other acts, in a menu under the more act after its act (destructive ones marked); the head row never moves, and a foldable section's more does not fold it. */
 	more?: readonly MenuItem[];
-	/** The count (when there is one) and the body wait: a Group or a List in the body draws its own skeleton rows, a Prose, Thread, Code, Form, Meter or Slider its own waiting form, and skeleton fields stand in for fields and for any other body, a direct ActionBar beside them waiting after them. */
+	/** The head is busy and the body waits: the count (when there is one) is undrawn, and each part of the body draws its own waiting form (a Group or a List its skeleton rows, a Prose, Thread, Code, Meter, Slider, DefinitionRow, FormField or ActionBar its own); the section reads nothing else, so a body no part answers for draws as it is. */
 	loading?: boolean;
-	/** The body: a Group, a List, or the rows a Form lays out. */
+	/** The body: a Group, a List, a Form or any other parts. */
 	children?: ReactNode;
 }
 
@@ -139,8 +105,6 @@ export function Section({
 	const nested = use(SectionContext);
 	// A section in a sheet's body reads a level below the sheet's title.
 	const stood = use(FormStands) === "sheet";
-	// Inside a Form the section takes the fields rhythm.
-	const within = use(FormContext) ? "form" : "page";
 	const Heading = `h${level}` as const;
 	const titleId = useId();
 	const bodyId = useId();
@@ -151,20 +115,9 @@ export function Section({
 	// `folded` is the initial fold: the section holds its fold from there.
 	const [open, setOpen] = useState(folded !== true);
 	const [pressed, press] = usePressed(blocked);
-	// The Section reads its body's collections off its children in render (by
-	// the depth rule, `sectionPartsOf`): a waiting one makes the head busy, a
-	// List or a Table counts there unless the Section has its own count, and a
-	// loading body with no rows waits as skeleton fields while it stays
-	// mounted, hidden, so what it holds (a field's text) outlives the wait.
-	const parts = sectionPartsOf(children, KINDS);
-	const {
-		busy,
-		counted,
-		count: shown,
-		fields,
-	} = sectionState(parts, { count, loading });
-	// A loading body stands its direct bars after the skeleton fields, waiting.
-	const { bars, rest } = liftBars(children, ActionBar, fields > 0);
+	// The head is busy exactly while the section loads; its count is the one it
+	// is given.
+	const busy = loading === true;
 	const host = useMemo(
 		() => (blocked === undefined ? undefined : { press }),
 		[blocked, press],
@@ -186,8 +139,8 @@ export function Section({
 	// unseen "0" for a number nobody knows yet, and the count arrives at the
 	// title's end, where it moves nothing.
 	const tally =
-		counted && busy ? null : shown !== undefined ? (
-			<Count value={shown} />
+		count !== undefined && !busy && count !== 0 ? (
+			<Count value={count} />
 		) : null;
 	const name = (
 		<>
@@ -215,7 +168,7 @@ export function Section({
 			}}
 			aria-labelledby={titleId}
 			aria-busy={busy || undefined}
-			className={cn(section({ in: within }), BOX)}
+			className={cn(SECTION, BOX)}
 		>
 			<div className={cn(SECTION_HEAD, HEAD)}>
 				<div
@@ -290,20 +243,9 @@ export function Section({
 					className={cn(SECTION_BODY, BODY, veil)}
 				>
 					<HeadingContext value={DEEPER[level]}>
-						{Array.from({ length: fields }, (_, index) => `field-${index}`).map(
-							(key, index) => (
-								<FieldWait
-									key={key}
-									{...fieldWaitOf(parts.fieldNodes[index])}
-								/>
-							),
-						)}
-						<div className={fields > 0 ? BODY_WAITS : BODY_SHOWN}>
-							<LoadingContext value={loading === true}>
-								<SectionContext value={true}>{rest}</SectionContext>
-							</LoadingContext>
-						</div>
-						<LoadingContext value={loading === true}>{bars}</LoadingContext>
+						<LoadingContext value={loading === true}>
+							<SectionContext value={true}>{children}</SectionContext>
+						</LoadingContext>
 					</HeadingContext>
 				</Collapsible.Panel>
 			)}

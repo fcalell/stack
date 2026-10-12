@@ -35,7 +35,6 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { compact } from "../../lib/compact";
 import { LoadingContext } from "../../lib/loading";
-import { SectionContext } from "../../lib/section";
 import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 import { EmptyStateBase } from "../empty-state/base";
@@ -210,15 +209,13 @@ interface Bar {
 export function BarChart<T>(props: BarChartProps<T>) {
 	const { keys, unit, level } = props;
 	const words = useWords();
-	const base = {
+	const input = {
 		query: props.query,
 		items: props.items,
 		loading: props.loading,
 		sectionLoading: useContext(LoadingContext),
-		inSection: false,
 		hasEmpty: props.empty !== undefined,
 	};
-	const input = { ...base, inSection: useContext(SectionContext) };
 	const state = listState(input);
 	if (state === "pending") return <Loading keys={keys} />;
 	if (state === "missing")

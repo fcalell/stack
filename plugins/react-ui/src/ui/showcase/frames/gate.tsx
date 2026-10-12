@@ -1,5 +1,4 @@
 import { text } from "@fcalell/ui-core/variants";
-import { ActionBar } from "../../components/action-bar/index.tsx";
 import { Banner } from "../../components/banner/index.tsx";
 import { Form } from "../../components/form/index.tsx";
 import { Gate } from "../../components/gate/index.tsx";
@@ -79,22 +78,20 @@ export function drawGate(frame: ShowcaseFrame) {
 					<Group>
 						<StandInRows ground="group" />
 					</Group>
-					<Form>
-						<ActionBar
-							acts={
-								raises
-									? [
-											{ label: "Remind me later", onAct: remind, quiet: true },
-											{
-												label: "Disconnect",
-												onAct: disconnect,
-												destructive: true,
-											},
-										]
-									: [{ label: "Continue", onAct: act }]
-							}
-						/>
-					</Form>
+					<Form
+						bar={{
+							acts: raises
+								? [
+										{ label: "Remind me later", onAct: remind, quiet: true },
+										{
+											label: "Disconnect",
+											onAct: disconnect,
+											destructive: true,
+										},
+									]
+								: [{ label: "Continue", onAct: act }],
+						}}
+					/>
 				</Gate>
 			</MarkProvider>
 		</div>

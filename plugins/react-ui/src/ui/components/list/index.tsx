@@ -44,7 +44,6 @@ import type { Closed } from "../../lib/closed.ts";
 import { useGroupPart } from "../../lib/group.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 import { ListedRoute, useRoute } from "../../lib/navigate.ts";
-import { SectionContext } from "../../lib/section.ts";
 import { TrailingWait } from "../../lib/trailing-wait.ts";
 import { TreeContext } from "../../lib/tree.ts";
 import { useWords } from "../../lib/words.tsx";
@@ -314,7 +313,7 @@ export type ListProps<T = unknown, V extends string | null = string> = Closed &
 	ListSource<T> &
 	ListKind<T, V>;
 
-/** Rows on the ground at the rows rhythm, with no box and no hairlines: a feed. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, waiting rows stand in the slots its map declares (a Section around a pending query busy, its count waiting); a query that answers not found draws the rest EmptyState saying it no longer exists with Back, never Retry; a failed query draws the failed EmptyState with `sentence` and Retry; no item draws `empty`; then one row per item. In a Group its rows, waiting rows and failed, missing and empty forms stand on the card, the hairline once between rows; a `definition` list (facts from data: DefinitionRows) stands in a Group, and adds no count to a Section's head. */
+/** Rows on the ground at the rows rhythm, with no box and no hairlines: a feed. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, waiting rows stand in the slots its map declares (busy itself while it waits); a query that answers not found draws the rest EmptyState saying it no longer exists with Back, never Retry; a failed query draws the failed EmptyState with `sentence` and Retry; no item draws `empty`; then one row per item. In a Group its rows, waiting rows and failed, missing and empty forms stand on the card, the hairline once between rows; a `definition` list (facts from data: DefinitionRows) stands in a Group, and carries no count of its own. */
 export function List<T, V extends string | null = string>(
 	props: ListProps<T, V>,
 ) {
@@ -324,15 +323,13 @@ export function List<T, V extends string | null = string>(
 	const [folded, setFolded] = useState<readonly string[]>([]);
 	// The key of the tree's row that holds its one tab stop.
 	const [active, setActive] = useState<string>();
-	const base = {
+	const input = {
 		query: props.query,
 		items: props.items,
 		loading: props.loading,
 		sectionLoading: use(LoadingContext),
-		inSection: false,
 		hasEmpty: props.empty !== undefined,
 	};
-	const input = { ...base, inSection: use(SectionContext) };
 	const busy = listBusy(input);
 	const ground = listGround(useGroupPart());
 	const state = listState(input);

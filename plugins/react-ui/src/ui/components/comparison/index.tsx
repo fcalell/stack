@@ -19,7 +19,6 @@ import {
 import { type ReactNode, use } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { LoadingContext } from "../../lib/loading.ts";
-import { SectionContext } from "../../lib/section.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Chip } from "../chip/index.tsx";
 import { EmptyStateBase } from "../empty-state/base.tsx";
@@ -193,15 +192,13 @@ function Fact<T>(props: {
 /** A Group of its own rows: a head row of `columns` at meta 500, then each fact's label at body 500 (its chips beside it, then its `status` verdict, a Status read out in the row, a passing fact drawing none) and its values in equal columns, a wrapped value keeping its row's air. On touch the label stands on its own line over the values, the verdict on that line. No column is the accent's; nothing is a selection. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, the head stands over four waiting facts, each a bar per column, a chips bar when `row` declares chips and a status bar when it declares `status`; a query that answers not found draws the rest EmptyState saying it no longer exists with Back, never Retry; a failed query draws the failed EmptyState with `sentence` and Retry; no item draws `empty`; then one row per fact. */
 export function Comparison<T>(props: ComparisonProps<T>) {
 	const words = useWords();
-	const base = {
+	const input = {
 		query: props.query,
 		items: props.items,
 		loading: props.loading,
 		sectionLoading: use(LoadingContext),
-		inSection: false,
 		hasEmpty: props.empty !== undefined,
 	};
-	const input = { ...base, inSection: use(SectionContext) };
 	const state = listState(input);
 	const { columns, row } = props;
 	if (state === "missing") return <Missing />;

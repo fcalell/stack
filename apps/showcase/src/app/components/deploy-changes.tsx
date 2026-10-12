@@ -34,8 +34,8 @@ function lines(from: string, other: string): number {
 // The files a deploy changed, from their own query, over the diff of the one
 // open (`?file=`, the first without it), which its row marks; the files
 // before it are seen. The list draws its own four states; the diff waits
-// with it and stands only over a loaded file. Both are handed back as
-// elements, so the list stands as its Section's direct child and counts there.
+// with it and stands only over a loaded file. The count and the wait are the
+// Section's props.
 function useChangedFiles(id: string, named: string | undefined) {
 	const route = useRoute();
 	const files = useQuery(orpc.deploys.files.queryOptions({ input: { id } }));
@@ -73,7 +73,7 @@ function useChangedFiles(id: string, named: string | undefined) {
 			}}
 		/>
 	);
-	return { list, diff };
+	return { list, diff, count: files.data?.length, pending: files.isPending };
 }
 
 // A deploy's changes: the description's edit and the release notes it was
@@ -97,11 +97,11 @@ export function DeployChanges(props: { deploy: OpenDeploy; file?: string }) {
 			<Section title="Release notes">
 				<Prose markdown={deploy.notes} />
 			</Section>
-			<Section title="Changes">
+			<Section title="Changes" count={files.count} loading={files.pending}>
 				{files.list}
 				{files.diff}
 			</Section>
-			<Section title="Build log">
+			<Section title="Build log" loading={log.isPending}>
 				<QueryBoundary
 					query={log}
 					sentence="The build log did not load."

@@ -209,26 +209,22 @@ const isEnd = (column: TableColumn) =>
 // under the sort's pick. The table sorts in its own state: newest or largest
 // first, then turned over, then off. It draws its four states: while its
 // query is pending, `loading` is set or a loading Section around it waits,
-// the header over skeleton rows (below `tablet` the list's waiting rows; a
-// Section around busy, its count waiting); a query that answers not found
+// the header over skeleton rows (below `tablet` the list's waiting rows); a query that answers not found
 // the rest EmptyState saying it no longer exists with Back, never Retry, and
 // a failed query the failed EmptyState with `sentence` and Retry, each under
-// the header on the grid and alone below `tablet`; no row `empty`; then one row per item, which a
-// Section around counts.
+// the header on the grid and alone below `tablet`; no row `empty`; then one row per item.
 export function Table<T>(props: TableProps<T>) {
 	const { columns, selected, onOpen, onEdit, empty } = props;
 	const words = useWords();
 	const [sort, setSort] = useState<Sort>();
 	const { width } = useWindowDimensions();
-	const base = {
+	const input = {
 		query: props.query,
 		items: props.items,
 		loading: props.loading,
 		sectionLoading: useContext(LoadingContext),
-		inSection: false,
 		hasEmpty: empty !== undefined,
 	};
-	const input = { ...base, inSection: useContext(SectionContext) };
 	const state = listState(input);
 	const waiting = state === "pending";
 	const items = (props.query ? props.query.data : props.items) ?? [];
@@ -254,8 +250,7 @@ export function Table<T>(props: TableProps<T>) {
 		return (
 			<View className={ROOT}>
 				{slot ?? (
-					// The Table reports to the Section around it once; its List is
-					// its own part, not a list of the Section.
+					// Its touch List is its own part: no Section stands around it.
 					<SectionContext.Provider value={false}>
 						<Phone
 							columns={columns}

@@ -461,6 +461,14 @@ export const closure = (
 		<Form class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<Form classList={{}} />
+		<Form groups={[]} />
+		{/* @ts-expect-error: closed channel */}
+		<Form groups={[]} className="x" />
+		{/* @ts-expect-error: a form's structure is groups or children, never both */}
+		<Form groups={[]}>x</Form>
+		<Form bar={{ acts: [] }} />
+		{/* @ts-expect-error: closed channel */}
+		<Form bar={{ acts: [], className: "x" }} />
 		{/* @ts-expect-error: closed channel */}
 		<Form colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
@@ -543,6 +551,9 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<ListRow title="a" placeholderTextColorClassName="text-ink-body" />
 		<DefinitionRow label="a" value="b" />
+		<DefinitionRow label="a" switch={{ checked: true, onChange: noop }} />
+		{/* @ts-expect-error: a fact's value is a value or a switch */}
+		<DefinitionRow label="a" value="b" switch={{ checked: true, onChange: noop }} />
 		{/* @ts-expect-error: closed channel */}
 		<DefinitionRow label="a" value="b" className="x" />
 		{/* @ts-expect-error: closed channel */}
@@ -566,6 +577,13 @@ export const closure = (
 		<FormField label="a" class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<FormField label="a" classList={{}} />
+		<FormField label="a" switch={{ checked: true, onChange: noop }} />
+		{/* @ts-expect-error: closed channel */}
+		<FormField label="a" switch={{ checked: true, onChange: noop, className: "x" }} />
+		{/* @ts-expect-error: a field's control is one descriptor or its children */}
+		<FormField label="a" switch={{ checked: true, onChange: noop }}>x</FormField>
+		{/* @ts-expect-error: a field's control is one descriptor or its children */}
+		<FormField label="a" switch={{ checked: true, onChange: noop }} checkbox={{ checked: true, onChange: noop }} />
 		{/* @ts-expect-error: closed channel */}
 		<FormField label="a" colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}

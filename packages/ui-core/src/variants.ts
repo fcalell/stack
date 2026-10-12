@@ -61,7 +61,6 @@ import {
 	ROW_STEP,
 	ROW_TITLE,
 	RULE_ARROW,
-	SECTION,
 	SEGMENT,
 	SEGMENT_LABEL,
 	SHEET_SIDE,
@@ -184,7 +183,6 @@ export const placeRowGlyph = build(PLACE_ROW_GLYPH);
 export const placeTab = build(PLACE_TAB);
 export const placeTabLabel = build(PLACE_TAB_LABEL);
 export const stepCountSegment = build(STEP_COUNT_SEGMENT);
-export const section = build(SECTION);
 export const columns = build(COLUMNS);
 export const form = build(FORM);
 export const actionBar = build(ACTION_BAR);
@@ -295,7 +293,6 @@ export const FAMILIES: readonly Family[] = [
 	family("PLACE_TAB", PLACE_TAB, placeTab),
 	family("PLACE_TAB_LABEL", PLACE_TAB_LABEL, placeTabLabel),
 	family("STEP_COUNT_SEGMENT", STEP_COUNT_SEGMENT, stepCountSegment),
-	family("SECTION", SECTION, section),
 	family("COLUMNS", COLUMNS, columns),
 	family("FORM", FORM, form),
 	family("ACTION_BAR", ACTION_BAR, actionBar),
@@ -886,7 +883,11 @@ export const PAGE_BODY = "gap-sections p-page";
 export const FOOT_DOCKED =
 	"border-t border-edge-raised bg-raised px-page py-acts max-h-full min-h-0";
 export const PAGE_BODY_OVER_FOOT = "pb-sections";
-// A section's head (its rhythm is `SECTION`'s): the head row over a blocked
+// A section: its head paired to its body, over a Group, a List or a column's
+// cards. The body's own parts stand apart at the fields rhythm
+// (`SECTION_BODY`).
+export const SECTION = "gap-pair";
+// A section's head: the head row over a blocked
 // act's reason, the title centred on the act, which sets the row's height.
 // The fold toggle's wash overhangs its start only, where its chevron stands
 // (a web overlay pulls it back).
@@ -934,8 +935,13 @@ export const TREE_RAIL = "w-indent border-r border-edge";
 export const TREE_LANE = "w-control-compact";
 // A board's column at its width.
 export const COLUMN = "w-column";
-// A sectioned form's foot: its action bar under a hairline across the form.
+// A form's foot: its action bar under a hairline across the form, drawn when
+// the form holds groups (and, in a sheet, stuck to the body's edge).
 export const FORM_FOOT = "border-t border-edge pt-fields";
+// A form's group (a fieldset): its legend, the group's title, a pair over the
+// rest, then its description, its lead and its fields at the fields rhythm.
+export const FORM_GROUP = "gap-fields";
+export const FORM_LEGEND = "mb-pair";
 export const ACTION_BAR_ACTS = "gap-acts";
 // A selection bar's gaps, a pair apart: the row holding the count and its
 // acts (the count at the start and the acts at the end, or stacked on touch)

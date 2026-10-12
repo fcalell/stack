@@ -18,7 +18,6 @@ import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { LoadingContext } from "../../lib/loading";
-import { SectionContext } from "../../lib/section";
 import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 import { Chip } from "../chip";
@@ -188,15 +187,13 @@ function Fact<T>(props: {
 // with `sentence` and Retry; no item draws `empty`; then one row per fact.
 export function Comparison<T>(props: ComparisonProps<T>) {
 	const words = useWords();
-	const base = {
+	const input = {
 		query: props.query,
 		items: props.items,
 		loading: props.loading,
 		sectionLoading: useContext(LoadingContext),
-		inSection: false,
 		hasEmpty: props.empty !== undefined,
 	};
-	const input = { ...base, inSection: useContext(SectionContext) };
 	const state = listState(input);
 	const { columns, row } = props;
 	if (state === "missing") return <Missing />;

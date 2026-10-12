@@ -1,5 +1,4 @@
 import { FormField } from "../../components/form-field/index.tsx";
-import { OptionList } from "../../components/option-list/index.tsx";
 import type { QueryLike } from "../../components/query-boundary/index.tsx";
 import { Select } from "../../components/select/index.tsx";
 import { TextArea } from "../../components/text-area/index.tsx";
@@ -148,29 +147,31 @@ function Approaches(props: {
 }) {
 	return (
 		<Wide>
-			<FormField label="How should the agent proceed?">
-				<OptionList
-					query={queryIn(props.state, APPROACHES)}
-					option={{
+			<FormField
+				label="How should the agent proceed?"
+				options={{
+					query: queryIn(props.state, APPROACHES),
+					option: {
 						value: (approach) => approach.id,
 						label: (approach) => approach.name,
 						description: (approach) => approach.about,
 						recommended: (approach) => approach.suggested,
-					}}
-					sentence="The answers did not load."
-					empty="No answer to choose."
-					value={props.checked ? "ask" : null}
-					onChange={change}
-				>
-					<FormField label="Note">
-						<TextArea
-							value=""
-							onChange={change}
-							placeholder="Anything the agent should know"
-						/>
-					</FormField>
-				</OptionList>
-			</FormField>
+					},
+					sentence: "The answers did not load.",
+					empty: "No answer to choose.",
+					value: props.checked ? "ask" : null,
+					onChange: change,
+					children: (
+						<FormField label="Note">
+							<TextArea
+								value=""
+								onChange={change}
+								placeholder="Anything the agent should know"
+							/>
+						</FormField>
+					),
+				}}
+			/>
 		</Wide>
 	);
 }
@@ -193,25 +194,26 @@ export function drawOptionList(frame: ShowcaseFrame) {
 	const part: Part = PARTS[named?.[1] ?? "rows"];
 	return (
 		<Wide>
-			<FormField label="Email me about" description="Sent to ada@acme.dev.">
-				<OptionList
-					query={queryIn(
+			<FormField
+				label="Email me about"
+				description="Sent to ada@acme.dev."
+				options={{
+					query: queryIn(
 						state,
 						TOPICS.filter((topic) => part.topics.includes(topic.id)),
-					)}
-					option={{
+					),
+					option: {
 						value: (topic) => topic.id,
 						label: (topic) => topic.name,
 						description: (topic) => topic.about,
 						recommended: (topic) => topic.suggested,
 						group: part.grouped ? (topic) => topic.kind : undefined,
-					}}
-					sentence="The topics did not load."
-					empty="No topic to follow yet."
-					value={[...part.chosen]}
-					onChange={change}
-				>
-					{part.opens ? (
+					},
+					sentence: "The topics did not load.",
+					empty: "No topic to follow yet.",
+					value: [...part.chosen],
+					onChange: change,
+					children: part.opens ? (
 						<FormField label="Only for">
 							<Select
 								value="production"
@@ -219,9 +221,9 @@ export function drawOptionList(frame: ShowcaseFrame) {
 								options={ENVIRONMENTS}
 							/>
 						</FormField>
-					) : null}
-				</OptionList>
-			</FormField>
+					) : null,
+				}}
+			/>
 		</Wide>
 	);
 }

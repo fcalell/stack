@@ -1,6 +1,5 @@
 import { DefinitionRow } from "@fcalell/plugin-react-ui/components/definition-row";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
-import { Switch } from "@fcalell/plugin-react-ui/components/switch";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect } from "storybook/test";
 
@@ -114,7 +113,7 @@ export const ValuesEndTogether: StoryObj = {
 const wraps: Play = async ({ canvas }) => {
 	const label = canvas.getByText(LABEL);
 	const row = rowOf(label);
-	const toggle = canvas.getByRole("switch", { name: "Only changes" });
+	const toggle = canvas.getByRole("switch", { name: LABEL });
 	await expect(box(label).height).toBeGreaterThan(
 		box(canvas.getByText("Short")).height * 1.5,
 	);
@@ -135,11 +134,11 @@ export const LabelWraps: StoryObj = {
 			<Group>
 				<DefinitionRow
 					label={LABEL}
-					value={<Switch checked onChange={change} label="Only changes" />}
+					switch={{ checked: true, onChange: change }}
 				/>
 				<DefinitionRow
 					label="Short"
-					value={<Switch checked onChange={change} label="Short" />}
+					switch={{ checked: true, onChange: change }}
 				/>
 				<DefinitionRow label="Plain" value="Value" />
 				<DefinitionRow label="Last" value="Value" />

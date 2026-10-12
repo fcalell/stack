@@ -707,16 +707,16 @@ a tick with no animation, never jumped to full.
   regions, switched by the app per place), and a `Form` that pins its own bar in a foot (no head for
   the title and close act, and it restates the Sheet's regions).
 - A long `Form` in a scroller keeps its bar in reach without leaving the Form. A sheet's body
-  provides `FormStands` `sheet` (uncapped); the web Form wraps its `ActionBar` in its foot there
+  provides `FormStands` `sheet` (uncapped); the web Form wraps its `bar`'s `ActionBar` in its foot there
   (`sticky bottom-0`, the host's ground, and a negative margin with matching padding across the
   scroller's inset, an overlay since positioning and the bleed are platform overlays), so the bar
   stays at the scroller's bottom edge and stands at the form's end when the form fits. Nothing
   lifts the bar out of the Form, so its pending state, Enter-to-submit and `SubmitContext` stay the
   Form's. The phone has no `sticky`: a native `Form` in any sheet
-  (`FormStands` `sheet`) lifts its direct `ActionBar` (`liftBars`, through fragments) into the
+  (`FormStands` `sheet`) hands the `ActionBar` it draws from its `bar` into the
   sheet's own foot slot, a store the sheet subscribes to (as it does its parts) so setting it never
   re-renders the Form. The Form sets the slot each render in a layout effect, the bar wrapped in
-  the Form's `FormContext`, `TouchedContext` and `LoadingContext` (the blocked reason and the
+  the Form's `TouchedContext` and `LoadingContext` (the blocked reason and the
   touched state still work in the footer's tree), and clears it on unmount; the sheet is `footed`
   when `foot`, `acts` or the slot is set and the foot draws the sheet's `acts`, then the slot's bar.
   Uncapped the foot stands at the content's end, where the bar stood, so a short form is unchanged;
@@ -1360,8 +1360,7 @@ a tick with no animation, never jumped to full.
   the EmptyState absolutely over the boxes at `opacity-0`), so the Section does not move, and the
   EmptyState's frame fills that box with its content centred in it (`EmptyStateBase`'s internal
   `fill`), so nothing floats above or below it.
-- A Section's rhythm has two steps: its head is paired to its body (`SECTION`, `pair` on a page, `fields` in a
-  Form) and the body's own parts (a Prose, a Code, a Group, an ActionBar) stand the `fields` step apart
+- A Section's rhythm has two steps: its head is paired to its body (`SECTION`, `pair`) and the body's own parts (a Prose, a Code, a Group, an ActionBar) stand the `fields` step apart
   (`SECTION_BODY`) wherever the Section sits, so a dense run of parts reads as parts; a Group keeps its
   rows' own tight spacing.
 - A Section's head ends in its `act` then its `more` (`MenuItem[]`, a prop shaped as `ListRow.more`, drawn by `MenuBase` titled by the Section; not a menu kind of `act`, which would widen the shared `Act` descriptor). Both stand in one end slot, so they wrap under the title together on touch; the more sits outside a foldable Section's toggle and never folds it.
@@ -1369,51 +1368,44 @@ a tick with no animation, never jumped to full.
   one figure wide around an unseen "0" so nothing moved when the count arrived, and Stead's critique
   read the "0" in a loading head. The count arrives at the title's end, where it moves no title; the web
   Section draws none while busy. (The phone's Section and the ItemHeader keep the waiting chip, unrendered.)
-- A Section reads its body's collections off its own children in render, so nothing registers and
-  the head (its count, its busy state) and the loading body land in the first paint with no
-  second commit. By the depth rule, a Section's collections stand as its direct children (a
-  fragment is transparent), inside a direct `Group`, or as a direct `QueryBoundary`'s props (its
-  queries, and its loading form while it waits). The platform walker (`sectionPartsOf` in each
-  plugin's `lib/section.ts`, handed the component types) reads each List and Table (it waits,
-  counts and is a body of rows), each BarChart and Comparison (it waits), each QueryBoundary,
-  Group and FormField; ui-core decides from those parts and the Section's own props
-  (`sectionState` in `./list-state`): busy while the Section loads or a part waits; its own
-  `count`, else its lists' total once every list has answered (a failed or missing one gives
-  none, an empty collection none beside its empty state); and, while loading with no body of
-  rows and no part that waits in its own form beside no field, one skeleton field per `FormField`,
-  three when none. The parts that wait in their own form are the platform walker's `forms` (a
-  Prose, a Thread, a Code, a Meter, a Slider): a loading Section hands them its loading through
-  `LoadingContext` and shows its body, so a body of one of them stands at that part's waiting form
-  and not at three fields; a field beside one keeps the skeleton fields. A `Form` is one of them
-  but waits through the same context rather than by being counted: it reads `LoadingContext` and
-  stands a skeleton field (`lib/field-wait`, the markup the Section's counted fields share) for
-  each `FormField` it holds, through fragments, with the field mounted hidden in its place. A
-  skeleton field takes the form of the field it stands for (`FieldShape` in `./list-state`: a
-  switch's box at the label's end, a checkbox's on the label's line, a slider's own head over its
-  track (`lib/slider-wait`), an option list's card of waiting rows (`lib/option-wait`: a static
-  list one row per option under a group label's bar per group, a query list four rows in the slots
-  its `option` map declares; the `children` under a chosen option are unknown before data and not
-  counted), a segmented control's track, an answered field's one summary row, a description's
-  bar; a Select's trigger waits as the plain field, measured), read
-  off the field's element by the platform's `fieldWaitOf` in `form-field` (an `answered` field
-  outranks its control; the lib files import no component): the Section's walker
-  hands it the `FormField` elements it counts (`fieldNodes`), the Form its own. The
-  Section's walker does not read through a Form: counting its fields would hide the body and with
-  it the `ActionBar`'s waiting form. A direct `ActionBar` beside counted fields (no `Form`) is
-  lifted out of the hidden body (`liftBars` in `lib/field-wait`, through fragments, a null left at
-  its place so the other children keep their keys) and stands after the skeleton fields under
-  `LoadingContext`, waiting as its own form at the loaded bar's height; loaded, it stands in its
-  children's order, mounted anew. Outside the rule nothing is read: a
-  collection inside an app's own component (a `ui/` wrapper around a List) draws itself but adds
-  no count and no busy state to the head, and the Lists inside a QueryBoundary's body are not
-  counted (its queries still make the head busy). The body stays mounted in every form, hidden
-  while skeleton fields stand in, so what it holds (a field's typed text, an open picker) outlives
-  a refetch. `SectionContext` says only that a Section stands around (an EmptyState's framed
-  form, a collection's busy state left to the head). Rejected: registration (a layout effect per
-  collection, a second commit before paint) and a registration the head reads in render from a
-  host object (the head renders before the body, so it would always be a render pass stale).
+- A Section reads nothing of its body (the walk is gone, pass 3 of the UI cleanup): its head is busy
+  exactly while its `loading` is set (the wait of a read that lasts, `useWait`) and its count is exactly
+  its `count` (none at 0, undrawn while busy; the phone draws the waiting chip), so a caller passes
+  `count={rows.length}` and `loading={query.isPending}` from the read its body draws. It provides
+  `LoadingContext` and `SectionContext` and each part of the body draws its own waiting form from
+  the context: a List and a Group their skeleton rows, a Prose, a Thread, a Code, a Meter, a Slider,
+  a DefinitionRow their own, an ActionBar (a Form's `bar`) the bar's waiting form, and a FormField a
+  skeleton field in the form of its control (`FieldShape` in `./list-state`: a switch's box at the
+  label's end, a checkbox's on the label's line, a slider's own head over its track
+  (`lib/slider-wait`), an option list's card of waiting rows (`lib/option-wait`: a static list one
+  row per option under a group label's bar per group, a query list four rows in the slots its
+  `option` map declares; the `children` under a chosen option are unknown before data and not
+  counted), a segmented control's track, an answered field's one summary row, a description's bar; a
+  Select's trigger waits as the plain field, measured), read off the field's own props (`waitOf` in
+  `form-field`: the descriptor set decides the form, an `answered` field outranks it; the lib files
+  import no component). The field stays mounted while it waits, its own root `hidden` rather than a
+  wrapper (a Group's hairline is a child selector, which a wrapper element would take), so what it
+  holds (typed text) outlives a refetch. Lost with the walk: a collection's or a QueryBoundary's wait
+  making the head busy, a List's or Table's total in the head, and the three fallback skeleton fields
+  for a body no part answers for (an app's own component draws as it is). `SectionContext` says only
+  that a Section stands around (an EmptyState's framed form; a nested Section's title). Rejected:
+  registration (a layout effect per collection, a second commit before paint) and a registration
+  the head reads in render from a host object (the head renders before the body, so it would
+  always be a render pass stale). A List's `aria-busy` is its own now (`listBusy`), the Section's head
+  no longer holding it.
   `folded` is the initial fold: the Section holds its fold from there and reads no later change. A foldable Section's chevron stands after its title (and count) inside the toggle, so every Section's heading starts at one left edge (003-327: with the chevron before it, a folded Section's heading stood 22 px right of an unfolded one's); the phone's Section still leads with it.
   A compound body sits in a `QueryBoundary`, which requires its `loading`.
+- A Form's structure is its props, one of `children` (a flat run of FormFields, a `fields` step apart)
+  or `groups` (`{ title, description?, lead?, fields, loading? }`, each a `fieldset` with a `legend`
+  on the web, a labelled group with a header on the phone, `FORM_GROUP` and `FORM_LEGEND`, the groups
+  a `sections` step apart), a TypeScript-exclusive union a `steps` shape can join. Its `bar` is the
+  ActionBar's own props, drawn in the foot (`FORM_FOOT` under a form of groups; stuck in a sheet on
+  the web); the form reads no child. A group's `loading` waits as a Section's does, so its FormFields
+  wait. A FormField's control is exactly one descriptor (`switch`, `checkbox`, `slider`, `select`,
+  `options`, `segments`: the component's own props less the label the field supplies) or its
+  `children` for any other control, and the field's form comes from which is set; a DefinitionRow
+  likewise takes an explicit `switch` in place of its `value`. `FormIn` is `page`, `sheet`, `auth`
+  (`pane` died with the Split's pane foot).
 - `Group` is composition: its children are static rows, or items that are no row (a Meter, a FormField, a Slider) at the card's inset. A set of rows from data is a `List`
   placed in the Group, which registers with it through `GroupContext` (however deep) and draws
   on the card: its rows and waiting rows at the group ground (`listGround`), the Group's hairline
@@ -1431,16 +1423,14 @@ a tick with no animation, never jumped to full.
   (`LoadingContext`), in order, so a card of static parts waits at one form per part and at the
   loaded card's height. A DefinitionRow's form is built from what it is given (`definitionShape`: a
   `description` or `locked` reason is the setting form, an `act` or `href` the end's square, a
-  control as its value the switch's box) and a Slider's is its label's and value's bars over a
+  `switch` the switch's box) and a Slider's is its label's and value's bars over a
   bar in the track's box. The setting skeletons stay the form for children no part answers for
   (an app's own row). A waiting
   setting row is the DefinitionRow's own wait (`definition-row/wait.tsx`, shared with a
   `definition` List, `end: "switch"` internal to the Group): it stands in the loaded
   DefinitionRow's boxes (the label's body line box beside the switch's target-sized hit box on the
   title line, the description's meta line box under it), so its height and its bars' centres are a
-  one-line setting row's at either density. A `definition` List adds no count to a Section's head
-  (`sectionPartsOf` flags the list by its map key, and `sectionState` makes it busy-only: no
-  count, no body of rows).
+  one-line setting row's at either density. A `definition` list is facts and carries no count of its own.
 - A Meter, a FormField or a Slider in a Group stands as its item at the card's inset (`GROUP_ITEM`, drawn by each through `GroundContext`, held by none, like `FIELD_ERROR_LINE`), the
   Group's hairline between, a FormField keeping its label and giving its control the list ground; a set of them from data is a `List` taking `meter`, in the Group (a set
   of label and value rows from data is a `List` taking `definition`). A

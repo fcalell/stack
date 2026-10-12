@@ -27,14 +27,11 @@ export function drawSegmentedControl(_frame: ShowcaseFrame) {
 				value="week"
 				onChange={change}
 			/>
-			<FormField label="Range" description="API calls by day.">
-				<SegmentedControl
-					label="Range"
-					options={RANGES}
-					value="30d"
-					onChange={change}
-				/>
-			</FormField>
+			<FormField
+				label="Range"
+				description="API calls by day."
+				segments={{ options: RANGES, value: "30d", onChange: change }}
+			/>
 		</div>
 	);
 }

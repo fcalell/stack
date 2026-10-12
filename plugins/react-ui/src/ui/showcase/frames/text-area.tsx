@@ -1,6 +1,5 @@
 import { Field } from "@base-ui/react/field";
 import { text } from "@fcalell/ui-core/variants";
-import { ActionBar } from "../../components/action-bar/index.tsx";
 import { Form } from "../../components/form/index.tsx";
 import { FormField } from "../../components/form-field/index.tsx";
 import { Pane } from "../../components/pane/index.tsx";
@@ -38,7 +37,14 @@ export function drawTextArea(frame: ShowcaseFrame) {
 				<div className="flex flex-col h-dvh">
 					<Place>
 						<Pane title="Page source">
-							<Form>
+							<Form
+								bar={{
+									acts: [
+										{ label: "Discard", onAct: change },
+										{ label: "Save", onAct: change },
+									],
+								}}
+							>
 								<FormField
 									label="Source"
 									disabled={frame.state === "disabled"}
@@ -48,12 +54,6 @@ export function drawTextArea(frame: ShowcaseFrame) {
 								>
 									<TextArea kind="source" value={SOURCE} onChange={change} />
 								</FormField>
-								<ActionBar
-									acts={[
-										{ label: "Discard", onAct: change },
-										{ label: "Save", onAct: change },
-									]}
-								/>
 							</Form>
 						</Pane>
 					</Place>

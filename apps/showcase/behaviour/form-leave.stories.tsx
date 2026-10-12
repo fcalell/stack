@@ -1,4 +1,3 @@
-import { ActionBar } from "@fcalell/plugin-react-ui/components/action-bar";
 import { Form } from "@fcalell/plugin-react-ui/components/form";
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Gate } from "@fcalell/plugin-react-ui/components/gate";
@@ -50,20 +49,21 @@ function Edit() {
 	const [name, setName] = useState("Acme");
 	return (
 		<Gate title="Rename domain">
-			<Form>
-				<FormField label="Name">
-					<Input value={name} onChange={setName} />
-				</FormField>
-				<ActionBar
-					acts={[
+			<Form
+				bar={{
+					acts: [
 						{
 							label: "Save",
 							onAct: () => {
 								void router.navigate({ href: "/saved" });
 							},
 						},
-					]}
-				/>
+					],
+				}}
+			>
+				<FormField label="Name">
+					<Input value={name} onChange={setName} />
+				</FormField>
 			</Form>
 		</Gate>
 	);
