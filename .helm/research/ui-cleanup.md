@@ -82,40 +82,57 @@ measure on web only: native has no render harness and answers the read and grep 
 
 ### 2. Component review
 
-**Scope, named in full:** each of the 66 components in `ui-core/src/roster.ts`, on web
-(`plugin-react-ui`) and native (`plugin-native-ui`; `Canvas` is web-only, so 65 there), and each
-helper a component uses to lay out, measure, wait or read its children: every file under each
-plugin's `src/ui/lib/` (the two are not mirrors) and every helper inside a component's folder
-(`item-header/pair.tsx`, `thread/fill.ts`, `canvas/*`, each `wait.tsx`). The full list is the
-checklists page's 0.2.
-
-**Questions:** the checklists page's section 2, 58 questions in seven groups (tree and flow, size
-and position, loading, behaviour and API, parity and cost, helpers, effects).
-
-**Report:** the checklists page's columns (4.1): one row per component and helper, a column per
-question, each answer with its path and lines; then the components grouped into families sharing a cause, each family with its
-proposed cut.
+Done 2026-10-12: every roster component on web and native, every `lib/` file and every
+component-folder helper answered on the checklist (reports kept in the session, not the repo).
+The rule-breaking logic gathers in the frame (Place, Screen, Split, Shell, `frame.ts`, `page.ts`,
+`headPaired`, `splitOf`, `thread/fill.ts` and the layout contexts), in children read by type
+(web Section, Form with `field-wait`, Toolbar, Columns, Split; native adds Group, Thread and
+Sheet), in contexts that pick a component's form (`GroundContext` in 13 files a platform,
+`SectionContext`, `PageTitle`, `FormStands`, `InsetRing`, `ActInk`, Group's registration) and
+in JavaScript measures (`usePageTablet`, `useWraps`, `modality`, `focus`, Slider's thumb moving
+230 to 320 px after mount). A 300-character unbroken title overflows the page by about 3350 px
+in Place and Screen, 2460 px in Banner. Three checklist greps missed real hits (a destructured
+`type` in `section.ts`, a context given by value in `field-wait`, `dataset.*` in `media.ts` and
+`modality.ts`): step 5's tests cover them.
 
 ### 3. Loading study
 
-**Scope, named in full:** every route in Stead's app (44 route files), in every state the fixture
-seeds (`full`, `empty`, `first`), at 320, 1280 and 1920 in light and dark, under the fixture's
-slow, fail and socket controls (`/fixture/delay`, `/fixture/fail`, `/fixture/socket`). The full
-matrix is the checklists page's section 3.
+Done 2026-10-12 on Stead's fixture; the dated lines are in Stead's `design/evidence.md`.
 
-**Questions:** the checklists page's section 3, 20 per screen and region, with its definition of
-settled and the harness rules Stead's evidence logged.
-
-**Report:** a table per screen, each fault with its numbers and its cause traced to the stack
-component or the Stead code behind it; dated lines in Stead's `design/evidence.md`; a summary here.
+- Every popup in the Shell draws its first frame offset by `main`'s origin, (240, 88) px, on
+  listboxes, dialogs and tooltips at 1280, 1440 and 1920; the grants picker reproduces the logged
+  (1408, 708) to (1168, 620) at 1440, and at 1280 the Shell frame scrolls sideways 148 px and
+  back. The cause is the popup layer inside the `relative` `main` (`shell/host.tsx`).
+- Every route that draws a skeleton (55 of 55) differs from its loaded form, 266 of 297 regions:
+  ListRow's waiting bars come from a fixed width table, Sections exist only once their data lands,
+  and the list column grew with its rows at Stead's pin (master already holds `w-list`).
+- The usage-pause banner arrives after first paint and drops the page 88 px (148 at 320): a Stead
+  fault, the pause known only from the socket's inbox snapshot. The banner stays in flow.
+- Every live frame refetches broad reads through Stead's `useLiveReads`.
 
 ### 4. Passes
 
-One pass per family from steps 2 and 3, each family's cut confirmed by fcalell before it is built.
-The frame is the first family, its design below, written before the review; the review confirms
-or changes it. Each pass lands on web and native in one commit, with the roster, `DESIGN.md`
-(regenerated), the showcase and the guides. Stead's stack pin moves after each pass and its
-screens are ported in that step.
+One pass per family, in this order, each cut confirmed by fcalell on 2026-10-12. Each pass lands on
+web and native in one commit, with the roster, `DESIGN.md` (regenerated), the showcase and the
+guides. Stead's stack pin moves after each pass and its screens are ported in that step.
+
+1. **Frame:** Place and Pane as designed below; only the last Pane is the size container.
+2. **Overlays:** popups mount in the body (Base UI's default), not in `main`'s layer;
+   `PortalContainer`, `PortalHosted` and `FrameHost`'s layer go; a popup takes its mode from a
+   class.
+3. **Children read by type:** explicit props in place of the walks (Section's `loading`, Toolbar's
+   `search`, Form's bars); Columns lays out its children with grid, no wrapper each.
+4. **Form by context:** one form per component, a prop where callers need two; a row's ground
+   comes from its parent's surface.
+5. **Measuring in JavaScript:** container queries and `flex-wrap`; JavaScript stays for the Canvas
+   and where the tree differs (the Shell's sidebar or tab bar).
+6. **Overflow:** `min-w-0` and `wrap-anywhere` on text slots.
+7. **Loading:** stack: ListRow's waiting form keeps the loaded row's marks and height. Stead: the
+   usage pause known at first paint, Sections drawn before their data, `useLiveReads` narrowed.
+   Open, designed before the pass: a terminal-like word scramble for text that loads, held to a
+   fixed character count in a monospaced face so the line keeps its width, with a still form
+   under reduced motion; `judging.md` lets only `transform` and `opacity` animate, so it needs a
+   named exception.
 
 ### 5. Structure rubric and checks
 
@@ -171,11 +188,11 @@ The first family's design, decided before the review and open to what it finds.
 - **Pane** is a flex column: a bar (title, actions, more, `back` drawn as Close beside other Panes
   and as Back where it stands alone), a body that scrolls (`flex-1 min-h-0 overflow-y-auto`,
   page inset, its direct children always a `sections` gap apart, nothing paired), and an
-  optional `foot` docked under the body (an ask box, a message input). Each Pane is the size
-  container (`@container/page`) its content's container queries read. Open: a size container
-  in an `auto` track draws 0 px wide, its content not counted (measured in Chromium 1194: a Pane
-  holding 300 px of content, `container-type: inline-size`, drew 0; without it, 300), so every
-  Pane but the last needs a width of its own, or no containment; the frame pass decides which.
+  optional `foot` docked under the body (an ask box, a message input). The last Pane is the size
+  container (`@container/page`) its content's container queries read; the Panes before it are
+  not, because a size container in an `auto` track draws 0 px wide, its content not counted
+  (measured in Chromium 1194: 300 px of content drew 0 with `container-type: inline-size`, 300
+  without).
 - **Content width.** A Pane's body content stands within `measure` (58ch, 488px on the desktop),
   aligned left under its title, so a label stays near its value, a field near the size of what it
   holds, a Save near the fields it saves. `wide` lifts the limit for content whose meaning is its
@@ -219,21 +236,6 @@ Stead's frame usage at its commit `b3d314e`: 7 Places, 17 Screens, 6 Splits; Pla
 `title` 7, `bleed` 6, `actions` 5, `more` 4, `up` 2, `foot` 1, `act` 1 (the not-found page, which an
 `EmptyState`'s act covers), `context` 0. `wide` on 3 Panes: the workflow canvas, the knowledge
 graph, the file diff.
-
-## Leads for the review
-
-Faults already seen while tracing the System screen, for step 2 to confirm, measure and place in
-their families. None is a decided cut.
-
-- `Section` reads its collections' loading state from its direct children (`lib/section.ts`,
-  `sectionPartsOf`, Fragments seen through, an app component not), so its skeleton depends on how
-  the app wraps its `List`. `QueryBoundary` has 35 uses in Stead; about 60 Sections pass `loading`.
-- `Form` (25 uses) and `lib/field-wait.tsx` walk their children through Fragments and treat
-  `FormField` (69 uses), `Section` and `ActionBar` apart by type.
-- `Toolbar` sorts its children into search and chips by type (1 use).
-- A popover's first frame lands before it is positioned, inside the `overflow-hidden` shell.
-- The Shell, the banner, `foot`'s docking and the room density: what each still earns once the
-  frame is Panes.
 
 ## Method
 
