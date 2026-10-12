@@ -137,6 +137,25 @@ guides. Stead's stack pin moves after each pass and its screens are ported in th
    among titled groups. Done: stack `cb41dc2`, `7514766`, `eea00d6`; Stead `95cbc0c`.
 4. **Form by context:** one form per component, a prop where callers need two; a row's ground
    comes from its parent's surface.
+   Decided 2026-10-12: a row has one form everywhere, square at the card's inset (`px-card`),
+   and a standalone `List` bleeds by that inset so its rows' text meets the title over it;
+   `GroundContext` goes. A `Group` is a frame whose structure is its prop, exactly one of
+   `items` (each `{ key, row }` drawn bare or `{ key, item }` drawn at the card's inset, a
+   hairline between) or `list` (a `List` it frames, no bleed); it reads no children, so native
+   draws the hairline on its own entries and `Children` leaves it. An empty state is no placed
+   component: a `Pane` and a `Section` take `empty` and draw its page or card form themselves,
+   and a `List` or `Table` draws its own; `PageTitle` and `SectionContext` choose nothing. A
+   `Sheet` and a `Gate` take `form` (a `Form`'s props) and draw its sheet or auth form; a
+   `Form` placed alone is the page form, so `FormStands` and native's `FootSlotContext` go. A
+   `Pane` and a `Thread` take `sheet` beside `foot` and draw the docked sheet with its measured
+   region as a prop; `Sheet` alone is the modal, and `FootPlace` and `FootRegion` go. No
+   `Section` stands in a `Section`, and a Section's title is one size, in a sheet too
+   (`SECTION_NESTED_TITLE` goes). A source `TextArea` never fills: content-tall to its cap, it
+   scrolls inside (`data-fill` and `HOLDS_FILL` go). Where the provider draws the consumer
+   itself (Banner's act, Code's acts, Button's count, List's rows, Table's cells, a ListRow's
+   entry, Rules, FormField's and OptionList's checkboxes), the context becomes the consumer's
+   internal prop. `DistanceContext` stays, the Place's density for the page as a whole, and so
+   does native's `Ink`, React Native's stand-in for inherited `currentColor`.
 5. **Measuring in JavaScript:** container queries and `flex-wrap`; JavaScript stays for the Canvas
    and where the tree differs (the Shell's sidebar or tab bar).
 6. **Overflow:** `min-w-0` and `wrap-anywhere` on text slots.
