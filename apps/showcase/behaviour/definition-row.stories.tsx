@@ -49,14 +49,27 @@ const words: Play = async ({ canvas }) => {
 export const ValueWords: StoryObj = {
 	render: () => (
 		<Pane>
-			<Group>
-				<DefinitionRow label="Expected spend" value="No history yet" />
-				<DefinitionRow label="Disk" value="7.4 GB left" />
-				<DefinitionRow label="Signed on" value="This machine" />
-				<DefinitionRow label="Held" value="No" />
-				<DefinitionRow label="Note" value={LONG} />
-				<DefinitionRow label="Key" value={ID} />
-			</Group>
+			<Group
+				items={[
+					{
+						key: "expected-spend",
+						row: (
+							<DefinitionRow label="Expected spend" value="No history yet" />
+						),
+					},
+					{
+						key: "disk",
+						row: <DefinitionRow label="Disk" value="7.4 GB left" />,
+					},
+					{
+						key: "signed-on",
+						row: <DefinitionRow label="Signed on" value="This machine" />,
+					},
+					{ key: "held", row: <DefinitionRow label="Held" value="No" /> },
+					{ key: "note", row: <DefinitionRow label="Note" value={LONG} /> },
+					{ key: "key", row: <DefinitionRow label="Key" value={ID} /> },
+				]}
+			/>
 		</Pane>
 	),
 	play: words,
@@ -88,22 +101,49 @@ const ends: Play = async ({ canvas }) => {
 export const ValuesEndTogether: StoryObj = {
 	render: () => (
 		<Pane>
-			<Group>
-				<DefinitionRow label="Plain" value="Plain value" />
-				<DefinitionRow label="Linked" value="Linked value" href="#linked" />
-				<DefinitionRow
-					label="Acted"
-					value="Acted value"
-					act={{ icon: "Pencil", label: "Edit", onAct: change }}
-				/>
-				<DefinitionRow label="Copied" value="Copied value" copyable />
-				<DefinitionRow
-					label="Described"
-					description="A sentence under the label and the value."
-					value="Described value"
-					act={{ icon: "Pencil", label: "Rename", onAct: change }}
-				/>
-			</Group>
+			<Group
+				items={[
+					{
+						key: "plain",
+						row: <DefinitionRow label="Plain" value="Plain value" />,
+					},
+					{
+						key: "linked",
+						row: (
+							<DefinitionRow
+								label="Linked"
+								value="Linked value"
+								href="#linked"
+							/>
+						),
+					},
+					{
+						key: "acted",
+						row: (
+							<DefinitionRow
+								label="Acted"
+								value="Acted value"
+								act={{ icon: "Pencil", label: "Edit", onAct: change }}
+							/>
+						),
+					},
+					{
+						key: "copied",
+						row: <DefinitionRow label="Copied" value="Copied value" copyable />,
+					},
+					{
+						key: "described",
+						row: (
+							<DefinitionRow
+								label="Described"
+								description="A sentence under the label and the value."
+								value="Described value"
+								act={{ icon: "Pencil", label: "Rename", onAct: change }}
+							/>
+						),
+					},
+				]}
+			/>
 		</Pane>
 	),
 	play: ends,
@@ -132,18 +172,30 @@ const wraps: Play = async ({ canvas }) => {
 export const LabelWraps: StoryObj = {
 	render: () => (
 		<Pane>
-			<Group>
-				<DefinitionRow
-					label={LABEL}
-					switch={{ checked: true, onChange: change }}
-				/>
-				<DefinitionRow
-					label="Short"
-					switch={{ checked: true, onChange: change }}
-				/>
-				<DefinitionRow label="Plain" value="Value" />
-				<DefinitionRow label="Last" value="Value" />
-			</Group>
+			<Group
+				items={[
+					{
+						key: "definitionRow0",
+						row: (
+							<DefinitionRow
+								label={LABEL}
+								switch={{ checked: true, onChange: change }}
+							/>
+						),
+					},
+					{
+						key: "short",
+						row: (
+							<DefinitionRow
+								label="Short"
+								switch={{ checked: true, onChange: change }}
+							/>
+						),
+					},
+					{ key: "plain", row: <DefinitionRow label="Plain" value="Value" /> },
+					{ key: "last", row: <DefinitionRow label="Last" value="Value" /> },
+				]}
+			/>
 		</Pane>
 	),
 	play: wraps,
@@ -196,17 +248,29 @@ const statusWhole: Play = async ({ canvas }) => {
 export const StatusValueStaysWhole: StoryObj = {
 	render: () => (
 		<Pane>
-			<Group>
-				<DefinitionRow label="Branch" value="main" />
-				<DefinitionRow
-					label="Last fetch of the remote's refs"
-					value={{ status: "done", label: "Fetched 3 min ago" }}
-				/>
-				<DefinitionRow
-					label="Usage"
-					value={{ status: "waiting", label: SENTENCE }}
-				/>
-			</Group>
+			<Group
+				items={[
+					{ key: "branch", row: <DefinitionRow label="Branch" value="main" /> },
+					{
+						key: "last-fetch-of-the-remote-s-refs",
+						row: (
+							<DefinitionRow
+								label="Last fetch of the remote's refs"
+								value={{ status: "done", label: "Fetched 3 min ago" }}
+							/>
+						),
+					},
+					{
+						key: "usage",
+						row: (
+							<DefinitionRow
+								label="Usage"
+								value={{ status: "waiting", label: SENTENCE }}
+							/>
+						),
+					},
+				]}
+			/>
 		</Pane>
 	),
 	play: statusWhole,
@@ -224,18 +288,25 @@ function Cycle() {
 	const [cycle, setCycle] = useState("monthly");
 	return (
 		<Pane>
-			<Group>
-				<DefinitionRow label="Plain" value="Value" />
-				<DefinitionRow
-					label="Billing cycle"
-					pick={{
-						label: "Billing cycle",
-						options: CYCLES,
-						value: cycle,
-						onChange: setCycle,
-					}}
-				/>
-			</Group>
+			<Group
+				items={[
+					{ key: "plain", row: <DefinitionRow label="Plain" value="Value" /> },
+					{
+						key: "billing-cycle",
+						row: (
+							<DefinitionRow
+								label="Billing cycle"
+								pick={{
+									label: "Billing cycle",
+									options: CYCLES,
+									value: cycle,
+									onChange: setCycle,
+								}}
+							/>
+						),
+					},
+				]}
+			/>
 		</Pane>
 	);
 }

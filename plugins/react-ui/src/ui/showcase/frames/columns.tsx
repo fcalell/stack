@@ -4,7 +4,7 @@ import { Pane } from "../../components/pane/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
-import { StandInRows } from "./layout-context.tsx";
+import { STAND_IN_ENTRIES } from "./layout-context.tsx";
 import { Column } from "./place.tsx";
 
 const act = () => {};
@@ -35,9 +35,7 @@ export function drawColumns(frame: ShowcaseFrame) {
 						<Columns fit="half">
 							{HEALTH.map(({ title, count }) => (
 								<Section key={title} title={title} count={count}>
-									<Group>
-										<StandInRows ground="group" />
-									</Group>
+									<Group items={STAND_IN_ENTRIES} />
 								</Section>
 							))}
 						</Columns>
@@ -55,9 +53,7 @@ export function drawColumns(frame: ShowcaseFrame) {
 						count={count}
 						act={{ icon: "Plus", label: `New issue in ${title}`, onAct: act }}
 					>
-						<Group>
-							<StandInRows ground="group" />
-						</Group>
+						<Group items={STAND_IN_ENTRIES} />
 					</Section>
 				))}
 			</Columns>

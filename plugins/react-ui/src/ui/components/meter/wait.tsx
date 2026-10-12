@@ -1,15 +1,12 @@
 import { cn } from "@fcalell/ui-core/cn";
 import type { WaitLine } from "@fcalell/ui-core/list-state";
 import {
-	GROUP_ITEM,
 	LINK_TARGET,
 	lineBox,
 	METER,
 	METER_HEAD,
 	skeleton,
 } from "@fcalell/ui-core/variants";
-import { use } from "react";
-import { GroundContext } from "../../lib/ground.ts";
 
 const STACK = "flex flex-col min-w-0";
 const HEAD = "flex items-center";
@@ -21,10 +18,8 @@ const BAR = "w-full";
 
 /** A Meter waiting: the label, share, bar and, when `line` is not `none`, the line under the bar as bars in their boxes (a meta line's, or one count link's target box). Outside the package's exports. */
 export function MeterWait(props: { line: WaitLine }) {
-	// In a Group the meter is one of its items, at the card's inset.
-	const item = use(GroundContext) === "group" && GROUP_ITEM;
 	return (
-		<div aria-hidden className={cn(METER, item, STACK)}>
+		<div aria-hidden className={cn(METER, STACK)}>
 			<div className={cn(METER_HEAD, HEAD)}>
 				<span className={cn(lineBox({ role: "body" }), LINE, LABEL_WAIT)}>
 					<span className={cn(skeleton({ kind: "line" }), "w-1/3")} />

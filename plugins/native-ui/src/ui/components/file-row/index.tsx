@@ -14,11 +14,9 @@ import {
 	ROW_LEADING,
 	row,
 } from "@fcalell/ui-core/variants";
-import { useContext } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { GroundContext } from "../../lib/ground";
 import { Ink } from "../../lib/ink";
 import { navigate, usePathname } from "../../lib/navigate";
 import type { Route } from "../../lib/route";
@@ -30,8 +28,6 @@ import { ChangeMark } from "../status/change";
 import { FileWait } from "./wait";
 
 const ROW = "relative flex-row items-center";
-// A list row's wash is square on the phone, where it meets the screen's edge.
-const SQUARE = "rounded-none";
 // The hit covers the row under its text and takes the press wash.
 const HIT = "absolute inset-0 active:bg-wash-press";
 // The change mark stands in its own lane at the row's start, ahead of the glyph.
@@ -135,8 +131,7 @@ function Path({ path }: { path: string }) {
 // its added and removed counts each in its own lane. A row that opens is one
 // hit, current (the selection wash) at its `href`, named by the whole path,
 // the cut text never read; it washes under the press.
-// In a `Group` it runs edge to edge at the card's inset, elsewhere it is the
-// list's row, square on the phone.
+// Square at the card's inset.
 export function FileRow({
 	path,
 	added,
@@ -148,7 +143,6 @@ export function FileRow({
 	onOpen,
 	loading,
 }: FileRowProps) {
-	const ground = useContext(GroundContext);
 	const pathname = usePathname();
 	if (loading)
 		return <FileWait change={change !== undefined} chip={chip !== undefined} />;
@@ -158,9 +152,8 @@ export function FileRow({
 	return (
 		<View
 			className={cn(
-				row({ lines: "one", ground, state: current ? "selected" : "rest" }),
+				row({ lines: "one", state: current ? "selected" : "rest" }),
 				ROW,
-				ground === "list" && SQUARE,
 			)}
 		>
 			{open ? (

@@ -22,7 +22,6 @@ import { memo, type ReactNode, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { GroundContext } from "../../lib/ground";
 import { Ink } from "../../lib/ink";
 import { moment } from "../../lib/moment";
 import { joinParts, META_CUT } from "../../lib/parts";
@@ -171,9 +170,7 @@ function SystemMessage(props: {
 		<View className={MESSAGE_ENTRY}>
 			{centred}
 			<View className={cn(MESSAGE_CARD, FRAMED)}>
-				<GroundContext.Provider value="group">
-					<ListRow {...detail.row} />
-				</GroundContext.Provider>
+				<ListRow {...detail.row} />
 			</View>
 		</View>
 	);

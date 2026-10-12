@@ -63,24 +63,26 @@ const MEMBERS = [
 // A member's role as a row's trailing pick.
 function Members() {
 	return (
-		<Group>
-			{MEMBERS.map((member) => (
-				<ListRow<Role>
-					key={member.name}
-					leading={{ avatar: { name: member.name } }}
-					title={member.name}
-					meta={[member.email]}
-					trailing={{
-						pick: {
-							label: `${member.name}'s role`,
-							options: [...ROLES],
-							value: member.role,
-							onChange: change,
-						},
-					}}
-				/>
-			))}
-		</Group>
+		<Group
+			items={MEMBERS.map((member) => ({
+				key: member.name,
+				row: (
+					<ListRow<Role>
+						leading={{ avatar: { name: member.name } }}
+						title={member.name}
+						meta={[member.email]}
+						trailing={{
+							pick: {
+								label: `${member.name}'s role`,
+								options: [...ROLES],
+								value: member.role,
+								onChange: change,
+							},
+						}}
+					/>
+				),
+			}))}
+		/>
 	);
 }
 

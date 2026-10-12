@@ -1,7 +1,6 @@
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
 import { Input } from "@fcalell/plugin-react-ui/components/input";
-import { List } from "@fcalell/plugin-react-ui/components/list";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
@@ -31,29 +30,23 @@ export const HeadIsBusyAndCountedByItsProps: StoryObj = {
 	render: () => (
 		<div className="flex flex-col gap-sections w-sheet max-w-full">
 			<Section title="Pending list">
-				<Group>
-					<List
-						query={PENDING}
-						sentence="Did not load."
-						empty={{ sentence: "None." }}
-						row={ROW}
-					/>
-				</Group>
+				<Group
+					list={{
+						query: PENDING,
+						sentence: "Did not load.",
+						empty: { sentence: "None." },
+						row: ROW,
+					}}
+				/>
 			</Section>
 			<Section title="Counted" count={3}>
-				<Group>
-					<List items={ITEMS} row={ROW} />
-				</Group>
+				<Group list={{ items: ITEMS, row: ROW }} />
 			</Section>
 			<Section title="Uncounted">
-				<Group>
-					<List items={ITEMS} row={ROW} />
-				</Group>
+				<Group list={{ items: ITEMS, row: ROW }} />
 			</Section>
 			<Section title="Loading" count={3} loading>
-				<Group>
-					<List items={ITEMS} row={ROW} />
-				</Group>
+				<Group list={{ items: ITEMS, row: ROW }} />
 			</Section>
 		</div>
 	),

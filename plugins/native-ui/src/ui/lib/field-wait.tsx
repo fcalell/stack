@@ -13,7 +13,6 @@ import {
 } from "@fcalell/ui-core/variants";
 import { View } from "react-native";
 import { cn } from "./cn";
-import { GroundContext } from "./ground";
 import { OptionWait } from "./option-wait";
 import { SliderWait } from "./slider-wait";
 import { Strut } from "./strut";
@@ -88,9 +87,7 @@ export function FieldWait({
 	if (holds === "slider")
 		return (
 			<View className={formField({ holds: "field" })}>
-				<GroundContext.Provider value="list">
-					<SliderWait />
-				</GroundContext.Provider>
+				<SliderWait />
 				{note}
 			</View>
 		);

@@ -62,7 +62,7 @@ export function DefinitionWait(props: {
 	return (
 		<View
 			className={cn(
-				skeletonRow({ kind: one ? "one-line-group" : "setting" }),
+				skeletonRow({ kind: one ? "one-line" : "setting" }),
 				DEFINITION_ROW,
 				ROW,
 			)}

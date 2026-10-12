@@ -30,8 +30,8 @@ export function drawSlider(frame: ShowcaseFrame) {
 	if (frame.state === "loading")
 		return (
 			<Wide>
-				<Group>{at(30)}</Group>
-				<Group loading>{at(30)}</Group>
+				<Group items={[{ key: "slider", item: at(30) }]} />
+				<Group loading items={[{ key: "slider", item: at(30) }]} />
 				<Section title="Session">{at(30)}</Section>
 				<Section title="Session" loading>
 					{at(30)}

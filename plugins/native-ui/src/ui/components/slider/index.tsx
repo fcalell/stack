@@ -1,6 +1,5 @@
 import { formatterFor } from "@fcalell/ui-core/format";
 import {
-	GROUP_ITEM,
 	SLIDER,
 	SLIDER_FILL,
 	SLIDER_HEAD,
@@ -16,7 +15,6 @@ import { useResolveClassNames } from "uniwind";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FieldDisabled } from "../../lib/field";
-import { GroundContext } from "../../lib/ground";
 import { useGroupPart } from "../../lib/group";
 import { LoadingContext } from "../../lib/loading";
 import { SliderWait } from "../../lib/slider-wait";
@@ -50,8 +48,6 @@ export function Slider({
 	unit,
 }: SliderProps) {
 	const disabled = useContext(FieldDisabled);
-	// In a Group the slider is one of its items, at the card's inset.
-	const item = useContext(GroundContext) === "group" && GROUP_ITEM;
 	const waiting = useContext(LoadingContext);
 	useGroupPart();
 	const [pressed, setPressed] = useState(false);
@@ -105,7 +101,7 @@ export function Slider({
 	const active = pressed && !disabled;
 	if (waiting) return <SliderWait />;
 	return (
-		<View className={cn(SLIDER, item, "justify-center")}>
+		<View className={cn(SLIDER, "justify-center")}>
 			<View
 				className={cn(SLIDER_HEAD, "flex-row items-center justify-between")}
 			>

@@ -22,6 +22,8 @@ export function MissingBase(props: {
 	sentence?: string;
 	act?: LinkAct;
 	fill?: boolean;
+	// A Group's List draws it: the card is its frame.
+	grouped?: boolean;
 }) {
 	const words = useWords();
 	const back = useBackAct();
@@ -31,6 +33,7 @@ export function MissingBase(props: {
 			sentence={props.sentence ?? words.missing}
 			act={props.act ?? back}
 			fill={props.fill}
+			grouped={props.grouped}
 		/>
 	);
 }

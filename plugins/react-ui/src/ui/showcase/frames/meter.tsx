@@ -16,66 +16,94 @@ const COUNTS = [
 function Usage() {
 	return (
 		<Section title="Hobby plan" description="Resets on Oct 31.">
-			<Group>
-				{[
-					<Meter
-						key="requests"
-						label="Requests"
-						value={250_000}
-						max={1_000_000}
-						meta="250k of 1M requests"
-					/>,
-					<Meter
-						key="minutes"
-						label="Build minutes"
-						value={4000}
-						max={6000}
-						meta="4,000 of 6,000 minutes"
-					/>,
-					<Meter
-						key="bandwidth"
-						label="Bandwidth"
-						value={92}
-						max={100}
-						meta="92 of 100 GB"
-					/>,
-					<Meter
-						key="storage"
-						label="Storage"
-						value={11.8}
-						max={10}
-						meta="11.8 of 10 GB · 1.8 GB over, billed at the end of the month"
-					/>,
-					<Meter
-						key="reserve"
-						label="Jobs this window"
-						value={62}
-						max={100}
-						mark={{ value: 80 }}
-						meta="Jobs and watches pause at the reserve"
-					/>,
-					<Slider
-						key="window"
-						label="Reserve"
-						value={80}
-						onChange={noop}
-						min={0}
-						max={100}
-						step={5}
-						unit="percent"
-					/>,
-					<Meter
-						key="tests"
-						label="Passing"
-						value={34}
-						max={42}
-						counts={[
-							{ label: "failing", value: 3, href: "/tests/failing" },
-							{ label: "untested", value: 5, href: "/tests/untested" },
-						]}
-					/>,
+			<Group
+				items={[
+					{
+						key: "requests",
+						item: (
+							<Meter
+								label="Requests"
+								value={250_000}
+								max={1_000_000}
+								meta="250k of 1M requests"
+							/>
+						),
+					},
+					{
+						key: "minutes",
+						item: (
+							<Meter
+								label="Build minutes"
+								value={4000}
+								max={6000}
+								meta="4,000 of 6,000 minutes"
+							/>
+						),
+					},
+					{
+						key: "bandwidth",
+						item: (
+							<Meter
+								label="Bandwidth"
+								value={92}
+								max={100}
+								meta="92 of 100 GB"
+							/>
+						),
+					},
+					{
+						key: "storage",
+						item: (
+							<Meter
+								label="Storage"
+								value={11.8}
+								max={10}
+								meta="11.8 of 10 GB · 1.8 GB over, billed at the end of the month"
+							/>
+						),
+					},
+					{
+						key: "reserve",
+						item: (
+							<Meter
+								label="Jobs this window"
+								value={62}
+								max={100}
+								mark={{ value: 80 }}
+								meta="Jobs and watches pause at the reserve"
+							/>
+						),
+					},
+					{
+						key: "window",
+						item: (
+							<Slider
+								label="Reserve"
+								value={80}
+								onChange={noop}
+								min={0}
+								max={100}
+								step={5}
+								unit="percent"
+							/>
+						),
+					},
+					{
+						key: "tests",
+						item: (
+							<Meter
+								label="Passing"
+								value={34}
+								max={42}
+								counts={[
+									{ label: "failing", value: 3, href: "/tests/failing" },
+									{ label: "untested", value: 5, href: "/tests/untested" },
+								]}
+							/>
+						),
+					},
 				]}
-			</Group>
+			/>
 		</Section>
 	);
 }

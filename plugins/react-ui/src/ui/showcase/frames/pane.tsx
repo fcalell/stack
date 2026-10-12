@@ -8,7 +8,12 @@ import { Section } from "../../components/section/index.tsx";
 import { Thread } from "../../components/thread/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { WORKFLOW } from "../graphs.ts";
-import { StandInList, StandInRows } from "./layout-context.tsx";
+import {
+	STAND_IN_ROW,
+	STAND_INS,
+	StandInList,
+	StandInRows,
+} from "./layout-context.tsx";
 import { ACTIONS, Column, MORE, Opened } from "./place.tsx";
 import { TURN, TURNS } from "./thread.tsx";
 
@@ -45,7 +50,7 @@ function Record() {
 	return (
 		<Pane title="Fix invoice rounding" back="#">
 			<Section title="Activity">
-				<StandInRows ground="list" />
+				<StandInRows />
 			</Section>
 		</Pane>
 	);
@@ -81,7 +86,7 @@ function Three() {
 			<Record />
 			<Pane title="Session" back="#">
 				<Section title="Details">
-					<StandInRows ground="list" />
+					<StandInRows />
 				</Section>
 			</Pane>
 		</Place>
@@ -95,7 +100,7 @@ export function Deployment() {
 			<Issues />
 			<Pane title="dpl_7Hp9aK" back="#" cover actions={COPY} more={MORE}>
 				<Section title="Properties">
-					<StandInRows ground="list" />
+					<StandInRows />
 				</Section>
 			</Pane>
 		</Place>
@@ -170,9 +175,7 @@ function Home() {
 				}
 			>
 				<Section title="Tasks">
-					<Group>
-						<StandInList />
-					</Group>
+					<Group list={{ items: STAND_INS, row: STAND_IN_ROW }} />
 				</Section>
 				<Section title="Latest">
 					<Thread items={TURNS.slice(-2)} message={TURN} />

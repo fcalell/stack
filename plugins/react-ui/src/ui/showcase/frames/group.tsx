@@ -3,42 +3,74 @@ import { Group } from "../../components/group/index.tsx";
 import { Meter } from "../../components/meter/index.tsx";
 import { Slider } from "../../components/slider/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
-import { StandInRows, Wide } from "./layout-context.tsx";
+import { STAND_IN_ENTRIES, Wide } from "./layout-context.tsx";
 
 const noop = () => {};
 
-/** A card of the static parts a waiting Group stands for, one per part: a Meter, a Slider and a DefinitionRow of each form (one line, copyable, a setting that opens, a control). Loaded and waiting draw the same children. */
+/** A card of the static parts a waiting Group stands for, one per part: a Meter, a Slider and a DefinitionRow of each form (one line, copyable, a setting that opens, a control). Loaded and waiting draw the same entries. */
 export function Static(props: { loading?: boolean }) {
 	return (
-		<Group loading={props.loading}>
-			<Meter
-				label="Jobs this window"
-				value={62}
-				max={100}
-				meta="Jobs and watches pause at the reserve"
-			/>
-			<Slider
-				label="Reserve"
-				value={80}
-				onChange={noop}
-				min={0}
-				max={100}
-				step={5}
-				unit="percent"
-			/>
-			<DefinitionRow label="Plan" value="Business" />
-			<DefinitionRow label="Workspace ID" value="ws_7f3k9q2m4x" copyable />
-			<DefinitionRow
-				label="Region"
-				description="Where the workspace runs."
-				value="Frankfurt"
-				href="#region"
-			/>
-			<DefinitionRow
-				label="Notify on failure"
-				switch={{ checked: true, onChange: noop }}
-			/>
-		</Group>
+		<Group
+			loading={props.loading}
+			items={[
+				{
+					key: "meter",
+					item: (
+						<Meter
+							label="Jobs this window"
+							value={62}
+							max={100}
+							meta="Jobs and watches pause at the reserve"
+						/>
+					),
+				},
+				{
+					key: "slider",
+					item: (
+						<Slider
+							label="Reserve"
+							value={80}
+							onChange={noop}
+							min={0}
+							max={100}
+							step={5}
+							unit="percent"
+						/>
+					),
+				},
+				{ key: "plan", row: <DefinitionRow label="Plan" value="Business" /> },
+				{
+					key: "id",
+					row: (
+						<DefinitionRow
+							label="Workspace ID"
+							value="ws_7f3k9q2m4x"
+							copyable
+						/>
+					),
+				},
+				{
+					key: "region",
+					row: (
+						<DefinitionRow
+							label="Region"
+							description="Where the workspace runs."
+							value="Frankfurt"
+							href="#region"
+						/>
+					),
+				},
+				{
+					key: "notify",
+					row: (
+						<DefinitionRow
+							label="Notify on failure"
+							switch={{ checked: true, onChange: noop }}
+						/>
+					),
+				},
+			]}
+		/>
 	);
 }
 
@@ -51,16 +83,12 @@ export function drawGroup(frame: ShowcaseFrame) {
 			<Wide>
 				<Static />
 				<Static loading />
-				<Group loading>
-					<StandInRows ground="group" />
-				</Group>
+				<Group loading items={STAND_IN_ENTRIES} />
 			</Wide>
 		);
 	return (
 		<Wide>
-			<Group>
-				<StandInRows ground="group" />
-			</Group>
+			<Group items={STAND_IN_ENTRIES} />
 		</Wide>
 	);
 }

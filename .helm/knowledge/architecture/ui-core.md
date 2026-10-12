@@ -85,7 +85,7 @@ its rationale.
   widths, the hairline and the ring too): the type roles (body 14 on the desktop set, 16 on touch,
   each role a ratio rounded to the pixel, its line box to the even pixel), the eleven spacing roles
   (multiples of 4, one rung looser on touch except the float and page insets and the acts gap; a
-  list bleeds by `control-x`, so its rows' leading meets the title over it at either density) and
+  list bleeds by `card`, so its rows' text meets the title over it at either density) and
   the thirty-seven sizes (control 32/44, field 38/48, target 28/44, `indent` 16/20 (a tree row's step
   in), `port` 8/8 (a canvas port's drawn size, over the 6/8 dot), the switch and its derived thumb travel, the avatar, three icon sizes by the text beside
   them, the check, the slider track, the one-time-code box, the meter's bar, the chart's plot, the
@@ -542,8 +542,7 @@ a tick with no animation, never jumped to full.
   be 168 px at a 768 viewport. `wide` is read only through a container (no viewport `wide:` is drawn).
 - A loading form stands in for what it replaces at that part's size: `SKELETON` by the part
   (`line`, `avatar`, `icon`, `dot`, `check`, `switch`, `count`, `field`, `meter`, `chart`) and
-  `SKELETON_ROW` by the row it replaces (`setting`, `field`, `facts`, `one-line`,
-  `one-line-group`); a ListRow waits in its own markup (below). The loading frame keeps the loaded
+  `SKELETON_ROW` by the row it replaces (`setting`, `field`, `facts`, `one-line`); a ListRow waits in its own markup (below). The loading frame keeps the loaded
   frame's height. `loading` is a boolean on every part, except where the loaded size is a count of
   drawn units the app knows and the part cannot derive: a Prose's lines and an ActionBar's acts take
   `loading?: boolean | number`, `true` the default form (two paragraphs, one act) and a number from 1
@@ -589,14 +588,15 @@ a tick with no animation, never jumped to full.
   (an absolute overlay, so the glyph's box and the label's centring do not move), and past `TAB_COUNT_MAX` (99) it reads `countOver` ("99+", `tabCount(words, n)`,
   handed to `Count` as its drawn form); the sidebar's `Count` draws the number whole. The badge
   stands inside the bar on the last of five tabs at 320, 390 and 768.
-- A row names what holds it: `ROW`'s `ground` axis is `list` (a list or a popover, the row
-  inset as a rounded wash) or `group` (edge to edge at the card's inset), and its `lines` what
-  it stands for (`one`, `two` a title over its meta, `setting` a label over its description).
-  A list row is square on touch, where the list's inset is none and the wash would meet the
-  screen's edge: a density flip, so an overlay over `list`, never a cell. A group draws the
-  hairline between its rows once (`GROUP`: `divide-y divide-edge`), so no row carries one. That is
+- A row has one form everywhere: `ROW` is square at the card's inset (`px-card`, no radius, a
+  popover's option rows included, a wash square inside the popover's float inset), and its `lines`
+  say what it stands for (`one`, `two` a title over its meta, `setting` a label over its
+  description). There is no `ground` axis: no context tells a row where it stands, so a row is the
+  same in a Group, a List, a menu and a sheet, and a standalone List bleeds the card's inset
+  (`LIST`: `-mx-card`) so its rows' text meets the title over it. A Group draws the hairline between
+  its entries once (`GROUP`: `divide-y divide-edge`), so no row carries one. That is
   web-only: `divide-*` is a child selector, which uniwind's compiler drops, so native has no
-  divider utility yet and draws the hairline per row.
+  divider utility yet and draws the hairline per entry.
 - A row's leading is one slot at the avatar's size (`ROW_LEADING`), the dot, spinner or glyph
   centred in it, so the titles of a list share one x whatever leads them; its meta line
   (`ROW_META_LINE`) is one line that yields in order: the later parts truncate first, then the chip,
@@ -612,7 +612,7 @@ a tick with no animation, never jumped to full.
   cuts in its middle like a definition value (`valueCut`, shared by both platforms). A row that opens (`href` or `onOpen`) ends in a chevron (`ROW_CHEVRON`, the square of an icon act) after
   its trailing value, unless its end holds an `act`, the more menu, a pick or a tree's fold. In a List
   whose row map declares `more`, a row with none (and no chevron) keeps the more act's square blank
-  (`ActsRoom`, set by the List from its loaded items, tree rows included), so every row's trailing value
+  (`room`, an internal prop of `ListRowBase` the List sets from its loaded items, tree rows included), so every row's trailing value
   ends at one x; a List with no `more` is unchanged. A labelled `act` is not reserved: its width is its label's. A value
   trailing a one-line title is whole or gone the same way: the title's basis is half its line, so
   a value wider than what that leaves wraps under the line and is clipped away, and the title then
@@ -1033,7 +1033,7 @@ a tick with no animation, never jumped to full.
   focus leaves a textarea's caret at the start; native: `selection` for the first render only).
   Rejected: a field that guesses a swap from a mount after an interaction.
 - What an agent made or did stands in a thread as a system Message's `detail` (`MessageDetail`,
-  exactly one of three, the others typed `?: never`): `row`, one `ListRow` (its `title` a `Part`) on the group ground in a
+  exactly one of three, the others typed `?: never`): `row`, one `ListRow` (its `title` a `Part`) in a
   hairline card on the surface (`MESSAGE_CARD`), its slots the row's (the kind leads as the icon or
   the first meta part), opening its record; `code`, a free act's arguments in the code role under
   the line, its verb, in the meta ink since they rank under it (`MESSAGE_CODE`); `fold`, meta lines
@@ -1047,7 +1047,7 @@ a tick with no animation, never jumped to full.
   `FileRow` slot, `meter`, one per `Meter` slot, or `definition`, one per `DefinitionRow` slot
   (`copyable` one value for the list). A `row` List given its `items` while `loading` (a map with
   a `trailing` slot, no tree) stands as loaded rows with each trailing value a four-figure bar
-  (`TrailingWait` in `lib/trailing-wait`, read by `ListRow`): the titles are known, only the
+  (`waits`, an internal prop of `ListRowBase`): the titles are known, only the
   values arrive; a List without items waits as below. Its waiting rows are the row's own markup
   (`list-row/wait.tsx`, `file-row/wait.tsx`, `meter/wait.tsx`, `definition-row/wait.tsx`), a ListRow's with bars in the slots
   `row` declares, a FileRow's chip bar only when `file` declares `chip`, and its change lane when
@@ -1215,7 +1215,7 @@ a tick with no animation, never jumped to full.
   `./list-state` flattens the items to the visible rows (each item, then its children one depth in
   unless its key is folded), pure and tested; the List holds the folded keys (open by default;
   `RowSlots.key` names a branch, so keys are unique across the tree) and hands each row its depth
-  and fold through an internal context, so `ListRow`'s roster props do not change. Each level is one
+  and fold as an internal prop of `ListRowBase` (the public `ListRow` is a thin wrapper that never sets it), so `ListRow`'s roster props do not change. Each level is one
   `indent` step (a size, 16 desktop and 20 touch: the leading slot plus the gap would be 30 or 40
   per level, and three levels would cost 90 px of a 360 px list column) with a hairline on its end
   (`TREE_RAIL`), which falls under the middle of the parent's fold lane. Every row of the tree
@@ -1227,7 +1227,7 @@ a tick with no animation, never jumped to full.
   wrapped one), and the tree's list drops the row gap (`LIST_TREE`), so a rail is unbroken from row
   to row. A flat list whose `row` map declares `meta` (two-line rows) abuts its rows too and parts
   them with one full-width hairline (`LIST_DIVIDED`: on the web a pseudo-element on each row but the last, a react-ui overlay, so it
-  stays straight under a row's rounded wash; `between` per row on the phone); a Group's own hairline falls once instead, and a tree draws none. On the web the tree is a real tree, the WAI-ARIA tree pattern: the list is `role="tree"`,
+  stays straight across the row; `between` per row on the phone); a Group's own hairline falls once instead, and a tree draws none. On the web the tree is a real tree, the WAI-ARIA tree pattern: the list is `role="tree"`,
   each row a `treeitem` (the row's own element: named by its title,
   `aria-level` its depth plus one, `aria-expanded` on a branch, `aria-current` at its `href`) and the
   tree holds one tab stop, roving to the row last focused (`treeStop`; the hit link and the fold act
@@ -1408,13 +1408,22 @@ a tick with no animation, never jumped to full.
   named by the row's label, the way an ItemHeader's pick fact is) in place of its `value`; a waiting
   pick row stands the switch's box where its value stands. `FormIn` is `page`, `sheet`, `auth`
   (`pane` died with the Split's pane foot).
-- `Group` is composition: its children are static rows, or items that are no row (a Meter, a FormField, a Slider) at the card's inset. A set of rows from data is a `List`
-  placed in the Group, which registers with it through `GroupContext` (however deep) and draws
-  on the card: its rows and waiting rows at the group ground (`listGround`), the Group's hairline
-  once between them (web: the rows stand in the card directly, under `GROUP`'s `divide-*`;
-  phone: each row after the first draws it on its wrapper, as the Group does its children), its
-  failed and empty EmptyStates in the card at `EMPTY_CARD` (the card their frame, in place of
-  `EMPTY_FRAME`). A busy List makes the Group busy, for the card is its box. The web card,
+- `Group` is a frame whose structure is its prop, exactly one of `items` or `list` (a union, as a
+  Form's `children | groups`), and it reads no children. `items` is `GroupItem[]`, each `{ key, row }`
+  (a ListRow, FileRow or DefinitionRow, drawn bare: the row pads itself) or `{ key, item }` (a Meter,
+  a FormField or a Slider, drawn in a box at the card's inset, `GROUP_ITEM`, the Group's own class
+  for the entry box); the Group's
+  hairline falls between entries (web: the entries stand in the card directly, under `GROUP`'s
+  `divide-*`; phone: Group maps its own array, so each entry box after the first draws `border-t`).
+  `list` is a `ListProps` the card frames, drawn by the internal `ListBase` with `framed` set (an
+  internal prop, not a context: the public `List` is a thin wrapper that never sets it), which drops
+  the bleed and the List's own box: its rows and waiting rows stand on the card, the Group's
+  hairline once between them (phone: the List draws it on each row after the first itself, as a
+  divided list does), its failed and empty EmptyStates in the card at `EMPTY_CARD` (the card their
+  frame, in place of `EMPTY_FRAME`; `EmptyStateBase`'s and `MissingBase`'s `grouped`). A
+  tree and a `definition` list take `list` too. A busy List makes the Group busy, for the card is
+  its box. Not both: a Meter list in a `list` stands each meter in `LIST_ITEM` (the List's own
+  `p-card`), and a FormField beside a List is two Groups. The web card,
   like each other block frame that hides its overflow (`Code`, `Diff`, `ProseDiff`, `Image`, `Stats`), never shrinks (`shrink-0`): its `overflow-hidden` gives a flex item a zero automatic
   minimum, so in a column that scrolls (a Pane's body, a Sheet's body) it would give up
   height and clip its rows; native's `flexShrink` default is 0. A waiting Group
@@ -1426,15 +1435,15 @@ a tick with no animation, never jumped to full.
   loaded card's height. A DefinitionRow's form is built from what it is given (`definitionShape`: a
   `description` or `locked` reason is the setting form, an `act` or `href` the end's square, a
   `switch` the switch's box) and a Slider's is its label's and value's bars over a
-  bar in the track's box. The setting skeletons stay the form for children no part answers for
+  bar in the track's box. The setting skeletons stay the form for entries no part answers for
   (an app's own row). A waiting
   setting row is the DefinitionRow's own wait (`definition-row/wait.tsx`, shared with a
   `definition` List, `end: "switch"` internal to the Group): it stands in the loaded
   DefinitionRow's boxes (the label's body line box beside the switch's target-sized hit box on the
   title line, the description's meta line box under it), so its height and its bars' centres are a
   one-line setting row's at either density. A `definition` list is facts and carries no count of its own.
-- A Meter, a FormField or a Slider in a Group stands as its item at the card's inset (`GROUP_ITEM`, drawn by each through `GroundContext`, held by none, like `FIELD_ERROR_LINE`), the
-  Group's hairline between, a FormField keeping its label and giving its control the list ground; a set of them from data is a `List` taking `meter`, in the Group (a set
+- A Meter, a FormField or a Slider is an `item` of a Group's `items`, in the entry box at the card's
+  inset; a FormField keeps its label, and a Meter, a Slider and a FormField carry no inset of their own. A set of them from data is a `List` taking `meter`, in the Group's `list` (a set
   of label and value rows from data is a `List` taking `definition`). A
   FileRow is selected at its `href`, as a ListRow is.
 - A Meter's one line under its bar is `meta` (words) or `counts` (`readonly CountLink[]`, links),

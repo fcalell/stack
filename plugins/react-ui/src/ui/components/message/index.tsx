@@ -23,7 +23,6 @@ import {
 } from "@fcalell/ui-core/variants";
 import { memo, type ReactNode, useId, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { GroundContext } from "../../lib/ground.ts";
 import { moment } from "../../lib/moment.ts";
 import { joinParts, META_CUT } from "../../lib/parts.ts";
 import { Icon } from "../icon/index.tsx";
@@ -161,9 +160,7 @@ function SystemMessage(props: {
 		<div className={cn(MESSAGE_ENTRY, STACK)}>
 			{centred}
 			<div className={cn(MESSAGE_CARD, FRAMED)}>
-				<GroundContext value="group">
-					<ListRow {...detail.row} />
-				</GroundContext>
+				<ListRow {...detail.row} />
 			</div>
 		</div>
 	);

@@ -1,7 +1,6 @@
 import { Slider as Base } from "@base-ui/react/slider";
 import { cn } from "@fcalell/ui-core/cn";
 import {
-	GROUP_ITEM,
 	SLIDER,
 	SLIDER_FILL,
 	SLIDER_HEAD,
@@ -13,7 +12,6 @@ import {
 } from "@fcalell/ui-core/variants";
 import { use } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { GroundContext } from "../../lib/ground.ts";
 import { useGroupPart } from "../../lib/group.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 import { SliderWait } from "../../lib/slider-wait.tsx";
@@ -50,7 +48,7 @@ export interface SliderProps extends Closed {
 	unit?: string;
 }
 
-/** A slider's label and value over its track: the fill up to the thumb, the rest after it. In a `Group` it stands as one of the card's items at the card's inset, the group's hairline between. It waits through its Group or Section: in a loading one it draws its waiting form, at the same height. */
+/** A slider's label and value over its track: the fill up to the thumb, the rest after it. It waits through its Group or Section: in a loading one it draws its waiting form, at the same height. */
 export function Slider({
 	label,
 	value,
@@ -60,8 +58,6 @@ export function Slider({
 	step,
 	unit,
 }: SliderProps) {
-	// In a Group the slider is one of its items, at the card's inset.
-	const item = use(GroundContext) === "group" && GROUP_ITEM;
 	const waiting = use(LoadingContext);
 	useGroupPart();
 	if (waiting) return <SliderWait />;
@@ -77,7 +73,7 @@ export function Slider({
 			step={step}
 			format={unit ? { style: "unit", unit } : undefined}
 			thumbAlignment="edge"
-			className={cn(SLIDER, item, BOX)}
+			className={cn(SLIDER, BOX)}
 			// Base UI marks a disabled slider with `data-disabled` alone; the label
 			// and value read as disabled to a checker through `aria-disabled` here.
 			render={(root, state) => (

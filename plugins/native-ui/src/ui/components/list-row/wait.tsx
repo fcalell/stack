@@ -12,10 +12,9 @@ import {
 	TREE_RAIL,
 	treeBleed,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, useContext } from "react";
+import type { ReactNode } from "react";
 import { View } from "react-native";
 import { cn } from "../../lib/cn";
-import { GroundContext } from "../../lib/ground";
 import { Strut } from "../../lib/strut";
 
 // The geometry of the row it stands in for (`./index.tsx`); a strut sets
@@ -30,7 +29,6 @@ const ROW_WHOLE = "relative flex-row items-start";
 const FIRST_LINE = "flex-row shrink-0 items-center h-line-body";
 const LINE_WHOLE = "flex-row items-start min-w-0";
 const TITLE_LINES = "flex-1 min-w-0";
-const SQUARE = "rounded-none";
 const LEADING = "shrink-0 items-center justify-center";
 // A tree's levels and fold lane, as one box that runs the row's full height
 // (`./index.tsx`); the lane is empty, no row waiting has a branch.
@@ -110,7 +108,6 @@ function TitleBar(props: { width: string }) {
 // field's bar and an act's bar in its place, each at its slot's place, a
 // labelled act's bar at the row's end and the more act's room left empty. Outside the package's exports.
 export function RowWait(props: { shape: RowShape; index: number }) {
-	const ground = useContext(GroundContext);
 	const { shape } = props;
 	const [title, meta] = BARS[props.index % BARS.length] ?? BARS[0];
 	const stacked = shape.meta || shape.entry ? "two" : "one";
@@ -135,12 +132,10 @@ export function RowWait(props: { shape: RowShape; index: number }) {
 			className={cn(
 				row({
 					lines,
-					ground,
 					state: "rest",
 				}),
 				top ? ROW_WHOLE : ROW,
 				under && ROW_UNDER,
-				ground === "list" && SQUARE,
 			)}
 		>
 			{shape.tree ? (

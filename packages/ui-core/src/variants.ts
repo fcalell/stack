@@ -386,7 +386,7 @@ export const OTP = "gap-inside";
 // the rows rhythm.
 export const SELECT_GROUP = "gap-rows";
 // An option group's label over its rows, inset to the rows' text.
-export const OPTION_GROUP_LABEL = "px-control-x pt-pair";
+export const OPTION_GROUP_LABEL = "px-card pt-pair";
 export const OTP_DIGIT =
 	"text-heading leading-heading tracking-heading font-semibold text-ink-body font-mono";
 // A slider: its label line (the label, its value trailing) over the track,
@@ -494,7 +494,7 @@ export const FORM_FIELD_SUMMARY_GLYPH = "text-ok";
 export const OPTION_LIST =
 	"gap-pair p-float rounded-card border border-edge bg-surface";
 export const OPTION_LINE = "gap-inside";
-export const OPTION_CHILDREN = "gap-inside px-control-x pb-pair";
+export const OPTION_CHILDREN = "gap-inside px-card pb-pair";
 export const OPTION_INDENT = "size-check";
 // The chosen radio's dot, centred in its ring.
 export const OPTION_RADIO_DOT = "size-dot rounded-full bg-toggle-on";
@@ -912,20 +912,23 @@ export const SECTION_NESTED_TITLE =
 // drops, so native draws that hairline per row.
 export const GROUP =
 	"rounded-card border border-edge bg-surface divide-y divide-edge";
-// An item of a Group that is no row (a Meter, a FormField, a Slider) stands at
-// the card's inset, the group drawing the hairline between. Unheld: each
-// that has one draws it, none owns it.
+// The box of a Group entry that is no row (an `item`: a Meter, a FormField, a
+// Slider), at the card's inset; a row entry draws bare, the row padding itself.
+// The group draws the hairline between its entries.
 export const GROUP_ITEM = "p-card";
-// A list bleeds its rows' inset, so a row's leading meets the title over it
-// and its wash hangs into the inset around it.
-export const LIST = "gap-rows -mx-control-x";
+// A List entry that is no row (a Meter) stands at the card's inset, as a
+// Group's item does.
+export const LIST_ITEM = "p-card";
+// A list bleeds the card's inset its rows pad themselves with, so a row's
+// leading meets the title over it and its wash hangs into the inset around it.
+export const LIST = "gap-rows -mx-card";
 // A tree's list: its rows abut, so a level's rail runs unbroken down them.
-export const LIST_TREE = "-mx-control-x";
+export const LIST_TREE = "-mx-card";
 // A list whose row map declares a `meta` line (two-line rows): its rows abut
 // under a full-width hairline once between them. A child selector is one
 // uniwind drops, so native draws that hairline per row and the web draws it
 // as an overlay on this box.
-export const LIST_DIVIDED = "-mx-control-x";
+export const LIST_DIVIDED = "-mx-card";
 // A tree row's level: one `indent` step in, its hairline rail on the end, so
 // the rail falls under the middle of the parent's fold lane. A row draws one
 // per level of its depth.
@@ -986,7 +989,6 @@ export type TableRowState = keyof (typeof TABLE_ROW)["variants"]["state"];
 export type CheckboxState = keyof (typeof CHECKBOX)["variants"]["state"];
 export type SegmentState = keyof (typeof SEGMENT)["variants"]["state"];
 export type RowLines = keyof (typeof ROW)["variants"]["lines"];
-export type RowGround = keyof (typeof ROW)["variants"]["ground"];
 // What a Sheet is told it holds; the desktop's short sheet is the Sheet's own choice.
 export type SheetFit = Exclude<SheetSideFit, "short">;
 export type SheetSideFit = keyof (typeof SHEET_SIDE)["variants"]["fit"];

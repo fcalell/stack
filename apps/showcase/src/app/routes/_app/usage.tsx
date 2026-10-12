@@ -5,7 +5,6 @@ import {
 } from "@fcalell/plugin-react-ui/components/bar-chart";
 import { Comparison } from "@fcalell/plugin-react-ui/components/comparison";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
-import { List } from "@fcalell/plugin-react-ui/components/list";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
@@ -50,23 +49,23 @@ function Usage() {
 					count={meters.data?.length}
 					loading={meters.isPending}
 				>
-					<Group>
-						<List
-							query={meters}
-							sentence="The meters did not load."
-							empty={{
+					<Group
+						list={{
+							query: meters,
+							sentence: "The meters did not load.",
+							empty: {
 								title: "No limits",
 								sentence: "This plan meters nothing.",
-							}}
-							meter={{
+							},
+							meter: {
 								key: (meter) => meter.label,
 								label: (meter) => meter.label,
 								value: (meter) => meter.value,
 								max: (meter) => meter.max,
 								meta: (meter) => meter.meta,
-							}}
-						/>
-					</Group>
+							},
+						}}
+					/>
 				</Section>
 				<Section
 					title="Requests"

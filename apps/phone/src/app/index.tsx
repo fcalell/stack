@@ -18,14 +18,34 @@ export default function Home() {
 		<Place>
 			<Pane title="Home">
 				<Section title="This device">
-					<Group>
-						<DefinitionRow label="Platform" value={platforms[Platform.OS]} />
-						<DefinitionRow
-							label="OS version"
-							value={String(Platform.Version)}
-						/>
-						<DefinitionRow label="State" value={{ status: "active" }} />
-					</Group>
+					<Group
+						items={[
+							{
+								key: "platform",
+								row: (
+									<DefinitionRow
+										label="Platform"
+										value={platforms[Platform.OS]}
+									/>
+								),
+							},
+							{
+								key: "os-version",
+								row: (
+									<DefinitionRow
+										label="OS version"
+										value={String(Platform.Version)}
+									/>
+								),
+							},
+							{
+								key: "state",
+								row: (
+									<DefinitionRow label="State" value={{ status: "active" }} />
+								),
+							},
+						]}
+					/>
 				</Section>
 			</Pane>
 		</Place>

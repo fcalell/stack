@@ -4,10 +4,8 @@ import {
 	skeletonLane,
 	skeletonRow,
 } from "@fcalell/ui-core/variants";
-import { useContext } from "react";
 import { View } from "react-native";
 import { cn } from "../../lib/cn";
-import { GroundContext } from "../../lib/ground";
 
 const WAIT = "flex-row items-center";
 const LEADING = "shrink-0 items-center justify-center";
@@ -28,16 +26,8 @@ const COUNTS_BAR = "w-1/3";
 // declared, the glyph, the path's bar, a chip's bar when `chip` is declared, and
 // the counts' bar. Outside the package's exports.
 export function FileWait(props: { change: boolean; chip: boolean }) {
-	const ground = useContext(GroundContext);
 	return (
-		<View
-			className={cn(
-				skeletonRow({
-					kind: ground === "group" ? "one-line-group" : "one-line",
-				}),
-				WAIT,
-			)}
-		>
+		<View className={cn(skeletonRow({ kind: "one-line" }), WAIT)}>
 			{props.change ? (
 				<View className={MARK}>
 					<View className={skeleton({ kind: "icon" })} />

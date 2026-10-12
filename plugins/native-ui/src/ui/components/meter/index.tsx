@@ -4,7 +4,6 @@ import { levelOf, waitLine } from "@fcalell/ui-core/list-state";
 
 import {
 	FIGURES,
-	GROUP_ITEM,
 	METER,
 	METER_HEAD,
 	METER_MARK,
@@ -17,7 +16,6 @@ import { useContext } from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { GroundContext } from "../../lib/ground";
 import { useGroupPart } from "../../lib/group";
 import { LoadingContext } from "../../lib/loading";
 
@@ -65,9 +63,8 @@ export type MeterProps = MeterBase & MeterLine;
 // The label at body 500 with the share in percent at its end, the bar under
 // them filling by the share in the meta ink, amber once near full (at its
 // `mark` when it has one) and `danger` once over, the line under the bar: the
-// meta, or the counts as links. In a `Group` it stands as one of its items at
-// the card's inset, the group's hairline between. React Native has no meter
-// role: it is a progress bar.
+// meta, or the counts as links. React Native has no meter role: it is a
+// progress bar.
 export function Meter({
 	label,
 	value,
@@ -77,8 +74,6 @@ export function Meter({
 	mark,
 	loading,
 }: MeterProps) {
-	// In a Group the meter is one of its items, at the card's inset.
-	const item = useContext(GroundContext) === "group" && GROUP_ITEM;
 	const inherited = useContext(LoadingContext);
 	useGroupPart();
 	if (loading ?? inherited)
@@ -94,7 +89,7 @@ export function Meter({
 			accessibilityRole="progressbar"
 			accessibilityLabel={label}
 			accessibilityValue={{ min: 0, max, now: Math.min(value, max) }}
-			className={cn(METER, item, STACK)}
+			className={cn(METER, STACK)}
 		>
 			<View className={cn(METER_HEAD, HEAD)}>
 				<RNText

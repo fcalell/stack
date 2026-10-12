@@ -11,7 +11,6 @@ import {
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use } from "react";
 import { PageTitle } from "../../lib/frame.ts";
-import { GroundContext } from "../../lib/ground.ts";
 import { HeadingContext } from "../../lib/heading.ts";
 import { SectionContext } from "../../lib/section.ts";
 import { Button } from "../button/index.tsx";
@@ -50,9 +49,11 @@ export function EmptyStateBase(props: {
 	// The frame fills the box it stands in, its content centred there (a
 	// chart's loaded height).
 	fill?: boolean;
+	// A Group's List draws it: the card is its frame.
+	grouped?: boolean;
 }) {
 	// In a Section it stands framed; in a Group the card is its frame.
-	const inGroup = use(GroundContext) === "group";
+	const inGroup = props.grouped === true;
 	const section = use(SectionContext);
 	const framed = inGroup || section;
 	const page = use(PageTitle) !== undefined;

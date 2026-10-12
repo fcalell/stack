@@ -105,21 +105,28 @@ export const Search: StoryObj = {
 function Trailing() {
 	const [role, setRole] = useState("member");
 	return (
-		<Group>
-			<ListRow
-				leading={{ avatar: { name: "Ben Kaya" } }}
-				title="Ben Kaya"
-				meta={["ben@acme.app"]}
-				trailing={{
-					pick: {
-						label: "Ben's role",
-						options: ROLES,
-						value: role,
-						onChange: setRole,
-					},
-				}}
-			/>
-		</Group>
+		<Group
+			items={[
+				{
+					key: "ben-kaya",
+					row: (
+						<ListRow
+							leading={{ avatar: { name: "Ben Kaya" } }}
+							title="Ben Kaya"
+							meta={["ben@acme.app"]}
+							trailing={{
+								pick: {
+									label: "Ben's role",
+									options: ROLES,
+									value: role,
+									onChange: setRole,
+								},
+							}}
+						/>
+					),
+				},
+			]}
+		/>
 	);
 }
 

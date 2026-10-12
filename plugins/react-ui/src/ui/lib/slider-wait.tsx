@@ -1,14 +1,11 @@
 import { cn } from "@fcalell/ui-core/cn";
 import {
-	GROUP_ITEM,
 	lineBox,
 	SLIDER,
 	SLIDER_HEAD,
 	SLIDER_TRACK,
 	skeleton,
 } from "@fcalell/ui-core/variants";
-import { use } from "react";
-import { GroundContext } from "./ground.ts";
 
 const BOX = "flex flex-col justify-center";
 const HEAD = "flex items-center justify-between";
@@ -20,10 +17,8 @@ const BAR = "w-full";
 
 /** A Slider waiting: its label's and value's bars in their line boxes over a bar in the track's box, at the loaded Slider's height. */
 export function SliderWait() {
-	// In a Group the slider is one of its items, at the card's inset.
-	const item = use(GroundContext) === "group" && GROUP_ITEM;
 	return (
-		<div aria-hidden className={cn(SLIDER, item, BOX)}>
+		<div aria-hidden className={cn(SLIDER, BOX)}>
 			<div className={cn(SLIDER_HEAD, HEAD)}>
 				<span className={cn(lineBox({ role: "body" }), LINE, LABEL_WAIT)}>
 					<span className={cn(skeleton({ kind: "line" }), "w-1/3")} />

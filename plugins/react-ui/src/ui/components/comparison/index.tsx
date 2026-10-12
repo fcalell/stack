@@ -16,13 +16,13 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, use } from "react";
+import { use } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Chip } from "../chip/index.tsx";
 import { EmptyStateBase } from "../empty-state/base.tsx";
-import { Group } from "../group/index.tsx";
+import { Group, type GroupItem } from "../group/index.tsx";
 import type { ListSource } from "../list/index.tsx";
 import { Missing } from "../missing/index.tsx";
 import { StatusBase } from "../status/base.tsx";
@@ -216,14 +216,39 @@ export function Comparison<T>(props: ComparisonProps<T>) {
 	const items = (props.query ? props.query.data : props.items) ?? [];
 	if (state === "loaded" && items.length === 0) return null;
 	const shape = factShape(columns, row);
-	const facts: ReactNode =
+	const facts: GroupItem[] =
 		state === "pending"
-			? LABEL_BARS.map((width, index) => (
-					<FactWait key={width + String(index)} shape={shape} index={index} />
-				))
-			: items.map((item) => (
-					<Fact key={row.key(item)} item={item} row={row} columns={columns} />
-				));
+			? LABEL_BARS.map((width, index) => ({
+					key: width + String(index),
+					row: <FactWait shape={shape} index={index} />,
+				}))
+			: items.map((item) => ({
+					key: row.key(item),
+					row: <Fact item={item} row={row} columns={columns} />,
+				}));
+	const header = (
+		// biome-ignore lint/a11y/useSemanticElements: a Group's rows, which no native table element can hold
+		// biome-ignore lint/a11y/useFocusableInteractive: a read row
+		<div role="row" className={cn(COMPARISON_ROW, ROW)}>
+			{/* biome-ignore lint/a11y/useSemanticElements: a Group's rows, which no native table element can hold */}
+			<span role="cell" className={CORNER} />
+			{columns.map((column) => (
+				// biome-ignore lint/a11y/useSemanticElements: a Group's rows, which no native table element can hold
+				// biome-ignore lint/a11y/useFocusableInteractive: a read header
+				<span
+					key={column}
+					role="columnheader"
+					className={cn(
+						text({ role: "meta" }),
+						textStrong({ role: "meta" }),
+						COLUMN,
+					)}
+				>
+					{column}
+				</span>
+			))}
+		</div>
+	);
 	// The Group's card holds the rows, so the table's roles stand on its
 	// own boxes; none is focusable, the facts are read, never acted on.
 	return (
@@ -233,30 +258,7 @@ export function Comparison<T>(props: ComparisonProps<T>) {
 			aria-label={props.label}
 			aria-busy={listBusy(input) || undefined}
 		>
-			<Group loading={false}>
-				{/* biome-ignore lint/a11y/useSemanticElements: a Group's rows, which no native table element can hold */}
-				{/* biome-ignore lint/a11y/useFocusableInteractive: a read row */}
-				<div role="row" className={cn(COMPARISON_ROW, ROW)}>
-					{/* biome-ignore lint/a11y/useSemanticElements: a Group's rows, which no native table element can hold */}
-					<span role="cell" className={CORNER} />
-					{columns.map((column) => (
-						// biome-ignore lint/a11y/useSemanticElements: a Group's rows, which no native table element can hold
-						// biome-ignore lint/a11y/useFocusableInteractive: a read header
-						<span
-							key={column}
-							role="columnheader"
-							className={cn(
-								text({ role: "meta" }),
-								textStrong({ role: "meta" }),
-								COLUMN,
-							)}
-						>
-							{column}
-						</span>
-					))}
-				</div>
-				{facts}
-			</Group>
+			<Group loading={false} items={[{ key: "head", row: header }, ...facts]} />
 		</div>
 	);
 }

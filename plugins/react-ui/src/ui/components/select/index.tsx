@@ -34,7 +34,7 @@ const VALUE_DISABLED = "text-ink-disabled";
 const POPUP = "flex flex-col min-w-(--anchor-width)";
 const POSITIONER = "z-(--layer-popover)";
 const OPTION_GROUP = "flex flex-col";
-const GROUP_LABEL = "px-control-x pt-pair";
+const GROUP_LABEL = "px-card pt-pair";
 // The highlight wash marks the keyboard's option, so a row draws no ring.
 const ITEM = "flex items-center";
 const ITEM_NO_RING = "outline-none";

@@ -253,7 +253,6 @@ export function DefinitionRow<V extends string | null = string>({
 				row({
 					lines: under ? "setting" : "one",
 					state: "rest",
-					ground: "group",
 				}),
 				DEFINITION_ROW,
 				ROW,

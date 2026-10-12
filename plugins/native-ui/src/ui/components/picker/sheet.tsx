@@ -276,7 +276,6 @@ export function PickSheet<V extends string | null>({
 												(blocked ?? option.description) && !asChip(option, chip)
 													? "two"
 													: "one",
-											ground: "group",
 										}),
 										OPTION,
 										blocked === undefined && PRESS,
@@ -296,13 +295,7 @@ export function PickSheet<V extends string | null>({
 					</View>
 				))}
 				{shown.length === 0 ? (
-					<RNText
-						className={cn(
-							row({ ground: "group" }),
-							text({ role: "meta" }),
-							NO_MATCHES,
-						)}
-					>
+					<RNText className={cn(row(), text({ role: "meta" }), NO_MATCHES)}>
 						{words.noMatches}
 					</RNText>
 				) : null}
@@ -316,7 +309,7 @@ export function PickSheet<V extends string | null>({
 								onClose();
 								act.onAct();
 							}}
-							className={cn(row({ ground: "group" }), OPTION, PRESS)}
+							className={cn(row(), OPTION, PRESS)}
 						>
 							<View className={ACT_GLYPH}>
 								<Ink.Provider value="ink-meta">

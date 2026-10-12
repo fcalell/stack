@@ -411,14 +411,11 @@ export const OPTION_RADIO = matrix({
 // keeps air. Highlighted (the
 // keyboard's or the pointer's current option) under the hover wash, pressed
 // under the press wash, selected under the selection wash, and the selection
-// under the pointer a step darker. `ground` is what holds it: a list or a
-// popover insets it as a rounded wash (a Select's option row), a group runs it edge to edge at the card's inset, the group
-// drawing the hairline between its rows. A list row is square on touch,
-// where the list's inset is none and its wash meets the screen's edge: a
-// density flip, so an overlay over `list` (the web's under `touch:`), never
-// a cell.
+// under the pointer a step darker. One form everywhere: square at the card's
+// inset, so a row's text meets the title over its card or list, and a group
+// draws the hairline between its rows.
 export const ROW = matrix({
-	base: "gap-inside",
+	base: "gap-inside px-card",
 	variants: {
 		lines: {
 			one: "min-h-row",
@@ -433,12 +430,8 @@ export const ROW = matrix({
 			selected: "bg-wash-selected",
 			"selected-hover": "bg-wash-selected-hover",
 		},
-		ground: {
-			list: "px-control-x rounded-row",
-			group: "px-card",
-		},
 	},
-	defaultVariants: { lines: "one", state: "rest", ground: "list" },
+	defaultVariants: { lines: "one", state: "rest" },
 });
 
 // A tree row's levels and fold lane run the row's full height, over the
@@ -1279,7 +1272,7 @@ export const SKELETON = matrix({
 
 // A loading row at the height of the row it stands in for: a group's setting
 // row, a form's field (a label line over the field's box at the label's
-// gap), a record's facts line (at the meta line's height), or a one-line row in a list or in a group (a file row's).
+// gap), a record's facts line (at the meta line's height), or a one-line row (a file row's).
 export const SKELETON_ROW = matrix({
 	base: "",
 	variants: {
@@ -1287,8 +1280,7 @@ export const SKELETON_ROW = matrix({
 			setting: "gap-fields min-h-row-setting px-card py-pair",
 			field: "gap-pair",
 			facts: "gap-x-fields",
-			"one-line": "gap-inside min-h-row px-control-x",
-			"one-line-group": "gap-inside min-h-row px-card",
+			"one-line": "gap-inside min-h-row px-card",
 		},
 	},
 	defaultVariants: { kind: "setting" },

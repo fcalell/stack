@@ -12,7 +12,6 @@ import {
 	FORM_FIELD_SUMMARY,
 	FORM_FIELD_SUMMARY_GLYPH,
 	formField,
-	GROUP_ITEM,
 	lineBox,
 	text,
 	textStrong,
@@ -31,7 +30,6 @@ import { FieldRefusal, GroupName, LabelTarget } from "../../lib/field.ts";
 import { FieldWait } from "../../lib/field-wait.tsx";
 import { focusFirst } from "../../lib/focus.ts";
 import { HOLDS_FILL } from "../../lib/form.ts";
-import { GroundContext } from "../../lib/ground.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Checkbox, type CheckboxProps } from "../checkbox/index.tsx";
@@ -348,7 +346,7 @@ function FieldBody(props: Body & { gone?: boolean }) {
 	);
 }
 
-/** The label (body 500) over its control, the description (meta) under it and the error in the description's place; a switch stands at the label's end and a checkbox on its first line. Base UI's field wires the label, the description, the error, the validity and the disabled state into the control. A `change` draws the change mark ahead of the field, on its label's line. In a `Group` it stands as one of the card's items at the card's inset, the group's hairline between, its label kept. In a loading `Section` or `Group` it draws its own waiting form, in the form of its control, and keeps the field mounted, hidden, so what it holds (a typed text) outlives the wait. */
+/** The label (body 500) over its control, the description (meta) under it and the error in the description's place; a switch stands at the label's end and a checkbox on its first line. Base UI's field wires the label, the description, the error, the validity and the disabled state into the control. A `change` draws the change mark ahead of the field, on its label's line. In a loading `Section` or `Group` it draws its own waiting form, in the form of its control, and keeps the field mounted, hidden, so what it holds (a typed text) outlives the wait. */
 export function FormField<
 	V,
 	S extends string | null = string,
@@ -360,38 +358,26 @@ export function FormField<
 	// `string | null` to the field that draws it.
 	const body = rest as Body;
 	const waiting = use(LoadingContext);
-	const item = use(GroundContext) === "group" && GROUP_ITEM;
-	// The root the field draws hides, never a wrapper, so a Group's hairline
-	// (a child selector) still falls between its items.
+	// The root the field draws hides, never a wrapper, so what a Group's entry
+	// holds beside it stands still.
 	const gone = waiting ? HIDDEN : undefined;
-	const field = (
-		<FieldBody {...body} gone={waiting && !item && change === undefined} />
-	);
+	const field = <FieldBody {...body} gone={waiting && change === undefined} />;
 	const marked =
 		change === undefined ? (
 			field
 		) : (
-			<div className={cn(MARKED, !item && gone)}>
+			<div className={cn(MARKED, gone)}>
 				<span className={cn(lineBox({ role: "body" }), BOX_LINE)}>
 					<ChangeMark kind={change} />
 				</span>
 				<div className={MARKED_BODY}>{field}</div>
 			</div>
 		);
-	// The field is the card's one item: what it holds (a Slider) is no second
-	// item, so its control stands on the list ground.
-	const shown = item ? (
-		<div className={cn(item, gone)}>
-			<GroundContext value="list">{marked}</GroundContext>
-		</div>
-	) : (
-		marked
-	);
 	const wait = waiting ? <FieldWait {...waitOf(body)} /> : null;
 	return (
 		<>
-			{item && wait ? <div className={item}>{wait}</div> : wait}
-			{shown}
+			{wait}
+			{marked}
 		</>
 	);
 }

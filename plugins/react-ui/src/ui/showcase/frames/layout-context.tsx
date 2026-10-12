@@ -1,6 +1,7 @@
 import { cn } from "@fcalell/ui-core/cn";
 import { row, text, textStrong } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
+import type { GroupItem } from "../../components/group/index.tsx";
 import { List, type RowSlots } from "../../components/list/index.tsx";
 import type { QueryLike } from "../../components/query-boundary/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
@@ -48,17 +49,25 @@ export function StandInList() {
 	return <List items={STAND_INS} row={STAND_IN_ROW} />;
 }
 
-export function StandInRows(props: { ground: "list" | "group" }) {
-	return NAMES.map((name) => (
-		<div
-			key={name}
-			className={cn(row({ ground: props.ground }), "flex items-center")}
-		>
+function StandInRow(props: { name: string }) {
+	return (
+		<div className={cn(row({}), "flex items-center")}>
 			<span
 				className={cn(text({ role: "body" }), textStrong({ role: "body" }))}
 			>
-				{name}
+				{props.name}
 			</span>
 		</div>
-	));
+	);
+}
+
+/** The stand-in rows of a card, as a Group's entries. */
+export const STAND_IN_ENTRIES: readonly GroupItem[] = NAMES.map((name) => ({
+	key: name,
+	row: <StandInRow name={name} />,
+}));
+
+/** The stand-in rows on the page: static rows no component owns. */
+export function StandInRows() {
+	return NAMES.map((name) => <StandInRow key={name} name={name} />);
 }

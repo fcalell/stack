@@ -1,6 +1,4 @@
 import type { ChipMark } from "@fcalell/ui-core/descriptors";
-import { FileRow } from "../../components/file-row/index.tsx";
-import { Group } from "../../components/group/index.tsx";
 import { type FileSlots, List } from "../../components/list/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { Wide } from "./layout-context.tsx";
@@ -135,33 +133,11 @@ function selected(): File[] {
 	];
 }
 
-// The group ground's cells draw the rows in a Group (each FileRow its own
-// loading form), every other cell a List of them; the list's rest cells add
-// the review list.
+// Every cell draws a List of the rows; the list's rest cells add the review
+// list.
 export function drawFileRow(frame: ShowcaseFrame) {
-	const cell = frame.cell.name;
-	const group =
-		cell === "ROW.ground.group" || cell === "SKELETON_ROW.kind.one-line-group";
 	const loading = frame.state === "loading";
 	const files = frame.state === "selected" ? selected() : ROWS;
-	if (group)
-		return (
-			<Wide>
-				<Group>
-					{files.map((file) => (
-						<FileRow
-							key={file.path}
-							path={file.path}
-							added={file.added}
-							removed={file.removed}
-							seen={file.seen}
-							href={file.href}
-							loading={loading}
-						/>
-					))}
-				</Group>
-			</Wide>
-		);
 	return (
 		<Wide>
 			<List items={files} loading={loading} file={FILE} />

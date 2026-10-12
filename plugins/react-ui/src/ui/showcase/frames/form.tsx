@@ -125,18 +125,30 @@ export function drawForm(frame: ShowcaseFrame) {
 						title: "Notifications",
 						description: "What you hear about.",
 						fields: (
-							<Group>
-								<Setting
-									label="Weekly summary"
-									description="Every Monday"
-									on={false}
-								/>
-								<Setting
-									label="Mentions"
-									description="When someone mentions you"
-									on
-								/>
-							</Group>
+							<Group
+								items={[
+									{
+										key: "weekly-summary",
+										row: (
+											<Setting
+												label="Weekly summary"
+												description="Every Monday"
+												on={false}
+											/>
+										),
+									},
+									{
+										key: "mentions",
+										row: (
+											<Setting
+												label="Mentions"
+												description="When someone mentions you"
+												on
+											/>
+										),
+									},
+								]}
+							/>
 						),
 					},
 				]}

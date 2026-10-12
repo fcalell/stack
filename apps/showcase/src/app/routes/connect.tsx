@@ -2,7 +2,6 @@ import { useQuery } from "@fcalell/plugin-api/tanstack-query";
 import { Banner } from "@fcalell/plugin-react-ui/components/banner";
 import { Gate } from "@fcalell/plugin-react-ui/components/gate";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
-import { List } from "@fcalell/plugin-react-ui/components/list";
 import { createFileRoute } from "@tanstack/react-router";
 import { act } from "../lib/act.ts";
 import { orpc } from "../lib/api.ts";
@@ -28,20 +27,20 @@ function Connect() {
 				request.isError ? <Banner kind="warn" sentence={EXPIRED} /> : undefined
 			}
 		>
-			<Group>
-				<List
-					query={workspaces}
-					sentence="Workspaces did not load."
-					empty={{ sentence: "No workspace is open to you." }}
-					row={{
+			<Group
+				list={{
+					query: workspaces,
+					sentence: "Workspaces did not load.",
+					empty: { sentence: "No workspace is open to you." },
+					row: {
 						key: (item) => item.name,
 						title: (item) => item.name,
 						meta: (item) => [item.meta],
 						leading: { avatar: (item) => ({ name: item.name }) },
 						onOpen: act,
-					}}
-				/>
-			</Group>
+					},
+				}}
+			/>
 		</Gate>
 	);
 }

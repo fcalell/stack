@@ -1,15 +1,12 @@
 import type { WaitLine } from "@fcalell/ui-core/list-state";
 import {
-	GROUP_ITEM,
 	LINK_TARGET,
 	METER,
 	METER_HEAD,
 	skeleton,
 } from "@fcalell/ui-core/variants";
-import { useContext } from "react";
 import { View } from "react-native";
 import { cn } from "../../lib/cn";
-import { GroundContext } from "../../lib/ground";
 import { Strut } from "../../lib/strut";
 
 const STACK = "min-w-0";
@@ -26,10 +23,8 @@ const BAR = "w-full";
 // line under the bar as bars in their boxes (a meta line's, or one count
 // link's target box). Outside the package's exports.
 export function MeterWait(props: { line: WaitLine }) {
-	// In a Group the meter is one of its items, at the card's inset.
-	const item = useContext(GroundContext) === "group" && GROUP_ITEM;
 	return (
-		<View className={cn(METER, item, STACK)}>
+		<View className={cn(METER, STACK)}>
 			<View className={cn(METER_HEAD, HEAD)}>
 				<View className={cn(LINE, LABEL_WAIT)}>
 					<Strut role="body" />

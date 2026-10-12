@@ -12,7 +12,6 @@ import { type ReactNode, useContext } from "react";
 import { Text as RNText, View } from "react-native";
 import { cn } from "../../lib/cn";
 import { PageTitle } from "../../lib/frame";
-import { GroundContext } from "../../lib/ground";
 import { Ink } from "../../lib/ink";
 import { navigate } from "../../lib/navigate";
 import { SectionContext } from "../../lib/section";
@@ -52,9 +51,11 @@ export function EmptyStateBase(props: {
 	// The frame fills the box it stands in, its content centred there (a
 	// chart's loaded height).
 	fill?: boolean;
+	// A Group's List draws it: the card is its frame.
+	grouped?: boolean;
 }) {
 	// In a Section it stands framed; in a Group the card is its frame.
-	const inGroup = useContext(GroundContext) === "group";
+	const inGroup = props.grouped === true;
 	const section = useContext(SectionContext);
 	const framed = inGroup || section;
 	const page = useContext(PageTitle) !== undefined;

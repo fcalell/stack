@@ -41,14 +41,21 @@ function Verify() {
 						],
 					}}
 				>
-					<Group>
-						<ListRow
-							leading={{ icon: "Globe" }}
-							title={DOMAIN}
-							meta={["acme-web", "Production"]}
-							href="/domains"
-						/>
-					</Group>
+					<Group
+						items={[
+							{
+								key: "domain",
+								row: (
+									<ListRow
+										leading={{ icon: "Globe" }}
+										title={DOMAIN}
+										meta={["acme-web", "Production"]}
+										href="/domains"
+									/>
+								),
+							},
+						]}
+					/>
 					<Text>
 						Enter the six-digit code from the TXT record we added to {DOMAIN}.
 					</Text>

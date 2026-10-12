@@ -16,10 +16,9 @@ import { Thread } from "../../components/thread/index.tsx";
 import { TouchedContext } from "../../lib/touched.ts";
 import type { ShowcaseFrame } from "../cells.ts";
 import {
+	STAND_IN_ENTRIES,
 	STAND_IN_ROW,
 	STAND_INS,
-	StandInList,
-	StandInRows,
 	Wide,
 } from "./layout-context.tsx";
 import { TURN, TURNS } from "./thread.tsx";
@@ -121,9 +120,7 @@ function Members(props: { blocked?: boolean }) {
 			description={DESCRIPTION}
 			act={props.blocked ? BLOCKED : INVITE}
 		>
-			<Group>
-				<StandInRows ground="group" />
-			</Group>
+			<Group items={STAND_IN_ENTRIES} />
 		</Section>
 	);
 }
@@ -158,9 +155,7 @@ export function drawSection(frame: ShowcaseFrame) {
 					act={INVITE}
 					loading
 				>
-					<Group>
-						<StandInList />
-					</Group>
+					<Group list={{ items: STAND_INS, row: STAND_IN_ROW }} />
 				</Section>
 				<Section title="In progress" folded={false} act={add} loading>
 					<List items={STAND_INS} row={STAND_IN_ROW} />
@@ -210,9 +205,7 @@ export function drawSection(frame: ShowcaseFrame) {
 					count={3}
 					act={{ icon: "Plus", label: "New issue in Todo", onAct: act }}
 				>
-					<Group>
-						<StandInRows ground="group" />
-					</Group>
+					<Group items={STAND_IN_ENTRIES} />
 				</Section>
 			</Wide>
 		);
@@ -243,14 +236,10 @@ export function drawSection(frame: ShowcaseFrame) {
 			<Members />
 			<Section title="Memory" description="What the workspace remembers.">
 				<Section title="Workspace">
-					<Group>
-						<StandInRows ground="group" />
-					</Group>
+					<Group items={STAND_IN_ENTRIES} />
 				</Section>
 				<Section title="Code">
-					<Group>
-						<StandInRows ground="group" />
-					</Group>
+					<Group items={STAND_IN_ENTRIES} />
 				</Section>
 			</Section>
 		</Wide>

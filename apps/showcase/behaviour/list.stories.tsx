@@ -1,7 +1,8 @@
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
 import { Input } from "@fcalell/plugin-react-ui/components/input";
-import { List } from "@fcalell/plugin-react-ui/components/list";
+import { List, type ListProps } from "@fcalell/plugin-react-ui/components/list";
+import { ListRow } from "@fcalell/plugin-react-ui/components/list-row";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect, waitFor } from "storybook/test";
 
@@ -72,18 +73,14 @@ const RUNS = [
 	{ id: "b", name: "Deploy web", meta: "9 min ago" },
 ];
 
-function Runs(props: { meta: boolean }) {
-	return (
-		<List
-			items={RUNS}
-			row={{
-				key: (run) => run.id,
-				title: (run) => run.name,
-				meta: props.meta ? (run) => [run.meta] : undefined,
-			}}
-		/>
-	);
-}
+const runs = (meta: boolean): ListProps<(typeof RUNS)[number]> => ({
+	items: RUNS,
+	row: {
+		key: (run) => run.id,
+		title: (run) => run.name,
+		meta: meta ? (run) => [run.meta] : undefined,
+	},
+});
 
 const edge = (element: Element | undefined) =>
 	element ? getComputedStyle(element).borderBottomWidth : undefined;
@@ -93,21 +90,19 @@ const after = (element: Element | undefined) =>
 
 // A row map that declares `meta` parts its rows by one hairline between them,
 // drawn on each row but the last as a bar across the row's whole width (its
-// ends at the row's, no curve) under the row's rounded wash; a map without it
-// draws none, and a List in a Group leaves the group's hairline the only one.
+// ends at the row's, no curve); a map without it draws none, and a List in a
+// Group leaves the group's hairline the only one.
 export const Separators: StoryObj = {
 	render: () => (
 		<>
 			<div data-testid="two-line">
-				<Runs meta />
+				<List {...runs(true)} />
 			</div>
 			<div data-testid="one-line">
-				<Runs meta={false} />
+				<List {...runs(false)} />
 			</div>
 			<div data-testid="grouped">
-				<Group>
-					<Runs meta />
-				</Group>
+				<Group list={runs(true)} />
 			</div>
 		</>
 	),
@@ -131,7 +126,7 @@ export const Separators: StoryObj = {
 		await expect(edge(last)).toBe("0px");
 		await expect(after(last)?.content).toBe("none");
 		await expect(first && getComputedStyle(first).borderTopLeftRadius).toBe(
-			"6px",
+			"0px",
 		);
 		for (const row of rows("one-line")) {
 			await expect(edge(row)).toBe("0px");
@@ -149,12 +144,22 @@ export const Separators: StoryObj = {
 export const FieldInAGroup: StoryObj = {
 	render: () => (
 		<div data-testid="card">
-			<Group>
-				<FormField label="Add host">
-					<Input value="" onChange={() => {}} />
-				</FormField>
-				<Runs meta={false} />
-			</Group>
+			<Group
+				items={[
+					{
+						key: "add-host",
+						item: (
+							<FormField label="Add host">
+								<Input value="" onChange={() => {}} />
+							</FormField>
+						),
+					},
+					...RUNS.map((run) => ({
+						key: run.id,
+						row: <ListRow title={run.name} />,
+					})),
+				]}
+			/>
 		</div>
 	),
 	play: async ({ canvas }) => {

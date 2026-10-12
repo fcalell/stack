@@ -14,7 +14,6 @@ import {
 	groupWait,
 	type ListInput,
 	listBusy,
-	listGround,
 	listState,
 	listWaits,
 	meterShape,
@@ -289,11 +288,6 @@ test("Retry refetches the query", () => {
 	assert.equal(calls, 0);
 	retry();
 	assert.equal(calls, 1);
-});
-
-test("a List in a Group draws group rows; the same List outside draws list rows", () => {
-	assert.equal(listGround(true), "group");
-	assert.equal(listGround(false), "list");
 });
 
 test("a waiting Group draws the waiting forms of the parts that register, else setting row skeletons", () => {

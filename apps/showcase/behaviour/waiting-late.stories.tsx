@@ -84,9 +84,10 @@ function Own(props: { ms: number }) {
 	}, [props.ms]);
 	return (
 		<Section title="Plan" loading={pending}>
-			<Group loading={pending}>
-				<div data-testid="row">Row</div>
-			</Group>
+			<Group
+				loading={pending}
+				items={[{ key: "div0", row: <div data-testid="row">Row</div> }]}
+			/>
 		</Section>
 	);
 }

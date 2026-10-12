@@ -5,8 +5,6 @@ import {
 	skeletonLane,
 	skeletonRow,
 } from "@fcalell/ui-core/variants";
-import { use } from "react";
-import { GroundContext } from "../../lib/ground.ts";
 
 const WAIT = "flex items-center";
 const WAIT_LEADING = "flex shrink-0 items-center justify-center";
@@ -25,17 +23,8 @@ const COUNTS_BAR = "w-1/3";
 
 /** A FileRow waiting: the change mark's skeleton in its lane when `change` is declared, the glyph, the path's bar, a chip's bar when `chip` is declared, and the counts' bar. Outside the package's exports. */
 export function FileWait(props: { change: boolean; chip: boolean }) {
-	const ground = use(GroundContext);
 	return (
-		<div
-			aria-hidden
-			className={cn(
-				skeletonRow({
-					kind: ground === "group" ? "one-line-group" : "one-line",
-				}),
-				WAIT,
-			)}
-		>
+		<div aria-hidden className={cn(skeletonRow({ kind: "one-line" }), WAIT)}>
 			{props.change ? (
 				<span className={WAIT_MARK}>
 					<span className={skeleton({ kind: "icon" })} />
