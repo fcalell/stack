@@ -225,6 +225,15 @@ room reads best dark, so run the app dark (`defaultMode: "dark"`).
 </Place>
 ```
 
+## A toolbar takes descriptors
+
+A `Toolbar` over a list takes `search` (`{ value, onChange, placeholder }`, the search box it draws),
+`chips` (the applied filters, each `{ family, label, onRemove }`, removable chips it draws in a row
+under the acts) and as `children` the acts at the bar fit: a filter's `Button` with its count, an
+`IconButton`, a `Picker`. It reads none of its children: a search `Input` or a `Chip` passed as a
+child stands in the acts' row like any act, so the search and the filters go in the two props. Never
+a filled act: the create act is the `Pane`'s.
+
 ## Data, never nodes
 
 A composed region is data its molecule renders: an `Act` (`{ label, onAct, destructive?, quiet? }`; `quiet` draws an `ActionBar`'s

@@ -22,14 +22,9 @@ import {
 	BottomSheetModal,
 	BottomSheetScrollView,
 	BottomSheetView,
-	INITIAL_LAYOUT_VALUE,
-	KEYBOARD_STATUS,
-	useBottomSheetInternal,
 } from "@gorhom/bottom-sheet";
 import {
-	Children,
 	createContext,
-	isValidElement,
 	type PropsWithChildren,
 	type ReactNode,
 	useContext,
@@ -41,10 +36,8 @@ import {
 	useSyncExternalStore,
 } from "react";
 import { Text as RNText, useWindowDimensions, View } from "react-native";
-import { useAnimatedReaction } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { scheduleOnRN } from "react-native-worklets";
-import { useResolveClassNames, withUniwind } from "uniwind";
+import { withUniwind } from "uniwind";
 import { cn } from "../../lib/cn";
 import { FieldNameContext } from "../../lib/field";
 import { type FootSlot, FootSlotContext, FormStands } from "../../lib/form";
@@ -60,10 +53,8 @@ import {
 import { useWords } from "../../lib/words";
 import { ActionBar } from "../action-bar";
 import { Button } from "../button";
-import { FormField, type FormFieldProps, fieldControl } from "../form-field";
 import { IconButton } from "../icon-button";
 import { IconButtonBase } from "../icon-button/base";
-import { TextArea } from "../text-area";
 
 // The modal layer over the app while the sheet is open.
 const LAYER = "absolute inset-0";
@@ -80,9 +71,6 @@ const REASON = "text-right";
 const BODY = "grow min-h-0";
 // A view's children fill the whole layer over the scrim.
 const VIEW = "flex-1";
-// The foot's end inset, which the home indicator's inset joins: a style
-// overrides the class, so the sum is one value.
-const FOOT_END = "pb-card";
 const FOOT_LINE = "flex-row items-center min-w-0";
 const FULL = ["100%"];
 // The sheet enters at the slow rung on the out curve and leaves at the base
@@ -118,10 +106,6 @@ interface Parts {
 	failed?: string;
 	host?: ReasonHost;
 	touched: Touched;
-	// The sheet's height cap, gorhom's `maxDynamicContentSize`.
-	cap: number;
-	setCapped: (capped: boolean) => void;
-	setFootHeight: (height: number) => void;
 }
 
 // A value a sheet's layer reads: gorhom draws the layer in its provider's
@@ -291,24 +275,18 @@ const NO_SUBSCRIBE = () => () => {};
 const NO_BAR = () => null;
 
 // The foot's line over a decision's acts, then the bar a `Form` handed up,
-// at the content's end or held by gorhom's footer; either place reports its
-// height.
+// in gorhom's footer: gorhom measures it with the sheet and keeps it above the
+// keyboard. Nothing in it, it draws nothing and the footer is no height.
 function Foot() {
-	const { foot, acts, setFootHeight } = useParts();
+	const { foot, acts } = useParts();
 	const slot = useContext(FootSlotContext);
 	const bar = useSyncExternalStore(
 		slot?.subscribe ?? NO_SUBSCRIBE,
 		slot?.get ?? NO_BAR,
 	);
-	const insets = useSafeAreaInsets();
-	const { paddingBottom } = useResolveClassNames(FOOT_END);
-	const footEnd = typeof paddingBottom === "number" ? paddingBottom : 0;
+	if (!foot && !acts && !bar) return null;
 	return (
-		<View
-			onLayout={(event) => setFootHeight(event.nativeEvent.layout.height)}
-			style={{ paddingBottom: footEnd + insets.bottom }}
-			className={SHEET_FOOT}
-		>
+		<View className={SHEET_FOOT}>
 			{foot ? (
 				<View className={FOOT_LINE}>
 					<RNText className={text({ role: "meta" })}>{foot}</RNText>
@@ -320,67 +298,18 @@ function Foot() {
 	);
 }
 
+// The home indicator's inset is the footer's `bottomInset`: gorhom lifts the
+// footer by it while the keyboard is down and drops it once the keyboard is
+// up, so no gap stands between the foot and the keyboard.
 function Footer(props: BottomSheetFooterProps) {
+	const insets = useSafeAreaInsets();
 	return (
-		<BottomSheetFooter {...props}>
+		<BottomSheetFooter {...props} bottomInset={insets.bottom}>
 			<RaisedGround>
 				<Foot />
 			</RaisedGround>
 		</BottomSheetFooter>
 	);
-}
-
-// Whether the content scrolls, read off gorhom's own layout: the head and
-// the content at the height cap, or, with the keyboard up, taller than the
-// room left over it, where gorhom clips the content.
-function Fits() {
-	const { cap, setCapped } = useParts();
-	const { animatedLayoutState, animatedKeyboardState } =
-		useBottomSheetInternal();
-	useAnimatedReaction(
-		() => {
-			const { containerHeight, handleHeight, contentHeight } =
-				animatedLayoutState.get();
-			if (
-				containerHeight === INITIAL_LAYOUT_VALUE ||
-				handleHeight === INITIAL_LAYOUT_VALUE ||
-				contentHeight === INITIAL_LAYOUT_VALUE
-			)
-				return undefined;
-			const keyboard = animatedKeyboardState.get();
-			const covered =
-				keyboard.status === KEYBOARD_STATUS.SHOWN
-					? keyboard.heightWithinContainer
-					: 0;
-			const sheet = handleHeight + contentHeight;
-			return sheet >= cap || sheet + covered > containerHeight;
-		},
-		(capped, previous) => {
-			if (capped !== undefined && capped !== previous)
-				scheduleOnRN(setCapped, capped);
-		},
-		[cap, setCapped],
-	);
-	return null;
-}
-
-// Whether the sheet holds a `TextArea`, read off the elements it is given
-// (through a `FormField`'s control), so it stands full height from its first
-// frame and a wizard's page without one returns to content height. A
-// TextArea an app component draws inside itself is out of its sight. A menu
-// that searches (it holds its search in `above`) is read as tall as well, so
-// its list does not jump as the filter narrows.
-function holdsTextArea(node: ReactNode): boolean {
-	return Children.toArray(node).some((child) => {
-		if (!isValidElement<{ children?: ReactNode }>(child)) return false;
-		if (child.type === TextArea) return true;
-		if (child.type === FormField)
-			// The element's type is FormField, so its props are a field's.
-			return holdsTextArea(fieldControl(child.props as FormFieldProps));
-		const inner = child.props.children;
-		// A render prop (a bound field, a list's map) is no node to read.
-		return typeof inner !== "function" && holdsTextArea(inner);
-	});
 }
 
 /** What every sheet draws: the public `Sheet`, the confirm, a `Menu` and the Picker's options. Outside the package's exports. */
@@ -407,20 +336,24 @@ export interface SheetBaseProps {
 	// Fixed under the head, over the scrolling body: the Picker's search, which
 	// stands a menu full height.
 	above?: ReactNode;
+	// Internal: the sheet stands at the cap from its first frame, so what it
+	// holds does not move it. Only a menu that searches is tall (its list must
+	// not jump as the filter narrows); the rest grow with their content.
+	tall?: boolean;
 	// An act pends: the close act, the scrim and the drag are inert.
 	busy?: boolean;
 	children?: ReactNode;
 }
 
-// A bottom sheet over the scrim, content-tall up to the screen under its top
-// inset (full height when it holds a TextArea or a menu searches): the head fixed at the top
+// A bottom sheet over the scrim, content-tall and growing with its content up
+// to the screen under its top inset, the body scrolling past it (a menu that
+// searches stands at that cap from its first frame): the head fixed at the top
 // (the close act, or back on a second page, or neither for a decision, whose
 // acts dismiss it, the title and the submit at its
 // end where a keyboard would cover a bar, the description under them and a
 // blocked submit's reason or a failed run's sentence under the head), the
-// body under it, and the foot (its line over a decision's acts) at the body's
-// end, or fixed at the
-// bottom once the body scrolls. Native draws the phone at every width, so
+// body under it, and the foot (its line over a decision's acts) in gorhom's
+// footer, measured with the sheet and held above the keyboard. Native draws the phone at every width, so
 // `fit` picks only the pane's title. The title names a typing control
 // inside that no `FormField` labels. A new `title` or `description` is a new
 // page, which has taken no input.
@@ -438,6 +371,7 @@ export function SheetBase({
 	acts,
 	form,
 	above,
+	tall: asked,
 	busy,
 	children,
 }: SheetBaseProps) {
@@ -449,8 +383,9 @@ export function SheetBase({
 	const { touched } = touchedValue;
 	const [pressedUnder, setPressedUnder] = useState<string>();
 	const view = form === "view";
-	const tall =
-		(form === "menu" && above !== undefined) || holdsTextArea(children);
+	// A menu that searches is tall as well, so its list does not jump as the
+	// filter narrows.
+	const tall = (form === "menu" && above !== undefined) || asked === true;
 	// A tall sheet and a view stand at the full height of the screen.
 	const full = tall || view;
 	const blocked = submit?.blocked !== undefined;
@@ -461,14 +396,10 @@ export function SheetBase({
 		setTouched(false);
 		setPressedUnder(undefined);
 	});
-	// gorhom sizes a sheet to its content once it has measured the content
-	// and the head; a footer it measures after them sizes it a second time.
-	// So the foot stands at the content's end, measured with it, and moves to
-	// gorhom's footer only where the content scrolls: a full-height sheet, or
-	// content gorhom caps, which keeps the foot's height as its end inset so
-	// the content's height holds.
-	const [capped, setCapped] = useState(false);
-	const [footHeight, setFootHeight] = useState(0);
+	// gorhom sizes the sheet to its content (the head, the body and, through
+	// `enableFooterMarginAdjustment`, the footer it measures) up to this cap;
+	// past it the body scrolls. Nothing here decides the height after
+	// `present()`.
 	const cap = height - insets.top;
 	// Whether gorhom holds the sheet, from `present()` to its `onDismiss`.
 	// A `dismiss()` while it holds none marks the modal dismissing for good,
@@ -501,32 +432,21 @@ export function SheetBase({
 		reason: blocked && (pressed || touched) ? submit?.blocked : undefined,
 		host,
 		touched: touchedValue,
-		cap,
-		setCapped,
-		setFootHeight,
 	};
-	const [{ partsStore, slot, Layer }] = useState(() => {
+	const [{ partsStore, Layer }] = useState(() => {
 		const created = store<Parts>(parts);
 		const bar = store<ReactNode>(null);
 		return {
 			partsStore: created,
-			slot: bar,
 			Layer: layerOf(created, bar),
 		};
 	});
 	useLayoutEffect(() => partsStore.set(parts));
-	// A form in the sheet hands its bar up: the sheet re-renders only as the
-	// bar appears or goes, never as the form renders.
-	const handed = useSyncExternalStore(
-		slot.subscribe,
-		() => slot.get() !== null,
-	);
-	const footed =
-		form === undefined && (foot !== undefined || acts !== undefined || handed);
-	const fixed = footed && (tall || capped);
-	let end: { paddingBottom: number } | undefined;
-	if (!footed) end = { paddingBottom: insets.bottom };
-	else if (fixed && !tall) end = { paddingBottom: footHeight };
+	// The footer is always gorhom's, so its height is measured with the sheet;
+	// it draws nothing while the foot is empty. The body's end keeps the home
+	// indicator's inset, gorhom adding the footer's height to it.
+	const footed = form === undefined;
+	const end = { paddingBottom: insets.bottom };
 	let body: ReactNode = null;
 	if (form === "menu") body = children;
 	else if (children)
@@ -547,7 +467,7 @@ export function SheetBase({
 			backgroundComponent={view ? null : Ground}
 			backdropComponent={Scrim}
 			handleComponent={view ? null : Head}
-			footerComponent={fixed ? Footer : undefined}
+			footerComponent={footed ? Footer : undefined}
 			enablePanDownToClose={!busy}
 			enableDynamicSizing={!full}
 			maxDynamicContentSize={cap}
@@ -568,15 +488,11 @@ export function SheetBase({
 				</ViewBody>
 			) : (
 				<BottomSheetScrollView
-					enableFooterMarginAdjustment={fixed && tall}
+					enableFooterMarginAdjustment={footed}
 					keyboardShouldPersistTaps="handled"
 					contentContainerStyle={end}
 				>
-					<RaisedGround>
-						{body}
-						{footed && !fixed ? <Foot /> : null}
-						{footed && !tall ? <Fits /> : null}
-					</RaisedGround>
+					<RaisedGround>{body}</RaisedGround>
 				</BottomSheetScrollView>
 			)}
 		</BottomSheetModal>

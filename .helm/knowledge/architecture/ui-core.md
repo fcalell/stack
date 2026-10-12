@@ -1824,10 +1824,16 @@ a tick with no animation, never jumped to full.
   `ACTION_BAR`'s two fits carry no cell: `end` and `full` differ in structure (an overlay) and in
   the `Button` fit the bar passes (`body`, `field`), and the matrix exists so the closed type is
   read off an axis like every other fit. `Columns` takes `fit` the same way: `board` (the default)
-  is a row of sections at the column width scrolling sideways from the page inset, `half` is two to
+  is a row of sections scrolling sideways from the page inset, each a grid track at the column width
+  (`*:w-column` on the web grid, no wrapper per section; the phone's sections stand at their own
+  width, a flex row), `half` is two to
   a row filling the body from the Pane's `page-desktop` width and stacking in order below it, at
   the `sections` gap, with no bleed and no column width (a web grid overlay, no scroll region). The
   phone stacks both: it never reaches `desktop`.
+- A `Toolbar` reads none of its children: its `search` (`ToolbarSearch`) and `chips` (`ToolbarChip`,
+  a `ChipMark` and its `onRemove`) are descriptors it draws as a `kind="search"` `Input` and
+  removable `Chip`s, and `children` are the acts at the bar fit. It once sorted its children by
+  type into three rows, which hid a search or a chip an app component drew inside itself.
 - An `Act` says what it does, never how it looks: `destructive` marks an act that removes or
   ends something, and the `ActionBar` draws it as `danger` when it is the bar's one filled act
   and as `destructive` (the hairline form) otherwise, so a confirm's filled act needs no kind of
@@ -1868,17 +1874,26 @@ a tick with no animation, never jumped to full.
   public `SheetFit`; `fit="pane"` and `form="centred"` (`SHEET_CENTERED`, a decision's cell) are
   unchanged, and touch is the bottom sheet. This reverses 003-147's card hung at the end edge. A
   sheet's title wraps beside its acts at every density and never ends in an ellipsis. A sheet's title wraps beside its acts at every density and never ends in an ellipsis.
-- A sheet knows what it holds before it presents. A sheet stands full height when it holds a
-  `TextArea` (which grows with its value) or a menu that searches (a pick past six options, whose
-  list would else jump as the filter narrows), read in render: on the phone off the elements it is
-  given, a `FormField`'s control included, and off the menu's search, so its snap point and dynamic
-  sizing are set before `present()` and follow a wizard's page; a TextArea an app component draws
-  inside itself is out of its sight. On the web only the touch sheet of a searching pick stands
+- A sheet is content-tall and grows with its content. On the phone every sheet sizes dynamically
+  (gorhom's `enableDynamicSizing`) up to a cap, the screen under its top inset
+  (`maxDynamicContentSize`), the body in the one `BottomSheetScrollView` so past the cap it
+  scrolls; a `TextArea` that grows grows the sheet a line at a time until the cap, then scrolls
+  inside. The foot is always gorhom's `footerComponent` (empty, it draws nothing), so it is
+  measured with the sheet and held above the keyboard, `enableFooterMarginAdjustment` adding its
+  height to the body's end; the home indicator's inset is the footer's `bottomInset`, which gorhom
+  drops once the keyboard is up. The one tall form is a menu that searches (a pick past six
+  options, whose list would else jump as the filter narrows), which stands at the cap from its
+  first frame, an internal `SheetBase` prop and no public one. Nothing reads the sheet's children
+  or decides its height in an effect after `present()` (it once read a `TextArea` off the elements,
+  and moved the foot into the footer once a reaction found the content capped). Needs a device run:
+  the keyboard over a growing field, the foot's inset, and the body's nested scroll. On the web only
+  the touch sheet of a searching pick stands
   tall, up to the page inset under the viewport's top, and the desktop pick is a popover. Every
   touch sheet keeps that strip of scrim above it, so a press there closes it; a searching pick is
   never a pushed page. Rejected: the TextArea asking the sheet from a mount effect (gorhom mounts
   the content only once presented, so the sheet opened content-tall and re-snapped after paint, and
-  never shrank back), and a public height prop.
+  never shrank back), a public height prop, a full-height form sheet, and the sheet reading its
+  children.
 - A `kind="source"` TextArea in a page's Form fills the free height of the page: the page is the
   document the field edits, and a window of a few lines loses its context. The field decides it
   in render (`FormStands` `page`) and marks its box `data-fill`; the Form and

@@ -29,7 +29,7 @@ export interface SheetProps extends Closed {
 	children?: ReactNode;
 }
 
-// A bottom sheet over the scrim: the close act first, the title, the submit
+// A bottom sheet over the scrim, content-tall and growing with its content up to the cap: the close act first, the title, the submit
 // at the head's end, the description under them; the body; the foot's line.
 // Passed as a Thread's or a Pane's `foot` it docks there with no scrim: the
 // back act, the title and the close act over the description in the head, the

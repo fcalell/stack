@@ -183,6 +183,7 @@ export const OVERLAYS: readonly string[] = [
 	"overflow-hidden",
 	"overflow-x-auto",
 	"-mx-page",
+	"*:w-column",
 	"grid-cols-1",
 	"page-desktop:grid-cols-2",
 	"[&>:not(:last-child)]:relative",

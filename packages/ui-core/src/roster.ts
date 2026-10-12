@@ -831,7 +831,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		Toolbar: {
-			props: ["children"],
+			props: ["search", "chips", "children"],
 			draws: ["TOOLBAR", "TOOLBAR_ROW", "TOOLBAR_CHIPS"],
 			holds: ["TOOLBAR", "TOOLBAR_ROW", "TOOLBAR_CHIPS"],
 			states: ["rest"],
@@ -919,8 +919,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		Columns: {
 			props: ["fit", "children"],
-			draws: ["COLUMNS", "COLUMN"],
-			holds: ["COLUMNS", "COLUMN"],
+			draws: ["COLUMNS"],
+			holds: ["COLUMNS"],
 			states: ["rest"],
 			owns: { spacing: ["fields", "page", "sections"], sizes: ["column"] },
 		},
