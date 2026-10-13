@@ -41,11 +41,11 @@ export const Popover: StoryObj = {
 		await userEvent.keyboard("a");
 		await waitFor(() => expect(rows[2]).toHaveFocus());
 		// The open menu keeps the rules.
-		await expect(walked()).toEqual([]);
+		await expect(await walked()).toEqual([]);
 		await userEvent.keyboard("{Escape}");
 		await waitFor(() => expect(screen.queryByRole("menu")).toBeNull());
 		await waitFor(() => expect(trigger).toHaveFocus());
-		await expect(walked()).toEqual([]);
+		await expect(await walked()).toEqual([]);
 	},
 };
 

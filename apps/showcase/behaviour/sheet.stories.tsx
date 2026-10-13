@@ -56,12 +56,12 @@ export const Modal: StoryObj = {
 			expect(dialog).toContainElement(document.activeElement as HTMLElement),
 		);
 		// The open sheet keeps the rules.
-		await expect(walked()).toEqual([]);
+		await expect(await walked()).toEqual([]);
 		await userEvent.keyboard("{Escape}");
 		await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
 		await waitFor(() => expect(trigger).toHaveFocus());
 		// Closed, with focus returned to the act that opened it.
-		await expect(walked()).toEqual([]);
+		await expect(await walked()).toEqual([]);
 	},
 };
 
@@ -101,11 +101,11 @@ export const Decision: StoryObj = {
 		await waitFor(() =>
 			expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus(),
 		);
-		await expect(walked()).toEqual([]);
+		await expect(await walked()).toEqual([]);
 		await userEvent.keyboard("{Escape}");
 		await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
 		await waitFor(() => expect(trigger).toHaveFocus());
-		await expect(walked()).toEqual([]);
+		await expect(await walked()).toEqual([]);
 	},
 };
 

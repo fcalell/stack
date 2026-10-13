@@ -92,7 +92,7 @@ export const BodyEndsAboveTheTabBar: StoryObj = {
 		await expect(save.bottom).toBeLessThanOrEqual(bar.top);
 		// Focus on the last act is not hidden under the tab bar.
 		canvas.getByRole("button", { name: "Save" }).focus();
-		await expect(walked()).toEqual([]);
+		await expect(await walked()).toEqual([]);
 	},
 };
 
@@ -327,7 +327,7 @@ export const PopupMountsInTheBody: StoryObj = {
 		const portal = list.closest("body > *");
 		expect(portal).not.toBeNull();
 		expect(portal?.contains(canvas.getByRole("main"))).toBe(false);
-		await expect(walked()).toEqual([]);
+		await expect(await walked()).toEqual([]);
 	},
 };
 
@@ -344,7 +344,7 @@ export const PopupInTheShellOnAPhone: StoryObj = {
 		await waitFor(() =>
 			expect(list).toContainElement(document.activeElement as HTMLElement),
 		);
-		await expect(walked()).toEqual([]);
+		await expect(await walked()).toEqual([]);
 	},
 };
 

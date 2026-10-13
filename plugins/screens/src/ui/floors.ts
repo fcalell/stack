@@ -5,7 +5,7 @@ import { page } from "vitest/browser";
 import { HEIGHT, WIDTHS } from "../widths.ts";
 import { unpinned } from "./globals.ts";
 import { overflowError } from "./overflow.ts";
-import { findings, format, watchFirstPaint } from "./walk.ts";
+import { findings, format, settled, watchFirstPaint } from "./walk.ts";
 
 // The checks a test run adds to every screen, as preview annotations the test
 // run's Storybook config loads and the workbench never does: axe with every
@@ -51,6 +51,7 @@ async function settle(): Promise<void> {
 		held = now === last ? held + 1 : 0;
 		last = now;
 	}
+	await settled();
 }
 
 let logged: string[] = [];

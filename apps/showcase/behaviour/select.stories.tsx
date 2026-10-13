@@ -45,7 +45,7 @@ export const Listbox: StoryObj = {
 		await userEvent.keyboard("v");
 		await waitFor(() => expect(options[2]).toHaveAttribute("data-highlighted"));
 		// The open listbox keeps the rules.
-		await expect(walked()).toEqual([]);
+		await expect(await walked()).toEqual([]);
 		await userEvent.keyboard("{Enter}");
 		await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
 		await expect(trigger).toHaveTextContent("Virginia");
@@ -55,7 +55,7 @@ export const Listbox: StoryObj = {
 		await userEvent.keyboard("{Escape}");
 		await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
 		await waitFor(() => expect(trigger).toHaveFocus());
-		await expect(walked()).toEqual([]);
+		await expect(await walked()).toEqual([]);
 	},
 };
 

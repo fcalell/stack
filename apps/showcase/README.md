@@ -46,8 +46,8 @@ pnpm --filter showcase test-screens  # every screen headlessly (--all: not only 
 Every route is drawn in data, loading, error, empty and not found, light and dark, at either
 density: the toolbar pins the mode and the density, and no request leaves MSW. A mutation always
 answers from its fixture, whatever state the screen is forced into. The test run opens each screen
-in every state, light and dark, and fails it on an axe violation, a horizontal overflow at 320 to
-1440 px, or a console error or warning.
+in every state, light and dark, and fails it on an axe violation, a horizontal overflow at 320, 1280
+or 1920 px, a finding of the render walk, or a console error or warning.
 
 ## The roster
 

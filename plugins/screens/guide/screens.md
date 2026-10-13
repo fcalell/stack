@@ -8,7 +8,7 @@ right. The app writes no story, harness or workbench config; a new route is a ne
 ```bash
 stack add screens   # once: installs the workbench and its packages into the app
 stack screens dev   # serves the workbench (--port 6006)
-stack screens test  # checks the screens a changed file reaches (--changed <ref>: since a ref; --all: every screen)
+stack screens test  # checks the screens a changed file reaches; narrow it with --screen, --state, --width, --mode (see The test run)
 ```
 
 ## The states
@@ -66,13 +66,91 @@ children through `<Outlet />`; without it a screen under the parent shows an emp
 
 ## The test run
 
-`stack screens test` fails a screen with an axe violation (every rule, the page-level ones and
-`target-size` included), a horizontal overflow at 320, 390, 768, 1280 or 1440 px, or a console error
-or warning, naming the screen, state and mode. It runs the
-screens a file with uncommitted changes reaches; `--changed <ref>` runs those a file changed since
-that git ref reaches (a batch committed in a worktree runs `--changed master`), and `--all` runs
-every one. A change under the `src/` of a workspace package the app links, outside the
-directories its source exports serve, reruns every screen: it reaches no screen's module graph.
+`stack screens test` opens each screen in a headless browser and fails it on
+
+- an axe violation (every rule, the page-level ones and `target-size` included);
+- a horizontal overflow at 320, 1280 or 1920 px (320 draws the touch density, 1280 and 1920 the
+  desktop one, as a phone and a laptop do);
+- a finding of the render walk, below;
+- a console error or warning.
+
+A failure names the screen, the state and the mode. A screen is drawn in five states and two modes
+(light and dark), and the run visits each at the three widths.
+
+### The render walk
+
+One walk of the page's elements at each width, after the resize settles, reads what is drawn against
+the contract's values: the page's own computed `--spacing-*`, `--text-*` and `--radius-*` at the
+density it is in (inside a `Place` that declares a `room` distance, the room's own values). It reports
+a finding as `rule: element measured X, expected Y; fix: how`.
+
+| Rule | A finding is |
+| --- | --- |
+| `type-size`, `type-sizes` | a visible text under 12 px; more than six distinct font sizes on the screen |
+| `control-height` | a button, field, switch, combobox, tab or checkbox whose height is no size token (control, control-compact, field, target, chip...); where it sets a floor (`min-h-*`), a floor that is no token, or a height under it |
+| `row-height` | a row, option, menu item or tree item under the shortest row token |
+| `gap`, `inset` | a flex or grid container's gap or padding that is neither 0 nor a spacing token |
+| `radius` | a corner that is no radius role or pill |
+| `nested-radius` | a box inside a rounded box with an inset smaller than the outer radius whose radius is not the outer less the inset |
+| `clip` | a box that clips (`overflow` hidden or clip) with more inside than it shows and no ellipsis or line clamp |
+| `font-late`, `font-failed` | a font face still loading at the screen's first frame, or failed |
+| `tabular-digits` | a text that is only a number (digits with separators, a sign, a percent, a currency symbol or a unit of up to three letters) in a proportional face without `tabular-nums` |
+| `region-name` | a landmark region inside another of the same accessible name |
+
+The walk leaves out what is not drawn: `display: none`, `visibility: hidden`, `aria-hidden`, a box under
+a pixel wide or high, and what a pixel-wide clipping box holds. It sees through `display: contents`.
+Its named exceptions are listed in one place, `EXCEPTIONS` in `@fcalell/plugin-screens/walk`, each with
+its reason; a finding is fixed in the component or the screen, never baselined.
+
+A behaviour story calls the same walk after an input, so a state a click or a key reached is judged
+too: `findings()` and `format()` from `@fcalell/plugin-screens/walk` give the page's findings, and
+`findings({ roots })` the findings under some elements alone (the roster stress does this for one
+component's frames); `focusCovered()` reports the focused element when a fixed or sticky element covers it;
+`rootMargins(frames)` the roster frames' roots that carry a margin.
+
+### Narrowing a run
+
+With no flag the run covers the screens a file with uncommitted changes reaches, in every state, mode
+and width. Flags narrow it on each axis and combine freely; the run prints what it covers first.
+
+| Flag | Narrows to |
+| --- | --- |
+| `--screen <list>` | the screens named, instead of those a changed file reaches: a route id (`/_app/deploys`) or a screen's title (`deploys`, `Screens/deploys`), comma separated |
+| `--state <list>` | some of `data`, `loading`, `error`, `empty`, `notFound` |
+| `--width <list>` | some of `320`, `1280`, `1920` |
+| `--mode <list>` | some of the app's modes (`light`, `dark`) |
+| `--changed <ref>` | the screens a file changed since the git ref reaches (a batch committed in a worktree runs `--changed master`); beside `--screen` it keeps only the named screens that file reaches |
+| `--all` | every screen |
+
+A change under the `src/` of a workspace package the app links, outside the directories its source
+exports serve, reruns every screen: it reaches no screen's module graph.
+
+**The narrowed run is the gate.** Choose the narrowest run the diff allows:
+
+| The diff | Run |
+| --- | --- |
+| Nothing but a screen's own file (a route, its components, its fixtures) | the default: the screens it reaches; `--screen <it>` names them |
+| A component or a screen's markup | the screens that use it (grep the app's routes for the component), `--screen a,b` |
+| A loading form only | `--state loading` |
+| An error, empty or not found form only | `--state error`, `--state empty`, `--state notFound` |
+| A colour, an ink or a surface; no token, theme or layout change | `--mode light` (or the app's default mode) |
+| Something behind one width variant (`touch:`, `page-tablet:`, a breakpoint) | that width: `--width 320` for `touch:`, `--width 1280,1920` for a `desktop:` or `wide:` |
+| A new screen | all its states, one mode, all widths: `--screen <it> --mode light` |
+| ui-core's tokens or theme, the app's CSS, a frame component (Shell, Place, Screen, Split, Pane, Section) or a dependency bump | the full run: `--all` |
+
+Combine the rows: a loading change on one screen's touch tree is
+`stack screens test --screen deploys --state loading --width 320 --mode light`.
+
+### The component stories
+
+A component is judged in the showcase's Storybook (`pnpm exec vitest run` in `apps/showcase`), and a
+single one runs alone:
+
+- by file: `pnpm exec vitest run behaviour/picker.stories.tsx` (a behaviour story),
+  `pnpm exec vitest run stories/Picker.stories.ts` (the roster's states of one component);
+- by name: `-t "Popover"` filters the tests of the files given by their names;
+- the roster stress, which also runs the walk over the component's frames and the root-margin check,
+  for one component: `pnpm exec vitest run stories/RosterStress.stories.ts -t "^Picker( Touch)?$"`.
 
 ## Limits
 

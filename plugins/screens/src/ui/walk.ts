@@ -444,6 +444,28 @@ const painted = (style: CSSStyleDeclaration): boolean =>
 
 // ── the walk ────────────────────────────────────────────────────────
 
+// Waits for the finite animations and transitions on the page to end, so a
+// popup still opening or a sheet sliding in is judged where it settles (an
+// endless one, a spinner or a shimmer, is left running). Gives up after
+// `timeout` ms.
+export async function settled(timeout = 2000): Promise<void> {
+	const end = performance.now() + timeout;
+	while (performance.now() < end) {
+		const running = document
+			.getAnimations()
+			.filter(
+				(animation) =>
+					animation.playState === "running" &&
+					Number.isFinite(animation.effect?.getComputedTiming().endTime ?? 0),
+			);
+		if (running.length === 0) return;
+		await Promise.race([
+			Promise.allSettled(running.map((animation) => animation.finished)),
+			new Promise((resolve) => setTimeout(resolve, 100)),
+		]);
+	}
+}
+
 // The first frame a screen draws, after its first layout: the status of every
 // font face then. A face a screen asks for starts loading at its first layout,
 // so one still loading at the first frame is a face that arrives late.

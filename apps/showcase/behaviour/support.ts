@@ -1,4 +1,9 @@
-import { findings, focusCovered, format } from "@fcalell/plugin-screens/walk";
+import {
+	findings,
+	focusCovered,
+	format,
+	settled,
+} from "@fcalell/plugin-screens/walk";
 
 // The element holding focus; a test that expects focus somewhere fails when
 // nothing does.
@@ -13,6 +18,7 @@ export function focused(): HTMLElement {
 // what breaks a rule, empty when it keeps them. A story calls it where it ends
 // in a state a click or a key reached (an open popup, a dialog's returned
 // focus).
-export function walked(): string[] {
+export async function walked(): Promise<string[]> {
+	await settled();
 	return [...format(findings({ fonts: false })), ...format(focusCovered())];
 }

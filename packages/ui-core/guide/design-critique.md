@@ -40,8 +40,8 @@ the route as a deep link, opens it with Maestro's `openLink`, and drives it with
 3. **Interact.** Tap every control and scroll every list in a flow, with a screenshot after each
    state the unit declares; a toast is judged from that screenshot, since it is gone before
    `maestro hierarchy` returns. A touch screen has no hover, and a pressed state is not captured.
-4. **Widths.** 390 and 320 dp, set live through the density on the 1080 px panel
-   (density = 1080 × 160 / width: 443 and 540), with no relaunch. An element whose bounds pass
+4. **Widths.** 320 dp, the narrowest phone, set live through the density on the 1080 px panel
+   (density = 1080 × 160 / width: 540), with no relaunch. An element whose bounds pass
    the screen's edge, or clipped text, is a finding, and so is a target under 44 dp for a primary
    act or under 24 dp otherwise.
 5. **Modes.** `adb shell cmd uimode night yes`, then `no`, and repeat steps 2 to 4. The app
@@ -61,8 +61,10 @@ The [Improve](#improve) section applies as on the web, with the same pattern pag
 Every render, in this order, in a browser the critic can script; a phone screen on the emulator,
 each step read as [A phone screen](#a-phone-screen) says. A web screen's `stack screens test`
 result is read first: a failing run is a blocker, and the critic measures none of what it
-measures (every axe rule, text contrast among them; horizontal overflow at the five widths;
-target size and spacing; console output).
+measures (every axe rule, text contrast among them; horizontal overflow at 320, 1280 and 1920;
+the render walk: type size and count, control and row heights, gaps and insets, radii nested ones
+included, clips, late fonts, tabular figures, same-name regions; target size and spacing; console
+output).
 
 1. **Prepare.** Open the URL. Set `prefers-reduced-motion: reduce` and inject
    `*{transition:none!important;animation:none!important}`. Park the pointer off-screen and clear
@@ -82,8 +84,8 @@ target size and spacing; console output).
    waiting row matches its loaded row's height and text start, measured row by row, and any
    per-row difference is a finding; a loaded row whose text wraps grows by its wrapped lines, its
    waiting row matching its one-line form.
-4. **Widths.** 1280 and 390 px, plus 768 and 1440 for a screen; 390 draws the touch density.
-   Clipped text, or a primary act under 44 px at 390, is a finding.
+4. **Widths.** 320, 1280 and 1920 px; 320 draws the touch density. Clipped text, or a primary act
+   under 44 px at 320, is a finding.
 5. **Modes.** Repeat steps 2 to 4 in dark mode, through the page's mode control or the `dark`
    class on the root. Dark is a calibration, not an inversion: check the surface steps and the
    hairline's lightness.

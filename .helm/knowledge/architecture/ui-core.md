@@ -2030,10 +2030,29 @@ touch is a toolbar toggle, not a test run; `a11y.test` is `error`):
   (`.storybook/roster.ts`) draws each component's frames at desktop and at touch in a 320 px
   column, and `.storybook/stress.ts` feeds every text slot a 300-character word and a URL, failing
   on a page that grows, a box past its parent (unless a box above cuts it) or text drawn outside
-  its box with no ellipsis; `behaviour/roster-stress.stories.tsx` holds its canaries.
+  its box with no ellipsis; `behaviour/roster-stress.stories.tsx` holds its canaries. The same
+  story then runs the render walk over the component's frames alone and the margin check on each
+  frame's root (no component's root carries a margin; the icon act's reach across a field's
+  hairline is the one named exception).
 
 A page is not one of them: the places above are the app's routes, and the workbench draws each as
 the document it is; `stack screens test` checks it.
+
+The test run's floors are one preview annotation (`@fcalell/plugin-screens/floors`) that, per story,
+visits 320, 1280 and 1920 px (narrowed by `--width`; the density's pin is taken off at each width so
+320 draws the touch set and the others the desktop one, the way the media query decides in a
+browser), and at each width, once the page has settled, checks overflow and runs the render walk
+(`@fcalell/plugin-screens/walk`). The walk reads the contract off the page, never from a copy: the
+`--spacing-*`, `--text-*` and `--radius-*` custom properties at the element's own density (a `room`
+`Place` holds its own), named by ui-core's token lists. Its checks are pure functions over measured
+data, tested in node, and every one has a canary in `behaviour/walk.stories.tsx` that hands it bad
+markup (and hidden, zero-size and `display: contents` cases) and asserts exactly what it finds.
+What the contract itself draws off a rule is a named exception in `EXCEPTIONS` (`walk.ts`), with
+its reason, never a baseline. Behaviour stories call `walked()` (`behaviour/support.ts`) at the end
+of a play function that ends in a state input reached (an open picker, a menu, a sheet, a dialog's
+returned focus, focus on the last act above the tab bar). The workbench's stories carry a tag per
+state (`state:loading`) and per checked global (`mode:dark`) so `--state` and `--mode` leave the
+others out, and `--screen` selects story files by route.
 
 A failing assertion is a finding in the component: it stays failing until the component is fixed,
 never weakened or skipped, and nothing is excluded from axe beyond the document-structure rules and

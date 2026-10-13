@@ -82,13 +82,20 @@ proxy or port) and returns its path, for Storybook's `viteConfigPath` and Vite's
   origin or a worker path fails (`onUnhandledRequest`).
 - **The worker.** `/mockServiceWorker.js` is served by `screensPlugin` from MSW's package.
 - **The test run.** `stack screens test` generates, then runs the app's `vitest run --config
-  .stack/screens.vitest.config.ts` (`--changed [<ref>]` unless `--all`, `--passWithNoTests`). The config
+  .stack/screens.vitest.config.ts` (`--changed [<ref>]` unless `--all` or `--screen`,
+  `--passWithNoTests`, then the story files `--screen` names). `--state`, `--mode` and `--width`
+  reach the run in the environment (`STACK_SCREENS_EXCLUDE`, `STACK_SCREENS_WIDTHS`): every story
+  file carries a tag per state (`state:loading`) and per checked global (`mode:dark`), the config
+  hands the storybook plugin the tags to leave out and the floors the widths (`provide`). The config
   spreads `.stack/screens.vite.config.ts`, so the run's host is the workbench's, and runs the Storybook
   test plugin on `.stack/screens-test/`, whose `main.ts` adds `./floors`: axe with every rule on
-  (`region`, which the a11y addon turns off, and `target-size`, which axe leaves off), the overflow
-  check (`page.viewport` at 320, 390, 768, 1280 and 1440, back at the starting size afterwards) and
-  the console check (`console.error`, `console.warn`, window `error`). The browser is Playwright's,
-  or `CHROME_PATH`, headless at 1280x800 with two workers at most.
+  (`region`, which the a11y addon turns off, and `target-size`, which axe leaves off), then at each
+  of 320, 1280 and 1920 (`page.viewport`, back at the starting size afterwards; a global with
+  `byViewport` has its pin taken off meanwhile, so 320 draws the touch density) the overflow check
+  and the render walk (`./walk`: the contract's numbers read off the page's computed custom
+  properties), and the console check (`console.error`, `console.warn`, window `error`). The browser
+  is Playwright's, or `CHROME_PATH`, headless at 1280x800 with two workers at most. The guide page
+  (`guide/screens.md`) lists the walk's rules and which run suits which diff.
 
 ## License
 
