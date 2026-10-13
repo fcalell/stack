@@ -95,13 +95,20 @@ export function stressStories(component: string, draw?: Draw) {
 					await waitFor(() =>
 						expect(collect(frames()).length).toBeGreaterThan(0),
 					);
-				const result = stress(frames(), pane);
+				// A popup still opening holds fewer slots than its floor: the stress
+				// runs again until it reaches it (each run restores what it fed).
+				const floor =
+					!TEXTLESS.has(component) && own.length > 0
+						? (FLOOR[component] ?? 1)
+						: 0;
+				let result = stress(frames(), pane);
+				if (result.probed < floor)
+					await waitFor(() => {
+						result = stress(frames(), pane);
+						expect(result.probed).toBeGreaterThanOrEqual(floor);
+					});
 				const faults = report(result);
 				if (faults.length > 0) throw new Error(`\n${faults.join("\n")}`);
-				if (!TEXTLESS.has(component) && own.length > 0)
-					await expect(result.probed).toBeGreaterThanOrEqual(
-						FLOOR[component] ?? 1,
-					);
 			},
 		};
 	};
