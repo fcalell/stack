@@ -12,7 +12,12 @@ import {
 } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { GroupContext, type GroupHost } from "../../lib/group.ts";
-import { LoadingContext, useWait, VEIL } from "../../lib/loading.ts";
+import {
+	LoadingContext,
+	useSettleName,
+	useWait,
+	VEIL,
+} from "../../lib/loading.ts";
 import { DefinitionWait } from "../definition-row/wait.tsx";
 import { ListBase } from "../list/base.tsx";
 import type { ListProps } from "../list/index.tsx";
@@ -74,6 +79,7 @@ export function Group<T, V extends string | null = string>(
 	// Its own `loading` waits as a read that lasts does (drawn after a delay, held
 	// a minimum); one inherited from a Section arrives already so.
 	const late = useWait(loading === true);
+	const settle = useSettleName();
 	const waiting = loading === undefined ? inherited : late.waiting;
 	// A waiting body draws the waiting forms of the parts that register (however
 	// deep: a List, a Meter, a Slider, a DefinitionRow); with none, setting
@@ -111,6 +117,7 @@ export function Group<T, V extends string | null = string>(
 	return (
 		<div
 			aria-busy={loading || undefined}
+			style={settle}
 			className={cn(GROUP, BOX, late.veiled && VEIL)}
 		>
 			{waiting && settings ? (

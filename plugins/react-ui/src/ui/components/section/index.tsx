@@ -22,7 +22,12 @@ import { type ReactNode, use, useId, useMemo, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { EmptyBase, type EmptyProps } from "../../lib/empty.tsx";
 import { DEEPER, HeadingContext } from "../../lib/heading.ts";
-import { LoadingContext, useWait, VEIL } from "../../lib/loading.ts";
+import {
+	LoadingContext,
+	useSettleName,
+	useWait,
+	VEIL,
+} from "../../lib/loading.ts";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";
@@ -101,6 +106,7 @@ export function Section({
 	const late = useWait(asked === true);
 	const loading = asked === undefined ? undefined : late.waiting;
 	const veil = late.veiled ? VEIL : undefined;
+	const settle = useSettleName();
 	const level = use(HeadingContext);
 	const Heading = `h${level}` as const;
 	const titleId = useId();
@@ -162,6 +168,7 @@ export function Section({
 			}}
 			aria-labelledby={titleId}
 			aria-busy={busy || undefined}
+			style={settle}
 			className={cn(SECTION, BOX)}
 		>
 			<div className={cn(SECTION_HEAD, HEAD)}>

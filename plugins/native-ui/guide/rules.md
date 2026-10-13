@@ -525,6 +525,15 @@ place, so the page keeps its height) and, once drawn, keep it 500 ms (`WAIT_DELA
 These two numbers are fixed, not options; a part's own `loading` (a `List`, a `Meter`) is drawn as
 given, so drive it from the boundary or the Section around it, never from a raw `isPending`.
 
+The switch from a waiting form to the loaded one is the page's one authored moment, the settle: the
+layout it changes moves between its two places and fades in on a `LayoutAnimation` over a rung of the
+duration scale, and snaps under the system's reduced motion. It is not an option; draw nothing for it.
+
+A waiting screen is the loaded tree with `loading` passed down, never a second tree: a page's outline
+comes from its route and its data fills it. A `Section` stands whatever its data holds and draws its
+`empty` when there is none, never gated on the data's length; a Section that must stay optional stands
+after every Section that always stands, so its arrival moves nothing.
+
 ## Words are the config's, sentences are props
 
 A word a component draws on its own comes from `nativeUi({ words })`, read with

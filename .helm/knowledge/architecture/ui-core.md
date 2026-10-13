@@ -1727,7 +1727,19 @@ a tick with no animation, never jumped to full.
   before it is drawn, `WAIT_MIN` 500 ms once drawn (`@fcalell/ui-core/wait`, one decision both
   platforms run), at `QueryBoundary` and a `Section`'s or `Group`'s own `loading`; during the
   delay the form stands undrawn in its place (`invisible` / `opacity-0`), so the page keeps its
-  height. A cell no entry holds is shared, spelled by each component that draws
+  height. The switch to the loaded form is the page's one authored moment, the settle, and `useWait`
+  owns it: when the read settles it keeps reporting waiting for that render and flips its own state
+  afterwards, whether the form was drawn or not, so every flip can be wrapped. On the web one
+  coordinator (`lib/settle`) gathers the flips of a frame into one `startViewTransition` with
+  `flushSync`, each `Section` and `Group` root carrying its own `view-transition-name` (from `useId`)
+  so the browser moves it from its old place by a transform, the duration and curve set on
+  `::view-transition-group(*)` in `globals.css` from the motion scale; it applies at once under
+  reduced motion, with no `startViewTransition`, in a hidden document or while any view transition
+  runs (the router's). On the phone the flip is preceded by `LayoutAnimation.configureNext` on the
+  `base` rung, skipped under the system's reduced motion (Fabric only, so no Android experimental
+  flag). A waiting ListRow's bars take their widths from a hash of the list's identity (`useId`) and
+  the row index (`waitingBars` in `./list-state`), so a list waits the same way every load and two
+  lists differ. A cell no entry holds is shared, spelled by each component that draws
   it: the type roles, the field box (`Input`, `Select`, `TextArea`, the Picker's field fit, the
   touch `MessageInput`), the row with its leading slot and its title and meta lines (`ListRow`,
   `FileRow`), the content frame, `FIGURES`, the option group and its label (`SELECT_GROUP`,

@@ -13,6 +13,7 @@ import {
 	treeMove,
 	treeRows,
 	treeStop,
+	WAITING_ROWS,
 } from "@fcalell/ui-core/list-state";
 import {
 	LIST,
@@ -25,6 +26,7 @@ import {
 	type KeyboardEvent,
 	type ReactNode,
 	use,
+	useId,
 	useState,
 } from "react";
 import { EmptyBase } from "../../lib/empty.tsx";
@@ -37,7 +39,7 @@ import { DefinitionWait } from "../definition-row/wait.tsx";
 import { FileRow } from "../file-row/index.tsx";
 import { FileWait } from "../file-row/wait.tsx";
 import { ListRowBase, type RowTree } from "../list-row/base.tsx";
-import { RowWait, WAITING_ROWS } from "../list-row/wait.tsx";
+import { RowWait } from "../list-row/wait.tsx";
 import { Meter } from "../meter/index.tsx";
 import { MeterWait } from "../meter/wait.tsx";
 import { MissingBase } from "../missing/base.tsx";
@@ -81,6 +83,8 @@ export function ListBase<T, V extends string | null = string>(
 ) {
 	const words = useWords();
 	const at = useRoute();
+	// The list's identity: its waiting rows take their bars' widths from it.
+	const list = useId();
 	// The keys of the tree's folded branches; every branch starts open.
 	const [folded, setFolded] = useState<readonly string[]>([]);
 	// The key of the tree's row that holds its one tab stop.
@@ -143,7 +147,12 @@ export function ListBase<T, V extends string | null = string>(
 			WAITING.map((index) => {
 				if (props.row)
 					return (
-						<RowWait key={index} shape={rowShape(props.row)} index={index} />
+						<RowWait
+							key={index}
+							shape={rowShape(props.row)}
+							list={list}
+							index={index}
+						/>
 					);
 				if (props.meter)
 					return (

@@ -29,7 +29,9 @@ import {
 	treeRows,
 	treeStop,
 	valueCut,
+	WAITING_ROWS,
 	waitCount,
+	waitingBars,
 	waitingDepth,
 	waitLine,
 } from "../src/list-state.ts";
@@ -744,4 +746,21 @@ test("the steps before the current one are done, it is current, the rest later",
 
 test("the step word says where the flow stands", () => {
 	assert.equal(filled(ENGLISH.stepOf, { at: "2", of: "3" }), "Step 2 of 3");
+});
+
+test("a waiting row's bars are the same on every call, differ between lists, and stay within the allowed widths", () => {
+	const rows = [0, 1, 2, 3].map((index) => waitingBars(":r1:", index));
+	assert.deepEqual(
+		rows,
+		[0, 1, 2, 3].map((index) => waitingBars(":r1:", index)),
+	);
+	const bars = new Set<string>();
+	for (let list = 0; list < 40; list++)
+		for (let index = 0; index < WAITING_ROWS; index++)
+			bars.add(waitingBars(`:r${list}:`, index).join(" "));
+	// Lists differ: 40 lists of 4 rows reach every title and meta width, and
+	// not one fixed table's four pairs.
+	assert.ok(new Set([...bars].map((pair) => pair.split(" ")[0])).size === 3);
+	assert.ok(new Set([...bars].map((pair) => pair.split(" ")[1])).size === 2);
+	assert.ok(bars.size > 4);
 });

@@ -206,6 +206,39 @@ export function waitingDepth(index: number): number {
 	return WAITING_DEPTHS[index % WAITING_DEPTHS.length] ?? 0;
 }
 
+// How many rows a waiting list draws.
+export const WAITING_ROWS = 4;
+
+// The lengths a waiting row's bars take, as shares of the line they stand in
+// for: a title's and a meta line's.
+const TITLE_BARS = ["w-1/2", "w-2/3", "w-3/4"] as const;
+const META_BARS = ["w-1/4", "w-1/3"] as const;
+
+// FNV-1a over a string's UTF-16 units: the same number every call, on every
+// platform.
+function hash(text: string): number {
+	let h = 0x811c9dc5;
+	for (let at = 0; at < text.length; at++) {
+		h = Math.imul(h ^ text.charCodeAt(at), 0x01000193);
+	}
+	return h >>> 0;
+}
+
+// The title bar's and the meta bar's width classes of the `index`th waiting
+// row of the list `list` (its identity, a string that is the same on every
+// load): drawn from the same few lengths, by a hash of the list and the row,
+// so a list waits the same way every time and two lists wait differently.
+export function waitingBars(
+	list: string,
+	index: number,
+): readonly [title: string, meta: string] {
+	const h = hash(`${list}:${index}`);
+	return [
+		TITLE_BARS[h % TITLE_BARS.length] ?? TITLE_BARS[0],
+		META_BARS[(h >>> 8) % META_BARS.length] ?? META_BARS[0],
+	];
+}
+
 // One row of a tree as the list draws it: its item at a depth (the roots at
 // 0), whether it has children to fold, and whether they are drawn.
 export interface TreeRow<T> {

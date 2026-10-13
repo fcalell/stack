@@ -8,6 +8,7 @@ import {
 	rowShape,
 	toggled,
 	treeRows,
+	WAITING_ROWS,
 } from "@fcalell/ui-core/list-state";
 import {
 	LIST,
@@ -15,7 +16,7 @@ import {
 	LIST_ITEM,
 	LIST_TREE,
 } from "@fcalell/ui-core/variants";
-import { type ReactElement, useContext, useState } from "react";
+import { type ReactElement, useContext, useId, useState } from "react";
 import { View } from "react-native";
 import { EmptyBase } from "../../lib/empty";
 import { between, useGroupPart } from "../../lib/group";
@@ -26,7 +27,7 @@ import { DefinitionWait } from "../definition-row/wait";
 import { FileRow } from "../file-row";
 import { FileWait } from "../file-row/wait";
 import { ListRowBase, type RowTree } from "../list-row/base";
-import { RowWait, WAITING_ROWS } from "../list-row/wait";
+import { RowWait } from "../list-row/wait";
 import { Meter } from "../meter";
 import { MeterWait } from "../meter/wait";
 import { MissingBase } from "../missing/base";
@@ -55,6 +56,8 @@ export function ListBase<T, V extends string | null = string>(
 	props: ListProps<T, V> & ListInternal,
 ) {
 	const words = useWords();
+	// The list's identity: its waiting rows take their bars' widths from it.
+	const list = useId();
 	// The keys of the tree's folded branches; every branch starts open.
 	const [folded, setFolded] = useState<readonly string[]>([]);
 	const input = {
@@ -101,7 +104,12 @@ export function ListBase<T, V extends string | null = string>(
 			WAITING.map((index) => {
 				if (props.row)
 					return (
-						<RowWait key={index} shape={rowShape(props.row)} index={index} />
+						<RowWait
+							key={index}
+							shape={rowShape(props.row)}
+							list={list}
+							index={index}
+						/>
 					);
 				if (props.meter)
 					return (

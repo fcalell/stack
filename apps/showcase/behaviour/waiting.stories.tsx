@@ -513,7 +513,8 @@ const refetch: StoryObj = {
 		await userEvent.click(canvas.getByRole("button", { name: "Toggle" }));
 		await expect(input).not.toBeVisible();
 		await userEvent.click(canvas.getByRole("button", { name: "Toggle" }));
-		await expect(input).toBeVisible();
+		// The loaded form lands with the settle, a frame after the read.
+		await waitFor(() => expect(input).toBeVisible());
 		await expect(canvas.getByDisplayValue("pnpm build")).toBe(input);
 	},
 };

@@ -43,6 +43,10 @@ micro-interactions that move something; press feedback may be shorter (100 ms). 
 and `opacity` animate: a colour never transitions, a state's fill, ink or boundary switches at
 once.
 
+A screen with loading data spends its one authored moment on the settle, the switch from the
+waiting form to the loaded one: each Section and Group moves from its old place to its new by a
+transform and the page fades by opacity, so the rule holds; it snaps under reduced motion.
+
 ## Composition
 
 One focal point per screen; the page has an owner (a frame molecule); nothing floats; empty space

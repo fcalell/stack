@@ -90,3 +90,15 @@
 		transform: scale(0.96);
 	}
 }
+
+/* The settle (`lib/settle.ts`): a waiting form giving way to the loaded one
+   runs in a view transition, each named Section and Group moving from its old
+   place to its new by a transform, the root crossfading. The pair images
+   inherit the group's duration and curve. Under reduced motion the script
+   starts no transition and the switch snaps. */
+@media (prefers-reduced-motion: no-preference) {
+	::view-transition-group(*) {
+		animation-duration: var(--transition-duration-base);
+		animation-timing-function: var(--ease-in-out);
+	}
+}

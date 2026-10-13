@@ -591,6 +591,18 @@ place, so the page keeps its height) and, once drawn, keep it 500 ms (`WAIT_DELA
 These two numbers are fixed, not options; a part's own `loading` (a `List`, a `Meter`) is drawn as
 given, so drive it from the boundary or the Section around it, never from a raw `isPending`.
 
+The switch from a waiting form to the loaded one is the page's one authored moment, the settle. Every
+switch of a frame runs together in one view transition: each `Section` and `Group` carries its own
+`view-transition-name`, so the browser moves it from its old place to its new by a transform within the
+duration scale while the page crossfades. It snaps under reduced motion, in a hidden tab, in a browser
+without view transitions and while the router's own transition runs. It is not an option; draw nothing
+for it.
+
+A waiting screen is the loaded tree with `loading` passed down, never a second tree: a page's outline
+comes from its route and its data fills it. A `Section` stands whatever its data holds and draws its
+`empty` when there is none, never gated on the data's length; a Section that must stay optional stands
+after every Section that always stands, so its arrival moves nothing.
+
 ## An icon act names itself
 
 Every `IconButton`, and every icon act a molecule draws (a Pane's `actions`, a Section's icon act,

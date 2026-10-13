@@ -1,5 +1,9 @@
 import { cn } from "@fcalell/ui-core/cn";
-import { type RowShape, waitingDepth } from "@fcalell/ui-core/list-state";
+import {
+	type RowShape,
+	waitingBars,
+	waitingDepth,
+} from "@fcalell/ui-core/list-state";
 import {
 	lineBox,
 	ROW_ACTS,
@@ -69,18 +73,6 @@ const ACT_BAR = "w-measure-short shrink-0";
 // The more act's room, empty: the act waits with nothing to act on.
 const ACTS = "relative flex shrink-0 items-center";
 const MORE = "size-control-compact";
-// Each waiting row's title and meta bars, at the lengths of the lines they
-// stand in for.
-const BARS = [
-	["w-1/2", "w-1/3"],
-	["w-2/3", "w-1/4"],
-	["w-3/4", "w-1/3"],
-	["w-1/2", "w-1/4"],
-] as const;
-
-/** How many rows a waiting list draws. Outside the package's exports. */
-export const WAITING_ROWS = BARS.length;
-
 // A part on the title's first line while the title wraps.
 function First(props: { on: boolean; children: ReactNode }) {
 	if (!props.on) return props.children;
@@ -98,10 +90,14 @@ function TitleBar(props: { width: string }) {
 	);
 }
 
-/** A ListRow waiting, the `index`th of a waiting list: a tree's rails (the depths `waitingDepth` gives) and fold lane, empty, the change mark's skeleton in its lane, the leading mark's skeleton by its kind, a bar in the title line (the one-line form when the list wraps its titles, its leading, trailing and acts on it; the trailing's at its end, four figures wide) and one in the meta line (the marks' at its end) or, with an entry, a field's bar and an act's bar in its place, each at its slot's place, a labelled act's bar at the row's end and the more act's room left empty. Outside the package's exports. */
-export function RowWait(props: { shape: RowShape; index: number }) {
+/** A ListRow waiting, the `index`th of the waiting list `list` (its bars' widths come from the two, `waitingBars`): a tree's rails (the depths `waitingDepth` gives) and fold lane, empty, the change mark's skeleton in its lane, the leading mark's skeleton by its kind, a bar in the title line (the one-line form when the list wraps its titles, its leading, trailing and acts on it; the trailing's at its end, four figures wide) and one in the meta line (the marks' at its end) or, with an entry, a field's bar and an act's bar in its place, each at its slot's place, a labelled act's bar at the row's end and the more act's room left empty. Outside the package's exports. */
+export function RowWait(props: {
+	shape: RowShape;
+	list: string;
+	index: number;
+}) {
 	const { shape } = props;
-	const [title, meta] = BARS[props.index % BARS.length] ?? BARS[0];
+	const [title, meta] = waitingBars(props.list, props.index);
 	const stacked = shape.meta || shape.entry ? "two" : "one";
 	const lines = shape.wrap ? "whole" : stacked;
 	// A wrapped title and an entry's input are lines under the title's first, so
