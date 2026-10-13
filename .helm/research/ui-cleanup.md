@@ -291,6 +291,20 @@ digits on a bare number, and no region inside a region of its name (the Pane and
 Findings the new checks raise on the showcase and the roster are fixed in this step or kept as a
 named exception with its reason, never a baseline.
 
+Done 2026-10-13: `structure.md` (19 rules, each held by a verify check, the render walk or
+judged); the verify checks `b-children`, `b-arbitrary`, `b-measure`, `b-context`, `b-dataset`
+and `b-type-prop` on web and native, and `b-section-nest` on native (react-ui 20, native-ui 26);
+`stack screens test` at 320, 1280 and 1920 with `--screen`, `--state`, `--width` and `--mode`,
+the walk exported as `@fcalell/plugin-screens/walk` and run in the floors, the behaviour stories
+and the roster stress, its canaries in `behaviour/walk.stories.tsx`. The full run takes about
+2m15 against 1m50 before. Open: the contexts `b-context` tags `form`, named exceptions to rule 11
+(web `Line`, `GroupContext`, `ReasonKept`, `ShellHome`; native adds `DistanceContext`), each to
+become a prop; a same-name region is caught, not prevented (a Pane and a Section are both
+regions named by their heading, and no fix stays inside the rules); the contract has no
+concentric inner radius (control, row and chip 6 inside card, popover and sheet 8), so the walk
+names those pairs as exceptions; a control that grows from a floor is checked against its floor
+only.
+
 ## The frame
 
 The first family's design, decided before the review and open to what it finds.
