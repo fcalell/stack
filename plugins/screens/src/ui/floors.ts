@@ -5,7 +5,13 @@ import { page } from "vitest/browser";
 import { HEIGHT, WIDTHS } from "../widths.ts";
 import { unpinned } from "./globals.ts";
 import { overflowError } from "./overflow.ts";
-import { findings, format, settled, watchFirstPaint } from "./walk.ts";
+import {
+	densityMark,
+	findings,
+	format,
+	settled,
+	watchFirstPaint,
+} from "./walk.ts";
 
 // The checks a test run adds to every screen, as preview annotations the test
 // run's Storybook config loads and the workbench never does: axe with every
@@ -27,7 +33,8 @@ const widths = (): number[] => {
 // A resize settles over frames: layout that reads the viewport in script
 // (a media query hook, a resize observer, a container query's restyle, a
 // tree swapped for the width) follows it a frame or several later. The page is
-// settled once its size and element count hold for a few frames running.
+// settled once its size and element count hold for a few frames running; the
+// first time, the animations the mount started have ended too.
 const STABLE_FRAMES = 3;
 const MAX_FRAMES = 90;
 
@@ -42,7 +49,7 @@ const shape = () =>
 		document.documentElement.dataset.density,
 	].join("|");
 
-async function settle(): Promise<void> {
+async function settle(animations: boolean): Promise<void> {
 	let last = "";
 	let held = 0;
 	for (let frames = 0; frames < MAX_FRAMES && held < STABLE_FRAMES; frames++) {
@@ -51,7 +58,7 @@ async function settle(): Promise<void> {
 		held = now === last ? held + 1 : 0;
 		last = now;
 	}
-	await settled();
+	if (animations) await settled();
 }
 
 let logged: string[] = [];
@@ -88,7 +95,7 @@ function capture(): void {
 // meanwhile. `reread` has whatever watches the attribute (the density's store)
 // read the viewport again, for a change of the media query it was never told
 // of; `restore` puts the pins back.
-function unpin(): { reread: () => void; restore: () => void } {
+function unpin(): { any: boolean; reread: () => void; restore: () => void } {
 	const root = document.documentElement;
 	const pins = previewGlobals.flatMap((global) =>
 		global.byViewport && "attribute" in global.apply
@@ -101,6 +108,7 @@ function unpin(): { reread: () => void; restore: () => void } {
 		root.removeAttribute(pin.attribute);
 	}
 	return {
+		any: pins.length > 0,
 		reread: () => {
 			for (const pin of pins) {
 				root.setAttribute(pin.attribute, "");
@@ -124,17 +132,19 @@ async function visit(): Promise<string[]> {
 	const failures: string[] = [];
 	// The screen first finishes mounting at the size it has: a store that
 	// watches the viewport (the density's media query) is wired as it mounts.
-	await settle();
+	await settle(true);
 	const pins = unpin();
+	const marks = new Map<number, string>();
 	try {
 		for (const [index, width] of widths().entries()) {
 			await page.viewport(width, HEIGHT);
 			pins.reread();
-			await settle();
+			await settle(false);
 			const scrollWidth = Math.max(
 				document.documentElement.scrollWidth,
 				document.body.scrollWidth,
 			);
+			marks.set(width, densityMark());
 			const failure = overflowError(width, scrollWidth, window.innerWidth);
 			if (failure) failures.push(failure);
 			failures.push(
@@ -146,6 +156,19 @@ async function visit(): Promise<string[]> {
 	} finally {
 		pins.restore();
 		await page.viewport(innerWidth, innerHeight);
+	}
+	// The phone width draws the touch set and the wider ones the desktop one: a
+	// run that visits both and draws one set at all of them did not unpin.
+	const wide = [...marks].filter(([width]) => width >= WIDTHS[1]);
+	const phone = marks.get(WIDTHS[0]);
+	if (
+		pins.any &&
+		phone !== undefined &&
+		wide.some(([, mark]) => mark === phone)
+	) {
+		failures.push(
+			`density: the token set at ${WIDTHS[0]}px is the one at ${wide[0]?.[0]}px (${phone}); expected the touch set at ${WIDTHS[0]}px and the desktop set at the wider widths; fix: the density global must follow the viewport (byViewport)`,
+		);
 	}
 	return failures;
 }

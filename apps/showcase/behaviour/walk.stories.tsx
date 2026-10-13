@@ -1,4 +1,5 @@
 import {
+	densityMark,
 	findings,
 	focusCovered,
 	rootMargins,
@@ -421,6 +422,27 @@ export const CatchesAFontThatArrivesAfterTheFirstFrame: StoryObj = {
 		} finally {
 			if (real) Object.defineProperty(document, "fonts", real);
 			else Reflect.deleteProperty(document, "fonts");
+		}
+	},
+};
+
+// The test run knows the density followed the width by this mark: it differs
+// between the touch and the desktop set, and a pin on the root decides it.
+export const MarksTheDensityThePageDraws: StoryObj = {
+	render: () => <div data-walk />,
+	play: async () => {
+		const root = document.documentElement;
+		const before = root.getAttribute("data-density");
+		try {
+			root.setAttribute("data-density", "desktop");
+			const desktop = densityMark();
+			root.setAttribute("data-density", "touch");
+			const touch = densityMark();
+			await expect(desktop).not.toBe("");
+			await expect(touch).not.toBe(desktop);
+		} finally {
+			if (before === null) root.removeAttribute("data-density");
+			else root.setAttribute("data-density", before);
 		}
 	},
 };

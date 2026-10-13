@@ -244,6 +244,15 @@ class Scopes {
 	}
 }
 
+// The mark of the token set the page draws now: the first size token's value
+// as the root holds it, which differs between the touch and desktop sets. The
+// test run compares it across widths to know that the density followed them.
+export function densityMark(): string {
+	return getComputedStyle(document.documentElement)
+		.getPropertyValue(`--spacing-${SIZES[0]}`)
+		.trim();
+}
+
 // ── what is drawn ───────────────────────────────────────────────────
 
 interface Seen {
