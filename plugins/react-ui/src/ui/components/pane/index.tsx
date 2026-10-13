@@ -133,7 +133,7 @@ export function Pane({
 	usePaneFocus(paneNode);
 	const [bodyNode, setBodyNode] = useState<HTMLDivElement | null>(null);
 	const body = useRef<HTMLDivElement | null>(null);
-	const stop = useScrolls(bodyNode);
+	useScrolls(bodyNode);
 	const dock = useRef<HTMLDivElement>(null);
 	// The body keeps a log's floor above a docked foot, and its insets: a
 	// Thread in it gives way to a docked sheet only down to two rows.
@@ -215,7 +215,6 @@ export function Pane({
 									body.current = node;
 									setBodyNode(node);
 								}}
-								tabIndex={stop ? 0 : undefined}
 								className={cn(
 									PAGE_BODY,
 									BODY,

@@ -1021,3 +1021,51 @@ export const OpenedByARoute: StoryObj = {
 		await expect(canvas.getByRole("button", { name: "Add" })).toBeVisible();
 	},
 };
+
+function OpensOnPress() {
+	const [open, setOpen] = useState(false);
+	return (
+		<Place>
+			<Pane title="Items">
+				<Button label="Open" onAct={() => setOpen(true)} />
+				{open ? (
+					<Sheet open onClose={() => setOpen(false)} title="Question">
+						<p>Which one?</p>
+					</Sheet>
+				) : null}
+			</Pane>
+		</Place>
+	);
+}
+
+// A Sheet closed by Escape before its own first focus lands, focus still on
+// the body: the page takes focus, never the body. The Escape goes out as the
+// dialog enters the document, before the frame its focus waits for.
+export const EscapedBeforeItsFocusLands: StoryObj = {
+	parameters: { layout: "fullscreen" },
+	render: () => <OpensOnPress />,
+	play: async ({ canvas, canvasElement }) => {
+		await expect(focused()).toBe(document.body);
+		const escaped = new Promise<Element | null>((resolve) => {
+			const watch = new MutationObserver(() => {
+				const dialog = document.querySelector('[role="dialog"]');
+				if (!dialog) return;
+				watch.disconnect();
+				const active = document.activeElement;
+				document.body.dispatchEvent(
+					new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+				);
+				resolve(active);
+			});
+			watch.observe(document.body, { childList: true, subtree: true });
+		});
+		canvas.getByRole("button", { name: "Open" }).click();
+		await expect(await escaped).toBe(document.body);
+		await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+		await waitFor(() =>
+			expect(canvasElement.querySelector("[data-page]")).toContainElement(
+				focused(),
+			),
+		);
+	},
+};

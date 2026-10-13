@@ -18,7 +18,17 @@ const DOCUMENT_RULES = [
 	"skip-link",
 ];
 
+// Axe judges a frame the viewer sees: a play that ends on a press has its
+// state committed but not yet laid out and painted, and what a layout read
+// decides (a scrolling region's tab stop) lands with the paint. The project's
+// hook runs before the addon's, which run last-listed first.
+const painted = () =>
+	new Promise<void>((resolve) =>
+		requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+	);
+
 const preview: Preview = {
+	afterEach: painted,
 	// The test run is desktop density; touch is a toolbar toggle.
 	initialGlobals: { density: "desktop" },
 	globalTypes: {

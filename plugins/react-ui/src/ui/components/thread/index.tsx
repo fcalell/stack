@@ -222,7 +222,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 	const title = use(PageTitle);
 	const log = useRef<HTMLDivElement>(null);
 	const [logNode, setLogNode] = useState<HTMLDivElement | null>(null);
-	const scrolls = useScrolls(logNode);
+	useScrolls(logNode);
 	const content = useRef<HTMLDivElement>(null);
 	const dock = useRef<HTMLDivElement>(null);
 	useFootFocus(dock);
@@ -277,7 +277,6 @@ export function Thread<T>(props: ThreadProps<T>) {
 					role="log"
 					aria-busy={busy}
 					aria-labelledby={title}
-					tabIndex={scrolls ? 0 : undefined}
 					onScroll={(event) => {
 						const { scrollHeight, scrollTop, clientHeight } =
 							event.currentTarget;

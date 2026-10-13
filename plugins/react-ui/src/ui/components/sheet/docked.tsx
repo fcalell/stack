@@ -96,7 +96,7 @@ export function SheetDocked({
 	// What the sheet pins besides its body (its head and foot) and the body's
 	// floor, measured off the sheet.
 	const [pinned, setPinned] = useState({ parts: 0, floor: 0 });
-	const stop = useScrolls(body);
+	useScrolls(body);
 	const [touchedValue, setTouched] = useTouchState();
 	const page = usePageTurn(open, title, description, () => setTouched(false));
 	// A new page opens at its top, not where the last one was scrolled to.
@@ -203,7 +203,6 @@ export function SheetDocked({
 				</div>
 				<div
 					ref={setBody}
-					tabIndex={stop ? 0 : undefined}
 					style={maxHeight === undefined ? undefined : { maxHeight }}
 					className={BODY}
 				>

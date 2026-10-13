@@ -167,7 +167,7 @@ export function SheetBase({
 	const popup = useRef<HTMLDivElement | null>(null);
 	useReturnFocus(open, popup);
 	const [bodyNode, setBodyNode] = useState<HTMLDivElement | null>(null);
-	const stop = useScrolls(bodyNode);
+	useScrolls(bodyNode);
 	const blocked = submit?.blocked !== undefined;
 	// The submit's press stands while it is blocked by the reason it came
 	// under (`@fcalell/ui-core/reason`).
@@ -306,11 +306,7 @@ export function SheetBase({
 			{form === "menu" ? (
 				children
 			) : children ? (
-				<div
-					ref={setBodyNode}
-					tabIndex={stop ? 0 : undefined}
-					className={cn(SHEET_BODY, BODY)}
-				>
+				<div ref={setBodyNode} className={cn(SHEET_BODY, BODY)}>
 					{children}
 				</div>
 			) : null}

@@ -82,7 +82,7 @@ export function Gate({
 	const titleId = useId();
 	const body = useRef<HTMLDivElement>(null);
 	const [pageNode, setPageNode] = useState<HTMLDivElement | null>(null);
-	const stop = useScrolls(pageNode);
+	useScrolls(pageNode);
 	// A step that opens (the page, then each new `title`) hands focus to its
 	// first field; a step with none leaves focus where it is.
 	// biome-ignore lint/correctness/useExhaustiveDependencies: a new title is the step opening
@@ -95,11 +95,7 @@ export function Gate({
 				<HeadingContext value={2}>
 					<div className={FRAME}>
 						<FrameMain>
-							<div
-								ref={setPageNode}
-								tabIndex={stop ? 0 : undefined}
-								className={cn(GATE, PAGE)}
-							>
+							<div ref={setPageNode} className={cn(GATE, PAGE)}>
 								<div
 									ref={body}
 									className={cn(

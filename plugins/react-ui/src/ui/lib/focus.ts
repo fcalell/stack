@@ -133,7 +133,11 @@ export function useReturnFocus(
 		if (!open) return;
 		const mine = ++turn.current;
 		const active = document.activeElement;
-		held.current = region.current?.contains(active) ?? false;
+		// A sheet opened with focus nowhere holds it from the start: its own
+		// first focus lands a frame later, and an Escape before then still
+		// leaves the page to take focus, not the body.
+		held.current =
+			active === document.body || (region.current?.contains(active) ?? false);
 		const from =
 			claimOpener() ??
 			(active instanceof HTMLElement &&

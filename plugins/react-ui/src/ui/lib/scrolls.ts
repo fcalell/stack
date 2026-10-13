@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { isTabbable } from "./focus.ts";
 
 /** Whether a region takes a tab stop of its own: it runs past its box vertically and holds nothing a keyboard reaches, so no other stop scrolls it. */
@@ -30,18 +30,20 @@ const TABBABLE_ATTRIBUTES = [
 	"contenteditable",
 ];
 
-/** Whether a scrolling region takes a tab stop (`takesStop`), measured as it resizes. Its children are watched too, since new content resizes them and not the box; a change to its own children rebinds them. Content swapping anywhere inside it, or an element becoming or ceasing to be tabbable, re-measures it, since a loaded body holds its waiting size and resizes nothing. */
-export function useScrolls(node: HTMLElement | null): boolean {
-	const [stop, setStop] = useState(false);
+/** Gives a scrolling region its tab stop (`takesStop`), measured as it resizes. Its children are watched too, since new content resizes them and not the box; a change to its own children rebinds them. Content swapping anywhere inside it, or an element becoming or ceasing to be tabbable, re-measures it, since a loaded body holds its waiting size and resizes nothing. The stop is set on the node in the observer's own callback, before the frame paints: a state would land a frame later, and a commit inside the callback resizes what it observes. The node takes no `tabIndex` prop, so a render never undoes it. */
+export function useScrolls(node: HTMLElement | null): void {
 	useEffect(() => {
 		if (!node) return;
-		const measure = () =>
-			setStop(
-				takesStop(
-					node,
-					Array.from(node.querySelectorAll<HTMLElement>("*")).some(isTabbable),
-				),
+		const measure = () => {
+			const stop = takesStop(
+				node,
+				Array.from(node.querySelectorAll<HTMLElement>("*")).some(isTabbable),
 			);
+			// Only a change writes: the write is itself a mutation it watches.
+			if (stop === node.hasAttribute("tabindex")) return;
+			if (stop) node.tabIndex = 0;
+			else node.removeAttribute("tabindex");
+		};
 		const resize = new ResizeObserver(measure);
 		const watch = () => {
 			resize.disconnect();
@@ -65,5 +67,4 @@ export function useScrolls(node: HTMLElement | null): boolean {
 			content.disconnect();
 		};
 	}, [node]);
-	return stop;
 }
