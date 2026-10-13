@@ -5,6 +5,7 @@ import {
 	PAGE_BODY_OVER_FOOT,
 	PAGE_HEAD,
 	PAGE_HEAD_ROOM,
+	PAGE_HEAD_TOUCH,
 	PAGE_TITLE_BLOCK,
 	PAGE_TITLE_FLOOR,
 	PAGE_TOP_BAR,
@@ -114,7 +115,7 @@ export function Pane({
 	return (
 		<BackRoute.Provider value={back}>
 			<View className={PANE}>
-				<View className={cn(PAGE_HEAD, far && PAGE_HEAD_ROOM)}>
+				<View className={cn(PAGE_HEAD, PAGE_HEAD_TOUCH, far && PAGE_HEAD_ROOM)}>
 					<View className={cn(PAGE_TOP_BAR, TOP_BAR)}>
 						{lead ? <View className={PAGE_TOP_BAR_START}>{lead}</View> : null}
 						<RNText

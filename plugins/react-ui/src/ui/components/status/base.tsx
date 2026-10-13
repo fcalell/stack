@@ -6,7 +6,6 @@ import {
 	skeleton,
 	statusDot,
 } from "@fcalell/ui-core/variants";
-import type { Ref } from "react";
 import { useWords } from "../../lib/words.tsx";
 import { StatusDot } from "./dot.tsx";
 
@@ -24,14 +23,13 @@ const WORD_WAIT = {
 // room is kept unseen and the bar is a short label wide at most.
 const DOT_ROOM = "invisible shrink-0";
 
-/** What every status draws: the public `Status`, or its loading form a composer draws (a table's waiting status cell), the word's bar at a share of the cell. `short` is drawn in the word's place while `label` stays the name; `word` is the word's element, which a row measures. Outside the package's exports. */
+/** What every status draws: the public `Status`, or its loading form a composer draws (a table's waiting status cell), the word's bar at a share of the cell. `short` is drawn in the word's place while `label` stays the name (a canvas node's). Outside the package's exports. */
 export function StatusBase(
 	props:
 		| {
 				state: StatusState;
 				label?: string;
 				short?: string;
-				word?: Ref<HTMLSpanElement>;
 				waiting?: never;
 		  }
 		| { waiting: keyof typeof WORD_WAIT },
@@ -57,7 +55,6 @@ export function StatusBase(
 		<span className={cn(STATUS, BOX)}>
 			<StatusDot state={props.state} />
 			<span
-				ref={props.word}
 				aria-hidden={props.short === undefined ? undefined : true}
 				className={cn(STATUS_LABEL, WORD)}
 			>

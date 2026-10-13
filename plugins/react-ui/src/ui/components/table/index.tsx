@@ -95,10 +95,14 @@ const FORM = "flex flex-col grow";
 // cells alone, never over a sheet.
 const FRAME = "flex flex-col isolate";
 // On touch every column stands at one width and the grid scrolls sideways
-// under its frozen leading column.
-const SCROLLS = "overflow-x-auto";
-const FIT = "w-full table-fixed";
-const MAX = "w-max table-fixed";
+// under its frozen leading column. A cell focused under that column scrolls
+// clear of it: the scroller's padding at its start is the frozen width (the
+// leading column's short measure, and the tick column's square before it).
+const SCROLLS =
+	"touch:overflow-x-auto touch:scroll-ps-(--container-measure-short)";
+const SCROLLS_TICKED =
+	"touch:overflow-x-auto touch:scroll-ps-[calc(var(--container-measure-short)+var(--spacing-row))]";
+const GRID = "w-full table-fixed touch:w-max";
 const HEAD_CELL = "p-0 font-normal";
 const START = "text-start";
 const END = "text-end";
@@ -163,7 +167,7 @@ const WIDTH: Record<NonNullable<TableColumn["width"]>, string> = {
 	"2/3": "w-2/3",
 	"3/4": "w-3/4",
 };
-const TOUCH_WIDTH = "w-measure-short";
+const TOUCH_WIDTH = "touch:w-measure-short";
 
 // Five loading rows, each bar at a share of its cell: a number's at a
 // quarter, the others by row and by their place among the bars.
@@ -636,23 +640,18 @@ function Grid(props: {
 		frame.current?.querySelector<HTMLElement>(
 			`td[data-row="${row}"][data-column="${column}"]`,
 		);
-	// The cursor's cell stays clear of the frozen columns it scrolls beneath:
-	// the leading column, and the tick column before it.
-	const clear = (cell: HTMLElement) => {
-		const scroller = frame.current;
-		const frozen = cell.parentElement?.children[shift];
-		if (!touch || !scroller || !frozen || Number(cell.dataset.column) <= shift)
-			return;
-		const box = cell.getBoundingClientRect();
-		const under = frozen.getBoundingClientRect().right - box.left;
-		const past = box.right - scroller.getBoundingClientRect().right;
-		if (under > 0) scroller.scrollLeft -= under;
-		else if (past > 0) scroller.scrollLeft += past;
-	};
+	// The cursor's cell takes focus and scrolls clear of the frozen columns it
+	// would stand under, by the scroller's padding at its start; a frozen cell
+	// stands in place, so it scrolls nothing.
 	const focusCell = (row: number, column: number) => {
 		const cell = cellAt(row, column);
-		cell?.focus();
-		if (cell) clear(cell);
+		if (!cell) return;
+		if (column <= shift) {
+			cell.focus();
+			return;
+		}
+		cell.focus({ preventScroll: true });
+		cell.scrollIntoView({ block: "nearest", inline: "nearest" });
 	};
 	// A pick's list gone ends the edit; it hands focus back to its cell.
 	const done = () => setEditing(undefined);
@@ -786,7 +785,10 @@ function Grid(props: {
 
 	return (
 		<div className={FORM}>
-			<div ref={frame} className={cn(TABLE_FRAME, FRAME, touch && SCROLLS)}>
+			<div
+				ref={frame}
+				className={cn(TABLE_FRAME, FRAME, choose ? SCROLLS_TICKED : SCROLLS)}
+			>
 				<table
 					// biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: a table whose keyboard is a cell cursor is the WAI-ARIA grid
 					role="grid"
@@ -795,20 +797,17 @@ function Grid(props: {
 					onFocus={onFocus}
 					onBlur={onBlur}
 					onKeyDown={onKeyDown}
-					className={cn(TABLE, touch ? MAX : FIT)}
+					className={cn(TABLE, GRID)}
 				>
 					<colgroup>
 						{choose ? <col className={TICK_WIDTH} /> : null}
 						{columns.map((column) => (
 							<col
 								key={column.key}
-								className={
-									touch
-										? TOUCH_WIDTH
-										: column.width
-											? WIDTH[column.width]
-											: undefined
-								}
+								className={cn(
+									column.width ? WIDTH[column.width] : undefined,
+									TOUCH_WIDTH,
+								)}
 							/>
 						))}
 					</colgroup>

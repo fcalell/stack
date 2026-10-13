@@ -29,7 +29,7 @@ import {
 	text,
 	treeBleed,
 } from "@fcalell/ui-core/variants";
-import { type KeyboardEvent, type ReactNode, useMemo, useState } from "react";
+import { type KeyboardEvent, type ReactNode, useMemo } from "react";
 import { ageShort } from "../../lib/age.ts";
 import { useClock } from "../../lib/clock.ts";
 import { CodeCut, Runs } from "../../lib/code.tsx";
@@ -366,7 +366,6 @@ export function ListRowBase<V extends string | null = string>({
 	const top = wrap || entry !== undefined;
 	const under = act !== undefined && !top;
 	const column = cn(TEXT, under && TEXT_UNDER);
-	const [metaLine, setMetaLine] = useState<HTMLSpanElement | null>(null);
 	const inline = { label: entry?.label ?? "" };
 	const entryReason = useReasonLine(entry?.act.blocked);
 	const actReason = useReasonLine(act?.blocked);
@@ -561,7 +560,7 @@ export function ListRowBase<V extends string | null = string>({
 			) : (
 				<span className={column}>
 					{titleLine}
-					<span ref={setMetaLine} className={cn(ROW_META_LINE, META_LINE)}>
+					<span className={cn(ROW_META_LINE, META_LINE)}>
 						{lead.length === 0 ? null : (
 							<span className={META_PARTS}>
 								<span
@@ -608,11 +607,7 @@ export function ListRowBase<V extends string | null = string>({
 							</span>
 						)}
 						{status ? (
-							<RowStatusMark
-								status={status}
-								line={metaLine}
-								beside={lead.length > 0}
-							/>
+							<RowStatusMark status={status} beside={lead.length > 0} />
 						) : null}
 						{warning !== undefined ? <WarningMark label={warning} /> : null}
 						{lock !== undefined ? <LockMark reason={lock} labelled /> : null}

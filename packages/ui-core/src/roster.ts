@@ -609,7 +609,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"PAGE_TOP_BAR_END",
 				"PAGE_TITLE_FLOOR",
 				"PAGE_TITLE_BLOCK",
-				"PAGE_HEAD_WRAPS",
+				"PAGE_HEAD_TOUCH",
 				"TEXT.role.title",
 				"PAGE_BODY",
 				"FOOT_DOCKED",
@@ -631,7 +631,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"PAGE_TOP_BAR_END",
 				"PAGE_TITLE_FLOOR",
 				"PAGE_TITLE_BLOCK",
-				"PAGE_HEAD_WRAPS",
+				"PAGE_HEAD_TOUCH",
 				"PAGE_BODY",
 				"PAGE_BODY_OVER_FOOT",
 			],
@@ -1546,7 +1546,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				sizes: ["control-compact"],
 			},
 		},
-		// `fit` is the desktop side sheet's: a form, or a record's details.
+		// `fit` is the desktop card's width: a form, or a record's details.
 		// On touch the submit stands at the head row's end and a blocked
 		// submit's reason or a `failed` sentence under the head.
 		// `form` is a Form's props, drawn after the children in the sheet's
@@ -1575,7 +1575,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			],
 			draws: [
 				"SHEET",
-				"SHEET_SIDE",
+				"SHEET_DESKTOP",
 				"SHEET_CENTERED",
 				"SHEET_HEAD",
 				"SHEET_HEAD_ROW",
@@ -1601,7 +1601,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			],
 			holds: [
 				"SHEET",
-				"SHEET_SIDE",
+				"SHEET_DESKTOP",
 				"SHEET_CENTERED",
 				"SHEET_HEAD",
 				"SHEET_HEAD_ROW",

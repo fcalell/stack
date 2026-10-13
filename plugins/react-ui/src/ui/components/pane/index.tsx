@@ -11,12 +11,7 @@ import {
 	PAGE_BODY_OVER_FOOT,
 	PAGE_HEAD,
 	PAGE_HEAD_ROOM,
-	PAGE_HEAD_WRAPS,
-	PAGE_TITLE_BLOCK,
-	PAGE_TITLE_FLOOR,
 	PAGE_TOP_BAR,
-	PAGE_TOP_BAR_END,
-	PAGE_TOP_BAR_START,
 	text,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useId, useRef, useState } from "react";
@@ -35,7 +30,6 @@ import { DistanceContext, useTouch } from "../../lib/media.ts";
 import { partText } from "../../lib/parts.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
 import { useWords } from "../../lib/words.tsx";
-import { useWraps } from "../../lib/wraps.ts";
 import { IconButtonLink } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 import { Menu } from "../menu/index.tsx";
@@ -61,13 +55,20 @@ const ALONE =
 const BESIDE =
 	"flex place-max-tablet:hidden group-first/pane:hidden group-data-cover/pane:hidden";
 const HEAD = "flex flex-col";
-// On touch the row is the title's: it wraps, so acts that do not fit beside the
-// back act, the title's floor and the gaps drop whole to a second line.
-const ROW = "flex items-center";
-const ROW_TOUCH = "flex flex-wrap items-start";
-const ACTS = "flex shrink-0 items-center gap-acts ms-auto";
-const TITLE = "min-w-0 grow truncate";
-const TITLE_WRAP = "min-w-0 grow";
+// On touch the head carries a step of block padding and the row is the
+// title's: it wraps, so acts that do not fit beside the back act, the title's
+// floor and the gaps drop whole to a second line, and the back act or the
+// switcher reaches the page inset by its start, the acts by their end. The row
+// anchors its items to the top, so a 44 px act centres on the title's first line.
+const HEAD_TOUCH = "touch:py-inside";
+const ROW = "flex items-center touch:flex-wrap touch:items-start";
+const START = "touch:-ms-icon-inset";
+const ACTS = "flex shrink-0 items-center gap-acts ms-auto touch:-me-icon-inset";
+// The title truncates on the desktop; on touch it wraps, with a step of block
+// padding so a wrapped title never butts the head's edges, holding at least two
+// fifths of the row (a structural fraction, never a width).
+const TITLE =
+	"min-w-0 grow truncate touch:min-w-2/5 touch:basis-0 touch:overflow-visible touch:whitespace-normal touch:text-clip touch:py-inside";
 // The body scrolls under the fixed head, taking a tab stop only while it
 // scrolls with nothing tabbable inside. What stands in it stands within the
 // measure at its start, so a label stays near its value and a Save near the
@@ -144,10 +145,9 @@ export function Pane({
 		foot
 	);
 	const fit = touch ? "body" : "bar";
-	const start = touch ? PAGE_TOP_BAR_START : undefined;
 	const goBack =
 		back === undefined ? null : (
-			<span className={cn(ALONE, start)}>
+			<span className={cn(ALONE, START)}>
 				<IconButtonLink
 					icon={backGlyph(touch)}
 					fit={fit}
@@ -166,7 +166,7 @@ export function Pane({
 	// desktop it stands in the sidebar.
 	const pick =
 		touch && !far && switcher && back === undefined ? (
-			<span className={start}>
+			<span className={START}>
 				<SwitcherPick switcher={switcher} touch />
 			</span>
 		) : null;
@@ -176,35 +176,20 @@ export function Pane({
 	const overflow = more?.length ? (
 		<Menu label={words.more} items={more} />
 	) : null;
-	const [titleRef, wrapped] = useWraps();
 	const heading = (
-		<h1
-			id={titleId}
-			ref={touch ? titleRef : undefined}
-			className={cn(
-				text({ role: "title" }),
-				touch ? cn(TITLE_WRAP, PAGE_TITLE_BLOCK, PAGE_TITLE_FLOOR) : TITLE,
-			)}
-		>
+		<h1 id={titleId} className={cn(text({ role: "title" }), TITLE)}>
 			{partText(title)}
 		</h1>
 	);
 	// The head is one tree on both densities, so crossing the density line
 	// keeps its acts and their focus.
 	const head = (
-		<header
-			className={cn(
-				PAGE_HEAD,
-				far && PAGE_HEAD_ROOM,
-				touch && wrapped && PAGE_HEAD_WRAPS,
-				HEAD,
-			)}
-		>
-			<div className={cn(PAGE_TOP_BAR, touch ? ROW_TOUCH : ROW)}>
+		<header className={cn(PAGE_HEAD, far && PAGE_HEAD_ROOM, HEAD_TOUCH, HEAD)}>
+			<div className={cn(PAGE_TOP_BAR, ROW)}>
 				{goBack}
 				{pick}
 				{heading}
-				<span className={cn(ACTS, touch && PAGE_TOP_BAR_END)}>
+				<span className={ACTS}>
 					{acts}
 					{overflow}
 					{close}

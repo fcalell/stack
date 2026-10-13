@@ -23,7 +23,7 @@ export interface SheetProps extends Closed {
 	foot?: string;
 	/** What the `submit`'s last run failed with (a sentence; wraps): an error in the line a blocked reason keeps (under the head's submit, or under the docked foot's act), the act ready again. Clear it to dismiss; a blocked `submit`'s reason stands before it. */
 	failed?: string;
-	// What the desktop side sheet holds; on the phone a pane's title steps
+	// What the desktop card holds; on the phone a pane's title steps
 	// down to body 500.
 	fit?: SheetFit;
 	/** A form the body ends with, drawn in the sheet's column: its `bar` stands in the sheet's foot, pinned while the fields scroll, and the sheet asks nothing when it closes. Give the form's `bar` or the sheet's `submit` as the act that completes the task, not both. */

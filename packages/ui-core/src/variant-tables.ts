@@ -747,19 +747,16 @@ export const MENU_LABEL = matrix({
 
 // ── Sheet ───────────────────────────────────────────────────────────
 
-// The sheet on the desktop, raised over the scrim. `fit` is what it holds: a
-// form at the sheet's width, hung at the end with its leading corners rounded;
-// a record's details at the pane's; or a short form
-// as a card at the sheet's width too (the sheet pattern's 610 to 730, not the
-// dialog's), centred, its hairline and radius on all four sides (the Sheet
-// chooses it by measuring its content).
-export const SHEET_SIDE = matrix({
-	base: "bg-raised border-edge-raised shadow-modal",
+// The sheet on the desktop, raised over the scrim: a card centred over the
+// page, its hairline and radius on all four sides. `fit` is what it holds: a
+// form at the sheet's width (the sheet pattern's 610 to 730, not the dialog's)
+// or a record's details at the pane's.
+export const SHEET_DESKTOP = matrix({
+	base: "bg-raised border border-edge-raised rounded-sheet shadow-modal",
 	variants: {
 		fit: {
-			form: "w-sheet border-l rounded-l-sheet",
-			pane: "w-pane border-l rounded-l-sheet",
-			short: "w-sheet border rounded-sheet",
+			form: "w-sheet",
+			pane: "w-pane",
 		},
 	},
 	defaultVariants: { fit: "form" },

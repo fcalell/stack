@@ -8,7 +8,6 @@ import {
 	SHEET_DOCKED_FOOT,
 	SHEET_DOCKED_HEAD,
 	SHEET_HEAD_ROW,
-	THREAD_COLUMN,
 	text,
 } from "@fcalell/ui-core/variants";
 import {
@@ -53,8 +52,10 @@ const BODY =
 	"min-h-0 overflow-y-auto overscroll-contain focus-visible:-outline-offset-2";
 const CONTENT = "flex flex-col";
 const FOOT = "shrink-0";
-const FOOT_ROW = "flex items-center justify-end";
-const FOOT_STACK = "flex flex-col";
+const FOOT_ROW =
+	"flex items-center justify-end touch:flex-col touch:items-stretch";
+// On the desktop the sheet stands within the thread's column, as the field does.
+const COLUMN = "max-w-measure touch:max-w-none";
 const FOOT_LINE = "grow min-w-0";
 
 /** What a docked `Sheet` draws: the public `Sheet`'s props, standing in a foot, and the foot's measured `region`. Outside the package's exports: a `Pane` and a `Thread` draw it for their `sheet`. */
@@ -170,7 +171,7 @@ export function SheetDocked({
 				}}
 				// A field inside takes input: a blocked act says its reason.
 				onChange={touchedValue.touch}
-				className={cn(!touch && THREAD_COLUMN, ROOT)}
+				className={cn(COLUMN, ROOT)}
 			>
 				<div className={cn(SHEET_HEAD_ROW, HEAD)}>
 					{back ? (
@@ -218,13 +219,7 @@ export function SheetDocked({
 					</div>
 				</div>
 				{line || bar ? (
-					<div
-						className={cn(
-							SHEET_DOCKED_FOOT,
-							FOOT,
-							touch ? FOOT_STACK : FOOT_ROW,
-						)}
-					>
+					<div className={cn(SHEET_DOCKED_FOOT, FOOT, FOOT_ROW)}>
 						{line}
 						{bar}
 					</div>

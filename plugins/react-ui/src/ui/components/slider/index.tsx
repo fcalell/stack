@@ -10,7 +10,7 @@ import {
 	SLIDER_TRACK,
 	SLIDER_VALUE,
 } from "@fcalell/ui-core/variants";
-import { use } from "react";
+import { type CSSProperties, use } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { useGroupPart } from "../../lib/group.ts";
 import { LoadingContext } from "../../lib/loading.ts";
@@ -23,8 +23,12 @@ const VALUE = "shrink-0 data-disabled:text-ink-disabled";
 const TRACK = "group relative flex items-center";
 const FILL =
 	"grow group-hover:bg-toggle-on-hover group-active:bg-toggle-on-hover group-data-disabled:bg-ink-disabled";
+// Base UI places an edge-aligned thumb from a measure it takes after mount and
+// hides it until then, so the thumb stands by CSS from the value (`--share`,
+// the value's share of the range) on the first frame: the fill's width plus half
+// the thumb, the point the gap between the fill and the rest centres on.
 const THUMB =
-	"relative shrink-0 overflow-hidden has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ring data-disabled:border-edge data-disabled:bg-fill-disabled";
+	"[inset-inline-start:calc((100%-var(--spacing-thumb))*var(--share)+var(--spacing-thumb)/2)]! visible! relative shrink-0 overflow-hidden has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ring data-disabled:border-edge data-disabled:bg-fill-disabled";
 const WASH =
 	"absolute inset-0 not-in-data-disabled:group-hover:bg-wash-hover not-in-data-disabled:group-active:bg-wash-press";
 const GAP = "shrink-0 size-thumb";
@@ -62,8 +66,11 @@ export function Slider({
 	useGroupPart();
 	if (waiting) return <SliderWait />;
 	// The fill and the rest share the track less the thumb in proportion to
-	// the value, and the thumb, positioned by Base UI at the same point with
-	// `edge` alignment, sits in the gap between them, so neither runs under it.
+	// the value, and the thumb, held at the same point with `edge` alignment (the
+	// pointer maps the track less the thumb), sits in the gap between them, so
+	// neither runs under it.
+	const share =
+		max > min ? Math.min(1, Math.max(0, (value - min) / (max - min))) : 0;
 	return (
 		<Base.Root
 			value={value}
@@ -84,7 +91,10 @@ export function Slider({
 				<Base.Label className={cn(SLIDER_LABEL, LABEL)}>{label}</Base.Label>
 				<Base.Value className={cn(SLIDER_VALUE, VALUE)} />
 			</div>
-			<Base.Control className={cn(SLIDER_TRACK, TRACK)}>
+			<Base.Control
+				className={cn(SLIDER_TRACK, TRACK)}
+				style={{ "--share": share } as CSSProperties}
+			>
 				<span
 					className={cn(SLIDER_FILL, FILL)}
 					style={{ flexGrow: value - min }}

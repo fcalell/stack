@@ -530,7 +530,7 @@ a tick with no animation, never jumped to full.
   `PAGE_TITLE_FLOOR` (two fifths of the row, `basis-0` so it wraps beside the leading act and the
   acts rather than pushing them down); the title carries a step of block padding above and below its
   lines (`PAGE_TITLE_BLOCK`, so a single line still fills the 44 px strip), the head takes a step more
-  over the row while the title wraps (`PAGE_HEAD_WRAPS`, a measured fact, `useWraps`), and the row
+  over the row (`PAGE_HEAD_TOUCH`, always on touch: the web spells it `touch:py-inside`), and the row
   hangs its items from the top so a 44 px act centres on the title's first line and the acts span,
   `shrink-0 ms-auto`, drops whole to a second line at the row's end at 44 px when it does not fit
   beside the leading act, the floor and the gaps (at 320 with three acts it wraps, at 390 it fits).
@@ -917,6 +917,11 @@ a tick with no animation, never jumped to full.
   `data-page` mark of a Pane) in the layout phase and reads whether the page is `tablet`
   wide through one external store (`usePageTablet`), so the choice re-renders before paint; a Table
   outside a page draws the list.
+  On touch the grid's scroller carries `scroll-padding-inline-start` of the frozen width (the short
+  measure, and the tick column's square before it), and the cursor's cell takes focus with
+  `preventScroll` then `scrollIntoView` at `nearest`, which honours that padding, so a cell never
+  stands under the frozen column and nothing measures; a frozen cell scrolls nothing, since it stands
+  in place.
 - A thread is a molecule (`Thread`), a collection: its Messages from `query` (with `sentence`) or
   `items` (waiting on `loading`) through the `message` map, one function per `Message` slot (`key`,
   `author`, `name`, `body`, `at`, `attachments` and `meta` for a turn, `onOpen` returning a system
@@ -962,6 +967,16 @@ a tick with no animation, never jumped to full.
   `null` at the end), which it draws in the log's region over its docked foot. The layer is anchored
   inside that region, never hung above the foot by `bottom-full`, because Android does not hit-test
   a child outside its parent's bounds.
+  On the web the layer is a size container, absolute so its height is the region's whatever the
+  content, whose font size is the act's reach (the act, a pair above the foot, and the focus ring),
+  and the act is `invisible` under `@container (height < 1em)`: a region too short for it leaves
+  the act out of the tab order and the tree, with no measure.
+- A web `Slider`'s thumb stands by CSS from the value on the first frame. Base UI places an
+  edge-aligned thumb from a measure it takes after mount and hides it until then, so the thumb
+  would jump; the thumb's start is the fill's width plus half the thumb (`--share`, the value's
+  share of the range, set on the control), over Base UI's inline style, and it stays visible.
+  Base UI's pointer and keyboard handling is kept: it maps the track less the thumb, as the
+  fill and the rest do.
 - A content molecule derives once per input: `Prose` lexes and folds its markdown, `Diff` runs its
   patch, `ProseDiff` its word diff and runs, and `QrCode` its encoding and module path, each
   memoised on its text and skipped while it waits (a waiting QR tile draws a version 2 code's 25
@@ -1122,25 +1137,13 @@ a tick with no animation, never jumped to full.
   status's gap in), in a box the meta line's height (`LINE_BOX` `meta`, `h-lh`; a `Strut` on the
   phone), so nothing shifts sideways when the word arrives, yielding to the first part
   as the status does, so nothing moves when it answers; it works in a `known` List and in a plain
-  `ListRow`. `StatusMark.short` is the status's words said shorter ("5 min ago"), drawn in the
-  label's place only on a `ListRow`'s meta line and only while the long form would be cut; `label`
-  stays the name (read by assistive tech beside the visible short form). On the web the long form
-  is whole too wherever the line holds it beside the first part's floor, so the short form draws only
-  where it would not (the long form is cut); on the phone the short form is what the app offered to
-  read whole, so it takes no part in the meta line's shared overflow (`shrink-0`): the first part
-  yields for it, where the long form shares the overflow with the first part. A `DefinitionRow`'s
-  status value stays whole as well, the label wrapping to the room it leaves, held to three quarters
-  of the line.
-  Stack cannot reword an
-  app's sentence and a floor in characters leaves a fragment, so the app offers the words. The long
-  form is the first paint, measured before paint (web: a layout effect reads the label's
-  `scrollWidth` against its `clientWidth` and a `ResizeObserver` watches the meta line; phone: an
-  invisible twin `Text` at the word's width reports `onTextLayout` lines past one where the visible
-  word truncates, since a truncated line's report differs between platforms). The decision rests on
-  the meta line's width alone, never on the form drawn, or the two would flip: `shortHeld`
-  (`./list-state`) holds the width at which the long form was cut, draws the short form while the
-  line is no wider, and tries the long form again only on a wider line; a new `label` or `short`
-  clears it.
+  `ListRow`. A row's status has one form, its word: `StatusMark` is `{ state, label }`, held whole
+  on the meta line before the later parts and cut, its word truncating, only where the line is out of
+  room beyond the first part's floor. Nothing measures the line, so no
+  second form can flip against the first. A canvas node's status keeps a `short` of its own (the
+  node's `status` is `StatusMark & { short? }`): the word beside the dot, where the dot alone
+  otherwise stands for the status. A `DefinitionRow`'s status value stays whole as well, the label
+  wrapping to the room it leaves, held to three quarters of the line.
 - A row, a fact or a field carries where it stands in a change set as one `change?: ChangeKind`
   (`added`, `changed`, `removed`, `unchanged`, `stale`, in `descriptors.ts`, the one `ChangeKind`;
   the change cell's own kinds are the subset `ChangeCellKind`) across `ListRow`, `DefinitionRow` and
@@ -1881,17 +1884,14 @@ a tick with no animation, never jumped to full.
   nothing. A `Form` in a sheet asks nothing (the sheet closes on its own acts), and two edited
   forms on one page each ask. Rejected: a prop or a `Form` variant (every edited form wants it),
   a capture-phase anchor interceptor (a router push and a back never reach it) and block-then-replay.
-- A desktop Sheet at the default `fit` is a centred card (`sheetSide` `fit: short`: `w-sheet`,
-  `rounded-sheet`, a border on all four sides, `LAYER_CENTRED` and `CENTRED_MOTION`) when its
-  content at natural height (head, body and foot, no cap) is at most the layer's height less the
-  page inset above and below, and the full-height side sheet otherwise. The popup mounts as the
-  card and a layout effect on its first mount measures it before paint, switching to the side
-  sheet in the same commit; the answer is held until the sheet is gone, so a form that grows stays
-  a card with its body scrolling between a pinned head and foot, a side sheet that shrinks stays
-  one, and a wizard keeps its first page's form. `fit: short` is the Sheet's own choice, outside the
-  public `SheetFit`; `fit="pane"` and `form="centred"` (`SHEET_CENTERED`, a decision's cell) are
-  unchanged, and touch is the bottom sheet. This reverses 003-147's card hung at the end edge. A
-  sheet's title wraps beside its acts at every density and never ends in an ellipsis. A sheet's title wraps beside its acts at every density and never ends in an ellipsis.
+- A desktop Sheet is always a centred card (`SHEET_DESKTOP`: `w-sheet`, or `w-pane` at
+  `fit: "pane"`, `rounded-sheet`, a border on all four sides, `LAYER_CENTRED` with the page inset
+  above and below, `CENTRED_MOTION`), capped at the layer's height with its body scrolling between
+  a pinned head and foot. Nothing is measured: a form that grows or a wizard's next page stays
+  the card. `form="centred"` (`SHEET_CENTERED`, a decision's cell) is unchanged, and touch is the
+  bottom sheet. The full-height side sheet and the measure that chose it (`useShortOrSide`) are
+  gone; this reverses 003-147's card hung at the end edge. A sheet's title wraps beside its acts at
+  every density and never ends in an ellipsis.
 - A sheet is content-tall and grows with its content. On the phone every sheet sizes dynamically
   (gorhom's `enableDynamicSizing`) up to a cap, the screen under its top inset
   (`maxDynamicContentSize`), the body in the one `BottomSheetScrollView` so past the cap it

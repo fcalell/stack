@@ -249,7 +249,8 @@ export const ActsShareTheTitleRow4At320 = row(320, 4, true);
 export const ActsShareTheTitleRow4At390 = row(390, 4);
 
 // A touch Pane whose title wraps pads it a step above and below its lines and
-// its bar a step more; the back act and the acts hang from the first line.
+// its head a step more (as every touch head does); the back act and the acts
+// hang from the first line.
 function wrapped(width: number): StoryObj {
 	return {
 		...viewport(width),
@@ -358,7 +359,7 @@ function titled(width: number): StoryObj {
 			await expect(end.bottom).toBeLessThanOrEqual(head.bottom);
 			await expect(lines).toBeGreaterThan(1);
 			// A wrapped title is padded a step above and below its lines (8 px), the
-			// head a step more; the acts hang from the first line, not the head's
+			// head a step more, as a one-line head is; the acts hang from the first line, not the head's
 			// middle; the title keeps two fifths of the row.
 			const line = Number.parseFloat(getComputedStyle(title).lineHeight);
 			const step = Number.parseFloat(getComputedStyle(title).paddingTop);
@@ -376,7 +377,8 @@ function titled(width: number): StoryObj {
 			await expect(text.width).toBeGreaterThanOrEqual(
 				(head.width - 32) * 0.4 - 1,
 			);
-			// The one-line form: head 45, acts 44, centred on the line.
+			// The one-line form: the strip's 45 under the head's step above and
+			// below, acts 44, centred on the line.
 			const shortHead = short.getBoundingClientRect();
 			const shortTitle = short.querySelector("h1")?.getBoundingClientRect();
 			const shortAct = short
@@ -384,7 +386,7 @@ function titled(width: number): StoryObj {
 				?.getBoundingClientRect();
 			if (!shortTitle || !shortAct)
 				throw new Error("the short Pane is not drawn");
-			await expect(shortHead.height).toBeCloseTo(45, 0);
+			await expect(shortHead.height).toBeCloseTo(45 + 2 * step, 0);
 			await expect(shortAct.height).toBeCloseTo(44, 0);
 			await expect(shortTitle.left).toBeCloseTo(16, 0);
 			await expect(shortAct.top + shortAct.height / 2).toBeCloseTo(

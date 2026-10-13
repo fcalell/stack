@@ -83,11 +83,6 @@ export interface StatusMark {
 	state: StatusState;
 	// The state's word (a word; truncates when its line is out of room).
 	label: string;
-	// The word said shorter ("5 min ago"); a row's meta line draws it in place
-	// of `label` when the line is out of room for the long form, and a canvas
-	// node draws it beside its dot (which alone otherwise stands for the status,
-	// named by `label`). `label` stays the name.
-	short?: string;
 }
 
 // A row's status as its map gives it: the mark, or `{ loading: true }` while
@@ -685,7 +680,9 @@ export interface CanvasNode {
 	line?: string;
 	number?: number;
 	count?: number;
-	status?: StatusMark;
+	// The node's status: its dot, named by `label`. `short` is the word said
+	// shorter ("Stale"), which the node draws beside the dot; `label` stays the name.
+	status?: StatusMark & { short?: string };
 	// What is wrong with the node, in `line`'s place (a short phrase; truncates).
 	problem?: string;
 	off?: boolean;

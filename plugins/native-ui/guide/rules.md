@@ -215,9 +215,7 @@ A row's marks are named props on the meta line, at most one each, in order: `sta
 act that clears a warning is the row's `act`. A `status` whose own read has not answered is
 `{ loading: true }` (a `RowStatus`, from a `List`'s `row` map or a `ListRow`): the row is the
 two-line row from its first frame and the status stands as a bar of its height starting where the word will, so the row keeps its
-height when it answers. A status the app can say shorter gives `short` ("5 min ago") beside its
-`label`: the row draws `short` in the label's place while the label would be cut on its meta line
-(the short form keeps its width, the first part taking the overflow), and `label` stays its name; stack never shortens a label itself.
+height when it answers. A status has one form, its `label`, truncating where the meta line is out of room. Keep a status word short; stack never shortens a label itself.
 
 Where a row, a fact or a field stands in a change set is its `change` (`ChangeKind`: `added`,
 `changed`, `removed`, `unchanged`, `stale`), one prop on `ListRow`, `DefinitionRow` and `FormField`

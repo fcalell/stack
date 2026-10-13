@@ -12,8 +12,7 @@ import {
 	SHEET_HEAD_ROW,
 	SHEET_HEAD_TITLE,
 	type SheetFit,
-	type SheetSideFit,
-	sheetSide,
+	sheetDesktop,
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
@@ -21,7 +20,6 @@ import {
 	type ReactNode,
 	type RefObject,
 	use,
-	useCallback,
 	useId,
 	useMemo,
 	useRef,
@@ -46,16 +44,14 @@ import { IconButtonBase } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 
 // The layer the sheet stands on over the scrim: from the bottom edge on
-// touch, at the end on the desktop, centred for a decision.
+// touch, centred on the desktop.
 const BACKDROP = "fixed inset-0 z-(--layer-sheet)";
 // Motion, on transform and opacity alone: a sheet enters at the slow rung
-// and leaves at the base rung, the side sheet from its end, the bottom sheet
-// from its edge, the centred one rising a pair as it fades; the scrim fades
-// on the same rung and curve. Reduced motion zeroes the rungs.
+// and leaves at the base rung, the bottom sheet from its edge, the centred one
+// rising a pair as it fades; the scrim fades on the same rung and curve.
+// Reduced motion zeroes the rungs.
 const SCRIM_MOTION =
 	"transition-opacity duration-slow ease-out data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:duration-base data-ending-style:ease-in";
-const SIDE_MOTION =
-	"transition-transform duration-slow ease-out data-starting-style:translate-x-full data-ending-style:translate-x-full data-ending-style:duration-base data-ending-style:ease-in";
 const BOTTOM_MOTION =
 	"transition-transform duration-slow ease-out data-starting-style:translate-y-full data-ending-style:translate-y-full data-ending-style:duration-base data-ending-style:ease-in";
 const CENTRED_MOTION =
@@ -64,16 +60,13 @@ const CENTRED_MOTION =
 // one, so a press above it still dismisses.
 const LAYER_BOTTOM =
 	"fixed inset-0 z-(--layer-sheet) flex flex-col justify-end pt-page";
-// A desktop sheet is the side sheet at the end edge, the full height of the
-// layer, or, when its content at natural height fits the layer less the page
-// inset above and below, a centred sheet over the page (`LAYER_SHORT` keeps that
-// inset). Either is capped at the layer's height, its body scrolling.
-const LAYER_SIDE =
-	"fixed inset-0 z-(--layer-sheet) flex items-stretch justify-end";
-const BOX_SIDE = "max-h-full";
+// A desktop sheet is a card centred over the page, capped at the layer's height
+// less the page inset above and below (`LAYER_CARD` keeps that inset), its body
+// scrolling. A decision is centred with no cap of its own.
 const LAYER_CENTRED =
 	"fixed inset-0 z-(--layer-sheet) flex items-center justify-center";
-const LAYER_SHORT = "py-page";
+const LAYER_CARD = "py-page";
+const BOX_CARD = "max-h-full";
 const BOX = "relative flex flex-col";
 // A view stands over the whole layer, fading in with the scrim. It takes no
 // press, so the layer around its content hears one as a press on the scrim
@@ -96,60 +89,18 @@ const TITLE_BLOCK = "flex flex-col grow min-w-0";
 const TITLE_SLOT = "flex items-center min-w-0";
 const TITLE = "min-w-0 wrap-break-word";
 // The desktop head is a two-line row tall (the title over its description)
-// whether or not the description stands.
-const HEAD_ROW_TALL = "min-h-row-2";
+// whether or not the description stands; on touch the row is the acts'.
+const HEAD_ROW_TALL = "min-h-row-2 touch:min-h-0";
 // The body takes a tab stop only while it scrolls with nothing tabbable inside.
 const BODY =
 	"flex flex-col grow min-h-0 overflow-y-auto overscroll-contain focus-visible:-outline-offset-2";
-// The side sheet's foot carries the raised ground to the box's corner, so it
-// follows the box's radius: the centred sheet's two bottom corners, the side sheet's one.
-const FOOT_SIDE = "rounded-bl-sheet";
-const FOOT_SHORT = "rounded-b-sheet";
-const FOOT_ROW = "flex items-center";
-const FOOT_STACK = "flex flex-col";
-const FOOT_LINE = "flex items-center min-w-0";
-const FOOT_LINE_ROW = "flex items-center min-w-0 grow";
-const SPACER = "grow";
-
-// Whether a desktop sheet is centred or the side sheet is decided once
-// per open, on the popup's first mount before paint: the popup mounts centred,
-// its content is measured at natural height (no cap) against the layer
-// less its page inset, and a longer one is switched to the side sheet in the
-// same commit. The answer is held until the sheet is gone, so a form that grows
-// stays centred with its body scrolling, a side sheet that shrinks stays one,
-// and a wizard keeps its first page's form.
-function useShortOrSide(
-	open: boolean,
-	measured: boolean,
-	popup: RefObject<HTMLDivElement | null>,
-) {
-	const [held, setHeld] = useState<"short" | "side">();
-	const [wasOpen, setWasOpen] = useState(open);
-	if (open !== wasOpen) {
-		setWasOpen(open);
-		if (open) setHeld(undefined);
-	}
-	const settle = useCallback(
-		(node: HTMLDivElement | null) => {
-			popup.current = node;
-			if (!(node && measured)) return;
-			const layer = node.parentElement;
-			if (!layer) return;
-			const style = getComputedStyle(layer);
-			const room =
-				layer.clientHeight -
-				Number.parseFloat(style.paddingTop) -
-				Number.parseFloat(style.paddingBottom);
-			const cap = node.style.maxHeight;
-			node.style.maxHeight = "none";
-			const natural = node.getBoundingClientRect().height;
-			node.style.maxHeight = cap;
-			setHeld((was) => was ?? (natural <= room ? "short" : "side"));
-		},
-		[popup, measured],
-	);
-	return [held, settle] as const;
-}
+// The card's foot carries the raised ground to the box's corners, so it follows
+// the box's radius; on touch the box rounds its top only. The foot is a row
+// on the desktop, a stack on touch, and its line grows beside the acts in the row.
+const FOOT =
+	"flex items-center rounded-b-sheet touch:flex-col touch:items-stretch touch:rounded-b-none";
+const FOOT_LINE = "flex items-center min-w-0 grow touch:grow-0";
+const SPACER = "grow touch:hidden";
 
 /** What every sheet form draws: the public `Sheet`, the confirm and a touch `Menu`. Outside the package's exports. */
 export interface SheetBaseProps {
@@ -181,7 +132,7 @@ export interface SheetBaseProps {
 	children?: ReactNode;
 }
 
-/** A sheet over the scrim: on touch raised from the bottom edge, its submit at the head's end where a keyboard would cover a bar and a blocked submit's reason under the head; on the desktop at the end (a form, or a Pane at `fit: pane`) with the submit after Cancel in the foot, or centred for a decision. Base UI's dialog traps focus and closes on Escape and on a press outside. */
+/** A sheet over the scrim: on touch raised from the bottom edge, its submit at the head's end where a keyboard would cover a bar and a blocked submit's reason under the head; on the desktop a card centred over the page (a form, or a Pane at `fit: pane`), capped at the viewport less the page inset, its body scrolling, with the submit after Cancel in the foot, or a decision centred. Base UI's dialog traps focus and closes on Escape and on a press outside. */
 export function SheetBase({
 	open,
 	onClose,
@@ -228,14 +179,6 @@ export function SheetBase({
 	const iconFit = touch ? "body" : "bar";
 	const centred = form === "centred" && !touch;
 	const view = form === "view";
-	// A form on the desktop at the default fit is centred or a side sheet by its
-	// height; a pane and a decision keep theirs.
-	const sized = !(touch || view || form) && fit !== "pane";
-	const [line, settle] = useShortOrSide(open, sized, popup);
-	const short = sized && line !== "side";
-	// The frame the sheet is measured in plays no motion: the form it settles
-	// on enters, not the one it was measured as.
-	const measuring = sized && line === undefined;
 	// A decision draws no close act: its acts dismiss it.
 	const close = acts ? null : (
 		<Dialog.Close
@@ -303,7 +246,7 @@ export function SheetBase({
 			className={cn(
 				SHEET_HEAD_ROW,
 				HEAD_ROW,
-				!(touch || centred) && HEAD_ROW_TALL,
+				!centred && HEAD_ROW_TALL,
 				headSubmit && HEAD_ROW_WRAP,
 			)}
 		>
@@ -327,20 +270,14 @@ export function SheetBase({
 		</ActFailed>
 	) : null;
 	const footLine = foot ? (
-		<div className={touch ? FOOT_LINE : FOOT_LINE_ROW}>
+		<div className={FOOT_LINE}>
 			<p className={text({ role: "meta" })}>{foot}</p>
 		</div>
 	) : null;
 	const footer =
 		footLine || actionBar ? (
-			<div
-				className={cn(
-					SHEET_FOOT,
-					touch ? FOOT_STACK : FOOT_ROW,
-					!touch && (short ? FOOT_SHORT : FOOT_SIDE),
-				)}
-			>
-				{footLine ?? (touch ? null : <div className={SPACER} />)}
+			<div className={cn(SHEET_FOOT, FOOT)}>
+				{footLine ?? <div className={SPACER} />}
 				{actionBar}
 			</div>
 		) : null;
@@ -387,23 +324,13 @@ export function SheetBase({
 			? cn(SHEET, BOX, BOX_BOTTOM, tall && BOX_TALL, BOTTOM_MOTION)
 			: centred
 				? cn(SHEET_CENTERED, BOX, BOX_FLOAT, CENTRED_MOTION)
-				: short
-					? cn(
-							sheetSide({ fit: "short" satisfies SheetSideFit }),
-							BOX,
-							BOX_FLOAT,
-							BOX_SIDE,
-							!measuring && CENTRED_MOTION,
-						)
-					: cn(sheetSide({ fit }), BOX, BOX_FLOAT, BOX_SIDE, SIDE_MOTION);
+				: cn(sheetDesktop({ fit }), BOX, BOX_FLOAT, BOX_CARD, CENTRED_MOTION);
 	const layer =
 		view || centred
 			? LAYER_CENTRED
-			: short
-				? cn(LAYER_CENTRED, LAYER_SHORT)
-				: touch
-					? LAYER_BOTTOM
-					: LAYER_SIDE;
+			: touch
+				? LAYER_BOTTOM
+				: cn(LAYER_CENTRED, LAYER_CARD);
 	return (
 		<Dialog.Root
 			handle={handle}
@@ -429,7 +356,7 @@ export function SheetBase({
 					className={layer}
 				>
 					<Dialog.Popup
-						ref={settle}
+						ref={popup}
 						// A field and an act take no ref (their props are closed), so the
 						// popup finds them. A decision opens on its way out: on touch the
 						// stack draws the filled act first, so the first tabbable is not it.

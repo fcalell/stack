@@ -231,18 +231,18 @@ const typeAndRun = (stage: HTMLElement) =>
 		);
 	});
 
-// The side sheet (the bottom sheet on touch) in its four states (the failed
+// The desktop card (the bottom sheet on touch) in its four states (the failed
 // one a line under the act in the foot, under the head's act on touch) on its
 // form cell, a second page with back on the body icon act cell, the pane fit on the
 // pane cell (two Sections in its body, a sections gap apart), and the confirm on the primary act cell: its typed name blocked
-// on `disabled` (the reason shown as the side sheet's is), typed and its act
+// on `disabled` (the reason shown as the card's is), typed and its act
 // running on `loading`. The rows inside are context. The bar fit cell draws the
 // docked form, since the docked foot draws no matrix cell of its own: a
 // conversation with a four-question sheet in its foot at a phone's height.
 export function drawSheet(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
 	const { state } = frame;
-	if (cell === "SHEET_SIDE.fit.form")
+	if (cell === "SHEET_DESKTOP.fit.form")
 		return (
 			<Stage contain ready={state === "disabled" ? pressSubmit : undefined}>
 				<Sheet
@@ -277,7 +277,7 @@ export function drawSheet(frame: ShowcaseFrame) {
 				</Sheet>
 			</Stage>
 		);
-	if (cell === "SHEET_SIDE.fit.pane" && state === "rest")
+	if (cell === "SHEET_DESKTOP.fit.pane" && state === "rest")
 		return (
 			<Stage contain>
 				<Sheet open onClose={act} title="Details" fit="pane">

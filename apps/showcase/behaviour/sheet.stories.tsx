@@ -375,8 +375,8 @@ const DESKTOP_900 = {
 	},
 } satisfies StoryObj;
 
-// A desktop Sheet whose content at natural height fits the viewport is a card
-// centred over the page at the sheet's width, its foot on screen.
+// A desktop Sheet is a card centred over the page at the sheet's width, its
+// foot on screen.
 export const ShortSheetIsACentredCard: StoryObj = {
 	...DESKTOP_900,
 	render: () => <Page />,
@@ -436,9 +436,10 @@ function LongPage() {
 	);
 }
 
-// A form past the viewport stays the full-height side sheet at the end edge,
-// its body scrolling between the head and the foot, which stay on screen.
-export const LongFormStaysASideSheet: StoryObj = {
+// A form past the viewport stays the centred card, capped at the viewport less
+// the page inset above and below, its body scrolling between the head and the
+// foot, which stay on screen.
+export const LongFormStaysACappedCard: StoryObj = {
 	...DESKTOP_900,
 	render: () => <LongPage />,
 	play: async ({ canvas, userEvent }) => {
@@ -446,16 +447,21 @@ export const LongFormStaysASideSheet: StoryObj = {
 			canvas.getByRole("button", { name: "Rename domain" }),
 		);
 		const dialog = await screen.findByRole("dialog", { name: "Rename domain" });
+		const probe = document.createElement("div");
+		probe.className = "pt-page";
+		document.body.append(probe);
+		const inset = Number.parseFloat(getComputedStyle(probe).paddingTop);
+		probe.remove();
 		await waitFor(() =>
-			expect(dialog.getBoundingClientRect().right).toBe(window.innerWidth),
+			expect(dialog.getBoundingClientRect().top).toBeCloseTo(inset, 0),
 		);
 		const box = dialog.getBoundingClientRect();
-		expect(box.top).toBe(0);
-		expect(box.height).toBe(window.innerHeight);
+		expect(box.height).toBeCloseTo(window.innerHeight - 2 * inset, 0);
+		expect(
+			Math.abs(box.left + box.width / 2 - window.innerWidth / 2),
+		).toBeLessThan(1.5);
 		const save = screen.getByRole("button", { name: "Save" });
-		expect(save.getBoundingClientRect().bottom).toBeLessThanOrEqual(
-			window.innerHeight,
-		);
+		expect(save.getBoundingClientRect().bottom).toBeLessThanOrEqual(box.bottom);
 	},
 };
 
@@ -904,7 +910,7 @@ export const DockedLeavesTheLogItsFloor: StoryObj = {
 	tags: ["touch"],
 	globals: { density: "touch" },
 	parameters: { layout: "fullscreen" },
-	render: () => <BannerQuestion height={645} tabs={TABS} />,
+	render: () => <BannerQuestion height={661} tabs={TABS} />,
 	play: async ({ canvas }) => {
 		const body = bodyOf(await canvas.findByRole("radiogroup"));
 		const log = canvas.getByRole("log");

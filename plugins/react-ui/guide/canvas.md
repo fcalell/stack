@@ -133,7 +133,7 @@ A node says its state in its own text or mark, never by colour alone.
   its words in place of the line, in the ink a line has. The dot stays when the node is selected,
   which takes the border. Pass the first words only, and name the whole problem outside the canvas
   in a `Banner` and a `List`. A node with a `problem` and a `status` draws both marks.
-- `status` is a `StatusMark` (`{ state, label, short? }`): a dot (a spinner while the state is
+- `status` is a `StatusMark` (`{ state, label }`, with an optional `short`): a dot (a spinner while the state is
   `running`) in the node's trailing column, named by its `label` and read as a tooltip, so a long word
   never takes the title's width; with a `short` ("Stale") the node draws that word beside the dot.
 - `path` (`nodes`, `edges`, `at`) is what a run or a scenario took. A node the path leaves out

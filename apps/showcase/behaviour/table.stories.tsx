@@ -134,3 +134,76 @@ export const Grid: StoryObj = {
 		await expect(cells(1)?.[1]).toHaveFocus();
 	},
 };
+
+const WIDE: TableColumn<Task>[] = [
+	{ key: "task", label: "Task", cell: (task) => task.task },
+	...["a", "b", "c", "d", "e", "f"].map((key) => ({
+		key,
+		label: `Column ${key}`,
+		cell: (task: Task) => `${task.id} ${key}`,
+	})),
+];
+
+// On touch the grid scrolls sideways under its frozen leading column, and a
+// cell the keyboard reaches scrolls clear of it by the scroller's padding at
+// its start: the cell never stands under the frozen column, and focusing the
+// frozen cell itself leaves the scroll where it is.
+export const FrozenColumnClearsTheFocus: StoryObj = {
+	tags: ["touch"],
+	globals: { density: "touch" },
+	parameters: { layout: "fullscreen" },
+	render: () => (
+		<div
+			style={{
+				width: 768,
+				height: 500,
+				display: "flex",
+				flexDirection: "column",
+			}}
+		>
+			<Place>
+				<Pane title="Cron tasks">
+					<Table
+						columns={WIDE}
+						items={TASKS}
+						row={{ id: (task) => task.id }}
+						onOpen={open}
+					/>
+				</Pane>
+			</Place>
+		</div>
+	),
+	play: async ({ canvas, userEvent }) => {
+		const grid = canvas.getByRole("grid");
+		const scroller = grid.parentElement;
+		if (!scroller) throw new Error("the grid has no scroller");
+		await expect(scroller.scrollWidth).toBeGreaterThan(scroller.clientWidth);
+		const cell = (column: number) =>
+			canvas.getAllByRole("row")[1]?.querySelectorAll<HTMLElement>("td")[
+				column
+			];
+		const frozen = cell(0);
+		if (!frozen) throw new Error("no frozen cell");
+		await userEvent.tab();
+		await expect(frozen).toHaveFocus();
+		for (let column = 1; column <= 6; column++) {
+			await userEvent.keyboard("{ArrowRight}");
+			await expect(cell(column)).toHaveFocus();
+			const at = cell(column)?.getBoundingClientRect();
+			await expect(at?.left).toBeGreaterThanOrEqual(
+				frozen.getBoundingClientRect().right - 0.5,
+			);
+		}
+		for (let column = 5; column >= 1; column--) {
+			await userEvent.keyboard("{ArrowLeft}");
+			await expect(cell(column)).toHaveFocus();
+			await expect(
+				cell(column)?.getBoundingClientRect().left,
+			).toBeGreaterThanOrEqual(frozen.getBoundingClientRect().right - 0.5);
+		}
+		const scrolled = scroller.scrollLeft;
+		await userEvent.keyboard("{ArrowLeft}");
+		await expect(frozen).toHaveFocus();
+		await expect(scroller.scrollLeft).toBe(scrolled);
+	},
+};

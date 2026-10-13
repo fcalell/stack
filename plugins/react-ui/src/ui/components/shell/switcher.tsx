@@ -19,8 +19,7 @@ const ROW_PRESS = "hover:bg-wash-hover active:bg-wash-press";
 const GLYPH = "flex shrink-0";
 const TRIGGER = "flex items-center w-full focus-visible:-outline-offset-2";
 const TRIGGER_TOUCH = "flex items-center min-w-0";
-const NAME = "truncate grow text-left";
-const NAME_TOUCH = "truncate";
+const NAME = "truncate grow text-left touch:grow-0 touch:text-start";
 
 function flatten(options: Switcher["options"]): readonly Option[] {
 	const entries: readonly (Option | OptionGroup)[] = options;
@@ -69,7 +68,7 @@ export function SwitcherPick(props: { switcher: Switcher; touch: boolean }) {
 						className={cn(
 							text({ role: "body" }),
 							textStrong({ role: "body" }),
-							touch ? NAME_TOUCH : NAME,
+							NAME,
 						)}
 					>
 						{name}

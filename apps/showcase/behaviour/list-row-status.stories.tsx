@@ -6,8 +6,8 @@ import { useState } from "react";
 import { expect, userEvent, within } from "storybook/test";
 
 // A row's status on its meta line: waiting for its own read at the loaded
-// row's height (so nothing under it moves when it answers), and said shorter
-// when the long words would be cut.
+// row's height (so nothing under it moves when it answers), and its word
+// truncating where the line is out of room.
 export default {
 	title: "Behaviour/ListRowStatus",
 } satisfies Meta;
@@ -177,26 +177,24 @@ export const StatusWaitsKnownTouch = touch(StatusWaitsKnown);
 
 const REMOTE = "/tmp/fx9/remotes/sailwind-service";
 const LONG = "Fetched 5 minutes ago";
-const SHORT = "5 min ago";
 
-function Repo(props: { short?: string; meta?: string[] }) {
+function Repo(props: { meta?: string[] }) {
 	return (
 		<ListRow
 			title="sailwind"
 			meta={props.meta ?? [REMOTE, "main"]}
-			status={{ state: "done", label: LONG, short: props.short }}
+			status={{ state: "done", label: LONG }}
 			href="#sailwind"
 		/>
 	);
 }
 
 const WIDTHS = [440, 390, 320];
-// The status stays whole beside the first part, which keeps a floor, so the
-// long words are cut (and the short form draws) only where the line is less
-// than the words and that floor.
+// The status stays whole beside the first part, which keeps a floor, so its
+// word is cut only where the line is less than the word and that floor.
 const NARROW = [440, 320, 220];
 
-function Narrow(props: { short?: string }) {
+function Narrow() {
 	return (
 		<div className="flex flex-col gap-sections">
 			{NARROW.map((width) => (
@@ -206,87 +204,32 @@ function Narrow(props: { short?: string }) {
 					style={{ width }}
 					className="max-w-full"
 				>
-					<Repo short={props.short} />
+					<Repo />
 				</div>
 			))}
 		</div>
 	);
 }
 
-// The status draws whole at every width: its long words where they fit, its
-// short words where they would be cut, never a fragment; the long words stay
-// its name.
-const whole: Play = async ({ canvas }) => {
-	const drawn: string[] = [];
-	for (const column of canvas.getAllByTestId("column")) {
-		const inside = within(column);
-		const short = inside.queryByText(SHORT);
-		const word = short ?? inside.getByText(LONG);
-		await expect(clipped(word)).toBe(false);
-		drawn.push(short ? "short" : "long");
-		if (short) await expect(inside.getByText(LONG)).toBeInTheDocument();
-		const row = inside.getByRole("link", { name: "sailwind" }).parentElement;
-		if (!row) throw new Error("the row has no box");
-		await expect(row.scrollWidth).toBeLessThanOrEqual(row.clientWidth);
-	}
-	await expect(drawn.at(-1)).toBe("short");
-};
-
-export const StatusShort: StoryObj = {
-	render: () => <Narrow short={SHORT} />,
-	play: whole,
-};
-
-// A line resized through the width the long form is cut at draws one form per
-// width, the same on the way back: no flip between the two.
-export const StatusShortResizes: StoryObj = {
-	render: () => <Narrow short={SHORT} />,
+// A status has one form, its word: whole where the line holds it beside the
+// first part's floor, truncating where it does not, the row never overflowing.
+export const StatusWord: StoryObj = {
+	render: () => <Narrow />,
 	play: async ({ canvas }) => {
-		const column = canvas.getAllByTestId("column")[0];
-		if (!column) throw new Error("no column");
-		const forms = async () => {
-			await new Promise((resolve) => setTimeout(resolve, 100));
-			return within(column).queryByText(SHORT) ? "short" : "long";
-		};
-		const read: Record<number, string> = {};
-		for (const width of [440, 400, 360, 330, 360, 400, 440, 330, 440]) {
-			column.style.width = `${width}px`;
-			const form = await forms();
-			read[width] ??= form;
-			await expect(form).toBe(read[width]);
-			const word =
-				within(column).queryByText(SHORT) ?? within(column).getByText(LONG);
-			await expect(clipped(word)).toBe(false);
+		const cut: boolean[] = [];
+		for (const column of canvas.getAllByTestId("column")) {
+			const inside = within(column);
+			cut.push(clipped(inside.getByText(LONG)));
+			const row = inside.getByRole("link", { name: "sailwind" }).parentElement;
+			if (!row) throw new Error("the row has no box");
+			await expect(row.scrollWidth).toBeLessThanOrEqual(row.clientWidth);
 		}
+		await expect(cut[0]).toBe(false);
+		await expect(cut.at(-1)).toBe(true);
 	},
 };
 
-// A row with room, and a status with no short form, are unchanged: the long
-// words whole where they fit and cut as before where they do not.
-export const StatusLong: StoryObj = {
-	render: () => (
-		<div className="flex flex-col gap-sections">
-			<div data-testid="room" style={{ width: 600 }} className="max-w-full">
-				<Repo short={SHORT} meta={["origin", "main"]} />
-			</div>
-			<div data-testid="plain" style={{ width: 220 }} className="max-w-full">
-				<Repo />
-			</div>
-		</div>
-	),
-	play: async ({ canvas }) => {
-		const room = within(canvas.getByTestId("room"));
-		await expect(clipped(room.getByText(LONG))).toBe(false);
-		await expect(room.queryByText(SHORT)).toBeNull();
-		const plain = within(canvas.getByTestId("plain"));
-		await expect(plain.queryByText(SHORT)).toBeNull();
-		await expect(clipped(plain.getByText(LONG))).toBe(true);
-	},
-};
-
-export const StatusShortTouch = touch(StatusShort);
-export const StatusShortResizesTouch = touch(StatusShortResizes);
-export const StatusLongTouch = touch(StatusLong);
+export const StatusWordTouch = touch(StatusWord);
 
 // A part the meta line has no room for goes whole; the status still stands at
 // the line's end, so every row's status ends at one x, and the room the part
@@ -313,7 +256,7 @@ function Drops() {
 							key={remote}
 							title={remote}
 							meta={[remote, "main"]}
-							status={{ state: "done", label: LONG, short: SHORT }}
+							status={{ state: "done", label: LONG }}
 							href={`#${remote}`}
 						/>
 					))}
@@ -350,10 +293,6 @@ const drops: Play = async ({ canvas }) => {
 			const later = parts?.children[1];
 			if (!row || !line || !parts || !status || !first || !later)
 				throw new Error("a row lacks a part");
-			const inside = within(status as HTMLElement);
-			await expect(
-				clipped(inside.queryByText(SHORT) ?? inside.getByText(LONG)),
-			).toBe(false);
 			edges.push(status.getBoundingClientRect().right);
 			// Wrapped away under its slot's one line: its text stands below the
 			// slot's top.

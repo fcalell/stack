@@ -26,7 +26,7 @@ import {
 	text,
 	treeBleed,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useMemo } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import { ageShort } from "../../lib/age";
 import { useClock } from "../../lib/clock";
@@ -340,8 +340,6 @@ export function ListRowBase<V extends string | null = string>({
 	// the parts beside them stand on that first line.
 	const top = wrap || entry !== undefined;
 	const under = act !== undefined && !top;
-	// The meta line's width, which decides a status's short form.
-	const [metaWidth, setMetaWidth] = useState(0);
 	const inline = { label: entry?.label ?? "" };
 	const entryReason = useReasonLine(entry?.act.blocked);
 	const actReason = useReasonLine(act?.blocked);
@@ -494,10 +492,7 @@ export function ListRowBase<V extends string | null = string>({
 			) : (
 				<View pointerEvents="none" className={TEXT}>
 					{titleLine}
-					<View
-						onLayout={(event) => setMetaWidth(event.nativeEvent.layout.width)}
-						className={cn(ROW_META_LINE, META_LINE)}
-					>
+					<View className={cn(ROW_META_LINE, META_LINE)}>
 						{lead.length === 0 ? null : (
 							<View className={META_PARTS}>
 								{coded ? (
@@ -544,7 +539,7 @@ export function ListRowBase<V extends string | null = string>({
 								) : null}
 							</View>
 						)}
-						{status ? <RowStatusMark status={status} line={metaWidth} /> : null}
+						{status ? <RowStatusMark status={status} /> : null}
 						{warning !== undefined ? <WarningMark label={warning} /> : null}
 						{lock !== undefined ? <LockMark /> : null}
 						{chip ? (

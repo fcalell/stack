@@ -251,9 +251,7 @@ A row's marks are named props on the meta line, at most one each, in order: `sta
 `chip`; the act that clears a warning is the row's `act`. A `status` whose own read has not
 answered is `{ loading: true }` (a `RowStatus`, from a `List`'s `row` map or a `ListRow`): the row is the two-line row from its first
 frame and the status stands as a bar of its height starting where the word will, so the row keeps its height and the word its place when it answers.
-A status the app can say shorter gives `short` ("5 min ago") beside its `label`: the row draws
-`short` in the label's place while the label would be cut on its meta line (the long form is whole wherever the line holds it beside the first part's floor, the first part and the later parts yielding to it, so the short form draws only where it would be cut), and `label` stays its
-name; stack never shortens a label itself.
+A status has one form, its `label`: whole wherever the meta line holds it beside the first part's floor (the first part and the later parts yield to it), else truncating. Keep a status word short; stack never shortens a label itself.
 
 Where a row, a fact or a field stands in a change set is its `change` (`ChangeKind`: `added`,
 `changed`, `removed`, `unchanged`, `stale`), one prop on `ListRow`, `DefinitionRow` and `FormField`
@@ -564,7 +562,7 @@ under the head’s submit on touch. On touch that submit stands in the title's r
 row's end. Pass
 the same props as the modal `<Sheet>` from a page and as the `sheet` of a conversation; closing it (`open` false, the
 `MessageInput` drawing in its place) returns focus to the input, and each page (a new `title`) opens at
-the top of its body with focus in its first field. On the desktop a `Sheet` is a card centred over the page when its content at natural height fits the viewport less the page inset above and below, and the full-height side sheet at the end otherwise, with no prop: it is measured once as it opens and held until it closes, so a form that grows stays a card with its body scrolling between the head and the foot, and a side sheet that shrinks stays a side sheet. The foot is always on screen. `fit="pane"` and a decision keep their own forms; touch is the bottom sheet.
+the top of its body with focus in its first field. On the desktop a `Sheet` is a card centred over the page, capped at the viewport less the page inset above and below, its body scrolling between the head and the foot; the foot is always on screen. `fit="pane"` sets the card's width to a pane's; a decision keeps its own form; touch is the bottom sheet.
 
 Keyboard focus follows the work without a prop. A `Sheet` returns focus to what opened it; when that
 is gone (an act of a `Picker` or `Menu`, which unmounts with its popup, returns to that popup's

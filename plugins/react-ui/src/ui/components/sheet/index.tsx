@@ -24,7 +24,7 @@ export interface SheetProps extends Closed {
 	foot?: string;
 	/** What the `submit`'s last run failed with (a sentence; wraps): an error in the line a blocked reason keeps under the act (under the head's submit on touch), the act ready again. Clear it to dismiss; a blocked `submit`'s reason stands before it. */
 	failed?: string;
-	/** What the desktop side sheet holds: a form (the default) or a record's pane. */
+	/** What the desktop card holds, which sets its width: a form (the default) or a record's pane. */
 	fit?: SheetFit;
 	/** A form the body ends with, drawn in the sheet's column: its `bar` sticks to the body's foot, and the sheet asks nothing when it closes. Give the form's `bar` or the sheet's `submit` as the act that completes the task, not both. */
 	form?: FormProps;
@@ -32,7 +32,7 @@ export interface SheetProps extends Closed {
 	children?: ReactNode;
 }
 
-/** On the desktop centred over the scrim when its content fits the viewport less the page inset, else a side sheet at the end the full height (decided as it opens), its head (the title over the description beside the close act) over the body and the foot; on touch a bottom sheet with the close act first and the submit at the head's end, a blocked submit's reason under the head. Always the modal one: a docked sheet is a `Pane`'s or a `Thread`'s `sheet`. */
+/** On the desktop a card centred over the scrim, capped at the viewport less the page inset with its body scrolling, its head (the title over the description beside the close act) over the body and the foot; on touch a bottom sheet with the close act first and the submit at the head's end, a blocked submit's reason under the head. Always the modal one: a docked sheet is a `Pane`'s or a `Thread`'s `sheet`. */
 export function Sheet({
 	open,
 	onClose,

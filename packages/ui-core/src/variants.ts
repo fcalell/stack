@@ -63,7 +63,7 @@ import {
 	RULE_ARROW,
 	SEGMENT,
 	SEGMENT_LABEL,
-	SHEET_SIDE,
+	SHEET_DESKTOP,
 	SKELETON,
 	SKELETON_LANE,
 	SKELETON_ROW,
@@ -156,7 +156,7 @@ export const toastState = build(TOAST_STATE);
 export const menu = build(MENU);
 export const menuGroup = build(MENU_GROUP);
 export const menuLabel = build(MENU_LABEL);
-export const sheetSide = build(SHEET_SIDE);
+export const sheetDesktop = build(SHEET_DESKTOP);
 export const proseMarker = build(PROSE_MARKER);
 export const proseDiffRun = build(PROSE_DIFF_RUN);
 export const codeText = build(CODE_TEXT);
@@ -266,7 +266,7 @@ export const FAMILIES: readonly Family[] = [
 	family("MENU", MENU, menu),
 	family("MENU_GROUP", MENU_GROUP, menuGroup),
 	family("MENU_LABEL", MENU_LABEL, menuLabel),
-	family("SHEET_SIDE", SHEET_SIDE, sheetSide),
+	family("SHEET_DESKTOP", SHEET_DESKTOP, sheetDesktop),
 	family("PROSE_MARKER", PROSE_MARKER, proseMarker),
 	family("PROSE_DIFF_RUN", PROSE_DIFF_RUN, proseDiffRun),
 	family("CODE_TEXT", CODE_TEXT, codeText),
@@ -512,9 +512,9 @@ export const TOAST =
 // beside its act on the desktop, over it on touch).
 export const BANNER_ROW = "gap-inside";
 export const BANNER_MAIN = "gap-inside";
-// A sheet on touch, raised from the bottom edge; on the desktop a side sheet
-// (`sheetSide`) or a centred one at the dialog's width, its one region at
-// the card inset.
+// A sheet on touch, raised from the bottom edge; on the desktop a card
+// (`sheetDesktop`) or a decision centred at the dialog's width, its one region
+// at the card inset.
 export const SHEET =
 	"bg-raised border-t border-edge-raised rounded-t-sheet shadow-modal";
 export const SHEET_CENTERED =
@@ -867,12 +867,13 @@ export const PAGE_TOP_BAR_END = "-me-icon-inset";
 // back act and the gaps drop whole to a second line at the row's end.
 export const PAGE_TITLE_FLOOR = "min-w-2/5 basis-0";
 // The title row's title carries a step of block padding above and below its
-// lines (one `inside` step), so a single line fills the strip's height as it did
-// and a wrapped title never butts the head's edges. A head whose title wraps
-// takes a step more over the row. The row anchors its items to the top (a
-// platform overlay), so a 44 px act centres on the title's first line.
+// lines (one `inside` step), so a single line fills the strip's height and a
+// wrapped title never butts the head's edges. On touch the head takes a step
+// more over the row, whether or not the title wraps. The row anchors its items
+// to the top (a platform overlay), so a 44 px act centres on the title's first
+// line.
 export const PAGE_TITLE_BLOCK = "py-inside";
-export const PAGE_HEAD_WRAPS = "py-inside";
+export const PAGE_HEAD_TOUCH = "py-inside";
 export const PAGE_BODY = "gap-sections p-page";
 // A docked foot (a Pane's `foot`) is one cell: a
 // region of its own under what scrolls past it, a raised surface (the raised
@@ -988,9 +989,7 @@ export type TableRowState = keyof (typeof TABLE_ROW)["variants"]["state"];
 export type CheckboxState = keyof (typeof CHECKBOX)["variants"]["state"];
 export type SegmentState = keyof (typeof SEGMENT)["variants"]["state"];
 export type RowLines = keyof (typeof ROW)["variants"]["lines"];
-// What a Sheet is told it holds; the desktop's short sheet is the Sheet's own choice.
-export type SheetFit = Exclude<SheetSideFit, "short">;
-export type SheetSideFit = keyof (typeof SHEET_SIDE)["variants"]["fit"];
+export type SheetFit = keyof (typeof SHEET_DESKTOP)["variants"]["fit"];
 export type ImageFit = keyof (typeof IMAGE)["variants"]["fit"];
 export type ImageState = keyof (typeof IMAGE)["variants"]["state"];
 export type FormIn = keyof (typeof FORM)["variants"]["in"];
