@@ -219,6 +219,7 @@ guides. Stead's stack pin moves after each pass and its screens are ported in th
    gathers every switch of a frame, the browser moving each Section from its old place by a
    transform within the duration scale; on native `LayoutAnimation` runs before the commit.
    Under reduced motion it snaps. Stead's shift review counts a move the rows above it explain.
+   Done: stack `905a890` (with pass 6's `e586689`), Stead's screens `23b4dce`.
 
 Carried from pass 1 to the pass that owns it:
 
