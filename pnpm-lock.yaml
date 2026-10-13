@@ -923,6 +923,9 @@ importers:
       '@fcalell/plugin-vite':
         specifier: workspace:*
         version: link:../vite
+      '@fcalell/ui-core':
+        specifier: workspace:*
+        version: link:../../packages/ui-core
     devDependencies:
       '@fcalell/plugin-cloudflare':
         specifier: workspace:*

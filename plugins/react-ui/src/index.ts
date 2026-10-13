@@ -430,8 +430,8 @@ export const reactUi = plugin("react-ui", {
 		// The mode and the density the sheet keys on (a `dark` class and
 		// `data-density` on the root), as toolbars the screens workbench pins
 		// before a story paints. The workbench opens in the theme's default mode,
-		// and a test run checks both modes at desktop density (density moves sizes,
-		// not names, roles or states).
+		// and a test run checks both modes, with the density the viewport gives each
+		// width.
 		screens.slots.previewGlobals.contribute(
 			async (ctx): Promise<PreviewGlobal[]> => {
 				const { defaultMode } = await ctx.resolve(self.slots.resolvedTheme);
@@ -449,6 +449,10 @@ export const reactUi = plugin("react-ui", {
 						title: "Density",
 						values: ["desktop", "touch"],
 						default: "desktop",
+						// The test run takes the pin off at each width, so 320 draws the
+						// touch set and 1280 and 1920 the desktop one, as a phone and a
+						// laptop do.
+						byViewport: true,
 						apply: { attribute: "data-density" },
 					},
 				];

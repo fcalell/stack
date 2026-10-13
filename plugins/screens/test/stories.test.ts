@@ -14,7 +14,7 @@ import { test } from "node:test";
 import { ancestorIds, checkVariants } from "../src/node/screens.ts";
 import { renderStoryFile, syncStories } from "../src/node/stories.ts";
 import type { PreviewGlobal } from "../src/types.ts";
-import { overflowError, WIDTHS } from "../src/ui/overflow.ts";
+import { overflowError } from "../src/ui/overflow.ts";
 
 const mode: PreviewGlobal = {
 	name: "mode",
@@ -72,19 +72,19 @@ test("a story file draws each state and hides its check variants from the sideba
 	const source = renderStoryFile("/projects/$id", ["../src/x.tsx"], [mode]);
 	assert.ok(
 		source.includes(
-			'export const NotFound = { ...screenStory("/projects/$id", "notFound"), name: "Not found" };',
+			'export const NotFound = { ...screenStory("/projects/$id", "notFound"), name: "Not found", tags: ["state:notFound","mode:light"] };',
 		),
 	);
 	assert.ok(
 		source.includes(
-			'export const NotFoundDark = { ...screenStory("/projects/$id", "notFound", {"mode":"dark"}), name: "Not found, dark", tags: ["!dev"] };',
+			'export const NotFoundDark = { ...screenStory("/projects/$id", "notFound", {"mode":"dark"}), name: "Not found, dark", tags: ["!dev","state:notFound","mode:dark"] };',
 		),
 	);
 	assert.ok(
 		source.includes('export default { title: "Screens/projects/$id" };'),
 	);
 	// Only the check variants carry the tag.
-	assert.equal(source.match(/tags: \["!dev"\]/g)?.length, 5);
+	assert.equal(source.match(/tags: \["!dev"/g)?.length, 5);
 });
 
 function app(files: Record<string, string>): string {
@@ -200,10 +200,9 @@ test("a deleted route's file goes with the folders it leaves empty", async () =>
 });
 
 test("a screen that fits is no failure at any width", () => {
-	assert.deepEqual(WIDTHS, [320, 390, 768, 1280, 1440]);
 	assert.equal(overflowError(320, 320, 320), null);
 	assert.equal(
-		overflowError(390, 412, 390),
-		"horizontal overflow at 390px: scrollWidth 412",
+		overflowError(320, 412, 320),
+		"horizontal overflow at 320px: scrollWidth 412",
 	);
 });

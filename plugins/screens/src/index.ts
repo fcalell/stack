@@ -13,8 +13,23 @@ import {
 	renderStorybookMain,
 	renderVitestConfig,
 } from "./node/config.ts";
-import { STORIES_DIR, syncStories } from "./node/stories.ts";
+import { SCREEN_STATES } from "./node/screens.ts";
+import {
+	globalExcludes,
+	parseWidths,
+	type RunSelection,
+	selectionEnv,
+	selectScreens,
+	stateExcludes,
+} from "./node/select.ts";
+import {
+	listScreens,
+	STORIES_DIR,
+	storyPath,
+	syncStories,
+} from "./node/stories.ts";
 import type { PreviewGlobal } from "./types.ts";
+import { WIDTHS } from "./widths.ts";
 
 const SOURCE = "screens";
 
@@ -118,10 +133,12 @@ async function run(
 	label: string,
 	script: string,
 	args: string[],
+	env: Record<string, string> = {},
 ): Promise<void> {
 	const child = spawn(process.execPath, [script, ...args], {
 		cwd,
 		stdio: "inherit",
+		env: { ...process.env, ...env },
 	});
 	await new Promise<void>((resolve, reject) => {
 		child.on("error", reject);
@@ -234,7 +251,7 @@ export const screens = plugin("screens", {
 		},
 		test: {
 			description:
-				"Check every screen in a headless browser: axe, no horizontal overflow, no console output",
+				"Check every screen in a headless browser: axe, no horizontal overflow, the render walk, no console output",
 			options: {
 				all: {
 					type: "boolean" as const,
@@ -247,22 +264,82 @@ export const screens = plugin("screens", {
 					description:
 						"Run the screens a file changed since this git ref reaches (default: uncommitted changes)",
 				},
+				screen: {
+					type: "string" as const,
+					description:
+						"Run these screens (a comma list of route ids or screen titles) instead of those a changed file reaches",
+				},
+				width: {
+					type: "string" as const,
+					description: `Check at these widths only (a comma list of ${WIDTHS.join(", ")}; default: all)`,
+				},
+				mode: {
+					type: "string" as const,
+					description:
+						"Check in these modes only (a comma list of the app's modes, light and dark; default: all)",
+				},
+				state: {
+					type: "string" as const,
+					description: `Check these states only (a comma list of ${SCREEN_STATES.map(({ state }) => state).join(", ")}; default: all)`,
+				},
 			},
 			handler: async (ctx, flags) => {
+				const routesDir = await ctx.resolve(react.slots.routesDir);
+				const globals = await ctx.resolve(previewGlobals);
+				// Bad flags fail before anything is generated or started.
+				const selection: RunSelection = {
+					widths: parseWidths(flags.width),
+					exclude: [
+						...globalExcludes(globals, "mode", flags.mode),
+						...stateExcludes(flags.state),
+					],
+				};
+				const requested = typeof flags.screen === "string";
+				const files =
+					requested && routesDir !== null
+						? selectScreens(
+								await listScreens(join(ctx.cwd, routesDir)),
+								flags.screen,
+							).map((id) => `${STORIES_DIR}/${storyPath(id)}`)
+						: [];
+				const modes = globals.find((g) => g.name === "mode");
+				const checked = modes?.checked ?? [];
+				console.log(
+					[
+						"stack screens test:",
+						`widths ${selection.widths.join(", ")};`,
+						`modes ${checked.filter((m) => !selection.exclude.includes(`mode:${m}`)).join(", ") || "default"};`,
+						`states ${SCREEN_STATES.filter(
+							({ state }) => !selection.exclude.includes(`state:${state}`),
+						)
+							.map(({ state }) => state)
+							.join(", ")};`,
+						`screens ${requested ? files.join(", ") : flags.all ? "all" : `changed${typeof flags.changed === "string" ? ` since ${flags.changed}` : ""}`}`,
+					].join(" "),
+				);
 				await ctx.generate();
-				await run(ctx.cwd, "vitest", binOf(ctx.cwd, "vitest"), [
-					"run",
-					"--config",
-					".stack/screens.vitest.config.ts",
-					// A clean tree has nothing to run, which is no failure.
-					"--passWithNoTests",
-					...(flags.all
-						? []
-						: [
-								"--changed",
-								...(typeof flags.changed === "string" ? [flags.changed] : []),
-							]),
-				]);
+				await run(
+					ctx.cwd,
+					"vitest",
+					binOf(ctx.cwd, "vitest"),
+					[
+						"run",
+						"--config",
+						".stack/screens.vitest.config.ts",
+						// A clean tree has nothing to run, which is no failure.
+						"--passWithNoTests",
+						...files,
+						// `--screen` names the files; the changed selection stays only
+						// when asked for beside it.
+						...(flags.all || (requested && typeof flags.changed !== "string")
+							? []
+							: [
+									"--changed",
+									...(typeof flags.changed === "string" ? [flags.changed] : []),
+								]),
+					],
+					selectionEnv(selection),
+				);
 			},
 		},
 	},

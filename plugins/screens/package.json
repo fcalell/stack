@@ -27,7 +27,8 @@
 		"./floors": "./src/ui/floors.ts",
 		"./msw": "./src/ui/msw.ts",
 		"./preview": "./src/ui/preview.tsx",
-		"./stories": "./src/ui/stories.tsx"
+		"./stories": "./src/ui/stories.tsx",
+		"./walk": "./src/ui/walk.ts"
 	},
 	"files": [
 		"dist",
@@ -115,7 +116,8 @@
 		"@fcalell/cli": "workspace:*",
 		"@fcalell/plugin-api": "workspace:*",
 		"@fcalell/plugin-react": "workspace:*",
-		"@fcalell/plugin-vite": "workspace:*"
+		"@fcalell/plugin-vite": "workspace:*",
+		"@fcalell/ui-core": "workspace:*"
 	},
 	"devDependencies": {
 		"@fcalell/plugin-cloudflare": "workspace:*",

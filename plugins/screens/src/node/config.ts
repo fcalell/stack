@@ -5,6 +5,7 @@ import {
 	type ViteConfigValues,
 } from "@fcalell/plugin-vite/node";
 import type { ScreensConfigValues } from "../types.ts";
+import { EXCLUDE_ENV, WIDTHS_ENV } from "./select.ts";
 
 // The app's fixtures module, beside the routes by convention.
 export const FIXTURES = "src/app/fixtures.ts";
@@ -154,7 +155,11 @@ export function renderStorybookMain(options: { floors: boolean }): string {
 
 // `.stack/screens.vitest.config.ts`: the screens host's own Vite config with
 // the Storybook test plugin on the test run's config directory, one browser
-// project. Each parallel page is one renderer, so two open at most.
+// project. Each parallel page is one renderer, so two open at most. The CLI's
+// narrowing reaches it in the environment: the tags to leave out go to the
+// storybook plugin, and the widths to the floors, which read them with
+// `inject`. Without the environment (Vitest run by hand) every story and
+// every width run.
 export function renderVitestConfig(): string {
 	return `import { fileURLToPath } from "node:url";
 import { workspaceTriggers } from "@fcalell/plugin-screens/node";
@@ -166,6 +171,11 @@ import screens from "./screens.vite.config.ts";
 // Playwright's own browser is the default; where none is installed,
 // \`CHROME_PATH\` names a Chrome to launch instead.
 const chrome = process.env.CHROME_PATH;
+
+const list = (value: string | undefined) =>
+	(value ?? "").split(",").filter(Boolean);
+const widths = list(process.env.${WIDTHS_ENV}).map(Number);
+const exclude = list(process.env.${EXCLUDE_ENV});
 
 export default defineConfig({
 	...screens,
@@ -182,10 +192,12 @@ export default defineConfig({
 				plugins: [
 					storybookTest({
 						configDir: fileURLToPath(new URL("./screens-test", import.meta.url)),
+						tags: { exclude },
 					}),
 				],
 				test: {
 					name: "screens",
+					provide: { screensWidths: widths },
 					testTimeout: 120_000,
 					maxWorkers: 2,
 					browser: {
