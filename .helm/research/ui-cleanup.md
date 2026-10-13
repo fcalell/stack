@@ -277,10 +277,13 @@ class changes a child's form (in place of the grep that missed `field-wait`); `d
 closed list (Table's cell coordinates, `modality`, the density pin); no destructured `type` prop;
 no Section in a Section on native too. A component root's margin is a render check in the
 roster stress harness, since a grep cannot tell the root. `stack screens test` takes
-`--width <list>` (of 320, 1280, 1920) and `--mode <light|dark>`; with neither it runs the three
-widths in both modes. The agent narrows by its diff, as the screens guide tabulates (no colour,
-token or theme change: one mode; a change behind one width variant: that width; ui-core's
-tokens, `globals.css` or a frame: the full run), and the narrowed run is the gate. The render walk
+`--width <list>` (of 320, 1280, 1920), `--mode <light|dark>`, `--screen <list>` and
+`--state <list>`; with none it runs every screen at the three widths in both modes. An agent
+checks only what its diff changed, on every axis, as the screens guide tabulates: the screens
+whose routes or components changed, the states a change reaches, the widths behind a changed
+width variant, one mode when no colour, token or theme changed, and in the showcase one
+component's roster and behaviour stories; the full run only for ui-core's tokens, the app's CSS,
+a frame or a dependency bump. The narrowed run is the gate. The render walk
 compares heights, gaps, insets and radii against the values the contract emits at the density,
 never the rubric's prose ranges; it also checks type at 12 px or more and six sizes or fewer a
 screen, nested radii, a clip with no ellipsis or clamp, fonts loaded before first paint, tabular
