@@ -5,6 +5,7 @@ import {
 	applyGlobals,
 	globalTypes,
 	initialGlobals,
+	unpinned,
 } from "../src/ui/globals.ts";
 
 const mode: PreviewGlobal = {
@@ -68,4 +69,18 @@ test("a global the toolbar never set applies its default", () => {
 	const r = root();
 	applyGlobals(r, [density], {});
 	assert.equal(r.attributes.get("data-density"), "desktop");
+});
+
+test("a global the run has unpinned is left alone when the story pins the rest", () => {
+	const { attributes, ...stand } = root();
+	unpinned.add("density");
+	try {
+		applyGlobals(stand, [density, mode], { density: "touch", mode: "dark" });
+		assert.equal(attributes.has("data-density"), false);
+		assert.equal(stand.classes.has("dark"), true);
+	} finally {
+		unpinned.delete("density");
+	}
+	applyGlobals(stand, [density], { density: "touch" });
+	assert.equal(attributes.get("data-density"), "touch");
 });

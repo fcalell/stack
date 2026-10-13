@@ -30,6 +30,10 @@ export function initialGlobals(
 	return Object.fromEntries(globals.map((g) => [g.name, g.default]));
 }
 
+// The globals the test run has taken the pin off while it visits a width: a
+// story that renders again pins the rest, never these.
+export const unpinned = new Set<string>();
+
 // Pins every global's chosen value on the root.
 export function applyGlobals(
 	root: GlobalsRoot,
@@ -37,6 +41,7 @@ export function applyGlobals(
 	chosen: Record<string, unknown>,
 ): void {
 	for (const g of globals) {
+		if (unpinned.has(g.name)) continue;
 		const value = String(chosen[g.name] ?? g.default);
 		if ("attribute" in g.apply) {
 			root.setAttribute(g.apply.attribute, value);

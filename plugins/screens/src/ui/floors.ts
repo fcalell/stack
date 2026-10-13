@@ -3,6 +3,7 @@ import type { Preview } from "@storybook/react-vite";
 import { expect, inject } from "vitest";
 import { page } from "vitest/browser";
 import { HEIGHT, WIDTHS } from "../widths.ts";
+import { unpinned } from "./globals.ts";
 import { overflowError } from "./overflow.ts";
 import { findings, format, watchFirstPaint } from "./walk.ts";
 
@@ -24,11 +25,33 @@ const widths = (): number[] => {
 };
 
 // A resize settles over frames: layout that reads the viewport in script
-// (a media query hook, a resize observer) follows it.
-const settle = () =>
-	new Promise<void>((resolve) =>
-		requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
-	);
+// (a media query hook, a resize observer, a container query's restyle, a
+// tree swapped for the width) follows it a frame or several later. The page is
+// settled once its size and element count hold for a few frames running.
+const STABLE_FRAMES = 3;
+const MAX_FRAMES = 90;
+
+const frame = () =>
+	new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+
+const shape = () =>
+	[
+		document.documentElement.scrollWidth,
+		document.documentElement.scrollHeight,
+		document.body.getElementsByTagName("*").length,
+		document.documentElement.dataset.density,
+	].join("|");
+
+async function settle(): Promise<void> {
+	let last = "";
+	let held = 0;
+	for (let frames = 0; frames < MAX_FRAMES && held < STABLE_FRAMES; frames++) {
+		await frame();
+		const now = shape();
+		held = now === last ? held + 1 : 0;
+		last = now;
+	}
+}
 
 let logged: string[] = [];
 let release = () => {};
@@ -59,18 +82,26 @@ function capture(): void {
 
 // Takes the pin off the globals the viewport decides (the density), so each
 // width draws the value its root's own rules give it there (a phone width the
-// touch set, a laptop the desktop one); returns the pins put back.
+// touch set, a laptop the desktop one); returns the pins put back. The
+// preview's decorator pins the rest whenever the story renders again, so it is
+// told to leave these alone meanwhile.
 function unpin(): () => void {
 	const root = document.documentElement;
 	const pins = previewGlobals.flatMap((global) =>
 		global.byViewport && "attribute" in global.apply
-			? [[global.apply.attribute, root.getAttribute(global.apply.attribute)]]
+			? [{ name: global.name, attribute: global.apply.attribute }]
 			: [],
 	);
-	for (const [attribute] of pins) root.removeAttribute(attribute as string);
+	const values = pins.map((pin) => root.getAttribute(pin.attribute));
+	for (const pin of pins) {
+		unpinned.add(pin.name);
+		root.removeAttribute(pin.attribute);
+	}
 	return () => {
-		for (const [attribute, value] of pins) {
-			if (value !== null) root.setAttribute(attribute as string, value);
+		for (const [i, pin] of pins.entries()) {
+			unpinned.delete(pin.name);
+			const value = values[i];
+			if (value != null) root.setAttribute(pin.attribute, value);
 		}
 	};
 }
@@ -80,6 +111,9 @@ function unpin(): () => void {
 async function visit(): Promise<string[]> {
 	const { innerWidth, innerHeight } = window;
 	const failures: string[] = [];
+	// The screen first finishes mounting at the size it has: a store that
+	// watches the viewport (the density's media query) is wired as it mounts.
+	await settle();
 	const repin = unpin();
 	try {
 		for (const [index, width] of widths().entries()) {

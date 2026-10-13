@@ -507,6 +507,10 @@ export function findings(options: WalkOptions = {}): Finding[] {
 				lineClamp: style.getPropertyValue("-webkit-line-clamp"),
 				scrollWidth: element.scrollWidth,
 				clientWidth: element.clientWidth,
+				widest:
+					element.scrollWidth > element.clientWidth + 1
+						? widest(element)
+						: undefined,
 			});
 		}
 
@@ -534,6 +538,20 @@ export function findings(options: WalkOptions = {}): Finding[] {
 		...checkRegions(regions),
 		...(scoped || options.fonts === false ? [] : checkFonts(fonts())),
 	];
+}
+
+// The descendant of a box that reaches furthest past its right edge.
+function widest(box: Element): ClipMeasure["widest"] {
+	const edge = box.getBoundingClientRect().right;
+	let best: ClipMeasure["widest"];
+	for (const element of box.querySelectorAll("*")) {
+		const over = element.getBoundingClientRect().right - edge;
+		if (over > 1 && (!best || over > best.over)) {
+			const at = locate(element);
+			best = { ...at, over };
+		}
+	}
+	return best;
 }
 
 // The nearest ancestor that paints a rounded box, and how far `element`

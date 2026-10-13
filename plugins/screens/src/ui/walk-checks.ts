@@ -314,6 +314,8 @@ export interface ClipMeasure extends Located {
 	lineClamp: string;
 	scrollWidth: number;
 	clientWidth: number;
+	// The element inside that reaches furthest past the box, where one does.
+	widest?: { path: string; name: string; over: number };
 }
 
 // A box that clips (`overflow` hidden or clip) with more inside than it
@@ -332,7 +334,7 @@ export function checkClip(items: ClipMeasure[]): Finding[] {
 			rule: "clip",
 			path: c.path,
 			name: c.name,
-			measured: `scrollWidth ${c.scrollWidth}px over clientWidth ${c.clientWidth}px`,
+			measured: `scrollWidth ${c.scrollWidth}px over clientWidth ${c.clientWidth}px${c.widest ? `, ${c.widest.path}${c.widest.name ? ` "${c.widest.name}"` : ""} reaches ${px(c.widest.over)} past it` : ""}`,
 			expected:
 				"scrollWidth within clientWidth + 1px, or an ellipsis or line clamp",
 			fix: "let the box grow (min-w-0 on its flex parent's child, wrap), or truncate its text with an ellipsis",
