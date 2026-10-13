@@ -136,7 +136,7 @@ exports serve, reruns every screen: it reaches no screen's module graph.
 | A colour, an ink or a surface; no token, theme or layout change | `--mode light` (or the app's default mode) |
 | Something behind one width variant (`touch:`, `page-tablet:`, a breakpoint) | that width: `--width 320` for `touch:`, `--width 1280,1920` for a `desktop:` or `wide:` |
 | A new screen | all its states, one mode, all widths: `--screen <it> --mode light` |
-| ui-core's tokens or theme, the app's CSS, a frame component (Shell, Place, Screen, Split, Pane, Section) or a dependency bump | the full run: `--all` |
+| ui-core's tokens or theme, the app's CSS, a frame component (Shell, Place, Pane, Section) or a dependency bump | the full run: `--all` |
 
 Combine the rows: a loading change on one screen's touch tree is
 `stack screens test --screen deploys --state loading --width 320 --mode light`.

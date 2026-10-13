@@ -134,7 +134,11 @@ its rationale.
   the touch set, so it draws the touch structure with no variant; the variant sits in a web
   molecule's overlay, never a cell. A value that flips by density is the same overlay over the
   desktop cell, never a matrix value. Structure is decided by CSS wherever CSS can, a runtime check
-  (`useTouch`) only where the tree differs (the Shell and Pane). Rejected: a `fine:`
+  (`useTouch`) only where the tree differs (the Shell, Picker, Menu, Sheet, MessageInput, Rules and
+  the Pane) or for behaviour (the ActionBar's reversed DOM order, a tooltip off on touch);
+  a read that only picked classes is the `touch:` variant. Still read in JavaScript are the cell picks
+  a plugin cannot prefix (an act's `fit`, `backGlyph`, the Table's frozen cells, the Sheet's cell
+  picks). Rejected: a `fine:`
   variant in the cells (an interaction condition in a shared cell, meaningless on native) and one
   type scale at every density (13 on a phone is unreadable and 16 on a desktop row wastes the row).
 - The `room` density is the third set, the one tier a screen declares (`Place.distance: "room"`),
@@ -471,6 +475,17 @@ a tick with no animation, never jumped to full.
   under size containment (a size container in an `auto` track draws 0 px wide, its content not
   counted: measured in Chromium 1194, 300 px of content drew 0 with `container-type: inline-size`
   and 300 without).
+- The frame replaces `Split` and `Screen` because each chose its layout from something other than its
+  own props. `Split`'s main had no head, so a list's title was an `ItemHeader` in the body while its
+  record's `Screen` drew a bar and the section's acts vanished when a record opened; a wrapper paired a
+  header with whichever sibling followed it, so an app component drawing every group put them all
+  inside the pair, six px apart in place of a sections gap; two halves each capped at the measure
+  left a fifth of a 2000 px page empty between the columns. The causes were general (a component
+  reading its children, a mark or a context; one sizing itself or others; one with more behaviours
+  than its uses need), and the rules that answer them hold for the whole roster (the guide's
+  `structure.md`): a parent lays out with flex or grid and a child says only how it flexes. So
+  `Screen`, `Split`, the paired header and the Details act are not roster parts; a page is Panes in
+  order, a pushed page a covering Pane with `back`.
 - Narrow widths and covering are one mechanism, in the Pane's CSS. The Place is a `place` size
   container (`@container/place`), and below `tablet` of its width (`place-max-tablet:`) every Pane but
   the last is `display: none`. A Pane marks itself `data-cover` for `cover`, and the Panes before it
@@ -682,7 +697,8 @@ a tick with no animation, never jumped to full.
   `logFloor` is `docked-log-floor`, a Pane's is 0, since its docked region has no log); the sheet
   measures what it pins. The contract's cells hold no arbitrary value, so each platform restates the
   bound in its overlay by measuring: the web reads the region's height with a `ResizeObserver`
-  (`useFootRegion`) and the pinned parts as the sheet's height less its scroller's, the phone reads
+  (`useFootRegion`, which stays because a footed Pane or Thread in an auto-height column has no definite
+  height: the region measured 0 px and the sheet overflowed by 232 to 337 px) and the pinned parts as the sheet's height less its scroller's, the phone reads
   the `Lifted` region's height and the head and foot `View`s from `onLayout`. A Thread's log region
   clips its height (`overflow-y-clip`; native `overflow-hidden`), so where a docked foot leaves it
   little room nothing the log draws, nor the Latest act at its foot, paints over the foot's head or
@@ -771,6 +787,16 @@ a tick with no animation, never jumped to full.
   width), grid placement (`col-start-1 row-start-1`, two acts in one slot), `table-fixed`, a
   hanging indent (`-indent-control-x`, a wrapped diff line's first line pulled back over its
   hang) and `wrap-anywhere`.
+- A long unbroken word never widens a page. A 300-character word grew 264 of 541 roster text slots
+  past their box, so a sentence, description, label or touch title breaks anywhere
+  (`overflow-wrap: anywhere` on the web body, `wrap-normal` where a figure lane must hold, no
+  per-slot spelling), while a desktop title, a button label and the single-line slots keep their
+  ellipsis. A Button's box is bounded (`max-w-full min-w-0`) so its label truncates; the act slots
+  of Banner, Toast, Section, ListRow and MessageInput may shrink; a unit, a size, a Slider's output,
+  a Status word and a chart tick cut at a word's 18 characters as Chip does; a tooltip holds the
+  measure; a URL or path in a meta line keeps cutting at its end. Native takes the same per slot
+  (`shrink` on a row's text; a source check fails row text with none). The roster stress floor
+  (below) feeds every text slot the long word and a URL.
 - The stacking order between components is a token, `STACK_ORDER`, each layer one step above the one
   before (`sheet` 1, `popover` 2, `toasts` 3, over the page's 0), emitted on the root as
   `--layer-<layer>` and read on the web as `z-(--layer-<layer>)`, since Tailwind's `z-*` reads no
@@ -1729,7 +1755,8 @@ a tick with no animation, never jumped to full.
   `data-popup-open`, which the tooltip's own trigger also sets. No popup of the roster locks the
   page: `Select` and `Picker` pass `modal={false}` (Base UI's select defaults to a scroll lock that
   changes the root's overflow and gutter and moves the page as the list opens), as `Menu` does; a
-  sheet is modal by design. A waiting form shows only for a read that lasts: `WAIT_DELAY` 200 ms
+  sheet is modal by design.
+- A waiting form shows only for a read that lasts: `WAIT_DELAY` 200 ms
   before it is drawn, `WAIT_MIN` 500 ms once drawn (`@fcalell/ui-core/wait`, one decision both
   platforms run), at `QueryBoundary` and a `Section`'s or `Group`'s own `loading`; during the
   delay the form stands undrawn in its place (`invisible` / `opacity-0`), so the page keeps its
@@ -1745,7 +1772,20 @@ a tick with no animation, never jumped to full.
   `base` rung, skipped under the system's reduced motion (Fabric only, so no Android experimental
   flag). A waiting ListRow's bars take their widths from a hash of the list's identity (`useId`) and
   the row index (`waitingBars` in `./list-state`), so a list waits the same way every load and two
-  lists differ. A cell no entry holds is shared, spelled by each component that draws
+  lists differ. A waiting form keeps today's row and line counts, so a list, a Thread or a text block
+  may still change height when its data lands: the change is animated, not prevented, and the
+  rubric's skeleton rule bounds it to the rows' difference.
+- A page's outline comes from its route and its data fills it. A `Section` stands whatever its data
+  holds, drawing its `empty` when there is none, so its arrival moves nothing; a Section per member
+  iterates the domain the app knows (the usage windows, the leads), not the response; a waiting page
+  is the loaded tree with `loading`, never a second tree; and a Section that must stay optional
+  stands after every Section that always stands, so its arrival moves nothing above it. Measured
+  before this held: every route that drew a skeleton (55 of 55) differed from its loaded form, 266
+  of 297 regions, because Sections existed only once their data landed and a waiting row's bars came
+  from a fixed width table. A consumer holds it by a check that no Section is gated on its data's
+  length, none waits on a hand-built tree, and a run that slows the reads fails when a Section's
+  top moves from its waiting to its loaded form; the guide's rules page says how.
+- A cell no entry holds is shared, spelled by each component that draws
   it: the type roles, the field box (`Input`, `Select`, `TextArea`, the Picker's field fit, the
   touch `MessageInput`), the row with its leading slot and its title and meta lines (`ListRow`,
   `FileRow`), the content frame, `FIGURES`, the option group and its label (`SELECT_GROUP`,
@@ -2048,7 +2088,10 @@ A page is not one of them: the places above are the app's routes, and the workbe
 the document it is; `stack screens test` checks it.
 
 The test run's floors are one preview annotation (`@fcalell/plugin-screens/floors`) that, per story,
-visits 320, 1280 and 1920 px (narrowed by `--width`; the density's pin is taken off at each width so
+visits three widths, each answering what the others cannot: 320 is the narrowest phone, the touch set;
+1280 a laptop, the desktop set where a list and its record stand together and `wide` is closed; 1920 a
+desktop monitor, where `wide` is open and every region shows, the only width at which a cap leaves dead
+space (narrowed by `--width`; the density's pin is taken off at each width so
 320 draws the touch set and the others the desktop one, the way the media query decides in a
 browser), and at each width, once the page has settled, checks overflow and runs the render walk
 (`@fcalell/plugin-screens/walk`). The walk reads the contract off the page, never from a copy: the
@@ -2057,7 +2100,12 @@ browser), and at each width, once the page has settled, checks overflow and runs
 data, tested in node, and every one has a canary in `behaviour/walk.stories.tsx` that hands it bad
 markup (and hidden, zero-size and `display: contents` cases) and asserts exactly what it finds.
 What the contract itself draws off a rule is a named exception in `EXCEPTIONS` (`walk.ts`), with
-its reason, never a baseline. Behaviour stories call `walked()` (`behaviour/support.ts`) at the end
+its reason, never a baseline. The standing family is the pair the contract does not make concentric:
+a control, a row or a chip (6, 6, 4) inside a card, a popover or a sheet (8) keep their roles'
+radii. A concentric inner radius, the outer's less the inset, would need the inner part to know its
+outer, a context or a CSS variable the outer sets (which is the same thing), and the numbers that
+would line up fall outside the rubric's ranges for a control, a row and a chip (decided 2026-10-13);
+the walk still holds every other nested pair to the outer less the inset. Behaviour stories call `walked()` (`behaviour/support.ts`) at the end
 of a play function that ends in a state input reached (an open picker, a menu, a sheet, a dialog's
 returned focus, focus on the last act above the tab bar). The workbench's stories carry a tag per
 state (`state:loading`) and per checked global (`mode:dark`) so `--state` and `--mode` leave the
@@ -2165,7 +2213,20 @@ product-noun scans over the sources, class-literal set-equality against each plu
 allowlist, every class a web component spells emitted by the built `app.css`, and the structure rules
 of the guide's `structure.md` (no read of children, no literal length in an arbitrary value, measuring,
 contexts and `dataset` only in closed lists, no `type` prop, no Section in a Section), whose matchers
-live in `@fcalell/ui-core/structure` with a test that each fails on a bad case. The web builds the
+live in `@fcalell/ui-core/structure` with a test that each fails on a bad case. The split follows what
+a check needs: a rule a grep can answer runs in each package's `pnpm verify` (inside `pnpm check`, on
+web and native alike, since native has no render harness), and a rule that needs a layout (heights,
+gaps, insets, radii, clipping, type sizes, late fonts, tabular digits, a root's margin, same-name
+regions) is the render walk of `stack screens test`, which reads the contract's numbers off the page,
+never from a second policy file. Every `createContext` is classed `data`, `behaviour` or `portal`, so
+a new one fails until classified and no class changes a child's form; the form contexts are retired
+(a row's ground, a Section's empty and a Form's stands, a Group's registration, a foot's place), each
+now a prop its owner passes or a structure its parent draws; where the provider drew the consumer
+itself, the context became the consumer's internal prop. `ShellHome` is the one
+named `form` exception: the router mounts the page for an unknown address wherever the miss lands, and
+only the tree above it knows whether a Shell stands there, while a Gate is a root frame and a Place of
+a Pane cannot draw outside one. Every check, grep or walk, has a test that it fails on a bad case
+(`display: contents`, a hidden element, zero height), so none passes by never matching. The web builds the
 roster one component at a time, so react-ui holds each component directory present to its entry and
 reports how many of the roster are built. A new matrix that skips a registry, a component the roster
 does not name, a literal that duplicates a cell, an off-contract utility, or a drawn word outside
