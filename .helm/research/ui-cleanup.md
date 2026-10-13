@@ -192,6 +192,7 @@ guides. Stead's stack pin moves after each pass and its screens are ported in th
    takes the same per slot (`shrink` on a row's text). A roster stress floor feeds every text slot
    the long word and a URL and fails on page growth, a box past its parent or a clip with no
    ellipsis, with false-pass canaries; native gets a source check for row text with no `shrink`.
+   Done: stack `e586689`, `6c3a6d8`.
 7. **Loading:** stack: ListRow's waiting form keeps the loaded row's marks and height. Stead:
    Sections drawn before their data, `useLiveReads` narrowed (the usage pause landed with pass
    1). A record's Pane carries the kind's word as its title while it loads; a waiting title
@@ -211,6 +212,13 @@ guides. Stead's stack pin moves after each pass and its screens are ported in th
    already shows, else the kind's word. ListRow's waiting bars take stable widths per list in
    place of the fixed table. A live frame refetches only the queries on screen, and the leads
    and workflows lists read narrower. The scramble is deferred (open below).
+   Decided after Stead's port: a waiting form keeps today's fixed row and line counts, so a
+   list, a Thread or a text block may still change height when its data lands; the change is
+   animated, not prevented. The switch from a waiting form to its loaded form (`useWait`) is
+   the page's one authored moment, the settle: on the web it runs in a view transition that
+   gathers every switch of a frame, the browser moving each Section from its old place by a
+   transform within the duration scale; on native `LayoutAnimation` runs before the commit.
+   Under reduced motion it snaps. Stead's shift review counts a move the rows above it explain.
 
 Carried from pass 1 to the pass that owns it:
 
