@@ -173,6 +173,13 @@ guides. Stead's stack pin moves after each pass and its screens are ported in th
    height. Staying, each for a reason: the Table's grid or list by its page's width (the tree
    differs), `useScrolls` (CSS sets no `tabindex`), the Thread's follow, the popup offsets read
    from tokens, every native measure (no container queries).
+   Done: stack `0107d12`. The docked sheet's measure stays: a footed Pane or Thread in an
+   auto-height column has no definite height (its region measured 0 px, the sheet overflowing by
+   232 to 337 px), and the body's third tier, giving below its floor once the log has given,
+   needs the pinned head and foot measured. A touch head is 16 px taller on one line (61 against
+   45 at 320); native's head carries the same padding. Still on `touch` in JavaScript: an act's
+   `fit` (`Button` and `IconButton` take density as a prop), `backGlyph`, the Table's frozen-cell
+   cells and the Sheet's cell picks, which are ui-core cells a plugin cannot prefix.
 6. **Overflow:** `min-w-0` and `wrap-anywhere` on text slots.
 7. **Loading:** stack: ListRow's waiting form keeps the loaded row's marks and height. Stead:
    Sections drawn before their data, `useLiveReads` narrowed (the usage pause landed with pass
