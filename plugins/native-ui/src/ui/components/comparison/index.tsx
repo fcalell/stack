@@ -8,6 +8,7 @@ import {
 import {
 	COMPARISON_LABEL,
 	COMPARISON_ROW,
+	FIGURES,
 	skeleton,
 	skeletonLane,
 	text,
@@ -164,7 +165,10 @@ function Fact<T>(props: {
 				) : null}
 			</View>
 			{columns.map((column, index) => (
-				<RNText key={column} className={cn(text({ role: "body" }), COLUMN)}>
+				<RNText
+					key={column}
+					className={cn(text({ role: "body" }), FIGURES, COLUMN)}
+				>
 					{values[index]}
 				</RNText>
 			))}

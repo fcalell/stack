@@ -7,6 +7,7 @@ import type {
 import { isCurrent } from "@fcalell/ui-core/route";
 import {
 	FIELD_ERROR_LINE,
+	FIGURES,
 	ROW_ACTS,
 	ROW_CHEVRON,
 	ROW_ENTRY,
@@ -352,7 +353,7 @@ export function ListRowBase<V extends string | null = string>({
 	// middle; beside a blocked reason it is a run in a sentence.
 	const [only] = lead;
 	const coded = lead.length === 1 && only && isCoded(only) ? only : undefined;
-	const metaRole = text({ role: "meta" });
+	const metaRole = cn(text({ role: "meta" }), FIGURES);
 	// A waiting row (its List was given the items while it loads) draws the bar
 	// in the value's place; the app's slot is not read for it.
 	let value: ReactNode = null;

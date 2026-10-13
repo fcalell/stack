@@ -143,6 +143,36 @@ export const CatchesANestedRadiusThatIsNotConcentric = canary(
 	["nested-radius"],
 );
 
+// The named exceptions are the contract's own draws: a code line is not a list
+// row, and a control hugging a card keeps its role's radius. Anything else
+// standing alike is still found (the short row and the nested box above).
+export const LeavesACodeLineOut = canary(
+	<table>
+		<tbody>
+			<tr className="text-code" style={{ height: 20 }}>
+				<td style={{ padding: 0 }}>1 const a = 1;</td>
+			</tr>
+		</tbody>
+	</table>,
+	[],
+);
+
+export const LeavesAControlHuggingACardOut = canary(
+	<div
+		className="rounded-card"
+		style={{ background: "gray", padding: 4, width: 120 }}
+	>
+		<button
+			type="button"
+			className="rounded-control"
+			style={{ ...BODY, height: "var(--spacing-control)", background: "white" }}
+		>
+			Send
+		</button>
+	</div>,
+	[],
+);
+
 export const CatchesARegionInsideARegionOfItsName = canary(
 	<section aria-label="Architecture">
 		<section aria-label="Architecture">words</section>
@@ -239,6 +269,25 @@ export const CatchesAMarginOnAComponentRoot: StoryObj = {
 
 export const PassesARootWithNoMargin: StoryObj = {
 	render: () => frame(<div style={BODY}>root</div>),
+	play: async ({ canvasElement }) => {
+		const cells = [...canvasElement.querySelectorAll("[data-cell]")];
+		await expect(rootMargins(cells)).toEqual([]);
+	},
+};
+
+// The field act's reach across its box's hairline is the one margin a root
+// carries by design; any other negative margin is still found.
+export const LeavesTheFieldActReachOut: StoryObj = {
+	render: () =>
+		frame(
+			<button
+				type="button"
+				className="-my-hairline"
+				style={{ ...BODY, marginTop: -1, marginBottom: -1 }}
+			>
+				More
+			</button>,
+		),
 	play: async ({ canvasElement }) => {
 		const cells = [...canvasElement.querySelectorAll("[data-cell]")];
 		await expect(rootMargins(cells)).toEqual([]);

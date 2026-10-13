@@ -10,6 +10,7 @@ import {
 import {
 	COMPARISON_LABEL,
 	COMPARISON_ROW,
+	FIGURES,
 	lineBox,
 	skeleton,
 	skeletonLane,
@@ -180,7 +181,7 @@ function Fact<T>(props: {
 				<span
 					key={column}
 					role="cell"
-					className={cn(text({ role: "body" }), COLUMN)}
+					className={cn(text({ role: "body" }), FIGURES, COLUMN)}
 				>
 					{values[index]}
 				</span>

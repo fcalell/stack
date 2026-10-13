@@ -2,6 +2,7 @@ import { cn } from "@fcalell/ui-core/cn";
 import type { Stage, StageEnd, StepState } from "@fcalell/ui-core/descriptors";
 import { stagesShown } from "@fcalell/ui-core/list-state";
 import {
+	FIGURES,
 	lineBox,
 	STAGE_CHECK,
 	STAGE_CROSS,
@@ -125,7 +126,10 @@ export function Stages({ steps, ended }: StagesProps) {
 					>
 						<span className={stage({ state: step.state })}>{step.label}</span>
 						{step.at ? (
-							<time dateTime={step.at} className={text({ role: "meta" })}>
+							<time
+								dateTime={step.at}
+								className={cn(text({ role: "meta" }), FIGURES)}
+							>
 								{moment(step.at)}
 							</time>
 						) : null}

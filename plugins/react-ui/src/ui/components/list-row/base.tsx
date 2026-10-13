@@ -10,6 +10,7 @@ import type {
 import { isCurrent } from "@fcalell/ui-core/route";
 import {
 	FIELD_ERROR_LINE,
+	FIGURES,
 	ROW_ACTS,
 	ROW_CHEVRON,
 	ROW_ENTRY,
@@ -566,6 +567,7 @@ export function ListRowBase<V extends string | null = string>({
 								<span
 									className={cn(
 										text({ role: "meta" }),
+										FIGURES,
 										coded ? META_FIRST_CODE : META_FIRST,
 									)}
 								>
@@ -576,7 +578,7 @@ export function ListRowBase<V extends string | null = string>({
 									)}
 								</span>
 								{rest.length ? (
-									<span className={cn(text({ role: "meta" }), LATER)}>
+									<span className={cn(text({ role: "meta" }), FIGURES, LATER)}>
 										<span aria-hidden className={LATER_START} />
 										<span className={LATER_TEXT}>
 											{partRuns(rest, META_CUT).map((run, at) =>

@@ -12,6 +12,7 @@ import { definitionShape, valueCut } from "@fcalell/ui-core/list-state";
 import {
 	DEFINITION_ROW,
 	DEFINITION_ROW_CHEVRON,
+	FIGURES,
 	ROW_TITLE_LINE,
 	row,
 	text,
@@ -170,7 +171,9 @@ export function DefinitionRow<V extends string | null = string>({
 	if (typeof value === "string") {
 		const { stem, tail } = valueCut(value);
 		shown = (
-			<span className={cn(text({ role: copied ? "code" : "meta" }), VALUE)}>
+			<span
+				className={cn(text({ role: copied ? "code" : "meta" }), FIGURES, VALUE)}
+			>
 				<span className={STEM}>{stem}</span>
 				{tail ? <span className={TAIL}>{tail}</span> : null}
 			</span>

@@ -5,6 +5,7 @@ import type {
 } from "@fcalell/ui-core/descriptors";
 import { closeOpenRuns } from "@fcalell/ui-core/streaming";
 import {
+	FIGURES,
 	MESSAGE_BUBBLE,
 	MESSAGE_CARD,
 	MESSAGE_CODE,
@@ -196,7 +197,10 @@ function LineWait({ role, bar }: { role: "body" | "meta"; bar: string }) {
 export const Message = memo(function Message(props: MessageProps) {
 	const { author, body, at, loading } = props;
 	const time = at ? (
-		<RNText numberOfLines={1} className={cn(text({ role: "meta" }), TIME)}>
+		<RNText
+			numberOfLines={1}
+			className={cn(text({ role: "meta" }), FIGURES, TIME)}
+		>
 			{moment(at)}
 		</RNText>
 	) : null;

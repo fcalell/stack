@@ -7,6 +7,7 @@ import type {
 } from "@fcalell/ui-core/descriptors";
 import { closeOpenRuns } from "@fcalell/ui-core/streaming";
 import {
+	FIGURES,
 	lineBox,
 	MESSAGE_BUBBLE,
 	MESSAGE_CARD,
@@ -172,7 +173,7 @@ function SystemMessage(props: {
 export const Message = memo(function Message(props: MessageProps) {
 	const { author, body, at, loading } = props;
 	const time = at ? (
-		<time dateTime={at} className={cn(text({ role: "meta" }), TIME)}>
+		<time dateTime={at} className={cn(text({ role: "meta" }), FIGURES, TIME)}>
 			{moment(at)}
 		</time>
 	) : null;

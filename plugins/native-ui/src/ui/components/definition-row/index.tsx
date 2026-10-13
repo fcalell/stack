@@ -10,6 +10,7 @@ import { definitionShape, valueCut } from "@fcalell/ui-core/list-state";
 import {
 	DEFINITION_ROW,
 	DEFINITION_ROW_CHEVRON,
+	FIGURES,
 	ROW_TITLE_LINE,
 	row,
 	text,
@@ -176,7 +177,7 @@ export function DefinitionRow<V extends string | null = string>({
 	let shown: ReactNode = null;
 	if (typeof value === "string") {
 		const { stem, tail } = valueCut(value);
-		const role = text({ role: copied ? "code" : "meta" });
+		const role = cn(text({ role: copied ? "code" : "meta" }), FIGURES);
 		// The two parts read as the one value.
 		shown = (
 			<View accessible accessibilityLabel={value} className={VALUE}>

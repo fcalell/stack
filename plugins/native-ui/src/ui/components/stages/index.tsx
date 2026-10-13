@@ -1,6 +1,7 @@
 import type { Stage, StageEnd, StepState } from "@fcalell/ui-core/descriptors";
 import { stagesShown } from "@fcalell/ui-core/list-state";
 import {
+	FIGURES,
 	STAGE_ROW,
 	STAGE_WORDS,
 	stage,
@@ -132,7 +133,7 @@ export function Stages({ steps, ended }: StagesProps) {
 							{step.label}
 						</RNText>
 						{step.at ? (
-							<RNText className={text({ role: "meta" })}>
+							<RNText className={cn(text({ role: "meta" }), FIGURES)}>
 								{moment(step.at)}
 							</RNText>
 						) : null}

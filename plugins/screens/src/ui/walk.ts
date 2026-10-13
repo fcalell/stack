@@ -43,19 +43,62 @@ export type { Finding } from "./walk-checks.ts";
 export { format } from "./walk-checks.ts";
 
 // The named exceptions, the one place the walk lets a rule pass over an
-// element: a selector, the rule it excepts and why. Never a baseline: each
-// stands for a thing the contract itself draws off the rule.
+// element: the rule, a selector the element (or an ancestor) matches, for
+// `nested-radius` the selector of the rounded box it stands in, and why. Never
+// a baseline: each stands for a thing the contract itself draws off the rule.
 export interface Exception {
 	rule: string;
 	selector: string;
+	outer?: string;
 	reason: string;
 }
 
-export const EXCEPTIONS: Exception[] = [];
+export const EXCEPTIONS: Exception[] = [
+	{
+		rule: "clip",
+		selector: ".flex-wrap.h-chip.overflow-hidden",
+		reason:
+			"a row's chip slot shows a chip whole or not at all: a chip wider than the room wraps under the slot's one line and is clipped away",
+	},
+	{
+		rule: "inset",
+		selector: '[class~="pt-[calc(1lh/2)]"]',
+		reason:
+			"a chart's plot starts half a tick label's line below its top, so the top gridline's label centres on the line",
+	},
+	{
+		rule: "row-height",
+		selector: "tr.text-code",
+		reason:
+			"a code line of a Diff or Code is one code leading tall, not a row of a list",
+	},
+	{
+		rule: "type-size",
+		selector: "main.min-h-screen",
+		reason:
+			"the Foundations page is the contract's specimen: it draws every type role, so its sizes are the roles, not a screen's",
+	},
+	{
+		rule: "root-margin",
+		selector: ".-my-hairline",
+		reason:
+			"an icon act in a field box reaches across the box's hairline (fit field) so its hit stands at the box's height",
+	},
+	{
+		rule: "nested-radius",
+		selector: "button.rounded-control",
+		outer: ".rounded-card",
+		reason:
+			"the control and card radii are two roles, not a concentric pair: a control hugging the inside of a card (the message input's send act) keeps the control radius",
+	},
+];
 
-function excepted(rule: string, element: Element): boolean {
+function excepted(rule: string, element: Element, outer?: Element): boolean {
 	return EXCEPTIONS.some(
-		(e) => e.rule === rule && element.closest(e.selector) !== null,
+		(e) =>
+			e.rule === rule &&
+			element.closest(e.selector) !== null &&
+			(e.outer === undefined || outer?.matches(e.outer) === true),
 	);
 }
 
@@ -569,6 +612,7 @@ function outerOf(
 		const box = up.getBoundingClientRect();
 		const radii = corners(style, box);
 		if (!radii.some((r) => r > 0) || !painted(style)) continue;
+		if (excepted("nested-radius", element, up)) return undefined;
 		const left = rect.left - box.left;
 		const top = rect.top - box.top;
 		const right = box.right - rect.right;
@@ -605,7 +649,7 @@ export function rootMargins(frames: Element[]): Finding[] {
 	for (const frame of frames) {
 		for (const root of roots(frame).slice(1)) {
 			const style = getComputedStyle(root);
-			if (style.display === "none") continue;
+			if (style.display === "none" || excepted("root-margin", root)) continue;
 			items.push({
 				...locate(root),
 				margin: [

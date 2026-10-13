@@ -82,10 +82,12 @@ function capture(): void {
 
 // Takes the pin off the globals the viewport decides (the density), so each
 // width draws the value its root's own rules give it there (a phone width the
-// touch set, a laptop the desktop one); returns the pins put back. The
-// preview's decorator pins the rest whenever the story renders again, so it is
-// told to leave these alone meanwhile.
-function unpin(): () => void {
+// touch set, a laptop the desktop one). The preview's decorator pins the rest
+// whenever the story renders again, so it is told to leave these alone
+// meanwhile. `reread` has whatever watches the attribute (the density's store)
+// read the viewport again, for a change of the media query it was never told
+// of; `restore` puts the pins back.
+function unpin(): { reread: () => void; restore: () => void } {
 	const root = document.documentElement;
 	const pins = previewGlobals.flatMap((global) =>
 		global.byViewport && "attribute" in global.apply
@@ -97,12 +99,20 @@ function unpin(): () => void {
 		unpinned.add(pin.name);
 		root.removeAttribute(pin.attribute);
 	}
-	return () => {
-		for (const [i, pin] of pins.entries()) {
-			unpinned.delete(pin.name);
-			const value = values[i];
-			if (value != null) root.setAttribute(pin.attribute, value);
-		}
+	return {
+		reread: () => {
+			for (const pin of pins) {
+				root.setAttribute(pin.attribute, "");
+				root.removeAttribute(pin.attribute);
+			}
+		},
+		restore: () => {
+			for (const [i, pin] of pins.entries()) {
+				unpinned.delete(pin.name);
+				const value = values[i];
+				if (value != null) root.setAttribute(pin.attribute, value);
+			}
+		},
 	};
 }
 
@@ -114,10 +124,11 @@ async function visit(): Promise<string[]> {
 	// The screen first finishes mounting at the size it has: a store that
 	// watches the viewport (the density's media query) is wired as it mounts.
 	await settle();
-	const repin = unpin();
+	const pins = unpin();
 	try {
 		for (const [index, width] of widths().entries()) {
 			await page.viewport(width, HEIGHT);
+			pins.reread();
 			await settle();
 			const scrollWidth = Math.max(
 				document.documentElement.scrollWidth,
@@ -132,7 +143,7 @@ async function visit(): Promise<string[]> {
 			);
 		}
 	} finally {
-		repin();
+		pins.restore();
 		await page.viewport(innerWidth, innerHeight);
 	}
 	return failures;

@@ -21,6 +21,7 @@ import {
 import {
 	button,
 	buttonLabel,
+	FIGURES,
 	field,
 	switchThumb,
 	text,
@@ -196,7 +197,7 @@ function Label(props: { name: string; value?: string }) {
 		<div className="flex flex-row justify-between gap-inside">
 			<p className={text({ role: "caption" })}>{props.name}</p>
 			{props.value && (
-				<p className={text({ role: "caption" })}>{props.value}</p>
+				<p className={cn(text({ role: "caption" }), FIGURES)}>{props.value}</p>
 			)}
 		</div>
 	);
