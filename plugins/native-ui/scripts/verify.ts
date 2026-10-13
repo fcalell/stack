@@ -1503,17 +1503,13 @@ const CONTEXTS: Record<string, [ContextClass, string]> = {
 		"behaviour",
 		"the host a blocked act tells it was pressed, which shows its reason",
 	],
-	"lib/reason.ts:ReasonKept": [
-		"form",
-		"exception: a docked foot's ActionBar keeps the reason's line before it shows, so showing it never moves the act; becomes a prop of the bar once the foot draws it",
-	],
 	"lib/reason.ts:ActFailed": [
 		"data",
 		"the sentence a sheet's act failed with, drawn in the reason's line",
 	],
 	"lib/frame.ts:ShellSwitcher": [
 		"data",
-		"the place switcher the Shell hands the Pane, which draws it as a descriptor in its bar",
+		"the place switcher the Shell hands the Pane, which draws it as a descriptor in its bar; a room Place hands none",
 	],
 	"lib/frame.ts:ShellTabs": [
 		"data",
@@ -1525,7 +1521,7 @@ const CONTEXTS: Record<string, [ContextClass, string]> = {
 	],
 	"lib/frame.ts:ShellHome": [
 		"form",
-		"exception: the page for an unknown address draws a Gate outside a Shell and a Pane inside one; becomes the router's not-found choice",
+		"exception: the router mounts the page for an unknown address wherever the miss lands, and only the tree above it knows whether a Shell stands there: a Gate is a root frame, a Place of a Pane cannot draw outside one, and native-ui imports no router to ask which layout took the miss",
 	],
 	"lib/frame.ts:PlaceRoute": [
 		"data",
@@ -1536,16 +1532,12 @@ const CONTEXTS: Record<string, [ContextClass, string]> = {
 		"the route a Pane's back act returns to, where a read leads back",
 	],
 	"lib/frame.ts:DistanceContext": [
-		"form",
-		"exception: a Pane in a room-distance Place leaves out the switcher, the room set having no tab bar; becomes a Pane prop the Place's density supplies",
+		"data",
+		"the Place's density for the page as a whole (room), the TV set, which the Pane insets its head by; native has no density query to read it from",
 	],
 	"lib/frame.ts:FootReturn": [
 		"behaviour",
 		"the claim a leaving docked sheet sets for the input that returns to take focus",
-	],
-	"lib/group.ts:GroupContext": [
-		"form",
-		"exception: a Group's parts register, and a waiting Group lets only those draw their own waiting forms; becomes each part's loading prop",
 	],
 	"lib/words.tsx:WordsContext": ["data", "the app's words"],
 	"lib/loading.ts:LoadingContext": [
@@ -1555,10 +1547,6 @@ const CONTEXTS: Record<string, [ContextClass, string]> = {
 	"lib/touched.ts:TouchedContext": [
 		"behaviour",
 		"whether a Form or Sheet has taken input, and its leave",
-	],
-	"components/text/index.tsx:Line": [
-		"form",
-		"exception: a Text inside a Text draws a run of its line; becomes a Run component",
 	],
 	"components/sheet/base.tsx:PartsContext": [
 		"portal",

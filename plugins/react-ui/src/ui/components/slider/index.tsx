@@ -12,7 +12,6 @@ import {
 } from "@fcalell/ui-core/variants";
 import { type CSSProperties, use } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { useGroupPart } from "../../lib/group.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 import { SliderWait } from "../../lib/slider-wait.tsx";
 
@@ -63,7 +62,6 @@ export function Slider({
 	unit,
 }: SliderProps) {
 	const waiting = use(LoadingContext);
-	useGroupPart();
 	if (waiting) return <SliderWait />;
 	// The fill and the rest share the track less the thumb in proportion to
 	// the value, and the thumb, held at the same point with `edge` alignment (the

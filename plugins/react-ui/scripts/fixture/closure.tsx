@@ -55,6 +55,7 @@ import { Slider } from "@fcalell/plugin-react-ui/components/slider";
 import { Spinner } from "@fcalell/plugin-react-ui/components/spinner";
 import { Status } from "@fcalell/plugin-react-ui/components/status";
 import { Switch } from "@fcalell/plugin-react-ui/components/switch";
+import { Strong } from "@fcalell/plugin-react-ui/components/strong";
 import { Text } from "@fcalell/plugin-react-ui/components/text";
 import { TextArea } from "@fcalell/plugin-react-ui/components/text-area";
 import { Thread } from "@fcalell/plugin-react-ui/components/thread";
@@ -82,6 +83,15 @@ export const closure = (
 		<Text role="body" class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<Text role="body" classList={{}} />
+		<Strong />
+		{/* @ts-expect-error: closed channel */}
+		<Strong className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Strong style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Strong class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Strong classList={{}} />
 		<Icon name="X" />
 		{/* @ts-expect-error: closed channel */}
 		<Icon name="X" className="x" />

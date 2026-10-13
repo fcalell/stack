@@ -165,7 +165,7 @@ export function Pane({
 	// On touch the shell's switcher leads a Pane with no way back; on the
 	// desktop it stands in the sidebar.
 	const pick =
-		touch && !far && switcher && back === undefined ? (
+		touch && switcher && back === undefined ? (
 			<span className={START}>
 				<SwitcherPick switcher={switcher} touch />
 			</span>

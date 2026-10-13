@@ -21,7 +21,6 @@ import {
 import { type ReactNode, use } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { useCopy } from "../../lib/copy.ts";
-import { useGroupPart } from "../../lib/group.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 import { follow } from "../../lib/navigate.ts";
 import { useWords } from "../../lib/words.tsx";
@@ -147,7 +146,6 @@ export function DefinitionRow<V extends string | null = string>({
 	// In a waiting Group or Section the row draws its waiting form, built from
 	// what it is given: a `switch` or a `pick` as its value stands as the switch's box.
 	const waiting = use(LoadingContext);
-	useGroupPart();
 	if (waiting) {
 		const shape = definitionShape({
 			change,

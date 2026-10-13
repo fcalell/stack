@@ -16,7 +16,6 @@ import { useContext } from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { useGroupPart } from "../../lib/group";
 import { LoadingContext } from "../../lib/loading";
 
 import { CountLinks } from "./count-links";
@@ -75,7 +74,6 @@ export function Meter({
 	loading,
 }: MeterProps) {
 	const inherited = useContext(LoadingContext);
-	useGroupPart();
 	if (loading ?? inherited)
 		return <MeterWait line={waitLine({ meta, counts })} />;
 	const share = max > 0 ? value / max : 0;

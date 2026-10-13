@@ -4,6 +4,7 @@
 // (check b7, and the package type-check itself, since scripts/ sits inside
 // the tsconfig include).
 
+import { Strong } from "@fcalell/plugin-native-ui/components/strong";
 import { Text } from "@fcalell/plugin-native-ui/components/text";
 import { Icon } from "@fcalell/plugin-native-ui/components/icon";
 import { Button } from "@fcalell/plugin-native-ui/components/button";
@@ -106,6 +107,17 @@ export const closure = (
 		<Text role="body" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<Text role="body" placeholderTextColorClassName="text-ink-body" />
+		<Strong />
+		{/* @ts-expect-error: closed channel */}
+		<Strong className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Strong style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Strong class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Strong classList={{}} />
+		{/* @ts-expect-error: closed channel */}
+		<Strong colorClassName="text-ink-body" />
 		<Icon name="X" fit="body" />
 		{/* @ts-expect-error: closed channel */}
 		<Icon name="X" fit="body" className="x" />

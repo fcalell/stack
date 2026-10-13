@@ -14,7 +14,6 @@ import {
 } from "@fcalell/ui-core/variants";
 import { use } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { useGroupPart } from "../../lib/group.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 import { CountLinks } from "./count-links.tsx";
 import { MeterWait } from "./wait.tsx";
@@ -67,7 +66,6 @@ export function Meter({
 	loading,
 }: MeterProps) {
 	const inherited = use(LoadingContext);
-	useGroupPart();
 	if (loading ?? inherited)
 		return <MeterWait line={waitLine({ meta, counts })} />;
 	const share = max > 0 ? value / max : 0;

@@ -68,7 +68,7 @@ export const PlaceRoute = createContext<Route | undefined>(undefined);
 export const BackRoute = createContext<Route | undefined>(undefined);
 
 // Whether the Place is read from across a room (`distance` `room`): the Pane
-// leaves out the switcher, which the room set has no tab bar for.
+// insets its head by the room set's page inset.
 export const DistanceContext = createContext(false);
 
 // What a docked foot's region hands the docked `Sheet` it draws: `height` is the

@@ -21,6 +21,7 @@ import {
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { type ReactNode, useState } from "react";
 import { expect, waitFor, within } from "storybook/test";
+import { sectionOf } from "./support.ts";
 
 // A waiting part stands as its loaded form stands, so the screen does not
 // move when the data lands. Each scenario draws a loaded form and a waiting one
@@ -122,7 +123,7 @@ const facts: StoryObj = {
 	},
 };
 
-// A Group holding rows no part answers for keeps its three setting rows.
+// A waiting Group draws a row of the app's own as it is: no part answers for it, and no second tree stands in its place.
 const fallback: StoryObj = {
 	render: () => (
 		<Pair
@@ -133,9 +134,11 @@ const fallback: StoryObj = {
 		/>
 	),
 	play: async ({ canvas }) => {
-		const waiting = canvas.getByTestId("waiting");
+		const { waiting } = await stand(canvas);
+		await expect(waiting.firstElementChild?.children).toHaveLength(1);
+		// The waiting form is drawn once the read has lasted its delay.
 		await waitFor(() =>
-			expect(waiting.firstElementChild?.children).toHaveLength(3),
+			expect(within(waiting).getByText("Own row")).toBeVisible(),
 		);
 	},
 };
@@ -148,18 +151,15 @@ const bodies: StoryObj = {
 	play: async ({ canvas }) => {
 		const waiting = within(canvas.getByTestId("waiting"));
 		const loaded = within(canvas.getByTestId("loaded"));
-		const prose = waiting
-			.getByRole("region", { name: "Notes" })
-			.querySelector("div[aria-busy]");
+		const prose = sectionOf(waiting, "Notes").querySelector("div[aria-busy]");
 		// The waiting form is drawn once the read has lasted its delay.
 		await waitFor(() => expect(prose).toBeVisible());
 		await expect(waiting.queryByText(/Moves the billing/)).toBeNull();
-		const thread = waiting.getByRole("region", { name: "Thread" });
+		const thread = sectionOf(waiting, "Thread");
 		await expect(thread.querySelectorAll("article[aria-busy]")).toHaveLength(3);
 		for (const message of thread.querySelectorAll("article[aria-busy]"))
 			await waitFor(() => expect(message).toBeVisible());
-		const check = (box: typeof waiting) =>
-			box.getByRole("region", { name: "Check" });
+		const check = (box: typeof waiting) => sectionOf(box, "Check");
 		await waitFor(() =>
 			expect(
 				Math.abs(height(check(loaded)) - height(check(waiting))),
@@ -189,9 +189,10 @@ const bar: StoryObj = {
 	render: () => <Pair loaded={<Profile />} waiting={<Profile loading />} />,
 	play: async ({ canvas }) => {
 		const { waiting } = await stand(canvas);
-		await expect(
-			within(waiting).getByRole("region", { name: "Profile" }),
-		).toHaveAttribute("aria-busy", "true");
+		await expect(sectionOf(within(waiting), "Profile")).toHaveAttribute(
+			"aria-busy",
+			"true",
+		);
 		await expect(within(waiting).queryAllByRole("textbox")).toHaveLength(0);
 		await expect(within(waiting).queryAllByRole("button")).toHaveLength(0);
 	},
@@ -299,9 +300,10 @@ const form: StoryObj = {
 	render: () => <Pair loaded={<Commands />} waiting={<Commands loading />} />,
 	play: async ({ canvas }) => {
 		const { waiting } = await stand(canvas);
-		await expect(
-			within(waiting).getByRole("region", { name: "Commands" }),
-		).toHaveAttribute("aria-busy", "true");
+		await expect(sectionOf(within(waiting), "Commands")).toHaveAttribute(
+			"aria-busy",
+			"true",
+		);
 		await expect(within(waiting).queryAllByRole("textbox")).toHaveLength(0);
 		await expect(within(waiting).queryAllByRole("button")).toHaveLength(0);
 		await expect(

@@ -2577,7 +2577,8 @@ A docked sheet's body keeps `docked-floor` (144px on touch, 96px on the desktop)
 
 | Component | Layer | Draws | States |
 | --- | --- | --- | --- |
-| `Text` | atom | `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body`, `TEXT_STRONG.role.meta` | rest |
+| `Text` | atom | `TEXT.role.body`, `TEXT.role.meta` | rest |
+| `Strong` | atom | `TEXT_STRONG.role.body`, `TEXT_STRONG.role.meta` | rest |
 | `Icon` | atom | `ICON` | rest |
 | `Button` | atom | `BUTTON`, `BUTTON_LABEL`, `ICON.fit.control`, `COUNT_LABEL` | rest, hover, focus, active, disabled, loading |
 | `IconButton` | atom | `ICON_BUTTON`, `TOOLTIP` | rest, hover, focus, active, loading |
@@ -2647,6 +2648,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | Component | Roles | Colours | Radii | Spacing | Sizes | Elevation |
 | --- | --- | --- | --- | --- | --- | --- |
 | `Text` | `body`, `meta` | `ink-body`, `ink-meta` | none | none | `measure` | none |
+| `Strong` | `body`, `meta` | none | none | none | none | none |
 | `Icon` | none | none | none | none | `icon-meta`, `icon`, `icon-control` | none |
 | `Button` | `body`, `meta`, `caption` | `act-`, `on-act-`, `edge`, `ink-body`, `ink-meta`, `danger`, `wash-hover`, `wash-press`, `fill-disabled`, `ink-disabled`, `ring` | `control` | `inside`, `control-x`, `pair` | `control`, `control-compact`, `field`, `icon-control` | none |
 | `IconButton` | `meta` | `ink-meta`, `ink-body`, `wash-hover`, `wash-press`, `ink-disabled`, `ring`, `raised`, `edge-raised` | `control` | `inside`, `pair` | `control`, `control-compact`, `hairline`, `measure-short` | `float` |

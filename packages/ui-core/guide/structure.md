@@ -42,11 +42,11 @@ check holds is edited in the check, with its one-line reason; an entry nothing m
 | 16 | Type is 12 px or more at every density, in at most six sizes a screen. | Is a text node under 12 px, or a seventh size on the screen? | render walk (type sizes) |
 | 17 | Fonts are loaded before first paint, so no text reflows. | Does a text box change size when a face lands? | render walk (late fonts) |
 | 18 | A bare number that changes in place sets tabular digits. | Is `font-variant-numeric` without `tabular-nums` on a figure that updates? | render walk (tabular digits) |
-| 19 | No region stands inside a region of its name (a Pane and a Section of one title). | Do two landmarks share a name on the page? | render walk (same-name regions) |
+| 19 | A Section is a heading over its body, never a landmark; no region stands inside a region of its name. | Does a Section carry a name or a role that makes it a region? Do two landmarks share a name on the page? | render walk (same-name regions) |
 
 ## Adding to a closed list
 
 A new file in `b-measure` or `b-dataset`, or a new context, is the last resort. First try the
 rule's own answer: flex, grid or a container query for a measure; a prop for a mark or a context.
 An entry names the one thing the file reads and why CSS cannot; a context names its class, and
-`form` is a named exception that records the prop it becomes.
+`form` is a named exception that records why no prop, no CSS and no parent that draws the child can decide it (the page for an unknown address, which the router mounts below a Shell or not).

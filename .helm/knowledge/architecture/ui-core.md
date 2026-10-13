@@ -1387,6 +1387,13 @@ a tick with no animation, never jumped to full.
   one figure wide around an unseen "0" so nothing moved when the count arrived, and Stead's critique
   read the "0" in a loading head. The count arrives at the title's end, where it moves no title; the web
   Section draws none while busy. (The phone's Section and the ItemHeader keep the waiting chip, unrendered.)
+- A Section is a heading over its body and no landmark: the web's `section` carries no
+  `aria-labelledby`, so it has no role, and the Pane is the page's one named region at each
+  title. A Section titled as its Pane (a record's tree under the record's name) is therefore not
+  a second region of one name (axe `landmark-unique`); heading navigation still lists it, and
+  the page's content stays inside the Pane's or Gate's landmark. The phone's Section is a
+  `View` with no role. The render walk's same-name check stays for the regions an app names
+  itself.
 - A Section reads nothing of its body (the walk is gone, pass 3 of the UI cleanup): its head is busy
   exactly while its `loading` is set (the wait of a read that lasts, `useWait`) and its count is exactly
   its `count` (none at 0, undrawn while busy; the phone draws the waiting chip), so a caller passes
@@ -1446,18 +1453,17 @@ a tick with no animation, never jumped to full.
   like each other block frame that hides its overflow (`Code`, `Diff`, `ProseDiff`, `Image`, `Stats`), never shrinks (`shrink-0`): its `overflow-hidden` gives a flex item a zero automatic
   minimum, so in a column that scrolls (a Pane's body, a Sheet's body) it would give up
   height and clip its rows; native's `flexShrink` default is 0. A waiting Group
-  (its `loading`, or a loading Section's) renders its body once and, when no part registered
-  (a List, a Meter, a Slider, a DefinitionRow register through `useGroupPart`, however deep),
-  swaps it for setting skeletons before paint (`groupWait`), the Section's mechanism; with a part
-  registered the body stays and each part draws its own waiting form from the loading it reads
-  (`LoadingContext`), in order, so a card of static parts waits at one form per part and at the
-  loaded card's height. A DefinitionRow's form is built from what it is given (`definitionShape`: a
-  `description` or `locked` reason is the setting form, an `act` or `href` the end's square, a
-  `switch` the switch's box) and a Slider's is its label's and value's bars over a
-  bar in the track's box. The setting skeletons stay the form for entries no part answers for
-  (an app's own row). A waiting
+  (its `loading`, or a loading Section's) hands its body the loading (`LoadingContext`) and each
+  part draws its own waiting form from it, in order, so a card of static parts waits at one form
+  per part and at the loaded card's height; a row of an app's own draws as it is, as in a Section,
+  since a waiting form is the loaded tree with `loading` and never a second tree (a body no part
+  answers for is not swapped for skeletons, which would need the parts to register with the Group).
+  A DefinitionRow's form is built from
+  what it is given (`definitionShape`: a `description` or `locked` reason is the setting form, an
+  `act` or `href` the end's square, a `switch` the switch's box) and a Slider's is its label's and
+  value's bars over a bar in the track's box. A waiting
   setting row is the DefinitionRow's own wait (`definition-row/wait.tsx`, shared with a
-  `definition` List, `end: "switch"` internal to the Group): it stands in the loaded
+  `definition` List): it stands in the loaded
   DefinitionRow's boxes (the label's body line box beside the switch's target-sized hit box on the
   title line, the description's meta line box under it), so its height and its bars' centres are a
   one-line setting row's at either density. A `definition` list is facts and carries no count of its own.
@@ -1701,7 +1707,7 @@ a tick with no animation, never jumped to full.
   Rejected: optional `value` and `onChange` on every control read from the field's context, which
   would compile a control with no value anywhere and could not type a boolean field against an
   `Input`.
-- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 64 components in four
+- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 65 components in four
   layers (atoms, layout molecules, shared molecules, content molecules) with their prop names, the
   cells each draws (a whole matrix family, one family cell as `FAMILY.axis.value`, or a single cell)
   and the states it has a form for, the same in both plugins; an entry with `platforms` ships on
@@ -1956,9 +1962,12 @@ a tick with no animation, never jumped to full.
   close handler (a pick or the act closed another way, and on the phone the rows re-expanded while
   the sheet left), and focusing the stop after two animation frames (a guess against Base UI's own
   focus).
-- `Text` draws `body` and `meta` (plus `strong`) and names those roles' cells of `TEXT` and
-  `TEXT_STRONG`, not either family; every other type role is drawn by the molecule that owns
-  its place, and `TEXT` keeps all eight roles as the one table those owners draw from.
+- `Text` draws `body` and `meta` and names those roles' cells of `TEXT`, not the family; every
+  other type role is drawn by the molecule that owns its place, and `TEXT` keeps all eight roles
+  as the one table those owners draw from. A run of emphasis inside a line is `Strong`, which
+  names the `TEXT_STRONG` cells (body and meta share the weight): it takes no role, so it needs
+  no context to read its line's, and a `Text` inside a `Text` is not a form (a paragraph in a
+  paragraph is not HTML).
 - Tokens are enforced by ownership: a token names a place, and the component that owns the place
   draws it. A component declares `owns` on its entry, the type roles, colours (a name, or a family
   prefix ending in `-`), radii, spacing roles, sizes and widths, and shadow levels it may draw. A

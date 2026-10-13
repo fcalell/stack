@@ -2084,7 +2084,7 @@ check(
 	"the roster is closed, camelCase, and off the style channels",
 	() => {
 		const entries = rosterEntries();
-		requireEqual(entries.length, 64, "component count");
+		requireEqual(entries.length, 65, "component count");
 		const names = new Set<string>();
 		for (const [, name, { props }] of entries) {
 			assert(/^[A-Z][A-Za-z]+$/.test(name), `${name} is not PascalCase`);

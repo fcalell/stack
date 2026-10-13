@@ -1,6 +1,7 @@
 import { cn } from "@fcalell/ui-core/cn";
-import type { ReactNode } from "react";
+import { type ReactNode, use } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { ShellSwitcher } from "../../lib/frame.ts";
 import { DistanceContext } from "../../lib/media.ts";
 
 // A place is a row of Panes and the size container they read whether it
@@ -28,14 +29,18 @@ export type PlaceProps = Closed &
 /** A page in the shell: its Panes in a row, each but the last at the list width giving way to its floor, the last taking the rest, a hairline between them. It draws no bar of its own: each Pane carries its own. Below `tablet` of its width only the last Pane stands. With `distance` `room` it draws the room set and the touch structure, its last Pane alone. */
 export function Place({ distance, children }: PlaceProps) {
 	const far = distance === "room";
+	const switcher = use(ShellSwitcher);
 	return (
 		<DistanceContext value={far}>
-			<div
-				data-density={far ? "room" : undefined}
-				className={cn(PLACE, far && ROOM)}
-			>
-				{children}
-			</div>
+			{/* The room set has no place to switch from: its Panes get no trigger. */}
+			<ShellSwitcher value={far ? undefined : switcher}>
+				<div
+					data-density={far ? "room" : undefined}
+					className={cn(PLACE, far && ROOM)}
+				>
+					{children}
+				</div>
+			</ShellSwitcher>
 		</DistanceContext>
 	);
 }

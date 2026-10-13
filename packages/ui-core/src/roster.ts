@@ -85,19 +85,21 @@ const PRESS = ["rest", "hover", "focus", "active"] as const;
 export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 	atom: {
 		Text: {
-			props: ["role", "strong", "children"],
-			draws: [
-				"TEXT.role.body",
-				"TEXT.role.meta",
-				"TEXT_STRONG.role.body",
-				"TEXT_STRONG.role.meta",
-			],
+			props: ["role", "children"],
+			draws: ["TEXT.role.body", "TEXT.role.meta"],
 			states: ["rest"],
 			owns: {
 				roles: ["body", "meta"],
 				colors: ["ink-body", "ink-meta"],
 				sizes: ["measure"],
 			},
+		},
+		// A run of a line: only the weight, the line's role and ink inherited.
+		Strong: {
+			props: ["children"],
+			draws: ["TEXT_STRONG.role.body", "TEXT_STRONG.role.meta"],
+			states: ["rest"],
+			owns: { roles: ["body", "meta"] },
 		},
 		Icon: {
 			props: ["name", "fit"],

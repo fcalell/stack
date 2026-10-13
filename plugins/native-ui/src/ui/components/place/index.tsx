@@ -1,7 +1,7 @@
 import { type ReactNode, useContext } from "react";
 import { View } from "react-native";
 import type { Closed } from "../../lib/closed";
-import { DistanceContext, ShellTabs } from "../../lib/frame";
+import { DistanceContext, ShellSwitcher, ShellTabs } from "../../lib/frame";
 import { RoomScope } from "../../lib/room";
 
 const PLACE = "flex-1";
@@ -25,12 +25,16 @@ export type PlaceProps = Closed &
 export function Place({ distance, children }: PlaceProps) {
 	const far = distance === "room";
 	const tabs = useContext(ShellTabs);
+	const switcher = useContext(ShellSwitcher);
+	// The room set has no place to switch from: its Pane gets no trigger.
 	const page = (
 		<DistanceContext.Provider value={far}>
-			<View className={PLACE}>
-				{children}
-				{tabs}
-			</View>
+			<ShellSwitcher.Provider value={far ? undefined : switcher}>
+				<View className={PLACE}>
+					{children}
+					{tabs}
+				</View>
+			</ShellSwitcher.Provider>
 		</DistanceContext.Provider>
 	);
 	return far ? <RoomScope>{page}</RoomScope> : page;

@@ -5,6 +5,7 @@ import { Section } from "@fcalell/plugin-react-ui/components/section";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { expect, waitFor } from "storybook/test";
+import { sectionOf } from "./support.ts";
 
 // A Section reads nothing of its body: its head is busy exactly while its
 // `loading` is set and its count is exactly its `count`; each part of the body
@@ -51,7 +52,7 @@ export const HeadIsBusyAndCountedByItsProps: StoryObj = {
 		</div>
 	),
 	play: async ({ canvas }) => {
-		const region = (name: string) => canvas.getByRole("region", { name });
+		const region = (name: string) => sectionOf(canvas, name);
 		await expect(region("Pending list")).not.toHaveAttribute("aria-busy");
 		await expect(region("Counted")).not.toHaveAttribute("aria-busy");
 		await expect(region("Loading")).toHaveAttribute("aria-busy", "true");
@@ -90,7 +91,7 @@ export const FieldWaitsAndKeepsItsText: StoryObj = {
 		await userEvent.type(input, " Inc");
 		await expect(input).toHaveValue("Acme Inc");
 		await userEvent.click(canvas.getByRole("button", { name: "Toggle" }));
-		const region = canvas.getByRole("region", { name: "Profile" });
+		const region = sectionOf(canvas, "Profile");
 		await expect(region).toHaveAttribute("aria-busy", "true");
 		await expect(input).not.toBeVisible();
 		// The waiting field is drawn once the read has lasted its delay.

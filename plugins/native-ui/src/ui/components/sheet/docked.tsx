@@ -13,11 +13,11 @@ import { cn } from "../../lib/cn";
 import { FieldClaim, FieldNameContext } from "../../lib/field";
 import { type FootRegionValue, FootReturn, tokenPx } from "../../lib/frame";
 import { Scroll, type ScrollRef } from "../../lib/hosts";
-import { ActFailed, ReasonKept } from "../../lib/reason";
+import { ActFailed } from "../../lib/reason";
 import { useCSSVariable } from "../../lib/theme";
 import { TouchedContext, usePageTurn, useTouchState } from "../../lib/touched";
 import { useWords } from "../../lib/words";
-import { ActionBar } from "../action-bar";
+import { ActionBarBase } from "../action-bar/base";
 import type { FormProps } from "../form";
 import { FormBody } from "../form/base";
 import { IconButton } from "../icon-button";
@@ -184,11 +184,9 @@ export function SheetDocked({
 									</View>
 								) : null}
 								{submit ? (
-									<ReasonKept.Provider value>
-										<ActFailed.Provider value={failed}>
-											<ActionBar acts={[submit]} />
-										</ActFailed.Provider>
-									</ReasonKept.Provider>
+									<ActFailed.Provider value={failed}>
+										<ActionBarBase acts={[submit]} kept />
+									</ActFailed.Provider>
 								) : null}
 							</View>
 						) : null}

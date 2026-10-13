@@ -22,7 +22,7 @@ import { backGlyph } from "../../lib/back.ts";
 import { focusFirst } from "../../lib/focus.ts";
 import type { FootRegionValue } from "../../lib/frame.ts";
 import { useTouch } from "../../lib/media.ts";
-import { ActFailed, ReasonKept } from "../../lib/reason.ts";
+import { ActFailed } from "../../lib/reason.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
 import {
 	TouchedContext,
@@ -30,7 +30,7 @@ import {
 	useTouchState,
 } from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";
-import { ActionBar } from "../action-bar/index.tsx";
+import { ActionBarBase } from "../action-bar/base.tsx";
 import { FormBody } from "../form/base.tsx";
 import type { FormProps } from "../form/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
@@ -153,11 +153,9 @@ export function SheetDocked({
 		<p className={cn(text({ role: "meta" }), FOOT_LINE)}>{foot}</p>
 	) : null;
 	const bar = submit ? (
-		<ReasonKept value>
-			<ActFailed value={failed}>
-				<ActionBar acts={[submit]} />
-			</ActFailed>
-		</ReasonKept>
+		<ActFailed value={failed}>
+			<ActionBarBase acts={[submit]} kept />
+		</ActFailed>
 	) : null;
 	return (
 		<TouchedContext value={touchedValue}>

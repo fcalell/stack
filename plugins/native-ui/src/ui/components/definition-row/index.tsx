@@ -21,7 +21,6 @@ import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { useCopy } from "../../lib/copy";
-import { useGroupPart } from "../../lib/group";
 import { Ink } from "../../lib/ink";
 import { LoadingContext } from "../../lib/loading";
 import { navigate } from "../../lib/navigate";
@@ -154,7 +153,6 @@ export function DefinitionRow<V extends string | null = string>({
 	// In a waiting Group or Section the row draws its waiting form, built from
 	// what it is given: a `switch` or a `pick` stands as the switch's box.
 	const waiting = useContext(LoadingContext);
-	useGroupPart();
 	if (waiting) {
 		const shape = definitionShape({
 			change,

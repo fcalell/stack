@@ -11,7 +11,6 @@ import {
 	factShape,
 	fileShape,
 	folding,
-	groupWait,
 	type ListInput,
 	listBusy,
 	listState,
@@ -289,12 +288,6 @@ test("Retry refetches the query", () => {
 	assert.equal(calls, 0);
 	retry();
 	assert.equal(calls, 1);
-});
-
-test("a waiting Group draws the waiting forms of the parts that register, else setting row skeletons", () => {
-	assert.equal(groupWait(1), "parts");
-	assert.equal(groupWait(2), "parts");
-	assert.equal(groupWait(0), "settings");
 });
 
 test("a part that waits for a count reads its own loading, else the loading it inherits as the fallback", () => {

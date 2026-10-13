@@ -15,7 +15,6 @@ import { useResolveClassNames } from "uniwind";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FieldDisabled } from "../../lib/field";
-import { useGroupPart } from "../../lib/group";
 import { LoadingContext } from "../../lib/loading";
 import { SliderWait } from "../../lib/slider-wait";
 
@@ -49,7 +48,6 @@ export function Slider({
 }: SliderProps) {
 	const disabled = useContext(FieldDisabled);
 	const waiting = useContext(LoadingContext);
-	useGroupPart();
 	const [pressed, setPressed] = useState(false);
 	// The track's width, which only a touch reads, so its layout renders nothing.
 	const width = useRef(0);

@@ -878,21 +878,17 @@ const CONTEXTS: Record<string, [ContextClass, string]> = {
 		"behaviour",
 		"the host a blocked act tells it was pressed, which shows its reason",
 	],
-	"lib/reason.ts:ReasonKept": [
-		"form",
-		"exception: a docked foot's ActionBar keeps the reason's line before it shows, so showing it never moves the act; becomes a prop of the bar once the foot draws it",
-	],
 	"lib/reason.ts:ActFailed": [
 		"data",
 		"the sentence a sheet's act failed with, drawn in the reason's line",
 	],
 	"lib/frame.ts:ShellSwitcher": [
 		"data",
-		"the place switcher the Shell hands the Pane, which draws it as a descriptor in its touch bar",
+		"the place switcher the Shell hands the Pane, which draws it as a descriptor in its touch bar; a room Place hands none",
 	],
 	"lib/frame.ts:ShellHome": [
 		"form",
-		"exception: the page for an unknown address draws a Gate outside a Shell and a Pane inside one; becomes the router's not-found choice",
+		"exception: the router mounts the page for an unknown address wherever the miss lands, and only the tree above it knows whether a Shell stands there: a Gate is a root frame with its own main, a Place of a Pane cannot draw outside one, and react-ui imports no router to ask which layout took the miss",
 	],
 	"lib/frame.ts:PlaceRoute": [
 		"data",
@@ -906,10 +902,6 @@ const CONTEXTS: Record<string, [ContextClass, string]> = {
 		"data",
 		"the id of the title that names a Pane or a Gate, which its Thread and Table label by",
 	],
-	"lib/group.ts:GroupContext": [
-		"form",
-		"exception: a Group's parts register, and a waiting Group lets only those draw their own waiting forms; becomes each part's loading prop",
-	],
 	"lib/words.tsx:WordsContext": ["data", "the app's words"],
 	"lib/loading.ts:LoadingContext": [
 		"data",
@@ -922,10 +914,6 @@ const CONTEXTS: Record<string, [ContextClass, string]> = {
 	"lib/media.ts:DistanceContext": [
 		"data",
 		"the Place's density for the page as a whole (room), the TV set",
-	],
-	"components/text/index.tsx:Line": [
-		"form",
-		"exception: a Text inside a Text draws a span, a run of its line; becomes a Run component",
 	],
 };
 

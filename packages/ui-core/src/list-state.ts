@@ -88,14 +88,6 @@ export function retryOf(query: { refetch: () => unknown }): () => void {
 	};
 }
 
-// What a waiting `Group` draws: the waiting forms of the parts it holds that
-// have one (a List's rows in the slots its map declares, a Meter, a Slider, a
-// DefinitionRow), each registered however deep; with none, setting row
-// skeletons in place of its static children.
-export function groupWait(parts: number): "parts" | "settings" {
-	return parts > 0 ? "parts" : "settings";
-}
-
 // How many drawn units a part's waiting form stands for, where that count is
 // one the app knows and the part cannot derive (a Prose's lines, an
 // ActionBar's acts): the part's own `loading` (`true` for `fallback`, a

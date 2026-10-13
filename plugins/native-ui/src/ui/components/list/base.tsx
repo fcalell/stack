@@ -19,7 +19,7 @@ import {
 import { type ReactElement, useContext, useId, useState } from "react";
 import { View } from "react-native";
 import { EmptyBase } from "../../lib/empty";
-import { between, useGroupPart } from "../../lib/group";
+import { between } from "../../lib/group";
 import { LoadingContext } from "../../lib/loading";
 import { useWords } from "../../lib/words";
 import { DefinitionRow } from "../definition-row";
@@ -67,7 +67,6 @@ export function ListBase<T, V extends string | null = string>(
 		sectionLoading: useContext(LoadingContext),
 		hasEmpty: props.empty !== undefined,
 	};
-	useGroupPart();
 	const framed = props.framed === true;
 	// A failed, missing or empty form stands on the Group's card when framed.
 	const fit = framed ? "group" : "frame";

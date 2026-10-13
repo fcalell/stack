@@ -109,7 +109,7 @@ export function Pane({
 				label={words.back}
 				onAct={() => navigate(back)}
 			/>
-		) : switcher && !far ? (
+		) : switcher ? (
 			<SwitcherPick switcher={switcher} />
 		) : null;
 	return (

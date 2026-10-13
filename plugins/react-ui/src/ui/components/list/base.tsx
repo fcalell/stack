@@ -30,7 +30,6 @@ import {
 	useState,
 } from "react";
 import { EmptyBase } from "../../lib/empty.tsx";
-import { useGroupPart } from "../../lib/group.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 import { ListedRoute, useRoute } from "../../lib/navigate.ts";
 import { useWords } from "../../lib/words.tsx";
@@ -97,7 +96,6 @@ export function ListBase<T, V extends string | null = string>(
 		hasEmpty: props.empty !== undefined,
 	};
 	const busy = listBusy(input);
-	useGroupPart();
 	const framed = props.framed === true;
 	// A failed, missing or empty form stands on the Group's card when framed.
 	const fit = framed ? "group" : "frame";

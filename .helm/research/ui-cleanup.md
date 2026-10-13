@@ -225,9 +225,11 @@ Carried from pass 1 to the pass that owns it:
 
 - Still open from pass 4: native `Columns` sets no column width, which a column would carry as
   its own prop; a native cell's search no longer ends the edit on blur.
-- Step 5: a Pane and a Section of one name are two region landmarks of one name (axe
+- Step 5: a Pane and a Section of one name were two region landmarks of one name (axe
   `landmark-unique` on Stead's knowledge page, the page Pane "Architecture" beside the tree's
-  Section "Architecture").
+  Section "Architecture"). Decided 2026-10-13: a Section is a `section` with no name, so no
+  landmark, and the Pane stays the named region; the walk's same-name check stays for an app's
+  own regions.
 - A device run: the native Pane's keyboard and its nested scroll are untested on a phone; so is
   the native sheet, content-tall and growing to its cap since pass 3 (decided 2026-10-12, its
   foot gorhom's footer on `bottomInset`, which may step rather than slide as the keyboard rises,
@@ -297,10 +299,13 @@ and `b-type-prop` on web and native, and `b-section-nest` on native (react-ui 20
 `stack screens test` at 320, 1280 and 1920 with `--screen`, `--state`, `--width` and `--mode`,
 the walk exported as `@fcalell/plugin-screens/walk` and run in the floors, the behaviour stories
 and the roster stress, its canaries in `behaviour/walk.stories.tsx`. The full run takes about
-2m15 against 1m50 before. Open: the contexts `b-context` tags `form`, named exceptions to rule 11
-(web `Line`, `GroupContext`, `ReasonKept`, `ShellHome`; native adds `DistanceContext`), each to
-become a prop; a same-name region is caught, not prevented (a Pane and a Section are both
-regions named by their heading, and no fix stays inside the rules); the contract has no
+2m15 against 1m50 before. Settled 2026-10-13: the contexts `b-context` tagged `form` are gone but
+one. `Line` became `Strong`, a run with no role to read; `GroupContext` went with the Group's
+second tree of setting skeletons (a waiting form is the loaded tree with `loading`);
+`ReasonKept` became the `kept` prop of the ActionBar's internal base, which the docked foot
+draws; native's `DistanceContext` stopped deciding an element (a room Place hands its Pane no
+switcher) and stays the density, data. `ShellHome` stays the one named exception. A Section is
+no landmark, so a Pane and a Section of one title are one region. Open: the contract has no
 concentric inner radius (control, row and chip 6 inside card, popover and sheet 8), so the walk
 names those pairs as exceptions; a control that grows from a floor is checked against its floor
 only.
