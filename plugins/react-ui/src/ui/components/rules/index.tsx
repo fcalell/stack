@@ -34,6 +34,7 @@ const ADD = "col-span-4 flex";
 const STACKED = "flex flex-col items-stretch";
 const STACK = "flex flex-col items-start gap-pair";
 const GROUP_SLOT = "self-stretch";
+const ADD_WRAP = "max-w-full";
 const MARK = "flex shrink-0 items-center justify-center";
 const REMOVE_END = "self-end";
 
@@ -205,7 +206,11 @@ export function Rules<V extends string | null = string>({
 						/>
 					</div>
 				) : null}
-				{act ? <div data-rule-add="">{act}</div> : null}
+				{act ? (
+					<div data-rule-add="" className={ADD_WRAP}>
+						{act}
+					</div>
+				) : null}
 			</div>
 		);
 	return (

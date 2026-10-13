@@ -28,7 +28,7 @@ const PICK = "absolute inset-0 opacity-0";
 const ANCHOR = "relative";
 const ABOVE = "relative flex";
 const VALUE = "min-w-0 grow truncate";
-const SIZE = "shrink-0";
+const SIZE = "shrink-0 max-w-measure-short truncate";
 const DISABLED = "text-ink-disabled";
 // A file over the box draws the focus ring, the box being where it lands.
 const OVER = "outline-2 outline-offset-(--focus-ring-edge-offset) outline-ring";

@@ -61,10 +61,13 @@ const ROW = "flex items-end";
 const OVER = "border-edge-hover";
 const FOOT = "flex items-center";
 const SPACER = "grow";
-// Stop, while an answer comes, and Send: never narrowed by the text.
-const ACTS = "flex items-center shrink-0";
+// Stop, while an answer comes, and Send: the spacer holds no width to give, so
+// only a label wider than the row narrows them. On touch they are icon acts the
+// field gives way to.
+const ACTS = "flex items-center min-w-0 max-w-full";
+const ACTS_ICON = "flex items-center shrink-0";
 const NOTICE = "flex items-center";
-const NOTICE_TEXT = "grow min-w-0";
+const NOTICE_TEXT = "grow shrink-10000000 min-w-0";
 const ATTACH_SLOT = "shrink-0";
 
 /** Where a message is written and sent. */
@@ -244,7 +247,12 @@ export function MessageInput({
 			</ActInert>
 		);
 	const acts = (
-		<div className={cn(touch ? MESSAGE_INPUT_ROW : MESSAGE_INPUT_FOOT, ACTS)}>
+		<div
+			className={cn(
+				touch ? MESSAGE_INPUT_ROW : MESSAGE_INPUT_FOOT,
+				touch ? ACTS_ICON : ACTS,
+			)}
+		>
 			{stopAct}
 			{touch ? (
 				<IconButtonBase

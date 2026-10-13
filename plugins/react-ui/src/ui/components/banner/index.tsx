@@ -20,12 +20,14 @@ const BOX = "flex flex-col justify-center";
 // The line beside its act on the desktop, over it on touch.
 const MAIN =
 	"flex items-center touch:flex-col touch:items-start touch:gap-pair";
-const LINE = "items-start flex grow min-w-0 touch:self-stretch";
+const LINE = "items-start flex grow shrink-10000000 min-w-0 touch:self-stretch";
 // The glyph in a box of the sentence's line height, so it stays on the
 // first line of a wrapped sentence.
 const GLYPH_BOX = "flex shrink-0 items-center h-lh";
 const SENTENCE = "min-w-0 grow";
-const ACT_SLOT = "flex shrink-0";
+// The act gives way only once the sentence has (its shrink weight is 10^7 against
+// the act's 1), so a long label cuts and an ordinary one never narrows.
+const ACT_SLOT = "flex min-w-0 max-w-full";
 
 const GLYPHS: Record<BannerKind, IconName> = {
 	note: "Info",

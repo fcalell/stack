@@ -75,12 +75,12 @@ const FIELD_VALUE = "min-w-0 grow truncate";
 const SEVERAL_BOX = "flex items-stretch min-w-0 hover:border-edge-hover";
 const SEVERAL_RUN = "flex flex-wrap items-center gap-inside min-w-0";
 const SEVERAL_TRIGGER =
-	"flex grow shrink-0 items-center justify-end min-w-target text-start";
+	"flex grow shrink-0 items-center justify-end min-w-target max-w-full text-start";
 // A row-fit trigger centres in its row and pulls back by its own padding at
 // the row's end; it stands over a row's hit. Open, it holds the press wash
 // and the value takes the body ink.
 const ROW_TRIGGER =
-	"relative inline-flex shrink-0 self-center items-center -me-inside hover:bg-wash-hover active:bg-wash-press";
+	"relative inline-flex shrink-0 max-w-full self-center items-center -me-inside hover:bg-wash-hover active:bg-wash-press";
 const ROW_OPEN = "bg-wash-press text-ink-body";
 const ROW_VALUE = "truncate";
 const OPEN_VALUE = "text-ink-body";

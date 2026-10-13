@@ -26,8 +26,10 @@ const STACKED =
 const MOTION =
 	"transition-[translate,transform,opacity] duration-base [transition-timing-function:var(--ease-in-out),var(--ease-out),var(--ease-out)] data-starting-style:[transform:translateY(var(--spacing-pair))] data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:duration-fast data-ending-style:ease-in";
 const GLYPH = "flex shrink-0";
-const SENTENCE = "min-w-0 grow";
-const ACT = "flex shrink-0";
+const SENTENCE = "min-w-0 grow shrink-10000000";
+// The act gives way only once the sentence has (its shrink weight is 10^7 against
+// the act's 1).
+const ACT = "flex min-w-0 max-w-full";
 
 // The glyph of each state a toast reports.
 const MARK: Record<ToastState, IconName> = {

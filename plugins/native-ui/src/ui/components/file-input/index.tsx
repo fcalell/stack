@@ -115,6 +115,7 @@ export function FileInput({ value, onChange, accept }: FileInputProps) {
 					<RNText
 						className={cn(
 							text({ role: "meta" }),
+							"shrink-0",
 							disabled && "text-ink-disabled",
 						)}
 					>

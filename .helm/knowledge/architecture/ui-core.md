@@ -2014,7 +2014,11 @@ touch is a toolbar toggle, not a test run; `a11y.test` is `error`):
   Table, List (tree), Slider, InputOtp and Gate; Place and Shell move no focus
   themselves (a Pane takes the keyboard on its first control when opened from another,
   `usePaneFocus`).
-- **Component stories**, above.
+- **Component stories**, above, and the roster stress floor: a generated `RosterStress` module
+  (`.storybook/roster.ts`) draws each component's frames at desktop and at touch in a 320 px
+  column, and `.storybook/stress.ts` feeds every text slot a 300-character word and a URL, failing
+  on a page that grows, a box past its parent (unless a box above cuts it) or text drawn outside
+  its box with no ellipsis; `behaviour/roster-stress.stories.tsx` holds its canaries.
 
 A page is not one of them: the places above are the app's routes, and the workbench draws each as
 the document it is; `stack screens test` checks it.

@@ -27,7 +27,7 @@ import { Link } from "../link/index.tsx";
 
 // An unbroken token too long for the column (a URL) wraps anywhere; every
 // paragraph, item and quote inherits it.
-const COLUMN = "flex flex-col min-w-0 wrap-anywhere";
+const COLUMN = "flex flex-col min-w-0";
 const STACK = "flex flex-col";
 const ITEM = "flex";
 const BULLET = "shrink-0 text-center";

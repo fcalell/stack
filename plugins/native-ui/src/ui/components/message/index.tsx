@@ -288,6 +288,7 @@ export const Message = memo(function Message(props: MessageProps) {
 							className={cn(
 								text({ role: "body" }),
 								textStrong({ role: "body" }),
+								"shrink",
 							)}
 						>
 							{name}

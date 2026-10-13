@@ -102,6 +102,7 @@ export function TextArea({
 					<RNText
 						className={cn(
 							textAreaBudget({ state: count > budget ? "error" : "rest" }),
+							"shrink-0",
 							disabled && "text-ink-disabled",
 						)}
 					>

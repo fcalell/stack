@@ -623,6 +623,16 @@ its middle, keeping its start and its end: a `DefinitionRow` value of one word o
 characters, and a title or meta part that is `{ code }`. A string that is no text (an `href`, a
 `src`, an id, a key, a file name, an Intl unit) is documented by what it is.
 
+A word no line can break (a 300-character token, a URL) never widens a page. The body breaks it
+anywhere (`overflow-wrap: anywhere`, inherited), so a sentence, a description, a label or a touch
+title wraps it; a desktop title, a button's label, a unit, a file size, a slider's output, a status
+word and a chart's ticks stay on one line and cut with an ellipsis (the last five at the short
+measure). A lane of figures or a badge that must keep its digits whole sets `wrap-normal`, and an
+act beside a sentence gives way only after the sentence has (the sentence's shrink weight is
+`10000000`, the act's slot `min-w-0 max-w-full`). The showcase's roster stress floor feeds every
+text slot of every component this word and a URL at 320 and 1280, and fails on a page that grows, a
+box that stands past its parent, or text drawn outside its box with no ellipsis.
+
 ## The app's `ui/`
 
 A shape that needs the app's nouns (`ProjectRow`, taking a `project`) lives in `ui/`, composes

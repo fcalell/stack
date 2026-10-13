@@ -28,7 +28,7 @@ const BODY = "flex min-w-0";
 // argument reads whole at any width. Focusable by script (the fold lands on
 // it), its ring inward inside the frame's clip.
 const TEXT =
-	"whitespace-pre-wrap wrap-anywhere focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring";
+	"whitespace-pre-wrap focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring";
 const TEXT_BESIDE = "grow min-w-0";
 const ACT = "shrink-0";
 const LINE = "flex items-center h-lh";

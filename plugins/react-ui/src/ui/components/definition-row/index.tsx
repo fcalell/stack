@@ -47,7 +47,7 @@ const LINE = "flex items-center min-w-0";
 // wraps has room; within the row's height a one-line label does not grow it.
 const ALONE = "py-rows";
 // The label wraps to the room its value leaves.
-const LABEL = "min-w-0 wrap-break-word";
+const LABEL = "min-w-0";
 // A string gives way first: it takes the room the label leaves, ending at the
 // line's end; an identifier too long for it cuts in its middle, its stem
 // truncating to the room and its tail standing whole (`valueCut`); words are

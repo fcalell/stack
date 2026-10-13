@@ -29,6 +29,9 @@ const TRIGGER_OPEN =
 	"data-popup-open:outline-2 data-popup-open:outline-offset-(--focus-ring-edge-offset) data-popup-open:outline-ring focus-visible:outline-offset-(--focus-ring-edge-offset)";
 // The value starts at the start, as an input's does, not at the button's centre.
 const VALUE = "min-w-0 grow truncate text-start";
+// A button is as wide as its value in a column that does not stretch it; it stops
+// at the column.
+const FIT = "max-w-full";
 const VALUE_DISABLED = "text-ink-disabled";
 // The list stands at the popover's width, or the trigger's when that is wider
 // (Base UI sets it on the positioner as `--anchor-width`).
@@ -108,6 +111,7 @@ export function Select<V extends string | null = string>({
 							}),
 							FIELD_GLYPH,
 							BOX,
+							FIT,
 							TRIGGER_OPEN,
 							state.disabled
 								? BOX_DISABLED

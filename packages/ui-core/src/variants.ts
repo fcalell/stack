@@ -368,8 +368,10 @@ export const REMOVE_HIT = "min-h-chip min-w-chip rounded-full";
 export const FIELD_ERROR_LINE =
 	"text-meta leading-meta font-normal text-ink-error";
 export const FIELD_PLACEHOLDER = "text-ink-meta";
-// A field's unit after its value, and its glyph (search, chevron).
-export const FIELD_UNIT = "text-body leading-body font-normal text-ink-meta";
+// A field's unit after its value, cut at the short measure, and its glyph
+// (search, chevron).
+export const FIELD_UNIT =
+	"max-w-measure-short text-body leading-body font-normal text-ink-meta";
 export const FIELD_GLYPH = "text-ink-meta";
 // A pick of several's chips wrap in a run inside its field box, inset above
 // and below by what centres a chip in the compact control (so one line of
@@ -393,13 +395,13 @@ export const OPTION_GROUP_LABEL = "px-control-x pt-pair";
 export const OPTION_ROW = "px-control-x rounded-row";
 export const OTP_DIGIT =
 	"text-heading leading-heading tracking-heading font-semibold text-ink-body font-mono";
-// A slider: its label line (the label, its value trailing) over the track,
-// the fill up to the thumb and the rest after it.
+// A slider: its label line (the label, its value trailing, cut at the short
+// measure) over the track, the fill up to the thumb and the rest after it.
 export const SLIDER = "gap-pair";
 export const SLIDER_HEAD = "gap-fields";
 export const SLIDER_LABEL = "text-body leading-body font-medium text-ink-body";
 export const SLIDER_VALUE =
-	"tabular-nums text-meta leading-meta font-normal text-ink-meta";
+	"max-w-measure-short tabular-nums text-meta leading-meta font-normal text-ink-meta";
 export const SLIDER_TRACK = "w-full min-h-target";
 export const SLIDER_FILL = "h-track rounded-full bg-toggle-on";
 // The unfilled rail is the control's part, in the thumb's boundary ink, so it

@@ -84,10 +84,10 @@ const HEAD_ROW = "flex items-center";
 // A touch head's submit that does not fit beside the title column drops to a
 // second line; its wrapper holds it at the row's end on either line.
 const HEAD_ROW_WRAP = "flex-wrap";
-const HEAD_SUBMIT = "ms-auto";
+const HEAD_SUBMIT = "ms-auto min-w-0 max-w-full";
 const TITLE_BLOCK = "flex flex-col grow min-w-0";
 const TITLE_SLOT = "flex items-center min-w-0";
-const TITLE = "min-w-0 wrap-break-word";
+const TITLE = "min-w-0";
 // The desktop head is a two-line row tall (the title over its description)
 // whether or not the description stands; on touch the row is the acts'.
 const HEAD_ROW_TALL = "min-h-row-2 touch:min-h-0";

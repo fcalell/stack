@@ -182,6 +182,7 @@ const NATIVE_OVERLAYS = [
 	"max-w-4/5",
 	"max-w-full",
 	"max-w-measure",
+	"max-w-measure-short",
 	"min-h-0",
 	"min-h-chip",
 	"min-h-control",

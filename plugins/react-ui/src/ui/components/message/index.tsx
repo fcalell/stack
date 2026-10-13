@@ -36,7 +36,7 @@ const YOURS = "flex flex-col items-end";
 // start-aligned across the column.
 const SYSTEM = "flex flex-col items-center justify-center text-center";
 // Each wraps at its spaces, breaking a token only when it outruns the line.
-const DETAIL = "self-stretch text-start whitespace-pre-wrap wrap-break-word";
+const DETAIL = "self-stretch text-start whitespace-pre-wrap";
 const FRAMED = "flex flex-col overflow-hidden";
 const LINE_TEXT = "inline-flex flex-wrap justify-center min-w-0";
 const OPEN =
@@ -44,8 +44,8 @@ const OPEN =
 const HEAD = "flex items-baseline";
 const BUBBLE = "max-w-4/5";
 // A token too long for the line (a link, a hash) breaks anywhere.
-const BODY = "whitespace-pre-wrap wrap-anywhere";
-const WORDS = "min-w-0 wrap-anywhere";
+const BODY = "whitespace-pre-wrap";
+const WORDS = "min-w-0";
 const TRAIL_END = "max-w-4/5 text-end";
 const LINE = "flex items-center h-lh";
 const BAR = "w-full";

@@ -29,7 +29,7 @@ const FAILED = "flex flex-col items-center justify-center";
 // The words of a failed tile: a thumbnail has no room for a sentence, so its
 // alt shows in a tooltip, the glyph alone drawn; a content tile wraps its alt
 // whole inside its box, centred under the glyph.
-const ALT = "min-w-0 max-w-full text-center wrap-break-word";
+const ALT = "min-w-0 max-w-full text-center";
 // The full view fills the sheet's layer, which takes no press: the picture
 // and the act take theirs, and a press anywhere else is on the scrim. The
 // picture is contained inside the page inset.

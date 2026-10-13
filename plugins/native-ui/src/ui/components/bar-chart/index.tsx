@@ -55,7 +55,7 @@ const AXIS = "shrink-0";
 const AXIS_BAND = "relative flex-1";
 // A tick centres on its gridline; the last band's bottom is the baseline,
 // whose tick is the zero.
-const TICK = "absolute right-0 top-0 -translate-y-1/2";
+const TICK = "absolute right-0 top-0 -translate-y-1/2 max-w-measure-short";
 const ZERO = "absolute right-0 bottom-0 translate-y-1/2";
 const MAIN = "grow min-w-0";
 const PLOT = "relative";
@@ -279,11 +279,14 @@ export function BarChart<T>(props: BarChartProps<T>) {
 					text({ role: "body" }),
 					textStrong({ role: "body" }),
 					FIGURES,
+					"shrink-0",
 				)}
 			>
 				{figure(total)}
 			</RNText>
-			{word ? <RNText className={text({ role: "meta" })}>{word}</RNText> : null}
+			{word ? (
+				<RNText className={cn(text({ role: "meta" }), "shrink")}>{word}</RNText>
+			) : null}
 		</View>
 	);
 	return (
@@ -316,7 +319,10 @@ export function BarChart<T>(props: BarChartProps<T>) {
 							)}
 						>
 							{peak > 0 ? (
-								<RNText className={cn(text({ role: "meta" }), FIGURES, TICK)}>
+								<RNText
+									numberOfLines={1}
+									className={cn(text({ role: "meta" }), FIGURES, TICK)}
+								>
 									{tick(top - step * index)}
 								</RNText>
 							) : null}
@@ -424,7 +430,9 @@ function Key(props: { name: string; at: number; children: ReactNode }) {
 					DOT,
 				)}
 			/>
-			<RNText className={text({ role: "meta" })}>{props.name}</RNText>
+			<RNText className={cn(text({ role: "meta" }), "shrink")}>
+				{props.name}
+			</RNText>
 			{props.children}
 		</View>
 	);

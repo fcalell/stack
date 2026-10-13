@@ -299,6 +299,7 @@ export function OptionList<V extends string = string, T = unknown>(
 													<RNText
 														className={cn(
 															text({ role: "meta" }),
+															"shrink",
 															blocked !== undefined && BLOCKED_INK,
 														)}
 													>

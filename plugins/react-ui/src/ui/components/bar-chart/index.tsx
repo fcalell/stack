@@ -52,7 +52,8 @@ const AXIS = "flex flex-col shrink-0";
 const AXIS_BAND = "relative flex-1";
 // A tick centres on its gridline; the last band's bottom is the baseline,
 // whose tick is the zero.
-const TICK = "absolute end-0 top-0 -translate-y-1/2";
+const TICK =
+	"absolute end-0 top-0 -translate-y-1/2 max-w-measure-short truncate";
 const ZERO = "absolute end-0 bottom-0 translate-y-1/2";
 const MAIN = "flex flex-col grow min-w-0";
 const PLOT = "relative";
@@ -63,14 +64,14 @@ const SLOT = "flex flex-col justify-end items-center flex-1 min-w-0";
 const PART = "shrink-0";
 const TIMES = "flex";
 const TIME = "flex justify-center flex-1 min-w-0";
-const TIME_TEXT = "whitespace-nowrap";
+const TIME_TEXT = "max-w-measure-short truncate";
 const LINE = "flex items-center h-lh";
 const TIMES_WAIT = "flex justify-between";
 const BAR = "w-full";
 // A failed or empty chart's form stands over the loaded boxes, held
 // unseen, so it takes the chart's loaded height, its frame filling it.
 const STAND = "grid";
-const LAYER = "col-start-1 row-start-1";
+const LAYER = "col-start-1 row-start-1 min-w-0";
 const HELD = "invisible";
 const OVER = "flex flex-col";
 

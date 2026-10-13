@@ -35,10 +35,10 @@ const HEAD = "flex flex-col";
 const REACH = "leading-meta -my-[calc((var(--spacing-target)-1lh)/2)]";
 const OVERLINE = "truncate";
 const FACTS = "flex flex-wrap items-center";
-const FACT = "inline-flex items-center";
+const FACT = "inline-flex items-center min-w-0 max-w-full";
 // A pick in the facts line pulls back at its start as well as its end, so its
 // dot and word sit where a plain fact's would.
-const PICK = cn("inline-flex -ms-inside", REACH);
+const PICK = cn("inline-flex max-w-full -ms-inside", REACH);
 // A fact that acts washes at the pointer, its words in the meta ink; one that
 // opens pulls back at its start as a pick does.
 const ACT =
@@ -94,10 +94,11 @@ function factKey<V extends string | null>(fact: Fact<V>): string {
 // unseen under the live one), so the line wraps the same as the save moves
 // between its states; from `tablet` it takes the live form's own width. Like
 // the pick it pulls back at both ends by a control box's padding.
-const SAVE = cn("inline-grid -mx-inside", REACH);
-const SAVE_FORM = "col-start-1 row-start-1 inline-flex items-center";
+const SAVE = cn("inline-grid max-w-full -mx-inside", REACH);
+const SAVE_FORM =
+	"col-start-1 row-start-1 inline-flex items-center min-w-0 max-w-full";
 const SAVE_ROOM =
-	"col-start-1 row-start-1 items-center invisible hidden max-tablet:inline-flex";
+	"col-start-1 row-start-1 items-center min-w-0 max-w-full invisible hidden max-tablet:inline-flex";
 const SAVE_WORDS = cn(WORD_ACT, ITEM_FACT, FACT);
 
 function Retry() {

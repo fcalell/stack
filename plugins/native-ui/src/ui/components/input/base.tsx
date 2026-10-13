@@ -159,7 +159,10 @@ export function InputBase({
 				}}
 			/>
 			{which === "number" && unit ? (
-				<RNText className={cn(FIELD_UNIT, disabled && "text-ink-disabled")}>
+				<RNText
+					numberOfLines={1}
+					className={cn(FIELD_UNIT, "shrink", disabled && "text-ink-disabled")}
+				>
 					{unit}
 				</RNText>
 			) : null}

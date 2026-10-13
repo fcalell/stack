@@ -41,7 +41,7 @@ const HEAD_ROW = "flex items-center";
 // title: the column's basis is its own width, so the row breaks once the
 // title, its count and its description cannot stand beside the act.
 const WRAP = "touch:flex-wrap";
-const TITLE_BLOCK = "flex flex-col grow min-w-0";
+const TITLE_BLOCK = "flex flex-col grow shrink-10000000 min-w-0";
 const TITLE_LINE = "flex items-center min-w-0";
 const TITLE_FOLD = "flex min-w-0";
 const TITLE = "truncate";
@@ -50,7 +50,7 @@ const TITLE = "truncate";
 const TOGGLE =
 	"flex items-center grow min-w-0 -ms-inside text-start text-ink-meta hover:bg-wash-hover hover:text-ink-body active:bg-wash-press active:text-ink-body";
 // The act and the more stand a row's act gap apart (`SECTION_ACTS`, as ListRow's).
-const ACT_SLOT = "flex items-center shrink-0";
+const ACT_SLOT = "flex items-center min-w-0 max-w-full";
 const BODY = "flex flex-col";
 // The description's bar stands in the meta line's box, at the sentence's half measure.
 const DESCRIPTION_LINE = "flex items-center h-lh";

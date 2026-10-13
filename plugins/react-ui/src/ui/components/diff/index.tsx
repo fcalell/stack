@@ -18,7 +18,7 @@ const FRAME = "flex flex-col shrink-0 min-w-0 overflow-hidden";
 const TABLE = "w-full border-collapse";
 // A wrapped line hangs one inset under its first visual line, which the
 // negative indent pulls back to the cell's start.
-const HANG = "-indent-control-x whitespace-pre-wrap wrap-anywhere";
+const HANG = "-indent-control-x whitespace-pre-wrap";
 const GUTTER = "text-end align-top";
 const MARK = "align-top";
 const CODE = "w-full align-top";

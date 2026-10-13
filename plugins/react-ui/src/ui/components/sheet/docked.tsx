@@ -44,7 +44,7 @@ const HEAD_MAIN = "flex flex-col grow min-w-0";
 // The back and close acts stand at the title's first line: each in a box one
 // heading line tall, centred on the line; a taller act overflows it centred.
 const FIRST_LINE = "flex shrink-0 items-center h-lh";
-const TITLE = "min-w-0 wrap-break-word";
+const TITLE = "min-w-0";
 // The body takes a tab stop only while it scrolls with nothing tabbable inside.
 // Its three-row floor is on the content it scrolls, so the body itself yields
 // below it where the region is short.

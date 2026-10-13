@@ -45,7 +45,7 @@ import { Slider, type SliderProps } from "../slider/index.tsx";
 import { ChangeMark } from "../status/change.tsx";
 import { Switch, type SwitchProps } from "../switch/index.tsx";
 
-const STACK = "flex flex-col min-w-0";
+const STACK = "flex flex-col min-w-0 max-w-full";
 const BESIDE = "flex items-center min-w-0";
 const AHEAD = "flex items-start min-w-0";
 const LABEL_BLOCK = "flex flex-col grow min-w-0";

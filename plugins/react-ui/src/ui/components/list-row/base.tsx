@@ -89,10 +89,10 @@ const LEADING = "flex shrink-0 items-center justify-center";
 // ticks and never opens.
 const TICK = "relative size-target";
 const GLYPH = "flex text-ink-meta";
-const TEXT = "flex flex-col grow min-w-0";
+const TEXT = "flex flex-col grow shrink-10000000 min-w-0";
 const LINE = "flex items-center min-w-0";
 const TITLE = "truncate grow";
-const TITLE_WHOLE = "grow min-w-0 wrap-break-word";
+const TITLE_WHOLE = "grow min-w-0";
 // A title that is one span of code stands in a flex line, so its stem
 // truncates and its tail keeps the room it needs.
 const TITLE_CODE = "flex items-center grow min-w-0";
@@ -153,7 +153,7 @@ const CHIP_SLOT =
 	"flex flex-wrap h-chip min-w-0 shrink-100000000000000000000 overflow-hidden";
 const CHIP_START = "w-0 h-full";
 const CHIP_MARK = "flex shrink-0";
-const ACTS = "relative flex shrink-0 items-center";
+const ACTS = "relative flex items-center min-w-0 max-w-full";
 // The chevron draws in the ink of the slot (currentColor), as a definition
 // row's does.
 // The more act's square, left blank in a row that has none beside rows that do.

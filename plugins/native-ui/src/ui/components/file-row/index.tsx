@@ -43,7 +43,7 @@ const NAME = "shrink-0 max-w-full";
 // floor; below it the chip's label truncates.
 const CHIP = "shrink min-w-0";
 const COUNTS = "flex-row shrink-0 items-center";
-const COUNT = "text-right";
+const COUNT = "shrink-0 text-right";
 
 export interface FileRowProps extends Closed {
 	/** The file's path (a path: the directory gives way first when it is too long, then the name's middle down to its floor, then the chip's label). */

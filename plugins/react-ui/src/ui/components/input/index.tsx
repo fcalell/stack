@@ -22,7 +22,7 @@ export interface InputProps extends Closed {
 	onCommit?: (value: string) => void;
 	/** The hint drawn while the value is empty; never the field's name (a short phrase; truncates). */
 	placeholder?: string;
-	/** A `number`'s unit, drawn after the value (a word; one line). */
+	/** A `number`'s unit, drawn after the value (a word; truncates past the short measure, 18 characters). */
 	unit?: string;
 	/** An icon act inside the field's end (copy, reveal, add); Enter in the field presses it. */
 	act?: IconAct;

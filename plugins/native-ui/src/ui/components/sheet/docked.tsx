@@ -178,7 +178,9 @@ export function SheetDocked({
 							>
 								{foot ? (
 									<View className={FOOT_LINE}>
-										<RNText className={text({ role: "meta" })}>{foot}</RNText>
+										<RNText className={cn(text({ role: "meta" }), "shrink")}>
+											{foot}
+										</RNText>
 									</View>
 								) : null}
 								{submit ? (

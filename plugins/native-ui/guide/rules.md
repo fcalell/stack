@@ -550,6 +550,13 @@ its middle, keeping its start and its end: a `DefinitionRow` value of one word o
 characters, and a title or meta part that is `{ code }`. A string that is no text (an `href`, a
 `src`, an id, a key, a file name, an Intl unit) is documented by what it is.
 
+A word no line can break (a 300-character token, a URL) never pushes a row past the edge. React
+Native's text does not shrink in a row, so each `Text` that stands in a `flex-row` decides: `shrink`
+(`flex-1`, `min-w-0`) where its words may be long, `shrink-0` where it is a figure or a stand-in
+that must hold; a unit, a slider's output and a chart's tick also carry one line and the short
+measure. `plugins/native-ui/test/row-text.test.ts` reads the sources for a row's `Text` that
+decides neither.
+
 ## The app's `ui/`
 
 A shape that needs the app's nouns (`ProjectRow`, taking a `project`) lives in `ui/`, composes

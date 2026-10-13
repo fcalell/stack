@@ -9,7 +9,7 @@ import {
 import { useWords } from "../../lib/words.tsx";
 import { StatusDot } from "./dot.tsx";
 
-const BOX = "inline-flex items-center min-w-0";
+const BOX = "inline-flex items-center min-w-0 max-w-full";
 const WORD = "truncate";
 // Waiting, the dot's and the word's skeletons fill what the status will.
 const WAIT = "flex items-center grow min-w-0";

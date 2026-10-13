@@ -42,6 +42,10 @@
 		line-height: var(--leading-body);
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: grayscale;
+		/* A word longer than its box breaks anywhere rather than pushing the box
+		   past its parent; the property inherits, so no slot spells it. A lane that
+		   must hold its figures sets `wrap-normal`; a single line truncates. */
+		overflow-wrap: anywhere;
 	}
 
 	h1,

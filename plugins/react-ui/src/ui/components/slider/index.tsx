@@ -19,7 +19,7 @@ import { SliderWait } from "../../lib/slider-wait.tsx";
 const BOX = "flex flex-col justify-center";
 const HEAD = "flex items-center justify-between";
 const LABEL = "truncate data-disabled:text-ink-disabled";
-const VALUE = "shrink-0 data-disabled:text-ink-disabled";
+const VALUE = "shrink-0 truncate data-disabled:text-ink-disabled";
 const TRACK = "group relative flex items-center";
 const FILL =
 	"grow group-hover:bg-toggle-on-hover group-active:bg-toggle-on-hover group-data-disabled:bg-ink-disabled";

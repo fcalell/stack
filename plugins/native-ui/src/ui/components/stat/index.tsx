@@ -26,11 +26,13 @@ export function Stat({ label, value, unit, loading }: StatProps) {
 	return (
 		<View className={cn(STAT, STACK)}>
 			<View className={cn(STAT_FIGURE, FIGURE)}>
-				<RNText className={text({ role: "display" })}>
+				<RNText className={cn(text({ role: "display" }), "shrink-0")}>
 					{formatterFor("number").format(value)}
 				</RNText>
 				{unit ? (
-					<RNText className={text({ role: "meta" })}>{unit}</RNText>
+					<RNText className={cn(text({ role: "meta" }), "shrink")}>
+						{unit}
+					</RNText>
 				) : null}
 			</View>
 			<RNText className={text({ role: "meta" })}>{label}</RNText>

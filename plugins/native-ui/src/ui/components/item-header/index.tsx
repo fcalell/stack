@@ -133,7 +133,9 @@ function SaveFact({
 					{save === "failed" ? (
 						<Status state="failed" label={said} />
 					) : (
-						<RNText className={text({ role: "meta" })}>{said}</RNText>
+						<RNText className={cn(text({ role: "meta" }), "shrink")}>
+							{said}
+						</RNText>
 					)}
 				</View>
 				{save === "failed" ? (
@@ -160,7 +162,7 @@ function FactPart({ fact }: { fact: Fact }) {
 				style={REACH}
 				className={cn(WORD_ACT, ITEM_FACT, OPEN)}
 			>
-				<RNText className={text({ role: "meta" })}>
+				<RNText className={cn(text({ role: "meta" }), "shrink")}>
 					{partText(fact.label, META_CUT)}
 				</RNText>
 				<Ink.Provider value="ink-meta">
@@ -177,7 +179,7 @@ function FactPart({ fact }: { fact: Fact }) {
 				style={REACH}
 				className={cn(WORD_ACT, ITEM_FACT, OPEN)}
 			>
-				<RNText className={text({ role: "meta" })}>
+				<RNText className={cn(text({ role: "meta" }), "shrink")}>
 					{partText(fact.label, META_CUT)}
 				</RNText>
 				<Ink.Provider value="ink-meta">
@@ -196,7 +198,9 @@ function FactPart({ fact }: { fact: Fact }) {
 	if (typeof fact === "object" && "count" in fact)
 		return (
 			<View className={cn(ITEM_FACT, FACT)}>
-				<RNText className={text({ role: "meta" })}>{fact.label}</RNText>
+				<RNText className={cn(text({ role: "meta" }), "shrink")}>
+					{fact.label}
+				</RNText>
 				<Count value={fact.count} />
 			</View>
 		);
@@ -231,7 +235,13 @@ export function ItemHeader({ overline, facts, loading }: ItemHeaderProps) {
 						<Strut role="meta" />
 						<View className={cn(skeleton({ kind: "line" }), "w-1/3")} />
 						<View className={cn(skeleton({ kind: "count" }), COUNT_WAIT)}>
-							<RNText className={cn(text({ role: "caption" }), FIGURE_WAIT)}>
+							<RNText
+								className={cn(
+									text({ role: "caption" }),
+									FIGURE_WAIT,
+									"shrink-0",
+								)}
+							>
 								0
 							</RNText>
 						</View>

@@ -50,11 +50,11 @@ export function Stats({ items, loading }: StatsProps) {
 						<View key={item.label} className={cn(STATS_CELL, CELL)}>
 							<RNText className={text({ role: "meta" })}>{item.label}</RNText>
 							<View className={cn(STATS_FIGURE, FIGURE)}>
-								<RNText className={text({ role: "figure" })}>
+								<RNText className={cn(text({ role: "figure" }), "shrink-0")}>
 									{number.format(item.value)}
 								</RNText>
 								{item.unit ? (
-									<RNText className={text({ role: "meta" })}>
+									<RNText className={cn(text({ role: "meta" }), "shrink")}>
 										{item.unit}
 									</RNText>
 								) : null}

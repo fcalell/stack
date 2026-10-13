@@ -183,7 +183,7 @@ export function Code({
 				<Ink.Provider value="ink-meta">
 					<Icon name="ChevronUp" fit="meta" />
 				</Ink.Provider>
-				<RNText className={text({ role: "meta" })}>
+				<RNText className={cn(text({ role: "meta" }), "shrink")}>
 					{counted(words.earlierLines, hidden)}
 				</RNText>
 			</Pressable>

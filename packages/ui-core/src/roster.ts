@@ -297,7 +297,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				],
 				radii: ["control"],
 				spacing: ["inside", "control-x"],
-				sizes: ["field", "control-compact"],
+				sizes: ["field", "control-compact", "measure-short"],
 			},
 		},
 		// The field box that chooses a file: empty, its whole box is the act (a
@@ -336,7 +336,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				],
 				radii: ["control"],
 				spacing: ["inside", "control-x"],
-				sizes: ["field", "icon-control"],
+				sizes: ["field", "icon-control", "measure-short"],
 			},
 		},
 		TextArea: {
@@ -492,7 +492,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				],
 				radii: ["full", "chip"],
 				spacing: ["pair", "fields", "card"],
-				sizes: ["target", "track", "thumb", "skeleton"],
+				sizes: ["target", "track", "thumb", "skeleton", "measure-short"],
 			},
 		},
 		Switch: {
@@ -2948,7 +2948,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				colors: ["ink-body", "ink-meta", "edge", "skeleton", "chart-"],
 				radii: ["full", "chip"],
 				spacing: ["fields", "inside", "pair"],
-				sizes: ["chart", "dot", "skeleton", "figures"],
+				sizes: ["chart", "dot", "skeleton", "figures", "measure-short"],
 			},
 		},
 		// A collection: its Messages from `query` or `items` through the

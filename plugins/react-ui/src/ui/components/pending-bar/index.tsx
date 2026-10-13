@@ -28,7 +28,8 @@ import { Spinner } from "../spinner/index.tsx";
 // the track stacks over the act as an ActionBar's acts do.
 const BAR = "flex flex-col items-end touch:items-stretch";
 const ROW = "flex items-center self-stretch touch:flex-col touch:items-stretch";
-const TRACK = "relative flex items-center grow min-w-0 overflow-hidden";
+const TRACK =
+	"relative flex items-center grow shrink-10000000 min-w-0 overflow-hidden";
 // The elapsed share, its width the runtime fraction.
 const FILL = "absolute bottom-0 left-0";
 // The track's parts stand over the fill.
@@ -38,7 +39,7 @@ const SPINNER_SLOT = "relative flex shrink-0 text-ink-meta";
 // above and below it, so one line is the control's height and a wrapped one
 // keeps the same air.
 const SENTENCE =
-	"relative min-w-0 grow wrap-break-word py-[calc((var(--spacing-control)-1lh)/2)]";
+	"relative min-w-0 grow py-[calc((var(--spacing-control)-1lh)/2)]";
 const LEFT = "relative shrink-0";
 
 // The elapsed share, moving on its own from where the run stands to full at

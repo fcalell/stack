@@ -65,9 +65,8 @@ const BOX_LINE = "flex shrink-0 items-center h-lh";
 // The field wrapper that disables the box is a flex box itself, so the box
 // stays a flex item on the line.
 const FIELD = "flex";
-const LABEL = "min-w-0 grow wrap-break-word";
+const LABEL = "min-w-0 grow";
 const TEXT = "flex flex-col min-w-0 grow";
-const TITLE = "wrap-break-word";
 const DESCRIPTION_LINE = "flex flex-wrap items-center min-w-0";
 // The radio is the box's size in its label's line, its dot centred; it is
 // the focused element, so the base focus ring draws on it.
@@ -79,7 +78,7 @@ const CHILDREN_BODY = "flex flex-col grow min-w-0";
 // The failed, missing and empty lines: the sentence, and Retry or Back at its
 // end.
 const NOTE = "flex items-center";
-const SENTENCE = "min-w-0 grow";
+const SENTENCE = "min-w-0 grow shrink-10000000";
 
 /** Where an OptionList's options come from. */
 type OptionSource<T, V extends string> =
@@ -293,7 +292,6 @@ export function OptionList<V extends string = string, T = unknown>(
 											id={target.labelledBy}
 											className={cn(
 												text({ role: "body" }),
-												TITLE,
 												blocked !== undefined && BLOCKED_INK,
 											)}
 										>

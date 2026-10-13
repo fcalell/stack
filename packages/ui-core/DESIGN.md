@@ -2654,12 +2654,12 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `StepCount` | `meta` | `ink-meta`, `fill-neutral` | `chip` | `pair`, `inside` | `meter` | none |
 | `Status` | `meta` | `accent-ink`, `ink-meta`, `ok`, `warn`, `chip-amber`, `danger`, `skeleton` | `full`, `chip` | `inside` | `dot`, `spinner`, `measure-short`, `skeleton`, `icon`, `icon-meta` | none |
 | `Chip` | `caption` | `chip-`, `wash-hover`, `wash-press`, `ring` | `full` | `inside` | `chip`, `measure-short` | none |
-| `Input` | `body`, `code` | `surface`, `edge`, `edge-hover`, `edge-error`, `ink-body`, `ink-meta`, `fill-disabled`, `ink-disabled`, `ring` | `control` | `inside`, `control-x` | `field`, `control-compact` | none |
-| `FileInput` | `body`, `meta` | `surface`, `edge`, `edge-hover`, `edge-error`, `ink-body`, `ink-meta`, `fill-disabled`, `ink-disabled`, `ring` | `control` | `inside`, `control-x` | `field`, `icon-control` | none |
+| `Input` | `body`, `code` | `surface`, `edge`, `edge-hover`, `edge-error`, `ink-body`, `ink-meta`, `fill-disabled`, `ink-disabled`, `ring` | `control` | `inside`, `control-x` | `field`, `control-compact`, `measure-short` | none |
+| `FileInput` | `body`, `meta` | `surface`, `edge`, `edge-hover`, `edge-error`, `ink-body`, `ink-meta`, `fill-disabled`, `ink-disabled`, `ring` | `control` | `inside`, `control-x` | `field`, `icon-control`, `measure-short` | none |
 | `TextArea` | `body`, `code`, `caption` | `surface`, `edge`, `edge-hover`, `edge-error`, `ink-body`, `ink-meta`, `ink-error`, `fill-disabled`, `ink-disabled`, `ring` | `control` | `rows`, `control-x`, `inside` | `text-area` | none |
 | `InputOtp` | `heading`, `meta` | `surface`, `edge`, `edge-error`, `ink-body`, `ink-meta`, `ring` | `control` | `inside`, `pair` | `otp`, `spinner` | none |
 | `Select` | `body`, `code`, `meta` | `surface`, `edge`, `edge-hover`, `edge-error`, `ink-body`, `ink-meta`, `fill-disabled`, `ink-disabled`, `ring`, `raised`, `edge-raised`, `wash-hover`, `wash-press`, `wash-selected` | `control`, `row`, `popover` | `card`, `inside`, `control-x`, `pair`, `rows`, `float` | `field`, `control-compact`, `row`, `row-2`, `popover` | `float` |
-| `Slider` | `body`, `meta` | `skeleton`, `ink-body`, `ink-meta`, `toggle-`, `edge`, `edge-strong`, `surface`, `wash-hover`, `wash-press`, `fill-disabled`, `ink-disabled`, `ring` | `full`, `chip` | `pair`, `fields`, `card` | `target`, `track`, `thumb`, `skeleton` | none |
+| `Slider` | `body`, `meta` | `skeleton`, `ink-body`, `ink-meta`, `toggle-`, `edge`, `edge-strong`, `surface`, `wash-hover`, `wash-press`, `fill-disabled`, `ink-disabled`, `ring` | `full`, `chip` | `pair`, `fields`, `card` | `target`, `track`, `thumb`, `skeleton`, `measure-short` | none |
 | `Switch` | none | `switch-`, `toggle-`, `fill-disabled`, `ink-disabled`, `ring` | `full` | none | `switch-w`, `switch-h`, `thumb`, `switch-inset`, `switch-travel`, `target` | none |
 | `Checkbox` | none | `edge-strong`, `surface`, `toggle-`, `on-accent`, `wash-hover`, `wash-press`, `edge`, `fill-disabled`, `ink-disabled`, `ring` | `chip` | none | `check`, `target`, `icon-meta` | none |
 | `Spinner` | none | none | `full` | none | `spinner` | none |
@@ -2703,7 +2703,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Stages` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `edge-strong`, `accent-ink`, `canvas`, `danger` | `full` | `pair` | `icon-meta`, `row-2` | none |
 | `Stats` | `figure`, `meta` | `edge`, `surface`, `ink-body`, `ink-meta`, `accent-ink`, `skeleton`, `wash-hover`, `wash-press` | `card`, `chip` | `pair`, `inside`, `card` | `skeleton`, `target` | none |
 | `Stat` | `display`, `meta` | `ink-body`, `ink-meta`, `skeleton` | `chip` | `pair`, `inside` | `skeleton` | none |
-| `BarChart` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `chart-` | `full`, `chip` | `fields`, `inside`, `pair` | `chart`, `dot`, `skeleton`, `figures` | none |
+| `BarChart` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `chart-` | `full`, `chip` | `fields`, `inside`, `pair` | `chart`, `dot`, `skeleton`, `figures`, `measure-short` | none |
 | `Thread` | none | `raised`, `edge`, `edge-raised` | `control` | `sections`, `page`, `pair`, `acts` | `measure`, `docked-log-floor` | `float` |
 | `QrCode` | none | `edge`, `surface`, `ink-body`, `skeleton` | `card` | none | `qr` | none |
 | `Image` | `meta` | `edge`, `edge-hover`, `ink-body`, `skeleton`, `group`, `ink-meta`, `raised`, `scrim` | `control`, `card` | `page`, `inside` | `image-tile`, `image-cap`, `icon`, `control` | `float` |

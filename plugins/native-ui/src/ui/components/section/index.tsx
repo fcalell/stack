@@ -129,7 +129,9 @@ export function Section({
 	if (count !== undefined && busy)
 		tally = (
 			<View className={cn(skeleton({ kind: "count" }), COUNT_WAIT, veil)}>
-				<RNText className={cn(text({ role: "caption" }), FIGURE_WAIT)}>
+				<RNText
+					className={cn(text({ role: "caption" }), FIGURE_WAIT, "shrink-0")}
+				>
 					0
 				</RNText>
 			</View>

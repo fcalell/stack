@@ -6,6 +6,8 @@ import { cn } from "../../lib/cn";
 import { Link } from "../link";
 
 const COUNTS = "flex-row flex-wrap";
+// A link's words wrap inside the row's width, so a long label never pushes a link past the edge.
+const LINK = "shrink";
 
 // A line of counts that lead to their lists: each a figure and its label as a
 // standalone link on the target height, its words at the meta size (the
@@ -16,16 +18,14 @@ export function CountLinks({ counts }: { counts: readonly CountLink[] }) {
 	return (
 		<View className={cn(COUNT_LINKS, COUNTS)}>
 			{counts.map((count) => (
-				<Link
-					key={`${count.href}${count.label}`}
-					href={count.href}
-					fit="standalone"
-				>
-					<RNText className={lineBox({ role: "meta" })}>
-						<RNText className={FIGURES}>{number.format(count.value)}</RNText>{" "}
-						{count.label}
-					</RNText>
-				</Link>
+				<View key={`${count.href}${count.label}`} className={LINK}>
+					<Link href={count.href} fit="standalone">
+						<RNText className={lineBox({ role: "meta" })}>
+							<RNText className={FIGURES}>{number.format(count.value)}</RNText>{" "}
+							{count.label}
+						</RNText>
+					</Link>
+				</View>
 			))}
 		</View>
 	);

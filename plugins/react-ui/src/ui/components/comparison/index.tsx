@@ -35,10 +35,10 @@ const ROW_WAIT = "flex items-center flex-wrap";
 const CORNER = "basis-0 grow min-w-0 touch:hidden";
 // A word wider than its column hyphenates in the document's language before
 // it breaks; a wrapped value leaves no lone word on its last line.
-const COLUMN = "basis-0 grow min-w-0 wrap-break-word hyphens-auto text-pretty";
+const COLUMN = "basis-0 grow min-w-0 hyphens-auto text-pretty";
 const LABEL =
 	"flex flex-wrap basis-0 grow min-w-0 items-center touch:basis-full";
-const LABEL_TEXT = "min-w-0 wrap-break-word";
+const LABEL_TEXT = "min-w-0";
 // A chip or a verdict keeps its width beside a label that wraps.
 const MARK = "inline-flex shrink-0";
 const CELL_WAIT = "flex items-center h-lh basis-0 grow min-w-0";

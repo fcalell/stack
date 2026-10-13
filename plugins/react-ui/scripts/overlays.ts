@@ -6,6 +6,8 @@
 // less its cell, verbatim from `atoms-overlays.md`.
 export const OVERLAYS: readonly string[] = [
 	"max-w-measure",
+	"max-w-measure-short",
+	"wrap-normal",
 	// Button, IconButton
 	"relative",
 	"absolute",
@@ -405,8 +407,6 @@ export const OVERLAYS: readonly string[] = [
 	// Prose, Code, Diff, ProseDiff, FileRow, Comparison
 	"inline-block",
 	"whitespace-pre-wrap",
-	"wrap-anywhere",
-	"wrap-break-word",
 	"text-pretty",
 	"-indent-control-x",
 	"border-collapse",

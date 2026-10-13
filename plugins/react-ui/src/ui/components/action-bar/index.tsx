@@ -64,8 +64,9 @@ const GHOST = "invisible";
 // start; an act is words washed at the pointer, the one that does not apply
 // (every row chosen, none chosen) in the disabled ink and still focusable, so
 // the focus a press leaves is not lost as the other applies.
-const COUNT = "flex flex-wrap items-center";
-const ALL = "shrink-0 whitespace-nowrap";
+const COUNT = "flex flex-wrap items-center min-w-0 shrink-10000000";
+const ALL = "min-w-0 max-w-full";
+const ALL_LABEL = "truncate";
 const ALL_LIVE =
 	"inline-flex items-center text-ink-meta hover:bg-wash-hover active:bg-wash-press";
 const ALL_INERT = "inline-flex items-center text-ink-disabled";
@@ -118,7 +119,9 @@ function AllAct(props: {
 				props.noHeadTick && CHOOSE_ALL,
 			)}
 		>
-			<span className={text({ role: "meta" })}>{props.label}</span>
+			<span className={cn(text({ role: "meta" }), ALL_LABEL)}>
+				{props.label}
+			</span>
 		</BaseButton>
 	);
 }

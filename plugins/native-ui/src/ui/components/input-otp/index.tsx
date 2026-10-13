@@ -89,7 +89,9 @@ export function InputOtp({
 			{loading ? (
 				<View className="flex-row items-center gap-inside">
 					<Spinner />
-					<RNText className={text({ role: "meta" })}>{words.checking}</RNText>
+					<RNText className={cn(text({ role: "meta" }), "shrink")}>
+						{words.checking}
+					</RNText>
 				</View>
 			) : null}
 		</View>

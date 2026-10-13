@@ -40,6 +40,9 @@ const COUNT = "flex-row flex-wrap items-center";
 const ALL = "flex-row items-center";
 const ALL_LIVE = "active:bg-wash-press";
 const ALL_INERT = "text-ink-disabled";
+// React Native's text does not shrink in a row, so a long word pushes past the
+// edge; each word of the count row gives way.
+const SHRINK = "shrink";
 // A kept failure line holds its height while nothing failed.
 const KEPT = "opacity-0";
 // A pending bar and the bar it replaces share one row: each is the row's width
@@ -96,7 +99,11 @@ function AllAct(props: { label: string; applies: boolean; onAct: () => void }) {
 			className={cn(ACTION_BAR_ALL, ALL, props.applies && ALL_LIVE)}
 		>
 			<RNText
-				className={cn(text({ role: "meta" }), !props.applies && ALL_INERT)}
+				className={cn(
+					text({ role: "meta" }),
+					SHRINK,
+					!props.applies && ALL_INERT,
+				)}
 			>
 				{props.label}
 			</RNText>
@@ -116,7 +123,7 @@ function Chosen({ chosen }: { chosen: ChosenCount }) {
 	const { onAll } = chosen;
 	return (
 		<View className={cn(ACTION_BAR_CHOSEN, COUNT)}>
-			<RNText className={text({ role: "meta" })}>{said}</RNText>
+			<RNText className={cn(text({ role: "meta" }), SHRINK)}>{said}</RNText>
 			{onAll !== undefined && chosen.of > 0 ? (
 				<>
 					<AllAct

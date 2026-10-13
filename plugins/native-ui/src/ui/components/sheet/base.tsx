@@ -278,7 +278,9 @@ function Foot() {
 		<View className={SHEET_FOOT}>
 			{foot ? (
 				<View className={FOOT_LINE}>
-					<RNText className={text({ role: "meta" })}>{foot}</RNText>
+					<RNText className={cn(text({ role: "meta" }), "shrink")}>
+						{foot}
+					</RNText>
 				</View>
 			) : null}
 			{acts ? <ActionBar acts={acts} /> : null}

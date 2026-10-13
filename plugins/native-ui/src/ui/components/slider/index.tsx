@@ -115,7 +115,14 @@ export function Slider({
 				>
 					{label}
 				</RNText>
-				<RNText className={cn(SLIDER_VALUE, disabled && "text-ink-disabled")}>
+				<RNText
+					numberOfLines={1}
+					className={cn(
+						SLIDER_VALUE,
+						"shrink-0",
+						disabled && "text-ink-disabled",
+					)}
+				>
 					{formatted}
 				</RNText>
 			</View>

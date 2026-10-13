@@ -42,7 +42,7 @@ const VALUE =
 const SEARCH_BOX = "grow";
 // A number in a table cell keeps the cell's end-aligned figures.
 const CELL_NUMBER = "text-end";
-const UNIT = "shrink-0";
+const UNIT = "shrink-0 truncate";
 const UNIT_DISABLED = "text-ink-disabled";
 
 // The whole box focuses the value, which is one line tall inside it; a press

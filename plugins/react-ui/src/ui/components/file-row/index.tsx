@@ -44,7 +44,8 @@ const PART = "shrink-0";
 const CHIP = "flex min-w-0 shrink";
 // The counts' block carries their type and stands aside: each lane is an item of the row.
 const COUNTS = "contents";
-const COUNT = "text-end";
+// The lane of figures keeps them whole where the page breaks a word anywhere.
+const COUNT = "text-end wrap-normal";
 
 /** A changed file in a review's list. */
 export interface FileRowProps extends Closed {

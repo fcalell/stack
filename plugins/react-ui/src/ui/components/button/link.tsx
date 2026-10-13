@@ -7,7 +7,8 @@ import {
 } from "@fcalell/ui-core/variants";
 import { follow } from "../../lib/navigate.ts";
 
-export const BOX = "relative inline-flex items-center justify-center";
+export const BOX =
+	"relative inline-flex items-center justify-center max-w-full min-w-0";
 export const LABEL = "truncate";
 export const PRESS: Record<ButtonAct, string> = {
 	primary: "hover:bg-act-accent-hover active:bg-act-accent-press",

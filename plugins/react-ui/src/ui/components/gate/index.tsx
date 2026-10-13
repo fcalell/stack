@@ -36,8 +36,6 @@ const PAGE =
 const COLUMN = "flex flex-col my-auto";
 const COLUMN_TYPED = "touch:my-0";
 const STEP = "flex flex-col";
-// An unbroken run (an address) wraps inside the column's width.
-const WRAPS = "wrap-anywhere";
 
 interface GateBase extends Closed {
 	/** A `Banner` standing first in the column, at its width. */
@@ -129,14 +127,11 @@ export function Gate({
 												/>
 											) : null}
 											{step ? <StepCount at={step.at} of={step.of} /> : null}
-											<h1
-												id={titleId}
-												className={cn(text({ role: "title" }), WRAPS)}
-											>
+											<h1 id={titleId} className={text({ role: "title" })}>
 												{title}
 											</h1>
 											{description ? (
-												<p className={cn(text({ role: "meta" }), WRAPS)}>
+												<p className={text({ role: "meta" })}>
 													<Runs runs={description} />
 												</p>
 											) : null}

@@ -144,7 +144,12 @@ export function ButtonBase({
 				) : null}
 				<RNText
 					numberOfLines={1}
-					className={cn(buttonLabel({ act: kind }), labelInk, labelLook)}
+					className={cn(
+						buttonLabel({ act: kind }),
+						"shrink",
+						labelInk,
+						labelLook,
+					)}
 				>
 					{label}
 				</RNText>
