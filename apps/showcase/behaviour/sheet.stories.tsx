@@ -16,7 +16,7 @@ import { confirm } from "@fcalell/plugin-react-ui/lib/confirm";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { expect, screen, waitFor } from "storybook/test";
-import { focused } from "./support.ts";
+import { focused, walked } from "./support.ts";
 
 function Page() {
 	const [open, setOpen] = useState(false);
@@ -55,9 +55,13 @@ export const Modal: StoryObj = {
 		await waitFor(() =>
 			expect(dialog).toContainElement(document.activeElement as HTMLElement),
 		);
+		// The open sheet keeps the rules.
+		await expect(walked()).toEqual([]);
 		await userEvent.keyboard("{Escape}");
 		await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
 		await waitFor(() => expect(trigger).toHaveFocus());
+		// Closed, with focus returned to the act that opened it.
+		await expect(walked()).toEqual([]);
 	},
 };
 
@@ -97,9 +101,11 @@ export const Decision: StoryObj = {
 		await waitFor(() =>
 			expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus(),
 		);
+		await expect(walked()).toEqual([]);
 		await userEvent.keyboard("{Escape}");
 		await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
 		await waitFor(() => expect(trigger).toHaveFocus());
+		await expect(walked()).toEqual([]);
 	},
 };
 

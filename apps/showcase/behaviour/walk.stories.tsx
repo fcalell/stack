@@ -85,6 +85,29 @@ export const CatchesAnOffTokenInset = canary(
 
 export const CatchesAThirtyPixelControl = canary(thirty(), ["control-height"]);
 
+// A control that sets a floor may grow past it when the floor is a token.
+export const PassesAControlGrownPastItsFloor = canary(
+	<button
+		type="button"
+		style={{
+			...BODY,
+			minHeight: "var(--spacing-control)",
+			paddingBlock: 40,
+			boxSizing: "border-box",
+		}}
+	>
+		Go
+	</button>,
+	["inset"].slice(0, 0),
+);
+
+export const CatchesAControlWhoseFloorIsNoToken = canary(
+	<button type="button" style={{ ...BODY, minHeight: 30 }}>
+		Go
+	</button>,
+	["control-height"],
+);
+
 export const CatchesAShortRow = canary(
 	<table>
 		<tbody>

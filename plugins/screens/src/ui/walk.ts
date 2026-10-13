@@ -86,10 +86,52 @@ export const EXCEPTIONS: Exception[] = [
 	},
 	{
 		rule: "nested-radius",
-		selector: "button.rounded-control",
-		outer: ".rounded-card",
+		selector: ".rounded-control, .rounded-row, .rounded-chip",
+		outer: ".rounded-card, .rounded-popover, .rounded-sheet",
 		reason:
-			"the control and card radii are two roles, not a concentric pair: a control hugging the inside of a card (the message input's send act) keeps the control radius",
+			"a control, a row or a chip inside a card, a popover or a sheet keeps its role's radius at the float or card inset (6 in 8 at 5): two roles, not a concentric pair",
+	},
+	{
+		rule: "nested-radius",
+		selector: ".rounded-t-sheet, .rounded-b-sheet, .rounded-t-card",
+		reason:
+			"a head or foot that carries its box's ground to the corners (a sheet's panel and foot, a group's head) follows the box's radius under the hairline",
+	},
+	{
+		rule: "nested-radius",
+		selector: ".rounded-popover",
+		reason:
+			"a popover floats over the page: the box beneath it is no part of it",
+	},
+	{
+		rule: "clip",
+		selector: ".gap-x-inside.flex.items-center.min-w-0.overflow-hidden",
+		reason:
+			"a row's meta line shows what fits: its marks keep their place at its end and its parts truncate first, and what has no room is clipped",
+	},
+	{
+		rule: "clip",
+		selector: '[class~="@container/canvas"]',
+		reason:
+			"a canvas clips the graph beyond its view, which its pan and zoom reach",
+	},
+	{
+		rule: "control-height",
+		selector: "button.block.relative.shrink-0.overflow-hidden",
+		reason:
+			"an image that opens is a button sized by its picture, up to the image cap, not as a control",
+	},
+	{
+		rule: "control-height",
+		selector: "input.text-code",
+		reason:
+			"a code field's input is the text line inside the field box, which holds the control height",
+	},
+	{
+		rule: "control-height",
+		selector: ".py-hairline.-my-hairline",
+		reason:
+			"a pick of several's trigger grows with the chips it wraps, from the compact control's floor",
 	},
 ];
 
@@ -116,6 +158,7 @@ const CONTROL_SIZES = [
 	"avatar",
 	"switch-h",
 	"check",
+	"image-tile",
 	"row",
 	"row-2",
 	"row-setting",
@@ -490,6 +533,7 @@ export function findings(options: WalkOptions = {}): Finding[] {
 			...at,
 			text: node.nodeValue ?? "",
 			variantNumeric: s.style.fontVariantNumeric,
+			monospace: /mono/i.test(s.style.fontFamily),
 		});
 	}
 
@@ -501,7 +545,12 @@ export function findings(options: WalkOptions = {}): Finding[] {
 		const group = groupOf(element, style);
 		const control = controlKind(element, style);
 		if (control && !excepted("control-height", element))
-			group.controls.push({ ...at(), kind: control, height: rect.height });
+			group.controls.push({
+				...at(),
+				kind: control,
+				height: rect.height,
+				floor: px(style.minHeight),
+			});
 		const row = rowKind(element);
 		if (row && !excepted("row-height", element))
 			group.rows.push({ ...at(), kind: row, height: rect.height });
@@ -534,7 +583,7 @@ export function findings(options: WalkOptions = {}): Finding[] {
 				height: rect.height,
 			};
 			if (painted(style) || style.overflowX !== "visible")
-				measure.outer = outerOf(element, rect);
+				measure.outer = outerOf(element, rect, roots);
 			group.radii.push(measure);
 		}
 
@@ -602,16 +651,26 @@ function widest(box: Element): ClipMeasure["widest"] {
 function outerOf(
 	element: Element,
 	rect: DOMRect,
+	roots: Element[],
 ): RadiusMeasure["outer"] | undefined {
 	for (
 		let up = element.parentElement;
-		up && up !== document.body;
+		up && up !== document.body && !roots.includes(up);
 		up = up.parentElement
 	) {
 		const style = getComputedStyle(up);
 		const box = up.getBoundingClientRect();
 		const radii = corners(style, box);
 		if (!radii.some((r) => r > 0) || !painted(style)) continue;
+		// A box that stands outside it (a popup drawn beside its trigger) is
+		// not inside it.
+		if (
+			rect.left < box.left - 0.5 ||
+			rect.top < box.top - 0.5 ||
+			rect.right > box.right + 0.5 ||
+			rect.bottom > box.bottom + 0.5
+		)
+			continue;
 		if (excepted("nested-radius", element, up)) return undefined;
 		const left = rect.left - box.left;
 		const top = rect.top - box.top;

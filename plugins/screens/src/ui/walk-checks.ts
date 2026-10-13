@@ -125,9 +125,13 @@ export interface HeightMeasure extends Located {
 	// The control or row kind, for the message.
 	kind: string;
 	height: number;
+	// The box's floor (`min-height`), 0 where it has none: a control that sets
+	// one grows past it with its content, so the floor is what the contract names.
+	floor?: number;
 }
 
-// Each control's height is a size token at the density; each row at least the
+// Each control's height is a size token at the density, or, where it sets a
+// floor, the floor is one and the height at least it; each row at least the
 // shortest row token (a row is a floor, `min-h-row`, that its content grows).
 export function checkHeights(
 	controls: HeightMeasure[],
@@ -137,15 +141,19 @@ export function checkHeights(
 	const floor = Math.min(...tokens.rows.map((t) => t.px));
 	return [
 		...controls
-			.filter((c) => !is(c.height, tokens.controls))
+			.filter((c) =>
+				c.floor
+					? !is(c.floor, tokens.controls) || c.height < c.floor - TOLERANCE
+					: !is(c.height, tokens.controls),
+			)
 			.map((c) =>
 				offToken(
 					"control-height",
 					c,
-					`${c.kind} height`,
-					c.height,
+					c.floor ? `${c.kind} floor (min-height)` : `${c.kind} height`,
+					c.floor || c.height,
 					tokens.controls,
-					"size the control by a size token (control, control-compact, field, target)",
+					"size the control by a size token (control, control-compact, field, target), as a height or as a floor (min-h-*)",
 				),
 			),
 		...rows
@@ -278,7 +286,9 @@ export function checkRadii(items: RadiusMeasure[], tokens: Tokens): Finding[] {
 		const off = item.radii.flatMap((_, corner) => {
 			const expected = wanted[corner];
 			const radius = drawn[corner] ?? 0;
+			// A pill is round by its role, whatever it stands in.
 			return radius === 0 ||
+				(item.radii[corner] ?? 0) >= pill - TOLERANCE ||
 				expected == null ||
 				Math.abs(radius - expected) <= TOLERANCE
 				? []
@@ -388,6 +398,8 @@ export function checkFonts(faces: FontMeasure[]): Finding[] {
 export interface NumberMeasure extends Located {
 	text: string;
 	variantNumeric: string;
+	// A monospaced face draws every digit at one width already.
+	monospace?: boolean;
 }
 
 // A whole text that is a number: digits with separators, a sign, a percent
@@ -403,7 +415,10 @@ export const isBareNumber = (text: string): boolean =>
 export function checkDigits(items: NumberMeasure[]): Finding[] {
 	return items
 		.filter(
-			(n) => isBareNumber(n.text) && !n.variantNumeric.includes("tabular-nums"),
+			(n) =>
+				isBareNumber(n.text) &&
+				!n.monospace &&
+				!n.variantNumeric.includes("tabular-nums"),
 		)
 		.map((n) => ({
 			rule: "tabular-digits",

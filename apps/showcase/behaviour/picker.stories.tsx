@@ -6,7 +6,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { expect, screen, waitFor, within } from "storybook/test";
 import { hover, type Point } from "./mouse.ts";
-import { focused } from "./support.ts";
+import { focused, walked } from "./support.ts";
 
 const ROLES = [
 	{ value: "owner", label: "Owner" },
@@ -40,6 +40,8 @@ export const Popover: StoryObj = {
 		await expect(options[2]).toHaveAttribute("aria-selected", "true");
 		await userEvent.keyboard("{ArrowDown}");
 		await waitFor(() => expect(options[3]).toHaveAttribute("data-highlighted"));
+		// The open picker keeps the rules.
+		await expect(walked()).toEqual([]);
 		await userEvent.keyboard("a");
 		await waitFor(() => expect(options[1]).toHaveAttribute("data-highlighted"));
 		await userEvent.keyboard("{Enter}");
@@ -51,6 +53,8 @@ export const Popover: StoryObj = {
 		await userEvent.keyboard("{Escape}");
 		await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
 		await waitFor(() => expect(trigger).toHaveFocus());
+		// Closed, with focus back on the trigger.
+		await expect(walked()).toEqual([]);
 	},
 };
 

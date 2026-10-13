@@ -4,7 +4,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { expect, screen, waitFor } from "storybook/test";
 import { hover } from "./mouse.ts";
-import { focused } from "./support.ts";
+import { focused, walked } from "./support.ts";
 
 const REGIONS = [
 	{ value: "eu-central-1", label: "Frankfurt" },
@@ -44,6 +44,8 @@ export const Listbox: StoryObj = {
 		await waitFor(() => expect(options[1]).toHaveAttribute("data-highlighted"));
 		await userEvent.keyboard("v");
 		await waitFor(() => expect(options[2]).toHaveAttribute("data-highlighted"));
+		// The open listbox keeps the rules.
+		await expect(walked()).toEqual([]);
 		await userEvent.keyboard("{Enter}");
 		await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
 		await expect(trigger).toHaveTextContent("Virginia");
@@ -53,6 +55,7 @@ export const Listbox: StoryObj = {
 		await userEvent.keyboard("{Escape}");
 		await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
 		await waitFor(() => expect(trigger).toHaveFocus());
+		await expect(walked()).toEqual([]);
 	},
 };
 

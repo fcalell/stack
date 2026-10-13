@@ -60,6 +60,16 @@ test("a control or a row of a height no token names is found, a token's within h
 	const found = checkHeights([{ ...ok, height: 30 }], [], tokens);
 	assert.deepEqual(rules(found), ["control-height"]);
 	assert.match(found[0]?.fix ?? "", /nearest: control, 32px/);
+	// A control that sets a floor grows past it, when the floor is a token.
+	const grown = { ...ok, height: 74, floor: 32 };
+	assert.deepEqual(checkHeights([grown], [], tokens), []);
+	const badFloor = checkHeights([{ ...grown, floor: 30 }], [], tokens);
+	assert.deepEqual(rules(badFloor), ["control-height"]);
+	assert.match(badFloor[0]?.measured ?? "", /floor \(min-height\) 30px/);
+	assert.deepEqual(
+		rules(checkHeights([{ ...grown, height: 20 }], [], tokens)),
+		["control-height"],
+	);
 	// A row is a floor its content grows past.
 	const row = { ...ok, kind: "row" };
 	assert.deepEqual(checkHeights([], [{ ...row, height: 40 }], tokens), []);
@@ -217,6 +227,8 @@ test("a bare number without tabular figures is found, a sentence with digits is 
 		checkDigits([{ ...number, text: "Deploy 1,234 failed" }]),
 		[],
 	);
+	// A monospaced face has one width for every digit already.
+	assert.deepEqual(checkDigits([{ ...number, monospace: true }]), []);
 });
 
 test("a region inside a region of its name is found, one inside another name is not", () => {

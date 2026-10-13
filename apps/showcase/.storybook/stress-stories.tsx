@@ -1,6 +1,6 @@
 import { showcaseFrames } from "@fcalell/plugin-react-ui/showcase/cells";
 import { type Draw, Frame } from "@fcalell/plugin-react-ui/showcase/frame";
-import { format, rootMargins } from "@fcalell/plugin-screens/walk";
+import { findings, format, rootMargins } from "@fcalell/plugin-screens/walk";
 import type { StoryObj } from "@storybook/react-vite";
 import { expect, waitFor } from "storybook/test";
 import { collect, report, stress } from "./stress.ts";
@@ -108,8 +108,14 @@ export function stressStories(component: string, draw?: Draw) {
 						result = stress(frames(), pane);
 						expect(result.probed).toBeGreaterThanOrEqual(floor);
 					});
-				// A component's root has no margin: its parent places it.
-				const faults = [...report(result), ...format(rootMargins(frames()))];
+				// The render walk over the component's frames alone (its heights,
+				// gaps, insets and radii against the tokens, its clips and figures),
+				// and no margin on a component's root: its parent places it.
+				const faults = [
+					...report(result),
+					...format(findings({ roots: frames() })),
+					...format(rootMargins(frames())),
+				];
 				if (faults.length > 0) throw new Error(`\n${faults.join("\n")}`);
 			},
 		};

@@ -2,7 +2,7 @@ import { Menu } from "@fcalell/plugin-react-ui/components/menu";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect, screen, waitFor } from "storybook/test";
 import { hover } from "./mouse.ts";
-import { focused } from "./support.ts";
+import { focused, walked } from "./support.ts";
 
 const act = () => {};
 
@@ -40,9 +40,12 @@ export const Popover: StoryObj = {
 		await waitFor(() => expect(rows[0]).toHaveFocus());
 		await userEvent.keyboard("a");
 		await waitFor(() => expect(rows[2]).toHaveFocus());
+		// The open menu keeps the rules.
+		await expect(walked()).toEqual([]);
 		await userEvent.keyboard("{Escape}");
 		await waitFor(() => expect(screen.queryByRole("menu")).toBeNull());
 		await waitFor(() => expect(trigger).toHaveFocus());
+		await expect(walked()).toEqual([]);
 	},
 };
 

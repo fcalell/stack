@@ -117,7 +117,7 @@ function Wide() {
 			<Place>
 				<Pane title="Workflow" back="#" wide>
 					<Canvas
-						label="Workflow"
+						label="Steps"
 						nodes={WORKFLOW.nodes}
 						edges={WORKFLOW.edges}
 						groups={WORKFLOW.groups}

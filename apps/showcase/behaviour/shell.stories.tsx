@@ -15,6 +15,7 @@ import type { PlaceSpec } from "@fcalell/ui-core/descriptors";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { expect, screen, waitFor } from "storybook/test";
+import { walked } from "./support.ts";
 
 const noop = () => {};
 const PLACES: PlaceSpec[] = [
@@ -89,6 +90,9 @@ export const BodyEndsAboveTheTabBar: StoryObj = {
 			.getByRole("button", { name: "Save" })
 			.getBoundingClientRect();
 		await expect(save.bottom).toBeLessThanOrEqual(bar.top);
+		// Focus on the last act is not hidden under the tab bar.
+		canvas.getByRole("button", { name: "Save" }).focus();
+		await expect(walked()).toEqual([]);
 	},
 };
 
@@ -323,6 +327,24 @@ export const PopupMountsInTheBody: StoryObj = {
 		const portal = list.closest("body > *");
 		expect(portal).not.toBeNull();
 		expect(portal?.contains(canvas.getByRole("main"))).toBe(false);
+		await expect(walked()).toEqual([]);
+	},
+};
+
+// The same picker opened in the Shell at the phone's width, where it opens a
+// sheet: the page with the sheet open keeps the rules.
+export const PopupInTheShellOnAPhone: StoryObj = {
+	parameters: { layout: "fullscreen" },
+	globals: { density: "touch" },
+	tags: ["touch"],
+	render: () => <Grants />,
+	play: async ({ canvas, userEvent }) => {
+		await userEvent.click(canvas.getByRole("button", { name: /Grant/ }));
+		const list = await screen.findByRole("listbox", { name: /Grant/ });
+		await waitFor(() =>
+			expect(list).toContainElement(document.activeElement as HTMLElement),
+		);
+		await expect(walked()).toEqual([]);
 	},
 };
 
