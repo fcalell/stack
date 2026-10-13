@@ -75,6 +75,10 @@
 			"types": "./dist/harness.d.ts",
 			"default": "./dist/harness.js"
 		},
+		"./structure": {
+			"types": "./dist/structure.d.ts",
+			"default": "./dist/structure.js"
+		},
 		"./manifest": {
 			"types": "./dist/manifest.d.ts",
 			"default": "./dist/manifest.js"

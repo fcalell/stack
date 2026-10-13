@@ -22,6 +22,11 @@ export const uiCoreGuide = [
 			"Looking up the design standard: the system constants, the floors, the bans",
 	},
 	{
+		page: "structure",
+		trigger:
+			"Building or editing a ui component: its layout, props, contexts and class strings",
+	},
+	{
 		page: "judging",
 		trigger:
 			"Judging a render's type, hierarchy, structure, colour, motion or composition",

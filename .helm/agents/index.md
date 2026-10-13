@@ -21,6 +21,7 @@ loading its rules, and read only what the task needs.
 | About to…                                               | Read                                                                                |
 | ------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | edit/create any TypeScript                              | `.helm/agents/conventions.md` (packages · placement)                                |
+| edit or create a ui component                           | `packages/ui-core/guide/structure.md`                                               |
 | write/modify a plugin (slots · contributions · runtime) | `.helm/agents/plugin-authoring.md` + `.helm/knowledge/architecture/slot-catalog.md` |
 | edit the knowledge base                                 | `.helm/agents/knowledge-base.md`                                                    |
 | commit                                                  | scope like `plugin-auth`                                                            |

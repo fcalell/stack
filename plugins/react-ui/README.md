@@ -128,6 +128,12 @@ graph, compiles it with the Tailwind CLI in `scripts/fixture/`, and holds the co
 | `b6` | every props type extends `Closed`, no class channel or props spread survives |
 | `b7` | `scripts/fixture/closure.tsx` passes each closed channel to every component under `@ts-expect-error` and compiles |
 | `b-roster` | every component directory is a roster name and its props type carries exactly the roster's props |
+| `b-children` | no `Children`, `cloneElement`, `isValidElement` or element `.type ===` in `src/ui` (the showcase excepted) |
+| `b-arbitrary` | no literal length inside a Tailwind arbitrary value, in the sources and in `scripts/overlays.ts` |
+| `b-measure` | `ResizeObserver`, `getBoundingClientRect`, `getComputedStyle`, the box sizes and `matchMedia` only in the closed list of files, each with its reason |
+| `b-context` | every `createContext` is in the closed list, tagged `data`, `behaviour`, `portal` or the named exception `form` |
+| `b-dataset` | `dataset` only in the closed list of files |
+| `b-type-prop` | no component takes or reads a prop named `type` |
 | `b-words` | no JSX text or labelling attribute is a literal word |
 | `b-nouns` | no product noun in `src` |
 | `b-exports` | every component and lib subpath resolves through `exports` to its own file |

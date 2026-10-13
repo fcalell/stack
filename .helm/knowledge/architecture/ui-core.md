@@ -2134,7 +2134,10 @@ cast hue, matrices asserted verbatim over their full axis products, every class 
 overlay draws checked against the tokens its roster entry owns, the roster compared against every
 component's props type, closure fixtures that compile every component's `?: never` props, word and
 product-noun scans over the sources, class-literal set-equality against each plugin's overlay
-allowlist, and every class a web component spells emitted by the built `app.css`. The web builds the
+allowlist, every class a web component spells emitted by the built `app.css`, and the structure rules
+of the guide's `structure.md` (no read of children, no literal length in an arbitrary value, measuring,
+contexts and `dataset` only in closed lists, no `type` prop, no Section in a Section), whose matchers
+live in `@fcalell/ui-core/structure` with a test that each fails on a bad case. The web builds the
 roster one component at a time, so react-ui holds each component directory present to its entry and
 reports how many of the roster are built. A new matrix that skips a registry, a component the roster
 does not name, a literal that duplicates a cell, an off-contract utility, or a drawn word outside

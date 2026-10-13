@@ -1,5 +1,7 @@
 # Rubric: beautiful
 
+How a component is built, rather than how it looks, is [structure](./structure.md).
+
 The standard a stack component and a consumer screen are judged by, in a
 [design critique](./design-critique.md). Every tell is a number or a yes/no read off the rendered
 unit at 1280 and 390 (a phone screen at 390 and 320 dp), light and dark, pointer parked

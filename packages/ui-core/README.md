@@ -4,11 +4,11 @@ The design system both stack UI plugins render from: one closed token contract, 
 foundations sheet as data behind four knobs, the words the molecules speak, the platform-invariant
 variant matrices, the roster every component and its props are pinned to, and the laws that say
 which token to pick. The contract subpaths export build-time data only, so each plugin renders its
-own CSS from the same records and ui-core stays framework-free. Two subpaths are Node-only:
-`./harness`, internal tooling for the packages' verify scripts, and `./manifest`, the guide pages
-the UI plugins index.
+own CSS from the same records and ui-core stays framework-free. Three subpaths are Node-only:
+`./harness` and `./structure`, internal tooling for the packages' verify scripts, and
+`./manifest`, the guide pages the UI plugins index.
 
-Twenty-one subpaths:
+Twenty-four subpaths:
 
 - `@fcalell/ui-core/tokens`: the contract as data, the sheet's every value, the knob defaults and
   the English `words`.
@@ -87,11 +87,14 @@ Twenty-one subpaths:
   of several predecessors placed after its last and a cycle cut at its back edge; `backEdges(order,
   edges)`, the ids of the edges whose target is at or before its source; and `HANDOFF_GLYPH`.
 - `@fcalell/ui-core/harness`: internal. The shared core of the packages' `scripts/verify.ts`.
+- `@fcalell/ui-core/structure`: internal. The matchers behind the packages' structure checks
+  (`b-children`, `b-arbitrary`, `b-measure`, `b-context`, `b-dataset`, `b-type-prop`,
+  `b-section-nest`), proved on a bad case by this package's tests.
 - `@fcalell/ui-core/manifest`: `uiCoreGuide`, the package's `guide/` pages with their load
   triggers, which react-ui and native-ui contribute to `cliSlots.guide`.
 
 The package's `guide/` is how to design on it: the screen recipe, the design critique, the
-rubric, the judging questions, the references, and one page per pattern under `patterns/`.
+rubric, the structure rules for building a component, the judging questions, the references, and one page per pattern under `patterns/`.
 
 The contract has two modes, `light` and `dark`. `themeTokens` seeds the light colors and the touch
 density set into the `@theme` block as well, because Tailwind v4 generates no utility from a

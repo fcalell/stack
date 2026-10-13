@@ -1,0 +1,52 @@
+# Structure: how a component is built
+
+How a component is built, as the [rubric](./rubric.md) is how it looks. Read each rule as a rule
+while building; a reviewer and the design critic answer its question item by item. A finding
+names the rule, the place (`file:line`, or the element's path), the measured value, the expected
+value and the fix.
+
+"Held by" names what fails the change: a `verify` check (each package's `pnpm verify`, on web
+and native alike unless said), the render walk of `stack screens test` (every page's elements at
+320, 1280 and 1920, light and dark), or *judged* where no machine check exists. A closed list a
+check holds is edited in the check, with its one-line reason; an entry nothing matches fails too.
+
+## Layout
+
+| # | Rule | Ask | Held by |
+| --- | --- | --- | --- |
+| 1 | A parent lays out its children with flex or grid; a child sets only its own flex or grid item properties. | Does an element place a sibling, or another component, by a margin, an offset or a fixed measure? | judged |
+| 2 | A component's root carries no margin; the parent's gap spaces it, and the root's inset is its own padding. | Does a root carry a margin, a negative one cancelling a parent's inset included? | render walk (margin on a component root) |
+| 3 | A component styles its own box and the parts it draws: no selector (`[&>…]`, `[&_…]`, `*:`) reaches a child it does not own. | Does a class string select what another component draws? | judged |
+| 4 | Heights, gaps, insets and radii are the contract's values at the density; a surface inside another is rounded by the outer radius less its inset. | Is each measured value the one the contract emits, and the inner radius the outer less the inset? | render walk (contract heights, gaps, insets, radii, nested radii) |
+| 5 | No literal length stands in a class: `calc()` over `var(--…)` tokens, `1lh`, `0px`, selector variants and track lists stay. | Does an arbitrary value (`-[…]`) hold a number with a length unit, or a bare number of 1 or more? | `b-arbitrary`; `b5` holds every spelled class against the allowlist |
+| 6 | A component adapts to its container with a container query or `flex-wrap`; the viewport reaches it only through the density (`touch:`). | Does a read of the window or a media query choose a form where the container decides? | `b-measure` for the read; judged for the class |
+| 7 | Nothing measures in JavaScript outside the closed list: the Canvas, the docked sheet's region, the Table's page width, the Thread's follow, `useScrolls`, the density and motion queries, and on native every layout read. | Does the file read a box, observe a size or match a media query, and is it listed with a reason? | `b-measure` |
+| 8 | A clipped flex item never shrinks below its content, and a clip hides nothing a layout error put there. | Is a clipped element shorter than its content, with no ellipsis or clamp to say so? | render walk (clipping) |
+
+## Reading
+
+| # | Rule | Ask | Held by |
+| --- | --- | --- | --- |
+| 9 | No component reads its children: no `Children`, `cloneElement`, `isValidElement` or `.type ===` on a React element. Structure arrives as a prop. | Does a walk of `children` decide anything? | `b-children` |
+| 10 | No Section stands in a Section. | Does a Section's body draw a Section? | `b-section-nest` |
+| 11 | No context, `data-*` mark or `:has()` changes a component's form. Every `createContext` is in the closed list as `data`, `behaviour` or `portal`; a context that changes a child's form is not allowed. The one exception: the Place's CSS hides the Panes before a covering Pane with `:has(~ [data-cover])`. | Does a descendant draw another tree, or another element, for a context it reads? Is every `dataset` in the closed list? | `b-context`, `b-dataset`; a CSS mark and `:has()` judged |
+| 12 | A child writes nothing its parent reads after paint (a registration, a lend, a fill); the parent decides from its props. | Does an effect set state in, or a ref of, a component above it? | judged |
+| 13 | A prop names what it chooses (`kind`, `form`, `fit`); none is called `type`. | Does a props type or a destructure carry `type`? | `b-type-prop` |
+| 14 | A popup mounts in the body; only a showcase stage provides where. | Does a popup mount inside a frame that clips or scrolls? | `b-context` (the one `portal` context); judged otherwise |
+
+## Waiting and figures
+
+| # | Rule | Ask | Held by |
+| --- | --- | --- | --- |
+| 15 | A waiting form is the loaded tree with `loading`, never a second tree: it keeps the loaded form's marks, heights and text start, and typed text, focus and scroll survive the switch. | Does a twin file or a branch draw the waiting form? Do the nodes survive toggling `loading`? | `Behaviour/Waiting` stories (a part's waiting box equals its loaded box); judged for the tree |
+| 16 | Type is 12 px or more at every density, in at most six sizes a screen. | Is a text node under 12 px, or a seventh size on the screen? | render walk (type sizes) |
+| 17 | Fonts are loaded before first paint, so no text reflows. | Does a text box change size when a face lands? | render walk (late fonts) |
+| 18 | A bare number that changes in place sets tabular digits. | Is `font-variant-numeric` without `tabular-nums` on a figure that updates? | render walk (tabular digits) |
+| 19 | No region stands inside a region of its name (a Pane and a Section of one title). | Do two landmarks share a name on the page? | render walk (same-name regions) |
+
+## Adding to a closed list
+
+A new file in `b-measure` or `b-dataset`, or a new context, is the last resort. First try the
+rule's own answer: flex, grid or a container query for a measure; a prop for a mark or a context.
+An entry names the one thing the file reads and why CSS cannot; a context names its class, and
+`form` is a named exception that records the prop it becomes.

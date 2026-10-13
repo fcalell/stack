@@ -53,6 +53,18 @@ import {
 	rosterEntries,
 } from "@fcalell/ui-core/roster";
 import {
+	arbitraryValues,
+	childReads,
+	contexts,
+	datasets,
+	type Hit,
+	measures,
+	NATIVE_MEASURES,
+	outsideList,
+	sectionNests,
+	typeProps,
+} from "@fcalell/ui-core/structure";
+import {
 	COLOR_NAMES,
 	COLORS,
 	type ColorName,
@@ -1339,6 +1351,291 @@ check("b-holds", "no component imports a cell another one holds", () => {
 	}
 	assert(hits.length === 0, `held cells spelled:\n  ${hits.join("\n  ")}`);
 	return `${read} component files, no held cell imported outside its holder`;
+});
+
+// ── The structure checks ────────────────────────────────────────────
+//
+// `packages/ui-core/guide/structure.md` is the rule behind each: the matchers
+// are `@fcalell/ui-core/structure`'s, proved to fail on a bad case by ui-core's
+// tests. They sweep every file of `src/ui`.
+
+const UI_DIR = resolve(pkgDir, "src/ui");
+const UI_FILES = walk(UI_DIR, /\.(ts|tsx)$/);
+
+function swept(match: (source: string, name: string) => Hit[]) {
+	const found = new Map<string, Hit[]>();
+	for (const path of UI_FILES)
+		found.set(relative(UI_DIR, path), match(readFileSync(path, "utf8"), path));
+	return found;
+}
+
+function where(found: ReadonlyMap<string, readonly Hit[]>): string[] {
+	return [...found].flatMap(([path, hits]) =>
+		hits.map((hit) => `${path}:${hit.line}: ${hit.text}`),
+	);
+}
+
+check(
+	"b-children",
+	"no component reads its children: no Children, cloneElement, isValidElement or element .type",
+	() => {
+		const hits = where(swept(childReads));
+		assert(
+			hits.length === 0,
+			`a component reads a React child (measured: ${hits.length}, expected: 0); take the structure as a prop:\n  ${hits.join("\n  ")}`,
+		);
+		return `${UI_FILES.length} files, no walk of a React child (a markdown token and an Intl part carry a string .type and are no child)`;
+	},
+);
+
+check(
+	"b-arbitrary",
+	"no literal length inside a Tailwind arbitrary value",
+	() => {
+		const found = swept(arbitraryValues);
+		found.set(
+			"scripts/verify.ts (NATIVE_OVERLAYS)",
+			arbitraryValues(JSON.stringify(NATIVE_OVERLAYS)),
+		);
+		const hits = where(found);
+		assert(
+			hits.length === 0,
+			`a literal length in an arbitrary value (measured: ${hits.length}, expected: 0); use a spacing, size or width token, or a calc() over var(--…) tokens:\n  ${hits.join("\n  ")}`,
+		);
+		return `${found.size} files, no literal length in an arbitrary value`;
+	},
+);
+
+// The files that measure the screen in JavaScript, each with the one thing it
+// reads: React Native has no container query, so a layout read is the only way
+// to learn a box. A file not listed fails, and so does a listed file that stops.
+const MEASURING: Record<string, string> = {
+	"lib/frame.ts":
+		"the toasts' box measured against the Shell's root, and the docked foot's region height (Yoga has no container units)",
+	"lib/room.tsx":
+		"the room set scales by the unit of the window, which a rotation or a resize changes",
+	"components/toast/room.tsx":
+		"the box the toasts stand in, laid out by the page and read for their layer",
+	"components/slider/index.tsx":
+		"the track's width, which the thumb's drag maps to a value",
+	"components/pane/index.tsx":
+		"a footed Pane's body region, read for the docked sheet's height",
+	"components/thread/index.tsx":
+		"a Thread's log region, read for the docked sheet's height",
+	"components/sheet/docked.tsx":
+		"the docked sheet's pinned head and foot, which the body gives below",
+	"components/sheet/base.tsx":
+		"the window's height, which caps a sheet and sets a tall one",
+	"components/table/index.tsx":
+		"the window's width, which picks the Table's grid or its list (the tree differs)",
+};
+
+check(
+	"b-measure",
+	"the screen is measured in JavaScript only in the closed list of files",
+	() => {
+		const found = swept((source, name) =>
+			measures(source, NATIVE_MEASURES, name),
+		);
+		const { unlisted, stale } = outsideList(
+			new Map(
+				[...found].map(([path, hits]) => [path, hits.map((h) => h.text)]),
+			),
+			MEASURING,
+		);
+		assert(
+			unlisted.length === 0,
+			`measuring outside the closed list (expected: flex; else add the file to MEASURING with its reason):\n  ${where(new Map([...found].filter(([path]) => unlisted.includes(path)))).join("\n  ")}`,
+		);
+		assert(
+			stale.length === 0,
+			`listed files that no longer measure (remove the entry): ${stale.join(", ")}`,
+		);
+		return `${Object.keys(MEASURING).length} listed entries, no other file measures`;
+	},
+);
+
+// Every context of src/ui, by the file that creates it, with its class and
+// why. `data` carries a value a child shows, `behaviour` a callback or a state
+// a child acts on, `portal` where a tree starts again. `form` is a named
+// exception: a context that changes a child's form, which no new context may
+// join.
+type ContextClass = "data" | "behaviour" | "portal" | "form";
+const CONTEXTS: Record<string, [ContextClass, string]> = {
+	"lib/ink.ts:Ink": [
+		"data",
+		"the ink of the place a glyph sits in, React Native's stand-in for inherited currentColor",
+	],
+	"lib/field.ts:FieldNameContext": [
+		"data",
+		"the label or title that names a typing control",
+	],
+	"lib/field.ts:FieldDisabled": [
+		"behaviour",
+		"whether the field around a control is disabled, so it answers no press",
+	],
+	"lib/field.ts:FieldError": [
+		"data",
+		"whether the field is in error, which the control's box draws as its edge",
+	],
+	"lib/field.ts:FieldRefusal": [
+		"behaviour",
+		"the callback a control refuses a value into its field's error line with",
+	],
+	"lib/field.ts:FieldFocus": [
+		"behaviour",
+		"the control a sheet opens on takes focus as it mounts",
+	],
+	"lib/field.ts:GroupName": [
+		"data",
+		"the label that names a group of controls",
+	],
+	"lib/field.ts:FieldClaim": [
+		"behaviour",
+		"the typing control of a region that holds focus",
+	],
+	"lib/toast.ts:ToastEntry": ["data", "the queued toast a Toast draws"],
+	"lib/form.ts:ActInert": [
+		"behaviour",
+		"an act that cannot run where it stands, drawn in its disabled cell",
+	],
+	"lib/reason.ts:ReasonHostContext": [
+		"behaviour",
+		"the host a blocked act tells it was pressed, which shows its reason",
+	],
+	"lib/reason.ts:ReasonKept": [
+		"form",
+		"exception: a docked foot's ActionBar keeps the reason's line before it shows, so showing it never moves the act; becomes a prop of the bar once the foot draws it",
+	],
+	"lib/reason.ts:ActFailed": [
+		"data",
+		"the sentence a sheet's act failed with, drawn in the reason's line",
+	],
+	"lib/frame.ts:ShellSwitcher": [
+		"data",
+		"the place switcher the Shell hands the Pane, which draws it as a descriptor in its bar",
+	],
+	"lib/frame.ts:ShellTabs": [
+		"data",
+		"the tab bar the Shell hands each Place, which draws it under its Pane",
+	],
+	"lib/frame.ts:ToastFrame": [
+		"behaviour",
+		"the Shell's root and the way to place the toasts' layer over a page's box",
+	],
+	"lib/frame.ts:ShellHome": [
+		"form",
+		"exception: the page for an unknown address draws a Gate outside a Shell and a Pane inside one; becomes the router's not-found choice",
+	],
+	"lib/frame.ts:PlaceRoute": [
+		"data",
+		"the route of the Shell's place, where a read leads back",
+	],
+	"lib/frame.ts:BackRoute": [
+		"data",
+		"the route a Pane's back act returns to, where a read leads back",
+	],
+	"lib/frame.ts:DistanceContext": [
+		"form",
+		"exception: a Pane in a room-distance Place leaves out the switcher, the room set having no tab bar; becomes a Pane prop the Place's density supplies",
+	],
+	"lib/frame.ts:FootReturn": [
+		"behaviour",
+		"the claim a leaving docked sheet sets for the input that returns to take focus",
+	],
+	"lib/group.ts:GroupContext": [
+		"form",
+		"exception: a Group's parts register, and a waiting Group lets only those draw their own waiting forms; becomes each part's loading prop",
+	],
+	"lib/words.tsx:WordsContext": ["data", "the app's words"],
+	"lib/loading.ts:LoadingContext": [
+		"data",
+		"the read's state: each part draws its own waiting form from the one tree",
+	],
+	"lib/touched.ts:TouchedContext": [
+		"behaviour",
+		"whether a Form or Sheet has taken input, and its leave",
+	],
+	"components/text/index.tsx:Line": [
+		"form",
+		"exception: a Text inside a Text draws a run of its line; becomes a Run component",
+	],
+	"components/sheet/base.tsx:PartsContext": [
+		"portal",
+		"gorhom draws the sheet outside the tree that opens it, so the sheet's parts start again at its container",
+	],
+};
+
+check(
+	"b-context",
+	"every createContext is in the closed list, classified data, behaviour or portal",
+	() => {
+		const found = new Map<string, string[]>();
+		for (const [path, hits] of swept(contexts))
+			for (const hit of hits) {
+				const key = `${path}:${hit.text}`;
+				found.set(key, [...(found.get(key) ?? []), `${path}:${hit.line}`]);
+			}
+		const unlisted = [...found.keys()].filter((key) => !(key in CONTEXTS));
+		assert(
+			unlisted.length === 0,
+			`a context outside the closed list (classify it as data, behaviour or portal in CONTEXTS; a context that changes a child's form is not allowed, pass a prop):\n  ${unlisted.map((key) => `${found.get(key)?.join(", ")}: ${key}`).join("\n  ")}`,
+		);
+		const stale = Object.keys(CONTEXTS).filter((key) => !found.has(key));
+		assert(
+			stale.length === 0,
+			`listed contexts that no longer exist (remove the entry): ${stale.join(", ")}`,
+		);
+		const forms = Object.values(CONTEXTS).filter(([kind]) => kind === "form");
+		return `${found.size} contexts, each classified; ${forms.length} named exceptions that change a child's form`;
+	},
+);
+
+// React Native has no DOM, so no file of src/ui may touch a dataset; the web's
+// closed list is its table, canvas, modality and density pin.
+check("b-dataset", "no file touches a dataset", () => {
+	const found = swept(datasets);
+	const { unlisted } = outsideList(
+		new Map([...found].map(([path, hits]) => [path, hits.map((h) => h.text)])),
+		{},
+	);
+	assert(
+		unlisted.length === 0,
+		`a data mark read or written (expected: a prop; React Native has no dataset):\n  ${where(found).join("\n  ")}`,
+	);
+	return `${found.size} files, none touches a dataset`;
+});
+
+check("b-type-prop", "no component takes a prop named type", () => {
+	const found = new Map<string, Hit[]>();
+	for (const path of UI_FILES) {
+		const rel = relative(UI_DIR, path);
+		if (!rel.startsWith("components/")) continue;
+		found.set(rel, typeProps(readFileSync(path, "utf8"), path));
+	}
+	const hits = where(found);
+	assert(
+		hits.length === 0,
+		`a component takes or reads a type prop (measured: ${hits.length}, expected: 0); name the prop for what it chooses, a kind or a form:\n  ${hits.join("\n  ")}`,
+	);
+	return `${found.size} component files, no prop named type`;
+});
+
+// A Section's title is one size, so a Section inside a Section reads as its
+// sibling and the page's outline flattens: no Section stands in a Section. The
+// package draws none of its own, so the check holds the sources a Section
+// would join; the matcher is proved on a bad case in ui-core's tests.
+check("b-section-nest", "no Section stands in a Section", () => {
+	const hits: string[] = [];
+	let drawn = 0;
+	for (const path of UI_FILES.filter((file) => file.endsWith(".tsx"))) {
+		const found = sectionNests(readFileSync(path, "utf8"), path);
+		drawn += found.drawn;
+		for (const hit of found.hits)
+			hits.push(`${relative(pkgDir, path)}:${hit.line}`);
+	}
+	assert(hits.length === 0, `a Section in a Section:\n  ${hits.join("\n  ")}`);
+	return `${drawn} Sections with a body, none holding another`;
 });
 
 check("b-stroke", "no stroke weight is spelled outside ICON_STROKE", () => {
