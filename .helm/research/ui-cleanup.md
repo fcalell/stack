@@ -161,6 +161,18 @@ guides. Stead's stack pin moves after each pass and its screens are ported in th
    merged with the follow-ups in `c42b3de`; Stead `27ad8c3`.
 5. **Measuring in JavaScript:** container queries and `flex-wrap`; JavaScript stays for the Canvas
    and where the tree differs (the Shell's sidebar or tab bar).
+   Decided 2026-10-13: a `touch` read that only picks classes becomes the `touch:` variant;
+   `useTouch` stays where the tree differs (Shell, Picker, Menu, Sheet, MessageInput, Rules) or
+   for behaviour (ActionBar's reversed DOM order, a tooltip off on touch). A Pane's head always
+   carries `py-inside` on touch, so `useWraps` goes. A desktop `Sheet` is always centred, capped,
+   its body scrolling: the side form and `useShortOrSide` go. A status has one form, its word
+   truncating: the short form and `useShort` go, on native too. The Slider's thumb stands by CSS
+   from its value, the Table's frozen column clears by `scroll-padding`, the Latest act hides by
+   a container query on the log. The docked sheet's region is spiked as a size container with a
+   flex-column sheet; `useFootRegion` stays only if a render shows the region has no definite
+   height. Staying, each for a reason: the Table's grid or list by its page's width (the tree
+   differs), `useScrolls` (CSS sets no `tabindex`), the Thread's follow, the popup offsets read
+   from tokens, every native measure (no container queries).
 6. **Overflow:** `min-w-0` and `wrap-anywhere` on text slots.
 7. **Loading:** stack: ListRow's waiting form keeps the loaded row's marks and height. Stead:
    Sections drawn before their data, `useLiveReads` narrowed (the usage pause landed with pass
@@ -175,7 +187,6 @@ Carried from pass 1 to the pass that owns it:
 
 - Still open from pass 4: native `Columns` sets no column width, which a column would carry as
   its own prop; a native cell's search no longer ends the edit on blur.
-- Pass 5: `Pane`'s title still measures its wrap with `useWraps` on touch.
 - Step 5: a Pane and a Section of one name are two region landmarks of one name (axe
   `landmark-unique` on Stead's knowledge page, the page Pane "Architecture" beside the tree's
   Section "Architecture").
