@@ -181,6 +181,17 @@ guides. Stead's stack pin moves after each pass and its screens are ported in th
    `fit` (`Button` and `IconButton` take density as a prop), `backGlyph`, the Table's frozen-cell
    cells and the Sheet's cell picks, which are ui-core cells a plugin cannot prefix.
 6. **Overflow:** `min-w-0` and `wrap-anywhere` on text slots.
+   Decided 2026-10-13 (measured: 264 of 541 roster text slots grew past their box under a
+   300-character word): a long unbroken word breaks anywhere in a sentence, description, label or
+   touch title (`overflow-wrap: anywhere` on the web body, `wrap-normal` where a figure lane must
+   hold, the per-slot spellings gone); a desktop title, a button label and the single-line slots
+   keep their ellipsis. A Button's box is bounded (`max-w-full min-w-0`) so its label truncates;
+   the act slots of Banner, Toast, Section, ListRow and MessageInput may shrink; a unit, a size,
+   a Slider's output, a Status word and a chart tick cut at a word's 18 characters as Chip does;
+   a tooltip holds the measure. A URL or path in a meta line keeps cutting at its end. Native
+   takes the same per slot (`shrink` on a row's text). A roster stress floor feeds every text slot
+   the long word and a URL and fails on page growth, a box past its parent or a clip with no
+   ellipsis, with false-pass canaries; native gets a source check for row text with no `shrink`.
 7. **Loading:** stack: ListRow's waiting form keeps the loaded row's marks and height. Stead:
    Sections drawn before their data, `useLiveReads` narrowed (the usage pause landed with pass
    1). A record's Pane carries the kind's word as its title while it loads; a waiting title
