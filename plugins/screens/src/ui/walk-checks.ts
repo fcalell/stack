@@ -127,12 +127,14 @@ export interface HeightMeasure extends Located {
 	height: number;
 }
 
-// Each control's height is a size token at the density, and each row's.
+// Each control's height is a size token at the density; each row at least the
+// shortest row token (a row is a floor, `min-h-row`, that its content grows).
 export function checkHeights(
 	controls: HeightMeasure[],
 	rows: HeightMeasure[],
 	tokens: Tokens,
 ): Finding[] {
+	const floor = Math.min(...tokens.rows.map((t) => t.px));
 	return [
 		...controls
 			.filter((c) => !is(c.height, tokens.controls))
@@ -147,17 +149,15 @@ export function checkHeights(
 				),
 			),
 		...rows
-			.filter((r) => !is(r.height, tokens.rows))
-			.map((r) =>
-				offToken(
-					"row-height",
-					r,
-					`${r.kind} height`,
-					r.height,
-					tokens.rows,
-					"size the row by a row token (row, row-2, row-setting)",
-				),
-			),
+			.filter((r) => r.height < floor - TOLERANCE)
+			.map((r) => ({
+				rule: "row-height",
+				path: r.path,
+				name: r.name,
+				measured: `${r.kind} height ${px(r.height)}`,
+				expected: `at least ${names(tokens.rows.slice(0, 1))}`,
+				fix: "give the row a floor of a row token (min-h-row, min-h-row-2, min-h-row-setting)",
+			})),
 	];
 }
 
@@ -172,6 +172,12 @@ export interface SpacingMeasure extends Located {
 
 const SIDES = ["top", "right", "bottom", "left"] as const;
 
+// The names of the entries of `values` that hold `value`, joined: the sides of
+// a padding that share a length are one finding.
+function sharing(names: readonly string[], values: number[], value: number) {
+	return names.filter((_, i) => values[i] === value).join("/");
+}
+
 // A flex or grid container's gaps and padding are 0 or a spacing token.
 export function checkSpacing(
 	items: SpacingMeasure[],
@@ -179,24 +185,28 @@ export function checkSpacing(
 ): Finding[] {
 	const found: Finding[] = [];
 	for (const item of items) {
-		const values: Array<[string, number]> = [
-			["row-gap", item.rowGap],
-			["column-gap", item.columnGap],
-			...item.padding.map((v, i): [string, number] => [
-				`padding-${SIDES[i]}`,
-				v,
-			]),
-		];
-		for (const [what, value] of values) {
+		const gaps =
+			item.rowGap === item.columnGap
+				? [["gap", item.rowGap] as const]
+				: ([
+						["row-gap", item.rowGap],
+						["column-gap", item.columnGap],
+					] as const);
+		const insets = [...new Set(item.padding)].map(
+			(value) =>
+				[`padding-${sharing(SIDES, item.padding, value)}`, value] as const,
+		);
+		for (const [what, value] of [...gaps, ...insets]) {
 			if (value === 0 || is(value, tokens.spacing)) continue;
+			const isGap = gaps.some(([name]) => name === what);
 			found.push(
 				offToken(
-					what.includes("gap") ? "gap" : "inset",
+					isGap ? "gap" : "inset",
 					item,
 					what,
 					value,
 					tokens.spacing,
-					what.includes("gap")
+					isGap
 						? "use a gap role (inside, pair, acts, rows, fields, sections)"
 						: "use an inset role (control-x, card, tile, float, page)",
 				),
@@ -217,12 +227,19 @@ export interface RadiusMeasure extends Located {
 	// inside it at each corner (the smaller of the two edges the corner meets).
 	outer?: {
 		path: string;
+		// Half the outer box's shorter side, where its radius stops growing.
+		half: number;
 		radii: [number, number, number, number];
 		insets: [number, number, number, number];
 	};
 }
 
-const CORNERS = ["top-left", "top-right", "bottom-right", "bottom-left"];
+const CORNERS = [
+	"top-left",
+	"top-right",
+	"bottom-right",
+	"bottom-left",
+] as const;
 
 // Every radius is 0, a radius role or a pill (at least half the box's
 // shorter side); a box inside a rounded box with an inset smaller than the
@@ -231,38 +248,60 @@ export function checkRadii(items: RadiusMeasure[], tokens: Tokens): Finding[] {
 	const found: Finding[] = [];
 	for (const item of items) {
 		const pill = Math.min(item.width, item.height) / 2;
-		item.radii.forEach((radius, corner) => {
-			if (radius === 0 || radius >= pill - TOLERANCE) return;
-			if (!is(radius, tokens.radius)) {
-				found.push(
-					offToken(
-						"radius",
-						item,
-						`${CORNERS[corner]} radius`,
-						radius,
-						tokens.radius,
-						"use a radius role (chip, control, row, card, popover, sheet), or full for a pill",
-					),
-				);
-			}
-		});
+		for (const radius of new Set(item.radii)) {
+			if (
+				radius === 0 ||
+				radius >= pill - TOLERANCE ||
+				is(radius, tokens.radius)
+			)
+				continue;
+			found.push(
+				offToken(
+					"radius",
+					item,
+					`${sharing(CORNERS, item.radii, radius)} radius`,
+					radius,
+					tokens.radius,
+					"use a radius role (chip, control, row, card, popover, sheet), or full for a pill",
+				),
+			);
+		}
 		if (!item.outer) continue;
 		const { outer } = item;
-		item.radii.forEach((radius, corner) => {
-			const out = outer.radii[corner] ?? 0;
+		// A radius larger than half the shorter side draws as half of it.
+		const drawn = item.radii.map((radius) => Math.min(radius, pill));
+		const wanted = item.radii.map((_, corner) => {
+			const out = Math.min(outer.radii[corner] ?? 0, outer.half);
 			const inset = outer.insets[corner] ?? 0;
-			if (radius === 0 || out === 0 || inset >= out) return;
-			const expected = out - inset;
-			if (Math.abs(radius - expected) <= TOLERANCE) return;
+			return out === 0 || inset >= out ? null : out - inset;
+		});
+		const off = item.radii.flatMap((_, corner) => {
+			const expected = wanted[corner];
+			const radius = drawn[corner] ?? 0;
+			return radius === 0 ||
+				expected == null ||
+				Math.abs(radius - expected) <= TOLERANCE
+				? []
+				: [corner];
+		});
+		// Corners standing off by the same radius and inset are one finding.
+		const seen = new Set<string>();
+		for (const corner of off) {
+			const key = `${drawn[corner]}|${wanted[corner]}`;
+			if (seen.has(key)) continue;
+			seen.add(key);
+			const same = off.filter((c) => `${drawn[c]}|${wanted[c]}` === key);
+			const out = Math.min(outer.radii[corner] ?? 0, outer.half);
+			const inset = outer.insets[corner] ?? 0;
 			found.push({
 				rule: "nested-radius",
 				path: item.path,
 				name: item.name,
-				measured: `${CORNERS[corner]} radius ${px(radius)} inside ${outer.path} (radius ${px(out)}, inset ${px(inset)})`,
-				expected: `${px(expected)} (outer ${px(out)} less inset ${px(inset)})`,
+				measured: `${same.map((c) => CORNERS[c]).join("/")} radius ${px(drawn[corner] ?? 0)} inside ${outer.path} (radius ${px(out)}, inset ${px(inset)})`,
+				expected: `${px(wanted[corner] ?? 0)} (outer ${px(out)} less inset ${px(inset)})`,
 				fix: "give the inner box the outer radius less the inset, or inset it by at least the outer radius",
 			});
-		});
+		}
 	}
 	return found;
 }

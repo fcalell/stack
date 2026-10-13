@@ -88,34 +88,74 @@ const INSET_SIZES = [
 	"switch-inset",
 ] as const;
 
-function token(
-	style: CSSStyleDeclaration,
-	prefix: string,
-	name: string,
-): Token[] {
-	const raw = style.getPropertyValue(`--${prefix}-${name}`).trim();
-	const value = raw.endsWith("px") ? Number.parseFloat(raw) : Number.NaN;
-	return Number.isNaN(value) ? [] : [{ name, px: value }];
+// A length the page gives a custom property, in pixels where the element
+// stands: `calc`s and `rem`s resolve through a probe, which is also what the
+// room scope's values (`calc`s over its own unit) need.
+function resolveTokens(scope: Element): Tokens {
+	const declared = getComputedStyle(scope);
+	const probe = document.createElement("div");
+	probe.style.cssText =
+		"position:absolute;visibility:hidden;pointer-events:none;inset:0 auto auto 0";
+	scope.append(probe);
+	const read = (prefix: string, name: string): Token[] => {
+		const property = `--${prefix}-${name}`;
+		if (declared.getPropertyValue(property).trim() === "") return [];
+		if (prefix === "text") {
+			probe.style.fontSize = `var(${property})`;
+			return [
+				{ name, px: Number.parseFloat(getComputedStyle(probe).fontSize) },
+			];
+		}
+		probe.style.width = `var(${property})`;
+		return [{ name, px: probe.getBoundingClientRect().width }];
+	};
+	const sizes = (names: readonly string[]) =>
+		SIZES.filter((s) => names.includes(s)).flatMap((s) => read("spacing", s));
+	try {
+		return {
+			text: TYPE_ROLES.flatMap((r) => read("text", r)),
+			spacing: [
+				...SPACING_ROLES.flatMap((r) => read("spacing", r)),
+				...sizes(INSET_SIZES),
+			],
+			controls: sizes(CONTROL_SIZES),
+			rows: sizes(ROW_SIZES),
+			radius: RADIUS_ROLES.filter((r) => r !== "full").flatMap((r) =>
+				read("radius", r),
+			),
+		};
+	} finally {
+		probe.remove();
+	}
 }
 
-export function readTokens(root: Element = document.documentElement): Tokens {
-	const style = getComputedStyle(root);
-	const sizes = (names: readonly string[]) =>
-		SIZES.filter((s) => names.includes(s)).flatMap((s) =>
-			token(style, "spacing", s),
+// The properties that tell one token scope from another: a box that holds its
+// own values (the room's `Place` draws every length from its own unit) differs
+// from the root in these.
+const SENTINELS = [
+	`--spacing-${SIZES[0]}`,
+	`--spacing-${SPACING_ROLES[0]}`,
+	`--text-${TYPE_ROLES[0]}`,
+];
+
+// The contract's values for the elements of one scope, read once.
+class Scopes {
+	private known = new Map<string, Tokens>();
+
+	of(
+		element: Element,
+		style: CSSStyleDeclaration,
+	): { key: string; tokens: Tokens } {
+		const key = SENTINELS.map((p) => style.getPropertyValue(p).trim()).join(
+			"|",
 		);
-	return {
-		text: TYPE_ROLES.flatMap((r) => token(style, "text", r)),
-		spacing: [
-			...SPACING_ROLES.flatMap((r) => token(style, "spacing", r)),
-			...sizes(INSET_SIZES),
-		],
-		controls: sizes(CONTROL_SIZES),
-		rows: sizes(ROW_SIZES),
-		radius: RADIUS_ROLES.filter((r) => r !== "full").flatMap((r) =>
-			token(style, "radius", r),
-		),
-	};
+		let tokens = this.known.get(key);
+		if (!tokens) {
+			tokens = resolveTokens(element);
+			this.known.set(key, tokens);
+		}
+		return { key, tokens };
+	}
 }
 
 // ── what is drawn ───────────────────────────────────────────────────
@@ -142,6 +182,13 @@ function drawn(roots: Element[]): Seen[] {
 		if (style.display === "none") return;
 		if (style.display !== "contents") {
 			const rect = element.getBoundingClientRect();
+			// A pixel-wide box that clips holds nothing to see: the visually
+			// hidden text pattern.
+			if (
+				(style.overflowX === "hidden" || style.overflowX === "clip") &&
+				(rect.width <= 1 || rect.height <= 1)
+			)
+				return;
 			if (style.visibility === "visible" && rect.width > 1 && rect.height > 1)
 				seen.push({ element, style, rect });
 		}
@@ -206,6 +253,17 @@ function texts(seen: Seen[]): Array<{ node: Text; seen: Seen }> {
 	return out;
 }
 
+// Elements whose scroll size says nothing of a layout error: a field's own
+// text, an image.
+const REPLACED = new Set([
+	"INPUT",
+	"TEXTAREA",
+	"SELECT",
+	"IMG",
+	"VIDEO",
+	"CANVAS",
+]);
+
 const INPUT_TYPES = new Set([
 	"text",
 	"email",
@@ -218,7 +276,17 @@ const INPUT_TYPES = new Set([
 
 // A control by its element or role: what a person presses, types in or picks
 // from, never an inline link or a field that grows with its text.
-function controlKind(element: Element): string | null {
+function controlKind(
+	element: Element,
+	style: CSSStyleDeclaration,
+): string | null {
+	// A hit overlay stretched over its row or field takes the box's height.
+	if (
+		style.position === "absolute" &&
+		style.top === "0px" &&
+		style.bottom === "0px"
+	)
+		return null;
 	const role = element.getAttribute("role");
 	if (role === "button" || role === "switch" || role === "checkbox")
 		return role;
@@ -235,6 +303,7 @@ function controlKind(element: Element): string | null {
 	return null;
 }
 
+// A row by role: a prose list's item is text, not a row.
 const ROW_ROLES = new Set([
 	"row",
 	"option",
@@ -248,9 +317,7 @@ const ROW_ROLES = new Set([
 function rowKind(element: Element): string | null {
 	const role = element.getAttribute("role");
 	if (role) return ROW_ROLES.has(role) ? role : null;
-	if (element.tagName === "LI") return "listitem";
-	if (element.tagName === "TR") return "row";
-	return null;
+	return element.tagName === "TR" ? "row" : null;
 }
 
 // A region landmark: an explicit region or a section with a name, whose name
@@ -344,18 +411,37 @@ export interface WalkOptions {
 	fonts?: boolean;
 }
 
+// What the elements of one token scope measured.
+interface Group {
+	tokens: Tokens;
+	controls: HeightMeasure[];
+	rows: HeightMeasure[];
+	spacing: SpacingMeasure[];
+	radii: RadiusMeasure[];
+}
+
 // Every finding on the page, or under `roots`.
 export function findings(options: WalkOptions = {}): Finding[] {
 	const roots = options.roots ?? [document.body];
 	const scoped = options.roots !== undefined;
-	const tokens = readTokens();
 	const seen = drawn(roots);
+	const scopes = new Scopes();
+	const groups = new Map<string, Group>();
+	const groupOf = (element: Element, style: CSSStyleDeclaration): Group => {
+		const { key, tokens } = scopes.of(element, style);
+		let group = groups.get(key);
+		if (!group) {
+			group = { tokens, controls: [], rows: [], spacing: [], radii: [] };
+			groups.set(key, group);
+		}
+		return group;
+	};
 
 	const type: TextMeasure[] = [];
 	const numbers: NumberMeasure[] = [];
 	for (const { node, seen: s } of texts(seen)) {
-		const at = locate(s.element);
 		if (excepted("type-size", s.element)) continue;
+		const at = locate(s.element);
 		type.push({ ...at, size: px(s.style.fontSize) });
 		numbers.push({
 			...at,
@@ -364,40 +450,36 @@ export function findings(options: WalkOptions = {}): Finding[] {
 		});
 	}
 
-	const controls: HeightMeasure[] = [];
-	const rows: HeightMeasure[] = [];
-	const spacing: SpacingMeasure[] = [];
-	const radii: RadiusMeasure[] = [];
 	const clips: ClipMeasure[] = [];
 	const regions: RegionMeasure[] = [];
 
 	for (const { element, style, rect } of seen) {
 		const at = () => locate(element);
-		const control = controlKind(element);
+		const group = groupOf(element, style);
+		const control = controlKind(element, style);
 		if (control && !excepted("control-height", element))
-			controls.push({ ...at(), kind: control, height: rect.height });
+			group.controls.push({ ...at(), kind: control, height: rect.height });
 		const row = rowKind(element);
 		if (row && !excepted("row-height", element))
-			rows.push({ ...at(), kind: row, height: rect.height });
+			group.rows.push({ ...at(), kind: row, height: rect.height });
 
 		if (/(flex|grid)/.test(style.display)) {
 			const inFlow = [...element.children].filter((child) => {
 				const position = getComputedStyle(child).position;
 				return position !== "absolute" && position !== "fixed";
 			}).length;
-			const measure: SpacingMeasure = {
-				...at(),
-				rowGap: inFlow > 1 ? px(style.rowGap) : 0,
-				columnGap: inFlow > 1 ? px(style.columnGap) : 0,
-				padding: [
-					px(style.paddingTop),
-					px(style.paddingRight),
-					px(style.paddingBottom),
-					px(style.paddingLeft),
-				],
-			};
 			if (!excepted("gap", element) && !excepted("inset", element))
-				spacing.push(measure);
+				group.spacing.push({
+					...at(),
+					rowGap: inFlow > 1 ? px(style.rowGap) : 0,
+					columnGap: inFlow > 1 ? px(style.columnGap) : 0,
+					padding: [
+						px(style.paddingTop),
+						px(style.paddingRight),
+						px(style.paddingBottom),
+						px(style.paddingLeft),
+					],
+				});
 		}
 
 		const radius = corners(style, rect);
@@ -408,39 +490,14 @@ export function findings(options: WalkOptions = {}): Finding[] {
 				width: rect.width,
 				height: rect.height,
 			};
-			const clipsBox = style.overflowX !== "visible";
-			if (painted(style) || clipsBox) {
-				for (
-					let up = element.parentElement;
-					up && up !== document.body;
-					up = up.parentElement
-				) {
-					const outerStyle = getComputedStyle(up);
-					const outerBox = up.getBoundingClientRect();
-					const outerRadius = corners(outerStyle, outerBox);
-					if (!outerRadius.some((r) => r > 0) || !painted(outerStyle)) continue;
-					const left = rect.left - outerBox.left;
-					const top = rect.top - outerBox.top;
-					const right = outerBox.right - rect.right;
-					const bottom = outerBox.bottom - rect.bottom;
-					measure.outer = {
-						path: locate(up, false).path,
-						radii: outerRadius,
-						insets: [
-							Math.min(left, top),
-							Math.min(right, top),
-							Math.min(right, bottom),
-							Math.min(left, bottom),
-						],
-					};
-					break;
-				}
-			}
-			radii.push(measure);
+			if (painted(style) || style.overflowX !== "visible")
+				measure.outer = outerOf(element, rect);
+			group.radii.push(measure);
 		}
 
 		if (
 			(style.overflowX === "hidden" || style.overflowX === "clip") &&
+			!REPLACED.has(element.tagName) &&
 			!excepted("clip", element)
 		) {
 			clips.push({
@@ -467,14 +524,50 @@ export function findings(options: WalkOptions = {}): Finding[] {
 
 	return [
 		...checkType(type).filter((f) => !scoped || f.rule !== "type-sizes"),
-		...checkHeights(controls, rows, tokens),
-		...checkSpacing(spacing, tokens),
-		...checkRadii(radii, tokens),
+		...[...groups.values()].flatMap((g) => [
+			...checkHeights(g.controls, g.rows, g.tokens),
+			...checkSpacing(g.spacing, g.tokens),
+			...checkRadii(g.radii, g.tokens),
+		]),
 		...checkClip(clips),
 		...checkDigits(numbers),
 		...checkRegions(regions),
 		...(scoped || options.fonts === false ? [] : checkFonts(fonts())),
 	];
+}
+
+// The nearest ancestor that paints a rounded box, and how far `element`
+// stands inside it at each corner.
+function outerOf(
+	element: Element,
+	rect: DOMRect,
+): RadiusMeasure["outer"] | undefined {
+	for (
+		let up = element.parentElement;
+		up && up !== document.body;
+		up = up.parentElement
+	) {
+		const style = getComputedStyle(up);
+		const box = up.getBoundingClientRect();
+		const radii = corners(style, box);
+		if (!radii.some((r) => r > 0) || !painted(style)) continue;
+		const left = rect.left - box.left;
+		const top = rect.top - box.top;
+		const right = box.right - rect.right;
+		const bottom = box.bottom - rect.bottom;
+		return {
+			path: locate(up, false).path,
+			half: Math.min(box.width, box.height) / 2,
+			radii,
+			insets: [
+				Math.min(left, top),
+				Math.min(right, top),
+				Math.min(right, bottom),
+				Math.min(left, bottom),
+			],
+		};
+	}
+	return undefined;
 }
 
 // The findings as report lines; empty when the page keeps every rule.

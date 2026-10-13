@@ -60,10 +60,12 @@ test("a control or a row of a height no token names is found, a token's within h
 	const found = checkHeights([{ ...ok, height: 30 }], [], tokens);
 	assert.deepEqual(rules(found), ["control-height"]);
 	assert.match(found[0]?.fix ?? "", /nearest: control, 32px/);
-	assert.deepEqual(
-		rules(checkHeights([], [{ ...ok, kind: "row", height: 40 }], tokens)),
-		["row-height"],
-	);
+	// A row is a floor its content grows past.
+	const row = { ...ok, kind: "row" };
+	assert.deepEqual(checkHeights([], [{ ...row, height: 40 }], tokens), []);
+	assert.deepEqual(rules(checkHeights([], [{ ...row, height: 24 }], tokens)), [
+		"row-height",
+	]);
 });
 
 test("a gap or an inset that is neither 0 nor a spacing token is found", () => {
@@ -80,18 +82,33 @@ test("a gap or an inset that is neither 0 nor a spacing token is found", () => {
 	);
 	assert.deepEqual(rules(found), ["gap", "inset"]);
 	assert.match(found[1]?.measured ?? "", /padding-right 10px/);
+	// Equal gaps and equal sides are one finding each.
+	assert.deepEqual(
+		rules(
+			checkSpacing(
+				[{ ...box, rowGap: 5, columnGap: 5, padding: [3, 3, 3, 3] }],
+				tokens,
+			),
+		),
+		["gap", "inset"],
+	);
 });
 
 test("a radius off the roles is found, a pill and a concentric corner are not", () => {
 	const box = { ...at, width: 100, height: 40 };
 	const same = (r: number): [number, number, number, number] => [r, r, r, r];
 	assert.deepEqual(checkRadii([{ ...box, radii: same(6) }], tokens), []);
-	assert.deepEqual(rules(checkRadii([{ ...box, radii: same(5) }], tokens)), [
-		"radius",
-		"radius",
-		"radius",
-		"radius",
-	]);
+	// Four corners at one radius are one finding.
+	const off = checkRadii([{ ...box, radii: same(5) }], tokens);
+	assert.deepEqual(rules(off), ["radius"]);
+	assert.match(
+		off[0]?.measured ?? "",
+		/^top-left\/top-right\/bottom-right\/bottom-left radius 5px/,
+	);
+	assert.deepEqual(
+		rules(checkRadii([{ ...box, radii: [6, 5, 6, 3] }], tokens)),
+		["radius", "radius"],
+	);
 	// A pill: at least half the shorter side.
 	assert.deepEqual(checkRadii([{ ...box, radii: same(20) }], tokens), []);
 	assert.deepEqual(checkRadii([{ ...box, radii: same(9999) }], tokens), []);
@@ -102,7 +119,12 @@ test("a radius off the roles is found, a pill and a concentric corner are not", 
 				{
 					...box,
 					radii: same(radius),
-					outer: { path: "div.card", radii: same(8), insets: same(inset) },
+					outer: {
+						path: "div.card",
+						half: 100,
+						radii: same(8),
+						insets: same(inset),
+					},
 				},
 			],
 			tokens,
@@ -111,6 +133,25 @@ test("a radius off the roles is found, a pill and a concentric corner are not", 
 	assert.deepEqual(rules(inside(6, 4)).slice(0, 1), ["nested-radius"]);
 	// Standing a whole radius in or more, nothing is concentric to hold.
 	assert.deepEqual(inside(6, 8), []);
+	// A knob in a pill track: both radii draw as half their side.
+	const knob = checkRadii(
+		[
+			{
+				...at,
+				width: 14,
+				height: 14,
+				radii: same(9999),
+				outer: {
+					path: "span.track",
+					half: 9,
+					radii: same(9999),
+					insets: same(2),
+				},
+			},
+		],
+		tokens,
+	);
+	assert.deepEqual(knob, []);
 });
 
 test("a clipping box with more inside than it shows is found unless it ends in an ellipsis or a clamp", () => {
