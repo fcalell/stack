@@ -196,10 +196,21 @@ guides. Stead's stack pin moves after each pass and its screens are ported in th
    Sections drawn before their data, `useLiveReads` narrowed (the usage pause landed with pass
    1). A record's Pane carries the kind's word as its title while it loads; a waiting title
    belongs here.
-   Open, designed before the pass: a terminal-like word scramble for text that loads, held to a
+   Open, deferred 2026-10-13: a terminal-like word scramble for text that loads, held to a
    fixed character count in a monospaced face so the line keeps its width, with a still form
    under reduced motion; `judging.md` lets only `transform` and `opacity` animate, so it needs a
    named exception.
+   Decided 2026-10-13: a page's outline comes from its route, its data fills it. A Section
+   stands whatever its data holds, drawing its `empty` when there is none; a Section per member
+   iterates the domain the app knows (the usage windows, the leads), not the response; a waiting
+   page is the loaded tree with `loading`, never a second tree; a Section that must stay optional
+   stands after every Section that always stands, so its arrival moves nothing. Stead's checks
+   hold it: no Section gated on its data's length, no `QueryBoundary` with a hand-built
+   `loading` tree, and a fixture run that slows the reads and fails when a Section's top moves
+   from its waiting to its loaded form. A record's Pane takes the name the opening row or card
+   already shows, else the kind's word. ListRow's waiting bars take stable widths per list in
+   place of the fixed table. A live frame refetches only the queries on screen, and the leads
+   and workflows lists read narrower. The scramble is deferred (open below).
 
 Carried from pass 1 to the pass that owns it:
 
