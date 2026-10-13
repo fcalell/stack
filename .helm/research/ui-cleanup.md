@@ -267,6 +267,27 @@ ui-core's tokens, never from a second policy file:
 - **False-pass tests.** Each check, grep or render, has a test showing it catches a bad case
   (`display: contents`, a hidden element, zero height), so none passes by never matching.
 
+Decided 2026-10-13 (the cut): the greps land as verify checks on web and native, each with its
+question in `structure.md`: no `Children`, `cloneElement`, `isValidElement` or `.type ===` on a
+React child; no literal length inside an arbitrary class value (a `calc()` over token variables
+and a selector variant stay); measuring (`ResizeObserver`, `getBoundingClientRect`, `offset*`,
+`onLayout`) only in a closed list of files, each with its reason; every `createContext` in a
+closed list tagged data, behaviour or portal, so a new context fails until classified and no
+class changes a child's form (in place of the grep that missed `field-wait`); `dataset` only in a
+closed list (Table's cell coordinates, `modality`, the density pin); no destructured `type` prop;
+no Section in a Section on native too. A component root's margin is a render check in the
+roster stress harness, since a grep cannot tell the root. `stack screens test` takes
+`--width <list>` (of 320, 1280, 1920) and `--mode <light|dark>`; with neither it runs the three
+widths in both modes. The agent narrows by its diff, as the screens guide tabulates (no colour,
+token or theme change: one mode; a change behind one width variant: that width; ui-core's
+tokens, `globals.css` or a frame: the full run), and the narrowed run is the gate. The render walk
+compares heights, gaps, insets and radii against the values the contract emits at the density,
+never the rubric's prose ranges; it also checks type at 12 px or more and six sizes or fewer a
+screen, nested radii, a clip with no ellipsis or clamp, fonts loaded before first paint, tabular
+digits on a bare number, and no region inside a region of its name (the Pane and Section clash).
+Findings the new checks raise on the showcase and the roster are fixed in this step or kept as a
+named exception with its reason, never a baseline.
+
 ## The frame
 
 The first family's design, decided before the review and open to what it finds.
