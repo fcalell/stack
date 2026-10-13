@@ -1,6 +1,9 @@
 import { ActionBar } from "@fcalell/plugin-react-ui/components/action-bar";
+import { Pane } from "@fcalell/plugin-react-ui/components/pane";
+import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Prose } from "@fcalell/plugin-react-ui/components/prose";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
+import { findings, settled } from "@fcalell/plugin-screens/walk";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect } from "storybook/test";
 
@@ -42,5 +45,31 @@ export const BodyPartsStandApart: StoryObj = {
 				.rowGap,
 		);
 		await expect(root).toBe(step(canvasElement, "pb-pair"));
+	},
+};
+
+// A Section is a heading over its body and no landmark: the Pane is the one
+// region of its name, and the render walk finds no region inside a region of
+// that name.
+export const ASectionTitledAsItsPaneIsNoSecondRegion: StoryObj = {
+	render: () => (
+		<Place>
+			<Pane title="Architecture">
+				<Section title="Architecture">
+					<Prose markdown="The tree." />
+				</Section>
+			</Pane>
+		</Place>
+	),
+	play: async ({ canvas, canvasElement }) => {
+		await expect(
+			canvas.getAllByRole("region", { name: "Architecture" }),
+		).toHaveLength(1);
+		await expect(
+			canvas.getAllByRole("heading", { name: "Architecture" }),
+		).toHaveLength(2);
+		await settled();
+		const found = findings({ roots: [canvasElement] }).map((one) => one.rule);
+		await expect(found).not.toContain("region-name");
 	},
 };

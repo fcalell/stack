@@ -63,7 +63,7 @@ function partText(part: Part): string {
 	return typeof part === "string" ? part : `“${part.quoted}”`;
 }
 
-/** A titled region of a page over its rows. */
+/** A titled stretch of a page over its rows. */
 export interface SectionProps extends Closed {
 	/** The heading (a short phrase; truncates). */
 	title: Part;
@@ -87,7 +87,7 @@ export interface SectionProps extends Closed {
 	children?: ReactNode;
 }
 
-/** A heading with its count, description, act and more act over its body; the title folds the body when `folded` is set, at the heading size folded or not. A blocked act's reason draws under the head row, which never moves. No Section stands in a Section: the body's parts are rows, groups, fields and prose. */
+/** A heading with its count, description, act and more act over its body; the title folds the body when `folded` is set, at the heading size folded or not. A blocked act's reason draws under the head row, which never moves. No Section stands in a Section: the body's parts are rows, groups, fields and prose. It is a `section` with no name, so no landmark of its own (a `section` is a region only when named): the `Pane` is the page's named region, and a Section titled as its Pane is not a second region of that name. */
 export function Section({
 	title,
 	count,
@@ -109,7 +109,6 @@ export function Section({
 	const settle = useSettleName();
 	const level = use(HeadingContext);
 	const Heading = `h${level}` as const;
-	const titleId = useId();
 	const bodyId = useId();
 	const { touched } = useTouched();
 	const words = useWords();
@@ -147,7 +146,7 @@ export function Section({
 		) : null;
 	const name = (
 		<>
-			<span id={titleId} className={cn(text({ role: "heading" }), TITLE)}>
+			<span className={cn(text({ role: "heading" }), TITLE)}>
 				{partText(title)}
 			</span>
 			{tally}
@@ -166,7 +165,6 @@ export function Section({
 				setOpen(next);
 				onToggle?.(next);
 			}}
-			aria-labelledby={titleId}
 			aria-busy={busy || undefined}
 			style={settle}
 			className={cn(SECTION, BOX)}
