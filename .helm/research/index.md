@@ -17,8 +17,8 @@ Working evidence: dated, drains, or gets promoted into `.helm/knowledge/`. Nothi
   phone animation; stories 003-330 and 003-332.
 - [states.md](./states.md): how any component reads, waits, fails, goes missing, stays empty,
   refreshes, streams or acts, and how its state is subscribed (the read handle, frames that own
-  reads, the painted loaded form, the wait store, acts as promises); deleting QueryBoundary or a
-  `loading` prop; the build's six phases.
+  reads, the painted loaded form, the read's store, acts as promises), or virtualizing a long
+  collection; deleting QueryBoundary or a `loading` prop; the build's six phases.
 - [skeleton-loading.md](./skeleton-loading.md): drawing a component's loading form in skeleton
   (where its shape comes from before the data), changing `List`, `QueryBoundary` or a data
   molecule's loading state, or epic 004.

@@ -1,6 +1,6 @@
 # Motion: the design
 
-Status: draft for the owner, 2026-10-14; give, the pulse and no haptics decided the same day, the loader (§4.2) decided after the loader demo. The rules it builds on landed in `cbe5562` (story
+Status: draft for the owner, 2026-10-14; give, the pulse and no haptics decided the same day, the loader (§4.2) decided after the loader demo and revised after an adversarial review (§7). The rules it builds on landed in `cbe5562` (story
 003-329): each motion explains a change, and a size or place never animates through layout. This
 page defines, for every component of the roster, how it animates, how it answers input, how it
 waits and how it arrives (loaded, empty or failed). It is built on a fact inventory of the code as
@@ -48,7 +48,8 @@ of this design (§4):
    viewer's own act or a settle. A change that arrives on its own while the viewer works (a new
    message, a row pushed by the server, a toast) enters by its own fade and pushes its neighbours
    at once: a web view transition freezes the page's drawing for its length, which must never land
-   under someone typing.
+   under someone typing. A settle is no exception: while an editable has focus, its arrivals cross-
+   fade in place with no view transition.
 6. **Errors say, never shake.** A failure changes colour, gains its sentence and keeps still.
 7. **Reduced motion snaps every transition.** Two loops keep a still form that still reads as
    live (§4); a gesture still follows the finger.
@@ -174,9 +175,11 @@ showcase before they land. Its look gains motion:
 The switch from a waiting form to its loaded, empty, missing or failed form is one move for all
 four: each moving region goes from its old place to its new by a transform on `base` `in-out`, the
 waiting form fades out on `fast` `in` and the arrived form fades in on `base` `out` (the root's
-crossfade, now on the rungs). A scramble decodes as it arrives (§4.2). A failed form arrives
-exactly as a loaded one: no shake, no flash. A retry from a failed form shows the act's pending
-form, then arrives through the settle.
+crossfade, now on the rungs). A scrambled figure or id decodes as it arrives (§4.2). A failed form
+arrives exactly as a loaded one: no shake, no flash. A retry from a failed form keeps the failed
+form with Retry pending, then arrives through the settle; a refetch the viewer did not ask for
+leaves the failed form still, under a busy mark (`states.md` §5). While an editable has focus the
+settle runs no view transition (§1.5).
 
 ### navigate: the page changes
 
@@ -225,14 +228,15 @@ None (decided 2026-10-14): the phone answers by sight alone, as the web does.
 
 ### 4.1 One waiting path
 
-Decided in `states.md` (§3 to §5): a read's frame owns its states, one wait store per read key
-runs the delay, the minimum, the veil and the settle for every leaf of that read, and every frame
-of a read is named for the settle.
+Decided in `states.md` (§3 to §5): the frame holding a read's root draws its states, one store
+per read key holds its value and runs the delay, the minimum, the veil and the settle for every
+leaf of that read (the value stays the placeholder until the settle, so all of them flip in one
+frame), and every frame of a read is named for the settle.
 
 ### 4.2 The loader: the loaded slot, painted by its kind
 
 The waiting form's geometry is the loaded form's (`states.md` §4): each waiting slot is the
-loaded slot drawn from a placeholder (the cache seed, the previous data, or the output's shape),
+loaded slot drawn from the placeholder (the output's shape),
 its text's own line boxes for a title, the shape's own size for an avatar, a check, a field, a
 chart. That geometry is what the shift review holds (no Section heading moves between a waiting
 and a loaded form). The loader is only how that box is painted, so either paint keeps every
@@ -260,7 +264,9 @@ An app that is not technical never writes it. A technical voice scrambles figure
 (Stead).
 
 **The pulse.** The slot's box is the skeleton's fill (the placeholder's glyphs transparent over
-it), breathing in one phase across the page (§3, wait). Under reduced motion it is still.
+it), breathing in one phase across the page (§3, wait). On the phone a text slot's fill is a
+nested `Text` with transparent ink over a background colour, one fill per line fragment. Under
+reduced motion it is still; an idle or paused read's slots are still too (`states.md` §5).
 
 **The scramble, shaped.** The box holds the placeholder's characters, each cycling within its
 own class: a letter through letters of its case, a digit through digits, an id's alphanumerics
@@ -273,13 +279,21 @@ clipped, so nothing around it moves. One page-wide ticker writes every scramble'
 directly (no render per tick on the web; Reanimated's animated text on the phone), so twenty
 slots cost one timer. Under reduced motion it is a still bar.
 
-**The decode.** On arrival the loaded text is laid out at once (its own width, its own face) and
-its characters lock in turn, left to right, across `slow`: the loaded text revealed up to the
-edge of the last locked character (measured, so a proportional face locks at its real edges), a
-scramble shaped like the loaded text continuing beyond it, clipped by the same edge. Layout is the
-loaded one from the first frame and the decode is paint alone, so nothing after the slot in its
-line moves while it plays. A slot that never showed waiting (a read inside the delay, a cached
-read) shows at once; a pulsing slot arrives by the settle's crossfade.
+The scramble always cycles the placeholder, which is generated Latin text, never the loaded
+string, so the script the data is written in never meets it.
+
+**The decode, figures and ids.** On arrival the loaded value is laid out at once and its
+characters lock in turn, from the reading start, across `slow`: the loaded value revealed up to
+the last locked character, a scramble shaped like it continuing beyond, clipped at the same edge.
+Tabular digits and the mono face give every glyph one advance, so the edge is the count of
+locked characters times that advance: nothing is measured, and the phone draws it as the web
+does. Layout is the loaded one from the first frame and the decode is paint alone, so nothing
+after the slot in its line moves while it plays.
+
+**Text arrives by the settle's crossfade,** scrambled or pulsing: a proportional face's edges
+would have to be measured per glyph, which the phone cannot (its text reports lines only), and a
+character-by-character reveal splits joined scripts, right-to-left runs and grapheme clusters.
+A slot that never showed waiting (a read inside the delay, a cached read) shows at once.
 
 **The busy glyph** (a pending act, a running status, a PendingBar with no end) follows the text
 kind: three mono glyphs cycling at `tick` in a box three glyphs wide when text scrambles
@@ -299,25 +313,28 @@ Weighed in the demo (2026-10-14) and left:
   one scramble is one voice, and shaped reads as data where classic reads as noise;
 - the scramble in a mono face everywhere: its glyphs are wider than a sans title's and a tabular
   figure's, so the box clips them mid-glyph;
-- a wipe or a crossfade as the decode: the wipe cuts glyphs in half at its edge, the crossfade
-  loses the decode's sense of the value resolving.
+- a wipe or a crossfade as the decode of a figure or id: the wipe cuts glyphs in half at its
+  edge, the crossfade loses the decode's sense of the value resolving;
+- a decode of text (revised after the adversarial review): it needs per-glyph measures the phone
+  lacks and breaks joined and right-to-left scripts, so text crossfades.
 
 ### 4.3 Each arrival
 
 | From waiting to | Motion |
 | --- | --- |
-| loaded | the settle; scrambles decode |
+| loaded | the settle; scrambled figures and ids decode, text crossfades |
 | empty | the settle; the empty sentence arrives as a loaded body does |
 | missing | the settle |
 | failed | the settle; the act is ready at once |
-| failed, retried, loaded | the act's pending form while the refetch runs, then the settle |
+| failed, retried, loaded | the failed form with Retry pending while the refetch runs, then the settle |
+| failed, refetched on its own | stays failed, a busy mark while it runs |
 
 ## 5. Per component
 
 Each row gives what the component does beyond the move named. In the Wait column "bars" means
 the text and shape slots and "scramble" the figure and id slots: each is painted by its kind's
-paint in `theme.loading` (§4.2), a pulsing bar or the scramble; "decode" is the scramble's
-arrival, the settle's crossfade under the pulse. "answer" covers hover, press,
+paint in `theme.loading` (§4.2), a pulsing bar or the scramble; "decode" is a scrambled figure's
+or id's arrival, the settle's crossfade under the pulse and for all text. "answer" covers hover, press,
 selected, disabled and error looks; a focus ring always snaps; reduced motion always snaps.
 
 ### Atoms
@@ -352,7 +369,7 @@ selected, disabled and error looks; a focus ring always snaps; reduced motion al
 | Gate | its acts | a new step: the old step fades on `fast` `in`, the new rises by `pair` with opacity on `base` `out` (focus moves at once); a Banner is a block | none | settle |
 | Section | the fold row answers, its chevron rotates | fold and unfold are blocks; a blocked act's reason is a line; the count rolls and arrives with the head; the description bar becomes the line by the settle | bars, the count's scramble, the body's forms | settle (named) |
 | Group | none | an item the viewer adds or removes is a block; one that arrives on its own fades in | bars | settle (named) |
-| List | rows answer | rows the viewer adds, removes or reorders move by block (each row its own name, `match-element`); rows that arrive on their own fade in on `base` and push at once; a tree branch's fold is a block with its chevron rotating | bars, four rows | settle (named when standalone) |
+| List | rows answer | rows the viewer adds, removes or reorders move by block (each mounted row its own name, `match-element`; a long list is virtualized, `states.md` §7, so only the rows on screen are named); rows that arrive on their own fade in on `base` and push at once; a tree branch's fold is a block with its chevron rotating | bars, four rows | settle (named when standalone) |
 | Form | none | a group appears or leaves as a block; the pending lock fades the other acts to their inert look on `fast` | each group's bars | settle |
 | Toolbar | the search and acts answer | the chips row appearing or leaving is a block; a chip is Chip's | none | none |
 | ActionBar | acts answer and give | the kept line cross-fades its text on `fast`; an unkept reason is a line; the swap to a PendingBar cross-fades on `base` in its held cell; "N of M chosen" rolls | a bar | settle (named) |
@@ -373,7 +390,6 @@ selected, disabled and error looks; a focus ring always snaps; reduced motion al
 | Menu | items answer | layer | none | none |
 | OptionList | options answer, toggle (radio dot, checkbox) | the chosen option's children are a block (in when chosen, out when left); a reason is a line | bars by option shape | settle (named) |
 | Missing, Failed | the act answers and gives; Retry shows its pending form | none | none | arrives by the settle |
-| QueryBoundary | none | none | the caller's form, pulsing | settle (named) |
 | Toast | layer, swipe on touch and the phone; its acts | the stack closes up | none | none |
 | Banner | its act | enters and leaves as a block when the viewer caused it (a dismiss), fades in otherwise; its kind changing cross-fades fill and ink on `base` | none | none |
 | PendingBar | its act | the fill is a value (linear to its end, as today); entering in an ActionBar's place cross-fades on `base`; spinner to fill cross-fades on `fast`; the time left switches each second | is the wait | none |
@@ -407,7 +423,8 @@ selected, disabled and error looks; a focus ring always snaps; reduced motion al
   like any look; a `motion` field on each roster entry naming its moves, emitted per component in
   DESIGN.md; c39 keeps every cell off layout.
 - **Web.** `lib/settle` becomes `lib/move` (the one coordinator for settles, blocks, toggles and
-  navigation, gathering a frame's moves into one view transition); `view-transition-class` per
+  navigation, gathering a frame's moves into one view transition, and running none while an
+  editable has focus); `view-transition-class` per
   move for its timing in `globals.css`; `Scramble`, `useRoll` and the pulse clock in `lib/`; the
   router's `defaultViewTransition`.
 - **Phone.** `lib/motion` gains `usePress`, `useToggle`, `useRoll`, `Scramble`, one pulse shared
@@ -437,5 +454,11 @@ one phase across the page; no haptics on the phone.
 Decided 2026-10-14 after the loader demo: the paint per slot kind, `theme.loading = { text,
 figure, id }`, each `"pulse"` or `"scramble"`, all `"pulse"` by default, shapes always pulsing;
 one scramble, shaped, in the slot's own face, each place on its own cadence; the decode locks
-character by character across `slow`; the busy glyph follows the text kind; the wait's numbers
+character by character across `slow` (figures and ids only since the review below); the busy glyph follows the text kind; the wait's numbers
 start at 400 and 800 ms and are tuned live on the showcase before they land.
+
+Revised the same day after an adversarial review (`states.md` §15): only figures and ids decode
+character by character, at an edge counted rather than measured; text, scrambled or pulsing,
+arrives by the settle's crossfade. The settle runs no view transition while an editable has
+focus. A retried failure keeps its failed form with Retry pending. The placeholder is the
+output's shape alone.

@@ -1,12 +1,13 @@
 # States: the design
 
-Status: decided with the owner, 2026-10-14; the wait's two numbers are tuned live, nothing is
-built. This page defines how every component of the roster reads, waits, fails, goes missing,
-stays empty, refreshes, streams and acts, on both platforms, and how state is held so that a
-change re-renders only what it changes. It supersedes `motion.md` §4.1 (one waiting path) and the
-shape question of `skeleton-loading.md`; `motion.md` keeps the motion (the loaders' paint, the
-settle, the decode). Once built it drains into `.helm/knowledge/architecture/ui-core.md` and the
-guide (`packages/ui-core/guide/screen.md`, `patterns/loading-and-pending.md`).
+Status: decided with the owner, 2026-10-14, and revised the same day after an adversarial review
+(§15); the wait's numbers are tuned live, nothing is built. This page defines how every component
+of the roster reads, waits, fails, goes missing, stays empty, refreshes, streams and acts, on both
+platforms, and how state is held so that a change re-renders only what it changes. It supersedes
+`motion.md` §4.1 (one waiting path) and the shape question of `skeleton-loading.md`; `motion.md`
+keeps the motion (the loaders' paint, the settle, the decode). Once built it drains into
+`.helm/knowledge/architecture/ui-core.md` and the guide (`packages/ui-core/guide/screen.md`,
+`patterns/loading-and-pending.md`).
 
 ## 0. Where we start
 
@@ -46,6 +47,8 @@ not kept, the findings are):
   boundary.
 - **The phone.** Each settle runs its own `LayoutAnimation`: no frame batching, no guard for one
   already running.
+- **Nothing virtualizes.** List, Table, Comparison and Thread draw every row on the web; the
+  phone's Thread turns a ScrollView upside down (as `VirtualizedList` inverts) without recycling.
 
 The spike (2026-10-14, web, the showcase's deploys list and record; not kept) drew the loaded
 body from TanStack placeholder data with each text slot painted as a bar. The record's Section
@@ -59,16 +62,21 @@ painted as waiting; generated ids collided as keys.
 ## 1. Principles
 
 1. **State lives in the deepest leaf that needs it.** A value is subscribed by the component that
-   draws it, a field's pending by the field, an act's pending by its button.
-2. **Handles go down, values never.** Props and context carry stable handles to reads; data and
-   status reach a component only through its own subscription. A parent's render never cascades
-   on data; a data change never renders a parent.
-3. **Contexts carry identity, never state** (handles, words, theme). Structure rule 11 classes
-   every context and holds it.
-4. **Every subscription is a slice:** one `select`, TanStack's tracked properties, structural
-   sharing.
+   draws it, a field's pending by the field, an act's pending by the host that runs it (a Button,
+   an ActionBar, a Sheet, a field), the deepest component that has to know.
+2. **Handles go down; the one value that goes down is an item to its row.** Props and context
+   carry stable handles to reads; data and status reach a component only through its own
+   subscription, except that a collection hands each row its item (structurally shared, so an
+   unchanged item is the same reference). A data change never renders a parent above the leaf
+   that draws it.
+3. **Contexts carry identity, never state** (handles, words, theme, the Pane's scroller). A
+   context never changes a child's form. Structure rule 11 classes every context and holds it.
+4. **One subscription per read key**, which every leaf of the read slices.
 5. **Data flows down; nothing reports up.**
-6. **The app never sees invented data, and never branches on a state the framework can draw.**
+6. **The app's own code never receives a placeholder.** `useRead` returns real data only. A
+   selector or a `combine` function the app writes does run over the placeholder, so it is pure
+   and total; one that throws paints its slot at the kind's default size (and logs in dev).
+7. **The app never branches on a state the framework can draw.**
 
 ## 2. The read
 
@@ -76,36 +84,49 @@ A read is a TanStack query, or anything with the same interface (a live channel,
 reply), written to the cache. plugin-api's query utils build its handle:
 
 ```ts
-const deploy = orpc.deploys.get.read({ id }); // stable, typed: query options + output shape + entity
+const deploy = orpc.deploys.get.read({ id }); // stable, typed: query options + output shape
 deploy.at((d) => d.commit);                   // a selection: the handle + a selector, typed
+combine(deploy, files, (d, f) => …);          // a selection over several reads
 ```
 
 ui-core knows only the handle's interface, so it stays free of TanStack. It derives one state
-from a read, framework-free and tested without rendering:
+from a read, framework-free and tested without rendering: one phase and the flags beside it.
 
-| State | When |
+| Phase | When |
 | --- | --- |
-| waiting | no real data yet (pending, or showing a placeholder) |
+| idle | not asked for yet (`enabled: false`, `skipToken`, a dependent read's parameter missing) |
+| waiting | asked for, no data yet |
 | ready | real data |
-| busy | ready and refetching |
-| stale | ready and the last refetch failed |
-| failed | no real data and the read failed |
+| failed | no data and the read failed |
 | missing | failed with not found (the handle knows its error type; no duck typing) |
-| empty | ready and the frame's selection is an empty array |
-| partial | ready with more to fetch (`hasNextPage`) or still streaming |
+
+| Flag | When |
+| --- | --- |
+| busy | ready and refetching, or failed and retrying |
+| stale | ready and the last refetch failed |
+| more | an infinite read with a next page (`hasNextPage`) |
+| streaming | a streamed read still writing |
+| paused | the read waits for a connection (`networkMode` paused it) |
+
+**Empty is the frame's, not the read's**: a frame's selection that is an empty array, `null` or
+`undefined` on real data. A procedure answering `null` ("no current X") is ready, and its frame
+draws empty.
 
 A component's data prop takes a **selection** (it comes from a read: the leaf subscribes to it,
 paints it while waiting, re-renders when it changes) or a **plain value** (a constant: drawn as
-given, never painted). The type tells data from constants.
+given, never painted). The type tells data from constants. A prop that chooses a form (a tone, a
+variant, a metered meter) takes a selection where its component draws data, and paints from the
+placeholder's value while waiting.
 
 ## 3. Frames own reads
 
-A read's states are drawn once, by the frame that owns it: `Pane read`, `Section read`,
-`Sheet read`, `Form read`, or a collection standing with no frame for its read. QueryBoundary is
-deleted: each of its jobs has a better home.
+A read's states are drawn once, by the frame that holds it: `Pane read`, `Section read`,
+`Sheet read`, `Form read`, or a collection standing with no frame. QueryBoundary is deleted: each
+of its jobs has a better home.
 
 ```tsx
 const deploy = orpc.deploys.get.read({ id });
+const steps = deploy.at((d) => d.steps);
 
 <Pane read={deploy} title={deploy.at((d) => d.message)} back="/deploys">
   <ItemHeader facts={[deploy.at((d) => d.author), deploy.at((d) => d.age)]} />
@@ -115,34 +136,36 @@ const deploy = orpc.deploys.get.read({ id });
       { key: "region", row: <DefinitionRow label="Region" value="Frankfurt, eu-central-1" /> },
     ]} />
   </Section>
-  <Section title="Steps" read={deploy.at((d) => d.steps)}>
-    <List row={…} />
+  <Section title="Steps" read={steps}>
+    <List items={steps} row={…} />
   </Section>
 </Pane>
 ```
 
-- **A frame takes a read or a selection.** Given an array selection, a Section knows its count
-  (the length), its empty (none) and its waiting (the count withheld); the collection in it takes
-  its items from the frame through the frame's handle (identity, not state). No `count`, no
-  `items`, no length check in app code, and a read cannot be stated twice.
+- **The type says who draws what.** The frame given the read itself (the root) draws its phase
+  and flags: failed, missing, busy, stale, paused. A frame given an array selection draws its
+  count and its empty. A collection takes `items` explicitly, always; a standalone
+  `List items={deploys}` holds a root, so it is its own frame. No claims and no items delivered
+  through context: a context never changes what a child draws (rule 11).
+- **One root holder per read.** A read's root is held by one frame; its selections go to frames
+  and leaves beneath. The store counts its mounted root holders: a failure with none, or a second
+  root holder of one key, is a dev error, caught at run time where selections cross files as
+  props. Busy and stale are drawn once, by the root holder.
+- **One read per frame.** Two reads are two frames, nested, each drawing its own fit; a leaf that
+  needs two at once takes `combine`. A frame never fills with one read's failure while throwing
+  away another's leaves.
 - **The frame draws in its own fit.** A Pane's failure fills the page with Back to its route; a
   Section's fills its body under its heading; a Sheet's its body over its acts. Retry refetches
-  the frame's read.
-- **A Pane with a read** draws its title from a selection (painted while waiting) and withholds
-  its acts until ready.
-- **Several reads.** A frame takes `read={[deploy, files]}`; a leaf that needs two at once takes
-  `combine(deploy, files, (d, f) => …)`.
-- **Claims.** A frame puts its read's key in a stable context. A leaf whose read an enclosing
-  frame claims draws only its value; a collection with no claim for its read is its own frame. A
-  selection no frame claims and that is no collection is a dev error, and verify fails it
-  wherever the source shows it.
+  the frame's read and keeps the failed form with Retry pending (`motion.md` §4.3).
+- **A Pane with a read** draws its title from a selection (painted while waiting) and paints its
+  acts inert while waiting, in their loaded places, so its head never shifts.
 - **Every frame of a read is named for the settle** (today only Section and Group roots are).
 
 ## 4. The waiting form is the loaded form, painted
 
-There is no waiting tree. While its read waits, each leaf draws its loaded form from a placeholder
-and paints its selected slots; constants draw as given. Each component defines only how its
-loaded form paints:
+There is no waiting tree. While its read waits, each leaf draws its loaded form from the
+placeholder and paints its selected slots; constants draw as given. Each component defines only
+how its loaded form paints:
 
 | Slot | Paint |
 | --- | --- |
@@ -152,110 +175,166 @@ loaded form paints:
 | block (meter track, chart plot, code, prose, diff, image, canvas node) | at its own size: a meter's track, a plot's height, code by its lines, an image box at its ratio |
 | control (a field whose value is a selection) | its own box, value painted, inert |
 
-No wrapper element is added: a `display: contents` wrapper breaks a parent's child rules.
+No wrapper element is added: a `display: contents` wrapper breaks a parent's child rules. On the
+phone a text bar is a nested `Text` with transparent ink over a background colour, which paints
+each line fragment natively (no `onTextLayout`; to check on a device).
 
-**The placeholder,** in order:
+**The placeholder is the output's shape**, emitted at `stack generate` from the router's inferred
+TypeScript output types, so a consumer writes nothing (no `.output()` schema, no `.meta`):
 
-1. **The cache seed.** When a list answers, plugin-api writes each item into its record's cache
-   as a seed, by entity and id (the registry invalidation already uses). A record opened from its
-   list waits with its real title and state, and the app writes no seeding.
-2. **The previous data** of the same query (a record switched to another).
-3. **The output's shape**, emitted by plugin-api's codegen from the zod output schema: a string's
-   typical length (`max`, format, or `.meta({ wait })`), an enum's neutral member (`.meta({ wait
-   })`, else the first), an array's typical count, ids unique per item.
+- a string by its role's default length (a title, a name, an id, a sentence), never a schema's
+  `max`; an enum by its first member; a discriminated union by its first variant; an optional
+  present; a recursive type cut at one level;
+- an array's count by its collection's default, never more than a viewport holds;
+- ids unique per item (`waiting-0`, …); dates one fixed epoch, so screens and stories are
+  deterministic.
 
-It is computed once per read key, kept in the wait store, and added to the library's own
-subscriptions only (TanStack's `placeholderData` is per observer). An app's `useRead` returns
-`undefined` while waiting, so an app branch (`state === "failed" ? <Banner/> : null`) renders only
-on real data.
+It is computed once per read key and held in the store, never written into the cache. There is no
+cache seed and no previous data: a record whose title should be there before its read lands gets
+it from preload (§11), not from an invented write.
 
-## 5. One clock
+**Waiting forms are inert.** On the web the painted region is `inert`; on the phone it is not
+pressable and hidden from assistive technology (`importantForAccessibility="no-hide-descendants"`).
+No `href` is built from placeholder data, and an accessible name (a Pane title that a log or a
+Columns region is labelled by) comes from real data only.
 
-The wait is one store per read key in ui-core (framework-free): `delay → drawn → hold → gone`,
-with the veil during the delay and the settle at the end. Every leaf and frame of a read reads its
-phase through `useSyncExternalStore` with a selector, so all of them flip in one store write, in
-one frame, on both platforms (the phone gains the batching and the running guard the web's settle
-already has). `aria-busy` and the live region are the frame's. A refetch after a failure runs the
-clock like a first read. The two numbers (`WAIT_DELAY`, `WAIT_MIN`) start at 400 and 800 ms
-(from 200 and 500) and are tuned live in the
-showcase with sliders for the delay, the minimum and a simulated read time.
+## 5. One store per read key
+
+The read's store in ui-core (framework-free, the TanStack binding in plugin-api) owns one
+`QueryObserver` per key and exposes `{ phase, flags, value }`:
+
+- **The value is the placeholder until the waiting form is gone.** Data that lands inside the
+  delay shows at once; data that lands inside the hold is kept until the hold ends, so every leaf,
+  frame and `useRead` of the read flips in one store write, in one settle frame.
+- **A leaf reads** `useSyncExternalStore(store.subscribe, () => select(store.value))` with a
+  memoized selector; `useRead(selection)` reads the same store and returns `undefined` until the
+  phase is ready.
+- **`combine` is a derived store,** memoized per its stores and function, so a derivation runs
+  once per write, not once per subscriber.
+- **The clock:** `delay → drawn → hold → gone`, with the veil on painted slots during the delay
+  (constants draw at once) and the settle at the end. The phone gains the batching and the
+  running guard the web's settle already has.
+- **idle** paints still and is not busy; **paused** paints still and the root holder shows one
+  line ("Waiting for a connection").
+- `aria-busy` is the root holder's. There is no live region: nothing is built for a screen reader
+  alone (`philosophy.md`).
+- **A failed read stays failed while it refetches.** Retry keeps the failed form with Retry
+  pending; an automatic refetch (focus, reconnect) is a busy mark, never a flip back to waiting.
+- The two numbers (`WAIT_DELAY`, `WAIT_MIN`) start at 400 and 800 ms (from 200 and 500) and are
+  tuned live in the showcase with sliders for the delay, the minimum and a simulated read time.
 
 ## 6. Subscriptions and renders
 
 | Who | Subscribes to | Renders when |
 | --- | --- | --- |
-| a frame | its read's state only (no data) | the state changes |
-| a frame's busy mark | `fetchStatus` alone | a refetch starts or ends |
-| a leaf with a selection | its slice, with the placeholder | its slice changes |
-| the wait store | one phase per read key | the phase changes |
+| a frame | its read's phase (and its selection's length, if it holds one) | either changes |
+| the root holder's busy mark | the busy flag | a refetch starts or ends |
+| a leaf with a selection | its slice of the store's value | its slice changes |
+| a row | nothing: its item comes from its collection | its item's reference changes |
 | the app (`useRead(selection)`) | its slice, real data only | its slice changes once real |
-| an act or a control | its own promise | its own pending or failure |
+| an act's host or a control | its own promise | its own pending or failure |
 
 - **Collections.** A List subscribes to its items. Structural sharing keeps every unchanged
-  item's reference and the React Compiler (on through `plugin-react`) memoizes each row by its
-  item, so only changed rows render; the build confirms the compiler covers the ui packages,
-  which ship as source, else rows get an explicit `memo`. A live collection (a feed, a running
-  job's steps) subscribes the List to keys and each row to its item.
+  item's reference and each row is memoized by its item, so only changed rows render. The React
+  Compiler does the memoizing: plugin-react's generated Vite config and plugin-expo's Babel config
+  include `@fcalell/*` from `node_modules` (plugin-react's default skips it, so a consumer like
+  Stead compiles none of the roster today), and the render-count stories run in a consumer as
+  well as the showcase. Until both hold, rows keep their explicit `memo`.
 - **Streams and live channels** are queries written with `setQueryData` (or `streamedQuery`). The
-  Thread subscribes to turn keys and each turn to its content, so a token renders the last turn.
-  Stead's `Live<T>` and the hand-built Thread queries go away.
+  turn being written has its own key; the thread's key changes only when a turn completes, so a
+  token renders the streaming turn and nothing scans the thread. A live channel's connection is a
+  read of its own (connected, reconnecting, lost), whose root holder draws the line. Stead's
+  `Live<T>` and the hand-built Thread queries go away.
 
 | Event | Renders |
 | --- | --- |
-| first answer | each leaf whose slice differs from the placeholder and each frame's state, in one settle frame |
+| first answer | each leaf whose slice differs from the placeholder and each frame's phase, in one settle frame |
 | refetch, same data | the busy mark, on and off |
 | refetch, one field changed | the leaves selecting it; the rows whose item changed |
-| refetch fails with data | the frame (its stale line); leaves keep their data |
+| refetch fails with data | the root holder (its stale line); leaves keep their data |
 | stream token | the streaming turn |
-| act pressed | that act |
+| act pressed | that act's host |
 | control saved | that control; then the leaves selecting what the write invalidates |
 
-## 7. States beyond the first read
+## 7. Long collections
 
-- **busy**: the frame's quiet mark after the delay (the Section heading's busy glyph, the Pane
-  bar's); the data stays.
+A collection past a fixed count virtualizes on both platforms, with no prop: List, Table,
+Comparison and Thread mount only the rows on screen and a margin around them.
+
+- **Web:** a virtualizer on the Pane's scroller, reached through context (identity). Find in page
+  does not reach unmounted rows: the accepted cost.
+- **Phone:** a recycling list. One cannot sit inside the Pane's ScrollView, so a Pane whose body
+  holds a long collection scrolls by that list, the rest of its body as the list's header and
+  footer.
+- **Waiting rows** are as many as fill the viewport (the placeholder's count, §4).
+- **The settle and moves name only mounted rows**, so a view transition's snapshot stays bounded
+  (`motion.md` §5, List).
+- **Thread** keeps its reading position when history loads above (the virtualizer's anchor on the
+  web, `maintainVisibleContentPosition` on the phone) and follows the end as it does today.
+
+Open: the libraries (TanStack Virtual on the web; FlashList or LegendList on the phone) and the
+count, settled by a spike on both platforms before phase 3.
+
+## 8. States beyond the first read
+
+- **busy**: the root holder's quiet mark after the delay (the Section heading's busy glyph, the
+  Pane bar's); the data stays.
 - **stale**: the data stays under one line, "Couldn't refresh · Retry".
-- **partial, more**: an infinite read gives its collection a more row; the next page waits as
-  painted rows after the loaded ones.
-- **partial, streaming**: the Thread's streaming slot is driven by the data; a stream that fails
-  marks its own turn, never the thread.
+- **more**: an infinite read gives its collection a more row; the next page waits as painted rows
+  after the loaded ones and does not run the frame's clock. An empty first page with more is not
+  empty: the frame waits for the next page.
+- **streaming**: the Thread's streaming turn is driven by its own key; a stream that fails is
+  data on its turn (the turn's failed line), never the thread's state.
 - **permissions**: the org's rules are a read like any other; an act gated on rules still loading
-  paints as waiting, never as blocked.
+  paints inert as waiting, never as blocked.
 
-## 8. Acts and saves
+## 9. Acts and saves
 
-- **One contract: `onAct` returns a promise.** The act derives its pending (the give at once, the
-  busy glyph only after the delay) and its failure, held in its own state. ActionBar `running`,
-  Sheet `busy`, ConfirmSheet's swallowing and the app's `loading: m.isPending` go.
-- **A control's `onChange`/`onCommit` may return a promise:** the control holds its optimistic
-  value, shows saving, rolls back on reject with its reason inline. The app's revert code goes.
-- **One failure home.** plugin-api's MutationCache `onError` draws a failed toast with Retry
-  (re-running the mutation) unless the act's leaf handled the rejection; Stead's `useAct` and
-  `actFailed` move into stack and away from call sites.
-- **Writes show on the page.** A mutation's declared `writes` mark every frame whose read it
-  invalidates busy until the refetch lands.
+- **One contract: `onAct` returns a promise.** The host that runs it (a Button standing alone, an
+  ActionBar, a Sheet, a field) holds its pending and its failure: inert at the press, sibling
+  acts inert with it and a Sheet's dismissal held while it runs, the busy glyph only after
+  `ACT_DELAY`. `WAIT_MIN` never applies: the act is ready the moment its promise settles.
+  ActionBar `running`, Sheet `busy`, `FormContext.setPending`, ConfirmSheet's swallowing and the
+  app's `loading: m.isPending` go.
+- **A failure is drawn by its host,** in its own slot (ActionBar's line, a Sheet's line over its
+  acts, a field's error). A host with no slot (an IconButton in a row, a Switch standing alone)
+  raises a toast whose Retry runs `onAct` again, the rest of the app's act included (a navigate, a
+  sheet closing). Stead's `useAct` and `actFailed` go; there is no MutationCache failure handler,
+  which runs before the caller's promise rejects and cannot know whether the host drew it.
+- **A control's `onChange`/`onCommit` may return a promise.** The control holds its optimistic
+  value, shows saving and rolls back with its reason inline on reject. The latest change wins:
+  each save carries a sequence number, a settled save older than the latest is ignored, and the
+  optimistic value holds until the selection matches it or the last save settles. A save cancels
+  the in-flight fetches of its read, so an old refetch cannot land over it. The app's revert code
+  goes.
+- **Forms read like frames.** `Form read={deploy}` gives its fields their initial values through
+  selections; a field follows its selection until the viewer edits it and never after, so a
+  refetch never overwrites what is being typed. Each field saves through its own promise.
+- **Writes need no mark of their own:** a mutation's invalidation refetches the reads it touched,
+  and their busy flag already shows.
 - **Names.** `loading` is retired: reads derive their state, acts theirs from the promise, and
   `pending` remains only for work started elsewhere (a deploy running on the server, PendingBar's
   `until`). Inert stays one encoding (`blocked` with a reason, focus kept) across Button,
   IconButton, Picker and SegmentedControl.
-- **Forms read like frames.** `Form read={deploy}` gives its fields their initial values through
-  selections; each field saves through its own promise.
 
-## 9. Copy from the entity
+## 10. Copy
 
-plugin-api knows each procedure's entity. With a noun per entity in `words`, a frame's failed
-("The deploy did not load."), empty ("No deploys yet.") and missing ("This deploy no longer
-exists.") sentences are derived; a prop remains only to override. The `sentence` prop on every
-read and the common `empty` go.
+A frame's failed, missing and empty sentences are generic, in `words` ("This didn't load.",
+"This no longer exists.", "Nothing here yet."), and a frame overrides any of them with its own
+sentence. Sentences are not composed from nouns: procedures read several tables, so there is no
+one entity to name, a composed sentence breaks gendered and inflected languages, and an empty
+sentence depends on the filter the app applied.
 
-## 10. Navigation
+## 11. Navigation
 
-A route declares the reads its Panes take as its loader (`ensureQueryData`), and the router gets
-`defaultPreload: "intent"`: a row's link hovered or focused reads its record before the press, so
-most opens are cache hits and draw no waiting form. Waiting remains for cold deep links and slow
-reads. The extra requests on hover are the accepted cost.
+A route declares its reads once, `reads(params)`, and its components take their handles from it.
+plugin-react wires it: the web router gets `defaultPreload: "intent"` and prefetches the route's
+reads on a hovered or focused link; the phone prefetches on a link's press-in. A prefetch is never
+awaited, so a navigation is immediate: most opens are cache hits and draw no waiting form, and a
+read that is still on its way shows the painted waiting form. Waiting remains for cold deep links
+and slow reads. The extra requests on hover are the accepted cost.
 
-## 11. What goes away
+## 12. What goes away
 
 - QueryBoundary; the `loading` prop on ~15 components; `LoadingContext`.
 - Every hand-built waiting form, both platforms: RowWait, DefinitionWait, OptionWait, CanvasWait,
@@ -265,48 +344,71 @@ reads. The extra requests on hover are the accepted cost.
   `waitingBars`, `waitingDepth`, `WAITING_ROWS`; `SKELETON` shrinks to the paint's fills; most of
   `listState` and `ListInput` (`sectionLoading`, `hasEmpty`, `known`, `listBusy`), ActionBar's
   `waitCount`.
-- Collection props inside a frame: `query`, `items`, `count`, `sentence`, the common `empty`.
+- Collection props: `query`, `count`, the common `empty`; `items` stays, explicit.
 - In Stead: the `loading` props, every `XBody({ view, loading })` and `ready`, the empty checks,
-  the seeding, `Live<T>`, `useAct`, and its two source checks (made unneeded, not moved).
+  the list-cache seeding (`listed`, `known`; preload replaces it), `Live<T>`, `useAct`, and its
+  two source checks (made unneeded, not moved).
 
-## 12. Checks and tests
+## 13. Checks and tests
 
-- **Verify:** no `useQuery` without `select` in the ui packages; no context carrying changing
-  state (rule 11); a selection no frame claims; a frame's selection never also passed to its
-  collection.
-- **ui-core unit tests:** the state derivation, the wait store, the placeholder fill from a shape,
-  the claims.
+- **Verify:** no context carrying changing state or changing a child's form (rule 11).
+- **At run time, in dev:** a failure with no root holder; two root holders of one key; a selector
+  that throws over the placeholder.
+- **ui-core unit tests:** the phase and flags, the store (the value held through the hold,
+  `combine` memoized, idle and paused), the placeholder from a shape (the fixed epoch, unique
+  ids, union and recursion cuts).
 - **Screens per read.** The workbench forces one read at a time (deploy loads, steps fail), not
   one state per route. The waiting form comes from the placeholder, so every route's loading
   screen is real, and the shift check (stack's now) compares each leaf's box waiting and loaded
-  at 320, 1280 and 1920 px.
+  at 320, 1280 and 1920 px. The scramble's randomness is seeded under tests.
 - **Render counts.** Behaviour stories assert the §6 event table ("refetch with the same data
-  renders one component").
+  renders one component"), in the showcase and in a consumer.
 
-## 13. Build order
+## 14. Build order
 
 Each phase lands web and phone together, with the showcase migrated in the same change.
 
-1. **The read.** plugin-api: `read()`, `at`, `combine`, `useRead`, output-shape codegen, list
-   seeding. ui-core: the state derivation, the wait store, the placeholder fill. Tests.
-2. **Frames and the paint.** `Pane`/`Section`/`Sheet read`, claims, collections from frames, each
-   leaf's paint, copy from entity nouns; QueryBoundary, `loading`, `LoadingContext` and the
-   waiting trees deleted; screens per read and the shift check.
-3. **States beyond the first read:** busy, stale, more, streaming, permissions; live channels as
-   queries.
-4. **Acts and saves:** the promise contract, controls, `Form read`, the MutationCache failure
-   home, writes marking frames busy.
-5. **Navigation:** route loaders and preload on intent.
+1. **The read.** plugin-api: `read()`, `at`, `combine`, `useRead`, the shape codegen from the
+   router's output types. ui-core: the phase and flags, the store, the placeholder fill.
+   plugin-react and plugin-expo: the compiler reaching `@fcalell/*`. Tests.
+2. **Frames and the paint.** `Pane`/`Section`/`Sheet read`, the root and selection rule, explicit
+   `items`, each leaf's paint, inert waiting forms, the generic sentences; QueryBoundary,
+   `loading`, `LoadingContext` and the waiting trees deleted; screens per read and the shift check.
+3. **States beyond the first read:** busy, stale, more, streaming on its own key, idle and paused,
+   permissions; live channels as queries; long collections (after their spike).
+4. **Acts and saves:** the host-held promise, controls with the latest change winning,
+   `Form read`.
+5. **Navigation:** `reads(params)`, preload on intent and on press-in.
 6. **Stead:** its screens moved to frame reads, its workarounds deleted, the pin moved.
 
-## 14. Decisions
+## 15. Decisions
 
 Decided 2026-10-14: everything above. Selections are written `read.at(fn)` (a path proxy,
-`read.$.commit`, was weighed and left: shorter, but magic). The handle is built by plugin-api,
-ui-core knows only its interface.
+`read.$.commit`, was weighed and left: shorter, but magic; with no seed there is no per-slot
+provenance a path would buy). The handle is built by plugin-api, ui-core knows only its interface.
 
 Decided the same day, after the loader demo (`motion.md` §4.2): the paint per slot kind,
 `theme.loading = { text, figure, id }`, each `"pulse"` or `"scramble"`, all `"pulse"` by default.
 
-Open: the two wait numbers (from 400 and 800 ms, tuned live); on the phone, the text bar's paint
-without CSS line boxes (the slot measures its lines with `onTextLayout`).
+Revised the same day after an adversarial review, with the owner:
+
+- one store per read key holding the value with the phase, the value gated by the clock (the
+  per-leaf observers and `placeholderData` are not built);
+- the placeholder is the shape alone, from TypeScript output types at generate; the cache seed,
+  the previous data and `.meta({ wait })` are dropped;
+- claims and items through context are dropped: the root holder draws the read's states, an array
+  selection's holder its count and empty, and collections take `items`;
+- the state is a phase with flags; idle and paused are drawn; empty belongs to the frame;
+- acts are held by their host, failures drawn there or in a toast; the MutationCache failure home
+  and writes marking frames busy are dropped;
+- copy is generic sentences with an override; copy from entity nouns is dropped;
+- a retried failure stays failed with Retry pending;
+- route reads are declared once and prefetched, never awaited, on both platforms;
+- the streaming turn has its own key, the second collection model is dropped;
+- long collections virtualize (§7);
+- the live region is dropped; waiting forms are inert;
+- text decodes by crossfade; only figures and ids decode by character (`motion.md` §4.2).
+
+Open: the wait numbers and `ACT_DELAY` (tuned live); the phone's text bar as a nested `Text`
+(a device check); the virtualizing libraries, their count and the phone Pane's scroll with a long
+collection (a spike).
