@@ -1,5 +1,4 @@
 import type { Act, ChosenCount } from "@fcalell/ui-core/descriptors";
-import { waitCount } from "@fcalell/ui-core/list-state";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
 	ACTION_BAR_ACTS,
@@ -16,14 +15,12 @@ import {
 import { useContext, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import { cn } from "../../lib/cn";
-import { LoadingContext } from "../../lib/loading";
 import { ActFailed, REASON_AT_REST, ReasonHostContext } from "../../lib/reason";
 import { useTouched } from "../../lib/touched";
 import { useWords } from "../../lib/words";
 import { ButtonBase } from "../button/base";
 import { PendingBar } from "../pending-bar";
 import type { ActionBarProps } from "./index";
-import { ActionBarWait } from "./wait";
 
 // The touch structure at either fit: one act per row across the container,
 // the filled act first.
@@ -127,7 +124,6 @@ export function ActionBarBase({
 	acts,
 	fit,
 	chosen,
-	loading,
 	pending,
 	kept,
 	painted,
@@ -142,9 +138,7 @@ export function ActionBarBase({
 	const { leave } = useTouched();
 	if (reason !== undefined && held !== reason) setHeld(reason);
 	const busy = running || acts.some((act) => act.loading);
-	const waits = waitCount(loading, useContext(LoadingContext), 1);
 	const lastAt = acts.length - 1;
-	if (waits !== undefined) return <ActionBarWait fit={where} count={waits} />;
 	const runFilled = () => {
 		// The press ends the form's edit before the act runs, so an act that
 		// navigates is not asked; a rejection puts the edit back.

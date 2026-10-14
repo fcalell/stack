@@ -978,14 +978,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// `chooseNone`) while any are chosen, and, below `tablet` of the page where
 		// the table draws no head tick, one that chooses every one (`chooseAll`)
 		// while some stand unchosen. The bar's column is centred in its foot.
-		// `loading` is a count of acts (`true` one): the bar waits as that many
-		// act-shaped bars at the loaded geometry, one per row on touch; 0 or
-		// `false` is not waiting, and a loading Group or Section hands down `true`
-		// only. `pending` is a PendingBar's props: the bar draws it over its own
+		// A form's or a sheet's bar paints its filled act, inert, while the frame's
+		// read waits (internal `painted`); an act's own `loading` is the running
+		// act. `pending` is a PendingBar's props: the bar draws it over its own
 		// acts, which stay drawn unseen and inert, so the place keeps the loaded
 		// bar's height.
 		ActionBar: {
-			props: ["acts", "fit", "chosen", "loading", "pending"],
+			props: ["acts", "fit", "chosen", "pending"],
 			draws: [
 				"ACTION_BAR",
 				"ACTION_BAR_ACTS",
@@ -1006,8 +1005,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"BUTTON_LABEL.act.secondary",
 				"BUTTON_LABEL.act.destructive",
 				"BUTTON_LABEL.act.quiet",
-				"SKELETON.kind.bar",
-				"SKELETON.kind.field",
+				"PAINT.kind.control",
 			],
 			holds: [
 				"ACTION_BAR",
@@ -1838,22 +1836,16 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// checked (the row takes no wash); radio rows when `value` is one value
 		// or null, a radiogroup whose chosen ring holds its dot. The
 		// recommended mark on its description line; the children under a
-		// chosen option at its label's start. From a query, its failed line
-		// (`sentence` beside Retry) and its `empty` sentence stand in the card.
+		// chosen option at its label's start. Static `options` never paint;
+		// `items`, constants or a selection, paint `PAINT_ROWS` rows while the
+		// read waits, in the slots `option` declares (a description under each
+		// label, a label over the group), inert, and a `value` selection paints
+		// the boxes or rings; the failed and empty forms are the frame's, the Pane,
+		// Section, Sheet or Form that holds the read.
 		// An option's `blocked` reason replaces its description in the disabled
 		// ink and its box or radio is disabled, until it is in the value.
 		OptionList: {
-			props: [
-				"options",
-				"query",
-				"option",
-				"sentence",
-				"empty",
-				"value",
-				"onChange",
-				"loading",
-				"children",
-			],
+			props: ["options", "items", "option", "value", "onChange", "children"],
 			draws: [
 				"OPTION_LIST",
 				"SELECT_GROUP",
@@ -1881,13 +1873,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"CHIP_LABEL.family.neutral",
 				"OPTION_CHILDREN",
 				"OPTION_INDENT",
-				"SKELETON.kind.check",
-				"SKELETON.kind.radio",
-				"SKELETON.kind.line",
-				"SKELETON_LANE",
-				"BUTTON.act.secondary",
-				"BUTTON.fit.bar",
-				"BUTTON_LABEL.act.secondary",
+				"PAINT.kind.glyphs",
+				"PAINT.kind.control",
 			],
 			holds: [
 				"OPTION_LIST",
@@ -1897,7 +1884,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"OPTION_RADIO",
 				"OPTION_RADIO_DOT",
 			],
-			states: [...PRESS, "loading", "error", "empty", "selected", "disabled"],
+			states: [...PRESS, "loading", "selected", "disabled"],
 			owns: {
 				roles: ["body", "meta", "caption"],
 				colors: [

@@ -1,9 +1,11 @@
 import { FormField } from "../../components/form-field/index.tsx";
-import type { QueryLike } from "../../components/query-boundary/index.tsx";
+import { Section } from "../../components/section/index.tsx";
 import { Select } from "../../components/select/index.tsx";
 import { TextArea } from "../../components/text-area/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
+import { itemsAt, waitingText } from "../waiting.ts";
 import { Wide } from "./layout-context.tsx";
+import { beside, isPaint } from "./painted.tsx";
 
 interface Topic {
 	id: string;
@@ -79,22 +81,6 @@ const ENVIRONMENTS = [
 	{ value: "preview", label: "Preview" },
 ];
 
-// A query in the frame's state: its items at rest, none when empty.
-function queryIn<T>(
-	state: ShowcaseFrame["state"],
-	items: readonly T[],
-): QueryLike<readonly T[]> {
-	let data: readonly T[] | undefined;
-	if (state === "empty") data = [];
-	else if (state !== "loading" && state !== "error") data = items;
-	return {
-		data,
-		isPending: state === "loading",
-		isError: state === "error",
-		refetch: change,
-	};
-}
-
 // A part is the rows a cell names, drawn in the frame's state: the topics it
 // lists, whether they stand under their group labels, which are checked, and
 // whether the first checked one opens the Select under it.
@@ -129,37 +115,27 @@ const CELL_PARTS: ReadonlyArray<readonly [string, keyof typeof PARTS]> = [
 	["CHECKBOX.state.checked", "checked"],
 	["CHIP", "recommended"],
 	["TEXT_STRONG", "groups"],
-	["SKELETON", "groups"],
+	["PAINT", "groups"],
 	["LINE_BOX", "groups"],
 ];
 
-// A skeleton or line-box cell is the waiting form itself, so it draws it at
-// rest too.
-const waits = (cell: string) =>
-	cell.startsWith("SKELETON") || cell.startsWith("LINE_BOX");
-
 // The question sheet's one answer: three described options, none chosen on
 // the unchecked cell, the recommended one chosen on the checked cell with its
-// note field under it. The radio skeleton is its waiting form.
-function Approaches(props: {
-	state: ShowcaseFrame["state"];
-	checked: boolean;
-}) {
+// note field under it. Painted, the radios are its value waiting.
+function Approaches(props: { checked: boolean; painted?: boolean }) {
 	return (
 		<Wide>
 			<FormField
 				label="How should the agent proceed?"
 				options={{
-					query: queryIn(props.state, APPROACHES),
+					items: APPROACHES,
 					option: {
 						value: (approach) => approach.id,
 						label: (approach) => approach.name,
 						description: (approach) => approach.about,
 						recommended: (approach) => approach.suggested,
 					},
-					sentence: "The answers did not load.",
-					empty: "No answer to choose.",
-					value: props.checked ? "ask" : null,
+					value: props.painted ? waitingText : props.checked ? "ask" : null,
 					onChange: change,
 					children: (
 						<FormField label="Note">
@@ -176,32 +152,31 @@ function Approaches(props: {
 	);
 }
 
-// Board 41's notifications from a query: topics under group labels, each
-// described, the recommended mark on a description line; waiting, failed and
-// empty in the card. Each cell draws only the topics it names (see PARTS), in
-// the frame's state.
-export function drawOptionList(frame: ShowcaseFrame) {
-	const cell = frame.cell.name;
-	const state = waits(cell) && frame.state === "rest" ? "loading" : frame.state;
-	if (cell.startsWith("OPTION_RADIO") || cell === "SKELETON.kind.radio")
-		return (
-			<Approaches
-				state={state}
-				checked={cell === "OPTION_RADIO.state.checked"}
-			/>
-		);
-	const named = CELL_PARTS.find(([prefix]) => cell.startsWith(prefix));
-	const part: Part = PARTS[named?.[1] ?? "rows"];
+// The topics a part names, in a Section that holds their read as a page ships
+// it, so the failed and empty forms stand in the Section's body.
+function Topics(props: {
+	id: string;
+	state: ShowcaseFrame["state"];
+	part: Part;
+}) {
+	const { part } = props;
+	const topics = itemsAt(
+		props.id,
+		props.state,
+		TOPICS.filter((topic) => part.topics.includes(topic.id)),
+	);
 	return (
-		<Wide>
+		<Section
+			title="Notifications"
+			read={topics}
+			failed="The topics did not load."
+			empty={{ title: "No topic", sentence: "No topic to follow yet." }}
+		>
 			<FormField
 				label="Email me about"
 				description="Sent to ada@acme.dev."
 				options={{
-					query: queryIn(
-						state,
-						TOPICS.filter((topic) => part.topics.includes(topic.id)),
-					),
+					items: topics,
 					option: {
 						value: (topic) => topic.id,
 						label: (topic) => topic.name,
@@ -209,8 +184,6 @@ export function drawOptionList(frame: ShowcaseFrame) {
 						recommended: (topic) => topic.suggested,
 						group: part.grouped ? (topic) => topic.kind : undefined,
 					},
-					sentence: "The topics did not load.",
-					empty: "No topic to follow yet.",
 					value: [...part.chosen],
 					onChange: change,
 					children: part.opens ? (
@@ -224,6 +197,43 @@ export function drawOptionList(frame: ShowcaseFrame) {
 					) : null,
 				}}
 			/>
+		</Section>
+	);
+}
+
+// Board 41's notifications from a read: topics under group labels, each
+// described, the recommended mark on a description line; painted while the
+// read waits, the frame drawing the failed and empty forms. Each cell draws
+// only the topics it names (see PARTS), in the frame's state; a `PAINT` cell
+// draws the rows loaded beside the same rows painted, and the radios loaded
+// beside the radios with their value waiting.
+export function drawOptionList(frame: ShowcaseFrame) {
+	const cell = frame.cell.name;
+	if (cell === "PAINT.kind.control") {
+		return beside(
+			frame,
+			<Approaches checked />,
+			<Approaches checked painted />,
+		);
+	}
+	if (cell.startsWith("OPTION_RADIO"))
+		return <Approaches checked={cell === "OPTION_RADIO.state.checked"} />;
+	const named = CELL_PARTS.find(([prefix]) => cell.startsWith(prefix));
+	const part: Part = PARTS[named?.[1] ?? "rows"];
+	if (isPaint(frame)) {
+		return beside(
+			frame,
+			<Wide>
+				<Topics id={`${frame.id}/loaded`} state="rest" part={part} />
+			</Wide>,
+			<Wide>
+				<Topics id={`${frame.id}/painted`} state="loading" part={part} />
+			</Wide>,
+		);
+	}
+	return (
+		<Wide>
+			<Topics id={frame.id} state={frame.state} part={part} />
 		</Wide>
 	);
 }

@@ -89,24 +89,6 @@ export function retryOf(query: { refetch: () => unknown }): () => void {
 	};
 }
 
-// How many drawn units a part's waiting form stands for, where that count is
-// one the app knows and the part cannot derive (a Prose's lines, an
-// ActionBar's acts): the part's own `loading` (`true` for `fallback`, a
-// number from 1 for that count), else the loading its Group or Section hands
-// down, which is a boolean and so only ever the fallback. Undefined when the
-// part does not wait; `false`, 0 and a count under 1 are not waiting, so a
-// `loading={rows?.length}` that reads 0 shows the loaded form.
-export function waitCount(
-	own: boolean | number | undefined,
-	inherited: boolean,
-	fallback: number,
-): number | undefined {
-	const set = own ?? inherited;
-	if (set === true) return fallback;
-	if (typeof set === "number" && set >= 1) return Math.floor(set);
-	return undefined;
-}
-
 // One row of a tree as the list draws it: its item at a depth (the roots at
 // 0), whether it has children to fold, and whether they are drawn.
 export interface TreeRow<T> {
@@ -249,50 +231,6 @@ export function waitLine(slots: {
 }): WaitLine {
 	if (slots.counts !== undefined) return "counts";
 	return slots.meta !== undefined ? "meta" : "none";
-}
-
-// The rows a query's waiting option list stands: its options are unknown
-// before the data.
-export const OPTION_WAIT_ROWS = 4;
-
-// The slots a waiting OptionList's check rows draw, known before any option:
-// a description bar under each label, and a group label's bar over the rows.
-export interface OptionShape {
-	description: boolean;
-	group: boolean;
-}
-
-// A query's waiting rows from the slots its `option` map declares, read by
-// key: no slot function runs.
-export function optionShape(slots: {
-	description?: unknown;
-	group?: unknown;
-}): OptionShape {
-	return {
-		description: slots.description !== undefined,
-		group: slots.group !== undefined,
-	};
-}
-
-// A static set's waiting rows from the options it holds: grouped ones draw a
-// group label's bar, a described one a description bar under every label.
-export function optionsShape(
-	options: readonly Option<string>[] | readonly OptionGroup<string>[],
-): OptionShape {
-	const groups = isGrouped(options) ? options : [{ options }];
-	return {
-		description: groups.some((group) =>
-			group.options.some((option) => option.description !== undefined),
-		),
-		group: isGrouped(options),
-	};
-}
-
-function isGrouped(
-	options: readonly Option<string>[] | readonly OptionGroup<string>[],
-): options is readonly OptionGroup<string>[] {
-	const first = options[0];
-	return first !== undefined && "options" in first;
 }
 
 // One function per check row slot, each called with a loaded item; `group`

@@ -4,6 +4,7 @@ import type { SheetFit } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
 import type { Closed } from "../../lib/closed";
 import type { EmptyProps } from "../../lib/empty";
+import { useFrame } from "../../lib/read";
 import type { FormProps } from "../form";
 import { FormBody } from "../form/base";
 import { SheetBase } from "./base";
@@ -57,6 +58,9 @@ export function Sheet({
 	form,
 	children,
 }: SheetProps) {
+	// The form's frame is read here, where its bar is hoisted into the foot, and
+	// handed down to the form, so its read has the one holder.
+	const formFrame = useFrame(form?.read);
 	return (
 		<SheetBase
 			open={open}
@@ -69,13 +73,14 @@ export function Sheet({
 			failed={failed}
 			fit={fit}
 			bar={form?.bar}
+			painted={formFrame.waits}
 			read={read}
 			empty={empty}
 		>
 			{form ? (
 				<>
 					{children}
-					<FormBody {...form} bar={undefined} in="sheet" />
+					<FormBody {...form} bar={undefined} frame={formFrame} in="sheet" />
 				</>
 			) : (
 				children

@@ -1,19 +1,18 @@
+import {
+	type Datum,
+	useDraft,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import type { Option, OptionGroup } from "@fcalell/ui-core/descriptors";
 import {
 	choose,
 	chosenOf,
-	isOneChoice,
-	listState,
-	type OneChoice,
 	type OptionChoice,
 	type OptionSlots,
 	optionBlocked,
-	optionShape,
 	optionsOf,
-	optionsShape,
-	retryOf,
-	type SetChoice,
 } from "@fcalell/ui-core/list-state";
+import { PAINT_ROWS } from "@fcalell/ui-core/paint";
 import {
 	OPTION_CHILDREN,
 	OPTION_GROUP_LABEL,
@@ -34,15 +33,11 @@ import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FieldDisabled, GroupName } from "../../lib/field";
-import { navigate } from "../../lib/navigate";
-import { OptionWait } from "../../lib/option-wait";
+import { inertProps, Painted, paintControl, useShown } from "../../lib/paint";
 import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
-import { Button } from "../button";
 import { CheckboxBase } from "../checkbox/base";
 import { Chip } from "../chip";
-import { useBackAct } from "../missing/base";
-import type { QueryLike } from "../query-boundary";
 
 // The row is the target of its box or radio: a press anywhere toggles or
 // chooses it.
@@ -66,36 +61,25 @@ const RADIO = "shrink-0 items-center justify-center";
 const CHILDREN = "flex-row";
 const INDENT = "shrink-0";
 const CHILDREN_BODY = "flex-1 min-w-0";
-// The failed, missing and empty lines: the sentence, and Retry or Back at its
-// end.
-const NOTE = "flex-row items-center";
-const SENTENCE = "flex-1 min-w-0";
 
 // Where an OptionList's options come from.
 type OptionSource<T, V extends string> =
 	| {
-			// The choices, flat or under group labels.
+			// The choices, flat or under group labels. They are constants: they
+			// never paint.
 			options: readonly Option<V>[] | readonly OptionGroup<V>[];
-			// The options wait: skeleton rows stand in for them.
-			loading?: boolean;
-			/** The card's line with no option; without it an empty set draws an empty card (a sentence; wraps). */
-			empty?: string;
-			query?: never;
+			items?: never;
 			option?: never;
-			sentence?: never;
 	  }
 	| {
-			// The query whose items the check rows draw.
-			query: QueryLike<readonly T[]>;
-			// One function per check row slot, each called with a loaded item;
-			// the slots given are the shape the waiting rows draw.
+			// The items the check rows draw, constants or a selection. While its
+			// read waits, `PAINT_ROWS` rows paint in the slots `option` declares,
+			// inert.
+			items: Datum<readonly T[]>;
+			// One function per check row slot, each called with an item; the slots
+			// given are the shape the painted rows draw.
 			option: OptionSlots<T, V>;
-			/** What failed to load, beside the retry act (a sentence; wraps). */
-			sentence: string;
-			/** The card's line when the query answers with no item (a sentence; wraps). */
-			empty: string;
 			options?: never;
-			loading?: never;
 	  };
 
 type OptionListBase<V extends string, T> = OptionSource<T, V> & {
@@ -104,12 +88,28 @@ type OptionListBase<V extends string, T> = OptionSource<T, V> & {
 	children?: ReactNode;
 };
 
-// One choice or several from one list, static or from a query: `value` one
+// One choice: the chosen value or null. A selection paints the radios, inert,
+// until its read lands and follows it until the viewer chooses.
+interface OneChoice<V extends string> {
+	value: Datum<NoInfer<V> | null>;
+	// Hears the option chosen.
+	onChange: (value: V) => void;
+}
+
+// Several choices: the chosen set. A selection of it paints as one choice, the
+// placeholder being no array.
+interface SetChoice<V extends string> {
+	value: Datum<readonly NoInfer<V>[]>;
+	// Hears the whole chosen set after a toggle.
+	onChange: (value: V[]) => void;
+}
+
+// One choice or several from one list, static or from items: `value` one
 // value or null draws radio rows, a set check rows. `V` is read off the
 // options or the `option` map's `value`.
 export type OptionListProps<V extends string = string, T = unknown> = Closed &
 	OptionListBase<V, T> &
-	OptionChoice<V>;
+	(OneChoice<V> | SetChoice<V>);
 
 function groupsOf<V extends string>(
 	options: readonly Option<V>[] | readonly OptionGroup<V>[],
@@ -120,7 +120,22 @@ function groupsOf<V extends string>(
 	return options as readonly OptionGroup<V>[];
 }
 
-function GroupLabel({ children }: { children: string }) {
+// The rows a waiting `items` paints: `PAINT_ROWS` options, in one group when
+// the map declares `group`. Which slots it declares is read by key, none run:
+// the filler decides nothing but the shape, a label over the group and a
+// description under each label.
+function paintedGroups<V extends string>(
+	slots: { description?: unknown; group?: unknown } = {},
+): readonly Option<V>[] | readonly OptionGroup<V>[] {
+	const options = Array.from({ length: PAINT_ROWS }, (_, at) => ({
+		value: `painted-${at}` as V,
+		label: "",
+		description: slots.description === undefined ? undefined : "",
+	}));
+	return slots.group === undefined ? options : [{ label: "", options }];
+}
+
+function GroupLabel({ children }: { children: ReactNode }) {
 	return (
 		<RNText
 			accessibilityRole="header"
@@ -139,11 +154,10 @@ function GroupLabel({ children }: { children: string }) {
 // radio (one choice, a radiogroup) on its label's
 // first line, a description and the recommended mark on the line under it;
 // the pressed row washes, the checked box or the ringed dot is the choice.
-// The children stand under the first chosen option. From a query it draws its
-// states in the card: waiting rows in the slots `option` declares, a failed
-// line with `sentence` and Retry, a line saying it no longer exists with Back
-// (never Retry) when the query answers not found, the `empty` sentence, then
-// the rows.
+// The children stand under the first chosen option. Static `options` never
+// paint; `items` paint `PAINT_ROWS` rows in the slots `option` declares while
+// their read waits, and a `value` selection paints the marks, inert. The frame
+// that holds the read draws its failed, missing and empty forms.
 export function OptionList<V extends string = string, T = unknown>(
 	props: Closed & OptionListBase<V, T> & OneChoice<V>,
 ): ReactNode;
@@ -158,177 +172,158 @@ export function OptionList<V extends string = string, T = unknown>(
 ) {
 	const { children } = props;
 	const words = useWords();
-	const back = useBackAct();
 	const named = useContext(GroupName);
-	const input = {
-		query: props.query,
-		items: props.options,
-		loading: props.loading,
-		sectionLoading: false,
-		hasEmpty: props.empty !== undefined,
-	};
-	const state = listState(input);
-	const one = isOneChoice(props);
-	const frame = (body: ReactNode, radios = false) => (
+	const [given] = useSelections([props.items] as const);
+	const draft = useDraft<V | null | readonly V[]>(props.value);
+	// The rows paint while their items wait; the marks paint too while the
+	// value does, the labels then standing.
+	const rowsPaint = given.painted;
+	const painted = rowsPaint || draft.painted;
+	const shown = useShown(painted);
+	// The placeholder is no array, so a painted value is one choice.
+	const one = !Array.isArray(draft.value);
+	const choice = {
+		value: draft.painted ? (one ? null : []) : draft.value,
+		onChange: (next: V | V[]) => {
+			draft.edit(next);
+			(props.onChange as (value: V | V[]) => void)(next);
+		},
+	} as OptionChoice<V>;
+	const options = rowsPaint
+		? paintedGroups<V>(props.option)
+		: (props.options ?? optionsOf(given.value as readonly T[], props.option));
+	const chosenValues = painted ? [] : chosenOf(choice);
+	const first = chosenValues[0];
+	return (
 		<View
-			accessibilityRole={radios ? "radiogroup" : undefined}
+			accessibilityRole={one ? "radiogroup" : undefined}
 			accessibilityLabel={named?.label}
 			className={OPTION_LIST}
 		>
-			{body}
-		</View>
-	);
-	if (state === "pending")
-		return frame(
-			<OptionWait
-				shape={
-					props.option ? optionShape(props.option) : optionsShape(props.options)
-				}
-				mark={one ? "radio" : "check"}
-			/>,
-		);
-	if (state === "missing")
-		return frame(
-			<View className={cn(row({ lines: "one" }), OPTION_ROW, NOTE)}>
-				<RNText className={cn(text({ role: "meta" }), SENTENCE)}>
-					{words.missing}
-				</RNText>
-				{back ? (
-					<Button
-						act="secondary"
-						fit="bar"
-						label={back.label}
-						onAct={() => navigate(back.href)}
-					/>
-				) : null}
-			</View>,
-		);
-	if (state === "failed" && props.query !== undefined)
-		return frame(
-			<View className={cn(row({ lines: "one" }), OPTION_ROW, NOTE)}>
-				<RNText className={cn(text({ role: "meta" }), SENTENCE)}>
-					{props.sentence}
-				</RNText>
-				<Button
-					act="secondary"
-					fit="bar"
-					label={words.retry}
-					onAct={retryOf(props.query)}
-				/>
-			</View>,
-		);
-	if (state === "empty")
-		return frame(
-			<View className={cn(row({ lines: "one" }), OPTION_ROW, NOTE)}>
-				<RNText className={cn(text({ role: "meta" }), SENTENCE)}>
-					{props.empty}
-				</RNText>
-			</View>,
-		);
-	const options = props.query
-		? optionsOf(props.query.data ?? [], props.option)
-		: props.options;
-	const chosenValues = chosenOf(props);
-	const first = chosenValues[0];
-	return frame(
-		groupsOf(options).map((group, at) => (
-			<View key={group.label ?? at} className={SELECT_GROUP}>
-				{group.label ? <GroupLabel>{group.label}</GroupLabel> : null}
-				{group.options.map((option) => {
-					const chosen = chosenValues.includes(option.value);
-					const blocked = optionBlocked(option, chosen);
-					const meta = blocked ?? option.description;
-					const marked = meta || option.recommended;
-					return (
-						<Fragment key={option.value}>
-							<Pressable
-								accessibilityRole={one ? "radio" : "checkbox"}
-								accessibilityLabel={option.label}
-								accessibilityState={{
-									checked: chosen,
-									disabled: blocked !== undefined,
-								}}
-								disabled={blocked !== undefined}
-								onPress={() => choose<V>(props, option.value)}
-								className={cn(
-									row({ lines: marked ? "two" : "whole" }),
-									OPTION_ROW,
-									OPTION,
-									blocked === undefined && PRESS,
-									!marked && OPTION_WHOLE,
-								)}
-							>
-								<View className={cn(OPTION_LINE, LINE)}>
-									<View className={BOX_LINE}>
-										<Strut role="body" />
-										{one ? (
-											<View
-												className={cn(
-													optionRadio({
-														state: chosen ? "checked" : "unchecked",
-													}),
-													RADIO,
-													blocked !== undefined && RADIO_BLOCKED,
-												)}
-											>
-												{chosen ? <View className={OPTION_RADIO_DOT} /> : null}
+			{groupsOf(options).map((group, at) => (
+				<View key={group.label ?? at} className={SELECT_GROUP}>
+					{group.label === undefined ? null : (
+						<GroupLabel>
+							{rowsPaint ? <Painted role="word" /> : group.label}
+						</GroupLabel>
+					)}
+					{group.options.map((option, place) => {
+						const chosen = chosenValues.includes(option.value);
+						const blocked = optionBlocked(option, chosen);
+						const meta = blocked ?? option.description;
+						// A painted row is marked when the map declares a description.
+						const marked = rowsPaint
+							? option.description !== undefined
+							: meta || option.recommended;
+						return (
+							<Fragment key={option.value}>
+								<Pressable
+									{...inertProps(painted)}
+									accessibilityRole={one ? "radio" : "checkbox"}
+									accessibilityLabel={option.label}
+									accessibilityState={{
+										checked: chosen,
+										disabled: blocked !== undefined,
+									}}
+									disabled={blocked !== undefined || painted}
+									onPress={() => choose(choice, option.value)}
+									className={cn(
+										row({ lines: marked ? "two" : "whole" }),
+										OPTION_ROW,
+										OPTION,
+										blocked === undefined && !painted && PRESS,
+										!marked && OPTION_WHOLE,
+									)}
+								>
+									<View className={cn(OPTION_LINE, LINE)}>
+										<View className={BOX_LINE}>
+											<Strut role="body" />
+											{one ? (
+												<View
+													className={cn(
+														optionRadio({
+															state: chosen ? "checked" : "unchecked",
+														}),
+														RADIO,
+														blocked !== undefined && RADIO_BLOCKED,
+														painted && paintControl(shown),
+													)}
+												>
+													{chosen ? (
+														<View className={OPTION_RADIO_DOT} />
+													) : null}
+												</View>
+											) : (
+												<FieldDisabled.Provider value={blocked !== undefined}>
+													<CheckboxBase
+														target
+														checked={chosen}
+														onChange={() => choose(choice, option.value)}
+														label={option.label}
+														painted={painted}
+													/>
+												</FieldDisabled.Provider>
+											)}
+										</View>
+										{marked ? (
+											<View className={TEXT}>
+												<RNText
+													className={cn(
+														text({ role: "body" }),
+														blocked !== undefined && BLOCKED_INK,
+													)}
+												>
+													{rowsPaint ? (
+														<Painted role="phrase" at={place} />
+													) : (
+														option.label
+													)}
+												</RNText>
+												<View className={cn(ROW_META_LINE, DESCRIPTION_LINE)}>
+													{rowsPaint ? (
+														<RNText
+															className={cn(text({ role: "meta" }), "shrink")}
+														>
+															<Painted role="phrase" at={place + 1} />
+														</RNText>
+													) : meta ? (
+														<RNText
+															className={cn(
+																text({ role: "meta" }),
+																"shrink",
+																blocked !== undefined && BLOCKED_INK,
+															)}
+														>
+															{meta}
+														</RNText>
+													) : null}
+													{option.recommended ? (
+														<Chip family="neutral" label={words.recommended} />
+													) : null}
+												</View>
 											</View>
 										) : (
-											<FieldDisabled.Provider value={blocked !== undefined}>
-												<CheckboxBase
-													target
-													checked={chosen}
-													onChange={() => choose<V>(props, option.value)}
-													label={option.label}
-												/>
-											</FieldDisabled.Provider>
+											<RNText className={cn(text({ role: "body" }), LABEL)}>
+												{rowsPaint ? (
+													<Painted role="phrase" at={place} />
+												) : (
+													option.label
+												)}
+											</RNText>
 										)}
 									</View>
-									{marked ? (
-										<View className={TEXT}>
-											<RNText
-												className={cn(
-													text({ role: "body" }),
-													blocked !== undefined && BLOCKED_INK,
-												)}
-											>
-												{option.label}
-											</RNText>
-											<View className={cn(ROW_META_LINE, DESCRIPTION_LINE)}>
-												{meta ? (
-													<RNText
-														className={cn(
-															text({ role: "meta" }),
-															"shrink",
-															blocked !== undefined && BLOCKED_INK,
-														)}
-													>
-														{meta}
-													</RNText>
-												) : null}
-												{option.recommended ? (
-													<Chip family="neutral" label={words.recommended} />
-												) : null}
-											</View>
-										</View>
-									) : (
-										<RNText className={cn(text({ role: "body" }), LABEL)}>
-											{option.label}
-										</RNText>
-									)}
-								</View>
-							</Pressable>
-							{option.value === first && chosen && children ? (
-								<View className={cn(OPTION_CHILDREN, CHILDREN)}>
-									<View className={cn(OPTION_INDENT, INDENT)} />
-									<View className={CHILDREN_BODY}>{children}</View>
-								</View>
-							) : null}
-						</Fragment>
-					);
-				})}
-			</View>
-		)),
-		one,
+								</Pressable>
+								{option.value === first && chosen && children ? (
+									<View className={cn(OPTION_CHILDREN, CHILDREN)}>
+										<View className={cn(OPTION_INDENT, INDENT)} />
+										<View className={CHILDREN_BODY}>{children}</View>
+									</View>
+								) : null}
+							</Fragment>
+						);
+					})}
+				</View>
+			))}
+		</View>
 	);
 }

@@ -11,7 +11,7 @@ import { Text as RNText, View } from "react-native";
 import { cn } from "../../lib/cn";
 import { useLeaveGuard } from "../../lib/leave";
 import { LoadingContext, useWait, VEIL } from "../../lib/loading";
-import { FrameBody, useFrame } from "../../lib/read";
+import { type Frame, FrameBody, useFrame } from "../../lib/read";
 import { TouchedContext, useTouched, useTouchState } from "../../lib/touched";
 import { ActionBarBase } from "../action-bar/base";
 import { Text } from "../text";
@@ -73,9 +73,16 @@ export function FormBody({
 	read,
 	empty,
 	failed,
+	frame: held,
 	in: within,
-}: FormProps & { in: FormIn }) {
-	const frame = useFrame(read);
+}: FormProps & {
+	in: FormIn;
+	// The frame its read was subscribed to by the parent that hoists the bar (a
+	// `Sheet`), which holds the read; the form then subscribes to none.
+	frame?: Frame;
+}) {
+	const subscribed = useFrame(held === undefined ? read : undefined);
+	const frame = held ?? subscribed;
 	const [own] = useTouchState();
 	const sheet = useTouched();
 	const touch = within === "sheet" ? sheet : own;

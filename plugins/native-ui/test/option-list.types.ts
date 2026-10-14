@@ -1,61 +1,67 @@
+import type { Datum, Selection } from "@fcalell/plugin-api/tanstack-query";
 import type {
 	OptionList,
 	OptionListProps,
-} from "../src/ui/components/option-list/index.tsx";
+} from "../src/ui/components/option-list";
 
 interface Scope {
 	id: string;
 	name: string;
 }
 
-const query = {
-	data: [] as Scope[],
-	isPending: false,
-	isError: false,
-	refetch: () => {},
-};
+declare const scopes: Selection<readonly Scope[]>;
 const option = {
 	value: (each: Scope) => each.id,
 	label: (each: Scope) => each.name,
 };
 const chosen = { value: [], onChange: () => {} };
 
-// an OptionList takes `query` with `option`, `sentence` and `empty`
+// an OptionList takes `items`, constants or a selection, with `option`
 {
 	const loaded: OptionListProps<string, Scope> = {
 		...chosen,
-		query,
+		items: scopes,
 		option,
-		sentence: "The scopes did not load.",
-		empty: "Nothing to grant.",
+	};
+	const constant: OptionListProps<string, Scope> = {
+		...chosen,
+		items: [],
+		option,
 	};
 	void loaded;
+	void constant;
 }
 
-// an OptionList takes static `options`, never beside a query
+// an OptionList takes static `options`, never beside `items`
 {
 	const fixed: OptionListProps = {
 		...chosen,
 		options: [{ value: "a", label: "A" }],
 	};
-	// @ts-expect-error: a static set and a query never together
+	// @ts-expect-error: a static set and items never together
 	const both: OptionListProps<string, Scope> = {
 		...chosen,
 		options: [],
-		query,
+		items: scopes,
 		option,
-		sentence: "x",
-		empty: "x",
 	};
 	void fixed;
 	void both;
 }
 
-// a query's OptionList names its failure and its empty sentence
+// items need their `option` map, and no query, sentence or loading remain
 {
-	// @ts-expect-error: a query needs its `sentence` and `empty`
-	const bare: OptionListProps<string, Scope> = { ...chosen, query, option };
+	// @ts-expect-error: items need their `option` map
+	const bare: OptionListProps<string, Scope> = { ...chosen, items: scopes };
+	const gone: OptionListProps<string, Scope> = {
+		...chosen,
+		items: scopes,
+		option,
+		// @ts-expect-error: the frame draws the failed and empty forms
+		sentence: "x",
+	};
 	void bare;
+	void gone;
 }
 
 // The component's own signatures, called as JSX calls them; never run.
@@ -65,11 +71,13 @@ const PLANS: { value: Plan; label: string }[] = [
 	{ value: "free", label: "Free" },
 	{ value: "pro", label: "Pro" },
 ];
-const plans = { ...query, data: [] as { id: Plan }[] };
+declare const plans: Selection<readonly { id: Plan }[]>;
+declare const picked: Selection<Plan | null>;
+declare const pickedSet: Selection<readonly Plan[]>;
 
 // one value or null types an inline `onChange` with one value
 {
-	const typed = (one: Plan | null) => [
+	const typed = (one: Datum<Plan | null>) => [
 		optionList({
 			options: PLANS,
 			value: one,
@@ -87,11 +95,17 @@ const plans = { ...query, data: [] as { id: Plan }[] };
 			},
 		}),
 		optionList({
-			query: plans,
+			options: PLANS,
+			value: picked,
+			onChange: (next) => {
+				const picked: Plan = next;
+				void picked;
+			},
+		}),
+		optionList({
+			items: plans,
 			option: { value: (each) => each.id, label: (each) => each.id },
-			sentence: "x",
-			empty: "x",
-			value: one,
+			value: null,
 			onChange: (next) => {
 				const picked: Plan = next;
 				void picked;
@@ -113,10 +127,16 @@ const plans = { ...query, data: [] as { id: Plan }[] };
 			},
 		}),
 		optionList({
-			query: plans,
+			options: PLANS,
+			value: pickedSet,
+			onChange: (next) => {
+				const picked: Plan[] = next;
+				void picked;
+			},
+		}),
+		optionList({
+			items: plans,
 			option: { value: (each) => each.id, label: (each) => each.id },
-			sentence: "x",
-			empty: "x",
 			value: set,
 			onChange: (next) => {
 				const picked: Plan[] = next;

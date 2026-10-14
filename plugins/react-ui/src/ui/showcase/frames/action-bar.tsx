@@ -56,7 +56,8 @@ const LOGIN: Drawn = {
 // cell a destructive secondary beside the filled act, the full fit and the
 // field fit a login's one act, the meta cell a selection bar's count over a
 // list. `loading` draws the filled act pending, `disabled` it blocked with
-// its reason at rest under the acts.
+// its reason at rest under the acts. A bar whose data is not here paints in a
+// Form's or a Sheet's drawer, where the frame's read waits.
 function drawnOf(cell: string): Drawn {
 	if (cell === "BUTTON.act.danger" || cell === "BUTTON_LABEL.act.danger")
 		return CONFIRM;
@@ -68,18 +69,6 @@ function drawnOf(cell: string): Drawn {
 	if (cell === "ACTION_BAR.fit.full" || cell === "BUTTON.fit.field")
 		return LOGIN;
 	return SAVE;
-}
-
-/** A bar of two acts loaded, and the bar waiting for one and for two. */
-export function Waiting(props: { fit: ActionBarFit }) {
-	const { fit } = props;
-	return (
-		<div className="flex flex-col gap-fields">
-			<ActionBar fit={fit} acts={SAVE.acts} />
-			<ActionBar fit={fit} acts={[]} loading />
-			<ActionBar fit={fit} acts={[]} loading={2} />
-		</div>
-	);
 }
 
 const PENDING = { sentence: "Merging the change" };
@@ -148,13 +137,6 @@ export function drawActionBar(frame: ShowcaseFrame) {
 				},
 	);
 	const bar = <ActionBar fit={fit} acts={drawn} />;
-	if (frame.state === "loading")
-		return (
-			<div className="flex flex-col gap-sections">
-				{bar}
-				<Waiting fit={fit} />
-			</div>
-		);
 	if (frame.cell.name === "BUTTON.fit.body" && frame.state === "rest")
 		return (
 			<div className="flex flex-col gap-sections">

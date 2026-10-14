@@ -1,24 +1,22 @@
 import { Field } from "@base-ui/react/field";
 import { Radio } from "@base-ui/react/radio";
 import { RadioGroup } from "@base-ui/react/radio-group";
+import {
+	type Datum,
+	useDraft,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type { Option, OptionGroup } from "@fcalell/ui-core/descriptors";
 import {
 	choose,
 	chosenOf,
-	isOneChoice,
-	listBusy,
-	listState,
-	type OneChoice,
 	type OptionChoice,
 	type OptionSlots,
 	optionBlocked,
-	optionShape,
 	optionsOf,
-	optionsShape,
-	retryOf,
-	type SetChoice,
 } from "@fcalell/ui-core/list-state";
+import { PAINT_ROWS } from "@fcalell/ui-core/paint";
 import {
 	lineBox,
 	OPTION_CHILDREN,
@@ -38,14 +36,10 @@ import {
 import { Fragment, type ReactNode, use, useId } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { GroupName } from "../../lib/field.ts";
-import { OptionWait } from "../../lib/option-wait.tsx";
+import { PAINT_CONTROL, Painted } from "../../lib/paint.tsx";
 import { useWords } from "../../lib/words.tsx";
-import { Button } from "../button/index.tsx";
-import { ButtonLink } from "../button/link.tsx";
 import { CheckboxBase } from "../checkbox/base.tsx";
 import { Chip } from "../chip/index.tsx";
-import { useBackAct } from "../missing/base.tsx";
-import type { QueryLike } from "../query-boundary/index.tsx";
 
 const LIST = "flex flex-col";
 const GROUP = "flex flex-col";
@@ -75,35 +69,21 @@ const RADIO =
 const CHILDREN = "flex";
 const INDENT = "shrink-0";
 const CHILDREN_BODY = "flex flex-col grow min-w-0";
-// The failed, missing and empty lines: the sentence, and Retry or Back at its
-// end.
-const NOTE = "flex items-center";
-const SENTENCE = "min-w-0 grow shrink-10000000";
 
 /** Where an OptionList's options come from. */
 type OptionSource<T, V extends string> =
 	| {
-			/** The choices, flat or under group labels. */
+			/** The choices, flat or under group labels. They are constants: they never paint. */
 			options: readonly Option<V>[] | readonly OptionGroup<V>[];
-			/** The options wait: skeleton rows stand in for them. */
-			loading?: boolean;
-			/** The card's line with no option; without it an empty set draws an empty card (a sentence; wraps). */
-			empty?: string;
-			query?: never;
+			items?: never;
 			option?: never;
-			sentence?: never;
 	  }
 	| {
-			/** The query whose items the check rows draw. */
-			query: QueryLike<readonly T[]>;
-			/** One function per check row slot, each called with a loaded item; the slots given are the shape the waiting rows draw. */
+			/** The items the check rows draw, constants or a selection. While its read waits, `PAINT_ROWS` rows paint in the slots `option` declares, inert. */
+			items: Datum<readonly T[]>;
+			/** One function per check row slot, each called with an item; the slots given are the shape the painted rows draw. */
 			option: OptionSlots<T, V>;
-			/** What failed to load, beside the retry act (a sentence; wraps). */
-			sentence: string;
-			/** The card's line when the query answers with no item (a sentence; wraps). */
-			empty: string;
 			options?: never;
-			loading?: never;
 	  };
 
 type OptionListBase<V extends string, T> = OptionSource<T, V> & {
@@ -111,10 +91,24 @@ type OptionListBase<V extends string, T> = OptionSource<T, V> & {
 	children?: ReactNode;
 };
 
-/** One choice or several from one list, static or from a query: `value` one value or null draws radio rows, a set check rows. `V` is read off the options or the `option` map's `value`. */
+/** One choice: the chosen value or null. A selection paints the radios, inert, until its read lands and follows it until the viewer chooses. */
+interface OneChoice<V extends string> {
+	value: Datum<NoInfer<V> | null>;
+	/** Hears the option chosen. */
+	onChange: (value: V) => void;
+}
+
+/** Several choices: the chosen set. A selection of it paints as one choice, the placeholder being no array. */
+interface SetChoice<V extends string> {
+	value: Datum<readonly NoInfer<V>[]>;
+	/** Hears the whole chosen set after a toggle. */
+	onChange: (value: V[]) => void;
+}
+
+/** One choice or several from one list, static or from items: `value` one value or null draws radio rows, a set check rows. `V` is read off the options or the `option` map's `value`. */
 export type OptionListProps<V extends string = string, T = unknown> = Closed &
 	OptionListBase<V, T> &
-	OptionChoice<V>;
+	(OneChoice<V> | SetChoice<V>);
 
 function groupsOf<V extends string>(
 	options: readonly Option<V>[] | readonly OptionGroup<V>[],
@@ -123,6 +117,21 @@ function groupsOf<V extends string>(
 	if (first === undefined || !("options" in first))
 		return [{ options: options as readonly Option<V>[] }];
 	return options as readonly OptionGroup<V>[];
+}
+
+// The rows a waiting `items` paints: `PAINT_ROWS` options, in one group when
+// the map declares `group`. Which slots it declares is read by key, none run:
+// the filler decides nothing but the shape, a label over the group and a
+// description under each label.
+function paintedGroups<V extends string>(
+	slots: { description?: unknown; group?: unknown } = {},
+): readonly Option<V>[] | readonly OptionGroup<V>[] {
+	const options = Array.from({ length: PAINT_ROWS }, (_, at) => ({
+		value: `painted-${at}` as V,
+		label: "",
+		description: slots.description === undefined ? undefined : "",
+	}));
+	return slots.group === undefined ? options : [{ label: "", options }];
 }
 
 function GroupLabel(props: { children: ReactNode }) {
@@ -139,7 +148,7 @@ function GroupLabel(props: { children: ReactNode }) {
 	);
 }
 
-/** Option rows on a hairline card, each the Checkbox (several choices) or the radio (one choice, a radiogroup) on its label's first line, a description and the recommended mark on the line under it; the row under the pointer washes, the checked box or the ringed dot is the choice. The children stand under the first chosen option. From a query it draws its states in the card: waiting rows in the slots `option` declares, a failed line with `sentence` and Retry, a line saying it no longer exists with Back (never Retry) when the query answers not found, the `empty` sentence, then the rows. */
+/** Option rows on a hairline card, each the Checkbox (several choices) or the radio (one choice, a radiogroup) on its label's first line, a description and the recommended mark on the line under it; the row under the pointer washes, the checked box or the ringed dot is the choice. The children stand under the first chosen option. Static `options` never paint; `items` paint `PAINT_ROWS` rows in the slots `option` declares while their read waits, and a `value` selection paints the marks, inert. The frame that holds the read draws its failed, missing and empty forms. */
 export function OptionList<V extends string = string, T = unknown>(
 	props: Closed & OptionListBase<V, T> & OneChoice<V>,
 ): ReactNode;
@@ -154,80 +163,27 @@ export function OptionList<V extends string = string, T = unknown>(
 ) {
 	const { children } = props;
 	const words = useWords();
-	const back = useBackAct();
 	const ids = useId();
 	const named = use(GroupName);
-	const input = {
-		query: props.query,
-		items: props.options,
-		loading: props.loading,
-		sectionLoading: false,
-		hasEmpty: props.empty !== undefined,
-	};
-	const state = listState(input);
-	const one = isOneChoice(props);
-	const frame = (body: ReactNode) => (
-		// biome-ignore lint/a11y/useSemanticElements: a group of rows, not a form's fieldset
-		<div
-			role="group"
-			aria-busy={listBusy(input) || undefined}
-			aria-labelledby={named?.labelledBy}
-			className={cn(OPTION_LIST, LIST)}
-		>
-			{body}
-		</div>
-	);
-	if (state === "pending")
-		return frame(
-			<OptionWait
-				shape={
-					props.option ? optionShape(props.option) : optionsShape(props.options)
-				}
-				mark={one ? "radio" : "check"}
-			/>,
-		);
-	if (state === "missing")
-		return frame(
-			<div className={cn(row({ lines: "one" }), OPTION_ROW, NOTE)}>
-				<span className={cn(text({ role: "meta" }), SENTENCE)}>
-					{words.missing}
-				</span>
-				{back ? (
-					<ButtonLink fit="bar" label={back.label} href={back.href} />
-				) : null}
-			</div>,
-		);
-	if (state === "failed" && props.query !== undefined)
-		return frame(
-			<div className={cn(row({ lines: "one" }), OPTION_ROW, NOTE)}>
-				<span className={cn(text({ role: "meta" }), SENTENCE)}>
-					{props.sentence}
-				</span>
-				<Button
-					act="secondary"
-					fit="bar"
-					label={words.retry}
-					onAct={retryOf(props.query)}
-				/>
-			</div>,
-		);
-	if (state === "empty")
-		return frame(
-			<p
-				className={cn(
-					row({ lines: "one" }),
-					OPTION_ROW,
-					NOTE,
-					text({ role: "meta" }),
-				)}
-			>
-				{props.empty}
-			</p>,
-		);
-	const options = props.query
-		? optionsOf(props.query.data ?? [], props.option)
-		: props.options;
-	const chosenValues = chosenOf(props);
+	const [given] = useSelections([props.items] as const);
+	const draft = useDraft<V | null | readonly V[]>(props.value);
+	// The rows paint while their items wait; the marks paint too while the
+	// value does, the labels then standing.
+	const rowsPaint = given.painted;
+	const painted = rowsPaint || draft.painted;
+	// The placeholder is no array, so a painted value is one choice.
+	const one = !Array.isArray(draft.value);
+	const choice = {
+		value: draft.painted ? (one ? null : []) : draft.value,
+		onChange: (next: V | V[]) => {
+			draft.edit(next);
+			(props.onChange as (value: V | V[]) => void)(next);
+		},
+	} as OptionChoice<V>;
+	const options = rowsPaint
+		? paintedGroups<V>(props.option)
+		: (props.options ?? optionsOf(given.value as readonly T[], props.option));
+	const chosenValues = painted ? [] : chosenOf(choice);
 	const first = chosenValues[0];
 	const rows = groupsOf(options).map((group, at) => (
 		// biome-ignore lint/a11y/useSemanticElements: a group of rows, not a form's fieldset
@@ -237,22 +193,30 @@ export function OptionList<V extends string = string, T = unknown>(
 			aria-label={group.label}
 			className={cn(SELECT_GROUP, GROUP)}
 		>
-			{group.label ? <GroupLabel>{group.label}</GroupLabel> : null}
+			{group.label === undefined ? null : (
+				<GroupLabel>
+					{rowsPaint ? <Painted role="word" /> : group.label}
+				</GroupLabel>
+			)}
 			{group.options.map((option, place) => {
 				const chosen = chosenValues.includes(option.value);
 				const blocked = optionBlocked(option, chosen);
 				const meta = blocked ?? option.description;
-				const marked = meta || option.recommended;
+				// A painted row is marked when the map declares a description.
+				const marked = rowsPaint
+					? option.description !== undefined
+					: meta || option.recommended;
 				const target = { labelledBy: `${ids}-${at}-${place}` };
 				return (
 					<Fragment key={option.value}>
 						{/* biome-ignore lint/a11y/noLabelWithoutControl: the Checkbox or the radio inside is its control */}
 						<label
+							inert={painted || undefined}
 							className={cn(
 								row({ lines: marked ? "two" : "whole" }),
 								OPTION_ROW,
 								OPTION,
-								blocked === undefined && PRESS,
+								blocked === undefined && !painted && PRESS,
 								!marked && OPTION_WHOLE,
 							)}
 						>
@@ -268,6 +232,7 @@ export function OptionList<V extends string = string, T = unknown>(
 													state: chosen ? "checked" : "unchecked",
 												}),
 												RADIO,
+												painted && PAINT_CONTROL,
 											)}
 										>
 											<Radio.Indicator className={OPTION_RADIO_DOT} />
@@ -280,8 +245,9 @@ export function OptionList<V extends string = string, T = unknown>(
 											<CheckboxBase
 												target={target}
 												checked={chosen}
-												onChange={() => choose<V>(props, option.value)}
+												onChange={() => choose(choice, option.value)}
 												label={option.label}
+												painted={painted}
 											/>
 										</Field.Root>
 									)}
@@ -295,10 +261,18 @@ export function OptionList<V extends string = string, T = unknown>(
 												blocked !== undefined && BLOCKED_INK,
 											)}
 										>
-											{option.label}
+											{rowsPaint ? (
+												<Painted role="phrase" at={place} />
+											) : (
+												option.label
+											)}
 										</span>
 										<span className={cn(ROW_META_LINE, DESCRIPTION_LINE)}>
-											{meta ? (
+											{rowsPaint ? (
+												<span className={text({ role: "meta" })}>
+													<Painted role="phrase" at={place + 1} />
+												</span>
+											) : meta ? (
 												<span
 													className={cn(
 														text({ role: "meta" }),
@@ -318,7 +292,11 @@ export function OptionList<V extends string = string, T = unknown>(
 										id={target.labelledBy}
 										className={cn(text({ role: "body" }), LABEL)}
 									>
-										{option.label}
+										{rowsPaint ? (
+											<Painted role="phrase" at={place} />
+										) : (
+											option.label
+										)}
 									</span>
 								)}
 							</span>
@@ -334,15 +312,26 @@ export function OptionList<V extends string = string, T = unknown>(
 			})}
 		</div>
 	));
-	if (!one) return frame(rows);
+	if (!one) {
+		return (
+			// biome-ignore lint/a11y/useSemanticElements: a group of rows, not a form's fieldset
+			<div
+				role="group"
+				aria-labelledby={named?.labelledBy}
+				className={cn(OPTION_LIST, LIST)}
+			>
+				{rows}
+			</div>
+		);
+	}
 	// One choice is a radiogroup: Base UI moves between its radios by the
 	// arrows and chooses the one it reaches. Null, not undefined, keeps it
 	// controlled while nothing is chosen.
 	return (
 		<RadioGroup<V | null>
-			value={props.value}
+			value={choice.value as V | null}
 			onValueChange={(next) => {
-				if (next !== null) choose<V>(props, next);
+				if (next !== null) choose(choice, next);
 			}}
 			aria-labelledby={named?.labelledBy}
 			className={cn(OPTION_LIST, LIST)}

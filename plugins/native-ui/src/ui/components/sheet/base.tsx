@@ -357,6 +357,10 @@ export interface SheetBaseProps {
 	read?: Selection<unknown>;
 	// The body's sentence when the `read` is empty.
 	empty?: EmptyProps;
+	// The form in the body holds its own read, and it waits: the form's bar,
+	// hoisted into the foot, paints with it (its frame is `Sheet`'s, handed down
+	// to the form).
+	painted?: boolean;
 	// An act pends: the close act, the scrim and the drag are inert.
 	busy?: boolean;
 	children?: ReactNode;
@@ -393,6 +397,7 @@ export function SheetBase({
 	busy,
 	read,
 	empty,
+	painted,
 	children,
 }: SheetBaseProps) {
 	const frame = useFrame(read);
@@ -447,7 +452,7 @@ export function SheetBase({
 		fit,
 		foot,
 		failed,
-		painted: frame.waits,
+		painted: frame.waits || painted,
 		acts,
 		bar,
 		above,

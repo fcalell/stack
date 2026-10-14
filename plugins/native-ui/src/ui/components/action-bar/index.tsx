@@ -14,13 +14,6 @@ export interface ActionBarProps extends Closed {
 	// `onAll` a select-all and a deselect-all act beside it. Docked as a
 	// `Pane`'s `foot`, its column centred in it.
 	chosen?: ChosenCount;
-	// The acts wait: a count of act-shaped bars, `true` standing for one (the
-	// acts are unknown before the read, so give `acts` as `[]`). A number from 1
-	// is the count of acts the bar will hold, and 0 or `false` is not waiting,
-	// so `loading={rows?.length}` reads the loaded bar at 0. Unset, a loading
-	// `Group` or `Section` around it makes it wait, as one act: it hands down a
-	// boolean, so set the count on the bar itself.
-	loading?: boolean | number;
 	// The server works on a decision: a `PendingBar` takes the bar's place at
 	// the bar's own loaded height, the acts kept under it unseen and out of
 	// reach. A `PendingBar` alone is for a place that held no bar. A pending

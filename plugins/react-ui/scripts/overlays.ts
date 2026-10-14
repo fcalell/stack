@@ -116,7 +116,6 @@ export const OVERLAYS: readonly string[] = [
 	"data-disabled:bg-fill-disabled",
 	"inline-flex",
 	"justify-start",
-	"min-h-control",
 	"min-h-target",
 	"min-w-target",
 	"size-target",

@@ -5,11 +5,8 @@ import {
 	chosenOf,
 	isOneChoice,
 	type OneChoice,
-	type OptionSlots,
 	optionBlocked,
-	optionShape,
 	optionsOf,
-	optionsShape,
 	type SetChoice,
 } from "../src/list-state.ts";
 
@@ -26,31 +23,6 @@ const SCOPES: Scope[] = [
 	{ id: "issues", name: "Issues", area: "Planning" },
 	{ id: "write", name: "Write repos", area: "Code", suggested: true },
 ];
-
-test("a pending OptionList whose option declares no description draws one-line skeleton rows", () => {
-	const option: OptionSlots<Scope, string> = {
-		value: (scope) => scope.id,
-		label: (scope) => scope.name,
-	};
-	assert.deepEqual(optionShape(option), { description: false, group: false });
-	assert.deepEqual(
-		optionShape({ ...option, description: (scope: Scope) => scope.about }),
-		{ description: true, group: false },
-	);
-});
-
-test("a static set waits in the shape its options hold", () => {
-	assert.deepEqual(optionsShape([{ value: "a", label: "A" }]), {
-		description: false,
-		group: false,
-	});
-	assert.deepEqual(
-		optionsShape([
-			{ label: "G", options: [{ value: "a", label: "A", description: "d" }] },
-		]),
-		{ description: true, group: true },
-	);
-});
 
 test("a query's items project into options, grouped in first-seen order", () => {
 	assert.deepEqual(

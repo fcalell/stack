@@ -1,7 +1,6 @@
 import { Button as BaseButton } from "@base-ui/react/button";
 import { cn } from "@fcalell/ui-core/cn";
 import type { Act } from "@fcalell/ui-core/descriptors";
-import { waitCount } from "@fcalell/ui-core/list-state";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
 	ACTION_BAR_ACTS,
@@ -16,7 +15,6 @@ import {
 } from "@fcalell/ui-core/variants";
 import { use, useState } from "react";
 import { ActInert, FormContext, SubmitContext } from "../../lib/form.ts";
-import { LoadingContext } from "../../lib/loading.ts";
 import { useTouch } from "../../lib/media.ts";
 import {
 	ActFailed,
@@ -29,7 +27,6 @@ import { ButtonBase } from "../button/base.tsx";
 import { Reason } from "../button/reason.tsx";
 import { PendingBar } from "../pending-bar/index.tsx";
 import type { ActionBarProps } from "./index.tsx";
-import { ActionBarWait } from "./wait.tsx";
 
 // End: the acts at their width at the container's end, wrapped to a further
 // row (the filled act last) when they need more than the container. Full: the
@@ -123,7 +120,6 @@ export function ActionBarBase({
 	acts,
 	fit,
 	chosen,
-	loading,
 	pending,
 	kept,
 	painted,
@@ -143,8 +139,6 @@ export function ActionBarBase({
 	if (reason !== undefined && held !== reason) setHeld(reason);
 	const busy = running || acts.some((act) => act.loading);
 	const lastAt = acts.length - 1;
-	const waits = waitCount(loading, use(LoadingContext), 1);
-	if (waits !== undefined) return <ActionBarWait fit={where} count={waits} />;
 	// The tree holds the acts in drawn order, so Tab follows it: on touch the
 	// stack draws the filled act first.
 	const ordered = acts.map((act, at) => [act, at] as const);

@@ -34,7 +34,6 @@
 		"./lib/not-found": "./src/ui/lib/not-found.tsx",
 		"./lib/paint": "./src/ui/lib/paint.tsx",
 		"./lib/read": "./src/ui/lib/read.tsx",
-		"./lib/option-wait": "./src/ui/lib/option-wait.tsx",
 		"./lib/words": "./src/ui/lib/words.tsx",
 		"./lib/*": "./src/ui/lib/*.ts",
 		"./showcase/foundations": "./src/ui/showcase/foundations.tsx",

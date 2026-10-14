@@ -46,16 +46,11 @@ const LONG = [
 	{ value: "long", label: SENTENCE },
 ];
 
-function Sized(props: { width: number; loading?: boolean }) {
+function Sized(props: { width: number }) {
 	const [value, setValue] = useState<string[]>([]);
 	return (
 		<div style={{ width: props.width, maxWidth: "100%" }}>
-			<OptionList
-				options={props.loading ? [] : LONG}
-				loading={props.loading}
-				value={value}
-				onChange={setValue}
-			/>
+			<OptionList options={LONG} value={value} onChange={setValue} />
 		</div>
 	);
 }
@@ -95,31 +90,6 @@ export const LabelWraps390 = wraps(390);
 export const LabelWraps768 = wraps(768);
 export const LabelWraps1440 = wraps(1440);
 
-// A short label's row is as tall as its waiting row, at each width.
-function keepsHeight(width: number): StoryObj {
-	return {
-		render: () => (
-			<>
-				<Sized width={width} />
-				<Sized width={width} loading />
-			</>
-		),
-		play: async ({ canvas, canvasElement }) => {
-			const short = (await canvas.findByText("Stop here")).closest("label");
-			const waiting = canvasElement.querySelector('[aria-hidden="true"] > div');
-			if (!short || !waiting) throw new Error("no rows");
-			await expect(short.getBoundingClientRect().height).toBeCloseTo(
-				waiting.getBoundingClientRect().height,
-				1,
-			);
-		},
-	};
-}
-
-export const ShortRowKeepsWaitingHeight375 = keepsHeight(375);
-export const ShortRowKeepsWaitingHeight768 = keepsHeight(768);
-export const ShortRowKeepsWaitingHeight1440 = keepsHeight(1440);
-
 // Several choices are checkboxes, each in the tab order and toggled by Space.
 export const Checks: StoryObj = {
 	render: () => <Several />,
@@ -151,12 +121,6 @@ const ROWS = AGENTS.map((agent) => ({
 	about: "description" in agent ? agent.description : undefined,
 	why: "blocked" in agent ? agent.blocked : undefined,
 }));
-const QUERY = {
-	data: ROWS,
-	isPending: false,
-	isError: false,
-	refetch: () => {},
-};
 const SLOTS = {
 	value: (row: (typeof ROWS)[number]) => row.id,
 	label: (row: (typeof ROWS)[number]) => row.name,
@@ -168,7 +132,7 @@ function Agents(props: { width: number; several: boolean; queried: boolean }) {
 	const [many, setMany] = useState<string[]>(["editor"]);
 	const [one, setOne] = useState<string | null>("editor");
 	const source = props.queried
-		? { query: QUERY, option: SLOTS, sentence: "Did not load.", empty: "None." }
+		? { items: ROWS, option: SLOTS }
 		: { options: AGENTS };
 	return (
 		<div style={{ width: props.width, maxWidth: "100%" }}>
@@ -191,7 +155,7 @@ const disabled = (element: HTMLElement) =>
 // A blocked option takes no press and leads its meta line with its reason in
 // the disabled ink, in a two-line row; a blocked option in the value draws and
 // acts as any chosen one (no reason), and once removed is blocked again, from
-// a static set or a query's `option` map alike.
+// a static set or the `option` map over items alike.
 function blocks(width: number, several: boolean, queried = false): StoryObj {
 	const role = several ? "checkbox" : "radio";
 	return {
