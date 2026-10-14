@@ -9,8 +9,10 @@ import {
 	answer,
 	emptyOf,
 	findFixture,
+	holdCalls,
 	mustBeMocked,
 	procedurePath,
+	release,
 	type ScreenState,
 } from "../src/ui/answer.ts";
 
@@ -128,7 +130,7 @@ test("a mutation under a forced state with no fixture answers which one is missi
 	assert.equal(error.message, "no fixture for projects.missing");
 });
 
-test("loading never settles a query, and a mutation still settles", async () => {
+test("loading holds a query until release, and a mutation still settles", async () => {
 	const settled = Symbol("settled");
 	const race = (method: string) =>
 		Promise.race([
@@ -142,6 +144,17 @@ test("loading never settles a query, and a mutation still settles", async () => 
 		]);
 	assert.equal(await race("GET"), settled);
 	assert.notEqual(await race("POST"), settled);
+	const held = answer(
+		new Request("http://localhost:6006/rpc/projects/list"),
+		"/rpc",
+		tree,
+		"loading",
+	);
+	release();
+	assert.equal((await held).status, 200);
+	assert.notEqual(await race("GET"), settled);
+	holdCalls();
+	assert.equal(await race("GET"), settled);
 });
 
 test("empty answers a collection with none, a page with no rows, and a record as it is", async () => {

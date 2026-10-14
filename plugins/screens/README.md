@@ -75,7 +75,7 @@ proxy or port) and returns its path, for Storybook's `viteConfigPath` and Vite's
   in the app's `virtual:stack-providers`, at the route's full path with its params filled from the
   fixtures, after the entry's own `bindRouter` calls.
 - **The answers.** MSW answers every call under the worker's route prefixes in oRPC's wire format
-  from the fixtures: data is the fixture, loading never settles, error is `INTERNAL_SERVER_ERROR`,
+  from the fixtures: data is the fixture, loading holds its queries until the test run's `release()` (the workbench never calls it), error is `INTERNAL_SERVER_ERROR`,
   not found is `NOT_FOUND`, empty is derived from the value (an array answers `[]`, a
   `{ data, nextCursor }` page its envelope with no rows, a record as it is). A forced state applies
   to every call the screen makes. A request outside the answered prefixes that reaches for another

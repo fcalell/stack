@@ -24,7 +24,7 @@ fixture, whatever the state.
 | State | What the screen's queries get |
 | --- | --- |
 | data | The fixture's value |
-| loading | No answer, ever |
+| loading | No answer until the test run releases it, then the fixture's value (the workbench never releases it, so the story stays waiting) |
 | error | A server error |
 | empty | The fixture's value with no items: an array becomes `[]`, a `{ data, nextCursor }` page keeps its envelope with no rows, and a record has no empty form (it answers as it is) |
 | not found | A `NOT_FOUND` error, which `isNotFound(error)` from `@fcalell/plugin-api/client` tests |
@@ -72,10 +72,29 @@ children through `<Outlet />`; without it a screen under the parent shows an emp
 - a horizontal overflow at 320, 1280 or 1920 px (320 draws the touch density, 1280 and 1920 the
   desktop one, as a phone and a laptop do);
 - a finding of the render walk, below;
-- a console error or warning.
+- a console error or warning;
+- a shift of the loading story (below).
 
 A failure names the screen, the state and the mode. A screen is drawn in five states and two modes
 (light and dark), and the run visits each at the three widths.
+
+### The loading shift
+
+A Section stands whatever its data holds, so the page must not jump when the data arrives. In a
+Loading story the run measures each Section at each width while the calls are held, answers them,
+waits until nothing is `aria-busy` (a button's own busy excepted) and the page has settled, and
+measures again. Per Pane, and per column of Sections side by side in it, it reports:
+
+- a Section that stood while waiting and is gone loaded;
+- the first Section moving at all (what stands above it changed height);
+- a later Section moving by other than what the Sections above it grew by;
+- a Section changing height with no rows, chart or text in it, in either form;
+- a Section that was not there arriving above one that was.
+
+The fix is in the waiting form: draw it at the loaded form's height, in the same places (a Section
+whose rows are unknown holds a row count, the rest holds its size). `shift.ts` holds the
+measurement and `compare`. For now the findings are logged (`console.info`) and fail nothing;
+`SHIFT_FAILS` in `floors.ts` turns them into failures.
 
 ### The render walk
 

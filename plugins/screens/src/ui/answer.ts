@@ -83,17 +83,41 @@ export function procedurePath(url: string, prefix: string): string[] {
 		.map(decodeURIComponent);
 }
 
+// The loading state holds its calls on this promise. Nothing releases it in the
+// workbench, so a Loading story stays waiting; the test run releases it to
+// measure the loaded form of the same screen, and holds again before the next
+// story. A release stays open, so the reads that follow the first ones (a
+// query that waits on another's answer) are answered too.
+let hold = Promise.resolve();
+let open = () => {};
+
+export function holdCalls(): void {
+	hold = new Promise<void>((resolve) => {
+		open = resolve;
+	});
+}
+holdCalls();
+
+// Answers the calls held, and the ones after, as data.
+export function release(): void {
+	open();
+}
+
 // One call to a procedure, answered for the story's state. A state applies to
 // a query, which stack's client sends as GET; a mutation (a POST) always
-// answers from its fixture, as the story records. Loading never settles.
+// answers from its fixture, as the story records. Loading holds a query until
+// `release`, then answers it as data.
 export async function answer(
 	request: Request,
 	prefix: string,
 	tree: unknown,
 	story: ScreenState,
 ): Promise<Response> {
-	const state = request.method === "GET" ? story : "data";
-	if (state === "loading") return new Promise<Response>(() => {});
+	let state = request.method === "GET" ? story : "data";
+	if (state === "loading") {
+		await hold;
+		state = "data";
+	}
 	if (state === "error")
 		return replyError(new ORPCError("INTERNAL_SERVER_ERROR"));
 	if (state === "notFound") return replyError(new ORPCError("NOT_FOUND"));

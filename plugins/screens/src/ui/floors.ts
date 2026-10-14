@@ -3,8 +3,10 @@ import type { Preview } from "@storybook/react-vite";
 import { expect, inject } from "vitest";
 import { page } from "vitest/browser";
 import { HEIGHT, WIDTHS } from "../widths.ts";
+import { holdCalls, release as releaseHold } from "./answer.ts";
 import { unpinned } from "./globals.ts";
 import { overflowError } from "./overflow.ts";
+import { compare, measure, type SectionBox } from "./shift.ts";
 import {
 	densityMark,
 	findings,
@@ -37,6 +39,12 @@ const widths = (): number[] => {
 // first time, the animations the mount started have ended too.
 const STABLE_FRAMES = 3;
 const MAX_FRAMES = 90;
+const LOAD_TIMEOUT = 5000;
+
+// Whether a shift fails the screen. Until the waiting forms are the painted
+// ones (the migration's last unit), the old skeletons move the page, so a
+// shift is logged for the run to show and fails nothing.
+const SHIFT_FAILS = false;
 
 const frame = () =>
 	new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
@@ -59,6 +67,22 @@ async function settle(animations: boolean): Promise<void> {
 		last = now;
 	}
 	if (animations) await settled();
+}
+
+// What a read holds busy: not a button, whose busy is its own action in
+// flight (a demo of one stays so), only a region or a list waiting for data.
+const READ_BUSY = '[aria-busy="true"]:not(button, [role="button"])';
+
+// Once the held reads are answered: nothing busy, and the page settled.
+async function loaded(): Promise<string | undefined> {
+	const end = performance.now() + LOAD_TIMEOUT;
+	while (document.querySelector(READ_BUSY)) {
+		if (performance.now() > end)
+			return `still busy: ${[...document.querySelectorAll(READ_BUSY)].map((e) => e.outerHTML.slice(0, 160)).join(" | ")}`;
+		await frame();
+	}
+	await settle(true);
+	return undefined;
 }
 
 let logged: string[] = [];
@@ -126,20 +150,25 @@ function unpin(): { any: boolean; reread: () => void; restore: () => void } {
 }
 
 // The screen at each width, back at the size it started with: the horizontal
-// overflow, then the walk once the width has settled.
-async function visit(): Promise<string[]> {
+// overflow, then the walk once the width has settled. A loading story also
+// has each width's Sections measured, its held calls answered, and the
+// Sections measured again: they must not have moved (`shift.ts`).
+async function visit(loading: boolean): Promise<string[]> {
 	const { innerWidth, innerHeight } = window;
 	const failures: string[] = [];
+	const shifts: string[] = [];
 	// The screen first finishes mounting at the size it has: a store that
 	// watches the viewport (the density's media query) is wired as it mounts.
 	await settle(true);
 	const pins = unpin();
 	const marks = new Map<number, string>();
+	const waiting = new Map<number, SectionBox[]>();
 	try {
 		for (const [index, width] of widths().entries()) {
 			await page.viewport(width, HEIGHT);
 			pins.reread();
 			await settle(false);
+			if (loading) waiting.set(width, measure());
 			const scrollWidth = Math.max(
 				document.documentElement.scrollWidth,
 				document.body.scrollWidth,
@@ -153,10 +182,27 @@ async function visit(): Promise<string[]> {
 				),
 			);
 		}
+		if (loading) {
+			releaseHold();
+			const busy = await loaded();
+			if (busy) shifts.push(`shift: ${busy}`);
+			for (const [width, before] of waiting) {
+				await page.viewport(width, HEIGHT);
+				pins.reread();
+				await settle(false);
+				shifts.push(
+					...compare(before, measure()).map(
+						(line) => `at ${width}px, shift: ${line}`,
+					),
+				);
+			}
+		}
 	} finally {
 		pins.restore();
 		await page.viewport(innerWidth, innerHeight);
 	}
+	if (SHIFT_FAILS) failures.push(...shifts);
+	else for (const line of shifts) console.info(line);
 	// The phone width draws the touch set and the wider ones the desktop one: a
 	// run that visits both and draws one set at all of them did not unpin.
 	const wide = [...marks].filter(([width]) => width >= WIDTHS[1]);
@@ -189,11 +235,12 @@ const floors: Preview = {
 		},
 	},
 	beforeEach: () => {
+		holdCalls();
 		capture();
 		watchFirstPaint(document.getElementById("storybook-root") ?? document.body);
 	},
-	afterEach: async () => {
-		const failures = await visit();
+	afterEach: async ({ tags }) => {
+		const failures = await visit(tags.includes("state:loading"));
 		failures.push(...logged);
 		release();
 		// Soft: the test fails but the hooks after this one still run, so the a11y
