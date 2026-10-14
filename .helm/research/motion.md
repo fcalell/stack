@@ -154,10 +154,11 @@ once. Where a line's room is already held (an ActionBar's kept line), only the t
 
 ### wait: a read that lasts shows it
 
-The waiting system (`states.md` §5): undrawn for `WAIT_DELAY`, holding its place; drawn at least
-`WAIT_MIN`. The two numbers move from 200 and 500 ms to 400 and 800 ms (a read inside 400 ms, the
-common one, shows no waiting form; once shown, a form stays half a pulse), tuned live on the
-showcase before they land. Its look gains motion:
+The waiting system (`states.md` §5): a painted slot stands undrawn for `WAIT_DELAY` after it
+mounts, holding its place, with no minimum once drawn (its geometry is the loaded form's, so a
+short show changes paint only). The delay moves from 200 to 400 ms (a read inside 400 ms, the
+common one, shows no waiting form), tuned live on the showcase before it lands, a minimum among
+the sliders in case one proves needed. Its look gains motion:
 
 - **Appear.** When the delay runs out the waiting form fades in on `base` `out` (today it pops).
 - **Pulse.** Every skeleton bar breathes, opacity 1 to 0.55 and back over `pulse` on `in-out`, all
@@ -228,10 +229,10 @@ None (decided 2026-10-14): the phone answers by sight alone, as the web does.
 
 ### 4.1 One waiting path
 
-Decided in `states.md` (§3 to §5): the frame holding a read's root draws its states, one store
-per read key holds its value and runs the delay, the minimum, the veil and the settle for every
-leaf of that read (the value stays the placeholder until the settle, so all of them flip in one
-frame), and every frame of a read is named for the settle.
+Decided in `states.md` (§3 to §5): the frame holding a read's root draws its states, each leaf
+reads through its own TanStack observer, painted from the placeholder; one cache write flips
+every leaf of a read in one batch, and that batch flushes inside the settle (the notify batch
+hook); the delay is a fade on each painted slot; every frame of a read is named for the settle.
 
 ### 4.2 The loader: the loaded slot, painted by its kind
 
@@ -424,7 +425,7 @@ selected, disabled and error looks; a focus ring always snaps; reduced motion al
   DESIGN.md; c39 keeps every cell off layout.
 - **Web.** `lib/settle` becomes `lib/move` (the one coordinator for settles, blocks, toggles and
   navigation, gathering a frame's moves into one view transition, and running none while an
-  editable has focus); `view-transition-class` per
+  editable has focus; a read's first answer reaches it through plugin-api's notify batch hook); `view-transition-class` per
   move for its timing in `globals.css`; `Scramble`, `useRoll` and the pulse clock in `lib/`; the
   router's `defaultViewTransition`.
 - **Phone.** `lib/motion` gains `usePress`, `useToggle`, `useRoll`, `Scramble`, one pulse shared
@@ -462,3 +463,7 @@ character by character, at an edge counted rather than measured; text, scrambled
 arrives by the settle's crossfade. The settle runs no view transition while an editable has
 focus. A retried failure keeps its failed form with Retry pending. The placeholder is the
 output's shape alone.
+
+Revised again the same day: the read runs on TanStack's own observers (`states.md` §5); the
+wait is the delay alone, a fade on each painted slot, with no minimum unless the live tuning shows
+a flash.
