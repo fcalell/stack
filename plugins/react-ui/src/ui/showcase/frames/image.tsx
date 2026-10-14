@@ -1,7 +1,9 @@
 import type { ImageFit, ImageState } from "@fcalell/ui-core/variants";
 import { Image } from "../../components/image/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
+import { waitingText } from "../waiting.ts";
 import { press, Stage } from "./overlay-stage.tsx";
+import { isPaint } from "./painted.tsx";
 
 // A captured page, inline so the frame needs no asset pipeline.
 export const SCREEN = `data:image/svg+xml,${encodeURIComponent(
@@ -17,12 +19,12 @@ const COLUMN = "w-dialog max-w-full";
 
 function drawn(fit: ImageFit, state: ShowcaseFrame["state"]) {
 	const src = state === "error" ? BROKEN : SCREEN;
-	const loading = state === "loading" || undefined;
-	if (fit === "thumb")
-		return <Image src={src} alt={ALT} fit="thumb" loading={loading} />;
+	// The address a read has not answered: the tile paints.
+	const shown = state === "loading" ? waitingText : src;
+	if (fit === "thumb") return <Image src={shown} alt={ALT} fit="thumb" />;
 	return (
 		<div className={COLUMN}>
-			<Image src={src} alt={ALT} aspect={SCREEN_ASPECT} loading={loading} />
+			<Image src={shown} alt={ALT} aspect={SCREEN_ASPECT} />
 		</div>
 	);
 }
@@ -31,12 +33,19 @@ const pressPicture = (stage: HTMLElement) =>
 	requestAnimationFrame(() => press(stage.querySelector("button")));
 
 // `IMAGE.fit.<fit>` draws the picture at that fit in the frame's state
-// (`loading` the skeleton, `error` the failed form); `IMAGE.state.<state>` both fits in that state and
+// (`loading` the painted tile, `error` the failed form); `IMAGE.state.<state>` both fits in that state and
 // `IMAGE_PICTURE.fit.<fit>` the picture alone. The Close act's cell
 // (`ICON_BUTTON.fit.body`) draws the full view opened, contain-fit on the
 // scrim.
 export function drawImage(frame: ShowcaseFrame) {
 	const [family, axis, value] = frame.cell.name.split(".");
+	if (isPaint(frame))
+		return frame.state === "rest" ? (
+			<>
+				{drawn("thumb", "loading")}
+				{drawn("content", "loading")}
+			</>
+		) : undefined;
 	if (family === "ICON_BUTTON" && frame.state === "rest")
 		return (
 			<Stage contain ready={pressPicture}>

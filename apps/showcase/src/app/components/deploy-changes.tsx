@@ -1,4 +1,4 @@
-import { useRead } from "@fcalell/plugin-api/tanstack-query";
+import { type Selection, useRead } from "@fcalell/plugin-api/tanstack-query";
 import { Code } from "@fcalell/plugin-react-ui/components/code";
 import { Diff } from "@fcalell/plugin-react-ui/components/diff";
 import { List } from "@fcalell/plugin-react-ui/components/list";
@@ -75,23 +75,31 @@ function useChangedFiles(id: string, named: string | undefined) {
 }
 
 // A deploy's changes: the description's edit and the release notes it was
-// opened with, then the files and the build log from their own queries.
-export function DeployChanges(props: { deploy: OpenDeploy; file?: string }) {
-	const { deploy } = props;
-	const log = orpc.deploys.log.read({ id: deploy.id });
-	const files = useChangedFiles(deploy.id, props.file);
+// opened with, as selections of the deploy the Pane holds, then the files and
+// the build log from their own reads. A deploy that edited no description draws
+// the Section's empty form.
+export function DeployChanges(props: {
+	deploy: Selection<OpenDeploy>;
+	deployId: string;
+	file?: string;
+}) {
+	const { deploy, deployId } = props;
+	const log = orpc.deploys.log.read({ id: deployId });
+	const files = useChangedFiles(deployId, props.file);
 	return (
 		<>
-			{deploy.description ? (
-				<Section title="Description">
-					<ProseDiff
-						before={deploy.description.before}
-						after={deploy.description.after}
-					/>
-				</Section>
-			) : null}
+			<Section
+				title="Description"
+				read={deploy.at((each) => each.description)}
+				empty={{ sentence: "This deploy did not edit its description." }}
+			>
+				<ProseDiff
+					before={deploy.at((each) => each.description?.before ?? "")}
+					after={deploy.at((each) => each.description?.after ?? "")}
+				/>
+			</Section>
 			<Section title="Release notes">
-				<Prose markdown={deploy.notes} />
+				<Prose markdown={deploy.at((each) => each.notes)} />
 			</Section>
 			<Section
 				title="Changes"

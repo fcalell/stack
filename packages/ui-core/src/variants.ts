@@ -57,7 +57,6 @@ import {
 	PLACE_TAB_LABEL,
 	PROSE_DIFF_RUN,
 	PROSE_MARKER,
-	QR_CODE,
 	ROW,
 	ROW_STEP,
 	ROW_TITLE,
@@ -168,7 +167,6 @@ export const message = build(MESSAGE);
 export const meterFill = build(METER_FILL);
 export const chartBand = build(CHART_BAND);
 export const chartFill = build(CHART_FILL);
-export const qrCode = build(QR_CODE);
 export const stage = build(STAGE);
 export const stageMark = build(STAGE_MARK);
 export const stageRail = build(STAGE_RAIL);
@@ -279,7 +277,6 @@ export const FAMILIES: readonly Family[] = [
 	family("METER_FILL", METER_FILL, meterFill),
 	family("CHART_BAND", CHART_BAND, chartBand),
 	family("CHART_FILL", CHART_FILL, chartFill),
-	family("QR_CODE", QR_CODE, qrCode),
 	family("IMAGE", IMAGE, image),
 	family("IMAGE_PICTURE", IMAGE_PICTURE, imagePicture),
 	family("CANVAS_GROUP", CANVAS_GROUP, canvasGroup),
@@ -754,7 +751,8 @@ export const THREAD_COLUMN = "w-full max-w-measure";
 // foot while the reader is scrolled up: a lifted ground under the secondary
 // act's hairline, at its radius.
 export const THREAD_LATEST = "mb-pair rounded-control bg-raised shadow-float";
-// QrCode: the tile at the qr size inside a hairline on the surface.
+// QrCode: the tile at the qr size inside a hairline on the surface, the code's SVG scaled into it in the body ink (the tile is a light scope, so the modules are dark in both modes).
+export const QR_CODE = "size-full text-ink-body";
 export const QR_TILE = "size-qr rounded-card border border-edge bg-surface";
 // Stages: a rail of fixed states. A stage is its mark beside its words, the
 // words the label with one meta line under it; a hairline in the edge ink

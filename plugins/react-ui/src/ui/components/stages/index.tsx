@@ -1,6 +1,8 @@
+import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type { Stage, StageEnd, StepState } from "@fcalell/ui-core/descriptors";
 import { stagesShown } from "@fcalell/ui-core/list-state";
+import { PAINT_ROWS } from "@fcalell/ui-core/paint";
 import {
 	FIGURES,
 	lineBox,
@@ -16,6 +18,7 @@ import {
 import type { ReactNode } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { moment } from "../../lib/moment.ts";
+import { PAINT_CONTROL, Painted } from "../../lib/paint.tsx";
 import { Icon } from "../icon/index.tsx";
 
 const LIST = "flex flex-col min-w-0";
@@ -36,10 +39,16 @@ const railBelow = (state: StepState | "ended"): RailState =>
 	state === "done" ? "done" : "ahead";
 const WORDS = "flex flex-col min-w-0";
 
+// The painted rail: its stages' number is the data's, so a collection's.
+const WAITING: readonly Stage[] = Array.from({ length: PAINT_ROWS }, () => ({
+	state: "later",
+	label: "",
+}));
+
 /** A rail of fixed states. */
 export interface StagesProps extends Closed {
-	/** The stages in order, each done, current or later; a done or current one may carry the moment it was reached. */
-	steps: readonly Stage[];
+	/** The stages in order, each done, current or later; a done or current one may carry the moment it was reached. A selection paints a rail of later stages, and the rail is inert, until its read lands. */
+	steps: Datum<readonly Stage[]>;
 	/** How the rail ended: the terminal row in place of every stage after the last done one, its reason under its label. */
 	ended?: StageEnd;
 }
@@ -85,10 +94,13 @@ function Row(props: {
 
 /** Its stages top to bottom on a hairline rail joining their marks, solid through the done stages: a done one a disc with a check and its moment under the label, the current one a ring in the accent with its label at 500, a later one a hollow ring with its label in meta; an ended rail closes on a danger cross, its label and its reason in meta. */
 export function Stages({ steps, ended }: StagesProps) {
-	const shown = stagesShown(steps, ended !== undefined);
+	const [drawn] = useSelections([steps]);
+	const shown = drawn.painted
+		? WAITING
+		: stagesShown(drawn.value, ended !== undefined);
 	const lastShown = shown.at(-1);
 	return (
-		<ol className={LIST}>
+		<ol inert={drawn.painted || undefined} className={LIST}>
 			{shown.map((step, at) => {
 				const last = ended === undefined && at === shown.length - 1;
 				const before = shown[at - 1];
@@ -98,7 +110,18 @@ export function Stages({ steps, ended }: StagesProps) {
 						className={cn(stageMark({ state: "later" }), SHAPE)}
 					/>
 				);
-				if (step.state === "done")
+				if (drawn.painted)
+					mark = (
+						<span
+							aria-hidden
+							className={cn(
+								stageMark({ state: "later" }),
+								SHAPE,
+								PAINT_CONTROL,
+							)}
+						/>
+					);
+				else if (step.state === "done")
 					mark = (
 						<span
 							aria-hidden
@@ -107,7 +130,7 @@ export function Stages({ steps, ended }: StagesProps) {
 							<Icon name="Check" fit="meta" />
 						</span>
 					);
-				if (step.state === "current")
+				else if (step.state === "current")
 					mark = (
 						<span
 							aria-hidden
@@ -124,7 +147,9 @@ export function Stages({ steps, ended }: StagesProps) {
 						above={before && railBelow(before.state)}
 						current={step.state === "current"}
 					>
-						<span className={stage({ state: step.state })}>{step.label}</span>
+						<span className={stage({ state: step.state })}>
+							{drawn.painted ? <Painted role="name" at={at} /> : step.label}
+						</span>
 						{step.at ? (
 							<time
 								dateTime={step.at}

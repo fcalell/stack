@@ -1,3 +1,4 @@
+import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
 import { pathOrder } from "@fcalell/ui-core/canvas";
 import { cn } from "@fcalell/ui-core/cn";
 import type {
@@ -52,12 +53,12 @@ import { ActFoot, ZoomStack } from "./zoom.tsx";
 export interface CanvasProps extends Closed {
 	/** What the graph is, read as its region's name (a short phrase; read aloud, never drawn). */
 	label: string;
-	/** The nodes; the canvas places those that carry no position. */
-	nodes: readonly CanvasNode[];
+	/** The nodes; the canvas places those that carry no position. A selection, here or in `edges` or `groups`, stands the ground and three painted nodes in place of the graph until its read lands; every handler and the `act` are then ignored. */
+	nodes: Datum<readonly CanvasNode[]>;
 	/** The links between nodes, each drawn as an arrow from `from` to `to`. */
-	edges?: readonly CanvasEdge[];
+	edges?: Datum<readonly CanvasEdge[]>;
 	/** Frames around the nodes they hold; a group holding none is a frame of its head alone that an edge may name, placed by the layout while no node has a position. */
-	groups?: readonly CanvasGroup[];
+	groups?: Datum<readonly CanvasGroup[]>;
 	/** The selected node's or group's id. */
 	selected?: string;
 	/** Hears a node's or group's id when it is chosen, `null` when the choice is cleared; with it nodes and group heads are buttons. */
@@ -70,11 +71,16 @@ export interface CanvasProps extends Closed {
 	onConnect?: (from: string, to: string | null) => void;
 	/** The canvas's act, at the foot's centre. */
 	act?: Act;
-	/** Stands the ground and three node-shaped bars in place of the graph while the data is read; `nodes`, every handler and the `act` are then ignored. */
-	loading?: boolean;
 	/** A sentence centred under the graph in the meta ink at the text floor at any zoom, taking no pointer; the app passes it or `undefined`. */
 	empty?: string;
 }
+
+// What the graph draws once its data is here: the canvas's props with the data given plain.
+type CanvasGraphProps = Omit<CanvasProps, "nodes" | "edges" | "groups"> & {
+	nodes: readonly CanvasNode[];
+	edges?: readonly CanvasEdge[];
+	groups?: readonly CanvasGroup[];
+};
 
 const NO_EDGES: readonly CanvasEdge[] = [];
 const NO_GROUPS: readonly CanvasGroup[] = [];
@@ -89,11 +95,17 @@ const PROBE = "invisible absolute flex flex-col items-start";
 const NBSP = "\u00a0";
 
 /** A graph of nodes and edges, laid out and pannable; read-only until it is given `onSelect`, `onMove` or `onConnect`. */
-export function Canvas({ loading, ...graph }: CanvasProps) {
-	return loading ? (
-		<CanvasWait label={graph.label} />
-	) : (
-		<CanvasGraph {...graph} />
+export function Canvas({ nodes, edges, groups, ...graph }: CanvasProps) {
+	const [placed, linked, framed] = useSelections([nodes, edges, groups]);
+	if (placed.painted || linked.painted || framed.painted)
+		return <CanvasWait label={graph.label} />;
+	return (
+		<CanvasGraph
+			{...graph}
+			nodes={placed.value}
+			edges={linked.value}
+			groups={framed.value}
+		/>
 	);
 }
 
@@ -109,7 +121,7 @@ function CanvasGraph({
 	onConnect,
 	act,
 	empty,
-}: Omit<CanvasProps, "loading">) {
+}: CanvasGraphProps) {
 	const caption = useId();
 	const region = useRef<HTMLElement>(null);
 	const viewport = useViewport(region);

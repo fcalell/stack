@@ -1,3 +1,4 @@
+import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
 import {
 	IMAGE_CLOSE,
 	IMAGE_FULL,
@@ -17,6 +18,7 @@ import {
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
+import { inertProps, paintBox, useShown } from "../../lib/paint";
 import { useWords } from "../../lib/words";
 import { Icon } from "../icon";
 import { IconButton } from "../icon-button";
@@ -42,11 +44,10 @@ const FULL_PICTURE = "size-full";
 const CLOSE_LAYER = "absolute inset-0 items-end";
 
 interface ImageBase extends Closed {
-	src: string;
+	/** The picture's address. A selection paints the tile, which takes no touch, until its read lands. */
+	src: Datum<string>;
 	/** What the picture shows: the button's accessible name, the failed form's words and the full view's name (a sentence; wraps in the failed form). */
 	alt: string;
-	// The tile at its box, a skeleton.
-	loading?: boolean;
 }
 
 // A thumbnail is a square and takes no aspect; a content picture's box is
@@ -75,14 +76,18 @@ interface Seen {
 }
 
 // The picture in a hairline frame, cover-cropped to its tile or its cap.
-// Waiting, the frame is a skeleton at the loaded height (a thumbnail's square,
-// a content picture's `aspect`); failed, an `ImageOff` glyph in the meta ink
+// While its address is a selection still to land the frame is painted at the
+// loaded height (a thumbnail's square, a content picture's `aspect`), and while
+// the bytes are on their way it is a skeleton there; failed, an `ImageOff` glyph in the meta ink
 // over the alt text (a thumbnail draws the glyph alone, the alt its name) and
 // nothing to open. Pressed, the full picture opens in a sheet's view over the
 // scrim (under the toasts), contain-fit inside the page inset and the safe
 // area, with a Close act, the system's back and a press on the scrim.
-export function Image({ src, alt, fit, aspect, loading }: ImageProps) {
+export function Image({ src: given, alt, fit, aspect }: ImageProps) {
 	const place = fit ?? "content";
+	const [named] = useSelections([given]);
+	const shown = useShown(named.painted);
+	const src = named.painted ? "" : named.value;
 	const [seen, setSeen] = useState<Seen>();
 	const [open, setOpen] = useState(false);
 	// Keyed by the address, so a new `src` is fetched again.
@@ -91,12 +96,12 @@ export function Image({ src, alt, fit, aspect, loading }: ImageProps) {
 	// The box's aspect is the consumer's data, the same in every state.
 	const boxed = imageAspect(place, aspect);
 	const box = boxed === undefined ? undefined : { aspectRatio: boxed };
-	if (loading)
+	if (named.painted)
 		return (
 			<View
-				accessibilityState={{ busy: true }}
+				{...inertProps(true)}
 				style={box}
-				className={cn(image({ fit: place, state: "loading" }), FRAME)}
+				className={cn(image({ fit: place }), FRAME, paintBox(shown))}
 			/>
 		);
 	if (current?.status === "failed")

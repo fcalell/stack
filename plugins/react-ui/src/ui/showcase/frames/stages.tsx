@@ -1,5 +1,9 @@
+import type { Stage } from "@fcalell/ui-core/descriptors";
 import { Stages } from "../../components/stages/index.tsx";
+import type { ShowcaseFrame } from "../cells.ts";
+import { waiting } from "../waiting.ts";
 import { Wide } from "./layout-context.tsx";
+import { isPaint } from "./painted.tsx";
 
 // A feature request's four fixed states: done ones dated, the current one
 // marked, the later one grey.
@@ -28,9 +32,26 @@ const IN_SPEC = [
 	{ label: "Live", state: "later" },
 ] as const;
 
+// Stages that never arrive: a rail given them stays painted.
+const waitingSteps = waiting.at((): readonly Stage[] => []);
+
 // Every cell draws the rail in flight, one with later stages mid-rail and the
-// rail ended under them.
-export function drawStages() {
+// rail ended under them; the loading state and a paint cell draw the painted
+// rail (the paint cell beside the loaded one).
+export function drawStages(frame: ShowcaseFrame) {
+	if (isPaint(frame))
+		return frame.state === "rest" ? (
+			<Wide>
+				<Stages steps={IN_BUILD} />
+				<Stages steps={waitingSteps} />
+			</Wide>
+		) : undefined;
+	if (frame.state === "loading")
+		return (
+			<Wide>
+				<Stages steps={waitingSteps} />
+			</Wide>
+		);
 	return (
 		<Wide>
 			<Stages steps={IN_BUILD} />

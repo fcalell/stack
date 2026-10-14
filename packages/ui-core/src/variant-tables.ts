@@ -979,22 +979,6 @@ export const CHART_FILL = matrix({
 	defaultVariants: { series: "teal" },
 });
 
-// ── QR code ─────────────────────────────────────────────────────────
-
-// The code's SVG scaled into its tile in the body ink (the tile is a light
-// scope, so the modules are dark in both modes), or its square in the
-// skeleton ink while loading.
-export const QR_CODE = matrix({
-	base: "size-full",
-	variants: {
-		state: {
-			rest: "text-ink-body",
-			loading: "text-skeleton",
-		},
-	},
-	defaultVariants: { state: "rest" },
-});
-
 // ── Image ───────────────────────────────────────────────────────────
 
 // The frame an image stands in, a hairline on the page. A thumbnail is a

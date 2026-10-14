@@ -1,3 +1,4 @@
+import type { CanvasNode } from "@fcalell/ui-core/descriptors";
 import { useEffect, useRef, useState } from "react";
 import { Canvas } from "../../components/canvas/index.tsx";
 import { LIFT_MS, SLOP } from "../../components/canvas/lift.ts";
@@ -16,6 +17,7 @@ import {
 	STATUSES,
 	WORKFLOW,
 } from "../graphs.ts";
+import { waiting } from "../waiting.ts";
 
 export type { Graph };
 export {
@@ -139,6 +141,9 @@ export const EMPTY = "Add a node, or drag from the trigger's port.";
 // What each cell draws: the cell is the tone or state its frame is there to
 // judge, and the canvas draws every state its graph holds. The confirm node of
 // the journey is selected in the `selected` frame of the first.
+// Nodes that never arrive: a canvas given them stays painted.
+const waitingNodes = waiting.at((): readonly CanvasNode[] => []);
+
 const DRAWN: Record<string, { label: string; graph: Graph }> = {
 	"CANVAS_NODE.state.problem": { label: "Problem", graph: PROBLEM },
 	"CANVAS_NODE_TEXT.tone.off": { label: "Off", graph: OFF },
@@ -159,7 +164,7 @@ export function drawCanvas(frame: ShowcaseFrame) {
 		return (
 			<div className={STAGE}>
 				{frame.state === "loading" ? (
-					<Canvas label="Workflow" nodes={[]} loading />
+					<Canvas label="Workflow" nodes={waitingNodes} />
 				) : (
 					<Canvas
 						label="Workflow"

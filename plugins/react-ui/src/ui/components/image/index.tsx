@@ -1,4 +1,5 @@
 import { Dialog } from "@base-ui/react/dialog";
+import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import {
 	IMAGE_CLOSE,
@@ -11,6 +12,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { PAINT_BOX } from "../../lib/paint.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButtonBase } from "../icon-button/base.tsx";
@@ -42,12 +44,10 @@ const CLOSE_LAYER =
 const CLOSE_HIT = "flex pointer-events-auto";
 
 interface ImageBase extends Closed {
-	/** The picture's address. */
-	src: string;
+	/** The picture's address. A selection paints the tile, inert, until its read lands. */
+	src: Datum<string>;
 	/** What the picture shows: the button's accessible name, the failed form's words and the full view's name (a sentence; wraps in the failed form). */
 	alt: string;
-	/** The tile at its box, a skeleton. */
-	loading?: boolean;
 }
 
 /** A thumbnail is a square and takes no aspect; a content picture's box is its width over its height, which only its consumer knows before the bytes are here. */
@@ -69,9 +69,11 @@ export type ImageProps = ImageBase & ImageSize;
 
 type Status = "pending" | "loaded" | "failed";
 
-/** The picture in a hairline frame, cover-cropped to its tile or its cap. Waiting, the frame is a skeleton at the loaded height (a thumbnail's square, a content picture's `aspect`); failed, an `ImageOff` glyph in the meta ink over the alt text (a thumbnail draws the glyph alone, the alt its name) and nothing to open. Pressed, the full picture opens over the scrim, contain-fit inside the page inset, with a Close act, Escape and a press outside. */
-export function Image({ src, alt, fit, aspect, loading }: ImageProps) {
+/** The picture in a hairline frame, cover-cropped to its tile or its cap. While its address is a selection still to land the frame is painted at the loaded height (a thumbnail's square, a content picture's `aspect`), and while the bytes are on their way it is a skeleton there; failed, an `ImageOff` glyph in the meta ink over the alt text (a thumbnail draws the glyph alone, the alt its name) and nothing to open. Pressed, the full picture opens over the scrim, contain-fit inside the page inset, with a Close act, Escape and a press outside. */
+export function Image({ src: given, alt, fit, aspect }: ImageProps) {
 	const place = fit ?? "content";
+	const [named] = useSelections([given]);
+	const src = named.painted ? "" : named.value;
 	const words = useWords();
 	const [seen, setSeen] = useState<{ src: string; status: Status }>();
 	const [open, setOpen] = useState(false);
@@ -87,12 +89,13 @@ export function Image({ src, alt, fit, aspect, loading }: ImageProps) {
 	// The box's aspect is the consumer's data, the same in every state.
 	const ratio = imageAspect(place, aspect);
 	const box = ratio === undefined ? undefined : { aspectRatio: ratio };
-	if (loading)
+	if (named.painted)
 		return (
 			<div
-				aria-busy
+				aria-hidden
+				inert
 				style={box}
-				className={cn(image({ fit: place, state: "loading" }), FRAME)}
+				className={cn(image({ fit: place }), FRAME, PAINT_BOX)}
 			/>
 		);
 	if (status === "failed")

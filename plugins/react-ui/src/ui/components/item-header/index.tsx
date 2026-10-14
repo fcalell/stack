@@ -1,4 +1,5 @@
 import { Button as BaseButton } from "@base-ui/react/button";
+import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type {
 	OptionPick,
@@ -10,21 +11,19 @@ import {
 	ITEM_FACT,
 	ITEM_FACTS,
 	ITEM_HEADER,
-	lineBox,
-	SKELETON_LINES,
-	skeleton,
-	skeletonRow,
 	text,
 	WORD_ACT,
 } from "@fcalell/ui-core/variants";
-import { useRef } from "react";
+import { Fragment, useRef } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { follow } from "../../lib/navigate.ts";
-import { joinParts, META_CUT, partText } from "../../lib/parts.ts";
+import { Painted } from "../../lib/paint.tsx";
+import { META_CUT, partText } from "../../lib/parts.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Count } from "../count/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { PickerBase } from "../picker/base.tsx";
+import { StatusBase } from "../status/base.tsx";
 import { Status } from "../status/index.tsx";
 
 const HEAD = "flex flex-col";
@@ -44,17 +43,6 @@ const PICK = cn("inline-flex max-w-full -ms-inside", REACH);
 const ACT =
 	"inline-flex items-center text-ink-meta hover:bg-wash-hover active:bg-wash-press";
 const OPEN = cn(ACT, "-ms-inside", REACH);
-// A loading line stands in its text's line box, so the loading head keeps
-// the loaded head's height.
-const LINE_WAIT = "flex items-center h-lh";
-// Where the facts wrap to a second line (a window under `tablet`) the
-// loading head reserves it.
-const WRAP_WAIT = "hidden max-tablet:flex items-center h-lh";
-const FACTS_WAIT = "flex flex-col";
-const FACTS_LINE_WAIT = "flex items-center min-h-lh";
-// The waiting count is a bar one figure wide, set by an unseen figure.
-const COUNT_WAIT = "inline-flex shrink-0 items-center";
-const FIGURE_WAIT = "opacity-0 tabular-nums";
 
 /** One fact in the head's facts line: words, a status, words that open a sheet or go to a route, a status that moves (a pick whose options carry states), a count beside its word, or the state of a save that runs as the record is typed, a failed one with its retry (each string a short phrase; the facts line wraps between facts, a `Quoted` part is cut at 40 characters). */
 export type Fact<V extends string | null = string> =
@@ -69,12 +57,10 @@ export type Fact<V extends string | null = string> =
 /** A record's place and facts under the Pane's bar, which holds the record's name and acts. */
 export interface ItemHeaderProps<V extends string | null = string>
 	extends Closed {
-	/** The parts that place the record (its project, key, cycle), joined by a middle dot (each a short phrase; one line, truncates). */
-	overline?: readonly Part[];
-	/** The facts in a wrapping line under the overline. */
-	facts?: readonly Fact<V>[];
-	/** Bars in each line's box stand in for the head, at its height. */
-	loading?: boolean;
+	/** The parts that place the record (its project, key, cycle), joined by a middle dot (each a short phrase; one line, truncates). A part that is a selection paints, and the head is inert, until its read lands. */
+	overline?: readonly Datum<Part>[];
+	/** The facts in a wrapping line under the overline. A fact that is a selection paints in its place (a status or a pick keeps its form, any other is a word), and the head is inert, until its read lands. */
+	facts?: readonly Datum<Fact<V>>[];
 }
 
 function factKey<V extends string | null>(fact: Fact<V>): string {
@@ -204,51 +190,64 @@ function FactPart<V extends string | null>({ fact }: { fact: Fact<V> }) {
 	);
 }
 
-/** The record's place (the overline) and its facts, a pair apart, under the Pane's bar: the bar holds the record's name and acts, so the head holds neither. */
-export function ItemHeader<V extends string | null = string>({
-	overline,
-	facts,
-	loading,
-}: ItemHeaderProps<V>) {
-	if (loading)
+// A fact that is not here, in the form its selection's shape says: the
+// placeholder is no object, so a selection that gives the fact whole paints as
+// a word.
+function PaintedFact({ fact, at }: { fact: unknown; at: number }) {
+	if (typeof fact === "object" && fact !== null && "status" in fact)
+		return <StatusBase painted />;
+	if (typeof fact === "object" && fact !== null && "pick" in fact)
 		return (
-			<div aria-busy className={cn(ITEM_HEADER, HEAD)}>
-				<span className={cn(lineBox({ role: "meta" }), LINE_WAIT)}>
-					<span className={cn(skeleton({ kind: "line" }), "w-1/4")} />
-				</span>
-				<span className={cn(SKELETON_LINES, FACTS_WAIT)}>
-					<span
-						className={cn(
-							skeletonRow({ kind: "facts" }),
-							lineBox({ role: "meta" }),
-							FACTS_LINE_WAIT,
-						)}
-					>
-						<span className={cn(skeleton({ kind: "line" }), "w-1/3")} />
-						<span className={cn(skeleton({ kind: "count" }), COUNT_WAIT)}>
-							<span className={cn(text({ role: "caption" }), FIGURE_WAIT)}>
-								0
-							</span>
-						</span>
-					</span>
-					<span className={cn(lineBox({ role: "meta" }), WRAP_WAIT)}>
-						<span className={cn(skeleton({ kind: "line" }), "w-1/2")} />
-					</span>
-				</span>
-			</div>
+			<span className={PICK}>
+				<PickerBase {...(fact.pick as OptionPick)} fit="row" painted />
+			</span>
 		);
 	return (
-		<div className={cn(ITEM_HEADER, HEAD)}>
-			{overline && overline.length > 0 ? (
+		<span className={text({ role: "meta" })}>
+			<Painted role="word" at={at} />
+		</span>
+	);
+}
+
+/** The record's place (the overline) and its facts, a pair apart, under the Pane's bar: the bar holds the record's name and acts, so the head holds neither. A part or a fact that is a selection paints in its place, and the head takes no press, until its read lands. */
+export function ItemHeader<V extends string | null = string>({
+	overline = [],
+	facts = [],
+}: ItemHeaderProps<V>) {
+	const drawn = useSelections([...overline, ...facts]);
+	const placed = drawn.slice(0, overline.length);
+	const stood = drawn.slice(overline.length);
+	const painted = drawn.some((each) => each.painted);
+	return (
+		<div inert={painted || undefined} className={cn(ITEM_HEADER, HEAD)}>
+			{placed.length > 0 ? (
 				<p className={cn(text({ role: "meta" }), OVERLINE)}>
-					{joinParts(overline, META_CUT)}
+					{placed.map((part, at) => (
+						// biome-ignore lint/suspicious/noArrayIndexKey: the parts are a fixed list, in order
+						<Fragment key={at}>
+							{at === 0 ? null : " · "}
+							{part.painted ? (
+								<Painted role="word" at={at} />
+							) : (
+								partText(part.value as Part, META_CUT)
+							)}
+						</Fragment>
+					))}
 				</p>
 			) : null}
-			{facts && facts.length > 0 ? (
+			{stood.length > 0 ? (
 				<div className={cn(ITEM_FACTS, FACTS)}>
-					{facts.map((fact) => (
-						<FactPart key={factKey(fact)} fact={fact} />
-					))}
+					{stood.map((fact, at) =>
+						fact.painted ? (
+							// biome-ignore lint/suspicious/noArrayIndexKey: a painted fact has no text to key by
+							<PaintedFact key={at} fact={fact.value} at={at} />
+						) : (
+							<FactPart
+								key={factKey(fact.value as Fact<V>)}
+								fact={fact.value as Fact<V>}
+							/>
+						),
+					)}
 				</div>
 			) : null}
 		</div>

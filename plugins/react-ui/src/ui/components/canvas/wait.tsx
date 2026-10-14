@@ -1,12 +1,8 @@
 import { cn } from "@fcalell/ui-core/cn";
-import {
-	canvasNode,
-	canvasNodeText,
-	skeleton,
-	skeletonLane,
-} from "@fcalell/ui-core/variants";
+import { canvasNode, canvasNodeText } from "@fcalell/ui-core/variants";
 import { useLayoutEffect, useRef, useState } from "react";
 import { spacing } from "../../lib/media.ts";
+import { PAINT_BOX, Painted } from "../../lib/paint.tsx";
 import { layerGap } from "./elk.ts";
 import { GROUND, Grid } from "./ground.tsx";
 import { fitTransform, type Transform, whole } from "./view.ts";
@@ -16,15 +12,15 @@ import { ZoomRoom } from "./zoom.tsx";
 const STAND = "absolute left-0 top-0 flex flex-col";
 const NODE = "flex items-center";
 const COLUMN = "flex flex-col flex-1 min-w-0";
-const LINE = "flex items-center h-lh";
-const GLYPH = "shrink-0";
+const LINE = "truncate";
+const GLYPH = "size-icon shrink-0 rounded-full";
 const NODES = ["a", "b", "c"];
 // A node's lines as a loaded node draws them (an overline, its title, its
-// line): each lane takes that part's text, so the card is the loaded card's height.
+// line), each in that part's text, so the card is the loaded card's height.
 const LINES = [
-	{ part: "overline", bar: "w-1/3" },
-	{ part: "title", bar: "w-2/3" },
-	{ part: "line", bar: "w-1/2" },
+	{ part: "overline", role: "word" },
+	{ part: "title", role: "name" },
+	{ part: "line", role: "phrase" },
 ] as const;
 
 // Where a loaded canvas opens a graph of these bounds: the opening view of the
@@ -40,7 +36,7 @@ function opening(region: HTMLElement, stand: HTMLElement): Transform {
 	);
 }
 
-/** A Canvas waiting: its ground and grid, and three node-shaped cards (an icon beside an overline, a title and a line bar) stacked at the gap a loaded path keeps, standing where the loaded chain opens (the same opening view as Fit's, in the room the unseen zoom stack leaves), with no zoom stack, act or handler. Outside the package's exports. */
+/** A Canvas whose graph is not here: its ground and grid, and three painted node cards (an icon beside an overline, a title and a line) stacked at the gap a loaded path keeps, standing where the loaded chain opens (the same opening view as Fit's, in the room the unseen zoom stack leaves), with no zoom stack, act or handler. Outside the package's exports. The one painted form that is a tree of its own, since a graph's layout has no geometry before its data. */
 export function CanvasWait({ label }: { label: string }) {
 	const region = useRef<HTMLElement>(null);
 	const stand = useRef<HTMLDivElement>(null);
@@ -57,7 +53,7 @@ export function CanvasWait({ label }: { label: string }) {
 		return () => watch.disconnect();
 	}, []);
 	return (
-		<section ref={region} aria-label={label} aria-busy className={GROUND}>
+		<section ref={region} aria-label={label} inert className={GROUND}>
 			<Grid />
 			<ZoomRoom />
 			<div
@@ -72,18 +68,11 @@ export function CanvasWait({ label }: { label: string }) {
 			>
 				{NODES.map((key) => (
 					<div key={key} className={cn(canvasNode({ state: "rest" }), NODE)}>
-						<span className={cn(skeleton({ kind: "icon" }), GLYPH)} />
+						<span className={cn(PAINT_BOX, GLYPH)} />
 						<span className={COLUMN}>
-							{LINES.map(({ part, bar }) => (
-								<span
-									key={part}
-									className={cn(
-										skeletonLane({ role: "meta" }),
-										canvasNodeText({ part }),
-										LINE,
-									)}
-								>
-									<span className={cn(skeleton({ kind: "line" }), bar)} />
+							{LINES.map(({ part, role }) => (
+								<span key={part} className={cn(canvasNodeText({ part }), LINE)}>
+									<Painted role={role} />
 								</span>
 							))}
 						</span>

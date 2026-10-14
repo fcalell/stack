@@ -1,5 +1,7 @@
+import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
 import type { Stage, StageEnd, StepState } from "@fcalell/ui-core/descriptors";
 import { stagesShown } from "@fcalell/ui-core/list-state";
+import { PAINT_ROWS } from "@fcalell/ui-core/paint";
 import {
 	FIGURES,
 	STAGE_ROW,
@@ -16,6 +18,7 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
 import { moment } from "../../lib/moment";
+import { inertProps, Painted, paintControl, useShown } from "../../lib/paint";
 import { Strut } from "../../lib/strut";
 
 import { Icon } from "../icon";
@@ -40,10 +43,15 @@ const railBelow = (state: StepState | "ended"): RailState =>
 	state === "done" ? "done" : "ahead";
 const WORDS = "flex-1 min-w-0";
 
+// The painted rail: its stages' number is the data's, so a collection's.
+const WAITING: readonly Stage[] = Array.from({ length: PAINT_ROWS }, () => ({
+	state: "later",
+	label: "",
+}));
+
 export interface StagesProps extends Closed {
-	// The stages in order, each done, current or later; a done or current
-	// one may carry the moment it was reached.
-	steps: readonly Stage[];
+	/** The stages in order, each done, current or later; a done or current one may carry the moment it was reached. A selection paints a rail of later stages, and the rail takes no touch, until its read lands. */
+	steps: Datum<readonly Stage[]>;
 	// How the rail ended: the terminal row in place of every stage after the
 	// last done one, its reason under its label.
 	ended?: StageEnd;
@@ -99,15 +107,28 @@ function Row(props: {
 // danger cross, its label and its reason in meta. React Native has no
 // current-step role: the current row is the selected one.
 export function Stages({ steps, ended }: StagesProps) {
-	const shown = stagesShown(steps, ended !== undefined);
+	const [drawn] = useSelections([steps]);
+	const visible = useShown(drawn.painted);
+	const shown = drawn.painted
+		? WAITING
+		: stagesShown(drawn.value, ended !== undefined);
 	const lastShown = shown.at(-1);
 	return (
-		<View className={LIST}>
+		<View {...inertProps(drawn.painted)} className={LIST}>
 			{shown.map((step, at) => {
 				const last = ended === undefined && at === shown.length - 1;
 				const before = shown[at - 1];
 				let mark = <View className={stageMark({ state: "later" })} />;
-				if (step.state === "done") {
+				if (drawn.painted) {
+					mark = (
+						<View
+							className={cn(
+								stageMark({ state: "later" }),
+								paintControl(visible),
+							)}
+						/>
+					);
+				} else if (step.state === "done") {
 					mark = (
 						<View className={cn(stageMark({ state: "done" }), DISC)}>
 							<Ink.Provider value={stageContentTone("check")}>
@@ -115,8 +136,7 @@ export function Stages({ steps, ended }: StagesProps) {
 							</Ink.Provider>
 						</View>
 					);
-				}
-				if (step.state === "current") {
+				} else if (step.state === "current") {
 					mark = <View className={stageMark({ state: "current" })} />;
 				}
 				return (
@@ -130,7 +150,7 @@ export function Stages({ steps, ended }: StagesProps) {
 						current={step.state === "current"}
 					>
 						<RNText className={stage({ state: step.state })}>
-							{step.label}
+							{drawn.painted ? <Painted role="name" at={at} /> : step.label}
 						</RNText>
 						{step.at ? (
 							<RNText className={cn(text({ role: "meta" }), FIGURES)}>

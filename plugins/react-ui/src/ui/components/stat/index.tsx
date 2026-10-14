@@ -1,8 +1,9 @@
+import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import { formatterFor } from "@fcalell/ui-core/format";
 import { STAT, STAT_FIGURE, text } from "@fcalell/ui-core/variants";
 import type { Closed } from "../../lib/closed.ts";
-import { StatWait } from "./wait.tsx";
+import { Painted } from "../../lib/paint.tsx";
 
 const STACK = "flex flex-col min-w-0";
 const FIGURE = "flex items-baseline";
@@ -11,22 +12,24 @@ const FIGURE = "flex items-baseline";
 export interface StatProps extends Closed {
 	/** What the figure counts, read after it ("need you") (a short phrase; wraps). */
 	label: string;
-	/** The figure; zero is a count, drawn. */
-	value: number;
+	/** The figure; zero is a count, drawn. A selection paints the figure, and the Stat is inert, until its read lands. */
+	value: Datum<number>;
 	/** What the figure counts, muted beside it (a word; wraps). */
 	unit?: string;
-	/** The figure and its label as bars in their line boxes. */
-	loading?: boolean;
 }
 
 /** The figure at the display role in tabular figures with its label in meta under it, so it reads "2, need you". One per screen. */
-export function Stat({ label, value, unit, loading }: StatProps) {
-	if (loading) return <StatWait />;
+export function Stat({ label, value, unit }: StatProps) {
+	const [figure] = useSelections([value]);
 	return (
-		<div className={cn(STAT, STACK)}>
+		<div inert={figure.painted || undefined} className={cn(STAT, STACK)}>
 			<p className={cn(STAT_FIGURE, FIGURE)}>
 				<span className={text({ role: "display" })}>
-					{formatterFor("number").format(value)}
+					{figure.painted ? (
+						<Painted role="figure" />
+					) : (
+						formatterFor("number").format(figure.value)
+					)}
 				</span>
 				{unit ? <span className={text({ role: "meta" })}>{unit}</span> : null}
 			</p>

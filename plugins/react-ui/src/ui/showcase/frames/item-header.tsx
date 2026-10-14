@@ -1,16 +1,34 @@
-import type { Option } from "@fcalell/ui-core/descriptors";
+import type { Selection } from "@fcalell/plugin-api/tanstack-query";
+import type { Option, Part } from "@fcalell/ui-core/descriptors";
 import type { StatusState } from "@fcalell/ui-core/tokens";
 import { useEffect, useState } from "react";
 import { ActionBar } from "../../components/action-bar/index.tsx";
+import type { Fact } from "../../components/item-header/index.tsx";
 import { ItemHeader } from "../../components/item-header/index.tsx";
 import { Pane } from "../../components/pane/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
+import { waiting, waitingText } from "../waiting.ts";
 import { StandInRows, Wide } from "./layout-context.tsx";
+import { isPaint } from "./painted.tsx";
 import { Column, Opened } from "./place.tsx";
 
 const move = () => {};
+
+// A head whose reads never answer: its parts and facts stay painted, a status
+// and a pick keeping their forms.
+const WAITING_OVERLINE: readonly Selection<Part>[] = [waitingText, waitingText];
+const WAITING_FACTS: readonly Selection<Fact>[] = [
+	waiting.at((): Fact => ({ status: "done" })),
+	waiting.at(
+		(): Fact => ({
+			pick: { label: "Status", options: STATES, onChange: move },
+		}),
+	),
+	waitingText,
+	waitingText,
+];
 
 // The states the record moves between, each drawn as its status.
 const STATES: Option<StatusState>[] = [
@@ -78,8 +96,9 @@ function Record() {
 }
 
 // Every cell draws the head in the frame's state: at rest the lines a pair
-// apart, the first fact a status that moves; loading the bars in each line's
-// box. A `STATUS_DOT.state` cell stands on that state. A third head carries a
+// apart, the first fact a status that moves; loading the head painted, each
+// part and fact a selection still to land, and a paint cell the loaded head
+// beside it. A `STATUS_DOT.state` cell stands on that state. A third head carries a
 // save fact that cycles its three states, a fourth a fact in words that opens
 // beside one that goes to a route; a record page holds a head under the
 // Pane's bar, which names the record and holds its acts, with its act under it.
@@ -87,12 +106,17 @@ export function drawItemHeader(frame: ShowcaseFrame) {
 	const [family, , value] = frame.cell.name.split(".");
 	// The third segment of a `STATUS_DOT.state` cell is a state key.
 	const state = family === "STATUS_DOT" ? (value as StatusState) : "active";
-	if (frame.state === "loading")
-		return (
+	const painted = (
+		<ItemHeader overline={WAITING_OVERLINE} facts={WAITING_FACTS} />
+	);
+	if (isPaint(frame))
+		return frame.state === "rest" ? (
 			<Wide>
-				<ItemHeader loading />
+				<ItemHeader overline={OVERLINE} facts={[moving("active"), ...REST]} />
+				{painted}
 			</Wide>
-		);
+		) : undefined;
+	if (frame.state === "loading") return <Wide>{painted}</Wide>;
 	return (
 		<Opened popup="closed">
 			<Wide>

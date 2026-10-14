@@ -1486,8 +1486,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		// The record's place and facts under the Pane's bar, which holds the
-		// record's name and acts. Loading, each line keeps its line box and the
-		// facts line the height of the status that moves on it. A fact in words
+		// record's name and acts. A part or a fact that is a selection paints in
+		// its place until its read lands (a status or a pick keeps its form, any
+		// other is a word), and the head is inert; each line keeps its line box
+		// and the facts line the height of the status that moves on it. A fact in words
 		// that opens a sheet is its words and a chevron in a `WORD_ACT`, a button
 		// named by the fact; one that goes to a route is the same box as a link. A save
 		// fact is the status region (one box, so its ring is one) and, failed, a
@@ -1495,7 +1497,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// `tablet`) it holds the failed form's room in every state, so the line
 		// never wraps differently as a save moves.
 		ItemHeader: {
-			props: ["overline", "facts", "loading"],
+			props: ["overline", "facts"],
 			draws: [
 				"ITEM_HEADER",
 				"ITEM_FACTS",
@@ -1512,11 +1514,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SPINNER_ARC",
 				"COUNT",
 				"COUNT_LABEL",
-				"LINE_BOX.role.meta",
-				"SKELETON_LINES",
-				"SKELETON_ROW.kind.facts",
-				"SKELETON.kind.line",
-				"SKELETON.kind.count",
+				"PAINT.kind.box",
+				"PAINT.kind.glyphs",
+				"PAINT.kind.control",
 			],
 			holds: ["ITEM_HEADER", "ITEM_FACTS", "ITEM_FACT"],
 			states: ["rest", "loading"],
@@ -2804,8 +2804,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// through the done stages, the plain hairline after, running through each
 		// mark's line so no break stands around a mark. A row stands at least the
 		// two-line row's height, so a later row keeps the done rows' pace. The hue is the
-		// marks'; a label's ink is its own. Static data, so it has no waiting
-		// form.
+		// marks'; a label's ink is its own. A `steps` that is a selection paints
+		// `PAINT_ROWS` later stages, each mark a painted control and each label
+		// a name, until its read lands.
 		Stages: {
 			props: ["steps", "ended"],
 			draws: [
@@ -2820,6 +2821,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"STAGE_ROW",
 				"STAGE_WORDS",
 				"TEXT.role.meta",
+				"PAINT.kind.control",
+				"PAINT.kind.glyphs",
 			],
 			holds: [
 				"STAGE",
@@ -2830,7 +2833,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"STAGE_CHECK",
 				"STAGE_CROSS",
 			],
-			states: ["rest"],
+			states: ["rest", "loading"],
 			owns: {
 				roles: ["body", "meta"],
 				colors: [
@@ -2841,8 +2844,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"accent-ink",
 					"canvas",
 					"danger",
+					"skeleton",
 				],
-				radii: ["full"],
+				radii: ["full", "chip"],
 				spacing: ["pair"],
 				sizes: ["icon-meta", "row-2"],
 			},
@@ -2853,15 +2857,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// its `href`, never both. Zeros are drawn. Cells stand in a row, two to a
 		// row below `tablet` of the page and on the phone.
 		Stats: {
-			props: ["items", "loading"],
+			props: ["items"],
 			draws: [
 				"LINK_TARGET",
 				"COUNT_LINKS",
 				"FIGURES",
-				"LINE_BOX.role.figure",
-				"LINE_BOX.role.meta",
 				"LINK.fit.standalone",
-				"SKELETON.kind.line",
+				"PAINT.kind.glyphs",
 				"STATS",
 				"STATS_CELL",
 				"STATS_EDGE",
@@ -2891,11 +2893,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// One figure at the `display` role, its label under it (figure first, read
 		// "2, need you"), a unit beside the figure. One per screen.
 		Stat: {
-			props: ["label", "value", "unit", "loading"],
+			props: ["label", "value", "unit"],
 			draws: [
-				"LINE_BOX.role.display",
-				"LINE_BOX.role.meta",
-				"SKELETON.kind.line",
+				"PAINT.kind.glyphs",
 				"STAT",
 				"STAT_FIGURE",
 				"TEXT.role.display",
@@ -2987,8 +2987,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		QrCode: {
-			props: ["value", "loading"],
-			draws: ["QR_CODE", "QR_TILE"],
+			props: ["value"],
+			draws: ["QR_CODE", "QR_TILE", "PAINT.kind.box"],
 			holds: ["QR_TILE", "QR_CODE"],
 			states: ["rest", "loading"],
 			owns: {
@@ -3001,15 +3001,17 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// container's width at its own aspect down to a height cap (`content`).
 		// A content picture's `aspect` (width over height) is required: it fixes
 		// its box in every state, so nothing moves when the bytes land; a
-		// thumbnail is square and takes none. Waiting it is a skeleton at its
-		// box; failed, an `ImageOff` glyph in the meta ink with the alt text in
+		// thumbnail is square and takes none. An address that is a selection
+		// paints its box until the read lands, and while the bytes are on their way
+		// it is a skeleton at that box; failed, an `ImageOff` glyph in the meta ink with the alt text in
 		// meta under it (a thumbnail draws the glyph alone, the alt its name) and
 		// nothing to open. The full view
 		// stands over the sheet base's scrim and focus trap, contain-fit inside
 		// the page inset, with a lifted Close act.
 		Image: {
-			props: ["src", "alt", "fit", "aspect", "loading"],
+			props: ["src", "alt", "fit", "aspect"],
 			draws: [
+				"PAINT.kind.box",
 				"IMAGE",
 				"IMAGE_PICTURE",
 				"IMAGE_FULL",
@@ -3049,7 +3051,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// A graph of nodes and edges on a pannable ground, the web's alone: the
 		// phone has no pointer to drag a node or draw an edge with. Selection
 		// recolours the node's outline; a `path` dims what a run did not take. A
-		// group holding no present node is a leaf an edge may name.
+		// group holding no present node is a leaf an edge may name. While its
+		// `nodes`, `edges` or `groups` is a selection still to land it stands its
+		// ground with three painted node cards, the one painted form that is a
+		// tree of its own, since a layout has no geometry before its data.
 		Canvas: {
 			props: [
 				"label",
@@ -3062,15 +3067,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"onMove",
 				"onConnect",
 				"act",
-				"loading",
 				"empty",
 			],
 			platforms: ["web"],
 			draws: [
-				"SKELETON.kind.icon",
-				"SKELETON.kind.line",
-				"SKELETON_LANE.role.meta",
-				"LINE_BOX.role.meta",
+				"PAINT.kind.box",
+				"PAINT.kind.glyphs",
 				"CANVAS_GROUND",
 				"CANVAS_NODE",
 				"CANVAS_NODE_TEXT",

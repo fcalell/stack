@@ -182,7 +182,6 @@ export const OVERLAYS: readonly string[] = [
 	"[anchor-name:--docked-foot]",
 	"bottom-[anchor(--docked-foot_top,0px)]",
 	// Section, Group, List, Columns
-	"tabular-nums",
 	"flex",
 	"flex-col",
 	"min-w-0",
@@ -261,12 +260,10 @@ export const OVERLAYS: readonly string[] = [
 	"h-lh",
 	"hidden",
 	"touch:flex",
-	"max-tablet:flex",
 	"max-tablet:inline-flex",
 	"inline-grid",
 	"-mx-inside",
 	"leading-meta",
-	"min-h-lh",
 	"-my-[calc((var(--spacing-target)-1lh)/2)]",
 	// QueryBoundary, Banner, PendingBar
 	"self-center",
@@ -454,6 +451,8 @@ export const OVERLAYS: readonly string[] = [
 	// Stats
 	"page-tablet:basis-0",
 	// Canvas
+	"size-icon",
+	"rounded-full",
 	"page-max-tablet:min-h-1/2",
 	"max-w-[min(var(--spacing-measure),calc(100cqw_-_2*var(--spacing-page)))]",
 	"origin-top",
