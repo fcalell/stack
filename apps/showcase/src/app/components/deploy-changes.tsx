@@ -31,33 +31,30 @@ function lines(from: string, other: string): number {
 	return from ? from.split("\n").filter((line) => !kept.has(line)).length : 0;
 }
 
-// The files a deploy changed, from their own query, over the diff of the one
+// The files a deploy changed, from their own read, over the diff of the one
 // open (`?file=`, the first without it), which its row marks; the files
-// before it are seen. The list draws its own four states; the diff waits
-// with it and stands only over a loaded file. The count and the wait are the
-// Section's props.
+// before it are seen. The Section holds the read, so the list paints its rows
+// while it waits and the Section draws the failed and empty forms; the diff
+// waits with it and stands only over a loaded file.
 function useChangedFiles(id: string, named: string | undefined) {
 	const route = useRoute();
-	const files = useQuery(orpc.deploys.files.queryOptions({ input: { id } }));
-	const all = files.data ?? [];
+	const files = orpc.deploys.files.read({ id });
+	// The Diff still waits through its own `loading`, so the app holds the
+	// query for it beside the frame's read.
+	const loaded = useQuery(files.options);
+	const all: ChangedFile[] = loaded.data ?? [];
 	const at = Math.max(
 		0,
 		all.findIndex((each) => each.path === named),
 	);
 	const open = all[at];
 	let diff = null;
-	if (files.isPending) diff = <Diff label="" before="" after="" loading />;
+	if (loaded.isPending) diff = <Diff label="" before="" after="" loading />;
 	else if (open)
 		diff = <Diff label={open.path} before={open.before} after={open.after} />;
 	const list = (
 		<List
-			query={files}
-			sentence="Changes did not load."
-			empty={{
-				icon: "GitCommitHorizontal",
-				title: "No changes",
-				sentence: "This deploy rebuilt the commit already in production.",
-			}}
+			items={files}
 			file={{
 				key: (each) => each.path,
 				path: (each) => each.path,
@@ -73,7 +70,7 @@ function useChangedFiles(id: string, named: string | undefined) {
 			}}
 		/>
 	);
-	return { list, diff, count: files.data?.length, pending: files.isPending };
+	return { list, diff, files };
 }
 
 // A deploy's changes: the description's edit and the release notes it was
@@ -97,7 +94,16 @@ export function DeployChanges(props: { deploy: OpenDeploy; file?: string }) {
 			<Section title="Release notes">
 				<Prose markdown={deploy.notes} />
 			</Section>
-			<Section title="Changes" count={files.count} loading={files.pending}>
+			<Section
+				title="Changes"
+				read={files.files}
+				failed="Changes did not load."
+				empty={{
+					icon: "GitCommitHorizontal",
+					title: "No changes",
+					sentence: "This deploy rebuilt the commit already in production.",
+				}}
+			>
 				{files.list}
 				{files.diff}
 			</Section>

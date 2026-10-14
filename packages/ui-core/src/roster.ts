@@ -884,10 +884,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// Its structure is its props, one of `items` (each entry a `row`, drawn bare
 		// since a row pads itself, or an `item`, a Meter, a FormField or a Slider
 		// drawn in a box at the card's inset: the hairline falls between the
-		// entries) or `list` (a List it frames, drawing its rows and its forms on
-		// the card with no bleed of its own). Waiting, each Meter, Slider,
-		// FormField and DefinitionRow in it draws its own waiting form at its
-		// loaded height; three setting rows stand for entries no part answers for.
+		// entries) or `list` (a List it frames, drawing its rows on the card with
+		// no bleed of its own, painted while its `items` selection waits; the frame
+		// around the Group draws the failed and empty forms). Waiting, each
+		// Slider and FormField in it draws its own waiting form at its loaded
+		// height; three setting rows stand for entries no part answers for.
 		Group: {
 			props: ["loading", "items", "list"],
 			draws: ["GROUP", "GROUP_ITEM"],
@@ -899,13 +900,16 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				spacing: ["card"],
 			},
 		},
-		// A collection: its rows from `query` or `items` through one item map
-		// (`row` for ListRows, `file` for FileRows, `meter` for Meters,
-		// `definition` for DefinitionRows), its waiting rows the row's own in
-		// the slots the map declares, its failed and empty forms its own.
-		// In a Group (its `list`) its rows and forms stand on the card, the card
-		// their box, with no bleed. A standalone List bleeds the card's inset, so
-		// its rows' text meets the title over it.
+		// A collection: its rows from `items`, constants or a selection, through
+		// one item map (`row` for ListRows, `file` for FileRows, `meter` for
+		// Meters, `definition` for DefinitionRows). While the selection's read
+		// waits it paints `PAINT_ROWS` rows, each in the slots the map declares,
+		// run over the placeholder: inert, with no link, a tree drawn flat. Its
+		// failed, missing and empty forms are the frame's, the Pane, Section,
+		// Sheet or Form that holds the read.
+		// In a Group (its `list`) its rows stand on the card, the card their box,
+		// with no bleed. A standalone List bleeds the card's inset, so its rows'
+		// text meets the title over it.
 		// A `row` map with `children` makes it a tree: the rows abut
 		// (`LIST_TREE`), each level one step in, and the List owns which
 		// branches are folded (open by default), handing every row its depth
@@ -914,23 +918,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// hairline falls once between rows. A `definition` list stands in a
 		// Group and carries no count of its own: facts are not a
 		// collection a viewer counts.
-		// Given `items` while `loading`, a `row` map with a `trailing` slot (no tree)
-		// stands as loaded rows with the trailing values waiting.
 		List: {
-			props: [
-				"query",
-				"sentence",
-				"empty",
-				"row",
-				"file",
-				"meter",
-				"definition",
-				"items",
-				"loading",
-			],
+			props: ["row", "file", "meter", "definition", "items"],
 			draws: ["LIST", "LIST_ITEM", "LIST_TREE", "LIST_DIVIDED"],
 			holds: ["LIST", "LIST_ITEM", "LIST_TREE", "LIST_DIVIDED"],
-			states: ["rest", "loading", "error", "empty"],
+			states: ["rest", "loading"],
 			owns: {
 				colors: ["edge"],
 				spacing: ["rows", "card"],
@@ -1148,9 +1140,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// each of Status, warning, lock and Chip, on the meta line in that
 		// order: a warning is what is wrong with the row (the act that clears
 		// it is the row's `act`), a lock what the row holds (its label shown
-		// from `tablet`). A `status` whose read has not answered is
-		// `{ loading: true }`: a bar at the Status's place and height, so the
-		// row keeps its height when it answers. A status with a `short` form
+		// from `tablet`). A status with a `short` form
 		// draws it in place of its label while the long one would be cut on the
 		// meta line. Its trailing is a value, or a
 		// pick: a `Picker` at the `row` fit, centred in the row.
@@ -1332,11 +1322,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// with an `href`); it takes no description, act or open, since its
 		// reason is the one line and the one link. A `change` draws the change
 		// mark ahead of the label, the kind's word its name. A `List`'s
-		// `definition` map draws one per item and waits as the internal
-		// `DefinitionWait`: a label bar and a value bar on one line (the value
-		// bar the room an identifier takes when the map is `copyable`), or, with
-		// a description, the label over the meta line; the act's square or the
-		// chevron's at the end when declared. A one-word string value of more than eight characters too long for its
+		// `definition` map draws one per item. A one-word string value of more than eight characters too long for its
 		// room cuts in its middle (`valueCut`), the whole value its text. `value`
 		// and `description` are data: a selection paints in its place, the row
 		// inert, until its read lands, and a painted `List` paints the whole row
@@ -1950,7 +1936,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"EMPTY_COLUMN",
 				"EMPTY_TEXT",
 				"EMPTY_FRAME",
-				"EMPTY_CARD",
 				"TEXT.role.meta",
 				"BUTTON.act.secondary",
 				"BUTTON.fit.bar",
@@ -1976,7 +1961,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"EMPTY_COLUMN",
 				"EMPTY_TEXT",
 				"EMPTY_FRAME",
-				"EMPTY_CARD",
 				"EMPTY_MARK",
 				"ICON.fit.control",
 				"TEXT.role.meta",

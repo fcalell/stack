@@ -1,6 +1,5 @@
 import type { Act, IconName, LinkAct } from "@fcalell/ui-core/descriptors";
 import {
-	EMPTY_CARD,
 	EMPTY_COLUMN,
 	EMPTY_FRAME,
 	EMPTY_MARK,
@@ -53,9 +52,8 @@ export interface EmptyProps {
 // The form an empty state draws, by the drawer that stands it: a `Pane`'s
 // `page` (centred in what the body leaves, or at its top over its children), a
 // first-run `Gate`'s `first`, a `Section`'s or a collection's `frame` (a
-// hairline frame, or one quiet sentence when only that is given) and a
-// `Group`'s `group` (the card its frame).
-export type EmptyFit = "page" | "first" | "frame" | "group";
+// hairline frame, or one quiet sentence when only that is given).
+export type EmptyFit = "page" | "first" | "frame";
 
 // The empty state every empty `Pane`, `Section` and collection, a failed read
 // and a missing one draw. Outside the package's exports: `fit` and `tone` are
@@ -75,7 +73,7 @@ export function EmptyBase(props: {
 	fill?: boolean;
 }) {
 	const { fit } = props;
-	const framed = fit === "frame" || fit === "group";
+	const framed = fit === "frame";
 	const glyph = props.tone === "failed" ? "CircleAlert" : props.icon;
 	const mark = glyph ? (
 		<View className={cn(EMPTY_MARK, MARK)}>
@@ -133,13 +131,7 @@ export function EmptyBase(props: {
 		) : null;
 		if (framed)
 			return (
-				<View
-					className={cn(
-						fit === "group" ? EMPTY_CARD : EMPTY_FRAME,
-						FRAME,
-						props.fill && FILL,
-					)}
-				>
+				<View className={cn(EMPTY_FRAME, FRAME, props.fill && FILL)}>
 					<View className={cn(EMPTY_COLUMN, COLUMN)}>
 						{mark}
 						{words}

@@ -418,11 +418,11 @@ export const closure = (
 		{/* @ts-expect-error: a list's rows lead with one kind */}
 		<List items={[1]} row={{ key: String, title: String, leading: { avatar: () => ({ name: "x" }), icon: () => "X" } }} />
 		<List items={[1]} row={{ key: String, title: String, leading: { status: () => "active" } }} />
-		{/* @ts-expect-error: a list takes a query or items, never both */}
+		{/* @ts-expect-error: a list takes items, never a query */}
 		<List items={[1]} query={{ data: [1], isPending: false, isError: false, refetch: noop }} sentence="x" empty={{ sentence: "x" }} row={{ key: String, title: String }} />
 		{/* @ts-expect-error: a list holds one row kind */}
 		<List items={[1]} row={{ key: String, title: String }} file={{ key: String, path: String, added: Number, removed: Number }} />
-		<List items={["a"]} empty={{ sentence: "x", act: { label: "x", onAct: noop } }} file={{ key: String, path: String, added: () => 1, removed: () => 0 }} />
+		<List items={["a"]} file={{ key: String, path: String, added: () => 1, removed: () => 0 }} />
 		{/* @ts-expect-error: a list holds one row kind */}
 		<List items={[1]} row={{ key: String, title: String }} meter={{ key: String, label: String, value: Number, max: Number }} />
 		<List items={[1]} meter={{ key: String, label: String, value: Number, max: Number, meta: String }} />

@@ -7,19 +7,15 @@ import {
 	chooseHead,
 	chooseReason,
 	chooseRow,
-	definitionShape,
 	factShape,
-	fileShape,
 	folding,
 	type ListInput,
 	listBusy,
 	listState,
 	listWaits,
-	meterShape,
 	missing,
 	pathCut,
 	retryOf,
-	rowShape,
 	stepStateOf,
 	tableRecords,
 	toggled,
@@ -28,10 +24,7 @@ import {
 	treeRows,
 	treeStop,
 	valueCut,
-	WAITING_ROWS,
 	waitCount,
-	waitingBars,
-	waitingDepth,
 	waitLine,
 } from "../src/list-state.ts";
 import { leadingOf, sizePx } from "../src/scales.ts";
@@ -137,135 +130,10 @@ test("a list is busy while its own items wait", () => {
 	assert.equal(listBusy({ ...base, items: [1], sectionLoading: true }), false);
 });
 
-test("the waiting shape follows the declared slots and runs none of them", () => {
-	const calls: string[] = [];
-	const spy = (name: string) => () => {
-		calls.push(name);
-		return undefined;
-	};
-	const none = {
-		wrap: false,
-		tree: false,
-		change: false,
-		leading: null,
-		meta: false,
-		chip: false,
-		marks: false,
-		trailing: false,
-		entry: false,
-		act: false,
-		more: false,
-	};
-	assert.deepEqual(rowShape({}), none);
-	assert.deepEqual(rowShape({ meta: spy("meta") }), { ...none, meta: true });
-	assert.deepEqual(
-		rowShape({
-			leading: { avatar: spy("leading") },
-			trailing: spy("trailing"),
-			more: spy("more"),
-		}),
-		{ ...none, leading: "avatar", trailing: true, more: true },
-	);
-	assert.deepEqual(rowShape({ status: spy("status") }), {
-		...none,
-		meta: true,
-		marks: true,
-	});
-	assert.deepEqual(rowShape({ chip: spy("chip") }), {
-		...none,
-		meta: true,
-		chip: true,
-		marks: true,
-	});
-	assert.deepEqual(rowShape({ warning: spy("warning") }), {
-		...none,
-		meta: true,
-		marks: true,
-	});
-	assert.deepEqual(rowShape({ lock: spy("lock") }), {
-		...none,
-		meta: true,
-		marks: true,
-	});
-	assert.deepEqual(rowShape({ change: spy("change") }), {
-		...none,
-		change: true,
-	});
-	// A step list waits as the meta line it replaces.
-	assert.deepEqual(rowShape({ steps: spy("steps") }), { ...none, meta: true });
-	assert.deepEqual(rowShape({ wrap: true, meta: spy("meta") }), {
-		...none,
-		wrap: true,
-		meta: true,
-	});
-	assert.equal(rowShape({ wrap: false }).wrap, false);
-	// A tree's waiting rows reserve its fold lane, whatever the children are.
-	assert.deepEqual(rowShape({ children: spy("children") }), {
-		...none,
-		tree: true,
-	});
-	assert.deepEqual(rowShape({ entry: spy("entry"), act: spy("act") }), {
-		...none,
-		entry: true,
-		act: true,
-	});
-	assert.equal(rowShape({ leading: { icon: spy("icon") } }).leading, "icon");
-	assert.equal(
-		rowShape({ leading: { status: spy("status") } }).leading,
-		"status",
-	);
-	assert.equal(rowShape({ leading: { check: spy("check") } }).leading, "check");
-	assert.deepEqual(meterShape({}), { line: "none" });
-	assert.deepEqual(meterShape({ meta: spy("meta") }), { line: "meta" });
-	assert.deepEqual(meterShape({ counts: spy("counts") }), { line: "counts" });
+test("a figure waits on the line its slots declare: counts over meta over none", () => {
+	assert.equal(waitLine({}), "none");
+	assert.equal(waitLine({ meta: "Of 10" }), "meta");
 	assert.equal(waitLine({ meta: "Of 10", counts: [] }), "counts");
-	assert.deepEqual(fileShape({}), { change: false, chip: false });
-	assert.deepEqual(fileShape({ chip: spy("chip") }), {
-		change: false,
-		chip: true,
-	});
-	assert.deepEqual(fileShape({ change: spy("change") }), {
-		change: true,
-		chip: false,
-	});
-	assert.deepEqual(calls, []);
-});
-
-test("a waiting definition row's shape comes from the keys a `definition` map declares: copy or an act gives the act's square, a link its chevron, a description or a lock its meta line", () => {
-	const calls: string[] = [];
-	const spy = (name: string) => () => {
-		calls.push(name);
-		return undefined;
-	};
-	assert.deepEqual(definitionShape({}), {
-		change: false,
-		description: false,
-		end: "none",
-		code: false,
-	});
-	assert.deepEqual(
-		definitionShape({ change: spy("change"), description: spy("description") }),
-		{ change: true, description: true, end: "none", code: false },
-	);
-	assert.equal(definitionShape({ copyable: true }).end, "act");
-	assert.equal(definitionShape({ copyable: false }).end, "none");
-	assert.equal(definitionShape({ copyable: true }).code, true);
-	assert.equal(definitionShape({ copyable: false }).code, false);
-	assert.equal(definitionShape({ act: spy("act") }).code, false);
-	assert.equal(definitionShape({ act: spy("act") }).end, "act");
-	assert.equal(definitionShape({ href: spy("href") }).end, "chevron");
-	assert.equal(definitionShape({ onOpen: spy("onOpen") }).end, "chevron");
-	assert.equal(
-		definitionShape({ copyable: true, href: spy("href") }).end,
-		"act",
-	);
-	assert.deepEqual(definitionShape({ locked: spy("locked") }), {
-		change: false,
-		description: true,
-		end: "none",
-		code: false,
-	});
-	assert.deepEqual(calls, []);
 });
 
 test("a list's own items wait on its query or on `loading`", () => {
@@ -620,11 +488,6 @@ test("another key, or a row the tree does not draw, moves nothing", () => {
 	assert.equal(treeMove([], 0, "End"), undefined);
 });
 
-test("a waiting tree's rows stand at a root, a level in, then two levels in", () => {
-	assert.deepEqual([0, 1, 2, 3].map(waitingDepth), [0, 1, 2, 2]);
-	assert.equal(waitingDepth(4), 0);
-});
-
 test("the tree's one tab stop is the active row, else the first", () => {
 	const rows = treeRows(TREE, NODES, []);
 	assert.equal(treeStop(rows, "a1y"), 3);
@@ -739,21 +602,4 @@ test("the steps before the current one are done, it is current, the rest later",
 
 test("the step word says where the flow stands", () => {
 	assert.equal(filled(ENGLISH.stepOf, { at: "2", of: "3" }), "Step 2 of 3");
-});
-
-test("a waiting row's bars are the same on every call, differ between lists, and stay within the allowed widths", () => {
-	const rows = [0, 1, 2, 3].map((index) => waitingBars(":r1:", index));
-	assert.deepEqual(
-		rows,
-		[0, 1, 2, 3].map((index) => waitingBars(":r1:", index)),
-	);
-	const bars = new Set<string>();
-	for (let list = 0; list < 40; list++)
-		for (let index = 0; index < WAITING_ROWS; index++)
-			bars.add(waitingBars(`:r${list}:`, index).join(" "));
-	// Lists differ: 40 lists of 4 rows reach every title and meta width, and
-	// not one fixed table's four pairs.
-	assert.ok(new Set([...bars].map((pair) => pair.split(" ")[0])).size === 3);
-	assert.ok(new Set([...bars].map((pair) => pair.split(" ")[1])).size === 2);
-	assert.ok(bars.size > 4);
 });

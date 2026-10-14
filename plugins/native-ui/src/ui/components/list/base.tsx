@@ -1,46 +1,32 @@
+import type { Drawn } from "@fcalell/plugin-api/tanstack-query";
 import type { RowLeading } from "@fcalell/ui-core/descriptors";
-import {
-	definitionShape,
-	fileShape,
-	listState,
-	meterShape,
-	retryOf,
-	rowShape,
-	toggled,
-	treeRows,
-	WAITING_ROWS,
-} from "@fcalell/ui-core/list-state";
+import { toggled, treeRows } from "@fcalell/ui-core/list-state";
+import { PAINT_ROWS, painting } from "@fcalell/ui-core/paint";
 import {
 	LIST,
 	LIST_DIVIDED,
 	LIST_ITEM,
 	LIST_TREE,
 } from "@fcalell/ui-core/variants";
-import { type ReactElement, useContext, useId, useState } from "react";
+import { type ReactElement, useState } from "react";
 import { View } from "react-native";
-import { EmptyBase } from "../../lib/empty";
+import type { Closed } from "../../lib/closed";
 import { between } from "../../lib/group";
-import { LoadingContext } from "../../lib/loading";
-import { useWords } from "../../lib/words";
-import { DefinitionRow } from "../definition-row";
-import { DefinitionWait } from "../definition-row/wait";
-import { FileRow } from "../file-row";
-import { FileWait } from "../file-row/wait";
+import { DefinitionRowBase } from "../definition-row";
+import { FileRowBase } from "../file-row";
 import { ListRowBase, type RowTree } from "../list-row/base";
-import { RowWait } from "../list-row/wait";
-import { Meter } from "../meter";
-import { MeterWait } from "../meter/wait";
-import { MissingBase } from "../missing/base";
-import type { LeadingSlot, ListProps } from "./index";
+import { MeterBase } from "../meter";
+import type { LeadingSlot, ListKind } from "./index";
 
 /** What a `Group` hands the List it frames; no app sets it, so it is outside `ListProps`. */
-export interface ListInternal {
+export interface ListInternal<T> {
 	// The List stands on a Group's card: no bleed and no box of its own, its
-	// rows and forms the card's, the card's hairline once between rows.
+	// rows the card's, the card's hairline once between rows.
 	framed?: boolean;
+	// The items as the List (or the Group framing it) subscribed to them: real,
+	// or the placeholder while the read waits, which paints `PAINT_ROWS` rows.
+	drawn: Drawn<readonly T[]>;
 }
-
-const WAITING = Array.from({ length: WAITING_ROWS }, (_, index) => index);
 
 // The item's leading mark, of the kind the slot names.
 function leadingOf<T>(slot: LeadingSlot<T>, item: T): RowLeading {
@@ -51,40 +37,33 @@ function leadingOf<T>(slot: LeadingSlot<T>, item: T): RowLeading {
 }
 
 // The List every List and a Group's `list` draw. Outside the package's
-// exports: `framed` is the Group's alone.
+// exports: `framed` and `drawn` are the List's and the Group's alone.
 export function ListBase<T, V extends string | null = string>(
-	props: ListProps<T, V> & ListInternal,
+	props: Closed & ListKind<T, V> & ListInternal<T>,
 ) {
-	const words = useWords();
-	// The list's identity: its waiting rows take their bars' widths from it.
-	const list = useId();
 	// The keys of the tree's folded branches; every branch starts open.
 	const [folded, setFolded] = useState<readonly string[]>([]);
-	const input = {
-		query: props.query,
-		items: props.items,
-		loading: props.loading,
-		sectionLoading: useContext(LoadingContext),
-		hasEmpty: props.empty !== undefined,
-	};
+	const { drawn } = props;
+	const painted = drawn.painted;
+	// Painted, `PAINT_ROWS` rows each over the placeholder; the data's depths
+	// are not there, so a painted tree draws flat.
+	const items: readonly T[] = drawn.painted
+		? Array.from({ length: PAINT_ROWS }, () => drawn.value as T)
+		: drawn.value;
+	const children = painted ? undefined : props.row?.children;
 	const framed = props.framed === true;
-	// A failed, missing or empty form stands on the Group's card when framed.
-	const fit = framed ? "group" : "frame";
-	const state = listState(input);
-	// Items given while the list loads (a row map with a trailing slot, no tree):
-	// the rows stand as loaded, their trailing values waiting.
-	const known =
-		state === "pending" &&
-		props.loading === true &&
-		props.row?.trailing !== undefined &&
-		props.row.children === undefined &&
-		(props.items?.length ?? 0) > 0;
+	// A slot run over an item; over a painted one, a slot that throws on the
+	// placeholder paints as the item itself.
+	const slot = <R,>(fn: (item: T) => R, item: T): R =>
+		painted ? (painting(fn, item) as R) : fn(item);
+	// A painted row's key is its place, the slots' keys being the placeholder's.
+	const keyOf = (key: (item: T) => string, item: T, index: number) =>
+		painted ? `waiting-${index}` : key(item);
 	// On a Group's card (framed) the card is the rows' box: each row after the
 	// first draws the group's hairline above it. Two-line rows (a map with a `meta`) abut
 	// under the same hairline.
 	// A tree's rows abut, so its rails run unbroken.
-	const divided =
-		props.row?.meta !== undefined && props.row.children === undefined;
+	const divided = props.row?.meta !== undefined && children === undefined;
 	// Whether a row of the loaded list has a more act: the rows without one then
 	// keep its square, so every row's end stands at one x.
 	let room = false;
@@ -98,80 +77,40 @@ export function ListBase<T, V extends string | null = string>(
 		));
 		return framed ? lines : <View className={LIST_DIVIDED}>{lines}</View>;
 	};
-	if (state === "pending" && !known) {
-		return frame(
-			WAITING.map((index) => {
-				if (props.row)
-					return (
-						<RowWait
-							key={index}
-							shape={rowShape(props.row)}
-							list={list}
-							index={index}
-						/>
-					);
-				if (props.meter)
-					return (
-						<View key={index} className={LIST_ITEM}>
-							<MeterWait {...meterShape(props.meter)} />
-						</View>
-					);
-				if (props.definition)
-					return (
-						<DefinitionWait
-							key={index}
-							shape={definitionShape(props.definition)}
-							index={index}
-						/>
-					);
-				return <FileWait key={index} {...fileShape(props.file)} />;
-			}),
-			props.row?.children !== undefined,
-		);
-	}
-	if (state === "missing") return <MissingBase fit={fit} />;
-	if (state === "failed" && props.query !== undefined) {
-		return (
-			<EmptyBase
-				fit={fit}
-				tone="failed"
-				sentence={props.sentence}
-				act={{ label: words.retry, onAct: retryOf(props.query) }}
-			/>
-		);
-	}
-	if (state === "empty" && props.empty)
-		return <EmptyBase fit={fit} tone="rest" {...props.empty} />;
-	const items = (props.query ? props.query.data : props.items) ?? [];
 	if (props.row) {
 		const { row } = props;
-		const rowOf = (item: T, tree?: RowTree) => (
+		const { leading } = row;
+		// A painted row opens as the loaded one would: it draws the chevron, and
+		// builds no hit.
+		const opens = row.href !== undefined || row.onOpen !== undefined;
+		const rowOf = (item: T, index: number, tree?: RowTree) => (
 			<ListRowBase
-				key={row.key(item)}
-				change={row.change?.(item)}
-				leading={row.leading && leadingOf(row.leading, item)}
-				title={row.title(item)}
-				meta={row.meta?.(item)}
-				trailing={known ? undefined : row.trailing?.(item)}
-				status={row.status?.(item)}
-				warning={row.warning?.(item)}
-				lock={row.lock?.(item)}
-				chip={row.chip?.(item)}
-				entry={row.entry?.(item)}
-				steps={row.steps?.(item)}
-				dim={row.dim?.(item)}
+				key={keyOf(row.key, item, index)}
+				change={row.change && slot(row.change, item)}
+				leading={leading && slot((one) => leadingOf(leading, one), item)}
+				title={slot(row.title, item)}
+				meta={row.meta && slot(row.meta, item)}
+				trailing={row.trailing && slot(row.trailing, item)}
+				status={row.status && slot(row.status, item)}
+				warning={row.warning && slot(row.warning, item)}
+				lock={row.lock && slot(row.lock, item)}
+				chip={row.chip && slot(row.chip, item)}
+				entry={row.entry && slot(row.entry, item)}
+				steps={row.steps && slot(row.steps, item)}
+				dim={row.dim && slot(row.dim, item)}
 				wrap={row.wrap}
-				act={row.act?.(item)}
-				more={row.more?.(item)}
-				href={row.href?.(item)}
-				selected={row.selected?.(item)}
+				act={row.act && slot(row.act, item)}
+				more={row.more && slot(row.more, item)}
+				href={row.href && slot(row.href, item)}
+				selected={row.selected && slot(row.selected, item)}
 				onOpen={row.onOpen ? () => row.onOpen?.(item) : undefined}
-				waits={known}
 				room={room}
 				tree={tree}
+				painted={painted}
+				opens={opens}
+				at={index}
 			/>
 		);
-		const { children } = row;
 		const { more } = row;
 		if (more !== undefined) {
 			const every =
@@ -180,13 +119,14 @@ export function ListBase<T, V extends string | null = string>(
 					: treeRows(items, { key: row.key, children }, []).map(
 							(each) => each.item,
 						);
-			room = every.some((item) => more(item)?.length);
+			room = every.some((item) => slot(more, item)?.length);
 		}
-		if (children === undefined) return frame(items.map((item) => rowOf(item)));
+		if (children === undefined)
+			return frame(items.map((item, index) => rowOf(item, index)));
 		// Each row of the tree is given its depth and fold.
 		return frame(
-			treeRows(items, { key: row.key, children }, folded).map((each) =>
-				rowOf(each.item, {
+			treeRows(items, { key: row.key, children }, folded).map((each, index) =>
+				rowOf(each.item, index, {
 					depth: each.depth,
 					fold: each.branch
 						? {
@@ -202,16 +142,18 @@ export function ListBase<T, V extends string | null = string>(
 	if (props.meter) {
 		const { meter } = props;
 		return frame(
-			items.map((item) => (
-				<View key={meter.key(item)} className={LIST_ITEM}>
-					<Meter
-						label={meter.label(item)}
-						value={meter.value(item)}
-						max={meter.max(item)}
-						mark={meter.mark?.(item)}
+			items.map((item, index) => (
+				<View key={keyOf(meter.key, item, index)} className={LIST_ITEM}>
+					<MeterBase
+						label={slot(meter.label, item)}
+						value={slot(meter.value, item)}
+						max={slot(meter.max, item)}
+						mark={meter.mark && slot(meter.mark, item)}
 						{...(meter.counts
-							? { counts: meter.counts(item) }
-							: { meta: meter.meta?.(item) })}
+							? { counts: slot(meter.counts, item) }
+							: { meta: meter.meta && slot(meter.meta, item) })}
+						painted={painted}
+						at={index}
 					/>
 				</View>
 			)),
@@ -220,24 +162,28 @@ export function ListBase<T, V extends string | null = string>(
 	if (props.definition) {
 		const { definition } = props;
 		return frame(
-			items.map((item) => {
-				const locked = definition.locked?.(item);
-				const key = definition.key(item);
+			items.map((item, index) => {
+				const locked = definition.locked && slot(definition.locked, item);
+				const key = keyOf(definition.key, item, index);
 				const shared = {
-					change: definition.change?.(item),
-					label: definition.label(item),
-					value: definition.value?.(item),
+					change: definition.change && slot(definition.change, item),
+					label: slot(definition.label, item),
+					value: definition.value && slot(definition.value, item),
 					copyable: definition.copyable,
+					painted,
+					at: index,
 				};
 				if (locked)
-					return <DefinitionRow key={key} {...shared} locked={locked} />;
+					return <DefinitionRowBase key={key} {...shared} locked={locked} />;
 				return (
-					<DefinitionRow
+					<DefinitionRowBase
 						key={key}
 						{...shared}
-						description={definition.description?.(item)}
-						act={definition.act?.(item)}
-						href={definition.href?.(item)}
+						description={
+							definition.description && slot(definition.description, item)
+						}
+						act={definition.act && slot(definition.act, item)}
+						href={definition.href && slot(definition.href, item)}
 						onOpen={
 							definition.onOpen ? () => definition.onOpen?.(item) : undefined
 						}
@@ -248,17 +194,19 @@ export function ListBase<T, V extends string | null = string>(
 	}
 	const { file } = props;
 	return frame(
-		items.map((item) => (
-			<FileRow
-				key={file.key(item)}
-				path={file.path(item)}
-				added={file.added(item)}
-				removed={file.removed(item)}
-				seen={file.seen?.(item)}
-				change={file.change?.(item)}
-				chip={file.chip?.(item)}
-				href={file.href?.(item)}
+		items.map((item, index) => (
+			<FileRowBase
+				key={keyOf(file.key, item, index)}
+				path={slot(file.path, item)}
+				added={slot(file.added, item)}
+				removed={slot(file.removed, item)}
+				seen={file.seen && slot(file.seen, item)}
+				change={file.change && slot(file.change, item)}
+				chip={file.chip && slot(file.chip, item)}
+				href={file.href && slot(file.href, item)}
 				onOpen={file.onOpen ? () => file.onOpen?.(item) : undefined}
+				painted={painted}
+				at={index}
 			/>
 		)),
 	);

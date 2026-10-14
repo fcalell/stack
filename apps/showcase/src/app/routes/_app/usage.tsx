@@ -31,10 +31,10 @@ const BAR: BarSlots<Day> = {
 // The projects a week's requests are split by.
 const PROJECTS = ["acme-web", "acme-api", "acme-docs"];
 
-// Each section reads its own query and its collection draws that query's
-// states, so a failure stays in its section.
+// Each section reads its own query and draws that query's states, so a
+// failure stays in its section.
 function Usage() {
-	const meters = useQuery(orpc.usage.meters.queryOptions());
+	const meters = orpc.usage.meters.read();
 	const requests = useQuery(orpc.usage.requests.queryOptions());
 	const minutes = useQuery(orpc.usage.minutes.queryOptions());
 	const cron = useQuery(orpc.usage.cron.queryOptions());
@@ -46,17 +46,16 @@ function Usage() {
 				<Section
 					title="This month"
 					description="Team plan, resets on Oct 31."
-					count={meters.data?.length}
-					loading={meters.isPending}
+					read={meters}
+					failed="The meters did not load."
+					empty={{
+						title: "No limits",
+						sentence: "This plan meters nothing.",
+					}}
 				>
 					<Group
 						list={{
-							query: meters,
-							sentence: "The meters did not load.",
-							empty: {
-								title: "No limits",
-								sentence: "This plan meters nothing.",
-							},
+							items: meters,
 							meter: {
 								key: (meter) => meter.label,
 								label: (meter) => meter.label,

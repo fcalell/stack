@@ -1,4 +1,3 @@
-import { useQuery } from "@fcalell/plugin-api/tanstack-query";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
 import { MessageInput } from "@fcalell/plugin-react-ui/components/message-input";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
@@ -33,7 +32,7 @@ const NAME = { you: "You", other: "Assistant" } as const;
 // scroll under the ask field docked at the foot; a question sent opens the
 // conversation.
 function Home() {
-	const tasks = useQuery(orpc.tasks.list.queryOptions());
+	const tasks = orpc.tasks.list.read();
 	const [value, setValue] = useState("");
 	return (
 		<Place>
@@ -50,14 +49,13 @@ function Home() {
 			>
 				<Section
 					title="Tasks"
-					count={tasks.data?.length}
-					loading={tasks.isPending}
+					read={tasks}
+					failed="Tasks did not load."
+					empty={{ sentence: "No task is open." }}
 				>
 					<Group
 						list={{
-							query: tasks,
-							sentence: "Tasks did not load.",
-							empty: { sentence: "No task is open." },
+							items: tasks,
 							row: {
 								key: (task) => task.id,
 								title: (task) => task.title,

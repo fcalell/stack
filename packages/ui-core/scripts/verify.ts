@@ -1976,7 +1976,6 @@ check(
 			"Quoted",
 			"Part",
 			"StatusMark",
-			"RowStatus",
 			"ChipMark",
 			"Option",
 			"PlaceSpec",

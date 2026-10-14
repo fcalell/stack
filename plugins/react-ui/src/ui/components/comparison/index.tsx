@@ -24,8 +24,9 @@ import { LoadingContext } from "../../lib/loading.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Chip } from "../chip/index.tsx";
 import { Group, type GroupItem } from "../group/index.tsx";
-import type { ListSource } from "../list/index.tsx";
+import type { ListEmpty } from "../list/index.tsx";
 import { MissingBase } from "../missing/base.tsx";
+import type { QueryLike } from "../query-boundary/index.tsx";
 import { StatusBase } from "../status/base.tsx";
 import { Status } from "../status/index.tsx";
 
@@ -70,6 +71,29 @@ export interface FactSlots<T> {
 	/** The fact's verdict, drawn after the label and its chips; a passing fact returns undefined, or a done mark where the screen reads the pass out. */
 	status?: (item: T) => StatusMark | undefined;
 }
+
+/** Where a comparison's items come from; the list's own source, which a List no longer takes. */
+type ListSource<T> =
+	| {
+			/** The query whose items the facts draw. */
+			query: QueryLike<readonly T[]>;
+			/** What failed to load, over the retry act (a sentence; wraps). */
+			sentence: string;
+			/** What the comparison draws when the query answers with no item. */
+			empty: ListEmpty;
+			items?: never;
+			loading?: never;
+	  }
+	| {
+			/** The items the facts draw. */
+			items: readonly T[];
+			/** The items are on their way (a compound body's loading form): the facts wait. */
+			loading?: boolean;
+			/** What the comparison draws with no item; without it an empty comparison draws nothing. */
+			empty?: ListEmpty;
+			query?: never;
+			sentence?: never;
+	  };
 
 /** Facts set side by side across two or three columns, from a query or from items. */
 export type ComparisonProps<T = unknown> = Closed &

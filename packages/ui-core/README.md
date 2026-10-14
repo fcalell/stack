@@ -35,7 +35,7 @@ Twenty-six subpaths:
   `ButtonFit`, `IconButtonFit` and `LinkFit`, what an act sits in, read off each matrix's `fit`
   axis; `ActionBarFit`, where an action bar stands, `end` or `full`, off `ACTION_BAR`'s;
   `TextRole`, the `body` and `meta` roles `Text` draws).
-- `@fcalell/ui-core/descriptors`: `IconName`, `Act`, `IconAct`, `Part`, `StatusMark`, `RowStatus`, `ChipMark`,
+- `@fcalell/ui-core/descriptors`: `IconName`, `Act`, `IconAct`, `Part`, `StatusMark`, `ChipMark`,
   `Option`, `OptionGroup`, `PlaceSpec`, `Switcher`, `Hunk`, `FieldBinding`, `Confirmation`,
   `MenuItem`, `RowEntry`, `Lock`, `Answered`, `TableColumn`, `TableRowSlots`, `CellEdit`, `Stage`,
   `StageEnd`, `Sentence`, `Coded`, `RowTitle` and the other framework-free types a prop carries.
@@ -51,7 +51,7 @@ Twenty-six subpaths:
 - `@fcalell/ui-core/settle`: `createSettle`, the page's one move from the painted form to the loaded
   one: the switches asked for in a frame apply together in one view transition, or at once.
 - `@fcalell/ui-core/list-state`: what a collection decides before it draws, free of any framework:
-  a `List`'s or `Table`'s state and waiting shape (`listState`, `rowShape`), a table's records,
+  a `List`'s or `Table`'s state and waiting shape (`listState`), a table's records,
   sort and tick logic (`tableRecords`, `sorted`, `tickable`), a tree's visible rows (`treeRows`),
   the states a meter, a step count and a rail draw (`levelOf`, `stepStateOf`, `stagesShown`) and
   the set a toggled value leaves (`toggled`), and a definition value's cut (`valueCut`, its stem and

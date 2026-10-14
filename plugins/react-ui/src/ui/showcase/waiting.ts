@@ -1,4 +1,5 @@
 import { type Read, read } from "@fcalell/plugin-api/tanstack-query";
+import type { ShowcaseFrame } from "./cells.ts";
 
 // The reads a frame's showcase drawer hands a frame to show each of its forms:
 // one that never answers, so the frame stays painted, one that always rejects,
@@ -9,11 +10,11 @@ import { type Read, read } from "@fcalell/plugin-api/tanstack-query";
 // frames, takes each its own set with `readsAt`.
 export interface Reads {
 	/** A read whose query never resolves: its frame holds the painted form. */
-	waiting: Read<unknown>;
+	waiting: Read<readonly string[]>;
 	/** A read whose query rejects: its frame draws the failed form. */
-	failing: Read<unknown>;
+	failing: Read<readonly string[]>;
 	/** A read that answers not found: its frame draws the missing form. */
-	missing: Read<unknown>;
+	missing: Read<readonly string[]>;
 	/** A read that answers no rows: its frame draws its empty form. */
 	empty: Read<readonly string[]>;
 	/** A read that answers rows: its frame draws the loaded tree and, for an array, its count. */
@@ -66,3 +67,28 @@ export function readsAt(key = ""): Reads {
 }
 
 export const { waiting, failing, missing, empty, ready } = readsAt();
+
+const itemed = new Map<string, Read<readonly unknown[]>>();
+
+/** A read in a frame's state of `items`: it answers them at rest and none when empty, never answers while loading and rejects in error. The same read for the same key; a frame that holds it as its root is its one holder, so each takes its own key. */
+export function itemsAt<T>(
+	key: string,
+	state: ShowcaseFrame["state"],
+	items: readonly T[],
+): Read<readonly T[]> {
+	const held = itemed.get(key);
+	if (held) return held as Read<readonly T[]>;
+	const made = read({
+		queryKey: ["showcase", key, "items"],
+		queryFn: (): Promise<readonly T[]> => {
+			if (state === "loading") return new Promise<never>(() => {});
+			if (state === "error")
+				return Promise.reject(new Error("The showcase read fails."));
+			return Promise.resolve(state === "empty" ? [] : items);
+		},
+		staleTime: Number.POSITIVE_INFINITY,
+		retry: false,
+	});
+	itemed.set(key, made);
+	return made;
+}

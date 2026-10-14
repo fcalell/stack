@@ -15,7 +15,7 @@ import { Section } from "../../components/section/index.tsx";
 import { Thread } from "../../components/thread/index.tsx";
 import { TouchedContext } from "../../lib/touched.ts";
 import type { ShowcaseFrame } from "../cells.ts";
-import { type Reads, readsAt } from "../waiting.ts";
+import { itemsAt, type Reads, readsAt } from "../waiting.ts";
 import {
 	STAND_IN_ENTRIES,
 	STAND_IN_ROW,
@@ -269,7 +269,12 @@ export function drawSection(frame: ShowcaseFrame) {
 					<QueryBoundary
 						query={PENDING}
 						sentence="Recent members did not load."
-						loading={<List items={[]} loading row={STAND_IN_ROW} />}
+						loading={
+							<List
+								items={itemsAt(`${frame.id}/recent`, "loading", STAND_INS)}
+								row={STAND_IN_ROW}
+							/>
+						}
 					>
 						{(names) => <List items={names} row={STAND_IN_ROW} />}
 					</QueryBoundary>

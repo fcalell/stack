@@ -25,7 +25,6 @@ import {
 	rowStep,
 	rowTitle,
 	rowTitleForm,
-	skeleton,
 	TREE_LANE,
 	TREE_RAIL,
 	text,
@@ -101,8 +100,6 @@ const TITLE_WHOLE = "grow min-w-0";
 const TITLE_CODE = "flex items-center grow min-w-0";
 const LINE_WHOLE = "flex items-start min-w-0";
 const TRAILING = "shrink-0";
-// A trailing value waiting: four figures, a count's or an age's width.
-const TRAILING_BAR = "w-figures";
 // A one-line title and its value stand on a line that wraps: the title's basis
 // is half the line, so the value, wider than what that leaves, wraps under the
 // line's one height and is clipped away; with room, the title grows to fill
@@ -175,14 +172,14 @@ const FOLD = "flex shrink-0 items-center justify-center self-center";
 export interface ListRowInternal {
 	/** The row's place in a tree `List`: its depth (the roots 0), for a branch whether its children are drawn and how to fold them, and whether it is the tree's one tab stop. */
 	tree?: RowTree;
-	/** The List was given the items while it loads: the trailing value draws as a bar and the app's `trailing` is not read. */
-	waits?: boolean;
 	/** A row of the list has a more act: a row without one keeps its square blank, so every row's trailing value ends at one x. */
 	room?: boolean;
 	/** The List's items are not here: every text and figure slot paints at its role, the marks and controls paint, the row is inert and builds no hit. The slots are run over the placeholder, so they say which parts the loaded row has. */
 	painted?: boolean;
 	/** The row's place among the painted rows, which varies the filler's lengths. */
 	at?: number;
+	/** The painted row's List has an `href` or `onOpen` slot: the row draws the chevron the loaded one would, though its slots gave no `href` over the placeholder. */
+	opens?: boolean;
 }
 
 // A row of a tree `List`: its depth (the roots 0), for a branch whether its
@@ -364,10 +361,10 @@ export function ListRowBase<V extends string | null = string>({
 	selected = false,
 	onOpen,
 	tree,
-	waits = false,
 	room = false,
 	painted = false,
 	at = 0,
+	opens: opened = false,
 }: ListRowProps<V> & ListRowInternal) {
 	const words = useWords();
 	const route = useRoute();
@@ -375,7 +372,7 @@ export function ListRowBase<V extends string | null = string>({
 	const named = painted ? "" : partText(title);
 	const current =
 		!painted && (selected || (href !== undefined && isCurrent(href, route)));
-	const opens = href !== undefined || onOpen !== undefined;
+	const opens = painted ? opened : href !== undefined || onOpen !== undefined;
 	// A row that opens ends in a chevron unless its end already holds an act, a
 	// pick or a tree's fold.
 	const chevron =
@@ -425,19 +422,8 @@ export function ListRowBase<V extends string | null = string>({
 	// A painted meta line is one filler per part the slot gave, a slot that
 	// gave the placeholder whole counting one.
 	const painters = painted && meta?.length ? paintedParts(meta) : 0;
-	// A waiting row (its List was given the items while it loads) draws the bar
-	// in the value's place; the app's slot is not read for it.
 	let value: ReactNode = null;
-	if (waits)
-		value = (
-			<First on={top}>
-				<span
-					aria-hidden
-					className={cn(skeleton({ kind: "line" }), TRAILING_BAR, TRAILING)}
-				/>
-			</First>
-		);
-	else if (trailing && !("pick" in trailing))
+	if (trailing && !("pick" in trailing))
 		value = (
 			<First on={top}>
 				<span className={cn(ROW_TRAILING, TRAILING)}>
@@ -717,7 +703,7 @@ export function ListRowBase<V extends string | null = string>({
 					{actReason.line}
 				</span>
 			)}
-			{!waits && trailing && "pick" in trailing ? (
+			{trailing && "pick" in trailing ? (
 				<First on={top}>
 					<PickerBase {...trailing.pick} fit="row" painted={painted} />
 				</First>

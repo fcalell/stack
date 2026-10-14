@@ -1,4 +1,3 @@
-import { useQuery } from "@fcalell/plugin-api/tanstack-query";
 import { List } from "@fcalell/plugin-react-ui/components/list";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
@@ -14,17 +13,18 @@ export const Route = createFileRoute("/_app/domains/")({
 
 // A list of the domains. A row opens nothing: no record route stands behind it.
 function Domains() {
-	const domains = useQuery(orpc.domains.list.queryOptions());
+	const domains = orpc.domains.list.read();
 	return (
 		<Place>
 			<Pane
 				title="Domains"
 				actions={[{ icon: "Plus", label: "Add domain", onAct: act }]}
+				read={domains}
+				failed="Domains did not load."
+				empty={{ sentence: "No domain is connected." }}
 			>
 				<List
-					query={domains}
-					sentence="Domains did not load."
-					empty={{ sentence: "No domain is connected." }}
+					items={domains}
 					row={{
 						key: (domain) => domain.name,
 						leading: { status: (domain) => domain.state },

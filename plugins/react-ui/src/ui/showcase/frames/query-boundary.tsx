@@ -7,6 +7,7 @@ import type { QueryLike } from "../../components/query-boundary/index.tsx";
 import { QueryBoundary } from "../../components/query-boundary/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
+import { itemsAt } from "../waiting.ts";
 import { Column } from "./place.tsx";
 
 const refetch = () => {};
@@ -92,7 +93,12 @@ export function drawQueryBoundary(frame: ShowcaseFrame) {
 						<QueryBoundary
 							query={query}
 							sentence="Issues did not load."
-							loading={<List items={[]} loading row={ROW} />}
+							loading={
+								<List
+									items={itemsAt(`${frame.id}/issues`, "loading", ISSUES)}
+									row={ROW}
+								/>
+							}
 						>
 							{(count) => <List items={ISSUES.slice(0, count)} row={ROW} />}
 						</QueryBoundary>

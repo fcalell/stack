@@ -6,7 +6,6 @@ import type {
 	RowEntry,
 	RowLeading,
 	RowPart,
-	RowStatus,
 	RowTitle,
 	RowTrailing,
 	StatusMark,
@@ -31,12 +30,10 @@ export interface ListRowProps<V extends string | null = string> extends Closed {
 	meta?: readonly RowPart[];
 	/** A value at the title line's end (an age, a count, a word: kept whole, the title truncating first), or a pick that applies at once. */
 	trailing?: RowTrailing<V>;
-	// A work state on the meta line; a waiting act is told by its tone.
-	// `{ loading: true }` while the read that answers it has not: a bar at the
-	// status's place and height, so the row keeps its height when it answers.
-	// A `short` form draws in place of the `label` while the long one would be
+	// A work state on the meta line; a waiting act is told by its tone. A
+	// `short` form draws in place of the `label` while the long one would be
 	// cut.
-	status?: RowStatus;
+	status?: StatusMark;
 	/** What is wrong with the row, on the meta line after the status: a warn glyph and its label (a short phrase; truncates). The act that clears it is the row's `act`. */
 	warning?: string;
 	/** What the row holds, on the meta line after the warning: a lock glyph and its label (a short phrase; truncates). */

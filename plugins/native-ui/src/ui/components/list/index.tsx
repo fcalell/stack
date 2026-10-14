@@ -1,3 +1,8 @@
+import {
+	type Datum,
+	type Drawn,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import type {
 	Act,
 	ChangeKind,
@@ -10,7 +15,6 @@ import type {
 	RowEntry,
 	RowLeading,
 	RowPart,
-	RowStatus,
 	RowTitle,
 	RowTrailing,
 	StatusMark,
@@ -19,7 +23,6 @@ import type { Closed } from "../../lib/closed";
 import type { EmptyProps } from "../../lib/empty";
 import type { Route } from "../../lib/route";
 import type { DefinitionValue } from "../definition-row";
-import type { QueryLike } from "../query-boundary";
 import { ListBase } from "./base";
 
 // A list's leading slot: one key naming the kind every row leads with, its
@@ -50,8 +53,8 @@ export type LeadingSlot<T> =
 			status?: never;
 	  };
 
-// One function per `ListRow` slot, each called with a loaded item; the
-// slots given are the shape the waiting rows draw.
+// One function per `ListRow` slot, each called with an item; the
+// slots given are the shape the painted rows draw.
 export interface RowSlots<T, V extends string | null = string> {
 	// The item's React key, unique in the list.
 	key: (item: T) => string;
@@ -69,22 +72,22 @@ export interface RowSlots<T, V extends string | null = string> {
 	/** The row's meta line (each part a short phrase; one line, the later parts truncating first). */
 	meta?: (item: T) => readonly RowPart[] | undefined;
 	trailing?: (item: T) => RowTrailing<V> | undefined;
-	status?: (item: T) => RowStatus | undefined;
+	status?: (item: T) => StatusMark | undefined;
 	/** What is wrong with the row, a warning mark (a short phrase; truncates). */
 	warning?: (item: T) => string | undefined;
 	/** What the row holds, a lock mark (a short phrase; truncates). */
 	lock?: (item: T) => string | undefined;
 	chip?: (item: T) => ChipMark | undefined;
-	// The row's input and its act, in the meta line's place; the waiting rows
+	// The row's input and its act, in the meta line's place; the painted rows
 	// draw it in place of the meta line.
 	entry?: (item: T) => RowEntry | undefined;
 	// The steps of the work the row's act pends on, in the meta line's place;
-	// the waiting rows draw the meta line.
+	// the painted rows draw the meta line.
 	steps?: (item: T) => readonly StatusMark[] | undefined;
 	// Whether the row stands off a highlighted path.
 	dim?: (item: T) => boolean | undefined;
 	// Whether every row's title wraps whole (a list of notes); one value for
-	// the list, so the waiting rows draw it.
+	// the list, so the painted rows draw it.
 	wrap?: boolean;
 	// The row's labelled act at its end.
 	act?: (item: T) => Act | undefined;
@@ -96,7 +99,7 @@ export interface RowSlots<T, V extends string | null = string> {
 	onOpen?: (item: T) => void;
 }
 
-// One function per `FileRow` slot, each called with a loaded item.
+// One function per `FileRow` slot, each called with an item.
 export interface FileSlots<T> {
 	key: (item: T) => string;
 	/** The file's path (a path: the directory gives way first, then the name's middle). */
@@ -120,8 +123,8 @@ interface MeterSlotsBase<T> {
 	mark?: (item: T) => MeterMark | undefined;
 }
 
-// One function per `Meter` slot, each called with a loaded item; a declared
-// `meta` or `counts` is the line the waiting meters draw, never both.
+// One function per `Meter` slot, each called with an item; a declared
+// `meta` or `counts` is the line the painted meters draw, never both.
 // `counts` is the line under the bar as links: counts that lead to their
 // lists.
 export type MeterSlots<T> = MeterSlotsBase<T> &
@@ -139,12 +142,12 @@ interface DefinitionSlotsBase<T> {
 	// Where the fact stands in a change set, its change mark.
 	change?: (item: T) => ChangeKind | undefined;
 	// Whether every value is copied whole (identifiers): drawn in the code role
-	// with a copy act; one value for the list, so the waiting rows hold the
+	// with a copy act; one value for the list, so the painted rows hold the
 	// act's square.
 	copyable?: boolean;
 }
 
-// One function per `DefinitionRow` slot, each called with a loaded item; a
+// One function per `DefinitionRow` slot, each called with an item; a
 // declared `description`, `act`, `href` or `onOpen` is the row's editable form,
 // a declared `locked` its locked one, never both.
 export type DefinitionSlots<T> = DefinitionSlotsBase<T> &
@@ -170,30 +173,8 @@ export type DefinitionSlots<T> = DefinitionSlotsBase<T> &
 // act that fills the list.
 export type ListEmpty = Pick<EmptyProps, "icon" | "title" | "sentence" | "act">;
 
-// Where a list's items come from.
-export type ListSource<T> =
-	| {
-			query: QueryLike<readonly T[]>;
-			/** What failed to load, over the retry act (a sentence; wraps). */
-			sentence: string;
-			empty: ListEmpty;
-			items?: never;
-			loading?: never;
-	  }
-	| {
-			items: readonly T[];
-			// The items are on their way (a compound body's loading form). Given
-			// items and a `row` map with a `trailing` slot (no tree), the rows stand
-			// as loaded and only their trailing values wait.
-			loading?: boolean;
-			// Without it an empty list draws nothing.
-			empty?: ListEmpty;
-			query?: never;
-			sentence?: never;
-	  };
-
 // The one kind of row a list holds.
-type ListKind<T, V extends string | null> =
+export type ListKind<T, V extends string | null> =
 	| { row: RowSlots<T, V>; file?: never; meter?: never; definition?: never }
 	| { file: FileSlots<T>; row?: never; meter?: never; definition?: never }
 	| { meter: MeterSlots<T>; row?: never; file?: never; definition?: never }
@@ -204,25 +185,27 @@ type ListKind<T, V extends string | null> =
 			meter?: never;
 	  };
 
-// A collection's rows: from a query or from items, each a ListRow, a
-// FileRow, a Meter or a DefinitionRow.
+// A collection's rows: from items, each a ListRow, a FileRow, a Meter or a
+// DefinitionRow.
 export type ListProps<T = unknown, V extends string | null = string> = Closed &
-	ListSource<T> &
-	ListKind<T, V>;
+	ListKind<T, V> & {
+		/** The items the rows draw: constants, or a selection, which paints `PAINT_ROWS` rows until its read lands. A selection stands in a frame (a Pane, Section, Sheet or Form given the read), which draws the list's failed, missing and empty forms. */
+		items: Datum<readonly T[]>;
+	};
 
 // Rows on the ground at the rows rhythm, with no box and no hairlines: a
-// feed. It draws its collection's four states: while its query is pending,
-// `loading` is set or a loading Section around it waits, waiting rows stand
-// in the slots its map declares (busy itself while it
-// waits); a query that answers not found draws the missing form
-// saying it no longer exists with Back, never Retry; a failed query draws the
-// failed form with `sentence` and Retry; no item draws `empty`; then
-// one row per item. A standalone list bleeds the card's inset, so its rows'
-// text meets the title over it; in a Group's `list` it stands on the card, the
-// hairline once between rows. A `definition` list (facts from data:
+// feed. It draws one row per item. While the `items` selection's read waits,
+// `PAINT_ROWS` rows stand in the slots its map declares (the slots are run
+// over the placeholder), each painted, inert and with no link; a tree draws
+// flat then. The frame around it draws the rest: it holds the read and draws
+// the failed form with Retry, the missing form saying it no longer exists with
+// Back, and the empty form. A standalone list bleeds the card's inset, so its
+// rows' text meets the title over it; in a Group's `list` it stands on the
+// card, the hairline once between rows. A `definition` list (facts from data:
 // DefinitionRows) stands in a Group, and carries no count of its own.
 export function List<T, V extends string | null = string>(
 	list: ListProps<T, V>,
 ) {
-	return <ListBase {...list} />;
+	const [drawn] = useSelections([list.items] as const);
+	return <ListBase {...list} drawn={drawn as Drawn<readonly T[]>} />;
 }

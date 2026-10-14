@@ -212,10 +212,7 @@ app's own form state. A `Form` that stands edited asks once, "Discard your edit?
 
 A row's marks are named props on the meta line, at most one each, in order: `status`, `warning`
 (what is wrong, a string), `lock` (what it holds, a string, a glyph) and `chip`; the
-act that clears a warning is the row's `act`. A `status` whose own read has not answered is
-`{ loading: true }` (a `RowStatus`, from a `List`'s `row` map or a `ListRow`): the row is the
-two-line row from its first frame and the status stands as a bar of its height starting where the word will, so the row keeps its
-height when it answers. A status has one form, its `label`, truncating where the meta line is out of room. Keep a status word short; stack never shortens a label itself.
+act that clears a warning is the row's `act`. A status has one form, its `label`, truncating where the meta line is out of room. Keep a status word short; stack never shortens a label itself.
 
 Where a row, a fact or a field stands in a change set is its `change` (`ChangeKind`: `added`,
 `changed`, `removed`, `unchanged`, `stale`), one prop on `ListRow`, `DefinitionRow` and `FormField`
@@ -229,7 +226,7 @@ row waits on keeps its pending press there, never also in `more`). An input on a
 in the meta line's place; once its act settles, give the row `meta` or `status` instead of
 `entry`. A `List`'s `row` map declares `act` and `entry` only if every item fills them.
 
-A `List` decides its rows' separator from its `row` map, never a prop: a map that declares `meta` (two-line rows) draws a full-width hairline once between rows, with no gap and no inset; any other map draws none, rows on the ground at the rows rhythm. The rows of one list never differ, so an item without a meta still stands under its hairline, and the waiting rows match. A tree's rails run unbroken, so a tree draws none, and a `List` in a `Group` takes the group's one hairline and adds none. The references split by row height: single-line and tight inbox rows read by whitespace and a press wash (`patterns/activity-feed.md`: the Linear inbox at about 54 px; `patterns/dark-mode.md`), where tall two-line rows are parted by a hairline (`patterns/chips-and-statuses.md`: Vercel deployment rows; `patterns/data-table.md`: horizontal lines only in lists; the Dribbble messages screen on Mobbin).
+A `List` decides its rows' separator from its `row` map, never a prop: a map that declares `meta` (two-line rows) draws a full-width hairline once between rows, with no gap and no inset; any other map draws none, rows on the ground at the rows rhythm. The rows of one list never differ, so an item without a meta still stands under its hairline, and the painted rows match. A tree's rails run unbroken, so a tree draws none, and a `List` in a `Group` takes the group's one hairline and adds none. The references split by row height: single-line and tight inbox rows read by whitespace and a press wash (`patterns/activity-feed.md`: the Linear inbox at about 54 px; `patterns/dark-mode.md`), where tall two-line rows are parted by a hairline (`patterns/chips-and-statuses.md`: Vercel deployment rows; `patterns/data-table.md`: horizontal lines only in lists; the Dribbble messages screen on Mobbin).
 
 A row off a highlighted path (a journey's untaken steps) is `dim`: its title in the meta ink at
 400, never faded, still a hit, its glyph and marks keeping their hue. While a row's act pends,
@@ -331,12 +328,13 @@ A `Section`'s head ends in its `act`, then its `more` (a `MenuItem[]`, destructi
 
 ## Collections take data
 
-A collection takes data and draws its states. A `List` takes its `query` (or static `items`) and one
-item map, `row` for `ListRow`s, `file` for `FileRow`s, `meter` for `Meter`s or `definition` for
+A collection takes data and draws its rows; the frame around it (a `Pane`, `Section`, `Sheet` or
+`Form`, given the read) draws its failed, missing and empty forms. A `List` takes `items` (static, or
+a selection of a read) and one item map, `row` for `ListRow`s, `file` for `FileRow`s, `meter` for `Meter`s or `definition` for
 `DefinitionRow`s (facts from data: `label`, `value`, and `description`, `act`, `href` and `onOpen` or
 `locked`, with `copyable` one value for the list), one function per slot; declare a slot only if
-every item fills it. Pending, it waits in those slots; failed, it shows
-`sentence` and Retry; empty, `empty`, with the act that fills it. Rows share one `leading` kind
+every item fills it. Pending, it paints four rows in those slots, run over the placeholder;
+the frame shows the failure with Retry and, empty, its `empty` with the act that fills it. Rows share one `leading` kind
 (`avatar`, `icon` or `status`) or none. The first meta part names the item. A row's meta line
 yields from its end, in this strict order: the later parts truncate (a `{ quoted }` part cuts ahead
 of the plain ones, so a long quote or reason yields and an age and spend that must read are the
@@ -359,7 +357,7 @@ a `List` is a `FormField` item in one `Group` and the `List` the `list` of a sec
 rows from data in a card, drawing their states on the card with no bleed of their own, never a `.map` of `ListRow`s,
 `DefinitionRow`s or `Meter`s. A `definition` list stands in a `Group`'s `list`, as a `DefinitionRow` does in its `items`.
 A row is one form everywhere, square at the card's inset, and a `List` outside a `Group` bleeds that inset, so its rows' text meets the title over it.
-A waiting `Group` (its `loading`, or a loading `Section`'s) draws one waiting form per `Meter`, `Slider` and `DefinitionRow` it holds, at the loaded card's height (a row's form follows the `description`, `act`, `href`, `locked` or control it is given), ; a row of your own draws as it is. Each part of a loading `Section`'s body draws its own waiting form: a `Prose`, a `Thread`, a `Code`, a `Meter`, a `Slider`, a `DefinitionRow`, a `FormField` and an `ActionBar` (a `Form`'s `bar` included) each wait where they stand, a `FormField` kept mounted, hidden, so typed text outlives the wait; any other body, an app's own component, draws as it is. A skeleton field stands in the form of the field it stands for, at its height: a label bar over the control's box, a switch's box at the label's end, a checkbox's on the label's line, a bar under the label or the control for a `description`; a `Slider` keeps its own head over its track, an `OptionList` its card of rows (one per static option, four for a query), a `SegmentedControl` its track, an `answered` field its one summary row, a `Select` the plain field. `Slider` and `DefinitionRow` wait through their `Group` or `Section` and take no `loading` of their own. `loading` is a boolean everywhere except where the loaded size is a count you know and the part cannot derive: a `Prose` takes `loading={lines}` (`true` is two paragraphs) and an `ActionBar` takes `loading={acts}` (`true` is one act, and give `acts` as `[]`). Both take a number from 1; `0` and `false` are not waiting, so `loading={rows?.length}` reads the loaded form when it is 0. A loading `Group` or `Section` hands down a boolean, so a `Prose` or `ActionBar` inside it draws the default; set the count on the part itself. A loading `Section` given `description=""` stands a bar where its sentence will be (an undefined `description` stands none, and loaded `""` draws no line, so `description={read?.tally ?? ""}` keeps the head's height). A `List` given `items` and `loading` with a `row` map that has a `trailing` slot (no tree) stands as the loaded rows with their trailing values waiting. A `definition` row's string value that does not fit its room, when it is one word of more than eight characters, cuts in its
+A waiting `Group` (its `loading`, or a loading `Section`'s) draws one waiting form per `Meter`, `Slider` and `DefinitionRow` it holds, at the loaded card's height (a row's form follows the `description`, `act`, `href`, `locked` or control it is given), ; a row of your own draws as it is. Each part of a loading `Section`'s body draws its own waiting form: a `Prose`, a `Thread`, a `Code`, a `Meter`, a `Slider`, a `DefinitionRow`, a `FormField` and an `ActionBar` (a `Form`'s `bar` included) each wait where they stand, a `FormField` kept mounted, hidden, so typed text outlives the wait; any other body, an app's own component, draws as it is. A skeleton field stands in the form of the field it stands for, at its height: a label bar over the control's box, a switch's box at the label's end, a checkbox's on the label's line, a bar under the label or the control for a `description`; a `Slider` keeps its own head over its track, an `OptionList` its card of rows (one per static option, four for a query), a `SegmentedControl` its track, an `answered` field its one summary row, a `Select` the plain field. `Slider` and `DefinitionRow` wait through their `Group` or `Section` and take no `loading` of their own. `loading` is a boolean everywhere except where the loaded size is a count you know and the part cannot derive: a `Prose` takes `loading={lines}` (`true` is two paragraphs) and an `ActionBar` takes `loading={acts}` (`true` is one act, and give `acts` as `[]`). Both take a number from 1; `0` and `false` are not waiting, so `loading={rows?.length}` reads the loaded form when it is 0. A loading `Group` or `Section` hands down a boolean, so a `Prose` or `ActionBar` inside it draws the default; set the count on the part itself. A loading `Section` given `description=""` stands a bar where its sentence will be (an undefined `description` stands none, and loaded `""` draws no line, so `description={read?.tally ?? ""}` keeps the head's height). A `definition` row's string value that does not fit its room, when it is one word of more than eight characters, cuts in its
 middle (its start and its last four characters stay, `SHA256:uNiV…k3Qz`) on one line (any other value truncates at its end); the whole value
 stays its read text and, with `copyable`, what the copy act copies, so a value never needs a wrapper
 that truncates it.
@@ -412,12 +410,19 @@ can be chosen). They call `onAll(true)` and `onAll(false)`: apply your rule to t
 The bar's column stands centred in the foot.
 
 ```tsx
-<List
-  query={notes}
-  sentence="Notes did not load."
+const notes = orpc.notes.list.read();
+
+<Section
+  title="Notes"
+  read={notes}
+  failed="Notes did not load."
   empty={{ sentence: "No notes.", act: { label: "New note", onAct: create } }}
-  row={{ key: (n) => n.id, title: (n) => n.title, meta: (n) => [n.edited] }}
-/>
+>
+  <List
+    items={notes}
+    row={{ key: (n) => n.id, title: (n) => n.title, meta: (n) => [n.edited] }}
+  />
+</Section>
 ```
 
 An `OptionList` holds a static set in `options`. Options from a query take `query`, `sentence`,

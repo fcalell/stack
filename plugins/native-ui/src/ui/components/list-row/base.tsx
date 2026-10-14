@@ -22,7 +22,6 @@ import {
 	rowStep,
 	rowTitle,
 	rowTitleForm,
-	skeleton,
 	TREE_LANE,
 	TREE_RAIL,
 	text,
@@ -96,8 +95,6 @@ const STEPS = "min-w-0";
 const STEP = "flex-row items-center min-w-0 h-line-body";
 const STEP_LABEL = "shrink";
 const TRAILING = "shrink-0";
-// A trailing value waiting: four figures, a count's or an age's width.
-const TRAILING_BAR = "w-figures";
 // The meta line is one line that yields in order: the later parts truncate
 // first (they take no width of their own), a model-written one (`Quoted`)
 // ahead of the plain ones, then the chip (shown whole or not at all), the
@@ -148,9 +145,6 @@ export interface ListRowInternal {
 	// The row's place in a tree `List`: its depth (the roots 0) and, for a
 	// branch, whether its children are drawn and how to fold them.
 	tree?: RowTree;
-	// The List was given the items while it loads: the trailing value draws as a
-	// bar and the app's `trailing` is not read.
-	waits?: boolean;
 	// A row of the list has a more act: a row without one keeps its square
 	// blank, so every row's trailing value ends at one x.
 	room?: boolean;
@@ -161,6 +155,10 @@ export interface ListRowInternal {
 	painted?: boolean;
 	// The row's place among the painted rows, which varies the filler's lengths.
 	at?: number;
+	// The painted row's List has an `href` or `onOpen` slot: the row draws the
+	// chevron the loaded one would, though its slots gave no `href` over the
+	// placeholder.
+	opens?: boolean;
 }
 
 // A row of a tree `List`: its depth (the roots 0) and, for a branch, whether
@@ -343,10 +341,10 @@ export function ListRowBase<V extends string | null = string>({
 	selected = false,
 	onOpen,
 	tree,
-	waits = false,
 	room = false,
 	painted = false,
 	at = 0,
+	opens: opened = false,
 }: ListRowProps<V> & ListRowInternal) {
 	const words = useWords();
 	const pathname = usePathname();
@@ -355,10 +353,11 @@ export function ListRowBase<V extends string | null = string>({
 	const current =
 		!painted && (selected || (href !== undefined && isCurrent(href, pathname)));
 	const open = href !== undefined ? () => navigate(href) : onOpen;
+	const opens = painted ? opened : open !== undefined;
 	// A row that opens ends in a chevron unless its end already holds an act, a
 	// pick or a tree's fold.
 	const chevron =
-		open !== undefined &&
+		opens &&
 		act === undefined &&
 		!more?.length &&
 		!(trailing && "pick" in trailing) &&
@@ -404,18 +403,8 @@ export function ListRowBase<V extends string | null = string>({
 	// gave the placeholder whole counting one.
 	const painters = painted && meta?.length ? paintedParts(meta) : 0;
 	const metaRole = cn(text({ role: "meta" }), FIGURES);
-	// A waiting row (its List was given the items while it loads) draws the bar
-	// in the value's place; the app's slot is not read for it.
 	let value: ReactNode = null;
-	if (waits)
-		value = (
-			<First on={top}>
-				<View
-					className={cn(skeleton({ kind: "line" }), TRAILING_BAR, TRAILING)}
-				/>
-			</First>
-		);
-	else if (trailing && !("pick" in trailing))
+	if (trailing && !("pick" in trailing))
 		value = (
 			<First on={top}>
 				<RNText className={cn(ROW_TRAILING, TRAILING)}>
@@ -644,7 +633,7 @@ export function ListRowBase<V extends string | null = string>({
 					{actReason.line}
 				</View>
 			)}
-			{!waits && trailing && "pick" in trailing ? (
+			{trailing && "pick" in trailing ? (
 				<First on={top}>
 					<PickerBase {...trailing.pick} fit="row" painted={painted} />
 				</First>

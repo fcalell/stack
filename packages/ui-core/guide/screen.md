@@ -39,11 +39,16 @@ leave it out, compose the rest, and file it by `node_modules/@fcalell/cli/guide/
 Write the screen under the rules page; never edit `node_modules` or a stack package.
 
 ```tsx
-<Section title="Active" count={projects.data?.length} loading={projects.isPending}>
+const projects = orpc.projects.list.read();
+
+<Section
+  title="Active"
+  read={projects}
+  failed="Projects could not load."
+  empty={{ sentence: "No project yet.", act: { label: "New project", onAct: create } }}
+>
   <List
-    query={projects}
-    sentence="Projects could not load."
-    empty={{ sentence: "No project yet.", act: { label: "New project", onAct: create } }}
+    items={projects}
     row={{ key: (p) => p.id, title: (p) => p.name, href: (p) => `/projects/${p.id}` }}
   />
 </Section>
@@ -53,9 +58,10 @@ Write the screen under the rules page; never edit `node_modules` or a stack pack
 
 ## 5. Draw every state
 
-Loading and failure sit at the leaf. A collection takes its own query and draws its states:
-pending rows in the slots its item map declares, its failure, its "no longer exists" form with
-Back when the read answers not found, its empty state, its items. Any other region that reads a
+Loading and failure sit at the frame. A `Pane`, `Section`, `Sheet` or `Form` given a `read` draws
+its failure, its "no longer exists" form with Back when the read answers not found and its empty
+state; the collection in it paints rows in the slots its item map declares while the read waits,
+then its items. Any other region that reads a
 query sits in its own `QueryBoundary`, which names its loading form and draws the same failure
 and not-found forms, so the rest stays drawn. A loading form is the loaded form in skeleton at the loaded heights, so
 nothing moves when the data lands; a pending act keeps its box. Empty is the `Pane`'s or the `Section`'s `empty` (a collection's own),

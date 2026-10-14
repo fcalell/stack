@@ -1920,8 +1920,6 @@ components:
     textColor: "{colors.ink-meta}"
   diff-mark-dark:
     textColor: "{colors.ink-meta-dark}"
-  empty-card:
-    padding: "{spacing.card}"
   empty-frame:
     padding: "{spacing.card}"
     rounded: "{rounded.card}"
@@ -2616,7 +2614,7 @@ A docked sheet's body keeps `docked-floor` (144px on touch, 96px on the desktop)
 | `Gate` | layout | `GATE`, `GATE_COLUMN`, `GATE_FLOW`, `GATE_STEP`, `GATE_MARK`, `GATE_MARK_ROW`, `GATE_LOGO`, `TEXT.role.title`, `TEXT.role.meta`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `EMPTY_COLUMN`, `EMPTY_TEXT`, `EMPTY_MARK`, `ICON.fit.control`, `BUTTON.act.primary`, `BUTTON.fit.body`, `BUTTON_LABEL.act.primary` | rest, empty |
 | `Section` | layout | `SECTION`, `SECTION_HEAD`, `SECTION_HEAD_ROW`, `SECTION_ACTS`, `SECTION_BODY`, `SECTION_TITLE`, `SECTION_TOGGLE`, `TEXT.role.heading`, `TEXT.role.meta`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `EMPTY_COLUMN`, `EMPTY_TEXT`, `EMPTY_FRAME`, `EMPTY_MARK`, `ICON.fit.control`, `ICON.fit.body`, `COUNT`, `COUNT_LABEL`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive`, `ICON_BUTTON.fit.bar`, `SKELETON.kind.count`, `SKELETON.kind.line`, `PAINT.kind.glyphs`, `PAINT.kind.control`, `TEXT.role.caption`, `LINE_BOX.role.meta` | rest, hover, focus, active, disabled, loading, empty, error |
 | `Group` | layout | `GROUP`, `GROUP_ITEM` | rest, loading |
-| `List` | layout | `LIST`, `LIST_ITEM`, `LIST_TREE`, `LIST_DIVIDED` | rest, loading, error, empty |
+| `List` | layout | `LIST`, `LIST_ITEM`, `LIST_TREE`, `LIST_DIVIDED` | rest, loading |
 | `Form` | layout | `FORM`, `FORM_FOOT`, `FORM_GROUP`, `FORM_LEGEND`, `TEXT.role.heading`, `TEXT.role.meta` | rest, loading, empty, error |
 | `Toolbar` | layout | `TOOLBAR`, `TOOLBAR_ROW`, `TOOLBAR_CHIPS` | rest |
 | `ActionBar` | layout | `ACTION_BAR`, `ACTION_BAR_ACTS`, `ACTION_BAR_CHOSEN`, `ACTION_BAR_SELECTION`, `ACTION_BAR_ALL`, `TEXT.role.meta`, `FIELD_ERROR_LINE`, `BUTTON.act.primary`, `BUTTON.act.danger`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.act.quiet`, `BUTTON.fit.body`, `BUTTON.fit.field`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.danger`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive`, `BUTTON_LABEL.act.quiet`, `SKELETON.kind.bar`, `SKELETON.kind.field` | rest, loading, disabled |
@@ -2631,8 +2629,8 @@ A docked sheet's body keeps `docked-floor` (144px on touch, 96px on the desktop)
 | `Picker` | shared | `PICKER`, `HAIRLINE`, `ROW_LEADING`, `AVATAR`, `AVATAR_LABEL`, `WORD_ACT`, `PICKER_VALUE`, `ICON.fit.meta`, `CHIP`, `CHIP_LABEL`, `FIELD.fit.bar`, `FIELD.trailing.none`, `FIELD.state.rest`, `FIELD_VALUE.kind.text`, `FIELD_VALUE.kind.search`, `FIELD_PLACEHOLDER`, `FIELD_GLYPH`, `CHIPS_RUN`, `CHIPS_TRIGGER`, `ICON.fit.control`, `PICKER_EMPTY`, `POPOVER`, `PICKER_POPOVER`, `SELECT_GROUP`, `ROW.lines.one`, `ROW.lines.two`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `OPTION_ROW`, `TEXT.role.body`, `TEXT.role.meta`, `ICON.fit.body`, `PAINT.kind.control` | rest, hover, focus, active, selected, disabled |
 | `Menu` | shared | `MENU`, `MENU_GROUP`, `MENU_LABEL`, `POPOVER`, `ROW.lines.one`, `ROW.lines.two`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `OPTION_ROW`, `TEXT.role.body`, `TEXT.role.meta`, `ICON.fit.body`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body`, `PAINT.kind.control` | rest, hover, focus, active |
 | `OptionList` | shared | `OPTION_LIST`, `SELECT_GROUP`, `OPTION_GROUP_LABEL`, `TEXT.role.meta`, `TEXT_STRONG.role.meta`, `ROW.lines.one`, `ROW.lines.two`, `ROW.lines.whole`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `OPTION_ROW`, `OPTION_LINE`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `CHECKBOX`, `CHECKBOX_MARK`, `OPTION_RADIO`, `OPTION_RADIO_DOT`, `TEXT.role.body`, `ROW_TITLE_LINE`, `ROW_META_LINE`, `CHIP.family.neutral`, `CHIP_LABEL.family.neutral`, `OPTION_CHILDREN`, `OPTION_INDENT`, `SKELETON.kind.check`, `SKELETON.kind.radio`, `SKELETON.kind.line`, `SKELETON_LANE`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary` | rest, hover, focus, active, loading, error, empty, selected, disabled |
-| `Missing` | shared | `EMPTY_COLUMN`, `EMPTY_TEXT`, `EMPTY_FRAME`, `EMPTY_CARD`, `TEXT.role.meta`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.secondary` | rest |
-| `Failed` | shared | `EMPTY_COLUMN`, `EMPTY_TEXT`, `EMPTY_FRAME`, `EMPTY_CARD`, `EMPTY_MARK`, `ICON.fit.control`, `TEXT.role.meta`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.secondary` | rest |
+| `Missing` | shared | `EMPTY_COLUMN`, `EMPTY_TEXT`, `EMPTY_FRAME`, `TEXT.role.meta`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.secondary` | rest |
+| `Failed` | shared | `EMPTY_COLUMN`, `EMPTY_TEXT`, `EMPTY_FRAME`, `EMPTY_MARK`, `ICON.fit.control`, `TEXT.role.meta`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.secondary` | rest |
 | `QueryBoundary` | shared | none | rest, loading, error |
 | `Toast` | shared | `TOAST`, `TOAST_STATE`, `ICON.fit.body`, `TEXT.role.body`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `ICON_BUTTON.fit.bar` | rest |
 | `Banner` | shared | `BANNER`, `BANNER_ROW`, `BANNER_MAIN`, `BANNER_GLYPH`, `ICON.fit.body`, `TEXT.role.body`, `TEXT.role.meta`, `BUTTON.act.quiet`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.quiet` | rest, disabled |

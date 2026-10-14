@@ -5,6 +5,7 @@ import { Pane } from "../../components/pane/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
+import { readsAt } from "../waiting.ts";
 import { Column } from "./place.tsx";
 
 const retry = () => {};
@@ -27,8 +28,8 @@ function Page(props: { children: ReactNode }) {
 
 // Each form on the cells it draws: the page, once, on the bar fit centred in
 // what the body leaves; the Section, in the hairline frame, on the mark and
-// the secondary act; the Group, in the card, on the sentence; and a first
-// run, on the body fit. The act is Retry in each, the hairline one with no
+// the secondary act; a Section holding a failed read, on the sentence; and a
+// first run, on the body fit. The act is Retry in each, the hairline one with no
 // plus, under the alert mark.
 export function drawFailed(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
@@ -52,30 +53,26 @@ export function drawFailed(frame: ShowcaseFrame) {
 				</Place>
 			</Column>
 		);
-	if (cell === "TEXT.role.meta" || cell === "EMPTY_CARD")
+	if (cell === "TEXT.role.meta") {
+		const { failing } = readsAt(frame.id);
 		return (
 			<Column>
 				<Place>
 					<Pane title="Settings">
-						<Section title="Webhooks">
+						<Section
+							title="Webhooks"
+							read={failing}
+							failed="Webhooks did not load."
+						>
 							<Group
-								list={{
-									query: {
-										data: undefined,
-										isPending: false,
-										isError: true,
-										refetch: RETRY.onAct,
-									},
-									sentence: "Webhooks did not load.",
-									empty: { sentence: "No webhooks." },
-									row: { key: String, title: String },
-								}}
+								list={{ items: failing, row: { key: String, title: String } }}
 							/>
 						</Section>
 					</Pane>
 				</Place>
 			</Column>
 		);
+	}
 	if (cell === "BUTTON.fit.body")
 		return (
 			<div className="flex flex-col items-center justify-center p-sections bg-canvas w-screen max-w-full">

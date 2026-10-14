@@ -7,7 +7,7 @@ import { Place } from "../../components/place/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import { ago } from "../ago.ts";
 import type { ShowcaseFrame } from "../cells.ts";
-import { queryOf } from "./layout-context.tsx";
+import { itemsAt } from "../waiting.ts";
 import { Column } from "./place.tsx";
 
 interface Note {
@@ -76,53 +76,38 @@ const LIMITS = [
 
 const refetch = () => {};
 
-// Rows whose titles are known before their counts: loading, they stand as
-// loaded with the counts waiting.
-const AREAS = [
-	{ id: "a1", name: "Notes", count: 12 },
-	{ id: "a2", name: "Deploys", count: 3 },
-	{ id: "a3", name: "Hosts", count: 2 },
-];
-
-/** A List of known rows with a trailing count, loaded or waiting for the counts. */
-export function Areas(props: { loading?: boolean }) {
-	return (
-		<Section title="Areas">
-			<List
-				items={AREAS}
-				loading={props.loading}
-				row={{
-					key: (area) => area.id,
-					title: (area) => area.name,
-					trailing: (area) => ({ count: area.count }),
-					href: (area) => `#${area.id}`,
-				}}
-			/>
-		</Section>
-	);
-}
-
 // Every cell draws five Lists in the frame's state, each in a Section on a
-// page as it ships: notes (a title over a meta line, no leading), deploys
-// (an avatar leading, an age trailing), each waiting in its own rows' slots,
-// its empty and failed forms framed in the Section; host keys, facts
-// from data in a Group (a label over its fingerprint, copied), the Section's
-// head carrying no count; and allowed hosts, an add field over a List in a
-// Group, the field live while the rows wait; and plan limits, meters from data in a Group.
+// page as it ships and the Section holding its read: notes (a title over a
+// meta line, no leading), deploys (an avatar leading, an age trailing), each
+// painting its rows while the read waits, its empty and failed forms framed in
+// the Section; host keys, facts from data in a Group (a label over its
+// fingerprint, copied); and allowed hosts, an add field over a List in a Group,
+// the field live while the rows paint; and plan limits, meters from data in a
+// Group.
 export function drawList(frame: ShowcaseFrame) {
+	const at = <T,>(name: string, items: readonly T[]) =>
+		itemsAt(`${frame.id}/${name}`, frame.state, items);
+	const notes = at("notes", NOTES);
+	const deploys = at("deploys", DEPLOYS);
+	const keys = at("keys", HOST_KEYS);
+	const hosts = at("hosts", HOSTS);
+	const limits = at("limits", LIMITS);
 	return (
 		<Column>
 			<Place>
 				<Pane title="Library">
-					<Section title="Notes">
+					<Section
+						title="Notes"
+						read={notes}
+						failed="The notes did not load."
+						empty={{
+							title: "No notes",
+							sentence: "Notes you write land here, newest first.",
+							act: { label: "New note", onAct: refetch },
+						}}
+					>
 						<List
-							query={queryOf(frame.state, NOTES)}
-							sentence="The notes did not load."
-							empty={{
-								title: "No notes",
-								sentence: "Notes you write land here, newest first.",
-								act: { label: "New note", onAct: refetch },
-							}}
+							items={notes}
 							row={{
 								key: (note) => note.id,
 								title: (note) => note.title,
@@ -131,15 +116,18 @@ export function drawList(frame: ShowcaseFrame) {
 							}}
 						/>
 					</Section>
-					<Section title="Deploys">
+					<Section
+						title="Deploys"
+						read={deploys}
+						failed="The deploys did not load."
+						empty={{
+							title: "No deploys",
+							sentence: "Each deploy of the project lands here.",
+							act: { label: "Deploy", onAct: refetch },
+						}}
+					>
 						<List
-							query={queryOf(frame.state, DEPLOYS)}
-							sentence="The deploys did not load."
-							empty={{
-								title: "No deploys",
-								sentence: "Each deploy of the project lands here.",
-								act: { label: "Deploy", onAct: refetch },
-							}}
+							items={deploys}
 							row={{
 								key: (deploy) => deploy.id,
 								leading: { avatar: (deploy) => ({ name: deploy.author }) },
@@ -149,16 +137,19 @@ export function drawList(frame: ShowcaseFrame) {
 							}}
 						/>
 					</Section>
-					<Section title="Host keys">
+					<Section
+						title="Host keys"
+						read={keys}
+						failed="The host keys did not load."
+						empty={{
+							title: "No host keys",
+							sentence: "The keys the host presents land here.",
+							act: { label: "Scan host", onAct: refetch },
+						}}
+					>
 						<Group
 							list={{
-								query: queryOf(frame.state, HOST_KEYS),
-								sentence: "The host keys did not load.",
-								empty: {
-									title: "No host keys",
-									sentence: "The keys the host presents land here.",
-									act: { label: "Scan host", onAct: refetch },
-								},
+								items: keys,
 								definition: {
 									key: (key) => key.id,
 									label: (key) => key.algorithm,
@@ -168,7 +159,15 @@ export function drawList(frame: ShowcaseFrame) {
 							}}
 						/>
 					</Section>
-					<Section title="Allowed hosts">
+					<Section
+						title="Allowed hosts"
+						read={hosts}
+						failed="The hosts did not load."
+						empty={{
+							title: "No hosts",
+							sentence: "Hosts you allow land here.",
+						}}
+					>
 						<Group
 							items={[
 								{
@@ -192,12 +191,7 @@ export function drawList(frame: ShowcaseFrame) {
 						/>
 						<Group
 							list={{
-								query: queryOf(frame.state, HOSTS),
-								sentence: "The hosts did not load.",
-								empty: {
-									title: "No hosts",
-									sentence: "Hosts you allow land here.",
-								},
+								items: hosts,
 								row: {
 									key: (host) => host.id,
 									title: (host) => host.name,
@@ -205,15 +199,18 @@ export function drawList(frame: ShowcaseFrame) {
 							}}
 						/>
 					</Section>
-					<Section title="Plan limits">
+					<Section
+						title="Plan limits"
+						read={limits}
+						failed="The limits did not load."
+						empty={{
+							title: "No limits",
+							sentence: "The limits of your plan land here.",
+						}}
+					>
 						<Group
 							list={{
-								query: queryOf(frame.state, LIMITS),
-								sentence: "The limits did not load.",
-								empty: {
-									title: "No limits",
-									sentence: "The limits of your plan land here.",
-								},
+								items: limits,
 								meter: {
 									key: (limit) => limit.id,
 									label: (limit) => limit.label,
@@ -224,12 +221,6 @@ export function drawList(frame: ShowcaseFrame) {
 							}}
 						/>
 					</Section>
-					{frame.state === "loading" ? (
-						<>
-							<Areas />
-							<Areas loading />
-						</>
-					) : null}
 				</Pane>
 			</Place>
 		</Column>

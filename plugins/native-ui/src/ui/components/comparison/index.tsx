@@ -24,8 +24,9 @@ import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 import { Chip } from "../chip";
 import { Group, type GroupItem } from "../group";
-import type { ListSource } from "../list";
+import type { ListEmpty } from "../list";
 import { MissingBase } from "../missing/base";
+import type { QueryLike } from "../query-boundary";
 import { Status } from "../status";
 import { StatusBase } from "../status/base";
 
@@ -69,6 +70,30 @@ export interface FactSlots<T> {
 	// out.
 	status?: (item: T) => StatusMark | undefined;
 }
+
+// Where a comparison's items come from; the list's own source, which a List no
+// longer takes.
+type ListSource<T> =
+	| {
+			/** The query whose items the facts draw. */
+			query: QueryLike<readonly T[]>;
+			/** What failed to load, over the retry act (a sentence; wraps). */
+			sentence: string;
+			/** What the comparison draws when the query answers with no item. */
+			empty: ListEmpty;
+			items?: never;
+			loading?: never;
+	  }
+	| {
+			/** The items the facts draw. */
+			items: readonly T[];
+			// The items are on their way (a compound body's loading form): the
+			// facts wait. Without `empty`, an empty comparison draws nothing.
+			loading?: boolean;
+			empty?: ListEmpty;
+			query?: never;
+			sentence?: never;
+	  };
 
 export type ComparisonProps<T = unknown> = Closed &
 	ListSource<T> & {

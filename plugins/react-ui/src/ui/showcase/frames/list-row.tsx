@@ -18,6 +18,7 @@ import { ListRowBase } from "../../components/list-row/base.tsx";
 import type { ListRowProps } from "../../components/list-row/index.tsx";
 import { ago } from "../ago.ts";
 import type { DrawnState, ShowcaseFrame } from "../cells.ts";
+import { itemsAt } from "../waiting.ts";
 import { isPaint } from "./painted.tsx";
 
 const act = () => {};
@@ -754,7 +755,7 @@ const MEMBERS: Member[] = [
 ];
 
 // A part is one List of the rows a cell names, drawn in the frame's state: its
-// rows at rest, its waiting rows loading (over the loaded ones when `pair`
+// rows at rest, its painted rows loading (over the loaded ones when `pair`
 // sets the skeleton against what it stands in for), the first row current when
 // selected. A row's error is its entry's error line, which every cell draws
 // in error.
@@ -762,14 +763,18 @@ interface Part {
 	draw: (state: DrawnState, pair: boolean) => ReactNode;
 }
 
+// Each part's painted rows come from a read of its own that never answers.
+let parts = 0;
+
 function part<T>(items: () => T[], row: RowSlots<T>): Part {
+	const key = `list-row/part/${parts++}`;
 	return {
 		draw: (state, pair) => {
 			const all = items();
 			if (state === "loading" || (pair && state === "rest"))
 				return (
 					<>
-						<List items={[]} loading row={row} />
+						<List items={itemsAt(key, "loading", all)} row={row} />
 						{pair ? <List items={all} row={row} /> : null}
 					</>
 				);

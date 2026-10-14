@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@fcalell/plugin-api/tanstack-query";
+import { useMutation } from "@fcalell/plugin-api/tanstack-query";
 import { FormField } from "@fcalell/plugin-native-ui/components/form-field";
 import { Input } from "@fcalell/plugin-native-ui/components/input";
 import { List } from "@fcalell/plugin-native-ui/components/list";
@@ -14,7 +14,7 @@ import { useState } from "react";
 import { orpc } from "../lib/api";
 
 export default function Notes() {
-	const notes = useQuery(orpc.notes.list.queryOptions());
+	const notes = orpc.notes.list.read();
 	const create = useMutation(orpc.notes.create.mutationOptions());
 	const remove = useMutation(orpc.notes.remove.mutationOptions());
 	const [open, setOpen] = useState(false);
@@ -56,13 +56,12 @@ export default function Notes() {
 			>
 				<Section
 					title="Recent"
-					count={notes.data?.length}
-					loading={notes.isPending}
+					read={notes}
+					failed="Notes did not load."
+					empty={{ sentence: "No notes yet." }}
 				>
 					<List
-						query={notes}
-						sentence="Notes did not load."
-						empty={{ sentence: "No notes yet." }}
+						items={notes}
 						row={{
 							key: (note) => note.id,
 							title: (note) => note.title,

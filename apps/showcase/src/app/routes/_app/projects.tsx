@@ -1,4 +1,3 @@
-import { useQuery } from "@fcalell/plugin-api/tanstack-query";
 import { Columns } from "@fcalell/plugin-react-ui/components/columns";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
@@ -18,23 +17,20 @@ const STAGES = [
 	{ stage: "production", title: "Production" },
 ] as const;
 
-// A stage's projects, from their own query, on the stage's card.
+// A stage's projects, from their own read, on the stage's card.
 function Stage(props: { stage: (typeof STAGES)[number] }) {
 	const { stage, title } = props.stage;
-	const projects = useQuery(
-		orpc.projects.list.queryOptions({ input: { stage } }),
-	);
+	const projects = orpc.projects.list.read({ stage });
 	return (
 		<Section
 			title={title}
-			count={projects.data?.length}
-			loading={projects.isPending}
+			read={projects}
+			failed="Projects did not load."
+			empty={{ sentence: `No project is in ${title}.` }}
 		>
 			<Group
 				list={{
-					query: projects,
-					sentence: "Projects did not load.",
-					empty: { sentence: `No project is in ${title}.` },
+					items: projects,
 					row: {
 						key: (project) => project.name,
 						leading: { icon: () => "Folder" },

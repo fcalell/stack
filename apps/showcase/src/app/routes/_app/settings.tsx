@@ -64,7 +64,7 @@ function Settings() {
 	const [digest, setDigest] = useState("week");
 	const [threshold, setThreshold] = useState(5);
 	const [image, setImage] = useState("node-24");
-	const paired = useQuery(orpc.devices.list.queryOptions());
+	const paired = orpc.devices.list.read();
 	const unpair = useMutation(
 		orpc.devices.unpair.mutationOptions({
 			meta: { skipAutoInvalidation: true },
@@ -199,38 +199,37 @@ function Settings() {
 							title: "Devices",
 							description:
 								"Scan the code with the Acme app on your phone to get deploy alerts there.",
+							lead: <QrCode value="https://acme.dev/pair/7KQ2XM" />,
+							read: paired,
+							failed: "Paired devices did not load.",
+							empty: {
+								icon: "Smartphone",
+								title: "No devices",
+								sentence: "A phone that scans the code shows here.",
+							},
 							fields: (
-								<>
-									<QrCode value="https://acme.dev/pair/7KQ2XM" />
-									<Group
-										list={{
-											query: paired,
-											sentence: "Paired devices did not load.",
-											empty: {
-												icon: "Smartphone",
-												title: "No devices",
-												sentence: "A phone that scans the code shows here.",
-											},
-											row: {
-												key: (device) => device,
-												leading: { icon: () => "Smartphone" },
-												title: (device) => device,
-												meta: () => ["Paired Sep 12"],
-												more: (device) => [
-													{
-														label: "Unpair",
-														icon: "Unlink",
-														destructive: true,
-														onAct: async () => {
-															await unpair.mutateAsync({ name: device });
-															toast(`${device} unpaired`, { state: "done" });
-														},
+								<Group
+									list={{
+										items: paired,
+										row: {
+											key: (device) => device,
+											leading: { icon: () => "Smartphone" },
+											title: (device) => device,
+											meta: () => ["Paired Sep 12"],
+											more: (device) => [
+												{
+													label: "Unpair",
+													icon: "Unlink",
+													destructive: true,
+													onAct: async () => {
+														await unpair.mutateAsync({ name: device });
+														toast(`${device} unpaired`, { state: "done" });
 													},
-												],
-											},
-										}}
-									/>
-								</>
+												},
+											],
+										},
+									}}
+								/>
 							),
 						},
 						{

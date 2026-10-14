@@ -78,7 +78,8 @@ import { CheckboxBase } from "../checkbox/base";
 import { Chip } from "../chip";
 import { Icon } from "../icon";
 import { InputBase } from "../input/base";
-import { List, type ListEmpty, type RowSlots } from "../list";
+import type { ListEmpty, RowSlots } from "../list";
+import { ListBase } from "../list/base";
 import { LockMark } from "../list-row/lock";
 import { MissingBase } from "../missing/base";
 import { PickerBase } from "../picker/base";
@@ -1123,7 +1124,10 @@ function Phone(props: {
 	return (
 		<>
 			{pick}
-			<List items={props.rows} loading={props.loading} row={row} />
+			<ListBase
+				drawn={{ painted: props.loading === true, value: props.rows }}
+				row={row}
+			/>
 		</>
 	);
 }

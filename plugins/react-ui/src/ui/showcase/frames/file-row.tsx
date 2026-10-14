@@ -1,8 +1,10 @@
+import type { Datum } from "@fcalell/plugin-api/tanstack-query";
 import type { ChipMark } from "@fcalell/ui-core/descriptors";
 import { FileRowBase } from "../../components/file-row/index.tsx";
 import { Group } from "../../components/group/index.tsx";
 import { type FileSlots, List } from "../../components/list/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
+import { itemsAt } from "../waiting.ts";
 import { Wide } from "./layout-context.tsx";
 import { isPaint } from "./painted.tsx";
 
@@ -161,11 +163,13 @@ export function drawFileRow(frame: ShowcaseFrame) {
 			</Wide>
 		);
 	}
-	const loading = frame.state === "loading";
-	const files = frame.state === "selected" ? selected() : ROWS;
+	let files: Datum<readonly File[]> =
+		frame.state === "selected" ? selected() : ROWS;
+	if (frame.state === "loading")
+		files = itemsAt(`${frame.id}/files`, "loading", ROWS);
 	return (
 		<Wide>
-			<List items={files} loading={loading} file={FILE} />
+			<List items={files} file={FILE} />
 			{frame.state === "rest" ? (
 				<div className="flex flex-col w-list max-w-full px-page">
 					<List items={REVIEW} file={FILE} />

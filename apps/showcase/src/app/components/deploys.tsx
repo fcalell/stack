@@ -1,4 +1,9 @@
-import { useMutation, useQuery } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Datum,
+	useMutation,
+	useQuery,
+	useQueryClient,
+} from "@fcalell/plugin-api/tanstack-query";
 import { Banner } from "@fcalell/plugin-react-ui/components/banner";
 import { Button } from "@fcalell/plugin-react-ui/components/button";
 import { Code } from "@fcalell/plugin-react-ui/components/code";
@@ -9,10 +14,7 @@ import { ItemHeader } from "@fcalell/plugin-react-ui/components/item-header";
 import { List } from "@fcalell/plugin-react-ui/components/list";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { PendingBar } from "@fcalell/plugin-react-ui/components/pending-bar";
-import {
-	QueryBoundary,
-	type QueryLike,
-} from "@fcalell/plugin-react-ui/components/query-boundary";
+import { QueryBoundary } from "@fcalell/plugin-react-ui/components/query-boundary";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
 import { Toolbar } from "@fcalell/plugin-react-ui/components/toolbar";
 import { age } from "@fcalell/plugin-react-ui/lib/age";
@@ -75,12 +77,10 @@ function moreOf(deploy: Deploy): MenuItem[] {
 		: [redeploy, copy];
 }
 
-function DeployRows(props: { query: QueryLike<Deploy[]> }) {
+function DeployRows(props: { deploys: Datum<readonly Deploy[]> }) {
 	return (
 		<List
-			query={props.query}
-			sentence="Deploys did not load."
-			empty={{ sentence: "No deploy has run on this project." }}
+			items={props.deploys}
 			row={{
 				key: (deploy) => deploy.id,
 				// Every row leads with who started it; its state's word is a mark on the
@@ -366,13 +366,17 @@ export function DeployDetails(props: { deployId: string }) {
 
 // The Deploys place's first Pane: the deploys, a row opening one beside it.
 export function DeployList() {
-	const query = useQuery(orpc.deploys.list.queryOptions());
+	const queryClient = useQueryClient();
+	const deploys = orpc.deploys.list.read();
 	const removePreviews = useMutation(
 		orpc.deploys.removePreviews.mutationOptions(),
 	);
 	return (
 		<Pane
 			title="Deploys"
+			read={deploys}
+			failed="Deploys did not load."
+			empty={{ sentence: "No deploy has run on this project." }}
 			actions={[
 				{
 					icon: "Plus",
@@ -383,7 +387,14 @@ export function DeployList() {
 							act: { label: "View", onAct: act },
 						}),
 				},
-				{ icon: "RefreshCw", label: "Refresh", onAct: () => query.refetch() },
+				{
+					icon: "RefreshCw",
+					label: "Refresh",
+					onAct: () =>
+						queryClient.invalidateQueries({
+							queryKey: deploys.options.queryKey,
+						}),
+				},
 			]}
 			more={[
 				{ label: "Copy deploy hook", onAct: () => toast("Deploy hook copied") },
@@ -436,7 +447,7 @@ export function DeployList() {
 					onAct={act}
 				/>
 			</Toolbar>
-			<DeployRows query={query} />
+			<DeployRows deploys={deploys} />
 		</Pane>
 	);
 }

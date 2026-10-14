@@ -1,3 +1,4 @@
+import { type Drawn, useSelections } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import { GROUP, GROUP_ITEM } from "@fcalell/ui-core/variants";
 import { Fragment, type ReactNode, use } from "react";
@@ -31,7 +32,7 @@ export type GroupProps<
 	T = unknown,
 	V extends string | null = string,
 > = Closed & {
-	/** The rows wait (a loading Section's body waits with it): a List in it draws its own waiting rows, a Slider and a FormField their own waiting forms; a row of your own draws as it is. */
+	/** The rows wait (a loading Section's body waits with it): a Slider and a FormField draw their own waiting forms; a row of your own draws as it is. */
 	loading?: boolean;
 } & (
 		| {
@@ -40,7 +41,7 @@ export type GroupProps<
 				list?: never;
 		  }
 		| {
-				/** A List the card frames: its rows, its waiting rows and its failed and empty forms stand on the card, with no bleed of its own. */
+				/** A List the card frames: its rows, painted while its `items` selection waits, stand on the card, with no bleed of its own. The frame around the Group draws the failed and empty forms. */
 				list: ListProps<T, V>;
 				items?: never;
 		  }
@@ -51,6 +52,8 @@ export function Group<T, V extends string | null = string>(
 	props: GroupProps<T, V>,
 ) {
 	const { loading } = props;
+	// The one subscription to the list's items, handed down to its rows.
+	const [drawn] = useSelections([props.list?.items] as const);
 	const inherited = use(LoadingContext);
 	// Its own `loading` waits as a read that lasts does (drawn after a delay, held
 	// a minimum); one inherited from a Section arrives already so.
@@ -58,7 +61,7 @@ export function Group<T, V extends string | null = string>(
 	const settle = useSettleName();
 	const waiting = loading === undefined ? inherited : late.waiting;
 	const content = props.list ? (
-		<ListBase {...props.list} framed />
+		<ListBase {...props.list} drawn={drawn as Drawn<readonly T[]>} framed />
 	) : (
 		props.items.map((entry) =>
 			"row" in entry ? (

@@ -85,10 +85,6 @@ export interface StatusMark {
 	label: string;
 }
 
-// A row's status as its map gives it: the mark, or `{ loading: true }` while
-// the read that answers it has not.
-export type RowStatus = StatusMark | { loading: true };
-
 export interface ChipMark {
 	family: ChipFamily;
 	// The value (a word; truncates past the short measure, 18 characters).
