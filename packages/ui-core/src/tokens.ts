@@ -1189,9 +1189,9 @@ export const STACK_ORDER = ["sheet", "popover", "toasts"] as const;
 // ── Motion ──────────────────────────────────────────────────────────
 
 // One scale from a base of 200 ms: `instant` is press feedback only, the
-// rest the 150–300 band a micro-interaction lives in. Only transform and
-// opacity animate: a state switches its color, fill and boundary at once,
-// and motion is spent on what enters and leaves and on the switch thumb.
+// rest the 150–300 band a micro-interaction lives in. A size or place never
+// animates through layout; colour, opacity, transform, clip-path and filter
+// may transition, each explaining a change (`guide/judging.md`, Motion).
 export const DURATIONS = ["instant", "fast", "base", "slow"] as const;
 export type Duration = (typeof DURATIONS)[number];
 
