@@ -1,5 +1,7 @@
+import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type { DiffLine, Hunk } from "@fcalell/ui-core/descriptors";
+import { PAINT_ROWS } from "@fcalell/ui-core/paint";
 import {
 	CONTENT_FRAME,
 	DIFF_CODE,
@@ -8,11 +10,11 @@ import {
 	DIFF_HUNK,
 	DIFF_MARK,
 	diffLine,
-	skeleton,
 } from "@fcalell/ui-core/variants";
 import { structuredPatch } from "diff";
 import { useMemo } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { Painted } from "../../lib/paint.tsx";
 
 const FRAME = "flex flex-col shrink-0 min-w-0 overflow-hidden";
 const TABLE = "w-full border-collapse";
@@ -22,20 +24,6 @@ const HANG = "-indent-control-x whitespace-pre-wrap";
 const GUTTER = "text-end align-top";
 const MARK = "align-top";
 const CODE = "w-full align-top";
-const LINE = "flex items-center h-lh";
-// The loading form: the hunk header's bar, then each line's bar at the
-// length of the line it stands in for.
-const HEADER_BAR = "w-1/3";
-const BARS = [
-	"w-1/2",
-	"w-1/3",
-	"w-2/3",
-	"w-1/2",
-	"w-3/4",
-	"w-1/4",
-	"w-2/3",
-	"w-1/2",
-] as const;
 // The marker a line's kind reads by without its ground's hue.
 const MARKS: Record<DiffLine["kind"], string> = {
 	context: " ",
@@ -46,24 +34,22 @@ const MARKS: Record<DiffLine["kind"], string> = {
 interface DiffBase extends Closed {
 	/** What the diff shows (the file's path), its table's accessible name (a short phrase; read aloud, never drawn). */
 	label: string;
-	/** The lines wait: the hunk header's bar and eight lines' bars stand in for them, a fixed count, since the lines are unknown before the data. */
-	loading?: boolean;
 }
 
 /** A unified diff, as hunks, or as the two texts it compares, diffed here by line. */
 export type DiffProps =
 	| (DiffBase & {
-			/** The hunks, each a header over its lines. */
-			hunks: readonly Hunk[];
+			/** The hunks, each a header over its lines. A selection paints a hunk header over `PAINT_ROWS` lines until its read lands. */
+			hunks: Datum<readonly Hunk[]>;
 			before?: never;
 			after?: never;
 	  })
 	| (DiffBase & {
 			hunks?: never;
 			/** The text before the change (text; its lines wrap). */
-			before: string;
+			before: Datum<string>;
 			/** The text after it (text; its lines wrap). */
-			after: string;
+			after: Datum<string>;
 	  });
 
 // The unified line diff of two texts as the hunks a `Diff` draws, three lines
@@ -140,6 +126,7 @@ function span(numbers: Numbers): number {
 	return 2 + Number(numbers.before) + Number(numbers.after);
 }
 
+// Painted, a line's gutters are empty cells.
 function Gutters(props: { line?: DiffLine; numbers: Numbers }) {
 	return (
 		<>
@@ -157,35 +144,34 @@ function Gutters(props: { line?: DiffLine; numbers: Numbers }) {
 }
 
 /** A unified diff at the code role in the frame Code shares: each hunk's header on the group ground in the meta ink, then its lines, added on ok-soft and removed on danger-soft, the whole row, each with its line numbers (the old and the new, or the one side a diff that only adds or only removes has) and its `+` or `−` marker. A long line wraps under itself at every width, hung one inset, its numbers on its first line. */
-export function Diff({ label, hunks, before, after, loading }: DiffProps) {
-	// The hunks derive once per text pair, and not while the diff waits.
-	const shown = useMemo(
-		() => hunks ?? (loading ? [] : lineHunks(before ?? "", after ?? "")),
-		[hunks, before, after, loading],
-	);
+export function Diff({ label, hunks, before, after }: DiffProps) {
+	const [h, b, a] = useSelections([hunks, before, after] as const);
+	const painted = h.painted || b.painted || a.painted;
+	// The hunks derive once per text pair, and not while the diff paints.
+	const shown = useMemo(() => {
+		if (painted) return [];
+		const given = h.value as readonly Hunk[] | undefined;
+		return given ?? lineHunks(b.value as string, a.value as string);
+	}, [painted, h.value, b.value, a.value]);
 	const numbers = numbersOf(shown);
-	if (loading)
+	if (painted)
 		return (
-			<div aria-busy className={cn(CONTENT_FRAME, FRAME)}>
+			<div inert className={cn(CONTENT_FRAME, FRAME)}>
 				<table className={TABLE}>
 					<tbody>
 						<tr className={diffLine({ kind: "header" })}>
 							<td colSpan={span(BOTH)} className={DIFF_HUNK}>
-								<span className={LINE}>
-									<span
-										className={cn(skeleton({ kind: "line" }), HEADER_BAR)}
-									/>
-								</span>
+								<div className={cn(DIFF_HANG, HANG)}>
+									<Painted role="phrase" />
+								</div>
 							</td>
 						</tr>
-						{BARS.map((width, index) => (
+						{Array.from({ length: PAINT_ROWS }, (_, at) => (
 							// biome-ignore lint/suspicious/noArrayIndexKey: the lines are fixed stand-ins
-							<tr key={index} className={diffLine({ kind: "context" })}>
+							<tr key={at} className={diffLine({ kind: "context" })}>
 								<Gutters numbers={BOTH} />
-								<td className={cn(DIFF_CODE, CODE)}>
-									<span className={LINE}>
-										<span className={cn(skeleton({ kind: "line" }), width)} />
-									</span>
+								<td className={cn(DIFF_CODE, DIFF_HANG, CODE, HANG)}>
+									<Painted role="sentence" at={at} />
 								</td>
 							</tr>
 						))}

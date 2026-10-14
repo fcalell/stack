@@ -1,3 +1,9 @@
+import {
+	type Datum,
+	type Drawn,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
+import { PAINT_ROWS } from "@fcalell/ui-core/paint";
 import { counted, named } from "@fcalell/ui-core/tokens";
 import {
 	CODE_ACT,
@@ -6,23 +12,21 @@ import {
 	CODE_UNDER_HEAD,
 	CONTENT_FRAME,
 	codeText,
-	skeleton,
 	text,
 } from "@fcalell/ui-core/variants";
 import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
-import { useContext, useState } from "react";
+import { Fragment, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { useCopy } from "../../lib/copy";
 import { Ink } from "../../lib/ink";
-import { LoadingContext } from "../../lib/loading";
-import { Strut } from "../../lib/strut";
+import { inertProps, Painted } from "../../lib/paint";
 import { toast } from "../../lib/toast";
 import { useWords } from "../../lib/words";
 import { Icon } from "../icon";
-import { IconButton } from "../icon-button";
+import { IconButtonBase } from "../icon-button/base";
 
 const FRAME = "min-w-0 overflow-hidden";
 const HEAD = "flex-row items-center";
@@ -30,20 +34,11 @@ const TITLE = "grow shrink min-w-0";
 const BODY = "flex-row min-w-0";
 const TEXT_BESIDE = "flex-1 min-w-0";
 const ACT = "shrink-0 flex-row gap-acts";
-// A line of the code role: a zero-width strut sets its height, the act or
-// the bar centred on it.
-const LINE = "flex-row items-center";
 const FOLD = "flex-row items-center w-full active:bg-wash-press";
-// The loading lines, each at the length of the line it stands in for, in
-// turn; the fold's word at a third.
-const BARS = ["w-2/3", "w-1/2", "w-3/4"] as const;
-const FOLD_WAIT = "flex-row items-center w-full";
-const FOLD_BAR = "w-1/3";
-const BAR = "w-full";
 
 export interface CodeProps extends Closed {
-	/** The text, its lines split on newlines (text; wraps). */
-	text: string;
+	/** The text, its lines split on newlines (text; wraps). A selection paints `PAINT_ROWS` lines until its read lands. */
+	text: Datum<string>;
 	/** What the text is (a file's name, the tool it goes into), in a head over it; it names the acts (a short phrase; truncates). */
 	title?: string;
 	// Shows only the last lines, this many, behind an act that reveals the
@@ -57,19 +52,17 @@ export interface CodeProps extends Closed {
 	// (`recovery-codes.txt`), named by the title (else by the file): after the
 	// copy act, in the same place.
 	download?: string;
-	// The text waits: line boxes stand in for it under the head, `tail` of
-	// them under the fold's when it folds. Unset, a loading `Section` or `Group`
-	// around it makes it wait.
-	loading?: boolean;
 }
 
 // The copy act: a check and the word Copied for two seconds once copied; a
 // refused write raises the failed Toast.
-function CopyAct({ name, value }: { name?: string; value: string }) {
+function CopyAct(props: { name?: string; value: string; painted: boolean }) {
+	const { name, value, painted } = props;
 	const words = useWords();
 	const [done, copy] = useCopy();
 	return (
-		<IconButton
+		<IconButtonBase
+			painted={painted}
 			icon={done ? "Check" : "Copy"}
 			label={done ? words.copied : named(words.copy, name)}
 			onAct={() => copy(value)}
@@ -80,7 +73,12 @@ function CopyAct({ name, value }: { name?: string; value: string }) {
 // The download act: the text written to the cache directory as a file of the
 // given name and handed to the share sheet, from which the phone saves it to
 // Files. A refused write or share raises the failed Toast.
-function DownloadAct(props: { name: string; value: string; file: string }) {
+function DownloadAct(props: {
+	name: string;
+	value: string;
+	file: string;
+	painted: boolean;
+}) {
 	const words = useWords();
 	const save = async () => {
 		const file = new File(Paths.cache, props.file);
@@ -88,7 +86,8 @@ function DownloadAct(props: { name: string; value: string; file: string }) {
 		await Sharing.shareAsync(file.uri, { mimeType: "text/plain" });
 	};
 	return (
-		<IconButton
+		<IconButtonBase
+			painted={props.painted}
 			icon="Download"
 			label={named(words.download, props.name)}
 			onAct={() => {
@@ -103,23 +102,24 @@ function DownloadAct(props: { name: string; value: string; file: string }) {
 // (`title`) and carries the copy and download acts; without a title they
 // stand side by side in a column beside the first line. `tail` folds the earlier lines behind a
 // one-way act that reveals them and leaves.
-export function Code({
-	text: source,
-	title,
-	tail,
-	copy,
-	download,
-	loading: own,
-}: CodeProps) {
-	const inherited = useContext(LoadingContext);
-	const loading = own ?? inherited;
+export function Code({ text: datum, title, tail, copy, download }: CodeProps) {
+	const [drawn] = useSelections([datum] as const) as [Drawn<string>];
+	const painted = drawn.painted;
+	const source = drawn.painted ? "" : drawn.value;
 	const words = useWords();
 	const [unfolded, setUnfolded] = useState(false);
 	const acts = (
 		<>
-			{copy ? <CopyAct name={title ?? download} value={source} /> : null}
+			{copy ? (
+				<CopyAct name={title ?? download} value={source} painted={painted} />
+			) : null}
 			{download ? (
-				<DownloadAct name={title ?? download} value={source} file={download} />
+				<DownloadAct
+					name={title ?? download}
+					value={source}
+					file={download}
+					painted={painted}
+				/>
 			) : null}
 		</>
 	);
@@ -128,46 +128,11 @@ export function Code({
 			<RNText numberOfLines={1} className={cn(text({ role: "meta" }), TITLE)}>
 				{title}
 			</RNText>
-			{loading ? null : acts}
+			{acts}
 		</View>
 	) : null;
-	// A folding text waits as it lands: the fold's row over `tail` lines.
-	const waiting =
-		tail === undefined
-			? BARS
-			: Array.from({ length: tail }, (_, at) => BARS[at % BARS.length]);
-	if (loading)
-		return (
-			<View
-				accessibilityState={{ busy: true }}
-				className={cn(CONTENT_FRAME, FRAME)}
-			>
-				{head}
-				{tail === undefined ? null : (
-					<View className={cn(CODE_FOLD, title && CODE_UNDER_HEAD, FOLD_WAIT)}>
-						<View className={cn(LINE, FOLD_BAR)}>
-							<Strut role="meta" />
-							<View className={cn(skeleton({ kind: "line" }), BAR)} />
-						</View>
-					</View>
-				)}
-				<View
-					className={cn(
-						codeText({ act: "none" }),
-						title && tail === undefined && CODE_UNDER_HEAD,
-					)}
-				>
-					{waiting.map((width, index) => (
-						// biome-ignore lint/suspicious/noArrayIndexKey: the lines are fixed stand-ins
-						<View key={index} className={LINE}>
-							<Strut role="code" />
-							<View className={cn(skeleton({ kind: "line" }), width)} />
-						</View>
-					))}
-				</View>
-			</View>
-		);
-	const lines = source.split("\n");
+	// Painted, the text is `PAINT_ROWS` lines of filler and never folds.
+	const lines = painted ? [] : source.split("\n");
 	const hidden =
 		tail !== undefined && !unfolded ? Math.max(0, lines.length - tail) : 0;
 	const shown = hidden > 0 ? lines.slice(hidden) : lines;
@@ -196,11 +161,21 @@ export function Code({
 				beside && TEXT_BESIDE,
 			)}
 		>
-			<RNText className={text({ role: "code" })}>{shown.join("\n")}</RNText>
+			<RNText className={text({ role: "code" })}>
+				{painted
+					? Array.from({ length: PAINT_ROWS }, (_, at) => (
+							// biome-ignore lint/suspicious/noArrayIndexKey: the lines are fixed stand-ins
+							<Fragment key={at}>
+								{at > 0 ? "\n" : null}
+								<Painted role="sentence" at={at} />
+							</Fragment>
+						))
+					: shown.join("\n")}
+			</RNText>
 		</View>
 	);
 	return (
-		<View className={cn(CONTENT_FRAME, FRAME)}>
+		<View {...inertProps(painted)} className={cn(CONTENT_FRAME, FRAME)}>
 			{head}
 			{fold}
 			{beside ? (

@@ -458,15 +458,6 @@ export function choose<V extends string>(
 	choice.onChange(toggled(choice.value, option));
 }
 
-// A pending Thread's turns, in order: each author is the item's, unknown
-// before the data, so the wait is a fixed exchange (another's reply, yours,
-// another's reply).
-export const WAITING_MESSAGES = [
-	{ key: 0, author: "other" },
-	{ key: 1, author: "you" },
-	{ key: 2, author: "other" },
-] as const;
-
 // One table row as both of its forms draw it: its own slots and each
 // column's cell by key, read from its item once.
 export interface TableRecord {

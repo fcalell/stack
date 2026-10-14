@@ -499,13 +499,12 @@ removable, so `blocked` never traps a value. A blocked row (and a `Menu`'s block
 highlight fill from the pointer or from a key landing on it; a key landing on it still shows the
 keyboard ring, and it presses and picks nothing.
 
-A `Thread` takes its `query` (or `items`) the same way through a `message` map (`key`,
+A `Thread` takes its `items` (constants, or a selection, which paints four messages of the other author until its read lands; the Pane, Section or Sheet that holds the read draws the failed, missing and empty forms) through a `message` map (`key`,
 `author`, `name`, `body`, `at`, `attachments`, `meta`, `streaming`, `onOpen`, `detail`), each reading only its
 item, since a message draws again only when its item changes; its `foot` is a `MessageInput`, and
 its `sheet` (a `Sheet`'s props) docks in the input's place while it is `open`. While a reply from the other author is on its way, set `replying`:
 the loaded log ends on one waiting message of theirs, followed as any message is; clear it in the
-render that adds the reply's item, which stands where the waiting message stood. A `Thread`'s own
-`loading` stays the log being on its way, three waiting messages. Set `streaming` on the reply (an
+render that adds the reply's item, which stands where the waiting message stood. Set `streaming` on the reply (an
 `other` turn, a `Message` prop and a `message` slot) while its text is still growing: a marker left
 open at its end (an emphasis, a strong run, a code span, a link, a fence) draws in its own form from
 its first character and the closing marker changes nothing drawn; a finished reply leaves an

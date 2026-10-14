@@ -1,38 +1,31 @@
+import {
+	type Datum,
+	type Drawn,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import type {
 	Attachment,
 	MessageDetail,
 	Part,
 } from "@fcalell/ui-core/descriptors";
-import {
-	type ListState,
-	listState,
-	retryOf,
-	WAITING_MESSAGES,
-} from "@fcalell/ui-core/list-state";
+import { PAINT_ROWS } from "@fcalell/ui-core/paint";
 import { THREAD } from "@fcalell/ui-core/variants";
 import {
 	memo,
 	type ReactElement,
 	type ReactNode,
 	type RefObject,
-	useContext,
 	useRef,
 	useState,
 } from "react";
 import { Platform, ScrollView, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { EmptyBase } from "../../lib/empty";
 import { FootReturn, useFootRegion } from "../../lib/frame";
 import { Lifted } from "../../lib/hosts";
-import { LoadingContext } from "../../lib/loading";
-
-import { useWords } from "../../lib/words";
-import type { ListEmpty } from "../list";
 import { Message } from "../message";
+import { MessageBase } from "../message/base";
 import { WaitingReply } from "../message/waiting";
-import { MissingBase } from "../missing/base";
-import type { QueryLike } from "../query-boundary";
 import type { SheetProps } from "../sheet";
 import { SheetDocked } from "../sheet/docked";
 import { Latest } from "./latest";
@@ -91,40 +84,18 @@ export interface MessageSlots<T> {
 	detail?: (item: T) => MessageDetail | undefined;
 }
 
-// Where a thread's messages come from, oldest first.
-type ThreadSource<T> =
-	| {
-			query: QueryLike<readonly T[]>;
-			/** What failed to load, over the retry act (a sentence; wraps). */
-			sentence: string;
-			// What the log draws when the query answers with no message: what
-			// to ask.
-			empty: ListEmpty;
-			items?: never;
-			loading?: never;
-	  }
-	| {
-			items: readonly T[];
-			// The items are on their way (a compound body's loading form).
-			loading?: boolean;
-			// Without it an empty log draws nothing.
-			empty?: ListEmpty;
-			query?: never;
-			sentence?: never;
-	  };
-
-// A conversation: its messages from a query or from items, over the input
-// that adds to it.
-export type ThreadProps<T = unknown> = Closed &
-	ThreadSource<T> & {
-		message: MessageSlots<T>;
-		// The `MessageInput` under the messages, drawn in every state.
-		foot?: ReactNode;
-		/** A task over the input: while it is `open` it docks in the foot in the input's place, the log keeping two rows above it, and closing hands focus back to the input. */
-		sheet?: SheetProps;
-		/** A reply from the other author is on its way: the loaded log ends on one waiting message of theirs, until it is cleared. */
-		replying?: boolean;
-	};
+// A conversation: its messages from items, over the input that adds to it.
+export type ThreadProps<T = unknown> = Closed & {
+	/** The items the messages draw, oldest first: constants, or a selection, which paints `PAINT_ROWS` messages until its read lands. A selection stands in a frame (a Pane, Section, Sheet or Form given the read), which draws the thread's failed, missing and empty forms. */
+	items: Datum<readonly T[]>;
+	message: MessageSlots<T>;
+	// The `MessageInput` under the messages.
+	foot?: ReactNode;
+	/** A task over the input: while it is `open` it docks in the foot in the input's place, the log keeping two rows above it, and closing hands focus back to the input. */
+	sheet?: SheetProps;
+	/** A reply from the other author is on its way: the loaded log ends on one waiting message of theirs, until it is cleared. */
+	replying?: boolean;
+};
 
 // One message from its item, its Message by its author: a system line takes
 // `onOpen` and `detail`, a turn takes `name`. It renders again only when its
@@ -179,33 +150,25 @@ function ThreadItemBase<T>({
 // the base's own type.
 const ThreadItem = memo(ThreadItemBase) as typeof ThreadItemBase;
 
-// What the log holds in the thread's state, oldest first, each part keyed:
-// the waiting turns, the failed or the empty form, or the messages.
+// What the log holds, oldest first, each part keyed: the painted messages
+// while the items are not here (the other author's, since an author is the
+// item's), else one Message per item.
 function logOf<T>(
 	props: ThreadProps<T>,
-	state: ListState,
-	retry: string,
+	drawn: Drawn<readonly T[]>,
 	slots: RefObject<MessageSlots<T>>,
 ): ReactElement[] {
-	if (state === "pending")
-		return WAITING_MESSAGES.map(({ key, author }) => (
-			<Message key={key} author={author} body="" loading />
+	if (drawn.painted)
+		return Array.from({ length: PAINT_ROWS }, (_, at) => (
+			<MessageBase
+				// biome-ignore lint/suspicious/noArrayIndexKey: the messages are fixed stand-ins
+				key={at}
+				painted
+				name={props.message.name !== undefined}
+				at={at}
+			/>
 		));
-	if (state === "missing") return [<MissingBase key="missing" fit="page" />];
-	if (state === "failed" && props.query !== undefined)
-		return [
-			<EmptyBase
-				key="failed"
-				fit="page"
-				tone="failed"
-				sentence={props.sentence}
-				act={{ label: retry, onAct: retryOf(props.query) }}
-			/>,
-		];
-	if (state === "empty" && props.empty)
-		return [<EmptyBase key="empty" fit="page" tone="rest" {...props.empty} />];
-	const items = (props.query ? props.query.data : props.items) ?? [];
-	const messages = items.map((item) => (
+	const messages = drawn.value.map((item) => (
 		<ThreadItem key={props.message.key(item)} item={item} slots={slots} />
 	));
 	return props.replying
@@ -219,31 +182,21 @@ function logOf<T>(
 // at the newest message and following each that arrives while the reader is at
 // the end, the input docked at the foot over the keyboard; while the reader is
 // scrolled up, a Latest act floats centred above the foot and returns to the
-// newest message. It draws its
-// collection's states, the input under each: while its query is pending,
-// `loading` is set or a loading `Section` holds it, Message's loading forms (another's reply, yours,
-// another's reply), the log at its end; a failed query, the failed
-// form with `sentence` and Retry in the log; a query that answers not
-// found, the form saying it no longer exists with Back; no message, `empty`
-// in the log; then one Message per item, and with `replying` set one waiting
-// Message of the other author after them, followed as any message is and
-// replaced in place when the reply's item arrives and `replying` clears.
+// newest message. It draws one Message per item, and with `replying` set one
+// waiting Message of the other author after them, followed as any message is
+// and replaced in place when the reply's item arrives and `replying` clears.
+// While the `items` selection's read waits, `PAINT_ROWS` messages of the other
+// author stand in the log, painted and inert. The frame around it draws the
+// rest: it holds the read and draws the failed form with Retry, the missing
+// form saying it no longer exists with Back, and the empty form.
 export function Thread<T>(props: ThreadProps<T>) {
 	const { sheet } = props;
-	const words = useWords();
-	const input = {
-		query: props.query,
-		items: props.items,
-		loading: props.loading,
-		sectionLoading: useContext(LoadingContext),
-		hasEmpty: props.empty !== undefined,
-	};
+	const [drawn] = useSelections([props.items] as const);
 	// The latest slots, which each drawn message reads when its item changes
 	// and its acts call when pressed.
 	const slots = useRef(props.message);
 	slots.current = props.message;
-	const state = listState(input);
-	const children = logOf(props, state, words.retry, slots);
+	const children = logOf(props, drawn as Drawn<readonly T[]>, slots);
 
 	const log = useRef<ScrollView>(null);
 	// The claim a docked sheet leaves the foot for the input that returns.

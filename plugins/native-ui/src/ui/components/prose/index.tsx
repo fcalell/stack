@@ -1,4 +1,9 @@
-import { waitCount } from "@fcalell/ui-core/list-state";
+import {
+	type Datum,
+	type Drawn,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
+import { PAINT_ROWS } from "@fcalell/ui-core/paint";
 import {
 	PROSE,
 	PROSE_BLOCKS,
@@ -11,19 +16,17 @@ import {
 	PROSE_RULE,
 	PROSE_STRIKE,
 	proseMarker,
-	skeleton,
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
 import { lexer, type Token, type Tokens } from "marked";
-import { type ReactNode, useContext, useMemo } from "react";
+import { type ReactNode, useMemo } from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { LoadingContext } from "../../lib/loading";
-import { Strut } from "../../lib/strut";
 import { Code } from "../code";
 import { Link } from "../link";
+import { PaintedProse } from "./painted";
 
 const COLUMN = "min-w-0";
 const ITEM = "flex-row";
@@ -32,39 +35,10 @@ const ORDINAL = "shrink-0 text-right";
 const ITEM_BODY = "flex-1 min-w-0";
 // A quote's text reads in the meta ink.
 const QUOTED = "text-ink-meta";
-// A line of the body role: a zero-width strut sets its height, the bar
-// centred on it.
-const LINE = "flex-row items-center";
-// The loading paragraphs' lines, each bar at the length of the line it
-// stands in for; the phone's column wraps the second paragraph once more.
-const BARS = [
-	["w-full", "w-full", "w-1/4"],
-	["w-full", "w-full", "w-1/2"],
-] as const;
-// The default form: no count was given, so the two paragraphs.
-const DEFAULT_WAIT = 0;
-const FULL = "w-full";
-const LAST = "w-1/2";
-
-// The paragraphs a waiting Prose draws: the default two, or one paragraph of
-// `lines` full lines whose last runs half the measure.
-function paragraphsOf(lines: number): readonly (readonly string[])[] {
-	if (lines === DEFAULT_WAIT) return BARS;
-	return [
-		Array.from({ length: lines }, (_, at) => (at === lines - 1 ? LAST : FULL)),
-	];
-}
 
 export interface ProseProps extends Closed {
-	/** The text, in markdown: headings, paragraphs, lists, quotes, rules, inline code, links and fenced code (text; wraps). */
-	markdown: string;
-	// The text waits: `true` stands two paragraphs of line boxes in for it, and
-	// a number from 1 stands that many lines of one paragraph (its last half
-	// the measure), so a one-line text waits as one line. 0 or `false` is not
-	// waiting, so `loading={lines?.length}` reads the loaded text at 0. Unset, a
-	// loading `Section` or `Group` around it makes it wait as two paragraphs: it
-	// hands down a boolean, so set the count on the Prose itself.
-	loading?: boolean | number;
+	/** The text, in markdown: headings, paragraphs, lists, quotes, rules, inline code, links and fenced code (text; wraps). A selection paints `PAINT_ROWS` paragraphs until its read lands. */
+	markdown: Datum<string>;
 }
 
 // A link's target, unless its scheme runs script.
@@ -309,46 +283,25 @@ function Headed({ part }: { part: Part }) {
 // slot), quotes and rules a fields gap apart; inline code on the neutral
 // fill; a fenced block is a `Code` with its copy act. Raw HTML reads as its
 // own text; tables, task lists and images draw as text. A heading is a
-// header, which has no levels on the phone.
-export function Prose({ markdown, loading }: ProseProps) {
-	const inherited = useContext(LoadingContext);
-	const lines = waitCount(loading, inherited, DEFAULT_WAIT);
-	const waiting = lines !== undefined;
-	// The markdown lexes and folds once per text, and not while the prose waits.
+// header, which has no levels on the phone. While the `markdown` selection's
+// read waits, `PAINT_ROWS` paragraphs of filler stand in its column, inert.
+export function Prose({ markdown }: ProseProps) {
+	const [drawn] = useSelections([markdown] as const) as [Drawn<string>];
+	const source = drawn.painted ? undefined : drawn.value;
+	// The markdown lexes and folds once per text, and not while the prose paints.
 	const root = useMemo(
-		() => (waiting ? undefined : parts(lexer(markdown))),
-		[markdown, waiting],
+		() => (source === undefined ? undefined : parts(lexer(source))),
+		[source],
 	);
-	if (!root)
-		return (
-			<View accessibilityState={{ busy: true }} className={cn(PROSE, COLUMN)}>
-				<View className={PROSE_BLOCKS}>
-					{paragraphsOf(lines ?? DEFAULT_WAIT).map((paragraph, index) => (
-						// biome-ignore lint/suspicious/noArrayIndexKey: the paragraphs are fixed stand-ins
-						<View key={index}>
-							{paragraph.map((width, line) => (
-								// biome-ignore lint/suspicious/noArrayIndexKey: the lines are fixed stand-ins
-								<View key={line} className={LINE}>
-									<Strut role="body" />
-									<View className={cn(skeleton({ kind: "line" }), width)} />
-								</View>
-							))}
-						</View>
-					))}
-				</View>
-			</View>
-		);
-	// Its fenced blocks are `Code` and wait only as the text does.
+	if (!root) return <PaintedProse rows={PAINT_ROWS} />;
 	return (
-		<LoadingContext.Provider value={false}>
-			<View className={cn(PROSE, COLUMN)}>
-				{root.blocks.length > 0 ? <Blocks part={root} /> : null}
-				{root.parts
-					.filter((part) => (part.heading?.depth ?? 1) <= 2)
-					.map((part) => (
-						<Headed key={part.key} part={part} />
-					))}
-			</View>
-		</LoadingContext.Provider>
+		<View className={cn(PROSE, COLUMN)}>
+			{root.blocks.length > 0 ? <Blocks part={root} /> : null}
+			{root.parts
+				.filter((part) => (part.heading?.depth ?? 1) <= 2)
+				.map((part) => (
+					<Headed key={part.key} part={part} />
+				))}
+		</View>
 	);
 }

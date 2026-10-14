@@ -1,9 +1,11 @@
 import type { Attachment } from "@fcalell/ui-core/descriptors";
 import type { ReactNode } from "react";
+import { MessageBase } from "../../components/message/base.tsx";
 import { Message } from "../../components/message/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { SCREEN } from "./image.tsx";
 import { Wide } from "./layout-context.tsx";
+import { isPaint } from "./painted.tsx";
 
 // A moment today at a board's time, as an ISO string the Message formats.
 export function today(time: string): string {
@@ -220,21 +222,31 @@ function Rest(props: { author: Author }) {
 	);
 }
 
-// Board 53's message cells on a thread's pane: each author at rest, each
-// loading.
+// Board 53's message cells on a thread's pane: each author at rest, the
+// reply painted while its thread's items are not here (a turn of yours or a
+// system line is never painted alone); the paint cell draws a reply beside
+// its painted form.
 export function drawMessage(frame: ShowcaseFrame) {
 	const author = authorOf(frame.cell.name);
-	let drawn: ReactNode;
+	const painted = <MessageBase painted name />;
+	if (isPaint(frame))
+		return frame.state === "rest" ? (
+			<Wide>
+				<Pane>
+					<Message author="other" name="Assistant" body={REPLY} />
+					{painted}
+				</Pane>
+			</Wide>
+		) : undefined;
 	if (frame.state === "loading")
-		drawn = (
-			<Pane>
-				{author === "system" ? (
-					<Message author="system" body="" loading />
-				) : (
-					<Message author={author} body="" loading />
-				)}
-			</Pane>
-		);
-	else drawn = <Rest author={author} />;
-	return <Wide>{drawn}</Wide>;
+		return author === "other" ? (
+			<Wide>
+				<Pane>{painted}</Pane>
+			</Wide>
+		) : undefined;
+	return (
+		<Wide>
+			<Rest author={author} />
+		</Wide>
+	);
 }

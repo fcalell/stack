@@ -1,10 +1,9 @@
-import { useQuery } from "@fcalell/plugin-api/tanstack-query";
+import { useRead } from "@fcalell/plugin-api/tanstack-query";
 import { Code } from "@fcalell/plugin-react-ui/components/code";
 import { Diff } from "@fcalell/plugin-react-ui/components/diff";
 import { List } from "@fcalell/plugin-react-ui/components/list";
 import { Prose } from "@fcalell/plugin-react-ui/components/prose";
 import { ProseDiff } from "@fcalell/plugin-react-ui/components/prose-diff";
-import { QueryBoundary } from "@fcalell/plugin-react-ui/components/query-boundary";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
 import { useRoute } from "@fcalell/plugin-react-ui/lib/navigate";
 import type { ChipMark } from "@fcalell/ui-core/descriptors";
@@ -33,25 +32,27 @@ function lines(from: string, other: string): number {
 
 // The files a deploy changed, from their own read, over the diff of the one
 // open (`?file=`, the first without it), which its row marks; the files
-// before it are seen. The Section holds the read, so the list paints its rows
-// while it waits and the Section draws the failed and empty forms; the diff
-// waits with it and stands only over a loaded file.
+// before it are seen. The Section holds the read, so the list and the diff
+// paint while it waits and the Section draws the failed and empty forms. The
+// app's own view of the read is its files once they land, for the open file's
+// place; the diff reads that file as a selection.
 function useChangedFiles(id: string, named: string | undefined) {
 	const route = useRoute();
 	const files = orpc.deploys.files.read({ id });
-	// The Diff still waits through its own `loading`, so the app holds the
-	// query for it beside the frame's read.
-	const loaded = useQuery(files.options);
-	const all: ChangedFile[] = loaded.data ?? [];
+	const all: readonly ChangedFile[] = useRead(files) ?? [];
 	const at = Math.max(
 		0,
 		all.findIndex((each) => each.path === named),
 	);
 	const open = all[at];
-	let diff = null;
-	if (loaded.isPending) diff = <Diff label="" before="" after="" loading />;
-	else if (open)
-		diff = <Diff label={open.path} before={open.before} after={open.after} />;
+	const file = files.at((each) => each[at]);
+	const diff = (
+		<Diff
+			label={open?.path ?? ""}
+			before={file.at((each) => each?.before ?? "")}
+			after={file.at((each) => each?.after ?? "")}
+		/>
+	);
 	const list = (
 		<List
 			items={files}
@@ -77,9 +78,7 @@ function useChangedFiles(id: string, named: string | undefined) {
 // opened with, then the files and the build log from their own queries.
 export function DeployChanges(props: { deploy: OpenDeploy; file?: string }) {
 	const { deploy } = props;
-	const log = useQuery(
-		orpc.deploys.log.queryOptions({ input: { id: deploy.id } }),
-	);
+	const log = orpc.deploys.log.read({ id: deploy.id });
 	const files = useChangedFiles(deploy.id, props.file);
 	return (
 		<>
@@ -107,14 +106,12 @@ export function DeployChanges(props: { deploy: OpenDeploy; file?: string }) {
 				{files.list}
 				{files.diff}
 			</Section>
-			<Section title="Build log" loading={log.isPending}>
-				<QueryBoundary
-					query={log}
-					sentence="The build log did not load."
-					loading={<Code text="" tail={6} copy loading />}
-				>
-					{(text) => <Code text={text} tail={6} copy />}
-				</QueryBoundary>
+			<Section
+				title="Build log"
+				read={log}
+				failed="The build log did not load."
+			>
+				<Code text={log} tail={6} copy />
 			</Section>
 		</>
 	);

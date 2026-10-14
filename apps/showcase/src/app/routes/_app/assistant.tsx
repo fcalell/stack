@@ -1,4 +1,4 @@
-import { useQuery } from "@fcalell/plugin-api/tanstack-query";
+import { useQueryClient } from "@fcalell/plugin-api/tanstack-query";
 import { MessageInput } from "@fcalell/plugin-react-ui/components/message-input";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
@@ -41,27 +41,26 @@ const QUEUED: Notice = {
 	sentence: "A message sent now is read once this answer ends.",
 };
 
-// The conversation: its history a query, a sent turn and its answer joining
-// the history as the server holds them (an empty one too); the input under
-// every state, inert until the history answers. A message sent while an
-// answer comes is answered next.
+// The conversation: its history a read the Pane holds, a sent turn and its
+// answer written into the history as the server holds them (an empty one too);
+// the input docked in the Pane's foot, inert until the history answers. A
+// message sent while an answer comes is answered next.
 function Assistant() {
-	const [sent, setSent] = useState<Turn[]>([]);
-	const history = useQuery(orpc.assistant.history.queryOptions());
-	const query = {
-		...history,
-		data: history.data && [...history.data, ...sent],
-	};
+	const queryClient = useQueryClient();
+	const history = orpc.assistant.history.read();
 	const [value, setValue] = useState("");
 	const [attachments, setAttachments] = useState<Attachment[]>(ATTACHED);
 	const [working, setWorking] = useState(false);
 	const answer = useRef<ReturnType<typeof setTimeout>>(undefined);
 	const queued = useRef(false);
 	const say = (turn: Omit<Turn, "id" | "at">) =>
-		setSent((all) => [
-			...all,
-			{ ...turn, id: `s${all.length + 1}`, at: new Date().toISOString() },
-		]);
+		queryClient.setQueryData<readonly Turn[]>(
+			history.options.queryKey,
+			(all = []) => [
+				...all,
+				{ ...turn, id: `s${all.length + 1}`, at: new Date().toISOString() },
+			],
+		);
 	const reply = () => {
 		setWorking(true);
 		answer.current = setTimeout(() => {
@@ -74,15 +73,57 @@ function Assistant() {
 	};
 	return (
 		<Place>
-			<Pane title="Assistant">
+			<Pane
+				title="Assistant"
+				read={history}
+				failed="The conversation did not load."
+				empty={{
+					title: "Ask about your deploys",
+					sentence:
+						"Why a deploy failed, what changed between two, or how much of the plan is used.",
+				}}
+				foot={
+					<MessageInput
+						value={value}
+						onChange={setValue}
+						attachments={attachments}
+						onAttach={(files) =>
+							setAttachments((all) => [
+								...all,
+								...files.map((file) => ({
+									id: crypto.randomUUID(),
+									name: file.name,
+									src: file.src,
+								})),
+							])
+						}
+						onDetach={(id) => {
+							const gone = attachments.find((each) => each.id === id)?.src;
+							if (gone?.startsWith("blob:")) URL.revokeObjectURL(gone);
+							setAttachments((all) => all.filter((each) => each.id !== id));
+						}}
+						placeholder="Ask about your deploys"
+						notice={working ? QUEUED : notice()}
+						working={working}
+						onSend={() => {
+							say({ author: "you", body: value });
+							setValue("");
+							setAttachments([]);
+							if (working) queued.current = true;
+							else reply();
+						}}
+						onStop={() => {
+							clearTimeout(answer.current);
+							queued.current = false;
+							setWorking(false);
+							say({ author: "system", body: "Answer stopped" });
+							toast("Answer stopped");
+						}}
+					/>
+				}
+			>
 				<Thread
-					query={query}
-					sentence="The conversation did not load."
-					empty={{
-						title: "Ask about your deploys",
-						sentence:
-							"Why a deploy failed, what changed between two, or how much of the plan is used.",
-					}}
+					items={history}
 					message={{
 						key: (turn) => turn.id,
 						author: (turn) => turn.author,
@@ -96,46 +137,6 @@ function Assistant() {
 							return () => navigate(`/deploys/${deploy}`);
 						},
 					}}
-					foot={
-						<MessageInput
-							value={value}
-							onChange={setValue}
-							attachments={attachments}
-							onAttach={(files) =>
-								setAttachments((all) => [
-									...all,
-									...files.map((file) => ({
-										id: crypto.randomUUID(),
-										name: file.name,
-										src: file.src,
-									})),
-								])
-							}
-							onDetach={(id) => {
-								const gone = attachments.find((each) => each.id === id)?.src;
-								if (gone?.startsWith("blob:")) URL.revokeObjectURL(gone);
-								setAttachments((all) => all.filter((each) => each.id !== id));
-							}}
-							placeholder="Ask about your deploys"
-							notice={working ? QUEUED : notice()}
-							working={working}
-							disabled={query.data === undefined}
-							onSend={() => {
-								say({ author: "you", body: value });
-								setValue("");
-								setAttachments([]);
-								if (working) queued.current = true;
-								else reply();
-							}}
-							onStop={() => {
-								clearTimeout(answer.current);
-								queued.current = false;
-								setWorking(false);
-								say({ author: "system", body: "Answer stopped" });
-								toast("Answer stopped");
-							}}
-						/>
-					}
 				/>
 			</Pane>
 		</Place>

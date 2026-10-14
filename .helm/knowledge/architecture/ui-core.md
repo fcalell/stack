@@ -961,23 +961,22 @@ a tick with no animation, never jumped to full.
   `preventScroll` then `scrollIntoView` at `nearest`, which honours that padding, so a cell never
   stands under the frozen column and nothing measures; a frozen cell scrolls nothing, since it stands
   in place.
-- A thread is a molecule (`Thread`), a collection: its Messages from `query` (with `sentence`) or
-  `items` (waiting on `loading`) through the `message` map, one function per `Message` slot (`key`,
+- A thread is a molecule (`Thread`), a collection: its Messages from `items` (constants, or a
+  selection) through the `message` map, one function per `Message` slot (`key`,
   `author`, `name`, `body`, `at`, `attachments` and `meta` for a turn, `onOpen` returning a system
   line's handler or none, and `detail` returning a system line's `MessageDetail` or none), a
   sections gap apart (one rung above Prose's block gap), and its `MessageInput` its `foot`, the one
-  authored part, drawn in every state. Pending, the log holds Message's own loading forms in a fixed
-  order (`WAITING_MESSAGES`: another's reply, yours, another's reply), for each author is the item's
-  and unknown before the data, each at its loaded height (yours its bubble over its time's bar,
-  `figures` wide, as the loaded bubble stands over its time); failed, the failed form with
-  `sentence` and Retry; no message, `empty`; each in the log's column. A reply on its way is the
-  Thread's boolean `replying`, outside the `query`/`items` source union: the loaded log ends on one
+  authored part. While the selection's read waits the log holds `PAINT_ROWS` messages of the other
+  author (an author is the item's and unknown before the data, so `author(P)` falls to `other`),
+  Message's internal `painted` form: the name and a paragraph of filler, inert. The failed, missing
+  and empty forms are the frame's (a Pane, Section or Sheet holding the read), which replaces the
+  Thread, so an input that must outlive them docks in the Pane's `foot`. A reply on its way is the
+  Thread's boolean `replying`: the loaded log ends on one
   loading Message of the other author, after the items, followed and pinned to as any message is and
   replaced in place when the app adds the reply's item and clears the flag. It is a prop and not a
   `loading` slot on `MessageSlots`, since a per-item slot needs an item and the app would invent a
-  placeholder `body`, `author` and `key` for something that is not a message yet; the Thread's own
-  `loading` stays the log being on its way (three waiting messages), and every other state ignores
-  `replying`. On the desktop both stand in
+  placeholder `body`, `author` and `key` for something that is not a message yet; every other state
+  ignores `replying`. On the desktop both stand in
   a measure-wide column (`THREAD_COLUMN`, held by no entry: a `MessageInput` and a record's
   `ItemHeader` over a filling Thread stand in it too), on touch in the screen's. The column is a
   width alone (below, column rule); a docked foot centres it, and a Thread among sections keeps

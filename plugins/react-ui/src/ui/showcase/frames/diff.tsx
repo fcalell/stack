@@ -1,7 +1,9 @@
 import type { Hunk } from "@fcalell/ui-core/descriptors";
 import { Diff } from "../../components/diff/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
+import { waitingText } from "../waiting.ts";
 import { Wide } from "./layout-context.tsx";
+import { isPaint } from "./painted.tsx";
 
 // Board 51's invoice.ts: two hunks, a long added line that wraps.
 const INVOICE: Hunk[] = [
@@ -77,14 +79,25 @@ export const NET_30: Terms = { days: 30, label: "Net 30" };
 export const NET_60: Terms = { days: 60, label: "Net 60" };
 `;
 
-// The added cell draws the new file; every other rest cell the invoice.
+// The added cell draws the new file; every other rest cell the invoice. The
+// paint cell draws the invoice beside its painted diff, the loading state the
+// painted diff alone.
 export function drawDiff(frame: ShowcaseFrame) {
-	if (frame.state === "loading")
-		return (
+	const painted = (
+		<Diff
+			label="src/billing/invoice.ts"
+			before={waitingText}
+			after={waitingText}
+		/>
+	);
+	if (isPaint(frame))
+		return frame.state === "rest" ? (
 			<Wide>
-				<Diff label="src/billing/invoice.ts" hunks={[]} loading />
+				<Diff label="src/billing/invoice.ts" hunks={INVOICE} />
+				{painted}
 			</Wide>
-		);
+		) : undefined;
+	if (frame.state === "loading") return <Wide>{painted}</Wide>;
 	return (
 		<Wide>
 			{frame.cell.name === "DIFF_LINE.kind.added" ? (

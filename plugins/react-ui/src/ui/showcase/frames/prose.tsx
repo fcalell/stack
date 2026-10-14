@@ -1,7 +1,9 @@
 import { Prose } from "../../components/prose/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
+import { waitingText } from "../waiting.ts";
 import { Wide } from "./layout-context.tsx";
+import { isPaint } from "./painted.tsx";
 
 // Board 50's release notes: headed parts, a nested part, lists two deep, an
 // ordered list with a strike, a quote with inline code, a fence, a rule and
@@ -42,26 +44,37 @@ const DESCRIPTION = `Moves the billing webhooks off the legacy queue. Each event
 
 Rollout is behind \`billing.queue_v2\`; see [the runbook](#runbook) before turning it on for an enterprise workspace.`;
 
-/** A one-line text, loaded and waiting as one line, in a Section each. */
+/** A one-line text, loaded and painted, in a Section each. */
 export function Sentence(props: { loading?: boolean }) {
 	return (
-		<Section title="Why it waits" loading={props.loading}>
-			<Prose markdown={SENTENCE} loading={props.loading ? 1 : undefined} />
+		<Section title="Why it waits">
+			<Prose markdown={props.loading ? waitingText : SENTENCE} />
 		</Section>
 	);
 }
 
-// The loading frames draw the description's Section waiting; the body and
-// link cells draw the description, every other cell the release notes.
+// The paint cell draws the description loaded and painted; the loading frames
+// draw the description painted; the body and link cells draw the description,
+// every other cell the release notes.
 export function drawProse(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
+	if (isPaint(frame))
+		return frame.state === "rest" ? (
+			<Wide>
+				<Section title="Description">
+					<Prose markdown={DESCRIPTION} />
+				</Section>
+				<Section title="Description">
+					<Prose markdown={waitingText} />
+				</Section>
+			</Wide>
+		) : undefined;
 	if (frame.state === "loading")
 		return (
 			<Wide>
 				<Section title="Description">
-					<Prose markdown={DESCRIPTION} loading />
+					<Prose markdown={waitingText} />
 				</Section>
-				<Sentence />
 				<Sentence loading />
 			</Wide>
 		);

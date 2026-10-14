@@ -446,11 +446,7 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<List items={[]} row={{ key: String, title: String }} placeholderTextColorClassName="text-ink-body" />
 		<Thread items={[]} message={{ key: String, author: () => "you", body: String }} />
-		<Thread query={{ data: ["a"], isPending: false, isError: false, refetch: noop }} sentence="x" empty={{ sentence: "x" }} message={{ key: String, author: () => "system", body: String, onOpen: () => noop }} foot={null} />
-		{/* @ts-expect-error: a thread takes a query or items, never both */}
-		<Thread items={["a"]} query={{ data: ["a"], isPending: false, isError: false, refetch: noop }} sentence="x" empty={{ sentence: "x" }} message={{ key: String, author: () => "you", body: String }} />
-		{/* @ts-expect-error: a thread's query names its failure and its empty form */}
-		<Thread query={{ data: ["a"], isPending: false, isError: false, refetch: noop }} message={{ key: String, author: () => "you", body: String }} />
+		<Thread items={["a"]} message={{ key: String, author: () => "system", body: String, onOpen: () => noop }} foot={null} />
 		{/* @ts-expect-error: a thread's messages are data, never children */}
 		<Thread items={[]} message={{ key: String, author: () => "you", body: String }}>x</Thread>
 		{/* @ts-expect-error: closed channel */}

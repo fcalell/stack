@@ -1,4 +1,6 @@
+import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
 import type { DiffLine, Hunk } from "@fcalell/ui-core/descriptors";
+import { PAINT_ROWS } from "@fcalell/ui-core/paint";
 import {
 	CONTENT_FRAME,
 	DIFF_CODE,
@@ -6,37 +8,19 @@ import {
 	DIFF_HUNK,
 	DIFF_MARK,
 	diffLine,
-	skeleton,
 } from "@fcalell/ui-core/variants";
 import { structuredPatch } from "diff";
 import { useMemo } from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { Strut } from "../../lib/strut";
+import { inertProps, Painted } from "../../lib/paint";
 
 const FRAME = "min-w-0 overflow-hidden";
 // A line's cells stand from its top, the numbers on its first line.
 const ROW = "flex-row items-start";
 const GUTTER = "text-right";
 const CODE = "flex-1 min-w-0";
-// A line of the code role: a zero-width strut sets its height, the bar
-// centred on it.
-const LINE = "flex-row items-center";
-const BAR_LINE = "flex-1 flex-row items-center";
-// The loading form: the hunk header's bar, then each line's bar at the
-// length of the line it stands in for.
-const HEADER_BAR = "w-1/3";
-const BARS = [
-	"w-1/2",
-	"w-1/3",
-	"w-2/3",
-	"w-1/2",
-	"w-3/4",
-	"w-1/4",
-	"w-2/3",
-	"w-1/2",
-] as const;
 // The marker a line's kind reads by without its ground's hue.
 const MARKS: Record<DiffLine["kind"], string> = {
 	context: " ",
@@ -47,16 +31,22 @@ const MARKS: Record<DiffLine["kind"], string> = {
 interface DiffBase extends Closed {
 	/** What the diff shows (the file's path), the name of its lines (a short phrase; read aloud, never drawn). */
 	label: string;
-	// The lines wait: the hunk header's bar and eight lines' bars stand in for
-	// them, a fixed count, since the lines are unknown before the data.
-	loading?: boolean;
 }
 
 // A unified diff, as hunks, or as the two texts it compares, diffed here by
 // line.
 export type DiffProps =
-	| (DiffBase & { hunks: readonly Hunk[]; before?: never; after?: never })
-	| (DiffBase & { hunks?: never; before: string; after: string });
+	| (DiffBase & {
+			/** The hunks, each a header over its lines. A selection paints a hunk header over `PAINT_ROWS` lines until its read lands. */
+			hunks: Datum<readonly Hunk[]>;
+			before?: never;
+			after?: never;
+	  })
+	| (DiffBase & {
+			hunks?: never;
+			before: Datum<string>;
+			after: Datum<string>;
+	  });
 
 // The unified line diff of two texts as the hunks a `Diff` draws, three lines
 // of context around each change, as git shows them.
@@ -156,36 +146,36 @@ function Gutters(props: { line?: DiffLine; numbers: Numbers }) {
 // removes has) and its `+` or `−` marker. A long line wraps under itself at the
 // line's start: React Native has no text indent, so a wrapped line does not
 // hang. The frame is a list named by `label`, the phone having no table.
-export function Diff({ label, hunks, before, after, loading }: DiffProps) {
-	// The hunks derive once per text pair, and not while the diff waits.
-	const shown = useMemo(
-		() => hunks ?? (loading ? [] : lineHunks(before ?? "", after ?? "")),
-		[hunks, before, after, loading],
-	);
+export function Diff({ label, hunks, before, after }: DiffProps) {
+	const [h, b, a] = useSelections([hunks, before, after] as const);
+	const painted = h.painted || b.painted || a.painted;
+	// The hunks derive once per text pair, and not while the diff paints.
+	const shown = useMemo(() => {
+		if (painted) return [];
+		const given = h.value as readonly Hunk[] | undefined;
+		return given ?? lineHunks(b.value as string, a.value as string);
+	}, [painted, h.value, b.value, a.value]);
 	const numbers = numbersOf(shown);
-	if (loading)
+	if (painted)
 		return (
-			<View
-				accessibilityState={{ busy: true }}
-				className={cn(CONTENT_FRAME, FRAME)}
-			>
+			<View {...inertProps(true)} className={cn(CONTENT_FRAME, FRAME)}>
 				<View className={diffLine({ kind: "header" })}>
-					<View className={cn(DIFF_HUNK, LINE)}>
-						<Strut role="code" />
-						<View className={cn(skeleton({ kind: "line" }), HEADER_BAR)} />
-					</View>
+					<RNText className={cn(diffLine({ kind: "header" }), DIFF_HUNK)}>
+						<Painted role="phrase" />
+					</RNText>
 				</View>
-				{BARS.map((width, index) => (
+				{Array.from({ length: PAINT_ROWS }, (_, at) => (
 					<View
 						// biome-ignore lint/suspicious/noArrayIndexKey: the lines are fixed stand-ins
-						key={index}
+						key={at}
 						className={cn(diffLine({ kind: "context" }), ROW)}
 					>
 						<Gutters numbers={BOTH} />
-						<View className={cn(DIFF_CODE, BAR_LINE)}>
-							<Strut role="code" />
-							<View className={cn(skeleton({ kind: "line" }), width)} />
-						</View>
+						<RNText
+							className={cn(diffLine({ kind: "context" }), DIFF_CODE, CODE)}
+						>
+							<Painted role="sentence" at={at} />
+						</RNText>
 					</View>
 				))}
 			</View>

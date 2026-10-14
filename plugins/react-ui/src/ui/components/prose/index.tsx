@@ -1,7 +1,11 @@
-import { cn } from "@fcalell/ui-core/cn";
-import { waitCount } from "@fcalell/ui-core/list-state";
 import {
-	lineBox,
+	type Datum,
+	type Drawn,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
+import { cn } from "@fcalell/ui-core/cn";
+import { PAINT_ROWS } from "@fcalell/ui-core/paint";
+import {
 	PROSE,
 	PROSE_BLOCKS,
 	PROSE_CODESPAN,
@@ -13,7 +17,6 @@ import {
 	PROSE_RULE,
 	PROSE_STRIKE,
 	proseMarker,
-	skeleton,
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
@@ -21,9 +24,9 @@ import { lexer, type Token, type Tokens } from "marked";
 import { type ReactNode, use, useMemo } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { HeadingContext } from "../../lib/heading.ts";
-import { LoadingContext } from "../../lib/loading.ts";
 import { Code } from "../code/index.tsx";
 import { Link } from "../link/index.tsx";
+import { PaintedProse } from "./painted.tsx";
 
 // An unbroken token too long for the column (a URL) wraps anywhere; every
 // paragraph, item and quote inherits it.
@@ -38,48 +41,10 @@ const ITEM_BODY = "flex flex-col grow min-w-0";
 const CODESPAN = "inline-block max-w-full";
 // A quote's text reads in the meta ink.
 const QUOTED = "text-ink-meta";
-const LINE = "flex items-center h-lh";
-// The touch column wraps the second paragraph's long line once more.
-const TOUCH_LINE = "hidden touch:flex items-center h-lh";
-// The loading paragraphs' lines, each bar at the length of the line it
-// stands in for; the second paragraph's middle line stands on touch alone.
-const BARS = [
-	[
-		["w-full", false],
-		["w-full", false],
-		["w-1/4", false],
-	],
-	[
-		["w-full", false],
-		["w-full", true],
-		["w-1/2", false],
-	],
-] as const;
-// The default form: no count was given, so the two paragraphs.
-const DEFAULT_WAIT = 0;
-const FULL = "w-full";
-const LAST = "w-1/2";
-
-// The paragraphs a waiting Prose draws: the default two, or one paragraph of
-// `lines` full lines whose last runs half the measure.
-function paragraphsOf(
-	lines: number,
-): readonly (readonly (readonly [string, boolean])[])[] {
-	if (lines === DEFAULT_WAIT) return BARS;
-	return [
-		Array.from(
-			{ length: lines },
-			(_, at) => [at === lines - 1 ? LAST : FULL, false] as const,
-		),
-	];
-}
-
 /** Markdown read at the measure. */
 export interface ProseProps extends Closed {
-	/** The text, in markdown: headings, paragraphs, lists, quotes, rules, inline code, links and fenced code (text; wraps). */
-	markdown: string;
-	/** The text waits: `true` stands two paragraphs of line boxes in for it, and a number from 1 stands that many lines of one paragraph (its last half the measure), so a one-line text waits as one line. 0 or `false` is not waiting, so `loading={lines?.length}` reads the loaded text at 0. Unset, a loading `Section` or `Group` around it makes it wait as two paragraphs: it hands down a boolean, so set the count on the Prose itself. */
-	loading?: boolean | number;
+	/** The text, in markdown: headings, paragraphs, lists, quotes, rules, inline code, links and fenced code (text; wraps). A selection paints `PAINT_ROWS` paragraphs until its read lands. */
+	markdown: Datum<string>;
 }
 
 // A link's target, unless its scheme runs script.
@@ -320,52 +285,25 @@ function Headed(props: { part: Part; level: number }) {
 	);
 }
 
-/** Markdown at the body role, its column at the measure: `#` and `##` head its parts a sections gap apart at the heading role, `###` and deeper head a part inside them at body 500; paragraphs, lists (the marker hung in its own slot), quotes and rules a fields gap apart; inline code on the neutral fill; a fenced block is a `Code` with its copy act. Raw HTML reads as its own text; tables, task lists and images draw as text. */
-export function Prose({ markdown, loading }: ProseProps) {
+/** Markdown at the body role, its column at the measure: `#` and `##` head its parts a sections gap apart at the heading role, `###` and deeper head a part inside them at body 500; paragraphs, lists (the marker hung in its own slot), quotes and rules a fields gap apart; inline code on the neutral fill; a fenced block is a `Code` with its copy act. Raw HTML reads as its own text; tables, task lists and images draw as text. While the `markdown` selection's read waits, `PAINT_ROWS` paragraphs of filler stand in its column, inert. */
+export function Prose({ markdown }: ProseProps) {
 	const level = use(HeadingContext);
-	const inherited = use(LoadingContext);
-	const lines = waitCount(loading, inherited, DEFAULT_WAIT);
-	const waiting = lines !== undefined;
-	// The markdown lexes and folds once per text, and not while the prose waits.
+	const [drawn] = useSelections([markdown] as const) as [Drawn<string>];
+	const source = drawn.painted ? undefined : drawn.value;
+	// The markdown lexes and folds once per text, and not while the prose paints.
 	const root = useMemo(
-		() => (waiting ? undefined : parts(lexer(markdown))),
-		[markdown, waiting],
+		() => (source === undefined ? undefined : parts(lexer(source))),
+		[source],
 	);
-	if (!root)
-		return (
-			<div aria-busy className={cn(PROSE, COLUMN)}>
-				<div className={cn(PROSE_BLOCKS, STACK)}>
-					{paragraphsOf(lines ?? DEFAULT_WAIT).map((paragraph, index) => (
-						// biome-ignore lint/suspicious/noArrayIndexKey: the paragraphs are fixed stand-ins
-						<div key={index} className={STACK}>
-							{paragraph.map(([width, touch], line) => (
-								<span
-									// biome-ignore lint/suspicious/noArrayIndexKey: the lines are fixed stand-ins
-									key={line}
-									className={cn(
-										lineBox({ role: "body" }),
-										touch ? TOUCH_LINE : LINE,
-									)}
-								>
-									<span className={cn(skeleton({ kind: "line" }), width)} />
-								</span>
-							))}
-						</div>
-					))}
-				</div>
-			</div>
-		);
-	// Its fenced blocks are `Code` and wait only as the text does.
+	if (!root) return <PaintedProse rows={PAINT_ROWS} />;
 	return (
-		<LoadingContext value={false}>
-			<div className={cn(PROSE, COLUMN)}>
-				{root.blocks.length > 0 ? <Blocks part={root} level={level} /> : null}
-				{root.parts
-					.filter((part) => (part.heading?.depth ?? 1) <= 2)
-					.map((part) => (
-						<Headed key={part.key} part={part} level={level} />
-					))}
-			</div>
-		</LoadingContext>
+		<div className={cn(PROSE, COLUMN)}>
+			{root.blocks.length > 0 ? <Blocks part={root} level={level} /> : null}
+			{root.parts
+				.filter((part) => (part.heading?.depth ?? 1) <= 2)
+				.map((part) => (
+					<Headed key={part.key} part={part} level={level} />
+				))}
+		</div>
 	);
 }

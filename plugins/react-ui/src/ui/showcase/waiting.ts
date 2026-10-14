@@ -68,6 +68,9 @@ export function readsAt(key = ""): Reads {
 
 export const { waiting, failing, missing, empty, ready } = readsAt();
 
+/** A text that never arrives: a leaf given it stays painted. */
+export const waitingText = waiting.at(() => "");
+
 const itemed = new Map<string, Read<readonly unknown[]>>();
 
 /** A read in a frame's state of `items`: it answers them at rest and none when empty, never answers while loading and rejects in error. The same read for the same key; a frame that holds it as its root is its one holder, so each takes its own key. */

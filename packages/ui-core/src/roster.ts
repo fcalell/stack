@@ -2096,7 +2096,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// as that many line bars; 0 or `false` is not waiting, and a loading Group
 		// or Section hands down `true` only.
 		Prose: {
-			props: ["markdown", "loading"],
+			props: ["markdown"],
 			draws: [
 				"LINE_BOX.role.body",
 				"LINK.fit.inline",
@@ -2111,8 +2111,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"PROSE_QUOTE",
 				"PROSE_RULE",
 				"PROSE_STRIKE",
-				"SKELETON.kind.line",
 				"TEXT.role.body",
+				"PAINT.kind.glyphs",
 				"TEXT.role.heading",
 				"TEXT_STRONG.role.body",
 			],
@@ -2150,7 +2150,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// copy and download acts its IconButtons at the body fit; `tail` folds the earlier lines
 		// behind a one-way act, the focus landing on the code.
 		Code: {
-			props: ["text", "title", "tail", "copy", "download", "loading"],
+			props: ["text", "title", "tail", "copy", "download"],
 			draws: [
 				"CODE_ACT",
 				"CODE_FOLD",
@@ -2161,9 +2161,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ICON.fit.control",
 				"ICON.fit.meta",
 				"ICON_BUTTON.fit.body",
-				"LINE_BOX.role.code",
-				"LINE_BOX.role.meta",
-				"SKELETON.kind.line",
+				"PAINT.kind.control",
+				"PAINT.kind.glyphs",
 				"TEXT.role.code",
 				"TEXT.role.meta",
 			],
@@ -2202,7 +2201,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// Unified, long lines wrapped and hung one inset, at every width; `before`
 		// and `after` are diffed in each plugin.
 		Diff: {
-			props: ["label", "hunks", "before", "after", "loading"],
+			props: ["label", "hunks", "before", "after"],
 			draws: [
 				"CONTENT_FRAME",
 				"DIFF_CODE",
@@ -2211,7 +2210,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"DIFF_HUNK",
 				"DIFF_LINE",
 				"DIFF_MARK",
-				"SKELETON.kind.line",
+				"PAINT.kind.glyphs",
 			],
 			holds: [
 				"DIFF_LINE",
@@ -2240,14 +2239,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		ProseDiff: {
-			props: ["before", "after", "loading"],
+			props: ["before", "after"],
 			draws: [
 				"CONTENT_FRAME",
-				"LINE_BOX.role.body",
 				"PROSE_DIFF_BODY",
 				"PROSE_DIFF_RUN",
 				"PROSE_DIFF_TEXT",
-				"SKELETON.kind.line",
+				"PAINT.kind.glyphs",
 				"TEXT.role.body",
 			],
 			holds: ["PROSE_DIFF_BODY", "PROSE_DIFF_TEXT", "PROSE_DIFF_RUN"],
@@ -2577,7 +2575,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"streaming",
 				"onOpen",
 				"detail",
-				"loading",
 			],
 			draws: [
 				"CHIP.family.neutral",
@@ -2598,6 +2595,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"MESSAGE_CODE",
 				"MESSAGE_FOLD",
 				"SKELETON.kind.line",
+				"PAINT.kind.glyphs",
 				"TEXT.role.body",
 				"TEXT.role.meta",
 				"TEXT.role.code",
@@ -2969,26 +2967,17 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				sizes: ["chart", "dot", "skeleton", "figures", "measure-short"],
 			},
 		},
-		// A collection: its Messages from `query` or `items` through the
-		// `message` map, its waiting turns the Message's own loading forms, its
-		// failed and empty forms its own in the log; a MessageInput, or its `sheet`
-		// docked in its place while it is open, its `foot`, drawn in every state. While a filling Thread's reader is scrolled
-		// up, a secondary Latest act floats over the log above the foot.
+		// A collection: its Messages from `items` through the `message` map,
+		// constants or a selection; while the selection's read waits it paints
+		// `PAINT_ROWS` of the other author's messages, its failed, missing and
+		// empty forms the frame's. A MessageInput, or its `sheet` docked in its
+		// place while it is open, is its `foot`. While a filling Thread's reader is
+		// scrolled up, a secondary Latest act floats over the log above the foot.
 		Thread: {
-			props: [
-				"query",
-				"sentence",
-				"empty",
-				"message",
-				"items",
-				"loading",
-				"foot",
-				"sheet",
-				"replying",
-			],
+			props: ["message", "items", "foot", "sheet", "replying"],
 			draws: ["THREAD", "THREAD_COLUMN", "FOOT_DOCKED", "THREAD_LATEST"],
 			holds: ["THREAD", "THREAD_LATEST"],
-			states: ["rest", "loading", "error", "empty"],
+			states: ["rest", "loading"],
 			owns: {
 				colors: ["raised", "edge", "edge-raised"],
 				radii: ["control"],

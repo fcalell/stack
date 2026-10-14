@@ -1,6 +1,8 @@
 import { Code } from "../../components/code/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
+import { waitingText } from "../waiting.ts";
 import { Wide } from "./layout-context.tsx";
+import { isPaint } from "./painted.tsx";
 
 const ENV = `DATABASE_URL=postgres://app@db.internal:5432/app
 STACK_ACCOUNT_ID=7f3k9q2m4x
@@ -59,13 +61,31 @@ function Tail(props: { copy?: boolean }) {
 	return <Code text={BUILD_LOG} title="Build log" tail={4} copy={props.copy} />;
 }
 
+// The head forms and the folding tail, painted: the paint cells draw them
+// beside the loaded ones, the loading state alone.
+function Painted() {
+	return (
+		<>
+			<Code text={waitingText} title=".env" copy />
+			<Code text={waitingText} />
+			<Code text={waitingText} title="Build log" tail={4} copy />
+		</>
+	);
+}
+
 export function drawCode(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
+	if (isPaint(frame))
+		return frame.state === "rest" ? (
+			<Wide>
+				<Code text={ENV} title=".env" copy />
+				<Painted />
+			</Wide>
+		) : undefined;
 	if (frame.state === "loading")
 		return (
 			<Wide>
-				<Code text="" title=".env" loading />
-				<Code text="" loading />
+				<Painted />
 			</Wide>
 		);
 	if (cell === "ICON.fit.meta")
