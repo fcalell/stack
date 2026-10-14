@@ -36,6 +36,14 @@
 			"types": "./dist/ability-client.d.ts",
 			"default": "./dist/ability-client.js"
 		},
+		"./read": {
+			"types": "./dist/read.d.ts",
+			"default": "./dist/read.js"
+		},
+		"./settle-reads": {
+			"types": "./dist/settle-reads.d.ts",
+			"default": "./dist/settle-reads.js"
+		},
 		"./tanstack-query": "./src/tanstack-query.tsx",
 		"./query-invalidation": {
 			"types": "./dist/query-invalidation.d.ts",

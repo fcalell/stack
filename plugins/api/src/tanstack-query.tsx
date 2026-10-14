@@ -12,6 +12,15 @@ import {
 	type EntityName,
 	handleMutationSuccess,
 } from "@fcalell/plugin-api/query-invalidation";
+import {
+	type Drawn,
+	placeholderData,
+	planSelections,
+	type Read,
+	type Selection,
+	withRead,
+} from "@fcalell/plugin-api/read";
+import { type Settle, settleReads } from "@fcalell/plugin-api/settle-reads";
 import type { RouterClient } from "@fcalell/plugin-api/types";
 import {
 	createTanstackQueryUtils,
@@ -22,15 +31,29 @@ import {
 	QueryClient,
 	type QueryClientConfig,
 	QueryClientProvider,
+	type SkipToken,
+	useQueries,
 	useQuery,
 } from "@tanstack/react-query";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 
 export type { PackedRulesLike } from "@fcalell/plugin-api/ability-client";
 export {
 	ORG_RULES_QUERY_KEY,
 	orgRulesQueryKey,
 } from "@fcalell/plugin-api/ability-client";
+export type {
+	Datum,
+	Drawn,
+	Read,
+	Selection,
+} from "@fcalell/plugin-api/read";
+export {
+	combine,
+	isPlaceholder,
+	isSelection,
+	read,
+} from "@fcalell/plugin-api/read";
 export type { RouterClient } from "@fcalell/plugin-api/types";
 export {
 	QueryClient,
@@ -97,18 +120,34 @@ export function createQueryClient(config?: QueryClientConfig): QueryClient {
 	return queryClient;
 }
 
+// `.read(input)` on every procedure's utils, beside `.queryOptions`: the same
+// input (`skipToken` included), the output typed, as a `Read` handle.
+type ReadsOf<C> = C extends (...a: infer A) => Promise<infer O>
+	? { read(...a: { [K in keyof A]: A[K] | SkipToken }): Read<O> }
+	: { [K in keyof C]: ReadsOf<C[K]> };
+
+export type ApiQueryUtils<TRouter> = ReturnType<
+	typeof createTanstackQueryUtils<RouterClient<TRouter>>
+> &
+	ReadsOf<RouterClient<TRouter>>;
+
 // Wrap a typed oRPC client with TanStack Query helpers (`.queryOptions`,
-// `.mutationOptions`, `.infiniteOptions`). The native analog of `createClient`
-// from `@fcalell/plugin-api/client` — same router-typed surface, query-shaped.
-// The client sends a query these utils make as GET: it learns the operation
-// context's symbol here, from the copy of `@orpc/tanstack-query` the utils are.
-export function createApiQueryUtils<TRouter>(client: RouterClient<TRouter>) {
+// `.mutationOptions`, `.infiniteOptions`, and `.read`). The native analog of
+// `createClient` from `@fcalell/plugin-api/client` — same router-typed surface,
+// query-shaped. The client sends a query these utils make as GET: it learns the
+// operation context's symbol here, from the copy of `@orpc/tanstack-query` the
+// utils are.
+export function createApiQueryUtils<TRouter>(
+	client: RouterClient<TRouter>,
+): ApiQueryUtils<TRouter> {
 	registerOperationContext(OPERATION_CONTEXT_SYMBOL);
-	return createTanstackQueryUtils(client);
+	return withRead(createTanstackQueryUtils(client));
 }
 
 export interface QueryProviderProps {
 	client?: QueryClient;
+	// How a read's first answer lands (`./settle-reads.ts`); a UI plugin passes it.
+	settle?: Settle;
 	children: ReactNode;
 }
 
@@ -117,9 +156,49 @@ export interface QueryProviderProps {
 // none is supplied so a bare consumer gets sane behaviour with zero config.
 export function QueryProvider(props: QueryProviderProps) {
 	const [client] = useState(() => props.client ?? createQueryClient());
+	const { settle } = props;
+	useEffect(
+		() => (settle ? settleReads(client, settle) : undefined),
+		[client, settle],
+	);
 	return (
 		<QueryClientProvider client={client}>{props.children}</QueryClientProvider>
 	);
+}
+
+// The leaf's one subscription: each value that is a selection is read, the
+// rest are constants. One `useQueries` for any count, so the hook count is
+// fixed. A read still to land draws from the placeholder and says so (`painted`).
+// The plan is memoized by `values`' identity, which keeps `combine` stable
+// (`useQueries` re-runs it when its identity changes); the React Compiler gives
+// a literal list that identity.
+export function useSelections<const V extends readonly unknown[]>(
+	values: V,
+): {
+	readonly [K in keyof V]: Drawn<V[K] extends Selection<infer T> ? T : V[K]>;
+} {
+	const plan = useMemo(() => planSelections(values), [values]);
+	return useQueries({
+		queries: plan.reads.map((r) => ({ ...r.options, placeholderData })),
+		combine: plan.draw,
+	}) as never;
+}
+
+// The app's own subscription to a selection: real data, or `undefined` while
+// the read waits, is idle or failed. The placeholder never reaches app code.
+export function useRead<T>(selection: Selection<T>): T | undefined {
+	const plan = useMemo(() => planSelections([selection]), [selection]);
+	const combine = useMemo(
+		() => (results: Parameters<typeof plan.draw>[0]) => {
+			const [drawn] = plan.draw(results);
+			return drawn?.painted ? undefined : (drawn?.value as T);
+		},
+		[plan],
+	);
+	return useQueries({
+		queries: plan.reads.map((r) => r.options),
+		combine,
+	});
 }
 
 // WS6.3: org-level authority everywhere,
