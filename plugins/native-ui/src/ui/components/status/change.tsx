@@ -10,10 +10,23 @@ import { IconBase } from "../icon";
 const BOX = "shrink-0 items-center justify-center";
 
 // Where a row, a fact or a field stands in a change set: its kind's glyph in
-// the kind's ink in a lane one icon wide, named by the kind's word. Outside
-// the package's exports.
-export function ChangeMark({ kind }: { kind: ChangeKind }) {
+// the kind's ink in a lane one icon wide, named by the kind's word. `painted`
+// is the lane with the glyph's box filled, for a kind that is not here.
+// Outside the package's exports.
+export function ChangeMark({
+	kind,
+	painted,
+}: {
+	kind: ChangeKind;
+	painted?: boolean;
+}) {
 	const words = useWords();
+	if (painted)
+		return (
+			<View className={BOX}>
+				<IconBase name="Plus" fit="meta" stroke="mark" painted />
+			</View>
+		);
 	return (
 		<View
 			accessible

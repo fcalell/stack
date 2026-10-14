@@ -7,6 +7,7 @@ import type {
 	RowPart,
 	RowTrailing,
 } from "@fcalell/ui-core/descriptors";
+import { paintText } from "@fcalell/ui-core/paint";
 import { isCurrent } from "@fcalell/ui-core/route";
 import {
 	FIELD_ERROR_LINE,
@@ -30,11 +31,12 @@ import {
 	text,
 	treeBleed,
 } from "@fcalell/ui-core/variants";
-import { type KeyboardEvent, type ReactNode, useMemo } from "react";
+import { Fragment, type KeyboardEvent, type ReactNode, useMemo } from "react";
 import { ageShort } from "../../lib/age.ts";
 import { useClock } from "../../lib/clock.ts";
 import { CodeCut, Runs } from "../../lib/code.tsx";
 import { follow, navigate, useRoute } from "../../lib/navigate.ts";
+import { Painted } from "../../lib/paint.tsx";
 import {
 	isCoded,
 	leadRuns,
@@ -45,16 +47,16 @@ import {
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";
-import { Avatar } from "../avatar/index.tsx";
-import { Button } from "../button/index.tsx";
+import { AvatarBase } from "../avatar/base.tsx";
+import { ButtonBase } from "../button/base.tsx";
 import { Reason } from "../button/reason.tsx";
-import { Checkbox } from "../checkbox/index.tsx";
-import { Chip } from "../chip/index.tsx";
-import { Icon } from "../icon/index.tsx";
+import { CheckboxBase } from "../checkbox/base.tsx";
+import { ChipBase } from "../chip/base.tsx";
+import { Icon, IconBase } from "../icon/index.tsx";
 import { IconButtonBase } from "../icon-button/base.tsx";
 import { InputBase } from "../input/base.tsx";
 import { MenuBase } from "../menu/base.tsx";
-import { Picker } from "../picker/index.tsx";
+import { PickerBase } from "../picker/base.tsx";
 import { ChangeMark } from "../status/change.tsx";
 import { StatusDot } from "../status/dot.tsx";
 import type { ListRowProps } from "./index.tsx";
@@ -177,6 +179,10 @@ export interface ListRowInternal {
 	waits?: boolean;
 	/** A row of the list has a more act: a row without one keeps its square blank, so every row's trailing value ends at one x. */
 	room?: boolean;
+	/** The List's items are not here: every text and figure slot paints at its role, the marks and controls paint, the row is inert and builds no hit. The slots are run over the placeholder, so they say which parts the loaded row has. */
+	painted?: boolean;
+	/** The row's place among the painted rows, which varies the filler's lengths. */
+	at?: number;
 }
 
 // A row of a tree `List`: its depth (the roots 0), for a branch whether its
@@ -229,13 +235,27 @@ function TreeLead(props: {
 	);
 }
 
-function Leading(props: { leading: RowLeading; named: string }) {
+const NOOP = () => {};
+
+function Leading(props: {
+	leading: RowLeading;
+	named: string;
+	painted: boolean;
+}) {
 	const words = useWords();
-	const { leading } = props;
+	const { leading, painted } = props;
+	// Painted, the kind is the slot's shape; what the marks name is not here.
+	if (painted) {
+		if ("check" in leading)
+			return <CheckboxBase checked={false} onChange={NOOP} label="" painted />;
+		if ("avatar" in leading) return <AvatarBase name="" painted />;
+		if ("status" in leading) return <StatusDot state="done" painted />;
+		return <IconBase name="File" stroke="line" painted />;
+	}
 	if ("check" in leading)
 		return (
 			<Field.Root disabled={leading.check.blocked !== undefined}>
-				<Checkbox
+				<CheckboxBase
 					checked={leading.check.checked}
 					onChange={leading.check.onChange}
 					label={props.named}
@@ -243,7 +263,7 @@ function Leading(props: { leading: RowLeading; named: string }) {
 			</Field.Root>
 		);
 	if ("avatar" in leading)
-		return <Avatar name={leading.avatar.name} src={leading.avatar.src} />;
+		return <AvatarBase name={leading.avatar.name} src={leading.avatar.src} />;
 	if ("status" in leading)
 		return <StatusDot state={leading.status} label={words[leading.status]} />;
 	return (
@@ -272,11 +292,22 @@ function useReasonLine(blocked: string | undefined) {
 function ActButton(props: {
 	act: Act;
 	host: ReturnType<typeof useReasonLine>["host"];
+	painted: boolean;
+	at: number;
 }) {
-	const { act, host } = props;
+	const { act, host, painted, at } = props;
+	if (painted)
+		return (
+			<ButtonBase
+				act="secondary"
+				fit="bar"
+				label={paintText("word", at)}
+				painted
+			/>
+		);
 	return (
 		<ReasonHostContext value={host}>
-			<Button
+			<ButtonBase
 				act={act.destructive ? "destructive" : "secondary"}
 				fit="bar"
 				label={act.label}
@@ -292,6 +323,12 @@ function ActButton(props: {
 // again only when they change.
 function Age(props: { moment: string }) {
 	return useClock((now) => ageShort(props.moment, now));
+}
+
+// How many fillers a painted meta line draws: a part each of the array the
+// slot gave, or one for the placeholder itself.
+function paintedParts(meta: readonly RowPart[]): number {
+	return Array.isArray(meta) ? meta.length : 1;
 }
 
 function trailingWord(trailing: RowTrailing<string | null>): ReactNode {
@@ -329,11 +366,15 @@ export function ListRowBase<V extends string | null = string>({
 	tree,
 	waits = false,
 	room = false,
+	painted = false,
+	at = 0,
 }: ListRowProps<V> & ListRowInternal) {
 	const words = useWords();
-	const at = useRoute();
-	const named = partText(title);
-	const current = selected || (href !== undefined && isCurrent(href, at));
+	const route = useRoute();
+	// Over the placeholder the title is not a name.
+	const named = painted ? "" : partText(title);
+	const current =
+		!painted && (selected || (href !== undefined && isCurrent(href, route)));
 	const opens = href !== undefined || onOpen !== undefined;
 	// A row that opens ends in a chevron unless its end already holds an act, a
 	// pick or a tree's fold.
@@ -352,7 +393,7 @@ export function ListRowBase<V extends string | null = string>({
 		lock !== undefined ||
 		chip !== undefined;
 	const ticks = leading !== undefined && "check" in leading;
-	const blocked = ticks ? leading.check.blocked : undefined;
+	const blocked = ticks && !painted ? leading.check.blocked : undefined;
 	const listed = steps?.length ? steps : undefined;
 	const lined = Boolean(
 		entry || listed || meta?.length || blocked !== undefined || marked,
@@ -361,15 +402,16 @@ export function ListRowBase<V extends string | null = string>({
 	const lines = wrap ? "whole" : stacked;
 	// A model-written name (`Quoted`) wraps in a row that has a second line, so
 	// its closing quote is never cut away; its row grows by the lines it wraps.
-	const quotedWraps = lined && typeof title === "object" && "quoted" in title;
+	const quotedWraps =
+		!painted && lined && typeof title === "object" && "quoted" in title;
 	// A wrapped title and an entry's input are lines under the title's first, so
 	// the parts beside them stand on that first line.
 	const top = wrap || entry !== undefined;
 	const under = act !== undefined && !top;
 	const column = cn(TEXT, under && TEXT_UNDER);
 	const inline = { label: entry?.label ?? "" };
-	const entryReason = useReasonLine(entry?.act.blocked);
-	const actReason = useReasonLine(act?.blocked);
+	const entryReason = useReasonLine(painted ? undefined : entry?.act.blocked);
+	const actReason = useReasonLine(painted ? undefined : act?.blocked);
 	// A blocked tick's reason follows the first part inside the span that yields
 	// last, so the part that names the item stays whole ahead of it.
 	const [first, ...rest] = meta ?? [];
@@ -378,7 +420,11 @@ export function ListRowBase<V extends string | null = string>({
 	// A first part that is one span of code, alone on its line, cuts in its
 	// middle; beside a blocked reason it is a run in a sentence.
 	const [only] = lead;
-	const coded = lead.length === 1 && only && isCoded(only) ? only : undefined;
+	const coded =
+		!painted && lead.length === 1 && only && isCoded(only) ? only : undefined;
+	// A painted meta line is one filler per part the slot gave, a slot that
+	// gave the placeholder whole counting one.
+	const painters = painted && meta?.length ? paintedParts(meta) : 0;
 	// A waiting row (its List was given the items while it loads) draws the bar
 	// in the value's place; the app's slot is not read for it.
 	let value: ReactNode = null;
@@ -395,7 +441,7 @@ export function ListRowBase<V extends string | null = string>({
 		value = (
 			<First on={top}>
 				<span className={cn(ROW_TRAILING, TRAILING)}>
-					{trailingWord(trailing)}
+					{painted ? <Painted role="figure" at={at} /> : trailingWord(trailing)}
 				</span>
 			</First>
 		);
@@ -404,7 +450,10 @@ export function ListRowBase<V extends string | null = string>({
 	const titles = value !== null && !top && !quotedWraps;
 	let shown: ReactNode = named;
 	let titleBox = wrap || quotedWraps ? TITLE_WHOLE : TITLE;
-	if (isCoded(title)) {
+	if (painted) {
+		shown = <Painted role="title" at={at} />;
+		titleBox = TITLE;
+	} else if (isCoded(title)) {
 		shown = <CodeCut code={title.code} />;
 		titleBox = TITLE_CODE;
 	} else if (typeof title === "object" && !("quoted" in title)) {
@@ -436,7 +485,7 @@ export function ListRowBase<V extends string | null = string>({
 	// In a tree the row is the focus stop and the hit is the pointer's alone.
 	const pointed = tree ? { tabIndex: -1 } : {};
 	let hit = null;
-	if (href !== undefined)
+	if (!painted && href !== undefined)
 		hit = (
 			<a
 				data-hit=""
@@ -448,7 +497,7 @@ export function ListRowBase<V extends string | null = string>({
 				{...pointed}
 			/>
 		);
-	else if (onOpen)
+	else if (!painted && onOpen)
 		hit = (
 			<BaseButton
 				data-hit=""
@@ -481,11 +530,12 @@ export function ListRowBase<V extends string | null = string>({
 	return (
 		<div
 			{...item}
+			inert={painted || undefined}
 			className={cn(
 				row({ lines, state: current ? "selected" : "rest" }),
 				top ? ROW_WHOLE : ROW,
 				under && ROW_UNDER,
-				opens && (current ? CHOSEN_PRESS : PRESS),
+				opens && !painted && (current ? CHOSEN_PRESS : PRESS),
 				tree && TREE_ITEM,
 			)}
 		>
@@ -495,13 +545,13 @@ export function ListRowBase<V extends string | null = string>({
 			) : null}
 			{change ? (
 				<First on={top}>
-					<ChangeMark kind={change} />
+					<ChangeMark kind={change} painted={painted} />
 				</First>
 			) : null}
 			{leading ? (
 				<First on={top}>
 					<span className={cn(ROW_LEADING, LEADING, ticks && TICK)}>
-						<Leading leading={leading} named={named} />
+						<Leading leading={leading} named={named} painted={painted} />
 					</span>
 				</First>
 			) : null}
@@ -512,7 +562,7 @@ export function ListRowBase<V extends string | null = string>({
 				</span>
 			) : entry ? (
 				<Field.Root
-					invalid={Boolean(entry.error)}
+					invalid={!painted && Boolean(entry.error)}
 					className={cn(ROW_ENTRY, TEXT)}
 				>
 					{titleLine}
@@ -524,11 +574,17 @@ export function ListRowBase<V extends string | null = string>({
 								onChange={entry.field.onChange}
 								onCommit={entry.field.onCommit}
 								placeholder={entry.placeholder}
+								painted={painted}
 							/>
 						</span>
-						<ActButton act={entry.act} host={entryReason.host} />
+						<ActButton
+							act={entry.act}
+							host={entryReason.host}
+							painted={painted}
+							at={at}
+						/>
 					</span>
-					{entry.error ? (
+					{entry.error && !painted ? (
 						<Field.Error match className={FIELD_ERROR_LINE}>
 							{entry.error}
 						</Field.Error>
@@ -540,19 +596,29 @@ export function ListRowBase<V extends string | null = string>({
 				<span className={column}>
 					{titleLine}
 					<span className={cn(ROW_STEPS, STEPS)}>
-						{listed.map((step, at) => (
+						{listed.map((step, index) => (
 							<span
 								// biome-ignore lint/suspicious/noArrayIndexKey: the steps are fixed-order data that never reorder, so position is the identity
-								key={at}
+								key={index}
 								className={cn(
 									rowStep({
-										state: step.state === "running" ? "running" : "rest",
+										state:
+											!painted && step.state === "running" ? "running" : "rest",
 									}),
 									STEP,
 								)}
 							>
-								<StatusDot state={step.state} />
-								<span className={STEP_LABEL}>{step.label}</span>
+								<StatusDot
+									state={painted ? "done" : step.state}
+									painted={painted}
+								/>
+								<span className={STEP_LABEL}>
+									{painted ? (
+										<Painted role="phrase" at={at + index} />
+									) : (
+										step.label
+									)}
+								</span>
 							</span>
 						))}
 					</span>
@@ -562,7 +628,21 @@ export function ListRowBase<V extends string | null = string>({
 				<span className={column}>
 					{titleLine}
 					<span className={cn(ROW_META_LINE, META_LINE)}>
-						{lead.length === 0 ? null : (
+						{painters ? (
+							<span className={META_PARTS}>
+								<span
+									className={cn(text({ role: "meta" }), FIGURES, META_FIRST)}
+								>
+									{Array.from({ length: painters }, (_, index) => (
+										// biome-ignore lint/suspicious/noArrayIndexKey: the fillers are fixed-order and never reorder, so position is the identity
+										<Fragment key={index}>
+											{index > 0 ? " · " : null}
+											<Painted role="phrase" at={at + index} />
+										</Fragment>
+									))}
+								</span>
+							</span>
+						) : lead.length === 0 ? null : (
 							<span className={META_PARTS}>
 								<span
 									className={cn(
@@ -609,15 +689,27 @@ export function ListRowBase<V extends string | null = string>({
 							</span>
 						)}
 						{status ? (
-							<RowStatusMark status={status} beside={lead.length > 0} />
+							<RowStatusMark
+								status={status}
+								beside={painters > 0 || lead.length > 0}
+								painted={painted}
+							/>
 						) : null}
-						{warning !== undefined ? <WarningMark label={warning} /> : null}
-						{lock !== undefined ? <LockMark reason={lock} labelled /> : null}
+						{warning !== undefined ? (
+							<WarningMark label={warning} painted={painted} />
+						) : null}
+						{lock !== undefined ? (
+							<LockMark reason={lock} labelled painted={painted} />
+						) : null}
 						{chip ? (
 							<span className={CHIP_SLOT}>
 								<span aria-hidden className={CHIP_START} />
 								<span className={CHIP_MARK}>
-									<Chip family={chip.family} label={chip.label} />
+									<ChipBase
+										family={chip.family}
+										label={chip.label}
+										painted={painted}
+									/>
 								</span>
 							</span>
 						) : null}
@@ -627,7 +719,7 @@ export function ListRowBase<V extends string | null = string>({
 			)}
 			{!waits && trailing && "pick" in trailing ? (
 				<First on={top}>
-					<Picker {...trailing.pick} fit="row" />
+					<PickerBase {...trailing.pick} fit="row" painted={painted} />
 				</First>
 			) : null}
 			{chevron ? (
@@ -640,7 +732,14 @@ export function ListRowBase<V extends string | null = string>({
 			{act || more?.length || blank ? (
 				<First on={top}>
 					<span className={cn(ROW_ACTS, ACTS, under && ACTS_UNDER)}>
-						{act ? <ActButton act={act} host={actReason.host} /> : null}
+						{act ? (
+							<ActButton
+								act={act}
+								host={actReason.host}
+								painted={painted}
+								at={at}
+							/>
+						) : null}
 						{blank ? (
 							<span aria-hidden className={cn(ROW_CHEVRON, BLANK)} />
 						) : null}
@@ -648,7 +747,8 @@ export function ListRowBase<V extends string | null = string>({
 							<MenuBase
 								label={`${words.more} ${named}`}
 								title={named}
-								items={more}
+								items={painted ? [] : more}
+								painted={painted}
 							/>
 						) : null}
 					</span>

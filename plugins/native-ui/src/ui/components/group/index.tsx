@@ -50,8 +50,8 @@ export type GroupProps<
 // `row` drawn bare or an `item` at the card's inset) or `list` (a List the
 // card frames: its rows, its waiting rows and its failed and empty forms
 // stand on the card, with no bleed of its own). A loading Section's body waits
-// with it: a List draws its own waiting rows, a Meter, a Slider, a FormField
-// and a DefinitionRow their own waiting forms; a row of your own draws as it is.
+// with it: a List draws its own waiting rows, a Slider and a FormField their
+// own waiting forms; a row of your own draws as it is.
 export function Group<T, V extends string | null = string>(
 	props: GroupProps<T, V>,
 ) {

@@ -18,10 +18,10 @@ import {
 } from "@fcalell/ui-core/variants";
 import type { Closed } from "../../lib/closed.ts";
 import { follow, useRoute } from "../../lib/navigate.ts";
-import { Chip } from "../chip/index.tsx";
-import { Icon } from "../icon/index.tsx";
+import { Painted } from "../../lib/paint.tsx";
+import { ChipBase } from "../chip/base.tsx";
+import { IconBase } from "../icon/index.tsx";
 import { ChangeMark } from "../status/change.tsx";
-import { FileWait } from "./wait.tsx";
 
 const ROW = "relative flex items-center";
 const PRESS = "hover:bg-wash-hover active:bg-wash-press";
@@ -65,8 +65,14 @@ export interface FileRowProps extends Closed {
 	href?: string;
 	/** Opens the file. */
 	onOpen?: () => void;
-	/** The row waits: the glyph, the path's bar, the chip's bar when it has a chip, and the counts' bar stand in for it. */
-	loading?: boolean;
+}
+
+/** What a `List` hands the row it draws while its items are not here; no app sets them, so they are outside `FileRowProps`. */
+export interface FileRowInternal {
+	/** The file is not here: the glyph, the path, the chip when it has one and the counts paint, the row is inert and builds no hit. */
+	painted?: boolean;
+	/** The row's place among the painted rows, which varies the filler's lengths. */
+	at?: number;
 }
 
 function glyph(seen: boolean | undefined): IconName {
@@ -120,7 +126,12 @@ function Path(props: { path: string }) {
 }
 
 /** A changed file: its seen mark leading, its path in mono (the directory in the meta ink, the name at 500) cut to the room its chip leaves, its chip, its added and removed counts each in its own lane. A row that opens is one hit, current (the selection wash) at its `href`, named by the path; it washes under the pointer and the press. Square at the card's inset. */
-export function FileRow({
+export function FileRow(file: FileRowProps) {
+	return <FileRowBase {...file} />;
+}
+
+/** Every file row: the public `FileRow`, or the one a `List` paints. Outside the package's exports. */
+export function FileRowBase({
 	path,
 	added,
 	removed,
@@ -129,14 +140,13 @@ export function FileRow({
 	chip,
 	href,
 	onOpen,
-	loading,
-}: FileRowProps) {
-	const at = useRoute();
-	if (loading)
-		return <FileWait change={change !== undefined} chip={chip !== undefined} />;
-	const current = href !== undefined && isCurrent(href, at);
+	painted = false,
+	at = 0,
+}: FileRowProps & FileRowInternal) {
+	const route = useRoute();
+	const current = !painted && href !== undefined && isCurrent(href, route);
 	let hit = null;
-	if (href !== undefined)
+	if (!painted && href !== undefined)
 		hit = (
 			// biome-ignore lint/a11y/useAnchorContent: the hit covers the row, named by its path
 			<a
@@ -147,10 +157,11 @@ export function FileRow({
 				className={HIT}
 			/>
 		);
-	else if (onOpen)
+	else if (!painted && onOpen)
 		hit = <BaseButton aria-label={path} onClick={onOpen} className={HIT} />;
 	return (
 		<div
+			inert={painted || undefined}
 			className={cn(
 				row({ lines: "one", state: current ? "selected" : "rest" }),
 				ROW,
@@ -160,23 +171,35 @@ export function FileRow({
 			{hit}
 			{change ? (
 				<span className={MARK}>
-					<ChangeMark kind={change} />
+					<ChangeMark kind={change} painted={painted} />
 				</span>
 			) : null}
 			<span className={cn(ROW_LEADING, LEADING)}>
-				<Icon name={glyph(seen)} />
+				<IconBase name={glyph(seen)} stroke="line" painted={painted} />
 			</span>
-			<Path path={path} />
+			{painted ? (
+				<span className={cn(FILE_PATH, PATH)}>
+					<span className={cn(filePathPart({ part: "name" }), STEM)}>
+						<Painted role="phrase" at={at} />
+					</span>
+				</span>
+			) : (
+				<Path path={path} />
+			)}
 			{chip ? (
 				<span className={CHIP}>
-					<Chip family={chip.family} label={chip.label} />
+					<ChipBase family={chip.family} label={chip.label} painted={painted} />
 				</span>
 			) : null}
 			<span className={cn(FILE_COUNTS, COUNTS)}>
 				<span
 					className={cn(fileCount({ kind: "added" }), FILE_COUNT_YIELD, COUNT)}
 				>
-					{added > 0 ? `+${added}` : null}
+					{painted ? (
+						<Painted role="figure" at={at} />
+					) : added > 0 ? (
+						`+${added}`
+					) : null}
 				</span>
 				<span
 					className={cn(
@@ -185,7 +208,11 @@ export function FileRow({
 						COUNT,
 					)}
 				>
-					{removed > 0 ? `−${removed}` : null}
+					{painted ? (
+						<Painted role="figure" at={at + 1} />
+					) : removed > 0 ? (
+						`−${removed}`
+					) : null}
 				</span>
 			</span>
 		</div>

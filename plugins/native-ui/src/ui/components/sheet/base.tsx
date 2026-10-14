@@ -25,6 +25,11 @@ import {
 	BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import {
+	type QueryClient,
+	QueryClientProvider,
+	useQueryClient,
+} from "@tanstack/react-query";
+import {
 	createContext,
 	type PropsWithChildren,
 	type ReactNode,
@@ -113,6 +118,9 @@ interface Parts {
 	painted?: boolean;
 	host?: ReasonHost;
 	touched: Touched;
+	// The app's query client: the body is drawn in gorhom's portal, outside the
+	// providers above the sheet, and its leaves subscribe to their reads.
+	client: QueryClient;
 }
 
 // A value a sheet's layer reads: gorhom draws the layer in its provider's
@@ -148,24 +156,27 @@ function useParts(): Parts {
 }
 
 // gorhom draws the sheet outside the tree that opens it, so the sheet's
-// contexts start at the container it draws everything in.
+// contexts, and the query client its body's leaves read through, start at the
+// container it draws everything in.
 function layerOf(parts: Store<Parts>) {
 	return function Layer({ children }: PropsWithChildren) {
 		const current = useSyncExternalStore(parts.subscribe, parts.get);
 		return (
-			<PartsContext.Provider value={current}>
-				<FieldNameContext.Provider value={current.title}>
-					<TouchedContext.Provider value={current.touched}>
-						<View
-							accessibilityViewIsModal
-							pointerEvents="box-none"
-							className={LAYER}
-						>
-							{children}
-						</View>
-					</TouchedContext.Provider>
-				</FieldNameContext.Provider>
-			</PartsContext.Provider>
+			<QueryClientProvider client={current.client}>
+				<PartsContext.Provider value={current}>
+					<FieldNameContext.Provider value={current.title}>
+						<TouchedContext.Provider value={current.touched}>
+							<View
+								accessibilityViewIsModal
+								pointerEvents="box-none"
+								className={LAYER}
+							>
+								{children}
+							</View>
+						</TouchedContext.Provider>
+					</FieldNameContext.Provider>
+				</PartsContext.Provider>
+			</QueryClientProvider>
 		);
 	};
 }
@@ -385,6 +396,7 @@ export function SheetBase({
 	children,
 }: SheetBaseProps) {
 	const frame = useFrame(read);
+	const client = useQueryClient();
 	const insets = useSafeAreaInsets();
 	const { height } = useWindowDimensions();
 	const ref = useRef<BottomSheetModal>(null);
@@ -444,6 +456,7 @@ export function SheetBase({
 		reason: blocked && (pressed || touched) ? submit?.blocked : undefined,
 		host,
 		touched: touchedValue,
+		client,
 	};
 	const [{ partsStore, Layer }] = useState(() => {
 		const created = store<Parts>(parts);

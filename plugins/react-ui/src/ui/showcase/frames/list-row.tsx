@@ -14,8 +14,11 @@ import type { StatusState } from "@fcalell/ui-core/tokens";
 import type { ReactNode } from "react";
 import { Group } from "../../components/group/index.tsx";
 import { List, type RowSlots } from "../../components/list/index.tsx";
+import { ListRowBase } from "../../components/list-row/base.tsx";
+import type { ListRowProps } from "../../components/list-row/index.tsx";
 import { ago } from "../ago.ts";
 import type { DrawnState, ShowcaseFrame } from "../cells.ts";
+import { isPaint } from "./painted.tsx";
 
 const act = () => {};
 
@@ -847,8 +850,76 @@ const CELL_PARTS: ReadonlyArray<readonly [string, keyof typeof PARTS]> = [
 const waits = (cell: string) =>
 	cell.startsWith("SKELETON") || cell.startsWith("LINE_BOX");
 
-// Each cell draws the part it names, in the frame's state.
+// The shapes a painted row paints: each part a row can hold, as the loaded row
+// draws it and, beside it, painted.
+const FIELD = { value: "", onChange: act, onCommit: act };
+const SHAPES: ListRowProps[] = [
+	{
+		leading: { avatar: { name: "Ana Ruiz" } },
+		title: "Ana Ruiz",
+		meta: ["ana@northwind.io", "Owner"],
+		status: { state: "done", label: "Active" },
+		trailing: { age: ago(40) },
+		more: MORE,
+	},
+	{
+		leading: { check: { checked: false, onChange: act } },
+		title: "Review the invoice",
+		meta: ["Due Friday"],
+		warning: "Overdue",
+		lock: "Held by CR-12",
+		chip: { family: "neutral", label: "Billing" },
+	},
+	{
+		leading: { icon: "GitBranch" },
+		title: "main",
+		meta: ["a1b2c3d"],
+		trailing: { count: 12 },
+		act: { label: "Redeploy", onAct: act },
+	},
+	{
+		leading: { status: "running" },
+		title: "Build",
+		steps: [
+			{ state: "done", label: "Install" },
+			{ state: "running", label: "Compile" },
+		],
+	},
+	{
+		title: "Import a repository",
+		entry: {
+			label: "Repository URL",
+			field: FIELD,
+			placeholder: "github.com/acme/api",
+			act: { label: "Import", onAct: act },
+		},
+	},
+];
+
+// The shapes as loaded rows, then painted: the same props, every part painted.
+function Shapes(props: { painted?: boolean }) {
+	return (
+		<Group
+			items={SHAPES.map((shape, at) => ({
+				key: `${at}`,
+				row: <ListRowBase {...shape} painted={props.painted} at={at} />,
+			}))}
+		/>
+	);
+}
+
+// Each cell draws the part it names, in the frame's state; a `PAINT` cell
+// draws the shapes loaded beside the same shapes painted.
 export function drawListRow(frame: ShowcaseFrame) {
+	if (isPaint(frame)) {
+		if (frame.state !== "rest") return undefined;
+		return (
+			<Page>
+				<Shapes />
+				<Shapes painted />
+			</Page>
+		);
+	}
 	const cell = frame.cell.name;
 	const named = CELL_PARTS.find(([prefix]) => cell.startsWith(prefix));
 	const chosen = PARTS[named?.[1] ?? "issues"];

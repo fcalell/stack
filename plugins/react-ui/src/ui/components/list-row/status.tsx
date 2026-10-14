@@ -17,13 +17,21 @@ const MARK_BESIDE = "max-w-[calc(100%-var(--spacing-figures))]";
 // the status does.
 const WAIT = "flex h-lh min-w-0";
 
-/** A row's status on its meta line: the mark, its word truncating where the line is out of room, or while its read has not answered a bar at the status's place and height. Outside the package's exports. */
+/** A row's status on its meta line: the mark, its word truncating where the line is out of room, or `painted` (the dot's box and a word's filler) while the status is not here. Outside the package's exports. */
 export function RowStatusMark(props: {
 	status: RowStatus;
 	/** Whether the line holds a first part before the status. */
 	beside: boolean;
+	painted?: boolean;
 }) {
 	const { status } = props;
+	// Painted before anything reads the status: over a placeholder every key is there.
+	if (props.painted)
+		return (
+			<span className={cn(MARK, props.beside ? MARK_BESIDE : MARK_ALONE)}>
+				<StatusBase painted />
+			</span>
+		);
 	if ("loading" in status)
 		return (
 			<span aria-hidden className={cn(lineBox({ role: "meta" }), WAIT)}>

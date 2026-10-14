@@ -1,3 +1,4 @@
+import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
 import type {
 	ChangeKind,
 	DefinitionData,
@@ -6,7 +7,7 @@ import type {
 	OptionPick,
 	StatusState,
 } from "@fcalell/ui-core/descriptors";
-import { definitionShape, valueCut } from "@fcalell/ui-core/list-state";
+import { valueCut } from "@fcalell/ui-core/list-state";
 import {
 	DEFINITION_ROW,
 	DEFINITION_ROW_CHEVRON,
@@ -16,25 +17,26 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, useContext } from "react";
+import type { ReactNode } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { useCopy } from "../../lib/copy";
 import { Ink } from "../../lib/ink";
-import { LoadingContext } from "../../lib/loading";
 import { navigate } from "../../lib/navigate";
+import { inertProps, Painted } from "../../lib/paint";
 import type { Route } from "../../lib/route";
 import { useWords } from "../../lib/words";
 import { Icon } from "../icon";
 import { IconButton } from "../icon-button";
+import { IconButtonBase } from "../icon-button/base";
 import { Link } from "../link";
 import { LockMark } from "../list-row/lock";
-import { Picker } from "../picker";
-import { Status } from "../status";
+import { PickerBase } from "../picker/base";
+import { StatusBase } from "../status/base";
 import { ChangeMark } from "../status/change";
-import { Switch, type SwitchProps } from "../switch";
-import { DefinitionWait } from "./wait";
+import type { SwitchProps } from "../switch";
+import { SwitchBase } from "../switch/base";
 
 const ROW = "relative flex-row items-center";
 // The hit covers the row under its text and its acts, and takes the press
@@ -75,13 +77,14 @@ interface DefinitionRowBase extends Closed {
 	copyable?: boolean;
 }
 
-// The fact's value: words or a status; or a `switch` that changes it in
+// The fact's value, a constant or a selection (it paints, inert, until its
+// read lands): words or a status; or a `switch` that changes it in
 // place (the Switch's own props, named by the row's label); or a `pick` that
 // chooses it in place (the options and the change, named by the row's label);
 // never more than one.
 type DefinitionRowValue<V extends string | null> =
 	| {
-			value?: DefinitionValue;
+			value?: Datum<DefinitionValue>;
 			switch?: never;
 			pick?: never;
 	  }
@@ -103,8 +106,8 @@ export type DefinitionRowProps<V extends string | null = string> =
 		(
 			| {
 					locked?: never;
-					/** Under the label and the value, at the row's width (a sentence; wraps). */
-					description?: string;
+					/** Under the label and the value, at the row's width (a sentence; wraps). A selection paints, inert, until its read lands. */
+					description?: Datum<string>;
 					// The row's one icon act at its end.
 					act?: IconAct;
 					// Where the row goes when opened; a chevron stands at its end.
@@ -123,6 +126,19 @@ export type DefinitionRowProps<V extends string | null = string> =
 			  }
 		);
 
+// What a `List` hands the row it draws while its items are not here; no app
+// sets them, so they are outside `DefinitionRowProps`.
+export interface DefinitionRowInternal {
+	// The fact is not here: the label, the value, the description and the
+	// controls paint, the row takes no touch and builds no link. The slots are
+	// run over the placeholder, so they say which parts the loaded row has.
+	painted?: boolean;
+	// The row's place among the painted rows, which varies the filler's lengths.
+	at?: number;
+}
+
+const NOOP = () => {};
+
 function isStatus(
 	value: DefinitionValue | undefined,
 ): value is { status: StatusState; label?: string } {
@@ -135,9 +151,17 @@ function isStatus(
 // ends at one x; the label wraps to the room its value leaves. A row that opens is one hit
 // under its acts. A locked row draws a lock after its value and its reason
 // under both in the description's place, the whole line a link with an
-// `href`. It waits through its Group or Section, drawing the form of the row
-// it is given.
-export function DefinitionRow<V extends string | null = string>({
+// `href`. A `value` or `description` that is a selection paints in its place,
+// and the row takes no touch, until its read lands.
+export function DefinitionRow<V extends string | null = string>(
+	fact: DefinitionRowProps<V>,
+) {
+	return <DefinitionRowBase {...fact} />;
+}
+
+// Every definition row: the public `DefinitionRow`, or the one a `List`
+// paints. Outside the package's exports.
+export function DefinitionRowBase<V extends string | null = string>({
 	change,
 	label,
 	description,
@@ -149,36 +173,48 @@ export function DefinitionRow<V extends string | null = string>({
 	act,
 	href,
 	onOpen,
-}: DefinitionRowProps<V>) {
-	// In a waiting Group or Section the row draws its waiting form, built from
-	// what it is given: a `switch` or a `pick` stands as the switch's box.
-	const waiting = useContext(LoadingContext);
-	if (waiting) {
-		const shape = definitionShape({
-			change,
-			description,
-			locked,
-			copyable,
-			act,
-			href,
-			onOpen,
-		});
-		return (
-			<DefinitionWait
-				shape={toggle || pick ? { ...shape, end: "switch" } : shape}
-				index={0}
-			/>
-		);
-	}
+	painted: listed = false,
+	at = 0,
+}: DefinitionRowProps<V> & DefinitionRowInternal) {
+	const [shown, said] = useSelections([value, description]);
+	// Painted by the list, or by a datum of its own: either way the row draws
+	// its loaded tree, each part the datum reaches in its filler, and takes no
+	// press.
+	const waitsValue = listed || shown.painted;
+	const waitsUnder = listed || said.painted;
+	const painted = waitsValue || waitsUnder;
+	const opens = href !== undefined || onOpen !== undefined;
 	const open = href !== undefined ? () => navigate(href) : onOpen;
-	const copied = copyable && typeof value === "string" ? value : undefined;
-	let shown: ReactNode = null;
-	if (typeof value === "string") {
-		const { stem, tail } = valueCut(value);
+	// A placeholder is a function proxy that no type test passes: the value is
+	// read only once painted is ruled out.
+	const plain = waitsValue ? undefined : shown.value;
+	const copied = copyable && typeof plain === "string" ? plain : undefined;
+	let valueNode: ReactNode = null;
+	if (waitsValue && value !== undefined)
+		valueNode = isStatus(shown.value as DefinitionValue | undefined) ? (
+			<View className={VALUE}>
+				<StatusBase painted />
+			</View>
+		) : (
+			<View className={VALUE}>
+				<RNText
+					numberOfLines={1}
+					className={cn(
+						text({ role: copyable ? "code" : "meta" }),
+						FIGURES,
+						STEM,
+					)}
+				>
+					<Painted role={copyable ? "id" : "phrase"} at={at} />
+				</RNText>
+			</View>
+		);
+	else if (typeof plain === "string") {
+		const { stem, tail } = valueCut(plain);
 		const role = cn(text({ role: copied ? "code" : "meta" }), FIGURES);
 		// The two parts read as the one value.
-		shown = (
-			<View accessible accessibilityLabel={value} className={VALUE}>
+		valueNode = (
+			<View accessible accessibilityLabel={plain} className={VALUE}>
 				<RNText numberOfLines={1} className={cn(role, STEM)}>
 					{stem}
 				</RNText>
@@ -189,41 +225,57 @@ export function DefinitionRow<V extends string | null = string>({
 				) : null}
 			</View>
 		);
-	} else if (isStatus(value))
-		shown = (
+	} else if (isStatus(plain))
+		valueNode = (
 			<View className={VALUE}>
-				<Status state={value.status} label={value.label} />
+				<StatusBase state={plain.status} label={plain.label} />
 			</View>
 		);
 	else if (toggle)
-		shown = (
+		valueNode = (
 			<View className={CONTROL}>
-				<Switch {...toggle} label={label} />
+				<SwitchBase {...toggle} label={listed ? "" : label} painted={painted} />
 			</View>
 		);
 	else if (pick)
-		shown = (
+		valueNode = (
 			<View className={CONTROL}>
-				<Picker {...pick} fit="row" />
+				<PickerBase {...pick} fit="row" painted={painted} />
 			</View>
 		);
+	const copy = copyable && waitsValue;
 	let end: ReactNode;
-	if (copied !== undefined || act)
+	if (copy || copied !== undefined || act) {
+		let acted: ReactNode = null;
+		if (act)
+			acted = listed ? (
+				<IconButtonBase
+					icon="Ellipsis"
+					fit="bar"
+					label=""
+					onAct={NOOP}
+					painted
+				/>
+			) : (
+				<IconButton
+					icon={act.icon}
+					fit="bar"
+					label={act.label}
+					onAct={act.onAct}
+					loading={act.loading}
+				/>
+			);
 		end = (
 			<View className={ACTS}>
-				{copied === undefined ? null : <CopyAct label={label} value={copied} />}
-				{act ? (
-					<IconButton
-						icon={act.icon}
-						fit="bar"
-						label={act.label}
-						onAct={act.onAct}
-						loading={act.loading}
-					/>
-				) : null}
+				{copy ? (
+					<IconButtonBase icon="Copy" fit="bar" label="" onAct={NOOP} painted />
+				) : copied === undefined ? null : (
+					<CopyAct label={label} value={copied} />
+				)}
+				{acted}
 			</View>
 		);
-	else if (open)
+	} else if (opens)
 		end = (
 			<View
 				pointerEvents="none"
@@ -241,16 +293,21 @@ export function DefinitionRow<V extends string | null = string>({
 				className={cn(DEFINITION_ROW_CHEVRON, NO_END)}
 			/>
 		);
-	let under: ReactNode = description;
-	if (locked)
-		under =
-			locked.href === undefined ? (
-				locked.reason
-			) : (
-				<Link href={locked.href}>{locked.reason}</Link>
-			);
+	let under: ReactNode;
+	if (locked) {
+		if (listed) under = <Painted role="sentence" at={at} />;
+		else if (locked.href === undefined) under = locked.reason;
+		else under = <Link href={locked.href}>{locked.reason}</Link>;
+	} else if (description !== undefined) {
+		under = waitsUnder ? (
+			<Painted role="sentence" at={at} />
+		) : (
+			(said.value as string)
+		);
+	}
 	return (
 		<View
+			{...inertProps(painted)}
 			className={cn(
 				row({
 					lines: under ? "setting" : "one",
@@ -260,7 +317,7 @@ export function DefinitionRow<V extends string | null = string>({
 				ROW,
 			)}
 		>
-			{open ? (
+			{open && !painted ? (
 				<Pressable
 					accessibilityRole={href !== undefined ? "link" : "button"}
 					accessibilityLabel={label}
@@ -268,8 +325,11 @@ export function DefinitionRow<V extends string | null = string>({
 					className={HIT}
 				/>
 			) : null}
-			{change ? <ChangeMark kind={change} /> : null}
-			<View pointerEvents={open ? "none" : "auto"} className={TEXT_BLOCK}>
+			{change ? <ChangeMark kind={change} painted={listed} /> : null}
+			<View
+				pointerEvents={open && !painted ? "none" : "auto"}
+				className={TEXT_BLOCK}
+			>
 				<View className={cn(ROW_TITLE_LINE, LINE)}>
 					<RNText
 						className={cn(
@@ -279,10 +339,10 @@ export function DefinitionRow<V extends string | null = string>({
 							!under && ALONE,
 						)}
 					>
-						{label}
+						{listed ? <Painted role="name" at={at} /> : label}
 					</RNText>
-					{shown}
-					{locked ? <LockMark /> : null}
+					{valueNode}
+					{locked ? <LockMark painted={listed} /> : null}
 				</View>
 				{under ? (
 					<RNText className={text({ role: "meta" })}>{under}</RNText>

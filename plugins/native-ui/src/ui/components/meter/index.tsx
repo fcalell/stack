@@ -1,6 +1,7 @@
+import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
 import type { CountLink, MeterMark } from "@fcalell/ui-core/descriptors";
 import { formatterFor } from "@fcalell/ui-core/format";
-import { levelOf, waitLine } from "@fcalell/ui-core/list-state";
+import { levelOf } from "@fcalell/ui-core/list-state";
 
 import {
 	FIGURES,
@@ -12,14 +13,11 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import { useContext } from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { LoadingContext } from "../../lib/loading";
-
+import { inertProps, Painted, paintBox, useShown } from "../../lib/paint";
 import { CountLinks } from "./count-links";
-import { MeterWait } from "./wait";
 
 const STACK = "min-w-0";
 const HEAD = "flex-row items-center";
@@ -30,18 +28,15 @@ const TRACK = "overflow-hidden";
 const TICK = "absolute";
 
 interface MeterBase extends Closed {
-	/** What is measured (a short phrase; truncates). */
-	label: string;
+	/** What is measured (a short phrase; truncates). A selection paints, inert, until its read lands. */
+	label: Datum<string>;
 	// How much is used; past `max` the meter is over.
-	value: number;
+	value: Datum<number>;
 	// The limit.
-	max: number;
+	max: Datum<number>;
 	// A tick across the track at the mark's value: the point the fill turns
 	// amber at, in place of the near share.
 	mark?: MeterMark;
-	// The label, share, bar and the line under it (the `meta` or `counts` given)
-	// as bars in their boxes.
-	loading?: boolean;
 }
 
 // The one line under the bar: words, or counts that are links, never both.
@@ -59,36 +54,61 @@ type MeterLine =
 
 export type MeterProps = MeterBase & MeterLine;
 
+// What a `List` hands the meter it draws while its items are not here; no app
+// sets it, so it is outside `MeterProps`.
+export interface MeterInternal {
+	// The meter is not here: the label, the share and the track paint, the line
+	// under the bar when it has one, and the meter takes no touch.
+	painted?: boolean;
+	// The meter's place among the painted ones, which varies the filler's lengths.
+	at?: number;
+}
+
 // The label at body 500 with the share in percent at its end, the bar under
 // them filling by the share in the meta ink, amber once near full (at its
 // `mark` when it has one) and `danger` once over, the line under the bar: the
-// meta, or the counts as links. React Native has no meter role: it is a
-// progress bar.
-export function Meter({
+// meta, or the counts as links. A `label`, `value` or `max` that is a
+// selection paints in its place until its read lands. React Native has no
+// meter role: it is a progress bar.
+export function Meter(meter: MeterProps) {
+	return <MeterBase {...meter} />;
+}
+
+// Every meter: the public `Meter`, or the one a `List` paints. Outside the
+// package's exports.
+export function MeterBase({
 	label,
 	value,
 	max,
 	meta,
 	counts,
 	mark,
-	loading,
-}: MeterProps) {
-	const inherited = useContext(LoadingContext);
-	if (loading ?? inherited)
-		return <MeterWait line={waitLine({ meta, counts })} />;
-	const share = max > 0 ? value / max : 0;
-	const markShare = mark && max > 0 ? mark.value / max : undefined;
+	painted: listed = false,
+	at = 0,
+}: MeterProps & MeterInternal) {
+	const [l, v, m] = useSelections([label, value, max]);
+	const painted = listed || l.painted || v.painted || m.painted;
+	const shown = useShown(painted);
+	// The drawn numbers are read only once painted is ruled out: a placeholder
+	// is a function proxy.
+	const used = painted ? 0 : (v.value as number);
+	const limit = painted ? 0 : (m.value as number);
+	const share = limit > 0 ? used / limit : 0;
+	const markShare = mark && limit > 0 ? mark.value / limit : undefined;
 	const percent = formatterFor("number", undefined, {
 		style: "percent",
 		maximumFractionDigits: 0,
 	}).format(share);
+	// A painted meter is no progress bar: its numbers are not here to be read.
+	const reads = painted
+		? {}
+		: ({
+				accessibilityRole: "progressbar",
+				accessibilityLabel: l.value as string,
+				accessibilityValue: { min: 0, max: limit, now: Math.min(used, limit) },
+			} as const);
 	return (
-		<View
-			accessibilityRole="progressbar"
-			accessibilityLabel={label}
-			accessibilityValue={{ min: 0, max, now: Math.min(value, max) }}
-			className={cn(METER, STACK)}
-		>
+		<View {...inertProps(painted)} {...reads} className={cn(METER, STACK)}>
 			<View className={cn(METER_HEAD, HEAD)}>
 				<RNText
 					numberOfLines={1}
@@ -98,14 +118,14 @@ export function Meter({
 						LABEL,
 					)}
 				>
-					{label}
+					{painted ? <Painted role="name" at={at} /> : (l.value as string)}
 				</RNText>
 				<RNText className={cn(text({ role: "meta" }), FIGURES, SHARE)}>
-					{percent}
+					{painted ? <Painted role="figure" at={at} /> : percent}
 				</RNText>
 			</View>
 			<View className={BAR}>
-				<View className={cn(METER_TRACK, TRACK)}>
+				<View className={cn(METER_TRACK, TRACK, painted && paintBox(shown))}>
 					{share > 0 ? (
 						<View
 							className={meterFill({ level: levelOf(share, markShare) })}
@@ -122,8 +142,12 @@ export function Meter({
 					/>
 				) : null}
 			</View>
-			{counts ? <CountLinks counts={counts} /> : null}
-			{meta ? <RNText className={text({ role: "meta" })}>{meta}</RNText> : null}
+			{counts ? <CountLinks counts={counts} painted={painted} /> : null}
+			{meta ? (
+				<RNText className={text({ role: "meta" })}>
+					{painted ? <Painted role="phrase" at={at} /> : meta}
+				</RNText>
+			) : null}
 		</View>
 	);
 }

@@ -1,7 +1,10 @@
 import type { ChipMark } from "@fcalell/ui-core/descriptors";
+import { FileRowBase } from "../../components/file-row/index.tsx";
+import { Group } from "../../components/group/index.tsx";
 import { type FileSlots, List } from "../../components/list/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { Wide } from "./layout-context.tsx";
+import { isPaint } from "./painted.tsx";
 
 const LONG = "docs/billing/payment-terms-and-late-invoices.md";
 
@@ -133,9 +136,31 @@ function selected(): File[] {
 	];
 }
 
+// A card of the rows, each as it is loaded or painted.
+function Shown(props: { painted?: boolean }) {
+	return (
+		<Group
+			items={REVIEW.concat(CHIPPED).map((file, at) => ({
+				key: `${props.painted}${file.path}`,
+				row: <FileRowBase {...file} painted={props.painted} at={at} />,
+			}))}
+		/>
+	);
+}
+
 // Every cell draws a List of the rows; the list's rest cells add the review
-// list.
+// list. A `PAINT` cell draws a card of the rows loaded beside the same rows
+// painted.
 export function drawFileRow(frame: ShowcaseFrame) {
+	if (isPaint(frame)) {
+		if (frame.state !== "rest") return undefined;
+		return (
+			<Wide>
+				<Shown />
+				<Shown painted />
+			</Wide>
+		);
+	}
 	const loading = frame.state === "loading";
 	const files = frame.state === "selected" ? selected() : ROWS;
 	return (

@@ -1256,6 +1256,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SKELETON.kind.line",
 				"LINE_BOX.role.body",
 				"LINE_BOX.role.meta",
+				"PAINT.kind.glyphs",
+				"PAINT.kind.box",
+				"PAINT.kind.control",
 			],
 			holds: [
 				"ROW_TITLE",
@@ -1334,10 +1337,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// bar the room an identifier takes when the map is `copyable`), or, with
 		// a description, the label over the meta line; the act's square or the
 		// chevron's at the end when declared. A one-word string value of more than eight characters too long for its
-		// room cuts in its middle (`valueCut`), the whole value its text. A waiting Group's setting rows are
-		// the same wait with a description and the switch's box at the end; a row in
-		// a waiting Group or Section draws it from the props it is given (a
-		// `switch` or a `pick` stands as the switch's box). `switch` is the Switch's
+		// room cuts in its middle (`valueCut`), the whole value its text. `value`
+		// and `description` are data: a selection paints in its place, the row
+		// inert, until its read lands, and a painted `List` paints the whole row
+		// (its label, value, description, lock and controls) at their roles. `switch` is the Switch's
 		// own props, named by the row's label and drawn centred beside it in place
 		// of `value`; `pick` is an `OptionPick` (the ItemHeader's pick fact), drawn
 		// as the Picker at the row fit in the same place, named by the row's label;
@@ -1389,9 +1392,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SKELETON.kind.switch",
 				"LINE_BOX.role.body",
 				"LINE_BOX.role.meta",
+				"PAINT.kind.glyphs",
+				"PAINT.kind.box",
+				"PAINT.kind.control",
 			],
 			holds: ["DEFINITION_ROW", "DEFINITION_ROW_CHEVRON"],
-			states: [...PRESS, "loading"],
+			states: PRESS,
 			owns: {
 				roles: ["body", "meta", "code"],
 				colors: [
@@ -2291,7 +2297,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"chip",
 				"href",
 				"onOpen",
-				"loading",
 			],
 			draws: [
 				"CHANGE_MARK",
@@ -2315,6 +2320,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SKELETON.kind.line",
 				"SKELETON_LANE.role.meta",
 				"SKELETON_ROW.kind.one-line",
+				"PAINT.kind.glyphs",
+				"PAINT.kind.box",
 			],
 			holds: [
 				"FILE_PATH",
@@ -2776,9 +2783,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// A bar at the `meter` size, its fill by level. Under it one line: `meta`,
 		// or `counts` (links composed from `Link`), never both. A `mark` is a tick
-		// across the track at its value, the meter's near point.
+		// across the track at its value, the meter's near point. `label`, `value`
+		// and `max` are data: a selection paints in its place, the meter inert,
+		// until its read lands.
 		Meter: {
-			props: ["label", "value", "max", "meta", "counts", "mark", "loading"],
+			props: ["label", "value", "max", "meta", "counts", "mark"],
 			draws: [
 				"LINK_TARGET",
 				"COUNT_LINKS",
@@ -2796,9 +2805,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"TEXT.role.body",
 				"TEXT.role.meta",
 				"TEXT_STRONG.role.body",
+				"PAINT.kind.glyphs",
+				"PAINT.kind.box",
 			],
 			holds: ["METER", "METER_HEAD", "METER_TRACK", "METER_FILL", "METER_MARK"],
-			states: ["rest", "loading"],
+			states: ["rest"],
 			owns: {
 				roles: ["body", "meta"],
 				colors: [

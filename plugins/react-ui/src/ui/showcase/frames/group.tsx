@@ -1,13 +1,13 @@
-import { DefinitionRow } from "../../components/definition-row/index.tsx";
+import { DefinitionRowBase } from "../../components/definition-row/index.tsx";
 import { Group } from "../../components/group/index.tsx";
-import { Meter } from "../../components/meter/index.tsx";
+import { MeterBase } from "../../components/meter/index.tsx";
 import { Slider } from "../../components/slider/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { STAND_IN_ENTRIES, Wide } from "./layout-context.tsx";
 
 const noop = () => {};
 
-/** A card of the static parts a waiting Group stands for, one per part: a Meter, a Slider and a DefinitionRow of each form (one line, copyable, a setting that opens, a control). Loaded and waiting draw the same entries. */
+/** A card of the static parts a waiting Group stands for, one per part: a Meter, a Slider and a DefinitionRow of each form (one line, copyable, a setting that opens, a control). Loaded and waiting draw the same entries: the Meter and the rows paint, the Slider waits through the Group. */
 export function Static(props: { loading?: boolean }) {
 	return (
 		<Group
@@ -16,7 +16,8 @@ export function Static(props: { loading?: boolean }) {
 				{
 					key: "meter",
 					item: (
-						<Meter
+						<MeterBase
+							painted={props.loading}
 							label="Jobs this window"
 							value={62}
 							max={100}
@@ -38,11 +39,21 @@ export function Static(props: { loading?: boolean }) {
 						/>
 					),
 				},
-				{ key: "plan", row: <DefinitionRow label="Plan" value="Business" /> },
+				{
+					key: "plan",
+					row: (
+						<DefinitionRowBase
+							painted={props.loading}
+							label="Plan"
+							value="Business"
+						/>
+					),
+				},
 				{
 					key: "id",
 					row: (
-						<DefinitionRow
+						<DefinitionRowBase
+							painted={props.loading}
 							label="Workspace ID"
 							value="ws_7f3k9q2m4x"
 							copyable
@@ -52,7 +63,8 @@ export function Static(props: { loading?: boolean }) {
 				{
 					key: "region",
 					row: (
-						<DefinitionRow
+						<DefinitionRowBase
+							painted={props.loading}
 							label="Region"
 							description="Where the workspace runs."
 							value="Frankfurt"
@@ -63,7 +75,8 @@ export function Static(props: { loading?: boolean }) {
 				{
 					key: "notify",
 					row: (
-						<DefinitionRow
+						<DefinitionRowBase
+							painted={props.loading}
 							label="Notify on failure"
 							switch={{ checked: true, onChange: noop }}
 						/>

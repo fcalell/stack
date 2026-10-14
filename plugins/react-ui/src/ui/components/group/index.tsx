@@ -31,7 +31,7 @@ export type GroupProps<
 	T = unknown,
 	V extends string | null = string,
 > = Closed & {
-	/** The rows wait (a loading Section's body waits with it): a List in it draws its own waiting rows, a Meter, a Slider, a FormField and a DefinitionRow their own waiting forms; a row of your own draws as it is. */
+	/** The rows wait (a loading Section's body waits with it): a List in it draws its own waiting rows, a Slider and a FormField their own waiting forms; a row of your own draws as it is. */
 	loading?: boolean;
 } & (
 		| {

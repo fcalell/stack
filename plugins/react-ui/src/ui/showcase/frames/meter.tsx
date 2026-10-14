@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
 import { Group } from "../../components/group/index.tsx";
-import { Meter } from "../../components/meter/index.tsx";
+import { Meter, MeterBase } from "../../components/meter/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import { Slider } from "../../components/slider/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { Wide } from "./layout-context.tsx";
+import { isPaint } from "./painted.tsx";
 
 const noop = () => {};
 
@@ -141,21 +142,35 @@ const LEVELS: Record<string, ReactNode> = {
 };
 
 // A `METER_FILL.level` cell draws the meters at that level, every other cell
-// the usage group; loading stands beside its loaded form.
+// the usage group; a `PAINT` cell draws each form of the line under the bar
+// (words, counts) loaded, with the same meter painted beside it.
 export function drawMeter(frame: ShowcaseFrame) {
-	let drawn = LEVELS[frame.cell.name] ?? <Usage />;
-	if (frame.state === "loading")
-		drawn = (
-			<>
+	if (isPaint(frame)) {
+		if (frame.state !== "rest") return undefined;
+		return (
+			<Wide>
 				<div className="grid grid-cols-2 gap-x-fields">
 					<Meter label="Seats" value={1} max={12} meta="1 of 12 seats" />
-					<Meter label="" value={0} max={0} meta="" loading />
+					<MeterBase
+						label="Seats"
+						value={1}
+						max={12}
+						meta="1 of 12 seats"
+						painted
+					/>
 				</div>
 				<div className="grid grid-cols-2 gap-x-fields">
 					<Meter label="Passing" value={34} max={42} counts={COUNTS} />
-					<Meter label="" value={0} max={0} counts={COUNTS} loading />
+					<MeterBase
+						label="Passing"
+						value={34}
+						max={42}
+						counts={COUNTS}
+						painted
+					/>
 				</div>
-			</>
+			</Wide>
 		);
-	return <Wide>{drawn}</Wide>;
+	}
+	return <Wide>{LEVELS[frame.cell.name] ?? <Usage />}</Wide>;
 }

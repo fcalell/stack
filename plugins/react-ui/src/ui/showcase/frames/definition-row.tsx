@@ -1,8 +1,12 @@
 import type { StatusState } from "@fcalell/ui-core/tokens";
-import { DefinitionRow } from "../../components/definition-row/index.tsx";
+import {
+	DefinitionRow,
+	DefinitionRowBase,
+} from "../../components/definition-row/index.tsx";
 import { Group } from "../../components/group/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { Wide } from "./layout-context.tsx";
+import { isPaint } from "./painted.tsx";
 
 const act = () => {};
 
@@ -17,18 +21,27 @@ const CYCLE = {
 	onChange: act,
 };
 
-// The facts of a card, as loaded or waiting; a waiting row draws the form of
-// what it is given (a description, an act, a link, a control).
-export function Facts(props: { loading?: boolean }) {
+// The facts of a card, as loaded or painted; a painted row paints each part
+// of what it is given (a description, an act, a link, a control).
+export function Facts(props: { painted?: boolean }) {
 	return (
 		<Group
-			loading={props.loading}
 			items={[
-				{ key: "plan", row: <DefinitionRow label="Plan" value="Business" /> },
+				{
+					key: "plan",
+					row: (
+						<DefinitionRowBase
+							painted={props.painted}
+							label="Plan"
+							value="Business"
+						/>
+					),
+				},
 				{
 					key: "workspace-name",
 					row: (
-						<DefinitionRow
+						<DefinitionRowBase
+							painted={props.painted}
 							label="Workspace name"
 							value="Acme"
 							act={{ icon: "Pencil", label: "Rename", onAct: act }}
@@ -38,7 +51,8 @@ export function Facts(props: { loading?: boolean }) {
 				{
 					key: "workspace-id",
 					row: (
-						<DefinitionRow
+						<DefinitionRowBase
+							painted={props.painted}
 							label="Workspace ID"
 							value="ws_7f3k9q2m4x"
 							copyable
@@ -48,7 +62,8 @@ export function Facts(props: { loading?: boolean }) {
 				{
 					key: "custom-domain",
 					row: (
-						<DefinitionRow
+						<DefinitionRowBase
+							painted={props.painted}
 							label="Custom domain"
 							description="Mail and links go out from it."
 							value={{ status: "done", label: "Verified" }}
@@ -59,7 +74,8 @@ export function Facts(props: { loading?: boolean }) {
 				{
 					key: "contract-end",
 					row: (
-						<DefinitionRow
+						<DefinitionRowBase
+							painted={props.painted}
 							label="Contract end"
 							value="31 Dec 2026"
 							locked={{ reason: "Held by CR-12, Ana" }}
@@ -69,7 +85,8 @@ export function Facts(props: { loading?: boolean }) {
 				{
 					key: "notify-on-failure",
 					row: (
-						<DefinitionRow
+						<DefinitionRowBase
+							painted={props.painted}
 							label="Notify on failure"
 							switch={{ checked: true, onChange: act }}
 						/>
@@ -77,7 +94,13 @@ export function Facts(props: { loading?: boolean }) {
 				},
 				{
 					key: "billing-cycle",
-					row: <DefinitionRow label="Billing cycle" pick={CYCLE} />,
+					row: (
+						<DefinitionRowBase
+							painted={props.painted}
+							label="Billing cycle"
+							pick={CYCLE}
+						/>
+					),
 				},
 			]}
 		/>
@@ -246,25 +269,23 @@ function Changes() {
 	);
 }
 
-// Every rest cell draws the settings group, a `STATUS_DOT.state` cell its
-// status row in that state, a `CHANGE_MARK` cell the change set's facts;
-// loading draws a card of facts waiting beside the loaded one.
+// Every cell draws the settings group, a `STATUS_DOT.state` cell its status
+// row in that state, a `CHANGE_MARK` cell the change set's facts; a `PAINT`
+// cell draws a card of facts painted beside the loaded one.
 export function drawDefinitionRow(frame: ShowcaseFrame) {
+	if (isPaint(frame)) {
+		if (frame.state !== "rest") return undefined;
+		return (
+			<Wide>
+				<Facts />
+				<Facts painted />
+			</Wide>
+		);
+	}
 	const [family, , value] = frame.cell.name.split(".");
 	// The third segment of a `STATUS_DOT.state` cell is a state key.
 	const status = family === "STATUS_DOT" ? (value as StatusState) : "done";
 	const rest =
 		family === "CHANGE_MARK" ? <Changes /> : <General status={status} />;
-	return (
-		<Wide>
-			{frame.state === "rest" ? (
-				rest
-			) : (
-				<>
-					<Facts />
-					<Facts loading />
-				</>
-			)}
-		</Wide>
-	);
+	return <Wide>{rest}</Wide>;
 }

@@ -19,13 +19,13 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
 import { navigate, usePathname } from "../../lib/navigate";
+import { inertProps, Painted } from "../../lib/paint";
 import type { Route } from "../../lib/route";
 import { useCSSVariable } from "../../lib/theme";
 
-import { Chip } from "../chip";
-import { Icon } from "../icon";
+import { ChipBase } from "../chip/base";
+import { IconBase } from "../icon";
 import { ChangeMark } from "../status/change";
-import { FileWait } from "./wait";
 
 const ROW = "relative flex-row items-center";
 // The hit covers the row under its text and takes the press wash.
@@ -65,9 +65,16 @@ export interface FileRowProps extends Closed {
 	href?: Route;
 	// Opens the file.
 	onOpen?: () => void;
-	// The row waits: the glyph, the path's bar, the chip's bar when it has a
-	// chip, and the counts' bar stand in for it.
-	loading?: boolean;
+}
+
+// What a `List` hands the row it draws while its items are not here; no app
+// sets them, so they are outside `FileRowProps`.
+export interface FileRowInternal {
+	// The file is not here: the glyph, the path, the chip when it has one and
+	// the counts paint, the row takes no touch and builds no hit.
+	painted?: boolean;
+	// The row's place among the painted rows, which varies the filler's lengths.
+	at?: number;
 }
 
 function glyph(seen: boolean | undefined): IconName {
@@ -132,7 +139,13 @@ function Path({ path }: { path: string }) {
 // hit, current (the selection wash) at its `href`, named by the whole path,
 // the cut text never read; it washes under the press.
 // Square at the card's inset.
-export function FileRow({
+export function FileRow(file: FileRowProps) {
+	return <FileRowBase {...file} />;
+}
+
+// Every file row: the public `FileRow`, or the one a `List` paints. Outside
+// the package's exports.
+export function FileRowBase({
 	path,
 	added,
 	removed,
@@ -141,22 +154,21 @@ export function FileRow({
 	chip,
 	href,
 	onOpen,
-	loading,
-}: FileRowProps) {
+	painted = false,
+	at = 0,
+}: FileRowProps & FileRowInternal) {
 	const pathname = usePathname();
-	if (loading)
-		return <FileWait change={change !== undefined} chip={chip !== undefined} />;
-
-	const current = href !== undefined && isCurrent(href, pathname);
+	const current = !painted && href !== undefined && isCurrent(href, pathname);
 	const open = href !== undefined ? () => navigate(href) : onOpen;
 	return (
 		<View
+			{...inertProps(painted)}
 			className={cn(
 				row({ lines: "one", state: current ? "selected" : "rest" }),
 				ROW,
 			)}
 		>
-			{open ? (
+			{open && !painted ? (
 				<Pressable
 					accessibilityRole={href !== undefined ? "link" : "button"}
 					accessibilityLabel={path}
@@ -167,30 +179,49 @@ export function FileRow({
 			) : null}
 			{change ? (
 				<View pointerEvents="none" className={MARK}>
-					<ChangeMark kind={change} />
+					<ChangeMark kind={change} painted={painted} />
 				</View>
 			) : null}
 			<View pointerEvents="none" className={cn(ROW_LEADING, LEADING)}>
 				<Ink.Provider value="ink-meta">
-					<Icon name={glyph(seen)} />
+					<IconBase name={glyph(seen)} stroke="line" painted={painted} />
 				</Ink.Provider>
 			</View>
-			<Path path={path} />
+			{painted ? (
+				<View pointerEvents="none" className={PATH}>
+					<RNText
+						numberOfLines={1}
+						className={cn(FILE_PATH, filePathPart({ part: "name" }), NAME)}
+					>
+						<Painted role="phrase" at={at} />
+					</RNText>
+				</View>
+			) : (
+				<Path path={path} />
+			)}
 			{chip ? (
 				<View pointerEvents="none" className={CHIP}>
-					<Chip family={chip.family} label={chip.label} />
+					<ChipBase family={chip.family} label={chip.label} painted={painted} />
 				</View>
 			) : null}
 			<View pointerEvents="none" className={cn(FILE_COUNTS, COUNTS)}>
 				<RNText
 					className={cn(FILE_COUNTS, fileCount({ kind: "added" }), COUNT)}
 				>
-					{added > 0 ? `+${added}` : null}
+					{painted ? (
+						<Painted role="figure" at={at} />
+					) : added > 0 ? (
+						`+${added}`
+					) : null}
 				</RNText>
 				<RNText
 					className={cn(FILE_COUNTS, fileCount({ kind: "removed" }), COUNT)}
 				>
-					{removed > 0 ? `−${removed}` : null}
+					{painted ? (
+						<Painted role="figure" at={at + 1} />
+					) : removed > 0 ? (
+						`−${removed}`
+					) : null}
 				</RNText>
 			</View>
 		</View>

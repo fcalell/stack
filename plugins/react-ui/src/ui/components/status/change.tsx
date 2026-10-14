@@ -6,9 +6,15 @@ import { IconBase } from "../icon/index.tsx";
 
 const BOX = "flex shrink-0 items-center justify-center";
 
-/** Where a row, a fact or a field stands in a change set: its kind's glyph in the kind's ink in a lane one icon wide. Outside the package's exports. */
-export function ChangeMark(props: { kind: ChangeKind }) {
-	const { kind } = props;
+/** Where a row, a fact or a field stands in a change set: its kind's glyph in the kind's ink in a lane one icon wide. `painted` is the lane with the glyph's box filled, for a kind that is not here. Outside the package's exports. */
+export function ChangeMark(props: { kind: ChangeKind; painted?: boolean }) {
+	const { kind, painted } = props;
+	if (painted)
+		return (
+			<span className={BOX}>
+				<IconBase name="Plus" fit="meta" stroke="mark" painted />
+			</span>
+		);
 	return (
 		<span className={cn(changeMark({ kind }), BOX)}>
 			<IconBase name={CHANGE_GLYPH[kind]} fit="meta" stroke="mark" />

@@ -9,9 +9,16 @@ const MARK = "shrink min-w-0";
 // the status does.
 const WAIT = "flex-row shrink min-w-0";
 
-/** A row's status on its meta line: the mark, its word truncating where the line is out of room, or while its read has not answered a bar at the status's place and height. Outside the package's exports. */
-export function RowStatusMark(props: { status: RowStatus }) {
+/** A row's status on its meta line: the mark, its word truncating where the line is out of room, or `painted` (the dot's box and a word's filler) while the status is not here. Outside the package's exports. */
+export function RowStatusMark(props: { status: RowStatus; painted?: boolean }) {
 	const { status } = props;
+	// Painted before anything reads the status: over a placeholder every key is there.
+	if (props.painted)
+		return (
+			<View className={MARK}>
+				<StatusBase painted />
+			</View>
+		);
 	if ("loading" in status)
 		return (
 			<View
