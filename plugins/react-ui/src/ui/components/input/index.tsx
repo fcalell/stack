@@ -1,3 +1,4 @@
+import type { Datum } from "@fcalell/plugin-api/tanstack-query";
 import type { IconAct } from "@fcalell/ui-core/descriptors";
 import type { Closed } from "../../lib/closed.ts";
 import { InputBase } from "./base.tsx";
@@ -14,8 +15,8 @@ export type InputKind =
 export interface InputProps extends Closed {
 	/** What is typed: `text` (the default), `search` (a toolbar box with its glyph), `secret`, `source` (mono, a machine reads it), `number` (with `unit`), or `email`. */
 	kind?: InputKind;
-	/** The value (text; one line, scrolls in the field). */
-	value: string;
+	/** The value (text; one line, scrolls in the field). A selection paints the box, inert, until its read lands and follows it until the viewer types. */
+	value: Datum<string>;
 	/** Hears every keystroke's value. */
 	onChange: (value: string) => void;
 	/** Hears the value once the viewer is done with it: on leaving the field or on Enter, only when it changed since focus; Escape then puts back the value at focus and leaves the field. */

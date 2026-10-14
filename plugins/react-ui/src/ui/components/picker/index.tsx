@@ -1,3 +1,4 @@
+import type { Datum } from "@fcalell/plugin-api/tanstack-query";
 import type {
 	IconAct,
 	Option,
@@ -6,7 +7,7 @@ import type {
 import type { PickerFit } from "@fcalell/ui-core/variants";
 import type { ReactElement } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { isSeveral, PickerBase } from "./base.tsx";
+import { PickerBase } from "./base.tsx";
 
 interface Shared<V extends string | null> extends Closed {
 	/** What is picked: the trigger's name, and the touch sheet's title (a short phrase; read aloud on the trigger, wraps as the sheet's title). */
@@ -22,8 +23,8 @@ interface Shared<V extends string | null> extends Closed {
 /** A pick of one option. */
 export interface PickOneProps<V extends string | null = string>
 	extends Shared<V> {
-	/** The chosen option's value. */
-	value?: NoInfer<V>;
+	/** The chosen option's value. A selection paints the trigger, inert, until its read lands and follows it until the viewer picks. */
+	value?: Datum<NoInfer<V>>;
 	/** Hears the picked option's value. */
 	onChange: (value: NoInfer<V>) => void;
 }
@@ -31,8 +32,8 @@ export interface PickOneProps<V extends string | null = string>
 /** A pick of several options. */
 export interface PickSeveralProps<V extends string | null = string>
 	extends Shared<V> {
-	/** The chosen options' values. */
-	value: readonly NoInfer<V>[];
+	/** The chosen options' values. A selection of them paints as a single pick, the placeholder being no array. */
+	value: Datum<readonly NoInfer<V>[]>;
 	/** Hears the chosen values once an option is ticked or a chip removed. */
 	onChange: (value: NoInfer<V>[]) => void;
 }
@@ -53,25 +54,16 @@ export function Picker<V extends string | null = string>(
 	props: PickerProps<V>,
 ) {
 	const { label, options, fit, act } = props;
-	if (isSeveral(props))
-		return (
-			<PickerBase
-				label={label}
-				options={options}
-				fit={fit}
-				act={act}
-				value={props.value}
-				onChange={props.onChange}
-			/>
-		);
+	// The value and its handler are one pick or several, which the base reads
+	// off the value it draws; the overloads type that pairing, this call cannot.
 	return (
 		<PickerBase
 			label={label}
 			options={options}
 			fit={fit}
 			act={act}
-			value={props.value}
-			onChange={props.onChange}
+			value={props.value as never}
+			onChange={props.onChange as never}
 		/>
 	);
 }

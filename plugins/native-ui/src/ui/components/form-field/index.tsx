@@ -1,10 +1,10 @@
+import { useDraft } from "@fcalell/plugin-api/tanstack-query";
 import type {
 	Answered,
 	ChangeKind,
 	FieldBinding,
 	FieldControl,
 } from "@fcalell/ui-core/descriptors";
-import { type FieldShape, optionsWaitOf } from "@fcalell/ui-core/list-state";
 import {
 	FIELD_ERROR_LINE,
 	FORM_FIELD_SUMMARY,
@@ -13,7 +13,7 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, useContext, useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
@@ -25,9 +25,8 @@ import {
 	FieldRefusal,
 	GroupName,
 } from "../../lib/field";
-import { FieldWait } from "../../lib/field-wait";
 import { Ink } from "../../lib/ink";
-import { LoadingContext } from "../../lib/loading";
+import { inertProps } from "../../lib/paint";
 import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 import type { CheckboxProps } from "../checkbox";
@@ -56,8 +55,6 @@ const BOX_LINE = "flex-row shrink-0 items-center";
 const MARKED = "flex-row items-start gap-inside min-w-0";
 const MARKED_BODY = "flex-1 min-w-0";
 const DISABLED = "text-ink-disabled";
-// A field waiting stands its waiting form in its place and hides itself.
-const HIDDEN = "hidden";
 const SUMMARY = "flex-row items-center min-w-0";
 const SUMMARY_LABEL = "shrink min-w-0";
 const SUMMARY_ANSWER = "flex-1 min-w-0";
@@ -182,31 +179,54 @@ function controlOf(props: Body, kind: ControlKind | undefined): ReactNode {
 		: null;
 }
 
-// The form a field waits as, read off its own props before its data: an
-// answered field folds to one summary row, whatever its control; a list of
-// options carries the rows its source declares.
-function waitOf(props: Body): FieldShape {
-	const described = Boolean(props.description);
-	if (props.answered) return { holds: "folded", described };
-	if (props.options)
-		return {
-			holds: "options",
-			described,
-			options: optionsWaitOf(props.options),
-		};
-	if (props.switch) return { holds: "switch", described };
-	if (props.checkbox) return { holds: "checkbox", described };
-	if (props.slider) return { holds: "slider", described };
-	if (props.segments) return { holds: "segments", described };
-	return { holds: "field", described };
+// A checkbox field: the row is the target, so it owns the draft the box
+// draws and the press edits.
+function CheckboxRow(props: {
+	checkbox: Body["checkbox"] & object;
+	label: string;
+	disabled: boolean;
+	children: ReactNode;
+}) {
+	const { checkbox, label, disabled } = props;
+	const draft = useDraft(checkbox.checked);
+	const checked = draft.painted ? false : draft.value;
+	return (
+		<Pressable
+			{...inertProps(draft.painted)}
+			accessibilityRole="checkbox"
+			accessibilityLabel={label}
+			accessibilityState={{ checked, disabled }}
+			disabled={disabled}
+			onPress={() => {
+				const next = checked !== true;
+				draft.edit(next);
+				checkbox.onChange(next);
+			}}
+			className={cn(formField({ holds: "checkbox" }), AHEAD)}
+		>
+			<View className={BOX_LINE}>
+				<Strut role="body" />
+				<FieldDisabled.Provider value={disabled}>
+					<CheckboxBase
+						checked={checked}
+						onChange={checkbox.onChange}
+						label={label}
+						painted={draft.painted}
+						target
+					/>
+				</FieldDisabled.Provider>
+			</View>
+			{props.children}
+		</Pressable>
+	);
 }
 
 // The field itself: the label over its control, a switch at the label's end and a
 // checkbox on its first line, the label row its target. The label names a
 // typing control; disabled, the label takes the disabled ink, the control its
 // disabled cells, and the description stays as the reason.
-function FieldBody(props: Body & { gone?: boolean }) {
-	const { label, description, disabled = false, answered, gone } = props;
+function FieldBody(props: Body) {
+	const { label, description, disabled = false, answered } = props;
 	const words = useWords();
 	const folded = answered !== undefined;
 	// What a control refused (a file of the wrong type) stands in the error
@@ -225,7 +245,6 @@ function FieldBody(props: Body & { gone?: boolean }) {
 	const kind = kindOf(props);
 	const control = folded ? null : controlOf(props, kind);
 	const form = kind ?? "field";
-	const hidden = gone ? HIDDEN : undefined;
 	// What a group of controls is named by, one value per change.
 	const group = useMemo(() => ({ label }), [label]);
 	const labelClass = cn(
@@ -241,7 +260,7 @@ function FieldBody(props: Body & { gone?: boolean }) {
 	) : null;
 	if (answered)
 		return (
-			<View className={cn(FORM_FIELD_SUMMARY, SUMMARY, hidden)}>
+			<View className={cn(FORM_FIELD_SUMMARY, SUMMARY)}>
 				<Ink.Provider value={summaryContentTone()}>
 					<Icon name="Check" />
 				</Ink.Provider>
@@ -266,36 +285,21 @@ function FieldBody(props: Body & { gone?: boolean }) {
 	// controls inside.
 	if (form === "options" || form === "segments")
 		return (
-			<View className={cn(formField({ holds: "field" }), STACK, hidden)}>
+			<View className={cn(formField({ holds: "field" }), STACK)}>
 				<RNText className={labelClass}>{label}</RNText>
 				<GroupName.Provider value={group}>{control}</GroupName.Provider>
 				{line}
 			</View>
 		);
-	if (props.checkbox) {
-		const { checked, onChange } = props.checkbox;
+	if (props.checkbox)
 		return (
-			<Pressable
-				accessibilityRole="checkbox"
-				accessibilityLabel={label}
-				accessibilityState={{ checked, disabled }}
-				disabled={disabled}
-				onPress={() => onChange(checked !== true)}
-				className={cn(formField({ holds: "checkbox" }), AHEAD, hidden)}
-			>
-				<View className={BOX_LINE}>
-					<Strut role="body" />
-					<FieldDisabled.Provider value={disabled}>
-						{control}
-					</FieldDisabled.Provider>
-				</View>
+			<CheckboxRow checkbox={props.checkbox} label={label} disabled={disabled}>
 				<View className={LABEL_BLOCK}>
 					{named}
 					{line}
 				</View>
-			</Pressable>
+			</CheckboxRow>
 		);
-	}
 	const held = (
 		<FieldNameContext.Provider value={label}>
 			<FieldDisabled.Provider value={disabled}>
@@ -311,7 +315,7 @@ function FieldBody(props: Body & { gone?: boolean }) {
 	);
 	if (form === "switch")
 		return (
-			<View className={cn(formField({ holds: "switch" }), BESIDE, hidden)}>
+			<View className={cn(formField({ holds: "switch" }), BESIDE)}>
 				<View className={LABEL_BLOCK}>
 					{named}
 					{line}
@@ -320,7 +324,7 @@ function FieldBody(props: Body & { gone?: boolean }) {
 			</View>
 		);
 	return (
-		<View className={cn(formField({ holds: "field" }), STACK, hidden)}>
+		<View className={cn(formField({ holds: "field" }), STACK)}>
 			{form === "slider" ? null : named}
 			{held}
 			{line}
@@ -331,9 +335,9 @@ function FieldBody(props: Body & { gone?: boolean }) {
 // The label (body 500) over its control, the description (meta) under it and
 // the error in the description's place; a switch stands at the label's end
 // and a checkbox on its first line. A `change` draws the change mark ahead of
-// the field, on its label's line. In a loading `Section` or `Group` it draws its own waiting form, in the form of
-// its control, and keeps the field mounted, hidden, so what it holds (a typed
-// text) outlives the wait.
+// the field, on its label's line. The label and the description are constants
+// and always stand; a control given a selection paints itself, inert, until
+// its read lands.
 export function FormField<
 	V,
 	S extends string | null = string,
@@ -343,29 +347,15 @@ export function FormField<
 	const { change, ...rest } = props;
 	// The descriptors are read at their widest: a `Select` over `S` is one over
 	// `string | null` to the field that draws it.
-	const body = rest as Body;
-	const waiting = useContext(LoadingContext);
-	// The root the field draws hides, never a wrapper, so what a Group's entry
-	// holds beside it stands still.
-	const gone = waiting ? HIDDEN : undefined;
-	const field = <FieldBody {...body} gone={waiting && change === undefined} />;
-	const marked =
-		change === undefined ? (
-			field
-		) : (
-			<View className={cn(MARKED, gone)}>
-				<View className={BOX_LINE}>
-					<Strut role="body" />
-					<ChangeMark kind={change} />
-				</View>
-				<View className={MARKED_BODY}>{field}</View>
-			</View>
-		);
-	const wait = waiting ? <FieldWait {...waitOf(body)} /> : null;
+	const field = <FieldBody {...(rest as Body)} />;
+	if (change === undefined) return field;
 	return (
-		<>
-			{wait}
-			{marked}
-		</>
+		<View className={MARKED}>
+			<View className={BOX_LINE}>
+				<Strut role="body" />
+				<ChangeMark kind={change} />
+			</View>
+			<View className={MARKED_BODY}>{field}</View>
+		</View>
 	);
 }

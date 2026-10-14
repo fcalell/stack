@@ -1,13 +1,14 @@
 import { Field } from "@base-ui/react/field";
-import { Group } from "../../components/group/index.tsx";
-import { Section } from "../../components/section/index.tsx";
 import { Slider } from "../../components/slider/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
-import { Wide } from "./layout-context.tsx";
+import { waiting } from "../waiting.ts";
+import { beside, isPaint } from "./painted.tsx";
 
 const change = () => {};
 
-function at(value: number) {
+const never = waiting.at(() => 0);
+
+function at(value: number | typeof never) {
 	return (
 		<Slider
 			label="Lock after idle"
@@ -24,19 +25,14 @@ function at(value: number) {
 // The one slider cell: at 30 of 0 to 60 in every state, and at rest also at
 // the minimum and the maximum, where the thumb meets the
 // track's ends. A disabled slider is drawn inside a disabled field, the way a
-// form disables it. Loading draws it waiting beside the loaded one, in a
-// Group's card and alone in a Section's body.
+// form disables it. `PAINT.kind.control` draws it beside its painted form, a
+// value that never arrives.
 export function drawSlider(frame: ShowcaseFrame) {
-	if (frame.state === "loading")
-		return (
-			<Wide>
-				<Group items={[{ key: "slider", item: at(30) }]} />
-				<Group loading items={[{ key: "slider", item: at(30) }]} />
-				<Section title="Session">{at(30)}</Section>
-				<Section title="Session" loading>
-					{at(30)}
-				</Section>
-			</Wide>
+	if (isPaint(frame))
+		return beside(
+			frame,
+			<div className="w-popover">{at(30)}</div>,
+			<div className="w-popover">{at(never)}</div>,
 		);
 	const ends = frame.state === "rest";
 	const drawn = (

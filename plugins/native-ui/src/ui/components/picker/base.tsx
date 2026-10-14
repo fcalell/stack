@@ -1,3 +1,4 @@
+import { useDraft } from "@fcalell/plugin-api/tanstack-query";
 import { toggled } from "@fcalell/ui-core/list-state";
 import type { ChipFamily } from "@fcalell/ui-core/tokens";
 import {
@@ -56,9 +57,20 @@ interface Several<V extends string | null> {
 	onChange: (value: V[]) => void;
 }
 
-export function isSeveral<V extends string | null>(
-	props: PickerProps<V>,
-): props is PickerProps<V> & Several<V> {
+// A pick's props once its value is drawn: the viewer's pick or the
+// selection's, no longer a datum.
+type Drawn<V extends string | null> = Omit<
+	PickerProps<V>,
+	"value" | "onChange"
+> &
+	(
+		| { value?: V; onChange: (value: V) => void }
+		| { value: readonly V[]; onChange: (value: V[]) => void }
+	);
+
+function isSeveral<V extends string | null>(
+	props: Drawn<V>,
+): props is Drawn<V> & Several<V> {
 	return Array.isArray(props.value);
 }
 
@@ -84,9 +96,21 @@ export function PickerBase<V extends string | null = string>(
 	props: PickerProps<V> & Composed,
 ): ReactElement;
 export function PickerBase<V extends string | null = string>(
-	props: PickerProps<V> & Composed,
+	given: PickerProps<V> & Composed,
 ) {
-	const { label, options, fit = "field", act, chip, cell, painted } = props;
+	// The value is the viewer's pick once made, else the selection's; a painted
+	// pick draws as a single one, as the placeholder is no array.
+	const draft = useDraft<V | readonly V[] | undefined>(given.value);
+	const painted = given.painted || draft.painted;
+	const props = {
+		...given,
+		value: draft.painted ? undefined : draft.value,
+		onChange: (next: V | V[]) => {
+			draft.edit(next);
+			(given.onChange as (next: V | V[]) => void)(next);
+		},
+	} as Drawn<V>;
+	const { label, options, fit = "field", act, chip, cell } = given;
 	const visible = useShown(painted);
 	const several = isSeveral(props) ? props : undefined;
 	const value = isSeveral(props) ? undefined : props.value;

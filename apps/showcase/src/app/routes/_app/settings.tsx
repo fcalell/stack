@@ -1,7 +1,7 @@
 import {
 	useMutation,
-	useQuery,
 	useQueryClient,
+	useRead,
 } from "@fcalell/plugin-api/tanstack-query";
 import { Banner } from "@fcalell/plugin-react-ui/components/banner";
 import { Form } from "@fcalell/plugin-react-ui/components/form";
@@ -11,7 +11,6 @@ import { Input } from "@fcalell/plugin-react-ui/components/input";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { QrCode } from "@fcalell/plugin-react-ui/components/qr-code";
-import { QueryBoundary } from "@fcalell/plugin-react-ui/components/query-boundary";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
 import { TextArea } from "@fcalell/plugin-react-ui/components/text-area";
 import { toast } from "@fcalell/plugin-react-ui/lib/toast";
@@ -48,17 +47,18 @@ const IMAGES = [
 
 function Settings() {
 	const queryClient = useQueryClient();
-	// The workspace's general settings as the server holds them: General waits
-	// as its fields while they load, and again on Refresh, its typed text kept.
-	const workspace = useQuery(orpc.settings.general.queryOptions());
-	const [typed, setTyped] = useState<{
+	// The workspace's general settings as the server holds them: General's
+	// fields paint while they load, and again on Refresh. The fields keep what
+	// is typed; `edits` collects it for Save, which sends the read under it.
+	const workspace = orpc.settings.general.read();
+	const saved = useRead(workspace);
+	const [edits, setEdits] = useState<{
 		name?: string;
 		about?: string;
 		region?: string;
 	}>({});
-	const name = typed.name ?? workspace.data?.name ?? "";
-	const about = typed.about ?? workspace.data?.about ?? "";
-	const region = typed.region ?? workspace.data?.region ?? "";
+	const edit = (key: keyof typeof edits) => (next: string) =>
+		setEdits((all) => ({ ...all, [key]: next }));
 	const [failed, setFailed] = useState(true);
 	const [weekly, setWeekly] = useState(false);
 	const [digest, setDigest] = useState("week");
@@ -75,40 +75,6 @@ function Settings() {
 		}),
 	);
 	const save = useMutation(orpc.settings.save.mutationOptions());
-	// General's fields, also the boundary's loading form, so the skeleton
-	// stands as many fields as the loaded form.
-	const general = (
-		<>
-			<FormField label="Workspace name">
-				<Input
-					value={name}
-					onChange={(next) => setTyped({ ...typed, name: next })}
-				/>
-			</FormField>
-			<FormField
-				label="Workspace URL"
-				description="Only owners change the address: links already shared stop resolving."
-				disabled
-			>
-				<Input value={workspace.data?.slug ?? ""} onChange={act} />
-			</FormField>
-			<FormField label="Description">
-				<TextArea
-					value={about}
-					onChange={(next) => setTyped({ ...typed, about: next })}
-					budget={120}
-				/>
-			</FormField>
-			<FormField
-				label="Default region"
-				select={{
-					value: region,
-					onChange: (next) => setTyped({ ...typed, region: next }),
-					options: REGIONS,
-				}}
-			/>
-		</>
-	);
 	return (
 		<Place>
 			<Pane
@@ -117,7 +83,10 @@ function Settings() {
 					{
 						icon: "RefreshCw",
 						label: "Refresh",
-						onAct: () => workspace.refetch(),
+						onAct: () =>
+							queryClient.invalidateQueries({
+								queryKey: workspace.options.queryKey,
+							}),
 					},
 				]}
 			>
@@ -129,9 +98,11 @@ function Settings() {
 								label: "Save",
 								onAct: async () => {
 									await save.mutateAsync({
-										name,
-										about,
-										region,
+										name: "",
+										about: "",
+										region: "",
+										...saved,
+										...edits,
 										failed,
 										weekly,
 										digest,
@@ -147,15 +118,39 @@ function Settings() {
 						{
 							title: "General",
 							description: "How the workspace appears to its members.",
-							loading: workspace.isFetching,
+							read: workspace,
+							failed: "General settings did not load.",
 							fields: (
-								<QueryBoundary
-									query={workspace}
-									sentence="General settings did not load."
-									loading={general}
-								>
-									{() => general}
-								</QueryBoundary>
+								<>
+									<FormField label="Workspace name">
+										<Input
+											value={workspace.at((w) => w.name)}
+											onChange={edit("name")}
+										/>
+									</FormField>
+									<FormField
+										label="Workspace URL"
+										description="Only owners change the address: links already shared stop resolving."
+										disabled
+									>
+										<Input value={workspace.at((w) => w.slug)} onChange={act} />
+									</FormField>
+									<FormField label="Description">
+										<TextArea
+											value={workspace.at((w) => w.about)}
+											onChange={edit("about")}
+											budget={120}
+										/>
+									</FormField>
+									<FormField
+										label="Default region"
+										select={{
+											value: workspace.at((w) => w.region),
+											onChange: edit("region"),
+											options: REGIONS,
+										}}
+									/>
+								</>
 							),
 						},
 						{

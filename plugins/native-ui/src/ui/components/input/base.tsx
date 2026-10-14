@@ -1,3 +1,4 @@
+import { useDraft } from "@fcalell/plugin-api/tanstack-query";
 import { commitMoment } from "@fcalell/ui-core/commit";
 import {
 	FIELD_UNIT,
@@ -66,8 +67,15 @@ export function InputBase({
 	autoFocus,
 	cell,
 	inline,
-	painted,
+	painted: given,
 }: InputProps & { cell?: CellFit; inline?: InlineFit; painted?: boolean }) {
+	const draft = useDraft(value);
+	const painted = given || draft.painted;
+	const typed = painted ? "" : draft.value;
+	const edit = (next: string) => {
+		draft.edit(next);
+		onChange(next);
+	};
 	const shown = useShown(painted);
 	const words = useWords();
 	const [moment] = useState(() => commitMoment<string>());
@@ -79,7 +87,7 @@ export function InputBase({
 	const focused = useContext(FieldFocus);
 	const input = useRef<TextInput>(null);
 	const column = useFieldClaim(input);
-	const caret = useCaretAtEnd(autoFocus, value);
+	const caret = useCaretAtEnd(autoFocus, typed);
 	// A placeholder's colour is a prop, never a class: `FIELD_PLACEHOLDER`'s ink.
 	const placeholderInk = useTokenColor("--color-ink-meta");
 	const which = kind ?? "text";
@@ -130,10 +138,10 @@ export function InputBase({
 					painted && "opacity-0",
 				)}
 				placeholderTextColor={placeholderInk}
-				value={value}
+				value={typed}
 				onChangeText={(next) => {
 					touch();
-					onChange(next);
+					edit(next);
 				}}
 				placeholder={placeholder ?? (search ? words.search : undefined)}
 				secureTextEntry={which === "secret"}
@@ -148,20 +156,20 @@ export function InputBase({
 				autoCorrect={which === "text"}
 				onFocus={() => {
 					column.onFocus();
-					moment.focus(value);
+					moment.focus(typed);
 				}}
 				onBlur={() => {
 					column.onBlur();
-					moment.leave(value, commit);
+					moment.leave(typed, commit);
 					cell?.done();
 				}}
 				onSubmitEditing={() => {
-					moment.commit(value, commit);
+					moment.commit(typed, commit);
 					act?.onAct();
 				}}
 				onKeyPress={(event) => {
 					if (!onCommit || event.nativeEvent.key !== "Escape") return;
-					moment.cancel(value, onChange);
+					moment.cancel(typed, edit);
 					input.current?.blur();
 				}}
 			/>

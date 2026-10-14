@@ -62,8 +62,8 @@ yet as its painted form. Your own code never sees the placeholder:
   reads. Pass a module-level `derive`, whose identity is the combine's. Given a read (`isRead`) the
   frame holds its root and draws its failure; given a selection it draws only waiting and empty.
 - `useDraft(datum)` is a field's value: it follows its selection until the viewer edits it, then
-  holds the edit (`edit(next)`); a selection over another read drops the edit. A constant is the
-  initial value.
+  holds the edit (`edit(next)`); a selection over another read drops the edit. A constant passes
+  through unchanged: the app owns it, and a value it changes shows.
 
 One read has one root holder. In dev, two frames given the same read raise `console.error` at mount
 (give one of them a selection), and so does a read that fails with no data while a leaf paints it

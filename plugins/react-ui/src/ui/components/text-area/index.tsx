@@ -1,4 +1,5 @@
 import { Input as Control } from "@base-ui/react/input";
+import { type Datum, useDraft } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import {
 	fieldValue,
@@ -14,6 +15,7 @@ import {
 	POINTER_FOCUS_EDGE,
 	useModality,
 } from "../../lib/modality.ts";
+import { PAINT_CONTROL } from "../../lib/paint.tsx";
 
 // The box draws the field's states, as `Input`'s does.
 const BOX = "flex flex-col";
@@ -32,8 +34,8 @@ function wordCount(value: string): number {
 export interface TextAreaProps extends Closed {
 	/** What is typed: `prose` (the default) or `source` (mono, a machine reads it). */
 	kind?: "prose" | "source";
-	/** The value (text; wraps). */
-	value: string;
+	/** The value (text; wraps). A selection paints the box, inert, until its read lands and follows it until the viewer types. */
+	value: Datum<string>;
 	/** Hears every keystroke's value. */
 	onChange: (value: string) => void;
 	/** Hears the value once the viewer leaves the field having changed it since focus (Enter is a new line); Escape then puts back the value at focus and leaves the field. */
@@ -57,13 +59,20 @@ export function TextArea({
 	autoFocus,
 }: TextAreaProps) {
 	useModality();
+	const draft = useDraft(value);
+	const painted = draft.painted;
+	const shown = painted ? "" : draft.value;
+	const edit = (next: string) => {
+		draft.edit(next);
+		onChange(next);
+	};
 	const source = kind === "source";
-	const commit = useCommit(value, onChange, onCommit, false);
-	const count = budget === undefined ? undefined : wordCount(value);
+	const commit = useCommit(shown, edit, onCommit, false);
+	const count = budget === undefined ? undefined : wordCount(shown);
 	return (
 		<Control
-			value={value}
-			onValueChange={(next) => onChange(next)}
+			value={shown}
+			onValueChange={edit}
 			{...commit}
 			autoCapitalize={source ? "off" : undefined}
 			spellCheck={source ? false : undefined}
@@ -77,11 +86,13 @@ export function TextArea({
 			render={(control, state) => (
 				<div
 					aria-disabled={state.disabled || undefined}
+					inert={painted || undefined}
 					className={cn(
 						textArea({ state: state.valid === false ? "error" : "rest" }),
 						BOX,
 						BOX_FOCUS,
 						state.disabled ? BOX_DISABLED : state.valid !== false && BOX_HOVER,
+						painted && cn(PAINT_CONTROL, "*:invisible"),
 					)}
 				>
 					<textarea

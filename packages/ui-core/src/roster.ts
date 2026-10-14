@@ -373,12 +373,14 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"TEXT_AREA_VALUE",
 				"FIELD_VALUE",
 				"FIELD_PLACEHOLDER",
+				"PAINT.kind.control",
 			],
 			holds: ["TEXT_AREA", "TEXT_AREA_BUDGET", "TEXT_AREA_VALUE"],
 			states: ["rest", "hover", "focus", "disabled", "error"],
 			owns: {
 				roles: ["body", "code", "caption"],
 				colors: [
+					"skeleton",
 					"surface",
 					"edge",
 					"edge-hover",
@@ -439,12 +441,14 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ROW.state.selected",
 				"TEXT.role.meta",
 				"TEXT_STRONG.role.meta",
+				"PAINT.kind.control",
 			],
 			holds: ["SELECT_POPOVER"],
 			states: ["rest", "hover", "focus", "selected", "disabled", "error"],
 			owns: {
 				roles: ["body", "code", "meta"],
 				colors: [
+					"skeleton",
 					"surface",
 					"edge",
 					"edge-hover",
@@ -477,9 +481,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SLIDER_FILL",
 				"SLIDER_REST",
 				"SLIDER_THUMB",
-				"SKELETON.kind.line",
-				"LINE_BOX.role.body",
-				"LINE_BOX.role.meta",
+				"PAINT.kind.control",
 			],
 			holds: [
 				"SLIDER",
@@ -491,7 +493,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SLIDER_REST",
 				"SLIDER_THUMB",
 			],
-			states: [...PRESS, "disabled", "loading"],
+			states: [...PRESS, "disabled"],
 			owns: {
 				roles: ["body", "meta"],
 				colors: [
@@ -1433,8 +1435,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// The control is the one descriptor set (`switch`, `checkbox`, `slider`,
 		// `select`, `options`, `segments`: the component's own props less the
 		// label the field supplies), whose form the field draws, or `children`
-		// for any other control. Inside a loading Section or Group it draws its
-		// own waiting form in the control's form, the field kept mounted, hidden.
+		// for any other control. The label and the description are constants and
+		// always stand; a control given a selection paints itself, inert, until its
+		// read lands.
 		FormField: {
 			props: [
 				"change",
@@ -1465,12 +1468,14 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"TEXT.role.body",
 				"TEXT_STRONG.role.body",
 				"TEXT.role.meta",
+				"PAINT.kind.control",
 			],
 			holds: ["FORM_FIELD", "FORM_FIELD_SUMMARY", "FORM_FIELD_SUMMARY_GLYPH"],
 			states: ["rest", "disabled", "error"],
 			owns: {
 				roles: ["body", "meta"],
 				colors: [
+					"skeleton",
 					"ink-body",
 					"ink-meta",
 					"ink-error",

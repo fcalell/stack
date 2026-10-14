@@ -1,3 +1,4 @@
+import type { Datum } from "@fcalell/plugin-api/tanstack-query";
 import type { Closed } from "../../lib/closed";
 import { SegmentedControlBase } from "./base";
 
@@ -11,7 +12,9 @@ export interface SegmentedControlProps extends Closed {
 	/** What the options switch, the group's name (a short phrase; read aloud, never drawn). */
 	label: string;
 	options: readonly Segment[];
-	value: string;
+	// A selection paints the track, inert, until its read lands and follows it
+	// until the viewer chooses.
+	value: Datum<string>;
 	onChange: (value: string) => void;
 }
 

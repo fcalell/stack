@@ -2,7 +2,9 @@ import { useState } from "react";
 import { FormField } from "../../components/form-field/index.tsx";
 import { Input } from "../../components/input/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
+import { waitingText } from "../waiting.ts";
 import { Wide } from "./layout-context.tsx";
+import { isPaint } from "./painted.tsx";
 
 const change = () => {};
 const REGIONS = [
@@ -100,8 +102,27 @@ function Changes() {
 // Board 41's fields: typed fields under their labels, then a switch and a
 // checkbox inline; in error the messages take the descriptions' places, and
 // disabled the labels take the disabled ink, the descriptions kept. At rest
-// the three-question form follows.
+// the three-question form follows. `PAINT.kind.control` draws a field beside
+// the same field over a value that never arrives: the label and the
+// description stand, the control paints.
 export function drawFormField(frame: ShowcaseFrame) {
+	if (isPaint(frame))
+		return frame.state === "rest" ? (
+			<Wide>
+				<FormField
+					label="Workspace URL"
+					description="Changing it breaks links."
+				>
+					<Input value="acme-inc" onChange={change} />
+				</FormField>
+				<FormField
+					label="Workspace URL"
+					description="Changing it breaks links."
+				>
+					<Input value={waitingText} onChange={change} />
+				</FormField>
+			</Wide>
+		) : undefined;
 	const { state } = frame;
 	const disabled = state === "disabled";
 	const error = state === "error";

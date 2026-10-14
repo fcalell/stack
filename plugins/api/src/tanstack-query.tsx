@@ -231,9 +231,10 @@ export function useFrameRead<S>(
 	return { state, retry };
 }
 
-// A field's value: its datum until the viewer edits it, the edit after. An
+// A field's value: its selection until the viewer edits it, the edit after. An
 // edit belongs to the read it was made over, so a selection over another read
-// drops it (`draftFor`).
+// drops it (`draftFor`). A constant is the app's own state: it passes through,
+// so a value the app changes shows, and `edit` has nothing to keep.
 export function useDraft<T>(value: Datum<T>): {
 	painted: boolean;
 	value: T;
@@ -247,7 +248,9 @@ export function useDraft<T>(value: Datum<T>): {
 	return {
 		painted: !live && drawn.painted,
 		value: live ? live.value : (drawn.value as T),
-		edit: (next) => setDraft({ key, value: next }),
+		edit: (next) => {
+			if (key !== undefined) setDraft({ key, value: next });
+		},
 	};
 }
 

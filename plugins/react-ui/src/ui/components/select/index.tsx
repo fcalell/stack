@@ -1,4 +1,5 @@
 import { Select as Control } from "@base-ui/react/select";
+import { type Datum, useDraft } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type { Option, OptionGroup } from "@fcalell/ui-core/descriptors";
 import { optionBlocked } from "@fcalell/ui-core/list-state";
@@ -19,6 +20,7 @@ import { use, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { useQuietGuards } from "../../lib/guards.ts";
 import { spacing } from "../../lib/media.ts";
+import { PAINT_CONTROL } from "../../lib/paint.tsx";
 import { PortalContainer } from "../../lib/portal.ts";
 import { Icon } from "../icon/index.tsx";
 import { BOX, BOX_DISABLED, BOX_HOVER } from "../input/base.tsx";
@@ -51,8 +53,8 @@ const INDICATOR = "flex shrink-0 text-ink-body";
 
 /** One choice among options, the control a `FormField` labels, describes and marks in error. `V` is read off the options, so an enum's options pick that enum. */
 export interface SelectProps<V extends string | null = string> extends Closed {
-	/** The chosen option's value; none draws the placeholder. */
-	value?: NoInfer<V>;
+	/** The chosen option's value; none draws the placeholder. A selection paints the trigger, inert, until its read lands and follows it until the viewer picks. */
+	value?: Datum<NoInfer<V>>;
 	/** Hears the picked option's value; `null` for an option whose value is `null` (the empty choice). */
 	onChange: (value: NoInfer<V>) => void;
 	/** The choices, flat or under group labels. */
@@ -78,6 +80,9 @@ export function Select<V extends string | null = string>({
 	options,
 	placeholder,
 }: SelectProps<V>) {
+	const draft = useDraft<V | undefined>(value);
+	const painted = draft.painted;
+	const chosen = painted ? undefined : draft.value;
 	const container = use(PortalContainer);
 	useQuietGuards();
 	// Whether a key moved the highlight last; the pointer and a (re)opening clear it.
@@ -96,8 +101,11 @@ export function Select<V extends string | null = string>({
 			modal={false}
 			onOpenChange={() => setKeyed(false)}
 			items={items}
-			value={value ?? null}
-			onValueChange={(next) => onChange(next as V)}
+			value={chosen ?? null}
+			onValueChange={(next) => {
+				draft.edit(next as V);
+				onChange(next as V);
+			}}
 		>
 			<Control.Trigger
 				// The render function hands over the trigger's state (Base UI's Field
@@ -105,6 +113,7 @@ export function Select<V extends string | null = string>({
 				render={(trigger, state) => (
 					<button
 						{...trigger}
+						inert={painted || undefined}
 						className={cn(
 							field({
 								state: state.valid === false ? "error" : "rest",
@@ -116,6 +125,7 @@ export function Select<V extends string | null = string>({
 							state.disabled
 								? BOX_DISABLED
 								: state.valid !== false && BOX_HOVER,
+							painted && cn(PAINT_CONTROL, "*:invisible"),
 						)}
 					>
 						<Control.Value
@@ -165,7 +175,10 @@ export function Select<V extends string | null = string>({
 									</Control.GroupLabel>
 								) : null}
 								{group.options.map((option) => {
-									const blocked = optionBlocked(option, option.value === value);
+									const blocked = optionBlocked(
+										option,
+										option.value === chosen,
+									);
 									const meta = blocked ?? option.description;
 									return (
 										<Control.Item

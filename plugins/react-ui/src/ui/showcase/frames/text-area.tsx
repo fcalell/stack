@@ -6,6 +6,8 @@ import { Pane } from "../../components/pane/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { TextArea } from "../../components/text-area/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
+import { waitingText } from "../waiting.ts";
+import { beside, isPaint } from "./painted.tsx";
 import { Column } from "./place.tsx";
 
 const change = () => {};
@@ -27,8 +29,15 @@ const SOURCE = Array.from(
 // every state; `TEXT_AREA_BUDGET.state.error` is over its budget, the rest
 // under it; `FIELD_VALUE.kind.code` is `source` in a page's `Form`, which
 // fills the page's height and scrolls its long value inside; `search` has no
-// form.
+// form. `PAINT.kind.control` draws the box beside its painted form, a value
+// that never arrives.
 export function drawTextArea(frame: ShowcaseFrame) {
+	if (isPaint(frame))
+		return beside(
+			frame,
+			<TextArea value={SHORT} onChange={change} />,
+			<TextArea value={waitingText} onChange={change} />,
+		);
 	const name = frame.cell.name;
 	if (name === "FIELD_VALUE.kind.search") return undefined;
 	if (name === "FIELD_VALUE.kind.code")

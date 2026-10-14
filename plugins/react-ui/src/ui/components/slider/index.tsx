@@ -1,4 +1,5 @@
 import { Slider as Base } from "@base-ui/react/slider";
+import { type Datum, useDraft } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import {
 	SLIDER,
@@ -10,10 +11,9 @@ import {
 	SLIDER_TRACK,
 	SLIDER_VALUE,
 } from "@fcalell/ui-core/variants";
-import { type CSSProperties, use } from "react";
+import type { CSSProperties } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { LoadingContext } from "../../lib/loading.ts";
-import { SliderWait } from "../../lib/slider-wait.tsx";
+import { PAINT_CONTROL } from "../../lib/paint.tsx";
 
 const BOX = "flex flex-col justify-center";
 const HEAD = "flex items-center justify-between";
@@ -37,8 +37,8 @@ const REST = "grow group-data-disabled:bg-edge";
 export interface SliderProps extends Closed {
 	/** What it sets, drawn over the track and naming the thumb (a short phrase; truncates). */
 	label: string;
-	/** The value, between `min` and `max`. */
-	value: number;
+	/** The value, between `min` and `max`. A selection paints the track, inert, until its read lands and follows it until the viewer moves it. */
+	value: Datum<number>;
 	/** Hears each value the viewer moves it to. */
 	onChange: (value: number) => void;
 	/** The value at the track's start. */
@@ -51,7 +51,7 @@ export interface SliderProps extends Closed {
 	unit?: string;
 }
 
-/** A slider's label and value over its track: the fill up to the thumb, the rest after it. It waits through its Group or Section: in a loading one it draws its waiting form, at the same height. */
+/** A slider's label and value over its track: the fill up to the thumb, the rest after it. Painted, the label stands and the value and the track are filled, at the same height. */
 export function Slider({
 	label,
 	value,
@@ -61,18 +61,23 @@ export function Slider({
 	step,
 	unit,
 }: SliderProps) {
-	const waiting = use(LoadingContext);
-	if (waiting) return <SliderWait />;
+	const draft = useDraft(value);
+	const painted = draft.painted;
+	// Painted, the thumb rests at the start: the value is the placeholder.
+	const at = painted ? min : draft.value;
 	// The fill and the rest share the track less the thumb in proportion to
 	// the value, and the thumb, held at the same point with `edge` alignment (the
 	// pointer maps the track less the thumb), sits in the gap between them, so
 	// neither runs under it.
 	const share =
-		max > min ? Math.min(1, Math.max(0, (value - min) / (max - min))) : 0;
+		max > min ? Math.min(1, Math.max(0, (at - min) / (max - min))) : 0;
 	return (
 		<Base.Root
-			value={value}
-			onValueChange={(next) => onChange(next)}
+			value={at}
+			onValueChange={(next) => {
+				draft.edit(next);
+				onChange(next);
+			}}
 			min={min}
 			max={max}
 			step={step}
@@ -82,25 +87,35 @@ export function Slider({
 			// Base UI marks a disabled slider with `data-disabled` alone; the label
 			// and value read as disabled to a checker through `aria-disabled` here.
 			render={(root, state) => (
-				<div {...root} aria-disabled={state.disabled || undefined} />
+				<div
+					{...root}
+					aria-disabled={state.disabled || undefined}
+					inert={painted || undefined}
+				/>
 			)}
 		>
 			<div className={cn(SLIDER_HEAD, HEAD)}>
 				<Base.Label className={cn(SLIDER_LABEL, LABEL)}>{label}</Base.Label>
-				<Base.Value className={cn(SLIDER_VALUE, VALUE)} />
+				<Base.Value
+					className={cn(SLIDER_VALUE, VALUE, painted && "invisible")}
+				/>
 			</div>
 			<Base.Control
-				className={cn(SLIDER_TRACK, TRACK)}
+				className={cn(
+					SLIDER_TRACK,
+					TRACK,
+					painted && cn(PAINT_CONTROL, "*:invisible"),
+				)}
 				style={{ "--share": share } as CSSProperties}
 			>
 				<span
 					className={cn(SLIDER_FILL, FILL)}
-					style={{ flexGrow: value - min }}
+					style={{ flexGrow: at - min }}
 				/>
 				<span className={GAP} />
 				<span
 					className={cn(SLIDER_REST, REST)}
-					style={{ flexGrow: max - value }}
+					style={{ flexGrow: max - at }}
 				/>
 				<Base.Thumb className={cn(SLIDER_THUMB, THUMB)}>
 					<span className={WASH} />

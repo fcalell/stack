@@ -26,7 +26,6 @@ import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { EmptyBase, type EmptyProps } from "../../lib/empty";
-import { LABEL_LINE } from "../../lib/field-wait";
 import { Ink } from "../../lib/ink";
 import { LoadingContext, useWait, VEIL } from "../../lib/loading";
 import { Painted } from "../../lib/paint";
@@ -44,6 +43,9 @@ import { Text } from "../text";
 
 const BOX = "min-w-0";
 const HEAD_ROW = "flex-row items-center";
+// The waiting description's bar stands in a text line's box: a strut sets the
+// line's height, as the web's `h-lh` does.
+const LABEL_LINE = "flex-row items-center";
 // A labelled act that would squeeze the title column wraps under the title:
 // the column's basis is its own width, so the row breaks once the title, its
 // count and its description cannot stand beside the act.

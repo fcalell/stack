@@ -1,10 +1,13 @@
+import type { Datum } from "@fcalell/plugin-api/tanstack-query";
 import type { Closed } from "../../lib/closed";
 import { SwitchBase } from "./base";
 
 /** A setting that takes effect at once, on or off. */
 export interface SwitchProps extends Closed {
 	/** Whether it is on. */
-	checked: boolean;
+	// A selection paints the track, inert, until its read lands and follows it
+	// until the viewer flips it.
+	checked: Datum<boolean>;
 	/** Hears the next value when the viewer flips it. */
 	onChange: (checked: boolean) => void;
 	/** Its name; the row around it draws the visible label (a short phrase; read aloud, never drawn). */

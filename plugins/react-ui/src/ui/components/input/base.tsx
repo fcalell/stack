@@ -1,4 +1,5 @@
 import { Input as Control } from "@base-ui/react/input";
+import { useDraft } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import {
 	FIELD_GLYPH,
@@ -73,7 +74,7 @@ const SURFACE: Record<InputKind, FieldKind> = {
 	email: "text",
 };
 
-/** The field box every Input renders. `cell` is the `Table` cell it edits in, `inline` the `ListRow` entry or `Rules` term it stands in: each sets its bar fit and name. `painted` is the box while its data is not here: filled at its loaded size, the value not drawn, inert. Outside the package's exports. */
+/** The field box every Input renders. A `value` that is a selection paints until its read lands and follows it until the viewer types. `cell` is the `Table` cell it edits in, `inline` the `ListRow` entry or `Rules` term it stands in: each sets its bar fit and name. `painted` is the box while its data is not here: filled at its loaded size, the value not drawn, inert. Outside the package's exports. */
 export function InputBase({
 	kind,
 	value,
@@ -85,14 +86,21 @@ export function InputBase({
 	autoFocus,
 	cell,
 	inline,
-	painted,
+	painted: given,
 }: InputProps & { cell?: CellFit; inline?: InlineFit; painted?: boolean }) {
 	useModality();
+	const draft = useDraft(value);
+	const painted = given || draft.painted;
+	const shown = painted ? "" : draft.value;
+	const edit = (next: string) => {
+		draft.edit(next);
+		onChange(next);
+	};
 	const words = useWords();
 	const which = kind ?? "text";
 	const surface = SURFACE[which];
 	const search = which === "search";
-	const commit = useCommit(value, onChange, onCommit, true);
+	const commit = useCommit(shown, edit, onCommit, true);
 	// Enter presses the act in place of a submit.
 	const keys = (event: KeyboardEvent<HTMLElement>) => {
 		commit.onKeyDown(event);
@@ -102,8 +110,8 @@ export function InputBase({
 	};
 	return (
 		<Control
-			value={value}
-			onValueChange={(next) => onChange(next)}
+			value={shown}
+			onValueChange={edit}
 			{...commit}
 			onKeyDown={keys}
 			type={TYPES[which]}

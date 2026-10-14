@@ -1,4 +1,5 @@
 import { Switch as Base } from "@base-ui/react/switch";
+import { useDraft } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import { switchThumb, switchTrack } from "@fcalell/ui-core/variants";
 import { PAINT_CONTROL } from "../../lib/paint.tsx";
@@ -22,9 +23,11 @@ export function SwitchBase({
 	checked,
 	onChange,
 	label,
-	painted,
+	painted: given,
 }: SwitchProps & { painted?: boolean }) {
-	const on = checked && !painted;
+	const draft = useDraft(checked);
+	const painted = given || draft.painted;
+	const on = draft.value && !painted;
 	const state = on ? "on" : "off";
 	// A field around it disables it through Base UI's field context, which
 	// sets `disabled` and `data-disabled` on the hit box and the thumb.
@@ -35,7 +38,10 @@ export function SwitchBase({
 			nativeButton
 			render={<button type="button" />}
 			checked={on}
-			onCheckedChange={(next) => onChange(next)}
+			onCheckedChange={(next) => {
+				draft.edit(next);
+				onChange(next);
+			}}
 			aria-label={label}
 			inert={painted || undefined}
 			className={HIT}

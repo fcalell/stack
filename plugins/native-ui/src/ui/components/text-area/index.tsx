@@ -1,3 +1,4 @@
+import { type Datum, useDraft } from "@fcalell/plugin-api/tanstack-query";
 import { commitMoment } from "@fcalell/ui-core/commit";
 import {
 	fieldValue,
@@ -11,13 +12,14 @@ import { useCaretAtEnd } from "../../lib/caret";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FieldDisabled, FieldError, useFieldName } from "../../lib/field";
+import { inertProps, paintControl, useShown } from "../../lib/paint";
 import { useTokenColor } from "../../lib/theme";
 import { useTouched } from "../../lib/touched";
 
 export interface TextAreaProps extends Closed {
 	kind?: "prose" | "source";
-	/** The value (text; wraps). */
-	value: string;
+	/** The value (text; wraps). A selection paints the box, inert, until its read lands and follows it until the viewer types. */
+	value: Datum<string>;
 	onChange: (value: string) => void;
 	onCommit?: (value: string) => void;
 	/** The hint drawn while the value is empty; never the field's name (a short phrase; wraps). */
@@ -46,9 +48,17 @@ export function TextArea({
 	budget,
 	autoFocus,
 }: TextAreaProps) {
+	const draft = useDraft(value);
+	const painted = draft.painted;
+	const typed = painted ? "" : draft.value;
+	const edit = (next: string) => {
+		draft.edit(next);
+		onChange(next);
+	};
+	const shown = useShown(painted);
 	const [moment] = useState(() => commitMoment<string>());
 	const input = useRef<TextInput>(null);
-	const caret = useCaretAtEnd(autoFocus, value);
+	const caret = useCaretAtEnd(autoFocus, typed);
 	const commit = (next: string) => onCommit?.(next);
 	const { touch } = useTouched();
 	const name = useFieldName();
@@ -57,12 +67,14 @@ export function TextArea({
 	// A placeholder's colour is a prop, never a class: `FIELD_PLACEHOLDER`'s ink.
 	const placeholderInk = useTokenColor("--color-ink-meta");
 	const source = kind === "source";
-	const count = budget === undefined ? undefined : wordCount(value);
+	const count = budget === undefined ? undefined : wordCount(typed);
 	return (
 		<View
+			{...inertProps(painted)}
 			className={cn(
 				textArea({ state: error ? "error" : "rest" }),
 				disabled && "bg-fill-disabled",
+				painted && paintControl(shown),
 			)}
 		>
 			<TextInput
@@ -79,26 +91,27 @@ export function TextArea({
 					TEXT_AREA_VALUE,
 					"py-0",
 					disabled && "text-ink-disabled",
+					painted && "opacity-0",
 				)}
 				placeholderTextColor={placeholderInk}
-				value={value}
+				value={typed}
 				onChangeText={(next) => {
 					touch();
-					onChange(next);
+					edit(next);
 				}}
 				placeholder={placeholder}
 				autoCapitalize={source ? "none" : "sentences"}
 				autoCorrect={!source}
-				onFocus={() => moment.focus(value)}
-				onBlur={() => moment.leave(value, commit)}
+				onFocus={() => moment.focus(typed)}
+				onBlur={() => moment.leave(typed, commit)}
 				onKeyPress={(event) => {
 					if (!onCommit || event.nativeEvent.key !== "Escape") return;
-					moment.cancel(value, onChange);
+					moment.cancel(typed, edit);
 					input.current?.blur();
 				}}
 			/>
 			{count !== undefined && budget !== undefined ? (
-				<View className="flex-row justify-end">
+				<View className={cn("flex-row justify-end", painted && "opacity-0")}>
 					<RNText
 						className={cn(
 							textAreaBudget({ state: count > budget ? "error" : "rest" }),

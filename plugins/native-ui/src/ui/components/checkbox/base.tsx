@@ -1,3 +1,4 @@
+import { useDraft } from "@fcalell/plugin-api/tanstack-query";
 import { ICON_STROKE } from "@fcalell/ui-core/tokens";
 import { CHECKBOX_MARK, checkbox } from "@fcalell/ui-core/variants";
 import { Check, type IconNode, Minus } from "lucide";
@@ -24,10 +25,13 @@ export function CheckboxBase({
 	onChange,
 	label,
 	target,
-	painted,
+	painted: given,
 }: CheckboxProps & { target?: boolean; painted?: boolean }) {
+	const draft = useDraft(checked);
+	const painted = given || draft.painted;
+	const value = draft.value;
 	const disabled = useContext(FieldDisabled);
-	const state = STATES[painted ? "false" : (`${checked}` as const)];
+	const state = STATES[painted ? "false" : (`${value}` as const)];
 	if (target)
 		return (
 			<Box
@@ -42,9 +46,13 @@ export function CheckboxBase({
 			{...inertProps(painted === true)}
 			accessibilityRole="checkbox"
 			accessibilityLabel={label}
-			accessibilityState={{ checked, disabled }}
+			accessibilityState={{ checked: painted ? false : value, disabled }}
 			disabled={disabled}
-			onPress={() => onChange(checked !== true)}
+			onPress={() => {
+				const next = value !== true;
+				draft.edit(next);
+				onChange(next);
+			}}
 			className="shrink-0 items-center justify-center size-target"
 		>
 			{({ pressed }) => (

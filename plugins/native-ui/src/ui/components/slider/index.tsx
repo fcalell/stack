@@ -1,3 +1,4 @@
+import { type Datum, useDraft } from "@fcalell/plugin-api/tanstack-query";
 import { formatterFor } from "@fcalell/ui-core/format";
 import {
 	SLIDER,
@@ -15,15 +16,14 @@ import { useResolveClassNames } from "uniwind";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FieldDisabled } from "../../lib/field";
-import { LoadingContext } from "../../lib/loading";
-import { SliderWait } from "../../lib/slider-wait";
+import { inertProps, paintControl, useShown } from "../../lib/paint";
 
 /** A number picked along a range, its label over the track. */
 export interface SliderProps extends Closed {
 	/** What it sets, drawn over the track and naming the thumb (a short phrase; truncates). */
 	label: string;
-	/** The value, between `min` and `max`. */
-	value: number;
+	/** The value, between `min` and `max`. A selection paints the track, inert, until its read lands and follows it until the viewer moves it. */
+	value: Datum<number>;
 	/** Hears each value the viewer moves it to. */
 	onChange: (value: number) => void;
 	/** The value at the track's start. */
@@ -36,7 +36,7 @@ export interface SliderProps extends Closed {
 	unit?: string;
 }
 
-/** A slider's label and value over its track: the fill up to the thumb, the rest after it. It waits through its Group or Section: in a loading one it draws its waiting form, at the same height. */
+/** A slider's label and value over its track: the fill up to the thumb, the rest after it. Painted, the label stands and the value and the track are filled, at the same height. */
 export function Slider({
 	label,
 	value,
@@ -47,7 +47,11 @@ export function Slider({
 	unit,
 }: SliderProps) {
 	const disabled = useContext(FieldDisabled);
-	const waiting = useContext(LoadingContext);
+	const draft = useDraft(value);
+	const painted = draft.painted;
+	// Painted, the thumb rests at the start: the value is the placeholder.
+	const at = painted ? min : draft.value;
+	const shown = useShown(painted);
 	const [pressed, setPressed] = useState(false);
 	// The track's width, which only a touch reads, so its layout renders nothing.
 	const width = useRef(0);
@@ -65,7 +69,9 @@ export function Slider({
 		const span = width.current - size;
 		if (span <= 0) return;
 		const ratio = Math.min(Math.max((x - size / 2) / span, 0), 1);
-		onChange(settle(min + ratio * (max - min)));
+		const next = settle(min + ratio * (max - min));
+		draft.edit(next);
+		onChange(next);
 	}
 
 	// A drag reads `locationX` once, at the grant on the `box-only` track, and
@@ -95,9 +101,8 @@ export function Slider({
 		"number",
 		undefined,
 		unit ? { style: "unit", unit } : {},
-	).format(value);
+	).format(at);
 	const active = pressed && !disabled;
-	if (waiting) return <SliderWait />;
 	return (
 		<View className={cn(SLIDER, "justify-center")}>
 			<View
@@ -119,46 +124,58 @@ export function Slider({
 						SLIDER_VALUE,
 						"shrink-0",
 						disabled && "text-ink-disabled",
+						painted && "opacity-0",
 					)}
 				>
 					{formatted}
 				</RNText>
 			</View>
 			<View
+				{...inertProps(painted)}
 				accessible
 				accessibilityRole="adjustable"
 				accessibilityLabel={label}
 				accessibilityState={{ disabled }}
-				accessibilityValue={{ min, max, now: value }}
+				accessibilityValue={{ min, max, now: at }}
 				pointerEvents="box-only"
 				onLayout={(event) => {
 					width.current = event.nativeEvent.layout.width;
 				}}
-				className={cn(SLIDER_TRACK, "flex-row items-center")}
+				className={cn(
+					SLIDER_TRACK,
+					"flex-row items-center",
+					painted && paintControl(shown),
+				)}
 				{...responder.panHandlers}
 			>
-				<View
-					className={cn(
-						SLIDER_FILL,
-						"grow",
-						active && "bg-toggle-on-hover",
-						disabled && "bg-ink-disabled",
-					)}
-					style={{ flexGrow: value - min }}
-				/>
-				<View
-					className={cn(
-						SLIDER_THUMB,
-						"relative shrink-0 overflow-hidden",
-						disabled && "border-edge bg-fill-disabled",
-					)}
-				>
-					{active ? <View className="absolute inset-0 bg-wash-press" /> : null}
-				</View>
-				<View
-					className={cn(SLIDER_REST, "grow", disabled && "bg-edge")}
-					style={{ flexGrow: max - value }}
-				/>
+				{painted ? null : (
+					<>
+						<View
+							className={cn(
+								SLIDER_FILL,
+								"grow",
+								active && "bg-toggle-on-hover",
+								disabled && "bg-ink-disabled",
+							)}
+							style={{ flexGrow: at - min }}
+						/>
+						<View
+							className={cn(
+								SLIDER_THUMB,
+								"relative shrink-0 overflow-hidden",
+								disabled && "border-edge bg-fill-disabled",
+							)}
+						>
+							{active ? (
+								<View className="absolute inset-0 bg-wash-press" />
+							) : null}
+						</View>
+						<View
+							className={cn(SLIDER_REST, "grow", disabled && "bg-edge")}
+							style={{ flexGrow: max - at }}
+						/>
+					</>
+				)}
 			</View>
 		</View>
 	);

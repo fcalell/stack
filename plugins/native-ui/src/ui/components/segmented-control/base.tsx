@@ -1,3 +1,4 @@
+import { useDraft } from "@fcalell/plugin-api/tanstack-query";
 import {
 	SEGMENTED_CONTROL,
 	segment,
@@ -29,8 +30,10 @@ export function SegmentedControlBase({
 	options,
 	value,
 	onChange,
-	painted,
+	painted: given,
 }: SegmentedControlProps & { painted?: boolean }) {
+	const draft = useDraft(value);
+	const painted = given || draft.painted;
 	const named = useContext(GroupName);
 	const shown = useShown(painted);
 	return (
@@ -41,7 +44,7 @@ export function SegmentedControlBase({
 			className={cn(SEGMENTED_CONTROL, TRACK, painted && paintControl(shown))}
 		>
 			{options.map((option) => {
-				const chosen = option.value === value;
+				const chosen = !painted && option.value === draft.value;
 				const state = chosen ? "selected" : "idle";
 				return (
 					<Pressable
@@ -49,7 +52,10 @@ export function SegmentedControlBase({
 						accessibilityRole="radio"
 						accessibilityLabel={option.label}
 						accessibilityState={{ checked: chosen }}
-						onPress={() => onChange(option.value)}
+						onPress={() => {
+							draft.edit(option.value);
+							onChange(option.value);
+						}}
 						className={cn(
 							segment({ state }),
 							SEGMENT,

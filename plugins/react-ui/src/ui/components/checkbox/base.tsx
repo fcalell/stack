@@ -1,4 +1,5 @@
 import { Checkbox as Base } from "@base-ui/react/checkbox";
+import { useDraft } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import { ICON_STROKE } from "@fcalell/ui-core/tokens";
 import { CHECKBOX_MARK, checkbox } from "@fcalell/ui-core/variants";
@@ -38,9 +39,12 @@ export function CheckboxBase({
 	label,
 	target,
 	cell,
-	painted,
+	painted: given,
 }: CheckboxProps & { target?: LabelFit; cell?: boolean; painted?: boolean }) {
-	const state = STATES[painted ? "false" : (`${checked}` as const)];
+	const draft = useDraft(checked);
+	const painted = given || draft.painted;
+	const value = draft.value;
+	const state = STATES[painted ? "false" : (`${value}` as const)];
 	// A field around it disables it through Base UI's field context, which
 	// sets `disabled` and `data-disabled` on the hit box and the mark.
 	// The hit box is a native button: on a span, Base UI reads the hidden
@@ -49,10 +53,13 @@ export function CheckboxBase({
 		<Base.Root
 			nativeButton
 			render={<button type="button" />}
-			checked={!painted && checked === true}
-			indeterminate={!painted && checked === "mixed"}
+			checked={!painted && value === true}
+			indeterminate={!painted && value === "mixed"}
 			inert={painted || undefined}
-			onCheckedChange={(next) => onChange(next)}
+			onCheckedChange={(next) => {
+				draft.edit(next);
+				onChange(next);
+			}}
 			aria-label={label}
 			aria-labelledby={target?.labelledBy}
 			// In a table cell the grid's cursor reaches it, so it leaves the tab
@@ -72,7 +79,7 @@ export function CheckboxBase({
 				{/* An unchecked box's pointer states are a wash over its own fill. */}
 				{state === "unchecked" ? <span className={WASH} /> : null}
 				<Base.Indicator className={cn(CHECKBOX_MARK, MARK)}>
-					<Mark node={checked === "mixed" ? Minus : Check} />
+					<Mark node={value === "mixed" ? Minus : Check} />
 				</Base.Indicator>
 			</span>
 		</Base.Root>
