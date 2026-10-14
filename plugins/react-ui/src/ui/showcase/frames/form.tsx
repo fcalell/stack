@@ -1,4 +1,5 @@
 import { Field } from "@base-ui/react/field";
+import type { Selection } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import { text, textStrong } from "@fcalell/ui-core/variants";
 import { type ReactNode, useEffect, useRef } from "react";
@@ -8,7 +9,9 @@ import { Group } from "../../components/group/index.tsx";
 import { Input } from "../../components/input/index.tsx";
 import { Switch } from "../../components/switch/index.tsx";
 import { Text } from "../../components/text/index.tsx";
+import type { EmptyProps } from "../../lib/empty.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
+import { readsAt } from "../waiting.ts";
 
 const change = () => {};
 const never = () => new Promise<void>(() => {});
@@ -46,6 +49,48 @@ function Setting(props: { label: string; description: string; on: boolean }) {
 	);
 }
 
+// A form of two fields and its bar over a read, in whichever form the read
+// puts it: waiting (the fields' leaves paint, the filled act with them),
+// failed, missing, empty or landed.
+function Over(props: {
+	read: Selection<unknown>;
+	empty?: EmptyProps;
+	failed?: string;
+}) {
+	return (
+		<Form
+			read={props.read}
+			empty={props.empty}
+			failed={props.failed}
+			bar={{ acts: [{ label: "Save", onAct: never }] }}
+		>
+			<Labelled label="Project name" value="acme-web" />
+			<Labelled label="Region" value="Frankfurt, eu-central-1" />
+		</Form>
+	);
+}
+
+// A form of groups, each its own frame: the first over a read, the second
+// always loaded, so one group's wait or failure never stands in the other's.
+function Grouped(props: { read: Selection<unknown>; failed?: string }) {
+	return (
+		<Form
+			groups={[
+				{
+					title: "General",
+					read: props.read,
+					failed: props.failed,
+					fields: <Labelled label="Workspace name" value="Acme Inc" />,
+				},
+				{
+					title: "Region",
+					fields: <Labelled label="Region" value="Frankfurt, eu-central-1" />,
+				},
+			]}
+		/>
+	);
+}
+
 // The loading frame presses its form's submit act once mounted, into an act
 // that never settles.
 function Submitted(props: { children: ReactNode }) {
@@ -71,6 +116,28 @@ export function drawForm(frame: ShowcaseFrame) {
 	if (name !== "FORM.holds.fields" && name !== "FORM.holds.sections")
 		return undefined;
 	const loading = frame.state === "loading";
+	const reads = readsAt(frame.id);
+	const other = readsAt(`${frame.id}/2`);
+	if (frame.state === "error")
+		return (
+			<div className="flex flex-col gap-sections">
+				<Over read={reads.failing} />
+				<Over read={other.failing} failed="The project did not load." />
+				<Over read={reads.missing} />
+				<Grouped read={readsAt(`${frame.id}/3`).failing} />
+			</div>
+		);
+	if (frame.state === "empty")
+		return (
+			<div className="flex flex-col gap-sections">
+				<Over
+					read={reads.empty}
+					empty={{ sentence: "There are no settings to change." }}
+				/>
+				<Over read={other.empty} />
+				<Grouped read={reads.empty.at((rows) => rows)} />
+			</div>
+		);
 	const drawn =
 		name === "FORM.holds.fields" ? (
 			<div className="flex flex-col gap-fields">
@@ -154,9 +221,18 @@ export function drawForm(frame: ShowcaseFrame) {
 				]}
 			/>
 		);
-	return loading && name === "FORM.holds.fields" ? (
-		<Submitted>{drawn}</Submitted>
-	) : (
-		drawn
+	if (loading)
+		return (
+			<div className="flex flex-col gap-sections">
+				{name === "FORM.holds.fields" ? <Submitted>{drawn}</Submitted> : drawn}
+				<Over read={reads.waiting} />
+				<Grouped read={other.waiting} />
+			</div>
+		);
+	return (
+		<div className="flex flex-col gap-sections">
+			{drawn}
+			<Over read={reads.ready.at((rows) => rows)} />
+		</div>
 	);
 }

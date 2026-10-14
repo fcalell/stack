@@ -25,7 +25,7 @@ import {
 } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";
-import { Button } from "../button/index.tsx";
+import { ButtonBase } from "../button/base.tsx";
 import { Reason } from "../button/reason.tsx";
 import { PendingBar } from "../pending-bar/index.tsx";
 import type { ActionBarProps } from "./index.tsx";
@@ -89,6 +89,8 @@ function kindOf(act: Act, last: boolean): ButtonAct {
 export interface ActionBarInternal {
 	/** The bar keeps the reason's line before a reason shows, so showing it never moves the act it describes. */
 	kept?: boolean;
+	/** The filled act's data is not here: it paints, inert, in its loaded box (a form's or a sheet's submit while its read waits). */
+	painted?: boolean;
 }
 
 function AllAct(props: {
@@ -124,6 +126,7 @@ export function ActionBarBase({
 	loading,
 	pending,
 	kept,
+	painted,
 }: ActionBarProps & ActionBarInternal) {
 	const where = fit ?? "end";
 	const touch = useTouch();
@@ -186,13 +189,14 @@ export function ActionBarBase({
 							value={!ghost && last && pend !== undefined}
 						>
 							<ActInert value={ghost || (busy && !loading)}>
-								<Button
+								<ButtonBase
 									act={kindOf(act, last)}
 									fit={FIT[where]}
 									label={act.label}
 									onAct={run}
 									loading={loading}
 									blocked={act.blocked}
+									painted={last && painted}
 								/>
 							</ActInert>
 						</SubmitContext>

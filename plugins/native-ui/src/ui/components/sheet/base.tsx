@@ -1,3 +1,4 @@
+import type { Selection } from "@fcalell/plugin-api/tanstack-query";
 import type { Act } from "@fcalell/ui-core/descriptors";
 import { pressStands } from "@fcalell/ui-core/reason";
 import {
@@ -39,9 +40,11 @@ import { Text as RNText, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { withUniwind } from "uniwind";
 import { cn } from "../../lib/cn";
+import type { EmptyProps } from "../../lib/empty";
 import { FieldNameContext } from "../../lib/field";
 import { timing } from "../../lib/motion";
 import { RaisedGround } from "../../lib/raised";
+import { FrameBody, useFrame } from "../../lib/read";
 import { type ReasonHost, ReasonHostContext } from "../../lib/reason";
 import {
 	type Touched,
@@ -51,7 +54,8 @@ import {
 } from "../../lib/touched";
 import { useWords } from "../../lib/words";
 import { ActionBar, type ActionBarProps } from "../action-bar";
-import { Button } from "../button";
+import { ActionBarBase } from "../action-bar/base";
+import { ButtonBase } from "../button/base";
 import { IconButton } from "../icon-button";
 import { IconButtonBase } from "../icon-button/base";
 
@@ -105,6 +109,8 @@ interface Parts {
 	reason?: string;
 	// The sentence the submit's last run failed with, in the reason's line.
 	failed?: string;
+	// The body's read waits: the submit and the form's bar paint, inert.
+	painted?: boolean;
 	host?: ReasonHost;
 	touched: Touched;
 }
@@ -196,6 +202,7 @@ function Head() {
 		description,
 		reason,
 		failed,
+		painted,
 		above,
 	} = useParts();
 	return (
@@ -240,12 +247,13 @@ function Head() {
 					{submit ? (
 						<ReasonHostContext.Provider value={host}>
 							<View className={HEAD_SUBMIT}>
-								<Button
+								<ButtonBase
 									fit="bar"
 									label={submit.label}
 									onAct={() => void submit.onAct()}
 									loading={submit.loading}
 									blocked={submit.blocked}
+									painted={painted}
 								/>
 							</View>
 						</ReasonHostContext.Provider>
@@ -272,7 +280,7 @@ function Head() {
 // footer: gorhom measures it with the sheet and keeps it above the keyboard.
 // Nothing in it, it draws nothing and the footer is no height.
 function Foot() {
-	const { foot, acts, bar } = useParts();
+	const { foot, acts, bar, painted } = useParts();
 	if (!foot && !acts && !bar) return null;
 	return (
 		<View className={SHEET_FOOT}>
@@ -284,7 +292,7 @@ function Foot() {
 				</View>
 			) : null}
 			{acts ? <ActionBar acts={acts} /> : null}
-			{bar ? <ActionBar {...bar} /> : null}
+			{bar ? <ActionBarBase {...bar} painted={painted} /> : null}
 		</View>
 	);
 }
@@ -333,6 +341,11 @@ export interface SheetBaseProps {
 	// holds does not move it. Only a menu that searches is tall (its list must
 	// not jump as the filter narrows); the rest grow with their content.
 	tall?: boolean;
+	// What the body holds, read once for the frame (`Sheet`'s `read`): the submit
+	// and the form's bar paint, inert, while it waits.
+	read?: Selection<unknown>;
+	// The body's sentence when the `read` is empty.
+	empty?: EmptyProps;
 	// An act pends: the close act, the scrim and the drag are inert.
 	busy?: boolean;
 	children?: ReactNode;
@@ -367,8 +380,11 @@ export function SheetBase({
 	above,
 	tall: asked,
 	busy,
+	read,
+	empty,
 	children,
 }: SheetBaseProps) {
+	const frame = useFrame(read);
 	const insets = useSafeAreaInsets();
 	const { height } = useWindowDimensions();
 	const ref = useRef<BottomSheetModal>(null);
@@ -419,6 +435,7 @@ export function SheetBase({
 		fit,
 		foot,
 		failed,
+		painted: frame.waits,
 		acts,
 		bar,
 		above,
@@ -443,8 +460,21 @@ export function SheetBase({
 	const end = { paddingBottom: insets.bottom };
 	let body: ReactNode = null;
 	if (form === "menu") body = children;
-	else if (children)
-		body = <View className={cn(SHEET_BODY, BODY)}>{children}</View>;
+	else if (children || read !== undefined)
+		body = (
+			<View
+				accessibilityState={{ busy: frame.holds && frame.waits }}
+				className={cn(SHEET_BODY, BODY)}
+			>
+				{read === undefined ? (
+					children
+				) : (
+					<FrameBody frame={frame} fit="frame" empty={empty}>
+						{children}
+					</FrameBody>
+				)}
+			</View>
+		);
 	return (
 		<BottomSheetModal
 			ref={ref}

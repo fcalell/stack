@@ -622,7 +622,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"more",
 				"foot",
 				"sheet",
+				"read",
 				"empty",
+				"failed",
 				"cover",
 				"wide",
 				"children",
@@ -648,6 +650,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ICON.fit.control",
 				"TEXT.role.heading",
 				"TEXT.role.meta",
+				"PAINT.kind.glyphs",
+				"PAINT.kind.control",
 			],
 			holds: [
 				"PAGE_HEAD",
@@ -661,10 +665,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"PAGE_BODY",
 				"PAGE_BODY_OVER_FOOT",
 			],
-			states: ["rest", "empty"],
+			states: ["rest", "loading", "empty", "error"],
 			owns: {
 				roles: ["title", "heading", "meta"],
 				colors: [
+					"skeleton",
 					"ink-body",
 					"ink-meta",
 					"edge",
@@ -674,7 +679,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"wash-press",
 					"fill-neutral",
 				],
-				radii: ["control", "full"],
+				radii: ["control", "chip", "full"],
 				spacing: ["acts", "page", "sections", "pair", "inside", "fields"],
 				sizes: [
 					"strip",
@@ -801,7 +806,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"act",
 				"more",
 				"loading",
+				"read",
 				"empty",
+				"failed",
 				"children",
 			],
 			draws: [
@@ -832,6 +839,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ICON_BUTTON.fit.bar",
 				"SKELETON.kind.count",
 				"SKELETON.kind.line",
+				"PAINT.kind.glyphs",
+				"PAINT.kind.control",
 				"TEXT.role.caption",
 				"LINE_BOX.role.meta",
 			],
@@ -844,7 +853,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SECTION_TITLE",
 				"SECTION_TOGGLE",
 			],
-			states: [...PRESS, "disabled", "loading", "empty"],
+			states: [...PRESS, "disabled", "loading", "empty", "error"],
 			owns: {
 				roles: ["heading", "meta", "body", "caption"],
 				colors: [
@@ -938,7 +947,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// of its body (web), in the sheet's pinned foot (phone), a Gate's across
 		// the column.
 		Form: {
-			props: ["children", "groups", "bar"],
+			props: ["children", "groups", "bar", "read", "empty", "failed"],
 			draws: [
 				"FORM",
 				"FORM_FOOT",
@@ -948,7 +957,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"TEXT.role.meta",
 			],
 			holds: ["FORM", "FORM_FOOT", "FORM_GROUP", "FORM_LEGEND"],
-			states: ["rest", "loading"],
+			states: ["rest", "loading", "empty", "error"],
 			owns: {
 				roles: ["heading", "body", "meta"],
 				colors: ["edge", "ink-body", "ink-meta", "raised"],
@@ -1602,6 +1611,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"foot",
 				"failed",
 				"fit",
+				"read",
+				"empty",
 				"form",
 				"children",
 			],
@@ -1630,6 +1641,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"BUTTON.act.primary",
 				"BUTTON.fit.bar",
 				"BUTTON_LABEL.act.primary",
+				"PAINT.kind.control",
 			],
 			holds: [
 				"SHEET",
@@ -1645,10 +1657,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SHEET_DOCKED_FOOT",
 				"SHEET_DOCKED_FLOOR",
 			],
-			states: ["rest", "disabled", "loading", "error"],
+			states: ["rest", "disabled", "loading", "empty", "error"],
 			owns: {
 				roles: ["heading", "body", "meta"],
 				colors: [
+					"skeleton",
 					"scrim",
 					"raised",
 					"edge-raised",

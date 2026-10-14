@@ -20,7 +20,7 @@ import { LoadingContext } from "../../lib/loading";
 import { ActFailed, REASON_AT_REST, ReasonHostContext } from "../../lib/reason";
 import { useTouched } from "../../lib/touched";
 import { useWords } from "../../lib/words";
-import { Button } from "../button";
+import { ButtonBase } from "../button/base";
 import { PendingBar } from "../pending-bar";
 import type { ActionBarProps } from "./index";
 import { ActionBarWait } from "./wait";
@@ -66,6 +66,9 @@ export interface ActionBarInternal {
 	// The bar keeps the reason's line before a reason shows, so showing it never
 	// moves the act it describes.
 	kept?: boolean;
+	// The filled act's data is not here: it paints, inert, in its loaded box (a
+	// form's or a sheet's submit while its read waits).
+	painted?: boolean;
 }
 
 function AllAct(props: { label: string; applies: boolean; onAct: () => void }) {
@@ -127,6 +130,7 @@ export function ActionBarBase({
 	loading,
 	pending,
 	kept,
+	painted,
 }: ActionBarProps & ActionBarInternal) {
 	const where = fit ?? "end";
 	const failed = useContext(ActFailed);
@@ -178,7 +182,7 @@ export function ActionBarBase({
 						const loading = act.loading === true || (last && running);
 						const run = last ? runFilled : act.onAct;
 						return (
-							<Button
+							<ButtonBase
 								key={act.label}
 								act={kindOf(act, last)}
 								fit={FIT[where]}
@@ -186,6 +190,7 @@ export function ActionBarBase({
 								onAct={ghost || (busy && !loading) ? undefined : run}
 								loading={loading}
 								blocked={act.blocked}
+								painted={last && painted}
 							/>
 						);
 					})}

@@ -1,3 +1,8 @@
+import {
+	type Datum,
+	type Selection,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type {
 	IconAct,
@@ -27,12 +32,15 @@ import {
 } from "../../lib/frame.ts";
 import { HeadingContext } from "../../lib/heading.ts";
 import { DistanceContext, useTouch } from "../../lib/media.ts";
+import { Painted } from "../../lib/paint.tsx";
 import { partText } from "../../lib/parts.ts";
+import { FrameBody, useFrame } from "../../lib/read.tsx";
 import { useScrolls } from "../../lib/scrolls.ts";
+import { useSettleName } from "../../lib/settle.ts";
 import { useWords } from "../../lib/words.tsx";
-import { IconButtonLink } from "../icon-button/base.tsx";
+import { IconButtonBase, IconButtonLink } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
-import { Menu } from "../menu/index.tsx";
+import { MenuBase } from "../menu/base.tsx";
 import { SheetDocked } from "../sheet/docked.tsx";
 import type { SheetProps } from "../sheet/index.tsx";
 import { SwitcherPick } from "../shell/switcher.tsx";
@@ -89,20 +97,24 @@ const DOCKED =
 
 /** A column of a `Place`. */
 export interface PaneProps extends Closed {
-	/** The Pane's title, an `h1` (a short phrase; truncates on the desktop, wraps on touch). On a record's Pane it is the record's name; while the record loads the app passes the generic word for the kind ("Deploy"). */
-	title: Part;
+	/** The Pane's title, an `h1` (a short phrase; truncates on the desktop, wraps on touch). On a record's Pane it is the record's name, given as a selection of the record's read: it paints while the record loads, and the Pane carries no name until it lands. */
+	title: Datum<Part>;
 	/** The route the Pane returns to: Back where it stands alone, Close where a Pane stands before it. None draws no back act. */
 	back?: Route;
-	/** Icon acts after the title, in order; a create act is one of them, and on a record's Pane the record's acts. */
-	actions?: IconAct[];
-	/** The acts past the actions, in a menu under the more act. */
-	more?: MenuItem[];
+	/** Icon acts after the title, in order; a create act is one of them, and on a record's Pane the record's acts. An act paints, inert, while the `read` waits or its own selection does. */
+	actions?: readonly Datum<IconAct>[];
+	/** The acts past the actions, in a menu under the more act; the more act paints, inert, as an action does. */
+	more?: Datum<readonly MenuItem[]>;
 	/** The field (a `MessageInput`) or the selection bar (an `ActionBar` with `chosen`) docked at the Pane's foot, the body scrolling under it. */
 	foot?: ReactNode;
 	/** A task over the foot: while it is `open` the sheet docks there in the foot's place, the body scrolling above it, and closing hands focus back to the foot's input. */
 	sheet?: SheetProps;
-	/** The Pane holds nothing yet: this stands in place of its body, centred in what the body leaves, or at the body's top over its own `children`. */
+	/** What the Pane's page holds, read once for the frame: while it waits the loaded tree paints, its failure and a missing record fill the page in place of the body, and an empty selection draws `empty`. A read (the root) draws its failure and says it is busy; a selection draws only its wait and its emptiness. */
+	read?: Selection<unknown>;
+	/** The Pane holds nothing yet: this stands in place of its body, centred in what the body leaves, or at the body's top over its own `children`. With a `read` it stands only when the selection is empty. */
 	empty?: EmptyProps;
+	/** What the page says when the `read` fails, in place of the generic sentence (a sentence; wraps). */
+	failed?: string;
 	/** The Pane spans its Place, the Panes before it hidden, mounted. */
 	cover?: boolean;
 	/** What it holds stands at the Pane's width, not the measure: a `Canvas`, a code `Diff`. */
@@ -119,7 +131,9 @@ export function Pane({
 	more,
 	foot,
 	sheet,
+	read,
 	empty,
+	failed,
 	cover,
 	wide,
 	children,
@@ -129,6 +143,13 @@ export function Pane({
 	const words = useWords();
 	const switcher = use(ShellSwitcher);
 	const titleId = useId();
+	const frame = useFrame(read);
+	const settle = useSettleName();
+	const [name, overflowAt, ...actionAt] = useSelections([
+		title,
+		more,
+		...(actions ?? []),
+	]);
 	const [paneNode, setPaneNode] = useState<HTMLElement | null>(null);
 	usePaneFocus(paneNode);
 	const [bodyNode, setBodyNode] = useState<HTMLDivElement | null>(null);
@@ -170,17 +191,38 @@ export function Pane({
 				<SwitcherPick switcher={switcher} touch />
 			</span>
 		) : null;
-	const acts = (actions ?? []).map((action) => (
-		<IconButton key={action.label} {...action} fit={fit} />
-	));
-	const overflow = more?.length ? (
-		<Menu label={words.more} items={more} />
-	) : null;
+	// An act is painted, inert, while the read waits or its own datum does; a
+	// selection's shape is unknown until it lands, so its paint is a bare glyph.
+	const acts = actionAt.map((one, at) =>
+		one.painted || frame.waits ? (
+			<IconButtonBase
+				// biome-ignore lint/suspicious/noArrayIndexKey: a painted act has no name, and the acts stand in a fixed order
+				key={at}
+				icon={one.painted ? "Ellipsis" : one.value.icon}
+				fit={fit}
+				label={one.painted ? "" : one.value.label}
+				painted
+			/>
+		) : (
+			<IconButton key={one.value.label} {...one.value} fit={fit} />
+		),
+	);
+	const items = overflowAt.painted ? [] : (overflowAt.value ?? []);
+	const overflow =
+		overflowAt.painted || items.length ? (
+			<MenuBase
+				label={words.more}
+				title={words.more}
+				items={items}
+				painted={overflowAt.painted || frame.waits}
+			/>
+		) : null;
 	const heading = (
 		<h1 id={titleId} className={cn(text({ role: "title" }), TITLE)}>
-			{partText(title)}
+			{name.painted ? <Painted role="title" /> : partText(name.value)}
 		</h1>
 	);
+	const named = name.painted ? undefined : titleId;
 	// The head is one tree on both densities, so crossing the density line
 	// keeps its acts and their focus.
 	const head = (
@@ -199,11 +241,13 @@ export function Pane({
 	);
 	return (
 		<BackRoute value={back}>
-			<PageTitle value={titleId}>
+			<PageTitle value={named}>
 				<HeadingContext value={2}>
 					<section
 						ref={setPaneNode}
-						aria-labelledby={titleId}
+						aria-labelledby={named}
+						aria-busy={(frame.holds && frame.waits) || undefined}
+						style={read === undefined ? undefined : settle}
 						data-page=""
 						data-cover={cover ? "" : undefined}
 						className={PANE}
@@ -222,14 +266,25 @@ export function Pane({
 									docked && PAGE_BODY_OVER_FOOT,
 								)}
 							>
-								{empty ? (
+								{read === undefined && empty ? (
 									<EmptyBase fit="page" tone="rest" {...empty} />
 								) : (
-									children
+									<FrameBody
+										frame={frame}
+										fit="page"
+										empty={empty}
+										failed={failed}
+									>
+										{children}
+									</FrameBody>
 								)}
 							</div>
 							{docked ? (
-								<div ref={dock} className={cn(FOOT_DOCKED, DOCKED)}>
+								<div
+									ref={dock}
+									inert={frame.waits || undefined}
+									className={cn(FOOT_DOCKED, DOCKED)}
+								>
 									{docked}
 								</div>
 							) : null}

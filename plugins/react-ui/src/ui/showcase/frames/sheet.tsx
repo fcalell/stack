@@ -14,6 +14,7 @@ import { ConfirmSheet } from "../../components/sheet/confirm.tsx";
 import { Sheet } from "../../components/sheet/index.tsx";
 import { Thread } from "../../components/thread/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
+import { readsAt } from "../waiting.ts";
 import { StandInRows } from "./layout-context.tsx";
 import { press, Stage } from "./overlay-stage.tsx";
 import { TURN, TURNS } from "./thread.tsx";
@@ -193,6 +194,25 @@ const pressSubmit = (stage: HTMLElement) =>
 		press(stage.querySelector('[aria-disabled="true"]:not([aria-busy])')),
 	);
 
+// The body's read by state: the data landed, the wait that holds the submit
+// painted and inert, the failure with its Retry in the body's place, and an
+// empty selection.
+function readOf(frame: ShowcaseFrame) {
+	const reads = readsAt(frame.id);
+	switch (frame.state) {
+		case "rest":
+			return reads.ready.at((rows) => rows);
+		case "loading":
+			return reads.waiting;
+		case "error":
+			return reads.failing;
+		case "empty":
+			return reads.empty.at((rows) => rows);
+		default:
+			return undefined;
+	}
+}
+
 const NAME = {
 	value: "acme-web",
 	label: "Type acme-web to confirm",
@@ -234,7 +254,9 @@ const typeAndRun = (stage: HTMLElement) =>
 // The desktop card (the bottom sheet on touch) in its four states (the failed
 // one a line under the act in the foot, under the head's act on touch) on its
 // form cell, a second page with back on the body icon act cell, the pane fit on the
-// pane cell (two Sections in its body, a sections gap apart), and the confirm on the primary act cell: its typed name blocked
+// pane cell (two Sections in its body, a sections gap apart; over a read it
+// is the data landed at rest, the submit painted and inert while it waits, the
+// failure with Retry in the body's place, and the empty sentence), and the confirm on the primary act cell: its typed name blocked
 // on `disabled` (the reason shown as the card's is), typed and its act
 // running on `loading`. The rows inside are context. The bar fit cell draws the
 // docked form, since the docked foot draws no matrix cell of its own: a
@@ -277,10 +299,23 @@ export function drawSheet(frame: ShowcaseFrame) {
 				</Sheet>
 			</Stage>
 		);
-	if (cell === "SHEET_DESKTOP.fit.pane" && state === "rest")
+	if (cell === "SHEET_DESKTOP.fit.pane" && state !== "disabled")
 		return (
 			<Stage contain>
-				<Sheet open onClose={act} title="Details" fit="pane">
+				<Sheet
+					open
+					onClose={act}
+					title="Details"
+					description="acme-web · production"
+					submit={state === "rest" ? undefined : { label: "Save", onAct: act }}
+					fit="pane"
+					read={readOf(frame)}
+					empty={
+						state === "empty"
+							? { sentence: "Nothing to show for this deploy." }
+							: undefined
+					}
+				>
 					<Section title="Properties">
 						<StandInRows />
 					</Section>

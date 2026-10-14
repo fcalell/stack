@@ -1,3 +1,8 @@
+import {
+	type Datum,
+	type Selection,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import type { IconAct, MenuItem, Part } from "@fcalell/ui-core/descriptors";
 import {
 	FOOT_DOCKED,
@@ -27,11 +32,14 @@ import {
 } from "../../lib/frame";
 import { Lifted, Scroll } from "../../lib/hosts";
 import { navigate } from "../../lib/navigate";
+import { inertProps, Painted } from "../../lib/paint";
 import { partText } from "../../lib/parts";
+import { FrameBody, useFrame } from "../../lib/read";
 import type { Route } from "../../lib/route";
 import { useWords } from "../../lib/words";
 import { IconButton } from "../icon-button";
-import { Menu } from "../menu";
+import { IconButtonBase } from "../icon-button/base";
+import { MenuBase } from "../menu/base";
 import type { SheetProps } from "../sheet";
 import { SheetDocked } from "../sheet/docked";
 import { SwitcherPick } from "../shell/switcher";
@@ -55,20 +63,24 @@ const DOCKED = "shrink-0 items-center";
 
 /** A page of a `Place`: on the phone one screen. */
 export interface PaneProps extends Closed {
-	/** The page's title, its one header (a short phrase; wraps). On a record's Pane it is the record's name; while the record loads the app passes the generic word for the kind ("Deploy"). */
-	title: Part;
+	/** The page's title, its one header (a short phrase; wraps). On a record's Pane it is the record's name, given as a selection of the record's read: it paints while the record loads. */
+	title: Datum<Part>;
 	/** The route the Pane returns to: a Back act leads its bar. None leaves the shell's switcher there. */
 	back?: Route;
-	/** Icon acts after the title, in order; a create act is one of them, and on a record's Pane the record's acts. */
-	actions?: IconAct[];
-	/** The acts past the actions, in a menu under the more act. */
-	more?: MenuItem[];
+	/** Icon acts after the title, in order; a create act is one of them, and on a record's Pane the record's acts. An act paints, inert, while the `read` waits or its own selection does. */
+	actions?: readonly Datum<IconAct>[];
+	/** The acts past the actions, in a menu under the more act; the more act paints, inert, as an action does. */
+	more?: Datum<readonly MenuItem[]>;
 	/** The field (a `MessageInput`) or the selection bar (an `ActionBar` with `chosen`) docked at the Pane's foot over the keyboard, the body scrolling past it. */
 	foot?: ReactNode;
 	/** A task over the foot: while it is `open` the sheet docks there in the foot's place, the body scrolling above it, and closing hands focus back to the foot's input. */
 	sheet?: SheetProps;
-	/** The Pane holds nothing yet: this stands in place of its body, centred in what the body leaves, or at the body's top over its own `children`. */
+	/** What the Pane's page holds, read once for the frame: while it waits the loaded tree paints, its failure and a missing record fill the page in place of the body, and an empty selection draws `empty`. A read (the root) draws its failure and says it is busy; a selection draws only its wait and its emptiness. */
+	read?: Selection<unknown>;
+	/** The Pane holds nothing yet: this stands in place of its body, centred in what the body leaves, or at the body's top over its own `children`. With a `read` it stands only when the selection is empty. */
 	empty?: EmptyProps;
+	/** What the page says when the `read` fails, in place of the generic sentence (a sentence; wraps). */
+	failed?: string;
 	/** Accepted for the web's sake; on the phone every Pane is a screen of the router's stack, so it changes nothing. */
 	cover?: boolean;
 	/** Accepted for the web's sake; the phone's body is one column at the screen's width, so it changes nothing. */
@@ -85,11 +97,18 @@ export function Pane({
 	more,
 	foot,
 	sheet,
+	read,
 	empty,
+	failed,
 	children,
 }: PaneProps) {
 	const words = useWords();
-	const name = partText(title);
+	const frame = useFrame(read);
+	const [name, overflowAt, ...actionAt] = useSelections([
+		title,
+		more,
+		...(actions ?? []),
+	]);
 	const far = useContext(DistanceContext);
 	const switcher = useContext(ShellSwitcher);
 	// The claim a docked sheet leaves the foot for the input that returns.
@@ -112,14 +131,36 @@ export function Pane({
 		) : switcher ? (
 			<SwitcherPick switcher={switcher} />
 		) : null;
+	// An act is painted, inert, while the read waits or its own datum does; a
+	// selection's shape is unknown until it lands, so its paint is a bare glyph.
+	const acts = actionAt.map((one, at) =>
+		one.painted || frame.waits ? (
+			<IconButtonBase
+				// biome-ignore lint/suspicious/noArrayIndexKey: a painted act has no name, and the acts stand in a fixed order
+				key={at}
+				icon={one.painted ? "Ellipsis" : one.value.icon}
+				fit="body"
+				label={one.painted ? "" : one.value.label}
+				onAct={() => {}}
+				painted
+			/>
+		) : (
+			<IconButton key={one.value.label} {...one.value} fit="body" />
+		),
+	);
+	const items = overflowAt.painted ? [] : (overflowAt.value ?? []);
 	return (
 		<BackRoute.Provider value={back}>
-			<View className={PANE}>
+			<View
+				accessibilityState={{ busy: frame.holds && frame.waits }}
+				className={PANE}
+			>
 				<View className={cn(PAGE_HEAD, PAGE_HEAD_TOUCH, far && PAGE_HEAD_ROOM)}>
 					<View className={cn(PAGE_TOP_BAR, TOP_BAR)}>
 						{lead ? <View className={PAGE_TOP_BAR_START}>{lead}</View> : null}
 						<RNText
 							accessibilityRole="header"
+							{...inertProps(name.painted)}
 							className={cn(
 								text({ role: "title" }),
 								TITLE,
@@ -127,13 +168,18 @@ export function Pane({
 								PAGE_TITLE_BLOCK,
 							)}
 						>
-							{name}
+							{name.painted ? <Painted role="title" /> : partText(name.value)}
 						</RNText>
 						<View className={cn(ACTS, PAGE_TOP_BAR_END)}>
-							{(actions ?? []).map((action) => (
-								<IconButton key={action.label} {...action} fit="body" />
-							))}
-							{more?.length ? <Menu label={words.more} items={more} /> : null}
+							{acts}
+							{overflowAt.painted || items.length ? (
+								<MenuBase
+									label={words.more}
+									title={words.more}
+									items={items}
+									painted={overflowAt.painted || frame.waits}
+								/>
+							) : null}
 						</View>
 					</View>
 				</View>
@@ -153,16 +199,26 @@ export function Pane({
 								BODY_CONTENT,
 							)}
 						>
-							{empty ? (
+							{read === undefined && empty ? (
 								<EmptyBase fit="page" tone="rest" {...empty} />
 							) : (
-								children
+								<FrameBody
+									frame={frame}
+									fit="page"
+									empty={empty}
+									failed={failed}
+								>
+									{children}
+								</FrameBody>
 							)}
 						</Scroll>
 						<ToastRoom />
 					</View>
 					{docked ? (
-						<View className={cn(FOOT_DOCKED, DOCKED)}>
+						<View
+							{...inertProps(frame.waits)}
+							className={cn(FOOT_DOCKED, DOCKED)}
+						>
 							<FootReturn.Provider value={claim}>{docked}</FootReturn.Provider>
 						</View>
 					) : null}

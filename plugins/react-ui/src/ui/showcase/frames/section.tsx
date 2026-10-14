@@ -15,6 +15,7 @@ import { Section } from "../../components/section/index.tsx";
 import { Thread } from "../../components/thread/index.tsx";
 import { TouchedContext } from "../../lib/touched.ts";
 import type { ShowcaseFrame } from "../cells.ts";
+import { type Reads, readsAt } from "../waiting.ts";
 import {
 	STAND_IN_ENTRIES,
 	STAND_IN_ROW,
@@ -112,6 +113,82 @@ export function Described(props: { loading?: boolean }) {
 	);
 }
 
+const MENU = [
+	{ label: "Export members", onAct: act },
+	{ label: "Remove all", onAct: act, destructive: true },
+];
+
+// A Section over a read still to answer: its description, act and more paint,
+// inert, with a body's leaves where they stand; the count is not drawn. The
+// first holds the read as its root (it is busy), the second a selection of it.
+function Waiting({ reads }: { reads: Reads }) {
+	const { waiting } = reads;
+	return (
+		<Wide>
+			<Section
+				title="Members"
+				count={3}
+				description={waiting.at(() => DESCRIPTION)}
+				act={waiting.at(() => INVITE)}
+				more={waiting.at(() => MENU)}
+				read={waiting}
+			>
+				<Group items={STAND_IN_ENTRIES} />
+			</Section>
+			<Section
+				title="Devices"
+				act={{ label: "Add", onAct: act }}
+				read={waiting.at((rows) => rows)}
+			>
+				<Group items={STAND_IN_ENTRIES} />
+			</Section>
+		</Wide>
+	);
+}
+
+// A read that fails stands in the body's place with its sentence and Retry,
+// and one that answers not found with the missing form; the head stays.
+function Failed(props: { first: Reads; second: Reads }) {
+	const { missing } = props.first;
+	return (
+		<Wide>
+			<Section title="Members" act={INVITE} read={props.first.failing}>
+				<Group items={STAND_IN_ENTRIES} />
+			</Section>
+			<Section
+				title="Members"
+				failed="Members did not load."
+				read={props.second.failing}
+			>
+				<Group items={STAND_IN_ENTRIES} />
+			</Section>
+			<Section title="Members" read={missing}>
+				<Group items={STAND_IN_ENTRIES} />
+			</Section>
+		</Wide>
+	);
+}
+
+// A read that answers nothing draws the Section's own `empty`, or the generic
+// sentence.
+function Nothing(props: { first: Reads; second: Reads }) {
+	return (
+		<Wide>
+			<Section
+				title="Webhooks"
+				read={props.first.empty}
+				empty={{
+					icon: "Webhook",
+					title: "No endpoints",
+					sentence: "Add an endpoint to receive an event on each deploy.",
+					act: { label: "Add endpoint", onAct: act },
+				}}
+			/>
+			<Section title="Needs you" read={props.second.empty} />
+		</Wide>
+	);
+}
+
 function Members(props: { blocked?: boolean }) {
 	return (
 		<Section
@@ -132,26 +209,35 @@ function Members(props: { blocked?: boolean }) {
 // loading form too), a Section over a Form, or over fields and a bar with no Form, whose
 // fields and bar each wait in their own form, and a Form's loading group. At rest the cell picks the form: the icon act a
 // column's head, the chevron an open and a folded section over a List, the
-// destructive act a section over a List whose act removes it, the skeleton cells the loading form, every other cell the section over a Group, then a Section with a description over a Group. An empty section is drawn by its `empty` state: framed with a mark, a title and an act, and the quiet sentence alone.
+// destructive act a section over a List whose act removes it, the skeleton cells the loading form, the paint cells a Section over a read that waits (its description, act and more painted, no count), every other cell the section over a Group, then a Section with a description over a Group. The error state draws a read that fails (its Retry, with and without a sentence of its own) and one that answers not found. A Section over a read that answered rows shows their count. An empty section is drawn by its `empty` state: framed with a mark, a title and an act, and the quiet sentence alone, then over a read that answers nothing.
 export function drawSection(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
 	const add = { label: "Add", onAct: act };
+	const reads = readsAt(frame.id);
+	if (frame.state === "error")
+		return <Failed first={reads} second={readsAt(`${frame.id}/2`)} />;
 	if (frame.state === "empty")
 		return (
-			<Wide>
-				<Section
-					title="Webhooks"
-					description="Where Acme posts deploy events."
-					empty={{
-						icon: "Webhook",
-						title: "No endpoints",
-						sentence:
-							"Add an endpoint to receive an event each time a deploy finishes.",
-						act: { label: "Add endpoint", onAct: act },
-					}}
-				/>
-				<Section title="Needs you" empty={{ sentence: "Nothing needs you." }} />
-			</Wide>
+			<>
+				<Nothing first={reads} second={readsAt(`${frame.id}/2`)} />
+				<Wide>
+					<Section
+						title="Webhooks"
+						description="Where Acme posts deploy events."
+						empty={{
+							icon: "Webhook",
+							title: "No endpoints",
+							sentence:
+								"Add an endpoint to receive an event each time a deploy finishes.",
+							act: { label: "Add endpoint", onAct: act },
+						}}
+					/>
+					<Section
+						title="Needs you"
+						empty={{ sentence: "Nothing needs you." }}
+					/>
+				</Wide>
+			</>
 		);
 	if (frame.state === "disabled")
 		return (
@@ -162,6 +248,8 @@ export function drawSection(frame: ShowcaseFrame) {
 				</TouchedContext>
 			</Wide>
 		);
+	if (frame.state === "loading" && cell.startsWith("PAINT"))
+		return <Waiting reads={reads} />;
 	if (frame.state === "loading" || cell.startsWith("SKELETON"))
 		return (
 			<Wide>
@@ -251,6 +339,9 @@ export function drawSection(frame: ShowcaseFrame) {
 	return (
 		<Wide>
 			<Members />
+			<Section title="Devices" act={INVITE} read={reads.ready}>
+				<Group items={STAND_IN_ENTRIES} />
+			</Section>
 			<Section title="Memory" description="What the workspace remembers.">
 				<Group items={STAND_IN_ENTRIES} />
 			</Section>

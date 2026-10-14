@@ -1,4 +1,9 @@
 import { Collapsible } from "@base-ui/react/collapsible";
+import {
+	type Datum,
+	type Selection,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type {
 	Act,
@@ -6,6 +11,7 @@ import type {
 	MenuItem,
 	Part,
 } from "@fcalell/ui-core/descriptors";
+import { paintText } from "@fcalell/ui-core/paint";
 import {
 	lineBox,
 	SECTION,
@@ -23,14 +29,17 @@ import type { Closed } from "../../lib/closed.ts";
 import { EmptyBase, type EmptyProps } from "../../lib/empty.tsx";
 import { DEEPER, HeadingContext } from "../../lib/heading.ts";
 import { LoadingContext, useWait, VEIL } from "../../lib/loading.ts";
+import { Painted } from "../../lib/paint.tsx";
+import { FrameBody, useFrame } from "../../lib/read.tsx";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useSettleName } from "../../lib/settle.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";
-import { Button } from "../button/index.tsx";
+import { ButtonBase } from "../button/base.tsx";
 import { Reason } from "../button/reason.tsx";
 import { Count } from "../count/index.tsx";
 import { Icon } from "../icon/index.tsx";
+import { IconButtonBase } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 import { MenuBase } from "../menu/base.tsx";
 import { Text } from "../text/index.tsx";
@@ -63,22 +72,26 @@ function partText(part: Part): string {
 export interface SectionProps extends Closed {
 	/** The heading (a short phrase; truncates). */
 	title: Part;
-	/** The body's total, in the muted ink after the title; none is drawn without it, at zero (the body's empty state says so) or while the section loads. */
+	/** The body's total, in the muted ink after the title; none is drawn without it, at zero (the body's empty state says so) or while the section waits. With a `read` of an array the total is the array's length once it lands, so none is given. */
 	count?: number;
-	/** Under the title (a sentence; wraps). While the Section loads, `""` stands one meta-height bar where the sentence will be and an undefined `description` stands none; loaded, `""` draws no line, as an undefined one. */
-	description?: string;
+	/** Under the title (a sentence; wraps). It paints where it will stand while its selection waits. While the Section loads, `""` stands one meta-height bar where the sentence will be and an undefined `description` stands none; loaded, `""` draws no line, as an undefined one. */
+	description?: Datum<string>;
 	/** Set, the title folds the body, and this is its initial fold: `true` starts folded, `false` open; later changes are not read. */
 	folded?: boolean;
 	/** Called as a foldable section opens or closes, with whether it is now open. */
 	onToggle?: (open: boolean) => void;
-	/** The section's one act, at the head's end: a labelled act or an icon act. */
-	act?: Act | IconAct;
-	/** The section's other acts, in a menu under the more act after its act (destructive ones marked); the head row never moves, and a foldable section's more does not fold it. */
-	more?: readonly MenuItem[];
+	/** The section's one act, at the head's end: a labelled act or an icon act. It paints, inert, while the `read` waits or its own selection does. */
+	act?: Datum<Act | IconAct>;
+	/** The section's other acts, in a menu under the more act after its act (destructive ones marked); the head row never moves, and a foldable section's more does not fold it. It paints, inert, as the act does. */
+	more?: Datum<readonly MenuItem[]>;
 	/** The head is busy and the body waits: the count (when there is one) is undrawn, and each part of the body draws its own waiting form (a Group or a List its skeleton rows, a Prose, Thread, Code, Meter, Slider, DefinitionRow, FormField or ActionBar its own); the section reads nothing else, so a body no part answers for draws as it is. */
 	loading?: boolean;
-	/** The section holds nothing yet: this stands in its body's place, framed, or as one quiet sentence when only the sentence is given. */
+	/** What the section's body holds, read once for the frame: while it waits the body's leaves paint, its failure and a missing record stand in the body's place, and an empty selection draws `empty`. A read (the root) draws its failure and says it is busy; a selection draws only its wait, its emptiness and its count. */
+	read?: Selection<unknown>;
+	/** The section holds nothing yet: this stands in its body's place, framed, or as one quiet sentence when only the sentence is given. With a `read` it stands only when the selection is empty. */
 	empty?: EmptyProps;
+	/** What the body says when the `read` fails, in place of the generic sentence (a sentence; wraps). */
+	failed?: string;
 	/** The body: a Group, a List, a Form or any other parts; none stand while `empty` is set. */
 	children?: ReactNode;
 }
@@ -93,7 +106,9 @@ export function Section({
 	act,
 	more,
 	loading: asked,
+	read,
 	empty,
+	failed,
 	children,
 }: SectionProps) {
 	// The wait is a read that lasts: drawn after a delay and held a minimum; the
@@ -103,13 +118,16 @@ export function Section({
 	const loading = asked === undefined ? undefined : late.waiting;
 	const veil = late.veiled ? VEIL : undefined;
 	const settle = useSettleName();
+	const frame = useFrame(read);
+	const [said, shownAct, shownMore] = useSelections([description, act, more]);
 	const level = use(HeadingContext);
 	const Heading = `h${level}` as const;
 	const bodyId = useId();
 	const { touched } = useTouched();
 	const words = useWords();
+	const given = shownAct.painted ? undefined : shownAct.value;
 	const blocked =
-		act !== undefined && "blocked" in act ? act.blocked : undefined;
+		given !== undefined && "blocked" in given ? given.blocked : undefined;
 	// `folded` is the initial fold: the section holds its fold from there.
 	const [open, setOpen] = useState(folded !== true);
 	const [pressed, press] = usePressed(blocked);
@@ -123,8 +141,14 @@ export function Section({
 	// The description waits as a bar only when the Section says it will have
 	// one: an empty string, which is no line once loaded.
 	let sentence: ReactNode = null;
-	if (description) sentence = <Text role="meta">{description}</Text>;
-	else if (loading === true && description === "")
+	if (said.painted)
+		sentence = (
+			<Text role="meta">
+				<Painted role="sentence" />
+			</Text>
+		);
+	else if (said.value) sentence = <Text role="meta">{said.value}</Text>;
+	else if (loading === true && said.value === "")
 		sentence = (
 			<span
 				aria-hidden
@@ -133,13 +157,50 @@ export function Section({
 				<span className={cn(skeleton({ kind: "line" }), "w-1/2")} />
 			</span>
 		);
-	// A count is not drawn while its body waits: a skeleton chip would carry an
+	// A count is not drawn while its body waits: a painted chip would carry an
 	// unseen "0" for a number nobody knows yet, and the count arrives at the
-	// title's end, where it moves nothing.
+	// title's end, where it moves nothing. A read of an array gives its length.
+	const total = frame.waits ? undefined : (frame.count ?? count);
 	const tally =
-		count !== undefined && !busy && count !== 0 ? (
-			<Count value={count} />
+		total !== undefined && !busy && total !== 0 ? (
+			<Count value={total} />
 		) : null;
+	// The acts paint, inert, while the read waits or their own datum does. A
+	// selection's shape is unknown until it lands, so its paint is a labelled act.
+	const labelled =
+		shownAct.painted || (given !== undefined && !("icon" in given));
+	let actNode: ReactNode = null;
+	if (shownAct.painted)
+		actNode = (
+			<ButtonBase act="secondary" fit="bar" label={paintText("word")} painted />
+		);
+	else if (given !== undefined && "icon" in given)
+		actNode = frame.waits ? (
+			<IconButtonBase icon={given.icon} fit="bar" label={given.label} painted />
+		) : (
+			<IconButton
+				icon={given.icon}
+				fit="bar"
+				label={given.label}
+				onAct={given.onAct}
+				loading={given.loading}
+			/>
+		);
+	else if (given !== undefined)
+		actNode = (
+			<ReasonHostContext value={host}>
+				<ButtonBase
+					act={given.destructive ? "destructive" : "secondary"}
+					fit="bar"
+					label={given.label}
+					onAct={given.onAct}
+					loading={given.loading}
+					blocked={given.blocked}
+					painted={frame.waits}
+				/>
+			</ReasonHostContext>
+		);
+	const items = shownMore.painted ? [] : (shownMore.value ?? []);
 	const name = (
 		<>
 			<span className={cn(text({ role: "heading" }), TITLE)}>
@@ -148,11 +209,18 @@ export function Section({
 			{tally}
 		</>
 	);
-	const body = empty ? (
-		<EmptyBase fit="frame" tone="rest" {...empty} />
-	) : (
-		children
-	);
+	const body =
+		read === undefined ? (
+			empty ? (
+				<EmptyBase fit="frame" tone="rest" {...empty} />
+			) : (
+				children
+			)
+		) : (
+			<FrameBody frame={frame} fit="frame" empty={empty} failed={failed}>
+				{children}
+			</FrameBody>
+		);
 	return (
 		<Collapsible.Root
 			render={<section />}
@@ -161,7 +229,7 @@ export function Section({
 				setOpen(next);
 				onToggle?.(next);
 			}}
-			aria-busy={busy || undefined}
+			aria-busy={busy || (frame.holds && frame.waits) || undefined}
 			style={settle}
 			className={cn(SECTION, BOX)}
 		>
@@ -171,7 +239,7 @@ export function Section({
 						SECTION_BODY,
 						SECTION_HEAD_ROW,
 						HEAD_ROW,
-						act && !("icon" in act) && WRAP,
+						labelled && WRAP,
 					)}
 				>
 					<div className={TITLE_BLOCK}>
@@ -192,33 +260,15 @@ export function Section({
 						)}
 						{sentence}
 					</div>
-					{act || more?.length ? (
+					{actNode || shownMore.painted || items.length ? (
 						<div className={cn(SECTION_ACTS, ACT_SLOT)}>
-							{act === undefined ? null : "icon" in act ? (
-								<IconButton
-									icon={act.icon}
-									fit="bar"
-									label={act.label}
-									onAct={act.onAct}
-									loading={act.loading}
-								/>
-							) : (
-								<ReasonHostContext value={host}>
-									<Button
-										act={act.destructive ? "destructive" : "secondary"}
-										fit="bar"
-										label={act.label}
-										onAct={act.onAct}
-										loading={act.loading}
-										blocked={act.blocked}
-									/>
-								</ReasonHostContext>
-							)}
-							{more?.length ? (
+							{actNode}
+							{shownMore.painted || items.length ? (
 								<MenuBase
 									label={`${words.more} ${partText(title)}`}
 									title={partText(title)}
-									items={more}
+									items={items}
+									painted={shownMore.painted || frame.waits}
 								/>
 							) : null}
 						</div>

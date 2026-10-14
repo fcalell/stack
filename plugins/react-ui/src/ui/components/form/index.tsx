@@ -1,5 +1,7 @@
+import type { Selection } from "@fcalell/plugin-api/tanstack-query";
 import type { ReactNode } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import type { EmptyProps } from "../../lib/empty.tsx";
 import type { ActionBarProps } from "../action-bar/index.tsx";
 import { FormBody } from "./base.tsx";
 
@@ -15,11 +17,23 @@ export interface FormGroup {
 	fields: ReactNode;
 	/** The group's data is on its way: the group is busy and each `FormField` in it draws its own waiting form, its typed text kept. */
 	loading?: boolean;
+	/** What the group's fields hold, read once for the group's frame: its leaves paint while it waits, and its failure and a missing record stand in the fields' place. */
+	read?: Selection<unknown>;
+	/** The fields' sentence when the group's `read` is empty. */
+	empty?: EmptyProps;
+	/** What the group says when its `read` fails, in place of the generic sentence (a sentence; wraps). */
+	failed?: string;
 }
 
 interface FormBase extends Closed {
 	/** The acts that close the form, drawn in its foot; the bar's filled act submits the form. */
 	bar?: ActionBarProps;
+	/** What the form's fields hold, read once for the form's frame: the fields' leaves paint while it waits, the filled act with them, inert; its failure and a missing record stand in the fields' place. Each group has its own. */
+	read?: Selection<unknown>;
+	/** The fields' sentence when the `read`'s selection is empty. */
+	empty?: EmptyProps;
+	/** What the form says when its `read` fails, in place of the generic sentence (a sentence; wraps). */
+	failed?: string;
 }
 
 /** Fields and the acts that submit them. The form's structure is its props: `children`, a flat run of `FormField`s, or `groups`, each drawn as a fieldset with a legend; never both. A form among a page's other sections is `Section > Form`, so every section's head-to-body gap stays the pair step. */

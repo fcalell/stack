@@ -180,6 +180,10 @@ export function QueryProvider(props: QueryProviderProps) {
 	);
 }
 
+// A datum's value type: a selection's, or the constant itself. Distributive,
+// so a `Datum<T>` prop gives `T`.
+type Unwrap<D> = D extends Selection<infer T> ? T : D;
+
 // The leaf's one subscription: each value that is a selection is read, the
 // rest are constants. One `useQueries` for any count, so the hook count is
 // fixed. A read still to land draws from the placeholder and says so (`painted`).
@@ -189,7 +193,7 @@ export function QueryProvider(props: QueryProviderProps) {
 export function useSelections<const V extends readonly unknown[]>(
 	values: V,
 ): {
-	readonly [K in keyof V]: Drawn<V[K] extends Selection<infer T> ? T : V[K]>;
+	readonly [K in keyof V]: Drawn<Unwrap<V[K]>>;
 } {
 	const plan = useMemo(() => planSelections(values), [values]);
 	useEffect(() => paintReads(plan.reads), [plan]);

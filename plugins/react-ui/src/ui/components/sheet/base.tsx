@@ -1,4 +1,5 @@
 import { Dialog } from "@base-ui/react/dialog";
+import type { Selection } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type { Act } from "@fcalell/ui-core/descriptors";
 import { pressStands } from "@fcalell/ui-core/reason";
@@ -26,19 +27,22 @@ import {
 	useState,
 } from "react";
 import { backGlyph } from "../../lib/back.ts";
+import type { EmptyProps } from "../../lib/empty.tsx";
 import { useReturnFocus } from "../../lib/focus.ts";
 import { useTouch } from "../../lib/media.ts";
 import { PortalContainer } from "../../lib/portal.ts";
+import { FrameBody, useFrame } from "../../lib/read.tsx";
 import { ActFailed, ReasonHostContext } from "../../lib/reason.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
+import { useSettleName } from "../../lib/settle.ts";
 import {
 	TouchedContext,
 	usePageTurn,
 	useTouchState,
 } from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";
-import { ActionBar } from "../action-bar/index.tsx";
-import { Button } from "../button/index.tsx";
+import { ActionBarBase } from "../action-bar/base.tsx";
+import { ButtonBase } from "../button/base.tsx";
 import { Reason } from "../button/reason.tsx";
 import { IconButtonBase } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
@@ -123,6 +127,10 @@ export interface SheetBaseProps {
 	form?: "centred" | "menu" | "view";
 	/** A menu that searches stands the whole viewport height from its first frame, so its list does not jump as the filter narrows. */
 	tall?: boolean;
+	/** What the body holds, read once for the frame (`Sheet`'s `read`): the submit paints, inert, while it waits. */
+	read?: Selection<unknown>;
+	/** The body's sentence when the `read` is empty. */
+	empty?: EmptyProps;
 	/** An act pends: the close act is inert and says so. */
 	busy?: boolean;
 	/** What the sheet opens focused on: its first field (a confirm's typed name), or the element a ref holds (a pick's option); a decision with neither opens on its first act, the way out. */
@@ -151,9 +159,22 @@ export function SheetBase({
 	handle,
 	busy,
 	focus,
+	read,
+	empty,
 	children,
 }: SheetBaseProps) {
 	const touch = useTouch();
+	const frame = useFrame(read);
+	const settle = useSettleName();
+	// The body is the frame's: its failure and its emptiness stand in its place.
+	const body =
+		read === undefined ? (
+			children
+		) : (
+			<FrameBody frame={frame} fit="frame" empty={empty}>
+				{children}
+			</FrameBody>
+		);
 	const words = useWords();
 	const container = use(PortalContainer);
 	// A sheet in a stage (a container is named) stays non-modal beside the
@@ -212,12 +233,13 @@ export function SheetBase({
 		touch && submit ? (
 			<ReasonHostContext value={host}>
 				<div className={HEAD_SUBMIT}>
-					<Button
+					<ButtonBase
 						fit="bar"
 						label={submit.label}
 						onAct={runSubmit}
 						loading={submit.loading === true || running}
 						blocked={submit.blocked}
+						painted={frame.waits}
 					/>
 				</div>
 			</ReasonHostContext>
@@ -266,7 +288,7 @@ export function SheetBase({
 			: undefined);
 	const actionBar = bar ? (
 		<ActFailed value={failed}>
-			<ActionBar acts={bar} />
+			<ActionBarBase acts={bar} painted={frame.waits} />
 		</ActFailed>
 	) : null;
 	const footLine = foot ? (
@@ -284,7 +306,7 @@ export function SheetBase({
 	const framed = centred ? (
 		<>
 			{headRow}
-			{children}
+			{body}
 			{actionBar}
 		</>
 	) : (
@@ -305,9 +327,14 @@ export function SheetBase({
 			</div>
 			{form === "menu" ? (
 				children
-			) : children ? (
-				<div ref={setBodyNode} className={cn(SHEET_BODY, BODY)}>
-					{children}
+			) : body ? (
+				<div
+					ref={setBodyNode}
+					aria-busy={(frame.holds && frame.waits) || undefined}
+					style={read === undefined ? undefined : settle}
+					className={cn(SHEET_BODY, BODY)}
+				>
+					{body}
 				</div>
 			) : null}
 			{form === "menu" ? null : footer}

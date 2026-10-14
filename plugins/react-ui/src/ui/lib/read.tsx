@@ -1,15 +1,20 @@
 import type { Selection } from "@fcalell/plugin-api/tanstack-query";
-import { useFrameRead } from "@fcalell/plugin-api/tanstack-query";
+import { isRead, useFrameRead } from "@fcalell/plugin-api/tanstack-query";
 import { frameOf } from "@fcalell/ui-core/read";
 import type { ReactNode } from "react";
 import { MissingBase } from "../components/missing/base.tsx";
 import { EmptyBase, type EmptyFit, type EmptyProps } from "./empty.tsx";
 import { useWords } from "./words.tsx";
 
-/** A frame's one subscription to its read (a root or a selection): the form it draws, its count, whether it refetches, and the retry. */
+/** A frame's one subscription to its read (a root or a selection): the form it draws, its count, whether it refetches, whether it waits (a painted or idle read), whether it holds its read as the root (it draws its failure) and the retry. */
 export function useFrame(read?: Selection<unknown>) {
 	const { state, retry } = useFrameRead(read, frameOf);
-	return { ...state, retry };
+	return {
+		...state,
+		waits: state.form === "waiting" || state.form === "idle",
+		holds: isRead(read),
+		retry,
+	};
 }
 
 export type Frame = ReturnType<typeof useFrame>;

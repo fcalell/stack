@@ -1,7 +1,9 @@
+import type { Selection } from "@fcalell/plugin-api/tanstack-query";
 import type { Act } from "@fcalell/ui-core/descriptors";
 import type { SheetFit } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import type { EmptyProps } from "../../lib/empty.tsx";
 import { FormBody } from "../form/base.tsx";
 import type { FormProps } from "../form/index.tsx";
 import { SheetBase } from "./base.tsx";
@@ -26,6 +28,10 @@ export interface SheetProps extends Closed {
 	failed?: string;
 	/** What the desktop card holds, which sets its width: a form (the default) or a record's pane. */
 	fit?: SheetFit;
+	/** What the body holds, read once for the frame: while it waits the body's leaves paint and the submit with them, inert; its failure and a missing record stand in the body's place. */
+	read?: Selection<unknown>;
+	/** The body's sentence when the `read`'s selection is empty. */
+	empty?: EmptyProps;
 	/** A form the body ends with, drawn in the sheet's column: its `bar` sticks to the body's foot, and the sheet asks nothing when it closes. Give the form's `bar` or the sheet's `submit` as the act that completes the task, not both. */
 	form?: FormProps;
 	/** The body, ahead of the `form`. */
@@ -43,6 +49,8 @@ export function Sheet({
 	foot,
 	failed,
 	fit,
+	read,
+	empty,
 	form,
 	children,
 }: SheetProps) {
@@ -57,6 +65,8 @@ export function Sheet({
 			foot={foot}
 			failed={failed}
 			fit={fit}
+			read={read}
+			empty={empty}
 		>
 			{form ? (
 				<>

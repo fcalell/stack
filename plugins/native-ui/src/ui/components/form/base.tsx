@@ -11,8 +11,9 @@ import { Text as RNText, View } from "react-native";
 import { cn } from "../../lib/cn";
 import { useLeaveGuard } from "../../lib/leave";
 import { LoadingContext, useWait, VEIL } from "../../lib/loading";
+import { FrameBody, useFrame } from "../../lib/read";
 import { TouchedContext, useTouched, useTouchState } from "../../lib/touched";
-import { ActionBar } from "../action-bar";
+import { ActionBarBase } from "../action-bar/base";
 import { Text } from "../text";
 import type { FormGroup, FormProps } from "./index";
 
@@ -22,13 +23,16 @@ import type { FormGroup, FormProps } from "./index";
 function GroupBox(props: { group: FormGroup }) {
 	const { group } = props;
 	const late = useWait(group.loading === true);
+	const frame = useFrame(group.read);
 	// A Section around the form waits its groups too.
 	const waiting = useContext(LoadingContext) || late.waiting;
 	return (
 		<View
 			role="group"
 			accessibilityLabel={group.title}
-			accessibilityState={{ busy: late.waiting }}
+			accessibilityState={{
+				busy: late.waiting || (frame.holds && frame.waits),
+			}}
 			className={FORM_GROUP}
 		>
 			{group.title ? (
@@ -43,7 +47,14 @@ function GroupBox(props: { group: FormGroup }) {
 			{group.lead}
 			<LoadingContext.Provider value={waiting}>
 				<View className={cn(FORM_GROUP, late.veiled && VEIL)}>
-					{group.fields}
+					<FrameBody
+						frame={frame}
+						fit="frame"
+						empty={group.empty}
+						failed={group.failed}
+					>
+						{group.fields}
+					</FrameBody>
 				</View>
 			</LoadingContext.Provider>
 		</View>
@@ -59,26 +70,34 @@ export function FormBody({
 	children,
 	groups,
 	bar,
+	read,
+	empty,
+	failed,
 	in: within,
 }: FormProps & { in: FormIn }) {
+	const frame = useFrame(read);
 	const [own] = useTouchState();
 	const sheet = useTouched();
 	const touch = within === "sheet" ? sheet : own;
 	useLeaveGuard(touch.leave, within !== "sheet");
-	const acts = bar === undefined ? null : <ActionBar {...bar} />;
+	const acts =
+		bar === undefined ? null : <ActionBarBase {...bar} painted={frame.waits} />;
 	return (
 		<TouchedContext.Provider value={touch}>
 			<View
+				accessibilityState={{ busy: frame.holds && frame.waits }}
 				className={form({
 					holds: groups ? "sections" : "fields",
 					in: within,
 				})}
 			>
-				{groups
-					? groups.map((group, index) => (
-							<GroupBox key={group.title ?? index} group={group} />
-						))
-					: children}
+				<FrameBody frame={frame} fit="frame" empty={empty} failed={failed}>
+					{groups
+						? groups.map((group, index) => (
+								<GroupBox key={group.title ?? index} group={group} />
+							))
+						: children}
+				</FrameBody>
 				{groups && acts ? <View className={FORM_FOOT}>{acts}</View> : acts}
 			</View>
 		</TouchedContext.Provider>

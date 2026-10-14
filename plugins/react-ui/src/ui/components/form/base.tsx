@@ -11,8 +11,10 @@ import { use, useState } from "react";
 import { FormContext } from "../../lib/form.ts";
 import { useLeaveGuard } from "../../lib/leave.ts";
 import { LoadingContext, useWait, VEIL } from "../../lib/loading.ts";
+import { FrameBody, useFrame } from "../../lib/read.tsx";
+import { useSettleName } from "../../lib/settle.ts";
 import { TouchedContext, useTouchState } from "../../lib/touched.ts";
-import { ActionBar } from "../action-bar/index.tsx";
+import { ActionBarBase } from "../action-bar/base.tsx";
 import { Text } from "../text/index.tsx";
 import type { FormGroup, FormProps } from "./index.tsx";
 
@@ -34,11 +36,14 @@ const FOOT_STUCK =
 function GroupBox(props: { group: FormGroup }) {
 	const { group } = props;
 	const late = useWait(group.loading === true);
+	const frame = useFrame(group.read);
+	const settle = useSettleName();
 	// A Section around the form waits its groups too.
 	const waiting = use(LoadingContext) || late.waiting;
 	return (
 		<fieldset
-			aria-busy={late.waiting || undefined}
+			aria-busy={late.waiting || (frame.holds && frame.waits) || undefined}
+			style={group.read === undefined ? undefined : settle}
 			className={cn(FORM_GROUP, GROUP)}
 		>
 			{group.title ? (
@@ -49,7 +54,16 @@ function GroupBox(props: { group: FormGroup }) {
 			{group.description ? <Text role="meta">{group.description}</Text> : null}
 			{group.lead}
 			<LoadingContext value={waiting}>
-				<div className={cn(FIELDS, late.veiled && VEIL)}>{group.fields}</div>
+				<div className={cn(FIELDS, late.veiled && VEIL)}>
+					<FrameBody
+						frame={frame}
+						fit="frame"
+						empty={group.empty}
+						failed={group.failed}
+					>
+						{group.fields}
+					</FrameBody>
+				</div>
 			</LoadingContext>
 		</fieldset>
 	);
@@ -60,8 +74,13 @@ export function FormBody({
 	children,
 	groups,
 	bar,
+	read,
+	empty,
+	failed,
 	in: within,
 }: FormProps & { in: FormIn }) {
+	const frame = useFrame(read);
+	const settle = useSettleName();
 	const [pending, setPending] = useState(false);
 	const [touch] = useTouchState();
 	// A sheet's form is the sheet's: it closes on its own act and asks nothing.
@@ -70,10 +89,10 @@ export function FormBody({
 	const foot =
 		bar === undefined ? null : groups || stuck ? (
 			<div className={cn(FORM_FOOT, stuck)}>
-				<ActionBar {...bar} />
+				<ActionBarBase {...bar} painted={frame.waits} />
 			</div>
 		) : (
-			<ActionBar {...bar} />
+			<ActionBarBase {...bar} painted={frame.waits} />
 		);
 	return (
 		<FormContext value={setPending}>
@@ -82,17 +101,20 @@ export function FormBody({
 				<form
 					onSubmit={(event) => event.preventDefault()}
 					onChange={touch.touch}
-					aria-busy={pending || undefined}
+					aria-busy={pending || (frame.holds && frame.waits) || undefined}
+					style={read === undefined ? undefined : settle}
 					className={cn(
 						form({ holds: groups ? "sections" : "fields", in: within }),
 						STACK,
 					)}
 				>
-					{groups
-						? groups.map((group, index) => (
-								<GroupBox key={group.title ?? index} group={group} />
-							))
-						: children}
+					<FrameBody frame={frame} fit="frame" empty={empty} failed={failed}>
+						{groups
+							? groups.map((group, index) => (
+									<GroupBox key={group.title ?? index} group={group} />
+								))
+							: children}
+					</FrameBody>
 					{foot}
 				</form>
 			</TouchedContext>
