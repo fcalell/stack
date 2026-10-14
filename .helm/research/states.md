@@ -176,7 +176,8 @@ with the veil during the delay and the settle at the end. Every leaf and frame o
 phase through `useSyncExternalStore` with a selector, so all of them flip in one store write, in
 one frame, on both platforms (the phone gains the batching and the running guard the web's settle
 already has). `aria-busy` and the live region are the frame's. A refetch after a failure runs the
-clock like a first read. The two numbers (`WAIT_DELAY`, `WAIT_MIN`) are tuned live in the
+clock like a first read. The two numbers (`WAIT_DELAY`, `WAIT_MIN`) start at 400 and 800 ms
+(from 200 and 500) and are tuned live in the
 showcase with sliders for the delay, the minimum and a simulated read time.
 
 ## 6. Subscriptions and renders
@@ -304,6 +305,8 @@ Decided 2026-10-14: everything above. Selections are written `read.at(fn)` (a pa
 `read.$.commit`, was weighed and left: shorter, but magic). The handle is built by plugin-api,
 ui-core knows only its interface.
 
-Open: the two wait numbers (tuned live); the loaders' paint and its configuration (`motion.md`
-§4.2: one skeleton plus the scramble, chosen per slot kind); on the phone, the text bar's paint
+Decided the same day, after the loader demo (`motion.md` §4.2): the paint per slot kind,
+`theme.loading = { text, figure, id }`, each `"pulse"` or `"scramble"`, all `"pulse"` by default.
+
+Open: the two wait numbers (from 400 and 800 ms, tuned live); on the phone, the text bar's paint
 without CSS line boxes (the slot measures its lines with `onTextLayout`).
