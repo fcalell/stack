@@ -4,15 +4,18 @@ import { IconButtonBase } from "../icon-button/base";
 import { MenuSheet } from "./sheet";
 
 // The more act named `label` and its sheet titled `title`: a row's menu is
-// titled with the row's name. Outside the package's exports.
+// titled with the row's name. `painted` is the trigger while its data is not
+// here: its box filled, inert, so no sheet opens. Outside the package's exports.
 export function MenuBase({
 	label,
 	title,
 	items,
+	painted,
 }: {
 	label: string;
 	title: string;
 	items: readonly MenuItem[];
+	painted?: boolean;
 }) {
 	const [open, setOpen] = useState(false);
 	return (
@@ -22,6 +25,7 @@ export function MenuBase({
 				fit="body"
 				label={label}
 				open={open}
+				painted={painted}
 				onAct={() => setOpen(true)}
 			/>
 			<MenuSheet

@@ -25,6 +25,7 @@ import {
 	useFieldName,
 } from "../../lib/field";
 import { Ink } from "../../lib/ink";
+import { inertProps, paintControl, useShown } from "../../lib/paint";
 import { useTokenColor } from "../../lib/theme";
 import { useTouched } from "../../lib/touched";
 import { useWords } from "../../lib/words";
@@ -52,7 +53,8 @@ const KEYBOARD: Record<InputKind, KeyboardTypeOptions> = {
 
 // The field box every Input renders, as the Input below describes it. `cell` is
 // the `Table` cell it edits in, `inline` the `ListRow` entry or `Rules` term it
-// stands in. Outside the package's exports.
+// stands in. `painted` is the box while its data is not here: filled at its
+// loaded size, the value not drawn, inert. Outside the package's exports.
 export function InputBase({
 	kind,
 	value,
@@ -64,7 +66,9 @@ export function InputBase({
 	autoFocus,
 	cell,
 	inline,
-}: InputProps & { cell?: CellFit; inline?: InlineFit }) {
+	painted,
+}: InputProps & { cell?: CellFit; inline?: InlineFit; painted?: boolean }) {
+	const shown = useShown(painted);
 	const words = useWords();
 	const [moment] = useState(() => commitMoment<string>());
 	const commit = (next: string) => onCommit?.(next);
@@ -85,6 +89,7 @@ export function InputBase({
 	// The whole box focuses the value: the value is one line tall inside it.
 	return (
 		<Pressable
+			{...inertProps(painted === true)}
 			accessible={false}
 			disabled={disabled}
 			onPress={() => input.current?.focus()}
@@ -96,9 +101,10 @@ export function InputBase({
 				}),
 				"flex-row items-center",
 				disabled && "bg-fill-disabled",
+				painted && paintControl(shown),
 			)}
 		>
-			{search ? (
+			{search && !painted ? (
 				<Ink.Provider value={disabled ? "ink-disabled" : "ink-meta"}>
 					<Icon name="Search" fit="control" />
 				</Ink.Provider>
@@ -121,6 +127,7 @@ export function InputBase({
 					"flex-1 py-0",
 					figures && "text-right",
 					disabled && "text-ink-disabled",
+					painted && "opacity-0",
 				)}
 				placeholderTextColor={placeholderInk}
 				value={value}
@@ -158,7 +165,7 @@ export function InputBase({
 					input.current?.blur();
 				}}
 			/>
-			{which === "number" && unit ? (
+			{which === "number" && unit && !painted ? (
 				<RNText
 					numberOfLines={1}
 					className={cn(FIELD_UNIT, "shrink", disabled && "text-ink-disabled")}
@@ -166,7 +173,7 @@ export function InputBase({
 					{unit}
 				</RNText>
 			) : null}
-			{act ? (
+			{act && !painted ? (
 				<IconButton
 					icon={act.icon}
 					label={act.label}

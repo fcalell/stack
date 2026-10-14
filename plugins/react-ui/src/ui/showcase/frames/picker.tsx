@@ -2,9 +2,11 @@ import type { Option } from "@fcalell/ui-core/descriptors";
 import { useState } from "react";
 import { Group } from "../../components/group/index.tsx";
 import { ListRow } from "../../components/list-row/index.tsx";
+import { PickerBase } from "../../components/picker/base.tsx";
 import { Picker } from "../../components/picker/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { press, Stage } from "./overlay-stage.tsx";
+import { beside, isPaint } from "./painted.tsx";
 
 const change = () => {};
 const ROLES = [
@@ -179,7 +181,26 @@ function openFirst(stage: HTMLElement) {
 // cell the field-fit triggers (two of them an option's chip after its label),
 // with a value, with the empty choice and with
 // none (its label in the placeholder's ink, a row fit's too).
+//
+// `PAINT.kind.control` draws the field-fit trigger beside its painted form.
 export function drawPicker(frame: ShowcaseFrame) {
+	if (isPaint(frame))
+		return beside(
+			frame,
+			<Picker
+				label="Role"
+				options={[...ROLES]}
+				value="admin"
+				onChange={change}
+			/>,
+			<PickerBase
+				label="Role"
+				options={[...ROLES]}
+				value="admin"
+				onChange={change}
+				painted
+			/>,
+		);
 	const cell = frame.cell.name;
 	const row =
 		cell.startsWith("PICKER.fit.row") ||

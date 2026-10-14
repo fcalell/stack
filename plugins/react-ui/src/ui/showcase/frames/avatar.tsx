@@ -1,5 +1,7 @@
+import { AvatarBase } from "../../components/avatar/base.tsx";
 import { Avatar } from "../../components/avatar/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
+import { beside, isPaint } from "./painted.tsx";
 
 // A name whose hash picks each step, so the frame draws its cell through the
 // component's own pick.
@@ -20,8 +22,15 @@ const PORTRAIT = `data:image/svg+xml,${encodeURIComponent(
 )}`;
 
 // `AVATAR.step.n` draws the initials on step n, then the image form (the
-// `AVATAR` base); `AVATAR_LABEL.step.n` the initials alone.
+// `AVATAR` base); `AVATAR_LABEL.step.n` the initials alone;
+// `PAINT.kind.box` the circle beside its painted form.
 export function drawAvatar(frame: ShowcaseFrame) {
+	if (isPaint(frame))
+		return beside(
+			frame,
+			<Avatar name={BY_STEP["1"] ?? ""} />,
+			<AvatarBase name={BY_STEP["1"] ?? ""} painted />,
+		);
 	const [cell, , step] = frame.cell.name.split(".");
 	const name = step && BY_STEP[step];
 	if (!name) return undefined;

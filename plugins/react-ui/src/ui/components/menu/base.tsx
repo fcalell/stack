@@ -126,15 +126,19 @@ function Groups(props: {
 }
 
 // The more act named `label` and its acts, the touch sheet titled `title`:
-// a row's menu is titled with the row's name. Outside the package's exports.
+// a row's menu is titled with the row's name. `painted` is the trigger while
+// its data is not here: its box filled, inert, so nothing opens. Outside the
+// package's exports.
 export function MenuBase({
 	label,
 	title,
 	items,
+	painted,
 }: {
 	label: string;
 	title: string;
 	items: readonly MenuItem[];
+	painted?: boolean;
 }) {
 	const touch = useTouch();
 	const container = use(PortalContainer);
@@ -146,7 +150,14 @@ export function MenuBase({
 			<>
 				<Dialog.Trigger
 					handle={sheet}
-					render={<IconButtonBase icon="Ellipsis" fit="body" label={label} />}
+					render={
+						<IconButtonBase
+							icon="Ellipsis"
+							fit="body"
+							label={label}
+							painted={painted}
+						/>
+					}
 				/>
 				<SheetBase
 					form="menu"
@@ -190,7 +201,14 @@ export function MenuBase({
 	return (
 		<Control.Root modal={false}>
 			<Control.Trigger
-				render={<IconButtonBase icon="Ellipsis" fit="bar" label={label} />}
+				render={
+					<IconButtonBase
+						icon="Ellipsis"
+						fit="bar"
+						label={label}
+						painted={painted}
+					/>
+				}
 			/>
 			<Control.Portal container={container}>
 				<Control.Positioner

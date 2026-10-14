@@ -3,6 +3,7 @@ import { cn } from "@fcalell/ui-core/cn";
 import { type ButtonAct, button, buttonLabel } from "@fcalell/ui-core/variants";
 import { use } from "react";
 import { ActInert, endSubmit, SubmitContext } from "../../lib/form.ts";
+import { PAINT_CONTROL } from "../../lib/paint.tsx";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { CountBase } from "../count/base.tsx";
@@ -15,6 +16,8 @@ import { Reason } from "./reason.tsx";
 const STACK = "flex flex-col items-start gap-pair";
 const GLYPH = "shrink-0";
 const PENDING = "opacity-0";
+// Painted, the act keeps its loaded box and draws none of its content.
+const HIDDEN = "invisible";
 const SPINNER_LAYER = "absolute inset-0 flex items-center justify-center";
 
 const FILL_PENDING: Record<ButtonAct, string> = {
@@ -51,7 +54,7 @@ function lookOf(kind: ButtonAct, loading: boolean, muted: boolean): string {
 	return PRESS[kind];
 }
 
-/** The act every Button renders. `ink` is the text class a quiet act draws in (a Banner's kind's ink, as its glyph does). Outside the package's exports: a molecule that draws an act hands it its ink. */
+/** The act every Button renders. `ink` is the text class a quiet act draws in (a Banner's kind's ink, as its glyph does). `painted` is the act while its data is not here: its box filled, its content not drawn, inert. Outside the package's exports: a molecule that draws an act hands it its ink. */
 export function ButtonBase({
 	act,
 	fit,
@@ -63,9 +66,10 @@ export function ButtonBase({
 	loading,
 	blocked,
 	ink,
-}: ButtonProps & { ink?: string }) {
+	painted,
+}: ButtonProps & { ink?: string; painted?: boolean }) {
 	const kind = act ?? "primary";
-	const muted = blocked !== undefined;
+	const muted = !painted && blocked !== undefined;
 	const { touched } = useTouched();
 	const host = use(ReasonHostContext);
 	const submits = use(SubmitContext);
@@ -74,7 +78,9 @@ export function ButtonBase({
 	const inert = (use(ActInert) || waiting) && !loading;
 	const [pressed, keep] = usePressed(blocked);
 	const said = muted && (pressed || touched);
-	const look = lookOf(kind, loading === true, muted || inert);
+	const look = painted
+		? PAINT_CONTROL
+		: lookOf(kind, loading === true, muted || inert);
 	const labelLook = loading ? PENDING : (muted || inert) && LABEL_BLOCKED[kind];
 	const quietInk = kind === "quiet" && ink;
 	const press = () => {
@@ -92,6 +98,7 @@ export function ButtonBase({
 			type={submits ? "submit" : "button"}
 			aria-disabled={loading || muted || inert || undefined}
 			aria-busy={loading || undefined}
+			inert={painted || undefined}
 			onClick={(event) => {
 				endSubmit(submits, event);
 				press();
@@ -99,21 +106,33 @@ export function ButtonBase({
 			className={cn(button({ act: kind, fit }), BOX, quietInk, look)}
 		>
 			{icon ? (
-				<span className={cn(GLYPH, loading && PENDING)}>
+				<span className={cn(GLYPH, loading && PENDING, painted && HIDDEN)}>
 					<Icon name={icon} fit="control" />
 				</span>
 			) : null}
 			<span
-				className={cn(buttonLabel({ act: kind }), LABEL, quietInk, labelLook)}
+				className={cn(
+					buttonLabel({ act: kind }),
+					LABEL,
+					quietInk,
+					labelLook,
+					painted && HIDDEN,
+				)}
 			>
 				{label}
 			</span>
 			{wait !== undefined ? (
-				<span className={cn(GLYPH, (loading || !waiting) && PENDING)}>
+				<span
+					className={cn(
+						GLYPH,
+						(loading || !waiting) && PENDING,
+						painted && HIDDEN,
+					)}
+				>
 					<CountBase value={wait} inAct />
 				</span>
 			) : count !== undefined ? (
-				<span className={cn(GLYPH, loading && PENDING)}>
+				<span className={cn(GLYPH, loading && PENDING, painted && HIDDEN)}>
 					<CountBase value={count} inAct />
 				</span>
 			) : null}

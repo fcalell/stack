@@ -16,6 +16,7 @@ import { Pressable, Text as RNText, View } from "react-native";
 import { cn } from "../../lib/cn";
 import type { CellFit } from "../../lib/field";
 import { Ink } from "../../lib/ink";
+import { inertProps, paintControl, useShown } from "../../lib/paint";
 import { Chip } from "../chip";
 import { Icon } from "../icon";
 import { Status } from "../status";
@@ -48,6 +49,7 @@ const ROW_TRIGGER =
 const ROW_OPEN = "bg-wash-press";
 const ROW_VALUE = "shrink";
 const OPEN_VALUE = "text-ink-body";
+const HIDDEN = "opacity-0";
 
 interface Several<V extends string | null> {
 	value: readonly V[];
@@ -65,6 +67,8 @@ interface Composed {
 	chip?: ChipFamily;
 	// The `Table` cell it edits in: the pick opens as the edit starts, named by the cell.
 	cell?: CellFit;
+	// Its data is not here: the trigger's box filled at its loaded size, its content not drawn, inert.
+	painted?: boolean;
 }
 
 // What every pick draws: the public `Picker`, or a composer's pick that says
@@ -82,15 +86,19 @@ export function PickerBase<V extends string | null = string>(
 export function PickerBase<V extends string | null = string>(
 	props: PickerProps<V> & Composed,
 ) {
-	const { label, options, fit = "field", act, chip, cell } = props;
+	const { label, options, fit = "field", act, chip, cell, painted } = props;
+	const visible = useShown(painted);
 	const several = isSeveral(props) ? props : undefined;
 	const value = isSeveral(props) ? undefined : props.value;
 	// In a table cell the pick opens as its edit starts, and its sheet gone,
 	// its leave played, ends the edit.
 	const [open, setOpen] = useState(cell !== undefined);
 	const groups = useOptionGroups(options);
-	const current = groups.flat.find((option) => option.value === value);
-	const chosen = (several?.value ?? []).flatMap(
+	// Painted, the trigger shows the label alone, not drawn.
+	const current = painted
+		? undefined
+		: groups.flat.find((option) => option.value === value);
+	const chosen = (painted ? [] : (several?.value ?? [])).flatMap(
 		(one) => groups.flat.find((option) => option.value === one) ?? [],
 	);
 	// The sheet closes itself on a single pick; a pick of several keeps it
@@ -121,6 +129,7 @@ export function PickerBase<V extends string | null = string>(
 					ROW_VALUE,
 					current === undefined && FIELD_PLACEHOLDER,
 					open && OPEN_VALUE,
+					painted && HIDDEN,
 				)}
 			>
 				{current?.label ?? label}
@@ -141,6 +150,7 @@ export function PickerBase<V extends string | null = string>(
 					current === undefined && FIELD_PLACEHOLDER,
 					(current?.value ?? null) === null && PICKER_EMPTY,
 					FIELD_VALUE,
+					painted && HIDDEN,
 				)}
 			>
 				{current?.label ?? label}
@@ -150,7 +160,13 @@ export function PickerBase<V extends string | null = string>(
 	// box is no press: the trigger that opens the sheet stands after them.
 	const trigger = several ? (
 		<View
-			className={cn(field({ fit: "bar" }), picker({ fit: "bar" }), SEVERAL_BOX)}
+			{...inertProps(painted === true)}
+			className={cn(
+				field({ fit: "bar" }),
+				picker({ fit: "bar" }),
+				SEVERAL_BOX,
+				painted && paintControl(visible),
+			)}
 		>
 			{chosen.length > 0 ? (
 				<View className={cn(CHIPS_RUN, SEVERAL_RUN)}>
@@ -180,12 +196,15 @@ export function PickerBase<V extends string | null = string>(
 							fieldValue({ kind: "text" }),
 							FIELD_PLACEHOLDER,
 							FIELD_VALUE,
+							painted && HIDDEN,
 						)}
 					>
 						{label}
 					</RNText>
 				) : null}
-				<Icon name="ChevronDown" fit="control" />
+				<View className={painted ? HIDDEN : undefined}>
+					<Icon name="ChevronDown" fit="control" />
+				</View>
 			</Pressable>
 		</View>
 	) : (
@@ -195,7 +214,8 @@ export function PickerBase<V extends string | null = string>(
 			accessibilityValue={{ text: current?.label }}
 			accessibilityState={{ expanded: open }}
 			onPress={() => setOpen(true)}
-			className={
+			{...inertProps(painted === true)}
+			className={cn(
 				row
 					? cn(WORD_ACT, picker({ fit }), ROW_TRIGGER, open && ROW_OPEN)
 					: cn(
@@ -203,8 +223,9 @@ export function PickerBase<V extends string | null = string>(
 							picker({ fit }),
 							FIELD_TRIGGER,
 							(cell || fit === "bar") && FILL,
-						)
-			}
+						),
+				painted && paintControl(visible),
+			)}
 		>
 			{glyph}
 			{shown}
@@ -213,9 +234,11 @@ export function PickerBase<V extends string | null = string>(
 					<Chip {...current.chip} />
 				</View>
 			) : null}
-			<Ink.Provider value={ink}>
-				<Icon name="ChevronDown" fit={row ? "meta" : "control"} />
-			</Ink.Provider>
+			<View className={painted ? HIDDEN : undefined}>
+				<Ink.Provider value={ink}>
+					<Icon name="ChevronDown" fit={row ? "meta" : "control"} />
+				</Ink.Provider>
+			</View>
 		</Pressable>
 	);
 	return (

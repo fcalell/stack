@@ -1,13 +1,22 @@
 import { Field } from "@base-ui/react/field";
+import { SwitchBase } from "../../components/switch/base.tsx";
 import { Switch } from "../../components/switch/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
+import { beside, isPaint } from "./painted.tsx";
 
 const change = () => {};
 
 // `SWITCH.state.<value>` and `SWITCH_THUMB.state.<value>` draw the switch
 // off or on in every state; `selected` is the on switch alone. A disabled
 // switch is drawn inside a disabled field, the way a form disables it.
+// `PAINT.kind.control` draws the on switch beside its painted form.
 export function drawSwitch(frame: ShowcaseFrame) {
+	if (isPaint(frame))
+		return beside(
+			frame,
+			<Switch checked onChange={change} label="Weekly summary" />,
+			<SwitchBase checked onChange={change} label="Weekly summary" painted />,
+		);
 	const on = frame.cell.name.endsWith(".on");
 	if (frame.state === "selected" && !on) return undefined;
 	const control = (

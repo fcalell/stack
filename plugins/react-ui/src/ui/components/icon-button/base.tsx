@@ -12,6 +12,7 @@ import type { Closed } from "../../lib/closed.ts";
 import { FieldDisabled } from "../../lib/field.ts";
 import { spacing, useTouch } from "../../lib/media.ts";
 import { follow } from "../../lib/navigate.ts";
+import { PAINT_CONTROL } from "../../lib/paint.tsx";
 import { PortalContainer } from "../../lib/portal.ts";
 import { Icon } from "../icon/index.tsx";
 import { Spinner } from "../spinner/index.tsx";
@@ -25,6 +26,8 @@ const INSET = "focus-visible:-outline-offset-2";
 const PRESS =
 	"hover:bg-wash-hover hover:text-ink-body active:bg-wash-press active:text-ink-body aria-expanded:bg-wash-press aria-expanded:text-ink-body";
 const DISABLED = "aria-disabled:text-ink-disabled";
+// Painted, the glyph keeps its place and is not drawn.
+const HIDDEN = "*:invisible";
 // The name draws over a sheet's scrim and under the toasts, with the popovers.
 const POSITIONER = "z-(--layer-popover)";
 // The hover rest before the name shows, a beat longer than a pointer passing
@@ -42,6 +45,7 @@ export function IconButtonBase({
 	label,
 	loading,
 	inset: framed,
+	painted,
 	...handed
 }: Handed & {
 	icon: IconName;
@@ -50,19 +54,22 @@ export function IconButtonBase({
 	loading?: boolean;
 	// Its frame clips (a Code's): the focus ring is drawn inset, so the clip never cuts it.
 	inset?: boolean;
+	// Its data is not here: the box filled, the glyph not drawn, inert.
+	painted?: boolean;
 }) {
 	// Inert inside a disabled field, or when its holder says so (a sheet's
 	// close while its act pends), or while it runs.
 	const disabled =
 		useContext(FieldDisabled) || handed.disabled === true || loading === true;
 	const inset = framed || fit === "field";
-	const look = disabled ? DISABLED : PRESS;
+	const look = painted ? PAINT_CONTROL : disabled ? DISABLED : PRESS;
 	return (
 		<Named label={label}>
 			<BaseButton
 				{...handed}
 				aria-label={label}
 				aria-busy={loading || undefined}
+				inert={painted || undefined}
 				disabled={disabled}
 				focusableWhenDisabled
 				className={cn(
@@ -71,6 +78,7 @@ export function IconButtonBase({
 					inset && INSET,
 					// A running act keeps the rest ink under its spinner and takes no wash.
 					loading ? undefined : look,
+					painted && HIDDEN,
 				)}
 			>
 				{loading ? <Spinner /> : <Icon name={icon} fit="control" />}

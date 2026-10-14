@@ -1,12 +1,5 @@
-import { switchThumb, switchTrack } from "@fcalell/ui-core/variants";
-import { useContext } from "react";
-import { Pressable, View } from "react-native";
 import type { Closed } from "../../lib/closed";
-import { cn } from "../../lib/cn";
-import { FieldDisabled } from "../../lib/field";
-
-// The press draws the hover fill: a toggle has no press step.
-const PRESSED = { off: "bg-switch-off-hover", on: "bg-toggle-on-hover" };
+import { SwitchBase } from "./base";
 
 /** A setting that takes effect at once, on or off. */
 export interface SwitchProps extends Closed {
@@ -20,34 +13,5 @@ export interface SwitchProps extends Closed {
 
 /** A track and its thumb, drawn alone inside a target-sized hit box. */
 export function Switch({ checked, onChange, label }: SwitchProps) {
-	const disabled = useContext(FieldDisabled);
-	const state = checked ? "on" : "off";
-	return (
-		<Pressable
-			accessibilityRole="switch"
-			accessibilityLabel={label}
-			accessibilityState={{ checked, disabled }}
-			disabled={disabled}
-			onPress={() => onChange(!checked)}
-			className="shrink-0 items-center justify-center min-h-target min-w-target"
-		>
-			{({ pressed }) => (
-				<View
-					className={cn(
-						switchTrack({ state }),
-						"shrink-0 flex-row items-center justify-start",
-						pressed && PRESSED[state],
-						disabled && "bg-fill-disabled",
-					)}
-				>
-					<View
-						className={cn(
-							switchThumb({ state }),
-							disabled && "bg-ink-disabled",
-						)}
-					/>
-				</View>
-			)}
-		</Pressable>
-	);
+	return <SwitchBase checked={checked} onChange={onChange} label={label} />;
 }

@@ -11,6 +11,7 @@ import { Pressable, Text as RNText, View } from "react-native";
 import { cn } from "../../lib/cn";
 import { ActInert } from "../../lib/form";
 import { Ink } from "../../lib/ink";
+import { inertProps, paintControl, useShown } from "../../lib/paint";
 import { ReasonHostContext, usePressed } from "../../lib/reason";
 import { useTouched } from "../../lib/touched";
 
@@ -22,6 +23,8 @@ import type { ButtonProps } from "./index";
 const STACK = "items-start gap-pair";
 const BOX = "flex-row items-center justify-center";
 const PENDING = "opacity-0";
+// Painted, the act keeps its loaded box and draws none of its content.
+const HIDDEN = "opacity-0";
 const SPINNER_LAYER = "absolute inset-0 items-center justify-center";
 
 const PRESS: Record<ButtonAct, string> = {
@@ -88,7 +91,8 @@ export interface BannerInk {
 // blocked one says why under itself once pressed or once its form or sheet is
 // touched, or on the line of the host that holds it. Its ink reaches the glyph
 // and the spinner through `Ink`, since a native view takes no currentColor.
-// Outside the package's exports.
+// `painted` is the act while its data is not here: its box filled, its content
+// not drawn, inert. Outside the package's exports.
 export function ButtonBase({
 	act,
 	fit,
@@ -100,9 +104,11 @@ export function ButtonBase({
 	loading,
 	blocked,
 	banner,
-}: ButtonProps & { banner?: BannerInk }) {
+	painted,
+}: ButtonProps & { banner?: BannerInk; painted?: boolean }) {
 	const kind = act ?? "primary";
-	const muted = blocked !== undefined;
+	const shown = useShown(painted);
+	const muted = !painted && blocked !== undefined;
 	const { touched } = useTouched();
 	const host = useContext(ReasonHostContext);
 	// Inert where it stands: the blocked look and no press, no reason.
@@ -110,7 +116,9 @@ export function ButtonBase({
 	const inert = (useContext(ActInert) || waiting) && !loading;
 	const [pressed, keep] = usePressed(blocked);
 	const said = muted && (pressed || touched);
-	const look = lookOf(kind, loading === true, muted || inert);
+	const look = painted
+		? paintControl(shown)
+		: lookOf(kind, loading === true, muted || inert);
 	const labelLook = loading ? PENDING : (muted || inert) && LABEL_BLOCKED[kind];
 	// A quiet act in a banner is in the banner's kind's ink.
 	const toned = kind === "quiet" ? banner : undefined;
@@ -134,11 +142,12 @@ export function ButtonBase({
 				busy: loading,
 			}}
 			onPress={press}
+			{...inertProps(painted === true)}
 			className={cn(button({ act: kind, fit }), BOX, look)}
 		>
 			<Ink.Provider value={ink}>
 				{icon ? (
-					<View className={loading ? PENDING : undefined}>
+					<View className={cn(loading && PENDING, painted && HIDDEN)}>
 						<Icon name={icon} fit="control" />
 					</View>
 				) : null}
@@ -149,16 +158,19 @@ export function ButtonBase({
 						"shrink",
 						labelInk,
 						labelLook,
+						painted && HIDDEN,
 					)}
 				>
 					{label}
 				</RNText>
 				{wait !== undefined ? (
-					<View className={loading || !waiting ? PENDING : undefined}>
+					<View
+						className={cn((loading || !waiting) && PENDING, painted && HIDDEN)}
+					>
 						<CountBase value={wait} inAct />
 					</View>
 				) : count !== undefined ? (
-					<View className={loading ? PENDING : undefined}>
+					<View className={cn(loading && PENDING, painted && HIDDEN)}>
 						<CountBase value={count} inAct />
 					</View>
 				) : null}

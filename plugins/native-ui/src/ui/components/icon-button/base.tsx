@@ -3,6 +3,7 @@ import { type IconButtonFit, iconButton } from "@fcalell/ui-core/variants";
 import { Pressable } from "react-native";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
+import { inertProps, paintControl, useShown } from "../../lib/paint";
 import { Icon } from "../icon";
 import { Spinner } from "../spinner";
 
@@ -15,7 +16,8 @@ const OPEN = "bg-wash-press";
 // stack's own back, close, more, send and stop acts. No boundary at rest, the
 // press wash its ground (an open trigger's too); the glyph is in the meta
 // ink, the body ink under the press and while open, and the disabled ink in a
-// disabled place, which takes no wash.
+// disabled place, which takes no wash. `painted` is the act while its data is
+// not here: its box filled, no glyph, inert.
 // Outside the package's exports.
 export function IconButtonBase({
 	icon,
@@ -26,6 +28,7 @@ export function IconButtonBase({
 	loading,
 	open,
 	expanded,
+	painted,
 }: {
 	icon: IconName;
 	label: string;
@@ -38,7 +41,9 @@ export function IconButtonBase({
 	// The act folds a branch: its state is the accessibility state, and the open wash (`open`)
 	// is not drawn for it.
 	expanded?: boolean;
+	painted?: boolean;
 }) {
+	const shown = useShown(painted);
 	return (
 		<Pressable
 			accessibilityRole="button"
@@ -50,16 +55,21 @@ export function IconButtonBase({
 			}}
 			disabled={disabled || loading}
 			onPress={onAct}
+			{...inertProps(painted === true)}
 			className={cn(
 				iconButton({ fit }),
 				BOX,
-				!disabled && !loading && PRESS,
-				open && OPEN,
+				painted ? paintControl(shown) : !disabled && !loading && PRESS,
+				!painted && open && OPEN,
 			)}
 		>
 			{({ pressed }) => (
 				<Ink.Provider value={toneOf(pressed || open === true, disabled)}>
-					{loading ? <Spinner /> : <Icon name={icon} fit="control" />}
+					{painted ? null : loading ? (
+						<Spinner />
+					) : (
+						<Icon name={icon} fit="control" />
+					)}
 				</Ink.Provider>
 			)}
 		</Pressable>

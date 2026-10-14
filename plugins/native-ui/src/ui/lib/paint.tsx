@@ -38,6 +38,10 @@ export function Painted({ role, at = 0 }: { role: PaintRole; at?: number }) {
 export const paintBox = (shown: boolean) =>
 	cn(paint({ kind: "box" }), !shown && "bg-transparent");
 
+/** The paint of a control's own box: its fill shown after the delay, its border not drawn. */
+export const paintControl = (shown: boolean) =>
+	cn(paint({ kind: "control" }), !shown && "bg-transparent");
+
 /** The props of a painted part that takes no touch and hides its filler from a screen reader. */
 export const inertProps = (on: boolean) =>
 	on

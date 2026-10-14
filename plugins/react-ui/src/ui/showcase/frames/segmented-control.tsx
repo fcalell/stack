@@ -1,6 +1,8 @@
 import { FormField } from "../../components/form-field/index.tsx";
+import { SegmentedControlBase } from "../../components/segmented-control/base.tsx";
 import { SegmentedControl } from "../../components/segmented-control/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
+import { beside, isPaint } from "./painted.tsx";
 
 const change = () => {};
 const PERIODS = [
@@ -18,7 +20,25 @@ const RANGES = [
 // Board 41's four periods, Week chosen; the frame's state forces every
 // segment, so the idle ones draw it and the chosen one its own. Under it a
 // FormField names a range switch with its label and describes it.
-export function drawSegmentedControl(_frame: ShowcaseFrame) {
+// `PAINT.kind.control` draws the switch beside its painted form.
+export function drawSegmentedControl(frame: ShowcaseFrame) {
+	if (isPaint(frame))
+		return beside(
+			frame,
+			<SegmentedControl
+				label="Period"
+				options={PERIODS}
+				value="week"
+				onChange={change}
+			/>,
+			<SegmentedControlBase
+				label="Period"
+				options={PERIODS}
+				value="week"
+				onChange={change}
+				painted
+			/>,
+		);
 	return (
 		<div className="flex flex-col items-start gap-sections">
 			<SegmentedControl

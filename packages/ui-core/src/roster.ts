@@ -103,10 +103,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		Icon: {
 			props: ["name", "fit"],
-			draws: ["ICON"],
+			draws: ["ICON", "PAINT.kind.box"],
 			holds: ["ICON"],
 			states: ["rest"],
-			owns: { sizes: ["icon-meta", "icon", "icon-control"] },
+			owns: {
+				colors: ["skeleton"],
+				sizes: ["icon-meta", "icon", "icon-control"],
+			},
 		},
 		Button: {
 			props: [
@@ -120,12 +123,19 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"loading",
 				"blocked",
 			],
-			draws: ["BUTTON", "BUTTON_LABEL", "ICON.fit.control", "COUNT_LABEL"],
+			draws: [
+				"BUTTON",
+				"BUTTON_LABEL",
+				"ICON.fit.control",
+				"COUNT_LABEL",
+				"PAINT.kind.control",
+			],
 			holds: ["BUTTON", "BUTTON_LABEL"],
 			states: [...PRESS, "disabled", "loading"],
 			owns: {
 				roles: ["body", "meta", "caption"],
 				colors: [
+					"skeleton",
 					"act-",
 					"on-act-",
 					"edge",
@@ -145,12 +155,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		IconButton: {
 			props: ["icon", "fit", "label", "onAct", "loading"],
-			draws: ["ICON_BUTTON", "TOOLTIP"],
+			draws: ["ICON_BUTTON", "TOOLTIP", "PAINT.kind.control"],
 			holds: ["ICON_BUTTON", "TOOLTIP"],
 			states: [...PRESS, "loading"],
 			owns: {
 				roles: ["meta"],
 				colors: [
+					"skeleton",
 					"ink-meta",
 					"ink-body",
 					"wash-hover",
@@ -168,12 +179,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		Count: {
 			props: ["value"],
-			draws: ["COUNT", "COUNT_LABEL"],
+			draws: ["COUNT", "COUNT_LABEL", "PAINT.kind.glyphs"],
 			holds: ["COUNT", "COUNT_LABEL"],
 			states: ["rest"],
 			owns: {
 				roles: ["caption"],
-				colors: ["ink-meta"],
+				colors: ["skeleton", "ink-meta"],
+				radii: ["chip"],
 			},
 		},
 		// An onboarding flow's place in it: `of` segments (two to four) at the
@@ -255,12 +267,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		Chip: {
 			props: ["label", "family", "onRemove"],
-			draws: ["CHIP", "CHIP_LABEL", "REMOVE_HIT"],
+			draws: ["CHIP", "CHIP_LABEL", "REMOVE_HIT", "PAINT.kind.box"],
 			holds: ["CHIP", "CHIP_LABEL"],
 			states: [...PRESS],
 			owns: {
 				roles: ["caption"],
-				colors: ["chip-", "wash-hover", "wash-press", "ring"],
+				colors: ["skeleton", "chip-", "wash-hover", "wash-press", "ring"],
 				radii: ["full"],
 				spacing: ["inside"],
 				sizes: ["chip", "measure-short"],
@@ -283,12 +295,14 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"FIELD_PLACEHOLDER",
 				"FIELD_UNIT",
 				"FIELD_GLYPH",
+				"PAINT.kind.control",
 			],
 			holds: ["FIELD_UNIT"],
 			states: ["rest", "hover", "focus", "disabled", "error"],
 			owns: {
 				roles: ["body", "code"],
 				colors: [
+					"skeleton",
 					"surface",
 					"edge",
 					"edge-hover",
@@ -501,11 +515,18 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		Switch: {
 			props: ["checked", "onChange", "label"],
-			draws: ["SWITCH", "SWITCH_THUMB"],
+			draws: ["SWITCH", "SWITCH_THUMB", "PAINT.kind.control"],
 			holds: ["SWITCH", "SWITCH_THUMB"],
 			states: [...PRESS, "disabled", "selected"],
 			owns: {
-				colors: ["switch-", "toggle-", "fill-disabled", "ink-disabled", "ring"],
+				colors: [
+					"skeleton",
+					"switch-",
+					"toggle-",
+					"fill-disabled",
+					"ink-disabled",
+					"ring",
+				],
 				radii: ["full"],
 				sizes: [
 					"switch-w",
@@ -519,11 +540,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		Checkbox: {
 			props: ["checked", "onChange", "label"],
-			draws: ["CHECKBOX", "CHECKBOX_MARK"],
+			draws: ["CHECKBOX", "CHECKBOX_MARK", "PAINT.kind.control"],
 			holds: ["CHECKBOX", "CHECKBOX_MARK"],
 			states: [...PRESS, "disabled", "selected"],
 			owns: {
 				colors: [
+					"skeleton",
 					"edge-strong",
 					"surface",
 					"toggle-",
@@ -548,12 +570,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		Avatar: {
 			props: ["name", "src"],
-			draws: ["AVATAR", "AVATAR_LABEL"],
+			draws: ["AVATAR", "AVATAR_LABEL", "PAINT.kind.box"],
 			holds: ["AVATAR", "AVATAR_LABEL"],
 			states: ["rest"],
 			owns: {
 				roles: ["caption"],
-				colors: ["avatar-"],
+				colors: ["skeleton", "avatar-"],
 				radii: ["full"],
 				sizes: ["avatar"],
 			},
@@ -1530,12 +1552,18 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		SegmentedControl: {
 			props: ["label", "options", "value", "onChange"],
-			draws: ["SEGMENTED_CONTROL", "SEGMENT", "SEGMENT_LABEL"],
+			draws: [
+				"SEGMENTED_CONTROL",
+				"SEGMENT",
+				"SEGMENT_LABEL",
+				"PAINT.kind.control",
+			],
 			holds: ["SEGMENTED_CONTROL", "SEGMENT", "SEGMENT_LABEL"],
 			states: [...PRESS, "selected"],
 			owns: {
 				roles: ["body"],
 				colors: [
+					"skeleton",
 					"group",
 					"ink-body",
 					"ink-meta",
@@ -1702,12 +1730,14 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"TEXT.role.body",
 				"TEXT.role.meta",
 				"ICON.fit.body",
+				"PAINT.kind.control",
 			],
 			holds: ["PICKER", "PICKER_VALUE", "PICKER_EMPTY", "PICKER_POPOVER"],
 			states: [...PRESS, "selected", "disabled"],
 			owns: {
 				roles: ["body", "meta", "caption"],
 				colors: [
+					"skeleton",
 					"ink-body",
 					"ink-meta",
 					"ink-disabled",
@@ -1763,12 +1793,14 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ICON.fit.body",
 				"ICON_BUTTON.fit.bar",
 				"ICON_BUTTON.fit.body",
+				"PAINT.kind.control",
 			],
 			holds: ["MENU", "MENU_GROUP", "MENU_LABEL"],
 			states: [...PRESS],
 			owns: {
 				roles: ["body", "meta"],
 				colors: [
+					"skeleton",
 					"raised",
 					"edge-raised",
 					"edge",

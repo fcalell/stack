@@ -1,7 +1,9 @@
 import type { MenuItem } from "@fcalell/ui-core/descriptors";
+import { MenuBase } from "../../components/menu/base.tsx";
 import { Menu } from "../../components/menu/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { press, Stage } from "./overlay-stage.tsx";
+import { beside, isPaint } from "./painted.tsx";
 
 const act = () => {};
 const ITEMS: MenuItem[] = [
@@ -53,8 +55,15 @@ const HIGHLIGHT = opener(true);
 
 // The trigger alone on its fit cells; the menu open
 // on its form cells (the popover on the desktop, the sheet on touch) and,
-// on the highlighted row cell, with the keyboard on its second row.
+// on the highlighted row cell, with the keyboard on its second row;
+// `PAINT.kind.control` the trigger beside its painted form.
 export function drawMenu(frame: ShowcaseFrame) {
+	if (isPaint(frame))
+		return beside(
+			frame,
+			<Menu label="More" items={ITEMS} />,
+			<MenuBase label="More" title="More" items={ITEMS} painted />,
+		);
 	const cell = frame.cell.name;
 	if (cell === "ICON_BUTTON.fit.bar" || cell === "ICON_BUTTON.fit.body")
 		return <Menu label="More" items={ITEMS} />;

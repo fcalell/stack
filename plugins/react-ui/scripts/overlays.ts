@@ -9,6 +9,7 @@ export const OVERLAYS: readonly string[] = [
 	"max-w-measure-short",
 	"wrap-normal",
 	// Button, IconButton
+	"*:invisible",
 	"relative",
 	"absolute",
 	"inset-0",

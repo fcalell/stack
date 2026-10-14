@@ -5,6 +5,7 @@ import { CHECKBOX_MARK, checkbox } from "@fcalell/ui-core/variants";
 import { Check, type IconNode, Minus } from "lucide";
 import { createElement } from "react";
 import type { LabelFit } from "../../lib/field.ts";
+import { PAINT_CONTROL } from "../../lib/paint.tsx";
 import type { CheckboxProps } from "./index.tsx";
 
 // The checkbox element is the target-sized hit box, so a press anywhere in it
@@ -30,15 +31,16 @@ const STATES = {
 	mixed: "mixed",
 } as const;
 
-/** The box every Checkbox renders. `target` is the label a row makes its target; `cell` is the `Table` cell it stands in, where the grid's cursor reaches it. Outside the package's exports. */
+/** The box every Checkbox renders. `target` is the label a row makes its target; `cell` is the `Table` cell it stands in, where the grid's cursor reaches it; `painted` is the box while its data is not here: filled, unchecked, inert. Outside the package's exports. */
 export function CheckboxBase({
 	checked,
 	onChange,
 	label,
 	target,
 	cell,
-}: CheckboxProps & { target?: LabelFit; cell?: boolean }) {
-	const state = STATES[`${checked}` as const];
+	painted,
+}: CheckboxProps & { target?: LabelFit; cell?: boolean; painted?: boolean }) {
+	const state = STATES[painted ? "false" : (`${checked}` as const)];
 	// A field around it disables it through Base UI's field context, which
 	// sets `disabled` and `data-disabled` on the hit box and the mark.
 	// The hit box is a native button: on a span, Base UI reads the hidden
@@ -47,8 +49,9 @@ export function CheckboxBase({
 		<Base.Root
 			nativeButton
 			render={<button type="button" />}
-			checked={checked === true}
-			indeterminate={checked === "mixed"}
+			checked={!painted && checked === true}
+			indeterminate={!painted && checked === "mixed"}
+			inert={painted || undefined}
 			onCheckedChange={(next) => onChange(next)}
 			aria-label={label}
 			aria-labelledby={target?.labelledBy}
@@ -63,6 +66,7 @@ export function CheckboxBase({
 					checkbox({ state }),
 					state === "unchecked" ? UNCHECKED : FILLED,
 					RING,
+					painted && PAINT_CONTROL,
 				)}
 			>
 				{/* An unchecked box's pointer states are a wash over its own fill. */}

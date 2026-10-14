@@ -46,6 +46,7 @@ import type { CellFit } from "../../lib/field.ts";
 import { expandedTrigger, rememberOpener } from "../../lib/focus.ts";
 import { useQuietGuards } from "../../lib/guards.ts";
 import { spacing, useTouch } from "../../lib/media.ts";
+import { PAINT_CONTROL } from "../../lib/paint.tsx";
 import { PortalContainer } from "../../lib/portal.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Avatar } from "../avatar/index.tsx";
@@ -69,6 +70,8 @@ const FIELD_OPEN =
 // cell or column it stands in for.
 const FILL = "w-full";
 const FIELD_VALUE = "min-w-0 grow truncate";
+// Painted, the trigger keeps its loaded box and draws none of its content.
+const PAINTED = cn(PAINT_CONTROL, "*:invisible");
 // A pick of several: the chips wrap in a run, and the trigger that opens the
 // list stands beside it, filling what the run leaves, its chevron at the box's
 // end; the run wraps, so the chevron never takes a line of its own.
@@ -321,6 +324,8 @@ interface Composed {
 	chip?: ChipFamily;
 	/** The `Table` cell it edits in: the pick mounts open as the edit starts, named by the cell. */
 	cell?: CellFit;
+	/** Its data is not here: the trigger's box filled at its loaded size, its content not drawn, inert, so no list opens. */
+	painted?: boolean;
 }
 
 // Overloaded as `Picker` is, so a handler's parameter is typed by the value
@@ -337,7 +342,16 @@ export function PickerBase<V extends string | null = string>(
 export function PickerBase<V extends string | null = string>(
 	props: PickerProps<V> & Composed,
 ) {
-	const { label, options, fit = "field", act, drawn, chip, cell } = props;
+	const {
+		label,
+		options,
+		fit = "field",
+		act,
+		drawn,
+		chip,
+		cell,
+		painted,
+	} = props;
 	// A pick of several: its value is an array, which `Several` types as one.
 	const several = isSeveral(props) ? props : undefined;
 	const value = isSeveral(props) ? undefined : props.value;
@@ -446,7 +460,9 @@ export function PickerBase<V extends string | null = string>(
 				SEVERAL_BOX,
 				FILL,
 				open && FIELD_OPEN,
+				painted && PAINTED,
 			)}
+			inert={painted || undefined}
 		>
 			{chosen.length > 0 ? (
 				<div ref={run} className={cn(CHIPS_RUN, SEVERAL_RUN)}>
@@ -490,7 +506,8 @@ export function PickerBase<V extends string | null = string>(
 				type="button"
 				aria-label={named}
 				tabIndex={cell ? -1 : handed.tabIndex}
-				className={
+				inert={painted || undefined}
+				className={cn(
 					fit === "row"
 						? cn(WORD_ACT, picker({ fit }), ROW_TRIGGER, open && ROW_OPEN)
 						: cn(
@@ -500,8 +517,9 @@ export function PickerBase<V extends string | null = string>(
 								FIELD_TRIGGER,
 								(cell || fit === "bar") && FILL,
 								open && FIELD_OPEN,
-							)
-				}
+							),
+					painted && PAINTED,
+				)}
 			>
 				{glyph}
 				{fit === "row" ? rowValue : fieldShown}

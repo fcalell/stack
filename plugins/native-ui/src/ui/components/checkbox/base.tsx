@@ -7,6 +7,7 @@ import Svg, { Path } from "react-native-svg";
 import { useResolveClassNames } from "uniwind";
 import { cn } from "../../lib/cn";
 import { FieldDisabled } from "../../lib/field";
+import { inertProps, paintControl, useShown } from "../../lib/paint";
 import type { CheckboxProps } from "./index";
 
 const STATES = {
@@ -17,18 +18,28 @@ const STATES = {
 
 type State = (typeof STATES)[keyof typeof STATES];
 
-/** The box every Checkbox renders. `target` is a row whose label is its target: the box alone, on the label's line. Outside the package's exports. */
+/** The box every Checkbox renders. `target` is a row whose label is its target: the box alone, on the label's line; `painted` is the box while its data is not here: filled, unchecked, inert. Outside the package's exports. */
 export function CheckboxBase({
 	checked,
 	onChange,
 	label,
 	target,
-}: CheckboxProps & { target?: boolean }) {
+	painted,
+}: CheckboxProps & { target?: boolean; painted?: boolean }) {
 	const disabled = useContext(FieldDisabled);
-	const state = STATES[`${checked}` as const];
-	if (target) return <Box state={state} pressed={false} disabled={disabled} />;
+	const state = STATES[painted ? "false" : (`${checked}` as const)];
+	if (target)
+		return (
+			<Box
+				state={state}
+				pressed={false}
+				disabled={disabled}
+				painted={painted}
+			/>
+		);
 	return (
 		<Pressable
+			{...inertProps(painted === true)}
 			accessibilityRole="checkbox"
 			accessibilityLabel={label}
 			accessibilityState={{ checked, disabled }}
@@ -37,7 +48,12 @@ export function CheckboxBase({
 			className="shrink-0 items-center justify-center size-target"
 		>
 			{({ pressed }) => (
-				<Box state={state} pressed={pressed} disabled={disabled} />
+				<Box
+					state={state}
+					pressed={pressed}
+					disabled={disabled}
+					painted={painted}
+				/>
 			)}
 		</Pressable>
 	);
@@ -47,11 +63,14 @@ function Box({
 	state,
 	pressed,
 	disabled,
+	painted,
 }: {
 	state: State;
 	pressed: boolean;
 	disabled: boolean;
+	painted?: boolean;
 }) {
+	const shown = useShown(painted);
 	const unchecked = state === "unchecked";
 	return (
 		<View
@@ -61,6 +80,7 @@ function Box({
 				!unchecked && pressed && "bg-toggle-on-hover",
 				disabled && unchecked && "border-edge",
 				disabled && "bg-fill-disabled",
+				painted && paintControl(shown),
 			)}
 		>
 			{/* An unchecked box's press is a wash over its own fill. */}

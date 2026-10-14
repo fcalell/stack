@@ -21,6 +21,7 @@ import {
 	POINTER_FOCUS_EDGE,
 	useModality,
 } from "../../lib/modality.ts";
+import { PAINT_CONTROL } from "../../lib/paint.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
@@ -72,7 +73,7 @@ const SURFACE: Record<InputKind, FieldKind> = {
 	email: "text",
 };
 
-/** The field box every Input renders. `cell` is the `Table` cell it edits in, `inline` the `ListRow` entry or `Rules` term it stands in: each sets its bar fit and name. Outside the package's exports. */
+/** The field box every Input renders. `cell` is the `Table` cell it edits in, `inline` the `ListRow` entry or `Rules` term it stands in: each sets its bar fit and name. `painted` is the box while its data is not here: filled at its loaded size, the value not drawn, inert. Outside the package's exports. */
 export function InputBase({
 	kind,
 	value,
@@ -84,7 +85,8 @@ export function InputBase({
 	autoFocus,
 	cell,
 	inline,
-}: InputProps & { cell?: CellFit; inline?: InlineFit }) {
+	painted,
+}: InputProps & { cell?: CellFit; inline?: InlineFit; painted?: boolean }) {
 	useModality();
 	const words = useWords();
 	const which = kind ?? "text";
@@ -124,6 +126,7 @@ export function InputBase({
 				<div
 					onMouseDown={focusValue}
 					aria-disabled={state.disabled || undefined}
+					inert={painted || undefined}
 					className={cn(
 						field({
 							fit: search || cell || inline ? "bar" : "form",
@@ -137,6 +140,7 @@ export function InputBase({
 						state.disabled
 							? BOX_DISABLED
 							: state.valid !== false && BOX_HOVER_VALUE,
+						painted && cn(PAINT_CONTROL, "*:invisible"),
 					)}
 				>
 					{search ? <Icon name="Search" fit="control" /> : null}

@@ -6,11 +6,13 @@ import {
 	skeleton,
 	statusDot,
 } from "@fcalell/ui-core/variants";
+import { PAINT_BOX, Painted } from "../../lib/paint.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { StatusDot } from "./dot.tsx";
 
 const BOX = "inline-flex items-center min-w-0 max-w-full";
 const WORD = "truncate";
+const DOT = "shrink-0";
 // Waiting, the dot's and the word's skeletons fill what the status will.
 const WAIT = "flex items-center grow min-w-0";
 const DOT_WAIT = "shrink-0";
@@ -23,7 +25,7 @@ const WORD_WAIT = {
 // room is kept unseen and the bar is a short label wide at most.
 const DOT_ROOM = "invisible shrink-0";
 
-/** What every status draws: the public `Status`, or its loading form a composer draws (a table's waiting status cell), the word's bar at a share of the cell. `short` is drawn in the word's place while `label` stays the name (a canvas node's). Outside the package's exports. */
+/** What every status draws: the public `Status`, or its loading form a composer draws (a table's waiting status cell), the word's bar at a share of the cell, or `painted` (the dot's box and a word's filler while the status's data is not here, inert; `waiting` goes with the List's waiting forms). `short` is drawn in the word's place while `label` stays the name (a canvas node's). Outside the package's exports. */
 export function StatusBase(
 	props:
 		| {
@@ -31,10 +33,24 @@ export function StatusBase(
 				label?: string;
 				short?: string;
 				waiting?: never;
+				painted?: never;
 		  }
-		| { waiting: keyof typeof WORD_WAIT },
+		| { waiting: keyof typeof WORD_WAIT; painted?: never }
+		| { painted: true; waiting?: never },
 ) {
 	const words = useWords();
+	if (props.painted)
+		return (
+			<span inert className={cn(STATUS, BOX)}>
+				<span
+					aria-hidden
+					className={cn(statusDot({ state: "done" }), DOT, PAINT_BOX)}
+				/>
+				<span className={cn(STATUS_LABEL, WORD)}>
+					<Painted role="word" />
+				</span>
+			</span>
+		);
 	if (props.waiting)
 		return (
 			<span className={cn(STATUS, WAIT)}>

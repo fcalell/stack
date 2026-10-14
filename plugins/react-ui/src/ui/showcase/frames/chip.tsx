@@ -1,6 +1,8 @@
 import type { ChipFamily } from "@fcalell/ui-core/tokens";
+import { ChipBase } from "../../components/chip/base.tsx";
 import { Chip } from "../../components/chip/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
+import { beside, isPaint } from "./painted.tsx";
 
 const remove = () => {};
 const LONG =
@@ -8,8 +10,14 @@ const LONG =
 
 // `CHIP.family.<family>` draws the family: at rest the plain chip over the
 // removable one. `CHIP.trailing` draws either end; `CHIP_LABEL.family.<family>`
-// a label past its bound.
+// a label past its bound; `PAINT.kind.box` the chip beside its painted box.
 export function drawChip(frame: ShowcaseFrame) {
+	if (isPaint(frame))
+		return beside(
+			frame,
+			<Chip label="Design" family="violet" />,
+			<ChipBase label="Design" family="violet" painted />,
+		);
 	const drawn = drawCell(frame);
 	// items-start, so the frame's column does not stretch the inline marks.
 	return (

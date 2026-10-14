@@ -4,6 +4,7 @@ import { ICON_STROKE, type IconStroke } from "@fcalell/ui-core/tokens";
 import { type IconFit, icon } from "@fcalell/ui-core/variants";
 import * as lucide from "lucide-react";
 import type { Closed } from "../../lib/closed.ts";
+import { PAINT_BOX } from "../../lib/paint.tsx";
 
 const GLYPH = "shrink-0";
 
@@ -19,13 +20,21 @@ export interface IconProps extends Closed {
 	fit?: IconFit;
 }
 
-/** What every icon draws: the public `Icon` at the line weight, or a mark that carries meaning (a change mark) at the mark weight. Outside the package's exports. */
+/** What every icon draws: the public `Icon` at the line weight, or a mark that carries meaning (a change mark) at the mark weight. `painted` is the glyph's box while its data is not here, nothing drawn in it. Outside the package's exports. */
 export function IconBase({
 	name,
 	fit,
 	stroke,
-}: IconProps & { stroke: IconStroke }) {
+	painted,
+}: IconProps & { stroke: IconStroke; painted?: boolean }) {
 	const Glyph = GLYPHS[name];
+	if (painted)
+		return (
+			<span
+				aria-hidden
+				className={cn(icon({ fit: fit ?? "body" }), GLYPH, PAINT_BOX)}
+			/>
+		);
 	// Decorative: the text beside it or the control around it names it.
 	return (
 		<Glyph

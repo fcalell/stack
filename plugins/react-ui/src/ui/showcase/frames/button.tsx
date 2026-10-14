@@ -1,8 +1,10 @@
 import { createLeave } from "@fcalell/ui-core/leave";
 import type { ButtonAct, ButtonFit } from "@fcalell/ui-core/variants";
+import { ButtonBase } from "../../components/button/base.tsx";
 import { Button, type ButtonProps } from "../../components/button/index.tsx";
 import { TouchedContext } from "../../lib/touched.ts";
 import type { ShowcaseFrame } from "../cells.ts";
+import { beside, isPaint } from "./painted.tsx";
 
 const act = () => {};
 const LABEL: Record<ButtonAct, string> = {
@@ -30,7 +32,17 @@ const COUNTED: ButtonProps = {
 // `loading` passes `loading`. `disabled` draws the blocked act twice, as the
 // board's two columns: before it is pressed, then in a touched form with its
 // reason shown. The `BUTTON_LABEL` cells are drawn inside every button.
+// `PAINT.kind.control` draws the filled act beside its painted form, the box
+// kept and the label and glyph not drawn.
 export function drawButton(frame: ShowcaseFrame) {
+	if (isPaint(frame)) {
+		const own: ButtonProps = { icon: "Plus", label: "New project", count: 2 };
+		return beside(
+			frame,
+			<Button {...own} onAct={act} />,
+			<ButtonBase {...own} painted />,
+		);
+	}
 	const [cell, axis, value] = frame.cell.name.split(".");
 	const glyph = cell === "ICON";
 	if (cell !== "BUTTON" && !glyph) return undefined;

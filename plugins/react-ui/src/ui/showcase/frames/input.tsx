@@ -1,7 +1,9 @@
 import { Field } from "@base-ui/react/field";
 import { text } from "@fcalell/ui-core/variants";
+import { InputBase } from "../../components/input/base.tsx";
 import { Input, type InputKind } from "../../components/input/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
+import { beside, isPaint } from "./painted.tsx";
 
 const change = () => {};
 
@@ -25,8 +27,15 @@ const VALUES: Record<InputKind, string> = {
 // The frame's `error` and `disabled` reach the control through Base UI's
 // `Field`, as a `FormField` puts them; `FIELD.state.error` is in error in
 // every state. `FIELD.trailing.act` draws the in-field copy act, and
-// `FIELD.trailing.none` a number with its unit.
+// `FIELD.trailing.none` a number with its unit; `PAINT.kind.control` the field
+// beside its painted form.
 export function drawInput(frame: ShowcaseFrame) {
+	if (isPaint(frame))
+		return beside(
+			frame,
+			<Input value={VALUES.text} onChange={change} />,
+			<InputBase value={VALUES.text} onChange={change} painted />,
+		);
 	const name = frame.cell.name;
 	const unit = name === "FIELD.trailing.none";
 	const kind = unit ? "number" : (KINDS[name] ?? "text");
