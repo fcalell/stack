@@ -33,6 +33,48 @@ const { data } = useQuery(orpc.projects.list.queryOptions({ input: { organizatio
 const create = useMutation(orpc.projects.create.mutationOptions());
 ```
 
+## Reads
+
+`orpc.*.read(input)` is `queryOptions` as a `Read` handle: the same input (`skipToken`
+included), the output typed, and how its failure reads as not found. A read is its own selection;
+`read.at(fn)` selects from it, and `combine([a, b], fn)` selects from several. A selector runs
+over a placeholder while its reads wait, so write it plainly (`d.steps.length`, `d.name`); one that
+throws over a read with no data yet paints its slot and warns in dev, and one that throws over real
+data is yours.
+
+```tsx
+const deploy = orpc.deploys.get.read({ id });
+const title = deploy.at((d) => d.commit);
+const summary = combine([deploy, orpc.usage.read()], (d, u) => `${d.commit}: ${u.used}`);
+<Section read={deploy} title="Steps"><List items={deploy.at((d) => d.steps)} /></Section>
+```
+
+A component takes a `Datum<T>`, a constant or a selection, and draws a selection it cannot answer
+yet as its painted form. Your own code never sees the placeholder:
+
+- `useRead(selection)` is the value, or `undefined` while the read waits, is idle or failed.
+- `useSelections([a, "fixed"] as const)` is what a component builds on: one `useQueries` for any
+  count of values, each a `Drawn` (`{ painted, value }`; a painted `value` is the placeholder, so it
+  is `unknown`). In dev it registers its reads as painted.
+- `useFrameRead(read, derive)` is what a frame (Pane, Section, Sheet, Form) builds on: one
+  subscription whose `derive(held)` runs in `combine`, so the frame renders when its derived state
+  changes and never on a value change. It returns `{ state, retry }`; `retry` refetches the frame's
+  reads. Pass a module-level `derive`, whose identity is the combine's. Given a read (`isRead`) the
+  frame holds its root and draws its failure; given a selection it draws only waiting and empty.
+- `useDraft(datum)` is a field's value: it follows its selection until the viewer edits it, then
+  holds the edit (`edit(next)`); a selection over another read drops the edit. A constant is the
+  initial value.
+
+One read has one root holder. In dev, two frames given the same read raise `console.error` at mount
+(give one of them a selection), and so does a read that fails with no data while a leaf paints it
+and no frame holds it (give its Pane, Section, Sheet or Form `read`). A read you hold with your own
+`useQuery` is not checked.
+
+`QueryProvider` takes `settle`, which a UI plugin passes: a read's first answer (its first data,
+its first failure with no data, a reset to waiting) is flushed through it, so the waiting form is
+still on screen when the move to the answer starts. A refetch is not a first answer and flushes at
+once. Never pass `settle` in an app on react-ui or native-ui, which already do.
+
 ## Not found
 
 A procedure that throws `ApiError("NOT_FOUND")` reaches the screen as a failed query.

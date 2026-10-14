@@ -3,8 +3,12 @@ import {
 	type ApiQueryUtils,
 	combine,
 	type Drawn,
+	type Held,
+	isRead,
 	type Read,
 	type Selection,
+	useDraft,
+	useFrameRead,
 	useSelections,
 } from "../src/tanstack-query.tsx";
 import type { Procedure } from "../src/types.ts";
@@ -66,3 +70,33 @@ export function useLeaf() {
 	if (title.painted) assertType<Equal<typeof title.value, unknown>>(true);
 	else assertType<Equal<typeof title.value, string>>(true);
 }
+
+// `useFrameRead` hands `derive` a `Held` and returns what it derives.
+export function useFrame() {
+	const { state, retry } = useFrameRead(
+		deploy,
+		(held: Held) => held.drawn?.painted,
+	);
+	assertType<Equal<typeof state, boolean | undefined>>(true);
+	assertType<Equal<typeof retry, () => void>>(true);
+	useFrameRead(undefined, () => 0);
+	useFrameRead(commit, () => 0);
+	// @ts-expect-error a constant is not a read
+	useFrameRead("fixed", () => 0);
+}
+
+// `useDraft` carries a datum's type through, constants included.
+export function useField() {
+	const field = useDraft(commit);
+	assertType<Equal<typeof field.value, string>>(true);
+	field.edit("next");
+	// @ts-expect-error an edit is the datum's type
+	field.edit(1);
+	assertType<Equal<typeof field.painted, boolean>>(true);
+	const fixed = useDraft<string>("fixed");
+	assertType<Equal<typeof fixed.value, string>>(true);
+}
+
+declare const unknownValue: unknown;
+if (isRead(unknownValue))
+	assertType<Equal<typeof unknownValue, Read<unknown>>>(true);

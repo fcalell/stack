@@ -13,11 +13,21 @@ import {
 	handleMutationSuccess,
 } from "@fcalell/plugin-api/query-invalidation";
 import {
+	type Datum,
+	type Draft,
 	type Drawn,
+	draftFor,
+	type Held,
+	holdRoot,
+	isRead,
+	paintReads,
 	placeholderData,
+	planFrame,
 	planSelections,
 	type Read,
+	readKey,
 	type Selection,
+	watchUnheld,
 	withRead,
 } from "@fcalell/plugin-api/read";
 import { type Settle, settleReads } from "@fcalell/plugin-api/settle-reads";
@@ -34,6 +44,7 @@ import {
 	type SkipToken,
 	useQueries,
 	useQuery,
+	useQueryClient,
 } from "@tanstack/react-query";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 
@@ -45,12 +56,14 @@ export {
 export type {
 	Datum,
 	Drawn,
+	Held,
 	Read,
 	Selection,
 } from "@fcalell/plugin-api/read";
 export {
 	combine,
 	isPlaceholder,
+	isRead,
 	isSelection,
 	read,
 } from "@fcalell/plugin-api/read";
@@ -161,6 +174,7 @@ export function QueryProvider(props: QueryProviderProps) {
 		() => (settle ? settleReads(client, settle) : undefined),
 		[client, settle],
 	);
+	useEffect(() => watchUnheld(client.getQueryCache()), [client]);
 	return (
 		<QueryClientProvider client={client}>{props.children}</QueryClientProvider>
 	);
@@ -178,10 +192,59 @@ export function useSelections<const V extends readonly unknown[]>(
 	readonly [K in keyof V]: Drawn<V[K] extends Selection<infer T> ? T : V[K]>;
 } {
 	const plan = useMemo(() => planSelections(values), [values]);
+	useEffect(() => paintReads(plan.reads), [plan]);
 	return useQueries({
 		queries: plan.reads.map((r) => ({ ...r.options, placeholderData })),
 		combine: plan.draw,
 	}) as never;
+}
+
+// A frame's one subscription: the same observer a leaf makes (placeholder on),
+// with `derive` run in `combine`, so the frame renders when its derived state
+// changes (form, count, busy) and never on a value change. Pass a `derive` that
+// is stable (a module function): its identity is the combine's. Given a read
+// the frame holds its root, which the dev registry counts. `retry` refetches
+// the frame's reads.
+export function useFrameRead<S>(
+	selection: Selection<unknown> | undefined,
+	derive: (held: Held) => S,
+): { state: S; retry: () => void } {
+	const plan = useMemo(() => planFrame(selection, derive), [selection, derive]);
+	useEffect(
+		() => (isRead(selection) ? holdRoot(selection) : undefined),
+		[selection],
+	);
+	const client = useQueryClient();
+	const state = useQueries({
+		queries: plan.reads.map((r) => ({ ...r.options, placeholderData })),
+		combine: plan.combine,
+	});
+	const retry = () => {
+		for (const r of plan.reads) {
+			void client.refetchQueries({ queryKey: r.options.queryKey, exact: true });
+		}
+	};
+	return { state, retry };
+}
+
+// A field's value: its datum until the viewer edits it, the edit after. An
+// edit belongs to the read it was made over, so a selection over another read
+// drops it (`draftFor`).
+export function useDraft<T>(value: Datum<T>): {
+	painted: boolean;
+	value: T;
+	edit: (next: T) => void;
+} {
+	const [drawn] = useSelections([value] as const);
+	const key = readKey(value);
+	const [draft, setDraft] = useState<Draft<T> | null>(null);
+	const live = draftFor(draft, key);
+	if (draft && !live) setDraft(null);
+	return {
+		painted: !live && drawn.painted,
+		value: live ? live.value : (drawn.value as T),
+		edit: (next) => setDraft({ key, value: next }),
+	};
 }
 
 // The app's own subscription to a selection: real data, or `undefined` while

@@ -213,3 +213,138 @@ export function planSelections(values: readonly unknown[]): {
 			}),
 	};
 }
+
+// A read, as against a selection of it: a frame given a read holds its root.
+export function isRead(v: unknown): v is Read<unknown> {
+	return isSelection(v) && v[SELECTION].reads[0] === v;
+}
+
+// What a frame sees of its read: ui-core's `Held`, written out structurally
+// because plugin-api imports nothing from ui-core. `root` is the read itself
+// (a frame given a selection holds none), with the fields of its result that
+// `readState` reads.
+export interface HeldResult {
+	status: "pending" | "success" | "error";
+	fetchStatus: "fetching" | "paused" | "idle";
+	isEnabled: boolean;
+	isPlaceholderData: boolean;
+	isRefetchError: boolean;
+	error: unknown;
+	hasNextPage?: boolean;
+}
+
+export interface Held {
+	drawn?: { painted: boolean; value: unknown };
+	root?: { result: HeldResult; missing: (error: unknown) => boolean };
+}
+
+// The pure core of `useFrameRead`: the frame's one read planned like a leaf's,
+// and `combine` deriving the frame's state from what is held. The root's result
+// is slot 0, which `planSelections` gives a read.
+export function planFrame<S>(
+	selection: Selection<unknown> | undefined,
+	derive: (held: Held) => S,
+): {
+	reads: readonly Read<unknown>[];
+	combine: (results: readonly (Result & HeldResult)[]) => S;
+} {
+	const plan = planSelections(selection === undefined ? [] : [selection]);
+	return {
+		reads: plan.reads,
+		combine: (results) =>
+			derive({
+				...(selection !== undefined && { drawn: plan.draw(results)[0] }),
+				...(isRead(selection) && {
+					root: {
+						result: results[0] as HeldResult,
+						missing: selection.missing,
+					},
+				}),
+			}),
+	};
+}
+
+// A draft's value follows its selection until the viewer edits it. `key` names
+// the selection's reads, so an edit belongs to the data it was made over: a
+// different read key drops it. A constant has no key, and its draft stays.
+export interface Draft<T> {
+	key: string | undefined;
+	value: T;
+}
+
+export function readKey(v: unknown): string | undefined {
+	return isSelection(v)
+		? v[SELECTION].reads.map((r) => hashKey(r.options.queryKey)).join("|")
+		: undefined;
+}
+
+export function draftFor<T>(
+	draft: Draft<T> | null,
+	key: string | undefined,
+): Draft<T> | null {
+	return draft && draft.key === key ? draft : null;
+}
+
+// Dev-only counts, by query hash, of the frames that hold a read as their root
+// and the leaves that paint it. They exist to name two mistakes at the moment
+// they are made: two frames each drawing one read's failure, and a leaf
+// painting a read that no frame holds, so its failure draws nowhere. A holder
+// or painter registers in an effect and returns its release.
+const holders = new Map<string, number>();
+const painters = new Map<string, number>();
+const dev = () => process.env.NODE_ENV !== "production";
+
+function count(counts: Map<string, number>, keys: readonly string[]) {
+	for (const key of keys) counts.set(key, (counts.get(key) ?? 0) + 1);
+	return () => {
+		for (const key of keys) counts.set(key, (counts.get(key) ?? 1) - 1);
+	};
+}
+
+export function holdRoot(read: Read<unknown>): () => void {
+	if (!dev()) return () => {};
+	const key = hashKey(read.options.queryKey);
+	const release = count(holders, [key]);
+	if ((holders.get(key) ?? 0) > 1) {
+		console.error(
+			`Two frames hold the read ${key} as their root, so each would draw its failure. Give one of them a selection.`,
+		);
+	}
+	return release;
+}
+
+export function paintReads(reads: readonly Read<unknown>[]): () => void {
+	if (!dev()) return () => {};
+	return count(
+		painters,
+		reads.map((r) => hashKey(r.options.queryKey)),
+	);
+}
+
+// A read that fails with no data while a leaf paints it and no frame holds it.
+// `QueryProvider` runs this in dev, over the query cache.
+export function watchUnheld(cache: {
+	subscribe: (
+		listener: (event: {
+			type: string;
+			action?: { type: string };
+			query: { queryHash: string; state: { data: unknown } };
+		}) => void,
+	) => () => void;
+}): () => void {
+	if (!dev()) return () => {};
+	return cache.subscribe((event) => {
+		const key = event.query.queryHash;
+		if (
+			event.type === "updated" &&
+			event.action?.type === "error" &&
+			event.query.state.data === undefined &&
+			(painters.get(key) ?? 0) > 0 &&
+			(holders.get(key) ?? 0) === 0
+		) {
+			console.error(
+				`The read ${key} failed and no frame holds it, so its failure draws nowhere. Give its Pane, Section, Sheet or Form \`read\`.`,
+			);
+		}
+	});
+}
