@@ -99,8 +99,8 @@ output).
 8. **Hygiene.** In the files that draw the unit: `focus-visible` present and no `outline: none`
    without a replacement; `min-w-0` on flex children that truncate; long text truncated or
    wrapped on purpose; `tabular-nums` on numbers compared in columns; an accessible name on every
-   icon-only control; links are anchors; no `transition: all`; only `transform` and `opacity`
-   animate; `prefers-reduced-motion` honoured without a global kill; `color-scheme` set for
+   icon-only control; links are anchors; no `transition: all`; no size or place animated through layout
+   (width, height, top, left, margin, padding, a grid track); `prefers-reduced-motion` honoured without a global kill; `color-scheme` set for
    dark; `overscroll-behavior: contain` on overlays; skeletons mirroring the final layout; empty,
    dense and very long content handled; `…`, never `...`; no `user-scalable=no`. On an app
    screen, also the platform's rules page: no class, `style` or look at a call site outside an

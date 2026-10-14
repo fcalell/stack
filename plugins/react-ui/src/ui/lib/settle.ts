@@ -1,4 +1,4 @@
-// The settle: the page's one authored moment, the switch from a waiting form
+// The settle: the page's one large motion, the switch from a waiting form
 // to the loaded one (`useWait`, `./loading.ts`). Every switch asked for in a
 // frame is gathered and applied together inside one view transition, so the
 // browser moves each named Section and Group from its old place to its new by

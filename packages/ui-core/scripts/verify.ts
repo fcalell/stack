@@ -53,6 +53,7 @@ import {
 	STATES,
 } from "../src/roster.ts";
 import { type Theme, wordsSchema } from "../src/schema.ts";
+import { transitionedLayout } from "../src/structure.ts";
 import {
 	AVATAR_STEPS,
 	BODY_SIZE,
@@ -2313,6 +2314,17 @@ check("c34", "the roster draws every family and names only real states", () => {
 	const undrawn = [...families].filter((family) => !drawn.has(family));
 	assert(undrawn.length === 0, `no component draws ${undrawn.join(", ")}`);
 	return `${families.size} families each drawn, every state one of ${STATES.length}`;
+});
+
+check("c39", "no cell animates a size or place through layout", () => {
+	const moved = [...enumerated()].filter(
+		(name) => transitionedLayout(name).length > 0,
+	);
+	assert(
+		moved.length === 0,
+		`a cell transitions a layout property; move it by a transform: ${moved.join(", ")}`,
+	);
+	return `${enumerated().size} classes, none transitioning a size or place through layout`;
 });
 
 check("c36", "every held cell is drawn by its one holder", () => {

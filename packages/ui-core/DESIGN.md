@@ -2713,7 +2713,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 
 ### Motion
 
-Durations are read as `duration-<rung>`; every rung is 0 under `prefers-reduced-motion: reduce`. Only transform and opacity animate: a state switches its color, fill and boundary at once. A spinner loops at 800 ms outside the scale and keeps turning under reduced motion.
+Durations are read as `duration-<rung>`; every rung is 0 under `prefers-reduced-motion: reduce`. A box's size or place never animates through layout (width, height, top, left, margin, padding, a grid track): it moves by a transform or a view transition. Colour, opacity, transform, clip-path and filter may transition. A spinner loops at 800 ms outside the scale and keeps turning under reduced motion.
 
 | Duration | Value | Times |
 | --- | --- | --- |

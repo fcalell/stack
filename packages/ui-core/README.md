@@ -401,8 +401,9 @@ rung. The loop is 800 ms, outside the scale and kept under reduced motion, becau
 the only sign a wait is live. The curves are emitted as `--ease-*`: `out` `cubic-bezier(0.16, 1,
 0.3, 1)` for what enters or answers a touch, `in` `cubic-bezier(0.7, 0, 0.84, 0)` for what
 leaves, `in-out` `cubic-bezier(0.65, 0, 0.35, 1)` for what moves between two places; none
-overshoots. Only transform and opacity animate: a state switches its color, fill and boundary at
-once, and motion is spent on what enters and leaves and on the switch thumb. A bare `transition`
+overshoots. A box's size or place never animates through layout (width, height, top, left, a
+margin, a padding, a grid track): it moves by a transform or a view transition; colour, opacity,
+transform, `clip-path` and `filter` may transition, each explaining a change. A bare `transition`
 takes `base` and `out` through the variables. `reducedMotionTokens` sets every rung to 0ms, which
 the web renders under `prefers-reduced-motion: reduce`; the loop stays. Motion lives in the
 matrices, never at a call site: no cell carries a duration that is not a rung. `deriveTheme` also

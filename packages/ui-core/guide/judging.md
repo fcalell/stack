@@ -38,14 +38,23 @@ selection, focus, links); status and chip hues fixed per family; dark mode its o
 
 ## Motion
 
-One duration scale, one easing set, one authored moment per screen at most; 150–300 ms for
-micro-interactions that move something; press feedback may be shorter (100 ms). Only `transform`
-and `opacity` animate: a colour never transitions, a state's fill, ink or boundary switches at
-once.
+Motion explains a change: where a thing came from, where it went, that a press landed, that a
+wait is live. Each motion answers one of those, or it is decoration and goes. One duration scale
+and one easing set time all of it; 150–300 ms for a micro-interaction that moves something, press
+feedback may be shorter (100 ms), and nothing outlasts the slow rung but a loop that marks a live
+wait.
 
-A screen with loading data spends its one authored moment on the settle, the switch from the
-waiting form to the loaded one: each Section and Group moves from its old place to its new by a
-transform and the page fades by opacity, so the rule holds; it snaps under reduced motion.
+What may animate is a question of cost, not taste. `transform` and `opacity` run on the
+compositor; colour, `clip-path` and `filter` repaint the one element and may transition too (a
+state's fill easing in, a reveal). A box's size or place never animates through layout (`width`,
+`height`, `top`, `left`, a margin, a padding, a grid track): it changes by a transform or a view
+transition, which move the drawn box while layout lands at once. Never `transition: all`.
+
+A screen may hold several motions, each on its own part, but they never compete: the settle, the
+switch from a waiting form to the loaded one, is the page's one large motion (each Section and
+Group moves by a transform from its old place to its new and the page fades), and what enters or
+leaves inside it rides that one transition. Under reduced motion every transition snaps; a loop
+that is the only sign a wait is live stays, slowed or stilled to a form that still reads as live.
 
 ## Composition
 

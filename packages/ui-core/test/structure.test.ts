@@ -5,12 +5,15 @@ import {
 	arbitraryValues,
 	childReads,
 	contexts,
+	cssLayoutMotion,
 	datasets,
+	layoutMotion,
 	literalLengths,
 	measures,
 	NATIVE_MEASURES,
 	outsideList,
 	sectionNests,
+	transitionedLayout,
 	typeProps,
 	WEB_MEASURES,
 } from "../src/structure.ts";
@@ -182,4 +185,62 @@ test("a closed list fails on an unlisted file and on a stale entry", () => {
 		unlisted: ["components/new/index.tsx"],
 		stale: ["lib/gone.ts"],
 	});
+});
+
+test("b-motion fails on a size or place animated through layout and passes on a transform", () => {
+	for (const token of [
+		"transition-all",
+		"hover:transition-all",
+		"transition-[height]",
+		"transition-[opacity,width]",
+		"transition-[grid-template-columns]",
+		"[transition-property:margin-top]",
+		"[transition:height_200ms_ease]",
+	])
+		assert.notDeepEqual(transitionedLayout(token), [], token);
+	for (const token of [
+		"transition",
+		"transition-colors",
+		"transition-[opacity,translate]",
+		"transition-[translate,transform,opacity]",
+		"transition-[clip-path,filter]",
+		"duration-base",
+	])
+		assert.deepEqual(transitionedLayout(token), [], token);
+	const bad = `
+const A = "transition-[height] duration-base";
+el.animate([{ width: "0%" }, { width: "100%" }], { duration: 1 });
+const s = useAnimatedStyle(() => ({ width: share.value }));
+const t = useAnimatedStyle(() => { return { marginTop: lift.value }; });
+`;
+	assert.deepEqual(texts(layoutMotion(bad)), [
+		"transition-[height] (height)",
+		"width",
+		"width",
+		"width",
+		"marginTop",
+	]);
+	const good = `
+// transition-[height] in a comment
+const A = "transition-[opacity,translate] duration-base";
+el.animate([{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }], { duration: 1 });
+const s = useAnimatedStyle(() => ({ transform: [{ scaleX: share.value }], opacity: 1 }));
+`;
+	assert.deepEqual(layoutMotion(good), []);
+	const css = `
+.a { transition: height 200ms ease, opacity 200ms; }
+/* transition: width 1s */
+.b { transition-property: opacity, transform; }
+@keyframes grow {
+	from { max-height: 0; }
+	to { opacity: 1; }
+}
+@keyframes show {
+	from { opacity: 0; transform: scale(0.96); }
+}
+`;
+	assert.deepEqual(
+		cssLayoutMotion(css).map((hit) => hit.line),
+		[2, 6],
+	);
 });

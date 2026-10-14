@@ -330,6 +330,8 @@ export const OVERLAYS: readonly string[] = [
 	"w-toast",
 	"duration-base",
 	"ease-out",
+	// PendingBar: the fill scales from the track's start
+	"origin-left",
 	// Sheet, Menu, Toast motion
 	"duration-slow",
 	"transition-opacity",

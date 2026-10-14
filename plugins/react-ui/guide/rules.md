@@ -591,7 +591,7 @@ place, so the page keeps its height) and, once drawn, keep it 500 ms (`WAIT_DELA
 These two numbers are fixed, not options; a part's own `loading` (a `List`, a `Meter`) is drawn as
 given, so drive it from the boundary or the Section around it, never from a raw `isPending`.
 
-The switch from a waiting form to the loaded one is the page's one authored moment, the settle. Every
+The switch from a waiting form to the loaded one is the page's one large motion, the settle. Every
 switch of a frame runs together in one view transition: each `Section` and `Group` carries its own
 `view-transition-name`, so the browser moves it from its old place to its new by a transform within the
 duration scale while the page crossfades. It snaps under reduced motion, in a hidden tab, in a browser

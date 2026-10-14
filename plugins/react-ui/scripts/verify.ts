@@ -44,8 +44,10 @@ import {
 	arbitraryValues,
 	childReads,
 	contexts,
+	cssLayoutMotion,
 	datasets,
 	type Hit,
+	layoutMotion,
 	measures,
 	outsideList,
 	sectionNests,
@@ -783,6 +785,29 @@ check(
 		return `${found.size} files, every arbitrary value a calc over tokens, 1lh, a selector, a property list or a track`;
 	},
 );
+
+check("b-motion", "no size or place animates through layout", () => {
+	const found = swept(layoutMotion);
+	found.set(
+		"scripts/overlays.ts",
+		layoutMotion(
+			readFileSync(resolve(here, "overlays.ts"), "utf8"),
+			"overlays.ts",
+		),
+	);
+	found.set(
+		"src/ui/globals.css",
+		cssLayoutMotion(
+			readFileSync(resolve(here, "../src/ui/globals.css"), "utf8"),
+		),
+	);
+	const hits = where(found);
+	assert(
+		hits.length === 0,
+		`a size or place animated through layout (measured: ${hits.length}, expected: 0); move it by a transform or a view transition:\n  ${hits.join("\n  ")}`,
+	);
+	return `${found.size} files, every animated size or place a transform or a view transition`;
+});
 
 // The files that measure the page in JavaScript, each with the one thing it
 // reads. A file not listed fails, and so does a listed file that stops.

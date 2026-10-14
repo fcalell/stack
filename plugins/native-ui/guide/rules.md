@@ -525,7 +525,7 @@ place, so the page keeps its height) and, once drawn, keep it 500 ms (`WAIT_DELA
 These two numbers are fixed, not options; a part's own `loading` (a `List`, a `Meter`) is drawn as
 given, so drive it from the boundary or the Section around it, never from a raw `isPending`.
 
-The switch from a waiting form to the loaded one is the page's one authored moment, the settle: the
+The switch from a waiting form to the loaded one is the page's one large motion, the settle: the
 layout it changes moves between its two places and fades in on a `LayoutAnimation` over a rung of the
 duration scale, and snaps under the system's reduced motion. It is not an option; draw nothing for it.
 

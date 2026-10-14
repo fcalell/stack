@@ -30,8 +30,9 @@ const BAR = "flex flex-col items-end touch:items-stretch";
 const ROW = "flex items-center self-stretch touch:flex-col touch:items-stretch";
 const TRACK =
 	"relative flex items-center grow shrink-10000000 min-w-0 overflow-hidden";
-// The elapsed share, its width the runtime fraction.
-const FILL = "absolute bottom-0 left-0";
+// The elapsed share: the track's full width, scaled from its start to the
+// runtime fraction, so the fill moves on the compositor and never lays out.
+const FILL = "absolute bottom-0 inset-x-0 origin-left";
 // The track's parts stand over the fill.
 const SPINNER_SLOT = "relative flex shrink-0 text-ink-meta";
 // The sentence wraps in a narrow column, never clips: the track grows by a
@@ -53,7 +54,10 @@ function Fill(props: { run: PendingRun; now: number }) {
 		const at = Date.now();
 		if (reduced || !fill.current || at >= run.end) return;
 		const motion = fill.current.animate(
-			[{ width: `${pendingShare(run, at) * 100}%` }, { width: "100%" }],
+			[
+				{ transform: `scaleX(${pendingShare(run, at)})` },
+				{ transform: "scaleX(1)" },
+			],
 			{ duration: run.end - at, easing: "linear", fill: "forwards" },
 		);
 		return () => motion.cancel();
@@ -64,7 +68,7 @@ function Fill(props: { run: PendingRun; now: number }) {
 			ref={fill}
 			aria-hidden
 			className={cn(PENDING_FILL, FILL)}
-			style={{ width: `${share * 100}%` }}
+			style={{ transform: `scaleX(${share})` }}
 		/>
 	);
 }

@@ -58,6 +58,7 @@ import {
 	contexts,
 	datasets,
 	type Hit,
+	layoutMotion,
 	measures,
 	NATIVE_MEASURES,
 	outsideList,
@@ -1405,6 +1406,15 @@ check(
 		return `${found.size} files, no literal length in an arbitrary value`;
 	},
 );
+
+check("b-motion", "no size or place animates through layout", () => {
+	const hits = where(swept(layoutMotion));
+	assert(
+		hits.length === 0,
+		`a size or place animated through layout (measured: ${hits.length}, expected: 0); move it by a transform or a layout transition:\n  ${hits.join("\n  ")}`,
+	);
+	return `${UI_FILES.length} files, every animated size or place a transform or a layout transition`;
+});
 
 // The files that measure the screen in JavaScript, each with the one thing it
 // reads: React Native has no container query, so a layout read is the only way

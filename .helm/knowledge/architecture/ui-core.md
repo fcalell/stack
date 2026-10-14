@@ -198,6 +198,19 @@ its rationale.
   light subtree renders light under a dark page; `rootTokens` puts the hairline, the ring (its offset, and `--focus-ring-edge-offset`, -1 px, for a field box that rings on its edge), the
   layers' order and the light shadows on `:root` outside `@theme`: no theme utility reads them,
   and a layer is read by the arbitrary `z-(--layer-<layer>)`, since `z-*` reads no theme namespace.
+- What may animate is a matter of cost, not taste. `transform` and `opacity` run on the
+  compositor; colour, `clip-path` and `filter` repaint one element and may transition too; a
+  box's size or place never animates through layout (`width`, `height`, an inset, a margin, a
+  padding, a gap, a grid track, `font-size`), since that runs layout every frame: it moves by a
+  transform, a view transition on the web or a layout transition on the phone, which move the
+  drawn box while layout lands at once. `structure.ts`'s `layoutMotion` and `cssLayoutMotion` hold
+  it in each plugin's verify (`b-motion`: class tokens, a Web Animations keyframe, a Reanimated
+  animated style, the web's `globals.css`) and `transitionedLayout` over every cell (ui-core's
+  `c39`). There is no cap on motions a screen: each explains a change (where a thing came from or
+  went, that a press landed, that a wait is live), which the judging page asks, and the settle is
+  the page's one large motion that what enters inside it rides. Rejected: the earlier taste rules,
+  only `transform` and `opacity` and one authored moment a screen, which stopped a state's fill
+  easing in and a reveal that cost nothing the performance rule guards.
 - Fonts split by fact: the theme names the families (`--font-sans`, `--font-mono`, each ahead of its
   platform fallback), each plugin's `fonts` option carries the files (a woff2 with fallback metrics
   on web, an expo-font source on native). The metric fallback face's name is one rule,
@@ -248,9 +261,9 @@ leaves once now passes its `until`, and the interval stops when no
 reader is left, so a bar past its `until` ticks nothing. What they draw is pure in ui-core's
 `./clock`: `timeLeft(end, now)`, and a `PendingRun` (`start`, `end`, `from`) whose
 `pendingShare(run, now)` is the fill; a moved `until` starts a new run from the share reached, so
-the fill never jumps back. The fill moves on its own from that share to full at `end` (a Web
-Animations width animation on the web, started before first paint; a linear Reanimated timing on
-the phone), and the tick redraws only the time left. Under reduced motion (the web's
+the fill never jumps back. The fill moves on its own from that share to full at `end` (the
+track's full width scaled from its start, `scaleX` by a Web Animations animation on the web,
+started before first paint, and by a linear Reanimated timing on the phone, so it never lays out), and the tick redraws only the time left. Under reduced motion (the web's
 `prefers-reduced-motion: reduce`, read live; the phone's system setting as Reanimated's
 `useReducedMotion` read it at launch) the fill steps with the clock instead: its share is set once
 a tick with no animation, never jumped to full.
@@ -1760,7 +1773,7 @@ a tick with no animation, never jumped to full.
   before it is drawn, `WAIT_MIN` 500 ms once drawn (`@fcalell/ui-core/wait`, one decision both
   platforms run), at `QueryBoundary` and a `Section`'s or `Group`'s own `loading`; during the
   delay the form stands undrawn in its place (`invisible` / `opacity-0`), so the page keeps its
-  height. The switch to the loaded form is the page's one authored moment, the settle, and `useWait`
+  height. The switch to the loaded form is the page's one large motion, the settle, and `useWait`
   owns it: when the read settles it keeps reporting waiting for that render and flips its own state
   afterwards, whether the form was drawn or not, so every flip can be wrapped. On the web one
   coordinator (`lib/settle`) gathers the flips of a frame into one `startViewTransition` with

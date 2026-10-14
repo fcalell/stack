@@ -1,6 +1,6 @@
 ---
 id: 003-329
-status: backlog
+status: done
 sessions: {}
 ---
 # ui-core: the motion rules
@@ -17,9 +17,12 @@ The proposal on the table: lift the taste rules and keep the performance rule.
 If the owner agrees, `judging.md` (Motion), `rubric.md` and `ui-core.md` change with it, and the walk may check what it can (a transitioned property outside the allowed list).
 
 ## Acceptance criteria
-- [ ] The owner decides: the proposal, a part of it, or the current rules.
-- [ ] The decided rules stand in `judging.md`, with the knowledge entry and the cells that carry them updated in the same change.
-- [ ] A rule a check can hold is held by one, with a test that it fails on a bad case.
+- [x] The owner decides: the proposal, a part of it, or the current rules.
+- [x] The decided rules stand in `judging.md`, with the knowledge entry and the cells that carry them updated in the same change.
+- [x] A rule a check can hold is held by one, with a test that it fails on a bad case.
 
 ## Open questions
-- [ ] Whether the owner accepts the proposal above or keeps the one-moment cap.
+- [x] Whether the owner accepts the proposal above or keeps the one-moment cap.
+
+## Outcome
+Decided 2026-10-14: the taste rules lifted, the performance rule kept. `judging.md` (Motion) now asks that each motion explains a change, with no cap per screen; colour, `clip-path` and `filter` may transition; a size or place never animates through layout. Held by `b-motion` in both plugins' verify and ui-core's `c39`; the check found both PendingBars animating `width`, now `scaleX`.

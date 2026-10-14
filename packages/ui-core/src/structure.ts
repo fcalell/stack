@@ -1,5 +1,6 @@
 // The matchers behind the packages' structure checks (`b-children`,
-// `b-arbitrary`, `b-measure`, `b-context`, `b-dataset`, `b-type-prop`), one per
+// `b-arbitrary`, `b-measure`, `b-context`, `b-dataset`, `b-type-prop`,
+// `b-motion`), one per
 // rule of the guide's `structure.md`. Each reads a file's syntax tree, so a
 // comment or a string never matches, and returns where it matched. The packages'
 // verify scripts hold the closed lists and sweep the files; `test/structure.test.ts`
@@ -339,6 +340,170 @@ export function sectionNests(
 			});
 	});
 	return { drawn, hits };
+}
+
+// ── b-motion ────────────────────────────────────────────────────────
+
+// The properties a box's size or place is laid out by: animating one runs layout
+// every frame, so a size or a place moves by a transform or a view transition.
+// A name matches itself and its longhands (`margin-top`, `inset-x`).
+export const LAYOUT_PROPERTIES = [
+	"width",
+	"height",
+	"min-width",
+	"min-height",
+	"max-width",
+	"max-height",
+	"top",
+	"right",
+	"bottom",
+	"left",
+	"inset",
+	"margin",
+	"padding",
+	"gap",
+	"flex-basis",
+	"grid-template-columns",
+	"grid-template-rows",
+	"font-size",
+	"line-height",
+	"border-width",
+] as const;
+
+function kebab(name: string): string {
+	return name.replace(/[A-Z]/g, (char) => `-${char.toLowerCase()}`);
+}
+
+function laysOut(name: string): boolean {
+	const property = kebab(name.trim());
+	return (
+		property === "all" ||
+		LAYOUT_PROPERTIES.some(
+			(one) => property === one || property.startsWith(`${one}-`),
+		)
+	);
+}
+
+// The layout properties (or `all`) a class token transitions: `transition-all`,
+// `transition-[height,opacity]`, `[transition-property:width]`,
+// `[transition:height_200ms]`.
+export function transitionedLayout(token: string): string[] {
+	const utility = segments(token).at(-1) ?? token;
+	if (utility === "transition-all") return ["all"];
+	let list: string[] = [];
+	const named = /^transition-\[(.+)\]$/.exec(utility);
+	if (named?.[1]) list = named[1].split(",");
+	const property = /^\[transition(-property)?:(.+)\]$/.exec(utility);
+	if (property?.[2])
+		list = property[2].split(",").map((one) => one.split("_")[0] ?? one);
+	return list.filter((one) => !one.startsWith("var(") && laysOut(one));
+}
+
+// The keys of an object literal, and of each object an array literal holds
+// (a keyframe list).
+function keysOf(node: ts.Node): ts.PropertyAssignment[] {
+	if (ts.isArrayLiteralExpression(node))
+		return node.elements.flatMap((one) => keysOf(one));
+	if (ts.isParenthesizedExpression(node)) return keysOf(node.expression);
+	if (!ts.isObjectLiteralExpression(node)) return [];
+	return node.properties.filter(ts.isPropertyAssignment);
+}
+
+// What a file animates through layout: a class token transitioning a layout
+// property, a Web Animations keyframe (`.animate([...])`) and a Reanimated
+// animated style (`useAnimatedStyle(() => ({...}))`) keyed by one.
+export function layoutMotion(source: string, name = "x.tsx"): Hit[] {
+	const file = parse(source, name);
+	const out: Hit[] = [];
+	walk(file, (node) => {
+		let text: string | undefined;
+		if (ts.isStringLiteralLike(node)) text = node.text;
+		else if (
+			ts.isTemplateHead(node) ||
+			ts.isTemplateMiddle(node) ||
+			ts.isTemplateTail(node)
+		)
+			text = node.text;
+		if (text !== undefined) {
+			for (const token of text.split(/\s+/)) {
+				if (!token.includes("transition")) continue;
+				const moved = transitionedLayout(token);
+				if (moved.length > 0)
+					out.push(hitAt(file, node, `${token} (${moved.join(", ")})`));
+			}
+			return;
+		}
+		if (!ts.isCallExpression(node)) return;
+		const callee = node.expression;
+		// The objects whose keys animate.
+		const animated: ts.Node[] = [];
+		if (
+			ts.isPropertyAccessExpression(callee) &&
+			callee.name.text === "animate"
+		) {
+			if (node.arguments[0]) animated.push(node.arguments[0]);
+		} else if (ts.isIdentifier(callee) && callee.text === "useAnimatedStyle") {
+			const worklet = node.arguments[0];
+			if (
+				worklet &&
+				(ts.isArrowFunction(worklet) || ts.isFunctionExpression(worklet))
+			) {
+				if (!ts.isBlock(worklet.body)) animated.push(worklet.body);
+				else
+					walk(worklet.body, (inner) => {
+						if (ts.isReturnStatement(inner) && inner.expression)
+							animated.push(inner.expression);
+					});
+			}
+		}
+		for (const frames of animated)
+			for (const key of keysOf(frames))
+				if (laysOut(key.name.getText(file)))
+					out.push(hitAt(file, key, key.name.getText(file)));
+	});
+	return out;
+}
+
+// What a stylesheet animates through layout: a `transition` or
+// `transition-property` declaration naming a layout property, and a
+// `@keyframes` step setting one.
+export function cssLayoutMotion(css: string): Hit[] {
+	const out: Hit[] = [];
+	const lines = css.replace(/\/\*[\s\S]*?\*\//g, (comment) =>
+		comment.replace(/[^\n]/g, " "),
+	);
+	let inFrames = 0;
+	let depth = 0;
+	lines.split("\n").forEach((line, at) => {
+		if (/@keyframes\b/.test(line)) inFrames = depth + 1;
+		const declared = /(?:^|[;{\s])transition(?:-property)?\s*:\s*([^;}]+)/.exec(
+			line,
+		);
+		if (declared?.[1]) {
+			const moved = declared[1]
+				.split(",")
+				.map((one) => one.trim().split(/\s+/)[0] ?? "")
+				.filter((one) => one !== "" && !one.startsWith("var(") && laysOut(one));
+			if (moved.length > 0)
+				out.push({
+					line: at + 1,
+					text: `${line.trim()} (${moved.join(", ")})`,
+				});
+		}
+		if (inFrames > 0 && depth >= inFrames) {
+			for (const match of line.matchAll(/([a-z-]+)\s*:/g))
+				if (match[1] && match[1] !== "all" && laysOut(match[1]))
+					out.push({ line: at + 1, text: `${line.trim()} (${match[1]})` });
+		}
+		for (const char of line) {
+			if (char === "{") depth++;
+			else if (char === "}") {
+				depth--;
+				if (depth < inFrames) inFrames = 0;
+			}
+		}
+	});
+	return out;
 }
 
 // ── The closed lists ────────────────────────────────────────────────

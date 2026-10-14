@@ -36,8 +36,9 @@ import { Button } from "../button";
 import { Spinner } from "../spinner";
 
 const TRACK = "relative flex-row items-center min-w-0 overflow-hidden";
-// The elapsed share, its width the runtime fraction.
-const FILL = "absolute bottom-0 left-0";
+// The elapsed share: the track's full width, scaled from its start to the
+// runtime fraction, so the fill moves on the UI thread and never lays out.
+const FILL = "absolute bottom-0 left-0 right-0";
 const SENTENCE = "relative min-w-0 flex-1";
 const LEFT = "relative shrink-0";
 
@@ -66,8 +67,15 @@ function Fill(props: { run: PendingRun; now: number }) {
 	useEffect(() => {
 		if (reduced) share.value = pendingShare(run, now);
 	}, [reduced, run, now, share]);
-	const width = useAnimatedStyle(() => ({ width: `${share.value * 100}%` }));
-	return <Filled className={cn(PENDING_FILL, FILL)} style={width} />;
+	const scaled = useAnimatedStyle(() => ({
+		transform: [{ scaleX: share.value }],
+	}));
+	return (
+		<Filled
+			className={cn(PENDING_FILL, FILL)}
+			style={[{ transformOrigin: "left" }, scaled]}
+		/>
+	);
 }
 
 export interface PendingBarProps extends Closed {
