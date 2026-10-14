@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { plugin } from "@fcalell/cli";
+import { renderTsSourceFile } from "@fcalell/cli/ast";
 import { buildGraphFromDiscovered } from "@fcalell/cli/build-graph";
 import { cliSlots } from "@fcalell/cli/cli-slots";
 import type { DiscoveredPlugin } from "@fcalell/cli/discovery";
@@ -192,4 +193,51 @@ test("routing off drops the router, the mount and the route scaffolds", async ()
 	assert.deepEqual(await g.resolve(cliSlots.initScaffolds), []);
 	assert.deepEqual(await g.resolve(react.slots.topLevelRoutes), []);
 	assert.deepEqual(await g.resolve(cliSlots.postWrite), []);
+});
+
+// The options the generated `react(...)` call receives, evaluated.
+async function reactCall(): Promise<{
+	exclude: RegExp;
+	babel: {
+		plugins: [[string, { sources: (filename: string) => boolean }]];
+	};
+}> {
+	const calls = await graph().resolve(vite.slots.pluginCalls);
+	const call = calls.find(
+		(c) =>
+			c.kind === "call" &&
+			c.callee.kind === "identifier" &&
+			c.callee.name === "react",
+	);
+	assert.ok(call);
+	const source = renderTsSourceFile({
+		imports: [],
+		statements: [{ kind: "const", name: "options", value: call }],
+	});
+	return new Function("react", `${source}\nreturn options;`)((o: unknown) => o);
+}
+
+const PNPM_FCALELL =
+	"/app/node_modules/.pnpm/@fcalell+plugin-react-ui@github.com+x/node_modules/@fcalell/plugin-react-ui/src/ui/button.tsx";
+
+test("the React Compiler reaches stack's packages under node_modules and no other dependency", async () => {
+	const { exclude, babel } = await reactCall();
+	const [[name, { sources }]] = babel.plugins;
+	assert.equal(name, "babel-plugin-react-compiler");
+	const cases: Array<[string, boolean]> = [
+		["/app/src/routes/index.tsx", true],
+		[PNPM_FCALELL, true],
+		["/app/node_modules/@fcalell/ui-core/src/cn.ts", true],
+		["/app/node_modules/.pnpm/zod@4.0.0/node_modules/zod/index.js", false],
+		["/app/node_modules/react/index.js", false],
+		[
+			"/app/node_modules/.pnpm/@fcalell+x@1/node_modules/@fcalell/x/node_modules/zod/index.js",
+			false,
+		],
+	];
+	for (const [file, compiled] of cases) {
+		// Babel runs on what `exclude` leaves in, the compiler on what `sources` keeps.
+		assert.equal(!exclude.test(file), compiled, `exclude: ${file}`);
+		assert.equal(sources(file), compiled, `sources: ${file}`);
+	}
 });
