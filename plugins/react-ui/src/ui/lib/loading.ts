@@ -1,14 +1,6 @@
 import { waitStep } from "@fcalell/ui-core/wait";
-import {
-	type CSSProperties,
-	createContext,
-	useEffect,
-	useId,
-	useRef,
-	useState,
-} from "react";
-import { flushSync } from "react-dom";
-import { createSettle } from "./settle.ts";
+import { createContext, useEffect, useRef, useState } from "react";
+import { settle } from "./settle.ts";
 
 // Set by a loading `Section` or `Group` around its body: each part in it that
 // has a waiting form (a `List`, a `Prose`, a `Meter`, a `Slider`, a
@@ -21,40 +13,6 @@ export const LoadingContext = createContext(false);
 // stands in its place, undrawn: it holds the height the loaded form replaces,
 // and a waiting part never shows a half-state.
 export const VEIL = "invisible";
-
-// The page's one coordinator: the switches of a frame run together in one view
-// transition (`./settle.ts`). A running transition is any the document holds,
-// the router's among them.
-const settle = createSettle({
-	frame: (run) => requestAnimationFrame(() => run()),
-	reduced: () => matchMedia("(prefers-reduced-motion: reduce)").matches,
-	hidden: () => document.hidden,
-	running: () =>
-		(document as { activeViewTransition?: unknown }).activeViewTransition !=
-			null ||
-		document
-			.getAnimations()
-			.some((one) =>
-				(one.effect as KeyframeEffect | null)?.pseudoElement?.startsWith(
-					"::view-transition",
-				),
-			),
-	start: (update) => {
-		if (!document.startViewTransition) return undefined;
-		const moving = document.startViewTransition(update);
-		moving.ready.catch(() => {});
-		return moving;
-	},
-	flush: (run) => flushSync(run),
-});
-
-/**
- * The name a `Section` or `Group` root takes for the settle: unique to the
- * instance, so the browser moves it from its old place to its new on its own.
- */
-export function useSettleName(): CSSProperties {
-	return { viewTransitionName: `settle-${useId().replace(/[^\w-]/g, "")}` };
-}
 
 /**
  * The waiting state of a read: `waiting` is what to draw as waiting (a read
@@ -94,14 +52,24 @@ export function useWait(waiting: boolean): {
 			setStanding(false);
 			setDrawn(false);
 		};
-		if (step.kind !== "hold") return settle.request(flip);
-		let withdraw: (() => void) | undefined;
+		if (step.kind !== "hold") {
+			let live = true;
+			settle(() => {
+				if (live) flip();
+			});
+			return () => {
+				live = false;
+			};
+		}
+		let live = true;
 		const timer = setTimeout(() => {
-			withdraw = settle.request(flip);
+			settle(() => {
+				if (live) flip();
+			});
 		}, step.after);
 		return () => {
 			clearTimeout(timer);
-			withdraw?.();
+			live = false;
 		};
 	}, [waiting, standing, drawn]);
 	const on = waiting || standing;

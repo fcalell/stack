@@ -180,12 +180,19 @@ function queryProvider(opts: NativeUiOptions): ProviderSpec {
 				source: "@fcalell/plugin-api/tanstack-query",
 				named: ["QueryProvider"],
 			},
+			{
+				source: "@fcalell/plugin-native-ui/lib/settle",
+				named: ["settle"],
+			},
 			{ source: mod.source, named: [mod.export] },
 		],
 		wrap: {
 			identifier: "QueryProvider",
 			props: [
 				{ name: "client", value: { kind: "identifier", name: mod.export } },
+				// A read's first answer lands with the screen's other switches
+				// (`lib/settle.ts`).
+				{ name: "settle", value: { kind: "identifier", name: "settle" } },
 			],
 		},
 		order: 26,

@@ -102,3 +102,17 @@
 		animation-timing-function: var(--ease-in-out);
 	}
 }
+
+/* The paint (`lib/paint.tsx`): a painted part's fill, drawn after the read has
+   run `--wait-delay`, so a read answered at once paints nothing. The delay
+   holds under reduced motion; the fade snaps there. */
+@keyframes paint-in {
+	from {
+		opacity: 0;
+	}
+}
+
+@theme {
+	--animate-paint: paint-in var(--transition-duration-base) var(--ease-out)
+		var(--wait-delay) both;
+}

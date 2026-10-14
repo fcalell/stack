@@ -33,6 +33,8 @@
 		"./lib/field-wait": "./src/ui/lib/field-wait.tsx",
 		"./lib/mark": "./src/ui/lib/mark.tsx",
 		"./lib/not-found": "./src/ui/lib/not-found.tsx",
+		"./lib/paint": "./src/ui/lib/paint.tsx",
+		"./lib/read": "./src/ui/lib/read.tsx",
 		"./lib/option-wait": "./src/ui/lib/option-wait.tsx",
 		"./lib/slider-wait": "./src/ui/lib/slider-wait.tsx",
 		"./lib/words": "./src/ui/lib/words.tsx",
@@ -65,11 +67,14 @@
 	},
 	"peerDependencies": {
 		"react": "^19.3",
-		"react-dom": "^19.3"
+		"react-dom": "^19.3",
+		"@orpc/tanstack-query": "^1.14.4",
+		"@tanstack/react-query": "^5.97.0"
 	},
 	"dependencies": {
 		"@base-ui/react": "^1.8.0",
 		"@fcalell/cli": "workspace:*",
+		"@fcalell/plugin-api": "workspace:*",
 		"@fcalell/plugin-auth": "workspace:*",
 		"@fcalell/plugin-react": "workspace:*",
 		"@fcalell/plugin-screens": "workspace:*",
@@ -93,7 +98,9 @@
 	},
 	"devDependencies": {
 		"@fcalell/typescript-config": "workspace:*",
+		"@orpc/tanstack-query": "^1.14.4",
 		"@tailwindcss/cli": "^4.3.3",
+		"@tanstack/react-query": "^5.104.0",
 		"@types/node": "^25.5.0",
 		"@types/react": "^19.3.0",
 		"@types/react-dom": "^19.3.0",

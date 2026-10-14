@@ -1,7 +1,6 @@
-import { DURATION_MS } from "@fcalell/ui-core/tokens";
 import { waitStep } from "@fcalell/ui-core/wait";
 import { createContext, useEffect, useRef, useState } from "react";
-import { AccessibilityInfo, LayoutAnimation } from "react-native";
+import { settle } from "./settle";
 
 // Set by a loading `Section` or `Group` around its body: each part in it that
 // has a waiting form (a `List`, a `Prose`, a `Meter`, a `Slider`, a
@@ -14,30 +13,11 @@ export const LoadingContext = createContext(false);
 // stands in its place, undrawn, so the screen does not move when it lands.
 export const VEIL = "opacity-0";
 
-// The settle's motion (the web's view transition): the layout the flip changes
-// moves between its two places and fades in over a rung of the duration scale,
-// on the `in-out` curve. LayoutAnimation animates frames and opacity alone.
-const SETTLE = {
-	duration: DURATION_MS.base,
-	create: { type: "easeInEaseOut", property: "opacity" },
-	update: { type: "easeInEaseOut" },
-	delete: { type: "easeInEaseOut", property: "opacity" },
-} as const;
-
-// The system's reduced motion, held for the flips (they are not in a render).
-let reduced = false;
-AccessibilityInfo.isReduceMotionEnabled().then((on) => {
-	reduced = on;
-});
-AccessibilityInfo.addEventListener("reduceMotionChanged", (on) => {
-	reduced = on;
-});
-
 // The waiting state of a read: `waiting` is what to draw as waiting (a read
 // that settled inside the minimum still holds its form), `veiled` that the
 // form stands undrawn while the delay runs. The switch to the loaded form is
-// the settle: it is a state of its own, flipped after the read, with the
-// layout animation set right before it (none under reduced motion).
+// the settle (`./settle.ts`): a state of its own, flipped after the read,
+// with every other switch of that frame under one layout animation.
 export function useWait(waiting: boolean): {
 	waiting: boolean;
 	veiled: boolean;
@@ -66,16 +46,26 @@ export function useWait(waiting: boolean): {
 		}
 		if (!standing || step.kind === "drawn") return undefined;
 		const flip = () => {
-			if (!reduced) LayoutAnimation.configureNext(SETTLE);
 			setStanding(false);
 			setDrawn(false);
 		};
+		let live = true;
+		const run = () => {
+			settle(() => {
+				if (live) flip();
+			});
+		};
 		if (step.kind !== "hold") {
-			flip();
-			return undefined;
+			run();
+			return () => {
+				live = false;
+			};
 		}
-		const timer = setTimeout(flip, step.after);
-		return () => clearTimeout(timer);
+		const timer = setTimeout(run, step.after);
+		return () => {
+			clearTimeout(timer);
+			live = false;
+		};
 	}, [waiting, standing, drawn]);
 	const on = waiting || standing;
 	return { waiting: on, veiled: on && !drawn };

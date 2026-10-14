@@ -820,7 +820,8 @@ const MEASURING: Record<string, string> = {
 		"useScrolls: a region that scrolls and holds nothing tabbable takes a tab stop, which CSS cannot set",
 	"lib/media.ts":
 		"the density query, the reduced-motion query and a spacing token read for a popup's offset",
-	"lib/loading.ts": "the settle reads reduced motion to snap instead of move",
+	"lib/settle.ts":
+		"the settle reads reduced motion and the focused field to snap instead of move, and the running view transition",
 	"components/canvas/":
 		"the Canvas draws its nodes, edges and viewport from measured boxes",
 	"components/thread/index.tsx":

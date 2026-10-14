@@ -2,12 +2,8 @@ import { cn } from "@fcalell/ui-core/cn";
 import { GROUP, GROUP_ITEM } from "@fcalell/ui-core/variants";
 import { Fragment, type ReactNode, use } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import {
-	LoadingContext,
-	useSettleName,
-	useWait,
-	VEIL,
-} from "../../lib/loading.ts";
+import { LoadingContext, useWait, VEIL } from "../../lib/loading.ts";
+import { useSettleName } from "../../lib/settle.ts";
 import { ListBase } from "../list/base.tsx";
 import type { ListProps } from "../list/index.tsx";
 

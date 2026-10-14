@@ -358,8 +358,19 @@ export const reactUi = plugin("react-ui", {
 						source: "@fcalell/plugin-api/tanstack-query",
 						named: ["QueryProvider"],
 					},
+					{
+						source: "@fcalell/plugin-react-ui/lib/settle",
+						named: ["settle"],
+					},
 				],
-				wrap: { identifier: "QueryProvider" },
+				// A read's first answer lands with the page's other switches
+				// (`lib/settle.ts`).
+				wrap: {
+					identifier: "QueryProvider",
+					props: [
+						{ name: "settle", value: { kind: "identifier", name: "settle" } },
+					],
+				},
 				order: 2,
 			}),
 		),

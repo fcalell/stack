@@ -22,13 +22,9 @@ import { type ReactNode, use, useId, useMemo, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { EmptyBase, type EmptyProps } from "../../lib/empty.tsx";
 import { DEEPER, HeadingContext } from "../../lib/heading.ts";
-import {
-	LoadingContext,
-	useSettleName,
-	useWait,
-	VEIL,
-} from "../../lib/loading.ts";
+import { LoadingContext, useWait, VEIL } from "../../lib/loading.ts";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
+import { useSettleName } from "../../lib/settle.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Button } from "../button/index.tsx";

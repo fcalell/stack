@@ -814,6 +814,9 @@ importers:
       '@fcalell/cli':
         specifier: workspace:*
         version: link:../../packages/cli
+      '@fcalell/plugin-api':
+        specifier: workspace:*
+        version: link:../api
       '@fcalell/plugin-auth':
         specifier: workspace:*
         version: link:../auth
@@ -878,9 +881,15 @@ importers:
       '@fcalell/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
+      '@orpc/tanstack-query':
+        specifier: ^1.14.4
+        version: 1.14.4(@opentelemetry/api@1.9.1)(@orpc/client@1.14.4(@opentelemetry/api@1.9.1))(@tanstack/query-core@5.104.0)
       '@tailwindcss/cli':
         specifier: ^4.3.3
         version: 4.3.3
+      '@tanstack/react-query':
+        specifier: ^5.104.0
+        version: 5.104.0(react@19.3.0)
       '@types/node':
         specifier: ^25.5.0
         version: 25.9.8

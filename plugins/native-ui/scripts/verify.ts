@@ -163,6 +163,7 @@ const NATIVE_OVERLAYS = [
 	"bg-ink-disabled",
 	"bg-switch-off-hover",
 	"bg-toggle-on-hover",
+	"bg-transparent",
 	"bg-wash-press",
 	"border-edge",
 	"border-t",

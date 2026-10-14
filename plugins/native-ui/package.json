@@ -16,6 +16,8 @@
 		"./lib/glyph": "./src/ui/lib/glyph.tsx",
 		"./lib/hosts": "./src/ui/lib/hosts.tsx",
 		"./lib/not-found": "./src/ui/lib/not-found.tsx",
+		"./lib/paint": "./src/ui/lib/paint.tsx",
+		"./lib/read": "./src/ui/lib/read.tsx",
 		"./lib/option-wait": "./src/ui/lib/option-wait.tsx",
 		"./lib/parts": "./src/ui/lib/parts.tsx",
 		"./lib/raised": "./src/ui/lib/raised.tsx",
