@@ -1,6 +1,6 @@
 # Motion: the design
 
-Status: draft for the owner, 2026-10-14. The rules it builds on landed in `cbe5562` (story
+Status: draft for the owner, 2026-10-14; give, the pulse and no haptics decided the same day, the loader styles (§4.2) open. The rules it builds on landed in `cbe5562` (story
 003-329): each motion explains a change, and a size or place never animates through layout. This
 page defines, for every component of the roster, how it animates, how it answers input, how it
 waits and how it arrives (loaded, empty or failed). It is built on a fact inventory of the code as
@@ -61,7 +61,7 @@ curves `out`, `in`, `in-out` (none overshoots). New:
 | Token | Value | Use |
 | --- | --- | --- |
 | `pulse` | 1600 ms, a loop | the skeleton's breath: two loops of the spinner, slow enough to read as calm |
-| `tick` | 80 ms | the scramble's step |
+| `tick` | 70 ms | the scramble's step (solid-ui's pace) |
 | `press` | scale 0.97 | the give of a pressed filled control |
 | `lift` | scale 1.02 | a lifted canvas node |
 
@@ -161,8 +161,8 @@ drawn at least `WAIT_MIN` (500 ms). Its look gains motion:
   bars of the page in one phase (one shared clock: Web Animations started at the document
   timeline's zero on the web, one shared value on the phone), so a page breathes as one surface,
   never as a ripple of bars out of step. Reduced motion: still.
-- **Scramble.** A waiting slot that will hold a figure or an identifier (§4.2) draws a scramble in
-  its own face instead of a bar. Reduced motion: a still row of `·`.
+- **The loader.** The paint of the waiting box is the app's theme knob (§4.2): a pulse (the
+  default), a shimmer, a scramble or still.
 - **Spinner.** Where a wait has no shape (a pending act, a running status, a PendingBar with no
   end) the spinner turns on the loop, entering with an opacity fade on `fast`; it keeps turning
   under reduced motion.
@@ -215,12 +215,9 @@ the log by a rise of `pair` with opacity on `base` `out`. The log keeps followin
 while the reader is there; the Latest act enters by fade and rise on `fast` `out` and leaves on
 `fast` `in`.
 
-### haptics (phone)
+### haptics
 
-A haptic answers a commit, never a hover or a scroll: a selection tick on a toggle, a pick and a
-slider's step, a light impact on a canvas lift (the web's `vibrate(10)` today), a warning on a
-destructive decision's confirm, an error notification on a failed act's toast. The system's own
-setting governs them. (A dependency: `expo-haptics`.)
+None (decided 2026-10-14): the phone answers by sight alone, as the web does.
 
 ## 4. Waiting and arriving
 
@@ -235,23 +232,66 @@ ActionBar) names its root for the settle, so it moves in a settle like a Section
 crossfade takes the rungs. A retry's arrival rides the settle (`useWait` reads a refetch after an
 error as waiting).
 
-### 4.2 Bars, the scramble and the spinner
+### 4.2 The loader: a box the component decides, a paint the theme picks
 
-A waiting slot draws:
+The waiting form's geometry is the component's and never changes: each waiting slot is a box at
+the loaded slot's line box and a width the component decides (a hash of the list and row for a
+title, `w-figures` for a figure, the shape's own size for an avatar, a check, a field, a chart).
+That geometry is what the shift review holds (no Section heading moves between a waiting and a
+loaded form). The loader is only how that box is painted, so any loader keeps every layout the
+review holds, a scrambled title included.
 
-- **a bar** (a pulsing skeleton) where the loaded content is words in the sans face: titles,
-  names, sentences, prose, labels. A proportional face cannot scramble without its line jittering
-  every tick, and a switch from a mono scramble to sans text would jump.
-- **the scramble** where it will hold a figure or an identifier in a face whose glyphs are one
-  width: a Stat, a Stats figure, a Count, a Meter's share, a chart's total, a table's number cell,
-  a DefinitionRow value that is `copyable` (an identifier), a Code's line numbers aside (Code
-  keeps bars). The scramble draws the slot's expected count of glyphs (a figure's from its format,
-  four by default; an identifier's from the row's declared width), each place changing on its own
-  cadence at `tick` from the slot's alphabet (digits for a figure, `0-9a-f` for an identifier). On
-  arrival it decodes: the places lock left to right to the loaded glyphs across `slow`, then the
-  slot is the loaded text. Its box equals the loaded slot's (one width per glyph), so nothing moves.
-- **the spinner** where the wait has no shape (above).
+Slots come in three classes:
 
+- **text**: words in the sans face (titles, names, sentences, prose lines, labels);
+- **figure**: a number or an identifier in one-width glyphs (a Stat, a Stats figure, a Count, a
+  Meter's share, a chart's total, a table's number cell, a copyable DefinitionRow value);
+- **shape**: a box with no glyphs (avatar, icon, dot, check, radio, switch, field, bar, meter,
+  chart, an image tile, a QR tile, a canvas node).
+
+The app picks one loader for all of its waiting, a theme knob beside `accentHue` and
+`defaultMode`:
+
+```ts
+theme: { loading: "pulse" } // "pulse" | "shimmer" | "scramble" | "still"; omitted, "pulse"
+```
+
+| Loader | text | figure | shape | busy glyph | arrives | for |
+| --- | --- | --- | --- | --- | --- | --- |
+| `pulse` (default) | a bar breathing | a bar breathing | breathing | the circle | the settle's crossfade | any app; calm, the default a non-technical app never has to think about |
+| `shimmer` | a bar under a sweep | a bar under a sweep | under the sweep | the circle | the crossfade | a consumer app that wants the wait to feel quicker; one sweep crosses the whole page, not one per bar |
+| `scramble` | glyphs cycling in the mono face | digits cycling | breathing | three cycling glyphs | a decode | a technical or terminal voice (Stead) |
+| `still` | a still bar | a still bar | still | the circle | the crossfade | a quiet surface (a TV, a kiosk), or a product that wants no motion in waiting |
+
+Under reduced motion every loader draws `still`, the scramble's busy glyph standing as `···`.
+
+**The scramble.** In a text slot the box fills with glyphs from `A–Z 0–9 # % & * + = ?` in the
+mono face at the slot's type role (the role sets the line box, so the height is the text's), clipped
+to the box's width. A figure slot draws digits (an identifier's `0–9 a–f`). Each place changes on
+its own cadence around `tick` (70 ms, the solid-ui scramble's pace), so the box shimmers rather than
+flips as one. One page-wide ticker writes every scramble's text node directly (no render per tick
+on the web; Reanimated's animated text on the phone), so twenty slots cost one timer.
+
+**The decode.** On arrival the loaded text is laid out at once (its own width, its own face) and a
+wipe runs left to right across `slow`: the loaded text revealed by `clip-path`, the scramble
+continuing to the right of the edge, clipped by the same edge. Layout is the loaded one from the
+first frame and the decode is paint alone, so nothing after the slot in its line moves while it
+plays. A slot that never waited (a cached read) shows at once.
+
+**The busy glyph** (a pending act, a running status, a PendingBar with no end) follows the
+loader: three mono glyphs cycling at `tick` in a box three glyphs wide under `scramble` (solid-ui's,
+restored), the turning circle under the rest. It keeps moving under reduced motion only as the
+circle; the scramble's glyph stands as `···`, which still reads as a wait in progress.
+
+Rejected:
+
+- a loader chosen per call site (solid-ui's `Spinner kind` and an act's `spinner`): one screen
+  could mix voices, and an app author would choose on every wait;
+- a loader per region: the same mix, one level up;
+- a scramble in the text's own sans face: each tick the glyphs' widths change and the box jitters
+  inside itself.
+
+The theme knob is the one new consumer surface: one enum, defaulted, read by both platforms.
 ### 4.3 Each arrival
 
 | From waiting to | Motion |
@@ -264,7 +304,10 @@ A waiting slot draws:
 
 ## 5. Per component
 
-Each row gives what the component does beyond the move named. "answer" covers hover, press,
+Each row gives what the component does beyond the move named. In the Wait column "bars" means
+the loader's text and shape slots and "scramble" its figure slots: under `scramble` they cycle
+glyphs, under the other loaders they are bars (§4.2); "decode" is the scramble's arrival, a
+crossfade under the others. "answer" covers hover, press,
 selected, disabled and error looks; a focus ring always snaps; reduced motion always snaps.
 
 ### Atoms
@@ -284,8 +327,8 @@ selected, disabled and error looks; a focus ring always snaps; reduced motion al
 | InputOtp | answer on the boxes; the active box's ring moves with the caret at once | a digit fades in on `instant` in its box; the checking line is a line; an error edges every box on `fast` | spinner line | its owner's |
 | Select | answer on the trigger; the chevron rotates on open | layer (popover) on the web; the phone's sheet | its FormField's bars | settle |
 | Slider | answer on thumb and fill; follow while dragged; a click or a key moves at once | the value figure switches at once (it follows the hand) | bars | settle |
-| Switch | answer, toggle (the phone gains the thumb's travel); haptic | none | a bar | settle |
-| Checkbox | answer, toggle; haptic | none | a bar | settle |
+| Switch | answer, toggle (the phone gains the thumb's travel) | none | a bar | settle |
+| Checkbox | answer, toggle | none | a bar | settle |
 | Spinner | none | fades in and out on `fast` with its owner | is the wait | none |
 | Avatar | none | an image fades in on `base` over its fill when it decodes; a failed image's initials cross-fade on `fast` | a bar circle | settle |
 | Link | answer on the underline (cross-fades with `text-decoration-color` on `fast`) | none | none | none |
@@ -314,14 +357,14 @@ selected, disabled and error looks; a focus ring always snaps; reduced motion al
 | DefinitionRow | answer on an opening row | value text cross-fades on `fast` when its data changes; the copy check is a value mark; a locked reason is a line | bars, an identifier's scramble | settle |
 | FormField | the label's and control's | the error is a line, replacing the description by a cross-fade on `fast` where both exist; the answered fold and unfold are blocks | bars by the control's shape (the field stays mounted, typed text kept) | settle |
 | ItemHeader | facts that act answer | a fact the viewer's act adds is a block, one arriving fades in; the save fact cross-fades saving, saved and failed on `fast` in its held room, its Retry fading in | bars, the count's scramble | settle (named) |
-| SegmentedControl | answer, toggle (the ground slides); haptic | none | a bar | settle |
+| SegmentedControl | answer, toggle (the ground slides) | none | a bar | settle |
 | Sheet | layer (all forms as §3); the bottom sheet follows a drag | a new page (title changes) cross-fades the body on `fast` and scrolls to the top at once; the failed and blocked lines are lines; the docked sheet is a block | its body's | its body's |
-| Picker | answer on the trigger, the chevron rotates; options answer (highlight follows the keyboard or pointer at once) | layer (popover on the web's desktop, sheet on touch and the phone); filtering removes rows at once (they follow the typing); a chip added or removed in the trigger is Chip's; haptic on a pick | its FormField's | settle |
+| Picker | answer on the trigger, the chevron rotates; options answer (highlight follows the keyboard or pointer at once) | layer (popover on the web's desktop, sheet on touch and the phone); filtering removes rows at once (they follow the typing); a chip added or removed in the trigger is Chip's | its FormField's | settle |
 | Menu | items answer | layer | none | none |
 | OptionList | options answer, toggle (radio dot, checkbox) | the chosen option's children are a block (in when chosen, out when left); a reason is a line | bars by option shape | settle (named) |
 | Missing, Failed | the act answers and gives; Retry shows its pending form | none | none | arrives by the settle |
 | QueryBoundary | none | none | the caller's form, pulsing | settle (named) |
-| Toast | layer, swipe on touch and the phone; its acts | the stack closes up; haptic on a failed toast | none | none |
+| Toast | layer, swipe on touch and the phone; its acts | the stack closes up | none | none |
 | Banner | its act | enters and leaves as a block when the viewer caused it (a dismiss), fades in otherwise; its kind changing cross-fades fill and ink on `base` | none | none |
 | PendingBar | its act | the fill is a value (linear to its end, as today); entering in an ActionBar's place cross-fades on `base`; spinner to fill cross-fades on `fast`; the time left switches each second | is the wait | none |
 
@@ -345,7 +388,7 @@ selected, disabled and error looks; a focus ring always snaps; reduced motion al
 | Thread | Latest answers | stream; the waiting reply gives way to the reply by the settle's crossfade; follow stays at once; Latest fades and rises | three waiting messages | settle (named) |
 | QrCode | none | a new value cross-fades on `base` | the still tile, pulsing | settle |
 | Image | answer on the frame | the image fades in on `base` over its skeleton when it decodes (a cached image shows at once); the view opens from the thumb (layer) | a pulsing tile | settle; failed cross-fades to its glyph on `fast` |
-| Canvas (web) | nodes answer; drag and pan follow; a touch lift scales to `lift` with the float shadow fading in on `fast` and a haptic; the in-port target cross-fades | zoom acts, fit, reveal and centring travel on `base` `in-out`; crossing the text floor cross-fades card and glyph on `fast`; a landing node fades in on `base` at its place; path tones cross-fade on `base` | three pulsing node cards | settle; the graph fades in once laid out |
+| Canvas (web) | nodes answer; drag and pan follow; a touch lift scales to `lift` with the float shadow fading in on `fast` (the web's `vibrate(10)` goes); the in-port target cross-fades | zoom acts, fit, reveal and centring travel on `base` `in-out`; crossing the text floor cross-fades card and glyph on `fast`; a landing node fades in on `base` at its place; path tones cross-fade on `base` | three pulsing node cards | settle; the graph fades in once laid out |
 
 ## 6. How it is built and held
 
@@ -358,8 +401,8 @@ selected, disabled and error looks; a focus ring always snaps; reduced motion al
   move for its timing in `globals.css`; `Scramble`, `useRoll` and the pulse clock in `lib/`; the
   router's `defaultViewTransition`.
 - **Phone.** `lib/motion` gains `usePress`, `useToggle`, `useRoll`, `Scramble`, one pulse shared
-  value, the block move (LayoutAnimation, which today only the settle uses), the place fade and
-  haptics; the Spinner moves from RN `Animated` to Reanimated.
+  value, the block move (LayoutAnimation, which today only the settle uses), and the place
+  fade; the Spinner moves from RN `Animated` to Reanimated.
 - **Checks.** Each plugin's verify reads a component's moves against what it draws (the move's
   cell on the web, its hook on the phone), so a move named and not drawn, or drawn and not named,
   fails by name; `b-motion` and c39 stay. The showcase's `behaviour/` stories hold what a test can
@@ -374,14 +417,13 @@ selected, disabled and error looks; a focus ring always snaps; reduced motion al
      chips, rows).
   3. Values and figures: fills by transform (Meter and BarChart today draw `width` and `height`),
      the roll, the scramble and its decode, value marks.
-  4. Navigation (story 003-332), the canvas viewport, gestures (toast swipe), haptics.
+  4. Navigation (story 003-332), the canvas viewport, gestures (toast swipe).
 
-## 7. Open for the owner
+## 7. Decisions
 
-1. **Give.** A filled control scaling to 0.97 under a press, or fill only.
-2. **The skeleton's motion.** A pulse in one phase (proposed), a shimmer sweeping the page, or
-   still bars.
-3. **The scramble's reach.** Figures and identifiers only (proposed), or titles and names too
-   (a proportional face jitters each tick, and the switch from the scramble's face to the text's
-   would jump).
-4. **Haptics on the phone.** A new dependency (`expo-haptics`) for the commits listed in §3.
+Decided 2026-10-14: give (a filled control scales to 0.97 under a press); the skeleton pulses in
+one phase across the page; no haptics on the phone.
+
+Open: the loader (§4.2): the four loaders, the knob's name (`loading`), and whether a figure
+should scramble under `pulse` too (proposed: no, one loader is one voice; an app that wants its
+figures to scramble picks `scramble`).
