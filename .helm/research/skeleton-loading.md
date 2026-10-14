@@ -6,6 +6,9 @@ them when 004-02 and 004-03 ship; delete it then.
 
 Desk research only: docs and READMEs as published on this date. Nothing was built.
 
+Superseded 2026-10-14 by `states.md` §4: the shape is the loaded form, drawn from a placeholder
+(the cache seed, the previous data, or the output's shape emitted from the zod schema).
+
 ## Verdict
 
 Every mature system gets the skeleton's shape from one of five places. Each bends one of stack's

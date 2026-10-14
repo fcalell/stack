@@ -15,6 +15,10 @@ Working evidence: dated, drains, or gets promoted into `.helm/knowledge/`. Nothi
 - [motion.md](./motion.md): designing or building motion on any component (how it animates,
   answers input, waits and arrives), the skeleton's pulse, the scramble, a view transition or a
   phone animation; stories 003-330 and 003-332.
+- [states.md](./states.md): how any component reads, waits, fails, goes missing, stays empty,
+  refreshes, streams or acts, and how its state is subscribed (the read handle, frames that own
+  reads, the painted loaded form, the wait store, acts as promises); deleting QueryBoundary or a
+  `loading` prop; the build's six phases.
 - [skeleton-loading.md](./skeleton-loading.md): drawing a component's loading form in skeleton
   (where its shape comes from before the data), changing `List`, `QueryBoundary` or a data
   molecule's loading state, or epic 004.

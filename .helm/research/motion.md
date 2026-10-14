@@ -223,21 +223,16 @@ None (decided 2026-10-14): the phone answers by sight alone, as the web does.
 
 ### 4.1 One waiting path
 
-Every waiting form goes through `useWait`: the component that owns a `loading` (or a pending
-query) runs it, unless a waiting ancestor (`LoadingContext`) already does, in which case it draws
-its form while the ancestor's flag is up and arrives with it. Every component that can own a wait
-on its own (Section, Group, QueryBoundary, a standalone List, Table, Comparison, BarChart, Thread,
-Canvas, Stats, Stat, Code, Diff, ProseDiff, Message, Image, QrCode, OptionList, ItemHeader,
-ActionBar) names its root for the settle, so it moves in a settle like a Section does. The root
-crossfade takes the rungs. A retry's arrival rides the settle (`useWait` reads a refetch after an
-error as waiting).
+Decided in `states.md` (§3 to §5): a read's frame owns its states, one wait store per read key
+runs the delay, the minimum, the veil and the settle for every leaf of that read, and every frame
+of a read is named for the settle.
 
 ### 4.2 The loader: a box the component decides, a paint the theme picks
 
-The waiting form's geometry is the component's and never changes: each waiting slot is a box at
-the loaded slot's line box and a width the component decides (a hash of the list and row for a
-title, `w-figures` for a figure, the shape's own size for an avatar, a check, a field, a chart).
-That geometry is what the shift review holds (no Section heading moves between a waiting and a
+The waiting form's geometry is the loaded form's (`states.md` §4): each waiting slot is the
+loaded slot drawn from a placeholder (the cache seed, the previous data, or the output's shape),
+its text's own line boxes for a title, the shape's own size for an avatar, a check, a field, a
+chart. That geometry is what the shift review holds (no Section heading moves between a waiting and a
 loaded form). The loader is only how that box is painted, so any loader keeps every layout the
 review holds, a scrambled title included.
 
