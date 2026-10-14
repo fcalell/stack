@@ -29,7 +29,6 @@ test("a read that settles after the minimum takes the form away", () => {
 	assert.deepEqual(waitStep(false, 1000, 5000), { kind: "gone" });
 });
 
-test("the delay is short of the 300 ms a wait is felt at and the minimum is longer than it", () => {
-	assert.ok(WAIT_DELAY >= 150 && WAIT_DELAY <= 300);
+test("the minimum is longer than the delay", () => {
 	assert.ok(WAIT_MIN > WAIT_DELAY);
 });

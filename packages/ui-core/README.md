@@ -8,7 +8,7 @@ own CSS from the same records and ui-core stays framework-free. Three subpaths a
 `./harness` and `./structure`, internal tooling for the packages' verify scripts, and
 `./manifest`, the guide pages the UI plugins index.
 
-Twenty-four subpaths:
+Twenty-six subpaths:
 
 - `@fcalell/ui-core/tokens`: the contract as data, the sheet's every value, the knob defaults and
   the English `words`.
@@ -45,6 +45,11 @@ Twenty-four subpaths:
 - `@fcalell/ui-core/read`: `readState`, a read's phase (idle, waiting, ready, failed, missing) and flags
   (busy, stale, more, streaming, paused) from the few fields of a query's result it names, free of any
   framework and of TanStack.
+- `@fcalell/ui-core/paint`: what a part draws while its data is not here, free of any framework:
+  `paintText` (deterministic filler of a role's length), `painting` (a slot over a painted item, a
+  throw painting the slot), `WAIT_DELAY` and `PAINT_ROWS`.
+- `@fcalell/ui-core/settle`: `createSettle`, the page's one move from the painted form to the loaded
+  one: the switches asked for in a frame apply together in one view transition, or at once.
 - `@fcalell/ui-core/list-state`: what a collection decides before it draws, free of any framework:
   a `List`'s or `Table`'s state and waiting shape (`listState`, `rowShape`), a table's records,
   sort and tick logic (`tableRecords`, `sorted`, `tickable`), a tree's visible rows (`treeRows`),

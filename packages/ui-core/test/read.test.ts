@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { type ReadResult, readState } from "../src/read.ts";
+import { frameOf, type ReadResult, readState } from "../src/read.ts";
 
 const never = () => false;
 const result = (over: Partial<ReadResult>): ReadResult => ({
@@ -132,4 +132,66 @@ test("a read paused before any answer is waiting and paused", () => {
 	const s = readState(result({ ...pending, fetchStatus: "paused" }), never);
 	assert.equal(s.phase, "waiting");
 	assert.equal(s.paused, true);
+});
+
+const root = (over: Partial<ReadResult>) => ({
+	result: result(over),
+	missing: (e: unknown) => e === "gone",
+});
+
+test("a frame holding no value is ready, busy while its read refetches", () => {
+	assert.deepEqual(frameOf({}), {
+		form: "ready",
+		count: undefined,
+		busy: false,
+	});
+	assert.deepEqual(frameOf({ root: root({ fetchStatus: "fetching" }) }), {
+		form: "ready",
+		count: undefined,
+		busy: true,
+	});
+});
+
+test("a failed or missing read ends the frame whatever it draws, failed busy while it retries", () => {
+	const drawn = { painted: true, value: [] };
+	assert.deepEqual(
+		frameOf({ drawn, root: root({ ...failure, fetchStatus: "fetching" }) }),
+		{ form: "failed", count: undefined, busy: true },
+	);
+	assert.equal(
+		frameOf({ drawn, root: root({ status: "error", error: "gone" }) }).form,
+		"missing",
+	);
+});
+
+test("a painted value is waiting, or idle where the read is not asked for, and never busy", () => {
+	const drawn = { painted: true, value: undefined };
+	assert.deepEqual(frameOf({ drawn, root: root(pending) }), {
+		form: "waiting",
+		count: undefined,
+		busy: false,
+	});
+	assert.equal(
+		frameOf({
+			drawn,
+			root: root({ ...pending, isEnabled: false, fetchStatus: "idle" }),
+		}).form,
+		"idle",
+	);
+	assert.equal(frameOf({ drawn }).form, "waiting");
+});
+
+test("a real value is ready with its length, empty when it is null or holds nothing", () => {
+	const real = (value: unknown) =>
+		frameOf({ drawn: { painted: false, value } });
+	assert.deepEqual(real([1, 2]), { form: "ready", count: 2, busy: false });
+	assert.deepEqual(real([]), { form: "empty", count: 0, busy: false });
+	assert.equal(real(null).form, "empty");
+	assert.equal(real(undefined).form, "empty");
+	assert.deepEqual(real({ a: 1 }), {
+		form: "ready",
+		count: undefined,
+		busy: false,
+	});
+	assert.equal(real(0).form, "ready");
 });

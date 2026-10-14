@@ -65,3 +65,55 @@ export function readState(
 		paused: r.fetchStatus === "paused",
 	};
 }
+
+// What a frame (a Pane, Section, Sheet or Form) holds: the read it is the root
+// holder of, and the value its collection or leaf draws, painted or real.
+export interface Held {
+	drawn?: { painted: boolean; value: unknown };
+	root?: { result: ReadResult; missing: (e: unknown) => boolean };
+}
+
+// ready: the loaded tree, its leaves real. waiting: the loaded tree, its
+// leaves painted. idle: the same, the read not asked for yet. empty: the
+// answer holds nothing. failed, missing: the read ended.
+export type FrameForm =
+	| "ready"
+	| "waiting"
+	| "idle"
+	| "empty"
+	| "failed"
+	| "missing";
+
+export interface FrameState {
+	form: FrameForm;
+	// The length of a drawn list; undefined where none is drawn.
+	count: number | undefined;
+	// A refetch or a retry runs.
+	busy: boolean;
+}
+
+// The frame's form from what it holds, never from a value's change: only the
+// form, the count and busy move it.
+export function frameOf(held: Held): FrameState {
+	const s = held.root && readState(held.root.result, held.root.missing);
+	if (s?.phase === "failed" || s?.phase === "missing") {
+		return { form: s.phase, count: undefined, busy: s.busy };
+	}
+	if (!held.drawn) {
+		return { form: "ready", count: undefined, busy: s?.busy ?? false };
+	}
+	if (held.drawn.painted) {
+		return {
+			form: s?.phase === "idle" ? "idle" : "waiting",
+			count: undefined,
+			busy: false,
+		};
+	}
+	const v = held.drawn.value;
+	const count = Array.isArray(v) ? v.length : undefined;
+	return {
+		form: v == null || count === 0 ? "empty" : "ready",
+		count,
+		busy: s?.busy ?? false,
+	};
+}

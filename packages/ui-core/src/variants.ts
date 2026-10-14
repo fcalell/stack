@@ -49,6 +49,7 @@ import {
 	METER_FILL,
 	OPTION_RADIO,
 	OTP_BOX,
+	PAINT,
 	PICKER,
 	PLACE_ROW,
 	PLACE_ROW_GLYPH,
@@ -186,6 +187,7 @@ export const stepCountSegment = build(STEP_COUNT_SEGMENT);
 export const columns = build(COLUMNS);
 export const form = build(FORM);
 export const actionBar = build(ACTION_BAR);
+export const paint = build(PAINT);
 export const skeleton = build(SKELETON);
 export const skeletonRow = build(SKELETON_ROW);
 export const skeletonLane = build(SKELETON_LANE);
@@ -296,6 +298,7 @@ export const FAMILIES: readonly Family[] = [
 	family("COLUMNS", COLUMNS, columns),
 	family("FORM", FORM, form),
 	family("ACTION_BAR", ACTION_BAR, actionBar),
+	family("PAINT", PAINT, paint),
 	family("SKELETON", SKELETON, skeleton),
 	family("SKELETON_ROW", SKELETON_ROW, skeletonRow),
 	family("SKELETON_LANE", SKELETON_LANE, skeletonLane),

@@ -157,6 +157,7 @@ import {
 	METER_FILL,
 	OPTION_RADIO,
 	OTP_BOX,
+	PAINT,
 	PICKER,
 	PLACE_ROW,
 	PLACE_ROW_GLYPH,
@@ -241,6 +242,7 @@ import {
 	meterFill,
 	optionRadio,
 	otpBox,
+	paint,
 	picker,
 	placeRow,
 	placeRowGlyph,
@@ -571,6 +573,7 @@ const MATRICES: readonly Registration[] = [
 	["COLUMNS", COLUMNS, columns],
 	["FORM", FORM, form],
 	["ACTION_BAR", ACTION_BAR, actionBar],
+	["PAINT", PAINT, paint],
 	["SKELETON", SKELETON, skeleton],
 	["SKELETON_ROW", SKELETON_ROW, skeletonRow],
 	["SKELETON_LANE", SKELETON_LANE, skeletonLane],
@@ -720,7 +723,7 @@ check("c02", "package.json shape", () => {
 		Object.keys(pkg.exports ?? {})
 			.sort()
 			.join(" "),
-		"./canvas ./chart ./clock ./cn ./commit ./derive ./descriptors ./emit ./file ./format ./harness ./leave ./list-state ./manifest ./read ./reason ./roster ./route ./rules ./schema ./streaming ./structure ./tokens ./variants ./wait",
+		"./canvas ./chart ./clock ./cn ./commit ./derive ./descriptors ./emit ./file ./format ./harness ./leave ./list-state ./manifest ./paint ./read ./reason ./roster ./route ./rules ./schema ./settle ./streaming ./structure ./tokens ./variants ./wait",
 		"export subpaths",
 	);
 	assert(pkg.peerDependencies?.zod, "zod is not a peerDependency");
@@ -749,7 +752,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(SHADOW_LEVELS.length, 2, "shadow level count");
 	requireEqual(WIDTHS.length, 14, "width count");
 	requireEqual(BREAKPOINTS.length, 3, "breakpoint count");
-	requireEqual(WORD_KEYS.length, 70, "word count");
+	requireEqual(WORD_KEYS.length, 72, "word count");
 	requireEqual(COUNTED_WORD_KEYS.length, 1, "counted word count");
 	requireEqual(SLOT_WORD_KEYS.length, 4, "slot word count");
 	requireEqual(
@@ -1258,6 +1261,7 @@ check("c08", "themeTokens and modeTokens carry the right keys", () => {
 	expected.add("--default-border-width");
 	for (const rung of DURATIONS) expected.add(`--transition-duration-${rung}`);
 	expected.add("--transition-duration-loop");
+	expected.add("--wait-delay");
 	for (const easing of EASINGS) expected.add(`--ease-${easing}`);
 	expected.add("--default-transition-duration");
 	expected.add("--default-transition-timing-function");

@@ -519,7 +519,7 @@ Any other region reading a query sits in its own `QueryBoundary`, naming its loa
 draws the not-found form when every failed query answers not found.
 
 A waiting form shows only for a read that lasts. `QueryBoundary`, and a `Section` or `Group` given
-`loading` itself, draw nothing until the read has run 200 ms (the waiting form stands undrawn in its
+`loading` itself, draw nothing until the read has run 400 ms (the waiting form stands undrawn in its
 place, so the page keeps its height) and, once drawn, keep it 500 ms (`WAIT_DELAY`, `WAIT_MIN` in
 `@fcalell/ui-core/wait`). A read the local server answers in a few milliseconds draws no skeleton.
 These two numbers are fixed, not options; a part's own `loading` (a `List`, a `Meter`) is drawn as

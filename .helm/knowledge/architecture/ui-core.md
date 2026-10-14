@@ -1772,7 +1772,7 @@ a tick with no animation, never jumped to full.
   page: `Select` and `Picker` pass `modal={false}` (Base UI's select defaults to a scroll lock that
   changes the root's overflow and gutter and moves the page as the list opens), as `Menu` does; a
   sheet is modal by design.
-- A waiting form shows only for a read that lasts: `WAIT_DELAY` 200 ms
+- A waiting form shows only for a read that lasts: `WAIT_DELAY` 400 ms
   before it is drawn, `WAIT_MIN` 500 ms once drawn (`@fcalell/ui-core/wait`, one decision both
   platforms run), at `QueryBoundary` and a `Section`'s or `Group`'s own `loading`; during the
   delay the form stands undrawn in its place (`invisible` / `opacity-0`), so the page keeps its

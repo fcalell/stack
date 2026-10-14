@@ -1240,6 +1240,25 @@ export const ACTION_BAR = matrix({
 	defaultVariants: { fit: "end" },
 });
 
+// ── Paint ───────────────────────────────────────────────────────────
+
+// What a part draws while its data is not here: the filler the part would
+// hold, filled (`glyphs`: a text, figure or id slot's own line boxes, the ink
+// transparent), the part's own box with its content not drawn (`box`: a
+// mark or a block), or a control's own box with its content invisible and the
+// control inert (`control`). Each component paints its own box, so the
+// painted form measures as the loaded one.
+export const PAINT = matrix({
+	base: "bg-skeleton",
+	variants: {
+		kind: {
+			glyphs: "text-transparent rounded-chip",
+			box: "",
+			control: "border-transparent",
+		},
+	},
+});
+
 // ── Skeleton ────────────────────────────────────────────────────────
 
 // What a loading form draws in place of a part: a text line (a fraction

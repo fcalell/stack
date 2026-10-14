@@ -1705,6 +1705,20 @@ components:
     height: "{spacing.meter}"
     rounded: "{rounded.chip}"
     backgroundColor: "{colors.fill-neutral-dark}"
+  paint-glyphs:
+    backgroundColor: "{colors.skeleton}"
+    rounded: "{rounded.chip}"
+  paint-glyphs-dark:
+    backgroundColor: "{colors.skeleton-dark}"
+    rounded: "{rounded.chip}"
+  paint-box:
+    backgroundColor: "{colors.skeleton}"
+  paint-box-dark:
+    backgroundColor: "{colors.skeleton-dark}"
+  paint-control:
+    backgroundColor: "{colors.skeleton}"
+  paint-control-dark:
+    backgroundColor: "{colors.skeleton-dark}"
   skeleton-line:
     height: "{spacing.skeleton}"
     rounded: "{rounded.chip}"
@@ -2584,7 +2598,7 @@ A docked sheet's body keeps `docked-floor` (144px on touch, 96px on the desktop)
 | `IconButton` | atom | `ICON_BUTTON`, `TOOLTIP` | rest, hover, focus, active, loading |
 | `Count` | atom | `COUNT`, `COUNT_LABEL` | rest |
 | `StepCount` | atom | `STEP_COUNT`, `STEP_COUNT_SEGMENTS`, `STEP_COUNT_SEGMENT`, `TEXT.role.meta` | rest |
-| `Status` | atom | `CHANGE_MARK`, `ICON.fit.meta`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `SKELETON.kind.dot`, `SKELETON.kind.line` | rest |
+| `Status` | atom | `CHANGE_MARK`, `ICON.fit.meta`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `SKELETON.kind.dot`, `SKELETON.kind.line`, `PAINT.kind.box`, `PAINT.kind.glyphs` | rest |
 | `Chip` | atom | `CHIP`, `CHIP_LABEL`, `REMOVE_HIT` | rest, hover, focus, active |
 | `Input` | atom | `FIELD`, `FIELD_VALUE`, `FIELD_PLACEHOLDER`, `FIELD_UNIT`, `FIELD_GLYPH` | rest, hover, focus, disabled, error |
 | `FileInput` | atom | `FIELD.fit.form`, `FIELD.trailing.none`, `FIELD.trailing.act`, `FIELD.state.rest`, `FIELD.state.error`, `FIELD_VALUE.kind.text`, `FIELD_PLACEHOLDER`, `TEXT.role.meta`, `FIELD_GLYPH`, `ICON.fit.control` | rest, hover, focus, disabled, error, empty |

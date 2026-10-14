@@ -5,8 +5,10 @@
 // enough that it never blinks. Fixed, not a token or an option: one rhythm for
 // every waiting form of an app.
 
+import { WAIT_DELAY } from "./paint.ts";
+
 // How long a read runs before its waiting form is drawn (ms).
-export const WAIT_DELAY = 200;
+export { WAIT_DELAY };
 // How long a drawn waiting form stays once drawn (ms), though the read settles.
 export const WAIT_MIN = 500;
 

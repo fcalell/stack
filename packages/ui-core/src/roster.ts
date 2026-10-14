@@ -219,6 +219,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SPINNER_ARC",
 				"SKELETON.kind.dot",
 				"SKELETON.kind.line",
+				"PAINT.kind.box",
+				"PAINT.kind.glyphs",
 			],
 			holds: [
 				"STATUS",
