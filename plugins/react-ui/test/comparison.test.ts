@@ -13,18 +13,9 @@ function assertType<T extends true>(_: T): void {}
 // Every key of every member of a union.
 type Keys<U> = U extends unknown ? keyof U : never;
 
-const PROPS = [
-	"label",
-	"columns",
-	"query",
-	"sentence",
-	"empty",
-	"row",
-	"items",
-	"loading",
-] as const;
+const PROPS = ["label", "columns", "row", "items"] as const;
 
-test("a Comparison takes columns, a query or items, a row map, sentence and empty, and lists its failed and empty states", () => {
+test("a Comparison takes columns, items and a row map, and lists its loading state", () => {
 	assertType<
 		Equal<Exclude<Keys<ComparisonProps>, keyof Closed>, (typeof PROPS)[number]>
 	>(true);

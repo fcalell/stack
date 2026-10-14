@@ -1,37 +1,27 @@
+import {
+	type Datum,
+	type Drawn,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type { StatusMark } from "@fcalell/ui-core/descriptors";
-import {
-	type FactShape,
-	factShape,
-	listBusy,
-	listState,
-	retryOf,
-} from "@fcalell/ui-core/list-state";
+import { PAINT_ROWS } from "@fcalell/ui-core/paint";
 import {
 	COMPARISON_LABEL,
 	COMPARISON_ROW,
 	FIGURES,
-	lineBox,
-	skeleton,
-	skeletonLane,
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import { use } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { EmptyBase } from "../../lib/empty.tsx";
-import { LoadingContext } from "../../lib/loading.ts";
-import { useWords } from "../../lib/words.tsx";
+import { Painted } from "../../lib/paint.tsx";
+import { ChipBase } from "../chip/base.tsx";
 import { Chip } from "../chip/index.tsx";
 import { Group, type GroupItem } from "../group/index.tsx";
-import type { ListEmpty } from "../list/index.tsx";
-import { MissingBase } from "../missing/base.tsx";
-import type { QueryLike } from "../query-boundary/index.tsx";
 import { StatusBase } from "../status/base.tsx";
 import { Status } from "../status/index.tsx";
 
 const ROW = "flex items-baseline flex-wrap";
-const ROW_WAIT = "flex items-center flex-wrap";
 // The head's cell over the labels; on touch the label stands on its own line
 // over the values, so the corner leaves the layout.
 const CORNER = "basis-0 grow min-w-0 touch:hidden";
@@ -43,22 +33,8 @@ const LABEL =
 const LABEL_TEXT = "min-w-0";
 // A chip or a verdict keeps its width beside a label that wraps.
 const MARK = "inline-flex shrink-0";
-const CELL_WAIT = "flex items-center h-lh basis-0 grow min-w-0";
-const LABEL_WAIT = "flex items-center basis-0 grow min-w-0 touch:basis-full";
-const LINE_HEIGHT = "h-lh";
-// A chip stands taller than the label's line.
-const CHIP_LINE = "min-h-chip";
-// The waiting facts: four rows of a label's bar (a chip's bar and a status's
-// beside it when declared) and each column's bar, every bar a share of the
-// short-label lane of the line it stands in, so it stands at the length of a
-// typical label or value rather than of the column.
-const BAR_ROOM = "flex grow items-center";
-const LABEL_BARS = ["w-1/2", "w-1/3", "w-2/3", "w-1/2"] as const;
-const VALUE_BARS = ["w-1/3", "w-2/3", "w-1/2"] as const;
-const END_BAR = "w-1/4";
-const STATUS_BAR = "flex min-w-0";
 
-/** One function per fact slot, each called with a loaded item; the slots given are the shape the waiting facts draw. */
+/** One function per fact slot, each called with an item (over the placeholder while the facts paint); the slots given are the shape the painted facts draw. */
 export interface FactSlots<T> {
 	/** The item's React key, unique in the comparison. */
 	key: (item: T) => string;
@@ -72,90 +48,56 @@ export interface FactSlots<T> {
 	status?: (item: T) => StatusMark | undefined;
 }
 
-/** Where a comparison's items come from; the list's own source, which a List no longer takes. */
-type ListSource<T> =
-	| {
-			/** The query whose items the facts draw. */
-			query: QueryLike<readonly T[]>;
-			/** What failed to load, over the retry act (a sentence; wraps). */
-			sentence: string;
-			/** What the comparison draws when the query answers with no item. */
-			empty: ListEmpty;
-			items?: never;
-			loading?: never;
-	  }
-	| {
-			/** The items the facts draw. */
-			items: readonly T[];
-			/** The items are on their way (a compound body's loading form): the facts wait. */
-			loading?: boolean;
-			/** What the comparison draws with no item; without it an empty comparison draws nothing. */
-			empty?: ListEmpty;
-			query?: never;
-			sentence?: never;
-	  };
+/** Facts set side by side across two or three columns, from items. */
+export type ComparisonProps<T = unknown> = Closed & {
+	/** The items the facts draw: constants, or a selection, which paints `PAINT_ROWS` facts until its read lands. A selection stands in a frame (a Pane, Section, Sheet or Form given the read), which draws the comparison's failed, missing and empty forms. */
+	items: Datum<readonly T[]>;
+	/** What the columns compare, the table's accessible name (a short phrase; read aloud, never drawn). */
+	label: string;
+	/** The compared things' labels, heading the columns, known before the data (each a short phrase; wraps). */
+	columns: readonly string[];
+	/** The fact slots. */
+	row: FactSlots<T>;
+};
 
-/** Facts set side by side across two or three columns, from a query or from items. */
-export type ComparisonProps<T = unknown> = Closed &
-	ListSource<T> & {
-		/** What the columns compare, the table's accessible name (a short phrase; read aloud, never drawn). */
-		label: string;
-		/** The compared things' labels, heading the columns, known before the data (each a short phrase; wraps). */
-		columns: readonly string[];
-		/** The fact slots. */
-		row: FactSlots<T>;
-	};
-
-// A waiting fact: a label's bar (a chip's bar beside it when chips are
-// declared) and a bar per declared column.
-function FactWait(props: { shape: FactShape; index: number }) {
-	const { shape, index } = props;
+// A painted fact: a filler for its label (a chip's box and a status's painted
+// mark beside it when `row` declares them) and one under each column, the
+// facts' slots not run: their shape is the declaration's.
+function PaintedFact<T>(props: {
+	row: FactSlots<T>;
+	columns: readonly string[];
+	at: number;
+}) {
+	const { row, columns, at } = props;
 	return (
-		<div aria-hidden className={cn(COMPARISON_ROW, ROW_WAIT)}>
-			<span
-				className={cn(
-					lineBox({ role: "body" }),
-					LABEL_WAIT,
-					shape.chips ? CHIP_LINE : LINE_HEIGHT,
-				)}
-			>
+		<div inert className={cn(COMPARISON_ROW, ROW)}>
+			<span className={cn(COMPARISON_LABEL, LABEL)}>
 				<span
 					className={cn(
-						skeletonLane({ role: "body" }),
-						COMPARISON_LABEL,
-						BAR_ROOM,
+						text({ role: "body" }),
+						textStrong({ role: "body" }),
+						LABEL_TEXT,
 					)}
 				>
-					<span
-						className={cn(
-							skeleton({ kind: "line" }),
-							LABEL_BARS[index % LABEL_BARS.length],
-						)}
-					/>
-					{shape.chips ? (
-						<span className={cn(skeleton({ kind: "line" }), END_BAR)} />
-					) : null}
-					{shape.status ? (
-						<span className={cn(STATUS_BAR, END_BAR)}>
-							<StatusBase waiting="half" />
-						</span>
-					) : null}
+					<Painted role="name" at={at} />
 				</span>
-			</span>
-			{Array.from({ length: shape.values }, (_, column) => (
-				<span
-					// biome-ignore lint/suspicious/noArrayIndexKey: the columns are fixed stand-ins
-					key={column}
-					className={cn(lineBox({ role: "body" }), CELL_WAIT)}
-				>
-					<span className={cn(skeletonLane({ role: "body" }), BAR_ROOM)}>
-						<span
-							className={cn(
-								skeleton({ kind: "line" }),
-								VALUE_BARS[(index + column) % VALUE_BARS.length],
-							)}
-						/>
+				{row.chips ? (
+					<span className={MARK}>
+						<ChipBase family="neutral" label="" painted />
 					</span>
+				) : null}
+				{row.status ? (
+					<span className={MARK}>
+						<StatusBase painted />
+					</span>
+				) : null}
+			</span>
+			{columns.map((column, index) => (
+				<span
+					key={column}
+					className={cn(text({ role: "body" }), FIGURES, COLUMN)}
+				>
+					<Painted role="phrase" at={at + index} />
 				</span>
 			))}
 		</div>
@@ -214,44 +156,20 @@ function Fact<T>(props: {
 	);
 }
 
-/** A Group of its own rows: a head row of `columns` at meta 500, then each fact's label at body 500 (its chips beside it, then its `status` verdict, a Status read out in the row, a passing fact drawing none) and its values in equal columns, a wrapped value keeping its row's air. On touch the label stands on its own line over the values, the verdict on that line. No column is the accent's; nothing is a selection. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, the head stands over four waiting facts, each a bar per column, a chips bar when `row` declares chips and a status bar when it declares `status`; a query that answers not found draws the missing form saying it no longer exists with Back, never Retry; a failed query draws the failed form with `sentence` and Retry; no item draws `empty`; then one row per fact. */
+/** A Group of its own rows: a head row of `columns` at meta 500, then each fact's label at body 500 (its chips beside it, then its `status` verdict, a Status read out in the row, a passing fact drawing none) and its values in equal columns, a wrapped value keeping its row's air. On touch the label stands on its own line over the values, the verdict on that line. No column is the accent's; nothing is a selection. While the `items` selection's read waits, the head (the declared columns) stands over `PAINT_ROWS` painted facts: a filler for the label and each column, a chip's box when `row` declares chips and a painted verdict when it declares `status`, inert. The frame around it draws the rest: the failed form with Retry, the missing form, the empty form. */
 export function Comparison<T>(props: ComparisonProps<T>) {
-	const words = useWords();
-	const input = {
-		query: props.query,
-		items: props.items,
-		loading: props.loading,
-		sectionLoading: use(LoadingContext),
-		hasEmpty: props.empty !== undefined,
-	};
-	const state = listState(input);
+	const [drawn] = useSelections([props.items] as const);
+	const { painted } = drawn as Drawn<readonly T[]>;
 	const { columns, row } = props;
-	if (state === "missing") return <MissingBase fit="frame" />;
-	if (state === "failed" && props.query !== undefined) {
-		return (
-			<EmptyBase
-				fit="frame"
-				tone="failed"
-				sentence={props.sentence}
-				act={{ label: words.retry, onAct: retryOf(props.query) }}
-			/>
-		);
-	}
-	if (state === "empty" && props.empty)
-		return <EmptyBase fit="frame" tone="rest" {...props.empty} />;
-	const items = (props.query ? props.query.data : props.items) ?? [];
-	if (state === "loaded" && items.length === 0) return null;
-	const shape = factShape(columns, row);
-	const facts: GroupItem[] =
-		state === "pending"
-			? LABEL_BARS.map((width, index) => ({
-					key: width + String(index),
-					row: <FactWait shape={shape} index={index} />,
-				}))
-			: items.map((item) => ({
-					key: row.key(item),
-					row: <Fact item={item} row={row} columns={columns} />,
-				}));
+	const facts: GroupItem[] = painted
+		? Array.from({ length: PAINT_ROWS }, (_, at) => ({
+				key: `waiting-${at}`,
+				row: <PaintedFact row={row} columns={columns} at={at} />,
+			}))
+		: (drawn.value as readonly T[]).map((item) => ({
+				key: row.key(item),
+				row: <Fact item={item} row={row} columns={columns} />,
+			}));
 	const header = (
 		// biome-ignore lint/a11y/useSemanticElements: a Group's rows, which no native table element can hold
 		// biome-ignore lint/a11y/useFocusableInteractive: a read row
@@ -279,11 +197,7 @@ export function Comparison<T>(props: ComparisonProps<T>) {
 	// own boxes; none is focusable, the facts are read, never acted on.
 	return (
 		// biome-ignore lint/a11y/useSemanticElements: a Group's rows, which no native table element can hold
-		<div
-			role="table"
-			aria-label={props.label}
-			aria-busy={listBusy(input) || undefined}
-		>
+		<div role="table" aria-label={props.label}>
 			<Group loading={false} items={[{ key: "head", row: header }, ...facts]} />
 		</div>
 	);

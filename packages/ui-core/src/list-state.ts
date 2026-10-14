@@ -17,6 +17,7 @@ import type {
 	TableColumn,
 	TableRowSlots,
 } from "./descriptors.ts";
+import { painting } from "./paint.ts";
 import { METER_NEAR, type Words } from "./tokens.ts";
 
 export type ListState = "pending" | "failed" | "missing" | "empty" | "loaded";
@@ -250,28 +251,6 @@ export function waitLine(slots: {
 	return slots.meta !== undefined ? "meta" : "none";
 }
 
-// The bars a waiting Comparison's fact draws, known before any item: one
-// value bar per declared column, a chips bar when its `row` map declares
-// chips, and a status bar when it declares `status`.
-export interface FactShape {
-	values: number;
-	chips: boolean;
-	status: boolean;
-}
-
-// The waiting fact's shape from the declared columns and the `row` map's
-// slots, read by key: no slot function runs.
-export function factShape(
-	columns: readonly string[],
-	slots: { chips?: unknown; status?: unknown },
-): FactShape {
-	return {
-		values: columns.length,
-		chips: slots.chips !== undefined,
-		status: slots.status !== undefined,
-	};
-}
-
 // What a waiting field is told of the field it stands in for, known before
 // its data: the form its control gives it (a switch at its label's end, a
 // checkbox on its label's first line, a slider that labels itself, an option
@@ -502,23 +481,27 @@ export interface TableRecord {
 }
 
 // The Table's rows: each item through the row map, every column's `cell` and
-// the reasons its choice gives.
+// the reasons its choice gives. Over the painted items (the placeholder) a
+// slot that throws paints as the item itself, never throws the page.
 export function tableRecords<T>(
 	items: readonly T[],
 	columns: readonly TableColumn<T>[],
 	row: TableRowSlots<T>,
 	choose?: TableChoice<T>,
+	painted = false,
 ): TableRecord[] {
+	const slot = <R>(fn: (item: T) => R, item: T): R =>
+		painted ? (painting(fn, item) as R) : fn(item);
 	return items.map((item) => ({
-		id: row.id(item),
-		href: row.href?.(item),
-		locked: row.locked?.(item),
-		warning: row.warning?.(item),
-		change: row.change?.(item),
-		blocked: choose?.blocked?.(item),
-		moved: choose?.moved?.(item),
+		id: slot(row.id, item),
+		href: row.href && slot(row.href, item),
+		locked: row.locked && slot(row.locked, item),
+		warning: row.warning && slot(row.warning, item),
+		change: row.change && slot(row.change, item),
+		blocked: choose?.blocked && slot(choose.blocked, item),
+		moved: choose?.moved && slot(choose.moved, item),
 		cells: Object.fromEntries(
-			columns.map((column) => [column.key, column.cell(item)]),
+			columns.map((column) => [column.key, slot(column.cell, item)]),
 		),
 	}));
 }

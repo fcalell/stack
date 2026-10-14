@@ -116,3 +116,11 @@
 	--animate-paint: paint-in var(--transition-duration-base) var(--ease-out)
 		var(--wait-delay) both;
 }
+
+/* A painted text clips at its slot's edge where a loaded one ends in an
+   ellipsis: the filler is no words to be cut short, and a visible "…" on it
+   reads as data. `Painted` sits directly in its slot's text element. Unlayered,
+   so it stands over the `truncate` utility. */
+:has(> [data-painted]) {
+	text-overflow: clip;
+}

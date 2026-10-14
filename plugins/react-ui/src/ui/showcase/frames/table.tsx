@@ -1,3 +1,4 @@
+import type { Read } from "@fcalell/plugin-api/tanstack-query";
 import type {
 	CellValue,
 	ChangeCell,
@@ -10,12 +11,13 @@ import { type ReactNode, useLayoutEffect, useRef, useState } from "react";
 import { ActionBar } from "../../components/action-bar/index.tsx";
 import { Pane } from "../../components/pane/index.tsx";
 import { Place } from "../../components/place/index.tsx";
-import type { QueryLike } from "../../components/query-boundary/index.tsx";
 import { Table } from "../../components/table/index.tsx";
 import { PortalContainer } from "../../lib/portal.ts";
 import { ago } from "../ago.ts";
 import type { ShowcaseFrame } from "../cells.ts";
+import { itemsAt } from "../waiting.ts";
 import { key, Stage } from "./overlay-stage.tsx";
+import { isPaint } from "./painted.tsx";
 import { Column } from "./place.tsx";
 
 const act = () => {};
@@ -218,21 +220,6 @@ const TASKS: Task[] = [
 	},
 ];
 
-// The frame's query in its state over the tasks it holds: pending while
-// loading, failed on error, none when empty, else the tasks.
-function queryOf(
-	state: ShowcaseFrame["state"],
-	tasks: readonly Task[],
-): QueryLike<readonly Task[]> {
-	const answered = state !== "loading" && state !== "error";
-	return {
-		data: answered ? (state === "empty" ? [] : tasks) : undefined,
-		isPending: state === "loading",
-		isError: state === "error",
-		refetch: act,
-	};
-}
-
 // What a cell draws of the table: its columns by key (in the table's order,
 // the leading one always) and its rows by id, drawn in the frame's state.
 // `ready` drives the frame once it mounts, and is one function for the life of
@@ -252,9 +239,12 @@ const WHOLE: Part = {
 };
 
 // The frame's table over the part's columns and rows, with its edits held in
-// the frame's own state. The first row is the open record when selected.
+// the frame's own state. The first row is the open record when selected. A
+// `read` is the tasks as a read still to land, which the Pane holds and the
+// table paints.
 function Tasks(props: {
 	part?: Part;
+	read?: Read<readonly Task[]>;
 	// The state of the selection bar docked at the page's foot, which makes
 	// the page a publish page: the bar reads the chosen count, and while it
 	// is `disabled` nothing is chosen and the act is blocked.
@@ -262,6 +252,7 @@ function Tasks(props: {
 	state: ShowcaseFrame["state"];
 }) {
 	const part = props.part ?? WHOLE;
+	const { read } = props;
 	const choosing = part.choosing || props.publish !== undefined;
 	const row = part.changes || choosing ? CHANGE_SET : ROW;
 	const [tasks, setTasks] = useState(TASKS);
@@ -326,18 +317,23 @@ function Tasks(props: {
 		: [{ icon: "Plus" as const, label: "New task", onAct: act }];
 	return (
 		<Place>
-			<Pane title="Cron tasks" actions={actions} foot={foot}>
+			<Pane
+				title="Cron tasks"
+				actions={actions}
+				foot={foot}
+				read={read}
+				failed="Cron tasks did not load."
+				empty={empty}
+			>
 				{part.readOnly ? (
 					<Table columns={columns} items={shown} row={row} onOpen={act} />
 				) : (
 					<Table
 						columns={columns}
-						query={queryOf(props.state, shown)}
-						sentence="Cron tasks did not load."
+						items={read ?? shown}
 						row={row}
 						selected={props.state === "selected" ? part.rows[0] : undefined}
 						choose={choose}
-						empty={empty}
 						onOpen={act}
 						onEdit={change}
 					/>
@@ -439,6 +435,11 @@ const standing = (kind: ChangeKind) =>
 const SORTED = only(["retries", "updated"], ["backup", "invoices", "reindex"], {
 	ready: byRetries,
 });
+const PAINTED = only(
+	["schedule", "queue", "retries", "alerts", "last", "updated"],
+	["backup", "invoices"],
+	{ choosing: true },
+);
 const CELL_PARTS: ReadonlyArray<readonly [string, Part]> = [
 	...TASKS.map(
 		(task) =>
@@ -515,9 +516,8 @@ const CELL_PARTS: ReadonlyArray<readonly [string, Part]> = [
 		"TABLE_HEAD_LABEL",
 		only(["retries", "updated"], ["backup", "invoices", "reindex"]),
 	],
-	["SKELETON.kind.line", only(["schedule"], ["backup"])],
-	["SKELETON.kind.check", only(["alerts"], ["backup"])],
-	["SKELETON.kind.dot", only(["last"], ["backup"])],
+	// The painted cells of each column kind, loaded beside painted (below).
+	["PAINT", PAINTED],
 ];
 const COMMON = only(
 	["retries", "last", "updated"],
@@ -527,19 +527,39 @@ const COMMON = only(
 	},
 );
 
-// A skeleton cell is the waiting form itself, so it draws it at rest too.
-const waits = (cell: string) => cell.startsWith("SKELETON");
-
 // The Table on the part each cell names, in the frame's state: the open record
-// selected, pending, failed, empty. The picked edit holds in a stage: the
-// queue's chips in the popover, or on touch in the pick sheet, held inside
-// the frame.
+// selected, or painted while its read waits. The picked edit holds in a stage:
+// the queue's chips in the popover, or on touch in the pick sheet, held inside
+// the frame. A `PAINT` cell draws the part loaded and the same part painted.
 export function drawTable(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
 	const part =
 		CELL_PARTS.find(([prefix]) => cell.startsWith(prefix))?.[1] ?? COMMON;
-	const state = waits(cell) && frame.state === "rest" ? "loading" : frame.state;
-	const tasks = <Tasks part={part} state={state} />;
+	const rows = part.rows.flatMap((id) =>
+		TASKS.filter((task) => task.id === id),
+	);
+	const painted = (
+		<Tasks
+			part={part}
+			state="loading"
+			read={itemsAt(`${frame.id}/painted`, "loading", rows)}
+		/>
+	);
+	if (isPaint(frame)) {
+		if (frame.state !== "rest") return undefined;
+		return (
+			<Column>
+				<Tasks part={part} state="rest" />
+				{painted}
+			</Column>
+		);
+	}
+	const tasks =
+		frame.state === "loading" ? (
+			painted
+		) : (
+			<Tasks part={part} state={frame.state} />
+		);
 	if (cell === "FIELD.trailing.none")
 		return (
 			<Stage contain={frame.density === "touch"} ready={part.ready}>

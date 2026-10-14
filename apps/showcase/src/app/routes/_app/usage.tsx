@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@fcalell/plugin-api/tanstack-query";
+import { useMutation } from "@fcalell/plugin-api/tanstack-query";
 import {
 	BarChart,
 	type BarSlots,
@@ -31,14 +31,14 @@ const BAR: BarSlots<Day> = {
 // The projects a week's requests are split by.
 const PROJECTS = ["acme-web", "acme-api", "acme-docs"];
 
-// Each section reads its own query and draws that query's states, so a
-// failure stays in its section.
+// Each section reads its own query and holds it as its frame, so a failure
+// stays in its section.
 function Usage() {
 	const meters = orpc.usage.meters.read();
-	const requests = useQuery(orpc.usage.requests.queryOptions());
-	const minutes = useQuery(orpc.usage.minutes.queryOptions());
-	const cron = useQuery(orpc.usage.cron.queryOptions());
-	const plan = useQuery(orpc.usage.plan.queryOptions());
+	const requests = orpc.usage.requests.read();
+	const minutes = orpc.usage.minutes.read();
+	const cron = orpc.usage.cron.read();
+	const plan = orpc.usage.plan.read();
 	const upgrade = useMutation(orpc.usage.upgrade.mutationOptions());
 	return (
 		<Place>
@@ -69,14 +69,14 @@ function Usage() {
 				<Section
 					title="Requests"
 					description="Per day this week, by project."
-					loading={requests.isPending}
+					read={requests}
+					failed="Requests did not load."
+					empty={{ sentence: "No request reached a project this week." }}
 				>
 					<BarChart
 						label="Requests per day this week, by project"
 						keys={PROJECTS}
-						query={requests}
-						sentence="Requests did not load."
-						empty={{ sentence: "No request reached a project this week." }}
+						items={requests}
 						bar={BAR}
 						unit="requests"
 					/>
@@ -84,13 +84,13 @@ function Usage() {
 				<Section
 					title="Build minutes"
 					description="Per day, the last 30 days."
-					loading={minutes.isPending}
+					read={minutes}
+					failed="Build minutes did not load."
+					empty={{ sentence: "No build ran in the last 30 days." }}
 				>
 					<BarChart
 						label="Build minutes per day, Sep 3 to Oct 2"
-						query={minutes}
-						sentence="Build minutes did not load."
-						empty={{ sentence: "No build ran in the last 30 days." }}
+						items={minutes}
 						bar={BAR}
 						unit="minutes"
 					/>
@@ -98,13 +98,13 @@ function Usage() {
 				<Section
 					title="Cron runs"
 					description="Per day this week."
-					loading={cron.isPending}
+					read={cron}
+					failed="Cron runs did not load."
+					empty={{ sentence: "Nothing ran on a schedule this week." }}
 				>
 					<BarChart
 						label="Cron runs per day this week"
-						query={cron}
-						sentence="Cron runs did not load."
-						empty={{ sentence: "Nothing ran on a schedule this week." }}
+						items={cron}
 						bar={BAR}
 						unit="runs"
 					/>
@@ -112,7 +112,9 @@ function Usage() {
 				<Section
 					title="Plan"
 					description="What moving to Business changes."
-					loading={plan.isPending}
+					read={plan}
+					failed="The plan change did not load."
+					empty={{ sentence: "Moving to Business changes nothing." }}
 					act={{
 						label: "Move to Business",
 						onAct: () =>
@@ -133,9 +135,7 @@ function Usage() {
 					<Comparison
 						label="Plan change"
 						columns={["Team, now", "Business"]}
-						query={plan}
-						sentence="The plan change did not load."
-						empty={{ sentence: "Moving to Business changes nothing." }}
+						items={plan}
 						row={{
 							key: (fact) => fact.label,
 							label: (fact) => fact.label,

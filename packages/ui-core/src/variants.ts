@@ -641,15 +641,13 @@ export const COMPARISON_LABEL = "gap-inside";
 // leading text meets the title over it; its columns read at body. A cell is
 // the row's height behind a transparent side border, so the `Input` that
 // edits it in place (the field's bar fit) puts its text where the cell's
-// stands. The frozen leading column's cell stands on the surface. An empty
-// grid's empty form stands a page inset under its header, across its width.
+// stands. The frozen leading column's cell stands on the surface.
 // A change cell's values and the arrow between them stand an inside gap
 // apart, the arrow in the meta ink (the values' inks are `TABLE_CHANGE_VALUE`).
 export const TABLE_FRAME = "-mx-control-x";
 export const TABLE = "text-body";
 export const TABLE_CELL = "min-h-row border-x border-transparent px-control-x";
 export const TABLE_FROZEN = "bg-surface";
-export const TABLE_EMPTY = "pt-page";
 export const TABLE_CHANGE = "gap-inside text-ink-meta";
 // A leading cell's name and its warning a gap apart.
 export const TABLE_NAME = "gap-inside";

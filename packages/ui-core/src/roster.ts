@@ -2348,33 +2348,20 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// A Group of its own rows (not list rows, so a wrapped value keeps its air);
 		// on touch the label stands on its own line over the values. A
-		// collection: its facts from `query` or `items` through a `row` map, its
-		// head from the declared `columns`, so its waiting facts draw a bar per
-		// column under the real head; its failed and empty forms its own.
+		// collection: its facts from `items` through a `row` map, its head from the
+		// declared `columns`, so its painted facts stand under the real head;
+		// its failed, missing and empty forms are the frame's.
 		// A fact's `status` is its verdict, a Status in the label's line after
 		// its chips; a passing fact gives none, or a done one where the screen
 		// wants the pass read.
 		Comparison: {
-			props: [
-				"label",
-				"columns",
-				"query",
-				"sentence",
-				"empty",
-				"row",
-				"items",
-				"loading",
-			],
+			props: ["label", "columns", "row", "items"],
 			draws: [
 				"CHIP.family.neutral",
 				"CHIP.trailing.none",
 				"CHIP_LABEL.family.neutral",
 				"COMPARISON_LABEL",
 				"COMPARISON_ROW",
-				"LINE_BOX.role.body",
-				"SKELETON.kind.dot",
-				"SKELETON.kind.line",
-				"SKELETON_LANE.role.body",
 				"STATUS",
 				"STATUS_DOT",
 				"STATUS_LABEL",
@@ -2383,9 +2370,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"TEXT.role.meta",
 				"TEXT_STRONG.role.body",
 				"TEXT_STRONG.role.meta",
+				"PAINT.kind.box",
+				"PAINT.kind.glyphs",
 			],
 			holds: ["COMPARISON_ROW", "COMPARISON_LABEL"],
-			states: ["rest", "loading", "error", "empty"],
+			states: ["rest", "loading"],
 			owns: {
 				roles: ["meta", "body", "caption"],
 				colors: [
@@ -2406,9 +2395,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		// The grid from tablet up, a cell cursor its keyboard; below tablet a List of
-		// ListRows with the sort a Picker above it. It takes `query` (with
-		// `sentence`) or `items`, each column reading its cell from the item and
-		// `row` the row's own slots, and draws its four states. It sorts in its
+		// ListRows with the sort a Picker above it. It takes `items`, constants or
+		// a selection, each column reading its cell from the item and `row` the
+		// row's own slots; while the selection's read waits it paints `PAINT_ROWS`
+		// rows over the constant header, each cell by its column's kind, inert,
+		// and its failed, missing and empty forms are the frame's. It sorts in its
 		// own state (descending, ascending, off); `onEdit` requires `onOpen`, and
 		// with `onOpen` the leading column never edits. A row's `change` slot draws
 		// the change mark ahead of the leading cell's name (a `ListRow` change
@@ -2425,16 +2416,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		Table: {
 			props: [
 				"columns",
-				"query",
-				"sentence",
 				"items",
-				"loading",
 				"row",
 				"selected",
 				"choose",
 				"onOpen",
 				"onEdit",
-				"empty",
 			],
 			draws: [
 				"CHECKBOX",
@@ -2450,9 +2437,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ICON.fit.body",
 				"ICON.fit.meta",
 				"LOCK_GLYPH",
-				"SKELETON.kind.check",
-				"SKELETON.kind.dot",
-				"SKELETON.kind.line",
 				"SPINNER",
 				"SPINNER_ARC",
 				"SPINNER_TRACK",
@@ -2469,7 +2453,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"TABLE_CHANGE_VALUE.kind.after",
 				"TABLE_CHANGE_VALUE.kind.before",
 				"TABLE_CHANGE_VALUE.kind.removed",
-				"TABLE_EMPTY",
 				"TABLE_FRAME",
 				"TABLE_FROZEN",
 				"TABLE_FROZEN_CELL",
@@ -2480,6 +2463,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"TEXT.role.code",
 				"TEXT.role.meta",
 				"TEXT_STRONG.role.body",
+				"PAINT.kind.box",
+				"PAINT.kind.glyphs",
+				"PAINT.kind.control",
 			],
 			holds: [
 				"TABLE_FRAME",
@@ -2493,9 +2479,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"TABLE_HEAD_LABEL",
 				"TABLE_FROZEN",
 				"TABLE_FROZEN_CELL",
-				"TABLE_EMPTY",
 			],
-			states: [...PRESS, "loading", "error", "selected", "empty"],
+			states: [...PRESS, "loading", "selected"],
 			owns: {
 				roles: ["body", "meta", "code", "caption"],
 				colors: [
@@ -2929,25 +2914,15 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		// A collection: columns over time in the chip marks, stacked by one
-		// dimension, its bars from `query` or `items` through the `bar` map;
+		// dimension, its bars from `items` through the `bar` map;
 		// `label` names the plot on the web; `keys` names the stack's parts in
 		// order, so the legend and each part's mark stand before the data does;
 		// `level` says the bars are a level, so its head draws the last bar, not
-		// the sum. Its failed and empty forms are its own, at its loaded
-		// height.
+		// the sum. While its read waits the total and the legend's figures are
+		// painted, the plot one painted box at its loaded height; its failed,
+		// missing and empty forms are the frame's.
 		BarChart: {
-			props: [
-				"label",
-				"keys",
-				"unit",
-				"level",
-				"query",
-				"sentence",
-				"empty",
-				"bar",
-				"items",
-				"loading",
-			],
+			props: ["label", "keys", "unit", "level", "bar", "items"],
 			draws: [
 				"CHART",
 				"CHART_BAND",
@@ -2963,13 +2938,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"CHART_TICK_LANE",
 				"CHART_TOTAL",
 				"FIGURES",
-				"LINE_BOX.role.body",
 				"LINE_BOX.role.meta",
-				"SKELETON.kind.chart",
-				"SKELETON.kind.line",
 				"TEXT.role.body",
 				"TEXT.role.meta",
 				"TEXT_STRONG.role.body",
+				"PAINT.kind.box",
+				"PAINT.kind.glyphs",
 			],
 			holds: [
 				"CHART",
@@ -2986,7 +2960,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"CHART_PART_SPLIT",
 				"CHART_TICK_LANE",
 			],
-			states: ["rest", "loading", "error", "empty"],
+			states: ["rest", "loading"],
 			owns: {
 				roles: ["body", "meta"],
 				colors: ["ink-body", "ink-meta", "edge", "skeleton", "chart-"],

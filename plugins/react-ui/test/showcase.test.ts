@@ -9,7 +9,9 @@ test("every roster component has frames, and every cell id is unique", () => {
 	const drawn = new Set(showcaseFrames().map((frame) => frame.component));
 	for (const [, name] of rosterEntries()) assert.ok(drawn.has(name), name);
 	assert.ok(ids.includes("Button/BUTTON.act.primary/rest/light/touch"));
-	assert.ok(ids.includes("Table/TABLE_ROW.state.selected/empty/dark/desktop"));
+	assert.ok(
+		ids.includes("Table/TABLE_ROW.state.selected/loading/dark/desktop"),
+	);
 	assert.ok(ids.includes("Pane/TEXT.role.title/rest/light/touch"));
 	assert.ok(ids.includes("Place/base/rest/dark/desktop"));
 	assert.ok(

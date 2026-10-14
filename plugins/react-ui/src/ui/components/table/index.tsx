@@ -1,4 +1,9 @@
 import { Field } from "@base-ui/react/field";
+import {
+	type Datum,
+	type Drawn,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type {
 	CellValue,
@@ -20,8 +25,6 @@ import {
 	chooseRow,
 	isChangeCell,
 	isStatusCell,
-	listState,
-	retryOf,
 	type Sort,
 	shown as shownWith,
 	sorted,
@@ -30,13 +33,12 @@ import {
 	tickable,
 	touchMeta,
 } from "@fcalell/ui-core/list-state";
+import { PAINT_ROWS } from "@fcalell/ui-core/paint";
 import {
 	FIGURES,
-	skeleton,
 	TABLE,
 	TABLE_CELL,
 	TABLE_CHANGE,
-	TABLE_EMPTY,
 	TABLE_FRAME,
 	TABLE_FROZEN,
 	TABLE_NAME,
@@ -62,33 +64,30 @@ import {
 import { age } from "../../lib/age.ts";
 import { useClock } from "../../lib/clock.ts";
 import type { Closed } from "../../lib/closed.ts";
-import { EmptyBase } from "../../lib/empty.tsx";
 import type { CellFit } from "../../lib/field.ts";
 import { PageTitle } from "../../lib/frame.ts";
-import { LoadingContext } from "../../lib/loading.ts";
 import { useTouch } from "../../lib/media.ts";
 import { follow, navigate } from "../../lib/navigate.ts";
 import { usePageTablet } from "../../lib/page.ts";
+import { Painted } from "../../lib/paint.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { CheckboxBase } from "../checkbox/base.tsx";
 import { Checkbox } from "../checkbox/index.tsx";
+import { ChipBase } from "../chip/base.tsx";
 import { Chip } from "../chip/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { InputBase } from "../input/base.tsx";
 import { ListBase } from "../list/base.tsx";
-import type { ListEmpty, RowSlots } from "../list/index.tsx";
+import type { RowSlots } from "../list/index.tsx";
 import { LockMark } from "../list-row/lock.tsx";
 import { WarningMark } from "../list-row/marks.tsx";
-import { MissingBase } from "../missing/base.tsx";
 import { PickerBase } from "../picker/base.tsx";
-import type { QueryLike } from "../query-boundary/index.tsx";
 import { StatusBase } from "../status/base.tsx";
 import { ChangeMark } from "../status/change.tsx";
 import { Status } from "../status/index.tsx";
 
-// The table fills what its page's body leaves, so an empty one's page form
-// centres under the header. From `tablet` of its page the grid stands; below
-// it the rows are a list under the sort's pick. Only the live form mounts,
+// The table fills what its page's body leaves. From `tablet` of its page the
+// grid stands; below it the rows are a list under the sort's pick. Only the live form mounts,
 // chosen from the page's width (`usePageTablet`).
 const ROOT = "flex flex-col grow";
 const FORM = "flex flex-col grow";
@@ -132,19 +131,16 @@ const GLYPH_HINT =
 // The cell cursor rings inward; the grid holds one cell at tabindex 0.
 const BODY_CELL =
 	"p-0 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring";
-const SKELETON_CELL = "p-0";
 const CELL = "flex items-center gap-inside min-w-0";
 const CELL_END = "justify-end";
 const VALUE = "truncate";
+const NOOP = () => {};
 const CHANGE = "flex items-center min-w-0";
 // The leading cell's change mark and the name (with the reason under it) side
 // by side, the mark centred on the name's own line.
 const CHANGE_LEAD = "flex items-start min-w-0";
 const MARK_LINE = "flex shrink-0 items-center h-line-body";
 const TICK = "flex shrink-0 text-ink-body";
-// The empty slot spans the grid: its page form centres in what the page's body
-// leaves.
-const EMPTY = "flex flex-col grow";
 // A row that opens washes under the pointer and the press, the open record a
 // step darker under the pointer; its frozen cell repeats the wash over its
 // own surface.
@@ -170,37 +166,9 @@ const WIDTH: Record<NonNullable<TableColumn["width"]>, string> = {
 };
 const TOUCH_WIDTH = "touch:w-measure-short";
 
-// Five loading rows, each bar at a share of its cell: a number's at a
-// quarter, the others by row and by their place among the bars.
-const LOADING_BARS = [
-	["w-2/3", "w-1/2", "w-1/3", "w-1/2", "w-1/2"],
-	["w-1/2", "w-2/3", "w-1/2", "w-1/3", "w-2/3"],
-	["w-3/4", "w-1/2", "w-1/3", "w-1/2", "w-1/3"],
-	["w-1/2", "w-1/3", "w-1/2", "w-1/3", "w-1/2"],
-	["w-2/3", "w-1/2", "w-1/3", "w-1/2", "w-2/3"],
-] as const;
-const NUMBER_BAR = "w-1/4";
-
-/** Where a table's records come from. */
-type TableSource<T> =
-	| {
-			/** The query whose items the rows draw. */
-			query: QueryLike<readonly T[]>;
-			/** What failed to load, over the retry act (a sentence; wraps). */
-			sentence: string;
-			items?: never;
-			loading?: never;
-	  }
-	| {
-			/** The items the rows draw. */
-			items: readonly T[];
-			/** The items are on their way (a compound body's loading form): the rows wait. */
-			loading?: boolean;
-			query?: never;
-			sentence?: never;
-	  };
-
 interface TableBase<T> extends Closed {
+	/** The items the rows draw: constants, or a selection, which paints `PAINT_ROWS` rows until its read lands. A selection stands in a frame (a Pane, Section, Sheet or Form given the read), which draws the table's failed, missing and empty forms. */
+	items: Datum<readonly T[]>;
 	/** The columns in order, the first the row's name, each reading its cell from the item. */
 	columns: readonly TableColumn<T>[];
 	/** The row's own slots, each read from the item. */
@@ -209,8 +177,6 @@ interface TableBase<T> extends Closed {
 	selected?: string;
 	/** The rows the viewer ticks: a tick column leads the grid (its head tick over the rows that can be ticked) and, below `tablet`, each row's leading is its tick. `chosen` is the ticked ids and `onChange` hears the set a tick makes, which the consumer applies its rule to and hands back through `chosen`; `blocked` and `moved` give a row's reason under its leading cell. */
 	choose?: TableChoice<T>;
-	/** What the table draws while it has no rows: a mark, a title, a sentence and the act that makes the first. */
-	empty?: ListEmpty;
 }
 
 interface Reads {
@@ -225,10 +191,8 @@ interface Edits {
 	onEdit?: (id: string, key: string, value: CellValue) => void;
 }
 
-/** Records in columns, from a query or from items. */
-export type TableProps<T = unknown> = TableBase<T> &
-	TableSource<T> &
-	(Reads | Edits);
+/** Records in columns, from items. */
+export type TableProps<T = unknown> = TableBase<T> & (Reads | Edits);
 
 // What a cell reads as, an age in this platform's words.
 function shown(column: TableColumn, cell: TableCell | undefined): string {
@@ -262,44 +226,20 @@ function editOf(
 	return column ? cellEdit(column, at === 0, edits, row) : undefined;
 }
 
-/** From `tablet` of its page a grid: a header of sortable acts (the table sorts in its own state: newest or largest first, then turned over, then off) over one row per record, its leading cell the record's name (its row's change mark, when it has one, ahead of it and its warning after it); on touch every column stands at the short measure and the grid scrolls sideways under its frozen leading column. Its keyboard is a cell cursor (one Tab stop, the arrows, Home and End; Enter opens the row from its leading cell or edits an editable cell, Space ticks a check, Escape leaves an edit); a press on a row opens it, a press on an editable value edits it in place: typed in an `Input`, picked in a `Picker`, ticked in a `Checkbox`. Below `tablet` one `ListRow` per record (its leading cell the title, its change the row's mark, its age trailing, its status, warning and chip the marks, the other values its meta line) under the sort's pick. It draws its four states: while its query is pending, `loading` is set or a loading Section around it waits, the header stands over skeleton rows (on touch, the list's waiting rows); a query that answers not found draws the missing form saying it no longer exists with Back, never Retry, and a failed query the failed form with `sentence` and Retry, each under the header on the grid; no row draws `empty`; then one row per item. */
+/** From `tablet` of its page a grid: a header of sortable acts (the table sorts in its own state: newest or largest first, then turned over, then off) over one row per record, its leading cell the record's name (its row's change mark, when it has one, ahead of it and its warning after it); on touch every column stands at the short measure and the grid scrolls sideways under its frozen leading column. Its keyboard is a cell cursor (one Tab stop, the arrows, Home and End; Enter opens the row from its leading cell or edits an editable cell, Space ticks a check, Escape leaves an edit); a press on a row opens it, a press on an editable value edits it in place: typed in an `Input`, picked in a `Picker`, ticked in a `Checkbox`. Below `tablet` one `ListRow` per record (its leading cell the title, its change the row's mark, its age trailing, its status, warning and chip the marks, the other values its meta line) under the sort's pick. While the `items` selection's read waits, `PAINT_ROWS` rows stand in the columns the table declares (the slots are run over the placeholder), the header constant over them, each cell painted by its column's kind and the rows inert; the list below `tablet` paints the same records as its rows. The frame around it draws the rest: the failed form with Retry, the missing form, the empty form. */
 export function Table<T>(props: TableProps<T>) {
-	const { columns, selected, onOpen, onEdit, empty } = props;
-	const words = useWords();
+	const { columns, selected, onOpen, onEdit } = props;
 	const [place, wide] = usePageTablet();
 	const [sort, setSort] = useState<Sort>();
-	const input = {
-		query: props.query,
-		items: props.items,
-		loading: props.loading,
-		sectionLoading: use(LoadingContext),
-		hasEmpty: empty !== undefined,
-	};
-	const state = listState(input);
-	const waiting = state === "pending";
-	const items = (props.query ? props.query.data : props.items) ?? [];
-	const records = waiting
-		? []
-		: sorted(
-				tableRecords(items, columns, props.row, props.choose),
-				columns,
-				sort,
-			);
-	let slot: ReactNode = null;
-	if (state === "missing") slot = <MissingBase fit="page" />;
-	else if (state === "failed" && props.query)
-		slot = (
-			<EmptyBase
-				fit="page"
-				tone="failed"
-				sentence={props.sentence}
-				act={{ label: words.retry, onAct: retryOf(props.query) }}
-			/>
-		);
-	else if (state === "empty" && empty)
-		slot = <EmptyBase fit="page" tone="rest" {...empty} />;
-	const under =
-		slot === null ? null : <div className={cn(TABLE_EMPTY, EMPTY)}>{slot}</div>;
+	const [drawn] = useSelections([props.items] as const);
+	const { painted } = drawn as Drawn<readonly T[]>;
+	// Painted, `PAINT_ROWS` records over the placeholder, in the order the
+	// data would arrive.
+	const items: readonly T[] = painted
+		? Array.from({ length: PAINT_ROWS }, () => drawn.value as T)
+		: (drawn.value as readonly T[]);
+	const made = tableRecords(items, columns, props.row, props.choose, painted);
+	const records = painted ? made : sorted(made, columns, sort);
 	// The form is unknown until the root is placed in its page; placing it
 	// re-renders before paint.
 	let form: ReactNode = null;
@@ -314,28 +254,24 @@ export function Table<T>(props: TableProps<T>) {
 				choose={props.choose}
 				onOpen={onOpen}
 				onEdit={onEdit}
-				loading={waiting}
-			>
-				{under}
-			</Grid>
+				painted={painted}
+			/>
 		);
 	} else if (wide === false) {
 		form = (
 			<div className={FORM}>
-				{slot ?? (
-					<Phone
-						columns={columns}
-						rows={records}
-						sort={sort}
-						onSort={setSort}
-						selected={selected}
-						onOpen={onOpen}
-						choose={props.choose}
-						loading={waiting}
-						warns={props.row.warning !== undefined}
-						changes={props.row.change !== undefined}
-					/>
-				)}
+				<Phone
+					columns={columns}
+					rows={records}
+					sort={sort}
+					onSort={setSort}
+					selected={selected}
+					onOpen={onOpen}
+					choose={props.choose}
+					painted={painted}
+					warns={props.row.warning !== undefined}
+					changes={props.row.change !== undefined}
+				/>
 			</div>
 		);
 	}
@@ -610,10 +546,9 @@ function Grid(props: {
 	choose: Pick<TableChoice<never>, "chosen" | "onChange"> | undefined;
 	onOpen: ((id: string) => void) | undefined;
 	onEdit: ((id: string, key: string, value: CellValue) => void) | undefined;
-	loading: boolean | undefined;
-	children: ReactNode;
+	painted: boolean;
 }) {
-	const { columns, rows, sort, loading, choose } = props;
+	const { columns, rows, sort, painted, choose } = props;
 	const words = useWords();
 	const touch = useTouch();
 	// A tick column leads the cursor's columns: the leading cell is its
@@ -794,7 +729,7 @@ function Grid(props: {
 					// biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: a table whose keyboard is a cell cursor is the WAI-ARIA grid
 					role="grid"
 					aria-labelledby={title}
-					aria-busy={loading || undefined}
+					aria-busy={painted || undefined}
 					onFocus={onFocus}
 					onBlur={onBlur}
 					onKeyDown={onKeyDown}
@@ -853,13 +788,13 @@ function Grid(props: {
 						</tr>
 					</thead>
 					<tbody>
-						{loading
-							? LOADING_BARS.map((bars, index) => (
-									<SkeletonRow
-										key={bars.join(" ") + String(index)}
+						{painted
+							? rows.map((_, index) => (
+									<PaintedRow
+										// biome-ignore lint/suspicious/noArrayIndexKey: the painted rows are fixed stand-ins
+										key={index}
+										index={index}
 										columns={columns}
-										bars={bars}
-										odd={index % 2 === 1}
 										touch={touch}
 										choosing={choose !== undefined}
 									/>
@@ -884,7 +819,6 @@ function Grid(props: {
 					</tbody>
 				</table>
 			</div>
-			{props.children}
 		</div>
 	);
 }
@@ -1153,20 +1087,76 @@ function CellEdit(props: {
 	);
 }
 
-function SkeletonRow(props: {
+// A painted cell by its column's kind: a number, an age or an id as a figure's
+// filler, a status as its painted mark, a check as a painted box, a chip as a
+// box, the rest as the text a column holds.
+function PaintedCell(props: {
+	column: TableColumn;
+	leading: boolean;
+	index: number;
+}) {
+	const { column, index } = props;
+	if (props.leading)
+		return (
+			<span
+				className={cn(
+					text({ role: "body" }),
+					textStrong({ role: "body" }),
+					VALUE,
+				)}
+			>
+				<Painted role="name" at={index} />
+			</span>
+		);
+	switch (column.kind) {
+		case "check":
+			return <CheckboxBase checked={false} onChange={NOOP} label="" painted />;
+		case "status":
+			return <StatusBase painted />;
+		case "chip":
+			return <ChipBase family={column.family} label="" painted />;
+		case "source":
+			return (
+				<span className={cn(text({ role: "code" }), VALUE)}>
+					<Painted role="id" at={index} />
+				</span>
+			);
+		case "number":
+		case "age":
+			return (
+				<span
+					className={cn(
+						text({ role: column.kind === "age" ? "meta" : "body" }),
+						FIGURES,
+						VALUE,
+					)}
+				>
+					<Painted role="figure" at={index} />
+				</span>
+			);
+		default:
+			return (
+				<span className={cn(text({ role: "body" }), VALUE)}>
+					<Painted role="phrase" at={index + 1} />
+				</span>
+			);
+	}
+}
+
+// A painted row: the loaded row's cells at their boxes, each painted by its
+// column's kind, the row inert.
+function PaintedRow(props: {
+	index: number;
 	columns: readonly TableColumn[];
-	bars: readonly string[];
-	odd: boolean;
 	touch: boolean;
 	choosing: boolean;
 }) {
-	let bar = 0;
 	return (
-		<tr aria-hidden className={tableRow({ state: "rest" })}>
+		<tr inert className={tableRow({ state: "rest" })}>
 			{props.choosing ? (
 				<td
 					className={cn(
-						SKELETON_CELL,
+						BODY_CELL,
 						props.touch && cn(TABLE_FROZEN, FROZEN, FROZEN_AT),
 					)}
 				>
@@ -1176,30 +1166,17 @@ function SkeletonRow(props: {
 							props.touch && tableFrozenCell({ state: "rest" }),
 						)}
 					>
-						<span className={skeleton({ kind: "check" })} />
+						<CheckboxBase checked={false} onChange={NOOP} label="" painted />
 					</div>
 				</td>
 			) : null}
 			{props.columns.map((column, place) => {
 				const frozen = props.touch && place === 0;
-				let wait: ReactNode;
-				if (column.kind === "check")
-					wait = <span className={skeleton({ kind: "check" })} />;
-				else if (column.kind === "number")
-					wait = (
-						<span className={cn(skeleton({ kind: "line" }), NUMBER_BAR)} />
-					);
-				else if (column.kind === "status")
-					wait = <StatusBase waiting={props.odd ? "third" : "half"} />;
-				else {
-					const width = props.bars[bar++ % props.bars.length];
-					wait = <span className={cn(skeleton({ kind: "line" }), width)} />;
-				}
 				return (
 					<td
 						key={column.key}
 						className={cn(
-							SKELETON_CELL,
+							BODY_CELL,
 							frozen &&
 								cn(
 									TABLE_FROZEN,
@@ -1216,7 +1193,11 @@ function SkeletonRow(props: {
 								frozen && tableFrozenCell({ state: "rest" }),
 							)}
 						>
-							{wait}
+							<PaintedCell
+								column={column}
+								leading={place === 0}
+								index={props.index + place}
+							/>
 						</div>
 					</td>
 				);
@@ -1234,7 +1215,7 @@ function Phone(props: {
 	selected: string | undefined;
 	onOpen: ((id: string) => void) | undefined;
 	choose: Pick<TableChoice<never>, "chosen" | "onChange"> | undefined;
-	loading: boolean | undefined;
+	painted: boolean;
 	warns: boolean;
 	changes: boolean;
 }) {
@@ -1273,9 +1254,10 @@ function Phone(props: {
 	) : null;
 	const cell = (record: TableRecord, column: TableColumn | undefined) =>
 		column ? record.cells[column.key] : undefined;
-	const { onOpen } = props;
-	// A slot is declared only when a column fills it, so the waiting rows
-	// stand in the slots the loaded ones draw.
+	const { onOpen, painted } = props;
+	// A slot is declared only when a column fills it, so the painted rows
+	// stand in the slots the loaded ones draw; a mark whose cell the placeholder
+	// does not shape (a status, a chip, an age) is given by its column instead.
 	const row: RowSlots<TableRecord> = {
 		key: (record) => record.id,
 		title: (record) =>
@@ -1318,12 +1300,14 @@ function Phone(props: {
 		// The row words its age moment and keeps it current itself.
 		trailing: ageColumn
 			? (record) => {
+					if (painted) return { age: "" };
 					const when = cell(record, ageColumn);
 					return typeof when === "string" ? { age: when } : undefined;
 				}
 			: undefined,
 		status: status
 			? (record) => {
+					if (painted) return { state: "done", label: "" };
 					const state = cell(record, status);
 					return isStatusCell(state)
 						? {
@@ -1338,6 +1322,7 @@ function Phone(props: {
 		chip:
 			chip?.kind === "chip"
 				? (record) => {
+						if (painted) return { family: chip.family, label: "" };
 						const value = cell(record, chip);
 						return typeof value === "string"
 							? { family: chip.family, label: shown(chip, value) }
@@ -1353,7 +1338,11 @@ function Phone(props: {
 		<>
 			{pick}
 			<ListBase
-				drawn={{ painted: props.loading === true, value: props.rows }}
+				drawn={
+					painted
+						? { painted: true, value: props.rows[0] }
+						: { painted: false, value: props.rows }
+				}
 				row={row}
 			/>
 		</>

@@ -7,7 +7,6 @@ import {
 	chooseHead,
 	chooseReason,
 	chooseRow,
-	factShape,
 	folding,
 	type ListInput,
 	listBusy,
@@ -171,41 +170,6 @@ test("a part that waits for a count reads its own loading, else the loading it i
 	assert.equal(waitCount(2.7, false, 1), 2);
 });
 
-test("a pending Comparison with three columns draws three bars per row, a chips bar only when chips are declared and a status bar only when status is", () => {
-	const calls: string[] = [];
-	const chips = () => {
-		calls.push("chips");
-		return undefined;
-	};
-	const status = () => {
-		calls.push("status");
-		return undefined;
-	};
-	const columns = ["Free", "Team", "Business"];
-	assert.deepEqual(factShape(columns, {}), {
-		values: 3,
-		chips: false,
-		status: false,
-	});
-	assert.deepEqual(factShape(columns, { chips }), {
-		values: 3,
-		chips: true,
-		status: false,
-	});
-	assert.deepEqual(factShape(columns, { status }), {
-		values: 3,
-		chips: false,
-		status: true,
-	});
-	assert.deepEqual(factShape(columns, { chips, status }), {
-		values: 3,
-		chips: true,
-		status: true,
-	});
-	assert.equal(factShape(["Team", "Business"], {}).values, 2);
-	assert.deepEqual(calls, []);
-});
-
 interface Member {
 	id: string;
 	name: string;
@@ -275,6 +239,32 @@ test("a table's rows read each column's cell and the row map from the item", () 
 			},
 		],
 	);
+});
+
+test("a table's records over the painted items paint a slot that throws as the item, never throw", () => {
+	const original = console.warn;
+	console.warn = () => {};
+	try {
+		assert.throws(() =>
+			tableRecords(
+				[undefined as unknown as Member],
+				COLUMNS,
+				{ id: (member) => member.id },
+				undefined,
+			),
+		);
+		assert.doesNotThrow(() =>
+			tableRecords(
+				[undefined as unknown as Member],
+				COLUMNS,
+				{ id: (member) => member.id },
+				undefined,
+				true,
+			),
+		);
+	} finally {
+		console.warn = original;
+	}
 });
 
 test("a Table whose query failed draws the failed form, and its Retry refetches", () => {

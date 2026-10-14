@@ -1,7 +1,8 @@
 import {
+	type Read,
 	useMutation,
-	useQuery,
 	useQueryClient,
+	useRead,
 } from "@fcalell/plugin-api/tanstack-query";
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
@@ -246,12 +247,12 @@ function edited(
 	return {};
 }
 
-// The members query, its answer updated in place by each edit as a query's
-// cache is: the mutations own the cache they change.
-function MemberTable() {
+// The members read, its answer updated in place by each edit as a query's
+// cache is: the mutations own the cache they change. The Section around the
+// table holds the read; the open record's member is the app's own view of it.
+function MemberTable(props: { members: Read<readonly Member[]> }) {
 	const queryClient = useQueryClient();
-	const query = useQuery(orpc.members.list.queryOptions());
-	const members = query.data ?? [];
+	const members = useRead(props.members) ?? [];
 	const [open, setOpen] = useState<string>();
 	const update = useMutation(
 		orpc.members.update.mutationOptions({
@@ -295,8 +296,7 @@ function MemberTable() {
 		<>
 			<Table
 				columns={COLUMNS}
-				query={query}
-				sentence="Members did not load."
+				items={props.members}
 				row={ROW}
 				selected={open}
 				onOpen={setOpen}
@@ -305,11 +305,6 @@ function MemberTable() {
 					if (!member) return;
 					if (key === "role" && value === "owner") transfer(member);
 					else update.mutate({ id, ...edited(key, value) });
-				}}
-				empty={{
-					icon: "Users",
-					title: "No members yet",
-					sentence: "Invite the people you work with to deploy together.",
 				}}
 			/>
 			<Record
@@ -322,6 +317,7 @@ function MemberTable() {
 }
 
 function Members() {
+	const members = orpc.members.list.read();
 	const [invited, setInvited] = useState(true);
 	const [inviting, setInviting] = useState(false);
 	const revokeInvitation = useMutation(
@@ -352,8 +348,15 @@ function Members() {
 				<Section
 					title="People"
 					description="Who works in Acme, and what each can change."
+					read={members}
+					failed="Members did not load."
+					empty={{
+						icon: "Users",
+						title: "No members yet",
+						sentence: "Invite the people you work with to deploy together.",
+					}}
 				>
-					<MemberTable />
+					<MemberTable members={members} />
 				</Section>
 				{invited ? (
 					<Section title="Invitations" count={1}>

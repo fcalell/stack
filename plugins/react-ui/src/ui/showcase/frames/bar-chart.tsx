@@ -1,7 +1,9 @@
 import { BarChart, type BarSlots } from "../../components/bar-chart/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
-import { queryOf, Wide } from "./layout-context.tsx";
+import { itemsAt } from "../waiting.ts";
+import { Wide } from "./layout-context.tsx";
+import { isPaint } from "./painted.tsx";
 
 // A day's figure, its parts by service when the chart stacks.
 interface Day {
@@ -88,40 +90,84 @@ const SPEND = [3.2, 4.15, 5.1, 6, 4.27, 3.5, 4.75].map(
 // A `CHART_FILL.series` cell past the first stacks by service (past the
 // third, by six of them); a `CHART_BAND` cell at rest adds a week of zeros,
 // a week of spend in dollars and the open flags;
-// every other cell draws the one series. Each chart takes a query in the
-// frame's state: its loaded boxes in skeleton, its failure, its empty form.
+// every other cell draws the one series. Each chart reads in a Section in the
+// frame's state: its painted form, its loaded one; a `PAINT` cell draws the
+// chart loaded beside the same chart painted.
+function Chart(props: {
+	id: string;
+	state: ShowcaseFrame["state"];
+	stacked: boolean;
+	keys: readonly string[];
+}) {
+	const { id, state, keys } = props;
+	const requests = itemsAt(`${id}/requests`, state, byService(keys));
+	const minutes = itemsAt(`${id}/minutes`, state, DAYS);
+	if (props.stacked)
+		return (
+			<Section
+				title="Requests"
+				description="Per day this week, by service."
+				read={requests}
+				failed="Requests did not load."
+				empty={{ sentence: "No request reached a service this week." }}
+			>
+				<BarChart
+					label="Requests per day this week, by service"
+					keys={keys}
+					items={requests}
+					bar={BAR}
+					unit="requests"
+				/>
+			</Section>
+		);
+	return (
+		<Section
+			title="Build minutes"
+			description="Per day, the last 30 days."
+			read={minutes}
+			failed="Build minutes did not load."
+			empty={{ sentence: "No build ran in the last 30 days." }}
+		>
+			<BarChart
+				label="Build minutes per day, Sep 3 to Oct 2"
+				items={minutes}
+				bar={BAR}
+				unit="minutes"
+			/>
+		</Section>
+	);
+}
+
 export function drawBarChart(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
 	const wide = ["pink", "green", "red"].some((hue) => cell.endsWith(hue));
 	const stacked = wide || ["violet", "amber"].some((hue) => cell.endsWith(hue));
 	const quiet = cell.startsWith("CHART_BAND") && frame.state === "rest";
 	const keys = SERVICES.slice(0, wide ? SERVICES.length : 3);
+	if (isPaint(frame)) {
+		if (frame.state !== "rest") return undefined;
+		return (
+			<Wide>
+				<Chart id={`${frame.id}/loaded`} state="rest" stacked keys={keys} />
+				<Chart id={`${frame.id}/painted`} state="loading" stacked keys={keys} />
+				<Chart
+					id={`${frame.id}/plain`}
+					state="rest"
+					stacked={false}
+					keys={keys}
+				/>
+				<Chart
+					id={`${frame.id}/plain-painted`}
+					state="loading"
+					stacked={false}
+					keys={keys}
+				/>
+			</Wide>
+		);
+	}
 	return (
 		<Wide>
-			{stacked ? (
-				<Section title="Requests" description="Per day this week, by service.">
-					<BarChart
-						label="Requests per day this week, by service"
-						keys={keys}
-						query={queryOf(frame.state, byService(keys))}
-						sentence="Requests did not load."
-						empty={{ sentence: "No request reached a service this week." }}
-						bar={BAR}
-						unit="requests"
-					/>
-				</Section>
-			) : (
-				<Section title="Build minutes" description="Per day, the last 30 days.">
-					<BarChart
-						label="Build minutes per day, Sep 3 to Oct 2"
-						query={queryOf(frame.state, DAYS)}
-						sentence="Build minutes did not load."
-						empty={{ sentence: "No build ran in the last 30 days." }}
-						bar={BAR}
-						unit="minutes"
-					/>
-				</Section>
-			)}
+			<Chart id={frame.id} state={frame.state} stacked={stacked} keys={keys} />
 			{quiet ? (
 				<Section title="Cron runs" description="Per day this week.">
 					<BarChart label="Cron runs" items={QUIET} bar={BAR} />

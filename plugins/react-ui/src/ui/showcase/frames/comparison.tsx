@@ -3,8 +3,11 @@ import {
 	Comparison,
 	type FactSlots,
 } from "../../components/comparison/index.tsx";
+import { Section } from "../../components/section/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
-import { queryOf, Wide } from "./layout-context.tsx";
+import { itemsAt } from "../waiting.ts";
+import { Wide } from "./layout-context.tsx";
+import { isPaint } from "./painted.tsx";
 
 interface Fact {
 	label: string;
@@ -91,47 +94,86 @@ const LAYER_ROW: FactSlots<LayerFact> = {
 	status: (fact) => fact.verdict,
 };
 
-// Every cell draws the comparisons in the frame's state: the plan change
-// over two columns, the plans over three with a chip on every fact, so a
-// waiting fact draws a bar per column and the plans' a chip's bar, and a data
+// The three comparisons, each in a Section that holds its read as a page ships
+// them: the plan change over two columns, the plans over three with a chip on
+// every fact, so a painted fact draws a chip's box beside its label, and a data
 // layer whose facts carry a verdict, failing, differing, matching or none, so
-// its waiting facts draw a status bar.
-export function drawComparison(frame: ShowcaseFrame) {
+// its painted facts draw a painted verdict.
+function Comparisons(props: { id: string; state: ShowcaseFrame["state"] }) {
+	const at = <T,>(name: string, items: readonly T[]) =>
+		itemsAt(`${props.id}/${name}`, props.state, items);
+	const change = at("change", CHANGE);
+	const plans = at("plans", PLANS);
+	const layer = at("layer", LAYER);
 	return (
-		<Wide>
-			<Comparison
-				label="Plan change"
-				columns={["Current", "After the change"]}
-				query={queryOf(frame.state, CHANGE)}
-				sentence="The plan change did not load."
+		<>
+			<Section
+				title="Plan change"
+				read={change}
+				failed="The plan change did not load."
 				empty={{
 					title: "No change",
 					sentence: "Pick a plan to see what it changes.",
 				}}
-				row={ROW}
-			/>
-			<Comparison
-				label="Plans"
-				columns={["Free", "Team", "Business"]}
-				query={queryOf(frame.state, PLANS)}
-				sentence="The plans did not load."
+			>
+				<Comparison
+					label="Plan change"
+					columns={["Current", "After the change"]}
+					items={change}
+					row={ROW}
+				/>
+			</Section>
+			<Section
+				title="Plans"
+				read={plans}
+				failed="The plans did not load."
 				empty={{
 					title: "No plans",
 					sentence: "Plans on sale land here.",
 				}}
-				row={PLAN_ROW}
-			/>
-			<Comparison
-				label="Data layer"
-				columns={["Expected", "Observed"]}
-				query={queryOf(frame.state, LAYER)}
-				sentence="The data layer did not load."
+			>
+				<Comparison
+					label="Plans"
+					columns={["Free", "Team", "Business"]}
+					items={plans}
+					row={PLAN_ROW}
+				/>
+			</Section>
+			<Section
+				title="Data layer"
+				read={layer}
+				failed="The data layer did not load."
 				empty={{
 					title: "Nothing observed",
 					sentence: "Observed fields land here.",
 				}}
-				row={LAYER_ROW}
-			/>
+			>
+				<Comparison
+					label="Data layer"
+					columns={["Expected", "Observed"]}
+					items={layer}
+					row={LAYER_ROW}
+				/>
+			</Section>
+		</>
+	);
+}
+
+// Every cell draws the comparisons in the frame's state; a `PAINT` cell draws
+// them loaded beside the same comparisons painted.
+export function drawComparison(frame: ShowcaseFrame) {
+	if (isPaint(frame)) {
+		if (frame.state !== "rest") return undefined;
+		return (
+			<Wide>
+				<Comparisons id={`${frame.id}/loaded`} state="rest" />
+				<Comparisons id={`${frame.id}/painted`} state="loading" />
+			</Wide>
+		);
+	}
+	return (
+		<Wide>
+			<Comparisons id={frame.id} state={frame.state} />
 		</Wide>
 	);
 }

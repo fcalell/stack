@@ -1,5 +1,9 @@
 import {
-	BANDS,
+	type Datum,
+	type Drawn,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
+import {
 	type ChartUnit,
 	chartHead,
 	chartScale,
@@ -8,7 +12,6 @@ import {
 } from "@fcalell/ui-core/chart";
 import { cn } from "@fcalell/ui-core/cn";
 import { formatterFor } from "@fcalell/ui-core/format";
-import { listBusy, listState, retryOf } from "@fcalell/ui-core/list-state";
 import { CHART_SERIES } from "@fcalell/ui-core/tokens";
 import {
 	CHART,
@@ -26,18 +29,12 @@ import {
 	chartFill,
 	FIGURES,
 	lineBox,
-	skeleton,
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, use } from "react";
+import type { ReactNode } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { EmptyBase } from "../../lib/empty.tsx";
-import { LoadingContext } from "../../lib/loading.ts";
-import { useWords } from "../../lib/words.tsx";
-import type { ListEmpty } from "../list/index.tsx";
-import { MissingBase } from "../missing/base.tsx";
-import type { QueryLike } from "../query-boundary/index.tsx";
+import { PAINT_BOX, Painted } from "../../lib/paint.tsx";
 
 const STACK = "flex flex-col min-w-0";
 const TOTAL = "flex items-baseline";
@@ -65,15 +62,8 @@ const PART = "shrink-0";
 const TIMES = "flex";
 const TIME = "flex justify-center flex-1 min-w-0";
 const TIME_TEXT = "max-w-measure-short truncate";
-const LINE = "flex items-center h-lh";
-const TIMES_WAIT = "flex justify-between";
-const BAR = "w-full";
-// A failed or empty chart's form stands over the loaded boxes, held
-// unseen, so it takes the chart's loaded height, its frame filling it.
-const STAND = "grid";
-const LAYER = "col-start-1 row-start-1 min-w-0";
-const HELD = "invisible";
-const OVER = "flex flex-col";
+// The painted times stand at the plot's two ends.
+const TIMES_PAINTED = "justify-between";
 
 interface Figures {
 	// The head's and the keys' figures.
@@ -138,43 +128,21 @@ export interface BarSlots<T> {
 	at?: (item: T) => string | undefined;
 }
 
-/** Where a chart's bars come from. */
-type ChartSource<T> =
-	| {
-			/** The query whose items the bars draw, oldest first. */
-			query: QueryLike<readonly T[]>;
-			/** What failed to load, over the retry act (a sentence; wraps). */
-			sentence: string;
-			/** What the chart draws when the query answers with no item. */
-			empty: ListEmpty;
-			items?: never;
-			loading?: never;
-	  }
-	| {
-			/** The items the bars draw, oldest first. */
-			items: readonly T[];
-			/** The items are on their way (a compound body's loading form): the chart waits. */
-			loading?: boolean;
-			/** What the chart draws with no item; without it an empty chart draws its empty plot. */
-			empty?: ListEmpty;
-			query?: never;
-			sentence?: never;
-	  };
-
 /** Columns over time: one bar per item, stacked by one dimension when `keys` names its parts. */
-export type BarChartProps<T = unknown> = Closed &
-	ChartSource<T> & {
-		/** What the chart counts, which names the plot (a short phrase; read aloud, never drawn). */
-		label: string;
-		/** The names a bar's parts stack by, bottom first (each a word; the legend wraps between names): present, the chart is stacked and draws them as its legend in every form, each name holding its series mark. */
-		keys?: readonly string[];
-		/** The bar slots, read from each item. */
-		bar: BarSlots<T>;
-		/** What the values count (`requests`, `minutes`), drawn after the total; a unit that takes a plural is `{ one, other }` (`{ one: "flag", other: "flags" }`), the form chosen by the figure it follows; money is `{ currency: "USD" }`, its figures written in the currency with no word after them. */
-		unit?: ChartUnit;
-		/** The bars are a level, not a flow (open flags per round, not requests per day): the head draws the last bar's value, and each key the last bar's part, never their sum. */
-		level?: boolean;
-	};
+export type BarChartProps<T = unknown> = Closed & {
+	/** The items the bars draw, oldest first: constants, or a selection, which paints the chart until its read lands. A selection stands in a frame (a Pane, Section, Sheet or Form given the read), which draws the chart's failed, missing and empty forms. */
+	items: Datum<readonly T[]>;
+	/** What the chart counts, which names the plot (a short phrase; read aloud, never drawn). */
+	label: string;
+	/** The names a bar's parts stack by, bottom first (each a word; the legend wraps between names): present, the chart is stacked and draws them as its legend in every form, each name holding its series mark. */
+	keys?: readonly string[];
+	/** The bar slots, read from each item. */
+	bar: BarSlots<T>;
+	/** What the values count (`requests`, `minutes`), drawn after the total; a unit that takes a plural is `{ one, other }` (`{ one: "flag", other: "flags" }`), the form chosen by the figure it follows; money is `{ currency: "USD" }`, its figures written in the currency with no word after them. */
+	unit?: ChartUnit;
+	/** The bars are a level, not a flow (open flags per round, not requests per day): the head draws the last bar's value, and each key the last bar's part, never their sum. */
+	level?: boolean;
+};
 
 // One bar, read from its item.
 interface Bar {
@@ -184,46 +152,13 @@ interface Bar {
 	at?: string;
 }
 
-/** The total (the last bar with `level`) at body 500 with its unit, the parts' keys under it, then the axis beside the plot, its four gridlines a hairline each with its tick centred on it and the baseline with its 0, the columns in the chip marks by part, a time under each bar that has one. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, its boxes in skeleton at their loaded size with the keys standing; a query that answers not found draws the missing form saying it no longer exists with Back (never Retry), a failed query the failed form with `sentence` and Retry, and no item `empty`, each at the chart's loaded height; then one bar per item. */
+/** The total (the last bar with `level`) at body 500 with its unit, the parts' keys under it, then the axis beside the plot, its four gridlines a hairline each with its tick centred on it and the baseline with its 0, the columns in the chip marks by part, a time under each bar that has one. While the `items` selection's read waits, the total is a figure's filler, the legend stands (its names and marks declared, its figures painted), the plot is one painted box at its loaded height with the axis's lane kept and the times are two fillers, the chart inert. The frame around it draws the rest: the failed form with Retry, the missing form, the empty form. */
 export function BarChart<T>(props: BarChartProps<T>) {
 	const { label, keys, unit, level } = props;
-	const words = useWords();
-	const input = {
-		query: props.query,
-		items: props.items,
-		loading: props.loading,
-		sectionLoading: use(LoadingContext),
-		hasEmpty: props.empty !== undefined,
-	};
-	const state = listState(input);
-	if (state === "pending")
-		return <Loading keys={keys} busy={listBusy(input)} />;
-	if (state === "missing")
-		return (
-			<Stand keys={keys}>
-				<MissingBase fit="frame" fill />
-			</Stand>
-		);
-	if (state === "failed" && props.query !== undefined)
-		return (
-			<Stand keys={keys}>
-				<EmptyBase
-					fit="frame"
-					fill
-					tone="failed"
-					sentence={props.sentence}
-					act={{ label: words.retry, onAct: retryOf(props.query) }}
-				/>
-			</Stand>
-		);
-	if (state === "empty" && props.empty)
-		return (
-			<Stand keys={keys}>
-				<EmptyBase fit="frame" fill tone="rest" {...props.empty} />
-			</Stand>
-		);
+	const [drawn] = useSelections([props.items] as const);
+	const { painted } = drawn as Drawn<readonly T[]>;
 	const { bar } = props;
-	const items = (props.query ? props.query.data : props.items) ?? [];
+	const items = painted ? [] : (drawn.value as readonly T[]);
 	const series: Bar[] = items.map((item) => ({
 		key: bar.key(item),
 		value: bar.value(item),
@@ -260,14 +195,14 @@ export function BarChart<T>(props: BarChartProps<T>) {
 					FIGURES,
 				)}
 			>
-				{figure.format(total)}
+				{painted ? <Painted role="figure" /> : figure.format(total)}
 			</span>
 			{word ? <span className={text({ role: "meta" })}>{word}</span> : null}
 		</div>
 	);
 	const height = (value: number) => ({ height: `${(value / top) * 100}%` });
 	return (
-		<div className={cn(CHART, STACK)}>
+		<div inert={painted || undefined} className={cn(CHART, STACK)}>
 			{labels.length > 0 ? (
 				<div className={cn(CHART_HEAD, HEAD)}>
 					{totalLine}
@@ -275,7 +210,11 @@ export function BarChart<T>(props: BarChartProps<T>) {
 						{keyTotals.map((key, at) => (
 							<Key key={key.label} name={key.label} at={at}>
 								<span className={cn(text({ role: "meta" }), FIGURES)}>
-									{figure.format(key.value)}
+									{painted ? (
+										<Painted role="figure" at={at} />
+									) : (
+										figure.format(key.value)
+									)}
 								</span>
 							</Key>
 						))}
@@ -309,64 +248,81 @@ export function BarChart<T>(props: BarChartProps<T>) {
 					))}
 				</div>
 				<div className={cn(CHART_MAIN, MAIN)}>
-					<div role="img" aria-label={label} className={PLOT}>
-						<div className={cn(CHART_GRID, GRID)}>
-							{Array.from({ length: bands }, (_, index) => (
-								<div
-									// biome-ignore lint/suspicious/noArrayIndexKey: a band is its index
-									key={index}
-									className={cn(
-										chartBand({ kind: "grid", rule: band(index, bands) }),
-										GRID_BAND,
-									)}
-								/>
-							))}
-						</div>
-						<div className={BARS}>
-							{series.map((bar) => (
-								<div key={bar.key} className={SLOT}>
-									{keys ? (
-										// The first part stands on the baseline, each next one
-										// over it, split from it by a clear line.
-										keys
-											.map((key, at) => (
-												<div
-													key={key}
-													className={cn(
-														chartFill({ series: mark(at) }),
-														at > 0 && CHART_PART_SPLIT,
-														"w-2/3",
-														PART,
-													)}
-													style={height(part(bar, key))}
-												/>
-											))
-											.reverse()
-									) : (
-										<div
-											className={cn(
-												chartFill({ series: CHART_SERIES[0] }),
-												"w-2/3",
-											)}
-											style={height(bar.value)}
-										/>
-									)}
-								</div>
-							))}
-						</div>
-					</div>
-					<div aria-hidden className={TIMES}>
-						{series.map((bar) => (
-							<div key={bar.key} className={TIME}>
-								{bar.at ? (
-									<span
-										className={cn(text({ role: "meta" }), FIGURES, TIME_TEXT)}
-									>
-										{bar.at}
-									</span>
-								) : null}
+					{painted ? (
+						<div className={cn(CHART_GRID, PAINT_BOX)} />
+					) : (
+						<div role="img" aria-label={label} className={PLOT}>
+							<div className={cn(CHART_GRID, GRID)}>
+								{Array.from({ length: bands }, (_, index) => (
+									<div
+										// biome-ignore lint/suspicious/noArrayIndexKey: a band is its index
+										key={index}
+										className={cn(
+											chartBand({ kind: "grid", rule: band(index, bands) }),
+											GRID_BAND,
+										)}
+									/>
+								))}
 							</div>
-						))}
+							<div className={BARS}>
+								{series.map((bar) => (
+									<div key={bar.key} className={SLOT}>
+										{keys ? (
+											// The first part stands on the baseline, each next one
+											// over it, split from it by a clear line.
+											keys
+												.map((key, at) => (
+													<div
+														key={key}
+														className={cn(
+															chartFill({ series: mark(at) }),
+															at > 0 && CHART_PART_SPLIT,
+															"w-2/3",
+															PART,
+														)}
+														style={height(part(bar, key))}
+													/>
+												))
+												.reverse()
+										) : (
+											<div
+												className={cn(
+													chartFill({ series: CHART_SERIES[0] }),
+													"w-2/3",
+												)}
+												style={height(bar.value)}
+											/>
+										)}
+									</div>
+								))}
+							</div>
+						</div>
+					)}
+					<div aria-hidden className={cn(TIMES, painted && TIMES_PAINTED)}>
+						{painted
+							? [0, 1].map((end) => (
+									<span
+										key={end}
+										className={cn(text({ role: "meta" }), FIGURES)}
+									>
+										<Painted role="word" at={end} />
+									</span>
+								))
+							: series.map((bar) => (
+									<div key={bar.key} className={TIME}>
+										{bar.at ? (
+											<span
+												className={cn(
+													text({ role: "meta" }),
+													FIGURES,
+													TIME_TEXT,
+												)}
+											>
+												{bar.at}
+											</span>
+										) : null}
+									</div>
+								))}
 					</div>
 				</div>
 			</div>
@@ -393,94 +349,5 @@ function Key(props: { name: string; at: number; children: ReactNode }) {
 			<span className={text({ role: "meta" })}>{props.name}</span>
 			{props.children}
 		</span>
-	);
-}
-
-// A failed, missing or empty chart: its form over the loaded boxes,
-// held unseen.
-function Stand(props: { keys?: readonly string[]; children: ReactNode }) {
-	return (
-		<div className={STAND}>
-			<div className={cn(LAYER, HELD)}>
-				<Loading keys={props.keys} busy={false} />
-			</div>
-			<div className={cn(LAYER, OVER)}>{props.children}</div>
-		</div>
-	);
-}
-
-// The loaded boxes: the total's line (with the keys under it, each figure
-// waiting in a lane four figures wide, so the legend wraps as the loaded one
-// does), a tick's lane on each gridline, the plot's box, a time's lane at
-// each end of the plot.
-function Loading(props: { keys?: readonly string[]; busy: boolean }) {
-	const total = (
-		<div className={cn(lineBox({ role: "body" }), LINE)}>
-			<span className={cn(skeleton({ kind: "line" }), "w-1/4")} />
-		</div>
-	);
-	return (
-		<div aria-busy={props.busy || undefined} className={cn(CHART, STACK)}>
-			{props.keys ? (
-				<div className={cn(CHART_HEAD, HEAD)}>
-					{total}
-					<div className={cn(CHART_KEYS, KEYS)}>
-						{props.keys.map((key, at) => (
-							<Key key={key} name={key} at={at}>
-								<span
-									className={cn(
-										lineBox({ role: "meta" }),
-										LINE,
-										CHART_TICK_LANE,
-									)}
-								>
-									<span className={cn(skeleton({ kind: "line" }), BAR)} />
-								</span>
-							</Key>
-						))}
-					</div>
-				</div>
-			) : (
-				total
-			)}
-			<div className={cn(CHART_BODY, BODY, lineBox({ role: "meta" }))}>
-				<div className={cn(CHART_GRID, CHART_TICK_LANE, AXIS)}>
-					{Array.from({ length: BANDS }, (_, index) => (
-						<div
-							// biome-ignore lint/suspicious/noArrayIndexKey: a band is its index
-							key={index}
-							className={cn(
-								chartBand({ kind: "axis", rule: band(index, BANDS) }),
-								AXIS_BAND,
-							)}
-						>
-							<span className={cn(lineBox({ role: "meta" }), LINE, BAR, TICK)}>
-								<span className={cn(skeleton({ kind: "line" }), BAR)} />
-							</span>
-							{index === BANDS - 1 ? (
-								<span
-									className={cn(lineBox({ role: "meta" }), LINE, BAR, ZERO)}
-								>
-									<span className={cn(skeleton({ kind: "line" }), BAR)} />
-								</span>
-							) : null}
-						</div>
-					))}
-				</div>
-				<div className={cn(CHART_MAIN, MAIN)}>
-					<div className={skeleton({ kind: "chart" })} />
-					<div className={TIMES_WAIT}>
-						{[0, 1].map((end) => (
-							<span
-								key={end}
-								className={cn(lineBox({ role: "meta" }), LINE, "w-1/12")}
-							>
-								<span className={cn(skeleton({ kind: "line" }), BAR)} />
-							</span>
-						))}
-					</div>
-				</div>
-			</div>
-		</div>
 	);
 }

@@ -820,7 +820,7 @@ export const closure = (
 		<Diff label="x" hunks={[]} before="a" after="b" />
 		<Code text="a" title="a" copy />
 		<ListRow title="a" more={[{ label: "a", onAct: noop }]} />
-		<Table columns={columns} items={[]} row={{ id: String }} selected="a" onOpen={noop} onEdit={noop} loading />
+		<Table columns={columns} items={[]} row={{ id: String }} selected="a" onOpen={noop} onEdit={noop} />
 		{/* @ts-expect-error: a status column never edits */}
 		<Table columns={[{ key: "a", label: "a", kind: "status", edit: { control: "input" }, cell: () => null }]} items={[]} row={{ id: String }} />
 		{/* @ts-expect-error: closed channel */}

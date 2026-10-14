@@ -352,7 +352,6 @@ export const OVERLAYS: readonly string[] = [
 	// ListRow, FormField, SegmentedControl, Picker, OptionList
 	"w-0",
 	"w-figures",
-	"min-h-chip",
 	"h-chip",
 	"min-w-icon-meta",
 	"shrink-100000000000000",
@@ -481,6 +480,11 @@ export const OVERLAYS: readonly string[] = [
 	"bg-edge-strong",
 	"top-1/2",
 	// Table
+	"w-1/4",
+	"w-1/3",
+	"w-1/2",
+	"w-2/3",
+	"w-3/4",
 	"touch:overflow-x-auto",
 	"touch:scroll-ps-(--container-measure-short)",
 	"touch:scroll-ps-[calc(var(--container-measure-short)+var(--spacing-row))]",
@@ -506,15 +510,9 @@ export const OVERLAYS: readonly string[] = [
 ];
 
 // SKELETON: a skeleton bar stands at the length of the text it replaces as a
-// fraction of its line. The seven are structural, never a token, and accepted
+// fraction of its line. The two are structural, never a token, and accepted
 // on a skeleton bar only (a class literal that spells `bg-skeleton`); check
-// b5 accepts them there without requiring them.
-export const SKELETON_WIDTHS: readonly string[] = [
-	"w-1/12",
-	"w-1/5",
-	"w-1/4",
-	"w-1/3",
-	"w-1/2",
-	"w-2/3",
-	"w-3/4",
-];
+// b5 accepts them there without requiring them. The other fractions are
+// real widths too (a table column's, a chart's bar) and stand in the
+// allowlist.
+export const SKELETON_WIDTHS: readonly string[] = ["w-1/12", "w-1/5"];

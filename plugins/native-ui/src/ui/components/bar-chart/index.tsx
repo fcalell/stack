@@ -1,5 +1,9 @@
 import {
-	BANDS,
+	type Datum,
+	type Drawn,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
+import {
 	type ChartUnit,
 	chartHead,
 	chartScale,
@@ -8,7 +12,6 @@ import {
 	unitOf,
 } from "@fcalell/ui-core/chart";
 import { formatterFor } from "@fcalell/ui-core/format";
-import { listState, retryOf } from "@fcalell/ui-core/list-state";
 import { CHART_SERIES } from "@fcalell/ui-core/tokens";
 import {
 	CHART,
@@ -25,22 +28,15 @@ import {
 	chartBand,
 	chartFill,
 	FIGURES,
-	skeleton,
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, useContext } from "react";
+import type { ReactNode } from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { compact } from "../../lib/compact";
-import { EmptyBase } from "../../lib/empty";
-import { LoadingContext } from "../../lib/loading";
-import { Strut } from "../../lib/strut";
-import { useWords } from "../../lib/words";
-import type { ListEmpty } from "../list";
-import { MissingBase } from "../missing/base";
-import type { QueryLike } from "../query-boundary";
+import { inertProps, Painted, paintBox, useShown } from "../../lib/paint";
 
 const STACK = "min-w-0";
 const TOTAL = "flex-row items-baseline";
@@ -69,15 +65,8 @@ const PART = "w-2/3 shrink-0";
 const PART_FILL = "flex-1";
 const TIMES = "flex-row";
 const TIME = "items-center flex-1 min-w-0";
-// A loading line stands in its text's line box: a zero-width line of the
-// role beside the bar, so the loading chart keeps the loaded one's boxes.
-const LINE = "flex-row items-center";
-const TIMES_WAIT = "flex-row justify-between";
-const BAR = "w-full";
-// A failed or empty chart's form stands over the loaded boxes, held
-// unseen, so it takes the chart's loaded height.
-const HELD = "opacity-0";
-const OVER = "absolute inset-0";
+// The painted times stand at the plot's two ends.
+const TIMES_PAINTED = "justify-between";
 
 interface Figures {
 	// The head's and the keys' figures.
@@ -148,45 +137,26 @@ export interface BarSlots<T> {
 	at?: (item: T) => string | undefined;
 }
 
-// Where a chart's bars come from, oldest first.
-type ChartSource<T> =
-	| {
-			query: QueryLike<readonly T[]>;
-			/** What failed to load, over the retry act (a sentence; wraps). */
-			sentence: string;
-			empty: ListEmpty;
-			items?: never;
-			loading?: never;
-	  }
-	| {
-			items: readonly T[];
-			// The items are on their way (a compound body's loading form).
-			loading?: boolean;
-			// Without it an empty chart draws its empty plot.
-			empty?: ListEmpty;
-			query?: never;
-			sentence?: never;
-	  };
-
 // Columns over time: one bar per item, stacked by one dimension when `keys`
 // names its parts.
-export type BarChartProps<T = unknown> = Closed &
-	ChartSource<T> & {
-		/** What the chart counts: the web names its plot by it, the phone draws no name for the plot (a short phrase; never drawn on the phone). */
-		label: string;
-		/** The names a bar's parts stack by, bottom first (each a word; the legend wraps between names): present, the chart is stacked and draws them as its legend in every form, each name holding its series mark. */
-		keys?: readonly string[];
-		bar: BarSlots<T>;
-		// What the values count (`requests`, `minutes`), drawn after the total; a
-		// unit that takes a plural is `{ one, other }`, read at the figure it
-		// follows; money is `{ currency: "USD" }`, its figures written in the
-		// currency with no word after them.
-		unit?: ChartUnit;
-		// The bars are a level, not a flow (open flags per round, not requests
-		// per day): the head draws the last bar's value, and each key the last
-		// bar's part, never their sum.
-		level?: boolean;
-	};
+export type BarChartProps<T = unknown> = Closed & {
+	/** The items the bars draw, oldest first: constants, or a selection, which paints the chart until its read lands. A selection stands in a frame (a Pane, Section, Sheet or Form given the read), which draws the chart's failed, missing and empty forms. */
+	items: Datum<readonly T[]>;
+	/** What the chart counts: the web names its plot by it, the phone draws no name for the plot (a short phrase; never drawn on the phone). */
+	label: string;
+	/** The names a bar's parts stack by, bottom first (each a word; the legend wraps between names): present, the chart is stacked and draws them as its legend in every form, each name holding its series mark. */
+	keys?: readonly string[];
+	bar: BarSlots<T>;
+	// What the values count (`requests`, `minutes`), drawn after the total; a
+	// unit that takes a plural is `{ one, other }`, read at the figure it
+	// follows; money is `{ currency: "USD" }`, its figures written in the
+	// currency with no word after them.
+	unit?: ChartUnit;
+	// The bars are a level, not a flow (open flags per round, not requests
+	// per day): the head draws the last bar's value, and each key the last
+	// bar's part, never their sum.
+	level?: boolean;
+};
 
 // One bar, read from its item.
 interface Bar {
@@ -198,52 +168,19 @@ interface Bar {
 
 // The total (the last bar with `level`) at body 500 with its unit, the parts' keys under it, then the
 // axis beside the plot, its four gridlines a hairline each with its tick centred on it and the baseline with its 0, the columns in the
-// chip marks by part, a time under each bar that has one. It draws its
-// collection's four states: while its query is pending, `loading` is set or a
-// loading Section around it waits, its boxes in skeleton at their loaded size
-// with the keys standing; a query
-// that answers not found draws the missing form saying it no longer exists
-// with Back (never Retry), a failed query the failed form with
-// `sentence` and Retry, and no item `empty`, each at the chart's loaded
-// height; then one bar per item.
+// chip marks by part, a time under each bar that has one. While the `items`
+// selection's read waits, the total is a figure's filler, the legend stands
+// (its names and marks declared, its figures painted), the plot is one
+// painted box at its loaded height with the axis's lane kept and the times
+// are two fillers, the chart inert. The frame around it draws the rest: the
+// failed form with Retry, the missing form, the empty form.
 export function BarChart<T>(props: BarChartProps<T>) {
 	const { keys, unit, level } = props;
-	const words = useWords();
-	const input = {
-		query: props.query,
-		items: props.items,
-		loading: props.loading,
-		sectionLoading: useContext(LoadingContext),
-		hasEmpty: props.empty !== undefined,
-	};
-	const state = listState(input);
-	if (state === "pending") return <Loading keys={keys} />;
-	if (state === "missing")
-		return (
-			<Stand keys={keys}>
-				<MissingBase fit="frame" fill />
-			</Stand>
-		);
-	if (state === "failed" && props.query !== undefined)
-		return (
-			<Stand keys={keys}>
-				<EmptyBase
-					fit="frame"
-					fill
-					tone="failed"
-					sentence={props.sentence}
-					act={{ label: words.retry, onAct: retryOf(props.query) }}
-				/>
-			</Stand>
-		);
-	if (state === "empty" && props.empty)
-		return (
-			<Stand keys={keys}>
-				<EmptyBase fit="frame" fill tone="rest" {...props.empty} />
-			</Stand>
-		);
+	const [drawn] = useSelections([props.items] as const);
+	const { painted } = drawn as Drawn<readonly T[]>;
+	const shown = useShown(painted);
 	const { bar } = props;
-	const items = (props.query ? props.query.data : props.items) ?? [];
+	const items = painted ? [] : (drawn.value as readonly T[]);
 	const series: Bar[] = items.map((item) => ({
 		key: bar.key(item),
 		value: bar.value(item),
@@ -282,7 +219,7 @@ export function BarChart<T>(props: BarChartProps<T>) {
 					"shrink-0",
 				)}
 			>
-				{figure(total)}
+				{painted ? <Painted role="figure" /> : figure(total)}
 			</RNText>
 			{word ? (
 				<RNText className={cn(text({ role: "meta" }), "shrink")}>{word}</RNText>
@@ -290,7 +227,7 @@ export function BarChart<T>(props: BarChartProps<T>) {
 		</View>
 	);
 	return (
-		<View className={cn(CHART, STACK)}>
+		<View {...inertProps(painted)} className={cn(CHART, STACK)}>
 			{labels.length > 0 ? (
 				<View className={CHART_HEAD}>
 					{totalLine}
@@ -298,7 +235,11 @@ export function BarChart<T>(props: BarChartProps<T>) {
 						{keyTotals.map((key, at) => (
 							<Key key={key.label} name={key.label} at={at}>
 								<RNText className={cn(text({ role: "meta" }), FIGURES)}>
-									{figure(key.value)}
+									{painted ? (
+										<Painted role="figure" at={at} />
+									) : (
+										figure(key.value)
+									)}
 								</RNText>
 							</Key>
 						))}
@@ -335,78 +276,91 @@ export function BarChart<T>(props: BarChartProps<T>) {
 					))}
 				</View>
 				<View className={cn(CHART_MAIN, MAIN)}>
-					<View className={PLOT}>
-						<View className={CHART_GRID}>
-							{Array.from({ length: bands }, (_, index) => (
-								<View
-									// biome-ignore lint/suspicious/noArrayIndexKey: a band is its index
-									key={index}
-									className={cn(
-										chartBand({ kind: "grid", rule: band(index, bands) }),
-										GRID_BAND,
-									)}
-								/>
-							))}
-						</View>
-						<View className={BARS}>
-							{series.map((bar) => (
-								<View key={bar.key} className={SLOT}>
-									{keys ? (
-										// The first part stands on the baseline, each next one
-										// over it, split from it by a clear line.
-										keys
-											.map((key, at) =>
-												at > 0 ? (
-													<View
-														key={key}
-														className={cn(CHART_PART_SPLIT, PART)}
-														style={height(part(bar, key), top)}
-													>
+					{painted ? (
+						<View className={cn(CHART_GRID, paintBox(shown))} />
+					) : (
+						<View className={PLOT}>
+							<View className={CHART_GRID}>
+								{Array.from({ length: bands }, (_, index) => (
+									<View
+										// biome-ignore lint/suspicious/noArrayIndexKey: a band is its index
+										key={index}
+										className={cn(
+											chartBand({ kind: "grid", rule: band(index, bands) }),
+											GRID_BAND,
+										)}
+									/>
+								))}
+							</View>
+							<View className={BARS}>
+								{series.map((bar) => (
+									<View key={bar.key} className={SLOT}>
+										{keys ? (
+											// The first part stands on the baseline, each next one
+											// over it, split from it by a clear line.
+											keys
+												.map((key, at) =>
+													at > 0 ? (
 														<View
+															key={key}
+															className={cn(CHART_PART_SPLIT, PART)}
+															style={height(part(bar, key), top)}
+														>
+															<View
+																className={cn(
+																	chartFill({ series: mark(at) }),
+																	PART_FILL,
+																)}
+															/>
+														</View>
+													) : (
+														<View
+															key={key}
 															className={cn(
 																chartFill({ series: mark(at) }),
-																PART_FILL,
+																PART,
 															)}
+															style={height(part(bar, key), top)}
 														/>
-													</View>
-												) : (
-													<View
-														key={key}
-														className={cn(
-															chartFill({ series: mark(at) }),
-															PART,
-														)}
-														style={height(part(bar, key), top)}
-													/>
-												),
-											)
-											.reverse()
-									) : (
-										<View
-											className={cn(
-												chartFill({ series: CHART_SERIES[0] }),
-												COLUMN,
-											)}
-											style={height(bar.value, top)}
-										/>
-									)}
-								</View>
-							))}
+													),
+												)
+												.reverse()
+										) : (
+											<View
+												className={cn(
+													chartFill({ series: CHART_SERIES[0] }),
+													COLUMN,
+												)}
+												style={height(bar.value, top)}
+											/>
+										)}
+									</View>
+								))}
+							</View>
 						</View>
-					</View>
-					<View className={TIMES}>
-						{series.map((bar) => (
-							<View key={bar.key} className={TIME}>
-								{bar.at ? (
+					)}
+					<View className={cn(TIMES, painted && TIMES_PAINTED)}>
+						{painted
+							? [0, 1].map((end) => (
 									<RNText
-										numberOfLines={1}
+										key={end}
 										className={cn(text({ role: "meta" }), FIGURES)}
 									>
-										{bar.at}
+										<Painted role="word" at={end} />
 									</RNText>
-								) : null}
-							</View>
-						))}
+								))
+							: series.map((bar) => (
+									<View key={bar.key} className={TIME}>
+										{bar.at ? (
+											<RNText
+												numberOfLines={1}
+												className={cn(text({ role: "meta" }), FIGURES)}
+											>
+												{bar.at}
+											</RNText>
+										) : null}
+									</View>
+								))}
 					</View>
 				</View>
 			</View>
@@ -434,91 +388,6 @@ function Key(props: { name: string; at: number; children: ReactNode }) {
 				{props.name}
 			</RNText>
 			{props.children}
-		</View>
-	);
-}
-
-// A failed, missing or empty chart: its form over the loaded boxes, held
-// unseen. React Native has no grid to stack the two
-// in one cell, so the empty form lies over the boxes, which set the height,
-// its frame filling them.
-function Stand(props: { keys?: readonly string[]; children: ReactNode }) {
-	return (
-		<View>
-			<View className={HELD}>
-				<Loading keys={props.keys} />
-			</View>
-			<View className={OVER}>{props.children}</View>
-		</View>
-	);
-}
-
-// The loaded boxes: the total's line (with the keys under it, each figure
-// waiting in a lane four figures wide, so the legend wraps as the loaded one
-// does), a tick's lane on each gridline, the plot's box, a time's lane at
-// each end of the plot.
-function Loading(props: { keys?: readonly string[] }) {
-	const total = (
-		<View className={LINE}>
-			<Strut role="body" />
-			<View className={cn(skeleton({ kind: "line" }), "w-1/4")} />
-		</View>
-	);
-	return (
-		<View className={cn(CHART, STACK)}>
-			{props.keys ? (
-				<View className={CHART_HEAD}>
-					{total}
-					<View className={cn(CHART_KEYS, KEYS)}>
-						{props.keys.map((key, at) => (
-							<Key key={key} name={key} at={at}>
-								<View className={cn(LINE, CHART_TICK_LANE)}>
-									<Strut role="meta" />
-									<View className={cn(skeleton({ kind: "line" }), BAR)} />
-								</View>
-							</Key>
-						))}
-					</View>
-				</View>
-			) : (
-				total
-			)}
-			<View className={cn(CHART_BODY, BODY)} style={REACH}>
-				<View className={cn(CHART_GRID, CHART_TICK_LANE, AXIS)}>
-					{Array.from({ length: BANDS }, (_, index) => (
-						<View
-							// biome-ignore lint/suspicious/noArrayIndexKey: a band is its index
-							key={index}
-							className={cn(
-								chartBand({ kind: "axis", rule: band(index, BANDS) }),
-								AXIS_BAND,
-							)}
-						>
-							<View className={cn(LINE, BAR, TICK)}>
-								<Strut role="meta" />
-								<View className={cn(skeleton({ kind: "line" }), BAR)} />
-							</View>
-							{index === BANDS - 1 ? (
-								<View className={cn(LINE, BAR, ZERO)}>
-									<Strut role="meta" />
-									<View className={cn(skeleton({ kind: "line" }), BAR)} />
-								</View>
-							) : null}
-						</View>
-					))}
-				</View>
-				<View className={cn(CHART_MAIN, MAIN)}>
-					<View className={skeleton({ kind: "chart" })} />
-					<View className={TIMES_WAIT}>
-						{[0, 1].map((end) => (
-							<View key={end} className={cn(LINE, "w-1/12")}>
-								<Strut role="meta" />
-								<View className={cn(skeleton({ kind: "line" }), BAR)} />
-							</View>
-						))}
-					</View>
-				</View>
-			</View>
 		</View>
 	);
 }

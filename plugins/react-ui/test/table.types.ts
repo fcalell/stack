@@ -17,30 +17,18 @@ const columns: TableColumn<Member>[] = [
 	},
 ];
 const row = { id: (member: Member) => member.id };
-const query = {
-	data: undefined,
-	isPending: false,
-	isError: true,
-	refetch: () => {},
-};
 
-// a Table takes `query` with `sentence`, or `items`, and a `row` map
+// a Table takes `items`, constants or a selection, and a `row` map
 {
-	const fromQuery: TableProps<Member> = {
-		columns,
-		query,
-		sentence: "Members did not load.",
-		row,
-	};
 	const fromItems: TableProps<Member> = { columns, items: [], row };
-	void [fromQuery, fromItems];
-	// @ts-expect-error: a query names what failed to load
-	const unsaid: TableProps<Member> = { columns, query, row };
+	void fromItems;
+	// @ts-expect-error: the rows are items, never a query
+	const queried: TableProps<Member> = { columns, query: {}, row };
+	// @ts-expect-error: the frame draws the empty form, never the table
+	const empty: TableProps<Member> = { columns, items: [], row, empty: {} };
 	// @ts-expect-error: rows of built records are gone
 	const built: TableProps<Member> = { columns, rows: [], row };
-	// @ts-expect-error: a table takes one data form
-	const both: TableProps<Member> = { columns, query, items: [], row };
-	void [unsaid, built, both];
+	void [queried, empty, built];
 }
 
 // a column reads its cell from the item by `cell`

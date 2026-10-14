@@ -17,10 +17,10 @@ export const PAINT_BOX = cn(paint({ kind: "box" }), FADE);
 /** The paint of a control: its own box filled, its content invisible; the control is also `inert`. */
 export const PAINT_CONTROL = cn(paint({ kind: "control" }), FADE);
 
-/** A text slot's paint, set inside the slot's own text element (no wrapper box): each line box a bar. */
+/** A text slot's paint, set inside the slot's own text element (no wrapper box): each line box a bar. It clips where a loaded text ellipsizes (`globals.css`). */
 export function Painted({ role, at = 0 }: { role: PaintRole; at?: number }) {
 	return (
-		<span aria-hidden className={GLYPHS}>
+		<span aria-hidden data-painted="" className={GLYPHS}>
 			{paintText(role, at)}
 		</span>
 	);

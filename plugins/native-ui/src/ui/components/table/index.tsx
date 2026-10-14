@@ -1,3 +1,8 @@
+import {
+	type Datum,
+	type Drawn,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import type {
 	CellValue,
 	StatusCell,
@@ -17,8 +22,6 @@ import {
 	chooseRow,
 	isChangeCell,
 	isStatusCell,
-	listState,
-	retryOf,
 	type Sort,
 	shown as shownWith,
 	sorted,
@@ -27,14 +30,13 @@ import {
 	tickable,
 	touchMeta,
 } from "@fcalell/ui-core/list-state";
+import { PAINT_ROWS } from "@fcalell/ui-core/paint";
 import { BREAKPOINT_PX } from "@fcalell/ui-core/tokens";
 import {
 	FIGURES,
 	rowWarningContentTone,
-	skeleton,
 	TABLE_CELL,
 	TABLE_CHANGE,
-	TABLE_EMPTY,
 	TABLE_FRAME,
 	TABLE_FROZEN,
 	TABLE_NAME,
@@ -47,15 +49,7 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import {
-	memo,
-	type ReactNode,
-	useContext,
-	useMemo,
-	useRef,
-	useState,
-	useSyncExternalStore,
-} from "react";
+import { memo, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import {
 	Pressable,
 	Text as RNText,
@@ -67,23 +61,21 @@ import { age } from "../../lib/age";
 import { useClock } from "../../lib/clock";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { EmptyBase } from "../../lib/empty";
 import { type CellFit, FieldDisabled } from "../../lib/field";
 import { Ink } from "../../lib/ink";
-import { LoadingContext } from "../../lib/loading";
 import { navigate } from "../../lib/navigate";
+import { inertProps, Painted } from "../../lib/paint";
 import { useWords } from "../../lib/words";
 import { Checkbox } from "../checkbox";
 import { CheckboxBase } from "../checkbox/base";
 import { Chip } from "../chip";
+import { ChipBase } from "../chip/base";
 import { Icon } from "../icon";
 import { InputBase } from "../input/base";
-import type { ListEmpty, RowSlots } from "../list";
+import type { RowSlots } from "../list";
 import { ListBase } from "../list/base";
 import { LockMark } from "../list-row/lock";
-import { MissingBase } from "../missing/base";
 import { PickerBase } from "../picker/base";
-import type { QueryLike } from "../query-boundary";
 import { StatusBase } from "../status/base";
 import { ChangeMark } from "../status/change";
 
@@ -116,46 +108,18 @@ const CELL = "flex-row items-center gap-inside min-w-0";
 const CELL_END = "justify-end";
 const VALUE = "shrink";
 const TICK = "shrink-0";
+const NOOP = () => {};
 // A Chip hugs its top edge in a row, so it stands centred in a slot of its own.
 const CHIP = "shrink min-w-0";
 // An edit fills the cell it stands in.
 const EDIT = "grow min-w-0";
-// The empty slot spans the grid: its page form centres in what the page's
-// body leaves.
-const EMPTY = "grow";
 const SORT_BAR = "flex-row items-center justify-end";
-
-// Five loading rows, each bar at a share of its cell: a number's at a
-// quarter, the others by row and by their place among the bars.
-const LOADING_BARS = [
-	["w-2/3", "w-1/2", "w-1/3", "w-1/2", "w-1/2"],
-	["w-1/2", "w-2/3", "w-1/2", "w-1/3", "w-2/3"],
-	["w-3/4", "w-1/2", "w-1/3", "w-1/2", "w-1/3"],
-	["w-1/2", "w-1/3", "w-1/2", "w-1/3", "w-1/2"],
-	["w-2/3", "w-1/2", "w-1/3", "w-1/2", "w-2/3"],
-] as const;
-const NUMBER_BAR = "w-1/4";
-
-// Where a table's records come from: a query, with what failed to load over
-// the retry act, or items, `loading` while they are on their way.
-type TableSource<T> =
-	| {
-			query: QueryLike<readonly T[]>;
-			/** What failed to load, over the retry act (a sentence; wraps). */
-			sentence: string;
-			items?: never;
-			loading?: never;
-	  }
-	| {
-			items: readonly T[];
-			loading?: boolean;
-			query?: never;
-			sentence?: never;
-	  };
 
 // The columns each read their cell from the item, and `row` the row's own
 // slots.
 interface TableBase<T> extends Closed {
+	/** The items the rows draw: constants, or a selection, which paints `PAINT_ROWS` rows until its read lands. A selection stands in a frame (a Pane, Section, Sheet or Form given the read), which draws the table's failed, missing and empty forms. */
+	items: Datum<readonly T[]>;
 	columns: readonly TableColumn<T>[];
 	row: TableRowSlots<T>;
 	selected?: string;
@@ -166,8 +130,6 @@ interface TableBase<T> extends Closed {
 	// `chosen`; `blocked` and `moved` give a row's reason under its leading
 	// cell.
 	choose?: TableChoice<T>;
-	/** What the table draws while it has no rows: a mark, a title, a sentence and the act that makes the first. */
-	empty?: ListEmpty;
 }
 
 interface Reads {
@@ -182,9 +144,7 @@ interface Edits {
 	onEdit?: (id: string, key: string, value: CellValue) => void;
 }
 
-export type TableProps<T = unknown> = TableBase<T> &
-	TableSource<T> &
-	(Reads | Edits);
+export type TableProps<T = unknown> = TableBase<T> & (Reads | Edits);
 
 // What a cell reads as, an age in this platform's words.
 function shown(column: TableColumn, cell: TableCell | undefined): string {
@@ -209,64 +169,40 @@ const isEnd = (column: TableColumn) =>
 // value edits it in place (typed in an `Input`, picked in a `Picker`'s
 // sheet, ticked in a `Checkbox`). Below `tablet` one `ListRow` per record
 // under the sort's pick. The table sorts in its own state: newest or largest
-// first, then turned over, then off. It draws its four states: while its
-// query is pending, `loading` is set or a loading Section around it waits,
-// the header over skeleton rows (below `tablet` the list's waiting rows); a query that answers not found
-// the missing form saying it no longer exists with Back, never Retry, and
-// a failed query the failed form with `sentence` and Retry, each under
-// the header on the grid and alone below `tablet`; no row `empty`; then one row per item.
+// first, then turned over, then off. While the `items` selection's read
+// waits, `PAINT_ROWS` rows stand in the columns the table declares (the slots
+// are run over the placeholder), the header constant over them, each cell
+// painted by its column's kind and the rows inert; below `tablet` the list
+// paints the same records as its rows. The frame around it draws the rest:
+// the failed form with Retry, the missing form, the empty form.
 export function Table<T>(props: TableProps<T>) {
-	const { columns, selected, onOpen, onEdit, empty } = props;
-	const words = useWords();
+	const { columns, selected, onOpen, onEdit } = props;
 	const [sort, setSort] = useState<Sort>();
 	const { width } = useWindowDimensions();
-	const input = {
-		query: props.query,
-		items: props.items,
-		loading: props.loading,
-		sectionLoading: useContext(LoadingContext),
-		hasEmpty: empty !== undefined,
-	};
-	const state = listState(input);
-	const waiting = state === "pending";
-	const items = (props.query ? props.query.data : props.items) ?? [];
-	const records = waiting
-		? []
-		: sorted(
-				tableRecords(items, columns, props.row, props.choose),
-				columns,
-				sort,
-			);
-	let slot: ReactNode = null;
-	if (state === "missing") slot = <MissingBase fit="page" />;
-	else if (state === "failed" && props.query)
-		slot = (
-			<EmptyBase
-				fit="page"
-				tone="failed"
-				sentence={props.sentence}
-				act={{ label: words.retry, onAct: retryOf(props.query) }}
-			/>
-		);
-	else if (state === "empty" && empty)
-		slot = <EmptyBase fit="page" tone="rest" {...empty} />;
+	const [drawn] = useSelections([props.items] as const);
+	const { painted } = drawn as Drawn<readonly T[]>;
+	// Painted, `PAINT_ROWS` records over the placeholder, in the order the
+	// data would arrive.
+	const items: readonly T[] = painted
+		? Array.from({ length: PAINT_ROWS }, () => drawn.value as T)
+		: (drawn.value as readonly T[]);
+	const made = tableRecords(items, columns, props.row, props.choose, painted);
+	const records = painted ? made : sorted(made, columns, sort);
 	if (width < BREAKPOINT_PX.tablet)
 		return (
 			<View className={ROOT}>
-				{slot ?? (
-					<Phone
-						columns={columns}
-						rows={records}
-						sort={sort}
-						onSort={setSort}
-						selected={selected}
-						onOpen={onOpen}
-						choose={props.choose}
-						loading={waiting}
-						warns={props.row.warning !== undefined}
-						changes={props.row.change !== undefined}
-					/>
-				)}
+				<Phone
+					columns={columns}
+					rows={records}
+					sort={sort}
+					onSort={setSort}
+					selected={selected}
+					onOpen={onOpen}
+					choose={props.choose}
+					painted={painted}
+					warns={props.row.warning !== undefined}
+					changes={props.row.change !== undefined}
+				/>
 			</View>
 		);
 	return (
@@ -280,11 +216,8 @@ export function Table<T>(props: TableProps<T>) {
 				choose={props.choose}
 				onOpen={onOpen}
 				onEdit={onEdit}
-				loading={waiting}
+				painted={painted}
 			/>
-			{slot === null ? null : (
-				<View className={cn(TABLE_EMPTY, EMPTY)}>{slot}</View>
-			)}
 		</View>
 	);
 }
@@ -578,7 +511,7 @@ function Grid(props: {
 	choose: Pick<TableChoice<never>, "chosen" | "onChange"> | undefined;
 	onOpen: ((id: string) => void) | undefined;
 	onEdit: ((id: string, key: string, value: CellValue) => void) | undefined;
-	loading: boolean | undefined;
+	painted: boolean;
 }) {
 	const { columns, rows, sort, choose } = props;
 	const words = useWords();
@@ -613,7 +546,7 @@ function Grid(props: {
 
 	return (
 		<View
-			accessibilityState={{ busy: props.loading === true }}
+			accessibilityState={{ busy: props.painted }}
 			className={cn(TABLE_FRAME, FRAME)}
 		>
 			{lead ? (
@@ -645,10 +578,12 @@ function Grid(props: {
 							/>
 						</View>
 					</View>
-					{props.loading
-						? LOADING_BARS.map((bars, index) => (
+					{props.painted
+						? rows.map((_, index) => (
 								<View
-									key={bars.join(" ") + String(index)}
+									// biome-ignore lint/suspicious/noArrayIndexKey: the painted rows are fixed stand-ins
+									key={index}
+									{...inertProps(true)}
 									className={cn(
 										tableRow({ state: "rest" }),
 										TABLE_FROZEN,
@@ -662,7 +597,12 @@ function Grid(props: {
 												tableFrozenCell({ state: "rest" }),
 											)}
 										>
-											<View className={skeleton({ kind: "check" })} />
+											<CheckboxBase
+												checked={false}
+												onChange={NOOP}
+												label=""
+												painted
+											/>
 										</View>
 									) : null}
 									<View
@@ -674,7 +614,7 @@ function Grid(props: {
 											tableFrozenCell({ state: "rest" }),
 										)}
 									>
-										{waits(columns, bars, index % 2 === 1)[0]}
+										<PaintedCell column={lead} leading index={index} />
 									</View>
 								</View>
 							))
@@ -713,30 +653,31 @@ function Grid(props: {
 							</View>
 						))}
 					</View>
-					{props.loading
-						? LOADING_BARS.map((bars, index) => (
+					{props.painted
+						? rows.map((_, index) => (
 								<View
-									key={bars.join(" ") + String(index)}
+									// biome-ignore lint/suspicious/noArrayIndexKey: the painted rows are fixed stand-ins
+									key={index}
+									{...inertProps(true)}
 									className={cn(tableRow({ state: "rest" }), ROW_LINE)}
 								>
-									{waits(columns, bars, index % 2 === 1)
-										.slice(1)
-										.map((wait, place) => {
-											const column = rest[place];
-											return column ? (
-												<View
-													key={column.key}
-													className={cn(
-														COLUMN,
-														TABLE_CELL,
-														CELL,
-														isEnd(column) && CELL_END,
-													)}
-												>
-													{wait}
-												</View>
-											) : null;
-										})}
+									{rest.map((column, place) => (
+										<View
+											key={column.key}
+											className={cn(
+												COLUMN,
+												TABLE_CELL,
+												CELL,
+												isEnd(column) && CELL_END,
+											)}
+										>
+											<PaintedCell
+												column={column}
+												leading={false}
+												index={index + place + 1}
+											/>
+										</View>
+									))}
 								</View>
 							))
 						: rows.map((row) => (
@@ -967,34 +908,66 @@ function CellEdit(props: {
 	);
 }
 
-// A loading row's waits, one per column: a check's box, a number's quarter
-// bar, a status's dot and word, the other bars by their place among the bars.
-function waits(
-	columns: readonly TableColumn[],
-	bars: readonly string[],
-	odd: boolean,
-): ReactNode[] {
-	let bar = 0;
-	return columns.map((column) => {
-		if (column.kind === "check")
-			return <View key={column.key} className={skeleton({ kind: "check" })} />;
-		if (column.kind === "number")
-			return (
-				<View
-					key={column.key}
-					className={cn(skeleton({ kind: "line" }), NUMBER_BAR)}
-				/>
-			);
-		if (column.kind === "status")
-			return <StatusBase key={column.key} waiting={odd ? "third" : "half"} />;
-		const width = bars[bar++ % bars.length];
+// A painted cell by its column's kind: a number, an age or an id as a figure's
+// filler, a status as its painted mark, a check as a painted box, a chip as a
+// box, the rest as the text a column holds.
+function PaintedCell(props: {
+	column: TableColumn;
+	leading: boolean;
+	index: number;
+}) {
+	const { column, index } = props;
+	if (props.leading)
 		return (
-			<View
-				key={column.key}
-				className={cn(skeleton({ kind: "line" }), width)}
-			/>
+			<RNText
+				numberOfLines={1}
+				className={cn(
+					text({ role: "body" }),
+					textStrong({ role: "body" }),
+					VALUE,
+				)}
+			>
+				<Painted role="name" at={index} />
+			</RNText>
 		);
-	});
+	switch (column.kind) {
+		case "check":
+			return <CheckboxBase checked={false} onChange={NOOP} label="" painted />;
+		case "status":
+			return <StatusBase painted />;
+		case "chip":
+			return (
+				<View className={CHIP}>
+					<ChipBase family={column.family} label="" painted />
+				</View>
+			);
+		case "source":
+			return (
+				<RNText numberOfLines={1} className={cn(text({ role: "code" }), VALUE)}>
+					<Painted role="id" at={index} />
+				</RNText>
+			);
+		case "number":
+		case "age":
+			return (
+				<RNText
+					numberOfLines={1}
+					className={cn(
+						text({ role: column.kind === "age" ? "meta" : "body" }),
+						FIGURES,
+						VALUE,
+					)}
+				>
+					<Painted role="figure" at={index} />
+				</RNText>
+			);
+		default:
+			return (
+				<RNText numberOfLines={1} className={cn(text({ role: "body" }), VALUE)}>
+					<Painted role="phrase" at={index + 1} />
+				</RNText>
+			);
+	}
 }
 
 // Below `tablet`: the sort's pick over one ListRow per record.
@@ -1006,7 +979,7 @@ function Phone(props: {
 	selected: string | undefined;
 	onOpen: ((id: string) => void) | undefined;
 	choose: Pick<TableChoice<never>, "chosen" | "onChange"> | undefined;
-	loading: boolean | undefined;
+	painted: boolean;
 	warns: boolean;
 	changes: boolean;
 }) {
@@ -1045,9 +1018,10 @@ function Phone(props: {
 	) : null;
 	const cell = (record: TableRecord, column: TableColumn | undefined) =>
 		column ? record.cells[column.key] : undefined;
-	const { onOpen } = props;
-	// A slot is declared only when a column fills it, so the waiting rows
-	// stand in the slots the loaded ones draw.
+	const { onOpen, painted } = props;
+	// A slot is declared only when a column fills it, so the painted rows
+	// stand in the slots the loaded ones draw; a mark whose cell the placeholder
+	// does not shape (a status, a chip, an age) is given by its column instead.
 	const row: RowSlots<TableRecord> = {
 		key: (record) => record.id,
 		title: (record) =>
@@ -1090,12 +1064,14 @@ function Phone(props: {
 		// The row words its age moment and keeps it current itself.
 		trailing: ageColumn
 			? (record) => {
+					if (painted) return { age: "" };
 					const when = cell(record, ageColumn);
 					return typeof when === "string" ? { age: when } : undefined;
 				}
 			: undefined,
 		status: status
 			? (record) => {
+					if (painted) return { state: "done", label: "" };
 					const state = cell(record, status);
 					return isStatusCell(state)
 						? {
@@ -1110,6 +1086,7 @@ function Phone(props: {
 		chip:
 			chip?.kind === "chip"
 				? (record) => {
+						if (painted) return { family: chip.family, label: "" };
 						const value = cell(record, chip);
 						return typeof value === "string"
 							? { family: chip.family, label: shown(chip, value) }
@@ -1125,7 +1102,11 @@ function Phone(props: {
 		<>
 			{pick}
 			<ListBase
-				drawn={{ painted: props.loading === true, value: props.rows }}
+				drawn={
+					painted
+						? { painted: true, value: props.rows[0] }
+						: { painted: false, value: props.rows }
+				}
 				row={row}
 			/>
 		</>
