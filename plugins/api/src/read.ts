@@ -13,7 +13,7 @@ const PLACEHOLDER = Symbol.for("@fcalell/plugin-api/placeholder");
 
 // One private-use character: a placeholder run through a template literal
 // keeps a mark that `isPlaceholder` finds, where a bare string would be lost.
-const WAITING_CHAR = "";
+const WAITING_CHAR = "\uE000";
 
 export interface Selection<T> {
 	/** @internal */ readonly [SELECTION]: {
