@@ -237,8 +237,8 @@ hook); the delay is a fade on each painted slot; every frame of a read is named 
 ### 4.2 The loader: the loaded slot, painted by its kind
 
 The waiting form's geometry is the loaded form's (`states.md` §4): each waiting slot is the
-loaded slot drawn from the placeholder (the output's shape),
-its text's own line boxes for a title, the shape's own size for an avatar, a check, a field, a
+loaded slot drawn from the placeholder, at its role's size (`states.md` §4): its text's own line
+boxes for a title, the shape's own size for an avatar, a check, a field, a
 chart. That geometry is what the shift review holds (no Section heading moves between a waiting
 and a loaded form). The loader is only how that box is painted, so either paint keeps every
 layout the review holds, a scrambled title included.
@@ -269,19 +269,20 @@ it), breathing in one phase across the page (§3, wait). On the phone a text slo
 nested `Text` with transparent ink over a background colour, one fill per line fragment. Under
 reduced motion it is still; an idle or paused read's slots are still too (`states.md` §5).
 
-**The scramble, shaped.** The box holds the placeholder's characters, each cycling within its
-own class: a letter through letters of its case, a digit through digits, an id's alphanumerics
-through `0–9 a–f`; spaces, separators, units and an id's prefix stand still, so words keep their
-lengths, figures their commas and `GB`, ids their `job_`. Each place changes on its own cadence
+**The scramble, shaped.** The box holds generated characters at its role's length, each cycling
+within its kind's class: a text slot's letters through letters (words of varied lengths with the
+spaces between them still), a figure's digits through digits (grouped as the locale groups them),
+an id's alphanumerics through `0–9 a–f`; what the component draws as a constant (a unit, an id's
+prefix, a label) stands still beside it. Each place changes on its own cadence
 (from `tick`, 70 ms, to about 2.5 ticks, at random), so the box shimmers rather than flips as one.
 It draws in the slot's own face and ink: tabular digits and mono ids keep one width per glyph and
-never move; a title's letters change width inside the box, which is fixed by the placeholder and
+never move; a title's letters change width inside the box, which is fixed by its role's size and
 clipped, so nothing around it moves. One page-wide ticker writes every scramble's text node
 directly (no render per tick on the web; Reanimated's animated text on the phone), so twenty
 slots cost one timer. Under reduced motion it is a still bar.
 
-The scramble always cycles the placeholder, which is generated Latin text, never the loaded
-string, so the script the data is written in never meets it.
+The scramble always cycles generated Latin characters, never the loaded string, so the script the
+data is written in never meets it.
 
 **The decode, figures and ids.** On arrival the loaded value is laid out at once and its
 characters lock in turn, from the reading start, across `slow`: the loaded value revealed up to
@@ -461,9 +462,12 @@ start at 400 and 800 ms and are tuned live on the showcase before they land.
 Revised the same day after an adversarial review (`states.md` §15): only figures and ids decode
 character by character, at an edge counted rather than measured; text, scrambled or pulsing,
 arrives by the settle's crossfade. The settle runs no view transition while an editable has
-focus. A retried failure keeps its failed form with Retry pending. The placeholder is the
-output's shape alone.
+focus. A retried failure keeps its failed form with Retry pending.
 
 Revised again the same day: the read runs on TanStack's own observers (`states.md` §5); the
 wait is the delay alone, a fade on each painted slot, with no minimum unless the live tuning shows
 a flash.
+
+Revised again during phase 1's build: the placeholder is one runtime value with no shape of its
+own (`states.md` §4), so a waiting slot's size and the scramble's length come from the slot's
+role, and the scramble generates its characters rather than cycling a placeholder string.

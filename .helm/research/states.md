@@ -71,8 +71,8 @@ painted as waiting; generated ids collided as keys.
    that draws it.
 3. **Contexts carry identity, never state** (handles, words, theme, the Pane's scroller). A
    context never changes a child's form. Structure rule 11 classes every context and holds it.
-4. **Every subscription is a slice:** one observer per leaf, with TanStack's `select`, tracked
-   properties and structural sharing.
+4. **Every subscription is a slice:** one `useQueries` per leaf over the reads it draws, with
+   tracked properties and structural sharing.
 5. **Data flows down; nothing reports up.**
 6. **The app's own code never receives a placeholder.** `useRead` returns real data only. A
    selector or a `combine` function the app writes does run over the placeholder, so it is pure
@@ -85,13 +85,16 @@ A read is a TanStack query, or anything with the same interface (a live channel,
 reply), written to the cache. plugin-api's query utils build its handle:
 
 ```ts
-const deploy = orpc.deploys.get.read({ id }); // stable, typed: query options + output shape
+const deploy = orpc.deploys.get.read({ id }); // typed: the query options and how not found reads
 deploy.at((d) => d.commit);                   // a selection: the handle + a selector, typed
-combine(deploy, files, (d, f) => …);          // a selection over several reads
+combine([deploy, files], (d, f) => …);        // a selection over several selections
 ```
 
-ui-core knows only the handle's interface, so it stays free of TanStack. It derives one state
-from a read, framework-free and tested without rendering: one phase and the flags beside it.
+A read is itself a selection (its whole value), so a collection takes a read or a selection
+alike. The handle (`Read`, `Selection`) lives in plugin-api; a read's not found is `read.missing`,
+plugin-api's `isNotFound` unless the read says otherwise. ui-core knows only an observer's result
+(`ReadResult`), so it stays free of TanStack, and derives one state from it (`readState`),
+framework-free and tested without rendering: one phase and the flags beside it.
 
 | Phase | When |
 | --- | --- |
@@ -180,20 +183,25 @@ No wrapper element is added: a `display: contents` wrapper breaks a parent's chi
 phone a text bar is a nested `Text` with transparent ink over a background colour, which paints
 each line fragment natively (no `onTextLayout`; to check on a device).
 
-**The placeholder is the output's shape**, emitted at `stack generate` from the router's inferred
-TypeScript output types, so a consumer writes nothing (no `.output()` schema, no `.meta`):
+**The placeholder is one value, P**, the same for every read (a router procedure, a live
+channel, a stream, the org's rules), so nothing is generated and a consumer writes nothing. P is a
+frozen, callable Proxy that answers any property with itself:
 
-- a string by its role's default length (a title, a name, an id, a sentence), never a schema's
-  `max`; an enum by its first member; a discriminated union by its first variant; an optional
-  present; a recursive type cut at one level;
-- an array's count by its collection's default, never more than a viewport holds;
-- ids unique per item (`waiting-0`, …); dates one fixed epoch, so screens and stories are
-  deterministic.
+- `P.a.b === P`, so an optional is present and a recursive type never ends; it is deterministic;
+- comparisons are false and lookups miss (`d.state === "failed"`, `LABELS[d.state]`), so a
+  selector takes its own default branch;
+- as a number it is 0 (`new Date(P)` is the epoch, a figure formats as `0`); as a string it is one
+  private-use character, so a string built from it (`` `${d.a} · ${d.b}` ``, `` `/d/${d.id}` ``)
+  is recognised as a placeholder (`isPlaceholder`);
+- iterating it yields nothing, `.map` and `.filter` return P, and `Object.entries(P)` is `[]`.
 
-It is generated once per procedure and given to each leaf's observer as `placeholderData`, never
-written into the cache. There is no
-cache seed and no previous data: a record whose title should be there before its read lands gets
-it from preload (§11), not from an invented write.
+The paint's sizes are the leaf's, not the data's: a text slot's length comes from its role (a
+title, a name, a sentence), and a collection draws its default count of painted rows, keyed
+`waiting-0`, … each item P. P is given to each leaf's observer as `placeholderData`, never written
+into the cache. There is no cache seed and no previous data: a record whose title should be there
+before its read lands gets it from preload (§11), not from an invented write. A lookup that misses
+can drop an optional slot while waiting; the shift check catches it and `LABELS[d.state] ?? d.state`
+fixes it.
 
 **Waiting forms are inert.** On the web the painted region is `inert`; on the phone it is not
 pressable and hidden from assistive technology (`importantForAccessibility="no-hide-descendants"`).
@@ -204,27 +212,33 @@ Columns region is labelled by) comes from real data only.
 
 The read needs no store of stack's own: each part is a TanStack builtin.
 
-- **A leaf** is a `useQuery({ ...read.options, select, placeholderData: read.shape })`. The
-  observer re-runs `select` only when the data or the selector changes and renders only for the
-  result properties the leaf reads; the placeholder goes through the same `select`, and
-  `isPlaceholderData` tells the leaf to paint. A selection is stable (the compiler memoizes
-  `read.at(fn)`; where it does not reach, `select` re-runs per render, which is cheap).
-- **`useRead(selection)`** is the same `useQuery` without `placeholderData`: real data, or
+- **A leaf** is one `useSelections([...])` over the data props it draws: one `useQueries` over
+  their distinct reads (deduplicated by query key), each with P as `placeholderData`, whose
+  `combine` runs each prop's selector and answers, per prop, `{ painted, value }`. Constants pass
+  through unpainted, so the hook count is fixed whatever mix of selections and constants a leaf
+  is given. A selector that throws over the placeholder answers P (logged in dev); a throw over
+  real data is the app's bug and rethrows. Each observer renders only for the result properties
+  its combine reads, and `useQueries` notifies only when the combined answer changes.
+- **`useRead(selection)`** is the same `useQueries` without the placeholder: real data, or
   `undefined`.
-- **`combine`** is `useQueries({ queries, combine })`, whose result TanStack memoizes.
-- **The phase and flags** are a pure function in ui-core over the observer's result (`status`,
-  `fetchStatus`, `isEnabled`, `isPaused`, `isPlaceholderData`, `isRefetchError`, `hasNextPage`),
-  tested without rendering; ui-core sees only that interface and stays free of TanStack.
+- **`combine([a, b], fn)`** is a selection over selections, resolved by the same hook.
+- **The phase and flags** are `readState(result, read.missing)` in ui-core, over the observer's
+  result (`status`, `fetchStatus`, `isEnabled`, `isPlaceholderData`, `isRefetchError`,
+  `hasNextPage`), tested without rendering.
 - **One flip.** One cache write notifies every observer of the read in one batch, so every leaf,
   frame and `useRead` of the read changes in one commit, on both platforms.
-- **The settle** sits where every batch flushes. plugin-api sets
-  `notifyManager.setBatchNotifyFunction`, and a query cache listener marks a batch that carries a
-  read's first answer. That batch flushes inside a view transition on the web
-  (`startViewTransition(() => flushSync(flush))`) and after `LayoutAnimation.configureNext` on the
-  phone, so the waiting form is still on screen when the move starts; every other batch flushes
-  as React batches. The guards stay: reduced motion, a hidden page, a move already running, an
-  editable with focus. It replaces each frame's `useWait` and gives the phone the batching the
-  web's settle has.
+- **The settle** sits where every batch is scheduled. `settleReads` (plugin-api) listens to the
+  query cache and marks a batch that changes a read's form: its first data, its first failure with
+  no data, or a reset to waiting, while the read has observers. TanStack calls the scheduler
+  (`notifyManager.setScheduler`) synchronously right after that listener, so the mark binds to
+  its own batch; a marked batch, and any batch scheduled while it is held, flushes through the
+  platform's `settle`, every other batch as TanStack schedules it. `QueryProvider` takes the
+  `settle`, and each UI plugin passes its own through the providers it already contributes, so a
+  consumer writes nothing. `createSettle` moves to ui-core and serves both platforms: the web
+  flushes inside a view transition (`startViewTransition(() => flushSync(flush))`), the phone
+  after `LayoutAnimation.configureNext`, gaining the web's frame batching and running guard. The
+  guards stay: reduced motion, a hidden page, a move already running, an editable with focus. It
+  replaces `useWait`: every other waiting thing is an act (§9).
 - **The delay is no clock.** A painted slot fades in `WAIT_DELAY` after it mounts (a CSS
   `animation-delay` on the web, Reanimated's `withDelay` on the phone), so a read that lands
   inside the delay never shows its paint. Constants draw at once.
@@ -257,10 +271,11 @@ The read needs no store of stack's own: each part is a TanStack builtin.
 
 - **Collections.** A List subscribes to its items. Structural sharing keeps every unchanged
   item's reference and each row is memoized by its item, so only changed rows render. The React
-  Compiler does the memoizing: plugin-react's generated Vite config and plugin-expo's Babel config
-  include `@fcalell/*` from `node_modules` (plugin-react's default skips it, so a consumer like
-  Stead compiles none of the roster today), and the render-count stories run in a consumer as
-  well as the showcase. Until both hold, rows keep their explicit `memo`.
+  Compiler does the memoizing where it reaches: plugin-react's generated Vite config compiles
+  `@fcalell/*` under `node_modules` in a consumer's build (`e23d17fc`). It does not reach the web
+  dev server, whose optimizer pre-bundles the packages, nor the phone, whose Expo preset never
+  compiles `node_modules`; so rows keep their explicit `memo`, and the render-count stories run in
+  the showcase.
 - **Streams and live channels** are queries written with `setQueryData` (or `streamedQuery`). The
   turn being written has its own key; the thread's key changes only when a turn completes, so a
   token renders the streaming turn and nothing scans the thread. A live channel's connection is a
@@ -376,9 +391,11 @@ and slow reads. The extra requests on hover are the accepted cost.
 - **At run time, in dev:** a failure with no root holder; two root holders of one key; a selector
   that throws over the placeholder.
 - **ui-core unit tests:** the phase and flags from an observer's result (idle, paused, stale,
-  more), the placeholder from a shape (the fixed epoch, unique ids, union and recursion cuts).
-- **plugin-api tests:** the batch hook flushes a first answer in one move and every other batch
-  as React does.
+  more, missing; a placeholder waits; a retried failure stays failed and busy).
+- **plugin-api tests:** P's traps (the epoch, a template string recognised), selections and
+  `combine` resolved over real observer results, a throwing selector answering P; `.read` keys
+  equal to `queryOptions` keys; `settleReads` flushing a form change through the settle once and
+  every other batch as TanStack schedules it.
 - **Screens per read.** The workbench forces one read at a time (deploy loads, steps fail), not
   one state per route. The waiting form comes from the placeholder, so every route's loading
   screen is real, and the shift check (stack's now) compares each leaf's box waiting and loaded
@@ -390,16 +407,19 @@ and slow reads. The extra requests on hover are the accepted cost.
 
 Each phase lands web and phone together, with the showcase migrated in the same change.
 
-1. **The read.** plugin-api: `read()`, `at`, `combine`, `useRead`, the shape codegen from the
-   router's output types, the settle's batch hook. ui-core: the phase and flags, the placeholder
-   fill. plugin-react and plugin-expo: the compiler reaching `@fcalell/*`. Tests.
-2. **Frames and the paint.** `Pane`/`Section`/`Sheet read`, the root and selection rule, explicit
-   `items`, each leaf's paint, inert waiting forms, the generic sentences; QueryBoundary,
-   `loading`, `LoadingContext` and the waiting trees deleted; screens per read and the shift check.
+1. **The read.** plugin-api: `.read` on the utils, `combine`, `useSelections`, `useRead`, P,
+   `settleReads` and `QueryProvider`'s `settle` (unwired). ui-core: `readState`. plugin-react: the
+   compiler reaching `@fcalell/*`. Tests. Nothing consumes it yet.
+2. **Frames and the paint.** react-ui depends on plugin-api, as native-ui does. `createSettle`
+   moves to ui-core and each UI plugin passes its `settle`. `Pane`/`Section`/`Sheet`/`Form read`
+   (the form's initial values as selections; its saves stay for phase 4), the root and selection
+   rule, explicit `items`, each leaf's paint, inert waiting forms, the generic sentences;
+   QueryBoundary, `loading`, `LoadingContext`, `useWait` and the waiting trees deleted; screens
+   per read and the shift check.
 3. **States beyond the first read:** busy, stale, more, streaming on its own key, idle and paused,
    permissions; live channels as queries; long collections (after their spike).
-4. **Acts and saves:** the host-held promise, controls with the latest change winning,
-   `Form read`.
+4. **Acts and saves:** the host-held promise, controls with the latest change winning, a form's
+   field saves.
 5. **Navigation:** `reads(params)`, preload on intent and on press-in.
 6. **Stead:** its screens moved to frame reads, its workarounds deleted, the pin moved.
 
@@ -414,13 +434,14 @@ Decided the same day, after the loader demo (`motion.md` §4.2): the paint per s
 
 Revised the same day after an adversarial review, with the owner:
 
-- the read runs on TanStack's own observers: a leaf is a `useQuery` with `select` and the shape
-  as `placeholderData`, `combine` is `useQueries`, the settle is the notify batch hook and the
-  delay a fade on painted slots; there is no store of stack's own and no minimum hold (a store
-  per read key, holding the value through a hold, was proposed by the review and dropped once the
+- the read runs on TanStack's own observers: a leaf is one `useQueries` with P as
+  `placeholderData`, the settle is a scheduler hook on TanStack's notifications and the delay a
+  fade on painted slots; there is no store of stack's own and no minimum hold (a store per read
+  key, holding the value through a hold, was proposed by the review and dropped once the
   builtins covered it);
-- the placeholder is the shape alone, from TypeScript output types at generate; the cache seed,
-  the previous data and `.meta({ wait })` are dropped;
+- the placeholder is one runtime value, P, for every read; the cache seed, the previous data,
+  `.meta({ wait })` and a shape generated from the router's types (which would have needed the
+  type checker at generate and covered router procedures only) are dropped;
 - claims and items through context are dropped: the root holder draws the read's states, an array
   selection's holder its count and empty, and collections take `items`;
 - the state is a phase with flags; idle and paused are drawn; empty belongs to the frame;
