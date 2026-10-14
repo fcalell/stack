@@ -91,6 +91,10 @@
 			"types": "./dist/list-state.d.ts",
 			"default": "./dist/list-state.js"
 		},
+		"./read": {
+			"types": "./dist/read.d.ts",
+			"default": "./dist/read.js"
+		},
 		"./streaming": {
 			"types": "./dist/streaming.d.ts",
 			"default": "./dist/streaming.js"
