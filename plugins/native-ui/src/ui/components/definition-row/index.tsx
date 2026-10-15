@@ -4,7 +4,6 @@ import type {
 	DefinitionData,
 	IconAct,
 	Lock,
-	OptionPick,
 	StatusState,
 } from "@fcalell/ui-core/descriptors";
 import { valueCut } from "@fcalell/ui-core/list-state";
@@ -33,6 +32,7 @@ import { IconButtonBase } from "../icon-button/base";
 import { Link } from "../link";
 import { LockMark } from "../list-row/lock";
 import { PickerBase } from "../picker/base";
+import type { PickOneProps } from "../picker/index";
 import { StatusBase } from "../status/base";
 import { ChangeMark } from "../status/change";
 import type { SwitchProps } from "../switch";
@@ -96,7 +96,7 @@ type DefinitionRowValue<V extends string | null> =
 	| {
 			value?: never;
 			switch?: never;
-			pick: OptionPick<V>;
+			pick: Omit<PickOneProps<V>, "fit" | "act">;
 	  };
 
 // A labelled fact in a Group: editable here, or locked with its reason.

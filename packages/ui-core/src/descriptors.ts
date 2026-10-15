@@ -1,6 +1,5 @@
 // Framework-free descriptors: a composed region is data, so the owning
 // molecule renders it.
-import type { Datum } from "@fcalell/plugin-api/read";
 import type { icons } from "lucide";
 import type {
 	ChipFamily,
@@ -174,50 +173,28 @@ export type RowLeading =
 	  };
 
 // A pick that applies at once where a value stands (a row's trailing, a
-// record's status fact), drawn as a `Picker` at the row fit. Its `options` and
-// `value` are constants or selections: the pick paints, inert, while either
-// waits.
+// record's status fact), drawn as a `Picker` at the row fit.
 export interface OptionPick<V extends string | null = string> {
 	// What is picked, the trigger's name (a short phrase; read aloud, never drawn on the trigger).
 	label: string;
-	options: Datum<readonly Option<V>[] | readonly OptionGroup<V>[]>;
-	value?: Datum<NoInfer<V>>;
+	options: readonly Option<V>[] | readonly OptionGroup<V>[];
+	value?: NoInfer<V>;
 	// A promise it returns holds the viewer's pick while it pends; a refusal
 	// puts it back, with its reason.
 	onChange: (value: NoInfer<V>) => unknown;
 }
 
 // A pick of several: the options ticked in the list, which stays open while
-// the viewer picks, and the chosen ones drawn as removable chips. Constants or
-// selections, as an `OptionPick`'s.
+// the viewer picks, and the chosen ones drawn as removable chips.
 export interface MultiPick<V extends string | null = string> {
 	// What is picked, the trigger's name (a short phrase; read aloud, never drawn on the trigger).
 	label: string;
-	options: Datum<readonly Option<V>[] | readonly OptionGroup<V>[]>;
-	value: Datum<readonly NoInfer<V>[]>;
+	options: readonly Option<V>[] | readonly OptionGroup<V>[];
+	value: readonly NoInfer<V>[];
 	// A promise it returns holds the viewer's picks while it pends; a refusal
 	// puts them back, with its reason.
 	onChange: (value: NoInfer<V>[]) => unknown;
 }
-
-// The pick and the several-pick of constants, where the options and the value
-// are worded before anything draws: a rule's term (`termHeld`, `ruleName`) and
-// the shell's switcher, whose current workspace names its trigger.
-export type ConstantPick<V extends string | null = string> = Omit<
-	OptionPick<V>,
-	"options" | "value"
-> & {
-	options: readonly Option<V>[] | readonly OptionGroup<V>[];
-	value?: NoInfer<V>;
-};
-
-export type ConstantMultiPick<V extends string | null = string> = Omit<
-	MultiPick<V>,
-	"options" | "value"
-> & {
-	options: readonly Option<V>[] | readonly OptionGroup<V>[];
-	value: readonly NoInfer<V>[];
-};
 
 // What a cell holds when it is a picked option or a typed value: the one
 // the viewer chose, `picked` unset while neither is.
@@ -241,8 +218,8 @@ export interface EitherPick<V extends string | null = string> {
 // One term of a rule: a pick, a pick of several, or a picked option or a
 // typed value.
 export type RuleValue<V extends string | null = string> =
-	| { pick: ConstantPick<V>; picks?: never; either?: never }
-	| { picks: ConstantMultiPick<V>; pick?: never; either?: never }
+	| { pick: OptionPick<V>; picks?: never; either?: never }
+	| { picks: MultiPick<V>; pick?: never; either?: never }
 	| { either: EitherPick<V>; pick?: never; picks?: never };
 
 // A rule's terms, one of two rows: a pair (a source mapped to a target) or a
@@ -250,7 +227,7 @@ export type RuleValue<V extends string | null = string> =
 export type RuleTerms<V extends string | null = string> =
 	| { from: RuleValue<V>; to: RuleValue<V>; field?: never }
 	| {
-			field: ConstantPick<V>;
+			field: OptionPick<V>;
 			// The fixed words between the field and the value (a word; wraps).
 			operator: string;
 			value: RuleValue<V>;
@@ -387,7 +364,7 @@ export interface MenuItem extends ActBase {
 // pick whose options carry their avatars or chips, the current one on the
 // trigger and ticked in the list, and `act`, the act that makes a new one,
 // under a hairline after the options.
-export interface Switcher extends ConstantPick {
+export interface Switcher extends OptionPick {
 	act?: IconAct;
 }
 

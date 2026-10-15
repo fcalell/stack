@@ -1340,7 +1340,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// inert, until its read lands, and a painted `List` paints the whole row
 		// (its label, value, description, lock and controls) at their roles. `switch` is the Switch's
 		// own props, named by the row's label and drawn centred beside it in place
-		// of `value`; `pick` is an `OptionPick` (the ItemHeader's pick fact, its
+		// of `value`; `pick` is the Picker's one-pick props less `fit` and `act` (its
 		// `options` and `value` constants or selections), drawn as the Picker at
 		// the row fit in the same place, named by the row's label;
 		// `value`, `switch` and `pick` are exclusive.

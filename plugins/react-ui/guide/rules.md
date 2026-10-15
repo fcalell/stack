@@ -371,7 +371,7 @@ its child is.
 ```
 
 A `DefinitionRow` shows an in-place `switch` (the Switch's own props, named by the row's label) or an
-in-place `pick` (an `OptionPick`: `label`, `options`, `value`, `onChange`; `options` and `value` are each a constant or a
+in-place `pick` (the Picker's props: `label`, `options`, `value`, `onChange`; `options` and `value` are each a constant or a
 selection, and the picker paints, inert, until they land; the row draws it at the row fit, named by the row's label) in place of
 its `value`, never more than one.
 

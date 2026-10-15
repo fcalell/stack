@@ -729,6 +729,26 @@ check("c02", "package.json shape", () => {
 	return "12 subpaths, no root export, no runtime cli dependency";
 });
 
+check("c04", "ui-core depends on no plugin", () => {
+	const pkg = JSON.parse(
+		readFileSync(resolve(pkgDir, "package.json"), "utf8"),
+	) as Record<string, Record<string, string> | undefined>;
+	// A plugin builds on ui-core's constants, never the reverse.
+	for (const field of [
+		"dependencies",
+		"peerDependencies",
+		"devDependencies",
+	] as const) {
+		for (const name of Object.keys(pkg[field] ?? {})) {
+			assert(
+				!name.startsWith("@fcalell/plugin-"),
+				`${name} appears in ${field}`,
+			);
+		}
+	}
+	return "no @fcalell/plugin-* dependency";
+});
+
 check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(COLOR_NAMES.length, 93, "color count");
 	requireEqual(new Set(COLOR_NAMES).size, COLOR_NAMES.length, "unique colors");
@@ -1951,7 +1971,7 @@ check(
 			assert(
 				(/^<V>$/.test(params) && /\bField\w+<V>/.test(header[0])) ||
 					(/^<V extends string \| null = string>$/.test(params) &&
-						/\b(?:Option|Row|MultiPick|Either|Rule|Constant)\w*</.test(header[0])) ||
+						/\b(?:Option|Row|MultiPick|Either|Rule)\w*</.test(header[0])) ||
 					(/^<T = never>$/.test(params) && /\bTableColumn</.test(header[0])) ||
 					(/^<T>$/.test(params) &&
 						/\bTable(?:RowSlots|Choice)</.test(header[0])),
@@ -1984,8 +2004,6 @@ check(
 			"TableRowSlots",
 			"TableChoice",
 			"MultiPick",
-			"ConstantPick",
-			"ConstantMultiPick",
 			"EitherValue",
 			"EitherPick",
 			"RuleValue",

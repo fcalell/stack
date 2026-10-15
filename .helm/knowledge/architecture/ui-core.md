@@ -1994,10 +1994,8 @@ a tick with no animation, never jumped to full.
   whose Retry saves the same value. `change` returns the save's promise, never rejecting, so an
   act that saves again holds the run. No saving mark is drawn: the value is the optimistic one.
   Molecules pass the value through (`DefinitionRow` `switch` and `pick`, `Table` `onEdit`,
-  `FormField`). `OptionPick` and `MultiPick` take `options` and `value` as `Datum`s (ui-core
-  imports the type from plugin-api, nothing at runtime), and the Picker and Select paint, inert,
-  while either waits; a rule's terms and the Shell's switcher, worded before anything draws, stay
-  constants (`ConstantPick`, `ConstantMultiPick`). No stack helper touches the cache's `onMutate`; a `setQueryData` in an `onSuccess`
+  `FormField`). A Picker's and a Select's `options` and `value` are `Datum`s (platform props, as every data prop is), so the trigger paints, inert, while either waits, and DefinitionRow's `pick` takes the same props. ui-core's `OptionPick`/`MultiPick` stay constants: a rule's terms and the Shell's switcher are worded before anything draws, and an ItemHeader pick fact is data as a whole `Datum<Fact>`.
+  No stack helper touches the cache's `onMutate`; a `setQueryData` in an `onSuccess`
   stays the app's. Latest-wins is client-only: a mutation that cares about order gives itself a
   `scope`. `InputOtp` holds its `onComplete` promise with `useRun` and draws its checking line at
   once, without `ACT_DELAY`: a code is never typed twice, so there is no fast answer to spare the
