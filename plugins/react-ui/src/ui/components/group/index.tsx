@@ -1,14 +1,11 @@
 import { pagesOf } from "@fcalell/plugin-api/tanstack-query";
-import { cn } from "@fcalell/ui-core/cn";
-import { GROUP, GROUP_ITEM } from "@fcalell/ui-core/variants";
+import { GROUP_ITEM } from "@fcalell/ui-core/variants";
 import { Fragment, type ReactNode, useRef } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { FrameBody, FrameLine, useCollection } from "../../lib/read.tsx";
-import { useSettleName } from "../../lib/settle.ts";
 import { ListBase } from "../list/base.tsx";
 import type { ListProps } from "../list/index.tsx";
-
-const BOX = "flex flex-col shrink-0 overflow-hidden";
+import { GroupCard } from "./base.tsx";
 
 /** One entry of a Group: a `row` (a ListRow, a FileRow or a DefinitionRow, which pads itself) drawn bare, or an `item` (a Meter, a FormField or a Slider) drawn in a box at the card's inset. */
 export type GroupItem =
@@ -48,7 +45,7 @@ export function Group<T, V extends string | null = string>(
 ) {
 	if (props.list) return <GroupList {...props.list} />;
 	return (
-		<Entries>
+		<GroupCard>
 			{props.items.map((entry) =>
 				"row" in entry ? (
 					<Fragment key={entry.key}>{entry.row}</Fragment>
@@ -58,16 +55,7 @@ export function Group<T, V extends string | null = string>(
 					</div>
 				),
 			)}
-		</Entries>
-	);
-}
-
-function Entries(props: { children: ReactNode }) {
-	const settle = useSettleName();
-	return (
-		<div style={settle} className={cn(GROUP, BOX)}>
-			{props.children}
-		</div>
+		</GroupCard>
 	);
 }
 
@@ -75,13 +63,12 @@ function Entries(props: { children: ReactNode }) {
 // empty read draws its form in place of the card, and the line over it.
 function GroupList<T, V extends string | null>(list: ListProps<T, V>) {
 	const { drawn, frame } = useCollection(list.items);
-	const settle = useSettleName();
 	// The group is the box a list's rows stand in, which they window in.
 	const box = useRef<HTMLDivElement>(null);
 	return (
 		<FrameBody frame={frame} fit="frame">
 			<FrameLine frame={frame} />
-			<div ref={box} style={settle} className={cn(GROUP, BOX)}>
+			<GroupCard box={box}>
 				<ListBase
 					{...list}
 					drawn={drawn}
@@ -89,7 +76,7 @@ function GroupList<T, V extends string | null>(list: ListProps<T, V>) {
 					box={box}
 					framed
 				/>
-			</div>
+			</GroupCard>
 		</FrameBody>
 	);
 }

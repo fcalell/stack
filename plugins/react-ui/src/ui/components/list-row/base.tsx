@@ -207,6 +207,9 @@ export interface ListRowInternal {
 // tab stop.
 export interface RowTree {
 	depth: number;
+	/** The row's place among its siblings (`place` of `size`, from 1), which the rows a window leaves unmounted do not tell. */
+	size: number;
+	place: number;
 	fold: { open: boolean; onToggle: () => void } | undefined;
 	tabbable: boolean;
 }
@@ -639,7 +642,10 @@ export function ListRowBase<V extends string | null = string>({
 				role: "treeitem",
 				tabIndex: tree.tabbable ? 0 : -1,
 				"aria-level": tree.depth + 1,
+				"aria-setsize": tree.size,
+				"aria-posinset": tree.place,
 				"aria-expanded": tree.fold?.open,
+				"data-index": at,
 				"aria-current": current ? ("page" as const) : undefined,
 				onKeyDown: opens ? openOnEnter : undefined,
 			}
@@ -898,6 +904,8 @@ export interface ListRowItemProps<T, V extends string | null> {
 	room: boolean;
 	/** In a tree: the row's depth, its fold (`open` on a branch alone, and `fold` hears the item's key) and whether it holds the tab stop. Flat so the memo compares them. */
 	depth?: number;
+	size?: number;
+	place?: number;
 	open?: boolean;
 	tabbable?: boolean;
 	fold?: (key: string) => void;
@@ -910,6 +918,8 @@ function ListRowItemBase<T, V extends string | null>({
 	painted,
 	room,
 	depth,
+	size = 1,
+	place = 1,
 	open,
 	tabbable = false,
 	fold,
@@ -922,6 +932,8 @@ function ListRowItemBase<T, V extends string | null>({
 			? undefined
 			: {
 					depth,
+					size,
+					place,
 					fold:
 						open === undefined
 							? undefined

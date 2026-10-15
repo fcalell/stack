@@ -2991,7 +2991,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				colors: ["ink-body", "ink-meta", "edge", "skeleton", "chart-"],
 				radii: ["full", "chip"],
 				spacing: ["fields", "inside", "pair"],
-				sizes: ["chart", "dot", "figures", "measure-short"],
+				sizes: ["chart", "dot", "figures", "measure-short", "target"],
 			},
 		},
 		// A collection: its Messages from `items` through the `message` map,

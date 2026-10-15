@@ -9,12 +9,14 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
+import { memo, useRef } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { Painted } from "../../lib/paint.tsx";
 import { FrameBody, FrameLine, useCollection } from "../../lib/read.tsx";
+import { Window } from "../../lib/window.tsx";
 import { ChipBase } from "../chip/base.tsx";
 import { Chip } from "../chip/index.tsx";
-import { Group, type GroupItem } from "../group/index.tsx";
+import { GroupCard } from "../group/base.tsx";
 import { StatusBase } from "../status/base.tsx";
 import { Status } from "../status/index.tsx";
 
@@ -102,20 +104,28 @@ function PaintedFact<T>(props: {
 }
 
 // A loaded fact: its label (its chips and its verdict beside it) and its
-// value under each column.
-function Fact<T>(props: {
+// value under each column. It runs its slots itself, so a refetch that changes
+// one item renders that fact alone. `index` counts the head row as the first,
+// so the row number the table reads aloud holds for the facts a window leaves
+// unmounted.
+function FactBase<T>(props: {
 	item: T;
+	index: number;
 	row: FactSlots<T>;
 	columns: readonly string[];
 }) {
-	const { item, row, columns } = props;
+	const { item, index, row, columns } = props;
 	const values = row.values(item);
 	const chips = row.chips?.(item) ?? [];
 	const status = row.status?.(item);
 	return (
 		// biome-ignore lint/a11y/useSemanticElements: a Group's rows, which no native table element can hold
 		// biome-ignore lint/a11y/useFocusableInteractive: a read row
-		<div role="row" className={cn(COMPARISON_ROW, ROW)}>
+		<div
+			role="row"
+			aria-rowindex={index + 1}
+			className={cn(COMPARISON_ROW, ROW)}
+		>
 			{/* biome-ignore lint/a11y/useSemanticElements: a Group's rows, which no native table element can hold */}
 			{/* biome-ignore lint/a11y/useFocusableInteractive: a read header */}
 			<span role="rowheader" className={cn(COMPARISON_LABEL, LABEL)}>
@@ -153,27 +163,17 @@ function Fact<T>(props: {
 	);
 }
 
-/** A Group of its own rows: a head row of `columns` at meta 500, then each fact's label at body 500 (its chips beside it, then its `status` verdict, a Status read out in the row, a passing fact drawing none) and its values in equal columns, a wrapped value keeping its row's air. On touch the label stands on its own line over the values, the verdict on that line. No column is the accent's; nothing is a selection. While the `items` selection's read waits, the head (the declared columns) stands over `PAINT_ROWS` painted facts: a filler for the label and each column, a chip's box when `row` declares chips and a painted verdict when it declares `status`, inert. The comparison is a frame of its facts: it draws the failed form with Retry, the missing form and the empty form in its own box with the generic sentence, and the stale and paused line above its head while it holds its read, whatever stands above it. */
-export function Comparison<T>(props: ComparisonProps<T>) {
-	const { drawn, frame } = useCollection(props.items);
-	const { painted } = drawn;
-	const { columns, row } = props;
-	const facts: GroupItem[] = painted
-		? Array.from({ length: PAINT_ROWS }, (_, at) => ({
-				key: `waiting-${at}`,
-				row: <PaintedFact row={row} columns={columns} at={at} />,
-			}))
-		: drawn.value.map((item) => ({
-				key: row.key(item),
-				row: <Fact item={item} row={row} columns={columns} />,
-			}));
-	const header = (
+const Fact = memo(FactBase) as typeof FactBase;
+
+// The head row: the corner over the labels, then the columns.
+const Head = memo(function Head(props: { columns: readonly string[] }) {
+	return (
 		// biome-ignore lint/a11y/useSemanticElements: a Group's rows, which no native table element can hold
 		// biome-ignore lint/a11y/useFocusableInteractive: a read row
-		<div role="row" className={cn(COMPARISON_ROW, ROW)}>
+		<div role="row" aria-rowindex={1} className={cn(COMPARISON_ROW, ROW)}>
 			{/* biome-ignore lint/a11y/useSemanticElements: a Group's rows, which no native table element can hold */}
 			<span role="cell" className={CORNER} />
-			{columns.map((column) => (
+			{props.columns.map((column) => (
 				// biome-ignore lint/a11y/useSemanticElements: a Group's rows, which no native table element can hold
 				// biome-ignore lint/a11y/useFocusableInteractive: a read header
 				<span
@@ -190,14 +190,55 @@ export function Comparison<T>(props: ComparisonProps<T>) {
 			))}
 		</div>
 	);
+});
+
+/** A Group of its own rows: a head row of `columns` at meta 500, then each fact's label at body 500 (its chips beside it, then its `status` verdict, a Status read out in the row, a passing fact drawing none) and its values in equal columns, a wrapped value keeping its row's air. On touch the label stands on its own line over the values, the verdict on that line. No column is the accent's; nothing is a selection. While the `items` selection's read waits, the head (the declared columns) stands over `PAINT_ROWS` painted facts: a filler for the label and each column, a chip's box when `row` declares chips and a painted verdict when it declares `status`, inert. From `VIRTUAL_FROM` facts under a scroller it draws only the facts near the scroller's view, behind the head, which stays mounted. The comparison is a frame of its facts: it draws the failed form with Retry, the missing form and the empty form in its own box with the generic sentence, and the stale and paused line above its head while it holds its read, whatever stands above it. */
+export function Comparison<T>(props: ComparisonProps<T>) {
+	const { drawn, frame } = useCollection(props.items);
+	const { painted } = drawn;
+	const { columns, row } = props;
+	const box = useRef<HTMLDivElement>(null);
+	const items = painted ? [] : drawn.value;
+	// The head is the first row of the card; a long table windows its facts
+	// behind it, and the head stays mounted.
+	const count = (painted ? PAINT_ROWS : items.length) + 1;
+	const keyOf = (index: number) =>
+		index === 0
+			? "head"
+			: painted
+				? `waiting-${index - 1}`
+				: row.key(items[index - 1] as T);
+	const rowAt = (index: number) => {
+		if (index === 0) return <Head key="head" columns={columns} />;
+		if (painted)
+			return (
+				<PaintedFact
+					key={keyOf(index)}
+					row={row}
+					columns={columns}
+					at={index - 1}
+				/>
+			);
+		return (
+			<Fact
+				key={keyOf(index)}
+				item={items[index - 1] as T}
+				index={index}
+				row={row}
+				columns={columns}
+			/>
+		);
+	};
 	// The Group's card holds the rows, so the table's roles stand on its
 	// own boxes; none is focusable, the facts are read, never acted on.
 	return (
 		<FrameBody frame={frame} fit="frame">
 			<FrameLine frame={frame} />
 			{/* biome-ignore lint/a11y/useSemanticElements: a Group's rows, which no native table element can hold */}
-			<div role="table" aria-label={props.label}>
-				<Group items={[{ key: "head", row: header }, ...facts]} />
+			<div role="table" aria-label={props.label} aria-rowcount={count}>
+				<GroupCard box={box}>
+					<Window count={count} keyOf={keyOf} row={rowAt} box={box} keep={0} />
+				</GroupCard>
 			</div>
 		</FrameBody>
 	);

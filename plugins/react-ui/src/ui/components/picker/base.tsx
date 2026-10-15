@@ -32,18 +32,20 @@ import {
 	textStrong,
 	WORD_ACT,
 } from "@fcalell/ui-core/variants";
+import { VIRTUAL_FROM } from "@fcalell/ui-core/window";
 import {
 	type ComponentProps,
-	type FocusEvent,
+	memo,
 	type ReactElement,
 	type ReactNode,
 	type RefObject,
 	use,
+	useLayoutEffect,
+	useMemo,
 	useRef,
 	useState,
 } from "react";
 import { useAct, useHeldDraft } from "../../lib/act.ts";
-import { arrowsOver } from "../../lib/arrows.ts";
 import type { CellFit } from "../../lib/field.ts";
 import { expandedTrigger, rememberOpener } from "../../lib/focus.ts";
 import { useQuietGuards } from "../../lib/guards.ts";
@@ -51,6 +53,7 @@ import { spacing, useTouch } from "../../lib/media.ts";
 import { PAINT_CONTROL } from "../../lib/paint.tsx";
 import { PortalContainer } from "../../lib/portal.ts";
 import { OptionsLine, useOptions } from "../../lib/read.tsx";
+import { Scroller, useScroller, Window } from "../../lib/window.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { Avatar } from "../avatar/index.tsx";
 import { Chip } from "../chip/index.tsx";
@@ -793,8 +796,145 @@ function PickList<V extends string | null>(
 	);
 }
 
+// One option of the search list, on the row its place gives: the label over
+// its description, the tick on the chosen one. `index` is the option's place in
+// the filtered list when the list is virtual, which Base UI cannot read off a
+// DOM that holds only a window of it.
+interface SearchItemProps<V extends string | null> {
+	option: Option<V>;
+	index?: number;
+	chosen: boolean;
+	/** The key moved the highlight last (a blocked row marks it by the key landing on it). */
+	keyed: boolean;
+	landed: boolean;
+	chip?: ChipFamily;
+	/** The option's place among all the filtered ones (`place` of `size`, from 1), when the list is virtual. */
+	size?: number;
+	place?: number;
+}
+
+function SearchItemBase<V extends string | null>(props: SearchItemProps<V>) {
+	const { option, chosen } = props;
+	const blocked = optionBlocked(option, chosen);
+	return (
+		<Combobox.Item
+			value={option}
+			index={props.index}
+			data-index={props.index}
+			aria-setsize={props.size}
+			aria-posinset={props.place}
+			disabled={blocked !== undefined}
+			className={(state) =>
+				cn(
+					optionRow(
+						option,
+						chosen,
+						props.chip,
+						state.highlighted && blocked === undefined,
+					),
+					OPTION_ROW,
+					OPTION,
+					blocked === undefined && PRESS,
+					// A blocked row has no wash to mark the key's position, so the key landing on it rings it.
+					optionFocus(
+						state.highlighted,
+						blocked === undefined ? props.keyed : props.landed,
+					),
+				)
+			}
+		>
+			<OptionText option={option} chosen={chosen} chip={props.chip} />
+			<Combobox.ItemIndicator className={TICK}>
+				<Icon name="Check" fit="body" />
+			</Combobox.ItemIndicator>
+		</Combobox.Item>
+	);
+}
+
+const SearchItem = memo(SearchItemBase) as typeof SearchItemBase;
+
+// A row of a virtual search list: a group's label, or one of the filtered
+// options at its place among them.
+type SearchRow<V extends string | null> =
+	| { label: string }
+	| { option: Option<V>; index: number };
+
+// The rows of a long search list: the filtered options, a group's label ahead
+// of its first match, in a box the list's scroller holds. Only the rows near
+// the scroller's view stand, and the highlighted one stays mounted and is
+// brought into view as a key moves it, so the keys reach every option.
+function SearchRows<V extends string | null>(props: {
+	groups: Grouped<V>[];
+	/** The option Base UI highlighted last, and whether to bring it into view. */
+	highlight: { index: number; reveal: boolean } | undefined;
+	several?: Several<V>;
+	current: V | undefined;
+	keyed: boolean;
+	landed: boolean;
+	chip?: ChipFamily;
+}) {
+	const matches = Combobox.useFilteredItems<Option<V>>();
+	const box = useRef<HTMLDivElement>(null);
+	const rows = useMemo(() => {
+		const kept = new Set(matches.map((option) => option.value));
+		const all: SearchRow<V>[] = [];
+		let index = 0;
+		for (const group of props.groups) {
+			const hits = group.items.filter((option) => kept.has(option.value));
+			if (hits.length === 0) continue;
+			if (group.label) all.push({ label: group.label });
+			for (const option of hits) all.push({ option, index: index++ });
+		}
+		return all;
+	}, [matches, props.groups]);
+	const { highlight } = props;
+	const lit = highlight
+		? rows.findIndex((row) => "option" in row && row.index === highlight.index)
+		: -1;
+	useLayoutEffect(() => {
+		if (!highlight?.reveal) return;
+		box.current
+			?.querySelector(`[data-index="${highlight.index}"]`)
+			?.scrollIntoView({ block: "nearest" });
+	}, [highlight]);
+	return (
+		<div ref={box} className={cn(SELECT_GROUP, GROUP)}>
+			<Window
+				count={rows.length}
+				keyOf={(at) => {
+					const row = rows[at] as SearchRow<V>;
+					return "option" in row ? String(row.option.value) : row.label;
+				}}
+				row={(at) => {
+					const row = rows[at] as SearchRow<V>;
+					if (!("option" in row))
+						return <GroupLabel key={row.label}>{row.label}</GroupLabel>;
+					const { option } = row;
+					return (
+						<SearchItem
+							key={String(option.value)}
+							option={option}
+							index={row.index}
+							size={matches.length}
+							place={row.index + 1}
+							chosen={inValue(props.several, props.current, option.value)}
+							keyed={props.keyed}
+							landed={props.landed}
+							chip={props.chip}
+						/>
+					);
+				}}
+				box={box}
+				keep={lit < 0 ? undefined : lit}
+			/>
+		</div>
+	);
+}
+
 // The desktop list past six options: Base UI's combobox filters the rows by
-// the search typed at the popover's head.
+// the search typed at the popover's head. From `VIRTUAL_FROM` options the
+// list is virtual: Base UI keeps the order and the highlight of every option,
+// and only a window of them is drawn.
 function PickSearch<V extends string | null>(
 	props: PickParts<V> & {
 		current: Option<V> | undefined;
@@ -806,10 +946,31 @@ function PickSearch<V extends string | null>(
 	useQuietGuards();
 	const words = useWords();
 	const keyboard = useKeyed(props.trigger);
+	const flat = props.groups.flatMap((group) => group.items);
+	const virtual = flat.length >= VIRTUAL_FROM;
+	const scroll = useScroller();
+	const [highlight, setHighlight] = useState<{
+		index: number;
+		reveal: boolean;
+	}>();
 	return (
 		<Combobox.Root
 			modal={false}
-			items={props.groups}
+			items={virtual ? flat : props.groups}
+			virtualized={virtual}
+			onItemHighlighted={
+				virtual
+					? (item, details) =>
+							setHighlight(
+								item
+									? {
+											index: details.index,
+											reveal: details.reason !== "pointer",
+										}
+									: undefined,
+							)
+					: undefined
+			}
 			autoHighlight
 			multiple={props.several !== undefined}
 			value={props.several ? props.chosen : (props.current ?? null)}
@@ -850,67 +1011,53 @@ function PickSearch<V extends string | null>(
 								className={cn(fieldValue({ kind: "search" }), SEARCH_VALUE)}
 							/>
 						</div>
-						<Combobox.List className={LIST}>
-							{(group: Grouped<V>) => (
-								<Combobox.Group
-									key={group.label ?? ""}
-									items={group.items as Option<V>[]}
-									className={cn(SELECT_GROUP, GROUP)}
-								>
-									{group.label ? (
-										<Combobox.GroupLabel
-											render={<GroupLabel>{group.label}</GroupLabel>}
-										/>
-									) : null}
-									<Combobox.Collection>
-										{(option: Option<V>) => {
-											const chosen = inValue(
-												props.several,
-												props.current?.value,
-												option.value,
-											);
-											const blocked = optionBlocked(option, chosen);
-											return (
-												<Combobox.Item
+						{virtual ? (
+							<Combobox.List ref={scroll.ref} className={LIST}>
+								<Scroller value={scroll.holder}>
+									<SearchRows<V>
+										groups={props.groups}
+										highlight={highlight}
+										several={props.several}
+										current={props.current?.value}
+										keyed={keyboard.keyed}
+										landed={keyboard.landed}
+										chip={props.chip}
+									/>
+								</Scroller>
+							</Combobox.List>
+						) : (
+							<Combobox.List className={LIST}>
+								{(group: Grouped<V>) => (
+									<Combobox.Group
+										key={group.label ?? ""}
+										items={group.items as Option<V>[]}
+										className={cn(SELECT_GROUP, GROUP)}
+									>
+										{group.label ? (
+											<Combobox.GroupLabel
+												render={<GroupLabel>{group.label}</GroupLabel>}
+											/>
+										) : null}
+										<Combobox.Collection>
+											{(option: Option<V>) => (
+												<SearchItem
 													key={String(option.value)}
-													value={option}
-													disabled={blocked !== undefined}
-													className={(state) =>
-														cn(
-															optionRow(
-																option,
-																chosen,
-																props.chip,
-																state.highlighted && blocked === undefined,
-															),
-															OPTION_ROW,
-															OPTION,
-															blocked === undefined && PRESS,
-															// A blocked row has no wash to mark the key's position, so the key landing on it rings it.
-															optionFocus(
-																state.highlighted,
-																blocked === undefined
-																	? keyboard.keyed
-																	: keyboard.landed,
-															),
-														)
-													}
-												>
-													<OptionText
-														option={option}
-														chosen={chosen}
-														chip={props.chip}
-													/>
-													<Combobox.ItemIndicator className={TICK}>
-														<Icon name="Check" fit="body" />
-													</Combobox.ItemIndicator>
-												</Combobox.Item>
-											);
-										}}
-									</Combobox.Collection>
-								</Combobox.Group>
-							)}
-						</Combobox.List>
+													option={option}
+													chosen={inValue(
+														props.several,
+														props.current?.value,
+														option.value,
+													)}
+													keyed={keyboard.keyed}
+													landed={keyboard.landed}
+													chip={props.chip}
+												/>
+											)}
+										</Combobox.Collection>
+									</Combobox.Group>
+								)}
+							</Combobox.List>
+						)}
 						<Combobox.Empty>
 							<NoMatches popover>{words.noMatches}</NoMatches>
 						</Combobox.Empty>
@@ -927,17 +1074,6 @@ function PickSearch<V extends string | null>(
 			</Combobox.Portal>
 		</Combobox.Root>
 	);
-}
-
-const moveFocus = arrowsOver("option");
-
-// The listbox's one tab stop moves to the option focus reaches.
-function rove(event: FocusEvent<HTMLElement>): void {
-	if (event.target.getAttribute("role") !== "option") return;
-	for (const option of event.currentTarget.querySelectorAll<HTMLElement>(
-		'[role="option"]',
-	))
-		option.tabIndex = option === event.target ? 0 : -1;
 }
 
 type SheetParts<V extends string | null> = PickParts<V> & {
@@ -988,6 +1124,113 @@ function PickSheet<V extends string | null>(props: SheetParts<V>) {
 	);
 }
 
+// One option of the sheet: a button that is a row of the listbox. It reads its
+// place in its group (`place` of `size`, from 1), which the rows a window
+// leaves unmounted do not tell, and where it stands among all the options
+// (`flat`, which the keys move by).
+interface PickOptionProps<V extends string | null> {
+	option: Option<V>;
+	place: number;
+	size: number;
+	flat: number;
+	chosen: boolean;
+	/** The option holds the listbox's one tab stop. */
+	stands: boolean;
+	/** What the sheet takes focus on as it opens: the tab stop's button. */
+	first: RefObject<HTMLButtonElement | null>;
+	chip?: ChipFamily;
+	pick: (value: V) => void;
+}
+
+function PickOptionBase<V extends string | null>(props: PickOptionProps<V>) {
+	const { option, chosen, stands } = props;
+	const blocked = optionBlocked(option, chosen);
+	return (
+		<button
+			ref={stands ? props.first : undefined}
+			type="button"
+			role="option"
+			aria-selected={chosen}
+			aria-disabled={blocked !== undefined || undefined}
+			aria-setsize={props.size}
+			aria-posinset={props.place + 1}
+			data-index={props.flat}
+			tabIndex={stands ? 0 : -1}
+			onClick={() => {
+				if (blocked === undefined) props.pick(option.value);
+			}}
+			className={cn(
+				optionRow(option, chosen, props.chip),
+				OPTION,
+				blocked === undefined && PRESS,
+				OPTION_BUTTON,
+				blocked === undefined && OPTION_FOCUS_WASH,
+			)}
+		>
+			<OptionText option={option} chosen={chosen} chip={props.chip} />
+			{chosen ? (
+				<span className={TICK}>
+					<Icon name="Check" fit="body" />
+				</span>
+			) : null}
+		</button>
+	);
+}
+
+const PickOption = memo(PickOptionBase) as typeof PickOptionBase;
+
+// One group of the sheet's options: its label over its rows, which stand in a
+// box of their own so a long group windows them, the tab stop's row kept
+// mounted.
+function PickGroupBox<V extends string | null>(props: {
+	group: Grouped<V>;
+	/** How many options stand before this group's. */
+	before: number;
+	/** The option holding the tab stop. */
+	stop: V | undefined;
+	first: RefObject<HTMLButtonElement | null>;
+	several?: Several<V>;
+	value: V | undefined;
+	chip?: ChipFamily;
+	pick: (value: V) => void;
+}) {
+	const { group, before, stop } = props;
+	const box = useRef<HTMLDivElement>(null);
+	const { items } = group;
+	const kept = items.findIndex((option) => option.value === stop);
+	return (
+		// biome-ignore lint/a11y/useSemanticElements: a listbox's group of options
+		<div role="group" className={cn(SELECT_GROUP, GROUP)}>
+			{group.label ? <GroupLabel>{group.label}</GroupLabel> : null}
+			<div ref={box} className={cn(SELECT_GROUP, GROUP)}>
+				<Window
+					count={items.length}
+					keyOf={(place) => String(items[place]?.value)}
+					row={(place) => {
+						const option = items[place] as Option<V>;
+						return (
+							<PickOption
+								key={String(option.value)}
+								option={option}
+								place={place}
+								size={items.length}
+								flat={before + place}
+								chosen={inValue(props.several, props.value, option.value)}
+								stands={place === kept}
+								first={props.first}
+								chip={props.chip}
+								pick={props.pick}
+							/>
+						);
+					}}
+					box={box}
+					keep={kept < 0 ? undefined : kept}
+				/>
+			</div>
+		</div>
+	);
+}
+
 // The sheet's rows hold the search, so it leaves with the sheet however it
 // closes (a pick, the act, the scrim, Escape) and the next open starts from
 // every option.
@@ -1008,15 +1251,38 @@ function PickRows<V extends string | null>(
 		}))
 		.filter((group) => group.items.length > 0);
 	// The options are one tab stop that the arrows move: it starts on the chosen
-	// one, else the first that can be chosen, and follows focus in the DOM, so a
-	// move re-renders no option.
+	// one, else the first that can be chosen, and follows focus.
 	const listed = shown.flatMap((group) => group.items);
 	const isChosen = (one: V) => inValue(props.several, props.value, one);
+	const [active, setActive] = useState<V>();
 	const kept = listed.find((option) => isChosen(option.value));
 	const free = listed.find(
 		(option) => optionBlocked(option, false) === undefined,
 	);
-	const stop = (kept ?? free ?? listed[0])?.value;
+	const stop = (
+		listed.find((option) => option.value === active) ??
+		kept ??
+		free ??
+		listed[0]
+	)?.value;
+	// The options are a window's rows, so a press hears the latest pick through
+	// one function and no row renders for another's.
+	const latest = useRef(props.pick);
+	latest.current = props.pick;
+	const [pick] = useState(() => (value: V) => latest.current(value));
+	// The option a key is moving the focus to; it stands mounted by then, the
+	// window keeping the tab stop's row, and takes the focus.
+	const scroll = useScroller();
+	const [wanted, setWanted] = useState<{ index: number }>();
+	// biome-ignore lint/correctness/useExhaustiveDependencies: only a new `wanted` is a move to focus
+	useLayoutEffect(() => {
+		if (!wanted) return;
+		scroll.holder.current
+			?.querySelector<HTMLElement>(`[data-index="${wanted.index}"]`)
+			?.focus();
+	}, [wanted]);
+	const indexOf = (target: HTMLElement) =>
+		Number(target.closest<HTMLElement>('[role="option"]')?.dataset.index);
 	return (
 		<div className={SHEET_ROWS}>
 			{props.searching ? (
@@ -1030,60 +1296,56 @@ function PickRows<V extends string | null>(
 				</div>
 			) : null}
 			<div
+				ref={scroll.ref}
 				role="listbox"
 				aria-multiselectable={props.several ? true : undefined}
 				aria-label={props.label}
-				onKeyDown={moveFocus}
-				onFocus={rove}
+				onKeyDown={(event) => {
+					const target = event.target as HTMLElement;
+					if (target.getAttribute("role") !== "option") return;
+					// The arrows wrap and Home and End go to the ends, over every
+					// option, mounted or not.
+					const at = indexOf(target);
+					const last = listed.length - 1;
+					const next =
+						event.key === "ArrowDown"
+							? (at + 1) % listed.length
+							: event.key === "ArrowUp"
+								? (at - 1 + listed.length) % listed.length
+								: event.key === "Home"
+									? 0
+									: event.key === "End"
+										? last
+										: undefined;
+					if (next === undefined) return;
+					event.preventDefault();
+					setActive(listed[next]?.value);
+					setWanted({ index: next });
+				}}
+				onFocus={(event) => {
+					const target = event.target as HTMLElement;
+					if (target.getAttribute("role") !== "option") return;
+					setActive(listed[indexOf(target)]?.value);
+				}}
 				className={LISTBOX}
 			>
-				{shown.map((group, at) => (
-					// biome-ignore lint/a11y/useSemanticElements: a listbox's group of options
-					<div
-						key={group.label ?? at}
-						role="group"
-						className={cn(SELECT_GROUP, GROUP)}
-					>
-						{group.label ? <GroupLabel>{group.label}</GroupLabel> : null}
-						{group.items.map((option) => {
-							const chosen = isChosen(option.value);
-							const blocked = optionBlocked(option, chosen);
-							const stands = option.value === stop;
-							return (
-								<button
-									key={String(option.value)}
-									ref={stands ? props.first : undefined}
-									type="button"
-									role="option"
-									aria-selected={chosen}
-									aria-disabled={blocked !== undefined || undefined}
-									tabIndex={stands ? 0 : -1}
-									onClick={() => {
-										if (blocked === undefined) props.pick(option.value);
-									}}
-									className={cn(
-										optionRow(option, chosen, props.chip),
-										OPTION,
-										blocked === undefined && PRESS,
-										OPTION_BUTTON,
-										blocked === undefined && OPTION_FOCUS_WASH,
-									)}
-								>
-									<OptionText
-										option={option}
-										chosen={chosen}
-										chip={props.chip}
-									/>
-									{chosen ? (
-										<span className={TICK}>
-											<Icon name="Check" fit="body" />
-										</span>
-									) : null}
-								</button>
-							);
-						})}
-					</div>
-				))}
+				<Scroller value={scroll.holder}>
+					{shown.map((group, at) => (
+						<PickGroupBox<V>
+							key={group.label ?? at}
+							group={group}
+							before={shown
+								.slice(0, at)
+								.reduce((sum, each) => sum + each.items.length, 0)}
+							stop={stop}
+							first={props.first}
+							several={props.several}
+							value={props.value}
+							chip={props.chip}
+							pick={pick}
+						/>
+					))}
+				</Scroller>
 			</div>
 			{shown.length === 0 ? <NoMatches>{words.noMatches}</NoMatches> : null}
 			{props.act ? (

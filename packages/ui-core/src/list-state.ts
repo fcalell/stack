@@ -21,11 +21,15 @@ import { painting } from "./paint.ts";
 import { METER_NEAR, type Words } from "./tokens.ts";
 
 // One row of a tree as the list draws it: its item at a depth (the roots at
-// 0), whether it has children to fold, and whether they are drawn.
+// 0), its place among its siblings (`place` of `size`, from 1, whichever of
+// them are drawn), whether it has children to fold, and whether they are
+// drawn.
 export interface TreeRow<T> {
 	item: T;
 	key: string;
 	depth: number;
+	size: number;
+	place: number;
 	branch: boolean;
 	open: boolean;
 }
@@ -45,11 +49,19 @@ export function treeRows<T>(
 ): TreeRow<T>[] {
 	const rows: TreeRow<T>[] = [];
 	const walk = (level: readonly T[], depth: number) => {
-		for (const item of level) {
+		for (const [at, item] of level.entries()) {
 			const key = slots.key(item);
 			const below = slots.children(item) ?? [];
 			const open = !folded.includes(key);
-			rows.push({ item, key, depth, branch: below.length > 0, open });
+			rows.push({
+				item,
+				key,
+				depth,
+				size: level.length,
+				place: at + 1,
+				branch: below.length > 0,
+				open,
+			});
 			if (open) walk(below, depth + 1);
 		}
 	};

@@ -22,6 +22,7 @@ import {
 	type ReactNode,
 	type RefObject,
 	useCallback,
+	useLayoutEffect,
 	useRef,
 	useState,
 } from "react";
@@ -50,9 +51,9 @@ export interface ListInternal<T> {
 }
 
 const STACK = "flex flex-col";
-// A tree in a Group has no box of its own: it stands as the card's rows, the
-// card's hairline falling once between them.
-const GROUP_TREE = "contents divide-y divide-edge";
+// A tree in a Group has no box of its own but the card: its rows stand in the
+// tree's element on the card, the card's hairline falling once between them.
+const GROUP_TREE = "flex flex-col divide-y divide-edge";
 // A divided list's hairline is a pseudo-element on each row but the last, not
 // the row's border, so it runs straight across the row's whole width.
 const DIVIDER =
@@ -81,6 +82,20 @@ export function ListBase<T, V extends string | null = string>(
 	);
 	const own = useRef<HTMLDivElement>(null);
 	const box = props.box ?? own;
+	// The tree's element, which holds its rows: its own box, or on a Group's card
+	// a box inside it.
+	const wrap = useRef<HTMLDivElement>(null);
+	const treeBox = props.framed === true ? wrap : own;
+	// The visible row a key is moving the focus to; it stands mounted by then,
+	// the window keeping the tab stop's row, and takes the focus.
+	const [wanted, setWanted] = useState<{ index: number }>();
+	// biome-ignore lint/correctness/useExhaustiveDependencies: only a new `wanted` is a move to focus
+	useLayoutEffect(() => {
+		if (!wanted) return;
+		treeBox.current
+			?.querySelector<HTMLElement>(`[data-index="${wanted.index}"]`)
+			?.focus();
+	}, [wanted]);
 	const { drawn } = props;
 	const painted = drawn.painted;
 	// Painted, `PAINT_ROWS` rows each over the placeholder; the data's depths
@@ -112,6 +127,7 @@ export function ListBase<T, V extends string | null = string>(
 		keyOf: (index: number) => string,
 		rowAt: (index: number) => ReactElement,
 		nav?: TreeNav,
+		keep?: number,
 	) => {
 		const rows = () =>
 			Array.from({ length: count }, (_, index) => rowAt(index));
@@ -139,18 +155,21 @@ export function ListBase<T, V extends string | null = string>(
 					)}
 				/>
 			) : null;
-		// A flat list's rows window; a tree's keyboard queries its treeitems in
-		// the DOM, so a tree draws them all.
-		const shown = nav ? (
-			rows()
-		) : (
-			<Window count={count} keyOf={keyOf} row={rowAt} box={box} />
+		// A tree's rows window too, the one holding the tab stop kept mounted.
+		const shown = (
+			<Window
+				count={count}
+				keyOf={keyOf}
+				row={rowAt}
+				box={nav ? treeBox : box}
+				keep={keep}
+			/>
 		);
 		let stand: ReactNode = shown;
 		if (framed && nav)
 			stand = (
-				<div {...nav} className={GROUP_TREE}>
-					{rows()}
+				<div {...nav} ref={wrap} className={GROUP_TREE}>
+					{shown}
 				</div>
 			);
 		else if (!framed)
@@ -202,28 +221,31 @@ export function ListBase<T, V extends string | null = string>(
 		// fold the branches (the WAI-ARIA tree pattern, `treeMove`).
 		const visible = treeRows(items, { key: row.key, children }, folded);
 		const stop = treeStop(visible, active);
-		const rowsOf = (list: HTMLElement) => [
-			...list.querySelectorAll<HTMLElement>('[role="treeitem"]'),
-		];
+		// A row knows its place among the visible ones (`data-index`), so a key
+		// moves by index over `visible`, whichever rows the window mounts.
+		const indexOf = (target: HTMLElement) =>
+			Number(target.closest<HTMLElement>('[role="treeitem"]')?.dataset.index);
 		const nav: TreeNav = {
 			role: "tree",
 			onKeyDown: (event) => {
 				// A key's target is the focused element, always an HTML one here.
 				const target = event.target as HTMLElement;
 				if (target.getAttribute("role") !== "treeitem") return;
-				const rows = rowsOf(event.currentTarget);
-				const move = treeMove(visible, rows.indexOf(target), event.key);
+				const move = treeMove(visible, indexOf(target), event.key);
 				if (!move) return;
 				event.preventDefault();
-				if ("focus" in move) rows[move.focus]?.focus();
-				else setFolded((keys) => folding(keys, move.fold, move.open));
+				if ("focus" in move) {
+					// The tab stop moves first: the window keeps its row, mounted by
+					// this render if it was not, and the focus follows it there.
+					setActive(visible[move.focus]?.key);
+					setWanted({ index: move.focus });
+				} else setFolded((keys) => folding(keys, move.fold, move.open));
 			},
 			onFocus: (event) => {
 				// A focus event's target is the element that took focus, an HTML one here.
 				const target = event.target as HTMLElement;
-				const item = target.closest<HTMLElement>('[role="treeitem"]');
-				if (!item) return;
-				setActive(visible[rowsOf(event.currentTarget).indexOf(item)]?.key);
+				if (!target.closest('[role="treeitem"]')) return;
+				setActive(visible[indexOf(target)]?.key);
 			},
 		};
 		return frame(
@@ -241,12 +263,15 @@ export function ListBase<T, V extends string | null = string>(
 						room={room}
 						fold={fold}
 						depth={each.depth}
+						size={each.size}
+						place={each.place}
 						open={each.branch ? each.open : undefined}
 						tabbable={index === stop}
 					/>
 				);
 			},
 			nav,
+			stop,
 		);
 	}
 	if (props.meter) {

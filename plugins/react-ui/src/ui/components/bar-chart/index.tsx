@@ -28,10 +28,12 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import type { ReactNode } from "react";
+import { VIRTUAL_FROM } from "@fcalell/ui-core/window";
+import { memo, type ReactNode, useMemo, useRef } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { PAINT_BOX, Painted } from "../../lib/paint.tsx";
 import { FrameBody, FrameLine, useCollection } from "../../lib/read.tsx";
+import { Scroller, useScroller, Window } from "../../lib/window.tsx";
 
 const STACK = "flex flex-col min-w-0";
 const TOTAL = "flex items-baseline";
@@ -49,15 +51,22 @@ const AXIS_BAND = "relative flex-1";
 const TICK =
 	"absolute end-0 top-0 -translate-y-1/2 max-w-measure-short truncate";
 const ZERO = "absolute end-0 bottom-0 translate-y-1/2";
-const MAIN = "flex flex-col grow min-w-0";
+const MAIN = "grow min-w-0";
+const COLUMN = "flex flex-col";
+// Past `VIRTUAL_FROM` bars the plot keeps a bar's width and scrolls sideways
+// under the axis, which stays; the bars and their times window along x.
+const SCROLLS = "overflow-x-auto focus-visible:-outline-offset-2";
+const WIDE = "w-max min-w-full";
+const SLOT_WIDE = "w-target shrink-0";
 const PLOT = "relative";
 const GRID = "flex flex-col";
 const GRID_BAND = "flex-1";
 const BARS = "absolute inset-0 flex";
-const SLOT = "flex flex-col justify-end items-center flex-1 min-w-0";
+const SLOT = "flex flex-col justify-end items-center";
+const SLOT_FIT = "flex-1 min-w-0";
 const PART = "shrink-0";
 const TIMES = "flex";
-const TIME = "flex justify-center flex-1 min-w-0";
+const TIME = "flex justify-center";
 const TIME_TEXT = "max-w-measure-short truncate";
 // The painted times stand at the plot's two ends.
 const TIMES_PAINTED = "justify-between";
@@ -149,21 +158,85 @@ interface Bar {
 	at?: string;
 }
 
-/** The total (the last bar with `level`) at body 500 with its unit, the parts' keys under it, then the axis beside the plot, its four gridlines a hairline each with its tick centred on it and the baseline with its 0, the columns in the chip marks by part, a time under each bar that has one. While the `items` selection's read waits, the total is a figure's filler, the legend stands (its names and marks declared, its figures painted), the plot is one painted box at its loaded height with the axis's lane kept and the times are two fillers, the chart inert. The chart is a frame of its items: it draws the failed form with Retry, the missing form and the empty form in its own box with the generic sentence, and the stale and paused line above itself while it holds its read, whatever stands above it. */
+const NONE: readonly never[] = [];
+
+// A bar's part by key; a key it lacks is 0.
+const part = (bar: Bar, key: string) => bar.parts?.[key] ?? 0;
+
+// One bar's slot in the plot: the bar, or its parts stacked.
+const BarSlot = memo(function BarSlot(props: {
+	bar: Bar;
+	keys: readonly string[] | undefined;
+	top: number;
+	wide: boolean;
+}) {
+	const { bar, keys, top } = props;
+	const height = (value: number) => ({ height: `${(value / top) * 100}%` });
+	return (
+		<div className={cn(SLOT, props.wide ? SLOT_WIDE : SLOT_FIT)}>
+			{keys ? (
+				// The first part stands on the baseline, each next one over it, split
+				// from it by a clear line.
+				keys
+					.map((key, at) => (
+						<div
+							key={key}
+							className={cn(
+								chartFill({ series: mark(at) }),
+								at > 0 && CHART_PART_SPLIT,
+								"w-2/3",
+								PART,
+							)}
+							style={height(part(bar, key))}
+						/>
+					))
+					.reverse()
+			) : (
+				<div
+					className={cn(chartFill({ series: CHART_SERIES[0] }), "w-2/3")}
+					style={height(bar.value)}
+				/>
+			)}
+		</div>
+	);
+});
+
+// The time under one bar, when it has one.
+const BarTime = memo(function BarTime(props: {
+	at: string | undefined;
+	wide: boolean;
+}) {
+	return (
+		<div className={cn(TIME, props.wide ? SLOT_WIDE : SLOT_FIT)}>
+			{props.at ? (
+				<span className={cn(text({ role: "meta" }), FIGURES, TIME_TEXT)}>
+					{props.at}
+				</span>
+			) : null}
+		</div>
+	);
+});
+
+/** The total (the last bar with `level`) at body 500 with its unit, the parts' keys under it, then the axis beside the plot, its four gridlines a hairline each with its tick centred on it and the baseline with its 0, the columns in the chip marks by part, a time under each bar that has one. From `VIRTUAL_FROM` bars the plot keeps a bar's width and scrolls sideways, the axis staying, and only the bars and times near the view are drawn. While the `items` selection's read waits, the total is a figure's filler, the legend stands (its names and marks declared, its figures painted), the plot is one painted box at its loaded height with the axis's lane kept and the times are two fillers, the chart inert. The chart is a frame of its items: it draws the failed form with Retry, the missing form and the empty form in its own box with the generic sentence, and the stale and paused line above itself while it holds its read, whatever stands above it. */
 export function BarChart<T>(props: BarChartProps<T>) {
 	const { label, keys, unit, level } = props;
 	const { drawn, frame } = useCollection(props.items);
 	const { painted } = drawn;
 	const { bar } = props;
-	const items = painted ? [] : drawn.value;
-	const series: Bar[] = items.map((item) => ({
-		key: bar.key(item),
-		value: bar.value(item),
-		parts: bar.parts?.(item),
-		at: bar.at?.(item),
-	}));
+	const items = painted ? NONE : drawn.value;
+	// The bars are read from their items once per answer, so a bar's slot
+	// renders only when its own bar changed.
+	const series = useMemo<Bar[]>(
+		() =>
+			items.map((item) => ({
+				key: bar.key(item),
+				value: bar.value(item),
+				parts: bar.parts?.(item),
+				at: bar.at?.(item),
+			})),
+		[items, bar],
+	);
 	const labels = keys ?? [];
-	const part = (bar: Bar, key: string) => bar.parts?.[key] ?? 0;
 	const peaks = series.map((bar) =>
 		keys ? keys.reduce((sum, key) => sum + part(bar, key), 0) : bar.value,
 	);
@@ -197,7 +270,12 @@ export function BarChart<T>(props: BarChartProps<T>) {
 			{word ? <span className={text({ role: "meta" })}>{word}</span> : null}
 		</div>
 	);
-	const height = (value: number) => ({ height: `${(value / top) * 100}%` });
+	// A long chart keeps a bar's width and windows its bars and their times
+	// along x, in a scroller of its own around the plot.
+	const windowed = series.length >= VIRTUAL_FROM;
+	const scroll = useScroller();
+	const bars = useRef<HTMLDivElement>(null);
+	const times = useRef<HTMLDivElement>(null);
 	return (
 		<FrameBody frame={frame} fit="frame">
 			<FrameLine frame={frame} />
@@ -246,83 +324,86 @@ export function BarChart<T>(props: BarChartProps<T>) {
 							</div>
 						))}
 					</div>
-					<div className={cn(CHART_MAIN, MAIN)}>
-						{painted ? (
-							<div className={cn(CHART_GRID, PAINT_BOX)} />
-						) : (
-							<div role="img" aria-label={label} className={PLOT}>
-								<div className={cn(CHART_GRID, GRID)}>
-									{Array.from({ length: bands }, (_, index) => (
-										<div
-											// biome-ignore lint/suspicious/noArrayIndexKey: a band is its index
-											key={index}
-											className={cn(
-												chartBand({ kind: "grid", rule: band(index, bands) }),
-												GRID_BAND,
-											)}
-										/>
-									))}
-								</div>
-								<div className={BARS}>
-									{series.map((bar) => (
-										<div key={bar.key} className={SLOT}>
-											{keys ? (
-												// The first part stands on the baseline, each next one
-												// over it, split from it by a clear line.
-												keys
-													.map((key, at) => (
-														<div
-															key={key}
-															className={cn(
-																chartFill({ series: mark(at) }),
-																at > 0 && CHART_PART_SPLIT,
-																"w-2/3",
-																PART,
-															)}
-															style={height(part(bar, key))}
-														/>
-													))
-													.reverse()
-											) : (
+					<div
+						ref={scroll.ref}
+						// A plot that scrolls is a region the keyboard scrolls too.
+						{...(windowed
+							? { role: "group", "aria-label": label, tabIndex: 0 }
+							: {})}
+						className={cn(MAIN, windowed && SCROLLS)}
+					>
+						<Scroller value={scroll.holder}>
+							<div className={cn(CHART_MAIN, COLUMN, windowed && WIDE)}>
+								{painted ? (
+									<div className={cn(CHART_GRID, PAINT_BOX)} />
+								) : (
+									<div role="img" aria-label={label} className={PLOT}>
+										<div className={cn(CHART_GRID, GRID)}>
+											{Array.from({ length: bands }, (_, index) => (
 												<div
+													// biome-ignore lint/suspicious/noArrayIndexKey: a band is its index
+													key={index}
 													className={cn(
-														chartFill({ series: CHART_SERIES[0] }),
-														"w-2/3",
+														chartBand({
+															kind: "grid",
+															rule: band(index, bands),
+														}),
+														GRID_BAND,
 													)}
-													style={height(bar.value)}
+												/>
+											))}
+										</div>
+										<div ref={bars} className={BARS}>
+											<Window
+												horizontal
+												count={series.length}
+												keyOf={(index) => (series[index] as Bar).key}
+												row={(index) => (
+													<BarSlot
+														key={(series[index] as Bar).key}
+														bar={series[index] as Bar}
+														keys={keys}
+														top={top}
+														wide={windowed}
+													/>
+												)}
+												box={bars}
+											/>
+										</div>
+									</div>
+								)}
+								<div
+									ref={times}
+									aria-hidden
+									className={cn(TIMES, painted && TIMES_PAINTED)}
+								>
+									{painted ? (
+										[0, 1].map((end) => (
+											<span
+												key={end}
+												className={cn(text({ role: "meta" }), FIGURES)}
+											>
+												<Painted role="word" at={end} />
+											</span>
+										))
+									) : (
+										<Window
+											horizontal
+											count={series.length}
+											keyOf={(index) => (series[index] as Bar).key}
+											row={(index) => (
+												<BarTime
+													key={(series[index] as Bar).key}
+													at={(series[index] as Bar).at}
+													wide={windowed}
 												/>
 											)}
-										</div>
-									))}
+											box={times}
+										/>
+									)}
 								</div>
 							</div>
-						)}
-						<div aria-hidden className={cn(TIMES, painted && TIMES_PAINTED)}>
-							{painted
-								? [0, 1].map((end) => (
-										<span
-											key={end}
-											className={cn(text({ role: "meta" }), FIGURES)}
-										>
-											<Painted role="word" at={end} />
-										</span>
-									))
-								: series.map((bar) => (
-										<div key={bar.key} className={TIME}>
-											{bar.at ? (
-												<span
-													className={cn(
-														text({ role: "meta" }),
-														FIGURES,
-														TIME_TEXT,
-													)}
-												>
-													{bar.at}
-												</span>
-											) : null}
-										</div>
-									))}
-						</div>
+						</Scroller>
 					</div>
 				</div>
 			</div>

@@ -20,7 +20,7 @@ import {
 	useState,
 } from "react";
 
-/** The holder of the nearest element that scrolls vertically, which a long collection windows against; none draws every row. A Pane's body, a Sheet's body, a Gate's page and a Thread's log provide it, the nearest one winning, so a List in a portaled Sheet never windows against the Pane under it. The holder is the same from the first render, its element attached with the commit, so a collection mounting with the Pane windows in its first draw. */
+/** The holder of the nearest element that scrolls vertically, which a long collection windows against; none draws every row. A Pane's body, a Sheet's body, a Gate's page, a Thread's log, a sheet's listbox of options, a popover's list of options and a long BarChart's plot (which scrolls sideways) provide it, the nearest one winning, so a List in a portaled Sheet never windows against the Pane under it. The holder is the same from the first render, its element attached with the commit, so a collection mounting with the Pane windows in its first draw. */
 export const Scroller = createContext<RefObject<HTMLElement | null> | null>(
 	null,
 );
@@ -64,22 +64,31 @@ export interface WindowProps {
 	end?: boolean;
 	/** The element a spacer is: a `tr` in a tbody. */
 	spacer?: "div" | "tr";
+	/** The rows stand side by side in a box that scrolls sideways (a chart's bars), so the window runs along x: widths for heights, the scroller's left for its top. */
+	horizontal?: boolean;
 }
 
-// The scroller's top over the box's top: how far the scroller's view has gone
-// into the box, so a collection's place in the page is nobody's business.
-function into(scroller: HTMLElement, box: HTMLElement | null): number {
+// The scroller's top over the box's top (its left, along x): how far the
+// scroller's view has gone into the box, so a collection's place in the page
+// is nobody's business.
+function into(
+	scroller: HTMLElement,
+	box: HTMLElement | null,
+	horizontal: boolean,
+): number {
 	if (!box) return 0;
-	return (
-		scroller.getBoundingClientRect().top +
-		scroller.clientTop -
-		box.getBoundingClientRect().top
-	);
+	const [view, at] = [scroller, box].map((element) =>
+		element.getBoundingClientRect(),
+	) as [DOMRect, DOMRect];
+	return horizontal
+		? view.left + scroller.clientLeft - at.left
+		: view.top + scroller.clientTop - at.top;
 }
 
-// The box's row gap, which every spacer gives back to its neighbours.
-function gapOf(box: HTMLElement): number {
-	return Number.parseFloat(getComputedStyle(box).rowGap) || 0;
+// The box's gap between rows, which every spacer gives back to its neighbours.
+function gapOf(box: HTMLElement, horizontal: boolean): number {
+	const style = getComputedStyle(box);
+	return Number.parseFloat(horizontal ? style.columnGap : style.rowGap) || 0;
 }
 
 /** The rows of a long collection, drawn only near the scroller's view: TanStack Virtual places and ranges them, the mounted rows stand in the host's box between spacers that hold the room of the rest. Fewer than `VIRTUAL_FROM` rows, or no `Scroller`, draw every row unchanged, so crossing the count (a Show more) mounts nothing again. The rows are measured by their place among the box's children, so a row is exactly one element and carries nothing of this. The focused row and `keep` stay mounted. */
@@ -91,6 +100,7 @@ export function Window({
 	keep,
 	end,
 	spacer = "div",
+	horizontal = false,
 }: WindowProps): ReactNode {
 	const holder = use(Scroller);
 	const scroller = holder?.current ?? null;
@@ -118,6 +128,11 @@ export function Window({
 	const applied = useRef(0);
 	// Reports the scroller's offset when the virtualizer holds another one.
 	const sync = useRef<() => void>(undefined);
+	// A mounted row's size along the window's axis.
+	const extentOf = (node: Element | undefined) => {
+		const rect = node?.getBoundingClientRect();
+		return (horizontal ? rect?.width : rect?.height) ?? 0;
+	};
 	const extract = useCallback(
 		(range: Parameters<typeof ranged>[0]) =>
 			ranged(range, [focused.current, keep]),
@@ -126,6 +141,7 @@ export function Window({
 	);
 	const virtualizer = useVirtualizer<HTMLElement, Element>({
 		count,
+		horizontal,
 		enabled: on,
 		getScrollElement: () => holder?.current ?? null,
 		estimateSize: () => size,
@@ -135,7 +151,10 @@ export function Window({
 		rangeExtractor: extract,
 		useFlushSync: false,
 		initialRect: view,
-		initialOffset: () => (end ? Math.max(0, count * size - view.height) : 0),
+		initialOffset: () =>
+			end
+				? Math.max(0, count * size - (horizontal ? view.width : view.height))
+				: 0,
 		observeElementOffset: (instance, report) => {
 			const element = instance.scrollElement;
 			if (!element) return;
@@ -143,7 +162,7 @@ export function Window({
 			let timer: ReturnType<typeof setTimeout> | undefined;
 			const send = () => {
 				applied.current = 0;
-				report(into(element, box.current), running);
+				report(into(element, box.current, horizontal), running);
 			};
 			const onScroll = () => {
 				running = true;
@@ -156,7 +175,9 @@ export function Window({
 			};
 			element.addEventListener("scroll", onScroll, { passive: true });
 			sync.current = () => {
-				if (into(element, box.current) !== instance.scrollOffset) send();
+				if (into(element, box.current, horizontal) !== instance.scrollOffset) {
+					send();
+				}
 			};
 			// Content above the box changing height moves the box without a
 			// scroll; the observer also reports once on observing, which gives
@@ -178,12 +199,15 @@ export function Window({
 			// adjustment (rows above the view measured) moves the scroller from
 			// where it is now, not from the offset the virtualizer last heard: a
 			// scroll the browser made since (a focus) is not undone.
-			const top =
+			const now = horizontal ? element.scrollLeft : element.scrollTop;
+			const to =
 				adjustments === undefined
-					? element.scrollTop - into(element, box.current) + offset
-					: element.scrollTop + adjustments - applied.current;
+					? now - into(element, box.current, horizontal) + offset
+					: now + adjustments - applied.current;
 			applied.current = adjustments ?? 0;
-			element.scrollTo({ top, behavior });
+			element.scrollTo(
+				horizontal ? { left: to, behavior } : { top: to, behavior },
+			);
 		},
 	});
 	const placed = on
@@ -228,8 +252,8 @@ export function Window({
 		const first = found.findIndex((slot) => "row" in slot);
 		if (!shape && first >= 0) {
 			setShape({
-				gap: gapOf(element),
-				size: mounted[first]?.getBoundingClientRect().height || ESTIMATE,
+				gap: gapOf(element, horizontal),
+				size: extentOf(mounted[first]) || ESTIMATE,
 			});
 			return;
 		}
@@ -238,7 +262,7 @@ export function Window({
 			const node = mounted[at];
 			if (!node || !("row" in slot)) return;
 			rowsAt.set(node, slot.row);
-			virtualizer.resizeItem(slot.row, node.getBoundingClientRect().height);
+			virtualizer.resizeItem(slot.row, extentOf(node));
 		});
 		indexed.current = rowsAt;
 		watch.current ??= new ResizeObserver((entries) => {
@@ -246,10 +270,7 @@ export function Window({
 				const index = indexed.current.get(entry.target);
 				// A row just unmounted is reported once more, at no height.
 				if (index !== undefined && entry.target.isConnected) {
-					virtualizer.resizeItem(
-						index,
-						entry.target.getBoundingClientRect().height,
-					);
+					virtualizer.resizeItem(index, extentOf(entry.target));
 				}
 			}
 		});
@@ -291,7 +312,7 @@ export function Window({
 	const Space = spacer;
 	return slots.map((slot) => {
 		if ("row" in slot) return row(slot.row);
-		const style = { height: slot.space };
+		const style = horizontal ? { width: slot.space } : { height: slot.space };
 		return Space === "tr" ? (
 			<tr key={`window-${slot.before}`} {...HIDDEN}>
 				<td style={{ ...style, padding: 0, border: 0 }} />

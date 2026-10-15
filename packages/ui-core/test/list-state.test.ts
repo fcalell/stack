@@ -236,6 +236,26 @@ test("a tree draws each item then its children one depth in, every level open by
 	assert.deepEqual(treeRows([], NODES, []), []);
 });
 
+test("a row knows its place among its siblings, whichever of them are drawn", () => {
+	const place = (folded: readonly string[]) =>
+		treeRows(TREE, NODES, folded).map(
+			(row) => `${row.key}:${row.place}/${row.size}`,
+		);
+	assert.deepEqual(place([]), [
+		"a:1/3",
+		"a1:1/2",
+		"a1x:1/2",
+		"a1y:2/2",
+		"a2:2/2",
+		"b:2/3",
+		"c:3/3",
+		"c1:1/1",
+	]);
+	// A folded branch's children are not drawn, and the rows after it keep their
+	// place among theirs.
+	assert.deepEqual(place(["a"]), ["a:1/3", "b:2/3", "c:3/3", "c1:1/1"]);
+});
+
 test("a folded item hides every descendant and keeps its own row", () => {
 	assert.deepEqual(shown(["a"]), ["0:a", "0:b", "0:c", "1:c1"]);
 	assert.deepEqual(shown(["a1"]), [

@@ -2596,7 +2596,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Stages` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `edge-strong`, `accent-ink`, `canvas`, `danger`, `skeleton` | `full`, `chip` | `pair` | `icon-meta`, `row-2` | none |
 | `Stats` | `figure`, `meta` | `edge`, `surface`, `ink-body`, `ink-meta`, `accent-ink`, `skeleton`, `wash-hover`, `wash-press` | `card`, `chip` | `pair`, `inside`, `card` | `target` | none |
 | `Stat` | `display`, `meta` | `ink-body`, `ink-meta`, `skeleton` | `chip` | `pair`, `inside` | none | none |
-| `BarChart` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `chart-` | `full`, `chip` | `fields`, `inside`, `pair` | `chart`, `dot`, `figures`, `measure-short` | none |
+| `BarChart` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `chart-` | `full`, `chip` | `fields`, `inside`, `pair` | `chart`, `dot`, `figures`, `measure-short`, `target` | none |
 | `Thread` | none | `raised`, `edge`, `edge-raised` | `control` | `sections`, `page`, `pair`, `acts` | `measure`, `docked-log-floor` | `float` |
 | `QrCode` | none | `edge`, `surface`, `ink-body`, `skeleton` | `card` | none | `qr` | none |
 | `Image` | `meta` | `edge`, `edge-hover`, `ink-body`, `skeleton`, `group`, `ink-meta`, `raised`, `scrim` | `control`, `card` | `page`, `inside` | `image-tile`, `image-cap`, `icon`, `control` | `float` |
