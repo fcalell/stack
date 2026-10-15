@@ -12,10 +12,13 @@ pnpm add @fcalell/plugin-api
 
 ## Guide
 
-Writing procedures, worker middleware, the client, tests, options, pagination and slugs lives in
+Writing procedures, worker middleware, the client and its reads, acts and abilities, tests, options, pagination and slugs lives in
 `guide/`, indexed into a consumer's `.stack/guide.md`:
 [`add-a-procedure.md`](./guide/add-a-procedure.md), [`procedures.md`](./guide/procedures.md),
 [`middleware.md`](./guide/middleware.md), [`client.md`](./guide/client.md),
+[`reads.md`](./guide/reads.md), [`pages-and-streams.md`](./guide/pages-and-streams.md),
+[`acts.md`](./guide/acts.md), [`abilities.md`](./guide/abilities.md),
+[`provider.md`](./guide/provider.md),
 [`testing.md`](./guide/testing.md), [`mcp.md`](./guide/mcp.md), [`config.md`](./guide/config.md) and
 [`utilities.md`](./guide/utilities.md).
 

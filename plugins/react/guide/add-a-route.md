@@ -36,7 +36,7 @@ function Project() {
 Read what the screen shows through the typed client as a `read`, keyed by the route's parameters.
 A procedure the route needs that does not exist yet is added first, by the add-a-procedure
 recipe (`node_modules/@fcalell/plugin-api/guide/add-a-procedure.md`). Page:
-`node_modules/@fcalell/plugin-api/guide/client.md`.
+`node_modules/@fcalell/plugin-api/guide/reads.md`.
 
 ```tsx
 const project = (id: string) => orpc.projects.get.read({ id });

@@ -73,7 +73,7 @@ answer it with a 400, code `ORGANIZATION_SLUG_RESERVED` and `fieldErrors: { slug
 ## Abilities
 
 `auth({ organization })` serves the caller's compiled rules per organization, and the client's
-`useAbility(organizationId)` reads them (api's client page, `node_modules/@fcalell/plugin-api/guide/client.md`).
+`useAbility(organizationId)` reads them (api's abilities page, `node_modules/@fcalell/plugin-api/guide/abilities.md`).
 Rules from a record's own data are in [abilities](./abilities.md).
 
 **Check:** `stack generate`, then `pnpm check` passes.

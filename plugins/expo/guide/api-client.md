@@ -27,7 +27,7 @@ const projects = orpc.projects.list.read({ organizationId });
 
 `read` is `queryOptions` as a handle a `Pane`, `Section`, `Sheet` or `Form` takes as its `read`, and
 a `List` or any part that shows a value takes as data; `useQuery(orpc.….queryOptions(…))` still
-serves a region the app draws itself. Page: `node_modules/@fcalell/plugin-api/guide/client.md`.
+serves a region the app draws itself. Page: `node_modules/@fcalell/plugin-api/guide/reads.md`.
 
 ## The URL
 

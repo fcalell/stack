@@ -28,7 +28,7 @@ api's procedures page (`node_modules/@fcalell/plugin-api/guide/procedures.md`).
 ## 3. Gate the screen
 
 Show the control only when `useAbility(organizationId).can("archive", "project")` answers yes.
-Page: api's client page (`node_modules/@fcalell/plugin-api/guide/client.md`).
+Page: api's abilities page (`node_modules/@fcalell/plugin-api/guide/abilities.md`).
 
 **Check:** under `pnpm dev`, a member without the grant sees no control.
 

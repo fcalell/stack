@@ -618,7 +618,32 @@ export const api = plugin("api", {
 		{
 			page: "client",
 			trigger:
-				"Calling the API from the app: the typed client, queries, drawing a not-found state, cache invalidation or `useAbility`",
+				"Calling the API from the app: the typed client, queries, drawing a not-found state or cache invalidation",
+		},
+		{
+			page: "reads",
+			trigger:
+				"Drawing a query on a screen: `.read`, `.at`, `combine`, `Datum`, or which frame holds a read",
+		},
+		{
+			page: "pages-and-streams",
+			trigger:
+				"Showing a paginated procedure's \"Show more\" list, streaming a reply into a `Thread`, or `preload`ing a route's reads",
+		},
+		{
+			page: "acts",
+			trigger:
+				"Running a mutation from an act's `onAct`, drawing its failure with `refusal`, or saving a field as it changes (`useDraft`, `useRun`)",
+		},
+		{
+			page: "abilities",
+			trigger:
+				"Gating a control or an act on what the caller may do: `ability` or `useAbility`",
+		},
+		{
+			page: "provider",
+			trigger:
+				"Wrapping an app in `QueryProvider`, or passing it `settle` or `listen`",
 		},
 		{ page: "testing", trigger: "Writing a test that calls a procedure" },
 		{
