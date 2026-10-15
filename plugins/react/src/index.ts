@@ -408,7 +408,7 @@ export const react = plugin("react", {
 						{ source: "virtual:stack-providers", default: "Providers" },
 					],
 					body: [
-						"const router = createRouter({ routeTree });",
+						"const router = createRouter({ routeTree, defaultPreloadStaleTime: 0 });",
 						...calls,
 						"",
 						'createRoot(document.getElementById("app") as HTMLElement).render(',

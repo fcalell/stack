@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { mock, test } from "node:test";
 import { createLeave } from "@fcalell/ui-core/leave";
 import {
 	bindRouter,
@@ -103,6 +103,7 @@ test("bound, a route opens in the router and every other click is the browser's"
 	const heard: Array<() => void> = [];
 	const router: InPlaceRouter = {
 		navigate: ({ href }) => opened.push(href),
+		preloadRoute: () => {},
 		subscribe: (_event, listener) => heard.push(listener),
 		state: { location: { href: "/a" }, resolvedLocation: { href: "/b" } },
 		history: { block: () => () => {} },
@@ -139,6 +140,7 @@ test("bound, a form that asks holds the router's navigation until the question i
 	let released = 0;
 	bindRouter({
 		navigate: () => {},
+		preloadRoute: () => {},
 		subscribe: () => {},
 		state: { location: { href: "/a" } },
 		history: {
@@ -174,4 +176,77 @@ test("bound, a form that asks holds the router's navigation until the question i
 	assert.equal(asked, 2);
 	release();
 	assert.equal(released, 1);
+});
+
+// The document's delegated listeners, which node has none of; a target is
+// the anchor itself, or nothing an anchor wraps.
+const delegated = new Map<string, Array<(event: unknown) => void>>();
+let added = 0;
+Object.defineProperty(globalThis, "document", {
+	value: {
+		addEventListener: (type: string, listener: (event: unknown) => void) => {
+			added++;
+			delegated.set(type, [...(delegated.get(type) ?? []), listener]);
+		},
+	},
+});
+
+function over(type: "pointerover" | "focusin", href: string | null) {
+	const target = {
+		closest: () => (href === null ? null : { getAttribute: () => href }),
+	};
+	for (const listener of delegated.get(type) ?? []) listener({ target });
+}
+
+test("a rest of 50 ms on a route's anchor preloads it once, and a pass preloads nothing", () => {
+	mock.timers.enable({ apis: ["setTimeout"] });
+	const preloaded: string[] = [];
+	const router: InPlaceRouter = {
+		navigate: () => {},
+		preloadRoute: ({ href }) => preloaded.push(href),
+		subscribe: () => {},
+		state: { location: { href: "/a" } },
+		history: { block: () => () => {} },
+	};
+	bindRouter(router);
+	// Binding again, as the workbench does per story, keeps the page's listener.
+	bindRouter(router);
+	assert.equal(added, 2);
+
+	over("pointerover", "/deploys/d1");
+	mock.timers.tick(49);
+	assert.deepEqual(preloaded, []);
+	mock.timers.tick(1);
+	assert.deepEqual(preloaded, ["/deploys/d1"]);
+	mock.timers.tick(500);
+	assert.equal(preloaded.length, 1);
+
+	// Leaving, or crossing to another anchor, drops the pending intent.
+	over("pointerover", "/deploys/d2");
+	mock.timers.tick(30);
+	over("pointerover", null);
+	mock.timers.tick(100);
+	over("pointerover", "/deploys/d3");
+	mock.timers.tick(30);
+	over("pointerover", "/deploys/d4");
+	mock.timers.tick(100);
+	assert.deepEqual(preloaded, ["/deploys/d1", "/deploys/d4"]);
+
+	// Focus is the keyboard's hover.
+	over("focusin", "/work");
+	mock.timers.tick(50);
+	assert.deepEqual(preloaded.slice(-1), ["/work"]);
+
+	// Somewhere else, a bare hash and the route already drawn have nothing to load.
+	for (const href of [
+		"https://example.com/x",
+		"//example.com/x",
+		"#top",
+		"/a",
+	]) {
+		over("pointerover", href);
+		mock.timers.tick(100);
+	}
+	assert.equal(preloaded.length, 3);
+	mock.timers.reset();
 });

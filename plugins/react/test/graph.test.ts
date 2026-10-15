@@ -88,7 +88,7 @@ test("a peer's router binding is imported and called with the router, by source,
 	assert.match(entry, /import \{ bindA as bindOther \} from "peer\/a";/);
 	assert.match(
 		entry,
-		/const router = createRouter\(\{ routeTree \}\);\nbindOther\(router\);\nbindB\(router\);\n\ncreateRoot/,
+		/const router = createRouter\(\{ routeTree, defaultPreloadStaleTime: 0 \}\);\nbindOther\(router\);\nbindB\(router\);\n\ncreateRoot/,
 	);
 });
 

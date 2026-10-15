@@ -48,6 +48,27 @@ function Project() {
 }
 ```
 
+## Preloading a route's data
+
+A route warms what its screen reads in its `loader`, through `preload` from
+`@fcalell/plugin-api/tanstack-query`. One function builds the read, and the loader and the
+component both call it, so the key is written once. The loader returns nothing, so navigation
+never waits on it; the component reads as it always does and finds the data already there.
+
+```tsx
+const project = (id: string) => orpc.projects.get.read({ id });
+
+export const Route = createFileRoute("/projects/$projectId")({
+  loader: ({ params }) => preload(project(params.projectId)),
+  component: () => <ProjectPane id={Route.useParams().projectId} />,
+});
+```
+
+Hovering or focusing a link to a route runs its loader and fetches its code, so the open that
+follows is often a cache hit; the query cache's `staleTime` decides whether a request goes out.
+Streams, idle reads and reads that take their input from another read's data are not preloaded.
+A search-driven input goes in the route's `loaderDeps`.
+
 ## Typed routes
 
 `stack generate` writes the route tree to `.stack/routeTree.gen.ts`, and the dev server and the

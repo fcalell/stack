@@ -11,6 +11,7 @@ import {
 // app's router to `bindRouter` right after creating it.
 export interface InPlaceRouter {
 	navigate(options: { href: string }): unknown;
+	preloadRoute(options: { href: string }): unknown;
 	subscribe(event: "onResolved", listener: () => void): unknown;
 	state: {
 		location: { href: string };
@@ -35,8 +36,39 @@ const hear = () => {
 	for (const reader of readers) reader();
 };
 
+// How long a pointer or focus rests on a route's anchor before its route is
+// preloaded: TanStack's own intent delay, so a pass across a list loads
+// nothing and a rest on one row loads that row.
+const INTENT_DELAY = 50;
+let intent: ReturnType<typeof setTimeout> | undefined;
+let listening = false;
+
+// Every anchor stack draws is a plain `<a href>`, so one delegated listener
+// for the page covers them all, and TanStack's own `Link`, with no prop on
+// any component. A touch's `pointerover` fires as the finger lands, which is
+// the web's press-in. Any other intent in the window drops the pending one;
+// the bound router is read when the timer fires, so a rebind (the screens
+// workbench binds per story) adds no listener and never preloads into a stale
+// router. External, hash-only and current hrefs have nothing to load.
+function wantsRoute(event: Event): void {
+	clearTimeout(intent);
+	intent = undefined;
+	const link = (event.target as Element | null)?.closest?.("a[href]");
+	const href = link?.getAttribute("href");
+	if (!href || !isRoute(href) || href === drawn()) return;
+	intent = setTimeout(() => {
+		intent = undefined;
+		bound?.preloadRoute({ href });
+	}, INTENT_DELAY);
+}
+
 export function bindRouter(router: InPlaceRouter): void {
 	bound = router;
+	if (!listening) {
+		listening = true;
+		document.addEventListener("pointerover", wantsRoute);
+		document.addEventListener("focusin", wantsRoute);
+	}
 	router.subscribe("onResolved", hear);
 	hear();
 }

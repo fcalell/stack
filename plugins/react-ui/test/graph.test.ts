@@ -240,7 +240,7 @@ test("the entry hands the router to react-ui's navigation, and not without route
 	);
 	assert.match(
 		entry,
-		/const router = createRouter\(\{ routeTree \}\);\nbindRouter\(router\);/,
+		/const router = createRouter\(\{ routeTree, defaultPreloadStaleTime: 0 \}\);\nbindRouter\(router\);/,
 	);
 	const off = (await artifacts({}, { routes: false })).get(".stack/entry.tsx");
 	assert.doesNotMatch(off ?? "", /bindRouter/);
