@@ -103,7 +103,7 @@ export function Select<V extends string | null = string>({
 			items={items}
 			value={chosen ?? null}
 			onValueChange={(next) => {
-				draft.edit(next as V);
+				draft.change(next as V);
 				onChange(next as V);
 			}}
 		>

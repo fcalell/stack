@@ -199,7 +199,7 @@ function CheckboxRow(props: {
 			disabled={disabled}
 			onPress={() => {
 				const next = checked !== true;
-				draft.edit(next);
+				draft.change(next);
 				checkbox.onChange(next);
 			}}
 			className={cn(formField({ holds: "checkbox" }), AHEAD)}

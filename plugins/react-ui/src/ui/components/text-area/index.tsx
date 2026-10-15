@@ -63,7 +63,7 @@ export function TextArea({
 	const painted = draft.painted;
 	const shown = painted ? "" : draft.value;
 	const edit = (next: string) => {
-		draft.edit(next);
+		draft.change(next);
 		onChange(next);
 	};
 	const source = kind === "source";

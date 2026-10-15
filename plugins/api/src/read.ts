@@ -370,6 +370,11 @@ export interface Draft<T> {
 	value: T;
 }
 
+// The reads a value draws from: none for a constant.
+export function readsOf(v: unknown): readonly Read<unknown>[] {
+	return isSelection(v) ? v[SELECTION].reads : [];
+}
+
 export function readKey(v: unknown): string | undefined {
 	return isSelection(v)
 		? v[SELECTION].reads.map((r) => hashKey(r.options.queryKey)).join("|")
@@ -390,7 +395,7 @@ export function draftFor<T>(
 // or painter registers in an effect and returns its release.
 const holders = new Map<string, number>();
 const painters = new Map<string, number>();
-const dev = () => process.env.NODE_ENV !== "production";
+export const dev = () => process.env.NODE_ENV !== "production";
 
 function count(counts: Map<string, number>, keys: readonly string[]) {
 	for (const key of keys) counts.set(key, (counts.get(key) ?? 0) + 1);

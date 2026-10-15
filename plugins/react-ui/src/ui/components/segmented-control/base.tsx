@@ -43,7 +43,7 @@ export function SegmentedControlBase({
 			aria-labelledby={named?.labelledBy}
 			value={chosenValue}
 			onValueChange={(next) => {
-				draft.edit(next as string);
+				draft.change(next as string);
 				onChange(next as string);
 			}}
 			inert={painted || undefined}

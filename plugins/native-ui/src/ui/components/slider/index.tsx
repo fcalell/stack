@@ -70,7 +70,7 @@ export function Slider({
 		if (span <= 0) return;
 		const ratio = Math.min(Math.max((x - size / 2) / span, 0), 1);
 		const next = settle(min + ratio * (max - min));
-		draft.edit(next);
+		draft.change(next);
 		onChange(next);
 	}
 

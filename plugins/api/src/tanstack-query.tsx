@@ -7,6 +7,16 @@ import {
 	orgRules,
 	type PackedRulesLike,
 } from "@fcalell/plugin-api/ability-client";
+import {
+	drew,
+	heldAct,
+	holdSave,
+	isThenable,
+	pausedStore,
+	type RunState,
+	startRun,
+	watchActs,
+} from "@fcalell/plugin-api/acts";
 import { registerOperationContext } from "@fcalell/plugin-api/client";
 import {
 	type EntityName,
@@ -14,18 +24,19 @@ import {
 } from "@fcalell/plugin-api/query-invalidation";
 import {
 	type Datum,
-	type Draft,
 	type Drawn,
 	draftFor,
 	type Held,
 	holdRoot,
 	isRead,
+	type Draft as Kept,
 	paintReads,
 	placeholderData,
 	planFrame,
 	planSelections,
 	type Read,
 	readKey,
+	readsOf,
 	type Selection,
 	watchUnheld,
 	withRead,
@@ -52,7 +63,14 @@ import {
 	useQueries,
 	useQueryClient,
 } from "@tanstack/react-query";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import {
+	type ReactNode,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+	useSyncExternalStore,
+} from "react";
 
 export type { PackedRulesLike } from "@fcalell/plugin-api/ability-client";
 export {
@@ -60,6 +78,12 @@ export {
 	ORG_RULES_QUERY_KEY,
 	orgRulesQueryKey,
 } from "@fcalell/plugin-api/ability-client";
+export {
+	drew,
+	heldAct,
+	isThenable,
+	refusal,
+} from "@fcalell/plugin-api/acts";
 export type {
 	Datum,
 	Drawn,
@@ -199,6 +223,7 @@ export function QueryProvider(props: QueryProviderProps) {
 	);
 	useEffect(() => (listen ? listenQueries(listen) : undefined), [listen]);
 	useEffect(() => watchUnheld(client.getQueryCache()), [client]);
+	useEffect(() => watchActs(client.getMutationCache()), [client]);
 	return (
 		<QueryClientProvider client={client}>{props.children}</QueryClientProvider>
 	);
@@ -236,7 +261,7 @@ export function useSelections<const V extends readonly unknown[]>(
 export function useFrameRead<S>(
 	selection: Selection<unknown> | undefined,
 	derive: (held: Held) => S,
-): { state: S; retry: () => void } {
+): { state: S; retry: () => Promise<unknown> } {
 	const client = useQueryClient();
 	const plan = useMemo(
 		() =>
@@ -255,11 +280,13 @@ export function useFrameRead<S>(
 		queries: plan.reads.map((r) => ({ ...r.options, placeholderData })),
 		combine: plan.combine,
 	});
-	const retry = () => {
-		for (const r of plan.reads) {
-			void client.refetchQueries({ queryKey: r.options.queryKey, exact: true });
-		}
-	};
+	// The refetch itself, so a Retry draws its own pending until it settles.
+	const retry = () =>
+		Promise.all(
+			plan.reads.map((r) =>
+				client.refetchQueries({ queryKey: r.options.queryKey, exact: true }),
+			),
+		);
 	return { state, retry };
 }
 
@@ -268,7 +295,7 @@ export interface More {
 	next: boolean;
 	fetching: boolean;
 	failed: boolean;
-	fetch: () => void;
+	fetch: () => Promise<unknown>;
 }
 
 // The collection's side of a pages read: an infinite observer that never
@@ -283,31 +310,97 @@ export function useMore(read: Read<unknown>): More {
 		next: query.hasNextPage,
 		fetching: query.isFetchingNextPage,
 		failed: query.isFetchNextPageError,
-		fetch: () => {
-			void query.fetchNextPage();
-		},
+		fetch: () => query.fetchNextPage(),
 	};
+}
+
+export interface Draft<T> {
+	painted: boolean;
+	value: T;
+	// A plain edit is kept over a selection until its read's key changes. A
+	// `save` that returns a promise holds `next` (a constant's too) instead, and
+	// the latest save's outcome decides: resolved, the hold waits for the
+	// refetch its invalidation started on this value's reads, then the value
+	// follows its datum unless edited since; rejected, it falls back to the
+	// datum and `failed` hears the error with a way to save the same value again.
+	change: (next: T, save?: () => unknown) => void;
 }
 
 // A field's value: its selection until the viewer edits it, the edit after. An
 // edit belongs to the read it was made over, so a selection over another read
 // drops it (`draftFor`). A constant is the app's own state: it passes through,
-// so a value the app changes shows, and `edit` has nothing to keep.
-export function useDraft<T>(value: Datum<T>): {
-	painted: boolean;
-	value: T;
-	edit: (next: T) => void;
-} {
+// so a value the app changes shows, and a plain edit has nothing to keep.
+export function useDraft<T>(
+	value: Datum<T>,
+	failed?: (error: unknown, again: () => void) => void,
+): Draft<T> {
+	const client = useQueryClient();
 	const [drawn] = useSelections([value] as const);
 	const key = readKey(value);
-	const [draft, setDraft] = useState<Draft<T> | null>(null);
-	const live = draftFor(draft, key);
-	if (draft && !live) setDraft(null);
+	const [kept, setKept] = useState<Kept<T> | null>(null);
+	const [held, setHeld] = useState<Kept<T> | null>(null);
+	const latest = useRef(0);
+	const liveKept = draftFor(kept, key);
+	const liveHeld = draftFor(held, key);
+	if (kept && !liveKept) setKept(null);
+	if (held && !liveHeld) setHeld(null);
+	const live = liveHeld ?? liveKept;
+	const change = (next: T, save?: () => unknown) => {
+		const seq = ++latest.current;
+		const saving = save && heldAct(save);
+		if (!isThenable(saving)) {
+			setHeld(null);
+			if (key !== undefined) setKept({ key, value: next });
+			return;
+		}
+		setKept(null);
+		setHeld({ key, value: next });
+		holdSave(saving, readsOf(value), client.getQueryCache(), {
+			latest: () => seq === latest.current,
+			release: () => setHeld(null),
+			rollback: (error) => {
+				setHeld(null);
+				if (!failed) return;
+				drew(error);
+				failed(error, () => change(next, save));
+			},
+		});
+	};
 	return {
 		painted: !live && drawn.painted,
 		value: live ? live.value : (drawn.value as T),
-		edit: (next) => {
-			if (key !== undefined) setDraft({ key, value: next });
+		change,
+	};
+}
+
+export interface Run<K> {
+	pending: K | undefined;
+	// Pending while the client is offline: the mutation waits for the connection.
+	paused: boolean;
+	// The newest run's rejection, until the next run.
+	failure: { key: K; error: unknown } | undefined;
+	run: (key: K, onAct: () => unknown) => void;
+}
+
+// A host's hold on its acts' runs (`./acts.ts`): `key` names which act runs,
+// for a host with several. The newest run wins.
+export function useRun<K = true>(): Run<K> {
+	const [state, setState] = useState<RunState<K>>({});
+	const latest = useRef(0);
+	const pending = state.pending !== undefined;
+	const store = useMemo(() => pausedStore(pending), [pending]);
+	const paused = useSyncExternalStore(
+		store.subscribe,
+		store.snapshot,
+		store.snapshot,
+	);
+	return {
+		pending: state.pending,
+		paused,
+		failure: state.failure,
+		run: (key, onAct) => {
+			const seq = ++latest.current;
+			startRun(key, onAct, () => seq === latest.current, setState);
 		},
 	};
 }

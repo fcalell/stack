@@ -106,7 +106,7 @@ export function PickerBase<V extends string | null = string>(
 		...given,
 		value: draft.painted ? undefined : draft.value,
 		onChange: (next: V | V[]) => {
-			draft.edit(next);
+			draft.change(next);
 			(given.onChange as (next: V | V[]) => void)(next);
 		},
 	} as Drawn<V>;

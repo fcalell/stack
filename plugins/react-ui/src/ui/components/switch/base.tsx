@@ -39,7 +39,7 @@ export function SwitchBase({
 			render={<button type="button" />}
 			checked={on}
 			onCheckedChange={(next) => {
-				draft.edit(next);
+				draft.change(next);
 				onChange(next);
 			}}
 			aria-label={label}

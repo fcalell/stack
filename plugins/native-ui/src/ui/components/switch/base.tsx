@@ -33,7 +33,7 @@ export function SwitchBase({
 			accessibilityState={{ checked: on, disabled }}
 			disabled={disabled}
 			onPress={() => {
-				draft.edit(!on);
+				draft.change(!on);
 				onChange(!on);
 			}}
 			className="shrink-0 items-center justify-center min-h-target min-w-target"

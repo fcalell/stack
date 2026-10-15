@@ -75,7 +75,7 @@ export function Slider({
 		<Base.Root
 			value={at}
 			onValueChange={(next) => {
-				draft.edit(next);
+				draft.change(next);
 				onChange(next);
 			}}
 			min={min}

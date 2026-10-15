@@ -50,7 +50,7 @@ export function CheckboxBase({
 			disabled={disabled}
 			onPress={() => {
 				const next = value !== true;
-				draft.edit(next);
+				draft.change(next);
 				onChange(next);
 			}}
 			className="shrink-0 items-center justify-center size-target"

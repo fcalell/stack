@@ -57,7 +57,7 @@ export function CheckboxBase({
 			indeterminate={!painted && value === "mixed"}
 			inert={painted || undefined}
 			onCheckedChange={(next) => {
-				draft.edit(next);
+				draft.change(next);
 				onChange(next);
 			}}
 			aria-label={label}

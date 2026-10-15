@@ -82,7 +82,7 @@ export function useFrame() {
 		(held: Held) => held.drawn?.painted,
 	);
 	assertType<Equal<typeof state, boolean | undefined>>(true);
-	assertType<Equal<typeof retry, () => void>>(true);
+	assertType<Equal<typeof retry, () => Promise<unknown>>>(true);
 	useFrameRead(undefined, () => 0);
 	useFrameRead(commit, () => 0);
 	// @ts-expect-error a constant is not a read
@@ -93,9 +93,9 @@ export function useFrame() {
 export function useField() {
 	const field = useDraft(commit);
 	assertType<Equal<typeof field.value, string>>(true);
-	field.edit("next");
+	field.change("next");
 	// @ts-expect-error an edit is the datum's type
-	field.edit(1);
+	field.change(1);
 	assertType<Equal<typeof field.painted, boolean>>(true);
 	const fixed = useDraft<string>("fixed");
 	assertType<Equal<typeof fixed.value, string>>(true);

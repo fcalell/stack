@@ -1,0 +1,209 @@
+import { fallbackORPCErrorMessage, ORPCError } from "@orpc/client";
+import {
+	hashKey,
+	type MutationCache,
+	onlineManager,
+	type QueryCache,
+} from "@tanstack/react-query";
+import { dev, type Read } from "./read.ts";
+
+// What an act is made of, apart from how it is drawn: the sentence a refusal
+// reads as, whether an `onAct` hands back its promise so the act can hold it,
+// and the run and save logic the hooks in `./tanstack-query.tsx` wrap. Pure
+// (or over the caches it is given), so the tests share one core with the hooks.
+
+// The server's own message as a sentence: capitalised, one closing stop (a
+// question or an exclamation keeps its own).
+function asSentence(message: string): string {
+	const body = `${message.charAt(0).toUpperCase()}${message.slice(1).replace(/[.\s]*$/, "")}`;
+	return /[?!]$/.test(body) ? body : `${body}.`;
+}
+
+// A refusal the server worded for the viewer: a 4xx whose message the
+// procedure chose. Sign-in, permission, a missing record and a rate limit have
+// their own screens or words, and a code's stock text says nothing the act's
+// own sentence does not.
+export function refusal(error: unknown): string | undefined {
+	if (!(error instanceof ORPCError)) return undefined;
+	const { status, code, message } = error;
+	if (status < 400 || status >= 500) return undefined;
+	if ([401, 403, 404, 429].includes(status)) return undefined;
+	if (!message || message === fallbackORPCErrorMessage(code, undefined)) {
+		return undefined;
+	}
+	return asSentence(message);
+}
+
+export function isThenable(v: unknown): v is PromiseLike<unknown> {
+	return (
+		(typeof v === "object" || typeof v === "function") &&
+		v !== null &&
+		typeof (v as { then?: unknown }).then === "function"
+	);
+}
+
+// The mutation caches `watchActs` watches, which `heldAct` looks in.
+const watched = new Set<MutationCache>();
+
+// An act's `onAct`, called. In dev it names a mutation the call started
+// without returning a promise: `mutate()` in place of `return mutateAsync()`,
+// so the act could not hold it and would read as done at once. A mutation is
+// built in the cache synchronously, so one added during the call is the act's.
+export function heldAct(onAct: () => unknown): unknown {
+	if (!dev() || watched.size === 0) return onAct();
+	const before = [...watched].map((cache) => ({
+		cache,
+		seen: new Set(cache.getAll()),
+	}));
+	const result = onAct();
+	if (isThenable(result)) return result;
+	for (const { cache, seen } of before) {
+		for (const mutation of cache.getAll()) {
+			if (seen.has(mutation)) continue;
+			console.error(
+				`The act started the mutation ${nameOf(mutation)} and returned no promise. Return mutateAsync's promise so the act holds it.`,
+			);
+		}
+	}
+	return result;
+}
+
+function nameOf(mutation: { options: { mutationKey?: readonly unknown[] } }) {
+	const key = mutation.options.mutationKey;
+	return key ? hashKey(key) : "(no mutation key)";
+}
+
+// Rejections a host drew (a line, a toast, a field's error): the dev check
+// below stays quiet for them. Only objects can be marked.
+const drawn = new WeakSet<object>();
+
+export function drew(error: unknown): void {
+	if (dev() && typeof error === "object" && error !== null) drawn.add(error);
+}
+
+// A mutation that failed with no host to draw it and no `onError` of its own
+// is a failure nobody sees. A host marks the rejection it drew with `drew`
+// within the microtasks after it rejects, so one macrotask is the wait.
+// `QueryProvider` runs this in dev, over the mutation cache.
+export function watchActs(cache: MutationCache): () => void {
+	if (!dev()) return () => {};
+	watched.add(cache);
+	const stop = cache.subscribe((event) => {
+		if (event.type !== "updated" || event.action.type !== "error") return;
+		if (event.mutation.options.onError !== undefined) return;
+		const error = event.action.error;
+		setTimeout(() => {
+			if (typeof error === "object" && error !== null && drawn.has(error)) {
+				return;
+			}
+			console.error(
+				`The mutation ${nameOf(event.mutation)} failed and nothing drew its failure. Return mutateAsync's promise from an act, or give the mutation an onError.`,
+			);
+		}, 0);
+	});
+	return () => {
+		watched.delete(cache);
+		stop();
+	};
+}
+
+export interface RunState<K> {
+	pending?: K;
+	failure?: { key: K; error: unknown };
+}
+
+// One act's run: pending from the press until its promise settles, its
+// rejection kept as the failure until the next run. `latest` says whether this
+// run is still the newest, and only the newest's outcome counts. A sync throw
+// clears the state and rethrows; a result that is no promise is done at once.
+export function startRun<K>(
+	key: K,
+	onAct: () => unknown,
+	latest: () => boolean,
+	set: (state: RunState<K>) => void,
+): void {
+	let result: unknown;
+	try {
+		result = heldAct(onAct);
+	} catch (error) {
+		set({});
+		throw error;
+	}
+	if (!isThenable(result)) {
+		set({});
+		return;
+	}
+	set({ pending: key });
+	result.then(
+		() => {
+			if (latest()) set({});
+		},
+		(error) => {
+			// The host's line draws the newest failure; a superseded one is moot.
+			drew(error);
+			if (latest()) set({ failure: { key, error } });
+		},
+	);
+}
+
+// The query cache's fetches of these reads are over. A save's invalidation
+// starts the refetch synchronously in the mutation's `onSuccess`, before the
+// save's promise resolves, so a read idle at that moment is not being
+// refreshed. A stream stays fetching while it writes and would never end.
+export function whenSettled(
+	cache: QueryCache,
+	reads: readonly Read<unknown>[],
+): Promise<void> {
+	const watching = reads.filter((r) => r.kind !== "stream");
+	const busy = () =>
+		watching.some((r) => {
+			const query = cache.find({ queryKey: r.options.queryKey, exact: true });
+			return query !== undefined && query.state.fetchStatus !== "idle";
+		});
+	if (!busy()) return Promise.resolve();
+	return new Promise((resolve) => {
+		const stop = cache.subscribe(() => {
+			if (busy()) return;
+			stop();
+			resolve();
+		});
+	});
+}
+
+// What happens to a control's held value when its save settles. Only the
+// latest save counts: a resolved one releases once its reads' refetch is over
+// (and only if nothing was edited meanwhile), a rejected one rolls back.
+export function holdSave(
+	save: PromiseLike<unknown>,
+	reads: readonly Read<unknown>[],
+	cache: QueryCache,
+	to: {
+		latest: () => boolean;
+		release: () => void;
+		rollback: (error: unknown) => void;
+	},
+): void {
+	save.then(
+		() =>
+			whenSettled(cache, reads).then(() => {
+				if (to.latest()) to.release();
+			}),
+		(error) => {
+			if (to.latest()) to.rollback(error);
+			else drew(error);
+		},
+	);
+}
+
+// The connection, as a store for `useSyncExternalStore`: subscribed only while
+// something pends, true while that is so and the client is offline.
+export function pausedStore(pending: boolean): {
+	subscribe: (notify: () => void) => () => void;
+	snapshot: () => boolean;
+} {
+	return {
+		subscribe: (notify) =>
+			pending ? onlineManager.subscribe(() => notify()) : () => {},
+		snapshot: () => pending && !onlineManager.isOnline(),
+	};
+}

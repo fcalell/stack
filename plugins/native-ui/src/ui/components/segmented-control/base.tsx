@@ -53,7 +53,7 @@ export function SegmentedControlBase({
 						accessibilityLabel={option.label}
 						accessibilityState={{ checked: chosen }}
 						onPress={() => {
-							draft.edit(option.value);
+							draft.change(option.value);
 							onChange(option.value);
 						}}
 						className={cn(

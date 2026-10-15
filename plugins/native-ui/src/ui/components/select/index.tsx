@@ -93,7 +93,7 @@ export function Select<V extends string | null = string>({
 				value={chosen}
 				onChange={(next) => {
 					touch();
-					draft.edit(next);
+					draft.change(next);
 					onChange(next);
 				}}
 				open={open}

@@ -176,7 +176,7 @@ export function OptionList<V extends string = string, T = unknown>(
 	const choice = {
 		value: draft.painted ? (one ? null : []) : draft.value,
 		onChange: (next: V | V[]) => {
-			draft.edit(next);
+			draft.change(next);
 			(props.onChange as (value: V | V[]) => void)(next);
 		},
 	} as OptionChoice<V>;
