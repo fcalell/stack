@@ -1,9 +1,16 @@
 import type { Selection } from "@fcalell/plugin-api/tanstack-query";
 import { isRead, useFrameRead } from "@fcalell/plugin-api/tanstack-query";
+import type { Act } from "@fcalell/ui-core/descriptors";
 import { frameOf } from "@fcalell/ui-core/read";
+import { text } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
+import { Text as RNText, View } from "react-native";
+import { Button } from "../components/button";
 import { MissingBase } from "../components/missing/base";
+import { Spinner } from "../components/spinner";
+import { cn } from "./cn";
 import { EmptyBase, type EmptyFit, type EmptyProps } from "./empty";
+import { useShown } from "./paint";
 import { useWords } from "./words";
 
 // A frame's one subscription to its read (a root or a selection): the form it
@@ -55,4 +62,56 @@ export function FrameBody(props: {
 		);
 	}
 	return children;
+}
+
+// The trailing line carries the room under itself, as the web's does.
+const LINE = "flex-row flex-wrap items-center gap-inside pb-inside";
+
+// A frame's busy mark, after its heading: a spinner while the root it holds
+// refetches or retries, shown after `WAIT_DELAY` so a refetch the server
+// answers at once draws nothing. The spinner's ink is its place's, meta by
+// default. A selection holder and a frame with no heading draw none.
+export function BusyMark({ frame }: { frame: Frame }) {
+	const busy = frame.holds && frame.busy;
+	const shown = useShown(busy);
+	return shown ? <Spinner /> : null;
+}
+
+// One meta sentence with an optional quiet act after it: what a frame says in
+// its head about its read's state.
+export function StateLine(props: { sentence: string; act?: Act }) {
+	const { sentence, act } = props;
+	return (
+		<View className={LINE}>
+			<RNText className={cn(text({ role: "meta" }), "shrink")}>
+				{sentence}
+			</RNText>
+			{act ? (
+				<Button
+					act="quiet"
+					fit="bar"
+					label={act.label}
+					onAct={act.onAct}
+					loading={act.loading}
+				/>
+			) : null}
+		</View>
+	);
+}
+
+// The line under a frame's heading row when its root holds data it could not
+// refresh (stale, with Retry, pending while it runs) or waits for a connection
+// (paused, nothing to press).
+export function FrameLine({ frame }: { frame: Frame }) {
+	const words = useWords();
+	if (!frame.holds) return null;
+	if (frame.stale) {
+		return (
+			<StateLine
+				sentence={words.readStale}
+				act={{ label: words.retry, onAct: frame.retry, loading: frame.busy }}
+			/>
+		);
+	}
+	return frame.paused ? <StateLine sentence={words.readPaused} /> : null;
 }

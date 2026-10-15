@@ -9,11 +9,20 @@ import {
 import { Text as RNText, View } from "react-native";
 import { cn } from "../../lib/cn";
 import { useLeaveGuard } from "../../lib/leave";
-import { type Frame, FrameBody, useFrame } from "../../lib/read";
+import {
+	BusyMark,
+	type Frame,
+	FrameBody,
+	FrameLine,
+	useFrame,
+} from "../../lib/read";
 import { TouchedContext, useTouched, useTouchState } from "../../lib/touched";
 import { ActionBarBase } from "../action-bar/base";
 import { Text } from "../text";
 import type { FormGroup, FormProps } from "./index";
+
+// The legend is a row, the busy mark after its title.
+const LEGEND = "flex-row items-center gap-inside";
 
 // One group: its heading, its description and lead, and its fields, which are
 // the group's own frame when it holds a `read`.
@@ -25,18 +34,22 @@ function GroupBox(props: { group: FormGroup }) {
 			role="group"
 			accessibilityLabel={group.title}
 			accessibilityState={{
-				busy: frame.holds && frame.waits,
+				busy: frame.holds && frame.form === "waiting",
 			}}
 			className={FORM_GROUP}
 		>
 			{group.title ? (
-				<RNText
-					accessibilityRole="header"
-					className={cn(text({ role: "heading" }), FORM_LEGEND)}
-				>
-					{group.title}
-				</RNText>
+				<View className={LEGEND}>
+					<RNText
+						accessibilityRole="header"
+						className={cn(text({ role: "heading" }), FORM_LEGEND, "shrink")}
+					>
+						{group.title}
+					</RNText>
+					<BusyMark frame={frame} />
+				</View>
 			) : null}
+			<FrameLine frame={frame} />
 			{group.description ? <Text role="meta">{group.description}</Text> : null}
 			{group.lead}
 			<View className={FORM_GROUP}>
@@ -84,12 +97,13 @@ export function FormBody({
 	return (
 		<TouchedContext.Provider value={touch}>
 			<View
-				accessibilityState={{ busy: frame.holds && frame.waits }}
+				accessibilityState={{ busy: frame.holds && frame.form === "waiting" }}
 				className={form({
 					holds: groups ? "sections" : "fields",
 					in: within,
 				})}
 			>
+				{held === undefined ? <FrameLine frame={frame} /> : null}
 				<FrameBody frame={frame} fit="frame" empty={empty} failed={failed}>
 					{groups
 						? groups.map((group, index) => (

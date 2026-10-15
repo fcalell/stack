@@ -27,7 +27,7 @@ import type { Closed } from "../../lib/closed.ts";
 import { EmptyBase, type EmptyProps } from "../../lib/empty.tsx";
 import { DEEPER, HeadingContext } from "../../lib/heading.ts";
 import { Painted } from "../../lib/paint.tsx";
-import { FrameBody, useFrame } from "../../lib/read.tsx";
+import { BusyMark, FrameBody, FrameLine, useFrame } from "../../lib/read.tsx";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useSettleName } from "../../lib/settle.ts";
 import { useTouched } from "../../lib/touched.ts";
@@ -177,6 +177,7 @@ export function Section({
 				{partText(title)}
 			</span>
 			{tally}
+			<BusyMark frame={frame} />
 		</>
 	);
 	const body =
@@ -199,7 +200,7 @@ export function Section({
 				setOpen(next);
 				onToggle?.(next);
 			}}
-			aria-busy={(frame.holds && frame.waits) || undefined}
+			aria-busy={(frame.holds && frame.form === "waiting") || undefined}
 			style={settle}
 			className={cn(SECTION, BOX)}
 		>
@@ -244,6 +245,7 @@ export function Section({
 						</div>
 					) : null}
 				</div>
+				<FrameLine frame={frame} />
 				{blocked === undefined ? null : (
 					<Reason shown={pressed || touched} end>
 						{blocked}

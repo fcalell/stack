@@ -10,7 +10,7 @@ import {
 import { useState } from "react";
 import { FormContext } from "../../lib/form.ts";
 import { useLeaveGuard } from "../../lib/leave.ts";
-import { FrameBody, useFrame } from "../../lib/read.tsx";
+import { BusyMark, FrameBody, FrameLine, useFrame } from "../../lib/read.tsx";
 import { useSettleName } from "../../lib/settle.ts";
 import { TouchedContext, useTouchState } from "../../lib/touched.ts";
 import { ActionBarBase } from "../action-bar/base.tsx";
@@ -19,6 +19,8 @@ import type { FormGroup, FormProps } from "./index.tsx";
 
 const STACK = "flex flex-col";
 const GROUP = "flex flex-col min-w-0";
+// The legend is a line, the busy mark after its title.
+const LEGEND = "flex items-center gap-pair";
 // In a sheet's body, which scrolls, the bar stays at the
 // scroller's bottom edge. A sticky box sticks inside the scroller's padding, so
 // the negative offset reaches the edge; the negative margin and matching
@@ -35,15 +37,17 @@ function GroupBox(props: { group: FormGroup }) {
 	const settle = useSettleName();
 	return (
 		<fieldset
-			aria-busy={(frame.holds && frame.waits) || undefined}
+			aria-busy={(frame.holds && frame.form === "waiting") || undefined}
 			style={group.read === undefined ? undefined : settle}
 			className={cn(FORM_GROUP, GROUP)}
 		>
 			{group.title ? (
-				<legend className={cn(text({ role: "heading" }), FORM_LEGEND)}>
+				<legend className={cn(text({ role: "heading" }), FORM_LEGEND, LEGEND)}>
 					{group.title}
+					<BusyMark frame={frame} />
 				</legend>
 			) : null}
+			<FrameLine frame={frame} />
 			{group.description ? <Text role="meta">{group.description}</Text> : null}
 			{group.lead}
 			<FrameBody
@@ -90,13 +94,16 @@ export function FormBody({
 				<form
 					onSubmit={(event) => event.preventDefault()}
 					onChange={touch.touch}
-					aria-busy={pending || (frame.holds && frame.waits) || undefined}
+					aria-busy={
+						pending || (frame.holds && frame.form === "waiting") || undefined
+					}
 					style={read === undefined ? undefined : settle}
 					className={cn(
 						form({ holds: groups ? "sections" : "fields", in: within }),
 						STACK,
 					)}
 				>
+					<FrameLine frame={frame} />
 					<FrameBody frame={frame} fit="frame" empty={empty} failed={failed}>
 						{groups
 							? groups.map((group, index) => (

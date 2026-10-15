@@ -11,7 +11,7 @@ import { Switch } from "../../components/switch/index.tsx";
 import { Text } from "../../components/text/index.tsx";
 import type { EmptyProps } from "../../lib/empty.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
-import { readsAt } from "../waiting.ts";
+import { isHeld, readsAt } from "../waiting.ts";
 
 const change = () => {};
 const never = () => new Promise<void>(() => {});
@@ -111,6 +111,8 @@ function Submitted(props: { children: ReactNode }) {
 // form of two groups with its bar under the hairline. Loading, the create
 // form presses its submit act, and a form over a read and one of groups over
 // a read wait beside it, painted.
+// Busy, stale and paused draw both over a read that holds rows: the mark after
+// the group's legend, the line under it or at the form's top.
 export function drawForm(frame: ShowcaseFrame) {
 	const { name } = frame.cell;
 	if (name !== "FORM.holds.fields" && name !== "FORM.holds.sections")
@@ -118,6 +120,13 @@ export function drawForm(frame: ShowcaseFrame) {
 	const loading = frame.state === "loading";
 	const reads = readsAt(frame.id);
 	const other = readsAt(`${frame.id}/2`);
+	if (isHeld(frame.state))
+		return (
+			<div className="flex flex-col gap-sections">
+				<Over read={reads[frame.state]} />
+				<Grouped read={readsAt(`${frame.id}/3`)[frame.state]} />
+			</div>
+		);
 	if (frame.state === "error")
 		return (
 			<div className="flex flex-col gap-sections">

@@ -28,7 +28,7 @@ import { EmptyBase, type EmptyProps } from "../../lib/empty";
 import { Ink } from "../../lib/ink";
 import { Painted } from "../../lib/paint";
 import { partText } from "../../lib/parts";
-import { FrameBody, useFrame } from "../../lib/read";
+import { BusyMark, FrameBody, FrameLine, useFrame } from "../../lib/read";
 import { useWords } from "../../lib/words";
 import { ButtonBase } from "../button/base";
 import { Count } from "../count";
@@ -166,6 +166,7 @@ export function Section({
 				{partText(title)}
 			</RNText>
 			{tally}
+			<BusyMark frame={frame} />
 		</>
 	);
 	const body =
@@ -182,7 +183,7 @@ export function Section({
 		);
 	return (
 		<View
-			accessibilityState={{ busy: frame.holds && frame.waits }}
+			accessibilityState={{ busy: frame.holds && frame.form === "waiting" }}
 			className={cn(SECTION, BOX)}
 		>
 			<View className={SECTION_HEAD}>
@@ -238,6 +239,7 @@ export function Section({
 						</View>
 					) : null}
 				</View>
+				<FrameLine frame={frame} />
 			</View>
 			{/* A section without children draws no body. */}
 			{body === undefined || body === null ? null : (

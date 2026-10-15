@@ -206,6 +206,7 @@ const NATIVE_OVERLAYS = [
 	"opacity-0",
 	"overflow-hidden",
 	"pb-card",
+	"pb-inside",
 	"pt-float",
 	"pt-pair",
 	"px-card",

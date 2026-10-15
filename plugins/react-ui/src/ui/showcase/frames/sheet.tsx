@@ -14,7 +14,7 @@ import { ConfirmSheet } from "../../components/sheet/confirm.tsx";
 import { Sheet } from "../../components/sheet/index.tsx";
 import { Thread } from "../../components/thread/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
-import { readsAt } from "../waiting.ts";
+import { isHeld, readsAt } from "../waiting.ts";
 import { StandInRows } from "./layout-context.tsx";
 import { press, Stage } from "./overlay-stage.tsx";
 import { TURN, TURNS } from "./thread.tsx";
@@ -196,7 +196,7 @@ const pressSubmit = (stage: HTMLElement) =>
 
 // The body's read by state: the data landed, the wait that holds the submit
 // painted and inert, the failure with its Retry in the body's place, and an
-// empty selection.
+// empty selection; busy, stale and paused hold the data beside their mark or line.
 function readOf(frame: ShowcaseFrame) {
 	const reads = readsAt(frame.id);
 	switch (frame.state) {
@@ -209,7 +209,7 @@ function readOf(frame: ShowcaseFrame) {
 		case "empty":
 			return reads.empty.at((rows) => rows);
 		default:
-			return undefined;
+			return isHeld(frame.state) ? reads[frame.state] : undefined;
 	}
 }
 
@@ -258,12 +258,14 @@ const typeAndRun = (stage: HTMLElement) =>
 // is the data landed at rest, the submit painted and inert while it waits, the
 // failure with Retry in the body's place, and the empty sentence), and the confirm on the primary act cell: its typed name blocked
 // on `disabled` (the reason shown as the card's is), typed and its act
-// running on `loading`. The rows inside are context. The bar fit cell draws the
+// running on `loading`. The pane fit also draws busy, stale and paused over a
+// read that holds rows. The rows inside are context. The bar fit cell draws the
 // docked form, since the docked foot draws no matrix cell of its own: a
 // conversation with a four-question sheet in its foot at a phone's height.
 export function drawSheet(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
 	const { state } = frame;
+	if (isHeld(state) && cell !== "SHEET_DESKTOP.fit.pane") return undefined;
 	if (cell === "SHEET_DESKTOP.fit.form")
 		return (
 			<Stage contain ready={state === "disabled" ? pressSubmit : undefined}>

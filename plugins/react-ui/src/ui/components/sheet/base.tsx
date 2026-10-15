@@ -31,7 +31,7 @@ import type { EmptyProps } from "../../lib/empty.tsx";
 import { useReturnFocus } from "../../lib/focus.ts";
 import { useTouch } from "../../lib/media.ts";
 import { PortalContainer } from "../../lib/portal.ts";
-import { FrameBody, useFrame } from "../../lib/read.tsx";
+import { BusyMark, FrameBody, FrameLine, useFrame } from "../../lib/read.tsx";
 import { ActFailed, ReasonHostContext } from "../../lib/reason.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
 import { useSettleName } from "../../lib/settle.ts";
@@ -90,7 +90,7 @@ const HEAD_ROW = "flex items-center";
 const HEAD_ROW_WRAP = "flex-wrap";
 const HEAD_SUBMIT = "ms-auto min-w-0 max-w-full";
 const TITLE_BLOCK = "flex flex-col grow min-w-0";
-const TITLE_SLOT = "flex items-center min-w-0";
+const TITLE_SLOT = "flex items-center gap-inside min-w-0";
 const TITLE = "min-w-0";
 // The desktop head is a two-line row tall (the title over its description)
 // whether or not the description stands; on touch the row is the acts'.
@@ -258,6 +258,7 @@ export function SheetBase({
 			>
 				{title}
 			</span>
+			<BusyMark frame={frame} />
 		</h2>
 	);
 	const said = description ? (
@@ -306,6 +307,7 @@ export function SheetBase({
 	const framed = centred ? (
 		<>
 			{headRow}
+			<FrameLine frame={frame} />
 			{body}
 			{actionBar}
 		</>
@@ -314,6 +316,7 @@ export function SheetBase({
 			<div className={cn(SHEET_HEAD, HEAD)}>
 				{headRow}
 				{touch ? said : null}
+				<FrameLine frame={frame} />
 				{headSubmit && submit?.blocked ? (
 					<Reason shown={touched || pressed} end>
 						{submit.blocked}
@@ -330,7 +333,7 @@ export function SheetBase({
 			) : body ? (
 				<div
 					ref={setBodyNode}
-					aria-busy={(frame.holds && frame.waits) || undefined}
+					aria-busy={(frame.holds && frame.form === "waiting") || undefined}
 					style={read === undefined ? undefined : settle}
 					className={cn(SHEET_BODY, BODY)}
 				>

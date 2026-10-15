@@ -34,7 +34,7 @@ import { Lifted, Scroll } from "../../lib/hosts";
 import { navigate } from "../../lib/navigate";
 import { inertProps, Painted } from "../../lib/paint";
 import { partText } from "../../lib/parts";
-import { FrameBody, useFrame } from "../../lib/read";
+import { BusyMark, FrameBody, FrameLine, useFrame } from "../../lib/read";
 import type { Route } from "../../lib/route";
 import { useWords } from "../../lib/words";
 import { IconButton } from "../icon-button";
@@ -50,7 +50,9 @@ const PANE = "flex-1";
 // act, the title's floor and the gaps drop whole to a second line.
 const TOP_BAR = "relative flex-row flex-wrap items-start";
 const ACTS = "shrink-0 flex-row items-center gap-acts ms-auto";
-const TITLE = "min-w-0 grow";
+// The title is a row: its text shrinks and wraps, the busy mark after it.
+const TITLE = "min-w-0 grow flex-row items-center gap-inside";
+const NAME = "shrink";
 // The body scrolls under the fixed bar, and the foot docks under it.
 const BODY = "flex-1";
 const BODY_WRAP = "relative flex-1";
@@ -152,24 +154,22 @@ export function Pane({
 	return (
 		<BackRoute.Provider value={back}>
 			<View
-				accessibilityState={{ busy: frame.holds && frame.waits }}
+				accessibilityState={{ busy: frame.holds && frame.form === "waiting" }}
 				className={PANE}
 			>
 				<View className={cn(PAGE_HEAD, PAGE_HEAD_TOUCH, far && PAGE_HEAD_ROOM)}>
 					<View className={cn(PAGE_TOP_BAR, TOP_BAR)}>
 						{lead ? <View className={PAGE_TOP_BAR_START}>{lead}</View> : null}
-						<RNText
-							accessibilityRole="header"
-							{...inertProps(name.painted)}
-							className={cn(
-								text({ role: "title" }),
-								TITLE,
-								PAGE_TITLE_FLOOR,
-								PAGE_TITLE_BLOCK,
-							)}
-						>
-							{name.painted ? <Painted role="title" /> : partText(name.value)}
-						</RNText>
+						<View className={cn(TITLE, PAGE_TITLE_FLOOR, PAGE_TITLE_BLOCK)}>
+							<RNText
+								accessibilityRole="header"
+								{...inertProps(name.painted)}
+								className={cn(text({ role: "title" }), NAME)}
+							>
+								{name.painted ? <Painted role="title" /> : partText(name.value)}
+							</RNText>
+							<BusyMark frame={frame} />
+						</View>
 						<View className={cn(ACTS, PAGE_TOP_BAR_END)}>
 							{acts}
 							{overflowAt.painted || items.length ? (
@@ -182,6 +182,7 @@ export function Pane({
 							) : null}
 						</View>
 					</View>
+					<FrameLine frame={frame} />
 				</View>
 				<Lifted
 					behavior="padding"

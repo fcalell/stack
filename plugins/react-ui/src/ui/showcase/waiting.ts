@@ -4,8 +4,9 @@ import type { ShowcaseFrame } from "./cells.ts";
 // The reads a frame's showcase drawer hands a frame to show each of its forms:
 // one that never answers, so the frame stays painted, one that always rejects,
 // so it draws its failure, one that rejects as not found, so it draws the
-// missing form, one that answers nothing and one that answers rows. No retry,
-// so a failure shows at once. A frame that holds a read as its root is the one
+// missing form, one that answers nothing, one that answers rows and three that
+// hold rows and are busy, stale or paused. No retry, so a failure shows at
+// once. A frame that holds a read as its root is the one
 // holder of its query, so a drawer that draws several frames, or a page of
 // frames, takes each its own set with `readsAt`.
 export interface Reads {
@@ -17,9 +18,23 @@ export interface Reads {
 	missing: Read<readonly string[]>;
 	/** A read that answers no rows: its frame draws its empty form. */
 	empty: Read<readonly string[]>;
+	/** A read that answers rows and refetches without end: its frame draws the loaded tree and its busy mark. */
+	busy: Read<readonly string[]>;
+	/** A read whose refetch failed over rows it holds: its frame draws the loaded tree and its stale line. */
+	stale: Read<readonly string[]>;
+	/** A read that holds rows and waits for a connection: its frame draws the loaded tree and its paused line. */
+	paused: Read<readonly string[]>;
 	/** A read that answers rows: its frame draws the loaded tree and, for an array, its count. */
 	ready: Read<readonly string[]>;
 }
+
+/** The states that hold rows beside a line or a mark of their read's. */
+export type HeldState = "busy" | "stale" | "paused";
+
+export const isHeld = (state: string): state is HeldState =>
+	state === "busy" || state === "stale" || state === "paused";
+
+const ROWS: readonly string[] = ["Ana Ruiz", "Ben Kaya", "Ema Okafor"];
 
 const made = new Map<string, Reads>();
 
@@ -53,13 +68,35 @@ export function readsAt(key = ""): Reads {
 		}),
 		ready: read({
 			queryKey: at("ready"),
-			queryFn: () =>
-				Promise.resolve<readonly string[]>([
-					"Ana Ruiz",
-					"Ben Kaya",
-					"Ema Okafor",
-				]),
+			queryFn: () => Promise.resolve(ROWS),
 			staleTime: Number.POSITIVE_INFINITY,
+		}),
+		// The three below hold rows from the start and are stale at once, so
+		// mounting refetches: the first never answers, the second fails, the
+		// third is parked as a lost connection parks a fetch.
+		busy: read({
+			queryKey: at("busy"),
+			queryFn: () => new Promise<never>(() => {}),
+			initialData: ROWS,
+			staleTime: 0,
+		}),
+		stale: read({
+			queryKey: at("stale"),
+			queryFn: () => Promise.reject(new Error("The showcase refetch fails.")),
+			initialData: ROWS,
+			staleTime: 0,
+			retry: false,
+		}),
+		paused: read({
+			queryKey: at("paused"),
+			queryFn: ({ client, queryKey }) => {
+				client.getQueryCache().find({ queryKey })?.setState({
+					fetchStatus: "paused",
+				});
+				return new Promise<never>(() => {});
+			},
+			initialData: ROWS,
+			staleTime: 0,
 		}),
 	};
 	made.set(key, reads);

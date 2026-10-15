@@ -9,7 +9,7 @@ import { Text } from "../../components/text/index.tsx";
 import { Thread } from "../../components/thread/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { WORKFLOW } from "../graphs.ts";
-import { type Reads, readsAt } from "../waiting.ts";
+import { type HeldState, isHeld, type Reads, readsAt } from "../waiting.ts";
 import {
 	STAND_IN_ENTRIES,
 	STAND_IN_ROW,
@@ -127,6 +127,20 @@ function Waiting({ reads }: { reads: Reads }) {
 					/>
 				}
 			>
+				<Section title="Recent">
+					<StandInList />
+				</Section>
+			</Pane>
+		</Short>
+	);
+}
+
+// A Pane over a read that holds rows: busy draws the mark after the title,
+// stale and paused the line under the bar; the body is the loaded tree.
+function Held({ reads, state }: { reads: Reads; state: HeldState }) {
+	return (
+		<Short>
+			<Pane title="Deploys" read={reads[state]} actions={ACTIONS} more={MORE}>
 				<Section title="Recent">
 					<StandInList />
 				</Section>
@@ -368,7 +382,7 @@ function Tasked() {
 // The cell picks the form; the loading state draws a Pane over a read that
 // waits, the error state one over a read that fails and one over a read that
 // answers not found, and the empty state draws the empty state's page form
-// alone and over children, then over a read that answers nothing. The title cell draws the Pane's forms in a Place:
+// alone and over children, then over a read that answers nothing. The busy, stale and paused states draw a Pane over a read that holds rows, on the title cell. The title cell draws the Pane's forms in a Place:
 // one, two (a list, then its record), three, a covering one, a wide one
 // holding a Canvas and one holding a Thread. The bar icon act draws one Pane
 // with its more menu open; the body icon act (the touch top bar's) an
@@ -383,6 +397,12 @@ export function drawPane(frame: ShowcaseFrame) {
 				<Waiting reads={reads} />
 			</Column>
 		);
+	if (isHeld(frame.state))
+		return cell === "TEXT.role.title" ? (
+			<Column>
+				<Held reads={reads} state={frame.state} />
+			</Column>
+		) : undefined;
 	if (frame.state === "error") return <Failed reads={reads} />;
 	if (frame.state === "empty")
 		return (

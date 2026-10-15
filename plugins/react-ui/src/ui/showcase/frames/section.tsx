@@ -4,7 +4,7 @@ import { List } from "../../components/list/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import { TouchedContext } from "../../lib/touched.ts";
 import type { ShowcaseFrame } from "../cells.ts";
-import { type Reads, readsAt } from "../waiting.ts";
+import { type HeldState, isHeld, type Reads, readsAt } from "../waiting.ts";
 import {
 	STAND_IN_ENTRIES,
 	STAND_IN_ROW,
@@ -45,6 +45,18 @@ function Waiting({ reads }: { reads: Reads }) {
 				act={{ label: "Add", onAct: act }}
 				read={waiting.at((rows) => rows)}
 			>
+				<Group items={STAND_IN_ENTRIES} />
+			</Section>
+		</Wide>
+	);
+}
+
+// A Section over a read that holds rows: busy draws the mark after the title,
+// stale and paused the line under the head; the body is the loaded tree.
+function Held({ reads, state }: { reads: Reads; state: HeldState }) {
+	return (
+		<Wide>
+			<Section title="Members" count={3} act={INVITE} read={reads[state]}>
 				<Group items={STAND_IN_ENTRIES} />
 			</Section>
 		</Wide>
@@ -118,10 +130,16 @@ function Members(props: { blocked?: boolean }) {
 // found. A Section over a read that answered rows shows their count. An empty
 // section is drawn by its `empty` state: framed with a mark, a title and an
 // act, and the quiet sentence alone, then over a read that answers nothing.
+// The busy, stale and paused states draw a Section over a read that holds
+// rows, on the heading cell.
 export function drawSection(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
 	const add = { label: "Add", onAct: act };
 	const reads = readsAt(frame.id);
+	if (isHeld(frame.state))
+		return cell === "TEXT.role.heading" ? (
+			<Held reads={reads} state={frame.state} />
+		) : undefined;
 	if (frame.state === "error")
 		return <Failed first={reads} second={readsAt(`${frame.id}/2`)} />;
 	if (frame.state === "empty")

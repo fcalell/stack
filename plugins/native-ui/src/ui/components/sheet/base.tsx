@@ -49,7 +49,13 @@ import type { EmptyProps } from "../../lib/empty";
 import { FieldNameContext } from "../../lib/field";
 import { timing } from "../../lib/motion";
 import { RaisedGround } from "../../lib/raised";
-import { FrameBody, useFrame } from "../../lib/read";
+import {
+	BusyMark,
+	type Frame,
+	FrameBody,
+	FrameLine,
+	useFrame,
+} from "../../lib/read";
 import { type ReasonHost, ReasonHostContext } from "../../lib/reason";
 import {
 	type Touched,
@@ -116,6 +122,8 @@ interface Parts {
 	failed?: string;
 	// The body's read waits: the submit and the form's bar paint, inert.
 	painted?: boolean;
+	// The body's frame, whose busy mark and state line the head draws.
+	frame: Frame;
 	host?: ReasonHost;
 	touched: Touched;
 	// The app's query client: the body is drawn in gorhom's portal, outside the
@@ -214,6 +222,7 @@ function Head() {
 		reason,
 		failed,
 		painted,
+		frame,
 		above,
 	} = useParts();
 	return (
@@ -253,6 +262,7 @@ function Head() {
 							>
 								{title}
 							</RNText>
+							<BusyMark frame={frame} />
 						</View>
 					</View>
 					{submit ? (
@@ -273,6 +283,7 @@ function Head() {
 				{description ? (
 					<RNText className={text({ role: "meta" })}>{description}</RNText>
 				) : null}
+				<FrameLine frame={frame} />
 				{reason ? (
 					<RNText className={cn(text({ role: "meta" }), REASON)}>
 						{reason}
@@ -453,6 +464,7 @@ export function SheetBase({
 		foot,
 		failed,
 		painted: frame.waits || painted,
+		frame,
 		acts,
 		bar,
 		above,
@@ -481,7 +493,7 @@ export function SheetBase({
 	else if (children || read !== undefined)
 		body = (
 			<View
-				accessibilityState={{ busy: frame.holds && frame.waits }}
+				accessibilityState={{ busy: frame.holds && frame.form === "waiting" }}
 				className={cn(SHEET_BODY, BODY)}
 			>
 				{read === undefined ? (

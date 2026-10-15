@@ -37,6 +37,9 @@ const DRAWN_STATES = [
 	"error",
 	"empty",
 	"selected",
+	"busy",
+	"stale",
+	"paused",
 ] as const satisfies readonly State[];
 export type DrawnState = (typeof DRAWN_STATES)[number];
 const isDrawn = (state: State): state is DrawnState =>

@@ -34,7 +34,7 @@ import { HeadingContext } from "../../lib/heading.ts";
 import { DistanceContext, useTouch } from "../../lib/media.ts";
 import { Painted } from "../../lib/paint.tsx";
 import { partText } from "../../lib/parts.ts";
-import { FrameBody, useFrame } from "../../lib/read.tsx";
+import { BusyMark, FrameBody, FrameLine, useFrame } from "../../lib/read.tsx";
 import { useScrolls } from "../../lib/scrolls.ts";
 import { useSettleName } from "../../lib/settle.ts";
 import { useWords } from "../../lib/words.tsx";
@@ -72,11 +72,14 @@ const HEAD_TOUCH = "touch:py-inside";
 const ROW = "flex items-center touch:flex-wrap touch:items-start";
 const START = "touch:-ms-icon-inset";
 const ACTS = "flex shrink-0 items-center gap-acts ms-auto touch:-me-icon-inset";
-// The title truncates on the desktop; on touch it wraps, with a step of block
-// padding so a wrapped title never butts the head's edges, holding at least two
-// fifths of the row (a structural fraction, never a width).
+// The heading is the title's line, the busy mark after the title. On touch it
+// holds at least two fifths of the row (a structural fraction, never a width),
+// with a step of block padding so a wrapped title never butts the head's edges.
 const TITLE =
-	"min-w-0 grow truncate touch:min-w-2/5 touch:basis-0 touch:overflow-visible touch:whitespace-normal touch:text-clip touch:py-inside";
+	"flex min-w-0 grow items-center gap-inside touch:min-w-2/5 touch:basis-0 touch:py-inside";
+// The title truncates on the desktop; on touch it wraps.
+const NAME =
+	"min-w-0 truncate touch:overflow-visible touch:whitespace-normal touch:text-clip";
 // The body scrolls under the fixed head, taking a tab stop only while it
 // scrolls with nothing tabbable inside. What stands in it stands within the
 // measure at its start, so a label stays near its value and a Save near the
@@ -222,7 +225,10 @@ export function Pane({
 	const Title = name.painted ? "p" : "h1";
 	const heading = (
 		<Title id={titleId} className={cn(text({ role: "title" }), TITLE)}>
-			{name.painted ? <Painted role="title" /> : partText(name.value)}
+			<span className={NAME}>
+				{name.painted ? <Painted role="title" /> : partText(name.value)}
+			</span>
+			<BusyMark frame={frame} />
 		</Title>
 	);
 	const named = name.painted ? undefined : titleId;
@@ -240,6 +246,7 @@ export function Pane({
 					{close}
 				</span>
 			</div>
+			<FrameLine frame={frame} />
 		</header>
 	);
 	return (
@@ -249,7 +256,7 @@ export function Pane({
 					<section
 						ref={setPaneNode}
 						aria-labelledby={named}
-						aria-busy={(frame.holds && frame.waits) || undefined}
+						aria-busy={(frame.holds && frame.form === "waiting") || undefined}
 						style={read === undefined ? undefined : settle}
 						data-page=""
 						data-cover={cover ? "" : undefined}

@@ -664,7 +664,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"PAGE_BODY",
 				"PAGE_BODY_OVER_FOOT",
 			],
-			states: ["rest", "loading", "empty", "error"],
+			states: ["rest", "loading", "empty", "error", "busy", "stale", "paused"],
 			owns: {
 				roles: ["title", "heading", "meta"],
 				colors: [
@@ -847,7 +847,16 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SECTION_TITLE",
 				"SECTION_TOGGLE",
 			],
-			states: [...PRESS, "disabled", "loading", "empty", "error"],
+			states: [
+				...PRESS,
+				"disabled",
+				"loading",
+				"empty",
+				"error",
+				"busy",
+				"stale",
+				"paused",
+			],
 			owns: {
 				roles: ["heading", "meta", "body", "caption"],
 				colors: [
@@ -939,7 +948,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"TEXT.role.meta",
 			],
 			holds: ["FORM", "FORM_FOOT", "FORM_GROUP", "FORM_LEGEND"],
-			states: ["rest", "loading", "empty", "error"],
+			states: ["rest", "loading", "empty", "error", "busy", "stale", "paused"],
 			owns: {
 				roles: ["heading", "body", "meta"],
 				colors: ["edge", "ink-body", "ink-meta", "raised"],
@@ -1624,7 +1633,16 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SHEET_DOCKED_FOOT",
 				"SHEET_DOCKED_FLOOR",
 			],
-			states: ["rest", "disabled", "loading", "empty", "error"],
+			states: [
+				"rest",
+				"disabled",
+				"loading",
+				"empty",
+				"error",
+				"busy",
+				"stale",
+				"paused",
+			],
 			owns: {
 				roles: ["heading", "body", "meta"],
 				colors: [
