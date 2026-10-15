@@ -36,6 +36,10 @@
 			"types": "./dist/ability-client.d.ts",
 			"default": "./dist/ability-client.js"
 		},
+		"./preload": {
+			"types": "./dist/preload.d.ts",
+			"default": "./dist/preload.js"
+		},
 		"./read": {
 			"types": "./dist/read.d.ts",
 			"default": "./dist/read.js"

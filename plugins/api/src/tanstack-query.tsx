@@ -18,6 +18,7 @@ import {
 	watchActs,
 } from "@fcalell/plugin-api/acts";
 import { registerOperationContext } from "@fcalell/plugin-api/client";
+import { bindClient } from "@fcalell/plugin-api/preload";
 import {
 	type EntityName,
 	handleMutationSuccess,
@@ -84,6 +85,7 @@ export {
 	isThenable,
 	refusal,
 } from "@fcalell/plugin-api/acts";
+export { preload } from "@fcalell/plugin-api/preload";
 export type {
 	Datum,
 	Drawn,
@@ -216,6 +218,9 @@ export interface QueryProviderProps {
 // none is supplied so a bare consumer gets sane behaviour with zero config.
 export function QueryProvider(props: QueryProviderProps) {
 	const [client] = useState(() => props.client ?? createQueryClient());
+	// In render, so it holds before the router's first load; assigning twice is
+	// harmless.
+	bindClient(client);
 	const { settle, listen } = props;
 	useEffect(
 		() => (settle ? settleReads(client, settle) : undefined),

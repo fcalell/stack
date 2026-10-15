@@ -137,6 +137,27 @@ const answer = read<Turn>(
 A WebSocket channel is a stream read too: `channelRead` in `@fcalell/plugin-node/live`
 (`plugins/node/guide/live.md`).
 
+## Preloading a route
+
+A route warms its reads before its components mount with `preload`, from its TanStack Router
+`loader`. Write each handle once, as a function both the loader and the component call, so the key
+is the same:
+
+```tsx
+const project = (id: string) => orpc.projects.get.read({ id });
+export const Route = createFileRoute("/projects/$projectId")({
+  loader: ({ params }) => preload(project(params.projectId)),
+  component: () => <ProjectPane id={Route.useParams().projectId} />,
+});
+```
+
+`preload(...selections)` starts each distinct read and returns at once, so navigation is never held;
+the component builds its own handle and draws what landed, or paints and settles if it is still in
+flight. A fresh read costs no request (`staleTime` decides), a `pages` read fetches its first page,
+and a failed prefetch is dropped. Streams, idle reads (`skipToken`, `enabled: false`) and reads
+whose input comes from another read's data are not preloaded. It uses the client `QueryProvider`
+holds, so it does nothing before a provider has rendered.
+
 ## Not found
 
 A procedure that throws `ApiError("NOT_FOUND")` reaches the screen as a failed query.
