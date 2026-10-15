@@ -5,3 +5,4 @@ stories/
 .stack
 .wrangler
 stack-screens
+.tanstack/
