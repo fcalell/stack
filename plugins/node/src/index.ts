@@ -126,6 +126,11 @@ export const node = plugin("node", {
 			trigger:
 				"Adding a background service, a WebSocket channel or a raw HTTP mount to the Node server",
 		},
+		{
+			page: "live",
+			trigger:
+				"Drawing a WebSocket channel's data on a screen: a channel read held by a frame",
+		},
 	],
 
 	slots: {

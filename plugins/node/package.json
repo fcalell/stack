@@ -22,6 +22,10 @@
 		"./client": {
 			"types": "./dist/client/index.d.ts",
 			"default": "./dist/client/index.js"
+		},
+		"./live": {
+			"types": "./dist/live/index.d.ts",
+			"default": "./dist/live/index.js"
 		}
 	},
 	"files": [
@@ -51,12 +55,21 @@
 		"ws": "^8.21.1",
 		"zod": "^4.3.6"
 	},
+	"peerDependencies": {
+		"@tanstack/react-query": "^5.100.2"
+	},
+	"peerDependenciesMeta": {
+		"@tanstack/react-query": {
+			"optional": true
+		}
+	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.16",
 		"@fcalell/plugin-auth": "workspace:*",
 		"@fcalell/plugin-db": "workspace:*",
 		"@fcalell/auth-testing": "workspace:*",
 		"@fcalell/typescript-config": "workspace:*",
+		"@tanstack/react-query": "^5.104.0",
 		"@types/node": "^25.5.0",
 		"@types/ws": "^8.18.1",
 		"typescript": "^5.9.3"
