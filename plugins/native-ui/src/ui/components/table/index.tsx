@@ -1229,7 +1229,7 @@ function Phone(props: {
 			<ListBase
 				drawn={
 					painted
-						? { painted: true, value: props.rows[0] }
+						? { painted: true, phase: "waiting", value: props.rows[0] }
 						: { painted: false, value: props.rows }
 				}
 				row={slots(painted)}
@@ -1241,7 +1241,7 @@ function Phone(props: {
 					paint={() => (
 						<View className={MORE_PAGE}>
 							<ListBase
-								drawn={{ painted: true, value: props.blank }}
+								drawn={{ painted: true, phase: "waiting", value: props.blank }}
 								row={slots(true)}
 							/>
 						</View>

@@ -30,6 +30,7 @@ import {
 	type Held,
 	type Holds,
 	holdReads,
+	holdsOf,
 	type Draft as Kept,
 	NO_HOLDS,
 	paintReads,
@@ -56,7 +57,6 @@ import {
 	OPERATION_CONTEXT_SYMBOL,
 } from "@orpc/tanstack-query";
 import {
-	hashKey,
 	MutationCache,
 	QueryClient,
 	type QueryClientConfig,
@@ -94,6 +94,7 @@ export { preload } from "@fcalell/plugin-api/preload";
 export type {
 	Datum,
 	Drawn,
+	DrawnPhase,
 	Held,
 	Holds,
 	Read,
@@ -256,17 +257,18 @@ export function useSelections<const V extends readonly unknown[]>(
 	readonly [K in keyof V]: Drawn<Unwrap<V[K]>>;
 } {
 	const plan = useMemo(() => planSelections(values), [values]);
-	useEffect(() => paintReads(plan.reads), [plan]);
+	useEffect(() => paintReads(plan.painted), [plan]);
 	return useQueries({
 		queries: plan.reads.map((r) => ({ ...r.options, placeholderData })),
 		combine: plan.draw,
 	}) as never;
 }
 
-// The query hashes the frames above hold and the surface they stand on,
-// identity only: a nested frame holds the reads of its selection that are not
-// in it. A frame that holds nothing and starts no surface passes its parent's
-// holds on, so the value changes only when a frame holds.
+// The query hashes the frames above hold, identity only: it places flags (which
+// frame draws a read's busy mark and its stale and paused line) and changes no
+// frame's form. A nested frame holds the read of its selection that is not in
+// it. A frame that holds nothing passes its parent's holds on, and frames over
+// the same keys share one identity (`holdsOf`).
 const HoldsContext = createContext<Holds>(NO_HOLDS);
 
 export function FrameHolds(props: { holds: Holds; children?: ReactNode }) {
@@ -276,17 +278,15 @@ export function FrameHolds(props: { holds: Holds; children?: ReactNode }) {
 // A frame's one subscription: the same observer a leaf makes (placeholder on),
 // with `derive` run in `combine`, so the frame renders when its derived state
 // changes (form, count, busy) and never on a value change. Pass a `derive` that
-// is stable (a module function): its identity is the combine's. The frame holds
-// the reads of its selection that no enclosing frame holds (the dev registry
-// counts them) and returns `holds`, those hashes with the enclosing ones, for
-// its body to publish through `FrameHolds`; `holding` says it holds any. `retry`
-// refetches the reads it holds. `surface` says the frame starts one (a Pane, a
-// Sheet): its holds stand on a new identity, stable for its life, and two
-// frames on one surface may not hold the same read.
+// is stable (a module function): its identity is the combine's. The frame's
+// form comes from every non-quiet read of its own selection; it holds at most
+// one read, the first that no enclosing frame holds (the dev registry counts
+// it, and a second is a dev error), and returns `holds`, that hash with the
+// enclosing ones, for its body to publish through `FrameHolds`; `holding` says
+// it holds one. `retry` refetches the read it holds.
 export function useFrameRead<S>(
 	selection: Selection<unknown> | undefined,
 	derive: (held: Held) => S,
-	surface?: boolean,
 ): {
 	state: S;
 	retry: () => Promise<unknown>;
@@ -295,7 +295,6 @@ export function useFrameRead<S>(
 } {
 	const client = useQueryClient();
 	const enclosing = use(HoldsContext);
-	const enclosingKeys = enclosing.keys;
 	const plan = useMemo(
 		() =>
 			planFrame(
@@ -306,37 +305,28 @@ export function useFrameRead<S>(
 						client.getQueryCache().find({ queryKey: r.options.queryKey })?.state
 							.fetchMeta?.fetchMore?.direction === "forward",
 				}),
-				enclosingKeys,
+				enclosing,
 			),
-		[selection, derive, client, enclosingKeys],
+		[selection, derive, client, enclosing],
 	);
-	const [own] = useState(() => ({}));
-	const holds = useMemo<Holds>(
-		() =>
-			plan.held.length === 0 && !surface
-				? enclosing
-				: {
-						keys: new Set([
-							...enclosing.keys,
-							...plan.held.map((r) => hashKey(r.options.queryKey)),
-						]),
-						surface: surface ? own : enclosing.surface,
-					},
-		[plan, enclosing, surface, own],
+	const holds = holdsOf(enclosing, plan.held);
+	useEffect(
+		() => holdReads(plan.held ? [plan.held, ...plan.extra] : []),
+		[plan],
 	);
-	useEffect(() => holdReads(holds.surface, plan.held), [plan, holds.surface]);
 	const state = useQueries({
 		queries: plan.reads.map((r) => ({ ...r.options, placeholderData })),
 		combine: plan.combine,
 	});
 	// The refetch itself, so a Retry draws its own pending until it settles.
 	const retry = () =>
-		Promise.all(
-			plan.held.map((r) =>
-				client.refetchQueries({ queryKey: r.options.queryKey, exact: true }),
-			),
-		);
-	return { state, retry, holding: plan.held.length > 0, holds };
+		plan.held
+			? client.refetchQueries({
+					queryKey: plan.held.options.queryKey,
+					exact: true,
+				})
+			: Promise.resolve();
+	return { state, retry, holding: plan.held !== undefined, holds };
 }
 
 export interface More {

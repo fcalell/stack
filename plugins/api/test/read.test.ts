@@ -15,6 +15,21 @@ import {
 // biome-ignore lint/suspicious/noExplicitAny: that is what the placeholder is
 const P: any = placeholderData();
 
+// A result still to land.
+const PENDING = {
+	isPlaceholderData: false,
+	status: "pending" as const,
+	fetchStatus: "fetching" as const,
+	isEnabled: true,
+	error: null,
+};
+
+const LANDED = {
+	...PENDING,
+	status: "success" as const,
+	fetchStatus: "idle" as const,
+};
+
 type Row = {
 	n: number;
 	message: string;
@@ -78,8 +93,8 @@ test("at and combine compose, and a read is its own selection", () => {
 	const plan = planSelections([sum, a.at((x) => x.n * 2)]);
 	assert.equal(plan.reads.length, 2);
 	const real = [
-		{ data: { n: 1 }, isPlaceholderData: false },
-		{ data: { n: 10 }, isPlaceholderData: false },
+		{ ...LANDED, data: { n: 1 } },
+		{ ...LANDED, data: { n: 10 } },
 	];
 	assert.deepEqual(plan.draw(real), [
 		{ painted: false, value: 11 },
@@ -93,7 +108,7 @@ test("planSelections dedupes reads by key and leaves constants alone", () => {
 	const plan = planSelections([a, again.at((x) => x.n), "constant", 3]);
 	assert.equal(plan.reads.length, 1);
 	assert.deepEqual(
-		plan.draw([{ data: { n: 4 }, isPlaceholderData: false }]).map((d) => d),
+		plan.draw([{ ...LANDED, data: { n: 4 } }]).map((d) => d),
 		[
 			{ painted: false, value: { n: 4 } },
 			{ painted: false, value: 4 },
@@ -161,20 +176,19 @@ test("a selector that throws over the placeholder gives it silently, and one ove
 			return x.n;
 		});
 		const plan = planSelections([bad]);
-		const waiting = plan.draw([{ data: P, isPlaceholderData: true }]);
-		assert.deepEqual(waiting, [{ painted: true, value: P }]);
-		const idle = plan.draw([{ data: undefined, isPlaceholderData: false }]);
-		assert.deepEqual(idle, [{ painted: true, value: P }]);
+		const waiting = plan.draw([
+			{ ...PENDING, data: P, isPlaceholderData: true },
+		]);
+		assert.deepEqual(waiting, [{ painted: true, phase: "waiting", value: P }]);
+		const idle = plan.draw([{ ...PENDING, data: undefined }]);
+		assert.deepEqual(idle, [{ painted: true, phase: "waiting", value: P }]);
 		assert.equal(warned.length, 0);
 		const real = planSelections([
 			make("a").at(() => {
 				throw new Error("bug");
 			}),
 		]);
-		assert.throws(
-			() => real.draw([{ data: { n: 1 }, isPlaceholderData: false }]),
-			/bug/,
-		);
+		assert.throws(() => real.draw([{ ...LANDED, data: { n: 1 } }]), /bug/);
 	} finally {
 		console.warn = warn;
 	}
@@ -189,7 +203,7 @@ test("a selector that dereferences fields does not warn over an idle or reset re
 			d.items.map((i) => (i as { n: number }).n),
 		);
 		const plan = planSelections([items]);
-		const idle = plan.draw([{ data: undefined, isPlaceholderData: false }]);
+		const idle = plan.draw([{ ...PENDING, data: undefined }]);
 		assert.equal(idle[0]?.painted, true);
 		assert.equal(isPlaceholder(idle[0]?.value), true);
 		assert.equal(warned.length, 0);
@@ -208,8 +222,8 @@ test("a combine of a loaded and an idle read paints, its selector over the real 
 	});
 	const plan = planSelections([both]);
 	const drawn = plan.draw([
-		{ data: { n: 1 }, isPlaceholderData: false },
-		{ data: undefined, isPlaceholderData: false },
+		{ ...LANDED, data: { n: 1 } },
+		{ ...PENDING, data: undefined },
 	]);
 	assert.equal(drawn[0]?.painted, true);
 	assert.deepEqual(seen, [{ n: 1 }]);
@@ -220,10 +234,7 @@ test("a selector that throws over real data rethrows", () => {
 		throw new Error("bug");
 	});
 	assert.throws(
-		() =>
-			planSelections([bug]).draw([
-				{ data: { n: 1 }, isPlaceholderData: false },
-			]),
+		() => planSelections([bug]).draw([{ ...LANDED, data: { n: 1 } }]),
 		/bug/,
 	);
 });
@@ -235,8 +246,125 @@ test("combine over a placeholder takes its default branch", () => {
 		x.items.length > 0 && y.ok ? "ready" : "none",
 	);
 	const [drawn] = planSelections([both]).draw([
-		{ data: P, isPlaceholderData: true },
-		{ data: P, isPlaceholderData: true },
+		{ ...PENDING, data: P, isPlaceholderData: true },
+		{ ...PENDING, data: P, isPlaceholderData: true },
 	]);
-	assert.deepEqual(drawn, { painted: true, value: "none" });
+	assert.deepEqual(drawn, { painted: true, phase: "waiting", value: "none" });
+});
+
+const gone = () => {
+	throw new Error("no");
+};
+
+test("`or` gives its fallback while the read waits, is idle or has failed, and never paints", async () => {
+	const client = new QueryClient();
+	const ok = make("or-ok", { message: "hi" });
+	const idle = read<Row>({
+		queryKey: ["or-idle"],
+		queryFn: async () => ({}) as Row,
+		enabled: false,
+	});
+	const failing = read<Row>({
+		queryKey: ["or-failing"],
+		queryFn: gone,
+		retry: false,
+	});
+	const { drawn, observer } = observe(client, [
+		ok.at((d) => d.message).or("fallback"),
+		idle.at((d) => d.message).or("idle"),
+		failing.at((d) => d.message).or("failed"),
+	]);
+	// Waiting (and idle): the fallback, drawn for real.
+	assert.deepEqual(drawn(), [
+		{ painted: false, value: "fallback" },
+		{ painted: false, value: "idle" },
+		{ painted: false, value: "failed" },
+	]);
+	const unsubscribe = observer.subscribe(() => {});
+	await client.fetchQuery(ok.options);
+	await client.prefetchQuery(failing.options);
+	assert.deepEqual(drawn(), [
+		{ painted: false, value: "hi" },
+		{ painted: false, value: "idle" },
+		{ painted: false, value: "failed" },
+	]);
+	unsubscribe();
+});
+
+test("a read used only through `or` is quiet, and one also used plainly is not", () => {
+	const a = make("quiet-or", { message: "a" });
+	const b = make("quiet-plain", { message: "b" });
+	assert.deepEqual(planSelections([a.or(0)]).painted, []);
+	assert.deepEqual(planSelections([a.or(0)]).reads, [a]);
+	assert.deepEqual(planSelections([a.at((d) => d.message).or("")]).painted, []);
+	assert.deepEqual(planSelections([a, b.or(0)]).painted, [a]);
+	assert.deepEqual(planSelections([combine([a.or(0), a], () => 1)]).painted, [
+		a,
+	]);
+	assert.deepEqual(planSelections([combine([b.or(0), a], () => 1)]).painted, [
+		a,
+	]);
+	// The same read plain in one value and `or` in another is painted by the first.
+	assert.deepEqual(planSelections([a.or(0), a]).painted, [a]);
+});
+
+test("a read used plainly and through `or` paints while it waits, its `or` part falling back", () => {
+	const client = new QueryClient();
+	const a = make("both", { message: "a" });
+	const { drawn } = observe(client, [
+		combine([a.at((d) => d.message), a.or(undefined)], (m, o) => [m, o]),
+	]);
+	const [first] = drawn();
+	assert.equal(first?.painted, true);
+	// The `or` part of a combine over a waiting plain read still falls back.
+	const [only] = observe(client, [
+		combine([a.or("x"), make("other", { n: 1 })], (o) => o),
+	]).drawn();
+	assert.deepEqual(only, { painted: true, phase: "waiting", value: "x" });
+});
+
+test("a painted selection says why: waiting, still for an idle or paused read, failed or missing once it ended", async () => {
+	const client = new QueryClient();
+	const waiting = read<Row>({
+		queryKey: ["phase-waiting"],
+		queryFn: () => new Promise<Row>(() => {}),
+	});
+	const idle = read<Row>({
+		queryKey: ["phase-idle"],
+		queryFn: async () => ({}) as Row,
+		enabled: false,
+	});
+	const failing = read<Row>({
+		queryKey: ["phase-failing"],
+		queryFn: gone,
+		retry: false,
+	});
+	const absent = read<Row>(
+		{ queryKey: ["phase-absent"], queryFn: gone, retry: false },
+		{ missing: (error) => (error as Error).message === "no" },
+	);
+	const { drawn, observer } = observe(client, [waiting, idle, failing, absent]);
+	const phases = () => drawn().map((d) => (d.painted ? d.phase : "real"));
+	assert.deepEqual(phases(), ["waiting", "still", "waiting", "waiting"]);
+	const unsubscribe = observer.subscribe(() => {});
+	await client.prefetchQuery(failing.options);
+	await client.prefetchQuery(absent.options);
+	assert.deepEqual(phases(), ["waiting", "still", "failed", "missing"]);
+	unsubscribe();
+	// Paused before any answer: still, nothing coming.
+	const offline = observe(new QueryClient(), [waiting]);
+	const [pausedDrawn] = offline.plan.draw([
+		{
+			data: undefined,
+			isPlaceholderData: false,
+			status: "pending",
+			fetchStatus: "paused",
+			isEnabled: true,
+			error: null,
+		},
+	]);
+	assert.equal(pausedDrawn?.painted && pausedDrawn.phase, "still");
+	// A selection over a failed and an idle read has ended.
+	const [ended] = observe(client, [combine([idle, failing], () => 1)]).drawn();
+	assert.equal(ended?.painted && ended.phase, "failed");
 });

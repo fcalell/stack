@@ -14,14 +14,9 @@ import { Text } from "../components/text/index.tsx";
 import { EmptyBase, type EmptyFit, type EmptyProps } from "./empty.tsx";
 import { useWords } from "./words.tsx";
 
-/** A frame's one subscription to its read (a read or a selection): the form it draws, its count, whether it refetches, whether it waits (a painted or idle read), whether it holds any read (it draws their failure), the hashes it and its ancestors hold (`held`, for its body to publish) and the retry. */
-export function useFrame(read?: Selection<unknown>, surface?: boolean) {
-	const {
-		state,
-		retry,
-		holding,
-		holds: held,
-	} = useFrameRead(read, frameOf, surface);
+/** A frame's one subscription to its read (a read or a selection): the form it draws (from its own selection's reads), its count, whether it refetches, whether it waits (a painted or idle read), whether it holds its read (it draws that read's busy, stale and paused flags), the hashes it and its ancestors hold (`held`, for its body to publish) and the retry. */
+export function useFrame(read?: Selection<unknown>) {
+	const { state, retry, holding, holds: held } = useFrameRead(read, frameOf);
 	return {
 		...state,
 		inert: state.form !== "ready" && state.form !== "empty",

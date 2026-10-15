@@ -148,7 +148,7 @@ export function Pane({
 	const words = useWords();
 	const switcher = use(ShellSwitcher);
 	const titleId = useId();
-	const frame = useFrame(read, true);
+	const frame = useFrame(read);
 	const settle = useSettleName();
 	const [name, overflowAt, ...actionAt] = useSelections([
 		title,

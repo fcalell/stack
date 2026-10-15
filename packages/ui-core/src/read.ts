@@ -73,13 +73,18 @@ export function readState(
 	};
 }
 
-// What a frame (a Pane, Section, Sheet or Form) holds: the reads it holds (those
-// of its selection that no enclosing frame holds), and the value its collection
-// or leaf draws, painted or real. `more`: the drawn value is one page of
-// several.
+// What a frame (a Pane, Section, Sheet or Form) draws from: its non-quiet reads
+// and the value its collection or leaf draws, painted or real. The form comes
+// from every read; busy, stale and paused only from the `held` one, which draws
+// them (a read an enclosing frame holds is drawn there). `more`: the drawn
+// value is one page of several.
 export interface Held {
 	drawn?: { painted: boolean; value: unknown; more?: boolean };
-	roots?: { result: ReadResult; missing: (e: unknown) => boolean }[];
+	reads?: {
+		result: ReadResult;
+		missing: (e: unknown) => boolean;
+		held: boolean;
+	}[];
 }
 
 // ready: the loaded tree, its leaves real. waiting: the loaded tree, its
@@ -107,18 +112,20 @@ export interface FrameState {
 	paused: boolean;
 }
 
-// The frame's form from what it holds, never from a value's change: only the
-// form, the count and busy move it. Several held reads merge: the first one
-// failed with no data ends the frame (failed, or missing by its own `missing`);
-// busy, stale and paused are any one's; the frame stands still when any is idle.
+// The frame's form from its reads, never from a value's change: only the
+// form, the count and busy move it. The first read failed with no data ends the
+// frame (failed, or missing by its own `missing`), held or not; busy, stale and
+// paused are the held reads'; the frame stands still when any read is idle or
+// paused with no data.
 export function frameOf(held: Held): FrameState {
-	const states = (held.roots ?? []).map((r) => readState(r.result, r.missing));
+	const all = (held.reads ?? []).map((r) => readState(r.result, r.missing));
+	const states = (held.reads ?? []).flatMap((r, i) =>
+		r.held ? [all[i] as ReadState] : [],
+	);
 	const busy = states.some((s) => s.busy);
 	const stale = states.some((s) => s.stale);
 	const paused = states.some((s) => s.paused);
-	const ended = states.find(
-		(s) => s.phase === "failed" || s.phase === "missing",
-	);
+	const ended = all.find((s) => s.phase === "failed" || s.phase === "missing");
 	if (ended) {
 		return {
 			form: ended.phase as FrameForm,
@@ -133,7 +140,7 @@ export function frameOf(held: Held): FrameState {
 	}
 	if (held.drawn.painted) {
 		return {
-			form: states.some((s) => s.phase === "idle" || s.paused)
+			form: all.some((s) => s.phase === "idle" || s.paused)
 				? "still"
 				: "waiting",
 			count: undefined,
@@ -163,7 +170,7 @@ export type TurnForm = "none" | "waiting" | "writing" | "written" | "stopped";
 
 export function turnOf(held: Held): { form: TurnForm; value: unknown } {
 	const value = held.drawn?.value;
-	const root = held.roots?.[0];
+	const root = held.reads?.[0];
 	const s = root && readState(root.result, root.missing);
 	if (s?.phase === "waiting") return { form: "waiting", value };
 	if (s?.phase === "failed" || s?.phase === "missing") {

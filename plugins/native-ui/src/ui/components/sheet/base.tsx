@@ -425,7 +425,7 @@ export function SheetBase({
 	waits,
 	children,
 }: SheetBaseProps) {
-	const frame = useFrame(read, true);
+	const frame = useFrame(read);
 	const own = useAct<number>("line");
 	const acting = given ?? own;
 	const client = useQueryClient();

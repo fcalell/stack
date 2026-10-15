@@ -12,6 +12,7 @@ import {
 	draftFor,
 	type Held,
 	holdReads,
+	holdsOf,
 	isRead,
 	moreOf,
 	paintReads,
@@ -66,7 +67,7 @@ test("a frame over a read holds its root and its drawn value", async () => {
 			tasks,
 			(held) => {
 				seen.push(held);
-				return held.roots?.[0]?.result.status;
+				return held.reads?.[0]?.result.status;
 			},
 			() => undefined,
 		),
@@ -74,10 +75,10 @@ test("a frame over a read holds its root and its drawn value", async () => {
 	const stop = observer.subscribe(() => {});
 	assert.equal(state(), "success");
 	assert.equal(seen.at(-1)?.drawn?.painted, true);
-	assert.equal(seen.at(-1)?.roots?.[0]?.result.isPlaceholderData, true);
+	assert.equal(seen.at(-1)?.reads?.[0]?.result.isPlaceholderData, true);
 	await tick();
 	assert.equal(state(), "error");
-	assert.equal(seen.at(-1)?.roots?.[0]?.missing(new Error("no")), false);
+	assert.equal(seen.at(-1)?.reads?.[0]?.missing(new Error("no")), false);
 	assert.equal(seen.at(-1)?.drawn?.painted, true);
 	fail = false;
 	await client.refetchQueries({ queryKey: ["tasks"] });
@@ -102,13 +103,11 @@ const landed = (data: unknown) => ({
 
 const hashOf = (r: Read<unknown>) => hashKey(r.options.queryKey);
 
-test("a frame holds the reads of its selection that no enclosing frame holds", () => {
+test("a frame holds the one read of its selection that no enclosing frame holds", () => {
 	const a = make("a", async () => 1);
 	const b = make("b", async () => 2);
 	const c = make("c", async () => 3);
-	const all = combine([a, b, c], (x, y, z) => [x, y, z]);
-	const results = [landed(1), landed(2), landed(3)];
-	const roots = (
+	const plan = (
 		selection: Parameters<typeof planFrame>[0],
 		enclosing?: ReadonlySet<string>,
 	) =>
@@ -117,81 +116,121 @@ test("a frame holds the reads of its selection that no enclosing frame holds", (
 			(h) => h,
 			() => undefined,
 			enclosing,
-		).combine(results.slice(0, readsLength(selection))).roots?.length;
-	const readsLength = (selection: Parameters<typeof planFrame>[0]) =>
-		planFrame(
-			selection,
-			(h) => h,
-			() => undefined,
-		).reads.length;
+		);
 
 	// A bare read, and an `at` of it, with no frame above: held.
-	assert.deepEqual(
-		planFrame(
-			a,
-			(h) => h,
-			() => undefined,
-		).held,
-		[a],
-	);
-	assert.deepEqual(
-		planFrame(
-			a.at((x) => x),
-			(h) => h,
-			() => undefined,
-		).held,
-		[a],
-	);
-	// Under a holder of the read: nothing, and the drawn value stands.
+	assert.equal(plan(a).held, a);
+	assert.equal(plan(a.at((x) => x)).held, a);
+	// Under a holder of the read: nothing is held, the drawn value stands, and
+	// the read is still the frame's, so its form follows it.
 	const above = new Set([hashOf(a)]);
-	const under = planFrame(
+	const under = plan(
+		a.at((x) => x),
+		above,
+	);
+	assert.equal(under.held, undefined);
+	assert.deepEqual(under.combine([landed(1)]), {
+		drawn: { painted: false, value: 1, more: false },
+		reads: [
+			{
+				result: {
+					...landed(1),
+					streamed: false,
+					hasNextPage: false,
+					fetchingMore: false,
+				},
+				missing: a.missing,
+				held: false,
+			},
+		],
+	});
+	// A combine holds its first read; the others are extra, in order.
+	const all = combine([a, b, c], (x, y, z) => [x, y, z]);
+	const first = plan(all);
+	assert.equal(first.held, a);
+	assert.deepEqual(first.extra, [b, c]);
+	assert.deepEqual(
+		first.combine([landed(1), landed(2), landed(3)]).reads?.map((r) => r.held),
+		[true, false, false],
+	);
+	// Under a holder of one of them, the next unheld one.
+	const some = plan(all, new Set([hashOf(a)]));
+	assert.equal(some.held, b);
+	assert.deepEqual(some.extra, [c]);
+	// Two selections of one read hold it once.
+	const twice = plan(combine([a, a.at((x) => x)], (x, y) => [x, y]));
+	assert.equal(twice.held, a);
+	assert.deepEqual(twice.extra, []);
+	// Over nothing, nothing.
+	const none = plan(undefined);
+	assert.deepEqual(none.reads, []);
+	assert.deepEqual(none.combine([]), { reads: [] });
+});
+
+test("a read used only through `or` is quiet: never held, never part of the form", () => {
+	const a = make("quiet-a", async () => 1);
+	const b = make("quiet-b", async () => 2);
+	const quiet = planFrame(
+		a.or(0),
+		(h) => h,
+		() => undefined,
+	);
+	assert.equal(quiet.held, undefined);
+	assert.deepEqual(quiet.extra, []);
+	assert.deepEqual(quiet.combine([landed(undefined)]).reads, []);
+	// Beside a plain read it is subscribed and still quiet: the plain one is held.
+	const both = planFrame(
+		combine([a, b.or(0)], (x, y) => [x, y]),
+		(h) => h,
+		() => undefined,
+	);
+	assert.equal(both.held, a);
+	assert.deepEqual(both.extra, []);
+	assert.equal(both.reads.length, 2);
+	// A read used plainly elsewhere in the selection is not quiet.
+	const plain = planFrame(
+		combine([a.or(0), a], (x, y) => [x, y]),
+		(h) => h,
+		() => undefined,
+	);
+	assert.equal(plain.held, a);
+});
+
+test("a nested frame's form follows its own selection while its flags are dropped", () => {
+	const a = make("nested", async () => 1);
+	const above = new Set([hashOf(a)]);
+	const failed = {
+		...landed(undefined),
+		status: "error" as const,
+		error: new Error("no"),
+	};
+	const inner = planFrame(
 		a.at((x) => x),
 		(h) => h,
 		() => undefined,
 		above,
 	);
-	assert.deepEqual(under.held, []);
-	assert.deepEqual(under.combine([landed(1)]), {
-		drawn: { painted: false, value: 1, more: false },
-		roots: [],
-	});
-	assert.equal(roots(a, above), 0);
-	// A combine under a read-less Pane holds all three, in order.
-	assert.deepEqual(
-		planFrame(
-			all,
-			(h) => h,
-			() => undefined,
-		).held,
-		[a, b, c],
-	);
-	assert.equal(roots(all), 3);
-	// Under a holder of one of them, the other two.
-	const some = planFrame(
-		all,
-		(h) => h,
-		() => undefined,
-		new Set([hashOf(b)]),
-	);
-	assert.deepEqual(some.held, [a, c]);
-	assert.equal(some.combine(results).roots?.length, 2);
-	// Two selections of one read hold it once.
-	assert.equal(
-		planFrame(
-			combine([a, a.at((x) => x)], (x, y) => [x, y]),
-			(h) => h,
-			() => undefined,
-		).held.length,
-		1,
-	);
-	// Over nothing, nothing.
-	const none = planFrame(
-		undefined,
-		(h) => h,
-		() => undefined,
-	);
-	assert.deepEqual(none.reads, []);
-	assert.deepEqual(none.combine([]), { roots: [] });
+	const held = inner.combine([
+		{ ...failed, isPlaceholderData: false, fetchStatus: "fetching" as const },
+	]);
+	assert.equal(held.reads?.length, 1);
+	assert.equal(held.reads?.[0]?.held, false);
+	assert.equal(held.reads?.[0]?.result.status, "error");
+	assert.equal(held.drawn?.painted, true);
+});
+
+test("frames over the same keys share one holds identity", () => {
+	const a = make("holds-a", async () => 1);
+	const b = make("holds-b", async () => 1);
+	const root = new Set<string>();
+	assert.equal(holdsOf(root, undefined), root);
+	const one = holdsOf(root, a);
+	assert.deepEqual([...one], [hashOf(a)]);
+	assert.equal(holdsOf(new Set(), a), one);
+	const nested = holdsOf(one, b);
+	assert.deepEqual([...nested], [hashOf(a), hashOf(b)]);
+	assert.equal(holdsOf(holdsOf(new Set(), a), b), nested);
+	assert.notEqual(holdsOf(root, b), nested);
 });
 
 test("a frame over a combine draws the failure of any read it holds", async () => {
@@ -206,7 +245,7 @@ test("a frame over a combine draws the failure of any read it holds", async () =
 		client,
 		planFrame(
 			combine([a, b], (x, y) => [x, y]),
-			(h) => h.roots?.map((r) => r.result.status),
+			(h) => h.reads?.map((r) => r.result.status),
 			() => undefined,
 		),
 	);
@@ -230,25 +269,25 @@ test("a draft stays with the read it was made over", () => {
 	assert.equal(draftFor(constant, readKey("other")), constant);
 });
 
-test("two frames on one surface holding one read log one error naming it", () => {
+test("a frame with two unheld reads logs one error naming both keys", () => {
 	const error = mock.method(console, "error", () => {});
 	const a = make("holders-a", async () => 1);
-	const surface = {};
-	const release = [holdReads(surface, [a]), holdReads(surface, [a])];
+	const b = make("holders-b", async () => 1);
+	const release = holdReads([a, b]);
 	assert.equal(error.mock.callCount(), 1);
-	assert.match(String(error.mock.calls[0]?.arguments[0]), /holders-a/);
-	assert.match(String(error.mock.calls[0]?.arguments[0]), /side by side/);
-	for (const one of release) one();
+	const message = String(error.mock.calls[0]?.arguments[0]);
+	assert.match(message, /holders-a/);
+	assert.match(message, /holders-b/);
+	release();
 	error.mock.restore();
 });
 
-test("one read held on two surfaces, or released and held again, logs nothing", () => {
+test("sibling frames holding one read, or one frame holding one, log nothing", () => {
 	const error = mock.method(console, "error", () => {});
-	const a = make("holders-b", async () => 1);
-	const one = {};
-	const release = [holdReads(one, [a]), holdReads({}, [a])];
+	const a = make("holders-c", async () => 1);
+	const release = [holdReads([a]), holdReads([a]), holdReads([])];
 	release[0]?.();
-	holdReads(one, [a])();
+	holdReads([a])();
 	for (const r of release) r();
 	assert.equal(error.mock.callCount(), 0);
 	error.mock.restore();
@@ -282,7 +321,7 @@ test("a failure with painters and no holder raises an error naming the read", as
 
 	const held = make("held", fail);
 	const unpaintHeld = paintReads([held]);
-	const unhold = holdReads({}, [held]);
+	const unhold = holdReads([held]);
 	await run("held");
 	assert.equal(error.mock.callCount(), 1);
 	unpaint();
@@ -346,13 +385,13 @@ test("a frame over a pages read has more, and a next page is fetchingMore", asyn
 	// The first fetch is not a next page, and over the placeholder nothing remains.
 	state();
 	assert.equal(seen.at(-1)?.drawn?.more, false);
-	assert.equal(seen.at(-1)?.roots?.[0]?.result.fetchingMore, false);
-	assert.equal(seen.at(-1)?.roots?.[0]?.result.streamed, false);
+	assert.equal(seen.at(-1)?.reads?.[0]?.result.fetchingMore, false);
+	assert.equal(seen.at(-1)?.reads?.[0]?.result.streamed, false);
 	await tick();
 	state();
 	const loaded = seen.at(-1);
 	assert.equal(loaded?.drawn?.more, true);
-	assert.equal(loaded?.roots?.[0]?.result.hasNextPage, true);
+	assert.equal(loaded?.reads?.[0]?.result.hasNextPage, true);
 	assert.deepEqual(loaded?.drawn?.value, [0]);
 	const next = new InfiniteQueryObserver(client, {
 		...pages.options,
@@ -362,12 +401,12 @@ test("a frame over a pages read has more, and a next page is fetchingMore", asyn
 	// The query says a next page is being fetched; the plain observer cannot.
 	assert.equal(queryOf()?.state.fetchMeta?.fetchMore?.direction, "forward");
 	state();
-	assert.equal(seen.at(-1)?.roots?.[0]?.result.fetchingMore, true);
+	assert.equal(seen.at(-1)?.reads?.[0]?.result.fetchingMore, true);
 	assert.deepEqual(seen.at(-1)?.drawn?.value, [0]);
 	await fetching;
 	await tick();
 	state();
-	assert.equal(seen.at(-1)?.roots?.[0]?.result.fetchingMore, false);
+	assert.equal(seen.at(-1)?.reads?.[0]?.result.fetchingMore, false);
 	assert.deepEqual(seen.at(-1)?.drawn?.value, [0, 1]);
 	stop();
 });
@@ -420,8 +459,8 @@ test("a next page that failed is not the frame's refetch error", async () => {
 			.status,
 		"error",
 	);
-	assert.equal(held?.roots?.[0]?.result.status, "success");
-	assert.equal(held?.roots?.[0]?.result.isRefetchError, false);
+	assert.equal(held?.reads?.[0]?.result.status, "success");
+	assert.equal(held?.reads?.[0]?.result.isRefetchError, false);
 	assert.deepEqual(held?.drawn?.value, [0]);
 	stop();
 });
@@ -444,8 +483,8 @@ test("a stream read says so, and a plain read has no more", async () => {
 	const stop = observer.subscribe(() => {});
 	await tick();
 	state();
-	assert.equal(held?.roots?.[0]?.result.streamed, true);
-	assert.equal(held?.roots?.[0]?.result.hasNextPage, false);
+	assert.equal(held?.reads?.[0]?.result.streamed, true);
+	assert.equal(held?.reads?.[0]?.result.hasNextPage, false);
 	assert.equal(held?.drawn?.more, false);
 	stop();
 });

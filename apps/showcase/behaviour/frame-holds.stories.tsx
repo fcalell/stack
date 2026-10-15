@@ -1,4 +1,3 @@
-import { combine } from "@fcalell/plugin-api/tanstack-query";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
 import { MessageInput } from "@fcalell/plugin-react-ui/components/message-input";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
@@ -11,11 +10,12 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect, within } from "storybook/test";
 import { sectionOf } from "./support.ts";
 
-// A frame holds the reads of its `read` that no enclosing frame holds, so a
-// Section over a `combine` draws the failure, the stale line and the paused
-// line of any one of its reads, and a Section over a selection of a read its
-// Pane already holds draws nothing of that read's: the Pane does. A read is
-// held once per surface: the Pane around the regions that share it holds it.
+// A frame holds the one read of its `read` that no enclosing frame holds, so a
+// Section draws the failure, the stale line and the paused line of its read,
+// and a Section over a selection of a read its Pane already holds draws
+// nothing of that read's: the Pane does. Every frame's form comes from its own
+// selection, so sibling Sections over one read each hold it and each fail in
+// place.
 const ROW = { key: (name: string) => name, title: (name: string) => name };
 const BODY = (items: ReturnType<typeof readsAt>["ready"]) => (
 	<Group list={{ items, row: ROW }} />
@@ -26,26 +26,24 @@ export default { title: "Behaviour/Frame holds" } satisfies Meta;
 const failed = readsAt("frame-holds/failed");
 const stale = readsAt("frame-holds/stale");
 const paused = readsAt("frame-holds/paused");
-const both = (a: typeof failed.ready, b: typeof failed.ready) =>
-	combine([a, b], (x, y) => [...x, ...y]);
 
-export const CombineDrawsAnyReadsState: StoryObj = {
+export const HeldReadDrawsItsState: StoryObj = {
 	render: () => (
 		<div className="flex flex-col gap-sections w-sheet max-w-full">
-			<Section title="Failed" read={both(failed.ready, failed.failing)}>
+			<Section title="Failed" read={failed.failing}>
 				{BODY(failed.ready)}
 			</Section>
-			<Section title="Stale" read={both(stale.ready, stale.stale)}>
-				{BODY(stale.ready)}
+			<Section title="Stale" read={stale.stale}>
+				{BODY(stale.stale)}
 			</Section>
-			<Section title="Paused" read={both(paused.ready, paused.paused)}>
-				{BODY(paused.ready)}
+			<Section title="Paused" read={paused.paused}>
+				{BODY(paused.paused)}
 			</Section>
 		</div>
 	),
 	play: async ({ canvas }) => {
 		const region = (name: string) => within(sectionOf(canvas, name));
-		// One of its reads failed with no data: the failed form with Retry.
+		// The read failed with no data: the failed form with Retry.
 		await region("Failed").findByText("This didn't load.");
 		await expect(
 			region("Failed").getByRole("button", { name: "Retry" }),
@@ -81,7 +79,7 @@ export const SelectionUnderItsHolderDrawsAsToday: StoryObj = {
 			<div className="h-[20rem]" data-testid="bare">
 				<Place>
 					<Pane title="Bare">
-						<Section title="Inner" read={both(bare.ready, bare.failing)}>
+						<Section title="Inner" read={bare.failing}>
 							{BODY(bare.ready)}
 						</Section>
 					</Pane>
@@ -97,8 +95,8 @@ export const SelectionUnderItsHolderDrawsAsToday: StoryObj = {
 		await expect(held.getAllByText("Couldn't refresh.").length).toBe(1);
 		await expect(held.getAllByRole("button", { name: "Retry" }).length).toBe(1);
 		await expect(sectionOf(held, "Inner")).not.toHaveAttribute("aria-busy");
-		// A Pane with no read holds nothing: the Section holds both its reads and
-		// draws the failure in its own place, the Pane's title standing.
+		// A Pane with no read holds nothing: the Section holds its read and draws
+		// the failure in its own place, the Pane's title standing.
 		const bareBox = within(await canvas.findByTestId("bare"));
 		await bareBox.findByText("This didn't load.");
 		await expect(bareBox.getByRole("heading", { name: "Bare" })).toBeVisible();
@@ -110,28 +108,22 @@ export const SelectionUnderItsHolderDrawsAsToday: StoryObj = {
 
 const shared = readsAt("frame-holds/shared");
 const pausedShared = readsAt("frame-holds/shared-paused");
-const around = (a: typeof shared.ready, b: typeof shared.ready) =>
-	combine([a, b], (x) => x);
 
-export const SharedReadHeldOnce: StoryObj = {
+export const SiblingSectionsOverOneReadEachHoldIt: StoryObj = {
 	render: () => (
 		<div className="flex flex-col gap-sections">
 			{[
-				["Failing", around(shared.failing, shared.ready), shared] as const,
-				[
-					"Paused",
-					around(pausedShared.paused, pausedShared.ready),
-					pausedShared,
-				] as const,
-			].map(([name, read, reads]) => (
-				<div key={name} className="h-[20rem]" data-testid={name}>
+				["Failing", shared.failing, shared.ready] as const,
+				["Paused", pausedShared.paused, pausedShared.ready] as const,
+			].map(([name, read, rows]) => (
+				<div key={name} className="h-[28rem]" data-testid={name}>
 					<Place>
-						<Pane title={name} read={read}>
-							<Section title="First" read={reads.ready.at((rows) => rows)}>
-								{BODY(reads.ready)}
+						<Pane title={name}>
+							<Section title="First" read={read}>
+								{BODY(rows)}
 							</Section>
 							<Section title="Second" read={read}>
-								{BODY(reads.ready)}
+								{BODY(rows)}
 							</Section>
 						</Pane>
 					</Place>
@@ -140,18 +132,23 @@ export const SharedReadHeldOnce: StoryObj = {
 		</div>
 	),
 	play: async ({ canvas }) => {
-		// `a` fails: the Pane draws one failed form, one Retry.
+		// The read fails: each Section draws its own failed form with its Retry.
 		const failing = within(await canvas.findByTestId("Failing"));
-		await failing.findByText("This didn't load.");
-		await expect(failing.getAllByText("This didn't load.").length).toBe(1);
-		await expect(failing.getAllByRole("button", { name: "Retry" }).length).toBe(
-			1,
-		);
-		// `a` waits for a connection: one line, under the Pane's title.
+		await failing.findAllByText("This didn't load.");
+		for (const name of ["First", "Second"]) {
+			const section = within(sectionOf(failing, name));
+			await expect(section.getByText("This didn't load.")).toBeVisible();
+			await expect(
+				section.getByRole("button", { name: "Retry" }),
+			).toBeVisible();
+		}
+		await expect(failing.getAllByText("This didn't load.").length).toBe(2);
+		// The read waits for a connection: each Section draws the line under its
+		// own heading.
 		const waiting = within(await canvas.findByTestId("Paused"));
-		await waiting.findByText("Waiting for a connection.");
+		await waiting.findAllByText("Waiting for a connection.");
 		await expect(waiting.getAllByText("Waiting for a connection.").length).toBe(
-			1,
+			2,
 		);
 	},
 };

@@ -24,6 +24,20 @@ import createWorker from "../src/worker/index.ts";
 
 registerOperationContext(OPERATION_CONTEXT_SYMBOL);
 
+// A result as the observer gives it, still to land or landed.
+const PENDING = {
+	isPlaceholderData: false,
+	status: "pending" as const,
+	fetchStatus: "fetching" as const,
+	isEnabled: true,
+	error: null,
+};
+const LANDED = {
+	...PENDING,
+	status: "success" as const,
+	fetchStatus: "idle" as const,
+};
+
 const procedure = createProcedure<Record<string, unknown>>();
 const routes = {
 	deploys: {
@@ -120,9 +134,7 @@ test("a procedure named read keeps its own utils and its own read", async () => 
 
 // What a leaf draws for the read over this raw data.
 function flat(handle: unknown, raw: unknown) {
-	return planSelections([handle]).draw([
-		{ data: raw, isPlaceholderData: false },
-	])[0]?.value;
+	return planSelections([handle]).draw([{ ...LANDED, data: raw }])[0]?.value;
 }
 
 test("a pages read keys as oRPC's infinite query and is built infinite", async () => {
@@ -182,7 +194,7 @@ test("a pages read's value is the flat list and a next page extends it", async (
 test("a pages read over the placeholder stays painted", () => {
 	const handle = utils().deploys.list.pages({ team: "a" });
 	const [drawn] = planSelections([handle]).draw([
-		{ data: placeholderData(), isPlaceholderData: true },
+		{ ...PENDING, data: placeholderData(), isPlaceholderData: true },
 	]);
 	assert.equal(drawn?.painted, true);
 	assert.equal(isPlaceholder(drawn?.value), true);

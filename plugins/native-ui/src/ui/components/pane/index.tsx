@@ -106,7 +106,7 @@ export function Pane({
 	children,
 }: PaneProps) {
 	const words = useWords();
-	const frame = useFrame(read, true);
+	const frame = useFrame(read);
 	const [name, overflowAt, ...actionAt] = useSelections([
 		title,
 		more,

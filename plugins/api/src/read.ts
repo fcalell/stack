@@ -18,10 +18,15 @@ const WAITING_CHAR = "\uE000";
 export interface Selection<T> {
 	/** @internal */ readonly [SELECTION]: {
 		readonly reads: readonly Read<unknown>[];
-		// One datum per read, in order.
-		readonly pick: (data: readonly unknown[]) => T;
+		// Per read, in order: used only through `or`, so it never paints, holds
+		// or fails a frame.
+		readonly quiet: readonly boolean[];
+		// One datum and one "is real data" per read, in order.
+		readonly pick: (data: readonly unknown[], real: readonly boolean[]) => T;
 	};
 	at<U>(fn: (value: T) => U): Selection<U>;
+	/** Real data when its reads have it, `fallback` in every other state (waiting, idle, paused, failed, missing). It never paints, holds or fails a frame, and a read used only through it is quiet. For enrichments only (a name, a badge, a lane order, a link): a read whose rows, options, facts or text a component draws is never `or`. */
+	or<F>(fallback: F): Selection<T | F>;
 }
 
 // How a read's query behaves: a plain `query`, an infinite one of stack's
@@ -47,10 +52,18 @@ export interface ReadHow {
 export type Datum<T> = T | Selection<T>;
 
 // What a leaf draws for one value: a constant or real data as given, or a
-// selection with a read still to land, whose `value` is the placeholder's.
+// selection with a read still to land, whose `value` is the placeholder's and
+// whose `phase` says why. waiting: asked for, no answer. still: not asked for,
+// or paused with no data, so nothing is coming (paints still, no sentence).
+// failed, missing: the read ended (the failed sentence, `words.missing`).
+export type DrawnPhase = "waiting" | "still" | "failed" | "missing";
 export type Drawn<T> =
 	| { readonly painted: false; readonly value: T }
-	| { readonly painted: true; readonly value: unknown };
+	| {
+			readonly painted: true;
+			readonly value: unknown;
+			readonly phase: DrawnPhase;
+	  };
 
 // The placeholder: the stand-in for data not yet there, shaped by nothing. It
 // is every key of itself and callable, so a selector walks it to a value and
@@ -106,11 +119,21 @@ function guarded<T>(data: readonly unknown[], run: () => T): T {
 
 function selection<T>(
 	reads: readonly Read<unknown>[],
-	pick: (data: readonly unknown[]) => T,
+	quiet: readonly boolean[],
+	pick: (data: readonly unknown[], real: readonly boolean[]) => T,
 ): Selection<T> {
 	return {
-		[SELECTION]: { reads, pick },
-		at: (fn) => selection(reads, (data) => guarded(data, () => fn(pick(data)))),
+		[SELECTION]: { reads, quiet, pick },
+		at: (fn) =>
+			selection(reads, quiet, (data, real) =>
+				guarded(data, () => fn(pick(data, real))),
+			),
+		or: (fallback) =>
+			selection(
+				reads,
+				reads.map(() => true),
+				(data, real) => (real.every(Boolean) ? pick(data, real) : fallback),
+			),
 	};
 }
 
@@ -148,6 +171,7 @@ export function read<T>(
 	const self: Read<T> = {
 		...selection<T>(
 			reads,
+			[false],
 			(data) => (kind === "pages" ? flatten(data[0]) : data[0]) as T,
 		),
 		options: kind === "pages" ? { ...options, _type: "infinite" } : options,
@@ -169,12 +193,13 @@ export function combine<const S extends readonly Selection<unknown>[], R>(
 	const parts = selections.map((s) => s[SELECTION]);
 	return selection(
 		parts.flatMap((p) => p.reads),
-		(data) =>
+		parts.flatMap((p) => p.quiet),
+		(data, real) =>
 			guarded(data, () => {
 				let from = 0;
 				const values = parts.map((p) => {
 					const to = from + p.reads.length;
-					const value = p.pick(data.slice(from, to));
+					const value = p.pick(data.slice(from, to), real.slice(from, to));
 					from = to;
 					return value;
 				});
@@ -226,12 +251,30 @@ export function withRead(target: any): any {
 
 // The pure core of both hooks. `reads` are the distinct queries the values
 // need, deduped by key (two observers of one key in one `QueriesObserver` warn);
-// `draw` maps their results back onto the values, in order.
-type Result = { data: unknown; isPlaceholderData: boolean };
+// `painted` are those some value uses plainly (the quiet ones are subscribed and
+// nothing more); `draw` maps their results back onto the values, in order.
+type SelectionResult = {
+	data: unknown;
+	isPlaceholderData: boolean;
+	status: "pending" | "success" | "error";
+	fetchStatus: "fetching" | "paused" | "idle";
+	isEnabled: boolean;
+	error: unknown;
+};
+
+const isReal = (r: SelectionResult) =>
+	!r.isPlaceholderData && r.data !== undefined;
+
+// Why a read has no data: it ended, nothing is coming, or the answer is.
+function phaseOf(r: SelectionResult, read: Read<unknown>): DrawnPhase {
+	if (r.status === "error") return read.missing(r.error) ? "missing" : "failed";
+	return !r.isEnabled || r.fetchStatus === "paused" ? "still" : "waiting";
+}
 
 export function planSelections(values: readonly unknown[]): {
 	reads: readonly Read<unknown>[];
-	draw: (results: readonly Result[]) => readonly Drawn<unknown>[];
+	painted: readonly Read<unknown>[];
+	draw: (results: readonly SelectionResult[]) => readonly Drawn<unknown>[];
 } {
 	const reads: Read<unknown>[] = [];
 	const slots = new Map<string, number>();
@@ -244,29 +287,52 @@ export function planSelections(values: readonly unknown[]): {
 	};
 	const plan = values.map((v) =>
 		isSelection(v)
-			? { pick: v[SELECTION].pick, at: v[SELECTION].reads.map(slotOf) }
+			? { ...v[SELECTION], at: v[SELECTION].reads.map(slotOf) }
 			: null,
+	);
+	const plain = new Set(
+		plan.flatMap((p) => p?.at.filter((_, k) => !p.quiet[k]) ?? []),
 	);
 
 	return {
 		reads,
+		painted: reads.filter((_, slot) => plain.has(slot)),
 		draw: (results) =>
 			values.map((value, i) => {
 				const p = plan[i];
 				if (!p) return { painted: false, value };
-				const inputs = p.at.map((slot) => results[slot] as Result);
-				const waiting = inputs.some(
-					(r) => r.isPlaceholderData || r.data === undefined,
+				const inputs = p.at.map((slot) => results[slot] as SelectionResult);
+				const real = inputs.map(isReal);
+				// Only a read the selection uses plainly holds it back: a quiet one
+				// that has no data gives its `or` fallback.
+				const open = inputs.flatMap((_, k) =>
+					p.quiet[k] || real[k] ? [] : [k],
 				);
+				if (open.length === 0) {
+					return {
+						painted: false,
+						value: p.pick(
+							inputs.map((r) => r.data),
+							real,
+						),
+					};
+				}
+				const phases = open.map((k) =>
+					phaseOf(inputs[k] as SelectionResult, p.reads[k] as Read<unknown>),
+				);
+				const ended = phases.find((x) => x === "failed" || x === "missing");
 				// A waiting slot picks over the placeholder where a read has no data,
 				// so a selector walks P and never meets `undefined`; a combine keeps
 				// the real data of its other reads.
-				return waiting
-					? {
-							painted: true,
-							value: p.pick(inputs.map((r) => r.data ?? P)) ?? P,
-						}
-					: { painted: false, value: p.pick(inputs.map((r) => r.data)) };
+				return {
+					painted: true,
+					phase: ended ?? (phases.includes("still") ? "still" : "waiting"),
+					value:
+						p.pick(
+							inputs.map((r) => r.data ?? P),
+							real,
+						) ?? P,
+				};
 			}),
 	};
 }
@@ -283,9 +349,10 @@ export function isRead(v: unknown): v is Read<unknown> {
 }
 
 // What a frame sees of its reads: ui-core's `Held`, written out structurally
-// because plugin-api imports nothing from ui-core. `roots` are the reads the
-// frame holds (the reads of its selection that no enclosing frame holds), each
-// with the fields of its result that `readState` reads.
+// because plugin-api imports nothing from ui-core. `reads` are the frame's
+// non-quiet reads, each with the fields of its result that `readState` reads:
+// the frame's form comes from all of them, its busy, stale and paused flags
+// only from the `held` one.
 export interface HeldResult {
 	status: "pending" | "success" | "error";
 	fetchStatus: "fetching" | "paused" | "idle";
@@ -302,38 +369,47 @@ export interface HeldResult {
 
 export interface Held {
 	drawn?: { painted: boolean; value: unknown; more?: boolean };
-	roots?: { result: HeldResult; missing: (error: unknown) => boolean }[];
+	reads?: {
+		result: HeldResult;
+		missing: (error: unknown) => boolean;
+		held: boolean;
+	}[];
 }
 
 // The pure core of `useFrameRead`: the frame's selection planned like a leaf's,
-// and `combine` deriving the frame's state from what is held. `enclosing` is
-// the query hashes the frames above it hold: the frame holds the other reads of
-// its selection, so a nested frame draws a failure only for what its ancestors
-// do not (a `combine` under a read-less Pane holds all its reads; an `x.at()`
-// under a holder of `x` holds none). `query` looks up a read's query in the
-// cache: a plain observer's result says nothing of a next page being fetched,
-// but the query's `fetchMeta` does.
+// and `combine` deriving the frame's state from its reads. The form comes from
+// every non-quiet read of the selection, held or not (a frame never reads its
+// form off a context). `enclosing` is the query hashes the frames above it
+// hold: the frame holds the first other non-quiet read, which draws its busy
+// mark and its stale and paused line, so a nested frame draws those only for
+// what its ancestors do not (a `combine` under a read-less Pane holds its read;
+// an `x.at()` under a holder of `x` holds none). A frame holds at most one:
+// `extra` are the further unheld ones, a mistake `holdReads` names in dev.
+// `query` looks up a read's query in the cache: a plain observer's result says
+// nothing of a next page being fetched, but the query's `fetchMeta` does.
 export function planFrame<S>(
 	selection: Selection<unknown> | undefined,
 	derive: (held: Held) => S,
 	query: (read: Read<unknown>) => { fetchMore?: boolean } | undefined,
-	enclosing: ReadonlySet<string> = NO_HOLDS.keys,
+	enclosing: Holds = NO_HOLDS,
 ): {
 	reads: readonly Read<unknown>[];
-	held: readonly Read<unknown>[];
-	combine: (results: readonly (Result & HeldResult)[]) => S;
+	held: Read<unknown> | undefined;
+	extra: readonly Read<unknown>[];
+	combine: (results: readonly (SelectionResult & HeldResult)[]) => S;
 } {
 	const plan = planSelections(selection === undefined ? [] : [selection]);
-	const held = plan.reads.filter(
+	const [held, ...extra] = plan.painted.filter(
 		(r) => !enclosing.has(hashKey(r.options.queryKey)),
 	);
 	return {
 		reads: plan.reads,
 		held,
+		extra,
 		combine: (results) => {
-			const roots = plan.reads.flatMap((r, i) => {
+			const reads = plan.reads.flatMap((r, i) => {
 				const result = results[i];
-				if (!held.includes(r) || !result) return [];
+				if (!plan.painted.includes(r) || !result) return [];
 				const forward = r.kind === "pages" && query(r)?.fetchMore === true;
 				// A next page that failed is the collection's line (its more row), not
 				// the read's: the frame holds the pages it has, so it is not stale.
@@ -353,6 +429,7 @@ export function planFrame<S>(
 							fetchingMore: forward && result.fetchStatus === "fetching",
 						},
 						missing: r.missing,
+						held: r === held,
 					},
 				];
 			});
@@ -360,12 +437,14 @@ export function planFrame<S>(
 				...(selection !== undefined && {
 					drawn: {
 						...(plan.draw(results)[0] as Drawn<unknown>),
-						more: plan.reads.some(
-							(r, i) => r.kind === "pages" && moreOf(results[i]?.data),
+						more: plan.painted.some(
+							(r) =>
+								r.kind === "pages" &&
+								moreOf(results[plan.reads.indexOf(r)]?.data),
 						),
 					},
 				}),
-				roots,
+				reads,
 			});
 		},
 	};
@@ -416,16 +495,34 @@ const painters = new Map<string, number>();
 export const dev = () => process.env.NODE_ENV !== "production";
 
 // What a frame publishes to its body: the hashes it and the frames around it
-// hold, and the surface they stand on (a Pane or a Sheet starts one).
-export interface Holds {
-	readonly keys: ReadonlySet<string>;
-	readonly surface: object;
+// hold. It places flags only (which frame draws a read's busy mark and its
+// stale and paused line); no frame's form reads it.
+export type Holds = ReadonlySet<string>;
+
+// What a frame outside every frame sees: nothing held.
+export const NO_HOLDS: Holds = new Set();
+
+// Holds are interned by their joined keys, so frames over the same keys
+// publish one identity and a context change re-renders nothing for them. The
+// table is bounded: a clear only costs one re-render.
+const interned = new Map<string, Holds>();
+const INTERNED_MAX = 256;
+
+export function holdsOf(
+	enclosing: Holds,
+	held: Read<unknown> | undefined,
+): Holds {
+	if (!held) return enclosing;
+	const keys = [...enclosing, hashKey(held.options.queryKey)];
+	const id = keys.join("|");
+	let holds = interned.get(id);
+	if (!holds) {
+		if (interned.size >= INTERNED_MAX) interned.clear();
+		holds = new Set(keys);
+		interned.set(id, holds);
+	}
+	return holds;
 }
-
-// What a frame outside every frame sees: the root surface, nothing held.
-export const NO_HOLDS: Holds = { keys: new Set(), surface: {} };
-
-const surfaces = new WeakMap<object, Map<string, number>>();
 
 function count(counts: Map<string, number>, keys: readonly string[]) {
 	for (const key of keys) counts.set(key, (counts.get(key) ?? 0) + 1);
@@ -434,31 +531,19 @@ function count(counts: Map<string, number>, keys: readonly string[]) {
 	};
 }
 
-// A read's states draw once per surface, so two frames on one surface holding
-// the same read draw its failure twice side by side: the frame around both
-// holds it. A nested frame holds only what its ancestors do not, and another
-// surface (a Pane in a Place, a portaled Sheet) is another place to draw.
-export function holdReads(
-	surface: object,
-	reads: readonly Read<unknown>[],
-): () => void {
+// A frame holds one read. Given the frame's unheld non-quiet reads, the first is
+// the one it holds, so each further one is a mistake named by both keys: its
+// failure still draws (the form comes from every read) but its flags do not.
+// Sibling frames over one read are no mistake; each holds and fails.
+export function holdReads(reads: readonly Read<unknown>[]): () => void {
 	if (!dev()) return () => {};
 	const keys = reads.map((r) => hashKey(r.options.queryKey));
-	const here = surfaces.get(surface) ?? new Map<string, number>();
-	surfaces.set(surface, here);
-	for (const key of keys) {
-		if ((here.get(key) ?? 0) > 0) {
-			console.error(
-				`The read ${key} is held by two frames side by side, so its state draws twice. Hold it once on the frame around both.`,
-			);
-		}
+	for (const key of keys.slice(1)) {
+		console.error(
+			`A frame holds one read, and this one has a second: ${keys[0]} and ${key}. Give each read its own Pane, Section, Sheet or Form, or use \`or\` for a read that only names or orders.`,
+		);
 	}
-	const release = count(holders, keys);
-	count(here, keys);
-	return () => {
-		release();
-		for (const key of keys) here.set(key, (here.get(key) ?? 1) - 1);
-	};
+	return count(holders, keys);
 }
 
 export function paintReads(reads: readonly Read<unknown>[]): () => void {

@@ -95,7 +95,11 @@ export function ListBase<T, V extends string | null = string>(
 						{...props}
 						more={undefined}
 						tail
-						drawn={{ painted: true, value: placeholderData() }}
+						drawn={{
+							painted: true,
+							phase: "waiting",
+							value: placeholderData(),
+						}}
 					/>
 				)}
 			/>

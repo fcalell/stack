@@ -169,7 +169,7 @@ export function SheetBase({
 	children,
 }: SheetBaseProps) {
 	const touch = useTouch();
-	const frame = useFrame(read, true);
+	const frame = useFrame(read);
 	const settle = useSettleName();
 	const own = useAct<number>("line");
 	// The sheet hosts its acts' run: its head submit, its foot bar and its
