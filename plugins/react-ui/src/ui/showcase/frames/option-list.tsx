@@ -2,8 +2,8 @@ import { FormField } from "../../components/form-field/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import { Select } from "../../components/select/index.tsx";
 import { TextArea } from "../../components/text-area/index.tsx";
-import type { ShowcaseFrame } from "../cells.ts";
-import { itemsAt, waitingText } from "../waiting.ts";
+import { isFirstCell, type ShowcaseFrame } from "../cells.ts";
+import { endedAt, itemsAt, waitingText } from "../waiting.ts";
 import { Wide } from "./layout-context.tsx";
 import { beside, isPaint } from "./painted.tsx";
 
@@ -206,9 +206,31 @@ function Topics(props: {
 // read waits, the frame drawing the failed and empty forms. Each cell draws
 // only the topics it names (see PARTS), in the frame's state; a `PAINT` cell
 // draws the rows loaded beside the same rows painted, and the radios loaded
-// beside the radios with their value waiting.
+// beside the radios with their value waiting. The error state, on the first
+// cell, draws the list over items that fail and answer not found, in a field
+// no frame holds: the list says so itself, in its own line.
 export function drawOptionList(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
+	if (frame.state === "error")
+		return isFirstCell(frame) ? (
+			<Wide>
+				{endedAt<Topic>(frame.id, "error").map(({ title, items }) => (
+					<FormField
+						key={title}
+						label={title}
+						options={{
+							items,
+							option: {
+								value: (topic) => topic.id,
+								label: (topic) => topic.name,
+							},
+							value: [],
+							onChange: change,
+						}}
+					/>
+				))}
+			</Wide>
+		) : undefined;
 	if (cell === "PAINT.kind.control") {
 		return beside(
 			frame,

@@ -1,4 +1,8 @@
-import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Datum,
+	isSelection,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import type { DiffLine, Hunk } from "@fcalell/ui-core/descriptors";
 import { PAINT_ROWS } from "@fcalell/ui-core/paint";
 import {
@@ -15,6 +19,7 @@ import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { inertProps, Painted } from "../../lib/paint";
+import { FrameBody, FrameLine, useFrame } from "../../lib/read";
 
 const FRAME = "min-w-0 overflow-hidden";
 // A line's cells stand from its top, the numbers on its first line.
@@ -37,7 +42,7 @@ interface DiffBase extends Closed {
 // line.
 export type DiffProps =
 	| (DiffBase & {
-			/** The hunks, each a header over its lines. A selection paints a hunk header over `PAINT_ROWS` lines until its read lands. */
+			/** The hunks, each a header over its lines. A selection paints a hunk header over `PAINT_ROWS` lines until its read lands, and is the diff's own frame: it holds its read and draws the failed, missing and empty forms in its own box whatever stands above it. */
 			hunks: Datum<readonly Hunk[]>;
 			before?: never;
 			after?: never;
@@ -145,9 +150,15 @@ function Gutters(props: { line?: DiffLine; numbers: Numbers }) {
 // numbers (the old and the new, or the one side a diff that only adds or only
 // removes has) and its `+` or `−` marker. A long line wraps under itself at the
 // line's start: React Native has no text indent, so a wrapped line does not
-// hang. The frame is a list named by `label`, the phone having no table.
+// hang. The frame is a list named by `label`, the phone having no table. Given
+// hunks by a selection it is a frame of them: the failed form with Retry, the
+// missing form and the empty form stand in its box with the generic sentence,
+// and the stale and paused line over it while it holds its read.
 export function Diff({ label, hunks, before, after }: DiffProps) {
 	const [h, b, a] = useSelections([hunks, before, after] as const);
+	// The hunks are the diff's frame: two texts are given plain or by a
+	// frame above, and a diff of them is no read's empty.
+	const frame = useFrame(isSelection(hunks) ? hunks : undefined);
 	const painted = h.painted || b.painted || a.painted;
 	// The hunks derive once per text pair, and not while the diff paints.
 	const shown = useMemo(() => {
@@ -156,31 +167,29 @@ export function Diff({ label, hunks, before, after }: DiffProps) {
 		return given ?? lineHunks(b.value as string, a.value as string);
 	}, [painted, h.value, b.value, a.value]);
 	const numbers = numbersOf(shown);
-	if (painted)
-		return (
-			<View {...inertProps(true)} className={cn(CONTENT_FRAME, FRAME)}>
-				<View className={diffLine({ kind: "header" })}>
-					<RNText className={cn(diffLine({ kind: "header" }), DIFF_HUNK)}>
-						<Painted role="phrase" />
+	const body = painted ? (
+		<View {...inertProps(true)} className={cn(CONTENT_FRAME, FRAME)}>
+			<View className={diffLine({ kind: "header" })}>
+				<RNText className={cn(diffLine({ kind: "header" }), DIFF_HUNK)}>
+					<Painted role="phrase" />
+				</RNText>
+			</View>
+			{Array.from({ length: PAINT_ROWS }, (_, at) => (
+				<View
+					// biome-ignore lint/suspicious/noArrayIndexKey: the lines are fixed stand-ins
+					key={at}
+					className={cn(diffLine({ kind: "context" }), ROW)}
+				>
+					<Gutters numbers={BOTH} />
+					<RNText
+						className={cn(diffLine({ kind: "context" }), DIFF_CODE, CODE)}
+					>
+						<Painted role="sentence" at={at} />
 					</RNText>
 				</View>
-				{Array.from({ length: PAINT_ROWS }, (_, at) => (
-					<View
-						// biome-ignore lint/suspicious/noArrayIndexKey: the lines are fixed stand-ins
-						key={at}
-						className={cn(diffLine({ kind: "context" }), ROW)}
-					>
-						<Gutters numbers={BOTH} />
-						<RNText
-							className={cn(diffLine({ kind: "context" }), DIFF_CODE, CODE)}
-						>
-							<Painted role="sentence" at={at} />
-						</RNText>
-					</View>
-				))}
-			</View>
-		);
-	return (
+			))}
+		</View>
+	) : (
 		<View
 			accessibilityRole="list"
 			accessibilityLabel={label}
@@ -207,5 +216,11 @@ export function Diff({ label, hunks, before, after }: DiffProps) {
 				)),
 			])}
 		</View>
+	);
+	return (
+		<FrameBody frame={frame} fit="frame">
+			<FrameLine frame={frame} />
+			{body}
+		</FrameBody>
 	);
 }

@@ -1,4 +1,9 @@
-import { type Read, read } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Datum,
+	type Read,
+	read,
+	type Selection,
+} from "@fcalell/plugin-api/tanstack-query";
 import type { ShowcaseFrame } from "./cells.ts";
 
 // The reads a frame's showcase drawer hands a frame to show each of its forms:
@@ -164,4 +169,24 @@ export function pagesAt<T>(
 	);
 	paged.set(key, made);
 	return made;
+}
+
+const gone = new Map<string, Selection<readonly unknown[]>>();
+
+/** The items a collection draws in its `empty` and `error` frames, each under the title of the section that stands it: one that answers none; one that fails and one that answers not found, which the `error` frame draws side by side as a Pane's does. No frame above holds them, so the collection draws its own form. The same reads for the same key. */
+export function endedAt<T>(
+	key: string,
+	state: "empty" | "error",
+): { title: string; items: Datum<readonly T[]> }[] {
+	if (state === "empty")
+		return [{ title: "Empty", items: itemsAt<T>(`${key}/empty`, "empty", []) }];
+	let missing = gone.get(key) as Selection<readonly T[]> | undefined;
+	if (!missing) {
+		missing = readsAt(key).missing.at((): readonly T[] => []);
+		gone.set(key, missing);
+	}
+	return [
+		{ title: "Failed", items: itemsAt<T>(`${key}/failed`, "error", []) },
+		{ title: "Missing", items: missing },
+	];
 }

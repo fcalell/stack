@@ -1,4 +1,8 @@
-import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Datum,
+	isSelection,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type { DiffLine, Hunk } from "@fcalell/ui-core/descriptors";
 import { PAINT_ROWS } from "@fcalell/ui-core/paint";
@@ -15,6 +19,7 @@ import { structuredPatch } from "diff";
 import { useMemo } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { Painted } from "../../lib/paint.tsx";
+import { FrameBody, FrameLine, useFrame } from "../../lib/read.tsx";
 
 const FRAME = "flex flex-col shrink-0 min-w-0 overflow-hidden";
 const TABLE = "w-full border-collapse";
@@ -39,7 +44,7 @@ interface DiffBase extends Closed {
 /** A unified diff, as hunks, or as the two texts it compares, diffed here by line. */
 export type DiffProps =
 	| (DiffBase & {
-			/** The hunks, each a header over its lines. A selection paints a hunk header over `PAINT_ROWS` lines until its read lands. */
+			/** The hunks, each a header over its lines. A selection paints a hunk header over `PAINT_ROWS` lines until its read lands, and is the diff's own frame: it holds its read and draws the failed, missing and empty forms in its own box whatever stands above it. */
 			hunks: Datum<readonly Hunk[]>;
 			before?: never;
 			after?: never;
@@ -143,9 +148,12 @@ function Gutters(props: { line?: DiffLine; numbers: Numbers }) {
 	);
 }
 
-/** A unified diff at the code role in the frame Code shares: each hunk's header on the group ground in the meta ink, then its lines, added on ok-soft and removed on danger-soft, the whole row, each with its line numbers (the old and the new, or the one side a diff that only adds or only removes has) and its `+` or `−` marker. A long line wraps under itself at every width, hung one inset, its numbers on its first line. */
+/** A unified diff at the code role in the frame Code shares: each hunk's header on the group ground in the meta ink, then its lines, added on ok-soft and removed on danger-soft, the whole row, each with its line numbers (the old and the new, or the one side a diff that only adds or only removes has) and its `+` or `−` marker. A long line wraps under itself at every width, hung one inset, its numbers on its first line. Given hunks by a selection it is a frame of them: the failed form with Retry, the missing form and the empty form stand in its box with the generic sentence, and the stale and paused line over it while it holds its read. */
 export function Diff({ label, hunks, before, after }: DiffProps) {
 	const [h, b, a] = useSelections([hunks, before, after] as const);
+	// The hunks are the diff's frame: two texts are given plain or by a
+	// frame above, and a diff of them is no read's empty.
+	const frame = useFrame(isSelection(hunks) ? hunks : undefined);
 	const painted = h.painted || b.painted || a.painted;
 	// The hunks derive once per text pair, and not while the diff paints.
 	const shown = useMemo(() => {
@@ -154,32 +162,30 @@ export function Diff({ label, hunks, before, after }: DiffProps) {
 		return given ?? lineHunks(b.value as string, a.value as string);
 	}, [painted, h.value, b.value, a.value]);
 	const numbers = numbersOf(shown);
-	if (painted)
-		return (
-			<div inert className={cn(CONTENT_FRAME, FRAME)}>
-				<table className={TABLE}>
-					<tbody>
-						<tr className={diffLine({ kind: "header" })}>
-							<td colSpan={span(BOTH)} className={DIFF_HUNK}>
-								<div className={cn(DIFF_HANG, HANG)}>
-									<Painted role="phrase" />
-								</div>
+	const body = painted ? (
+		<div inert className={cn(CONTENT_FRAME, FRAME)}>
+			<table className={TABLE}>
+				<tbody>
+					<tr className={diffLine({ kind: "header" })}>
+						<td colSpan={span(BOTH)} className={DIFF_HUNK}>
+							<div className={cn(DIFF_HANG, HANG)}>
+								<Painted role="phrase" />
+							</div>
+						</td>
+					</tr>
+					{Array.from({ length: PAINT_ROWS }, (_, at) => (
+						// biome-ignore lint/suspicious/noArrayIndexKey: the lines are fixed stand-ins
+						<tr key={at} className={diffLine({ kind: "context" })}>
+							<Gutters numbers={BOTH} />
+							<td className={cn(DIFF_CODE, DIFF_HANG, CODE, HANG)}>
+								<Painted role="sentence" at={at} />
 							</td>
 						</tr>
-						{Array.from({ length: PAINT_ROWS }, (_, at) => (
-							// biome-ignore lint/suspicious/noArrayIndexKey: the lines are fixed stand-ins
-							<tr key={at} className={diffLine({ kind: "context" })}>
-								<Gutters numbers={BOTH} />
-								<td className={cn(DIFF_CODE, DIFF_HANG, CODE, HANG)}>
-									<Painted role="sentence" at={at} />
-								</td>
-							</tr>
-						))}
-					</tbody>
-				</table>
-			</div>
-		);
-	return (
+					))}
+				</tbody>
+			</table>
+		</div>
+	) : (
 		<div className={cn(CONTENT_FRAME, FRAME)}>
 			<table aria-label={label} className={TABLE}>
 				<tbody>
@@ -204,5 +210,11 @@ export function Diff({ label, hunks, before, after }: DiffProps) {
 				</tbody>
 			</table>
 		</div>
+	);
+	return (
+		<FrameBody frame={frame} fit="frame">
+			<FrameLine frame={frame} />
+			{body}
+		</FrameBody>
 	);
 }

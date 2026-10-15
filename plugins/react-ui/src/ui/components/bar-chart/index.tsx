@@ -1,8 +1,4 @@
-import {
-	type Datum,
-	type Drawn,
-	useSelections,
-} from "@fcalell/plugin-api/tanstack-query";
+import type { Datum } from "@fcalell/plugin-api/tanstack-query";
 import {
 	type ChartUnit,
 	chartHead,
@@ -35,6 +31,7 @@ import {
 import type { ReactNode } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { PAINT_BOX, Painted } from "../../lib/paint.tsx";
+import { FrameBody, FrameLine, useCollection } from "../../lib/read.tsx";
 
 const STACK = "flex flex-col min-w-0";
 const TOTAL = "flex items-baseline";
@@ -130,7 +127,7 @@ export interface BarSlots<T> {
 
 /** Columns over time: one bar per item, stacked by one dimension when `keys` names its parts. */
 export type BarChartProps<T = unknown> = Closed & {
-	/** The items the bars draw, oldest first: constants, or a selection, which paints the chart until its read lands. A selection stands in a frame (a Pane, Section, Sheet or Form given the read), which draws the chart's failed, missing and empty forms. */
+	/** The items the bars draw, oldest first: constants, or a selection, which paints the chart until its read lands. A selection is the chart's own frame: it holds its read and draws the failed, missing and empty forms in its own box whatever stands above it. */
 	items: Datum<readonly T[]>;
 	/** What the chart counts, which names the plot (a short phrase; read aloud, never drawn). */
 	label: string;
@@ -152,13 +149,13 @@ interface Bar {
 	at?: string;
 }
 
-/** The total (the last bar with `level`) at body 500 with its unit, the parts' keys under it, then the axis beside the plot, its four gridlines a hairline each with its tick centred on it and the baseline with its 0, the columns in the chip marks by part, a time under each bar that has one. While the `items` selection's read waits, the total is a figure's filler, the legend stands (its names and marks declared, its figures painted), the plot is one painted box at its loaded height with the axis's lane kept and the times are two fillers, the chart inert. The frame around it draws the rest: the failed form with Retry, the missing form, the empty form. */
+/** The total (the last bar with `level`) at body 500 with its unit, the parts' keys under it, then the axis beside the plot, its four gridlines a hairline each with its tick centred on it and the baseline with its 0, the columns in the chip marks by part, a time under each bar that has one. While the `items` selection's read waits, the total is a figure's filler, the legend stands (its names and marks declared, its figures painted), the plot is one painted box at its loaded height with the axis's lane kept and the times are two fillers, the chart inert. The chart is a frame of its items: it draws the failed form with Retry, the missing form and the empty form in its own box with the generic sentence, and the stale and paused line above itself while it holds its read, whatever stands above it. */
 export function BarChart<T>(props: BarChartProps<T>) {
 	const { label, keys, unit, level } = props;
-	const [drawn] = useSelections([props.items] as const);
-	const { painted } = drawn as Drawn<readonly T[]>;
+	const { drawn, frame } = useCollection(props.items);
+	const { painted } = drawn;
 	const { bar } = props;
-	const items = painted ? [] : (drawn.value as readonly T[]);
+	const items = painted ? [] : drawn.value;
 	const series: Bar[] = items.map((item) => ({
 		key: bar.key(item),
 		value: bar.value(item),
@@ -202,131 +199,134 @@ export function BarChart<T>(props: BarChartProps<T>) {
 	);
 	const height = (value: number) => ({ height: `${(value / top) * 100}%` });
 	return (
-		<div inert={painted || undefined} className={cn(CHART, STACK)}>
-			{labels.length > 0 ? (
-				<div className={cn(CHART_HEAD, HEAD)}>
-					{totalLine}
-					<div className={cn(CHART_KEYS, KEYS)}>
-						{keyTotals.map((key, at) => (
-							<Key key={key.label} name={key.label} at={at}>
-								<span className={cn(text({ role: "meta" }), FIGURES)}>
-									{painted ? (
-										<Painted role="figure" at={at} />
-									) : (
-										figure.format(key.value)
-									)}
-								</span>
-							</Key>
+		<FrameBody frame={frame} fit="frame">
+			<FrameLine frame={frame} />
+			<div inert={painted || undefined} className={cn(CHART, STACK)}>
+				{labels.length > 0 ? (
+					<div className={cn(CHART_HEAD, HEAD)}>
+						{totalLine}
+						<div className={cn(CHART_KEYS, KEYS)}>
+							{keyTotals.map((key, at) => (
+								<Key key={key.label} name={key.label} at={at}>
+									<span className={cn(text({ role: "meta" }), FIGURES)}>
+										{painted ? (
+											<Painted role="figure" at={at} />
+										) : (
+											figure.format(key.value)
+										)}
+									</span>
+								</Key>
+							))}
+						</div>
+					</div>
+				) : (
+					totalLine
+				)}
+				<div className={cn(CHART_BODY, BODY, lineBox({ role: "meta" }))}>
+					<div aria-hidden className={cn(CHART_GRID, CHART_TICK_LANE, AXIS)}>
+						{Array.from({ length: bands }, (_, index) => (
+							<div
+								// biome-ignore lint/suspicious/noArrayIndexKey: a band is its index
+								key={index}
+								className={cn(
+									chartBand({ kind: "axis", rule: band(index, bands) }),
+									AXIS_BAND,
+								)}
+							>
+								{peak > 0 ? (
+									<span className={cn(text({ role: "meta" }), FIGURES, TICK)}>
+										{tick.format(top - step * index)}
+									</span>
+								) : null}
+								{peak > 0 && index === bands - 1 ? (
+									<span className={cn(text({ role: "meta" }), FIGURES, ZERO)}>
+										{tick.format(0)}
+									</span>
+								) : null}
+							</div>
 						))}
 					</div>
-				</div>
-			) : (
-				totalLine
-			)}
-			<div className={cn(CHART_BODY, BODY, lineBox({ role: "meta" }))}>
-				<div aria-hidden className={cn(CHART_GRID, CHART_TICK_LANE, AXIS)}>
-					{Array.from({ length: bands }, (_, index) => (
-						<div
-							// biome-ignore lint/suspicious/noArrayIndexKey: a band is its index
-							key={index}
-							className={cn(
-								chartBand({ kind: "axis", rule: band(index, bands) }),
-								AXIS_BAND,
-							)}
-						>
-							{peak > 0 ? (
-								<span className={cn(text({ role: "meta" }), FIGURES, TICK)}>
-									{tick.format(top - step * index)}
-								</span>
-							) : null}
-							{peak > 0 && index === bands - 1 ? (
-								<span className={cn(text({ role: "meta" }), FIGURES, ZERO)}>
-									{tick.format(0)}
-								</span>
-							) : null}
-						</div>
-					))}
-				</div>
-				<div className={cn(CHART_MAIN, MAIN)}>
-					{painted ? (
-						<div className={cn(CHART_GRID, PAINT_BOX)} />
-					) : (
-						<div role="img" aria-label={label} className={PLOT}>
-							<div className={cn(CHART_GRID, GRID)}>
-								{Array.from({ length: bands }, (_, index) => (
-									<div
-										// biome-ignore lint/suspicious/noArrayIndexKey: a band is its index
-										key={index}
-										className={cn(
-											chartBand({ kind: "grid", rule: band(index, bands) }),
-											GRID_BAND,
-										)}
-									/>
-								))}
+					<div className={cn(CHART_MAIN, MAIN)}>
+						{painted ? (
+							<div className={cn(CHART_GRID, PAINT_BOX)} />
+						) : (
+							<div role="img" aria-label={label} className={PLOT}>
+								<div className={cn(CHART_GRID, GRID)}>
+									{Array.from({ length: bands }, (_, index) => (
+										<div
+											// biome-ignore lint/suspicious/noArrayIndexKey: a band is its index
+											key={index}
+											className={cn(
+												chartBand({ kind: "grid", rule: band(index, bands) }),
+												GRID_BAND,
+											)}
+										/>
+									))}
+								</div>
+								<div className={BARS}>
+									{series.map((bar) => (
+										<div key={bar.key} className={SLOT}>
+											{keys ? (
+												// The first part stands on the baseline, each next one
+												// over it, split from it by a clear line.
+												keys
+													.map((key, at) => (
+														<div
+															key={key}
+															className={cn(
+																chartFill({ series: mark(at) }),
+																at > 0 && CHART_PART_SPLIT,
+																"w-2/3",
+																PART,
+															)}
+															style={height(part(bar, key))}
+														/>
+													))
+													.reverse()
+											) : (
+												<div
+													className={cn(
+														chartFill({ series: CHART_SERIES[0] }),
+														"w-2/3",
+													)}
+													style={height(bar.value)}
+												/>
+											)}
+										</div>
+									))}
+								</div>
 							</div>
-							<div className={BARS}>
-								{series.map((bar) => (
-									<div key={bar.key} className={SLOT}>
-										{keys ? (
-											// The first part stands on the baseline, each next one
-											// over it, split from it by a clear line.
-											keys
-												.map((key, at) => (
-													<div
-														key={key}
-														className={cn(
-															chartFill({ series: mark(at) }),
-															at > 0 && CHART_PART_SPLIT,
-															"w-2/3",
-															PART,
-														)}
-														style={height(part(bar, key))}
-													/>
-												))
-												.reverse()
-										) : (
-											<div
-												className={cn(
-													chartFill({ series: CHART_SERIES[0] }),
-													"w-2/3",
-												)}
-												style={height(bar.value)}
-											/>
-										)}
-									</div>
-								))}
-							</div>
+						)}
+						<div aria-hidden className={cn(TIMES, painted && TIMES_PAINTED)}>
+							{painted
+								? [0, 1].map((end) => (
+										<span
+											key={end}
+											className={cn(text({ role: "meta" }), FIGURES)}
+										>
+											<Painted role="word" at={end} />
+										</span>
+									))
+								: series.map((bar) => (
+										<div key={bar.key} className={TIME}>
+											{bar.at ? (
+												<span
+													className={cn(
+														text({ role: "meta" }),
+														FIGURES,
+														TIME_TEXT,
+													)}
+												>
+													{bar.at}
+												</span>
+											) : null}
+										</div>
+									))}
 						</div>
-					)}
-					<div aria-hidden className={cn(TIMES, painted && TIMES_PAINTED)}>
-						{painted
-							? [0, 1].map((end) => (
-									<span
-										key={end}
-										className={cn(text({ role: "meta" }), FIGURES)}
-									>
-										<Painted role="word" at={end} />
-									</span>
-								))
-							: series.map((bar) => (
-									<div key={bar.key} className={TIME}>
-										{bar.at ? (
-											<span
-												className={cn(
-													text({ role: "meta" }),
-													FIGURES,
-													TIME_TEXT,
-												)}
-											>
-												{bar.at}
-											</span>
-										) : null}
-									</div>
-								))}
 					</div>
 				</div>
 			</div>
-		</div>
+		</FrameBody>
 	);
 }
 

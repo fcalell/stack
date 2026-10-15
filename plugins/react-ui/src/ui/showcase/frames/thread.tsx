@@ -1,4 +1,4 @@
-import { read } from "@fcalell/plugin-api/tanstack-query";
+import { type Datum, read } from "@fcalell/plugin-api/tanstack-query";
 import type {
 	Attachment,
 	MessageDetail,
@@ -11,7 +11,7 @@ import { Place } from "../../components/place/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import { type MessageSlots, Thread } from "../../components/thread/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
-import { itemsAt } from "../waiting.ts";
+import { endedAt, itemsAt } from "../waiting.ts";
 import { StandInList } from "./layout-context.tsx";
 import { ATTACHED, REPLY, today } from "./message.tsx";
 import { Column } from "./place.tsx";
@@ -152,11 +152,39 @@ export const TURNS: Turn[] = [
 // Board 53's thread in a Pane's body among its sections, under one: system
 // lines (one opening, one folding its reads, a free act over its code, a
 // proposal as its row), yours and the assistant's replies, the input docked in
-// the Pane's foot with its notice, the answer still working. The Pane holds the
-// read, so each frame draws its state: the painted messages, the failed form,
-// the empty form, the conversation.
+// the Pane's foot with its notice, the answer still working. No frame holds
+// the thread's read: the thread is a frame of its items, so each frame draws
+// its state in the log's place with the foot kept: the painted messages, the
+// empty log, the failed and missing forms, the conversation. The error state
+// also draws a stream that stopped.
 export function drawThread(frame: ShowcaseFrame) {
-	return <Conversation id={frame.id} state={frame.state} />;
+	const { id, state } = frame;
+	if (state === "empty" || state === "error")
+		return (
+			<>
+				{endedAt<Turn>(id, state).map(({ title, items }) => (
+					<Conversation key={title} id={`${id}/${title}`} items={items} />
+				))}
+				{state === "error" ? (
+					<Conversation
+						id={`${id}/stopped`}
+						items={itemsAt(`${id}/turns`, "rest", TURNS)}
+						stream="error"
+					/>
+				) : null}
+			</>
+		);
+	return (
+		<Conversation
+			id={id}
+			items={itemsAt(
+				`${id}/turns`,
+				state === "streaming" ? "rest" : state,
+				TURNS,
+			)}
+			stream={state === "streaming" ? state : undefined}
+		/>
+	);
 }
 
 // The turn being written, as the read of a stream holds it: the first words of
@@ -169,7 +197,7 @@ const PARTIAL: Turn = {
 	at: today("10:07"),
 };
 
-function replyAt(id: string, state: ShowcaseFrame["state"]) {
+function replyAt(id: string, state: "streaming" | "error") {
 	return read(
 		{
 			queryKey: ["showcase", id, "reply"],
@@ -185,30 +213,23 @@ function replyAt(id: string, state: ShowcaseFrame["state"]) {
 	);
 }
 
-function Conversation(props: { id: string; state: ShowcaseFrame["state"] }) {
+function Conversation(props: {
+	id: string;
+	items: Datum<readonly Turn[]>;
+	stream?: "streaming" | "error";
+}) {
 	const [value, setValue] = useState("");
 	const [working, setWorking] = useState(true);
-	const replies = props.state === "streaming" || props.state === "error";
-	const turns = itemsAt(
-		`${props.id}/turns`,
-		replies ? "rest" : props.state,
-		TURNS,
-	);
+	const { id, stream } = props;
 	const reply = useMemo(
-		() => (replies ? replyAt(props.id, props.state) : undefined),
-		[replies, props.id, props.state],
+		() => (stream ? replyAt(id, stream) : undefined),
+		[id, stream],
 	);
 	return (
 		<Column>
 			<Place>
 				<Pane
 					title="Assistant"
-					read={turns}
-					failed="The conversation did not load."
-					empty={{
-						sentence:
-							"Ask about this deploy: why it failed, what it changed, or what to run next.",
-					}}
 					foot={
 						<MessageInput
 							value={value}
@@ -232,7 +253,7 @@ function Conversation(props: { id: string; state: ShowcaseFrame["state"] }) {
 					<Section title="Deploys">
 						<StandInList />
 					</Section>
-					<Thread items={turns} message={TURN} reply={reply} />
+					<Thread items={props.items} message={TURN} reply={reply} />
 				</Pane>
 			</Place>
 		</Column>

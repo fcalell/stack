@@ -17,7 +17,7 @@ import {
 	STATUSES,
 	WORKFLOW,
 } from "../graphs.ts";
-import { waiting } from "../waiting.ts";
+import { endedAt, waiting } from "../waiting.ts";
 
 export type { Graph };
 export {
@@ -159,20 +159,38 @@ const DRAWN: Record<string, { label: string; graph: Graph }> = {
 // node and a run fitted to a pane where each glyph carries its node's name.
 export function drawCanvas(frame: ShowcaseFrame) {
 	const { name } = frame.cell;
-	if (frame.state === "loading" || frame.state === "empty") {
+	if (
+		frame.state === "loading" ||
+		frame.state === "empty" ||
+		frame.state === "error"
+	) {
 		if (name !== "CANVAS_NODE.state.rest") return undefined;
-		return (
-			<div className={STAGE}>
-				{frame.state === "loading" ? (
+		if (frame.state === "loading")
+			return (
+				<div className={STAGE}>
 					<Canvas label="Workflow" nodes={waitingNodes} />
-				) : (
-					<Canvas
-						label="Workflow"
-						nodes={WORKFLOW.nodes.slice(0, 1)}
-						empty={EMPTY}
-					/>
-				)}
-			</div>
+				</div>
+			);
+		// The caption is the app's own sentence under a graph; the nodes' read
+		// that answers none, fails or answers not found is the canvas's own frame,
+		// which draws its form in its ground.
+		return (
+			<>
+				{frame.state === "empty" ? (
+					<div className={STAGE}>
+						<Canvas
+							label="Workflow"
+							nodes={WORKFLOW.nodes.slice(0, 1)}
+							empty={EMPTY}
+						/>
+					</div>
+				) : null}
+				{endedAt<CanvasNode>(frame.id, frame.state).map(({ title, items }) => (
+					<div key={title} className={STAGE}>
+						<Canvas label={`Workflow, ${title}`} nodes={items} />
+					</div>
+				))}
+			</>
 		);
 	}
 	if (name.startsWith("CANVAS_NODE_GLYPH.state.")) {

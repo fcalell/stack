@@ -1,8 +1,4 @@
-import {
-	type Datum,
-	type Drawn,
-	useSelections,
-} from "@fcalell/plugin-api/tanstack-query";
+import type { Datum } from "@fcalell/plugin-api/tanstack-query";
 import type { StatusMark } from "@fcalell/ui-core/descriptors";
 import { PAINT_ROWS } from "@fcalell/ui-core/paint";
 import {
@@ -16,6 +12,7 @@ import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { inertProps, Painted } from "../../lib/paint";
+import { FrameBody, FrameLine, useCollection } from "../../lib/read";
 import { Chip } from "../chip";
 import { ChipBase } from "../chip/base";
 import { Group, type GroupItem } from "../group";
@@ -49,7 +46,7 @@ export interface FactSlots<T> {
 }
 
 export type ComparisonProps<T = unknown> = Closed & {
-	/** The items the facts draw: constants, or a selection, which paints `PAINT_ROWS` facts until its read lands. A selection stands in a frame (a Pane, Section, Sheet or Form given the read), which draws the comparison's failed, missing and empty forms. */
+	/** The items the facts draw: constants, or a selection, which paints `PAINT_ROWS` facts until its read lands. A selection is the comparison's own frame: it holds its read and draws the failed, missing and empty forms in its own box whatever stands above it. */
 	items: Datum<readonly T[]>;
 	/** What the columns compare, the name of its rows (a short phrase; read aloud, never drawn). */
 	label: string;
@@ -159,18 +156,20 @@ function Fact<T>(props: {
 // drawn alone. While the `items` selection's read waits, the head (the
 // declared columns) stands over `PAINT_ROWS` painted facts: a filler for the
 // label and each column, a chip's box when `row` declares chips and a painted
-// verdict when it declares `status`, inert. The frame around it draws the
-// rest: the failed form with Retry, the missing form, the empty form.
+// verdict when it declares `status`, inert. The comparison is a frame of its
+// facts: it draws the failed form with Retry, the missing form and the empty
+// form in its own box with the generic sentence, and the stale and paused
+// line above its head while it holds its read, whatever stands above it.
 export function Comparison<T>(props: ComparisonProps<T>) {
-	const [drawn] = useSelections([props.items] as const);
-	const { painted } = drawn as Drawn<readonly T[]>;
+	const { drawn, frame } = useCollection(props.items);
+	const { painted } = drawn;
 	const { columns, row } = props;
 	const facts: GroupItem[] = painted
 		? Array.from({ length: PAINT_ROWS }, (_, at) => ({
 				key: `waiting-${at}`,
 				row: <PaintedFact row={row} columns={columns} at={at} />,
 			}))
-		: (drawn.value as readonly T[]).map((item) => ({
+		: drawn.value.map((item) => ({
 				key: row.key(item),
 				row: <Fact item={item} row={row} columns={columns} />,
 			}));
@@ -190,5 +189,10 @@ export function Comparison<T>(props: ComparisonProps<T>) {
 			))}
 		</View>
 	);
-	return <Group items={[{ key: "head", row: header }, ...facts]} />;
+	return (
+		<FrameBody frame={frame} fit="frame">
+			<FrameLine frame={frame} />
+			<Group items={[{ key: "head", row: header }, ...facts]} />
+		</FrameBody>
+	);
 }

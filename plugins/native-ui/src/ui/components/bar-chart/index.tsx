@@ -1,8 +1,4 @@
-import {
-	type Datum,
-	type Drawn,
-	useSelections,
-} from "@fcalell/plugin-api/tanstack-query";
+import type { Datum } from "@fcalell/plugin-api/tanstack-query";
 import {
 	type ChartUnit,
 	chartHead,
@@ -37,6 +33,7 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { compact } from "../../lib/compact";
 import { inertProps, Painted, paintBox, useShown } from "../../lib/paint";
+import { FrameBody, FrameLine, useCollection } from "../../lib/read";
 
 const STACK = "min-w-0";
 const TOTAL = "flex-row items-baseline";
@@ -140,7 +137,7 @@ export interface BarSlots<T> {
 // Columns over time: one bar per item, stacked by one dimension when `keys`
 // names its parts.
 export type BarChartProps<T = unknown> = Closed & {
-	/** The items the bars draw, oldest first: constants, or a selection, which paints the chart until its read lands. A selection stands in a frame (a Pane, Section, Sheet or Form given the read), which draws the chart's failed, missing and empty forms. */
+	/** The items the bars draw, oldest first: constants, or a selection, which paints the chart until its read lands. A selection is the chart's own frame: it holds its read and draws the failed, missing and empty forms in its own box whatever stands above it. */
 	items: Datum<readonly T[]>;
 	/** What the chart counts: the web names its plot by it, the phone draws no name for the plot (a short phrase; never drawn on the phone). */
 	label: string;
@@ -172,12 +169,14 @@ interface Bar {
 // selection's read waits, the total is a figure's filler, the legend stands
 // (its names and marks declared, its figures painted), the plot is one
 // painted box at its loaded height with the axis's lane kept and the times
-// are two fillers, the chart inert. The frame around it draws the rest: the
-// failed form with Retry, the missing form, the empty form.
+// are two fillers, the chart inert. The chart is a frame of its items: it
+// draws the failed form with Retry, the missing form and the empty form in its
+// own box with the generic sentence, and the stale and paused line above
+// itself while it holds its read, whatever stands above it.
 export function BarChart<T>(props: BarChartProps<T>) {
 	const { keys, unit, level } = props;
-	const [drawn] = useSelections([props.items] as const);
-	const { painted } = drawn as Drawn<readonly T[]>;
+	const { drawn, frame } = useCollection(props.items);
+	const { painted } = drawn;
 	const shown = useShown(painted);
 	const { bar } = props;
 	const items = painted ? [] : (drawn.value as readonly T[]);
@@ -227,144 +226,147 @@ export function BarChart<T>(props: BarChartProps<T>) {
 		</View>
 	);
 	return (
-		<View {...inertProps(painted)} className={cn(CHART, STACK)}>
-			{labels.length > 0 ? (
-				<View className={CHART_HEAD}>
-					{totalLine}
-					<View className={cn(CHART_KEYS, KEYS)}>
-						{keyTotals.map((key, at) => (
-							<Key key={key.label} name={key.label} at={at}>
-								<RNText className={cn(text({ role: "meta" }), FIGURES)}>
-									{painted ? (
-										<Painted role="figure" at={at} />
-									) : (
-										figure(key.value)
-									)}
-								</RNText>
-							</Key>
+		<FrameBody frame={frame} fit="frame">
+			<FrameLine frame={frame} />
+			<View {...inertProps(painted)} className={cn(CHART, STACK)}>
+				{labels.length > 0 ? (
+					<View className={CHART_HEAD}>
+						{totalLine}
+						<View className={cn(CHART_KEYS, KEYS)}>
+							{keyTotals.map((key, at) => (
+								<Key key={key.label} name={key.label} at={at}>
+									<RNText className={cn(text({ role: "meta" }), FIGURES)}>
+										{painted ? (
+											<Painted role="figure" at={at} />
+										) : (
+											figure(key.value)
+										)}
+									</RNText>
+								</Key>
+							))}
+						</View>
+					</View>
+				) : (
+					totalLine
+				)}
+				<View className={cn(CHART_BODY, BODY)} style={REACH}>
+					<View className={cn(CHART_GRID, CHART_TICK_LANE, AXIS)}>
+						{Array.from({ length: bands }, (_, index) => (
+							<View
+								// biome-ignore lint/suspicious/noArrayIndexKey: a band is its index
+								key={index}
+								className={cn(
+									chartBand({ kind: "axis", rule: band(index, bands) }),
+									AXIS_BAND,
+								)}
+							>
+								{peak > 0 ? (
+									<RNText
+										numberOfLines={1}
+										className={cn(text({ role: "meta" }), FIGURES, TICK)}
+									>
+										{tick(top - step * index)}
+									</RNText>
+								) : null}
+								{peak > 0 && index === bands - 1 ? (
+									<RNText className={cn(text({ role: "meta" }), FIGURES, ZERO)}>
+										{tick(0)}
+									</RNText>
+								) : null}
+							</View>
 						))}
 					</View>
-				</View>
-			) : (
-				totalLine
-			)}
-			<View className={cn(CHART_BODY, BODY)} style={REACH}>
-				<View className={cn(CHART_GRID, CHART_TICK_LANE, AXIS)}>
-					{Array.from({ length: bands }, (_, index) => (
-						<View
-							// biome-ignore lint/suspicious/noArrayIndexKey: a band is its index
-							key={index}
-							className={cn(
-								chartBand({ kind: "axis", rule: band(index, bands) }),
-								AXIS_BAND,
-							)}
-						>
-							{peak > 0 ? (
-								<RNText
-									numberOfLines={1}
-									className={cn(text({ role: "meta" }), FIGURES, TICK)}
-								>
-									{tick(top - step * index)}
-								</RNText>
-							) : null}
-							{peak > 0 && index === bands - 1 ? (
-								<RNText className={cn(text({ role: "meta" }), FIGURES, ZERO)}>
-									{tick(0)}
-								</RNText>
-							) : null}
-						</View>
-					))}
-				</View>
-				<View className={cn(CHART_MAIN, MAIN)}>
-					{painted ? (
-						<View className={cn(CHART_GRID, paintBox(shown))} />
-					) : (
-						<View className={PLOT}>
-							<View className={CHART_GRID}>
-								{Array.from({ length: bands }, (_, index) => (
-									<View
-										// biome-ignore lint/suspicious/noArrayIndexKey: a band is its index
-										key={index}
-										className={cn(
-											chartBand({ kind: "grid", rule: band(index, bands) }),
-											GRID_BAND,
-										)}
-									/>
-								))}
-							</View>
-							<View className={BARS}>
-								{series.map((bar) => (
-									<View key={bar.key} className={SLOT}>
-										{keys ? (
-											// The first part stands on the baseline, each next one
-											// over it, split from it by a clear line.
-											keys
-												.map((key, at) =>
-													at > 0 ? (
-														<View
-															key={key}
-															className={cn(CHART_PART_SPLIT, PART)}
-															style={height(part(bar, key), top)}
-														>
+					<View className={cn(CHART_MAIN, MAIN)}>
+						{painted ? (
+							<View className={cn(CHART_GRID, paintBox(shown))} />
+						) : (
+							<View className={PLOT}>
+								<View className={CHART_GRID}>
+									{Array.from({ length: bands }, (_, index) => (
+										<View
+											// biome-ignore lint/suspicious/noArrayIndexKey: a band is its index
+											key={index}
+											className={cn(
+												chartBand({ kind: "grid", rule: band(index, bands) }),
+												GRID_BAND,
+											)}
+										/>
+									))}
+								</View>
+								<View className={BARS}>
+									{series.map((bar) => (
+										<View key={bar.key} className={SLOT}>
+											{keys ? (
+												// The first part stands on the baseline, each next one
+												// over it, split from it by a clear line.
+												keys
+													.map((key, at) =>
+														at > 0 ? (
 															<View
+																key={key}
+																className={cn(CHART_PART_SPLIT, PART)}
+																style={height(part(bar, key), top)}
+															>
+																<View
+																	className={cn(
+																		chartFill({ series: mark(at) }),
+																		PART_FILL,
+																	)}
+																/>
+															</View>
+														) : (
+															<View
+																key={key}
 																className={cn(
 																	chartFill({ series: mark(at) }),
-																	PART_FILL,
+																	PART,
 																)}
+																style={height(part(bar, key), top)}
 															/>
-														</View>
-													) : (
-														<View
-															key={key}
-															className={cn(
-																chartFill({ series: mark(at) }),
-																PART,
-															)}
-															style={height(part(bar, key), top)}
-														/>
-													),
-												)
-												.reverse()
-										) : (
-											<View
-												className={cn(
-													chartFill({ series: CHART_SERIES[0] }),
-													COLUMN,
-												)}
-												style={height(bar.value, top)}
-											/>
-										)}
-									</View>
-								))}
+														),
+													)
+													.reverse()
+											) : (
+												<View
+													className={cn(
+														chartFill({ series: CHART_SERIES[0] }),
+														COLUMN,
+													)}
+													style={height(bar.value, top)}
+												/>
+											)}
+										</View>
+									))}
+								</View>
 							</View>
+						)}
+						<View className={cn(TIMES, painted && TIMES_PAINTED)}>
+							{painted
+								? [0, 1].map((end) => (
+										<RNText
+											key={end}
+											className={cn(text({ role: "meta" }), FIGURES)}
+										>
+											<Painted role="word" at={end} />
+										</RNText>
+									))
+								: series.map((bar) => (
+										<View key={bar.key} className={TIME}>
+											{bar.at ? (
+												<RNText
+													numberOfLines={1}
+													className={cn(text({ role: "meta" }), FIGURES)}
+												>
+													{bar.at}
+												</RNText>
+											) : null}
+										</View>
+									))}
 						</View>
-					)}
-					<View className={cn(TIMES, painted && TIMES_PAINTED)}>
-						{painted
-							? [0, 1].map((end) => (
-									<RNText
-										key={end}
-										className={cn(text({ role: "meta" }), FIGURES)}
-									>
-										<Painted role="word" at={end} />
-									</RNText>
-								))
-							: series.map((bar) => (
-									<View key={bar.key} className={TIME}>
-										{bar.at ? (
-											<RNText
-												numberOfLines={1}
-												className={cn(text({ role: "meta" }), FIGURES)}
-											>
-												{bar.at}
-											</RNText>
-										) : null}
-									</View>
-								))}
 					</View>
 				</View>
 			</View>
-		</View>
+		</FrameBody>
 	);
 }
 

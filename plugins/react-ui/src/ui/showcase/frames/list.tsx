@@ -7,7 +7,7 @@ import { Place } from "../../components/place/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import { ago } from "../ago.ts";
 import type { ShowcaseFrame } from "../cells.ts";
-import { itemsAt } from "../waiting.ts";
+import { endedAt, itemsAt } from "../waiting.ts";
 import { Paged } from "./more.tsx";
 import { Column } from "./place.tsx";
 
@@ -77,6 +77,13 @@ const LIMITS = [
 
 const refetch = () => {};
 
+const NOTE_ROW = {
+	key: (note: Note) => note.id,
+	title: (note: Note) => note.title,
+	meta: (note: Note) => [note.edited],
+	href: (note: Note) => `#${note.id}`,
+};
+
 // A list over a pages read, in each state of its more row.
 const MORE_TITLES = {
 	next: "Deploys",
@@ -91,8 +98,10 @@ const MORE_TITLES = {
 // the Section; host keys, facts from data in a Group (a label over its
 // fingerprint, copied); and allowed hosts, an add field over a List in a Group,
 // the field live while the rows paint; and plan limits, meters from data in a
-// Group. The more state draws the deploys over a pages read in each state of
-// its more row, on the list cell.
+// Group. The empty and error states draw a list over a read that answers none,
+// one that fails and one that answers not found, in Sections that hold none of
+// them, so the list draws its own form. The more state draws the deploys over a
+// pages read in each state of its more row, on the list cell.
 export function drawList(frame: ShowcaseFrame) {
 	if (frame.state === "more")
 		return frame.cell.name === "LIST" ? (
@@ -123,6 +132,22 @@ export function drawList(frame: ShowcaseFrame) {
 				</Place>
 			</Column>
 		) : undefined;
+	// The empty and error states: no Section holds the list's read, so the list
+	// is its own frame and draws its form in its own box.
+	if (frame.state === "empty" || frame.state === "error")
+		return (
+			<Column>
+				<Place>
+					<Pane title="Library">
+						{endedAt<Note>(frame.id, frame.state).map(({ title, items }) => (
+							<Section key={title} title={title}>
+								<List items={items} row={NOTE_ROW} />
+							</Section>
+						))}
+					</Pane>
+				</Place>
+			</Column>
+		);
 	const at = <T,>(name: string, items: readonly T[]) =>
 		itemsAt(`${frame.id}/${name}`, frame.state, items);
 	const notes = at("notes", NOTES);
@@ -143,15 +168,7 @@ export function drawList(frame: ShowcaseFrame) {
 							act: { label: "New note", onAct: refetch },
 						}}
 					>
-						<List
-							items={notes}
-							row={{
-								key: (note) => note.id,
-								title: (note) => note.title,
-								meta: (note) => [note.edited],
-								href: (note) => `#${note.id}`,
-							}}
-						/>
+						<List items={notes} row={NOTE_ROW} />
 					</Section>
 					<Section
 						title="Deploys"

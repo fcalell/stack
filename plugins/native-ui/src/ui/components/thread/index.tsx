@@ -5,7 +5,6 @@ import {
 	FrameHolds,
 	type Selection,
 	useFrameRead,
-	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
 import type {
 	Attachment,
@@ -28,7 +27,13 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FootReturn, useFootRegion } from "../../lib/frame";
 import { Lifted } from "../../lib/hosts";
-import { StateLine } from "../../lib/read";
+import {
+	type Frame,
+	FrameBody,
+	FrameLine,
+	StateLine,
+	useCollection,
+} from "../../lib/read";
 import { useWords } from "../../lib/words";
 import { Message } from "../message";
 import { MessageBase } from "../message/base";
@@ -238,30 +243,19 @@ function logOf<T>(
 // waiting Message of the other author after them, followed as any message is
 // and replaced in place when the reply's item arrives and `replying` clears; the `reply` read draws its turn after them the same way, from its own subscription.
 // While the `items` selection's read waits, `PAINT_ROWS` messages of the other
-// author stand in the log, painted and inert. The frame around it draws the
-// rest: it holds the read and draws the failed form with Retry, the missing
-// form saying it no longer exists with Back, and the empty form.
+// author stand in the log, painted and inert. The thread is a frame of its
+// items: the failed form with Retry and the missing form stand in the log's
+// place, in its box with the generic sentence, and the empty form is an empty
+// log with no sentence; the foot and the reply stand through each of them, so
+// a thread whose items failed still sends. The stale and paused line stands
+// over the log while it holds its read.
 export function Thread<T>(props: ThreadProps<T>) {
 	const { sheet } = props;
-	const [drawn] = useSelections([props.items] as const);
+	const { drawn, frame } = useCollection(props.items);
 	// The latest slots, which each drawn message reads when its item changes
 	// and its acts call when pressed.
 	const slots = useRef(props.message);
 	slots.current = props.message;
-	const children = logOf(props, drawn as Drawn<readonly T[]>, slots);
-	// The newest turn, at the origin before the rest: a cell of its own, which
-	// draws nothing, gap included, while there is no turn being written.
-	const last = (drawn.value as readonly T[]).at(-1);
-	const reply =
-		props.reply && !drawn.painted ? (
-			<ReplyTurn
-				reply={props.reply}
-				slots={slots}
-				after={last === undefined ? undefined : props.message.key(last)}
-			/>
-		) : null;
-
-	const log = useRef<ScrollView>(null);
 	// The claim a docked sheet leaves the foot for the input that returns.
 	const claim = useRef(false);
 	const region = useFootRegion(true);
@@ -270,6 +264,54 @@ export function Thread<T>(props: ThreadProps<T>) {
 	) : (
 		props.foot
 	);
+	return (
+		<Lifted
+			behavior="padding"
+			automaticOffset
+			onLayout={region.onLayout}
+			className={cn(FILL, THREAD)}
+		>
+			<View className={REGION}>
+				<FrameHolds holds={frame.held}>
+					<FrameLine frame={frame} />
+					<Log thread={props} drawn={drawn} frame={frame} slots={slots} />
+				</FrameHolds>
+			</View>
+			{foot ? (
+				<View className={DOCKED}>
+					<FrameHolds holds={NO_HOLDS}>
+						<FootReturn.Provider value={claim}>{foot}</FootReturn.Provider>
+					</FrameHolds>
+				</View>
+			) : null}
+		</Lifted>
+	);
+}
+
+// The log and the Latest act floating at its foot. The items' failed and
+// missing forms stand in the messages' place, the reply and the waiting
+// message after them as after any messages.
+function Log<T>(props: {
+	thread: ThreadProps<T>;
+	drawn: Drawn<readonly T[]>;
+	frame: Frame;
+	slots: RefObject<MessageSlots<T>>;
+}) {
+	const { thread, drawn, frame, slots } = props;
+	const ended = frame.form === "failed" || frame.form === "missing";
+	const children = ended ? [] : logOf(thread, drawn, slots);
+	// The newest turn, at the origin before the rest: a cell of its own, which
+	// draws nothing, gap included, while there is no turn being written.
+	const last = drawn.painted ? undefined : drawn.value.at(-1);
+	const reply =
+		thread.reply && (ended || !drawn.painted) ? (
+			<ReplyTurn
+				reply={thread.reply}
+				slots={slots}
+				after={last === undefined ? undefined : thread.message.key(last)}
+			/>
+		) : null;
+	const log = useRef<ScrollView>(null);
 	// The reader is scrolled up: the Latest act stands over the foot.
 	const [away, setAway] = useState(false);
 	// Back to the newest message, at the log's origin.
@@ -285,40 +327,32 @@ export function Thread<T>(props: ThreadProps<T>) {
 		</View>
 	));
 	return (
-		<Lifted
-			behavior="padding"
-			automaticOffset
-			onLayout={region.onLayout}
-			className={cn(FILL, THREAD)}
-		>
-			<View className={REGION}>
-				<ScrollView
-					ref={log}
-					style={INVERTED}
-					// A message arriving at the origin keeps a scrolled-up reader's
-					// place, and one at the end follows it.
-					maintainVisibleContentPosition={{
-						minIndexForVisible: 0,
-						autoscrollToTopThreshold: AT_END,
-					}}
-					onScroll={(event) =>
-						setAway(event.nativeEvent.contentOffset.y > AT_END)
-					}
-					className={LOG}
-					contentContainerClassName={cn(THREAD, UPSIDE_DOWN)}
-				>
-					{reply}
-					{cells}
-				</ScrollView>
-				<Latest onBack={away ? toLatest : null} />
-			</View>
-			{foot ? (
-				<View className={DOCKED}>
-					<FrameHolds holds={NO_HOLDS}>
-						<FootReturn.Provider value={claim}>{foot}</FootReturn.Provider>
-					</FrameHolds>
-				</View>
-			) : null}
-		</Lifted>
+		<>
+			<ScrollView
+				ref={log}
+				style={INVERTED}
+				// A message arriving at the origin keeps a scrolled-up reader's
+				// place, and one at the end follows it.
+				maintainVisibleContentPosition={{
+					minIndexForVisible: 0,
+					autoscrollToTopThreshold: AT_END,
+				}}
+				onScroll={(event) =>
+					setAway(event.nativeEvent.contentOffset.y > AT_END)
+				}
+				className={LOG}
+				contentContainerClassName={cn(THREAD, UPSIDE_DOWN)}
+			>
+				{reply}
+				{ended ? (
+					<View style={INVERTED}>
+						<FrameBody frame={frame} fit="frame" />
+					</View>
+				) : (
+					cells
+				)}
+			</ScrollView>
+			<Latest onBack={away ? toLatest : null} />
+		</>
 	);
 }

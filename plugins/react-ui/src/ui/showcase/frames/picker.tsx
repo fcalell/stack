@@ -4,7 +4,8 @@ import { Group } from "../../components/group/index.tsx";
 import { ListRow } from "../../components/list-row/index.tsx";
 import { HeldPicker } from "../../components/picker/base.tsx";
 import { Picker } from "../../components/picker/index.tsx";
-import type { ShowcaseFrame } from "../cells.ts";
+import { isFirstCell, type ShowcaseFrame } from "../cells.ts";
+import { endedAt } from "../waiting.ts";
 import { press, Stage } from "./overlay-stage.tsx";
 import { beside, isPaint } from "./painted.tsx";
 
@@ -201,6 +202,22 @@ export function drawPicker(frame: ShowcaseFrame) {
 				painted
 			/>,
 		);
+	// The error state, on the first cell: the picker over options that fail and
+	// answer not found, which no frame holds, so it says so itself.
+	if (frame.state === "error")
+		return isFirstCell(frame) ? (
+			<div className="flex w-popover max-w-full flex-col gap-sections">
+				{endedAt<Option>(frame.id, "error").map(({ title, items }) => (
+					<Picker
+						key={title}
+						label={title}
+						options={items}
+						value="admin"
+						onChange={change}
+					/>
+				))}
+			</div>
+		) : undefined;
 	const cell = frame.cell.name;
 	const row =
 		cell.startsWith("PICKER.fit.row") ||

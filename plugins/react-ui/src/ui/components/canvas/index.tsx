@@ -1,4 +1,8 @@
-import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Datum,
+	isSelection,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import { pathOrder } from "@fcalell/ui-core/canvas";
 import { cn } from "@fcalell/ui-core/cn";
 import type {
@@ -24,6 +28,7 @@ import {
 } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { useTouch } from "../../lib/media.ts";
+import { FrameBody, FrameLine, useFrame } from "../../lib/read.tsx";
 import { Caption } from "./caption.tsx";
 import { ConnectionLine } from "./connection.tsx";
 import { EdgeLayer } from "./edges.tsx";
@@ -53,7 +58,7 @@ import { ActFoot, ZoomStack } from "./zoom.tsx";
 export interface CanvasProps extends Closed {
 	/** What the graph is, read as its region's name (a short phrase; read aloud, never drawn). */
 	label: string;
-	/** The nodes; the canvas places those that carry no position. A selection, here or in `edges` or `groups`, stands the ground and three painted nodes in place of the graph until its read lands; every handler and the `act` are then ignored. */
+	/** The nodes; the canvas places those that carry no position. A selection, here or in `edges` or `groups`, stands the ground and three painted nodes in place of the graph until its read lands; every handler and the `act` are then ignored. A selection of nodes is the canvas's own frame: it holds its read and draws the failed, missing and empty forms in the ground whatever stands above it, with the generic sentences, and the stale and paused line over it. */
 	nodes: Datum<readonly CanvasNode[]>;
 	/** The links between nodes, each drawn as an arrow from `from` to `to`. */
 	edges?: Datum<readonly CanvasEdge[]>;
@@ -97,15 +102,32 @@ const NBSP = "\u00a0";
 /** A graph of nodes and edges, laid out and pannable; read-only until it is given `onSelect`, `onMove` or `onConnect`. */
 export function Canvas({ nodes, edges, groups, ...graph }: CanvasProps) {
 	const [placed, linked, framed] = useSelections([nodes, edges, groups]);
-	if (placed.painted || linked.painted || framed.painted)
-		return <CanvasWait label={graph.label} />;
+	// The nodes are the canvas's frame; its edges and groups wait with it.
+	const frame = useFrame(isSelection(nodes) ? nodes : undefined);
+	if (
+		frame.form === "failed" ||
+		frame.form === "missing" ||
+		frame.form === "empty"
+	)
+		return (
+			<section aria-label={graph.label} className={GROUND}>
+				<FrameBody frame={frame} fit="frame" fill />
+			</section>
+		);
 	return (
-		<CanvasGraph
-			{...graph}
-			nodes={placed.value}
-			edges={linked.value}
-			groups={framed.value}
-		/>
+		<FrameBody frame={frame} fit="frame">
+			<FrameLine frame={frame} />
+			{placed.painted || linked.painted || framed.painted ? (
+				<CanvasWait label={graph.label} />
+			) : (
+				<CanvasGraph
+					{...graph}
+					nodes={placed.value}
+					edges={linked.value}
+					groups={framed.value}
+				/>
+			)}
+		</FrameBody>
 	);
 }
 

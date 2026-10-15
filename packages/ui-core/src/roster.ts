@@ -920,7 +920,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			props: ["items", "list"],
 			draws: ["GROUP", "GROUP_ITEM"],
 			holds: ["GROUP", "GROUP_ITEM"],
-			states: ["rest", "loading", "more"],
+			states: ["rest", "loading", "empty", "error", "more"],
 			owns: {
 				colors: ["edge", "surface"],
 				radii: ["card"],
@@ -958,7 +958,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			props: ["row", "file", "meter", "definition", "items"],
 			draws: ["LIST", "LIST_ITEM", "LIST_TREE", "LIST_DIVIDED"],
 			holds: ["LIST", "LIST_ITEM", "LIST_TREE", "LIST_DIVIDED"],
-			states: ["rest", "loading", "more"],
+			states: ["rest", "loading", "empty", "error", "more"],
 			owns: {
 				colors: ["edge"],
 				spacing: ["rows", "card"],
@@ -1791,7 +1791,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"PAINT.kind.control",
 			],
 			holds: ["PICKER", "PICKER_VALUE", "PICKER_EMPTY", "PICKER_POPOVER"],
-			states: [...PRESS, "selected", "disabled"],
+			states: [...PRESS, "selected", "disabled", "error"],
 			owns: {
 				roles: ["body", "meta", "caption"],
 				colors: [
@@ -1939,7 +1939,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"OPTION_RADIO",
 				"OPTION_RADIO_DOT",
 			],
-			states: [...PRESS, "loading", "selected", "disabled"],
+			states: [...PRESS, "loading", "selected", "disabled", "error"],
 			owns: {
 				roles: ["body", "meta", "caption"],
 				colors: [
@@ -2232,7 +2232,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		// Unified, long lines wrapped and hung one inset, at every width; `before`
-		// and `after` are diffed in each plugin.
+		// and `after` are diffed in each plugin. Its `hunks`, given as a selection,
+		// are its own frame: its failed, missing and empty forms stand in its box
+		// with the generic sentences, and its stale and paused line over it.
 		Diff: {
 			props: ["label", "hunks", "before", "after"],
 			draws: [
@@ -2253,7 +2255,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"DIFF_MARK",
 				"DIFF_CODE",
 			],
-			states: ["rest", "loading"],
+			states: ["rest", "loading", "empty", "error"],
 			owns: {
 				roles: ["code"],
 				colors: [
@@ -2376,7 +2378,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// on touch the label stands on its own line over the values. A
 		// collection: its facts from `items` through a `row` map, its head from the
 		// declared `columns`, so its painted facts stand under the real head;
-		// its failed, missing and empty forms are the frame's.
+		// a frame of its items: its failed, missing and empty forms stand in its box
+		// with the generic sentences, whatever stands above it.
 		// A fact's `status` is its verdict, a Status in the label's line after
 		// its chips; a passing fact gives none, or a done one where the screen
 		// wants the pass read.
@@ -2400,7 +2403,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"PAINT.kind.glyphs",
 			],
 			holds: ["COMPARISON_ROW", "COMPARISON_LABEL"],
-			states: ["rest", "loading"],
+			states: ["rest", "loading", "empty", "error"],
 			owns: {
 				roles: ["meta", "body", "caption"],
 				colors: [
@@ -2507,7 +2510,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"TABLE_FROZEN",
 				"TABLE_FROZEN_CELL",
 			],
-			states: [...PRESS, "loading", "selected", "more"],
+			states: [...PRESS, "loading", "empty", "error", "selected", "more"],
 			owns: {
 				roles: ["body", "meta", "code", "caption"],
 				colors: [
@@ -2940,8 +2943,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// order, so the legend and each part's mark stand before the data does;
 		// `level` says the bars are a level, so its head draws the last bar, not
 		// the sum. While its read waits the total and the legend's figures are
-		// painted, the plot one painted box at its loaded height; its failed,
-		// missing and empty forms are the frame's.
+		// painted, the plot one painted box at its loaded height. It is a frame of
+		// its items: its failed, missing and empty forms stand in its box with the
+		// generic sentences, whatever stands above it.
 		BarChart: {
 			props: ["label", "keys", "unit", "level", "bar", "items"],
 			draws: [
@@ -2981,7 +2985,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"CHART_PART_SPLIT",
 				"CHART_TICK_LANE",
 			],
-			states: ["rest", "loading"],
+			states: ["rest", "loading", "empty", "error"],
 			owns: {
 				roles: ["body", "meta"],
 				colors: ["ink-body", "ink-meta", "edge", "skeleton", "chart-"],
@@ -2992,8 +2996,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// A collection: its Messages from `items` through the `message` map,
 		// constants or a selection; while the selection's read waits it paints
-		// `PAINT_ROWS` of the other author's messages, its failed, missing and
-		// empty forms the frame's. A MessageInput, or its `sheet` docked in its
+		// `PAINT_ROWS` of the other author's messages. It is a frame of its items,
+		// with its foot and reply kept: its failed and missing forms stand in the
+		// log's place with the generic sentences, and its empty form is an empty
+		// log with no sentence, so a thread whose items failed still sends. A
+		// MessageInput, or its `sheet` docked in its
 		// place while it is open, is its `foot`. While a filling Thread's reader is
 		// scrolled up, a secondary Latest act floats over the log above the foot.
 		// Its `reply` is the turn being written, a read of the app's own that
@@ -3005,7 +3012,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			props: ["message", "items", "foot", "sheet", "replying", "reply"],
 			draws: ["THREAD", "THREAD_COLUMN", "FOOT_DOCKED", "THREAD_LATEST"],
 			holds: ["THREAD", "THREAD_LATEST"],
-			states: ["rest", "loading", "error", "streaming"],
+			states: ["rest", "loading", "empty", "error", "streaming"],
 			owns: {
 				colors: ["raised", "edge", "edge-raised"],
 				radii: ["control"],
@@ -3082,7 +3089,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// group holding no present node is a leaf an edge may name. While its
 		// `nodes`, `edges` or `groups` is a selection still to land it stands its
 		// ground with three painted node cards, the one painted form that is a
-		// tree of its own, since a layout has no geometry before its data.
+		// tree of its own, since a layout has no geometry before its data. Its
+		// `nodes`, given as a selection, are its own frame: its failed, missing and
+		// empty forms stand in its ground with the generic sentences (its `empty`
+		// caption stays the app's own line under a graph).
 		Canvas: {
 			props: [
 				"label",
@@ -3142,7 +3152,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"CANVAS_GROUP_HEAD",
 				"CANVAS_ZOOM",
 			],
-			states: ["rest", "selected", "loading", "empty"],
+			states: ["rest", "selected", "loading", "empty", "error"],
 			owns: {
 				roles: ["body", "meta", "caption"],
 				colors: [

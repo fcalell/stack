@@ -5,7 +5,6 @@ import {
 	FrameHolds,
 	type Selection,
 	useFrameRead,
-	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type {
@@ -29,7 +28,13 @@ import {
 import type { Closed } from "../../lib/closed.ts";
 import { useFootFocus } from "../../lib/focus.ts";
 import { PageTitle, useFootRegion } from "../../lib/frame.ts";
-import { StateLine } from "../../lib/read.tsx";
+import {
+	type Frame,
+	FrameBody,
+	FrameLine,
+	StateLine,
+	useCollection,
+} from "../../lib/read.tsx";
 import { useScrolls } from "../../lib/scrolls.ts";
 import { Scroller, useScroller, Window } from "../../lib/window.tsx";
 import { useWords } from "../../lib/words.tsx";
@@ -216,14 +221,16 @@ function messagesOf<T>(
 }
 
 // What follows the window: the waiting message and the turn being written,
-// which grow outside it, so a chunk never reaches the rows.
+// which grow outside it, so a chunk never reaches the rows. They stand through
+// the items' failed form, which says nothing of a turn being written.
 function tailOf<T>(
 	props: ThreadProps<T>,
 	drawn: Drawn<readonly T[]>,
 	slots: RefObject<MessageSlots<T>>,
+	ended: boolean,
 ): ReactNode {
-	if (drawn.painted) return null;
-	const last = drawn.value.at(-1);
+	if (drawn.painted && !ended) return null;
+	const last = drawn.painted ? undefined : drawn.value.at(-1);
 	return (
 		<>
 			{props.replying ? <WaitingReply /> : null}
@@ -238,21 +245,14 @@ function tailOf<T>(
 	);
 }
 
-/** The messages, a log region so an arriving one is announced, a sections gap apart, one rung above a reply's block gap, and the input a sections gap under them. It fills what it stands in by plain flex: in a Pane's body it takes the free height and the log scrolls, opening at the newest message and following each that arrives while the reader is at the end, the input under it, which a docked `sheet` takes the place of, its body scrolling past two fifths of the region and keeping three rows, the log keeping two rows of its own while the body can give and the foot's head and submit never giving; while the reader is scrolled up, a Latest act floats centred above the input and returns to the newest message. Among sections it stands at its content's height. It draws one Message per item, and with `replying` set one waiting Message of the other author after them, followed and pinned to as any message is, replaced in place when the reply's item arrives and `replying` clears; the `reply` read draws its turn after them the same way, from its own subscription. While the `items` selection's read waits, `PAINT_ROWS` messages of the other author stand in the log, painted and inert. The frame around it draws the rest: it holds the read and draws the failed form with Retry, the missing form saying it no longer exists with Back, and the empty form. */
+/** The messages, a log region so an arriving one is announced, a sections gap apart, one rung above a reply's block gap, and the input a sections gap under them. It fills what it stands in by plain flex: in a Pane's body it takes the free height and the log scrolls, opening at the newest message and following each that arrives while the reader is at the end, the input under it, which a docked `sheet` takes the place of, its body scrolling past two fifths of the region and keeping three rows, the log keeping two rows of its own while the body can give and the foot's head and submit never giving; while the reader is scrolled up, a Latest act floats centred above the input and returns to the newest message. Among sections it stands at its content's height. It draws one Message per item, and with `replying` set one waiting Message of the other author after them, followed and pinned to as any message is, replaced in place when the reply's item arrives and `replying` clears; the `reply` read draws its turn after them the same way, from its own subscription. While the `items` selection's read waits, `PAINT_ROWS` messages of the other author stand in the log, painted and inert. The thread is a frame of its items: the failed form with Retry and the missing form stand in the log's place, in its box with the generic sentence, and the empty form is an empty log with no sentence; the foot and the reply stand through each of them, so a thread whose items failed still sends. The stale and paused line stands over the log while it holds its read. */
 export function Thread<T>(props: ThreadProps<T>) {
 	const { sheet } = props;
-	const [drawn] = useSelections([props.items] as const);
+	const { drawn, frame } = useCollection(props.items);
 	// The latest slots, which each drawn message reads when its item changes
 	// and its acts call when pressed.
 	const slots = useRef(props.message);
 	slots.current = props.message;
-	const messages = messagesOf(props, drawn as Drawn<readonly T[]>, slots);
-	const tail = tailOf(props, drawn as Drawn<readonly T[]>, slots);
-	const title = use(PageTitle);
-	const log = useRef<HTMLDivElement>(null);
-	const scroll = useScroller(log);
-	useScrolls(scroll.node);
-	const content = useRef<HTMLDivElement>(null);
 	const dock = useRef<HTMLDivElement>(null);
 	useFootFocus(dock);
 	const region = useFootRegion(dock, true);
@@ -261,6 +261,41 @@ export function Thread<T>(props: ThreadProps<T>) {
 	) : (
 		props.foot
 	);
+	return (
+		<div ref={foot ? region.ref : undefined} className={cn(FILL, THREAD)}>
+			<div className={REGION}>
+				<FrameHolds holds={frame.held}>
+					<FrameLine frame={frame} />
+					<Log thread={props} drawn={drawn} frame={frame} slots={slots} />
+				</FrameHolds>
+			</div>
+			{foot ? (
+				<div ref={dock} className={FOOT}>
+					<FrameHolds holds={NO_HOLDS}>{foot}</FrameHolds>
+				</div>
+			) : null}
+		</div>
+	);
+}
+
+// The log and the Latest act floating at its foot. The items' failed and
+// missing forms stand in the messages' place, the reply and the waiting
+// message after them as after any messages.
+function Log<T>(props: {
+	thread: ThreadProps<T>;
+	drawn: Drawn<readonly T[]>;
+	frame: Frame;
+	slots: RefObject<MessageSlots<T>>;
+}) {
+	const { thread, drawn, frame, slots } = props;
+	const ended = frame.form === "failed" || frame.form === "missing";
+	const messages = ended ? [] : messagesOf(thread, drawn, slots);
+	const tail = tailOf(thread, drawn, slots, ended);
+	const title = use(PageTitle);
+	const log = useRef<HTMLDivElement>(null);
+	const scroll = useScroller(log);
+	useScrolls(scroll.node);
+	const content = useRef<HTMLDivElement>(null);
 	const atEnd = useRef(true);
 	// The log's box and content heights as the follow last saw them. A scroll
 	// event that reads other heights came with a resize (the foot changed, a
@@ -296,37 +331,33 @@ export function Thread<T>(props: ThreadProps<T>) {
 		scroller.focus({ preventScroll: true });
 	};
 	return (
-		<div ref={foot ? region.ref : undefined} className={cn(FILL, THREAD)}>
-			<div className={REGION}>
-				<div
-					ref={scroll.ref}
-					role="log"
-					aria-labelledby={title}
-					onScroll={(event) => {
-						const { scrollHeight, scrollTop, clientHeight } =
-							event.currentTarget;
-						const [height, content] = laid.current;
-						if (clientHeight !== height || scrollHeight !== content) return;
-						const end = scrollHeight - scrollTop - clientHeight <= AT_END;
-						atEnd.current = end;
-						setAway(!end);
-					}}
-					className={SCROLLS}
-				>
-					<Scroller value={scroll.holder}>
-						<div ref={content} className={cn(THREAD, STACK)}>
+		<>
+			<div
+				ref={scroll.ref}
+				role="log"
+				aria-labelledby={title}
+				onScroll={(event) => {
+					const { scrollHeight, scrollTop, clientHeight } = event.currentTarget;
+					const [height, content] = laid.current;
+					if (clientHeight !== height || scrollHeight !== content) return;
+					const end = scrollHeight - scrollTop - clientHeight <= AT_END;
+					atEnd.current = end;
+					setAway(!end);
+				}}
+				className={SCROLLS}
+			>
+				<Scroller value={scroll.holder}>
+					<div ref={content} className={cn(THREAD, STACK)}>
+						{ended ? (
+							<FrameBody frame={frame} fit="frame" />
+						) : (
 							<Window rows={messages} box={content} end />
-							{tail}
-						</div>
-					</Scroller>
-				</div>
-				<Latest onBack={away ? toLatest : null} />
+						)}
+						{tail}
+					</div>
+				</Scroller>
 			</div>
-			{foot ? (
-				<div ref={dock} className={FOOT}>
-					<FrameHolds holds={NO_HOLDS}>{foot}</FrameHolds>
-				</div>
-			) : null}
-		</div>
+			<Latest onBack={away ? toLatest : null} />
+		</>
 	);
 }

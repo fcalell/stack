@@ -4,6 +4,7 @@ import { MeterBase } from "../../components/meter/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import { Slider } from "../../components/slider/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
+import { endedAt } from "../waiting.ts";
 import { STAND_IN_ENTRIES, Wide } from "./layout-context.tsx";
 import { Paged } from "./more.tsx";
 
@@ -95,8 +96,10 @@ const WORKSPACES = [
 ];
 
 // Every cell draws the Group in the frame's state: rows at rest, loading its
-// static parts painted beside the loaded card; the more state, on the group
-// cell, its list over a pages read in each state of its more row.
+// static parts painted beside the loaded card; the empty and error states its
+// list over a read that answers none, fails and answers not found, each in a
+// Section that holds no read, so the Group draws its own form; the more state,
+// on the group cell, its list over a pages read in each state of its more row.
 export function drawGroup(frame: ShowcaseFrame) {
 	if (frame.state === "more")
 		return frame.cell.name === "GROUP" ? (
@@ -117,6 +120,23 @@ export function drawGroup(frame: ShowcaseFrame) {
 				/>
 			</Wide>
 		) : undefined;
+	if (frame.state === "empty" || frame.state === "error")
+		return (
+			<Wide>
+				{endedAt<(typeof WORKSPACES)[number]>(frame.id, frame.state).map(
+					({ title, items }) => (
+						<Section key={title} title={title}>
+							<Group
+								list={{
+									items,
+									row: { key: (one) => one.id, title: (one) => one.name },
+								}}
+							/>
+						</Section>
+					),
+				)}
+			</Wide>
+		);
 	if (frame.state === "loading")
 		return (
 			<Wide>

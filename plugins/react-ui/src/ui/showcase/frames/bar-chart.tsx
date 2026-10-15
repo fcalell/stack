@@ -1,7 +1,7 @@
 import { BarChart, type BarSlots } from "../../components/bar-chart/index.tsx";
 import { Section } from "../../components/section/index.tsx";
-import type { ShowcaseFrame } from "../cells.ts";
-import { itemsAt } from "../waiting.ts";
+import { isFirstCell, type ShowcaseFrame } from "../cells.ts";
+import { endedAt, itemsAt } from "../waiting.ts";
 import { Wide } from "./layout-context.tsx";
 import { isPaint } from "./painted.tsx";
 
@@ -138,7 +138,25 @@ function Chart(props: {
 	);
 }
 
+// The empty and error states, on the first cell, draw the minutes over a read
+// that answers none, fails and answers not found, in Sections that hold none
+// of them: the chart draws its own form.
 export function drawBarChart(frame: ShowcaseFrame) {
+	if (frame.state === "empty" || frame.state === "error")
+		return isFirstCell(frame) ? (
+			<Wide>
+				{endedAt<Day>(frame.id, frame.state).map(({ title, items }) => (
+					<Section key={title} title={title}>
+						<BarChart
+							label={`Build minutes, ${title}`}
+							items={items}
+							bar={BAR}
+							unit="minutes"
+						/>
+					</Section>
+				))}
+			</Wide>
+		) : undefined;
 	const cell = frame.cell.name;
 	const wide = ["pink", "green", "red"].some((hue) => cell.endsWith(hue));
 	const stacked = wide || ["violet", "amber"].some((hue) => cell.endsWith(hue));

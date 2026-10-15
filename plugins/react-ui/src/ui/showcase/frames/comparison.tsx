@@ -4,8 +4,8 @@ import {
 	type FactSlots,
 } from "../../components/comparison/index.tsx";
 import { Section } from "../../components/section/index.tsx";
-import type { ShowcaseFrame } from "../cells.ts";
-import { itemsAt } from "../waiting.ts";
+import { isFirstCell, type ShowcaseFrame } from "../cells.ts";
+import { endedAt, itemsAt } from "../waiting.ts";
 import { Wide } from "./layout-context.tsx";
 import { isPaint } from "./painted.tsx";
 
@@ -157,8 +157,26 @@ function Comparisons(props: { id: string; state: ShowcaseFrame["state"] }) {
 }
 
 // Every cell draws the comparisons in the frame's state; a `PAINT` cell draws
-// them loaded beside the same comparisons painted.
+// them loaded beside the same comparisons painted. The empty and error states,
+// on the first cell, draw the plan change over a read that answers none, fails
+// and answers not found, in Sections that hold none of them: the comparison
+// draws its own form.
 export function drawComparison(frame: ShowcaseFrame) {
+	if (frame.state === "empty" || frame.state === "error")
+		return isFirstCell(frame) ? (
+			<Wide>
+				{endedAt<Fact>(frame.id, frame.state).map(({ title, items }) => (
+					<Section key={title} title={title}>
+						<Comparison
+							label={title}
+							columns={["Current", "After the change"]}
+							items={items}
+							row={ROW}
+						/>
+					</Section>
+				))}
+			</Wide>
+		) : undefined;
 	if (isPaint(frame)) {
 		if (frame.state !== "rest") return undefined;
 		return (

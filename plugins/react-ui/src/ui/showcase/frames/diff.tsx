@@ -1,7 +1,8 @@
 import type { Hunk } from "@fcalell/ui-core/descriptors";
 import { Diff } from "../../components/diff/index.tsx";
-import type { ShowcaseFrame } from "../cells.ts";
-import { waitingText } from "../waiting.ts";
+import { Section } from "../../components/section/index.tsx";
+import { isFirstCell, type ShowcaseFrame } from "../cells.ts";
+import { endedAt, waitingText } from "../waiting.ts";
 import { Wide } from "./layout-context.tsx";
 import { isPaint } from "./painted.tsx";
 
@@ -81,8 +82,20 @@ export const NET_60: Terms = { days: 60, label: "Net 60" };
 
 // The added cell draws the new file; every other rest cell the invoice. The
 // paint cell draws the invoice beside its painted diff, the loading state the
-// painted diff alone.
+// painted diff alone. The empty and error states, on the first cell, draw the
+// diff over hunks that arrive as none, fail and answer not found, in Sections
+// that hold none of them: the diff draws its own form.
 export function drawDiff(frame: ShowcaseFrame) {
+	if (frame.state === "empty" || frame.state === "error")
+		return isFirstCell(frame) ? (
+			<Wide>
+				{endedAt<Hunk>(frame.id, frame.state).map(({ title, items }) => (
+					<Section key={title} title={title}>
+						<Diff label={`src/billing/${title}.ts`} hunks={items} />
+					</Section>
+				))}
+			</Wide>
+		) : undefined;
 	const painted = (
 		<Diff
 			label="src/billing/invoice.ts"

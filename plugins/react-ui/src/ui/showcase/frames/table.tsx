@@ -11,11 +11,12 @@ import { type ReactNode, useLayoutEffect, useRef, useState } from "react";
 import { ActionBar } from "../../components/action-bar/index.tsx";
 import { Pane } from "../../components/pane/index.tsx";
 import { Place } from "../../components/place/index.tsx";
+import { Section } from "../../components/section/index.tsx";
 import { Table } from "../../components/table/index.tsx";
 import { PortalContainer } from "../../lib/portal.ts";
 import { ago } from "../ago.ts";
-import type { ShowcaseFrame } from "../cells.ts";
-import { itemsAt } from "../waiting.ts";
+import { isFirstCell, type ShowcaseFrame } from "../cells.ts";
+import { endedAt, itemsAt } from "../waiting.ts";
 import { Paged } from "./more.tsx";
 import { key, Stage } from "./overlay-stage.tsx";
 import { isPaint } from "./painted.tsx";
@@ -527,7 +528,9 @@ const COMMON = only(
 
 // The Table on the part each cell names, in the frame's state: the open record
 // selected, or painted while its read waits; the more state, on the table cell,
-// the table over a pages read in each state of its more row. The picked edit holds in a stage:
+// the table over a pages read in each state of its more row; the empty and
+// error states, on the table cell, over a read that answers none, fails and
+// answers not found, in Sections that hold none of them. The picked edit holds in a stage:
 // the queue's chips in the popover, or on touch in the pick sheet, held inside
 // the frame. A `PAINT` cell draws the part loaded and the same part painted.
 export function drawTable(frame: ShowcaseFrame) {
@@ -552,6 +555,20 @@ export function drawTable(frame: ShowcaseFrame) {
 					rows={rows}
 					draw={(read) => <Tasks part={part} state="rest" read={read} />}
 				/>
+			</Column>
+		) : undefined;
+	if (frame.state === "empty" || frame.state === "error")
+		return isFirstCell(frame) ? (
+			<Column>
+				<Place>
+					<Pane title="Cron tasks">
+						{endedAt<Task>(frame.id, frame.state).map(({ title, items }) => (
+							<Section key={title} title={title}>
+								<Table columns={COLUMNS} items={items} row={ROW} />
+							</Section>
+						))}
+					</Pane>
+				</Place>
 			</Column>
 		) : undefined;
 	if (isPaint(frame)) {

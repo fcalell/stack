@@ -3,8 +3,8 @@ import { text } from "@fcalell/ui-core/variants";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { Select } from "../../components/select/index.tsx";
 import { PortalContainer } from "../../lib/portal.ts";
-import type { ShowcaseFrame } from "../cells.ts";
-import { waitingText } from "../waiting.ts";
+import { isFirstCell, type ShowcaseFrame } from "../cells.ts";
+import { endedAt, waitingText } from "../waiting.ts";
 import { beside, isPaint, labelled } from "./painted.tsx";
 
 const change = () => {};
@@ -65,7 +65,8 @@ function Open(props: { children: ReactNode }) {
 // `Field`, as a `FormField` puts them; the label names a button, so it is
 // no native `<label>`. The placeholder cell and an error draw nothing
 // chosen; every other frame has a region chosen, and `selected` draws the
-// list open. `PAINT.kind.control` draws the trigger beside its painted form, a
+// list open; the first error cell adds the control over options that fail
+// and answer not found. `PAINT.kind.control` draws the trigger beside its painted form, a
 // value that never arrives.
 export function drawSelect(frame: ShowcaseFrame) {
 	if (isPaint(frame))
@@ -104,5 +105,23 @@ export function drawSelect(frame: ShowcaseFrame) {
 		</Field.Root>
 	);
 	if (frame.state === "selected") return <Open>{control}</Open>;
+	// The first error cell also draws the control over options that fail and
+	// answer not found: no frame holds them, so the control says so itself.
+	if (frame.state === "error" && isFirstCell(frame))
+		return (
+			<div className="flex flex-col gap-sections">
+				{control}
+				{endedAt<{ value: string; label: string }>(frame.id, "error").map(
+					({ title, items }) => (
+						<Select
+							key={title}
+							value="eu-central-1"
+							onChange={change}
+							options={items}
+						/>
+					),
+				)}
+			</div>
+		);
 	return control;
 }

@@ -81,9 +81,11 @@ export function FrameBody(props: {
 	fit: EmptyFit;
 	empty?: Empty;
 	failed?: string;
+	// The forms fill the box they stand in (a canvas's ground).
+	fill?: boolean;
 	children?: ReactNode;
 }) {
-	const { frame, fit, empty, failed, children } = props;
+	const { frame, fit, empty, failed, fill, children } = props;
 	const words = useWords();
 	if (frame.form === "failed") {
 		return (
@@ -92,15 +94,17 @@ export function FrameBody(props: {
 				tone="failed"
 				sentence={failed ?? words.readFailed}
 				act={{ label: words.retry, onAct: frame.retry }}
+				fill={fill}
 			/>
 		);
 	}
-	if (frame.form === "missing") return <MissingBase fit={fit} />;
+	if (frame.form === "missing") return <MissingBase fit={fit} fill={fill} />;
 	if (frame.form === "empty") {
 		return (
 			<EmptyBase
 				fit={fit}
 				tone="rest"
+				fill={fill}
 				{...{ sentence: words.readEmpty, ...empty }}
 			/>
 		);
