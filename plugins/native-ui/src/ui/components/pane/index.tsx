@@ -1,5 +1,6 @@
 import {
 	type Datum,
+	FrameHolds,
 	type Selection,
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
@@ -69,7 +70,7 @@ export interface PaneProps extends Closed {
 	title: Datum<Part>;
 	/** The route the Pane returns to: a Back act leads its bar. None leaves the shell's switcher there. */
 	back?: Route;
-	/** Icon acts after the title, in order; a create act is one of them, and on a record's Pane the record's acts. An act paints, inert, while the `read` waits or its own selection does. */
+	/** Icon acts after the title, in order; a create act is one of them, and on a record's Pane the record's acts. An act paints, inert, while the `read` has no data (waits, stands still, failed or missing) or its own selection waits. */
 	actions?: readonly Datum<IconAct>[];
 	/** The acts past the actions, in a menu under the more act; the more act paints, inert, as an action does. */
 	more?: Datum<readonly MenuItem[]>;
@@ -105,7 +106,7 @@ export function Pane({
 	children,
 }: PaneProps) {
 	const words = useWords();
-	const frame = useFrame(read);
+	const frame = useFrame(read, true);
 	const [name, overflowAt, ...actionAt] = useSelections([
 		title,
 		more,
@@ -116,12 +117,15 @@ export function Pane({
 	// The claim a docked sheet leaves the foot for the input that returns.
 	const claim = useRef(false);
 	const region = useFootRegion(false);
-	const docked = sheet?.open ? (
+	// A failed or missing page is the whole page: the foot and the docked sheet
+	// are not drawn, and return with the data.
+	const ended = frame.form === "failed" || frame.form === "missing";
+	const docked = ended ? null : sheet?.open ? (
 		<SheetDocked {...sheet} region={region.value} />
 	) : (
 		foot
 	);
-	const footed = docked !== undefined;
+	const footed = docked != null;
 	const lead =
 		back !== undefined ? (
 			<IconButton
@@ -136,7 +140,7 @@ export function Pane({
 	// An act is painted, inert, while the read waits or its own datum does; a
 	// selection's shape is unknown until it lands, so its paint is a bare glyph.
 	const acts = actionAt.map((one, at) =>
-		one.painted || frame.waits ? (
+		one.painted || frame.inert ? (
 			<IconButtonBase
 				// biome-ignore lint/suspicious/noArrayIndexKey: a painted act has no name, and the acts stand in a fixed order
 				key={at}
@@ -177,7 +181,7 @@ export function Pane({
 									label={words.more}
 									title={words.more}
 									items={items}
-									painted={overflowAt.painted || frame.waits}
+									painted={overflowAt.painted || frame.inert}
 								/>
 							) : null}
 						</View>
@@ -217,10 +221,14 @@ export function Pane({
 					</View>
 					{docked ? (
 						<View
-							{...inertProps(frame.waits)}
+							{...inertProps(frame.inert)}
 							className={cn(FOOT_DOCKED, DOCKED)}
 						>
-							<FootReturn.Provider value={claim}>{docked}</FootReturn.Provider>
+							<FrameHolds holds={frame.held}>
+								<FootReturn.Provider value={claim}>
+									{docked}
+								</FootReturn.Provider>
+							</FrameHolds>
 						</View>
 					) : null}
 				</Lifted>

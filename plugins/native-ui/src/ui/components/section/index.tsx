@@ -67,7 +67,7 @@ export interface SectionProps extends Closed {
 	// Called as a foldable section opens or closes, with whether it is now
 	// open.
 	onToggle?: (open: boolean) => void;
-	/** The section's one act, at the head's end: a labelled act or an icon act. It paints, inert, while the `read` waits or its own selection does. */
+	/** The section's one act, at the head's end: a labelled act or an icon act. It paints, inert, while the `read` has no data (waits, stands still, failed or missing) or its own selection waits. */
 	act?: Datum<Act | IconAct>;
 	/** The section's other acts, in a menu under the more act after its act (destructive ones marked); a foldable section's more does not fold it. It paints, inert, as the act does. */
 	more?: Datum<readonly MenuItem[]>;
@@ -120,7 +120,7 @@ export function Section({
 	// A count is not drawn while its body waits: a painted chip would carry an
 	// unseen "0" for a number nobody knows yet, and the count arrives at the
 	// title's end, where it moves nothing. A read of an array gives its length.
-	const total = frame.waits ? undefined : (frame.count ?? count);
+	const total = frame.inert ? undefined : (frame.count ?? count);
 	const tally =
 		total !== undefined && total !== 0 ? <Count value={total} /> : null;
 	// The acts paint, inert, while the read waits or their own datum does. A
@@ -134,7 +134,7 @@ export function Section({
 			<ButtonBase act="secondary" fit="bar" label={paintText("word")} painted />
 		);
 	else if (given !== undefined && "icon" in given)
-		actNode = frame.waits ? (
+		actNode = frame.inert ? (
 			<IconButtonBase
 				icon={given.icon}
 				fit="bar"
@@ -160,7 +160,7 @@ export function Section({
 				onAct={given.onAct}
 				failed={given.failed}
 				blocked={given.blocked}
-				painted={frame.waits}
+				painted={frame.inert}
 			/>
 		);
 	const items = shownMore.painted ? [] : (shownMore.value ?? []);
@@ -237,7 +237,7 @@ export function Section({
 									label={`${words.more} ${partText(title)}`}
 									title={partText(title)}
 									items={items}
-									painted={shownMore.painted || frame.waits}
+									painted={shownMore.painted || frame.inert}
 								/>
 							) : null}
 						</View>

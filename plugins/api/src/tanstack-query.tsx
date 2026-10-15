@@ -28,6 +28,7 @@ import {
 	type Drawn,
 	draftFor,
 	type Held,
+	type Holds,
 	holdReads,
 	type Draft as Kept,
 	NO_HOLDS,
@@ -94,6 +95,7 @@ export type {
 	Datum,
 	Drawn,
 	Held,
+	Holds,
 	Read,
 	ReadHow,
 	ReadKind,
@@ -261,15 +263,13 @@ export function useSelections<const V extends readonly unknown[]>(
 	}) as never;
 }
 
-// The query hashes the frames above hold, identity only: a nested frame holds
-// the reads of its selection that are not in it. A frame that holds nothing
-// passes its parent's set on, so the value changes only when a frame holds.
-const HoldsContext = createContext<ReadonlySet<string>>(NO_HOLDS);
+// The query hashes the frames above hold and the surface they stand on,
+// identity only: a nested frame holds the reads of its selection that are not
+// in it. A frame that holds nothing and starts no surface passes its parent's
+// holds on, so the value changes only when a frame holds.
+const HoldsContext = createContext<Holds>(NO_HOLDS);
 
-export function FrameHolds(props: {
-	holds: ReadonlySet<string>;
-	children?: ReactNode;
-}) {
+export function FrameHolds(props: { holds: Holds; children?: ReactNode }) {
 	return <HoldsContext value={props.holds}>{props.children}</HoldsContext>;
 }
 
@@ -280,18 +280,22 @@ export function FrameHolds(props: {
 // the reads of its selection that no enclosing frame holds (the dev registry
 // counts them) and returns `holds`, those hashes with the enclosing ones, for
 // its body to publish through `FrameHolds`; `holding` says it holds any. `retry`
-// refetches the reads it holds.
+// refetches the reads it holds. `surface` says the frame starts one (a Pane, a
+// Sheet): its holds stand on a new identity, stable for its life, and two
+// frames on one surface may not hold the same read.
 export function useFrameRead<S>(
 	selection: Selection<unknown> | undefined,
 	derive: (held: Held) => S,
+	surface?: boolean,
 ): {
 	state: S;
 	retry: () => Promise<unknown>;
 	holding: boolean;
-	holds: ReadonlySet<string>;
+	holds: Holds;
 } {
 	const client = useQueryClient();
 	const enclosing = use(HoldsContext);
+	const enclosingKeys = enclosing.keys;
 	const plan = useMemo(
 		() =>
 			planFrame(
@@ -302,21 +306,25 @@ export function useFrameRead<S>(
 						client.getQueryCache().find({ queryKey: r.options.queryKey })?.state
 							.fetchMeta?.fetchMore?.direction === "forward",
 				}),
-				enclosing,
+				enclosingKeys,
 			),
-		[selection, derive, client, enclosing],
+		[selection, derive, client, enclosingKeys],
 	);
-	const holds = useMemo(
+	const [own] = useState(() => ({}));
+	const holds = useMemo<Holds>(
 		() =>
-			plan.held.length === 0
+			plan.held.length === 0 && !surface
 				? enclosing
-				: new Set([
-						...enclosing,
-						...plan.held.map((r) => hashKey(r.options.queryKey)),
-					]),
-		[plan, enclosing],
+				: {
+						keys: new Set([
+							...enclosing.keys,
+							...plan.held.map((r) => hashKey(r.options.queryKey)),
+						]),
+						surface: surface ? own : enclosing.surface,
+					},
+		[plan, enclosing, surface, own],
 	);
-	useEffect(() => holdReads(plan.held), [plan]);
+	useEffect(() => holdReads(holds.surface, plan.held), [plan, holds.surface]);
 	const state = useQueries({
 		queries: plan.reads.map((r) => ({ ...r.options, placeholderData })),
 		combine: plan.combine,

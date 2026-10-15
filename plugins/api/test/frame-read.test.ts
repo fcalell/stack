@@ -230,11 +230,26 @@ test("a draft stays with the read it was made over", () => {
 	assert.equal(draftFor(constant, readKey("other")), constant);
 });
 
-test("sibling frames may each hold a read, and nothing is raised", () => {
+test("two frames on one surface holding one read log one error naming it", () => {
 	const error = mock.method(console, "error", () => {});
 	const a = make("holders-a", async () => 1);
-	const release = [holdReads([a]), holdReads([a])];
+	const surface = {};
+	const release = [holdReads(surface, [a]), holdReads(surface, [a])];
+	assert.equal(error.mock.callCount(), 1);
+	assert.match(String(error.mock.calls[0]?.arguments[0]), /holders-a/);
+	assert.match(String(error.mock.calls[0]?.arguments[0]), /side by side/);
 	for (const one of release) one();
+	error.mock.restore();
+});
+
+test("one read held on two surfaces, or released and held again, logs nothing", () => {
+	const error = mock.method(console, "error", () => {});
+	const a = make("holders-b", async () => 1);
+	const one = {};
+	const release = [holdReads(one, [a]), holdReads({}, [a])];
+	release[0]?.();
+	holdReads(one, [a])();
+	for (const r of release) r();
 	assert.equal(error.mock.callCount(), 0);
 	error.mock.restore();
 });
@@ -267,7 +282,7 @@ test("a failure with painters and no holder raises an error naming the read", as
 
 	const held = make("held", fail);
 	const unpaintHeld = paintReads([held]);
-	const unhold = holdReads([held]);
+	const unhold = holdReads({}, [held]);
 	await run("held");
 	assert.equal(error.mock.callCount(), 1);
 	unpaint();

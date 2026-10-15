@@ -1,5 +1,6 @@
 import {
 	type Datum,
+	FrameHolds,
 	type Selection,
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
@@ -105,7 +106,7 @@ export interface PaneProps extends Closed {
 	title: Datum<Part>;
 	/** The route the Pane returns to: Back where it stands alone, Close where a Pane stands before it. None draws no back act. */
 	back?: Route;
-	/** Icon acts after the title, in order; a create act is one of them, and on a record's Pane the record's acts. An act paints, inert, while the `read` waits or its own selection does. */
+	/** Icon acts after the title, in order; a create act is one of them, and on a record's Pane the record's acts. An act paints, inert, while the `read` has no data (waits, stands still, failed or missing) or its own selection waits. */
 	actions?: readonly Datum<IconAct>[];
 	/** The acts past the actions, in a menu under the more act; the more act paints, inert, as an action does. */
 	more?: Datum<readonly MenuItem[]>;
@@ -147,7 +148,7 @@ export function Pane({
 	const words = useWords();
 	const switcher = use(ShellSwitcher);
 	const titleId = useId();
-	const frame = useFrame(read);
+	const frame = useFrame(read, true);
 	const settle = useSettleName();
 	const [name, overflowAt, ...actionAt] = useSelections([
 		title,
@@ -164,7 +165,10 @@ export function Pane({
 	// Thread in it gives way to a docked sheet only down to two rows.
 	const region = useFootRegion(dock, true, body);
 	useFootFocus(dock);
-	const docked = sheet?.open ? (
+	// A failed or missing page is the whole page: the foot and the docked sheet
+	// are not drawn, and return with the data.
+	const ended = frame.form === "failed" || frame.form === "missing";
+	const docked = ended ? null : sheet?.open ? (
 		<SheetDocked {...sheet} region={region.value} />
 	) : (
 		foot
@@ -198,7 +202,7 @@ export function Pane({
 	// An act is painted, inert, while the read waits or its own datum does; a
 	// selection's shape is unknown until it lands, so its paint is a bare glyph.
 	const acts = actionAt.map((one, at) =>
-		one.painted || frame.waits ? (
+		one.painted || frame.inert ? (
 			<IconButtonBase
 				// biome-ignore lint/suspicious/noArrayIndexKey: a painted act has no name, and the acts stand in a fixed order
 				key={at}
@@ -218,7 +222,7 @@ export function Pane({
 				label={words.more}
 				title={words.more}
 				items={items}
-				painted={overflowAt.painted || frame.waits}
+				painted={overflowAt.painted || frame.inert}
 			/>
 		) : null;
 	// A painted title is filler, not a heading: it stands as a paragraph of the
@@ -292,10 +296,10 @@ export function Pane({
 							{docked ? (
 								<div
 									ref={dock}
-									inert={frame.waits || undefined}
+									inert={frame.inert || undefined}
 									className={cn(FOOT_DOCKED, DOCKED)}
 								>
-									{docked}
+									<FrameHolds holds={frame.held}>{docked}</FrameHolds>
 								</div>
 							) : null}
 						</div>

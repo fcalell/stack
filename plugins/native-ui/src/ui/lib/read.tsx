@@ -21,11 +21,16 @@ import { useWords } from "./words";
 // draws, its count, whether it refetches, whether it waits (a painted or idle
 // read), whether it holds any read (it draws their failure), the hashes it and
 // its ancestors hold (`held`, for its body to publish) and the retry.
-export function useFrame(read?: Selection<unknown>) {
-	const { state, retry, holding, holds: held } = useFrameRead(read, frameOf);
+export function useFrame(read?: Selection<unknown>, surface?: boolean) {
+	const {
+		state,
+		retry,
+		holding,
+		holds: held,
+	} = useFrameRead(read, frameOf, surface);
 	return {
 		...state,
-		waits: state.form === "waiting" || state.form === "still",
+		inert: state.form !== "ready" && state.form !== "empty",
 		holds: holding,
 		held,
 		retry,

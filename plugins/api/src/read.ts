@@ -93,16 +93,13 @@ export function isSelection(v: unknown): v is Selection<unknown> {
 
 // A selector or `combine` function runs over the placeholder (a waiting slot
 // picks over it, an idle or failed read's missing data included), so one that
-// throws there is not a bug in the data: its slot is the placeholder, with a
-// dev warning. Over real data the throw is the app's.
+// throws there is not a bug in the data: its slot is the placeholder, silently.
+// Over real data the throw is the app's.
 function guarded<T>(data: readonly unknown[], run: () => T): T {
 	try {
 		return run();
 	} catch (error) {
 		if (!data.some(isPlaceholder)) throw error;
-		if (process.env.NODE_ENV !== "production") {
-			console.warn("A selector threw over a read that has no data yet", error);
-		}
 		return P;
 	}
 }
@@ -320,7 +317,7 @@ export function planFrame<S>(
 	selection: Selection<unknown> | undefined,
 	derive: (held: Held) => S,
 	query: (read: Read<unknown>) => { fetchMore?: boolean } | undefined,
-	enclosing: ReadonlySet<string> = NO_HOLDS,
+	enclosing: ReadonlySet<string> = NO_HOLDS.keys,
 ): {
 	reads: readonly Read<unknown>[];
 	held: readonly Read<unknown>[];
@@ -418,8 +415,17 @@ const holders = new Map<string, number>();
 const painters = new Map<string, number>();
 export const dev = () => process.env.NODE_ENV !== "production";
 
-// The hashes no frame holds: what a frame outside every frame sees.
-export const NO_HOLDS: ReadonlySet<string> = new Set();
+// What a frame publishes to its body: the hashes it and the frames around it
+// hold, and the surface they stand on (a Pane or a Sheet starts one).
+export interface Holds {
+	readonly keys: ReadonlySet<string>;
+	readonly surface: object;
+}
+
+// What a frame outside every frame sees: the root surface, nothing held.
+export const NO_HOLDS: Holds = { keys: new Set(), surface: {} };
+
+const surfaces = new WeakMap<object, Map<string, number>>();
 
 function count(counts: Map<string, number>, keys: readonly string[]) {
 	for (const key of keys) counts.set(key, (counts.get(key) ?? 0) + 1);
@@ -428,15 +434,31 @@ function count(counts: Map<string, number>, keys: readonly string[]) {
 	};
 }
 
-// Sibling frames may each hold a read and draw its state in their own place,
-// and a nested frame holds only what its ancestors do not, so there is no
-// count to refuse.
-export function holdReads(reads: readonly Read<unknown>[]): () => void {
+// A read's states draw once per surface, so two frames on one surface holding
+// the same read draw its failure twice side by side: the frame around both
+// holds it. A nested frame holds only what its ancestors do not, and another
+// surface (a Pane in a Place, a portaled Sheet) is another place to draw.
+export function holdReads(
+	surface: object,
+	reads: readonly Read<unknown>[],
+): () => void {
 	if (!dev()) return () => {};
-	return count(
-		holders,
-		reads.map((r) => hashKey(r.options.queryKey)),
-	);
+	const keys = reads.map((r) => hashKey(r.options.queryKey));
+	const here = surfaces.get(surface) ?? new Map<string, number>();
+	surfaces.set(surface, here);
+	for (const key of keys) {
+		if ((here.get(key) ?? 0) > 0) {
+			console.error(
+				`The read ${key} is held by two frames side by side, so its state draws twice. Hold it once on the frame around both.`,
+			);
+		}
+	}
+	const release = count(holders, keys);
+	count(here, keys);
+	return () => {
+		release();
+		for (const key of keys) here.set(key, (here.get(key) ?? 1) - 1);
+	};
 }
 
 export function paintReads(reads: readonly Read<unknown>[]): () => void {

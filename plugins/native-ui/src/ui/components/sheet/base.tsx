@@ -123,7 +123,7 @@ interface Parts {
 	onClose: () => void;
 	// A blocked submit's reason once the sheet is touched or the submit pressed.
 	reason?: string;
-	// The body's read waits: the head's submit paints, inert.
+	// The body's read has no data: the head's submit paints, inert.
 	painted?: boolean;
 	// The reads the form's bar paints for: the body's and the form's.
 	waits: readonly (Selection<unknown> | undefined)[];
@@ -425,7 +425,7 @@ export function SheetBase({
 	waits,
 	children,
 }: SheetBaseProps) {
-	const frame = useFrame(read);
+	const frame = useFrame(read, true);
 	const own = useAct<number>("line");
 	const acting = given ?? own;
 	const client = useQueryClient();
@@ -478,7 +478,7 @@ export function SheetBase({
 		submit,
 		fit,
 		foot,
-		painted: frame.waits,
+		painted: frame.inert,
 		waits: [read, ...(waits ?? [])],
 		frame,
 		acts,
@@ -512,13 +512,9 @@ export function SheetBase({
 				accessibilityState={{ busy: frame.holds && frame.form === "waiting" }}
 				className={cn(SHEET_BODY, BODY)}
 			>
-				{read === undefined ? (
-					children
-				) : (
-					<FrameBody frame={frame} fit="frame" empty={empty} failed={failed}>
-						{children}
-					</FrameBody>
-				)}
+				<FrameBody frame={frame} fit="frame" empty={empty} failed={failed}>
+					{children}
+				</FrameBody>
 			</View>
 		);
 	return (

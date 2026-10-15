@@ -132,7 +132,7 @@ export interface SheetBaseProps {
 	form?: "centred" | "menu" | "view";
 	/** A menu that searches stands the whole viewport height from its first frame, so its list does not jump as the filter narrows. */
 	tall?: boolean;
-	/** What the body holds, read once for the frame (`Sheet`'s `read`): the submit paints, inert, while it waits. */
+	/** What the body holds, read once for the frame (`Sheet`'s `read`): the submit paints, inert, while it has no data (waits, stands still, failed or missing). */
 	read?: Selection<unknown>;
 	/** The body's sentence when the `read` is empty. */
 	empty?: EmptyProps;
@@ -169,7 +169,7 @@ export function SheetBase({
 	children,
 }: SheetBaseProps) {
 	const touch = useTouch();
-	const frame = useFrame(read);
+	const frame = useFrame(read, true);
 	const settle = useSettleName();
 	const own = useAct<number>("line");
 	// The sheet hosts its acts' run: its head submit, its foot bar and its
@@ -177,14 +177,11 @@ export function SheetBase({
 	// while it runs (unless it waits for a connection, which holds nothing).
 	const acting = given ?? own;
 	// The body is the frame's: its failure and its emptiness stand in its place.
-	const body =
-		read === undefined ? (
-			children
-		) : (
-			<FrameBody frame={frame} fit="frame" empty={empty} failed={failed}>
-				{children}
-			</FrameBody>
-		);
+	const body = (
+		<FrameBody frame={frame} fit="frame" empty={empty} failed={failed}>
+			{children}
+		</FrameBody>
+	);
 	const words = useWords();
 	const container = use(PortalContainer);
 	// A sheet in a stage (a container is named) stays non-modal beside the
@@ -242,7 +239,7 @@ export function SheetBase({
 						onAct={() => submit && acting.run(HEAD_SUBMIT_AT, submit)}
 						pending={acting.pending === HEAD_SUBMIT_AT}
 						blocked={submit.blocked}
-						painted={frame.waits}
+						painted={frame.inert}
 					/>
 				</div>
 			</ReasonHostContext>

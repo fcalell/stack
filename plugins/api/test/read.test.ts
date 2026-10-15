@@ -151,7 +151,7 @@ test("an idle or failed read paints too", async () => {
 	unsubscribe();
 });
 
-test("a selector that throws over the placeholder gives it, with a warning", () => {
+test("a selector that throws over the placeholder gives it silently, and one over real data rethrows", () => {
 	const warn = console.warn;
 	const warned: unknown[] = [];
 	console.warn = (...args) => warned.push(args);
@@ -165,7 +165,16 @@ test("a selector that throws over the placeholder gives it, with a warning", () 
 		assert.deepEqual(waiting, [{ painted: true, value: P }]);
 		const idle = plan.draw([{ data: undefined, isPlaceholderData: false }]);
 		assert.deepEqual(idle, [{ painted: true, value: P }]);
-		assert.equal(warned.length, 2);
+		assert.equal(warned.length, 0);
+		const real = planSelections([
+			make("a").at(() => {
+				throw new Error("bug");
+			}),
+		]);
+		assert.throws(
+			() => real.draw([{ data: { n: 1 }, isPlaceholderData: false }]),
+			/bug/,
+		);
 	} finally {
 		console.warn = warn;
 	}
