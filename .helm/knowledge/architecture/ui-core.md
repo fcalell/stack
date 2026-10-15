@@ -105,8 +105,7 @@ its rationale.
   overflows it. The short measure is `ch` on the web (`measure-short`, 18ch), so each label keeps 18
   characters of its own font; native has no `ch`, so `nativeMeasureTokens` declares it in px at
   `SANS_ADVANCE` (Plex Sans's "0", 0.6 em) of the touch body size, rounded up (173). That is a native
-  limit: there every short label's cap is the body's 18 characters whatever its role (a chip's
-  caption included, and `SKELETON_LANE`'s role axis draws one width), and a named sans with a wider
+  limit: there every short label's cap is the body's 18 characters whatever its role (a chip's caption included), and a named sans with a wider
   "0" overflows it. The running-text measure is a derived size, never a `ch` width: `measure` is 58
   characters at `SANS_ADVANCE` of the density's body size, rounded up (488 on the desktop, 557 on
   touch and in the room), so a meta line, a body paragraph and a form stand at one width where `ch`
@@ -222,10 +221,10 @@ its rationale.
 
 Every word a molecule draws on its own (the seven `Status` words, `recommended`,
 `copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`,
-`attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`,
+`attach`, `search`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`,
 `edit`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`,
 `message`, `copyFailed`, `downloadFailed`, `latest`,
-`missing`, `chooseFile`, `typeValue`, `pickValue`, `locked`, `photos`, `files`,
+`missing`, `readFailed`, `readEmpty`, `chooseFile`, `typeValue`, `pickValue`, `locked`, `photos`, `files`,
 `changed`, `unchanged`, `stale`, `chooseAll`, `chooseNone`, `noMatches`, `imageFiles`, `audioFiles`, `videoFiles`, `textFiles`, `expand`, `collapse`, `zoomIn`, `zoomOut`, `fit`, `arrange`, `off`, `notFound`, `nowhere`, `discardEdit`, `keepEditing`, `discard`, `editUnsaved`, the counted
 `earlierLines`, and the slot words `wrongType`, `stepOf`, `chosenOf` and `countOver`) comes from `words`, a closed
 typed object with English defaults. The `Words` type requires every key and `wordsSchema` is strict,
@@ -302,11 +301,9 @@ a tick with no animation, never jumped to full.
   passes, never a cell of the molecule's own; a molecule it composes (a `Code` in a `Prose`, a
   `Prose` in a `Message`, the `Group` around a `Comparison`) draws its own cells and the composer
   owns none of them.
-- A part that stands beside a line of text, or in for one while loading, is that line's box
-  (`LINE_BOX` by type role): a checkbox on its label's first line in a FormField or an
-  OptionList, an ItemHeader's loading bar in the line its text fills, so the loading frame and the
-  loaded one share a height. A loading label's bar runs in `SKELETON_LANE`, a short label's
-  measure in the ch of the role it stands in for.
+- A part that stands beside a line of text is that line's box (`LINE_BOX` by type role): a
+  checkbox on its label's first line in a FormField or an OptionList. Painted text is the filler's
+  own line boxes, so a painted part and a loaded one share a height.
 - A chosen option is ticked (`Picker`), checked or its radio dotted (`OptionList`), never washed: an
   option row draws `ROW {state}` for the pointer alone, where a list's or a group's chosen row draws
   `selected`. A destructive menu act's label draws `MENU_LABEL {kind: destructive}` (`text-danger`),
@@ -367,10 +364,11 @@ a tick with no animation, never jumped to full.
   moves), and a context pick on the Pane (no screen used one). The Picker holds `CHIP` and
   `CHIP_LABEL`; a chip column's option (the Picker's `chip` family) draws its own chip alone and
   ignores `Option.chip`.
-- A record's name and acts stand in its Pane's bar: `title` is a `Part` (the record's name; while the
-  record loads the app passes the generic word for the kind, read from the query outside the
-  `QueryBoundary`, so the Pane has no `loading` of its own) and the record's acts are the Pane's
-  `actions`/`more`, passed once it has loaded, so each act has one place on both platforms.
+- A record's name and acts stand in its Pane's bar: `title` is a `Datum<Part>` (the record's name,
+  given as a selection of the record's read: it paints while the record loads, as a paragraph in
+  the heading's look and no `h1` until the name lands, so a page never names itself with filler)
+  and the record's acts are the Pane's `actions`/`more`, each a constant or a selection that paints
+  inert beside the title, so each act has one place on both platforms.
   `ItemHeader` takes the record's place (`overline`) and its `facts` under the bar and draws no
   heading and no acts.
 - A header fact in words that opens a sheet is `{ label: Part; onOpen }` on `ItemHeader`: the words
@@ -568,27 +566,31 @@ a tick with no animation, never jumped to full.
   `tablet` is read against the Place, which in the Shell is the viewport less the 240 px sidebar: the
   Panes stand together from a Place 768 wide (a 1008 viewport), where the last Pane would otherwise
   be 168 px at a 768 viewport. `wide` is read only through a container (no viewport `wide:` is drawn).
-- A loading form stands in for what it replaces at that part's size: `SKELETON` by the part
-  (`line`, `avatar`, `icon`, `dot`, `check`, `switch`, `count`, `field`, `meter`, `chart`) and
-  `SKELETON_ROW` by the row it replaces (`setting`, `field`, `facts`, `one-line`); a ListRow waits in its own markup (below). The loading frame keeps the loaded
-  frame's height. `loading` is a boolean on every part, except where the loaded size is a count of
-  drawn units the app knows and the part cannot derive: a Prose's lines and an ActionBar's acts take
-  `loading?: boolean | number`, `true` the default form (two paragraphs, one act) and a number from 1
-  the count; 0 and `false` are not waiting, so `loading={rows?.length}` reads the loaded form at 0
-  (`waitCount` in `./list-state`). A loading Group or Section hands down a boolean
-  (`LoadingContext`), so an inheriting Prose or ActionBar draws the default; a count is set on the
-  part itself. A waiting ActionBar is that many act-shaped bars at the loaded geometry (the control's
-  box at the end, the field's height across, one per row on touch). An ActionBar's `pending`
+- A part that waits is its loaded form painted, never a second tree (structure rule 15). A part
+  takes a `Datum` (a constant, or a selection of a read) and, given a selection whose read has not
+  landed, draws the tree it draws loaded with filler in each text slot and each mark or control
+  as its own box, all in the one `PAINT` family (`bg-skeleton`; `glyphs` for text, whose line boxes
+  are the bars, `box` for a mark or a block, `control` for a control whose content is unseen). Each
+  component paints its own box, so the family is held by no entry. The filler is `paintText(role,
+  at)` (`@fcalell/ui-core/paint`, framework-free): words of three to seven letters at the
+  `PaintRole`'s length in characters (`title`, `name`, `word`, `phrase`, `sentence`, `paragraph`;
+  `figure` and `id` are zeros, tabular or mono), the lengths cycling by the part's place so
+  neighbours differ and a slot paints the same filler every load. The painted frame keeps the
+  loaded frame's heights and text start by construction, where a separate waiting tree per part and per row (and shapes read before any item existed) each had to be kept equal to the loaded one by hand and drifted. A painted part is inert (no press, no focus, no
+  link) and hidden from assistive tech. A collection of unknown length paints `PAINT_ROWS` (4)
+  rows and a text block of unknown length that many lines, since the length is the data's and
+  unknown: no count prop, no hash of the list's identity. A painted row, option, message or cell
+  is wholly painted: none mixes a known title with painted values. A Section's `description`, a
+  `Datum<string>`, paints where it will stand while its selection waits, and a loaded `""` draws no
+  line, as an undefined one, because the app knows a description is coming and not its words.
+- An ActionBar's `pending`
   (a PendingBar's props) keeps the bar's height through the swap: no count reproduces a bar whose acts
   wrap by their label widths, so the loaded bar is the measure. On the web it stays drawn in one grid
   cell with the PendingBar, `invisible`, `inert` and `aria-hidden`, its acts inert and none the
   form's submit; on the phone both stand in one row, each the row's width and the PendingBar
   pulled back over the bar by a `-100%` margin (a percentage margin resolves against the row's
   width), so Yoga sizes the row to the taller of the two with no measurement; the bar is at zero
-  opacity, `pointerEvents="none"` and hidden from accessibility. A Section's `description` is a
-  declaration of the same kind: while the Section loads, `""` stands one meta-height bar where the
-  sentence will be and an undefined `description` stands none (loaded, both draw no line), because
-  the app knows a description is coming and not its words.
+  opacity, `pointerEvents="none"` and hidden from accessibility.
 - No arbitrary values in a cell, in either spelling. A control pads across on `control-x`, stands
   on a size (`min-h-control`, `min-h-field`) and insets on a spacing role; density moves all
   three through the variables.
@@ -649,7 +651,7 @@ a tick with no animation, never jumped to full.
   trailing a one-line title is whole or gone the same way: the title's basis is half its line, so
   a value wider than what that leaves wraps under the line and is clipped away, and the title then
   takes the whole line (a 320 px table row shows its name, not its age). Both rules are the web's: the phone's later parts and values still truncate with an ellipsis. Every row keeps one height, so its waiting form matches it by
-  construction. A short label (a chip's, a skeleton label's lane) is bounded by the
+  construction. A short label (a chip's) is bounded by the
   one width `measure-short` (18ch, the short sibling of `measure`).
 - A minimum height is the floor of something pressed (a control, a field, a target, a chip, a row),
   the set height of a bar (`strip` 40 / 44: the Pane's desktop bar and its touch bar), an
@@ -765,13 +767,10 @@ a tick with no animation, never jumped to full.
   360), so the last Pane reflowed on every load and filter. The width is therefore the ceiling it always
   was, so 003-122's arithmetic (a last Pane of at least a page less the list) holds exactly.
   Rejected: a list width the app names (a consumer option, and an app cannot know its rows' width),
-  and holding the content-sized width through a skeleton (the loaded rows would still differ list to
+  and holding the content-sized width through a paint (the loaded rows would still differ list to
   list).
 - A frame's fixed regions are widths (`sidebar`, `list` the width of a Pane before the last, `region-min` its floor, `pane` a side sheet's, `column`, `node` a canvas node, `auth`, `empty` an empty
-  state's column, `selection` a selection bar's column), so a region keeps its measure at any viewport. A skeleton bar alone takes a
-  fraction width (`w-1/12`, `w-1/5`, `w-1/4` to `w-3/4`) to stand at its text's length: structural,
-  a closed list in the web verify's overlay acceptance, never a token; a chart column's share of its
-  slot (`w-2/3`) is structural the same way. A size the data decides (a meter's fill width, a chart
+  state's column, `selection` a selection bar's column), so a region keeps its measure at any viewport. A fraction width (`w-2/3`: a chart column's share of its slot, a table column's declared share) is structural, a closed list in the web verify's overlay acceptance, never a token. A size the data decides (a meter's fill width, a chart
   column's height) is the value's share, set by the component on both platforms, never a class.
 - A column cell is a width and nothing else (`w-full max-w-<width>`: `THREAD_COLUMN`,
   `ACTION_BAR_SELECTION`, `EMPTY_COLUMN`), so a column's alignment is its region's: a region that
@@ -852,22 +851,10 @@ a tick with no animation, never jumped to full.
   the sortable columns, the sorted one led by its direction's glyph (`Option.icon`), the trigger
   named "Sort, {column}, {direction}" by the words `sort`, `ascending` and `descending`; its rows
   are the List's `items` through a `row` map whose slots the columns declare (an age column the
-  trailing, the status and chip columns the marks), so its loading rows wait in the slots the loaded
-  ones draw. What a cell reads as and sorts by (`shown`, `order`, `sorted`, an age read through the
+  trailing, the status and chip columns the marks), so its painted rows stand in the slots the loaded ones draw. What a cell reads as and sorts by (`shown`, `order`, `sorted`, an age read through the
   platform's own words), the rows a tick reaches (`tickable`), a row's reason (`chooseReason`) and
   the cell guards (`isChangeCell`, `isStatusCell`) are `./list-state`'s, so neither platform's Table
-  re-derives them. A Table takes data as a List does: `query` (with `sentence`) or `items`
-  (`loading` while a compound body waits), each `TableColumn<T>` reading its cell from the item by
-  `cell`, and a `row` map (`TableRowSlots<T>`) for the row's own slots. Both forms draw one
-  projection, A Table takes data as a List does: `query` (with `sentence`) or `items` (`loading`
-  while a compound body waits), each `TableColumn<T>` reading its cell from the item by `cell`, and
-  a `row` map (`TableRowSlots<T>`) for the row's own slots. Both forms draw one projection,
-  `tableRecords` in `./list-state`, so the grid and the touch List read the same item. It decides
-  its state by the List's `listState` and draws each at the leaf: pending, the header over skeleton
-  rows (the touch List's waiting rows); failed, the failed form with `sentence` and Retry, and
-  missing, the missing form, each under the header on the grid and alone on touch; empty, `empty`;
-  then its rows. It counts once in the Section around it, which reads the Table's own props, and
-  reports to the Section once. A row
+  re-derives them. A Table takes data as a List does: `items`, a constant or a selection, each `TableColumn<T>` reading its cell from the item by `cell`, and a `row` map (`TableRowSlots<T>`) for the row's own slots. Both forms draw one projection, `tableRecords` in `./list-state`, so the grid and the touch List read the same item. It holds no read and no state branch: while the selection's read waits, `PAINT_ROWS` rows stand in the columns it declares (the `cell` and `row` slots run over the placeholder through `painting`), the header constant over them, each cell painted by its column's kind (a number a figure, a status the Status's painted form, a check a painted Checkbox, a chip a box, any text filler) and the rows inert; the touch List paints the same records. Its failed, missing and empty forms are its frame's, which holds the read, and the Section around it counts an array read once. A row
   with `href` is its leading cell's link (`tabindex -1`, so a new tab opens it); a row's `locked`
   names the columns it draws read only (an owner's role), and in an editable table a cell it locks
   (one its column would edit) ends in the lock mark. A column's own
@@ -881,11 +868,8 @@ a tick with no animation, never jumped to full.
   ends the field's `CommitMoment`, so the leave after it commits nothing) and the pick's close end
   it in their own handlers. Enter and Escape focus the cell at once; the pick's list names the cell
   as its `finalFocus`, so Base UI hands focus back there once the list unmounts, after an option's
-  own press has focused it, unless a press outside the list moved focus on. A loading status cell is
-  the Status's own loading form (its internal base: the dot's and the word's skeletons at its gap).
-  An empty grid keeps its header and holds its `empty` a page inset under it, across the grid's
-  width, in the page form (`TABLE_EMPTY`: no side inset; on touch the form
-  stands alone, the List's width). A read-only check cell draws a tick. Where the grid scrolls sideways its
+  own press has focused it, unless a press outside the list moved focus on. A painted status cell is the Status's own painted form (its internal base: the dot's box and a word's filler at its gap).
+  A read-only check cell draws a tick. Where the grid scrolls sideways its
   leading column stays: the frozen cell on the surface
   (`TABLE_FROZEN`), its content carrying its end hairline and the row's wash (`TABLE_FROZEN_CELL`).
   A `change` column holds a `ChangeCell` (`{ before, after }`, either null), read only and sorted by
@@ -1017,7 +1001,7 @@ a tick with no animation, never jumped to full.
   fill and the rest do.
 - A content molecule derives once per input: `Prose` lexes and folds its markdown, `Diff` runs its
   patch, `ProseDiff` its word diff and runs, and `QrCode` its encoding and module path, each
-  memoised on its text and skipped while it waits (a waiting QR tile draws a version 2 code's 25
+  memoised on its text and skipped while it waits (a painted QR tile draws a version 2 code's 25
   modules and encodes nothing). A streaming `other` message (`streaming`, a Thread `message` slot too) draws `closeOpenRuns(body)` from `@fcalell/ui-core/streaming` (a pure function both platforms run), which closes the runs open at the text's end (fence, emphasis, strong, strike, code span, link text and target), so the closing marker changes nothing drawn; unset, an unmatched marker stays text. `Message` is memoised on its props, and the Thread draws each item
   through a memoised item that renders again only when its item does: every slot reads the item, and
   a system line's `onOpen` and a detail row's `onOpen` call the thread's latest slots when pressed,
@@ -1101,36 +1085,35 @@ a tick with no animation, never jumped to full.
   wrapping at a space and breaking a token only when it outruns the line. The line stays the centred
   meta line; a fold's line is its toggle, so it opens nothing else. A line and its card stand a pair step apart (`MESSAGE_ENTRY`), the label over its content as a Section's title is over its body. A thread holds one item kind, so
   a row or a `Code` between messages is a detail, never a second item map or children.
-- A collection takes data and draws its states at the leaf. A `List` takes `query` (or `items`,
-  waiting on `loading`) and one item map: `row`, one function per `ListRow` slot, `file`, one per
-  `FileRow` slot, `meter`, one per `Meter` slot, or `definition`, one per `DefinitionRow` slot
-  (`copyable` one value for the list). A `row` List given its `items` while `loading` (a map with
-  a `trailing` slot, no tree) stands as loaded rows with each trailing value a four-figure bar
-  (`waits`, an internal prop of `ListRowBase`): the titles are known, only the
-  values arrive; a List without items waits as below. Its waiting rows are the row's own markup
-  (`list-row/wait.tsx`, `file-row/wait.tsx`, `meter/wait.tsx`, `definition-row/wait.tsx`), a ListRow's with bars in the slots
-  `row` declares, a FileRow's chip bar only when `file` declares `chip`, and its change lane when
-  `file` declares `change` (`fileShape`), and a Meter's line bar only when `meter` declares `meta`
-  or `counts`, and a DefinitionRow's change lane, meta line (a description or a lock's reason, the
-  value bar moving to the title line when none) and end square (an act or `copyable`, or a
-  chevron) by the slots `definition` declares (`definitionShape`), read before any item exists. Its
-  bars stand at the loaded row's columns: the label bar `figures` wide from the label's start, the
-  value bar at the line's end in the room its value takes, an identifier (`copyable`, `code`) the room
-  the label leaves up to the `measure`, where its loaded value, cut to the room, fills it, any other
-  value half a short-label lane. A loaded string value too long for its room cuts in its middle
-  (`list-state`'s `valueCut`: the stem truncating to the room the row gives, the last four
-  characters standing whole), each platform measuring its own box; the whole value stays the read
-  text and the copy act's payload. The `leading` slot names its kind by its one key (`{
-  avatar }`, `{ icon }` or `{ status }`, each a function of the item), so a list's rows share one
-  kind or have none, and the waiting row draws that kind's mark at its size (`SKELETON` `avatar`,
-  `icon` or `dot`). A trailing waits `figures` wide; a declared `status` or `chip` draws the marks'
-  bar at the meta line's end, half its own short-label lane (`RowShape.marks`), as the loaded marks
-  end that line; a declared `more` keeps the act's room empty. A collection of unknown length waits
-  as four rows, and its height change on load is accepted. A failed query draws the failed
-  form with `sentence` and Retry; no item draws `empty` (an empty state's props, its act the
-  one that fills the list, its frame the collection's own). Its decisions (which state, the waiting shape, the count, Retry) and the
-  Section's total (`sectionCount`) are ui-core's `./list-state`, which both platforms import, tested
-  without rendering.
+- A collection takes data and draws its rows; the frame draws the rest. A `List` takes `items` (a
+  constant, or a selection that paints) and one item map: `row`, one function per `ListRow` slot,
+  `file`, one per `FileRow` slot, `meter`, one per `Meter` slot, or `definition`, one per
+  `DefinitionRow` slot (`copyable` one value for the list). It holds no read and no state branch,
+  and neither do Table, Thread, OptionList, BarChart or Comparison: no context reaches a
+  collection, so a List cannot know whether the Section around it holds the same root, and the idiom
+  `<Section read={tasks}><List items={tasks}/></Section>` would make two root holders. The frame (a
+  Pane, Section, Sheet or Form given the read) draws the failed form with Retry, the missing form
+  and the empty form (its `empty`, the act that fills the list) in the body's place, in the fit the
+  collection would; a collection outside every frame whose read fails raises the dev no-holder
+  error. While the selection's read waits, a List paints `PAINT_ROWS` rows from the item map's
+  slots, run over the placeholder through `painting` (a slot that throws paints itself with a dev
+  warning, never the page), so a painted row draws exactly the slots the map declares: a ListRow's
+  filler in each declared text slot and a painted mark per declared `status`, `chip`, `warning`,
+  `lock` or `change`; a FileRow's chip only when `file` declares `chip` and its change lane when it
+  declares `change`; a Meter's line only when `meter` declares `meta` or `counts`; a
+  DefinitionRow's change lane, meta line (a description or a lock's reason) and end square (an act
+  or `copyable`, or a chevron) by the slots `definition` declares. A row is wholly painted or wholly
+  loaded, and a painted tree draws flat, since its depths are the data's. A painted row is inert and
+  draws a chevron only where the `row` map declares `href` or `onOpen`, as the loaded rows would. A
+  loaded string value too long for its room cuts in its middle (`list-state`'s `valueCut`: the stem
+  truncating to the room the row gives, the last four characters standing whole), each platform
+  measuring its own box; the whole value stays the read text and the copy act's payload. The
+  `leading` slot names its kind by its one key (`{ avatar }`, `{ icon }` or `{ status }`, each a
+  function of the item), so a list's rows share one kind or have none, and the painted row draws
+  that kind's mark painted. A collection of unknown length paints four rows, and its height change
+  on load is accepted. The collections' pure logic (the tree, the table and option projections, the
+  sort) is ui-core's `./list-state`, and a frame's state is `./read`'s, both imported by both
+  platforms and tested without rendering.
 - A `ListRow` carries several marks as named props, not a `marks` record: `status`, `warning`,
   `lock`, `chip`, at most one each, in that order on the meta line (`ROW_MARKS`). `warning` is what
   is wrong with the row (a string: "Name conflicts with Checkout"), a `TriangleAlert` glyph at the
@@ -1156,29 +1139,23 @@ a tick with no animation, never jumped to full.
   an `act` stands its acts on a line of their own at the row's end, under the text (`flex-wrap`
   on the row, the text a zero basis, the acts a whole line wide; on the phone always): beside
   them the text kept 65 of 288 px at 320, under the 112 the status and the two glyphs need, and
-  the waiting row draws the same line. A row holding an entry or wrapping its title keeps its acts
+  the painted row draws the same line. A row holding an entry or wrapping its title keeps its acts
   on the title's first line. `selected` (`RowSlots.selected`) washes a row as the open record
   whatever its `href`, as the route does at one: a Table's list form passes its `selected`
   through it. The marks are flat items of the meta line, not a box of their own,
-  so one set of weights orders them with the parts. Why named props: `List`'s per-slot functions let a waiting row know
-  which marks to reserve before any item exists (`rowShape` reads `warning` and `lock` by key, as it
-  does `status` and `chip`); a `marks` record function would hide that. A count is a meta part and a
+  so one set of weights orders them with the parts. Why named props: `List`'s per-slot functions let a painted row know which marks to reserve before any item exists (the slots run over the placeholder, and a mark is drawn where its slot is declared); a `marks` record function would hide that. A count is a meta part and a
   test status a `status`, so no cell kind is added; a change set's mark is `change`, below. A
   `Table` row's `warning` (`TableRowSlots.warning`) is drawn after its leading cell's name on the
   grid, the same glyph and label; on touch it is the `ListRow` warning, and on the phone's frozen
   leading column, a short measure wide, the glyph alone with the sentence read with the row's name.
   The Table has no row act, so a warning's act on a Table row is the row's open.
-- A row's `status` is a `RowStatus` (`descriptors.ts`): a `StatusMark`, or `{ loading: true }`
-  while the read that answers it has not, which a `List`'s `row.status` and a `ListRow` take (not
-  `StatusMark` itself, which other parts consume; `loading` is the roster's one waiting word, where
-  a sentinel string or a second per-item slot would be an untyped meaning or a second function for
-  one state). A waiting status counts as a mark, so the row is the two-line row from its first frame,
-  and stands as the `Status`'s own waiting form (`StatusBase waiting="short"`): a `skeleton` line bar
-  at most `w-measure-short` wide, starting at the loaded word's x (the unseen dot's room and the
-  status's gap in), in a box the meta line's height (`LINE_BOX` `meta`, `h-lh`; a `Strut` on the
-  phone), so nothing shifts sideways when the word arrives, yielding to the first part
-  as the status does, so nothing moves when it answers; it works in a `known` List and in a plain
-  `ListRow`. A row's status has one form, its word: `StatusMark` is `{ state, label }`, held whole
+- A row's `status` is a `StatusMark`, and a painted row draws it as the Status's own painted form
+  (`StatusBase painted`): the dot's box and a word's filler, at most `w-measure-short` wide, starting
+  at the loaded word's x (the unseen dot's room and the status's gap in), in a box the meta line's
+  height (`LINE_BOX` `meta`, `h-lh`; a `Strut` on the phone), so nothing shifts sideways when the word
+  arrives, and the row is the two-line row from its first frame, yielding to the first part as the
+  status does. There is no `{ loading: true }` status: a row is wholly painted or wholly loaded,
+  and the `status` slot, run over the placeholder, only says the row has one. A row's status has one form, its word: `StatusMark` is `{ state, label }`, held whole
   on the meta line before the later parts and cut, its word truncating, only where the line is out of
   room beyond the first part's floor. Nothing measures the line, so no
   second form can flip against the first. A canvas node's status keeps a `short` of its own (the
@@ -1198,15 +1175,13 @@ a tick with no animation, never jumped to full.
   `stale`, plain words), its accessible name on the phone. The lane stands ahead of the leading slot (`ListRow`), the
   label (`DefinitionRow`), the field on its label's line (`FormField`, every form of it), and the
   name in a Table's leading cell (on touch the `ListRow` change). A row with no `change` draws no
-  lane, so a set marks its untouched rows `unchanged`; `rowShape` reads a declared `change` slot, so
-  a waiting row draws the lane. Why one prop, no wrapper: the four parts each own their row box, a
+  lane, so a set marks its untouched rows `unchanged`; a painted row draws the lane when its map declares `change`. Why one prop, no wrapper: the four parts each own their row box, a
   wrapper would have to reach into it, and the canon has no node slots.
 - A row's `leading` may be a tick: `RowLeading` gains `{ check: { checked, onChange, blocked? } }`,
   a `Checkbox` in the leading slot at its hit box (`target`) above the row's open hit, named by the
   title. `blocked` (the reason it cannot be ticked) draws it disabled and leads the row's meta line,
   so the row grows to two lines. It is how a touch Table chooses rows; a `List`'s `leading` slot
-  takes `check` as it does `avatar`, `icon` and `status`, and `rowShape` reads it so a waiting row
-  holds the tick's skeleton in the same slot.
+  takes `check` as it does `avatar`, `icon` and `status`, and a painted row holds the tick's painted box in the same slot.
 - A `ListRow` shows a labelled act and holds an input by two props, not a second row kind. `act` is
   one `Act` at the row's end ahead of the more act, a secondary Button at the bar fit with its
   pending and blocked forms; the more menu stays the row's other acts, so an act the row waits on
@@ -1222,9 +1197,7 @@ a tick with no animation, never jumped to full.
   title's first line (the box `wrap` uses), so the glyph names the line it sits by and not the
   input under it. Rejected: a `Form` or a `FormField` in a `Group` row, which draws a
   label over its field and a foot ActionBar, the wrong geometry for a row, and a Group child loses
-  the row's leading and title. `RowSlots` carries `act` and `entry`; `rowShape` reads them by key,
-  so a waiting row draws a field-high bar and an act's bar (`SKELETON {kind: bar}`) in their places,
-  the entry's line in the meta line's.
+  the row's leading and title. `RowSlots` carries `act` and `entry`, and a painted row draws a painted field box and a painted act in their places, the entry's line in the meta line's.
 - A `ListRow` takes three more props, each a look the consumer cannot know and the row cannot
   derive. `dim` (`RowSlots.dim`, per item) stands the row off a highlighted path: its title in
   `ink-meta` at 400 (`ROW_TITLE` `form` `dim`), never faded, since opacity drops the title under the
@@ -1241,18 +1214,14 @@ a tick with no animation, never jumped to full.
   at meta size, the running step in `ink-body` and the others in `ink-meta`; each mark carries its
   state's word as its label, so the state is never told by colour alone. It takes no descriptor of
   its own, so it shares nothing with `Stage` (a rail of fixed stages: a progress indicator, not a
-  status list). A waiting row draws the meta line a `steps` slot declares, never the steps
-  (`rowShape` reads `steps` as a meta line): the steps show while an act pends, never while a list
-  loads, so a pending row standing taller than its waiting row is a change of state, not of
-  loading. `wrap` (`RowSlots.wrap`, one boolean for the list) is a
+  status list). A painted row draws the meta line a `steps` slot declares, never the steps: the steps show while an act pends, never while a list loads, so a pending row standing taller than its painted row is a change of state, not of loading. `wrap` (`RowSlots.wrap`, one boolean for the list) is a
   title read whole: `ROW.lines.whole` (no minimum height, a `pair` pad, the lines set the height)
   wraps it to every line at body 400 (`ROW_TITLE` `form` `whole`, so a list of notes is not a wall
   of medium weight), the change mark, leading, trailing value or pick and acts standing in a box one
   body line tall on its first line (`line-body`, `h-line-body` on both platforms: the box is pinned
   to one body line, so a 44 act overflows it centred on the line instead of growing it). A `Quoted`
   title wraps whole in a row that has a second line (its closing quote is never cut away) and adds quotes (a model-written name), `Prose` has no per-item
-  meta or more, `Message` is a turn; a row whose title wraps is none of them. `rowShape.wrap` is the
-  list's flag, so the waiting row draws the one-line form (one body line in the title's place, its
+  meta or more, `Message` is a turn; a row whose title wraps is none of them. The list's `wrap` flag makes the painted row draw the one-line form (one body line in the title's place, its
   leading, trailing and acts on it), the row a note loads into when it fits a line, and the list
   grows on load only by the lines a title wraps. The one `ROW_TITLE` family holds the four forms (`strong`, `dim`, `whole`, `whole-dim`)
   so a title's weight and ink are one cell, not a call-site pick; `rowTitleForm(wrap, dim)` names it
@@ -1266,8 +1235,7 @@ a tick with no animation, never jumped to full.
   `indent` step (a size, 16 desktop and 20 touch: the leading slot plus the gap would be 30 or 40
   per level, and three levels would cost 90 px of a 360 px list column) with a hairline on its end
   (`TREE_RAIL`), which falls under the middle of the parent's fold lane. Every row of the tree
-  reserves the lane (`TREE_LANE`, the `control-compact` square; waiting rows too, through
-  `rowShape.tree`), a branch's fold act standing in it as the bar-fit `IconButton` with a
+  reserves the lane (`TREE_LANE`, the `control-compact` square; painted rows too), a branch's fold act standing in it as the bar-fit `IconButton` with a
   `ChevronRight` or `ChevronDown`, named by the words `expand` and `collapse` before the title. The
   levels and the lane stand as one box that bleeds the row's padding (`TREE_BLEED`, keyed on
   `ROW.lines`: the negative of the form's `py`, so `-my-rows` on a two-line row and `-my-pair` on a
@@ -1285,9 +1253,7 @@ a tick with no animation, never jumped to full.
   index or a fold), with `folding` setting a branch open or folded by key; the List's container
   hears the keys and focus its rows send up and moves the focus. A row's own controls (its act, its
   more menu) keep their tab stops. The phone has no keyboard focus: the fold act's
-  `accessibilityState.expanded` is its state. A waiting tree draws its rails at the depths 0, 1, 2
-  and 2 (`waitingDepth`), so its rows start their text about where a loaded tree's rows do; the data's
-  own depths are unknown while it waits. `dim` composes by item: an off-path branch gives `dim`
+  `accessibilityState.expanded` is its state. A painted tree draws flat, since the data's own depths are unknown while it waits. `dim` composes by item: an off-path branch gives `dim`
   to its parent and each child, so the branch reads grey whole, its chevron staying in the meta ink
   and its rail the `edge` hairline. A Section counts a tree's top level, not every node.
 - A value outside its editable context reads locked on the fact's own row: `DefinitionRow.locked` is
@@ -1300,13 +1266,15 @@ a tick with no animation, never jumped to full.
   line where the row itself may be the hit.
 - A read that answers not found is `missing`, a state of its own beside `failed`: every read
   ends in content, "does not exist" with a way back, or Retry, and Retry cannot bring back what
-  was removed. `missing(query)` in `./list-state` reads the query's `error` by shape, true for
-  `code === "NOT_FOUND"` (what stack's procedures throw as `ORPCError("NOT_FOUND")`) or
-  `status === 404`, so ui-core imports no client library; `QueryLike` carries the optional
-  `error` a `useQuery` result already has, and no prop is added. `listState` returns `missing`
-  for such a query, and `boundaryState` makes a `QueryBoundary` draw it when every failed query
-  answers not found (one that failed otherwise keeps Retry). Every collection that takes `query`
-  (List, Table, Thread, Comparison, BarChart) and the boundary draw the missing form
+  was removed. The handle knows its error type, so `read(options, missing)` carries the test
+  (default `isNotFound`, `code === "NOT_FOUND"` or `status === 404`) and ui-core's
+  `readState(result, missing)` (`@fcalell/ui-core/read`, framework-free: it names only the few
+  fields of a query result it reads and imports neither TanStack nor React) gives the phase
+  (`idle`, `waiting`, `ready`, `failed`, `missing`) both platforms share, so no error shape is
+  guessed and no prop is added. `frameOf` folds a frame's held root and drawn value into its form
+  (`ready`, `waiting`, `empty`, `failed`, `missing`). A frame given a root read draws the missing
+  form when it is `missing` and the failed form (with Retry) when it is `failed`; a frame given a
+  selection draws neither, since the frame holding the root does. The form is
   (`missing/base.tsx`): the empty state's frame at rest ink with no mark, the word `missing`
   ("This no longer exists.") and Back, the hairline act with no plus (a Back is no create act,
   as Retry is not; the base's internal `missing` tone carries it), never Retry. The form is
@@ -1315,9 +1283,7 @@ a tick with no animation, never jumped to full.
   route (`{ label, href }`), the one descriptor both platforms carry, and the act defaults to
   Back. Rejected: an empty-state flag for the act's kind (a consumer option to pick a look) and
   deriving it from `href` (a create act that navigates, "Add a repo", keeps its plus). `tone`
-  stays internal, as does `fill`. An OptionList
-  draws it as its card's line, `missing` beside a secondary Back, as its failed line stands.
-  Back goes to `BackRoute`, the `back` of the Pane around the read, else to `PlaceRoute`, the route of the place that owns the
+  stays internal, as does `fill`. Back goes to `BackRoute`, the `back` of the Pane around the read, else to `PlaceRoute`, the route of the place that owns the
   address (`placeAt` in `./route`, which the Shell reads, below); with neither it draws no act. Going to a route is navigation, so on the web Back is an anchor
   in the hairline act's look (the internal `ButtonLink`), as a Pane's back and
   Close acts are anchors in the icon act's (`IconButtonLink`); native presses through
@@ -1346,64 +1312,56 @@ a tick with no animation, never jumped to full.
   app and an app's own route replaces it), expo-router's require-context keys patched in the
   generated entry (a documented file route exists), and a file in `.stack/` (expo-router reads
   none).
-- The failed form is public as `Failed` (`sentence`, `act: Act`) for a read that is no query (a
+- The failed form is public as `Failed` (`sentence`, `act: Act`) for a failure that is no read (a
   mutation that opens a file): the alert mark, the hairline act with no plus, drawn by the same
-  empty state's `failed` tone (`lib/empty`) that `QueryBoundary` renders through `Failed` itself, so the two
-  cannot drift. A failed tone's act is the hairline one in every form, a first run's included. Its
-  act is a function act, never a `LinkAct` (a way back is a `Missing`). Rejected: `QueryBoundary`
-  taking a mutation's result (a boundary reads a query's `isPending`, `error` and `refetch`; a
-  fake query is a workaround), `Missing` taking an `Act` (its form has no mark and no Retry) and an
-  empty-state tone (the look option `tone` stays internal).
+  empty state's `failed` tone (`lib/empty`) that a frame renders through `FrameBody` for a failed
+  read, so the two cannot drift. A failed tone's act is the hairline one in every form, a first run's
+  included. Its act is a function act, never a `LinkAct` (a way back is a `Missing`). A frame's
+  failed form says `readFailed` ("This didn't load.") or its own `failed` sentence, and its Retry
+  refetches the root and shows `loading` while it does; a frame's empty form says `readEmpty`
+  ("Nothing here yet.") or its `empty`. Rejected: a frame taking a mutation's result (a frame holds
+  a read, and a fake read is a workaround), `Missing` taking an `Act` (its form has no mark and no
+  Retry) and an empty-state tone (the look option `tone` stays internal).
 - An empty state is no placed component (`EmptyState` is gone from the roster): a `Pane`, a
-  `Section` and a first-run `Gate` take `empty` (`EmptyProps`: `icon`, `title`, `sentence`, `act`,
-  `children`) and draw it in place of their body, and each collection draws its own. One drawer
+  `Section` and a first-run `Gate` take `empty` (`EmptyProps`: `icon`, `title`, `sentence`, `act`, `children`) and draw it in place of their body, as a `Sheet`, a `Form` and a form's groups do for an empty `read`; a collection draws none. One drawer
   (`lib/empty`) takes an internal `fit` from whoever stands it, so nothing reads where it stands (the
-  `PageTitle`, `SectionContext` and `GroundContext` reads are gone): `page` (a Pane's, a Thread's log
-  and a Table under its header: centred in what the body leaves, or at its top over its own children;
+  `PageTitle`, `SectionContext` and `GroundContext` reads are gone): `page` (a Pane's: centred in what the body leaves, or at its top over its own children;
   the title at `heading`, the act the filled one with the plus), `first` (a Gate's: the page's `h1` at
-  `title`, the acts stacked across the column), `frame` (a Section's, a List's, a Comparison's, a
-  chart's and `Failed` and `Missing`: the `EMPTY_FRAME` hairline card, the title at body 500 and the
-  act the hairline one, or one quiet sentence at meta when only `sentence` is given) and `group` (the
-  Group's card its frame, `EMPTY_CARD`). `PageTitle` stays the id of the title that labels a Thread's
-  log and a Table's grid, and nothing else. A Pane already draws its `h1`, so its empty state stands
+  `title`, the acts stacked across the column), `frame` (a Section's, a Sheet's, a Form's and a group's, and `Failed` and `Missing`: the `EMPTY_FRAME` hairline card, the title at body 500 and the act the hairline one, or one quiet sentence at meta when only `sentence` is given). `PageTitle` stays the id of the title that labels a Thread's log and a Table's grid, and nothing else. A Pane already draws its `h1`, so its empty state stands
   at the `heading` role under it.
-- A `Comparison` is a collection of facts with the List's source (`query` with `sentence` and
-  `empty`, or `items` waiting on `loading`) and a `row` map over a fact's slots: `key`, `label`,
-  `values` (one per column, in order), `chips` and `status`. A fact's `status` is its verdict, a
-  `StatusMark` drawn in the label's line after the label and its chips, so on touch it never
-  squeezes the values; a passing fact returns none, or `{ state: "done", label: "Matches" }` where
-  the screen wants the pass read. It is a trailing `Status` rather than a leading one (a passing row
-  has none, and every row of a list leads with the same kind of mark) or a tint (status hue stays on
-  the dot). Its column heads are its declared `columns`, known before the data, so its waiting form
-  is the real head over four facts of bars: a value bar per column, and a chip's bar and a status's
-  bar beside the label's when `row` declares `chips` or `status` (`factShape` in `./list-state`),
-  each bar a share of its line's short-label lane (`SKELETON_LANE`), so it stands at a typical
-  label's or value's length rather than the column's. The Section around reads its wait and no
+- A `Comparison` is a collection of facts with the List's source (`items`, a constant or a selection)
+  and a `row` map over a fact's slots: `key`, `label`, `values` (one per column, in order), `chips`
+  and `status`. A fact's `status` is its verdict, a `StatusMark` drawn in the label's line after the
+  label and its chips, so on touch it never squeezes the values; a passing fact returns none, or
+  `{ state: "done", label: "Matches" }` where the screen wants the pass read. It is a trailing
+  `Status` rather than a leading one (a passing row has none, and every row of a list leads with the
+  same kind of mark) or a tint (status hue stays on the dot). Its column heads are its declared
+  `columns`, constant, so its painted form is the real head over `PAINT_ROWS` painted facts: filler
+  for the label, a value per column, and a chip's box and a status's painted mark beside the label
+  when `row` declares `chips` or `status`. The Section around it holds the read and gives no
   count: its facts are one record's, not items the Section counts.
-- An `OptionList` is a collection with a static form. A static set takes `options` (an `Option`
-  is already the projected row, waiting on `loading`); a set from a query takes `query`,
-  `sentence`, `empty` and an `option` map over the check row's slots (`value`, `label`,
-  `description`, `recommended`, `blocked`, and `group`, the label it stands under, groups in the order they
-  first appear). Every state stands in its card, so the field keeps its place in the form:
-  waiting, four check rows, two-line only when `description` is declared (a static set: when an
-  option is described) under a group label's bar only when `group` is; failed, one row holding
-  `sentence` and a secondary Retry at the bar fit; empty, one row holding the `empty` sentence.
-  No Section reads it. Its projection and waiting shape (`optionsOf`, `optionShape`,
-  `optionsShape`) are in `./list-state`.
+- An `OptionList` is a collection with a static form. A static set takes `options` (an `Option` is
+  already the projected row, and never paints); a set from data takes `items` (a constant or a
+  selection) and an `option` map over the check row's slots (`value`, `label`, `description`,
+  `recommended`, `blocked`, and `group`, the label it stands under, groups in the order they first
+  appear). Painted, a set from data is `PAINT_ROWS` check rows, two-line only when `description` is
+  declared, under a group label's filler only when `group` is; its failed and empty forms are the
+  frame's, so the field keeps its place in the form while it waits. Its `value` is a `Datum`
+  followed through `useDraft`: a selection paints the boxes or rings until it lands, and the
+  viewer's pick then replaces it. No Section reads it. Its projection (`optionsOf`) is in
+  `./list-state`.
 - An `OptionList`'s `value` picks its form: a set is several choices, check rows each toggling
   the set; one value or null is one choice, radio rows in a radiogroup (the web's
   Base UI `RadioGroup`, native `radiogroup` around `radio` rows with their checked state). The
   radio is the box's size (`OPTION_RADIO {state}`, a `full` ring in `edge-strong`, `toggle-on`
   when chosen) around the `toggle-on` dot (`OPTION_RADIO_DOT`), both held by OptionList. The
-  radio is the focused element, so the web's base focus ring draws on it; waiting, radio rows
-  lead with the ring's skeleton (`SKELETON {kind: radio}`), check rows with the box's. The
+  radio is the focused element, so the web's base focus ring draws on it; painted, radio rows lead with the ring's paint, check rows with the box's. The
   description line, the recommended mark and the children under the chosen option are the same
   in both forms. The form is the component's two call signatures (`OneChoice`, `SetChoice` in
   `./list-state`), so an inline `onChange` takes its parameter from `value`: TypeScript does
   not narrow a props union by `value: V | null` against `value: readonly V[]`, neither member
   being a literal type. Rejected: a `ChoiceList` beside it, the same rows under a second name.
-- A `BarChart` is a collection on the same decisions: `query` (or `items`, waiting on `loading`)
-  and a `bar` map (`key`, `value`, `parts` by `keys`, `at`, each a function of the
+- A `BarChart` is a collection on the same decisions: `items` (a constant or a selection) and a `bar` map (`key`, `value`, `parts` by `keys`, `at`, each a function of the
   item). Its head is the sum of its bars (a flow); `level` (the bars are a level, a fact only the
   app holds, so no derivation) makes it the last bar's value and each key's last part. Its axis scale and head are `./chart`'s `chartScale` and `chartHead`,
   one pure answer for both platforms (with `unitOf`, the unit's form at the figure it follows:
@@ -1413,21 +1371,17 @@ a tick with no animation, never jumped to full.
   part is a whole number and the step would fall under 1, a step of 1 over as many bands as the peak
   rounds up to, so a peak of 3 ticks 1, 2, 3 and never past its bars. Each tick is centred on its
   gridline and the baseline carries the 0, so the top tick reaches half a meta line above the plot
-  and the body stands that far below the head (`tickReach`; the web's `1lh / 2`). Its `keys` are
-  declared, so its pending form is its loaded boxes in skeleton with the
-  legend standing. Its failed and empty forms stand at its loaded height: the loaded boxes
-  are held unseen under them in one cell (the web's grid placement and `invisible`; native lays
-  the form absolutely over the boxes at `opacity-0`), so the Section does not move, and the
-  form's frame fills that box with its content centred in it (the empty drawer's internal
-  `fill`), so nothing floats above or below it.
+  and the body stands that far below the head (`tickReach`; the web's `1lh / 2`). Its `keys` are declared, so its painted form is the legend standing with its figures painted, the
+  total a painted figure and the plot one painted box at its loaded height, the time labels filler.
+  Its failed and empty forms are the frame's.
 - A Section's rhythm has two steps: its head is paired to its body (`SECTION`, `pair`) and the body's own parts (a Prose, a Code, a Group, an ActionBar) stand the `fields` step apart
   (`SECTION_BODY`) wherever the Section sits, so a dense run of parts reads as parts; a Group keeps its
   rows' own tight spacing.
 - A Section's head ends in its `act` then its `more` (`MenuItem[]`, a prop shaped as `ListRow.more`, drawn by `MenuBase` titled by the Section; not a menu kind of `act`, which would widen the shared `Act` descriptor). Both stand in one end slot, so they wrap under the title together on touch; the more sits outside a foldable Section's toggle and never folds it.
-- A Section's count is not drawn while its body waits (003-326): the waiting chip had been a skeleton
-  one figure wide around an unseen "0" so nothing moved when the count arrived, and Stead's critique
-  read the "0" in a loading head. The count arrives at the title's end, where it moves no title; the web
-  Section draws none while busy. (The phone's Section and the ItemHeader keep the waiting chip, unrendered.)
+- A Section's count is exactly its `count` (static) or an array read's length once it lands, and
+  is never drawn while its body waits, on either platform (003-326: the waiting chip had been a bar one figure wide around an unseen "0" so nothing moved when the count arrived, and Stead's
+  critique read the "0" in a loading head). The count arrives at the title's end, where it moves no
+  title.
 - A Section is a heading over its body and no landmark: the web's `section` carries no
   `aria-labelledby`, so it has no role, and the Pane is the page's one named region at each
   title. A Section titled as its Pane (a record's tree under the record's name) is therefore not
@@ -1435,45 +1389,38 @@ a tick with no animation, never jumped to full.
   the page's content stays inside the Pane's or Gate's landmark. The phone's Section is a
   `View` with no role. The render walk's same-name check stays for the regions an app names
   itself.
-- A Section reads nothing of its body (the walk is gone, pass 3 of the UI cleanup): its head is busy
-  exactly while its `loading` is set (the wait of a read that lasts, `useWait`) and its count is exactly
-  its `count` (none at 0, undrawn while busy; the phone draws the waiting chip), so a caller passes
-  `count={rows.length}` and `loading={query.isPending}` from the read its body draws. It provides
-  `LoadingContext` and each part of the body draws its own waiting form from
-  the context: a List and a Group their skeleton rows, a Prose, a Thread, a Code, a Meter, a Slider,
-  a DefinitionRow their own, an ActionBar (a Form's `bar`) the bar's waiting form, and a FormField a
-  skeleton field in the form of its control (`FieldShape` in `./list-state`: a switch's box at the
-  label's end, a checkbox's on the label's line, a slider's own head over its track
-  (`lib/slider-wait`), an option list's card of waiting rows (`lib/option-wait`: a static list one
-  row per option under a group label's bar per group, a query list four rows in the slots its
-  `option` map declares; the `children` under a chosen option are unknown before data and not
-  counted), a segmented control's track, an answered field's one summary row, a description's bar; a
-  Select's trigger waits as the plain field, measured), read off the field's own props (`waitOf` in
-  `form-field`: the descriptor set decides the form, an `answered` field outranks it; the lib files
-  import no component). The field stays mounted while it waits, its own root `hidden` rather than a
-  wrapper (a Group's hairline is a child selector, which a wrapper element would take), so what it
-  holds (typed text) outlives a refetch. Lost with the walk: a collection's or a QueryBoundary's wait
-  making the head busy, a List's or Table's total in the head, and the three fallback skeleton fields
-  for a body no part answers for (an app's own component draws as it is). `SectionContext` is gone: a Section's `empty` is its own prop and its title one size, and no Section
-  stands in a Section. Rejected:
-  registration (a layout effect per collection, a second commit before paint) and a registration
-  the head reads in render from a host object (the head renders before the body, so it would
-  always be a render pass stale). A List's `aria-busy` is its own now (`listBusy`), the Section's head
-  no longer holding it.
+- A Section holds the read of its body (`read`: a root, or a selection of one) and draws its failed,
+  missing and empty forms in the body's place, the head standing. The forms are `FrameBody`'s
+  (`lib/read`, one per platform) over the state `useFrame` derives with plugin-api's
+  `useFrameRead(read, frameOf)`: one `useQueries` per frame whose derivation runs in `combine`, so a
+  frame renders when its form, count or busy changes and never on a value change. Given a root (an
+  `isRead` handle) the frame draws failed and missing, is the read's one holder (in dev a second
+  holder of one query key raises `console.error` at mount, "give one of them a selection") and is
+  `aria-busy` while it waits (the phone's `accessibilityState.busy`); given a selection it draws
+  only waiting, empty and its count. Empty is an empty array, `null` or `undefined` on real data.
+  The body's leaves paint on their own selections: a List and a Group their painted rows, a Prose,
+  a Thread, a Code, a Meter, a Slider, a DefinitionRow and a FormField's control take a `Datum` and
+  read nothing from the Section, so no context carries a wait flag (structure rule 11: a context carries identity only). A body that is an app's own component draws as it is and reads with
+  `useRead`. A control follows its selection until the viewer edits it (`useDraft`; a selection
+  over another read drops the edit), so typed text outlives a refetch and no control flips on the
+  frame. Rejected: registration (a layout effect per collection, a second commit before paint), a
+  registration the head reads in render from a host object (the head renders before the body, so it
+  would always be a render pass stale), and a context handing the body a wait flag (every part had
+  to read it and keep a second tree for it). `SectionContext` is gone: a Section's `empty` is its
+  own prop and its title one size, and no Section stands in a Section. Only the root holder is busy;
+  a collection is not.
   `folded` is the initial fold: the Section holds its fold from there and reads no later change. A foldable Section's chevron stands after its title (and count) inside the toggle, so every Section's heading starts at one left edge (003-327: with the chevron before it, a folded Section's heading stood 22 px right of an unfolded one's); the phone's Section still leads with it.
-  A compound body sits in a `QueryBoundary`, which requires its `loading`.
+  
 - A Form's structure is its props, one of `children` (a flat run of FormFields, a `fields` step apart)
-  or `groups` (`{ title, description?, lead?, fields, loading? }`, each a `fieldset` with a `legend`
+  or `groups` (`{ title, description?, lead?, fields, read?, empty?, failed? }`, each a `fieldset` with a `legend`
   on the web, a labelled group with a header on the phone, `FORM_GROUP` and `FORM_LEGEND`, the groups
   a `sections` step apart), a TypeScript-exclusive union a `steps` shape can join. Its `bar` is the
   ActionBar's own props, drawn in the foot (`FORM_FOOT` under a form of groups; stuck in a sheet on
-  the web); the form reads no child. A group's `loading` waits as a Section's does, so its FormFields
-  wait. A FormField's control is exactly one descriptor (`switch`, `checkbox`, `slider`, `select`,
+  the web); the form reads no child. A form's `read` frames all its fields and a group's `read` its own (`FormGroup.read`, `empty`, `failed`): each group is a frame, so a page of a workspace group and a devices group reads each where it stands, and the bar's filled act paints, inert, with the form's read. A FormField's control is exactly one descriptor (`switch`, `checkbox`, `slider`, `select`,
   `options`, `segments`: the component's own props less the label the field supplies) or its
   `children` for any other control, and the field's form comes from which is set; a DefinitionRow
   likewise takes an explicit `switch` or `pick` (an `OptionPick`, drawn as the Picker at the row fit,
-  named by the row's label, the way an ItemHeader's pick fact is) in place of its `value`; a waiting
-  pick row stands the switch's box where its value stands. `FormIn` is `page`, `sheet`, `auth`
+  named by the row's label, the way an ItemHeader's pick fact is) in place of its `value`; a painted pick row stands the picker's box where its value stands. `FormIn` is `page`, `sheet`, `auth`
   (`pane` died with the Split's pane foot).
 - `Group` is a frame whose structure is its prop, exactly one of `items` or `list` (a union, as a
   Form's `children | groups`), and it reads no children. `items` is `GroupItem[]`, each `{ key, row }`
@@ -1484,30 +1431,20 @@ a tick with no animation, never jumped to full.
   `divide-*`; phone: Group maps its own array, so each entry box after the first draws `border-t`).
   `list` is a `ListProps` the card frames, drawn by the internal `ListBase` with `framed` set (an
   internal prop, not a context: the public `List` is a thin wrapper that never sets it), which drops
-  the bleed and the List's own box: its rows and waiting rows stand on the card, the Group's
+  the bleed and the List's own box: its rows, painted ones too, stand on the card, the Group's
   hairline once between them (phone: the List draws it on each row after the first itself, as a
-  divided list does), its failed and empty forms in the card at `EMPTY_CARD` (the card their
-  frame, in place of `EMPTY_FRAME`: the empty drawer's fit `group`). A
-  tree and a `definition` list take `list` too. A busy List makes the Group busy, for the card is
-  its box. Not both: a Meter list in a `list` stands each meter in `LIST_ITEM` (the List's own
+  divided list does), A tree and a `definition` list take `list` too. Not both: a Meter list in a `list` stands each meter in `LIST_ITEM` (the List's own
   `p-card`), and a FormField beside a List is two Groups. The web card,
   like each other block frame that hides its overflow (`Code`, `Diff`, `ProseDiff`, `Image`, `Stats`), never shrinks (`shrink-0`): its `overflow-hidden` gives a flex item a zero automatic
   minimum, so in a column that scrolls (a Pane's body, a Sheet's body) it would give up
-  height and clip its rows; native's `flexShrink` default is 0. A waiting Group
-  (its `loading`, or a loading Section's) hands its body the loading (`LoadingContext`) and each
-  part draws its own waiting form from it, in order, so a card of static parts waits at one form
-  per part and at the loaded card's height; a row of an app's own draws as it is, as in a Section,
-  since a waiting form is the loaded tree with `loading` and never a second tree (a body no part
-  answers for is not swapped for skeletons, which would need the parts to register with the Group).
-  A DefinitionRow's form is built from
-  what it is given (`definitionShape`: a `description` or `locked` reason is the setting form, an
-  `act` or `href` the end's square, a `switch` the switch's box) and a Slider's is its label's and
-  value's bars over a bar in the track's box. A waiting
-  setting row is the DefinitionRow's own wait (`definition-row/wait.tsx`, shared with a
-  `definition` List): it stands in the loaded
-  DefinitionRow's boxes (the label's body line box beside the switch's target-sized hit box on the
-  title line, the description's meta line box under it), so its height and its bars' centres are a
-  one-line setting row's at either density. A `definition` list is facts and carries no count of its own.
+  height and clip its rows; native's `flexShrink` default is 0. A Group reads nothing of its body: each part paints on its own selection, so a card of static
+  parts waits at one painted form per part and at the loaded card's height, and a row of an app's
+  own draws as it is. A painted DefinitionRow is the loaded row (`painted` is internal; its `value`
+  and `description` take a `Datum`): the label constant, the value's slot filler or its control's
+  box, the description's line painted, in the loaded DefinitionRow's boxes (the label's body line
+  box beside the switch's target-sized hit box on the title line, the description's meta line box
+  under it), so its height and its bars' centres are a one-line setting row's at either density. A
+  Slider paints its label's and value's filler over its track's box. A `definition` list is facts and carries no count of its own.
 - A Meter, a FormField or a Slider is an `item` of a Group's `items`, in the entry box at the card's
   inset; a FormField keeps its label, and a Meter, a Slider and a FormField carry no inset of their own. A set of them from data is a `List` taking `meter`, in the Group's `list` (a set
   of label and value rows from data is a `List` taking `definition`). A
@@ -1520,11 +1457,10 @@ a tick with no animation, never jumped to full.
   part per platform. Each count is a `fit="standalone"` link: it stands alone on its line, so it
   takes the `target` box (`LINK_TARGET`, 28 / 44; the web's anchor carries it, the phone's link is a
   pressable of that height with its words centred, since a text's own box takes no touch past its
-  words) rather than the inline fit's line-high one. A waiting meter or strip cell stands at the
-  loaded height by the line it declares (`WaitLine` in `./list-state`: `counts`, a target-high
-  box, over `meta`, a meta line box, over none), read off the `meta` or `counts` it is given even
-  while it waits; `Stats` waits one cell per item it is given, four of label and figure when it
-  has none. A `mark` (`{ value }`, `MeterMark`) is a tick across the track centred
+  words) rather than the inline fit's line-high one. A painted meter or strip cell stands at the loaded height by the line it declares (`counts`, a
+  target-high box, over `meta`, a meta line box, over none), read off the `meta` or `counts` it is
+  given even while painted. A Meter's `label`, `value` and `max` take a `Datum`; a `Stats` cell's
+  figure is a `Datum<number>` and paints alone, its label, unit and line constant. A `mark` (`{ value }`, `MeterMark`) is a tick across the track centred
   on `value / max` (`METER_MARK`, outside the clipping track) and the meter's near point in place of
   `METER_NEAR`. The role's children are presentational, so the counts stand outside the element
   carrying the meter role.
@@ -1590,9 +1526,8 @@ a tick with no animation, never jumped to full.
   in one row from `tablet` of the page and two to a row below it and on the phone; an odd count ends
   on one cell across its row. `Stat` is the figure first at `display` with its label in meta under
   it (read "2, need you", where a strip's cell is label-first because its label names which count),
-  one per screen as the role's rule says. A waiting strip is four cells at the loaded cell's label
-  and figure line boxes, since its length is the data's, so its width changes on load by the cells'
-  number and its height by the meta line or counts a loaded cell may add.
+  one per screen as the role's rule says. A strip's cells are declared (`items`), so a painted strip is the loaded strip with its figures
+  painted and moves nothing.
 - The phone `Link` takes an `href` of either kind and decides by its shape: a path from the root
   navigates through `lib/navigate` (as a row's `href` does) and anything else (a scheme, or a
   protocol-relative `//`) opens through `Linking`. Both platforms' `href` is a string, so the
@@ -1611,7 +1546,7 @@ a tick with no animation, never jumped to full.
   Group keys each row's wrapper by the row's own key (`Children.toArray`'s, its place among the
   children as written), so a conditional row appearing shifts no later row's state.
 - A FileRow's own change is its `change` (a `ChangeKind`): the one change mark every row draws,
-  in its lane before the glyph, its waiting form reserving the lane.
+  in its lane before the glyph, a painted row reserving the lane when the `file` map declares `change`.
   The chip never carries it.
 - A FileRow carries at most one `ChipMark` (why the file is listed),
   standing between the path and the count lanes at its label's `measure-short` cap; the path
@@ -1639,20 +1574,16 @@ a tick with no animation, never jumped to full.
   cells and size are FileRow's own in the roster, composed from `Chip`, with no token of its own.
 - Code, Diff and ProseDiff stand in one frame on the surface inside a hairline (`CONTENT_FRAME`),
   so a diff's soft grounds always sit on the surface; a diff's number columns and a file row's
-  count lanes are `figures` wide. A waiting Diff is a collection of unknown length: its hunk
-  header and eight lines wait at the loaded rows' heights and code start, and its height changes on
-  load by the line count, and on touch by the lines that wrap, which no waiting form can know.
+  count lanes are `figures` wide. A painted Diff is a collection of unknown length: its hunk header and `PAINT_ROWS` lines are painted at the loaded rows' heights and code start, and its height changes on load by the line count, and on touch by the lines that wrap, which no painted form can know.
 - A picture is `Image`, one component for every place a picture stands (a record's screenshot, a
-  message's attachment, a message input's pending file): `src`, `alt`, `fit`, `aspect` and
-  `loading`. `thumb` is a square tile (`IMAGE`, `size-image-tile`, the control radius) and
+  message's attachment, a message input's pending file): `src` (a `Datum`), `alt`, `fit` and `aspect`. `thumb` is a square tile (`IMAGE`, `size-image-tile`, the control radius) and
   `content` the container's width at the picture's own aspect down to a height cap (`image-cap`,
   the card radius), both cover-cropped inside the hairline `edge` (`IMAGE_PICTURE`). A content
-  picture has no aspect before its bytes, so its waiting form stands at the loaded height through
-  `aspect`, a number (width over height, `16 / 9`) that is required for `content` and typed off
+  picture has no aspect before its bytes, so its painted and pending forms stand at the loaded height through `aspect`, a number (width over height, `16 / 9`) that is required for `content` and typed off
   `thumb` (a union on `fit`, so a `content` picture without one is a type error) and fixes the box
   in every state with the picture cover-cropped to it, so no state moves when the bytes land
   (`imageAspect` in `./variants` reads it for both platforms). The picture mounts while it
-  waits, hidden, so the frame (`IMAGE {state}`: a skeleton at that height) is replaced by the bytes
+  waits, hidden, so the frame (`IMAGE {state}`: the `skeleton` fill at that height) is replaced by the bytes
   without a second fetch; a failed fetch draws a group-ground tile at the same box with an
   `ImageOff` glyph in the meta ink (`IMAGE_FAILED_INK`, 4.5:1 on `group` in both modes with the alt
   text it labels) over the alt text in meta, wrapped whole and centred inside the box (the box's
@@ -1694,8 +1625,7 @@ a tick with no animation, never jumped to full.
   `STAGE_WORDS`; `row-2`, 52 / 64, the state rail's 28–56 and 48–70) carry the room between stages,
   so a later row of one meta line keeps the pace of a done one. The rail runs through each mark's
   line box in two halves around the mark, so it breaks nowhere. Each mark stands on its label's first line (a later label is meta, so its mark is
-  on a meta line) and draws its state as its glyph, so `words` gains none. Stages is static data, so it has no waiting
-  form.
+  on a meta line) and draws its state as its glyph, so `words` gains none. Stages takes its steps as a `Datum`: a selection paints `PAINT_ROWS` stages, each mark a painted control and each label filler, until its read lands.
 - A copy act (`Code`'s, `DefinitionRow`'s) reads Copied for two seconds from the last copy: each
   copy is a counted moment and the reset is keyed on it, so a copy inside the window restarts it.
   Unfolding a `Code` moves focus to its already-mounted text in the press, before the fold act
@@ -1707,8 +1637,7 @@ a tick with no animation, never jumped to full.
   tab stop only while they scroll, through `lib/scrolls.ts`, on the vertical axis, with one more condition: a
   region takes the stop only while it scrolls and holds nothing a keyboard reaches (what a keyboard reaches is `isTabbable` of `lib/focus`, the rule a
   docked Sheet's focus hand-back reads), re-measured when its content changes anywhere inside it or
-  an element's tab-affecting attribute does, since a waiting form holds its loaded size and resizes
-  nothing, so a body of links gains no stop, and a body of text, which
+  an element's tab-affecting attribute does, since a painted form holds its loaded size and resizes nothing, so a body of links gains no stop, and a body of text, which
   Safari leaves unreachable, gains one, ringed inset. It takes no role or name; focus reads the
   content inside `main`. A native scroll view has no tab order.
 - `Code`'s `download` is the file's name, a string because the name is the one value stack cannot
@@ -1748,7 +1677,7 @@ a tick with no animation, never jumped to full.
   Rejected: optional `value` and `onChange` on every control read from the field's context, which
   would compile a control with no value anywhere and could not type a boolean field against an
   `Input`.
-- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 65 components in four
+- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 64 components in four
   layers (atoms, layout molecules, shared molecules, content molecules) with their prop names, the
   cells each draws (a whole matrix family, one family cell as `FAMILY.axis.value`, or a single cell)
   and the states it has a form for, the same in both plugins; an entry with `platforms` ships on
@@ -1771,42 +1700,52 @@ a tick with no animation, never jumped to full.
   page: `Select` and `Picker` pass `modal={false}` (Base UI's select defaults to a scroll lock that
   changes the root's overflow and gutter and moves the page as the list opens), as `Menu` does; a
   sheet is modal by design.
-- A waiting form shows only for a read that lasts: `WAIT_DELAY` 400 ms
-  before it is drawn, `WAIT_MIN` 500 ms once drawn (`@fcalell/ui-core/wait`, one decision both
-  platforms run), at `QueryBoundary` and a `Section`'s or `Group`'s own `loading`; during the
-  delay the form stands undrawn in its place (`invisible` / `opacity-0`), so the page keeps its
-  height. The switch to the loaded form is the page's one large motion, the settle, and `useWait`
-  owns it: when the read settles it keeps reporting waiting for that render and flips its own state
-  afterwards, whether the form was drawn or not, so every flip can be wrapped. On the web one
-  coordinator (`lib/settle`) gathers the flips of a frame into one `startViewTransition` with
-  `flushSync`, each `Section` and `Group` root carrying its own `view-transition-name` (from `useId`)
-  so the browser moves it from its old place by a transform, the duration and curve set on
-  `::view-transition-group(*)` in `globals.css` from the motion scale; it applies at once under
-  reduced motion, with no `startViewTransition`, in a hidden document or while any view transition
-  runs (the router's). On the phone the flip is preceded by `LayoutAnimation.configureNext` on the
-  `base` rung, skipped under the system's reduced motion (Fabric only, so no Android experimental
-  flag). A waiting ListRow's bars take their widths from a hash of the list's identity (`useId`) and
-  the row index (`waitingBars` in `./list-state`), so a list waits the same way every load and two
-  lists differ. A waiting form keeps today's row and line counts, so a list, a Thread or a text block
-  may still change height when its data lands: the change is animated, not prevented, and the
-  rubric's skeleton rule bounds it to the rows' difference.
+- The paint shows only for a read that lasts: `WAIT_DELAY` is 400 ms (`@fcalell/ui-core/paint`, one
+  number both platforms run; emitted as `--wait-delay`, which reduced motion does not zero: the
+  delay holds, the fade snaps). During the delay the painted tree stands transparent in its place
+  (the web's `animate-paint` fades in from `opacity: 0` once the delay has run; the phone has no
+  fade, and `useShown` snaps its fill in), so the page keeps its height and a read the server
+  answers at once paints nothing a viewer sees. The delay is fixed, not an option: one rhythm for
+  every paint of an app, and once shown the paint stays only as long as the read.
+- The switch to the loaded form is the page's one large motion, the settle
+  (`@fcalell/ui-core/settle`: `createSettle(env)`, framework-free and tested in node; each platform
+  supplies the env). A read's first answer (its first data, its first failure with no data, a reset
+  to waiting) reaches the screen through `QueryProvider settle`: plugin-api's `settleReads` sets
+  TanStack's `notifyManager` scheduler so the flush runs through `settle` while the painted form
+  is still on screen, and a refetch is not a first answer and flushes at once. Two
+  `QueryProvider`s mounted at once fall back to the default scheduler, harmlessly. On the web
+  `lib/settle` supplies `startViewTransition` with `flushSync`, each frame root carrying its own
+  `view-transition-name` (`useSettleName`, from `useId`) so the browser moves it from its old place
+  by a transform, the duration and curve set on `::view-transition-group(*)` in `globals.css` from
+  the motion scale; it applies at once under reduced motion, in a hidden document, while any view
+  transition runs (the router's) and while the viewer types in a field (`typing`: a text-like
+  input, a textarea or a contenteditable has focus, so a move never takes the caret). On the phone
+  `lib/settle` calls `LayoutAnimation.configureNext` on the `base` rung, and applies at once under
+  the system's reduced motion, in the background and while a `TextInput` has focus. Each UI
+  plugin's providers contribution passes `settle` to `QueryProvider`, so a consumer writes nothing.
+  A painted list may still change height when its data lands, by the difference in row count: the
+  change is animated, not prevented, and the rubric's paint rule bounds it to the rows' difference.
 - A page's outline comes from its route and its data fills it. A `Section` stands whatever its data
   holds, drawing its `empty` when there is none, so its arrival moves nothing; a Section per member
   iterates the domain the app knows (the usage windows, the leads), not the response; a waiting page
-  is the loaded tree with `loading`, never a second tree; and a Section that must stay optional
-  stands after every Section that always stands, so its arrival moves nothing above it. Measured
-  before this held: every route that drew a skeleton (55 of 55) differed from its loaded form, 266
-  of 297 regions, because Sections existed only once their data landed and a waiting row's bars came
-  from a fixed width table. A consumer holds it by a check that no Section is gated on its data's
-  length, none waits on a hand-built tree, and a run that slows the reads fails when a Section's
-  top moves from its waiting to its loaded form; the guide's rules page says how.
+  is the loaded tree painted, never a second tree; and a Section that must stay optional stands
+  after every Section that always stands, so its arrival moves nothing above it. Measured before
+  this held: every route that drew a waiting form (55 of 55) differed from its loaded form, 266 of 297
+  regions, because Sections existed only once their data landed and a waiting row's bars came from a
+  fixed width table. A consumer holds it by a check that no Section is gated on its data's length,
+  none waits on a hand-built tree (`b-wait`), and the shift check of `stack screens test`: each
+  screen's loading story holds its reads, measures every Section heading's top and height waiting
+  and then loaded at 320, 1280 and 1920 px, per Pane and per column, and fails the screen when the
+  first Section moves, a later one moves by other than what the Sections above it grew by, a Section
+  that stood is gone, or a Section with no rows, chart or text changes height; the guide's rules
+  page says how.
 - A cell no entry holds is shared, spelled by each component that draws
   it: the type roles, the field box (`Input`, `Select`, `TextArea`, the Picker's field fit, the
   touch `MessageInput`), the row with its leading slot and its title and meta lines (`ListRow`,
   `FileRow`), the content frame, `FIGURES`, the option group and its label (`SELECT_GROUP`,
   `OPTION_GROUP_LABEL`: `Select`, `Picker`, `OptionList`), the error line (`FIELD_ERROR_LINE`:
   `FormField`, `ListRow`'s entry), the remove act's round hit box (`REMOVE_HIT`: `Chip`, an
-  attachment's thumbnail), the line box, the popover, the skeleton, and the toasts' layer
+  attachment's thumbnail), the line box, the popover, the paint (`PAINT`, spelled by each component that paints its own box), and the toasts' layer
   (`TOASTS`, which the Shell stands over its page).
   `Select`, the single-choice field over `options`, is the field box (`FIELD`) whose open list is a
   popover (`POPOVER`) of rows (`ROW`); on native it opens the same option sheet as `Picker`.
@@ -1832,9 +1771,7 @@ a tick with no animation, never jumped to full.
   `min-h-1/2`, half the content box of the region it fills (a Pane's body), so the column scrolls past it and the
   head and banners above it scroll away rather than shrink it; the percentage resolves because the
   body is a flex item of the Pane, whose post-flex size is definite, so a viewport-share token is not needed
-  (`canvas-touch` holds it at 375 × 667 and 390 × 844). `loading` swaps the whole graph component for
-  `CanvasWait` (the ground and grid it shares with the graph, three `canvasNode` cards of skeletons
-  in a column), so no viewport, layout or ELK runs while waiting and no zoom stack or act
+  (`canvas-touch` holds it at 375 × 667 and 390 × 844). A selection in `nodes`, `edges` or `groups` swaps the whole graph component for `CanvasWait` (the ground and grid it shares with the graph, three `canvasNode` cards of filler in a column), the one painted form that is a tree of its own, since a layout has no geometry before its data (the named exception to structure rule 15, held by `b-wait`), so no viewport, layout or ELK runs while waiting and no zoom stack or act
   stands (both are overlays, so omitting them moves nothing). The column stands where a loaded
   chain opens: the wait measures its pane and column and takes `openTransform` (the loaded
   canvas's opening view) with `clearanceOf`, the room the zoom stack leaves, held by an unseen
@@ -2064,8 +2001,7 @@ the built components: `/deploys` (with `/deploys/$deployId` and `/deploys/$deplo
 `/projects`, `/usage`, `/domains` (and `/domains/verify`, a covering Pane over it), `/logs`, `/assistant`,
 `/members`, `/settings` and `/home` in the Shell (the pathless layout `_app`), and `/sign-in`
 and `/connect` outside it. A place calls typed procedures through the generated client
-(`src/worker/routes/`, each with zod schemas and a stub handler that answers no rows) and draws their
-states through the components' own `query` props and `QueryBoundary`; `src/app/fixtures.ts` answers every
+(`src/worker/routes/`, each with zod schemas and a stub handler that answers no rows) and reads them as `orpc.*.read` handles into frames (`read`) and selections (`.at`, `combine`), so every place waits as its loaded tree painted; `src/app/fixtures.ts` answers every
 procedure with the data a place shows and gives each route `$param` an example value. The screens
 workbench (`stack screens dev`) draws every route in data, loading, error, empty and not found, light
 and dark, at either density. The roster is in Storybook. react-ui's `./showcase/cells`, `./showcase/frame` and
@@ -2090,6 +2026,12 @@ touch is a toolbar toggle, not a test run; `a11y.test` is `error`):
   Table, List (tree), Slider, InputOtp and Gate; Place and Shell move no focus
   themselves (a Pane takes the keyboard on its first control when opened from another,
   `usePaneFocus`).
+- **Paint stories**, also hand-written: `behaviour/paint.stories.tsx` draws a row, a definition row, a
+  stat, a control and a Section heading loaded (over a read that answers) and painted (over a read
+  that never does, `showcase/waiting`'s `waiting` and `failing` reads) and asserts the painted box
+  equals the loaded box, at the desktop density and in a 375 px phone at the touch one: the
+  per-leaf form of structure rule 15, whose screen-level form is the shift check. The settle,
+  waiting-late, section-loading and not-found stories drive frames over the same reads.
 - **Component stories**, above, and the roster stress floor: a generated `RosterStress` module
   (`.storybook/roster.ts`) draws each component's frames at desktop and at touch in a 320 px
   column, and `.storybook/stress.ts` feeds every text slot a 300-character word and a URL, failing

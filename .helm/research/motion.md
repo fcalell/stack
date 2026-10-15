@@ -1,6 +1,6 @@
 # Motion: the design
 
-Status: draft for the owner, 2026-10-14; give, the pulse and no haptics decided the same day, the loader (§4.2) decided after the loader demo and revised after an adversarial review (§7). The rules it builds on landed in `cbe5562` (story
+Status: draft for the owner, 2026-10-14; give, the pulse and no haptics decided the same day, the loader (§4.2) decided after the loader demo and revised after an adversarial review (§7). Built so far: the paint's still fill and its delayed fade, the settle and the shift check (`states.md` phases 1 and 2); the pulse, the scramble, `theme.loading` and the rest of this page are not. The rules it builds on landed in `cbe5562` (story
 003-329): each motion explains a change, and a size or place never animates through layout. This
 page defines, for every component of the roster, how it animates, how it answers input, how it
 waits and how it arrives (loaded, empty or failed). It is built on a fact inventory of the code as

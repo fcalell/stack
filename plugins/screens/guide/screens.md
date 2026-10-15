@@ -91,10 +91,11 @@ measures again. Per Pane, and per column of Sections side by side in it, it repo
 - a Section changing height with no rows, chart or text in it, in either form;
 - a Section that was not there arriving above one that was.
 
-The fix is in the waiting form: draw it at the loaded form's height, in the same places (a Section
-whose rows are unknown holds a row count, the rest holds its size). `shift.ts` holds the
-measurement and `compare`. For now the findings are logged (`console.info`) and fail nothing;
-`SHIFT_FAILS` in `floors.ts` turns them into failures.
+Each finding fails the screen. The fix is in the screen's outline, never in the paint, which is the
+loaded form already at the loaded heights: give every Section a `read`, stand the ones that always
+stand before any that may not (a Banner or a PendingBar whose condition lands with the data goes
+below the Sections), and keep a text that wraps short enough to wrap the same painted and loaded.
+`shift.ts` holds the measurement and `compare`.
 
 ### The render walk
 

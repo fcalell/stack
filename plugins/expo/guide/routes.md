@@ -57,16 +57,10 @@ and `wide` change nothing on the phone.
 // src/app/projects/[id].tsx
 export default function ProjectScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const query = useQuery(orpc.projects.get.queryOptions({ input: { id } }));
+  const project = orpc.projects.get.read({ id });
   return (
-    <Pane title={query.data?.name ?? "Project"} back="/projects">
-      <QueryBoundary
-        query={query}
-        sentence="The project could not load."
-        loading={<ItemHeader loading />}
-      >
-        {(project) => <ItemHeader overline={[project.team]} facts={[project.owner]} />}
-      </QueryBoundary>
+    <Pane read={project} title={project.at((p) => p.name)} back="/projects">
+      <ItemHeader overline={[project.at((p) => p.team)]} facts={[project.at((p) => p.owner)]} />
     </Pane>
   );
 }

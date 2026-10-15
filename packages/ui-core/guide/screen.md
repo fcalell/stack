@@ -58,14 +58,15 @@ const projects = orpc.projects.list.read();
 
 ## 5. Draw every state
 
-Loading and failure sit at the frame. A `Pane`, `Section`, `Sheet` or `Form` given a `read` draws
-its failure, its "no longer exists" form with Back when the read answers not found and its empty
-state; the collection in it paints rows in the slots its item map declares while the read waits,
-then its items. Any other region that reads a
-query sits in its own `QueryBoundary`, which names its loading form and draws the same failure
-and not-found forms, so the rest stays drawn. A loading form is the loaded form in skeleton at the loaded heights, so
-nothing moves when the data lands; a pending act keeps its box. Empty is the `Pane`'s or the `Section`'s `empty` (a collection's own),
-with the act that fills it unless the screen's primary act already does. Error draws where the work happened (a field's error, a banner over the
+Waiting and failure sit at the frame. A `Pane`, `Section`, `Sheet` or `Form` (or a form's group)
+given a `read` draws its failure with Retry, its "no longer exists" form with Back when the read
+answers not found, and its empty state; give it the root read, or a selection of a read another
+frame holds (one read has one root holder). Every part below the frame takes a selection
+(`deploy.at((d) => d.steps)`, a `Datum`) and, while the read waits, draws its loaded form painted: a
+collection paints four rows in the slots its item map declares, a text its filler, a control its box.
+So the outline of the screen is written once, for the loaded data, and the waiting form is that
+outline painted at the loaded heights, never a second tree; a pending act keeps its box. Empty is
+the frame's `empty`, with the act that fills it unless the screen's primary act already does. Error draws where the work happened (a field's error, a banner over the
 region, a toast for an act) and keeps what still works.
 
 **Check:** each state is reachable by a route, a fixture or a control, written down.

@@ -79,11 +79,11 @@ output).
    in the story (move the pointer onto it, press and hold, Tab to it). Screenshot rest, hover,
    focus, active, disabled, loading, empty, error and selected wherever the unit declares them. A
    declared state with no visible change is a finding, and so is a loading form whose
-   height differs from the loaded one, except a collection of unknown length: it waits with a
+   height differs from the loaded one, except a collection of unknown length: it paints a
    fixed number of rows; the list's height may change only by the difference in row count: each
-   waiting row matches its loaded row's height and text start, measured row by row, and any
+   painted row matches its loaded row's height and text start, measured row by row, and any
    per-row difference is a finding; a loaded row whose text wraps grows by its wrapped lines, its
-   waiting row matching its one-line form.
+   painted row matching its one-line form.
 4. **Widths.** 320, 1280 and 1920 px; 320 draws the touch density. Clipped text, or a primary act
    under 44 px at 320, is a finding.
 5. **Modes.** Repeat steps 2 to 4 in dark mode, through the page's mode control or the `dark`
@@ -101,7 +101,7 @@ output).
    wrapped on purpose; `tabular-nums` on numbers compared in columns; an accessible name on every
    icon-only control; links are anchors; no `transition: all`; no size or place animated through layout
    (width, height, top, left, margin, padding, a grid track); `prefers-reduced-motion` honoured without a global kill; `color-scheme` set for
-   dark; `overscroll-behavior: contain` on overlays; skeletons mirroring the final layout; empty,
+   dark; `overscroll-behavior: contain` on overlays; the painted form being the loaded one, not a second layout; empty,
    dense and very long content handled; `…`, never `...`; no `user-scalable=no`. On an app
    screen, also the platform's rules page: no class, `style` or look at a call site outside an
    intrinsic host's geometry, and no raw element rebuilding a shape a roster component owns.

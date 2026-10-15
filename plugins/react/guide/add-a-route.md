@@ -33,13 +33,13 @@ function Project() {
 
 ## 3. Read its data
 
-Read what the screen shows through the typed client as a query, keyed by the route's parameters.
+Read what the screen shows through the typed client as a `read`, keyed by the route's parameters.
 A procedure the route needs that does not exist yet is added first, by the add-a-procedure
 recipe (`node_modules/@fcalell/plugin-api/guide/add-a-procedure.md`). Page:
 `node_modules/@fcalell/plugin-api/guide/client.md`.
 
 ```tsx
-const project = useQuery(orpc.projects.get.queryOptions({ input: { projectId } }));
+const project = orpc.projects.get.read({ projectId });
 ```
 
 **Check:** `pnpm check` passes, and the data arrives under `pnpm dev`.

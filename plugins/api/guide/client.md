@@ -46,7 +46,9 @@ data is yours.
 const deploy = orpc.deploys.get.read({ id });
 const title = deploy.at((d) => d.commit);
 const summary = combine([deploy, orpc.usage.read()], (d, u) => `${d.commit}: ${u.used}`);
-<Section read={deploy} title="Steps"><List items={deploy.at((d) => d.steps)} /></Section>
+<Section read={deploy} title="Steps">
+  <List items={deploy.at((d) => d.steps)} row={{ key: (s) => s.id, title: (s) => s.label }} />
+</Section>
 ```
 
 A component takes a `Datum<T>`, a constant or a selection, and draws a selection it cannot answer

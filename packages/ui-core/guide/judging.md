@@ -51,8 +51,8 @@ state's fill easing in, a reveal). A box's size or place never animates through 
 transition, which move the drawn box while layout lands at once. Never `transition: all`.
 
 A screen may hold several motions, each on its own part, but they never compete: the settle, the
-switch from a waiting form to the loaded one, is the page's one large motion (each Section and
-Group moves by a transform from its old place to its new and the page fades), and what enters or
+switch from the painted form to the loaded one, is the page's one large motion (each frame
+moves by a transform from its old place to its new and the page fades), and what enters or
 leaves inside it rides that one transition. Under reduced motion every transition snaps; a loop
 that is the only sign a wait is live stays, slowed or stilled to a form that still reads as live.
 

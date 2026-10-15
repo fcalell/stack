@@ -187,11 +187,16 @@ An `act` stands at the foot's centre; it adds, it never removes.
 
 ## Loading
 
-`loading` stands the ground and its grid with three node-shaped skeletons (a loaded node's size, at the gap a loaded path keeps, standing where a loaded chain opens), busy to assistive
-technology, while the data is read, so the page below the head does not move when the graph
-arrives. The wait stands the opening view of a three-node chain; a graph that overflows or has a different pitch opens by its own rule, so its first node can move on arrival. Pass `nodes={[]}` meanwhile: `nodes`, the handlers and the `act` are ignored, and the
-loading form draws no zoom stack, no act, no node button and no drag. Do not stand `nodes={[]}`
-for a wait: it reads as an empty graph.
+`nodes`, `edges` and `groups` take a constant or a selection (`flow.at((f) => f.nodes)`). While a
+selection's read waits the canvas stands the ground and its grid with three painted node cards (a
+loaded node's size, at the gap a loaded path keeps, standing where a loaded chain opens), inert, so
+the page below the head does not move when the graph arrives. A graph's layout has no geometry
+before its data, so this is the one painted form that is a tree of its own. The stand-in is the
+opening view of a three-node chain; a graph that overflows or has a different pitch opens by its own
+rule, so its first node can move on arrival. The handlers and the `act` are ignored meanwhile, and
+the painted form draws no zoom stack, no act, no node button and no drag. Give the canvas its
+selection, not `nodes={[]}` for a wait: it reads as an empty graph. Its failed and empty read forms
+are the frame's, as for any collection.
 
 ## An empty graph
 

@@ -1,7 +1,7 @@
 # States: the design
 
 Status: decided with the owner, 2026-10-14, and revised the same day after an adversarial review
-(§15); the wait's numbers are tuned live, nothing is built. This page defines how every component
+(§15). Phases 1 and 2 of §14 are built (the read; the frames and the paint) and §15 records what changed in building them; phases 3 to 6 are not, and the wait's numbers are tuned live. This page defines how every component
 of the roster reads, waits, fails, goes missing, stays empty, refreshes, streams and acts, on both
 platforms, and how state is held so that a change re-renders only what it changes. It supersedes
 `motion.md` §4.1 (one waiting path) and the shape question of `skeleton-loading.md`; `motion.md`
@@ -454,6 +454,46 @@ Revised the same day after an adversarial review, with the owner:
 - long collections virtualize (§7);
 - the live region is dropped; waiting forms are inert;
 - text decodes by crossfade; only figures and ids decode by character (`motion.md` §4.2).
+
+Changed while building phase 2 (2026-10-15); where the sections above differ, this list wins:
+
+1. Collections never hold a read; only frames do (Pane, Section, Sheet, Form and its groups). No
+   context reaches a collection, so a List cannot know whether its Section holds the same root, and
+   `<Section read={x}><List items={x}/></Section>` would make two root holders. List, Table, Thread,
+   OptionList, BarChart and Comparison lose every state branch on both platforms; a list Pane's
+   failure fills the page; a collection with no frame raises the dev no-holder error. Cut: a
+   standalone `List items` as its own frame, and failure as a standalone frame.
+2. `FormGroup.read` is added: each group is a frame (it replaces `FormGroup.loading`).
+3. Gate takes no `read`: its body takes Sections, so `connect` uses a `Section read`.
+4. Acts can be data: Pane `actions` and `more`, Section `act`, `more` and `description` take a
+   `Datum`; a painted act is inert in its loaded place.
+5. The paint is a still fill plus the delayed fade. The breathing loop (`pulse`, one shared clock),
+   the scramble and `theme.loading` go to the motion phases; the phone has no fade, its fill snaps
+   in after `WAIT_DELAY`.
+6. One `PAINT_ROWS = 4` for every collection and every text block of unknown length.
+7. A Section's count is never painted while it waits, on either platform.
+8. Sentence overrides: `empty` and `failed?: string` on Pane, Section, Form and FormGroup; Sheet
+   takes `empty` only until phase 4 (its `failed` is still the act's sentence). No `missing`
+   override: the generic sentence stays and the public `Missing` covers a bespoke one.
+9. `SKELETON` is replaced wholly by `PAINT` (`glyphs`, `box`, `control`); each component paints its
+   own box.
+10. The shift check compares Section heading tops, waiting against loaded, at 320, 1280 and 1920 px
+    (Stead's method); per-leaf box equality is a showcase behaviour story; "screens per read" is
+    deferred to phase 5 (`reads(params)`).
+11. A row is wholly painted or wholly loaded: `RowStatus {loading: true}`, the List "known" hybrid
+    and `waitingDepth` are gone, and a painted tree draws flat.
+12. The dev no-holder error fires only for a read that a leaf paints (registered by
+    `useSelections`); a read the app holds with its own `useQuery` is not checked.
+13. Canvas keeps a painted stand-in (three painted node cards), since its layout has no geometry
+    before the data: the one named exception to "no second tree".
+14. FileRow takes no public `Datum`; it paints only through `List file`.
+15. Retry pending lands now: the failed form's Retry shows `loading` while the read refetches.
+16. The Pane's painted title is a `<p>` in the heading's look, not an empty `h1`; the real `h1`
+    stands once the name lands.
+17. The showcase routes were reshaped for the shift check: a Section no longer waits behind a
+    Banner or a PendingBar (the deploy's conditions stand below every Section), Settings puts its
+    Webhooks Section first, Connect lists as many workspaces as it paints, and a wrapping fact line
+    or title is short enough to wrap the same painted and loaded.
 
 Open: `WAIT_DELAY` and `ACT_DELAY` (tuned live), and whether a minimum is needed after all; the phone's text bar as a nested `Text`
 (a device check); the virtualizing libraries, their count and the phone Pane's scroll with a long

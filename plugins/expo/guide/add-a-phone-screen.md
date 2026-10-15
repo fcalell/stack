@@ -30,16 +30,18 @@ Write the screen under the phone's rules page, reading each component's props in
 
 ## 4. Feed it
 
-Read through `orpc` from `src/lib/api.ts` with `useQuery` and act with `useMutation`. A
-collection (a `List`, a `Table`) takes its query; any other region that fetches sits in a `QueryBoundary`
-that names its loading form. Page: [the API client](./api-client.md).
+Read through `orpc` from `src/lib/api.ts` with `orpc.*.read(input)` and act with `useMutation`. The
+screen's `Pane`, or the `Section` that stands over the data, takes the read as its `read`; a
+collection (a `List`, a `Table`) and every part that shows a value take the read or a selection of
+it (`project.at((p) => p.name)`), and paint while it waits. Page: [the API client](./api-client.md).
 
 **Check:** with `stack dev` and `stack expo dev` running, the screen loads its data on a device
 or simulator.
 
 ## 5. Draw every state
 
-Draw loading, empty and error for each region as the screen recipe's step 5 says.
+Draw loading, empty, error and not found for each region as the screen recipe's step 5 says: a
+frame's `read` draws the last three, and the loaded form painted is the first.
 
 **Check:** each state is reachable by a route, a fixture or a control, written down beside it.
 

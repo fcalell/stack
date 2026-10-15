@@ -232,7 +232,7 @@ default the greys and the accent read as one palette.
 - The washes are `ink-body` at an alpha, so they follow the mode and sit on any surface as one
   more step: `wash-hover` a transparent part under the pointer, `wash-press` pressed,
   `wash-selected` a selected row or chip, `wash-selected-hover` a selected row under the pointer,
-  `skeleton` a loading bar, `fill-disabled` a disabled act's or chip's box, `fill-neutral` a
+  `skeleton` the paint, a waiting part's fill, `fill-disabled` a disabled act's or chip's box, `fill-neutral` a
   resting neutral ground (a grey chip, a message bubble).
 - The places, each an alias of the tone that draws it: `ring` the focus ring and
   `selected-outline` a selected tile's outline, both `accent-ink`; `edge-hover` a field's boundary
@@ -352,7 +352,7 @@ a change mark's glyph read `mark`; every other icon reads `line`. Both platforms
 the glyph's `strokeWidth`, and each plugin's verify fails a stroke weight spelled anywhere else.
 
 Seven radius roles, density-invariant, a radius naming the role and never the size: `chip` 4
-(an outlined chip, a skeleton bar, a checkbox), `control` 6 (a button, a field, a segmented
+(an outlined chip, a painted bar, a checkbox), `control` 6 (a button, a field, a segmented
 control), `row` 6 (a menu item, a highlighted row), `card` 8 (a card, a toast), `popover` 8,
 `sheet` 8 (a sheet's leading corners, a centred sheet), `full` (a dot, an avatar, the pill chip or
 status, a switch). One hairline of 1 px draws region edges, row splits and field boundaries, as
@@ -361,7 +361,7 @@ the control's own edge; inside a list it is drawn inward. A bordered box that ta
 choosing (a field, the Select and Picker trigger) rings on its edge: `RING_EDGE_OFFSET_PX`, -1 px,
 centres the ring on the hairline.
 
-Widths are a short label's measure (a chip's label, a status word, a skeleton label's lane), the
+Widths are a short label's measure (a chip's label, a status word), the
 lifted layers' ranges and the fixed regions of a frame, as
 `--container-*`: `measure-short` 18ch, `popover` 240, `toast` 360, `dialog` 520, `sheet` 640
 (native has no `ch`, so `nativeMeasureTokens` declares the short measure in px at
@@ -518,7 +518,7 @@ they spell, so a type role, a colour or a size reaches a cell only through the c
 it. It also declares what it holds (`holds`): the families and constants of its own box, which only
 it spells, so every other component draws them by composing it; a cell no entry holds (a type role,
 the field box, the row and its title and meta lines, the line box, the popover, the scrim, the
-skeleton) is shared, spelled by each component that draws it. A plugin's verify suite reads every
+paint) is shared, spelled by each component that draws it. A plugin's verify suite reads every
 component's exported props type against it, so a prop added on one platform, a prop renamed, or a
 style channel reopened fails by name. The directory of a component is its name in kebab case
 (`componentDir("ListRow")` is `list-row`).

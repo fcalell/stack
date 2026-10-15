@@ -58,11 +58,12 @@ column. The `Pane`'s title is an `h1` and its sections start at `h2`. A `Pane` i
 container, so what stands in it reads its width (a `Table` whether it is `tablet` wide); the `Place`
 is the `place` container the `Pane`s read.
 
-A record's name and acts are its `Pane`'s bar: `title` is the record's name (while it loads, the
-generic word for its kind, `Deploy`, read from the query outside the `QueryBoundary`) and
-`actions` and `more` are its acts, passed once it has loaded. An `ItemHeader` at the top of the body
-holds what the bar does not: the record's place (`overline`, its project, key or cycle) and its
-`facts` in a wrapping line; its `loading` stands bars at the loaded height. A fact that opens a
+A record's name and acts are its `Pane`'s bar: `title` is the record's name as a selection of the
+record's read (`title={deploy.at((d) => d.commit)}`), painted until it lands and no heading until
+then, and `actions` and `more` are its acts, each a constant or a selection, painted and inert while
+the `Pane`'s read waits. An `ItemHeader` at the top of the body holds what the bar does not: the
+record's place (`overline`, its project, key or cycle) and its `facts` in a wrapping line, each part
+a constant or a selection that paints in its place until it lands. A fact that opens a
 sheet is `{ label, onOpen }` and one that goes to another route is `{ label, href }`: each draws the
 words and a chevron, the second as a link.
 
@@ -98,8 +99,9 @@ of emphasis inside it) or the molecule that owns its role (`title` is `Pane`'s a
 
 A picture is an `Image`, never an `<img>`: `src`, `alt` (a sentence naming what it shows), a `fit`
 (`thumb`, a square tile beside the lines that say where it came from, or `content`, the
-container's width at the picture's own aspect, capped in height), an `aspect` and `loading`. It
-draws its own waiting and failed forms (the failed form says the `alt`; a `thumb`, too small for a
+container's width at the picture's own aspect, capped in height), and an `aspect`. Its `src` is a constant or a
+selection, which paints the tile at the loaded height until its read lands. It draws its own failed
+form (the failed form says the `alt`; a `thumb`, too small for a
 sentence, draws the glyph alone and the `alt` names it), and a press opens the full picture over
 the scrim with a Close act, Escape and a press outside. The full view takes no zoom.
 
@@ -110,8 +112,10 @@ one is a type error; store the picture's width and height with its address. A `t
 square and takes none.
 
 ```tsx
-<Image src={shot.url} alt={shot.title} fit="thumb" loading={shot.pending} />
-<Image src={shot.url} alt={shot.title} aspect={shot.width / shot.height} />
+const shot = orpc.deploys.shot.read({ id });
+
+<Image src={shot.at((s) => s.url)} alt="Latest preview" fit="thumb" />
+<Image src={shot.at((s) => s.url)} alt="Latest preview" aspect={16 / 9} />
 ```
 
 ## A page outside the shell is a `Gate`
@@ -187,10 +191,10 @@ A strip of counts is `Stats`, never a `Columns` of `Text`: `items`, each a `Stat
 `CountLink` with its own `href`), never both. Zeros are counts, drawn. It stands two cells to a row
 below `tablet`. One figure that is the focal point of its screen is a `Stat` (`label`, `value`,
 `unit`), once per screen, its label read after it ("2 need you"); a `Stats` cell's label is read
-before it. Each `counts` link is a standalone link on the target height. While `loading`, a `Stats`
-waits at the loaded height from the `items` you pass: one waiting cell per item, with the line
-(`meta` or `counts`) it declares. With no items, four cells of label and figure stand in, so a
-strip whose cells carry a line moves when its data lands.
+before it. Each `counts` link is a standalone link on the target height. A cell's
+`value` is a constant or a selection (`usage.at((u) => u.requests)`): a selection paints the figure,
+inert and no link, until its read lands, the label, unit and line (`meta` or `counts`) standing as
+given, so the cell keeps its loaded height.
 
 A `Link`'s `href` is a route of the app (a plain click opens it through the router, with no
 document load) or an external URL (the browser follows it). Every route anchor stays an `<a href>`,
@@ -338,15 +342,17 @@ the `Form`'s first child: the object's glyph as `leading`, its name as `title`, 
 ```
 
 A `Form`'s structure is its props, one of two: `children`, a flat run of `FormField`s a fields step
-apart, or `groups`, `{ title?, description?, lead?, fields, loading? }[]`, each drawn as a `fieldset`
+apart, or `groups`, `{ title?, description?, lead?, fields, read?, empty?, failed? }[]`, each drawn as a `fieldset`
 with the `title` as its `legend` (an untitled group, for fields that lead or close the form among
 titled ones, draws none), the groups a sections step apart and each group's `description`, `lead` (a
 note, a `Banner`) and `fields` a fields step apart. A form never takes both, and never a `Section`
 or an `ActionBar` as a child: its `bar` is the `ActionBar`'s own props (`acts`, `fit`, `pending`),
 which the form draws in its foot (under a hairline across a form of groups) and whose filled act
 submits it. One form among a page's sections is `Section > Form`, so every section's head-to-body
-gap stays the pair step; a form of several titled parts under one Save is `groups`. A group given
-`loading` is busy and its fields wait as a loading `Section`'s do.
+gap stays the pair step; a form of several titled parts under one Save is `groups`. A `Form` given a `read` is a
+frame, and so is a group given its own: the fields paint while it waits and its failure stands in
+their place, the form's filled act painted and inert with them. A field's value is a selection
+(`value={workspace.at((w) => w.name)}`) that the viewer's edit replaces.
 
 A `FormField` takes its control as exactly one descriptor, the component's own props less the label
 the field supplies: `switch` (at the label's end), `checkbox` (ahead of it), `slider`, `select`,
@@ -382,7 +388,7 @@ that holds nothing yet and draw it in place of the body: the `Pane`'s centres in
 leaves (or stands at the body's top over its own `children`), its title at the heading role and its
 act the filled one with the plus; a `Section`'s stands in a hairline frame, its title at body 500 and its
 act the hairline one, or is one quiet sentence at the meta role when only `sentence` is given. A
-`Table` draws its own `empty` (the page form under its header); a `List` draws none, the frame that holds its read does. There is no
+`Pane`, `Section`, `Sheet` or `Form` frame draws the empty form of the collection in it, the one place the sentence is set; a collection draws none. There is no
 `EmptyState` component to place.
 
 ## Collections take data
@@ -405,26 +411,24 @@ next step and let the row decide where it stands. A table's `selected` row washe
 as in its grid. A file row's `change` (a `ChangeKind`) draws the
 change mark ahead of its glyph, and its `chip` says why it is listed; the path yields to it down to
 its name's floor (the whole name when it is short, else its first three characters, an ellipsis
-and its end, never clipped mid-glyph), and below that the counts yield to their text, then the chip's label truncates with an ellipsis; the row never overflows sideways. A `Section` reads nothing of its body: its head is busy exactly while its `loading` is set and
-its count is exactly its `count`, so pass `count={rows.length}` and `loading={query.isPending}` from the
-read the body draws. A collection in the body draws its rows, painted while its read waits; the frame holds the read. A `Group`'s structure is its prop,
+and its end, never clipped mid-glyph), and below that the counts yield to their text, then the chip's label truncates with an ellipsis; the row never overflows sideways. A `Section` given a `read` is the frame of its body: the heading stays and the body's failed, missing and empty forms stand in the body's place, and a collection in the body paints its rows while its selection waits. The count after the title is the array's length once an array read lands and is never drawn while the body waits; a read that is no array takes a static `count`. A `Group`'s structure is its prop,
 exactly one of `items` and `list`. `items` are the card's entries: `{ key, row }` is a `ListRow`, `FileRow` or
 `DefinitionRow` drawn bare (the row pads itself) and `{ key, item }` is a thing that is no row (a `Meter`, a `FormField`, a
 `Slider`) drawn in a box at the card's inset, the group's one hairline between entries and the label kept; an add field over
 a `List` is a `FormField` item in one `Group` and the `List` the `list` of a second. `list` is a `List` the card frames:
-rows from data in a card, drawing their states on the card with no bleed of their own, never a `.map` of `ListRow`s,
+rows from data in a card, painted on the card while their selection waits, with no bleed of their own, never a `.map` of `ListRow`s,
 `DefinitionRow`s or `Meter`s. A `definition` list stands in a `Group`'s `list`, as a `DefinitionRow` does in its `items`.
 A row is one form everywhere, square at the card's inset, and a `List` outside a `Group` bleeds that inset, so its rows' text meets the title over it.
-A waiting `Group` (its `loading`, or a loading `Section`'s) draws one waiting form per `Meter`, `Slider` and `DefinitionRow` it holds, at the loaded card's height (a row's form follows the `description`, `act`, `href`, `locked` or control it is given), ; a row of your own draws as it is. Each part of a loading `Section`'s body draws its own waiting form: a `Prose`, a `Thread`, a `Code`, a `Meter`, a `Slider`, a `DefinitionRow`, a `FormField` and an `ActionBar` (a `Form`'s `bar` included) each wait where they stand, a `FormField` kept mounted, hidden, so typed text outlives the wait; any other body, an app's own component, draws as it is. A skeleton field stands in the form of the field it stands for, at its height: a label bar over the control's box, a switch's box at the label's end, a checkbox's on the label's line, a bar under the label or the control for a `description`; a `Slider` keeps its own head over its track, an `OptionList` its card of rows (one per static option, four for a query), a `SegmentedControl` its track, an `answered` field its one summary row, a `Select` the plain field. `Slider` and `DefinitionRow` wait through their `Group` or `Section` and take no `loading` of their own. `loading` is a boolean everywhere except where the loaded size is a count you know and the part cannot derive: a `Prose` takes `loading={lines}` (`true` is two paragraphs) and an `ActionBar` takes `loading={acts}` (`true` is one act, and give `acts` as `[]`). Both take a number from 1; `0` and `false` are not waiting, so `loading={rows?.length}` reads the loaded form when it is 0. A loading `Group` or `Section` hands down a boolean, so a `Prose` or `ActionBar` inside it draws the default; set the count on the part itself. A loading `Section` given `description=""` stands a bar where its sentence will be (an undefined `description` stands none, and loaded `""` draws no line, so `description={read?.tally ?? ""}` keeps the head's height). A `definition` row's string value that does not fit its room, when it is one word of more than eight characters, cuts in its
+Every leaf paints on its own selection: a `Meter`, a `Slider`, a `DefinitionRow`, a `FormField`'s control, a `Prose`, a `Code`, a `Diff`, a `Thread`, a `Stat` and a `Stats` cell take a constant or a selection of the read, and a selection whose read has not landed draws the part's loaded form painted, at its loaded height, a `Select`, `Slider`, `Switch` and the rest as the box the control keeps. A part of your own draws as it is: read what it needs with `useRead(selection)`, which is `undefined` while the read waits. A control's value follows its selection until the viewer edits it (`useDraft`), so typed text outlives a refetch. A `Section`'s `description` is a `Datum<string>`: it paints where the sentence will stand, and a loaded `""` draws no line, as an undefined one, so `description={report.at((r) => r.tally ?? "")}` keeps the head's height while it waits. A `definition` row's string value that does not fit its room, when it is one word of more than eight characters, cuts in its
 middle (its start and its last four characters stay, `SHA256:uNiV…k3Qz`) on one line (any other value truncates at its end); the whole value
 stays its read text and, with `copyable`, what the copy act copies, so a value never needs a wrapper
 that truncates it.
 
-A read that answers not found (its query's `error` carries `code: "NOT_FOUND"`, as a stack
-procedure throws it, or `status: 404`) draws "This no longer exists." (the `missing` word) with
-Back, never Retry: Back goes to the enclosing `Pane`'s `back`, else to the place's route, and
-with neither there is no act. Pass the `useQuery` result whole so its `error` arrives; a record
-opened by an address after it was removed then needs no screen of its own.
+A frame given a root read (`orpc.x.read()`) that answers not found (the procedure throws
+`NOT_FOUND`, a 404) draws "This no longer exists." (the `missing` word) with Back, never Retry: Back
+goes to the enclosing `Pane`'s `back`, else to the place's route, and with neither there is no act.
+Give the frame the read itself, not a selection of it, so its error arrives; a record opened by an
+address after it was removed then needs no screen of its own.
 
 A missing state decided from data (a record the loaded list lacks, an address nothing serves) is
 a `Missing`, never a Pane's or a Section's `empty`: its `sentence` defaults to the `missing` word and its `act` is
@@ -440,16 +444,16 @@ matches, or a `notFoundComponent` on a route. To own the page under a shell, add
 the layout's routes and compose `<Place><Pane title="Not found"><Missing sentence="Nothing is at this
 address." act={{ label: "Open Now", href: "/" }} /></Pane></Place>`.
 
-A read that is no query and failed (a mutation that opens a file) is a `Failed`, never an
-`empty` and never a query faked for `QueryBoundary`: its `sentence` says what did not load and
+A failure that is no read (a mutation that opens a file) is a `Failed`, never an
+`empty` and never a read faked for a frame: its `sentence` says what did not load and
 its `act` is a function act (`{ label, onAct }`, Retry), never a `LinkAct`, drawn under the alert
-mark as the hairline act with no plus, the form `QueryBoundary` draws for a failed query. A way back
-that creates nothing is a `Missing`; a read of a query is a `QueryBoundary` or a collection's own `query`.
+mark as the hairline act with no plus, the form a frame draws for a failed read. A way back
+that creates nothing is a `Missing`; a read is a frame's `read`, and a frame's `failed` replaces the generic sentence ("This didn't load.").
 
-A `Table` takes its data the same way: `query` with `sentence`, or `items`; each column reads its
+A `Table` takes its data the same way: `items`, a constant or a selection that paints four rows until it lands; each column reads its
 cell from the item by `cell`, and `row` gives the row's `id`, `href`, `locked`, `warning` (what is
 wrong with it, drawn after its name) and `change` (where it stands in a change set, its mark ahead
-of its name). It draws its states itself, with no `QueryBoundary` around it. An editable table
+of its name). Its failed, missing and empty forms are its frame's. An editable table
 (`onEdit`) draws a lock after a cell its row locks; a column's own `locked` makes it read
 only, its lock in the head alone.
 
@@ -582,32 +586,27 @@ sections (a `Pane`'s body, a `Sheet`'s body) stands them a sections gap apart: n
 in a `div` to space them.
 
 A `BarChart` takes data the same way, its `bar` map reading each item's `key`, `value`,
-`parts` (by its declared `keys`) and `at`; its failed and empty forms stand at the chart's height.
+`parts` (by its declared `keys`) and `at`; its frame draws its failed and empty forms, and while `items` waits the total and the legend's figures are painted and the plot is one painted box at the loaded height.
 Its head sums the bars, which is right for a flow (requests per day); bars that are a level (open
 flags per round, a reading each hour) take `level`, and the head draws the last bar, never the sum.
 A `unit` that takes a plural is `{ one: "flag", other: "flags" }`, never a bare plural: the head reads the form its figure takes ("1 flag", "6 flags"). Money is `{ currency: "USD" }`: the head and the keys write their figures in the currency, exact ("$30.97"), the axis whole when its step is, and no word follows; never a spelled `dollars` beside a figure the page writes with its symbol.
 
-Any other region reading a query sits in its own `QueryBoundary`, naming its loading form; it
-draws the not-found form when every failed query answers not found.
+A region that reads is a frame. Give a `Pane`, `Section`, `Sheet` or `Form` (or one of a form's groups) its `read`: the root (`orpc.deploys.get.read({ id })`) where it is the one that holds the read, or a selection (`deploy.at((d) => d.steps)`) of a read another frame holds. One read has one root holder, so a second frame over it takes a selection (dev raises `console.error` otherwise). A frame draws the failed form when its root fails, the missing form when it answers not found, and its `empty` when its selection is an empty array, `null` or `undefined` on real data. A collection holds no state: `items` is all it takes, so one outside a frame raises a dev error when its read fails. A read held by the app's own `useQuery` is not a frame's; that region draws its states itself.
 
-A waiting form shows only for a read that lasts. `QueryBoundary`, and a `Section` or `Group` given
-`loading` itself, draw nothing until the read has run 400 ms (the waiting form stands undrawn in its
-place, so the page keeps its height) and, once drawn, keep it 500 ms (`WAIT_DELAY`, `WAIT_MIN` in
-`@fcalell/ui-core/wait`). A read the local server answers in a few milliseconds draws no skeleton.
-These two numbers are fixed, not options; a part's own `loading` (a `List`, a `Meter`) is drawn as
-given, so drive it from the boundary or the Section around it, never from a raw `isPending`.
+The waiting form is the loaded form painted (structure rule 15): while a selection's read waits, each leaf draws its loaded tree with filler in place of its text, at the loaded heights, in the `skeleton` colour (`PAINT`: filler glyphs for text, the component's own box for a mark or a control). A painted part is inert: no press, no focus, no link. A collection paints four rows (`PAINT_ROWS`) in the slots its item map declares, run over a placeholder, so write each slot plainly (`p.name`, `d.steps.length`); a slot that throws there paints itself and warns in dev. Nothing shows for 400 ms (`WAIT_DELAY` in `@fcalell/ui-core/paint`): the painted tree stands transparent in its place, so the page keeps its height, then the paint fades in. A read the local server answers in a few milliseconds draws none. The delay is fixed, not an option. Only the root holder's frame is `aria-busy`, while it waits.
 
-The switch from a waiting form to the loaded one is the page's one large motion, the settle. Every
-switch of a frame runs together in one view transition: each `Section` and `Group` carries its own
+The switch from the painted form to the loaded one is the page's one large motion, the settle. Every
+switch of a frame runs together in one view transition: each frame carries its own
 `view-transition-name`, so the browser moves it from its old place to its new by a transform within the
-duration scale while the page crossfades. It snaps under reduced motion, in a hidden tab, in a browser
-without view transitions and while the router's own transition runs. It is not an option; draw nothing
-for it.
+duration scale while the page crossfades. It snaps under reduced motion, in a hidden tab, while the
+viewer types in a field and while the router's own transition runs. It is not an option, and
+`QueryProvider` is given it by the plugin; draw nothing for it.
 
-A waiting screen is the loaded tree with `loading` passed down, never a second tree: a page's outline
+A waiting screen is the loaded tree, never a second tree: a page's outline
 comes from its route and its data fills it. A `Section` stands whatever its data holds and draws its
 `empty` when there is none, never gated on the data's length; a Section that must stay optional stands
-after every Section that always stands, so its arrival moves nothing.
+after every Section that always stands, so its arrival moves nothing. The one painted stand-in is a
+`Canvas`'s, which has no geometry before its data.
 
 ## An icon act names itself
 
