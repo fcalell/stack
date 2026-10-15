@@ -1,6 +1,8 @@
 import {
 	type Datum,
 	type Drawn,
+	type Selection,
+	useFrameRead,
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
@@ -10,6 +12,7 @@ import type {
 	Part,
 } from "@fcalell/ui-core/descriptors";
 import { PAINT_ROWS } from "@fcalell/ui-core/paint";
+import { turnOf } from "@fcalell/ui-core/read";
 import { THREAD } from "@fcalell/ui-core/variants";
 import {
 	memo,
@@ -23,7 +26,9 @@ import {
 import type { Closed } from "../../lib/closed.ts";
 import { useFootFocus } from "../../lib/focus.ts";
 import { PageTitle, useFootRegion } from "../../lib/frame.ts";
+import { StateLine } from "../../lib/read.tsx";
 import { useScrolls } from "../../lib/scrolls.ts";
+import { useWords } from "../../lib/words.tsx";
 import { MessageBase } from "../message/base.tsx";
 import { Message } from "../message/index.tsx";
 import { WaitingReply } from "../message/waiting.tsx";
@@ -86,6 +91,8 @@ export type ThreadProps<T = unknown> = Closed & {
 	sheet?: SheetProps;
 	/** A reply from the other author is on its way: the loaded log ends on one waiting message of theirs, until it is cleared. */
 	replying?: boolean;
+	/** The turn being written, a read the app declares (a stream: `read(options, { kind: "stream" })` over `streamedQuery`, or a slice of a channel read): it draws after the items from its own subscription, so a chunk renders only it. Waiting for the first chunk it is one waiting message of the other author; writing, the message with `streaming` set; written, the message. Held as a root read, a failed stream draws the partial message, if any, then "The reply stopped." with Retry, which runs the stream again. It hides once the last item has its key, so a history that catches up shows no second turn. `null` or `undefined` is no turn. */
+	reply?: Selection<T | null | undefined>;
 };
 
 // One message from its item, its Message by its author: a system line takes
@@ -96,9 +103,12 @@ export type ThreadProps<T = unknown> = Closed & {
 function ThreadItemBase<T>({
 	item,
 	slots,
+	streaming,
 }: {
 	item: T;
 	slots: RefObject<MessageSlots<T>>;
+	// The reply turn's own, which overrides the slot.
+	streaming?: boolean;
 }) {
 	const read = slots.current;
 	const author = read.author(item);
@@ -113,7 +123,9 @@ function ThreadItemBase<T>({
 				at={at}
 				attachments={read.attachments?.(item)}
 				meta={read.meta?.(item)}
-				streaming={author === "other" ? read.streaming?.(item) : undefined}
+				streaming={
+					author === "other" ? (streaming ?? read.streaming?.(item)) : undefined
+				}
 			/>
 		);
 	const opens = read.onOpen?.(item) !== undefined;
@@ -141,6 +153,41 @@ function ThreadItemBase<T>({
 // the base's own type.
 const ThreadItem = memo(ThreadItemBase) as typeof ThreadItemBase;
 
+// The turn being written, from its own subscription to the reply: a chunk
+// renders this and nothing else in the thread. A stream that failed keeps its
+// partial message and says it stopped, with the frame's retry, which runs the
+// stream again.
+function ReplyTurn<T>(props: {
+	reply: Selection<T | null | undefined>;
+	slots: RefObject<MessageSlots<T>>;
+	after: string | undefined;
+}) {
+	const { reply, slots, after } = props;
+	const words = useWords();
+	const {
+		state: { form, value },
+		retry,
+	} = useFrameRead(reply, turnOf);
+	if (form === "none") return null;
+	if (form === "waiting") return <WaitingReply />;
+	const item = value as T | null | undefined;
+	// History holds the turn already: it draws it, so this one steps aside.
+	if (item != null && slots.current.key(item) === after) return null;
+	return (
+		<>
+			{item == null ? null : (
+				<ThreadItem item={item} slots={slots} streaming={form === "writing"} />
+			)}
+			{form === "stopped" ? (
+				<StateLine
+					sentence={words.replyStopped}
+					act={{ label: words.retry, onAct: retry }}
+				/>
+			) : null}
+		</>
+	);
+}
+
 // What the log holds, oldest first: the painted messages while the items are
 // not here (the other author's, since an author is the item's), else one
 // Message per item.
@@ -159,15 +206,24 @@ function logOf<T>(
 				at={at}
 			/>
 		));
+	const last = drawn.value.at(-1);
 	return [
 		...drawn.value.map((item) => (
 			<ThreadItem key={props.message.key(item)} item={item} slots={slots} />
 		)),
 		props.replying ? <WaitingReply key="replying" /> : null,
+		props.reply ? (
+			<ReplyTurn
+				key="reply"
+				reply={props.reply}
+				slots={slots}
+				after={last === undefined ? undefined : props.message.key(last)}
+			/>
+		) : null,
 	];
 }
 
-/** The messages, a log region so an arriving one is announced, a sections gap apart, one rung above a reply's block gap, and the input a sections gap under them. It fills what it stands in by plain flex: in a Pane's body it takes the free height and the log scrolls, opening at the newest message and following each that arrives while the reader is at the end, the input under it, which a docked `sheet` takes the place of, its body scrolling past two fifths of the region and keeping three rows, the log keeping two rows of its own while the body can give and the foot's head and submit never giving; while the reader is scrolled up, a Latest act floats centred above the input and returns to the newest message. Among sections it stands at its content's height. It draws one Message per item, and with `replying` set one waiting Message of the other author after them, followed and pinned to as any message is, replaced in place when the reply's item arrives and `replying` clears. While the `items` selection's read waits, `PAINT_ROWS` messages of the other author stand in the log, painted and inert. The frame around it draws the rest: it holds the read and draws the failed form with Retry, the missing form saying it no longer exists with Back, and the empty form. */
+/** The messages, a log region so an arriving one is announced, a sections gap apart, one rung above a reply's block gap, and the input a sections gap under them. It fills what it stands in by plain flex: in a Pane's body it takes the free height and the log scrolls, opening at the newest message and following each that arrives while the reader is at the end, the input under it, which a docked `sheet` takes the place of, its body scrolling past two fifths of the region and keeping three rows, the log keeping two rows of its own while the body can give and the foot's head and submit never giving; while the reader is scrolled up, a Latest act floats centred above the input and returns to the newest message. Among sections it stands at its content's height. It draws one Message per item, and with `replying` set one waiting Message of the other author after them, followed and pinned to as any message is, replaced in place when the reply's item arrives and `replying` clears; the `reply` read draws its turn after them the same way, from its own subscription. While the `items` selection's read waits, `PAINT_ROWS` messages of the other author stand in the log, painted and inert. The frame around it draws the rest: it holds the read and draws the failed form with Retry, the missing form saying it no longer exists with Back, and the empty form. */
 export function Thread<T>(props: ThreadProps<T>) {
 	const { sheet } = props;
 	const [drawn] = useSelections([props.items] as const);

@@ -1,6 +1,8 @@
 import {
 	type Datum,
 	type Drawn,
+	type Selection,
+	useFrameRead,
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
 import type {
@@ -9,6 +11,7 @@ import type {
 	Part,
 } from "@fcalell/ui-core/descriptors";
 import { PAINT_ROWS } from "@fcalell/ui-core/paint";
+import { turnOf } from "@fcalell/ui-core/read";
 import { THREAD } from "@fcalell/ui-core/variants";
 import {
 	memo,
@@ -23,6 +26,8 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FootReturn, useFootRegion } from "../../lib/frame";
 import { Lifted } from "../../lib/hosts";
+import { StateLine } from "../../lib/read";
+import { useWords } from "../../lib/words";
 import { Message } from "../message";
 import { MessageBase } from "../message/base";
 import { WaitingReply } from "../message/waiting";
@@ -95,6 +100,8 @@ export type ThreadProps<T = unknown> = Closed & {
 	sheet?: SheetProps;
 	/** A reply from the other author is on its way: the loaded log ends on one waiting message of theirs, until it is cleared. */
 	replying?: boolean;
+	/** The turn being written, a read the app declares (a stream: `read(options, { kind: "stream" })` over `streamedQuery`, or a slice of a channel read): it draws after the items from its own subscription, so a chunk renders only it. Waiting for the first chunk it is one waiting message of the other author; writing, the message with `streaming` set; written, the message. Held as a root read, a failed stream draws the partial message, if any, then "The reply stopped." with Retry, which runs the stream again. It hides once the last item has its key, so a history that catches up shows no second turn. `null` or `undefined` is no turn. */
+	reply?: Selection<T | null | undefined>;
 };
 
 // One message from its item, its Message by its author: a system line takes
@@ -105,9 +112,12 @@ export type ThreadProps<T = unknown> = Closed & {
 function ThreadItemBase<T>({
 	item,
 	slots,
+	streaming,
 }: {
 	item: T;
 	slots: RefObject<MessageSlots<T>>;
+	// The reply turn's own, which overrides the slot.
+	streaming?: boolean;
 }) {
 	const read = slots.current;
 	const author = read.author(item);
@@ -122,7 +132,9 @@ function ThreadItemBase<T>({
 				at={at}
 				attachments={read.attachments?.(item)}
 				meta={read.meta?.(item)}
-				streaming={author === "other" ? read.streaming?.(item) : undefined}
+				streaming={
+					author === "other" ? (streaming ?? read.streaming?.(item)) : undefined
+				}
 			/>
 		);
 	const opens = read.onOpen?.(item) !== undefined;
@@ -149,6 +161,44 @@ function ThreadItemBase<T>({
 // `memo` erases the generic its component takes, so the memoised item keeps
 // the base's own type.
 const ThreadItem = memo(ThreadItemBase) as typeof ThreadItemBase;
+
+// The turn being written, from its own subscription to the reply: a chunk
+// renders this and nothing else in the thread. A stream that failed keeps its
+// partial message and says it stopped, with the frame's retry, which runs the
+// stream again.
+function ReplyTurn<T>(props: {
+	reply: Selection<T | null | undefined>;
+	slots: RefObject<MessageSlots<T>>;
+	after: string | undefined;
+}) {
+	const { reply, slots, after } = props;
+	const words = useWords();
+	const {
+		state: { form, value },
+		retry,
+	} = useFrameRead(reply, turnOf);
+	if (form === "none") return null;
+	const item = value as T | null | undefined;
+	// History holds the turn already: it draws it, so this one steps aside.
+	if (item != null && slots.current.key(item) === after) return null;
+	// Its own cell in the log, upside down like the others and drawn only when
+	// there is a turn, so a thread with none leaves no gap at its end; the
+	// message and its line keep the thread's gap inside it.
+	return (
+		<View style={INVERTED} className={THREAD}>
+			{form === "waiting" ? <WaitingReply /> : null}
+			{item == null ? null : (
+				<ThreadItem item={item} slots={slots} streaming={form === "writing"} />
+			)}
+			{form === "stopped" ? (
+				<StateLine
+					sentence={words.replyStopped}
+					act={{ label: words.retry, onAct: retry }}
+				/>
+			) : null}
+		</View>
+	);
+}
 
 // What the log holds, oldest first, each part keyed: the painted messages
 // while the items are not here (the other author's, since an author is the
@@ -184,7 +234,7 @@ function logOf<T>(
 // scrolled up, a Latest act floats centred above the foot and returns to the
 // newest message. It draws one Message per item, and with `replying` set one
 // waiting Message of the other author after them, followed as any message is
-// and replaced in place when the reply's item arrives and `replying` clears.
+// and replaced in place when the reply's item arrives and `replying` clears; the `reply` read draws its turn after them the same way, from its own subscription.
 // While the `items` selection's read waits, `PAINT_ROWS` messages of the other
 // author stand in the log, painted and inert. The frame around it draws the
 // rest: it holds the read and draws the failed form with Retry, the missing
@@ -197,6 +247,17 @@ export function Thread<T>(props: ThreadProps<T>) {
 	const slots = useRef(props.message);
 	slots.current = props.message;
 	const children = logOf(props, drawn as Drawn<readonly T[]>, slots);
+	// The newest turn, at the origin before the rest: a cell of its own, which
+	// draws nothing, gap included, while there is no turn being written.
+	const last = (drawn.value as readonly T[]).at(-1);
+	const reply =
+		props.reply && !drawn.painted ? (
+			<ReplyTurn
+				reply={props.reply}
+				slots={slots}
+				after={last === undefined ? undefined : props.message.key(last)}
+			/>
+		) : null;
 
 	const log = useRef<ScrollView>(null);
 	// The claim a docked sheet leaves the foot for the input that returns.
@@ -244,6 +305,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 					className={LOG}
 					contentContainerClassName={cn(THREAD, UPSIDE_DOWN)}
 				>
+					{reply}
 					{cells}
 				</ScrollView>
 				<Latest onBack={away ? toLatest : null} />

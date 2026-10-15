@@ -2926,11 +2926,16 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// empty forms the frame's. A MessageInput, or its `sheet` docked in its
 		// place while it is open, is its `foot`. While a filling Thread's reader is
 		// scrolled up, a secondary Latest act floats over the log above the foot.
+		// Its `reply` is the turn being written, a read of the app's own that
+		// draws after the items from its own subscription: waiting a painted
+		// message, `streaming` the message with its open Markdown drawn in its
+		// own form, `error` the partial message with the stopped line and its
+		// Retry.
 		Thread: {
-			props: ["message", "items", "foot", "sheet", "replying"],
+			props: ["message", "items", "foot", "sheet", "replying", "reply"],
 			draws: ["THREAD", "THREAD_COLUMN", "FOOT_DOCKED", "THREAD_LATEST"],
 			holds: ["THREAD", "THREAD_LATEST"],
-			states: ["rest", "loading"],
+			states: ["rest", "loading", "error", "streaming"],
 			owns: {
 				colors: ["raised", "edge", "edge-raised"],
 				radii: ["control"],

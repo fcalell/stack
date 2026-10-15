@@ -1,9 +1,10 @@
+import { read } from "@fcalell/plugin-api/tanstack-query";
 import type {
 	Attachment,
 	MessageDetail,
 	Part,
 } from "@fcalell/ui-core/descriptors";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { MessageInput } from "../../components/message-input/index.tsx";
 import { Pane } from "../../components/pane/index.tsx";
 import { Place } from "../../components/place/index.tsx";
@@ -158,10 +159,45 @@ export function drawThread(frame: ShowcaseFrame) {
 	return <Conversation id={frame.id} state={frame.state} />;
 }
 
+// The turn being written, as the read of a stream holds it: the first words of
+// the answer with an emphasis still open. `streaming` has the stream running
+// over them, `error` has it failed over them.
+const PARTIAL: Turn = {
+	id: "t10",
+	author: "other",
+	body: "The migration adds a **NOT NULL column with no default, so the `invoices",
+	at: today("10:07"),
+};
+
+function replyAt(id: string, state: ShowcaseFrame["state"]) {
+	return read(
+		{
+			queryKey: ["showcase", id, "reply"],
+			queryFn: (): Promise<Turn> =>
+				state === "error"
+					? Promise.reject(new Error("The showcase stream fails."))
+					: new Promise<never>(() => {}),
+			initialData: PARTIAL,
+			staleTime: 0,
+			retry: false,
+		},
+		{ kind: "stream" },
+	);
+}
+
 function Conversation(props: { id: string; state: ShowcaseFrame["state"] }) {
 	const [value, setValue] = useState("");
 	const [working, setWorking] = useState(true);
-	const turns = itemsAt(`${props.id}/turns`, props.state, TURNS);
+	const replies = props.state === "streaming" || props.state === "error";
+	const turns = itemsAt(
+		`${props.id}/turns`,
+		replies ? "rest" : props.state,
+		TURNS,
+	);
+	const reply = useMemo(
+		() => (replies ? replyAt(props.id, props.state) : undefined),
+		[replies, props.id, props.state],
+	);
 	return (
 		<Column>
 			<Place>
@@ -196,7 +232,7 @@ function Conversation(props: { id: string; state: ShowcaseFrame["state"] }) {
 					<Section title="Deploys">
 						<StandInList />
 					</Section>
-					<Thread items={turns} message={TURN} />
+					<Thread items={turns} message={TURN} reply={reply} />
 				</Pane>
 			</Place>
 		</Column>
