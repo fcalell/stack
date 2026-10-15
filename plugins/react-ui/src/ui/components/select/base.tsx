@@ -1,5 +1,5 @@
 import { Select as Control } from "@base-ui/react/select";
-import { type Draft, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import type { Draft } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type { Option, OptionGroup } from "@fcalell/ui-core/descriptors";
 import { optionBlocked } from "@fcalell/ui-core/list-state";
@@ -21,6 +21,7 @@ import { useQuietGuards } from "../../lib/guards.ts";
 import { spacing } from "../../lib/media.ts";
 import { PAINT_CONTROL } from "../../lib/paint.tsx";
 import { PortalContainer } from "../../lib/portal.ts";
+import { OptionsLine, useOptions } from "../../lib/read.tsx";
 import { Icon } from "../icon/index.tsx";
 import { BOX, BOX_DISABLED, BOX_HOVER } from "../input/base.tsx";
 import type { SelectProps } from "./index.tsx";
@@ -68,8 +69,9 @@ export function SelectBase<V extends string | null = string>({
 	options,
 	placeholder,
 }: Omit<SelectProps<V>, "value"> & { draft: Draft<V | undefined> }) {
-	// Waiting options paint the trigger as a waiting value does.
-	const [waiting] = useSelections([options] as const);
+	// Waiting options paint the trigger as a waiting value does; ended ones
+	// say so in a line under it.
+	const { drawn: waiting, retry } = useOptions(options);
 	const painted = draft.painted || waiting.painted;
 	const chosen = painted ? undefined : draft.value;
 	const container = use(PortalContainer);
@@ -84,147 +86,150 @@ export function SelectBase<V extends string | null = string>({
 		})),
 	);
 	return (
-		<Control.Root
-			// Not modal: a modal select locks the page's scroll and moves the page
-			// as the list opens (as a Menu's popover, it leaves the page alone).
-			modal={false}
-			onOpenChange={() => setKeyed(false)}
-			items={items}
-			value={chosen ?? null}
-			onValueChange={(next) => {
-				draft.change(next as V, () => onChange(next as V));
-			}}
-		>
-			<Control.Trigger
-				// The render function hands over the trigger's state (Base UI's Field
-				// wires its label, validity and disabled), so the value inside draws it.
-				render={(trigger, state) => (
-					<button
-						{...trigger}
-						inert={painted || undefined}
-						className={cn(
-							field({
-								state: state.valid === false ? "error" : "rest",
-							}),
-							FIELD_GLYPH,
-							BOX,
-							FIT,
-							TRIGGER_OPEN,
-							state.disabled
-								? BOX_DISABLED
-								: state.valid !== false && BOX_HOVER,
-							painted && cn(PAINT_CONTROL, "*:invisible"),
-						)}
+		<>
+			<Control.Root
+				// Not modal: a modal select locks the page's scroll and moves the page
+				// as the list opens (as a Menu's popover, it leaves the page alone).
+				modal={false}
+				onOpenChange={() => setKeyed(false)}
+				items={items}
+				value={chosen ?? null}
+				onValueChange={(next) => {
+					draft.change(next as V, () => onChange(next as V));
+				}}
+			>
+				<Control.Trigger
+					// The render function hands over the trigger's state (Base UI's Field
+					// wires its label, validity and disabled), so the value inside draws it.
+					render={(trigger, state) => (
+						<button
+							{...trigger}
+							inert={painted || undefined}
+							className={cn(
+								field({
+									state: state.valid === false ? "error" : "rest",
+								}),
+								FIELD_GLYPH,
+								BOX,
+								FIT,
+								TRIGGER_OPEN,
+								state.disabled
+									? BOX_DISABLED
+									: state.valid !== false && BOX_HOVER,
+								painted && cn(PAINT_CONTROL, "*:invisible"),
+							)}
+						>
+							<Control.Value
+								placeholder={placeholder}
+								className={(value) =>
+									cn(
+										fieldValue({ kind: "text" }),
+										value.placeholder && FIELD_PLACEHOLDER,
+										VALUE,
+										state.disabled && VALUE_DISABLED,
+									)
+								}
+							/>
+							<Control.Icon className="flex">
+								<Icon name="ChevronDown" fit="control" />
+							</Control.Icon>
+						</button>
+					)}
+				/>
+				<Control.Portal container={container}>
+					<Control.Positioner
+						className={POSITIONER}
+						alignItemWithTrigger={false}
+						// The list sits one `pair` below the trigger, the gap a label keeps
+						// over its field.
+						sideOffset={() => spacing("pair")}
 					>
-						<Control.Value
-							placeholder={placeholder}
-							className={(value) =>
-								cn(
-									fieldValue({ kind: "text" }),
-									value.placeholder && FIELD_PLACEHOLDER,
-									VALUE,
-									state.disabled && VALUE_DISABLED,
-								)
-							}
-						/>
-						<Control.Icon className="flex">
-							<Icon name="ChevronDown" fit="control" />
-						</Control.Icon>
-					</button>
-				)}
-			/>
-			<Control.Portal container={container}>
-				<Control.Positioner
-					className={POSITIONER}
-					alignItemWithTrigger={false}
-					// The list sits one `pair` below the trigger, the gap a label keeps
-					// over its field.
-					sideOffset={() => spacing("pair")}
-				>
-					<Control.Popup
-						className={cn(POPOVER, SELECT_POPOVER, POPUP)}
-						onKeyDown={() => setKeyed(true)}
-						onPointerMove={() => setKeyed(false)}
-					>
-						{groups.map((group, at) => (
-							<Control.Group
-								key={group.label ?? at}
-								className={cn(SELECT_GROUP, OPTION_GROUP)}
-							>
-								{group.label ? (
-									<Control.GroupLabel
-										className={cn(
-											text({ role: "meta" }),
-											textStrong({ role: "meta" }),
-											GROUP_LABEL,
-										)}
-									>
-										{group.label}
-									</Control.GroupLabel>
-								) : null}
-								{group.options.map((option) => {
-									const blocked = optionBlocked(
-										option,
-										option.value === chosen,
-									);
-									const meta = blocked ?? option.description;
-									return (
-										<Control.Item
-											key={String(option.value)}
-											value={option.value}
-											label={option.label}
-											disabled={blocked !== undefined}
-											className={(state) =>
-												cn(
-													row({
-														lines: blocked === undefined ? "one" : "two",
-														state:
-															state.highlighted && blocked === undefined
-																? "highlighted"
-																: "rest",
-													}),
-													OPTION_ROW,
-													ITEM,
-													state.highlighted && blocked !== undefined && keyed
-														? ITEM_RING
-														: ITEM_NO_RING,
-												)
-											}
+						<Control.Popup
+							className={cn(POPOVER, SELECT_POPOVER, POPUP)}
+							onKeyDown={() => setKeyed(true)}
+							onPointerMove={() => setKeyed(false)}
+						>
+							{groups.map((group, at) => (
+								<Control.Group
+									key={group.label ?? at}
+									className={cn(SELECT_GROUP, OPTION_GROUP)}
+								>
+									{group.label ? (
+										<Control.GroupLabel
+											className={cn(
+												text({ role: "meta" }),
+												textStrong({ role: "meta" }),
+												GROUP_LABEL,
+											)}
 										>
-											<span className={ITEM_TEXT}>
-												<Control.ItemText
-													className={cn(
-														fieldValue({ kind: "text" }),
-														option.value === null && FIELD_PLACEHOLDER,
-														LINE,
-														blocked !== undefined && BLOCKED_INK,
-													)}
-												>
-													{option.label}
-												</Control.ItemText>
-												{meta ? (
-													<span
+											{group.label}
+										</Control.GroupLabel>
+									) : null}
+									{group.options.map((option) => {
+										const blocked = optionBlocked(
+											option,
+											option.value === chosen,
+										);
+										const meta = blocked ?? option.description;
+										return (
+											<Control.Item
+												key={String(option.value)}
+												value={option.value}
+												label={option.label}
+												disabled={blocked !== undefined}
+												className={(state) =>
+													cn(
+														row({
+															lines: blocked === undefined ? "one" : "two",
+															state:
+																state.highlighted && blocked === undefined
+																	? "highlighted"
+																	: "rest",
+														}),
+														OPTION_ROW,
+														ITEM,
+														state.highlighted && blocked !== undefined && keyed
+															? ITEM_RING
+															: ITEM_NO_RING,
+													)
+												}
+											>
+												<span className={ITEM_TEXT}>
+													<Control.ItemText
 														className={cn(
-															text({ role: "meta" }),
+															fieldValue({ kind: "text" }),
+															option.value === null && FIELD_PLACEHOLDER,
 															LINE,
 															blocked !== undefined && BLOCKED_INK,
 														)}
 													>
-														{meta}
-													</span>
-												) : null}
-											</span>
-											<Control.ItemIndicator className={INDICATOR}>
-												<Icon name="Check" fit="body" />
-											</Control.ItemIndicator>
-										</Control.Item>
-									);
-								})}
-							</Control.Group>
-						))}
-					</Control.Popup>
-				</Control.Positioner>
-			</Control.Portal>
-		</Control.Root>
+														{option.label}
+													</Control.ItemText>
+													{meta ? (
+														<span
+															className={cn(
+																text({ role: "meta" }),
+																LINE,
+																blocked !== undefined && BLOCKED_INK,
+															)}
+														>
+															{meta}
+														</span>
+													) : null}
+												</span>
+												<Control.ItemIndicator className={INDICATOR}>
+													<Icon name="Check" fit="body" />
+												</Control.ItemIndicator>
+											</Control.Item>
+										);
+									})}
+								</Control.Group>
+							))}
+						</Control.Popup>
+					</Control.Positioner>
+				</Control.Portal>
+			</Control.Root>
+			<OptionsLine drawn={waiting} retry={retry} />
+		</>
 	);
 }

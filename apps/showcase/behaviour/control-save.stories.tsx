@@ -1,6 +1,5 @@
 import { read } from "@fcalell/plugin-api/tanstack-query";
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
-import { Input } from "@fcalell/plugin-react-ui/components/input";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Shell } from "@fcalell/plugin-react-ui/components/shell";
@@ -172,9 +171,41 @@ function Name(props: { srv: Server<string> }) {
 	const [name] = useState(() => srv.setting.at((s) => s.value));
 	const save = useSave(srv);
 	return (
-		<FormField label="Name">
-			<Input value={name} onChange={() => {}} onCommit={save} />
-		</FormField>
+		<FormField
+			label="Name"
+			input={{ value: name, onChange: () => {}, onCommit: save }}
+		/>
+	);
+}
+
+function About(props: { srv: Server<string> }) {
+	const { srv } = props;
+	const [about] = useState(() => srv.setting.at((s) => s.value));
+	const save = useSave(srv);
+	return (
+		<FormField
+			label="About"
+			textArea={{ value: about, onChange: () => {}, onCommit: save }}
+		/>
+	);
+}
+
+function Region(props: { srv: Server<string> }) {
+	const { srv } = props;
+	const [value] = useState(() => srv.setting.at((s) => s.value));
+	const save = useSave(srv);
+	return (
+		<FormField
+			label="Region"
+			picker={{
+				options: [
+					{ value: "eu", label: "Europe" },
+					{ value: "us", label: "United States" },
+				],
+				value,
+				onChange: save,
+			}}
+		/>
 	);
 }
 
@@ -326,11 +357,8 @@ const renamed = server({
 });
 
 // A typing control saves at its commit: the value held while it pends, and a
-// refusal puts the datum back with its reason in a toast. The field hosts only
-// its own descriptors' saves, so an Input given as children toasts as a bare
-// one does.
+// refusal puts the datum back with its reason in the field's line.
 export const ACommitThatIsRefusedPutsTheValueBack: StoryObj = {
-	parameters: TOASTING,
 	render: () => (
 		<Page>
 			<Name srv={renamed} />
@@ -343,9 +371,65 @@ export const ACommitThatIsRefusedPutsTheValueBack: StoryObj = {
 		await userEvent.type(input, "Bea");
 		await userEvent.tab();
 		await expect(input).toHaveValue("Bea");
-		await screen.findAllByText("That name is taken.");
+		await expect(await canvas.findByText("That name is taken.")).toBeVisible();
 		await expect(input).toHaveValue("Ana");
 		await expect(renamed.state.saves).toEqual(["Bea"]);
+		// The next change clears the line.
+		await userEvent.type(input, "x");
+		await waitFor(() =>
+			expect(canvas.queryByText("That name is taken.")).toBeNull(),
+		);
+	},
+};
+
+const abouted = server({
+	initial: "Hello",
+	saveMs: 40,
+	readMs: 20,
+	refuse: () => wrongNow(),
+});
+
+export const ATextAreaInAFieldRefusesIntoTheFieldsLine: StoryObj = {
+	render: () => (
+		<Page>
+			<About srv={abouted} />
+		</Page>
+	),
+	play: async ({ canvas, userEvent }) => {
+		const area = await canvas.findByRole("textbox", { name: "About" });
+		await waitFor(() => expect(area).toHaveValue("Hello"));
+		await userEvent.type(area, "!");
+		await userEvent.tab();
+		await expect(await canvas.findByText("Not now.")).toBeVisible();
+		await expect(area).toHaveValue("Hello");
+	},
+};
+
+const regioned = server({
+	initial: "eu",
+	saveMs: 40,
+	readMs: 20,
+	refuse: () => wrongNow(),
+});
+
+export const APickerInAFieldRefusesIntoTheFieldsLine: StoryObj = {
+	render: () => (
+		<Page>
+			<Region srv={regioned} />
+		</Page>
+	),
+	play: async ({ canvas, userEvent }) => {
+		const trigger = await canvas.findByRole("combobox", { name: /Region/ });
+		await waitFor(() => expect(trigger.hasAttribute("inert")).toBe(false));
+		await userEvent.click(trigger);
+		await userEvent.click(
+			await screen.findByRole("option", { name: "United States" }),
+		);
+		await expect(await canvas.findByText("Not now.")).toBeVisible();
+		await waitFor(() => expect(regioned.state.saves).toEqual(["us"]));
+		await expect(
+			canvas.getByRole("combobox", { name: /Region/ }),
+		).toHaveTextContent("Europe");
 	},
 };
 

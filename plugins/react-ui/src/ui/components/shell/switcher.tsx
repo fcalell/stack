@@ -13,7 +13,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { Avatar } from "../avatar/index.tsx";
 import { Icon } from "../icon/index.tsx";
-import { PickerBase } from "../picker/base.tsx";
+import { HeldPicker } from "../picker/base.tsx";
 
 const ROW_PRESS = "hover:bg-wash-hover active:bg-wash-press";
 const GLYPH = "flex shrink-0";
@@ -40,7 +40,7 @@ export function SwitcherPick(props: { switcher: Switcher; touch: boolean }) {
 	);
 	const name = current?.label ?? switcher.label;
 	return (
-		<PickerBase
+		<HeldPicker
 			label={switcher.label}
 			options={switcher.options}
 			value={switcher.value}

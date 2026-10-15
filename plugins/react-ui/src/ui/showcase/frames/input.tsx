@@ -1,6 +1,6 @@
 import { Field } from "@base-ui/react/field";
 import { text } from "@fcalell/ui-core/variants";
-import { InputBase } from "../../components/input/base.tsx";
+import { HeldInput } from "../../components/input/base.tsx";
 import { Input, type InputKind } from "../../components/input/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { beside, isPaint, labelled } from "./painted.tsx";
@@ -34,7 +34,7 @@ export function drawInput(frame: ShowcaseFrame) {
 		return beside(
 			frame,
 			labelled(<Input value={VALUES.text} onChange={change} />),
-			labelled(<InputBase value={VALUES.text} onChange={change} painted />),
+			labelled(<HeldInput value={VALUES.text} onChange={change} painted />),
 		);
 	const name = frame.cell.name;
 	const unit = name === "FIELD.trailing.none";

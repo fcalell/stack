@@ -1,4 +1,4 @@
-import { type Draft, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import type { Draft } from "@fcalell/plugin-api/tanstack-query";
 import {
 	FIELD_PLACEHOLDER,
 	field,
@@ -10,6 +10,7 @@ import { cn } from "../../lib/cn";
 import { FieldDisabled, FieldError, useFieldName } from "../../lib/field";
 import { Ink } from "../../lib/ink";
 import { inertProps, paintControl, useShown } from "../../lib/paint";
+import { OptionsLine, useOptions } from "../../lib/read";
 import { useTouched } from "../../lib/touched";
 import { Icon } from "../icon";
 import { NO_OPTIONS, PickSheet, useOptionGroups } from "../picker/sheet";
@@ -26,8 +27,9 @@ export function SelectBase<V extends string | null = string>({
 	options,
 	placeholder,
 }: Omit<SelectProps<V>, "value"> & { draft: Draft<V | undefined> }) {
-	// Waiting options paint the trigger as a waiting value does.
-	const [waiting] = useSelections([options] as const);
+	// Waiting options paint the trigger as a waiting value does; ended ones
+	// say so in a line under it.
+	const { drawn: waiting, retry } = useOptions(options);
 	const painted = draft.painted || waiting.painted;
 	const chosen = painted ? undefined : draft.value;
 	const shown = useShown(painted);
@@ -86,6 +88,7 @@ export function SelectBase<V extends string | null = string>({
 				open={open}
 				onClose={() => setOpen(false)}
 			/>
+			<OptionsLine drawn={waiting} retry={retry} />
 		</>
 	);
 }

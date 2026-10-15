@@ -1,4 +1,4 @@
-import { type Draft, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import type { Draft } from "@fcalell/plugin-api/tanstack-query";
 import type { Option, OptionGroup } from "@fcalell/ui-core/descriptors";
 import {
 	choose,
@@ -28,6 +28,7 @@ import { Pressable, Text as RNText, View } from "react-native";
 import { cn } from "../../lib/cn";
 import { FieldDisabled, GroupName } from "../../lib/field";
 import { inertProps, Painted, paintControl, useShown } from "../../lib/paint";
+import { OptionsLine, useOptions } from "../../lib/read";
 import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 import { HeldCheckbox } from "../checkbox/base";
@@ -111,7 +112,8 @@ export function OptionListBase<V extends string = string, T = unknown>(
 	const { children, draft } = props;
 	const words = useWords();
 	const named = useContext(GroupName);
-	const [given] = useSelections([props.items] as const);
+	// Waiting items paint the rows; ended ones say so in a line under them.
+	const { drawn: given, retry } = useOptions(props.items);
 	// The rows paint while their items wait; the marks paint too while the
 	// value does, the labels then standing.
 	const rowsPaint = given.painted;
@@ -130,7 +132,7 @@ export function OptionListBase<V extends string = string, T = unknown>(
 		: (props.options ?? optionsOf(given.value as readonly T[], props.option));
 	const chosenValues = painted ? [] : chosenOf(choice);
 	const first = chosenValues[0];
-	return (
+	const list = (
 		<View
 			accessibilityRole={one ? "radiogroup" : undefined}
 			accessibilityLabel={named?.label}
@@ -261,5 +263,11 @@ export function OptionListBase<V extends string = string, T = unknown>(
 				</View>
 			))}
 		</View>
+	);
+	return (
+		<>
+			{list}
+			<OptionsLine drawn={given} retry={retry} />
+		</>
 	);
 }

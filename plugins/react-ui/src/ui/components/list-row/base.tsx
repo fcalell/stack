@@ -53,9 +53,9 @@ import { HeldCheckbox } from "../checkbox/base.tsx";
 import { ChipBase } from "../chip/base.tsx";
 import { Icon, IconBase } from "../icon/index.tsx";
 import { IconButtonBase } from "../icon-button/base.tsx";
-import { InputBase } from "../input/base.tsx";
+import { HeldInput } from "../input/base.tsx";
 import { MenuBase } from "../menu/base.tsx";
-import { PickerBase } from "../picker/base.tsx";
+import { HeldPicker } from "../picker/base.tsx";
 import { ChangeMark } from "../status/change.tsx";
 import { StatusDot } from "../status/dot.tsx";
 import type { ListRowProps } from "./index.tsx";
@@ -554,7 +554,7 @@ export function ListRowBase<V extends string | null = string>({
 					{titleLine}
 					<span className={cn(ROW_META_LINE, ENTRY)}>
 						<span className={ENTRY_FIELD}>
-							<InputBase
+							<HeldInput
 								inline={inline}
 								value={entry.field.value}
 								onChange={entry.field.onChange}
@@ -705,7 +705,7 @@ export function ListRowBase<V extends string | null = string>({
 			)}
 			{trailing && "pick" in trailing ? (
 				<First on={top}>
-					<PickerBase {...trailing.pick} fit="row" painted={painted} />
+					<HeldPicker {...trailing.pick} fit="row" painted={painted} />
 				</First>
 			) : null}
 			{chevron ? (

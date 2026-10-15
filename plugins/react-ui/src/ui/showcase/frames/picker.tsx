@@ -2,7 +2,7 @@ import type { Option } from "@fcalell/ui-core/descriptors";
 import { useState } from "react";
 import { Group } from "../../components/group/index.tsx";
 import { ListRow } from "../../components/list-row/index.tsx";
-import { PickerBase } from "../../components/picker/base.tsx";
+import { HeldPicker } from "../../components/picker/base.tsx";
 import { Picker } from "../../components/picker/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { press, Stage } from "./overlay-stage.tsx";
@@ -193,7 +193,7 @@ export function drawPicker(frame: ShowcaseFrame) {
 				value="admin"
 				onChange={change}
 			/>,
-			<PickerBase
+			<HeldPicker
 				label="Role"
 				options={[...ROLES]}
 				value="admin"

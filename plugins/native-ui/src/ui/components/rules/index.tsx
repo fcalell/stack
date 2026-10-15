@@ -20,7 +20,7 @@ import { ButtonBase } from "../button/base";
 import { Group } from "../group";
 import { Icon } from "../icon";
 import { IconButton } from "../icon-button";
-import { InputBase } from "../input/base";
+import { HeldInput } from "../input/base";
 import { Picker } from "../picker";
 import { Text } from "../text";
 
@@ -45,7 +45,7 @@ function Either<V extends string | null>(props: EitherPick<V>) {
 	const rule = { label, focus: typing };
 	if (isTyped(value))
 		return (
-			<InputBase
+			<HeldInput
 				inline={rule}
 				value={value.typed}
 				onChange={(typed) => onChange({ typed })}

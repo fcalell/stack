@@ -23,7 +23,7 @@ import { META_CUT, partText } from "../../lib/parts";
 import type { Route } from "../../lib/route";
 import { Count } from "../count";
 import { Icon } from "../icon";
-import { PickerBase } from "../picker/base";
+import { HeldPicker } from "../picker/base";
 import { Status } from "../status";
 import { StatusBase } from "../status/base";
 
@@ -110,7 +110,7 @@ function FactPart({ fact }: { fact: Fact }) {
 	if (typeof fact === "object" && "pick" in fact)
 		return (
 			<View style={REACH} className={PICK}>
-				<PickerBase {...fact.pick} fit="row" />
+				<HeldPicker {...fact.pick} fit="row" />
 			</View>
 		);
 	if (typeof fact === "object" && "status" in fact)
@@ -140,7 +140,7 @@ function PaintedFact({ fact, at }: { fact: unknown; at: number }) {
 	if (typeof fact === "object" && fact !== null && "pick" in fact)
 		return (
 			<View style={REACH} className={PICK}>
-				<PickerBase {...(fact.pick as OptionPick)} fit="row" painted />
+				<HeldPicker {...(fact.pick as OptionPick)} fit="row" painted />
 			</View>
 		);
 	return (

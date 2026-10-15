@@ -21,7 +21,7 @@ import { Painted } from "../../lib/paint.tsx";
 import { META_CUT, partText } from "../../lib/parts.ts";
 import { Count } from "../count/index.tsx";
 import { Icon } from "../icon/index.tsx";
-import { PickerBase } from "../picker/base.tsx";
+import { HeldPicker } from "../picker/base.tsx";
 import { StatusBase } from "../status/base.tsx";
 import { Status } from "../status/index.tsx";
 
@@ -102,7 +102,7 @@ function FactPart<V extends string | null>({ fact }: { fact: Fact<V> }) {
 	if (typeof fact === "object" && "pick" in fact)
 		return (
 			<span className={PICK}>
-				<PickerBase {...fact.pick} fit="row" />
+				<HeldPicker {...fact.pick} fit="row" />
 			</span>
 		);
 	if (typeof fact === "object" && "status" in fact)
@@ -128,7 +128,7 @@ function PaintedFact({ fact, at }: { fact: unknown; at: number }) {
 	if (typeof fact === "object" && fact !== null && "pick" in fact)
 		return (
 			<span className={PICK}>
-				<PickerBase {...(fact.pick as OptionPick)} fit="row" painted />
+				<HeldPicker {...(fact.pick as OptionPick)} fit="row" painted />
 			</span>
 		);
 	return (

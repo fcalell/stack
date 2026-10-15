@@ -7,7 +7,7 @@ import type {
 import type { PickerFit } from "@fcalell/ui-core/variants";
 import type { ReactElement } from "react";
 import type { Closed } from "../../lib/closed";
-import { PickerBase } from "./base";
+import { HeldPicker } from "./base";
 
 interface Shared<V extends string | null> extends Closed {
 	/** What is picked: the trigger's name, and the sheet's title (a short phrase; read aloud on the trigger, wraps as the sheet's title). */
@@ -66,5 +66,17 @@ export function Picker<V extends string | null = string>(
 export function Picker<V extends string | null = string>(
 	props: PickerProps<V>,
 ) {
-	return <PickerBase {...props} />;
+	const { label, options, fit, act } = props;
+	// The value and its handler are one pick or several, which the base reads
+	// off the value it draws; the overloads type that pairing, this call cannot.
+	return (
+		<HeldPicker
+			label={label}
+			options={options}
+			fit={fit}
+			act={act}
+			value={props.value as never}
+			onChange={props.onChange as never}
+		/>
+	);
 }

@@ -1,7 +1,7 @@
 import { Field } from "@base-ui/react/field";
 import { Radio } from "@base-ui/react/radio";
 import { RadioGroup } from "@base-ui/react/radio-group";
-import { type Draft, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import type { Draft } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type { Option, OptionGroup } from "@fcalell/ui-core/descriptors";
 import {
@@ -31,6 +31,7 @@ import {
 import { Fragment, type ReactNode, use, useId } from "react";
 import { GroupName } from "../../lib/field.ts";
 import { PAINT_CONTROL, Painted } from "../../lib/paint.tsx";
+import { OptionsLine, useOptions } from "../../lib/read.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { HeldCheckbox } from "../checkbox/base.tsx";
 import { Chip } from "../chip/index.tsx";
@@ -114,7 +115,8 @@ export function OptionListBase<V extends string = string, T = unknown>(
 	const words = useWords();
 	const ids = useId();
 	const named = use(GroupName);
-	const [given] = useSelections([props.items] as const);
+	// Waiting items paint the rows; ended ones say so in a line under them.
+	const { drawn: given, retry } = useOptions(props.items);
 	// The rows paint while their items wait; the marks paint too while the
 	// value does, the labels then standing.
 	const rowsPaint = given.painted;
@@ -259,22 +261,10 @@ export function OptionListBase<V extends string = string, T = unknown>(
 			})}
 		</div>
 	));
-	if (!one) {
-		return (
-			// biome-ignore lint/a11y/useSemanticElements: a group of rows, not a form's fieldset
-			<div
-				role="group"
-				aria-labelledby={named?.labelledBy}
-				className={cn(OPTION_LIST, LIST)}
-			>
-				{rows}
-			</div>
-		);
-	}
 	// One choice is a radiogroup: Base UI moves between its radios by the
 	// arrows and chooses the one it reaches. Null, not undefined, keeps it
 	// controlled while nothing is chosen.
-	return (
+	const list = one ? (
 		<RadioGroup<V | null>
 			value={choice.value as V | null}
 			onValueChange={(next) => {
@@ -285,5 +275,20 @@ export function OptionListBase<V extends string = string, T = unknown>(
 		>
 			{rows}
 		</RadioGroup>
+	) : (
+		// biome-ignore lint/a11y/useSemanticElements: a group of rows, not a form's fieldset
+		<div
+			role="group"
+			aria-labelledby={named?.labelledBy}
+			className={cn(OPTION_LIST, LIST)}
+		>
+			{rows}
+		</div>
+	);
+	return (
+		<>
+			{list}
+			<OptionsLine drawn={given} retry={retry} />
+		</>
 	);
 }

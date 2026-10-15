@@ -1,7 +1,7 @@
 import type { Datum } from "@fcalell/plugin-api/tanstack-query";
 import type { IconAct } from "@fcalell/ui-core/descriptors";
 import type { Closed } from "../../lib/closed.ts";
-import { InputBase } from "./base.tsx";
+import { HeldInput } from "./base.tsx";
 
 export type InputKind =
 	| "text"
@@ -43,7 +43,7 @@ export function Input({
 	autoFocus,
 }: InputProps) {
 	return (
-		<InputBase
+		<HeldInput
 			kind={kind}
 			value={value}
 			onChange={onChange}

@@ -45,6 +45,24 @@ export function useCollection<T>(items: Datum<readonly T[]>) {
 	return { drawn: drawn as Drawn<readonly T[]>, frame };
 }
 
+// A control holds its options' read and draws no flags of it: nothing about
+// the read's refetching is its to say, so the frame's state is not derived.
+const NO_FLAGS = () => null;
+
+// A control's subscription to its options: what it draws (the placeholder
+// while its read waits, with the phase it stands in) and the retry. It holds
+// the read no frame above holds, so a control in a toolbar outside any frame
+// says its failure itself (`OptionsLine`), but draws no busy or stale flag. A
+// constant draws as given.
+export function useOptions<O>(options: Datum<O>) {
+	const [drawn] = useSelections([options] as const);
+	const { retry } = useFrameRead(
+		isSelection(options) ? options : undefined,
+		NO_FLAGS,
+	);
+	return { drawn: drawn as Drawn<O>, retry };
+}
+
 // The reason an act stands blocked under once the read it depends on has
 // ended (a frame's `form`, or a selection's `phase`): the failed sentence (the
 // frame's own when it has one), or `words.missing`. None while the read waits,
@@ -160,6 +178,30 @@ export function StateLine(props: {
 			) : null}
 		</View>
 	);
+}
+
+// The line under a control whose options have ended: the failed sentence
+// with Retry, or `words.missing`; nothing while they wait, stand still or
+// answered.
+export function OptionsLine(props: {
+	drawn: Drawn<unknown>;
+	retry: () => Promise<unknown>;
+}) {
+	const { drawn, retry } = props;
+	const words = useWords();
+	if (!drawn.painted) return null;
+	if (drawn.phase === "failed") {
+		return (
+			<StateLine
+				flow
+				sentence={words.readFailed}
+				act={{ label: words.retry, onAct: retry }}
+			/>
+		);
+	}
+	return drawn.phase === "missing" ? (
+		<StateLine flow sentence={words.missing} />
+	) : null;
 }
 
 // The line under a frame's heading row when a read it holds has data it could not

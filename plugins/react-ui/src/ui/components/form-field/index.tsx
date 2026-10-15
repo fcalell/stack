@@ -26,8 +26,12 @@ import { CheckboxBase } from "../checkbox/base.tsx";
 import type { CheckboxProps } from "../checkbox/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
+import { InputBase } from "../input/base.tsx";
+import type { InputProps } from "../input/index.tsx";
 import { OptionListBase } from "../option-list/base.tsx";
 import type { OptionListProps } from "../option-list/index.tsx";
+import { PickerBase } from "../picker/base.tsx";
+import type { PickerProps } from "../picker/index.tsx";
 import { SegmentedControlBase } from "../segmented-control/base.tsx";
 import type { SegmentedControlProps } from "../segmented-control/index.tsx";
 import { SelectBase } from "../select/base.tsx";
@@ -37,6 +41,8 @@ import type { SliderProps } from "../slider/index.tsx";
 import { ChangeMark } from "../status/change.tsx";
 import { SwitchBase } from "../switch/base.tsx";
 import type { SwitchProps } from "../switch/index.tsx";
+import { TextAreaBase } from "../text-area/base.tsx";
+import type { TextAreaProps } from "../text-area/index.tsx";
 
 const STACK = "flex flex-col min-w-0 max-w-full";
 const BESIDE = "flex items-center min-w-0";
@@ -69,10 +75,17 @@ interface FormFieldBase extends Closed {
 	answered?: Answered;
 }
 
+// A pick's props less the label the field supplies, each of its two forms (one
+// or several) keeping its own value and handler.
+type PickerLess<P> = P extends unknown ? Omit<P, "label"> : never;
+
 // The control descriptors, each the component's own props less what the field
 // supplies (its label). Exactly one is set, or `children` draws any other
 // control.
 interface Controls<S extends string | null, O extends string, T> {
+	input: InputProps;
+	textArea: TextAreaProps;
+	picker: PickerLess<PickerProps<S>>;
 	switch: Omit<SwitchProps, "label">;
 	checkbox: Omit<CheckboxProps, "label">;
 	slider: Omit<SliderProps, "label">;
@@ -86,7 +99,7 @@ type OneOf<C> = {
 	[K in keyof C]: Pick<C, K> & Never<Omit<C, K>>;
 }[keyof C];
 
-/** One control with its label, its description and its error. The control is the one descriptor set (`switch`, `checkbox`, `slider`, `select`, `options`, `segments`: the component's own props, less the label the field supplies), which the field draws in its form: a switch at the label's end, a checkbox ahead of it, any other under it; or any other control as `children`. Unbound, the consumer gives the error and the control; bound, the form's field gives both, and the control is a function of the field's value: `{(control) => <Input {...control} />}`. */
+/** One control with its label, its description and its error. The control is the one descriptor set (`input`, `textArea`, `picker`, `switch`, `checkbox`, `slider`, `select`, `options`, `segments`: the component's own props, less the label the field supplies), which the field draws in its form: a switch at the label's end, a checkbox ahead of it, any other under it; or any other control as `children`. Unbound, the consumer gives the error and the control; bound, the form's field gives both, and the control is a function of the field's value: `{(control) => <Input {...control} />}`. */
 export type FormFieldProps<
 	V = unknown,
 	S extends string | null = string,
@@ -108,7 +121,7 @@ export type FormFieldProps<
 							field?: never;
 							/** The message that takes the description's place, the control drawn in error (a sentence; wraps). */
 							error?: string;
-							/** Any other control (an Input, a TextArea, a Picker). */
+							/** Any other control. */
 							children?: ReactNode;
 					  }
 					| {
@@ -130,6 +143,9 @@ type Body = FormFieldBase & {
 
 // The one descriptor set, if any.
 function kindOf(props: Body): ControlKind | undefined {
+	if (props.input) return "input";
+	if (props.textArea) return "textArea";
+	if (props.picker) return "picker";
 	if (props.switch) return "switch";
 	if (props.checkbox) return "checkbox";
 	if (props.slider) return "slider";
@@ -148,6 +164,12 @@ type Form = "field" | ControlKind;
 // The value the descriptor's control saves, which the field holds the draft of.
 function savedOf(props: Body, kind: ControlKind | undefined): Datum<unknown> {
 	switch (kind) {
+		case "input":
+			return props.input?.value;
+		case "textArea":
+			return props.textArea?.value;
+		case "picker":
+			return props.picker?.value;
 		case "switch":
 			return props.switch?.checked;
 		case "checkbox":
@@ -173,6 +195,25 @@ function controlOf(
 	draft: Draft<unknown>,
 ): ReactNode {
 	const { label } = props;
+	if (props.input)
+		return <InputBase {...props.input} draft={draft as Draft<string>} />;
+	if (props.textArea)
+		return <TextAreaBase {...props.textArea} draft={draft as Draft<string>} />;
+	if (props.picker)
+		return (
+			<PickerBase<string | null>
+				{...props.picker}
+				label={label}
+				draft={
+					draft as Draft<string | null | readonly (string | null)[] | undefined>
+				}
+				onChange={
+					props.picker.onChange as (
+						next: string | null | (string | null)[],
+					) => unknown
+				}
+			/>
+		);
 	if (props.switch)
 		return (
 			<SwitchBase

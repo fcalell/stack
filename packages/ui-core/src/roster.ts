@@ -429,7 +429,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// and the chosen one ticked, a description in meta under an option; an
 		// option's `blocked` reason replaces it in the disabled ink and the row
 		// takes no pick, until it is chosen. `value` and `options` are data: a
-		// selection paints the trigger, inert, until its read lands.
+		// selection paints the trigger, inert, until its read lands; options that
+		// have failed draw the failed sentence with Retry (or `missing`) in a line
+		// under the trigger.
 		Select: {
 			props: ["value", "onChange", "options", "placeholder"],
 			draws: [
@@ -449,6 +451,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ROW.state.selected",
 				"TEXT.role.meta",
 				"TEXT_STRONG.role.meta",
+				"BUTTON.act.quiet",
+				"BUTTON.fit.bar",
+				"BUTTON_LABEL.act.quiet",
 				"PAINT.kind.control",
 			],
 			holds: ["SELECT_POPOVER"],
@@ -1454,8 +1459,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// description, error or disabled form.
 		// A `change` draws the change mark in a lane ahead of the label (on a
 		// checkbox's line, ahead of the box), the kind's word its name.
-		// The control is the one descriptor set (`switch`, `checkbox`, `slider`,
-		// `select`, `options`, `segments`: the component's own props less the
+		// The control is the one descriptor set (`input`, `textArea`, `picker`,
+		// `switch`, `checkbox`, `slider`, `select`, `options`, `segments`: the
+		// component's own props less the
 		// label the field supplies), whose form the field draws, or `children`
 		// for any other control. The label and the description are constants and
 		// always stand; a control given a selection paints itself, inert, until its
@@ -1470,6 +1476,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"disabled",
 				"answered",
 				"field",
+				"input",
+				"textArea",
+				"picker",
 				"switch",
 				"checkbox",
 				"slider",
@@ -1736,7 +1745,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// `blocked` reason replaces its description in the disabled ink and
 		// the option takes no pick, until it is in the value. `value` and
 		// `options` are data: a selection paints the trigger, inert and its
-		// content undrawn, until its read lands.
+		// content undrawn, until its read lands. Options that have failed draw the
+		// failed sentence with Retry (or `missing`) in a line under the trigger,
+		// which stays painted; the picker holds that read, so it needs no frame
+		// and draws no busy or stale flag.
 		Picker: {
 			props: ["label", "options", "value", "onChange", "fit", "act"],
 			draws: [
@@ -1773,6 +1785,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"TEXT.role.body",
 				"TEXT.role.meta",
 				"ICON.fit.body",
+				"BUTTON.act.quiet",
+				"BUTTON.fit.bar",
+				"BUTTON_LABEL.act.quiet",
 				"PAINT.kind.control",
 			],
 			holds: ["PICKER", "PICKER_VALUE", "PICKER_EMPTY", "PICKER_POPOVER"],
@@ -1875,8 +1890,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// `items`, constants or a selection, paint `PAINT_ROWS` rows while the
 		// read waits, in the slots `option` declares (a description under each
 		// label, a label over the group), inert, and a `value` selection paints
-		// the boxes or rings; the failed and empty forms are the frame's, the Pane,
-		// Section, Sheet or Form that holds the read.
+		// the boxes or rings; the empty form is the frame's, the Pane, Section,
+		// Sheet or Form that holds the read, and `items` that have failed draw the
+		// failed sentence with Retry (or `missing`) in a line under the rows, the
+		// list holding that read where no frame does.
 		// An option's `blocked` reason replaces its description in the disabled
 		// ink and its box or radio is disabled, until it is in the value.
 		OptionList: {
@@ -1908,6 +1925,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"CHIP_LABEL.family.neutral",
 				"OPTION_CHILDREN",
 				"OPTION_INDENT",
+				"BUTTON.act.quiet",
+				"BUTTON.fit.bar",
+				"BUTTON_LABEL.act.quiet",
 				"PAINT.kind.glyphs",
 				"PAINT.kind.control",
 			],

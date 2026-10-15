@@ -75,11 +75,11 @@ import { CheckboxBase, HeldCheckbox } from "../checkbox/base";
 import { Chip } from "../chip";
 import { ChipBase } from "../chip/base";
 import { Icon } from "../icon";
-import { InputBase } from "../input/base";
+import { HeldInput } from "../input/base";
 import type { RowSlots } from "../list";
 import { ListBase } from "../list/base";
 import { LockMark } from "../list-row/lock";
-import { PickerBase } from "../picker/base";
+import { HeldPicker } from "../picker/base";
 import { StatusBase } from "../status/base";
 import { ChangeMark } from "../status/change";
 
@@ -1001,7 +1001,7 @@ function CellEdit(props: {
 	);
 	if (column.edit?.control === "picker")
 		return (
-			<PickerBase<string | null>
+			<HeldPicker<string | null>
 				label={column.label}
 				options={column.edit.options}
 				value={typeof cell === "string" || cell === null ? cell : undefined}
@@ -1012,7 +1012,7 @@ function CellEdit(props: {
 		);
 	const number = column.kind === "number";
 	return (
-		<InputBase
+		<HeldInput
 			cell={props.field}
 			kind={number ? "number" : column.kind === "source" ? "source" : "text"}
 			value={draft}
@@ -1129,7 +1129,7 @@ function Phone(props: {
 	const arrow = sort?.direction === "ascending" ? "ArrowUp" : "ArrowDown";
 	const pick = sortable.length ? (
 		<View className={SORT_BAR}>
-			<PickerBase<string>
+			<HeldPicker<string>
 				label={words.sort}
 				options={sortable.map((column) => ({
 					value: column.key,

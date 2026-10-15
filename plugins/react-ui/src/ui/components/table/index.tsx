@@ -81,12 +81,12 @@ import { Checkbox } from "../checkbox/index.tsx";
 import { ChipBase } from "../chip/base.tsx";
 import { Chip } from "../chip/index.tsx";
 import { Icon } from "../icon/index.tsx";
-import { InputBase } from "../input/base.tsx";
+import { HeldInput } from "../input/base.tsx";
 import { ListBase } from "../list/base.tsx";
 import type { RowSlots } from "../list/index.tsx";
 import { LockMark } from "../list-row/lock.tsx";
 import { WarningMark } from "../list-row/marks.tsx";
-import { PickerBase } from "../picker/base.tsx";
+import { HeldPicker } from "../picker/base.tsx";
 import { StatusBase } from "../status/base.tsx";
 import { ChangeMark } from "../status/change.tsx";
 import { Status } from "../status/index.tsx";
@@ -1153,7 +1153,7 @@ function CellEdit(props: {
 	);
 	if (column.edit?.control === "picker")
 		return (
-			<PickerBase<string | null>
+			<HeldPicker<string | null>
 				label={column.label}
 				options={column.edit.options}
 				value={typeof cell === "string" || cell === null ? cell : undefined}
@@ -1164,7 +1164,7 @@ function CellEdit(props: {
 		);
 	const number = column.kind === "number";
 	return (
-		<InputBase
+		<HeldInput
 			cell={props.field}
 			kind={number ? "number" : column.kind === "source" ? "source" : "text"}
 			value={draft}
@@ -1328,7 +1328,7 @@ function Phone(props: {
 	const arrow = sort?.direction === "ascending" ? "ArrowUp" : "ArrowDown";
 	const pick = sortable.length ? (
 		<div className={SORT_BAR}>
-			<PickerBase<string>
+			<HeldPicker<string>
 				label={words.sort}
 				options={sortable.map((column) => ({
 					value: column.key,

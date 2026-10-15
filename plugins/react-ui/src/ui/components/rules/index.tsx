@@ -20,7 +20,7 @@ import { ButtonBase } from "../button/base.tsx";
 import { Group } from "../group/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
-import { InputBase } from "../input/base.tsx";
+import { HeldInput } from "../input/base.tsx";
 import { Picker } from "../picker/index.tsx";
 import { Text } from "../text/index.tsx";
 
@@ -57,7 +57,7 @@ function Either<V extends string | null>(props: EitherPick<V>) {
 	const rule = { label, focus: typing };
 	if (isTyped(value))
 		return (
-			<InputBase
+			<HeldInput
 				inline={rule}
 				value={value.typed}
 				onChange={(typed) => onChange({ typed })}

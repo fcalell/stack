@@ -1,3 +1,4 @@
+import type { Draft } from "@fcalell/plugin-api/tanstack-query";
 import { commitMoment } from "@fcalell/ui-core/commit";
 import {
 	FIELD_UNIT,
@@ -52,13 +53,15 @@ const KEYBOARD: Record<InputKind, KeyboardTypeOptions> = {
 	email: "email-address",
 };
 
-// The field box every Input renders, as the Input below describes it. `cell` is
+// The field box every Input renders, as the Input below describes it, on the
+// `draft` its host holds: a field hosts the draft of its input and draws a
+// rejection in its own line. `cell` is
 // the `Table` cell it edits in, `inline` the `ListRow` entry or `Rules` term it
 // stands in. `painted` is the box while its data is not here: filled at its
 // loaded size, the value not drawn, inert. Outside the package's exports.
 export function InputBase({
+	draft,
 	kind,
-	value,
 	onChange,
 	onCommit,
 	placeholder,
@@ -68,8 +71,12 @@ export function InputBase({
 	cell,
 	inline,
 	painted: given,
-}: InputProps & { cell?: CellFit; inline?: InlineFit; painted?: boolean }) {
-	const draft = useHeldDraft(value);
+}: Omit<InputProps, "value"> & {
+	draft: Draft<string>;
+	cell?: CellFit;
+	inline?: InlineFit;
+	painted?: boolean;
+}) {
 	const painted = given || draft.painted;
 	const typed = painted ? "" : draft.value;
 	const edit = (next: string) => {
@@ -194,5 +201,37 @@ export function InputBase({
 				/>
 			) : null}
 		</Pressable>
+	);
+}
+
+// An Input that holds its own draft, as a bare one, a cell and a rule's term
+// do; a rejection toasts. Outside the package's exports.
+export function HeldInput({
+	value,
+	kind,
+	onChange,
+	onCommit,
+	placeholder,
+	unit,
+	act,
+	autoFocus,
+	cell,
+	inline,
+	painted,
+}: InputProps & { cell?: CellFit; inline?: InlineFit; painted?: boolean }) {
+	return (
+		<InputBase
+			draft={useHeldDraft(value)}
+			kind={kind}
+			onChange={onChange}
+			onCommit={onCommit}
+			placeholder={placeholder}
+			unit={unit}
+			act={act}
+			autoFocus={autoFocus}
+			cell={cell}
+			inline={inline}
+			painted={painted}
+		/>
 	);
 }

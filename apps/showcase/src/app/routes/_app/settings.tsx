@@ -9,12 +9,10 @@ import { Banner } from "@fcalell/plugin-react-ui/components/banner";
 import { Form } from "@fcalell/plugin-react-ui/components/form";
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
-import { Input } from "@fcalell/plugin-react-ui/components/input";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { QrCode } from "@fcalell/plugin-react-ui/components/qr-code";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
-import { TextArea } from "@fcalell/plugin-react-ui/components/text-area";
 import { toast } from "@fcalell/plugin-react-ui/lib/toast";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
@@ -144,26 +142,30 @@ function Settings() {
 							failed: "General settings did not load.",
 							fields: (
 								<>
-									<FormField label="Workspace name">
-										<Input
-											value={workspace.at((w) => w.name)}
-											onChange={edit("name")}
-										/>
-									</FormField>
+									<FormField
+										label="Workspace name"
+										input={{
+											value: workspace.at((w) => w.name),
+											onChange: edit("name"),
+										}}
+									/>
 									<FormField
 										label="Workspace URL"
 										description="Only owners change the address: links already shared stop resolving."
 										disabled
-									>
-										<Input value={workspace.at((w) => w.slug)} onChange={act} />
-									</FormField>
-									<FormField label="Description">
-										<TextArea
-											value={workspace.at((w) => w.about)}
-											onChange={edit("about")}
-											budget={120}
-										/>
-									</FormField>
+										input={{
+											value: workspace.at((w) => w.slug),
+											onChange: act,
+										}}
+									/>
+									<FormField
+										label="Description"
+										textArea={{
+											value: workspace.at((w) => w.about),
+											onChange: edit("about"),
+											budget: 120,
+										}}
+									/>
 									<FormField
 										label="Default region"
 										select={{

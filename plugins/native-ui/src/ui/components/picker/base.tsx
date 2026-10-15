@@ -1,4 +1,4 @@
-import { useSelections } from "@fcalell/plugin-api/tanstack-query";
+import type { Draft } from "@fcalell/plugin-api/tanstack-query";
 import { toggled } from "@fcalell/ui-core/list-state";
 import type { ChipFamily } from "@fcalell/ui-core/tokens";
 import {
@@ -19,6 +19,7 @@ import { cn } from "../../lib/cn";
 import type { CellFit } from "../../lib/field";
 import { Ink } from "../../lib/ink";
 import { inertProps, paintControl, useShown } from "../../lib/paint";
+import { OptionsLine, useOptions } from "../../lib/read";
 import { Chip } from "../chip";
 import { Icon } from "../icon";
 import { Status } from "../status";
@@ -84,35 +85,28 @@ interface Composed {
 	painted?: boolean;
 }
 
-// What every pick draws: the public `Picker`, or a composer's pick that says
-// more (a chip column's chips, a table cell's edit). Outside the package's exports. Overloaded as `Picker` is, so
-// a handler's parameter is typed by the value beside it.
+// What every pick draws, on the `draft` its host holds: a field hosts the draft
+// of its picker and draws a rejection in its own line. Waiting options paint
+// the trigger, and ended ones say so in a line under it. Outside the package's
+// exports.
 export function PickerBase<V extends string | null = string>(
-	props: PickOneProps<V> & Composed,
-): ReactElement;
-export function PickerBase<V extends string | null = string>(
-	props: PickSeveralProps<V> & Composed,
-): ReactElement;
-export function PickerBase<V extends string | null = string>(
-	props: PickerProps<V> & Composed,
-): ReactElement;
-export function PickerBase<V extends string | null = string>(
-	given: PickerProps<V> & Composed,
+	given: Omit<PickerProps<V>, "value" | "onChange"> & {
+		draft: Draft<V | readonly V[] | undefined>;
+		onChange: (next: V | V[]) => unknown;
+	} & Composed,
 ) {
 	// The value is the viewer's pick once made, else the selection's; a painted
 	// pick draws as a single one, as the placeholder is no array.
-	const draft = useHeldDraft<V | readonly V[] | undefined>(given.value);
+	const { draft } = given;
 	// Waiting options paint the trigger as a waiting value does, and the sheet
 	// has no rows to open.
-	const [waiting] = useSelections([given.options] as const);
+	const { drawn: waiting, retry } = useOptions(given.options);
 	const painted = given.painted || draft.painted || waiting.painted;
 	const props = {
 		...given,
 		value: draft.painted ? undefined : draft.value,
 		onChange: (next: V | V[]) => {
-			draft.change(next, () =>
-				(given.onChange as (next: V | V[]) => unknown)(next),
-			);
+			draft.change(next, () => given.onChange(next));
 		},
 	} as Drawn<V>;
 	const { label, fit = "field", act, chip, cell } = given;
@@ -286,6 +280,38 @@ export function PickerBase<V extends string | null = string>(
 				act={act}
 				chip={chip}
 			/>
+			<OptionsLine drawn={waiting} retry={retry} />
 		</>
+	);
+}
+
+// A Picker that holds its own draft, as a bare one, a row's pick and a cell's
+// do; a rejection toasts. Overloaded as `Picker` is. Outside the package's
+// exports.
+export function HeldPicker<V extends string | null = string>(
+	props: PickOneProps<V> & Composed,
+): ReactElement;
+export function HeldPicker<V extends string | null = string>(
+	props: PickSeveralProps<V> & Composed,
+): ReactElement;
+export function HeldPicker<V extends string | null = string>(
+	props: PickerProps<V> & Composed,
+): ReactElement;
+export function HeldPicker<V extends string | null = string>(
+	props: PickerProps<V> & Composed,
+) {
+	const { value, onChange, label, options, fit, act } = props;
+	return (
+		<PickerBase<V>
+			draft={useHeldDraft<V | readonly V[] | undefined>(value)}
+			onChange={onChange as (next: V | V[]) => unknown}
+			label={label}
+			options={options}
+			fit={fit}
+			act={act}
+			chip={props.chip}
+			cell={props.cell}
+			painted={props.painted}
+		/>
 	);
 }

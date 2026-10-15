@@ -29,7 +29,7 @@ import { IconButtonBase } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 import { Link } from "../link/index.tsx";
 import { LockMark } from "../list-row/lock.tsx";
-import { PickerBase } from "../picker/base.tsx";
+import { HeldPicker } from "../picker/base.tsx";
 import type { PickOneProps } from "../picker/index.tsx";
 import { StatusBase } from "../status/base.tsx";
 import { ChangeMark } from "../status/change.tsx";
@@ -223,7 +223,7 @@ export function DefinitionRowBase<V extends string | null = string>({
 	else if (pick)
 		valueNode = (
 			<span className={CONTROL}>
-				<PickerBase {...pick} fit="row" painted={painted} />
+				<HeldPicker {...pick} fit="row" painted={painted} />
 			</span>
 		);
 	const copy = copyable && waitsValue;

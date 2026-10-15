@@ -31,7 +31,7 @@ import { IconButton } from "../icon-button";
 import { IconButtonBase } from "../icon-button/base";
 import { Link } from "../link";
 import { LockMark } from "../list-row/lock";
-import { PickerBase } from "../picker/base";
+import { HeldPicker } from "../picker/base";
 import type { PickOneProps } from "../picker/index";
 import { StatusBase } from "../status/base";
 import { ChangeMark } from "../status/change";
@@ -241,7 +241,7 @@ export function DefinitionRowBase<V extends string | null = string>({
 	else if (pick)
 		valueNode = (
 			<View className={CONTROL}>
-				<PickerBase {...pick} fit="row" painted={painted} />
+				<HeldPicker {...pick} fit="row" painted={painted} />
 			</View>
 		);
 	const copy = copyable && waitsValue;
