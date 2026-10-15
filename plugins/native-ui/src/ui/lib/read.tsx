@@ -1,6 +1,9 @@
-import type { Selection } from "@fcalell/plugin-api/tanstack-query";
 import {
+	type Datum,
+	type Drawn,
 	FrameHolds,
+	isSelection,
+	type Selection,
 	useFrameRead,
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
@@ -34,6 +37,13 @@ export function useFrame(read?: Selection<unknown>) {
 }
 
 export type Frame = ReturnType<typeof useFrame>;
+
+// A collection's subscription to its items: what it draws (the placeholder while its read waits) and its own frame, from its own selection alone, so its failed, missing and empty forms never depend on what stands above it. A constant has no frame to speak of: it draws as given.
+export function useCollection<T>(items: Datum<readonly T[]>) {
+	const [drawn] = useSelections([items] as const);
+	const frame = useFrame(isSelection(items) ? items : undefined);
+	return { drawn: drawn as Drawn<readonly T[]>, frame };
+}
 
 // The reason an act stands blocked under once the read it depends on has
 // ended (a frame's `form`, or a selection's `phase`): the failed sentence (the

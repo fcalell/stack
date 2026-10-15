@@ -1,14 +1,11 @@
-import {
-	type Drawn,
-	pagesOf,
-	useSelections,
-} from "@fcalell/plugin-api/tanstack-query";
+import { pagesOf } from "@fcalell/plugin-api/tanstack-query";
 import { GROUP, GROUP_ITEM } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
 import { View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { between } from "../../lib/group";
+import { FrameBody, FrameLine, useCollection } from "../../lib/read";
 import type { ListProps } from "../list";
 import { ListBase } from "../list/base";
 
@@ -49,31 +46,37 @@ export type GroupProps<T = unknown, V extends string | null = string> = Closed &
 // entries, so no row carries one. Its structure is its props, `items` (each a
 // `row` drawn bare or an `item` at the card's inset) or `list` (a List the
 // card frames: its rows, painted while its `items` selection waits, stand on
-// the card, with no bleed of its own; the frame around the Group draws the
-// failed and empty forms).
+// the card, with no bleed of its own; the Group is a frame of the
+// list's items: its failed, missing and empty forms stand in place of the
+// card, whatever stands above it).
 export function Group<T, V extends string | null = string>(
 	props: GroupProps<T, V>,
 ) {
-	// The one subscription to the list's items, handed down to its rows.
-	const [drawn] = useSelections([props.list?.items] as const);
-	let body: ReactNode;
-	if (props.list)
-		body = (
-			<ListBase
-				{...props.list}
-				drawn={drawn as Drawn<readonly T[]>}
-				more={pagesOf(props.list.items)}
-				framed
-			/>
-		);
-	else
-		body = props.items.map((entry, index) => (
-			<View
-				key={entry.key}
-				className={cn(between(index), "item" in entry && GROUP_ITEM)}
-			>
-				{"row" in entry ? entry.row : entry.item}
+	if (props.list) return <GroupList {...props.list} />;
+	return (
+		<View className={cn(GROUP, BOX)}>
+			{props.items.map((entry, index) => (
+				<View
+					key={entry.key}
+					className={cn(between(index), "item" in entry && GROUP_ITEM)}
+				>
+					{"row" in entry ? entry.row : entry.item}
+				</View>
+			))}
+		</View>
+	);
+}
+
+// The Group of a List: a frame of the list's items, so a failed, missing or
+// empty read draws its form in place of the card, and the line over it.
+function GroupList<T, V extends string | null>(list: ListProps<T, V>) {
+	const { drawn, frame } = useCollection(list.items);
+	return (
+		<FrameBody frame={frame} fit="frame">
+			<FrameLine frame={frame} />
+			<View className={cn(GROUP, BOX)}>
+				<ListBase {...list} drawn={drawn} more={pagesOf(list.items)} framed />
 			</View>
-		));
-	return <View className={cn(GROUP, BOX)}>{body}</View>;
+		</FrameBody>
+	);
 }

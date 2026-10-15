@@ -907,8 +907,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// since a row pads itself, or an `item`, a Meter, a FormField or a Slider
 		// drawn in a box at the card's inset: the hairline falls between the
 		// entries) or `list` (a List it frames, drawing its rows on the card with
-		// no bleed of its own, painted while its `items` selection waits; the frame
-		// around the Group draws the failed and empty forms).
+		// no bleed of its own, painted while its `items` selection waits). A Group
+		// of a `list` is a frame of the list's items: its failed, missing and empty
+		// forms stand in place of the card, whatever stands above it, and its stale
+		// and paused line over it while it holds its read.
 		Group: {
 			props: ["items", "list"],
 			draws: ["GROUP", "GROUP_ITEM"],
@@ -924,9 +926,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// one item map (`row` for ListRows, `file` for FileRows, `meter` for
 		// Meters, `definition` for DefinitionRows). While the selection's read
 		// waits it paints `PAINT_ROWS` rows, each in the slots the map declares,
-		// run over the placeholder: inert, with no link, a tree drawn flat. Its
-		// failed, missing and empty forms are the frame's, the Pane, Section,
-		// Sheet or Form that holds the read.
+		// run over the placeholder: inert, with no link, a tree drawn flat. It is
+		// a frame of its items: its failed, missing and empty forms are its own, in
+		// its own box with the generic sentences (Retry where it fails), whatever
+		// stands above it; it draws the stale and paused line above its rows when
+		// it holds its read. A frame above that holds the same read unmounts it
+		// when the read fails and alone draws the failure.
 		// In a Group (its `list`) its rows stand on the card, the card their box,
 		// with no bleed. A standalone List bleeds the card's inset, so its rows'
 		// text meets the title over it.
@@ -2399,8 +2404,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// ListRows with the sort a Picker above it. It takes `items`, constants or
 		// a selection, each column reading its cell from the item and `row` the
 		// row's own slots; while the selection's read waits it paints `PAINT_ROWS`
-		// rows over the constant header, each cell by its column's kind, inert,
-		// and its failed, missing and empty forms are the frame's. It sorts in its
+		// rows over the constant header, each cell by its column's kind, inert.
+		// It is a frame of its items as a List is: its failed, missing and empty
+		// forms and its stale and paused line are its own. It sorts in its
 		// own state (descending, ascending, off); `onEdit` requires `onOpen`, and
 		// with `onOpen` the leading column never edits. A row's `change` slot draws
 		// the change mark ahead of the leading cell's name (a `ListRow` change

@@ -2,10 +2,8 @@ import { Field } from "@base-ui/react/field";
 import { placeholderData } from "@fcalell/plugin-api/read";
 import {
 	type Datum,
-	type Drawn,
 	pagesOf,
 	type Read,
-	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type {
@@ -75,6 +73,7 @@ import { MoreRow } from "../../lib/more.tsx";
 import { follow, navigate } from "../../lib/navigate.ts";
 import { usePageTablet } from "../../lib/page.ts";
 import { Painted } from "../../lib/paint.tsx";
+import { FrameBody, FrameLine, useCollection } from "../../lib/read.tsx";
 import { Window } from "../../lib/window.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { HeldCheckbox } from "../checkbox/base.tsx";
@@ -176,7 +175,7 @@ const WIDTH: Record<NonNullable<TableColumn["width"]>, string> = {
 const TOUCH_WIDTH = "touch:w-measure-short";
 
 interface TableBase<T> extends Closed {
-	/** The items the rows draw: constants, or a selection, which paints `PAINT_ROWS` rows until its read lands. A selection stands in a frame (a Pane, Section, Sheet or Form given the read), which draws the table's failed, missing and empty forms. */
+	/** The items the rows draw: constants, or a selection, which paints `PAINT_ROWS` rows until its read lands. A selection is the table's own frame: it holds its read and draws the failed, missing and empty forms in its own box whatever stands above it. */
 	items: Datum<readonly T[]>;
 	/** The columns in order, the first the row's name, each reading its cell from the item. */
 	columns: readonly TableColumn<T>[];
@@ -235,18 +234,18 @@ function editOf(
 	return column ? cellEdit(column, at === 0, edits, row) : undefined;
 }
 
-/** From `tablet` of its page a grid: a header of sortable acts (the table sorts in its own state: newest or largest first, then turned over, then off) over one row per record, its leading cell the record's name (its row's change mark, when it has one, ahead of it and its warning after it); on touch every column stands at the short measure and the grid scrolls sideways under its frozen leading column. Its keyboard is a cell cursor (one Tab stop, the arrows, Home and End; Enter opens the row from its leading cell or edits an editable cell, Space ticks a check, Escape leaves an edit); a press on a row opens it, a press on an editable value edits it in place: typed in an `Input`, picked in a `Picker`, ticked in a `Checkbox`. Below `tablet` one `ListRow` per record (its leading cell the title, its change the row's mark, its age trailing, its status, warning and chip the marks, the other values its meta line) under the sort's pick. While the `items` selection's read waits, `PAINT_ROWS` rows stand in the columns the table declares (the slots are run over the placeholder), the header constant over them, each cell painted by its column's kind and the rows inert; the list below `tablet` paints the same records as its rows. The frame around it draws the rest: the failed form with Retry, the missing form, the empty form. */
+/** From `tablet` of its page a grid: a header of sortable acts (the table sorts in its own state: newest or largest first, then turned over, then off) over one row per record, its leading cell the record's name (its row's change mark, when it has one, ahead of it and its warning after it); on touch every column stands at the short measure and the grid scrolls sideways under its frozen leading column. Its keyboard is a cell cursor (one Tab stop, the arrows, Home and End; Enter opens the row from its leading cell or edits an editable cell, Space ticks a check, Escape leaves an edit); a press on a row opens it, a press on an editable value edits it in place: typed in an `Input`, picked in a `Picker`, ticked in a `Checkbox`. Below `tablet` one `ListRow` per record (its leading cell the title, its change the row's mark, its age trailing, its status, warning and chip the marks, the other values its meta line) under the sort's pick. While the `items` selection's read waits, `PAINT_ROWS` rows stand in the columns the table declares (the slots are run over the placeholder), the header constant over them, each cell painted by its column's kind and the rows inert; the list below `tablet` paints the same records as its rows. The table is a frame of its items: it draws the failed form with Retry, the missing form and the empty form in its own box, and the stale and paused line above its rows while it holds its read, whatever stands above it. */
 export function Table<T>(props: TableProps<T>) {
 	const { columns, selected, onOpen, onEdit } = props;
 	const [place, wide] = usePageTablet();
 	const [sort, setSort] = useState<Sort>();
-	const [drawn] = useSelections([props.items] as const);
-	const { painted } = drawn as Drawn<readonly T[]>;
+	const { drawn, frame } = useCollection(props.items);
+	const { painted } = drawn;
 	// Painted, `PAINT_ROWS` records over the placeholder, in the order the
 	// data would arrive.
 	const items: readonly T[] = painted
 		? Array.from({ length: PAINT_ROWS }, () => drawn.value as T)
-		: (drawn.value as readonly T[]);
+		: drawn.value;
 	const made = tableRecords(items, columns, props.row, props.choose, painted);
 	const records = painted ? made : sorted(made, columns, sort);
 	const more = painted ? undefined : pagesOf(props.items);
@@ -300,7 +299,10 @@ export function Table<T>(props: TableProps<T>) {
 	}
 	return (
 		<div ref={place} className={ROOT}>
-			{form}
+			<FrameBody frame={frame} fit="frame">
+				<FrameLine frame={frame} />
+				{form}
+			</FrameBody>
 		</div>
 	);
 }

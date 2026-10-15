@@ -1,12 +1,9 @@
-import {
-	type Drawn,
-	pagesOf,
-	useSelections,
-} from "@fcalell/plugin-api/tanstack-query";
+import { pagesOf } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import { GROUP, GROUP_ITEM } from "@fcalell/ui-core/variants";
 import { Fragment, type ReactNode, useRef } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { FrameBody, FrameLine, useCollection } from "../../lib/read.tsx";
 import { useSettleName } from "../../lib/settle.ts";
 import { ListBase } from "../list/base.tsx";
 import type { ListProps } from "../list/index.tsx";
@@ -39,7 +36,7 @@ export type GroupProps<T = unknown, V extends string | null = string> = Closed &
 				list?: never;
 		  }
 		| {
-				/** A List the card frames: its rows, painted while its `items` selection waits, stand on the card, with no bleed of its own. The frame around the Group draws the failed and empty forms. */
+				/** A List the card frames: its rows, painted while its `items` selection waits, stand on the card, with no bleed of its own. The Group is a frame of the list's items: its failed, missing and empty forms stand in place of the card, whatever stands above it. */
 				list: ListProps<T, V>;
 				items?: never;
 		  }
@@ -49,33 +46,50 @@ export type GroupProps<T = unknown, V extends string | null = string> = Closed &
 export function Group<T, V extends string | null = string>(
 	props: GroupProps<T, V>,
 ) {
-	// The one subscription to the list's items, handed down to its rows.
-	const [drawn] = useSelections([props.list?.items] as const);
+	if (props.list) return <GroupList {...props.list} />;
+	return (
+		<Entries>
+			{props.items.map((entry) =>
+				"row" in entry ? (
+					<Fragment key={entry.key}>{entry.row}</Fragment>
+				) : (
+					<div key={entry.key} className={GROUP_ITEM}>
+						{entry.item}
+					</div>
+				),
+			)}
+		</Entries>
+	);
+}
+
+function Entries(props: { children: ReactNode }) {
+	const settle = useSettleName();
+	return (
+		<div style={settle} className={cn(GROUP, BOX)}>
+			{props.children}
+		</div>
+	);
+}
+
+// The Group of a List: a frame of the list's items, so a failed, missing or
+// empty read draws its form in place of the card, and the line over it.
+function GroupList<T, V extends string | null>(list: ListProps<T, V>) {
+	const { drawn, frame } = useCollection(list.items);
 	const settle = useSettleName();
 	// The group is the box a list's rows stand in, which they window in.
 	const box = useRef<HTMLDivElement>(null);
-	const content = props.list ? (
-		<ListBase
-			{...props.list}
-			drawn={drawn as Drawn<readonly T[]>}
-			more={pagesOf(props.list.items)}
-			box={box}
-			framed
-		/>
-	) : (
-		props.items.map((entry) =>
-			"row" in entry ? (
-				<Fragment key={entry.key}>{entry.row}</Fragment>
-			) : (
-				<div key={entry.key} className={GROUP_ITEM}>
-					{entry.item}
-				</div>
-			),
-		)
-	);
 	return (
-		<div ref={box} style={settle} className={cn(GROUP, BOX)}>
-			{content}
-		</div>
+		<FrameBody frame={frame} fit="frame">
+			<FrameLine frame={frame} />
+			<div ref={box} style={settle} className={cn(GROUP, BOX)}>
+				<ListBase
+					{...list}
+					drawn={drawn}
+					more={pagesOf(list.items)}
+					box={box}
+					framed
+				/>
+			</div>
+		</FrameBody>
 	);
 }

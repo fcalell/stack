@@ -1,10 +1,8 @@
 import { placeholderData } from "@fcalell/plugin-api/read";
 import {
 	type Datum,
-	type Drawn,
 	pagesOf,
 	type Read,
-	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
 import type {
 	CellValue,
@@ -70,6 +68,7 @@ import { Ink } from "../../lib/ink";
 import { MoreRow } from "../../lib/more";
 import { navigate } from "../../lib/navigate";
 import { clipWhen, inertProps, Painted } from "../../lib/paint";
+import { FrameBody, FrameLine, useCollection } from "../../lib/read";
 import { useWords } from "../../lib/words";
 import { Checkbox } from "../checkbox";
 import { CheckboxBase, HeldCheckbox } from "../checkbox/base";
@@ -182,19 +181,21 @@ const isEnd = (column: TableColumn) =>
 // waits, `PAINT_ROWS` rows stand in the columns the table declares (the slots
 // are run over the placeholder), the header constant over them, each cell
 // painted by its column's kind and the rows inert; below `tablet` the list
-// paints the same records as its rows. The frame around it draws the rest:
-// the failed form with Retry, the missing form, the empty form.
+// paints the same records as its rows. The table is a frame of its
+// items: it draws the failed form with Retry, the missing form and the empty
+// form in its own box, and the stale and paused line above its rows while it
+// holds its read, whatever stands above it.
 export function Table<T>(props: TableProps<T>) {
 	const { columns, selected, onOpen, onEdit } = props;
 	const [sort, setSort] = useState<Sort>();
 	const { width } = useWindowDimensions();
-	const [drawn] = useSelections([props.items] as const);
-	const { painted } = drawn as Drawn<readonly T[]>;
+	const { drawn, frame } = useCollection(props.items);
+	const { painted } = drawn;
 	// Painted, `PAINT_ROWS` records over the placeholder, in the order the
 	// data would arrive.
 	const items: readonly T[] = painted
 		? Array.from({ length: PAINT_ROWS }, () => drawn.value as T)
-		: (drawn.value as readonly T[]);
+		: drawn.value;
 	const made = tableRecords(items, columns, props.row, props.choose, painted);
 	const records = painted ? made : sorted(made, columns, sort);
 	const more = painted ? undefined : pagesOf(props.items);
@@ -210,37 +211,43 @@ export function Table<T>(props: TableProps<T>) {
 	if (width < BREAKPOINT_PX.tablet)
 		return (
 			<View className={ROOT}>
-				<Phone
-					columns={columns}
-					rows={records}
-					sort={sort}
-					onSort={setSort}
-					selected={selected}
-					onOpen={onOpen}
-					choose={props.choose}
-					painted={painted}
-					more={more}
-					blank={blank}
-					warns={props.row.warning !== undefined}
-					links={props.row.href !== undefined}
-					changes={props.row.change !== undefined}
-				/>
+				<FrameBody frame={frame} fit="frame">
+					<FrameLine frame={frame} />
+					<Phone
+						columns={columns}
+						rows={records}
+						sort={sort}
+						onSort={setSort}
+						selected={selected}
+						onOpen={onOpen}
+						choose={props.choose}
+						painted={painted}
+						more={more}
+						blank={blank}
+						warns={props.row.warning !== undefined}
+						links={props.row.href !== undefined}
+						changes={props.row.change !== undefined}
+					/>
+				</FrameBody>
 			</View>
 		);
 	return (
 		<View className={ROOT}>
-			<Grid
-				columns={columns}
-				rows={records}
-				sort={sort}
-				onSort={(key) => setSort((current) => next(current, key))}
-				selected={selected}
-				choose={props.choose}
-				onOpen={onOpen}
-				onEdit={onEdit}
-				painted={painted}
-				more={more}
-			/>
+			<FrameBody frame={frame} fit="frame">
+				<FrameLine frame={frame} />
+				<Grid
+					columns={columns}
+					rows={records}
+					sort={sort}
+					onSort={(key) => setSort((current) => next(current, key))}
+					selected={selected}
+					choose={props.choose}
+					onOpen={onOpen}
+					onEdit={onEdit}
+					painted={painted}
+					more={more}
+				/>
+			</FrameBody>
 		</View>
 	);
 }

@@ -1,9 +1,4 @@
-import {
-	type Datum,
-	type Drawn,
-	pagesOf,
-	useSelections,
-} from "@fcalell/plugin-api/tanstack-query";
+import { type Datum, pagesOf } from "@fcalell/plugin-api/tanstack-query";
 import type {
 	Act,
 	ChangeKind,
@@ -22,6 +17,7 @@ import type {
 } from "@fcalell/ui-core/descriptors";
 import type { Closed } from "../../lib/closed.ts";
 import type { Empty, GateFirstRun } from "../../lib/empty.tsx";
+import { FrameBody, FrameLine, useCollection } from "../../lib/read.tsx";
 import type { DefinitionValue } from "../definition-row/index.tsx";
 import { ListBase } from "./base.tsx";
 
@@ -220,20 +216,19 @@ export type ListKind<T, V extends string | null> =
 /** A collection's rows: from items, each a ListRow, a FileRow, a Meter or a DefinitionRow. */
 export type ListProps<T = unknown, V extends string | null = string> = Closed &
 	ListKind<T, V> & {
-		/** The items the rows draw: constants, or a selection, which paints `PAINT_ROWS` rows until its read lands. A selection stands in a frame (a Pane, Section, Sheet or Form given the read), which draws the list's failed, missing and empty forms. */
+		/** The items the rows draw: constants, or a selection, which paints `PAINT_ROWS` rows until its read lands. A selection is the list's own frame: it holds its read and draws the failed, missing and empty forms in its own box whatever stands above it. */
 		items: Datum<readonly T[]>;
 	};
 
-/** Rows on the ground at the rows rhythm, with no box and no hairlines: a feed. It draws one row per item. While the `items` selection's read waits, `PAINT_ROWS` rows stand in the slots its map declares (the slots are run over the placeholder), each painted, inert and with no link; a tree draws flat then. The frame around it draws the rest: it holds the read and draws the failed form with Retry, the missing form saying it no longer exists with Back, and the empty form. A standalone list bleeds the card's inset, so its rows' text meets the title over it; in a Group's `list` it stands on the card, the hairline once between rows. A `definition` list (facts from data: DefinitionRows) stands in a Group, and carries no count of its own. */
+/** Rows on the ground at the rows rhythm, with no box and no hairlines: a feed. It draws one row per item. While the `items` selection's read waits, `PAINT_ROWS` rows stand in the slots its map declares (the slots are run over the placeholder), each painted, inert and with no link; a tree draws flat then. The list is a frame of its items: it draws the failed form with Retry, the missing form saying it no longer exists, and the empty form, each in its box with the generic sentence, and the stale and paused line above its rows while it holds its read. A frame above that holds the same read is unmounted with it when it fails and draws the failure alone. A standalone list bleeds the card's inset, so its rows' text meets the title over it; in a Group's `list` it stands on the card, the hairline once between rows. A `definition` list (facts from data: DefinitionRows) stands in a Group, and carries no count of its own. */
 export function List<T, V extends string | null = string>(
 	list: ListProps<T, V>,
 ) {
-	const [drawn] = useSelections([list.items] as const);
+	const { drawn, frame } = useCollection(list.items);
 	return (
-		<ListBase
-			{...list}
-			drawn={drawn as Drawn<readonly T[]>}
-			more={pagesOf(list.items)}
-		/>
+		<FrameBody frame={frame} fit="frame">
+			<FrameLine frame={frame} />
+			<ListBase {...list} drawn={drawn} more={pagesOf(list.items)} />
+		</FrameBody>
 	);
 }
