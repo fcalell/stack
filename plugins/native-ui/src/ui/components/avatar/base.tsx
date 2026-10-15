@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Image, Text as RNText, View } from "react-native";
 import { cn } from "../../lib/cn";
 import { inertProps, paintBox, useShown } from "../../lib/paint";
-import type { AvatarProps } from "./index";
 
 const CIRCLE = "items-center justify-center overflow-hidden";
 
@@ -24,7 +23,11 @@ export function AvatarBase({
 	name,
 	src,
 	painted,
-}: AvatarProps & { painted?: boolean }) {
+}: {
+	name: string;
+	src?: string;
+	painted?: boolean;
+}) {
 	const [failed, setFailed] = useState<string>();
 	const shown = useShown(painted);
 	const step = avatarStep(name);

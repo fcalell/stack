@@ -1,3 +1,4 @@
+import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
 import type { Act, IconName } from "@fcalell/ui-core/descriptors";
 import {
 	BANNER_MAIN,
@@ -12,9 +13,10 @@ import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
+import { inertProps, Painted } from "../../lib/paint";
 import { Strut } from "../../lib/strut";
 import { type BannerInk, ButtonBase } from "../button/base";
-import { Icon } from "../icon";
+import { Icon, IconBase } from "../icon";
 
 const BOX = "justify-center";
 // The line over its act, as touch draws it.
@@ -44,46 +46,61 @@ const GLYPHS: Record<BannerKind, IconName> = {
 
 export interface BannerProps extends Closed {
 	// What it tells: news (`note`, the default), a caution (`warn`), or a
-	// failure (`danger`).
-	kind?: BannerKind;
-	/** The text beside the glyph (a sentence; wraps). */
-	sentence: string;
-	// The one act it offers, under the line; a blocked act's reason under it.
-	act?: Act;
+	// failure (`danger`). A selection paints the glyph, in the news tint, until
+	// its read lands.
+	kind?: Datum<BannerKind | undefined>;
+	/** The text beside the glyph (a sentence; wraps). A selection paints the line until its read lands. */
+	sentence: Datum<string>;
+	// The one act it offers, under the line; a blocked act's reason under it. A
+	// selection paints the act's box until its read lands.
+	act?: Datum<Act | undefined>;
 }
 
 // A tinted strip at its content's height: the kind's glyph in the kind's ink
 // beside the sentence in the body ink, and the act, a quiet Button at the
-// bar fit in the kind's ink, under the line.
+// bar fit in the kind's ink, under the line. Each prop that is a selection is
+// painted in its place, and the banner takes no touch, until its read lands.
 export function Banner({ kind, sentence, act }: BannerProps) {
-	const drawn = kind ?? "note";
+	const [tone, said, offer] = useSelections([kind, sentence, act]);
+	const drawn = (tone.painted ? undefined : tone.value) ?? "note";
+	const waits = tone.painted || said.painted || offer.painted;
+	const given = offer.painted ? undefined : offer.value;
 	return (
 		<View
 			role={drawn === "danger" ? "alert" : "status"}
+			{...inertProps(waits)}
 			className={cn(banner({ kind: drawn }), BOX)}
 		>
 			<View className={cn(BANNER_MAIN, MAIN)}>
 				<View className={cn(BANNER_ROW, LINE)}>
 					<View className={GLYPH_BOX}>
 						<Strut role="body" />
-						<Ink.Provider value={bannerContentTone(drawn)}>
-							<Icon name={GLYPHS[drawn]} />
-						</Ink.Provider>
+						{tone.painted ? (
+							<IconBase name="Info" stroke="line" painted />
+						) : (
+							<Ink.Provider value={bannerContentTone(drawn)}>
+								<Icon name={GLYPHS[drawn]} />
+							</Ink.Provider>
+						)}
 					</View>
 					<RNText className={cn(text({ role: "body" }), SENTENCE)}>
-						{sentence}
+						{said.painted ? <Painted role="sentence" /> : said.value}
 					</RNText>
 				</View>
-				{act ? (
+				{offer.painted ? (
+					<View className={ACT_SLOT}>
+						<ButtonBase act="quiet" fit="bar" label="" painted />
+					</View>
+				) : given ? (
 					<View className={ACT_SLOT}>
 						<ButtonBase
 							act="quiet"
 							fit="bar"
 							banner={INKS[drawn]}
-							label={act.label}
-							onAct={act.onAct}
-							failed={act.failed}
-							blocked={act.blocked}
+							label={given.label}
+							onAct={given.onAct}
+							failed={given.failed}
+							blocked={given.blocked}
 						/>
 					</View>
 				) : null}

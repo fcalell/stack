@@ -1,4 +1,5 @@
 import { paintText } from "@fcalell/ui-core/paint";
+import type { ChipFamily } from "@fcalell/ui-core/tokens";
 import { chip, chipLabel, REMOVE_HIT } from "@fcalell/ui-core/variants";
 import { Pressable, Text as RNText, View } from "react-native";
 import { cn } from "../../lib/cn";
@@ -6,7 +7,6 @@ import { Ink } from "../../lib/ink";
 import { inertProps, paintBox, useShown } from "../../lib/paint";
 import { useWords } from "../../lib/words";
 import { Icon } from "../icon";
-import type { ChipProps } from "./index";
 
 // A data value's tag on its family's soft ground, hugging its content; its
 // one act removes the value, a round hit box the chip's height closing its
@@ -19,7 +19,12 @@ export function ChipBase({
 	family,
 	onRemove,
 	painted,
-}: ChipProps & { painted?: boolean }) {
+}: {
+	label: string;
+	family: ChipFamily;
+	onRemove?: () => void;
+	painted?: boolean;
+}) {
 	const words = useWords();
 	const shown = useShown(painted);
 	if (painted)

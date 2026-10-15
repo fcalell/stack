@@ -2,7 +2,6 @@ import { cn } from "@fcalell/ui-core/cn";
 import { avatar, avatarLabel, avatarStep } from "@fcalell/ui-core/variants";
 import { useState } from "react";
 import { PAINT_BOX } from "../../lib/paint.tsx";
-import type { AvatarProps } from "./index.tsx";
 
 const CIRCLE =
 	"inline-flex items-center justify-center shrink-0 overflow-hidden";
@@ -22,7 +21,11 @@ export function AvatarBase({
 	name,
 	src,
 	painted,
-}: AvatarProps & { painted?: boolean }) {
+}: {
+	name: string;
+	src?: string;
+	painted?: boolean;
+}) {
 	const [failed, setFailed] = useState<string>();
 	const step = avatarStep(name);
 	if (painted)

@@ -1,11 +1,11 @@
 import { Button as BaseButton } from "@base-ui/react/button";
 import { cn } from "@fcalell/ui-core/cn";
 import { paintText } from "@fcalell/ui-core/paint";
+import type { ChipFamily } from "@fcalell/ui-core/tokens";
 import { chip, chipLabel, REMOVE_HIT } from "@fcalell/ui-core/variants";
 import { PAINT_BOX } from "../../lib/paint.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { Icon } from "../icon/index.tsx";
-import type { ChipProps } from "./index.tsx";
 
 const BOX = "inline-flex items-center min-w-0";
 const LABEL = "truncate";
@@ -18,7 +18,12 @@ export function ChipBase({
 	family,
 	onRemove,
 	painted,
-}: ChipProps & { painted?: boolean }) {
+}: {
+	label: string;
+	family: ChipFamily;
+	onRemove?: () => void;
+	painted?: boolean;
+}) {
 	const words = useWords();
 	if (painted)
 		return (
