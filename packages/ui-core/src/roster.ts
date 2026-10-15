@@ -396,10 +396,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		InputOtp: {
-			props: ["length", "value", "onChange", "onComplete", "loading"],
+			props: ["length", "value", "onChange", "onComplete"],
 			draws: ["OTP", "OTP_BOX", "OTP_DIGIT", "TEXT.role.meta", "SPINNER"],
 			holds: ["OTP", "OTP_BOX", "OTP_DIGIT"],
-			states: ["rest", "focus", "loading", "error"],
+			states: ["rest", "focus", "pending", "error"],
 			owns: {
 				roles: ["heading", "meta"],
 				colors: [
@@ -469,7 +469,16 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		Slider: {
-			props: ["label", "value", "onChange", "min", "max", "step", "unit"],
+			props: [
+				"label",
+				"value",
+				"onChange",
+				"onCommit",
+				"min",
+				"max",
+				"step",
+				"unit",
+			],
 			draws: [
 				"SLIDER",
 				"SLIDER_HEAD",
@@ -1490,11 +1499,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// other is a word), and the head is inert; each line keeps its line box
 		// and the facts line the height of the status that moves on it. A fact in words
 		// that opens a sheet is its words and a chevron in a `WORD_ACT`, a button
-		// named by the fact; one that goes to a route is the same box as a link. A save
-		// fact is the status region (one box, so its ring is one) and, failed, a
-		// retry in a `WORD_ACT` led by a retry glyph; where the facts wrap (below
-		// `tablet`) it holds the failed form's room in every state, so the line
-		// never wraps differently as a save moves.
+		// named by the fact; one that goes to a route is the same box as a link.
 		ItemHeader: {
 			props: ["overline", "facts"],
 			draws: [

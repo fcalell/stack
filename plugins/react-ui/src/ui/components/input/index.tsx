@@ -19,8 +19,8 @@ export interface InputProps extends Closed {
 	value: Datum<string>;
 	/** Hears every keystroke's value. */
 	onChange: (value: string) => void;
-	/** Hears the value once the viewer is done with it: on leaving the field or on Enter, only when it changed since focus; Escape then puts back the value at focus and leaves the field. */
-	onCommit?: (value: string) => void;
+	/** Hears the value once the viewer is done with it: on leaving the field or on Enter, only when it changed since focus; Escape then puts back the value at focus and leaves the field. Return the save's promise and the viewer's value holds while it pends; a refusal puts it back, with its reason. */
+	onCommit?: (value: string) => unknown;
 	/** The hint drawn while the value is empty; never the field's name (a short phrase; truncates). */
 	placeholder?: string;
 	/** A `number`'s unit, drawn after the value (a word; truncates past the short measure, 18 characters). */

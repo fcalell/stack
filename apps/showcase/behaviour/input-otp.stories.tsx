@@ -1,4 +1,4 @@
-import { Field } from "@base-ui/react/field";
+import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { InputOtp } from "@fcalell/plugin-react-ui/components/input-otp";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
@@ -6,19 +6,17 @@ import { expect, fn, waitFor } from "storybook/test";
 
 const done = fn();
 
-function Code(props: { loading?: boolean }) {
+function Code(props: { check?: (code: string) => unknown }) {
 	const [code, setCode] = useState("");
 	return (
-		<Field.Root>
-			<Field.Label>Code</Field.Label>
+		<FormField label="Code">
 			<InputOtp
 				length={6}
 				value={code}
 				onChange={setCode}
-				onComplete={done}
-				loading={props.loading}
+				onComplete={props.check ?? done}
 			/>
-		</Field.Root>
+		</FormField>
 	);
 }
 
@@ -39,11 +37,30 @@ export const Typing: StoryObj = {
 	},
 };
 
-// A code being checked says so and takes no more digits.
+// A code being checked, its promise pending, says so and takes no more digits.
 export const Checking: StoryObj = {
-	render: () => <Code loading />,
-	play: async ({ canvas }) => {
-		await expect(canvas.getByRole("status")).toHaveTextContent(/checking/i);
+	render: () => <Code check={() => new Promise(() => {})} />,
+	play: async ({ canvas, userEvent }) => {
+		await userEvent.tab();
+		await userEvent.keyboard("481902");
+		await expect(await canvas.findByRole("status")).toHaveTextContent(
+			/checking/i,
+		);
 		await expect(canvas.getByRole("textbox", { name: "Code" })).toBeDisabled();
+	},
+};
+
+// A refused code goes to the field's error line with the server's reason, and
+// the next digit clears it.
+export const Refused: StoryObj = {
+	render: () => (
+		<Code check={() => Promise.reject(new Error("That code is not right."))} />
+	),
+	play: async ({ canvas, userEvent }) => {
+		await userEvent.tab();
+		await userEvent.keyboard("481902");
+		await expect(
+			await canvas.findByText("That didn't go through."),
+		).toBeVisible();
 	},
 };

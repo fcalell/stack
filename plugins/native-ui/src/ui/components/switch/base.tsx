@@ -1,7 +1,7 @@
-import { useDraft } from "@fcalell/plugin-api/tanstack-query";
 import { switchThumb, switchTrack } from "@fcalell/ui-core/variants";
 import { useContext } from "react";
 import { Pressable, View } from "react-native";
+import { useHeldDraft } from "../../lib/act";
 import { cn } from "../../lib/cn";
 import { FieldDisabled } from "../../lib/field";
 import { inertProps, paintControl, useShown } from "../../lib/paint";
@@ -19,7 +19,7 @@ export function SwitchBase({
 	label,
 	painted: given,
 }: SwitchProps & { painted?: boolean }) {
-	const draft = useDraft(checked);
+	const draft = useHeldDraft(checked);
 	const painted = given || draft.painted;
 	const disabled = useContext(FieldDisabled);
 	const shown = useShown(painted);
@@ -33,8 +33,7 @@ export function SwitchBase({
 			accessibilityState={{ checked: on, disabled }}
 			disabled={disabled}
 			onPress={() => {
-				draft.change(!on);
-				onChange(!on);
+				draft.change(!on, () => onChange(!on));
 			}}
 			className="shrink-0 items-center justify-center min-h-target min-w-target"
 		>

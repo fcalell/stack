@@ -14,12 +14,11 @@ import {
 	text,
 	WORD_ACT,
 } from "@fcalell/ui-core/variants";
-import { Fragment, useRef } from "react";
+import { Fragment } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { follow } from "../../lib/navigate.ts";
 import { Painted } from "../../lib/paint.tsx";
 import { META_CUT, partText } from "../../lib/parts.ts";
-import { useWords } from "../../lib/words.tsx";
 import { Count } from "../count/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { PickerBase } from "../picker/base.tsx";
@@ -44,15 +43,14 @@ const ACT =
 	"inline-flex items-center text-ink-meta hover:bg-wash-hover active:bg-wash-press";
 const OPEN = cn(ACT, "-ms-inside", REACH);
 
-/** One fact in the head's facts line: words, a status, words that open a sheet or go to a route, a status that moves (a pick whose options carry states), a count beside its word, or the state of a save that runs as the record is typed, a failed one with its retry (each string a short phrase; the facts line wraps between facts, a `Quoted` part is cut at 40 characters). */
+/** One fact in the head's facts line: words, a status, words that open a sheet or go to a route, a status that moves (a pick whose options carry states), a count beside its word (each string a short phrase; the facts line wraps between facts, a `Quoted` part is cut at 40 characters). */
 export type Fact<V extends string | null = string> =
 	| Part
 	| { status: StatusState; label?: string }
 	| { label: Part; onOpen: () => void }
 	| { label: Part; href: Route; onOpen?: never }
 	| { pick: OptionPick<V> }
-	| { count: number; label: string }
-	| { save: "saving" | "saved" | "failed"; onRetry: () => void };
+	| { count: number; label: string };
 
 /** A record's place and facts under the Pane's bar, which holds the record's name and acts. */
 export interface ItemHeaderProps<V extends string | null = string>
@@ -71,74 +69,7 @@ function factKey<V extends string | null>(fact: Fact<V>): string {
 		return `${fact.status} ${fact.label ?? ""}`;
 	if (typeof fact === "object" && "count" in fact)
 		return `${fact.count} ${fact.label}`;
-	if (typeof fact === "object" && "save" in fact) return "save";
 	return partText(fact);
-}
-
-// The save fact stands in one grid cell. Under `tablet`, where the facts wrap,
-// it holds its widest form's room (the failed form, a status and a retry, drawn
-// unseen under the live one), so the line wraps the same as the save moves
-// between its states; from `tablet` it takes the live form's own width. Like
-// the pick it pulls back at both ends by a control box's padding.
-const SAVE = cn("inline-grid max-w-full -mx-inside", REACH);
-const SAVE_FORM =
-	"col-start-1 row-start-1 inline-flex items-center min-w-0 max-w-full";
-const SAVE_ROOM =
-	"col-start-1 row-start-1 items-center min-w-0 max-w-full invisible hidden max-tablet:inline-flex";
-const SAVE_WORDS = cn(WORD_ACT, ITEM_FACT, FACT);
-
-function Retry() {
-	const words = useWords();
-	return (
-		<>
-			<Icon name="RotateCcw" fit="meta" />
-			<span className={text({ role: "meta" })}>{words.retry}</span>
-		</>
-	);
-}
-
-// The region stands from the record's open, `saved` at rest, and stays mounted
-// as the save moves between its states, and holds the focus a pressed Retry
-// leaves as that act gives way to the saving words.
-function SaveFact({
-	save,
-	onRetry,
-}: {
-	save: "saving" | "saved" | "failed";
-	onRetry: () => void;
-}) {
-	const words = useWords();
-	const region = useRef<HTMLSpanElement>(null);
-	const retry = () => {
-		onRetry();
-		region.current?.focus();
-	};
-	return (
-		<span className={SAVE}>
-			<span aria-hidden className={SAVE_ROOM}>
-				<span className={SAVE_WORDS}>
-					<Status state="failed" label={words.notSaved} />
-				</span>
-				<span className={cn(WORD_ACT, ITEM_FACT, ACT)}>
-					<Retry />
-				</span>
-			</span>
-			<span className={SAVE_FORM}>
-				<span ref={region} tabIndex={-1} role="status" className={SAVE_WORDS}>
-					{save === "failed" ? (
-						<Status state="failed" label={words.notSaved} />
-					) : (
-						<span className={text({ role: "meta" })}>{words[save]}</span>
-					)}
-				</span>
-				{save === "failed" ? (
-					<BaseButton onClick={retry} className={cn(WORD_ACT, ITEM_FACT, ACT)}>
-						<Retry />
-					</BaseButton>
-				) : null}
-			</span>
-		</span>
-	);
 }
 
 function FactPart<V extends string | null>({ fact }: { fact: Fact<V> }) {
@@ -183,8 +114,6 @@ function FactPart<V extends string | null>({ fact }: { fact: Fact<V> }) {
 				<Count value={fact.count} />
 			</span>
 		);
-	if (typeof fact === "object" && "save" in fact)
-		return <SaveFact save={fact.save} onRetry={fact.onRetry} />;
 	return (
 		<span className={text({ role: "meta" })}>{partText(fact, META_CUT)}</span>
 	);

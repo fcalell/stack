@@ -1,4 +1,3 @@
-import { useDraft } from "@fcalell/plugin-api/tanstack-query";
 import { commitMoment } from "@fcalell/ui-core/commit";
 import {
 	FIELD_UNIT,
@@ -14,6 +13,7 @@ import {
 	Text as RNText,
 	TextInput,
 } from "react-native";
+import { useHeldDraft } from "../../lib/act";
 import { useCaretAtEnd } from "../../lib/caret";
 import { cn } from "../../lib/cn";
 import {
@@ -69,7 +69,7 @@ export function InputBase({
 	inline,
 	painted: given,
 }: InputProps & { cell?: CellFit; inline?: InlineFit; painted?: boolean }) {
-	const draft = useDraft(value);
+	const draft = useHeldDraft(value);
 	const painted = given || draft.painted;
 	const typed = painted ? "" : draft.value;
 	const edit = (next: string) => {
@@ -79,7 +79,10 @@ export function InputBase({
 	const shown = useShown(painted);
 	const words = useWords();
 	const [moment] = useState(() => commitMoment<string>());
-	const commit = (next: string) => onCommit?.(next);
+	// A commit that returns its save's promise holds the value while it pends.
+	const commit = (next: string) => {
+		if (onCommit) draft.change(next, () => onCommit(next));
+	};
 	const { touch } = useTouched();
 	const name = useFieldName();
 	const error = useContext(FieldError);

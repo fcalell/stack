@@ -194,8 +194,8 @@ interface Reads {
 
 interface Edits {
 	onOpen: (id: string) => void;
-	/** Hears one committed edit of a cell whose column edits; a phone edits through the record `onOpen` shows. */
-	onEdit?: (id: string, key: string, value: CellValue) => void;
+	/** Hears one committed edit of a cell whose column edits; a phone edits through the record `onOpen` shows. Return the save's promise and the cell's control holds the viewer's value while it pends; a refusal puts it back, with its reason. */
+	onEdit?: (id: string, key: string, value: CellValue) => unknown;
 }
 
 /** Records in columns, from items. */
@@ -309,7 +309,7 @@ export function Table<T>(props: TableProps<T>) {
 interface GridActions {
 	start: (row: number, column: number) => void;
 	done: () => void;
-	edit: (row: TableRecord, column: TableColumn, value: CellValue) => void;
+	edit: (row: TableRecord, column: TableColumn, value: CellValue) => unknown;
 	click: (event: MouseEvent, row: TableRecord) => void;
 	home: (row: number, column: number) => HTMLElement | undefined;
 	tick: (row: TableRecord, on: boolean) => void;
@@ -566,7 +566,7 @@ function Grid(props: {
 	selected: string | undefined;
 	choose: Pick<TableChoice<never>, "chosen" | "onChange"> | undefined;
 	onOpen: ((id: string) => void) | undefined;
-	onEdit: ((id: string, key: string, value: CellValue) => void) | undefined;
+	onEdit: ((id: string, key: string, value: CellValue) => unknown) | undefined;
 	painted: boolean;
 	more: Read<unknown> | undefined;
 }) {
@@ -1127,7 +1127,7 @@ function CellEdit(props: {
 	column: TableColumn;
 	cell: TableCell | undefined;
 	field: CellFit;
-	onEdit: (value: CellValue) => void;
+	onEdit: (value: CellValue) => unknown;
 }) {
 	const { column, cell } = props;
 	const [draft, setDraft] = useState(

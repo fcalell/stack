@@ -1,7 +1,7 @@
 import { Switch as Base } from "@base-ui/react/switch";
-import { useDraft } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import { switchThumb, switchTrack } from "@fcalell/ui-core/variants";
+import { useHeldDraft } from "../../lib/act.ts";
 import { PAINT_CONTROL } from "../../lib/paint.tsx";
 import type { SwitchProps } from "./index.tsx";
 
@@ -25,7 +25,7 @@ export function SwitchBase({
 	label,
 	painted: given,
 }: SwitchProps & { painted?: boolean }) {
-	const draft = useDraft(checked);
+	const draft = useHeldDraft(checked);
 	const painted = given || draft.painted;
 	const on = draft.value && !painted;
 	const state = on ? "on" : "off";
@@ -39,8 +39,7 @@ export function SwitchBase({
 			render={<button type="button" />}
 			checked={on}
 			onCheckedChange={(next) => {
-				draft.change(next);
-				onChange(next);
+				draft.change(next, () => onChange(next));
 			}}
 			aria-label={label}
 			inert={painted || undefined}

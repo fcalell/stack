@@ -1,12 +1,17 @@
 import { Input as Control } from "@base-ui/react/input";
+import { isThenable } from "@fcalell/plugin-api/acts";
+import { useRun } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import { OTP, OTP_DIGIT, otpBox, text } from "@fcalell/ui-core/variants";
+import { use } from "react";
+import { useFailed } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
+import { FieldRefusal } from "../../lib/field.ts";
 import { useModality } from "../../lib/modality.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Spinner } from "../spinner/index.tsx";
 
-// The loading line stands one `pair` under the row.
+// The checking line stands one `pair` under the row.
 const STACK = "flex flex-col gap-pair";
 const ROW = "relative flex items-center";
 // One real input lies over the boxes, invisible: a click anywhere focuses it,
@@ -27,10 +32,8 @@ export interface InputOtpProps extends Closed {
 	value: string;
 	/** Hears the digits on every change; anything but a digit is dropped. */
 	onChange: (value: string) => void;
-	/** Hears the code once its last digit lands. */
-	onComplete?: (value: string) => void;
-	/** The code is being checked: the boxes hold it at rest, the input is disabled, a spinner line under it. */
-	loading?: boolean;
+	/** Hears the code once its last digit lands. Return the check's promise and, while it pends, the boxes hold the code at rest, the input is disabled and a spinner line stands under it; a refusal goes to the field's error line, with its reason, and the next digit clears it. */
+	onComplete?: (value: string) => unknown;
 }
 
 /** A row of digit boxes over one input; the box the next digit lands in rings on focus. */
@@ -39,24 +42,36 @@ export function InputOtp({
 	value,
 	onChange,
 	onComplete,
-	loading,
 }: InputOtpProps) {
 	useModality();
 	const words = useWords();
+	const run = useRun();
+	const failed = useFailed();
+	const refuse = use(FieldRefusal);
+	const checking = run.pending !== undefined;
 	const active = Math.min(value.length, length - 1);
+	const complete = (code: string) =>
+		run.run(true, () => {
+			const result = onComplete?.(code);
+			if (!isThenable(result)) return result;
+			return Promise.resolve(result).catch((error: unknown) =>
+				failed(error, () => complete(code)),
+			);
+		});
 	return (
 		<Control
 			value={value}
 			onValueChange={(raw) => {
 				const next = raw.replace(/\D/g, "").slice(0, length);
 				if (next === value) return;
+				refuse?.(undefined);
 				onChange(next);
-				if (next.length === length) onComplete?.(next);
+				if (next.length === length) complete(next);
 			}}
 			inputMode="numeric"
 			autoComplete="one-time-code"
 			maxLength={length}
-			disabled={loading}
+			disabled={checking}
 			// Base UI's Field wires the input; the render function hands over its
 			// props and state so the boxes draw the field's error.
 			render={(control, state) => (
@@ -71,14 +86,14 @@ export function InputOtp({
 								className={cn(
 									otpBox({ state: state.valid === false ? "error" : "rest" }),
 									BOX,
-									index === active && !loading && BOX_FOCUS,
+									index === active && !checking && BOX_FOCUS,
 								)}
 							>
 								<span className={cn(OTP_DIGIT, DIGIT)}>{value[index]}</span>
 							</span>
 						))}
 					</div>
-					{loading ? (
+					{checking ? (
 						<p role="status" className={cn(text({ role: "meta" }), LINE)}>
 							<Spinner />
 							<span>{words.checking}</span>

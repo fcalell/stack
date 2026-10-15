@@ -1,4 +1,4 @@
-import { type Datum, useDraft } from "@fcalell/plugin-api/tanstack-query";
+import type { Datum } from "@fcalell/plugin-api/tanstack-query";
 import type { Option, OptionGroup } from "@fcalell/ui-core/descriptors";
 import {
 	FIELD_PLACEHOLDER,
@@ -7,6 +7,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { useContext, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
+import { useHeldDraft } from "../../lib/act";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FieldDisabled, FieldError, useFieldName } from "../../lib/field";
@@ -23,7 +24,9 @@ export interface SelectProps<V extends string | null = string> extends Closed {
 	// A selection paints the trigger, inert, until its read lands and follows it
 	// until the viewer picks.
 	value?: Datum<NoInfer<V>>;
-	onChange: (value: NoInfer<V>) => void;
+	// A promise it returns holds the viewer's value while it pends; a refusal
+	// puts it back, with its reason.
+	onChange: (value: NoInfer<V>) => unknown;
 	options: readonly Option<V>[] | readonly OptionGroup<V>[];
 	/** The hint drawn while nothing is chosen; never the field's name (a short phrase; truncates). */
 	placeholder?: string;
@@ -39,7 +42,7 @@ export function Select<V extends string | null = string>({
 	options,
 	placeholder,
 }: SelectProps<V>) {
-	const draft = useDraft<V | undefined>(value);
+	const draft = useHeldDraft<V | undefined>(value);
 	const painted = draft.painted;
 	const chosen = painted ? undefined : draft.value;
 	const shown = useShown(painted);
@@ -93,8 +96,7 @@ export function Select<V extends string | null = string>({
 				value={chosen}
 				onChange={(next) => {
 					touch();
-					draft.change(next);
-					onChange(next);
+					draft.change(next, () => onChange(next));
 				}}
 				open={open}
 				onClose={() => setOpen(false)}

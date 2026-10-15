@@ -1,5 +1,5 @@
 import { Slider as Base } from "@base-ui/react/slider";
-import { type Datum, useDraft } from "@fcalell/plugin-api/tanstack-query";
+import type { Datum } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import {
 	SLIDER,
@@ -12,6 +12,7 @@ import {
 	SLIDER_VALUE,
 } from "@fcalell/ui-core/variants";
 import type { CSSProperties } from "react";
+import { useHeldDraft } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
 import { PAINT_CONTROL } from "../../lib/paint.tsx";
 
@@ -41,6 +42,8 @@ export interface SliderProps extends Closed {
 	value: Datum<number>;
 	/** Hears each value the viewer moves it to. */
 	onChange: (value: number) => void;
+	/** Hears the value the viewer lets go of the thumb on (a key's step is one). Return the save's promise and the viewer's value holds while it pends; a refusal puts it back, with its reason. */
+	onCommit?: (value: number) => unknown;
 	/** The value at the track's start. */
 	min: number;
 	/** The value at the track's end. */
@@ -56,12 +59,13 @@ export function Slider({
 	label,
 	value,
 	onChange,
+	onCommit,
 	min,
 	max,
 	step,
 	unit,
 }: SliderProps) {
-	const draft = useDraft(value);
+	const draft = useHeldDraft(value);
 	const painted = draft.painted;
 	// Painted, the thumb rests at the start: the value is the placeholder.
 	const at = painted ? min : draft.value;
@@ -77,6 +81,9 @@ export function Slider({
 			onValueChange={(next) => {
 				draft.change(next);
 				onChange(next);
+			}}
+			onValueCommitted={(next) => {
+				if (onCommit) draft.change(next, () => onCommit(next));
 			}}
 			min={min}
 			max={max}

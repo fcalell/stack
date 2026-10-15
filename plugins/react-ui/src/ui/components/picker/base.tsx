@@ -1,7 +1,6 @@
 import { Combobox } from "@base-ui/react/combobox";
 import { Dialog } from "@base-ui/react/dialog";
 import { Select } from "@base-ui/react/select";
-import { useDraft } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type {
 	IconAct,
@@ -42,7 +41,7 @@ import {
 	useRef,
 	useState,
 } from "react";
-import { useAct } from "../../lib/act.ts";
+import { useAct, useHeldDraft } from "../../lib/act.ts";
 import { arrowsOver } from "../../lib/arrows.ts";
 import type { CellFit } from "../../lib/field.ts";
 import { expandedTrigger, rememberOpener } from "../../lib/focus.ts";
@@ -354,14 +353,15 @@ export function PickerBase<V extends string | null = string>(
 ) {
 	// The value is the viewer's pick once made, else the selection's; a painted
 	// pick draws as a single one, as the placeholder is no array.
-	const draft = useDraft<V | readonly V[] | undefined>(given.value);
+	const draft = useHeldDraft<V | readonly V[] | undefined>(given.value);
 	const painted = given.painted || draft.painted;
 	const props = {
 		...given,
 		value: draft.painted ? undefined : draft.value,
 		onChange: (next: V | V[]) => {
-			draft.change(next);
-			(given.onChange as (next: V | V[]) => void)(next);
+			draft.change(next, () =>
+				(given.onChange as (next: V | V[]) => unknown)(next),
+			);
 		},
 	} as Drawn<V>;
 	const { label, options, fit = "field", act, drawn, chip, cell } = given;

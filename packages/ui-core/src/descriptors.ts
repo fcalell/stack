@@ -179,6 +179,8 @@ export interface OptionPick<V extends string | null = string> {
 	label: string;
 	options: readonly Option<V>[] | readonly OptionGroup<V>[];
 	value?: NoInfer<V>;
+	// A promise it returns holds the viewer's pick while it pends; a refusal
+	// puts it back, with its reason.
 	onChange: (value: NoInfer<V>) => unknown;
 }
 
@@ -189,6 +191,8 @@ export interface MultiPick<V extends string | null = string> {
 	label: string;
 	options: readonly Option<V>[] | readonly OptionGroup<V>[];
 	value: readonly NoInfer<V>[];
+	// A promise it returns holds the viewer's picks while it pends; a refusal
+	// puts them back, with its reason.
 	onChange: (value: NoInfer<V>[]) => unknown;
 }
 

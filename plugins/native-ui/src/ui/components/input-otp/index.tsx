@@ -1,11 +1,15 @@
+import { isThenable } from "@fcalell/plugin-api/acts";
+import { useRun } from "@fcalell/plugin-api/tanstack-query";
 import { OTP, OTP_DIGIT, otpBox, text } from "@fcalell/ui-core/variants";
 import { useContext, useRef } from "react";
 import { Text as RNText, TextInput, View } from "react-native";
+import { useFailed } from "../../lib/act";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import {
 	FieldError,
 	FieldFocus,
+	FieldRefusal,
 	useFieldClaim,
 	useFieldName,
 } from "../../lib/field";
@@ -17,8 +21,7 @@ export interface InputOtpProps extends Closed {
 	length: number;
 	value: string;
 	onChange: (value: string) => void;
-	onComplete?: (value: string) => void;
-	loading?: boolean;
+	onComplete?: (value: string) => unknown;
 }
 
 // A one-time code: `length` boxes over one string of digits, standing at the
@@ -28,17 +31,30 @@ export interface InputOtpProps extends Closed {
 // boxes draw it. It takes focus as it mounts where `FieldFocus` asks, as an
 // `Input` does, so a code sheet is typed into at once, and in a
 // `Gate` unless a typing control there holds it. `onComplete`
-// hears the code once its last digit lands; `loading` holds the boxes at rest
-// while the code is checked, the input inert (unwritable and marked
-// disabled, still read), the spinner and its line under it.
+// hears the code once its last digit lands; a promise it returns holds the
+// boxes at rest while the code is checked, the input inert (unwritable and
+// marked disabled, still read), the spinner and its line under it, and a
+// refusal goes to the field's error line, with its reason, until the next
+// digit.
 export function InputOtp({
 	length,
 	value,
 	onChange,
 	onComplete,
-	loading,
 }: InputOtpProps) {
 	const words = useWords();
+	const run = useRun();
+	const failed = useFailed();
+	const refuse = useContext(FieldRefusal);
+	const checking = run.pending !== undefined;
+	const complete = (code: string) =>
+		run.run(true, () => {
+			const result = onComplete?.(code);
+			if (!isThenable(result)) return result;
+			return Promise.resolve(result).catch((error: unknown) =>
+				failed(error, () => complete(code)),
+			);
+		});
 	const { touch } = useTouched();
 	const name = useFieldName();
 	const error = useContext(FieldError);
@@ -67,26 +83,27 @@ export function InputOtp({
 					onFocus={column.onFocus}
 					onBlur={column.onBlur}
 					accessibilityLabel={name}
-					accessibilityState={{ disabled: loading, busy: loading }}
+					accessibilityState={{ disabled: checking, busy: checking }}
 					autoFocus={focused}
 					value={value}
 					onChangeText={(raw) => {
 						const next = raw.replace(/\D/g, "").slice(0, length);
 						touch();
 						if (next === value) return;
+						refuse?.(undefined);
 						onChange(next);
-						if (next.length === length) onComplete?.(next);
+						if (next.length === length) complete(next);
 					}}
 					maxLength={length}
 					keyboardType="number-pad"
 					textContentType="oneTimeCode"
 					autoComplete="one-time-code"
-					editable={!loading}
+					editable={!checking}
 					caretHidden
 					className="absolute inset-0 opacity-0"
 				/>
 			</View>
-			{loading ? (
+			{checking ? (
 				<View className="flex-row items-center gap-inside">
 					<Spinner />
 					<RNText className={cn(text({ role: "meta" }), "shrink")}>

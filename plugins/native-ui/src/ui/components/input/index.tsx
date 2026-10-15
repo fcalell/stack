@@ -16,7 +16,9 @@ export interface InputProps extends Closed {
 	/** The value (text; one line, scrolls in the field). A selection paints the box, inert, until its read lands and follows it until the viewer types. */
 	value: Datum<string>;
 	onChange: (value: string) => void;
-	onCommit?: (value: string) => void;
+	// Hears the commit; a promise it returns holds the viewer's value while it
+	// pends, and a refusal puts it back, with its reason.
+	onCommit?: (value: string) => unknown;
 	/** The hint drawn while the value is empty; never the field's name (a short phrase; truncates). */
 	placeholder?: string;
 	/** A `number`'s unit, drawn after the value (a word; truncates past the short measure, 18 characters). */

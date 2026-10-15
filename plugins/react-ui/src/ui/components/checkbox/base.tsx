@@ -1,10 +1,10 @@
 import { Checkbox as Base } from "@base-ui/react/checkbox";
-import { useDraft } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import { ICON_STROKE } from "@fcalell/ui-core/tokens";
 import { CHECKBOX_MARK, checkbox } from "@fcalell/ui-core/variants";
 import { Check, type IconNode, Minus } from "lucide";
 import { createElement } from "react";
+import { useHeldDraft } from "../../lib/act.ts";
 import type { LabelFit } from "../../lib/field.ts";
 import { PAINT_CONTROL } from "../../lib/paint.tsx";
 import type { CheckboxProps } from "./index.tsx";
@@ -41,7 +41,7 @@ export function CheckboxBase({
 	cell,
 	painted: given,
 }: CheckboxProps & { target?: LabelFit; cell?: boolean; painted?: boolean }) {
-	const draft = useDraft(checked);
+	const draft = useHeldDraft(checked);
 	const painted = given || draft.painted;
 	const value = draft.value;
 	const state = STATES[painted ? "false" : (`${value}` as const)];
@@ -57,8 +57,7 @@ export function CheckboxBase({
 			indeterminate={!painted && value === "mixed"}
 			inert={painted || undefined}
 			onCheckedChange={(next) => {
-				draft.change(next);
-				onChange(next);
+				draft.change(next, () => onChange(next));
 			}}
 			aria-label={label}
 			aria-labelledby={target?.labelledBy}

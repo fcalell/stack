@@ -1,4 +1,3 @@
-import { useDraft } from "@fcalell/plugin-api/tanstack-query";
 import { toggled } from "@fcalell/ui-core/list-state";
 import type { ChipFamily } from "@fcalell/ui-core/tokens";
 import {
@@ -14,6 +13,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { type ReactElement, type ReactNode, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
+import { useHeldDraft } from "../../lib/act";
 import { cn } from "../../lib/cn";
 import type { CellFit } from "../../lib/field";
 import { Ink } from "../../lib/ink";
@@ -100,14 +100,15 @@ export function PickerBase<V extends string | null = string>(
 ) {
 	// The value is the viewer's pick once made, else the selection's; a painted
 	// pick draws as a single one, as the placeholder is no array.
-	const draft = useDraft<V | readonly V[] | undefined>(given.value);
+	const draft = useHeldDraft<V | readonly V[] | undefined>(given.value);
 	const painted = given.painted || draft.painted;
 	const props = {
 		...given,
 		value: draft.painted ? undefined : draft.value,
 		onChange: (next: V | V[]) => {
-			draft.change(next);
-			(given.onChange as (next: V | V[]) => void)(next);
+			draft.change(next, () =>
+				(given.onChange as (next: V | V[]) => unknown)(next),
+			);
 		},
 	} as Drawn<V>;
 	const { label, options, fit = "field", act, chip, cell } = given;

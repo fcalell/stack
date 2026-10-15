@@ -1,5 +1,4 @@
 import { Input as Control } from "@base-ui/react/input";
-import { useDraft } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import {
 	FIELD_GLYPH,
@@ -10,6 +9,7 @@ import {
 	fieldValue,
 } from "@fcalell/ui-core/variants";
 import type { KeyboardEvent, MouseEvent } from "react";
+import { useHeldDraft } from "../../lib/act.ts";
 import { caretAtEnd } from "../../lib/caret.ts";
 import { useCommit } from "../../lib/commit.ts";
 import {
@@ -89,18 +89,21 @@ export function InputBase({
 	painted: given,
 }: InputProps & { cell?: CellFit; inline?: InlineFit; painted?: boolean }) {
 	useModality();
-	const draft = useDraft(value);
+	const draft = useHeldDraft(value);
 	const painted = given || draft.painted;
 	const shown = painted ? "" : draft.value;
 	const edit = (next: string) => {
 		draft.change(next);
 		onChange(next);
 	};
+	// A commit that returns its save's promise holds the value while it pends.
+	const save =
+		onCommit && ((next: string) => draft.change(next, () => onCommit(next)));
 	const words = useWords();
 	const which = kind ?? "text";
 	const surface = SURFACE[which];
 	const search = which === "search";
-	const commit = useCommit(shown, edit, onCommit, true);
+	const commit = useCommit(shown, edit, save, true);
 	// Enter presses the act in place of a submit.
 	const keys = (event: KeyboardEvent<HTMLElement>) => {
 		commit.onKeyDown(event);

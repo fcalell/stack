@@ -264,9 +264,6 @@ export const OVERLAYS: readonly string[] = [
 	"h-lh",
 	"hidden",
 	"touch:flex",
-	"max-tablet:inline-flex",
-	"inline-grid",
-	"-mx-inside",
 	"leading-meta",
 	"-my-[calc((var(--spacing-target)-1lh)/2)]",
 	// Banner, PendingBar

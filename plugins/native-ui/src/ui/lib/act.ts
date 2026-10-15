@@ -1,5 +1,10 @@
 import { drew, isThenable, refusal } from "@fcalell/plugin-api/acts";
-import { useRun } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Datum,
+	type Draft,
+	useDraft,
+	useRun,
+} from "@fcalell/plugin-api/tanstack-query";
 import type { ActBase } from "@fcalell/ui-core/descriptors";
 import { useContext, useRef } from "react";
 import { FieldRefusal } from "./field";
@@ -65,5 +70,18 @@ export function useFailed(
 				state: "failed",
 				act: { label: words.retry, onAct: again },
 			});
+	};
+}
+
+/** A control's draft with its rejections drawn where `useFailed` draws them. The field's refusal is cleared by the next change, so the line is the latest save's alone. */
+export function useHeldDraft<T>(value: Datum<T>): Draft<T> {
+	const refuse = useContext(FieldRefusal);
+	const draft = useDraft(value, useFailed());
+	return {
+		...draft,
+		change: (next, save) => {
+			refuse?.(undefined);
+			draft.change(next, save);
+		},
 	};
 }

@@ -1,4 +1,4 @@
-import { type Datum, useDraft } from "@fcalell/plugin-api/tanstack-query";
+import type { Datum } from "@fcalell/plugin-api/tanstack-query";
 import { commitMoment } from "@fcalell/ui-core/commit";
 import {
 	fieldValue,
@@ -8,6 +8,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { useContext, useRef, useState } from "react";
 import { Text as RNText, TextInput, View } from "react-native";
+import { useHeldDraft } from "../../lib/act";
 import { useCaretAtEnd } from "../../lib/caret";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
@@ -21,7 +22,9 @@ export interface TextAreaProps extends Closed {
 	/** The value (text; wraps). A selection paints the box, inert, until its read lands and follows it until the viewer types. */
 	value: Datum<string>;
 	onChange: (value: string) => void;
-	onCommit?: (value: string) => void;
+	// Hears the commit; a promise it returns holds the viewer's value while it
+	// pends, and a refusal puts it back, with its reason.
+	onCommit?: (value: string) => unknown;
 	/** The hint drawn while the value is empty; never the field's name (a short phrase; wraps). */
 	placeholder?: string;
 	budget?: number;
@@ -48,7 +51,7 @@ export function TextArea({
 	budget,
 	autoFocus,
 }: TextAreaProps) {
-	const draft = useDraft(value);
+	const draft = useHeldDraft(value);
 	const painted = draft.painted;
 	const typed = painted ? "" : draft.value;
 	const edit = (next: string) => {
@@ -59,7 +62,10 @@ export function TextArea({
 	const [moment] = useState(() => commitMoment<string>());
 	const input = useRef<TextInput>(null);
 	const caret = useCaretAtEnd(autoFocus, typed);
-	const commit = (next: string) => onCommit?.(next);
+	// A commit that returns its save's promise holds the value while it pends.
+	const commit = (next: string) => {
+		if (onCommit) draft.change(next, () => onCommit(next));
+	};
 	const { touch } = useTouched();
 	const name = useFieldName();
 	const error = useContext(FieldError);

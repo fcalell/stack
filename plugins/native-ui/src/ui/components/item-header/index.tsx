@@ -21,7 +21,6 @@ import { navigate } from "../../lib/navigate";
 import { clipWhen, inertProps, Painted } from "../../lib/paint";
 import { META_CUT, partText } from "../../lib/parts";
 import type { Route } from "../../lib/route";
-import { useWords } from "../../lib/words";
 import { Count } from "../count";
 import { Icon } from "../icon";
 import { PickerBase } from "../picker/base";
@@ -43,8 +42,7 @@ const PICK = "flex-row -ms-inside";
 const ACT = "flex-row items-center active:bg-wash-press";
 const OPEN = cn(ACT, "-ms-inside");
 // One fact in the head's facts line: words, a status, words that open a sheet or go to a route, a status that
-// moves (a pick whose options carry states), a count beside its word, or the state of a save
-// that runs as the record is typed, a failed one with its retry. Each string
+// moves (a pick whose options carry states), a count beside its word. Each string
 // is a short phrase: the facts line wraps between facts, a `Quoted` part is cut
 // at 40 characters.
 export type Fact =
@@ -53,8 +51,7 @@ export type Fact =
 	| { label: Part; onOpen: () => void }
 	| { label: Part; href: Route; onOpen?: never }
 	| { pick: OptionPick }
-	| { count: number; label: string }
-	| { save: "saving" | "saved" | "failed"; onRetry: () => void };
+	| { count: number; label: string };
 
 /** A record's place and facts under the Pane's bar, which holds the record's name and acts. */
 export interface ItemHeaderProps extends Closed {
@@ -72,72 +69,7 @@ function factKey(fact: Fact): string {
 		return `${fact.status} ${fact.label ?? ""}`;
 	if (typeof fact === "object" && "count" in fact)
 		return `${fact.count} ${fact.label}`;
-	if (typeof fact === "object" && "save" in fact) return "save";
 	return partText(fact);
-}
-
-// The save fact holds its widest form's room (the failed form, a status and a
-// retry, drawn unseen in the flow) under the live form, so the facts line wraps
-// the same as the save moves between its states. Like the pick it pulls back
-// at both ends by a control box's padding.
-const SAVE = "flex-row -mx-inside";
-const SAVE_FORM = "absolute inset-0 flex-row items-center";
-const SAVE_ROOM = "flex-row items-center opacity-0";
-const SAVE_WORDS = cn(WORD_ACT, ITEM_FACT, FACT);
-
-function Retry() {
-	const words = useWords();
-	return (
-		<>
-			<Ink.Provider value="ink-meta">
-				<Icon name="RotateCcw" fit="meta" />
-			</Ink.Provider>
-			<RNText className={text({ role: "meta" })}>{words.retry}</RNText>
-		</>
-	);
-}
-
-function SaveFact({
-	save,
-	onRetry,
-}: {
-	save: "saving" | "saved" | "failed";
-	onRetry: () => void;
-}) {
-	const words = useWords();
-	const said = save === "failed" ? words.notSaved : words[save];
-	return (
-		<View style={REACH} className={SAVE}>
-			<View className={SAVE_ROOM}>
-				<View className={SAVE_WORDS}>
-					<Status state="failed" label={words.notSaved} />
-				</View>
-				<View className={cn(WORD_ACT, ITEM_FACT, ACT)}>
-					<Retry />
-				</View>
-			</View>
-			<View className={SAVE_FORM}>
-				<View className={SAVE_WORDS}>
-					{save === "failed" ? (
-						<Status state="failed" label={said} />
-					) : (
-						<RNText className={cn(text({ role: "meta" }), "shrink")}>
-							{said}
-						</RNText>
-					)}
-				</View>
-				{save === "failed" ? (
-					<Pressable
-						accessibilityRole="button"
-						onPress={onRetry}
-						className={cn(WORD_ACT, ITEM_FACT, ACT)}
-					>
-						<Retry />
-					</Pressable>
-				) : null}
-			</View>
-		</View>
-	);
 }
 
 function FactPart({ fact }: { fact: Fact }) {
@@ -192,8 +124,6 @@ function FactPart({ fact }: { fact: Fact }) {
 				<Count value={fact.count} />
 			</View>
 		);
-	if (typeof fact === "object" && "save" in fact)
-		return <SaveFact save={fact.save} onRetry={fact.onRetry} />;
 	return (
 		<RNText className={text({ role: "meta" })}>
 			{partText(fact, META_CUT)}

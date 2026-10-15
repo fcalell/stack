@@ -60,6 +60,7 @@ import {
 	useWindowDimensions,
 	View,
 } from "react-native";
+import { useHeldDraft } from "../../lib/act";
 import { age } from "../../lib/age";
 import { useClock } from "../../lib/clock";
 import type { Closed } from "../../lib/closed";
@@ -147,8 +148,9 @@ interface Reads {
 interface Edits {
 	onOpen: (id: string) => void;
 	// One committed edit of a cell whose column edits; below `tablet` the
-	// record `onOpen` shows edits it.
-	onEdit?: (id: string, key: string, value: CellValue) => void;
+	// record `onOpen` shows edits it. A promise it returns holds the viewer's
+	// value in the cell's control while it pends; a refusal puts it back.
+	onEdit?: (id: string, key: string, value: CellValue) => unknown;
 }
 
 export type TableProps<T = unknown> = TableBase<T> & (Reads | Edits);
@@ -255,7 +257,7 @@ interface GridActions {
 	open: (row: TableRecord) => void;
 	start: (row: string, key: string) => void;
 	done: () => void;
-	edit: (row: string, key: string, value: CellValue) => void;
+	edit: (row: string, key: string, value: CellValue) => unknown;
 	tick: (row: string, on: boolean) => void;
 }
 
@@ -452,6 +454,34 @@ const RestRow = memo(function RestRow(props: {
 	);
 });
 
+// A check cell: the cell is the target, so it owns the draft the box draws
+// and the press edits, and the edit's promise holds the viewer's tick.
+function TickCell({
+	checked: given,
+	label,
+	onEdit,
+	box,
+}: {
+	checked: boolean;
+	label: string;
+	onEdit: (checked: boolean) => unknown;
+	box: string;
+}) {
+	const draft = useHeldDraft(given);
+	const checked = draft.painted ? false : draft.value;
+	return (
+		<Pressable
+			accessibilityRole="checkbox"
+			accessibilityLabel={label}
+			accessibilityState={{ checked }}
+			onPress={() => draft.change(!checked, () => onEdit(!checked))}
+			className={box}
+		>
+			<CheckboxBase target checked={checked} onChange={onEdit} label={label} />
+		</Pressable>
+	);
+}
+
 // A cell past the leading one, by whether and how its column edits (the
 // leading column never edits, nor a column locked whole, nor a column its row
 // locks); a value its row locks that its column edits ends in a lock.
@@ -475,20 +505,12 @@ function Cell(props: {
 	const edit = (next: CellValue) => actions.edit(row.id, column.key, next);
 	if (control === "checkbox")
 		return (
-			<Pressable
-				accessibilityRole="checkbox"
-				accessibilityLabel={column.label}
-				accessibilityState={{ checked: value === true }}
-				onPress={() => edit(value !== true)}
-				className={box}
-			>
-				<CheckboxBase
-					target
-					checked={value === true}
-					onChange={edit}
-					label={column.label}
-				/>
-			</Pressable>
+			<TickCell
+				checked={value === true}
+				label={column.label}
+				onEdit={edit}
+				box={box}
+			/>
 		);
 	if (control && props.editing)
 		return (

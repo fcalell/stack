@@ -29,7 +29,9 @@ export interface PickOneProps<V extends string | null = string>
 	// A selection paints the trigger, inert, until its read lands and follows
 	// it until the viewer picks.
 	value?: Datum<NoInfer<V>>;
-	onChange: (value: NoInfer<V>) => void;
+	// A promise it returns holds the viewer's value while it pends; a refusal
+	// puts it back, with its reason.
+	onChange: (value: NoInfer<V>) => unknown;
 }
 
 // A `value` that is an array picks several: the rows tick and the sheet stays
@@ -39,7 +41,9 @@ export interface PickSeveralProps<V extends string | null = string>
 	// A selection of them paints as a single pick, the placeholder being no
 	// array.
 	value: Datum<readonly NoInfer<V>[]>;
-	onChange: (value: NoInfer<V>[]) => void;
+	// A promise it returns holds the viewer's value while it pends; a refusal
+	// puts it back, with its reason.
+	onChange: (value: NoInfer<V>[]) => unknown;
 }
 
 export type PickerProps<V extends string | null = string> =

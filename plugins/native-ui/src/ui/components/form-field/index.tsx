@@ -1,4 +1,3 @@
-import { useDraft } from "@fcalell/plugin-api/tanstack-query";
 import type {
 	Answered,
 	ChangeKind,
@@ -15,6 +14,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useMemo, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
+import { useHeldDraft } from "../../lib/act";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import {
@@ -188,7 +188,7 @@ function CheckboxRow(props: {
 	children: ReactNode;
 }) {
 	const { checkbox, label, disabled } = props;
-	const draft = useDraft(checkbox.checked);
+	const draft = useHeldDraft(checkbox.checked);
 	const checked = draft.painted ? false : draft.value;
 	return (
 		<Pressable
@@ -199,8 +199,7 @@ function CheckboxRow(props: {
 			disabled={disabled}
 			onPress={() => {
 				const next = checked !== true;
-				draft.change(next);
-				checkbox.onChange(next);
+				draft.change(next, () => checkbox.onChange(next));
 			}}
 			className={cn(formField({ holds: "checkbox" }), AHEAD)}
 		>
@@ -229,8 +228,8 @@ function FieldBody(props: Body) {
 	const { label, description, disabled = false, answered } = props;
 	const words = useWords();
 	const folded = answered !== undefined;
-	// What a control refused (a file of the wrong type) stands in the error
-	// line until its next pick.
+	// What a control refused (a file of the wrong type, a save the server
+	// refused) stands in the error line until its next change.
 	const [refused, refuse] = useState<string>();
 	// A field unfolding mounts its control afresh, which takes focus as it
 	// mounts where `FieldFocus` asks.
@@ -243,7 +242,11 @@ function FieldBody(props: Body) {
 	const error = refused ?? (props.field ? props.field.error : props.error);
 	// A folded field draws no control, so the consumer's function is not called.
 	const kind = kindOf(props);
-	const control = folded ? null : controlOf(props, kind);
+	const control = folded ? null : (
+		<FieldRefusal.Provider value={refuse}>
+			{controlOf(props, kind)}
+		</FieldRefusal.Provider>
+	);
 	const form = kind ?? "field";
 	// What a group of controls is named by, one value per change.
 	const group = useMemo(() => ({ label }), [label]);
@@ -293,22 +296,24 @@ function FieldBody(props: Body) {
 		);
 	if (props.checkbox)
 		return (
-			<CheckboxRow checkbox={props.checkbox} label={label} disabled={disabled}>
-				<View className={LABEL_BLOCK}>
-					{named}
-					{line}
-				</View>
-			</CheckboxRow>
+			<FieldRefusal.Provider value={refuse}>
+				<CheckboxRow
+					checkbox={props.checkbox}
+					label={label}
+					disabled={disabled}
+				>
+					<View className={LABEL_BLOCK}>
+						{named}
+						{line}
+					</View>
+				</CheckboxRow>
+			</FieldRefusal.Provider>
 		);
 	const held = (
 		<FieldNameContext.Provider value={label}>
 			<FieldDisabled.Provider value={disabled}>
 				<FieldError.Provider value={Boolean(error)}>
-					<FieldRefusal.Provider value={refuse}>
-						<FieldFocus.Provider value={reopened}>
-							{control}
-						</FieldFocus.Provider>
-					</FieldRefusal.Provider>
+					<FieldFocus.Provider value={reopened}>{control}</FieldFocus.Provider>
 				</FieldError.Provider>
 			</FieldDisabled.Provider>
 		</FieldNameContext.Provider>

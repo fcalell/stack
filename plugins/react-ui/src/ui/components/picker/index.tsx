@@ -25,8 +25,8 @@ export interface PickOneProps<V extends string | null = string>
 	extends Shared<V> {
 	/** The chosen option's value. A selection paints the trigger, inert, until its read lands and follows it until the viewer picks. */
 	value?: Datum<NoInfer<V>>;
-	/** Hears the picked option's value. */
-	onChange: (value: NoInfer<V>) => void;
+	/** Hears the picked option's value. Return the save's promise and the viewer's value holds while it pends; a refusal puts it back, with its reason. */
+	onChange: (value: NoInfer<V>) => unknown;
 }
 
 /** A pick of several options. */
@@ -34,8 +34,8 @@ export interface PickSeveralProps<V extends string | null = string>
 	extends Shared<V> {
 	/** The chosen options' values. A selection of them paints as a single pick, the placeholder being no array. */
 	value: Datum<readonly NoInfer<V>[]>;
-	/** Hears the chosen values once an option is ticked or a chip removed. */
-	onChange: (value: NoInfer<V>[]) => void;
+	/** Hears the chosen values once an option is ticked or a chip removed. Return the save's promise and the viewer's value holds while it pends; a refusal puts it back, with its reason. */
+	onChange: (value: NoInfer<V>[]) => unknown;
 }
 
 /** A pick that applies at once, outside a form: in a toolbar, a row, a definition or a rule. `V` is read off the options, so an enum's options pick that enum; an option whose value is `null` is the empty choice. A `value` that is an array picks several. */

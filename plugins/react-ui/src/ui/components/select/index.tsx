@@ -1,5 +1,5 @@
 import { Select as Control } from "@base-ui/react/select";
-import { type Datum, useDraft } from "@fcalell/plugin-api/tanstack-query";
+import type { Datum } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type { Option, OptionGroup } from "@fcalell/ui-core/descriptors";
 import { optionBlocked } from "@fcalell/ui-core/list-state";
@@ -17,6 +17,7 @@ import {
 	textStrong,
 } from "@fcalell/ui-core/variants";
 import { use, useState } from "react";
+import { useHeldDraft } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
 import { useQuietGuards } from "../../lib/guards.ts";
 import { spacing } from "../../lib/media.ts";
@@ -55,8 +56,8 @@ const INDICATOR = "flex shrink-0 text-ink-body";
 export interface SelectProps<V extends string | null = string> extends Closed {
 	/** The chosen option's value; none draws the placeholder. A selection paints the trigger, inert, until its read lands and follows it until the viewer picks. */
 	value?: Datum<NoInfer<V>>;
-	/** Hears the picked option's value; `null` for an option whose value is `null` (the empty choice). */
-	onChange: (value: NoInfer<V>) => void;
+	/** Hears the picked option's value; `null` for an option whose value is `null` (the empty choice). Return the save's promise and the viewer's value holds while it pends; a refusal puts it back, with its reason. */
+	onChange: (value: NoInfer<V>) => unknown;
 	/** The choices, flat or under group labels. */
 	options: readonly Option<V>[] | readonly OptionGroup<V>[];
 	/** The hint drawn while nothing is chosen; never the field's name (a short phrase; truncates). */
@@ -80,7 +81,7 @@ export function Select<V extends string | null = string>({
 	options,
 	placeholder,
 }: SelectProps<V>) {
-	const draft = useDraft<V | undefined>(value);
+	const draft = useHeldDraft<V | undefined>(value);
 	const painted = draft.painted;
 	const chosen = painted ? undefined : draft.value;
 	const container = use(PortalContainer);
@@ -103,8 +104,7 @@ export function Select<V extends string | null = string>({
 			items={items}
 			value={chosen ?? null}
 			onValueChange={(next) => {
-				draft.change(next as V);
-				onChange(next as V);
+				draft.change(next as V, () => onChange(next as V));
 			}}
 		>
 			<Control.Trigger

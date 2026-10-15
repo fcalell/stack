@@ -1,4 +1,3 @@
-import { useDraft } from "@fcalell/plugin-api/tanstack-query";
 import { ICON_STROKE } from "@fcalell/ui-core/tokens";
 import { CHECKBOX_MARK, checkbox } from "@fcalell/ui-core/variants";
 import { Check, type IconNode, Minus } from "lucide";
@@ -6,6 +5,7 @@ import { useContext } from "react";
 import { Pressable, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { useResolveClassNames } from "uniwind";
+import { useHeldDraft } from "../../lib/act";
 import { cn } from "../../lib/cn";
 import { FieldDisabled } from "../../lib/field";
 import { inertProps, paintControl, useShown } from "../../lib/paint";
@@ -27,7 +27,7 @@ export function CheckboxBase({
 	target,
 	painted: given,
 }: CheckboxProps & { target?: boolean; painted?: boolean }) {
-	const draft = useDraft(checked);
+	const draft = useHeldDraft(checked);
 	const painted = given || draft.painted;
 	const value = draft.value;
 	const disabled = useContext(FieldDisabled);
@@ -50,8 +50,7 @@ export function CheckboxBase({
 			disabled={disabled}
 			onPress={() => {
 				const next = value !== true;
-				draft.change(next);
-				onChange(next);
+				draft.change(next, () => onChange(next));
 			}}
 			className="shrink-0 items-center justify-center size-target"
 		>

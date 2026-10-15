@@ -1,11 +1,7 @@
 import { Field } from "@base-ui/react/field";
 import { Radio } from "@base-ui/react/radio";
 import { RadioGroup } from "@base-ui/react/radio-group";
-import {
-	type Datum,
-	useDraft,
-	useSelections,
-} from "@fcalell/plugin-api/tanstack-query";
+import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type { Option, OptionGroup } from "@fcalell/ui-core/descriptors";
 import {
@@ -34,6 +30,7 @@ import {
 	textStrong,
 } from "@fcalell/ui-core/variants";
 import { Fragment, type ReactNode, use, useId } from "react";
+import { useHeldDraft } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
 import { GroupName } from "../../lib/field.ts";
 import { PAINT_CONTROL, Painted } from "../../lib/paint.tsx";
@@ -94,15 +91,15 @@ type OptionListBase<V extends string, T> = OptionSource<T, V> & {
 /** One choice: the chosen value or null. A selection paints the radios, inert, until its read lands and follows it until the viewer chooses. */
 interface OneChoice<V extends string> {
 	value: Datum<NoInfer<V> | null>;
-	/** Hears the option chosen. */
-	onChange: (value: V) => void;
+	/** Hears the option chosen. Return the save's promise and the viewer's value holds while it pends; a refusal puts it back, with its reason. */
+	onChange: (value: V) => unknown;
 }
 
 /** Several choices: the chosen set. A selection of it paints as one choice, the placeholder being no array. */
 interface SetChoice<V extends string> {
 	value: Datum<readonly NoInfer<V>[]>;
-	/** Hears the whole chosen set after a toggle. */
-	onChange: (value: V[]) => void;
+	/** Hears the whole chosen set after a toggle. Return the save's promise and the viewer's value holds while it pends; a refusal puts it back, with its reason. */
+	onChange: (value: V[]) => unknown;
 }
 
 /** One choice or several from one list, static or from items: `value` one value or null draws radio rows, a set check rows. `V` is read off the options or the `option` map's `value`. */
@@ -166,7 +163,7 @@ export function OptionList<V extends string = string, T = unknown>(
 	const ids = useId();
 	const named = use(GroupName);
 	const [given] = useSelections([props.items] as const);
-	const draft = useDraft<V | null | readonly V[]>(props.value);
+	const draft = useHeldDraft<V | null | readonly V[]>(props.value);
 	// The rows paint while their items wait; the marks paint too while the
 	// value does, the labels then standing.
 	const rowsPaint = given.painted;
@@ -176,8 +173,9 @@ export function OptionList<V extends string = string, T = unknown>(
 	const choice = {
 		value: draft.painted ? (one ? null : []) : draft.value,
 		onChange: (next: V | V[]) => {
-			draft.change(next);
-			(props.onChange as (value: V | V[]) => void)(next);
+			draft.change(next, () =>
+				(props.onChange as (value: V | V[]) => unknown)(next),
+			);
 		},
 	} as OptionChoice<V>;
 	const options = rowsPaint

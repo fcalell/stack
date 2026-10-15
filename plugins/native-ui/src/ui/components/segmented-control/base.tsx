@@ -1,4 +1,3 @@
-import { useDraft } from "@fcalell/plugin-api/tanstack-query";
 import {
 	SEGMENTED_CONTROL,
 	segment,
@@ -6,6 +5,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { useContext } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
+import { useHeldDraft } from "../../lib/act";
 import { cn } from "../../lib/cn";
 import { GroupName } from "../../lib/field";
 import { inertProps, paintControl, useShown } from "../../lib/paint";
@@ -32,7 +32,7 @@ export function SegmentedControlBase({
 	onChange,
 	painted: given,
 }: SegmentedControlProps & { painted?: boolean }) {
-	const draft = useDraft(value);
+	const draft = useHeldDraft(value);
 	const painted = given || draft.painted;
 	const named = useContext(GroupName);
 	const shown = useShown(painted);
@@ -53,8 +53,7 @@ export function SegmentedControlBase({
 						accessibilityLabel={option.label}
 						accessibilityState={{ checked: chosen }}
 						onPress={() => {
-							draft.change(option.value);
-							onChange(option.value);
+							draft.change(option.value, () => onChange(option.value));
 						}}
 						className={cn(
 							segment({ state }),

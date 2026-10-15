@@ -1,6 +1,5 @@
 import { Radio } from "@base-ui/react/radio";
 import { RadioGroup } from "@base-ui/react/radio-group";
-import { useDraft } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import {
 	SEGMENTED_CONTROL,
@@ -8,6 +7,7 @@ import {
 	segmentLabel,
 } from "@fcalell/ui-core/variants";
 import { use } from "react";
+import { useHeldDraft } from "../../lib/act.ts";
 import { GroupName } from "../../lib/field.ts";
 import { PAINT_CONTROL } from "../../lib/paint.tsx";
 import type { SegmentedControlProps } from "./index.tsx";
@@ -32,7 +32,7 @@ export function SegmentedControlBase({
 	onChange,
 	painted: given,
 }: SegmentedControlProps & { painted?: boolean }) {
-	const draft = useDraft(value);
+	const draft = useHeldDraft(value);
 	const painted = given || draft.painted;
 	const chosenValue = painted ? "" : draft.value;
 	// A FormField around it names it with its visible label.
@@ -42,10 +42,9 @@ export function SegmentedControlBase({
 			aria-label={named ? undefined : label}
 			aria-labelledby={named?.labelledBy}
 			value={chosenValue}
-			onValueChange={(next) => {
-				draft.change(next as string);
-				onChange(next as string);
-			}}
+			onValueChange={(next) =>
+				draft.change(next as string, () => onChange(next as string))
+			}
 			inert={painted || undefined}
 			className={cn(
 				SEGMENTED_CONTROL,

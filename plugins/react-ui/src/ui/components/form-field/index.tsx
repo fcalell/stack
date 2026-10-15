@@ -182,13 +182,15 @@ function FieldBody(props: Body) {
 	const { label, description, disabled, answered } = props;
 	const words = useWords();
 	const folded = answered !== undefined;
-	// What a control refused (a file of the wrong type) stands in the error
-	// line until its next pick.
+	// What a control refused (a file of the wrong type, a save the server
+	// refused) stands in the error line until its next change.
 	const [refused, refuse] = useState<string>();
 	const error = refused ?? (props.field ? props.field.error : props.error);
 	// A folded field draws no control, so the consumer's function is not called.
 	const kind = kindOf(props);
-	const control = folded ? null : controlOf(props, kind);
+	const control = folded ? null : (
+		<FieldRefusal value={refuse}>{controlOf(props, kind)}</FieldRefusal>
+	);
 	const form: Form = kind ?? "field";
 	const root = useRef<HTMLDivElement>(null);
 	const wasFolded = useRef(folded);
@@ -303,7 +305,7 @@ function FieldBody(props: Body) {
 			{holds === "field" ? (
 				<>
 					{form === "slider" ? null : named}
-					<FieldRefusal value={refuse}>{control}</FieldRefusal>
+					{control}
 					{said}
 				</>
 			) : (

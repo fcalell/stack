@@ -6,8 +6,8 @@ import { CheckboxBase } from "./base";
 export interface CheckboxProps extends Closed {
 	/** Whether it is checked; `mixed` when some of the set it stands for are. A selection paints the box, inert, until its read lands and follows it until the viewer toggles it. */
 	checked: Datum<boolean | "mixed">;
-	/** Hears the next value when the viewer toggles it; a mixed box checks. */
-	onChange: (checked: boolean) => void;
+	/** Hears the next value when the viewer toggles it; a mixed box checks. Return the save's promise and the viewer's value holds while it pends; a refusal puts it back, with its reason. */
+	onChange: (checked: boolean) => unknown;
 	/** Its name; the row around it draws the visible label (a short phrase; read aloud, never drawn). */
 	label: string;
 }

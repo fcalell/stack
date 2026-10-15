@@ -2481,7 +2481,7 @@ A docked sheet's body keeps `docked-floor` (144px on touch, 96px on the desktop)
 | `Input` | atom | `FIELD`, `FIELD_VALUE`, `FIELD_PLACEHOLDER`, `FIELD_UNIT`, `FIELD_GLYPH`, `PAINT.kind.control` | rest, hover, focus, disabled, error |
 | `FileInput` | atom | `FIELD.fit.form`, `FIELD.trailing.none`, `FIELD.trailing.act`, `FIELD.state.rest`, `FIELD.state.error`, `FIELD_VALUE.kind.text`, `FIELD_PLACEHOLDER`, `TEXT.role.meta`, `FIELD_GLYPH`, `ICON.fit.control` | rest, hover, focus, disabled, error, empty |
 | `TextArea` | atom | `TEXT_AREA`, `TEXT_AREA_BUDGET`, `TEXT_AREA_VALUE`, `FIELD_VALUE`, `FIELD_PLACEHOLDER`, `PAINT.kind.control` | rest, hover, focus, disabled, error |
-| `InputOtp` | atom | `OTP`, `OTP_BOX`, `OTP_DIGIT`, `TEXT.role.meta`, `SPINNER` | rest, focus, loading, error |
+| `InputOtp` | atom | `OTP`, `OTP_BOX`, `OTP_DIGIT`, `TEXT.role.meta`, `SPINNER` | rest, focus, pending, error |
 | `Select` | atom | `FIELD`, `FIELD_VALUE`, `FIELD_PLACEHOLDER`, `FIELD_GLYPH`, `POPOVER`, `SELECT_POPOVER`, `SELECT_GROUP`, `ROW.lines.one`, `ROW.lines.two`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `OPTION_ROW`, `ROW.state.selected`, `TEXT.role.meta`, `TEXT_STRONG.role.meta`, `PAINT.kind.control` | rest, hover, focus, selected, disabled, error |
 | `Slider` | atom | `SLIDER`, `SLIDER_HEAD`, `SLIDER_LABEL`, `SLIDER_VALUE`, `SLIDER_TRACK`, `SLIDER_FILL`, `SLIDER_REST`, `SLIDER_THUMB`, `PAINT.kind.control` | rest, hover, focus, active, disabled |
 | `Switch` | atom | `SWITCH`, `SWITCH_THUMB`, `PAINT.kind.control` | rest, hover, focus, active, disabled, selected |

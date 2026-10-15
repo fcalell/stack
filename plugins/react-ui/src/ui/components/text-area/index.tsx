@@ -1,5 +1,5 @@
 import { Input as Control } from "@base-ui/react/input";
-import { type Datum, useDraft } from "@fcalell/plugin-api/tanstack-query";
+import type { Datum } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import {
 	fieldValue,
@@ -7,6 +7,7 @@ import {
 	textArea,
 	textAreaBudget,
 } from "@fcalell/ui-core/variants";
+import { useHeldDraft } from "../../lib/act.ts";
 import { caretAtEnd } from "../../lib/caret.ts";
 import type { Closed } from "../../lib/closed.ts";
 import { useCommit } from "../../lib/commit.ts";
@@ -38,8 +39,8 @@ export interface TextAreaProps extends Closed {
 	value: Datum<string>;
 	/** Hears every keystroke's value. */
 	onChange: (value: string) => void;
-	/** Hears the value once the viewer leaves the field having changed it since focus (Enter is a new line); Escape then puts back the value at focus and leaves the field. */
-	onCommit?: (value: string) => void;
+	/** Hears the value once the viewer leaves the field having changed it since focus (Enter is a new line); Escape then puts back the value at focus and leaves the field. Return the save's promise and the viewer's value holds while it pends; a refusal puts it back, with its reason. */
+	onCommit?: (value: string) => unknown;
 	/** The hint drawn while the value is empty; never the field's name (a short phrase; wraps). */
 	placeholder?: string;
 	/** A word budget: draws the count against it, in the error ink once over. */
@@ -59,15 +60,18 @@ export function TextArea({
 	autoFocus,
 }: TextAreaProps) {
 	useModality();
-	const draft = useDraft(value);
+	const draft = useHeldDraft(value);
 	const painted = draft.painted;
 	const shown = painted ? "" : draft.value;
 	const edit = (next: string) => {
 		draft.change(next);
 		onChange(next);
 	};
+	// A commit that returns its save's promise holds the value while it pends.
+	const save =
+		onCommit && ((next: string) => draft.change(next, () => onCommit(next)));
 	const source = kind === "source";
-	const commit = useCommit(shown, edit, onCommit, false);
+	const commit = useCommit(shown, edit, save, false);
 	const count = budget === undefined ? undefined : wordCount(shown);
 	return (
 		<Control

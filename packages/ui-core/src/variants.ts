@@ -345,9 +345,8 @@ export const STATUS = "gap-inside";
 export const STATUS_SPINNER = "text-accent-ink";
 export const STATUS_LABEL = "text-meta leading-meta font-normal text-ink-meta";
 // Words that act in a control-radius box with no boundary at rest: a row's
-// pick and a status that moves (Picker), a header fact that opens a sheet,
-// goes to a route or retries a save (ItemHeader), whose status region takes
-// the box's shape for its focus ring. It pulls back by its own padding on the
+// pick and a status that moves (Picker), a header fact that opens a sheet
+// or goes to a route (ItemHeader). It pulls back by its own padding on the
 // side that meets plain text (an overlay), so its words sit where static
 // words do. Shared by both drawers.
 export const WORD_ACT = "rounded-control px-inside min-h-target";
@@ -475,7 +474,7 @@ export const LOCK_GLYPH = "shrink-0 text-ink-meta";
 // A record's head under the Pane's bar: the overline and the facts line a pair apart;
 // the facts wrap at the fields rhythm, a counted fact its word beside its
 // count. The line stands at the meta line's height whichever facts it holds:
-// a fact that acts or changes (a pick, an opening fact, a save) keeps its
+// a fact that acts or changes (a pick, an opening fact) keeps its
 // target-height hit box and reaches past the line above and below it
 // (`factReach`), so a fact that opens joining the line moves nothing under it.
 export const ITEM_HEADER = "gap-pair";

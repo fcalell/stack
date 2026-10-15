@@ -1,7 +1,6 @@
 import type { Selection } from "@fcalell/plugin-api/tanstack-query";
 import type { Option, Part } from "@fcalell/ui-core/descriptors";
 import type { StatusState } from "@fcalell/ui-core/tokens";
-import { useEffect, useState } from "react";
 import { ActionBar } from "../../components/action-bar/index.tsx";
 import type { Fact } from "../../components/item-header/index.tsx";
 import { ItemHeader } from "../../components/item-header/index.tsx";
@@ -48,32 +47,6 @@ function moving(state: StatusState) {
 	};
 }
 
-type Save = "saving" | "saved" | "failed";
-
-// What follows each save state: a retry starts a save, a save finishes, and a
-// finished one is followed by a failed one, so the head cycles the three.
-const NEXT: Record<Save, Save> = {
-	failed: "saving",
-	saving: "saved",
-	saved: "failed",
-};
-
-// The head rests on a failed save, its retry starting the cycle.
-function SavingHead() {
-	const [save, setSave] = useState<Save>("failed");
-	useEffect(() => {
-		if (save === "failed") return;
-		const timer = setTimeout(() => setSave(NEXT[save]), 1500);
-		return () => clearTimeout(timer);
-	}, [save]);
-	return (
-		<ItemHeader
-			overline={OVERLINE}
-			facts={[{ save, onRetry: () => setSave(NEXT.failed) }, ...REST]}
-		/>
-	);
-}
-
 // A record page: the record's name and acts in the Pane's bar, its head under
 // it, its act and the sections after them, a sections step apart.
 function Record() {
@@ -98,8 +71,7 @@ function Record() {
 // Every cell draws the head in the frame's state: at rest the lines a pair
 // apart, the first fact a status that moves; loading the head painted, each
 // part and fact a selection still to land, and a paint cell the loaded head
-// beside it. A `STATUS_DOT.state` cell stands on that state. A third head carries a
-// save fact that cycles its three states, a fourth a fact in words that opens
+// beside it. A `STATUS_DOT.state` cell stands on that state. A third head carries a fact in words that opens
 // beside one that goes to a route; a record page holds a head under the
 // Pane's bar, which names the record and holds its acts, with its act under it.
 export function drawItemHeader(frame: ShowcaseFrame) {
@@ -125,7 +97,6 @@ export function drawItemHeader(frame: ShowcaseFrame) {
 					facts={[moving("attention"), ...REST]}
 				/>
 				<ItemHeader overline={OVERLINE} facts={[moving(state), ...REST]} />
-				<SavingHead />
 				<ItemHeader
 					overline={OVERLINE}
 					facts={[

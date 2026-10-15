@@ -15,7 +15,9 @@ export interface SegmentedControlProps extends Closed {
 	// A selection paints the track, inert, until its read lands and follows it
 	// until the viewer chooses.
 	value: Datum<string>;
-	onChange: (value: string) => void;
+	// A promise it returns holds the viewer's value while it pends; a refusal
+	// puts it back, with its reason.
+	onChange: (value: string) => unknown;
 }
 
 // A view switch over two to four options, one chosen: a radio group.

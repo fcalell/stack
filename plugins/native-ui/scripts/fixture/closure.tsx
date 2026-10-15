@@ -217,7 +217,7 @@ export const closure = (
 		<TextArea value="" onChange={noop} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<TextArea value="" onChange={noop} placeholderTextColorClassName="text-ink-body" />
-		<InputOtp length={6} value="" onChange={noop} onComplete={noop} loading />
+		<InputOtp length={6} value="" onChange={noop} onComplete={noop} />
 		{/* @ts-expect-error: closed channel */}
 		<InputOtp length={6} value="" onChange={noop} className="x" />
 		{/* @ts-expect-error: closed channel */}

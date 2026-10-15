@@ -1,4 +1,4 @@
-import { type Datum, useDraft } from "@fcalell/plugin-api/tanstack-query";
+import type { Datum } from "@fcalell/plugin-api/tanstack-query";
 import { formatterFor } from "@fcalell/ui-core/format";
 import {
 	SLIDER,
@@ -13,6 +13,7 @@ import {
 import { useContext, useRef, useState } from "react";
 import { PanResponder, Text as RNText, View } from "react-native";
 import { useResolveClassNames } from "uniwind";
+import { useHeldDraft } from "../../lib/act";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FieldDisabled } from "../../lib/field";
@@ -26,6 +27,10 @@ export interface SliderProps extends Closed {
 	value: Datum<number>;
 	/** Hears each value the viewer moves it to. */
 	onChange: (value: number) => void;
+	// Hears the value the viewer lets go of the thumb on. A promise it returns
+	// holds the viewer's value while it pends; a refusal puts it back, with its
+	// reason.
+	onCommit?: (value: number) => unknown;
 	/** The value at the track's start. */
 	min: number;
 	/** The value at the track's end. */
@@ -41,13 +46,14 @@ export function Slider({
 	label,
 	value,
 	onChange,
+	onCommit,
 	min,
 	max,
 	step,
 	unit,
 }: SliderProps) {
 	const disabled = useContext(FieldDisabled);
-	const draft = useDraft(value);
+	const draft = useHeldDraft(value);
 	const painted = draft.painted;
 	// Painted, the thumb rests at the start: the value is the placeholder.
 	const at = painted ? min : draft.value;
@@ -57,6 +63,7 @@ export function Slider({
 	const width = useRef(0);
 	const thumb = useResolveClassNames(SLIDER_THUMB).width;
 	const quantum = step ?? 1;
+	const reached = useRef<number>(undefined);
 
 	function settle(raw: number): number {
 		return Math.min(max, Math.max(min, Math.round(raw / quantum) * quantum));
@@ -70,15 +77,26 @@ export function Slider({
 		if (span <= 0) return;
 		const ratio = Math.min(Math.max((x - size / 2) / span, 0), 1);
 		const next = settle(min + ratio * (max - min));
+		reached.current = next;
 		draft.change(next);
 		onChange(next);
+	}
+
+	// The thumb let go: the last value it reached is the one committed.
+	function finish(): void {
+		setPressed(false);
+		const next = reached.current;
+		reached.current = undefined;
+		if (onCommit && next !== undefined) {
+			draft.change(next, () => onCommit(next));
+		}
 	}
 
 	// A drag reads `locationX` once, at the grant on the `box-only` track, and
 	// follows the gesture's travel from there, since a moving finger's
 	// `locationX` is relative to whatever view is under it.
-	const latest = useRef({ pick, disabled });
-	latest.current = { pick, disabled };
+	const latest = useRef({ pick, finish, disabled });
+	latest.current = { pick, finish, disabled };
 	const origin = useRef(0);
 	const responder = useRef(
 		PanResponder.create({
@@ -92,8 +110,8 @@ export function Slider({
 			},
 			onPanResponderMove: (_, gesture) =>
 				latest.current.pick(origin.current + gesture.dx),
-			onPanResponderRelease: () => setPressed(false),
-			onPanResponderTerminate: () => setPressed(false),
+			onPanResponderRelease: () => latest.current.finish(),
+			onPanResponderTerminate: () => latest.current.finish(),
 		}),
 	).current;
 
