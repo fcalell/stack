@@ -276,20 +276,6 @@ export const ScrolledUpStaysSteady: StoryObj = {
 			await canvas.findByRole("button", { name: "Latest" }),
 		);
 		await waitFor(() => expect(atEnd(log)).toBe(true));
-		console.log(
-			"DBG",
-			turns(log)
-				.map((t) => t.textContent?.slice(0, 12))
-				.join("|"),
-			log.querySelectorAll("[aria-hidden=true]").length,
-			[...log.querySelectorAll("[aria-hidden=true]")]
-				.map((n) => (n as HTMLElement).style.height)
-				.join(","),
-			turns(log).at(-1)?.textContent?.slice(0, 30),
-			log.scrollTop,
-			log.scrollHeight,
-			log.clientHeight,
-		);
 		await expect(visible(log, message(log, COUNT + 1) as Element)).toBe(true);
 		await expect(
 			canvas.queryByRole("button", { name: "Latest" }),

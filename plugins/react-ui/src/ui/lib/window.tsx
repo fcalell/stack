@@ -116,6 +116,8 @@ export function Window({
 	// How much of the virtualizer's adjustments since its last offset the
 	// scroller has already taken.
 	const applied = useRef(0);
+	// Reports the scroller's offset when the virtualizer holds another one.
+	const sync = useRef<() => void>(undefined);
 	const extract = useCallback(
 		(range: Parameters<typeof ranged>[0]) =>
 			ranged(range, [focused.current, keep]),
@@ -153,6 +155,9 @@ export function Window({
 				}, SETTLED);
 			};
 			element.addEventListener("scroll", onScroll, { passive: true });
+			sync.current = () => {
+				if (into(element, box.current) !== instance.scrollOffset) send();
+			};
 			// Content above the box changing height moves the box without a
 			// scroll; the observer also reports once on observing, which gives
 			// the first true offset once the box stands.
@@ -160,6 +165,7 @@ export function Window({
 			resize.observe(element);
 			for (const child of element.children) resize.observe(child);
 			return () => {
+				sync.current = undefined;
 				element.removeEventListener("scroll", onScroll);
 				clearTimeout(timer);
 				resize.disconnect();
@@ -195,6 +201,11 @@ export function Window({
 	useLayoutEffect(() => {
 		drawn.current = slots;
 	});
+
+	// A scroll the host made in the same commit (Latest) is heard as the scroll
+	// event arrives, a frame later; the window renders against the offset the
+	// scroller has now, so the rows it jumped to are mounted when it lands.
+	useLayoutEffect(() => sync.current?.());
 
 	// The first row's height stands in for the rest of the rows, which nothing
 	// has measured yet, so the virtualizer starts over once it holds the shape.
