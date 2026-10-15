@@ -1,9 +1,11 @@
 import { DefinitionRowBase } from "../../components/definition-row/index.tsx";
 import { Group } from "../../components/group/index.tsx";
 import { MeterBase } from "../../components/meter/index.tsx";
+import { Section } from "../../components/section/index.tsx";
 import { Slider } from "../../components/slider/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { STAND_IN_ENTRIES, Wide } from "./layout-context.tsx";
+import { Paged } from "./more.tsx";
 
 const noop = () => {};
 
@@ -86,9 +88,35 @@ export function Static(props: { loading?: boolean }) {
 	);
 }
 
+const WORKSPACES = [
+	{ id: "w1", name: "Production" },
+	{ id: "w2", name: "Staging" },
+	{ id: "w3", name: "Previews" },
+];
+
 // Every cell draws the Group in the frame's state: rows at rest, loading its
-// static parts painted beside the loaded card.
+// static parts painted beside the loaded card; the more state, on the group
+// cell, its list over a pages read in each state of its more row.
 export function drawGroup(frame: ShowcaseFrame) {
+	if (frame.state === "more")
+		return frame.cell.name === "GROUP" ? (
+			<Wide>
+				<Paged
+					id={frame.id}
+					rows={WORKSPACES}
+					draw={(workspaces, how) => (
+						<Section title={`Workspaces, ${how}`} read={workspaces}>
+							<Group
+								list={{
+									items: workspaces,
+									row: { key: (one) => one.id, title: (one) => one.name },
+								}}
+							/>
+						</Section>
+					)}
+				/>
+			</Wide>
+		) : undefined;
 	if (frame.state === "loading")
 		return (
 			<Wide>

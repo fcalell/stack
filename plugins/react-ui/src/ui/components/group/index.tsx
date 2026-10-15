@@ -1,4 +1,8 @@
-import { type Drawn, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Drawn,
+	pagesOf,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import { GROUP, GROUP_ITEM } from "@fcalell/ui-core/variants";
 import { Fragment, type ReactNode } from "react";
@@ -49,7 +53,12 @@ export function Group<T, V extends string | null = string>(
 	const [drawn] = useSelections([props.list?.items] as const);
 	const settle = useSettleName();
 	const content = props.list ? (
-		<ListBase {...props.list} drawn={drawn as Drawn<readonly T[]>} framed />
+		<ListBase
+			{...props.list}
+			drawn={drawn as Drawn<readonly T[]>}
+			more={pagesOf(props.list.items)}
+			framed
+		/>
 	) : (
 		props.items.map((entry) =>
 			"row" in entry ? (

@@ -8,6 +8,7 @@ import { Section } from "../../components/section/index.tsx";
 import { ago } from "../ago.ts";
 import type { ShowcaseFrame } from "../cells.ts";
 import { itemsAt } from "../waiting.ts";
+import { Paged } from "./more.tsx";
 import { Column } from "./place.tsx";
 
 interface Note {
@@ -76,6 +77,13 @@ const LIMITS = [
 
 const refetch = () => {};
 
+// A list over a pages read, in each state of its more row.
+const MORE_TITLES = {
+	next: "Deploys",
+	fetching: "Deploys, next page loading",
+	failed: "Deploys, next page failed",
+};
+
 // Every cell draws five Lists in the frame's state, each in a Section on a
 // page as it ships and the Section holding its read: notes (a title over a
 // meta line, no leading), deploys (an avatar leading, an age trailing), each
@@ -83,8 +91,38 @@ const refetch = () => {};
 // the Section; host keys, facts from data in a Group (a label over its
 // fingerprint, copied); and allowed hosts, an add field over a List in a Group,
 // the field live while the rows paint; and plan limits, meters from data in a
-// Group.
+// Group. The more state draws the deploys over a pages read in each state of
+// its more row, on the list cell.
 export function drawList(frame: ShowcaseFrame) {
+	if (frame.state === "more")
+		return frame.cell.name === "LIST" ? (
+			<Column>
+				<Place>
+					<Pane title="Library">
+						<Paged
+							id={frame.id}
+							rows={DEPLOYS}
+							draw={(deploys, how) => (
+								<Section title={MORE_TITLES[how]} read={deploys}>
+									<List
+										items={deploys}
+										row={{
+											key: (deploy) => deploy.id,
+											leading: {
+												avatar: (deploy) => ({ name: deploy.author }),
+											},
+											title: (deploy) => deploy.message,
+											trailing: (deploy) => ({ age: deploy.age }),
+											href: (deploy) => `#${deploy.id}`,
+										}}
+									/>
+								</Section>
+							)}
+						/>
+					</Pane>
+				</Place>
+			</Column>
+		) : undefined;
 	const at = <T,>(name: string, items: readonly T[]) =>
 		itemsAt(`${frame.id}/${name}`, frame.state, items);
 	const notes = at("notes", NOTES);

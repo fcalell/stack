@@ -16,6 +16,7 @@ import { PortalContainer } from "../../lib/portal.ts";
 import { ago } from "../ago.ts";
 import type { ShowcaseFrame } from "../cells.ts";
 import { itemsAt } from "../waiting.ts";
+import { Paged } from "./more.tsx";
 import { key, Stage } from "./overlay-stage.tsx";
 import { isPaint } from "./painted.tsx";
 import { Column } from "./place.tsx";
@@ -528,7 +529,8 @@ const COMMON = only(
 );
 
 // The Table on the part each cell names, in the frame's state: the open record
-// selected, or painted while its read waits. The picked edit holds in a stage:
+// selected, or painted while its read waits; the more state, on the table cell,
+// the table over a pages read in each state of its more row. The picked edit holds in a stage:
 // the queue's chips in the popover, or on touch in the pick sheet, held inside
 // the frame. A `PAINT` cell draws the part loaded and the same part painted.
 export function drawTable(frame: ShowcaseFrame) {
@@ -545,6 +547,16 @@ export function drawTable(frame: ShowcaseFrame) {
 			read={itemsAt(`${frame.id}/painted`, "loading", rows)}
 		/>
 	);
+	if (frame.state === "more")
+		return cell === "TABLE" ? (
+			<Column>
+				<Paged
+					id={frame.id}
+					rows={rows}
+					draw={(read) => <Tasks part={part} state="rest" read={read} />}
+				/>
+			</Column>
+		) : undefined;
 	if (isPaint(frame)) {
 		if (frame.state !== "rest") return undefined;
 		return (

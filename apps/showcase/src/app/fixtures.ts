@@ -182,7 +182,15 @@ Node 18 leaves the build images on Oct 12, so the first keeps working longer.`,
 export default defineFixtures<AppRouter>(
 	{
 		deploys: {
-			list: () => DEPLOYS,
+			// The cursor is the index of a page's first deploy.
+			list: ({ cursor, limit }) => {
+				const from = Number(cursor ?? 0);
+				const to = from + (limit ?? DEPLOYS.length);
+				return {
+					data: DEPLOYS.slice(from, to),
+					nextCursor: to < DEPLOYS.length ? String(to) : null,
+				};
+			},
 			get: ({ id }) => {
 				const deploy = found(DEPLOYS.find((each) => each.id === id));
 				const { description, notes } = found(CHANGES[id]);

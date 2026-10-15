@@ -1,7 +1,10 @@
 import { Field } from "@base-ui/react/field";
+import { placeholderData } from "@fcalell/plugin-api/read";
 import {
 	type Datum,
 	type Drawn,
+	pagesOf,
+	type Read,
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
@@ -67,6 +70,7 @@ import type { Closed } from "../../lib/closed.ts";
 import type { CellFit } from "../../lib/field.ts";
 import { PageTitle } from "../../lib/frame.ts";
 import { useTouch } from "../../lib/media.ts";
+import { MoreRow } from "../../lib/more.tsx";
 import { follow, navigate } from "../../lib/navigate.ts";
 import { usePageTablet } from "../../lib/page.ts";
 import { Painted } from "../../lib/paint.tsx";
@@ -102,6 +106,9 @@ const SCROLLS =
 	"touch:overflow-x-auto touch:scroll-ps-(--container-measure-short)";
 const SCROLLS_TICKED =
 	"touch:overflow-x-auto touch:scroll-ps-[calc(var(--container-measure-short)+var(--spacing-row))]";
+// The painted next page of the narrow list stands a rows gap under the loaded
+// one's box.
+const MORE_PAGE = "pt-rows";
 const GRID = "w-full table-fixed touch:w-max";
 const HEAD_CELL = "p-0 font-normal";
 const START = "text-start";
@@ -240,6 +247,16 @@ export function Table<T>(props: TableProps<T>) {
 		: (drawn.value as readonly T[]);
 	const made = tableRecords(items, columns, props.row, props.choose, painted);
 	const records = painted ? made : sorted(made, columns, sort);
+	const more = painted ? undefined : pagesOf(props.items);
+	const blank = more
+		? tableRecords(
+				[placeholderData() as T],
+				columns,
+				props.row,
+				props.choose,
+				true,
+			)[0]
+		: undefined;
 	// The form is unknown until the root is placed in its page; placing it
 	// re-renders before paint.
 	let form: ReactNode = null;
@@ -255,6 +272,7 @@ export function Table<T>(props: TableProps<T>) {
 				onOpen={onOpen}
 				onEdit={onEdit}
 				painted={painted}
+				more={more}
 			/>
 		);
 	} else if (wide === false) {
@@ -269,6 +287,8 @@ export function Table<T>(props: TableProps<T>) {
 					onOpen={onOpen}
 					choose={props.choose}
 					painted={painted}
+					more={more}
+					blank={blank}
 					warns={props.row.warning !== undefined}
 					changes={props.row.change !== undefined}
 				/>
@@ -547,6 +567,7 @@ function Grid(props: {
 	onOpen: ((id: string) => void) | undefined;
 	onEdit: ((id: string, key: string, value: CellValue) => void) | undefined;
 	painted: boolean;
+	more: Read<unknown> | undefined;
 }) {
 	const { columns, rows, sort, painted, choose } = props;
 	const words = useWords();
@@ -735,18 +756,7 @@ function Grid(props: {
 					onKeyDown={onKeyDown}
 					className={cn(TABLE, GRID)}
 				>
-					<colgroup>
-						{choose ? <col className={TICK_WIDTH} /> : null}
-						{columns.map((column) => (
-							<col
-								key={column.key}
-								className={cn(
-									column.width ? WIDTH[column.width] : undefined,
-									TOUCH_WIDTH,
-								)}
-							/>
-						))}
-					</colgroup>
+					<Cols columns={columns} choosing={choose !== undefined} />
 					<thead>
 						<tr className={tableRow({ state: "rest" })}>
 							{choose ? (
@@ -819,6 +829,68 @@ function Grid(props: {
 					</tbody>
 				</table>
 			</div>
+			{props.more ? (
+				<MoreRow
+					read={props.more}
+					empty={rows.length === 0}
+					paint={() => (
+						<MorePage columns={columns} choosing={choose !== undefined} />
+					)}
+				/>
+			) : null}
+		</div>
+	);
+}
+
+// The grid's columns, at the widths its cells keep.
+function Cols(props: { columns: readonly TableColumn[]; choosing: boolean }) {
+	return (
+		<colgroup>
+			{props.choosing ? <col className={TICK_WIDTH} /> : null}
+			{props.columns.map((column) => (
+				<col
+					key={column.key}
+					className={cn(
+						column.width ? WIDTH[column.width] : undefined,
+						TOUCH_WIDTH,
+					)}
+				/>
+			))}
+		</colgroup>
+	);
+}
+
+// The next page while it loads: `PAINT_ROWS` painted rows at the grid's
+// columns, in a grid of their own under the loaded one.
+function MorePage(props: {
+	columns: readonly TableColumn[];
+	choosing: boolean;
+}) {
+	const touch = useTouch();
+	return (
+		<div
+			aria-hidden
+			className={cn(
+				TABLE_FRAME,
+				FRAME,
+				props.choosing ? SCROLLS_TICKED : SCROLLS,
+			)}
+		>
+			<table className={cn(TABLE, GRID)}>
+				<Cols columns={props.columns} choosing={props.choosing} />
+				<tbody>
+					{Array.from({ length: PAINT_ROWS }, (_, index) => (
+						<PaintedRow
+							// biome-ignore lint/suspicious/noArrayIndexKey: the painted rows are fixed stand-ins
+							key={index}
+							index={index}
+							columns={props.columns}
+							touch={touch}
+							choosing={props.choosing}
+						/>
+					))}
+				</tbody>
+			</table>
 		</div>
 	);
 }
@@ -1216,6 +1288,9 @@ function Phone(props: {
 	onOpen: ((id: string) => void) | undefined;
 	choose: Pick<TableChoice<never>, "chosen" | "onChange"> | undefined;
 	painted: boolean;
+	more: Read<unknown> | undefined;
+	// A record over the placeholder, the next page's painted rows.
+	blank: TableRecord | undefined;
 	warns: boolean;
 	changes: boolean;
 }) {
@@ -1258,7 +1333,7 @@ function Phone(props: {
 	// A slot is declared only when a column fills it, so the painted rows
 	// stand in the slots the loaded ones draw; a mark whose cell the placeholder
 	// does not shape (a status, a chip, an age) is given by its column instead.
-	const row: RowSlots<TableRecord> = {
+	const slots = (painted: boolean): RowSlots<TableRecord> => ({
 		key: (record) => record.id,
 		title: (record) =>
 			leading ? shown(leading, cell(record, leading)) : record.id,
@@ -1333,7 +1408,7 @@ function Phone(props: {
 		selected: (record) => record.id === props.selected,
 		// A row with `href` goes there; the others open through `onOpen`.
 		onOpen: onOpen ? (record) => onOpen(record.id) : undefined,
-	};
+	});
 	return (
 		<>
 			{pick}
@@ -1343,8 +1418,22 @@ function Phone(props: {
 						? { painted: true, value: props.rows[0] }
 						: { painted: false, value: props.rows }
 				}
-				row={row}
+				row={slots(painted)}
 			/>
+			{props.more && props.blank ? (
+				<MoreRow
+					read={props.more}
+					empty={props.rows.length === 0}
+					paint={() => (
+						<div className={MORE_PAGE}>
+							<ListBase
+								drawn={{ painted: true, value: props.blank }}
+								row={slots(true)}
+							/>
+						</div>
+					)}
+				/>
+			) : null}
 		</>
 	);
 }

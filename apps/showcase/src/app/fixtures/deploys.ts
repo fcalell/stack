@@ -2,7 +2,7 @@ import type { AppRouter } from "../../../.stack/worker";
 import { ago } from "./ago.ts";
 
 type Deploys = AppRouter["deploys"];
-type Deploy = Deploys["list"]["__output"][number];
+type Deploy = Deploys["list"]["__output"]["data"][number];
 type Step = Deploys["get"]["__output"]["steps"][number];
 type ChangedFile = Deploys["files"]["__output"][number];
 

@@ -893,7 +893,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			props: ["items", "list"],
 			draws: ["GROUP", "GROUP_ITEM"],
 			holds: ["GROUP", "GROUP_ITEM"],
-			states: ["rest", "loading"],
+			states: ["rest", "loading", "more"],
 			owns: {
 				colors: ["edge", "surface"],
 				radii: ["card"],
@@ -918,11 +918,17 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// hairline falls once between rows. A `definition` list stands in a
 		// Group and carries no count of its own: facts are not a
 		// collection a viewer counts.
+		// Over a pages read it ends in its more row (`more`): "Show more" while a
+		// next page remains, pressed by the viewer; `PAINT_ROWS` painted rows
+		// while that page loads; "Couldn't load more" with Retry when it failed.
+		// An empty first page with more is not empty: the next page is fetched
+		// at once. The frame is not busy for a next page and draws no count while
+		// more remains. Group's `list` and the Table end the same way.
 		List: {
 			props: ["row", "file", "meter", "definition", "items"],
 			draws: ["LIST", "LIST_ITEM", "LIST_TREE", "LIST_DIVIDED"],
 			holds: ["LIST", "LIST_ITEM", "LIST_TREE", "LIST_DIVIDED"],
-			states: ["rest", "loading"],
+			states: ["rest", "loading", "more"],
 			owns: {
 				colors: ["edge"],
 				spacing: ["rows", "card"],
@@ -2437,7 +2443,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"TABLE_FROZEN",
 				"TABLE_FROZEN_CELL",
 			],
-			states: [...PRESS, "loading", "selected"],
+			states: [...PRESS, "loading", "selected", "more"],
 			owns: {
 				roles: ["body", "meta", "code", "caption"],
 				colors: [
@@ -2469,7 +2475,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"ink-disabled",
 				],
 				radii: ["full", "chip", "control"],
-				spacing: ["control-x", "inside", "pair", "page"],
+				spacing: ["control-x", "inside", "pair", "page", "rows"],
 				// A column stands at the measure its descriptor names.
 				sizes: [
 					...MEASURES,

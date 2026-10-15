@@ -31,6 +31,7 @@
 		"./lib/code": "./src/ui/lib/code.tsx",
 		"./lib/empty": "./src/ui/lib/empty.tsx",
 		"./lib/mark": "./src/ui/lib/mark.tsx",
+		"./lib/more": "./src/ui/lib/more.tsx",
 		"./lib/not-found": "./src/ui/lib/not-found.tsx",
 		"./lib/paint": "./src/ui/lib/paint.tsx",
 		"./lib/read": "./src/ui/lib/read.tsx",

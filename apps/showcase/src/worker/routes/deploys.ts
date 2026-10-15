@@ -36,9 +36,12 @@ const changedFile = z.object({
 const byId = z.object({ id: z.string() });
 
 export const deploys = {
-	list: procedure({ reads: ["deploys"] })
-		.output(z.array(deploy))
-		.query(() => []),
+	// Paged: a page of deploys, the cursor of the next, null at the last.
+	list: procedure({ reads: ["deploys"], paginated: true })
+		.output(
+			z.object({ data: z.array(deploy), nextCursor: z.string().nullable() }),
+		)
+		.query(() => ({ data: [], nextCursor: null })),
 
 	get: procedure({ reads: ["deploys"] })
 		.input(byId)

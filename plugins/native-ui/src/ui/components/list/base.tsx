@@ -1,4 +1,5 @@
-import type { Drawn } from "@fcalell/plugin-api/tanstack-query";
+import { placeholderData } from "@fcalell/plugin-api/read";
+import type { Drawn, Read } from "@fcalell/plugin-api/tanstack-query";
 import type { RowLeading } from "@fcalell/ui-core/descriptors";
 import { toggled, treeRows } from "@fcalell/ui-core/list-state";
 import { PAINT_ROWS, painting } from "@fcalell/ui-core/paint";
@@ -12,6 +13,7 @@ import { type ReactElement, useState } from "react";
 import { View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { between } from "../../lib/group";
+import { MoreRow } from "../../lib/more";
 import { DefinitionRowBase } from "../definition-row";
 import { FileRowBase } from "../file-row";
 import { ListRowBase, type RowTree } from "../list-row/base";
@@ -26,6 +28,12 @@ export interface ListInternal<T> {
 	// The items as the List (or the Group framing it) subscribed to them: real,
 	// or the placeholder while the read waits, which paints `PAINT_ROWS` rows.
 	drawn: Drawn<readonly T[]>;
+	// The pages read the items come from, when it has pages: the List ends in
+	// its more row.
+	more?: Read<unknown>;
+	// The List is the painted next page of another: its rows alone, standing in
+	// that List's box.
+	tail?: boolean;
 }
 
 // The item's leading mark, of the kind the slot names.
@@ -67,15 +75,48 @@ export function ListBase<T, V extends string | null = string>(
 	// Whether a row of the loaded list has a more act: the rows without one then
 	// keep its square, so every row's end stands at one x.
 	let room = false;
-	const frame = (rows: readonly ReactElement[], tree = false) => {
-		if (!framed && !divided)
-			return <View className={tree ? LIST_TREE : LIST}>{rows}</View>;
-		const lines = rows.map((row, index) => (
+	const hairlined = framed || divided;
+	const lines = (rows: readonly ReactElement[]) =>
+		rows.map((row, index) => (
 			<View key={row.key ?? index} className={between(index)}>
 				{row}
 			</View>
 		));
-		return framed ? lines : <View className={LIST_DIVIDED}>{lines}</View>;
+	// The more row ends the box, behind the hairline a further row would have;
+	// the rows it paints stand in its place at the box's rhythm.
+	const more =
+		props.more && !painted && !props.tail ? (
+			<MoreRow
+				read={props.more}
+				empty={items.length === 0}
+				paint={() => (
+					<ListBase
+						{...props}
+						more={undefined}
+						tail
+						drawn={{ painted: true, value: placeholderData() }}
+					/>
+				)}
+			/>
+		) : null;
+	const frame = (rows: readonly ReactElement[], tree = false) => {
+		if (props.tail) return hairlined ? lines(rows) : rows;
+		if (!hairlined)
+			return (
+				<View className={tree ? LIST_TREE : LIST}>
+					{rows}
+					{more}
+				</View>
+			);
+		const all = more
+			? [
+					...lines(rows),
+					<View key="more" className={between(rows.length)}>
+						{more}
+					</View>,
+				]
+			: lines(rows);
+		return framed ? all : <View className={LIST_DIVIDED}>{all}</View>;
 	};
 	if (props.row) {
 		const { row } = props;

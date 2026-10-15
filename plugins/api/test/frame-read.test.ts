@@ -265,6 +265,60 @@ test("a frame over a pages read has more, and a next page is fetchingMore", asyn
 	stop();
 });
 
+test("a next page that failed is not the frame's refetch error", async () => {
+	const client = new QueryClient();
+	const pages = read<unknown>(
+		{
+			queryKey: ["failing-pages"],
+			queryFn: async ({ pageParam }: { pageParam?: string }) => {
+				if (pageParam !== undefined) throw new Error("next fails");
+				return pageOf(0);
+			},
+			initialPageParam: undefined,
+			getNextPageParam: (last: { nextCursor: string | null }) =>
+				last.nextCursor,
+			retry: false,
+		} as never,
+		{ kind: "pages" },
+	);
+	let held: Held | undefined;
+	const { observer, state } = observe(
+		client,
+		planFrame(
+			pages,
+			(each) => {
+				held = each;
+				return each;
+			},
+			(r) => ({
+				fetchMore:
+					client.getQueryCache().find({ queryKey: r.options.queryKey })?.state
+						.fetchMeta?.fetchMore?.direction === "forward",
+			}),
+		),
+	);
+	const stop = observer.subscribe(() => {});
+	await tick();
+	state();
+	const next = new InfiniteQueryObserver(client, {
+		...pages.options,
+		enabled: false,
+	} as never);
+	await next.fetchNextPage();
+	await tick();
+	state();
+	// The query is in error over its first page; the frame reads it as loaded.
+	assert.equal(
+		client.getQueryCache().find({ queryKey: pages.options.queryKey })?.state
+			.status,
+		"error",
+	);
+	assert.equal(held?.root?.result.status, "success");
+	assert.equal(held?.root?.result.isRefetchError, false);
+	assert.deepEqual(held?.drawn?.value, [0]);
+	stop();
+});
+
 test("a stream read says so, and a plain read has no more", async () => {
 	const client = new QueryClient();
 	const stream = read(

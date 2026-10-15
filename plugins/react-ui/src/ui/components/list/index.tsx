@@ -1,6 +1,7 @@
 import {
 	type Datum,
 	type Drawn,
+	pagesOf,
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
 import type {
@@ -228,5 +229,11 @@ export function List<T, V extends string | null = string>(
 	list: ListProps<T, V>,
 ) {
 	const [drawn] = useSelections([list.items] as const);
-	return <ListBase {...list} drawn={drawn as Drawn<readonly T[]>} />;
+	return (
+		<ListBase
+			{...list}
+			drawn={drawn as Drawn<readonly T[]>}
+			more={pagesOf(list.items)}
+		/>
+	);
 }

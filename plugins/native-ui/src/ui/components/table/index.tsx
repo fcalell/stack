@@ -1,6 +1,9 @@
+import { placeholderData } from "@fcalell/plugin-api/read";
 import {
 	type Datum,
 	type Drawn,
+	pagesOf,
+	type Read,
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
 import type {
@@ -63,6 +66,7 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { type CellFit, FieldDisabled } from "../../lib/field";
 import { Ink } from "../../lib/ink";
+import { MoreRow } from "../../lib/more";
 import { navigate } from "../../lib/navigate";
 import { clipWhen, inertProps, Painted } from "../../lib/paint";
 import { useWords } from "../../lib/words";
@@ -80,6 +84,9 @@ import { StatusBase } from "../status/base";
 import { ChangeMark } from "../status/change";
 
 const ROOT = "grow";
+// The painted next page of the phone's list stands a rows gap under the loaded
+// one's box.
+const MORE_PAGE = "pt-rows";
 // The frozen leading column stands outside the sideways scroll, on the
 // surface, so the cells scroll beneath its hairline: React Native has no
 // sticky cell, and the two halves of a row share its height because every
@@ -188,6 +195,16 @@ export function Table<T>(props: TableProps<T>) {
 		: (drawn.value as readonly T[]);
 	const made = tableRecords(items, columns, props.row, props.choose, painted);
 	const records = painted ? made : sorted(made, columns, sort);
+	const more = painted ? undefined : pagesOf(props.items);
+	const blank = more
+		? tableRecords(
+				[placeholderData() as T],
+				columns,
+				props.row,
+				props.choose,
+				true,
+			)[0]
+		: undefined;
 	if (width < BREAKPOINT_PX.tablet)
 		return (
 			<View className={ROOT}>
@@ -200,6 +217,8 @@ export function Table<T>(props: TableProps<T>) {
 					onOpen={onOpen}
 					choose={props.choose}
 					painted={painted}
+					more={more}
+					blank={blank}
 					warns={props.row.warning !== undefined}
 					changes={props.row.change !== undefined}
 				/>
@@ -217,6 +236,7 @@ export function Table<T>(props: TableProps<T>) {
 				onOpen={onOpen}
 				onEdit={onEdit}
 				painted={painted}
+				more={more}
 			/>
 		</View>
 	);
@@ -512,6 +532,7 @@ function Grid(props: {
 	onOpen: ((id: string) => void) | undefined;
 	onEdit: ((id: string, key: string, value: CellValue) => void) | undefined;
 	painted: boolean;
+	more: Read<unknown> | undefined;
 }) {
 	const { columns, rows, sort, choose } = props;
 	const words = useWords();
@@ -545,94 +566,211 @@ function Grid(props: {
 	}));
 
 	return (
+		<>
+			<View
+				accessibilityState={{ busy: props.painted }}
+				className={cn(TABLE_FRAME, FRAME)}
+			>
+				{lead ? (
+					<View className={FROZEN_COLUMN}>
+						<View
+							className={cn(
+								tableRow({ state: "rest" }),
+								TABLE_FROZEN,
+								ROW_LINE,
+							)}
+						>
+							{choose ? (
+								<View
+									className={cn(TICK_BOX, tableFrozenCell({ state: "rest" }))}
+								>
+									<FieldDisabled.Provider value={!reach}>
+										<Checkbox
+											checked={chooseHead(rows, choose.chosen)}
+											onChange={() =>
+												choose.onChange(chooseAllToggled(rows, choose.chosen))
+											}
+											label={words.chooseAll}
+										/>
+									</FieldDisabled.Provider>
+								</View>
+							) : null}
+							<View className={COLUMN}>
+								<HeadCell
+									column={lead}
+									sort={sort}
+									frozen
+									onSort={() => props.onSort(lead.key)}
+								/>
+							</View>
+						</View>
+						{props.painted
+							? rows.map((_, index) => (
+									<PaintedLeadRow
+										// biome-ignore lint/suspicious/noArrayIndexKey: the painted rows are fixed stand-ins
+										key={index}
+										lead={lead}
+										choosing={choose !== undefined}
+										index={index}
+									/>
+								))
+							: rows.map((row) => (
+									<LeadRow
+										key={row.id}
+										row={row}
+										lead={lead}
+										name={name(row)}
+										chosen={row.id === props.selected}
+										choosing={choose !== undefined}
+										ticked={ticked.has(row.id)}
+										opens={opens(row)}
+										link={props.onOpen === undefined}
+										store={store}
+										actions={actions}
+									/>
+								))}
+					</View>
+				) : null}
+				<ScrollView
+					horizontal
+					showsHorizontalScrollIndicator={false}
+					className={SCROLLS}
+				>
+					<View>
+						<View className={cn(tableRow({ state: "rest" }), ROW_LINE)}>
+							{rest.map((column) => (
+								<View key={column.key} className={COLUMN}>
+									<HeadCell
+										column={column}
+										sort={sort}
+										frozen={false}
+										onSort={() => props.onSort(column.key)}
+									/>
+								</View>
+							))}
+						</View>
+						{props.painted
+							? rows.map((_, index) => (
+									<PaintedRestRow
+										// biome-ignore lint/suspicious/noArrayIndexKey: the painted rows are fixed stand-ins
+										key={index}
+										columns={rest}
+										index={index}
+									/>
+								))
+							: rows.map((row) => (
+									<RestRow
+										key={row.id}
+										row={row}
+										columns={rest}
+										chosen={row.id === props.selected}
+										opens={opens(row)}
+										edits={edits}
+										editing={editing?.row === row.id ? editing.key : undefined}
+										tall={chooseReason(row) !== undefined}
+										store={store}
+										actions={actions}
+									/>
+								))}
+					</View>
+				</ScrollView>
+			</View>
+			{props.more ? (
+				<MoreRow
+					read={props.more}
+					empty={rows.length === 0}
+					paint={() => (
+						<MorePage lead={lead} rest={rest} choosing={choose !== undefined} />
+					)}
+				/>
+			) : null}
+		</>
+	);
+}
+
+// A painted row's frozen half: the tick and the leading cell, painted.
+function PaintedLeadRow(props: {
+	lead: TableColumn;
+	choosing: boolean;
+	index: number;
+}) {
+	const { lead, index } = props;
+	return (
 		<View
-			accessibilityState={{ busy: props.painted }}
+			{...inertProps(true)}
+			className={cn(tableRow({ state: "rest" }), TABLE_FROZEN, ROW_LINE)}
+		>
+			{props.choosing ? (
+				<View className={cn(TICK_BOX, tableFrozenCell({ state: "rest" }))}>
+					<CheckboxBase checked={false} onChange={NOOP} label="" painted />
+				</View>
+			) : null}
+			<View
+				className={cn(
+					COLUMN,
+					TABLE_CELL,
+					CELL,
+					isEnd(lead) && CELL_END,
+					tableFrozenCell({ state: "rest" }),
+				)}
+			>
+				<PaintedCell column={lead} leading index={index} />
+			</View>
+		</View>
+	);
+}
+
+// A painted row's scrolling half: the other columns' cells, painted.
+function PaintedRestRow(props: {
+	columns: readonly TableColumn[];
+	index: number;
+}) {
+	return (
+		<View
+			{...inertProps(true)}
+			className={cn(tableRow({ state: "rest" }), ROW_LINE)}
+		>
+			{props.columns.map((column, place) => (
+				<View
+					key={column.key}
+					className={cn(COLUMN, TABLE_CELL, CELL, isEnd(column) && CELL_END)}
+				>
+					<PaintedCell
+						column={column}
+						leading={false}
+						index={props.index + place + 1}
+					/>
+				</View>
+			))}
+		</View>
+	);
+}
+
+// The next page while it loads: `PAINT_ROWS` painted rows at the grid's
+// columns, in a grid of their own under the loaded one, with no head.
+function MorePage(props: {
+	lead: TableColumn | undefined;
+	rest: readonly TableColumn[];
+	choosing: boolean;
+}) {
+	const { lead, rest } = props;
+	const at = Array.from({ length: PAINT_ROWS }, (_, index) => index);
+	return (
+		<View
+			accessibilityElementsHidden
+			importantForAccessibility="no-hide-descendants"
 			className={cn(TABLE_FRAME, FRAME)}
 		>
 			{lead ? (
 				<View className={FROZEN_COLUMN}>
-					<View
-						className={cn(tableRow({ state: "rest" }), TABLE_FROZEN, ROW_LINE)}
-					>
-						{choose ? (
-							<View
-								className={cn(TICK_BOX, tableFrozenCell({ state: "rest" }))}
-							>
-								<FieldDisabled.Provider value={!reach}>
-									<Checkbox
-										checked={chooseHead(rows, choose.chosen)}
-										onChange={() =>
-											choose.onChange(chooseAllToggled(rows, choose.chosen))
-										}
-										label={words.chooseAll}
-									/>
-								</FieldDisabled.Provider>
-							</View>
-						) : null}
-						<View className={COLUMN}>
-							<HeadCell
-								column={lead}
-								sort={sort}
-								frozen
-								onSort={() => props.onSort(lead.key)}
-							/>
-						</View>
-					</View>
-					{props.painted
-						? rows.map((_, index) => (
-								<View
-									// biome-ignore lint/suspicious/noArrayIndexKey: the painted rows are fixed stand-ins
-									key={index}
-									{...inertProps(true)}
-									className={cn(
-										tableRow({ state: "rest" }),
-										TABLE_FROZEN,
-										ROW_LINE,
-									)}
-								>
-									{choose ? (
-										<View
-											className={cn(
-												TICK_BOX,
-												tableFrozenCell({ state: "rest" }),
-											)}
-										>
-											<CheckboxBase
-												checked={false}
-												onChange={NOOP}
-												label=""
-												painted
-											/>
-										</View>
-									) : null}
-									<View
-										className={cn(
-											COLUMN,
-											TABLE_CELL,
-											CELL,
-											isEnd(lead) && CELL_END,
-											tableFrozenCell({ state: "rest" }),
-										)}
-									>
-										<PaintedCell column={lead} leading index={index} />
-									</View>
-								</View>
-							))
-						: rows.map((row) => (
-								<LeadRow
-									key={row.id}
-									row={row}
-									lead={lead}
-									name={name(row)}
-									chosen={row.id === props.selected}
-									choosing={choose !== undefined}
-									ticked={ticked.has(row.id)}
-									opens={opens(row)}
-									link={props.onOpen === undefined}
-									store={store}
-									actions={actions}
-								/>
-							))}
+					{at.map((index) => (
+						<PaintedLeadRow
+							key={index}
+							lead={lead}
+							choosing={props.choosing}
+							index={index}
+						/>
+					))}
 				</View>
 			) : null}
 			<ScrollView
@@ -641,59 +779,9 @@ function Grid(props: {
 				className={SCROLLS}
 			>
 				<View>
-					<View className={cn(tableRow({ state: "rest" }), ROW_LINE)}>
-						{rest.map((column) => (
-							<View key={column.key} className={COLUMN}>
-								<HeadCell
-									column={column}
-									sort={sort}
-									frozen={false}
-									onSort={() => props.onSort(column.key)}
-								/>
-							</View>
-						))}
-					</View>
-					{props.painted
-						? rows.map((_, index) => (
-								<View
-									// biome-ignore lint/suspicious/noArrayIndexKey: the painted rows are fixed stand-ins
-									key={index}
-									{...inertProps(true)}
-									className={cn(tableRow({ state: "rest" }), ROW_LINE)}
-								>
-									{rest.map((column, place) => (
-										<View
-											key={column.key}
-											className={cn(
-												COLUMN,
-												TABLE_CELL,
-												CELL,
-												isEnd(column) && CELL_END,
-											)}
-										>
-											<PaintedCell
-												column={column}
-												leading={false}
-												index={index + place + 1}
-											/>
-										</View>
-									))}
-								</View>
-							))
-						: rows.map((row) => (
-								<RestRow
-									key={row.id}
-									row={row}
-									columns={rest}
-									chosen={row.id === props.selected}
-									opens={opens(row)}
-									edits={edits}
-									editing={editing?.row === row.id ? editing.key : undefined}
-									tall={chooseReason(row) !== undefined}
-									store={store}
-									actions={actions}
-								/>
-							))}
+					{at.map((index) => (
+						<PaintedRestRow key={index} columns={rest} index={index} />
+					))}
 				</View>
 			</ScrollView>
 		</View>
@@ -990,6 +1078,9 @@ function Phone(props: {
 	onOpen: ((id: string) => void) | undefined;
 	choose: Pick<TableChoice<never>, "chosen" | "onChange"> | undefined;
 	painted: boolean;
+	more: Read<unknown> | undefined;
+	// A record over the placeholder, the next page's painted rows.
+	blank: TableRecord | undefined;
 	warns: boolean;
 	changes: boolean;
 }) {
@@ -1032,7 +1123,7 @@ function Phone(props: {
 	// A slot is declared only when a column fills it, so the painted rows
 	// stand in the slots the loaded ones draw; a mark whose cell the placeholder
 	// does not shape (a status, a chip, an age) is given by its column instead.
-	const row: RowSlots<TableRecord> = {
+	const slots = (painted: boolean): RowSlots<TableRecord> => ({
 		key: (record) => record.id,
 		title: (record) =>
 			leading ? shown(leading, cell(record, leading)) : record.id,
@@ -1107,7 +1198,7 @@ function Phone(props: {
 		selected: (record) => record.id === props.selected,
 		// A row with `href` goes there; the others open through `onOpen`.
 		onOpen: onOpen ? (record) => onOpen(record.id) : undefined,
-	};
+	});
 	return (
 		<>
 			{pick}
@@ -1117,8 +1208,22 @@ function Phone(props: {
 						? { painted: true, value: props.rows[0] }
 						: { painted: false, value: props.rows }
 				}
-				row={row}
+				row={slots(painted)}
 			/>
+			{props.more && props.blank ? (
+				<MoreRow
+					read={props.more}
+					empty={props.rows.length === 0}
+					paint={() => (
+						<View className={MORE_PAGE}>
+							<ListBase
+								drawn={{ painted: true, value: props.blank }}
+								row={slots(true)}
+							/>
+						</View>
+					)}
+				/>
+			) : null}
 		</>
 	);
 }

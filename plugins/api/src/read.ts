@@ -316,6 +316,11 @@ export function planFrame<S>(
 		combine: (results) => {
 			const root = isRead(selection) ? selection : undefined;
 			const first = results[0];
+			const forward = root?.kind === "pages" && query(root)?.fetchMore === true;
+			// A next page that failed is the collection's line (its more row), not
+			// the read's: the frame holds the pages it has, so it is not stale.
+			const nextFailed =
+				forward && first?.status === "error" && first.isRefetchError;
 			return derive({
 				...(selection !== undefined && {
 					drawn: {
@@ -330,12 +335,14 @@ export function planFrame<S>(
 						root: {
 							result: {
 								...first,
+								...(nextFailed && {
+									status: "success" as const,
+									isRefetchError: false,
+									error: null,
+								}),
 								streamed: root.kind === "stream",
 								hasNextPage: root.kind === "pages" && moreOf(first.data),
-								fetchingMore:
-									root.kind === "pages" &&
-									first.fetchStatus === "fetching" &&
-									query(root)?.fetchMore === true,
+								fetchingMore: forward && first.fetchStatus === "fetching",
 							},
 							missing: root.missing,
 						},

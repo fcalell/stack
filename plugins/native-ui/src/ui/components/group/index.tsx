@@ -1,4 +1,8 @@
-import { type Drawn, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Drawn,
+	pagesOf,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import { GROUP, GROUP_ITEM } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
 import { View } from "react-native";
@@ -55,7 +59,12 @@ export function Group<T, V extends string | null = string>(
 	let body: ReactNode;
 	if (props.list)
 		body = (
-			<ListBase {...props.list} drawn={drawn as Drawn<readonly T[]>} framed />
+			<ListBase
+				{...props.list}
+				drawn={drawn as Drawn<readonly T[]>}
+				more={pagesOf(props.list.items)}
+				framed
+			/>
 		);
 	else
 		body = props.items.map((entry, index) => (

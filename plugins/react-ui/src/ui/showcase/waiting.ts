@@ -132,3 +132,37 @@ export function itemsAt<T>(
 	itemed.set(key, made);
 	return made;
 }
+
+export type MoreState = "next" | "fetching" | "failed";
+
+const paged = new Map<string, Read<readonly unknown[]>>();
+
+/** A pages read that holds `rows` as its first page with another after it: the next page answers nothing, so it loads for good ("fetching"), fails ("failed"), or is not asked for ("next", where "Show more" stands). The same read for the same key; a frame that holds it as its root is its one holder, so each takes its own key. */
+export function pagesAt<T>(
+	key: string,
+	how: MoreState,
+	rows: readonly T[],
+): Read<readonly T[]> {
+	const held = paged.get(key);
+	if (held) return held as Read<readonly T[]>;
+	const made = read<readonly T[]>(
+		{
+			queryKey: ["showcase", key, "pages"],
+			queryFn: ({ pageParam }: { pageParam?: string }) => {
+				if (pageParam === undefined)
+					return Promise.resolve({ data: rows, nextCursor: "1" });
+				if (how === "failed")
+					return Promise.reject(new Error("The showcase next page fails."));
+				return new Promise<never>(() => {});
+			},
+			initialPageParam: undefined,
+			getNextPageParam: (last: { nextCursor: string | null }) =>
+				last.nextCursor ?? undefined,
+			staleTime: Number.POSITIVE_INFINITY,
+			retry: false,
+		} as never,
+		{ kind: "pages" },
+	);
+	paged.set(key, made);
+	return made;
+}

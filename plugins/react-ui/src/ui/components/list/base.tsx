@@ -1,4 +1,5 @@
-import type { Drawn } from "@fcalell/plugin-api/tanstack-query";
+import { placeholderData } from "@fcalell/plugin-api/read";
+import type { Drawn, Read } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type { RowLeading } from "@fcalell/ui-core/descriptors";
 import {
@@ -22,6 +23,7 @@ import {
 	useState,
 } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { MoreRow } from "../../lib/more.tsx";
 import { ListedRoute, useRoute } from "../../lib/navigate.ts";
 import { DefinitionRowBase } from "../definition-row/index.tsx";
 import { FileRowBase } from "../file-row/index.tsx";
@@ -35,6 +37,10 @@ export interface ListInternal<T> {
 	framed?: boolean;
 	/** The items as the List (or the Group framing it) subscribed to them: real, or the placeholder while the read waits, which paints `PAINT_ROWS` rows. */
 	drawn: Drawn<readonly T[]>;
+	/** The pages read the items come from, when it has pages: the List ends in its more row. */
+	more?: Read<unknown>;
+	/** The List is the painted next page of another: its rows alone, standing in that List's box. */
+	tail?: boolean;
 }
 
 const STACK = "flex flex-col";
@@ -100,6 +106,25 @@ export function ListBase<T, V extends string | null = string>(
 	// keep its square, so every row's end stands at one x.
 	let room = false;
 	const frame = (rows: ReactNode, nav?: TreeNav) => {
+		if (props.tail) return <ListedRoute value={at}>{rows}</ListedRoute>;
+		// The more row ends the box, so the rows it paints stand at the box's
+		// rhythm; a tree's box holds treeitems alone, so its row follows it.
+		const list = props;
+		const more =
+			props.more && !painted ? (
+				<MoreRow
+					read={props.more}
+					empty={items.length === 0}
+					paint={() => (
+						<ListBase
+							{...list}
+							more={undefined}
+							tail={!nav}
+							drawn={{ painted: true, value: placeholderData() }}
+						/>
+					)}
+				/>
+			) : null;
 		let box = rows;
 		if (framed && nav)
 			box = (
@@ -111,9 +136,15 @@ export function ListBase<T, V extends string | null = string>(
 			box = (
 				<div {...nav} className={cn(nav ? LIST_TREE : flat, STACK)}>
 					{rows}
+					{nav ? null : more}
 				</div>
 			);
-		return <ListedRoute value={at}>{box}</ListedRoute>;
+		return (
+			<ListedRoute value={at}>
+				{box}
+				{nav || framed ? more : null}
+			</ListedRoute>
+		);
 	};
 	if (props.row) {
 		const { row } = props;

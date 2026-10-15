@@ -39,8 +39,11 @@ import { orpc } from "../lib/api.ts";
 import { DeployChanges } from "./deploy-changes.tsx";
 
 type Deploys = AppRouter["deploys"];
-type Deploy = Deploys["list"]["__output"][number];
+type Deploy = Deploys["list"]["__output"]["data"][number];
 type OpenDeploy = Deploys["get"]["__output"];
+
+// Deploys a page holds: the list pages in fives, behind "Show more".
+const PAGE = 5;
 
 const ENVIRONMENTS: Record<Deploy["environment"], ChipMark> = {
 	production: { family: "teal", label: "Production" },
@@ -425,7 +428,7 @@ function DeployDetails(props: { deploy: Selection<OpenDeploy> }) {
 // The Deploys place's first Pane: the deploys, a row opening one beside it.
 export function DeployList() {
 	const queryClient = useQueryClient();
-	const deploys = orpc.deploys.list.read();
+	const deploys = orpc.deploys.list.pages({ limit: PAGE });
 	const removePreviews = useMutation(
 		orpc.deploys.removePreviews.mutationOptions(),
 	);

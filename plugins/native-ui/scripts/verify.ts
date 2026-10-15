@@ -209,6 +209,7 @@ const NATIVE_OVERLAYS = [
 	"pb-inside",
 	"pt-float",
 	"pt-pair",
+	"pt-rows",
 	"px-card",
 	"py-0",
 	"py-pair",

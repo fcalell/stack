@@ -41,6 +41,7 @@ const DRAWN_STATES = [
 	"stale",
 	"paused",
 	"streaming",
+	"more",
 ] as const satisfies readonly State[];
 export type DrawnState = (typeof DRAWN_STATES)[number];
 const isDrawn = (state: State): state is DrawnState =>

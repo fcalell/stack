@@ -14,6 +14,7 @@
 		"./lib/empty": "./src/ui/lib/empty.tsx",
 		"./lib/glyph": "./src/ui/lib/glyph.tsx",
 		"./lib/hosts": "./src/ui/lib/hosts.tsx",
+		"./lib/more": "./src/ui/lib/more.tsx",
 		"./lib/not-found": "./src/ui/lib/not-found.tsx",
 		"./lib/paint": "./src/ui/lib/paint.tsx",
 		"./lib/read": "./src/ui/lib/read.tsx",
