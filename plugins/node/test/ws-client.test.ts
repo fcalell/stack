@@ -40,7 +40,6 @@ test("subscriptions sharing a channel each get its frames, and the channel is le
 	globalThis.WebSocket = FakeSocket as unknown as typeof WebSocket;
 	try {
 		const client = createWsClient({ url: "ws://test/ws" });
-		const socket = FakeSocket.last as FakeSocket;
 		const seen: string[] = [];
 		const shell = client.subscribe(inbox, {
 			onMessage: { snapshot: (s) => seen.push(`shell ${s.count}`) },
@@ -49,6 +48,7 @@ test("subscriptions sharing a channel each get its frames, and the channel is le
 			onMessage: { snapshot: (s) => seen.push(`place ${s.count}`) },
 		});
 
+		const socket = FakeSocket.last as FakeSocket;
 		// Opened after both subscribed: one `sub` for the channel.
 		socket.emit("open");
 		assert.deepEqual(socket.sent, [{ t: "sub", ch: "inbox" }]);
@@ -85,8 +85,8 @@ test("reconnect opens a closed socket at once and resubscribes, and does nothing
 	globalThis.WebSocket = FakeSocket as unknown as typeof WebSocket;
 	try {
 		const client = createWsClient({ url: "ws://test/ws" });
-		const first = FakeSocket.last as FakeSocket;
 		client.subscribe(inbox, { onMessage: {} });
+		const first = FakeSocket.last as FakeSocket;
 		first.emit("open");
 		client.reconnect();
 		assert.equal(FakeSocket.last, first, "an open socket is kept");
@@ -99,6 +99,40 @@ test("reconnect opens a closed socket at once and resubscribes, and does nothing
 		second.emit("open");
 		assert.deepEqual(second.sent, [{ t: "sub", ch: "inbox" }]);
 		client.close();
+	} finally {
+		globalThis.WebSocket = real;
+	}
+});
+
+test("a client opens no socket until its first subscribe or reconnect, and a status listener hears connecting only then", () => {
+	const real = globalThis.WebSocket;
+	globalThis.WebSocket = FakeSocket as unknown as typeof WebSocket;
+	FakeSocket.last = undefined;
+	try {
+		const client = createWsClient({ url: "ws://test/ws" });
+		assert.equal(FakeSocket.last, undefined, "created, no socket");
+
+		const statuses: string[] = [];
+		client.subscribe(inbox, {
+			onMessage: {},
+			onStatus: (status) => statuses.push(status),
+		});
+		const socket = FakeSocket.last as unknown as FakeSocket | undefined;
+		assert.ok(socket, "the first subscribe connects");
+		assert.deepEqual(statuses, ["connecting"]);
+		socket.emit("open");
+		assert.deepEqual(socket.sent, [{ t: "sub", ch: "inbox" }]);
+		client.close();
+
+		// A reconnect on a client that never connected opens it.
+		FakeSocket.last = undefined;
+		const lazy = createWsClient({ url: "ws://test/ws" });
+		lazy.reconnect();
+		assert.ok(FakeSocket.last, "reconnect connects a fresh client");
+		const opened = FakeSocket.last;
+		lazy.subscribe(inbox, { onMessage: {} });
+		assert.equal(FakeSocket.last, opened, "the subscribe shares that socket");
+		lazy.close();
 	} finally {
 		globalThis.WebSocket = real;
 	}

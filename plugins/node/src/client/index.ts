@@ -23,7 +23,8 @@ export interface WsClient {
 	): Subscription<C>;
 	// Tries the socket now, skipping what is left of the backoff; a no-op
 	// while it is open or opening. A retry that keeps every draft, where a
-	// reload would lose them.
+	// reload would lose them. On a client that never connected it opens the
+	// socket.
 	reconnect(): void;
 	close(): void;
 }
@@ -36,8 +37,9 @@ interface LiveSubscription {
 const BACKOFF_BASE_MS = 250;
 const BACKOFF_CAP_MS = 5000;
 
-// One shared socket per client, auto-reconnecting with capped exponential
-// backoff. Any number of subscriptions may share a channel: every frame on
+// One shared socket per client, opened by the first subscribe or reconnect
+// (a client made at module level holds none before sign-in),
+// auto-reconnecting with capped exponential backoff. Any number of subscriptions may share a channel: every frame on
 // it reaches each of them, a new one sends `sub` so the server snapshots
 // again, and `unsub` goes only when the channel's last one leaves. On every
 // (re)open the client re-sends `sub` once per channel, so a server that
@@ -140,8 +142,6 @@ export function createWsClient(options: { url?: string } = {}): WsClient {
 		}, delay);
 	}
 
-	connect();
-
 	return {
 		subscribe(def, handlers) {
 			const live: LiveSubscription = {
@@ -152,6 +152,10 @@ export function createWsClient(options: { url?: string } = {}): WsClient {
 			if (socket && socket.readyState === WebSocket.OPEN) {
 				sendFrame({ t: "sub", ch: def.name });
 				handlers.onStatus?.("open");
+			} else if (!socket && !reconnectTimer && !closed) {
+				// Never connected: this opens it, and says "connecting" to the
+				// new subscription with the rest.
+				connect();
 			} else {
 				handlers.onStatus?.(closed ? "closed" : "connecting");
 			}

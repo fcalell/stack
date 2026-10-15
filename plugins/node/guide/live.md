@@ -22,7 +22,9 @@ export const inbox = channelRead(ws, inboxChannel, {
 });
 ```
 
-Create the client once and share it; every channel read rides its one socket. A handler gets the
+Create the client once and share it; every channel read rides its one socket. The client opens
+that socket on its first subscribe, so one made at module level holds none before the first
+channel read (before sign-in, say). A handler gets the
 current value (`undefined` before the snapshot), the frame's payload and `{ client }`, to write
 another read's key. Returning `undefined` changes nothing. A handler that throws fails the read:
 before the snapshot it is the frame's failure, after it the read is stale with its last value

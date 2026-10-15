@@ -56,7 +56,7 @@ export const board = defineChannel("board", {
 
 The hub takes `onSubscribe(conn)`, `onUnsubscribe(conn)` and `onMessage.<type>(payload, conn)`;
 `conn.id` is stable for the socket's life. In the app, `createWsClient()` from
-`@fcalell/plugin-node/client` opens one socket to `/ws`, and
+`@fcalell/plugin-node/client` opens one socket to `/ws` on its first subscribe, and
 `client.subscribe(board, { onMessage: { tick(payload) {} }, onStatus(status) {} })` answers a
 subscription with `send(type, payload)` and `unsubscribe()`. The client reconnects on its own and
 subscribes again, so a channel that sends a snapshot in `onSubscribe` stays consistent.
