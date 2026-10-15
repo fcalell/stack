@@ -97,8 +97,8 @@ export interface BannerInk {
 // The act every Button renders; `banner` is the ink a Banner hands its quiet
 // act. It holds its own run: inert at the press, then (after `ACT_DELAY`) its
 // glyph and label hidden under the spinner, its name kept; a rejection is a
-// failed toast with Retry. `pending` is a host's state handed down (its
-// handler returns nothing, so the act's own run never pends twice); `line`
+// failed toast with Retry. `pending` is a host's state handed down: the
+// host holds the run, so a press calls the handler as it is; `line`
 // draws a rejection under the act instead (the public Button standing alone).
 // Pending and blocked acts stay focusable and ignore the press, a
 // blocked one says why under itself once pressed or once its form or sheet is
@@ -154,9 +154,12 @@ export function ButtonBase({
 			: (toned?.tone ?? buttonContentTone(kind));
 	const press = () => {
 		if (pending || inert) return;
-		if (!muted) acting.run(true, { onAct: () => onAct?.(), failed });
-		else if (host) host.press();
-		else keep();
+		if (muted) {
+			if (host) host.press();
+			else keep();
+		} else if (given === undefined)
+			acting.run(true, { onAct: () => onAct?.(), failed });
+		else onAct?.();
 	};
 	const control = (
 		<Pressable

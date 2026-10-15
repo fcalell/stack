@@ -33,6 +33,7 @@ function Verify() {
 						acts: [
 							{
 								label: "Verify",
+								failed: "The code was not accepted.",
 								onAct: async () => {
 									await verify.mutateAsync({ name: DOMAIN, code });
 									toast(`${DOMAIN} verified`, { state: "done" });

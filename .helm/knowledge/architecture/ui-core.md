@@ -221,7 +221,7 @@ its rationale.
 
 Every word a molecule draws on its own (the seven `Status` words, `recommended`,
 `copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`,
-`attach`, `search`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`,
+`attach`, `search`, `checking`, `retry`, `add`, `remove`,
 `edit`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`,
 `message`, `copyFailed`, `downloadFailed`, `latest`,
 `missing`, `readFailed`, `readEmpty`, `chooseFile`, `typeValue`, `pickValue`, `locked`, `photos`, `files`,

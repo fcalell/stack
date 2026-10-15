@@ -108,6 +108,7 @@ function Settings() {
 							{ label: "Cancel", onAct: act },
 							{
 								label: "Save",
+								failed: "The settings were not saved.",
 								onAct: async () => {
 									await save.mutateAsync({
 										name: "",
@@ -228,6 +229,7 @@ function Settings() {
 													label: "Unpair",
 													icon: "Unlink",
 													destructive: true,
+													failed: `${device} could not be unpaired.`,
 													onAct: async () => {
 														await unpair.mutateAsync({ name: device });
 														toast(`${device} unpaired`, { state: "done" });

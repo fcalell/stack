@@ -163,7 +163,7 @@ always draws the touch set and so the touch structure.
 Every word a molecule draws on its own comes from `words`, a typed object passed once
 beside `theme`: the seven `Status` words, `recommended`, `copy`, `copied`, `download`, `back`,
 `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `checking`,
-`retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `edit`, `details`, `places`,
+`retry`, `add`, `remove`, `edit`, `details`, `places`,
 `notifications`, `code`, `added`, `removed`, `sort`, `message`,
 `copyFailed`, `downloadFailed`, `latest`, `missing`, `readFailed`, `readEmpty`, `readStale`, `readPaused`, `showMore`, `moreFailed`, `replyStopped`, `actFailed`, `chooseFile`, `typeValue`,
 `pickValue`, `locked`, `photos`, `files`, `changed`, `unchanged`, `stale`, `chooseAll`,

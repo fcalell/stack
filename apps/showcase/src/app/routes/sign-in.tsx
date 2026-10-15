@@ -47,11 +47,13 @@ function SignIn() {
 									{ label: "Back", onAct: () => setAt("email") },
 									{
 										label: "Resend",
+										failed: "The code was not sent again.",
 										onAct: () => sendCode.mutateAsync({ email }),
 										quiet: true,
 									},
 									{
 										label: "Verify",
+										failed: "The code was not accepted.",
 										onAct: () => verify.mutateAsync({ email, code }),
 										blocked:
 											code.length === 6 ? undefined : "Enter the 6-digit code.",

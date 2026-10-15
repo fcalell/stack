@@ -58,7 +58,7 @@ export function useAct<K = true>(where: "line" | "toast"): Acting<K> {
 /** Where a save's rejection is drawn: the field's error line when the control stands in a field, else a failed toast whose Retry saves again. `own` is the save's sentence when the server gives no refusal. */
 export function useFailed(
 	own?: string,
-): (error: unknown, again: () => void) => void {
+): (error: unknown, again: () => unknown) => void {
 	const words = useWords();
 	const refuse = use(FieldRefusal);
 	return (error, again) => {
@@ -81,7 +81,7 @@ export function useHeldDraft<T>(value: Datum<T>): Draft<T> {
 		...draft,
 		change: (next, save) => {
 			refuse?.(undefined);
-			draft.change(next, save);
+			return draft.change(next, save);
 		},
 	};
 }

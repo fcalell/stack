@@ -328,7 +328,9 @@ export interface Draft<T> {
 	// refetch its invalidation started on this value's reads, then the value
 	// follows its datum unless edited since; rejected, it falls back to the
 	// datum and `failed` hears the error with a way to save the same value again.
-	change: (next: T, save?: () => unknown) => void;
+	// It returns that save's promise (never rejecting: the rejection is `failed`'s
+	// to draw), so an act that saves again holds the run.
+	change: (next: T, save?: () => unknown) => Promise<void> | undefined;
 }
 
 // A field's value: its selection until the viewer edits it, the edit after. An
@@ -337,7 +339,7 @@ export interface Draft<T> {
 // so a value the app changes shows, and a plain edit has nothing to keep.
 export function useDraft<T>(
 	value: Datum<T>,
-	failed?: (error: unknown, again: () => void) => void,
+	failed?: (error: unknown, again: () => unknown) => void,
 ): Draft<T> {
 	const client = useQueryClient();
 	const [drawn] = useSelections([value] as const);
@@ -350,13 +352,13 @@ export function useDraft<T>(
 	if (kept && !liveKept) setKept(null);
 	if (held && !liveHeld) setHeld(null);
 	const live = liveHeld ?? liveKept;
-	const change = (next: T, save?: () => unknown) => {
+	const change = (next: T, save?: () => unknown): Promise<void> | undefined => {
 		const seq = ++latest.current;
 		const saving = save && heldAct(save);
 		if (!isThenable(saving)) {
 			setHeld(null);
 			if (key !== undefined) setKept({ key, value: next });
-			return;
+			return undefined;
 		}
 		setKept(null);
 		setHeld({ key, value: next });
@@ -370,6 +372,10 @@ export function useDraft<T>(
 				failed(error, () => change(next, save));
 			},
 		});
+		return Promise.resolve(saving).then(
+			() => undefined,
+			() => undefined,
+		);
 	};
 	return {
 		painted: !live && drawn.painted,

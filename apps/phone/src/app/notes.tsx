@@ -8,7 +8,6 @@ import { Section } from "@fcalell/plugin-native-ui/components/section";
 import { Sheet } from "@fcalell/plugin-native-ui/components/sheet";
 import { age } from "@fcalell/plugin-native-ui/lib/age";
 import { confirm } from "@fcalell/plugin-native-ui/lib/confirm";
-import { toast } from "@fcalell/plugin-native-ui/lib/toast";
 import type { Act } from "@fcalell/ui-core/descriptors";
 import { useState } from "react";
 import { orpc } from "../lib/api";
@@ -27,11 +26,8 @@ export default function Notes() {
 	const add: Act = {
 		label: "Add",
 		blocked: title.trim() ? undefined : "Give the note a title.",
-		onAct: () =>
-			create.mutateAsync({ title }).then(
-				() => setOpen(false),
-				() => toast("The note was not added.", { state: "failed" }),
-			),
+		failed: "The note was not added.",
+		onAct: () => create.mutateAsync({ title }).then(() => setOpen(false)),
 	};
 	const ask = (note: { id: string; title: string }) =>
 		confirm({
@@ -40,11 +36,8 @@ export default function Notes() {
 			act: {
 				label: "Delete",
 				destructive: true,
-				onAct: () =>
-					remove.mutateAsync({ id: note.id }).catch((error: unknown) => {
-						toast("The note was not deleted.", { state: "failed" });
-						throw error;
-					}),
+				failed: "The note was not deleted.",
+				onAct: () => remove.mutateAsync({ id: note.id }),
 			},
 		});
 	return (

@@ -47,14 +47,15 @@ export function InputOtp({
 	const failed = useFailed();
 	const refuse = useContext(FieldRefusal);
 	const checking = run.pending !== undefined;
-	const complete = (code: string) =>
-		run.run(true, () => {
-			const result = onComplete?.(code);
-			if (!isThenable(result)) return result;
-			return Promise.resolve(result).catch((error: unknown) =>
-				failed(error, () => complete(code)),
-			);
-		});
+	// The attempt a Retry runs again: its promise, so the toast's act holds it.
+	const attempt = (code: string): unknown => {
+		const result = onComplete?.(code);
+		if (!isThenable(result)) return result;
+		return Promise.resolve(result).catch((error: unknown) =>
+			failed(error, () => attempt(code)),
+		);
+	};
+	const complete = (code: string) => run.run(true, () => attempt(code));
 	const { touch } = useTouched();
 	const name = useFieldName();
 	const error = useContext(FieldError);

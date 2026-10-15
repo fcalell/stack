@@ -136,6 +136,7 @@ function Invite(props: { open: boolean; onClose: () => void }) {
 			description="They join Acme once they accept the email."
 			submit={{
 				label: "Send invite",
+				failed: "The invitation was not sent.",
 				blocked: email ? undefined : "Enter an email address first.",
 				onAct: async () => {
 					await invite.mutateAsync({ email, role, permissions });
@@ -193,6 +194,7 @@ function Record(props: {
 			description={draft?.email}
 			submit={{
 				label: "Save",
+				failed: "The member was not saved.",
 				onAct: async () => {
 					if (draft) await props.onSave(draft);
 					props.onClose();
@@ -286,6 +288,7 @@ function MemberTable(props: { members: Read<readonly Member[]> }) {
 			act: {
 				label: "Transfer ownership",
 				destructive: true,
+				failed: "Ownership was not transferred.",
 				onAct: async () => {
 					await owner.mutateAsync({ id: member.id });
 					toast(`${member.name} owns Acme`, { state: "done" });
@@ -303,8 +306,8 @@ function MemberTable(props: { members: Read<readonly Member[]> }) {
 				onEdit={(id, key, value) => {
 					const member = members.find((each) => each.id === id);
 					if (!member) return;
-					if (key === "role" && value === "owner") transfer(member);
-					else update.mutate({ id, ...edited(key, value) });
+					if (key === "role" && value === "owner") return transfer(member);
+					return update.mutateAsync({ id, ...edited(key, value) });
 				}}
 			/>
 			<Record
@@ -330,6 +333,7 @@ function Members() {
 			act: {
 				label: "Revoke",
 				destructive: true,
+				failed: "The invitation was not revoked.",
 				onAct: async () => {
 					await revokeInvitation.mutateAsync();
 					setInvited(false);

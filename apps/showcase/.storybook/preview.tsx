@@ -27,8 +27,28 @@ const painted = () =>
 		requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
 	);
 
+// The dev checks of plugin-api's acts (a mutation an act started without
+// returning its promise, a failure nothing drew) log to `console.error`; a
+// story that trips one fails, so a route or a story that wires an act wrong
+// cannot pass.
+const DEV_CHECK = /returned no promise|nothing drew its failure/;
+const tripped: string[] = [];
+const logged = console.error;
+
 const preview: Preview = {
-	afterEach: painted,
+	beforeEach: () => {
+		tripped.length = 0;
+		console.error = (...args: unknown[]) => {
+			if (typeof args[0] === "string" && DEV_CHECK.test(args[0]))
+				tripped.push(args[0]);
+			logged(...args);
+		};
+	},
+	afterEach: async () => {
+		await painted();
+		console.error = logged;
+		if (tripped.length) throw new Error(tripped.join("\n"));
+	},
 	// The test run is desktop density; touch is a toolbar toggle.
 	initialGlobals: { density: "desktop" },
 	globalTypes: {

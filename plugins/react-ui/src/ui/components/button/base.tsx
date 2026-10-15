@@ -61,7 +61,7 @@ function lookOf(kind: ButtonAct, pending: boolean, muted: boolean): string {
 	return PRESS[kind];
 }
 
-/** The act every Button renders; it holds its own run: inert and `aria-busy` at the press, the pending look after `ACT_DELAY`, a rejection drawn in a failed toast with Retry. `ink` is the text class a quiet act draws in (a Banner's kind's ink, as its glyph does). `painted` is the act while its data is not here: its box filled, its content not drawn, inert. `pending` is a host's state handed down (its handler returns nothing, so the act's own run never pends twice). `line` draws a rejection in a reason line under the act instead (the public Button standing alone). Outside the package's exports: a molecule that draws an act hands it its ink. */
+/** The act every Button renders; it holds its own run: inert and `aria-busy` at the press, the pending look after `ACT_DELAY`, a rejection drawn in a failed toast with Retry. `ink` is the text class a quiet act draws in (a Banner's kind's ink, as its glyph does). `painted` is the act while its data is not here: its box filled, its content not drawn, inert. `pending` is a host's state handed down: the host holds the run, so a press calls the handler as it is and the act holds none of its own. `line` draws a rejection in a reason line under the act instead (the public Button standing alone). Outside the package's exports: a molecule that draws an act hands it its ink. */
 export function ButtonBase({
 	act,
 	fit,
@@ -103,9 +103,12 @@ export function ButtonBase({
 	const quietInk = kind === "quiet" && ink;
 	const press = () => {
 		if (inert || pending) return;
-		if (!muted) acting.run(true, { onAct: () => onAct?.(), failed });
-		else if (host) host.press();
-		else keep();
+		if (muted) {
+			if (host) host.press();
+			else keep();
+		} else if (given === undefined)
+			acting.run(true, { onAct: () => onAct?.(), failed });
+		else onAct?.();
 	};
 	// Blocked is not Base UI's `disabled`, which swallows the press that shows
 	// the reason: aria-disabled is set by hand, and the caller's props win the merge.
