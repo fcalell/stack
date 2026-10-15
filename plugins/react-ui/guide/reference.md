@@ -42,17 +42,18 @@ a scroller, only the rows near the view and `OVERSCAN` past each edge are drawn,
 the room of the rest. No prop turns it on or off. The scrollers are a `Pane`'s body, a `Sheet`'s
 body (docked or not), a `Gate`'s page and a `Thread`'s log, the nearest one winning, so a `List` in
 a `Sheet` windows against the `Sheet`. A `List` (rows, files, meters and definitions, flat), a
-`Group`'s list, a `Table` at both widths and a `Thread` window; trees, `Comparison`, `BarChart`
-and `OptionList` draw every row. A row is exactly one element. A collection that crosses the count
+`Group`'s list, a `Table` at both widths, a `Thread`, trees, an `OptionList`, a `Picker`'s options,
+a `Comparison` and a `BarChart` (sideways, at a fixed bar width) window; a standalone `Select` draws
+every option. A row is exactly one element. A collection that crosses the count
 (a Show more) keeps the rows it drew. A part of your own that scrolls and holds a long collection
 provides `Scroller` (`lib/window`) with `useScroller`; one that draws its own rows from a long
-list uses `Window` (`lib/window`), given every row built and the box they stand in.
+list uses `Window` (`lib/window`), given `count`, `keyOf`, `row(index)` (built only for the mounted indices) and the box the rows stand in.
 
 ## Acts
 
 An act's holder reads from `useAct(where)` (`lib/act`): `pending` (which act runs), `holds` (it
-runs and does not wait for a connection, so siblings stand inert), `line` (its rejection's sentence,
-or "Waiting for a connection."), and `run(key, act)`. `where` is `"line"` for a holder that draws the
+runs, so siblings stand inert), `line` (its rejection's sentence, or "No connection." / the app's
+`unreachable` sentence for an act refused for the connection), and `run(key, act)`. `where` is `"line"` for a holder that draws the
 sentence itself, as the `ActionBar` and `Sheet` do, or `"toast"` for a failed toast with Retry. A
 control of your own that saves as it changes takes `useHeldDraft(value)` (the draft that holds its
 value while a save pends and toasts a refusal, whose Retry saves it again; a `FormField`'s own descriptors are hosted by the field instead, which draws the refusal in its line); `draft.change(next, () =>

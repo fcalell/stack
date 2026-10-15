@@ -344,15 +344,15 @@ screen's. A form in a `Sheet` or a `Gate` is that drawer's `form` prop (a `Form`
 pinned above the keyboard while a long form's fields scroll, and the sheet asks nothing when it
 closes; the sheet's own `submit` and the form's `bar` are two ways to complete the task: give one,
 never both. A `Section` never stands in a `Section`, and its title is one size (the heading)
-everywhere, a sheet's body included. A `Pane` and a `Section` take `empty` (`{ icon?, title?, sentence, act?,
-children? }`) for a body that holds nothing yet and draw it in place of the body: the `Pane`'s centres
-in what the body leaves (its title at the heading role, its act the filled one with the plus), a
-`Section`'s stands in a hairline frame (its title at body 500, its act the hairline one), or is one
-quiet sentence at the meta role when only `sentence` is given. A frame draws the empty form of the
-collection in it; a collection draws none. There is no `EmptyState` component to place. One form among a screen's sections is `Section > Form`, so every section's
+everywhere, a sheet's body included. A `Pane`, `Section`, `Sheet`, `Form` and form group take `empty` (`{ sentence, act? }`) for a body that
+holds nothing yet, drawn in place of the body only when the frame's own `read` is empty: a frame with no `read`
+has no `empty`, and the read alone decides, never a count the app checks. The `Pane`'s centres in what the body
+leaves, its act the filled one with the plus; a `Section`'s stands in a hairline frame, its act the hairline one,
+or is one quiet sentence at the meta role when only `sentence` is given. A collection a frame holds the read of
+leaves its empty to that frame; a collection of its own read draws its own, generic one ("Nothing here yet."). There is no `EmptyState` component to place. One form among a screen's sections is `Section > Form`, so every section's
 head-to-body gap stays the pair step; a form of several titled parts under one Save is `groups`. A `Form`
 given a `read` is a frame, and so is a group given its own: the fields paint while it waits and its
-failure stands in their place, the form's filled act painted and inert with them. A field's value is
+failure stands in their place. The form's bar waits only on the form's own read (a group's never reaches it): it paints while that read waits and is blocked with the failed sentence once it failed. A field's value is
 a selection (`value={workspace.at((w) => w.name)}`) that the viewer's edit replaces.
 
 A `FormField` takes its control as exactly one descriptor, the component's own props less the label
@@ -376,13 +376,16 @@ A `Section`'s head ends in its `act`, then its `more` (a `MenuItem[]`, destructi
 
 ## Collections take data
 
-A collection takes data and draws its rows; the frame around it (a `Pane`, `Section`, `Sheet` or
-`Form`, given the read) draws its failed, missing and empty forms. A `List` takes `items` (static, or
+A collection takes data and draws its rows. Given a selection, a collection is a frame of its own
+items: it draws its failed form with Retry, its missing form and its empty form in its own box with the
+generic sentences, and the stale and paused line above its rows, whatever stands above it; a `Pane`,
+`Section`, `Sheet` or `Form` that holds the same read draws instead, and the collection is not mounted
+under its failure. A `List` takes `items` (static, or
 a selection of a read) and one item map, `row` for `ListRow`s, `file` for `FileRow`s, `meter` for `Meter`s or `definition` for
 `DefinitionRow`s (facts from data: `label`, `value`, and `description`, `act`, `href` and `onOpen` or
 `locked`, with `copyable` one value for the list), one function per slot; declare a slot only if
 every item fills it. Pending, it paints four rows in those slots, run over the placeholder;
-the frame shows the failure with Retry and, empty, its `empty` with the act that fills it. Rows share one `leading` kind
+a failed list shows the failure with Retry. Rows share one `leading` kind
 (`avatar`, `icon` or `status`) or none. The first meta part names the item. A row's meta line
 yields from its end, in this strict order: the later parts truncate (a `{ quoted }` part cuts ahead
 of the plain ones, so a long quote or reason yields and an age and spend that must read are the
@@ -437,7 +440,7 @@ that creates nothing is a `Missing`; a read is a frame's `read`, and a frame's `
 A `Table` takes its data the same way: `items`, a constant or a selection that paints four rows until it lands; each column reads its
 cell from the item by `cell`, and `row` gives the row's `id`, `href`, `locked`, `warning` (what is
 wrong with it, drawn after its name) and `change` (where it stands in a change set, its mark ahead
-of its name). Its failed, missing and empty forms are its frame's. A collection over a paginated read (`orpc.x.list.pages(input)`) ends in a more row of its own: "Show more", pressed by the viewer (nothing loads by scrolling); while the next page loads, `PAINT_ROWS` painted rows follow the loaded ones; a failed page is "Couldn't load more." with Retry. The frame is not busy for it and its Section draws no count while more remains; an empty first page with more is fetched on, not drawn empty. A `Table` paints its next page as rows in the same slots, and `items={deploys}` is all a collection takes. An editable table
+of its name). Its failed, missing and empty forms are its own. A collection over a paginated read (`orpc.x.list.pages(input)`) ends in a more row of its own: "Show more", pressed by the viewer (nothing loads by scrolling); while the next page loads, `PAINT_ROWS` painted rows follow the loaded ones; a failed page is "Couldn't load more." with Retry. The frame is not busy for it and its Section draws no count while more remains; an empty first page with more is fetched on, not drawn empty. A `Table` paints its next page as rows in the same slots, and `items={deploys}` is all a collection takes. An editable table
 (`onEdit`) draws a lock after a cell its row locks; a column's own `locked` makes it read
 only, its lock in the head alone.
 
@@ -474,8 +477,7 @@ const notes = orpc.notes.list.read();
 An `OptionList` holds a static set in `options`, which never paints. Options from a read take `items`
 (constants or a selection) and an `option` map over the check row: `value`, `label`, `description`,
 `recommended`, `blocked` and `group`; while the read waits it paints four rows in the shape the map
-declares, and the Pane, Section, Sheet or Form that holds the read draws its failed and empty
-forms. A `value` selection paints the boxes or rings until it lands. The `value` picks the
+declares. An `OptionList` shows its options' state itself: a failed or missing read is the failed sentence with Retry (or the missing one) in a line under the control, with no frame needed. A `value` selection paints the boxes or rings until it lands. The `value` picks the
 form: a set (`onChange` hears the set) draws check rows, one value or `null` (`onChange` hears
 the value) radio rows, one answer among a few described options. An option that cannot be chosen
 now carries `blocked`, a short reason that replaces its description in the disabled ink (in an
@@ -483,7 +485,7 @@ now carries `blocked`, a short reason that replaces its description in the disab
 place in the list. Once the option is in the value it draws and acts as any chosen one and stays
 removable, so `blocked` never traps a value.
 
-A `Thread` takes its `items` (constants, or a selection, which paints four messages of the other author until its read lands; the Pane, Section or Sheet that holds the read draws the failed, missing and empty forms) through a `message` map (`key`,
+A `Thread` takes its `items` (constants, or a selection, which paints four messages of the other author until its read lands; its failed and missing forms stand in the log's place, its empty form is an empty log with no sentence, and its foot and reply stand through each) through a `message` map (`key`,
 `author`, `name`, `body`, `at`, `attachments`, `meta`, `streaming`, `onOpen`, `detail`), each reading only its
 item, since a message draws again only when its item changes; its `foot` is a `MessageInput`, and
 its `sheet` (a `Sheet`'s props) docks in the input's place while it is `open`. While a reply from the other author is on its way, set `replying`:
@@ -561,7 +563,7 @@ A column is a width and the region around it aligns it: a docked foot (a `Pane`'
 to space them.
 
 A `BarChart` takes data the same way, its `bar` map reading each item's `key`, `value`,
-`parts` (by its declared `keys`) and `at`; its frame draws its failed and empty forms, and while `items` waits the total and the legend's figures are painted and the plot is one painted box at the loaded height.
+`parts` (by its declared `keys`) and `at`; it draws its failed and empty forms, and while `items` waits the total and the legend's figures are painted and the plot is one painted box at the loaded height.
 Its head sums the bars, which is right for a flow (requests per day); bars that are a level (open
 flags per round, a reading each hour) take `level`, and the head draws the last bar, never the sum.
 A `unit` that takes a plural is `{ one: "flag", other: "flags" }`, never a bare plural: the head reads the
@@ -569,7 +571,7 @@ form its figure takes ("1 flag", "6 flags"). Money is `{ currency: "USD" }`: the
 currency, exact ("$30.97"), the axis whole when its step is, and no word follows; never a spelled `dollars` beside a figure the
 page writes with its symbol.
 
-A region that reads is a frame. Give a `Pane`, `Section`, `Sheet` or `Form` (or one of a form's groups) its `read`: a read (`orpc.deploys.get.read({ id })`), a selection of one (`deploy.at((d) => d.steps)`) or a `combine` of several. A frame holds the reads of its `read` that no enclosing frame holds, so a Section given a selection of the read its Pane holds draws nothing of that read's state. A read's states draw once per surface (a Pane or a Sheet): a read that several regions share is held by the frame around all of them, usually the Pane, written `combine([value, ...shared], (value) => value)` (the frame's value feeds only its empty form and count, so the first read's stands for it); its loading, failure, stale and paused lines then draw once, with one Retry. Two frames side by side on one surface holding the same read is a dev error naming the read. A frame with no data (waiting, still, failed or missing) paints its acts inert; a failed or missing Pane is the whole page, draws no foot and no docked sheet, and Retry is its one act. A frame draws the failed form when a read it holds fails, the missing form when it answers not found, and its `empty` when its selection is an empty array, `null` or `undefined` on real data. A collection holds no state: `items` is all it takes, so one outside a frame raises a dev error when its read fails. A read held by the app's own `useQuery` is not a frame's; that region draws its states itself.
+A region that reads is a frame. Give a `Pane`, `Section`, `Sheet` or `Form` (or one of a form's groups) its `read`: a read (`orpc.deploys.get.read({ id })`), a selection of one (`deploy.at((d) => d.steps)`) or a `combine` of several. A frame holds one read: the one read of its selection that no enclosing frame holds and that is not quiet. A Section given a selection of the read its Pane holds draws nothing of that read's state, and a second held read in one frame is a dev error naming both keys, so a region that draws two reads is two frames and a leaf that needs both takes `combine`. `or` is for enrichments only: `names.or("a board")` falls back quietly and never fails a frame, so it serves a name, a badge or a lane order, and a read whose rows, options, facts or text are drawn is never `or`. Sibling regions that draw one read each hold it and each fail in place; a repeated line is accepted, and a read is never lifted into a frame around its siblings. A frame draws the failed form when its read fails, the missing form when it answers not found, and its `empty`, a `{ sentence, act? }`, when its own read is an empty array, `null` or `undefined` on real data; a frame with no read has no `empty`. A failed Pane is the whole page with Retry as its one act, but its foot and docked sheet stand, since they answer to their own reads. Acts paint by their own datum: a constant act is always live, and an act given as a selection paints while its read waits, stands still with no sentence when its read is not asked for, and is blocked once its read ended, with the failed sentence (`words.missing` when missing). A collection (`List`, `Table`, `Thread`, `BarChart`, `Comparison`, `Canvas`, `Diff`) and an option control (`Picker`, `Select`, `OptionList`) given a selection show their own read's state in their own box, whatever stands above them. A field hosts its control's save, so a refusal draws in the field's line (a control standing alone toasts it), and a form's bar waits only on the form's own read. No act queues offline: an act pressed with no connection is refused with the connection's sentence ("No connection."), and nothing is sent later. A read held by the app's own `useQuery` is not a frame's; that region draws its states itself.
 
 The waiting form is the loaded form painted (structure rule 15): while a selection's read waits, each leaf draws its loaded tree with filler in place of its text, at the loaded heights, in the `skeleton` colour (`PAINT`: filler glyphs for text, the component's own box for a mark or a control). A painted part is inert and hidden from the screen reader: no press, no focus, no link. A collection paints four rows (`PAINT_ROWS`) in the slots its item map declares, run over a placeholder, so write each slot plainly (`p.name`, `d.steps.length`); a slot that throws there paints itself, silently. Nothing shows for 400 ms (`WAIT_DELAY` in `@fcalell/ui-core/paint`): the paint stands transparent in its place, so the screen keeps its height, then its fill snaps in (the phone has no fade). A read the local server answers in a few milliseconds draws none. The delay is fixed, not an option. Only a frame that holds a read is busy to assistive tech (`accessibilityState`), while it waits.
 

@@ -10,8 +10,9 @@ const ability = useAbility(organizationId);
 return ability.can("delete", "organization") ? <DeleteOrganization /> : null;
 ```
 
-Gate an act that stands in a frame's head as a selection, so it paints inert while the rules load
-and is never blocked by a wait:
+Gate an act that stands in a frame's head as a selection. It paints its box while the rules load,
+stands still with no sentence when they are not asked for, and is blocked with the failed sentence
+once that read has failed or is missing, never a false yes:
 
 ```tsx
 const rules = ability(organizationId);
@@ -40,4 +41,4 @@ organization subject (`writes: ["member"]` on a role change) invalidates every o
 rules. Never read the ability instance out of the query cache: it is composed (memoized) outside
 it, and a copy from the cache is a new instance every render.
 
-**Check:** `pnpm check` passes, and under `pnpm dev` a member without the grant sees the act inert.
+**Check:** `pnpm check` passes, and under `pnpm dev` a member without the grant sees the act blocked with your reason.

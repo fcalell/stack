@@ -46,12 +46,28 @@ A frame draws more than the first wait of its root. While the data stays it mark
 asked for yet (`enabled: false`, `skipToken`) paints still, as a paused one does. All of it comes
 with the frame's `read`; write nothing for it.
 
-A frame holds the reads of its `read` that no enclosing frame holds, and draws their failure, stale
-and paused lines. A Pane given `deploy` holds it, and a Section inside it given `deploy.at(...)`
-holds nothing; a Section given `combine([inbox, jobs, board], f)` under a Pane with no `read` holds
-all three, and draws the failed form when any of them fails with no data. Sibling frames may each
-hold a read and draw its state in their own place. In dev a read that fails with no data while a
-leaf paints it and no frame holds it raises `console.error` (give its Pane, Section, Sheet or Form
-`read`). A read you hold with your own `useQuery` is not checked.
+A frame holds one read: the one read of its `read` that is neither quiet nor held by an enclosing
+frame, and it draws that read's failure, stale and paused lines. A Pane given `deploy` holds it, and
+a Section inside it given `deploy.at(...)` holds nothing. A second such read in one selection is a
+dev `console.error` naming both keys (the frame holds the first); a leaf that needs two reads takes
+`combine`, and a region that draws two reads is two frames. Sibling frames that draw the same read
+each hold it and each fail in place, so a failure repeats in each; there is no lifting a shared read
+to an outer frame. In dev a read that fails with no data while a leaf paints it and no frame holds it
+raises `console.error` (give its Pane, Section, Sheet or Form `read`). A read you hold with your own
+`useQuery` is not checked.
+
+A read that only enriches (a name, a badge, a lane order, a link) is `selection.or(fallback)`: real
+data when its reads have it and `fallback` in every other state. It never paints, holds or fails a
+frame, and a read used only through `or` is quiet: subscribed, never held. A read whose rows,
+options, facts or text a component draws is never `or`.
+
+A read that a collection or an option control draws is that component's own: a `List`, `Table`,
+`Thread`, `Picker` or `Select` given a selection shows that read's state in its own box, whatever
+stands above it.
+
+A query made with `read()` (and a channel made with `channelRead`) holds its first answer when the
+paint has shown, until the paint has stood for the minimum (`QueryProvider hold`, which a UI plugin
+passes from its live timings); a refetch or a later page is never held. A query built without
+`read()` is not held.
 
 **Check:** `pnpm check` passes, and the screen paints, then shows its data under `pnpm dev`.

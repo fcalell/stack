@@ -931,9 +931,11 @@ a tick with no animation, never jumped to full.
   sections gap apart (one rung above Prose's block gap), and its `MessageInput` its `foot`, the one
   authored part. While the selection's read waits the log holds `PAINT_ROWS` messages of the other
   author (an author is the item's and unknown before the data, so `author(P)` falls to `other`),
-  Message's internal `painted` form: the name and a paragraph of filler, inert. The failed, missing
-  and empty forms are the frame's (a Pane, Section or Sheet holding the read), which replaces the
-  Thread, so an input that must outlive them docks in the Pane's `foot`. A reply on its way is the
+  Message's internal `painted` form: the name and a paragraph of filler, inert. A Thread is a frame of its
+  items (`useCollection`): its failed and missing forms stand in the log's place with Retry, and
+  its empty form is an empty log with no sentence; its foot and reply stand through each, so a
+  thread whose items failed still sends. A Pane, Section or Sheet holding the same read draws
+  instead and replaces the Thread, so an input that must outlive that docks in the Pane's `foot`. A reply on its way is the
   Thread's boolean `replying`: the loaded log ends on one
   loading Message of the other author, after the items, followed and pinned to as any message is and
   replaced in place when the app adds the reply's item and clears the flag. It is a prop and not a
@@ -1064,16 +1066,19 @@ a tick with no animation, never jumped to full.
   wrapping at a space and breaking a token only when it outruns the line. The line stays the centred
   meta line; a fold's line is its toggle, so it opens nothing else. A line and its card stand a pair step apart (`MESSAGE_ENTRY`), the label over its content as a Section's title is over its body. A thread holds one item kind, so
   a row or a `Code` between messages is a detail, never a second item map or children.
-- A collection takes data and draws its rows; the frame draws the rest. A `List` takes `items` (a
+- A collection takes data and draws its rows, and given a selection it is a frame of its own items.
+  A `List` takes `items` (a
   constant, or a selection that paints) and one item map: `row`, one function per `ListRow` slot,
   `file`, one per `FileRow` slot, `meter`, one per `Meter` slot, or `definition`, one per
-  `DefinitionRow` slot (`copyable` one value for the list). It holds no read and no state branch,
-  and neither do Table, Thread, OptionList, BarChart or Comparison: the state
-  belongs to the frame, which holds the read once, so a collection never draws a second copy of the
-  failure the Section around it draws. The frame (a Pane, Section, Sheet or Form given the read) draws the failed form with Retry, the missing form
-  and the empty form (its `empty`, the act that fills the list) in the body's place, in the fit the
-  collection would; a collection outside every frame whose read fails raises the dev no-holder
-  error. While the selection's read waits, a List paints `PAINT_ROWS` rows from the item map's
+  `DefinitionRow` slot (`copyable` one value for the list). `useCollection` (`lib/read`) gives a
+  List, Group's list, Table, Thread, BarChart, Comparison, Canvas (its `nodes`) and Diff (its
+  `hunks`) the form of their own selection alone, whatever stands above: the failed form with Retry,
+  the missing form and the empty form in the collection's own box with the generic sentences
+  (`readFailed`, `words.missing`, `readEmpty`), and the stale and paused line above its rows while
+  it holds its read. A frame that holds the same read draws instead and unmounts the collection
+  with its failure, so the flags are drawn once. The collection takes no `empty` and no `failed`: a
+  sentence of its own is the frame's. A collection whose read fails with no frame holding it holds
+  it itself, so the dev no-holder error stays quiet. While the selection's read waits, a List paints `PAINT_ROWS` rows from the item map's
   slots, run over the placeholder through `painting` (a slot that throws paints itself with a dev
   warning, never the page), so a painted row draws exactly the slots the map declares: a ListRow's
   filler in each declared text slot and a painted mark per declared `status`, `chip`, `warning`,
@@ -1250,9 +1255,9 @@ a tick with no animation, never jumped to full.
   fields of a query result it reads and imports neither TanStack nor React) gives the phase
   (`idle`, `waiting`, `ready`, `failed`, `missing`) both platforms share, so no error shape is
   guessed and no prop is added. `frameOf` folds a frame's held root and drawn value into its form
-  (`ready`, `waiting`, `still`, `empty`, `failed`, `missing`). A frame given a root read draws the missing
-  form when it is `missing` and the failed form (with Retry) when it is `failed`; a frame given a
-  selection draws neither, since the frame holding the root does. The form is
+  (`ready`, `waiting`, `still`, `empty`, `failed`, `missing`). A frame draws the missing
+  form when its own selection's read is `missing` and the failed form (with Retry) when it is
+  `failed`, whichever frame holds the read above it. The form is
   (`missing/base.tsx`): the empty state's frame at rest ink with no mark, the word `missing`
   ("This no longer exists.") and Back, the hairline act with no plus (a Back is no create act,
   as Retry is not; the base's internal `missing` tone carries it), never Retry. The form is
@@ -1296,17 +1301,25 @@ a tick with no animation, never jumped to full.
   read, so the two cannot drift. A failed tone's act is the hairline one in every form, a first run's
   included. Its act is a function act, never a `LinkAct` (a way back is a `Missing`). A frame's
   failed form says `readFailed` ("This didn't load.") or its own `failed` sentence, and its Retry
-  refetches the root and shows `loading` while it does; a frame's empty form says `readEmpty`
+  refetches the read it holds and pends while it does; a frame's empty form says `readEmpty`
   ("Nothing here yet.") or its `empty`. Rejected: a frame taking a mutation's result (a frame holds
   a read, and a fake read is a workaround), `Missing` taking an `Act` (its form has no mark and no
   Retry) and an empty-state tone (the look option `tone` stays internal).
 - An empty state is no placed component (`EmptyState` is gone from the roster): a `Pane`, a
-  `Section` and a first-run `Gate` take `empty` (`EmptyProps`: `icon`, `title`, `sentence`, `act`, `children`) and draw it in place of their body, as a `Sheet`, a `Form` and a form's groups do for an empty `read`; a collection draws none. One drawer
-  (`lib/empty`) takes an internal `fit` from whoever stands it, so nothing reads where it stands (the
-  `PageTitle`, `SectionContext` and `GroundContext` reads are gone): `page` (a Pane's: centred in what the body leaves, or at its top over its own children;
-  the title at `heading`, the act the filled one with the plus), `first` (a Gate's: the page's `h1` at
-  `title`, the acts stacked across the column), `frame` (a Section's, a Sheet's, a Form's and a group's, and `Failed` and `Missing`: the `EMPTY_FRAME` hairline card, the title at body 500 and the act the hairline one, or one quiet sentence at meta when only `sentence` is given). `PageTitle` stays the id of the title that labels a Thread's log and a Table's grid, and nothing else. A Pane already draws its `h1`, so its empty state stands
-  at the `heading` role under it.
+  `Section`, a `Sheet`, a `Form` and a form's groups take `empty` (`Empty`: `{ sentence, act? }`) and
+  draw it in place of their body, only when the frame's own `read` is empty. The read alone decides:
+  a frame with no `read` has no `empty` (`PaneProps` and `SectionProps` are unions, so `read={maybe}`
+  with `empty` does not type-check), and it carries a sentence and an act, no icon, title or children. A first-run `Gate` takes `empty` as `GateFirstRun` (`icon`, `title`, `sentence`, `act`,
+  `children`), a page and not a read's empty state, which stays as it was. A collection draws its own
+  generic empty form. One drawer (`lib/empty`) takes an internal `fit` from whoever stands it, so
+  nothing reads where it stands (the `PageTitle`, `SectionContext` and `GroundContext` reads are
+  gone): `page` (a Pane's: centred in what the body leaves, or at its top over its own children, the
+  act the filled one with the plus), `first` (a Gate's: the page's `h1` at `title`, the acts stacked
+  across the column), `frame` (a Section's, a Sheet's, a Form's and a group's, a collection's, and
+  `Failed` and `Missing`: the `EMPTY_FRAME` hairline card and the act the hairline one, or one quiet
+  sentence at meta when only `sentence` is given). The drawer's title and children branches serve the
+  Gate's first run alone. `PageTitle` stays the id of the title that labels a Thread's log and a
+  Table's grid, and nothing else.
 - A `Comparison` is a collection of facts with the List's source (`items`, a constant or a selection)
   and a `row` map over a fact's slots: `key`, `label`, `values` (one per column, in order), `chips`
   and `status`. A fact's `status` is its verdict, a `StatusMark` drawn in the label's line after the
@@ -1323,8 +1336,8 @@ a tick with no animation, never jumped to full.
   selection) and an `option` map over the check row's slots (`value`, `label`, `description`,
   `recommended`, `blocked`, and `group`, the label it stands under, groups in the order they first
   appear). Painted, a set from data is `PAINT_ROWS` check rows, two-line only when `description` is
-  declared, under a group label's filler only when `group` is; its failed and empty forms are the
-  frame's, so the field keeps its place in the form while it waits. Its `value` is a `Datum`
+  declared, under a group label's filler only when `group` is; its options' state is its own
+  (`useOptions`, `lib/read`): while the read waits the trigger or rows paint, and once it has failed or is missing the control draws the failed sentence with Retry (or `words.missing`) in a line under itself, with no busy or stale flag and no frame needed, so the field keeps its place in the form. Its `value` is a `Datum`
   followed through `useDraft`: a selection paints the boxes or rings until it lands, and the
   viewer's pick then replaces it. No Section reads it. Its projection (`optionsOf`) is in
   `./list-state`.
@@ -1351,7 +1364,7 @@ a tick with no animation, never jumped to full.
   gridline and the baseline carries the 0, so the top tick reaches half a meta line above the plot
   and the body stands that far below the head (`tickReach`; the web's `1lh / 2`). Its `keys` are declared, so its painted form is the legend standing with its figures painted, the
   total a painted figure and the plot one painted box at its loaded height, the time labels filler.
-  Its failed and empty forms are the frame's.
+  Its failed and empty forms are its own.
 - A Section's rhythm has two steps: its head is paired to its body (`SECTION`, `pair`) and the body's own parts (a Prose, a Code, a Group, an ActionBar) stand the `fields` step apart
   (`SECTION_BODY`) wherever the Section sits, so a dense run of parts reads as parts; a Group keeps its
   rows' own tight spacing.
@@ -1367,28 +1380,32 @@ a tick with no animation, never jumped to full.
   the page's content stays inside the Pane's or Gate's landmark. The phone's Section is a
   `View` with no role. The render walk's same-name check stays for the regions an app names
   itself.
-- A Section holds the reads of its body (`read`: a read, a selection or a `combine` of several; it holds those no enclosing frame holds) and draws its failed,
-  missing and empty forms in the body's place, the head standing. The forms are `FrameBody`'s
-  (`lib/read`, one per platform) over the state `useFrame` derives with plugin-api's
-  `useFrameRead(read, frameOf)`: one `useQueries` per frame whose derivation runs in `combine`, so a
-  frame renders when its form, count or busy changes and never on a value change. A frame holds the
-  reads of its selection that no enclosing frame holds (`FrameHolds`, a context of query hashes,
-  identity only, which `FrameBody` publishes to the body): it draws their failed and missing forms
-  (the first read failed with no data ends the frame) and their busy, stale and paused lines, and is
-  `aria-busy` while it waits (the phone's `accessibilityState.busy`). A frame that holds none draws
-  only waiting, empty and its count. A read draws once per surface: a Pane and a Sheet are
-  surfaces (`Holds.surface`, a new identity beside the hashes, which `useFrame(read, true)` starts),
-  and the frame enclosing every region that draws a read holds it, written
-  `combine([value, ...shared], (value) => value)`; the app places a shared read on the common frame,
-  usually the Pane. Sibling frames never each hold one read: in dev `holdReads` counts holders per
-  (surface, key) and logs an error on the second, naming the key and saying to hold it once on the
-  frame around both. Two Panes in a Place, or a portaled Sheet and its Pane, are different surfaces;
-  a Pane's docked foot and docked sheet stand inside the Pane's holds, so they are the same surface.
-  A frame with no data paints its acts inert (`Frame.inert`: waiting, still, failed or missing; a
-  Pane's actions and more, a Section's act, more and count, a Sheet's submit); paused or stale with
-  data stays live. A failed or missing Pane draws no foot and no docked sheet: its failed form is
-  the whole page with Retry the one act, and while waiting the foot stays, inert. A selector that
-  throws over the placeholder returns it silently; a throw over real data rethrows. Empty is an empty array, `null` or `undefined` on real data.
+- A Section holds one read of its body (`read`: a read, a selection or a `combine`; the one
+  non-quiet read no enclosing frame holds) and draws its failed, missing and empty forms in the
+  body's place, the head standing. The forms are `FrameBody`'s (`lib/read`, one per platform) over
+  the state `useFrame` derives with plugin-api's `useFrameRead(read, frameOf)`: one `useQueries` per
+  frame whose derivation runs in `combine`, so a frame renders when its form, count or busy changes
+  and never on a value change. A frame's form comes from its own selection alone. `HoldsContext`
+  (`FrameHolds`, a context of query hashes, identity only, which `FrameBody` publishes to the body
+  and which both verifies sweep for rule 11) places flags and nothing else: the frame that holds a
+  read draws its busy, stale and paused lines, is `aria-busy` while it waits (the phone's
+  `accessibilityState.busy`), registers with the dev holder registry, and has Retry refetch the read
+  it holds. Sibling frames that draw one read each hold it and each fail in place; the repeated
+  line is accepted, and a read is never lifted into a frame around them. A second
+  non-quiet read in one frame is a dev `console.error` naming both keys, and the frame holds the
+  first. `selection.or(fallback)` is for enrichments (a name, a badge, a lane order): a read used
+  only through `or` is quiet, subscribed and never held, painted or registered, and its part gives
+  the fallback in every state but real data. A Sheet, a Pane's docked foot and docked sheet and a
+  Thread's foot start with no holds. Acts paint by their own datum (`Drawn.phase`): a constant act
+  is live in every form of the frame; a selection act paints while its read waits, stands still
+  with no sentence when its read is idle or paused with no data, and stands blocked with the failed
+  sentence (`words.missing` when missing) once its read ended. A Pane's actions and more, a
+  Section's act and more, a Banner's act, a row's act and more, a Sheet's or Form's submit (its own
+  read's) all follow that, and a Section's count shows only when its form is ready or empty. A
+  failed or missing Pane is the whole page with Retry its one act, its foot and docked sheet kept. A
+  selector that throws over the placeholder returns it silently; a throw over real data rethrows.
+  Empty is an empty array, `null` or `undefined` on real data, and the frame's read alone decides
+  it.
   The body's leaves paint on their own selections: a List and a Group their painted rows, a Prose,
   a Thread, a Code, a Meter, a Slider, a DefinitionRow and a FormField's control take a `Datum` and
   read nothing from the Section, so no context carries a wait flag (structure rule 11: a context carries identity only). A body that is an app's own component draws as it is and reads with
@@ -1457,9 +1474,11 @@ a tick with no animation, never jumped to full.
   arrives with the commit, so a collection mounting with its Pane windows in its first draw, from
   the viewport's size, and renders once more to measure against the element. The nearest scroller
   wins, so a List in a portaled Sheet never windows against the Pane. `Window` is TanStack Virtual
-  over it: the host builds every row and passes them with the box they stand in, `Window` returns
-  them unchanged below the count or with no scroller (crossing the count on a Show more keeps the
-  same keys in the same parent, so nothing remounts) and otherwise returns the mounted slice
+  over it: the host gives `Window({ count, keyOf, row })` and the box the rows stand in, and
+  `Window` builds `row(index)` only for the mounted indices, so the rest are never built or rendered
+  (each row kind is one `memo` component taking its item, index, descriptor and `painted`); below
+  the count or with no scroller it returns every row (crossing the count on a Show more keeps the
+  same keys in the same parent, so nothing remounts) and otherwise the mounted slice
   between spacers (`aria-hidden`, a `tr` in a tbody, sized against the box's `row-gap`). Rows are
   measured by their place among the box's children (a row is exactly one element, enforced in
   dev), never by an attribute or wrapper; offsets are box-relative, re-reported by a
@@ -1475,9 +1494,16 @@ a tick with no animation, never jumped to full.
   cursor first and focuses in a layout effect so Ctrl+End reaches the last row, and carries
   `aria-rowcount` and `aria-rowindex`), and Thread (the log is the scroller, its content div the
   box, `end` opens at the last rows; `replying`, `ReplyTurn` and the more row stand after the
-  window, so a token grows outside it). Not windowed: trees (their keyboard queries the DOM's
-  treeitems), Comparison, BarChart, OptionList, and painted forms (`PAINT_ROWS`, always below the
-  count). Rows carry no settle names, so the settle and the shift check are unchanged. Accepted:
+  window, so a token grows outside it), trees (the tab stop's row kept mounted, keys moving by
+  index over the visible rows, `treeRows` saying each row's place among its siblings for
+  `aria-setsize` and `aria-posinset`), an OptionList's groups (a memo `OptionRow` each; the checkboxes
+  carry no set size, the radios their place in the group), a Picker's sheet and its desktop search
+  list (Base UI's virtualized combobox, from `VIRTUAL_FROM` options, the highlight kept mounted and
+  brought into view), Comparison (its facts behind a kept head row, with `aria-rowcount` and
+  `aria-rowindex`, on the Group's `GroupCard`) and BarChart (past `VIRTUAL_FROM` bars it keeps a
+  bar's width and scrolls sideways under its axis, its bars and times windowing along x through
+  `Window horizontal`). Not windowed: a standalone Select (Base UI's Select has no virtualization;
+  it would have to become a combobox) and painted forms (`PAINT_ROWS`, always below the count). Rows carry no settle names, so the settle and the shift check are unchanged. Accepted:
   find in page and print reach drawn rows only. The phone draws every row and its Thread keeps
   its inverted log; the design for it stays open in `states.md` §7 until a device measures it.
 - **The phone wires TanStack's managers.** `QueryProvider listen` takes `online` and `focus`
@@ -1490,8 +1516,8 @@ a tick with no animation, never jumped to full.
   on the web, a labelled group with a header on the phone, `FORM_GROUP` and `FORM_LEGEND`, the groups
   a `sections` step apart), a TypeScript-exclusive union a `steps` shape can join. Its `bar` is the
   ActionBar's own props, drawn in the foot (`FORM_FOOT` under a form of groups; stuck in a sheet on
-  the web); the form reads no child. A form's `read` frames all its fields and a group's `read` its own (`FormGroup.read`, `empty`, `failed`): each group is a frame, so a page of a workspace group and a devices group reads each where it stands, and the bar's filled act paints, inert, with the form's read. A FormField's control is exactly one descriptor (`switch`, `checkbox`, `slider`, `select`,
-  `options`, `segments`: the component's own props less the label the field supplies) or its
+  the web); the form reads no child. A form's `read` frames all its fields and a group's `read` its own (`FormGroup.read`, `empty`, `failed`): each group is a frame, so a page of a workspace group and a devices group reads each where it stands, and the bar follows the form's own read alone: its filled act paints while that read (or its sheet's) waits and stands blocked with the failed sentence once it ended, and a group's read never reaches it. A FormField's control is exactly one descriptor (`switch`, `checkbox`, `slider`, `select`,
+  `options`, `segments`, `input`, `textArea`, `picker`: the component's own props less the label the field supplies) or its
   `children` for any other control, and the field's form comes from which is set; a DefinitionRow
   likewise takes an explicit `switch` or `pick` (an `OptionPick`, drawn as the Picker at the row fit,
   named by the row's label, the way an ItemHeader's pick fact is) in place of its `value`; a painted pick row stands the picker's box where its value stands. `FormIn` is `page`, `sheet`, `auth`
@@ -1866,12 +1892,8 @@ a tick with no animation, never jumped to full.
   every file either platform hands over (a drop and the phone's picker can bring any); the phone's
   picker names MIME types alone, so `pickerTypes` asks for every type when `accept` holds an
   extension. A refused file never reaches `onChange`: it is drawn in the `FormField`'s own error
-  line (the `FieldRefusal` context a `FormField` gives its control, the line then in error and the
-  box on `edge-error`), cleared by the next pick, so the error stays one place. A `FileInput`
-  therefore stands only inside a `FormField`: outside one a refusal has nowhere to stand and
-  vanishes, and the control has no error line of its own (react-ui's verify flags a `FileInput`
-  drawn outside a `FormField` in the package's own sources; an app's `.tsx` is out of its reach, so
-  the rule is the guide's). The web draws a drag-over as the focus ring (the contract has no dashed
+  line under its box (the line then in error and the box on `edge-error`), the control's own
+  and cleared by the next pick, so the error stays one place and nothing reports up to a parent. The web draws a drag-over as the focus ring (the contract has no dashed
   edge); the phone has no drop. `expo-document-picker` is a native-ui peer declared as
   `expo-clipboard` is; its config plugin only sets an iCloud container, so the component needs none.
 - `Canvas` (web only) draws a graph on two libraries that react-ui carries as its own
@@ -2001,16 +2023,17 @@ a tick with no animation, never jumped to full.
   through `SheetBase acting`. A host hands `pending` to the act it renders, whose handler
   then returns nothing: `ButtonBase pending` makes a hosted button call its handler as it is, since
   holding a second run would pend twice. `FormContext`, the form's submitting `aria-busy`,
-  `SheetBase.busy`, `ActFailed` and ConfirmSheet's swallowed rejection are gone. The bar paints its
-  filled act, inert, while any read its fields hold waits (`ActionBarBase waits`, one
-  `useSelections` of the form's read, each group's and the sheet's; nothing reports up). A confirm's
+  `SheetBase.busy`, `ActFailed` and ConfirmSheet's swallowed rejection are gone. The bar's filled act
+  follows the form's own read (or its sheet's) alone: it paints while that read waits or stands
+  still (`ActionBarInternal painted`) and is blocked with the failed sentence or `words.missing`
+  once it ended (`ended`); a group's read never touches it, and nothing reports up. A confirm's
   act runs the work: `ConfirmSheet` hands it to the bar as `then(act.onAct(), onDone)`, so the
   sheet closes when it resolves and stays open, ready, with the sentence in its bar line when it
   rejects, and a non-promise act closes it at once. `confirm()` returns nothing, and its optional
   `cancel` is the way out's label (the `cancel` word unless given): the words for leaving a decision
   are the decision's own ("Keep editing", "Stay"), so no word derives them.
 - **A failure is drawn by its host, in its line, else in a toast.** `Acting.line` is the rejection's
-  sentence (or `readPaused` while paused): the `ActionBar`'s kept line, the `Sheet`'s, a standing
+  sentence (the connection's, `Unreached.sentence ?? words.offline`, for an act refused for it): the `ActionBar`'s kept line, the `Sheet`'s, a standing
   public `Button`'s reason line under itself, a field's error for a control's save, and `InputOtp`'s
   field for its `onComplete`. Every other act raises a failed toast whose Retry is the same `ActBase`
   (the app's whole `onAct` again, a navigate included), held by the toast's own button. The sentence
@@ -2034,11 +2057,14 @@ a tick with no animation, never jumped to full.
   `onChange` and `onCommit` (Input, TextArea and the new Slider `onCommit`, the value the thumb is
   let go on) return `unknown`; a promise holds the viewer's value, a selection's or a constant's,
   while the latest save pends (`useDraft.change(next, save)`, through `useHeldDraft` in `lib/act`,
-  which also clears the field's `FieldRefusal` on the next change). Each change carries a sequence
+  for a bare control, whose rejection toasts; a `FormField` hosts the save of its `switch`,
+  `checkbox`, `slider`, `select`, `options`, `segments`, `input`, `textArea` and `picker` through
+  `useFieldDraft`, holds the refusal line in its own state and clears it on the next change, and the
+  control's Base takes the field's `draft`). Each change carries a sequence
   number and only the latest's outcome counts. Resolved, the hold waits for the refetch the save's
   invalidation started on the control's own reads (a query-cache subscription; the write's
   `onSuccess` starts it synchronously), then follows its datum unless edited since. Rejected, the
-  value falls back to its datum and the reason goes to the `FieldRefusal` line, else a failed toast
+  value falls back to its datum and the reason goes to the field's line, else a failed toast
   whose Retry saves the same value. `change` returns the save's promise, never rejecting, so an
   act that saves again holds the run. No saving mark is drawn: the value is the optimistic one.
   Molecules pass the value through (`DefinitionRow` `switch` and `pick`, `Table` `onEdit`,
@@ -2215,7 +2241,12 @@ touch is a toolbar toggle, not a test run; `a11y.test` is `error`):
   preview fails any story that trips a dev check. `Timings` (`behaviour/timings.stories.tsx`) is the
   tuning bench for `WAIT_DELAY` and `ACT_DELAY`: sliders set `--wait-delay` and `--act-delay` on the
   root, a read's time and an act's time and outcome (resolve, refuse, fail, offline), so the owner
-  feels a number before it goes into `paint.ts`; the phone takes the numbers settled there.
+  feels a number before it goes into `paint.ts`; the phone takes the numbers settled there. The
+  same numbers live in `timings` (`waitDelay`, `actDelay`, `waitMin`), read at use, and `holdFor`
+  turns them into the minimum hold `QueryProvider hold` gives a read's first write: a first answer
+  that lands after the paint has shown waits until the paint has stood for `waitMin` (0 by
+  default), counted from the fetch's start; queries made with `read()` and `channelRead` hold,
+  refetches and later pages do not.
 - **Component stories**, above, and the roster stress floor: a generated `RosterStress` module
   (`.storybook/roster.ts`) draws each component's frames at desktop and at touch in a 320 px
   column, and `.storybook/stress.ts` feeds every text slot a 300-character word and a URL, failing

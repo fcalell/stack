@@ -1,7 +1,7 @@
 # States: the design
 
 Status: decided with the owner, 2026-10-14, and revised the same day after an adversarial review
-(§15). Phases 1 to 5 of §14 are built (the read; the frames and the paint; the states beyond the first read; acts and saves; navigation reads and preload) and §15 records what changed in building them; phase 6 is Stead's; phase 7, long collections (§7), is built on the web and its phone half is owed to a device (§15). The wait's numbers are tuned live. This page defines how every component
+(§15). Phases 1 to 5 of §14 are built (the read; the frames and the paint; the states beyond the first read; acts and saves; navigation reads and preload) and §15 records what changed in building them; phase 6 is Stead's; phase 7, long collections (§7), is built on the web and its phone half is owed to a device (§15); phase 9 fixed what the audit of 2026-10-15 found, and the owner's rulings revert phase 8 where they differ (§15); phase 10, motion, is scheduled (§14). The wait's numbers are tuned live. This page defines how every component
 of the roster reads, waits, fails, goes missing, stays empty, refreshes, streams and acts, on both
 platforms, and how state is held so that a change re-renders only what it changes. It supersedes
 `motion.md` §4.1 (one waiting path) and the shape question of `skeleton-loading.md`; `motion.md`
@@ -70,7 +70,10 @@ painted as waiting; generated ids collided as keys.
    unchanged item is the same reference). A data change never renders a parent above the leaf
    that draws it.
 3. **Contexts carry identity, never state** (handles, words, theme, the Pane's scroller). A
-   context never changes a child's form. Structure rule 11 classes every context and holds it.
+   context never changes a child's form. `HoldsContext` (the keys of the reads held above) is
+   identity that places flags only: it says which frame draws a read's busy, stale and paused
+   lines, never what a frame's body looks like. Structure rule 11 classes every context and holds
+   it.
 4. **Every subscription is a slice:** one `useQueries` per leaf over the reads it draws, with
    tracked properties and structural sharing.
 5. **Data flows down; nothing reports up.**
@@ -112,8 +115,20 @@ framework-free and tested without rendering: one phase and the flags beside it.
 | streaming | a streamed read still writing |
 | paused | the read waits for a connection (`networkMode` paused it) |
 
+`selection.or(fallback)` is real data when its reads have it and `fallback` in every other state.
+It never paints, holds or fails a frame, and a read used only inside `or` parts is quiet:
+subscribed, never held, painted or registered for the no-holder check. It is for enrichments alone
+(a name, a badge, a lane order, a link); a read whose rows, options, facts or text a component
+draws is never `or`.
+
+What a leaf draws for a selection it cannot answer also says why (`Drawn.phase`): *waiting* (asked
+for, no answer), *still* (not asked for, or paused with no data, so nothing is coming), or
+*failed* and *missing* (the read ended). Waiting paints; still paints with no sentence; only failed
+and missing end, and an act drawn from a read is blocked on them (§3).
+
 **Empty is the frame's, not the read's**: a frame's selection that is an empty array, `null` or
-`undefined` on real data. A procedure answering `null` ("no current X") is ready, and its frame
+`undefined` on real data, decided by the frame's own read alone and never by a count the app
+checks. A procedure answering `null` ("no current X") is ready, and its frame
 draws empty.
 
 A component's data prop takes a **selection** (it comes from a read: the leaf subscribes to it,
@@ -124,9 +139,9 @@ placeholder's value while waiting.
 
 ## 3. Frames own reads
 
-A read's states are drawn once, by the frame that holds it: `Pane read`, `Section read`,
-`Sheet read`, `Form read`, or a collection standing with no frame. QueryBoundary is deleted: each
-of its jobs has a better home.
+A read's states are drawn by the frame that holds it: `Pane read`, `Section read`, `Sheet read`,
+`Form read`, or a collection or an option control given a selection, each a frame of its own read.
+QueryBoundary is deleted: each of its jobs has a better home.
 
 ```tsx
 const deploy = orpc.deploys.get.read({ id });
@@ -151,18 +166,41 @@ const steps = deploy.at((d) => d.steps);
   count and its empty. A collection takes `items` explicitly, always; a standalone
   `List items={deploys}` holds a root, so it is its own frame. No claims and no items delivered
   through context: a context never changes what a child draws (rule 11).
-- **One root holder per read.** A read's root is held by one frame; its selections go to frames
-  and leaves beneath. The query cache's observer events count a read's mounted root holders: a failure with none, or a second
-  root holder of one key, is a dev error, caught at run time where selections cross files as
-  props. Busy and stale are drawn once, by the root holder.
-- **One read per frame.** Two reads are two frames, nested, each drawing its own fit; a leaf that
-  needs two at once takes `combine`. A frame never fills with one read's failure while throwing
-  away another's leaves.
+- **A frame holds one read.** It holds the one read of its selection that is neither quiet (`or`)
+  nor held by an enclosing frame; `HoldsContext` carries the keys held above, memoized by their
+  joined keys, and decides only which frame draws a read's busy mark, stale and paused line and
+  `aria-busy`, which reads the dev registry counts, and what Retry refetches. A second such read
+  in one frame is a dev `console.error` naming both keys (production holds the first). A failure
+  with no holder is a dev error, caught at run time where selections cross files as props.
+- **A frame's form comes from its own selection.** Waiting, still, failed, missing, empty and
+  ready come from the frame's non-quiet reads and nothing above it, so a context never changes a
+  child's form. Sibling frames that draw one read each hold it and each fail in place; the repeated
+  line is accepted, and a read is never lifted into a frame around its siblings. A leaf that needs
+  two reads at once takes `combine`; a region that draws two reads is two frames. A read that only
+  names or orders reaches its leaf through `or`, with a quiet fallback, and never fails a frame.
+- **Collections and option controls show their own read's state.** List (and Group's list), Table,
+  Thread, BarChart, Comparison, Canvas (its `nodes`) and Diff (its `hunks`) are frames of their
+  items, and Picker, Select and OptionList of their options: each draws its failed, missing and
+  empty forms in its own box with the generic sentences, and the stale and paused line above its
+  rows. A control draws its options' failure and Retry in a line under itself, with no busy or
+  stale flag; while the options wait its trigger paints, and it paints still, inert and with no
+  sentence while they are idle or paused. A Thread's failed and missing forms stand in the log's
+  place and its empty form is an empty log with no sentence; its foot and reply stand through
+  each.
 - **The frame draws in its own fit.** A Pane's failure fills the page with Back to its route; a
   Section's fills its body under its heading; a Sheet's its body over its acts. Retry refetches
-  the frame's read and keeps the failed form with Retry pending (`motion.md` §4.3).
-- **A Pane with a read** draws its title from a selection (painted while waiting) and paints its
-  acts inert while waiting, in their loaded places, so its head never shifts.
+  the read the frame holds and keeps the failed form with Retry pending (`motion.md` §4.3). A failed
+  Pane keeps its foot and its docked sheet, which answer to their own reads.
+- **A Pane with a read** draws its title from a selection (painted while waiting), and its head
+  is a leaf (`PaneHead`, as a Section's `SectionHead`): the title, acts, more and description
+  subscribe themselves, so one of those reads changing renders the head and nothing under the
+  body.
+- **An act paints by its own datum.** A plain act is a constant: drawn as given, live in every
+  form of every frame. An act given as a selection (a Pane's actions and more, a Section's act, more
+  and description, a Banner's act, a row's act and more) paints while its own read waits, stands
+  still with no sentence while the read is idle or paused with no data, and stands blocked with the
+  failed sentence once the read has failed (`words.missing` when it is missing), never a false
+  yes. A Section's count shows only when its form is ready or empty.
 - **Every frame of a read is named for the settle** (today only Section and Group roots are).
 
 ## 4. The waiting form is the loaded form, painted
@@ -216,7 +254,9 @@ The read needs no store of stack's own: each part is a TanStack builtin.
   their distinct reads (deduplicated by query key), each with P as `placeholderData`, whose
   `combine` runs each prop's selector and answers, per prop, `{ painted, value }`. Constants pass
   through unpainted, so the hook count is fixed whatever mix of selections and constants a leaf
-  is given. A selector that throws over the placeholder answers P (logged in dev); a throw over
+  is given. `usePainted(values)` is the same `useQueries` whose `combine` answers one boolean, for a
+  component that only needs to know whether any of its values paints (the action bar, a Pane's
+  `aria-labelledby`). A selector that throws over the placeholder answers P (logged in dev); a throw over
   real data is the app's bug and rethrows. Each observer renders only for the result properties
   its combine reads, and `useQueries` notifies only when the combined answer changes.
 - **`useRead(selection)`** is the same `useQueries` without the placeholder: real data, or
@@ -242,17 +282,20 @@ The read needs no store of stack's own: each part is a TanStack builtin.
 - **The delay is no clock.** A painted slot fades in `WAIT_DELAY` after it mounts (a CSS
   `animation-delay` on the web, Reanimated's `withDelay` on the phone), so a read that lands
   inside the delay never shows its paint. Constants draw at once.
-- **No minimum.** The waiting form has the loaded form's geometry, so a form shown briefly
-  changes paint, not layout, and the settle's crossfade carries it. The live tuning confirms it
-  (the showcase's sliders: the delay, a minimum at 0, a simulated read time). If it flashes, the
-  fallback holds a first load's cache write until the minimum has passed (still one write, so the
-  read still flips at once); it counts from the fetch's start, which for a prefetched read comes
-  before its leaves mount.
+- **Live timings, and the minimum on a read's own first write.** `timings` (`waitDelay`,
+  `actDelay`, `waitMin`) is a bench knob read at use, as the web's `--wait-delay` and `--act-delay`
+  are, so the showcase's sliders change them on the next mount. The waiting form has the loaded
+  form's geometry, so a form shown briefly changes paint, not layout, and the settle's crossfade
+  carries it, and `waitMin` is 0. If a number is set above it, a first load's cache write is held
+  until the paint has stood for it (`holdFor(elapsed)`, `QueryProvider hold`): the query's own
+  `queryFn` in `read()` and the first snapshot in `channelRead` wait, so the read still flips at
+  once, from the fetch's start; a refetch or a later page is never held, and a query built without
+  `read()` is not held.
 - **The root holder count** (§3) comes from the query cache's observer-added and -removed events,
   in dev only.
 - **idle** and **paused** while waiting are one form, `still`: the loaded tree painted and inert,
-  not busy; a paused root holder also shows one line ("Waiting for a connection").
-- `aria-busy` is the root holder's. There is no live region: nothing is built for a screen reader
+  not busy; a paused holder also shows one line ("Waiting for a connection").
+- `aria-busy` is the holding frame's. There is no live region: nothing is built for a screen reader
   alone (`philosophy.md`).
 - **A failed read stays failed while it refetches.** Retry keeps the failed form with Retry
   pending; an automatic refetch (focus, reconnect) is a busy mark, never a flip back to waiting.
@@ -264,18 +307,22 @@ The read needs no store of stack's own: each part is a TanStack builtin.
 | --- | --- | --- |
 | a frame | its own observer: the phase's properties (and its selection's length, if it holds one) | either changes |
 | the root holder's busy mark | the busy flag | a refetch starts or ends |
+| a head (`PaneHead`, `SectionHead`) | its title, acts, more and description | one of them changes |
 | a leaf with a selection | its own observer's slice | its slice changes |
 | a row | nothing: its item comes from its collection | its item's reference changes |
 | the app (`useRead(selection)`) | its slice, real data only | its slice changes once real |
 | an act's host or a control | its own promise (`useRun`, `useDraft`) | its own pending or failure |
 
 - **Collections.** A List subscribes to its items. Structural sharing keeps every unchanged
-  item's reference and each row is memoized by its item, so only changed rows render. The React
-  Compiler does the memoizing where it reaches: plugin-react's generated Vite config compiles
-  `@fcalell/*` under `node_modules` in a consumer's build (`e23d17fc`). It does not reach the web
-  dev server, whose optimizer pre-bundles the packages, nor the phone, whose Expo preset never
-  compiles `node_modules`; so rows keep their explicit `memo`, and the render-count stories run in
-  the showcase.
+  item's reference, and each row kind (ListRow, Meter, DefinitionRow, FileRow) is one `memo` row
+  component that takes its `item`, `index`, the descriptor and `painted`, runs its slots inside
+  itself and calls `onOpen(item)` itself, so a refetch that changes one item renders exactly that
+  row; `Window` builds rows by index (§7). The row's act and more may be selections its own leaf
+  subscribes to. The React Compiler does the memoizing where it reaches: plugin-react's generated
+  Vite config compiles `@fcalell/*` under `node_modules` in a consumer's build (`e23d17fc`). It does
+  not reach the web dev server, whose optimizer pre-bundles the packages, nor the phone, whose Expo
+  preset never compiles `node_modules`; so rows keep their explicit `memo`, and the render-count
+  stories (a first answer, a pressed act, a saved control) run in the showcase.
 - **Streams and live channels** are queries written with `setQueryData` (or `streamedQuery`). The
   turn being written has its own key; the thread's key changes only when a turn completes, so a
   token renders the streaming turn and nothing scans the thread. A live channel's connection is a
@@ -291,23 +338,28 @@ The read needs no store of stack's own: each part is a TanStack builtin.
 | stream token | the streaming turn |
 | act pressed | that act's host |
 | act rejected | its host's line, or a failed toast; nothing else |
-| act pressed offline | its host's line ("Waiting for a connection."); nothing is held |
-| control saved | that control; then the leaves selecting what the write invalidates |
-| control's save rejected | that control (its value back, its reason in the field's line) or a failed toast |
+| act pressed offline | refused at its press, nothing sent: its host's line ("No connection.") |
+| control saved | that control; then the leaves selecting what the write invalidates (the field hosts it when the control stands in one) |
+| control's save rejected | that control (its value back) and its field's line, or a failed toast for a bare control |
 
 ## 7. Long collections
 
-Built on the web (phase 7); the phone's half is owed to a device (§15, "Changed while building
-phase 7").
+Built on the web (phase 7, extended in phase 9); the phone's half is owed to a device, the owner's explicit waiver of "web and native in one commit" and "long lists virtualized" for the phone's windowing alone (§15, "Changed while building phase 7" and "phase 9").
 
 A collection windows from `VIRTUAL_FROM` loaded rows under a scroller, with no prop: it mounts only
 the rows near the view and `OVERSCAN` (8) past each edge, spacers holding the room of the rest.
 
 - **Web (built):** TanStack Virtual (`@tanstack/react-virtual`) over a `Scroller` context of
   identity (the Pane body, Sheet body, docked Sheet body, Gate page, Thread log; the nearest wins),
-  in react-ui's `lib/window`; the count and the slot arithmetic are ui-core's `window`. List (flat),
-  Group's list, Table at both widths and Thread window. Painted forms are `PAINT_ROWS` (4) and
-  never window, so "waiting rows fill the viewport" is cut. The focused row and a Table's cursor
+  in react-ui's `lib/window`; the count and the slot arithmetic are ui-core's `window`. `Window`
+  takes `count`, `keyOf` and `row(index)` and builds only the mounted indices, so the rows off screen
+  are never built or rendered. List (flat), Group's list, Table at both widths and Thread window,
+  and so do trees (the tab stop's row kept mounted, keys moving by index over the visible rows),
+  an OptionList's groups, a Picker's sheet and its desktop search list (Base UI's virtualized
+  combobox from `VIRTUAL_FROM` options), Comparison (its facts behind a kept head row) and
+  BarChart (past `VIRTUAL_FROM` bars it keeps a bar's width and scrolls sideways under its axis,
+  windowing along x). A standalone Select does not window: Base UI's Select has no virtualization.
+  Painted forms are `PAINT_ROWS` (4) and never window, so "waiting rows fill the viewport" is cut. The focused row and a Table's cursor
   row stay mounted; the grid carries `aria-rowcount` and `aria-rowindex`. Find in page and print
   reach mounted rows only: the accepted cost. The virtualizer is the one scroll anchor; Thread
   opens at the end and follows it as before. The settle and moves name only mounted rows (rows
@@ -335,8 +387,9 @@ the rows near the view and `OVERSCAN` (8) past each edge, spacers holding the ro
   windowing on the Pane's own ScrollView through a scroller-identity context (mounts and unmounts,
   does not recycle) and a recycling list as the Pane's scroller, given as an explicit prop; for
   Thread, FlashList v2 against its inverted ScrollView. Until then the phone draws every row.
-- **Cut:** trees, Comparison, BarChart, OptionList, Thread's history paging and the anchor on a
-  prepend (no thread pages), `aria-setsize` on lists (they carry no list role).
+- **Cut:** Thread's history paging and the anchor on a prepend (no thread pages), `aria-setsize`
+  on lists (they carry no list role) and on an OptionList's checkboxes (its radios carry their place
+  in the group).
 
 Open on the phone: the libraries (FlashList v2, LegendList as the fallback; none is installed),
 the Pane design and the count, settled by a spike on a mid-range Android: the Pane first (1000
@@ -360,11 +413,14 @@ Built (phase 3).
 - **streaming**: the turn being written is a read the app declares (`Thread reply`), drawn by its
   own part; a stream that fails is data on its turn (the partial message, "The reply stopped." and
   Retry), never the thread's state. A WebSocket channel is one such read
-  (`@fcalell/plugin-node/live`); a socket down past two seconds pauses its reads, so there is no
-  connection read.
+  (`@fcalell/plugin-node/live`); a socket down past two seconds pauses its reads. The socket's own
+  status is a read too, `ws.connection` (`connecting`, `open` or `lost`), which guards acts (§9)
+  and which an app's banner may select.
 - **permissions**: the org's rules are an ambient read (`ability(orgId)`); a gated act in a head is
-  a selection that paints inert while the rules load, never blocked, and a row's act is combined
-  into its items. A failed rules read leaves its acts painted and inert.
+  a selection (`rules.at((a) => …)`) and a row's act is `act: (row) => rules.at((a) => …)`, so the
+  list never waits on the rules. The act paints its box while the rules load, stands still with
+  no sentence when they are not asked for, and is blocked with the failed sentence once that read
+  failed or went missing, never a false yes.
 - **the phone** wires TanStack's online and focus managers, or it would never pause or refetch on
   focus.
 
@@ -389,23 +445,34 @@ Built (phase 4); §15 records what changed in building it.
   the caller's promise rejects and cannot know whether the host drew it. Two dev checks stand in for
   it: a mutation an act started without returning its promise, and a mutation failure nothing drew
   (a mutation with its own `onError` is exempt).
-- **Offline blocks no act.** TanStack pauses a mutation started offline and runs it on reconnect, so
-  a press runs; the host's line says "Waiting for a connection." and holds nothing, siblings stay
-  live and a sheet can be dismissed. A server that is down while the client is online is a failed
-  act. `blocked` stays the one encoding for a reason that is not the connection.
+- **No act queues.** `createQueryClient`'s mutation cache runs `guardReach` in `onMutate`: while
+  `onlineManager` is offline, or a cached read's `meta.reach` says the server is out of reach
+  (plugin-node's `ws.connection`, `lost` after `PAUSE_AFTER`, with the app's `createWsClient({
+  unreachable })` sentence), the mutation throws `Unreached` before any fetch, so it never pauses and
+  never fires on reconnect. The act's host draws `sentence ?? words.offline` ("No connection.") as
+  its failure line with no Retry, siblings stay live and a sheet can be dismissed; the act looks
+  live until it is pressed. A server that is down while the client is online is a failed act.
+  `blocked` stays the one encoding for a reason that is not the connection; whether an act also
+  looks blocked before any press waits on the owner (§15, Open). A caller-supplied `mutationCache`
+  calls `guardReach` itself.
 - **A control's `onChange`/`onCommit` may return a promise.** The control holds the viewer's value
   (a selection's or a constant's) while the latest save pends and draws no saving mark. The latest
   change wins: each save carries a sequence number and only the latest's outcome counts. Resolved,
   the hold waits for the refetch the write's invalidation started on the control's own reads, then
-  follows its datum unless edited since. Rejected, the value rolls back and the reason goes to the
-  field's error line, else a toast whose Retry saves the same value again. The app's revert code
-  goes. Invalidation itself is not awaited, or a delete that navigates would draw its record's stale
-  line before leaving.
+  follows its datum unless edited since. Rejected, the value rolls back and the reason is drawn by
+  whoever hosts the save: a control in a `FormField` is handed the field's draft (`useFieldDraft`),
+  and the field holds the refusal in its own state and draws it in its line (FileInput's type
+  refusal and InputOtp's check refusal draw in each control's own line); a bare control holds its
+  own draft and toasts the reason with Retry, which saves the same value again. The app's revert
+  code goes, and nothing reports up to a parent. Invalidation itself is not awaited, or a delete
+  that navigates would draw its record's stale line before leaving.
 - **Forms read like frames.** `Form read={deploy}` gives its fields their initial values through
   selections; a field follows its selection until the viewer edits it and never after, so a
   refetch never overwrites what is being typed. The form's bar is a host: pressing it ends the
-  edit, a rejection puts the edit back, and its filled act paints, inert, while any read the form,
-  its groups or its sheet hold waits.
+  edit, a rejection puts the edit back, and its filled act waits only on what it submits: it paints
+  while the form's own read (or its sheet's) waits and stands blocked with the failed sentence once
+  that read ended. A group's read never touches the bar; a field that is not picked is covered by
+  the app's own `blocked` reason.
 - **Writes need no mark of their own:** a mutation's invalidation refetches the reads it touched,
   and their busy flag already shows. There is no done mark and no client undo (a toast is
   client-owned); a window the server holds stays PendingBar `until`, with an Undo act that holds its
@@ -419,7 +486,10 @@ Built (phase 4); §15 records what changed in building it.
 
 A frame's failed, missing and empty sentences are generic, in `words` ("This didn't load.",
 "This no longer exists.", "Nothing here yet."), and a frame overrides any of them with its own
-sentence. Sentences are not composed from nouns: procedures read several tables, so there is no
+sentence. A frame's `empty` is `Empty`, `{ sentence, act? }`, drawn only when the frame's own read is
+empty, so a frame with no read has none; the icon, the title, the children and a no-read toggle are
+not part of it. A collection draws the generic sentences. A failed act or control save says the
+server's refusal, then the act's own `failed`, then the generic "That didn't go through.". Sentences are not composed from nouns: procedures read several tables, so there is no
 one entity to name, a composed sentence breaks gendered and inflected languages, and an empty
 sentence depends on the filter the app applied.
 
@@ -434,7 +504,8 @@ and draw no waiting form, and a read that is still on its way shows the painted 
 Waiting remains for cold deep links and slow reads. On the web, one listener for the page
 (`pointerover` and `focusin` on a route anchor, held 50 ms) calls `router.preloadRoute`, which runs
 the loaders and fetches the route's code; a touch's `pointerover` is the press-in. The phone
-preloads nothing: its screens start their reads as they mount. The extra requests on hover are the
+preloads nothing: its screens start their reads as they mount, and its press-in preload stays
+open with the owner (§15). The extra requests on hover are the
 accepted cost, and `staleTime` dedupes them.
 
 ## 12. What goes away
@@ -455,8 +526,8 @@ accepted cost, and `staleTime` dedupes them.
 ## 13. Checks and tests
 
 - **Verify:** no context carrying changing state or changing a child's form (rule 11).
-- **At run time, in dev:** a failure with no root holder; two root holders of one key; a selector
-  that throws over the placeholder.
+- **At run time, in dev:** a failure with no holder; a second non-quiet read in one frame, naming
+  both keys.
 - **ui-core unit tests:** the phase and flags from an observer's result (idle, paused, stale,
   more, missing; a placeholder waits; a retried failure stays failed and busy).
 - **plugin-api tests:** P's traps (the epoch, a template string recognised), selections and
@@ -496,6 +567,18 @@ Each phase lands web and phone together, with the showcase migrated in the same 
 6. **Stead:** its screens moved to frame reads, its workarounds deleted, the pin moved; its six
    channels become `channelRead`s.
 7. **Long collections** (web built; the phone is owed to a device): the window of §7 on the web; the spike and the phone's virtualization wait for a device.
+8. **Phase 8** (surface holds, lifted shared reads, the Pane that draws no foot): reverted by
+   phase 9 where audit ruling 1 differs (§15).
+9. **The audit's fixes** (phase 9, built): one read per frame and `or` for enrichments; forms from a
+   frame's own selection; acts painted by their own datum; collections and option controls as frames
+   of their own read; heads as leaves; memoized rows windowed by index; the field hosting its
+   control's save; no act queued offline; live timings with the minimum hold; the window extended
+   to trees, OptionList, Picker, Comparison and BarChart on the web. The phone's windowing stays
+   deferred by the owner (ruling 8).
+10. **Motion** (phase 10, not built; audit ruling 7): the pulse (the breathing loop of the paint),
+    the scramble (figures and ids decoding by character), the `theme.loading` config object that
+    chooses a loader per component type, and per-component motion definitions. `motion.md` holds
+    the design.
 
 ## 15. Decisions
 
@@ -508,14 +591,13 @@ Decided the same day, after the loader demo (`motion.md` §4.2): the paint per s
 
 Revised the same day after an adversarial review, with the owner:
 
-- the read runs on TanStack's own observers: a leaf is one `useQueries` with P as
-  `placeholderData`, the settle is a scheduler hook on TanStack's notifications and the delay a
-  fade on painted slots; there is no store of stack's own and no minimum hold (a store per read
-  key, holding the value through a hold, was proposed by the review and dropped once the
+- the read runs on TanStack's own observers: a leaf is a `useQuery` with `select` and the shape
+  as `placeholderData`, `combine` is `useQueries`, the settle is the notify batch hook and the
+  delay a fade on painted slots; there is no store of stack's own and no minimum hold (a store per
+  read key, holding the value through a hold, was proposed by the review and dropped once the
   builtins covered it);
-- the placeholder is one runtime value, P, for every read; the cache seed, the previous data,
-  `.meta({ wait })` and a shape generated from the router's types (which would have needed the
-  type checker at generate and covered router procedures only) are dropped;
+- the placeholder is the shape alone, from TypeScript output types at generate; the cache seed,
+  the previous data and `.meta({ wait })` are dropped;
 - claims and items through context are dropped: the root holder draws the read's states, an array
   selection's holder its count and empty, and collections take `items`;
 - the state is a phase with flags; idle and paused are drawn; empty belongs to the frame;
@@ -529,6 +611,11 @@ Revised the same day after an adversarial review, with the owner:
 - the live region is dropped; waiting forms are inert;
 - text decodes by crossfade; only figures and ids decode by character (`motion.md` §4.2).
 
+Changed while building phase 1: one runtime placeholder P instead of a generated
+shape; approved by the owner on 2026-10-15 (audit ruling 5). With it, a leaf is one `useQueries`
+over its values and the settle a scheduler hook installed through `QueryProvider`; §4 and §5 above
+describe P and those hooks.
+
 Changed while building phase 2 (2026-10-15); where the sections above differ, this list wins:
 
 1. Collections never hold a read; only frames do (Pane, Section, Sheet, Form and its groups). No
@@ -536,7 +623,8 @@ Changed while building phase 2 (2026-10-15); where the sections above differ, th
    `<Section read={x}><List items={x}/></Section>` would make two root holders. List, Table, Thread,
    OptionList, BarChart and Comparison lose every state branch on both platforms; a list Pane's
    failure fills the page; a collection with no frame raises the dev no-holder error. Cut: a
-   standalone `List items` as its own frame, and failure as a standalone frame.
+   standalone `List items` as its own frame, and failure as a standalone frame. *Revised by phase
+   9: a collection given a selection is a frame of its own items.*
 2. `FormGroup.read` is added: each group is a frame (it replaces `FormGroup.loading`).
 3. Gate takes no `read`: its body takes Sections, so `connect` uses a `Section read`.
 4. Acts can be data: Pane `actions` and `more`, Section `act`, `more` and `description` take a
@@ -548,7 +636,8 @@ Changed while building phase 2 (2026-10-15); where the sections above differ, th
 7. A Section's count is never painted while it waits, on either platform.
 8. Sentence overrides: `empty` and `failed?: string` on Pane, Section, Form and FormGroup; Sheet
    takes `empty` only until phase 4 (its `failed` is still the act's sentence). No `missing`
-   override: the generic sentence stays and the public `Missing` covers a bespoke one.
+   override: the generic sentence stays and the public `Missing` covers a bespoke one. *Revised by
+   phase 9: `empty` is `{ sentence, act? }`, drawn only for the frame's own read.*
 9. `SKELETON` is replaced wholly by `PAINT` (`glyphs`, `box`, `control`); each component paints its
    own box.
 10. The shift check compares Section heading tops, waiting against loaded, at 320, 1280 and 1920 px
@@ -586,8 +675,11 @@ Changed while building phase 3 (2026-10-15); where the sections above differ, th
    its read and draws its failure, and hides once history holds its key.
 6. **live channels**: the primitive is plugin-node's `channelRead`. There is no connection read: a
    lost socket pauses each channel read. Stead's connection banner is its own product choice.
+   *Revised by phase 9: `ws.connection` is a read of the socket's status.*
 7. **permissions**: the org's rules are an ambient read; gated head acts are `Datum` selections and
    row acts are combined into items. A failed rules read leaves its acts painted and inert.
+   *Revised by phase 9: a head act and a row act are selections of the rules, and an ended read
+   blocks them with the failed sentence.*
 8. **long collections** are phase 7, and §7's phone design is reopened: windowing on the Pane's
    ScrollView against the Pane given the list. The count is the spike's.
 9. **the phone** wires the online and focus managers (`QueryProvider listen`).
@@ -604,13 +696,15 @@ Changed while building phase 4 (2026-10-15); where the sections above differ, th
 3. Invalidation is not awaited. A control's hold waits on its own reads' refetch in flight. "A save
    cancels in-flight fetches" goes, and controls draw no saving mark.
 4. Acts are never blocked by the connection. Offline presses wait, the host's line says so and
-   nothing is held.
+   nothing is held. *Revised by phase 9: no act queues; a press with no connection is refused
+   with the connection's sentence.*
 5. There is no client undo; server windows stay PendingBar `until`.
 6. Cut: the ItemHeader save fact (with the words `saving`, `saved` and `notSaved`), the Form's
    submitting `aria-busy`, `FormContext` and `SheetBase.busy`.
 7. Retry's pending is its own promise (`retry` and `More.fetch` return theirs); a refetch nobody
    pressed is the busy mark alone.
-8. A form's bar paints while any of its reads (form, groups, sheet) waits.
+8. A form's bar paints while any of its reads (form, groups, sheet) waits. *Revised by phase 9: the
+   bar follows its form's own read (or its sheet's) alone.*
 9. `ACT_DELAY = 300` and `--act-delay`, tuned in the `Timings` story; the roster's act state is
    `pending`.
 10. Two dev checks: a mutation started without its promise returned, and a mutation failure nothing
@@ -625,7 +719,9 @@ Deviations kept from the build:
 - Slider gained `onCommit`, the value the thumb is let go on; its `onChange` still hears each step.
 - `useHeldDraft` (each platform's `lib/act`) is the draft every saving control uses: it sends a
   rejection to `useFailed` (the field's `FieldRefusal`, else a toast with Retry) and clears the
-  field's refusal on the next change.
+  field's refusal on the next change. *Revised by phase 9: a `FormField` hosts the save of its
+  control (`useFieldDraft`) and draws the refusal in its own line; `useHeldDraft` serves a bare
+  control and toasts; `useFailed` and `FieldRefusal` are deleted.*
 - InputOtp's checking line draws at once, without `ACT_DELAY`: a code is never typed twice, so
   there is no fast answer to spare it for.
 - A failed toast stays in the tree: its root sets `aria-hidden={false}` and `aria-live="off"` (its
@@ -664,11 +760,13 @@ Changed while building phase 6 (2026-10-15); where the sections above differ, th
    c])` under a read-less Pane holds all three. Frames publish the hashes they hold through
    `FrameHolds`, a context of identity only; the context resolves nesting, so the dev "two holders"
    error is gone and sibling frames may each hold a read and draw its state in their own place.
-   The no-holder check stays and counts every held read.
+   The no-holder check stays and counts every held read. *Revised by phase 9: a frame holds one
+   read.*
 2. **`Held.roots[]`** replaces `Held.root`. `frameOf` merges them: the first read failed with no
    data ends the frame (failed, or missing by its own `missing`); busy, stale and paused are any
    one's, and the frame stands still when any is idle or paused. `retry` refetches the held reads.
-   A reply (`turnOf`) holds its one read.
+   A reply (`turnOf`) holds its one read. *Revised by phase 9: a frame holds one read and its form
+   comes from its own selection's non-quiet reads.*
 3. `createQueryClient`'s default `retry` is one retry of a failure that is not a not-found.
 
 Deviations kept from the build: a failed next page is the collection's line, not the frame's stale
@@ -684,6 +782,7 @@ Changed while building phase 7 (2026-10-15); where the sections above differ, th
    prop. Painted forms stay `PAINT_ROWS`, and "fill the viewport" is cut.
 3. The collections that window: List (flat), Group's list, Table at both widths, Thread. Cut:
    trees, Comparison, BarChart, OptionList, Thread's history paging and the anchor on a prepend.
+   *Revised by phase 9: trees, OptionList, Picker, Comparison and BarChart window on the web.*
 4. Focus stays mounted: the focused row and Table's cursor row. The grid carries `aria-rowcount`
    and `aria-rowindex`. Find in page and print stop at mounted rows.
 5. The virtualizer is the one scroll anchor. Thread opens at the end and follows it as before.
@@ -731,15 +830,121 @@ collection (a spike on a device); and `VIRTUAL_FROM` itself (above).
 
 Changed while building phase 8 (2026-10-15); where the sections above differ, this list wins:
 
-1. A read's states draw once per surface. The frame enclosing every region that draws a read holds
-   it, written `combine([value, ...shared], (value) => value)`. This revises phase 6's "sibling
-   frames may each hold a read".
-2. A Pane and a Sheet are surfaces (`Holds.surface`). In dev two holders of one key on one surface
+1. *Reverted by phase 9 (audit ruling 1).* A read's states draw once per surface. The frame
+   enclosing every region that draws a read holds it, written `combine([value, ...shared], (value)
+   => value)`. This revises phase 6's "sibling frames may each hold a read".
+2. *Reverted by phase 9 (audit ruling 1).* A Pane and a Sheet are surfaces (`Holds.surface`). In dev two holders of one key on one surface
    are an error; a Pane's foot and docked sheet stand inside its holds.
-3. `Frame.inert` replaces `Frame.waits` for acts: they paint inert while the frame has no data
+3. *Reverted by phase 9 (audit ruling 1).* `Frame.inert` replaces `Frame.waits` for acts: they paint inert while the frame has no data
    (waiting, still, failed, missing).
-4. A failed or missing Pane draws no foot and no docked sheet.
-5. A selector's throw over the placeholder is silent.
+4. *Reverted by phase 9 (audit ruling 1).* A failed or missing Pane draws no foot and no docked
+   sheet.
+5. A selector's throw over the placeholder is silent. *Stands as built; phase 9 reverts #1 to #4
+   only.*
 6. Done: the DefinitionRow label (`6ccc916d`) and the Datum picks (`6bcdb19f`, `53b971ab`). Cut:
    ListRow facts as a Datum (a fact from a read the row does not own is absent on failure, which is
    control flow, so `useRead` is right).
+
+Changed while building phase 9 (2026-10-15), after the audit and the owner's rulings; where the
+sections above differ, this list wins:
+
+1. A frame holds one read: the one non-quiet read of its selection that no enclosing frame holds.
+   A second is a dev `console.error` naming both keys (production holds the first). A frame's form
+   (waiting, still, failed, missing, empty, ready) comes from its own selection alone, and
+   `HoldsContext` places only the flags (which frame draws busy, stale, paused and `aria-busy`, the
+   dev registry, what Retry refetches). `Holds.surface`, `surfaces`, the "side by side" error and the
+   lifted `combine([value, ...shared], …)` idiom go; sibling frames each hold and fail in place.
+   Revises phase 6 #1 and #2 and reverts phase 8 #1 and #2.
+2. `selection.or(fallback)` is for enrichments: real data, else the fallback in every state, never
+   painting, holding or failing a frame. A read used only through `or` is quiet.
+3. `Drawn.phase` says why a painted value has no data (waiting, still, failed, missing). `Frame.inert`
+   goes. A constant act is live in every form. An act given as a selection (Pane actions and more,
+   Section act and more, Banner act, row act and more) paints while its read waits, stands still
+   with no sentence when it is idle or paused with no data, and stands blocked with the failed
+   sentence (or `words.missing`) once the read ended. A Section's count shows only when its form is
+   ready or empty. Reverts phase 8 #3.
+4. A Pane's foot and docked sheet are never made inert or removed by the frame; a failed Pane keeps
+   them. A Sheet, a Pane's dock, a docked sheet and a Thread's foot start with no holds. Reverts
+   phase 8 #4.
+5. Collections and option controls are frames of their own read: List (and Group's list), Table,
+   Thread, BarChart, Comparison, Canvas (`nodes`) and Diff (`hunks`) through `useCollection`;
+   Picker, Select and OptionList through `useOptions`, which registers as the holder of the options'
+   read and draws its failure and Retry in a line under the control, with no busy or stale flag.
+   They draw the generic sentences. Revises phase 2 #1.
+6. A frame's `empty` is `Empty`, `{ sentence, act? }`, for the frame's own read alone: a Pane or a
+   Section given `empty` with no `read` does not type-check, and the icon, the title, the children
+   and the no-read toggle are gone. Gate's first run keeps its title and children as
+   `GateFirstRun`, a page and not a read's empty state. Canvas keeps its caption prop. Revises
+   phase 2 #8.
+7. Heads are leaves: `PaneHead` and `SectionHead` subscribe to their title, acts, more and
+   description, so one of them changing renders the head and nothing under the body.
+   `usePainted(values)` is a `useQueries` whose `combine` answers one boolean.
+8. A form's bar (and a Sheet's submit) waits only on what it submits: its own read, or its Sheet's.
+   It paints while that waits and is blocked with the failed sentence once it ended. A group's read
+   never touches it, and `formReads` goes. Revises phase 4 #8.
+9. Each row kind (ListRow, Meter, DefinitionRow, FileRow) is one `memo` component taking `item`,
+   `index`, the descriptor and `painted`, and calls `onOpen(item)` itself; `Window({ count, keyOf,
+   row })` builds only the mounted indices. A row's act and more may be selections. The §6 claim
+   that a refetch renders only the rows whose item changed holds, with render-count stories for a
+   first answer, a pressed act and a saved control.
+10. The field hosts its control's save. `FormField` gains `input`, `textArea` and `picker`
+    descriptors beside the others; it runs `useFieldDraft`, holds the refusal in its own state and
+    renders the control's Base with the draft. A bare control holds its draft (`useHeldDraft`) and
+    toasts a rejection with Retry. FileInput's type refusal and InputOtp's check refusal draw in
+    each control's own line. `FieldRefusal` and `useFailed` are deleted. Revises phase 4's
+    `useHeldDraft` deviation.
+11. No act queues offline. `createQueryClient`'s mutation cache runs `guardReach`; plugin-node's
+    `ws.connection` is a read of the socket's status (`networkMode: "always"`, `gcTime: Infinity`,
+    never opening the socket) whose `meta.reach` carries the app's `createWsClient({ unreachable })`
+    sentence; the host draws `sentence ?? words.offline` ("No connection.") with no Retry.
+    `useRun.paused` and `pausedStore` go. Revises phase 3 #6 and phase 4 #4.
+12. Live timings: `timings` and `holdFor` in ui-core, `QueryProvider hold` (`withHold` merges it into
+    a caller's client and keeps the client's other defaults), the hold wrapping `read()`'s `queryFn`
+    and `channelRead`'s first snapshot. A refetch or a later page is not held. `waitMin` stays 0.
+13. The atoms Banner, Status, Count, Chip and Avatar take selections and paint as a whole.
+14. On the web the window extends to trees, an OptionList's groups, a Picker's sheet and desktop
+    search list, Comparison and BarChart. `Window` gains a horizontal axis, and Comparison and
+    Group share `GroupCard`. Revises phase 7 #3. The phone's windowing stays deferred (ruling 8).
+15. Phase 8 #1 to #4 are reverted (ruling 1); #5 and #6 stand. The connection banner is Stead's
+    (ruling 2), the generic toast "That didn't go through." stays (ruling 4), and the phone's
+    press-in preload stays open (§11).
+
+Deviations kept from the build:
+
+- **`holdFor` lives in ui-core**, which the plan did not name: one copy serves each platform's
+  generated `QueryProvider`, with `withHold` and `holdOf` in plugin-api's `read.ts`.
+- **`ListEmpty`** stays exported from List on both platforms (`Empty` with the first run's `icon`
+  and `title`), the list's former empty shape, though a list draws the generic empty form and takes
+  no `empty`.
+- **The Picker windows** (its touch sheet, and its desktop search list through Base UI's virtualized
+  combobox from `VIRTUAL_FROM` options), beyond the collections the plan named.
+- **BarChart past `VIRTUAL_FROM` bars keeps a bar's width and scrolls sideways under its axis**: a
+  look change, awaiting the owner (below).
+- **A standalone Select does not window.** Base UI's Select has no virtualization; windowing it
+  would make it a combobox.
+- **An OptionList's checkboxes carry no set size**; its radios carry their place in the group.
+- **A selection act over a read no frame holds** may log the dev no-holder error when that read fails:
+  a blocked act is not registered as a holder.
+- **The one-read dev error is runtime only**, so Stead's console pass and stack's screens run are
+  the net.
+
+Open with the owner (nothing below is built beyond what both answers share):
+
+1. **Acts' own failure sentences.** Ruling 4 keeps the generic toast; the plan applied it to control
+   saves. Act sentences such as "The page was not saved." and "Could not end it." stay as built. If
+   the ruling covers them, they go.
+2. **What "blocked" looks like before a press.** Ruling 3 blocks offline acts, and stack cannot know
+   beforehand which acts need the server. Either (a) refused at its press, the act looking live
+   until then (built), or (b) a per-act flag draws it blocked before the press.
+3. **Collection sentences.** Either (a) collection frames take `empty?: Empty` and `failed?: string`,
+   drawn only from their own read, or (b) generic only (built).
+4. **Gate's first run.** Either (a) rename it `first` and keep its title and children, or (b)
+   reduce it to `{ sentence, act? }`. It stays as built, `GateFirstRun`.
+5. **Canvas's caption.** Either (a) rename it `hint`, a caption the app gives, or (b) drop it. It
+   stays as built.
+6. **The phone's press-in preload.** Either (a) `router.prefetch` with a press-in delay (it mounts
+   the whole screen), (b) a route `preload` export the phone link calls, or (c) none (built).
+7. **`VIRTUAL_FROM`** stays 100 against the measured rule of about 10 (§7).
+8. **BarChart's sideways scroll** for 100 or more bars is a look change; `bar-chart/index.tsx`
+   reverts if the owner rejects it.
+9. **The standalone Select** does not window; it would have to become a combobox.

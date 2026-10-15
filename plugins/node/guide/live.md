@@ -42,6 +42,10 @@ const urgent = inbox.at((i) => i.items.filter((item) => item.level === "urgent")
 </Pane>
 ```
 
+A channel read's first snapshot is held like a query's first answer: when the paint has shown, the
+snapshot is written once it has stood for the minimum (`holdFor`, `QueryProvider hold`), so a
+snapshot that lands just after the paint appears does not flash it. Later messages write at once.
+
 The read stays fetching for as long as it is subscribed, and does not count as busy for that:
 only a first wait or a refetch does. The subscription lasts while any frame or leaf holds the
 read. The last one leaving ends it, and the value stays cached for the next.

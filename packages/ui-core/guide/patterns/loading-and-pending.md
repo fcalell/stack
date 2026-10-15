@@ -39,8 +39,9 @@ its fill, so an act the server answers at once never flashes one; it is ready th
 promise settles. The promise is the act's own (`ActBase.onAct`), and the host holds it: an
 `ActionBar` pends one act at a time with the others inert, a `Sheet` holds its dismissal while its
 head submit, foot bar or form bar pends, and an `InputOtp` checking a code draws its checking line
-at once (a code is never typed twice). An act that waits for a connection holds nothing: the host's
-line says "Waiting for a connection." and the siblings stay live. A Retry (a frame's, a stale line's,
+at once (a code is never typed twice). No act queues for a connection that is not there: one pressed
+offline is refused at the press, its host's line says "No connection." (or the app's sentence for a lost
+socket) with no Retry, and the siblings stay live. A Retry (a frame's, a stale line's,
 a more row's) pends on its own refetch's promise; a refetch nobody pressed shows the busy mark alone.
 
 After the first wait the frame says what its read is doing, and the data stays. A refetch is the
@@ -51,6 +52,8 @@ holding the read renders for it, never its body, and a frame with no heading sho
 "Couldn't refresh." with a quiet Retry that is pending while it runs; a read waiting for a
 connection says "Waiting for a connection." with nothing to press. Both stand under the heading row.
 A read not asked for yet, or paused with no data, **stands still**: the loaded form painted and
-inert, with no busy mark. A next page is the collection's own wait: the painted rows after the loaded
+inert, with no busy mark. An act drawn from a read follows it: painted while the read waits, still when
+it is not asked for, and blocked with the failed sentence once it failed; a constant act is never
+painted or inert for a read it does not draw. A next page is the collection's own wait: the painted rows after the loaded
 ones (`patterns/data-table.md`). A turn being written is the thread's
 (`patterns/activity-feed.md`).

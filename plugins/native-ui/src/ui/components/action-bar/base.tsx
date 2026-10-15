@@ -143,7 +143,7 @@ export function ActionBarBase({
 	const where = fit ?? "end";
 	const own = useAct<number>("line");
 	// A failure draws in the bar's kept line, so it never moves the act; the
-	// same line says an act waits for a connection.
+	// same line says the connection refused an act.
 	const acting = given ?? own;
 	// The filled act is the one a read's end blocks.
 	const acts =

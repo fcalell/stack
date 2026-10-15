@@ -64,8 +64,12 @@ loaded; a phone screen starts its reads as it mounts.
 
 Waiting and failure sit at the frame. A `Pane`, `Section`, `Sheet` or `Form` (or a form's group)
 given a `read` draws its failure with Retry, its "no longer exists" form with Back when the read
-answers not found, and its empty state; give it a read, a selection or a `combine` of reads: it
-holds the reads that no enclosing frame holds. Every part below the frame takes a selection
+answers not found, and its empty state; give it one read, a selection of one or a `combine`: it
+holds the one read of its selection that no enclosing frame holds (a second is a dev error, so a
+region that draws two reads is two frames). Sibling regions that draw one read each fail in place,
+and the repeated line is accepted; a read that only names or orders (a name, a badge) is
+`selection.or(fallback)`, which falls back quietly and never fails a frame. A `List`, `Table`,
+`Thread` or `Picker` given a selection shows its own read's state in its own box. Every part below the frame takes a selection
 (`deploy.at((d) => d.steps)`, a `Datum`) and, while the read waits, draws its loaded form painted: a
 collection paints four rows in the slots its item map declares, a text its filler, a control its box.
 So the outline of the screen is written once, for the loaded data, and the waiting form is that
@@ -77,7 +81,9 @@ for yet. A paginated read (`.pages`) ends its collection in "Show more", with th
 while it loads and "Couldn't load more." with Retry when it failed, and no count while more remains.
 A conversation's turn being written is `Thread reply`, its own read: waiting, writing, written, or
 "The reply stopped." with Retry. Empty is
-the frame's `empty`, with the act that fills it unless the screen's primary act already does. Error draws where the work happened (a field's error, a banner over the
+the frame's `empty`, `{ sentence, act? }`, drawn only when the frame's own read is empty, with the act that
+fills it unless the screen's primary act already does. An act given as a selection is live once its read
+answered and stands blocked, with the failed sentence, when that read failed; a constant act is always live. Error draws where the work happened (a field's error, a banner over the
 region, a toast for an act) and keeps what still works.
 
 An act holds its own run. Its `onAct` returns the promise of the work it starts

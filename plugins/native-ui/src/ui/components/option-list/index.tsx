@@ -63,8 +63,8 @@ export type OptionListProps<V extends string = string, T = unknown> = Closed &
 // the pressed row washes, the checked box or the ringed dot is the choice.
 // The children stand under the first chosen option. Static `options` never
 // paint; `items` paint `PAINT_ROWS` rows in the slots `option` declares while
-// their read waits, and a `value` selection paints the marks, inert. The frame
-// that holds the read draws its failed, missing and empty forms.
+// their read waits, and a `value` selection paints the marks, inert. A failed
+// or missing `items` read says so in a line under the list.
 export function OptionList<V extends string = string, T = unknown>(
 	props: Closed & OptionListShape<V, T> & OneChoice<V>,
 ): ReactNode;

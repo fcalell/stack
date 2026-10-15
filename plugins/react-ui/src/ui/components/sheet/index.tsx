@@ -31,7 +31,7 @@ export interface SheetProps extends Closed {
 	failed?: string;
 	/** What the desktop card holds, which sets its width: a form (the default) or a record's pane. */
 	fit?: SheetFit;
-	/** What the body holds, read once for the frame: while it waits the body's leaves paint and the submit with them, inert; its failure and a missing record stand in the body's place, the submit blocked with the failed sentence. A sheet is a surface of its own: it starts with no holds, so its read draws its state here whatever the page under it holds. */
+	/** What the body holds, read once for the frame: while it waits the body's leaves paint and the submit with them, inert; its failure and a missing record stand in the body's place, the submit blocked with the failed sentence. A sheet starts with no holds, so its read draws its state here whatever the page under it holds. */
 	read?: Selection<unknown>;
 	/** The body's sentence when the `read`'s selection is empty. */
 	empty?: Empty;

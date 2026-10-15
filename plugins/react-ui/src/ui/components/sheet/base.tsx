@@ -186,7 +186,7 @@ export function SheetBase({
 		ended === undefined ? offered : offered && { ...offered, blocked: ended };
 	// The sheet hosts its acts' run: its head submit, its foot bar and its
 	// form's bar share one, so one act pends at a time and the dismissal is held
-	// while it runs (unless it waits for a connection, which holds nothing).
+	// while it runs.
 	const acting = given ?? own;
 	// The body is the frame's: its failure and its emptiness stand in its place.
 	const body = (

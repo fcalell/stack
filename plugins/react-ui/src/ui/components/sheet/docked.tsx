@@ -89,7 +89,7 @@ export function SheetDocked({
 }: SheetDockedProps) {
 	const touch = useTouch();
 	// The foot's act and its form's bar share one run: one act pends at a time,
-	// and closing is held while it runs (unless it waits for a connection).
+	// and closing is held while it runs.
 	const acting = useAct<number>("line");
 	const words = useWords();
 	const titleId = useId();

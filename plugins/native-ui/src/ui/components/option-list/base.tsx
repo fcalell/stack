@@ -101,8 +101,8 @@ function GroupLabel({ children }: { children: ReactNode }) {
 // field hosts the draft of its options and draws a rejection in its own line.
 // Static `options` never paint; `items` paint `PAINT_ROWS` rows in the slots
 // `option` declares while their read waits, and the draft paints the marks,
-// inert. The frame that holds the read draws its failed, missing and empty
-// forms. Outside the package's exports.
+// inert. The list says its options' failed and missing state itself
+// (`useOptions`). Outside the package's exports.
 export function OptionListBase<V extends string = string, T = unknown>(
 	props: OptionListShape<V, T> & {
 		draft: Draft<V | null | readonly V[]>;

@@ -1,7 +1,7 @@
 # Acts and saves
 
 An act's `onAct` returns the promise of the work it starts, and the host that draws the act holds
-the run (pending, failure, a press offline); the app passes no `loading`:
+the run (pending, failure, a refusal for the connection); the app passes no `loading`:
 
 ```tsx
 const create = useMutation(orpc.projects.create.mutationOptions());
@@ -26,6 +26,10 @@ const add = {
   it never pauses and never fires on reconnect. The host draws `error.sentence` (the app's) or
   "No connection.". A `mutationCache` you supply yourself must call `guardReach(client)` in its
   `onMutate`.
+- An act given as a selection (`rules.at((a) => …)`) is the viewer's to press only when its read
+  answered: it paints while the read waits and stands blocked once the read has failed or is
+  missing, with the failed sentence (`words.missing` when missing). A constant act is live in every
+  frame form.
 - Invalidation is not awaited, so what the act changed shows through the reads it refetches (their
   busy mark); there is no done mark.
 
@@ -59,7 +63,9 @@ since; rejected, it falls back to the datum and `failed` hears the error with `a
 the same value. `change` returns the save's promise (never rejecting, since `failed` draws the
 rejection), so an act that saves again holds the run. react-ui and native-ui's controls do all of
 this: hand one the promise from `onChange`, or from `onCommit` for an `Input`, `TextArea` or
-`Slider`. Two saves in flight can reach the server out of order; a mutation that cares gives
+`Slider`. A `FormField` hosts its control's save: the field holds the draft and a refusal draws in
+the field's own line. A control standing alone holds its own draft and a rejection is a toast with
+Retry. Two saves in flight can reach the server out of order; a mutation that cares gives
 itself a `scope`.
 
 **Check:** `pnpm check` passes, and under `pnpm dev` a refused act shows its sentence and Retry.
