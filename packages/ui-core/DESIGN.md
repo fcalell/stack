@@ -1711,120 +1711,6 @@ components:
     backgroundColor: "{colors.skeleton}"
   paint-control-dark:
     backgroundColor: "{colors.skeleton-dark}"
-  skeleton-line:
-    height: "{spacing.skeleton}"
-    rounded: "{rounded.chip}"
-    backgroundColor: "{colors.skeleton}"
-  skeleton-line-dark:
-    height: "{spacing.skeleton}"
-    rounded: "{rounded.chip}"
-    backgroundColor: "{colors.skeleton-dark}"
-  skeleton-avatar:
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
-    rounded: "{rounded.full}"
-    backgroundColor: "{colors.skeleton}"
-  skeleton-avatar-dark:
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
-    rounded: "{rounded.full}"
-    backgroundColor: "{colors.skeleton-dark}"
-  skeleton-switch:
-    width: "{spacing.switch-w}"
-    height: "{spacing.switch-h}"
-    rounded: "{rounded.full}"
-    backgroundColor: "{colors.skeleton}"
-  skeleton-switch-dark:
-    width: "{spacing.switch-w}"
-    height: "{spacing.switch-h}"
-    rounded: "{rounded.full}"
-    backgroundColor: "{colors.skeleton-dark}"
-  skeleton-count:
-    height: "{spacing.skeleton}"
-    rounded: "{rounded.chip}"
-    backgroundColor: "{colors.skeleton}"
-  skeleton-count-dark:
-    height: "{spacing.skeleton}"
-    rounded: "{rounded.chip}"
-    backgroundColor: "{colors.skeleton-dark}"
-  skeleton-field:
-    height: "{spacing.field}"
-    rounded: "{rounded.control}"
-    backgroundColor: "{colors.skeleton}"
-  skeleton-field-dark:
-    height: "{spacing.field}"
-    rounded: "{rounded.control}"
-    backgroundColor: "{colors.skeleton-dark}"
-  skeleton-bar:
-    height: "{spacing.control-compact}"
-    rounded: "{rounded.control}"
-    backgroundColor: "{colors.skeleton}"
-  skeleton-bar-dark:
-    height: "{spacing.control-compact}"
-    rounded: "{rounded.control}"
-    backgroundColor: "{colors.skeleton-dark}"
-  skeleton-check:
-    height: "{spacing.check}"
-    width: "{spacing.check}"
-    rounded: "{rounded.chip}"
-    backgroundColor: "{colors.skeleton}"
-  skeleton-check-dark:
-    height: "{spacing.check}"
-    width: "{spacing.check}"
-    rounded: "{rounded.chip}"
-    backgroundColor: "{colors.skeleton-dark}"
-  skeleton-radio:
-    height: "{spacing.check}"
-    width: "{spacing.check}"
-    rounded: "{rounded.full}"
-    backgroundColor: "{colors.skeleton}"
-  skeleton-radio-dark:
-    height: "{spacing.check}"
-    width: "{spacing.check}"
-    rounded: "{rounded.full}"
-    backgroundColor: "{colors.skeleton-dark}"
-  skeleton-icon:
-    height: "{spacing.icon}"
-    width: "{spacing.icon}"
-    rounded: "{rounded.full}"
-    backgroundColor: "{colors.skeleton}"
-  skeleton-icon-dark:
-    height: "{spacing.icon}"
-    width: "{spacing.icon}"
-    rounded: "{rounded.full}"
-    backgroundColor: "{colors.skeleton-dark}"
-  skeleton-dot:
-    height: "{spacing.dot}"
-    width: "{spacing.dot}"
-    rounded: "{rounded.full}"
-    backgroundColor: "{colors.skeleton}"
-  skeleton-dot-dark:
-    height: "{spacing.dot}"
-    width: "{spacing.dot}"
-    rounded: "{rounded.full}"
-    backgroundColor: "{colors.skeleton-dark}"
-  skeleton-meter:
-    height: "{spacing.meter}"
-    rounded: "{rounded.chip}"
-    backgroundColor: "{colors.skeleton}"
-  skeleton-meter-dark:
-    height: "{spacing.meter}"
-    rounded: "{rounded.chip}"
-    backgroundColor: "{colors.skeleton-dark}"
-  skeleton-chart:
-    height: "{spacing.chart}"
-    rounded: "{rounded.chip}"
-    backgroundColor: "{colors.skeleton}"
-  skeleton-chart-dark:
-    height: "{spacing.chart}"
-    rounded: "{rounded.chip}"
-    backgroundColor: "{colors.skeleton-dark}"
-  skeleton-row-setting:
-    height: "{spacing.row-setting}"
-  skeleton-row-one-line:
-    height: "{spacing.row}"
-  skeleton-lane-body:
-    typography: "{typography.body}"
   action-bar-all:
     rounded: "{rounded.control}"
     height: "{spacing.target}"
@@ -2592,7 +2478,7 @@ A docked sheet's body keeps `docked-floor` (144px on touch, 96px on the desktop)
 | `IconButton` | atom | `ICON_BUTTON`, `TOOLTIP`, `PAINT.kind.control` | rest, hover, focus, active, loading |
 | `Count` | atom | `COUNT`, `COUNT_LABEL`, `PAINT.kind.glyphs` | rest |
 | `StepCount` | atom | `STEP_COUNT`, `STEP_COUNT_SEGMENTS`, `STEP_COUNT_SEGMENT`, `TEXT.role.meta` | rest |
-| `Status` | atom | `CHANGE_MARK`, `ICON.fit.meta`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `SKELETON.kind.dot`, `SKELETON.kind.line`, `PAINT.kind.box`, `PAINT.kind.glyphs` | rest |
+| `Status` | atom | `CHANGE_MARK`, `ICON.fit.meta`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `PAINT.kind.box`, `PAINT.kind.glyphs` | rest |
 | `Chip` | atom | `CHIP`, `CHIP_LABEL`, `REMOVE_HIT`, `PAINT.kind.box` | rest, hover, focus, active |
 | `Input` | atom | `FIELD`, `FIELD_VALUE`, `FIELD_PLACEHOLDER`, `FIELD_UNIT`, `FIELD_GLYPH`, `PAINT.kind.control` | rest, hover, focus, disabled, error |
 | `FileInput` | atom | `FIELD.fit.form`, `FIELD.trailing.none`, `FIELD.trailing.act`, `FIELD.state.rest`, `FIELD.state.error`, `FIELD_VALUE.kind.text`, `FIELD_PLACEHOLDER`, `TEXT.role.meta`, `FIELD_GLYPH`, `ICON.fit.control` | rest, hover, focus, disabled, error, empty |
@@ -2608,7 +2494,7 @@ A docked sheet's body keeps `docked-floor` (144px on touch, 96px on the desktop)
 | `Place` | layout | none | rest |
 | `Pane` | layout | `PAGE_HEAD`, `PAGE_HEAD_ROOM`, `PAGE_TOP_BAR`, `PAGE_TOP_BAR_START`, `PAGE_TOP_BAR_END`, `PAGE_TITLE_FLOOR`, `PAGE_TITLE_BLOCK`, `PAGE_HEAD_TOUCH`, `TEXT.role.title`, `PAGE_BODY`, `FOOT_DOCKED`, `PAGE_BODY_OVER_FOOT`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body`, `EMPTY_COLUMN`, `EMPTY_TEXT`, `EMPTY_MARK`, `ICON.fit.control`, `TEXT.role.heading`, `TEXT.role.meta`, `PAINT.kind.glyphs`, `PAINT.kind.control` | rest, loading, empty, error |
 | `Gate` | layout | `GATE`, `GATE_COLUMN`, `GATE_FLOW`, `GATE_STEP`, `GATE_MARK`, `GATE_MARK_ROW`, `GATE_LOGO`, `TEXT.role.title`, `TEXT.role.meta`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `EMPTY_COLUMN`, `EMPTY_TEXT`, `EMPTY_MARK`, `ICON.fit.control`, `BUTTON.act.primary`, `BUTTON.fit.body`, `BUTTON_LABEL.act.primary` | rest, empty |
-| `Section` | layout | `SECTION`, `SECTION_HEAD`, `SECTION_HEAD_ROW`, `SECTION_ACTS`, `SECTION_BODY`, `SECTION_TITLE`, `SECTION_TOGGLE`, `TEXT.role.heading`, `TEXT.role.meta`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `EMPTY_COLUMN`, `EMPTY_TEXT`, `EMPTY_FRAME`, `EMPTY_MARK`, `ICON.fit.control`, `ICON.fit.body`, `COUNT`, `COUNT_LABEL`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive`, `ICON_BUTTON.fit.bar`, `SKELETON.kind.count`, `SKELETON.kind.line`, `PAINT.kind.glyphs`, `PAINT.kind.control`, `TEXT.role.caption`, `LINE_BOX.role.meta` | rest, hover, focus, active, disabled, loading, empty, error |
+| `Section` | layout | `SECTION`, `SECTION_HEAD`, `SECTION_HEAD_ROW`, `SECTION_ACTS`, `SECTION_BODY`, `SECTION_TITLE`, `SECTION_TOGGLE`, `TEXT.role.heading`, `TEXT.role.meta`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `EMPTY_COLUMN`, `EMPTY_TEXT`, `EMPTY_FRAME`, `EMPTY_MARK`, `ICON.fit.control`, `ICON.fit.body`, `COUNT`, `COUNT_LABEL`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive`, `ICON_BUTTON.fit.bar`, `PAINT.kind.glyphs`, `PAINT.kind.control`, `TEXT.role.caption`, `LINE_BOX.role.meta` | rest, hover, focus, active, disabled, loading, empty, error |
 | `Group` | layout | `GROUP`, `GROUP_ITEM` | rest, loading |
 | `List` | layout | `LIST`, `LIST_ITEM`, `LIST_TREE`, `LIST_DIVIDED` | rest, loading |
 | `Form` | layout | `FORM`, `FORM_FOOT`, `FORM_GROUP`, `FORM_LEGEND`, `TEXT.role.heading`, `TEXT.role.meta` | rest, loading, empty, error |
@@ -2616,8 +2502,8 @@ A docked sheet's body keeps `docked-floor` (144px on touch, 96px on the desktop)
 | `ActionBar` | layout | `ACTION_BAR`, `ACTION_BAR_ACTS`, `ACTION_BAR_CHOSEN`, `ACTION_BAR_SELECTION`, `ACTION_BAR_ALL`, `TEXT.role.meta`, `FIELD_ERROR_LINE`, `BUTTON.act.primary`, `BUTTON.act.danger`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.act.quiet`, `BUTTON.fit.body`, `BUTTON.fit.field`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.danger`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive`, `BUTTON_LABEL.act.quiet`, `PAINT.kind.control` | rest, loading, disabled |
 | `Columns` | layout | `COLUMNS` | rest |
 | `Shell` | layout | `SHELL_SIDEBAR`, `SHELL_COLUMN`, `SHELL_BANNER`, `SHELL_MARK`, `SHELL_MARK_ROW`, `SHELL_LOGO`, `GATE_MARK`, `SWITCHER_SLOT`, `SWITCHER`, `SHELL_PLACES`, `PLACE_ROW`, `PLACE_ROW_GLYPH`, `SHELL_TAB_BAR`, `PLACE_TAB`, `PLACE_TAB_LABEL`, `TOASTS`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `ICON.fit.body`, `ICON.fit.control`, `COUNT`, `COUNT_LABEL` | rest, hover, focus, active, selected |
-| `ListRow` | shared | `ROW.lines.one`, `ROW.lines.two`, `ROW.lines.whole`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.state.selected`, `ROW.state.selected-hover`, `ROW_TITLE`, `ROW_STEPS`, `ROW_STEP`, `TREE_RAIL`, `TREE_LANE`, `TREE_BLEED`, `ROW_LEADING`, `ROW_TITLE_LINE`, `ROW_META_LINE`, `ROW_TRAILING`, `ROW_MARKS`, `ROW_WARNING`, `LOCK_GLYPH`, `ROW_ACTS`, `ROW_CHEVRON`, `CHANGE_MARK`, `CHECKBOX`, `CHECKBOX_MARK`, `TEXT.role.meta`, `ICON.fit.body`, `ICON.fit.meta`, `AVATAR`, `AVATAR_LABEL`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `CHIP`, `CHIP_LABEL`, `ICON_BUTTON.fit.bar`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `FIELD.fit.bar`, `FIELD.trailing.none`, `FIELD.state.rest`, `FIELD.state.error`, `FIELD_VALUE.kind.text`, `FIELD_PLACEHOLDER`, `ROW_ENTRY`, `FIELD_ERROR_LINE`, `SKELETON.kind.avatar`, `SKELETON.kind.icon`, `SKELETON.kind.dot`, `SKELETON.kind.check`, `SKELETON.kind.bar`, `SKELETON_LANE.role.body`, `SKELETON_LANE.role.meta`, `SKELETON.kind.line`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `PAINT.kind.glyphs`, `PAINT.kind.box`, `PAINT.kind.control` | rest, hover, focus, active, loading, error, selected |
-| `DefinitionRow` | shared | `ROW.lines.one`, `ROW.lines.setting`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `DEFINITION_ROW`, `DEFINITION_ROW_CHEVRON`, `ROW_TITLE_LINE`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `TEXT.role.code`, `ICON.fit.body`, `ICON.fit.meta`, `LINK.fit.inline`, `LOCK_GLYPH`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `ICON_BUTTON.fit.bar`, `CHANGE_MARK`, `SKELETON_ROW.kind.one-line`, `SKELETON_ROW.kind.setting`, `SKELETON.kind.line`, `SKELETON.kind.icon`, `SKELETON.kind.switch`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `PAINT.kind.glyphs`, `PAINT.kind.box`, `PAINT.kind.control` | rest, hover, focus, active |
+| `ListRow` | shared | `ROW.lines.one`, `ROW.lines.two`, `ROW.lines.whole`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.state.selected`, `ROW.state.selected-hover`, `ROW_TITLE`, `ROW_STEPS`, `ROW_STEP`, `TREE_RAIL`, `TREE_LANE`, `TREE_BLEED`, `ROW_LEADING`, `ROW_TITLE_LINE`, `ROW_META_LINE`, `ROW_TRAILING`, `ROW_MARKS`, `ROW_WARNING`, `LOCK_GLYPH`, `ROW_ACTS`, `ROW_CHEVRON`, `CHANGE_MARK`, `CHECKBOX`, `CHECKBOX_MARK`, `TEXT.role.meta`, `ICON.fit.body`, `ICON.fit.meta`, `AVATAR`, `AVATAR_LABEL`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `CHIP`, `CHIP_LABEL`, `ICON_BUTTON.fit.bar`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `FIELD.fit.bar`, `FIELD.trailing.none`, `FIELD.state.rest`, `FIELD.state.error`, `FIELD_VALUE.kind.text`, `FIELD_PLACEHOLDER`, `ROW_ENTRY`, `FIELD_ERROR_LINE`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `PAINT.kind.glyphs`, `PAINT.kind.box`, `PAINT.kind.control` | rest, hover, focus, active, loading, error, selected |
+| `DefinitionRow` | shared | `ROW.lines.one`, `ROW.lines.setting`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `DEFINITION_ROW`, `DEFINITION_ROW_CHEVRON`, `ROW_TITLE_LINE`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `TEXT.role.code`, `ICON.fit.body`, `ICON.fit.meta`, `LINK.fit.inline`, `LOCK_GLYPH`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `ICON_BUTTON.fit.bar`, `CHANGE_MARK`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `PAINT.kind.glyphs`, `PAINT.kind.box`, `PAINT.kind.control` | rest, hover, focus, active |
 | `FormField` | shared | `FORM_FIELD`, `FIELD_ERROR_LINE`, `FORM_FIELD_SUMMARY`, `FORM_FIELD_SUMMARY_GLYPH`, `CHANGE_MARK`, `ICON.fit.body`, `ICON.fit.meta`, `ICON_BUTTON.fit.bar`, `LINE_BOX.role.body`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `PAINT.kind.control` | rest, disabled, error |
 | `ItemHeader` | shared | `ITEM_HEADER`, `ITEM_FACTS`, `ITEM_FACT`, `WORD_ACT`, `ICON.fit.meta`, `TEXT.role.meta`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `COUNT`, `COUNT_LABEL`, `PAINT.kind.box`, `PAINT.kind.glyphs`, `PAINT.kind.control` | rest, loading |
 | `SegmentedControl` | shared | `SEGMENTED_CONTROL`, `SEGMENT`, `SEGMENT_LABEL`, `PAINT.kind.control` | rest, hover, focus, active, selected |
@@ -2627,7 +2513,6 @@ A docked sheet's body keeps `docked-floor` (144px on touch, 96px on the desktop)
 | `OptionList` | shared | `OPTION_LIST`, `SELECT_GROUP`, `OPTION_GROUP_LABEL`, `TEXT.role.meta`, `TEXT_STRONG.role.meta`, `ROW.lines.one`, `ROW.lines.two`, `ROW.lines.whole`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `OPTION_ROW`, `OPTION_LINE`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `CHECKBOX`, `CHECKBOX_MARK`, `OPTION_RADIO`, `OPTION_RADIO_DOT`, `TEXT.role.body`, `ROW_TITLE_LINE`, `ROW_META_LINE`, `CHIP.family.neutral`, `CHIP_LABEL.family.neutral`, `OPTION_CHILDREN`, `OPTION_INDENT`, `PAINT.kind.glyphs`, `PAINT.kind.control` | rest, hover, focus, active, loading, selected, disabled |
 | `Missing` | shared | `EMPTY_COLUMN`, `EMPTY_TEXT`, `EMPTY_FRAME`, `TEXT.role.meta`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.secondary` | rest |
 | `Failed` | shared | `EMPTY_COLUMN`, `EMPTY_TEXT`, `EMPTY_FRAME`, `EMPTY_MARK`, `ICON.fit.control`, `TEXT.role.meta`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.secondary` | rest |
-| `QueryBoundary` | shared | none | rest, loading, error |
 | `Toast` | shared | `TOAST`, `TOAST_STATE`, `ICON.fit.body`, `TEXT.role.body`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `ICON_BUTTON.fit.bar` | rest |
 | `Banner` | shared | `BANNER`, `BANNER_ROW`, `BANNER_MAIN`, `BANNER_GLYPH`, `ICON.fit.body`, `TEXT.role.body`, `TEXT.role.meta`, `BUTTON.act.quiet`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.quiet` | rest, disabled |
 | `PendingBar` | shared | `PENDING_BAR`, `PENDING_ROW`, `PENDING_TRACK`, `PENDING_FILL`, `PENDING_LEFT`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `TEXT.role.body`, `TEXT.role.meta`, `BUTTON.act.secondary`, `BUTTON.fit.body`, `BUTTON_LABEL.act.secondary` | rest, disabled |
@@ -2635,13 +2520,13 @@ A docked sheet's body keeps `docked-floor` (144px on touch, 96px on the desktop)
 | `Code` | content | `CODE_ACT`, `CODE_FOLD`, `CODE_HEAD`, `CODE_TEXT`, `CODE_UNDER_HEAD`, `CONTENT_FRAME`, `ICON.fit.control`, `ICON.fit.meta`, `ICON_BUTTON.fit.body`, `PAINT.kind.control`, `PAINT.kind.glyphs`, `TEXT.role.code`, `TEXT.role.meta` | rest, hover, focus, active, loading |
 | `Diff` | content | `CONTENT_FRAME`, `DIFF_CODE`, `DIFF_GUTTER`, `DIFF_HANG`, `DIFF_HUNK`, `DIFF_LINE`, `DIFF_MARK`, `PAINT.kind.glyphs` | rest, loading |
 | `ProseDiff` | content | `CONTENT_FRAME`, `PROSE_DIFF_BODY`, `PROSE_DIFF_RUN`, `PROSE_DIFF_TEXT`, `PAINT.kind.glyphs`, `TEXT.role.body` | rest, loading |
-| `FileRow` | content | `CHANGE_MARK`, `CHIP`, `CHIP_LABEL`, `FILE_COUNT`, `FILE_COUNT_YIELD`, `FILE_COUNTS`, `FILE_PATH`, `FILE_PATH_PART`, `ICON.fit.body`, `ICON.fit.meta`, `ROW.lines.one`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.state.rest`, `ROW.state.selected`, `ROW.state.selected-hover`, `ROW_LEADING`, `SKELETON.kind.icon`, `SKELETON.kind.line`, `SKELETON_LANE.role.meta`, `SKELETON_ROW.kind.one-line`, `PAINT.kind.glyphs`, `PAINT.kind.box` | rest, hover, focus, active, selected, loading |
+| `FileRow` | content | `CHANGE_MARK`, `CHIP`, `CHIP_LABEL`, `FILE_COUNT`, `FILE_COUNT_YIELD`, `FILE_COUNTS`, `FILE_PATH`, `FILE_PATH_PART`, `ICON.fit.body`, `ICON.fit.meta`, `ROW.lines.one`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.state.rest`, `ROW.state.selected`, `ROW.state.selected-hover`, `ROW_LEADING`, `PAINT.kind.glyphs`, `PAINT.kind.box` | rest, hover, focus, active, selected, loading |
 | `Comparison` | content | `CHIP.family.neutral`, `CHIP.trailing.none`, `CHIP_LABEL.family.neutral`, `COMPARISON_LABEL`, `COMPARISON_ROW`, `STATUS`, `STATUS_DOT`, `STATUS_LABEL`, `STATUS_SPINNER`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body`, `TEXT_STRONG.role.meta`, `PAINT.kind.box`, `PAINT.kind.glyphs` | rest, loading |
 | `Table` | content | `CHECKBOX`, `CHECKBOX_MARK`, `CHANGE_MARK`, `CHIP.family.teal`, `CHIP.trailing.none`, `CHIP_LABEL.family.teal`, `FIELD.fit.bar`, `FIELD.state.rest`, `FIELD.trailing.none`, `FIGURES`, `ICON.fit.body`, `ICON.fit.meta`, `LOCK_GLYPH`, `SPINNER`, `SPINNER_ARC`, `SPINNER_TRACK`, `STATUS`, `STATUS_DOT`, `STATUS_LABEL`, `STATUS_SPINNER`, `ROW_WARNING`, `TABLE`, `TABLE_CELL`, `TABLE_CHANGE`, `TABLE_NAME`, `TABLE_CHANGE_VALUE.kind.added`, `TABLE_CHANGE_VALUE.kind.after`, `TABLE_CHANGE_VALUE.kind.before`, `TABLE_CHANGE_VALUE.kind.removed`, `TABLE_FRAME`, `TABLE_FROZEN`, `TABLE_FROZEN_CELL`, `TABLE_HEAD`, `TABLE_HEAD_LABEL`, `TABLE_ROW`, `TEXT.role.body`, `TEXT.role.code`, `TEXT.role.meta`, `TEXT_STRONG.role.body`, `PAINT.kind.box`, `PAINT.kind.glyphs`, `PAINT.kind.control` | rest, hover, focus, active, loading, selected |
 | `Rules` | content | `ICON.fit.meta`, `RULES`, `RULE_ROW`, `RULE_CARD`, `RULE_ARROW`, `TEXT.role.meta` | rest |
-| `Message` | content | `CHIP.family.neutral`, `CHIP_LABEL.family.neutral`, `IMAGE.fit.thumb`, `IMAGE_PICTURE.fit.thumb`, `MESSAGE_ATTACHMENTS`, `ICON.fit.meta`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `MESSAGE`, `MESSAGE_BUBBLE`, `MESSAGE_HEAD`, `MESSAGE_LINE`, `MESSAGE_OPEN`, `MESSAGE_ENTRY`, `MESSAGE_CARD`, `MESSAGE_CODE`, `MESSAGE_FOLD`, `SKELETON.kind.line`, `PAINT.kind.glyphs`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT.role.code`, `TEXT_STRONG.role.body` | rest, hover, focus, active, loading |
+| `Message` | content | `CHIP.family.neutral`, `CHIP_LABEL.family.neutral`, `IMAGE.fit.thumb`, `IMAGE_PICTURE.fit.thumb`, `MESSAGE_ATTACHMENTS`, `ICON.fit.meta`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `MESSAGE`, `MESSAGE_BUBBLE`, `MESSAGE_HEAD`, `MESSAGE_LINE`, `MESSAGE_OPEN`, `MESSAGE_ENTRY`, `MESSAGE_CARD`, `MESSAGE_CODE`, `MESSAGE_FOLD`, `PAINT.kind.glyphs`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT.role.code`, `TEXT_STRONG.role.body` | rest, hover, focus, active, loading |
 | `MessageInput` | content | `BUTTON.act.primary`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.secondary`, `CHIP.family.neutral`, `CHIP.trailing.remove`, `CHIP_LABEL.family.neutral`, `REMOVE_HIT`, `FIELD.fit.bar`, `FIELD.state.rest`, `FIELD.trailing.none`, `FIELD_VALUE.kind.text`, `ICON.fit.control`, `ICON.fit.meta`, `ICON_BUTTON.fit.bar`, `IMAGE.fit.thumb`, `IMAGE_PICTURE.fit.thumb`, `IMAGE_REMOVE`, `IMAGE_REMOVE_DISC`, `MESSAGE_ATTACH_SLOT`, `MESSAGE_ATTACHMENTS`, `MESSAGE_INPUT`, `MESSAGE_INPUT_BOX`, `MESSAGE_INPUT_CHIPS`, `MESSAGE_INPUT_FIELD`, `MESSAGE_INPUT_FOOT`, `MESSAGE_INPUT_ROW`, `MESSAGE_INPUT_TEXT`, `MESSAGE_INPUT_VALUE`, `MESSAGE_NOTICE`, `MESSAGE_NOTICE_TEXT`, `SPINNER`, `SPINNER_ARC`, `SPINNER_TRACK`, `THREAD_COLUMN`, `TEXT.role.meta` | rest, hover, focus, disabled |
-| `Meter` | content | `LINK_TARGET`, `COUNT_LINKS`, `FIGURES`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `LINK.fit.standalone`, `METER`, `METER_FILL`, `METER_HEAD`, `METER_MARK`, `METER_TRACK`, `SKELETON.kind.line`, `SKELETON.kind.meter`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body`, `PAINT.kind.glyphs`, `PAINT.kind.box` | rest |
+| `Meter` | content | `LINK_TARGET`, `COUNT_LINKS`, `FIGURES`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `LINK.fit.standalone`, `METER`, `METER_FILL`, `METER_HEAD`, `METER_MARK`, `METER_TRACK`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body`, `PAINT.kind.glyphs`, `PAINT.kind.box` | rest |
 | `Stages` | content | `ICON.fit.meta`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `STAGE`, `STAGE_CHECK`, `STAGE_CROSS`, `STAGE_MARK`, `STAGE_RAIL`, `STAGE_ROW`, `STAGE_WORDS`, `TEXT.role.meta`, `PAINT.kind.control`, `PAINT.kind.glyphs` | rest, loading |
 | `Stats` | content | `LINK_TARGET`, `COUNT_LINKS`, `FIGURES`, `LINK.fit.standalone`, `PAINT.kind.glyphs`, `STATS`, `STATS_CELL`, `STATS_EDGE`, `STATS_FIGURE`, `TEXT.role.figure`, `TEXT.role.meta` | rest, loading |
 | `Stat` | content | `PAINT.kind.glyphs`, `STAT`, `STAT_FIGURE`, `TEXT.role.display`, `TEXT.role.meta` | rest, loading |

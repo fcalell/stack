@@ -211,8 +211,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		// A mark, never an act: a status that moves is a `Picker` whose options
-		// carry states. Its loading form (a table's waiting status cell) is the
-		// dot's and the word's skeletons at its gap, through its internal base.
+		// carry states. Its painted form (a table's waiting status cell) is the
+		// dot's and the word's paint at its gap, through its internal base.
 		// `running` draws a `Spinner` in the dot's place, in the accent ink. Its
 		// internal change mark stands beside the dot: one glyph in a lane an icon
 		// wide, by the kind of change (added, changed, removed, unchanged, stale),
@@ -229,8 +229,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SPINNER",
 				"SPINNER_TRACK",
 				"SPINNER_ARC",
-				"SKELETON.kind.dot",
-				"SKELETON.kind.line",
 				"PAINT.kind.box",
 				"PAINT.kind.glyphs",
 			],
@@ -786,14 +784,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// The fold toggle is the title line; a blocked act's reason stands on
 		// its own line under the head row.
-		// Its head is busy exactly when `loading` is set and its count is exactly
-		// `count`; it reads nothing of its body. Loading, each part of the body
-		// draws its own waiting form: a Group or a List its skeleton rows, a
-		// Prose, Thread, Code, Meter, Slider, DefinitionRow, FormField or
-		// ActionBar its own.
-		// While it loads, `description=""` stands one meta-height bar where the
-		// sentence will be, and an undefined `description` stands none; loaded, `""`
-		// draws no line, as an undefined one. `empty` stands in its body's place in
+		// Its count is exactly `count`, or an array read's length once it lands,
+		// and never drawn while the body waits; the body's leaves paint on their
+		// own selections, and its `read` draws the failed, missing and empty
+		// forms in the body's place.
+		// `description` paints where it will stand while its selection waits; loaded,
+		// `""` draws no line, as an undefined one. `empty` stands in its body's place in
 		// a hairline frame (the mark, the title at body 500 over the sentence at
 		// meta, the act the hairline one), or as one quiet sentence at meta when
 		// only the sentence is given. The title is the heading size, folded or not,
@@ -807,7 +803,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"onToggle",
 				"act",
 				"more",
-				"loading",
 				"read",
 				"empty",
 				"failed",
@@ -839,8 +834,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"BUTTON_LABEL.act.secondary",
 				"BUTTON_LABEL.act.destructive",
 				"ICON_BUTTON.fit.bar",
-				"SKELETON.kind.count",
-				"SKELETON.kind.line",
 				"PAINT.kind.glyphs",
 				"PAINT.kind.control",
 				"TEXT.role.caption",
@@ -888,11 +881,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// drawn in a box at the card's inset: the hairline falls between the
 		// entries) or `list` (a List it frames, drawing its rows on the card with
 		// no bleed of its own, painted while its `items` selection waits; the frame
-		// around the Group draws the failed and empty forms). Waiting, each
-		// Slider and FormField in it draws its own waiting form at its loaded
-		// height; three setting rows stand for entries no part answers for.
+		// around the Group draws the failed and empty forms).
 		Group: {
-			props: ["loading", "items", "list"],
+			props: ["items", "list"],
 			draws: ["GROUP", "GROUP_ITEM"],
 			holds: ["GROUP", "GROUP_ITEM"],
 			states: ["rest", "loading"],
@@ -933,8 +924,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// Its structure is its props, one of `children` (a flat run of FormFields
 		// a fields step apart) or `groups` (each a fieldset with a legend, its
 		// description, lead and fields a fields step apart, the groups a
-		// sections step apart; a group's `loading` waits its fields as a
-		// loading Section's do). `bar` is the ActionBar's own props, drawn in its
+		// sections step apart; a group's `read` is its own frame). `bar` is the ActionBar's own props, drawn in its
 		// foot: under a hairline across a form of groups. A Form placed alone is
 		// the page's, at most a measure wide; a Sheet's or a Gate's `form` (these
 		// props) stands on their column, uncapped, a Sheet's bar stuck to the edge
@@ -1236,14 +1226,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"FIELD_PLACEHOLDER",
 				"ROW_ENTRY",
 				"FIELD_ERROR_LINE",
-				"SKELETON.kind.avatar",
-				"SKELETON.kind.icon",
-				"SKELETON.kind.dot",
-				"SKELETON.kind.check",
-				"SKELETON.kind.bar",
-				"SKELETON_LANE.role.body",
-				"SKELETON_LANE.role.meta",
-				"SKELETON.kind.line",
 				"LINE_BOX.role.body",
 				"LINE_BOX.role.meta",
 				"PAINT.kind.glyphs",
@@ -1371,11 +1353,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SPINNER_ARC",
 				"ICON_BUTTON.fit.bar",
 				"CHANGE_MARK",
-				"SKELETON_ROW.kind.one-line",
-				"SKELETON_ROW.kind.setting",
-				"SKELETON.kind.line",
-				"SKELETON.kind.icon",
-				"SKELETON.kind.switch",
 				"LINE_BOX.role.body",
 				"LINE_BOX.role.meta",
 				"PAINT.kind.glyphs",
@@ -1945,8 +1922,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// The failed form: the alert mark in the danger ink, the sentence at meta
 		// and the act that runs a function (never a link), the hairline act with
-		// no plus, in a hairline frame at the empty width. The form a
-		// QueryBoundary draws for a failed query, for a read that is no query.
+		// no plus, in a hairline frame at the empty width. The frames draw it for
+		// a failed read; this is for a read that is no query.
 		Failed: {
 			props: ["sentence", "act"],
 			draws: [
@@ -1969,15 +1946,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				spacing: ["fields", "pair", "card", "inside", "control-x"],
 				sizes: ["empty", "control", "control-compact", "icon-control"],
 			},
-		},
-		// Loading, the body's own loading form (`loading`), else the loading
-		// form of the Group or List it composes (a Section's busy head through
-		// the Section either way); failed, the `Failed` form with its
-		// sentence and a retry act. It spells no cell.
-		QueryBoundary: {
-			props: ["query", "sentence", "children", "loading"],
-			draws: [],
-			states: ["rest", "loading", "error"],
 		},
 		Toast: {
 			props: ["sentence", "state", "act"],
@@ -2084,9 +2052,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// Markdown at the measure: headings, paragraphs, lists, quotes, rules, inline
 		// code and links; a fenced block is a `Code`. No syntax colours, tables,
 		// task lists or images.
-		// `loading` is a count of lines (`true` the two paragraphs): the Prose waits
-		// as that many line bars; 0 or `false` is not waiting, and a loading Group
-		// or Section hands down `true` only.
+		// Its markdown is a constant or a selection; while the selection waits it
+		// paints `PAINT_ROWS` paragraphs.
 		Prose: {
 			props: ["markdown"],
 			draws: [
@@ -2290,10 +2257,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ROW.state.selected",
 				"ROW.state.selected-hover",
 				"ROW_LEADING",
-				"SKELETON.kind.icon",
-				"SKELETON.kind.line",
-				"SKELETON_LANE.role.meta",
-				"SKELETON_ROW.kind.one-line",
 				"PAINT.kind.glyphs",
 				"PAINT.kind.box",
 			],
@@ -2586,7 +2549,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"MESSAGE_CARD",
 				"MESSAGE_CODE",
 				"MESSAGE_FOLD",
-				"SKELETON.kind.line",
 				"PAINT.kind.glyphs",
 				"TEXT.role.body",
 				"TEXT.role.meta",
@@ -2759,8 +2721,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"METER_HEAD",
 				"METER_MARK",
 				"METER_TRACK",
-				"SKELETON.kind.line",
-				"SKELETON.kind.meter",
 				"TEXT.role.body",
 				"TEXT.role.meta",
 				"TEXT_STRONG.role.body",

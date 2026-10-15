@@ -29,9 +29,9 @@ The routes (`src/app/routes/`) are one app composed from the built components, p
 - Outside the Shell: `/sign-in` (the email step, then the code step)
   and `/connect` (the first of two Connect steps), each a `Gate`.
 
-A place calls typed procedures through the generated client and draws their states through the
-components' own `query` props (`List`, `Table`, `BarChart`, `Comparison`, `Thread`) and
-`QueryBoundary`. The procedures are `src/worker/routes/`: zod input and output schemas and a stub
+A place calls typed procedures through the generated client's `read` and draws their states through
+the frames (`Pane`, `Section`, `Sheet`, `Form`) that hold the read, its leaves and collections
+taking selections of it. The procedures are `src/worker/routes/`: zod input and output schemas and a stub
 handler each, so a run against the dev worker draws every collection empty and every record not
 found. The data a place shows is `src/app/fixtures.ts`, which answers every procedure, and an
 example value for the route params (`deployId`, `stepId`).

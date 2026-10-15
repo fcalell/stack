@@ -230,7 +230,6 @@ const NATIVE_OVERLAYS = [
 	"top-0",
 	"underline",
 	"w-0",
-	"w-1/2",
 	"w-2/3",
 	"w-full",
 	"w-icon-meta",
@@ -1541,10 +1540,6 @@ const CONTEXTS: Record<string, [ContextClass, string]> = {
 		"the claim a leaving docked sheet sets for the input that returns to take focus",
 	],
 	"lib/words.tsx:WordsContext": ["data", "the app's words"],
-	"lib/loading.ts:LoadingContext": [
-		"data",
-		"the read's state: each part draws its own waiting form from the one tree",
-	],
 	"lib/touched.ts:TouchedContext": [
 		"behaviour",
 		"whether a Form or Sheet has taken input, and its leave",
@@ -1608,6 +1603,27 @@ check("b-type-prop", "no component takes a prop named type", () => {
 		`a component takes or reads a type prop (measured: ${hits.length}, expected: 0); name the prop for what it chooses, a kind or a form:\n  ${hits.join("\n  ")}`,
 	);
 	return `${found.size} component files, no prop named type`;
+});
+
+// The waiting form is the loaded form painted, never a second tree: no file
+// is named `wait.tsx` or `*-wait.tsx`, and no component is named `*Wait`. The
+// phone has no exception (the web's Canvas keeps one painted stand-in).
+check("b-wait", "no waiting tree stands beside the loaded one", () => {
+	const hits: string[] = [];
+	for (const path of UI_FILES) {
+		const rel = relative(pkgDir, path);
+		if (/(^|[/-])wait\.tsx?$/.test(rel)) hits.push(`${rel}: a waiting file`);
+		const source = withoutComments(readFileSync(path, "utf8"));
+		for (const found of source.matchAll(
+			/\b(?:function|const|class)\s+(\w*Wait)\b/g,
+		))
+			hits.push(`${rel}: ${found[1]}`);
+	}
+	assert(
+		hits.length === 0,
+		`a waiting tree beside the loaded one (paint the loaded form instead):\n  ${hits.join("\n  ")}`,
+	);
+	return `${UI_FILES.length} source files, no waiting tree`;
 });
 
 // A Section's title is one size, so a Section inside a Section reads as its

@@ -71,7 +71,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { Node, Project, SyntaxKind } from "ts-morph";
 import { reactUi } from "../src/index.ts";
-import { OVERLAYS, SKELETON_WIDTHS } from "./overlays.ts";
+import { OVERLAYS } from "./overlays.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const pkgDir = resolve(here, "..");
@@ -422,35 +422,7 @@ check("a6", "the built sheet carries every class the components spell", () => {
 });
 
 check("b5", "the overlay allowlist mirrors the swept sources", () => {
-	const misplaced: string[] = [];
-	for (const path of COMPONENT_FILES) {
-		const source = readFileSync(path, "utf8");
-		// A width composed over the line cell (`cn(skeleton({ kind: "line" }), width)`)
-		// sits in a literal of widths alone, in a file that draws the cell.
-		const bars = source.includes('skeleton({ kind: "line" })');
-		for (const literal of classLiterals(path)) {
-			const names = classes(literal);
-			if (names.includes("bg-skeleton")) continue;
-			if (
-				bars &&
-				names.length > 0 &&
-				names.every((name) => SKELETON_WIDTHS.includes(name))
-			)
-				continue;
-			for (const name of names) {
-				if (SKELETON_WIDTHS.includes(name)) {
-					misplaced.push(`${relative(pkgDir, path)}: ${name}`);
-				}
-			}
-		}
-	}
-	assert(
-		misplaced.length === 0,
-		`a skeleton width off a skeleton bar: ${misplaced.join(", ")}`,
-	);
-	const listed = [...ALL_SWEPT].filter(
-		(name) => !isStateToken(name) && !SKELETON_WIDTHS.includes(name),
-	);
+	const listed = [...ALL_SWEPT].filter((name) => !isStateToken(name));
 	const missing = listed.filter((name) => !OVERLAYS.includes(name));
 	assert(
 		missing.length === 0,
@@ -710,6 +682,32 @@ check("b-file-input", "every FileInput stands inside a FormField", () => {
 	return `${drawn} FileInput, each inside a FormField`;
 });
 
+// The waiting form is the loaded form painted, never a second tree: no file
+// is named `wait.tsx` or `*-wait.tsx`, and no component is named `*Wait`. The
+// one named exception is Canvas's `CanvasWait`, the painted stand-in: its
+// layout has no geometry before the data, so it cannot be painted in place.
+const WAIT_EXCEPTION = "CanvasWait";
+check("b-wait", "no waiting tree stands beside the loaded one", () => {
+	const hits: string[] = [];
+	let files = 0;
+	for (const path of walk(resolve(pkgDir, "src/ui"), /\.(ts|tsx)$/)) {
+		files++;
+		const rel = relative(pkgDir, path);
+		if (/(^|[/-])wait\.tsx?$/.test(rel) && !rel.endsWith("canvas/wait.tsx"))
+			hits.push(`${rel}: a waiting file`);
+		const source = withoutComments(readFileSync(path, "utf8"));
+		for (const found of source.matchAll(
+			/\b(?:function|const|class)\s+(\w*Wait)\b/g,
+		))
+			if (found[1] !== WAIT_EXCEPTION) hits.push(`${rel}: ${found[1]}`);
+	}
+	assert(
+		hits.length === 0,
+		`a waiting tree beside the loaded one (paint the loaded form instead; only ${WAIT_EXCEPTION} is named):\n  ${hits.join("\n  ")}`,
+	);
+	return `${files} source files, no waiting tree beyond ${WAIT_EXCEPTION}`;
+});
+
 // A Section's title is one size, so a Section inside a Section reads as its
 // sibling and the page's outline flattens: no Section stands in a Section.
 // Read over this package's own sources, showcase included, as the FileInput
@@ -929,10 +927,6 @@ const CONTEXTS: Record<string, [ContextClass, string]> = {
 		"the id of the title that names a Pane or a Gate, which its Thread and Table label by",
 	],
 	"lib/words.tsx:WordsContext": ["data", "the app's words"],
-	"lib/loading.ts:LoadingContext": [
-		"data",
-		"the read's state: each part draws its own waiting form from the one tree",
-	],
 	"lib/touched.ts:TouchedContext": [
 		"behaviour",
 		"whether a Form or Sheet has taken input, and its leave",

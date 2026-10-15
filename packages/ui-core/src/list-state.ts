@@ -1,7 +1,7 @@
-// The decisions a collection (a `List`, a `Table`, an `OptionList`), the
-// `Section` around it, and the Meter, StepCount and Stages states make before
-// they draw, free of any framework: both platforms run this one source, and it
-// is tested without rendering.
+// The decisions a collection (a `List`, a `Table`, an `OptionList`) and the
+// Meter, StepCount and Stages states make before they draw, free of any
+// framework: both platforms run this one source, and it is tested without
+// rendering.
 
 import type {
 	ChangeCell,
@@ -19,75 +19,6 @@ import type {
 } from "./descriptors.ts";
 import { painting } from "./paint.ts";
 import { METER_NEAR, type Words } from "./tokens.ts";
-
-export type ListState = "pending" | "failed" | "missing" | "empty" | "loaded";
-
-export interface ListInput {
-	query?: {
-		isPending: boolean;
-		isError: boolean;
-		error?: unknown;
-		data: readonly unknown[] | undefined;
-	};
-	items?: readonly unknown[];
-	// The items are on their way (a compound body's loading form).
-	loading?: boolean;
-	// A loading Section around the list waits.
-	sectionLoading: boolean;
-	// The list has an empty form to draw.
-	hasEmpty: boolean;
-}
-
-// The list's own items wait: its query is pending or `loading` is set.
-export function listWaits(input: ListInput): boolean {
-	return input.query?.isPending === true || input.loading === true;
-}
-
-// A failed read whose answer is that the thing does not exist: its error
-// carries the code stack's procedures throw (`ORPCError("NOT_FOUND")`) or an
-// HTTP 404, read by shape so no client library is imported.
-export function missing(query: { error?: unknown }): boolean {
-	const { error } = query;
-	if (typeof error !== "object" || error === null) return false;
-	return (
-		("code" in error && error.code === "NOT_FOUND") ||
-		("status" in error && error.status === 404)
-	);
-}
-
-// What a QueryBoundary draws once no query waits: missing when every failed
-// query answers not found, failed when any fails otherwise, else its body.
-export function boundaryState(
-	queries: readonly { isError: boolean; error?: unknown }[],
-): "failed" | "missing" | "loaded" {
-	const failed = queries.filter((query) => query.isError);
-	if (failed.length === 0) return "loaded";
-	return failed.every(missing) ? "missing" : "failed";
-}
-
-// Pending while its own items wait or a loading Section waits; missing when
-// its query answers not found, failed when it fails otherwise; empty when no
-// item answers and an empty form is given; else loaded (no item and no empty
-// form draws none).
-export function listState(input: ListInput): ListState {
-	if (listWaits(input) || input.sectionLoading) return "pending";
-	if (input.query?.isError) return missing(input.query) ? "missing" : "failed";
-	const items = input.query ? input.query.data : input.items;
-	if (!items?.length && input.hasEmpty) return "empty";
-	return "loaded";
-}
-
-// Busy while its own items wait.
-export function listBusy(input: ListInput): boolean {
-	return listWaits(input);
-}
-
-// The failed form's Retry: it refetches the query.
-export function retryOf(query: { refetch: () => unknown }): () => void {
-	return () => {
-		query.refetch();
-	};
-}
 
 // One row of a tree as the list draws it: its item at a depth (the roots at
 // 0), whether it has children to fold, and whether they are drawn.
@@ -216,21 +147,6 @@ export function valueCut(value: string): { stem: string; tail: string } {
 		stem: characters.slice(0, at).join(""),
 		tail: characters.slice(at).join(""),
 	};
-}
-
-// The line a waiting figure or bar draws under it, known before any data: the
-// slot declared, `counts` (a link's target box, the taller) over `meta` (one
-// meta line), or none.
-export type WaitLine = "none" | "meta" | "counts";
-
-// The waiting line from the slots declared, read by key: no slot function
-// runs.
-export function waitLine(slots: {
-	meta?: unknown;
-	counts?: unknown;
-}): WaitLine {
-	if (slots.counts !== undefined) return "counts";
-	return slots.meta !== undefined ? "meta" : "none";
 }
 
 // One function per check row slot, each called with a loaded item; `group`

@@ -64,7 +64,7 @@ import { cn } from "../../lib/cn";
 import { type CellFit, FieldDisabled } from "../../lib/field";
 import { Ink } from "../../lib/ink";
 import { navigate } from "../../lib/navigate";
-import { inertProps, Painted } from "../../lib/paint";
+import { clipWhen, inertProps, Painted } from "../../lib/paint";
 import { useWords } from "../../lib/words";
 import { Checkbox } from "../checkbox";
 import { CheckboxBase } from "../checkbox/base";
@@ -921,6 +921,7 @@ function PaintedCell(props: {
 		return (
 			<RNText
 				numberOfLines={1}
+				{...clipWhen(true)}
 				className={cn(
 					text({ role: "body" }),
 					textStrong({ role: "body" }),
@@ -943,7 +944,11 @@ function PaintedCell(props: {
 			);
 		case "source":
 			return (
-				<RNText numberOfLines={1} className={cn(text({ role: "code" }), VALUE)}>
+				<RNText
+					numberOfLines={1}
+					{...clipWhen(true)}
+					className={cn(text({ role: "code" }), VALUE)}
+				>
 					<Painted role="id" at={index} />
 				</RNText>
 			);
@@ -952,6 +957,7 @@ function PaintedCell(props: {
 			return (
 				<RNText
 					numberOfLines={1}
+					{...clipWhen(true)}
 					className={cn(
 						text({ role: column.kind === "age" ? "meta" : "body" }),
 						FIGURES,
@@ -963,7 +969,11 @@ function PaintedCell(props: {
 			);
 		default:
 			return (
-				<RNText numberOfLines={1} className={cn(text({ role: "body" }), VALUE)}>
+				<RNText
+					numberOfLines={1}
+					{...clipWhen(true)}
+					className={cn(text({ role: "body" }), VALUE)}
+				>
 					<Painted role="phrase" at={index + 1} />
 				</RNText>
 			);

@@ -51,7 +51,7 @@ Twenty-six subpaths:
 - `@fcalell/ui-core/settle`: `createSettle`, the page's one move from the painted form to the loaded
   one: the switches asked for in a frame apply together in one view transition, or at once.
 - `@fcalell/ui-core/list-state`: what a collection decides before it draws, free of any framework:
-  a `List`'s or `Table`'s state and waiting shape (`listState`), a table's records,
+  a table's records,
   sort and tick logic (`tableRecords`, `sorted`, `tickable`), a tree's visible rows (`treeRows`),
   the states a meter, a step count and a rail draw (`levelOf`, `stepStateOf`, `stagesShown`) and
   the set a toggled value leaves (`toggled`), and a definition value's cut (`valueCut`, its stem and
@@ -162,7 +162,7 @@ always draws the touch set and so the touch structure.
 
 Every word a molecule draws on its own comes from `words`, a typed object passed once
 beside `theme`: the seven `Status` words, `recommended`, `copy`, `copied`, `download`, `back`,
-`close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`,
+`close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `checking`,
 `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `edit`, `details`, `places`,
 `notifications`, `code`, `added`, `removed`, `sort`, `message`,
 `copyFailed`, `downloadFailed`, `latest`, `missing`, `chooseFile`, `typeValue`,
@@ -370,10 +370,9 @@ short label's cap is the body's 18 characters whatever its own size, and a consu
 wider "0" overflows it); a layer never stretches to its container. The regions: `sidebar` 240 (the
 Shell's places), `list` 360 (a split's list column, one width whatever it holds) and `pane` 320 (the ceiling of a split's record pane, which sizes to its content between `region-min` 240 and the ceiling), `column` 300 (a
 board column), `node` 240 (a canvas node), `auth` 400 (the sign-in column), `empty` 320 (an empty state's column), `selection` 1060 (a selection bar's column, the pattern's table-wide bar). A width never
-takes a spacing role's or a size's name, since `w-*` reads `--spacing-*` first. A skeleton bar alone
-may take a fraction width (`w-1/12`, `w-1/5`, `w-1/4`, `w-1/3`, `w-1/2`, `w-2/3`, `w-3/4`) to stand
-at the length of the text it replaces: structural, never a token; a chart column's share of its slot
-(`w-2/3`) is structural the same way. Breakpoints are `--breakpoint-*`: `tablet` 768, `desktop`
+takes a spacing role's or a size's name, since `w-*` reads `--spacing-*` first. A fraction width
+(`w-1/4`, `w-1/3`, `w-1/2`, `w-2/3`, `w-3/4`) is structural, never a token: a chart column's share of
+its slot (`w-2/3`) is one. Breakpoints are `--breakpoint-*`: `tablet` 768, `desktop`
 1024, `wide` 1440, so `tablet:` and `desktop:` are the only responsive variants.
 
 Elevation is two levels spent on lifted layers only: `shadow-float` for a popover, a menu, a
@@ -496,7 +495,7 @@ The canon binds every component either UI plugin ships:
 
 ## The roster
 
-`ROSTER` in `@fcalell/ui-core/roster` is the closed list: 65 components in four layers (atoms,
+`ROSTER` in `@fcalell/ui-core/roster` is the closed list: 64 components in four layers (atoms,
 layout molecules, shared molecules, content molecules), each with its prop names, the cells it draws
 (`draws`: a `FAMILIES` name for every cell of that family, `FAMILY.axis.value` for one of its cells,
 as `Text` draws `TEXT.role.body`, or a single-cell constant of `./variants`) and the states it has a

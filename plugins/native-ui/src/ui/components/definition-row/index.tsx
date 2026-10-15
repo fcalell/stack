@@ -24,7 +24,7 @@ import { cn } from "../../lib/cn";
 import { useCopy } from "../../lib/copy";
 import { Ink } from "../../lib/ink";
 import { navigate } from "../../lib/navigate";
-import { inertProps, Painted } from "../../lib/paint";
+import { clipWhen, inertProps, Painted } from "../../lib/paint";
 import type { Route } from "../../lib/route";
 import { useWords } from "../../lib/words";
 import { Icon } from "../icon";
@@ -199,6 +199,7 @@ export function DefinitionRowBase<V extends string | null = string>({
 			<View className={VALUE}>
 				<RNText
 					numberOfLines={1}
+					{...clipWhen(true)}
 					className={cn(
 						text({ role: copyable ? "code" : "meta" }),
 						FIGURES,

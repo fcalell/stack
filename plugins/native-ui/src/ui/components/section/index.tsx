@@ -18,7 +18,6 @@ import {
 	SECTION_HEAD_ROW,
 	SECTION_TITLE,
 	SECTION_TOGGLE,
-	skeleton,
 	text,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useState } from "react";
@@ -27,11 +26,9 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { EmptyBase, type EmptyProps } from "../../lib/empty";
 import { Ink } from "../../lib/ink";
-import { LoadingContext, useWait, VEIL } from "../../lib/loading";
 import { Painted } from "../../lib/paint";
 import { partText } from "../../lib/parts";
 import { FrameBody, useFrame } from "../../lib/read";
-import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 import { ButtonBase } from "../button/base";
 import { Count } from "../count";
@@ -45,7 +42,6 @@ const BOX = "min-w-0";
 const HEAD_ROW = "flex-row items-center";
 // The waiting description's bar stands in a text line's box: a strut sets the
 // line's height, as the web's `h-lh` does.
-const LABEL_LINE = "flex-row items-center";
 // A labelled act that would squeeze the title column wraps under the title:
 // the column's basis is its own width, so the row breaks once the title, its
 // count and its description cannot stand beside the act.
@@ -63,7 +59,7 @@ export interface SectionProps extends Closed {
 	title: Part;
 	/** The body's total, in the muted ink after the title; none is drawn without it, at zero (the body's empty state says so) or while the section waits. With a `read` of an array the total is the array's length once it lands, so none is given. */
 	count?: number;
-	/** Under the title (a sentence; wraps). It paints where it will stand while its selection waits. While the Section loads, `""` stands one meta-height bar where the sentence will be and an undefined `description` stands none; loaded, `""` draws no line, as an undefined one. */
+	/** Under the title (a sentence; wraps). It paints where it will stand while its selection waits. `""` and an undefined one draw no line. */
 	description?: Datum<string>;
 	// Set, the title folds the body, and this is its initial fold: `true`
 	// starts folded, `false` open; later changes are not read.
@@ -75,11 +71,6 @@ export interface SectionProps extends Closed {
 	act?: Datum<Act | IconAct>;
 	/** The section's other acts, in a menu under the more act after its act (destructive ones marked); a foldable section's more does not fold it. It paints, inert, as the act does. */
 	more?: Datum<readonly MenuItem[]>;
-	// The head is busy and the body waits: each part of the body draws its own
-	// waiting form (a Group or a List its skeleton rows, a Prose, Thread, Code,
-	// Meter, Slider, DefinitionRow, FormField or ActionBar its own); the
-	// section reads nothing else, so a body no part answers for draws as it is.
-	loading?: boolean;
 	/** What the section's body holds, read once for the frame: while it waits the body's leaves paint, its failure and a missing record stand in the body's place, and an empty selection draws `empty`. A read (the root) draws its failure and says it is busy; a selection draws only its wait, its emptiness and its count. */
 	read?: Selection<unknown>;
 	/** The section holds nothing yet: this stands in its body's place, framed, or as one quiet sentence when only the sentence is given. With a `read` it stands only when the selection is empty. */
@@ -92,10 +83,8 @@ export interface SectionProps extends Closed {
 }
 
 // A heading with its count, description and act over its body; the title
-// folds the body when `folded` is set. A loading section hands its loading to
-// its body, whose parts each draw their own waiting form. A blocked act says
-// its reason under itself once pressed
-// or once its form or sheet is touched, as a `Button` does. React Native
+// folds the body when `folded` is set. A blocked act says its reason under
+// itself once pressed or once its form or sheet is touched, as a `Button` does. React Native
 // exposes no heading level, so the title is a header at any depth. The title
 // is the heading size, folded or not, and no Section stands in a Section.
 export function Section({
@@ -106,28 +95,16 @@ export function Section({
 	onToggle,
 	act,
 	more,
-	loading: asked,
 	read,
 	empty,
 	failed,
 	children,
 }: SectionProps) {
-	// The wait is a read that lasts: drawn after a delay and held a minimum; the
-	// head's title and act stay, what waits in the head and the body is undrawn
-	// meanwhile.
-	const late = useWait(asked === true);
-	const loading = asked === undefined ? undefined : late.waiting;
-	const veil = late.veiled ? VEIL : undefined;
 	const words = useWords();
 	const frame = useFrame(read);
 	const [said, shownAct, shownMore] = useSelections([description, act, more]);
 	// `folded` is the initial fold: the section holds its fold from there.
 	const [open, setOpen] = useState(folded !== true);
-	// The head is busy exactly while the section loads; its count is the one it
-	// is given.
-	const busy = loading === true;
-	// The description waits as a bar only when the Section says it will have
-	// one: an empty string, which is no line once loaded.
 	let sentence: ReactNode = null;
 	if (said.painted)
 		sentence = (
@@ -136,21 +113,12 @@ export function Section({
 			</Text>
 		);
 	else if (said.value) sentence = <Text role="meta">{said.value}</Text>;
-	else if (loading === true && said.value === "")
-		sentence = (
-			<View className={cn(LABEL_LINE, veil)}>
-				<Strut role="meta" />
-				<View className={cn(skeleton({ kind: "line" }), "w-1/2")} />
-			</View>
-		);
 	// A count is not drawn while its body waits: a painted chip would carry an
 	// unseen "0" for a number nobody knows yet, and the count arrives at the
 	// title's end, where it moves nothing. A read of an array gives its length.
 	const total = frame.waits ? undefined : (frame.count ?? count);
 	const tally =
-		total !== undefined && !busy && total !== 0 ? (
-			<Count value={total} />
-		) : null;
+		total !== undefined && total !== 0 ? <Count value={total} /> : null;
 	// The acts paint, inert, while the read waits or their own datum does. A
 	// selection's shape is unknown until it lands, so its paint is a labelled act.
 	const given = shownAct.painted ? undefined : shownAct.value;
@@ -214,7 +182,7 @@ export function Section({
 		);
 	return (
 		<View
-			accessibilityState={{ busy: busy || (frame.holds && frame.waits) }}
+			accessibilityState={{ busy: frame.holds && frame.waits }}
 			className={cn(SECTION, BOX)}
 		>
 			<View className={SECTION_HEAD}>
@@ -273,11 +241,7 @@ export function Section({
 			</View>
 			{/* A section without children draws no body. */}
 			{body === undefined || body === null ? null : (
-				<View className={cn(SECTION_BODY, !open && BODY_FOLDED, veil)}>
-					<LoadingContext.Provider value={loading === true}>
-						{body}
-					</LoadingContext.Provider>
-				</View>
+				<View className={cn(SECTION_BODY, !open && BODY_FOLDED)}>{body}</View>
 			)}
 		</View>
 	);

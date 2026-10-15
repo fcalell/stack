@@ -6,7 +6,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { Text as RNText, View } from "react-native";
 import { Ink } from "../../lib/ink";
-import { Painted } from "../../lib/paint";
+import { clipWhen, Painted } from "../../lib/paint";
 import { IconBase } from "../icon";
 
 // The warning keeps its glyph and yields its label after the chip and before
@@ -28,7 +28,11 @@ export function WarningMark(props: { label: string; painted?: boolean }) {
 					painted={props.painted}
 				/>
 			</Ink.Provider>
-			<RNText numberOfLines={1} className={cn(text({ role: "meta" }), LABEL)}>
+			<RNText
+				numberOfLines={1}
+				{...clipWhen(props.painted)}
+				className={cn(text({ role: "meta" }), LABEL)}
+			>
 				{props.painted ? <Painted role="phrase" /> : props.label}
 			</RNText>
 		</View>

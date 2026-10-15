@@ -16,7 +16,13 @@ import {
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { inertProps, Painted, paintBox, useShown } from "../../lib/paint";
+import {
+	clipWhen,
+	inertProps,
+	Painted,
+	paintBox,
+	useShown,
+} from "../../lib/paint";
 import { CountLinks } from "./count-links";
 
 const STACK = "min-w-0";
@@ -112,6 +118,7 @@ export function MeterBase({
 			<View className={cn(METER_HEAD, HEAD)}>
 				<RNText
 					numberOfLines={1}
+					{...clipWhen(painted)}
 					className={cn(
 						text({ role: "body" }),
 						textStrong({ role: "body" }),

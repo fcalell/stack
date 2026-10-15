@@ -67,24 +67,16 @@ import { Chip } from "@fcalell/plugin-native-ui/components/chip";
 import { Select } from "@fcalell/plugin-native-ui/components/select";
 import { Table } from "@fcalell/plugin-native-ui/components/table";
 import { Menu } from "@fcalell/plugin-native-ui/components/menu";
-import {
-	type QueryLike,
-	QueryBoundary,
-} from "@fcalell/plugin-native-ui/components/query-boundary";
 import type {
 	FieldBinding,
 	OptionGroup,
 	TableColumn,
 } from "@fcalell/ui-core/descriptors";
-import type { UseQueryResult } from "@tanstack/react-query";
 
 const noop = () => {};
 declare const text: FieldBinding<string>;
 declare const role: FieldBinding<"owner" | "viewer">;
 declare const group: OptionGroup;
-declare const count: QueryLike<number>;
-declare const names: QueryLike<string[]>;
-declare const live: UseQueryResult<{ id: string }[], Error>;
 const columns: TableColumn[] = [
 	{ key: "name", label: "a", edit: { control: "input" }, cell: () => "a" },
 	{ key: "state", label: "a", kind: "status", cell: () => null },
@@ -988,29 +980,6 @@ export const closure = (
 		<Select options={[]} onChange={noop} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<Select options={[]} onChange={noop} placeholderTextColorClassName="text-ink-body" />
-		<QueryBoundary query={count} sentence="a" loading={null}>{(n) => <Count value={n} />}</QueryBoundary>
-		{/* @ts-expect-error: a QueryBoundary names its loading form */}
-		<QueryBoundary query={count} sentence="a">{(n) => <Count value={n} />}</QueryBoundary>
-		{/* @ts-expect-error: closed channel */}
-		<QueryBoundary query={count} sentence="a" loading={null} children={() => null} className="x" />
-		{/* @ts-expect-error: closed channel */}
-		<QueryBoundary query={count} sentence="a" loading={null} children={() => null} style={{ flex: 1 }} />
-		{/* @ts-expect-error: closed channel */}
-		<QueryBoundary query={count} sentence="a" loading={null} children={() => null} class="x" />
-		{/* @ts-expect-error: closed channel */}
-		<QueryBoundary query={count} sentence="a" loading={null} children={() => null} classList={{}} />
-		{/* @ts-expect-error: closed channel */}
-		<QueryBoundary query={count} sentence="a" loading={null} children={() => null} colorClassName="text-ink-body" />
-		{/* @ts-expect-error: closed channel */}
-		<QueryBoundary query={count} sentence="a" loading={null} children={() => null} selectionColorClassName="text-ink-body" />
-		{/* @ts-expect-error: closed channel */}
-		<QueryBoundary query={count} sentence="a" loading={null} children={() => null} placeholderTextColorClassName="text-ink-body" />
-		<QueryBoundary query={[live, count]} sentence="a" loading={null}>
-			{([rows, n]) => <Count value={rows.length + n} />}
-		</QueryBoundary>
-		<QueryBoundary query={[count, names]} sentence="a" loading={null}>
-			{([n, list]) => <Count value={n + list.length} />}
-		</QueryBoundary>
 		<FormField label="a" field={text}>
 			{(control) => <Input kind="source" {...control} />}
 		</FormField>

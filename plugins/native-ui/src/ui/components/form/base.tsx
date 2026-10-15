@@ -6,32 +6,26 @@ import {
 	form,
 	text,
 } from "@fcalell/ui-core/variants";
-import { useContext } from "react";
 import { Text as RNText, View } from "react-native";
 import { cn } from "../../lib/cn";
 import { useLeaveGuard } from "../../lib/leave";
-import { LoadingContext, useWait, VEIL } from "../../lib/loading";
 import { type Frame, FrameBody, useFrame } from "../../lib/read";
 import { TouchedContext, useTouched, useTouchState } from "../../lib/touched";
 import { ActionBarBase } from "../action-bar/base";
 import { Text } from "../text";
 import type { FormGroup, FormProps } from "./index";
 
-// One group: its heading, its description and lead, and its fields, which
-// wait together when the group loads. The wait is a read that lasts: drawn
-// after a delay and held a minimum, the fields undrawn meanwhile.
+// One group: its heading, its description and lead, and its fields, which are
+// the group's own frame when it holds a `read`.
 function GroupBox(props: { group: FormGroup }) {
 	const { group } = props;
-	const late = useWait(group.loading === true);
 	const frame = useFrame(group.read);
-	// A Section around the form waits its groups too.
-	const waiting = useContext(LoadingContext) || late.waiting;
 	return (
 		<View
 			role="group"
 			accessibilityLabel={group.title}
 			accessibilityState={{
-				busy: late.waiting || (frame.holds && frame.waits),
+				busy: frame.holds && frame.waits,
 			}}
 			className={FORM_GROUP}
 		>
@@ -45,18 +39,16 @@ function GroupBox(props: { group: FormGroup }) {
 			) : null}
 			{group.description ? <Text role="meta">{group.description}</Text> : null}
 			{group.lead}
-			<LoadingContext.Provider value={waiting}>
-				<View className={cn(FORM_GROUP, late.veiled && VEIL)}>
-					<FrameBody
-						frame={frame}
-						fit="frame"
-						empty={group.empty}
-						failed={group.failed}
-					>
-						{group.fields}
-					</FrameBody>
-				</View>
-			</LoadingContext.Provider>
+			<View className={FORM_GROUP}>
+				<FrameBody
+					frame={frame}
+					fit="frame"
+					empty={group.empty}
+					failed={group.failed}
+				>
+					{group.fields}
+				</FrameBody>
+			</View>
 		</View>
 	);
 }

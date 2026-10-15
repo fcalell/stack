@@ -7,11 +7,10 @@ import { STAND_IN_ENTRIES, Wide } from "./layout-context.tsx";
 
 const noop = () => {};
 
-/** A card of the static parts a waiting Group stands for, one per part: a Meter, a Slider and a DefinitionRow of each form (one line, copyable, a setting that opens, a control). Loaded and waiting draw the same entries: the Meter and the rows paint, the Slider waits through the Group. */
+/** A card of the static parts a Group holds, one per part: a Meter, a Slider and a DefinitionRow of each form (one line, copyable, a setting that opens, a control). Loaded and painted draw the same entries: the Meter and the rows paint, the Slider has no data to wait for. */
 export function Static(props: { loading?: boolean }) {
 	return (
 		<Group
-			loading={props.loading}
 			items={[
 				{
 					key: "meter",
@@ -88,15 +87,13 @@ export function Static(props: { loading?: boolean }) {
 }
 
 // Every cell draws the Group in the frame's state: rows at rest, loading its
-// static parts waiting beside the loaded card, and stand-in rows no part
-// answers for as the three setting rows.
+// static parts painted beside the loaded card.
 export function drawGroup(frame: ShowcaseFrame) {
 	if (frame.state === "loading")
 		return (
 			<Wide>
 				<Static />
 				<Static loading />
-				<Group loading items={STAND_IN_ENTRIES} />
 			</Wide>
 		);
 	return (

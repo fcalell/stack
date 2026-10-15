@@ -2,19 +2,12 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { TableColumn } from "../src/descriptors.ts";
 import {
-	boundaryState,
 	chooseAllToggled,
 	chooseHead,
 	chooseReason,
 	chooseRow,
 	folding,
-	type ListInput,
-	listBusy,
-	listState,
-	listWaits,
-	missing,
 	pathCut,
-	retryOf,
 	stepStateOf,
 	tableRecords,
 	toggled,
@@ -23,7 +16,6 @@ import {
 	treeRows,
 	treeStop,
 	valueCut,
-	waitLine,
 } from "../src/list-state.ts";
 import { leadingOf, sizePx } from "../src/scales.ts";
 import { ENGLISH, filled } from "../src/tokens.ts";
@@ -33,128 +25,6 @@ import {
 	row,
 	treeBleed,
 } from "../src/variants.ts";
-
-const refetch = () => {};
-const base: ListInput = {
-	sectionLoading: false,
-	hasEmpty: true,
-};
-const query = (
-	isPending: boolean,
-	isError: boolean,
-	data: readonly unknown[] | undefined,
-) => ({ isPending, isError, data, refetch });
-
-test("a pending query, a loading list or a loading Section draws the waiting rows", () => {
-	assert.equal(
-		listState({ ...base, query: query(true, false, undefined) }),
-		"pending",
-	);
-	assert.equal(listState({ ...base, items: [], loading: true }), "pending");
-	assert.equal(
-		listState({ ...base, items: [1], sectionLoading: true }),
-		"pending",
-	);
-});
-
-test("a failed query draws its failure", () => {
-	assert.equal(
-		listState({ ...base, query: query(false, true, undefined) }),
-		"failed",
-	);
-});
-
-test("an error carrying stack's NOT_FOUND code or an HTTP 404 answers not found; any other error does not", () => {
-	assert.equal(missing({ error: { code: "NOT_FOUND", status: 404 } }), true);
-	assert.equal(missing({ error: { code: "NOT_FOUND" } }), true);
-	assert.equal(missing({ error: { status: 404 } }), true);
-	assert.equal(missing({ error: { code: "INTERNAL_SERVER_ERROR" } }), false);
-	assert.equal(missing({ error: { status: 500 } }), false);
-	assert.equal(missing({ error: new Error("NOT_FOUND") }), false);
-	assert.equal(missing({ error: "NOT_FOUND" }), false);
-	assert.equal(missing({ error: null }), false);
-	assert.equal(missing({}), false);
-});
-
-test("a query that answers not found draws its missing form, never its failure", () => {
-	const notFound = { ...query(false, true, undefined), error: { status: 404 } };
-	assert.equal(listState({ ...base, query: notFound }), "missing");
-	assert.equal(
-		listState({
-			...base,
-			query: { ...query(false, true, undefined), error: { status: 503 } },
-		}),
-		"failed",
-	);
-	assert.equal(
-		listState({ ...base, query: { ...notFound, isError: false, data: [1] } }),
-		"loaded",
-	);
-});
-
-test("a QueryBoundary draws its missing form only when every failed query answers not found", () => {
-	const ok = { isError: false };
-	const notFound = { isError: true, error: { code: "NOT_FOUND" } };
-	const down = { isError: true, error: { status: 503 } };
-	assert.equal(boundaryState([ok]), "loaded");
-	assert.equal(boundaryState([notFound]), "missing");
-	assert.equal(boundaryState([ok, notFound]), "missing");
-	assert.equal(boundaryState([notFound, notFound]), "missing");
-	assert.equal(boundaryState([notFound, down]), "failed");
-	assert.equal(boundaryState([down]), "failed");
-	assert.equal(boundaryState([{ isError: true }]), "failed");
-});
-
-test("no item draws the empty form when there is one, else the empty list", () => {
-	assert.equal(listState({ ...base, query: query(false, false, []) }), "empty");
-	assert.equal(listState({ ...base, items: [] }), "empty");
-	assert.equal(listState({ ...base, items: [], hasEmpty: false }), "loaded");
-});
-
-test("items draw loaded", () => {
-	assert.equal(
-		listState({ ...base, query: query(false, false, [1]) }),
-		"loaded",
-	);
-	assert.equal(listState({ ...base, items: [1, 2] }), "loaded");
-});
-
-test("a list is busy while its own items wait", () => {
-	assert.equal(
-		listBusy({ ...base, query: query(true, false, undefined) }),
-		true,
-	);
-	assert.equal(listBusy({ ...base, items: [], loading: true }), true);
-	assert.equal(listBusy({ ...base, items: [1], sectionLoading: true }), false);
-});
-
-test("a figure waits on the line its slots declare: counts over meta over none", () => {
-	assert.equal(waitLine({}), "none");
-	assert.equal(waitLine({ meta: "Of 10" }), "meta");
-	assert.equal(waitLine({ meta: "Of 10", counts: [] }), "counts");
-});
-
-test("a list's own items wait on its query or on `loading`", () => {
-	assert.equal(
-		listWaits({ ...base, query: query(true, false, undefined) }),
-		true,
-	);
-	assert.equal(listWaits({ ...base, items: [], loading: true }), true);
-	assert.equal(listWaits({ ...base, items: [1], sectionLoading: true }), false);
-	assert.equal(listWaits({ ...base, query: query(false, false, [1]) }), false);
-});
-
-test("Retry refetches the query", () => {
-	let calls = 0;
-	const retry = retryOf({
-		refetch: () => {
-			calls++;
-		},
-	});
-	assert.equal(calls, 0);
-	retry();
-	assert.equal(calls, 1);
-});
 
 interface Member {
 	id: string;
@@ -251,22 +121,6 @@ test("a table's records over the painted items paint a slot that throws as the i
 	} finally {
 		console.warn = original;
 	}
-});
-
-test("a Table whose query failed draws the failed form, and its Retry refetches", () => {
-	let calls = 0;
-	const failed = {
-		isPending: false,
-		isError: true,
-		data: undefined,
-		refetch: () => {
-			calls++;
-		},
-	};
-	const input = { ...base, query: failed };
-	assert.equal(listState(input), "failed");
-	retryOf(failed)();
-	assert.equal(calls, 1);
 });
 
 test("a change mark's ink is its kind's: added ok, removed danger, changed warn", () => {

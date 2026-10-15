@@ -756,7 +756,7 @@ const MEMBERS: Member[] = [
 
 // A part is one List of the rows a cell names, drawn in the frame's state: its
 // rows at rest, its painted rows loading (over the loaded ones when `pair`
-// sets the skeleton against what it stands in for), the first row current when
+// sets the paint against what it stands in for), the first row current when
 // selected. A row's error is its entry's error line, which every cell draws
 // in error.
 interface Part {
@@ -841,19 +841,12 @@ const CELL_PARTS: ReadonlyArray<readonly [string, keyof typeof PARTS]> = [
 	["AVATAR", "issues"],
 	["STATUS", "stages"],
 	["SPINNER", "stages"],
-	["SKELETON.kind.avatar", "issues"],
-	["SKELETON.kind.icon", "deploys"],
-	["SKELETON.kind.dot", "invites"],
-	["SKELETON.kind.check", "ticks"],
-	["SKELETON.kind.bar", "sources"],
-	["SKELETON", "notes"],
 	["LINE_BOX", "notes"],
 ];
 
-// A skeleton cell is the waiting form itself, so it draws it over the loaded
-// rows it stands in for, at rest too.
-const waits = (cell: string) =>
-	cell.startsWith("SKELETON") || cell.startsWith("LINE_BOX");
+// A line box is what the paint fills, so its cell draws the painted rows over
+// the loaded rows they stand in for, at rest too.
+const waits = (cell: string) => cell.startsWith("LINE_BOX");
 
 // The shapes a painted row paints: each part a row can hold, as the loaded row
 // draws it and, beside it, painted.

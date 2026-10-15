@@ -264,7 +264,7 @@ export const OVERLAYS: readonly string[] = [
 	"-mx-inside",
 	"leading-meta",
 	"-my-[calc((var(--spacing-target)-1lh)/2)]",
-	// QueryBoundary, Banner, PendingBar
+	// Banner, PendingBar
 	"self-center",
 	"text-center",
 	"items-start",
@@ -427,7 +427,6 @@ export const OVERLAYS: readonly string[] = [
 	"col-start-1",
 	"row-start-1",
 	"invisible",
-	// QueryBoundary
 	"contents",
 	"flex-1",
 	"self-start",
@@ -505,11 +504,3 @@ export const OVERLAYS: readonly string[] = [
 	"w-measure-short",
 	"w-measure",
 ];
-
-// SKELETON: a skeleton bar stands at the length of the text it replaces as a
-// fraction of its line. The two are structural, never a token, and accepted
-// on a skeleton bar only (a class literal that spells `bg-skeleton`); check
-// b5 accepts them there without requiring them. The other fractions are
-// real widths too (a table column's, a chart's bar) and stand in the
-// allowlist.
-export const SKELETON_WIDTHS: readonly string[] = ["w-1/12", "w-1/5"];

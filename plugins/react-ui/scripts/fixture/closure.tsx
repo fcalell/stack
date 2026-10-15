@@ -39,7 +39,6 @@ import { PendingBar } from "@fcalell/plugin-react-ui/components/pending-bar";
 import { Picker } from "@fcalell/plugin-react-ui/components/picker";
 import { QrCode } from "@fcalell/plugin-react-ui/components/qr-code";
 import { Rules } from "@fcalell/plugin-react-ui/components/rules";
-import { QueryBoundary } from "@fcalell/plugin-react-ui/components/query-boundary";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { List } from "@fcalell/plugin-react-ui/components/list";
@@ -496,18 +495,6 @@ export const closure = (
 		<Missing class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<Missing classList={{}} />
-		<QueryBoundary query={{ data: 1, isPending: false, isError: false, refetch: () => {} }} sentence="x" children={() => null} loading={null} />
-		<QueryBoundary query={{ data: 1, isPending: true, isError: false, refetch: () => {} }} sentence="x" children={() => null} loading={<List items={[]} row={{ key: String, title: String }} />} />
-		{/* @ts-expect-error: a QueryBoundary names its loading form */}
-		<QueryBoundary query={{ data: 1, isPending: true, isError: false, refetch: () => {} }} sentence="x" children={() => null} />
-		{/* @ts-expect-error: closed channel */}
-		<QueryBoundary query={{ data: 1, isPending: false, isError: false, refetch: () => {} }} sentence="x" children={() => null} loading={null} className="x" />
-		{/* @ts-expect-error: closed channel */}
-		<QueryBoundary query={{ data: 1, isPending: false, isError: false, refetch: () => {} }} sentence="x" children={() => null} loading={null} style={{ flex: 1 }} />
-		{/* @ts-expect-error: closed channel */}
-		<QueryBoundary query={{ data: 1, isPending: false, isError: false, refetch: () => {} }} sentence="x" children={() => null} loading={null} class="x" />
-		{/* @ts-expect-error: closed channel */}
-		<QueryBoundary query={{ data: 1, isPending: false, isError: false, refetch: () => {} }} sentence="x" children={() => null} loading={null} classList={{}} />
 		<Banner sentence="x" />
 		{/* @ts-expect-error: closed channel */}
 		<Banner sentence="x" className="x" />

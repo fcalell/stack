@@ -34,6 +34,14 @@ export function Painted({ role, at = 0 }: { role: PaintRole; at?: number }) {
 	);
 }
 
+/**
+ * The props of a text that may hold `Painted` inside a `numberOfLines` limit:
+ * the filler is longer than the box it stands in, so a painted text clips
+ * rather than ending in an ellipsis.
+ */
+export const clipWhen = (painted: boolean | undefined) =>
+	painted ? ({ ellipsizeMode: "clip" } as const) : {};
+
 /** The paint of a part's own box (a mark, a block): its fill, shown after the delay. */
 export const paintBox = (shown: boolean) =>
 	cn(paint({ kind: "box" }), !shown && "bg-transparent");

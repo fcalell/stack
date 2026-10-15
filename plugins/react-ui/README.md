@@ -123,7 +123,7 @@ graph, compiles it with the Tailwind CLI in `scripts/fixture/`, and holds the co
 | Check | Asserts |
 | --- | --- |
 | `a6` | every class a component spells is emitted by the built sheet, so an off-contract utility fails by name |
-| `b5` | the overlay classes the components spell equal `scripts/overlays.ts`, both ways; a state variant over a contract token is held by `b-owns` instead; the skeleton fraction widths (`SKELETON_WIDTHS`) are accepted without being required, only in a class literal that spells `bg-skeleton`, or in a literal of widths alone in a file that draws the line cell (`skeleton({ kind: "line" })`) |
+| `b5` | the overlay classes the components spell equal `scripts/overlays.ts`, both ways; a state variant over a contract token is held by `b-owns` instead |
 | `b-owns` | every token a component spells is one its roster entry `owns` |
 | `b6` | every props type extends `Closed`, no class channel or props spread survives |
 | `b7` | `scripts/fixture/closure.tsx` passes each closed channel to every component under `@ts-expect-error` and compiles |
@@ -133,6 +133,7 @@ graph, compiles it with the Tailwind CLI in `scripts/fixture/`, and holds the co
 | `b-measure` | `ResizeObserver`, `getBoundingClientRect`, `getComputedStyle`, the box sizes and `matchMedia` only in the closed list of files, each with its reason |
 | `b-context` | every `createContext` is in the closed list, tagged `data`, `behaviour`, `portal` or the named exception `form` |
 | `b-dataset` | `dataset` only in the closed list of files |
+| `b-wait` | no `wait.tsx` or `*-wait.tsx` file and no `*Wait` component in `src/ui`, but Canvas's `CanvasWait`, the painted stand-in |
 | `b-type-prop` | no component takes or reads a prop named `type` |
 | `b-words` | no JSX text or labelling attribute is a literal word |
 | `b-nouns` | no product noun in `src` |

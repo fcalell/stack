@@ -190,7 +190,5 @@ export function Comparison<T>(props: ComparisonProps<T>) {
 			))}
 		</View>
 	);
-	return (
-		<Group loading={false} items={[{ key: "head", row: header }, ...facts]} />
-	);
+	return <Group items={[{ key: "head", row: header }, ...facts]} />;
 }

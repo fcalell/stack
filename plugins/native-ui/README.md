@@ -83,7 +83,7 @@ own compiler and a Tailwind build, checks a raised ground's hairline re-point on
 sheet, reads the matrices back off ui-core's cvas, holds the overlay allowlist equal to the swept
 sources, proves the closure with the fixture under `scripts/fixture/closure.tsx`, reads every
 component's props type against the roster, and holds the structure rules (`b-children`,
-`b-arbitrary`, `b-measure`, `b-context`, `b-dataset`, `b-type-prop`, `b-section-nest`) over
+`b-arbitrary`, `b-measure`, `b-context`, `b-dataset`, `b-type-prop`, `b-section-nest`, `b-wait`) over
 `src/ui`, as `packages/ui-core/guide/structure.md` sets them out.
 
 ## Slots

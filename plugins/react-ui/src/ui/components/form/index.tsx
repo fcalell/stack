@@ -15,8 +15,6 @@ export interface FormGroup {
 	lead?: ReactNode;
 	/** The group's `FormField`s. */
 	fields: ReactNode;
-	/** The group's data is on its way: the group is busy and each `FormField` in it draws its own waiting form, its typed text kept. */
-	loading?: boolean;
 	/** What the group's fields hold, read once for the group's frame: its leaves paint while it waits, and its failure and a missing record stand in the fields' place. */
 	read?: Selection<unknown>;
 	/** The fields' sentence when the group's `read` is empty. */

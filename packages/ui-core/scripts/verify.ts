@@ -172,9 +172,6 @@ import {
 	SEGMENT,
 	SEGMENT_LABEL,
 	SHEET_DESKTOP,
-	SKELETON,
-	SKELETON_LANE,
-	SKELETON_ROW,
 	STAGE,
 	STAGE_MARK,
 	STAGE_RAIL,
@@ -257,9 +254,6 @@ import {
 	segment,
 	segmentLabel,
 	sheetDesktop,
-	skeleton,
-	skeletonLane,
-	skeletonRow,
 	stage,
 	stageContentTone,
 	stageMark,
@@ -571,9 +565,6 @@ const MATRICES: readonly Registration[] = [
 	["FORM", FORM, form],
 	["ACTION_BAR", ACTION_BAR, actionBar],
 	["PAINT", PAINT, paint],
-	["SKELETON", SKELETON, skeleton],
-	["SKELETON_ROW", SKELETON_ROW, skeletonRow],
-	["SKELETON_LANE", SKELETON_LANE, skeletonLane],
 ];
 
 // The class-bearing exports that are not matrices: every uppercase string
@@ -720,7 +711,7 @@ check("c02", "package.json shape", () => {
 		Object.keys(pkg.exports ?? {})
 			.sort()
 			.join(" "),
-		"./canvas ./chart ./clock ./cn ./commit ./derive ./descriptors ./emit ./file ./format ./harness ./leave ./list-state ./manifest ./paint ./read ./reason ./roster ./route ./rules ./schema ./settle ./streaming ./structure ./tokens ./variants ./wait",
+		"./canvas ./chart ./clock ./cn ./commit ./derive ./descriptors ./emit ./file ./format ./harness ./leave ./list-state ./manifest ./paint ./read ./reason ./roster ./route ./rules ./schema ./settle ./streaming ./structure ./tokens ./variants",
 		"export subpaths",
 	);
 	assert(pkg.peerDependencies?.zod, "zod is not a peerDependency");
@@ -749,7 +740,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(SHADOW_LEVELS.length, 2, "shadow level count");
 	requireEqual(WIDTHS.length, 14, "width count");
 	requireEqual(BREAKPOINTS.length, 3, "breakpoint count");
-	requireEqual(WORD_KEYS.length, 72, "word count");
+	requireEqual(WORD_KEYS.length, 71, "word count");
 	requireEqual(COUNTED_WORD_KEYS.length, 1, "counted word count");
 	requireEqual(SLOT_WORD_KEYS.length, 4, "slot word count");
 	requireEqual(
@@ -2085,7 +2076,7 @@ check(
 	"the roster is closed, camelCase, and off the style channels",
 	() => {
 		const entries = rosterEntries();
-		requireEqual(entries.length, 65, "component count");
+		requireEqual(entries.length, 64, "component count");
 		const names = new Set<string>();
 		for (const [, name, { props }] of entries) {
 			assert(/^[A-Z][A-Za-z]+$/.test(name), `${name} is not PascalCase`);

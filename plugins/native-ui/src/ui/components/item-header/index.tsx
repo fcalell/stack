@@ -18,7 +18,7 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
 import { navigate } from "../../lib/navigate";
-import { inertProps, Painted } from "../../lib/paint";
+import { clipWhen, inertProps, Painted } from "../../lib/paint";
 import { META_CUT, partText } from "../../lib/parts";
 import type { Route } from "../../lib/route";
 import { useWords } from "../../lib/words";
@@ -232,7 +232,11 @@ export function ItemHeader({ overline = [], facts = [] }: ItemHeaderProps) {
 	return (
 		<View {...inertProps(painted)} className={ITEM_HEADER}>
 			{placed.length > 0 ? (
-				<RNText numberOfLines={1} className={text({ role: "meta" })}>
+				<RNText
+					numberOfLines={1}
+					{...clipWhen(painted)}
+					className={text({ role: "meta" })}
+				>
 					{placed.map((part, at) => (
 						// biome-ignore lint/suspicious/noArrayIndexKey: the parts are a fixed list, in order
 						<Fragment key={at}>

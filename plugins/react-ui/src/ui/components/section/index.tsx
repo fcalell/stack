@@ -13,7 +13,6 @@ import type {
 } from "@fcalell/ui-core/descriptors";
 import { paintText } from "@fcalell/ui-core/paint";
 import {
-	lineBox,
 	SECTION,
 	SECTION_ACTS,
 	SECTION_BODY,
@@ -21,14 +20,12 @@ import {
 	SECTION_HEAD_ROW,
 	SECTION_TITLE,
 	SECTION_TOGGLE,
-	skeleton,
 	text,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useId, useMemo, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { EmptyBase, type EmptyProps } from "../../lib/empty.tsx";
 import { DEEPER, HeadingContext } from "../../lib/heading.ts";
-import { LoadingContext, useWait, VEIL } from "../../lib/loading.ts";
 import { Painted } from "../../lib/paint.tsx";
 import { FrameBody, useFrame } from "../../lib/read.tsx";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
@@ -62,8 +59,6 @@ const TOGGLE =
 // The act and the more stand a row's act gap apart (`SECTION_ACTS`, as ListRow's).
 const ACT_SLOT = "flex items-center min-w-0 max-w-full";
 const BODY = "flex flex-col";
-// The description's bar stands in the meta line's box, at the sentence's half measure.
-const DESCRIPTION_LINE = "flex items-center h-lh";
 function partText(part: Part): string {
 	return typeof part === "string" ? part : `“${part.quoted}”`;
 }
@@ -74,7 +69,7 @@ export interface SectionProps extends Closed {
 	title: Part;
 	/** The body's total, in the muted ink after the title; none is drawn without it, at zero (the body's empty state says so) or while the section waits. With a `read` of an array the total is the array's length once it lands, so none is given. */
 	count?: number;
-	/** Under the title (a sentence; wraps). It paints where it will stand while its selection waits. While the Section loads, `""` stands one meta-height bar where the sentence will be and an undefined `description` stands none; loaded, `""` draws no line, as an undefined one. */
+	/** Under the title (a sentence; wraps). It paints where it will stand while its selection waits; `""` and an undefined one draw no line. */
 	description?: Datum<string>;
 	/** Set, the title folds the body, and this is its initial fold: `true` starts folded, `false` open; later changes are not read. */
 	folded?: boolean;
@@ -84,8 +79,6 @@ export interface SectionProps extends Closed {
 	act?: Datum<Act | IconAct>;
 	/** The section's other acts, in a menu under the more act after its act (destructive ones marked); the head row never moves, and a foldable section's more does not fold it. It paints, inert, as the act does. */
 	more?: Datum<readonly MenuItem[]>;
-	/** The head is busy and the body waits: the count (when there is one) is undrawn, and each part of the body draws its own waiting form (a Group or a List its skeleton rows, a Prose, Thread, Code, Meter, Slider, DefinitionRow, FormField or ActionBar its own); the section reads nothing else, so a body no part answers for draws as it is. */
-	loading?: boolean;
 	/** What the section's body holds, read once for the frame: while it waits the body's leaves paint, its failure and a missing record stand in the body's place, and an empty selection draws `empty`. A read (the root) draws its failure and says it is busy; a selection draws only its wait, its emptiness and its count. */
 	read?: Selection<unknown>;
 	/** The section holds nothing yet: this stands in its body's place, framed, or as one quiet sentence when only the sentence is given. With a `read` it stands only when the selection is empty. */
@@ -105,18 +98,11 @@ export function Section({
 	onToggle,
 	act,
 	more,
-	loading: asked,
 	read,
 	empty,
 	failed,
 	children,
 }: SectionProps) {
-	// The wait is a read that lasts: drawn after a delay and held a minimum; the
-	// head's title and act stay, what waits in the head and the body is undrawn
-	// meanwhile.
-	const late = useWait(asked === true);
-	const loading = asked === undefined ? undefined : late.waiting;
-	const veil = late.veiled ? VEIL : undefined;
 	const settle = useSettleName();
 	const frame = useFrame(read);
 	const [said, shownAct, shownMore] = useSelections([description, act, more]);
@@ -131,15 +117,10 @@ export function Section({
 	// `folded` is the initial fold: the section holds its fold from there.
 	const [open, setOpen] = useState(folded !== true);
 	const [pressed, press] = usePressed(blocked);
-	// The head is busy exactly while the section loads; its count is the one it
-	// is given.
-	const busy = loading === true;
 	const host = useMemo(
 		() => (blocked === undefined ? undefined : { press }),
 		[blocked, press],
 	);
-	// The description waits as a bar only when the Section says it will have
-	// one: an empty string, which is no line once loaded.
 	let sentence: ReactNode = null;
 	if (said.painted)
 		sentence = (
@@ -148,23 +129,12 @@ export function Section({
 			</Text>
 		);
 	else if (said.value) sentence = <Text role="meta">{said.value}</Text>;
-	else if (loading === true && said.value === "")
-		sentence = (
-			<span
-				aria-hidden
-				className={cn(lineBox({ role: "meta" }), DESCRIPTION_LINE, veil)}
-			>
-				<span className={cn(skeleton({ kind: "line" }), "w-1/2")} />
-			</span>
-		);
 	// A count is not drawn while its body waits: a painted chip would carry an
 	// unseen "0" for a number nobody knows yet, and the count arrives at the
 	// title's end, where it moves nothing. A read of an array gives its length.
 	const total = frame.waits ? undefined : (frame.count ?? count);
 	const tally =
-		total !== undefined && !busy && total !== 0 ? (
-			<Count value={total} />
-		) : null;
+		total !== undefined && total !== 0 ? <Count value={total} /> : null;
 	// The acts paint, inert, while the read waits or their own datum does. A
 	// selection's shape is unknown until it lands, so its paint is a labelled act.
 	const labelled =
@@ -229,7 +199,7 @@ export function Section({
 				setOpen(next);
 				onToggle?.(next);
 			}}
-			aria-busy={busy || (frame.holds && frame.waits) || undefined}
+			aria-busy={(frame.holds && frame.waits) || undefined}
 			style={settle}
 			className={cn(SECTION, BOX)}
 		>
@@ -285,11 +255,9 @@ export function Section({
 				<Collapsible.Panel
 					id={bodyId}
 					keepMounted
-					className={cn(SECTION_BODY, BODY, veil)}
+					className={cn(SECTION_BODY, BODY)}
 				>
-					<HeadingContext value={DEEPER[level]}>
-						<LoadingContext value={loading === true}>{body}</LoadingContext>
-					</HeadingContext>
+					<HeadingContext value={DEEPER[level]}>{body}</HeadingContext>
 				</Collapsible.Panel>
 			)}
 		</Collapsible.Root>

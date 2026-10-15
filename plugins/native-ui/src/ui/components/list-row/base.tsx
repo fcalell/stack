@@ -36,7 +36,7 @@ import { CodeCut, Runs } from "../../lib/code";
 import { FieldDisabled, FieldError } from "../../lib/field";
 import { Ink } from "../../lib/ink";
 import { navigate, usePathname } from "../../lib/navigate";
-import { inertProps, Painted } from "../../lib/paint";
+import { clipWhen, inertProps, Painted } from "../../lib/paint";
 import {
 	isCoded,
 	leadRuns,
@@ -427,6 +427,7 @@ export function ListRowBase<V extends string | null = string>({
 		) : (
 			<RNText
 				numberOfLines={wrap || quotedWraps ? undefined : 1}
+				{...clipWhen(painted)}
 				className={cn(titleRole, TITLE)}
 			>
 				{shown}
@@ -527,6 +528,7 @@ export function ListRowBase<V extends string | null = string>({
 								/>
 								<RNText
 									numberOfLines={1}
+									{...clipWhen(painted)}
 									className={cn(
 										rowStep({
 											state:
@@ -554,7 +556,11 @@ export function ListRowBase<V extends string | null = string>({
 					<View className={cn(ROW_META_LINE, META_LINE)}>
 						{painters ? (
 							<View className={META_PARTS}>
-								<RNText numberOfLines={1} className={cn(metaRole, META_FIRST)}>
+								<RNText
+									numberOfLines={1}
+									{...clipWhen(true)}
+									className={cn(metaRole, META_FIRST)}
+								>
 									{Array.from({ length: painters }, (_, index) => (
 										// biome-ignore lint/suspicious/noArrayIndexKey: the fillers are fixed-order and never reorder, so position is the identity
 										<Fragment key={index}>

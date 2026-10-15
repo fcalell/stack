@@ -1,9 +1,8 @@
 import { type Drawn, useSelections } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import { GROUP, GROUP_ITEM } from "@fcalell/ui-core/variants";
-import { Fragment, type ReactNode, use } from "react";
+import { Fragment, type ReactNode } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { LoadingContext, useWait, VEIL } from "../../lib/loading.ts";
 import { useSettleName } from "../../lib/settle.ts";
 import { ListBase } from "../list/base.tsx";
 import type { ListProps } from "../list/index.tsx";
@@ -28,13 +27,8 @@ export type GroupItem =
 	  };
 
 /** Rows in a hairline card. */
-export type GroupProps<
-	T = unknown,
-	V extends string | null = string,
-> = Closed & {
-	/** The rows wait (a loading Section's body waits with it): a Slider and a FormField draw their own waiting forms; a row of your own draws as it is. */
-	loading?: boolean;
-} & (
+export type GroupProps<T = unknown, V extends string | null = string> = Closed &
+	(
 		| {
 				/** The card's entries, a hairline between them. */
 				items: readonly GroupItem[];
@@ -51,15 +45,9 @@ export type GroupProps<
 export function Group<T, V extends string | null = string>(
 	props: GroupProps<T, V>,
 ) {
-	const { loading } = props;
 	// The one subscription to the list's items, handed down to its rows.
 	const [drawn] = useSelections([props.list?.items] as const);
-	const inherited = use(LoadingContext);
-	// Its own `loading` waits as a read that lasts does (drawn after a delay, held
-	// a minimum); one inherited from a Section arrives already so.
-	const late = useWait(loading === true);
 	const settle = useSettleName();
-	const waiting = loading === undefined ? inherited : late.waiting;
 	const content = props.list ? (
 		<ListBase {...props.list} drawn={drawn as Drawn<readonly T[]>} framed />
 	) : (
@@ -74,12 +62,8 @@ export function Group<T, V extends string | null = string>(
 		)
 	);
 	return (
-		<div
-			aria-busy={loading || undefined}
-			style={settle}
-			className={cn(GROUP, BOX, late.veiled && VEIL)}
-		>
-			<LoadingContext value={waiting}>{content}</LoadingContext>
+		<div style={settle} className={cn(GROUP, BOX)}>
+			{content}
 		</div>
 	);
 }

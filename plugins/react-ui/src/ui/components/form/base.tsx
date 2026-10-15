@@ -7,10 +7,9 @@ import {
 	form,
 	text,
 } from "@fcalell/ui-core/variants";
-import { use, useState } from "react";
+import { useState } from "react";
 import { FormContext } from "../../lib/form.ts";
 import { useLeaveGuard } from "../../lib/leave.ts";
-import { LoadingContext, useWait, VEIL } from "../../lib/loading.ts";
 import { FrameBody, useFrame } from "../../lib/read.tsx";
 import { useSettleName } from "../../lib/settle.ts";
 import { TouchedContext, useTouchState } from "../../lib/touched.ts";
@@ -20,8 +19,6 @@ import type { FormGroup, FormProps } from "./index.tsx";
 
 const STACK = "flex flex-col";
 const GROUP = "flex flex-col min-w-0";
-// The fields stand in the group's own rhythm, wrapped only to carry the veil.
-const FIELDS = "contents";
 // In a sheet's body, which scrolls, the bar stays at the
 // scroller's bottom edge. A sticky box sticks inside the scroller's padding, so
 // the negative offset reaches the edge; the negative margin and matching
@@ -30,19 +27,15 @@ const FIELDS = "contents";
 const FOOT_STUCK =
 	"sticky -bottom-card bg-raised -mx-card px-card -mb-card pb-card";
 
-// One group: its legend, its description and lead, and its fields, which wait
-// together when the group loads. The wait is a read that lasts: drawn after a
-// delay and held a minimum, the fields undrawn meanwhile.
+// One group: its legend, its description and lead, and its fields, which are
+// the group's own frame when it holds a `read`.
 function GroupBox(props: { group: FormGroup }) {
 	const { group } = props;
-	const late = useWait(group.loading === true);
 	const frame = useFrame(group.read);
 	const settle = useSettleName();
-	// A Section around the form waits its groups too.
-	const waiting = use(LoadingContext) || late.waiting;
 	return (
 		<fieldset
-			aria-busy={late.waiting || (frame.holds && frame.waits) || undefined}
+			aria-busy={(frame.holds && frame.waits) || undefined}
 			style={group.read === undefined ? undefined : settle}
 			className={cn(FORM_GROUP, GROUP)}
 		>
@@ -53,18 +46,14 @@ function GroupBox(props: { group: FormGroup }) {
 			) : null}
 			{group.description ? <Text role="meta">{group.description}</Text> : null}
 			{group.lead}
-			<LoadingContext value={waiting}>
-				<div className={cn(FIELDS, late.veiled && VEIL)}>
-					<FrameBody
-						frame={frame}
-						fit="frame"
-						empty={group.empty}
-						failed={group.failed}
-					>
-						{group.fields}
-					</FrameBody>
-				</div>
-			</LoadingContext>
+			<FrameBody
+				frame={frame}
+				fit="frame"
+				empty={group.empty}
+				failed={group.failed}
+			>
+				{group.fields}
+			</FrameBody>
 		</fieldset>
 	);
 }

@@ -109,8 +109,8 @@ function Submitted(props: { children: ReactNode }) {
 
 // `FORM.holds.fields` draws a create form, `FORM.holds.sections` a settings
 // form of two groups with its bar under the hairline. Loading, the create
-// form presses its submit act and the settings form's first group waits
-// over its fields.
+// form presses its submit act, and a form over a read and one of groups over
+// a read wait beside it, painted.
 export function drawForm(frame: ShowcaseFrame) {
 	const { name } = frame.cell;
 	if (name !== "FORM.holds.fields" && name !== "FORM.holds.sections")
@@ -173,7 +173,6 @@ export function drawForm(frame: ShowcaseFrame) {
 					{
 						title: "General",
 						description: "How the workspace appears to its members.",
-						loading,
 						fields: (
 							<>
 								<FormField label="Workspace name">

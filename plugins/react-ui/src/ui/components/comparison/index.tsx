@@ -198,7 +198,7 @@ export function Comparison<T>(props: ComparisonProps<T>) {
 	return (
 		// biome-ignore lint/a11y/useSemanticElements: a Group's rows, which no native table element can hold
 		<div role="table" aria-label={props.label}>
-			<Group loading={false} items={[{ key: "head", row: header }, ...facts]} />
+			<Group items={[{ key: "head", row: header }, ...facts]} />
 		</div>
 	);
 }

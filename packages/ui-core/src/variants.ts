@@ -64,9 +64,6 @@ import {
 	SEGMENT,
 	SEGMENT_LABEL,
 	SHEET_DESKTOP,
-	SKELETON,
-	SKELETON_LANE,
-	SKELETON_ROW,
 	STAGE,
 	STAGE_MARK,
 	STAGE_RAIL,
@@ -186,9 +183,6 @@ export const columns = build(COLUMNS);
 export const form = build(FORM);
 export const actionBar = build(ACTION_BAR);
 export const paint = build(PAINT);
-export const skeleton = build(SKELETON);
-export const skeletonRow = build(SKELETON_ROW);
-export const skeletonLane = build(SKELETON_LANE);
 
 // ── The family registry and its cells ──────────────────────────────
 
@@ -296,9 +290,6 @@ export const FAMILIES: readonly Family[] = [
 	family("FORM", FORM, form),
 	family("ACTION_BAR", ACTION_BAR, actionBar),
 	family("PAINT", PAINT, paint),
-	family("SKELETON", SKELETON, skeleton),
-	family("SKELETON_ROW", SKELETON_ROW, skeletonRow),
-	family("SKELETON_LANE", SKELETON_LANE, skeletonLane),
 ];
 
 export function classes(value: string): string[] {
@@ -960,8 +951,6 @@ export const ACTION_BAR_ALL = "rounded-control px-inside min-h-target";
 export const TOOLBAR = "gap-pair px-page py-inside border-b border-edge";
 export const TOOLBAR_ROW = "gap-acts";
 export const TOOLBAR_CHIPS = "gap-pair";
-// A skeleton row's stacked lines.
-export const SKELETON_LINES = "gap-pair";
 
 // The roles `Text` draws: a primary line and a secondary one. The other roles
 // are drawn by the molecule that owns their place.

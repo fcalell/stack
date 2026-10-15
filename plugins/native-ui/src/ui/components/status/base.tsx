@@ -2,7 +2,13 @@ import type { StatusState } from "@fcalell/ui-core/descriptors";
 import { STATUS, STATUS_LABEL, statusDot } from "@fcalell/ui-core/variants";
 import { Text as RNText, View } from "react-native";
 import { cn } from "../../lib/cn";
-import { inertProps, Painted, paintBox, useShown } from "../../lib/paint";
+import {
+	clipWhen,
+	inertProps,
+	Painted,
+	paintBox,
+	useShown,
+} from "../../lib/paint";
 import { useWords } from "../../lib/words";
 import { StatusDot } from "./dot";
 
@@ -28,7 +34,11 @@ export function StatusBase(
 				<View
 					className={cn(statusDot({ state: "done" }), DOT, paintBox(shown))}
 				/>
-				<RNText numberOfLines={1} className={cn(STATUS_LABEL, WORD)}>
+				<RNText
+					numberOfLines={1}
+					{...clipWhen(true)}
+					className={cn(STATUS_LABEL, WORD)}
+				>
 					<Painted role="word" />
 				</RNText>
 			</View>

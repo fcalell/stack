@@ -19,7 +19,7 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
 import { navigate, usePathname } from "../../lib/navigate";
-import { inertProps, Painted } from "../../lib/paint";
+import { clipWhen, inertProps, Painted } from "../../lib/paint";
 import type { Route } from "../../lib/route";
 import { useCSSVariable } from "../../lib/theme";
 
@@ -191,6 +191,7 @@ export function FileRowBase({
 				<View pointerEvents="none" className={PATH}>
 					<RNText
 						numberOfLines={1}
+						{...clipWhen(true)}
 						className={cn(FILE_PATH, filePathPart({ part: "name" }), NAME)}
 					>
 						<Painted role="phrase" at={at} />
