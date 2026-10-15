@@ -7,7 +7,9 @@ import {
 import { ORPCError } from "@orpc/client";
 import {
 	answer,
+	called,
 	emptyOf,
+	failing,
 	findFixture,
 	holdCalls,
 	mustBeMocked,
@@ -155,6 +157,46 @@ test("loading holds a query until release, and a mutation still settles", async 
 	assert.notEqual(await race("GET"), settled);
 	holdCalls();
 	assert.equal(await race("GET"), settled);
+});
+
+test("the queries a story calls are recorded until the calls are held again", async () => {
+	holdCalls();
+	const api = client("data");
+	await api.projects.list(undefined, asQuery);
+	await api.projects.get({ id: "p1" }, asQuery);
+	await api.projects.get({ id: "p2" }, asQuery);
+	await api.projects.create({ name: "Gamma" }, asMutation);
+	// Once each, in order, and no mutation.
+	assert.deepEqual(called(), [
+		["projects", "list"],
+		["projects", "get"],
+	]);
+	holdCalls();
+	assert.deepEqual(called(), []);
+});
+
+test("a failing procedure fails its queries in a data story and no other call", async () => {
+	holdCalls();
+	const api = client("data");
+	failing(["projects", "get"]);
+	const error = await failure(api.projects.get({ id: "p1" }, asQuery));
+	assert.equal(error.code, "INTERNAL_SERVER_ERROR");
+	assert.deepEqual(await api.projects.list(undefined, asQuery), projects);
+	// Its mutations answer, and the failed query is still recorded.
+	assert.deepEqual(await api.projects.create({ name: "Gamma" }, asMutation), {
+		id: "p3",
+		name: "Gamma",
+	});
+	assert.deepEqual(called(), [
+		["projects", "get"],
+		["projects", "list"],
+	]);
+	failing(undefined);
+	assert.deepEqual(await api.projects.get({ id: "p1" }, asQuery), projects[0]);
+	// Holding again takes it off.
+	failing(["projects", "list"]);
+	holdCalls();
+	assert.deepEqual(await api.projects.list(undefined, asQuery), projects);
 });
 
 test("empty answers a collection with none, a page with no rows, and a record as it is", async () => {

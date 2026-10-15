@@ -83,6 +83,24 @@ export function procedurePath(url: string, prefix: string): string[] {
 		.map(decodeURIComponent);
 }
 
+// The procedures a story's queries call, in the order they first did, since
+// the last `holdCalls`. The run finds a screen's reads by watching: nothing
+// declares them, and a dependent or ambient read shows up like any other.
+const seen = new Map<string, readonly string[]>();
+
+export function called(): readonly (readonly string[])[] {
+	return [...seen.values()];
+}
+
+// The one procedure whose queries fail in a "data" story, every other still
+// answering its fixture: the run's way to draw a screen with a single read
+// failed. `holdCalls` takes it off.
+let failed: string | undefined;
+
+export function failing(path: readonly string[] | undefined): void {
+	failed = path?.join(".");
+}
+
 // The loading state holds its calls on this promise. Nothing releases it in the
 // workbench, so a Loading story stays waiting; the test run releases it to
 // measure the loaded form of the same screen, and holds again before the next
@@ -95,7 +113,10 @@ export function holdCalls(): void {
 	hold = new Promise<void>((resolve) => {
 		open = resolve;
 	});
+	seen.clear();
+	failed = undefined;
 }
+
 holdCalls();
 
 // Answers the calls held, and the ones after, as data.
@@ -113,7 +134,12 @@ export async function answer(
 	tree: unknown,
 	story: ScreenState,
 ): Promise<Response> {
+	const path = procedurePath(request.url, prefix);
 	let state = request.method === "GET" ? story : "data";
+	if (request.method === "GET") {
+		seen.set(path.join("."), path);
+		if (state === "data" && failed === path.join(".")) state = "error";
+	}
 	if (state === "loading") {
 		await hold;
 		state = "data";
@@ -121,7 +147,6 @@ export async function answer(
 	if (state === "error")
 		return replyError(new ORPCError("INTERNAL_SERVER_ERROR"));
 	if (state === "notFound") return replyError(new ORPCError("NOT_FOUND"));
-	const path = procedurePath(request.url, prefix);
 	const fixture = findFixture(tree, path);
 	if (!fixture) {
 		return replyError(

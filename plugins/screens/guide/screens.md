@@ -73,7 +73,8 @@ children through `<Outlet />`; without it a screen under the parent shows an emp
   desktop one, as a phone and a laptop do);
 - a finding of the render walk, below;
 - a console error or warning;
-- a shift of the loading story (below).
+- a shift of the loading story (below);
+- any of these with one read failed (below).
 
 A failure names the screen, the state and the mode. A screen is drawn in five states and two modes
 (light and dark), and the run visits each at the three widths.
@@ -96,6 +97,40 @@ loaded form already at the loaded heights: give every Section a `read`, stand th
 stand before any that may not (a Banner or a PendingBar whose condition lands with the data goes
 below the Sections), and keep a text that wraps short enough to wrap the same painted and loaded.
 `shift.ts` holds the measurement and `compare`.
+
+### Each read failed
+
+A screen with one read failed is a state the five do not reach: the error story fails every query at
+once, so a frame that holds a read nobody else does never meets it alone. After the Data story's
+floors, when the screen called two or more procedures, the run fails each procedure in turn and
+draws the screen again:
+
+1. the procedure's queries answer a server error and every other procedure answers its fixture;
+2. those queries reset (on the procedure and on the one failed before it, which answers data
+   again) and fetch again;
+3. once nothing is busy and the page has settled, the horizontal overflow and the render walk run
+   at each width, and the console is read.
+
+Nothing declares the reads: the run takes them from the procedures the Data story called, so a read
+that depends on another's answer, or an ambient one, is covered like any other. Each finding is
+prefixed `with <procedure> failed:`, for example
+`with usage.plan failed: console.error: The read [["usage","plan"],…] failed and no frame holds it`.
+That is the usual one: a Section, Pane, Sheet or Form that draws a read needs `read={…}` on it, or
+its failure draws nowhere and the leaf stays painted.
+
+- It covers the sidebar's Data story only (not the hidden variants a `--mode` narrows to), and a
+  screen with one procedure is the error story's case.
+- Empty, not found and waiting are not repeated per read: the empty story already empties every
+  collection, a missing form is the failed form with another sentence, and a painted leaf has its
+  loaded geometry, which the loading shift holds. Axe does not run per read; the roster stories
+  judge the failed forms.
+- A failed read retries once before it fails (about a second), so a screen costs about two
+  seconds for each procedure it calls (on the showcase, 4 to 5 procedures take 10 to 15 seconds).
+- A selector that throws over the emptied read is not reported: a reset reaches leaves a moment
+  before their frame replaces them with the failed form, which no viewer's read does.
+
+`called()` and `failing()` in `src/ui/answer.ts` hold the record and the failure, and `perRead()` in
+`src/ui/floors.ts` the run.
 
 ### The render walk
 
