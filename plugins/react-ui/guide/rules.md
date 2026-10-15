@@ -294,8 +294,9 @@ Rows of inline terms (a mapping of sources to targets, a filter's conditions) ar
 (`{ field, operator, value }`), each term a `RuleValue`, one of `{ pick }` (an `OptionPick`),
 `{ picks }` (a `MultiPick`, the chosen values as removable chips) or `{ either }` (an
 `EitherPick`: a picked option or a typed value, `{ picked }` or `{ typed }`, with a way back).
-`add` is the act that ends the list. A pick of several outside a rule is a `Picker` given an
-array `value`.
+`add` is the act that ends the list. A rule's picks are constants: its name and chips are worded from them. A pick of several outside a rule is a `Picker` given an
+array `value`; a `Picker`'s and a `Select`'s `options` are a `Datum` as its `value` is, so a pick over a record's read is built
+from selections of it and paints until they land.
 
 ```tsx
 <Rules
@@ -370,8 +371,9 @@ its child is.
 ```
 
 A `DefinitionRow` shows an in-place `switch` (the Switch's own props, named by the row's label) or an
-in-place `pick` (an `OptionPick`: `label`, `options`, `value`, `onChange`; the row draws the picker at
-the row fit, named by the row's label) in place of its `value`, never more than one.
+in-place `pick` (an `OptionPick`: `label`, `options`, `value`, `onChange`; `options` and `value` are each a constant or a
+selection, and the picker paints, inert, until they land; the row draws it at the row fit, named by the row's label) in place of
+its `value`, never more than one.
 
 A `Section`'s head ends in its `act`, then its `more` (a `MenuItem[]`, destructive ones marked, shaped as a `ListRow`'s): a block's other acts (move, remove) stay on its head row beside the title, which never moves, and a foldable Section's more does not fold it. With a labelled `act` the pair wraps under the title on touch together.
 

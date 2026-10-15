@@ -1951,7 +1951,7 @@ check(
 			assert(
 				(/^<V>$/.test(params) && /\bField\w+<V>/.test(header[0])) ||
 					(/^<V extends string \| null = string>$/.test(params) &&
-						/\b(?:Option|Row|MultiPick|Either|Rule)\w*</.test(header[0])) ||
+						/\b(?:Option|Row|MultiPick|Either|Rule|Constant)\w*</.test(header[0])) ||
 					(/^<T = never>$/.test(params) && /\bTableColumn</.test(header[0])) ||
 					(/^<T>$/.test(params) &&
 						/\bTable(?:RowSlots|Choice)</.test(header[0])),
@@ -1984,6 +1984,8 @@ check(
 			"TableRowSlots",
 			"TableChoice",
 			"MultiPick",
+			"ConstantPick",
+			"ConstantMultiPick",
 			"EitherValue",
 			"EitherPick",
 			"RuleValue",

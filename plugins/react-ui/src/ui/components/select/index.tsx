@@ -1,5 +1,5 @@
 import { Select as Control } from "@base-ui/react/select";
-import type { Datum } from "@fcalell/plugin-api/tanstack-query";
+import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type { Option, OptionGroup } from "@fcalell/ui-core/descriptors";
 import { optionBlocked } from "@fcalell/ui-core/list-state";
@@ -58,14 +58,14 @@ export interface SelectProps<V extends string | null = string> extends Closed {
 	value?: Datum<NoInfer<V>>;
 	/** Hears the picked option's value; `null` for an option whose value is `null` (the empty choice). Return the save's promise and the viewer's value holds while it pends; a refusal puts it back, with its reason. */
 	onChange: (value: NoInfer<V>) => unknown;
-	/** The choices, flat or under group labels. */
-	options: readonly Option<V>[] | readonly OptionGroup<V>[];
+	/** The choices, flat or under group labels. A selection paints the trigger, inert, until its read lands. */
+	options: Datum<readonly Option<V>[] | readonly OptionGroup<V>[]>;
 	/** The hint drawn while nothing is chosen; never the field's name (a short phrase; truncates). */
 	placeholder?: string;
 }
 
 function groupsOf<V extends string | null>(
-	options: SelectProps<V>["options"],
+	options: readonly Option<V>[] | readonly OptionGroup<V>[],
 ): readonly { label?: string; options: readonly Option<V>[] }[] {
 	const first = options[0];
 	if (first === undefined || !("options" in first)) {
@@ -82,13 +82,15 @@ export function Select<V extends string | null = string>({
 	placeholder,
 }: SelectProps<V>) {
 	const draft = useHeldDraft<V | undefined>(value);
-	const painted = draft.painted;
+	// Waiting options paint the trigger as a waiting value does.
+	const [waiting] = useSelections([options] as const);
+	const painted = draft.painted || waiting.painted;
 	const chosen = painted ? undefined : draft.value;
 	const container = use(PortalContainer);
 	useQuietGuards();
 	// Whether a key moved the highlight last; the pointer and a (re)opening clear it.
 	const [keyed, setKeyed] = useState(false);
-	const groups = groupsOf(options);
+	const groups = groupsOf(waiting.painted ? [] : waiting.value);
 	const items = groups.flatMap((group) =>
 		group.options.map((option) => ({
 			value: option.value,

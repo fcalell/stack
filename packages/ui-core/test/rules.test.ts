@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type {
+	ConstantMultiPick,
+	ConstantPick,
 	EitherPick,
-	MultiPick,
 	Option,
-	OptionPick,
 	RuleTerms,
 } from "../src/descriptors.ts";
 import {
@@ -24,10 +24,10 @@ const OPTIONS: Option[] = [
 	{ value: "state", label: "State", status: "active" },
 ];
 
-const pick = (value?: string): { pick: OptionPick } => ({
+const pick = (value?: string): { pick: ConstantPick } => ({
 	pick: { label: "Field", options: OPTIONS, value, onChange: () => {} },
 });
-const picks = (value: string[]): { picks: MultiPick } => ({
+const picks = (value: string[]): { picks: ConstantMultiPick } => ({
 	picks: { label: "Values", options: OPTIONS, value, onChange: () => {} },
 });
 const either = (value: EitherPick["value"]): { either: EitherPick } => ({

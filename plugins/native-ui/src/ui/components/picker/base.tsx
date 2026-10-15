@@ -1,3 +1,4 @@
+import { useSelections } from "@fcalell/plugin-api/tanstack-query";
 import { toggled } from "@fcalell/ui-core/list-state";
 import type { ChipFamily } from "@fcalell/ui-core/tokens";
 import {
@@ -22,7 +23,7 @@ import { Chip } from "../chip";
 import { Icon } from "../icon";
 import { Status } from "../status";
 import type { PickerProps, PickOneProps, PickSeveralProps } from "./index";
-import { PickSheet, useOptionGroups } from "./sheet";
+import { NO_OPTIONS, PickSheet, useOptionGroups } from "./sheet";
 
 // A field-fit trigger is the field box at the bar fit; in a table cell it
 // fills the cell it stands in for. It yields only past its line, so a long
@@ -101,7 +102,10 @@ export function PickerBase<V extends string | null = string>(
 	// The value is the viewer's pick once made, else the selection's; a painted
 	// pick draws as a single one, as the placeholder is no array.
 	const draft = useHeldDraft<V | readonly V[] | undefined>(given.value);
-	const painted = given.painted || draft.painted;
+	// Waiting options paint the trigger as a waiting value does, and the sheet
+	// has no rows to open.
+	const [waiting] = useSelections([given.options] as const);
+	const painted = given.painted || draft.painted || waiting.painted;
 	const props = {
 		...given,
 		value: draft.painted ? undefined : draft.value,
@@ -111,14 +115,14 @@ export function PickerBase<V extends string | null = string>(
 			);
 		},
 	} as Drawn<V>;
-	const { label, options, fit = "field", act, chip, cell } = given;
+	const { label, fit = "field", act, chip, cell } = given;
 	const visible = useShown(painted);
 	const several = isSeveral(props) ? props : undefined;
 	const value = isSeveral(props) ? undefined : props.value;
 	// In a table cell the pick opens as its edit starts, and its sheet gone,
 	// its leave played, ends the edit.
 	const [open, setOpen] = useState(cell !== undefined);
-	const groups = useOptionGroups(options);
+	const groups = useOptionGroups(waiting.painted ? NO_OPTIONS : waiting.value);
 	// Painted, the trigger shows the label alone, not drawn.
 	const current = painted
 		? undefined

@@ -82,6 +82,9 @@ export interface OptionGroups<V extends string | null> {
 	flat: readonly Option<V>[];
 }
 
+// What a waiting pick draws its rows from: one array, so the groups memoize.
+export const NO_OPTIONS: PickOptions<never> = [];
+
 export function useOptionGroups<V extends string | null>(
 	options: PickOptions<V>,
 ): OptionGroups<V> {

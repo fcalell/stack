@@ -419,7 +419,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// group labels (meta at 500), the highlighted row under the hover wash
 		// and the chosen one ticked, a description in meta under an option; an
 		// option's `blocked` reason replaces it in the disabled ink and the row
-		// takes no pick, until it is chosen.
+		// takes no pick, until it is chosen. `value` and `options` are data: a
+		// selection paints the trigger, inert, until its read lands.
 		Select: {
 			props: ["value", "onChange", "options", "placeholder"],
 			draws: [
@@ -1339,8 +1340,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// inert, until its read lands, and a painted `List` paints the whole row
 		// (its label, value, description, lock and controls) at their roles. `switch` is the Switch's
 		// own props, named by the row's label and drawn centred beside it in place
-		// of `value`; `pick` is an `OptionPick` (the ItemHeader's pick fact), drawn
-		// as the Picker at the row fit in the same place, named by the row's label;
+		// of `value`; `pick` is an `OptionPick` (the ItemHeader's pick fact, its
+		// `options` and `value` constants or selections), drawn as the Picker at
+		// the row fit in the same place, named by the row's label;
 		// `value`, `switch` and `pick` are exclusive.
 		DefinitionRow: {
 			props: [
@@ -1714,7 +1716,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// makes it a pick of several: the rows tick and the list stays open, and
 		// the box holds one removable neutral chip per value. An option's
 		// `blocked` reason replaces its description in the disabled ink and
-		// the option takes no pick, until it is in the value.
+		// the option takes no pick, until it is in the value. `value` and
+		// `options` are data: a selection paints the trigger, inert and its
+		// content undrawn, until its read lands.
 		Picker: {
 			props: ["label", "options", "value", "onChange", "fit", "act"],
 			draws: [

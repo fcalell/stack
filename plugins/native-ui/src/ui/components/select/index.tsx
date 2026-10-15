@@ -1,4 +1,4 @@
-import type { Datum } from "@fcalell/plugin-api/tanstack-query";
+import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
 import type { Option, OptionGroup } from "@fcalell/ui-core/descriptors";
 import {
 	FIELD_PLACEHOLDER,
@@ -15,7 +15,7 @@ import { Ink } from "../../lib/ink";
 import { inertProps, paintControl, useShown } from "../../lib/paint";
 import { useTouched } from "../../lib/touched";
 import { Icon } from "../icon";
-import { PickSheet, useOptionGroups } from "../picker/sheet";
+import { NO_OPTIONS, PickSheet, useOptionGroups } from "../picker/sheet";
 
 // `V` is read off the options alone, so an enum's options pick that enum and
 // a value outside them is a type error. An option whose value is `null` is
@@ -27,7 +27,8 @@ export interface SelectProps<V extends string | null = string> extends Closed {
 	// A promise it returns holds the viewer's value while it pends; a refusal
 	// puts it back, with its reason.
 	onChange: (value: NoInfer<V>) => unknown;
-	options: readonly Option<V>[] | readonly OptionGroup<V>[];
+	// A selection paints the trigger, inert, until its read lands.
+	options: Datum<readonly Option<V>[] | readonly OptionGroup<V>[]>;
 	/** The hint drawn while nothing is chosen; never the field's name (a short phrase; truncates). */
 	placeholder?: string;
 }
@@ -43,7 +44,9 @@ export function Select<V extends string | null = string>({
 	placeholder,
 }: SelectProps<V>) {
 	const draft = useHeldDraft<V | undefined>(value);
-	const painted = draft.painted;
+	// Waiting options paint the trigger as a waiting value does.
+	const [waiting] = useSelections([options] as const);
+	const painted = draft.painted || waiting.painted;
 	const chosen = painted ? undefined : draft.value;
 	const shown = useShown(painted);
 	const [open, setOpen] = useState(false);
@@ -51,7 +54,7 @@ export function Select<V extends string | null = string>({
 	const name = useFieldName();
 	const error = useContext(FieldError);
 	const disabled = useContext(FieldDisabled);
-	const groups = useOptionGroups(options);
+	const groups = useOptionGroups(waiting.painted ? NO_OPTIONS : waiting.value);
 	const current = groups.flat.find(
 		(option) => option.value !== null && option.value === chosen,
 	);

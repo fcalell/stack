@@ -1,3 +1,5 @@
+import { read } from "@fcalell/plugin-api/tanstack-query";
+import { DefinitionRow } from "@fcalell/plugin-react-ui/components/definition-row";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
 import { ListRow } from "@fcalell/plugin-react-ui/components/list-row";
 import { Picker } from "@fcalell/plugin-react-ui/components/picker";
@@ -498,5 +500,61 @@ export const Start: StoryObj = {
 			await userEvent.keyboard("{Escape}");
 			await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
 		}
+	},
+};
+
+// A pick over reads that have not landed paints, inert and its content
+// undrawn; once they land it draws the value they hold, and the viewer picks
+// from the options they hold.
+export const SelectionsPaintThenDraw: StoryObj = {
+	render: () => {
+		let land: () => void = () => {};
+		const gate = new Promise<void>((done) => {
+			land = done;
+		});
+		const record = read({
+			queryKey: ["picker-selections", "record"],
+			queryFn: async () => {
+				await gate;
+				return { role: "admin", roles: ROLES };
+			},
+		});
+		return (
+			<>
+				<button type="button" onClick={land}>
+					Land
+				</button>
+				<Group
+					items={[
+						{
+							key: "role",
+							row: (
+								<DefinitionRow
+									label="Role"
+									pick={{
+										label: "Role",
+										options: record.at((r) => r.roles),
+										value: record.at((r) => r.role),
+										onChange: () => {},
+									}}
+								/>
+							),
+						},
+					]}
+				/>
+			</>
+		);
+	},
+	play: async ({ canvas, userEvent }) => {
+		const trigger = canvas.getByRole("combobox", { name: /Role/ });
+		await expect(trigger).toHaveAttribute("inert");
+		await expect(trigger).not.toHaveTextContent("Admin");
+		await userEvent.click(canvas.getByRole("button", { name: "Land" }));
+		await waitFor(() => expect(trigger).not.toHaveAttribute("inert"));
+		await expect(trigger).toHaveTextContent("Admin");
+		await userEvent.click(trigger);
+		const options = await screen.findAllByRole("option");
+		await expect(options).toHaveLength(4);
+		await expect(options[1]).toHaveAttribute("aria-selected", "true");
 	},
 };

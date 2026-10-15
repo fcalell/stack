@@ -1,6 +1,7 @@
 import { Combobox } from "@base-ui/react/combobox";
 import { Dialog } from "@base-ui/react/dialog";
 import { Select } from "@base-ui/react/select";
+import { useSelections } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type {
 	IconAct,
@@ -171,8 +172,12 @@ const inValue = <V extends string | null>(
 	one: V,
 ) => (several ? several.value.includes(one) : one === value);
 
+type PickOptions<V extends string | null> =
+	| readonly Option<V>[]
+	| readonly OptionGroup<V>[];
+
 function groupsOf<V extends string | null>(
-	options: PickerProps<V>["options"],
+	options: PickOptions<V>,
 ): Grouped<V>[] {
 	const first = options[0];
 	if (first === undefined || !("options" in first))
@@ -354,7 +359,11 @@ export function PickerBase<V extends string | null = string>(
 	// The value is the viewer's pick once made, else the selection's; a painted
 	// pick draws as a single one, as the placeholder is no array.
 	const draft = useHeldDraft<V | readonly V[] | undefined>(given.value);
-	const painted = given.painted || draft.painted;
+	// Waiting options paint the trigger as a waiting value does, and the list
+	// has no rows to open.
+	const [waiting] = useSelections([given.options] as const);
+	const options: PickOptions<V> = waiting.painted ? [] : waiting.value;
+	const painted = given.painted || draft.painted || waiting.painted;
 	const props = {
 		...given,
 		value: draft.painted ? undefined : draft.value,
@@ -364,7 +373,7 @@ export function PickerBase<V extends string | null = string>(
 			);
 		},
 	} as Drawn<V>;
-	const { label, options, fit = "field", act, drawn, chip, cell } = given;
+	const { label, fit = "field", act, drawn, chip, cell } = given;
 	// A pick of several: its value is an array, which `Several` types as one.
 	const several = isSeveral(props) ? props : undefined;
 	const value = isSeveral(props) ? undefined : props.value;
