@@ -28,13 +28,19 @@ import { EmptyBase, type EmptyProps } from "../../lib/empty";
 import { Ink } from "../../lib/ink";
 import { clipWhen, Painted } from "../../lib/paint";
 import { partText } from "../../lib/parts";
-import { BusyMark, FrameBody, FrameLine, useFrame } from "../../lib/read";
+import {
+	BusyMark,
+	endedItems,
+	endedReason,
+	FrameBody,
+	FrameLine,
+	useFrame,
+} from "../../lib/read";
 import { useWords } from "../../lib/words";
 import { ButtonBase } from "../button/base";
 import { Count } from "../count";
 import { Icon } from "../icon";
 import { IconButton } from "../icon-button";
-import { IconButtonBase } from "../icon-button/base";
 import { MenuBase } from "../menu/base";
 import { Text } from "../text";
 
@@ -67,9 +73,9 @@ export interface SectionProps extends Closed {
 	// Called as a foldable section opens or closes, with whether it is now
 	// open.
 	onToggle?: (open: boolean) => void;
-	/** The section's one act, at the head's end: a labelled act or an icon act. It paints, inert, while the `read` has no data (waits, stands still, failed or missing) or its own selection waits. */
+	/** The section's one act, at the head's end: a labelled act or an icon act. It is live whatever the `read` does. Given as a selection it paints, inert, while its own read waits or stands still, and stands blocked with the failed sentence once that read failed or is missing. */
 	act?: Datum<Act | IconAct>;
-	/** The section's other acts, in a menu under the more act after its act (destructive ones marked); a foldable section's more does not fold it. It paints, inert, as the act does. */
+	/** The section's other acts, in a menu under the more act after its act (destructive ones marked); a foldable section's more does not fold it. It paints and stands blocked as the act does. */
 	more?: Datum<readonly MenuItem[]>;
 	/** What the section's body holds, read once for the frame: while it waits the body's leaves paint, its failure and a missing record stand in the body's place, and an empty selection draws `empty`. It holds the reads of `read` that no enclosing frame holds: those draw their failure and say they are busy; the rest only wait, empty and count. */
 	read?: Selection<unknown>;
@@ -117,32 +123,36 @@ export function Section({
 			</RNText>
 		);
 	else if (said.value) sentence = <Text role="meta">{said.value}</Text>;
-	// A count is not drawn while its body waits: a painted chip would carry an
-	// unseen "0" for a number nobody knows yet, and the count arrives at the
-	// title's end, where it moves nothing. A read of an array gives its length.
-	const total = frame.inert ? undefined : (frame.count ?? count);
+	// A count is not drawn until its body has answered: a painted chip would
+	// carry an unseen "0" for a number nobody knows yet, and the count arrives at
+	// the title's end, where it moves nothing. A read of an array gives its length.
+	const answered = frame.form === "ready" || frame.form === "empty";
+	const total = answered ? (frame.count ?? count) : undefined;
 	const tally =
 		total !== undefined && total !== 0 ? <Count value={total} /> : null;
-	// The acts paint, inert, while the read waits or their own datum does. A
-	// selection's shape is unknown until it lands, so its paint is a labelled act.
+	// An act paints, inert, while its own datum waits; the frame's read is not
+	// its concern. One whose own read ended stands blocked with its sentence,
+	// never a false yes. A selection's shape is unknown until it lands, so its
+	// paint is a labelled act.
 	const given = shownAct.painted ? undefined : shownAct.value;
+	const ended = shownAct.painted
+		? endedReason(words, shownAct.phase)
+		: undefined;
 	const labelled =
 		shownAct.painted || (given !== undefined && !("icon" in given));
 	let actNode: ReactNode = null;
 	if (shownAct.painted)
 		actNode = (
-			<ButtonBase act="secondary" fit="bar" label={paintText("word")} painted />
+			<ButtonBase
+				act="secondary"
+				fit="bar"
+				label={ended ?? paintText("word")}
+				blocked={ended}
+				painted={ended === undefined}
+			/>
 		);
 	else if (given !== undefined && "icon" in given)
-		actNode = frame.inert ? (
-			<IconButtonBase
-				icon={given.icon}
-				fit="bar"
-				label={given.label}
-				onAct={given.onAct}
-				painted
-			/>
-		) : (
+		actNode = (
 			<IconButton
 				icon={given.icon}
 				fit="bar"
@@ -160,10 +170,16 @@ export function Section({
 				onAct={given.onAct}
 				failed={given.failed}
 				blocked={given.blocked}
-				painted={frame.inert}
 			/>
 		);
-	const items = shownMore.painted ? [] : (shownMore.value ?? []);
+	const moreEnded = shownMore.painted
+		? endedReason(words, shownMore.phase)
+		: undefined;
+	const items = moreEnded
+		? endedItems(words, moreEnded)
+		: shownMore.painted
+			? []
+			: (shownMore.value ?? []);
 	const name = (
 		<>
 			<RNText numberOfLines={1} className={text({ role: "heading" })}>
@@ -237,7 +253,7 @@ export function Section({
 									label={`${words.more} ${partText(title)}`}
 									title={partText(title)}
 									items={items}
-									painted={shownMore.painted || frame.inert}
+									painted={shownMore.painted && moreEnded === undefined}
 								/>
 							) : null}
 						</View>

@@ -1,11 +1,8 @@
 import type { Selection } from "@fcalell/plugin-api/tanstack-query";
-import {
-	FrameHolds,
-	useFrameRead,
-	useSelections,
-} from "@fcalell/plugin-api/tanstack-query";
-import type { Act } from "@fcalell/ui-core/descriptors";
+import { FrameHolds, useFrameRead } from "@fcalell/plugin-api/tanstack-query";
+import type { Act, MenuItem } from "@fcalell/ui-core/descriptors";
 import { frameOf } from "@fcalell/ui-core/read";
+import type { Words } from "@fcalell/ui-core/tokens";
 import { text } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
 import { Text as RNText, View } from "react-native";
@@ -19,14 +16,13 @@ import { useWords } from "./words";
 
 // A frame's one subscription to its read (a read or a selection): the form it
 // draws (from its own selection's reads), its count, whether it refetches,
-// whether it waits (a painted or idle read), whether it holds its read (it
-// draws that read's busy, stale and paused flags), the hashes it and its
-// ancestors hold (`held`, for its body to publish) and the retry.
+// whether it holds its read (it draws that read's busy, stale and paused
+// flags), the hashes it and its ancestors hold (`held`, for its body to
+// publish) and the retry.
 export function useFrame(read?: Selection<unknown>) {
 	const { state, retry, holding, holds: held } = useFrameRead(read, frameOf);
 	return {
 		...state,
-		inert: state.form !== "ready" && state.form !== "empty",
 		holds: holding,
 		held,
 		retry,
@@ -34,8 +30,6 @@ export function useFrame(read?: Selection<unknown>) {
 }
 
 export type Frame = ReturnType<typeof useFrame>;
-
-const NO_READS: readonly undefined[] = [];
 
 // The reads a form's fields hold: its own and each group's.
 export function formReads(form: {
@@ -45,12 +39,23 @@ export function formReads(form: {
 	return [form.read, ...(form.groups?.map((group) => group.read) ?? [])];
 }
 
-// Whether any of these reads waits, in one subscription: a holder that has no
-// frame of its own (a form's bar) paints its acts, inert, while it does.
-export function useWaits(
-	reads: readonly (Selection<unknown> | undefined)[] = NO_READS,
-): boolean {
-	return useSelections(reads).some((drawn) => drawn.painted);
+// The reason an act stands blocked under once the read it depends on has
+// ended (a frame's `form`, or a selection's `phase`): the failed sentence (the
+// frame's own when it has one), or `words.missing`. None while the read waits,
+// stands still or answered.
+export function endedReason(
+	words: Words,
+	phase?: string,
+	failed?: string,
+): string | undefined {
+	if (phase === "failed") return failed ?? words.readFailed;
+	return phase === "missing" ? words.missing : undefined;
+}
+
+// The one blocked item a menu stands as while its read has ended: nothing
+// can be taken from it, and its reason says why.
+export function endedItems(words: Words, reason: string): readonly MenuItem[] {
+	return [{ label: words.more, blocked: reason, onAct: () => {} }];
 }
 
 // What a frame draws in place of its body, or its body: the failed, missing

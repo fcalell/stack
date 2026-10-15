@@ -264,6 +264,24 @@ export function useSelections<const V extends readonly unknown[]>(
 	}) as never;
 }
 
+// The one boolean a holder with no value of its own needs (a bar's filled act):
+// whether any of these selections has no data. Its `combine` returns the
+// boolean, so the holder renders when that answer changes and never on a
+// value's.
+export function usePainted(values: readonly unknown[]): boolean {
+	const plan = useMemo(() => planSelections(values), [values]);
+	useEffect(() => paintReads(plan.painted), [plan]);
+	const combine = useMemo(
+		() => (results: Parameters<typeof plan.draw>[0]) =>
+			plan.draw(results).some((drawn) => drawn.painted),
+		[plan],
+	);
+	return useQueries({
+		queries: plan.reads.map((r) => ({ ...r.options, placeholderData })),
+		combine,
+	});
+}
+
 // The query hashes the frames above hold, identity only: it places flags (which
 // frame draws a read's busy mark and its stale and paused line) and changes no
 // frame's form. A nested frame holds the read of its selection that is not in

@@ -1,3 +1,4 @@
+import { read } from "@fcalell/plugin-api/tanstack-query";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
 import { MessageInput } from "@fcalell/plugin-react-ui/components/message-input";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
@@ -7,7 +8,7 @@ import { Sheet } from "@fcalell/plugin-react-ui/components/sheet";
 import { Stage } from "@fcalell/plugin-react-ui/showcase/frames/overlay-stage";
 import { readsAt } from "@fcalell/plugin-react-ui/showcase/waiting";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { expect, within } from "storybook/test";
+import { expect, fn, userEvent, within } from "storybook/test";
 import { sectionOf } from "./support.ts";
 
 // A frame holds the one read of its `read` that no enclosing frame holds, so a
@@ -155,7 +156,7 @@ export const SiblingSectionsOverOneReadEachHoldIt: StoryObj = {
 
 const ended = readsAt("frame-holds/ended");
 
-export const FailedPaneDrawsNoFoot: StoryObj = {
+export const FailedPaneKeepsItsFoot: StoryObj = {
 	render: () => (
 		<div className="h-[20rem]">
 			<Place>
@@ -171,50 +172,162 @@ export const FailedPaneDrawsNoFoot: StoryObj = {
 	),
 	play: async ({ canvas }) => {
 		await canvas.findByText("This didn't load.");
-		await expect(canvas.queryByRole("textbox")).toBeNull();
+		// The page failed; its foot is not its read's to take away.
+		const input = canvas.getByRole("textbox");
+		await expect(input).toBeVisible();
+		await expect(input.closest("[inert]")).toBeNull();
+		await expect(input).not.toBeDisabled();
 		await expect(canvas.getByRole("button", { name: "Retry" })).toBeVisible();
 	},
 };
 
 const acts = readsAt("frame-holds/acts");
+const live = {
+	Waiting: { frame: acts.waiting, pane: fn(), section: fn() },
+	Failed: { frame: acts.failing, pane: fn(), section: fn() },
+};
 
-export const FailedFrameActsPaint: StoryObj = {
+// An act given as a constant is live whatever its frame's read does.
+export const ConstantActsStayLive: StoryObj = {
 	render: () => (
 		<div className="flex flex-col gap-sections">
-			<div data-testid="section">
-				<Section
-					title="Members"
-					read={acts.failing}
-					act={{ label: "Add member", onAct: () => {} }}
-				>
-					{BODY(acts.ready)}
-				</Section>
-			</div>
-			<Stage contain>
-				<Sheet
-					open
-					onClose={() => {}}
-					title="Invite"
-					fit="pane"
-					read={acts.failing}
-					submit={{ label: "Send invite", onAct: () => {} }}
-				>
-					{BODY(acts.ready)}
-				</Sheet>
-			</Stage>
+			{Object.entries(live).map(([name, one]) => (
+				<div key={name} data-testid={name}>
+					<div className="h-[12rem]">
+						<Place>
+							<Pane
+								title={name}
+								read={one.frame}
+								actions={[
+									{ icon: "Plus", label: `New ${name}`, onAct: one.pane },
+								]}
+							/>
+						</Place>
+					</div>
+					<Section
+						title="Members"
+						read={one.frame}
+						act={{ label: `Add ${name}`, onAct: one.section }}
+					>
+						{BODY(acts.ready)}
+					</Section>
+				</div>
+			))}
 		</div>
 	),
 	play: async ({ canvas }) => {
-		const box = await canvas.findByTestId("section");
-		await within(box).findByText("This didn't load.");
-		// The act stands painted and inert; only Retry presses.
-		const live = [...box.querySelectorAll("button:not([inert])")];
-		await expect(live.map((b) => b.textContent)).toEqual(["Retry"]);
-		await expect(box.querySelector("button[inert]")).not.toBeNull();
-		// The sheet's submit is painted, not pressable.
-		const send = await canvas.findAllByRole("button", { hidden: true });
+		for (const [name, one] of Object.entries(live)) {
+			const box = within(await canvas.findByTestId(name));
+			for (const [label, spy] of [
+				[`New ${name}`, one.pane],
+				[`Add ${name}`, one.section],
+			] as const) {
+				const act = await box.findByRole("button", { name: label });
+				await expect(act.closest("[inert]")).toBeNull();
+				await expect(act).not.toHaveAttribute("aria-disabled", "true");
+				await userEvent.click(act);
+				await expect(spy).toHaveBeenCalledTimes(1);
+			}
+		}
+	},
+};
+
+const gated = readsAt("frame-holds/gated");
+const idle = read({
+	queryKey: ["showcase", "frame-holds", "idle"],
+	queryFn: () => Promise.resolve(["x"]),
+	enabled: false,
+});
+const archive = { label: "Archive", onAct: fn() };
+
+// An act given as a selection follows its own read, and only that one: it
+// paints while it waits or stands still, and once the read ended it stands
+// blocked with the sentence, never a false yes.
+export const SelectionActFollowsItsOwnRead: StoryObj = {
+	render: () => (
+		<div className="flex flex-col gap-sections">
+			<div data-testid="failed">
+				<Section title="Failed act" act={gated.failing.at(() => archive)} />
+			</div>
+			<div data-testid="idle">
+				<Section title="Idle act" act={idle.at(() => archive)} />
+			</div>
+		</div>
+	),
+	play: async ({ canvas }) => {
+		const failed = within(await canvas.findByTestId("failed"));
+		const blocked = await failed.findByRole("button", {
+			name: "This didn't load.",
+		});
+		await expect(blocked).toHaveAttribute("aria-disabled", "true");
+		await expect(blocked.closest("[inert]")).toBeNull();
+		await userEvent.click(blocked);
+		await expect(archive.onAct).not.toHaveBeenCalled();
+		// The press says why, once more under the head.
+		await expect(failed.getAllByText("This didn't load.").length).toBe(2);
+		// A read nothing asked for paints the act still, with no sentence.
+		const still = within(await canvas.findByTestId("idle"));
+		await expect(still.queryByText("This didn't load.")).toBeNull();
 		await expect(
-			send.some((b) => b.hasAttribute("inert") && b.closest("[role=dialog]")),
-		).toBe(true);
+			still.getByRole("heading", { name: "Idle act" }),
+		).toBeVisible();
+		await expect(
+			canvas.getByTestId("idle").querySelector("button[inert]"),
+		).not.toBeNull();
+	},
+};
+
+// A name that only enriches falls back and never fails the frame around it.
+export const OrTitleShowsItsFallback: StoryObj = {
+	render: () => (
+		<div className="h-[20rem]">
+			<Place>
+				<Pane
+					title={gated.failing.at((rows) => rows[0] ?? "").or("Untitled")}
+					read={gated.ready}
+				>
+					<Section title="Members">{BODY(gated.ready)}</Section>
+				</Pane>
+			</Place>
+		</div>
+	),
+	play: async ({ canvas }) => {
+		await expect(
+			await canvas.findByRole("heading", { name: "Untitled" }),
+		).toBeVisible();
+		await expect(canvas.queryByText("This didn't load.")).toBeNull();
+	},
+};
+
+const sheeted = readsAt("frame-holds/sheet");
+const invite = fn();
+
+// The sheet's submit waits on the sheet's own read alone, and a failed one
+// blocks it with the sentence.
+export const FailedSheetBlocksItsSubmit: StoryObj = {
+	render: () => (
+		<Stage contain>
+			<Sheet
+				open
+				onClose={() => {}}
+				title="Invite"
+				fit="pane"
+				read={sheeted.failing}
+				submit={{ label: "Send invite", onAct: invite }}
+			>
+				{BODY(sheeted.ready)}
+			</Sheet>
+		</Stage>
+	),
+	play: async ({ canvas }) => {
+		const send = await canvas.findByRole("button", {
+			name: "Send invite",
+			hidden: true,
+		});
+		await expect(send).toHaveAttribute("aria-disabled", "true");
+		await expect(send.closest("[inert]")).toBeNull();
+		await userEvent.click(send);
+		await expect(invite).not.toHaveBeenCalled();
+		await expect(canvas.getAllByText("This didn't load.").length).toBe(2);
 	},
 };

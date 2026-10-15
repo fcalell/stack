@@ -1,6 +1,6 @@
 import { Button as BaseButton } from "@base-ui/react/button";
 import { isThenable } from "@fcalell/plugin-api/acts";
-import type { Selection } from "@fcalell/plugin-api/tanstack-query";
+import { type Selection, usePainted } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type { Act } from "@fcalell/ui-core/descriptors";
 import { filled } from "@fcalell/ui-core/tokens";
@@ -19,7 +19,6 @@ import { useState } from "react";
 import { type Acting, useAct } from "../../lib/act.ts";
 import { ActInert, SubmitContext } from "../../lib/form.ts";
 import { useTouch } from "../../lib/media.ts";
-import { useWaits } from "../../lib/read.tsx";
 import { REASON_AT_REST, ReasonHostContext } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";
@@ -120,6 +119,8 @@ function AllAct(props: {
 	);
 }
 
+const NO_WAITS: readonly undefined[] = [];
+
 export function ActionBarBase({
 	acts,
 	fit,
@@ -127,7 +128,7 @@ export function ActionBarBase({
 	pending,
 	kept,
 	acting: given,
-	waits,
+	waits = NO_WAITS,
 	submits = false,
 }: ActionBarProps & ActionBarInternal) {
 	const where = fit ?? "end";
@@ -137,7 +138,7 @@ export function ActionBarBase({
 	// A failure draws in the bar's kept line, so it never moves the act; the
 	// same line says an act waits for a connection.
 	const acting = given ?? own;
-	const painted = useWaits(waits);
+	const painted = usePainted(waits);
 	// The reason this bar last drew: once a line has drawn the bar keeps its box.
 	const [held, setHeld] = useState<string>();
 	const { leave } = useTouched();

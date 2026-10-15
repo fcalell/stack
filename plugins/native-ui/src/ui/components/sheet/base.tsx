@@ -52,6 +52,7 @@ import { timing } from "../../lib/motion";
 import { RaisedGround } from "../../lib/raised";
 import {
 	BusyMark,
+	endedReason,
 	type Frame,
 	FrameBody,
 	FrameLine,
@@ -123,7 +124,7 @@ interface Parts {
 	onClose: () => void;
 	// A blocked submit's reason once the sheet is touched or the submit pressed.
 	reason?: string;
-	// The body's read has no data: the head's submit paints, inert.
+	// The body's read waits or stands still: the head's submit paints, inert.
 	painted?: boolean;
 	// The reads the form's bar paints for: the body's and the form's.
 	waits: readonly (Selection<unknown> | undefined)[];
@@ -378,7 +379,8 @@ export interface SheetBaseProps {
 	// not jump as the filter narrows); the rest grow with their content.
 	tall?: boolean;
 	// What the body holds, read once for the frame (`Sheet`'s `read`): the submit
-	// and the form's bar paint, inert, while it waits.
+	// paints, inert, while it waits or stands still, and stands blocked with the
+	// failed sentence once it failed or is missing.
 	read?: Selection<unknown>;
 	// The body's sentence when the `read` is empty.
 	empty?: EmptyProps;
@@ -410,7 +412,7 @@ export function SheetBase({
 	title,
 	description,
 	back,
-	submit,
+	submit: offered,
 	foot,
 	failed,
 	fit,
@@ -426,6 +428,13 @@ export function SheetBase({
 	children,
 }: SheetBaseProps) {
 	const frame = useFrame(read);
+	const words = useWords();
+	// The submit waits only on the sheet's own read: painted while it waits or
+	// stands still, blocked with the sentence once it ended.
+	const waiting = frame.form === "waiting" || frame.form === "still";
+	const ended = endedReason(words, frame.form, failed);
+	const submit =
+		ended === undefined ? offered : offered && { ...offered, blocked: ended };
 	const own = useAct<number>("line");
 	const acting = given ?? own;
 	const client = useQueryClient();
@@ -478,7 +487,7 @@ export function SheetBase({
 		submit,
 		fit,
 		foot,
-		painted: frame.inert,
+		painted: waiting,
 		waits: [read, ...(waits ?? [])],
 		frame,
 		acts,

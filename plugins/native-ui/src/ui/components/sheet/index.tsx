@@ -1,4 +1,6 @@
+import { NO_HOLDS } from "@fcalell/plugin-api/read";
 import type { Selection } from "@fcalell/plugin-api/tanstack-query";
+import { FrameHolds } from "@fcalell/plugin-api/tanstack-query";
 import type { Act } from "@fcalell/ui-core/descriptors";
 import type { SheetFit } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
@@ -30,7 +32,7 @@ export interface SheetProps extends Closed {
 	// What the desktop card holds; on the phone a pane's title steps
 	// down to body 500.
 	fit?: SheetFit;
-	/** What the body holds, read once for the frame: while it waits the body's leaves paint and the submit with them, inert; its failure and a missing record stand in the body's place. */
+	/** What the body holds, read once for the frame: while it waits the body's leaves paint and the submit with them, inert; its failure and a missing record stand in the body's place, the submit blocked with the failed sentence. A sheet starts with no holds: its read draws its state here whatever the page under it holds. */
 	read?: Selection<unknown>;
 	/** The body's sentence when the `read`'s selection is empty. */
 	empty?: EmptyProps;
@@ -64,30 +66,32 @@ export function Sheet({
 	// it runs.
 	const acting = useAct<number>("line");
 	return (
-		<SheetBase
-			acting={acting}
-			open={open}
-			onClose={onClose}
-			title={title}
-			description={description}
-			back={back}
-			submit={submit}
-			foot={foot}
-			failed={failed}
-			fit={fit}
-			bar={form?.bar}
-			waits={form && formReads(form)}
-			read={read}
-			empty={empty}
-		>
-			{form ? (
-				<>
-					{children}
-					<FormBody {...form} bar={undefined} in="sheet" />
-				</>
-			) : (
-				children
-			)}
-		</SheetBase>
+		<FrameHolds holds={NO_HOLDS}>
+			<SheetBase
+				acting={acting}
+				open={open}
+				onClose={onClose}
+				title={title}
+				description={description}
+				back={back}
+				submit={submit}
+				foot={foot}
+				failed={failed}
+				fit={fit}
+				bar={form?.bar}
+				waits={form && formReads(form)}
+				read={read}
+				empty={empty}
+			>
+				{form ? (
+					<>
+						{children}
+						<FormBody {...form} bar={undefined} in="sheet" />
+					</>
+				) : (
+					children
+				)}
+			</SheetBase>
+		</FrameHolds>
 	);
 }

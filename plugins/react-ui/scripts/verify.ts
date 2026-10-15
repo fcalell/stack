@@ -853,7 +853,7 @@ check(
 	},
 );
 
-// Every context of src/ui, by the file that creates it, with its class and
+// Every context of src/ui and plugin-api's holds, by the file that creates it, with its class and
 // why. `data` carries a value a child shows, `behaviour` a callback or a state
 // a child acts on, `portal` where a popup mounts. `form` is a named exception:
 // a context that changes a child's form, which no new context may join.
@@ -924,6 +924,10 @@ const CONTEXTS: Record<string, [ContextClass, string]> = {
 		"data",
 		"the id of the title that names a Pane or a Gate, which its Thread and Table label by",
 	],
+	"plugin-api/tanstack-query.tsx:HoldsContext": [
+		"data",
+		"identity that places flags: the query hashes the frames above hold, which says which frame draws a read's busy mark and its stale and paused line; no frame's form comes from it",
+	],
 	"lib/words.tsx:WordsContext": ["data", "the app's words"],
 	"lib/touched.ts:TouchedContext": [
 		"behaviour",
@@ -940,7 +944,14 @@ check(
 	"every createContext is in the closed list, classified data, behaviour or portal",
 	() => {
 		const found = new Map<string, string[]>();
-		for (const [path, hits] of swept(contexts))
+		// The holds context lives in plugin-api, beside the hook that reads it.
+		const sources = swept(contexts);
+		const holds = resolve(pkgDir, "../api/src/tanstack-query.tsx");
+		sources.set(
+			"plugin-api/tanstack-query.tsx",
+			contexts(readFileSync(holds, "utf8"), holds),
+		);
+		for (const [path, hits] of sources)
 			for (const hit of hits) {
 				const key = `${path}:${hit.text}`;
 				found.set(key, [...(found.get(key) ?? []), `${path}:${hit.line}`]);

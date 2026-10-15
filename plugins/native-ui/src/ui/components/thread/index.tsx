@@ -1,6 +1,8 @@
+import { NO_HOLDS } from "@fcalell/plugin-api/read";
 import {
 	type Datum,
 	type Drawn,
+	FrameHolds,
 	type Selection,
 	useFrameRead,
 	useSelections,
@@ -312,7 +314,9 @@ export function Thread<T>(props: ThreadProps<T>) {
 			</View>
 			{foot ? (
 				<View className={DOCKED}>
-					<FootReturn.Provider value={claim}>{foot}</FootReturn.Provider>
+					<FrameHolds holds={NO_HOLDS}>
+						<FootReturn.Provider value={claim}>{foot}</FootReturn.Provider>
+					</FrameHolds>
 				</View>
 			) : null}
 		</Lifted>

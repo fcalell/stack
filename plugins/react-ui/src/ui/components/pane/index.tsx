@@ -1,3 +1,4 @@
+import { NO_HOLDS } from "@fcalell/plugin-api/read";
 import {
 	type Datum,
 	FrameHolds,
@@ -35,7 +36,14 @@ import { HeadingContext } from "../../lib/heading.ts";
 import { DistanceContext, useTouch } from "../../lib/media.ts";
 import { Painted } from "../../lib/paint.tsx";
 import { partText } from "../../lib/parts.ts";
-import { BusyMark, FrameBody, FrameLine, useFrame } from "../../lib/read.tsx";
+import {
+	BusyMark,
+	endedItems,
+	endedReason,
+	FrameBody,
+	FrameLine,
+	useFrame,
+} from "../../lib/read.tsx";
 import { useScrolls } from "../../lib/scrolls.ts";
 import { useSettleName } from "../../lib/settle.ts";
 import { Scroller, useScroller } from "../../lib/window.tsx";
@@ -106,9 +114,9 @@ export interface PaneProps extends Closed {
 	title: Datum<Part>;
 	/** The route the Pane returns to: Back where it stands alone, Close where a Pane stands before it. None draws no back act. */
 	back?: Route;
-	/** Icon acts after the title, in order; a create act is one of them, and on a record's Pane the record's acts. An act paints, inert, while the `read` has no data (waits, stands still, failed or missing) or its own selection waits. */
+	/** Icon acts after the title, in order; a create act is one of them, and on a record's Pane the record's acts. An act is live whatever the `read` does. One given as a selection paints, inert, while its own read waits or stands still, and stands blocked, the failed sentence its name, once that read failed or is missing. */
 	actions?: readonly Datum<IconAct>[];
-	/** The acts past the actions, in a menu under the more act; the more act paints, inert, as an action does. */
+	/** The acts past the actions, in a menu under the more act; the more act paints and stands blocked as an action does. */
 	more?: Datum<readonly MenuItem[]>;
 	/** The field (a `MessageInput`) or the selection bar (an `ActionBar` with `chosen`) docked at the Pane's foot, the body scrolling under it. */
 	foot?: ReactNode;
@@ -165,10 +173,9 @@ export function Pane({
 	// Thread in it gives way to a docked sheet only down to two rows.
 	const region = useFootRegion(dock, true, body);
 	useFootFocus(dock);
-	// A failed or missing page is the whole page: the foot and the docked sheet
-	// are not drawn, and return with the data.
-	const ended = frame.form === "failed" || frame.form === "missing";
-	const docked = ended ? null : sheet?.open ? (
+	// The foot and the docked sheet stand whatever the page's read does: they
+	// draw nothing of it.
+	const docked = sheet?.open ? (
 		<SheetDocked {...sheet} region={region.value} />
 	) : (
 		foot
@@ -199,30 +206,41 @@ export function Pane({
 				<SwitcherPick switcher={switcher} touch />
 			</span>
 		) : null;
-	// An act is painted, inert, while the read waits or its own datum does; a
-	// selection's shape is unknown until it lands, so its paint is a bare glyph.
-	const acts = actionAt.map((one, at) =>
-		one.painted || frame.inert ? (
+	// An act is painted, inert, while its own datum waits; a selection's shape
+	// is unknown until it lands, so its paint is a bare glyph. One whose read
+	// ended stands blocked with the sentence for its name, never a false yes.
+	const acts = actionAt.map((one, at) => {
+		if (!one.painted) {
+			return <IconButton key={one.value.label} {...one.value} fit={fit} />;
+		}
+		const ended = endedReason(words, one.phase);
+		return (
 			<IconButtonBase
 				// biome-ignore lint/suspicious/noArrayIndexKey: a painted act has no name, and the acts stand in a fixed order
 				key={at}
-				icon={one.painted ? "Ellipsis" : one.value.icon}
+				icon={ended ? "CircleAlert" : "Ellipsis"}
 				fit={fit}
-				label={one.painted ? "" : one.value.label}
-				painted
+				label={ended ?? ""}
+				disabled={ended !== undefined}
+				painted={ended === undefined}
 			/>
-		) : (
-			<IconButton key={one.value.label} {...one.value} fit={fit} />
-		),
-	);
-	const items = overflowAt.painted ? [] : (overflowAt.value ?? []);
+		);
+	});
+	const overflowEnded = overflowAt.painted
+		? endedReason(words, overflowAt.phase)
+		: undefined;
+	const items = overflowEnded
+		? endedItems(words, overflowEnded)
+		: overflowAt.painted
+			? []
+			: (overflowAt.value ?? []);
 	const overflow =
 		overflowAt.painted || items.length ? (
 			<MenuBase
 				label={words.more}
 				title={words.more}
 				items={items}
-				painted={overflowAt.painted || frame.inert}
+				painted={overflowAt.painted && overflowEnded === undefined}
 			/>
 		) : null;
 	// A painted title is filler, not a heading: it stands as a paragraph of the
@@ -294,12 +312,8 @@ export function Pane({
 								</Scroller>
 							</div>
 							{docked ? (
-								<div
-									ref={dock}
-									inert={frame.inert || undefined}
-									className={cn(FOOT_DOCKED, DOCKED)}
-								>
-									<FrameHolds holds={frame.held}>{docked}</FrameHolds>
+								<div ref={dock} className={cn(FOOT_DOCKED, DOCKED)}>
+									<FrameHolds holds={NO_HOLDS}>{docked}</FrameHolds>
 								</div>
 							) : null}
 						</div>

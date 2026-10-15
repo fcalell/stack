@@ -12,8 +12,10 @@ import {
 import { useMemo } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { Painted } from "../../lib/paint.tsx";
+import { endedReason } from "../../lib/read.tsx";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
+import { useWords } from "../../lib/words.tsx";
 import { ButtonBase } from "../button/base.tsx";
 import { Reason } from "../button/reason.tsx";
 import { Icon, IconBase } from "../icon/index.tsx";
@@ -43,7 +45,7 @@ export interface BannerProps extends Closed {
 	kind?: Datum<BannerKind | undefined>;
 	/** The text beside the glyph (a sentence; wraps). A selection paints the line until its read lands. */
 	sentence: Datum<string>;
-	/** The one act it offers, at the line's end; a blocked act's reason draws on the banner's own line, under it. A selection paints the act's box until its read lands. */
+	/** The one act it offers, at the line's end; a blocked act's reason draws on the banner's own line, under it. A selection paints the act's box until its read lands, and stands blocked with the failed sentence once that read failed or is missing. */
 	act?: Datum<Act | undefined>;
 }
 
@@ -51,10 +53,15 @@ export interface BannerProps extends Closed {
 export function Banner({ kind, sentence, act }: BannerProps) {
 	const [tone, said, offer] = useSelections([kind, sentence, act]);
 	const drawn = (tone.painted ? undefined : tone.value) ?? "note";
-	const waits = tone.painted || said.painted || offer.painted;
+	const words = useWords();
+	// An act whose own read ended stands blocked with its sentence, never a
+	// false yes; one still to land paints the banner inert.
+	const ended = offer.painted ? endedReason(words, offer.phase) : undefined;
+	const waits =
+		tone.painted || said.painted || (offer.painted && ended === undefined);
 	const { touched } = useTouched();
 	const given = offer.painted ? undefined : offer.value;
-	const blocked = given?.blocked;
+	const blocked = ended ?? given?.blocked;
 	const [pressed, press] = usePressed(blocked);
 	const host = useMemo(
 		() => (blocked === undefined ? undefined : { press }),
@@ -81,7 +88,19 @@ export function Banner({ kind, sentence, act }: BannerProps) {
 				</div>
 				{offer.painted ? (
 					<span className={ACT_SLOT}>
-						<ButtonBase act="quiet" fit="bar" label="" painted />
+						{ended === undefined ? (
+							<ButtonBase act="quiet" fit="bar" label="" painted />
+						) : (
+							<ReasonHostContext value={host}>
+								<ButtonBase
+									act="quiet"
+									fit="bar"
+									ink={bannerGlyph({ kind: drawn })}
+									label={ended}
+									blocked={ended}
+								/>
+							</ReasonHostContext>
+						)}
 					</span>
 				) : given ? (
 					<span className={ACT_SLOT}>

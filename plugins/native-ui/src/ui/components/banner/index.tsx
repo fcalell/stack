@@ -14,7 +14,9 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
 import { inertProps, Painted } from "../../lib/paint";
+import { endedReason } from "../../lib/read";
 import { Strut } from "../../lib/strut";
+import { useWords } from "../../lib/words";
 import { type BannerInk, ButtonBase } from "../button/base";
 import { Icon, IconBase } from "../icon";
 
@@ -52,7 +54,8 @@ export interface BannerProps extends Closed {
 	/** The text beside the glyph (a sentence; wraps). A selection paints the line until its read lands. */
 	sentence: Datum<string>;
 	// The one act it offers, under the line; a blocked act's reason under it. A
-	// selection paints the act's box until its read lands.
+	// selection paints the act's box until its read lands, and stands blocked
+	// with the failed sentence once that read failed or is missing.
 	act?: Datum<Act | undefined>;
 }
 
@@ -63,7 +66,12 @@ export interface BannerProps extends Closed {
 export function Banner({ kind, sentence, act }: BannerProps) {
 	const [tone, said, offer] = useSelections([kind, sentence, act]);
 	const drawn = (tone.painted ? undefined : tone.value) ?? "note";
-	const waits = tone.painted || said.painted || offer.painted;
+	const words = useWords();
+	// An act whose own read ended stands blocked with its sentence, never a
+	// false yes; one still to land paints the banner inert.
+	const ended = offer.painted ? endedReason(words, offer.phase) : undefined;
+	const waits =
+		tone.painted || said.painted || (offer.painted && ended === undefined);
 	const given = offer.painted ? undefined : offer.value;
 	return (
 		<View
@@ -89,7 +97,17 @@ export function Banner({ kind, sentence, act }: BannerProps) {
 				</View>
 				{offer.painted ? (
 					<View className={ACT_SLOT}>
-						<ButtonBase act="quiet" fit="bar" label="" painted />
+						{ended === undefined ? (
+							<ButtonBase act="quiet" fit="bar" label="" painted />
+						) : (
+							<ButtonBase
+								act="quiet"
+								fit="bar"
+								banner={INKS[drawn]}
+								label={ended}
+								blocked={ended}
+							/>
+						)}
 					</View>
 				) : given ? (
 					<View className={ACT_SLOT}>

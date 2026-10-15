@@ -32,7 +32,13 @@ import type { EmptyProps } from "../../lib/empty.tsx";
 import { useReturnFocus } from "../../lib/focus.ts";
 import { useTouch } from "../../lib/media.ts";
 import { PortalContainer } from "../../lib/portal.ts";
-import { BusyMark, FrameBody, FrameLine, useFrame } from "../../lib/read.tsx";
+import {
+	BusyMark,
+	endedReason,
+	FrameBody,
+	FrameLine,
+	useFrame,
+} from "../../lib/read.tsx";
 import { ReasonHostContext } from "../../lib/reason.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
 import { useSettleName } from "../../lib/settle.ts";
@@ -132,7 +138,7 @@ export interface SheetBaseProps {
 	form?: "centred" | "menu" | "view";
 	/** A menu that searches stands the whole viewport height from its first frame, so its list does not jump as the filter narrows. */
 	tall?: boolean;
-	/** What the body holds, read once for the frame (`Sheet`'s `read`): the submit paints, inert, while it has no data (waits, stands still, failed or missing). */
+	/** What the body holds, read once for the frame (`Sheet`'s `read`): the submit paints, inert, while it waits or stands still, and stands blocked with the failed sentence once it failed or is missing. */
 	read?: Selection<unknown>;
 	/** The body's sentence when the `read` is empty. */
 	empty?: EmptyProps;
@@ -154,7 +160,7 @@ export function SheetBase({
 	title,
 	description,
 	back,
-	submit,
+	submit: offered,
 	foot,
 	failed,
 	fit,
@@ -170,8 +176,15 @@ export function SheetBase({
 }: SheetBaseProps) {
 	const touch = useTouch();
 	const frame = useFrame(read);
+	const words = useWords();
 	const settle = useSettleName();
 	const own = useAct<number>("line");
+	// The submit waits only on the sheet's own read: painted while it waits or
+	// stands still, blocked with the sentence once it ended.
+	const waiting = frame.form === "waiting" || frame.form === "still";
+	const ended = endedReason(words, frame.form, failed);
+	const submit =
+		ended === undefined ? offered : offered && { ...offered, blocked: ended };
 	// The sheet hosts its acts' run: its head submit, its foot bar and its
 	// form's bar share one, so one act pends at a time and the dismissal is held
 	// while it runs (unless it waits for a connection, which holds nothing).
@@ -182,7 +195,6 @@ export function SheetBase({
 			{children}
 		</FrameBody>
 	);
-	const words = useWords();
 	const container = use(PortalContainer);
 	// A sheet in a stage (a container is named) stays non-modal beside the
 	// stage's others; in an app it is modal.
@@ -239,7 +251,7 @@ export function SheetBase({
 						onAct={() => submit && acting.run(HEAD_SUBMIT_AT, submit)}
 						pending={acting.pending === HEAD_SUBMIT_AT}
 						blocked={submit.blocked}
-						painted={frame.inert}
+						painted={waiting}
 					/>
 				</div>
 			</ReasonHostContext>
@@ -288,7 +300,11 @@ export function SheetBase({
 			? [{ label: words.cancel, onAct: onClose }, submit]
 			: undefined);
 	const actionBar = bar ? (
-		<ActionBarBase acts={bar} acting={acting} waits={[read]} />
+		<ActionBarBase
+			acts={bar}
+			acting={acting}
+			waits={waiting ? [read] : undefined}
+		/>
 	) : null;
 	const footLine = foot ? (
 		<div className={FOOT_LINE}>
