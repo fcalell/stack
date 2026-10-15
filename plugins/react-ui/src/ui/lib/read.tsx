@@ -1,5 +1,9 @@
 import type { Selection } from "@fcalell/plugin-api/tanstack-query";
-import { isRead, useFrameRead } from "@fcalell/plugin-api/tanstack-query";
+import {
+	isRead,
+	useFrameRead,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import type { Act } from "@fcalell/ui-core/descriptors";
 import { frameOf } from "@fcalell/ui-core/read";
 import type { ReactNode } from "react";
@@ -22,6 +26,23 @@ export function useFrame(read?: Selection<unknown>) {
 }
 
 export type Frame = ReturnType<typeof useFrame>;
+
+const NO_READS: readonly undefined[] = [];
+
+/** The reads a form's fields hold: its own and each group's. */
+export function formReads(form: {
+	read?: Selection<unknown>;
+	groups?: readonly { read?: Selection<unknown> }[];
+}): (Selection<unknown> | undefined)[] {
+	return [form.read, ...(form.groups?.map((group) => group.read) ?? [])];
+}
+
+/** Whether any of these reads waits, in one subscription: a holder that has no frame of its own (a form's bar) paints its acts, inert, while it does. */
+export function useWaits(
+	reads: readonly (Selection<unknown> | undefined)[] = NO_READS,
+): boolean {
+	return useSelections(reads).some((drawn) => drawn.painted);
+}
 
 /** What a frame draws in place of its body, or its body: the failed, missing and empty forms in the frame's `fit`; ready, waiting and idle are the loaded tree, its leaves painting. */
 export function FrameBody(props: {

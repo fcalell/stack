@@ -1,3 +1,4 @@
+import type { Selection } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import {
 	FORM_FOOT,
@@ -7,10 +8,15 @@ import {
 	form,
 	text,
 } from "@fcalell/ui-core/variants";
-import { useState } from "react";
-import { FormContext } from "../../lib/form.ts";
+import type { Acting } from "../../lib/act.ts";
 import { useLeaveGuard } from "../../lib/leave.ts";
-import { BusyMark, FrameBody, FrameLine, useFrame } from "../../lib/read.tsx";
+import {
+	BusyMark,
+	FrameBody,
+	FrameLine,
+	formReads,
+	useFrame,
+} from "../../lib/read.tsx";
 import { useSettleName } from "../../lib/settle.ts";
 import { TouchedContext, useTouchState } from "../../lib/touched.ts";
 import { ActionBarBase } from "../action-bar/base.tsx";
@@ -71,49 +77,56 @@ export function FormBody({
 	empty,
 	failed,
 	in: within,
-}: FormProps & { in: FormIn }) {
+	acting,
+	outer,
+}: FormProps & {
+	in: FormIn;
+	/** The holder of the bar's run, when the form stands in one that holds more than the bar (a sheet's dismissal). */
+	acting?: Acting<number>;
+	/** The read of the sheet the form stands in: the bar paints while it waits too. */
+	outer?: Selection<unknown>;
+}) {
 	const frame = useFrame(read);
 	const settle = useSettleName();
-	const [pending, setPending] = useState(false);
 	const [touch] = useTouchState();
 	// A sheet's form is the sheet's: it closes on its own act and asks nothing.
 	useLeaveGuard(touch.leave, within !== "sheet");
 	const stuck = within === "sheet" ? FOOT_STUCK : undefined;
+	// The bar subscribes to every read the form's fields hold, so a group's
+	// waiting paints the submit as the form's does.
+	const waits = [outer, ...formReads({ read, groups })];
+	const acts = bar && (
+		<ActionBarBase {...bar} acting={acting} waits={waits} submits />
+	);
 	const foot =
-		bar === undefined ? null : groups || stuck ? (
-			<div className={cn(FORM_FOOT, stuck)}>
-				<ActionBarBase {...bar} painted={frame.waits} />
-			</div>
+		acts === undefined ? null : groups || stuck ? (
+			<div className={cn(FORM_FOOT, stuck)}>{acts}</div>
 		) : (
-			<ActionBarBase {...bar} painted={frame.waits} />
+			acts
 		);
 	return (
-		<FormContext value={setPending}>
-			<TouchedContext value={touch}>
-				{/* The submit act's click runs its `onAct`; the submit only stays on the page. */}
-				<form
-					onSubmit={(event) => event.preventDefault()}
-					onChange={touch.touch}
-					aria-busy={
-						pending || (frame.holds && frame.form === "waiting") || undefined
-					}
-					style={read === undefined ? undefined : settle}
-					className={cn(
-						form({ holds: groups ? "sections" : "fields", in: within }),
-						STACK,
-					)}
-				>
-					<FrameLine frame={frame} flow />
-					<FrameBody frame={frame} fit="frame" empty={empty} failed={failed}>
-						{groups
-							? groups.map((group, index) => (
-									<GroupBox key={group.title ?? index} group={group} />
-								))
-							: children}
-					</FrameBody>
-					{foot}
-				</form>
-			</TouchedContext>
-		</FormContext>
+		<TouchedContext value={touch}>
+			{/* The submit act's click runs its `onAct`; the submit only stays on the page. */}
+			<form
+				onSubmit={(event) => event.preventDefault()}
+				onChange={touch.touch}
+				aria-busy={(frame.holds && frame.form === "waiting") || undefined}
+				style={read === undefined ? undefined : settle}
+				className={cn(
+					form({ holds: groups ? "sections" : "fields", in: within }),
+					STACK,
+				)}
+			>
+				<FrameLine frame={frame} flow />
+				<FrameBody frame={frame} fit="frame" empty={empty} failed={failed}>
+					{groups
+						? groups.map((group, index) => (
+								<GroupBox key={group.title ?? index} group={group} />
+							))
+						: children}
+				</FrameBody>
+				{foot}
+			</form>
+		</TouchedContext>
 	);
 }

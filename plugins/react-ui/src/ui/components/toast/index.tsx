@@ -56,8 +56,19 @@ export function Toast({ sentence, state, act }: ToastProps) {
 		throw new Error(
 			"a Toast stands in the Shell's toasts layer, queued by toast()",
 		);
+	// A failed (high priority) toast is announced by its own alert, and Base UI
+	// hides the toast itself until it is focused so a polite region does not read
+	// it twice. Its acts must stay reachable (a hidden subtree holding a focusable
+	// act fails `aria-hidden-focus`), so the toast stays in the tree and turns
+	// its own live region off instead: the alert is the one announcement.
+	const alerted = entry.priority === "high";
 	return (
-		<Control.Root toast={entry} className={cn(TOAST, BOX, STACKED, MOTION)}>
+		<Control.Root
+			toast={entry}
+			aria-hidden={alerted ? false : undefined}
+			aria-live={alerted ? "off" : undefined}
+			className={cn(TOAST, BOX, STACKED, MOTION)}
+		>
 			{state ? (
 				<span className={cn(toastState({ state }), GLYPH)}>
 					<Icon name={MARK[state]} />
@@ -81,7 +92,9 @@ export function Toast({ sentence, state, act }: ToastProps) {
 					/>
 				</span>
 			) : null}
+			{/* Base UI hides the close act while the stack is collapsed; ours is always drawn, so it stays in the tree. */}
 			<Control.Close
+				aria-hidden={false}
 				render={<IconButtonBase icon="X" fit="bar" label={words.dismiss} />}
 			/>
 		</Control.Root>

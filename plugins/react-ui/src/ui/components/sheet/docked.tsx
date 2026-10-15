@@ -18,11 +18,11 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { useAct } from "../../lib/act.ts";
 import { backGlyph } from "../../lib/back.ts";
 import { focusFirst } from "../../lib/focus.ts";
 import type { FootRegionValue } from "../../lib/frame.ts";
 import { useTouch } from "../../lib/media.ts";
-import { ActFailed } from "../../lib/reason.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
 import {
 	TouchedContext,
@@ -67,7 +67,6 @@ export interface SheetDockedProps {
 	back?: () => void;
 	submit?: Act;
 	foot?: string;
-	failed?: string;
 	form?: FormProps;
 	/** The foot's region, which bounds the body. */
 	region: FootRegionValue;
@@ -83,12 +82,14 @@ export function SheetDocked({
 	back,
 	submit,
 	foot,
-	failed,
 	form,
 	region,
 	children,
 }: SheetDockedProps) {
 	const touch = useTouch();
+	// The foot's act and its form's bar share one run: one act pends at a time,
+	// and closing is held while it runs (unless it waits for a connection).
+	const acting = useAct<number>("line");
 	const words = useWords();
 	const titleId = useId();
 	const root = useRef<HTMLElement>(null);
@@ -153,10 +154,11 @@ export function SheetDocked({
 		<p className={cn(text({ role: "meta" }), FOOT_LINE)}>{foot}</p>
 	) : null;
 	const bar = submit ? (
-		<ActFailed value={failed}>
-			<ActionBarBase acts={[submit]} kept />
-		</ActFailed>
+		<ActionBarBase acts={[submit]} acting={acting} kept />
 	) : null;
+	const close = () => {
+		if (!acting.holds) onClose();
+	};
 	return (
 		<TouchedContext value={touchedValue}>
 			<section
@@ -165,7 +167,7 @@ export function SheetDocked({
 				onKeyDown={(event) => {
 					if (event.key !== "Escape") return;
 					event.stopPropagation();
-					onClose();
+					close();
 				}}
 				// A field inside takes input: a blocked act says its reason.
 				onChange={touchedValue.touch}
@@ -195,7 +197,7 @@ export function SheetDocked({
 							icon="X"
 							fit={iconFit}
 							label={words.close}
-							onAct={onClose}
+							onAct={close}
 						/>
 					</div>
 				</div>
@@ -212,7 +214,7 @@ export function SheetDocked({
 						)}
 					>
 						{children}
-						{form ? <FormBody {...form} in="sheet" /> : null}
+						{form ? <FormBody {...form} in="sheet" acting={acting} /> : null}
 					</div>
 				</div>
 				{line || bar ? (

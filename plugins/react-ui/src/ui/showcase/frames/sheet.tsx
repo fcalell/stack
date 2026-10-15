@@ -17,6 +17,7 @@ import type { ShowcaseFrame } from "../cells.ts";
 import { isHeld, readsAt } from "../waiting.ts";
 import { StandInRows } from "./layout-context.tsx";
 import { press, Stage } from "./overlay-stage.tsx";
+import { fail, hang } from "./pending.tsx";
 import { TURN, TURNS } from "./thread.tsx";
 
 const act = () => {};
@@ -78,13 +79,16 @@ function DockedQuestions({ state }: { state: ShowcaseFrame["state"] }) {
 	const [open, setOpen] = useState(true);
 	const [answers, setAnswers] = useState<(string | null)[]>(
 		QUESTIONS.map((_, i) =>
-			state === "loading" || state === "error"
+			state === "pending" || state === "error"
 				? (QUESTIONS[i]?.options[0]?.value ?? null)
 				: null,
 		),
 	);
 	useEffect(() => {
-		if (state === "disabled" && frame.current) pressSubmit(frame.current);
+		if (!frame.current) return;
+		if (state === "disabled") pressSubmit(frame.current);
+		if (state === "pending" || state === "error")
+			pressNamed(frame.current, "Send");
 	}, [state]);
 	const question = QUESTIONS[at];
 	const last = at === QUESTIONS.length - 1;
@@ -132,7 +136,8 @@ function DockedQuestions({ state }: { state: ShowcaseFrame["state"] }) {
 										description: "Before I redeploy",
 										submit: {
 											label: last ? "Send" : "Next",
-											onAct: last ? close : () => setAt(at + 1),
+											onAct: last ? actOf(state, close) : () => setAt(at + 1),
+											failed: "Couldn't send your answers. Try again.",
 											blocked:
 												last && state === "disabled"
 													? "Choose who hears about it first."
@@ -141,10 +146,6 @@ function DockedQuestions({ state }: { state: ShowcaseFrame["state"] }) {
 										foot: last
 											? "Your answers go with the redeploy."
 											: undefined,
-										failed:
-											last && state === "error"
-												? "Couldn't send your answers. Try again."
-												: undefined,
 										children: (
 											<Section title={question.title}>
 												<OptionList
@@ -178,13 +179,31 @@ function OneField() {
 	);
 }
 
+// The submit's work by state: one that never settles while it pends, one the
+// server refuses on `error`.
+function actOf(state: ShowcaseFrame["state"], rest: () => void) {
+	if (state === "pending") return hang;
+	return state === "error" ? fail : rest;
+}
+
 function submitOf(state: ShowcaseFrame["state"]): Act {
 	return {
 		label: "Save",
-		onAct: act,
+		onAct: actOf(state, act),
+		failed: "Couldn't save the project. Try again.",
 		blocked: state === "disabled" ? "Add a description first." : undefined,
 	};
 }
+
+// A pressed act, found by its name.
+const pressNamed = (stage: HTMLElement, label: string) =>
+	requestAnimationFrame(() =>
+		press(
+			[...stage.querySelectorAll("button")].find(
+				(button) => button.textContent === label,
+			),
+		),
+	);
 
 // A blocked submit shows its reason once pressed.
 const pressSubmit = (stage: HTMLElement) =>
@@ -231,6 +250,8 @@ const CONFIRM = {
 };
 
 // The name typed in, then the act pressed: the act runs its work.
+const pressSave = (stage: HTMLElement) => pressNamed(stage, "Save");
+
 const typeAndRun = (stage: HTMLElement) =>
 	requestAnimationFrame(() => {
 		const field = stage.querySelector("input");
@@ -256,7 +277,7 @@ const typeAndRun = (stage: HTMLElement) =>
 // is the data landed at rest, the submit painted and inert while it waits, the
 // failure with Retry in the body's place, and the empty sentence), and the confirm on the primary act cell: its typed name blocked
 // on `disabled` (the reason shown as the card's is), typed and its act
-// running on `loading`. The pane fit also draws busy, stale and paused over a
+// running on `pending`. The pane fit also draws busy, stale and paused over a
 // read that holds rows. The rows inside are context. The bar fit cell draws the
 // docked form, since the docked foot draws no matrix cell of its own: a
 // conversation with a four-question sheet in its foot at a phone's height.
@@ -266,7 +287,16 @@ export function drawSheet(frame: ShowcaseFrame) {
 	if (isHeld(state) && cell !== "SHEET_DESKTOP.fit.pane") return undefined;
 	if (cell === "SHEET_DESKTOP.fit.form")
 		return (
-			<Stage contain ready={state === "disabled" ? pressSubmit : undefined}>
+			<Stage
+				contain
+				ready={
+					state === "disabled"
+						? pressSubmit
+						: state === "pending" || state === "error"
+							? pressSave
+							: undefined
+				}
+			>
 				<Sheet
 					open
 					onClose={act}
@@ -274,11 +304,6 @@ export function drawSheet(frame: ShowcaseFrame) {
 					description="acme-web · production"
 					submit={submitOf(state)}
 					foot={state === "rest" ? "Applies from the next deploy." : undefined}
-					failed={
-						state === "error"
-							? "Couldn't save the project. Try again."
-							: undefined
-					}
 				>
 					<StandInRows />
 				</Sheet>
@@ -299,7 +324,11 @@ export function drawSheet(frame: ShowcaseFrame) {
 				</Sheet>
 			</Stage>
 		);
-	if (cell === "SHEET_DESKTOP.fit.pane" && state !== "disabled")
+	if (
+		cell === "SHEET_DESKTOP.fit.pane" &&
+		state !== "disabled" &&
+		state !== "pending"
+	)
 		return (
 			<Stage contain>
 				<Sheet
@@ -333,7 +362,7 @@ export function drawSheet(frame: ShowcaseFrame) {
 				ready={
 					state === "disabled"
 						? pressSubmit
-						: state === "loading"
+						: state === "pending"
 							? typeAndRun
 							: undefined
 				}

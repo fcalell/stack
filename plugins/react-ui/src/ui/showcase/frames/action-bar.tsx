@@ -3,7 +3,7 @@ import type { ActionBarFit } from "@fcalell/ui-core/variants";
 import { ActionBar } from "../../components/action-bar/index.tsx";
 import { Text } from "../../components/text/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
-import { hang, Pressed } from "./pending.tsx";
+import { fail, hang, Pressed } from "./pending.tsx";
 import { Column } from "./place.tsx";
 import { Publish } from "./table.tsx";
 
@@ -56,8 +56,9 @@ const LOGIN: Drawn = {
 // A sheet's footer by default; the danger cell a confirm's, the destructive
 // cell a destructive secondary beside the filled act, the full fit and the
 // field fit a login's one act, the meta cell a selection bar's count over a
-// list. `pending` presses the filled act into one that never settles, `disabled` it blocked with
-// its reason at rest under the acts. A bar whose data is not here paints in a
+// list. `pending` presses the filled act into one that never settles, `error`
+// into one the server refuses (its sentence in the bar's kept line, the act
+// ready again), `disabled` it blocked with its reason at rest under the acts. A bar whose data is not here paints in a
 // Form's or a Sheet's drawer, where the frame's read waits.
 function drawnOf(cell: string): Drawn {
 	if (cell === "BUTTON.act.danger" || cell === "BUTTON_LABEL.act.danger")
@@ -133,12 +134,19 @@ export function drawActionBar(frame: ShowcaseFrame) {
 			? act
 			: {
 					...act,
-					onAct: frame.state === "pending" ? hang : act.onAct,
+					onAct:
+						frame.state === "pending"
+							? hang
+							: frame.state === "error"
+								? fail
+								: act.onAct,
+					failed: "That change could not be saved.",
 					blocked: frame.state === "disabled" ? reason : undefined,
 				},
 	);
 	const bar = <ActionBar fit={fit} acts={drawn} />;
-	if (frame.state === "pending") return <Pressed>{bar}</Pressed>;
+	if (frame.state === "pending" || frame.state === "error")
+		return <Pressed label={acts[last]?.label}>{bar}</Pressed>;
 	if (frame.cell.name === "BUTTON.fit.body" && frame.state === "rest")
 		return (
 			<div className="flex flex-col gap-sections">

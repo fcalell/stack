@@ -26,13 +26,14 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { type Acting, useAct } from "../../lib/act.ts";
 import { backGlyph } from "../../lib/back.ts";
 import type { EmptyProps } from "../../lib/empty.tsx";
 import { useReturnFocus } from "../../lib/focus.ts";
 import { useTouch } from "../../lib/media.ts";
 import { PortalContainer } from "../../lib/portal.ts";
 import { BusyMark, FrameBody, FrameLine, useFrame } from "../../lib/read.tsx";
-import { ActFailed, ReasonHostContext } from "../../lib/reason.ts";
+import { ReasonHostContext } from "../../lib/reason.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
 import { useSettleName } from "../../lib/settle.ts";
 import {
@@ -85,6 +86,8 @@ const BOX_TALL = "grow";
 const BOX_FLOAT = "max-w-full";
 const HEAD = "flex flex-col";
 const HEAD_ROW = "flex items-center";
+// The head submit's place among the sheet's acts, below any bar's index.
+const HEAD_SUBMIT_AT = -1;
 // A touch head's submit that does not fit beside the title column drops to a
 // second line; its wrapper holds it at the row's end on either line.
 const HEAD_ROW_WRAP = "flex-wrap";
@@ -119,6 +122,7 @@ export interface SheetBaseProps {
 	back?: () => void;
 	submit?: Act;
 	foot?: string;
+	/** What the body says when its `read` fails, in place of the generic sentence. */
 	failed?: string;
 	fit?: SheetFit;
 	/** A decision's acts, the foot's `ActionBar` at both densities. */
@@ -131,8 +135,8 @@ export interface SheetBaseProps {
 	read?: Selection<unknown>;
 	/** The body's sentence when the `read` is empty. */
 	empty?: EmptyProps;
-	/** An act pends: the close act is inert and says so. */
-	busy?: boolean;
+	/** The holder of the sheet's acts' run, when a form in its body has a bar of its own (the one holder keeps the dismissal held while either runs). Absent, the sheet hosts its own. */
+	acting?: Acting<number>;
 	/** What the sheet opens focused on: its first field (a confirm's typed name), or the element a ref holds (a pick's option); a decision with neither opens on its first act, the way out. */
 	focus?: "field" | RefObject<HTMLElement | null>;
 	/** Ties a trigger elsewhere (a `Dialog.Trigger`) to the sheet. */
@@ -157,7 +161,7 @@ export function SheetBase({
 	form,
 	tall,
 	handle,
-	busy,
+	acting: given,
 	focus,
 	read,
 	empty,
@@ -166,12 +170,17 @@ export function SheetBase({
 	const touch = useTouch();
 	const frame = useFrame(read);
 	const settle = useSettleName();
+	const own = useAct<number>("line");
+	// The sheet hosts its acts' run: its head submit, its foot bar and its
+	// form's bar share one, so one act pends at a time and the dismissal is held
+	// while it runs (unless it waits for a connection, which holds nothing).
+	const acting = given ?? own;
 	// The body is the frame's: its failure and its emptiness stand in its place.
 	const body =
 		read === undefined ? (
 			children
 		) : (
-			<FrameBody frame={frame} fit="frame" empty={empty}>
+			<FrameBody frame={frame} fit="frame" empty={empty} failed={failed}>
 				{children}
 			</FrameBody>
 		);
@@ -184,7 +193,6 @@ export function SheetBase({
 	const [touchedValue, setTouched] = useTouchState();
 	const { touched } = touchedValue;
 	const [pressedUnder, setPressedUnder] = useState<string>();
-	const [running, setRunning] = useState(false);
 	const popup = useRef<HTMLDivElement | null>(null);
 	useReturnFocus(open, popup);
 	const [bodyNode, setBodyNode] = useState<HTMLDivElement | null>(null);
@@ -203,7 +211,7 @@ export function SheetBase({
 	// A decision draws no close act: its acts dismiss it.
 	const close = acts ? null : (
 		<Dialog.Close
-			disabled={busy}
+			disabled={acting.holds}
 			render={<IconButtonBase icon="X" fit={iconFit} label={words.close} />}
 		/>
 	);
@@ -221,14 +229,8 @@ export function SheetBase({
 		[blocked, submit?.blocked],
 	);
 	// On touch the submit stands at the head's end in close's place, which
-	// moves to the start unless back holds it. It pends on its promise, as the
-	// desktop's foot bar does.
-	const runSubmit = () => {
-		const ran = submit?.onAct();
-		if (!(ran instanceof Promise)) return;
-		setRunning(true);
-		void ran.finally(() => setRunning(false));
-	};
+	// moves to the start unless back holds it. It runs as the desktop's foot
+	// bar does.
 	const headSubmit =
 		touch && submit ? (
 			<ReasonHostContext value={host}>
@@ -236,8 +238,8 @@ export function SheetBase({
 					<ButtonBase
 						fit="bar"
 						label={submit.label}
-						onAct={runSubmit}
-						pending={running}
+						onAct={() => submit && acting.run(HEAD_SUBMIT_AT, submit)}
+						pending={acting.pending === HEAD_SUBMIT_AT}
 						blocked={submit.blocked}
 						painted={frame.waits}
 					/>
@@ -288,9 +290,7 @@ export function SheetBase({
 			? [{ label: words.cancel, onAct: onClose }, submit]
 			: undefined);
 	const actionBar = bar ? (
-		<ActFailed value={failed}>
-			<ActionBarBase acts={bar} painted={frame.waits} />
-		</ActFailed>
+		<ActionBarBase acts={bar} acting={acting} waits={[read]} />
 	) : null;
 	const footLine = foot ? (
 		<div className={FOOT_LINE}>
@@ -322,9 +322,11 @@ export function SheetBase({
 						{submit.blocked}
 					</Reason>
 				) : null}
-				{headSubmit && submit?.blocked === undefined && failed ? (
-					<Reason shown failed end>
-						{failed}
+				{headSubmit &&
+				submit?.blocked === undefined &&
+				acting.line !== undefined ? (
+					<Reason shown failed={acting.pending === undefined} end>
+						{acting.line}
 					</Reason>
 				) : null}
 			</div>
@@ -361,7 +363,10 @@ export function SheetBase({
 		<Dialog.Root
 			handle={handle}
 			open={open}
-			onOpenChange={(next) => (next ? onOpen?.() : onClose())}
+			onOpenChange={(next) => {
+				if (next) onOpen?.();
+				else if (!acting.holds) onClose();
+			}}
 			onOpenChangeComplete={(next) => {
 				if (!next) onGone?.();
 			}}

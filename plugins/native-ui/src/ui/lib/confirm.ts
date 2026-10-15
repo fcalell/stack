@@ -1,3 +1,4 @@
+import { isThenable } from "@fcalell/plugin-api/acts";
 import type { Confirmation } from "@fcalell/ui-core/descriptors";
 import { useSyncExternalStore } from "react";
 
@@ -38,11 +39,19 @@ export function ask(confirmation: Confirmation): Promise<boolean> {
 			...confirmation,
 			act: {
 				...confirmation.act,
-				onAct: () =>
-					Promise.resolve(confirmation.act.onAct()).then((done) => {
+				// A promise's resolution is the answer; an act that returns nothing
+				// is done at once.
+				onAct: () => {
+					const ran = confirmation.act.onAct();
+					if (!isThenable(ran)) {
+						taken = true;
+						return ran;
+					}
+					return Promise.resolve(ran).then((done) => {
 						taken = true;
 						return done;
-					}),
+					});
+				},
 			},
 		});
 	});

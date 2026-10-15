@@ -6,7 +6,7 @@ import { ActionBarBase } from "./base.tsx";
 
 /** The acts that close a form, a sheet or a confirm, or that apply to the rows chosen in a list. */
 export interface ActionBarProps extends Closed {
-	/** The acts in reading order, the one filled act last. Inside a `Form` the filled act submits it. A promise the filled act's `onAct` returns keeps it pending until it settles. */
+	/** The acts in reading order, the one filled act last. Inside a `Form` the filled act submits it. A promise an act's `onAct` returns keeps it pending until it settles, the others inert meanwhile; a rejection stands in the bar's line under the acts (the server's refusal, else the act's `failed`, else "That didn't go through."), the act ready again. */
 	acts: Act[];
 	/** Where the bar stands: at its container's end (the default), or across it with each act at the field's height (a `Gate`'s form draws its bar so). */
 	fit?: ActionBarFit;
@@ -16,7 +16,7 @@ export interface ActionBarProps extends Closed {
 	pending?: PendingBarProps;
 }
 
-/** The acts row over a blocked act's reason, beside a selection count when `chosen` is set; while one act is pending the others ignore the press. */
+/** The acts row over a blocked act's reason, beside a selection count when `chosen` is set; while one act is pending the others ignore the press. It holds its acts' run. */
 export function ActionBar(bar: ActionBarProps) {
 	return <ActionBarBase {...bar} />;
 }

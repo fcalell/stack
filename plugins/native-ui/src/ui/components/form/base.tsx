@@ -7,13 +7,14 @@ import {
 	text,
 } from "@fcalell/ui-core/variants";
 import { Text as RNText, View } from "react-native";
+import type { Acting } from "../../lib/act";
 import { cn } from "../../lib/cn";
 import { useLeaveGuard } from "../../lib/leave";
 import {
 	BusyMark,
-	type Frame,
 	FrameBody,
 	FrameLine,
+	formReads,
 	useFrame,
 } from "../../lib/read";
 import { TouchedContext, useTouched, useTouchState } from "../../lib/touched";
@@ -70,7 +71,8 @@ function GroupBox(props: { group: FormGroup }) {
 // the sheet) and a `Gate`'s (`in` the auth column). Outside the package's
 // exports: `in` is the drawers' alone. A sheet's form takes the sheet's
 // touched state, which its foot's bar reads too, and asks nothing when it is
-// left.
+// left. A bar the form is given draws in its flow and subscribes to the reads
+// its fields hold; a sheet hoists the bar into its foot and gives it the same.
 export function FormBody({
 	children,
 	groups,
@@ -78,22 +80,27 @@ export function FormBody({
 	read,
 	empty,
 	failed,
-	frame: held,
 	in: within,
+	acting,
 }: FormProps & {
 	in: FormIn;
-	// The frame its read was subscribed to by the parent that hoists the bar (a
-	// `Sheet`), which holds the read; the form then subscribes to none.
-	frame?: Frame;
+	// The holder of the bar's run, when the form stands in one that holds more
+	// than the bar (a docked sheet's dismissal).
+	acting?: Acting<number>;
 }) {
-	const subscribed = useFrame(held === undefined ? read : undefined);
-	const frame = held ?? subscribed;
+	const frame = useFrame(read);
 	const [own] = useTouchState();
 	const sheet = useTouched();
 	const touch = within === "sheet" ? sheet : own;
 	useLeaveGuard(touch.leave, within !== "sheet");
 	const acts =
-		bar === undefined ? null : <ActionBarBase {...bar} painted={frame.waits} />;
+		bar === undefined ? null : (
+			<ActionBarBase
+				{...bar}
+				acting={acting}
+				waits={formReads({ read, groups })}
+			/>
+		);
 	return (
 		<TouchedContext.Provider value={touch}>
 			<View
@@ -103,7 +110,7 @@ export function FormBody({
 					in: within,
 				})}
 			>
-				{held === undefined ? <FrameLine frame={frame} flow /> : null}
+				<FrameLine frame={frame} flow />
 				<FrameBody frame={frame} fit="frame" empty={empty} failed={failed}>
 					{groups
 						? groups.map((group, index) => (

@@ -1,3 +1,4 @@
+import { isThenable } from "@fcalell/plugin-api/acts";
 import { useState } from "react";
 import {
 	type ConfirmEntry,
@@ -14,8 +15,9 @@ import { SheetBase } from "./base";
 // over the way out in the foot (Cancel unless the decision names it; a
 // destructive act the danger fill), the way out its one dismissing act. The
 // act runs the work: pending while its promise pends, the way out and the
-// scrim inert; the sheet closes when it resolves and stays open, the act
-// ready again, when it rejects. A decision that asks for a name draws its
+// scrim inert; the sheet closes when it resolves (at once for an act that
+// returns nothing) and stays open, the act ready again and its sentence in the
+// bar's line, when it rejects. A decision that asks for a name draws its
 // field in the body, the act blocked on its reason until the name typed
 // matches, the field taking focus as the sheet opens.
 function ConfirmSheet({
@@ -28,7 +30,6 @@ function ConfirmSheet({
 	onDone: () => void;
 }) {
 	const words = useWords();
-	const [pending, setPending] = useState(false);
 	const [typed, setTyped] = useState("");
 	// A new decision starts from an empty field and a ready act, reset during
 	// render; a sheet that is leaving keeps its decision's state until it is gone.
@@ -36,17 +37,14 @@ function ConfirmSheet({
 	if (decision !== entry.id) {
 		setDecision(entry.id);
 		setTyped("");
-		setPending(false);
 	}
-	const dismiss = () => {
-		if (!pending) onDone();
-	};
-	// A failed act keeps the sheet open to retry; its caller says why.
+	// The sheet's bar holds the act's run: a rejection stays in the bar's line,
+	// the sheet open and the act ready; an act that returns no promise is done
+	// at once.
 	const run = () => {
-		setPending(true);
-		return Promise.resolve(entry.act.onAct())
-			.then(onDone, () => {})
-			.finally(() => setPending(false));
+		const ran = entry.act.onAct();
+		if (!isThenable(ran)) return onDone();
+		return Promise.resolve(ran).then(onDone);
 	};
 	const name = entry.confirmName;
 	const blocked =
@@ -54,15 +52,15 @@ function ConfirmSheet({
 	return (
 		<SheetBase
 			open={open}
-			onClose={dismiss}
-			busy={pending}
+			onClose={onDone}
 			title={entry.title}
 			description={entry.sentence}
 			acts={[
-				{ label: entry.cancel ?? words.cancel, onAct: dismiss },
+				{ label: entry.cancel ?? words.cancel, onAct: onDone },
 				{
 					label: entry.act.label,
 					destructive: entry.act.destructive,
+					failed: entry.act.failed,
 					blocked,
 					onAct: run,
 				},

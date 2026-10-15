@@ -9,11 +9,11 @@ import {
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useContext, useEffect, useRef, useState } from "react";
 import { Text as RNText, type TextInput, View } from "react-native";
+import { useAct } from "../../lib/act";
 import { cn } from "../../lib/cn";
 import { FieldClaim, FieldNameContext } from "../../lib/field";
 import { type FootRegionValue, FootReturn, tokenPx } from "../../lib/frame";
 import { Scroll, type ScrollRef } from "../../lib/hosts";
-import { ActFailed } from "../../lib/reason";
 import { useCSSVariable } from "../../lib/theme";
 import { TouchedContext, usePageTurn, useTouchState } from "../../lib/touched";
 import { useWords } from "../../lib/words";
@@ -51,7 +51,6 @@ export interface SheetDockedProps {
 	back?: () => void;
 	submit?: Act;
 	foot?: string;
-	failed?: string;
 	form?: FormProps;
 	// The foot's region, which bounds the body.
 	region: FootRegionValue;
@@ -75,12 +74,17 @@ export function SheetDocked({
 	back,
 	submit,
 	foot,
-	failed,
 	form,
 	region,
 	children,
 }: SheetDockedProps) {
 	const words = useWords();
+	// The foot's act and its form's bar share one run: one act pends at a time,
+	// and closing is held while it runs (unless it waits for a connection).
+	const acting = useAct<number>("line");
+	const close = () => {
+		if (!acting.holds) onClose();
+	};
 	const claim = useContext(FootReturn);
 	const floor = tokenPx(useCSSVariable("--spacing-docked-floor"));
 	// The head's and the foot's heights, which the sheet pins.
@@ -153,7 +157,7 @@ export function SheetDocked({
 									icon="X"
 									fit="body"
 									label={words.close}
-									onAct={onClose}
+									onAct={close}
 								/>
 							</View>
 						</View>
@@ -167,7 +171,7 @@ export function SheetDocked({
 							}
 						>
 							{children}
-							{form ? <FormBody {...form} in="sheet" /> : null}
+							{form ? <FormBody {...form} in="sheet" acting={acting} /> : null}
 						</Scroll>
 						{foot || submit ? (
 							<View
@@ -184,9 +188,7 @@ export function SheetDocked({
 									</View>
 								) : null}
 								{submit ? (
-									<ActFailed.Provider value={failed}>
-										<ActionBarBase acts={[submit]} kept />
-									</ActFailed.Provider>
+									<ActionBarBase acts={[submit]} acting={acting} kept />
 								) : null}
 							</View>
 						) : null}

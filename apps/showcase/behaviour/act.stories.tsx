@@ -34,15 +34,6 @@ export default {
 	parameters: { layout: "fullscreen" },
 } satisfies Meta;
 
-// A failed toast is high priority: Base UI announces it at once and hides it
-// from the tree (`aria-hidden`) until the viewer focuses it, its acts included,
-// so axe's `aria-hidden-focus` flags the Retry and the dismiss act of every one.
-const TOASTING = {
-	a11y: {
-		config: { rules: [{ id: "aria-hidden-focus", enabled: false }] },
-	},
-};
-
 // The spinner layer is in the tree from the press and fades in after the
 // delay; what a viewer sees is its opacity.
 const layerOf = (button: HTMLElement) =>
@@ -134,7 +125,6 @@ const refused = () =>
 // An act the server refused toasts the server's sentence with Retry, and Retry
 // runs the act again.
 export const ARefusalToastsItsSentenceWithRetry: StoryObj = {
-	parameters: TOASTING,
 	render: () => (
 		<Page>
 			<IconButton icon="RefreshCw" label="Rename" onAct={refused} />
@@ -155,7 +145,6 @@ const failing = () => Promise.reject(new Error("socket hang up"));
 
 // With no refusal of the server's, the act's own sentence, else the generic one.
 export const AnActsOwnSentenceStandsInForAnUnwordedFailure: StoryObj = {
-	parameters: TOASTING,
 	render: () => (
 		<Page>
 			<IconButton

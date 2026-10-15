@@ -2,9 +2,10 @@ import type { Selection } from "@fcalell/plugin-api/tanstack-query";
 import type { Act } from "@fcalell/ui-core/descriptors";
 import type { SheetFit } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
+import { useAct } from "../../lib/act";
 import type { Closed } from "../../lib/closed";
 import type { EmptyProps } from "../../lib/empty";
-import { useFrame } from "../../lib/read";
+import { formReads } from "../../lib/read";
 import type { FormProps } from "../form";
 import { FormBody } from "../form/base";
 import { SheetBase } from "./base";
@@ -24,7 +25,7 @@ export interface SheetProps extends Closed {
 	submit?: Act;
 	/** In the foot (a sentence; wraps). */
 	foot?: string;
-	/** What the `submit`'s last run failed with (a sentence; wraps): an error in the line a blocked reason keeps (under the head's submit, or under the docked foot's act), the act ready again. Clear it to dismiss; a blocked `submit`'s reason stands before it. */
+	/** What the sheet says when its `read` fails, in place of the generic sentence (a sentence; wraps). A rejected act draws its own sentence in the line a blocked reason keeps (under the head's submit), the act ready again. */
 	failed?: string;
 	// What the desktop card holds; on the phone a pane's title steps
 	// down to body 500.
@@ -58,11 +59,13 @@ export function Sheet({
 	form,
 	children,
 }: SheetProps) {
-	// The form's frame is read here, where its bar is hoisted into the foot, and
-	// handed down to the form, so its read has the one holder.
-	const formFrame = useFrame(form?.read);
+	// The form's bar is hoisted into the foot, so the sheet holds its run beside
+	// its own submit's: one act pends at a time and the dismissal is held while
+	// it runs.
+	const acting = useAct<number>("line");
 	return (
 		<SheetBase
+			acting={acting}
 			open={open}
 			onClose={onClose}
 			title={title}
@@ -73,14 +76,14 @@ export function Sheet({
 			failed={failed}
 			fit={fit}
 			bar={form?.bar}
-			painted={formFrame.waits}
+			waits={form && formReads(form)}
 			read={read}
 			empty={empty}
 		>
 			{form ? (
 				<>
 					{children}
-					<FormBody {...form} bar={undefined} frame={formFrame} in="sheet" />
+					<FormBody {...form} bar={undefined} in="sheet" />
 				</>
 			) : (
 				children

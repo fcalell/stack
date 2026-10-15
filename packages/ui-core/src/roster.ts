@@ -943,7 +943,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// the page's, at most a measure wide; a Sheet's or a Gate's `form` (these
 		// props) stands on their column, uncapped, a Sheet's bar stuck to the edge
 		// of its body (web), in the sheet's pinned foot (phone), a Gate's across
-		// the column.
+		// the column. The bar paints its filled act, inert, while the form's read or
+		// any group's waits (a sheet's own read too); the form draws no busy mark
+		// of its own for an act that runs.
 		Form: {
 			props: ["children", "groups", "bar", "read", "empty", "failed"],
 			draws: [
@@ -982,9 +984,14 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// `chooseNone`) while any are chosen, and, below `tablet` of the page where
 		// the table draws no head tick, one that chooses every one (`chooseAll`)
 		// while some stand unchosen. The bar's column is centred in its foot.
-		// A form's or a sheet's bar paints its filled act, inert, while the frame's
-		// read waits (internal `painted`); an act that runs draws its
-		// own pending look. `pending` is a PendingBar's props: the bar draws it over its own
+		// The bar hosts its acts' run: one pends at a time (inert at the press, the
+		// pending look after the act delay) and the others are inert beside it.
+		// A rejection stands in the bar's kept line under the acts (`error`), the
+		// act ready again, so a failure never moves it; an act waiting for a
+		// connection says so in the same line and holds nothing. A form's or a
+		// sheet's bar paints its filled act, inert, while any read its fields hold
+		// waits (internal `waits`: the form's, each group's and the sheet's).
+		// `pending` is a PendingBar's props: the bar draws it over its own
 		// acts, which stay drawn unseen and inert, so the place keeps the loaded
 		// bar's height.
 		ActionBar: {
@@ -1018,7 +1025,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ACTION_BAR_SELECTION",
 				"ACTION_BAR_ALL",
 			],
-			states: ["rest", "pending", "disabled"],
+			states: ["rest", "pending", "error", "disabled"],
 			owns: {
 				roles: ["meta", "body"],
 				colors: [
@@ -1572,7 +1579,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// `fit` is the desktop card's width: a form, or a record's details.
 		// On touch the submit stands at the head row's end and a blocked
-		// submit's reason or a `failed` sentence under the head.
+		// submit's reason or a rejected act's sentence under the head. `failed`
+		// is the body's sentence when its `read` fails, like every frame's.
 		// `form` is a Form's props, drawn after the children in the sheet's
 		// column (its `bar` stuck to the edge of the body on the web, in the pinned
 		// foot on the phone); the sheet's `submit` and the form's `bar` are two
@@ -1580,9 +1588,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// a Thread's `sheet` (these props) docks there instead, drawing the
 		// docked head and foot inside the foot's raised cell with no scrim. The
 		// docked foot's states are its submit's: pending, blocked
-		// (`disabled`), and failed (`error`, the act ready again, the `failed`
+		// (`disabled`), and failed (`error`, the act ready again, the rejection's
 		// sentence under it in the line a blocked reason keeps, in the field
-		// error's cell and ink).
+		// error's cell and ink). The sheet hosts its acts' run, head submit, foot
+		// bar and its form's bar alike: its dismissal is held while one pends,
+		// unless it waits for a connection.
 		Sheet: {
 			props: [
 				"open",
@@ -1644,6 +1654,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"rest",
 				"disabled",
 				"loading",
+				"pending",
 				"empty",
 				"error",
 				"busy",

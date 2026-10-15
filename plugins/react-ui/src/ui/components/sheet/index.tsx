@@ -2,6 +2,7 @@ import type { Selection } from "@fcalell/plugin-api/tanstack-query";
 import type { Act } from "@fcalell/ui-core/descriptors";
 import type { SheetFit } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
+import { useAct } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
 import type { EmptyProps } from "../../lib/empty.tsx";
 import { FormBody } from "../form/base.tsx";
@@ -24,7 +25,7 @@ export interface SheetProps extends Closed {
 	submit?: Act;
 	/** In the foot, beside the submit on the desktop (a sentence; wraps). */
 	foot?: string;
-	/** What the `submit`'s last run failed with (a sentence; wraps): an error in the line a blocked reason keeps under the act (under the head's submit on touch), the act ready again. Clear it to dismiss; a blocked `submit`'s reason stands before it. */
+	/** What the sheet says when its `read` fails, in place of the generic sentence (a sentence; wraps). A rejected act draws its own sentence in the line a blocked reason keeps under the act (under the head's submit on touch), the act ready again. */
 	failed?: string;
 	/** What the desktop card holds, which sets its width: a form (the default) or a record's pane. */
 	fit?: SheetFit;
@@ -54,8 +55,12 @@ export function Sheet({
 	form,
 	children,
 }: SheetProps) {
+	// The sheet's form has a bar of its own: one holder keeps the dismissal held
+	// while either the form's act or the sheet's runs.
+	const acting = useAct<number>("line");
 	return (
 		<SheetBase
+			acting={acting}
 			open={open}
 			onClose={onClose}
 			title={title}
@@ -71,7 +76,7 @@ export function Sheet({
 			{form ? (
 				<>
 					{children}
-					<FormBody {...form} in="sheet" />
+					<FormBody {...form} in="sheet" acting={acting} outer={read} />
 				</>
 			) : (
 				children

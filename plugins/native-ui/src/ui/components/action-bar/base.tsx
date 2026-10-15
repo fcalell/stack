@@ -1,3 +1,5 @@
+import { isThenable } from "@fcalell/plugin-api/acts";
+import type { Selection } from "@fcalell/plugin-api/tanstack-query";
 import type { Act, ChosenCount } from "@fcalell/ui-core/descriptors";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
@@ -12,10 +14,13 @@ import {
 	FIELD_ERROR_LINE,
 	text,
 } from "@fcalell/ui-core/variants";
-import { useContext, useState } from "react";
+import { useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
+import { type Acting, useAct } from "../../lib/act";
 import { cn } from "../../lib/cn";
-import { ActFailed, REASON_AT_REST, ReasonHostContext } from "../../lib/reason";
+import { ActInert } from "../../lib/form";
+import { useWaits } from "../../lib/read";
+import { REASON_AT_REST, ReasonHostContext } from "../../lib/reason";
 import { useTouched } from "../../lib/touched";
 import { useWords } from "../../lib/words";
 import { ButtonBase } from "../button/base";
@@ -63,9 +68,13 @@ export interface ActionBarInternal {
 	// The bar keeps the reason's line before a reason shows, so showing it never
 	// moves the act it describes.
 	kept?: boolean;
-	// The filled act's data is not here: it paints, inert, in its loaded box (a
-	// form's or a sheet's submit while its read waits).
-	painted?: boolean;
+	// The holder that hosts this bar's acts' run, when the bar is not the only
+	// host (a sheet holds its dismissal while its bar's act pends). Absent, the
+	// bar hosts its own.
+	acting?: Acting<number>;
+	// The reads the filled act's data is: it paints, inert, in its loaded box
+	// while any waits (a form's, its groups' and its sheet's).
+	waits?: readonly (Selection<unknown> | undefined)[];
 }
 
 function AllAct(props: { label: string; applies: boolean; onAct: () => void }) {
@@ -126,43 +135,53 @@ export function ActionBarBase({
 	chosen,
 	pending,
 	kept,
-	painted,
+	acting: given,
+	waits,
 }: ActionBarProps & ActionBarInternal) {
 	const where = fit ?? "end";
-	const failed = useContext(ActFailed);
+	const own = useAct<number>("line");
+	// A failure draws in the bar's kept line, so it never moves the act; the
+	// same line says an act waits for a connection.
+	const acting = given ?? own;
+	const painted = useWaits(waits);
 	// The last blocked act's reason takes the line a failure would draw in.
 	const reason = acts.findLast((act) => act.blocked !== undefined)?.blocked;
-	const [running, setRunning] = useState(false);
 	// The reason this bar last drew: once a line has drawn the bar keeps its box.
 	const [held, setHeld] = useState<string>();
 	const { leave } = useTouched();
 	if (reason !== undefined && held !== reason) setHeld(reason);
-	const busy = running;
 	const lastAt = acts.length - 1;
-	const runFilled = () => {
-		// The press ends the form's edit before the act runs, so an act that
-		// navigates is not asked; a rejection puts the edit back.
+	// The press ends the form's edit before the filled act runs, so an act that
+	// navigates is not asked; a rejection puts the edit back.
+	const ending = (act: Act) => () => {
 		leave.press();
 		let ran: unknown;
 		try {
-			ran = acts[lastAt]?.onAct();
+			ran = act.onAct();
 		} catch (error) {
 			leave.settle(true);
 			throw error;
 		}
-		if (!(ran instanceof Promise)) {
+		if (!isThenable(ran)) {
 			leave.settle(false);
-			return;
+			return ran;
 		}
-		setRunning(true);
-		// Settled either way, so a failing act leaves no derived promise to
-		// reject unhandled: its rejection stays the caller's.
-		const done = (rejected: boolean) => () => {
-			leave.settle(rejected);
-			setRunning(false);
-		};
-		void ran.then(done(false), done(true));
+		return Promise.resolve(ran).then(
+			(done) => {
+				leave.settle(false);
+				return done;
+			},
+			(error: unknown) => {
+				leave.settle(true);
+				throw error;
+			},
+		);
 	};
+	const press = (act: Act, at: number) =>
+		acting.run(at, {
+			onAct: at === lastAt ? ending(act) : act.onAct,
+			failed: act.failed,
+		});
 	// The bar under a `PendingBar` is drawn with no act that presses.
 	const bar = (ghost: boolean) => (
 		<View
@@ -173,19 +192,22 @@ export function ActionBarBase({
 				<View className={cn(ACTION_BAR_ACTS, ACTS)}>
 					{acts.map((act, at) => {
 						const last = at === lastAt;
-						const pending = last && running;
-						const run = last ? runFilled : act.onAct;
+						const running = acting.pending === at;
 						return (
-							<ButtonBase
+							<ActInert.Provider
 								key={act.label}
-								act={kindOf(act, last)}
-								fit={FIT[where]}
-								label={act.label}
-								onAct={ghost || (busy && !pending) ? undefined : run}
-								pending={pending}
-								blocked={act.blocked}
-								painted={last && painted}
-							/>
+								value={ghost || (acting.holds && !running)}
+							>
+								<ButtonBase
+									act={kindOf(act, last)}
+									fit={FIT[where]}
+									label={act.label}
+									onAct={() => press(act, at)}
+									pending={running}
+									blocked={act.blocked}
+									painted={last && painted}
+								/>
+							</ActInert.Provider>
 						);
 					})}
 				</View>
@@ -194,15 +216,20 @@ export function ActionBarBase({
 				<RNText className={text({ role: "meta" })}>{reason}</RNText>
 			)}
 			{reason !== undefined ||
-			!(held !== undefined || kept || failed !== undefined) ? null : (
+			!(held !== undefined || kept || acting.line !== undefined) ? null : (
 				<RNText
-					accessibilityElementsHidden={failed === undefined}
+					accessibilityElementsHidden={acting.line === undefined}
 					importantForAccessibility={
-						failed === undefined ? "no-hide-descendants" : "auto"
+						acting.line === undefined ? "no-hide-descendants" : "auto"
 					}
-					className={cn(FIELD_ERROR_LINE, failed === undefined && KEPT)}
+					className={cn(
+						acting.pending === undefined
+							? FIELD_ERROR_LINE
+							: text({ role: "meta" }),
+						acting.line === undefined && KEPT,
+					)}
 				>
-					{failed ?? held ?? NO_FAILURE}
+					{acting.line ?? held ?? NO_FAILURE}
 				</RNText>
 			)}
 		</View>

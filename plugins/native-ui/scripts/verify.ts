@@ -1505,10 +1505,6 @@ const CONTEXTS: Record<string, [ContextClass, string]> = {
 		"behaviour",
 		"the host a blocked act tells it was pressed, which shows its reason",
 	],
-	"lib/reason.ts:ActFailed": [
-		"data",
-		"the sentence a sheet's act failed with, drawn in the reason's line",
-	],
 	"lib/frame.ts:ShellSwitcher": [
 		"data",
 		"the place switcher the Shell hands the Pane, which draws it as a descriptor in its bar; a room Place hands none",

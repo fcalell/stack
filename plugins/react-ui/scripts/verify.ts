@@ -881,10 +881,6 @@ const CONTEXTS: Record<string, [ContextClass, string]> = {
 		"data",
 		"the id of the label that names a group of controls",
 	],
-	"lib/form.ts:FormContext": [
-		"behaviour",
-		"the callback an ActionBar marks its Form busy with while its act pends",
-	],
 	"lib/form.ts:SubmitContext": [
 		"behaviour",
 		"the Button an ActionBar draws is the Form's submit button",
@@ -901,10 +897,6 @@ const CONTEXTS: Record<string, [ContextClass, string]> = {
 	"lib/reason.ts:ReasonHostContext": [
 		"behaviour",
 		"the host a blocked act tells it was pressed, which shows its reason",
-	],
-	"lib/reason.ts:ActFailed": [
-		"data",
-		"the sentence a sheet's act failed with, drawn in the reason's line",
 	],
 	"lib/frame.ts:ShellSwitcher": [
 		"data",

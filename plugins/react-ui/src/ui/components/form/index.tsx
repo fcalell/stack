@@ -49,7 +49,7 @@ export type FormProps = FormBase &
 		  }
 	);
 
-/** One column, at most a line of running text wide on a page: fields apart at the fields rhythm, or `groups` apart at the sections rhythm with the `bar` under a hairline across the form. Its bar's filled act is the submit button, so Enter in a field runs that act's `onAct`; while its promise pends the act is pending, the others ignore the press and the form is busy. A blocked act says its reason once a field has taken input. While the form stands edited, leaving its page (a navigation, the back button, a reload) asks once, "Discard your edit?" or keep editing; pressing the filled act ends the edit, so an act that navigates is not asked, and a rejected act puts the edit back. A form in a sheet or a gate is that drawer's `form` prop, not this component. */
+/** One column, at most a line of running text wide on a page: fields apart at the fields rhythm, or `groups` apart at the sections rhythm with the `bar` under a hairline across the form. Its bar's filled act is the submit button, so Enter in a field runs that act's `onAct`; while its promise pends the act is pending and the others ignore the press; a rejection stands in the bar's line, the act ready again. The bar paints, inert, while the form's `read` or any group's waits. A blocked act says its reason once a field has taken input. While the form stands edited, leaving its page (a navigation, the back button, a reload) asks once, "Discard your edit?" or keep editing; pressing the filled act ends the edit, so an act that navigates is not asked, and a rejected act puts the edit back. A form in a sheet or a gate is that drawer's `form` prop, not this component. */
 export function Form(form: FormProps) {
 	return <FormBody {...form} in="page" />;
 }

@@ -44,6 +44,7 @@ import {
 import { Text as RNText, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { withUniwind } from "uniwind";
+import { type Acting, useAct } from "../../lib/act";
 import { cn } from "../../lib/cn";
 import type { EmptyProps } from "../../lib/empty";
 import { FieldNameContext } from "../../lib/field";
@@ -64,7 +65,7 @@ import {
 	useTouchState,
 } from "../../lib/touched";
 import { useWords } from "../../lib/words";
-import { ActionBar, type ActionBarProps } from "../action-bar";
+import type { ActionBarProps } from "../action-bar";
 import { ActionBarBase } from "../action-bar/base";
 import { ButtonBase } from "../button/base";
 import { IconButton } from "../icon-button";
@@ -87,6 +88,8 @@ const BODY = "grow min-h-0";
 const VIEW = "flex-1";
 const FOOT_LINE = "flex-row items-center min-w-0";
 const FULL = ["100%"];
+// The head submit's place among the sheet's acts, below any bar's index.
+const HEAD_SUBMIT_AT = -1;
 // The sheet enters at the slow rung on the out curve and leaves at the base
 // rung on the in curve; the scrim fades with it, its opacity read off the
 // sheet's position. gorhom runs a swipe's and the scrim's close on the
@@ -114,14 +117,16 @@ interface Parts {
 	// The form's bar, under the foot's line.
 	bar?: ActionBarProps;
 	above?: ReactNode;
-	busy?: boolean;
+	// The holder of the sheet's acts' run: its head submit, its foot's acts and
+	// its form's bar share it, and it holds the dismissal while one runs.
+	acting: Acting<number>;
 	onClose: () => void;
 	// A blocked submit's reason once the sheet is touched or the submit pressed.
 	reason?: string;
-	// The sentence the submit's last run failed with, in the reason's line.
-	failed?: string;
-	// The body's read waits: the submit and the form's bar paint, inert.
+	// The body's read waits: the head's submit paints, inert.
 	painted?: boolean;
+	// The reads the form's bar paints for: the body's and the form's.
+	waits: readonly (Selection<unknown> | undefined)[];
 	// The body's frame, whose busy mark and state line the head draws.
 	frame: Frame;
 	host?: ReasonHost;
@@ -194,7 +199,7 @@ function Ground({ style }: BottomSheetBackgroundProps) {
 }
 
 function Scrim(props: BottomSheetBackdropProps) {
-	const { busy } = useParts();
+	const { acting } = useParts();
 	return (
 		<ScrimBase
 			{...props}
@@ -202,7 +207,7 @@ function Scrim(props: BottomSheetBackdropProps) {
 			opacity={1}
 			appearsOnIndex={0}
 			disappearsOnIndex={-1}
-			pressBehavior={busy ? "none" : "close"}
+			pressBehavior={acting.holds ? "none" : "close"}
 		/>
 	);
 }
@@ -213,14 +218,13 @@ function Head() {
 		back,
 		acts,
 		onClose,
-		busy,
 		fit,
 		title,
 		submit,
 		host,
 		description,
 		reason,
-		failed,
+		acting,
 		painted,
 		frame,
 		above,
@@ -243,7 +247,7 @@ function Head() {
 							fit="body"
 							label={words.close}
 							onAct={onClose}
-							disabled={busy}
+							disabled={acting.holds}
 						/>
 					)}
 					<View
@@ -271,7 +275,8 @@ function Head() {
 								<ButtonBase
 									fit="bar"
 									label={submit.label}
-									onAct={submit.onAct}
+									onAct={() => acting.run(HEAD_SUBMIT_AT, submit)}
+									pending={acting.pending === HEAD_SUBMIT_AT}
 									blocked={submit.blocked}
 									painted={painted}
 								/>
@@ -288,8 +293,17 @@ function Head() {
 						{reason}
 					</RNText>
 				) : null}
-				{failed && submit?.blocked === undefined ? (
-					<RNText className={cn(FIELD_ERROR_LINE, REASON)}>{failed}</RNText>
+				{acting.line !== undefined && submit?.blocked === undefined ? (
+					<RNText
+						className={cn(
+							acting.pending === undefined
+								? FIELD_ERROR_LINE
+								: text({ role: "meta" }),
+							REASON,
+						)}
+					>
+						{acting.line}
+					</RNText>
 				) : null}
 			</View>
 			{above}
@@ -301,7 +315,7 @@ function Head() {
 // footer: gorhom measures it with the sheet and keeps it above the keyboard.
 // Nothing in it, it draws nothing and the footer is no height.
 function Foot() {
-	const { foot, acts, bar, painted } = useParts();
+	const { foot, acts, bar, acting, waits } = useParts();
 	if (!foot && !acts && !bar) return null;
 	return (
 		<View className={SHEET_FOOT}>
@@ -312,8 +326,8 @@ function Foot() {
 					</RNText>
 				</View>
 			) : null}
-			{acts ? <ActionBar acts={acts} /> : null}
-			{bar ? <ActionBarBase {...bar} painted={painted} /> : null}
+			{acts ? <ActionBarBase acts={acts} acting={acting} /> : null}
+			{bar ? <ActionBarBase {...bar} acting={acting} waits={waits} /> : null}
 		</View>
 	);
 }
@@ -343,6 +357,7 @@ export interface SheetBaseProps {
 	back?: () => void;
 	submit?: Act;
 	foot?: string;
+	// What the body says when its `read` fails, in place of the generic sentence.
 	failed?: string;
 	fit?: SheetFit;
 	// A decision's acts, the foot's `ActionBar`.
@@ -367,12 +382,12 @@ export interface SheetBaseProps {
 	read?: Selection<unknown>;
 	// The body's sentence when the `read` is empty.
 	empty?: EmptyProps;
-	// The form in the body holds its own read, and it waits: the form's bar,
-	// hoisted into the foot, paints with it (its frame is `Sheet`'s, handed down
-	// to the form).
-	painted?: boolean;
-	// An act pends: the close act, the scrim and the drag are inert.
-	busy?: boolean;
+	// The reads the form in the body holds: the form's bar, hoisted into the
+	// foot, paints while any waits, with the body's own.
+	waits?: readonly (Selection<unknown> | undefined)[];
+	// The holder of the sheet's acts' run, when a holder above it hosts more
+	// (a `Sheet` holds its form's bar too). Absent, the sheet hosts its own.
+	acting?: Acting<number>;
 	children?: ReactNode;
 }
 
@@ -404,13 +419,15 @@ export function SheetBase({
 	form,
 	above,
 	tall: asked,
-	busy,
+	acting: given,
 	read,
 	empty,
-	painted,
+	waits,
 	children,
 }: SheetBaseProps) {
 	const frame = useFrame(read);
+	const own = useAct<number>("line");
+	const acting = given ?? own;
 	const client = useQueryClient();
 	const insets = useSafeAreaInsets();
 	const { height } = useWindowDimensions();
@@ -461,13 +478,13 @@ export function SheetBase({
 		submit,
 		fit,
 		foot,
-		failed,
-		painted: frame.waits || painted,
+		painted: frame.waits,
+		waits: [read, ...(waits ?? [])],
 		frame,
 		acts,
 		bar,
 		above,
-		busy,
+		acting,
 		onClose,
 		reason: blocked && (pressed || touched) ? submit?.blocked : undefined,
 		host,
@@ -498,7 +515,7 @@ export function SheetBase({
 				{read === undefined ? (
 					children
 				) : (
-					<FrameBody frame={frame} fit="frame" empty={empty}>
+					<FrameBody frame={frame} fit="frame" empty={empty} failed={failed}>
 						{children}
 					</FrameBody>
 				)}
@@ -521,7 +538,7 @@ export function SheetBase({
 			backdropComponent={Scrim}
 			handleComponent={view ? null : Head}
 			footerComponent={footed ? Footer : undefined}
-			enablePanDownToClose={!busy}
+			enablePanDownToClose={!acting.holds}
 			enableDynamicSizing={!full}
 			maxDynamicContentSize={cap}
 			snapPoints={full ? FULL : undefined}
