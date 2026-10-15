@@ -610,6 +610,17 @@ export function holdReads(reads: readonly Read<unknown>[]): () => void {
 	return count(holders, keys);
 }
 
+// A leaf that draws its own selection's failure (an act stands blocked with
+// the failed sentence) says so, so the dev check does not call that read
+// unheld. It holds no flag, so any number of reads may stand in a list.
+export function drawFailures(reads: readonly Read<unknown>[]): () => void {
+	if (!dev()) return () => {};
+	return count(
+		holders,
+		reads.map((r) => hashKey(r.options.queryKey)),
+	);
+}
+
 export function paintReads(reads: readonly Read<unknown>[]): () => void {
 	if (!dev()) return () => {};
 	return count(

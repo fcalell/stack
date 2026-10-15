@@ -1,6 +1,7 @@
 import {
 	type Datum,
 	isSelection,
+	useDrawsFailure,
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
 import type {
@@ -326,6 +327,7 @@ function RowAct(props: {
 	at: number;
 }) {
 	const { act, stand, at } = props;
+	useDrawsFailure([act]);
 	const { waits, given, blocked } = useOffer(act);
 	const host = useMemo(
 		() => (blocked === undefined ? undefined : { press: () => stand(blocked) }),
@@ -366,6 +368,7 @@ function RowMore(props: {
 	more: Datum<readonly MenuItem[] | undefined>;
 	named: string;
 }) {
+	useDrawsFailure([props.more]);
 	const [offer] = useSelections([props.more]);
 	const words = useWords();
 	const ended = offer.painted ? endedReason(words, offer.phase) : undefined;

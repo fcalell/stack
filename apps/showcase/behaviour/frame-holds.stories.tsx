@@ -1,5 +1,7 @@
 import { read } from "@fcalell/plugin-api/tanstack-query";
+import { Banner } from "@fcalell/plugin-react-ui/components/banner";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
+import { List } from "@fcalell/plugin-react-ui/components/list";
 import { MessageInput } from "@fcalell/plugin-react-ui/components/message-input";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
@@ -8,7 +10,7 @@ import { Sheet } from "@fcalell/plugin-react-ui/components/sheet";
 import { Stage } from "@fcalell/plugin-react-ui/showcase/frames/overlay-stage";
 import { readsAt } from "@fcalell/plugin-react-ui/showcase/waiting";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { expect, fn, userEvent, within } from "storybook/test";
+import { expect, fn, spyOn, userEvent, waitFor, within } from "storybook/test";
 import { sectionOf } from "./support.ts";
 
 // A frame holds the one read of its `read` that no enclosing frame holds, so a
@@ -274,6 +276,56 @@ export const SelectionActFollowsItsOwnRead: StoryObj = {
 		await expect(
 			canvas.getByTestId("idle").querySelector("button[inert]"),
 		).not.toBeNull();
+	},
+};
+
+// The dev check that names a read nobody draws the failure of stays quiet for
+// an act over a failing read with no frame above it: the act draws that
+// failure itself. A plain leaf painting an unheld read is still named.
+const UNHELD = /no frame holds it/;
+const unheld = (logged: ReturnType<typeof spyOn>) =>
+	logged.mock.calls.filter(
+		(args: unknown[]) => typeof args[0] === "string" && UNHELD.test(args[0]),
+	);
+let logged: ReturnType<typeof spyOn>;
+const watch = () => {
+	logged = spyOn(console, "error");
+	return () => logged.mockRestore();
+};
+const actOnly = readsAt("frame-holds/act-only");
+const plain = readsAt("frame-holds/plain-leaf");
+
+export const AnActOverAFailingReadLogsNoDevError: StoryObj = {
+	beforeEach: watch,
+	render: () => (
+		<div className="flex flex-col gap-sections">
+			<Section title="Section act" act={actOnly.failing.at(() => archive)} />
+			<Banner sentence="Heads up." act={actOnly.failing.at(() => archive)} />
+			<List
+				items={["a"]}
+				row={{
+					...ROW,
+					act: () => actOnly.failing.at(() => archive),
+					more: () => actOnly.failing.at(() => []),
+				}}
+			/>
+		</div>
+	),
+	play: async ({ canvas }) => {
+		await waitFor(() =>
+			expect(
+				canvas.getAllByRole("button", { name: "This didn't load." }).length,
+			).toBeGreaterThanOrEqual(3),
+		);
+		await expect(unheld(logged)).toHaveLength(0);
+	},
+};
+
+export const APlainLeafOverAnUnheldReadStillLogs: StoryObj = {
+	beforeEach: watch,
+	render: () => <Banner sentence={plain.failing.at(() => "Heads up.")} />,
+	play: async () => {
+		await waitFor(() => expect(unheld(logged)).toHaveLength(1));
 	},
 };
 

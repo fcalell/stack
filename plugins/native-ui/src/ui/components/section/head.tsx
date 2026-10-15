@@ -1,4 +1,8 @@
-import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Datum,
+	useDrawsFailure,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import type {
 	Act,
 	IconAct,
@@ -69,6 +73,7 @@ export function SectionHead(props: {
 	const { title, count, description, act, more, foldable, open, fold, frame } =
 		props;
 	const words = useWords();
+	useDrawsFailure([act, more]);
 	const [said, shownAct, shownMore] = useSelections([description, act, more]);
 	let sentence: ReactNode = null;
 	if (said.painted)

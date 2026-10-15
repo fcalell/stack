@@ -1,4 +1,8 @@
-import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Datum,
+	useDrawsFailure,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type { Act, IconName } from "@fcalell/ui-core/descriptors";
 import {
@@ -52,6 +56,7 @@ export interface BannerProps extends Closed {
 /** A tinted strip at its content's height, each prop that is a selection painted in its place, and the banner inert, until its read lands: the kind's glyph in the kind's ink beside the sentence in the body ink, and the act, a quiet Button at the bar fit in the kind's ink, beside the line on the desktop and under it on touch. */
 export function Banner({ kind, sentence, act }: BannerProps) {
 	const [tone, said, offer] = useSelections([kind, sentence, act]);
+	useDrawsFailure([act]);
 	const drawn = (tone.painted ? undefined : tone.value) ?? "note";
 	const words = useWords();
 	// An act whose own read ended stands blocked with its sentence, never a

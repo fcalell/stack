@@ -1,4 +1,8 @@
-import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Datum,
+	useDrawsFailure,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import type { Act, IconName } from "@fcalell/ui-core/descriptors";
 import {
 	BANNER_MAIN,
@@ -65,6 +69,7 @@ export interface BannerProps extends Closed {
 // painted in its place, and the banner takes no touch, until its read lands.
 export function Banner({ kind, sentence, act }: BannerProps) {
 	const [tone, said, offer] = useSelections([kind, sentence, act]);
+	useDrawsFailure([act]);
 	const drawn = (tone.painted ? undefined : tone.value) ?? "note";
 	const words = useWords();
 	// An act whose own read ended stands blocked with its sentence, never a

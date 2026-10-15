@@ -1,4 +1,8 @@
-import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Datum,
+	useDrawsFailure,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import type { IconAct, MenuItem, Part } from "@fcalell/ui-core/descriptors";
 import {
 	PAGE_HEAD,
@@ -59,6 +63,7 @@ export function PaneHead(props: {
 		more,
 		...(actions ?? []),
 	]);
+	useDrawsFailure([more, ...(actions ?? [])]);
 	const far = useContext(DistanceContext);
 	const switcher = useContext(ShellSwitcher);
 	const lead =

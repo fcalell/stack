@@ -913,9 +913,6 @@ Deviations kept from the build:
 
 - **`holdFor` lives in ui-core**, which the plan did not name: one copy serves each platform's
   generated `QueryProvider`, with `withHold` and `holdOf` in plugin-api's `read.ts`.
-- **`ListEmpty`** stays exported from List on both platforms (`Empty` with the first run's `icon`
-  and `title`), the list's former empty shape, though a list draws the generic empty form and takes
-  no `empty`.
 - **The Picker windows** (its touch sheet, and its desktop search list through Base UI's virtualized
   combobox from `VIRTUAL_FROM` options), beyond the collections the plan named.
 - **BarChart past `VIRTUAL_FROM` bars keeps a bar's width and scrolls sideways under its axis**: a

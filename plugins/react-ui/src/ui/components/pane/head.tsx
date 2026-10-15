@@ -1,4 +1,8 @@
-import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Datum,
+	useDrawsFailure,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type {
 	IconAct,
@@ -78,6 +82,7 @@ export function PaneHead(props: {
 		more,
 		...(actions ?? []),
 	]);
+	useDrawsFailure([more, ...(actions ?? [])]);
 	const fit = touch ? "body" : "bar";
 	const goBack =
 		back === undefined ? null : (

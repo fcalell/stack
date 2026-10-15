@@ -1,5 +1,9 @@
 import { Collapsible } from "@base-ui/react/collapsible";
-import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Datum,
+	useDrawsFailure,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type {
 	Act,
@@ -89,6 +93,7 @@ export function SectionHead(props: {
 	const level = use(HeadingContext);
 	const Heading = `h${level}` as const;
 	const [said, shownAct, shownMore] = useSelections([description, act, more]);
+	useDrawsFailure([act, more]);
 	const { touched } = useTouched();
 	const words = useWords();
 	const given = shownAct.painted ? undefined : shownAct.value;

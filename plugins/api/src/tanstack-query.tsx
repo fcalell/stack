@@ -28,6 +28,7 @@ import {
 	type Datum,
 	type Drawn,
 	draftFor,
+	drawFailures,
 	type Held,
 	type Holds,
 	holdReads,
@@ -285,6 +286,16 @@ export function useSelections<const V extends readonly unknown[]>(
 		queries: plan.reads.map((r) => ({ ...r.options, placeholderData })),
 		combine: plan.draw,
 	}) as never;
+}
+
+// A leaf that stands its act blocked with the failed sentence of the
+// selection it reads (`phase` "failed") draws that failure itself, so it
+// registers as the read's holder for the dev check: no frame is needed to
+// draw it. It subscribes to nothing and draws no busy or stale flag; a read an
+// enclosing frame holds counts once more, which changes nothing a frame draws.
+export function useDrawsFailure(values: readonly unknown[]): void {
+	const plan = useMemo(() => planSelections(values), [values]);
+	useEffect(() => drawFailures(plan.painted), [plan]);
 }
 
 // The one boolean a holder with no value of its own needs (a bar's filled act):
