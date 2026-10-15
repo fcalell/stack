@@ -7,7 +7,7 @@ the output typed, and how its failure reads as not found. For a query of your ow
 `"pages"` or `"stream"` ([pages and streams](./pages-and-streams.md)). A read is its own selection;
 `read.at(fn)` selects from it, and `combine([a, b], fn)` selects from several. A selector runs
 over a placeholder while its reads wait, are idle or have failed with no data, so write it plainly
-(`d.steps.length`, `d.name`); one that throws there paints its slot and warns in dev, and one that
+(`d.steps.length`, `d.name`); one that throws there paints its slot, silently, and one that
 throws over real data is yours.
 
 ```tsx

@@ -1376,8 +1376,19 @@ a tick with no animation, never jumped to full.
   identity only, which `FrameBody` publishes to the body): it draws their failed and missing forms
   (the first read failed with no data ends the frame) and their busy, stale and paused lines, and is
   `aria-busy` while it waits (the phone's `accessibilityState.busy`). A frame that holds none draws
-  only waiting, empty and its count. Sibling frames may each hold a read and draw it in their own
-  place. Empty is an empty array, `null` or `undefined` on real data.
+  only waiting, empty and its count. A read draws once per surface: a Pane and a Sheet are
+  surfaces (`Holds.surface`, a new identity beside the hashes, which `useFrame(read, true)` starts),
+  and the frame enclosing every region that draws a read holds it, written
+  `combine([value, ...shared], (value) => value)`; the app places a shared read on the common frame,
+  usually the Pane. Sibling frames never each hold one read: in dev `holdReads` counts holders per
+  (surface, key) and logs an error on the second, naming the key and saying to hold it once on the
+  frame around both. Two Panes in a Place, or a portaled Sheet and its Pane, are different surfaces;
+  a Pane's docked foot and docked sheet stand inside the Pane's holds, so they are the same surface.
+  A frame with no data paints its acts inert (`Frame.inert`: waiting, still, failed or missing; a
+  Pane's actions and more, a Section's act, more and count, a Sheet's submit); paused or stale with
+  data stays live. A failed or missing Pane draws no foot and no docked sheet: its failed form is
+  the whole page with Retry the one act, and while waiting the foot stays, inert. A selector that
+  throws over the placeholder returns it silently; a throw over real data rethrows. Empty is an empty array, `null` or `undefined` on real data.
   The body's leaves paint on their own selections: a List and a Group their painted rows, a Prose,
   a Thread, a Code, a Meter, a Slider, a DefinitionRow and a FormField's control take a `Datum` and
   read nothing from the Section, so no context carries a wait flag (structure rule 11: a context carries identity only). A body that is an app's own component draws as it is and reads with

@@ -728,3 +728,18 @@ Deviations kept from the build:
 Open: `WAIT_DELAY` and `ACT_DELAY` (tuned live), and whether a minimum is needed after all; the phone's text bar as a nested `Text`
 (a device check); the phone's virtualizing libraries, its count and its Pane's scroll with a long
 collection (a spike on a device); and `VIRTUAL_FROM` itself (above).
+
+Changed while building phase 8 (2026-10-15); where the sections above differ, this list wins:
+
+1. A read's states draw once per surface. The frame enclosing every region that draws a read holds
+   it, written `combine([value, ...shared], (value) => value)`. This revises phase 6's "sibling
+   frames may each hold a read".
+2. A Pane and a Sheet are surfaces (`Holds.surface`). In dev two holders of one key on one surface
+   are an error; a Pane's foot and docked sheet stand inside its holds.
+3. `Frame.inert` replaces `Frame.waits` for acts: they paint inert while the frame has no data
+   (waiting, still, failed, missing).
+4. A failed or missing Pane draws no foot and no docked sheet.
+5. A selector's throw over the placeholder is silent.
+6. Done: the DefinitionRow label (`6ccc916d`) and the Datum picks (`6bcdb19f`, `53b971ab`). Cut:
+   ListRow facts as a Datum (a fact from a read the row does not own is absent on failure, which is
+   control flow, so `useRead` is right).
