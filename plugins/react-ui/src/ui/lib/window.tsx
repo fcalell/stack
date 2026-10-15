@@ -1,0 +1,281 @@
+import {
+	OVERSCAN,
+	ranged,
+	slotsOf,
+	VIRTUAL_FROM,
+} from "@fcalell/ui-core/window";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import {
+	createContext,
+	type ReactElement,
+	type ReactNode,
+	type RefObject,
+	use,
+	useCallback,
+	useEffect,
+	useLayoutEffect,
+	useRef,
+	useState,
+} from "react";
+
+/** The nearest element that scrolls vertically, which a long collection windows against; none draws every row. A Pane's body, a Sheet's body, a Gate's page and a Thread's log provide it, the nearest one winning, so a List in a portaled Sheet never windows against the Pane under it. */
+export const Scroller = createContext<HTMLElement | null>(null);
+
+// The height a row is taken to have until the first one is measured.
+const ESTIMATE = 48;
+// A spacer is out of the accessibility tree and is what `check` knows it by.
+const HIDDEN = { "aria-hidden": true } as const;
+// How long a scroll is taken to run after its last event (ms).
+const SETTLED = 150;
+
+export interface WindowProps {
+	/** Every row, keyed, built by the host. */
+	rows: readonly ReactElement[];
+	/** The element the rows stand in as its first children, each row exactly one element. */
+	box: RefObject<HTMLElement | null>;
+	/** A row mounted whatever the scroll (a Table's cursor). */
+	keep?: number;
+	/** The window opens at the last rows (a Thread). */
+	end?: boolean;
+	/** The element a spacer is: a `tr` in a tbody. */
+	spacer?: "div" | "tr";
+}
+
+// The scroller's top over the box's top: how far the scroller's view has gone
+// into the box, so a collection's place in the page is nobody's business.
+function into(scroller: HTMLElement, box: HTMLElement | null): number {
+	if (!box) return 0;
+	return (
+		scroller.getBoundingClientRect().top +
+		scroller.clientTop -
+		box.getBoundingClientRect().top
+	);
+}
+
+// The box's row gap, which every spacer gives back to its neighbours.
+function gapOf(box: HTMLElement): number {
+	return Number.parseFloat(getComputedStyle(box).rowGap) || 0;
+}
+
+/** The rows of a long collection, drawn only near the scroller's view: TanStack Virtual places and ranges them, the mounted rows stand in the host's box between spacers that hold the room of the rest. Fewer than `VIRTUAL_FROM` rows, or no `Scroller`, draw every row unchanged, so crossing the count (a Show more) mounts nothing again. The rows are measured by their place among the box's children, so a row is exactly one element and carries nothing of this. The focused row and `keep` stay mounted. */
+export function Window({
+	rows,
+	box,
+	keep,
+	end,
+	spacer = "div",
+}: WindowProps): ReactNode {
+	const scroller = use(Scroller);
+	const on = scroller !== null && rows.length >= VIRTUAL_FROM;
+	// What the extractor and the effects read at their moment, not at a render.
+	const latest = useRef({ keep, focused: undefined as number | undefined });
+	latest.current.keep = keep;
+	// The box's gap and a row's height, read when the window opens. They are
+	// state so the virtualizer holds them before it measures again.
+	const [shape, setShape] = useState<{ gap: number; size: number }>();
+	const { gap, size } = shape ?? { gap: 0, size: ESTIMATE };
+	// How much of the virtualizer's adjustments since its last offset the
+	// scroller has already taken.
+	const applied = useRef(0);
+	const extract = useCallback(
+		(range: Parameters<typeof ranged>[0]) =>
+			ranged(range, [latest.current.focused, latest.current.keep]),
+		[],
+	);
+	const keyOf = useCallback(
+		(index: number) => rows[index]?.key ?? index,
+		[rows],
+	);
+	const virtualizer = useVirtualizer<HTMLElement, Element>({
+		count: rows.length,
+		enabled: on,
+		getScrollElement: () => scroller,
+		estimateSize: () => size,
+		getItemKey: keyOf,
+		gap,
+		overscan: OVERSCAN,
+		rangeExtractor: extract,
+		useFlushSync: false,
+		initialRect: {
+			width: scroller?.clientWidth ?? 0,
+			height: scroller?.clientHeight ?? 0,
+		},
+		initialOffset: () =>
+			end ? Math.max(0, rows.length * size - (scroller?.clientHeight ?? 0)) : 0,
+		observeElementOffset: (instance, report) => {
+			const element = instance.scrollElement;
+			if (!element) return;
+			let running = false;
+			let timer: ReturnType<typeof setTimeout> | undefined;
+			const send = () => {
+				applied.current = 0;
+				report(into(element, box.current), running);
+			};
+			const onScroll = () => {
+				running = true;
+				send();
+				clearTimeout(timer);
+				timer = setTimeout(() => {
+					running = false;
+					send();
+				}, SETTLED);
+			};
+			element.addEventListener("scroll", onScroll, { passive: true });
+			// Content above the box changing height moves the box without a
+			// scroll; the observer also reports once on observing, which gives
+			// the first true offset once the box stands.
+			const resize = new ResizeObserver(send);
+			resize.observe(element);
+			for (const child of element.children) resize.observe(child);
+			return () => {
+				element.removeEventListener("scroll", onScroll);
+				clearTimeout(timer);
+				resize.disconnect();
+			};
+		},
+		scrollToFn: (offset, { adjustments, behavior }, instance) => {
+			const element = instance.scrollElement;
+			if (!element) return;
+			// The virtualizer speaks box-relative, the scroller its own. An
+			// adjustment (rows above the view measured) moves the scroller from
+			// where it is now, not from the offset the virtualizer last heard: a
+			// scroll the browser made since (a focus) is not undone.
+			const top =
+				adjustments === undefined
+					? element.scrollTop - into(element, box.current) + offset
+					: element.scrollTop + adjustments - applied.current;
+			applied.current = adjustments ?? 0;
+			element.scrollTo({ top, behavior });
+		},
+	});
+	const placed = on
+		? virtualizer.getVirtualItems().map(({ index, start, end: stop }) => ({
+				index,
+				start,
+				end: stop,
+			}))
+		: [];
+	const slots = on
+		? slotsOf(placed, rows.length, virtualizer.getTotalSize(), gap)
+		: [];
+	// What the box holds after this commit, which the effects measure it by.
+	const drawn = useRef(slots);
+	useLayoutEffect(() => {
+		drawn.current = slots;
+	});
+
+	// The first row's height stands in for the rest of the rows, which nothing
+	// has measured yet, so the virtualizer starts over once it holds the shape.
+	useLayoutEffect(() => {
+		if (shape) virtualizer.measure();
+	}, [shape, virtualizer]);
+
+	// Measure what is mounted, and keep measuring it.
+	const watch = useRef<ResizeObserver | null>(null);
+	const indexed = useRef(new Map<Element, number>());
+	useEffect(() => {
+		const element = box.current;
+		if (!on || !element) {
+			setShape(undefined);
+			return;
+		}
+		const found = drawn.current;
+		const mounted = [...element.children].slice(0, found.length);
+		if (process.env.NODE_ENV !== "production") check(found, mounted);
+		const first = found.findIndex((slot) => "row" in slot);
+		if (!shape && first >= 0) {
+			setShape({
+				gap: gapOf(element),
+				size: mounted[first]?.getBoundingClientRect().height || ESTIMATE,
+			});
+			return;
+		}
+		const rowsAt = new Map<Element, number>();
+		found.forEach((slot, at) => {
+			const node = mounted[at];
+			if (!node || !("row" in slot)) return;
+			rowsAt.set(node, slot.row);
+			virtualizer.resizeItem(slot.row, node.getBoundingClientRect().height);
+		});
+		indexed.current = rowsAt;
+		watch.current ??= new ResizeObserver((entries) => {
+			for (const entry of entries) {
+				const index = indexed.current.get(entry.target);
+				// A row just unmounted is reported once more, at no height.
+				if (index !== undefined && entry.target.isConnected) {
+					virtualizer.resizeItem(
+						index,
+						entry.target.getBoundingClientRect().height,
+					);
+				}
+			}
+		});
+		watch.current.disconnect();
+		for (const node of rowsAt.keys()) watch.current.observe(node);
+	});
+	useEffect(() => () => watch.current?.disconnect(), []);
+
+	// The row holding focus stays mounted: tracked on the box, read by the
+	// extractor at the next range.
+	useEffect(() => {
+		const element = box.current;
+		if (!on || !element) return;
+		const focus = (event: FocusEvent) => {
+			const at = [...element.children].findIndex((node) =>
+				node.contains(event.target as Node),
+			);
+			const slot = drawn.current[at];
+			latest.current.focused = slot && "row" in slot ? slot.row : undefined;
+		};
+		const blur = (event: FocusEvent) => {
+			if (!element.contains(event.relatedTarget as Node | null)) {
+				latest.current.focused = undefined;
+			}
+		};
+		element.addEventListener("focusin", focus);
+		element.addEventListener("focusout", blur);
+		// A box that windows does not let the browser anchor inside it: the
+		// virtualizer's own adjustment is the only one.
+		element.style.overflowAnchor = "none";
+		return () => {
+			element.removeEventListener("focusin", focus);
+			element.removeEventListener("focusout", blur);
+			element.style.overflowAnchor = "";
+		};
+	}, [on, box]);
+
+	if (!on) return rows;
+	const Space = spacer;
+	return slots.map((slot) => {
+		if ("row" in slot) return rows[slot.row];
+		const style = { height: slot.space };
+		return Space === "tr" ? (
+			<tr key={`window-${slot.before}`} {...HIDDEN}>
+				<td style={{ ...style, padding: 0, border: 0 }} />
+			</tr>
+		) : (
+			<div
+				key={`window-${slot.before}`}
+				{...HIDDEN}
+				style={style}
+				className="shrink-0"
+			/>
+		);
+	});
+}
+
+// A row that is not exactly one element of the box shifts every child after
+// it off its slot, so the spacers are where it shows.
+function check(
+	slots: ReturnType<typeof slotsOf>,
+	mounted: readonly Element[],
+): void {
+	slots.forEach((slot, at) => {
+		const space = mounted[at]?.getAttribute("aria-hidden") === "true";
+		if (mounted[at] === undefined || space !== !("row" in slot)) {
+			throw new Error(
+				"Window: each row must be exactly one element, the first children of the box",
+			);
+		}
+	});
+}

@@ -19,12 +19,16 @@ import {
 import {
 	type FocusEvent,
 	type KeyboardEvent,
+	type ReactElement,
 	type ReactNode,
+	type RefObject,
+	useRef,
 	useState,
 } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { MoreRow } from "../../lib/more.tsx";
 import { ListedRoute, useRoute } from "../../lib/navigate.ts";
+import { Window } from "../../lib/window.tsx";
 import { DefinitionRowBase } from "../definition-row/index.tsx";
 import { FileRowBase } from "../file-row/index.tsx";
 import { ListRowBase, type RowTree } from "../list-row/base.tsx";
@@ -39,6 +43,8 @@ export interface ListInternal<T> {
 	drawn: Drawn<readonly T[]>;
 	/** The pages read the items come from, when it has pages: the List ends in its more row. */
 	more?: Read<unknown>;
+	/** The element the rows stand in when a Group's card is it, which the rows window against; the List's own box otherwise. */
+	box?: RefObject<HTMLElement | null>;
 	/** The List is the painted next page of another: its rows alone, standing in that List's box. */
 	tail?: boolean;
 }
@@ -77,6 +83,8 @@ export function ListBase<T, V extends string | null = string>(
 	const [folded, setFolded] = useState<readonly string[]>([]);
 	// The key of the tree's row that holds its one tab stop.
 	const [active, setActive] = useState<string>();
+	const own = useRef<HTMLDivElement>(null);
+	const box = props.box ?? own;
 	const { drawn } = props;
 	const painted = drawn.painted;
 	// Painted, `PAINT_ROWS` rows each over the placeholder; the data's depths
@@ -105,7 +113,7 @@ export function ListBase<T, V extends string | null = string>(
 	// Whether a row of the loaded list has a more act: the rows without one then
 	// keep its square, so every row's end stands at one x.
 	let room = false;
-	const frame = (rows: ReactNode, nav?: TreeNav) => {
+	const frame = (rows: ReactElement[], nav?: TreeNav) => {
 		if (props.tail) return <ListedRoute value={at}>{rows}</ListedRoute>;
 		// The more row ends the box, so the rows it paints stand at the box's
 		// rhythm; a tree's box holds treeitems alone, so its row follows it.
@@ -126,23 +134,26 @@ export function ListBase<T, V extends string | null = string>(
 					)}
 				/>
 			) : null;
-		let box = rows;
+		// A flat list's rows window; a tree's keyboard queries its treeitems in
+		// the DOM, so a tree draws them all.
+		const shown = nav ? rows : <Window rows={rows} box={box} />;
+		let stand: ReactNode = shown;
 		if (framed && nav)
-			box = (
+			stand = (
 				<div {...nav} className={GROUP_TREE}>
 					{rows}
 				</div>
 			);
 		else if (!framed)
-			box = (
-				<div {...nav} className={cn(nav ? LIST_TREE : flat, STACK)}>
-					{rows}
+			stand = (
+				<div {...nav} ref={own} className={cn(nav ? LIST_TREE : flat, STACK)}>
+					{shown}
 					{nav ? null : more}
 				</div>
 			);
 		return (
 			<ListedRoute value={at}>
-				{box}
+				{stand}
 				{nav || framed ? more : null}
 			</ListedRoute>
 		);

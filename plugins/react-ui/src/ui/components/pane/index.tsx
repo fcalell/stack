@@ -37,6 +37,7 @@ import { partText } from "../../lib/parts.ts";
 import { BusyMark, FrameBody, FrameLine, useFrame } from "../../lib/read.tsx";
 import { useScrolls } from "../../lib/scrolls.ts";
 import { useSettleName } from "../../lib/settle.ts";
+import { Scroller } from "../../lib/window.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { IconButtonBase, IconButtonLink } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
@@ -276,18 +277,20 @@ export function Pane({
 									docked && PAGE_BODY_OVER_FOOT,
 								)}
 							>
-								{read === undefined && empty ? (
-									<EmptyBase fit="page" tone="rest" {...empty} />
-								) : (
-									<FrameBody
-										frame={frame}
-										fit="page"
-										empty={empty}
-										failed={failed}
-									>
-										{children}
-									</FrameBody>
-								)}
+								<Scroller value={bodyNode}>
+									{read === undefined && empty ? (
+										<EmptyBase fit="page" tone="rest" {...empty} />
+									) : (
+										<FrameBody
+											frame={frame}
+											fit="page"
+											empty={empty}
+											failed={failed}
+										>
+											{children}
+										</FrameBody>
+									)}
+								</Scroller>
 							</div>
 							{docked ? (
 								<div

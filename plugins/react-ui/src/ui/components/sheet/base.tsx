@@ -41,6 +41,7 @@ import {
 	usePageTurn,
 	useTouchState,
 } from "../../lib/touched.ts";
+import { Scroller } from "../../lib/window.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { ActionBarBase } from "../action-bar/base.tsx";
 import { ButtonBase } from "../button/base.tsx";
@@ -339,7 +340,7 @@ export function SheetBase({
 					style={read === undefined ? undefined : settle}
 					className={cn(SHEET_BODY, BODY)}
 				>
-					{body}
+					<Scroller value={bodyNode}>{body}</Scroller>
 				</div>
 			) : null}
 			{form === "menu" ? null : footer}

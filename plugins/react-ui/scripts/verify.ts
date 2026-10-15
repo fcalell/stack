@@ -818,6 +818,8 @@ const MEASURING: Record<string, string> = {
 		"useScrolls: a region that scrolls and holds nothing tabbable takes a tab stop, which CSS cannot set",
 	"lib/media.ts":
 		"the density query, the reduced-motion query and a spacing token read for a popup's offset",
+	"lib/window.tsx":
+		"a long collection draws only the rows near its scroller's view, placed from the rows' measured heights and the scroller's offset into the box",
 	"lib/settle.ts":
 		"the settle reads reduced motion and the focused field to snap instead of move, and the running view transition",
 	"components/canvas/":
@@ -860,6 +862,10 @@ const CONTEXTS: Record<string, [ContextClass, string]> = {
 	"lib/navigate.ts:ListedRoute": [
 		"data",
 		"the route a List read once, which its rows read instead of each subscribing",
+	],
+	"lib/window.tsx:Scroller": [
+		"behaviour",
+		"the element that scrolls around a long collection, which it windows its rows against",
 	],
 	"lib/portal.ts:PortalContainer": [
 		"portal",

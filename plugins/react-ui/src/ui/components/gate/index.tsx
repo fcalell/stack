@@ -18,6 +18,7 @@ import { PageTitle } from "../../lib/frame.ts";
 import { HeadingContext } from "../../lib/heading.ts";
 import { Lockup, useMark } from "../../lib/mark.tsx";
 import { useScrolls } from "../../lib/scrolls.ts";
+import { Scroller } from "../../lib/window.tsx";
 import { FormBody } from "../form/base.tsx";
 import type { FormProps } from "../form/index.tsx";
 import { FrameHost, FrameMain } from "../shell/host.tsx";
@@ -96,53 +97,55 @@ export function Gate({
 					<div className={FRAME}>
 						<FrameMain>
 							<div ref={setPageNode} className={cn(GATE, PAGE)}>
-								<div
-									ref={body}
-									className={cn(
-										GATE_COLUMN,
-										GATE_FLOW,
-										COLUMN,
-										title !== undefined && COLUMN_TYPED,
-									)}
-								>
-									{banner}
-									{title === undefined ? (
-										<>
-											{empty ? (
-												<EmptyBase fit="first" tone="rest" {...empty} />
-											) : null}
-											{children}
-										</>
-									) : (
-										<div className={cn(GATE_STEP, STEP)}>
-											{mark ? (
-												<Lockup
-													mark={mark}
-													logo={GATE_LOGO}
-													className={GATE_MARK_ROW}
-												/>
-											) : null}
-											{step ? <StepCount at={step.at} of={step.of} /> : null}
-											<h1 id={titleId} className={text({ role: "title" })}>
-												{title}
-											</h1>
-											{description ? (
-												<p className={text({ role: "meta" })}>
-													<Runs runs={description} />
-												</p>
-											) : null}
-											{children}
-											{form ? (
-												<FormBody
-													key={title}
-													{...form}
-													bar={form.bar && { fit: "full", ...form.bar }}
-													in="auth"
-												/>
-											) : null}
-										</div>
-									)}
-								</div>
+								<Scroller value={pageNode}>
+									<div
+										ref={body}
+										className={cn(
+											GATE_COLUMN,
+											GATE_FLOW,
+											COLUMN,
+											title !== undefined && COLUMN_TYPED,
+										)}
+									>
+										{banner}
+										{title === undefined ? (
+											<>
+												{empty ? (
+													<EmptyBase fit="first" tone="rest" {...empty} />
+												) : null}
+												{children}
+											</>
+										) : (
+											<div className={cn(GATE_STEP, STEP)}>
+												{mark ? (
+													<Lockup
+														mark={mark}
+														logo={GATE_LOGO}
+														className={GATE_MARK_ROW}
+													/>
+												) : null}
+												{step ? <StepCount at={step.at} of={step.of} /> : null}
+												<h1 id={titleId} className={text({ role: "title" })}>
+													{title}
+												</h1>
+												{description ? (
+													<p className={text({ role: "meta" })}>
+														<Runs runs={description} />
+													</p>
+												) : null}
+												{children}
+												{form ? (
+													<FormBody
+														key={title}
+														{...form}
+														bar={form.bar && { fit: "full", ...form.bar }}
+														in="auth"
+													/>
+												) : null}
+											</div>
+										)}
+									</div>
+								</Scroller>
 							</div>
 						</FrameMain>
 					</div>

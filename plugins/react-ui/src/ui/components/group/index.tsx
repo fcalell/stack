@@ -5,7 +5,7 @@ import {
 } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import { GROUP, GROUP_ITEM } from "@fcalell/ui-core/variants";
-import { Fragment, type ReactNode } from "react";
+import { Fragment, type ReactNode, useRef } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { useSettleName } from "../../lib/settle.ts";
 import { ListBase } from "../list/base.tsx";
@@ -52,11 +52,14 @@ export function Group<T, V extends string | null = string>(
 	// The one subscription to the list's items, handed down to its rows.
 	const [drawn] = useSelections([props.list?.items] as const);
 	const settle = useSettleName();
+	// The group is the box a list's rows stand in, which they window in.
+	const box = useRef<HTMLDivElement>(null);
 	const content = props.list ? (
 		<ListBase
 			{...props.list}
 			drawn={drawn as Drawn<readonly T[]>}
 			more={pagesOf(props.list.items)}
+			box={box}
 			framed
 		/>
 	) : (
@@ -71,7 +74,7 @@ export function Group<T, V extends string | null = string>(
 		)
 	);
 	return (
-		<div style={settle} className={cn(GROUP, BOX)}>
+		<div ref={box} style={settle} className={cn(GROUP, BOX)}>
 			{content}
 		</div>
 	);

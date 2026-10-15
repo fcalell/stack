@@ -29,6 +29,7 @@ import {
 	usePageTurn,
 	useTouchState,
 } from "../../lib/touched.ts";
+import { Scroller } from "../../lib/window.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { ActionBarBase } from "../action-bar/base.tsx";
 import { FormBody } from "../form/base.tsx";
@@ -213,8 +214,10 @@ export function SheetDocked({
 							region.height > 0 && SHEET_DOCKED_FLOOR,
 						)}
 					>
-						{children}
-						{form ? <FormBody {...form} in="sheet" acting={acting} /> : null}
+						<Scroller value={body}>
+							{children}
+							{form ? <FormBody {...form} in="sheet" acting={acting} /> : null}
+						</Scroller>
 					</div>
 				</div>
 				{line || bar ? (
