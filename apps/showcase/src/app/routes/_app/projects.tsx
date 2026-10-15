@@ -1,3 +1,4 @@
+import { preload } from "@fcalell/plugin-api/tanstack-query";
 import { Columns } from "@fcalell/plugin-react-ui/components/columns";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
@@ -8,6 +9,7 @@ import { act } from "../../lib/act.ts";
 import { orpc } from "../../lib/api.ts";
 
 export const Route = createFileRoute("/_app/projects")({
+	loader: () => preload(...STAGES.map((one) => projectsOf(one.stage))),
 	component: Projects,
 });
 
@@ -17,10 +19,14 @@ const STAGES = [
 	{ stage: "production", title: "Production" },
 ] as const;
 
+// A stage's projects: the read the card draws and the route preloads.
+const projectsOf = (stage: (typeof STAGES)[number]["stage"]) =>
+	orpc.projects.list.read({ stage });
+
 // A stage's projects, from their own read, on the stage's card.
 function Stage(props: { stage: (typeof STAGES)[number] }) {
 	const { stage, title } = props.stage;
-	const projects = orpc.projects.list.read({ stage });
+	const projects = projectsOf(stage);
 	return (
 		<Section
 			title={title}

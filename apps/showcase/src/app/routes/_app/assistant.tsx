@@ -1,4 +1,5 @@
 import {
+	preload,
 	type Read,
 	read,
 	streamedQuery,
@@ -17,6 +18,7 @@ import type { AppRouter } from "../../../../.stack/worker";
 import { orpc } from "../../lib/api.ts";
 
 export const Route = createFileRoute("/_app/assistant")({
+	loader: () => preload(orpc.assistant.history.read()),
 	component: Assistant,
 });
 

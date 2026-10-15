@@ -1,4 +1,5 @@
 import {
+	preload,
 	useMutation,
 	useQueryClient,
 	useRead,
@@ -20,6 +21,7 @@ import { act } from "../../lib/act.ts";
 import { orpc } from "../../lib/api.ts";
 
 export const Route = createFileRoute("/_app/settings")({
+	loader: () => preload(orpc.settings.general.read(), orpc.devices.list.read()),
 	component: Settings,
 });
 

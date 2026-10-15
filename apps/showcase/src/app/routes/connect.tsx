@@ -1,4 +1,4 @@
-import { useQuery } from "@fcalell/plugin-api/tanstack-query";
+import { preload, useQuery } from "@fcalell/plugin-api/tanstack-query";
 import { Banner } from "@fcalell/plugin-react-ui/components/banner";
 import { Gate } from "@fcalell/plugin-react-ui/components/gate";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
@@ -8,6 +8,7 @@ import { act } from "../lib/act.ts";
 import { orpc } from "../lib/api.ts";
 
 export const Route = createFileRoute("/connect")({
+	loader: () => preload(orpc.workspaces.list.read()),
 	component: Connect,
 });
 

@@ -1,3 +1,4 @@
+import { preload } from "@fcalell/plugin-api/tanstack-query";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
 import { MessageInput } from "@fcalell/plugin-react-ui/components/message-input";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
@@ -10,6 +11,7 @@ import { useState } from "react";
 import { orpc } from "../../lib/api.ts";
 
 export const Route = createFileRoute("/_app/home")({
+	loader: () => preload(orpc.tasks.list.read()),
 	component: Home,
 });
 

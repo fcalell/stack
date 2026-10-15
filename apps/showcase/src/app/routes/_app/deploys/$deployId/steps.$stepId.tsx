@@ -1,7 +1,9 @@
+import { preload } from "@fcalell/plugin-api/tanstack-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { DeployStep } from "../../../../components/deploys.tsx";
+import { DeployStep, deployRead } from "../../../../components/deploys.tsx";
 
 export const Route = createFileRoute("/_app/deploys/$deployId/steps/$stepId")({
+	loader: ({ params }) => preload(deployRead(params.deployId)),
 	component: OpenStep,
 });
 

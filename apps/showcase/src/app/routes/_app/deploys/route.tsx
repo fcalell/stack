@@ -1,8 +1,10 @@
+import { preload } from "@fcalell/plugin-api/tanstack-query";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { DeployList } from "../../../components/deploys.tsx";
+import { DeployList, deploysPage } from "../../../components/deploys.tsx";
 
 export const Route = createFileRoute("/_app/deploys")({
+	loader: () => preload(deploysPage()),
 	component: DeploysPlace,
 });
 

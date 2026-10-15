@@ -1,4 +1,4 @@
-import { useMutation } from "@fcalell/plugin-api/tanstack-query";
+import { preload, useMutation } from "@fcalell/plugin-api/tanstack-query";
 import {
 	BarChart,
 	type BarSlots,
@@ -15,6 +15,14 @@ import type { AppRouter } from "../../../../.stack/worker";
 import { orpc } from "../../lib/api.ts";
 
 export const Route = createFileRoute("/_app/usage")({
+	loader: () =>
+		preload(
+			orpc.usage.meters.read(),
+			orpc.usage.requests.read(),
+			orpc.usage.minutes.read(),
+			orpc.usage.cron.read(),
+			orpc.usage.plan.read(),
+		),
 	component: Usage,
 });
 

@@ -30,6 +30,9 @@ function lines(from: string, other: string): number {
 	return from ? from.split("\n").filter((line) => !kept.has(line)).length : 0;
 }
 
+export const filesRead = (id: string) => orpc.deploys.files.read({ id });
+export const logRead = (id: string) => orpc.deploys.log.read({ id });
+
 // The files a deploy changed, from their own read, over the diff of the one
 // open (`?file=`, the first without it), which its row marks; the files
 // before it are seen. The Section holds the read, so the list and the diff
@@ -38,7 +41,7 @@ function lines(from: string, other: string): number {
 // place; the diff reads that file as a selection.
 function useChangedFiles(id: string, named: string | undefined) {
 	const route = useRoute();
-	const files = orpc.deploys.files.read({ id });
+	const files = filesRead(id);
 	const all: readonly ChangedFile[] = useRead(files) ?? [];
 	const at = Math.max(
 		0,
@@ -84,7 +87,7 @@ export function DeployChanges(props: {
 	file?: string;
 }) {
 	const { deploy, deployId } = props;
-	const log = orpc.deploys.log.read({ id: deployId });
+	const log = logRead(deployId);
 	const files = useChangedFiles(deployId, props.file);
 	return (
 		<>

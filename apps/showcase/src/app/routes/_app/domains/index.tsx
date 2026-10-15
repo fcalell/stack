@@ -1,3 +1,4 @@
+import { preload } from "@fcalell/plugin-api/tanstack-query";
 import { List } from "@fcalell/plugin-react-ui/components/list";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
@@ -8,6 +9,7 @@ import { act } from "../../../lib/act.ts";
 import { orpc } from "../../../lib/api.ts";
 
 export const Route = createFileRoute("/_app/domains/")({
+	loader: () => preload(orpc.domains.list.read()),
 	component: Domains,
 });
 

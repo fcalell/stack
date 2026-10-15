@@ -45,6 +45,11 @@ type OpenDeploy = Deploys["get"]["__output"];
 // Deploys a page holds: the list pages in fives, behind "Show more".
 const PAGE = 5;
 
+// The reads of the Deploys place, built here so a route's loader and the
+// component that draws them name one key.
+export const deploysPage = () => orpc.deploys.list.pages({ limit: PAGE });
+export const deployRead = (id: string) => orpc.deploys.get.read({ id });
+
 const ENVIRONMENTS: Record<Deploy["environment"], ChipMark> = {
 	production: { family: "teal", label: "Production" },
 	preview: { family: "violet", label: "Preview" },
@@ -291,7 +296,7 @@ function StepRows(props: {
 // the deploy's route. The deploy's own Pane holds the read; this one holds the
 // step as a selection of it, so a step that is gone draws the empty form.
 export function DeployStep(props: { deployId: string; stepId: string }) {
-	const deploy = orpc.deploys.get.read({ id: props.deployId });
+	const deploy = deployRead(props.deployId);
 	const step = deploy.at((each) =>
 		each.steps.find((one) => one.id === props.stepId),
 	);
@@ -429,7 +434,7 @@ function DeployDetails(props: { deploy: Selection<OpenDeploy> }) {
 // The Deploys place's first Pane: the deploys, a row opening one beside it.
 export function DeployList() {
 	const queryClient = useQueryClient();
-	const deploys = orpc.deploys.list.pages({ limit: PAGE });
+	const deploys = deploysPage();
 	const removePreviews = useMutation(
 		orpc.deploys.removePreviews.mutationOptions(),
 	);
@@ -519,7 +524,7 @@ export function DeployList() {
 // so an address after its removal draws the missing form. Its Close returns to
 // the list.
 export function DeployRecord(props: { deployId: string; file?: string }) {
-	const deploy = orpc.deploys.get.read({ id: props.deployId });
+	const deploy = deployRead(props.deployId);
 	return (
 		<Pane
 			read={deploy}
