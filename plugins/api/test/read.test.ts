@@ -171,6 +171,41 @@ test("a selector that throws over the placeholder gives it, with a warning", () 
 	}
 });
 
+test("a selector that dereferences fields does not warn over an idle or reset read", () => {
+	const warn = console.warn;
+	const warned: unknown[] = [];
+	console.warn = (...args) => warned.push(args);
+	try {
+		const items = make("items").at((d) =>
+			d.items.map((i) => (i as { n: number }).n),
+		);
+		const plan = planSelections([items]);
+		const idle = plan.draw([{ data: undefined, isPlaceholderData: false }]);
+		assert.equal(idle[0]?.painted, true);
+		assert.equal(isPlaceholder(idle[0]?.value), true);
+		assert.equal(warned.length, 0);
+	} finally {
+		console.warn = warn;
+	}
+});
+
+test("a combine of a loaded and an idle read paints, its selector over the real data", () => {
+	const a = make("a");
+	const b = make("b");
+	const seen: unknown[] = [];
+	const both = combine([a, b], (x, y) => {
+		seen.push(x);
+		return `${x.n}${y.n}`;
+	});
+	const plan = planSelections([both]);
+	const drawn = plan.draw([
+		{ data: { n: 1 }, isPlaceholderData: false },
+		{ data: undefined, isPlaceholderData: false },
+	]);
+	assert.equal(drawn[0]?.painted, true);
+	assert.deepEqual(seen, [{ n: 1 }]);
+});
+
 test("a selector that throws over real data rethrows", () => {
 	const bug = make("a").at(() => {
 		throw new Error("bug");

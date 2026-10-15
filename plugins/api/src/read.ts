@@ -91,15 +91,15 @@ export function isSelection(v: unknown): v is Selection<unknown> {
 	return typeof v === "object" && v !== null && SELECTION in v;
 }
 
-// A selector or `combine` function runs over the placeholder (and over an idle
-// or failed read's `undefined`), so one that throws there is not a bug in the
-// data: its slot is the placeholder, with a dev warning. Over real data the
-// throw is the app's.
+// A selector or `combine` function runs over the placeholder (a waiting slot
+// picks over it, an idle or failed read's missing data included), so one that
+// throws there is not a bug in the data: its slot is the placeholder, with a
+// dev warning. Over real data the throw is the app's.
 function guarded<T>(data: readonly unknown[], run: () => T): T {
 	try {
 		return run();
 	} catch (error) {
-		if (!data.some((d) => d === undefined || isPlaceholder(d))) throw error;
+		if (!data.some(isPlaceholder)) throw error;
 		if (process.env.NODE_ENV !== "production") {
 			console.warn("A selector threw over a read that has no data yet", error);
 		}
@@ -258,13 +258,18 @@ export function planSelections(values: readonly unknown[]): {
 				const p = plan[i];
 				if (!p) return { painted: false, value };
 				const inputs = p.at.map((slot) => results[slot] as Result);
-				const data = inputs.map((r) => r.data);
 				const waiting = inputs.some(
 					(r) => r.isPlaceholderData || r.data === undefined,
 				);
+				// A waiting slot picks over the placeholder where a read has no data,
+				// so a selector walks P and never meets `undefined`; a combine keeps
+				// the real data of its other reads.
 				return waiting
-					? { painted: true, value: p.pick(data) ?? P }
-					: { painted: false, value: p.pick(data) };
+					? {
+							painted: true,
+							value: p.pick(inputs.map((r) => r.data ?? P)) ?? P,
+						}
+					: { painted: false, value: p.pick(inputs.map((r) => r.data)) };
 			}),
 	};
 }

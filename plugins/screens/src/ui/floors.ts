@@ -246,8 +246,6 @@ async function resize(
 	await settle(false);
 }
 
-const SELECTOR_WARNING = /^console\.warn: A selector threw over a read/;
-
 // A data story's screen with one of its reads failed at a time. The reads are
 // the procedures the story called, found by watching (`called`); the run
 // answers one with an error and every other with data, resets those queries
@@ -280,15 +278,8 @@ async function perRead(): Promise<string[]> {
 				await resize(pins, width);
 				found.push(...floorsAt(width, false));
 			}
-			// The console lines this read's failure wrote belong to it alone. A
-			// selector warning is left out: a reset empties the read under leaves
-			// mounted a moment before its frame swaps them for the failed form, a
-			// notification no viewer's read goes through (a failure keeps the data
-			// it had). A leaf the failed form does not replace paints on, and the
-			// walk and the unheld-read error find that.
-			found.push(
-				...logged.splice(from).filter((line) => !SELECTOR_WARNING.test(line)),
-			);
+			// The console lines this read's failure wrote belong to it alone.
+			found.push(...logged.splice(from));
 			out.push(...found.map((line) => `with ${name} failed: ${line}`));
 		}
 		failing(undefined);

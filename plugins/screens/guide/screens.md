@@ -126,8 +126,6 @@ its failure draws nowhere and the leaf stays painted.
   judge the failed forms.
 - A failed read retries once before it fails (about a second), so a screen costs about two
   seconds for each procedure it calls (on the showcase, 4 to 5 procedures take 10 to 15 seconds).
-- A selector that throws over the emptied read is not reported: a reset reaches leaves a moment
-  before their frame replaces them with the failed form, which no viewer's read does.
 
 `called()` and `failing()` in `src/ui/answer.ts` hold the record and the failure, and `perRead()` in
 `src/ui/floors.ts` the run.
