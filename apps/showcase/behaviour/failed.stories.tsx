@@ -1,6 +1,7 @@
 import { Failed } from "@fcalell/plugin-react-ui/components/failed";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
+import { readsAt } from "@fcalell/plugin-react-ui/showcase/waiting";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { expect } from "storybook/test";
@@ -52,9 +53,8 @@ export const Create: StoryObj = {
 		<Place>
 			<Pane
 				title="Projects"
+				read={readsAt("failed/create").empty}
 				empty={{
-					icon: "FolderPlus",
-					title: "No projects yet",
 					sentence: "A project holds the deploys of one app.",
 					act: { label: "New project", onAct: () => {} },
 				}}
@@ -62,7 +62,7 @@ export const Create: StoryObj = {
 		</Place>
 	),
 	play: async ({ canvas }) => {
-		const create = canvas.getByRole("button", { name: "New project" });
+		const create = await canvas.findByRole("button", { name: "New project" });
 		await expect(create.querySelector(".lucide-plus")).not.toBeNull();
 	},
 };

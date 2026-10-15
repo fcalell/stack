@@ -1,6 +1,5 @@
 import { Button as BaseButton } from "@base-ui/react/button";
 import { isThenable } from "@fcalell/plugin-api/acts";
-import { type Selection, usePainted } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type { Act } from "@fcalell/ui-core/descriptors";
 import { filled } from "@fcalell/ui-core/tokens";
@@ -87,8 +86,10 @@ export interface ActionBarInternal {
 	kept?: boolean;
 	/** The holder that hosts this bar's acts' run, when the bar is not the only host (a sheet holds its dismissal while its bar's act pends). Absent, the bar hosts its own. */
 	acting?: Acting<number>;
-	/** The reads the filled act's data is: it paints, inert, in its loaded box while any waits (a form's, its groups' and its sheet's). */
-	waits?: readonly (Selection<unknown> | undefined)[];
+	/** The read the filled act submits waits or stands still: the act paints, inert, in its loaded box. */
+	painted?: boolean;
+	/** The read the filled act submits has ended: the act stands blocked under this reason, the failed sentence or `words.missing`. */
+	ended?: string;
 	/** The filled act is its form's submit button, so Enter in a field presses it. */
 	submits?: boolean;
 }
@@ -119,16 +120,15 @@ function AllAct(props: {
 	);
 }
 
-const NO_WAITS: readonly undefined[] = [];
-
 export function ActionBarBase({
-	acts,
+	acts: offered,
 	fit,
 	chosen,
 	pending,
 	kept,
 	acting: given,
-	waits = NO_WAITS,
+	painted = false,
+	ended,
 	submits = false,
 }: ActionBarProps & ActionBarInternal) {
 	const where = fit ?? "end";
@@ -138,7 +138,13 @@ export function ActionBarBase({
 	// A failure draws in the bar's kept line, so it never moves the act; the
 	// same line says an act waits for a connection.
 	const acting = given ?? own;
-	const painted = usePainted(waits);
+	// The filled act is the one a read's end blocks.
+	const acts =
+		ended === undefined
+			? offered
+			: offered.map((act, at) =>
+					at === offered.length - 1 ? { ...act, blocked: ended } : act,
+				);
 	// The reason this bar last drew: once a line has drawn the bar keeps its box.
 	const [held, setHeld] = useState<string>();
 	const { leave } = useTouched();

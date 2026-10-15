@@ -1,5 +1,6 @@
 import {
 	preload,
+	read,
 	useMutation,
 	useQueryClient,
 	useRead,
@@ -46,6 +47,13 @@ const IMAGES = [
 	{ value: "python-3", label: "Python 3.13" },
 	{ value: "go-1", label: "Go 1.25" },
 ];
+
+// The endpoints the workspace posts deploy events to: none is set up yet.
+const endpoints = read({
+	queryKey: ["webhooks"],
+	queryFn: () => Promise.resolve<readonly string[]>([]),
+	staleTime: Number.POSITIVE_INFINITY,
+});
 
 function Settings() {
 	const queryClient = useQueryClient();
@@ -96,9 +104,8 @@ function Settings() {
 				<Section
 					title="Webhooks"
 					description="Where Acme posts deploy events."
+					read={endpoints}
 					empty={{
-						icon: "Webhook",
-						title: "No endpoints",
 						sentence:
 							"Add an endpoint to receive an event each time a deploy finishes.",
 						act: { label: "Add endpoint", onAct: act },
@@ -213,8 +220,6 @@ function Settings() {
 							read: paired,
 							failed: "Paired devices did not load.",
 							empty: {
-								icon: "Smartphone",
-								title: "No devices",
 								sentence: "A phone that scans the code shows here.",
 							},
 							fields: (

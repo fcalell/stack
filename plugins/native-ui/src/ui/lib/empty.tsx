@@ -34,8 +34,16 @@ const LINE = "text-center";
 // A first run's acts stretch across the column, its children under the act.
 const ACTS = "gap-acts";
 
-/** What a `Pane`, a `Section` or a first-run `Gate` says while it holds nothing yet. */
-export interface EmptyProps {
+/** What a frame says when the read it holds is empty: the sentence, and the act that makes the first one. It stands only for the frame's own read, so a frame given none has no empty state. */
+export interface Empty {
+	/** What is missing and what the act makes (a sentence; wraps). */
+	sentence: string;
+	// The way to make the first one.
+	act?: Act;
+}
+
+/** What a first-run `Gate` says while it holds nothing yet: the page's own header, not a read's empty state. */
+export interface GateFirstRun {
 	// The glyph in the mark's disc.
 	icon?: IconName;
 	/** The line over the sentence (a short phrase; wraps). */
@@ -44,8 +52,7 @@ export interface EmptyProps {
 	sentence: string;
 	// The way to make the first one.
 	act?: Act;
-	// What still stands: under it on a page, in its acts column on a first
-	// run.
+	// What still stands: in its acts column on a first run.
 	children?: ReactNode;
 }
 

@@ -112,7 +112,6 @@ function Comparisons(props: { id: string; state: ShowcaseFrame["state"] }) {
 				read={change}
 				failed="The plan change did not load."
 				empty={{
-					title: "No change",
 					sentence: "Pick a plan to see what it changes.",
 				}}
 			>
@@ -128,7 +127,6 @@ function Comparisons(props: { id: string; state: ShowcaseFrame["state"] }) {
 				read={plans}
 				failed="The plans did not load."
 				empty={{
-					title: "No plans",
 					sentence: "Plans on sale land here.",
 				}}
 			>
@@ -144,7 +142,6 @@ function Comparisons(props: { id: string; state: ShowcaseFrame["state"] }) {
 				read={layer}
 				failed="The data layer did not load."
 				empty={{
-					title: "Nothing observed",
 					sentence: "Observed fields land here.",
 				}}
 			>

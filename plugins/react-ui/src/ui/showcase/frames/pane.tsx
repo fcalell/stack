@@ -11,7 +11,6 @@ import type { ShowcaseFrame } from "../cells.ts";
 import { WORKFLOW } from "../graphs.ts";
 import { type HeldState, isHeld, type Reads, readsAt } from "../waiting.ts";
 import {
-	STAND_IN_ENTRIES,
 	STAND_IN_ROW,
 	STAND_INS,
 	StandInList,
@@ -193,33 +192,6 @@ function Ready({ reads }: { reads: Reads }) {
 	);
 }
 
-// A read that answers nothing: the page says so with the Pane's own sentence,
-// or the generic one.
-function Nothing(props: { first: Reads; second: Reads }) {
-	return (
-		<>
-			<Column>
-				<Short>
-					<Pane
-						title="Deploys"
-						read={props.first.empty}
-						empty={{
-							icon: "FolderPlus",
-							title: "No deploys yet",
-							sentence: "Push a branch to make the first one.",
-						}}
-					/>
-				</Short>
-			</Column>
-			<Column>
-				<Short>
-					<Pane title="Deploys" read={props.second.empty} />
-				</Short>
-			</Column>
-		</>
-	);
-}
-
 // A `cover` Pane spans the Place and the one before it is hidden, mounted.
 export function Deployment() {
 	return (
@@ -317,42 +289,32 @@ const PROJECTS = "A project holds the deploys, domains and logs of one app.";
 
 // A page as tall as the viewport, so an empty Pane's state alone in its body
 // centres in what the body leaves.
-function Empty(props: { children?: ReactNode }) {
+function Empty(props: { read: Reads["empty"] }) {
 	return (
 		<div className="flex flex-col h-dvh">
 			<Place>
 				<Pane
 					title="Projects"
-					empty={{
-						icon: "FolderPlus",
-						title: "No projects yet",
-						sentence: PROJECTS,
-						act: NEW_PROJECT,
-						children: props.children,
-					}}
+					read={props.read}
+					empty={{ sentence: PROJECTS, act: NEW_PROJECT }}
 				/>
 			</Place>
 		</div>
 	);
 }
 
-// The empty state's page form: alone it centres in what the body leaves, and
-// with children it stands at the body's top over them.
-function Emptied() {
+// A read that answers nothing: the page says so with the Pane's own sentence
+// and act, or with the generic sentence.
+function Emptied(props: { first: Reads; second: Reads }) {
 	return (
 		<>
 			<Column>
-				<Empty />
+				<Empty read={props.first.empty} />
 			</Column>
 			<Column>
-				<Empty>
-					<Section
-						title="Start from a template"
-						description="Each one deploys as is."
-					>
-						<Group items={STAND_IN_ENTRIES} />
-					</Section>
-				</Empty>
+				<Short>
+					<Pane title="Deploys" read={props.second.empty} />
+				</Short>
 			</Column>
 		</>
 	);
@@ -381,8 +343,10 @@ function Tasked() {
 
 // The cell picks the form; the loading state draws a Pane over a read that
 // waits, the error state one over a read that fails and one over a read that
-// answers not found, and the empty state draws the empty state's page form
-// alone and over children, then over a read that answers nothing. The busy, stale and paused states draw a Pane over a read that holds rows, on the title cell. The title cell draws the Pane's forms in a Place:
+// answers not found, and the empty state draws a Pane over a read that answers
+// nothing, with its own sentence and act and with the generic one. The busy,
+// stale and paused states draw a Pane over a read that holds rows, on the title
+// cell. The title cell draws the Pane's forms in a Place:
 // one, two (a list, then its record), three, a covering one, a wide one
 // holding a Canvas and one holding a Thread. The bar icon act draws one Pane
 // with its more menu open; the body icon act (the touch top bar's) an
@@ -405,12 +369,7 @@ export function drawPane(frame: ShowcaseFrame) {
 		) : undefined;
 	if (frame.state === "error") return <Failed reads={reads} />;
 	if (frame.state === "empty")
-		return (
-			<>
-				<Emptied />
-				<Nothing first={reads} second={readsAt(`${frame.id}/2`)} />
-			</>
-		);
+		return <Emptied first={reads} second={readsAt(`${frame.id}/2`)} />;
 	if (cell === "TEXT.role.title")
 		return (
 			<>

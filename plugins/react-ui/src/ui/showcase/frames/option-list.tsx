@@ -170,7 +170,7 @@ function Topics(props: {
 			title="Notifications"
 			read={topics}
 			failed="The topics did not load."
-			empty={{ title: "No topic", sentence: "No topic to follow yet." }}
+			empty={{ sentence: "No topic to follow yet." }}
 		>
 			<FormField
 				label="Email me about"

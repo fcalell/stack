@@ -6,7 +6,7 @@ import type { SheetFit } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
 import { useAct } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
-import type { EmptyProps } from "../../lib/empty.tsx";
+import type { Empty } from "../../lib/empty.tsx";
 import { FormBody } from "../form/base.tsx";
 import type { FormProps } from "../form/index.tsx";
 import { SheetBase } from "./base.tsx";
@@ -34,7 +34,7 @@ export interface SheetProps extends Closed {
 	/** What the body holds, read once for the frame: while it waits the body's leaves paint and the submit with them, inert; its failure and a missing record stand in the body's place, the submit blocked with the failed sentence. A sheet is a surface of its own: it starts with no holds, so its read draws its state here whatever the page under it holds. */
 	read?: Selection<unknown>;
 	/** The body's sentence when the `read`'s selection is empty. */
-	empty?: EmptyProps;
+	empty?: Empty;
 	/** A form the body ends with, drawn in the sheet's column: its `bar` sticks to the body's foot, and the sheet asks nothing when it closes. Give the form's `bar` or the sheet's `submit` as the act that completes the task, not both. */
 	form?: FormProps;
 	/** The body, ahead of the `form`. */

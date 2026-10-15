@@ -12,7 +12,7 @@ import {
 import { type ReactNode, useEffect, useId, useRef } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { Runs } from "../../lib/code.tsx";
-import { EmptyBase, type EmptyProps } from "../../lib/empty.tsx";
+import { EmptyBase, type GateFirstRun } from "../../lib/empty.tsx";
 import { focusFirst } from "../../lib/focus.ts";
 import { PageTitle } from "../../lib/frame.ts";
 import { HeadingContext } from "../../lib/heading.ts";
@@ -65,7 +65,7 @@ export type GateProps = GateBase &
 				step?: never;
 				form?: never;
 				/** The first run's one empty state, its title the page's `h1`: the mark, the title over the sentence, the act and its `children` stacked across the column. */
-				empty?: EmptyProps;
+				empty?: GateFirstRun;
 		  }
 	);
 

@@ -1,7 +1,7 @@
 import type { Selection } from "@fcalell/plugin-api/tanstack-query";
 import type { ReactNode } from "react";
 import type { Closed } from "../../lib/closed";
-import type { EmptyProps } from "../../lib/empty";
+import type { Empty } from "../../lib/empty";
 import type { ActionBarProps } from "../action-bar";
 import { FormBody } from "./base";
 
@@ -18,7 +18,7 @@ export interface FormGroup {
 	/** What the group's fields hold, read once for the group's frame: its leaves paint while it waits, and its failure and a missing record stand in the fields' place. */
 	read?: Selection<unknown>;
 	/** The fields' sentence when the group's `read` is empty. */
-	empty?: EmptyProps;
+	empty?: Empty;
 	/** What the group says when its `read` fails, in place of the generic sentence (a sentence; wraps). */
 	failed?: string;
 }
@@ -29,7 +29,7 @@ interface FormBase extends Closed {
 	/** What the form's fields hold, read once for the form's frame: the fields' leaves paint while it waits, the filled act with them, inert; its failure and a missing record stand in the fields' place. Each group has its own. */
 	read?: Selection<unknown>;
 	/** The fields' sentence when the `read`'s selection is empty. */
-	empty?: EmptyProps;
+	empty?: Empty;
 	/** What the form says when its `read` fails, in place of the generic sentence (a sentence; wraps). */
 	failed?: string;
 }

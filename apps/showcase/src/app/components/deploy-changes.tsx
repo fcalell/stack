@@ -109,8 +109,6 @@ export function DeployChanges(props: {
 				read={files.files}
 				failed="Changes did not load."
 				empty={{
-					icon: "GitCommitHorizontal",
-					title: "No changes",
 					sentence: "This deploy rebuilt the commit already in production.",
 				}}
 			>

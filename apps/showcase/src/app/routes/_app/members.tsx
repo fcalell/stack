@@ -357,8 +357,6 @@ function Members() {
 					read={members}
 					failed="Members did not load."
 					empty={{
-						icon: "Users",
-						title: "No members yet",
 						sentence: "Invite the people you work with to deploy together.",
 					}}
 				>

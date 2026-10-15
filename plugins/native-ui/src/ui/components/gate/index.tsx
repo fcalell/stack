@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Runs } from "../../lib/code";
-import { EmptyBase, type EmptyProps } from "../../lib/empty";
+import { EmptyBase, type GateFirstRun } from "../../lib/empty";
 import { FieldClaim } from "../../lib/field";
 import { Scroll } from "../../lib/hosts";
 import type { FormProps } from "../form";
@@ -70,7 +70,7 @@ export type GateProps = GateBase &
 				step?: never;
 				form?: never;
 				// The first run's one empty state, its title the page's header.
-				empty?: EmptyProps;
+				empty?: GateFirstRun;
 		  }
 	);
 

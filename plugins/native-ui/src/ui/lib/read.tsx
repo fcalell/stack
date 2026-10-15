@@ -1,5 +1,9 @@
 import type { Selection } from "@fcalell/plugin-api/tanstack-query";
-import { FrameHolds, useFrameRead } from "@fcalell/plugin-api/tanstack-query";
+import {
+	FrameHolds,
+	useFrameRead,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import type { Act, MenuItem } from "@fcalell/ui-core/descriptors";
 import { frameOf } from "@fcalell/ui-core/read";
 import type { Words } from "@fcalell/ui-core/tokens";
@@ -10,7 +14,7 @@ import { ButtonBase } from "../components/button/base";
 import { MissingBase } from "../components/missing/base";
 import { Spinner } from "../components/spinner";
 import { cn } from "./cn";
-import { EmptyBase, type EmptyFit, type EmptyProps } from "./empty";
+import { type Empty, EmptyBase, type EmptyFit } from "./empty";
 import { useShown } from "./paint";
 import { useWords } from "./words";
 
@@ -31,14 +35,6 @@ export function useFrame(read?: Selection<unknown>) {
 
 export type Frame = ReturnType<typeof useFrame>;
 
-// The reads a form's fields hold: its own and each group's.
-export function formReads(form: {
-	read?: Selection<unknown>;
-	groups?: readonly { read?: Selection<unknown> }[];
-}): (Selection<unknown> | undefined)[] {
-	return [form.read, ...(form.groups?.map((group) => group.read) ?? [])];
-}
-
 // The reason an act stands blocked under once the read it depends on has
 // ended (a frame's `form`, or a selection's `phase`): the failed sentence (the
 // frame's own when it has one), or `words.missing`. None while the read waits,
@@ -58,13 +54,34 @@ export function endedItems(words: Words, reason: string): readonly MenuItem[] {
 	return [{ label: words.more, blocked: reason, onAct: () => {} }];
 }
 
+// What the bar that submits a frame's data takes from the frame's own read:
+// whether its filled act paints (the read waits or stands still, so the bar
+// keeps its loaded box) and the reason it stands blocked under (the read failed
+// or is missing). A group's read is not the form's, so it never reaches the bar.
+export function submitOf(words: Words, form: Frame["form"], failed?: string) {
+	return {
+		waiting: form === "waiting" || form === "still",
+		ended: endedReason(words, form, failed),
+	};
+}
+
+// The same for a bar whose frame stands elsewhere: a sheet's foot holds its
+// form's bar, hoisted out of the form that owns the read.
+export function useSubmitOf(read?: Selection<unknown>, failed?: string) {
+	const words = useWords();
+	const [one] = useSelections([read]);
+	if (!one.painted) return { waiting: false, ended: undefined };
+	const ended = endedReason(words, one.phase, failed);
+	return { waiting: ended === undefined, ended };
+}
+
 // What a frame draws in place of its body, or its body: the failed, missing
 // and empty forms in the frame's `fit`; ready, waiting and idle are the loaded
 // tree, its leaves painting.
 export function FrameBody(props: {
 	frame: Frame;
 	fit: EmptyFit;
-	empty?: EmptyProps;
+	empty?: Empty;
 	failed?: string;
 	children?: ReactNode;
 }) {

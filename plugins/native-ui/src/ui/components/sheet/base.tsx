@@ -46,17 +46,18 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { withUniwind } from "uniwind";
 import { type Acting, useAct } from "../../lib/act";
 import { cn } from "../../lib/cn";
-import type { EmptyProps } from "../../lib/empty";
+import type { Empty } from "../../lib/empty";
 import { FieldNameContext } from "../../lib/field";
 import { timing } from "../../lib/motion";
 import { RaisedGround } from "../../lib/raised";
 import {
 	BusyMark,
-	endedReason,
 	type Frame,
 	FrameBody,
 	FrameLine,
+	submitOf,
 	useFrame,
+	useSubmitOf,
 } from "../../lib/read";
 import { type ReasonHost, ReasonHostContext } from "../../lib/reason";
 import {
@@ -126,8 +127,12 @@ interface Parts {
 	reason?: string;
 	// The body's read waits or stands still: the head's submit paints, inert.
 	painted?: boolean;
-	// The reads the form's bar paints for: the body's and the form's.
-	waits: readonly (Selection<unknown> | undefined)[];
+	// Why the body's read ended: the form's bar stands blocked under it too.
+	ended?: string;
+	// What the form in the body holds and says when it fails: the form's bar,
+	// hoisted into the foot, submits what that gives.
+	barRead?: Selection<unknown>;
+	barFailed?: string;
 	// The body's frame, whose busy mark and state line the head draws.
 	frame: Frame;
 	host?: ReasonHost;
@@ -312,11 +317,27 @@ function Head() {
 	);
 }
 
+// The form's bar: it subscribes to the form's read itself, since the form that
+// owns the read stands in the body and the bar in the footer.
+function FormBar() {
+	const { bar, acting, painted, ended, barRead, barFailed } = useParts();
+	const form = useSubmitOf(barRead, barFailed);
+	if (!bar) return null;
+	return (
+		<ActionBarBase
+			{...bar}
+			acting={acting}
+			painted={painted || form.waiting}
+			ended={ended ?? form.ended}
+		/>
+	);
+}
+
 // The foot's line over a decision's acts, then the form's bar, in gorhom's
 // footer: gorhom measures it with the sheet and keeps it above the keyboard.
 // Nothing in it, it draws nothing and the footer is no height.
 function Foot() {
-	const { foot, acts, bar, acting, waits } = useParts();
+	const { foot, acts, bar, acting } = useParts();
 	if (!foot && !acts && !bar) return null;
 	return (
 		<View className={SHEET_FOOT}>
@@ -328,7 +349,7 @@ function Foot() {
 				</View>
 			) : null}
 			{acts ? <ActionBarBase acts={acts} acting={acting} /> : null}
-			{bar ? <ActionBarBase {...bar} acting={acting} waits={waits} /> : null}
+			{bar ? <FormBar /> : null}
 		</View>
 	);
 }
@@ -383,10 +404,12 @@ export interface SheetBaseProps {
 	// failed sentence once it failed or is missing.
 	read?: Selection<unknown>;
 	// The body's sentence when the `read` is empty.
-	empty?: EmptyProps;
-	// The reads the form in the body holds: the form's bar, hoisted into the
-	// foot, paints while any waits, with the body's own.
-	waits?: readonly (Selection<unknown> | undefined)[];
+	empty?: Empty;
+	// The read the form in the body holds, and what it says when it fails: the
+	// form's bar, hoisted into the foot, paints while it or the body's waits
+	// and stands blocked once either has ended. A group's read is the group's.
+	barRead?: Selection<unknown>;
+	barFailed?: string;
 	// The holder of the sheet's acts' run, when a holder above it hosts more
 	// (a `Sheet` holds its form's bar too). Absent, the sheet hosts its own.
 	acting?: Acting<number>;
@@ -424,15 +447,15 @@ export function SheetBase({
 	acting: given,
 	read,
 	empty,
-	waits,
+	barRead,
+	barFailed,
 	children,
 }: SheetBaseProps) {
 	const frame = useFrame(read);
 	const words = useWords();
 	// The submit waits only on the sheet's own read: painted while it waits or
 	// stands still, blocked with the sentence once it ended.
-	const waiting = frame.form === "waiting" || frame.form === "still";
-	const ended = endedReason(words, frame.form, failed);
+	const { waiting, ended } = submitOf(words, frame.form, failed);
 	const submit =
 		ended === undefined ? offered : offered && { ...offered, blocked: ended };
 	const own = useAct<number>("line");
@@ -488,7 +511,9 @@ export function SheetBase({
 		fit,
 		foot,
 		painted: waiting,
-		waits: [read, ...(waits ?? [])],
+		ended,
+		barRead,
+		barFailed,
 		frame,
 		acts,
 		bar,

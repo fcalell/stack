@@ -11,7 +11,7 @@ import { ORPCError } from "@orpc/client";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { onlineManager } from "@tanstack/react-query";
 import { useState } from "react";
-import { expect, fn, screen, waitFor } from "storybook/test";
+import { expect, fn, screen, waitFor, within } from "storybook/test";
 
 const noop = () => {};
 
@@ -200,26 +200,49 @@ export const APausedSheetCanBeDismissed: StoryObj = {
 	},
 };
 
-// A form's bar paints, inert, while any read its fields hold waits: a group's
-// alone is enough, and a form of loaded groups is ready.
-export const AFormsBarPaintsWhileAGroupsReadWaits: StoryObj = {
+// A form's bar follows the form's own read and nothing else. It paints, inert,
+// while that read waits, and stands blocked with the failed sentence once it
+// failed; a group's read is the group's, so a group still to land, or one that
+// failed, leaves the bar live.
+const own = readsAt("act-hosts/bar/own");
+const groups = readsAt("act-hosts/bar/groups");
+const saved = fn();
+
+const bar = (label: string) => ({ acts: [{ label, onAct: saved }] });
+const name = (
+	<FormField label="Name">
+		<Input value="Acme" onChange={noop} />
+	</FormField>
+);
+
+export const AFormsBarPaintsWhileItsOwnReadWaits: StoryObj = {
+	render: () => (
+		<div className="flex flex-col gap-sections w-sheet max-w-full">
+			<Form bar={bar("Save waiting")} read={own.waiting}>
+				{name}
+			</Form>
+			<Form bar={bar("Save loaded")}>{name}</Form>
+		</div>
+	),
+	play: async ({ canvas }) => {
+		const waiting = canvas.getByText("Save waiting").closest("button");
+		const loaded = canvas.getByText("Save loaded").closest("button");
+		await expect(waiting).toHaveAttribute("inert");
+		await expect(loaded).not.toHaveAttribute("inert");
+	},
+};
+
+export const AGroupsReadNeverTouchesTheBar: StoryObj = {
 	render: () => (
 		<div className="flex flex-col gap-sections w-sheet max-w-full">
 			<div data-testid="waiting">
 				<Form
-					bar={{ acts: [{ label: "Save waiting", onAct: noop }] }}
+					bar={bar("Save waiting group")}
 					groups={[
-						{
-							title: "General",
-							read: readsAt("hosts").waiting,
-							fields: (
-								<FormField label="Name">
-									<Input value="Acme" onChange={noop} />
-								</FormField>
-							),
-						},
+						{ title: "General", fields: name },
 						{
 							title: "Email",
+							read: groups.waiting,
 							fields: (
 								<FormField label="Contact">
 									<Input value="ana@acme.dev" onChange={noop} />
@@ -229,15 +252,17 @@ export const AFormsBarPaintsWhileAGroupsReadWaits: StoryObj = {
 					]}
 				/>
 			</div>
-			<div data-testid="loaded">
+			<div data-testid="failed">
 				<Form
-					bar={{ acts: [{ label: "Save loaded", onAct: noop }] }}
+					bar={bar("Save failed group")}
 					groups={[
+						{ title: "General", fields: name },
 						{
-							title: "General",
+							title: "Devices",
+							read: groups.failing,
 							fields: (
-								<FormField label="Name">
-									<Input value="Acme" onChange={noop} />
+								<FormField label="Phone">
+									<Input value="Pixel" onChange={noop} />
 								</FormField>
 							),
 						},
@@ -246,10 +271,37 @@ export const AFormsBarPaintsWhileAGroupsReadWaits: StoryObj = {
 			</div>
 		</div>
 	),
-	play: async ({ canvas }) => {
-		const waiting = canvas.getByText("Save waiting").closest("button");
-		const loaded = canvas.getByText("Save loaded").closest("button");
-		await expect(waiting).toHaveAttribute("inert");
-		await expect(loaded).not.toHaveAttribute("inert");
+	play: async ({ canvas, userEvent }) => {
+		saved.mockClear();
+		const waiting = canvas.getByText("Save waiting group").closest("button");
+		await expect(waiting).not.toHaveAttribute("inert");
+		// The Devices group fails in its own place; Save stays live.
+		const failed = within(await canvas.findByTestId("failed"));
+		await failed.findByText("This didn't load.");
+		const save = failed.getByRole("button", { name: "Save failed group" });
+		await expect(save).not.toHaveAttribute("inert");
+		await expect(save).not.toHaveAttribute("aria-disabled", "true");
+		await userEvent.click(save);
+		await expect(saved).toHaveBeenCalledTimes(1);
+	},
+};
+
+export const AFormsBarStandsBlockedUnderItsFailedRead: StoryObj = {
+	render: () => (
+		<div className="w-sheet max-w-full">
+			<Form bar={bar("Save failed")} read={own.failing}>
+				{name}
+			</Form>
+		</div>
+	),
+	play: async ({ canvas, userEvent }) => {
+		saved.mockClear();
+		const save = await canvas.findByRole("button", { name: "Save failed" });
+		await expect(save).toHaveAttribute("aria-disabled", "true");
+		await expect(save).not.toHaveAttribute("inert");
+		await userEvent.click(save);
+		await expect(saved).not.toHaveBeenCalled();
+		// The form's failed form, and the bar's reason for the blocked Save.
+		await expect(canvas.getAllByText("This didn't load.").length).toBe(2);
 	},
 };

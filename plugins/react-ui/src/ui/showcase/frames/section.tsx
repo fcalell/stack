@@ -95,8 +95,6 @@ function Nothing(props: { first: Reads; second: Reads }) {
 				title="Webhooks"
 				read={props.first.empty}
 				empty={{
-					icon: "Webhook",
-					title: "No endpoints",
 					sentence: "Add an endpoint to receive an event on each deploy.",
 					act: { label: "Add endpoint", onAct: act },
 				}}
@@ -128,8 +126,8 @@ function Members(props: { blocked?: boolean }) {
 // with a description over a Group. The error state draws a read that fails
 // (its Retry, with and without a sentence of its own) and one that answers not
 // found. A Section over a read that answered rows shows their count. An empty
-// section is drawn by its `empty` state: framed with a mark, a title and an
-// act, and the quiet sentence alone, then over a read that answers nothing.
+// section is drawn by its `empty` state: framed with an act, and the
+// quiet sentence alone, then over a read that answers nothing.
 // The busy, stale and paused states draw a Section over a read that holds
 // rows, on the heading cell.
 export function drawSection(frame: ShowcaseFrame) {
@@ -150,9 +148,8 @@ export function drawSection(frame: ShowcaseFrame) {
 					<Section
 						title="Webhooks"
 						description="Where Acme posts deploy events."
+						read={readsAt(`${frame.id}/3`).empty}
 						empty={{
-							icon: "Webhook",
-							title: "No endpoints",
 							sentence:
 								"Add an endpoint to receive an event each time a deploy finishes.",
 							act: { label: "Add endpoint", onAct: act },
@@ -160,6 +157,7 @@ export function drawSection(frame: ShowcaseFrame) {
 					/>
 					<Section
 						title="Needs you"
+						read={readsAt(`${frame.id}/4`).empty}
 						empty={{ sentence: "Nothing needs you." }}
 					/>
 				</Wide>

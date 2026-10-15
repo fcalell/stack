@@ -1,3 +1,4 @@
+import type { Selection } from "@fcalell/plugin-api/tanstack-query";
 import type { IconAct, MenuItem } from "@fcalell/ui-core/descriptors";
 import type { PaneProps } from "../src/ui/components/pane/index.tsx";
 import type { PlaceProps } from "../src/ui/components/place/index.tsx";
@@ -5,6 +6,7 @@ import type { PlaceProps } from "../src/ui/components/place/index.tsx";
 const act = () => {};
 const create: IconAct = { icon: "Plus", label: "New", onAct: act };
 const more: MenuItem[] = [{ label: "Export", onAct: act }];
+declare const projects: Selection<readonly string[]>;
 
 // a Place holds its Pane and states only the distance it is read from
 {
@@ -83,14 +85,20 @@ const more: MenuItem[] = [{ label: "Export", onAct: act }];
 	void [acting, details, fills];
 }
 
-// a Pane draws its empty state and its docked sheet itself
+// a Pane draws the empty state of its read and its docked sheet itself
 {
 	const empty: PaneProps = {
 		title: "Projects",
+		read: projects,
 		empty: {
 			sentence: "A project holds the deploys of one app.",
-			title: "None",
+			act: { label: "New project", onAct: act },
 		},
+	};
+	// @ts-expect-error: an empty state answers for the Pane's own read
+	const unread: PaneProps = {
+		title: "Projects",
+		empty: { sentence: "A project holds the deploys of one app." },
 	};
 	const docked: PaneProps = {
 		title: "Assistant",
@@ -102,9 +110,19 @@ const more: MenuItem[] = [{ label: "Export", onAct: act }];
 			form: { bar: { acts: [{ label: "Send", onAct: act }] } },
 		},
 	};
-	// @ts-expect-error: the empty state needs its sentence
-	const wordless: PaneProps = { title: "Projects", empty: { title: "None" } };
+	const wordless: PaneProps = {
+		title: "Projects",
+		read: projects,
+		// @ts-expect-error: the empty state needs its sentence
+		empty: { act: { label: "New project", onAct: act } },
+	};
+	const titled: PaneProps = {
+		title: "Projects",
+		read: projects,
+		// @ts-expect-error: the empty state is a sentence and an act, no title
+		empty: { sentence: "None.", title: "None" },
+	};
 	// @ts-expect-error: a sheet is a Sheet's props, open and titled
 	const unopened: PaneProps = { title: "Assistant", sheet: { title: "x" } };
-	void [empty, docked, wordless, unopened];
+	void [empty, unread, docked, wordless, titled, unopened];
 }

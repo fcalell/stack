@@ -283,12 +283,6 @@ function Tasks(props: {
 		setTasks((current) =>
 			current.map((task) => (task.id === id ? { ...task, [at]: value } : task)),
 		);
-	const empty = {
-		icon: "CalendarClock" as const,
-		title: "No cron tasks yet",
-		sentence:
-			"A cron task runs on a schedule, a nightly backup or a weekly digest.",
-	};
 	const publishing = props.publish !== undefined;
 	const publishAct = {
 		label:
@@ -328,7 +322,6 @@ function Tasks(props: {
 				foot={foot}
 				read={read}
 				failed="Cron tasks did not load."
-				empty={empty}
 			>
 				{part.readOnly ? (
 					<Table columns={columns} items={shown} row={row} onOpen={act} />

@@ -1,4 +1,4 @@
-import type { Selection } from "@fcalell/plugin-api/tanstack-query";
+import { type Selection, usePainted } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import {
 	FORM_FOOT,
@@ -14,11 +14,12 @@ import {
 	BusyMark,
 	FrameBody,
 	FrameLine,
-	formReads,
+	submitOf,
 	useFrame,
 } from "../../lib/read.tsx";
 import { useSettleName } from "../../lib/settle.ts";
 import { TouchedContext, useTouchState } from "../../lib/touched.ts";
+import { useWords } from "../../lib/words.tsx";
 import { ActionBarBase } from "../action-bar/base.tsx";
 import { Text } from "../text/index.tsx";
 import type { FormGroup, FormProps } from "./index.tsx";
@@ -83,7 +84,7 @@ export function FormBody({
 	in: FormIn;
 	/** The holder of the bar's run, when the form stands in one that holds more than the bar (a sheet's dismissal). */
 	acting?: Acting<number>;
-	/** The read of the sheet the form stands in: the bar paints while it waits too. */
+	/** The read of the sheet the form stands in: the bar paints while it waits too, as the sheet's own submit does. */
 	outer?: Selection<unknown>;
 }) {
 	const frame = useFrame(read);
@@ -92,11 +93,20 @@ export function FormBody({
 	// A sheet's form is the sheet's: it closes on its own act and asks nothing.
 	useLeaveGuard(touch.leave, within !== "sheet");
 	const stuck = within === "sheet" ? FOOT_STUCK : undefined;
-	// The bar subscribes to every read the form's fields hold, so a group's
-	// waiting paints the submit as the form's does.
-	const waits = [outer, ...formReads({ read, groups })];
+	// The bar submits what the form's own read gives, and the sheet's: it
+	// paints while either waits and stands blocked once the form's has ended.
+	// A group's read is the group's, not the bar's.
+	const words = useWords();
+	const { waiting, ended } = submitOf(words, frame.form, failed);
+	const outerWaits = usePainted([outer]);
 	const acts = bar && (
-		<ActionBarBase {...bar} acting={acting} waits={waits} submits />
+		<ActionBarBase
+			{...bar}
+			acting={acting}
+			painted={waiting || outerWaits}
+			ended={ended}
+			submits
+		/>
 	);
 	const foot =
 		acts === undefined ? null : groups || stuck ? (

@@ -21,7 +21,7 @@ import type {
 	StatusMark,
 } from "@fcalell/ui-core/descriptors";
 import type { Closed } from "../../lib/closed";
-import type { EmptyProps } from "../../lib/empty";
+import type { Empty, GateFirstRun } from "../../lib/empty";
 import type { Route } from "../../lib/route";
 import type { DefinitionValue } from "../definition-row";
 import { ListBase } from "./base";
@@ -172,7 +172,7 @@ export type DefinitionSlots<T> = DefinitionSlotsBase<T> &
 
 // What an empty list draws: a mark, title, sentence and the
 // act that fills the list.
-export type ListEmpty = Pick<EmptyProps, "icon" | "title" | "sentence" | "act">;
+export type ListEmpty = Empty & Pick<GateFirstRun, "icon" | "title">;
 
 // The one kind of row a list holds.
 export type ListKind<T, V extends string | null> =

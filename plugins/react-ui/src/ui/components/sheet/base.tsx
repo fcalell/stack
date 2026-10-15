@@ -28,15 +28,15 @@ import {
 } from "react";
 import { type Acting, useAct } from "../../lib/act.ts";
 import { backGlyph } from "../../lib/back.ts";
-import type { EmptyProps } from "../../lib/empty.tsx";
+import type { Empty } from "../../lib/empty.tsx";
 import { useReturnFocus } from "../../lib/focus.ts";
 import { useTouch } from "../../lib/media.ts";
 import { PortalContainer } from "../../lib/portal.ts";
 import {
 	BusyMark,
-	endedReason,
 	FrameBody,
 	FrameLine,
+	submitOf,
 	useFrame,
 } from "../../lib/read.tsx";
 import { ReasonHostContext } from "../../lib/reason.ts";
@@ -141,7 +141,7 @@ export interface SheetBaseProps {
 	/** What the body holds, read once for the frame (`Sheet`'s `read`): the submit paints, inert, while it waits or stands still, and stands blocked with the failed sentence once it failed or is missing. */
 	read?: Selection<unknown>;
 	/** The body's sentence when the `read` is empty. */
-	empty?: EmptyProps;
+	empty?: Empty;
 	/** The holder of the sheet's acts' run, when a form in its body has a bar of its own (the one holder keeps the dismissal held while either runs). Absent, the sheet hosts its own. */
 	acting?: Acting<number>;
 	/** What the sheet opens focused on: its first field (a confirm's typed name), or the element a ref holds (a pick's option); a decision with neither opens on its first act, the way out. */
@@ -181,8 +181,7 @@ export function SheetBase({
 	const own = useAct<number>("line");
 	// The submit waits only on the sheet's own read: painted while it waits or
 	// stands still, blocked with the sentence once it ended.
-	const waiting = frame.form === "waiting" || frame.form === "still";
-	const ended = endedReason(words, frame.form, failed);
+	const { waiting, ended } = submitOf(words, frame.form, failed);
 	const submit =
 		ended === undefined ? offered : offered && { ...offered, blocked: ended };
 	// The sheet hosts its acts' run: its head submit, its foot bar and its
@@ -300,11 +299,7 @@ export function SheetBase({
 			? [{ label: words.cancel, onAct: onClose }, submit]
 			: undefined);
 	const actionBar = bar ? (
-		<ActionBarBase
-			acts={bar}
-			acting={acting}
-			waits={waiting ? [read] : undefined}
-		/>
+		<ActionBarBase acts={bar} acting={acting} painted={waiting} />
 	) : null;
 	const footLine = foot ? (
 		<div className={FOOT_LINE}>

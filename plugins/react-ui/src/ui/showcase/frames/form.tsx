@@ -9,7 +9,7 @@ import { Group } from "../../components/group/index.tsx";
 import { Input } from "../../components/input/index.tsx";
 import { Switch } from "../../components/switch/index.tsx";
 import { Text } from "../../components/text/index.tsx";
-import type { EmptyProps } from "../../lib/empty.tsx";
+import type { Empty } from "../../lib/empty.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { isHeld, readsAt } from "../waiting.ts";
 
@@ -54,7 +54,7 @@ function Setting(props: { label: string; description: string; on: boolean }) {
 // failed, missing, empty or landed.
 function Over(props: {
 	read: Selection<unknown>;
-	empty?: EmptyProps;
+	empty?: Empty;
 	failed?: string;
 }) {
 	return (

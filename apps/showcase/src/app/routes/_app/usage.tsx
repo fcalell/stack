@@ -57,7 +57,6 @@ function Usage() {
 					read={meters}
 					failed="The meters did not load."
 					empty={{
-						title: "No limits",
 						sentence: "This plan meters nothing.",
 					}}
 				>

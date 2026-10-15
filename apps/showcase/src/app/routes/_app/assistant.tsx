@@ -160,9 +160,8 @@ function Assistant() {
 				read={history}
 				failed="The conversation did not load."
 				empty={{
-					title: "Ask about your deploys",
 					sentence:
-						"Why a deploy failed, what changed between two, or how much of the plan is used.",
+						"Ask about your deploys: why one failed, what changed between two, or how much of the plan is used.",
 				}}
 				foot={
 					<MessageInput

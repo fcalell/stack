@@ -14,10 +14,11 @@ import {
 	BusyMark,
 	FrameBody,
 	FrameLine,
-	formReads,
+	submitOf,
 	useFrame,
 } from "../../lib/read";
 import { TouchedContext, useTouched, useTouchState } from "../../lib/touched";
+import { useWords } from "../../lib/words";
 import { ActionBarBase } from "../action-bar/base";
 import { Text } from "../text";
 import type { FormGroup, FormProps } from "./index";
@@ -71,8 +72,9 @@ function GroupBox(props: { group: FormGroup }) {
 // the sheet) and a `Gate`'s (`in` the auth column). Outside the package's
 // exports: `in` is the drawers' alone. A sheet's form takes the sheet's
 // touched state, which its foot's bar reads too, and asks nothing when it is
-// left. A bar the form is given draws in its flow and subscribes to the reads
-// its fields hold; a sheet hoists the bar into its foot and gives it the same.
+// left. A bar the form is given draws in its flow and submits what the form's
+// own read gives (a group's read is the group's); a sheet hoists the bar into
+// its foot, which reads the same.
 export function FormBody({
 	children,
 	groups,
@@ -93,13 +95,11 @@ export function FormBody({
 	const sheet = useTouched();
 	const touch = within === "sheet" ? sheet : own;
 	useLeaveGuard(touch.leave, within !== "sheet");
+	const words = useWords();
+	const { waiting, ended } = submitOf(words, frame.form, failed);
 	const acts =
 		bar === undefined ? null : (
-			<ActionBarBase
-				{...bar}
-				acting={acting}
-				waits={formReads({ read, groups })}
-			/>
+			<ActionBarBase {...bar} acting={acting} painted={waiting} ended={ended} />
 		);
 	return (
 		<TouchedContext.Provider value={touch}>

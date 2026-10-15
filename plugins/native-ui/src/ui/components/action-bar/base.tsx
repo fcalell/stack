@@ -1,5 +1,4 @@
 import { isThenable } from "@fcalell/plugin-api/acts";
-import { type Selection, usePainted } from "@fcalell/plugin-api/tanstack-query";
 import type { Act, ChosenCount } from "@fcalell/ui-core/descriptors";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
@@ -71,9 +70,12 @@ export interface ActionBarInternal {
 	// host (a sheet holds its dismissal while its bar's act pends). Absent, the
 	// bar hosts its own.
 	acting?: Acting<number>;
-	// The reads the filled act's data is: it paints, inert, in its loaded box
-	// while any waits (a form's, its groups' and its sheet's).
-	waits?: readonly (Selection<unknown> | undefined)[];
+	// The read the filled act submits waits or stands still: the act paints,
+	// inert, in its loaded box.
+	painted?: boolean;
+	// The read the filled act submits has ended: the act stands blocked under
+	// this reason, the failed sentence or `words.missing`.
+	ended?: string;
 }
 
 function AllAct(props: { label: string; applies: boolean; onAct: () => void }) {
@@ -128,23 +130,28 @@ function Chosen({ chosen }: { chosen: ChosenCount }) {
 	);
 }
 
-const NO_WAITS: readonly undefined[] = [];
-
 export function ActionBarBase({
-	acts,
+	acts: offered,
 	fit,
 	chosen,
 	pending,
 	kept,
 	acting: given,
-	waits = NO_WAITS,
+	painted = false,
+	ended,
 }: ActionBarProps & ActionBarInternal) {
 	const where = fit ?? "end";
 	const own = useAct<number>("line");
 	// A failure draws in the bar's kept line, so it never moves the act; the
 	// same line says an act waits for a connection.
 	const acting = given ?? own;
-	const painted = usePainted(waits);
+	// The filled act is the one a read's end blocks.
+	const acts =
+		ended === undefined
+			? offered
+			: offered.map((act, at) =>
+					at === offered.length - 1 ? { ...act, blocked: ended } : act,
+				);
 	// The last blocked act's reason takes the line a failure would draw in.
 	const reason = acts.findLast((act) => act.blocked !== undefined)?.blocked;
 	// The reason this bar last drew: once a line has drawn the bar keeps its box.

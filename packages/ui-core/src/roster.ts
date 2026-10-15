@@ -617,10 +617,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// A `foot` (a field or a selection bar) docks under the body and spans
 		// it; a `MessageInput` keeps its own measure column. A `sheet` docks there
 		// in the foot's place while it is open, the Pane measuring the foot's
-		// region for it. `empty` stands in place of the children: centred in
-		// what the body leaves, or at its top over the empty state's own children
-		// (the mark, the title at the heading role over the sentence at meta, the
-		// act the filled one with the plus). A `cover` Pane spans
+		// region for it. The `empty` of its `read` stands in place of the children,
+		// centred in what the body leaves (the sentence at meta, the act the filled
+		// one with the plus); it answers for the Pane's own read, so a Pane with
+		// none takes no `empty`. A `cover` Pane spans
 		// its Place, the Panes before it hidden. On a record's Pane the title is the
 		// record's name (a `Part`, the generic word for the kind while it loads)
 		// and the actions and more are the record's acts.
@@ -799,11 +799,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// own selections, and its `read` draws the failed, missing and empty
 		// forms in the body's place.
 		// `description` paints where it will stand while its selection waits; loaded,
-		// `""` draws no line, as an undefined one. `empty` stands in its body's place in
-		// a hairline frame (the mark, the title at body 500 over the sentence at
-		// meta, the act the hairline one), or as one quiet sentence at meta when
-		// only the sentence is given. The title is the heading size, folded or not,
-		// and no Section stands in a Section.
+		// `""` draws no line, as an undefined one. The `empty` of its `read` stands
+		// in its body's place in a hairline frame (the sentence at meta, the act the
+		// hairline one), or as one quiet sentence at meta when only the sentence
+		// is given; a Section with no `read` takes no `empty`. The title is the
+		// heading size, folded or not, and no Section stands in a Section.
 		Section: {
 			props: [
 				"title",
@@ -953,8 +953,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// the page's, at most a measure wide; a Sheet's or a Gate's `form` (these
 		// props) stands on their column, uncapped, a Sheet's bar stuck to the edge
 		// of its body (web), in the sheet's pinned foot (phone), a Gate's across
-		// the column. The bar paints its filled act, inert, while the form's read or
-		// any group's waits (a sheet's own read too); the form draws no busy mark
+		// the column. The bar paints its filled act, inert, while the form's own
+		// read waits (a sheet's too), and stands blocked with the failed sentence
+		// once that read failed or is missing; a group's read is the group's and
+		// never reaches the bar. The form draws no busy mark
 		// of its own for an act that runs.
 		Form: {
 			props: ["children", "groups", "bar", "read", "empty", "failed"],
@@ -999,8 +1001,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// A rejection stands in the bar's kept line under the acts (`error`), the
 		// act ready again, so a failure never moves it; an act waiting for a
 		// connection says so in the same line and holds nothing. A form's or a
-		// sheet's bar paints its filled act, inert, while any read its fields hold
-		// waits (internal `waits`: the form's, each group's and the sheet's).
+		// sheet's bar paints its filled act, inert, while the form's own read (or
+		// the sheet's) waits, and blocks it under the failed sentence once that read
+		// ended (internal `painted` and `ended`).
 		// `pending` is a PendingBar's props: the bar draws it over its own
 		// acts, which stay drawn unseen and inert, so the place keeps the loaded
 		// bar's height.

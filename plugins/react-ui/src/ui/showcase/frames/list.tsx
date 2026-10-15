@@ -139,7 +139,6 @@ export function drawList(frame: ShowcaseFrame) {
 						read={notes}
 						failed="The notes did not load."
 						empty={{
-							title: "No notes",
 							sentence: "Notes you write land here, newest first.",
 							act: { label: "New note", onAct: refetch },
 						}}
@@ -159,7 +158,6 @@ export function drawList(frame: ShowcaseFrame) {
 						read={deploys}
 						failed="The deploys did not load."
 						empty={{
-							title: "No deploys",
 							sentence: "Each deploy of the project lands here.",
 							act: { label: "Deploy", onAct: refetch },
 						}}
@@ -180,7 +178,6 @@ export function drawList(frame: ShowcaseFrame) {
 						read={keys}
 						failed="The host keys did not load."
 						empty={{
-							title: "No host keys",
 							sentence: "The keys the host presents land here.",
 							act: { label: "Scan host", onAct: refetch },
 						}}
@@ -202,7 +199,6 @@ export function drawList(frame: ShowcaseFrame) {
 						read={hosts}
 						failed="The hosts did not load."
 						empty={{
-							title: "No hosts",
 							sentence: "Hosts you allow land here.",
 						}}
 					>
@@ -242,7 +238,6 @@ export function drawList(frame: ShowcaseFrame) {
 						read={limits}
 						failed="The limits did not load."
 						empty={{
-							title: "No limits",
 							sentence: "The limits of your plan land here.",
 						}}
 					>

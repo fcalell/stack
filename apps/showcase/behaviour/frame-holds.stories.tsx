@@ -331,3 +331,25 @@ export const FailedSheetBlocksItsSubmit: StoryObj = {
 		await expect(canvas.getAllByText("This didn't load.").length).toBe(2);
 	},
 };
+
+// The sheet's read paints its form's bar too, the form standing in the body.
+export const AWaitingSheetPaintsItsFormsBar: StoryObj = {
+	render: () => (
+		<Stage contain>
+			<Sheet
+				open
+				onClose={() => {}}
+				title="Invite"
+				fit="pane"
+				read={sheeted.waiting}
+				form={{ bar: { acts: [{ label: "Send form", onAct: invite }] } }}
+			>
+				{BODY(sheeted.ready)}
+			</Sheet>
+		</Stage>
+	),
+	play: async ({ canvas }) => {
+		const send = (await canvas.findByText("Send form")).closest("button");
+		await expect(send).toHaveAttribute("inert");
+	},
+};

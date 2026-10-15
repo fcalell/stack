@@ -206,8 +206,8 @@ function Conversation(props: { id: string; state: ShowcaseFrame["state"] }) {
 					read={turns}
 					failed="The conversation did not load."
 					empty={{
-						title: "Ask about this deploy",
-						sentence: "Why it failed, what it changed, or what to run next.",
+						sentence:
+							"Ask about this deploy: why it failed, what it changed, or what to run next.",
 					}}
 					foot={
 						<MessageInput

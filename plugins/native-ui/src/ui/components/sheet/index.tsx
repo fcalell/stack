@@ -6,8 +6,7 @@ import type { SheetFit } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
 import { useAct } from "../../lib/act";
 import type { Closed } from "../../lib/closed";
-import type { EmptyProps } from "../../lib/empty";
-import { formReads } from "../../lib/read";
+import type { Empty } from "../../lib/empty";
 import type { FormProps } from "../form";
 import { FormBody } from "../form/base";
 import { SheetBase } from "./base";
@@ -35,7 +34,7 @@ export interface SheetProps extends Closed {
 	/** What the body holds, read once for the frame: while it waits the body's leaves paint and the submit with them, inert; its failure and a missing record stand in the body's place, the submit blocked with the failed sentence. A sheet starts with no holds: its read draws its state here whatever the page under it holds. */
 	read?: Selection<unknown>;
 	/** The body's sentence when the `read`'s selection is empty. */
-	empty?: EmptyProps;
+	empty?: Empty;
 	/** A form the body ends with, drawn in the sheet's column: its `bar` stands in the sheet's foot, pinned while the fields scroll, and the sheet asks nothing when it closes. Give the form's `bar` or the sheet's `submit` as the act that completes the task, not both. */
 	form?: FormProps;
 	// The body, ahead of the `form`.
@@ -79,7 +78,8 @@ export function Sheet({
 				failed={failed}
 				fit={fit}
 				bar={form?.bar}
-				waits={form && formReads(form)}
+				barRead={form?.read}
+				barFailed={form?.failed}
 				read={read}
 				empty={empty}
 			>

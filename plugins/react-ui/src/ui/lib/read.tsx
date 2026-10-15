@@ -8,7 +8,7 @@ import { ButtonBase } from "../components/button/base.tsx";
 import { MissingBase } from "../components/missing/base.tsx";
 import { Spinner } from "../components/spinner/index.tsx";
 import { Text } from "../components/text/index.tsx";
-import { EmptyBase, type EmptyFit, type EmptyProps } from "./empty.tsx";
+import { type Empty, EmptyBase, type EmptyFit } from "./empty.tsx";
 import { useWords } from "./words.tsx";
 
 /** A frame's one subscription to its read (a read or a selection): the form it draws (from its own selection's reads), its count, whether it refetches, whether it holds its read (it draws that read's busy, stale and paused flags), the hashes it and its ancestors hold (`held`, for its body to publish) and the retry. */
@@ -23,14 +23,6 @@ export function useFrame(read?: Selection<unknown>) {
 }
 
 export type Frame = ReturnType<typeof useFrame>;
-
-/** The reads a form's fields hold: its own and each group's. */
-export function formReads(form: {
-	read?: Selection<unknown>;
-	groups?: readonly { read?: Selection<unknown> }[];
-}): (Selection<unknown> | undefined)[] {
-	return [form.read, ...(form.groups?.map((group) => group.read) ?? [])];
-}
 
 /** The reason an act stands blocked under once the read it depends on has ended (a frame's `form`, or a selection's `phase`): the failed sentence (the frame's own when it has one), or `words.missing`. None while the read waits, stands still or answered. */
 export function endedReason(
@@ -47,11 +39,19 @@ export function endedItems(words: Words, reason: string): readonly MenuItem[] {
 	return [{ label: words.more, blocked: reason, onAct: () => {} }];
 }
 
+/** What the bar that submits a frame's data takes from the frame's own read: whether its filled act paints (the read waits or stands still, so the bar keeps its loaded box) and the reason it stands blocked under (the read failed or is missing). A group's read is not the form's, so it never reaches the bar. */
+export function submitOf(words: Words, form: Frame["form"], failed?: string) {
+	return {
+		waiting: form === "waiting" || form === "still",
+		ended: endedReason(words, form, failed),
+	};
+}
+
 /** What a frame draws in place of its body, or its body: the failed, missing and empty forms in the frame's `fit`; ready, waiting and idle are the loaded tree, its leaves painting. */
 export function FrameBody(props: {
 	frame: Frame;
 	fit: EmptyFit;
-	empty?: EmptyProps;
+	empty?: Empty;
 	failed?: string;
 	children?: ReactNode;
 }) {
