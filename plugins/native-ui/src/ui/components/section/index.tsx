@@ -26,7 +26,7 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { EmptyBase, type EmptyProps } from "../../lib/empty";
 import { Ink } from "../../lib/ink";
-import { Painted } from "../../lib/paint";
+import { clipWhen, Painted } from "../../lib/paint";
 import { partText } from "../../lib/parts";
 import { BusyMark, FrameBody, FrameLine, useFrame } from "../../lib/read";
 import { useWords } from "../../lib/words";
@@ -108,9 +108,13 @@ export function Section({
 	let sentence: ReactNode = null;
 	if (said.painted)
 		sentence = (
-			<Text role="meta">
-				<Painted role="sentence" />
-			</Text>
+			<RNText
+				numberOfLines={1}
+				{...clipWhen(true)}
+				className={text({ role: "meta" })}
+			>
+				<Painted role="phrase" />
+			</RNText>
 		);
 	else if (said.value) sentence = <Text role="meta">{said.value}</Text>;
 	// A count is not drawn while its body waits: a painted chip would carry an
