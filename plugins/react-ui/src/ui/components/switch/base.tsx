@@ -1,4 +1,5 @@
 import { Switch as Base } from "@base-ui/react/switch";
+import type { Draft } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import { switchThumb, switchTrack } from "@fcalell/ui-core/variants";
 import { useHeldDraft } from "../../lib/act.ts";
@@ -18,14 +19,16 @@ const ON =
 const THUMB =
 	"transition-transform duration-fast ease-in-out data-disabled:bg-ink-disabled";
 
-/** The track and thumb every Switch renders. `painted` is the track while its data is not here: filled, the thumb not drawn, inert. Outside the package's exports. */
+/** The track and thumb every Switch renders, on the `draft` its host holds: a field hosts the draft of its switch and draws a rejection in its own line. `painted` is the track while its data is not here: filled, the thumb not drawn, inert. Outside the package's exports. */
 export function SwitchBase({
-	checked,
+	draft,
 	onChange,
 	label,
 	painted: given,
-}: SwitchProps & { painted?: boolean }) {
-	const draft = useHeldDraft(checked);
+}: Omit<SwitchProps, "checked"> & {
+	draft: Draft<boolean>;
+	painted?: boolean;
+}) {
 	const painted = given || draft.painted;
 	const on = draft.value && !painted;
 	const state = on ? "on" : "off";
@@ -58,5 +61,22 @@ export function SwitchBase({
 				/>
 			</span>
 		</Base.Root>
+	);
+}
+
+/** A Switch that holds its own draft, as a bare one and a row's toggle do; a rejection toasts. Outside the package's exports. */
+export function HeldSwitch({
+	checked,
+	onChange,
+	label,
+	painted,
+}: SwitchProps & { painted?: boolean }) {
+	return (
+		<SwitchBase
+			draft={useHeldDraft(checked)}
+			onChange={onChange}
+			label={label}
+			painted={painted}
+		/>
 	);
 }

@@ -3,22 +3,18 @@ import { accepts, kindsOf, pickerTypes } from "@fcalell/ui-core/file";
 import { formatterFor } from "@fcalell/ui-core/format";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
+	FIELD_ERROR_LINE,
 	FIELD_PLACEHOLDER,
 	field,
 	fieldValue,
 	text,
 } from "@fcalell/ui-core/variants";
 import * as DocumentPicker from "expo-document-picker";
-import { useContext } from "react";
-import { Pressable, Text as RNText } from "react-native";
+import { useContext, useState } from "react";
+import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import {
-	FieldDisabled,
-	FieldError,
-	FieldRefusal,
-	useFieldName,
-} from "../../lib/field";
+import { FieldDisabled, FieldError, useFieldName } from "../../lib/field";
 import { Ink } from "../../lib/ink";
 import { pickedFromDocument } from "../../lib/picked";
 import { useTouched } from "../../lib/touched";
@@ -43,8 +39,8 @@ export interface FileInputProps extends Closed {
 // document picker, which names MIME types alone, so a type `accept` spells as
 // an extension is checked on the file picked. Empty it reads Choose file,
 // chosen it shows the file's name and size with an act that removes it. A file
-// of another type is refused into its `FormField`'s error line and never
-// reaches `onChange`; the line clears on the next pick. The phone has no drop.
+// of another type is refused in a line under the box and never reaches
+// `onChange`; the line clears on the next pick. The phone has no drop.
 // `edge-error` when its `FormField` is in error, the disabled fill when its
 // field is disabled.
 export function FileInput({ value, onChange, accept }: FileInputProps) {
@@ -53,7 +49,8 @@ export function FileInput({ value, onChange, accept }: FileInputProps) {
 	const name = useFieldName();
 	const error = useContext(FieldError);
 	const disabled = useContext(FieldDisabled);
-	const refuse = useContext(FieldRefusal);
+	// What the box refused stands in its own line until the next pick.
+	const [refused, refuse] = useState<string>();
 	const choose = async () => {
 		const result = await DocumentPicker.getDocumentAsync({
 			type: pickerTypes(accept),
@@ -63,7 +60,7 @@ export function FileInput({ value, onChange, accept }: FileInputProps) {
 		touch();
 		const file = pickedFromDocument(asset);
 		if (!accepts(file, accept)) {
-			refuse?.(
+			refuse(
 				filled(words.wrongType, {
 					name: file.name,
 					types: kindsOf(accept, words).join(", "),
@@ -71,70 +68,77 @@ export function FileInput({ value, onChange, accept }: FileInputProps) {
 			);
 			return;
 		}
-		refuse?.(undefined);
+		refuse(undefined);
 		onChange(file);
 	};
 	const ink = disabled ? "ink-disabled" : "ink-meta";
 	return (
-		<Pressable
-			accessible={false}
-			disabled={disabled}
-			onPress={choose}
-			className={cn(
-				field({
-					trailing: value ? "act" : "none",
-					state: error ? "error" : "rest",
-				}),
-				"flex-row items-center",
-				disabled && "bg-fill-disabled",
-			)}
-		>
+		<View className="gap-pair">
 			<Pressable
-				accessibilityRole="button"
-				accessibilityLabel={name}
-				accessibilityState={{ disabled }}
+				accessible={false}
 				disabled={disabled}
 				onPress={choose}
-				className="flex-1 flex-row items-center gap-inside min-w-0"
+				className={cn(
+					field({
+						trailing: value ? "act" : "none",
+						state: error || refused ? "error" : "rest",
+					}),
+					"flex-row items-center",
+					disabled && "bg-fill-disabled",
+				)}
 			>
-				<Ink.Provider value={ink}>
-					<Icon name={value ? "File" : "FileUp"} fit="control" />
-				</Ink.Provider>
-				<RNText
-					numberOfLines={1}
-					className={cn(
-						fieldValue({ kind: "text" }),
-						!value && FIELD_PLACEHOLDER,
-						"flex-1",
-						disabled && "text-ink-disabled",
-					)}
+				<Pressable
+					accessibilityRole="button"
+					accessibilityLabel={name}
+					accessibilityState={{ disabled }}
+					disabled={disabled}
+					onPress={choose}
+					className="flex-1 flex-row items-center gap-inside min-w-0"
 				>
-					{value ? value.name : words.chooseFile}
-				</RNText>
-				{value ? (
+					<Ink.Provider value={ink}>
+						<Icon name={value ? "File" : "FileUp"} fit="control" />
+					</Ink.Provider>
 					<RNText
+						numberOfLines={1}
 						className={cn(
-							text({ role: "meta" }),
-							"shrink-0",
+							fieldValue({ kind: "text" }),
+							!value && FIELD_PLACEHOLDER,
+							"flex-1",
 							disabled && "text-ink-disabled",
 						)}
 					>
-						{formatterFor("number", undefined, BYTES).format(value.size)}
+						{value ? value.name : words.chooseFile}
 					</RNText>
+					{value ? (
+						<RNText
+							className={cn(
+								text({ role: "meta" }),
+								"shrink-0",
+								disabled && "text-ink-disabled",
+							)}
+						>
+							{formatterFor("number", undefined, BYTES).format(value.size)}
+						</RNText>
+					) : null}
+				</Pressable>
+				{value ? (
+					<IconButton
+						icon="X"
+						label={`${words.remove} ${value.name}`}
+						onAct={() => {
+							touch();
+							refuse(undefined);
+							onChange(null);
+						}}
+						fit="field"
+					/>
 				) : null}
 			</Pressable>
-			{value ? (
-				<IconButton
-					icon="X"
-					label={`${words.remove} ${value.name}`}
-					onAct={() => {
-						touch();
-						refuse?.(undefined);
-						onChange(null);
-					}}
-					fit="field"
-				/>
+			{refused ? (
+				<RNText accessibilityRole="alert" className={FIELD_ERROR_LINE}>
+					{refused}
+				</RNText>
 			) : null}
-		</Pressable>
+		</View>
 	);
 }

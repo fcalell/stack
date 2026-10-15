@@ -50,8 +50,8 @@ export const Checking: StoryObj = {
 	},
 };
 
-// A refused code goes to the field's error line with the server's reason, and
-// the next digit clears it.
+// A refused code stands in the control's own line, under the boxes, and the
+// next digit clears it.
 export const Refused: StoryObj = {
 	render: () => (
 		<Code check={() => Promise.reject(new Error("That code is not right."))} />
@@ -59,8 +59,15 @@ export const Refused: StoryObj = {
 	play: async ({ canvas, userEvent }) => {
 		await userEvent.tab();
 		await userEvent.keyboard("481902");
-		await expect(
-			await canvas.findByText("That didn't go through."),
-		).toBeVisible();
+		const line = await canvas.findByRole("alert");
+		await expect(line).toHaveTextContent("That didn't go through.");
+		const boxes = canvas.getByRole("textbox", { name: "Code" }).parentElement;
+		await expect(line.getBoundingClientRect().top).toBeGreaterThanOrEqual(
+			(boxes as HTMLElement).getBoundingClientRect().bottom,
+		);
+		// The check disabled the input, which dropped its focus.
+		await userEvent.tab();
+		await userEvent.keyboard("{Backspace}");
+		await waitFor(() => expect(canvas.queryByRole("alert")).toBeNull());
 	},
 };

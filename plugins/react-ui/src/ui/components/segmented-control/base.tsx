@@ -1,5 +1,6 @@
 import { Radio } from "@base-ui/react/radio";
 import { RadioGroup } from "@base-ui/react/radio-group";
+import type { Draft } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import {
 	SEGMENTED_CONTROL,
@@ -24,15 +25,17 @@ const IDLE = "hover:bg-wash-hover active:bg-wash-press";
 const CHOSEN = "hover:bg-wash-selected-hover";
 const LABEL = "truncate";
 
-/** The group every SegmentedControl renders. `painted` is the track while its data is not here: one filled box at its loaded size, the segments not drawn, inert. Outside the package's exports. */
+/** The group every SegmentedControl renders, on the `draft` its host holds: a field hosts the draft of its segments and draws a rejection in its own line. `painted` is the track while its data is not here: one filled box at its loaded size, the segments not drawn, inert. Outside the package's exports. */
 export function SegmentedControlBase({
 	label,
 	options,
-	value,
+	draft,
 	onChange,
 	painted: given,
-}: SegmentedControlProps & { painted?: boolean }) {
-	const draft = useHeldDraft(value);
+}: Omit<SegmentedControlProps, "value"> & {
+	draft: Draft<string>;
+	painted?: boolean;
+}) {
 	const painted = given || draft.painted;
 	const chosenValue = painted ? "" : draft.value;
 	// A FormField around it names it with its visible label.
@@ -70,5 +73,24 @@ export function SegmentedControlBase({
 				);
 			})}
 		</RadioGroup>
+	);
+}
+
+/** A SegmentedControl that holds its own draft, as a bare one does; a rejection toasts. Outside the package's exports. */
+export function HeldSegmentedControl({
+	label,
+	options,
+	value,
+	onChange,
+	painted,
+}: SegmentedControlProps & { painted?: boolean }) {
+	return (
+		<SegmentedControlBase
+			label={label}
+			options={options}
+			draft={useHeldDraft(value)}
+			onChange={onChange}
+			painted={painted}
+		/>
 	);
 }

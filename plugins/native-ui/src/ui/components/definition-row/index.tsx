@@ -36,7 +36,7 @@ import type { PickOneProps } from "../picker/index";
 import { StatusBase } from "../status/base";
 import { ChangeMark } from "../status/change";
 import type { SwitchProps } from "../switch";
-import { SwitchBase } from "../switch/base";
+import { HeldSwitch } from "../switch/base";
 
 const ROW = "relative flex-row items-center";
 // The hit covers the row under its text and its acts, and takes the press
@@ -235,7 +235,7 @@ export function DefinitionRowBase<V extends string | null = string>({
 	else if (toggle)
 		valueNode = (
 			<View className={CONTROL}>
-				<SwitchBase {...toggle} label={listed ? "" : label} painted={painted} />
+				<HeldSwitch {...toggle} label={listed ? "" : label} painted={painted} />
 			</View>
 		);
 	else if (pick)

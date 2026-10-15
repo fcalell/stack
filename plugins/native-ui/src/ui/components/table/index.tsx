@@ -72,7 +72,7 @@ import { navigate } from "../../lib/navigate";
 import { clipWhen, inertProps, Painted } from "../../lib/paint";
 import { useWords } from "../../lib/words";
 import { Checkbox } from "../checkbox";
-import { CheckboxBase } from "../checkbox/base";
+import { CheckboxBase, HeldCheckbox } from "../checkbox/base";
 import { Chip } from "../chip";
 import { ChipBase } from "../chip/base";
 import { Icon } from "../icon";
@@ -467,8 +467,8 @@ function TickCell({
 	onEdit: (checked: boolean) => unknown;
 	box: string;
 }) {
-	const draft = useHeldDraft(given);
-	const checked = draft.painted ? false : draft.value;
+	const draft = useHeldDraft<boolean | "mixed">(given);
+	const checked = !draft.painted && draft.value === true;
 	return (
 		<Pressable
 			accessibilityRole="checkbox"
@@ -477,7 +477,7 @@ function TickCell({
 			onPress={() => draft.change(!checked, () => onEdit(!checked))}
 			className={box}
 		>
-			<CheckboxBase target checked={checked} onChange={onEdit} label={label} />
+			<CheckboxBase target draft={draft} onChange={onEdit} label={label} />
 		</Pressable>
 	);
 }
@@ -725,7 +725,7 @@ function PaintedLeadRow(props: {
 		>
 			{props.choosing ? (
 				<View className={cn(TICK_BOX, tableFrozenCell({ state: "rest" }))}>
-					<CheckboxBase checked={false} onChange={NOOP} label="" painted />
+					<HeldCheckbox checked={false} onChange={NOOP} label="" painted />
 				</View>
 			) : null}
 			<View
@@ -1044,7 +1044,7 @@ function PaintedCell(props: {
 		);
 	switch (column.kind) {
 		case "check":
-			return <CheckboxBase checked={false} onChange={NOOP} label="" painted />;
+			return <HeldCheckbox checked={false} onChange={NOOP} label="" painted />;
 		case "status":
 			return <StatusBase painted />;
 		case "chip":

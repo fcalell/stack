@@ -106,6 +106,67 @@ function Setting(props: { srv: Server<boolean>; field?: boolean }) {
 	);
 }
 
+// The other descriptors a field hosts, each over a read and a save that refuses.
+function Descriptors(props: {
+	srv: Server<string>;
+	kind: "segments" | "select" | "options";
+}) {
+	const { srv, kind } = props;
+	const [value] = useState(() => srv.setting.at((s) => s.value));
+	const save = useSave(srv);
+	const choices = [
+		{ value: "day", label: "Day" },
+		{ value: "week", label: "Week" },
+	];
+	if (kind === "segments")
+		return (
+			<FormField
+				label="Period"
+				segments={{ options: choices, value, onChange: save }}
+			/>
+		);
+	if (kind === "select")
+		return (
+			<FormField
+				label="Period"
+				select={{ options: choices, value, onChange: save }}
+			/>
+		);
+	return (
+		<FormField
+			label="Period"
+			options={{ options: choices, value, onChange: save }}
+		/>
+	);
+}
+
+function Boxed(props: { srv: Server<boolean> }) {
+	const { srv } = props;
+	const [on] = useState(() => srv.setting.at((s) => s.value));
+	const save = useSave(srv);
+	return (
+		<FormField label="Notify" checkbox={{ checked: on, onChange: save }} />
+	);
+}
+
+function Level(props: { srv: Server<number> }) {
+	const { srv } = props;
+	const [level] = useState(() => srv.setting.at((s) => s.value));
+	const save = useSave(srv);
+	return (
+		<FormField
+			label="Level"
+			slider={{
+				value: level,
+				onChange: () => {},
+				onCommit: save,
+				min: 0,
+				max: 10,
+			}}
+		/>
+	);
+}
+
 function Name(props: { srv: Server<string> }) {
 	const { srv } = props;
 	const [name] = useState(() => srv.setting.at((s) => s.value));
@@ -265,8 +326,11 @@ const renamed = server({
 });
 
 // A typing control saves at its commit: the value held while it pends, and a
-// refusal puts the datum back with its reason in the field.
+// refusal puts the datum back with its reason in a toast. The field hosts only
+// its own descriptors' saves, so an Input given as children toasts as a bare
+// one does.
 export const ACommitThatIsRefusedPutsTheValueBack: StoryObj = {
+	parameters: TOASTING,
 	render: () => (
 		<Page>
 			<Name srv={renamed} />
@@ -279,8 +343,106 @@ export const ACommitThatIsRefusedPutsTheValueBack: StoryObj = {
 		await userEvent.type(input, "Bea");
 		await userEvent.tab();
 		await expect(input).toHaveValue("Bea");
-		await expect(await canvas.findByText("That name is taken.")).toBeVisible();
+		await screen.findAllByText("That name is taken.");
 		await expect(input).toHaveValue("Ana");
 		await expect(renamed.state.saves).toEqual(["Bea"]);
+	},
+};
+
+// Every descriptor a field hosts draws a refusal in the field's line, and the
+// value goes back to the datum: the field holds the save, not the control.
+const refusing = <T,>(initial: T) =>
+	server({
+		initial,
+		saveMs: 40,
+		readMs: 20,
+		refuse: () => wrongNow(),
+	});
+
+const boxed = refusing(false);
+
+export const ACheckboxInAFieldRefusesIntoTheFieldsLine: StoryObj = {
+	render: () => (
+		<Page>
+			<Boxed srv={boxed} />
+		</Page>
+	),
+	play: async ({ canvas, userEvent }) => {
+		const box = canvas.getByRole("checkbox", { name: "Notify" });
+		await waitFor(() => expect(box.hasAttribute("inert")).toBe(false));
+		await userEvent.click(box);
+		await expect(await canvas.findByText("Not now.")).toBeVisible();
+		await waitFor(() => expect(box).toHaveAttribute("aria-checked", "false"));
+	},
+};
+
+const sliding = refusing(3);
+
+export const ASliderInAFieldRefusesIntoTheFieldsLine: StoryObj = {
+	render: () => (
+		<Page>
+			<Level srv={sliding} />
+		</Page>
+	),
+	play: async ({ canvas, userEvent }) => {
+		const thumb = await canvas.findByRole("slider", { name: "Level" });
+		await waitFor(() => expect(thumb).toHaveAttribute("aria-valuenow", "3"));
+		thumb.focus();
+		await userEvent.keyboard("{ArrowRight}");
+		await expect(await canvas.findByText("Not now.")).toBeVisible();
+		await waitFor(() => expect(sliding.state.saves).toEqual([4]));
+		await waitFor(() => expect(thumb).toHaveAttribute("aria-valuenow", "3"));
+	},
+};
+
+const segmented = refusing("day");
+
+export const SegmentsInAFieldRefuseIntoTheFieldsLine: StoryObj = {
+	render: () => (
+		<Page>
+			<Descriptors srv={segmented} kind="segments" />
+		</Page>
+	),
+	play: async ({ canvas, userEvent }) => {
+		const day = await canvas.findByRole("radio", { name: "Day" });
+		await waitFor(() => expect(day).toHaveAttribute("aria-checked", "true"));
+		await userEvent.click(canvas.getByRole("radio", { name: "Week" }));
+		await expect(await canvas.findByText("Not now.")).toBeVisible();
+		await waitFor(() => expect(day).toHaveAttribute("aria-checked", "true"));
+	},
+};
+
+const choosing = refusing("day");
+
+export const OptionsInAFieldRefuseIntoTheFieldsLine: StoryObj = {
+	render: () => (
+		<Page>
+			<Descriptors srv={choosing} kind="options" />
+		</Page>
+	),
+	play: async ({ canvas, userEvent }) => {
+		const day = await canvas.findByRole("radio", { name: "Day" });
+		await waitFor(() => expect(day).toHaveAttribute("aria-checked", "true"));
+		await userEvent.click(canvas.getByRole("radio", { name: "Week" }));
+		await expect(await canvas.findByText("Not now.")).toBeVisible();
+		await waitFor(() => expect(day).toHaveAttribute("aria-checked", "true"));
+	},
+};
+
+const picking = refusing("day");
+
+export const ASelectInAFieldRefusesIntoTheFieldsLine: StoryObj = {
+	render: () => (
+		<Page>
+			<Descriptors srv={picking} kind="select" />
+		</Page>
+	),
+	play: async ({ canvas, userEvent }) => {
+		const trigger = await canvas.findByRole("combobox", { name: "Period" });
+		await waitFor(() => expect(trigger).toHaveTextContent("Day"));
+		await userEvent.click(trigger);
+		await userEvent.click(await screen.findByRole("option", { name: "Week" }));
+		await expect(await canvas.findByText("Not now.")).toBeVisible();
+		await waitFor(() => expect(trigger).toHaveTextContent("Day"));
 	},
 };

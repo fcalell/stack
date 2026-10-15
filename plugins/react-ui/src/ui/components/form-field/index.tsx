@@ -1,4 +1,5 @@
 import { Field } from "@base-ui/react/field";
+import type { Datum, Draft } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type {
 	Answered,
@@ -15,31 +16,27 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import {
-	type ReactNode,
-	useEffect,
-	useId,
-	useMemo,
-	useRef,
-	useState,
-} from "react";
+import { type ReactNode, useEffect, useId, useMemo, useRef } from "react";
+import { useFieldDraft } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
-import { FieldRefusal, GroupName } from "../../lib/field.ts";
+import { GroupName } from "../../lib/field.ts";
 import { focusFirst } from "../../lib/focus.ts";
 import { useWords } from "../../lib/words.tsx";
 import { CheckboxBase } from "../checkbox/base.tsx";
 import type { CheckboxProps } from "../checkbox/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
-import { OptionList, type OptionListProps } from "../option-list/index.tsx";
-import {
-	SegmentedControl,
-	type SegmentedControlProps,
-} from "../segmented-control/index.tsx";
-import { Select, type SelectProps } from "../select/index.tsx";
-import { Slider, type SliderProps } from "../slider/index.tsx";
+import { OptionListBase } from "../option-list/base.tsx";
+import type { OptionListProps } from "../option-list/index.tsx";
+import { SegmentedControlBase } from "../segmented-control/base.tsx";
+import type { SegmentedControlProps } from "../segmented-control/index.tsx";
+import { SelectBase } from "../select/base.tsx";
+import type { SelectProps } from "../select/index.tsx";
+import { SliderBase } from "../slider/base.tsx";
+import type { SliderProps } from "../slider/index.tsx";
 import { ChangeMark } from "../status/change.tsx";
-import { Switch, type SwitchProps } from "../switch/index.tsx";
+import { SwitchBase } from "../switch/base.tsx";
+import type { SwitchProps } from "../switch/index.tsx";
 
 const STACK = "flex flex-col min-w-0 max-w-full";
 const BESIDE = "flex items-center min-w-0";
@@ -148,20 +145,84 @@ function kindOf(props: Body): ControlKind | undefined {
 // and holds controls named on their own.
 type Form = "field" | ControlKind;
 
-// The control a field draws: the descriptor's component, or its children,
-// bound drawn from the field's value.
-function controlOf(props: Body, kind: ControlKind | undefined): ReactNode {
+// The value the descriptor's control saves, which the field holds the draft of.
+function savedOf(props: Body, kind: ControlKind | undefined): Datum<unknown> {
+	switch (kind) {
+		case "switch":
+			return props.switch?.checked;
+		case "checkbox":
+			return props.checkbox?.checked;
+		case "slider":
+			return props.slider?.value;
+		case "select":
+			return props.select?.value;
+		case "options":
+			return props.options?.value;
+		case "segments":
+			return props.segments?.value;
+		default:
+			return undefined;
+	}
+}
+
+// The control a field draws: the descriptor's control over the draft the field
+// holds, or its children, bound drawn from the field's value.
+function controlOf(
+	props: Body,
+	kind: ControlKind | undefined,
+	draft: Draft<unknown>,
+): ReactNode {
 	const { label } = props;
-	if (props.switch) return <Switch {...props.switch} label={label} />;
+	if (props.switch)
+		return (
+			<SwitchBase
+				{...props.switch}
+				draft={draft as Draft<boolean>}
+				label={label}
+			/>
+		);
 	if (props.checkbox)
 		return (
-			<CheckboxBase {...props.checkbox} label={label} target={FIELD_TARGET} />
+			<CheckboxBase
+				{...props.checkbox}
+				draft={draft as Draft<boolean | "mixed">}
+				label={label}
+				target={FIELD_TARGET}
+			/>
 		);
-	if (props.slider) return <Slider {...props.slider} label={label} />;
-	if (props.select) return <Select {...props.select} />;
-	if (props.options) return <OptionList {...props.options} />;
+	if (props.slider)
+		return (
+			<SliderBase
+				{...props.slider}
+				draft={draft as Draft<number>}
+				label={label}
+			/>
+		);
+	if (props.select)
+		return (
+			<SelectBase
+				{...props.select}
+				draft={draft as Draft<string | null | undefined>}
+			/>
+		);
+	if (props.options)
+		return (
+			<OptionListBase
+				{...props.options}
+				draft={draft as Draft<string | null | readonly string[]>}
+				onChange={
+					props.options.onChange as (next: string | string[]) => unknown
+				}
+			/>
+		);
 	if (props.segments)
-		return <SegmentedControl {...props.segments} label={label} />;
+		return (
+			<SegmentedControlBase
+				{...props.segments}
+				draft={draft as Draft<string>}
+				label={label}
+			/>
+		);
 	if (kind !== undefined) return null;
 	const { field, children } = props;
 	if (typeof children !== "function") return children;
@@ -182,15 +243,13 @@ function FieldBody(props: Body) {
 	const { label, description, disabled, answered } = props;
 	const words = useWords();
 	const folded = answered !== undefined;
-	// What a control refused (a file of the wrong type, a save the server
-	// refused) stands in the error line until its next change.
-	const [refused, refuse] = useState<string>();
+	// The field hosts its control's save: a save the server refused stands in
+	// the error line until the control's next change.
+	const kind = kindOf(props);
+	const { draft, refused } = useFieldDraft(savedOf(props, kind));
 	const error = refused ?? (props.field ? props.field.error : props.error);
 	// A folded field draws no control, so the consumer's function is not called.
-	const kind = kindOf(props);
-	const control = folded ? null : (
-		<FieldRefusal value={refuse}>{controlOf(props, kind)}</FieldRefusal>
-	);
+	const control = folded ? null : controlOf(props, kind, draft);
 	const form: Form = kind ?? "field";
 	const root = useRef<HTMLDivElement>(null);
 	const wasFolded = useRef(folded);
@@ -319,7 +378,7 @@ function FieldBody(props: Body) {
 	);
 }
 
-/** The label (body 500) over its control, the description (meta) under it and the error in the description's place; a switch stands at the label's end and a checkbox on its first line. Base UI's field wires the label, the description, the error, the validity and the disabled state into the control. A `change` draws the change mark ahead of the field, on its label's line. The label and the description are constants and always stand; a control given a selection paints itself, inert, until its read lands. */
+/** The label (body 500) over its control, the description (meta) under it and the error in the description's place; a switch stands at the label's end and a checkbox on its first line. Base UI's field wires the label, the description, the error, the validity and the disabled state into the control. A `change` draws the change mark ahead of the field, on its label's line. The label and the description are constants and always stand; a control given a selection paints itself, inert, until its read lands. The field hosts the save of its descriptor's control: the viewer's value holds while the save pends, and a refusal stands in the field's error line until the control's next change. */
 export function FormField<
 	V,
 	S extends string | null = string,

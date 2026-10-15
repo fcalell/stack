@@ -77,7 +77,7 @@ import { usePageTablet } from "../../lib/page.ts";
 import { Painted } from "../../lib/paint.tsx";
 import { Window } from "../../lib/window.tsx";
 import { useWords } from "../../lib/words.tsx";
-import { CheckboxBase } from "../checkbox/base.tsx";
+import { HeldCheckbox } from "../checkbox/base.tsx";
 import { Checkbox } from "../checkbox/index.tsx";
 import { ChipBase } from "../chip/base.tsx";
 import { Chip } from "../chip/index.tsx";
@@ -431,7 +431,7 @@ function TickCell(props: {
 			{/* biome-ignore lint/a11y/noLabelWithoutControl: the Checkbox inside is the control */}
 			<label className={box}>
 				<Field.Root disabled={row.blocked !== undefined}>
-					<CheckboxBase
+					<HeldCheckbox
 						cell
 						target={{}}
 						checked={props.ticked}
@@ -530,7 +530,7 @@ const Cell = memo(function Cell(props: {
 			) : control === "checkbox" ? (
 				// biome-ignore lint/a11y/noLabelWithoutControl: the Checkbox inside is the control
 				<label className={box}>
-					<CheckboxBase
+					<HeldCheckbox
 						cell
 						target={{}}
 						checked={cell === true}
@@ -1199,7 +1199,7 @@ function PaintedCell(props: {
 		);
 	switch (column.kind) {
 		case "check":
-			return <CheckboxBase checked={false} onChange={NOOP} label="" painted />;
+			return <HeldCheckbox checked={false} onChange={NOOP} label="" painted />;
 		case "status":
 			return <StatusBase painted />;
 		case "chip":
@@ -1255,7 +1255,7 @@ function PaintedRow(props: {
 							props.touch && tableFrozenCell({ state: "rest" }),
 						)}
 					>
-						<CheckboxBase checked={false} onChange={NOOP} label="" painted />
+						<HeldCheckbox checked={false} onChange={NOOP} label="" painted />
 					</div>
 				</td>
 			) : null}

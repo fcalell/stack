@@ -319,9 +319,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// The field box that chooses a file: empty, its whole box is the act (a
 		// leading glyph and the `chooseFile` word); chosen, the name, the size
 		// and an act that removes it. The web's box also takes a dropped file,
-		// ringed while one is over it. A file of another type is refused into its
-		// `FormField`'s error line and never reaches `onChange`, so it stands only
-		// inside a `FormField`.
+		// ringed while one is over it. A file of another type is refused in a line
+		// under the box and never reaches `onChange`.
 		FileInput: {
 			props: ["value", "onChange", "accept"],
 			draws: [
@@ -334,6 +333,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"FIELD_PLACEHOLDER",
 				"TEXT.role.meta",
 				"FIELD_GLYPH",
+				"FIELD_ERROR_LINE",
 				"ICON.fit.control",
 			],
 			states: ["rest", "hover", "focus", "disabled", "error", "empty"],
@@ -348,10 +348,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"ink-meta",
 					"fill-disabled",
 					"ink-disabled",
+					"ink-error",
 					"ring",
 				],
 				radii: ["control"],
-				spacing: ["inside", "control-x"],
+				spacing: ["inside", "control-x", "pair"],
 				sizes: ["field", "icon-control", "measure-short"],
 			},
 		},
@@ -397,7 +398,14 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		InputOtp: {
 			props: ["length", "value", "onChange", "onComplete"],
-			draws: ["OTP", "OTP_BOX", "OTP_DIGIT", "TEXT.role.meta", "SPINNER"],
+			draws: [
+				"OTP",
+				"OTP_BOX",
+				"OTP_DIGIT",
+				"TEXT.role.meta",
+				"FIELD_ERROR_LINE",
+				"SPINNER",
+			],
 			holds: ["OTP", "OTP_BOX", "OTP_DIGIT"],
 			states: ["rest", "focus", "pending", "error"],
 			owns: {
@@ -408,6 +416,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"edge-error",
 					"ink-body",
 					"ink-meta",
+					"ink-error",
 					"ring",
 				],
 				radii: ["control"],
@@ -1445,7 +1454,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// label the field supplies), whose form the field draws, or `children`
 		// for any other control. The label and the description are constants and
 		// always stand; a control given a selection paints itself, inert, until its
-		// read lands.
+		// read lands. The field hosts the save of its descriptor's control and draws
+		// a rejection in its error line.
 		FormField: {
 			props: [
 				"change",

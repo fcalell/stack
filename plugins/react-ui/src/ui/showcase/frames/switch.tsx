@@ -1,5 +1,5 @@
 import { Field } from "@base-ui/react/field";
-import { SwitchBase } from "../../components/switch/base.tsx";
+import { HeldSwitch } from "../../components/switch/base.tsx";
 import { Switch } from "../../components/switch/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { beside, isPaint } from "./painted.tsx";
@@ -15,7 +15,7 @@ export function drawSwitch(frame: ShowcaseFrame) {
 		return beside(
 			frame,
 			<Switch checked onChange={change} label="Weekly summary" />,
-			<SwitchBase checked onChange={change} label="Weekly summary" painted />,
+			<HeldSwitch checked onChange={change} label="Weekly summary" painted />,
 		);
 	const on = frame.cell.name.endsWith(".on");
 	if (frame.state === "selected" && !on) return undefined;

@@ -1,5 +1,5 @@
 import { FormField } from "../../components/form-field/index.tsx";
-import { SegmentedControlBase } from "../../components/segmented-control/base.tsx";
+import { HeldSegmentedControl } from "../../components/segmented-control/base.tsx";
 import { SegmentedControl } from "../../components/segmented-control/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { beside, isPaint } from "./painted.tsx";
@@ -31,7 +31,7 @@ export function drawSegmentedControl(frame: ShowcaseFrame) {
 				value="week"
 				onChange={change}
 			/>,
-			<SegmentedControlBase
+			<HeldSegmentedControl
 				label="Period"
 				options={PERIODS}
 				value="week"

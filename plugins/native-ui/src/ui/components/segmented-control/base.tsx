@@ -1,3 +1,4 @@
+import type { Draft } from "@fcalell/plugin-api/tanstack-query";
 import {
 	SEGMENTED_CONTROL,
 	segment,
@@ -23,16 +24,19 @@ const LABEL = "shrink";
 // The group every SegmentedControl renders: segments flush on the group
 // ground, the chosen one under the selection wash in body ink, the others in
 // meta ink: a radio group. A FormField around it names it with its visible
-// label. `painted` is the track while its data is not here: one filled box at
+// label. It draws the `draft` its host holds: a field hosts the draft of its
+// segments and draws a rejection in its own line. `painted` is the track while its data is not here: one filled box at
 // its loaded size, the segments not drawn, inert. Outside the package's exports.
 export function SegmentedControlBase({
 	label,
 	options,
-	value,
+	draft,
 	onChange,
 	painted: given,
-}: SegmentedControlProps & { painted?: boolean }) {
-	const draft = useHeldDraft(value);
+}: Omit<SegmentedControlProps, "value"> & {
+	draft: Draft<string>;
+	painted?: boolean;
+}) {
 	const painted = given || draft.painted;
 	const named = useContext(GroupName);
 	const shown = useShown(painted);
@@ -72,5 +76,25 @@ export function SegmentedControlBase({
 				);
 			})}
 		</View>
+	);
+}
+
+// A SegmentedControl that holds its own draft, as a bare one does; a rejection
+// toasts. Outside the package's exports.
+export function HeldSegmentedControl({
+	label,
+	options,
+	value,
+	onChange,
+	painted,
+}: SegmentedControlProps & { painted?: boolean }) {
+	return (
+		<SegmentedControlBase
+			label={label}
+			options={options}
+			draft={useHeldDraft(value)}
+			onChange={onChange}
+			painted={painted}
+		/>
 	);
 }

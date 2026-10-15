@@ -1,15 +1,19 @@
-import { isThenable } from "@fcalell/plugin-api/acts";
+import { drew, isThenable, refusal } from "@fcalell/plugin-api/acts";
 import { useRun } from "@fcalell/plugin-api/tanstack-query";
-import { OTP, OTP_DIGIT, otpBox, text } from "@fcalell/ui-core/variants";
-import { useContext, useRef } from "react";
+import {
+	FIELD_ERROR_LINE,
+	OTP,
+	OTP_DIGIT,
+	otpBox,
+	text,
+} from "@fcalell/ui-core/variants";
+import { useContext, useRef, useState } from "react";
 import { Text as RNText, TextInput, View } from "react-native";
-import { useFailed } from "../../lib/act";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import {
 	FieldError,
 	FieldFocus,
-	FieldRefusal,
 	useFieldClaim,
 	useFieldName,
 } from "../../lib/field";
@@ -34,7 +38,7 @@ export interface InputOtpProps extends Closed {
 // hears the code once its last digit lands; a promise it returns holds the
 // boxes at rest while the code is checked, the input inert (unwritable and
 // marked disabled, still read), the spinner and its line under it, and a
-// refusal goes to the field's error line, with its reason, until the next
+// refusal stands in a line under the boxes, with its reason, until the next
 // digit.
 export function InputOtp({
 	length,
@@ -44,16 +48,17 @@ export function InputOtp({
 }: InputOtpProps) {
 	const words = useWords();
 	const run = useRun();
-	const failed = useFailed();
-	const refuse = useContext(FieldRefusal);
+	// The check's refusal stands in the control's own line until the next digit.
+	const [refused, refuse] = useState<string>();
 	const checking = run.pending !== undefined;
 	// The attempt a Retry runs again: its promise, so the toast's act holds it.
 	const attempt = (code: string): unknown => {
 		const result = onComplete?.(code);
 		if (!isThenable(result)) return result;
-		return Promise.resolve(result).catch((error: unknown) =>
-			failed(error, () => attempt(code)),
-		);
+		return Promise.resolve(result).catch((error: unknown) => {
+			drew(error);
+			refuse(refusal(error) ?? words.actFailed);
+		});
 	};
 	const complete = (code: string) => run.run(true, () => attempt(code));
 	const { touch } = useTouched();
@@ -70,7 +75,7 @@ export function InputOtp({
 						// biome-ignore lint/suspicious/noArrayIndexKey: a box is its position
 						key={index}
 						className={cn(
-							otpBox({ state: error ? "error" : "rest" }),
+							otpBox({ state: error || refused ? "error" : "rest" }),
 							"items-center justify-center",
 						)}
 					>
@@ -91,7 +96,7 @@ export function InputOtp({
 						const next = raw.replace(/\D/g, "").slice(0, length);
 						touch();
 						if (next === value) return;
-						refuse?.(undefined);
+						refuse(undefined);
 						onChange(next);
 						if (next.length === length) complete(next);
 					}}
@@ -111,6 +116,11 @@ export function InputOtp({
 						{words.checking}
 					</RNText>
 				</View>
+			) : null}
+			{refused ? (
+				<RNText accessibilityRole="alert" className={FIELD_ERROR_LINE}>
+					{refused}
+				</RNText>
 			) : null}
 		</View>
 	);

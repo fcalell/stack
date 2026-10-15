@@ -6,8 +6,7 @@ import {
 	useRun,
 } from "@fcalell/plugin-api/tanstack-query";
 import type { ActBase } from "@fcalell/ui-core/descriptors";
-import { use, useRef } from "react";
-import { FieldRefusal } from "./field.ts";
+import { useRef, useState } from "react";
 import { toast } from "./toast.ts";
 import { useWords } from "./words.tsx";
 
@@ -55,33 +54,35 @@ export function useAct<K = true>(where: "line" | "toast"): Acting<K> {
 	};
 }
 
-/** Where a save's rejection is drawn: the field's error line when the control stands in a field, else a failed toast whose Retry saves again. `own` is the save's sentence when the server gives no refusal. */
-export function useFailed(
-	own?: string,
-): (error: unknown, again: () => unknown) => void {
+/** A bare control's draft: its rejection toasts, and the toast's Retry saves the same value again. A control in a `FormField` is handed the field's draft instead (`useFieldDraft`), so the field's line draws the rejection. */
+export function useHeldDraft<T>(value: Datum<T>): Draft<T> {
 	const words = useWords();
-	const refuse = use(FieldRefusal);
-	return (error, again) => {
-		drew(error);
-		const sentence = refusal(error) ?? own ?? words.actFailed;
-		if (refuse) refuse(sentence);
-		else
-			toast(sentence, {
-				state: "failed",
-				act: { label: words.retry, onAct: again },
-			});
-	};
+	return useDraft(value, (error, again) => {
+		toast(refusal(error) ?? words.actFailed, {
+			state: "failed",
+			act: { label: words.retry, onAct: again },
+		});
+	});
 }
 
-/** A control's draft with its rejections drawn where `useFailed` draws them. The field's refusal is cleared by the next change, so the line is the latest save's alone. */
-export function useHeldDraft<T>(value: Datum<T>): Draft<T> {
-	const refuse = use(FieldRefusal);
-	const draft = useDraft(value, useFailed());
+/** The draft a `FormField` hosts for its control's save, and the line the save's rejection draws in: the latest save's alone, cleared by the next change. */
+export function useFieldDraft<T>(value: Datum<T>): {
+	draft: Draft<T>;
+	refused: string | undefined;
+} {
+	const words = useWords();
+	const [refused, refuse] = useState<string>();
+	const draft = useDraft(value, (error) =>
+		refuse(refusal(error) ?? words.actFailed),
+	);
 	return {
-		...draft,
-		change: (next, save) => {
-			refuse?.(undefined);
-			return draft.change(next, save);
+		draft: {
+			...draft,
+			change: (next, save) => {
+				refuse(undefined);
+				return draft.change(next, save);
+			},
 		},
+		refused,
 	};
 }

@@ -295,9 +295,11 @@ or from `onCommit` (`Input`, `TextArea`, and `Slider`, whose `onChange` hears ea
 constant's, while the latest save pends and then follows its datum once the refetch the write
 invalidated has landed, so nothing flickers back and no saving mark is drawn. Each change
 supersedes the one before; a refusal puts the value back and draws its reason in the field's error
-line, else in a failed toast whose Retry saves the same value again. An `InputOtp`'s `onComplete`
-returns the check's promise: the boxes hold the code and a checking line stands under them at once,
-with no delay, and a refusal goes to the field's error line.
+line when the control is one of a `FormField`'s descriptors (`switch`, `checkbox`, `slider`,
+`select`, `options`, `segments`), which the field hosts, else in a failed toast whose Retry saves the
+same value again. An `InputOtp`'s `onComplete` returns the check's promise: the boxes hold the code
+and a checking line stands under them at once, with no delay, and a refusal stands in the control's
+own line under the boxes.
 
 In dev, `QueryProvider` logs an error for a mutation an `onAct` started without returning its promise
 and for a mutation failure nothing drew; a mutation with its own `onError` is exempt.
@@ -512,8 +514,8 @@ A picked file's `src` is a local address to draw it from before it is uploaded: 
 set on every file the photo library and the file picker hand over. It is the asset's own address,
 so nothing needs revoking.
 
-A `FileInput` stands only inside a `FormField`, which labels it and draws the error line a refused
-file lands in; outside one the refusal vanishes.
+A `FileInput` draws a file of another type in its own line under its box, in a `FormField` or out
+of one; the line clears on the next pick.
 
 ```tsx
 <FormField label="Leads file">

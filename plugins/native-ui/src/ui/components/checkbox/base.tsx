@@ -1,3 +1,4 @@
+import type { Draft } from "@fcalell/plugin-api/tanstack-query";
 import { ICON_STROKE } from "@fcalell/ui-core/tokens";
 import { CHECKBOX_MARK, checkbox } from "@fcalell/ui-core/variants";
 import { Check, type IconNode, Minus } from "lucide";
@@ -19,15 +20,18 @@ const STATES = {
 
 type State = (typeof STATES)[keyof typeof STATES];
 
-/** The box every Checkbox renders. `target` is a row whose label is its target: the box alone, on the label's line; `painted` is the box while its data is not here: filled, unchecked, inert. Outside the package's exports. */
+/** The box every Checkbox renders, on the `draft` its host holds: a field hosts the draft of its checkbox and draws a rejection in its own line. `target` is a row whose label is its target: the box alone, on the label's line; `painted` is the box while its data is not here: filled, unchecked, inert. Outside the package's exports. */
 export function CheckboxBase({
-	checked,
+	draft,
 	onChange,
 	label,
 	target,
 	painted: given,
-}: CheckboxProps & { target?: boolean; painted?: boolean }) {
-	const draft = useHeldDraft(checked);
+}: Omit<CheckboxProps, "checked"> & {
+	draft: Draft<boolean | "mixed">;
+	target?: boolean;
+	painted?: boolean;
+}) {
 	const painted = given || draft.painted;
 	const value = draft.value;
 	const disabled = useContext(FieldDisabled);
@@ -63,6 +67,28 @@ export function CheckboxBase({
 				/>
 			)}
 		</Pressable>
+	);
+}
+
+/** A Checkbox that holds its own draft, as a bare one and a row's box do; a rejection toasts. Outside the package's exports. */
+export function HeldCheckbox({
+	checked,
+	onChange,
+	label,
+	target,
+	painted,
+}: CheckboxProps & {
+	target?: boolean;
+	painted?: boolean;
+}) {
+	return (
+		<CheckboxBase
+			draft={useHeldDraft(checked)}
+			onChange={onChange}
+			label={label}
+			target={target}
+			painted={painted}
+		/>
 	);
 }
 

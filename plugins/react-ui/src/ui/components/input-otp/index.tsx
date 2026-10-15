@@ -1,12 +1,16 @@
 import { Input as Control } from "@base-ui/react/input";
-import { isThenable } from "@fcalell/plugin-api/acts";
+import { drew, isThenable, refusal } from "@fcalell/plugin-api/acts";
 import { useRun } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
-import { OTP, OTP_DIGIT, otpBox, text } from "@fcalell/ui-core/variants";
-import { use } from "react";
-import { useFailed } from "../../lib/act.ts";
+import {
+	FIELD_ERROR_LINE,
+	OTP,
+	OTP_DIGIT,
+	otpBox,
+	text,
+} from "@fcalell/ui-core/variants";
+import { useId, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { FieldRefusal } from "../../lib/field.ts";
 import { useModality } from "../../lib/modality.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Spinner } from "../spinner/index.tsx";
@@ -32,7 +36,7 @@ export interface InputOtpProps extends Closed {
 	value: string;
 	/** Hears the digits on every change; anything but a digit is dropped. */
 	onChange: (value: string) => void;
-	/** Hears the code once its last digit lands. Return the check's promise and, while it pends, the boxes hold the code at rest, the input is disabled and a spinner line stands under it; a refusal goes to the field's error line, with its reason, and the next digit clears it. */
+	/** Hears the code once its last digit lands. Return the check's promise and, while it pends, the boxes hold the code at rest, the input is disabled and a spinner line stands under it; a refusal stands in a line under the boxes, with its reason, and the next digit clears it. */
 	onComplete?: (value: string) => unknown;
 }
 
@@ -46,17 +50,19 @@ export function InputOtp({
 	useModality();
 	const words = useWords();
 	const run = useRun();
-	const failed = useFailed();
-	const refuse = use(FieldRefusal);
+	// The check's refusal stands in the control's own line until the next digit.
+	const [refused, refuse] = useState<string>();
+	const line = useId();
 	const checking = run.pending !== undefined;
 	const active = Math.min(value.length, length - 1);
 	// The attempt a Retry runs again: its promise, so the toast's act holds it.
 	const attempt = (code: string): unknown => {
 		const result = onComplete?.(code);
 		if (!isThenable(result)) return result;
-		return Promise.resolve(result).catch((error: unknown) =>
-			failed(error, () => attempt(code)),
-		);
+		return Promise.resolve(result).catch((error: unknown) => {
+			drew(error);
+			refuse(refusal(error) ?? words.actFailed);
+		});
 	};
 	const complete = (code: string) => run.run(true, () => attempt(code));
 	return (
@@ -65,7 +71,7 @@ export function InputOtp({
 			onValueChange={(raw) => {
 				const next = raw.replace(/\D/g, "").slice(0, length);
 				if (next === value) return;
-				refuse?.(undefined);
+				refuse(undefined);
 				onChange(next);
 				if (next.length === length) complete(next);
 			}}
@@ -78,14 +84,27 @@ export function InputOtp({
 			render={(control, state) => (
 				<div className={STACK}>
 					<div className={cn(OTP, ROW)}>
-						<input {...control} className={INPUT} />
+						<input
+							{...control}
+							aria-invalid={refused ? true : control["aria-invalid"]}
+							aria-describedby={
+								refused
+									? [control["aria-describedby"], line]
+											.filter(Boolean)
+											.join(" ")
+									: control["aria-describedby"]
+							}
+							className={INPUT}
+						/>
 						{Array.from({ length }, (_, index) => (
 							<span
 								// biome-ignore lint/suspicious/noArrayIndexKey: a box is its position
 								key={index}
 								aria-hidden
 								className={cn(
-									otpBox({ state: state.valid === false ? "error" : "rest" }),
+									otpBox({
+										state: state.valid === false || refused ? "error" : "rest",
+									}),
 									BOX,
 									index === active && !checking && BOX_FOCUS,
 								)}
@@ -98,6 +117,11 @@ export function InputOtp({
 						<p role="status" className={cn(text({ role: "meta" }), LINE)}>
 							<Spinner />
 							<span>{words.checking}</span>
+						</p>
+					) : null}
+					{refused ? (
+						<p id={line} role="alert" className={FIELD_ERROR_LINE}>
+							{refused}
 						</p>
 					) : null}
 				</div>

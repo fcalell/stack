@@ -1418,7 +1418,7 @@ const MEASURING: Record<string, string> = {
 		"the room set scales by the unit of the window, which a rotation or a resize changes",
 	"components/toast/room.tsx":
 		"the box the toasts stand in, laid out by the page and read for their layer",
-	"components/slider/index.tsx":
+	"components/slider/base.tsx":
 		"the track's width, which the thumb's drag maps to a value",
 	"components/pane/index.tsx":
 		"a footed Pane's body region, read for the docked sheet's height",
@@ -1479,10 +1479,6 @@ const CONTEXTS: Record<string, [ContextClass, string]> = {
 	"lib/field.ts:FieldError": [
 		"data",
 		"whether the field is in error, which the control's box draws as its edge",
-	],
-	"lib/field.ts:FieldRefusal": [
-		"behaviour",
-		"the callback a control refuses a value into its field's error line with",
 	],
 	"lib/field.ts:FieldFocus": [
 		"behaviour",

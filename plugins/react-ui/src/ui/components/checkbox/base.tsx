@@ -1,4 +1,5 @@
 import { Checkbox as Base } from "@base-ui/react/checkbox";
+import type { Draft } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import { ICON_STROKE } from "@fcalell/ui-core/tokens";
 import { CHECKBOX_MARK, checkbox } from "@fcalell/ui-core/variants";
@@ -32,16 +33,20 @@ const STATES = {
 	mixed: "mixed",
 } as const;
 
-/** The box every Checkbox renders. `target` is the label a row makes its target; `cell` is the `Table` cell it stands in, where the grid's cursor reaches it; `painted` is the box while its data is not here: filled, unchecked, inert. Outside the package's exports. */
+/** The box every Checkbox renders, on the `draft` its host holds: a field hosts the draft of its checkbox and draws a rejection in its own line. `target` is the label a row makes its target; `cell` is the `Table` cell it stands in, where the grid's cursor reaches it; `painted` is the box while its data is not here: filled, unchecked, inert. Outside the package's exports. */
 export function CheckboxBase({
-	checked,
+	draft,
 	onChange,
 	label,
 	target,
 	cell,
 	painted: given,
-}: CheckboxProps & { target?: LabelFit; cell?: boolean; painted?: boolean }) {
-	const draft = useHeldDraft(checked);
+}: Omit<CheckboxProps, "checked"> & {
+	draft: Draft<boolean | "mixed">;
+	target?: LabelFit;
+	cell?: boolean;
+	painted?: boolean;
+}) {
 	const painted = given || draft.painted;
 	const value = draft.value;
 	const state = STATES[painted ? "false" : (`${value}` as const)];
@@ -82,6 +87,31 @@ export function CheckboxBase({
 				</Base.Indicator>
 			</span>
 		</Base.Root>
+	);
+}
+
+/** A Checkbox that holds its own draft, as a bare one, a row's box and a cell's do; a rejection toasts. Outside the package's exports. */
+export function HeldCheckbox({
+	checked,
+	onChange,
+	label,
+	target,
+	cell,
+	painted,
+}: CheckboxProps & {
+	target?: LabelFit;
+	cell?: boolean;
+	painted?: boolean;
+}) {
+	return (
+		<CheckboxBase
+			draft={useHeldDraft(checked)}
+			onChange={onChange}
+			label={label}
+			target={target}
+			cell={cell}
+			painted={painted}
+		/>
 	);
 }
 

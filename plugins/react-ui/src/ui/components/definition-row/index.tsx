@@ -33,7 +33,7 @@ import { PickerBase } from "../picker/base.tsx";
 import type { PickOneProps } from "../picker/index.tsx";
 import { StatusBase } from "../status/base.tsx";
 import { ChangeMark } from "../status/change.tsx";
-import { SwitchBase } from "../switch/base.tsx";
+import { HeldSwitch } from "../switch/base.tsx";
 import type { SwitchProps } from "../switch/index.tsx";
 
 const ROW = "relative flex items-center";
@@ -217,7 +217,7 @@ export function DefinitionRowBase<V extends string | null = string>({
 	else if (toggle)
 		valueNode = (
 			<span className={CONTROL}>
-				<SwitchBase {...toggle} label={listed ? "" : label} painted={painted} />
+				<HeldSwitch {...toggle} label={listed ? "" : label} painted={painted} />
 			</span>
 		);
 	else if (pick)

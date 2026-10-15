@@ -1,3 +1,4 @@
+import type { Datum, Draft } from "@fcalell/plugin-api/tanstack-query";
 import type {
 	Answered,
 	ChangeKind,
@@ -14,7 +15,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useMemo, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
-import { useHeldDraft } from "../../lib/act";
+import { useFieldDraft } from "../../lib/act";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import {
@@ -22,7 +23,6 @@ import {
 	FieldError,
 	FieldFocus,
 	FieldNameContext,
-	FieldRefusal,
 	GroupName,
 } from "../../lib/field";
 import { Ink } from "../../lib/ink";
@@ -33,15 +33,17 @@ import type { CheckboxProps } from "../checkbox";
 import { CheckboxBase } from "../checkbox/base";
 import { Icon } from "../icon";
 import { IconButton } from "../icon-button";
-import { OptionList, type OptionListProps } from "../option-list";
-import {
-	SegmentedControl,
-	type SegmentedControlProps,
-} from "../segmented-control";
-import { Select, type SelectProps } from "../select";
-import { Slider, type SliderProps } from "../slider";
+import type { OptionListProps } from "../option-list";
+import { OptionListBase } from "../option-list/base";
+import type { SegmentedControlProps } from "../segmented-control";
+import { SegmentedControlBase } from "../segmented-control/base";
+import type { SelectProps } from "../select";
+import { SelectBase } from "../select/base";
+import type { SliderProps } from "../slider";
+import { SliderBase } from "../slider/base";
 import { ChangeMark } from "../status/change";
-import { Switch, type SwitchProps } from "../switch";
+import type { SwitchProps } from "../switch";
+import { SwitchBase } from "../switch/base";
 
 const STACK = "min-w-0";
 const BESIDE = "flex-row items-center min-w-0";
@@ -148,26 +150,89 @@ function kindOf(props: Body): ControlKind | undefined {
 	return undefined;
 }
 
-// The control a field draws: the descriptor's component, or its children,
-// bound drawn from the field's value. A sheet reads the children to know
-// whether it holds a `TextArea`.
+// The children a field draws, bound drawn from the field's value. A sheet
+// reads them to know whether it holds a `TextArea`.
 export function fieldControl<V, S extends string | null, O extends string, T>(
 	props: FormFieldProps<V, S, O, T>,
 ): ReactNode {
-	return controlOf(props as Body, undefined);
+	return childrenOf(props as Body);
 }
 
-function controlOf(props: Body, kind: ControlKind | undefined): ReactNode {
+// The value the descriptor's control saves, which the field holds the draft of.
+function savedOf(props: Body, kind: ControlKind | undefined): Datum<unknown> {
+	switch (kind) {
+		case "switch":
+			return props.switch?.checked;
+		case "checkbox":
+			return props.checkbox?.checked;
+		case "slider":
+			return props.slider?.value;
+		case "select":
+			return props.select?.value;
+		case "options":
+			return props.options?.value;
+		case "segments":
+			return props.segments?.value;
+		default:
+			return undefined;
+	}
+}
+
+// The control a field draws: the descriptor's control over the draft the field
+// holds, or its children. A checkbox is drawn by its row.
+function controlOf(
+	props: Body,
+	kind: ControlKind | undefined,
+	draft: Draft<unknown>,
+): ReactNode {
 	const { label } = props;
-	if (props.switch) return <Switch {...props.switch} label={label} />;
-	if (props.checkbox)
-		return <CheckboxBase {...props.checkbox} label={label} target />;
-	if (props.slider) return <Slider {...props.slider} label={label} />;
-	if (props.select) return <Select {...props.select} />;
-	if (props.options) return <OptionList {...props.options} />;
+	if (props.switch)
+		return (
+			<SwitchBase
+				{...props.switch}
+				draft={draft as Draft<boolean>}
+				label={label}
+			/>
+		);
+	if (props.slider)
+		return (
+			<SliderBase
+				{...props.slider}
+				draft={draft as Draft<number>}
+				label={label}
+			/>
+		);
+	if (props.select)
+		return (
+			<SelectBase
+				{...props.select}
+				draft={draft as Draft<string | null | undefined>}
+			/>
+		);
+	if (props.options)
+		return (
+			<OptionListBase
+				{...props.options}
+				draft={draft as Draft<string | null | readonly string[]>}
+				onChange={
+					props.options.onChange as (next: string | string[]) => unknown
+				}
+			/>
+		);
 	if (props.segments)
-		return <SegmentedControl {...props.segments} label={label} />;
+		return (
+			<SegmentedControlBase
+				{...props.segments}
+				draft={draft as Draft<string>}
+				label={label}
+			/>
+		);
 	if (kind !== undefined) return null;
+	return childrenOf(props);
+}
+
+// The control a field is given as children, bound drawn from the field's value.
+function childrenOf(props: Body): ReactNode {
 	const { field, children } = props;
 	if (typeof children !== "function") return children;
 	return field
@@ -179,16 +244,16 @@ function controlOf(props: Body, kind: ControlKind | undefined): ReactNode {
 		: null;
 }
 
-// A checkbox field: the row is the target, so it owns the draft the box
-// draws and the press edits.
+// A checkbox field: the row is the target, so it draws the draft the field
+// holds and the press edits.
 function CheckboxRow(props: {
 	checkbox: Body["checkbox"] & object;
+	draft: Draft<boolean | "mixed">;
 	label: string;
 	disabled: boolean;
 	children: ReactNode;
 }) {
-	const { checkbox, label, disabled } = props;
-	const draft = useHeldDraft(checkbox.checked);
+	const { checkbox, draft, label, disabled } = props;
 	const checked = draft.painted ? false : draft.value;
 	return (
 		<Pressable
@@ -207,10 +272,9 @@ function CheckboxRow(props: {
 				<Strut role="body" />
 				<FieldDisabled.Provider value={disabled}>
 					<CheckboxBase
-						checked={checked}
+						draft={draft}
 						onChange={checkbox.onChange}
 						label={label}
-						painted={draft.painted}
 						target
 					/>
 				</FieldDisabled.Provider>
@@ -228,9 +292,10 @@ function FieldBody(props: Body) {
 	const { label, description, disabled = false, answered } = props;
 	const words = useWords();
 	const folded = answered !== undefined;
-	// What a control refused (a file of the wrong type, a save the server
-	// refused) stands in the error line until its next change.
-	const [refused, refuse] = useState<string>();
+	// The field hosts its control's save: a save the server refused stands in
+	// the error line until the control's next change.
+	const kind = kindOf(props);
+	const { draft, refused } = useFieldDraft(savedOf(props, kind));
 	// A field unfolding mounts its control afresh, which takes focus as it
 	// mounts where `FieldFocus` asks.
 	const [wasFolded, setWasFolded] = useState(folded);
@@ -241,12 +306,7 @@ function FieldBody(props: Body) {
 	}
 	const error = refused ?? (props.field ? props.field.error : props.error);
 	// A folded field draws no control, so the consumer's function is not called.
-	const kind = kindOf(props);
-	const control = folded ? null : (
-		<FieldRefusal.Provider value={refuse}>
-			{controlOf(props, kind)}
-		</FieldRefusal.Provider>
-	);
+	const control = folded ? null : controlOf(props, kind, draft);
 	const form = kind ?? "field";
 	// What a group of controls is named by, one value per change.
 	const group = useMemo(() => ({ label }), [label]);
@@ -296,18 +356,17 @@ function FieldBody(props: Body) {
 		);
 	if (props.checkbox)
 		return (
-			<FieldRefusal.Provider value={refuse}>
-				<CheckboxRow
-					checkbox={props.checkbox}
-					label={label}
-					disabled={disabled}
-				>
-					<View className={LABEL_BLOCK}>
-						{named}
-						{line}
-					</View>
-				</CheckboxRow>
-			</FieldRefusal.Provider>
+			<CheckboxRow
+				checkbox={props.checkbox}
+				draft={draft as Draft<boolean | "mixed">}
+				label={label}
+				disabled={disabled}
+			>
+				<View className={LABEL_BLOCK}>
+					{named}
+					{line}
+				</View>
+			</CheckboxRow>
 		);
 	const held = (
 		<FieldNameContext.Provider value={label}>
@@ -342,7 +401,9 @@ function FieldBody(props: Body) {
 // and a checkbox on its first line. A `change` draws the change mark ahead of
 // the field, on its label's line. The label and the description are constants
 // and always stand; a control given a selection paints itself, inert, until
-// its read lands.
+// its read lands. The field hosts the save of its descriptor's control: the
+// viewer's value holds while the save pends, and a refusal stands in the
+// field's error line until the control's next change.
 export function FormField<
 	V,
 	S extends string | null = string,

@@ -1,3 +1,4 @@
+import type { Draft } from "@fcalell/plugin-api/tanstack-query";
 import { switchThumb, switchTrack } from "@fcalell/ui-core/variants";
 import { useContext } from "react";
 import { Pressable, View } from "react-native";
@@ -10,16 +11,19 @@ import type { SwitchProps } from "./index";
 // The press draws the hover fill: a toggle has no press step.
 const PRESSED = { off: "bg-switch-off-hover", on: "bg-toggle-on-hover" };
 
-// The track and thumb every Switch renders. `painted` is the track while its
-// data is not here: filled, the thumb not drawn, inert. Outside the package's
-// exports.
+// The track and thumb every Switch renders, on the `draft` its host holds: a
+// field hosts the draft of its switch and draws a rejection in its own line.
+// `painted` is the track while its data is not here: filled, the thumb not
+// drawn, inert. Outside the package's exports.
 export function SwitchBase({
-	checked,
+	draft,
 	onChange,
 	label,
 	painted: given,
-}: SwitchProps & { painted?: boolean }) {
-	const draft = useHeldDraft(checked);
+}: Omit<SwitchProps, "checked"> & {
+	draft: Draft<boolean>;
+	painted?: boolean;
+}) {
 	const painted = given || draft.painted;
 	const disabled = useContext(FieldDisabled);
 	const shown = useShown(painted);
@@ -57,5 +61,23 @@ export function SwitchBase({
 				</View>
 			)}
 		</Pressable>
+	);
+}
+
+// A Switch that holds its own draft, as a bare one and a row's toggle do; a
+// rejection toasts. Outside the package's exports.
+export function HeldSwitch({
+	checked,
+	onChange,
+	label,
+	painted,
+}: SwitchProps & { painted?: boolean }) {
+	return (
+		<SwitchBase
+			draft={useHeldDraft(checked)}
+			onChange={onChange}
+			label={label}
+			painted={painted}
+		/>
 	);
 }

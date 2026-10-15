@@ -1,5 +1,5 @@
 import { Field } from "@base-ui/react/field";
-import { CheckboxBase } from "../../components/checkbox/base.tsx";
+import { HeldCheckbox } from "../../components/checkbox/base.tsx";
 import { Checkbox } from "../../components/checkbox/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { beside, isPaint } from "./painted.tsx";
@@ -20,7 +20,7 @@ export function drawCheckbox(frame: ShowcaseFrame) {
 		return beside(
 			frame,
 			<Checkbox checked onChange={change} label="Weekly summary" />,
-			<CheckboxBase checked onChange={change} label="Weekly summary" painted />,
+			<HeldCheckbox checked onChange={change} label="Weekly summary" painted />,
 		);
 	const checked = VALUES[frame.cell.name as keyof typeof VALUES];
 	if (checked === undefined) return undefined;

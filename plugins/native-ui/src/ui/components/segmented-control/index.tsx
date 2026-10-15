@@ -1,6 +1,6 @@
 import type { Datum } from "@fcalell/plugin-api/tanstack-query";
 import type { Closed } from "../../lib/closed";
-import { SegmentedControlBase } from "./base";
+import { HeldSegmentedControl } from "./base";
 
 export interface Segment {
 	value: string;
@@ -28,7 +28,7 @@ export function SegmentedControl({
 	onChange,
 }: SegmentedControlProps) {
 	return (
-		<SegmentedControlBase
+		<HeldSegmentedControl
 			label={label}
 			options={options}
 			value={value}

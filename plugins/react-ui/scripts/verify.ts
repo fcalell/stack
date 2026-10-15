@@ -879,10 +879,6 @@ const CONTEXTS: Record<string, [ContextClass, string]> = {
 		"behaviour",
 		"whether the field around an act is disabled, which Base UI's field context does not hand to a Button",
 	],
-	"lib/field.ts:FieldRefusal": [
-		"behaviour",
-		"the callback a control refuses a value into its field's error line with",
-	],
 	"lib/field.ts:GroupName": [
 		"data",
 		"the id of the label that names a group of controls",

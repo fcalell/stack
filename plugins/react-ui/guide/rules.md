@@ -544,8 +544,8 @@ A picked file's `src` is a local address to draw it from before it is uploaded. 
 `src`), and it stays until you revoke it (`URL.revokeObjectURL(file.src)`) once you drop the
 attachment.
 
-A `FileInput` stands only inside a `FormField`, which labels it and draws the error line a refused
-file lands in; outside one the refusal vanishes.
+A `FileInput` draws a file of another type in its own line under its box, in a `FormField` or out
+of one; the line clears on the next pick.
 
 ```tsx
 <FormField label="Leads file">
@@ -648,9 +648,11 @@ step and whose `onCommit` the value it is let go on). The control shows the view
 selection's or a constant's, while the latest save pends and then follows its datum once the
 refetch the write invalidated has landed, so nothing flickers back and no saving mark is drawn. Each
 change supersedes the one before; a refusal puts the value back and draws its reason in the
-field's error line, else in a failed toast whose Retry saves the same value again. An `InputOtp`'s
-`onComplete` returns the check's promise: the boxes hold the code and a checking line stands under
-them at once, with no delay, and a refusal goes to the field's error line. A save written with a
+field's error line when the control is one of a `FormField`'s descriptors (`switch`, `checkbox`,
+`slider`, `select`, `options`, `segments`), which the field hosts, else in a failed toast whose Retry
+saves the same value again. An `InputOtp`'s `onComplete` returns the check's promise: the boxes hold
+the code and a checking line stands under them at once, with no delay, and a refusal stands in the
+control's own line under the boxes. A save written with a
 `useMutation` keeps TanStack's own invalidation (every write refetches the reads it touched; it is
 not awaited, so a delete that navigates draws no stale record).
 

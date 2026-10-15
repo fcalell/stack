@@ -49,7 +49,7 @@ import { useTouched } from "../../lib/touched";
 import { useWords } from "../../lib/words";
 import { AvatarBase } from "../avatar/base";
 import { ButtonBase } from "../button/base";
-import { CheckboxBase } from "../checkbox/base";
+import { HeldCheckbox } from "../checkbox/base";
 import { ChipBase } from "../chip/base";
 import { Icon, IconBase } from "../icon";
 import { IconButtonBase } from "../icon-button/base";
@@ -224,7 +224,7 @@ function Leading(props: {
 	// Painted, the kind is the slot's shape; what the marks name is not here.
 	if (painted) {
 		if ("check" in leading)
-			return <CheckboxBase checked={false} onChange={NOOP} label="" painted />;
+			return <HeldCheckbox checked={false} onChange={NOOP} label="" painted />;
 		if ("avatar" in leading) return <AvatarBase name="" painted />;
 		if ("status" in leading) return <StatusDot state="done" painted />;
 		return <IconBase name="File" stroke="line" painted />;
@@ -232,7 +232,7 @@ function Leading(props: {
 	if ("check" in leading)
 		return (
 			<FieldDisabled.Provider value={leading.check.blocked !== undefined}>
-				<CheckboxBase
+				<HeldCheckbox
 					checked={leading.check.checked}
 					onChange={leading.check.onChange}
 					label={named}

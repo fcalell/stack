@@ -1,6 +1,6 @@
 import type { Datum } from "@fcalell/plugin-api/tanstack-query";
 import type { Closed } from "../../lib/closed.ts";
-import { CheckboxBase } from "./base.tsx";
+import { HeldCheckbox } from "./base.tsx";
 
 /** A choice among others, on, off, or mixed over a set. */
 export interface CheckboxProps extends Closed {
@@ -14,5 +14,5 @@ export interface CheckboxProps extends Closed {
 
 /** A box and its mark, drawn alone inside a target-sized hit box. */
 export function Checkbox({ checked, onChange, label }: CheckboxProps) {
-	return <CheckboxBase checked={checked} onChange={onChange} label={label} />;
+	return <HeldCheckbox checked={checked} onChange={onChange} label={label} />;
 }

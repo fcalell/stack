@@ -1,6 +1,6 @@
 import type { Datum } from "@fcalell/plugin-api/tanstack-query";
 import type { Closed } from "../../lib/closed";
-import { SwitchBase } from "./base";
+import { HeldSwitch } from "./base";
 
 /** A setting that takes effect at once, on or off. */
 export interface SwitchProps extends Closed {
@@ -16,5 +16,5 @@ export interface SwitchProps extends Closed {
 
 /** A track and its thumb, drawn alone inside a target-sized hit box. */
 export function Switch({ checked, onChange, label }: SwitchProps) {
-	return <SwitchBase checked={checked} onChange={onChange} label={label} />;
+	return <HeldSwitch checked={checked} onChange={onChange} label={label} />;
 }

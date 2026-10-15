@@ -5,15 +5,16 @@ import { accepts, kindsOf } from "@fcalell/ui-core/file";
 import { formatterFor } from "@fcalell/ui-core/format";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
+	FIELD_ERROR_LINE,
 	FIELD_GLYPH,
 	FIELD_PLACEHOLDER,
 	field,
 	fieldValue,
 	text,
 } from "@fcalell/ui-core/variants";
-import { type ChangeEvent, type DragEvent, use, useState } from "react";
+import { type ChangeEvent, type DragEvent, useId, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { FieldDisabled, FieldRefusal } from "../../lib/field.ts";
+import { FieldDisabled } from "../../lib/field.ts";
 import { BOX_FOCUS, useModality } from "../../lib/modality.ts";
 import { pickedFrom } from "../../lib/picked.ts";
 import { useWords } from "../../lib/words.tsx";
@@ -26,6 +27,7 @@ import { BOX, BOX_DISABLED, BOX_HOVER_VALUE } from "../input/base.tsx";
 // focus as an `Input`'s does. The remove act stands above it.
 const PICK = "absolute inset-0 opacity-0";
 const ANCHOR = "relative";
+const STACK = "flex flex-col gap-pair min-w-0";
 const ABOVE = "relative flex";
 const VALUE = "min-w-0 grow truncate";
 const SIZE = "shrink-0 max-w-measure-short truncate";
@@ -50,16 +52,18 @@ export interface FileInputProps extends Closed {
 	accept: readonly string[];
 }
 
-/** A field box that is the act: empty it reads Choose file, chosen it shows the file's name and size with an act that removes it. A file dropped on the box is taken as one chosen; a file of another type is refused into its `FormField`'s error line, which clears on the next pick. */
+/** A field box that is the act: empty it reads Choose file, chosen it shows the file's name and size with an act that removes it. A file dropped on the box is taken as one chosen; a file of another type is refused in a line under the box, which clears on the next pick. */
 export function FileInput({ value, onChange, accept }: FileInputProps) {
 	useModality();
 	const words = useWords();
-	const refuse = use(FieldRefusal);
+	// What the box refused stands in its own line until the next pick.
+	const [refused, refuse] = useState<string>();
+	const line = useId();
 	const [over, setOver] = useState(false);
 	const take = (file: File | undefined) => {
 		if (!file) return;
 		if (!accepts(file, accept)) {
-			refuse?.(
+			refuse(
 				filled(words.wrongType, {
 					name: file.name,
 					types: kindsOf(accept, words).join(", "),
@@ -67,7 +71,7 @@ export function FileInput({ value, onChange, accept }: FileInputProps) {
 			);
 			return;
 		}
-		refuse?.(undefined);
+		refuse(undefined);
 		onChange(pickedFrom(file));
 	};
 	const pick = (event: ChangeEvent<HTMLInputElement>) => {
@@ -87,80 +91,98 @@ export function FileInput({ value, onChange, accept }: FileInputProps) {
 		if (!disabled) take(event.dataTransfer.files[0]);
 	};
 	return (
-		<Control
-			type="file"
-			accept={accept.join(",")}
-			onChange={pick}
-			// Base UI's Field wires the control (its id, label, description and
-			// validity); the render function hands over its props and state so the
-			// box around the value draws that state. A disabled box carries
-			// `aria-disabled` itself, so the name and size outside the native
-			// control read as disabled to a checker.
-			render={(control, state) => (
-				// biome-ignore lint/a11y/noStaticElementInteractions: the box only takes a drop; the file input inside it is the control the keyboard reaches
-				<div
-					aria-disabled={state.disabled || undefined}
-					onDragOver={(event) => {
-						event.preventDefault();
-						if (!state.disabled) setOver(true);
-					}}
-					onDragLeave={leave}
-					onDrop={(event) => drop(event, state.disabled)}
-					className={cn(
-						field({
-							trailing: value ? "act" : "none",
-							state: state.valid === false ? "error" : "rest",
-						}),
-						FIELD_GLYPH,
-						BOX,
-						BOX_FOCUS,
-						ANCHOR,
-						over && OVER,
-						state.disabled
-							? BOX_DISABLED
-							: state.valid !== false && BOX_HOVER_VALUE,
-					)}
-				>
-					<input {...control} className={PICK} />
-					<Icon name={value ? "File" : "FileUp"} fit="control" />
-					<span
+		<div className={STACK}>
+			<Control
+				type="file"
+				accept={accept.join(",")}
+				onChange={pick}
+				// Base UI's Field wires the control (its id, label, description and
+				// validity); the render function hands over its props and state so the
+				// box around the value draws that state. A disabled box carries
+				// `aria-disabled` itself, so the name and size outside the native
+				// control read as disabled to a checker.
+				render={(control, state) => (
+					// biome-ignore lint/a11y/noStaticElementInteractions: the box only takes a drop; the file input inside it is the control the keyboard reaches
+					<div
+						aria-disabled={state.disabled || undefined}
+						onDragOver={(event) => {
+							event.preventDefault();
+							if (!state.disabled) setOver(true);
+						}}
+						onDragLeave={leave}
+						onDrop={(event) => drop(event, state.disabled)}
 						className={cn(
-							fieldValue({ kind: "text" }),
-							!value && FIELD_PLACEHOLDER,
-							VALUE,
-							state.disabled && DISABLED,
+							field({
+								trailing: value ? "act" : "none",
+								state: state.valid === false || refused ? "error" : "rest",
+							}),
+							FIELD_GLYPH,
+							BOX,
+							BOX_FOCUS,
+							ANCHOR,
+							over && OVER,
+							state.disabled
+								? BOX_DISABLED
+								: state.valid !== false && !refused && BOX_HOVER_VALUE,
 						)}
 					>
-						{value ? value.name : words.chooseFile}
-					</span>
-					{value ? (
-						<>
-							<span
-								className={cn(
-									text({ role: "meta" }),
-									SIZE,
-									state.disabled && DISABLED,
-								)}
-							>
-								{formatterFor("number", undefined, BYTES).format(value.size)}
-							</span>
-							<span className={ABOVE}>
-								<FieldDisabled value={state.disabled}>
-									<IconButton
-										icon="X"
-										label={`${words.remove} ${value.name}`}
-										onAct={() => {
-											refuse?.(undefined);
-											onChange(null);
-										}}
-										fit="field"
-									/>
-								</FieldDisabled>
-							</span>
-						</>
-					) : null}
-				</div>
-			)}
-		/>
+						<input
+							{...control}
+							aria-invalid={refused ? true : control["aria-invalid"]}
+							aria-describedby={
+								refused
+									? [control["aria-describedby"], line]
+											.filter(Boolean)
+											.join(" ")
+									: control["aria-describedby"]
+							}
+							className={PICK}
+						/>
+						<Icon name={value ? "File" : "FileUp"} fit="control" />
+						<span
+							className={cn(
+								fieldValue({ kind: "text" }),
+								!value && FIELD_PLACEHOLDER,
+								VALUE,
+								state.disabled && DISABLED,
+							)}
+						>
+							{value ? value.name : words.chooseFile}
+						</span>
+						{value ? (
+							<>
+								<span
+									className={cn(
+										text({ role: "meta" }),
+										SIZE,
+										state.disabled && DISABLED,
+									)}
+								>
+									{formatterFor("number", undefined, BYTES).format(value.size)}
+								</span>
+								<span className={ABOVE}>
+									<FieldDisabled value={state.disabled}>
+										<IconButton
+											icon="X"
+											label={`${words.remove} ${value.name}`}
+											onAct={() => {
+												refuse(undefined);
+												onChange(null);
+											}}
+											fit="field"
+										/>
+									</FieldDisabled>
+								</span>
+							</>
+						) : null}
+					</div>
+				)}
+			/>
+			{refused ? (
+				<p id={line} role="alert" className={FIELD_ERROR_LINE}>
+					{refused}
+				</p>
+			) : null}
+		</div>
 	);
 }
