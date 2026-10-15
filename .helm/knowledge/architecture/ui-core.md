@@ -1433,8 +1433,42 @@ a tick with no animation, never jumped to full.
   a `StateLine` "The reply stopped." with Retry, which re-runs the stream); a selection reply draws
   its value only and `none` is `null`. The turn steps aside when its key equals the last item's,
   which removes the double draw as history catches up. `replying` stays the app's boolean for a
-  reply it does not stream. Thread's earlier-history paging is not built: it needs the scroll
-  anchor, with long collections.
+  reply it does not stream. Thread's earlier-history paging is not built: no thread pages, and
+  its anchor on a prepend went with it.
+- **A long collection windows on the web, with no prop.** `@fcalell/ui-core/window` holds the
+  count (`VIRTUAL_FROM`, 100 loaded rows, set from a render measurement kept in `states.md` §7),
+  `OVERSCAN` (8 rows past each edge) and the node-tested arithmetic: `slotsOf` places the mounted
+  runs of rows and one spacer for each run of unmounted ones (gap-exact), `ranged` adds the indices
+  kept mounted to TanStack's range. react-ui's `lib/window` holds the rest. `Scroller` is a context
+  of identity whose value is a holder (a ref), provided by the Pane body, Sheet base body, docked
+  Sheet body, Gate page and Thread log through `useScroller` (one stable ref function, the node
+  also in state for `useScrolls`); the holder is the same from the first render and its element
+  arrives with the commit, so a collection mounting with its Pane windows in its first draw, from
+  the viewport's size, and renders once more to measure against the element. The nearest scroller
+  wins, so a List in a portaled Sheet never windows against the Pane. `Window` is TanStack Virtual
+  over it: the host builds every row and passes them with the box they stand in, `Window` returns
+  them unchanged below the count or with no scroller (crossing the count on a Show more keeps the
+  same keys in the same parent, so nothing remounts) and otherwise returns the mounted slice
+  between spacers (`aria-hidden`, a `tr` in a tbody, sized against the box's `row-gap`). Rows are
+  measured by their place among the box's children (a row is exactly one element, enforced in
+  dev), never by an attribute or wrapper; offsets are box-relative, re-reported by a
+  ResizeObserver on the scroller's children when content above the box changes height. The
+  virtualizer is the one scroll anchor (`overflow-anchor: none` on the box, `useFlushSync: false`,
+  so the settle's `flushSync` is the only one), and its adjustments are applied as increments
+  from the scroller's own position, so a scroll the browser made (a focus) is not undone. The
+  focused row (tracked by `focusin` on the box) and the host's `keep` stay mounted through the
+  range extractor, so mounted runs may be non-contiguous; `keep` is in the extractor's
+  dependencies, so a new one ranges again. Which collections window: List (flat; rows, files,
+  meters and definitions), Group's list (its card is the box), Table at both widths (the narrow
+  form is a ListBase; the grid's tbody takes `keep` as the cursor row and `spacer="tr"`, moves the
+  cursor first and focuses in a layout effect so Ctrl+End reaches the last row, and carries
+  `aria-rowcount` and `aria-rowindex`), and Thread (the log is the scroller, its content div the
+  box, `end` opens at the last rows; `replying`, `ReplyTurn` and the more row stand after the
+  window, so a token grows outside it). Not windowed: trees (their keyboard queries the DOM's
+  treeitems), Comparison, BarChart, OptionList, and painted forms (`PAINT_ROWS`, always below the
+  count). Rows carry no settle names, so the settle and the shift check are unchanged. Accepted:
+  find in page and print reach drawn rows only. The phone draws every row and its Thread keeps
+  its inverted log; the design for it stays open in `states.md` §7 until a device measures it.
 - **The phone wires TanStack's managers.** `QueryProvider listen` takes `online` and `focus`
   setters, which native-ui passes (`lib/net.ts`: `expo-network`, `AppState`) the way it passes
   `settle`; without them the phone never pauses a read and never refetches on focus.

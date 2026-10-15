@@ -34,3 +34,10 @@ open Markdown marker drawn in its own form (`streaming`); once the stream ends i
 stream that fails keeps the words so far and says "The reply stopped." with a quiet Retry that
 runs the stream again, a line under that turn and never the thread's own state. The turn steps
 aside once the history holds its key, so a history that catches up shows no second turn.
+
+A long thread windows on the web: from `VIRTUAL_FROM` messages, only those near the log's view
+and `OVERSCAN` past each edge are drawn, spacers holding the room of the rest. The log opens at the
+newest message and follows the end as before; the turn being written, the `replying` line and
+the more row stand after the window, so a token grows outside it. The message holding focus stays
+drawn; find in page and print reach the drawn messages only. The phone draws every message
+and keeps its inverted log.

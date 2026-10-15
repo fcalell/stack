@@ -31,3 +31,12 @@ of their own at the same columns, on the phone as rows in the same slots), and a
 is "Couldn't load more." with a quiet Retry. The heading draws no count while more remains, and the
 frame is not busy for the next page; a first page that comes back empty with more behind it is not
 empty, and the next page is fetched at once. A list and a group's list end the same way.
+
+A long table windows on the web: from `VIRTUAL_FROM` loaded rows under a scroller (a `Pane`'s body,
+a `Sheet`'s body), at the grid's width and at the narrow list's, only the rows near the view and
+`OVERSCAN` past each edge are drawn, with spacers holding the room of the rest, so the scroll's
+length is the data's. The row holding focus and the cursor's row stay drawn, so Tab and the
+arrow keys, Ctrl+End included, never meet a missing row; the grid says how long it is
+(`aria-rowcount`, `aria-rowindex` on every row). Find in page and print reach the drawn rows
+only. A table below the count, or with no scroller around it, draws every row. The phone draws
+every row for now.

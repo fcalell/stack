@@ -36,6 +36,11 @@ events, so `nativeUi()` wires TanStack's online and focus managers itself (`expo
 `AppState`, through `QueryProvider listen`): a read pauses offline, shows the paused line, and
 refetches when the app returns to the foreground. Pass nothing.
 
+## Long collections
+
+The phone draws every row of a collection for now, whatever its length, and a `Thread` keeps its
+inverted log; the web windows a long one (`VIRTUAL_FROM`), the phone's waits on a device.
+
 ## Acts
 
 An act's holder reads from `useAct(where)` (`lib/act`): `pending` (which act runs), `holds` (it

@@ -1,7 +1,7 @@
 # States: the design
 
 Status: decided with the owner, 2026-10-14, and revised the same day after an adversarial review
-(§15). Phases 1 to 5 of §14 are built (the read; the frames and the paint; the states beyond the first read; acts and saves; navigation reads and preload) and §15 records what changed in building them; phase 6 is Stead's, and long collections (§7) are phase 7. The wait's numbers are tuned live. This page defines how every component
+(§15). Phases 1 to 5 of §14 are built (the read; the frames and the paint; the states beyond the first read; acts and saves; navigation reads and preload) and §15 records what changed in building them; phase 6 is Stead's; phase 7, long collections (§7), is built on the web and its phone half is owed to a device (§15). The wait's numbers are tuned live. This page defines how every component
 of the roster reads, waits, fails, goes missing, stays empty, refreshes, streams and acts, on both
 platforms, and how state is held so that a change re-renders only what it changes. It supersedes
 `motion.md` §4.1 (one waiting path) and the shape question of `skeleton-loading.md`; `motion.md`
@@ -297,30 +297,50 @@ The read needs no store of stack's own: each part is a TanStack builtin.
 
 ## 7. Long collections
 
-Not built: its own phase (7, after phase 5; §15). Paging bounds what a list mounts and no list in the
-showcase or Stead approaches a virtualizing count, so it waits for a consumer list that does. The
-phone's design below is reopened (§15).
+Built on the web (phase 7); the phone's half is owed to a device (§15, "Changed while building
+phase 7").
 
-A collection past a fixed count virtualizes on both platforms, with no prop: List, Table,
-Comparison and Thread mount only the rows on screen and a margin around them.
+A collection windows from `VIRTUAL_FROM` loaded rows under a scroller, with no prop: it mounts only
+the rows near the view and `OVERSCAN` (8) past each edge, spacers holding the room of the rest.
 
-- **Web:** a virtualizer on the Pane's scroller, reached through context (identity). Find in page
-  does not reach unmounted rows: the accepted cost.
-- **Phone:** reopened. A recycling list cannot sit inside the Pane's ScrollView, and the Pane
-  cannot know that a List deep in its children is long (rules 9, 11, 12). The spike decides
-  between windowing on the Pane's own ScrollView through a scroller-identity context (mounts and
-  unmounts, does not recycle) and a recycling list as the Pane's scroller, given as an explicit
-  prop.
-- **Waiting rows** are as many as fill the viewport (the placeholder's count, §4).
-- **The settle and moves name only mounted rows**, so a view transition's snapshot stays bounded
-  (`motion.md` §5, List).
-- **Thread** keeps its reading position when history loads above (the virtualizer's anchor on the
-  web, `maintainVisibleContentPosition` on the phone) and follows the end as it does today.
+- **Web (built):** TanStack Virtual (`@tanstack/react-virtual`) over a `Scroller` context of
+  identity (the Pane body, Sheet body, docked Sheet body, Gate page, Thread log; the nearest wins),
+  in react-ui's `lib/window`; the count and the slot arithmetic are ui-core's `window`. List (flat),
+  Group's list, Table at both widths and Thread window. Painted forms are `PAINT_ROWS` (4) and
+  never window, so "waiting rows fill the viewport" is cut. The focused row and a Table's cursor
+  row stay mounted; the grid carries `aria-rowcount` and `aria-rowindex`. Find in page and print
+  reach mounted rows only: the accepted cost. The virtualizer is the one scroll anchor; Thread
+  opens at the end and follows it as before. The settle and moves name only mounted rows (rows
+  carry no names, so nothing changed).
+- **The count:** measured on Chromium (Playwright, a production build, 1280 px, a 4x CPU throttle
+  through CDP `Emulation.setCPUThrottlingRate`): the time from `flushSync` of the mount through
+  forced layout of N unwindowed ListRows, the median of 18 warm runs.
 
-Open: the libraries (TanStack Virtual on the web; FlashList v2 on the phone, LegendList as the
-fallback; none is installed) and the count (`VIRTUAL_FROM`, about 100), settled by a spike on both
-platforms: the phone Pane first (1000 rows under a Section header, both designs), then the phone
-Thread and the web.
+  | rows | 1x | 4x |
+  | --- | --- | --- |
+  | 1 | 1.9 ms | 6.8 ms |
+  | 10 | 4.9 ms | 14.5 ms |
+  | 50 | 15.1 ms | 46.6 ms |
+  | 100 | 18.7 ms | 82.6 ms |
+  | 300 | 78.8 ms | 245.5 ms |
+  | 1000 | 161.9 ms | 859.7 ms |
+
+  The dev build (Storybook dev) is 4 to 5 times slower still (4x: 100 rows 391 ms, 300 rows
+  1145 ms, 1000 rows 3277 ms). 100 rows exceed 16 ms, so the rule that set the measurement (lower the count to
+  the largest that fits) would give about 10. `VIRTUAL_FROM` stays 100 until the owner decides
+  that rule: at 10 rows a window draws less than a screen and every list over ten rows loses find
+  in page. The 16 ms frame is also a hard bar for a one-time mount, which a window pays on top of.
+- **Phone (owed):** a recycling list cannot sit inside the Pane's ScrollView, and the Pane cannot
+  know that a List deep in its children is long (rules 9, 11, 12). The spike decides between
+  windowing on the Pane's own ScrollView through a scroller-identity context (mounts and unmounts,
+  does not recycle) and a recycling list as the Pane's scroller, given as an explicit prop; for
+  Thread, FlashList v2 against its inverted ScrollView. Until then the phone draws every row.
+- **Cut:** trees, Comparison, BarChart, OptionList, Thread's history paging and the anchor on a
+  prepend (no thread pages), `aria-setsize` on lists (they carry no list role).
+
+Open on the phone: the libraries (FlashList v2, LegendList as the fallback; none is installed),
+the Pane design and the count, settled by a spike on a mid-range Android: the Pane first (1000
+rows under a Section header, both designs), then the Thread.
 
 ## 8. States beyond the first read
 
@@ -475,7 +495,7 @@ Each phase lands web and phone together, with the showcase migrated in the same 
 5. **Navigation** (built): a route's `loader` preloads its reads, on link intent on the web.
 6. **Stead:** its screens moved to frame reads, its workarounds deleted, the pin moved; its six
    channels become `channelRead`s.
-7. **Long collections:** the spike (§7), then virtualization on both platforms.
+7. **Long collections** (web built; the phone is owed to a device): the window of §7 on the web; the spike and the phone's virtualization wait for a device.
 
 ## 15. Decisions
 
@@ -656,6 +676,55 @@ Deviations kept from the build: a failed next page is the collection's line, not
 own at the same columns, and the narrow list as rows in the same slots; the Thread roster's
 `error` is the stopped turn.
 
+Changed while building phase 7 (2026-10-15); where the sections above differ, this list wins:
+
+1. Long collections are web only for now. The phone draws every row and its Thread stays inverted;
+   the phone's libraries, Pane design and count wait for a device.
+2. Windowing is automatic from `VIRTUAL_FROM` loaded rows under a `Scroller`: TanStack Virtual, no
+   prop. Painted forms stay `PAINT_ROWS`, and "fill the viewport" is cut.
+3. The collections that window: List (flat), Group's list, Table at both widths, Thread. Cut:
+   trees, Comparison, BarChart, OptionList, Thread's history paging and the anchor on a prepend.
+4. Focus stays mounted: the focused row and Table's cursor row. The grid carries `aria-rowcount`
+   and `aria-rowindex`. Find in page and print stop at mounted rows.
+5. The virtualizer is the one scroll anchor. Thread opens at the end and follows it as before.
+6. The settle and the shift check are unchanged, since rows carry no names.
+7. Open keeps the phone's libraries and its Pane design; the count is the web's, and the phone
+   re-checks it on a device.
+
+Deviations kept from the build:
+
+- **The count was measured and the plan's rule was not applied** (§7): 100 unwindowed rows take
+  83 ms under a 4x throttle, so the rule would set about 10. `VIRTUAL_FROM` is still 100, owed a
+  decision.
+- **`Scroller` holds a holder, not the element.** A Pane's collection mounts in the same commit
+  that attaches the body, so a state-held element would be null in its first draw. `useScroller`
+  gives one stable ref function (a `useCallback`, so a render never detaches the holder from
+  under a Window that measures in the same commit) and the node in state for `useScrolls`. A
+  Window rendering before the element has arrived ranges from the viewport's size, then renders
+  once more to measure against the element (the plan had "the box ref is not attached on mount"
+  and the scroller's client size).
+- **TanStack's timing:** the virtualizer reads its `gap` and estimate when it is created, so
+  `Window` holds the box's gap and the first row's height in state and calls `measure()` once it
+  has them, before any row has been measured. The mounted rows are measured by `resizeItem` after
+  each commit and by one ResizeObserver.
+- **Scroll adjustments are increments.** The virtualizer's adjustment (rows above the view
+  measured) is applied from the scroller's position now, less what has already been applied since
+  the last offset report, so a scroll the browser made in between (a focus) is not undone. A
+  scroll to an offset converts box-relative to the scroller's own.
+- **Disconnected ResizeObserver entries** are ignored: a row just unmounted is reported once more
+  at no height, which would have set its size to zero.
+- **`keep` is in the range extractor's dependencies**, so a new cursor row is a new extractor and
+  ranges again; the focused row is read from a ref at the moment of ranging.
+- **First-render windowing from the viewport.** A collection mounting with its Pane windows in its
+  first draw, from `window.innerWidth` and `innerHeight`
+  until the scroller is measured.
+- **Table's first commit.** The cursor moves first and the cell takes focus in a layout effect
+  once the window has drawn its row (`focusCell` sets the cursor and a `wanted` cell), since a
+  `querySelector` on a row not yet mounted found nothing; the grid's rows are built once and
+  handed to `Window`.
+- **A spacer is `aria-hidden`**, a `div` or, in the grid, a `tr` holding one empty cell; zero
+  heights are omitted.
+
 Open: `WAIT_DELAY` and `ACT_DELAY` (tuned live), and whether a minimum is needed after all; the phone's text bar as a nested `Text`
-(a device check); the virtualizing libraries, their count and the phone Pane's scroll with a long
-collection (a spike, phase 7).
+(a device check); the phone's virtualizing libraries, its count and its Pane's scroll with a long
+collection (a spike on a device); and `VIRTUAL_FROM` itself (above).

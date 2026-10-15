@@ -35,6 +35,19 @@ and `FrameLine` (the stale and paused lines) take the `Frame` it returns. A pagi
 "Show more" row is `MoreRow` (`lib/more`), which the collections draw; the web needs no
 `QueryProvider listen`, since TanStack reads the window's online and visibility events.
 
+## Long collections
+
+A collection windows by itself: from `VIRTUAL_FROM` loaded rows (`@fcalell/ui-core/window`) under
+a scroller, only the rows near the view and `OVERSCAN` past each edge are drawn, spacers holding
+the room of the rest. No prop turns it on or off. The scrollers are a `Pane`'s body, a `Sheet`'s
+body (docked or not), a `Gate`'s page and a `Thread`'s log, the nearest one winning, so a `List` in
+a `Sheet` windows against the `Sheet`. A `List` (rows, files, meters and definitions, flat), a
+`Group`'s list, a `Table` at both widths and a `Thread` window; trees, `Comparison`, `BarChart`
+and `OptionList` draw every row. A row is exactly one element. A collection that crosses the count
+(a Show more) keeps the rows it drew. A part of your own that scrolls and holds a long collection
+provides `Scroller` (`lib/window`) with `useScroller`; one that draws its own rows from a long
+list uses `Window` (`lib/window`), given every row built and the box they stand in.
+
 ## Acts
 
 An act's holder reads from `useAct(where)` (`lib/act`): `pending` (which act runs), `holds` (it
