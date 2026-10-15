@@ -63,11 +63,13 @@ yet as its painted form. Your own code never sees the placeholder:
   is `unknown`). In dev it registers its reads as painted.
 - `useFrameRead(read, derive)` is what a frame (Pane, Section, Sheet, Form) builds on: one
   subscription whose `derive(held)` runs in `combine`, so the frame renders when its derived state
-  changes and never on a value change. It returns `{ state, retry }`; `retry` refetches the frame's
-  reads. Pass a module-level `derive`, whose identity is the combine's. Given a read (`isRead`) the
-  frame holds its root and draws its failure; given a selection it draws only waiting and empty.
+  changes and never on a value change. It returns `{ state, retry, holding, holds }`; `retry`
+  refetches the reads the frame holds, `holding` says it holds any and `holds` is their hashes with
+  the enclosing frames' (publish it with `<FrameHolds holds={holds}>` around the body). Pass a
+  module-level `derive`, whose identity is the combine's. The frame holds the reads of its `read`
+  that no enclosing frame holds, and draws their failure.
 - `useDraft(datum)` is a field's value: it follows its selection until the viewer edits it, then
-  holds the edit (`edit(next)`); a selection over another read drops the edit. A constant passes
+  holds the edit (`change(next)`); a selection over another read drops the edit. A constant passes
   through unchanged: the app owns it, and a value it changes shows.
 
 A frame draws more than the first wait of its root. While the data stays it marks a refetch
@@ -76,10 +78,13 @@ A frame draws more than the first wait of its root. While the data stays it mark
 asked for yet (`enabled: false`, `skipToken`) paints still, as a paused one does. All of it comes
 with the frame's `read`; write nothing for it.
 
-One read has one root holder. In dev, two frames given the same read raise `console.error` at mount
-(give one of them a selection), and so does a read that fails with no data while a leaf paints it
-and no frame holds it (give its Pane, Section, Sheet or Form `read`). A read you hold with your own
-`useQuery` is not checked.
+A frame holds the reads of its `read` that no enclosing frame holds, and draws their failure, stale
+and paused lines. A Pane given `deploy` holds it, and a Section inside it given `deploy.at(...)`
+holds nothing; a Section given `combine([inbox, jobs, board], f)` under a Pane with no `read` holds
+all three, and draws the failed form when any of them fails with no data. Sibling frames may each
+hold a read and draw its state in their own place. In dev a read that fails with no data while a
+leaf paints it and no frame holds it raises `console.error` (give its Pane, Section, Sheet or Form
+`read`). A read you hold with your own `useQuery` is not checked.
 
 `QueryProvider` takes `settle`, which a UI plugin passes: a read's first answer (its first data,
 its first failure with no data, a reset to waiting) is flushed through it, so the waiting form is

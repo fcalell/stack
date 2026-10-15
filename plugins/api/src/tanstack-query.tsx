@@ -28,9 +28,9 @@ import {
 	type Drawn,
 	draftFor,
 	type Held,
-	holdRoot,
-	isRead,
+	holdReads,
 	type Draft as Kept,
+	NO_HOLDS,
 	paintReads,
 	placeholderData,
 	planFrame,
@@ -38,6 +38,7 @@ import {
 	type Read,
 	readKey,
 	readsOf,
+	retryOnce,
 	type Selection,
 	watchUnheld,
 	withRead,
@@ -54,6 +55,7 @@ import {
 	OPERATION_CONTEXT_SYMBOL,
 } from "@orpc/tanstack-query";
 import {
+	hashKey,
 	MutationCache,
 	QueryClient,
 	type QueryClientConfig,
@@ -65,7 +67,9 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import {
+	createContext,
 	type ReactNode,
+	use,
 	useEffect,
 	useMemo,
 	useRef,
@@ -126,13 +130,13 @@ declare module "@tanstack/react-query" {
 	}
 }
 
-// Mobile-friendly defaults: a single retry (flaky cellular shouldn't hammer the
-// worker) and a short freshness window so navigating between screens doesn't
+// Mobile-friendly defaults: a single retry of a failure that may pass (flaky
+// cellular shouldn't hammer the worker) and a short freshness window so navigating between screens doesn't
 // refetch on every mount.
 const NATIVE_DEFAULTS: QueryClientConfig = {
 	defaultOptions: {
 		queries: {
-			retry: 1,
+			retry: retryOnce,
 			staleTime: 30_000,
 		},
 	},
@@ -257,30 +261,62 @@ export function useSelections<const V extends readonly unknown[]>(
 	}) as never;
 }
 
+// The query hashes the frames above hold, identity only: a nested frame holds
+// the reads of its selection that are not in it. A frame that holds nothing
+// passes its parent's set on, so the value changes only when a frame holds.
+const HoldsContext = createContext<ReadonlySet<string>>(NO_HOLDS);
+
+export function FrameHolds(props: {
+	holds: ReadonlySet<string>;
+	children?: ReactNode;
+}) {
+	return <HoldsContext value={props.holds}>{props.children}</HoldsContext>;
+}
+
 // A frame's one subscription: the same observer a leaf makes (placeholder on),
 // with `derive` run in `combine`, so the frame renders when its derived state
 // changes (form, count, busy) and never on a value change. Pass a `derive` that
-// is stable (a module function): its identity is the combine's. Given a read
-// the frame holds its root, which the dev registry counts. `retry` refetches
-// the frame's reads.
+// is stable (a module function): its identity is the combine's. The frame holds
+// the reads of its selection that no enclosing frame holds (the dev registry
+// counts them) and returns `holds`, those hashes with the enclosing ones, for
+// its body to publish through `FrameHolds`; `holding` says it holds any. `retry`
+// refetches the reads it holds.
 export function useFrameRead<S>(
 	selection: Selection<unknown> | undefined,
 	derive: (held: Held) => S,
-): { state: S; retry: () => Promise<unknown> } {
+): {
+	state: S;
+	retry: () => Promise<unknown>;
+	holding: boolean;
+	holds: ReadonlySet<string>;
+} {
 	const client = useQueryClient();
+	const enclosing = use(HoldsContext);
 	const plan = useMemo(
 		() =>
-			planFrame(selection, derive, (r) => ({
-				fetchMore:
-					client.getQueryCache().find({ queryKey: r.options.queryKey })?.state
-						.fetchMeta?.fetchMore?.direction === "forward",
-			})),
-		[selection, derive, client],
+			planFrame(
+				selection,
+				derive,
+				(r) => ({
+					fetchMore:
+						client.getQueryCache().find({ queryKey: r.options.queryKey })?.state
+							.fetchMeta?.fetchMore?.direction === "forward",
+				}),
+				enclosing,
+			),
+		[selection, derive, client, enclosing],
 	);
-	useEffect(
-		() => (isRead(selection) ? holdRoot(selection) : undefined),
-		[selection],
+	const holds = useMemo(
+		() =>
+			plan.held.length === 0
+				? enclosing
+				: new Set([
+						...enclosing,
+						...plan.held.map((r) => hashKey(r.options.queryKey)),
+					]),
+		[plan, enclosing],
 	);
+	useEffect(() => holdReads(plan.held), [plan]);
 	const state = useQueries({
 		queries: plan.reads.map((r) => ({ ...r.options, placeholderData })),
 		combine: plan.combine,
@@ -288,11 +324,11 @@ export function useFrameRead<S>(
 	// The refetch itself, so a Retry draws its own pending until it settles.
 	const retry = () =>
 		Promise.all(
-			plan.reads.map((r) =>
+			plan.held.map((r) =>
 				client.refetchQueries({ queryKey: r.options.queryKey, exact: true }),
 			),
 		);
-	return { state, retry };
+	return { state, retry, holding: plan.held.length > 0, holds };
 }
 
 export interface More {

@@ -6,9 +6,8 @@ import type { ShowcaseFrame } from "./cells.ts";
 // so it draws its failure, one that rejects as not found, so it draws the
 // missing form, one that answers nothing, one that answers rows and three that
 // hold rows and are busy, stale or paused. No retry, so a failure shows at
-// once. A frame that holds a read as its root is the one
-// holder of its query, so a drawer that draws several frames, or a page of
-// frames, takes each its own set with `readsAt`.
+// once. A drawer that draws several frames, or a page of frames, takes each its
+// own set with `readsAt`, so the states of one do not leak into the next.
 export interface Reads {
 	/** A read whose query never resolves: its frame holds the painted form. */
 	waiting: Read<readonly string[]>;
@@ -110,7 +109,7 @@ export const waitingText = waiting.at(() => "");
 
 const itemed = new Map<string, Read<readonly unknown[]>>();
 
-/** A read in a frame's state of `items`: it answers them at rest and none when empty, never answers while loading and rejects in error. The same read for the same key; a frame that holds it as its root is its one holder, so each takes its own key. */
+/** A read in a frame's state of `items`: it answers them at rest and none when empty, never answers while loading and rejects in error. The same read for the same key, so each frame takes its own key. */
 export function itemsAt<T>(
 	key: string,
 	state: ShowcaseFrame["state"],
@@ -137,7 +136,7 @@ export type MoreState = "next" | "fetching" | "failed";
 
 const paged = new Map<string, Read<readonly unknown[]>>();
 
-/** A pages read that holds `rows` as its first page with another after it: the next page answers nothing, so it loads for good ("fetching"), fails ("failed"), or is not asked for ("next", where "Show more" stands). The same read for the same key; a frame that holds it as its root is its one holder, so each takes its own key. */
+/** A pages read that holds `rows` as its first page with another after it: the next page answers nothing, so it loads for good ("fetching"), fails ("failed"), or is not asked for ("next", where "Show more" stands). The same read for the same key, so each frame takes its own key. */
 export function pagesAt<T>(
 	key: string,
 	how: MoreState,

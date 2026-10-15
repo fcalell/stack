@@ -147,7 +147,7 @@ test("a frame holding no value is ready, busy while its read refetches", () => {
 		stale: false,
 		paused: false,
 	});
-	assert.deepEqual(frameOf({ root: root({ fetchStatus: "fetching" }) }), {
+	assert.deepEqual(frameOf({ roots: [root({ fetchStatus: "fetching" })] }), {
 		form: "ready",
 		count: undefined,
 		busy: true,
@@ -159,7 +159,7 @@ test("a frame holding no value is ready, busy while its read refetches", () => {
 test("a failed or missing read ends the frame whatever it draws, failed busy while it retries", () => {
 	const drawn = { painted: true, value: [] };
 	assert.deepEqual(
-		frameOf({ drawn, root: root({ ...failure, fetchStatus: "fetching" }) }),
+		frameOf({ drawn, roots: [root({ ...failure, fetchStatus: "fetching" })] }),
 		{
 			form: "failed",
 			count: undefined,
@@ -169,14 +169,14 @@ test("a failed or missing read ends the frame whatever it draws, failed busy whi
 		},
 	);
 	assert.equal(
-		frameOf({ drawn, root: root({ status: "error", error: "gone" }) }).form,
+		frameOf({ drawn, roots: [root({ status: "error", error: "gone" })] }).form,
 		"missing",
 	);
 });
 
 test("a painted value is waiting, or still where the read is not asked for, and never busy", () => {
 	const drawn = { painted: true, value: undefined };
-	assert.deepEqual(frameOf({ drawn, root: root(pending) }), {
+	assert.deepEqual(frameOf({ drawn, roots: [root(pending)] }), {
 		form: "waiting",
 		count: undefined,
 		busy: false,
@@ -186,7 +186,7 @@ test("a painted value is waiting, or still where the read is not asked for, and 
 	assert.equal(
 		frameOf({
 			drawn,
-			root: root({ ...pending, isEnabled: false, fetchStatus: "idle" }),
+			roots: [root({ ...pending, isEnabled: false, fetchStatus: "idle" })],
 		}).form,
 		"still",
 	);
@@ -213,7 +213,7 @@ test("a painted value stands still while its root is paused, and keeps the pause
 	const drawn = { painted: true, value: undefined };
 	const f = frameOf({
 		drawn,
-		root: root({ ...pending, fetchStatus: "paused" }),
+		roots: [root({ ...pending, fetchStatus: "paused" })],
 	});
 	assert.equal(f.form, "still");
 	assert.equal(f.paused, true);
@@ -225,11 +225,11 @@ test("a frame is stale when its root's refetch failed, paused when its root wait
 	const drawn = { painted: false, value: [1] };
 	const stale = frameOf({
 		drawn,
-		root: root({ ...failure, isRefetchError: true }),
+		roots: [root({ ...failure, isRefetchError: true })],
 	});
 	assert.equal(stale.form, "ready");
 	assert.equal(stale.stale, true);
-	const paused = frameOf({ drawn, root: root({ fetchStatus: "paused" }) });
+	const paused = frameOf({ drawn, roots: [root({ fetchStatus: "paused" })] });
 	assert.equal(paused.form, "ready");
 	assert.equal(paused.paused, true);
 	const none = frameOf({ drawn });
@@ -262,7 +262,7 @@ test("a next page fetching is not busy", () => {
 	assert.equal(
 		frameOf({
 			drawn: { painted: false, value: [1] },
-			root: root(fetchingMore),
+			roots: [root(fetchingMore)],
 		}).busy,
 		false,
 	);
@@ -275,19 +275,21 @@ test("a next page fetching is not busy", () => {
 test("a streamed read is not busy while it writes", () => {
 	const f = frameOf({
 		drawn: { painted: false, value: [1] },
-		root: root({ fetchStatus: "fetching", streamed: true }),
+		roots: [root({ fetchStatus: "fetching", streamed: true })],
 	});
 	assert.equal(f.busy, false);
 });
 
 test("a turn waits for its first chunk, and none is drawn before it", () => {
-	assert.deepEqual(turnOf({ root: root(pending) }), {
+	assert.deepEqual(turnOf({ roots: [root(pending)] }), {
 		form: "waiting",
 		value: undefined,
 	});
 	assert.equal(
-		turnOf({ drawn: { painted: true, value: undefined }, root: root(pending) })
-			.form,
+		turnOf({
+			drawn: { painted: true, value: undefined },
+			roots: [root(pending)],
+		}).form,
 		"waiting",
 	);
 });
@@ -296,28 +298,28 @@ test("a turn writes while chunks arrive and is written once the stream settles",
 	const drawn = { painted: false, value: "Hel" };
 	const writing = turnOf({
 		drawn,
-		root: root({ fetchStatus: "fetching", streamed: true }),
+		roots: [root({ fetchStatus: "fetching", streamed: true })],
 	});
 	assert.deepEqual(writing, { form: "writing", value: "Hel" });
 	assert.equal(
-		turnOf({ drawn, root: root({ streamed: true }) }).form,
+		turnOf({ drawn, roots: [root({ streamed: true })] }).form,
 		"written",
 	);
-	assert.equal(turnOf({ drawn, root: root({}) }).form, "written");
+	assert.equal(turnOf({ drawn, roots: [root({})] }).form, "written");
 });
 
 test("a turn whose stream failed, or whose refresh did, is stopped with its partial value", () => {
 	const drawn = { painted: false, value: "Hel" };
-	assert.deepEqual(turnOf({ drawn, root: root(failure) }), {
+	assert.deepEqual(turnOf({ drawn, roots: [root(failure)] }), {
 		form: "stopped",
 		value: "Hel",
 	});
 	assert.equal(
-		turnOf({ root: root({ status: "error", error: "gone" }) }).form,
+		turnOf({ roots: [root({ status: "error", error: "gone" })] }).form,
 		"stopped",
 	);
 	assert.equal(
-		turnOf({ drawn, root: root({ ...failure, isRefetchError: true }) }).form,
+		turnOf({ drawn, roots: [root({ ...failure, isRefetchError: true })] }).form,
 		"stopped",
 	);
 });
@@ -325,7 +327,7 @@ test("a turn whose stream failed, or whose refresh did, is stopped with its part
 test("a turn with no value, or a painted selection, is none; a real selection value is written", () => {
 	assert.equal(turnOf({ drawn: { painted: false, value: null } }).form, "none");
 	assert.equal(
-		turnOf({ drawn: { painted: false, value: undefined }, root: root({}) })
+		turnOf({ drawn: { painted: false, value: undefined }, roots: [root({})] })
 			.form,
 		"none",
 	);
@@ -334,4 +336,57 @@ test("a turn with no value, or a painted selection, is none; a real selection va
 		form: "written",
 		value: "Hi",
 	});
+});
+
+test("a frame over several reads draws the first one failed with no data", () => {
+	const drawn = { painted: true, value: undefined };
+	const f = frameOf({
+		drawn,
+		roots: [
+			root({ fetchStatus: "fetching" }),
+			root({ ...failure }),
+			root({ status: "error", error: "gone" }),
+		],
+	});
+	assert.equal(f.form, "failed");
+	assert.equal(f.busy, true);
+	const missing = frameOf({
+		drawn,
+		roots: [root({ status: "error", error: "gone" }), root({ ...failure })],
+	});
+	assert.equal(missing.form, "missing");
+});
+
+test("busy, stale and paused come from any held read", () => {
+	const drawn = { painted: false, value: [1] };
+	const f = frameOf({
+		drawn,
+		roots: [
+			root({}),
+			root({ fetchStatus: "fetching" }),
+			root({ ...failure, isRefetchError: true }),
+			root({ fetchStatus: "paused" }),
+		],
+	});
+	assert.deepEqual(
+		[f.form, f.busy, f.stale, f.paused],
+		["ready", true, true, true],
+	);
+	const calm = frameOf({ drawn, roots: [root({}), root({})] });
+	assert.deepEqual([calm.busy, calm.stale, calm.paused], [false, false, false]);
+});
+
+test("a frame over several reads stands still while any is idle or paused", () => {
+	const drawn = { painted: true, value: undefined };
+	assert.equal(
+		frameOf({
+			drawn,
+			roots: [root(pending), root({ ...pending, isEnabled: false })],
+		}).form,
+		"still",
+	);
+	assert.equal(
+		frameOf({ drawn, roots: [root(pending), root(pending)] }).form,
+		"waiting",
+	);
 });

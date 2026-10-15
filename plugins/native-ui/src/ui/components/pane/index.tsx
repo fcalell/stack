@@ -77,7 +77,7 @@ export interface PaneProps extends Closed {
 	foot?: ReactNode;
 	/** A task over the foot: while it is `open` the sheet docks there in the foot's place, the body scrolling above it, and closing hands focus back to the foot's input. */
 	sheet?: SheetProps;
-	/** What the Pane's page holds, read once for the frame: while it waits the loaded tree paints, its failure and a missing record fill the page in place of the body, and an empty selection draws `empty`. A read (the root) draws its failure and says it is busy; a selection draws only its wait and its emptiness. */
+	/** What the Pane's page holds, read once for the frame: while it waits the loaded tree paints, its failure and a missing record fill the page in place of the body, and an empty selection draws `empty`. It holds the reads of `read` that no enclosing frame holds: those draw their failure and say they are busy; the rest only wait and empty. */
 	read?: Selection<unknown>;
 	/** The Pane holds nothing yet: this stands in place of its body, centred in what the body leaves, or at the body's top over its own `children`. With a `read` it stands only when the selection is empty. */
 	empty?: EmptyProps;

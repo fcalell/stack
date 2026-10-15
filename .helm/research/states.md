@@ -543,6 +543,21 @@ Changed while building phase 3 (2026-10-15); where the sections above differ, th
 9. **the phone** wires the online and focus managers (`QueryProvider listen`).
 10. `read(options, missing)` is `read(options, { missing, kind })`.
 
+Changed while building phase 6 (2026-10-15); where the sections above differ, this list wins:
+
+1. **A frame holds the reads of its selection that no enclosing frame holds.** "One root holder per
+   read" is revised: a frame given a read holds it unless an ancestor holds it, a frame given
+   `x.at(...)` under a holder of `x` holds nothing (as before), and a frame given `combine([a, b,
+   c])` under a read-less Pane holds all three. Frames publish the hashes they hold through
+   `FrameHolds`, a context of identity only; the context resolves nesting, so the dev "two holders"
+   error is gone and sibling frames may each hold a read and draw its state in their own place.
+   The no-holder check stays and counts every held read.
+2. **`Held.roots[]`** replaces `Held.root`. `frameOf` merges them: the first read failed with no
+   data ends the frame (failed, or missing by its own `missing`); busy, stale and paused are any
+   one's, and the frame stands still when any is idle or paused. `retry` refetches the held reads.
+   A reply (`turnOf`) holds its one read.
+3. `createQueryClient`'s default `retry` is one retry of a failure that is not a not-found.
+
 Deviations kept from the build: a failed next page is the collection's line, not the frame's stale
 (`planFrame` presents the pages held as success); a `Table` paints its next page as a grid of its
 own at the same columns, and the narrow list as rows in the same slots; the Thread roster's

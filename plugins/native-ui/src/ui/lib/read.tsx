@@ -1,6 +1,6 @@
 import type { Selection } from "@fcalell/plugin-api/tanstack-query";
 import {
-	isRead,
+	FrameHolds,
 	useFrameRead,
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
@@ -17,16 +17,17 @@ import { EmptyBase, type EmptyFit, type EmptyProps } from "./empty";
 import { useShown } from "./paint";
 import { useWords } from "./words";
 
-// A frame's one subscription to its read (a root or a selection): the form it
+// A frame's one subscription to its read (a read or a selection): the form it
 // draws, its count, whether it refetches, whether it waits (a painted or idle
-// read), whether it holds its read as the root (it draws its failure) and the
-// retry.
+// read), whether it holds any read (it draws their failure), the hashes it and
+// its ancestors hold (`held`, for its body to publish) and the retry.
 export function useFrame(read?: Selection<unknown>) {
-	const { state, retry } = useFrameRead(read, frameOf);
+	const { state, retry, holding, holds: held } = useFrameRead(read, frameOf);
 	return {
 		...state,
 		waits: state.form === "waiting" || state.form === "still",
-		holds: isRead(read),
+		holds: holding,
+		held,
 		retry,
 	};
 }
@@ -83,7 +84,8 @@ export function FrameBody(props: {
 			/>
 		);
 	}
-	return children;
+	// The reads this frame holds are not drawn again by a frame in its body.
+	return <FrameHolds holds={frame.held}>{children}</FrameHolds>;
 }
 
 // The trailing line carries the room under itself, as the web's does.
@@ -91,10 +93,10 @@ const LINE = "flex-row flex-wrap items-center gap-inside pb-inside";
 // In a form's flow (a group, the form) the gap around it is the room.
 const LINE_IN_FLOW = "flex-row flex-wrap items-center gap-inside";
 
-// A frame's busy mark, after its heading: a spinner while the root it holds
+// A frame's busy mark, after its heading: a spinner while a read it holds
 // refetches or retries, shown after `WAIT_DELAY` so a refetch the server
 // answers at once draws nothing. The spinner's ink is its place's, meta by
-// default. A selection holder and a frame with no heading draw none.
+// default. A frame that holds no read and a frame with no heading draw none.
 export function BusyMark({ frame }: { frame: Frame }) {
 	const busy = frame.holds && frame.busy;
 	const shown = useShown(busy);
@@ -127,7 +129,7 @@ export function StateLine(props: {
 	);
 }
 
-// The line under a frame's heading row when its root holds data it could not
+// The line under a frame's heading row when a read it holds has data it could not
 // refresh (stale, with Retry, pending while it runs) or waits for a connection
 // (paused, nothing to press).
 export function FrameLine({

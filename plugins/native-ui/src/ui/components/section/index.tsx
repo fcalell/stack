@@ -71,7 +71,7 @@ export interface SectionProps extends Closed {
 	act?: Datum<Act | IconAct>;
 	/** The section's other acts, in a menu under the more act after its act (destructive ones marked); a foldable section's more does not fold it. It paints, inert, as the act does. */
 	more?: Datum<readonly MenuItem[]>;
-	/** What the section's body holds, read once for the frame: while it waits the body's leaves paint, its failure and a missing record stand in the body's place, and an empty selection draws `empty`. A read (the root) draws its failure and says it is busy; a selection draws only its wait, its emptiness and its count. */
+	/** What the section's body holds, read once for the frame: while it waits the body's leaves paint, its failure and a missing record stand in the body's place, and an empty selection draws `empty`. It holds the reads of `read` that no enclosing frame holds: those draw their failure and say they are busy; the rest only wait, empty and count. */
 	read?: Selection<unknown>;
 	/** The section holds nothing yet: this stands in its body's place, framed, or as one quiet sentence when only the sentence is given. With a `read` it stands only when the selection is empty. */
 	empty?: EmptyProps;

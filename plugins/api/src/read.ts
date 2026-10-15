@@ -274,15 +274,21 @@ export function planSelections(values: readonly unknown[]): {
 	};
 }
 
-// A read, as against a selection of it: a frame given a read holds its root.
+// `createQueryClient`'s default `retry`: one retry of a failure that may pass,
+// none of a not-found, which is an answer and only delays the missing form.
+export function retryOnce(failures: number, error: unknown): boolean {
+	return !isNotFound(error) && failures < 1;
+}
+
+// A read, as against a selection of it.
 export function isRead(v: unknown): v is Read<unknown> {
 	return isSelection(v) && v[SELECTION].reads[0] === v;
 }
 
-// What a frame sees of its read: ui-core's `Held`, written out structurally
-// because plugin-api imports nothing from ui-core. `root` is the read itself
-// (a frame given a selection holds none), with the fields of its result that
-// `readState` reads.
+// What a frame sees of its reads: ui-core's `Held`, written out structurally
+// because plugin-api imports nothing from ui-core. `roots` are the reads the
+// frame holds (the reads of its selection that no enclosing frame holds), each
+// with the fields of its result that `readState` reads.
 export interface HeldResult {
 	status: "pending" | "success" | "error";
 	fetchStatus: "fetching" | "paused" | "idle";
@@ -299,33 +305,60 @@ export interface HeldResult {
 
 export interface Held {
 	drawn?: { painted: boolean; value: unknown; more?: boolean };
-	root?: { result: HeldResult; missing: (error: unknown) => boolean };
+	roots?: { result: HeldResult; missing: (error: unknown) => boolean }[];
 }
 
-// The pure core of `useFrameRead`: the frame's one read planned like a leaf's,
-// and `combine` deriving the frame's state from what is held. The root's result
-// is slot 0, which `planSelections` gives a read. `query` looks up a read's
-// query in the cache: a plain observer's result says nothing of a next page
-// being fetched, but the query's `fetchMeta` does.
+// The pure core of `useFrameRead`: the frame's selection planned like a leaf's,
+// and `combine` deriving the frame's state from what is held. `enclosing` is
+// the query hashes the frames above it hold: the frame holds the other reads of
+// its selection, so a nested frame draws a failure only for what its ancestors
+// do not (a `combine` under a read-less Pane holds all its reads; an `x.at()`
+// under a holder of `x` holds none). `query` looks up a read's query in the
+// cache: a plain observer's result says nothing of a next page being fetched,
+// but the query's `fetchMeta` does.
 export function planFrame<S>(
 	selection: Selection<unknown> | undefined,
 	derive: (held: Held) => S,
 	query: (read: Read<unknown>) => { fetchMore?: boolean } | undefined,
+	enclosing: ReadonlySet<string> = NO_HOLDS,
 ): {
 	reads: readonly Read<unknown>[];
+	held: readonly Read<unknown>[];
 	combine: (results: readonly (Result & HeldResult)[]) => S;
 } {
 	const plan = planSelections(selection === undefined ? [] : [selection]);
+	const held = plan.reads.filter(
+		(r) => !enclosing.has(hashKey(r.options.queryKey)),
+	);
 	return {
 		reads: plan.reads,
+		held,
 		combine: (results) => {
-			const root = isRead(selection) ? selection : undefined;
-			const first = results[0];
-			const forward = root?.kind === "pages" && query(root)?.fetchMore === true;
-			// A next page that failed is the collection's line (its more row), not
-			// the read's: the frame holds the pages it has, so it is not stale.
-			const nextFailed =
-				forward && first?.status === "error" && first.isRefetchError;
+			const roots = plan.reads.flatMap((r, i) => {
+				const result = results[i];
+				if (!held.includes(r) || !result) return [];
+				const forward = r.kind === "pages" && query(r)?.fetchMore === true;
+				// A next page that failed is the collection's line (its more row), not
+				// the read's: the frame holds the pages it has, so it is not stale.
+				const nextFailed =
+					forward && result.status === "error" && result.isRefetchError;
+				return [
+					{
+						result: {
+							...result,
+							...(nextFailed && {
+								status: "success" as const,
+								isRefetchError: false,
+								error: null,
+							}),
+							streamed: r.kind === "stream",
+							hasNextPage: r.kind === "pages" && moreOf(result.data),
+							fetchingMore: forward && result.fetchStatus === "fetching",
+						},
+						missing: r.missing,
+					},
+				];
+			});
 			return derive({
 				...(selection !== undefined && {
 					drawn: {
@@ -335,23 +368,7 @@ export function planFrame<S>(
 						),
 					},
 				}),
-				...(root &&
-					first && {
-						root: {
-							result: {
-								...first,
-								...(nextFailed && {
-									status: "success" as const,
-									isRefetchError: false,
-									error: null,
-								}),
-								streamed: root.kind === "stream",
-								hasNextPage: root.kind === "pages" && moreOf(first.data),
-								fetchingMore: forward && first.fetchStatus === "fetching",
-							},
-							missing: root.missing,
-						},
-					}),
+				roots,
 			});
 		},
 	};
@@ -393,14 +410,16 @@ export function draftFor<T>(
 	return draft && draft.key === key ? draft : null;
 }
 
-// Dev-only counts, by query hash, of the frames that hold a read as their root
-// and the leaves that paint it. They exist to name two mistakes at the moment
-// they are made: two frames each drawing one read's failure, and a leaf
-// painting a read that no frame holds, so its failure draws nowhere. A holder
-// or painter registers in an effect and returns its release.
+// Dev-only counts, by query hash, of the frames that hold a read and the
+// leaves that paint it. They exist to name one mistake at the moment it is
+// made: a leaf painting a read that no frame holds, so its failure draws
+// nowhere. A holder or painter registers in an effect and returns its release.
 const holders = new Map<string, number>();
 const painters = new Map<string, number>();
 export const dev = () => process.env.NODE_ENV !== "production";
+
+// The hashes no frame holds: what a frame outside every frame sees.
+export const NO_HOLDS: ReadonlySet<string> = new Set();
 
 function count(counts: Map<string, number>, keys: readonly string[]) {
 	for (const key of keys) counts.set(key, (counts.get(key) ?? 0) + 1);
@@ -409,16 +428,15 @@ function count(counts: Map<string, number>, keys: readonly string[]) {
 	};
 }
 
-export function holdRoot(read: Read<unknown>): () => void {
+// Sibling frames may each hold a read and draw its state in their own place,
+// and a nested frame holds only what its ancestors do not, so there is no
+// count to refuse.
+export function holdReads(reads: readonly Read<unknown>[]): () => void {
 	if (!dev()) return () => {};
-	const key = hashKey(read.options.queryKey);
-	const release = count(holders, [key]);
-	if ((holders.get(key) ?? 0) > 1) {
-		console.error(
-			`Two frames hold the read ${key} as their root, so each would draw its failure. Give one of them a selection.`,
-		);
-	}
-	return release;
+	return count(
+		holders,
+		reads.map((r) => hashKey(r.options.queryKey)),
+	);
 }
 
 export function paintReads(reads: readonly Read<unknown>[]): () => void {

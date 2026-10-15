@@ -60,8 +60,8 @@ const projects = orpc.projects.list.read();
 
 Waiting and failure sit at the frame. A `Pane`, `Section`, `Sheet` or `Form` (or a form's group)
 given a `read` draws its failure with Retry, its "no longer exists" form with Back when the read
-answers not found, and its empty state; give it the root read, or a selection of a read another
-frame holds (one read has one root holder). Every part below the frame takes a selection
+answers not found, and its empty state; give it a read, a selection or a `combine` of reads: it
+holds the reads that no enclosing frame holds. Every part below the frame takes a selection
 (`deploy.at((d) => d.steps)`, a `Datum`) and, while the read waits, draws its loaded form painted: a
 collection paints four rows in the slots its item map declares, a text its filler, a control its box.
 So the outline of the screen is written once, for the loaded data, and the waiting form is that

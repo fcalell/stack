@@ -73,12 +73,13 @@ export function readState(
 	};
 }
 
-// What a frame (a Pane, Section, Sheet or Form) holds: the read it is the
-// root holder of, and the value its collection or leaf draws, painted or real.
-// `more`: the drawn value is one page of several.
+// What a frame (a Pane, Section, Sheet or Form) holds: the reads it holds (those
+// of its selection that no enclosing frame holds), and the value its collection
+// or leaf draws, painted or real. `more`: the drawn value is one page of
+// several.
 export interface Held {
 	drawn?: { painted: boolean; value: unknown; more?: boolean };
-	root?: { result: ReadResult; missing: (e: unknown) => boolean };
+	roots?: { result: ReadResult; missing: (e: unknown) => boolean }[];
 }
 
 // ready: the loaded tree, its leaves real. waiting: the loaded tree, its
@@ -100,28 +101,41 @@ export interface FrameState {
 	count: number | undefined;
 	// A refetch or a retry runs.
 	busy: boolean;
-	// The root's: the last refetch failed, or it waits for a connection. False
-	// for a holder that is a selection.
+	// A held read's: the last refetch failed, or it waits for a connection. False
+	// for a frame that holds none.
 	stale: boolean;
 	paused: boolean;
 }
 
 // The frame's form from what it holds, never from a value's change: only the
-// form, the count and busy move it.
+// form, the count and busy move it. Several held reads merge: the first one
+// failed with no data ends the frame (failed, or missing by its own `missing`);
+// busy, stale and paused are any one's; the frame stands still when any is idle.
 export function frameOf(held: Held): FrameState {
-	const s = held.root && readState(held.root.result, held.root.missing);
-	const busy = s?.busy ?? false;
-	const stale = s?.stale ?? false;
-	const paused = s?.paused ?? false;
-	if (s?.phase === "failed" || s?.phase === "missing") {
-		return { form: s.phase, count: undefined, busy, stale, paused };
+	const states = (held.roots ?? []).map((r) => readState(r.result, r.missing));
+	const busy = states.some((s) => s.busy);
+	const stale = states.some((s) => s.stale);
+	const paused = states.some((s) => s.paused);
+	const ended = states.find(
+		(s) => s.phase === "failed" || s.phase === "missing",
+	);
+	if (ended) {
+		return {
+			form: ended.phase as FrameForm,
+			count: undefined,
+			busy,
+			stale,
+			paused,
+		};
 	}
 	if (!held.drawn) {
 		return { form: "ready", count: undefined, busy, stale, paused };
 	}
 	if (held.drawn.painted) {
 		return {
-			form: s?.phase === "idle" || s?.paused ? "still" : "waiting",
+			form: states.some((s) => s.phase === "idle" || s.paused)
+				? "still"
+				: "waiting",
 			count: undefined,
 			busy: false,
 			stale: false,
@@ -140,7 +154,8 @@ export function frameOf(held: Held): FrameState {
 	};
 }
 
-// The turn an app writes into a conversation, held by its own read: none
+// The turn an app writes into a conversation, held by its own read (a reply
+// holds the one): none
 // where nothing is being written, waiting for the first chunk, writing while
 // chunks arrive, written once it settles, stopped where the stream failed (or
 // a refresh of it did, the partial value kept).
@@ -148,7 +163,8 @@ export type TurnForm = "none" | "waiting" | "writing" | "written" | "stopped";
 
 export function turnOf(held: Held): { form: TurnForm; value: unknown } {
 	const value = held.drawn?.value;
-	const s = held.root && readState(held.root.result, held.root.missing);
+	const root = held.roots?.[0];
+	const s = root && readState(root.result, root.missing);
 	if (s?.phase === "waiting") return { form: "waiting", value };
 	if (s?.phase === "failed" || s?.phase === "missing") {
 		return { form: "stopped", value };

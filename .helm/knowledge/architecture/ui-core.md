@@ -1089,10 +1089,9 @@ a tick with no animation, never jumped to full.
   constant, or a selection that paints) and one item map: `row`, one function per `ListRow` slot,
   `file`, one per `FileRow` slot, `meter`, one per `Meter` slot, or `definition`, one per
   `DefinitionRow` slot (`copyable` one value for the list). It holds no read and no state branch,
-  and neither do Table, Thread, OptionList, BarChart or Comparison: no context reaches a
-  collection, so a List cannot know whether the Section around it holds the same root, and the idiom
-  `<Section read={tasks}><List items={tasks}/></Section>` would make two root holders. The frame (a
-  Pane, Section, Sheet or Form given the read) draws the failed form with Retry, the missing form
+  and neither do Table, Thread, OptionList, BarChart or Comparison: the state
+  belongs to the frame, which holds the read once, so a collection never draws a second copy of the
+  failure the Section around it draws. The frame (a Pane, Section, Sheet or Form given the read) draws the failed form with Retry, the missing form
   and the empty form (its `empty`, the act that fills the list) in the body's place, in the fit the
   collection would; a collection outside every frame whose read fails raises the dev no-holder
   error. While the selection's read waits, a List paints `PAINT_ROWS` rows from the item map's
@@ -1389,15 +1388,17 @@ a tick with no animation, never jumped to full.
   the page's content stays inside the Pane's or Gate's landmark. The phone's Section is a
   `View` with no role. The render walk's same-name check stays for the regions an app names
   itself.
-- A Section holds the read of its body (`read`: a root, or a selection of one) and draws its failed,
+- A Section holds the reads of its body (`read`: a read, a selection or a `combine` of several; it holds those no enclosing frame holds) and draws its failed,
   missing and empty forms in the body's place, the head standing. The forms are `FrameBody`'s
   (`lib/read`, one per platform) over the state `useFrame` derives with plugin-api's
   `useFrameRead(read, frameOf)`: one `useQueries` per frame whose derivation runs in `combine`, so a
-  frame renders when its form, count or busy changes and never on a value change. Given a root (an
-  `isRead` handle) the frame draws failed and missing, is the read's one holder (in dev a second
-  holder of one query key raises `console.error` at mount, "give one of them a selection") and is
-  `aria-busy` while it waits (the phone's `accessibilityState.busy`); given a selection it draws
-  only waiting, empty and its count. Empty is an empty array, `null` or `undefined` on real data.
+  frame renders when its form, count or busy changes and never on a value change. A frame holds the
+  reads of its selection that no enclosing frame holds (`FrameHolds`, a context of query hashes,
+  identity only, which `FrameBody` publishes to the body): it draws their failed and missing forms
+  (the first read failed with no data ends the frame) and their busy, stale and paused lines, and is
+  `aria-busy` while it waits (the phone's `accessibilityState.busy`). A frame that holds none draws
+  only waiting, empty and its count. Sibling frames may each hold a read and draw it in their own
+  place. Empty is an empty array, `null` or `undefined` on real data.
   The body's leaves paint on their own selections: a List and a Group their painted rows, a Prose,
   a Thread, a Code, a Meter, a Slider, a DefinitionRow and a FormField's control take a `Datum` and
   read nothing from the Section, so no context carries a wait flag (structure rule 11: a context carries identity only). A body that is an app's own component draws as it is and reads with
@@ -1407,8 +1408,8 @@ a tick with no animation, never jumped to full.
   registration the head reads in render from a host object (the head renders before the body, so it
   would always be a render pass stale), and a context handing the body a wait flag (every part had
   to read it and keep a second tree for it). `SectionContext` is gone: a Section's `empty` is its
-  own prop and its title one size, and no Section stands in a Section. Only the root holder is busy;
-  a collection is not.
+  own prop and its title one size, and no Section stands in a Section. Only a frame that holds a
+  read is busy; a collection is not.
 - **The frame's states past the first read.** The frame that holds the root renders on `busy`,
   `stale` and `paused` (`frameOf` carries them, so there is no second subscription), and its
   children are the same elements, so they bail out. *Busy* is `BusyMark` (`lib/read`): the

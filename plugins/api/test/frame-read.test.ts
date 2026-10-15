@@ -1,14 +1,17 @@
 import assert from "node:assert/strict";
 import { mock, test } from "node:test";
+import { ORPCError } from "@orpc/client";
 import {
+	hashKey,
 	InfiniteQueryObserver,
 	QueriesObserver,
 	QueryClient,
 } from "@tanstack/react-query";
 import {
+	combine,
 	draftFor,
 	type Held,
-	holdRoot,
+	holdReads,
 	isRead,
 	moreOf,
 	paintReads,
@@ -17,6 +20,7 @@ import {
 	type Read,
 	read,
 	readKey,
+	retryOnce,
 	watchUnheld,
 } from "../src/read.ts";
 
@@ -62,7 +66,7 @@ test("a frame over a read holds its root and its drawn value", async () => {
 			tasks,
 			(held) => {
 				seen.push(held);
-				return held.root?.result.status;
+				return held.roots?.[0]?.result.status;
 			},
 			() => undefined,
 		),
@@ -70,10 +74,10 @@ test("a frame over a read holds its root and its drawn value", async () => {
 	const stop = observer.subscribe(() => {});
 	assert.equal(state(), "success");
 	assert.equal(seen.at(-1)?.drawn?.painted, true);
-	assert.equal(seen.at(-1)?.root?.result.isPlaceholderData, true);
+	assert.equal(seen.at(-1)?.roots?.[0]?.result.isPlaceholderData, true);
 	await tick();
 	assert.equal(state(), "error");
-	assert.equal(seen.at(-1)?.root?.missing(new Error("no")), false);
+	assert.equal(seen.at(-1)?.roots?.[0]?.missing(new Error("no")), false);
 	assert.equal(seen.at(-1)?.drawn?.painted, true);
 	fail = false;
 	await client.refetchQueries({ queryKey: ["tasks"] });
@@ -86,34 +90,130 @@ test("a frame over a read holds its root and its drawn value", async () => {
 	stop();
 });
 
-test("a frame over a selection holds no root, and over nothing holds nothing", () => {
+const landed = (data: unknown) => ({
+	data,
+	isPlaceholderData: false,
+	status: "success" as const,
+	fetchStatus: "idle" as const,
+	isEnabled: true,
+	isRefetchError: false,
+	error: null,
+});
+
+const hashOf = (r: Read<unknown>) => hashKey(r.options.queryKey);
+
+test("a frame holds the reads of its selection that no enclosing frame holds", () => {
 	const a = make("a", async () => 1);
-	let held: Held | undefined;
-	planFrame(
+	const b = make("b", async () => 2);
+	const c = make("c", async () => 3);
+	const all = combine([a, b, c], (x, y, z) => [x, y, z]);
+	const results = [landed(1), landed(2), landed(3)];
+	const roots = (
+		selection: Parameters<typeof planFrame>[0],
+		enclosing?: ReadonlySet<string>,
+	) =>
+		planFrame(
+			selection,
+			(h) => h,
+			() => undefined,
+			enclosing,
+		).combine(results.slice(0, readsLength(selection))).roots?.length;
+	const readsLength = (selection: Parameters<typeof planFrame>[0]) =>
+		planFrame(
+			selection,
+			(h) => h,
+			() => undefined,
+		).reads.length;
+
+	// A bare read, and an `at` of it, with no frame above: held.
+	assert.deepEqual(
+		planFrame(
+			a,
+			(h) => h,
+			() => undefined,
+		).held,
+		[a],
+	);
+	assert.deepEqual(
+		planFrame(
+			a.at((x) => x),
+			(h) => h,
+			() => undefined,
+		).held,
+		[a],
+	);
+	// Under a holder of the read: nothing, and the drawn value stands.
+	const above = new Set([hashOf(a)]);
+	const under = planFrame(
 		a.at((x) => x),
-		(h) => (held = h),
+		(h) => h,
 		() => undefined,
-	).combine([
-		{
-			data: 3,
-			isPlaceholderData: false,
-			status: "success",
-			fetchStatus: "idle",
-			isEnabled: true,
-			isRefetchError: false,
-			error: null,
-		},
-	]);
-	assert.deepEqual(held, {
-		drawn: { painted: false, value: 3, more: false },
+		above,
+	);
+	assert.deepEqual(under.held, []);
+	assert.deepEqual(under.combine([landed(1)]), {
+		drawn: { painted: false, value: 1, more: false },
+		roots: [],
 	});
+	assert.equal(roots(a, above), 0);
+	// A combine under a read-less Pane holds all three, in order.
+	assert.deepEqual(
+		planFrame(
+			all,
+			(h) => h,
+			() => undefined,
+		).held,
+		[a, b, c],
+	);
+	assert.equal(roots(all), 3);
+	// Under a holder of one of them, the other two.
+	const some = planFrame(
+		all,
+		(h) => h,
+		() => undefined,
+		new Set([hashOf(b)]),
+	);
+	assert.deepEqual(some.held, [a, c]);
+	assert.equal(some.combine(results).roots?.length, 2);
+	// Two selections of one read hold it once.
+	assert.equal(
+		planFrame(
+			combine([a, a.at((x) => x)], (x, y) => [x, y]),
+			(h) => h,
+			() => undefined,
+		).held.length,
+		1,
+	);
+	// Over nothing, nothing.
 	const none = planFrame(
 		undefined,
 		(h) => h,
 		() => undefined,
 	);
 	assert.deepEqual(none.reads, []);
-	assert.deepEqual(none.combine([]), {});
+	assert.deepEqual(none.combine([]), { roots: [] });
+});
+
+test("a frame over a combine draws the failure of any read it holds", async () => {
+	const client = new QueryClient({
+		defaultOptions: { queries: { retry: false } },
+	});
+	const a = make("ok", async () => 1);
+	const b = make("down", async () => {
+		throw new Error("no");
+	});
+	const { observer, state } = observe(
+		client,
+		planFrame(
+			combine([a, b], (x, y) => [x, y]),
+			(h) => h.roots?.map((r) => r.result.status),
+			() => undefined,
+		),
+	);
+	const stop = observer.subscribe(() => {});
+	await tick();
+	assert.deepEqual(state(), ["success", "error"]);
+	stop();
 });
 
 test("a draft stays with the read it was made over", () => {
@@ -130,20 +230,12 @@ test("a draft stays with the read it was made over", () => {
 	assert.equal(draftFor(constant, readKey("other")), constant);
 });
 
-test("two holders of one read raise an error, one does not", () => {
+test("sibling frames may each hold a read, and nothing is raised", () => {
 	const error = mock.method(console, "error", () => {});
 	const a = make("holders-a", async () => 1);
-	const b = make("holders-b", async () => 1);
-	const releaseA = holdRoot(a);
-	holdRoot(b)();
+	const release = [holdReads([a]), holdReads([a])];
+	for (const one of release) one();
 	assert.equal(error.mock.callCount(), 0);
-	const second = holdRoot(a);
-	assert.equal(error.mock.callCount(), 1);
-	assert.match(String(error.mock.calls[0]?.arguments[0]), /holders-a/);
-	releaseA();
-	second();
-	holdRoot(a)();
-	assert.equal(error.mock.callCount(), 1);
 	error.mock.restore();
 });
 
@@ -175,7 +267,7 @@ test("a failure with painters and no holder raises an error naming the read", as
 
 	const held = make("held", fail);
 	const unpaintHeld = paintReads([held]);
-	const unhold = holdRoot(held);
+	const unhold = holdReads([held]);
 	await run("held");
 	assert.equal(error.mock.callCount(), 1);
 	unpaint();
@@ -239,13 +331,13 @@ test("a frame over a pages read has more, and a next page is fetchingMore", asyn
 	// The first fetch is not a next page, and over the placeholder nothing remains.
 	state();
 	assert.equal(seen.at(-1)?.drawn?.more, false);
-	assert.equal(seen.at(-1)?.root?.result.fetchingMore, false);
-	assert.equal(seen.at(-1)?.root?.result.streamed, false);
+	assert.equal(seen.at(-1)?.roots?.[0]?.result.fetchingMore, false);
+	assert.equal(seen.at(-1)?.roots?.[0]?.result.streamed, false);
 	await tick();
 	state();
 	const loaded = seen.at(-1);
 	assert.equal(loaded?.drawn?.more, true);
-	assert.equal(loaded?.root?.result.hasNextPage, true);
+	assert.equal(loaded?.roots?.[0]?.result.hasNextPage, true);
 	assert.deepEqual(loaded?.drawn?.value, [0]);
 	const next = new InfiniteQueryObserver(client, {
 		...pages.options,
@@ -255,12 +347,12 @@ test("a frame over a pages read has more, and a next page is fetchingMore", asyn
 	// The query says a next page is being fetched; the plain observer cannot.
 	assert.equal(queryOf()?.state.fetchMeta?.fetchMore?.direction, "forward");
 	state();
-	assert.equal(seen.at(-1)?.root?.result.fetchingMore, true);
+	assert.equal(seen.at(-1)?.roots?.[0]?.result.fetchingMore, true);
 	assert.deepEqual(seen.at(-1)?.drawn?.value, [0]);
 	await fetching;
 	await tick();
 	state();
-	assert.equal(seen.at(-1)?.root?.result.fetchingMore, false);
+	assert.equal(seen.at(-1)?.roots?.[0]?.result.fetchingMore, false);
 	assert.deepEqual(seen.at(-1)?.drawn?.value, [0, 1]);
 	stop();
 });
@@ -313,8 +405,8 @@ test("a next page that failed is not the frame's refetch error", async () => {
 			.status,
 		"error",
 	);
-	assert.equal(held?.root?.result.status, "success");
-	assert.equal(held?.root?.result.isRefetchError, false);
+	assert.equal(held?.roots?.[0]?.result.status, "success");
+	assert.equal(held?.roots?.[0]?.result.isRefetchError, false);
 	assert.deepEqual(held?.drawn?.value, [0]);
 	stop();
 });
@@ -337,8 +429,33 @@ test("a stream read says so, and a plain read has no more", async () => {
 	const stop = observer.subscribe(() => {});
 	await tick();
 	state();
-	assert.equal(held?.root?.result.streamed, true);
-	assert.equal(held?.root?.result.hasNextPage, false);
+	assert.equal(held?.roots?.[0]?.result.streamed, true);
+	assert.equal(held?.roots?.[0]?.result.hasNextPage, false);
 	assert.equal(held?.drawn?.more, false);
 	stop();
+});
+
+test("the default retry gives a failure one more try and a not-found none", async () => {
+	const gone = new ORPCError("NOT_FOUND");
+	assert.equal(retryOnce(0, new Error("down")), true);
+	assert.equal(retryOnce(1, new Error("down")), false);
+	assert.equal(retryOnce(0, gone), false);
+	const client = new QueryClient({
+		defaultOptions: { queries: { retry: retryOnce, retryDelay: 0 } },
+	});
+	let calls = 0;
+	const attempt = (key: string, error: unknown) =>
+		client
+			.fetchQuery({
+				queryKey: [key],
+				queryFn: async () => {
+					calls++;
+					throw error;
+				},
+			})
+			.catch(() => {});
+	await attempt("missing", gone);
+	assert.equal(calls, 1);
+	await attempt("down", new Error("down"));
+	assert.equal(calls, 3);
 });

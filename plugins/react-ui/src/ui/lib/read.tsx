@@ -1,6 +1,6 @@
 import type { Selection } from "@fcalell/plugin-api/tanstack-query";
 import {
-	isRead,
+	FrameHolds,
 	useFrameRead,
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
@@ -14,13 +14,14 @@ import { Text } from "../components/text/index.tsx";
 import { EmptyBase, type EmptyFit, type EmptyProps } from "./empty.tsx";
 import { useWords } from "./words.tsx";
 
-/** A frame's one subscription to its read (a root or a selection): the form it draws, its count, whether it refetches, whether it waits (a painted or idle read), whether it holds its read as the root (it draws its failure) and the retry. */
+/** A frame's one subscription to its read (a read or a selection): the form it draws, its count, whether it refetches, whether it waits (a painted or idle read), whether it holds any read (it draws their failure), the hashes it and its ancestors hold (`held`, for its body to publish) and the retry. */
 export function useFrame(read?: Selection<unknown>) {
-	const { state, retry } = useFrameRead(read, frameOf);
+	const { state, retry, holding, holds: held } = useFrameRead(read, frameOf);
 	return {
 		...state,
 		waits: state.form === "waiting" || state.form === "still",
-		holds: isRead(read),
+		holds: holding,
+		held,
 		retry,
 	};
 }
@@ -74,7 +75,8 @@ export function FrameBody(props: {
 			/>
 		);
 	}
-	return children;
+	// The reads this frame holds are not drawn again by a frame in its body.
+	return <FrameHolds holds={frame.held}>{children}</FrameHolds>;
 }
 
 // The mark fades in after `--wait-delay` like the paint does, so a refetch
@@ -86,7 +88,7 @@ const LINE = "flex flex-wrap items-center gap-inside pb-inside";
 // In a form's flow (a group, the form) the gap around it is the room.
 const LINE_IN_FLOW = "flex flex-wrap items-center gap-inside";
 
-/** A frame's busy mark, after its heading: a spinner while the root it holds refetches or retries, faded in after `WAIT_DELAY`. A selection holder and a frame with no heading draw none. */
+/** A frame's busy mark, after its heading: a spinner while a read it holds refetches or retries, faded in after `WAIT_DELAY`. A frame that holds no read and a frame with no heading draw none. */
 export function BusyMark({ frame }: { frame: Frame }) {
 	if (!(frame.holds && frame.busy)) return null;
 	return (
@@ -119,7 +121,7 @@ export function StateLine(props: {
 	);
 }
 
-/** The line under a frame's heading row when its root holds data it could not refresh (stale, with Retry, pending while it runs) or waits for a connection (paused, nothing to press). */
+/** The line under a frame's heading row when a read it holds has data it could not refresh (stale, with Retry, pending while it runs) or waits for a connection (paused, nothing to press). */
 export function FrameLine({
 	frame,
 	flow,
