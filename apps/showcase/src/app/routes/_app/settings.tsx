@@ -90,6 +90,18 @@ function Settings() {
 					},
 				]}
 			>
+				{/* The one Section stands first: the form under it holds a list that paints a different number of rows than it loads, and a Section's heading does not move with what stands below it. */}
+				<Section
+					title="Webhooks"
+					description="Where Acme posts deploy events."
+					empty={{
+						icon: "Webhook",
+						title: "No endpoints",
+						sentence:
+							"Add an endpoint to receive an event each time a deploy finishes.",
+						act: { label: "Add endpoint", onAct: act },
+					}}
+				/>
 				<Form
 					bar={{
 						acts: [
@@ -246,17 +258,6 @@ function Settings() {
 							),
 						},
 					]}
-				/>
-				<Section
-					title="Webhooks"
-					description="Where Acme posts deploy events."
-					empty={{
-						icon: "Webhook",
-						title: "No endpoints",
-						sentence:
-							"Add an endpoint to receive an event each time a deploy finishes.",
-						act: { label: "Add endpoint", onAct: act },
-					}}
 				/>
 			</Pane>
 		</Place>

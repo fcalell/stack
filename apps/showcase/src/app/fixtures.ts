@@ -320,6 +320,7 @@ export default defineFixtures<AppRouter>(
 				{ name: "Acme", meta: "12 members" },
 				{ name: "Globex", meta: "4 members" },
 				{ name: "Initech", meta: "31 members" },
+				{ name: "Hooli", meta: "9 members" },
 			],
 		},
 	},

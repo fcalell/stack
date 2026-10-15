@@ -112,7 +112,8 @@ function DeployRows(props: { deploys: Datum<readonly Deploy[]> }) {
 	);
 }
 
-// The open deploy's body: its place and facts, its sections, what it waits on.
+// The open deploy's body: its place and facts, its sections, then what it
+// waits on.
 // The status the viewer picks is the app's own edit over the record's state.
 function Record(props: {
 	deploy: Selection<OpenDeploy>;
@@ -133,7 +134,7 @@ function Record(props: {
 			<ItemHeader
 				overline={[
 					"acme-web",
-					deploy.at((each) => ENVIRONMENTS[each.environment].label),
+					deploy.at((each) => ENVIRONMENTS[each.environment]?.label),
 				]}
 				facts={[
 					deploy.at(
@@ -146,9 +147,7 @@ function Record(props: {
 							},
 						}),
 					),
-					deploy.at((each) => each.author),
 					deploy.at((each) => age(each.age)),
-					{ count: 3, label: "Checks" },
 				]}
 			/>
 			<Section title="Summary">
@@ -232,6 +231,13 @@ function Record(props: {
 			<Section title="Steps" read={steps}>
 				<StepRows deployId={props.deployId} steps={steps} />
 			</Section>
+			<DeployChanges
+				deploy={deploy}
+				deployId={props.deployId}
+				file={props.file}
+			/>
+			<DeployDetails deploy={deploy} />
+			{/* Below every Section: they stand only with the data, and a Section's heading does not move with what stands under it. */}
 			{open?.state === "failed" ? (
 				<Banner
 					kind="danger"
@@ -255,11 +261,6 @@ function Record(props: {
 					/>
 				</>
 			) : null}
-			<DeployChanges
-				deploy={deploy}
-				deployId={props.deployId}
-				file={props.file}
-			/>
 		</>
 	);
 }
@@ -527,7 +528,6 @@ export function DeployRecord(props: { deployId: string; file?: string }) {
 				deployId={props.deployId}
 				file={props.file}
 			/>
-			<DeployDetails deploy={deploy} />
 		</Pane>
 	);
 }

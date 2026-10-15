@@ -61,6 +61,12 @@ export const EXCEPTIONS: Exception[] = [
 			"a row's chip slot shows a chip whole or not at all: a chip wider than the room wraps under the slot's one line and is clipped away",
 	},
 	{
+		rule: "clip",
+		selector: ":has(> [data-painted])",
+		reason:
+			"a painted text clips at its slot's edge where a loaded one ends in an ellipsis: the filler is no words to cut short (`globals.css`)",
+	},
+	{
 		rule: "inset",
 		selector: '[class~="pt-[calc(1lh/2)]"]',
 		reason:

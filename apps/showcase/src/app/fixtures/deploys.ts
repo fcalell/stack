@@ -10,7 +10,7 @@ export const DEPLOYS: Deploy[] = [
 	{
 		id: "d1",
 		author: "Ana Ruiz",
-		message: "Cache build output between deploys",
+		message: "Cache the build output",
 		branch: "main",
 		commit: "a41c9e2",
 		age: ago(2),

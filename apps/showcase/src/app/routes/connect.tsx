@@ -18,12 +18,10 @@ const EXPIRED =
 function Connect() {
 	const request = useQuery(orpc.account.request.queryOptions());
 	const workspaces = orpc.workspaces.list.read();
-	const email = request.data?.email;
 	return (
 		<Gate
 			step={{ at: 1, of: 2 }}
 			title="Choose a workspace"
-			description={email ? ["Signed in as ", { strong: email }] : undefined}
 			banner={
 				request.isError ? <Banner kind="warn" sentence={EXPIRED} /> : undefined
 			}
