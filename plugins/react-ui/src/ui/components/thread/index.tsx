@@ -16,6 +16,7 @@ import { turnOf } from "@fcalell/ui-core/read";
 import { THREAD } from "@fcalell/ui-core/variants";
 import {
 	memo,
+	type ReactElement,
 	type ReactNode,
 	type RefObject,
 	use,
@@ -28,6 +29,7 @@ import { useFootFocus } from "../../lib/focus.ts";
 import { PageTitle, useFootRegion } from "../../lib/frame.ts";
 import { StateLine } from "../../lib/read.tsx";
 import { useScrolls } from "../../lib/scrolls.ts";
+import { Scroller, Window } from "../../lib/window.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { MessageBase } from "../message/base.tsx";
 import { Message } from "../message/index.tsx";
@@ -188,14 +190,14 @@ function ReplyTurn<T>(props: {
 	);
 }
 
-// What the log holds, oldest first: the painted messages while the items are
-// not here (the other author's, since an author is the item's), else one
-// Message per item.
-function logOf<T>(
+// What the log's window holds, oldest first: the painted messages while the
+// items are not here (the other author's, since an author is the item's), else
+// one Message per item.
+function messagesOf<T>(
 	props: ThreadProps<T>,
 	drawn: Drawn<readonly T[]>,
 	slots: RefObject<MessageSlots<T>>,
-): ReactNode {
+): ReactElement[] {
 	if (drawn.painted)
 		return Array.from({ length: PAINT_ROWS }, (_, at) => (
 			<MessageBase
@@ -206,21 +208,32 @@ function logOf<T>(
 				at={at}
 			/>
 		));
+	return drawn.value.map((item) => (
+		<ThreadItem key={props.message.key(item)} item={item} slots={slots} />
+	));
+}
+
+// What follows the window: the waiting message and the turn being written,
+// which grow outside it, so a chunk never reaches the rows.
+function tailOf<T>(
+	props: ThreadProps<T>,
+	drawn: Drawn<readonly T[]>,
+	slots: RefObject<MessageSlots<T>>,
+): ReactNode {
+	if (drawn.painted) return null;
 	const last = drawn.value.at(-1);
-	return [
-		...drawn.value.map((item) => (
-			<ThreadItem key={props.message.key(item)} item={item} slots={slots} />
-		)),
-		props.replying ? <WaitingReply key="replying" /> : null,
-		props.reply ? (
-			<ReplyTurn
-				key="reply"
-				reply={props.reply}
-				slots={slots}
-				after={last === undefined ? undefined : props.message.key(last)}
-			/>
-		) : null,
-	];
+	return (
+		<>
+			{props.replying ? <WaitingReply /> : null}
+			{props.reply ? (
+				<ReplyTurn
+					reply={props.reply}
+					slots={slots}
+					after={last === undefined ? undefined : props.message.key(last)}
+				/>
+			) : null}
+		</>
+	);
 }
 
 /** The messages, a log region so an arriving one is announced, a sections gap apart, one rung above a reply's block gap, and the input a sections gap under them. It fills what it stands in by plain flex: in a Pane's body it takes the free height and the log scrolls, opening at the newest message and following each that arrives while the reader is at the end, the input under it, which a docked `sheet` takes the place of, its body scrolling past two fifths of the region and keeping three rows, the log keeping two rows of its own while the body can give and the foot's head and submit never giving; while the reader is scrolled up, a Latest act floats centred above the input and returns to the newest message. Among sections it stands at its content's height. It draws one Message per item, and with `replying` set one waiting Message of the other author after them, followed and pinned to as any message is, replaced in place when the reply's item arrives and `replying` clears; the `reply` read draws its turn after them the same way, from its own subscription. While the `items` selection's read waits, `PAINT_ROWS` messages of the other author stand in the log, painted and inert. The frame around it draws the rest: it holds the read and draws the failed form with Retry, the missing form saying it no longer exists with Back, and the empty form. */
@@ -231,7 +244,8 @@ export function Thread<T>(props: ThreadProps<T>) {
 	// and its acts call when pressed.
 	const slots = useRef(props.message);
 	slots.current = props.message;
-	const children = logOf(props, drawn as Drawn<readonly T[]>, slots);
+	const messages = messagesOf(props, drawn as Drawn<readonly T[]>, slots);
+	const tail = tailOf(props, drawn as Drawn<readonly T[]>, slots);
 	const title = use(PageTitle);
 	const log = useRef<HTMLDivElement>(null);
 	const [logNode, setLogNode] = useState<HTMLDivElement | null>(null);
@@ -300,9 +314,12 @@ export function Thread<T>(props: ThreadProps<T>) {
 					}}
 					className={SCROLLS}
 				>
-					<div ref={content} className={cn(THREAD, STACK)}>
-						{children}
-					</div>
+					<Scroller value={logNode}>
+						<div ref={content} className={cn(THREAD, STACK)}>
+							<Window rows={messages} box={content} end />
+							{tail}
+						</div>
+					</Scroller>
 				</div>
 				<Latest onBack={away ? toLatest : null} />
 			</div>
