@@ -1,10 +1,10 @@
 // Siblings by package name, never relative: this file ships as source for the
 // bundler while `./client` ships compiled from dist, so a relative import would
 // load a second copy of the registered client and the entity registry.
+import type { MongoAbility } from "@casl/ability";
 import {
 	composeAbility,
-	fetchOrgRules,
-	orgRulesQueryKey,
+	orgRules,
 	type PackedRulesLike,
 } from "@fcalell/plugin-api/ability-client";
 import { registerOperationContext } from "@fcalell/plugin-api/client";
@@ -30,7 +30,12 @@ import {
 	watchUnheld,
 	withRead,
 } from "@fcalell/plugin-api/read";
-import { type Settle, settleReads } from "@fcalell/plugin-api/settle-reads";
+import {
+	listenQueries,
+	type QueryListeners,
+	type Settle,
+	settleReads,
+} from "@fcalell/plugin-api/settle-reads";
 import type { RouterClient } from "@fcalell/plugin-api/types";
 import {
 	createTanstackQueryUtils,
@@ -45,13 +50,13 @@ import {
 	type UseInfiniteQueryOptions,
 	useInfiniteQuery,
 	useQueries,
-	useQuery,
 	useQueryClient,
 } from "@tanstack/react-query";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 
 export type { PackedRulesLike } from "@fcalell/plugin-api/ability-client";
 export {
+	ability,
 	ORG_RULES_QUERY_KEY,
 	orgRulesQueryKey,
 } from "@fcalell/plugin-api/ability-client";
@@ -73,6 +78,7 @@ export {
 	pagesOf,
 	read,
 } from "@fcalell/plugin-api/read";
+export type { QueryListeners } from "@fcalell/plugin-api/settle-reads";
 export type { RouterClient } from "@fcalell/plugin-api/types";
 export {
 	experimental_streamedQuery as streamedQuery,
@@ -175,6 +181,9 @@ export interface QueryProviderProps {
 	client?: QueryClient;
 	// How a read's first answer lands (`./settle-reads.ts`); a UI plugin passes it.
 	settle?: Settle;
+	// How the online and focus managers learn their state, where the platform
+	// has no window events (the phone). The web passes nothing.
+	listen?: QueryListeners;
 	children: ReactNode;
 }
 
@@ -183,11 +192,12 @@ export interface QueryProviderProps {
 // none is supplied so a bare consumer gets sane behaviour with zero config.
 export function QueryProvider(props: QueryProviderProps) {
 	const [client] = useState(() => props.client ?? createQueryClient());
-	const { settle } = props;
+	const { settle, listen } = props;
 	useEffect(
 		() => (settle ? settleReads(client, settle) : undefined),
 		[client, settle],
 	);
+	useEffect(() => (listen ? listenQueries(listen) : undefined), [listen]);
 	useEffect(() => watchUnheld(client.getQueryCache()), [client]);
 	return (
 		<QueryClientProvider client={client}>{props.children}</QueryClientProvider>
@@ -319,33 +329,18 @@ export function useRead<T>(selection: Selection<T>): T | undefined {
 	});
 }
 
-// WS6.3: org-level authority everywhere,
-// layered with a `PackedRules` field off any query the caller already has
-// (`useAbility(query.data.rules)`). Deny-all while the org rules query is
-// loading or errored -- `query.data` is `undefined` then, and
-// `composeAbility` treats "no org rules and no record rules" as deny-all;
-// a record layer passed in that window still answers its own checks, since
-// it's real data the caller already has, not something still loading.
-//
-// The rules are the caller's role in `organizationId`, cached per
-// organization (`staleTime: Infinity`); a role change invalidates them when
-// its mutation declares `writes` on an org subject (see
-// `./ability-client.ts`'s `ORG_RULES_QUERY_KEY` comment). No organization
-// yet: deny-all, with no request.
-//
-// The composed `MongoAbility` is a class instance and must never be read out
-// of the query cache directly (it isn't -- `useQuery` here only ever caches
-// the plain packed-rules array; composition happens on every call, memoized
-// by array identity in `composeAbility`).
+// Org-level authority everywhere, layered with a `PackedRules` field off any
+// query the caller already has (`useAbility(orgId, query.data.rules)`).
+// Deny-all while the org rules are loading or errored (`composeAbility` treats
+// "no org rules and no record rules" as deny-all); a record layer passed in
+// that window still answers its own checks, since it is real data the caller
+// already has.
 export function useAbility(
 	organizationId: string | undefined,
 	recordRules?: PackedRulesLike,
-) {
-	const query = useQuery({
-		queryKey: orgRulesQueryKey(organizationId ?? ""),
-		queryFn: () => fetchOrgRules(organizationId ?? ""),
-		enabled: organizationId !== undefined,
-		staleTime: Infinity,
-	});
-	return composeAbility(query.data, recordRules);
+): MongoAbility {
+	const rules = useRead(
+		useMemo(() => orgRules(organizationId), [organizationId]),
+	);
+	return composeAbility(rules, recordRules);
 }

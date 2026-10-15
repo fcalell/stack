@@ -683,6 +683,9 @@ importers:
       expo-image-picker:
         specifier: ~56.0.16
         version: 56.0.25(expo@56.0.9)
+      expo-network:
+        specifier: ~56.0.0
+        version: 56.0.5(expo@56.0.9)(react@19.2.3)
       expo-router:
         specifier: ~56.2.8
         version: 56.2.21(fa3a56236419b70a1ce02e6fac88e4c3)

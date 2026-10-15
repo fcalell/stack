@@ -7,6 +7,14 @@ import {
 } from "@casl/ability";
 import { type PackRule, unpackRules } from "@casl/ability/extra";
 import { isNotFound } from "./not-found.ts";
+import {
+	combine,
+	isPlaceholder,
+	placeholderData,
+	type Read,
+	read,
+	type Selection,
+} from "./read.ts";
 import { ORG_RULES_PATH, SCOPE_ROUTES_PATH } from "./wire.ts";
 
 // WS6.3: framework-agnostic core behind
@@ -192,4 +200,50 @@ export const ORG_RULES_QUERY_KEY = [ORG_RULES_PATH] as const;
 
 export function orgRulesQueryKey(organizationId: string) {
 	return [ORG_RULES_PATH, { input: { organizationId } }] as const;
+}
+
+// ---------- Ability as a read ----------
+
+// The caller's rules in one organization, cached per organization
+// (`staleTime: Infinity`); a role change invalidates them when its mutation
+// declares `writes` on an org subject (see `./ability-client.ts`'s
+// `ORG_RULES_QUERY_KEY` comment). The read is ambient: no frame holds it, so a
+// failure leaves what it gates painted and inert, never a false yes. No
+// organization yet: it answers `[]` at once (deny-all, no request), so what it
+// gates never stays painted.
+export function orgRules(
+	organizationId: string | undefined,
+): Read<PackedRulesLike> {
+	return read<PackedRulesLike>({
+		queryKey: orgRulesQueryKey(organizationId ?? ""),
+		queryFn: () => fetchOrgRules(organizationId ?? ""),
+		enabled: organizationId !== undefined,
+		staleTime: Infinity,
+		meta: { ambient: true },
+		...(organizationId === undefined && { initialData: [] }),
+	});
+}
+
+// The composed `MongoAbility` is a class instance and must never be read out
+// of the query cache (only the plain packed-rules array is cached);
+// composition happens here, memoized by array identity in `composeAbility`.
+// Over the placeholder it stays the placeholder, so an act gated on it
+// (`ability.at(a => a.can(...) ? act : { ...act, blocked })`) paints inert
+// while the rules load, never blocked.
+const composed = (
+	rules: PackedRulesLike,
+	record?: PackedRulesLike,
+): MongoAbility =>
+	isPlaceholder(rules)
+		? (placeholderData() as MongoAbility)
+		: composeAbility(rules, record);
+
+export function ability(
+	organizationId: string | undefined,
+	record?: Selection<PackedRulesLike | undefined>,
+): Selection<MongoAbility> {
+	const rules = orgRules(organizationId);
+	return record
+		? combine([rules, record], (r, rec) => composed(r, rec))
+		: rules.at((r) => composed(r));
 }

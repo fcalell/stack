@@ -184,6 +184,10 @@ function queryProvider(opts: NativeUiOptions): ProviderSpec {
 				source: "@fcalell/plugin-native-ui/lib/settle",
 				named: ["settle"],
 			},
+			{
+				source: "@fcalell/plugin-native-ui/lib/net",
+				named: ["listen"],
+			},
 			{ source: mod.source, named: [mod.export] },
 		],
 		wrap: {
@@ -193,6 +197,9 @@ function queryProvider(opts: NativeUiOptions): ProviderSpec {
 				// A read's first answer lands with the screen's other switches
 				// (`lib/settle.ts`).
 				{ name: "settle", value: { kind: "identifier", name: "settle" } },
+				// The phone has no window events: the managers listen to the
+				// network and the app's foreground (`lib/net.ts`).
+				{ name: "listen", value: { kind: "identifier", name: "listen" } },
 			],
 		},
 		order: 26,

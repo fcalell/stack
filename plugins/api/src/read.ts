@@ -413,13 +413,19 @@ export function paintReads(reads: readonly Read<unknown>[]): () => void {
 }
 
 // A read that fails with no data while a leaf paints it and no frame holds it.
-// `QueryProvider` runs this in dev, over the query cache.
+// `QueryProvider` runs this in dev, over the query cache. An ambient read
+// (`meta: { ambient: true }`, the org rules) has no frame by design: its
+// failure leaves what it gates painted and inert.
 export function watchUnheld(cache: {
 	subscribe: (
 		listener: (event: {
 			type: string;
 			action?: { type: string };
-			query: { queryHash: string; state: { data: unknown } };
+			query: {
+				queryHash: string;
+				meta?: Record<string, unknown>;
+				state: { data: unknown };
+			};
 		}) => void,
 	) => () => void;
 }): () => void {
@@ -429,6 +435,7 @@ export function watchUnheld(cache: {
 		if (
 			event.type === "updated" &&
 			event.action?.type === "error" &&
+			event.query.meta?.["ambient"] !== true &&
 			event.query.state.data === undefined &&
 			(painters.get(key) ?? 0) > 0 &&
 			(holders.get(key) ?? 0) === 0

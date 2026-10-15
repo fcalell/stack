@@ -64,7 +64,8 @@
 		"expo-file-system": "~56.0.7",
 		"expo-sharing": "~56.0.16",
 		"expo-document-picker": "~56.0.4",
-		"expo-image-picker": "~56.0.16"
+		"expo-image-picker": "~56.0.16",
+		"expo-network": "~56.0.0"
 	},
 	"dependencies": {
 		"@fcalell/cli": "workspace:*",
@@ -107,6 +108,7 @@
 		"expo-sharing": "~56.0.16",
 		"expo-document-picker": "~56.0.4",
 		"expo-image-picker": "~56.0.16",
+		"expo-network": "~56.0.0",
 		"ts-morph": "^28.0.0",
 		"@types/diff": "^8.0.0"
 	}

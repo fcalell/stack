@@ -58,7 +58,16 @@ test("the words, Query and Auth providers wrap the sheets' provider", async () =
 	const entry = (await graph.resolve(expo.slots.entrySource)) ?? "";
 	assert.match(
 		entry,
-		/<WordsProvider .*><QueryProvider [^>]*settle=\{settle\}[^>]*><AuthProvider [^>]*><BottomSheetModalProvider><Fragment><ExpoRoot [^>]*\/><StatusBar [^>]*\/><\/Fragment><\/BottomSheetModalProvider><\/AuthProvider><\/QueryProvider><\/WordsProvider>/s,
+		/<WordsProvider .*><QueryProvider [^>]*settle=\{settle\}[^>]*listen=\{listen\}[^>]*><AuthProvider [^>]*><BottomSheetModalProvider><Fragment><ExpoRoot [^>]*\/><StatusBar [^>]*\/><\/Fragment><\/BottomSheetModalProvider><\/AuthProvider><\/QueryProvider><\/WordsProvider>/s,
+	);
+});
+
+// TanStack's managers listen to window events, which the phone has not.
+test("the Query provider gets the phone's network and foreground listeners", async () => {
+	const entry = (await defaultGraph().resolve(expo.slots.entrySource)) ?? "";
+	assert.match(
+		entry,
+		/^import \{ listen \} from "@fcalell\/plugin-native-ui\/lib\/net";$/m,
 	);
 });
 
