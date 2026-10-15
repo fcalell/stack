@@ -110,7 +110,7 @@
 	},
 	"peerDependencies": {
 		"@orpc/tanstack-query": "^1.14.4",
-		"@tanstack/react-query": "^5.97.0",
+		"@tanstack/react-query": "^5.100.2",
 		"react": "^19.2.0"
 	},
 	"peerDependenciesMeta": {

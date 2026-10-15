@@ -1,11 +1,16 @@
 import assert from "node:assert/strict";
 import { mock, test } from "node:test";
-import { QueriesObserver, QueryClient } from "@tanstack/react-query";
+import {
+	InfiniteQueryObserver,
+	QueriesObserver,
+	QueryClient,
+} from "@tanstack/react-query";
 import {
 	draftFor,
 	type Held,
 	holdRoot,
 	isRead,
+	moreOf,
 	paintReads,
 	placeholderData,
 	planFrame,
@@ -53,10 +58,14 @@ test("a frame over a read holds its root and its drawn value", async () => {
 	const seen: Held[] = [];
 	const { observer, state } = observe(
 		client,
-		planFrame(tasks, (held) => {
-			seen.push(held);
-			return held.root?.result.status;
-		}),
+		planFrame(
+			tasks,
+			(held) => {
+				seen.push(held);
+				return held.root?.result.status;
+			},
+			() => undefined,
+		),
 	);
 	const stop = observer.subscribe(() => {});
 	assert.equal(state(), "success");
@@ -69,7 +78,11 @@ test("a frame over a read holds its root and its drawn value", async () => {
 	fail = false;
 	await client.refetchQueries({ queryKey: ["tasks"] });
 	assert.equal(state(), "success");
-	assert.deepEqual(seen.at(-1)?.drawn, { painted: false, value: [1, 2] });
+	assert.deepEqual(seen.at(-1)?.drawn, {
+		painted: false,
+		value: [1, 2],
+		more: false,
+	});
 	stop();
 });
 
@@ -79,6 +92,7 @@ test("a frame over a selection holds no root, and over nothing holds nothing", (
 	planFrame(
 		a.at((x) => x),
 		(h) => (held = h),
+		() => undefined,
 	).combine([
 		{
 			data: 3,
@@ -90,8 +104,14 @@ test("a frame over a selection holds no root, and over nothing holds nothing", (
 			error: null,
 		},
 	]);
-	assert.deepEqual(held, { drawn: { painted: false, value: 3 } });
-	const none = planFrame(undefined, (h) => h);
+	assert.deepEqual(held, {
+		drawn: { painted: false, value: 3, more: false },
+	});
+	const none = planFrame(
+		undefined,
+		(h) => h,
+		() => undefined,
+	);
 	assert.deepEqual(none.reads, []);
 	assert.deepEqual(none.combine([]), {});
 });
@@ -163,4 +183,108 @@ test("a failure with painters and no holder raises an error naming the read", as
 	unhold();
 	stop();
 	error.mock.restore();
+});
+
+const pageOf = (n: number, last = false) => ({
+	data: [n],
+	nextCursor: last ? null : String(n + 1),
+});
+
+function pagesRead(key: string) {
+	let n = 0;
+	return read<unknown>(
+		{
+			queryKey: [key],
+			queryFn: async () => {
+				return pageOf(n++, n > 2);
+			},
+			initialPageParam: undefined,
+			getNextPageParam: (last: { nextCursor: string | null }) =>
+				last.nextCursor,
+		} as never,
+		{ kind: "pages" },
+	);
+}
+
+test("moreOf is the last page's cursor, and false over nothing", () => {
+	assert.equal(moreOf({ pages: [pageOf(0), pageOf(1)] }), true);
+	assert.equal(moreOf({ pages: [pageOf(0), pageOf(1, true)] }), false);
+	assert.equal(moreOf({ pages: [] }), false);
+	assert.equal(moreOf(undefined), false);
+	assert.equal(moreOf(placeholderData()), false);
+});
+
+test("a frame over a pages read has more, and a next page is fetchingMore", async () => {
+	const client = new QueryClient();
+	const pages = pagesRead("pages");
+	const queryOf = () =>
+		client.getQueryCache().find({ queryKey: pages.options.queryKey });
+	const seen: Held[] = [];
+	const { observer, state } = observe(
+		client,
+		planFrame(
+			pages,
+			(held) => {
+				seen.push(held);
+				return held;
+			},
+			(r) => ({
+				fetchMore:
+					client.getQueryCache().find({ queryKey: r.options.queryKey })?.state
+						.fetchMeta?.fetchMore?.direction === "forward",
+			}),
+		),
+	);
+	const stop = observer.subscribe(() => {});
+	// The first fetch is not a next page, and over the placeholder nothing remains.
+	state();
+	assert.equal(seen.at(-1)?.drawn?.more, false);
+	assert.equal(seen.at(-1)?.root?.result.fetchingMore, false);
+	assert.equal(seen.at(-1)?.root?.result.streamed, false);
+	await tick();
+	state();
+	const loaded = seen.at(-1);
+	assert.equal(loaded?.drawn?.more, true);
+	assert.equal(loaded?.root?.result.hasNextPage, true);
+	assert.deepEqual(loaded?.drawn?.value, [0]);
+	const next = new InfiniteQueryObserver(client, {
+		...pages.options,
+		enabled: false,
+	} as never);
+	const fetching = next.fetchNextPage();
+	// The query says a next page is being fetched; the plain observer cannot.
+	assert.equal(queryOf()?.state.fetchMeta?.fetchMore?.direction, "forward");
+	state();
+	assert.equal(seen.at(-1)?.root?.result.fetchingMore, true);
+	assert.deepEqual(seen.at(-1)?.drawn?.value, [0]);
+	await fetching;
+	await tick();
+	state();
+	assert.equal(seen.at(-1)?.root?.result.fetchingMore, false);
+	assert.deepEqual(seen.at(-1)?.drawn?.value, [0, 1]);
+	stop();
+});
+
+test("a stream read says so, and a plain read has no more", async () => {
+	const client = new QueryClient();
+	const stream = read(
+		{ queryKey: ["s"], queryFn: async () => 1 },
+		{ kind: "stream" },
+	);
+	let held: Held | undefined;
+	const { observer, state } = observe(
+		client,
+		planFrame(
+			stream,
+			(h) => (held = h),
+			() => undefined,
+		),
+	);
+	const stop = observer.subscribe(() => {});
+	await tick();
+	state();
+	assert.equal(held?.root?.result.streamed, true);
+	assert.equal(held?.root?.result.hasNextPage, false);
+	assert.equal(held?.drawn?.more, false);
+	stop();
 });

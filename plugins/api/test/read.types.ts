@@ -20,6 +20,10 @@ import { assertType, type Equal } from "./types.ts";
 type Deploy = { id: string; commit: string; steps: string[] };
 type Router = {
 	deploys: {
+		list: Procedure<
+			{ team: string; cursor?: string },
+			{ data: Deploy[]; nextCursor: string | null }
+		>;
 		get: Procedure<{ id: string }, Deploy>;
 		current: Procedure<undefined, Deploy | null>;
 	};
@@ -100,3 +104,13 @@ export function useField() {
 declare const unknownValue: unknown;
 if (isRead(unknownValue))
 	assertType<Equal<typeof unknownValue, Read<unknown>>>(true);
+
+// `.pages` exists only on a procedure of the paginated envelope: the input
+// loses `cursor`, and the value is the flat list.
+const listed = utils.deploys.list.pages({ team: "a" });
+assertType<Equal<typeof listed, Read<Deploy[]>>>(true);
+utils.deploys.list.pages(skipToken);
+// @ts-expect-error the cursor is the read's own
+utils.deploys.list.pages({ team: "a", cursor: "c" });
+// @ts-expect-error a procedure that does not page has no pages read
+utils.deploys.get.pages({ id: "d1" });

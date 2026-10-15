@@ -42,6 +42,8 @@ import {
 	type QueryClientConfig,
 	QueryClientProvider,
 	type SkipToken,
+	type UseInfiniteQueryOptions,
+	useInfiniteQuery,
 	useQueries,
 	useQuery,
 	useQueryClient,
@@ -58,6 +60,8 @@ export type {
 	Drawn,
 	Held,
 	Read,
+	ReadHow,
+	ReadKind,
 	Selection,
 } from "@fcalell/plugin-api/read";
 export {
@@ -65,10 +69,13 @@ export {
 	isPlaceholder,
 	isRead,
 	isSelection,
+	moreOf,
+	pagesOf,
 	read,
 } from "@fcalell/plugin-api/read";
 export type { RouterClient } from "@fcalell/plugin-api/types";
 export {
+	experimental_streamedQuery as streamedQuery,
 	QueryClient,
 	QueryClientProvider,
 	useInfiniteQuery,
@@ -134,9 +141,16 @@ export function createQueryClient(config?: QueryClientConfig): QueryClient {
 }
 
 // `.read(input)` on every procedure's utils, beside `.queryOptions`: the same
-// input (`skipToken` included), the output typed, as a `Read` handle.
+// input (`skipToken` included), the output typed, as a `Read` handle. A
+// procedure whose output is stack's paginated envelope also gets `.pages(input)`
+// (no `cursor`), a read of the flat list that pages in.
+type Page<T> = { data: T[]; nextCursor: string | null };
 type ReadsOf<C> = C extends (...a: infer A) => Promise<infer O>
-	? { read(...a: { [K in keyof A]: A[K] | SkipToken }): Read<O> }
+	? {
+			read(...a: { [K in keyof A]: A[K] | SkipToken }): Read<O>;
+		} & (O extends Page<infer T>
+			? { pages(input: Omit<A[0], "cursor"> | SkipToken): Read<T[]> }
+			: unknown)
 	: { [K in keyof C]: ReadsOf<C[K]> };
 
 export type ApiQueryUtils<TRouter> = ReturnType<
@@ -213,12 +227,20 @@ export function useFrameRead<S>(
 	selection: Selection<unknown> | undefined,
 	derive: (held: Held) => S,
 ): { state: S; retry: () => void } {
-	const plan = useMemo(() => planFrame(selection, derive), [selection, derive]);
+	const client = useQueryClient();
+	const plan = useMemo(
+		() =>
+			planFrame(selection, derive, (r) => ({
+				fetchMore:
+					client.getQueryCache().find({ queryKey: r.options.queryKey })?.state
+						.fetchMeta?.fetchMore?.direction === "forward",
+			})),
+		[selection, derive, client],
+	);
 	useEffect(
 		() => (isRead(selection) ? holdRoot(selection) : undefined),
 		[selection],
 	);
-	const client = useQueryClient();
 	const state = useQueries({
 		queries: plan.reads.map((r) => ({ ...r.options, placeholderData })),
 		combine: plan.combine,
@@ -229,6 +251,32 @@ export function useFrameRead<S>(
 		}
 	};
 	return { state, retry };
+}
+
+export interface More {
+	// Another page remains.
+	next: boolean;
+	fetching: boolean;
+	failed: boolean;
+	fetch: () => void;
+}
+
+// The collection's side of a pages read: an infinite observer that never
+// fetches by mounting (`enabled: false`), so the query is the frame's and the
+// leaf's, and a page is fetched only when the viewer asks.
+export function useMore(read: Read<unknown>): More {
+	const query = useInfiniteQuery({
+		...(read.options as UseInfiniteQueryOptions),
+		enabled: false,
+	});
+	return {
+		next: query.hasNextPage,
+		fetching: query.isFetchingNextPage,
+		failed: query.isFetchNextPageError,
+		fetch: () => {
+			void query.fetchNextPage();
+		},
+	};
 }
 
 // A field's value: its selection until the viewer edits it, the edit after. An

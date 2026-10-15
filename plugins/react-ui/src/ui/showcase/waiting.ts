@@ -44,7 +44,7 @@ export function readsAt(key = ""): Reads {
 				queryFn: () => Promise.reject(new Error("The showcase read is gone.")),
 				retry: false,
 			},
-			() => true,
+			{ missing: () => true },
 		),
 		empty: read({
 			queryKey: at("empty"),

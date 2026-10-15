@@ -1,5 +1,5 @@
 import type { QueryKey, UseQueryOptions } from "@tanstack/react-query";
-import { hashKey } from "@tanstack/react-query";
+import { hashKey, skipToken } from "@tanstack/react-query";
 import { isNotFound } from "./not-found.ts";
 
 // The read handle: the options of one query plus how its failure reads as
@@ -24,12 +24,23 @@ export interface Selection<T> {
 	at<U>(fn: (value: T) => U): Selection<U>;
 }
 
+// How a read's query behaves: a plain `query`, an infinite one of stack's
+// paginated envelope (`pages`), or one that stays fetching while it writes
+// (`stream`: fetching with data is writing, not busy).
+export type ReadKind = "query" | "pages" | "stream";
+
 // A read is its own identity selection, so `List items={deploys}` takes a root.
 export interface Read<T> extends Selection<T> {
 	// No `select` and no `placeholderData`: a leaf adds its own.
 	// biome-ignore lint/suspicious/noExplicitAny: a read of any output is one options type (variance)
 	readonly options: UseQueryOptions<any, any, any, any>;
 	readonly missing: (error: unknown) => boolean;
+	readonly kind: ReadKind;
+}
+
+export interface ReadHow {
+	missing?: (error: unknown) => boolean;
+	kind?: ReadKind;
 }
 
 // A data prop's type: a constant, or a selection the leaf subscribes to.
@@ -106,17 +117,45 @@ function selection<T>(
 	};
 }
 
+// stack's paginated envelope, the one output a `pages` read is made over.
+type Page = { data: unknown[]; nextCursor: string | null };
+type Pages = { pages: readonly Page[] };
+
+// More pages remain when the last one names a cursor. False over the
+// placeholder and over no data.
+export function moreOf(data: unknown): boolean {
+	if (data === undefined || isPlaceholder(data)) return false;
+	const last = (data as Pages).pages.at(-1);
+	return last !== undefined && last.nextCursor != null;
+}
+
+// A pages read's value is the flat list, so `Pane read={deploys}` with
+// `List items={deploys}` is the same idiom as a plain read. The placeholder
+// stays itself, painted.
+function flatten(data: unknown): unknown {
+	if (data === undefined || isPlaceholder(data)) return data;
+	return (data as Pages).pages.flatMap((page) => page.data);
+}
+
 export function read<T>(
 	options: UseQueryOptions<T, unknown, T, QueryKey>,
-	missing: (error: unknown) => boolean = isNotFound,
+	how: ReadHow = {},
 ): Read<T> {
+	const kind = how.kind ?? "query";
+	// A pages read's options are infinite ones. `_type` makes the query infinite
+	// whichever observer creates it, a leaf's plain `useQueries` included (a
+	// TanStack internal, since 5.100.2; `read.test.ts` pins it).
 	// The identity selection holds the read itself, so its reads list closes the
 	// loop once the read exists.
 	const reads: Read<unknown>[] = [];
 	const self: Read<T> = {
-		...selection<T>(reads, (data) => data[0] as T),
-		options,
-		missing,
+		...selection<T>(
+			reads,
+			(data) => (kind === "pages" ? flatten(data[0]) : data[0]) as T,
+		),
+		options: kind === "pages" ? { ...options, _type: "infinite" } : options,
+		missing: how.missing ?? isNotFound,
+		kind,
 	};
 	reads.push(self);
 	return self;
@@ -149,18 +188,34 @@ export function combine<const S extends readonly Selection<unknown>[], R>(
 
 // oRPC's utils are a proxy that makes a child on every string key, and a
 // procedure's `queryOptions` is a function whose own keys are the child's. The
-// wrapper follows the same shape: `read` is a function that forwards its keys
-// to the child named `read`, so a procedure called `read` keeps its utils.
+// wrapper follows the same shape: `read` and `pages` are functions that forward
+// their keys to the child of that name, so a procedure called `read` or `pages`
+// keeps its utils.
 // biome-ignore lint/suspicious/noExplicitAny: oRPC's utils proxy is dynamically typed
 export function withRead(target: any): any {
+	// The cursor is the page param; the first page has none.
+	const make = (key: "read" | "pages") => (input?: unknown) =>
+		key === "read"
+			? read(target.queryOptions({ input }))
+			: read(
+					target.infiniteOptions({
+						input:
+							input === skipToken
+								? skipToken
+								: (cursor: string | undefined) => ({
+										...(input as object),
+										cursor,
+									}),
+						initialPageParam: undefined,
+						getNextPageParam: (last: Page) => last.nextCursor,
+					}),
+					{ kind: "pages" },
+				);
 	return new Proxy(target, {
 		get(_, key) {
-			if (key === "read") {
+			if (key === "read" || key === "pages") {
 				const child = withRead(Reflect.get(target, key));
-				return new Proxy(
-					(input?: unknown) => read(target.queryOptions({ input })),
-					{ get: (_, k) => Reflect.get(child, k) },
-				);
+				return new Proxy(make(key), { get: (_, k) => Reflect.get(child, k) });
 			}
 			const value = Reflect.get(target, key);
 			if (typeof key !== "string") return value;
@@ -231,19 +286,26 @@ export interface HeldResult {
 	isRefetchError: boolean;
 	error: unknown;
 	hasNextPage?: boolean;
+	// From the read's kind: it is written by a stream.
+	streamed?: boolean;
+	// An infinite read fetching its next page: not busy.
+	fetchingMore?: boolean;
 }
 
 export interface Held {
-	drawn?: { painted: boolean; value: unknown };
+	drawn?: { painted: boolean; value: unknown; more?: boolean };
 	root?: { result: HeldResult; missing: (error: unknown) => boolean };
 }
 
 // The pure core of `useFrameRead`: the frame's one read planned like a leaf's,
 // and `combine` deriving the frame's state from what is held. The root's result
-// is slot 0, which `planSelections` gives a read.
+// is slot 0, which `planSelections` gives a read. `query` looks up a read's
+// query in the cache: a plain observer's result says nothing of a next page
+// being fetched, but the query's `fetchMeta` does.
 export function planFrame<S>(
 	selection: Selection<unknown> | undefined,
 	derive: (held: Held) => S,
+	query: (read: Read<unknown>) => { fetchMore?: boolean } | undefined,
 ): {
 	reads: readonly Read<unknown>[];
 	combine: (results: readonly (Result & HeldResult)[]) => S;
@@ -251,17 +313,46 @@ export function planFrame<S>(
 	const plan = planSelections(selection === undefined ? [] : [selection]);
 	return {
 		reads: plan.reads,
-		combine: (results) =>
-			derive({
-				...(selection !== undefined && { drawn: plan.draw(results)[0] }),
-				...(isRead(selection) && {
-					root: {
-						result: results[0] as HeldResult,
-						missing: selection.missing,
+		combine: (results) => {
+			const root = isRead(selection) ? selection : undefined;
+			const first = results[0];
+			return derive({
+				...(selection !== undefined && {
+					drawn: {
+						...(plan.draw(results)[0] as Drawn<unknown>),
+						more: plan.reads.some(
+							(r, i) => r.kind === "pages" && moreOf(results[i]?.data),
+						),
 					},
 				}),
-			}),
+				...(root &&
+					first && {
+						root: {
+							result: {
+								...first,
+								streamed: root.kind === "stream",
+								hasNextPage: root.kind === "pages" && moreOf(first.data),
+								fetchingMore:
+									root.kind === "pages" &&
+									first.fetchStatus === "fetching" &&
+									query(root)?.fetchMore === true,
+							},
+							missing: root.missing,
+						},
+					}),
+			});
+		},
 	};
+}
+
+// The datum's one read, when it is a pages read: the collection's more row
+// fetches through it.
+export function pagesOf(v: unknown): Read<unknown> | undefined {
+	if (!isSelection(v)) return undefined;
+	const reads = v[SELECTION].reads;
+	return reads.length === 1 && reads[0]?.kind === "pages"
+		? reads[0]
+		: undefined;
 }
 
 // A draft's value follows its selection until the viewer edits it. `key` names
