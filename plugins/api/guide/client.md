@@ -36,7 +36,10 @@ const create = useMutation(orpc.projects.create.mutationOptions());
 ## Reads
 
 `orpc.*.read(input)` is `queryOptions` as a `Read` handle: the same input (`skipToken`
-included), the output typed, and how its failure reads as not found. A read is its own selection;
+included), the output typed, and how its failure reads as not found. For a query of your own,
+`read(options, { missing, kind })` from `@fcalell/plugin-api/tanstack-query` makes the handle:
+`missing` tells the error that reads as not found (default `isNotFound`) and `kind` is `"query"`,
+`"pages"` or `"stream"` (below). A read is its own selection;
 `read.at(fn)` selects from it, and `combine([a, b], fn)` selects from several. A selector runs
 over a placeholder while its reads wait, so write it plainly (`d.steps.length`, `d.name`); one that
 throws over a read with no data yet paints its slot and warns in dev, and one that throws over real
@@ -67,6 +70,12 @@ yet as its painted form. Your own code never sees the placeholder:
   holds the edit (`edit(next)`); a selection over another read drops the edit. A constant passes
   through unchanged: the app owns it, and a value it changes shows.
 
+A frame draws more than the first wait of its root. While the data stays it marks a refetch
+(`busy`, a spinner after the heading), says "Couldn't refresh." with Retry when a refetch failed
+(`stale`) and "Waiting for a connection." when the read is paused offline. A read the app has not
+asked for yet (`enabled: false`, `skipToken`) paints still, as a paused one does. All of it comes
+with the frame's `read`; write nothing for it.
+
 One read has one root holder. In dev, two frames given the same read raise `console.error` at mount
 (give one of them a selection), and so does a read that fails with no data while a leaf paints it
 and no frame holds it (give its Pane, Section, Sheet or Form `read`). A read you hold with your own
@@ -76,6 +85,57 @@ and no frame holds it (give its Pane, Section, Sheet or Form `read`). A read you
 its first failure with no data, a reset to waiting) is flushed through it, so the waiting form is
 still on screen when the move to the answer starts. A refetch is not a first answer and flushes at
 once. Never pass `settle` in an app on react-ui or native-ui, which already do.
+
+## Paginated procedures
+
+A procedure declared `paginated: true` answers `{ data, nextCursor }` and takes `cursor` and
+`limit`. Beside `.read`, its utils have `.pages(input)` (the input without `cursor`), a read of
+`kind: "pages"` whose value is the flat `data` of every page loaded, so it is held and drawn like
+any read:
+
+```tsx
+const deploys = orpc.deploys.list.pages({ limit: 5 });
+<Pane read={deploys} title="Deploys">
+  <List items={deploys} row={{ key: (d) => d.id, title: (d) => d.commit }} />
+</Pane>
+```
+
+The collection (`List`, `Group`, `Table`) draws the rest: a "Show more" row while a next page
+remains, the next page painted while it loads, and "Couldn't load more." with Retry when it
+failed. The viewer presses it; nothing loads by scrolling. The frame is not busy for a next page,
+draws no count while more remain, and an empty first page that has more fetches the next. A
+`Section`'s count is therefore the loaded rows only once the last page is in.
+
+`useMore(read)` is what that row builds on (`{ next, fetching, failed, fetch }`); reach for it
+only for a control of your own, since it never fetches by mounting. A hand-written `read` with
+`kind: "pages"` must be an infinite query (`infiniteOptions`) over the same envelope.
+
+## Streams
+
+A read that stays fetching while it writes is `kind: "stream"`: fetching with data is writing,
+not busy. Build it on TanStack's `streamedQuery` (re-exported) and hand it to a `Thread`'s
+`reply`; the oRPC form for a procedure that yields is
+`read(orpc.x.experimental_streamedOptions({ input }), { kind: "stream" })`.
+
+```tsx
+const answer = read<Turn>(
+  {
+    queryKey: ["assistant", "answer", id],
+    queryFn: streamedQuery<string, Turn>({
+      streamFn: ({ signal }) => words(signal),
+      reducer: (turn, word) => ({ ...turn, body: turn.body + word }),
+      initialValue: { id, author: "other", body: "", at: new Date().toISOString() },
+    }),
+    staleTime: Number.POSITIVE_INFINITY,
+    retry: false,
+  },
+  { kind: "stream" },
+);
+<Thread items={history} reply={answer} message={{ key: (t) => t.id, author: (t) => t.author, body: (t) => t.body }} />
+```
+
+A WebSocket channel is a stream read too: `channelRead` in `@fcalell/plugin-node/live`
+(`plugins/node/guide/live.md`).
 
 ## Not found
 
@@ -114,21 +174,46 @@ nothing.
 
 ## Abilities
 
-`useAbility(organizationId)` answers what the caller may do in that organization, from the rules
-of its role there, fetched once and cached per organization.
+`ability(organizationId, record?)` is what the caller may do in that organization as a selection
+of a `MongoAbility`: the rules of its role there, fetched once and cached per organization, read
+like any read. `useAbility(organizationId, recordRules?)` is the same as a hook.
 
 ```tsx
 const ability = useAbility(organizationId);
 return ability.can("delete", "organization") ? <DeleteOrganization /> : null;
 ```
 
-It denies everything while the rules load, while the id is `undefined`, and when the caller is no
-member, so it never answers a false yes. To layer a record's own rules, return
-`packAbility(ability)` from the procedure (`@fcalell/plugin-auth/ability`) and pass the packed
-field through: `useAbility(organizationId, expense?.rules)`, then
+Gate an act that stands in a frame's head as a selection, so it paints inert while the rules load
+and is never blocked by a wait:
+
+```tsx
+const rules = ability(organizationId);
+<Section
+  title="Danger"
+  act={rules.at((a) => (a.can("delete", "organization") ? remove : { ...remove, blocked: "Only an owner can delete this." }))}
+/>
+```
+
+An act on each row combines the rules into the items, so the list waits for them:
+`combine([items, rules], (rows, a) => rows.map((row) => ({ ...row, act: a.can("update", subject("Expense", row)) ? edit(row) : undefined })))`.
+The rules read is ambient: no frame holds it, and one that fails leaves its acts painted and inert,
+never a false yes.
+
+The ability denies everything while the id is `undefined` (no request is made), when the caller is no
+member, and, in the hook, while the rules load, so it never answers a false yes. To layer a
+record's own rules, return `packAbility(ability)` from the procedure
+(`@fcalell/plugin-auth/ability`) and pass the packed field through: `useAbility(organizationId,
+expense?.rules)`, or `ability(organizationId, expense.at((e) => e.rules))`, then
 `ability.can("update", subject("Expense", expense))`. A mutation that declares `writes` on an
 organization subject (`writes: ["member"]` on a role change) invalidates every organization's
-rules. Never read the ability instance out of the query cache: `useAbility` memoizes it, and a
-copy from the cache is a new instance every render.
+rules. Never read the ability instance out of the query cache: it is composed (memoized) outside
+it, and a copy from the cache is a new instance every render.
+
+## The phone's network and focus
+
+`QueryProvider` takes `listen`, `{ online?, focus? }`, each given the manager's setter and
+returning its cleanup, for a platform with no window events. native-ui passes the phone's
+(`expo-network` and `AppState`), so a read pauses offline and refetches when the app returns;
+the web needs nothing. Never pass `listen` in an app on native-ui.
 
 **Check:** `pnpm check` passes, and the screen shows the data under `pnpm dev`.

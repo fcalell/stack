@@ -24,3 +24,13 @@ DESIGN.md: `linear.app`: type body-sm 14/400, caption 12/400 lh 1.4, eyebrow 13/
 The references span: system-event row 20–28 px at 11.5–12 px, comment/message rows 40–72; body 12–13 with actor at 500–700; day grouping by a chip or grey label, not by cards; vertical rule optional (Basecamp) and mostly absent; state changes rendered as 18–20 px outlined chips with "→"; accent never on the feed.
 
 Thin evidence: Linear's feed screens hold one to four lines; the dense timelines come from Basecamp, incident.io, Plain and Better Stack.
+
+## In stack
+
+A conversation's turn being written is a read the app declares (`Thread reply`), drawn after the
+history by its own part, so a token renders that turn and nothing above it. Before the first chunk
+it is one waiting message of the other author; while chunks arrive it is the message with its
+open Markdown marker drawn in its own form (`streaming`); once the stream ends it is the message. A
+stream that fails keeps the words so far and says "The reply stopped." with a quiet Retry that
+runs the stream again, a line under that turn and never the thread's own state. The turn steps
+aside once the history holds its key, so a history that catches up shows no second turn.

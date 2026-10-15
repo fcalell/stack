@@ -65,11 +65,19 @@ frame holds (one read has one root holder). Every part below the frame takes a s
 (`deploy.at((d) => d.steps)`, a `Datum`) and, while the read waits, draws its loaded form painted: a
 collection paints four rows in the slots its item map declares, a text its filler, a control its box.
 So the outline of the screen is written once, for the loaded data, and the waiting form is that
-outline painted at the loaded heights, never a second tree; a pending act keeps its box. Empty is
+outline painted at the loaded heights, never a second tree; a pending act keeps its box. After the
+first answer the frame keeps the data and says what its read does: a spinner after the heading while
+it refetches (busy), "Couldn't refresh." with Retry when a refetch failed (stale), "Waiting for a
+connection." when it is paused offline, and still (painted, inert, no spinner) for a read not asked
+for yet. A paginated read (`.pages`) ends its collection in "Show more", with the next page painted
+while it loads and "Couldn't load more." with Retry when it failed, and no count while more remains.
+A conversation's turn being written is `Thread reply`, its own read: waiting, writing, written, or
+"The reply stopped." with Retry. Empty is
 the frame's `empty`, with the act that fills it unless the screen's primary act already does. Error draws where the work happened (a field's error, a banner over the
 region, a toast for an act) and keeps what still works.
 
-**Check:** each state is reachable by a route, a fixture or a control, written down.
+**Check:** each state is reachable by a route, a fixture or a control, written down; busy, stale, paused,
+more and a stopped reply included where the screen has them.
 
 ## 6. Judge
 

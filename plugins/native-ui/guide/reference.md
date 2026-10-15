@@ -26,6 +26,16 @@ shared clock, `useClock((now) => age(moment, now))` (`lib/clock`). `setTheme("li
 icon set is Lucide, drawn from `lucide-react-native`: every `icon` a component takes is an
 `IconName`, a Lucide PascalCase name.
 
+## Reads
+
+A frame's `read` draws its states from `useFrame` (`lib/read`); a part of your own that stands in
+a frame can draw the same: `BusyMark`, `StateLine` (a meta sentence with an optional quiet act)
+and `FrameLine` (the stale and paused lines) take the `Frame` it returns. A paginated read's
+"Show more" row is `MoreRow` (`lib/more`), which the collections draw. The phone has no window
+events, so `nativeUi()` wires TanStack's online and focus managers itself (`expo-network` and
+`AppState`, through `QueryProvider listen`): a read pauses offline, shows the paused line, and
+refetches when the app returns to the foreground. Pass nothing.
+
 ## Options
 
 | Option | Default | What it does |

@@ -22,3 +22,12 @@ Queries: `data table with an editable cell in focus, column headers and row hove
 DESIGN.md: `supabase`: type caption 13/400, micro 12/400, code 14/400, button-md 14/500; radius xs 4, sm 6, md 8; hairline `#dfdfdf`, cool `#ededed`, strong `#c7c7c7`; spacing 2/4/8/12/16/24. `notion`: type body-sm 14/400, caption 13/400, micro 12/500, micro-uppercase 11/600; radius xs 4, sm 6, md 8; hairline `#e5e3df`, soft `#ede9e4`, strong `#c8c4be`; spacing 4/8/12/16/20/24. `airtable`: type body-md 14/400, caption 14/500, label-md 16/500; radius xs 2, sm 6, md 10, lg 12; hairline `#dddddd`, border-strong `#9297a0`; spacing 4/8/12/16/24/32.
 
 The references span: rows 30–37, headers 30–34; body 11–13 with header 11–12 muted (one size below body or equal, never bold); cell padding ≈ 6–8 × 10–12; radius 4 on pills and cells, 6 on popovers; grid is hairline both axes in editors, horizontal-only in record lists; hover is a surface step, edit state a tinted row (amber) or focused cell ring; accent appears only on the primary act (Insert / Save / New) and as status tints.
+
+## In stack
+
+A table over a paginated read ends in "Show more", pressed by the viewer and never by scrolling.
+While the next page loads, `PAINT_ROWS` painted rows follow the loaded ones (on the web as a grid
+of their own at the same columns, on the phone as rows in the same slots), and a page that failed
+is "Couldn't load more." with a quiet Retry. The heading draws no count while more remains, and the
+frame is not busy for the next page; a first page that comes back empty with more behind it is not
+empty, and the next page is fetched at once. A list and a group's list end the same way.

@@ -35,3 +35,15 @@ at its loaded row's height, so the list differs only by its row count. The paint
 (`WAIT_DELAY`) and fades in on the web, snaps in on the phone; a read the local server answers
 sooner shows none. A pending act is not a read: it keeps its width and height, swaps its label for a
 spinner and lightens its fill (`Act.loading`).
+
+After the first wait the frame says what its read is doing, and the data stays. A refetch is the
+**busy** mark: a spinner in the heading's meta ink, after the title (and a Section's count), shown
+after the same `WAIT_DELAY` so a refetch the server answers at once draws nothing; only the frame
+holding the read renders for it, never its body, and a frame with no heading shows none.
+`aria-busy` is the first wait alone. A refetch that failed leaves the data under one meta line,
+"Couldn't refresh." with a quiet Retry that is pending while it runs; a read waiting for a
+connection says "Waiting for a connection." with nothing to press. Both stand under the heading row.
+A read not asked for yet, or paused with no data, **stands still**: the loaded form painted and
+inert, with no busy mark. A next page is the collection's own wait: the painted rows after the loaded
+ones (`patterns/data-table.md`). A turn being written is the thread's
+(`patterns/activity-feed.md`).

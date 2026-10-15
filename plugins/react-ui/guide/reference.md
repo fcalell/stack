@@ -27,6 +27,14 @@ pass the moment, never a worded string. `useTouch()` (`lib/media`) says whether 
 drawing. The icon set is Lucide, drawn from `lucide-react`: every `icon` a component takes is an
 `IconName`, a Lucide PascalCase name.
 
+## Reads
+
+A frame's `read` draws its states from `useFrame` (`lib/read`); a part of your own that stands in
+a frame can draw the same: `BusyMark`, `StateLine` (a meta sentence with an optional quiet act)
+and `FrameLine` (the stale and paused lines) take the `Frame` it returns. A paginated read's
+"Show more" row is `MoreRow` (`lib/more`), which the collections draw; the web needs no
+`QueryProvider listen`, since TanStack reads the window's online and visibility events.
+
 ## Options
 
 | Option | Default | What it does |

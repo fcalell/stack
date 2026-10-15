@@ -1266,13 +1266,13 @@ a tick with no animation, never jumped to full.
   line where the row itself may be the hit.
 - A read that answers not found is `missing`, a state of its own beside `failed`: every read
   ends in content, "does not exist" with a way back, or Retry, and Retry cannot bring back what
-  was removed. The handle knows its error type, so `read(options, missing)` carries the test
+  was removed. The handle knows its error type, so `read(options, { missing, kind })` carries the test
   (default `isNotFound`, `code === "NOT_FOUND"` or `status === 404`) and ui-core's
   `readState(result, missing)` (`@fcalell/ui-core/read`, framework-free: it names only the few
   fields of a query result it reads and imports neither TanStack nor React) gives the phase
   (`idle`, `waiting`, `ready`, `failed`, `missing`) both platforms share, so no error shape is
   guessed and no prop is added. `frameOf` folds a frame's held root and drawn value into its form
-  (`ready`, `waiting`, `empty`, `failed`, `missing`). A frame given a root read draws the missing
+  (`ready`, `waiting`, `still`, `empty`, `failed`, `missing`). A frame given a root read draws the missing
   form when it is `missing` and the failed form (with Retry) when it is `failed`; a frame given a
   selection draws neither, since the frame holding the root does. The form is
   (`missing/base.tsx`): the empty state's frame at rest ink with no mark, the word `missing`
@@ -1409,6 +1409,53 @@ a tick with no animation, never jumped to full.
   to read it and keep a second tree for it). `SectionContext` is gone: a Section's `empty` is its
   own prop and its title one size, and no Section stands in a Section. Only the root holder is busy;
   a collection is not.
+- **The frame's states past the first read.** The frame that holds the root renders on `busy`,
+  `stale` and `paused` (`frameOf` carries them, so there is no second subscription), and its
+  children are the same elements, so they bail out. *Busy* is `BusyMark` (`lib/read`): the
+  `Spinner` in meta ink after the heading (a Pane's title, a Section's title and count, a Sheet's
+  title, a form group's legend; a frame with no heading, a Form's root, shows none), faded in after
+  `WAIT_DELAY` on the web and snapped in by `useShown` on the phone, so a fast refetch draws
+  nothing. `aria-busy` is the first wait alone (form `waiting`), never a refetch. The scramble
+  glyph waits for `theme.loading` (`motion.md`). *Stale* and *paused* share `FrameLine`, one
+  `StateLine` (a meta sentence and an optional quiet act) under the heading row: "Couldn't
+  refresh." with Retry, pending while it runs, and "Waiting for a connection." with no act.
+  `StateLine` is the one internal part the more row and a stopped reply reuse. *Still* is the form
+  for a painted drawn value whose root is idle (`enabled: false`, `skipToken`) or paused: the
+  loaded tree painted and inert, not `aria-busy`, with no busy mark; it changes nothing visible
+  until the motion phase's pulse reads it. A fetch of a `kind: "stream"` read with data is
+  `streaming`, not busy, so a live read does not spin forever.
+- **The more row belongs to the collection.** A paginated procedure's `.pages(input)` is a read of
+  `kind: "pages"` whose options carry `_type: "infinite"` (so a leaf's plain `useQueries` builds the
+  query infinite whichever observer creates it) and whose value is the flat list, so
+  `Pane read={deploys}` with `List items={deploys}` keeps the plain idiom. The frame reads the raw
+  pages for `more` and `hasNextPage`: no count while more remains, and an empty first page with more
+  is not empty. List, Group's list and Table pass `pagesOf(items)` to `MoreRow` (`lib/more`), which
+  holds its own `useMore` (an infinite observer with `enabled: false`, so it never fetches by
+  mounting) and renders alone on a page fetch: "Show more" pressed by the viewer (scroll-triggered
+  loading would need measuring, rule 7), `PAINT_ROWS` painted rows through the collection's
+  `paint` callback while the page loads, "Couldn't load more." with Retry when it failed, and a
+  fetch on mount for an empty first page that has more. A next-page fetch is `fetchingMore`, which
+  `readState` excludes from busy and `settleReads` does not count as a flip; a page that failed is
+  the collection's line, not the frame's stale (`planFrame` presents the pages it has as success).
+  A `Table` paints its next page as a grid of its own at the same columns, under the loaded one's
+  box; the narrow list paints rows in the same slots. Rejected: a more row owned by the frame (it cannot know which collection
+  below it pages), and `useInfiniteQuery` in the frame (its result carries no `hasNextPage` through
+  `useQueries`).
+- **The reply turn.** `Thread reply?: Selection<T | null | undefined>` is the turn being written,
+  a read the app declares: a stream (`kind: "stream"` over TanStack's `streamedQuery`, re-exported
+  by plugin-api, which builds no oRPC `.stream()` since that API is unstable) or a slice of a
+  channel read (`plugin-node/live`). `ReplyTurn`, the Thread's child, holds it with its own
+  `useFrameRead(reply, turnOf)`, so a chunk renders it alone. `turnOf` names the form: `waiting`
+  (a root asked for, no chunk yet, drawn as `WaitingReply`), `writing` (the message with
+  `streaming`), `written`, and `stopped` (a failed or stale root: the partial message if any, then
+  a `StateLine` "The reply stopped." with Retry, which re-runs the stream); a selection reply draws
+  its value only and `none` is `null`. The turn steps aside when its key equals the last item's,
+  which removes the double draw as history catches up. `replying` stays the app's boolean for a
+  reply it does not stream. Thread's earlier-history paging is not built: it needs the scroll
+  anchor, with long collections.
+- **The phone wires TanStack's managers.** `QueryProvider listen` takes `online` and `focus`
+  setters, which native-ui passes (`lib/net.ts`: `expo-network`, `AppState`) the way it passes
+  `settle`; without them the phone never pauses a read and never refetches on focus.
   `folded` is the initial fold: the Section holds its fold from there and reads no later change. A foldable Section's chevron stands after its title (and count) inside the toggle, so every Section's heading starts at one left edge (003-327: with the chevron before it, a folded Section's heading stood 22 px right of an unfolded one's); the phone's Section still leads with it.
   
 - A Form's structure is its props, one of `children` (a flat run of FormFields, a `fields` step apart)

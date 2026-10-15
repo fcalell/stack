@@ -1,7 +1,7 @@
 # States: the design
 
 Status: decided with the owner, 2026-10-14, and revised the same day after an adversarial review
-(§15). Phases 1 and 2 of §14 are built (the read; the frames and the paint) and §15 records what changed in building them; phases 3 to 6 are not, and the wait's numbers are tuned live. This page defines how every component
+(§15). Phases 1 to 3 of §14 are built (the read; the frames and the paint; the states beyond the first read) and §15 records what changed in building them; long collections (§7) are phase 7, and phases 4 to 6 are not built. The wait's numbers are tuned live. This page defines how every component
 of the roster reads, waits, fails, goes missing, stays empty, refreshes, streams and acts, on both
 platforms, and how state is held so that a change re-renders only what it changes. It supersedes
 `motion.md` §4.1 (one waiting path) and the shape question of `skeleton-loading.md`; `motion.md`
@@ -250,8 +250,8 @@ The read needs no store of stack's own: each part is a TanStack builtin.
   before its leaves mount.
 - **The root holder count** (§3) comes from the query cache's observer-added and -removed events,
   in dev only.
-- **idle** paints still and is not busy; **paused** paints still and the root holder shows one
-  line ("Waiting for a connection").
+- **idle** and **paused** while waiting are one form, `still`: the loaded tree painted and inert,
+  not busy; a paused root holder also shows one line ("Waiting for a connection").
 - `aria-busy` is the root holder's. There is no live region: nothing is built for a screen reader
   alone (`philosophy.md`).
 - **A failed read stays failed while it refetches.** Retry keeps the failed form with Retry
@@ -294,35 +294,56 @@ The read needs no store of stack's own: each part is a TanStack builtin.
 
 ## 7. Long collections
 
+Not built: its own phase (7, after phase 5; §15). Paging bounds what a list mounts and no list in the
+showcase or Stead approaches a virtualizing count, so it waits for a consumer list that does. The
+phone's design below is reopened (§15).
+
 A collection past a fixed count virtualizes on both platforms, with no prop: List, Table,
 Comparison and Thread mount only the rows on screen and a margin around them.
 
 - **Web:** a virtualizer on the Pane's scroller, reached through context (identity). Find in page
   does not reach unmounted rows: the accepted cost.
-- **Phone:** a recycling list. One cannot sit inside the Pane's ScrollView, so a Pane whose body
-  holds a long collection scrolls by that list, the rest of its body as the list's header and
-  footer.
+- **Phone:** reopened. A recycling list cannot sit inside the Pane's ScrollView, and the Pane
+  cannot know that a List deep in its children is long (rules 9, 11, 12). The spike decides
+  between windowing on the Pane's own ScrollView through a scroller-identity context (mounts and
+  unmounts, does not recycle) and a recycling list as the Pane's scroller, given as an explicit
+  prop.
 - **Waiting rows** are as many as fill the viewport (the placeholder's count, §4).
 - **The settle and moves name only mounted rows**, so a view transition's snapshot stays bounded
   (`motion.md` §5, List).
 - **Thread** keeps its reading position when history loads above (the virtualizer's anchor on the
   web, `maintainVisibleContentPosition` on the phone) and follows the end as it does today.
 
-Open: the libraries (TanStack Virtual on the web; FlashList or LegendList on the phone) and the
-count, settled by a spike on both platforms before phase 3.
+Open: the libraries (TanStack Virtual on the web; FlashList v2 on the phone, LegendList as the
+fallback; none is installed) and the count (`VIRTUAL_FROM`, about 100), settled by a spike on both
+platforms: the phone Pane first (1000 rows under a Section header, both designs), then the phone
+Thread and the web.
 
 ## 8. States beyond the first read
 
-- **busy**: the root holder's quiet mark after the delay (the Section heading's busy glyph, the
-  Pane bar's); the data stays.
-- **stale**: the data stays under one line, "Couldn't refresh · Retry".
-- **more**: an infinite read gives its collection a more row; the next page waits as painted rows
-  after the loaded ones and does not run the frame's clock. An empty first page with more is not
-  empty: the frame waits for the next page.
-- **streaming**: the Thread's streaming turn is driven by its own key; a stream that fails is
-  data on its turn (the turn's failed line), never the thread's state.
-- **permissions**: the org's rules are a read like any other; an act gated on rules still loading
-  paints inert as waiting, never as blocked.
+Built (phase 3).
+
+- **busy**: the root holder's quiet mark after the delay: the `Spinner` in meta ink after the
+  frame's heading (a frame with no heading shows none), `aria-busy` for the first wait alone. The
+  scramble glyph waits for `theme.loading`. The data stays.
+- **stale** and **paused**: one line under the heading row, "Couldn't refresh." with Retry or
+  "Waiting for a connection." with no act.
+- **still**: idle, or paused while waiting; the loaded form painted, inert, no mark.
+- **more**: stack's paginated envelope only (`.pages(input)`, a flat value). The collection draws
+  "Show more", pressed by the viewer; the next page waits as painted rows after the loaded ones
+  and does not run the frame's clock; a failed page is the collection's line. The frame draws no
+  count while more remains, and an empty first page with more is not empty: the next page is
+  fetched at once.
+- **streaming**: the turn being written is a read the app declares (`Thread reply`), drawn by its
+  own part; a stream that fails is data on its turn (the partial message, "The reply stopped." and
+  Retry), never the thread's state. A WebSocket channel is one such read
+  (`@fcalell/plugin-node/live`); a socket down past two seconds pauses its reads, so there is no
+  connection read.
+- **permissions**: the org's rules are an ambient read (`ability(orgId)`); a gated act in a head is
+  a selection that paints inert while the rules load, never blocked, and a row's act is combined
+  into its items. A failed rules read leaves its acts painted and inert.
+- **the phone** wires TanStack's online and focus managers, or it would never pause or refetch on
+  focus.
 
 ## 9. Acts and saves
 
@@ -416,12 +437,15 @@ Each phase lands web and phone together, with the showcase migrated in the same 
    rule, explicit `items`, each leaf's paint, inert waiting forms, the generic sentences;
    QueryBoundary, `loading`, `LoadingContext`, `useWait` and the waiting trees deleted; screens
    per read and the shift check.
-3. **States beyond the first read:** busy, stale, more, streaming on its own key, idle and paused,
-   permissions; live channels as queries; long collections (after their spike).
+3. **States beyond the first read** (built): busy, stale, more, streaming on its own key, still and
+   paused, permissions; live channels as queries; the phone's managers. Long collections moved to
+   phase 7.
 4. **Acts and saves:** the host-held promise, controls with the latest change winning, a form's
    field saves.
 5. **Navigation:** `reads(params)`, preload on intent and on press-in.
-6. **Stead:** its screens moved to frame reads, its workarounds deleted, the pin moved.
+6. **Stead:** its screens moved to frame reads, its workarounds deleted, the pin moved; its six
+   channels become `channelRead`s.
+7. **Long collections:** the spike (§7), then virtualization on both platforms.
 
 ## 15. Decisions
 
@@ -495,6 +519,35 @@ Changed while building phase 2 (2026-10-15); where the sections above differ, th
     Webhooks Section first, Connect lists as many workspaces as it paints, and a wrapping fact line
     or title is short enough to wrap the same painted and loaded.
 
+Changed while building phase 3 (2026-10-15); where the sections above differ, this list wins:
+
+1. **busy** is drawn by the root-holding frame, which renders when busy changes; its children are
+   the same elements and bail out. The separate busy-mark subscription is cut. `aria-busy` is the
+   first wait only. The glyph is the `Spinner` until `theme.loading` lands; a frame with no heading
+   shows none.
+2. **stale and paused are one line** under the frame's heading row (`StateLine`); paused has no act.
+3. **idle and paused-while-waiting are one frame form**, `still` (`FrameForm` `idle` is renamed).
+4. **more** covers stack's paginated envelope only and its value is flat. The more row is pressed
+   by the viewer and is the collection's, as is a failed next page. A next-page fetch is not busy
+   and the frame draws no count while more remains. Thread's earlier-history paging moves to the
+   long-collections phase.
+5. **streaming**: the turn is the app's declared read (`Thread reply`); stack builds no oRPC
+   `.stream()` or `.live()`, adds `kind: "stream"` and re-exports `streamedQuery`. The turn holds
+   its read and draws its failure, and hides once history holds its key.
+6. **live channels**: the primitive is plugin-node's `channelRead`. There is no connection read: a
+   lost socket pauses each channel read. Stead's connection banner is its own product choice.
+7. **permissions**: the org's rules are an ambient read; gated head acts are `Datum` selections and
+   row acts are combined into items. A failed rules read leaves its acts painted and inert.
+8. **long collections** are phase 7, and §7's phone design is reopened: windowing on the Pane's
+   ScrollView against the Pane given the list. The count is the spike's.
+9. **the phone** wires the online and focus managers (`QueryProvider listen`).
+10. `read(options, missing)` is `read(options, { missing, kind })`.
+
+Deviations kept from the build: a failed next page is the collection's line, not the frame's stale
+(`planFrame` presents the pages held as success); a `Table` paints its next page as a grid of its
+own at the same columns, and the narrow list as rows in the same slots; the Thread roster's
+`error` is the stopped turn.
+
 Open: `WAIT_DELAY` and `ACT_DELAY` (tuned live), and whether a minimum is needed after all; the phone's text bar as a nested `Text`
 (a device check); the virtualizing libraries, their count and the phone Pane's scroll with a long
-collection (a spike).
+collection (a spike, phase 7).
