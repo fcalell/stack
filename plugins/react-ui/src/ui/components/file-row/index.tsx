@@ -6,6 +6,7 @@ import type {
 	IconName,
 } from "@fcalell/ui-core/descriptors";
 import { DIRECTORY_LEAD, pathCut } from "@fcalell/ui-core/list-state";
+import { painting } from "@fcalell/ui-core/paint";
 import { isCurrent } from "@fcalell/ui-core/route";
 import {
 	FILE_COUNT_YIELD,
@@ -16,11 +17,13 @@ import {
 	ROW_LEADING,
 	row,
 } from "@fcalell/ui-core/variants";
+import { memo } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { follow, useRoute } from "../../lib/navigate.ts";
 import { Painted } from "../../lib/paint.tsx";
 import { ChipBase } from "../chip/base.tsx";
 import { IconBase } from "../icon/index.tsx";
+import type { FileSlots } from "../list/index.tsx";
 import { ChangeMark } from "../status/change.tsx";
 
 const ROW = "relative flex items-center";
@@ -218,3 +221,31 @@ export function FileRowBase({
 		</div>
 	);
 }
+
+/** One file row of a `List` from its item: it runs the slots itself and opens the item itself, so a refetch that changes one item renders that row alone. */
+function FileItemBase<T>(props: {
+	item: T;
+	index: number;
+	file: FileSlots<T>;
+	painted: boolean;
+}) {
+	const { item, index, file, painted } = props;
+	const slot = <R,>(fn: (one: T) => R): R =>
+		painted ? (painting(fn, item) as R) : fn(item);
+	return (
+		<FileRowBase
+			path={slot(file.path)}
+			added={slot(file.added)}
+			removed={slot(file.removed)}
+			seen={file.seen && slot(file.seen)}
+			change={file.change && slot(file.change)}
+			chip={file.chip && slot(file.chip)}
+			href={file.href && slot(file.href)}
+			onOpen={file.onOpen ? () => file.onOpen?.(item) : undefined}
+			painted={painted}
+			at={index}
+		/>
+	);
+}
+
+export const FileItem = memo(FileItemBase) as typeof FileItemBase;

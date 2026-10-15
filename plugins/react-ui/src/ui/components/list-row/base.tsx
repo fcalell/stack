@@ -1,13 +1,20 @@
 import { Button as BaseButton } from "@base-ui/react/button";
 import { Field } from "@base-ui/react/field";
+import {
+	type Datum,
+	isSelection,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type {
 	Act,
+	MenuItem,
 	RowLeading,
 	RowPart,
 	RowTrailing,
 } from "@fcalell/ui-core/descriptors";
-import { paintText } from "@fcalell/ui-core/paint";
+import { painting, paintText } from "@fcalell/ui-core/paint";
+import { pressStands } from "@fcalell/ui-core/reason";
 import { isCurrent } from "@fcalell/ui-core/route";
 import {
 	FIELD_ERROR_LINE,
@@ -30,7 +37,14 @@ import {
 	text,
 	treeBleed,
 } from "@fcalell/ui-core/variants";
-import { Fragment, type KeyboardEvent, type ReactNode, useMemo } from "react";
+import {
+	Fragment,
+	type KeyboardEvent,
+	memo,
+	type ReactNode,
+	useMemo,
+	useState,
+} from "react";
 import { ageShort } from "../../lib/age.ts";
 import { useClock } from "../../lib/clock.ts";
 import { CodeCut, Runs } from "../../lib/code.tsx";
@@ -43,6 +57,7 @@ import {
 	partRuns,
 	partText,
 } from "../../lib/parts.ts";
+import { endedItems, endedReason } from "../../lib/read.tsx";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";
@@ -54,6 +69,7 @@ import { ChipBase } from "../chip/base.tsx";
 import { Icon, IconBase } from "../icon/index.tsx";
 import { IconButtonBase } from "../icon-button/base.tsx";
 import { HeldInput } from "../input/base.tsx";
+import type { LeadingSlot, RowSlots } from "../list/index.tsx";
 import { MenuBase } from "../menu/base.tsx";
 import { HeldPicker } from "../picker/base.tsx";
 import { ChangeMark } from "../status/change.tsx";
@@ -170,6 +186,10 @@ const FOLD = "flex shrink-0 items-center justify-center self-center";
 
 /** What a `List` hands the rows it draws; no app sets them, so they are outside `ListRowProps`. */
 export interface ListRowInternal {
+	/** The row's act, constant or a selection: a selection paints its box until its read lands and stands blocked with the failed sentence once that read failed or is missing. */
+	act?: Datum<Act | undefined>;
+	/** The row's acts, constant or a selection, the same way. */
+	more?: Datum<readonly MenuItem[] | undefined>;
 	/** The row's place in a tree `List`: its depth (the roots 0), for a branch whether its children are drawn and how to fold them, and whether it is the tree's one tab stop. */
 	tree?: RowTree;
 	/** A row of the list has a more act: a row without one keeps its square blank, so every row's trailing value ends at one x. */
@@ -286,6 +306,120 @@ function useReasonLine(blocked: string | undefined) {
 	return { host, line };
 }
 
+/** Whether the row has a more act to draw: a selection may still answer none, the box standing meanwhile. */
+export function hasMore(more: Datum<readonly MenuItem[] | undefined>) {
+	return isSelection(more) || Boolean(more?.length);
+}
+
+function PaintedAct({ at }: { at: number }) {
+	return (
+		<ButtonBase
+			act="secondary"
+			fit="bar"
+			label={paintText("word", at)}
+			painted
+		/>
+	);
+}
+
+// The row's act as its own datum draws it: waiting while the read lands, the
+// act once it did, and blocked with the sentence once the read ended, never a
+// false yes.
+function useOffer(act: Datum<Act | undefined>) {
+	const [offer] = useSelections([act]);
+	const words = useWords();
+	const ended = offer.painted ? endedReason(words, offer.phase) : undefined;
+	const given: Act | undefined =
+		ended === undefined
+			? offer.painted
+				? undefined
+				: offer.value
+			: { label: ended, onAct: NOOP };
+	return {
+		waits: offer.painted && ended === undefined,
+		given,
+		blocked: given?.blocked ?? ended,
+	};
+}
+
+// The row's act button at its end; a press on it while blocked tells the row
+// whose line draws the reason.
+function RowAct(props: {
+	act: Datum<Act | undefined>;
+	stand: (reason: string) => void;
+	at: number;
+}) {
+	const { act, stand, at } = props;
+	const { waits, given, blocked } = useOffer(act);
+	const host = useMemo(
+		() => (blocked === undefined ? undefined : { press: () => stand(blocked) }),
+		[blocked, stand],
+	);
+	if (waits) return <PaintedAct at={at} />;
+	if (!given) return null;
+	return (
+		<ReasonHostContext value={host}>
+			<ButtonBase
+				act={given.destructive ? "destructive" : "secondary"}
+				fit="bar"
+				label={given.label}
+				onAct={given.onAct}
+				failed={given.failed}
+				blocked={blocked}
+			/>
+		</ReasonHostContext>
+	);
+}
+
+// The reason the row's act is blocked under, on the row's own line: shown once
+// the act was pressed while blocked, or its form is touched.
+function ActLine(props: {
+	act: Datum<Act | undefined>;
+	stood: string | undefined;
+}) {
+	const { blocked } = useOffer(props.act);
+	const { touched } = useTouched();
+	if (blocked === undefined) return null;
+	return (
+		<Reason shown={pressStands(blocked, props.stood) || touched}>
+			{blocked}
+		</Reason>
+	);
+}
+
+// The row's more act: painted while its read lands, the one blocked item with
+// the sentence once it ended, the square left blank when it answers none.
+function RowMore(props: {
+	more: Datum<readonly MenuItem[] | undefined>;
+	named: string;
+}) {
+	const [offer] = useSelections([props.more]);
+	const words = useWords();
+	const ended = offer.painted ? endedReason(words, offer.phase) : undefined;
+	if (offer.painted && ended === undefined)
+		return (
+			<MenuBase
+				label={`${words.more} ${props.named}`}
+				title={props.named}
+				items={[]}
+				painted
+			/>
+		);
+	const items: readonly MenuItem[] | undefined =
+		ended === undefined
+			? (offer.value as readonly MenuItem[] | undefined)
+			: endedItems(words, ended);
+	if (!items?.length)
+		return <span aria-hidden className={cn(ROW_CHEVRON, BLANK)} />;
+	return (
+		<MenuBase
+			label={`${words.more} ${props.named}`}
+			title={props.named}
+			items={items}
+		/>
+	);
+}
+
 function ActButton(props: {
 	act: Act;
 	host: ReturnType<typeof useReasonLine>["host"];
@@ -293,15 +427,7 @@ function ActButton(props: {
 	at: number;
 }) {
 	const { act, host, painted, at } = props;
-	if (painted)
-		return (
-			<ButtonBase
-				act="secondary"
-				fit="bar"
-				label={paintText("word", at)}
-				painted
-			/>
-		);
+	if (painted) return <PaintedAct at={at} />;
 	return (
 		<ReasonHostContext value={host}>
 			<ButtonBase
@@ -365,7 +491,7 @@ export function ListRowBase<V extends string | null = string>({
 	painted = false,
 	at = 0,
 	opens: opened = false,
-}: ListRowProps<V> & ListRowInternal) {
+}: Omit<ListRowProps<V>, "act" | "more"> & ListRowInternal) {
 	const words = useWords();
 	const route = useRoute();
 	// Over the placeholder the title is not a name.
@@ -375,15 +501,16 @@ export function ListRowBase<V extends string | null = string>({
 	const opens = painted ? opened : href !== undefined || onOpen !== undefined;
 	// A row that opens ends in a chevron unless its end already holds an act, a
 	// pick or a tree's fold.
+	const moreActs = hasMore(more);
 	const chevron =
 		opens &&
 		act === undefined &&
-		!more?.length &&
+		!moreActs &&
 		!(trailing && "pick" in trailing) &&
 		!tree?.fold;
 	// A row of a list where another has a more act, with no more act and no
 	// chevron of its own, keeps that act's square blank.
-	const blank = room && !more?.length && !chevron;
+	const blank = room && !moreActs && !chevron;
 	const marked =
 		status !== undefined ||
 		warning !== undefined ||
@@ -408,7 +535,11 @@ export function ListRowBase<V extends string | null = string>({
 	const column = cn(TEXT, under && TEXT_UNDER);
 	const inline = { label: entry?.label ?? "" };
 	const entryReason = useReasonLine(painted ? undefined : entry?.act.blocked);
-	const actReason = useReasonLine(painted ? undefined : act?.blocked);
+	// The pressed reason of the act, which its button and its line both read:
+	// the row holds it, neither knows the other.
+	const [stood, stand] = useState<string>();
+	const actLine =
+		act === undefined || painted ? null : <ActLine act={act} stood={stood} />;
 	// A blocked tick's reason follows the first part inside the span that yields
 	// last, so the part that names the item stays whole ahead of it.
 	const [first, ...rest] = meta ?? [];
@@ -544,7 +675,7 @@ export function ListRowBase<V extends string | null = string>({
 			{!lined ? (
 				<span className={column}>
 					{titleLine}
-					{actReason.line}
+					{actLine}
 				</span>
 			) : entry ? (
 				<Field.Root
@@ -576,7 +707,7 @@ export function ListRowBase<V extends string | null = string>({
 						</Field.Error>
 					) : null}
 					{entryReason.line}
-					{actReason.line}
+					{actLine}
 				</Field.Root>
 			) : listed ? (
 				<span className={column}>
@@ -608,7 +739,7 @@ export function ListRowBase<V extends string | null = string>({
 							</span>
 						))}
 					</span>
-					{actReason.line}
+					{actLine}
 				</span>
 			) : (
 				<span className={column}>
@@ -700,7 +831,7 @@ export function ListRowBase<V extends string | null = string>({
 							</span>
 						) : null}
 					</span>
-					{actReason.line}
+					{actLine}
 				</span>
 			)}
 			{trailing && "pick" in trailing ? (
@@ -715,27 +846,30 @@ export function ListRowBase<V extends string | null = string>({
 					</span>
 				</First>
 			) : null}
-			{act || more?.length || blank ? (
+			{act || moreActs || blank ? (
 				<First on={top}>
 					<span className={cn(ROW_ACTS, ACTS, under && ACTS_UNDER)}>
 						{act ? (
-							<ActButton
-								act={act}
-								host={actReason.host}
-								painted={painted}
-								at={at}
-							/>
+							painted ? (
+								<PaintedAct at={at} />
+							) : (
+								<RowAct act={act} stand={stand} at={at} />
+							)
 						) : null}
 						{blank ? (
 							<span aria-hidden className={cn(ROW_CHEVRON, BLANK)} />
 						) : null}
-						{more?.length ? (
-							<MenuBase
-								label={`${words.more} ${named}`}
-								title={named}
-								items={painted ? [] : more}
-								painted={painted}
-							/>
+						{more !== undefined && hasMore(more) ? (
+							painted ? (
+								<MenuBase
+									label={`${words.more} ${named}`}
+									title={named}
+									items={[]}
+									painted
+								/>
+							) : (
+								<RowMore more={more} named={named} />
+							)
 						) : null}
 					</span>
 				</First>
@@ -743,3 +877,86 @@ export function ListRowBase<V extends string | null = string>({
 		</div>
 	);
 }
+
+// The item's leading mark, of the kind the slot names.
+function leadingOf<T>(slot: LeadingSlot<T>, item: T): RowLeading {
+	if (slot.avatar !== undefined) return { avatar: slot.avatar(item) };
+	if (slot.icon !== undefined) return { icon: slot.icon(item) };
+	if (slot.check !== undefined) return { check: slot.check(item) };
+	return { status: slot.status(item) };
+}
+
+/** What a `List` hands the ListRowItem it draws; no app sets it. */
+export interface ListRowItemProps<T, V extends string | null> {
+	item: T;
+	/** The item's place among the rows, which varies a painted row's fillers. */
+	index: number;
+	/** The slots, run inside the row over the item (over the placeholder while it is painted: a slot that throws there paints as the item itself). */
+	row: RowSlots<T, V>;
+	painted: boolean;
+	/** A row of the list has a more act (`ListRowInternal.room`). */
+	room: boolean;
+	/** In a tree: the row's depth, its fold (`open` on a branch alone, and `fold` hears the item's key) and whether it holds the tab stop. Flat so the memo compares them. */
+	depth?: number;
+	open?: boolean;
+	tabbable?: boolean;
+	fold?: (key: string) => void;
+}
+
+function ListRowItemBase<T, V extends string | null>({
+	item,
+	index,
+	row,
+	painted,
+	room,
+	depth,
+	open,
+	tabbable = false,
+	fold,
+}: ListRowItemProps<T, V>) {
+	const { leading } = row;
+	const slot = <R,>(fn: (one: T) => R): R =>
+		painted ? (painting(fn, item) as R) : fn(item);
+	const tree: RowTree | undefined =
+		depth === undefined
+			? undefined
+			: {
+					depth,
+					fold:
+						open === undefined
+							? undefined
+							: { open, onToggle: () => fold?.(row.key(item)) },
+					tabbable,
+				};
+	return (
+		<ListRowBase
+			change={row.change && slot(row.change)}
+			leading={leading && slot((one) => leadingOf(leading, one))}
+			title={slot(row.title)}
+			meta={row.meta && slot(row.meta)}
+			trailing={row.trailing && slot(row.trailing)}
+			status={row.status && slot(row.status)}
+			warning={row.warning && slot(row.warning)}
+			lock={row.lock && slot(row.lock)}
+			chip={row.chip && slot(row.chip)}
+			entry={row.entry && slot(row.entry)}
+			steps={row.steps && slot(row.steps)}
+			dim={row.dim && slot(row.dim)}
+			wrap={row.wrap}
+			act={row.act && slot(row.act)}
+			more={row.more && slot(row.more)}
+			href={row.href && slot(row.href)}
+			selected={row.selected && slot(row.selected)}
+			onOpen={row.onOpen ? () => row.onOpen?.(item) : undefined}
+			room={room}
+			tree={tree}
+			painted={painted}
+			// A painted row opens as the loaded one would: it draws the chevron, and builds no hit.
+			opens={row.href !== undefined || row.onOpen !== undefined}
+			at={index}
+		/>
+	);
+}
+
+/** One row of a `List` from its item: it runs the slots itself and opens the item itself, so a refetch that changes one item renders that row alone. `memo` erases the generic, so the item keeps the base's own type. */
+export const ListRowItem = memo(ListRowItemBase) as typeof ListRowItemBase;

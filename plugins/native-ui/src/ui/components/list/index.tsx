@@ -86,9 +86,11 @@ export interface RowSlots<T, V extends string | null = string> {
 	// Whether every row's title wraps whole (a list of notes); one value for
 	// the list, so the painted rows draw it.
 	wrap?: boolean;
-	// The row's labelled act at its end.
-	act?: (item: T) => Act | undefined;
-	more?: (item: T) => readonly MenuItem[] | undefined;
+	// The row's labelled act at its end. A selection paints the act's box until
+	// its read lands and stands blocked with the failed sentence once that read
+	// failed or is missing; the row and the list never wait on it.
+	act?: (item: T) => Datum<Act | undefined>;
+	more?: (item: T) => Datum<readonly MenuItem[] | undefined>;
 	href?: (item: T) => Route | undefined;
 	// Whether the row is the open record, washed as selected whatever its
 	// `href`.

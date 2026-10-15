@@ -235,14 +235,14 @@ function windowed(kind: Kind): Story {
 					args.count / 4,
 				);
 
-				// A scroll costs the host nothing: its slots do not run again, the
-				// window renders, and the rows still mounted keep their nodes.
+				// A scroll costs the host nothing: the window renders, the slots run
+				// for the rows entering it alone, and no row of the thousand more.
 				const slots = spy.slots;
 				const commits = spy.commits;
 				const kept = mounted(canvasElement)[0];
 				view.scrollTop = view.scrollHeight / 2;
 				await frames(6);
-				await expect(spy.slots).toBe(slots);
+				await expect(spy.slots - slots).toBeLessThan(args.count / 4);
 				await expect(spy.commits).toBeGreaterThan(commits);
 				await expect(kept?.isConnected).toBe(false);
 				await waitFor(bound);

@@ -6,7 +6,7 @@ import { Pane } from "../../components/pane/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import { ago } from "../ago.ts";
-import type { ShowcaseFrame } from "../cells.ts";
+import { isFirstCell, type ShowcaseFrame } from "../cells.ts";
 import { endedAt, itemsAt } from "../waiting.ts";
 import { Paged } from "./more.tsx";
 import { Column } from "./place.tsx";
@@ -101,10 +101,10 @@ const MORE_TITLES = {
 // Group. The empty and error states draw a list over a read that answers none,
 // one that fails and one that answers not found, in Sections that hold none of
 // them, so the list draws its own form. The more state draws the deploys over a
-// pages read in each state of its more row, on the list cell.
+// pages read in each state of its more row, on the first cell.
 export function drawList(frame: ShowcaseFrame) {
 	if (frame.state === "more")
-		return frame.cell.name === "LIST" ? (
+		return isFirstCell(frame) ? (
 			<Column>
 				<Place>
 					<Pane title="Library">

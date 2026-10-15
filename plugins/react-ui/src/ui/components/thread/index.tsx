@@ -197,27 +197,26 @@ function ReplyTurn<T>(props: {
 	);
 }
 
-// What the log's window holds, oldest first: the painted messages while the
-// items are not here (the other author's, since an author is the item's), else
-// one Message per item.
-function messagesOf<T>(
+// The message at an index of the log's window, oldest first: a painted one
+// while the items are not here (the other author's, since an author is the
+// item's), else one Message per item.
+function messageAt<T>(
 	props: ThreadProps<T>,
 	drawn: Drawn<readonly T[]>,
 	slots: RefObject<MessageSlots<T>>,
-): ReactElement[] {
+	index: number,
+): ReactElement {
 	if (drawn.painted)
-		return Array.from({ length: PAINT_ROWS }, (_, at) => (
+		return (
 			<MessageBase
-				// biome-ignore lint/suspicious/noArrayIndexKey: the messages are fixed stand-ins
-				key={at}
+				key={index}
 				painted
 				name={props.message.name !== undefined}
-				at={at}
+				at={index}
 			/>
-		));
-	return drawn.value.map((item) => (
-		<ThreadItem key={props.message.key(item)} item={item} slots={slots} />
-	));
+		);
+	const item = drawn.value[index] as T;
+	return <ThreadItem key={props.message.key(item)} item={item} slots={slots} />;
 }
 
 // What follows the window: the waiting message and the turn being written,
@@ -289,7 +288,7 @@ function Log<T>(props: {
 }) {
 	const { thread, drawn, frame, slots } = props;
 	const ended = frame.form === "failed" || frame.form === "missing";
-	const messages = ended ? [] : messagesOf(thread, drawn, slots);
+	const count = ended ? 0 : drawn.painted ? PAINT_ROWS : drawn.value.length;
 	const tail = tailOf(thread, drawn, slots, ended);
 	const title = use(PageTitle);
 	const log = useRef<HTMLDivElement>(null);
@@ -351,7 +350,17 @@ function Log<T>(props: {
 						{ended ? (
 							<FrameBody frame={frame} fit="frame" />
 						) : (
-							<Window rows={messages} box={content} end />
+							<Window
+								count={count}
+								keyOf={(index) =>
+									drawn.painted
+										? index
+										: thread.message.key(drawn.value[index] as T)
+								}
+								row={(index) => messageAt(thread, drawn, slots, index)}
+								box={content}
+								end
+							/>
 						)}
 						{tail}
 					</div>

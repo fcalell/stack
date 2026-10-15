@@ -21,10 +21,11 @@ const rules = ability(organizationId);
 />
 ```
 
-An act on each row combines the rules into the items, so the list waits for them:
-`combine([items, rules], (rows, a) => rows.map((row) => ({ ...row, act: a.can("update", subject("Expense", row)) ? edit(row) : undefined })))`.
-The rules read is ambient: no frame holds it, and one that fails leaves its acts painted and inert,
-never a false yes.
+An act on each row is a selection of the rules too, so the list never waits on them:
+`act: (row) => rules.at((a) => (a.can("update", subject("Expense", row)) ? edit(row) : undefined))`, and
+`more` the same. The row's act paints its box while the rules load, and stands blocked with the failed
+sentence once that read failed or went missing, never a false yes. The rules read is ambient: no frame
+holds it.
 
 The ability denies everything while the id is `undefined` (no request is made), when the caller is
 no member, and, in the hook, while the rules load, so it never answers a false yes.

@@ -2,7 +2,7 @@ import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
 import type { CountLink, MeterMark } from "@fcalell/ui-core/descriptors";
 import { formatterFor } from "@fcalell/ui-core/format";
 import { levelOf } from "@fcalell/ui-core/list-state";
-
+import { painting } from "@fcalell/ui-core/paint";
 import {
 	FIGURES,
 	METER,
@@ -13,6 +13,7 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
+import { memo } from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
@@ -23,6 +24,7 @@ import {
 	paintBox,
 	useShown,
 } from "../../lib/paint";
+import type { MeterSlots } from "../list/index";
 import { CountLinks } from "./count-links";
 
 const STACK = "min-w-0";
@@ -158,3 +160,31 @@ export function MeterBase({
 		</View>
 	);
 }
+
+// One meter of a `List` from its item: it runs the slots itself, so a refetch
+// that changes one item renders that meter alone.
+function MeterItemBase<T>(props: {
+	item: T;
+	index: number;
+	meter: MeterSlots<T>;
+	painted: boolean;
+}) {
+	const { item, index, meter, painted } = props;
+	const slot = <R,>(fn: (one: T) => R): R =>
+		painted ? (painting(fn, item) as R) : fn(item);
+	return (
+		<MeterBase
+			label={slot(meter.label)}
+			value={slot(meter.value)}
+			max={slot(meter.max)}
+			mark={meter.mark && slot(meter.mark)}
+			{...(meter.counts
+				? { counts: slot(meter.counts) }
+				: { meta: meter.meta && slot(meter.meta) })}
+			painted={painted}
+			at={index}
+		/>
+	);
+}
+
+export const MeterItem = memo(MeterItemBase) as typeof MeterItemBase;

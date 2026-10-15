@@ -9,6 +9,7 @@ import type {
 	StatusState,
 } from "@fcalell/ui-core/descriptors";
 import { valueCut } from "@fcalell/ui-core/list-state";
+import { painting } from "@fcalell/ui-core/paint";
 import {
 	DEFINITION_ROW,
 	DEFINITION_ROW_CHEVRON,
@@ -18,7 +19,7 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import type { ReactNode } from "react";
+import { memo, type ReactNode } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { useCopy } from "../../lib/copy.ts";
 import { follow } from "../../lib/navigate.ts";
@@ -28,6 +29,7 @@ import { Icon } from "../icon/index.tsx";
 import { IconButtonBase } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 import { Link } from "../link/index.tsx";
+import type { DefinitionSlots } from "../list/index.tsx";
 import { LockMark } from "../list-row/lock.tsx";
 import { HeldPicker } from "../picker/base.tsx";
 import type { PickOneProps } from "../picker/index.tsx";
@@ -338,3 +340,38 @@ function CopyAct({ label, value }: { label: string; value: string }) {
 		/>
 	);
 }
+
+/** One definition row of a `List` from its item: it runs the slots itself and opens the item itself, so a refetch that changes one item renders that row alone. */
+function DefinitionItemBase<T>(props: {
+	item: T;
+	index: number;
+	definition: DefinitionSlots<T>;
+	painted: boolean;
+}) {
+	const { item, index, definition, painted } = props;
+	const slot = <R,>(fn: (one: T) => R): R =>
+		painted ? (painting(fn, item) as R) : fn(item);
+	const locked = definition.locked && slot(definition.locked);
+	const shared = {
+		change: definition.change && slot(definition.change),
+		label: slot(definition.label),
+		value: definition.value && slot(definition.value),
+		copyable: definition.copyable,
+		painted,
+		at: index,
+	};
+	if (locked) return <DefinitionRowBase {...shared} locked={locked} />;
+	return (
+		<DefinitionRowBase
+			{...shared}
+			description={definition.description && slot(definition.description)}
+			act={definition.act && slot(definition.act)}
+			href={definition.href && slot(definition.href)}
+			onOpen={definition.onOpen ? () => definition.onOpen?.(item) : undefined}
+		/>
+	);
+}
+
+export const DefinitionItem = memo(
+	DefinitionItemBase,
+) as typeof DefinitionItemBase;

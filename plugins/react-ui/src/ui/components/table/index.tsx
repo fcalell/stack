@@ -756,34 +756,35 @@ function Grid(props: {
 	// The head tick reaches the rows that can be ticked; with none it is off.
 	const reach = tickable(rows).length > 0;
 
-	const drawn = painted
-		? rows.map((_, index) => (
-				<PaintedRow
-					// biome-ignore lint/suspicious/noArrayIndexKey: the painted rows are fixed stand-ins
-					key={index}
-					index={index}
-					columns={columns}
-					touch={touch}
-					choosing={choose !== undefined}
-				/>
-			))
-		: rows.map((row, index) => (
-				<Row
-					key={row.id}
-					row={row}
-					index={index}
-					columns={columns}
-					chosen={row.id === props.selected}
-					choosing={choose !== undefined}
-					ticked={ticked.has(row.id)}
-					opens={opens}
-					touch={touch}
-					edits={edits}
-					cursor={index === at.row ? at.column : -1}
-					editing={index === at.row ? editing : undefined}
-					actions={actions}
-				/>
-			));
+	// Built by index, so a long grid builds only the rows its Window mounts.
+	const rowAt = (index: number) => {
+		const row = rows[index] as TableRecord;
+		return painted ? (
+			<PaintedRow
+				key={index}
+				index={index}
+				columns={columns}
+				touch={touch}
+				choosing={choose !== undefined}
+			/>
+		) : (
+			<Row
+				key={row.id}
+				row={row}
+				index={index}
+				columns={columns}
+				chosen={row.id === props.selected}
+				choosing={choose !== undefined}
+				ticked={ticked.has(row.id)}
+				opens={opens}
+				touch={touch}
+				edits={edits}
+				cursor={index === at.row ? at.column : -1}
+				editing={index === at.row ? editing : undefined}
+				actions={actions}
+			/>
+		);
+	};
 
 	return (
 		<div className={FORM}>
@@ -844,7 +845,14 @@ function Grid(props: {
 						</tr>
 					</thead>
 					<tbody ref={body}>
-						<Window box={body} keep={at.row} spacer="tr" rows={drawn} />
+						<Window
+							box={body}
+							keep={at.row}
+							spacer="tr"
+							count={rows.length}
+							keyOf={(index) => (painted ? index : (rows[index]?.id ?? index))}
+							row={rowAt}
+						/>
 					</tbody>
 				</table>
 			</div>

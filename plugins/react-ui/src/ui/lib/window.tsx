@@ -7,6 +7,7 @@ import {
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
 	createContext,
+	type Key,
 	type ReactElement,
 	type ReactNode,
 	type RefObject,
@@ -49,8 +50,12 @@ const HIDDEN = { "aria-hidden": true } as const;
 const SETTLED = 150;
 
 export interface WindowProps {
-	/** Every row, keyed, built by the host. */
-	rows: readonly ReactElement[];
+	/** How many rows there are. */
+	count: number;
+	/** The key of the row at an index, which the virtualizer keeps its measures by. */
+	keyOf: (index: number) => Key;
+	/** The row at an index, exactly one element carrying that key: built only for the indices the window mounts, so a long collection never builds (or renders) the rest. */
+	row: (index: number) => ReactElement;
 	/** The element the rows stand in as its first children, each row exactly one element. */
 	box: RefObject<HTMLElement | null>;
 	/** A row mounted whatever the scroll (a Table's cursor). */
@@ -79,7 +84,9 @@ function gapOf(box: HTMLElement): number {
 
 /** The rows of a long collection, drawn only near the scroller's view: TanStack Virtual places and ranges them, the mounted rows stand in the host's box between spacers that hold the room of the rest. Fewer than `VIRTUAL_FROM` rows, or no `Scroller`, draw every row unchanged, so crossing the count (a Show more) mounts nothing again. The rows are measured by their place among the box's children, so a row is exactly one element and carries nothing of this. The focused row and `keep` stay mounted. */
 export function Window({
-	rows,
+	count,
+	keyOf,
+	row,
 	box,
 	keep,
 	end,
@@ -87,7 +94,7 @@ export function Window({
 }: WindowProps): ReactNode {
 	const holder = use(Scroller);
 	const scroller = holder?.current ?? null;
-	const on = holder !== null && rows.length >= VIRTUAL_FROM;
+	const on = holder !== null && count >= VIRTUAL_FROM;
 	// A Window mounting with its scroller (a Pane's first render) renders
 	// before the element is attached, from the viewport's size; it renders once
 	// more when the element has arrived, to measure against it.
@@ -115,12 +122,8 @@ export function Window({
 		// A new `keep` is a new extractor, which ranges again.
 		[keep],
 	);
-	const keyOf = useCallback(
-		(index: number) => rows[index]?.key ?? index,
-		[rows],
-	);
 	const virtualizer = useVirtualizer<HTMLElement, Element>({
-		count: rows.length,
+		count,
 		enabled: on,
 		getScrollElement: () => holder?.current ?? null,
 		estimateSize: () => size,
@@ -130,8 +133,7 @@ export function Window({
 		rangeExtractor: extract,
 		useFlushSync: false,
 		initialRect: view,
-		initialOffset: () =>
-			end ? Math.max(0, rows.length * size - view.height) : 0,
+		initialOffset: () => (end ? Math.max(0, count * size - view.height) : 0),
 		observeElementOffset: (instance, report) => {
 			const element = instance.scrollElement;
 			if (!element) return;
@@ -186,7 +188,7 @@ export function Window({
 			}))
 		: [];
 	const slots = on
-		? slotsOf(placed, rows.length, virtualizer.getTotalSize(), gap)
+		? slotsOf(placed, count, virtualizer.getTotalSize(), gap)
 		: [];
 	// What the box holds after this commit, which the effects measure it by.
 	const drawn = useRef(slots);
@@ -274,10 +276,10 @@ export function Window({
 		};
 	}, [on, box]);
 
-	if (!on) return rows;
+	if (!on) return Array.from({ length: count }, (_, index) => row(index));
 	const Space = spacer;
 	return slots.map((slot) => {
-		if ("row" in slot) return rows[slot.row];
+		if ("row" in slot) return row(slot.row);
 		const style = { height: slot.space };
 		return Space === "tr" ? (
 			<tr key={`window-${slot.before}`} {...HIDDEN}>

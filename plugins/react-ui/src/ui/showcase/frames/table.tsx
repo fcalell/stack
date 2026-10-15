@@ -527,7 +527,7 @@ const COMMON = only(
 );
 
 // The Table on the part each cell names, in the frame's state: the open record
-// selected, or painted while its read waits; the more state, on the table cell,
+// selected, or painted while its read waits; the more state, on the first cell,
 // the table over a pages read in each state of its more row; the empty and
 // error states, on the table cell, over a read that answers none, fails and
 // answers not found, in Sections that hold none of them. The picked edit holds in a stage:
@@ -548,7 +548,7 @@ export function drawTable(frame: ShowcaseFrame) {
 		/>
 	);
 	if (frame.state === "more")
-		return cell === "TABLE" ? (
+		return isFirstCell(frame) ? (
 			<Column>
 				<Paged
 					id={frame.id}

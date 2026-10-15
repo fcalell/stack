@@ -80,10 +80,10 @@ export interface RowSlots<T, V extends string | null = string> {
 	dim?: (item: T) => boolean | undefined;
 	/** Whether every row's title wraps whole (a list of notes); one value for the list, so the painted rows draw it. */
 	wrap?: boolean;
-	/** The row's labelled act at its end. */
-	act?: (item: T) => Act | undefined;
-	/** The row's acts. */
-	more?: (item: T) => readonly MenuItem[] | undefined;
+	/** The row's labelled act at its end. A selection (`rules.at((a) => …)`) paints the act's box until its read lands and stands blocked with the failed sentence once that read failed or is missing; the row and the list never wait on it. */
+	act?: (item: T) => Datum<Act | undefined>;
+	/** The row's acts. A selection draws the same way: the more act painted while it waits, one blocked item with the failed sentence once it ended. */
+	more?: (item: T) => Datum<readonly MenuItem[] | undefined>;
 	/** Where the row goes. */
 	href?: (item: T) => string | undefined;
 	/** Whether the row is the open record, washed as selected whatever its `href`. */
