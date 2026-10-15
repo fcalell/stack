@@ -3,14 +3,11 @@ import {
 	createApiQueryUtils,
 	QueryClient,
 	QueryClientProvider,
-	useQuery,
 } from "@fcalell/plugin-api/tanstack-query";
 import type { Procedure } from "@fcalell/plugin-api/types";
 import { Gate } from "@fcalell/plugin-react-ui/components/gate";
-import { ItemHeader } from "@fcalell/plugin-react-ui/components/item-header";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
-import { QueryBoundary } from "@fcalell/plugin-react-ui/components/query-boundary";
 import { Shell } from "@fcalell/plugin-react-ui/components/shell";
 import { bindRouter } from "@fcalell/plugin-react-ui/lib/navigate";
 import { bindNotFound } from "@fcalell/plugin-react-ui/lib/not-found";
@@ -164,30 +161,22 @@ function RecordPlace({ answer }: { answer: () => Response }) {
 	return (
 		<QueryClientProvider client={queries}>
 			<Place>
-				<Pane title="Record">
-					<RecordBody orpc={orpc} />
-				</Pane>
+				<RecordPane orpc={orpc} />
 			</Place>
 		</QueryClientProvider>
 	);
 }
 
-function RecordBody({
+function RecordPane({
 	orpc,
 }: {
 	orpc: ReturnType<typeof createApiQueryUtils<Api>>;
 }) {
-	const record = useQuery(
-		orpc.record.get.queryOptions({ input: { id: "zzz" } }),
-	);
+	const record = orpc.record.get.read({ id: "zzz" });
 	return (
-		<QueryBoundary
-			query={record}
-			sentence="The record did not load."
-			loading={<ItemHeader loading />}
-		>
-			{(data) => <p>{data.name}</p>}
-		</QueryBoundary>
+		<Pane title="Record" read={record} failed="The record did not load.">
+			<p>The record.</p>
+		</Pane>
 	);
 }
 

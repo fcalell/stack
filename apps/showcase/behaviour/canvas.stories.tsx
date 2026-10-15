@@ -23,6 +23,7 @@ import {
 	WORKFLOW,
 	WORKFLOW_STAGE,
 } from "@fcalell/plugin-react-ui/showcase/frames/canvas";
+import { waiting as slow } from "@fcalell/plugin-react-ui/showcase/waiting";
 import { pathOrder } from "@fcalell/ui-core/canvas";
 import type { CanvasNode, CanvasPoint } from "@fcalell/ui-core/descriptors";
 import { SIZE_PX, WIDTH_VALUE } from "@fcalell/ui-core/tokens";
@@ -1225,8 +1226,8 @@ export const StateKeepsTheLayout: StoryObj = {
 };
 
 // A waiting canvas stands the loaded one's ground and grid with three
-// node-shaped cards where the loaded chain opens, and is busy and inert: no
-// button, no zoom stack, no act, however the page handlers read.
+// painted node cards where the loaded chain opens, and is inert: no button, no
+// zoom stack, no act, however the page handlers read.
 function Waiting() {
 	return (
 		<>
@@ -1243,8 +1244,7 @@ function Waiting() {
 			<div className={STAGE} data-testid="waiting">
 				<Canvas
 					label="Waiting"
-					nodes={WORKFLOW.nodes}
-					loading
+					nodes={slow.at(() => WORKFLOW.nodes)}
 					onSelect={fn()}
 					onMove={fn()}
 					onConnect={fn()}
@@ -1286,7 +1286,7 @@ async function boxes(canvas: ReturnType<typeof within>) {
 		waiting,
 		loaded,
 		cards,
-		skeleton: cards.map((card) => inPane(waiting, rect(card))),
+		painted: cards.map((card) => inPane(waiting, rect(card))),
 		nodes: WORKFLOW.nodes
 			.slice(0, 3)
 			.map((one) =>
@@ -1305,18 +1305,18 @@ async function boxes(canvas: ReturnType<typeof within>) {
 export const Loading: StoryObj = {
 	render: () => <Waiting />,
 	play: async ({ canvas }) => {
-		const { waiting, loaded, cards, skeleton, nodes } = await boxes(canvas);
-		await expect(waiting).toHaveAttribute("aria-busy", "true");
+		const { waiting, loaded, cards, painted, nodes } = await boxes(canvas);
+		await expect(waiting).toHaveAttribute("inert");
 		await expect(buttonsOf(waiting)).toHaveLength(0);
 		await expect(waiting.querySelector("[data-grid]")).not.toBeNull();
 		await expect(getComputedStyle(waiting).backgroundColor).toBe(
 			getComputedStyle(loaded).backgroundColor,
 		);
 		await expect(cards).toHaveLength(3);
-		for (const [index, card] of skeleton.entries()) {
+		for (const [index, card] of painted.entries()) {
 			const here = nodes[index];
 			const after = nodes[index + 1];
-			const next = skeleton[index + 1];
+			const next = painted[index + 1];
 			await expect(card.height).toBeCloseTo(here?.height ?? 0, 1);
 			await expect(card.width).toBeCloseTo(here?.width ?? 0, 0);
 			if (next && here && after)
@@ -1329,7 +1329,7 @@ export const Loading: StoryObj = {
 	},
 };
 
-// The arrival moves nothing: each skeleton card's box stands within a pixel of
+// The arrival moves nothing: each painted card's box stands within a pixel of
 // the loaded chain's node, at every width and in both modes.
 const arrives = (
 	width: number,
@@ -1355,11 +1355,11 @@ const arrives = (
 			},
 		},
 		play: async ({ canvas }) => {
-			const { waiting, skeleton, nodes } = await boxes(canvas);
-			await expect(waiting).toHaveAttribute("aria-busy", "true");
+			const { waiting, painted, nodes } = await boxes(canvas);
+			await expect(waiting).toHaveAttribute("inert");
 			await expect(buttonsOf(waiting)).toHaveLength(0);
-			await expect(skeleton).toHaveLength(3);
-			for (const [index, card] of skeleton.entries()) {
+			await expect(painted).toHaveLength(3);
+			for (const [index, card] of painted.entries()) {
 				const node = nodes[index];
 				for (const edge of ["left", "top", "width", "height"] as const)
 					await expect(Math.abs(card[edge] - (node?.[edge] ?? 0))).toBeLessThan(

@@ -1,23 +1,14 @@
-import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
-import { Input } from "@fcalell/plugin-react-ui/components/input";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
+import { readsAt } from "@fcalell/plugin-react-ui/showcase/waiting";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { useState } from "react";
 import { expect, waitFor } from "storybook/test";
 import { sectionOf } from "./support.ts";
 
-// A Section reads nothing of its body: its head is busy exactly while its
-// `loading` is set and its count is exactly its `count`; each part of the body
-// draws its own waiting form, a FormField a skeleton field with the real one
-// kept mounted, hidden.
-const noop = () => {};
-const PENDING = {
-	data: undefined,
-	isPending: true,
-	isError: false,
-	refetch: noop,
-};
+// A Section's head is busy exactly while the read it holds waits: a read as
+// its root says so, a selection of one does not, and a body's own read is
+// nothing of the head's. The count is the one it is given, or the length of an
+// array read once it lands, and never drawn while the body waits.
 const ITEMS = ["Notes", "Deploys", "Hosts", "Mail", "Docs"];
 const ROW = { key: (name: string) => name, title: (name: string) => name };
 
@@ -25,84 +16,42 @@ export default {
 	title: "Behaviour/Section loading",
 } satisfies Meta;
 
-// A pending List in the body makes no head busy and a list's total is no count:
-// the head is busy by `loading` alone and counts what it is given.
-export const HeadIsBusyAndCountedByItsProps: StoryObj = {
+const waits = readsAt("section-loading/waits");
+const ready = readsAt("section-loading/ready");
+
+export const HeadIsBusyAndCountedByItsRead: StoryObj = {
 	render: () => (
 		<div className="flex flex-col gap-sections w-sheet max-w-full">
-			<Section title="Pending list">
-				<Group
-					list={{
-						query: PENDING,
-						sentence: "Did not load.",
-						empty: { sentence: "None." },
-						row: ROW,
-					}}
-				/>
-			</Section>
 			<Section title="Counted" count={3}>
 				<Group list={{ items: ITEMS, row: ROW }} />
 			</Section>
 			<Section title="Uncounted">
 				<Group list={{ items: ITEMS, row: ROW }} />
 			</Section>
-			<Section title="Loading" count={3} loading>
-				<Group list={{ items: ITEMS, row: ROW }} />
+			<Section title="Waiting" count={3} read={waits.waiting}>
+				<Group list={{ items: waits.waiting, row: ROW }} />
+			</Section>
+			<Section title="Selection" read={waits.waiting.at((rows) => rows)}>
+				<Group list={{ items: waits.waiting, row: ROW }} />
+			</Section>
+			<Section title="Read" read={ready.ready}>
+				<Group list={{ items: ready.ready, row: ROW }} />
 			</Section>
 		</div>
 	),
 	play: async ({ canvas }) => {
 		const region = (name: string) => sectionOf(canvas, name);
-		await expect(region("Pending list")).not.toHaveAttribute("aria-busy");
 		await expect(region("Counted")).not.toHaveAttribute("aria-busy");
-		await expect(region("Loading")).toHaveAttribute("aria-busy", "true");
-		// The count is the prop, never the five rows; none is drawn while busy.
-		await expect(canvas.getByText("3")).toBeVisible();
-		await expect(canvas.queryByText("5")).toBeNull();
+		await expect(region("Waiting")).toHaveAttribute("aria-busy", "true");
+		// A selection of the read is no holder: the root says it is busy.
+		await expect(region("Selection")).not.toHaveAttribute("aria-busy");
+		// The count is the prop, never the rows; none is drawn while waiting.
 		const head = (name: string) => region(name).querySelector("h2");
+		await expect(head("Counted")).toHaveTextContent(/^Counted\s*3$/);
 		await expect(head("Uncounted")).toHaveTextContent(/^Uncounted$/);
-		await expect(head("Loading")).toHaveTextContent(/^Loading$/);
-	},
-};
-
-function Profile() {
-	const [loading, setLoading] = useState(false);
-	const [name, setName] = useState("Acme");
-	return (
-		<>
-			<button type="button" onClick={() => setLoading(!loading)}>
-				Toggle
-			</button>
-			<Section title="Profile" loading={loading}>
-				<FormField label="Workspace name">
-					<Input value={name} onChange={setName} />
-				</FormField>
-			</Section>
-		</>
-	);
-}
-
-// A FormField in a loading Section waits as a skeleton field of its own, the
-// real field mounted and hidden, so what was typed stands again when it loads.
-export const FieldWaitsAndKeepsItsText: StoryObj = {
-	render: () => <Profile />,
-	play: async ({ canvas, canvasElement, userEvent }) => {
-		const input = canvas.getByRole("textbox", { name: "Workspace name" });
-		await userEvent.type(input, " Inc");
-		await expect(input).toHaveValue("Acme Inc");
-		await userEvent.click(canvas.getByRole("button", { name: "Toggle" }));
-		const region = sectionOf(canvas, "Profile");
-		await expect(region).toHaveAttribute("aria-busy", "true");
-		await expect(input).not.toBeVisible();
-		// The waiting field is drawn once the read has lasted its delay.
-		await waitFor(() => {
-			const wait = canvasElement.querySelector("section div[aria-hidden]");
-			if (!wait) throw new Error("no skeleton field");
-			return expect(getComputedStyle(wait).visibility).not.toBe("hidden");
-		});
-		await userEvent.click(canvas.getByRole("button", { name: "Toggle" }));
-		await waitFor(() => expect(input).toBeVisible(), { timeout: 2000 });
-		await expect(input).toHaveValue("Acme Inc");
-		await expect(region).not.toHaveAttribute("aria-busy");
+		await expect(head("Waiting")).toHaveTextContent(/^Waiting$/);
+		// An array read counts its own length once it lands.
+		await waitFor(() => expect(head("Read")).toHaveTextContent(/^Read\s*3$/));
+		await expect(region("Read")).not.toHaveAttribute("aria-busy");
 	},
 };

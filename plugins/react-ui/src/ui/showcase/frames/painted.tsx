@@ -1,3 +1,6 @@
+import { Field } from "@base-ui/react/field";
+import { cn } from "@fcalell/ui-core/cn";
+import { text } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
 import type { ShowcaseFrame } from "../cells.ts";
 
@@ -19,5 +22,20 @@ export function beside(
 			{loaded}
 			{painted}
 		</div>
+	);
+}
+
+// A control under its label, as a FormField gives it one: the painted form of
+// a control keeps the label it will have, and a loaded one is named for the
+// accessibility run. The wrapper takes no more than its row has, so the
+// control truncates as it does beside its painted form.
+export function labelled(control: ReactNode) {
+	return (
+		<Field.Root className="flex flex-col min-w-0 max-w-full">
+			<Field.Label className={cn(text({ role: "body" }), "truncate")}>
+				Workspace
+			</Field.Label>
+			{control}
+		</Field.Root>
 	);
 }

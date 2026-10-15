@@ -7,7 +7,7 @@ import { Place } from "../../components/place/index.tsx";
 import { TextArea } from "../../components/text-area/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { waitingText } from "../waiting.ts";
-import { beside, isPaint } from "./painted.tsx";
+import { isPaint, labelled } from "./painted.tsx";
 import { Column } from "./place.tsx";
 
 const change = () => {};
@@ -33,11 +33,14 @@ const SOURCE = Array.from(
 // that never arrives.
 export function drawTextArea(frame: ShowcaseFrame) {
 	if (isPaint(frame))
-		return beside(
-			frame,
-			<TextArea value={SHORT} onChange={change} />,
-			<TextArea value={waitingText} onChange={change} />,
-		);
+		// Stacked, not side by side: a text area takes its column's width, which a
+		// wrapping row would leave to its content.
+		return frame.state === "rest" ? (
+			<div className="flex flex-col gap-sections">
+				{labelled(<TextArea value={SHORT} onChange={change} />)}
+				{labelled(<TextArea value={waitingText} onChange={change} />)}
+			</div>
+		) : undefined;
 	const name = frame.cell.name;
 	if (name === "FIELD_VALUE.kind.search") return undefined;
 	if (name === "FIELD_VALUE.kind.code")

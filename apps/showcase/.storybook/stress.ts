@@ -141,7 +141,8 @@ interface Slot {
 }
 
 // The text slots of `frames` that are drawn, each once by its place in its
-// component: none of zero size, none the system formats.
+// component: none of zero size, none the system formats, none a paint (its
+// filler is no string a user wrote).
 export function collect(frames: Element[]): Slot[] {
 	const seen = new Set<string>();
 	const slots: Slot[] = [];
@@ -150,7 +151,11 @@ export function collect(frames: Element[]): Slot[] {
 		for (let node = walker.nextNode(); node; node = walker.nextNode()) {
 			const text = node.nodeValue?.trim();
 			const parent = node.parentElement;
-			if (!text || !parent || parent.closest("script,style,svg,textarea"))
+			if (
+				!text ||
+				!parent ||
+				parent.closest("script,style,svg,textarea,[data-painted]")
+			)
 				continue;
 			if (system(parent, text, frame)) continue;
 			// An unseen copy that holds a room (a ghost) is a slot of its own.

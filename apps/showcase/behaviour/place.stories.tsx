@@ -1,3 +1,4 @@
+import { read, useQueryClient } from "@fcalell/plugin-api/tanstack-query";
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Input } from "@fcalell/plugin-react-ui/components/input";
 import { List } from "@fcalell/plugin-react-ui/components/list";
@@ -150,29 +151,34 @@ export const ListPaneHoldsTheListWidth: StoryObj = {
 	},
 };
 
-// The list loads and its rows arrive: the Panes keep their edges.
+// The list loads and its rows arrive: the Panes keep their edges. The list's
+// read never answers until a button lands its rows in the cache.
+let lists = 0;
 function Loads() {
-	const [rows, setRows] = useState<string[] | undefined>(undefined);
+	const queries = useQueryClient();
+	const [rows] = useState(() =>
+		read({
+			queryKey: ["place", "reviews", lists++],
+			queryFn: () => new Promise<readonly string[]>(() => {}),
+			staleTime: Number.POSITIVE_INFINITY,
+		}),
+	);
+	const land = (next: readonly string[]) =>
+		queries.setQueryData(rows.options.queryKey, next);
 	return (
 		<Page width={1440}>
 			<Place>
-				<Pane title="Reviews">
-					{rows ? (
-						<List items={rows} row={ROWS} />
-					) : (
-						<List items={[]} loading row={ROWS} />
-					)}
+				<Pane title="Reviews" read={rows}>
+					<List items={rows} row={ROWS} />
 				</Pane>
 				<Pane title="Review" back="/reviews">
 					<button
 						type="button"
-						onClick={() =>
-							setRows(["Review the deploy of the billing service"])
-						}
+						onClick={() => land(["Review the deploy of the billing service"])}
 					>
 						Load
 					</button>
-					<button type="button" onClick={() => setRows(NAMES)}>
+					<button type="button" onClick={() => land(NAMES)}>
 						Load short
 					</button>
 				</Pane>
@@ -194,10 +200,10 @@ export const ListPaneHoldsItsWidthWhileLoading: StoryObj = {
 		const loading = edges();
 		await expect(loading[0]).toBeCloseTo(width(canvasElement, "w-list"), 0);
 		await userEvent.click(canvas.getByRole("button", { name: "Load" }));
-		await expect(canvas.getByText(/Review the deploy of/)).toBeVisible();
+		await expect(await canvas.findByText(/Review the deploy of/)).toBeVisible();
 		await expect(edges()).toEqual(loading);
 		await userEvent.click(canvas.getByRole("button", { name: "Load short" }));
-		await expect(canvas.getByText("Ana Ruiz")).toBeVisible();
+		await expect(await canvas.findByText("Ana Ruiz")).toBeVisible();
 		await expect(edges()).toEqual(loading);
 	},
 };

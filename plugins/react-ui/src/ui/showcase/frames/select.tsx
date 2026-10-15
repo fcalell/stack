@@ -5,7 +5,7 @@ import { Select } from "../../components/select/index.tsx";
 import { PortalContainer } from "../../lib/portal.ts";
 import type { ShowcaseFrame } from "../cells.ts";
 import { waitingText } from "../waiting.ts";
-import { beside, isPaint } from "./painted.tsx";
+import { beside, isPaint, labelled } from "./painted.tsx";
 
 const change = () => {};
 
@@ -71,8 +71,12 @@ export function drawSelect(frame: ShowcaseFrame) {
 	if (isPaint(frame))
 		return beside(
 			frame,
-			<Select value="eu-central-1" onChange={change} options={REGIONS} />,
-			<Select value={waitingText} onChange={change} options={REGIONS} />,
+			labelled(
+				<Select value="eu-central-1" onChange={change} options={REGIONS} />,
+			),
+			labelled(
+				<Select value={waitingText} onChange={change} options={REGIONS} />,
+			),
 		);
 	const name = frame.cell.name;
 	const empty =

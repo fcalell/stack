@@ -1,35 +1,37 @@
+import { read } from "@fcalell/plugin-api/tanstack-query";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { expect, waitFor } from "storybook/test";
 
-// The settle: the switch from a waiting form to the loaded one is the page's
+// The settle: the switch from a painted form to the loaded one is the page's
 // one authored moment. Every switch of a frame runs in one view transition,
 // each Section moving from its old place to its new; under reduced motion it
-// snaps. The top Section waits as four rows and loads as two, so the Section
-// under it moves up; a copy of the page that never waits stands beside it as
-// the place it must end at.
+// snaps. The top Section paints four rows and loads two, so the Section under
+// it moves up; a copy of the page that never waits stands beside it as the
+// place it must end at.
 const ITEMS = ["Notes", "Deploys"];
 const ROW = { key: (name: string) => name, title: (name: string) => name };
 
+// Each moving page reads a query of its own, answered after `ms`.
+let pages = 0;
 function Page(props: { ms?: number }) {
-	const [pending, setPending] = useState(props.ms !== undefined);
-	useEffect(() => {
-		if (props.ms === undefined) return;
-		const timer = setTimeout(() => setPending(false), props.ms);
-		return () => clearTimeout(timer);
-	}, [props.ms]);
+	const [top] = useState(() =>
+		props.ms === undefined
+			? undefined
+			: read({
+					queryKey: ["settle", pages++],
+					queryFn: () =>
+						new Promise<readonly string[]>((done) =>
+							setTimeout(() => done(ITEMS), props.ms),
+						),
+				}),
+	);
 	return (
 		<div className="flex flex-col gap-sections w-sheet max-w-full">
-			<Section title="Top" loading={pending}>
-				<Group
-					list={{
-						items: pending ? undefined : ITEMS,
-						loading: pending,
-						row: ROW,
-					}}
-				/>
+			<Section title="Top" read={top}>
+				<Group list={{ items: top ?? ITEMS, row: ROW }} />
 			</Section>
 			<Section title="Below">
 				<Group list={{ items: ITEMS, row: ROW }} />
@@ -93,9 +95,9 @@ export default {
 	title: "Behaviour/Settle",
 } satisfies Meta;
 
-// A read of 600 ms draws its waiting form, then its loaded form arrives in
-// one view transition: the browser animates both Sections, and the lower one
-// ends where the page that never waited holds it.
+// A read of 600 ms paints its rows, then its loaded form arrives in one view
+// transition: the browser animates both Sections, and the lower one ends where
+// the page that never waited holds it.
 export const MovesInATransition: StoryObj = {
 	render: () => <Both ms={600} />,
 	play: async ({ canvas }) => {
@@ -103,7 +105,7 @@ export const MovesInATransition: StoryObj = {
 		try {
 			const moves = canvas.getByTestId("moves");
 			const still = canvas.getByTestId("still");
-			// Waiting, the lower Section stands under four rows.
+			// Painted, the lower Section stands under four rows.
 			await expect(offset(moves)).toBeGreaterThan(offset(still) + 20);
 			await waitFor(() => expect(watch.seen.started).toBe(1), {
 				timeout: 3000,
@@ -118,8 +120,9 @@ export const MovesInATransition: StoryObj = {
 	},
 };
 
-// A read that settles inside the delay draws no waiting form, yet its switch
-// goes through the same flip: one view transition, the page ending in place.
+// A read that settles inside the delay paints nothing a viewer sees, yet its
+// switch goes through the same flip: one view transition, the page ending in
+// place.
 export const FastReadFlipsToo: StoryObj = {
 	render: () => <Both ms={50} />,
 	play: async ({ canvas }) => {

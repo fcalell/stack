@@ -1,113 +1,73 @@
+import { read } from "@fcalell/plugin-api/tanstack-query";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
-import { QueryBoundary } from "@fcalell/plugin-react-ui/components/query-boundary";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { expect, waitFor } from "storybook/test";
 
-// A waiting form shows only for a read that lasts: nothing is drawn until the
-// read has run about 200 ms, and once drawn it stays about 500 ms.
-function Read(props: { ms: number }) {
-	const [pending, setPending] = useState(true);
-	useEffect(() => {
-		const timer = setTimeout(() => setPending(false), props.ms);
-		return () => clearTimeout(timer);
-	}, [props.ms]);
+// A paint shows only for a read that lasts: it stands in its place from the
+// first frame, but its fill fades in only after the wait delay, so a read the
+// server answers at once paints nothing a viewer sees.
+const ROW = { key: (name: string) => name, title: (name: string) => name };
+
+// A Section over a read of its own, answered after `ms`.
+let reads = 0;
+function Late(props: { ms: number }) {
+	const [people] = useState(() =>
+		read({
+			queryKey: ["waiting-late", reads++],
+			queryFn: () =>
+				new Promise<readonly string[]>((done) =>
+					setTimeout(() => done(["Ana Ruiz"]), props.ms),
+				),
+		}),
+	);
 	return (
-		<QueryBoundary
-			query={{
-				data: pending ? undefined : "Loaded",
-				isPending: pending,
-				isError: false,
-				refetch: () => {},
-			}}
-			sentence="Could not load"
-			loading={<div data-testid="waiting">Waiting</div>}
-		>
-			{(data) => <div data-testid="loaded">{data}</div>}
-		</QueryBoundary>
+		<Section title="People" read={people}>
+			<Group list={{ items: people, row: ROW }} />
+		</Section>
 	);
 }
 
-const drawn = (element: HTMLElement) =>
-	getComputedStyle(element).visibility !== "hidden";
+// How visible the most visible paint on the page is: 0 before the fade, 1
+// once it has run.
+const shown = (root: ParentNode) =>
+	Math.max(
+		0,
+		...[...root.querySelectorAll<HTMLElement>("[data-painted]")].map((paint) =>
+			Number(getComputedStyle(paint).opacity),
+		),
+	);
 
 export default {
 	title: "Behaviour/Waiting late",
 } satisfies Meta;
 
-// A read that settles at 50 ms never draws its waiting form.
+// A read that settles at 50 ms never shows its paint.
 export const Fast: StoryObj = {
-	render: () => <Read ms={50} />,
-	play: async ({ canvas }) => {
-		const seen: boolean[] = [];
-		const watch = setInterval(() => {
-			const form = canvas.queryByTestId("waiting");
-			seen.push(form !== null && drawn(form));
-		}, 10);
-		await canvas.findByTestId("loaded");
+	render: () => <Late ms={50} />,
+	play: async ({ canvas, canvasElement }) => {
+		const seen: number[] = [];
+		const watch = setInterval(() => seen.push(shown(canvasElement)), 10);
+		await canvas.findByText("Ana Ruiz");
 		await new Promise((done) => setTimeout(done, 700));
 		clearInterval(watch);
-		await expect(seen.some(Boolean)).toBe(false);
+		await expect(Math.max(...seen)).toBe(0);
 	},
 };
 
-// A read of 1 s draws its waiting form after the delay, not before.
+// A read of 1 s paints its rows at once, unseen, and fades them in after the
+// delay, not before.
 export const Slow: StoryObj = {
-	render: () => <Read ms={1000} />,
-	play: async ({ canvas }) => {
-		const form = await canvas.findByTestId("waiting");
-		await expect(drawn(form)).toBe(false);
-		await waitFor(() => expect(drawn(form)).toBe(true), { timeout: 600 });
-		await canvas.findByTestId("loaded", {}, { timeout: 3000 });
-	},
-};
-
-// A read that settles just after the delay holds its form for the minimum, so
-// it never blinks.
-export const Held: StoryObj = {
-	render: () => <Read ms={260} />,
-	play: async ({ canvas }) => {
-		const form = await canvas.findByTestId("waiting");
-		await waitFor(() => expect(drawn(form)).toBe(true), { timeout: 600 });
-		const shown = performance.now();
-		await canvas.findByTestId("loaded", {}, { timeout: 3000 });
-		await expect(performance.now() - shown).toBeGreaterThan(400);
-	},
-};
-
-function Own(props: { ms: number }) {
-	const [pending, setPending] = useState(true);
-	useEffect(() => {
-		const timer = setTimeout(() => setPending(false), props.ms);
-		return () => clearTimeout(timer);
-	}, [props.ms]);
-	return (
-		<Section title="Plan" loading={pending}>
-			<Group
-				loading={pending}
-				items={[{ key: "div0", row: <div data-testid="row">Row</div> }]}
-			/>
-		</Section>
-	);
-}
-
-// A Section's and a Group's own `loading` follows the same rule: a read that
-// settles at 50 ms leaves their waiting forms undrawn throughout.
-export const Own50: StoryObj = {
-	render: () => <Own ms={50} />,
-	play: async ({ canvas }) => {
-		const section = canvas
-			.getByRole("heading", { name: "Plan" })
-			.closest("section");
-		await expect(section).not.toBeNull();
-		const drawnWhileBusy: boolean[] = [];
-		const watch = setInterval(() => {
-			const group = section?.querySelector("[aria-busy=true]");
-			if (group instanceof HTMLElement) drawnWhileBusy.push(drawn(group));
-		}, 10);
-		await new Promise((done) => setTimeout(done, 800));
-		clearInterval(watch);
-		await expect(drawnWhileBusy.some(Boolean)).toBe(false);
+	render: () => <Late ms={1000} />,
+	play: async ({ canvas, canvasElement }) => {
+		await waitFor(() =>
+			expect(canvasElement.querySelector("[data-painted]")).not.toBeNull(),
+		);
+		await expect(shown(canvasElement)).toBe(0);
+		await waitFor(() => expect(shown(canvasElement)).toBeGreaterThan(0.99), {
+			timeout: 900,
+		});
+		await canvas.findByText("Ana Ruiz", {}, { timeout: 3000 });
 	},
 };

@@ -217,10 +217,13 @@ export function Pane({
 				painted={overflowAt.painted || frame.waits}
 			/>
 		) : null;
+	// A painted title is filler, not a heading: it stands as a paragraph of the
+	// heading's own look until the title lands.
+	const Title = name.painted ? "p" : "h1";
 	const heading = (
-		<h1 id={titleId} className={cn(text({ role: "title" }), TITLE)}>
+		<Title id={titleId} className={cn(text({ role: "title" }), TITLE)}>
 			{name.painted ? <Painted role="title" /> : partText(name.value)}
-		</h1>
+		</Title>
 	);
 	const named = name.painted ? undefined : titleId;
 	// The head is one tree on both densities, so crossing the density line

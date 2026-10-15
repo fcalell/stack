@@ -1,153 +1,18 @@
-import { List } from "@fcalell/plugin-react-ui/components/list";
 import { ListRow } from "@fcalell/plugin-react-ui/components/list-row";
-import type { RowStatus } from "@fcalell/ui-core/descriptors";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { useState } from "react";
-import { expect, userEvent, within } from "storybook/test";
+import { expect, within } from "storybook/test";
 
-// A row's status on its meta line: waiting for its own read at the loaded
-// row's height (so nothing under it moves when it answers), and its word
-// truncating where the line is out of room.
+// A row's status on its meta line: its word truncating where the line is out
+// of room, and staying whole at the line's end. A painted row's height is the
+// paint stories'.
 export default {
 	title: "Behaviour/ListRowStatus",
 } satisfies Meta;
 
 type Play = NonNullable<StoryObj["play"]>;
 
-const top = (element: Element) => element.getBoundingClientRect().top;
-const height = (element: Element) => element.getBoundingClientRect().height;
 const clipped = (element: HTMLElement) =>
 	element.scrollWidth > element.clientWidth;
-
-interface Section {
-	id: string;
-	title: string;
-	status?: string;
-}
-
-const SECTIONS: Section[] = [
-	{ id: "status", title: "Status", status: "Healthy" },
-	{ id: "agents", title: "Agents", status: "2 running" },
-	{ id: "memory", title: "Memory" },
-];
-
-// A known row whose status read answers later: `answered` is the read.
-function Index(props: { answered: boolean; loading: boolean }) {
-	return (
-		<List
-			items={SECTIONS}
-			loading={props.loading}
-			row={{
-				key: (section) => section.id,
-				title: (section) => section.title,
-				trailing: (section) => ({ value: section.id.length.toString() }),
-				status: (section): RowStatus | undefined => {
-					if (section.status === undefined) return undefined;
-					if (section.id === "agents" && !props.answered)
-						return { loading: true };
-					return { state: "done", label: section.status };
-				},
-				href: (section) => `#${section.id}`,
-			}}
-		/>
-	);
-}
-
-function Reads(props: { loading: boolean }) {
-	const [answered, setAnswered] = useState(false);
-	return (
-		<div className="flex flex-col gap-sections">
-			<button type="button" onClick={() => setAnswered(true)}>
-				Answer
-			</button>
-			{[390, 440].map((width) => (
-				<div
-					key={width}
-					data-testid="column"
-					style={{ width }}
-					className="max-w-full"
-				>
-					<Index answered={answered} loading={props.loading} />
-				</div>
-			))}
-		</div>
-	);
-}
-
-// The waiting row stands as tall as its answered self, its bar hidden from the
-// tree and drawing no word, and the rows under it do not move; a row with no
-// status stays a line shorter than one with it.
-const waits: Play = async ({ canvas }) => {
-	const columns = canvas.getAllByTestId("column");
-	const before = columns.map((column) => {
-		const rows = within(column).getAllByRole("link");
-		return rows.map((link) => {
-			const row = link.parentElement;
-			if (!row) throw new Error("a row has no box");
-			return { top: top(row), height: height(row) };
-		});
-	});
-	// The waiting bar starts where the arriving word does and is a short label
-	// wide at most.
-	const barLeft = columns.map((column) => {
-		const bar = within(column)
-			.getByRole("link", { name: "Agents" })
-			.parentElement?.querySelector(".h-lh .bg-skeleton");
-		if (!bar) throw new Error("the status is not waiting");
-		const probe = document.createElement("div");
-		probe.className = "w-measure-short";
-		column.append(probe);
-		const measure = probe.getBoundingClientRect().width;
-		probe.remove();
-		expect(bar.getBoundingClientRect().width).toBeLessThanOrEqual(
-			measure + 0.5,
-		);
-		return bar.getBoundingClientRect().left;
-	});
-	for (const [at, column] of columns.entries()) {
-		const bars = (name: string) =>
-			within(column)
-				.getByRole("link", { name })
-				.parentElement?.querySelectorAll(".bg-skeleton").length ?? 0;
-		await expect(bars("Agents")).toBe(bars("Status") + 1);
-		await expect(within(column).queryByText("2 running")).toBeNull();
-		const rows = before[at];
-		if (!rows) throw new Error("no rows");
-		const [status, , memory] = rows;
-		if (!status || !memory) throw new Error("a row is missing");
-		await expect(rows[1]?.height).toBe(status.height);
-		await expect(memory.height).toBeLessThan(status.height);
-	}
-	await userEvent.click(canvas.getByRole("button", { name: "Answer" }));
-	for (const [at, column] of columns.entries()) {
-		await expect(within(column).getByText("2 running")).toBeVisible();
-		console.log(
-			`bar left ${barLeft[at]}, word left ${within(column).getByText("2 running").getBoundingClientRect().left}`,
-		);
-		await expect(
-			within(column).getByText("2 running").getBoundingClientRect().left,
-		).toBeCloseTo(barLeft[at] ?? Number.NaN, 1);
-		const rows = within(column).getAllByRole("link");
-		for (const [index, link] of rows.entries()) {
-			const row = link.parentElement;
-			const was = before[at]?.[index];
-			if (!row || !was) throw new Error("a row has no box");
-			await expect(top(row)).toBe(was.top);
-			await expect(height(row)).toBe(was.height);
-		}
-	}
-};
-
-export const StatusWaits: StoryObj = {
-	render: () => <Reads loading={false} />,
-	play: waits,
-};
-
-// A List given its items while it loads draws the same.
-export const StatusWaitsKnown: StoryObj = {
-	render: () => <Reads loading />,
-	play: waits,
-};
 
 // The same scenarios in a phone at the touch density.
 function touch(story: StoryObj, width = 390): StoryObj {
@@ -171,9 +36,6 @@ function touch(story: StoryObj, width = 390): StoryObj {
 		},
 	};
 }
-
-export const StatusWaitsTouch = touch(StatusWaits);
-export const StatusWaitsKnownTouch = touch(StatusWaitsKnown);
 
 const REMOTE = "/tmp/fx9/remotes/sailwind-service";
 const LONG = "Fetched 5 minutes ago";

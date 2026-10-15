@@ -52,12 +52,12 @@ const FLOOR: Record<string, number> = {
 	Picker: 50,
 	Prose: 8,
 	Rules: 6,
-	Section: 40,
+	Section: 7,
 	Select: 60,
 	Sheet: 23,
 	StepCount: 7,
-	Table: 10,
-	Thread: 14,
+	Table: 4,
+	Thread: 4,
 	Toast: 2,
 };
 

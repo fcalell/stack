@@ -3,7 +3,7 @@ import { text } from "@fcalell/ui-core/variants";
 import { InputBase } from "../../components/input/base.tsx";
 import { Input, type InputKind } from "../../components/input/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
-import { beside, isPaint } from "./painted.tsx";
+import { beside, isPaint, labelled } from "./painted.tsx";
 
 const change = () => {};
 
@@ -33,8 +33,8 @@ export function drawInput(frame: ShowcaseFrame) {
 	if (isPaint(frame))
 		return beside(
 			frame,
-			<Input value={VALUES.text} onChange={change} />,
-			<InputBase value={VALUES.text} onChange={change} painted />,
+			labelled(<Input value={VALUES.text} onChange={change} />),
+			labelled(<InputBase value={VALUES.text} onChange={change} painted />),
 		);
 	const name = frame.cell.name;
 	const unit = name === "FIELD.trailing.none";
