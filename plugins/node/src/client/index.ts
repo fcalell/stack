@@ -1,4 +1,7 @@
+import type { Reach } from "@fcalell/plugin-api/acts";
+import { type Read, read } from "@fcalell/plugin-api/read";
 import type { z } from "zod";
+import { PAUSE_AFTER } from "../live/index.ts";
 import type { ChannelDef, ClientFrame, MessageSchemas } from "../ws/index.ts";
 import { serverFrameSchema } from "../ws/index.ts";
 
@@ -16,6 +19,14 @@ export interface Subscription<C extends MessageSchemas> {
 	unsubscribe(): void;
 }
 
+// The socket as a read of its own: connecting, open, or lost (down for longer
+// than `PAUSE_AFTER`). `answered` is when the server last answered, as an ISO
+// time, once it has.
+export interface Connection {
+	state: "connecting" | "open" | "lost";
+	answered: string | undefined;
+}
+
 export interface WsClient {
 	subscribe<S extends MessageSchemas, C extends MessageSchemas>(
 		def: ChannelDef<S, C>,
@@ -27,6 +38,11 @@ export interface WsClient {
 	// socket.
 	reconnect(): void;
 	close(): void;
+	// The socket's status as a read in the query cache. It never opens the
+	// socket: it only watches it. Its `meta.reach` is what the mutation guard
+	// asks (`guardReach`): a lost connection refuses acts with the app's
+	// `unreachable` sentence.
+	readonly connection: Read<Connection>;
 }
 
 interface LiveSubscription {
@@ -56,7 +72,14 @@ function defaultUrl(): string {
 	return `${loc.protocol === "https:" ? "wss" : "ws"}://${loc.host}/ws`;
 }
 
-export function createWsClient(options: { url?: string } = {}): WsClient {
+export function createWsClient(
+	options: {
+		url?: string;
+		// The sentence an act is refused with while the connection is lost,
+		// from when the server last answered.
+		unreachable?: (answered: string | undefined) => string;
+	} = {},
+): WsClient {
 	const url = options.url ?? defaultUrl();
 
 	const subscriptions = new Set<LiveSubscription>();
@@ -64,8 +87,18 @@ export function createWsClient(options: { url?: string } = {}): WsClient {
 	let closed = false;
 	let attempt = 0;
 	let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+	// What the connection read watches: the socket's last status (none before
+	// it first connects) and when it last answered.
+	let current: WsStatus | undefined;
+	let answered: string | undefined;
+	const watchers = new Set<(status: WsStatus) => void>();
 
 	function notify(status: WsStatus): void {
+		if (current === "open" && status !== "open") {
+			answered = new Date().toISOString();
+		}
+		current = status;
+		for (const watcher of watchers) watcher(status);
 		for (const sub of subscriptions) {
 			sub.handlers.onStatus?.(status);
 		}
@@ -142,7 +175,57 @@ export function createWsClient(options: { url?: string } = {}): WsClient {
 		}, delay);
 	}
 
+	const reach: Reach = (data) =>
+		(data as Connection).state === "lost"
+			? { sentence: options.unreachable?.((data as Connection).answered) }
+			: undefined;
+
+	const connection = read<Connection>(
+		{
+			queryKey: ["ws", "connection"],
+			queryFn: ({ client, signal }) =>
+				new Promise<Connection>((settle) => {
+					const key = ["ws", "connection"];
+					let timer: ReturnType<typeof setTimeout> | undefined;
+					const write = (state: Connection["state"]) =>
+						client.setQueryData<Connection>(key, { state, answered });
+					// Lost stays until the socket opens: a retry's "connecting" is
+					// not an answer.
+					const watch = (status: WsStatus) => {
+						if (status === "open") {
+							clearTimeout(timer);
+							timer = undefined;
+							write("open");
+							return;
+						}
+						if (client.getQueryData<Connection>(key)?.state !== "lost") {
+							write("connecting");
+						}
+						timer ??= setTimeout(() => write("lost"), PAUSE_AFTER);
+					};
+					// Before the socket first connects nothing is down yet.
+					if (current === undefined) write("connecting");
+					else watch(current);
+					watchers.add(watch);
+					signal.addEventListener("abort", () => {
+						clearTimeout(timer);
+						watchers.delete(watch);
+						settle(client.getQueryData<Connection>(key) as Connection);
+					});
+				}),
+			staleTime: Number.POSITIVE_INFINITY,
+			retry: false,
+			// Always, so a connection first mounted offline still records `lost`;
+			// kept forever, so the guard always finds it.
+			networkMode: "always",
+			gcTime: Number.POSITIVE_INFINITY,
+			meta: { reach },
+		},
+		{ kind: "stream" },
+	);
+
 	return {
+		connection,
 		subscribe(def, handlers) {
 			const live: LiveSubscription = {
 				def: def as ChannelDef,

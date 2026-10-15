@@ -572,8 +572,7 @@ foot line and submit never give: the submit stays inside the foot. A blocked
 same line, in the field error’s cell and ink, the act ready again and no `Banner`: the line clears
 on the next press, and a blocked `submit`’s reason stands before it. The modal `Sheet` draws it in
 the foot bar’s line on the desktop and under the head’s submit on touch. The sheet holds the run of
-its head submit, its foot bar and its form’s bar, so it cannot be dismissed while one pends (unless
-the act waits for a connection); its `failed` prop is the body’s sentence when its `read` fails, as
+its head submit, its foot bar and its form’s bar, so it cannot be dismissed while one pends; its `failed` prop is the body’s sentence when its `read` fails, as
 on every frame. On touch that submit stands in the title's row and the title wraps whole inside three fifths of it
 (two lines at 25 characters); a submit that does not fit beside that column drops whole, at its 44 px, to a second head line at the
 row's end. Pass
@@ -637,9 +636,10 @@ more follows. The act renderer holds the run, so the app passes no `loading` and
   except 401, 403, 404 and 429), then the act's `failed`, then "That didn't go through."
   (`words.actFailed`). Give each act that writes a `failed`, and `.catch` nothing: a handler that
   catches a rejection to toast it draws it twice;
-- an act pressed offline runs: the mutation pauses and goes out on reconnect, and the host's line
-  says "Waiting for a connection." with nothing else held. Never `blocked` an act for the
-  connection.
+- an act pressed offline, or while the app's connection read says the server is out of reach, is
+  refused at the press: it rejects with `Unreached`, nothing is sent and nothing queues for later,
+  and the host's line says the app's sentence, else "No connection.", with no Retry and nothing
+  else held.
 
 A control that saves as the viewer changes it returns the save's promise from `onChange` (`Switch`,
 `Checkbox`, `Select`, `SegmentedControl`, `Picker`, `OptionList`, a `DefinitionRow` `switch` or `pick`,

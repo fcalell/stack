@@ -4,6 +4,7 @@ import {
 	type MutationCache,
 	onlineManager,
 	type QueryCache,
+	type QueryClient,
 } from "@tanstack/react-query";
 import { dev, type Read } from "./read.ts";
 
@@ -195,15 +196,35 @@ export function holdSave(
 	);
 }
 
-// The connection, as a store for `useSyncExternalStore`: subscribed only while
-// something pends, true while that is so and the client is offline.
-export function pausedStore(pending: boolean): {
-	subscribe: (notify: () => void) => () => void;
-	snapshot: () => boolean;
-} {
-	return {
-		subscribe: (notify) =>
-			pending ? onlineManager.subscribe(() => notify()) : () => {},
-		snapshot: () => pending && !onlineManager.isOnline(),
-	};
+// What a read's `meta.reach` answers about its value: the server is out of
+// reach, with the app's own sentence for it when it has one.
+export type Reach = (
+	data: unknown,
+) => { sentence: string | undefined } | undefined;
+
+// An act refused before it was sent because the server is out of reach.
+// `sentence` is the app's wording for it; none means the generic "No
+// connection." of the host.
+export class Unreached extends Error {
+	readonly sentence: string | undefined;
+	constructor(sentence?: string) {
+		super(sentence ?? "No connection.");
+		this.name = "Unreached";
+		this.sentence = sentence;
+	}
+}
+
+// The mutation cache's `onMutate`: nothing queues for a connection that is not
+// there. While the browser is offline, or a cached read's `meta.reach` says
+// the server is out (a socket lost), the mutation fails before any fetch with
+// `Unreached`, so it never pauses and never fires later. `createQueryClient`
+// runs it; a caller-supplied `mutationCache` must call it too.
+export function guardReach(client: QueryClient): void {
+	if (!onlineManager.isOnline()) throw new Unreached();
+	for (const query of client.getQueryCache().getAll()) {
+		const reach = query.meta?.reach as Reach | undefined;
+		if (reach === undefined || query.state.data === undefined) continue;
+		const out = reach(query.state.data);
+		if (out) throw new Unreached(out.sentence);
+	}
 }

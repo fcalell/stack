@@ -9,10 +9,11 @@ import {
 } from "@fcalell/plugin-api/ability-client";
 import {
 	drew,
+	guardReach,
 	heldAct,
 	holdSave,
 	isThenable,
-	pausedStore,
+	type Reach,
 	type RunState,
 	startRun,
 	watchActs,
@@ -76,7 +77,6 @@ import {
 	useMemo,
 	useRef,
 	useState,
-	useSyncExternalStore,
 } from "react";
 
 export type { PackedRulesLike } from "@fcalell/plugin-api/ability-client";
@@ -135,6 +135,9 @@ declare module "@tanstack/react-query" {
 			// How much longer a first load's data waits, set once on the client's
 			// default query meta by `QueryProvider`.
 			hold?: (elapsed: number) => number;
+			// Says from the read's value whether the server is out of reach
+			// (`guardReach` in `@fcalell/plugin-api/acts`).
+			reach?: Reach;
 		} & Record<string, unknown>;
 	}
 }
@@ -152,12 +155,15 @@ const NATIVE_DEFAULTS: QueryClientConfig = {
 };
 
 // Auto-invalidate on every mutation success unless the caller supplied its
-// own `mutationCache` (they own invalidation then) or the mutation opted out
-// via `meta: { skipAutoInvalidation: true }`.
+// own `mutationCache` (they own invalidation then, and call `guardReach` in
+// its `onMutate`) or the mutation opted out via
+// `meta: { skipAutoInvalidation: true }`. Every mutation first passes the
+// reach guard: nothing queues for a connection that is not there.
 function createAutoInvalidationMutationCache(
 	getQueryClient: () => QueryClient,
 ): MutationCache {
 	return new MutationCache({
+		onMutate: () => guardReach(getQueryClient()),
 		onSuccess: (_data, _variables, _onMutateResult, mutation) => {
 			if (mutation.meta?.skipAutoInvalidation) return;
 			handleMutationSuccess(getQueryClient(), mutation.options.mutationKey);
@@ -455,8 +461,6 @@ export function useDraft<T>(
 
 export interface Run<K> {
 	pending: K | undefined;
-	// Pending while the client is offline: the mutation waits for the connection.
-	paused: boolean;
 	// The newest run's rejection, until the next run.
 	failure: { key: K; error: unknown } | undefined;
 	run: (key: K, onAct: () => unknown) => void;
@@ -467,16 +471,8 @@ export interface Run<K> {
 export function useRun<K = true>(): Run<K> {
 	const [state, setState] = useState<RunState<K>>({});
 	const latest = useRef(0);
-	const pending = state.pending !== undefined;
-	const store = useMemo(() => pausedStore(pending), [pending]);
-	const paused = useSyncExternalStore(
-		store.subscribe,
-		store.snapshot,
-		store.snapshot,
-	);
 	return {
 		pending: state.pending,
-		paused,
 		failure: state.failure,
 		run: (key, onAct) => {
 			const seq = ++latest.current;

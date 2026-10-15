@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { onlineManager } from "@tanstack/react-query";
-import { pausedStore, type RunState, startRun } from "../src/acts.ts";
+import { type RunState, startRun } from "../src/acts.ts";
 
 const tick = () => new Promise<void>((r) => setTimeout(r, 5));
 
@@ -71,29 +70,4 @@ test("an act that returns no promise is done at once; a sync throw rethrows", ()
 		/sync/,
 	);
 	assert.deepEqual(r.last, {});
-});
-
-test("TanStack: onlineManager says offline, and tells its subscribers", () => {
-	const store = pausedStore(true);
-	let told = 0;
-	const stop = store.subscribe(() => told++);
-	assert.equal(store.snapshot(), false);
-	onlineManager.setOnline(false);
-	try {
-		assert.equal(onlineManager.isOnline(), false);
-		assert.equal(store.snapshot(), true);
-		assert.equal(told, 1);
-		// Not pending: never paused, never subscribed.
-		const idle = pausedStore(false);
-		let idleTold = 0;
-		idle.subscribe(() => idleTold++)();
-		assert.equal(idle.snapshot(), false);
-		onlineManager.setOnline(true);
-		assert.equal(store.snapshot(), false);
-		assert.equal(told, 2);
-		assert.equal(idleTold, 0);
-	} finally {
-		stop();
-		onlineManager.setOnline(true);
-	}
 });

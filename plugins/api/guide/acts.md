@@ -19,8 +19,13 @@ const add = {
   other than 401, 403, 404 and 429 whose message is not the code's stock text
   (`new ApiError("BAD_REQUEST", { message: "That name is taken" })` reads "That name is taken.");
   anything else is `undefined`.
-- A press offline is not blocked: TanStack pauses the mutation and runs it on reconnect, and
-  `useRun().paused` says it is pending while the client is offline.
+- Nothing queues for a connection that is not there. `createQueryClient`'s mutation cache runs
+  `guardReach` before every mutation: while `onlineManager` is offline, or a cached read's
+  `meta.reach` says the server is out of reach (`ws.connection` from
+  `@fcalell/plugin-node/client`), the mutation rejects with `Unreached` before any fetch, so
+  it never pauses and never fires on reconnect. The host draws `error.sentence` (the app's) or
+  "No connection.". A `mutationCache` you supply yourself must call `guardReach(client)` in its
+  `onMutate`.
 - Invalidation is not awaited, so what the act changed shows through the reads it refetches (their
   busy mark); there is no done mark.
 
@@ -31,7 +36,7 @@ a handler that catches a failure itself (`.catch(setError)` on the call, or the 
 and the check stays quiet.
 
 A host or control of your own holds a run with `useRun<K>()`: `run(key, onAct)` calls `onAct`, and
-`pending` (the key), `paused` and `failure` (`{ key, error }`, kept until the next run) follow its
+`pending` (the key) and `failure` (`{ key, error }`, kept until the next run) follow its
 promise, the newest run counting alone.
 
 ## A value that saves as it changes

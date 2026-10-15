@@ -1,7 +1,16 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { guardReach, Unreached } from "@fcalell/plugin-api/acts";
+import {
+	MutationCache,
+	MutationObserver,
+	onlineManager,
+	QueryClient,
+	QueryObserver,
+} from "@tanstack/react-query";
 import { z } from "zod";
 import { createWsClient } from "../src/client/index.ts";
+import { PAUSE_AFTER } from "../src/live/index.ts";
 import { defineChannel } from "../src/ws/index.ts";
 
 const inbox = defineChannel("inbox", {
@@ -134,6 +143,156 @@ test("a client opens no socket until its first subscribe or reconnect, and a sta
 		assert.equal(FakeSocket.last, opened, "the subscribe shares that socket");
 		lazy.close();
 	} finally {
+		globalThis.WebSocket = real;
+	}
+});
+
+const lastSocket = () => FakeSocket.last;
+const resetSocket = () => {
+	FakeSocket.last = undefined;
+};
+
+// The connection read and the guard that asks it, on a client built the way
+// `createQueryClient` builds its mutation cache.
+function guarded() {
+	const client: QueryClient = new QueryClient({
+		mutationCache: new MutationCache({ onMutate: () => guardReach(client) }),
+	});
+	let sent = 0;
+	const send = () =>
+		new MutationObserver(client, {
+			mutationFn: async () => {
+				sent += 1;
+			},
+		}).mutate();
+	return { client, send, sent: () => sent };
+}
+
+test("offline, an act rejects with Unreached, queues nothing, and going online sends nothing", async () => {
+	const { client, send, sent } = guarded();
+	onlineManager.setOnline(false);
+	try {
+		await assert.rejects(send(), (error) => {
+			assert.ok(error instanceof Unreached);
+			assert.equal(error.sentence, undefined);
+			return true;
+		});
+		assert.equal(
+			client
+				.getMutationCache()
+				.getAll()
+				.filter((m) => m.state.isPaused).length,
+			0,
+		);
+		onlineManager.setOnline(true);
+		await new Promise((r) => setTimeout(r, 5));
+		assert.equal(sent(), 0);
+		await send();
+		assert.equal(sent(), 1);
+	} finally {
+		onlineManager.setOnline(true);
+	}
+});
+
+test("with the connection lost, an act is refused with the app's sentence", async (t) => {
+	t.mock.timers.enable({ apis: ["setTimeout"] });
+	const real = globalThis.WebSocket;
+	globalThis.WebSocket = FakeSocket as unknown as typeof WebSocket;
+	resetSocket();
+	try {
+		const ws = createWsClient({
+			url: "ws://test/ws",
+			unreachable: (answered) =>
+				`Not answering since ${answered ? "a while" : "ever"}.`,
+		});
+		const { client, send, sent } = guarded();
+		const watcher = new QueryObserver(client, ws.connection.options);
+		const stop = watcher.subscribe(() => {});
+		// The read watches the socket and never opens it.
+		assert.equal(lastSocket(), undefined);
+		assert.deepEqual(client.getQueryData(["ws", "connection"]), {
+			state: "connecting",
+			answered: undefined,
+		});
+		ws.subscribe(inbox, { onMessage: {} });
+		const socket = lastSocket() as FakeSocket;
+		socket.emit("open");
+		assert.equal(
+			(client.getQueryData(["ws", "connection"]) as { state: string }).state,
+			"open",
+		);
+		await send();
+		assert.equal(sent(), 1);
+
+		socket.readyState = 3;
+		socket.emit("close");
+		t.mock.timers.tick(PAUSE_AFTER - 1);
+		assert.equal(
+			(client.getQueryData(["ws", "connection"]) as { state: string }).state,
+			"connecting",
+		);
+		await send();
+		t.mock.timers.tick(1);
+		const lost = client.getQueryData(["ws", "connection"]) as {
+			state: string;
+			answered: string;
+		};
+		assert.equal(lost.state, "lost");
+		await assert.rejects(send(), (error) => {
+			assert.ok(error instanceof Unreached);
+			assert.equal(error.sentence, "Not answering since a while.");
+			return true;
+		});
+		assert.equal(sent(), 2);
+
+		// Answering again lifts the refusal.
+		t.mock.timers.tick(5000);
+		lastSocket()?.emit("open");
+		await send();
+		assert.equal(sent(), 3);
+		stop();
+		ws.close();
+	} finally {
+		globalThis.WebSocket = real;
+		resetSocket();
+	}
+});
+
+test("the connection read is kept forever, answers when mounted offline, and opens no socket", async (t) => {
+	t.mock.timers.enable({ apis: ["setTimeout"] });
+	const real = globalThis.WebSocket;
+	globalThis.WebSocket = FakeSocket as unknown as typeof WebSocket;
+	resetSocket();
+	onlineManager.setOnline(false);
+	try {
+		const ws = createWsClient({ url: "ws://test/ws" });
+		const { options } = ws.connection;
+		assert.equal(options.networkMode, "always");
+		assert.equal(options.gcTime, Number.POSITIVE_INFINITY);
+		assert.equal(typeof options.meta?.reach, "function");
+		const client = new QueryClient();
+		const stop = new QueryObserver(client, options).subscribe(() => {});
+		assert.equal(lastSocket(), undefined);
+		// The query ran although the client is offline.
+		assert.equal(
+			(client.getQueryData(["ws", "connection"]) as { state: string }).state,
+			"connecting",
+		);
+		stop();
+		// Mounted after the socket went down, offline, it records `lost`.
+		ws.reconnect();
+		lastSocket()?.emit("close");
+		const late = new QueryClient();
+		const stopLate = new QueryObserver(late, options).subscribe(() => {});
+		t.mock.timers.tick(PAUSE_AFTER);
+		assert.equal(
+			(late.getQueryData(["ws", "connection"]) as { state: string }).state,
+			"lost",
+		);
+		stopLate();
+		ws.close();
+	} finally {
+		onlineManager.setOnline(true);
 		globalThis.WebSocket = real;
 	}
 });

@@ -48,7 +48,13 @@ read. The last one leaving ends it, and the value stays cached for the next.
 
 ## The connection
 
-There is no connection read. A socket down for more than two seconds (`PAUSE_AFTER`) pauses
+`ws.connection`, on the client `createWsClient` returns, is a read of the socket's own status:
+`{ state: "connecting" | "open" | "lost", answered }`, where `answered` is when the server last
+answered (an ISO time) and `lost` comes once the socket has been down for `PAUSE_AFTER`. It
+only watches the socket and never opens it, and it stays in the query cache, so a banner
+selects it like any read. `createWsClient({ unreachable })` takes the sentence an act is refused
+with while the connection is lost, from `answered`; without it the refusal reads "No
+connection.". A socket down for more than two seconds (`PAUSE_AFTER`) pauses
 every channel read, and each frame holding one draws "Waiting for a connection" in its head;
 the socket opening again resumes them, and the server's fresh snapshot replaces the value.
 A shorter break says nothing.

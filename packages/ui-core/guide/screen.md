@@ -90,7 +90,7 @@ is the server's own refusal, then the act's `failed`, then "That didn't go throu
 that writes a `failed` sentence and catch nothing. A control that saves as the viewer changes it
 (`Switch`, `Select`, `Picker`, a `DefinitionRow` `switch` or `pick`, a field's `onCommit`) returns the
 save's promise: it holds the viewer's value while the latest save pends and puts it back, with the
-reason, on a refusal. Offline blocks no act: a press waits for the connection and its host says so.
+reason, on a refusal. An act pressed offline is refused at the press, and its host says "No connection." (or the app's sentence for a lost socket) with nothing queued.
 
 **Check:** each state is reachable by a route, a fixture or a control, written down; busy, stale, paused,
 more and a stopped reply included where the screen has them; so are each act's pending, its refusal

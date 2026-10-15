@@ -1,4 +1,4 @@
-import { drew, isThenable, refusal } from "@fcalell/plugin-api/acts";
+import { drew, isThenable, refusal, Unreached } from "@fcalell/plugin-api/acts";
 import {
 	type Datum,
 	type Draft,
@@ -11,9 +11,8 @@ import { toast } from "./toast.ts";
 import { useWords } from "./words.tsx";
 
 // What an act's holder reads: which act pends (inert at once; the pending look
-// comes after `ACT_DELAY`), whether it holds its siblings (pending and not
-// waiting for a connection), the line its failure or its wait is drawn in, and
-// the call that runs an act.
+// comes after `ACT_DELAY`), whether it holds its siblings (while one pends),
+// the line its failure is drawn in, and the call that runs an act.
 export interface Acting<K> {
 	pending: K | undefined;
 	holds: boolean;
@@ -21,22 +20,20 @@ export interface Acting<K> {
 	run(key: K, act: ActBase): void;
 }
 
-/** A holder's run of its acts. `where` is the place a rejection is drawn: the holder's own `line`, or a failed toast whose Retry runs the whole act again. The sentence is the server's refusal, then the act's own `failed`, then the generic one. */
+/** A holder's run of its acts. `where` is the place a rejection is drawn: the holder's own `line`, or a failed toast whose Retry runs the whole act again. The sentence is the server's refusal, then the act's own `failed`, then the generic one; an act refused for the connection says why (the app's sentence, else "No connection.") and has no Retry. */
 export function useAct<K = true>(where: "line" | "toast"): Acting<K> {
 	const words = useWords();
 	const run = useRun<K>();
 	const failed = useRef<string>(undefined);
 	const sentenceOf = (error: unknown, own: string | undefined) =>
-		refusal(error) ?? own ?? words.actFailed;
-	const { pending, paused, failure } = run;
+		error instanceof Unreached
+			? (error.sentence ?? words.offline)
+			: (refusal(error) ?? own ?? words.actFailed);
+	const { pending, failure } = run;
 	return {
 		pending,
-		holds: pending !== undefined && !paused,
-		line: paused
-			? words.readPaused
-			: failure
-				? sentenceOf(failure.error, failed.current)
-				: undefined,
+		holds: pending !== undefined,
+		line: failure ? sentenceOf(failure.error, failed.current) : undefined,
 		run: (key, act) => {
 			failed.current = act.failed;
 			run.run(key, () => {
@@ -46,7 +43,10 @@ export function useAct<K = true>(where: "line" | "toast"): Acting<K> {
 					drew(error);
 					toast(sentenceOf(error, act.failed), {
 						state: "failed",
-						act: { label: words.retry, onAct: act.onAct, failed: act.failed },
+						act:
+							error instanceof Unreached
+								? undefined
+								: { label: words.retry, onAct: act.onAct, failed: act.failed },
 					});
 				});
 			});

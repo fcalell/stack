@@ -2022,11 +2022,14 @@ a tick with no animation, never jumped to full.
   in the tree. There is no MutationCache failure handler (it runs before the caller's promise
   rejects and cannot know whether a host drew it) and no client undo: a window the server holds is
   `PendingBar until`.
-- **Offline blocks no act.** TanStack's mutations pause offline and run on reconnect, so a press
-  runs. `Run.paused` is pending while `onlineManager` is offline (subscribed only while pending), and
-  a paused host draws `readPaused` in its line and holds nothing: siblings stay live and a sheet can
-  be dismissed. A server that is down while the client is online is a failed act. `blocked` stays
-  the encoding for a reason that is not the connection (permission, an incomplete field).
+- **Nothing queues for a missing connection.** `createQueryClient`'s mutation cache runs
+  `guardReach` in `onMutate`: while `onlineManager` is offline, or a cached read's `meta.reach` says
+  the server is out of reach (plugin-node's `ws.connection`, `lost` after `PAUSE_AFTER`, with the
+  app's `unreachable` sentence), it throws `Unreached` before any fetch, so no mutation pauses and
+  none fires on reconnect. A caller-supplied `mutationCache` must call it. The act's host draws
+  `Unreached.sentence ?? words.offline` ("No connection.") as the failure line, with no Retry and
+  nothing held: siblings stay live and a sheet can be dismissed. Whether an act also looks blocked
+  before the press is the owner's open question; the press is what refuses.
 - **A control holds a save it is handed.** `FieldControl.onChange`, `OptionPick`/`MultiPick`
   `onChange` and `onCommit` (Input, TextArea and the new Slider `onCommit`, the value the thumb is
   let go on) return `unknown`; a promise holds the viewer's value, a selection's or a constant's,

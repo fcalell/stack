@@ -9,7 +9,7 @@ import { confirm } from "@fcalell/plugin-react-ui/lib/confirm";
 import { readsAt } from "@fcalell/plugin-react-ui/showcase/waiting";
 import { ORPCError } from "@orpc/client";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { onlineManager } from "@tanstack/react-query";
+import { onlineManager, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { expect, fn, screen, waitFor, within } from "storybook/test";
 
@@ -182,16 +182,33 @@ export const ASheetCannotBeDismissedWhilePending: StoryObj = {
 	},
 };
 
-// An act that waits for a connection holds nothing: the sheet says so in its
-// line and can still be dismissed.
-export const APausedSheetCanBeDismissed: StoryObj = {
-	render: () => <Held />,
+function HeldMutation() {
+	const [open, setOpen] = useState(true);
+	const save = useMutation({ mutationFn: async () => {} });
+	return (
+		<Sheet
+			open={open}
+			onClose={() => setOpen(false)}
+			title="Rename domain"
+			submit={{ label: "Save", onAct: () => save.mutateAsync() }}
+		>
+			<FormField label="Name">
+				<Input value="acme" onChange={noop} />
+			</FormField>
+		</Sheet>
+	);
+}
+
+// An act refused for the connection holds nothing: the sheet says "No
+// connection." in its line and can still be dismissed.
+export const AnOfflineSheetCanBeDismissed: StoryObj = {
+	render: () => <HeldMutation />,
 	play: async ({ userEvent }) => {
 		onlineManager.setOnline(false);
 		try {
 			await screen.findByRole("dialog", { name: "Rename domain" });
 			await userEvent.click(screen.getByRole("button", { name: "Save" }));
-			await screen.findByText("Waiting for a connection.");
+			await screen.findByText("No connection.");
 			await userEvent.keyboard("{Escape}");
 			await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
 		} finally {
