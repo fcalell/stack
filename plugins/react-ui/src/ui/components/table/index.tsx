@@ -290,6 +290,7 @@ export function Table<T>(props: TableProps<T>) {
 					more={more}
 					blank={blank}
 					warns={props.row.warning !== undefined}
+					links={props.row.href !== undefined}
 					changes={props.row.change !== undefined}
 				/>
 			</div>
@@ -1292,6 +1293,7 @@ function Phone(props: {
 	// A record over the placeholder, the next page's painted rows.
 	blank: TableRecord | undefined;
 	warns: boolean;
+	links: boolean;
 	changes: boolean;
 }) {
 	const words = useWords();
@@ -1404,7 +1406,7 @@ function Phone(props: {
 							: undefined;
 					}
 				: undefined,
-		href: (record) => record.href,
+		href: props.links ? (record) => record.href : undefined,
 		selected: (record) => record.id === props.selected,
 		// A row with `href` goes there; the others open through `onOpen`.
 		onOpen: onOpen ? (record) => onOpen(record.id) : undefined,

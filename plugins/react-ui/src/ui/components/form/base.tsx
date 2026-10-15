@@ -47,7 +47,7 @@ function GroupBox(props: { group: FormGroup }) {
 					<BusyMark frame={frame} />
 				</legend>
 			) : null}
-			<FrameLine frame={frame} />
+			<FrameLine frame={frame} flow />
 			{group.description ? <Text role="meta">{group.description}</Text> : null}
 			{group.lead}
 			<FrameBody
@@ -103,7 +103,7 @@ export function FormBody({
 						STACK,
 					)}
 				>
-					<FrameLine frame={frame} />
+					<FrameLine frame={frame} flow />
 					<FrameBody frame={frame} fit="frame" empty={empty} failed={failed}>
 						{groups
 							? groups.map((group, index) => (

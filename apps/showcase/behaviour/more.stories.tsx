@@ -124,6 +124,20 @@ function Case(props: { kind: Kind; how: Omit<How, "hold">; held?: boolean }) {
 
 const release = () => (window as unknown as { __gate: () => void }).__gate();
 const digits = (root: HTMLElement) => /\d/.test(root.textContent ?? "");
+// Where a text's first glyph stands: the rows' text is the measure a more row
+// aligns to, whatever its own box (a hung quiet act, a line) is.
+const leftOf = (root: HTMLElement, text: string) => {
+	const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+	for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+		if (node.textContent?.trim() !== text) continue;
+		const range = document.createRange();
+		range.selectNodeContents(node);
+		return range.getBoundingClientRect().left;
+	}
+	throw new Error(`no text "${text}"`);
+};
+// A table's cell edge is a hairline from its text.
+const ALIGNED = 1.5;
 const marks = (root: ParentNode) => root.querySelectorAll("[data-busy]");
 const painted = (root: ParentNode) =>
 	root.querySelectorAll("[data-painted]").length;
@@ -144,6 +158,11 @@ function show(kind: Kind): StoryObj {
 			const button = await canvas.findByRole("button", { name: "Show more" });
 			await expect(digits(canvasElement)).toBe(false);
 			await expect(painted(canvasElement)).toBe(0);
+			await expect(
+				Math.abs(
+					leftOf(canvasElement, "Show more") - leftOf(canvasElement, "Charlie"),
+				),
+			).toBeLessThan(ALIGNED);
 			await userEvent.click(button);
 			await waitFor(() => expect(painted(canvasElement)).toBeGreaterThan(0));
 			// Past the wait delay the frame still draws no busy mark.
@@ -175,11 +194,17 @@ function show(kind: Kind): StoryObj {
 function failed(kind: Kind): StoryObj {
 	return {
 		render: () => <Case kind={kind} how={{ fail: true }} />,
-		play: async ({ canvas, userEvent }) => {
+		play: async ({ canvas, canvasElement, userEvent }) => {
 			await userEvent.click(
 				await canvas.findByRole("button", { name: "Show more" }),
 			);
 			await canvas.findByText(ENGLISH.moreFailed);
+			await expect(
+				Math.abs(
+					leftOf(canvasElement, ENGLISH.moreFailed) -
+						leftOf(canvasElement, "Charlie"),
+				),
+			).toBeLessThan(ALIGNED);
 			await expect(canvas.getByText("Charlie")).toBeVisible();
 			await expect(canvas.queryByText(ENGLISH.readFailed)).toBeNull();
 			await userEvent.click(canvas.getByRole("button", { name: "Retry" }));

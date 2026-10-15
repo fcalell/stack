@@ -62,6 +62,8 @@ export function FrameBody(props: {
 const BUSY = "inline-flex shrink-0 items-center text-ink-meta animate-paint";
 // The line trails its heading row, so it carries the room under itself.
 const LINE = "flex flex-wrap items-center gap-inside pb-inside";
+// In a form's flow (a group, the form) the gap around it is the room.
+const LINE_IN_FLOW = "flex flex-wrap items-center gap-inside";
 
 /** A frame's busy mark, after its heading: a spinner while the root it holds refetches or retries, faded in after `WAIT_DELAY`. A selection holder and a frame with no heading draw none. */
 export function BusyMark({ frame }: { frame: Frame }) {
@@ -74,10 +76,14 @@ export function BusyMark({ frame }: { frame: Frame }) {
 }
 
 /** One meta sentence with an optional quiet act after it: what a frame says in its head about its read's state. */
-export function StateLine(props: { sentence: string; act?: Act }) {
-	const { sentence, act } = props;
+export function StateLine(props: {
+	sentence: string;
+	act?: Act;
+	flow?: boolean;
+}) {
+	const { sentence, act, flow } = props;
 	return (
-		<div className={LINE}>
+		<div className={flow ? LINE_IN_FLOW : LINE}>
 			<Text role="meta">{sentence}</Text>
 			{act ? (
 				<Button
@@ -93,16 +99,26 @@ export function StateLine(props: { sentence: string; act?: Act }) {
 }
 
 /** The line under a frame's heading row when its root holds data it could not refresh (stale, with Retry, pending while it runs) or waits for a connection (paused, nothing to press). */
-export function FrameLine({ frame }: { frame: Frame }) {
+export function FrameLine({
+	frame,
+	flow,
+}: {
+	frame: Frame;
+	/** The line stands among a form's gapped children, which are its room. */
+	flow?: boolean;
+}) {
 	const words = useWords();
 	if (!frame.holds) return null;
 	if (frame.stale) {
 		return (
 			<StateLine
+				flow={flow}
 				sentence={words.readStale}
 				act={{ label: words.retry, onAct: frame.retry, loading: frame.busy }}
 			/>
 		);
 	}
-	return frame.paused ? <StateLine sentence={words.readPaused} /> : null;
+	return frame.paused ? (
+		<StateLine flow={flow} sentence={words.readPaused} />
+	) : null;
 }

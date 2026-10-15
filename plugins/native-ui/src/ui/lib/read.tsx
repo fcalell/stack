@@ -66,6 +66,8 @@ export function FrameBody(props: {
 
 // The trailing line carries the room under itself, as the web's does.
 const LINE = "flex-row flex-wrap items-center gap-inside pb-inside";
+// In a form's flow (a group, the form) the gap around it is the room.
+const LINE_IN_FLOW = "flex-row flex-wrap items-center gap-inside";
 
 // A frame's busy mark, after its heading: a spinner while the root it holds
 // refetches or retries, shown after `WAIT_DELAY` so a refetch the server
@@ -79,10 +81,14 @@ export function BusyMark({ frame }: { frame: Frame }) {
 
 // One meta sentence with an optional quiet act after it: what a frame says in
 // its head about its read's state.
-export function StateLine(props: { sentence: string; act?: Act }) {
-	const { sentence, act } = props;
+export function StateLine(props: {
+	sentence: string;
+	act?: Act;
+	flow?: boolean;
+}) {
+	const { sentence, act, flow } = props;
 	return (
-		<View className={LINE}>
+		<View className={flow ? LINE_IN_FLOW : LINE}>
 			<RNText className={cn(text({ role: "meta" }), "shrink")}>
 				{sentence}
 			</RNText>
@@ -102,16 +108,26 @@ export function StateLine(props: { sentence: string; act?: Act }) {
 // The line under a frame's heading row when its root holds data it could not
 // refresh (stale, with Retry, pending while it runs) or waits for a connection
 // (paused, nothing to press).
-export function FrameLine({ frame }: { frame: Frame }) {
+export function FrameLine({
+	frame,
+	flow,
+}: {
+	frame: Frame;
+	// The line stands among a form's gapped children, which are its room.
+	flow?: boolean;
+}) {
 	const words = useWords();
 	if (!frame.holds) return null;
 	if (frame.stale) {
 		return (
 			<StateLine
+				flow={flow}
 				sentence={words.readStale}
 				act={{ label: words.retry, onAct: frame.retry, loading: frame.busy }}
 			/>
 		);
 	}
-	return frame.paused ? <StateLine sentence={words.readPaused} /> : null;
+	return frame.paused ? (
+		<StateLine flow={flow} sentence={words.readPaused} />
+	) : null;
 }

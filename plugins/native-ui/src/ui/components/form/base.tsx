@@ -49,7 +49,7 @@ function GroupBox(props: { group: FormGroup }) {
 					<BusyMark frame={frame} />
 				</View>
 			) : null}
-			<FrameLine frame={frame} />
+			<FrameLine frame={frame} flow />
 			{group.description ? <Text role="meta">{group.description}</Text> : null}
 			{group.lead}
 			<View className={FORM_GROUP}>
@@ -103,7 +103,7 @@ export function FormBody({
 					in: within,
 				})}
 			>
-				{held === undefined ? <FrameLine frame={frame} /> : null}
+				{held === undefined ? <FrameLine frame={frame} flow /> : null}
 				<FrameBody frame={frame} fit="frame" empty={empty} failed={failed}>
 					{groups
 						? groups.map((group, index) => (

@@ -115,6 +115,7 @@ export function ListBase<T, V extends string | null = string>(
 				<MoreRow
 					read={props.more}
 					empty={items.length === 0}
+					inset={framed || !nav}
 					paint={() => (
 						<ListBase
 							{...list}
