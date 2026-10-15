@@ -1,7 +1,7 @@
 # States: the design
 
 Status: decided with the owner, 2026-10-14, and revised the same day after an adversarial review
-(§15). Phases 1 to 3 of §14 are built (the read; the frames and the paint; the states beyond the first read) and §15 records what changed in building them; long collections (§7) are phase 7, and phases 4 to 6 are not built. The wait's numbers are tuned live. This page defines how every component
+(§15). Phases 1 to 5 of §14 are built (the read; the frames and the paint; the states beyond the first read; acts and saves; navigation reads and preload) and §15 records what changed in building them; phase 6 is Stead's, and long collections (§7) are phase 7. The wait's numbers are tuned live. This page defines how every component
 of the roster reads, waits, fails, goes missing, stays empty, refreshes, streams and acts, on both
 platforms, and how state is held so that a change re-renders only what it changes. It supersedes
 `motion.md` §4.1 (one waiting path) and the shape question of `skeleton-loading.md`; `motion.md`
@@ -267,7 +267,7 @@ The read needs no store of stack's own: each part is a TanStack builtin.
 | a leaf with a selection | its own observer's slice | its slice changes |
 | a row | nothing: its item comes from its collection | its item's reference changes |
 | the app (`useRead(selection)`) | its slice, real data only | its slice changes once real |
-| an act's host or a control | its own promise | its own pending or failure |
+| an act's host or a control | its own promise (`useRun`, `useDraft`) | its own pending or failure |
 
 - **Collections.** A List subscribes to its items. Structural sharing keeps every unchanged
   item's reference and each row is memoized by its item, so only changed rows render. The React
@@ -290,7 +290,10 @@ The read needs no store of stack's own: each part is a TanStack builtin.
 | refetch fails with data | the root holder (its stale line); leaves keep their data |
 | stream token | the streaming turn |
 | act pressed | that act's host |
+| act rejected | its host's line, or a failed toast; nothing else |
+| act pressed offline | its host's line ("Waiting for a connection."); nothing is held |
 | control saved | that control; then the leaves selecting what the write invalidates |
+| control's save rejected | that control (its value back, its reason in the field's line) or a failed toast |
 
 ## 7. Long collections
 
@@ -347,31 +350,49 @@ Built (phase 3).
 
 ## 9. Acts and saves
 
-- **One contract: `onAct` returns a promise.** The host that runs it (a Button standing alone, an
-  ActionBar, a Sheet, a field) holds its pending and its failure: inert at the press, sibling
-  acts inert with it and a Sheet's dismissal held while it runs, the busy glyph only after
-  `ACT_DELAY`, and ready the moment its promise settles.
-  ActionBar `running`, Sheet `busy`, `FormContext.setPending`, ConfirmSheet's swallowing and the
-  app's `loading: m.isPending` go.
-- **A failure is drawn by its host,** in its own slot (ActionBar's line, a Sheet's line over its
-  acts, a field's error). A host with no slot (an IconButton in a row, a Switch standing alone)
-  raises a toast whose Retry runs `onAct` again, the rest of the app's act included (a navigate, a
-  sheet closing). Stead's `useAct` and `actFailed` go; there is no MutationCache failure handler,
-  which runs before the caller's promise rejects and cannot know whether the host drew it.
-- **A control's `onChange`/`onCommit` may return a promise.** The control holds its optimistic
-  value, shows saving and rolls back with its reason inline on reject. The latest change wins:
-  each save carries a sequence number, a settled save older than the latest is ignored, and the
-  optimistic value holds until the selection matches it or the last save settles. A save cancels
-  the in-flight fetches of its read, so an old refetch cannot land over it. The app's revert code
-  goes.
+Built (phase 4); §15 records what changed in building it.
+
+- **One contract: `onAct` returns a promise.** An act is `ActBase { onAct; failed? }` (Act, IconAct,
+  MenuItem and ConfirmAct extend it) and `loading` is on none of them. Every act renderer holds its
+  own run: inert at the press, the pending look only after `ACT_DELAY` (300 ms, `--act-delay`),
+  ready the moment its promise settles. A host takes over its acts' run: an ActionBar pends one act
+  and the rest stand inert, a Sheet holds its head submit, foot bar and form bar and its
+  dismissal with them, ConfirmSheet stays open on a rejection. `FormContext`, the form's submitting
+  `aria-busy`, `SheetBase.busy`, ConfirmSheet's swallowing and the app's `loading: m.isPending` go.
+- **A failure is drawn by its host,** in its own line (ActionBar's kept line, a Sheet's line over
+  its acts or under its head submit, a standing Button's reason line, a field's error) and, where
+  the host has none (an IconButton in a row, a Switch standing alone), in a failed toast whose Retry
+  runs the whole `onAct` again, the rest of the app's act included (a navigate, a sheet closing).
+  The sentence is `refusal(error) ?? act.failed ?? words.actFailed`; `refusal` is an ORPCError's
+  own message for a 4xx other than 401, 403, 404 and 429. Stead's `useAct` and `actFailed` go
+  (`asSentence` moved into `refusal`); there is no MutationCache failure handler, which runs before
+  the caller's promise rejects and cannot know whether the host drew it. Two dev checks stand in for
+  it: a mutation an act started without returning its promise, and a mutation failure nothing drew
+  (a mutation with its own `onError` is exempt).
+- **Offline blocks no act.** TanStack pauses a mutation started offline and runs it on reconnect, so
+  a press runs; the host's line says "Waiting for a connection." and holds nothing, siblings stay
+  live and a sheet can be dismissed. A server that is down while the client is online is a failed
+  act. `blocked` stays the one encoding for a reason that is not the connection.
+- **A control's `onChange`/`onCommit` may return a promise.** The control holds the viewer's value
+  (a selection's or a constant's) while the latest save pends and draws no saving mark. The latest
+  change wins: each save carries a sequence number and only the latest's outcome counts. Resolved,
+  the hold waits for the refetch the write's invalidation started on the control's own reads, then
+  follows its datum unless edited since. Rejected, the value rolls back and the reason goes to the
+  field's error line, else a toast whose Retry saves the same value again. The app's revert code
+  goes. Invalidation itself is not awaited, or a delete that navigates would draw its record's stale
+  line before leaving.
 - **Forms read like frames.** `Form read={deploy}` gives its fields their initial values through
   selections; a field follows its selection until the viewer edits it and never after, so a
-  refetch never overwrites what is being typed. Each field saves through its own promise.
+  refetch never overwrites what is being typed. The form's bar is a host: pressing it ends the
+  edit, a rejection puts the edit back, and its filled act paints, inert, while any read the form,
+  its groups or its sheet hold waits.
 - **Writes need no mark of their own:** a mutation's invalidation refetches the reads it touched,
-  and their busy flag already shows.
+  and their busy flag already shows. There is no done mark and no client undo (a toast is
+  client-owned); a window the server holds stays PendingBar `until`, with an Undo act that holds its
+  own run.
 - **Names.** `loading` is retired: reads derive their state, acts theirs from the promise, and
-  `pending` remains only for work started elsewhere (a deploy running on the server, PendingBar's
-  `until`). Inert stays one encoding (`blocked` with a reason, focus kept) across Button,
+  `pending` remains the act's state and the work started elsewhere (a deploy running on the server,
+  PendingBar's `until`). Inert stays one encoding (`blocked` with a reason, focus kept) across Button,
   IconButton, Picker and SegmentedControl.
 
 ## 10. Copy
@@ -384,12 +405,17 @@ sentence depends on the filter the app applied.
 
 ## 11. Navigation
 
-A route declares its reads once, `reads(params)`, and its components take their handles from it.
-plugin-react wires it: the web router gets `defaultPreload: "intent"` and prefetches the route's
-reads on a hovered or focused link; the phone prefetches on a link's press-in. A prefetch is never
-awaited, so a navigation is immediate: most opens are cache hits and draw no waiting form, and a
-read that is still on its way shows the painted waiting form. Waiting remains for cold deep links
-and slow reads. The extra requests on hover are the accepted cost.
+Built (phase 5). A route warms what its screen reads in its TanStack Router `loader`,
+`loader: ({ params }) => preload(project(params.projectId))`, over a handle that one function builds
+and the component calls too, so the key is written once. Components keep building their own reads;
+nothing is handed down from the route. `preload` starts each distinct read through the client
+`QueryProvider` holds and is never awaited, so a navigation is immediate: most opens are cache hits
+and draw no waiting form, and a read that is still on its way shows the painted waiting form.
+Waiting remains for cold deep links and slow reads. On the web, one listener for the page
+(`pointerover` and `focusin` on a route anchor, held 50 ms) calls `router.preloadRoute`, which runs
+the loaders and fetches the route's code; a touch's `pointerover` is the press-in. The phone
+preloads nothing: its screens start their reads as they mount. The extra requests on hover are the
+accepted cost, and `staleTime` dedupes them.
 
 ## 12. What goes away
 
@@ -417,10 +443,14 @@ and slow reads. The extra requests on hover are the accepted cost.
   `combine` resolved over real observer results, a throwing selector answering P; `.read` keys
   equal to `queryOptions` keys; `settleReads` flushing a form change through the settle once and
   every other batch as TanStack schedules it.
-- **Screens per read.** The workbench forces one read at a time (deploy loads, steps fail), not
-  one state per route. The waiting form comes from the placeholder, so every route's loading
-  screen is real, and the shift check (stack's now) compares each leaf's box waiting and loaded
-  at 320, 1280 and 1920 px. The scramble's randomness is seeded under tests.
+- **Screens per read.** The reads are the procedures the sidebar Data story called; nothing
+  declares them. For a screen of two or more, the run fails each one in turn (its GETs answer a
+  server error, every other procedure answers data), resets those queries and runs the overflow
+  and walk floors at each width and the console capture, each finding prefixed `with <procedure>
+  failed`. That turns the dev no-holder error into a test finding on every screen. The workbench
+  keeps its five states over every read. The waiting form comes from the placeholder, so every
+  route's loading screen is real, and the shift check (stack's now) compares each Section heading's
+  top waiting and loaded at 320, 1280 and 1920 px. The scramble's randomness is seeded under tests.
 - **Render counts.** Behaviour stories assert the §6 event table ("refetch with the same data
   renders one component"), in the showcase and in a consumer.
 
@@ -440,9 +470,9 @@ Each phase lands web and phone together, with the showcase migrated in the same 
 3. **States beyond the first read** (built): busy, stale, more, streaming on its own key, still and
    paused, permissions; live channels as queries; the phone's managers. Long collections moved to
    phase 7.
-4. **Acts and saves:** the host-held promise, controls with the latest change winning, a form's
-   field saves.
-5. **Navigation:** `reads(params)`, preload on intent and on press-in.
+4. **Acts and saves** (built): the host-held promise, controls with the latest change winning, a
+   form's field saves.
+5. **Navigation** (built): a route's `loader` preloads its reads, on link intent on the web.
 6. **Stead:** its screens moved to frame reads, its workarounds deleted, the pin moved; its six
    channels become `channelRead`s.
 7. **Long collections:** the spike (§7), then virtualization on both platforms.
@@ -542,6 +572,69 @@ Changed while building phase 3 (2026-10-15); where the sections above differ, th
    ScrollView against the Pane given the list. The count is the spike's.
 9. **the phone** wires the online and focus managers (`QueryProvider listen`).
 10. `read(options, missing)` is `read(options, { missing, kind })`.
+
+Changed while building phase 4 (2026-10-15); where the sections above differ, this list wins:
+
+1. An act is `ActBase { onAct; failed? }`. `loading` leaves every act and Button, IconButton and
+   InputOtp; `failed` is the act's own sentence.
+2. Act renderers hold their own run and hosts take over theirs. The failure goes in the host's line,
+   otherwise in a failed toast with Retry; the sentence is the server's refusal, then the act's
+   own, then the generic `actFailed`. `ActFailed` goes, and Sheet `failed` is now its read's
+   override.
+3. Invalidation is not awaited. A control's hold waits on its own reads' refetch in flight. "A save
+   cancels in-flight fetches" goes, and controls draw no saving mark.
+4. Acts are never blocked by the connection. Offline presses wait, the host's line says so and
+   nothing is held.
+5. There is no client undo; server windows stay PendingBar `until`.
+6. Cut: the ItemHeader save fact (with the words `saving`, `saved` and `notSaved`), the Form's
+   submitting `aria-busy`, `FormContext` and `SheetBase.busy`.
+7. Retry's pending is its own promise (`retry` and `More.fetch` return theirs); a refetch nobody
+   pressed is the busy mark alone.
+8. A form's bar paints while any of its reads (form, groups, sheet) waits.
+9. `ACT_DELAY = 300` and `--act-delay`, tuned in the `Timings` story; the roster's act state is
+   `pending`.
+10. Two dev checks: a mutation started without its promise returned, and a mutation failure nothing
+    drew (an `onError` of the mutation's own exempts it). A story that trips either fails.
+
+Deviations kept from the build:
+
+- A hosted Button calls its host's handler as it is (`ButtonBase pending`): the host holds the run,
+  and a second run in the button would pend twice.
+- `useDraft.change` returns its save's promise, never rejecting, so a Retry that saves again holds
+  the run and the dev checks stay silent for acts that mutate.
+- Slider gained `onCommit`, the value the thumb is let go on; its `onChange` still hears each step.
+- `useHeldDraft` (each platform's `lib/act`) is the draft every saving control uses: it sends a
+  rejection to `useFailed` (the field's `FieldRefusal`, else a toast with Retry) and clears the
+  field's refusal on the next change.
+- InputOtp's checking line draws at once, without `ACT_DELAY`: a code is never typed twice, so
+  there is no fast answer to spare it for.
+- A failed toast stays in the tree: its root sets `aria-hidden={false}` and `aria-live="off"` (its
+  own alert is the one announcement) and its close act `aria-hidden={false}`, or Base UI's hidden
+  subtree would hold a focusable act.
+
+Changed while building phase 5 (2026-10-15); where the sections above differ, this list wins:
+
+1. There is no `reads(params)`. A route's TanStack Router `loader` calls `preload(...)` over
+   handles built by a function its component also calls; components keep building their own reads.
+2. Intent on the web is react-ui's single delegated listener (`pointerover` and `focusin` on a
+   route anchor, held 50 ms), which calls `router.preloadRoute({ href })` and so loads the route's
+   code too; `pointerover` is the touch web's press-in. `defaultPreload` is not set, and
+   `defaultPreloadStaleTime: 0` hands freshness to the query cache.
+3. `preload` skips stream, idle and dependent reads; a pages read fetches its first page. A failed
+   prefetch opens painted waiting, never failed.
+4. The phone's press-in preload is cut until a phone list opens a record; the recorded path is
+   expo-router's `router.prefetch(href)` on press-in, after a spike.
+5. Screens per read: the reads are the procedures the Data story called, observed and never
+   declared; the run fails each alone and applies the overflow, walk and console floors. Per-read
+   empty, missing, waiting and axe are cut, and the workbench keeps its five states over every read.
+6. §4's "a record's title comes from preload" holds for an open the viewer pointed at first; a cold
+   deep link paints.
+7. The client `QueryProvider` holds is bound for `preload` and the screens run: one cache per app,
+   the last provider rendered wins.
+
+Deviation kept from the build: a waiting slot picks over the placeholder where a read has no data
+(an idle or failed read's missing data included), so a selector walks P and never meets
+`undefined`; found while failing each read in turn.
 
 Changed while building phase 6 (2026-10-15); where the sections above differ, this list wins:
 

@@ -380,28 +380,6 @@ a tick with no animation, never jumped to full.
   be found; it is the form a system `Message` line takes with `onOpen`. Rejected: `Status` with
   `onOpen` (a status carries a hue, a fact in words none), a `Button` beside the facts (a second
   control for one fact) and a `Link` (the accent hue).
-- A field that saves as it is typed shows its save as an `ItemHeader` fact, `{ save: "saving" |
-  "saved" | "failed"; onRetry }`, which stack owns so the words (`saving`, `saved`, `notSaved`,
-  `retry`) are not the consumer's to spell. `saving` and `saved` are meta-ink
-  words; `failed` is the `failed` Status with `notSaved`, then `retry` as words in a
-  `WORD_ACT` led by a `RotateCcw` glyph (a button named by the fact, in the meta ink as an opening
-  fact is; the glyph is what tells it from the facts beside it, and it stays words in a box, never a
-  `Button`, so the head keeps one height), so the fact keeps its target-height hit box (`WORD_ACT`) in
-  all three states and the head keeps the loading head's height as the save moves. The facts line is
-  one meta line tall whichever kinds of fact it holds: a fact that acts (an opening fact, a pick, a
-  save) reaches past the line above and below it by `factReach` (the web reads `(target - 1lh) / 2`, the
-  phone the px), so an opening fact joining a status moves nothing under the head.
-  Where the facts wrap (below `tablet` on the web, always on the phone) the fact also holds the
-  failed form's room in every state, the failed form drawn invisible in the one grid cell the live form
-  stands in (a stacked, transparent copy on the phone), so the line wraps the same in all three and the
-  head never gains a line when a save fails; from `tablet` it takes the live form's own width, so
-  "Saved" leaves no gap after it. The words stand in one box, so its focus ring is
-  one, which keeps one key across the states and takes the focus a pressed Retry leaves as that act
-  gives way to the saving words (`tabIndex={-1}` and `focus()` on the web), so a keyboard user keeps
-  their place. The fact stands from the record's open, `saved` at rest. Rejected: a generic fact
-  that carries an act, which lets any fact hold acts and leaves the words to the consumer; a
-  `Banner`, which is loud for a save that usually succeeds. An autosaving `FieldBinding` feeding
-  this fact is not built.
 - `running` is work under way and `active` a steady state (a watch that stands, a service that is
   up): both wear the accent, and `running` draws a `Spinner` where every other state draws its
   dot, wherever a status draws one (a `Status`, a list row's `{ status }` leading, an
@@ -720,13 +698,12 @@ a tick with no animation, never jumped to full.
   the header.
   Its states are its
   submit's: pending, blocked (the reason stands at rest under the act), and failed (the act ready again, the
-  `Sheet`'s `failed` sentence in that same kept line: `ActFailed` around the bar hands it to the
-  `ActionBar`, which draws it in `FIELD_ERROR_LINE`, the field error's cell and ink, in place of the
-  reason when no act is blocked, and holds the line empty while neither shows, so a failure moves
-  nothing; no `Banner`). `failed` is the `Sheet`'s prop and
-  not an `Act` field, since only a sheet's one submit has a line to fail in; the modal `Sheet` takes
-  it too, in the foot bar's line on the desktop and under the head's submit on touch (the phone's
-  modal only the latter). The modal Sheet's touch head wraps its row (`SHEET_HEAD_TITLE`, the title
+  rejection's sentence in that same kept line: the `ActionBar` draws the host's `Acting.line` in
+  `FIELD_ERROR_LINE`, the field error's cell and ink, in place of the reason when no act is blocked,
+  and holds the line empty while neither shows, so a failure moves nothing; no `Banner`). The sheet
+  is the host of its acts (below), so the modal `Sheet` draws the same sentence in the foot bar's
+  line on the desktop and under the head's submit on touch (the phone's modal only the latter).
+  `Sheet`'s `failed` prop is its body's sentence when its `read` fails, like every frame's. The modal Sheet's touch head wraps its row (`SHEET_HEAD_TITLE`, the title
   at most three fifths of it, a structural fraction): the submit that does not fit beside the title
   drops whole to a second line at the row's end, so a long act word is never truncated and the title
   never falls to a stack of fragments. On the desktop the docked Sheet holds
@@ -748,8 +725,10 @@ a tick with no animation, never jumped to full.
   form wraps its `bar`'s `ActionBar` in its foot (`sticky bottom-0`, the host's ground, and a negative
   margin with matching padding across the scroller's inset, an overlay since positioning and the
   bleed are platform overlays), so the bar stays at the scroller's bottom edge and stands at the
-  form's end when the form fits. Nothing lifts the bar out of the Form, so its pending state,
-  Enter-to-submit and `SubmitContext` stay the Form's. The phone has no `sticky`: its `Sheet`, holding
+  form's end when the form fits. Nothing lifts the bar out of the Form, so its
+  Enter-to-submit and `SubmitContext` stay the Form's (`ActionBarBase submits`) and its run is the
+  host's: the sheet passes its `Acting` down, so one act pends across the head submit, the foot bar
+  and the form's bar. The phone has no `sticky`: its `Sheet`, holding
   `form`, draws `form.bar` in its own foot (gorhom's footer) after the foot line, and the form body
   takes the sheet's touched state, so the footer's blocked reason and the fields share it; capped or
   full height the bar stays on screen while the fields scroll, and uncapped the foot stands at the
@@ -1018,9 +997,9 @@ a tick with no animation, never jumped to full.
   pressed, and stands while `blocked` is that reason (`pressStands` in ui-core's `./reason`,
   `usePressed` in each plugin's `lib/reason`), so unblocking or a new reason forgets it in render
   and a new reason waits for its own press. A reason host (a sheet's submit, a Section's head
-  act, a Banner's or a PendingBar's act) keeps the press the same way. An ActionBar settles the
-  filled act's promise with `then(done, done)`, so a failing act leaves no derived promise to
-  reject unhandled.
+  act, a Banner's or a PendingBar's act) keeps the press the same way. A host's run
+  (`useRun`) settles an act's promise with a handler for each outcome, so a failing act leaves no
+  derived promise to reject unhandled.
 - A `MessageInput` sends while an answer streams: `working` sets Stop before Send and leaves Send
   live, so Send and Enter send whenever the text is non-empty. Stop is the secondary bar Button on
   the desktop and an icon act at the bar fit (`ICON_BUTTON.fit.bar`, `CircleStop`) on touch, and
@@ -1419,7 +1398,9 @@ a tick with no animation, never jumped to full.
   nothing. `aria-busy` is the first wait alone (form `waiting`), never a refetch. The scramble
   glyph waits for `theme.loading` (`motion.md`). *Stale* and *paused* share `FrameLine`, one
   `StateLine` (a meta sentence and an optional quiet act) under the heading row: "Couldn't
-  refresh." with Retry, pending while it runs, and "Waiting for a connection." with no act.
+  refresh." with Retry, pending while its own refetch runs (`useFrameRead`'s `retry` returns the
+  `refetchQueries` promise, `More.fetch` `fetchNextPage`'s, and the act holds it like any act; a
+  refetch nobody pressed shows the busy mark alone), and "Waiting for a connection." with no act.
   `StateLine` is the one internal part the more row and a stopped reply reuse. *Still* is the form
   for a painted drawn value whose root is idle (`enabled: false`, `skipToken`) or paused: the
   loaded tree painted and inert, not `aria-busy`, with no busy mark; it changes nothing visible
@@ -1593,6 +1574,33 @@ a tick with no animation, never jumped to full.
   List's rows, cheaper and plainer than serializing each row's props to skip it. On the phone a
   Group keys each row's wrapper by the row's own key (`Children.toArray`'s, its place among the
   children as written), so a conditional row appearing shifts no later row's state.
+- **A link's intent preloads its route, and navigation is never held.** A route warms what its
+  screen reads in its TanStack Router `loader`, `loader: ({ params }) => preload(project(params.id))`,
+  where `project` is a function both the loader and the component call, so a key is written once and
+  components keep building their own reads (a route-level declaration of reads, handed down to them, would
+  break that, and has nowhere to go in an app whose routes are empty files).
+  plugin-api's `preload(...selections)` starts each distinct read through the client `QueryProvider`
+  binds as it renders (`bindClient`: the router never sees the query client, and the last provider
+  rendered wins; unbound, it does nothing) and returns at once: `prefetchQuery` for a query,
+  `prefetchInfiniteQuery` for a pages read (its first page), nothing for a stream (no observer
+  would ever abort it) or an idle read (`skipToken`, `enabled: false`, which would throw), and a
+  failed prefetch resets to waiting when its leaf mounts, so the viewer sees painted, never failed.
+  A read whose input comes from another read's data is not preloaded; it starts when its component
+  mounts. The query cache's `staleTime` (30 s) decides whether a request goes out. react-ui's
+  `bindRouter` installs one `pointerover` and `focusin` listener for the page (`INTENT_DELAY` 50 ms,
+  TanStack's own default, dropped by any other intent in that time) that calls
+  `router.preloadRoute({ href })` for the nearest `a[href]` that is a route of the app other than
+  the one drawn; no stack anchor is a TanStack `Link`, so `defaultPreload: "intent"` would have
+  preloaded nothing, and the listener covers all of them (and `Link`) with no prop. It reads the
+  bound router when the timer fires, so the screens workbench rebinding per story adds no listener.
+  A touch's `pointerover` fires as the finger lands: the web's press-in. plugin-react's mount sets
+  `defaultPreloadStaleTime: 0` so every intent reaches the loader and the query cache is the one
+  authority on freshness. A loader returns nothing, so most opens are cache hits that draw loaded on
+  the first frame, a read still in flight paints and settles, and a cold deep link paints (it also
+  starts its fetches beside the chunk's load). The phone preloads nothing: no list there opens a
+  record, expo-router has no loaders on native, and its `router.prefetch(href)` renders the target
+  in the background and needs a Stack; the path when a consumer arrives is native-ui's row and
+  `Link` `onPressIn` calling it, after a spike. A phone screen starts its reads as it mounts.
 - A FileRow's own change is its `change` (a `ChangeKind`): the one change mark every row draws,
   in its lane before the glyph, a painted row reserving the lane when the `file` map declares `change`.
   The chip never carries it.
@@ -1700,7 +1708,7 @@ a tick with no animation, never jumped to full.
 
 ## The canon, the roster and the closed props
 
-- The canon binds every component either UI plugin ships: one name per concept (`label`, `loading`,
+- The canon binds every component either UI plugin ships: one name per concept (`label`,
   `onChange`, `onAct`, `act`, `blocked`, `sentence`), composed regions as typed descriptors (`Act`,
   `StatusMark`, `ChipMark`, `RowLeading`, `RowTrailing`, `PlaceSpec`, `Switcher`, `Option`,
   `OptionGroup`, `Part`, `FieldBinding`, `MessageDetail`, `Confirmation`, `MenuItem`, `RowEntry`,
@@ -1786,7 +1794,15 @@ a tick with no animation, never jumped to full.
   and then loaded at 320, 1280 and 1920 px, per Pane and per column, and fails the screen when the
   first Section moves, a later one moves by other than what the Sections above it grew by, a Section
   that stood is gone, or a Section with no rows, chart or text changes height; the guide's rules
-  page says how.
+  page says how. The run also fails each read in turn: the answerer records the procedures the
+  sidebar Data story called (nothing declares them), and for a screen of two or more it answers one
+  procedure's GETs with a server error, resets its queries and runs the overflow, walk and console
+  floors at each width, each finding prefixed `with <procedure> failed`. That is where the dev
+  error for a read no frame holds becomes a test finding on every screen. Empty (the empty story
+  already empties every collection), not found (the failed form with another sentence), waiting (a
+  painted leaf has its loaded geometry, which the shift check holds) and axe (the roster stories
+  judge the failed forms) are not repeated per read, and the workbench keeps its five states over
+  every read, with no per-read picker.
 - A cell no entry holds is shared, spelled by each component that draws
   it: the type roles, the field box (`Input`, `Select`, `TextArea`, the Picker's field fit, the
   touch `MessageInput`), the row with its leading slot and its title and meta lines (`ListRow`,
@@ -1919,11 +1935,74 @@ a tick with no animation, never jumped to full.
   its own. `quiet` draws a non-filled act as `BUTTON {act: quiet}`: words in the meta ink, no fill
   and no hairline, the sign-in pattern's Resend (the login-and-otp range's muted 12 text); it has no
   press ink of its own beyond the wash.
-- A confirm's act runs the work, as a Form's submit does: `ConfirmAct.onAct` returns a promise,
-  the act is pending and the sheet's other acts inert while it pends, and the sheet closes when it
-  resolves and stays open to retry when it rejects (the caller says why, a toast). `confirm()`
-  returns nothing, and its optional `cancel` is the way out's label (the `cancel` word unless given): the words for leaving a decision are the decision's own ("Keep editing", "Stay"), so no word derives them. A caller that awaited a boolean and then did the work left the sheet closed
-  with nothing pending while the work ran, and lost the retry.
+- **An act is `ActBase`, and holds its own run.** `ActBase { onAct: () => unknown; failed? }` is what
+  `Act`, `IconAct`, `MenuItem` and `ConfirmAct` extend; `loading` is on no act, nor on `Button`,
+  `IconButton` or `InputOtp`. A thenable `onAct` returns holds the act pending until it settles. Every
+  act renderer holds its own run by default (`ButtonBase`, the public `IconButton` that every
+  `IconAct` is drawn through, a `Menu` with its trigger drawn pending), through `useAct` in each
+  plugin's `lib/act.ts` over plugin-api's `useRun`. The act is inert (`aria-busy`) at the press and
+  is ready the moment its promise settles. Its pending look (the pending fill, label and glyph
+  hidden, the spinner) waits `ACT_DELAY`, 300 ms in `@fcalell/ui-core/paint` beside `WAIT_DELAY` and
+  emitted as `--act-delay`: on the web one keyframe pair (`act-out`, `act-in`) delayed by the token,
+  on the phone `useShown(pending, ACT_DELAY)`. The delay is fixed, not an option; it holds under
+  reduced motion and the fades snap. Pending is the roster's act state (`pending`, in place of
+  `loading`) for Button, IconButton, ActionBar, Menu and InputOtp. A done act has no mark: what it
+  changed is drawn by the reads its invalidation refetches (their busy mark), and plugin-api's
+  invalidation is deliberately not awaited, or a delete that navigates would draw its record's stale
+  line before leaving. A `state: "done"` toast stays the app's report of a change off screen.
+- **A host takes over its acts' run.** The `ActionBar` hosts any of its acts (one pends, the rest
+  stand inert through `ActInert`); the `Sheet` hosts its head submit, foot bar and form bar, holds
+  its dismissal while one pends, and shares its `Acting` with the docked sheet and `ConfirmSheet`
+  through `SheetBase acting`. A host hands `pending` to the act it renders, whose handler
+  then returns nothing: `ButtonBase pending` makes a hosted button call its handler as it is, since
+  holding a second run would pend twice. `FormContext`, the form's submitting `aria-busy`,
+  `SheetBase.busy`, `ActFailed` and ConfirmSheet's swallowed rejection are gone. The bar paints its
+  filled act, inert, while any read its fields hold waits (`ActionBarBase waits`, one
+  `useSelections` of the form's read, each group's and the sheet's; nothing reports up). A confirm's
+  act runs the work: `ConfirmSheet` hands it to the bar as `then(act.onAct(), onDone)`, so the
+  sheet closes when it resolves and stays open, ready, with the sentence in its bar line when it
+  rejects, and a non-promise act closes it at once. `confirm()` returns nothing, and its optional
+  `cancel` is the way out's label (the `cancel` word unless given): the words for leaving a decision
+  are the decision's own ("Keep editing", "Stay"), so no word derives them.
+- **A failure is drawn by its host, in its line, else in a toast.** `Acting.line` is the rejection's
+  sentence (or `readPaused` while paused): the `ActionBar`'s kept line, the `Sheet`'s, a standing
+  public `Button`'s reason line under itself, a field's error for a control's save, and `InputOtp`'s
+  field for its `onComplete`. Every other act raises a failed toast whose Retry is the same `ActBase`
+  (the app's whole `onAct` again, a navigate included), held by the toast's own button. The sentence
+  is `refusal(error) ?? act.failed ?? words.actFailed` ("That didn't go through."); `refusal`
+  (plugin-api `./acts`) is an `ORPCError`'s own message for a 4xx other than 401, 403, 404 and 429
+  whose message is not the code's stock text. The line clears on the next press. A failed (high
+  priority) toast is announced by its own alert, so its root sets `aria-live="off"` and
+  `aria-hidden={false}` and its close act `aria-hidden={false}`: the toast and its focusable acts stay
+  in the tree. There is no MutationCache failure handler (it runs before the caller's promise
+  rejects and cannot know whether a host drew it) and no client undo: a window the server holds is
+  `PendingBar until`.
+- **Offline blocks no act.** TanStack's mutations pause offline and run on reconnect, so a press
+  runs. `Run.paused` is pending while `onlineManager` is offline (subscribed only while pending), and
+  a paused host draws `readPaused` in its line and holds nothing: siblings stay live and a sheet can
+  be dismissed. A server that is down while the client is online is a failed act. `blocked` stays
+  the encoding for a reason that is not the connection (permission, an incomplete field).
+- **A control holds a save it is handed.** `FieldControl.onChange`, `OptionPick`/`MultiPick`
+  `onChange` and `onCommit` (Input, TextArea and the new Slider `onCommit`, the value the thumb is
+  let go on) return `unknown`; a promise holds the viewer's value, a selection's or a constant's,
+  while the latest save pends (`useDraft.change(next, save)`, through `useHeldDraft` in `lib/act`,
+  which also clears the field's `FieldRefusal` on the next change). Each change carries a sequence
+  number and only the latest's outcome counts. Resolved, the hold waits for the refetch the save's
+  invalidation started on the control's own reads (a query-cache subscription; the write's
+  `onSuccess` starts it synchronously), then follows its datum unless edited since. Rejected, the
+  value falls back to its datum and the reason goes to the `FieldRefusal` line, else a failed toast
+  whose Retry saves the same value. `change` returns the save's promise, never rejecting, so an
+  act that saves again holds the run. No saving mark is drawn: the value is the optimistic one.
+  Molecules pass the value through (`DefinitionRow` `switch` and `pick`, `Table` `onEdit`,
+  `FormField`). No stack helper touches the cache's `onMutate`; a `setQueryData` in an `onSuccess`
+  stays the app's. Latest-wins is client-only: a mutation that cares about order gives itself a
+  `scope`. `InputOtp` holds its `onComplete` promise with `useRun` and draws its checking line at
+  once, without `ACT_DELAY`: a code is never typed twice, so there is no fast answer to spare the
+  line for.
+- **The dev checks** (plugin-api `watchActs` and `heldAct`, run by `QueryProvider`) `console.error`
+  on a mutation an `onAct` or a `change` save started without returning its promise, and on a
+  mutation failure that no host marked as drawn (`drew`) within a macrotask, unless the mutation has
+  an `onError` of its own. The showcase's Storybook preview fails a story that logs either.
 - A `Form` that stands edited asks once when its page is left, with no prop: the app passes
   nothing and writes no guard. The state is ui-core's `createLeave` (`./leave`), one object per
   `Form` beside `touched` in `useTouchState`, a ref-like store and never React state, because a
@@ -2080,6 +2159,14 @@ touch is a toolbar toggle, not a test run; `a11y.test` is `error`):
   equals the loaded box, at the desktop density and in a 375 px phone at the touch one: the
   per-leaf form of structure rule 15, whose screen-level form is the shift check. The settle,
   waiting-late, section-loading and not-found stories drive frames over the same reads.
+- **Act stories**: `act`, `act-hosts`, `act-offline`, `control-save`, `input-otp` and
+  `preload-intent` in `apps/showcase/behaviour` drive an act's pending after the delay, a host's
+  inert siblings and held dismissal, a refusal in a line and in a toast, a press offline, the latest
+  save winning and a rollback, and a hover that requests a record before the click. The Storybook
+  preview fails any story that trips a dev check. `Timings` (`behaviour/timings.stories.tsx`) is the
+  tuning bench for `WAIT_DELAY` and `ACT_DELAY`: sliders set `--wait-delay` and `--act-delay` on the
+  root, a read's time and an act's time and outcome (resolve, refuse, fail, offline), so the owner
+  feels a number before it goes into `paint.ts`; the phone takes the numbers settled there.
 - **Component stories**, above, and the roster stress floor: a generated `RosterStress` module
   (`.storybook/roster.ts`) draws each component's frames at desktop and at touch in a 320 px
   column, and `.storybook/stress.ts` feeds every text slot a 300-character word and a URL, failing

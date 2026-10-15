@@ -35,6 +35,18 @@ and `FrameLine` (the stale and paused lines) take the `Frame` it returns. A pagi
 "Show more" row is `MoreRow` (`lib/more`), which the collections draw; the web needs no
 `QueryProvider listen`, since TanStack reads the window's online and visibility events.
 
+## Acts
+
+An act's holder reads from `useAct(where)` (`lib/act`): `pending` (which act runs), `holds` (it
+runs and does not wait for a connection, so siblings stand inert), `line` (its rejection's sentence,
+or "Waiting for a connection."), and `run(key, act)`. `where` is `"line"` for a holder that draws the
+sentence itself, as the `ActionBar` and `Sheet` do, or `"toast"` for a failed toast with Retry. A
+control of your own that saves as it changes takes `useHeldDraft(value)` (the draft that holds its
+value while a save pends and draws a refusal where `useFailed()` does); `draft.change(next, () =>
+save(next))` returns the save's promise, never rejecting. `refusal(error)` comes from `@fcalell/plugin-api/acts`; `useRun()` and
+`useDraft` from `@fcalell/plugin-api/tanstack-query`. The pending look waits `ACT_DELAY` (300 ms,
+`--act-delay`, from `@fcalell/ui-core/paint`).
+
 ## Options
 
 | Option | Default | What it does |

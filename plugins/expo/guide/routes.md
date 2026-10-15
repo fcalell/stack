@@ -73,6 +73,8 @@ navigates with `router` or `Link` from `expo-router`. Every one of these routes 
 writes the route types from the files under the routes directory, and `stack dev` rewrites them
 as a route file comes or goes, so an `href` to a path no file serves fails the type-check.
 
+A phone screen starts its reads as it mounts, under the push: nothing preloads on a press.
+
 ```tsx
 <Link href="/projects/12">Project 12</Link> // a route file serves it
 <Link href="/settings">Settings</Link> // fails the type-check: no route file

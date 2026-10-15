@@ -27,3 +27,15 @@ DESIGN.md: `framer`: type body 15/400, body-sm 14/500, caption 13/500, micro 12/
 The references span: toasts 340–430 wide, 36 (pill) to 100 (title + body + act) tall, radius 8 or pill, text 12–13, status colour confined to icon, hairline + shadow separation; banners 36–44 tall (inline) to 90 (message + body), radius 0–6, tinted surface or left rule, act as a small 24–26 button.
 
 Thin evidence: one full-width top banner at calibre (ManyChat); the rest are inline banners (Graphite, Better Stack) and bottom chips (Framer).
+
+## In stack
+
+A toast is the report of a change that happened off the screen, or the failure of an act whose host
+has no line of its own (an `IconButton` in a row, a `Switch` standing alone, a `Menu` item). The
+failed toast's Retry is the act's own `onAct` again, whatever else it does (a navigate, a sheet
+closing), and pends on its own button. Its sentence is the server's refusal, the act's `failed`, then
+"That didn't go through." An act's success draws no mark of its own: what it changed is drawn by the
+reads it refetches (their busy mark), and `state: "done"` is the app's report for a change nothing
+on screen shows. A failed toast is announced by its own alert, so the toast turns its live region off
+and stays in the tree with its close act. There is no client undo: a window the server holds is a
+`PendingBar` with `until` and an Undo act, which holds its own run like any act.

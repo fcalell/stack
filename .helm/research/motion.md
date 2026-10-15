@@ -1,6 +1,6 @@
 # Motion: the design
 
-Status: draft for the owner, 2026-10-14; give, the pulse and no haptics decided the same day, the loader (§4.2) decided after the loader demo and revised after an adversarial review (§7). Built so far: the paint's still fill and its delayed fade, the settle and the shift check (`states.md` phases 1 and 2), and the busy mark as the `Spinner` and the state lines (`states.md` phase 3); the pulse, the scramble, `theme.loading` and the rest of this page are not. The rules it builds on landed in `cbe5562` (story
+Status: draft for the owner, 2026-10-14; give, the pulse and no haptics decided the same day, the loader (§4.2) decided after the loader demo and revised after an adversarial review (§7). Built so far: the paint's still fill and its delayed fade, the settle and the shift check (`states.md` phases 1 and 2), the busy mark as the `Spinner` and the state lines (`states.md` phase 3), and an act's pending look (inert at the press, the fill and spinner after `ACT_DELAY`, `states.md` phase 4); the pulse, the scramble, `theme.loading` and the rest of this page are not. The rules it builds on landed in `cbe5562` (story
 003-329): each motion explains a change, and a size or place never animates through layout. This
 page defines, for every component of the roster, how it animates, how it answers input, how it
 waits and how it arrives (loaded, empty or failed). It is built on a fact inventory of the code as
@@ -345,8 +345,8 @@ selected, disabled and error looks; a focus ring always snaps; reduced motion al
 | --- | --- | --- | --- | --- |
 | Text, Strong | none | none | a bar (its owner draws it) | settle |
 | Icon | none | a glyph swapped by its owner cross-fades on `fast` | none | none |
-| Button | answer, give | loading: the label, glyph and count fade to 0 on `fast` while the spinner fades in, the width held; back the same. A blocked reason is a line. Count and wait figures: roll (count), at once (wait) | spinner | its owner's |
-| IconButton | answer, give (a ground only while pressed or open: the give is the glyph's) | glyph to spinner cross-fade on `fast`; a copy act's check: value mark | spinner | its owner's |
+| Button | answer, give | pending: inert at the press; after `ACT_DELAY` (300 ms) the label, glyph and count fade to 0 on `base` while the pending fill and the spinner fade in, the width held; ready at once when the promise settles (the web's one keyframe pair, the phone's snap). The delay holds under reduced motion and the fades snap. A blocked reason is a line. Count and wait figures: roll (count), at once (wait) | spinner | its owner's |
+| IconButton | answer, give (a ground only while pressed or open: the give is the glyph's) | pending: the glyph to spinner cross-fade after `ACT_DELAY`, as Button's; a copy act's check: value mark | spinner | its owner's |
 | Tooltip | layer (opacity, `fast`, after 500 ms rest; leaves at once; a second tooltip within 300 ms of the last shows with no rest and no fade) | none | none | none |
 | Count | none | roll | scramble | decode |
 | StepCount | none | a segment that turns done cross-fades its fill on `base` | none | none |
@@ -385,7 +385,7 @@ selected, disabled and error looks; a focus ring always snaps; reduced motion al
 | ListRow | answer (the press wash only on the row's own hit, no longer reaching the row from an inner act); its tick, act and pick are theirs | a status mark is a value mark; a reason is a line; an entry's error is a line; the trailing age switches at once; steps' running mark is the spinner; selected cross-fades | bars by kind | settle |
 | DefinitionRow | answer on an opening row | value text cross-fades on `fast` when its data changes; the copy check is a value mark; a locked reason is a line | bars, an identifier's scramble | settle |
 | FormField | the label's and control's | the error is a line, replacing the description by a cross-fade on `fast` where both exist; the answered fold and unfold are blocks | bars by the control's shape (the field stays mounted, typed text kept) | settle |
-| ItemHeader | facts that act answer | a fact the viewer's act adds is a block, one arriving fades in; the save fact cross-fades saving, saved and failed on `fast` in its held room, its Retry fading in | bars, the count's scramble | settle (named) |
+| ItemHeader | facts that act answer | a fact the viewer's act adds is a block, one arriving fades in | bars, the count's scramble | settle (named) |
 | SegmentedControl | answer, toggle (the ground slides) | none | a bar | settle |
 | Sheet | layer (all forms as §3); the bottom sheet follows a drag | a new page (title changes) cross-fades the body on `fast` and scrolls to the top at once; the failed and blocked lines are lines; the docked sheet is a block | its body's | its body's |
 | Picker | answer on the trigger, the chevron rotates; options answer (highlight follows the keyboard or pointer at once) | layer (popover on the web's desktop, sheet on touch and the phone); filtering removes rows at once (they follow the typing); a chip added or removed in the trigger is Chip's | its FormField's | settle |

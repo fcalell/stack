@@ -44,6 +44,12 @@ check holds is edited in the check, with its one-line reason; an entry nothing m
 | 18 | A bare number that changes in place sets tabular digits. | Is `font-variant-numeric` without `tabular-nums` on a figure that updates? | render walk (tabular digits) |
 | 19 | A Section is a heading over its body, never a landmark; no region stands inside a region of its name. | Does a Section carry a name or a role that makes it a region? Do two landmarks share a name on the page? | render walk (same-name regions) |
 
+## Acts
+
+| # | Rule | Ask | Held by |
+| --- | --- | --- | --- |
+| 20 | An act holds its own run: `onAct` returns the promise of what it starts, and the pending look, the failure and the wait for a connection come from that promise, never from a flag the app passes in. | Does a prop or a context carry an act's `loading` or `busy` from above? Does an `onAct` start a mutation and return no promise? Does a host leave an act's rejection undrawn, or draw it where it moves the act? | the types (`ActBase` has no `loading`); `QueryProvider`'s dev checks, which fail a story on `returned no promise` and `nothing drew its failure`; judged for a host's line |
+
 ## Adding to a closed list
 
 A new file in `b-measure` or `b-dataset`, or a new context, is the last resort. First try the

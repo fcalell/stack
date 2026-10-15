@@ -26,3 +26,16 @@ DESIGN.md: `mintlify`: type body-sm 14/400, body-sm-medium 14/500, caption 13/40
 The references span: input 38; two-line rows 64–70; label 12–13/500 over an 11–12 muted description, page title 15–16; radius 4–8 (cards 8, inputs 4–6); separation by hairline card + hairline row split, or a surface-step tile with no border; save sits per card in a footer strip or right-aligned under the group; accent appears only on switches, never on the save button (black/dark primary).
 
 Thin evidence: no Linear, Vercel or Stripe settings screen was returned; Dub and v0 stand in for that idiom.
+
+## In stack
+
+A setting saves in one of two places, and the pending and the failure are drawn in the same place
+either way. A control that saves as it changes (`Switch`, `Checkbox`, `Select`, `SegmentedControl`,
+`Picker`, a `DefinitionRow` `switch` or `pick`, a `Table` cell) returns the save's promise from its
+handler, and a text field or a `Slider` from `onCommit` (Enter or blur, the thumb let go). The control
+shows the viewer's value while the latest save pends, with no saving mark and no flicker back while
+the refetch lands, and a refusal puts the value back with its reason in the field's error line (a
+control with no field raises a failed toast whose Retry saves the same value again). A card's Save is
+a bar act: its siblings are inert while it pends, a rejection stands in the bar's kept line under the
+acts so a failure never moves the act, and the bar's filled act paints inert while any read the form
+holds waits (the form's, each group's, a sheet's).

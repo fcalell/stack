@@ -41,9 +41,9 @@ included), the output typed, and how its failure reads as not found. For a query
 `missing` tells the error that reads as not found (default `isNotFound`) and `kind` is `"query"`,
 `"pages"` or `"stream"` (below). A read is its own selection;
 `read.at(fn)` selects from it, and `combine([a, b], fn)` selects from several. A selector runs
-over a placeholder while its reads wait, so write it plainly (`d.steps.length`, `d.name`); one that
-throws over a read with no data yet paints its slot and warns in dev, and one that throws over real
-data is yours.
+over a placeholder while its reads wait, are idle or have failed with no data, so write it plainly
+(`d.steps.length`, `d.name`); one that throws there paints its slot and warns in dev, and one that
+throws over real data is yours.
 
 ```tsx
 const deploy = orpc.deploys.get.read({ id });
@@ -64,13 +64,15 @@ yet as its painted form. Your own code never sees the placeholder:
 - `useFrameRead(read, derive)` is what a frame (Pane, Section, Sheet, Form) builds on: one
   subscription whose `derive(held)` runs in `combine`, so the frame renders when its derived state
   changes and never on a value change. It returns `{ state, retry, holding, holds }`; `retry`
-  refetches the reads the frame holds, `holding` says it holds any and `holds` is their hashes with
+  refetches the reads the frame holds and returns that promise (so a Retry pends on it), `holding`
+  says it holds any and `holds` is their hashes with
   the enclosing frames' (publish it with `<FrameHolds holds={holds}>` around the body). Pass a
   module-level `derive`, whose identity is the combine's. The frame holds the reads of its `read`
   that no enclosing frame holds, and draws their failure.
-- `useDraft(datum)` is a field's value: it follows its selection until the viewer edits it, then
-  holds the edit (`change(next)`); a selection over another read drops the edit. A constant passes
-  through unchanged: the app owns it, and a value it changes shows.
+- `useDraft(datum, failed?)` is a field's value: it follows its selection until the viewer edits it,
+  then holds the edit (`change(next)`); a selection over another read drops the edit. A constant
+  passes through unchanged: the app owns it, and a value it changes shows. `change(next, save)` with
+  a `save` that returns a promise is a save (below).
 
 A frame draws more than the first wait of its root. While the data stays it marks a refetch
 (`busy`, a spinner after the heading), says "Couldn't refresh." with Retry when a refetch failed
@@ -111,8 +113,8 @@ failed. The viewer presses it; nothing loads by scrolling. The frame is not busy
 draws no count while more remain, and an empty first page that has more fetches the next. A
 `Section`'s count is therefore the loaded rows only once the last page is in.
 
-`useMore(read)` is what that row builds on (`{ next, fetching, failed, fetch }`); reach for it
-only for a control of your own, since it never fetches by mounting. A hand-written `read` with
+`useMore(read)` is what that row builds on (`{ next, fetching, failed, fetch }`, `fetch` returning
+its promise); reach for it only for a control of your own, since it never fetches by mounting. A hand-written `read` with
 `kind: "pages"` must be an infinite query (`infiniteOptions`) over the same envelope.
 
 ## Streams
@@ -162,6 +164,59 @@ flight. A fresh read costs no request (`staleTime` decides), a `pages` read fetc
 and a failed prefetch is dropped. Streams, idle reads (`skipToken`, `enabled: false`) and reads
 whose input comes from another read's data are not preloaded. It uses the client `QueryProvider`
 holds, so it does nothing before a provider has rendered.
+
+## Acts and saves
+
+An act's `onAct` returns the promise of the work it starts, and the host that draws the act holds
+the run (pending, failure, a press offline); the app passes no `loading`:
+
+```tsx
+const create = useMutation(orpc.projects.create.mutationOptions());
+const add = {
+  label: "Add",
+  failed: "The project was not added.",
+  onAct: () => create.mutateAsync({ name }),
+};
+```
+
+- Return `mutateAsync`'s promise, never `mutate()`, and `.catch` nothing: the host draws the
+  rejection, in its line or a failed toast with Retry, and the toast's Retry runs `onAct` again.
+- The sentence is `refusal(error)` from `@fcalell/plugin-api/acts`, then the act's `failed`, then
+  the generic one. `refusal` is an `ORPCError`'s own message, capitalised and stopped, for a 4xx
+  other than 401, 403, 404 and 429 whose message is not the code's stock text (`new ApiError("BAD_REQUEST",
+  { message: "That name is taken" })` reads "That name is taken."); anything else is `undefined`.
+- A press offline is not blocked: TanStack pauses the mutation and runs it on reconnect, and
+  `useRun().paused` says it is pending while the client is offline.
+- Invalidation is not awaited, so what the act changed shows through the reads it refetches (their
+  busy mark); there is no done mark.
+
+In dev, `QueryProvider` checks the two ways an act goes unseen with `console.error`: a mutation an
+`onAct` started that returned no promise (the act would read as done at once), and a mutation that
+failed with nothing drawing it within a tick. A mutation with an `onError` of its own is exempt, so
+a handler that catches a failure itself (`.catch(setError)` on the call, or the option) draws it
+and the check stays quiet.
+
+A host or control of your own holds a run with `useRun<K>()`: `run(key, onAct)` calls `onAct`, and
+`pending` (the key), `paused` and `failure` (`{ key, error }`, kept until the next run) follow its
+promise, the newest run counting alone. A value that saves as it changes uses `useDraft`:
+
+```tsx
+const draft = useDraft(notify, (error, again) =>
+  toast(refusal(error) ?? "Not saved.", { state: "failed", act: { label: "Retry", onAct: again } }),
+);
+<input type="checkbox" checked={draft.value} disabled={draft.painted}
+  onChange={(e) => draft.change(e.target.checked, () => save.mutateAsync({ notify: e.target.checked }))} />
+```
+
+While a save pends the draft holds `next`, a selection's or a constant's. Each change supersedes the
+one before and only the latest's outcome counts: resolved, the hold waits for the refetch that the
+write's invalidation started on the draft's reads, then follows its datum unless it was edited
+since; rejected, it falls back to the datum and `failed` hears the error with `again`, a way to save
+the same value. `change` returns the save's promise (never rejecting, since `failed` draws the
+rejection), so an act that saves again holds the run. react-ui and native-ui's controls do all of
+this: hand one the promise from `onChange`, or from `onCommit` for an `Input`, `TextArea` or
+`Slider`. Two saves in flight can reach the server out of order; a mutation that cares gives
+itself a `scope`.
 
 ## Not found
 

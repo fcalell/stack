@@ -206,12 +206,12 @@ a filled act: the create act is the `Pane`'s.
 
 ## Data, never nodes
 
-A composed region is data its molecule draws: an `Act` (`{ label, onAct, destructive?, quiet? }`; `quiet` draws an `ActionBar`'s
+A composed region is data its molecule draws: an `Act` (`{ label, onAct, failed?, destructive?, quiet? }`; `quiet` draws an `ActionBar`'s
 act as words in the meta ink with no hairline, a resend or a skip, never its filled act),
-an `IconAct` (`{ icon, label, onAct, failed? }`; a promise `onAct` returns holds the act pending, inert, its glyph swapped for the spinner at the same size), a row's `StatusMark` and `ChipMark`, a menu's `MenuItem`s, a `PlaceSpec`, all from
+an `IconAct` (`{ icon, label, onAct, failed? }`; the promise `onAct` returns holds the act, below), a row's `StatusMark` and `ChipMark`, a menu's `MenuItem`s, a `PlaceSpec`, all from
 `@fcalell/ui-core/descriptors`. An icon is an `IconName`, a Lucide glyph's PascalCase name.
 `children` is open only where the roster gives it. A `Form`'s `bar` (the `ActionBar`'s own props) filled act runs its
-`onAct`; an `ActionBar` draws its last blocked act's `blocked` reason under the acts at rest, at meta size. To keep the bar's place while the server works, give the `ActionBar` a `pending` (a `PendingBar`'s `sentence`, `until`, `act`): the pending form stands over the bar at the bar's own loaded height, so nothing below moves when it is set or cleared; a `PendingBar` alone is for a place that held no bar. A `FormField` takes a `FieldBinding` from the
+`onAct`, and the bar holds its acts' run; an `ActionBar` draws its last blocked act's `blocked` reason under the acts at rest, at meta size. To keep the bar's place while the server works, give the `ActionBar` a `pending` (a `PendingBar`'s `sentence`, `until`, `act`): the pending form stands over the bar at the bar's own loaded height, so nothing below moves when it is set or cleared; a `PendingBar` alone is for a place that held no bar. A `FormField` takes a `FieldBinding` from the
 app's own form state. A `Form` that stands edited asks once, "Discard your edit?" or Keep editing, when its screen is left (the back, a swipe, a navigate that removes it), so the app writes no `beforeRemove` guard of its own; pressing the filled act ends the edit, so an act that navigates is never asked, and a rejected act puts the edit back. An `Input` with an `act` presses that act on the keyboard's return. A field that replaces what the viewer was reading (an edit swapped in for rendered text) takes `autoFocus`, which focuses it as it mounts with the caret at the end of its text; a field on a form that loads with the page leaves it off. A `confirm()` takes a `Confirmation`, its `cancel` the way out's own label ("Keep editing") where the `cancel` word is not the decision's.
 
 A row's marks are named props on the meta line, at most one each, in order: `status`, `warning`
@@ -263,6 +263,43 @@ with an `href` ("Held by CR-12, Ana"). A locked row takes no `description`, `act
 `onOpen`. A held value is never a disabled `FormField`.
 
 An act that is out of reach for a while (a resend after a code is sent) is a `Button` with `wait`, its seconds left, never a `blocked` reason that grows its row: it draws the count in its label, is inert while the count is above zero, and keeps its width at zero. Pass `wait` every tick, `0` once it is live; a `Button` is never wrapped in a context of the roster's own to be inert.
+
+## An act holds its run
+
+Every act's `onAct` returns the promise of the work it starts: `onAct: () => save.mutateAsync(v)`,
+never `mutate()`, and `async () => { await remove.mutateAsync({ id }); router.back(); }` when more
+follows. The act renderer holds the run, so the app passes no `loading` and reads no `isPending`:
+
+- the act is inert at the press, draws its pending look (the pending fill, label and glyph hidden,
+  the spinner) only after `ACT_DELAY`, 300 ms (it snaps in; the delay is no option), and is ready the
+  moment its promise settles;
+- a host takes over its acts' run: an `ActionBar` pends one act and the rest stand inert, a `Sheet`
+  holds its head submit, foot bar and form bar and its dismissal with them, and a `confirm()` act
+  closes its sheet when it resolves and stays open, ready, with the sentence in its bar line when it
+  rejects;
+- a rejection is drawn by the host, in its line (an `ActionBar`'s kept line, a `Sheet`'s, a
+  standing `Button`'s under itself) and otherwise in a failed toast whose Retry runs the whole act
+  again, a navigation included. The sentence is `refusal(error)` from `@fcalell/plugin-api/acts` (a 4xx the procedure worded itself,
+  except 401, 403, 404 and 429), then the act's `failed`, then "That didn't go through."
+  (`words.actFailed`). Give each act that writes a `failed`, and `.catch` nothing: a handler that
+  catches a rejection to toast it draws it twice;
+- an act pressed offline runs: the mutation pauses and goes out on reconnect, and the host's line
+  says "Waiting for a connection." with nothing else held. Never `blocked` an act for the
+  connection.
+
+A control that saves as the viewer changes it returns the save's promise from `onChange` (`Switch`,
+`Checkbox`, `Select`, `SegmentedControl`, `Picker`, `OptionList`, a `DefinitionRow` `switch` or `pick`)
+or from `onCommit` (`Input`, `TextArea`, and `Slider`, whose `onChange` hears each step and whose
+`onCommit` the value it is let go on). The control shows the viewer's value, a selection's or a
+constant's, while the latest save pends and then follows its datum once the refetch the write
+invalidated has landed, so nothing flickers back and no saving mark is drawn. Each change
+supersedes the one before; a refusal puts the value back and draws its reason in the field's error
+line, else in a failed toast whose Retry saves the same value again. An `InputOtp`'s `onComplete`
+returns the check's promise: the boxes hold the code and a checking line stands under them at once,
+with no delay, and a refusal goes to the field's error line.
+
+In dev, `QueryProvider` logs an error for a mutation an `onAct` started without returning its promise
+and for a mutation failure nothing drew; a mutation with its own `onError` is exempt.
 
 ## A form about an object opens on that object
 
@@ -497,10 +534,12 @@ three rows whatever the head, the foot line and the log hold (a shorter body pad
 keeps two rows of its own above the foot while the body can give; where the region is short the body
 gives first to the log's two rows, then to its three, then the log goes, and the head, foot line and
 submit never give: the submit stays inside the foot. A blocked `submit`’s reason stands
-at rest under the act in the foot; a failed run is the `failed`
-sentence in that same line, in the field error’s cell and ink, the act ready again and no `Banner`:
-clear `failed` when the act runs again, and a blocked `submit`’s reason stands before it. The modal
-`Sheet` takes `failed` too, under the head’s submit. That submit stands in the title's row and the title wraps whole inside three fifths
+at rest under the act in the foot; a rejected act is its sentence in that same line, in the field
+error’s cell and ink, the act ready again and no `Banner`: the line clears on the next press, and a
+blocked `submit`’s reason stands before it. The modal `Sheet` draws it under the head’s submit. The
+sheet holds the run of its head submit, its foot bar and its form’s bar, so it cannot be dismissed
+while one pends (unless the act waits for a connection); its `failed` prop is the body’s sentence
+when its `read` fails, as on every frame. That submit stands in the title's row and the title wraps whole inside three fifths
 of it (two lines at 25 characters); a submit that does not fit beside that column drops whole, at its 44 px, to a second head line at the
 row's end. Pass
 the same props as the modal `<Sheet>` from a page and as the `sheet` of a conversation; closing it (`open` false, the

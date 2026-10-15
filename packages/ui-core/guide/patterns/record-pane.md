@@ -22,3 +22,12 @@ Queries: `master-detail layout: list of records on the left and the selected rec
 DESIGN.md: `linear.app`: type body-sm 14/400, caption 12/400, eyebrow 13/500, headline 28/600; radius xs 4, sm 6, md 8; hairline `#23252a`, strong `#34343a`; spacing 4/8/12/16/24/32. `clay`: type body-md 16/400, body-sm 14/400, caption 13/500, caption-uppercase 12/600, title-sm 16/600; radius xs 6, sm 8, md 12, lg 16; hairline `#e5e5e5`, soft `#f0f0f0`; spacing 4/8/12/16/24/32/48.
 
 The references span: list 375, pane 300–395; list rows 46–55 for two-line items, up to 110 for message threads; property rows 30–34 with label 11–12 muted and value 11–12 at the same size; title 18/600 is the only large size; radius 4–6; every pane boundary is a hairline (a sheet adds a faint shadow); selection is a gray fill, or a tinted fill with a left bar where the accent is allowed; accent otherwise stays on status glyphs.
+
+## In stack
+
+A record opens from its list row's anchor. A pointer resting on the anchor for 50 ms, focus landing
+on it or a finger touching it preloads the route's reads and its code, so most opens draw the record
+loaded on the first frame, its title included, with no painted slot; a read still on its way paints
+and settles as it does anywhere, and a cold deep link paints. Navigation is never held for the
+preload. A record's edits save through its controls and its form bar, which hold their own pending
+and failure (`patterns/settings-form.md`); its header carries no save fact.

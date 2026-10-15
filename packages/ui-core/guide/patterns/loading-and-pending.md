@@ -33,8 +33,15 @@ slot's length whose line boxes are the bars, a mark or a control is its own box 
 unseen. Painted parts are inert. A collection of unknown length paints four rows (`PAINT_ROWS`), each
 at its loaded row's height, so the list differs only by its row count. The paint shows after 400 ms
 (`WAIT_DELAY`) and fades in on the web, snaps in on the phone; a read the local server answers
-sooner shows none. A pending act is not a read: it keeps its width and height, swaps its label for a
-spinner and lightens its fill (`Act.loading`).
+sooner shows none. A pending act is not a read: it is inert at the press and keeps its width and
+height, and only after 300 ms (`ACT_DELAY`, `--act-delay`) swaps its label for a spinner and lightens
+its fill, so an act the server answers at once never flashes one; it is ready the moment its
+promise settles. The promise is the act's own (`ActBase.onAct`), and the host holds it: an
+`ActionBar` pends one act at a time with the others inert, a `Sheet` holds its dismissal while its
+head submit, foot bar or form bar pends, and an `InputOtp` checking a code draws its checking line
+at once (a code is never typed twice). An act that waits for a connection holds nothing: the host's
+line says "Waiting for a connection." and the siblings stay live. A Retry (a frame's, a stale line's,
+a more row's) pends on its own refetch's promise; a refetch nobody pressed shows the busy mark alone.
 
 After the first wait the frame says what its read is doing, and the data stays. A refetch is the
 **busy** mark: a spinner in the heading's meta ink, after the title (and a Section's count), shown

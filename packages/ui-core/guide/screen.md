@@ -54,6 +54,10 @@ const projects = orpc.projects.list.read();
 </Section>
 ```
 
+On the web the route's `loader` warms what the screen reads (`preload`, see
+`node_modules/@fcalell/plugin-react/guide/routes.md`), so an open the viewer pointed at first draws
+loaded; a phone screen starts its reads as it mounts.
+
 **Check:** `pnpm check` passes.
 
 ## 5. Draw every state
@@ -76,8 +80,21 @@ A conversation's turn being written is `Thread reply`, its own read: waiting, wr
 the frame's `empty`, with the act that fills it unless the screen's primary act already does. Error draws where the work happened (a field's error, a banner over the
 region, a toast for an act) and keeps what still works.
 
+An act holds its own run. Its `onAct` returns the promise of the work it starts
+(`() => save.mutateAsync(v)`, never `mutate`), and its host does the rest: the act is inert at the
+press, draws its pending look only after `ACT_DELAY` (so an answer at once flashes nothing), and is
+ready the moment the promise settles, so the screen passes no `loading` and reads no `isPending`. A
+rejection draws in the host's line (an `ActionBar`'s or a `Sheet`'s under the acts, a standing
+`Button`'s under itself), else in a failed toast whose Retry runs the whole act again; the sentence
+is the server's own refusal, then the act's `failed`, then "That didn't go through." Give each act
+that writes a `failed` sentence and catch nothing. A control that saves as the viewer changes it
+(`Switch`, `Select`, `Picker`, a `DefinitionRow` `switch` or `pick`, a field's `onCommit`) returns the
+save's promise: it holds the viewer's value while the latest save pends and puts it back, with the
+reason, on a refusal. Offline blocks no act: a press waits for the connection and its host says so.
+
 **Check:** each state is reachable by a route, a fixture or a control, written down; busy, stale, paused,
-more and a stopped reply included where the screen has them.
+more and a stopped reply included where the screen has them; so are each act's pending, its refusal
+and its press offline.
 
 ## 6. Judge
 
