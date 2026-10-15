@@ -172,19 +172,23 @@ const ThreadItem = memo(ThreadItemBase) as typeof ThreadItemBase;
 // The turn being written, from its own subscription to the reply: a chunk
 // renders this and nothing else in the thread. A stream that failed keeps its
 // partial message and says it stopped, with the frame's retry, which runs the
-// stream again.
+// stream again. It stays mounted whenever there is a reply, so the items'
+// fetch cycle never subscribes it or lets it go: a reply read that shares the
+// items' failed read would otherwise refetch on each mount and loop.
 function ReplyTurn<T>(props: {
 	reply: Selection<T | null | undefined>;
 	slots: RefObject<MessageSlots<T>>;
 	after: string | undefined;
+	// The items are painted, not here: no turn stands among painted messages.
+	painted: boolean;
 }) {
-	const { reply, slots, after } = props;
+	const { reply, slots, after, painted } = props;
 	const words = useWords();
 	const {
 		state: { form, value },
 		retry,
 	} = useFrameRead(reply, turnOf);
-	if (form === "none") return null;
+	if (painted || form === "none") return null;
 	const item = value as T | null | undefined;
 	// History holds the turn already: it draws it, so this one steps aside.
 	if (item != null && slots.current.key(item) === after) return null;
@@ -303,14 +307,14 @@ function Log<T>(props: {
 	// The newest turn, at the origin before the rest: a cell of its own, which
 	// draws nothing, gap included, while there is no turn being written.
 	const last = drawn.painted ? undefined : drawn.value.at(-1);
-	const reply =
-		thread.reply && (ended || !drawn.painted) ? (
-			<ReplyTurn
-				reply={thread.reply}
-				slots={slots}
-				after={last === undefined ? undefined : thread.message.key(last)}
-			/>
-		) : null;
+	const reply = thread.reply ? (
+		<ReplyTurn
+			reply={thread.reply}
+			slots={slots}
+			painted={drawn.painted && !ended}
+			after={last === undefined ? undefined : thread.message.key(last)}
+		/>
+	) : null;
 	const log = useRef<ScrollView>(null);
 	// The reader is scrolled up: the Latest act stands over the foot.
 	const [away, setAway] = useState(false);

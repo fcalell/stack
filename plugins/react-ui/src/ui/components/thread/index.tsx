@@ -165,19 +165,23 @@ const ThreadItem = memo(ThreadItemBase) as typeof ThreadItemBase;
 // The turn being written, from its own subscription to the reply: a chunk
 // renders this and nothing else in the thread. A stream that failed keeps its
 // partial message and says it stopped, with the frame's retry, which runs the
-// stream again.
+// stream again. It stays mounted whenever there is a reply, so the items'
+// fetch cycle never subscribes it or lets it go: a reply read that shares the
+// items' failed read would otherwise refetch on each mount and loop.
 function ReplyTurn<T>(props: {
 	reply: Selection<T | null | undefined>;
 	slots: RefObject<MessageSlots<T>>;
 	after: string | undefined;
+	// The items are painted, not here: no turn stands among painted messages.
+	painted: boolean;
 }) {
-	const { reply, slots, after } = props;
+	const { reply, slots, after, painted } = props;
 	const words = useWords();
 	const {
 		state: { form, value },
 		retry,
 	} = useFrameRead(reply, turnOf);
-	if (form === "none") return null;
+	if (painted || form === "none") return null;
 	if (form === "waiting") return <WaitingReply />;
 	const item = value as T | null | undefined;
 	// History holds the turn already: it draws it, so this one steps aside.
@@ -221,22 +225,24 @@ function messageAt<T>(
 
 // What follows the window: the waiting message and the turn being written,
 // which grow outside it, so a chunk never reaches the rows. They stand through
-// the items' failed form, which says nothing of a turn being written.
+// the items' failed form, which says nothing of a turn being written, and
+// hold back while the items are painted.
 function tailOf<T>(
 	props: ThreadProps<T>,
 	drawn: Drawn<readonly T[]>,
 	slots: RefObject<MessageSlots<T>>,
 	ended: boolean,
 ): ReactNode {
-	if (drawn.painted && !ended) return null;
+	const painted = drawn.painted && !ended;
 	const last = drawn.painted ? undefined : drawn.value.at(-1);
 	return (
 		<>
-			{props.replying ? <WaitingReply /> : null}
+			{props.replying && !painted ? <WaitingReply /> : null}
 			{props.reply ? (
 				<ReplyTurn
 					reply={props.reply}
 					slots={slots}
+					painted={painted}
 					after={last === undefined ? undefined : props.message.key(last)}
 				/>
 			) : null}

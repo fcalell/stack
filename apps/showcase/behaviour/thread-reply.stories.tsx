@@ -211,3 +211,64 @@ export const NoDoubleTurnWhenHistoryHoldsTheKey: StoryObj = {
 		started.end();
 	},
 };
+
+// The items and the reply are two selections of one read, and that read
+// fails. The frame's own fetch cycle (Retry's refetch, the waiting form it
+// passes through) never mounts or unmounts the reply's subscription, so each
+// Retry costs one fetch and the failed read does not resubscribe by itself.
+interface Session {
+	lines: Turn[];
+	streaming: Turn | null;
+}
+
+const fetches = { count: 0 };
+
+function OneFailedRead() {
+	const [session] = useState(() =>
+		read<Session>({
+			queryKey: ["thread-reply", "failed-session", made++],
+			queryFn: async () => {
+				fetches.count += 1;
+				throw new Error("The session read fails.");
+			},
+			retry: false,
+		}),
+	);
+	return (
+		<div style={{ display: "flex", flexDirection: "column", height: 480 }}>
+			<Place>
+				<Pane title="Assistant">
+					<Thread
+						items={session.at((s) => s.lines)}
+						reply={session.at((s) => s.streaming)}
+						message={{
+							key: (turn) => turn.id,
+							author: (turn) => turn.author,
+							body: (turn) => turn.body,
+						}}
+					/>
+				</Pane>
+			</Place>
+		</div>
+	);
+}
+
+export const AFailedReadSharedByItemsAndReplyFetchesOncePerRetry: StoryObj = {
+	render: () => <OneFailedRead />,
+	beforeEach: () => {
+		fetches.count = 0;
+	},
+	play: async ({ canvas, userEvent }) => {
+		await waitFor(() => expect(fetches.count).toBeGreaterThan(0));
+		// A loop would keep fetching on its own.
+		await new Promise((resolve) => setTimeout(resolve, 600));
+		await expect(fetches.count).toBe(1);
+		// The items' failed form and the reply's stopped line each offer Retry.
+		await canvas.findAllByRole("button", { name: "Retry" });
+		await userEvent.click(canvas.getAllByRole("button", { name: "Retry" })[0]);
+		await waitFor(() => expect(fetches.count).toBe(2));
+		await canvas.findAllByRole("button", { name: "Retry" });
+		await new Promise((resolve) => setTimeout(resolve, 600));
+		await expect(fetches.count).toBe(2);
+	},
+};

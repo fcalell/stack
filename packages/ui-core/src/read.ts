@@ -169,15 +169,17 @@ export function frameOf(held: Held): FrameState {
 export type TurnForm = "none" | "waiting" | "writing" | "written" | "stopped";
 
 export function turnOf(held: Held): { form: TurnForm; value: unknown } {
-	const value = held.drawn?.value;
+	// A painted selection holds a placeholder where its value would stand, and
+	// a read that failed before it ever loaded is painted: no turn to keep.
+	const value = held.drawn?.painted ? undefined : held.drawn?.value;
 	const root = held.reads?.[0];
 	const s = root && readState(root.result, root.missing);
 	if (s?.phase === "waiting") return { form: "waiting", value };
 	if (s?.phase === "failed" || s?.phase === "missing") {
 		return { form: "stopped", value };
 	}
-	// A selection holder draws its value only, and a painted or null one is no turn.
-	if (held.drawn?.painted || value == null) return { form: "none", value };
+	// A selection holder draws its value only, and a null one is no turn.
+	if (value == null) return { form: "none", value };
 	if (s?.stale) return { form: "stopped", value };
 	return { form: s?.streaming ? "writing" : "written", value };
 }

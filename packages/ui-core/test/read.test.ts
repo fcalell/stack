@@ -325,6 +325,16 @@ test("a turn whose stream failed, or whose refresh did, is stopped with its part
 	);
 });
 
+test("a stream that failed before it loaded keeps no placeholder as its partial value", () => {
+	assert.deepEqual(
+		turnOf({
+			drawn: { painted: true, value: { placeholder: true } },
+			reads: [root(failure)],
+		}),
+		{ form: "stopped", value: undefined },
+	);
+});
+
 test("a turn with no value, or a painted selection, is none; a real selection value is written", () => {
 	assert.equal(turnOf({ drawn: { painted: false, value: null } }).form, "none");
 	assert.equal(
