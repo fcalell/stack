@@ -103,6 +103,10 @@
 			"types": "./dist/settle.d.ts",
 			"default": "./dist/settle.js"
 		},
+		"./window": {
+			"types": "./dist/window.d.ts",
+			"default": "./dist/window.js"
+		},
 		"./streaming": {
 			"types": "./dist/streaming.d.ts",
 			"default": "./dist/streaming.js"
