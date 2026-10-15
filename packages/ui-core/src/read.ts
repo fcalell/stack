@@ -18,6 +18,8 @@ export interface ReadResult {
 	hasNextPage?: boolean;
 	// Supplied from the handle: the read is a stream still writing.
 	streamed?: boolean;
+	// An infinite read fetching its next page: the frame is not busy for it.
+	fetchingMore?: boolean;
 }
 
 // idle: not asked for yet. waiting: asked for, no answer. ready: real data.
@@ -58,7 +60,12 @@ export function readState(
 	const streaming = real && fetching && r.streamed === true;
 	return {
 		phase,
-		busy: fetching && phase !== "waiting" && phase !== "idle" && !streaming,
+		busy:
+			fetching &&
+			!r.fetchingMore &&
+			phase !== "waiting" &&
+			phase !== "idle" &&
+			!streaming,
 		stale: real && r.status === "error",
 		more: real && r.hasNextPage === true,
 		streaming,
@@ -66,54 +73,88 @@ export function readState(
 	};
 }
 
-// What a frame (a Pane, Section, Sheet or Form) holds: the read it is the root
-// holder of, and the value its collection or leaf draws, painted or real.
+// What a frame (a Pane, Section, Sheet or Form) holds: the read it is the
+// root holder of, and the value its collection or leaf draws, painted or real.
+// `more`: the drawn value is one page of several.
 export interface Held {
-	drawn?: { painted: boolean; value: unknown };
+	drawn?: { painted: boolean; value: unknown; more?: boolean };
 	root?: { result: ReadResult; missing: (e: unknown) => boolean };
 }
 
 // ready: the loaded tree, its leaves real. waiting: the loaded tree, its
-// leaves painted. idle: the same, the read not asked for yet. empty: the
-// answer holds nothing. failed, missing: the read ended.
+// leaves painted. still: the same, painted while the root is not asked for or
+// waits for a connection, so nothing is coming yet. empty: the answer holds
+// nothing. failed, missing: the read ended.
 export type FrameForm =
 	| "ready"
 	| "waiting"
-	| "idle"
+	| "still"
 	| "empty"
 	| "failed"
 	| "missing";
 
 export interface FrameState {
 	form: FrameForm;
-	// The length of a drawn list; undefined where none is drawn.
+	// The length of a drawn list; undefined where none is drawn, while it waits
+	// or stands still, and while more pages remain.
 	count: number | undefined;
 	// A refetch or a retry runs.
 	busy: boolean;
+	// The root's: the last refetch failed, or it waits for a connection. False
+	// for a holder that is a selection.
+	stale: boolean;
+	paused: boolean;
 }
 
 // The frame's form from what it holds, never from a value's change: only the
 // form, the count and busy move it.
 export function frameOf(held: Held): FrameState {
 	const s = held.root && readState(held.root.result, held.root.missing);
+	const busy = s?.busy ?? false;
+	const stale = s?.stale ?? false;
+	const paused = s?.paused ?? false;
 	if (s?.phase === "failed" || s?.phase === "missing") {
-		return { form: s.phase, count: undefined, busy: s.busy };
+		return { form: s.phase, count: undefined, busy, stale, paused };
 	}
 	if (!held.drawn) {
-		return { form: "ready", count: undefined, busy: s?.busy ?? false };
+		return { form: "ready", count: undefined, busy, stale, paused };
 	}
 	if (held.drawn.painted) {
 		return {
-			form: s?.phase === "idle" ? "idle" : "waiting",
+			form: s?.phase === "idle" || s?.paused ? "still" : "waiting",
 			count: undefined,
 			busy: false,
+			stale: false,
+			paused,
 		};
 	}
 	const v = held.drawn.value;
-	const count = Array.isArray(v) ? v.length : undefined;
+	const more = held.drawn.more === true;
+	const length = Array.isArray(v) ? v.length : undefined;
 	return {
-		form: v == null || count === 0 ? "empty" : "ready",
-		count,
-		busy: s?.busy ?? false,
+		form: (v == null || length === 0) && !more ? "empty" : "ready",
+		count: more ? undefined : length,
+		busy,
+		stale,
+		paused,
 	};
+}
+
+// The turn an app writes into a conversation, held by its own read: none
+// where nothing is being written, waiting for the first chunk, writing while
+// chunks arrive, written once it settles, stopped where the stream failed (or
+// a refresh of it did, the partial value kept).
+export type TurnForm = "none" | "waiting" | "writing" | "written" | "stopped";
+
+export function turnOf(held: Held): { form: TurnForm; value: unknown } {
+	const value = held.drawn?.value;
+	const s = held.root && readState(held.root.result, held.root.missing);
+	if (s?.phase === "waiting") return { form: "waiting", value };
+	if (s?.phase === "failed" || s?.phase === "missing") {
+		return { form: "stopped", value };
+	}
+	// A selection holder draws its value only, and a painted or null one is no turn.
+	if (held.drawn?.painted || value == null) return { form: "none", value };
+	if (s?.stale) return { form: "stopped", value };
+	return { form: s?.streaming ? "writing" : "written", value };
 }

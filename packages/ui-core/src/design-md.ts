@@ -147,7 +147,6 @@ const SIZE_USE: Record<(typeof SIZES)[number], string> = {
 	thumb: "a switch's knob",
 	"switch-inset": "the knob's inset from its track",
 	"switch-travel": "the knob's travel: the width less the knob and both insets",
-	skeleton: "a skeleton bar's height",
 	"icon-meta": "an icon beside meta or caption text",
 	icon: "an icon beside body text",
 	"icon-control": "an icon inside a control",

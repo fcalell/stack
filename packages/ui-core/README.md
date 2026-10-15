@@ -165,7 +165,7 @@ beside `theme`: the seven `Status` words, `recommended`, `copy`, `copied`, `down
 `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `checking`,
 `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `edit`, `details`, `places`,
 `notifications`, `code`, `added`, `removed`, `sort`, `message`,
-`copyFailed`, `downloadFailed`, `latest`, `missing`, `chooseFile`, `typeValue`,
+`copyFailed`, `downloadFailed`, `latest`, `missing`, `readFailed`, `readEmpty`, `readStale`, `readPaused`, `showMore`, `moreFailed`, `replyStopped`, `chooseFile`, `typeValue`,
 `pickValue`, `locked`, `photos`, `files`, `changed`, `unchanged`, `stale`, `chooseAll`,
 `chooseNone`, `noMatches`, `imageFiles`, `audioFiles`, `videoFiles`, `textFiles`, `expand`, `collapse`, `zoomIn`, `zoomOut`, `fit`, `arrange`, `off`, `notFound`, `nowhere`, `discardEdit`, `keepEditing`, `discard`, `editUnsaved`, the counted `earlierLines`, and the slot words `wrongType`, `stepOf`, `chosenOf` and
 `countOver`. A counted word is `{ one, other }`, each form spelling `{count}` where the number
@@ -317,7 +317,7 @@ title and acts), `target` 28 / 44 (the least hit area of any interactive part), 
 port's drawn size, over the dot), `chip` 22 /
 24, `avatar` 24 / 32, `spinner` 14 / 18 (the `icon` rung), `switch-w` 32 / 40, `switch-h` 18 / 24,
 `thumb` 14 / 20, `switch-inset` 2 / 2, `switch-travel` 14 / 16 (the thumb's travel, derived:
-`switch-w` less `thumb` and both insets), `skeleton` 12 / 12, `icon-meta` 14 / 14 (an icon beside
+`switch-w` less `thumb` and both insets), `icon-meta` 14 / 14 (an icon beside
 meta or caption text), `icon` 16 / 18 (beside body text), `icon-control` 18 / 20 (inside a control),
 `check` 18 / 20 (a checkbox's box), `track` 2 / 4 (a slider's track thickness), `otp` 44 / 48 (a
 one-time-code box, square), `text-area` 66 / 72 (a text area's least value height, derived: three
@@ -500,7 +500,7 @@ layout molecules, shared molecules, content molecules), each with its prop names
 (`draws`: a `FAMILIES` name for every cell of that family, `FAMILY.axis.value` for one of its cells,
 as `Text` draws `TEXT.role.body`, or a single-cell constant of `./variants`) and the states it has a
 form for (`states`, from `STATES`: `rest`, `hover`, `focus`, `active`, `disabled`, `loading`,
-`error`, `selected`, `empty`), the same in both plugins. Every family is drawn by at least one
+`error`, `selected`, `empty`, `busy`, `stale`, `paused`, `more`, `streaming`), the same in both plugins. Every family is drawn by at least one
 component, and a component that takes `loading` or `empty` lists that state.
 
 An entry with `platforms` ships on those platforms alone (`Canvas` is `["web"]`); one without ships on

@@ -14,7 +14,7 @@ export function useFrame(read?: Selection<unknown>) {
 	const { state, retry } = useFrameRead(read, frameOf);
 	return {
 		...state,
-		waits: state.form === "waiting" || state.form === "idle",
+		waits: state.form === "waiting" || state.form === "still",
 		holds: isRead(read),
 		retry,
 	};

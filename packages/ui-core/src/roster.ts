@@ -32,8 +32,9 @@ export const CLOSED_PROPS = [
 ] as const;
 
 // The states a component can be drawn in: the eight interaction states, plus
-// `empty` for a component with an empty form. The showcase draws each
-// component in exactly the states its entry lists.
+// `empty` for a component with an empty form, and the states a read puts a
+// frame or collection in: busy, stale, paused, more, streaming. The showcase
+// draws each component in exactly the states its entry lists.
 export const STATES = [
 	"rest",
 	"hover",
@@ -44,6 +45,11 @@ export const STATES = [
 	"error",
 	"selected",
 	"empty",
+	"busy",
+	"stale",
+	"paused",
+	"more",
+	"streaming",
 ] as const;
 export type State = (typeof STATES)[number];
 
@@ -253,14 +259,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				],
 				radii: ["full", "chip"],
 				spacing: ["inside"],
-				sizes: [
-					"dot",
-					"spinner",
-					"measure-short",
-					"skeleton",
-					"icon",
-					"icon-meta",
-				],
+				sizes: ["dot", "spinner", "measure-short", "icon", "icon-meta"],
 			},
 		},
 		Chip: {
@@ -510,7 +509,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				],
 				radii: ["full", "chip"],
 				spacing: ["pair", "fields", "card"],
-				sizes: ["target", "track", "thumb", "skeleton", "measure-short"],
+				sizes: ["target", "track", "thumb", "measure-short"],
 			},
 		},
 		Switch: {
@@ -867,7 +866,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				sizes: [
 					"icon",
 					"control-compact",
-					"skeleton",
 					"field",
 					"target",
 					"empty",
@@ -1289,7 +1287,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"measure-short",
 					"chip",
 					"control-compact",
-					"skeleton",
 					"figures",
 					"check",
 					"target",
@@ -1389,7 +1386,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"measure-short",
 					"measure",
 					"figures",
-					"skeleton",
 					"switch-w",
 					"switch-h",
 					"target",
@@ -1519,7 +1515,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				radii: ["control", "chip", "full"],
 				spacing: ["pair", "sections", "inside", "fields", "control-x"],
 				sizes: [
-					"skeleton",
 					"target",
 					"control",
 					"control-compact",
@@ -1890,7 +1885,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"icon-meta",
 					"chip",
 					"measure-short",
-					"skeleton",
 					"control-compact",
 				],
 			},
@@ -2102,7 +2096,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				],
 				radii: ["chip"],
 				spacing: ["sections", "pair", "fields", "inside", "control-x"],
-				sizes: ["measure", "icon", "skeleton"],
+				sizes: ["measure", "icon"],
 			},
 		},
 		// The frame Code, Diff and ProseDiff share; the head a strip-high bar, the
@@ -2147,14 +2141,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				],
 				radii: ["card", "control", "chip"],
 				spacing: ["tile", "acts", "float", "inside"],
-				sizes: [
-					"control",
-					"icon-control",
-					"strip",
-					"target",
-					"icon-meta",
-					"skeleton",
-				],
+				sizes: ["control", "icon-control", "strip", "target", "icon-meta"],
 			},
 		},
 		// Unified, long lines wrapped and hung one inset, at every width; `before`
@@ -2194,7 +2181,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				],
 				radii: ["card", "chip"],
 				spacing: ["inside", "rows", "control-x"],
-				sizes: ["figures", "skeleton"],
+				sizes: ["figures"],
 			},
 		},
 		ProseDiff: {
@@ -2221,7 +2208,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				],
 				radii: ["card", "chip"],
 				spacing: ["card"],
-				sizes: ["measure", "skeleton"],
+				sizes: ["measure"],
 			},
 		},
 		// A one-line row, its leading the row's slot, the path cut
@@ -2292,7 +2279,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"avatar",
 					"icon",
 					"figures",
-					"skeleton",
 					"measure-short",
 					"chip",
 					"icon-meta",
@@ -2344,7 +2330,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				],
 				radii: ["full", "chip"],
 				spacing: ["pair", "inside", "card"],
-				sizes: ["row", "chip", "dot", "measure-short", "skeleton"],
+				sizes: ["row", "chip", "dot", "measure-short"],
 			},
 		},
 		// The grid from tablet up, a cell cursor its keyboard; below tablet a List of
@@ -2480,7 +2466,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"spinner",
 					"control-compact",
 					"icon",
-					"skeleton",
 					"line-body",
 				],
 			},
@@ -2586,7 +2571,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				sizes: [
 					"target",
 					"icon-meta",
-					"skeleton",
 					"figures",
 					"chip",
 					"measure-short",
@@ -2742,7 +2726,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				],
 				radii: ["chip"],
 				spacing: ["pair", "inside", "card"],
-				sizes: ["meter", "track", "skeleton", "target"],
+				sizes: ["meter", "track", "target"],
 			},
 		},
 		// A known sequence with a position in it, top to bottom on a hairline
@@ -2839,7 +2823,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				],
 				radii: ["card", "chip"],
 				spacing: ["pair", "inside", "card"],
-				sizes: ["skeleton", "target"],
+				sizes: ["target"],
 			},
 		},
 		// One figure at the `display` role, its label under it (figure first, read
@@ -2860,7 +2844,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				colors: ["ink-body", "ink-meta", "skeleton"],
 				radii: ["chip"],
 				spacing: ["pair", "inside"],
-				sizes: ["skeleton"],
 			},
 		},
 		// A collection: columns over time in the chip marks, stacked by one
@@ -2916,7 +2899,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				colors: ["ink-body", "ink-meta", "edge", "skeleton", "chart-"],
 				radii: ["full", "chip"],
 				spacing: ["fields", "inside", "pair"],
-				sizes: ["chart", "dot", "skeleton", "figures", "measure-short"],
+				sizes: ["chart", "dot", "figures", "measure-short"],
 			},
 		},
 		// A collection: its Messages from `items` through the `message` map,
@@ -3107,7 +3090,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"measure-short",
 					"measure",
 					"spinner",
-					"skeleton",
 				],
 			},
 		},
