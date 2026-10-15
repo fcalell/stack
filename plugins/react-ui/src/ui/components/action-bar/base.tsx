@@ -137,7 +137,7 @@ export function ActionBarBase({
 	// a failure would draw in.
 	const reason = acts.findLast((act) => act.blocked !== undefined)?.blocked;
 	if (reason !== undefined && held !== reason) setHeld(reason);
-	const busy = running || acts.some((act) => act.loading);
+	const busy = running;
 	const lastAt = acts.length - 1;
 	// The tree holds the acts in drawn order, so Tab follows it: on touch the
 	// stack draws the filled act first.
@@ -175,20 +175,20 @@ export function ActionBarBase({
 			<div className={cn(ACTION_BAR_ACTS, ACTS[where])}>
 				{drawn.map(([act, at]) => {
 					const last = at === lastAt;
-					const loading = act.loading === true || (last && running);
+					const pending = last && running;
 					const run = last ? runFilled : act.onAct;
 					return (
 						<SubmitContext
 							key={act.label}
 							value={!ghost && last && pend !== undefined}
 						>
-							<ActInert value={ghost || (busy && !loading)}>
+							<ActInert value={ghost || (busy && !pending)}>
 								<ButtonBase
 									act={kindOf(act, last)}
 									fit={FIT[where]}
 									label={act.label}
 									onAct={run}
-									loading={loading}
+									pending={pending}
 									blocked={act.blocked}
 									painted={last && painted}
 								/>

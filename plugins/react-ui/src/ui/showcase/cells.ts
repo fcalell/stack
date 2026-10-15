@@ -34,6 +34,7 @@ const DRAWN_STATES = [
 	"rest",
 	"disabled",
 	"loading",
+	"pending",
 	"error",
 	"empty",
 	"selected",

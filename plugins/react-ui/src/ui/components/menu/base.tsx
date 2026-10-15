@@ -12,6 +12,7 @@ import {
 	text,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useState } from "react";
+import { useAct } from "../../lib/act.ts";
 import { arrowsOver } from "../../lib/arrows.ts";
 import { expandedTrigger, rememberOpener } from "../../lib/focus.ts";
 import { useQuietGuards } from "../../lib/guards.ts";
@@ -126,7 +127,8 @@ function Groups(props: {
 }
 
 // The more act named `label` and its acts, the touch sheet titled `title`:
-// a row's menu is titled with the row's name. `painted` is the trigger while
+// a row's menu is titled with the row's name. It holds its items' run, the
+// trigger drawn pending while one runs. `painted` is the trigger while
 // its data is not here: its box filled, inert, so nothing opens. Outside the
 // package's exports.
 export function MenuBase({
@@ -143,6 +145,8 @@ export function MenuBase({
 	const touch = useTouch();
 	const container = use(PortalContainer);
 	useQuietGuards();
+	const acting = useAct("toast");
+	const pending = acting.pending !== undefined;
 	const [open, setOpen] = useState(false);
 	const [sheet] = useState(() => Dialog.createHandle<unknown>());
 	if (touch) {
@@ -156,6 +160,7 @@ export function MenuBase({
 							fit="body"
 							label={label}
 							painted={painted}
+							pending={pending}
 						/>
 					}
 				/>
@@ -185,7 +190,7 @@ export function MenuBase({
 										if (item.blocked !== undefined) return;
 										rememberOpener(expandedTrigger(document));
 										setOpen(false);
-										item.onAct();
+										acting.run(true, item);
 									}}
 									className={cn(rowOf(item, false), BUTTON)}
 								>
@@ -207,6 +212,7 @@ export function MenuBase({
 						fit="bar"
 						label={label}
 						painted={painted}
+						pending={pending}
 					/>
 				}
 			/>
@@ -232,7 +238,7 @@ export function MenuBase({
 									label={item.label}
 									onClick={() => {
 										rememberOpener(expandedTrigger(document));
-										item.onAct();
+										acting.run(true, item);
 									}}
 									disabled={item.blocked !== undefined}
 									className={(state) => rowOf(item, state.highlighted)}

@@ -1,4 +1,5 @@
 import type { MenuItem } from "@fcalell/ui-core/descriptors";
+import { IconButtonBase } from "../../components/icon-button/base.tsx";
 import { MenuBase } from "../../components/menu/base.tsx";
 import { Menu } from "../../components/menu/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
@@ -56,6 +57,7 @@ const HIGHLIGHT = opener(true);
 // The trigger alone on its fit cells; the menu open
 // on its form cells (the popover on the desktop, the sheet on touch) and,
 // on the highlighted row cell, with the keyboard on its second row;
+// `pending` the trigger alone, pending as a chosen item's run draws it;
 // `PAINT.kind.control` the trigger beside its painted form.
 export function drawMenu(frame: ShowcaseFrame) {
 	if (isPaint(frame))
@@ -66,7 +68,16 @@ export function drawMenu(frame: ShowcaseFrame) {
 		);
 	const cell = frame.cell.name;
 	if (cell === "ICON_BUTTON.fit.bar" || cell === "ICON_BUTTON.fit.body")
-		return <Menu label="More" items={ITEMS} />;
+		return frame.state === "pending" ? (
+			<IconButtonBase
+				icon="Ellipsis"
+				fit={cell === "ICON_BUTTON.fit.bar" ? "bar" : "body"}
+				label="More"
+				pending
+			/>
+		) : (
+			<Menu label="More" items={ITEMS} />
+		);
 	if (cell === "MENU.form.popover" || cell === "MENU.form.sheet")
 		return (
 			<Stage contain={frame.density === "touch"} ready={OPEN}>

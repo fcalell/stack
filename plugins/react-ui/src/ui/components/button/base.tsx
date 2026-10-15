@@ -2,6 +2,7 @@ import { Button as BaseButton } from "@base-ui/react/button";
 import { cn } from "@fcalell/ui-core/cn";
 import { type ButtonAct, button, buttonLabel } from "@fcalell/ui-core/variants";
 import { use } from "react";
+import { useAct } from "../../lib/act.ts";
 import { ActInert, endSubmit, SubmitContext } from "../../lib/form.ts";
 import { PAINT_CONTROL } from "../../lib/paint.tsx";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
@@ -16,13 +17,18 @@ import { Reason } from "./reason.tsx";
 const STACK = "flex flex-col items-start gap-pair";
 const GLYPH = "shrink-0";
 const PENDING = "opacity-0";
+// Pending, the label and glyph fade out and the fill and spinner fade in once
+// `--act-delay` has run (`globals.css`).
+const FADE_OUT = "animate-act-out";
+const FADE_IN = "animate-act-in";
 // Painted, the act keeps its loaded box and draws none of its content.
 const HIDDEN = "invisible";
-const SPINNER_LAYER = "absolute inset-0 flex items-center justify-center";
+const SPINNER_LAYER =
+	"absolute inset-0 flex items-center justify-center rounded-[inherit]";
 
 const FILL_PENDING: Record<ButtonAct, string> = {
-	primary: "aria-busy:bg-act-accent-pending",
-	danger: "aria-busy:bg-act-danger-pending",
+	primary: "bg-act-accent-pending",
+	danger: "bg-act-danger-pending",
 	secondary: "",
 	destructive: "",
 	quiet: "",
@@ -47,14 +53,15 @@ const LABEL_BLOCKED: Record<ButtonAct, string> = {
 };
 
 // Pending and blocked both set aria-disabled, so one look is chosen: pending
-// over blocked, and neither takes the press.
-function lookOf(kind: ButtonAct, loading: boolean, muted: boolean): string {
-	if (loading) return FILL_PENDING[kind];
+// over blocked, and neither takes the press. A pending act keeps its rest box
+// until the delay has run, then the fill layer fades over it.
+function lookOf(kind: ButtonAct, pending: boolean, muted: boolean): string {
+	if (pending) return "";
 	if (muted) return BLOCKED[kind];
 	return PRESS[kind];
 }
 
-/** The act every Button renders. `ink` is the text class a quiet act draws in (a Banner's kind's ink, as its glyph does). `painted` is the act while its data is not here: its box filled, its content not drawn, inert. Outside the package's exports: a molecule that draws an act hands it its ink. */
+/** The act every Button renders; it holds its own run: inert and `aria-busy` at the press, the pending look after `ACT_DELAY`, a rejection drawn in a failed toast with Retry. `ink` is the text class a quiet act draws in (a Banner's kind's ink, as its glyph does). `painted` is the act while its data is not here: its box filled, its content not drawn, inert. `pending` is a host's state handed down (its handler returns nothing, so the act's own run never pends twice). `line` draws a rejection in a reason line under the act instead (the public Button standing alone). Outside the package's exports: a molecule that draws an act hands it its ink. */
 export function ButtonBase({
 	act,
 	fit,
@@ -63,29 +70,40 @@ export function ButtonBase({
 	count,
 	wait,
 	onAct,
-	loading,
+	failed,
 	blocked,
 	ink,
 	painted,
-}: ButtonProps & { ink?: string; painted?: boolean }) {
+	pending: given,
+	line,
+}: ButtonProps & {
+	ink?: string;
+	painted?: boolean;
+	pending?: boolean;
+	line?: boolean;
+}) {
 	const kind = act ?? "primary";
 	const muted = !painted && blocked !== undefined;
 	const { touched } = useTouched();
 	const host = use(ReasonHostContext);
 	const submits = use(SubmitContext);
+	// A host with a line of its own draws a rejection there; the public Button
+	// alone draws it under itself.
+	const acting = useAct(line && !host ? "line" : "toast");
+	const pending = given === true || acting.pending !== undefined;
 	// Inert beside a pending act: the blocked look and no press, no reason.
 	const waiting = wait !== undefined && wait > 0;
-	const inert = (use(ActInert) || waiting) && !loading;
+	const inert = (use(ActInert) || waiting) && !pending;
 	const [pressed, keep] = usePressed(blocked);
 	const said = muted && (pressed || touched);
-	const look = painted
-		? PAINT_CONTROL
-		: lookOf(kind, loading === true, muted || inert);
-	const labelLook = loading ? PENDING : (muted || inert) && LABEL_BLOCKED[kind];
+	const look = painted ? PAINT_CONTROL : lookOf(kind, pending, muted || inert);
+	const labelLook = pending
+		? FADE_OUT
+		: (muted || inert) && LABEL_BLOCKED[kind];
 	const quietInk = kind === "quiet" && ink;
 	const press = () => {
-		if (inert) return;
-		if (!muted) onAct?.();
+		if (inert || pending) return;
+		if (!muted) acting.run(true, { onAct: () => onAct?.(), failed });
 		else if (host) host.press();
 		else keep();
 	};
@@ -93,11 +111,11 @@ export function ButtonBase({
 	// the reason: aria-disabled is set by hand, and the caller's props win the merge.
 	const control = (
 		<BaseButton
-			disabled={loading}
+			disabled={pending}
 			focusableWhenDisabled
 			type={submits ? "submit" : "button"}
-			aria-disabled={loading || muted || inert || undefined}
-			aria-busy={loading || undefined}
+			aria-disabled={pending || muted || inert || undefined}
+			aria-busy={pending || undefined}
 			inert={painted || undefined}
 			onClick={(event) => {
 				endSubmit(submits, event);
@@ -106,7 +124,7 @@ export function ButtonBase({
 			className={cn(button({ act: kind, fit }), BOX, quietInk, look)}
 		>
 			{icon ? (
-				<span className={cn(GLYPH, loading && PENDING, painted && HIDDEN)}>
+				<span className={cn(GLYPH, pending && FADE_OUT, painted && HIDDEN)}>
 					<Icon name={icon} fit="control" />
 				</span>
 			) : null}
@@ -125,30 +143,45 @@ export function ButtonBase({
 				<span
 					className={cn(
 						GLYPH,
-						(loading || !waiting) && PENDING,
+						!waiting && PENDING,
+						pending && FADE_OUT,
 						painted && HIDDEN,
 					)}
 				>
 					<CountBase value={wait} inAct />
 				</span>
 			) : count !== undefined ? (
-				<span className={cn(GLYPH, loading && PENDING, painted && HIDDEN)}>
+				<span className={cn(GLYPH, pending && FADE_OUT, painted && HIDDEN)}>
 					<CountBase value={count} inAct />
 				</span>
 			) : null}
-			{loading ? (
-				<span className={SPINNER_LAYER}>
+			{pending ? (
+				<span className={cn(SPINNER_LAYER, FILL_PENDING[kind], FADE_IN)}>
 					<Spinner />
 				</span>
 			) : null}
 		</BaseButton>
 	);
-	// A host draws the reason on its own line.
-	if (!muted || host) return control;
+	// A host draws the reason, and a failure, on its own line. A blocked act's
+	// reason stands before a failure; paused is the wait for a connection, not
+	// a failure.
+	if (host) return control;
+	if (muted) {
+		return (
+			<div className={STACK}>
+				{control}
+				<Reason shown={said}>{blocked}</Reason>
+			</div>
+		);
+	}
+	const under = line ? acting.line : undefined;
+	if (under === undefined) return control;
 	return (
 		<div className={STACK}>
 			{control}
-			<Reason shown={said}>{blocked}</Reason>
+			<Reason shown failed={acting.holds || acting.pending === undefined}>
+				{under}
+			</Reason>
 		</div>
 	);
 }

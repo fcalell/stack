@@ -1,4 +1,5 @@
 import type { IconName } from "@fcalell/ui-core/descriptors";
+import { ACT_DELAY } from "@fcalell/ui-core/paint";
 import { type IconButtonFit, iconButton } from "@fcalell/ui-core/variants";
 import { Pressable } from "react-native";
 import { cn } from "../../lib/cn";
@@ -16,8 +17,9 @@ const OPEN = "bg-wash-press";
 // stack's own back, close, more, send and stop acts. No boundary at rest, the
 // press wash its ground (an open trigger's too); the glyph is in the meta
 // ink, the body ink under the press and while open, and the disabled ink in a
-// disabled place, which takes no wash. `painted` is the act while its data is
-// not here: its box filled, no glyph, inert.
+// disabled place, which takes no wash. `pending` is the act running: inert at
+// once, its glyph swapped for the spinner after `ACT_DELAY`. `painted` is the
+// act while its data is not here: its box filled, no glyph, inert.
 // Outside the package's exports.
 export function IconButtonBase({
 	icon,
@@ -25,7 +27,7 @@ export function IconButtonBase({
 	onAct,
 	fit,
 	disabled,
-	loading,
+	pending,
 	open,
 	expanded,
 	painted,
@@ -36,7 +38,7 @@ export function IconButtonBase({
 	fit?: IconButtonFit;
 	disabled?: boolean;
 	// The act is running: inert, its glyph swapped for the spinner, the rest ink kept.
-	loading?: boolean;
+	pending?: boolean;
 	open?: boolean;
 	// The act folds a branch: its state is the accessibility state, and the open wash (`open`)
 	// is not drawn for it.
@@ -44,28 +46,29 @@ export function IconButtonBase({
 	painted?: boolean;
 }) {
 	const shown = useShown(painted);
+	const drawn = useShown(pending, ACT_DELAY);
 	return (
 		<Pressable
 			accessibilityRole="button"
 			accessibilityLabel={label}
 			accessibilityState={{
-				disabled: disabled || loading,
-				busy: loading,
+				disabled: disabled || pending,
+				busy: pending,
 				expanded: expanded ?? open,
 			}}
-			disabled={disabled || loading}
+			disabled={disabled || pending}
 			onPress={onAct}
 			{...inertProps(painted === true)}
 			className={cn(
 				iconButton({ fit }),
 				BOX,
-				painted ? paintControl(shown) : !disabled && !loading && PRESS,
+				painted ? paintControl(shown) : !disabled && !pending && PRESS,
 				!painted && open && OPEN,
 			)}
 		>
 			{({ pressed }) => (
 				<Ink.Provider value={toneOf(pressed || open === true, disabled)}>
-					{painted ? null : loading ? (
+					{painted ? null : drawn ? (
 						<Spinner />
 					) : (
 						<Icon name={icon} fit="control" />

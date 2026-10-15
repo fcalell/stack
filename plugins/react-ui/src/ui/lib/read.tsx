@@ -3,7 +3,7 @@ import { isRead, useFrameRead } from "@fcalell/plugin-api/tanstack-query";
 import type { Act } from "@fcalell/ui-core/descriptors";
 import { frameOf } from "@fcalell/ui-core/read";
 import type { ReactNode } from "react";
-import { Button } from "../components/button/index.tsx";
+import { ButtonBase } from "../components/button/base.tsx";
 import { MissingBase } from "../components/missing/base.tsx";
 import { Spinner } from "../components/spinner/index.tsx";
 import { Text } from "../components/text/index.tsx";
@@ -39,7 +39,7 @@ export function FrameBody(props: {
 				fit={fit}
 				tone="failed"
 				sentence={failed ?? words.readFailed}
-				act={{ label: words.retry, onAct: frame.retry, loading: frame.busy }}
+				act={{ label: words.retry, onAct: frame.retry }}
 			/>
 		);
 	}
@@ -86,12 +86,12 @@ export function StateLine(props: {
 		<div className={flow ? LINE_IN_FLOW : LINE}>
 			<Text role="meta">{sentence}</Text>
 			{act ? (
-				<Button
+				<ButtonBase
 					act="quiet"
 					fit="bar"
 					label={act.label}
 					onAct={act.onAct}
-					loading={act.loading}
+					failed={act.failed}
 				/>
 			) : null}
 		</div>
@@ -114,7 +114,7 @@ export function FrameLine({
 			<StateLine
 				flow={flow}
 				sentence={words.readStale}
-				act={{ label: words.retry, onAct: frame.retry, loading: frame.busy }}
+				act={{ label: words.retry, onAct: frame.retry }}
 			/>
 		);
 	}

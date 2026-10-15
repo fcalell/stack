@@ -35,8 +35,6 @@ export interface Act extends ActBase {
 	label: string;
 	// Why the act cannot run (a sentence; wraps).
 	blocked?: string;
-	// @deprecated removed in phase 4 U2
-	loading?: boolean;
 	destructive?: boolean;
 	// A quiet act: words in the meta ink with no hairline (a resend). An
 	// `ActionBar` draws it so unless it is the bar's filled act.
@@ -51,14 +49,11 @@ export interface LinkAct {
 	href: Route;
 }
 
-// An icon-only act: the label is its accessible name, never drawn. `loading`
-// is an `Act`'s: the act is running, inert, its glyph swapped for the spinner.
+// An icon-only act: the label is its accessible name, never drawn.
 export interface IconAct extends ActBase {
 	icon: IconName;
 	// The act's accessible name (a short phrase; read aloud, never drawn).
 	label: string;
-	// @deprecated removed in phase 4 U2
-	loading?: boolean;
 }
 
 // A model-written name: typographic quotes around it, drawn in the slot's own

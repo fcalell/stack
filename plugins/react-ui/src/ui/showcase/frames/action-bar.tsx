@@ -3,6 +3,7 @@ import type { ActionBarFit } from "@fcalell/ui-core/variants";
 import { ActionBar } from "../../components/action-bar/index.tsx";
 import { Text } from "../../components/text/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
+import { hang, Pressed } from "./pending.tsx";
 import { Column } from "./place.tsx";
 import { Publish } from "./table.tsx";
 
@@ -55,7 +56,7 @@ const LOGIN: Drawn = {
 // A sheet's footer by default; the danger cell a confirm's, the destructive
 // cell a destructive secondary beside the filled act, the full fit and the
 // field fit a login's one act, the meta cell a selection bar's count over a
-// list. `loading` draws the filled act pending, `disabled` it blocked with
+// list. `pending` presses the filled act into one that never settles, `disabled` it blocked with
 // its reason at rest under the acts. A bar whose data is not here paints in a
 // Form's or a Sheet's drawer, where the frame's read waits.
 function drawnOf(cell: string): Drawn {
@@ -120,7 +121,7 @@ export function Swaps() {
 
 export function drawActionBar(frame: ShowcaseFrame) {
 	// The meta cell is the selection count: a publish page's bar docked at
-	// its foot, the act pending in `loading` and blocked in `disabled`.
+	// its foot, the act pending in `pending` and blocked in `disabled`.
 	if (frame.cell.name === "TEXT.role.meta") {
 		const page = <Publish state={frame.state} />;
 		return <Column>{page}</Column>;
@@ -132,11 +133,12 @@ export function drawActionBar(frame: ShowcaseFrame) {
 			? act
 			: {
 					...act,
-					loading: frame.state === "loading",
+					onAct: frame.state === "pending" ? hang : act.onAct,
 					blocked: frame.state === "disabled" ? reason : undefined,
 				},
 	);
 	const bar = <ActionBar fit={fit} acts={drawn} />;
+	if (frame.state === "pending") return <Pressed>{bar}</Pressed>;
 	if (frame.cell.name === "BUTTON.fit.body" && frame.state === "rest")
 		return (
 			<div className="flex flex-col gap-sections">

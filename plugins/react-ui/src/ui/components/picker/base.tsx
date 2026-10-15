@@ -42,6 +42,7 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { useAct } from "../../lib/act.ts";
 import { arrowsOver } from "../../lib/arrows.ts";
 import type { CellFit } from "../../lib/field.ts";
 import { expandedTrigger, rememberOpener } from "../../lib/focus.ts";
@@ -55,7 +56,6 @@ import { Chip } from "../chip/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { Input } from "../input/index.tsx";
 import { SheetBase } from "../sheet/base.tsx";
-import { Spinner } from "../spinner/index.tsx";
 import { StatusDot } from "../status/dot.tsx";
 import { Status } from "../status/index.tsx";
 import type { PickerProps, PickOneProps, PickSeveralProps } from "./index.tsx";
@@ -263,7 +263,7 @@ function OptionText(props: {
 
 // The act that ends the list under a hairline: its glyph and label on a row,
 // washed under the pointer and the press; it closes the list as it runs.
-// Pending, its glyph is the spinner and the press does nothing.
+// It holds its own run past the list's close: a rejection toasts with Retry.
 function PickAct(props: {
 	act: IconAct;
 	// The act stands in the popover: rounded at the control's inset, as its options.
@@ -272,23 +272,21 @@ function PickAct(props: {
 	onFocus?: () => void;
 }) {
 	const { act } = props;
+	const acting = useAct("toast");
 	return (
 		<div className={cn(HAIRLINE, ACT_SLOT)}>
 			<button
 				type="button"
 				onFocus={props.onFocus}
-				aria-disabled={act.loading || undefined}
-				aria-busy={act.loading || undefined}
 				onClick={() => {
-					if (act.loading) return;
 					rememberOpener(expandedTrigger(document));
 					props.done();
-					act.onAct();
+					acting.run(true, act);
 				}}
 				className={cn(row(), props.popover && OPTION_ROW, ACT_ROW)}
 			>
 				<span className={ACT_GLYPH}>
-					{act.loading ? <Spinner /> : <Icon name={act.icon} />}
+					<Icon name={act.icon} />
 				</span>
 				<span className={cn(text({ role: "body" }), LINE)}>{act.label}</span>
 			</button>

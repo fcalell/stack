@@ -19,6 +19,7 @@ import { itemsAt } from "../waiting.ts";
 import { Paged } from "./more.tsx";
 import { key, Stage } from "./overlay-stage.tsx";
 import { isPaint } from "./painted.tsx";
+import { hang, Pressed } from "./pending.tsx";
 import { Column } from "./place.tsx";
 
 const act = () => {};
@@ -294,15 +295,14 @@ function Tasks(props: {
 			chosen.length === 1
 				? "Publish 1 change"
 				: `Publish ${chosen.length} changes`,
-		onAct: act,
-		loading: props.publish === "loading",
+		onAct: props.publish === "pending" ? hang : act,
 		blocked: chosen.length === 0 ? "Choose a change to publish." : undefined,
 	};
 	// The rows that can be chosen: the held one cannot, so `of` counts the rest.
 	// `onAll` clears the rows, and chooses them all below `tablet` of the page,
 	// where the table draws no head tick.
 	const tickable = shown.filter((task) => task.id !== "purge");
-	const foot = publishing ? (
+	const bar = (
 		<ActionBar
 			chosen={{
 				count: chosen.length,
@@ -312,7 +312,11 @@ function Tasks(props: {
 			}}
 			acts={[publishAct]}
 		/>
-	) : undefined;
+	);
+	let foot: ReactNode;
+	if (props.publish === "pending")
+		foot = <Pressed label={publishAct.label}>{bar}</Pressed>;
+	else if (publishing) foot = bar;
 	const actions = publishing
 		? undefined
 		: [{ icon: "Plus" as const, label: "New task", onAct: act }];

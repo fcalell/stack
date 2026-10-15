@@ -16,7 +16,7 @@ import { Fragment, useMemo, useRef, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { useTouch } from "../../lib/media.ts";
 import { useWords } from "../../lib/words.tsx";
-import { Button } from "../button/index.tsx";
+import { ButtonBase } from "../button/base.tsx";
 import { Group } from "../group/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
@@ -185,14 +185,14 @@ export function Rules<V extends string | null = string>({
 		/>
 	);
 	const act = add ? (
-		<Button
+		<ButtonBase
 			act="secondary"
 			fit="bar"
 			icon="Plus"
 			label={add.label}
 			onAct={add.onAct}
 			blocked={add.blocked}
-			loading={add.loading}
+			failed={add.failed}
 		/>
 	) : null;
 	if (touch)

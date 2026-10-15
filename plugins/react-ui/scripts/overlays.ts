@@ -10,6 +10,11 @@ export const OVERLAYS: readonly string[] = [
 	"wrap-normal",
 	// Button, IconButton
 	"*:invisible",
+	"animate-act-in",
+	"animate-act-out",
+	"bg-act-accent-pending",
+	"bg-act-danger-pending",
+	"rounded-[inherit]",
 	"relative",
 	"absolute",
 	"inset-0",

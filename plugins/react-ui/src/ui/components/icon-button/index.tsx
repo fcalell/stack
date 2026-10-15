@@ -1,5 +1,6 @@
 import type { IconName } from "@fcalell/ui-core/descriptors";
 import type { IconButtonFit } from "@fcalell/ui-core/variants";
+import { useAct } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
 import { IconButtonBase } from "./base.tsx";
 
@@ -11,27 +12,28 @@ export interface IconButtonProps extends Closed {
 	fit?: IconButtonFit;
 	/** The act's accessible name (a short phrase; read aloud, never drawn). */
 	label: string;
-	/** Runs the act. */
-	onAct: () => void;
-	/** The act is running: inert, its glyph swapped for a spinner, its size and name kept. */
-	loading?: boolean;
+	/** Runs the act. A promise it returns holds the act pending until it settles: inert at the press, then (after `ACT_DELAY`) its glyph swapped for a spinner, its size and name kept. A rejection raises a failed toast with Retry. */
+	onAct: () => unknown;
+	/** The act's own sentence for a rejection the server gives no refusal for. */
+	failed?: string;
 }
 
-/** A square act with no boundary at rest; the wash is its ground. Inside a disabled field it is inert and keeps focus. */
+/** A square act with no boundary at rest; the wash is its ground. Inside a disabled field it is inert and keeps focus. It holds its own run. */
 export function IconButton({
 	icon,
 	fit,
 	label,
 	onAct,
-	loading,
+	failed,
 }: IconButtonProps) {
+	const acting = useAct("toast");
 	return (
 		<IconButtonBase
 			icon={icon}
 			fit={fit}
 			label={label}
-			loading={loading}
-			onClick={onAct}
+			pending={acting.pending !== undefined}
+			onClick={() => acting.run(true, { onAct, failed })}
 		/>
 	);
 }

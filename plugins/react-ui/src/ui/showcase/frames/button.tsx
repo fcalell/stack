@@ -5,6 +5,7 @@ import { Button, type ButtonProps } from "../../components/button/index.tsx";
 import { TouchedContext } from "../../lib/touched.ts";
 import type { ShowcaseFrame } from "../cells.ts";
 import { beside, isPaint } from "./painted.tsx";
+import { hang, Pressed } from "./pending.tsx";
 
 const act = () => {};
 const LABEL: Record<ButtonAct, string> = {
@@ -29,7 +30,7 @@ const COUNTED: ButtonProps = {
 // `BUTTON.act.<act>` draws that act at the body fit, `BUTTON.fit.<fit>` the
 // primary act at that fit, `ICON.fit.control` the primary act with its
 // glyph; `BUTTON.fit.bar` adds the counted act beside it (the `COUNT_LABEL` cell);
-// `loading` passes `loading`. `disabled` draws the blocked act twice, as the
+// `pending` presses them into an act that never settles. `disabled` draws the blocked act twice, as the
 // board's two columns: before it is pressed, then in a touched form with its
 // reason shown. The `BUTTON_LABEL` cells are drawn inside every button.
 // `PAINT.kind.control` draws the filled act beside its painted form, the box
@@ -55,16 +56,19 @@ export function drawButton(frame: ShowcaseFrame) {
 		label: glyph ? "New project" : LABEL[kind],
 	};
 	const acts = fit === "bar" ? [own, COUNTED] : [own];
+	if (frame.state === "pending")
+		return (
+			<Pressed>
+				{acts.map((props) => (
+					<Button key={props.label} {...props} onAct={hang} />
+				))}
+			</Pressed>
+		);
 	if (frame.state !== "disabled")
 		return (
 			<>
 				{acts.map((props) => (
-					<Button
-						key={props.label}
-						{...props}
-						onAct={act}
-						loading={frame.state === "loading"}
-					/>
+					<Button key={props.label} {...props} onAct={act} />
 				))}
 			</>
 		);

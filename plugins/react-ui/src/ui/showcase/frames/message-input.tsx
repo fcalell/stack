@@ -8,6 +8,7 @@ import { MessageInput } from "../../components/message-input/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { SCREEN } from "./image.tsx";
 import { Wide } from "./layout-context.tsx";
+import { hang, Pressed } from "./pending.tsx";
 
 const act = () => {};
 const PLACEHOLDER = "Ask about this project";
@@ -121,12 +122,11 @@ function Rest(props: { cell: string }) {
 		return (
 			<>
 				<Live notice={UPGRADE} />
-				<Live
-					notice={{
-						...UPGRADE,
-						act: { label: "Upgrade", onAct: act, loading: true },
-					}}
-				/>
+				<Pressed label="Upgrade">
+					<Live
+						notice={{ ...UPGRADE, act: { label: "Upgrade", onAct: hang } }}
+					/>
+				</Pressed>
 			</>
 		);
 	if (cell.startsWith("CHIP") || cell === "ICON.fit.meta")

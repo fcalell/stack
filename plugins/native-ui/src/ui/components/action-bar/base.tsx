@@ -137,7 +137,7 @@ export function ActionBarBase({
 	const [held, setHeld] = useState<string>();
 	const { leave } = useTouched();
 	if (reason !== undefined && held !== reason) setHeld(reason);
-	const busy = running || acts.some((act) => act.loading);
+	const busy = running;
 	const lastAt = acts.length - 1;
 	const runFilled = () => {
 		// The press ends the form's edit before the act runs, so an act that
@@ -173,7 +173,7 @@ export function ActionBarBase({
 				<View className={cn(ACTION_BAR_ACTS, ACTS)}>
 					{acts.map((act, at) => {
 						const last = at === lastAt;
-						const loading = act.loading === true || (last && running);
+						const pending = last && running;
 						const run = last ? runFilled : act.onAct;
 						return (
 							<ButtonBase
@@ -181,8 +181,8 @@ export function ActionBarBase({
 								act={kindOf(act, last)}
 								fit={FIT[where]}
 								label={act.label}
-								onAct={ghost || (busy && !loading) ? undefined : run}
-								loading={loading}
+								onAct={ghost || (busy && !pending) ? undefined : run}
+								pending={pending}
 								blocked={act.blocked}
 								painted={last && painted}
 							/>

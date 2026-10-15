@@ -289,7 +289,7 @@ function ActButton(props: {
 				fit="bar"
 				label={act.label}
 				onAct={act.onAct}
-				loading={act.loading}
+				failed={act.failed}
 				blocked={act.blocked}
 			/>
 		</ReasonHostContext.Provider>

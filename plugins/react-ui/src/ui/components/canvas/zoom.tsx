@@ -2,7 +2,7 @@ import { cn } from "@fcalell/ui-core/cn";
 import type { Act } from "@fcalell/ui-core/descriptors";
 import { CANVAS_ZOOM } from "@fcalell/ui-core/variants";
 import { useWords } from "../../lib/words.tsx";
-import { Button } from "../button/index.tsx";
+import { ButtonBase } from "../button/base.tsx";
 import { IconButtonBase } from "../icon-button/base.tsx";
 import { EXTENT } from "./view.ts";
 import { useViewportValue, type Viewport } from "./viewport.ts";
@@ -88,13 +88,13 @@ export function ActFoot({ act }: { act: Act }) {
 	return (
 		<div data-no-pan className={FOOT}>
 			<div data-clear="bottom" className={cn(CANVAS_ZOOM, ACT)}>
-				<Button
+				<ButtonBase
 					act="quiet"
 					fit="body"
 					label={act.label}
 					onAct={act.onAct}
 					blocked={act.blocked}
-					loading={act.loading}
+					failed={act.failed}
 				/>
 			</div>
 		</div>

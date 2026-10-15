@@ -5,20 +5,21 @@ import { useEffect, useState } from "react";
 import { Text as RNText } from "react-native";
 
 /**
- * Whether a paint shows yet: false for `WAIT_DELAY` after `on` turns true (one
- * timer, only while painted), so a read the server answers at once paints
- * nothing. The phone's fill snaps in; the web fades.
+ * Whether a paint shows yet: false for `delay` (`WAIT_DELAY`; an act's is
+ * `ACT_DELAY`) after `on` turns true (one timer, only while painted), so a read
+ * the server answers at once paints nothing. The phone's fill snaps in; the
+ * web fades.
  */
-export function useShown(on = true): boolean {
+export function useShown(on = true, delay = WAIT_DELAY): boolean {
 	const [shown, setShown] = useState(false);
 	useEffect(() => {
 		if (!on) {
 			setShown(false);
 			return undefined;
 		}
-		const timer = setTimeout(() => setShown(true), WAIT_DELAY);
+		const timer = setTimeout(() => setShown(true), delay);
 		return () => clearTimeout(timer);
-	}, [on]);
+	}, [on, delay]);
 	return on && shown;
 }
 

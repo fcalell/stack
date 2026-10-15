@@ -153,7 +153,7 @@ export function Section({
 				fit="bar"
 				label={given.label}
 				onAct={given.onAct}
-				loading={given.loading}
+				failed={given.failed}
 			/>
 		);
 	else if (given !== undefined)
@@ -164,7 +164,7 @@ export function Section({
 					fit="bar"
 					label={given.label}
 					onAct={given.onAct}
-					loading={given.loading}
+					failed={given.failed}
 					blocked={given.blocked}
 					painted={frame.waits}
 				/>

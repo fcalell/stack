@@ -20,7 +20,7 @@ import type { Closed } from "../../lib/closed.ts";
 import { useReducedMotion } from "../../lib/media.ts";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
-import { Button } from "../button/index.tsx";
+import { ButtonBase } from "../button/base.tsx";
 import { Reason } from "../button/reason.tsx";
 import { Spinner } from "../spinner/index.tsx";
 
@@ -119,11 +119,11 @@ export function PendingBar({ sentence, until, act }: PendingBarProps) {
 				</div>
 				{act ? (
 					<ReasonHostContext value={host}>
-						<Button
+						<ButtonBase
 							act="secondary"
 							label={act.label}
 							onAct={act.onAct}
-							loading={act.loading}
+							failed={act.failed}
 							blocked={blocked}
 						/>
 					</ReasonHostContext>

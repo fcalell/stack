@@ -5,7 +5,7 @@ import { frameOf } from "@fcalell/ui-core/read";
 import { text } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
 import { Text as RNText, View } from "react-native";
-import { Button } from "../components/button";
+import { ButtonBase } from "../components/button/base";
 import { MissingBase } from "../components/missing/base";
 import { Spinner } from "../components/spinner";
 import { cn } from "./cn";
@@ -47,7 +47,7 @@ export function FrameBody(props: {
 				fit={fit}
 				tone="failed"
 				sentence={failed ?? words.readFailed}
-				act={{ label: words.retry, onAct: frame.retry, loading: frame.busy }}
+				act={{ label: words.retry, onAct: frame.retry }}
 			/>
 		);
 	}
@@ -93,12 +93,12 @@ export function StateLine(props: {
 				{sentence}
 			</RNText>
 			{act ? (
-				<Button
+				<ButtonBase
 					act="quiet"
 					fit="bar"
 					label={act.label}
 					onAct={act.onAct}
-					loading={act.loading}
+					failed={act.failed}
 				/>
 			) : null}
 		</View>
@@ -123,7 +123,7 @@ export function FrameLine({
 			<StateLine
 				flow={flow}
 				sentence={words.readStale}
-				act={{ label: words.retry, onAct: frame.retry, loading: frame.busy }}
+				act={{ label: words.retry, onAct: frame.retry }}
 			/>
 		);
 	}

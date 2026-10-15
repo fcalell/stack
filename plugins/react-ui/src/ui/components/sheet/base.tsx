@@ -237,7 +237,7 @@ export function SheetBase({
 						fit="bar"
 						label={submit.label}
 						onAct={runSubmit}
-						loading={submit.loading === true || running}
+						pending={running}
 						blocked={submit.blocked}
 						painted={frame.waits}
 					/>

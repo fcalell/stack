@@ -82,7 +82,7 @@ export function Banner({ kind, sentence, act }: BannerProps) {
 							banner={INKS[drawn]}
 							label={act.label}
 							onAct={act.onAct}
-							loading={act.loading}
+							failed={act.failed}
 							blocked={act.blocked}
 						/>
 					</View>

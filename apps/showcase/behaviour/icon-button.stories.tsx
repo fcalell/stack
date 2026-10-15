@@ -9,24 +9,27 @@ export default {
 	render: () => (
 		<>
 			<IconButton icon="RefreshCw" label="Rest" onAct={onAct} />
-			<IconButton icon="RefreshCw" label="Fetch now" onAct={onAct} loading />
+			<IconButton
+				icon="RefreshCw"
+				label="Fetch now"
+				onAct={() => new Promise(() => {})}
+			/>
 		</>
 	),
 } satisfies Meta;
 
 // A running icon act is inert and busy, keeps the square of a resting one, and
-// swaps its glyph for the spinner.
-export const Loading: StoryObj = {
+// takes no second press. Its glyph gives way to the spinner after the act delay
+// (the act stories).
+export const Running: StoryObj = {
 	play: async ({ canvas, userEvent }) => {
 		onAct.mockClear();
 		const rest = canvas.getByRole("button", { name: "Rest" });
 		const running = canvas.getByRole("button", { name: "Fetch now" });
+		await expect(rest).not.toHaveAttribute("aria-busy");
+		await userEvent.click(running);
 		await expect(running).toHaveAttribute("aria-busy", "true");
 		await expect(running).toHaveAttribute("aria-disabled", "true");
-		await expect(rest).not.toHaveAttribute("aria-busy");
-		await expect(running.querySelector("svg")).toBeNull();
-		await userEvent.click(running);
-		await expect(onAct).not.toHaveBeenCalled();
 		const size = rest.getBoundingClientRect();
 		const held = running.getBoundingClientRect();
 		await expect(held.width).toBe(size.width);

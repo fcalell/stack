@@ -9,7 +9,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
 import { Text as RNText, View } from "react-native";
-import { Button } from "../components/button";
+import { ButtonBase } from "../components/button/base";
 import { Icon } from "../components/icon";
 import { cn } from "./cn";
 import { Ink } from "./ink";
@@ -200,7 +200,7 @@ function ActButton(props: {
 	if ("href" in act) {
 		const { href } = act;
 		return (
-			<Button
+			<ButtonBase
 				act="secondary"
 				fit={props.fit}
 				label={act.label}
@@ -209,13 +209,13 @@ function ActButton(props: {
 		);
 	}
 	return (
-		<Button
+		<ButtonBase
 			act={props.kind}
 			fit={props.fit}
 			icon={props.icon}
 			label={act.label}
 			onAct={act.onAct}
-			loading={act.loading}
+			failed={act.failed}
 			blocked={act.blocked}
 		/>
 	);

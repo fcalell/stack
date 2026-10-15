@@ -27,7 +27,6 @@ export default function Notes() {
 	const add: Act = {
 		label: "Add",
 		blocked: title.trim() ? undefined : "Give the note a title.",
-		loading: create.isPending,
 		onAct: () =>
 			create.mutateAsync({ title }).then(
 				() => setOpen(false),

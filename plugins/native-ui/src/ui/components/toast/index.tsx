@@ -26,7 +26,7 @@ import { curve } from "../../lib/motion";
 import { RaisedGround } from "../../lib/raised";
 import { dismissToast, ToastEntry } from "../../lib/toast";
 import { useWords } from "../../lib/words";
-import { Button } from "../button";
+import { ButtonBase } from "../button/base";
 import { Icon } from "../icon";
 import { IconButtonBase } from "../icon-button/base";
 
@@ -98,12 +98,12 @@ export function Toast({ sentence, state, act }: ToastProps) {
 				</RNText>
 				{act ? (
 					<View className={ACT}>
-						<Button
+						<ButtonBase
 							act="secondary"
 							fit="bar"
 							label={act.label}
-							onAct={() => void act.onAct()}
-							loading={act.loading}
+							onAct={act.onAct}
+							failed={act.failed}
 							blocked={act.blocked}
 						/>
 					</View>

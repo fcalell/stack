@@ -32,7 +32,7 @@ import { Ink } from "../../lib/ink";
 
 import { ReasonHostContext, usePressed } from "../../lib/reason";
 import { useTouched } from "../../lib/touched";
-import { Button } from "../button";
+import { ButtonBase } from "../button/base";
 import { Spinner } from "../spinner";
 
 const TRACK = "relative flex-row items-center min-w-0 overflow-hidden";
@@ -135,11 +135,11 @@ export function PendingBar({ sentence, until, act }: PendingBarProps) {
 				</View>
 				{act ? (
 					<ReasonHostContext.Provider value={host}>
-						<Button
+						<ButtonBase
 							act="secondary"
 							label={act.label}
 							onAct={act.onAct}
-							loading={act.loading}
+							failed={act.failed}
 							blocked={blocked}
 						/>
 					</ReasonHostContext.Provider>

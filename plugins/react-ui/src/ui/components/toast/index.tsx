@@ -11,7 +11,7 @@ import { use } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { ToastEntry } from "../../lib/toast.ts";
 import { useWords } from "../../lib/words.tsx";
-import { Button } from "../button/index.tsx";
+import { ButtonBase } from "../button/base.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButtonBase } from "../icon-button/base.tsx";
 
@@ -71,12 +71,12 @@ export function Toast({ sentence, state, act }: ToastProps) {
 			</Control.Title>
 			{act ? (
 				<span className={ACT}>
-					<Button
+					<ButtonBase
 						act="secondary"
 						fit="bar"
 						label={act.label}
-						onAct={() => void act.onAct()}
-						loading={act.loading}
+						onAct={act.onAct}
+						failed={act.failed}
 						blocked={act.blocked}
 					/>
 				</span>

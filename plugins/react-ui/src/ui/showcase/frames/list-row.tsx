@@ -20,6 +20,7 @@ import { ago } from "../ago.ts";
 import type { DrawnState, ShowcaseFrame } from "../cells.ts";
 import { itemsAt } from "../waiting.ts";
 import { isPaint } from "./painted.tsx";
+import { hang, Pressed } from "./pending.tsx";
 
 const act = () => {};
 
@@ -341,7 +342,7 @@ const STEPS: Step[] = [
 		id: "review",
 		title: "Invoice export",
 		meta: ["Implementation", "Ben Kaya"],
-		act: { label: "Request review", onAct: act, loading: true },
+		act: { label: "Request review", onAct: hang },
 	},
 	{
 		id: "release",
@@ -563,8 +564,7 @@ const IMPORT_ROW: RowSlots<Import> = {
 	steps: (run) => run.steps,
 	act: (run) => ({
 		label: "Import",
-		onAct: act,
-		loading: run.steps !== undefined,
+		onAct: run.steps !== undefined ? hang : act,
 	}),
 	more: () => MORE,
 };
@@ -766,20 +766,32 @@ interface Part {
 // Each part's painted rows come from a read of its own that never answers.
 let parts = 0;
 
-function part<T>(items: () => T[], row: RowSlots<T>): Part {
+function part<T>(
+	items: () => T[],
+	row: RowSlots<T>,
+	// The label of the act the part holds pending: pressed once drawn, into an
+	// act that never settles.
+	pressed?: string,
+): Part {
 	const key = `list-row/part/${parts++}`;
 	return {
 		draw: (state, pair) => {
 			const all = items();
+			const held = (drawn: ReactNode) =>
+				pressed === undefined ? (
+					drawn
+				) : (
+					<Pressed label={pressed}>{drawn}</Pressed>
+				);
 			if (state === "loading" || (pair && state === "rest"))
-				return (
+				return held(
 					<>
 						<List items={itemsAt(key, "loading", all)} row={row} />
 						{pair ? <List items={all} row={row} /> : null}
-					</>
+					</>,
 				);
 			const first = all[0];
-			return (
+			return held(
 				<List
 					items={all}
 					row={
@@ -787,7 +799,7 @@ function part<T>(items: () => T[], row: RowSlots<T>): Part {
 							? { ...row, selected: (item) => item === first }
 							: row
 					}
-				/>
+				/>,
 			);
 		},
 	};
@@ -808,14 +820,14 @@ const PARTS = {
 			<div className="w-[335px] max-w-full">{WORK_PART.draw(state, pair)}</div>
 		),
 	},
-	steps: part(() => STEPS, STEP_ROW),
+	steps: part(() => STEPS, STEP_ROW, "Request review"),
 	sources: part(() => SOURCES, SOURCE_ROW),
 	entries: part(() => ENTRIES, ENTRY_ROW),
 	changes: part(() => CHANGES, CHANGE_ROW),
 	ticks: part(() => TICKS, TICK_ROW),
 	hops: part(() => HOPS, HOP_ROW),
 	legs: part(() => LEGS, LEG_ROW),
-	imports: part(() => IMPORTS, IMPORT_ROW),
+	imports: part(() => IMPORTS, IMPORT_ROW, "Import"),
 	memories: part(() => MEMORIES, MEMORY_ROW),
 	notes: part(() => NOTES, NOTE_ROW),
 };

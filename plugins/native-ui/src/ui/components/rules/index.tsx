@@ -16,7 +16,7 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
 import { useWords } from "../../lib/words";
-import { Button } from "../button";
+import { ButtonBase } from "../button/base";
 import { Group } from "../group";
 import { Icon } from "../icon";
 import { IconButton } from "../icon-button";
@@ -144,14 +144,14 @@ export function Rules<V extends string | null = string>({
 				</View>
 			) : null}
 			{add ? (
-				<Button
+				<ButtonBase
 					act="secondary"
 					fit="bar"
 					icon="Plus"
 					label={add.label}
 					onAct={add.onAct}
 					blocked={add.blocked}
-					loading={add.loading}
+					failed={add.failed}
 				/>
 			) : null}
 		</View>

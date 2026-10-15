@@ -17,6 +17,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { useMemo, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
+import { useAct } from "../../lib/act";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
 import { useWords } from "../../lib/words";
@@ -25,7 +26,6 @@ import { Chip } from "../chip";
 import { Icon } from "../icon";
 import { Input } from "../input";
 import { SheetBase } from "../sheet/base";
-import { Spinner } from "../spinner";
 import { StatusDot } from "../status/dot";
 
 export type PickOptions<V extends string | null> =
@@ -199,6 +199,8 @@ export function PickSheet<V extends string | null>({
 	chip?: ChipFamily;
 }) {
 	const words = useWords();
+	// The act holds its own run past the sheet's close: a rejection toasts with Retry.
+	const acting = useAct("toast");
 	const [search, setSearch] = useState("");
 	// The search clears as the sheet opens, during render, so the rows keep
 	// their filter while the sheet leaves.
@@ -311,17 +313,15 @@ export function PickSheet<V extends string | null>({
 					<View className={cn(HAIRLINE, ACT_SLOT)}>
 						<Pressable
 							accessibilityRole="button"
-							accessibilityState={{ disabled: act.loading, busy: act.loading }}
 							onPress={() => {
-								if (act.loading) return;
 								onClose();
-								act.onAct();
+								acting.run(true, act);
 							}}
 							className={cn(row(), OPTION, PRESS)}
 						>
 							<View className={ACT_GLYPH}>
 								<Ink.Provider value="ink-meta">
-									{act.loading ? <Spinner /> : <Icon name={act.icon} />}
+									<Icon name={act.icon} />
 								</Ink.Provider>
 							</View>
 							<RNText

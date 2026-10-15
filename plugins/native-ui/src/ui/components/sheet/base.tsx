@@ -271,8 +271,7 @@ function Head() {
 								<ButtonBase
 									fit="bar"
 									label={submit.label}
-									onAct={() => void submit.onAct()}
-									loading={submit.loading}
+									onAct={submit.onAct}
 									blocked={submit.blocked}
 									painted={painted}
 								/>

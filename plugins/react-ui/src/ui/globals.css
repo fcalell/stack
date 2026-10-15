@@ -115,6 +115,27 @@
 @theme {
 	--animate-paint: paint-in var(--transition-duration-base) var(--ease-out)
 		var(--wait-delay) both;
+	--animate-act-in: act-in var(--transition-duration-base) var(--ease-out)
+		var(--act-delay) both;
+	--animate-act-out: act-out var(--transition-duration-base) var(--ease-out)
+		var(--act-delay) both;
+}
+
+/* An act's pending look (`components/button`, `icon-button`): the act is inert
+   at the press and draws nothing until `--act-delay` has run, so an act the
+   server answers at once never flashes a spinner. Then the pending fill and
+   the spinner fade in (`act-in`) as the label and glyph fade out (`act-out`).
+   The delay holds under reduced motion; the fades snap there. */
+@keyframes act-in {
+	from {
+		opacity: 0;
+	}
+}
+
+@keyframes act-out {
+	to {
+		opacity: 0;
+	}
 }
 
 /* A painted text clips at its slot's edge where a loaded one ends in an

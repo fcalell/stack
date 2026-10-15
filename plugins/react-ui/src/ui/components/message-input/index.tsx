@@ -31,6 +31,7 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { useAct } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
 import { FieldDisabled } from "../../lib/field.ts";
 import { ActInert } from "../../lib/form.ts";
@@ -42,7 +43,7 @@ import {
 } from "../../lib/modality.ts";
 import { attachedFrom } from "../../lib/picked.ts";
 import { useWords } from "../../lib/words.tsx";
-import { Button } from "../button/index.tsx";
+import { ButtonBase } from "../button/base.tsx";
 import { IconButtonBase } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 import { Attachments } from "../message/attachments.tsx";
@@ -89,9 +90,9 @@ export interface MessageInputProps extends Closed {
 	/** An answer is coming: Stop stands before Send, and Send still sends. */
 	working?: boolean;
 	/** Sends the text; inert while it is empty. Enter sends on the desktop, Shift+Enter breaks the line. */
-	onSend: () => void;
+	onSend: () => unknown;
 	/** Stops the answer; without it Stop is drawn inert. */
-	onStop?: () => void;
+	onStop?: () => unknown;
 	/** Nothing can be written or sent: the disabled fill and ink, the attach act inert in its place. */
 	disabled?: boolean;
 }
@@ -123,12 +124,17 @@ export function MessageInput({
 	const [over, setOver] = useState(false);
 	// Focus never drops to the page: Send and Stop hand it to the text, a
 	// removed chip to the next chip's remove, else the previous one's.
+	// Send and Stop hold their handler's promise: the pressed one pends, and a
+	// rejection toasts with Retry.
+	const acting = useAct<"send" | "stop">("toast");
+	const sending = acting.pending === "send";
+	const stopping = acting.pending === "stop";
 	const send = () => {
-		onSend();
+		acting.run("send", { onAct: onSend });
 		textField.current?.focus();
 	};
 	const stop = () => {
-		onStop?.();
+		acting.run("stop", { onAct: () => onStop?.() });
 		textField.current?.focus();
 	};
 	// Every way a file arrives (the dialog, a paste, a drop) ends here.
@@ -190,7 +196,7 @@ export function MessageInput({
 		if (touch || event.key !== "Enter" || event.shiftKey) return;
 		if (event.nativeEvent.isComposing) return;
 		event.preventDefault();
-		if (sendable) send();
+		if (sendable && !sending) send();
 	};
 	const box = cn(BOX_FOCUS, disabled ? BOX_DISABLED : BOX_HOVER, over && OVER);
 	// A disabled input keeps its attach act, inert, so the field stands at one
@@ -237,13 +243,20 @@ export function MessageInput({
 				fit="bar"
 				label={words.stop}
 				onClick={stop}
+				pending={stopping}
 				disabled={!onStop}
 			/>
 		);
 	else if (working)
 		stopAct = (
 			<ActInert value={!onStop}>
-				<Button act="secondary" fit="bar" label={words.stop} onAct={stop} />
+				<ButtonBase
+					act="secondary"
+					fit="bar"
+					label={words.stop}
+					onAct={stop}
+					pending={stopping}
+				/>
 			</ActInert>
 		);
 	const acts = (
@@ -260,22 +273,29 @@ export function MessageInput({
 					fit="bar"
 					label={words.send}
 					onClick={send}
+					pending={sending}
 					disabled={!sendable}
 				/>
 			) : (
 				<ActInert value={!sendable}>
-					<Button act="primary" fit="bar" label={words.send} onAct={send} />
+					<ButtonBase
+						act="primary"
+						fit="bar"
+						label={words.send}
+						onAct={send}
+						pending={sending}
+					/>
 				</ActInert>
 			)}
 		</div>
 	);
 	const act = notice?.act ? (
-		<Button
+		<ButtonBase
 			act="secondary"
 			fit="bar"
 			label={notice.act.label}
 			onAct={notice.act.onAct}
-			loading={notice.act.loading}
+			failed={notice.act.failed}
 			blocked={notice.act.blocked}
 		/>
 	) : null;

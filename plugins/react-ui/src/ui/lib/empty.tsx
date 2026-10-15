@@ -9,7 +9,7 @@ import {
 	textStrong,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use } from "react";
-import { Button } from "../components/button/index.tsx";
+import { ButtonBase } from "../components/button/base.tsx";
 import { ButtonLink } from "../components/button/link.tsx";
 import { Icon } from "../components/icon/index.tsx";
 import { Text } from "../components/text/index.tsx";
@@ -181,13 +181,13 @@ function ActButton(props: {
 	if ("href" in act)
 		return <ButtonLink fit={props.fit} label={act.label} href={act.href} />;
 	return (
-		<Button
+		<ButtonBase
 			act={props.kind}
 			fit={props.fit}
 			icon={props.icon}
 			label={act.label}
 			onAct={act.onAct}
-			loading={act.loading}
+			failed={act.failed}
 			blocked={act.blocked}
 		/>
 	);

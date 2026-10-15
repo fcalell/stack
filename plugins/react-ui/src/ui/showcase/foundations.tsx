@@ -28,6 +28,7 @@ import {
 	textStrong,
 } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
+import { ButtonBase } from "../components/button/base.tsx";
 import { Button } from "../components/button/index.tsx";
 import { FormField } from "../components/form-field/index.tsx";
 import { Input } from "../components/input/index.tsx";
@@ -434,10 +435,10 @@ function States() {
 							</div>
 						))}
 						<div data-act={`${fill}-pending`}>
-							<Button
+							<ButtonBase
 								act={ACT_KIND[fill as keyof typeof ACT_KIND]}
 								label="pending"
-								loading
+								pending
 							/>
 						</div>
 						<div data-act={`${fill}-disabled`}>

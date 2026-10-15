@@ -263,7 +263,7 @@ export function DefinitionRowBase<V extends string | null = string>({
 					fit="bar"
 					label={act.label}
 					onAct={act.onAct}
-					loading={act.loading}
+					failed={act.failed}
 				/>
 			);
 		end = (

@@ -127,7 +127,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"count",
 				"wait",
 				"onAct",
-				"loading",
+				"failed",
 				"blocked",
 			],
 			draws: [
@@ -138,7 +138,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"PAINT.kind.control",
 			],
 			holds: ["BUTTON", "BUTTON_LABEL"],
-			states: [...PRESS, "disabled", "loading"],
+			states: [...PRESS, "disabled", "pending"],
 			owns: {
 				roles: ["body", "meta", "caption"],
 				colors: [
@@ -161,10 +161,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		IconButton: {
-			props: ["icon", "fit", "label", "onAct", "loading"],
+			props: ["icon", "fit", "label", "onAct", "failed"],
 			draws: ["ICON_BUTTON", "TOOLTIP", "PAINT.kind.control"],
 			holds: ["ICON_BUTTON", "TOOLTIP"],
-			states: [...PRESS, "loading"],
+			states: [...PRESS, "pending"],
 			owns: {
 				roles: ["meta"],
 				colors: [
@@ -983,8 +983,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// the table draws no head tick, one that chooses every one (`chooseAll`)
 		// while some stand unchosen. The bar's column is centred in its foot.
 		// A form's or a sheet's bar paints its filled act, inert, while the frame's
-		// read waits (internal `painted`); an act's own `loading` is the running
-		// act. `pending` is a PendingBar's props: the bar draws it over its own
+		// read waits (internal `painted`); an act that runs draws its
+		// own pending look. `pending` is a PendingBar's props: the bar draws it over its own
 		// acts, which stay drawn unseen and inert, so the place keeps the loaded
 		// bar's height.
 		ActionBar: {
@@ -1018,7 +1018,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ACTION_BAR_SELECTION",
 				"ACTION_BAR_ALL",
 			],
-			states: ["rest", "loading", "disabled"],
+			states: ["rest", "pending", "disabled"],
 			owns: {
 				roles: ["meta", "body"],
 				colors: [
@@ -1579,7 +1579,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// ways to complete the task, one given. Always the modal sheet: a Pane's or
 		// a Thread's `sheet` (these props) docks there instead, drawing the
 		// docked head and foot inside the foot's raised cell with no scrim. The
-		// docked foot's states are its submit's: pending (`loading`), blocked
+		// docked foot's states are its submit's: pending, blocked
 		// (`disabled`), and failed (`error`, the act ready again, the `failed`
 		// sentence under it in the line a blocked reason keeps, in the field
 		// error's cell and ink).
@@ -1801,7 +1801,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"PAINT.kind.control",
 			],
 			holds: ["MENU", "MENU_GROUP", "MENU_LABEL"],
-			states: [...PRESS],
+			states: [...PRESS, "pending"],
 			owns: {
 				roles: ["body", "meta"],
 				colors: [

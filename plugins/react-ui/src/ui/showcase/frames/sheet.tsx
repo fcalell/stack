@@ -133,7 +133,6 @@ function DockedQuestions({ state }: { state: ShowcaseFrame["state"] }) {
 										submit: {
 											label: last ? "Send" : "Next",
 											onAct: last ? close : () => setAt(at + 1),
-											loading: (last && state === "loading") || undefined,
 											blocked:
 												last && state === "disabled"
 													? "Choose who hears about it first."
@@ -183,7 +182,6 @@ function submitOf(state: ShowcaseFrame["state"]): Act {
 	return {
 		label: "Save",
 		onAct: act,
-		loading: state === "loading" || undefined,
 		blocked: state === "disabled" ? "Add a description first." : undefined,
 	};
 }

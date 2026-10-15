@@ -1,13 +1,16 @@
+import { ACT_DELAY } from "@fcalell/ui-core/paint";
 import {
 	type ButtonAct,
 	button,
 	buttonContentTone,
 	buttonLabel,
 	type ContentTone,
+	FIELD_ERROR_LINE,
 	text,
 } from "@fcalell/ui-core/variants";
 import { useContext } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
+import { useAct } from "../../lib/act";
 import { cn } from "../../lib/cn";
 import { ActInert } from "../../lib/form";
 import { Ink } from "../../lib/ink";
@@ -71,9 +74,15 @@ const BLOCKED: Record<ButtonAct, string> = {
 };
 
 // Pending and blocked are both inert, so one look is chosen: pending over
-// blocked, and neither takes the press.
-function lookOf(kind: ButtonAct, loading: boolean, muted: boolean): string {
-	if (loading) return FILL_PENDING[kind];
+// blocked, and neither takes the press. A pending act keeps its rest look
+// until the delay has run.
+function lookOf(
+	kind: ButtonAct,
+	pending: boolean,
+	shown: boolean,
+	muted: boolean,
+): string {
+	if (pending) return shown ? FILL_PENDING[kind] : "";
 	if (muted) return BLOCKED[kind];
 	return PRESS[kind];
 }
@@ -86,8 +95,12 @@ export interface BannerInk {
 }
 
 // The act every Button renders; `banner` is the ink a Banner hands its quiet
-// act. Pending and blocked acts stay focusable and ignore the press; a pending
-// act hides its glyph and label under the spinner and keeps its name, a
+// act. It holds its own run: inert at the press, then (after `ACT_DELAY`) its
+// glyph and label hidden under the spinner, its name kept; a rejection is a
+// failed toast with Retry. `pending` is a host's state handed down (its
+// handler returns nothing, so the act's own run never pends twice); `line`
+// draws a rejection under the act instead (the public Button standing alone).
+// Pending and blocked acts stay focusable and ignore the press, a
 // blocked one says why under itself once pressed or once its form or sheet is
 // touched, or on the line of the host that holds it. Its ink reaches the glyph
 // and the spinner through `Ink`, since a native view takes no currentColor.
@@ -101,35 +114,47 @@ export function ButtonBase({
 	count,
 	wait,
 	onAct,
-	loading,
+	failed,
 	blocked,
 	banner,
 	painted,
-}: ButtonProps & { banner?: BannerInk; painted?: boolean }) {
+	pending: given,
+	line,
+}: ButtonProps & {
+	banner?: BannerInk;
+	painted?: boolean;
+	pending?: boolean;
+	line?: boolean;
+}) {
 	const kind = act ?? "primary";
 	const shown = useShown(painted);
 	const muted = !painted && blocked !== undefined;
 	const { touched } = useTouched();
 	const host = useContext(ReasonHostContext);
+	// A host with a line of its own draws a rejection there; the public Button
+	// alone draws it under itself.
+	const acting = useAct(line && !host ? "line" : "toast");
+	const pending = given === true || acting.pending !== undefined;
+	const drawn = useShown(pending, ACT_DELAY);
 	// Inert where it stands: the blocked look and no press, no reason.
 	const waiting = wait !== undefined && wait > 0;
-	const inert = (useContext(ActInert) || waiting) && !loading;
+	const inert = (useContext(ActInert) || waiting) && !pending;
 	const [pressed, keep] = usePressed(blocked);
 	const said = muted && (pressed || touched);
 	const look = painted
 		? paintControl(shown)
-		: lookOf(kind, loading === true, muted || inert);
-	const labelLook = loading ? PENDING : (muted || inert) && LABEL_BLOCKED[kind];
+		: lookOf(kind, pending, drawn, muted || inert);
+	const labelLook = drawn ? PENDING : (muted || inert) && LABEL_BLOCKED[kind];
 	// A quiet act in a banner is in the banner's kind's ink.
 	const toned = kind === "quiet" ? banner : undefined;
 	const labelInk = toned?.label;
 	const ink =
-		(muted || inert) && !loading
+		(muted || inert) && !pending
 			? INK_BLOCKED[kind]
 			: (toned?.tone ?? buttonContentTone(kind));
 	const press = () => {
-		if (loading || inert) return;
-		if (!muted) onAct?.();
+		if (pending || inert) return;
+		if (!muted) acting.run(true, { onAct: () => onAct?.(), failed });
 		else if (host) host.press();
 		else keep();
 	};
@@ -138,8 +163,8 @@ export function ButtonBase({
 			accessibilityRole="button"
 			accessibilityLabel={label}
 			accessibilityState={{
-				disabled: loading || muted || inert,
-				busy: loading,
+				disabled: pending || muted || inert,
+				busy: pending,
 			}}
 			onPress={press}
 			{...inertProps(painted === true)}
@@ -147,7 +172,7 @@ export function ButtonBase({
 		>
 			<Ink.Provider value={ink}>
 				{icon ? (
-					<View className={cn(loading && PENDING, painted && HIDDEN)}>
+					<View className={cn(drawn && PENDING, painted && HIDDEN)}>
 						<Icon name={icon} fit="control" />
 					</View>
 				) : null}
@@ -165,16 +190,16 @@ export function ButtonBase({
 				</RNText>
 				{wait !== undefined ? (
 					<View
-						className={cn((loading || !waiting) && PENDING, painted && HIDDEN)}
+						className={cn((drawn || !waiting) && PENDING, painted && HIDDEN)}
 					>
 						<CountBase value={wait} inAct />
 					</View>
 				) : count !== undefined ? (
-					<View className={cn(loading && PENDING, painted && HIDDEN)}>
+					<View className={cn(drawn && PENDING, painted && HIDDEN)}>
 						<CountBase value={count} inAct />
 					</View>
 				) : null}
-				{loading ? (
+				{drawn ? (
 					<View className={SPINNER_LAYER}>
 						<Spinner />
 					</View>
@@ -182,14 +207,33 @@ export function ButtonBase({
 			</Ink.Provider>
 		</Pressable>
 	);
-	// A host draws the reason on its own line.
-	if (!muted || host) return control;
+	// A host draws the reason, and a failure, on its own line.
+	if (host) return control;
+	if (muted) {
+		return (
+			<View className={STACK}>
+				{control}
+				{said ? (
+					<RNText className={text({ role: "meta" })}>{blocked}</RNText>
+				) : null}
+			</View>
+		);
+	}
+	const under = line ? acting.line : undefined;
+	if (under === undefined) return control;
 	return (
 		<View className={STACK}>
 			{control}
-			{said ? (
-				<RNText className={text({ role: "meta" })}>{blocked}</RNText>
-			) : null}
+			<RNText
+				accessibilityRole="alert"
+				className={
+					acting.holds || acting.pending === undefined
+						? FIELD_ERROR_LINE
+						: text({ role: "meta" })
+				}
+			>
+				{under}
+			</RNText>
 		</View>
 	);
 }

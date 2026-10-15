@@ -2,7 +2,7 @@ import { type Read, useMore } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
-import { Button } from "../components/button/index.tsx";
+import { ButtonBase } from "../components/button/base.tsx";
 import { StateLine } from "./read.tsx";
 import { useWords } from "./words.tsx";
 
@@ -47,7 +47,7 @@ export function MoreRow(props: {
 	return (
 		<div className={cn(SHOW, inset && INSET)}>
 			<div className={HANG}>
-				<Button
+				<ButtonBase
 					act="quiet"
 					fit="bar"
 					label={words.showMore}

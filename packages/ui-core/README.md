@@ -456,7 +456,7 @@ do not cover is a matrix cell or a consumer primitive under `ui/`, never a class
 
 The canon binds every component either UI plugin ships:
 
-1. One name per concept: `label` for the visible word, `loading` for a busy control, `onChange`
+1. One name per concept: `label` for the visible word, `pending` for a running act, `onChange`
    for a value's change (`onSelect` is its one sibling: a selection that may also be nothing, `null`), `onAct` for an act, `act` for a labelled act or a button's kind, `blocked`
    for a disabled control's reason, `sentence` for a consumer's line, `fit` for what a component
    sits in. `fit` is a closed enum off its matrix's `fit` axis, defaulting to the matrix's default:
@@ -499,7 +499,7 @@ The canon binds every component either UI plugin ships:
 layout molecules, shared molecules, content molecules), each with its prop names, the cells it draws
 (`draws`: a `FAMILIES` name for every cell of that family, `FAMILY.axis.value` for one of its cells,
 as `Text` draws `TEXT.role.body`, or a single-cell constant of `./variants`) and the states it has a
-form for (`states`, from `STATES`: `rest`, `hover`, `focus`, `active`, `disabled`, `loading`,
+form for (`states`, from `STATES`: `rest`, `hover`, `focus`, `active`, `disabled`, `loading`, `pending`,
 `error`, `selected`, `empty`, `busy`, `stale`, `paused`, `more`, `streaming`), the same in both plugins. Every family is drawn by at least one
 component, and a component that takes `loading` or `empty` lists that state.
 

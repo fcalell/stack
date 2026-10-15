@@ -18,6 +18,7 @@ import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 import { useContext, useEffect, useRef, useState } from "react";
 import { Pressable, Text as RNText, TextInput, View } from "react-native";
+import { useAct } from "../../lib/act";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FieldDisabled } from "../../lib/field";
@@ -25,7 +26,7 @@ import { FootReturn } from "../../lib/frame";
 import { pickedFromDocument, pickedFromImage } from "../../lib/picked";
 import { useTokenColor } from "../../lib/theme";
 import { useWords } from "../../lib/words";
-import { Button } from "../button";
+import { ButtonBase } from "../button/base";
 import { IconButton } from "../icon-button";
 import { IconButtonBase } from "../icon-button/base";
 import { MenuSheet } from "../menu/sheet";
@@ -63,9 +64,9 @@ export interface MessageInputProps extends Closed {
 	// An answer is coming: Stop stands before Send, and Send still sends.
 	working?: boolean;
 	// Sends the text; inert while it is empty. Return breaks the line.
-	onSend: () => void;
+	onSend: () => unknown;
 	// Stops the answer; without it Stop is drawn inert.
-	onStop?: () => void;
+	onStop?: () => unknown;
 	// Nothing can be written or sent: the disabled fill and ink, the attach act
 	// inert in its place.
 	disabled?: boolean;
@@ -100,6 +101,9 @@ export function MessageInput({
 		textField.current?.focus();
 	}, [returned]);
 	const [choosing, setChoosing] = useState(false);
+	// Send and Stop hold their handler's promise: the pressed one pends, and a
+	// rejection toasts with Retry.
+	const acting = useAct<"send" | "stop">("toast");
 	const sendable = value.trim() !== "" && !disabled;
 	const photos = async () => {
 		const result = await ImagePicker.launchImageLibraryAsync({
@@ -167,7 +171,8 @@ export function MessageInput({
 						icon="CircleStop"
 						fit="bar"
 						label={words.stop}
-						onAct={() => onStop?.()}
+						onAct={() => acting.run("stop", { onAct: () => onStop?.() })}
+						pending={acting.pending === "stop"}
 						disabled={!onStop}
 					/>
 				) : null}
@@ -175,7 +180,8 @@ export function MessageInput({
 					icon="Send"
 					fit="bar"
 					label={words.send}
-					onAct={onSend}
+					onAct={() => acting.run("send", { onAct: onSend })}
+					pending={acting.pending === "send"}
 					disabled={!sendable}
 				/>
 			</View>
@@ -194,12 +200,12 @@ export function MessageInput({
 						{notice.sentence}
 					</RNText>
 					{notice.act ? (
-						<Button
+						<ButtonBase
 							act="secondary"
 							fit="bar"
 							label={notice.act.label}
 							onAct={notice.act.onAct}
-							loading={notice.act.loading}
+							failed={notice.act.failed}
 							blocked={notice.act.blocked}
 						/>
 					) : null}

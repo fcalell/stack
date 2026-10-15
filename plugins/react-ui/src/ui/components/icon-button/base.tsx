@@ -26,6 +26,11 @@ const INSET = "focus-visible:-outline-offset-2";
 const PRESS =
 	"hover:bg-wash-hover hover:text-ink-body active:bg-wash-press active:text-ink-body aria-expanded:bg-wash-press aria-expanded:text-ink-body";
 const DISABLED = "aria-disabled:text-ink-disabled";
+// Pending, the glyph fades out and the spinner in once `--act-delay` has run
+// (`globals.css`).
+const FADE_OUT = "animate-act-out";
+const SPINNER_LAYER =
+	"absolute inset-0 flex items-center justify-center animate-act-in";
 // Painted, the glyph keeps its place and is not drawn.
 const HIDDEN = "*:invisible";
 // The name draws over a sheet's scrim and under the toasts, with the popovers.
@@ -43,7 +48,7 @@ export function IconButtonBase({
 	icon,
 	fit,
 	label,
-	loading,
+	pending,
 	inset: framed,
 	painted,
 	...handed
@@ -51,7 +56,8 @@ export function IconButtonBase({
 	icon: IconName;
 	fit?: IconButtonFit;
 	label: string;
-	loading?: boolean;
+	// The act is running: inert at once, then (after `ACT_DELAY`) its glyph swapped for the spinner.
+	pending?: boolean;
 	// Its frame clips (a Code's): the focus ring is drawn inset, so the clip never cuts it.
 	inset?: boolean;
 	// Its data is not here: the box filled, the glyph not drawn, inert.
@@ -60,7 +66,7 @@ export function IconButtonBase({
 	// Inert inside a disabled field, or when its holder says so (a sheet's
 	// close while its act pends), or while it runs.
 	const disabled =
-		useContext(FieldDisabled) || handed.disabled === true || loading === true;
+		useContext(FieldDisabled) || handed.disabled === true || pending === true;
 	const inset = framed || fit === "field";
 	const look = painted ? PAINT_CONTROL : disabled ? DISABLED : PRESS;
 	return (
@@ -68,7 +74,7 @@ export function IconButtonBase({
 			<BaseButton
 				{...handed}
 				aria-label={label}
-				aria-busy={loading || undefined}
+				aria-busy={pending || undefined}
 				inert={painted || undefined}
 				disabled={disabled}
 				focusableWhenDisabled
@@ -77,11 +83,18 @@ export function IconButtonBase({
 					BOX,
 					inset && INSET,
 					// A running act keeps the rest ink under its spinner and takes no wash.
-					loading ? undefined : look,
+					pending ? undefined : look,
 					painted && HIDDEN,
 				)}
 			>
-				{loading ? <Spinner /> : <Icon name={icon} fit="control" />}
+				<span className={cn("inline-flex", pending && FADE_OUT)}>
+					<Icon name={icon} fit="control" />
+				</span>
+				{pending ? (
+					<span className={SPINNER_LAYER}>
+						<Spinner />
+					</span>
+				) : null}
 			</BaseButton>
 		</Named>
 	);
