@@ -192,6 +192,7 @@ export const Control: StoryObj = {
 };
 
 const HEADS = readsAt("paint/heading");
+const DESCRIBED = readsAt("paint/description");
 
 // A Section heading: the title stands where it stands loaded, at the same
 // height, whatever its body paints. The count waits out the read.
@@ -224,6 +225,42 @@ export const Heading: StoryObj = {
 	},
 };
 
+// A Section description that waits is one clipped line, as tall as the loaded
+// short sentence, however narrow the column.
+export const Description: StoryObj = {
+	render: () => (
+		<div className="w-pane max-w-full">
+			<Pair
+				loaded={
+					<Section
+						title="Usage"
+						description="Resets in 2 h 10 min"
+						read={DESCRIBED.ready}
+					>
+						<Group list={{ items: DESCRIBED.ready, row: ROW }} />
+					</Section>
+				}
+				painted={
+					<Section
+						title="Usage"
+						description={DESCRIBED.waiting.at(() => "Resets in 2 h 10 min")}
+						read={DESCRIBED.waiting}
+					>
+						<Group list={{ items: DESCRIBED.waiting, row: ROW }} />
+					</Section>
+				}
+			/>
+		</div>
+	),
+	play: async ({ canvas }) => {
+		const { loaded, painted } = await sides(canvas, "Resets in");
+		const bar = painted.querySelector("[data-painted]") as HTMLElement;
+		const line = box(loaded.querySelector("p") as Element).height;
+		await expect(box(bar.parentElement as Element).height).toBeCloseTo(line, 0);
+		await expect(bar.getClientRects().length).toBe(1);
+	},
+};
+
 // The same scenarios in a 375 px phone at the touch density.
 function touch(story: StoryObj): StoryObj {
 	return {
@@ -252,6 +289,7 @@ export const DefinitionTouch = touch(Definition);
 export const FigureTouch = touch(Figure);
 export const ControlTouch = touch(Control);
 export const HeadingTouch = touch(Heading);
+export const DescriptionTouch = touch(Description);
 
 export default {
 	title: "Behaviour/Paint",

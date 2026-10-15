@@ -37,7 +37,7 @@ import { partText } from "../../lib/parts.ts";
 import { BusyMark, FrameBody, FrameLine, useFrame } from "../../lib/read.tsx";
 import { useScrolls } from "../../lib/scrolls.ts";
 import { useSettleName } from "../../lib/settle.ts";
-import { Scroller } from "../../lib/window.tsx";
+import { Scroller, useScroller } from "../../lib/window.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { IconButtonBase, IconButtonLink } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
@@ -156,9 +156,9 @@ export function Pane({
 	]);
 	const [paneNode, setPaneNode] = useState<HTMLElement | null>(null);
 	usePaneFocus(paneNode);
-	const [bodyNode, setBodyNode] = useState<HTMLDivElement | null>(null);
 	const body = useRef<HTMLDivElement | null>(null);
-	useScrolls(bodyNode);
+	const scroll = useScroller(body);
+	useScrolls(scroll.node);
 	const dock = useRef<HTMLDivElement>(null);
 	// The body keeps a log's floor above a docked foot, and its insets: a
 	// Thread in it gives way to a docked sheet only down to two rows.
@@ -266,10 +266,7 @@ export function Pane({
 						{head}
 						<div ref={docked ? region.ref : undefined} className={REGION}>
 							<div
-								ref={(node) => {
-									body.current = node;
-									setBodyNode(node);
-								}}
+								ref={scroll.ref}
 								className={cn(
 									PAGE_BODY,
 									BODY,
@@ -277,7 +274,7 @@ export function Pane({
 									docked && PAGE_BODY_OVER_FOOT,
 								)}
 							>
-								<Scroller value={bodyNode}>
+								<Scroller value={scroll.holder}>
 									{read === undefined && empty ? (
 										<EmptyBase fit="page" tone="rest" {...empty} />
 									) : (

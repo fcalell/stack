@@ -276,6 +276,52 @@ export const StatusValueStaysWhole: StoryObj = {
 	play: statusWhole,
 };
 
+// A one-word label never breaks inside the word, whatever its value: the
+// value, a status or words, is the one that gives way.
+const oneWord: Play = async ({ canvas }) => {
+	for (const name of ["Runtime", "Notes"]) {
+		const label = canvas.getByText(name);
+		const text = document.createRange();
+		text.selectNodeContents(label);
+		await expect(text.getClientRects()).toHaveLength(1);
+		await expect(label.scrollWidth).toBeLessThanOrEqual(label.clientWidth + 1);
+	}
+	const value = canvas.getByText("Claude, signed in, with a long account name");
+	await expect(box(value).right).toBeLessThanOrEqual(
+		box(rowOf(value)).right + 0.5,
+	);
+};
+
+export const LabelKeepsItsWord: StoryObj = {
+	render: () => (
+		<Pane>
+			<Group
+				items={[
+					{ key: "branch", row: <DefinitionRow label="Branch" value="main" /> },
+					{
+						key: "runtime",
+						row: (
+							<DefinitionRow
+								label="Runtime"
+								description="Claude Code 2.1.280"
+								value={{
+									status: "done",
+									label: "Claude, signed in, with a long account name",
+								}}
+							/>
+						),
+					},
+					{
+						key: "notes",
+						row: <DefinitionRow label="Notes" value={LONG} />,
+					},
+				]}
+			/>
+		</Pane>
+	),
+	play: oneWord,
+};
+
 // A pick row draws the picker at the row's value position, named by the row's
 // label: it opens its options, and a picked option changes the value in place
 // and closes the list.
@@ -333,4 +379,5 @@ export const ValuePicked: StoryObj = {
 export const ValueWordsTouch = touch(ValueWords);
 export const ValuesEndTogetherTouch = touch(ValuesEndTogether);
 export const LabelWrapsTouch = touch(LabelWraps);
+export const LabelKeepsItsWordTouch = touch(LabelKeepsItsWord);
 export const StatusValueStaysWholeTouch = touch(StatusValueStaysWhole);

@@ -4,7 +4,7 @@ import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Thread } from "@fcalell/plugin-react-ui/components/thread";
 import { OVERSCAN } from "@fcalell/ui-core/window";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { useState } from "react";
+import { Profiler, useState } from "react";
 import { expect, waitFor } from "storybook/test";
 
 // A 1000-message thread windows its log: it opens at the newest message with
@@ -60,6 +60,9 @@ async function* words() {
 const calls = { thread: 0, reply: 0 };
 // Each frame's first message and scroll, from the first render on.
 const seen = { first: false, frames: 0, stop: false };
+// The most messages the DOM held after any commit of the thread, the first
+// included.
+const drawn = { max: 0 };
 
 let made = 0;
 function Stage() {
@@ -83,21 +86,32 @@ function Stage() {
 		<div style={{ display: "flex", flexDirection: "column", height: 600 }}>
 			<Place>
 				<Pane title="Assistant">
-					<Thread
-						items={items}
-						reply={reply}
-						message={{
-							key: (each) => {
-								if (each.id === "m1") calls.thread += 1;
-								return each.id;
-							},
-							author: (each) => each.author,
-							body: (each) => {
-								if (each.id === "reply") calls.reply += 1;
-								return each.body;
-							},
+					<Profiler
+						id="thread"
+						onRender={() => {
+							const log = document.querySelector('[role="log"]');
+							drawn.max = Math.max(
+								drawn.max,
+								log?.querySelectorAll("article").length ?? 0,
+							);
 						}}
-					/>
+					>
+						<Thread
+							items={items}
+							reply={reply}
+							message={{
+								key: (each) => {
+									if (each.id === "m1") calls.thread += 1;
+									return each.id;
+								},
+								author: (each) => each.author,
+								body: (each) => {
+									if (each.id === "reply") calls.reply += 1;
+									return each.body;
+								},
+							}}
+						/>
+					</Profiler>
 				</Pane>
 			</Place>
 			<button
@@ -118,6 +132,7 @@ export default {
 		calls.thread = 0;
 		calls.reply = 0;
 		seen.first = false;
+		drawn.max = 0;
 		seen.frames = 0;
 		seen.stop = false;
 		drive.push = () => {};
@@ -187,6 +202,11 @@ export const OpensAtTheEnd: StoryObj = {
 		const inView = mounted.filter((one) => visible(log, one)).length;
 		await expect(mounted.length).toBeLessThanOrEqual(inView + 2 * OVERSCAN + 2);
 		await expect(mounted.length).toBeLessThan(COUNT / 4);
+		// No commit, the first included, drew more than the viewport's window.
+		await expect(drawn.max).toBeGreaterThan(0);
+		await expect(drawn.max).toBeLessThanOrEqual(
+			Math.ceil(window.innerHeight / 48) + 2 * OVERSCAN + 2,
+		);
 	},
 };
 
@@ -256,6 +276,20 @@ export const ScrolledUpStaysSteady: StoryObj = {
 			await canvas.findByRole("button", { name: "Latest" }),
 		);
 		await waitFor(() => expect(atEnd(log)).toBe(true));
+		console.log(
+			"DBG",
+			turns(log)
+				.map((t) => t.textContent?.slice(0, 12))
+				.join("|"),
+			log.querySelectorAll("[aria-hidden=true]").length,
+			[...log.querySelectorAll("[aria-hidden=true]")]
+				.map((n) => (n as HTMLElement).style.height)
+				.join(","),
+			turns(log).at(-1)?.textContent?.slice(0, 30),
+			log.scrollTop,
+			log.scrollHeight,
+			log.clientHeight,
+		);
 		await expect(visible(log, message(log, COUNT + 1) as Element)).toBe(true);
 		await expect(
 			canvas.queryByRole("button", { name: "Latest" }),

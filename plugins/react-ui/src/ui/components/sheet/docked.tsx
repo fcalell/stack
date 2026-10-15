@@ -29,7 +29,7 @@ import {
 	usePageTurn,
 	useTouchState,
 } from "../../lib/touched.ts";
-import { Scroller } from "../../lib/window.tsx";
+import { Scroller, useScroller } from "../../lib/window.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { ActionBarBase } from "../action-bar/base.tsx";
 import { FormBody } from "../form/base.tsx";
@@ -94,7 +94,8 @@ export function SheetDocked({
 	const words = useWords();
 	const titleId = useId();
 	const root = useRef<HTMLElement>(null);
-	const [body, setBody] = useState<HTMLDivElement | null>(null);
+	const scroll = useScroller();
+	const body = scroll.node;
 	// What the sheet pins besides its body (its head and foot) and the body's
 	// floor, measured off the sheet.
 	const [pinned, setPinned] = useState({ parts: 0, floor: 0 });
@@ -203,7 +204,7 @@ export function SheetDocked({
 					</div>
 				</div>
 				<div
-					ref={setBody}
+					ref={scroll.ref}
 					style={maxHeight === undefined ? undefined : { maxHeight }}
 					className={BODY}
 				>
@@ -214,7 +215,7 @@ export function SheetDocked({
 							region.height > 0 && SHEET_DOCKED_FLOOR,
 						)}
 					>
-						<Scroller value={body}>
+						<Scroller value={scroll.holder}>
 							{children}
 							{form ? <FormBody {...form} in="sheet" acting={acting} /> : null}
 						</Scroller>

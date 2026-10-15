@@ -29,7 +29,7 @@ import { useFootFocus } from "../../lib/focus.ts";
 import { PageTitle, useFootRegion } from "../../lib/frame.ts";
 import { StateLine } from "../../lib/read.tsx";
 import { useScrolls } from "../../lib/scrolls.ts";
-import { Scroller, Window } from "../../lib/window.tsx";
+import { Scroller, useScroller, Window } from "../../lib/window.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { MessageBase } from "../message/base.tsx";
 import { Message } from "../message/index.tsx";
@@ -248,8 +248,8 @@ export function Thread<T>(props: ThreadProps<T>) {
 	const tail = tailOf(props, drawn as Drawn<readonly T[]>, slots);
 	const title = use(PageTitle);
 	const log = useRef<HTMLDivElement>(null);
-	const [logNode, setLogNode] = useState<HTMLDivElement | null>(null);
-	useScrolls(logNode);
+	const scroll = useScroller(log);
+	useScrolls(scroll.node);
 	const content = useRef<HTMLDivElement>(null);
 	const dock = useRef<HTMLDivElement>(null);
 	useFootFocus(dock);
@@ -297,10 +297,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 		<div ref={foot ? region.ref : undefined} className={cn(FILL, THREAD)}>
 			<div className={REGION}>
 				<div
-					ref={(node) => {
-						log.current = node;
-						setLogNode(node);
-					}}
+					ref={scroll.ref}
 					role="log"
 					aria-labelledby={title}
 					onScroll={(event) => {
@@ -314,7 +311,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 					}}
 					className={SCROLLS}
 				>
-					<Scroller value={logNode}>
+					<Scroller value={scroll.holder}>
 						<div ref={content} className={cn(THREAD, STACK)}>
 							<Window rows={messages} box={content} end />
 							{tail}

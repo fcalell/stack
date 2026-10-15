@@ -60,6 +60,7 @@ import {
 	memo,
 	type ReactNode,
 	use,
+	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState,
@@ -74,6 +75,7 @@ import { MoreRow } from "../../lib/more.tsx";
 import { follow, navigate } from "../../lib/navigate.ts";
 import { usePageTablet } from "../../lib/page.ts";
 import { Painted } from "../../lib/paint.tsx";
+import { Window } from "../../lib/window.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { CheckboxBase } from "../checkbox/base.tsx";
 import { Checkbox } from "../checkbox/index.tsx";
@@ -342,6 +344,7 @@ const Row = memo(function Row(props: {
 	const reason = chooseReason(row);
 	return (
 		<tr
+			aria-rowindex={index + 2}
 			aria-selected={chosen || undefined}
 			onClick={(event) => actions.click(event, row)}
 			className={cn(
@@ -579,6 +582,7 @@ function Grid(props: {
 	const ticked = useMemo(() => new Set(choose?.chosen), [choose?.chosen]);
 	const title = use(PageTitle);
 	const frame = useRef<HTMLDivElement>(null);
+	const body = useRef<HTMLTableSectionElement>(null);
 	const [cursor, setCursor] = useState<Cursor>({ row: 0, column: 0 });
 	// The cursor's cell in its edit: `started` from the keyboard or a tap, its
 	// control mounted afresh (focused, or a pick open), or `entered` when focus
@@ -598,19 +602,28 @@ function Grid(props: {
 		frame.current?.querySelector<HTMLElement>(
 			`td[data-row="${row}"][data-column="${column}"]`,
 		);
-	// The cursor's cell takes focus and scrolls clear of the frozen columns it
-	// would stand under, by the scroller's padding at its start; a frozen cell
-	// stands in place, so it scrolls nothing.
+	// The cursor moves first and its cell takes focus once the row stands: a row
+	// the window had not mounted is kept by the cursor, drawn by this render.
+	const [wanted, setWanted] = useState<Cursor>();
 	const focusCell = (row: number, column: number) => {
-		const cell = cellAt(row, column);
+		setCursor({ row, column });
+		setWanted({ row, column });
+	};
+	// The cell scrolls clear of the frozen columns it would stand under, by the
+	// scroller's padding at its start; a frozen cell stands in place, so it
+	// scrolls nothing.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: only a new `wanted` is a move to focus
+	useLayoutEffect(() => {
+		if (!wanted) return;
+		const cell = cellAt(wanted.row, wanted.column);
 		if (!cell) return;
-		if (column <= shift) {
+		if (wanted.column <= shift) {
 			cell.focus();
 			return;
 		}
 		cell.focus({ preventScroll: true });
 		cell.scrollIntoView({ block: "nearest", inline: "nearest" });
-	};
+	}, [wanted]);
 	// A pick's list gone ends the edit; it hands focus back to its cell.
 	const done = () => setEditing(undefined);
 	const open = (row: TableRecord) => {
@@ -741,6 +754,35 @@ function Grid(props: {
 	// The head tick reaches the rows that can be ticked; with none it is off.
 	const reach = tickable(rows).length > 0;
 
+	const drawn = painted
+		? rows.map((_, index) => (
+				<PaintedRow
+					// biome-ignore lint/suspicious/noArrayIndexKey: the painted rows are fixed stand-ins
+					key={index}
+					index={index}
+					columns={columns}
+					touch={touch}
+					choosing={choose !== undefined}
+				/>
+			))
+		: rows.map((row, index) => (
+				<Row
+					key={row.id}
+					row={row}
+					index={index}
+					columns={columns}
+					chosen={row.id === props.selected}
+					choosing={choose !== undefined}
+					ticked={ticked.has(row.id)}
+					opens={opens}
+					touch={touch}
+					edits={edits}
+					cursor={index === at.row ? at.column : -1}
+					editing={index === at.row ? editing : undefined}
+					actions={actions}
+				/>
+			));
+
 	return (
 		<div className={FORM}>
 			<div
@@ -752,6 +794,7 @@ function Grid(props: {
 					role="grid"
 					aria-labelledby={title}
 					aria-busy={painted || undefined}
+					aria-rowcount={rows.length + 1}
 					onFocus={onFocus}
 					onBlur={onBlur}
 					onKeyDown={onKeyDown}
@@ -759,7 +802,7 @@ function Grid(props: {
 				>
 					<Cols columns={columns} choosing={choose !== undefined} />
 					<thead>
-						<tr className={tableRow({ state: "rest" })}>
+						<tr aria-rowindex={1} className={tableRow({ state: "rest" })}>
 							{choose ? (
 								<th
 									scope="col"
@@ -798,35 +841,8 @@ function Grid(props: {
 							))}
 						</tr>
 					</thead>
-					<tbody>
-						{painted
-							? rows.map((_, index) => (
-									<PaintedRow
-										// biome-ignore lint/suspicious/noArrayIndexKey: the painted rows are fixed stand-ins
-										key={index}
-										index={index}
-										columns={columns}
-										touch={touch}
-										choosing={choose !== undefined}
-									/>
-								))
-							: rows.map((row, index) => (
-									<Row
-										key={row.id}
-										row={row}
-										index={index}
-										columns={columns}
-										chosen={row.id === props.selected}
-										choosing={choose !== undefined}
-										ticked={ticked.has(row.id)}
-										opens={opens}
-										touch={touch}
-										edits={edits}
-										cursor={index === at.row ? at.column : -1}
-										editing={index === at.row ? editing : undefined}
-										actions={actions}
-									/>
-								))}
+					<tbody ref={body}>
+						<Window box={body} keep={at.row} spacer="tr" rows={drawn} />
 					</tbody>
 				</table>
 			</div>

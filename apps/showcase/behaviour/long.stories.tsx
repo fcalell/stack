@@ -12,7 +12,7 @@ import { OVERSCAN, VIRTUAL_FROM } from "@fcalell/ui-core/window";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Profiler, type ReactNode, useMemo, useState } from "react";
 import { expect, screen, waitFor } from "storybook/test";
-import { focused } from "./support.ts";
+import { focused, walked } from "./support.ts";
 
 // A long collection draws only the rows near its scroller's view, from
 // `VIRTUAL_FROM` loaded rows: the rows between stand as spacers, the focused
@@ -409,3 +409,307 @@ export const Settles: Story = {
 		}
 	},
 };
+
+// The wide Table windows its tbody. Each row has a name cell and six more, the
+// leading one frozen on touch; the grid's cursor is the one Tab stop and the
+// row it stands on stays mounted.
+const WIDE: TableColumn<Item>[] = [
+	{ key: "name", label: "Name", sortable: true, cell: (each) => each.name },
+	...["a", "b", "c", "d", "e", "f"].map((key) => ({
+		key,
+		label: `Column ${key}`,
+		cell: (each: Item) => {
+			if (key === "a") spy.slots += 1;
+			return `${each.name} ${key}`;
+		},
+	})),
+];
+
+function Grid(props: { rows: Read<readonly Item[]> | Item[] }) {
+	return (
+		<Table
+			columns={WIDE}
+			items={props.rows}
+			row={{ id: (each) => each.id }}
+			onOpen={() => {}}
+		/>
+	);
+}
+
+function Wide(props: { count: number; width?: number }) {
+	const rows = useMemo(() => pages(props.count), [props.count]);
+	return (
+		<div
+			style={{
+				width: props.width ?? 1100,
+				height: 700,
+				display: "flex",
+				flexDirection: "column",
+			}}
+		>
+			<Place>
+				<Pane title="Long">
+					<Section title="Rows" read={rows}>
+						<Grid rows={rows} />
+					</Section>
+				</Pane>
+			</Place>
+		</div>
+	);
+}
+
+// The cell of a row and column, by the cursor's own attributes.
+const cellOf = (root: ParentNode, row: number, column: number) =>
+	root.querySelector<HTMLElement>(
+		`td[data-row="${row}"][data-column="${column}"]`,
+	);
+const COLUMN_LAST = WIDE.length - 1;
+
+// The grid at 1000 rows: the rows' indexes count the whole grid; the arrows,
+// Home, End and Ctrl+End reach rows the window had not mounted and focus them;
+// the cursor's row stays mounted away from the view; sorting does not make a
+// scroll render the host; axe holds.
+export const TableWindows: Story = {
+	render: ({ count }) => <Wide count={count} />,
+	play: async ({ canvas, canvasElement, userEvent, args }) => {
+		try {
+			const grid = await canvas.findByRole("grid");
+			await canvas.findByText("Row 1");
+			const view = scrollerOf(grid);
+			await frames();
+			const bound = () => {
+				const rows = mounted(canvasElement);
+				const seen = inView(rows, view);
+				if (rows.length > seen + 2 * OVERSCAN) {
+					throw new Error(`${rows.length} rows mounted, ${seen} in view`);
+				}
+			};
+			await waitFor(bound);
+			await expect(mounted(canvasElement).length).toBeLessThan(args.count / 4);
+
+			// The indexes stand for the whole grid, the header's row first.
+			await expect(grid).toHaveAttribute(
+				"aria-rowcount",
+				String(args.count + 1),
+			);
+			await expect(canvas.getAllByRole("row")[0]).toHaveAttribute(
+				"aria-rowindex",
+				"1",
+			);
+			await expect(
+				grid.querySelector("tbody tr:not([aria-hidden])"),
+			).toHaveAttribute("aria-rowindex", "2");
+
+			// A sorted grid scrolls without the host rendering: the slots of its
+			// cells do not run again.
+			await userEvent.click(canvas.getByRole("button", { name: /^Name/ }));
+			await userEvent.click(canvas.getByRole("button", { name: /^Name/ }));
+			await frames(3);
+			const slots = spy.slots;
+			view.scrollTop = view.scrollHeight / 3;
+			await frames(6);
+			await expect(spy.slots).toBe(slots);
+			await waitFor(bound);
+			view.scrollTop = 0;
+			await frames(4);
+			// Back to the unsorted order.
+			await userEvent.click(canvas.getByRole("button", { name: /^Name/ }));
+			await frames(3);
+
+			// The cursor takes the one Tab stop; Ctrl+End reaches the last cell
+			// though its row is far from the mounted ones, Ctrl+Home the first.
+			await userEvent.tab();
+			await expect(cellOf(grid, 0, 0)).toHaveFocus();
+			await userEvent.keyboard("{Control>}{End}{/Control}");
+			await waitFor(() =>
+				expect(cellOf(grid, args.count - 1, COLUMN_LAST)).toHaveFocus(),
+			);
+			await expect(
+				cellOf(grid, args.count - 1, COLUMN_LAST)?.closest("tr"),
+			).toHaveAttribute("aria-rowindex", String(args.count + 1));
+			await waitFor(bound);
+			await userEvent.keyboard("{Control>}{Home}{/Control}");
+			await waitFor(() => expect(cellOf(grid, 0, 0)).toHaveFocus());
+			await waitFor(bound);
+
+			// Home and End on a row far down; the arrows through rows the window
+			// had not mounted when the focus went there.
+			await userEvent.keyboard("{Control>}{End}{/Control}");
+			await waitFor(() =>
+				expect(cellOf(grid, args.count - 1, COLUMN_LAST)).toHaveFocus(),
+			);
+			await userEvent.keyboard("{Home}");
+			await waitFor(() =>
+				expect(cellOf(grid, args.count - 1, 0)).toHaveFocus(),
+			);
+			await userEvent.keyboard("{ArrowUp}");
+			await waitFor(() =>
+				expect(cellOf(grid, args.count - 2, 0)).toHaveFocus(),
+			);
+			await userEvent.keyboard("{End}");
+			await waitFor(() =>
+				expect(cellOf(grid, args.count - 2, COLUMN_LAST)).toHaveFocus(),
+			);
+			// The row the focus stands on is the other end from the view's, so
+			// the arrow reaches a row that stood unmounted.
+			view.scrollTop = 0;
+			await frames(6);
+			await expect(cellOf(grid, args.count - 2, COLUMN_LAST)).toHaveFocus();
+			await userEvent.keyboard("{ArrowDown}");
+			await waitFor(() =>
+				expect(cellOf(grid, args.count - 1, COLUMN_LAST)).toHaveFocus(),
+			);
+			await waitFor(bound);
+
+			// The cursor's row stays mounted when the view is scrolled away and
+			// nothing holds focus: the Tab stop is still there.
+			await userEvent.keyboard("{Control>}{Home}{/Control}");
+			await waitFor(() => expect(cellOf(grid, 0, 0)).toHaveFocus());
+			for (let down = 0; down < 12; down++) {
+				await userEvent.keyboard("{ArrowDown}");
+			}
+			await waitFor(() => expect(cellOf(grid, 12, 0)).toHaveFocus());
+			focused().blur();
+			view.scrollTop = view.scrollHeight / 2;
+			await frames(6);
+			const stop = cellOf(grid, 12, 0);
+			await expect(stop?.isConnected).toBe(true);
+			await expect(stop).toHaveAttribute("tabindex", "0");
+			await expect(
+				mounted(canvasElement).some((each) => each.contains(stop)),
+			).toBe(true);
+			await waitFor(bound);
+			await expect(await walked()).toEqual([]);
+			await expect(flush.seen).toEqual([]);
+		} finally {
+			flush.restore();
+		}
+	},
+};
+
+// On touch the grid scrolls sideways under its frozen leading column while it
+// windows: a sideways scroll survives the rows entering and leaving, and the
+// frozen cells stay at the scroller's start.
+export const TableTouchScrollsSideways: Story = {
+	tags: ["touch"],
+	globals: { density: "touch" },
+	render: ({ count }) => <Wide count={count} width={768} />,
+	play: async ({ canvas, canvasElement, args }) => {
+		try {
+			const grid = await canvas.findByRole("grid");
+			await canvas.findByText("Row 1");
+			const across = grid.parentElement;
+			if (!across) throw new Error("the grid has no scroller");
+			const view = scrollerOf(grid);
+			await frames();
+			await expect(across.scrollWidth).toBeGreaterThan(across.clientWidth);
+			across.scrollLeft = 160;
+			await frames(2);
+			await expect(across.scrollLeft).toBe(160);
+			const frozen = () => {
+				const row = mounted(canvasElement)[0];
+				const cell = row?.querySelector("td");
+				if (!cell) throw new Error("no frozen cell");
+				return cell.getBoundingClientRect().left;
+			};
+			const start = across.getBoundingClientRect().left;
+			await expect(Math.abs(frozen() - start)).toBeLessThan(2);
+			// Rows leave and enter as the page scrolls; the sideways scroll and
+			// the frozen cells stay.
+			for (const at of [1 / 3, 2 / 3, 1, 0.5]) {
+				view.scrollTop = view.scrollHeight * at;
+				await frames(6);
+				await expect(across.scrollLeft).toBe(160);
+				await expect(Math.abs(frozen() - start)).toBeLessThan(2);
+			}
+			const rows = mounted(canvasElement);
+			await expect(rows.length).toBeLessThan(args.count / 4);
+			across.scrollLeft = 0;
+			await frames(2);
+			await expect(across.scrollLeft).toBe(0);
+			await expect(await walked()).toEqual([]);
+			await expect(flush.seen).toEqual([]);
+		} finally {
+			flush.restore();
+		}
+	},
+};
+
+// The most rows the DOM held after any commit of what it wraps, the one that
+// mounted it first (a Table draws its grid in the commit after its page is
+// known).
+function Probe(props: { children: ReactNode }) {
+	return (
+		<div data-probe="" style={{ display: "contents" }}>
+			<Profiler
+				id="probe"
+				onRender={() => {
+					const box = document.querySelector("[data-probe]");
+					if (box) first.drawn = Math.max(first.drawn, mounted(box).length);
+				}}
+			>
+				{props.children}
+			</Profiler>
+		</div>
+	);
+}
+const first = { drawn: -1 };
+
+function Opening(props: { kind: Kind | "wide"; count: number }) {
+	const [open, setOpen] = useState(false);
+	const rows = useMemo(() => items(1, props.count), [props.count]);
+	return (
+		<>
+			<button type="button" onClick={() => setOpen(true)}>
+				Open
+			</button>
+			{open ? (
+				<Probe>
+					<Stage kind="list">
+						<Section title="Rows">
+							{props.kind === "wide" ? (
+								<Grid rows={rows} />
+							) : (
+								<Rows kind={props.kind} rows={rows} />
+							)}
+						</Section>
+					</Stage>
+				</Probe>
+			) : null}
+		</>
+	);
+}
+
+// A Pane mounting with 1000 rows in hand (a cache hit) draws no more than the
+// window in any commit from its first: the rows it never draws are never mounted.
+function mountsWindowed(kind: Kind | "wide"): Story {
+	return {
+		render: ({ count }) => <Opening kind={kind} count={count} />,
+		play: async ({ canvas, canvasElement, userEvent, args }) => {
+			try {
+				first.drawn = -1;
+				await userEvent.click(canvas.getByRole("button", { name: "Open" }));
+				await canvas.findByText("Row 1");
+				await frames();
+				const rows = mounted(canvasElement);
+				const view = scrollerOf(await canvas.findByText("Row 1"));
+				const height = (rows[0]?.getBoundingClientRect().height ?? 1) || 1;
+				// The first commit knows the viewport, not the pane's body.
+				await expect(first.drawn).toBeGreaterThan(0);
+				await expect(first.drawn).toBeLessThanOrEqual(
+					Math.ceil(window.innerHeight / height) + OVERSCAN + 1,
+				);
+				await expect(first.drawn).toBeLessThan(args.count / 4);
+				await expect(rows.length).toBeLessThanOrEqual(
+					inView(rows, view) + 2 * OVERSCAN,
+				);
+				await expect(flush.seen).toEqual([]);
+			} finally {
+				flush.restore();
+			}
+		},
+	};
+}
+
+export const ListMountsWindowed = mountsWindowed("list");
+export const TableMountsWindowed = mountsWindowed("wide");

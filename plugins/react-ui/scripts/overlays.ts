@@ -355,6 +355,7 @@ export const OVERLAYS: readonly string[] = [
 	"shrink-100000000000000",
 	"shrink-100000000000000000000",
 	"max-w-3/4",
+	"min-w-min",
 	"py-[calc((var(--spacing-control)-1lh)/2)]",
 	"max-w-[calc(100%-var(--spacing-figures))]",
 	"border-t",

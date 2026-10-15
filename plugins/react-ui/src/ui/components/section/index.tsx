@@ -41,6 +41,9 @@ import { IconButton } from "../icon-button/index.tsx";
 import { MenuBase } from "../menu/base.tsx";
 import { Text } from "../text/index.tsx";
 
+// A waiting description is one line, clipped where it ends: the loaded one is
+// a short sentence, and a bar that wraps would be taller than it.
+const PAINTED_LINE = "block overflow-hidden whitespace-nowrap";
 const BOX = "flex flex-col min-w-0";
 const HEAD = "flex flex-col";
 const HEAD_ROW = "flex items-center";
@@ -125,7 +128,9 @@ export function Section({
 	if (said.painted)
 		sentence = (
 			<Text role="meta">
-				<Painted role="sentence" />
+				<span className={PAINTED_LINE}>
+					<Painted role="phrase" />
+				</span>
 			</Text>
 		);
 	else if (said.value) sentence = <Text role="meta">{said.value}</Text>;

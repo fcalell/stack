@@ -41,7 +41,7 @@ import {
 	usePageTurn,
 	useTouchState,
 } from "../../lib/touched.ts";
-import { Scroller } from "../../lib/window.tsx";
+import { Scroller, useScroller } from "../../lib/window.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { ActionBarBase } from "../action-bar/base.tsx";
 import { ButtonBase } from "../button/base.tsx";
@@ -196,8 +196,8 @@ export function SheetBase({
 	const [pressedUnder, setPressedUnder] = useState<string>();
 	const popup = useRef<HTMLDivElement | null>(null);
 	useReturnFocus(open, popup);
-	const [bodyNode, setBodyNode] = useState<HTMLDivElement | null>(null);
-	useScrolls(bodyNode);
+	const scroll = useScroller();
+	useScrolls(scroll.node);
 	const blocked = submit?.blocked !== undefined;
 	// The submit's press stands while it is blocked by the reason it came
 	// under (`@fcalell/ui-core/reason`).
@@ -335,12 +335,12 @@ export function SheetBase({
 				children
 			) : body ? (
 				<div
-					ref={setBodyNode}
+					ref={scroll.ref}
 					aria-busy={(frame.holds && frame.form === "waiting") || undefined}
 					style={read === undefined ? undefined : settle}
 					className={cn(SHEET_BODY, BODY)}
 				>
-					<Scroller value={bodyNode}>{body}</Scroller>
+					<Scroller value={scroll.holder}>{body}</Scroller>
 				</div>
 			) : null}
 			{form === "menu" ? null : footer}

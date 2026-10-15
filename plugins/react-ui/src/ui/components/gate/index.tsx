@@ -9,7 +9,7 @@ import {
 	GATE_STEP,
 	text,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { type ReactNode, useEffect, useId, useRef } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { Runs } from "../../lib/code.tsx";
 import { EmptyBase, type EmptyProps } from "../../lib/empty.tsx";
@@ -18,7 +18,7 @@ import { PageTitle } from "../../lib/frame.ts";
 import { HeadingContext } from "../../lib/heading.ts";
 import { Lockup, useMark } from "../../lib/mark.tsx";
 import { useScrolls } from "../../lib/scrolls.ts";
-import { Scroller } from "../../lib/window.tsx";
+import { Scroller, useScroller } from "../../lib/window.tsx";
 import { FormBody } from "../form/base.tsx";
 import type { FormProps } from "../form/index.tsx";
 import { FrameHost, FrameMain } from "../shell/host.tsx";
@@ -82,8 +82,8 @@ export function Gate({
 	const mark = useMark();
 	const titleId = useId();
 	const body = useRef<HTMLDivElement>(null);
-	const [pageNode, setPageNode] = useState<HTMLDivElement | null>(null);
-	useScrolls(pageNode);
+	const scroll = useScroller();
+	useScrolls(scroll.node);
 	// A step that opens (the page, then each new `title`) hands focus to its
 	// first field; a step with none leaves focus where it is.
 	// biome-ignore lint/correctness/useExhaustiveDependencies: a new title is the step opening
@@ -96,8 +96,8 @@ export function Gate({
 				<HeadingContext value={2}>
 					<div className={FRAME}>
 						<FrameMain>
-							<div ref={setPageNode} className={cn(GATE, PAGE)}>
-								<Scroller value={pageNode}>
+							<div ref={scroll.ref} className={cn(GATE, PAGE)}>
+								<Scroller value={scroll.holder}>
 									<div
 										ref={body}
 										className={cn(

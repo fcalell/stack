@@ -48,16 +48,20 @@ const LINE = "flex items-center min-w-0";
 // A label with nothing under it keeps a rows inset above and below, so one that
 // wraps has room; within the row's height a one-line label does not grow it.
 const ALONE = "py-rows";
-// The label wraps to the room its value leaves.
-const LABEL = "min-w-0";
+// The label wraps to the room its value leaves, never inside a word: its
+// longest word is its floor, which the body's `overflow-wrap: anywhere` would
+// make a letter, so the label sets `wrap-normal`.
+const LABEL = "min-w-min wrap-normal shrink-10000000";
 // A string gives way first: it takes the room the label leaves, ending at the
 // line's end; an identifier too long for it cuts in its middle, its stem
 // truncating to the room and its tail standing whole (`valueCut`); words are
 // one text run that truncates at its end.
 const VALUE = "flex basis-0 grow min-w-0 justify-end";
-// A status stays whole and the label wraps to the room it leaves, a quarter of
-// the line at least: a status wider than three quarters of it is cut.
-const VALUE_STATUS = "flex shrink-0 min-w-0 ms-auto max-w-3/4";
+// A status stays whole and the label wraps to the room it leaves, down to its
+// longest word: a status wider than three quarters of the line, or than the
+// room that word leaves, is cut. The label's shrink dwarfs the status's, so it
+// gives way first.
+const VALUE_STATUS = "flex min-w-0 ms-auto max-w-3/4";
 const STEM = "min-w-0 truncate";
 const TAIL = "shrink-0";
 // A control stands whole at the line's end, the label wrapping beside it.

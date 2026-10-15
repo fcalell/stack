@@ -14,12 +14,32 @@ import {
 	useCallback,
 	useEffect,
 	useLayoutEffect,
+	useReducer,
 	useRef,
 	useState,
 } from "react";
 
-/** The nearest element that scrolls vertically, which a long collection windows against; none draws every row. A Pane's body, a Sheet's body, a Gate's page and a Thread's log provide it, the nearest one winning, so a List in a portaled Sheet never windows against the Pane under it. */
-export const Scroller = createContext<HTMLElement | null>(null);
+/** The holder of the nearest element that scrolls vertically, which a long collection windows against; none draws every row. A Pane's body, a Sheet's body, a Gate's page and a Thread's log provide it, the nearest one winning, so a List in a portaled Sheet never windows against the Pane under it. The holder is the same from the first render, its element attached with the commit, so a collection mounting with the Pane windows in its first draw. */
+export const Scroller = createContext<RefObject<HTMLElement | null> | null>(
+	null,
+);
+
+/** A scrolling body's `Scroller` value and the ref that fills it (and `own`, the host's ref to the same element): `node` is state, for what reacts to the element arriving. The ref is one function for the body's life, so a render never detaches the holder from under a Window that measures in the same commit. */
+export function useScroller<T extends HTMLElement = HTMLElement>(
+	own?: RefObject<T | null>,
+) {
+	const holder = useRef<HTMLElement | null>(null);
+	const [node, setNode] = useState<HTMLElement | null>(null);
+	const ref = useCallback(
+		(element: T | null) => {
+			holder.current = element;
+			if (own) own.current = element;
+			setNode(element);
+		},
+		[own],
+	);
+	return { holder, node, ref };
+}
 
 // The height a row is taken to have until the first one is measured.
 const ESTIMATE = 48;
@@ -65,11 +85,23 @@ export function Window({
 	end,
 	spacer = "div",
 }: WindowProps): ReactNode {
-	const scroller = use(Scroller);
-	const on = scroller !== null && rows.length >= VIRTUAL_FROM;
-	// What the extractor and the effects read at their moment, not at a render.
-	const latest = useRef({ keep, focused: undefined as number | undefined });
-	latest.current.keep = keep;
+	const holder = use(Scroller);
+	const scroller = holder?.current ?? null;
+	const on = holder !== null && rows.length >= VIRTUAL_FROM;
+	// A Window mounting with its scroller (a Pane's first render) renders
+	// before the element is attached, from the viewport's size; it renders once
+	// more when the element has arrived, to measure against it.
+	const [, arrive] = useReducer((count: number) => count + 1, 0);
+	useEffect(() => {
+		if (holder && holder.current !== scroller) arrive();
+	});
+	const view = {
+		width: scroller?.clientWidth ?? window.innerWidth,
+		height: scroller?.clientHeight ?? window.innerHeight,
+	};
+	// The row holding focus, which the extractor reads at its moment, not at a
+	// render.
+	const focused = useRef<number>(undefined);
 	// The box's gap and a row's height, read when the window opens. They are
 	// state so the virtualizer holds them before it measures again.
 	const [shape, setShape] = useState<{ gap: number; size: number }>();
@@ -79,8 +111,9 @@ export function Window({
 	const applied = useRef(0);
 	const extract = useCallback(
 		(range: Parameters<typeof ranged>[0]) =>
-			ranged(range, [latest.current.focused, latest.current.keep]),
-		[],
+			ranged(range, [focused.current, keep]),
+		// A new `keep` is a new extractor, which ranges again.
+		[keep],
 	);
 	const keyOf = useCallback(
 		(index: number) => rows[index]?.key ?? index,
@@ -89,19 +122,16 @@ export function Window({
 	const virtualizer = useVirtualizer<HTMLElement, Element>({
 		count: rows.length,
 		enabled: on,
-		getScrollElement: () => scroller,
+		getScrollElement: () => holder?.current ?? null,
 		estimateSize: () => size,
 		getItemKey: keyOf,
 		gap,
 		overscan: OVERSCAN,
 		rangeExtractor: extract,
 		useFlushSync: false,
-		initialRect: {
-			width: scroller?.clientWidth ?? 0,
-			height: scroller?.clientHeight ?? 0,
-		},
+		initialRect: view,
 		initialOffset: () =>
-			end ? Math.max(0, rows.length * size - (scroller?.clientHeight ?? 0)) : 0,
+			end ? Math.max(0, rows.length * size - view.height) : 0,
 		observeElementOffset: (instance, report) => {
 			const element = instance.scrollElement;
 			if (!element) return;
@@ -225,11 +255,11 @@ export function Window({
 				node.contains(event.target as Node),
 			);
 			const slot = drawn.current[at];
-			latest.current.focused = slot && "row" in slot ? slot.row : undefined;
+			focused.current = slot && "row" in slot ? slot.row : undefined;
 		};
 		const blur = (event: FocusEvent) => {
 			if (!element.contains(event.relatedTarget as Node | null)) {
-				latest.current.focused = undefined;
+				focused.current = undefined;
 			}
 		};
 		element.addEventListener("focusin", focus);
