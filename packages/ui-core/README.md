@@ -47,7 +47,8 @@ Twenty-six subpaths:
   framework and of TanStack.
 - `@fcalell/ui-core/paint`: what a part draws while its data is not here, free of any framework:
   `paintText` (deterministic filler of a role's length), `painting` (a slot over a painted item, a
-  throw painting the slot), `WAIT_DELAY` and `PAINT_ROWS`.
+  throw painting the slot), `WAIT_DELAY` and `PAINT_ROWS`, and `timings` (the live `waitDelay`,
+  `actDelay` and `waitMin` a bench tunes, with `holdFor`, the minimum hold on a first load).
 - `@fcalell/ui-core/settle`: `createSettle`, the page's one move from the painted form to the loaded
   one: the switches asked for in a frame apply together in one view transition, or at once.
 - `@fcalell/ui-core/list-state`: what a collection decides before it draws, free of any framework:

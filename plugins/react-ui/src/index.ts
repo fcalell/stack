@@ -361,15 +361,16 @@ export const reactUi = plugin("react-ui", {
 					},
 					{
 						source: "@fcalell/plugin-react-ui/lib/settle",
-						named: ["settle"],
+						named: ["settle", "holdFor"],
 					},
 				],
 				// A read's first answer lands with the page's other switches
-				// (`lib/settle.ts`).
+				// (`lib/settle.ts`), no earlier than the minimum hold.
 				wrap: {
 					identifier: "QueryProvider",
 					props: [
 						{ name: "settle", value: { kind: "identifier", name: "settle" } },
+						{ name: "hold", value: { kind: "identifier", name: "holdFor" } },
 					],
 				},
 				order: 2,

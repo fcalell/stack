@@ -1,4 +1,9 @@
-import type { QueryKey, UseQueryOptions } from "@tanstack/react-query";
+import type {
+	QueryClient,
+	QueryFunctionContext,
+	QueryKey,
+	UseQueryOptions,
+} from "@tanstack/react-query";
 import { hashKey, skipToken } from "@tanstack/react-query";
 import { isNotFound } from "./not-found.ts";
 
@@ -157,11 +162,70 @@ function flatten(data: unknown): unknown {
 	return (data as Pages).pages.flatMap((page) => page.data);
 }
 
+// What a first load's data waits for (ms), from the client's default query
+// `meta.hold` that `QueryProvider` sets; 0 with none set.
+export function holdOf(client: QueryClient, elapsed: number): number {
+	const hold = client.getDefaultOptions().queries?.meta?.["hold"];
+	return typeof hold === "function"
+		? (hold as (e: number) => number)(elapsed)
+		: 0;
+}
+
+// A client the app supplied takes the hold beside its own defaults, merged by
+// hand: `setDefaultOptions` replaces them all.
+export function withHold(
+	client: QueryClient,
+	hold: ((elapsed: number) => number) | undefined,
+): QueryClient {
+	const defaults = client.getDefaultOptions();
+	if (hold && defaults.queries?.meta?.hold !== hold) {
+		client.setDefaultOptions({
+			...defaults,
+			queries: {
+				...defaults.queries,
+				meta: { ...defaults.queries?.meta, hold },
+			},
+		});
+	}
+	return client;
+}
+
+// A first load's data resolves no earlier than the minimum hold allows. Only
+// this read's own write waits (never TanStack's scheduler), a refetch or a
+// later page is not held, and a cancelled fetch is let go at once: TanStack
+// ignores what it settles.
+function held<F extends (...args: never[]) => unknown>(queryFn: F): F {
+	return (async (ctx: QueryFunctionContext) => {
+		const first = ctx.client.getQueryData(ctx.queryKey) === undefined;
+		const start = Date.now();
+		const data = await queryFn(ctx as never);
+		if (!first) return data;
+		const wait = holdOf(ctx.client, Date.now() - start);
+		if (wait <= 0 || ctx.signal.aborted) return data;
+		await new Promise<void>((done) => {
+			const timer = setTimeout(finish, wait);
+			function finish(): void {
+				clearTimeout(timer);
+				ctx.signal.removeEventListener("abort", finish);
+				done();
+			}
+			ctx.signal.addEventListener("abort", finish);
+		});
+		return data;
+	}) as unknown as F;
+}
+
 export function read<T>(
 	options: UseQueryOptions<T, unknown, T, QueryKey>,
 	how: ReadHow = {},
 ): Read<T> {
 	const kind = how.kind ?? "query";
+	// A stream is not a load: its first write is the channel's own to hold.
+	const queryFn = options.queryFn;
+	const own =
+		kind !== "stream" && typeof queryFn === "function"
+			? { ...options, queryFn: held(queryFn) }
+			: options;
 	// A pages read's options are infinite ones. `_type` makes the query infinite
 	// whichever observer creates it, a leaf's plain `useQueries` included (a
 	// TanStack internal, since 5.100.2; `read.test.ts` pins it).
@@ -174,7 +238,7 @@ export function read<T>(
 			[false],
 			(data) => (kind === "pages" ? flatten(data[0]) : data[0]) as T,
 		),
-		options: kind === "pages" ? { ...options, _type: "infinite" } : options,
+		options: kind === "pages" ? { ...own, _type: "infinite" } : own,
 		missing: how.missing ?? isNotFound,
 		kind,
 	};

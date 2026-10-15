@@ -64,3 +64,7 @@ export const settle = createSettle({
 export function useSettleName(): CSSProperties {
 	return { viewTransitionName: `settle-${useId().replace(/[^\w-]/g, "")}` };
 }
+
+// The minimum hold on a read's first write (`timings.waitMin`), handed to
+// `QueryProvider` beside `settle`.
+export { holdFor } from "@fcalell/ui-core/paint";

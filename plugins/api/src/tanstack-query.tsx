@@ -43,6 +43,7 @@ import {
 	retryOnce,
 	type Selection,
 	watchUnheld,
+	withHold,
 	withRead,
 } from "@fcalell/plugin-api/read";
 import {
@@ -129,7 +130,12 @@ export {
 // the app's `EntityName`, on web and phone alike. Other meta keys stay open.
 declare module "@tanstack/react-query" {
 	interface Register {
-		queryMeta: { reads?: readonly EntityName[] } & Record<string, unknown>;
+		queryMeta: {
+			reads?: readonly EntityName[];
+			// How much longer a first load's data waits, set once on the client's
+			// default query meta by `QueryProvider`.
+			hold?: (elapsed: number) => number;
+		} & Record<string, unknown>;
 	}
 }
 
@@ -217,6 +223,9 @@ export interface QueryProviderProps {
 	// How the online and focus managers learn their state, where the platform
 	// has no window events (the phone). The web passes nothing.
 	listen?: QueryListeners;
+	// The minimum hold on a read's first write, given the ms since its fetch
+	// began (`holdOf` in `./read.ts`); a UI plugin passes it from its timings.
+	hold?: (elapsed: number) => number;
 	children: ReactNode;
 }
 
@@ -224,7 +233,15 @@ export interface QueryProviderProps {
 // `plugin-expo.slots.providers`). Lazily builds a stable default client when
 // none is supplied so a bare consumer gets sane behaviour with zero config.
 export function QueryProvider(props: QueryProviderProps) {
-	const [client] = useState(() => props.client ?? createQueryClient());
+	const [client] = useState(() =>
+		withHold(
+			props.client ??
+				createQueryClient({
+					defaultOptions: { queries: { meta: { hold: props.hold } } },
+				}),
+			props.hold,
+		),
+	);
 	// In render, so it holds before the router's first load; assigning twice is
 	// harmless.
 	bindClient(client);

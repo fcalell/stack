@@ -1,4 +1,4 @@
-import { type Read, read } from "@fcalell/plugin-api/read";
+import { holdOf, type Read, read } from "@fcalell/plugin-api/read";
 import type { QueryClient } from "@tanstack/react-query";
 import type { z } from "zod";
 import type { WsClient } from "../client/index.ts";
@@ -41,6 +41,12 @@ export function channelRead<
 					const query = () =>
 						client.getQueryCache().find({ queryKey, exact: true });
 					let timer: ReturnType<typeof setTimeout> | undefined;
+					// A first load's write waits for the minimum hold: the value so far
+					// is `unwritten`, and `due` is the timer that writes it once.
+					const began = Date.now();
+					let loading = client.getQueryData<T>(queryKey) === undefined;
+					let unwritten: T | undefined;
+					let due: ReturnType<typeof setTimeout> | undefined;
 					const onMessage: Record<string, (payload: never) => void> = {};
 					for (const [type, handler] of Object.entries(
 						fold as Record<string, NonNullable<Fold<S, T>[string]>>,
@@ -48,10 +54,24 @@ export function channelRead<
 						onMessage[type] = (payload) => {
 							try {
 								const next = handler(
-									client.getQueryData<T>(queryKey),
+									unwritten ?? client.getQueryData<T>(queryKey),
 									payload,
 									{ client },
 								);
+								if (next !== undefined && loading) {
+									const wait = holdOf(client, Date.now() - began);
+									if (due !== undefined || wait > 0) {
+										unwritten = next;
+										due ??= setTimeout(() => {
+											due = undefined;
+											loading = false;
+											client.setQueryData(queryKey, unwritten);
+											unwritten = undefined;
+										}, wait);
+										return;
+									}
+									loading = false;
+								}
 								// A write undefined is a no-op. It writes data while the fetch
 								// stays open, so the first one makes the read ready.
 								client.setQueryData(queryKey, next);
@@ -83,6 +103,7 @@ export function channelRead<
 					});
 					function end(): void {
 						clearTimeout(timer);
+						clearTimeout(due);
 						signal.removeEventListener("abort", onAbort);
 						sub.unsubscribe();
 					}

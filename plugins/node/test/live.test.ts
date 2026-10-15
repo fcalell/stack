@@ -56,8 +56,10 @@ function fakeWs(status: WsStatus = "open") {
 	return fake;
 }
 
-function setup(ws = fakeWs()) {
-	const client = new QueryClient();
+function setup(ws = fakeWs(), hold?: (elapsed: number) => number) {
+	const client = new QueryClient({
+		defaultOptions: { queries: { meta: { hold } } },
+	});
 	const inboxRead = channelRead(ws as unknown as WsClient, inbox, {
 		snapshot: (_, s): Inbox => s,
 		item: (value, item) => ({ items: [...(value?.items ?? []), item] }),
@@ -77,7 +79,7 @@ const flush = async () => {
 };
 
 beforeEach(() => {
-	mock.timers.enable({ apis: ["setTimeout"] });
+	mock.timers.enable({ apis: ["setTimeout", "Date"] });
 	// The notify batch is a zero timeout by default; a microtask is enough here.
 	notifyManager.setScheduler((cb) => queueMicrotask(cb));
 });
@@ -239,4 +241,57 @@ test("a refetch with a live subscription replaces it rather than doubling it", a
 	await flush();
 	assert.equal(ws.subs.size, 1);
 	stop();
+});
+
+// The minimum hold with a delay of 400 ms and a minimum of 300 ms.
+const hold = (elapsed: number) =>
+	elapsed < 400 ? 0 : Math.max(0, 700 - elapsed);
+
+test("a first frame past the delay is written once at the minimum, with the latest value", async () => {
+	const { ws, client, watch, now } = setup(fakeWs(), hold);
+	const writes: unknown[] = [];
+	client.getQueryCache().subscribe((event) => {
+		if (event.type === "updated" && event.action.type === "success")
+			writes.push(event.query.state.data);
+	});
+	const stop = watch();
+	mock.timers.tick(500);
+	ws.emit("snapshot", { items: ["a"] });
+	ws.emit("item", "b");
+	await flush();
+	assert.equal(now().status, "pending");
+	mock.timers.tick(199);
+	await flush();
+	assert.equal(now().status, "pending");
+	mock.timers.tick(1);
+	await flush();
+	assert.deepEqual(now().data, { items: ["a", "b"] });
+	assert.deepEqual(writes, [{ items: ["a", "b"] }]);
+	// Later frames land at once.
+	ws.emit("item", "c");
+	await flush();
+	assert.deepEqual(now().data, { items: ["a", "b", "c"] });
+	stop();
+});
+
+test("a first frame before the delay is not held", async () => {
+	const { ws, watch, now } = setup(fakeWs(), hold);
+	const stop = watch();
+	mock.timers.tick(100);
+	ws.emit("snapshot", { items: ["a"] });
+	await flush();
+	assert.deepEqual(now().data, { items: ["a"] });
+	stop();
+});
+
+test("a read left while its first write is held writes nothing late", async () => {
+	const { ws, watch, now } = setup(fakeWs(), hold);
+	const stop = watch();
+	mock.timers.tick(500);
+	ws.emit("snapshot", { items: ["a"] });
+	await flush();
+	stop();
+	mock.timers.tick(1000);
+	await flush();
+	assert.equal(now().data, undefined);
 });

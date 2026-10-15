@@ -13,6 +13,28 @@ export const WAIT_DELAY = 400;
 // at the press, and one the server answers at once never flashes a spinner.
 export const ACT_DELAY = 300;
 
+// How long a read that showed its paint keeps it at least (ms): 0, so a
+// read's answer lands the moment it comes.
+export const WAIT_MIN = 0;
+
+// The live tuning object: a bench knob read at use, as the web's CSS variables
+// are, so a change applies on the next mount. The phone's `useShown` and
+// buttons and the query hold read it; the web's paint and act delays are
+// `--wait-delay` and `--act-delay`, which the bench sets beside it.
+export const timings = {
+	waitDelay: WAIT_DELAY,
+	actDelay: ACT_DELAY,
+	waitMin: WAIT_MIN,
+};
+
+// How much longer a first load's data waits (ms) when it comes `elapsed` ms
+// after the fetch began: nothing while the paint has not shown, else until
+// the paint has stood for `waitMin`. `QueryProvider hold` takes it.
+export function holdFor(elapsed: number): number {
+	if (elapsed < timings.waitDelay) return 0;
+	return Math.max(0, timings.waitDelay + timings.waitMin - elapsed);
+}
+
 // Painted rows, options, messages, cells and lines of a collection or text
 // block whose length is not known.
 export const PAINT_ROWS = 4;

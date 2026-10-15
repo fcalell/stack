@@ -1,5 +1,5 @@
 import type { IconName } from "@fcalell/ui-core/descriptors";
-import { ACT_DELAY } from "@fcalell/ui-core/paint";
+import { timings } from "@fcalell/ui-core/paint";
 import { type IconButtonFit, iconButton } from "@fcalell/ui-core/variants";
 import { Pressable } from "react-native";
 import { cn } from "../../lib/cn";
@@ -46,7 +46,7 @@ export function IconButtonBase({
 	painted?: boolean;
 }) {
 	const shown = useShown(painted);
-	const drawn = useShown(pending, ACT_DELAY);
+	const drawn = useShown(pending, timings.actDelay);
 	return (
 		<Pressable
 			accessibilityRole="button"

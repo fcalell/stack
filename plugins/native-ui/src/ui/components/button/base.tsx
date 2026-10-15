@@ -1,4 +1,4 @@
-import { ACT_DELAY } from "@fcalell/ui-core/paint";
+import { timings } from "@fcalell/ui-core/paint";
 import {
 	type ButtonAct,
 	button,
@@ -135,7 +135,7 @@ export function ButtonBase({
 	// alone draws it under itself.
 	const acting = useAct(line && !host ? "line" : "toast");
 	const pending = given === true || acting.pending !== undefined;
-	const drawn = useShown(pending, ACT_DELAY);
+	const drawn = useShown(pending, timings.actDelay);
 	// Inert where it stands: the blocked look and no press, no reason.
 	const waiting = wait !== undefined && wait > 0;
 	const inert = (useContext(ActInert) || waiting) && !pending;

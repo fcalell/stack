@@ -6,15 +6,17 @@ import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
 import { Shell } from "@fcalell/plugin-react-ui/components/shell";
 import type { PlaceSpec } from "@fcalell/ui-core/descriptors";
-import { ACT_DELAY, WAIT_DELAY } from "@fcalell/ui-core/paint";
+import { ACT_DELAY, timings, WAIT_DELAY } from "@fcalell/ui-core/paint";
 import { ORPCError } from "@orpc/client";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { onlineManager, useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { expect } from "storybook/test";
 
-// The tuning bench for the two delays: a read paints after `--wait-delay` and
-// an act after `--act-delay`, both set live on the root. The page under the
+// The tuning bench for the two delays and the minimum: a read paints after
+// `--wait-delay` and an act after `--act-delay`, both set live on the root
+// beside `timings`, and a read's first answer waits until the paint has stood
+// for the minimum. The page under the
 // controls is a Pane with a Section list (painted, then settled) and an
 // ActionBar act, with a read time and an act's time and outcome chosen here, so
 // the owner feels a number before it goes into `paint.ts`.
@@ -125,6 +127,7 @@ function Bench(props: { readMs: number; actMs: number; outcome: Outcome }) {
 function Timings() {
 	const [waitDelay, setWaitDelay] = useState(WAIT_DELAY);
 	const [actDelay, setActDelay] = useState(ACT_DELAY);
+	const [waitMin, setWaitMin] = useState(timings.waitMin);
 	const [readMs, setReadMs] = useState(1200);
 	const [actMs, setActMs] = useState(1200);
 	const [outcome, setOutcome] = useState<Outcome>("resolve");
@@ -138,6 +141,11 @@ function Timings() {
 		return () => {
 			root.style.setProperty("--wait-delay", was[0]);
 			root.style.setProperty("--act-delay", was[1]);
+			Object.assign(timings, {
+				waitDelay: WAIT_DELAY,
+				actDelay: ACT_DELAY,
+				waitMin: 0,
+			});
 		};
 	}, []);
 	useEffect(() => {
@@ -146,7 +154,8 @@ function Timings() {
 			`${waitDelay}ms`,
 		);
 		document.documentElement.style.setProperty("--act-delay", `${actDelay}ms`);
-	}, [waitDelay, actDelay]);
+		Object.assign(timings, { waitDelay, actDelay, waitMin });
+	}, [waitDelay, actDelay, waitMin]);
 	return (
 		<>
 			<fieldset
@@ -166,6 +175,13 @@ function Timings() {
 					max={1000}
 					step={25}
 					onChange={setActDelay}
+				/>
+				<Slider
+					label="Minimum"
+					value={waitMin}
+					max={1000}
+					step={25}
+					onChange={setWaitMin}
 				/>
 				<Slider
 					label="Read time"
@@ -205,5 +221,6 @@ export const Bench_: StoryObj = {
 		const root = document.documentElement.style;
 		await expect(root.getPropertyValue("--wait-delay")).toBe(`${WAIT_DELAY}ms`);
 		await expect(root.getPropertyValue("--act-delay")).toBe(`${ACT_DELAY}ms`);
+		await expect(timings.waitMin).toBe(0);
 	},
 };

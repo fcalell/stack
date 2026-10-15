@@ -46,3 +46,7 @@ export const settle = createSettle({
 	},
 	flush: (run) => run(),
 });
+
+// The minimum hold on a read's first write (`timings.waitMin`), handed to
+// `QueryProvider` beside `settle`.
+export { holdFor } from "@fcalell/ui-core/paint";

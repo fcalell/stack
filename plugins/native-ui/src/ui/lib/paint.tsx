@@ -1,16 +1,16 @@
 import { cn } from "@fcalell/ui-core/cn";
-import { type PaintRole, paintText, WAIT_DELAY } from "@fcalell/ui-core/paint";
+import { type PaintRole, paintText, timings } from "@fcalell/ui-core/paint";
 import { paint } from "@fcalell/ui-core/variants";
 import { useEffect, useState } from "react";
 import { Text as RNText } from "react-native";
 
 /**
- * Whether a paint shows yet: false for `delay` (`WAIT_DELAY`; an act's is
- * `ACT_DELAY`) after `on` turns true (one timer, only while painted), so a read
+ * Whether a paint shows yet: false for `delay` (`timings.waitDelay`; an act's
+ * is `timings.actDelay`) after `on` turns true (one timer, only while painted), so a read
  * the server answers at once paints nothing. The phone's fill snaps in; the
  * web fades.
  */
-export function useShown(on = true, delay = WAIT_DELAY): boolean {
+export function useShown(on = true, delay = timings.waitDelay): boolean {
 	const [shown, setShown] = useState(false);
 	useEffect(() => {
 		if (!on) {

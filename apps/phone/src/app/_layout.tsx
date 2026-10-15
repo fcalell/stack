@@ -6,6 +6,10 @@ const places: PlaceSpec[] = [
 	{ route: "/", label: "Home", icon: "House" },
 	{ route: "/notes", label: "Notes", icon: "NotebookPen" },
 	{ route: "/ask", label: "Ask", icon: "MessageSquare" },
+	// The timings bench is for development only.
+	...(__DEV__
+		? [{ route: "/timings", label: "Timings", icon: "Timer" } as PlaceSpec]
+		: []),
 ];
 
 export default function Layout() {
