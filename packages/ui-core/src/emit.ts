@@ -1,5 +1,5 @@
 import type { ResolvedTheme } from "./derive.ts";
-import { WAIT_DELAY } from "./paint.ts";
+import { ACT_DELAY, WAIT_DELAY } from "./paint.ts";
 import {
 	leadingOf,
 	nativeMeasurePx,
@@ -77,6 +77,7 @@ export function themeTokens(resolved: ResolvedTheme): Record<string, string> {
 	// The wait before a paint fades in; not a rung, so it holds under reduced
 	// motion while the fade itself (a rung) snaps.
 	tokens["--wait-delay"] = `${WAIT_DELAY}ms`;
+	tokens["--act-delay"] = `${ACT_DELAY}ms`;
 	for (const easing of EASINGS) {
 		tokens[`--ease-${easing}`] =
 			`cubic-bezier(${resolved.motion.easings[easing].join(", ")})`;

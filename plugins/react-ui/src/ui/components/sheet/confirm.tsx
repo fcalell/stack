@@ -32,8 +32,7 @@ export function ConfirmSheet(props: {
 	// A failed act keeps the sheet open to retry; its caller says why.
 	const run = () => {
 		setPending(true);
-		return entry.act
-			.onAct()
+		return Promise.resolve(entry.act.onAct())
 			.then(onDone, () => {})
 			.finally(() => setPending(false));
 	};

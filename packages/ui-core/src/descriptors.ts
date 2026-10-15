@@ -16,17 +16,26 @@ export type { ChipFamily, StatusState, Width, Words };
 // export it under. Lucide's own aliases are names too.
 export type IconName = keyof typeof icons;
 
+// What every act is: the run it starts and the sentence it fails with. A
+// thenable `onAct` returns holds the act pending until it settles; `failed`
+// is drawn when the server gives no refusal of its own.
+export interface ActBase {
+	onAct: () => unknown;
+	// Why the act failed (a sentence; wraps).
+	failed?: string;
+}
+
 // A labelled text act, 44 px, with an optional `blocked` reason drawn under
 // it. `destructive` marks an act that removes or ends something: an
 // `ActionBar` draws it as `danger` when it is the bar's filled act and as
 // `destructive` (the hairline form) otherwise. A promise its `onAct`
 // returns keeps the bar's filled act pending until it settles.
-export interface Act {
+export interface Act extends ActBase {
 	// The act's visible text (a short phrase; truncates).
 	label: string;
-	onAct: () => unknown;
 	// Why the act cannot run (a sentence; wraps).
 	blocked?: string;
+	// @deprecated removed in phase 4 U2
 	loading?: boolean;
 	destructive?: boolean;
 	// A quiet act: words in the meta ink with no hairline (a resend). An
@@ -44,11 +53,11 @@ export interface LinkAct {
 
 // An icon-only act: the label is its accessible name, never drawn. `loading`
 // is an `Act`'s: the act is running, inert, its glyph swapped for the spinner.
-export interface IconAct {
+export interface IconAct extends ActBase {
 	icon: IconName;
 	// The act's accessible name (a short phrase; read aloud, never drawn).
 	label: string;
-	onAct: () => void;
+	// @deprecated removed in phase 4 U2
 	loading?: boolean;
 }
 
@@ -175,7 +184,7 @@ export interface OptionPick<V extends string | null = string> {
 	label: string;
 	options: readonly Option<V>[] | readonly OptionGroup<V>[];
 	value?: NoInfer<V>;
-	onChange: (value: NoInfer<V>) => void;
+	onChange: (value: NoInfer<V>) => unknown;
 }
 
 // A pick of several: the options ticked in the list, which stays open while
@@ -185,7 +194,7 @@ export interface MultiPick<V extends string | null = string> {
 	label: string;
 	options: readonly Option<V>[] | readonly OptionGroup<V>[];
 	value: readonly NoInfer<V>[];
-	onChange: (value: NoInfer<V>[]) => void;
+	onChange: (value: NoInfer<V>[]) => unknown;
 }
 
 // What a cell holds when it is a picked option or a typed value: the one
@@ -291,8 +300,8 @@ export type DefinitionData = string | { status: StatusState; label?: string };
 // Enter having changed it).
 export interface FieldControl<V> {
 	readonly value: V;
-	onChange: (value: V) => void;
-	onCommit?: (value: V) => void;
+	onChange: (value: V) => unknown;
+	onCommit?: (value: V) => unknown;
 }
 
 // A form field by name: its value, its change handler and its error line.
@@ -308,10 +317,9 @@ export interface FieldBinding<V> extends FieldControl<V> {
 // other acts are inert; the sheet closes when it resolves and stays open,
 // the act ready again, when it rejects. Dismissing the sheet runs nothing.
 // `destructive` draws the act as a destructive button.
-export interface ConfirmAct {
+export interface ConfirmAct extends ActBase {
 	// The act's visible text (a short phrase; truncates).
 	label: string;
-	onAct: () => Promise<unknown>;
 	destructive?: boolean;
 }
 
@@ -343,10 +351,9 @@ export interface Confirmation {
 // One act of a menu: its label, an optional glyph, `destructive` for an act
 // that removes or ends something, and `blocked`, the reason it cannot be
 // taken, drawn under its label while the act is disabled.
-export interface MenuItem {
+export interface MenuItem extends ActBase {
 	// The act's text (a short phrase; truncates).
 	label: string;
-	onAct: () => void;
 	icon?: IconName;
 	destructive?: boolean;
 	// Why the act cannot be taken (a sentence; wraps).

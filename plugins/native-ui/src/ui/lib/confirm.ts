@@ -39,7 +39,7 @@ export function ask(confirmation: Confirmation): Promise<boolean> {
 			act: {
 				...confirmation.act,
 				onAct: () =>
-					confirmation.act.onAct().then((done) => {
+					Promise.resolve(confirmation.act.onAct()).then((done) => {
 						taken = true;
 						return done;
 					}),

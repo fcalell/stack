@@ -9,6 +9,10 @@
 // rhythm for every paint of an app.
 export const WAIT_DELAY = 400;
 
+// How long an act runs before its pending look shows (ms): the act is inert
+// at the press, and one the server answers at once never flashes a spinner.
+export const ACT_DELAY = 300;
+
 // Painted rows, options, messages, cells and lines of a collection or text
 // block whose length is not known.
 export const PAINT_ROWS = 4;

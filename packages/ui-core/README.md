@@ -165,7 +165,7 @@ beside `theme`: the seven `Status` words, `recommended`, `copy`, `copied`, `down
 `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `checking`,
 `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `edit`, `details`, `places`,
 `notifications`, `code`, `added`, `removed`, `sort`, `message`,
-`copyFailed`, `downloadFailed`, `latest`, `missing`, `readFailed`, `readEmpty`, `readStale`, `readPaused`, `showMore`, `moreFailed`, `replyStopped`, `chooseFile`, `typeValue`,
+`copyFailed`, `downloadFailed`, `latest`, `missing`, `readFailed`, `readEmpty`, `readStale`, `readPaused`, `showMore`, `moreFailed`, `replyStopped`, `actFailed`, `chooseFile`, `typeValue`,
 `pickValue`, `locked`, `photos`, `files`, `changed`, `unchanged`, `stale`, `chooseAll`,
 `chooseNone`, `noMatches`, `imageFiles`, `audioFiles`, `videoFiles`, `textFiles`, `expand`, `collapse`, `zoomIn`, `zoomOut`, `fit`, `arrange`, `off`, `notFound`, `nowhere`, `discardEdit`, `keepEditing`, `discard`, `editUnsaved`, the counted `earlierLines`, and the slot words `wrongType`, `stepOf`, `chosenOf` and
 `countOver`. A counted word is `{ one, other }`, each form spelling `{count}` where the number

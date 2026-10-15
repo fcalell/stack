@@ -42,6 +42,7 @@ export const STATES = [
 	"active",
 	"disabled",
 	"loading",
+	"pending",
 	"error",
 	"selected",
 	"empty",

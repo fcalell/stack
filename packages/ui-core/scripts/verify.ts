@@ -740,7 +740,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(SHADOW_LEVELS.length, 2, "shadow level count");
 	requireEqual(WIDTHS.length, 14, "width count");
 	requireEqual(BREAKPOINTS.length, 3, "breakpoint count");
-	requireEqual(WORD_KEYS.length, 76, "word count");
+	requireEqual(WORD_KEYS.length, 77, "word count");
 	requireEqual(COUNTED_WORD_KEYS.length, 1, "counted word count");
 	requireEqual(SLOT_WORD_KEYS.length, 4, "slot word count");
 	requireEqual(
@@ -1250,6 +1250,7 @@ check("c08", "themeTokens and modeTokens carry the right keys", () => {
 	for (const rung of DURATIONS) expected.add(`--transition-duration-${rung}`);
 	expected.add("--transition-duration-loop");
 	expected.add("--wait-delay");
+	expected.add("--act-delay");
 	for (const easing of EASINGS) expected.add(`--ease-${easing}`);
 	expected.add("--default-transition-duration");
 	expected.add("--default-transition-timing-function");
