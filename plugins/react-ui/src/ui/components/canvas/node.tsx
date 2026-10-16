@@ -28,7 +28,7 @@ import type { Size } from "./geometry.ts";
 import { hit } from "./hit.ts";
 import { useLift } from "./lift.ts";
 import type { NodeLook } from "./look.ts";
-import { ZOOM_TO_NODE } from "./view.ts";
+import { centreOf, ZOOM_TO_NODE } from "./view.ts";
 import type { Viewport } from "./viewport.ts";
 
 // The glyph draws in the node's own ink: it would else take the ink the page
@@ -468,6 +468,7 @@ export function NodeView({
 		<button
 			type="button"
 			ref={measure}
+			data-focus={id}
 			style={place}
 			onClick={() => onSelect(id)}
 			onFocus={focused}
@@ -481,8 +482,8 @@ export function NodeView({
 			{content}
 		</div>
 	);
-	// A tap, a click and a key all zoom to the node at its own size, which brings
-	// the full form back; they never select it. A key's click hands focus on to it.
+	// A tap, a click and a key all zoom to the node at its own size about its
+	// centre, which stays where it stands, and bring the full form back; they never select it. A key's click hands focus on to it.
 	const glyph = glyphed ? (
 		// The glyph box's place and size are coordinates of the flow, known at run time.
 		<div
@@ -498,9 +499,10 @@ export function NodeView({
 				type="button"
 				// The name the glyph carries alone, and whole where the overview cuts it: a native tooltip, which also names the button for axe and voice control.
 				title={node.title}
+				data-focus={id}
 				onClick={(event) => {
 					refocus.current = event.detail === 0;
-					viewport.centreOn(frame, ZOOM_TO_NODE);
+					viewport.zoomTo(ZOOM_TO_NODE, centreOf(frame));
 				}}
 				onFocus={focused}
 				onPointerDown={lift.bind.onPointerDown}

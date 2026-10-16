@@ -74,6 +74,36 @@ export const EXTENT: readonly [number, number] = [0.1, 2];
 // floor's threshold.
 export const ZOOM_TO_NODE = 1;
 
+// Where a flow point stands in the pane under the transform.
+export const paneOf = (
+	point: CanvasPoint,
+	{ x, y, k }: Transform,
+): CanvasPoint => ({
+	x: point.x * k + x,
+	y: point.y * k + y,
+});
+
+// The box's centre, a flow point.
+export const centreOf = (box: Box): CanvasPoint => ({
+	x: box.x + box.width / 2,
+	y: box.y + box.height / 2,
+});
+
+// The transform at scale `k` that keeps the flow point under `anchor` (a pane
+// point) where it stands: the one zoom a tap, a button and a pinch share.
+export function zoomAbout(
+	transform: Transform,
+	anchor: CanvasPoint,
+	k: number,
+): Transform {
+	const ratio = k / transform.k;
+	return {
+		k,
+		x: anchor.x - (anchor.x - transform.x) * ratio,
+		y: anchor.y - (anchor.y - transform.y) * ratio,
+	};
+}
+
 // The transform that puts the box's centre on the pane's centre at scale `k`.
 export function centredTransform(box: Box, k: number, pane: Size): Transform {
 	return {

@@ -50,7 +50,7 @@ const numbered = nodes.map((node) => ({ ...node, number: numbers.get(node.id) })
 
 A plain wheel pans, Ctrl or Cmd with the wheel zooms (a trackpad pinch is a Ctrl wheel), a drag
 pans, even from a node (with `onMove` a drag from a node moves that node instead), one finger pans
-and two pinch. The zoom stack at the bottom left zooms in, zooms out and fits: Fit shows the whole
+and two pinch. The zoom stack at the bottom left zooms in, zooms out and fits (a zoom step is about the focused node, which stays where it stands, else the pane's centre): Fit shows the whole
 graph, never larger than its own size and clear of the zoom stack and the `act`. A graph opens as Fit shows it: centred in the room the zoom stack and the `act` leave, at its own
 size where it fits there, else at the scale that holds the whole graph, groups and all, so none is cut at an
 edge (every node is then its glyph or glyph and name, and a group's head stays, below).
@@ -115,7 +115,7 @@ close for their names to clear each other at half raises that zoom to the lowest
 clear, and one that cannot clear them under zoom 1 has no named overview: the glyph alone. Group
 heads stay under zoom 1, drawn at their own size on screen (a button a target tall, the meta role's size, cut to
 the frame's width), and edge labels draw nothing. A click, a tap or Enter on a glyph or its name
-zooms to that node at its own size and chooses nothing. A zoom step is a fifth of the scale.
+zooms to that node at its own size about its centre, which stays where it stood (under the finger), and chooses nothing. A zoom step is a fifth of the scale.
 Edges and group frames follow the glyphs, so an edge ends on its glyph, and zooming out stops
 where two glyphs would stand closer than two `pair`, so the edges between them still draw.
 Give each node its own `title`: beside the icon it is the overview's only mark of one node of a

@@ -15,6 +15,7 @@ import type {
 } from "@fcalell/ui-core/descriptors";
 import { CANVAS_GROUP_HEAD, canvasGroup } from "@fcalell/ui-core/variants";
 import {
+	type FocusEvent,
 	type KeyboardEvent,
 	type MouseEvent,
 	useCallback,
@@ -47,7 +48,7 @@ import { EdgeLabel } from "./label.tsx";
 import { useLayout } from "./layout.ts";
 import { type EdgeTone, edgeLook, nodeLook } from "./look.ts";
 import { type NodeEdit, NodeView } from "./node.tsx";
-import { landAt, place } from "./view.ts";
+import { centreOf, landAt, place } from "./view.ts";
 import { useViewport, useViewportValue } from "./viewport.ts";
 import { ActFoot, ZoomPainted, ZoomStack } from "./zoom.tsx";
 
@@ -317,6 +318,22 @@ function CanvasGraph({
 		edges.map((edge) => [edge.id, edgeLook(edge, byId, path)]),
 	);
 
+	// The node last focused inside the region, which the zoom buttons zoom about:
+	// focus moving to a button of the stack keeps it, anywhere else drops it, and
+	// so does a click on the ground. A ref, since nothing draws it.
+	const focused = useRef<string | null>(null);
+	const track = (event: FocusEvent) => {
+		const target = event.target;
+		if (!(target instanceof Element)) return;
+		const node = target.closest<HTMLElement>("[data-focus]");
+		if (node) focused.current = node.dataset.focus ?? null;
+		else if (!target.closest("[data-clear]")) focused.current = null;
+	};
+	const anchor = () => {
+		const box = focused.current ? boxes.get(focused.current) : undefined;
+		return box ? centreOf(box) : undefined;
+	};
+
 	// Escape clears the selection from anywhere inside the region.
 	const clear = (event: KeyboardEvent) => {
 		if (event.key === "Escape" && selected !== undefined) onSelect?.(null);
@@ -329,8 +346,10 @@ function CanvasGraph({
 			region.current &&
 			target instanceof Element &&
 			isGround(target, region.current)
-		)
+		) {
+			focused.current = null;
 			onSelect?.(null);
+		}
 	};
 	const edit: NodeEdit = {
 		viewport,
@@ -350,6 +369,7 @@ function CanvasGraph({
 			ref={region}
 			aria-label={label}
 			onKeyDown={clear}
+			onFocus={track}
 			onClick={onSelect ? ground : undefined}
 			className={cn(GROUND, !ready && HIDDEN)}
 		>
@@ -406,6 +426,7 @@ function CanvasGraph({
 				viewport={viewport}
 				onFit={fit}
 				minZoom={minZoom}
+				anchor={anchor}
 				onArrange={onMove ? arrange : undefined}
 			/>
 			{act ? <ActFoot act={act} /> : null}

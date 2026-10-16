@@ -45,13 +45,16 @@ import { carried } from "../src/ui/components/canvas/lift.ts";
 import { edgeLook, nodeLook } from "../src/ui/components/canvas/look.ts";
 import {
 	centredTransform,
+	centreOf,
 	EXTENT,
 	fitTransform,
 	inside,
 	landAt,
 	ORIGIN,
+	paneOf,
 	place,
 	whole,
+	zoomAbout,
 } from "../src/ui/components/canvas/view.ts";
 import { showcaseFrames } from "../src/ui/showcase/cells.ts";
 import {
@@ -1671,4 +1674,44 @@ test("an edge naming a group with a node is ignored, and an empty group's edge e
 		}),
 	);
 	assert.deepEqual(routed.routes.get("in")?.points.at(-1), { x: 120, y: 200 });
+});
+
+test("zooming about an anchor keeps the flow point under it where it stands", () => {
+	const start = { x: -40, y: 25, k: 0.6 };
+	const flow = { x: 310, y: 170 };
+	const anchor = paneOf(flow, start);
+	for (const k of [0.1, 0.5, 1, 1.2, 2]) {
+		const next = zoomAbout(start, anchor, k);
+		assert.equal(next.k, k);
+		const after = paneOf(flow, next);
+		assert.ok(Math.abs(after.x - anchor.x) < 1e-9);
+		assert.ok(Math.abs(after.y - anchor.y) < 1e-9);
+	}
+});
+
+test("zooming about an anchor composes: in then out returns the view", () => {
+	const start = { x: 12, y: -8, k: 0.8 };
+	const anchor = { x: 160, y: 300 };
+	const back = zoomAbout(zoomAbout(start, anchor, 1.6), anchor, 0.8);
+	assert.ok(Math.abs(back.x - start.x) < 1e-9);
+	assert.ok(Math.abs(back.y - start.y) < 1e-9);
+	assert.equal(back.k, start.k);
+});
+
+test("a node's centre stays under the finger when a tap zooms to its own size", () => {
+	const box = { x: 200, y: 400, width: 240, height: 56 };
+	const fitted = { x: 30, y: 14, k: 0.37 };
+	const finger = paneOf(centreOf(box), fitted);
+	const next = whole(zoomAbout(fitted, finger, 1));
+	assert.equal(next.k, 1);
+	const after = paneOf(centreOf(box), next);
+	assert.ok(Math.abs(after.x - finger.x) <= 0.5);
+	assert.ok(Math.abs(after.y - finger.y) <= 0.5);
+});
+
+test("the pane's centre is the anchor when no node is", () => {
+	const start = { x: 5, y: 9, k: 1 };
+	const pane = { x: 160, y: 320 };
+	const next = zoomAbout(start, pane, 1.2);
+	assert.deepEqual(next, { k: 1.2, x: 160 - 155 * 1.2, y: 320 - 311 * 1.2 });
 });

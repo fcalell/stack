@@ -293,7 +293,7 @@ export const OverviewDark = mode("dark", overview);
 
 // ── 2 Click and Enter ───────────────────────────────────────────────
 
-// A click on a glyph zooms to its node at scale 1, centred, shows its card and
+// A click on a glyph zooms to its node at scale 1 about its centre, shows its card and
 // chooses nothing. With the keyboard, Tab walks the glyphs in path order and
 // Enter on one does the same, then focus stands on that node's card.
 const activate: Story = {
@@ -309,17 +309,18 @@ const activate: Story = {
 		const index = ORDER.indexOf("build");
 		const target = glyphs(canvasElement)[index];
 		if (!target) throw new Error("no glyph for build");
+		// Where the glyph stands in the pane: the node stays there.
+		const inPane = (point: { x: number; y: number }) => ({
+			x: point.x - rect(region).left,
+			y: point.y - rect(region).top,
+		});
+		const was = inPane(centre(rect(target)));
 		await click(centre(rect(target)));
 		await waitFor(() => expect(scale()).toBe(1));
-		// The page may scroll as a button takes focus, so the pane is read now.
-		const middle = centre(rect(region));
 		await expect(card(region, "build")).toBeVisible();
-		await expect(
-			Math.abs(centre(rect(card(region, "build"))).x - middle.x),
-		).toBeLessThan(1);
-		await expect(
-			Math.abs(centre(rect(card(region, "build"))).y - middle.y),
-		).toBeLessThan(1);
+		const now = inPane(centre(rect(card(region, "build"))));
+		await expect(Math.abs(now.x - was.x)).toBeLessThan(1);
+		await expect(Math.abs(now.y - was.y)).toBeLessThan(1);
 		await expect(args.selected).not.toHaveBeenCalled();
 		await expect(glyphs(canvasElement)).toHaveLength(0);
 

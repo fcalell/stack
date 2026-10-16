@@ -1,5 +1,5 @@
 import { cn } from "@fcalell/ui-core/cn";
-import type { Act } from "@fcalell/ui-core/descriptors";
+import type { Act, CanvasPoint } from "@fcalell/ui-core/descriptors";
 import { CANVAS_ZOOM } from "@fcalell/ui-core/variants";
 import { useWords } from "../../lib/words.tsx";
 import { ButtonBase } from "../button/base.tsx";
@@ -76,11 +76,15 @@ export function ZoomStack({
 	onFit,
 	minZoom,
 	onArrange,
+	anchor,
 }: {
 	viewport: Viewport;
 	onFit: () => void;
 	minZoom: number;
 	onArrange?: () => void;
+	// The flow point the buttons zoom about: the focused node's centre, else
+	// nothing, which is the pane's centre.
+	anchor: () => CanvasPoint | undefined;
 }) {
 	const atMax = useViewportValue(viewport, (view) => view.k >= EXTENT[1]);
 	const atMin = useViewportValue(viewport, (view) => view.k <= minZoom);
@@ -89,8 +93,8 @@ export function ZoomStack({
 			atMax={atMax}
 			atMin={atMin}
 			arrange={onArrange !== undefined}
-			onZoomIn={() => viewport.zoomIn()}
-			onZoomOut={() => viewport.zoomOut()}
+			onZoomIn={() => viewport.zoomIn(anchor())}
+			onZoomOut={() => viewport.zoomOut(anchor())}
 			onFit={onFit}
 			onArrange={onArrange}
 		/>

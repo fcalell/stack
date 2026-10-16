@@ -702,14 +702,15 @@ const overview: Story = {
 		await expect(calls(args.moved)).toHaveLength(reports);
 		await expect(args.selected).not.toHaveBeenCalled();
 
-		// A tap on a glyph zooms to its node at scale 1, centred, and the card is
+		// A tap on a glyph zooms to its node at scale 1 about its centre, which stays under the finger, and the card is
 		// back. The node is the one whose glyph was tapped.
 		const tapped = [...glyphs(canvasElement)].find((each) =>
 			reachable(region, each),
 		);
 		if (!tapped) throw new Error("no glyph a finger can reach");
 		const index = [...glyphs(canvasElement)].indexOf(tapped);
-		await tap(centre(rect(tapped)));
+		const held = centre(rect(tapped));
+		await tap(held);
 		await waitFor(() => expect(scale()).toBeCloseTo(1, 1));
 		await expect(around(scale(), 1, 0.01)).toBe(true);
 		const shown = [
@@ -717,8 +718,8 @@ const overview: Story = {
 		][index];
 		if (!shown) throw new Error("no card for the glyph");
 		await expect(shown).toBeVisible();
-		await expect(around(centre(rect(shown)).x, middle.x, 1)).toBe(true);
-		await expect(around(centre(rect(shown)).y, middle.y, 1)).toBe(true);
+		await expect(around(centre(rect(shown)).x, held.x, 1)).toBe(true);
+		await expect(around(centre(rect(shown)).y, held.y, 1)).toBe(true);
 		await expect(glyphs(canvasElement)).toHaveLength(0);
 		await expect(args.selected).not.toHaveBeenCalled();
 	},

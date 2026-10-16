@@ -15,8 +15,10 @@ import {
 	EXTENT,
 	inside,
 	NO_CLEARANCE,
+	paneOf,
 	type Transform,
 	whole,
+	zoomAbout,
 } from "./view.ts";
 
 // The canvas's viewport: pan, wheel, pinch and the zoom stack over one layer.
@@ -25,8 +27,12 @@ export interface Viewport {
 	get(): Transform;
 	// Every transform change, for a part that reads the zoom.
 	subscribe(listener: () => void): () => void;
-	zoomIn(): void;
-	zoomOut(): void;
+	// A step of the scale about a flow point, which stays where it stands in the
+	// pane; the pane's centre without one.
+	zoomIn(about?: CanvasPoint): void;
+	zoomOut(about?: CanvasPoint): void;
+	// The scale (within its extent) about a flow point, as a step does.
+	zoomTo(k: number, about?: CanvasPoint): void;
 	// Instant, within the scale extent.
 	set(transform: Transform): void;
 	// What the canvas's own chrome takes from the pane, which a fit and the opening view stay clear of.
@@ -142,17 +148,17 @@ function make(region: RefObject<HTMLElement | null>) {
 		height: region.current?.clientHeight ?? 0,
 	});
 
-	// The scale moves by `factor` about the pane's centre.
-	const zoomBy = (factor: number) => {
+	// The scale moves to `target` about the flow point `about`, else the pane's
+	// centre, and that point stays where it stands.
+	const zoomTo = (target: number, about?: CanvasPoint) => {
 		const [low, high] = behaviour.scaleExtent();
-		const k = Math.min(high, Math.max(low, current.k * factor));
-		const ratio = k / current.k;
 		const { width, height } = pane();
-		viewport.set({
-			k,
-			x: width / 2 - (width / 2 - current.x) * ratio,
-			y: height / 2 - (height / 2 - current.y) * ratio,
-		});
+		const anchor = about
+			? paneOf(about, current)
+			: { x: width / 2, y: height / 2 };
+		viewport.set(
+			zoomAbout(current, anchor, Math.min(high, Math.max(low, target))),
+		);
 	};
 
 	const viewport: Viewport = {
@@ -163,8 +169,9 @@ function make(region: RefObject<HTMLElement | null>) {
 				listeners.delete(listener);
 			};
 		},
-		zoomIn: () => zoomBy(STEP),
-		zoomOut: () => zoomBy(1 / STEP),
+		zoomIn: (about) => zoomTo(current.k * STEP, about),
+		zoomOut: (about) => zoomTo(current.k / STEP, about),
+		zoomTo,
 		// Every transform the canvas sets itself comes through here, at whole
 		// pixels; a wheel or a pinch stays as d3 gives it.
 		set(transform) {
@@ -189,7 +196,7 @@ function make(region: RefObject<HTMLElement | null>) {
 		},
 		limit(lowest) {
 			behaviour.scaleExtent([lowest, EXTENT[1]]);
-			if (current.k < lowest) zoomBy(1);
+			if (current.k < lowest) zoomTo(current.k);
 		},
 		screenToFlow(point) {
 			const rect = region.current?.getBoundingClientRect();
