@@ -458,9 +458,9 @@ export const ROW_END = "gap-inside";
 export const ROW_TEXT_FLOOR = "basis-2/5 shrink-0";
 // A list row's marks, after its status in the end group, in order (a warning, a lock, a chip), a
 // gap apart. A row's status leads them, in the end group, beside the trailing
-// value or under it. They are never cut: those that do not all fit whole beside
-// the text group's floor fold away, the last first (`marksShown`), and the first
-// stands whatever the room. The lock's label shows from `tablet`, the glyph
+// value or under it. Those that do not all fit whole beside the text group's
+// floor fold away, the last first (`marksShown`); the first never folds, cut only
+// where it alone is wider than the room. The lock's label shows from `tablet`, the glyph
 // alone below. The warning's glyph is in `warn`, its label in the meta ink.
 export const ROW_MARKS = "gap-inside";
 export const ROW_WARNING = "text-warn";

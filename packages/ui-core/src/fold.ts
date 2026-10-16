@@ -44,15 +44,15 @@ export interface FoldItems {
 	more?: number;
 	// Whether the more item stands though every item fits (a head's own menu).
 	holds?: boolean;
-	// How many stand whatever the room says: a row's first mark.
+	// How many never fold: a row's first mark.
 	least?: number;
 }
 
 // How many of the items stand: the first this many, the rest folded, and they
 // come back as the room grows. It is the one rule both folds run: a head's
-// acts (`actsShown`) and a row's marks (`marksShown`). An item is never cut,
-// so it stands whole or folds away; the more item holds its place before an
-// item does.
+// acts (`actsShown`) and a row's marks (`marksShown`). An item folds whole,
+// never cut to fit, and the more item holds its place before an item does;
+// one the `least` keeps is cut only where it alone is wider than the room.
 export function itemsShown(items: FoldItems): number {
 	const { budget, widths, gap, more, holds = false, least = 0 } = items;
 	const total = widths.length;
@@ -98,7 +98,9 @@ export interface MarksRoom {
 // How many of a row's marks stand in its end group: the text group keeps its
 // two fifths (`TITLE_FLOOR`), and the marks that do not fit whole in the rest
 // fold away, the last first. They have no menu to go to, so they are not drawn;
-// the first stands whatever the room, as the row's one thing the end must say.
+// the first never folds, as the row's one thing the end must say, and is cut
+// only where it alone is wider than the room (a row composed for more than its
+// width).
 export function marksShown(room: MarksRoom): number {
 	const { row, fixed, widths, gap } = room;
 	return itemsShown({

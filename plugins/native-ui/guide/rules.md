@@ -219,10 +219,10 @@ A row's marks are named props, at most one each, in order: `status`, `warning` (
 string), `lock` (what it holds, a string, a glyph) and `chip`; the act that clears a warning is the
 row's `act`. The marks stand in the row's end group, one line, under the trailing value or beside
 it, never on the meta line, and none is ever dropped, so a row whose second line would hold only
-marks is one line. A status has one form, its `label`, and a mark is never cut: the marks that do not
+marks is one line. A status has one form, its `label`, and a mark folds rather than cut: the marks that do not
 all fit whole beside the text group's two fifths fold away, the last first, and are not drawn (they
 have no menu to go to; the screen reader still reads them), so the first mark of a narrow row stands
-alone. Put the mark that must be seen first. Keep a status word short; stack never shortens a label itself.
+alone, cut only where it alone is wider than the room. Put the mark that must be seen first. Keep a status word short; stack never shortens a label itself.
 
 Where a row, a fact or a field stands in a change set is its `change` (`ChangeKind`: `added`,
 `changed`, `removed`, `unchanged`, `stale`), one prop on `ListRow`, `DefinitionRow` and `FormField`

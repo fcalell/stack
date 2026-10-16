@@ -365,7 +365,6 @@ function Members() {
 									key: "lea-northwind-io",
 									row: (
 										<ListRow
-											leading={{ status: "waiting" }}
 											title="lea@northwind.io"
 											meta={["Invited 2 d ago by Ana Ruiz"]}
 											status={{ state: "waiting", label: "Pending" }}
