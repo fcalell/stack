@@ -1,5 +1,9 @@
 import { Button as BaseButton } from "@base-ui/react/button";
-import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Datum,
+	paints,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type {
 	ChangeKind,
@@ -169,17 +173,18 @@ export function DefinitionRowBase<V extends string | null = string>({
 	at = 0,
 }: DefinitionRowProps<V> & DefinitionRowInternal) {
 	const [shown, said] = useSelections([value, description]);
-	// Painted by the list, or by a datum of its own: either way the row draws
-	// its loaded tree, each part the datum reaches in its filler, and takes no
-	// press.
-	const waitsValue = listed || shown.painted;
-	const waitsUnder = listed || said.painted;
+	// Painted by the list, or by a datum of its own that waits: either way the
+	// row draws its loaded tree, each part the datum reaches in its filler, and
+	// takes no press. A datum whose read ended draws nothing (the label alone);
+	// the frame that holds the read says why.
+	const waitsValue = listed || paints(shown);
+	const waitsUnder = listed || paints(said);
 	const painted = waitsValue || waitsUnder;
 	const opens = href !== undefined || onOpen !== undefined;
 	const live = opens && !painted;
 	// A placeholder is a function proxy that no type test passes: the value is
 	// read only once painted is ruled out.
-	const plain = waitsValue ? undefined : shown.value;
+	const plain = listed || shown.painted ? undefined : shown.value;
 	const copied = copyable && typeof plain === "string" ? plain : undefined;
 	let valueNode: ReactNode = null;
 	if (waitsValue && value !== undefined)
@@ -275,7 +280,7 @@ export function DefinitionRowBase<V extends string | null = string>({
 	} else if (description !== undefined) {
 		under = waitsUnder ? (
 			<Painted role="sentence" at={at} />
-		) : (
+		) : said.painted ? undefined : (
 			(said.value as string)
 		);
 	}

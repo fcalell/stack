@@ -2,6 +2,7 @@ import { Button as BaseButton } from "@base-ui/react/button";
 import {
 	type Datum,
 	type Drawn,
+	paints,
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
@@ -102,7 +103,7 @@ function CopyAct(props: { name?: string; text: string; painted: boolean }) {
 /** Mono at the code role in the frame Code, Diff and ProseDiff share; keeps its line breaks and wraps a long line at any width, never scrolling sideways. A head names it (`title`) and carries the copy and download acts; without a title they stand side by side in a column beside the first line. `tail` folds the earlier lines behind a one-way act that reveals them and leaves, the focus landing on the text. */
 export function Code({ text: datum, title, tail, copy, download }: CodeProps) {
 	const [drawn] = useSelections([datum] as const) as [Drawn<string>];
-	const painted = drawn.painted;
+	const painted = paints(drawn);
 	const source = drawn.painted ? "" : drawn.value;
 	const words = useWords();
 	const id = useId();
@@ -185,6 +186,8 @@ export function Code({ text: datum, title, tail, copy, download }: CodeProps) {
 			</code>
 		</pre>
 	);
+	// An ended read draws no text; the frame that holds it says why.
+	if (drawn.painted && !painted) return null;
 	return (
 		<div inert={painted || undefined} className={cn(CONTENT_FRAME, FRAME)}>
 			{head}

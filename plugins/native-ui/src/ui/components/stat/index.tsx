@@ -1,4 +1,8 @@
-import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Datum,
+	paints,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import { formatterFor } from "@fcalell/ui-core/format";
 import { STAT, STAT_FIGURE, text } from "@fcalell/ui-core/variants";
 import { Text as RNText, View } from "react-native";
@@ -23,12 +27,12 @@ export interface StatProps extends Closed {
 export function Stat({ label, value, unit }: StatProps) {
 	const [figure] = useSelections([value]);
 	return (
-		<View {...inertProps(figure.painted)} className={cn(STAT, STACK)}>
+		<View {...inertProps(paints(figure))} className={cn(STAT, STACK)}>
 			<View className={cn(STAT_FIGURE, FIGURE)}>
 				<RNText className={cn(text({ role: "display" }), "shrink-0")}>
-					{figure.painted ? (
+					{paints(figure) ? (
 						<Painted role="figure" />
-					) : (
+					) : figure.painted ? null : (
 						formatterFor("number").format(figure.value)
 					)}
 				</RNText>

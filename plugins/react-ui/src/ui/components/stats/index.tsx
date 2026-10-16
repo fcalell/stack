@@ -1,4 +1,8 @@
-import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Datum,
+	paints,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type { StatSpec } from "@fcalell/ui-core/descriptors";
 import { formatterFor } from "@fcalell/ui-core/format";
@@ -48,7 +52,7 @@ export function Stats({ items }: StatsProps) {
 			<ul className={CELLS}>
 				{items.map((item, at) => {
 					const figure = figures[at];
-					const painted = figure?.painted === true;
+					const painted = figure !== undefined && paints(figure);
 					const opens = item.href !== undefined && !painted;
 					return (
 						<li
@@ -68,9 +72,9 @@ export function Stats({ items }: StatsProps) {
 							<span className={text({ role: "meta" })}>{item.label}</span>
 							<p className={cn(STATS_FIGURE, FIGURE)}>
 								<span className={text({ role: "figure" })}>
-									{figure?.painted ? (
+									{painted ? (
 										<Painted role="figure" at={at} />
-									) : (
+									) : figure?.painted ? null : (
 										number.format(figure?.value as number)
 									)}
 								</span>

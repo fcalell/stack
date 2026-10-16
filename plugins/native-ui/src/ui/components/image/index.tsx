@@ -1,4 +1,8 @@
-import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Datum,
+	paints,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import {
 	IMAGE_CLOSE,
 	IMAGE_FULL,
@@ -86,7 +90,8 @@ interface Seen {
 export function Image({ src: given, alt, fit, aspect }: ImageProps) {
 	const place = fit ?? "content";
 	const [named] = useSelections([given]);
-	const shown = useShown(named.painted);
+	const waits = paints(named);
+	const shown = useShown(waits);
 	const src = named.painted ? "" : named.value;
 	const [seen, setSeen] = useState<Seen>();
 	const [open, setOpen] = useState(false);
@@ -96,6 +101,8 @@ export function Image({ src: given, alt, fit, aspect }: ImageProps) {
 	// The box's aspect is the consumer's data, the same in every state.
 	const boxed = imageAspect(place, aspect);
 	const box = boxed === undefined ? undefined : { aspectRatio: boxed };
+	// An ended read draws no picture; the frame that holds it says why.
+	if (named.painted && !waits) return null;
 	if (named.painted)
 		return (
 			<View

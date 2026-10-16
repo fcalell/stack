@@ -64,12 +64,18 @@ function Held({ reads, state }: { reads: Reads; state: HeldState }) {
 }
 
 // A read that fails stands in the body's place with its sentence and Retry,
-// and one that answers not found with the missing form; the head stays.
+// and one that answers not found with the missing form; the head stays, its
+// description over the ended read drawing nothing.
 function Failed(props: { first: Reads; second: Reads }) {
-	const { missing } = props.first;
+	const { missing, failing } = props.first;
 	return (
 		<Wide>
-			<Section title="Members" act={INVITE} read={props.first.failing}>
+			<Section
+				title="Members"
+				description={failing.at(() => DESCRIPTION)}
+				act={INVITE}
+				read={failing}
+			>
 				<Group items={STAND_IN_ENTRIES} />
 			</Section>
 			<Section

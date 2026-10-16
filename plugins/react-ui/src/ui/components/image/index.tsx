@@ -1,5 +1,9 @@
 import { Dialog } from "@base-ui/react/dialog";
-import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Datum,
+	paints,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import {
 	IMAGE_CLOSE,
@@ -89,6 +93,7 @@ export function Image({ src: given, alt, fit, aspect }: ImageProps) {
 	// The box's aspect is the consumer's data, the same in every state.
 	const ratio = imageAspect(place, aspect);
 	const box = ratio === undefined ? undefined : { aspectRatio: ratio };
+	if (named.painted && !paints(named)) return null;
 	if (named.painted)
 		return (
 			<div

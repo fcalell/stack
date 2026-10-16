@@ -1,5 +1,9 @@
 import { Button as BaseButton } from "@base-ui/react/button";
-import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Datum,
+	paints,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type {
 	OptionPick,
@@ -144,9 +148,12 @@ export function ItemHeader<V extends string | null = string>({
 	facts = [],
 }: ItemHeaderProps<V>) {
 	const drawn = useSelections([...overline, ...facts]);
-	const placed = drawn.slice(0, overline.length);
-	const stood = drawn.slice(overline.length);
-	const painted = drawn.some((each) => each.painted);
+	// A part or a fact whose read ended draws nothing; the frame that holds the
+	// read says why.
+	const draws = (each: (typeof drawn)[number]) => !each.painted || paints(each);
+	const placed = drawn.slice(0, overline.length).filter(draws);
+	const stood = drawn.slice(overline.length).filter(draws);
+	const painted = drawn.some(paints);
 	return (
 		<div inert={painted || undefined} className={cn(ITEM_HEADER, HEAD)}>
 			{placed.length > 0 ? (

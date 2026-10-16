@@ -1,6 +1,7 @@
 import {
 	type Datum,
 	type Drawn,
+	paints,
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
 import { PAINT_ROWS } from "@fcalell/ui-core/paint";
@@ -104,7 +105,7 @@ function DownloadAct(props: {
 // one-way act that reveals them and leaves.
 export function Code({ text: datum, title, tail, copy, download }: CodeProps) {
 	const [drawn] = useSelections([datum] as const) as [Drawn<string>];
-	const painted = drawn.painted;
+	const painted = paints(drawn);
 	const source = drawn.painted ? "" : drawn.value;
 	const words = useWords();
 	const [unfolded, setUnfolded] = useState(false);
@@ -174,6 +175,8 @@ export function Code({ text: datum, title, tail, copy, download }: CodeProps) {
 			</RNText>
 		</View>
 	);
+	// An ended read draws no text; the frame that holds it says why.
+	if (drawn.painted && !painted) return null;
 	return (
 		<View {...inertProps(painted)} className={cn(CONTENT_FRAME, FRAME)}>
 			{head}

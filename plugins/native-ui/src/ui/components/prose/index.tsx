@@ -1,6 +1,7 @@
 import {
 	type Datum,
 	type Drawn,
+	paints,
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
 import { PAINT_ROWS } from "@fcalell/ui-core/paint";
@@ -293,7 +294,8 @@ export function Prose({ markdown }: ProseProps) {
 		() => (source === undefined ? undefined : parts(lexer(source))),
 		[source],
 	);
-	if (!root) return <PaintedProse rows={PAINT_ROWS} />;
+	// An ended read draws no text; the frame that holds it says why.
+	if (!root) return paints(drawn) ? <PaintedProse rows={PAINT_ROWS} /> : null;
 	return (
 		<View className={cn(PROSE, COLUMN)}>
 			{root.blocks.length > 0 ? <Blocks part={root} /> : null}

@@ -1,4 +1,8 @@
-import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Datum,
+	paints,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import { QR_CODE, QR_TILE } from "@fcalell/ui-core/variants";
 import qrcode from "qrcode-generator";
@@ -62,6 +66,8 @@ export function QrCode({ value: given }: QrCodeProps) {
 	}, [value]);
 	const count = drawn?.count ?? PAINTED_MODULES;
 	const box = `0 0 ${count + QUIET * 2} ${count + QUIET * 2}`;
+	// An ended read draws no tile; the frame that holds it says why.
+	if (!drawn && named.painted && !paints(named)) return null;
 	if (!drawn)
 		return (
 			<div aria-hidden inert className={cn(QR_TILE, TILE)}>

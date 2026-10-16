@@ -111,6 +111,7 @@ export {
 	isSelection,
 	moreOf,
 	pagesOf,
+	paints,
 	read,
 } from "@fcalell/plugin-api/read";
 export type { QueryListeners } from "@fcalell/plugin-api/settle-reads";

@@ -1,4 +1,8 @@
-import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Datum,
+	paints,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type { Stage, StageEnd, StepState } from "@fcalell/ui-core/descriptors";
 import { stagesShown } from "@fcalell/ui-core/list-state";
@@ -95,12 +99,15 @@ function Row(props: {
 /** Its stages top to bottom on a hairline rail joining their marks, solid through the done stages: a done one a disc with a check and its moment under the label, the current one a ring in the accent with its label at 500, a later one a hollow ring with its label in meta; an ended rail closes on a danger cross, its label and its reason in meta. */
 export function Stages({ steps, ended }: StagesProps) {
 	const [drawn] = useSelections([steps]);
-	const shown = drawn.painted
-		? WAITING
-		: stagesShown(drawn.value, ended !== undefined);
+	const waits = paints(drawn);
+	// An ended read draws no stage; the frame that holds it says why.
+	let shown: readonly Stage[] = [];
+	if (waits) shown = WAITING;
+	else if (!drawn.painted)
+		shown = stagesShown(drawn.value, ended !== undefined);
 	const lastShown = shown.at(-1);
 	return (
-		<ol inert={drawn.painted || undefined} className={LIST}>
+		<ol inert={waits || undefined} className={LIST}>
 			{shown.map((step, at) => {
 				const last = ended === undefined && at === shown.length - 1;
 				const before = shown[at - 1];
@@ -110,7 +117,7 @@ export function Stages({ steps, ended }: StagesProps) {
 						className={cn(stageMark({ state: "later" }), SHAPE)}
 					/>
 				);
-				if (drawn.painted)
+				if (waits)
 					mark = (
 						<span
 							aria-hidden
@@ -148,7 +155,7 @@ export function Stages({ steps, ended }: StagesProps) {
 						current={step.state === "current"}
 					>
 						<span className={stage({ state: step.state })}>
-							{drawn.painted ? <Painted role="name" at={at} /> : step.label}
+							{waits ? <Painted role="name" at={at} /> : step.label}
 						</span>
 						{step.at ? (
 							<time

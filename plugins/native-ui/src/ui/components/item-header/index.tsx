@@ -1,4 +1,8 @@
-import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Datum,
+	paints,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import { factReach } from "@fcalell/ui-core/chart";
 import type {
 	OptionPick,
@@ -156,9 +160,12 @@ function PaintedFact({ fact, at }: { fact: unknown; at: number }) {
 // head takes no touch, until its read lands.
 export function ItemHeader({ overline = [], facts = [] }: ItemHeaderProps) {
 	const drawn = useSelections([...overline, ...facts]);
-	const placed = drawn.slice(0, overline.length);
-	const stood = drawn.slice(overline.length);
-	const painted = drawn.some((each) => each.painted);
+	// A part or a fact whose read ended draws nothing; the frame that holds the
+	// read says why.
+	const draws = (each: (typeof drawn)[number]) => !each.painted || paints(each);
+	const placed = drawn.slice(0, overline.length).filter(draws);
+	const stood = drawn.slice(overline.length).filter(draws);
+	const painted = drawn.some(paints);
 	return (
 		<View {...inertProps(painted)} className={ITEM_HEADER}>
 			{placed.length > 0 ? (

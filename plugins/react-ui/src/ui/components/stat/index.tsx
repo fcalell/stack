@@ -1,4 +1,8 @@
-import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Datum,
+	paints,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import { formatterFor } from "@fcalell/ui-core/format";
 import { STAT, STAT_FIGURE, text } from "@fcalell/ui-core/variants";
@@ -22,12 +26,12 @@ export interface StatProps extends Closed {
 export function Stat({ label, value, unit }: StatProps) {
 	const [figure] = useSelections([value]);
 	return (
-		<div inert={figure.painted || undefined} className={cn(STAT, STACK)}>
+		<div inert={paints(figure) || undefined} className={cn(STAT, STACK)}>
 			<p className={cn(STAT_FIGURE, FIGURE)}>
 				<span className={text({ role: "display" })}>
-					{figure.painted ? (
+					{paints(figure) ? (
 						<Painted role="figure" />
-					) : (
+					) : figure.painted ? null : (
 						formatterFor("number").format(figure.value)
 					)}
 				</span>

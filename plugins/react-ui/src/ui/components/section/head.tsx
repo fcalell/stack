@@ -1,6 +1,7 @@
 import { Collapsible } from "@base-ui/react/collapsible";
 import {
 	type Datum,
+	paints,
 	useDrawsFailure,
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
@@ -111,7 +112,7 @@ export function SectionHead(props: {
 		[blocked, press],
 	);
 	let sentence: ReactNode = null;
-	if (said.painted)
+	if (paints(said))
 		sentence = (
 			<Text role="meta">
 				<span className={PAINTED_LINE}>
@@ -119,7 +120,8 @@ export function SectionHead(props: {
 				</span>
 			</Text>
 		);
-	else if (said.value) sentence = <Text role="meta">{said.value}</Text>;
+	else if (!said.painted && said.value)
+		sentence = <Text role="meta">{said.value}</Text>;
 	// A count is not drawn until its body has answered: a painted chip would
 	// carry an unseen "0" for a number nobody knows yet, and the count arrives at
 	// the title's end, where it moves nothing. A read of an array gives its length.

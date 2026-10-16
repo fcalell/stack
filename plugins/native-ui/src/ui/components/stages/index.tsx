@@ -1,4 +1,8 @@
-import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Datum,
+	paints,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import type { Stage, StageEnd, StepState } from "@fcalell/ui-core/descriptors";
 import { stagesShown } from "@fcalell/ui-core/list-state";
 import { PAINT_ROWS } from "@fcalell/ui-core/paint";
@@ -108,18 +112,21 @@ function Row(props: {
 // current-step role: the current row is the selected one.
 export function Stages({ steps, ended }: StagesProps) {
 	const [drawn] = useSelections([steps]);
-	const visible = useShown(drawn.painted);
-	const shown = drawn.painted
-		? WAITING
-		: stagesShown(drawn.value, ended !== undefined);
+	const waits = paints(drawn);
+	const visible = useShown(waits);
+	// An ended read draws no stage; the frame that holds it says why.
+	let shown: readonly Stage[] = [];
+	if (waits) shown = WAITING;
+	else if (!drawn.painted)
+		shown = stagesShown(drawn.value, ended !== undefined);
 	const lastShown = shown.at(-1);
 	return (
-		<View {...inertProps(drawn.painted)} className={LIST}>
+		<View {...inertProps(waits)} className={LIST}>
 			{shown.map((step, at) => {
 				const last = ended === undefined && at === shown.length - 1;
 				const before = shown[at - 1];
 				let mark = <View className={stageMark({ state: "later" })} />;
-				if (drawn.painted) {
+				if (waits) {
 					mark = (
 						<View
 							className={cn(
@@ -150,7 +157,7 @@ export function Stages({ steps, ended }: StagesProps) {
 						current={step.state === "current"}
 					>
 						<RNText className={stage({ state: step.state })}>
-							{drawn.painted ? <Painted role="name" at={at} /> : step.label}
+							{waits ? <Painted role="name" at={at} /> : step.label}
 						</RNText>
 						{step.at ? (
 							<RNText className={cn(text({ role: "meta" }), FIGURES)}>

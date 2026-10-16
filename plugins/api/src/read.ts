@@ -70,6 +70,15 @@ export type Drawn<T> =
 			readonly phase: DrawnPhase;
 	  };
 
+// Whether a leaf draws its paint: while its read waits (or stands still). A
+// leaf whose read ended draws its loaded-empty form instead, no line for a
+// text and nothing for a mark; the frame that holds the read says why, once.
+export function paints(drawn: Drawn<unknown>): boolean {
+	return (
+		drawn.painted && (drawn.phase === "waiting" || drawn.phase === "still")
+	);
+}
+
 // The placeholder: the stand-in for data not yet there, shaped by nothing. It
 // is every key of itself and callable, so a selector walks it to a value and
 // takes its default branch (comparisons are false, lookups miss, `new Date`

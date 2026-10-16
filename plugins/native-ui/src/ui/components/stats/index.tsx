@@ -1,4 +1,8 @@
-import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Datum,
+	paints,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import type { StatSpec } from "@fcalell/ui-core/descriptors";
 import { formatterFor } from "@fcalell/ui-core/format";
 import {
@@ -50,7 +54,7 @@ export function Stats({ items }: StatsProps) {
 				{items.map((item, at) => {
 					const { href } = item;
 					const figure = figures[at];
-					const painted = figure?.painted === true;
+					const painted = figure !== undefined && paints(figure);
 					return (
 						<View
 							key={item.label}
@@ -60,9 +64,9 @@ export function Stats({ items }: StatsProps) {
 							<RNText className={text({ role: "meta" })}>{item.label}</RNText>
 							<View className={cn(STATS_FIGURE, FIGURE)}>
 								<RNText className={cn(text({ role: "figure" }), "shrink-0")}>
-									{figure?.painted ? (
+									{painted ? (
 										<Painted role="figure" at={at} />
-									) : (
+									) : figure?.painted ? null : (
 										number.format(figure?.value as number)
 									)}
 								</RNText>

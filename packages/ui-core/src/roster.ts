@@ -813,7 +813,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// own selections, and its `read` draws the failed, missing and empty
 		// forms in the body's place.
 		// `description` paints where it will stand while its selection waits; loaded,
-		// `""` draws no line, as an undefined one. The `empty` of its `read` stands
+		// `""` draws no line, as an undefined one, and so does one whose read
+		// ended, the read's holder saying why once. The `empty` of its `read` stands
 		// in its body's place in a hairline frame (the sentence at meta, the act the
 		// hairline one), or as one quiet sentence at meta when only the sentence
 		// is given; a Section with no `read` takes no `empty`. The title is the
@@ -1359,7 +1360,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// `definition` map draws one per item. A one-word string value of more than eight characters too long for its
 		// room cuts in its middle (`valueCut`), the whole value its text. `value`
 		// and `description` are data: a selection paints in its place, the row
-		// inert, until its read lands, and a painted `List` paints the whole row
+		// inert, while its read waits (once it ended the part draws nothing, the
+		// label alone for a value), and a painted `List` paints the whole row
 		// (its label, value, description, lock and controls) at their roles. `switch` is the Switch's
 		// own props, named by the row's label and drawn centred beside it in place
 		// of `value`; `pick` is the Picker's one-pick props less `fit` and `act` (its
@@ -1524,7 +1526,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// The record's place and facts under the Pane's bar, which holds the
 		// record's name and acts. A part or a fact that is a selection paints in
-		// its place until its read lands (a status or a pick keeps its form, any
+		// its place while its read waits, and draws nothing once it ended (a status or a pick keeps its form, any
 		// other is a word), and the head is inert; each line keeps its line box
 		// and the facts line the height of the status that moves on it. A fact in words
 		// that opens a sheet is its words and a chevron in a `WORD_ACT`, a button
@@ -2134,7 +2136,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// code and links; a fenced block is a `Code`. No syntax colours, tables,
 		// task lists or images.
 		// Its markdown is a constant or a selection; while the selection waits it
-		// paints `PAINT_ROWS` paragraphs.
+		// paints `PAINT_ROWS` paragraphs, and draws nothing once it ended.
 		Prose: {
 			props: ["markdown"],
 			draws: [
@@ -2833,7 +2835,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// two-line row's height, so a later row keeps the done rows' pace. The hue is the
 		// marks'; a label's ink is its own. A `steps` that is a selection paints
 		// `PAINT_ROWS` later stages, each mark a painted control and each label
-		// a name, until its read lands.
+		// a name, while its read waits, and draws no stage once it ended.
 		Stages: {
 			props: ["steps", "ended"],
 			draws: [

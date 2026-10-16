@@ -1,4 +1,8 @@
-import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Datum,
+	paints,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import type { Closed } from "../../lib/closed";
 import { AvatarBase } from "./base";
 
@@ -13,6 +17,8 @@ export interface AvatarProps extends Closed {
 // the fill step its hash picks, so one name keeps one fill.
 export function Avatar({ name, src }: AvatarProps) {
 	const [person, picture] = useSelections([name, src]);
-	if (person.painted || picture.painted) return <AvatarBase name="" painted />;
+	if (paints(person) || paints(picture)) return <AvatarBase name="" painted />;
+	// An ended read draws no circle; the frame that holds it says why.
+	if (person.painted || picture.painted) return null;
 	return <AvatarBase name={person.value} src={picture.value} />;
 }

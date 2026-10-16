@@ -1,5 +1,6 @@
 import {
 	type Datum,
+	paints,
 	useDrawsFailure,
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
@@ -76,7 +77,7 @@ export function Banner({ kind, sentence, act }: BannerProps) {
 	// false yes; one still to land paints the banner inert.
 	const ended = offer.painted ? endedReason(words, offer.phase) : undefined;
 	const waits =
-		tone.painted || said.painted || (offer.painted && ended === undefined);
+		tone.painted || paints(said) || (offer.painted && ended === undefined);
 	const given = offer.painted ? undefined : offer.value;
 	return (
 		<View
@@ -97,7 +98,11 @@ export function Banner({ kind, sentence, act }: BannerProps) {
 						)}
 					</View>
 					<RNText className={cn(text({ role: "body" }), SENTENCE)}>
-						{said.painted ? <Painted role="sentence" /> : said.value}
+						{paints(said) ? (
+							<Painted role="sentence" />
+						) : said.painted ? null : (
+							said.value
+						)}
 					</RNText>
 				</View>
 				{offer.painted ? (

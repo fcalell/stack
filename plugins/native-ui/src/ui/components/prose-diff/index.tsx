@@ -1,4 +1,8 @@
-import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Datum,
+	paints,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import { PAINT_ROWS } from "@fcalell/ui-core/paint";
 import {
 	CONTENT_FRAME,
@@ -28,13 +32,15 @@ export interface ProseDiffProps extends Closed {
 // underlined on ok-soft.
 export function ProseDiff({ before, after }: ProseDiffProps) {
 	const [from, to] = useSelections([before, after] as const);
-	const painted = from.painted || to.painted;
+	const painted = paints(from) || paints(to);
+	// An ended read draws no text; the frame that holds it says why.
+	const ended = from.painted || to.painted;
 	// The runs derive once per text pair, and not while the text paints. A run marks its words alone, its edge
 	// whitespace standing outside it; each run is keyed by where it starts in
 	// the two texts read together.
 	const runs = useMemo(() => {
 		const drawn: ReactNode[] = [];
-		if (painted) return drawn;
+		if (ended) return drawn;
 		const parts = diffWords(from.value as string, to.value as string);
 		let at = 0;
 		parts.forEach((part, index) => {
@@ -69,7 +75,7 @@ export function ProseDiff({ before, after }: ProseDiffProps) {
 			);
 		});
 		return drawn;
-	}, [painted, from.value, to.value]);
+	}, [ended, from.value, to.value]);
 	if (painted)
 		return (
 			<View {...inertProps(true)} className={cn(CONTENT_FRAME, FRAME)}>
@@ -86,6 +92,7 @@ export function ProseDiff({ before, after }: ProseDiffProps) {
 				</View>
 			</View>
 		);
+	if (ended) return null;
 	return (
 		<View className={cn(CONTENT_FRAME, FRAME)}>
 			<View className={PROSE_DIFF_BODY}>

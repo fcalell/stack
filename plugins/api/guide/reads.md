@@ -20,7 +20,9 @@ const summary = combine([deploy, orpc.usage.read()], (d, u) => `${d.commit}: ${u
 ```
 
 A component takes a `Datum<T>`, a constant or a selection, and draws a selection it cannot answer
-yet as its painted form. Your own code never sees the placeholder:
+yet as its painted form, and only while the read waits: a text or mark leaf whose read ended draws its
+loaded-empty form (no line, nothing), and the frame that holds the read says why. Your own code never
+sees the placeholder:
 
 - `useRead(selection)` is the value, or `undefined` while the read waits, is idle or failed.
 - `useSelections([a, "fixed"] as const)` is what a component builds on: one `useQueries` for any
@@ -52,7 +54,7 @@ a Section inside it given `deploy.at(...)` holds nothing. A second such read in 
 dev `console.error` naming both keys (the frame holds the first); a leaf that needs two reads takes
 `combine`, and a region that draws two reads is two frames. Sibling frames that draw the same read
 each hold it and each fail in place, so a failure repeats in each; there is no lifting a shared read
-to an outer frame. In dev a read that fails with no data while a leaf paints it and no frame holds it
+to an outer frame. In dev a read that fails with no data while a leaf draws it and no frame holds it
 raises `console.error` (give its Pane, Section, Sheet or Form `read`). A read you hold with your own
 `useQuery` is not checked.
 

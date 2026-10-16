@@ -1,4 +1,8 @@
-import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Datum,
+	paints,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import type { ChipFamily } from "@fcalell/ui-core/tokens";
 import type { Closed } from "../../lib/closed.ts";
 import { ChipBase } from "./base.tsx";
@@ -16,7 +20,9 @@ export interface ChipProps extends Closed {
 /** A pill of a family's soft ground and ink; its one act removes the value. */
 export function Chip({ label, family, onRemove }: ChipProps) {
 	const [word, hue] = useSelections([label, family]);
-	if (word.painted || hue.painted)
+	if (paints(word) || paints(hue))
 		return <ChipBase label="" family="neutral" painted />;
+	// An ended read draws no pill; the frame that holds it says why.
+	if (word.painted || hue.painted) return null;
 	return <ChipBase label={word.value} family={hue.value} onRemove={onRemove} />;
 }

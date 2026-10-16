@@ -1,4 +1,8 @@
-import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Datum,
+	paints,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import { QR_CODE, QR_TILE } from "@fcalell/ui-core/variants";
 import qrcode from "qrcode-generator";
 import { useMemo } from "react";
@@ -66,7 +70,8 @@ export function QrCode({ value }: QrCodeProps) {
 // takes its ink as a prop, never a class.
 function Tile({ value: given }: { value: Datum<string> }) {
 	const [named] = useSelections([given]);
-	const shown = useShown(named.painted);
+	const waits = paints(named);
+	const shown = useShown(waits);
 	const ink = useTokenColor("--color-ink-body");
 	const value = named.painted ? undefined : named.value;
 	// The code encodes once per value, and not while the tile is painted.
@@ -77,6 +82,8 @@ function Tile({ value: given }: { value: Datum<string> }) {
 	}, [value]);
 	const count = drawn?.count ?? PAINTED_MODULES;
 	const box = `0 0 ${count + QUIET * 2} ${count + QUIET * 2}`;
+	// An ended read draws no tile; the frame that holds it says why.
+	if (named.painted && !waits) return null;
 	return (
 		<View
 			accessible={!named.painted}

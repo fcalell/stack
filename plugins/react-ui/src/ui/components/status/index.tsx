@@ -1,4 +1,8 @@
-import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
+import {
+	type Datum,
+	paints,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
 import type { StatusState } from "@fcalell/ui-core/tokens";
 import type { Closed } from "../../lib/closed.ts";
 import { StatusBase } from "./base.tsx";
@@ -14,6 +18,8 @@ export interface StatusProps extends Closed {
 /** A dot and a word, a mark: a status that moves is a `Picker` whose options carry states. */
 export function Status({ state, label }: StatusProps) {
 	const [mark, word] = useSelections([state, label]);
-	if (mark.painted || word.painted) return <StatusBase painted />;
+	if (paints(mark) || paints(word)) return <StatusBase painted />;
+	// An ended read draws no mark; the frame that holds it says why.
+	if (mark.painted || word.painted) return null;
 	return <StatusBase state={mark.value} label={word.value} />;
 }
