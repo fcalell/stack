@@ -2,9 +2,9 @@ import { ListRow } from "@fcalell/plugin-react-ui/components/list-row";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect, within } from "storybook/test";
 
-// A row's status on its meta line: its word truncating where the line is out
-// of room, and staying whole at the line's end. A painted row's height is the
-// paint stories'.
+// A row's status in its end group: its word truncating where the group, held to
+// the text group's two fifths leave, is out of room, and standing at the row's end. A
+// painted row's height is the paint stories'.
 export default {
 	title: "Behaviour/ListRowStatus",
 } satisfies Meta;
@@ -52,8 +52,9 @@ function Repo(props: { meta?: string[] }) {
 }
 
 const WIDTHS = [440, 390, 320];
-// The status stays whole beside the first part, which keeps a floor, so its
-// word is cut only where the line is less than the word and that floor.
+// The status stays whole in its end group, so its word is cut only where the
+// row is less than the word and the chevron beside it, and the quarter the text
+// keeps.
 const NARROW = [440, 320, 220];
 
 function Narrow() {
@@ -73,8 +74,8 @@ function Narrow() {
 	);
 }
 
-// A status has one form, its word: whole where the line holds it beside the
-// first part's floor, truncating where it does not, the row never overflowing.
+// A status has one form, its word: whole where the end group holds it,
+// truncating where it does not, the row never overflowing.
 export const StatusWord: StoryObj = {
 	render: () => <Narrow />,
 	play: async ({ canvas }) => {
@@ -86,16 +87,15 @@ export const StatusWord: StoryObj = {
 			if (!row) throw new Error("the row has no box");
 			await expect(row.scrollWidth).toBeLessThanOrEqual(row.clientWidth);
 		}
-		await expect(cut[0]).toBe(false);
 		await expect(cut.at(-1)).toBe(true);
 	},
 };
 
 export const StatusWordTouch = touch(StatusWord);
 
-// A part the meta line has no room for goes whole; the status still stands at
-// the line's end, so every row's status ends at one x, and the room the part
-// leaves before it is under the `figures` the later parts show at least. The
+// A part the meta line has no room for goes whole; the status stands in the
+// end group, so every row's status ends at one x, and the room the part leaves
+// on the line is under the `figures` the later parts show at least. The
 // remotes run from a few letters to a path: at every width some row drops
 // `main` with the first part whole.
 const REMOTES = Array.from(
@@ -150,12 +150,11 @@ const drops: Play = async ({ canvas }) => {
 			}).parentElement;
 			const line = row?.querySelector<HTMLElement>(".gap-x-inside.min-w-0");
 			const parts = line?.firstElementChild;
-			const status = line?.lastElementChild;
 			const first = parts?.firstElementChild;
 			const later = parts?.children[1];
-			if (!row || !line || !parts || !status || !first || !later)
+			if (!row || !line || !parts || !first || !later)
 				throw new Error("a row lacks a part");
-			edges.push(status.getBoundingClientRect().right);
+			edges.push(within(row).getByText(LONG).getBoundingClientRect().right);
 			// Wrapped away under its slot's one line: its text stands below the
 			// slot's top.
 			const text = later.lastElementChild;
@@ -167,10 +166,8 @@ const drops: Play = async ({ canvas }) => {
 			dropped += 1;
 			const figures = Number.parseFloat(getComputedStyle(text).flexBasis);
 			await expect(figures).toBeGreaterThan(0);
-			// The gap step stands before the status in every row; the rest is the
-			// room the dropped part left.
-			const gap = Number.parseFloat(getComputedStyle(line).columnGap);
-			const left = status.getBoundingClientRect().left - inkRight(first) - gap;
+			// The room the dropped part left on the line.
+			const left = parts.getBoundingClientRect().right - inkRight(first);
 			widest = Math.max(widest, left);
 			await expect(left).toBeLessThan(figures);
 		}

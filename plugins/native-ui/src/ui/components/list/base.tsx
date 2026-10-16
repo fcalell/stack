@@ -1,7 +1,7 @@
 import { placeholderData } from "@fcalell/plugin-api/read";
 import type { Drawn, Read } from "@fcalell/plugin-api/tanstack-query";
 import { toggled, treeRows } from "@fcalell/ui-core/list-state";
-import { PAINT_ROWS, painting } from "@fcalell/ui-core/paint";
+import { PAINT_ROWS } from "@fcalell/ui-core/paint";
 import {
 	LIST,
 	LIST_DIVIDED,
@@ -15,7 +15,7 @@ import { between } from "../../lib/group";
 import { MoreRow } from "../../lib/more";
 import { DefinitionItem } from "../definition-row";
 import { FileItem } from "../file-row";
-import { hasMore, ListRowItem } from "../list-row/base";
+import { ListRowItem } from "../list-row/base";
 import { MeterItem } from "../meter";
 import type { ListKind } from "./index";
 
@@ -63,9 +63,6 @@ export function ListBase<T, V extends string | null = string>(
 	// under the same hairline.
 	// A tree's rows abut, so its rails run unbroken.
 	const divided = props.row?.meta !== undefined && children === undefined;
-	// Whether a row of the loaded list has a more act: the rows without one then
-	// keep its square, so every row's end stands at one x.
-	let room = false;
 	const hairlined = framed || divided;
 	const lines = (rows: readonly ReactElement[]) =>
 		rows.map((row, index) => (
@@ -116,22 +113,6 @@ export function ListBase<T, V extends string | null = string>(
 	};
 	if (props.row) {
 		const { row } = props;
-		const { more } = row;
-		if (more !== undefined) {
-			const every =
-				children === undefined
-					? items
-					: treeRows(items, { key: row.key, children }, []).map(
-							(each) => each.item,
-						);
-			room = every.some((item) =>
-				hasMore(
-					painted
-						? (painting(more, item) as ReturnType<typeof more>)
-						: more(item),
-				),
-			);
-		}
 		if (children === undefined)
 			return frame(
 				items.map((item, index) => (
@@ -141,7 +122,6 @@ export function ListBase<T, V extends string | null = string>(
 						index={index}
 						row={row}
 						painted={painted}
-						room={room}
 					/>
 				)),
 			);
@@ -154,7 +134,6 @@ export function ListBase<T, V extends string | null = string>(
 					index={index}
 					row={row}
 					painted={painted}
-					room={room}
 					fold={fold}
 					depth={each.depth}
 					open={each.branch ? each.open : undefined}

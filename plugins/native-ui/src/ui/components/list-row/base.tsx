@@ -20,11 +20,14 @@ import {
 	FIGURES,
 	ROW_ACTS,
 	ROW_CHEVRON,
+	ROW_END,
 	ROW_ENTRY,
 	ROW_LEADING,
+	ROW_MARKS,
 	ROW_META_LINE,
 	ROW_STEPS,
-	ROW_TITLE_LINE,
+	ROW_TEXT,
+	ROW_TEXT_FLOOR,
 	ROW_TRAILING,
 	type RowLines,
 	row,
@@ -75,18 +78,18 @@ import { WarningMark } from "./marks";
 import { RowStatusMark } from "./status";
 
 const ROW = "relative flex-row items-center";
-// A row with a labelled act stands its acts on a line of their own at the
-// row's end, under the text: beside it the text keeps only what the acts
-// leave (65 of 288 at 320), too little for its title, its status and the
-// glyphs of its meta line. The text already takes no width of its own
-// (`flex-1`), so it fills the first line and the acts, a whole line wide, wrap
-// under it.
+// A row with a labelled act stands its end group, the act with the value and
+// status beside it, on a line of its own at the row's end, under the text:
+// beside it the text keeps only what the end group leaves (65 of 288 at 320),
+// too little for its title and the glyphs of its meta line. The text already
+// takes no width of its own (`flex-1`), so it fills the first line and the end
+// group, a whole line wide, wraps under it.
 const ROW_UNDER = "flex-wrap";
-const ACTS_UNDER = "w-full justify-end";
-// A row whose title wraps whole, or that holds an entry, stands its parts on the
-// title's first line:
-// each in a box one body line tall, centred on the line; a taller part
-// overflows it centred.
+const END_UNDER = "w-full justify-end";
+// A row whose title wraps whole, or that holds an entry, stands its change
+// mark, tick and tree lane on the title's first line: each in a box one body
+// line tall, centred on the line; a taller part overflows it centred. Its end
+// group stays centred on the row.
 const ROW_WHOLE = "relative flex-row items-start";
 const FIRST_LINE = "flex-row shrink-0 items-center h-line-body";
 // The hit covers the row under its text, its pick and its acts, and takes the
@@ -95,32 +98,36 @@ const HIT = "absolute inset-0 active:bg-wash-press";
 const LEADING = "shrink-0 items-center justify-center";
 // A tick takes its hit box, and its own touch.
 const TICK = "size-target";
+// The text group: the title over the meta line, a column that takes the room
+// the end group leaves.
 const TEXT = "flex-1 min-w-0";
-const LINE = "flex-row items-center min-w-0";
-const TITLE = "grow shrink";
-const TITLE_CODE = "flex-row items-center grow shrink min-w-0";
-const LINE_WHOLE = "flex-row items-start min-w-0";
+const TITLE = "shrink";
+const TITLE_CODE = "flex-row items-center shrink min-w-0 overflow-hidden";
+// The end group is a line centred on the row, whichever lines the text group
+// holds: the value and the status in it truncate to what the row leaves, the
+// chevron and the acts stand whole. A press on a row that opens goes through
+// its value to the hit under it, so the group takes none itself.
+const END = "flex-row items-center self-center shrink min-w-0";
+// A value and the marks together stand stacked, the value over the marks,
+// right-aligned, as one item of the end group.
+const PAIR = "items-end shrink min-w-0";
+// The marks are one line, a gap apart, which no mark ever leaves.
+const MARKS = "flex-row items-center justify-end shrink min-w-0";
+const CHIP_MARK = "shrink min-w-0";
 // A step is one body line's box tall (the step lists' 19 of the references,
 // at the type scale's rung).
 const STEPS = "min-w-0";
 const STEP = "flex-row items-center min-w-0 h-line-body";
 const STEP_LABEL = "shrink";
-const TRAILING = "shrink-0";
-// The meta line is one line that yields in order: the later parts truncate
-// first (they take no width of their own), a model-written one (`Quoted`)
-// ahead of the plain ones, then the chip (shown whole or not at all), the
-// warning's label and last the first part, which names the item and truncates
-// with an ellipsis; the glyphs keep their width, and past them the line clips
-// at the row's edge rather than overprint. The status stands in the parts'
-// tier: the two share the overflow in proportion to their widths, so a long
-// status never takes the line from the subject, nor the subject from the
-// status. The shrink
-// weights are the order: a flex line takes the overflow from each item in
-// proportion to its weight times its own width, and a part that still fits
-// must take none of it, so the weights run 1, 10^7 and 10^14 (the warning's in
-// `./marks.tsx`, the chip's slot below), which holds an earlier part's share of
-// the overflow to a few thousandths of a pixel. The parts' box grows into the
-// room the marks leave.
+const TRAILING = "shrink min-w-0";
+// The meta line is one line of the meta parts alone: the later parts truncate
+// first (they take no width of their own), a model-written one (`Quoted`) ahead
+// of the plain ones, and last the first part, which names the item and
+// truncates with an ellipsis. The marks (status, warning, lock, chip) are not
+// on it: they stand in the end group. The shrink weights are the order: a flex
+// line takes the overflow from each item in proportion to its weight times its
+// own width, and a part that still fits must take none of it, so the weights
+// run 1 and 10^7.
 const META_LINE = "flex-row items-center min-w-0 overflow-hidden";
 const META_PARTS = "flex-row grow shrink min-w-0";
 const META_FIRST = "shrink min-w-0";
@@ -130,18 +137,8 @@ const META_RUN = "shrink min-w-0";
 const META_QUOTED = "shrink-10000000 min-w-0";
 const META_CODE = "flex-row shrink-10000000 min-w-0";
 const SEPARATOR = "shrink-0";
-// The chip stands in a slot that shows it whole or not at all: a flex line
-// always keeps its first item, so a zero-width start item takes that place and
-// the chip, wider than the room the slot is left, wraps under the slot's one
-// line height and is clipped away.
-const CHIP_SLOT =
-	"flex-row flex-wrap h-chip min-w-0 shrink-100000000000000 overflow-hidden";
-const CHIP_START = "w-0 h-full";
-const CHIP_MARK = "shrink-0";
 const ACTS = "relative flex-row shrink-0 items-center";
 const CHEVRON = "shrink-0 items-center justify-center";
-// The more act's square, left blank in a row that has none beside rows that do.
-const BLANK = "shrink-0";
 // The entry takes the touch itself: the input filling the room its act leaves.
 const ENTRY = "flex-row items-center min-w-0";
 const ENTRY_FIELD = "flex-1 min-w-0";
@@ -162,9 +159,6 @@ export interface ListRowInternal {
 	// The row's place in a tree `List`: its depth (the roots 0) and, for a
 	// branch, whether its children are drawn and how to fold them.
 	tree?: RowTree;
-	// A row of the list has a more act: a row without one keeps its square
-	// blank, so every row's trailing value ends at one x.
-	room?: boolean;
 	// The List's items are not here: every text and figure slot paints at its
 	// role, the marks and controls paint, the row takes no touch and builds no
 	// hit. The slots are run over the placeholder, so they say which parts the
@@ -385,7 +379,7 @@ function RowMore(props: {
 		ended === undefined
 			? (offer.value as readonly MenuItem[] | undefined)
 			: endedItems(words, ended);
-	if (!items?.length) return <View className={cn(ROW_CHEVRON, BLANK)} />;
+	if (!items?.length) return null;
 	return (
 		<MenuBase
 			label={`${words.more} ${props.named}`}
@@ -461,7 +455,6 @@ export function ListRowBase<V extends string | null = string>({
 	selected = false,
 	onOpen,
 	tree,
-	room = false,
 	painted = false,
 	at = 0,
 	opens: opened = false,
@@ -483,21 +476,23 @@ export function ListRowBase<V extends string | null = string>({
 		!moreActs &&
 		!(trailing && "pick" in trailing) &&
 		!tree?.fold;
-	// A row of a list where another has a more act, with no more act and no
-	// chevron of its own, keeps that act's square blank.
-	const blank = room && !moreActs && !chevron;
-	const marked =
-		status !== undefined ||
-		warning !== undefined ||
-		lock !== undefined ||
-		chip !== undefined;
 	const ticks = leading !== undefined && "check" in leading;
 	const blocked = ticks && !painted ? leading.check.blocked : undefined;
 	const listed = steps?.length ? steps : undefined;
 	const lined = Boolean(
-		entry || listed || meta?.length || blocked !== undefined || marked,
+		entry || listed || meta?.length || blocked !== undefined,
 	);
-	const stacked = lined ? "two" : "one";
+	// The marks stand in the end group; an entry or the steps stand in their
+	// place, as the meta line did. A value over marks is two lines of it.
+	const marked =
+		entry === undefined &&
+		!listed &&
+		(status !== undefined ||
+			warning !== undefined ||
+			lock !== undefined ||
+			chip !== undefined);
+	const paired = trailing !== undefined && !("pick" in trailing) && marked;
+	const stacked = lined || paired ? "two" : "one";
 	const lines = wrap ? "whole" : stacked;
 	// A model-written name (`Quoted`) wraps in a row that has a second line, so
 	// its closing quote is never cut away; its row grows by the lines it wraps.
@@ -507,6 +502,10 @@ export function ListRowBase<V extends string | null = string>({
 	// the parts beside them stand on that first line.
 	const top = wrap || entry !== undefined;
 	const under = act !== undefined && !top;
+	// A pick or a labelled act is a control that cannot truncate, so beside one the
+	// text group has no floor and gives way to it, as before.
+	const floored = act === undefined && !(trailing && "pick" in trailing);
+	const column = cn(ROW_TEXT, TEXT, floored && ROW_TEXT_FLOOR);
 	const inline = { label: entry?.label ?? "" };
 	const entryReason = useReasonLine(painted ? undefined : entry?.act.blocked);
 	// The pressed reason of the act, which its button and its line both read:
@@ -531,12 +530,29 @@ export function ListRowBase<V extends string | null = string>({
 	let value: ReactNode = null;
 	if (trailing && !("pick" in trailing))
 		value = (
-			<First on={top}>
-				<RNText className={cn(ROW_TRAILING, TRAILING)}>
-					{painted ? <Painted role="figure" at={at} /> : trailingWord(trailing)}
-				</RNText>
-			</First>
+			<RNText
+				numberOfLines={1}
+				pointerEvents="none"
+				{...clipWhen(painted)}
+				className={cn(ROW_TRAILING, TRAILING)}
+			>
+				{painted ? <Painted role="figure" at={at} /> : trailingWord(trailing)}
+			</RNText>
 		);
+	const marks = marked ? (
+		<View pointerEvents="none" className={cn(ROW_MARKS, MARKS)}>
+			{status ? <RowStatusMark status={status} painted={painted} /> : null}
+			{warning !== undefined ? (
+				<WarningMark label={warning} painted={painted} />
+			) : null}
+			{lock !== undefined ? <LockMark painted={painted} /> : null}
+			{chip ? (
+				<View className={CHIP_MARK}>
+					<ChipBase family={chip.family} label={chip.label} painted={painted} />
+				</View>
+			) : null}
+		</View>
+	) : null;
 	const titleRole = rowTitle({ form: rowTitleForm(wrap, dim) });
 	let shown: ReactNode = named;
 	if (painted) shown = <Painted role="title" at={at} />;
@@ -558,15 +574,13 @@ export function ListRowBase<V extends string | null = string>({
 				{shown}
 			</RNText>
 		);
-	const titleLine = (
-		<View
-			pointerEvents="none"
-			className={cn(ROW_TITLE_LINE, wrap ? LINE_WHOLE : LINE)}
-		>
-			{titled}
-			{value}
-		</View>
-	);
+	const acted = act !== undefined || moreActs;
+	const hasEnd =
+		value !== null ||
+		marks !== null ||
+		(trailing !== undefined && "pick" in trailing) ||
+		chevron ||
+		acted;
 	return (
 		<View
 			{...inertProps(painted)}
@@ -604,13 +618,13 @@ export function ListRowBase<V extends string | null = string>({
 				</First>
 			) : null}
 			{!lined ? (
-				<View pointerEvents="none" className={TEXT}>
-					{titleLine}
+				<View pointerEvents="none" className={column}>
+					{titled}
 					{actLine}
 				</View>
 			) : entry ? (
-				<View pointerEvents="box-none" className={cn(ROW_ENTRY, TEXT)}>
-					{titleLine}
+				<View pointerEvents="box-none" className={cn(ROW_ENTRY, column)}>
+					{titled}
 					<FieldError.Provider value={!painted && Boolean(entry.error)}>
 						<View className={cn(ROW_META_LINE, ENTRY)}>
 							<View className={ENTRY_FIELD}>
@@ -638,8 +652,8 @@ export function ListRowBase<V extends string | null = string>({
 					{actLine}
 				</View>
 			) : listed ? (
-				<View pointerEvents="none" className={TEXT}>
-					{titleLine}
+				<View pointerEvents="none" className={column}>
+					{titled}
 					<View className={cn(ROW_STEPS, STEPS)}>
 						{listed.map((step, index) => (
 							<View
@@ -676,8 +690,8 @@ export function ListRowBase<V extends string | null = string>({
 					{actLine}
 				</View>
 			) : (
-				<View pointerEvents="none" className={TEXT}>
-					{titleLine}
+				<View pointerEvents="none" className={column}>
+					{titled}
 					<View className={cn(ROW_META_LINE, META_LINE)}>
 						{painters ? (
 							<View className={META_PARTS}>
@@ -741,68 +755,60 @@ export function ListRowBase<V extends string | null = string>({
 								) : null}
 							</View>
 						)}
-						{status ? (
-							<RowStatusMark status={status} painted={painted} />
-						) : null}
-						{warning !== undefined ? (
-							<WarningMark label={warning} painted={painted} />
-						) : null}
-						{lock !== undefined ? <LockMark painted={painted} /> : null}
-						{chip ? (
-							<View className={CHIP_SLOT}>
-								<View className={CHIP_START} />
-								<View className={CHIP_MARK}>
-									<ChipBase
-										family={chip.family}
-										label={chip.label}
-										painted={painted}
-									/>
-								</View>
-							</View>
-						) : null}
 					</View>
 					{actLine}
 				</View>
 			)}
-			{trailing && "pick" in trailing ? (
-				<First on={top}>
-					<HeldPicker {...trailing.pick} fit="row" painted={painted} />
-				</First>
-			) : null}
-			{chevron ? (
-				<First on={top}>
-					<View pointerEvents="none" className={cn(ROW_CHEVRON, CHEVRON)}>
-						<Ink.Provider value="ink-meta">
-							<Icon name="ChevronRight" />
-						</Ink.Provider>
-					</View>
-				</First>
-			) : null}
-			{act || moreActs || blank ? (
-				<First on={top}>
-					<View className={cn(ROW_ACTS, ACTS, under && ACTS_UNDER)}>
-						{act ? (
-							painted ? (
-								<PaintedAct at={at} />
-							) : (
-								<RowAct act={act} stand={stand} at={at} />
-							)
-						) : null}
-						{blank ? <View className={cn(ROW_CHEVRON, BLANK)} /> : null}
-						{moreActs ? (
-							painted ? (
-								<MenuBase
-									label={`${words.more} ${named}`}
-									title={named}
-									items={[]}
-									painted
-								/>
-							) : (
-								<RowMore more={more} named={named} />
-							)
-						) : null}
-					</View>
-				</First>
+			{hasEnd ? (
+				<View
+					pointerEvents="box-none"
+					className={cn(ROW_END, END, under && END_UNDER)}
+				>
+					{value !== null && marks !== null ? (
+						<View pointerEvents="none" className={PAIR}>
+							{value}
+							{marks}
+						</View>
+					) : (
+						<>
+							{value}
+							{marks}
+						</>
+					)}
+					{trailing && "pick" in trailing ? (
+						<HeldPicker {...trailing.pick} fit="row" painted={painted} />
+					) : null}
+					{chevron ? (
+						<View pointerEvents="none" className={cn(ROW_CHEVRON, CHEVRON)}>
+							<Ink.Provider value="ink-meta">
+								<Icon name="ChevronRight" />
+							</Ink.Provider>
+						</View>
+					) : null}
+					{acted ? (
+						<View className={cn(ROW_ACTS, ACTS)}>
+							{act ? (
+								painted ? (
+									<PaintedAct at={at} />
+								) : (
+									<RowAct act={act} stand={stand} at={at} />
+								)
+							) : null}
+							{moreActs ? (
+								painted ? (
+									<MenuBase
+										label={`${words.more} ${named}`}
+										title={named}
+										items={[]}
+										painted
+									/>
+								) : (
+									<RowMore more={more} named={named} />
+								)
+							) : null}
+						</View>
+					) : null}
+				</View>
 			) : null}
 		</View>
 	);
@@ -825,8 +831,6 @@ export interface ListRowItemProps<T, V extends string | null> {
 	// it is painted: a slot that throws there paints as the item itself).
 	row: RowSlots<T, V>;
 	painted: boolean;
-	// A row of the list has a more act (`ListRowInternal.room`).
-	room: boolean;
 	// In a tree: the row's depth and its fold (`open` on a branch alone, and
 	// `fold` hears the item's key). Flat so the memo compares them.
 	depth?: number;
@@ -839,7 +843,6 @@ function ListRowItemBase<T, V extends string | null>({
 	index,
 	row,
 	painted,
-	room,
 	depth,
 	open,
 	fold,
@@ -877,7 +880,6 @@ function ListRowItemBase<T, V extends string | null>({
 			href={row.href && slot(row.href)}
 			selected={row.selected && slot(row.selected)}
 			onOpen={row.onOpen ? () => row.onOpen?.(item) : undefined}
-			room={room}
 			tree={tree}
 			painted={painted}
 			// A painted row opens as the loaded one would: it draws the chevron, and builds no hit.

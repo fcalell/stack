@@ -23,11 +23,14 @@ import {
 	FIGURES,
 	ROW_ACTS,
 	ROW_CHEVRON,
+	ROW_END,
 	ROW_ENTRY,
 	ROW_LEADING,
+	ROW_MARKS,
 	ROW_META_LINE,
 	ROW_STEPS,
-	ROW_TITLE_LINE,
+	ROW_TEXT,
+	ROW_TEXT_FLOOR,
 	ROW_TRAILING,
 	type RowLines,
 	row,
@@ -82,16 +85,19 @@ import { WarningMark } from "./marks.tsx";
 import { RowStatusMark } from "./status.tsx";
 
 const ROW = "relative flex items-center";
-// Below `tablet` a row with a labelled act stands its acts on a line of their
-// own at the row's end, under the text: beside it the text keeps only what the
-// acts leave (65 of 288 at 320), too little for its title, its status and the
-// glyphs of its meta line. The text then takes no width of its own, so it
-// fills the first line and the acts, a whole line wide, wrap under it.
+// Below `tablet` a row with a labelled act stands its end group, the act with
+// the value and status beside it, on a line of its own at the row's end, under
+// the text: beside it the text keeps only what the end group leaves (65 of 288
+// at 320), too little for its title and the glyphs of its meta line. The text
+// then takes no width of its own, so it fills the first line and the end group,
+// a whole line wide, wraps under it.
 const ROW_UNDER = "page-max-tablet:flex-wrap";
 const TEXT_UNDER = "page-max-tablet:basis-0";
-const ACTS_UNDER = "page-max-tablet:basis-full page-max-tablet:justify-end";
-// A row whose title wraps whole, or that holds an entry, stands its parts on
-// the title's first line.
+const END_UNDER =
+	"page-max-tablet:basis-full page-max-tablet:max-w-full page-max-tablet:justify-end";
+// A row whose title wraps whole, or that holds an entry, stands its change
+// mark, tick and tree lane on the title's first line; its end group stays
+// centred on the row.
 const ROW_WHOLE = "relative flex items-start";
 // The box one body line tall a part stands in, centred on the first line; a
 // taller part overflows it centred.
@@ -109,38 +115,36 @@ const LEADING = "flex shrink-0 items-center justify-center";
 // ticks and never opens.
 const TICK = "relative size-target";
 const GLYPH = "flex text-ink-meta";
+// The text group: the title over the meta line, a column that takes the room
+// the end group leaves and gives way to it first.
 const TEXT = "flex flex-col grow shrink-10000000 min-w-0";
-const LINE = "flex items-center min-w-0";
-const TITLE = "truncate grow";
-const TITLE_WHOLE = "grow min-w-0";
+const TITLE = "truncate";
+const TITLE_WHOLE = "min-w-0";
 // A title that is one span of code stands in a flex line, so its stem
 // truncates and its tail keeps the room it needs.
-const TITLE_CODE = "flex items-center grow min-w-0";
-const LINE_WHOLE = "flex items-start min-w-0";
-const TRAILING = "shrink-0";
-// A one-line title and its value stand on a line that wraps: the title's basis
-// is half the line, so the value, wider than what that leaves, wraps under the
-// line's one height and is clipped away; with room, the title grows to fill
-// what the value leaves.
-const VALUE_LINE = "flex-wrap h-line-body overflow-hidden";
-const TITLE_BEFORE_VALUE = "basis-1/2";
-// The meta line is one line that yields in order: the later parts truncate
-// first (they take no width of their own), a model-written one (`Quoted`)
-// ahead of the plain ones, then the chip (shown whole or not at all), the
-// lock's label, the warning's label and last the first part, which names the
-// item and truncates with an ellipsis; the glyphs keep their width, and past
-// them the line clips at the row's edge rather than overprint. The status
-// stays whole before all of them (`./status.tsx`): it takes no share of the
-// overflow, and is held to the line less the first part's floor, so only a
-// status wider than that is cut. The shrink weights are the order: a flex line takes the
-// overflow from each item in proportion to its weight times its own width, and
-// `truncate` draws its ellipsis on any overflow, however small, so a part that
-// still fits must take none of it: the weights run 1, 10^7, 10^14 and 10^20
-// (`./marks.tsx`, `./lock.tsx` and the chip's slot below; Tailwind reads no
-// bare number from 10^21), which holds an earlier part's share of the overflow
-// to a few thousandths of a pixel, against the layout's 1/64 px. The parts'
-// box grows into the room the marks leave, so the status stands at the line's
-// end; the room a dropped part leaves falls before it.
+const TITLE_CODE = "flex items-center min-w-0 overflow-hidden";
+// The end group is a line centred on the row, whichever lines the text group
+// holds, after the text group's floor (`ROW_TEXT_FLOOR`, the Pane head's two
+// fifths of the row): the end group takes what is left and its value and marks
+// are cut with an ellipsis to it, the chevron and the acts stand whole.
+const END = "flex items-center self-center min-w-0";
+// A value and the marks together stand stacked, the value over the marks,
+// right-aligned, as one item of the end group; the marks are one line, a gap
+// apart, which no mark ever leaves.
+const MARKS = "flex items-center justify-end min-w-0 max-w-full";
+const CHIP_MARK = "flex min-w-0";
+const PAIR = "flex flex-col items-end min-w-0";
+const TRAILING = "min-w-0 max-w-full truncate";
+// The meta line is one line of the meta parts alone: the later parts truncate
+// first (they take no width of their own), a model-written one (`Quoted`) ahead
+// of the plain ones, and last the first part, which names the item and
+// truncates with an ellipsis. The marks (status, warning, lock, chip) are not
+// on it: they stand in the end group. The shrink weights are the order: a flex
+// line takes the overflow from each item in proportion to its weight times its
+// own width, and `truncate` draws its ellipsis on any overflow, however small,
+// so a part that still fits must take none of it: the weights run 1 and 10^7.
+// The parts' box takes the line; the room a dropped part leaves is under
+// `figures`.
 const META_LINE = "flex items-center min-w-0 overflow-hidden";
 const META_PARTS = "flex grow shrink min-w-0";
 const META_FIRST = "min-w-0 truncate";
@@ -163,19 +167,9 @@ const SEPARATOR = "shrink-0";
 const STEPS = "flex flex-col min-w-0";
 const STEP = "flex items-center min-w-0 h-line-body";
 const STEP_LABEL = "truncate";
-// The chip stands in a slot that shows it whole or not at all: a flex line
-// always keeps its first item, so a zero-width start item takes that place and
-// the chip, wider than the room the slot is left, wraps under the slot's one
-// line height and is clipped away.
-const CHIP_SLOT =
-	"flex flex-wrap h-chip min-w-0 shrink-100000000000000000000 overflow-hidden";
-const CHIP_START = "w-0 h-full";
-const CHIP_MARK = "flex shrink-0";
-const ACTS = "relative flex items-center min-w-0 max-w-full";
+const ACTS = "relative flex shrink-0 items-center min-w-0 max-w-full";
 // The chevron draws in the ink of the slot (currentColor), as a definition
 // row's does.
-// The more act's square, left blank in a row that has none beside rows that do.
-const BLANK = "shrink-0";
 const CHEVRON = "flex shrink-0 items-center justify-center text-ink-meta";
 // The entry stands above the hit: the input and its act, the field filling
 // the room the act leaves.
@@ -194,8 +188,6 @@ export interface ListRowInternal {
 	more?: Datum<readonly MenuItem[] | undefined>;
 	/** The row's place in a tree `List`: its depth (the roots 0), for a branch whether its children are drawn and how to fold them, and whether it is the tree's one tab stop. */
 	tree?: RowTree;
-	/** A row of the list has a more act: a row without one keeps its square blank, so every row's trailing value ends at one x. */
-	room?: boolean;
 	/** The List's items are not here: every text and figure slot paints at its role, the marks and controls paint, the row is inert and builds no hit. The slots are run over the placeholder, so they say which parts the loaded row has. */
 	painted?: boolean;
 	/** The row's place among the painted rows, which varies the filler's lengths. */
@@ -393,7 +385,7 @@ function ActLine(props: {
 }
 
 // The row's more act: painted while its read lands, the one blocked item with
-// the sentence once it ended, the square left blank when it answers none.
+// the sentence once it ended, nothing when it answers none.
 function RowMore(props: {
 	more: Datum<readonly MenuItem[] | undefined>;
 	named: string;
@@ -415,8 +407,7 @@ function RowMore(props: {
 		ended === undefined
 			? (offer.value as readonly MenuItem[] | undefined)
 			: endedItems(words, ended);
-	if (!items?.length)
-		return <span aria-hidden className={cn(ROW_CHEVRON, BLANK)} />;
+	if (!items?.length) return null;
 	return (
 		<MenuBase
 			label={`${words.more} ${props.named}`}
@@ -492,7 +483,6 @@ export function ListRowBase<V extends string | null = string>({
 	selected = false,
 	onOpen,
 	tree,
-	room = false,
 	painted = false,
 	at = 0,
 	opens: opened = false,
@@ -513,31 +503,42 @@ export function ListRowBase<V extends string | null = string>({
 		!moreActs &&
 		!(trailing && "pick" in trailing) &&
 		!tree?.fold;
-	// A row of a list where another has a more act, with no more act and no
-	// chevron of its own, keeps that act's square blank.
-	const blank = room && !moreActs && !chevron;
-	const marked =
-		status !== undefined ||
-		warning !== undefined ||
-		lock !== undefined ||
-		chip !== undefined;
 	const ticks = leading !== undefined && "check" in leading;
 	const blocked = ticks && !painted ? leading.check.blocked : undefined;
 	const listed = steps?.length ? steps : undefined;
 	const lined = Boolean(
-		entry || listed || meta?.length || blocked !== undefined || marked,
+		entry || listed || meta?.length || blocked !== undefined,
 	);
-	const stacked = lined ? "two" : "one";
+	// The marks stand in the end group; an entry or the steps stand in their
+	// place, as the meta line did. A value over marks is two lines of it.
+	const marked =
+		entry === undefined &&
+		!listed &&
+		(status !== undefined ||
+			warning !== undefined ||
+			lock !== undefined ||
+			chip !== undefined);
+	const paired = trailing !== undefined && !("pick" in trailing) && marked;
+	const stacked = lined || paired ? "two" : "one";
 	const lines = wrap ? "whole" : stacked;
 	// A model-written name (`Quoted`) wraps in a row that has a second line, so
 	// its closing quote is never cut away; its row grows by the lines it wraps.
 	const quotedWraps =
 		!painted && lined && typeof title === "object" && "quoted" in title;
 	// A wrapped title and an entry's input are lines under the title's first, so
-	// the parts beside them stand on that first line.
+	// the change mark, tick and tree lane beside them stand on that first line;
+	// the end group stands on the row's centre.
 	const top = wrap || entry !== undefined;
 	const under = act !== undefined && !top;
-	const column = cn(TEXT, under && TEXT_UNDER);
+	// A pick or a labelled act is a control that cannot truncate, so beside one the
+	// text group has no floor and gives way to it, as before.
+	const floored = act === undefined && !(trailing && "pick" in trailing);
+	const column = cn(
+		ROW_TEXT,
+		TEXT,
+		floored && ROW_TEXT_FLOOR,
+		under && TEXT_UNDER,
+	);
 	const inline = { label: entry?.label ?? "" };
 	const entryReason = useReasonLine(painted ? undefined : entry?.act.blocked);
 	// The pressed reason of the act, which its button and its line both read:
@@ -561,15 +562,26 @@ export function ListRowBase<V extends string | null = string>({
 	let value: ReactNode = null;
 	if (trailing && !("pick" in trailing))
 		value = (
-			<First on={top}>
-				<span className={cn(ROW_TRAILING, TRAILING)}>
-					{painted ? <Painted role="figure" at={at} /> : trailingWord(trailing)}
-				</span>
-			</First>
+			<span className={cn(ROW_TRAILING, TRAILING)}>
+				{painted ? <Painted role="figure" at={at} /> : trailingWord(trailing)}
+			</span>
 		);
-	// A value beside a one-line title is whole or gone: the title holds half its
-	// line before the value takes a place on it.
-	const titles = value !== null && !top && !quotedWraps;
+	const marks = marked ? (
+		<span className={cn(ROW_MARKS, MARKS)}>
+			{status ? <RowStatusMark status={status} painted={painted} /> : null}
+			{warning !== undefined ? (
+				<WarningMark label={warning} painted={painted} />
+			) : null}
+			{lock !== undefined ? (
+				<LockMark reason={lock} labelled painted={painted} />
+			) : null}
+			{chip ? (
+				<span className={CHIP_MARK}>
+					<ChipBase family={chip.family} label={chip.label} painted={painted} />
+				</span>
+			) : null}
+		</span>
+	) : null;
 	let shown: ReactNode = named;
 	let titleBox = wrap || quotedWraps ? TITLE_WHOLE : TITLE;
 	if (painted) {
@@ -581,29 +593,18 @@ export function ListRowBase<V extends string | null = string>({
 	} else if (typeof title === "object" && !("quoted" in title)) {
 		shown = <Runs runs={title} />;
 	}
-	const titled = (
-		<span
-			className={cn(
-				rowTitle({ form: rowTitleForm(wrap, dim) }),
-				titleBox,
-				titles && TITLE_BEFORE_VALUE,
-			)}
-		>
+	const titleLine = (
+		<span className={cn(rowTitle({ form: rowTitleForm(wrap, dim) }), titleBox)}>
 			{shown}
 		</span>
 	);
-	const titleLine = (
-		<span
-			className={cn(
-				ROW_TITLE_LINE,
-				wrap ? LINE_WHOLE : LINE,
-				titles && VALUE_LINE,
-			)}
-		>
-			{titled}
-			{value}
-		</span>
-	);
+	const acted = act !== undefined || moreActs;
+	const hasEnd =
+		value !== null ||
+		marks !== null ||
+		(trailing !== undefined && "pick" in trailing) ||
+		chevron ||
+		acted;
 	// In a tree the row is the focus stop and the hit is the pointer's alone.
 	const pointed = tree ? { tabIndex: -1 } : {};
 	let hit = null;
@@ -688,7 +689,7 @@ export function ListRowBase<V extends string | null = string>({
 			) : entry ? (
 				<Field.Root
 					invalid={!painted && Boolean(entry.error)}
-					className={cn(ROW_ENTRY, TEXT)}
+					className={cn(ROW_ENTRY, column)}
 				>
 					{titleLine}
 					<span className={cn(ROW_META_LINE, ENTRY)}>
@@ -813,74 +814,55 @@ export function ListRowBase<V extends string | null = string>({
 								) : null}
 							</span>
 						)}
-						{status ? (
-							<RowStatusMark
-								status={status}
-								beside={painters > 0 || lead.length > 0}
-								painted={painted}
-							/>
-						) : null}
-						{warning !== undefined ? (
-							<WarningMark label={warning} painted={painted} />
-						) : null}
-						{lock !== undefined ? (
-							<LockMark reason={lock} labelled painted={painted} />
-						) : null}
-						{chip ? (
-							<span className={CHIP_SLOT}>
-								<span aria-hidden className={CHIP_START} />
-								<span className={CHIP_MARK}>
-									<ChipBase
-										family={chip.family}
-										label={chip.label}
-										painted={painted}
-									/>
-								</span>
-							</span>
-						) : null}
 					</span>
 					{actLine}
 				</span>
 			)}
-			{trailing && "pick" in trailing ? (
-				<First on={top}>
-					<HeldPicker {...trailing.pick} fit="row" painted={painted} />
-				</First>
-			) : null}
-			{chevron ? (
-				<First on={top}>
-					<span className={cn(ROW_CHEVRON, CHEVRON)}>
-						<Icon name="ChevronRight" />
-					</span>
-				</First>
-			) : null}
-			{act || moreActs || blank ? (
-				<First on={top}>
-					<span className={cn(ROW_ACTS, ACTS, under && ACTS_UNDER)}>
-						{act ? (
-							painted ? (
-								<PaintedAct at={at} />
-							) : (
-								<RowAct act={act} stand={stand} at={at} />
-							)
-						) : null}
-						{blank ? (
-							<span aria-hidden className={cn(ROW_CHEVRON, BLANK)} />
-						) : null}
-						{more !== undefined && hasMore(more) ? (
-							painted ? (
-								<MenuBase
-									label={`${words.more} ${named}`}
-									title={named}
-									items={[]}
-									painted
-								/>
-							) : (
-								<RowMore more={more} named={named} />
-							)
-						) : null}
-					</span>
-				</First>
+			{hasEnd ? (
+				<span className={cn(ROW_END, END, under && END_UNDER)}>
+					{value !== null && marks !== null ? (
+						<span className={PAIR}>
+							{value}
+							{marks}
+						</span>
+					) : (
+						<>
+							{value}
+							{marks}
+						</>
+					)}
+					{trailing && "pick" in trailing ? (
+						<HeldPicker {...trailing.pick} fit="row" painted={painted} />
+					) : null}
+					{chevron ? (
+						<span className={cn(ROW_CHEVRON, CHEVRON)}>
+							<Icon name="ChevronRight" />
+						</span>
+					) : null}
+					{acted ? (
+						<span className={cn(ROW_ACTS, ACTS)}>
+							{act ? (
+								painted ? (
+									<PaintedAct at={at} />
+								) : (
+									<RowAct act={act} stand={stand} at={at} />
+								)
+							) : null}
+							{more !== undefined && hasMore(more) ? (
+								painted ? (
+									<MenuBase
+										label={`${words.more} ${named}`}
+										title={named}
+										items={[]}
+										painted
+									/>
+								) : (
+									<RowMore more={more} named={named} />
+								)
+							) : null}
+						</span>
+					) : null}
+				</span>
 			) : null}
 		</div>
 	);
@@ -902,8 +884,6 @@ export interface ListRowItemProps<T, V extends string | null> {
 	/** The slots, run inside the row over the item (over the placeholder while it is painted: a slot that throws there paints as the item itself). */
 	row: RowSlots<T, V>;
 	painted: boolean;
-	/** A row of the list has a more act (`ListRowInternal.room`). */
-	room: boolean;
 	/** In a tree: the row's depth, its fold (`open` on a branch alone, and `fold` hears the item's key) and whether it holds the tab stop. Flat so the memo compares them. */
 	depth?: number;
 	size?: number;
@@ -918,7 +898,6 @@ function ListRowItemBase<T, V extends string | null>({
 	index,
 	row,
 	painted,
-	room,
 	depth,
 	size = 1,
 	place = 1,
@@ -962,7 +941,6 @@ function ListRowItemBase<T, V extends string | null>({
 			href={row.href && slot(row.href)}
 			selected={row.selected && slot(row.selected)}
 			onOpen={row.onOpen ? () => row.onOpen?.(item) : undefined}
-			room={room}
 			tree={tree}
 			painted={painted}
 			// A painted row opens as the loaded one would: it draws the chevron, and builds no hit.

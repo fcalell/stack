@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { actsShown, type FoldRoom, TITLE_FLOOR } from "../src/fold.ts";
+import { ROW_TEXT_FLOOR } from "../src/variants.ts";
 
 // A 288 wide row, a 44 act, an 8 gap and a 52 lead: the title's floor takes
 // 115.2, so 288 - 115.2 - 52 - 8 = 112.8 is left for the acts.
@@ -16,6 +17,11 @@ const ROOM: FoldRoom = {
 
 test("the title keeps two fifths of the row", () => {
 	assert.equal(TITLE_FLOOR, 0.4);
+	// A row's text group keeps the same floor (`ROW_TEXT_FLOOR`, `min-w-2/5`).
+	assert.equal(
+		ROW_TEXT_FLOOR,
+		`basis-${Math.round(TITLE_FLOOR * 5)}/5 shrink-0`,
+	);
 });
 
 test("acts that fit all stand, with no more act of their own", () => {

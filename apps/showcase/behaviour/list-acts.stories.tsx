@@ -33,15 +33,32 @@ export default {
 	),
 } satisfies Meta;
 
-// A list where only some rows carry a more act ends every row's trailing value
-// at one x: the actless row keeps the act's square blank.
-export const TrailingKeepsItsColumn: StoryObj = {
+// A list where only some rows carry a more act reserves nothing for it on the
+// rest: the actless row's trailing value ends at the row's inset, the rows with
+// a menu end theirs before it, and no empty box stands where the menu would.
+export const TrailingEndsAtItsRow: StoryObj = {
 	play: async ({ canvasElement }) => {
-		const values = [...canvasElement.querySelectorAll("span")].filter((el) =>
-			["2m", "3h", "5d"].includes(el.textContent ?? ""),
+		const values = [...canvasElement.querySelectorAll("span")].filter(
+			(el) =>
+				["2m", "3h", "5d"].includes(el.textContent ?? "") &&
+				!el.querySelector("span"),
 		);
 		await expect(values).toHaveLength(3);
-		const ends = values.map((el) => el.getBoundingClientRect().right);
-		await expect(Math.max(...ends) - Math.min(...ends)).toBeLessThan(0.5);
+		const [bare, ...acted] = values;
+		const row = bare.closest(".relative.flex");
+		if (!row) throw new Error("the row has no box");
+		const inset = Number.parseFloat(getComputedStyle(row).paddingRight);
+		await expect(
+			Math.abs(
+				row.getBoundingClientRect().right -
+					inset -
+					bare.getBoundingClientRect().right,
+			),
+		).toBeLessThan(0.5);
+		for (const value of acted)
+			await expect(value.getBoundingClientRect().right).toBeLessThan(
+				bare.getBoundingClientRect().right - 20,
+			);
+		await expect(canvasElement.querySelector("[aria-hidden]:empty")).toBeNull();
 	},
 };

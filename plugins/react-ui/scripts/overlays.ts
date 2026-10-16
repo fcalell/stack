@@ -341,14 +341,10 @@ export const OVERLAYS: readonly string[] = [
 	"data-ending-style:ease-in",
 	// ListRow, FormField, SegmentedControl, Picker, OptionList
 	"w-0",
-	"h-chip",
 	"min-w-icon-meta",
 	"shrink-100000000000000",
-	"shrink-100000000000000000000",
-	"max-w-3/4",
 	"min-w-min",
 	"py-[calc((var(--spacing-control)-1lh)/2)]",
-	"max-w-[calc(100%-var(--spacing-figures))]",
 	"max-w-[calc(100%+var(--spacing-inside))]",
 	"border-t",
 	"pt-float",
@@ -395,6 +391,7 @@ export const OVERLAYS: readonly string[] = [
 	"page-max-tablet:flex-wrap",
 	"page-max-tablet:basis-0",
 	"page-max-tablet:basis-full",
+	"page-max-tablet:max-w-full",
 	"page-max-tablet:justify-end",
 	// Prose, Code, Diff, ProseDiff, FileRow, Comparison
 	"inline-block",

@@ -28,15 +28,16 @@ export interface ListRowProps<V extends string | null = string> extends Closed {
 	title: RowTitle;
 	/** The line under the title, its parts (each a short phrase) joined by a middle dot on one line, the later parts truncating first; a `{ code }` part cuts in its middle, keeping its start and its end. */
 	meta?: readonly RowPart[];
-	/** A value at the title line's end (an age, a count, a word: kept whole, the title truncating first), or a pick that applies at once. */
+	/** A value in the row's end group, centred on the row (an age, a count, a word: it truncates only where the row is out of room), or a pick that applies at once. With marks the two stand stacked, the value over the marks. */
 	trailing?: RowTrailing<V>;
-	// A work state on the meta line; a waiting act is told by its tone.
+	// A work state in the row's end group, beside the value or under it,
+	// centred on the row; a waiting act is told by its tone.
 	status?: StatusMark;
-	/** What is wrong with the row, on the meta line after the status: a warn glyph and its label (a short phrase; truncates). The act that clears it is the row's `act`. */
+	/** What is wrong with the row, a mark in the end group: a warn glyph and its label (a short phrase; truncates). The act that clears it is the row's `act`. */
 	warning?: string;
-	/** What the row holds, on the meta line after the warning: a lock glyph and its label (a short phrase; truncates). */
+	/** What the row holds, a mark in the end group after the warning: a lock glyph and its label (a short phrase; truncates). */
 	lock?: string;
-	// A data value's chip on the meta line.
+	// A data value's chip, a mark in the end group.
 	chip?: ChipMark;
 	// An input and its act under the title, in the meta line's place: `meta`,
 	// `status` and `chip` are not drawn while it stands. Give them in its place
@@ -52,8 +53,9 @@ export interface ListRowProps<V extends string | null = string> extends Closed {
 	// never faded, so it stays legible; still a hit, its leading glyph and
 	// marks keeping their hue.
 	dim?: boolean;
-	// The title is a passage read whole: it wraps to every line, and the
-	// leading, trailing and acts stand on its first line.
+	// The title is a passage read whole: it wraps to every line, the leading
+	// stands on its first line, and the trailing, status and acts on the row's
+	// centre.
 	wrap?: boolean;
 	// One labelled act at the row's end, ahead of the more act: the next step
 	// the row names. An act the row waits on keeps its pending press here,

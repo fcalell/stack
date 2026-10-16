@@ -95,7 +95,9 @@ const frames = (canvas: Canvas) =>
 	["pane", "list"].map((id) => within(canvas.getByTestId(id)));
 
 // A later part yields in order: the model-written one cuts first, the plain
-// part and the trailing value after it stay whole, and no box passes its row.
+// part after it shows whole or is dropped whole (the end group, with the
+// trailing value, takes its room first), the trailing value stays whole in its
+// end group, and no box passes its row.
 const yielding: Play = async ({ canvas }) => {
 	for (const frame of frames(canvas)) {
 		const row = frame.getByRole("link", { name: TITLE }).parentElement;
@@ -104,7 +106,13 @@ const yielding: Play = async ({ canvas }) => {
 			await expect(right(element)).toBeLessThanOrEqual(right(row) + 0.5);
 		}
 		await expect(clipped(frame.getByText(/“Let a signed/))).toBe(true);
-		await expect(clipped(frame.getByText(/pass 1/))).toBe(false);
+		const plain = frame.getByText(/pass 1/);
+		const slot = plain.parentElement?.parentElement;
+		if (!slot) throw new Error("the later parts have no slot");
+		const gone =
+			plain.getBoundingClientRect().top >=
+			slot.getBoundingClientRect().bottom - 0.5;
+		await expect(gone || !clipped(plain)).toBe(true);
 		await expect(clipped(frame.getByText("18 min · $0.42"))).toBe(false);
 	}
 };
@@ -485,6 +493,22 @@ export const ReviewGroupFloorTouch390 = touch(
 );
 export const ChevronEndsTouch = touch(ChevronEnds);
 
+// A text is cut only where the row's text group is down to its floor, two
+// fifths of the row's content width (the end group takes the rest).
+const cutOnlyAtCap = async (row: Element, text: HTMLElement) => {
+	if (!clipped(text)) return;
+	const group = row.querySelector<HTMLElement>("[class*='basis-2/5']");
+	if (!group) throw new Error("the row has no text group");
+	const style = getComputedStyle(row);
+	const inner =
+		row.clientWidth -
+		Number.parseFloat(style.paddingLeft) -
+		Number.parseFloat(style.paddingRight);
+	await expect(group.getBoundingClientRect().width).toBeLessThanOrEqual(
+		inner * 0.4 + 1,
+	);
+};
+
 // A status label draws whole while its line has room and truncates, within its
 // row, only when the line is out of it; no measure caps it short of the room:
 // a row's, a head's fact (`Status` alone) as well. Desktop only: the room is
@@ -494,7 +518,9 @@ const WATCHES = "Watches paused for under a minute while the repository syncs";
 const statusRoom: Play = async ({ canvas }) => {
 	const room = within(canvas.getByTestId("room"));
 	const tight = within(canvas.getByTestId("tight"));
-	await expect(clipped(room.getByText(WATCHES))).toBe(false);
+	const sheet = room.getByRole("link", { name: "Usage" }).parentElement;
+	if (!sheet) throw new Error("the row has no box");
+	await cutOnlyAtCap(sheet, room.getByText(WATCHES));
 	await expect(clipped(room.getByText("Fetched 28 seconds ago"))).toBe(false);
 	await expect(clipped(tight.getByText(WATCHES))).toBe(true);
 	const row = tight.getByRole("link", { name: "Usage" }).parentElement;
@@ -532,10 +558,9 @@ export const StatusRoom: StoryObj = {
 	play: statusRoom,
 };
 
-// A row's status stays whole beside the parts that name the item: the later
-// parts, then the first part, yield to it, and only a status wider than the
-// whole line truncates, within the row. Desktop and touch, in a 320 px pane
-// and a 360 px list.
+// A row's status stands in its end group, whole while the group is within
+// the room the text group's two fifths leave and truncating, within the row, only once the group is at
+// that cap. Desktop and touch, in a 320 px pane and a 360 px list.
 const REMOTE = "/tmp/sc3/remotes/a-repository-with-a-name-long-enough-to-wrap";
 
 function Statuses() {
@@ -575,9 +600,17 @@ const statusWhole: Play = async ({ canvas }) => {
 				await expect(right(element)).toBeLessThanOrEqual(right(row) + 0.5);
 			}
 		}
-		await expect(clipped(frame.getByText("Fetched 3 minutes ago"))).toBe(false);
+		const remote = frame.getByRole("link", {
+			name: REMOTE.split("/").pop(),
+		}).parentElement;
+		if (!remote) throw new Error("the row has no box");
+		await cutOnlyAtCap(remote, frame.getByText("Fetched 3 minutes ago"));
 		await expect(clipped(frame.getByText(REMOTE))).toBe(true);
-		await expect(clipped(frame.getByText("Waiting for you"))).toBe(false);
+		const flag = frame.getByRole("link", {
+			name: "Rename the flag",
+		}).parentElement;
+		if (!flag) throw new Error("the row has no box");
+		await cutOnlyAtCap(flag, frame.getByText("Waiting for you"));
 		await expect(clipped(frame.getByText(/^Rename the flag to --strict/))).toBe(
 			true,
 		);

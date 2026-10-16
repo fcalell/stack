@@ -8,7 +8,7 @@ import {
 	treeRows,
 	treeStop,
 } from "@fcalell/ui-core/list-state";
-import { PAINT_ROWS, painting } from "@fcalell/ui-core/paint";
+import { PAINT_ROWS } from "@fcalell/ui-core/paint";
 import {
 	LIST,
 	LIST_DIVIDED,
@@ -32,7 +32,7 @@ import { ListedRoute, useRoute } from "../../lib/navigate.ts";
 import { Window } from "../../lib/window.tsx";
 import { DefinitionItem } from "../definition-row/index.tsx";
 import { FileItem } from "../file-row/index.tsx";
-import { hasMore, ListRowItem } from "../list-row/base.tsx";
+import { ListRowItem } from "../list-row/base.tsx";
 import { MeterItem } from "../meter/index.tsx";
 import type { ListKind } from "./index.tsx";
 
@@ -117,9 +117,6 @@ export function ListBase<T, V extends string | null = string>(
 		props.row?.meta !== undefined && children === undefined
 			? cn(LIST_DIVIDED, DIVIDER)
 			: LIST;
-	// Whether a row of the loaded list has a more act: the rows without one then
-	// keep its square, so every row's end stands at one x.
-	let room = false;
 	// The rows are built by their index, so a long flat list's Window builds
 	// only the ones it mounts; the others draw all of them.
 	const frame = (
@@ -188,22 +185,6 @@ export function ListBase<T, V extends string | null = string>(
 	};
 	if (props.row) {
 		const { row } = props;
-		const { more } = row;
-		if (more !== undefined) {
-			const every =
-				children === undefined
-					? items
-					: treeRows(items, { key: row.key, children }, []).map(
-							(each) => each.item,
-						);
-			room = every.some((item) =>
-				hasMore(
-					painted
-						? (painting(more, item) as ReturnType<typeof more>)
-						: more(item),
-				),
-			);
-		}
 		const keyOf = (index: number) => keyAt(row.key, index);
 		if (children === undefined)
 			return frame(items.length, keyOf, (index) => (
@@ -213,7 +194,6 @@ export function ListBase<T, V extends string | null = string>(
 					index={index}
 					row={row}
 					painted={painted}
-					room={room}
 				/>
 			));
 		// Each row of the tree reads its depth, fold and tab stop from its own
@@ -260,7 +240,6 @@ export function ListBase<T, V extends string | null = string>(
 						index={index}
 						row={row}
 						painted={painted}
-						room={room}
 						fold={fold}
 						depth={each.depth}
 						size={each.size}

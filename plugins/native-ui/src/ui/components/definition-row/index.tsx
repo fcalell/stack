@@ -18,6 +18,7 @@ import {
 	FIGURES,
 	ROW_END,
 	ROW_TEXT,
+	ROW_TEXT_FLOOR,
 	row,
 	text,
 	textStrong,
@@ -63,6 +64,8 @@ const ALONE = "py-rows";
 // middle, its stem truncating to the room and its tail standing whole
 // (`valueCut`); words are one text run that truncates at its end.
 const END_CUT = "grow min-w-0 justify-end";
+// A status's text group keeps the row floor (`ROW_TEXT_FLOOR`).
+const END_STATUS = `${END_CUT} min-w-0`;
 const VALUE = "flex-1 min-w-0 flex-row justify-end";
 const STEM = "shrink";
 const TAIL = "shrink-0";
@@ -207,7 +210,9 @@ export function DefinitionRowBase<V extends string | null = string>({
 	let stands = "";
 	let valueNode: ReactNode = null;
 	if (waitsValue && value !== undefined) {
-		stands = END_CUT;
+		stands = isStatus(shown.value as DefinitionValue | undefined)
+			? END_STATUS
+			: END_CUT;
 		valueNode = isStatus(shown.value as DefinitionValue | undefined) ? (
 			<View pointerEvents={shut} className={VALUE}>
 				<StatusBase painted />
@@ -250,7 +255,7 @@ export function DefinitionRowBase<V extends string | null = string>({
 			</View>
 		);
 	} else if (isStatus(plain)) {
-		stands = END_CUT;
+		stands = END_STATUS;
 		valueNode = (
 			<View pointerEvents={shut} className={VALUE}>
 				<StatusBase state={plain.status} label={plain.label} />
@@ -345,7 +350,11 @@ export function DefinitionRowBase<V extends string | null = string>({
 			{change ? <ChangeMark kind={change} painted={listed} /> : null}
 			<View
 				pointerEvents={shut}
-				className={cn(ROW_TEXT, stands !== END_CUT && TEXT_GROWS)}
+				className={cn(
+					ROW_TEXT,
+					stands === END_STATUS && ROW_TEXT_FLOOR,
+					!stands.startsWith(END_CUT) && TEXT_GROWS,
+				)}
 			>
 				<RNText
 					className={cn(

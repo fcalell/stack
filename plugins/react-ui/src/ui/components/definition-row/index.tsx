@@ -20,6 +20,7 @@ import {
 	FIGURES,
 	ROW_END,
 	ROW_TEXT,
+	ROW_TEXT_FLOOR,
 	row,
 	text,
 	textStrong,
@@ -71,9 +72,9 @@ const VALUE = "flex w-0 grow min-w-0 justify-end";
 const STEM = "min-w-0 truncate";
 const TAIL = "shrink-0";
 // A status stays whole and the label wraps to the room it leaves, down to its
-// longest word: a status end group wider than three quarters of the row, or
-// than the room that word leaves, is cut.
-const END_STATUS = "min-w-0 max-w-3/4";
+// longest word, or the text group's floor (`ROW_TEXT_FLOOR`) where that is
+// more: a status end group wider than the room they leave is cut.
+const END_STATUS = "min-w-0";
 const VALUE_STATUS = "flex min-w-0";
 // A control stands whole at the row's end, the label wrapping beside it; so
 // does an act or a chevron with no value.
@@ -330,7 +331,14 @@ export function DefinitionRowBase<V extends string | null = string>({
 			)}
 		>
 			{change ? <ChangeMark kind={change} painted={listed} /> : null}
-			<span className={cn(ROW_TEXT, TEXT, stands !== END_CUT && TEXT_GROWS)}>
+			<span
+				className={cn(
+					ROW_TEXT,
+					TEXT,
+					stands === END_STATUS && ROW_TEXT_FLOOR,
+					stands !== END_CUT && TEXT_GROWS,
+				)}
+			>
 				{title}
 				{under ? <span className={text({ role: "meta" })}>{under}</span> : null}
 			</span>

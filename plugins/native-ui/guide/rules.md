@@ -215,9 +215,11 @@ an `IconAct` (`{ icon, label, onAct }`; the promise `onAct` returns holds the ac
 `onAct`, and the bar holds its acts' run; an `ActionBar` draws its last blocked act's `blocked` reason under the acts at rest, at meta size (but the filled act of a `Form` or `Sheet` whose read ended draws its reason on a press, in the line the bar keeps unseen). To keep the bar's place while the server works, give the `ActionBar` a `pending` (a `PendingBar`'s `sentence`, `until`, `act`): the pending form stands over the bar at the bar's own loaded height, so nothing below moves when it is set or cleared; a `PendingBar` alone is for a place that held no bar. A `FormField` takes a `FieldBinding` from the
 app's own form state. A `Form` that stands edited asks once, "Discard your edit?" or Keep editing, when its screen is left (the back, a swipe, a navigate that removes it), so the app writes no `beforeRemove` guard of its own; pressing the filled act ends the edit, so an act that navigates is never asked, and a rejected act puts the edit back. An `Input` with an `act` presses that act on the keyboard's return. A field that replaces what the viewer was reading (an edit swapped in for rendered text) takes `autoFocus`, which focuses it as it mounts with the caret at the end of its text; a field on a form that loads with the page leaves it off. A `confirm()` takes a `Confirmation`, its `cancel` the way out's own label ("Keep editing") where the `cancel` word is not the decision's.
 
-A row's marks are named props on the meta line, at most one each, in order: `status`, `warning`
-(what is wrong, a string), `lock` (what it holds, a string, a glyph) and `chip`; the
-act that clears a warning is the row's `act`. A status has one form, its `label`, truncating where the meta line is out of room. Keep a status word short; stack never shortens a label itself.
+A row's marks are named props, at most one each, in order: `status`, `warning` (what is wrong, a
+string), `lock` (what it holds, a string, a glyph) and `chip`; the act that clears a warning is the
+row's `act`. The marks stand in the row's end group, one line, under the trailing value or beside
+it, never on the meta line, and none is ever dropped, so a row whose second line would hold only
+marks is one line. A status has one form, its `label`, truncating where the row is out of room. Keep a status word short; stack never shortens a label itself.
 
 Where a row, a fact or a field stands in a change set is its `change` (`ChangeKind`: `added`,
 `changed`, `removed`, `unchanged`, `stale`), one prop on `ListRow`, `DefinitionRow` and `FormField`
@@ -237,8 +239,8 @@ A row off a highlighted path (a journey's untaken steps) is `dim`: its title in 
 400, never faded, still a hit, its glyph and marks keeping their hue. While a row's act pends,
 its work's steps are `steps` (a `StatusMark` each, the running one in `running`): one line each
 in the meta line's place, so give `meta` back once the act settles. A title read whole (a note,
-a memory) is `wrap`: it wraps to every line at 400 with its leading, trailing and acts on the
-first line, and a `List`'s `row` map takes it as one boolean for every row. A `{ quoted }` title
+a memory) is `wrap`: it wraps to every line at 400 with its leading on the first line and its
+trailing and acts centred on the row, and a `List`'s `row` map takes it as one boolean for every row. A `{ quoted }` title
 marks a model-written name and wraps whole in a row with a second line; `wrap` is for text a person approved. A flag, a path or an identifier in a title is a `{ code }` run: the title is then an array of runs (`[{ code: "--strict" }, " turns strict mode on."]`; backticks in a string are never parsed) that draws the code in the inline code style and truncates at its end as one title; a title that is a single `{ code: path }` is one value that cuts in its middle, keeping its start and its end, so the end of a path stays readable. A `meta` part that is `{ code }` cuts the same way. A row's trailing age is the ISO
 moment itself, `trailing: { age: item.madeAt }`: the row words it short ("2 min") and keeps it
 current, so pass the moment, never a worded string. A spend or other short value that goes with the age is its `beside`, `trailing: { age: run.startedAt, beside: "$0.12" }`: it stands after the age in the same trailing, and the age keeps ticking.
@@ -392,10 +394,13 @@ a failed list shows the failure with Retry. Rows share one `leading` kind
 yields from its end, in this strict order: the later parts truncate (a `{ quoted }` part cuts ahead
 of the plain ones, so a long quote or reason yields and an age and spend that must read are the
 row's `trailing`), then the chip leaves whole,
-then the warning's label truncates, and last the first part truncates; the status and the glyphs
-stay whole. A row that opens (`href` or `onOpen`) ends in a chevron after its trailing value; a row
-with an `act`, `more`, a trailing pick or a tree's fold draws none, and neither does a static row. In a list where some rows declare `more`, the rows without one keep its square blank, so every row's trailing value ends at one x; give `more` only to the rows that have acts.
-A row with an `act` stands its acts on a line under its text, at the row's end, so give
+then the warning's label truncates, and last the first part truncates; the glyphs stay whole. A row
+is a text group (the title over the meta line) and an end group centred on the row: a trailing
+value, the marks, a pick, the chevron, the act and the more menu stand in it, in that order, never
+on the title's or the meta line's line; a value and marks together stand stacked, the value over
+the marks. The text group keeps two fifths of the row; the end group takes the rest. A row that opens (`href` or `onOpen`) ends in a chevron after its trailing value; a row
+with an `act`, `more`, a trailing pick or a tree's fold draws none, and neither does a static row. A row with nothing at its end draws no end group and reserves no room for one, so the rows of a list that end differently end at different x; give `more` only to the rows that have acts.
+A row with an `act` stands its end group on a line under its text, at the row's end, so give
 `act` the next step and let the row decide where it stands. A table's `selected` row washes in its
 list form as in its grid. A file row's `change` (a `ChangeKind`) draws the
 change mark ahead of its glyph, and its `chip` says why it is listed; the path yields to it down to

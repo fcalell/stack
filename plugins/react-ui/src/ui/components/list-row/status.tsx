@@ -1,34 +1,26 @@
-import { cn } from "@fcalell/ui-core/cn";
 import type { StatusMark } from "@fcalell/ui-core/descriptors";
 import { StatusBase } from "../status/base.tsx";
 
-// The status stays whole: it never shrinks below its word while anything else
-// on the line can give (the later parts, the chip, the lock's label, the
-// warning's, then the first part, in that order). It is held to the line's
-// width less the floor the first part keeps (`figures`, so the item is still
-// named by a few characters), and a status wider than that is cut, its word
-// truncating. With no first part it is held to the line.
-const MARK = "flex shrink-0 min-w-0";
-const MARK_ALONE = "max-w-full";
-const MARK_BESIDE = "max-w-[calc(100%-var(--spacing-figures))]";
+// The status stands in the row's end group, beside the value or under it: its
+// word truncates to what the group's cap leaves, so a status wider than that is
+// cut and the text group keeps its two fifths of the row.
+const MARK = "flex min-w-0";
 
-/** A row's status on its meta line: the mark, its word truncating where the line is out of room, or `painted` (the dot's box and a word's filler) while the status is not here. Outside the package's exports. */
+/** A row's status in its end group: the mark, its word truncating where the group is out of room, or `painted` (the dot's box and a word's filler) while the status is not here. Outside the package's exports. */
 export function RowStatusMark(props: {
 	status: StatusMark;
-	/** Whether the line holds a first part before the status. */
-	beside: boolean;
 	painted?: boolean;
 }) {
 	const { status } = props;
 	// Painted before anything reads the status: over a placeholder every key is there.
 	if (props.painted)
 		return (
-			<span className={cn(MARK, props.beside ? MARK_BESIDE : MARK_ALONE)}>
+			<span className={MARK}>
 				<StatusBase painted />
 			</span>
 		);
 	return (
-		<span className={cn(MARK, props.beside ? MARK_BESIDE : MARK_ALONE)}>
+		<span className={MARK}>
 			<StatusBase state={status.state} label={status.label} />
 		</span>
 	);

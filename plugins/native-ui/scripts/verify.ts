@@ -177,7 +177,6 @@ const NATIVE_OVERLAYS = [
 	"gap-pair",
 	"grow",
 	"h-full",
-	"h-chip",
 	"h-line-body",
 	"hidden",
 	"inset-0",

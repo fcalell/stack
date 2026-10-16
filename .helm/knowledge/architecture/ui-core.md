@@ -619,22 +619,42 @@ a tick with no animation, never jumped to full.
   centred in it, so the titles of a list share one x whatever leads them; its meta line
   (`ROW_META_LINE`) is one line that yields in order: the later parts truncate first, then the chip,
   the lock's label, the warning's label and last the first part (naming the item, with an ellipsis);
-  the status stays whole before all of them (on the web it takes no share of the overflow and is held to the line less the first part's floor, `figures`, so only a status wider than that is cut; the phone's still shares the first part's tier), the glyphs keep their width, and past them the line clips at the row's edge rather
-  than overprint (the marks are described under `warning` below). The later parts take no width of
+  the glyphs keep their width, and past them the line clips at the row's edge rather
+  than overprint (the marks are described under `warning` below). The row's status is not on this
+  line: it stands in the end group, below. The later parts take no width of
   their own (`w-0`, growing into the room the marks leave) and show at least `figures` of it or
-  none, in the chip's wrapping slot, so a bare separator and an ellipsis never draw; the slot's
-  text shrinks to nothing on its own line, so its box never passes the slot. The status stands at the line's end, so a list's statuses share one right edge; the room a dropped part leaves falls before it and is under `figures`, since a part that would leave more shows (`basis-figures`); the phone's later parts never drop, they truncate. A model-written later
+  none, in a wrapping slot, so a bare separator and an ellipsis never draw; the slot's
+  text shrinks to nothing on its own line, so its box never passes the slot. The room a dropped part leaves is under `figures`, since a part that would leave more shows (`basis-figures`); the phone's later parts never drop, they truncate. The meta line holds the meta parts alone, nothing right-aligned: the marks stand in the end group. A model-written later
   part (`Quoted`) stands in a span of its own that yields ahead of the plain parts, which is the
   one way a row says which part gives way: the age and spend that must read whole are its
   `trailing`. A `Coded` later part (`{ code }`) stands in a span of its own at the same tier and
-  cuts in its middle like a definition value (`valueCut`, shared by both platforms). A row that opens (`href` or `onOpen`) ends in a chevron (`ROW_CHEVRON`, the square of an icon act) after
-  its trailing value, unless its end holds an `act`, the more menu, a pick or a tree's fold. In a List
-  whose row map declares `more`, a row with none (and no chevron) keeps the more act's square blank
-  (`room`, an internal prop of `ListRowBase` the List sets from its loaded items, tree rows included), so every row's trailing value
-  ends at one x; a List with no `more` is unchanged. A labelled `act` is not reserved: its width is its label's. A value
-  trailing a one-line title is whole or gone the same way: the title's basis is half its line, so
-  a value wider than what that leaves wraps under the line and is clipped away, and the title then
-  takes the whole line (a 320 px table row shows its name, not its age). Both rules are the web's: the phone's later parts and values still truncate with an ellipsis. Every row keeps one height, so its waiting form matches it by
+  cuts in its middle like a definition value (`valueCut`, shared by both platforms). A `ListRow` is a
+  flex row of two groups, `ROW_TEXT` and `ROW_END` (the same two a `DefinitionRow` stands on, defined
+  once in `variants.ts`; each platform adds its own direction and centring): the text group is the
+  title over the meta line (a column that takes the room the end group leaves and gives way to it
+  first, `min-w-0`, shrink 10^7), and the end group is what stands at the row's end, in this order
+  (the trailing value over the marks (status, warning, lock, chip), a pick, the chevron, the acts), a line an inside apart, centred on
+  the row (`self-center`), under a second line too. The trailing value and the status leave the title
+  line and the meta line, and so do the marks (`status`, `warning`, `lock`, `chip`, one line a gap
+  apart, none ever dropped, an entry's or the steps' row drawing none): a row whose second line held
+  only marks is one line, the marks at its end. A value and the marks together stand stacked in the
+  end group, the value over the marks, right-aligned, as one item centred on the row (two lines high, so the row is the two-line
+  row; whether such a row should stand so is the owner's open question G1, built on its
+  recommendation). A row that opens (`href` or `onOpen`) ends in a chevron (`ROW_CHEVRON`, the square of an icon act) after
+  its trailing value and status, unless its end holds an `act`, the more menu, a pick or a tree's fold. A row with nothing at its end draws no end group, and a row
+  with a chevron and a row with none end at different x: nothing reserves room for an absent end item
+  (the more act's blank square, `room`, and the list that computed it are gone), and the room that
+  holds an alignment is a group's gap or padding, never an empty element. The end group is held to
+  the text group's floor, `ROW_TEXT_FLOOR` (`basis-2/5 shrink-0`, the Pane head's `TITLE_FLOOR`, one constant
+  for every row kind): the text group keeps two fifths of the row's content width whatever else
+  stands in the row (a leading, a more act), the end group takes what is left, and its value and
+  marks are cut with an ellipsis to it while the chevron and the acts stand whole. A wrapped title (`wrap`) and an entry stand their change mark, tick and tree lane on the
+  title's first line, as built, and the end group stands on the row's centre like any row's (an
+  entry's own act, which is part of the entry line, stands where the entry does). A labelled `act`
+  is not reserved: its width is its label's. A one-line title is cut by an ellipsis to the room the
+  end group leaves, and a code title's box clips the way its text does (`overflow-hidden`: the
+  stem truncates, the tail stands whole). Both are the web's: the phone's end group shrinks with
+  the row. Every row keeps one height, so its waiting form matches it by
   construction. A short label (a chip's) is bounded by the
   one width `measure-short` (18ch, the short sibling of `measure`).
 - A minimum height is the floor of something pressed (a control, a field, a target, a chip, a row),
@@ -1106,7 +1126,8 @@ a tick with no animation, never jumped to full.
   sort) is ui-core's `./list-state`, and a frame's state is `./read`'s, both imported by both
   platforms and tested without rendering.
 - A `ListRow` carries several marks as named props, not a `marks` record: `status`, `warning`,
-  `lock`, `chip`, at most one each, in that order on the meta line (`ROW_MARKS`). `warning` is what
+  `lock`, `chip`, at most one each: the `warning`, `lock` and `chip` in that order on the meta line
+  (`ROW_MARKS`), the `status` in the end group. `warning` is what
   is wrong with the row (a string: "Name conflicts with Checkout"), a `TriangleAlert` glyph at the
   meta icon size in `warn` (`ROW_WARNING`) beside its label in the meta ink; `lock` is what the row holds ("Holds 3 fields"), the lock mark whose label shows
   from `tablet`, the glyph alone below. The mark
@@ -1121,17 +1142,17 @@ a tick with no animation, never jumped to full.
   few thousandths of a pixel against the layout's 1/64 px, and Tailwind reads no bare number from
   10^21) so the order holds: the later meta parts (they take no width of their own), then the chip, then the lock's
   label, then the warning's label, and last the first part, which names the item and truncates with
-  an ellipsis (the status stays whole on the web, `shrink-0` and held to the line less `figures`, which the first part keeps; the phone's shares the first part's tier and truncates, uncapped, only when the line is out of room); every glyph keeps its width, and past them the line clips at the
+  an ellipsis; every glyph keeps its width, and past them the line clips at the
   row's edge rather than overprint. The chip is shown whole or not at all: it stands in a slot one
   line tall that wraps (a start item as wide as nothing and as tall as the slot holds the first
   line a flex line always keeps, so a chip wider than the room the slot is left wraps under the
   slot and is clipped away; a start item with no height leaves the wrapped chip in the slot's
   height, drawn cut), so no sliver of a pill ever draws. Below `tablet` of its page a row with
-  an `act` stands its acts on a line of their own at the row's end, under the text (`flex-wrap`
-  on the row, the text a zero basis, the acts a whole line wide; on the phone always): beside
-  them the text kept 65 of 288 px at 320, under the 112 the status and the two glyphs need, and
-  the painted row draws the same line. A row holding an entry or wrapping its title keeps its acts
-  on the title's first line. `selected` (`RowSlots.selected`) washes a row as the open record
+  an `act` stands its end group (the act, with the value and status beside it) on a line of its
+  own at the row's end, under the text (`flex-wrap` on the row, the text a zero basis, the end
+  group a whole line wide; on the phone always): beside it the text kept 65 of 288 px at 320, under
+  the 112 the glyphs need, and the painted row draws the same line. A row holding an entry or
+  wrapping its title keeps its end group on the row's centre. `selected` (`RowSlots.selected`) washes a row as the open record
   whatever its `href`, as the route does at one: a Table's list form passes its `selected`
   through it. The marks are flat items of the meta line, not a box of their own,
   so one set of weights orders them with the parts. Why named props: `List`'s per-slot functions let a painted row know which marks to reserve before any item exists (the slots run over the placeholder, and a mark is drawn where its slot is declared); a `marks` record function would hide that. A count is a meta part and a
@@ -1143,14 +1164,14 @@ a tick with no animation, never jumped to full.
 - A row's `status` is a `StatusMark`, and a painted row draws it as the Status's own painted form
   (`StatusBase painted`): the dot's box and a word's filler, at most `w-measure-short` wide, starting
   at the loaded word's x (the unseen dot's room and the status's gap in), in a box the meta line's
-  height (`LINE_BOX` `meta`, `h-lh`; a `Strut` on the phone), so nothing shifts sideways when the word
-  arrives, and the row is the two-line row from its first frame, yielding to the first part as the
-  status does. There is no `{ loading: true }` status: a row is wholly painted or wholly loaded,
-  and the `status` slot, run over the placeholder, only says the row has one. A row's status has one form, its word: `StatusMark` is `{ state, label }`, held whole
-  on the meta line before the later parts and cut, its word truncating, only where the line is out of
-  room beyond the first part's floor. Nothing measures the line, so no
+  height (`LINE_BOX` `meta`, `h-lh`; a `Strut` on the phone), in the end group where the loaded
+  status stands, so nothing shifts sideways when the word arrives. There is no `{ loading: true }`
+  status: a row is wholly painted or wholly loaded, and the `status` slot, run over the placeholder,
+  only says the row has one. A row's status has one form, its word: `StatusMark` is `{ state, label }`,
+  held in the end group, its word truncating only where the group, beside the text group's two fifths,
+  is out of room. Nothing measures the line, so no
   second form can flip against the first. A canvas node's status is the same `StatusMark`, its dot beside its label. A `DefinitionRow`'s status value stays whole as well, the label
-  wrapping to the room it leaves, its end group held to three quarters of the row.
+  wrapping to the room it leaves, the text group holding two fifths of the row.
 - A row, a fact or a field carries where it stands in a change set as one `change?: ChangeKind`
   (`added`, `changed`, `removed`, `unchanged`, `stale`, in `descriptors.ts`, the one `ChangeKind`;
   the change cell's own kinds are the subset `ChangeCellKind`) across `ListRow`, `DefinitionRow` and
@@ -1257,7 +1278,7 @@ a tick with no animation, never jumped to full.
   `min-w-min`, its shrink 10^7), and gives way first to a status or a control; a string value gives
   way before the label does, its end group taking the room the label leaves and its value (`w-0`, so
   it asks for none) filling it, so a value is cut where it was cut before the groups. A status's end
-  group is capped at 3/4 of the row. On the phone the same groups hold it (the string's and the
+  text group keeps `ROW_TEXT_FLOOR`, two fifths of the row. On the phone the same groups hold it (the string's and the
   status's end group `grow` over a `flex-1` value; a press on a row that opens goes through its
   value, the end group `box-none`). `ListRow` and the other row kinds move onto it in the alignment
   sweep.

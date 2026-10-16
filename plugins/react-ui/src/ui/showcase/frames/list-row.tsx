@@ -47,8 +47,9 @@ const ROLES = [
 // Each list's items fill every slot its map declares, so its waiting rows
 // stand in exactly the slots its loaded rows draw.
 
-// A deploy: its glyph leading, its commit naming it on the meta line, its
-// status and environment chip at the line's end, its age, its acts.
+// A deploy: its glyph leading, its commit naming it on the meta line with its
+// environment chip at the line's end, its age over its status in the end
+// group, its acts.
 interface Deploy {
 	id: string;
 	glyph: IconName;
@@ -246,7 +247,8 @@ const STAGES: Stage[] = [
 
 // A work item's meta line at the phone's narrowest: its stage, the model-written
 // epic it belongs to (long enough to yield) and a reason, with its age and
-// spend as the row's trailing value, which stays whole while the quote cuts.
+// spend as the row's trailing value, in the end group, which stays whole while
+// the quote cuts.
 interface Work {
 	id: string;
 	title: RowTitle;
@@ -353,8 +355,9 @@ const STEPS: Step[] = [
 ];
 
 // A change set entry carrying every mark at once: its count a meta part, its
-// status, a warning (the act that clears it the row's own), the lock it holds
-// and its change chip; the second row's marks are long enough to yield.
+// status in the end group, a warning (the act that clears it the row's own), the
+// lock it holds and its change chip; the second row's marks are long enough to
+// yield.
 interface Entry {
 	id: string;
 	title: string;

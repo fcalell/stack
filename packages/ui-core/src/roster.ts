@@ -1094,17 +1094,22 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// labelled `act` ahead of it (a secondary Button at the bar fit, the
 		// next step the row names): an act a row waits on (a retry) is told by
 		// its Status and leads the menu, and its pending press stays on `act`.
-		// Below `tablet` of its page a row with an `act` stands its acts on a line
-		// of their own at the row's end, under the text, which beside them kept
+		// A row is a text group (the title over the meta line) and an end group
+		// (`ROW_TEXT`, `ROW_END`): the end group holds the trailing value, the
+		// status, a pick, the chevron or the acts, centred on the row, and a row
+		// with nothing at its end draws none. A value and a status together stand
+		// stacked in it, the value over the status.
+		// Below `tablet` of its page a row with an `act` stands its end group on a
+		// line of its own at the row's end, under the text, which beside it kept
 		// too little for its title and its marks. A `selected` row is the open
 		// record, washed as one at its `href` is.
 		// An `entry` (an Input at the bar fit and its labelled Button) stands
 		// under the title in the meta line's place, its error under it; the
 		// consumer gives `meta` or `status` once the act settles. At most one
-		// each of Status, warning, lock and Chip, on the meta line in that
-		// order: a warning is what is wrong with the row (the act that clears
-		// it is the row's `act`), a lock what the row holds (its label shown
-		// from `tablet`). Its trailing is a value, or a
+		// each of warning, lock and Chip, on the meta line in that order, and a
+		// Status in the end group: a warning is what is wrong with the row (the
+		// act that clears it is the row's `act`), a lock what the row holds (its
+		// label shown from `tablet`). Its trailing is a value, or a
 		// pick: a `Picker` at the `row` fit, centred in the row.
 		// A `leading` of `check` is the row's tick, a `Checkbox` in the leading
 		// slot named by the title; its `blocked` reason draws it disabled and
@@ -1114,8 +1119,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// glyph and marks keeping their hue. `steps` (StatusMarks) stand in the
 		// meta line's place while the row's act pends, one line each, the
 		// running step in the body ink with the spinner. `wrap` is a title read
-		// whole: it wraps to every line at 400, the leading, trailing and acts
-		// aligned to its first line.
+		// whole: it wraps to every line at 400, the leading aligned to its first
+		// line and the end group centred on the row.
 		// Inside a tree List (`row.children`) a row reads its depth and fold from the
 		// List: a rail per level (`TREE_RAIL`, one `indent` step) and a fold lane
 		// (`TREE_LANE`) ahead of its change mark, every row of the tree reserving
@@ -1161,7 +1166,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"TREE_LANE",
 				"TREE_BLEED",
 				"ROW_LEADING",
-				"ROW_TITLE_LINE",
+				"ROW_TEXT",
+				"ROW_END",
+				"ROW_TEXT_FLOOR",
 				"ROW_META_LINE",
 				"ROW_TRAILING",
 				"ROW_MARKS",
@@ -1310,6 +1317,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"DEFINITION_ROW_CHEVRON",
 				"ROW_TEXT",
 				"ROW_END",
+				"ROW_TEXT_FLOOR",
 				"TEXT.role.body",
 				"TEXT_STRONG.role.body",
 				"TEXT.role.meta",

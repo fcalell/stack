@@ -451,8 +451,14 @@ export const ROW_META_LINE = "gap-x-inside";
 // is a group's gap or padding, never an empty element.
 export const ROW_TEXT = "min-w-0 shrink";
 export const ROW_END = "gap-inside";
-// A list row's marks on its meta line, in order (a status, a warning, a lock,
-// a chip), a gap apart, and its end acts. They yield from the end: the chip
+// A row's text group keeps at least `TITLE_FLOOR` (two fifths) of the row's
+// content width, the Pane head's floor (a fraction, never a width), whatever
+// else stands in the row (a leading, a more act). The end group takes what is
+// left and its leaves truncate inside it.
+export const ROW_TEXT_FLOOR = "basis-2/5 shrink-0";
+// A list row's marks on its meta line, in order (a warning, a lock, a chip), a
+// gap apart. A row's status is not among them: it stands in the end group,
+// beside the trailing value or under it. They yield from the end: the chip
 // truncates first, then the lock's label (the glyph alone below `tablet`),
 // and the warning's label keeps. The warning's glyph is in `warn`, its label
 // in the meta ink.
@@ -460,7 +466,7 @@ export const ROW_MARKS = "gap-inside";
 export const ROW_WARNING = "text-warn";
 export const ROW_ACTS = "gap-acts";
 // The chevron a list row that opens ends in, centred in the square of the icon
-// act it stands in for, so rows with a menu and rows that open end at one x.
+// act it stands in for, so a row that opens and a row with a menu end alike.
 export const ROW_CHEVRON = "size-control-compact";
 // A list row's step list, in the meta line's place while its act pends: one
 // line per step (`rowStep`), a pair gap apart.
