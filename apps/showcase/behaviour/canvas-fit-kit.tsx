@@ -1,23 +1,14 @@
 import { showcaseFrames } from "@fcalell/plugin-react-ui/showcase/cells";
 import { Frame } from "@fcalell/plugin-react-ui/showcase/frame";
-import {
-	drawCanvas,
-	EMPTY,
-	WORKFLOW,
-} from "@fcalell/plugin-react-ui/showcase/frames/canvas";
+import { drawCanvas } from "@fcalell/plugin-react-ui/showcase/frames/canvas";
 import type { StoryObj } from "@storybook/react-vite";
-import { expect, waitFor, within } from "storybook/test";
-import {
-	atTheFloor,
-	captionHeld,
-	clearOfTheStack,
-	opensFitted,
-} from "./canvas-fit.ts";
+import { expect, waitFor } from "storybook/test";
+import { clearOfTheStack, opensFitted } from "./canvas-fit.ts";
 import { LAID } from "./canvas-support.ts";
 
 // The frames 003-189 and 003-291 are judged on, drawn as the showcase draws
 // them: the loop frames of CANVAS_GROUP (Hollow, Placed and Lone loop, with the
-// workflow before them) and the empty canvas of CANVAS_NODE. A story renders one
+// workflow before them). A story renders one
 // frame in the mode and density the file runs at; the file sets the viewport.
 type Mode = "light" | "dark";
 type Density = "desktop" | "touch";
@@ -32,19 +23,6 @@ export function loopFrame(mode: Mode, density: Density) {
 			each.density === density,
 	);
 	if (!frame) throw new Error("no CANVAS_GROUP rest frame");
-	return frame;
-}
-
-export function emptyFrame(mode: Mode, density: Density) {
-	const frame = showcaseFrames().find(
-		(each) =>
-			each.component === "Canvas" &&
-			each.cell.name === "CANVAS_NODE.state.rest" &&
-			each.state === "empty" &&
-			each.mode === mode &&
-			each.density === density,
-	);
-	if (!frame) throw new Error("no CANVAS_NODE empty frame");
 	return frame;
 }
 
@@ -74,25 +52,6 @@ export function loops(mode: Mode, density: Density): StoryObj {
 				opensFitted(region, label);
 				clearOfTheStack(region, label);
 			}
-		},
-	};
-}
-
-// The empty canvas opens with its node and its sentence whole, the sentence at
-// the floor size and a `pair` under the node, the node at its own size.
-export function empty(mode: Mode, density: Density): StoryObj {
-	return {
-		parameters: { mode },
-		render: () => <Frame frame={emptyFrame(mode, density)} draw={drawCanvas} />,
-		play: async ({ canvas }) => {
-			const region = await opened(canvas, "Workflow");
-			atTheFloor(region, "the empty canvas");
-			const node = within(region)
-				.getByText(WORKFLOW.nodes[0]?.title ?? "")
-				.closest("[data-layer] > div");
-			if (!node) throw new Error("the empty canvas holds its node");
-			captionHeld(region, within(region).getByText(EMPTY), node);
-			clearOfTheStack(region, "the empty canvas");
 		},
 	};
 }

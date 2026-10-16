@@ -171,21 +171,19 @@ export const CanvasFailsInItsGround: StoryObj = {
 	},
 };
 
-export const EmptyCanvasDrawsTheGenericSentenceAndKeepsItsCaptionProp: StoryObj =
-	{
-		render: () => (
-			<div className="flex h-[24rem] flex-col">
-				<Canvas
-					label="Workflow"
-					nodes={graphs.empty.at((rows) => rows.map(NODE))}
-					empty="Add a step to begin."
-				/>
-			</div>
-		),
-		play: async ({ canvas }) => {
-			await canvas.findByText("Nothing here yet.");
-		},
-	};
+export const EmptyCanvasDrawsTheGenericSentence: StoryObj = {
+	render: () => (
+		<div className="flex h-[24rem] flex-col">
+			<Canvas
+				label="Workflow"
+				nodes={graphs.empty.at((rows) => rows.map(NODE))}
+			/>
+		</div>
+	),
+	play: async ({ canvas }) => {
+		await canvas.findByText("Nothing here yet.");
+	},
+};
 
 const lines = readsAt("collections-ii/lines");
 

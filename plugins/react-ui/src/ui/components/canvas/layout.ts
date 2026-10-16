@@ -388,13 +388,7 @@ export function useLayout({
 		if (!element) return null;
 		const pane = { width: element.clientWidth, height: element.clientHeight };
 		const view = (bounds: Box) =>
-			fitTransform(
-				bounds,
-				pane,
-				spacing("page"),
-				viewport.clearance(),
-				viewport.reserved() ?? undefined,
-			);
+			fitTransform(bounds, pane, spacing("page"), viewport.clearance());
 		const stand = (k: number) =>
 			view(routeAt(routeSide(k, glyph, spacing("pair"))).bounds);
 		let at = view(routeAt(0).bounds);

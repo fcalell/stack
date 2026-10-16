@@ -7,7 +7,6 @@ import { Frame } from "@fcalell/plugin-react-ui/showcase/frame";
 import {
 	ALONE_STAGE,
 	drawCanvas,
-	EMPTY,
 	HOLLOW,
 	HOLLOW_ALONE,
 	HOLLOW_PLACED,
@@ -30,13 +29,7 @@ import { SIZE_PX, WIDTH_VALUE } from "@fcalell/ui-core/tokens";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { expect, fn, spyOn, waitFor, within } from "storybook/test";
-import {
-	glyphs,
-	hollowHeld,
-	hollowRow,
-	lowestZoom,
-	room,
-} from "./canvas-support.ts";
+import { hollowHeld, hollowRow, lowestZoom, room } from "./canvas-support.ts";
 import {
 	click as mouseClick,
 	drag as mouseDrag,
@@ -1024,12 +1017,11 @@ export const Problem: StoryObj = {
 	},
 };
 
-// A node's status, which its dot names: the dot's accessible name, or none.
+// A node's status word, drawn beside its dot, or none.
 const statusOf = (button: Element) =>
-	button.querySelector('[role="img"]')?.getAttribute("aria-label") ?? null;
+	button.querySelector(".gap-inside")?.textContent ?? null;
 
-// A status is its dot (a spinner while it runs), named by its word: the word
-// itself would take the title's width.
+// A status is its dot (a spinner while it runs) and its word.
 export const Statuses: StoryObj = {
 	render: () => <Stated graph={STATUSES} label="Statuses" />,
 	play: async ({ canvas }) => {
@@ -1037,7 +1029,6 @@ export const Statuses: StoryObj = {
 		for (const node of STATUSES.nodes) {
 			const button = stateButton(region, STATUSES, node.id);
 			await expect(statusOf(button)).toBe(node.status?.label ?? null);
-			await expect(button).not.toHaveTextContent(node.status?.label ?? "\0");
 			const spinning = button.querySelector(".animate-spin") !== null;
 			await expect(spinning).toBe(node.status?.state === "running");
 			if (node.status?.state !== "running")
@@ -1052,55 +1043,77 @@ export const Statuses: StoryObj = {
 	},
 };
 
-// A node's status never takes the title's width: a long word stands as the dot
-// named by it (and a tooltip), a `short` word beside the dot where the app
-// gives one, so the title of a 240 px node is whole.
+// A node draws its status as the dot and its label, and the label truncates
+// before the title does: at 320 a long word is cut with an ellipsis while the
+// title stays whole, and a short word stands whole.
 const STALE: CanvasNode[] = [
 	{
 		id: "glossary",
 		icon: "BookOpen",
 		overline: "Page",
 		title: "Glossary of the terms",
-		status: { state: "waiting", label: "May be out of date" },
+		status: { state: "waiting", label: "May be out of date, read it again" },
 	},
 	{
 		id: "terms",
 		icon: "BookOpen",
 		overline: "Page",
 		title: "Glossary of the terms",
-		status: { state: "waiting", label: "May be out of date", short: "Stale" },
+		status: { state: "waiting", label: "Stale" },
 	},
 ];
 
-export const LongStatusKeepsTheTitle: StoryObj = {
+export const LongStatusLabelTruncatesBeforeTheTitleAt320: StoryObj = {
+	globals: { viewport: { value: "w320x640", isRotated: false } },
+	parameters: {
+		layout: "fullscreen",
+		viewport: {
+			options: {
+				w320x640: {
+					name: "w320x640",
+					styles: { width: "320px", height: "640px" },
+					type: "mobile",
+				},
+			},
+		},
+	},
 	render: () => (
-		<div className={STAGE}>
+		<div className="flex h-[40rem] w-[320px] flex-col bg-surface">
 			<Canvas label="Pages" nodes={STALE} onSelect={fn()} />
 		</div>
 	),
-	play: async ({ canvas, canvasElement }) => {
+	play: async ({ canvas, canvasElement, userEvent }) => {
 		const region = await canvas.findByRole("region", { name: "Pages" });
+		await waitFor(
+			() => expect(getComputedStyle(region).opacity).toBe("1"),
+			LAID,
+		);
+		// The pane opens fitted under zoom 1, where a node is its glyph: zoom in
+		// to the cards.
+		for (let step = 0; viewport(region).scale < 1 && step < 12; step++)
+			await userEvent.click(canvas.getByRole("button", { name: "Zoom in" }));
 		await waitFor(() => expect(nodeButtons(region)[0]).toBeVisible(), LAID);
 		const [long, short] = [...nodeButtons(canvasElement)];
 		if (!long || !short) throw new Error("no nodes");
+		const word = (card: HTMLElement) =>
+			card.querySelector(".gap-inside > .truncate") as HTMLElement;
 		for (const card of [long, short]) {
 			const title = within(card).getByText("Glossary of the terms");
-			// The title is whole, and fills the node less its icon, gaps and mark.
+			// The title is whole in both cards.
 			await expect(title.scrollWidth).toBeLessThanOrEqual(title.clientWidth);
+			// The dot stands beside its word.
+			await expect(
+				card.querySelector(".gap-inside > [aria-hidden]"),
+			).not.toBeNull();
 		}
-		// The long word is the dot's name, not a drawn word.
-		await expect(long).not.toHaveTextContent("May be out of date");
-		await expect(
-			within(long).getByRole("img", { name: "May be out of date" }),
-		).toBeVisible();
-		await expect(
-			rect(long.querySelector("[title]") as Element).width,
-		).toBeLessThan(24);
-		// The short word is drawn beside its dot, the long one still its name.
-		await expect(within(short).getByText("Stale")).toBeVisible();
-		const wide = (card: HTMLElement) =>
-			rect(within(card).getByText("Glossary of the terms")).width;
-		await expect(wide(long)).toBeGreaterThan(wide(short));
+		// The long word is cut, the short one whole.
+		await expect(word(long).scrollWidth).toBeGreaterThan(
+			word(long).clientWidth,
+		);
+		await expect(word(short).scrollWidth).toBeLessThanOrEqual(
+			word(short).clientWidth,
+		);
+		await expect(word(short)).toHaveTextContent("Stale");
 	},
 };
 
@@ -1225,20 +1238,18 @@ export const StateKeepsTheLayout: StoryObj = {
 	},
 };
 
-// A waiting canvas stands the loaded one's ground and grid with three
-// painted node cards where the loaded chain opens, and is inert: no button, no
-// zoom stack, no act, however the page handlers read.
+// A waiting canvas stands the bare surface the loaded one arrives in: its
+// ground, its dot grid and its zoom stack, inert, with no node, no act and no
+// sentence.
 function Waiting() {
 	return (
 		<>
 			<div className={STAGE} data-testid="loaded">
-				<Canvas label="Loaded" nodes={WORKFLOW.nodes} edges={WORKFLOW.edges} />
-			</div>
-			<div className={STAGE} data-testid="chain">
 				<Canvas
-					label="Chain"
-					nodes={WORKFLOW.nodes.slice(0, 3)}
-					edges={WORKFLOW.edges.slice(0, 2)}
+					label="Loaded"
+					nodes={WORKFLOW.nodes}
+					edges={WORKFLOW.edges}
+					onMove={fn()}
 				/>
 			</div>
 			<div className={STAGE} data-testid="waiting">
@@ -1255,82 +1266,60 @@ function Waiting() {
 	);
 }
 
-// The buttons a canvas draws: the unseen zoom room's one does not count.
-const buttonsOf = (pane: Element) =>
-	[...pane.querySelectorAll("button")].filter(
-		(button) => !button.closest("[data-clear]"),
-	);
-
-// The waiting canvas's cards and the same three nodes loaded in a path with no
-// chip, each box read from its own pane.
-async function boxes(canvas: ReturnType<typeof within>) {
-	const waiting = await canvas.findByRole("region", { name: "Waiting" });
-	const loaded = await canvas.findByRole("region", { name: "Loaded" });
-	const chain = await canvas.findByRole("region", { name: "Chain" });
-	for (const region of [loaded, chain])
-		await waitFor(
-			() => expect(getComputedStyle(region).opacity).toBe("1"),
-			LAID,
-		);
-	const cards = [
-		...(waiting.querySelector("[aria-hidden]:not(svg):not([data-clear])")
-			?.children ?? []),
-	];
-	const inPane = (pane: Element, box: DOMRect) => ({
+// The zoom stack's box, inside its pane.
+const stackIn = (pane: Element) => {
+	const stack = pane.querySelector("[data-clear='left']");
+	if (!stack) throw new Error("no zoom stack");
+	const box = rect(stack);
+	return {
 		left: box.left - rect(pane).left,
-		top: box.top - rect(pane).top,
+		bottom: rect(pane).bottom - box.bottom,
 		width: box.width,
 		height: box.height,
-	});
-	return {
-		waiting,
-		loaded,
-		cards,
-		painted: cards.map((card) => inPane(waiting, rect(card))),
-		nodes: WORKFLOW.nodes
-			.slice(0, 3)
-			.map((one) =>
-				inPane(
-					chain,
-					rect(
-						within(chain)
-							.getByText(one.title)
-							.closest("[data-layer] > div") as Element,
-					),
-				),
-			),
 	};
+};
+
+async function surfaces(canvas: ReturnType<typeof within>) {
+	const waiting = await canvas.findByRole("region", { name: "Waiting" });
+	const loaded = await canvas.findByRole("region", { name: "Loaded" });
+	await waitFor(() => expect(getComputedStyle(loaded).opacity).toBe("1"), LAID);
+	return { waiting, loaded };
 }
 
 export const Loading: StoryObj = {
 	render: () => <Waiting />,
 	play: async ({ canvas }) => {
-		const { waiting, loaded, cards, painted, nodes } = await boxes(canvas);
+		const { waiting, loaded } = await surfaces(canvas);
 		await expect(waiting).toHaveAttribute("inert");
-		await expect(buttonsOf(waiting)).toHaveLength(0);
+		// The dotted surface on the loaded ground, and nothing else drawn on it:
+		// no node, no layer, no act, no sentence.
 		await expect(waiting.querySelector("[data-grid]")).not.toBeNull();
 		await expect(getComputedStyle(waiting).backgroundColor).toBe(
 			getComputedStyle(loaded).backgroundColor,
 		);
-		await expect(cards).toHaveLength(3);
-		for (const [index, card] of painted.entries()) {
-			const here = nodes[index];
-			const after = nodes[index + 1];
-			const next = painted[index + 1];
-			await expect(card.height).toBeCloseTo(here?.height ?? 0, 1);
-			await expect(card.width).toBeCloseTo(here?.width ?? 0, 0);
-			if (next && here && after)
-				await expect(next.top - (card.top + card.height)).toBeCloseTo(
-					after.top - (here.top + here.height),
-					1,
-				);
-		}
+		await expect(waiting.querySelector("[data-layer]")).toBeNull();
+		await expect(nodeButtons(waiting)).toHaveLength(0);
+		await expect(waiting.textContent).toBe("");
+		await expect(within(waiting).queryByText("Add node")).toBeNull();
+		await expect(
+			loaded.querySelectorAll("[data-layer] > div").length,
+		).toBeGreaterThan(0);
+		// The zoom stack is the loaded one's, with arrange where nodes can move.
+		const names = [...waiting.querySelectorAll("button")].map((button) =>
+			button.getAttribute("aria-label"),
+		);
+		await expect(names).toEqual(
+			[...loaded.querySelectorAll("[data-clear='left'] button")].map((button) =>
+				button.getAttribute("aria-label"),
+			),
+		);
+		await expect(names).toHaveLength(4);
 		await expect(rect(waiting).height).toBe(rect(loaded).height);
 	},
 };
 
-// The arrival moves nothing: each painted card's box stands within a pixel of
-// the loaded chain's node, at every width and in both modes.
+// The arrival moves nothing: the zoom stack stands where the loaded canvas's
+// does, in the same pane, at every width and in both modes.
 const arrives = (
 	width: number,
 	height: number,
@@ -1355,17 +1344,14 @@ const arrives = (
 			},
 		},
 		play: async ({ canvas }) => {
-			const { waiting, painted, nodes } = await boxes(canvas);
+			const { waiting, loaded } = await surfaces(canvas);
 			await expect(waiting).toHaveAttribute("inert");
-			await expect(buttonsOf(waiting)).toHaveLength(0);
-			await expect(painted).toHaveLength(3);
-			for (const [index, card] of painted.entries()) {
-				const node = nodes[index];
-				for (const edge of ["left", "top", "width", "height"] as const)
-					await expect(Math.abs(card[edge] - (node?.[edge] ?? 0))).toBeLessThan(
-						1,
-					);
-			}
+			await expect(nodeButtons(waiting)).toHaveLength(0);
+			const [here, there] = [stackIn(waiting), stackIn(loaded)];
+			for (const edge of ["left", "bottom", "width", "height"] as const)
+				await expect(Math.abs(here[edge] - there[edge])).toBeLessThan(1);
+			await expect(rect(waiting).width).toBe(rect(loaded).width);
+			await expect(rect(waiting).height).toBe(rect(loaded).height);
 		},
 	};
 };
@@ -1376,100 +1362,6 @@ export const ArrivesInPlaceAt768Light = arrives(768, 1024, "desktop", "light");
 export const ArrivesInPlaceAt768Dark = arrives(768, 1024, "desktop", "dark");
 export const ArrivesInPlaceAt1440Light = arrives(1440, 900, "desktop", "light");
 export const ArrivesInPlaceAt1440Dark = arrives(1440, 900, "desktop", "dark");
-
-// An `empty` sentence stands centred under the graph's bounds, a `pair` below
-// its bottom edge at any zoom, holds its size on screen, takes no pointer, and
-// describes the region. It wraps within the pane less a page inset on each
-// side, and the opening view holds the node and the sentence whole in the pane.
-function emptyText(stage: string, globals?: StoryObj["globals"]): StoryObj {
-	return {
-		globals,
-		render: () => (
-			<div className={stage}>
-				<Canvas
-					label="Workflow"
-					nodes={WORKFLOW.nodes.slice(0, 1)}
-					empty={EMPTY}
-				/>
-			</div>
-		),
-		play: async ({ canvas, userEvent }) => {
-			const region = await canvas.findByRole("region", { name: "Workflow" });
-			await waitFor(
-				() => expect(getComputedStyle(region).opacity).toBe("1"),
-				LAID,
-			);
-			const text = canvas.getByText(EMPTY);
-			const node = canvas
-				.getByText(WORKFLOW.nodes[0]?.title ?? "")
-				.closest("[data-layer] > div") as HTMLElement;
-			const token = (name: string) =>
-				parseFloat(
-					getComputedStyle(document.documentElement).getPropertyValue(name),
-				);
-			const pair = token("--spacing-pair");
-			const page = token("--spacing-page");
-			await expect(region).toHaveAccessibleDescription(EMPTY);
-			await expect(getComputedStyle(text).pointerEvents).toBe("none");
-			// Whole in the pane: no edge of the node or the sentence is clipped.
-			const clipped = (box: DOMRect) => {
-				const pane = rect(region);
-				return Math.max(
-					0,
-					pane.left - box.left,
-					box.right - pane.right,
-					pane.top - box.top,
-					box.bottom - pane.bottom,
-				);
-			};
-			await expect(clipped(rect(node))).toBeLessThan(0.5);
-			await expect(clipped(rect(text))).toBeLessThan(0.5);
-			// It opens at the card's own size, not as its glyph.
-			await expect(viewport(region).scale).toBe(1);
-			await expect(glyphs(region)).toHaveLength(0);
-			await expect(rect(text).width).toBeLessThanOrEqual(
-				rect(region).width - 2 * page + 1,
-			);
-			// What the eye reads as the node: its card, and its glyph once the zoom
-			// leaves the card under the text floor.
-			const shown = () => {
-				const glyph = glyphs(region)[0];
-				return rect(glyph ?? node);
-			};
-			const standing = () => ({
-				x:
-					rect(text).left +
-					rect(text).width / 2 -
-					(shown().left + shown().width / 2),
-				gap: rect(text).top - shown().bottom,
-				height: rect(text).height,
-			});
-			const first = standing();
-			await expect(Math.abs(first.x)).toBeLessThan(1);
-			await expect(first.gap).toBeGreaterThanOrEqual(pair - 0.5);
-			const size = getComputedStyle(text).fontSize;
-			await userEvent.click(canvas.getByRole("button", { name: "Zoom out" }));
-			await userEvent.click(canvas.getByRole("button", { name: "Zoom out" }));
-			await waitFor(() => expect(viewport(region).scale).toBeLessThan(1));
-			await expect(getComputedStyle(text).fontSize).toBe(size);
-			await expect(rect(text).height).toBeCloseTo(first.height, 0);
-			await expect(standing().gap).toBeGreaterThanOrEqual(pair - 0.5);
-			await expect(rect(text).width).toBeLessThanOrEqual(
-				parseFloat(getComputedStyle(text).maxWidth) + 1,
-			);
-			// A fit holds them whole again.
-			await userEvent.click(canvas.getByRole("button", { name: "Fit" }));
-			await waitFor(() => expect(clipped(rect(text))).toBeLessThan(0.5));
-			await expect(clipped(shown())).toBeLessThan(0.5);
-		},
-	};
-}
-
-export const EmptyText = emptyText(STAGE);
-
-// A 263 px pane, the phone's: 295 px less a page inset on each side of the stage.
-const NARROW = "flex flex-col h-[40rem] w-[295px] max-w-full bg-surface p-page";
-export const EmptyTextInAPhonePane = emptyText(NARROW, { density: "touch" });
 
 // Each generated canvas frame's stage, but the glyph's and the name's (which
 // `Canvas overview` checks, fitted under the text floor), holds its whole graph at scale 1: the

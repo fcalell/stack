@@ -1,5 +1,5 @@
 import { BODY_SIZE, TYPE_SCALE } from "@fcalell/ui-core/tokens";
-import { px, rect, viewport } from "./canvas-support.ts";
+import { rect, viewport } from "./canvas-support.ts";
 
 // What a canvas opens at, read off the DOM: the view Fit gives (003-324; before
 // it, 003-189's text floor first), the whole graph standing in the room the
@@ -107,15 +107,4 @@ export function opensFitted(region: Element, label: string) {
 				`${label}: a head is ${high.toFixed(1)} px tall on screen, its own height ${head.offsetHeight}`,
 			);
 	}
-}
-
-// The text of an `empty` canvas: at the floor size, whole, a `pair` under the node.
-export function captionHeld(region: Element, text: Element, node: Element) {
-	const size = Number.parseFloat(getComputedStyle(text).fontSize);
-	if (size < FLOOR - 0.01)
-		throw new Error(`the empty text is ${size} px, under the floor ${FLOOR}`);
-	whole(region, "the empty canvas", text, node);
-	const gap = rect(text).top - rect(node).bottom;
-	if (gap < px("pair") - 0.5)
-		throw new Error(`the empty text is ${gap.toFixed(1)} px under the node`);
 }

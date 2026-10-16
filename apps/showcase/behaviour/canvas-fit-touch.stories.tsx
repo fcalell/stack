@@ -3,7 +3,7 @@ import { drawCanvas } from "@fcalell/plugin-react-ui/showcase/frames/canvas";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect } from "storybook/test";
 import { clipped, frameOf } from "./canvas-fit.ts";
-import { empty, loopFrame, loops, opened } from "./canvas-fit-kit.tsx";
+import { loopFrame, loops, opened } from "./canvas-fit-kit.tsx";
 import { rect, viewport } from "./canvas-support.ts";
 
 // The frames 003-189 and 003-291 are judged on, in a 375 px phone at the touch
@@ -29,8 +29,6 @@ export default {
 
 export const LoopFramesAt375Light = loops("light", "touch");
 export const LoopFramesAt375Dark = loops("dark", "touch");
-export const EmptyCanvasAt375Light = empty("light", "touch");
-export const EmptyCanvasAt375Dark = empty("dark", "touch");
 
 // The Placed loop's second group (`retry`) stood past the pane's right edge when
 // a canvas opened at the text floor; opened as Fit shows it, it is whole in the

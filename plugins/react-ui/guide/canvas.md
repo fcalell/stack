@@ -133,9 +133,9 @@ A node says its state in its own text or mark, never by colour alone.
   its words in place of the line, in the ink a line has. The dot stays when the node is selected,
   which takes the border. Pass the first words only, and name the whole problem outside the canvas
   in a `Banner` and a `List`. A node with a `problem` and a `status` draws both marks.
-- `status` is a `StatusMark` (`{ state, label }`, with an optional `short`): a dot (a spinner while the state is
-  `running`) in the node's trailing column, named by its `label` and read as a tooltip, so a long word
-  never takes the title's width; with a `short` ("Stale") the node draws that word beside the dot.
+- `status` is a `StatusMark` (`{ state, label }`): a dot (a spinner while the state is
+  `running`) beside its `label` in the node's trailing column. The label truncates before the title
+  does, so a long word never costs the title its room.
 - `path` (`nodes`, `edges`, `at`) is what a run or a scenario took. A node the path leaves out
   draws every part in disabled ink and no status or problem mark, an edge it leaves out dims, and `at` is outlined
   as a selection is. An edge is on the path by its own id, never by its ends.
@@ -188,26 +188,15 @@ An `act` stands at the foot's centre; it adds, it never removes.
 ## Loading
 
 `nodes`, `edges` and `groups` take a constant or a selection (`flow.at((f) => f.nodes)`). While a
-selection's read waits the canvas stands the ground and its grid with three painted node cards (a
-loaded node's size, at the gap a loaded path keeps, standing where a loaded chain opens), inert, so
-the page below the head does not move when the graph arrives. A graph's layout has no geometry
-before its data, so this is the one painted form that is a tree of its own. The stand-in is the
-opening view of a three-node chain; a graph that overflows or has a different pitch opens by its own
-rule, so its first node can move on arrival. The handlers and the `act` are ignored meanwhile, and
-the painted form draws no zoom stack, no act, no node button and no drag. Give the canvas its
+selection's read waits the canvas stands its bare surface: the dotted ground and the zoom stack
+(with arrange where you gave `onMove`), inert, and no node. It is the region the graph arrives in,
+so the page below the head does not move when the nodes appear. The handlers and the `act` are
+ignored meanwhile, and the surface draws no act, no node button and no drag. Give the canvas its
 selection, not `nodes={[]}` for a wait: it reads as an empty graph. Its failed and empty read forms
 are the frame's, as for any collection.
 
-## An empty graph
-
-`empty` is a sentence the canvas draws centred under the graph, a `pair` below its bottom edge, in
-the meta ink at the text floor at any zoom, never closer to the graph than a `pair`. It wraps within the pane less a page inset on each side, and the opening view and Fit hold the graph and the sentence whole in the pane. It follows the pan and zoom, takes no pointer (a drag
-through it pans, a tap on it clears the selection) and is the region's accessible description.
-The sentence is your copy and you decide when it stands: pass it or `undefined`.
-
-```tsx
-<Canvas label="Workflow" nodes={nodes} empty={nodes.length < 2 ? "Add a node, or drag from the trigger's port." : undefined} />
-```
+A read that answers no node is the frame's empty form, with the generic sentence. The canvas draws
+no sentence of its own under a graph; a hint such as "Add a node" belongs in your page's head or its act.
 
 ## Where it stands
 

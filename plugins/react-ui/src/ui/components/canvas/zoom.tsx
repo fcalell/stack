@@ -12,25 +12,30 @@ const FOOT =
 	"absolute bottom-page inset-x-0 flex justify-center pointer-events-none";
 const ACT = "pointer-events-auto";
 
-// Zoom in, zoom out and fit, stacked at the bottom left, then arrange when the
-// canvas can move nodes. A press here starts no pan. A zoom is unavailable at
-// its end of the scale (`minZoom` the lowest); the button keeps focus, as a
-// disabled icon act does. A fit stays clear of the stack, which `data-clear`
-// names to the viewport.
-export function ZoomStack({
-	viewport,
+// The buttons of the zoom stack, stacked at the bottom left: zoom in, zoom out,
+// fit, then arrange when the canvas can move nodes. A press here starts no pan.
+// A zoom is unavailable at its end of the scale (`atMax`, `atMin`); the button
+// keeps focus, as a disabled icon act does. A fit stays clear of the stack,
+// which `data-clear` names to the viewport. A waiting canvas draws them with no
+// act, inside its inert region.
+function ZoomButtons({
+	atMax = false,
+	atMin = false,
+	arrange,
+	onZoomIn,
+	onZoomOut,
 	onFit,
-	minZoom,
 	onArrange,
 }: {
-	viewport: Viewport;
-	onFit: () => void;
-	minZoom: number;
+	atMax?: boolean;
+	atMin?: boolean;
+	arrange: boolean;
+	onZoomIn?: () => void;
+	onZoomOut?: () => void;
+	onFit?: () => void;
 	onArrange?: () => void;
 }) {
 	const words = useWords();
-	const atMax = useViewportValue(viewport, (view) => view.k >= EXTENT[1]);
-	const atMin = useViewportValue(viewport, (view) => view.k <= minZoom);
 	return (
 		<div data-no-pan data-clear="left" className={cn(CANVAS_ZOOM, STACK)}>
 			<IconButtonBase
@@ -38,14 +43,14 @@ export function ZoomStack({
 				fit="body"
 				label={words.zoomIn}
 				disabled={atMax}
-				onClick={() => viewport.zoomIn()}
+				onClick={onZoomIn}
 			/>
 			<IconButtonBase
 				icon="ZoomOut"
 				fit="body"
 				label={words.zoomOut}
 				disabled={atMin}
-				onClick={() => viewport.zoomOut()}
+				onClick={onZoomOut}
 			/>
 			<IconButtonBase
 				icon="Maximize"
@@ -53,7 +58,7 @@ export function ZoomStack({
 				label={words.fit}
 				onClick={onFit}
 			/>
-			{onArrange ? (
+			{arrange ? (
 				<IconButtonBase
 					icon="Network"
 					fit="body"
@@ -65,20 +70,37 @@ export function ZoomStack({
 	);
 }
 
-// The room the zoom stack takes, held by a waiting canvas that draws none: the
-// stack's frame around one icon act, `invisible` (unfocusable, out of the
-// accessibility tree), so an opening view clears
-// what a loaded canvas's clears and nothing moves when the graph arrives.
-export function ZoomRoom() {
+// The stack of a loaded canvas, its ends of the scale read from the viewport.
+export function ZoomStack({
+	viewport,
+	onFit,
+	minZoom,
+	onArrange,
+}: {
+	viewport: Viewport;
+	onFit: () => void;
+	minZoom: number;
+	onArrange?: () => void;
+}) {
+	const atMax = useViewportValue(viewport, (view) => view.k >= EXTENT[1]);
+	const atMin = useViewportValue(viewport, (view) => view.k <= minZoom);
 	return (
-		<div
-			aria-hidden
-			data-clear="left"
-			className={cn(CANVAS_ZOOM, STACK, "invisible")}
-		>
-			<IconButtonBase icon="ZoomIn" fit="body" label="" tabIndex={-1} />
-		</div>
+		<ZoomButtons
+			atMax={atMax}
+			atMin={atMin}
+			arrange={onArrange !== undefined}
+			onZoomIn={() => viewport.zoomIn()}
+			onZoomOut={() => viewport.zoomOut()}
+			onFit={onFit}
+			onArrange={onArrange}
+		/>
 	);
+}
+
+// The stack a waiting canvas draws: the loaded stack's buttons, with `arrange`
+// where the canvas can move nodes, so nothing changes when the graph arrives.
+export function ZoomPainted({ arrange }: { arrange: boolean }) {
+	return <ZoomButtons arrange={arrange} />;
 }
 
 // The canvas's act, at the foot's centre. It adds, never removes, so its

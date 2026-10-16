@@ -1,5 +1,5 @@
 import type { Meta } from "@storybook/react-vite";
-import { empty, loops } from "./canvas-fit-kit.tsx";
+import { loops } from "./canvas-fit-kit.tsx";
 
 // The frames 003-189 and 003-291 are judged on, at 1440 px: a canvas opens as
 // Fit shows it (003-324), the whole graph in the pane with its group heads
@@ -23,5 +23,3 @@ export default {
 
 export const LoopFramesAt1440Light = loops("light", "desktop");
 export const LoopFramesAt1440Dark = loops("dark", "desktop");
-export const EmptyCanvasAt1440Light = empty("light", "desktop");
-export const EmptyCanvasAt1440Dark = empty("dark", "desktop");

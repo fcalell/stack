@@ -25,7 +25,7 @@ export interface ListRowProps<V extends string | null = string> extends Closed {
 	meta?: readonly RowPart[];
 	/** A value at the title line's end (an age, a count, a word: shown whole or gone), or a pick that applies at once. */
 	trailing?: RowTrailing<V>;
-	/** A work state on the meta line; a waiting act is told by its tone. A `short` form draws in place of the `label` while the long one would be cut. */
+	/** A work state on the meta line; a waiting act is told by its tone. */
 	status?: StatusMark;
 	/** What is wrong with the row, on the meta line after the status: a warn glyph and its label (a short phrase; truncates). The act that clears it is the row's `act`. */
 	warning?: string;

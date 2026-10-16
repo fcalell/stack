@@ -680,9 +680,8 @@ export interface CanvasNode {
 	line?: string;
 	number?: number;
 	count?: number;
-	// The node's status: its dot, named by `label`. `short` is the word said
-	// shorter ("Stale"), which the node draws beside the dot; `label` stays the name.
-	status?: StatusMark & { short?: string };
+	// The node's status: its dot and its `label`, which truncates before the title does.
+	status?: StatusMark;
 	// What is wrong with the node, in `line`'s place (a short phrase; truncates).
 	problem?: string;
 	off?: boolean;

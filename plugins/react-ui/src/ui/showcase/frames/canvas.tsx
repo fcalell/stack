@@ -136,8 +136,6 @@ function Overview({
 	);
 }
 
-export const EMPTY = "Add a node, or drag from the trigger's port.";
-
 // What each cell draws: the cell is the tone or state its frame is there to
 // judge, and the canvas draws every state its graph holds. The confirm node of
 // the journey is selected in the `selected` frame of the first.
@@ -171,26 +169,14 @@ export function drawCanvas(frame: ShowcaseFrame) {
 					<Canvas label="Workflow" nodes={waitingNodes} />
 				</div>
 			);
-		// The caption is the app's own sentence under a graph; the nodes' read
-		// that answers none, fails or answers not found is the canvas's own frame,
-		// which draws its form in its ground.
-		return (
-			<>
-				{frame.state === "empty" ? (
-					<div className={STAGE}>
-						<Canvas
-							label="Workflow"
-							nodes={WORKFLOW.nodes.slice(0, 1)}
-							empty={EMPTY}
-						/>
-					</div>
-				) : null}
-				{endedAt<CanvasNode>(frame.id, frame.state).map(({ title, items }) => (
-					<div key={title} className={STAGE}>
-						<Canvas label={`Workflow, ${title}`} nodes={items} />
-					</div>
-				))}
-			</>
+		// The nodes' read that answers none, fails or answers not found is the
+		// canvas's own frame, which draws its form in its ground.
+		return endedAt<CanvasNode>(frame.id, frame.state).map(
+			({ title, items }) => (
+				<div key={title} className={STAGE}>
+					<Canvas label={`Workflow, ${title}`} nodes={items} />
+				</div>
+			),
 		);
 	}
 	if (name.startsWith("CANVAS_NODE_GLYPH.state.")) {

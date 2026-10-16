@@ -1611,8 +1611,7 @@ check("b-type-prop", "no component takes a prop named type", () => {
 });
 
 // The waiting form is the loaded form painted, never a second tree: no file
-// is named `wait.tsx` or `*-wait.tsx`, and no component is named `*Wait`. The
-// phone has no exception (the web's Canvas keeps one painted stand-in).
+// is named `wait.tsx` or `*-wait.tsx`, and no component is named `*Wait`.
 check("b-wait", "no waiting tree stands beside the loaded one", () => {
 	const hits: string[] = [];
 	for (const path of UI_FILES) {

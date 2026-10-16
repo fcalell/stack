@@ -612,8 +612,8 @@ viewer types in a field and while the router's own transition runs. It is not an
 A waiting screen is the loaded tree, never a second tree: a page's outline
 comes from its route and its data fills it. A `Section` stands whatever its data holds and draws its
 `empty` when there is none, never gated on the data's length; a Section that must stay optional stands
-after every Section that always stands, so its arrival moves nothing. The one painted stand-in is a
-`Canvas`'s, which has no geometry before its data.
+after every Section that always stands, so its arrival moves nothing. A waiting `Canvas` is its bare surface: the dotted ground and its zoom stack, no node, since a
+graph has no geometry before its data.
 
 ## An act holds its run
 

@@ -453,11 +453,7 @@ export const OVERLAYS: readonly string[] = [
 	// Stats
 	"page-tablet:basis-0",
 	// Canvas
-	"size-icon",
-	"rounded-full",
 	"page-max-tablet:min-h-1/2",
-	"max-w-[min(var(--spacing-measure),calc(100cqw_-_2*var(--spacing-page)))]",
-	"origin-top",
 	"origin-top-left",
 	"outline-selected-outline",
 	"overflow-visible",
@@ -479,6 +475,8 @@ export const OVERLAYS: readonly string[] = [
 	"cursor-default",
 	"bg-edge-strong",
 	"top-1/2",
+	"flex-auto",
+	"shrink-1000",
 	// Table
 	"w-1/4",
 	"w-1/3",

@@ -13,7 +13,6 @@ import {
 	type Clearance,
 	centredTransform,
 	EXTENT,
-	type Foot,
 	inside,
 	NO_CLEARANCE,
 	type Transform,
@@ -32,9 +31,6 @@ export interface Viewport {
 	set(transform: Transform): void;
 	// What the canvas's own chrome takes from the pane, which a fit and the opening view stay clear of.
 	clearance(): Clearance;
-	// The text standing under the graph, which a fit and the opening view hold with it; `null` once it goes.
-	reserve(foot: Foot | null): void;
-	reserved(): Foot | null;
 	// Pans only, at the zoom it has, and nothing when the box is already in
 	// view; given a zoom it always moves, to that zoom, the box centred.
 	centreOn(box: Box, zoom?: number): void;
@@ -100,7 +96,6 @@ function make(region: RefObject<HTMLElement | null>) {
 	const listeners = new Set<() => void>();
 	let current: Transform = { x: 0, y: 0, k: 1 };
 	let layer: HTMLElement | null = null;
-	let foot: Foot | null = null;
 	let pattern: SVGPatternElement | null = null;
 
 	// The layer and the grid move by script, so a pan renders no React tree.
@@ -183,10 +178,6 @@ function make(region: RefObject<HTMLElement | null>) {
 				);
 		},
 		clearance: () => clearanceOf(region.current),
-		reserve(next) {
-			foot = next;
-		},
-		reserved: () => foot,
 		centreOn(box, zoom) {
 			const size = pane();
 			if (zoom === undefined) {

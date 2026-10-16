@@ -133,7 +133,7 @@ graph, compiles it with the Tailwind CLI in `scripts/fixture/`, and holds the co
 | `b-measure` | `ResizeObserver`, `getBoundingClientRect`, `getComputedStyle`, the box sizes and `matchMedia` only in the closed list of files, each with its reason |
 | `b-context` | every `createContext` is in the closed list, tagged `data`, `behaviour`, `portal` or the named exception `form` |
 | `b-dataset` | `dataset` only in the closed list of files |
-| `b-wait` | no `wait.tsx` or `*-wait.tsx` file and no `*Wait` component in `src/ui`, but Canvas's `CanvasWait`, the painted stand-in |
+| `b-wait` | no `wait.tsx` or `*-wait.tsx` file and no `*Wait` component in `src/ui` |
 | `b-type-prop` | no component takes or reads a prop named `type` |
 | `b-words` | no JSX text or labelling attribute is a literal word |
 | `b-nouns` | no product noun in `src` |

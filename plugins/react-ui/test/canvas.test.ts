@@ -1546,27 +1546,10 @@ test("fitTransform stands the bounds clear of the chrome on the left and the bot
 	assert.equal(fitTransform(box(0, 0, 50, 50), pane, 16, clear).k, 1);
 });
 
-test("a fit with a foot holds the bounds and the text under them whole in the pane", () => {
+test("a lone box the room cannot hold is scaled to the room", () => {
 	const node = box(0, 0, 240, 74);
-	const foot = { gap: 8, height: 60, width: 231 };
-	// A 263 px pane with chrome 68 px in from the left reaching 180 px up: the
-	// text is as wide as the room between the insets, so it centres on the pane
-	// and the room ends above the chrome. The node keeps its own size.
 	const pane = { width: 263, height: 400 };
 	const clear = { left: 68, bottom: 16, stack: 180 };
-	const at = fitTransform(node, pane, 16, clear, foot);
-	assert.equal(at.k, 1);
-	assert.equal(at.x + 120, pane.width / 2);
-	const bottom = at.y + 74 + foot.gap + foot.height;
-	assert.ok(at.y >= 16 - 1e-9);
-	assert.ok(bottom <= pane.height - 180 + 1e-9);
-	// A narrow pane scales the node to the pane, never under it.
-	const small = fitTransform(node, { width: 200, height: 400 }, 16, clear, {
-		...foot,
-		width: 168,
-	});
-	assert.equal(small.k, 200 / 240);
-	// A lone box the room cannot hold is scaled to the room.
 	const lone = fitTransform(node, pane, 16, clear);
 	assert.ok(lone.k < 1);
 	assert.ok(lone.x >= 0 && lone.x + 240 * lone.k <= pane.width);

@@ -20,7 +20,6 @@ import {
 	useCallback,
 	useEffect,
 	useEffectEvent,
-	useId,
 	useLayoutEffect,
 	useMemo,
 	useRef,
@@ -29,7 +28,6 @@ import {
 import type { Closed } from "../../lib/closed.ts";
 import { useTouch } from "../../lib/media.ts";
 import { FrameBody, FrameLine, useFrame } from "../../lib/read.tsx";
-import { Caption } from "./caption.tsx";
 import { ConnectionLine } from "./connection.tsx";
 import { EdgeLayer } from "./edges.tsx";
 import {
@@ -51,14 +49,13 @@ import { type EdgeTone, edgeLook, nodeLook } from "./look.ts";
 import { type NodeEdit, NodeView } from "./node.tsx";
 import { landAt, place } from "./view.ts";
 import { useViewport, useViewportValue } from "./viewport.ts";
-import { CanvasWait } from "./wait.tsx";
-import { ActFoot, ZoomStack } from "./zoom.tsx";
+import { ActFoot, ZoomPainted, ZoomStack } from "./zoom.tsx";
 
 /** A graph of nodes and edges on a pannable, zoomable ground. */
 export interface CanvasProps extends Closed {
 	/** What the graph is, read as its region's name (a short phrase; read aloud, never drawn). */
 	label: string;
-	/** The nodes; the canvas places those that carry no position. A selection, here or in `edges` or `groups`, stands the ground and three painted nodes in place of the graph until its read lands; every handler and the `act` are then ignored. A selection of nodes is the canvas's own frame: it holds its read and draws the failed, missing and empty forms in the ground whatever stands above it, with the generic sentences, and the stale and paused line over it. */
+	/** The nodes; the canvas places those that carry no position. A selection, here or in `edges` or `groups`, stands the bare ground (its dots and its zoom stack, no node) in place of the graph until its read lands; every handler and the `act` are then ignored. A selection of nodes is the canvas's own frame: it holds its read and draws the failed, missing and empty forms in the ground whatever stands above it, with the generic sentences, and the stale and paused line over it. */
 	nodes: Datum<readonly CanvasNode[]>;
 	/** The links between nodes, each drawn as an arrow from `from` to `to`. */
 	edges?: Datum<readonly CanvasEdge[]>;
@@ -76,8 +73,6 @@ export interface CanvasProps extends Closed {
 	onConnect?: (from: string, to: string | null) => void;
 	/** The canvas's act, at the foot's centre. */
 	act?: Act;
-	/** A sentence centred under the graph in the meta ink at the text floor at any zoom, taking no pointer; the app passes it or `undefined`. */
-	empty?: string;
 }
 
 // What the graph draws once its data is here: the canvas's props with the data given plain.
@@ -118,7 +113,10 @@ export function Canvas({ nodes, edges, groups, ...graph }: CanvasProps) {
 		<FrameBody frame={frame} fit="frame">
 			<FrameLine frame={frame} />
 			{placed.painted || linked.painted || framed.painted ? (
-				<CanvasWait label={graph.label} />
+				<section aria-label={graph.label} inert className={GROUND}>
+					<Grid />
+					<ZoomPainted arrange={Boolean(graph.onMove)} />
+				</section>
 			) : (
 				<CanvasGraph
 					{...graph}
@@ -142,9 +140,7 @@ function CanvasGraph({
 	onMove,
 	onConnect,
 	act,
-	empty,
 }: CanvasGraphProps) {
-	const caption = useId();
 	const region = useRef<HTMLElement>(null);
 	const viewport = useViewport(region);
 	const touch = useTouch();
@@ -353,22 +349,12 @@ function CanvasGraph({
 		<section
 			ref={region}
 			aria-label={label}
-			aria-describedby={empty ? caption : undefined}
 			onKeyDown={clear}
 			onClick={onSelect ? ground : undefined}
 			className={cn(GROUND, !ready && HIDDEN)}
 		>
 			<Grid />
 			<div data-layer className={LAYER}>
-				{empty ? (
-					<Caption
-						id={caption}
-						text={empty}
-						bounds={routed.bounds}
-						gap={space.pair}
-						viewport={viewport}
-					/>
-				) : null}
 				{groups.map((group) => {
 					const frame = routed.frames.get(group.id);
 					return frame ? (

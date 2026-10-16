@@ -9,13 +9,12 @@ const BOX = "inline-flex items-center min-w-0 max-w-full";
 const WORD = "truncate";
 const DOT = "shrink-0";
 
-/** What every status draws: the public `Status`, or `painted` (the dot's box and a word's filler while the status's data is not here, inert). `short` is drawn in the word's place while `label` stays the name (a canvas node's). Outside the package's exports. */
+/** What every status draws: the public `Status`, or `painted` (the dot's box and a word's filler while the status's data is not here, inert). Outside the package's exports. */
 export function StatusBase(
 	props:
 		| {
 				state: StatusState;
 				label?: string;
-				short?: string;
 				painted?: never;
 		  }
 		| { painted: true },
@@ -37,15 +36,7 @@ export function StatusBase(
 	return (
 		<span className={cn(STATUS, BOX)}>
 			<StatusDot state={props.state} />
-			<span
-				aria-hidden={props.short === undefined ? undefined : true}
-				className={cn(STATUS_LABEL, WORD)}
-			>
-				{props.short ?? label}
-			</span>
-			{props.short === undefined ? null : (
-				<span className="sr-only">{label}</span>
-			)}
+			<span className={cn(STATUS_LABEL, WORD)}>{label}</span>
 		</span>
 	);
 }

@@ -1143,9 +1143,7 @@ a tick with no animation, never jumped to full.
   and the `status` slot, run over the placeholder, only says the row has one. A row's status has one form, its word: `StatusMark` is `{ state, label }`, held whole
   on the meta line before the later parts and cut, its word truncating, only where the line is out of
   room beyond the first part's floor. Nothing measures the line, so no
-  second form can flip against the first. A canvas node's status keeps a `short` of its own (the
-  node's `status` is `StatusMark & { short? }`): the word beside the dot, where the dot alone
-  otherwise stands for the status. A `DefinitionRow`'s status value stays whole as well, the label
+  second form can flip against the first. A canvas node's status is the same `StatusMark`, its dot beside its label. A `DefinitionRow`'s status value stays whole as well, the label
   wrapping to the room it leaves, held to three quarters of the line.
 - A row, a fact or a field carries where it stands in a change set as one `change?: ChangeKind`
   (`added`, `changed`, `removed`, `unchanged`, `stale`, in `descriptors.ts`, the one `ChangeKind`;
@@ -1929,18 +1927,7 @@ a tick with no animation, never jumped to full.
   `min-h-1/2`, half the content box of the region it fills (a Pane's body), so the column scrolls past it and the
   head and banners above it scroll away rather than shrink it; the percentage resolves because the
   body is a flex item of the Pane, whose post-flex size is definite, so a viewport-share token is not needed
-  (`canvas-touch` holds it at 375 × 667 and 390 × 844). A selection in `nodes`, `edges` or `groups` swaps the whole graph component for `CanvasWait` (the ground and grid it shares with the graph, three `canvasNode` cards of filler in a column), the one painted form that is a tree of its own, since a layout has no geometry before its data (the named exception to structure rule 15, held by `b-wait`), so no viewport, layout or ELK runs while waiting and no zoom stack or act
-  stands (both are overlays, so omitting them moves nothing). The column stands where a loaded
-  chain opens: the wait measures its pane and column and takes `openTransform` (the loaded
-  canvas's opening view) with `clearanceOf`, the room the zoom stack leaves, held by an unseen
-  `ZoomRoom` of the stack's frame, so the arrival moves no card (`canvas.stories` holds it at 375,
-  768 and 1440, both modes). Only the stack's width is held: an `act` or a foot, which a loaded
-  canvas keeps clear of, is not; nor is the graph's shape: a graph that overflows (opening
-  top-anchored) or has a wider pitch opens by its own rule, so its first node can move on arrival. `empty` is a string, not a slot or a
-  `words` entry (it is app copy, and the app decides when it stands): the layer's first child
-  centres it under the graph's bounds and holds its size through `--canvas-unzoom`, so it
-  stays at the text floor, and `pointer-events-none` lets a drag through it pan and a tap on it
-  reach the ground. `d3-zoom` on the region gives pan, the Ctrl or Cmd wheel
+  (`canvas-touch` holds it at 375 × 667 and 390 × 844). A selection in `nodes`, `edges` or `groups` swaps the whole graph component for the bare surface: the ground and its dot grid with the zoom stack (the loaded stack's buttons, with arrange where `onMove` is given), inert, and no node, so no viewport, layout or ELK runs while waiting. A layout has no geometry before its data, so nothing of the graph is guessed, and the surface is the same region the graph arrives in: the box moves nothing and the nodes appear on load. The act is an overlay a waiting canvas omits. The canvas draws no sentence of its own under a graph (an empty graph's read is the frame's empty form), so nothing reserves room on the viewport. A node's status is its dot and its label, the label truncating before the title does (the trailing marks shrink first). `d3-zoom` on the region gives pan, the Ctrl or Cmd wheel
   and pinch, and its transform lands on one layer by script, so a pan renders no React tree; a
   plain wheel pans through the canvas's own listener, since d3-zoom's wheel always zooms. The layer
   holds, bottom to top, the group frames, one SVG of every edge with its chips over it, and the
@@ -1979,7 +1966,7 @@ a tick with no animation, never jumped to full.
   size on screen, growing in the flow by the zoom's inverse, `grow` in `layout.ts`): the fit is taken again at the scale it gave, down until the bounds at that scale fit it
   (`fitted`, at most six rounds), by the opening view and by Fit alike, and the lowest scale is set from the boxes before the view is (a stale `limit` had clamped a first view to 1).
   A group's head under the floor draws at its own size on screen (`UNZOOM` about the frame's top left, its width the frame's on screen), is still a button and a Tab stop,
-  and a node's name in the overview is the meta role (12.9 px, over the caption's 11.8 that fell under the rubric's 12 px floor). A node's status is its dot, named by its label, or its `short` word beside it: the long word took a third of the node and cut the title. ELK's worker is its own file imported with `?worker`, which cannot survive
+  and a node's name in the overview is the meta role (12.9 px, over the caption's 11.8 that fell under the rubric's 12 px floor). A node's status is its dot and its label, which truncates before the title loses room. ELK's worker is its own file imported with `?worker`, which cannot survive
   Vite's pre-bundling of this package's `.tsx` entries: the module holding the import
   (`lib/canvas-layout`) is reached from a dynamic import by the package's own name, so a graph the
   consumer placed loads neither ELK nor its worker, and the generated Vite config carries

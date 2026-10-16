@@ -1106,9 +1106,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// each of Status, warning, lock and Chip, on the meta line in that
 		// order: a warning is what is wrong with the row (the act that clears
 		// it is the row's `act`), a lock what the row holds (its label shown
-		// from `tablet`). A status with a `short` form
-		// draws it in place of its label while the long one would be cut on the
-		// meta line. Its trailing is a value, or a
+		// from `tablet`). Its trailing is a value, or a
 		// pick: a `Picker` at the `row` fit, centred in the row.
 		// A `leading` of `check` is the row's tick, a `Checkbox` in the leading
 		// slot named by the title; its `blocked` reason draws it disabled and
@@ -3025,11 +3023,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// recolours the node's outline; a `path` dims what a run did not take. A
 		// group holding no present node is a leaf an edge may name. While its
 		// `nodes`, `edges` or `groups` is a selection still to land it stands its
-		// ground with three painted node cards, the one painted form that is a
-		// tree of its own, since a layout has no geometry before its data. Its
-		// `nodes`, given as a selection, are its own frame: its failed, missing and
-		// empty forms stand in its ground with the generic sentences (its `empty`
-		// caption stays the app's own line under a graph).
+		// bare ground (the dots and the zoom stack, no node), since a layout has
+		// no geometry before its data. Its `nodes`, given as a selection, are its
+		// own frame: its failed, missing and empty forms stand in its ground with
+		// the generic sentences. A node's status is its dot and its label, which
+		// truncates before the title.
 		Canvas: {
 			props: [
 				"label",
@@ -3042,7 +3040,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"onMove",
 				"onConnect",
 				"act",
-				"empty",
 			],
 			platforms: ["web"],
 			draws: [

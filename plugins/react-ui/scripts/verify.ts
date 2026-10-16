@@ -683,29 +683,25 @@ check("b-file-input", "every FileInput stands inside a FormField", () => {
 });
 
 // The waiting form is the loaded form painted, never a second tree: no file
-// is named `wait.tsx` or `*-wait.tsx`, and no component is named `*Wait`. The
-// one named exception is Canvas's `CanvasWait`, the painted stand-in: its
-// layout has no geometry before the data, so it cannot be painted in place.
-const WAIT_EXCEPTION = "CanvasWait";
+// is named `wait.tsx` or `*-wait.tsx`, and no component is named `*Wait`.
 check("b-wait", "no waiting tree stands beside the loaded one", () => {
 	const hits: string[] = [];
 	let files = 0;
 	for (const path of walk(resolve(pkgDir, "src/ui"), /\.(ts|tsx)$/)) {
 		files++;
 		const rel = relative(pkgDir, path);
-		if (/(^|[/-])wait\.tsx?$/.test(rel) && !rel.endsWith("canvas/wait.tsx"))
-			hits.push(`${rel}: a waiting file`);
+		if (/(^|[/-])wait\.tsx?$/.test(rel)) hits.push(`${rel}: a waiting file`);
 		const source = withoutComments(readFileSync(path, "utf8"));
 		for (const found of source.matchAll(
 			/\b(?:function|const|class)\s+(\w*Wait)\b/g,
 		))
-			if (found[1] !== WAIT_EXCEPTION) hits.push(`${rel}: ${found[1]}`);
+			hits.push(`${rel}: ${found[1]}`);
 	}
 	assert(
 		hits.length === 0,
-		`a waiting tree beside the loaded one (paint the loaded form instead; only ${WAIT_EXCEPTION} is named):\n  ${hits.join("\n  ")}`,
+		`a waiting tree beside the loaded one (paint the loaded form instead):\n  ${hits.join("\n  ")}`,
 	);
-	return `${files} source files, no waiting tree beyond ${WAIT_EXCEPTION}`;
+	return `${files} source files, no waiting tree`;
 });
 
 // A Section's title is one size, so a Section inside a Section reads as its
