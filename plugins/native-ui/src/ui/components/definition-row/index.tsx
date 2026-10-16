@@ -270,7 +270,6 @@ export function DefinitionRowBase<V extends string | null = string>({
 					fit="bar"
 					label={act.label}
 					onAct={act.onAct}
-					failed={act.failed}
 				/>
 			);
 		end = (

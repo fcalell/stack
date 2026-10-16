@@ -369,7 +369,6 @@ function RowAct(props: {
 				fit="bar"
 				label={given.label}
 				onAct={given.onAct}
-				failed={given.failed}
 				blocked={blocked}
 			/>
 		</ReasonHostContext>
@@ -441,7 +440,6 @@ function ActButton(props: {
 				fit="bar"
 				label={act.label}
 				onAct={act.onAct}
-				failed={act.failed}
 				blocked={act.blocked}
 			/>
 		</ReasonHostContext>

@@ -199,8 +199,8 @@ function HeldMutation() {
 	);
 }
 
-// An act refused for the connection holds nothing: the sheet says "No
-// connection." in its line and can still be dismissed.
+// An act refused for the connection holds nothing: the sheet says "That didn't
+// go through." in its line and can still be dismissed.
 export const AnOfflineSheetCanBeDismissed: StoryObj = {
 	render: () => <HeldMutation />,
 	play: async ({ userEvent }) => {
@@ -208,7 +208,7 @@ export const AnOfflineSheetCanBeDismissed: StoryObj = {
 		try {
 			await screen.findByRole("dialog", { name: "Rename domain" });
 			await userEvent.click(screen.getByRole("button", { name: "Save" }));
-			await screen.findByText("No connection.");
+			await screen.findByText("That didn't go through.");
 			await userEvent.keyboard("{Escape}");
 			await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
 		} finally {

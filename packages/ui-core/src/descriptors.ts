@@ -16,13 +16,11 @@ export type { ChipFamily, StatusState, Width, Words };
 // export it under. Lucide's own aliases are names too.
 export type IconName = keyof typeof icons;
 
-// What every act is: the run it starts and the sentence it fails with. A
-// thenable `onAct` returns holds the act pending until it settles; `failed`
-// is drawn when the server gives no refusal of its own.
+// What every act is: the run it starts. A thenable `onAct` returns holds the
+// act pending until it settles; a rejection draws the server's refusal when it
+// words one, else the generic `actFailed`.
 export interface ActBase {
 	onAct: () => unknown;
-	// Why the act failed (a sentence; wraps).
-	failed?: string;
 }
 
 // A labelled text act, 44 px, with an optional `blocked` reason drawn under

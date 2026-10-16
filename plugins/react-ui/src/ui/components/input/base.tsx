@@ -182,7 +182,6 @@ export function InputBase({
 								icon={act.icon}
 								label={act.label}
 								onAct={act.onAct}
-								failed={act.failed}
 								fit="field"
 							/>
 						</FieldDisabled>

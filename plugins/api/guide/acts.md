@@ -1,21 +1,20 @@
 # Acts and saves
 
 An act's `onAct` returns the promise of the work it starts, and the host that draws the act holds
-the run (pending, failure, a refusal for the connection); the app passes no `loading`:
+the run (pending, failure); the app passes no `loading`:
 
 ```tsx
 const create = useMutation(orpc.projects.create.mutationOptions());
 const add = {
   label: "Add",
-  failed: "The project was not added.",
   onAct: () => create.mutateAsync({ name }),
 };
 ```
 
 - Return `mutateAsync`'s promise, never `mutate()`, and `.catch` nothing: the host draws the
   rejection, in its line or a failed toast with Retry, and the toast's Retry runs `onAct` again.
-- The sentence is `refusal(error)` from `@fcalell/plugin-api/acts`, then the act's `failed`, then
-  the generic one. `refusal` is an `ORPCError`'s own message, capitalised and stopped, for a 4xx
+- The sentence is `refusal(error)` from `@fcalell/plugin-api/acts`, else the
+  generic one; an act has no sentence of its own. `refusal` is an `ORPCError`'s own message, capitalised and stopped, for a 4xx
   other than 401, 403, 404 and 429 whose message is not the code's stock text
   (`new ApiError("BAD_REQUEST", { message: "That name is taken" })` reads "That name is taken.");
   anything else is `undefined`.
@@ -23,8 +22,8 @@ const add = {
   `guardReach` before every mutation: while `onlineManager` is offline, or a cached read's
   `meta.reach` says the server is out of reach (`ws.connection` from
   `@fcalell/plugin-node/client`), the mutation rejects with `Unreached` before any fetch, so
-  it never pauses and never fires on reconnect. The host draws `error.sentence` (the app's) or
-  "No connection.". A `mutationCache` you supply yourself must call `guardReach(client)` in its
+  it never pauses and never fires on reconnect. The host draws the generic sentence with no Retry; the
+  connection's reason is the app's offline banner's. A `mutationCache` you supply yourself must call `guardReach(client)` in its
   `onMutate`.
 - An act given as a selection (`rules.at((a) => …)`) is the viewer's to press only when its read
   answered: it paints while the read waits and stands blocked once the read has failed or is

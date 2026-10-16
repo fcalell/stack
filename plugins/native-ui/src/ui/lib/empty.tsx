@@ -222,7 +222,6 @@ function ActButton(props: {
 			icon={props.icon}
 			label={act.label}
 			onAct={act.onAct}
-			failed={act.failed}
 			blocked={act.blocked}
 		/>
 	);

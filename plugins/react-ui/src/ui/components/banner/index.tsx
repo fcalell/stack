@@ -121,7 +121,6 @@ export function Banner({ kind, sentence, act }: BannerProps) {
 								ink={bannerGlyph({ kind: drawn })}
 								label={given.label}
 								onAct={given.onAct}
-								failed={given.failed}
 								blocked={blocked}
 							/>
 						</ReasonHostContext>

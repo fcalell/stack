@@ -151,7 +151,6 @@ export function Rules<V extends string | null = string>({
 					label={add.label}
 					onAct={add.onAct}
 					blocked={add.blocked}
-					failed={add.failed}
 				/>
 			) : null}
 		</View>

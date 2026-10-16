@@ -94,7 +94,6 @@ export function ActFoot({ act }: { act: Act }) {
 					label={act.label}
 					onAct={act.onAct}
 					blocked={act.blocked}
-					failed={act.failed}
 				/>
 			</div>
 		</div>

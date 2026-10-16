@@ -26,7 +26,6 @@ export default function Notes() {
 	const add: Act = {
 		label: "Add",
 		blocked: title.trim() ? undefined : "Give the note a title.",
-		failed: "The note was not added.",
 		onAct: () => create.mutateAsync({ title }).then(() => setOpen(false)),
 	};
 	const ask = (note: { id: string; title: string }) =>
@@ -36,7 +35,6 @@ export default function Notes() {
 			act: {
 				label: "Delete",
 				destructive: true,
-				failed: "The note was not deleted.",
 				onAct: () => remove.mutateAsync({ id: note.id }),
 			},
 		});

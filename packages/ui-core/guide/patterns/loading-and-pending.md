@@ -40,8 +40,8 @@ promise settles. The promise is the act's own (`ActBase.onAct`), and the host ho
 `ActionBar` pends one act at a time with the others inert, a `Sheet` holds its dismissal while its
 head submit, foot bar or form bar pends, and an `InputOtp` checking a code draws its checking line
 at once (a code is never typed twice). No act queues for a connection that is not there: one pressed
-offline is refused at the press, its host's line says "No connection." (or the app's sentence for a lost
-socket) with no Retry, and the siblings stay live. A Retry (a frame's, a stale line's,
+offline is refused at the press, its host's line says the generic "That didn't go through." with no Retry, and the siblings stay live;
+the connection's own sentence is the offline banner's, drawn once. A Retry (a frame's, a stale line's,
 a more row's) pends on its own refetch's promise; a refetch nobody pressed shows the busy mark alone.
 
 After the first wait the frame says what its read is doing, and the data stays. A refetch is the

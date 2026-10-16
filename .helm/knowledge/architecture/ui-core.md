@@ -2036,11 +2036,11 @@ a tick with no animation, never jumped to full.
   `cancel` is the way out's label (the `cancel` word unless given): the words for leaving a decision
   are the decision's own ("Keep editing", "Stay"), so no word derives them.
 - **A failure is drawn by its host, in its line, else in a toast.** `Acting.line` is the rejection's
-  sentence (the connection's, `Unreached.sentence ?? words.offline`, for an act refused for it): the `ActionBar`'s kept line, the `Sheet`'s, a standing
+  sentence (the generic one for an act refused for the connection too): the `ActionBar`'s kept line, the `Sheet`'s, a standing
   public `Button`'s reason line under itself, a field's error for a control's save, and `InputOtp`'s
   field for its `onComplete`. Every other act raises a failed toast whose Retry is the same `ActBase`
   (the app's whole `onAct` again, a navigate included), held by the toast's own button. The sentence
-  is `refusal(error) ?? act.failed ?? words.actFailed` ("That didn't go through."); `refusal`
+  is `refusal(error) ?? words.actFailed` ("That didn't go through."): an act carries no sentence of its own, since a per-act wording repeats what the generic line says; `refusal`
   (plugin-api `./acts`) is an `ORPCError`'s own message for a 4xx other than 401, 403, 404 and 429
   whose message is not the code's stock text. The line clears on the next press. A failed (high
   priority) toast is announced by its own alert, so its root sets `aria-live="off"` and
@@ -2050,11 +2050,11 @@ a tick with no animation, never jumped to full.
   `PendingBar until`.
 - **Nothing queues for a missing connection.** `createQueryClient`'s mutation cache runs
   `guardReach` in `onMutate`: while `onlineManager` is offline, or a cached read's `meta.reach` says
-  the server is out of reach (plugin-node's `ws.connection`, `lost` after `PAUSE_AFTER`, with the
-  app's `unreachable` sentence), it throws `Unreached` before any fetch, so no mutation pauses and
-  none fires on reconnect. A caller-supplied `mutationCache` must call it. The act's host draws
-  `Unreached.sentence ?? words.offline` ("No connection.") as the failure line, with no Retry and
-  nothing held: siblings stay live and a sheet can be dismissed. Whether an act also looks blocked
+  the server is out of reach (plugin-node's `ws.connection`, `lost` after `PAUSE_AFTER`), it throws `Unreached` before any
+  fetch, so no mutation pauses and none fires on reconnect. A caller-supplied `mutationCache` must
+  call it. The act's host draws the generic `words.actFailed` as the failure line, with no Retry and
+  nothing held, because the reason is the app's offline banner's and a second telling would repeat
+  it: siblings stay live and a sheet can be dismissed. Whether an act also looks blocked
   before the press is the owner's open question; the press is what refuses.
 - **A control holds a save it is handed.** `FieldControl.onChange`, `OptionPick`/`MultiPick`
   `onChange` and `onCommit` (Input, TextArea and the new Slider `onCommit`, the value the thumb is

@@ -131,7 +131,6 @@ function Usage() {
 									"The new limits apply at once. You are billed $480 a month from Oct 14.",
 								act: {
 									label: "Move to Business",
-									failed: "The plan was not changed.",
 									onAct: async () => {
 										await upgrade.mutateAsync();
 										toast("Acme is on Business", { state: "done" });

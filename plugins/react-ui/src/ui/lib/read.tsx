@@ -143,13 +143,7 @@ export function StateLine(props: {
 		<div className={flow ? LINE_IN_FLOW : LINE}>
 			<Text role="meta">{sentence}</Text>
 			{act ? (
-				<ButtonBase
-					act="quiet"
-					fit="bar"
-					label={act.label}
-					onAct={act.onAct}
-					failed={act.failed}
-				/>
+				<ButtonBase act="quiet" fit="bar" label={act.label} onAct={act.onAct} />
 			) : null}
 		</div>
 	);

@@ -124,7 +124,6 @@ export function SectionHead(props: {
 				fit="bar"
 				label={given.label}
 				onAct={given.onAct}
-				failed={given.failed}
 			/>
 		);
 	else if (given !== undefined)
@@ -134,7 +133,6 @@ export function SectionHead(props: {
 				fit="bar"
 				label={given.label}
 				onAct={given.onAct}
-				failed={given.failed}
 				blocked={given.blocked}
 			/>
 		);

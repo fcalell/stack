@@ -188,7 +188,6 @@ export function ActionBarBase({
 	const press = (act: Act, at: number) =>
 		acting.run(at, {
 			onAct: at === lastAt ? ending(act) : act.onAct,
-			failed: act.failed,
 		});
 	// The bar under a `PendingBar` is drawn with no act that presses.
 	const bar = (ghost: boolean) => (

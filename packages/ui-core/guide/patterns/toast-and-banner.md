@@ -33,8 +33,8 @@ Thin evidence: one full-width top banner at calibre (ManyChat); the rest are inl
 A toast is the report of a change that happened off the screen, or the failure of an act whose host
 has no line of its own (an `IconButton` in a row, a `Switch` standing alone, a `Menu` item). The
 failed toast's Retry is the act's own `onAct` again, whatever else it does (a navigate, a sheet
-closing), and pends on its own button. Its sentence is the server's refusal, the act's `failed`, then
-"That didn't go through." An act's success draws no mark of its own: what it changed is drawn by the
+closing), and pends on its own button. Its sentence is the server's refusal, else
+"That didn't go through." (an act refused for the connection reads the same, with no Retry: the connection's sentence is the offline banner's alone). An act's success draws no mark of its own: what it changed is drawn by the
 reads it refetches (their busy mark), and `state: "done"` is the app's report for a change nothing
 on screen shows. A failed toast is announced by its own alert, so the toast turns its live region off
 and stays in the tree with its close act. There is no client undo: a window the server holds is a

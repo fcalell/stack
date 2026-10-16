@@ -113,11 +113,7 @@ function Bench(props: { readMs: number; actMs: number; outcome: Outcome }) {
 							row={{ key: (name) => name, title: (name) => name }}
 						/>
 					</Section>
-					<ActionBar
-						acts={[
-							{ label: "Send", failed: "The bench act failed.", onAct: press },
-						]}
-					/>
+					<ActionBar acts={[{ label: "Send", onAct: press }]} />
 				</Pane>
 			</Place>
 		</Shell>

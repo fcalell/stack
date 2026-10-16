@@ -205,7 +205,6 @@ export function MessageInput({
 							fit="bar"
 							label={notice.act.label}
 							onAct={notice.act.onAct}
-							failed={notice.act.failed}
 							blocked={notice.act.blocked}
 						/>
 					) : null}

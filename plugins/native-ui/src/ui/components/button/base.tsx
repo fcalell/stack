@@ -114,7 +114,6 @@ export function ButtonBase({
 	count,
 	wait,
 	onAct,
-	failed,
 	blocked,
 	banner,
 	painted,
@@ -158,7 +157,7 @@ export function ButtonBase({
 			if (host) host.press();
 			else keep();
 		} else if (given === undefined)
-			acting.run(true, { onAct: () => onAct?.(), failed });
+			acting.run(true, { onAct: () => onAct?.() });
 		else onAct?.();
 	};
 	const control = (

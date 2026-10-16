@@ -127,7 +127,6 @@ export function Banner({ kind, sentence, act }: BannerProps) {
 							banner={INKS[drawn]}
 							label={given.label}
 							onAct={given.onAct}
-							failed={given.failed}
 							blocked={given.blocked}
 						/>
 					</View>

@@ -49,7 +49,6 @@ export function ConfirmSheet(props: {
 				{
 					label: entry.act.label,
 					destructive: entry.act.destructive,
-					failed: entry.act.failed,
 					blocked,
 					onAct: run,
 				},

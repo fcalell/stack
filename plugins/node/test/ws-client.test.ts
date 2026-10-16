@@ -174,7 +174,6 @@ test("offline, an act rejects with Unreached, queues nothing, and going online s
 	try {
 		await assert.rejects(send(), (error) => {
 			assert.ok(error instanceof Unreached);
-			assert.equal(error.sentence, undefined);
 			return true;
 		});
 		assert.equal(
@@ -194,7 +193,7 @@ test("offline, an act rejects with Unreached, queues nothing, and going online s
 	}
 });
 
-test("with the connection lost, an act is refused with the app's sentence", async (t) => {
+test("with the connection lost, an act is refused", async (t) => {
 	t.mock.timers.enable({ apis: ["setTimeout"] });
 	const real = globalThis.WebSocket;
 	globalThis.WebSocket = FakeSocket as unknown as typeof WebSocket;
@@ -202,8 +201,6 @@ test("with the connection lost, an act is refused with the app's sentence", asyn
 	try {
 		const ws = createWsClient({
 			url: "ws://test/ws",
-			unreachable: (answered) =>
-				`Not answering since ${answered ? "a while" : "ever"}.`,
 		});
 		const { client, send, sent } = guarded();
 		const watcher = new QueryObserver(client, ws.connection.options);
@@ -240,7 +237,6 @@ test("with the connection lost, an act is refused with the app's sentence", asyn
 		assert.equal(lost.state, "lost");
 		await assert.rejects(send(), (error) => {
 			assert.ok(error instanceof Unreached);
-			assert.equal(error.sentence, "Not answering since a while.");
 			return true;
 		});
 		assert.equal(sent(), 2);

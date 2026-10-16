@@ -70,7 +70,6 @@ export function ButtonBase({
 	count,
 	wait,
 	onAct,
-	failed,
 	blocked,
 	ink,
 	painted,
@@ -107,7 +106,7 @@ export function ButtonBase({
 			if (host) host.press();
 			else keep();
 		} else if (given === undefined)
-			acting.run(true, { onAct: () => onAct?.(), failed });
+			acting.run(true, { onAct: () => onAct?.() });
 		else onAct?.();
 	};
 	// Blocked is not Base UI's `disabled`, which swallows the press that shows

@@ -168,13 +168,7 @@ export function StateLine(props: {
 				{sentence}
 			</RNText>
 			{act ? (
-				<ButtonBase
-					act="quiet"
-					fit="bar"
-					label={act.label}
-					onAct={act.onAct}
-					failed={act.failed}
-				/>
+				<ButtonBase act="quiet" fit="bar" label={act.label} onAct={act.onAct} />
 			) : null}
 		</View>
 	);

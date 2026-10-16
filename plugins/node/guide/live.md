@@ -56,9 +56,9 @@ read. The last one leaving ends it, and the value stays cached for the next.
 `{ state: "connecting" | "open" | "lost", answered }`, where `answered` is when the server last
 answered (an ISO time) and `lost` comes once the socket has been down for `PAUSE_AFTER`. It
 only watches the socket and never opens it, and it stays in the query cache, so a banner
-selects it like any read. `createWsClient({ unreachable })` takes the sentence an act is refused
-with while the connection is lost, from `answered`; without it the refusal reads "No
-connection.". A socket down for more than two seconds (`PAUSE_AFTER`) pauses
+selects it like any read; the banner words the lost connection, and an act pressed while it is
+lost is refused at the press and draws the generic "That didn't go through." (see the api
+plugin's acts guide). A socket down for more than two seconds (`PAUSE_AFTER`) pauses
 every channel read, and each frame holding one draws "Waiting for a connection" in its head;
 the socket opening again resumes them, and the server's fresh snapshot replaces the value.
 A shorter break says nothing.

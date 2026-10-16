@@ -127,7 +127,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"count",
 				"wait",
 				"onAct",
-				"failed",
 				"blocked",
 			],
 			draws: [
@@ -161,7 +160,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		IconButton: {
-			props: ["icon", "fit", "label", "onAct", "failed"],
+			props: ["icon", "fit", "label", "onAct"],
 			draws: ["ICON_BUTTON", "TOOLTIP", "PAINT.kind.control"],
 			holds: ["ICON_BUTTON", "TOOLTIP"],
 			states: [...PRESS, "pending"],

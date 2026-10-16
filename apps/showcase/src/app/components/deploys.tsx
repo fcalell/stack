@@ -412,7 +412,6 @@ function DeployDetails(props: { deploy: Selection<OpenDeploy> }) {
 								act: {
 									label: "Delete deploy",
 									destructive: true,
-									failed: "The deploy was not deleted.",
 									onAct: async () => {
 										await remove.mutateAsync({ id: each.id });
 										navigate("/deploys");
@@ -476,7 +475,6 @@ export function DeployList() {
 							act: {
 								label: "Delete previews",
 								destructive: true,
-								failed: "The previews were not deleted.",
 								onAct: async () => {
 									await removePreviews.mutateAsync();
 									toast("Previews deleted", { state: "done" });

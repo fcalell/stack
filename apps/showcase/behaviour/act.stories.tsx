@@ -143,26 +143,15 @@ export const ARefusalToastsItsSentenceWithRetry: StoryObj = {
 
 const failing = () => Promise.reject(new Error("socket hang up"));
 
-// With no refusal of the server's, the act's own sentence, else the generic one.
-export const AnActsOwnSentenceStandsInForAnUnwordedFailure: StoryObj = {
+// A failure the server words no refusal for is the generic sentence, whatever
+// the act: no per-act wording.
+export const AnUnwordedFailureToastsTheGenericSentence: StoryObj = {
 	render: () => (
 		<Page>
-			<IconButton
-				icon="RefreshCw"
-				label="Stop"
-				onAct={failing}
-				failed="The job could not be stopped."
-			/>
 			<IconButton icon="RefreshCw" label="Start" onAct={failing} />
 		</Page>
 	),
 	play: async ({ canvas, userEvent }) => {
-		await userEvent.click(canvas.getByRole("button", { name: "Stop" }));
-		await drawn("The job could not be stopped.");
-		await userEvent.click(screen.getByLabelText("Dismiss"));
-		await waitFor(() =>
-			expect(screen.queryByText("The job could not be stopped.")).toBeNull(),
-		);
 		await userEvent.click(canvas.getByRole("button", { name: "Start" }));
 		await drawn("That didn't go through.");
 	},
@@ -193,3 +182,19 @@ export const AStandaloneButtonDrawsItsFailureUnderItself: StoryObj = {
 		).toBeTruthy();
 	},
 };
+
+// With no refusal of the server's, the line under the act is the generic
+// sentence: the act has no wording of its own.
+export const AStandaloneButtonDrawsTheGenericSentenceForAnUnwordedFailure: StoryObj =
+	{
+		render: () => (
+			<Page>
+				<Button label="Publish" onAct={failing} />
+			</Page>
+		),
+		play: async ({ canvas, userEvent }) => {
+			await userEvent.click(canvas.getByRole("button", { name: "Publish" }));
+			const line = await canvas.findByRole("alert");
+			await expect(line).toHaveTextContent("That didn't go through.");
+		},
+	};

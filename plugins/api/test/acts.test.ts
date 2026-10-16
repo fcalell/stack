@@ -4,10 +4,19 @@ import { ORPCError } from "@orpc/client";
 import {
 	MutationCache,
 	MutationObserver,
+	onlineManager,
 	QueryClient,
 	QueryObserver,
 } from "@tanstack/react-query";
-import { drew, heldAct, isThenable, refusal, watchActs } from "../src/acts.ts";
+import {
+	drew,
+	guardReach,
+	heldAct,
+	isThenable,
+	refusal,
+	Unreached,
+	watchActs,
+} from "../src/acts.ts";
 
 const tick = () => new Promise<void>((r) => setTimeout(r, 5));
 
@@ -196,4 +205,28 @@ test("TanStack: invalidation in the cache's onSuccess has started the refetch wh
 	assert.equal(query?.state.fetchStatus, "idle");
 	stop();
 	assert.equal(fetches, 2);
+});
+
+test("guardReach refuses an act while offline or while a read's reach says out, with no sentence of its own", () => {
+	const client = new QueryClient();
+	guardReach(client);
+	onlineManager.setOnline(false);
+	try {
+		assert.throws(() => guardReach(client), Unreached);
+	} finally {
+		onlineManager.setOnline(true);
+	}
+	client.setQueryData(["conn"], { lost: false });
+	client
+		.getQueryCache()
+		.find({ queryKey: ["conn"] })
+		?.setOptions({
+			meta: { reach: (data: unknown) => (data as { lost: boolean }).lost },
+		});
+	guardReach(client);
+	client.setQueryData(["conn"], { lost: true });
+	assert.throws(
+		() => guardReach(client),
+		(error) => error instanceof Unreached && !("sentence" in error),
+	);
 });

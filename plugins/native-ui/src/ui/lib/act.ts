@@ -6,7 +6,7 @@ import {
 	useRun,
 } from "@fcalell/plugin-api/tanstack-query";
 import type { ActBase } from "@fcalell/ui-core/descriptors";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { toast } from "./toast";
 import { useWords } from "./words";
 
@@ -20,33 +20,28 @@ export interface Acting<K> {
 	run(key: K, act: ActBase): void;
 }
 
-/** A holder's run of its acts. `where` is the place a rejection is drawn: the holder's own `line`, or a failed toast whose Retry runs the whole act again. The sentence is the server's refusal, then the act's own `failed`, then the generic one; an act refused for the connection says why (the app's sentence, else "No connection.") and has no Retry. */
+/** A holder's run of its acts. `where` is the place a rejection is drawn: the holder's own `line`, or a failed toast whose Retry runs the whole act again. The sentence is the server's refusal, else the generic one; an act refused for the connection draws the generic one too, with no Retry, and the connection's own sentence is the offline banner's alone. */
 export function useAct<K = true>(where: "line" | "toast"): Acting<K> {
 	const words = useWords();
 	const run = useRun<K>();
-	const failed = useRef<string>(undefined);
-	const sentenceOf = (error: unknown, own: string | undefined) =>
-		error instanceof Unreached
-			? (error.sentence ?? words.offline)
-			: (refusal(error) ?? own ?? words.actFailed);
+	const sentenceOf = (error: unknown) => refusal(error) ?? words.actFailed;
 	const { pending, failure } = run;
 	return {
 		pending,
 		holds: pending !== undefined,
-		line: failure ? sentenceOf(failure.error, failed.current) : undefined,
+		line: failure ? sentenceOf(failure.error) : undefined,
 		run: (key, act) => {
-			failed.current = act.failed;
 			run.run(key, () => {
 				const result = act.onAct();
 				if (where === "line" || !isThenable(result)) return result;
 				return Promise.resolve(result).catch((error: unknown) => {
 					drew(error);
-					toast(sentenceOf(error, act.failed), {
+					toast(sentenceOf(error), {
 						state: "failed",
 						act:
 							error instanceof Unreached
 								? undefined
-								: { label: words.retry, onAct: act.onAct, failed: act.failed },
+								: { label: words.retry, onAct: act.onAct },
 					});
 				});
 			});

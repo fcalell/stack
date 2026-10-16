@@ -44,7 +44,7 @@ inverted log; the web windows a long one (`VIRTUAL_FROM`), the phone's waits on 
 ## Acts
 
 An act's holder reads from `useAct(where)` (`lib/act`): `pending` (which act runs), `holds` (it
-runs, so siblings stand inert), `line` (its rejection's sentence, or the connection's: "No connection."), and `run(key, act)`. `where` is `"line"` for a holder that draws the
+runs, so siblings stand inert), `line` (its rejection's sentence), and `run(key, act)`. `where` is `"line"` for a holder that draws the
 sentence itself, as the `ActionBar` and `Sheet` do, or `"toast"` for a failed toast with Retry. A
 control of your own that saves as it changes takes `useHeldDraft(value)` (the draft that holds its
 value while a save pends and toasts a refusal, whose Retry saves it again; a `FormField`'s own descriptors are hosted by the field instead, which draws the refusal in its line); `draft.change(next, () =>

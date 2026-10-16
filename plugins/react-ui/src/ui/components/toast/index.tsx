@@ -87,7 +87,6 @@ export function Toast({ sentence, state, act }: ToastProps) {
 						fit="bar"
 						label={act.label}
 						onAct={act.onAct}
-						failed={act.failed}
 						blocked={act.blocked}
 					/>
 				</span>

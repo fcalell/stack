@@ -139,7 +139,6 @@ export function PendingBar({ sentence, until, act }: PendingBarProps) {
 							act="secondary"
 							label={act.label}
 							onAct={act.onAct}
-							failed={act.failed}
 							blocked={blocked}
 						/>
 					</ReasonHostContext.Provider>

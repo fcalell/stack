@@ -137,7 +137,6 @@ function DockedQuestions({ state }: { state: ShowcaseFrame["state"] }) {
 										submit: {
 											label: last ? "Send" : "Next",
 											onAct: last ? actOf(state, close) : () => setAt(at + 1),
-											failed: "Couldn't send your answers. Try again.",
 											blocked:
 												last && state === "disabled"
 													? "Choose who hears about it first."
@@ -190,7 +189,6 @@ function submitOf(state: ShowcaseFrame["state"]): Act {
 	return {
 		label: "Save",
 		onAct: actOf(state, act),
-		failed: "Couldn't save the project. Try again.",
 		blocked: state === "disabled" ? "Add a description first." : undefined,
 	};
 }

@@ -19,8 +19,6 @@ export interface ButtonProps extends Closed {
 	wait?: number;
 	/** Runs the act. A promise it returns holds the act pending until it settles: inert at the press, then (after `ACT_DELAY`) its glyph and label hidden under a spinner, its name kept. A rejection reads under the act. */
 	onAct?: () => unknown;
-	/** The act's own sentence for a rejection the server gives no refusal for. */
-	failed?: string;
 	/** Why the act cannot run (a sentence; wraps): it is inert, and shows this under itself once pressed or once its form or sheet is touched. */
 	blocked?: string;
 }
@@ -34,7 +32,6 @@ export function Button({
 	count,
 	wait,
 	onAct,
-	failed,
 	blocked,
 }: ButtonProps) {
 	return (
@@ -46,7 +43,6 @@ export function Button({
 			count={count}
 			wait={wait}
 			onAct={onAct}
-			failed={failed}
 			blocked={blocked}
 			line
 		/>

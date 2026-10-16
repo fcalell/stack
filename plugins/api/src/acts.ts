@@ -196,21 +196,17 @@ export function holdSave(
 	);
 }
 
-// What a read's `meta.reach` answers about its value: the server is out of
-// reach, with the app's own sentence for it when it has one.
-export type Reach = (
-	data: unknown,
-) => { sentence: string | undefined } | undefined;
+// What a read's `meta.reach` answers about its value: whether the server is
+// out of reach.
+export type Reach = (data: unknown) => boolean;
 
-// An act refused before it was sent because the server is out of reach.
-// `sentence` is the app's wording for it; none means the generic "No
-// connection." of the host.
+// An act refused before it was sent because the server is out of reach. The
+// host draws it as any failed press, the generic sentence with no Retry; the
+// connection's own sentence is the app's offline banner.
 export class Unreached extends Error {
-	readonly sentence: string | undefined;
-	constructor(sentence?: string) {
-		super(sentence ?? "No connection.");
+	constructor() {
+		super("The server is out of reach.");
 		this.name = "Unreached";
-		this.sentence = sentence;
 	}
 }
 
@@ -224,7 +220,6 @@ export function guardReach(client: QueryClient): void {
 	for (const query of client.getQueryCache().getAll()) {
 		const reach = query.meta?.reach as Reach | undefined;
 		if (reach === undefined || query.state.data === undefined) continue;
-		const out = reach(query.state.data);
-		if (out) throw new Unreached(out.sentence);
+		if (reach(query.state.data)) throw new Unreached();
 	}
 }

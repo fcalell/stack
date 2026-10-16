@@ -40,8 +40,7 @@ export interface WsClient {
 	close(): void;
 	// The socket's status as a read in the query cache. It never opens the
 	// socket: it only watches it. Its `meta.reach` is what the mutation guard
-	// asks (`guardReach`): a lost connection refuses acts with the app's
-	// `unreachable` sentence.
+	// asks (`guardReach`): a lost connection refuses acts.
 	readonly connection: Read<Connection>;
 }
 
@@ -72,14 +71,7 @@ function defaultUrl(): string {
 	return `${loc.protocol === "https:" ? "wss" : "ws"}://${loc.host}/ws`;
 }
 
-export function createWsClient(
-	options: {
-		url?: string;
-		// The sentence an act is refused with while the connection is lost,
-		// from when the server last answered.
-		unreachable?: (answered: string | undefined) => string;
-	} = {},
-): WsClient {
+export function createWsClient(options: { url?: string } = {}): WsClient {
 	const url = options.url ?? defaultUrl();
 
 	const subscriptions = new Set<LiveSubscription>();
@@ -175,10 +167,7 @@ export function createWsClient(
 		}, delay);
 	}
 
-	const reach: Reach = (data) =>
-		(data as Connection).state === "lost"
-			? { sentence: options.unreachable?.((data as Connection).answered) }
-			: undefined;
+	const reach: Reach = (data) => (data as Connection).state === "lost";
 
 	const connection = read<Connection>(
 		{
