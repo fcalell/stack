@@ -358,6 +358,7 @@ export const OVERLAYS: readonly string[] = [
 	"min-w-min",
 	"py-[calc((var(--spacing-control)-1lh)/2)]",
 	"max-w-[calc(100%-var(--spacing-figures))]",
+	"max-w-[calc(100%+var(--spacing-inside))]",
 	"border-t",
 	"pt-float",
 	"w-fit",

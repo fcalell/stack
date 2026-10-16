@@ -86,11 +86,10 @@ const SEVERAL_TRIGGER =
 	"flex grow shrink-0 items-center justify-end min-w-target max-w-full text-start";
 // A row-fit trigger centres in its row and pulls back by its own padding at
 // the row's end; it stands over a row's hit. Open, it holds the press wash
-// and the value takes the body ink. No `max-w-full`: the pull-back shrinks the
-// width a percentage resolves against, so the cap cut a value with room to
-// spare; `PICKER_VALUE` bounds the value.
+// and the value takes the body ink. Its cap counts the pull-back, so a value
+// with room stays whole and a long one still stops at its column.
 const ROW_TRIGGER =
-	"relative inline-flex shrink-0 self-center items-center -me-inside hover:bg-wash-hover active:bg-wash-press";
+	"relative inline-flex shrink-0 max-w-[calc(100%+var(--spacing-inside))] self-center items-center -me-inside hover:bg-wash-hover active:bg-wash-press";
 const ROW_OPEN = "bg-wash-press text-ink-body";
 const ROW_VALUE = "truncate";
 const OPEN_VALUE = "text-ink-body";
