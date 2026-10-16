@@ -1,3 +1,4 @@
+import { paints } from "@fcalell/plugin-api/read";
 import {
 	type Datum,
 	useDrawsFailure,
@@ -9,7 +10,6 @@ import {
 	PAGE_HEAD,
 	PAGE_HEAD_ROOM,
 	PAGE_HEAD_TOUCH,
-	PAGE_TITLE_BLOCK,
 	PAGE_TITLE_FLOOR,
 	PAGE_TOP_BAR,
 	PAGE_TOP_BAR_END,
@@ -19,6 +19,7 @@ import {
 import { useContext } from "react";
 import { Text as RNText, View } from "react-native";
 import { cn } from "../../lib/cn";
+import { useFold } from "../../lib/fold";
 import { DistanceContext, ShellSwitcher } from "../../lib/frame";
 import { navigate } from "../../lib/navigate";
 import { inertProps, Painted } from "../../lib/paint";
@@ -31,11 +32,12 @@ import { IconButtonBase } from "../icon-button/base";
 import { MenuBase } from "../menu/base";
 import { SwitcherPick } from "../shell/switcher";
 
-// The bar is the title's row: it wraps, so acts that do not fit beside the back
-// act, the title's floor and the gaps drop whole to a second line.
-const TOP_BAR = "relative flex-row flex-wrap items-start";
+// The bar is one line: the back act, the title truncating at its floor (two
+// fifths of the row), then the acts, which fold into the more menu where they
+// do not fit beside it (`useFold`).
+const TOP_BAR = "relative flex-row items-center";
 const ACTS = "shrink-0 flex-row items-center gap-acts ms-auto";
-// The title is a row: its text shrinks and wraps, the busy mark after it.
+// The title is a row: its text shrinks and truncates, the busy mark after it.
 const TITLE = "min-w-0 grow flex-row items-center gap-inside";
 const NAME = "shrink";
 
@@ -75,7 +77,7 @@ export function PaneHead(props: {
 	// An act is painted, inert, while its own datum waits; a selection's shape
 	// is unknown until it lands, so its paint is a bare glyph. One whose read
 	// ended stands blocked with the sentence for its name, never a false yes.
-	const acts = actionAt.map((one, at) => {
+	const built = actionAt.map((one, at) => {
 		if (!one.painted) {
 			return <IconButton key={one.value.label} {...one.value} fit="body" />;
 		}
@@ -96,33 +98,57 @@ export function PaneHead(props: {
 	const overflowEnded = overflowAt.painted
 		? endedReason(words, overflowAt.phase)
 		: undefined;
-	const items = overflowEnded
+	const own = overflowEnded
 		? endedItems(words, overflowEnded)
 		: overflowAt.painted
 			? []
 			: (overflowAt.value ?? []);
+	const fold = useFold(built.length, overflowAt.painted || own.length > 0);
+	// The acts folded into the menu stand before its own, in their order; one
+	// whose read waits has no name yet and one whose read ended stands blocked.
+	const folded = actionAt
+		.slice(fold.shown)
+		.flatMap((one): readonly MenuItem[] => {
+			if (!one.painted) return [one.value];
+			const ended = endedReason(words, one.phase);
+			return ended ? endedItems(words, ended) : [];
+		});
+	const items = [...folded, ...own];
+	const overflow = overflowAt.painted || items.length > 0;
 	return (
 		<View className={cn(PAGE_HEAD, PAGE_HEAD_TOUCH, far && PAGE_HEAD_ROOM)}>
-			<View className={cn(PAGE_TOP_BAR, TOP_BAR)}>
+			<View onLayout={fold.onRow} className={cn(PAGE_TOP_BAR, TOP_BAR)}>
 				{lead ? <View className={PAGE_TOP_BAR_START}>{lead}</View> : null}
-				<View className={cn(TITLE, PAGE_TITLE_FLOOR, PAGE_TITLE_BLOCK)}>
+				<View onLayout={fold.onTitle} className={cn(TITLE, PAGE_TITLE_FLOOR)}>
 					<RNText
 						accessibilityRole="header"
+						numberOfLines={1}
 						{...inertProps(name.painted)}
 						className={cn(text({ role: "title" }), NAME)}
 					>
-						{name.painted ? <Painted role="title" /> : partText(name.value)}
+						{paints(name) ? (
+							<Painted role="title" />
+						) : name.painted ? null : (
+							partText(name.value)
+						)}
 					</RNText>
 					<BusyMark frame={frame} />
 				</View>
-				<View className={cn(ACTS, PAGE_TOP_BAR_END)}>
-					{acts}
-					{overflowAt.painted || items.length ? (
+				<View
+					onLayout={fold.onActs(fold.shown + (overflow ? 1 : 0))}
+					className={cn(ACTS, PAGE_TOP_BAR_END)}
+				>
+					{built.slice(0, fold.shown)}
+					{overflow ? (
 						<MenuBase
 							label={words.more}
 							title={words.more}
 							items={items}
-							painted={overflowAt.painted && overflowEnded === undefined}
+							painted={
+								overflowAt.painted &&
+								overflowEnded === undefined &&
+								folded.length === 0
+							}
 						/>
 					) : null}
 				</View>

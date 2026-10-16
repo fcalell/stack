@@ -1412,6 +1412,8 @@ check("b-motion", "no size or place animates through layout", () => {
 // reads: React Native has no container query, so a layout read is the only way
 // to learn a box. A file not listed fails, and so does a listed file that stops.
 const MEASURING: Record<string, string> = {
+	"components/pane/head.tsx":
+		"a Pane head's row, title and acts, whose layouts say how many acts fit beside the title's floor before the rest fold into the more menu",
 	"lib/frame.ts":
 		"the toasts' box measured against the Shell's root, and the docked foot's region height (Yoga has no container units)",
 	"lib/room.tsx":

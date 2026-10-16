@@ -95,6 +95,10 @@
 			"types": "./dist/read.d.ts",
 			"default": "./dist/read.js"
 		},
+		"./fold": {
+			"types": "./dist/fold.d.ts",
+			"default": "./dist/fold.js"
+		},
 		"./paint": {
 			"types": "./dist/paint.d.ts",
 			"default": "./dist/paint.js"

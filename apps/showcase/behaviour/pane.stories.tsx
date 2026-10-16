@@ -17,6 +17,7 @@ import { Section } from "@fcalell/plugin-react-ui/components/section";
 import { Stats } from "@fcalell/plugin-react-ui/components/stats";
 import { Thread } from "@fcalell/plugin-react-ui/components/thread";
 import { SCREEN } from "@fcalell/plugin-react-ui/showcase/frames/image";
+import { readsAt } from "@fcalell/plugin-react-ui/showcase/waiting";
 import { BREAKPOINT_PX } from "@fcalell/ui-core/tokens";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { type ReactNode, useState } from "react";
@@ -190,215 +191,265 @@ const TOOLS = [
 ];
 const MORE = [{ label: "Copy deploy hook", onAct: noop }];
 
-// A touch Pane's bar is one row: the back act, the title wrapping, then its
-// acts as one span at the row's end. The title keeps two fifths of the row;
-// acts that do not fit beside it, the back act and the gaps drop whole to a
-// second line at the row's end, every target at 44 px.
-function row(width: number, count: number, wraps?: boolean): StoryObj {
+// The bar is one line at every width. The title truncates and keeps two fifths
+// of the row; the acts that do not fit beside it fold into the more menu, the
+// last first, every target at 44 px on touch.
+const ROW_TITLE = "Deploy history";
+
+// The labels of the acts standing in the head, and of the more menu's items.
+function standing(head: Element): string[] {
+	return TOOLS.map((act) => act.label).filter((label) =>
+		head.querySelector(`[aria-label='${label}']`),
+	);
+}
+
+async function menuLabels(head: Element): Promise<string[]> {
+	const more = must(head.querySelector<HTMLElement>("[aria-label='More']"));
+	more.click();
+	await waitFor(() =>
+		expect(document.querySelectorAll("[role=menuitem]").length).toBeGreaterThan(
+			0,
+		),
+	);
+	const labels = [...document.querySelectorAll("[role=menuitem]")].map(
+		(item) => item.textContent ?? "",
+	);
+	document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+	return labels;
+}
+
+// A bar with `count` acts at `width`, `shown` of which stand beside the title.
+function row(width: number, count: number, shown: number): StoryObj {
 	return {
 		...viewport(width),
 		render: () => (
 			<Place>
-				<Pane
-					title="Deploy history"
-					back="/system"
-					actions={TOOLS.slice(0, count)}
-				>
+				<Pane title={ROW_TITLE} back="/system" actions={TOOLS.slice(0, count)}>
 					<p>The first section.</p>
 				</Pane>
 			</Place>
 		),
 		play: async ({ canvasElement }) => {
-			const head = canvasElement.querySelector("header");
-			const title = head?.querySelector("h1");
-			const bar = head?.firstElementChild;
-			const back = head?.querySelector("[aria-label='Back']");
-			const acts = TOOLS.slice(0, count).map((act) =>
-				head?.querySelector(`[aria-label='${act.label}']`),
-			);
-			if (!head || !title || !bar || !back || acts.some((act) => !act))
-				throw new Error("the Pane is not drawn");
+			const head = must(canvasElement.querySelector("header"));
+			const title = must(head.querySelector("h1"));
+			const bar = must(head.firstElementChild);
+			await waitFor(() => expect(standing(head).length).toBe(shown));
 			const box = head.getBoundingClientRect();
 			const line = bar.getBoundingClientRect();
 			const text = title.getBoundingClientRect();
-			const first = acts[0]?.getBoundingClientRect();
-			const last = acts[acts.length - 1]?.getBoundingClientRect();
-			if (!first || !last) throw new Error("the acts are not drawn");
-			const wrapped = first.top >= text.bottom - 1;
+			const back = must(
+				head.querySelector("[aria-label='Back']"),
+			).getBoundingClientRect();
+			const labels = standing(head);
 			console.log(
-				`${width} x ${count}: head ${box.height}, row ${line.width}, title ${text.width}x${text.height}, acts ${first.left} to ${last.right} at ${first.top}, ${wrapped ? "wrapped" : "inline"}`,
+				`${width} x ${count}: head ${box.height}, row ${line.width}, title ${text.width}x${text.height}, standing ${labels.join(",")}`,
+			);
+			// One line: the title is a single line, and every target stands on its centre.
+			await expect(text.height).toBeLessThanOrEqual(
+				Number.parseFloat(getComputedStyle(title).lineHeight) + 1,
 			);
 			await expect(text.width).toBeGreaterThanOrEqual(line.width * 0.4 - 1);
-			for (const act of [back, ...acts]) {
-				const at = act?.getBoundingClientRect();
-				await expect(at?.width).toBeGreaterThanOrEqual(44);
-				await expect(at?.height).toBeGreaterThanOrEqual(44);
-				await expect(at?.bottom).toBeLessThanOrEqual(box.bottom);
+			await expect(back.width).toBeGreaterThanOrEqual(44);
+			for (const label of labels) {
+				const at = must(
+					head.querySelector(`[aria-label='${label}']`),
+				).getBoundingClientRect();
+				await expect(at.width).toBeGreaterThanOrEqual(44);
+				await expect(at.height).toBeGreaterThanOrEqual(44);
+				await expect(at.top + at.height / 2).toBeCloseTo(
+					back.top + back.height / 2,
+					0,
+				);
+				await expect(at.right).toBeLessThanOrEqual(box.right);
 			}
-			await expect(last.right).toBeLessThanOrEqual(box.right);
-			if (wraps !== undefined) await expect(wrapped).toBe(wraps);
+			// The last fold first: the acts standing are the first ones.
+			await expect(labels).toEqual(
+				TOOLS.slice(0, shown).map((act) => act.label),
+			);
+			if (shown < count) {
+				await expect(await menuLabels(head)).toEqual(
+					TOOLS.slice(shown, count).map((act) => act.label),
+				);
+			} else await expect(head.querySelector("[aria-label='More']")).toBeNull();
 		},
 	};
 }
 
-export const ActsShareTheTitleRow1At320 = row(320, 1, false);
-export const ActsShareTheTitleRow1At390 = row(390, 1, false);
-export const ActsShareTheTitleRow3At320 = row(320, 3, true);
-export const ActsShareTheTitleRow3At390 = row(390, 3, false);
-export const ActsShareTheTitleRow4At320 = row(320, 4, true);
-export const ActsShareTheTitleRow4At390 = row(390, 4);
+export const ActsShareTheTitleRow1At320 = row(320, 1, 1);
+export const ActsShareTheTitleRow1At390 = row(390, 1, 1);
+export const ActsShareTheTitleRow3At320 = row(320, 3, 1);
+export const ActsShareTheTitleRow3At390 = row(390, 3, 3);
+export const ActsShareTheTitleRow4At320 = row(320, 4, 1);
+export const ActsShareTheTitleRow4At390 = row(390, 4, 2);
 
-// A touch Pane whose title wraps pads it a step above and below its lines and
-// its head a step more (as every touch head does); the back act and the acts
-// hang from the first line.
-function wrapped(width: number): StoryObj {
-	return {
-		...viewport(width),
-		render: () => (
-			<Place>
-				<Pane
-					title="A deploy history title long enough to wrap onto several lines of the head before any act of the screen"
-					back="/system"
-					actions={TOOLS.slice(0, 1)}
-				>
-					<p>The first section.</p>
-				</Pane>
-			</Place>
-		),
-		play: async ({ canvasElement }) => {
-			const head = canvasElement.querySelector("header");
-			const title = head?.querySelector("h1");
-			const back = head?.querySelector("[aria-label='Back']");
-			const act = head?.querySelector("[aria-label='Filter']");
-			if (!head || !title || !back || !act)
-				throw new Error("the Pane is not drawn");
-			const box = head.getBoundingClientRect();
-			const text = title.getBoundingClientRect();
-			const style = getComputedStyle(title);
-			const line = Number.parseFloat(style.lineHeight);
-			const step = Number.parseFloat(style.paddingTop);
-			const lines = Math.round((text.height - 2 * step) / line);
-			const first = act.getBoundingClientRect();
-			const arrow = back.getBoundingClientRect();
-			console.log(
-				`${width}: head ${box.height}, title ${text.height} (${lines} lines), act centre ${first.top + first.height / 2}, back centre ${arrow.top + arrow.height / 2}, first line centre ${text.top + step + line / 2}`,
-			);
-			await expect(lines).toBeGreaterThanOrEqual(3);
-			await expect(step).toBeGreaterThanOrEqual(8);
-			await expect(text.height).toBeGreaterThanOrEqual(100);
-			await expect(box.height).toBeGreaterThanOrEqual(text.height + 2 * step);
-			await expect(first.top + first.height / 2).toBeCloseTo(
-				text.top + step + line / 2,
-				0,
-			);
-			await expect(arrow.top + arrow.height / 2).toBeCloseTo(
-				text.top + step + line / 2,
-				0,
-			);
-			await expect(text.width).toBeGreaterThanOrEqual(
-				(box.width - 32) * 0.4 - 1,
-			);
-		},
-	};
-}
+// ── A failed title ───────────────────────────────────────────────────
 
-export const WrappedTitleKeepsItsBlockAt320 = wrapped(320);
-export const WrappedTitleKeepsItsBlockAt390 = wrapped(390);
+const TITLES = readsAt("pane/title");
 
-const LONG_TITLE = "A deploy title long enough to wrap before the acts";
-
-// A touch Pane with no back act stands its acts on the title's row: 44 px
-// targets at the row's end, the title at the page's gutter wrapping before
-// them, the first section under a hairline that is no taller than the row.
-function titled(width: number): StoryObj {
+// A title whose read failed, with no fallback, draws nothing: the head keeps
+// the height a loaded title gives it, its back act and its acts, and the body
+// line speaks.
+function failedTitle(width: number): StoryObj {
 	return {
 		...viewport(width),
 		render: () => (
 			<div>
 				<Place>
-					<Pane title={LONG_TITLE} actions={TOOLS.slice(0, 2)} more={MORE}>
+					<Pane
+						title={TITLES.failing.at(() => "Never drawn")}
+						back="/system"
+						actions={TOOLS.slice(0, 1)}
+						read={TITLES.failing}
+					>
 						<p>The first section.</p>
 					</Pane>
 				</Place>
 				<Place>
-					<Pane title="Deploys" actions={TOOLS.slice(0, 2)} more={MORE}>
+					<Pane title="Deploys" back="/system" actions={TOOLS.slice(0, 1)}>
 						<p>The first section.</p>
 					</Pane>
 				</Place>
 			</div>
 		),
 		play: async ({ canvasElement }) => {
-			const [single, short] = [...canvasElement.querySelectorAll("header")];
-			if (!single || !short) throw new Error("the heads are not drawn");
-			const title = single.querySelector("h1");
-			const filter = single.querySelector("[aria-label='Filter']");
-			const more = single.querySelector("[aria-label='More']");
-			const section = single.nextElementSibling?.querySelector("p");
-			if (!title || !filter || !more || !section)
-				throw new Error("the Pane is not drawn");
-			const head = single.getBoundingClientRect();
-			const text = title.getBoundingClientRect();
-			const end = more.getBoundingClientRect();
-			const first = filter.getBoundingClientRect();
-			const lines = Math.round(
-				(text.height - 16) /
-					Number.parseFloat(getComputedStyle(title).lineHeight),
+			const [failed, loaded] = [...canvasElement.querySelectorAll("header")];
+			if (!failed || !loaded) throw new Error("the heads are not drawn");
+			await waitFor(() =>
+				expect(failed.parentElement?.textContent).toContain("didn't load"),
 			);
-			console.log(
-				`${width}: head ${head.height}, title ${text.height} (${lines} lines) from ${text.left} to ${text.right}, filter ${first.width}x${first.height} from ${first.left}, more ${end.width}x${end.height} ending ${end.right} of ${head.right}, section ${section.getBoundingClientRect().left}; one-line head ${short.getBoundingClientRect().height}`,
-			);
-			await expect(text.left).toBeCloseTo(
-				section.getBoundingClientRect().left,
-				1,
-			);
-			await expect(text.right).toBeLessThanOrEqual(first.left);
-			await expect(first.height).toBeGreaterThanOrEqual(44);
-			await expect(first.width).toBeGreaterThanOrEqual(44);
-			await expect(end.height).toBeGreaterThanOrEqual(44);
-			await expect(end.top).toBeGreaterThanOrEqual(head.top);
-			await expect(end.bottom).toBeLessThanOrEqual(head.bottom);
-			await expect(lines).toBeGreaterThan(1);
-			// A wrapped title is padded a step above and below its lines (8 px), the
-			// head a step more, as a one-line head is; the acts hang from the first line, not the head's
-			// middle; the title keeps two fifths of the row.
-			const line = Number.parseFloat(getComputedStyle(title).lineHeight);
-			const step = Number.parseFloat(getComputedStyle(title).paddingTop);
-			await expect(step).toBeGreaterThanOrEqual(8);
-			await expect(text.height).toBeGreaterThanOrEqual(lines * line + 2 * step);
-			await expect(head.height).toBeGreaterThanOrEqual(text.height + 2 * step);
-			await expect(first.top + first.height / 2).toBeCloseTo(
-				text.top + step + line / 2,
-				0,
-			);
-			await expect(end.top + end.height / 2).toBeCloseTo(
-				first.top + first.height / 2,
-				0,
-			);
-			await expect(text.width).toBeGreaterThanOrEqual(
-				(head.width - 32) * 0.4 - 1,
-			);
-			// The one-line form: the strip's 45 under the head's step above and
-			// below, acts 44, centred on the line.
-			const shortHead = short.getBoundingClientRect();
-			const shortTitle = short.querySelector("h1")?.getBoundingClientRect();
-			const shortAct = short
-				.querySelector("[aria-label='Filter']")
-				?.getBoundingClientRect();
-			if (!shortTitle || !shortAct)
-				throw new Error("the short Pane is not drawn");
-			await expect(shortHead.height).toBeCloseTo(45 + 2 * step, 0);
-			await expect(shortAct.height).toBeCloseTo(44, 0);
-			await expect(shortTitle.left).toBeCloseTo(16, 0);
-			await expect(shortAct.top + shortAct.height / 2).toBeCloseTo(
-				shortTitle.top + shortTitle.height / 2,
+			await expect(failed.querySelector("[data-painted]")).toBeNull();
+			await expect(failed.querySelector("h1")).toBeNull();
+			await expect(failed.textContent?.trim()).toBe("");
+			await expect(failed.querySelector("[aria-label='Back']")).not.toBeNull();
+			await expect(
+				failed.querySelector("[aria-label='Filter']"),
+			).not.toBeNull();
+			await expect(failed.getBoundingClientRect().height).toBeCloseTo(
+				loaded.getBoundingClientRect().height,
 				0,
 			);
 		},
 	};
 }
 
-export const ActsShareTheTitleRowAt320 = titled(320);
-export const ActsShareTheTitleRowAt390 = titled(390);
+export const FailedTitleIsBlankAt320 = failedTitle(320);
+export const FailedTitleIsBlankAt1280 = failedTitle(1280);
+
+// Widening the row returns the folded acts, narrowing it folds them again,
+// last first, with no reload.
+export const WideningReturnsTheActs: StoryObj = {
+	...viewport(700),
+	render: () => (
+		<div data-box="" style={{ width: 320 }}>
+			<Place>
+				<Pane title={ROW_TITLE} back="/system" actions={TOOLS}>
+					<p>The first section.</p>
+				</Pane>
+			</Place>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const head = must(canvasElement.querySelector("header"));
+		const box = must(canvasElement.querySelector<HTMLElement>("[data-box]"));
+		await waitFor(() => expect(standing(head).length).toBeLessThan(4));
+		const folded = standing(head).length;
+		await expect(standing(head)).toEqual(
+			TOOLS.slice(0, folded).map((act) => act.label),
+		);
+		box.style.width = "700px";
+		await waitFor(() => expect(standing(head).length).toBe(4));
+		await expect(head.querySelector("[aria-label='More']")).toBeNull();
+		box.style.width = "320px";
+		await waitFor(() => expect(standing(head).length).toBe(folded));
+	},
+};
+
+// With no back act the title stands at the page's gutter, the acts and the
+// more act (the head's own) at the row's end, one line.
+function gutter(width: number): StoryObj {
+	return {
+		...viewport(width),
+		render: () => (
+			<Place>
+				<Pane title="Deploys" actions={TOOLS.slice(0, 2)} more={MORE}>
+					<p>The first section.</p>
+				</Pane>
+			</Place>
+		),
+		play: async ({ canvasElement }) => {
+			const head = must(canvasElement.querySelector("header"));
+			const title = must(head.querySelector("h1")).getBoundingClientRect();
+			const filter = must(
+				head.querySelector("[aria-label='Filter']"),
+			).getBoundingClientRect();
+			const more = must(
+				head.querySelector("[aria-label='More']"),
+			).getBoundingClientRect();
+			const box = head.getBoundingClientRect();
+			const section = must(
+				head.nextElementSibling?.querySelector("p"),
+			).getBoundingClientRect();
+			console.log(
+				`${width}: head ${box.height}, title ${title.left} to ${title.right}, filter ${filter.left}, more ${more.right} of ${box.right}`,
+			);
+			await expect(title.left).toBeCloseTo(section.left, 1);
+			await expect(title.right).toBeLessThanOrEqual(filter.left);
+			await expect(more.right).toBeLessThanOrEqual(box.right);
+			await expect(filter.height).toBeGreaterThanOrEqual(44);
+			await expect(more.height).toBeGreaterThanOrEqual(44);
+			// The strip's 45 under the head's step above and below.
+			await expect(box.height).toBeCloseTo(45 + 16, 0);
+			await expect(filter.top + filter.height / 2).toBeCloseTo(
+				title.top + title.height / 2,
+				0,
+			);
+		},
+	};
+}
+
+export const TitleStandsAtTheGutterAt320 = gutter(320);
+export const TitleStandsAtTheGutterAt390 = gutter(390);
+
+// The same fold rule on the desktop: a narrow Pane's head folds its acts into
+// the more menu beside the back act, and a wide one holds them all.
+function desktop(width: number, folds: boolean): StoryObj {
+	return {
+		render: () => (
+			<Page width={width} fluid>
+				<Place>
+					<Pane title={ROW_TITLE} back="/system" actions={TOOLS}>
+						<p>The first section.</p>
+					</Pane>
+				</Place>
+			</Page>
+		),
+		play: async ({ canvasElement }) => {
+			const head = must(canvasElement.querySelector("header"));
+			const title = must(head.querySelector("h1"));
+			const bar = must(head.firstElementChild).getBoundingClientRect();
+			const text = title.getBoundingClientRect();
+			const shown = standing(head).length;
+			console.log(
+				`${width}: row ${bar.width}, title ${text.width}, standing ${shown}`,
+			);
+			await expect(shown < 4).toBe(folds);
+			await expect(text.width).toBeGreaterThanOrEqual(bar.width * 0.4 - 1);
+			await expect(text.height).toBeLessThanOrEqual(
+				Number.parseFloat(getComputedStyle(title).lineHeight) + 1,
+			);
+			await expect(standing(head)).toEqual(
+				TOOLS.slice(0, shown).map((act) => act.label),
+			);
+			if (folds)
+				await expect(await menuLabels(head)).toEqual(
+					TOOLS.slice(shown).map((act) => act.label),
+				);
+		},
+	};
+}
+
+export const NarrowPaneFoldsItsActs = desktop(260, true);
+export const WidePaneHoldsItsActs = desktop(900, false);
 
 // ── The title and its sections ──────────────────────────────────────
 

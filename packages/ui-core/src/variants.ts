@@ -848,17 +848,12 @@ export const PAGE_TOP_BAR = "gap-acts min-h-strip";
 // the acts by their end, and the title stands at the inset.
 export const PAGE_TOP_BAR_START = "-ms-icon-inset";
 export const PAGE_TOP_BAR_END = "-me-icon-inset";
-// A touch Pane's title row wraps: the title holds at least two fifths of it (a
-// structural fraction, never a width), so acts that do not fit beside it, the
-// back act and the gaps drop whole to a second line at the row's end.
+// A Pane's head is one line at every width. The title truncates and holds at
+// least two fifths of the row (`TITLE_FLOOR`, a structural fraction, never a
+// width); the acts that do not fit beside it fold into the more menu, the last
+// first, and come back when there is room (`actsShown`). On touch the head takes
+// a step of block padding over the row.
 export const PAGE_TITLE_FLOOR = "min-w-2/5 basis-0";
-// The title row's title carries a step of block padding above and below its
-// lines (one `inside` step), so a single line fills the strip's height and a
-// wrapped title never butts the head's edges. On touch the head takes a step
-// more over the row, whether or not the title wraps. The row anchors its items
-// to the top (a platform overlay), so a 44 px act centres on the title's first
-// line.
-export const PAGE_TITLE_BLOCK = "py-inside";
 export const PAGE_HEAD_TOUCH = "py-inside";
 export const PAGE_BODY = "gap-sections p-page";
 // A docked foot (a Pane's `foot`) is one cell: a

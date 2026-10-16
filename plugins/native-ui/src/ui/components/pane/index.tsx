@@ -71,7 +71,7 @@ export type PaneProps = PaneBase &
 		  }
 	);
 
-/** A page of a Place, on the phone one screen: a bar (the back act where `back` is set, else the shell's switcher; the title wrapping; then the actions and more, which drop whole to a second line when they do not fit), a body that scrolls, its children a sections gap apart, and a `foot` that docks under the body over the keyboard, a `sheet` in its place while it is open, and the `empty` of its `read` standing in place of the children. On a record's Pane the title is the record's name, the actions and more its acts, and the record's place and facts stand in an `ItemHeader` at the body's top. The toasts stand over the body, above the foot. `cover` and `wide` are the web's: on the phone a Pane is always the whole screen and its column the screen's width, so both change nothing. */
+/** A page of a Place, on the phone one screen: a bar (the back act where `back` is set, else the shell's switcher; the title, one line, truncating, never under two fifths of the bar; then the actions and more, the actions that do not fit folding into the more menu, the last first, and returning when there is room), a body that scrolls, its children a sections gap apart, and a `foot` that docks under the body over the keyboard, a `sheet` in its place while it is open, and the `empty` of its `read` standing in place of the children. On a record's Pane the title is the record's name, the actions and more its acts, and the record's place and facts stand in an `ItemHeader` at the body's top. The toasts stand over the body, above the foot. `cover` and `wide` are the web's: on the phone a Pane is always the whole screen and its column the screen's width, so both change nothing. */
 export function Pane({
 	title,
 	back,

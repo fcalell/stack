@@ -1,3 +1,4 @@
+import { paints } from "@fcalell/plugin-api/read";
 import {
 	type Datum,
 	useDrawsFailure,
@@ -14,11 +15,13 @@ import { endedReason } from "@fcalell/ui-core/read";
 import {
 	PAGE_HEAD,
 	PAGE_HEAD_ROOM,
+	PAGE_TITLE_FLOOR,
 	PAGE_TOP_BAR,
 	text,
 } from "@fcalell/ui-core/variants";
 import { use } from "react";
 import { backGlyph } from "../../lib/back.ts";
+import { useFold } from "../../lib/fold.ts";
 import { ShellSwitcher } from "../../lib/frame.ts";
 import { DistanceContext, useTouch } from "../../lib/media.ts";
 import { Painted } from "../../lib/paint.tsx";
@@ -43,25 +46,20 @@ const ALONE =
 const BESIDE =
 	"flex place-max-tablet:hidden group-first/pane:hidden group-data-cover/pane:hidden";
 const HEAD = "flex flex-col";
-// On touch the head carries a step of block padding and the row is the
-// title's: it wraps, so acts that do not fit beside the back act, the title's
-// floor and the gaps drop whole to a second line, and the back act or the
+// On touch the head carries a step of block padding, and the back act or the
 // switcher reaches the page inset by its start, the acts by their end. The row
-// anchors its items to the top, so a 44 px act centres on the title's first line.
+// is one line at every width: the title truncates and keeps its floor (two
+// fifths of the row, a structural fraction, never a width), and the acts that
+// do not fit beside it fold into the more menu (`useFold`).
 const HEAD_TOUCH = "touch:py-inside";
-const ROW = "flex items-center touch:flex-wrap touch:items-start";
+const ROW = "flex items-center";
 const START = "touch:-ms-icon-inset";
 const ACTS = "flex shrink-0 items-center gap-acts ms-auto touch:-me-icon-inset";
-// The heading is the title's line, the busy mark after the title. On touch it
-// holds at least two fifths of the row (a structural fraction, never a width),
-// with a step of block padding so a wrapped title never butts the head's edges.
-const TITLE =
-	"flex min-w-0 grow items-center gap-inside touch:min-w-2/5 touch:basis-0 touch:py-inside";
-// The title truncates on the desktop; on touch it wraps.
-const NAME =
-	"min-w-0 truncate touch:overflow-visible touch:whitespace-normal touch:text-clip";
+// The heading is the title's line, the busy mark after the title.
+const TITLE = "flex min-w-0 grow items-center gap-inside";
+const NAME = "min-w-0 truncate";
 
-/** A Pane's bar: the back act, the title, the actions and more, and the line of its read's state. It subscribes to the title and the acts itself, so a title or an act's read landing renders the bar and nothing under the Pane's body. Outside the package's exports. */
+/** A Pane's bar: the back act, the title, the actions and more, and the line of its read's state. The bar is one line: the acts that do not fit beside the title's floor stand in the more menu, the last first. It subscribes to the title and the acts itself, so a title or an act's read landing renders the bar and nothing under the Pane's body. Outside the package's exports. */
 export function PaneHead(props: {
 	/** The title's id, which names the Pane while the title is no filler. */
 	titleId: string;
@@ -95,12 +93,6 @@ export function PaneHead(props: {
 				/>
 			</span>
 		);
-	const close =
-		back === undefined ? null : (
-			<span className={BESIDE}>
-				<IconButtonLink icon="X" fit={fit} label={words.close} href={back} />
-			</span>
-		);
 	// On touch the shell's switcher leads a Pane with no way back; on the
 	// desktop it stands in the sidebar.
 	const pick =
@@ -112,7 +104,7 @@ export function PaneHead(props: {
 	// An act is painted, inert, while its own datum waits; a selection's shape
 	// is unknown until it lands, so its paint is a bare glyph. One whose read
 	// ended stands blocked with the sentence for its name, never a false yes.
-	const acts = actionAt.map((one, at) => {
+	const built = actionAt.map((one, at) => {
 		if (!one.painted) {
 			return <IconButton key={one.value.label} {...one.value} fit={fit} />;
 		}
@@ -132,18 +124,39 @@ export function PaneHead(props: {
 	const overflowEnded = overflowAt.painted
 		? endedReason(words, overflowAt.phase)
 		: undefined;
-	const items = overflowEnded
+	const own = overflowEnded
 		? endedItems(words, overflowEnded)
 		: overflowAt.painted
 			? []
 			: (overflowAt.value ?? []);
+	const fold = useFold(built.length, overflowAt.painted || own.length > 0);
+	// The acts folded into the menu stand before its own, in their order; one
+	// whose read waits has no name yet and one whose read ended stands blocked.
+	const folded = actionAt
+		.slice(fold.shown)
+		.flatMap((one): readonly MenuItem[] => {
+			if (!one.painted) return [one.value];
+			const ended = endedReason(words, one.phase);
+			return ended ? endedItems(words, ended) : [];
+		});
+	const items = [...folded, ...own];
+	const close =
+		back === undefined ? null : (
+			<span ref={fold.close} className={BESIDE}>
+				<IconButtonLink icon="X" fit={fit} label={words.close} href={back} />
+			</span>
+		);
 	const overflow =
 		overflowAt.painted || items.length ? (
 			<MenuBase
 				label={words.more}
 				title={words.more}
 				items={items}
-				painted={overflowAt.painted && overflowEnded === undefined}
+				painted={
+					overflowAt.painted &&
+					overflowEnded === undefined &&
+					folded.length === 0
+				}
 			/>
 		) : null;
 	// A painted title is filler, not a heading: it stands as a paragraph of the
@@ -153,17 +166,25 @@ export function PaneHead(props: {
 	// keeps its acts and their focus.
 	return (
 		<header className={cn(PAGE_HEAD, far && PAGE_HEAD_ROOM, HEAD_TOUCH, HEAD)}>
-			<div className={cn(PAGE_TOP_BAR, ROW)}>
+			<div ref={fold.row} className={cn(PAGE_TOP_BAR, ROW)}>
 				{goBack}
 				{pick}
-				<Title id={titleId} className={cn(text({ role: "title" }), TITLE)}>
+				<Title
+					id={titleId}
+					ref={fold.title}
+					className={cn(text({ role: "title" }), PAGE_TITLE_FLOOR, TITLE)}
+				>
 					<span className={NAME}>
-						{name.painted ? <Painted role="title" /> : partText(name.value)}
+						{paints(name) ? (
+							<Painted role="title" />
+						) : name.painted ? null : (
+							partText(name.value)
+						)}
 					</span>
 					<BusyMark frame={frame} />
 				</Title>
-				<span className={ACTS}>
-					{acts}
+				<span ref={fold.group} className={ACTS}>
+					{built.slice(0, fold.shown)}
 					{overflow}
 					{close}
 				</span>

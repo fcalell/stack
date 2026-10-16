@@ -25,9 +25,11 @@ and body:
 A `Pane`'s bar holds its `back` act, its `title` (the `h1`, a short phrase), its `actions` (icon
 acts; a create act is one, an `IconAct` with the `Plus` icon) and `more` (the acts past them, in a
 menu). There is no filled act and no Details act. On touch the shell's switcher leads the bar of a
-`Pane` with no `back`, and the bar is one row: the leading act, the title wrapping, then the
-actions and `more`; when the acts do not fit beside the title's floor they drop whole to a second
-line at the row's end.
+`Pane` with no `back`, and the bar is one line at every width: the leading act, the title, then the
+actions and `more`. The title truncates and keeps two fifths of the row; the actions that do not fit
+beside it fold into the `more` menu, the last first, and come back when there is room, so a bar never
+wraps or grows. A title whose read failed, with no `.or` fallback, draws nothing: the bar keeps its
+height, its back or close act and its actions, and the body line says why.
 
 `back` is the route the `Pane` returns to. It draws as Back where the `Pane` stands alone (below
 `tablet` of its `Place`, first in it, or covering it) and as Close, at the bar's end, where another

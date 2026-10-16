@@ -518,7 +518,7 @@ a tick with no animation, never jumped to full.
   (exact, but a second mechanism per platform for one rule).
 - A molecule whose structure follows density keeps one constant per structure, never a density axis:
   the Pane's head (`PAGE_HEAD`, one hairline at both densities) holds the desktop bar (`PAGE_TOP_BAR`
-  with the back act, the title and the acts in one row) or the touch one (the same row, wrapping),
+  with the back act, the title and the acts in one row) or the touch one (the same row, with its padding and insets),
   the sidebar (`SHELL_SIDEBAR`, `PLACE_ROW`) and the tab bar (`SHELL_TAB_BAR`, `PLACE_TAB`). The web
   picks the structure under `touch:` or, for which Panes stand and what a Pane's content draws, by
   container width: a Place is the `place` size container and a Pane the `page` one, and the web's
@@ -530,14 +530,20 @@ a tick with no animation, never jumped to full.
   over the title. `PAGE_TOP_BAR_START` and `PAGE_TOP_BAR_END` reach the leading act and the acts span
   across the page inset by `icon-inset`, half of what the control has over its icon, so its first and
   last icon glyphs stand at the title's start and the inset's end; the switcher's trigger keeps the
-  same inset as its padding, so its avatar stands there too. The row wraps: the title keeps
-  `PAGE_TITLE_FLOOR` (two fifths of the row, `basis-0` so it wraps beside the leading act and the
-  acts rather than pushing them down); the title carries a step of block padding above and below its
-  lines (`PAGE_TITLE_BLOCK`, so a single line still fills the 44 px strip), the head takes a step more
-  over the row (`PAGE_HEAD_TOUCH`, always on touch: the web spells it `touch:py-inside`), and the row
-  hangs its items from the top so a 44 px act centres on the title's first line and the acts span,
-  `shrink-0 ms-auto`, drops whole to a second line at the row's end at 44 px when it does not fit
-  beside the leading act, the floor and the gaps (at 320 with three acts it wraps, at 390 it fits).
+  same inset as its padding, so its avatar stands there too. The row is one line at every width: the
+  title truncates and keeps `PAGE_TITLE_FLOOR` (two fifths of the row, `basis-0`), the head takes a
+  step of block padding over the row on touch (`PAGE_HEAD_TOUCH`, which the web spells
+  `touch:py-inside`), and the acts that do not fit beside the leading act, the floor and the gaps
+  fold into the head's more menu, the last first, and return when there is room. A wrapping head
+  made the bar's height depend on its acts and pushed acts off the title's line; a fold keeps the
+  height and every act one press away. The count is `actsShown` in `@fcalell/ui-core/fold`, pure
+  over the row, what stands beside the acts, one act's box and the gap, so both platforms fold at
+  the same widths; the web measures with a `ResizeObserver` on the row (`useFold`, one entry of the
+  closed measure list) and the phone reads `onLayout`. The folded acts stand in the menu before the
+  head's own items, in their order; a folded act whose read waits is absent from it until it lands
+  and one whose read ended stands blocked. A title whose read failed with no `.or` fallback draws
+  nothing (`paints` is false for an ended read): the bar keeps its strip's height, its back or close
+  act and its acts, and the body's failed line speaks.
   A Pane's title is a bar over a hairline and the body starts a page inset under it, where a
   Section's title is a line of the body a pair over its content; the two rhythms are not one, and the
   first Pane's title is the section's name at every density (the app never forks it by density).
