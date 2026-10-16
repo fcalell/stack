@@ -52,16 +52,11 @@ function Setting(props: { label: string; description: string; on: boolean }) {
 // A form of two fields and its bar over a read, in whichever form the read
 // puts it: waiting (the fields' leaves paint, the filled act with them),
 // failed, missing, empty or landed.
-function Over(props: {
-	read: Selection<unknown>;
-	empty?: Empty;
-	failed?: string;
-}) {
+function Over(props: { read: Selection<unknown>; empty?: Empty }) {
 	return (
 		<Form
 			read={props.read}
 			empty={props.empty}
-			failed={props.failed}
 			bar={{ acts: [{ label: "Save", onAct: never }] }}
 		>
 			<Labelled label="Project name" value="acme-web" />
@@ -72,14 +67,13 @@ function Over(props: {
 
 // A form of groups, each its own frame: the first over a read, the second
 // always loaded, so one group's wait or failure never stands in the other's.
-function Grouped(props: { read: Selection<unknown>; failed?: string }) {
+function Grouped(props: { read: Selection<unknown> }) {
 	return (
 		<Form
 			groups={[
 				{
 					title: "General",
 					read: props.read,
-					failed: props.failed,
 					fields: <Labelled label="Workspace name" value="Acme Inc" />,
 				},
 				{
@@ -131,7 +125,6 @@ export function drawForm(frame: ShowcaseFrame) {
 		return (
 			<div className="flex flex-col gap-sections">
 				<Over read={reads.failing} />
-				<Over read={other.failing} failed="The project did not load." />
 				<Over read={reads.missing} />
 				<Grouped read={readsAt(`${frame.id}/3`).failing} />
 			</div>

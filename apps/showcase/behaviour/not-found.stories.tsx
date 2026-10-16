@@ -174,7 +174,7 @@ function RecordPane({
 }) {
 	const record = orpc.record.get.read({ id: "zzz" });
 	return (
-		<Pane title="Record" read={record} failed="The record did not load.">
+		<Pane title="Record" read={record}>
 			<p>The record.</p>
 		</Pane>
 	);
@@ -233,9 +233,7 @@ export const Failure: StoryObj = {
 		/>
 	),
 	play: async ({ canvas, userEvent }) => {
-		await expect(
-			await canvas.findByText("The record did not load."),
-		).toBeVisible();
+		await expect(await canvas.findByText("This didn't load.")).toBeVisible();
 		await expect(canvas.queryByText("This no longer exists.")).toBeNull();
 		await userEvent.click(canvas.getByRole("button", { name: "Retry" }));
 		await waitFor(() => expect(requests).toHaveBeenCalledTimes(2));

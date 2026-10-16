@@ -57,12 +57,7 @@ function GroupBox(props: { group: FormGroup }) {
 			<FrameLine frame={frame} flow />
 			{group.description ? <Text role="meta">{group.description}</Text> : null}
 			{group.lead}
-			<FrameBody
-				frame={frame}
-				fit="frame"
-				empty={group.empty}
-				failed={group.failed}
-			>
+			<FrameBody frame={frame} fit="frame" empty={group.empty}>
 				{group.fields}
 			</FrameBody>
 		</fieldset>
@@ -76,7 +71,6 @@ export function FormBody({
 	bar,
 	read,
 	empty,
-	failed,
 	in: within,
 	acting,
 	outer,
@@ -97,7 +91,7 @@ export function FormBody({
 	// paints while either waits and stands blocked once the form's has ended.
 	// A group's read is the group's, not the bar's.
 	const words = useWords();
-	const { waiting, ended } = submitOf(words, frame.form, failed);
+	const { waiting, ended } = submitOf(words, frame.form);
 	const outerWaits = usePainted([outer]);
 	const acts = bar && (
 		<ActionBarBase
@@ -128,7 +122,7 @@ export function FormBody({
 				)}
 			>
 				<FrameLine frame={frame} flow />
-				<FrameBody frame={frame} fit="frame" empty={empty} failed={failed}>
+				<FrameBody frame={frame} fit="frame" empty={empty}>
 					{groups
 						? groups.map((group, index) => (
 								<GroupBox key={group.title ?? index} group={group} />

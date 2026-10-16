@@ -78,11 +78,7 @@ function Failed(props: { first: Reads; second: Reads }) {
 			>
 				<Group items={STAND_IN_ENTRIES} />
 			</Section>
-			<Section
-				title="Members"
-				failed="Members did not load."
-				read={props.second.failing}
-			>
+			<Section title="Members" read={props.second.failing}>
 				<Group items={STAND_IN_ENTRIES} />
 			</Section>
 			<Section title="Members" read={missing}>

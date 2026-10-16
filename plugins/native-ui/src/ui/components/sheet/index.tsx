@@ -26,8 +26,6 @@ export interface SheetProps extends Closed {
 	submit?: Act;
 	/** In the foot (a sentence; wraps). */
 	foot?: string;
-	/** What the sheet says when its `read` fails, in place of the generic sentence (a sentence; wraps). A rejected act draws its own sentence in the line a blocked reason keeps (under the head's submit), the act ready again. */
-	failed?: string;
 	// What the desktop card holds; on the phone a pane's title steps
 	// down to body 500.
 	fit?: SheetFit;
@@ -53,7 +51,6 @@ export function Sheet({
 	back,
 	submit,
 	foot,
-	failed,
 	fit,
 	read,
 	empty,
@@ -75,11 +72,9 @@ export function Sheet({
 				back={back}
 				submit={submit}
 				foot={foot}
-				failed={failed}
 				fit={fit}
 				bar={form?.bar}
 				barRead={form?.read}
-				barFailed={form?.failed}
 				read={read}
 				empty={empty}
 			>

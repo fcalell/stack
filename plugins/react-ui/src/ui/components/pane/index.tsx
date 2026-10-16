@@ -72,8 +72,6 @@ interface PaneBase extends Closed {
 	foot?: ReactNode;
 	/** A task over the foot: while it is `open` the sheet docks there in the foot's place, the body scrolling above it, and closing hands focus back to the foot's input. */
 	sheet?: SheetProps;
-	/** What the page says when the `read` fails, in place of the generic sentence (a sentence; wraps). */
-	failed?: string;
 	/** The Pane spans its Place, the Panes before it hidden, mounted. */
 	cover?: boolean;
 	/** What it holds stands at the Pane's width, not the measure: a `Canvas`, a code `Diff`. */
@@ -107,7 +105,6 @@ export function Pane({
 	sheet,
 	read,
 	empty,
-	failed,
 	cover,
 	wide,
 	children,
@@ -168,12 +165,7 @@ export function Pane({
 								)}
 							>
 								<Scroller value={scroll.holder}>
-									<FrameBody
-										frame={frame}
-										fit="page"
-										empty={empty}
-										failed={failed}
-									>
+									<FrameBody frame={frame} fit="page" empty={empty}>
 										{children}
 									</FrameBody>
 								</Scroller>

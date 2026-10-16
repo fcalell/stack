@@ -129,10 +129,9 @@ interface Parts {
 	painted?: boolean;
 	// Why the body's read ended: the form's bar stands blocked under it too.
 	ended?: string;
-	// What the form in the body holds and says when it fails: the form's bar,
-	// hoisted into the foot, submits what that gives.
+	// What the form in the body holds: the form's bar, hoisted into the foot,
+	// submits what that gives.
 	barRead?: Selection<unknown>;
-	barFailed?: string;
 	// The body's frame, whose busy mark and state line the head draws.
 	frame: Frame;
 	host?: ReasonHost;
@@ -320,8 +319,8 @@ function Head() {
 // The form's bar: it subscribes to the form's read itself, since the form that
 // owns the read stands in the body and the bar in the footer.
 function FormBar() {
-	const { bar, acting, painted, ended, barRead, barFailed } = useParts();
-	const form = useSubmitOf(barRead, barFailed);
+	const { bar, acting, painted, ended, barRead } = useParts();
+	const form = useSubmitOf(barRead);
 	if (!bar) return null;
 	return (
 		<ActionBarBase
@@ -380,7 +379,6 @@ export interface SheetBaseProps {
 	submit?: Act;
 	foot?: string;
 	// What the body says when its `read` fails, in place of the generic sentence.
-	failed?: string;
 	fit?: SheetFit;
 	// A decision's acts, the foot's `ActionBar`.
 	acts?: Act[];
@@ -405,11 +403,10 @@ export interface SheetBaseProps {
 	read?: Selection<unknown>;
 	// The body's sentence when the `read` is empty.
 	empty?: Empty;
-	// The read the form in the body holds, and what it says when it fails: the
-	// form's bar, hoisted into the foot, paints while it or the body's waits
-	// and stands blocked once either has ended. A group's read is the group's.
+	// The read the form in the body holds: the form's bar, hoisted into the
+	// foot, paints while it or the body's waits and stands blocked once either
+	// has ended. A group's read is the group's.
 	barRead?: Selection<unknown>;
-	barFailed?: string;
 	// The holder of the sheet's acts' run, when a holder above it hosts more
 	// (a `Sheet` holds its form's bar too). Absent, the sheet hosts its own.
 	acting?: Acting<number>;
@@ -437,7 +434,6 @@ export function SheetBase({
 	back,
 	submit: offered,
 	foot,
-	failed,
 	fit,
 	acts,
 	bar,
@@ -448,14 +444,13 @@ export function SheetBase({
 	read,
 	empty,
 	barRead,
-	barFailed,
 	children,
 }: SheetBaseProps) {
 	const frame = useFrame(read);
 	const words = useWords();
 	// The submit waits only on the sheet's own read: painted while it waits or
 	// stands still, blocked with the sentence once it ended.
-	const { waiting, ended } = submitOf(words, frame.form, failed);
+	const { waiting, ended } = submitOf(words, frame.form);
 	const submit =
 		ended === undefined ? offered : offered && { ...offered, blocked: ended };
 	const own = useAct<number>("line");
@@ -513,7 +508,6 @@ export function SheetBase({
 		painted: waiting,
 		ended,
 		barRead,
-		barFailed,
 		frame,
 		acts,
 		bar,
@@ -546,7 +540,7 @@ export function SheetBase({
 				accessibilityState={{ busy: frame.holds && frame.form === "waiting" }}
 				className={cn(SHEET_BODY, BODY)}
 			>
-				<FrameBody frame={frame} fit="frame" empty={empty} failed={failed}>
+				<FrameBody frame={frame} fit="frame" empty={empty}>
 					{children}
 				</FrameBody>
 			</View>

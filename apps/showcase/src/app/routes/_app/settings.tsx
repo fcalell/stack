@@ -138,7 +138,6 @@ function Settings() {
 							title: "General",
 							description: "How the workspace appears to its members.",
 							read: workspace,
-							failed: "General settings did not load.",
 							fields: (
 								<>
 									<FormField
@@ -219,7 +218,6 @@ function Settings() {
 								"Scan the code with the Acme app on your phone to get deploy alerts there.",
 							lead: <QrCode value="https://acme.dev/pair/7KQ2XM" />,
 							read: paired,
-							failed: "Paired devices did not load.",
 							empty: {
 								sentence: "A phone that scans the code shows here.",
 							},

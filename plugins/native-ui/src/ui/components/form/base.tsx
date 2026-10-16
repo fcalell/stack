@@ -55,12 +55,7 @@ function GroupBox(props: { group: FormGroup }) {
 			{group.description ? <Text role="meta">{group.description}</Text> : null}
 			{group.lead}
 			<View className={FORM_GROUP}>
-				<FrameBody
-					frame={frame}
-					fit="frame"
-					empty={group.empty}
-					failed={group.failed}
-				>
+				<FrameBody frame={frame} fit="frame" empty={group.empty}>
 					{group.fields}
 				</FrameBody>
 			</View>
@@ -81,7 +76,6 @@ export function FormBody({
 	bar,
 	read,
 	empty,
-	failed,
 	in: within,
 	acting,
 }: FormProps & {
@@ -96,7 +90,7 @@ export function FormBody({
 	const touch = within === "sheet" ? sheet : own;
 	useLeaveGuard(touch.leave, within !== "sheet");
 	const words = useWords();
-	const { waiting, ended } = submitOf(words, frame.form, failed);
+	const { waiting, ended } = submitOf(words, frame.form);
 	const acts =
 		bar === undefined ? null : (
 			<ActionBarBase {...bar} acting={acting} painted={waiting} ended={ended} />
@@ -111,7 +105,7 @@ export function FormBody({
 				})}
 			>
 				<FrameLine frame={frame} flow />
-				<FrameBody frame={frame} fit="frame" empty={empty} failed={failed}>
+				<FrameBody frame={frame} fit="frame" empty={empty}>
 					{groups
 						? groups.map((group, index) => (
 								<GroupBox key={group.title ?? index} group={group} />

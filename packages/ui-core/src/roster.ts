@@ -647,7 +647,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"sheet",
 				"read",
 				"empty",
-				"failed",
 				"cover",
 				"wide",
 				"children",
@@ -829,7 +828,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"more",
 				"read",
 				"empty",
-				"failed",
 				"children",
 			],
 			draws: [
@@ -978,7 +976,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// never reaches the bar. The form draws no busy mark
 		// of its own for an act that runs.
 		Form: {
-			props: ["children", "groups", "bar", "read", "empty", "failed"],
+			props: ["children", "groups", "bar", "read", "empty"],
 			draws: [
 				"FORM",
 				"FORM_FOOT",
@@ -1614,8 +1612,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// `fit` is the desktop card's width: a form, or a record's details.
 		// On touch the submit stands at the head row's end and a blocked
-		// submit's reason or a rejected act's sentence under the head. `failed`
-		// is the body's sentence when its `read` fails, like every frame's.
+		// submit's reason or a rejected act's sentence under the head.
 		// `form` is a Form's props, drawn after the children in the sheet's
 		// column (its `bar` stuck to the edge of the body on the web, in the pinned
 		// foot on the phone); the sheet's `submit` and the form's `bar` are two
@@ -1637,7 +1634,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"back",
 				"submit",
 				"foot",
-				"failed",
 				"fit",
 				"read",
 				"empty",

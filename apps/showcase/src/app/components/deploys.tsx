@@ -441,7 +441,6 @@ export function DeployList() {
 		<Pane
 			title="Deploys"
 			read={deploys}
-			failed="Deploys did not load."
 			empty={{ sentence: "No deploy has run on this project." }}
 			actions={[
 				{
@@ -527,7 +526,6 @@ export function DeployRecord(props: { deployId: string; file?: string }) {
 		<Pane
 			read={deploy}
 			title={deploy.at((each) => each.message)}
-			failed="The deploy did not load."
 			back="/deploys"
 		>
 			<Record

@@ -107,7 +107,7 @@ function Bench(props: { readMs: number; actMs: number; outcome: Outcome }) {
 						},
 					]}
 				>
-					<Section title="People" read={rows} failed="People did not load.">
+					<Section title="People" read={rows}>
 						<List
 							items={rows}
 							row={{ key: (name) => name, title: (name) => name }}

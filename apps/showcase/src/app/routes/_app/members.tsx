@@ -351,7 +351,6 @@ function Members() {
 					title="People"
 					description="Who works in Acme, and what each can change."
 					read={members}
-					failed="Members did not load."
 					empty={{
 						sentence: "Invite the people you work with to deploy together.",
 					}}

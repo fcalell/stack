@@ -108,7 +108,6 @@ function Chart(props: {
 				title="Requests"
 				description="Per day this week, by service."
 				read={requests}
-				failed="Requests did not load."
 				empty={{ sentence: "No request reached a service this week." }}
 			>
 				<BarChart
@@ -125,7 +124,6 @@ function Chart(props: {
 			title="Build minutes"
 			description="Per day, the last 30 days."
 			read={minutes}
-			failed="Build minutes did not load."
 			empty={{ sentence: "No build ran in the last 30 days." }}
 		>
 			<BarChart

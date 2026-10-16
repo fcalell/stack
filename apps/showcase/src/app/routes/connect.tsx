@@ -30,7 +30,6 @@ function Connect() {
 			<Section
 				title="Workspaces"
 				read={workspaces}
-				failed="Workspaces did not load."
 				empty={{ sentence: "No workspace is open to you." }}
 			>
 				<Group

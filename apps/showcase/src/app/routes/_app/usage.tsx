@@ -55,7 +55,6 @@ function Usage() {
 					title="This month"
 					description="Team plan, resets on Oct 31."
 					read={meters}
-					failed="The meters did not load."
 					empty={{
 						sentence: "This plan meters nothing.",
 					}}
@@ -77,7 +76,6 @@ function Usage() {
 					title="Requests"
 					description="Per day this week, by project."
 					read={requests}
-					failed="Requests did not load."
 					empty={{ sentence: "No request reached a project this week." }}
 				>
 					<BarChart
@@ -92,7 +90,6 @@ function Usage() {
 					title="Build minutes"
 					description="Per day, the last 30 days."
 					read={minutes}
-					failed="Build minutes did not load."
 					empty={{ sentence: "No build ran in the last 30 days." }}
 				>
 					<BarChart
@@ -106,7 +103,6 @@ function Usage() {
 					title="Cron runs"
 					description="Per day this week."
 					read={cron}
-					failed="Cron runs did not load."
 					empty={{ sentence: "Nothing ran on a schedule this week." }}
 				>
 					<BarChart
@@ -120,7 +116,6 @@ function Usage() {
 					title="Plan"
 					description="What moving to Business changes."
 					read={plan}
-					failed="The plan change did not load."
 					empty={{ sentence: "Moving to Business changes nothing." }}
 					act={{
 						label: "Move to Business",

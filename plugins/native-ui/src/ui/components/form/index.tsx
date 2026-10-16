@@ -19,8 +19,6 @@ export interface FormGroup {
 	read?: Selection<unknown>;
 	/** The fields' sentence when the group's `read` is empty. */
 	empty?: Empty;
-	/** What the group says when its `read` fails, in place of the generic sentence (a sentence; wraps). */
-	failed?: string;
 }
 
 interface FormBase extends Closed {
@@ -30,8 +28,6 @@ interface FormBase extends Closed {
 	read?: Selection<unknown>;
 	/** The fields' sentence when the `read`'s selection is empty. */
 	empty?: Empty;
-	/** What the form says when its `read` fails, in place of the generic sentence (a sentence; wraps). */
-	failed?: string;
 }
 
 // The form's structure is its props: `children`, a flat run of `FormField`s,

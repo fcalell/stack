@@ -107,7 +107,6 @@ export function DeployChanges(props: {
 			<Section
 				title="Changes"
 				read={files.files}
-				failed="Changes did not load."
 				empty={{
 					sentence: "This deploy rebuilt the commit already in production.",
 				}}
@@ -115,11 +114,7 @@ export function DeployChanges(props: {
 				{files.list}
 				{files.diff}
 			</Section>
-			<Section
-				title="Build log"
-				read={log}
-				failed="The build log did not load."
-			>
+			<Section title="Build log" read={log}>
 				<Code text={log} tail={6} copy />
 			</Section>
 		</>

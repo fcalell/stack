@@ -158,7 +158,6 @@ function Assistant() {
 			<Pane
 				title="Assistant"
 				read={history}
-				failed="The conversation did not load."
 				empty={{
 					sentence:
 						"Ask about your deploys: why one failed, what changed between two, or how much of the plan is used.",

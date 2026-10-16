@@ -48,8 +48,6 @@ interface PaneBase extends Closed {
 	foot?: ReactNode;
 	/** A task over the foot: while it is `open` the sheet docks there in the foot's place, the body scrolling above it, and closing hands focus back to the foot's input. */
 	sheet?: SheetProps;
-	/** What the page says when the `read` fails, in place of the generic sentence (a sentence; wraps). */
-	failed?: string;
 	/** Accepted for the web's sake; on the phone every Pane is a screen of the router's stack, so it changes nothing. */
 	cover?: boolean;
 	/** Accepted for the web's sake; the phone's body is one column at the screen's width, so it changes nothing. */
@@ -83,7 +81,6 @@ export function Pane({
 	sheet,
 	read,
 	empty,
-	failed,
 	children,
 }: PaneProps) {
 	const frame = useFrame(read);
@@ -127,7 +124,7 @@ export function Pane({
 								BODY_CONTENT,
 							)}
 						>
-							<FrameBody frame={frame} fit="page" empty={empty} failed={failed}>
+							<FrameBody frame={frame} fit="page" empty={empty}>
 								{children}
 							</FrameBody>
 						</Scroll>

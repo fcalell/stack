@@ -317,13 +317,7 @@ function Tasks(props: {
 		: [{ icon: "Plus" as const, label: "New task", onAct: act }];
 	return (
 		<Place>
-			<Pane
-				title="Cron tasks"
-				actions={actions}
-				foot={foot}
-				read={read}
-				failed="Cron tasks did not load."
-			>
+			<Pane title="Cron tasks" actions={actions} foot={foot} read={read}>
 				{part.readOnly ? (
 					<Table columns={columns} items={shown} row={row} onOpen={act} />
 				) : (

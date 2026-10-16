@@ -22,7 +22,6 @@ function Domains() {
 				title="Domains"
 				actions={[{ icon: "Plus", label: "Add domain", onAct: act }]}
 				read={domains}
-				failed="Domains did not load."
 				empty={{ sentence: "No domain is connected." }}
 			>
 				<List

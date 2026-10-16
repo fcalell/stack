@@ -129,8 +129,6 @@ export interface SheetBaseProps {
 	back?: () => void;
 	submit?: Act;
 	foot?: string;
-	/** What the body says when its `read` fails, in place of the generic sentence. */
-	failed?: string;
 	fit?: SheetFit;
 	/** A decision's acts, the foot's `ActionBar` at both densities. */
 	acts?: Act[];
@@ -162,7 +160,6 @@ export function SheetBase({
 	back,
 	submit: offered,
 	foot,
-	failed,
 	fit,
 	acts,
 	form,
@@ -181,7 +178,7 @@ export function SheetBase({
 	const own = useAct<number>("line");
 	// The submit waits only on the sheet's own read: painted while it waits or
 	// stands still, blocked with the sentence once it ended.
-	const { waiting, ended } = submitOf(words, frame.form, failed);
+	const { waiting, ended } = submitOf(words, frame.form);
 	const submit =
 		ended === undefined ? offered : offered && { ...offered, blocked: ended };
 	// The sheet hosts its acts' run: its head submit, its foot bar and its
@@ -190,7 +187,7 @@ export function SheetBase({
 	const acting = given ?? own;
 	// The body is the frame's: its failure and its emptiness stand in its place.
 	const body = (
-		<FrameBody frame={frame} fit="frame" empty={empty} failed={failed}>
+		<FrameBody frame={frame} fit="frame" empty={empty}>
 			{children}
 		</FrameBody>
 	);

@@ -44,7 +44,6 @@ const projects = orpc.projects.list.read();
 <Section
   title="Active"
   read={projects}
-  failed="Projects could not load."
   empty={{ sentence: "No project yet.", act: { label: "New project", onAct: create } }}
 >
   <List
@@ -80,7 +79,8 @@ connection." when it is paused offline, and still (painted, inert, no spinner) f
 for yet. A paginated read (`.pages`) ends its collection in "Show more", with the next page painted
 while it loads and "Couldn't load more." with Retry when it failed, and no count while more remains.
 A conversation's turn being written is `Thread reply`, its own read: waiting, writing, written, or
-"The reply stopped." with Retry. Empty is
+"The reply stopped." with Retry. A frame whose read failed says "This didn't load." with
+Retry, in every frame and whatever failed: it takes no sentence of its own. Empty is
 the frame's `empty`, `{ sentence, act? }`, drawn only when the frame's own read is empty, with the act that
 fills it unless the screen's primary act already does. An act given as a selection is live once its read
 answered and stands blocked, with the failed sentence, when that read failed; a constant act is always live. Error draws where the work happened (a field's error, a banner over the

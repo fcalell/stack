@@ -169,7 +169,6 @@ function Topics(props: {
 		<Section
 			title="Notifications"
 			read={topics}
-			failed="The topics did not load."
 			empty={{ sentence: "No topic to follow yet." }}
 		>
 			<FormField

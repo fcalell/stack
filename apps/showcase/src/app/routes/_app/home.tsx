@@ -52,7 +52,6 @@ function Home() {
 				<Section
 					title="Tasks"
 					read={tasks}
-					failed="Tasks did not load."
 					empty={{ sentence: "No task is open." }}
 				>
 					<Group

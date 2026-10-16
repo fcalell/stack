@@ -64,15 +64,11 @@ export function useOptions<O>(options: Datum<O>) {
 }
 
 // The reason an act stands blocked under once the read it depends on has
-// ended (a frame's `form`, or a selection's `phase`): the failed sentence (the
-// frame's own when it has one), or `words.missing`. None while the read waits,
+// ended (a frame's `form`, or a selection's `phase`): `words.readFailed`, or
+// `words.missing`. None while the read waits,
 // stands still or answered.
-export function endedReason(
-	words: Words,
-	phase?: string,
-	failed?: string,
-): string | undefined {
-	if (phase === "failed") return failed ?? words.readFailed;
+export function endedReason(words: Words, phase?: string): string | undefined {
+	if (phase === "failed") return words.readFailed;
 	return phase === "missing" ? words.missing : undefined;
 }
 
@@ -86,20 +82,20 @@ export function endedItems(words: Words, reason: string): readonly MenuItem[] {
 // whether its filled act paints (the read waits or stands still, so the bar
 // keeps its loaded box) and the reason it stands blocked under (the read failed
 // or is missing). A group's read is not the form's, so it never reaches the bar.
-export function submitOf(words: Words, form: Frame["form"], failed?: string) {
+export function submitOf(words: Words, form: Frame["form"]) {
 	return {
 		waiting: form === "waiting" || form === "still",
-		ended: endedReason(words, form, failed),
+		ended: endedReason(words, form),
 	};
 }
 
 // The same for a bar whose frame stands elsewhere: a sheet's foot holds its
 // form's bar, hoisted out of the form that owns the read.
-export function useSubmitOf(read?: Selection<unknown>, failed?: string) {
+export function useSubmitOf(read?: Selection<unknown>) {
 	const words = useWords();
 	const [one] = useSelections([read]);
 	if (!one.painted) return { waiting: false, ended: undefined };
-	const ended = endedReason(words, one.phase, failed);
+	const ended = endedReason(words, one.phase);
 	return { waiting: ended === undefined, ended };
 }
 
@@ -110,17 +106,16 @@ export function FrameBody(props: {
 	frame: Frame;
 	fit: EmptyFit;
 	empty?: Empty;
-	failed?: string;
 	children?: ReactNode;
 }) {
-	const { frame, fit, empty, failed, children } = props;
+	const { frame, fit, empty, children } = props;
 	const words = useWords();
 	if (frame.form === "failed") {
 		return (
 			<EmptyBase
 				fit={fit}
 				tone="failed"
-				sentence={failed ?? words.readFailed}
+				sentence={words.readFailed}
 				act={{ label: words.retry, onAct: frame.retry }}
 			/>
 		);

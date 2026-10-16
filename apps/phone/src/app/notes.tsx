@@ -47,7 +47,6 @@ export default function Notes() {
 				<Section
 					title="Recent"
 					read={notes}
-					failed="Notes did not load."
 					empty={{ sentence: "No notes yet." }}
 				>
 					<List

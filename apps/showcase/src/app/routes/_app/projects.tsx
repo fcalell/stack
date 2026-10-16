@@ -31,7 +31,6 @@ function Stage(props: { stage: (typeof STAGES)[number] }) {
 		<Section
 			title={title}
 			read={projects}
-			failed="Projects did not load."
 			empty={{ sentence: `No project is in ${title}.` }}
 		>
 			<Group

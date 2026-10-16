@@ -59,11 +59,7 @@ export function drawFailed(frame: ShowcaseFrame) {
 			<Column>
 				<Place>
 					<Pane title="Settings">
-						<Section
-							title="Webhooks"
-							read={failing}
-							failed="Webhooks did not load."
-						>
+						<Section title="Webhooks" read={failing}>
 							<Group
 								list={{ items: failing, row: { key: String, title: String } }}
 							/>

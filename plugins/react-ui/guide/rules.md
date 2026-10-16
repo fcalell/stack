@@ -456,7 +456,7 @@ A failure that is no read (a mutation that opens a file) is a `Failed`, never an
 `empty` and never a read faked for a frame: its `sentence` says what did not load and
 its `act` is a function act (`{ label, onAct }`, Retry), never a `LinkAct`, drawn under the alert
 mark as the hairline act with no plus, the form a frame draws for a failed read. A way back
-that creates nothing is a `Missing`; a read is a frame's `read`, and a frame's `failed` replaces the generic sentence ("This didn't load.").
+that creates nothing is a `Missing`; a read is a frame's `read`, and a frame says "This didn't load." with Retry whatever failed, and takes no sentence of its own.
 
 A `Table` takes its data the same way: `items`, a constant or a selection that paints four rows until it lands; each column reads its
 cell from the item by `cell`, and `row` gives the row's `id`, `href`, `locked`, `warning` (what is
@@ -489,7 +489,6 @@ const notes = orpc.notes.list.read();
 <Section
   title="Notes"
   read={notes}
-  failed="Notes did not load."
   empty={{ sentence: "No notes.", act: { label: "New note", onAct: create } }}
 >
   <List
@@ -574,8 +573,7 @@ foot line and submit never give: the submit stays inside the foot. A blocked
 same line, in the field error’s cell and ink, the act ready again and no `Banner`: the line clears
 on the next press, and a blocked `submit`’s reason stands before it. The modal `Sheet` draws it in
 the foot bar’s line on the desktop and under the head’s submit on touch. The sheet holds the run of
-its head submit, its foot bar and its form’s bar, so it cannot be dismissed while one pends; its `failed` prop is the body’s sentence when its `read` fails, as
-on every frame. On touch that submit stands in the title's row and the title wraps whole inside three fifths of it
+its head submit, its foot bar and its form’s bar, so it cannot be dismissed while one pends. On touch that submit stands in the title's row and the title wraps whole inside three fifths of it
 (two lines at 25 characters); a submit that does not fit beside that column drops whole, at its 44 px, to a second head line at the
 row's end. Pass
 the same props as the modal `<Sheet>` from a page and as the `sheet` of a conversation; closing it (`open` false, the

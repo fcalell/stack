@@ -703,7 +703,7 @@ a tick with no animation, never jumped to full.
   and holds the line empty while neither shows, so a failure moves nothing; no `Banner`). The sheet
   is the host of its acts (below), so the modal `Sheet` draws the same sentence in the foot bar's
   line on the desktop and under the head's submit on touch (the phone's modal only the latter).
-  `Sheet`'s `failed` prop is its body's sentence when its `read` fails, like every frame's. The modal Sheet's touch head wraps its row (`SHEET_HEAD_TITLE`, the title
+  The modal Sheet's touch head wraps its row (`SHEET_HEAD_TITLE`, the title
   at most three fifths of it, a structural fraction): the submit that does not fit beside the title
   drops whole to a second line at the row's end, so a long act word is never truncated and the title
   never falls to a stack of fragments. On the desktop the docked Sheet holds
@@ -1077,7 +1077,7 @@ a tick with no animation, never jumped to full.
   (`readFailed`, `words.missing`, `readEmpty`), and the stale and paused line above its rows while
   it holds its read. A frame that holds the same read draws instead and unmounts the collection
   with its failure, so the flags are drawn once. The collection takes no `empty` and no `failed`: a
-  sentence of its own is the frame's. A collection whose read fails with no frame holding it holds
+  sentence of its own is the frame's, and the failed one is never anyone's. A collection whose read fails with no frame holding it holds
   it itself, so the dev no-holder error stays quiet. While the selection's read waits, a List paints `PAINT_ROWS` rows from the item map's
   slots, run over the placeholder through `painting` (a slot that throws paints itself with a dev
   warning, never the page), so a painted row draws exactly the slots the map declares: a ListRow's
@@ -1300,7 +1300,7 @@ a tick with no animation, never jumped to full.
   empty state's `failed` tone (`lib/empty`) that a frame renders through `FrameBody` for a failed
   read, so the two cannot drift. A failed tone's act is the hairline one in every form, a first run's
   included. Its act is a function act, never a `LinkAct` (a way back is a `Missing`). A frame's
-  failed form says `readFailed` ("This didn't load.") or its own `failed` sentence, and its Retry
+  failed form says `readFailed` ("This didn't load."), never a sentence of the frame's own (a Pane, Section, Sheet, Form and a form's group take no `failed`: what failed to load is the frame's title and place, and a per-frame wording only repeats the generic line), and its Retry
   refetches the read it holds and pends while it does; a frame's empty form says `readEmpty`
   ("Nothing here yet.") or its `empty`. Rejected: a frame taking a mutation's result (a frame holds
   a read, and a fake read is a workaround), `Missing` taking an `Act` (its form has no mark and no
@@ -1519,7 +1519,7 @@ a tick with no animation, never jumped to full.
   on the web, a labelled group with a header on the phone, `FORM_GROUP` and `FORM_LEGEND`, the groups
   a `sections` step apart), a TypeScript-exclusive union a `steps` shape can join. Its `bar` is the
   ActionBar's own props, drawn in the foot (`FORM_FOOT` under a form of groups; stuck in a sheet on
-  the web); the form reads no child. A form's `read` frames all its fields and a group's `read` its own (`FormGroup.read`, `empty`, `failed`): each group is a frame, so a page of a workspace group and a devices group reads each where it stands, and the bar follows the form's own read alone: its filled act paints while that read (or its sheet's) waits and stands blocked with the failed sentence once it ended, and a group's read never reaches it. A FormField's control is exactly one descriptor (`switch`, `checkbox`, `slider`, `select`,
+  the web); the form reads no child. A form's `read` frames all its fields and a group's `read` its own (`FormGroup.read`, `empty`): each group is a frame, so a page of a workspace group and a devices group reads each where it stands, and the bar follows the form's own read alone: its filled act paints while that read (or its sheet's) waits and stands blocked with the failed sentence once it ended, and a group's read never reaches it. A FormField's control is exactly one descriptor (`switch`, `checkbox`, `slider`, `select`,
   `options`, `segments`, `input`, `textArea`, `picker`: the component's own props less the label the field supplies) or its
   `children` for any other control, and the field's form comes from which is set; a DefinitionRow
   likewise takes an explicit `switch` or `pick` (an `OptionPick`, drawn as the Picker at the row fit,

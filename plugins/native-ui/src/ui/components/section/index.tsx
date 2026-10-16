@@ -34,8 +34,6 @@ interface SectionBase extends Closed {
 	act?: Datum<Act | IconAct>;
 	/** The section's other acts, in a menu under the more act after its act (destructive ones marked); a foldable section's more does not fold it. It paints and stands blocked as the act does. */
 	more?: Datum<readonly MenuItem[]>;
-	/** What the body says when the `read` fails, in place of the generic sentence (a sentence; wraps). */
-	failed?: string;
 	// The body: a Group, a List, a Form or any other parts; none stand while
 	// the `read` is empty.
 	children?: ReactNode;
@@ -71,7 +69,6 @@ export function Section({
 	more,
 	read,
 	empty,
-	failed,
 	children,
 }: SectionProps) {
 	const frame = useFrame(read);
@@ -81,7 +78,7 @@ export function Section({
 		read === undefined ? (
 			children
 		) : (
-			<FrameBody frame={frame} fit="frame" empty={empty} failed={failed}>
+			<FrameBody frame={frame} fit="frame" empty={empty}>
 				{children}
 			</FrameBody>
 		);
