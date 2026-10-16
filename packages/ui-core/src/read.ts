@@ -164,10 +164,17 @@ export function frameOf(held: Held): FrameState {
 // The turn an app writes into a conversation: none where nothing is being
 // written, waiting for the first chunk, writing while chunks arrive, written
 // once it settles, stopped where the stream failed (or a refresh of it did, the
-// partial value kept). Waiting and stopped are the read's states, so a turn
+// partial value kept), failed where it failed or went missing before any text
+// was written. Waiting, stopped and failed are the read's states, so a turn
 // draws them only when it holds the read; under a frame that holds it, that
 // frame says them once and the turn draws its value alone.
-export type TurnForm = "none" | "waiting" | "writing" | "written" | "stopped";
+export type TurnForm =
+	| "none"
+	| "waiting"
+	| "writing"
+	| "written"
+	| "stopped"
+	| "failed";
 
 export function turnOf(held: Held): { form: TurnForm; value: unknown } {
 	// A painted selection holds a placeholder where its value would stand, and
@@ -180,7 +187,7 @@ export function turnOf(held: Held): { form: TurnForm; value: unknown } {
 		return { form: holds ? "waiting" : "none", value };
 	}
 	if (s?.phase === "failed" || s?.phase === "missing") {
-		if (holds) return { form: "stopped", value };
+		if (holds) return { form: value == null ? "failed" : "stopped", value };
 		return { form: value == null ? "none" : "written", value };
 	}
 	// A selection holder draws its value only, and a null one is no turn.

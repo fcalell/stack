@@ -8,7 +8,8 @@ import { expect, waitFor } from "storybook/test";
 
 // The turn being written is a read the app declares: Thread's `reply`. It
 // draws from its own subscription, so a chunk renders it and nothing else; a
-// stream that fails keeps what arrived and says it stopped, with Retry; and
+// stream that fails after some text keeps what arrived and says it stopped,
+// one that fails before any text says it did not load, each with Retry; and
 // once the history holds its key the reply steps aside.
 interface Turn {
 	id: string;
@@ -172,8 +173,9 @@ export const AChunkRendersOnlyTheReply: StoryObj = {
 	},
 };
 
-// A stream that fails keeps the words that arrived, says the reply stopped
-// and offers Retry, which runs the stream again from the waiting form.
+// A stream that fails after some text keeps the words that arrived, says the
+// reply stopped and offers Retry, which runs the stream again from the waiting
+// form. It does not say the read did not load.
 export const AStoppedStreamDrawsItsLineWithRetry: StoryObj = {
 	play: async ({ canvas, userEvent }) => {
 		const log = await canvas.findByRole("log");
@@ -182,6 +184,7 @@ export const AStoppedStreamDrawsItsLineWithRetry: StoryObj = {
 		await canvas.findByText(/One/);
 		first.fail();
 		await canvas.findByText("The reply stopped.");
+		await expect(canvas.queryByText("This didn't load.")).toBeNull();
 		await expect(last(log)?.textContent).toContain("One");
 		await userEvent.click(canvas.getByRole("button", { name: "Retry" }));
 		const second = await run(1);
@@ -189,6 +192,27 @@ export const AStoppedStreamDrawsItsLineWithRetry: StoryObj = {
 			expect(last(log)?.hasAttribute("aria-busy")).toBe(true),
 		);
 		await expect(canvas.queryByText("The reply stopped.")).toBeNull();
+		second.push("Again");
+		await canvas.findByText(/Again/);
+		second.end();
+	},
+};
+
+// A stream that fails before any text has nothing to keep and nothing that
+// stopped: it says the read did not load, with Retry, which runs the stream
+// again from the waiting form.
+export const AStreamFailedBeforeTextSaysItDidNotLoad: StoryObj = {
+	play: async ({ canvas, userEvent }) => {
+		await canvas.findByRole("log");
+		const first = await run();
+		first.fail();
+		await canvas.findByText("This didn't load.");
+		await expect(canvas.queryByText("The reply stopped.")).toBeNull();
+		await userEvent.click(canvas.getByRole("button", { name: "Retry" }));
+		const second = await run(1);
+		await waitFor(() =>
+			expect(canvas.queryByText("This didn't load.")).toBeNull(),
+		);
 		second.push("Again");
 		await canvas.findByText(/Again/);
 		second.end();

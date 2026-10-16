@@ -309,14 +309,33 @@ test("a turn writes while chunks arrive and is written once the stream settles",
 	assert.equal(turnOf({ drawn, reads: [root({})] }).form, "written");
 });
 
-test("a turn whose stream failed, or whose refresh did, is stopped with its partial value", () => {
+test("a held turn that failed or went missing before any text is failed, not stopped", () => {
+	assert.deepEqual(turnOf({ reads: [root(failure)] }), {
+		form: "failed",
+		value: undefined,
+	});
+	assert.equal(
+		turnOf({ reads: [root({ status: "error", error: "gone" })] }).form,
+		"failed",
+	);
+	assert.equal(
+		turnOf({ drawn: { painted: false, value: null }, reads: [root(failure)] })
+			.form,
+		"failed",
+	);
+});
+
+test("a turn whose stream failed after text, or whose refresh did, is stopped with its partial value", () => {
 	const drawn = { painted: false, value: "Hel" };
 	assert.deepEqual(turnOf({ drawn, reads: [root(failure)] }), {
 		form: "stopped",
 		value: "Hel",
 	});
 	assert.equal(
-		turnOf({ reads: [root({ status: "error", error: "gone" })] }).form,
+		turnOf({
+			drawn,
+			reads: [root({ status: "error", error: "gone" })],
+		}).form,
 		"stopped",
 	);
 	assert.equal(
@@ -351,13 +370,13 @@ test("a turn that does not hold its read draws its value alone", () => {
 	);
 });
 
-test("a stream that failed before it loaded keeps no placeholder as its partial value", () => {
+test("a stream that failed before it loaded is failed and keeps no placeholder as its value", () => {
 	assert.deepEqual(
 		turnOf({
 			drawn: { painted: true, value: { placeholder: true } },
 			reads: [root(failure)],
 		}),
-		{ form: "stopped", value: undefined },
+		{ form: "failed", value: undefined },
 	);
 });
 

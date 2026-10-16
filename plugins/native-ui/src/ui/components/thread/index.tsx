@@ -107,7 +107,7 @@ export type ThreadProps<T = unknown> = Closed & {
 	sheet?: SheetProps;
 	/** A reply from the other author is on its way: the loaded log ends on one waiting message of theirs, until it is cleared. */
 	replying?: boolean;
-	/** The turn being written, a read the app declares (a stream: `read(options, { kind: "stream" })` over `streamedQuery`, or a slice of a channel read): it draws after the items from its own subscription, so a chunk renders only it. Waiting for the first chunk it is one waiting message of the other author; writing, the message with `streaming` set; written, the message. Held as a root read, a failed stream draws the partial message, if any, then "The reply stopped." with Retry, which runs the stream again. It hides once the last item has its key, so a history that catches up shows no second turn. `null` or `undefined` is no turn. */
+	/** The turn being written, a read the app declares (a stream: `read(options, { kind: "stream" })` over `streamedQuery`, or a slice of a channel read): it draws after the items from its own subscription, so a chunk renders only it. Waiting for the first chunk it is one waiting message of the other author; writing, the message with `streaming` set; written, the message. Held as a root read, a stream that failed after some text draws the partial message, then "The reply stopped." with Retry; one that failed before any text draws "This didn't load." with Retry. Retry runs the stream again. It hides once the last item has its key, so a history that catches up shows no second turn. `null` or `undefined` is no turn. */
 	reply?: Selection<T | null | undefined>;
 };
 
@@ -171,10 +171,11 @@ const ThreadItem = memo(ThreadItemBase) as typeof ThreadItemBase;
 
 // The turn being written, from its own subscription to the reply: a chunk
 // renders this and nothing else in the thread. A stream that failed keeps its
-// partial message and says it stopped, with the frame's retry, which runs the
-// stream again. It stays mounted whenever there is a reply, so the items'
-// fetch cycle never subscribes it or lets it go: a reply read that shares the
-// items' failed read would otherwise refetch on each mount and loop.
+// partial message and says it stopped, one that failed before any text says the
+// read failed, each with the frame's retry, which runs the stream again. It
+// stays mounted whenever there is a reply, so the items' fetch cycle never
+// subscribes it or lets it go: a reply read that shares the items' failed read
+// would otherwise refetch on each mount and loop.
 function ReplyTurn<T>(props: {
 	reply: Selection<T | null | undefined>;
 	slots: RefObject<MessageSlots<T>>;
@@ -201,9 +202,9 @@ function ReplyTurn<T>(props: {
 			{item == null ? null : (
 				<ThreadItem item={item} slots={slots} streaming={form === "writing"} />
 			)}
-			{form === "stopped" ? (
+			{form === "stopped" || form === "failed" ? (
 				<StateLine
-					sentence={words.replyStopped}
+					sentence={form === "failed" ? words.readFailed : words.replyStopped}
 					act={{ label: words.retry, onAct: retry }}
 				/>
 			) : null}
