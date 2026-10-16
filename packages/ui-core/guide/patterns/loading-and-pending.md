@@ -54,6 +54,8 @@ connection says "Waiting for a connection." with nothing to press. Both stand un
 A read not asked for yet, or paused with no data, **stands still**: the loaded form painted and
 inert, with no busy mark. An act drawn from a read follows it: painted while the read waits, still when
 it is not asked for, and blocked with the failed sentence once it failed; a constant act is never
-painted or inert for a read it does not draw. A next page is the collection's own wait: the painted rows after the loaded
+painted or inert for a read it does not draw. A read that fails while a leaf paints it and no frame
+holds it is named in dev, judged on the query cache's own observers (a leaf carries `placeholderData`, a
+frame or an act drawing the failure carries `heldPlaceholder`), so a leaf that mounts late is caught too. A next page is the collection's own wait: the painted rows after the loaded
 ones (`patterns/data-table.md`). A turn being written is the thread's
 (`patterns/activity-feed.md`).

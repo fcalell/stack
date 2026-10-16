@@ -28,14 +28,13 @@ import {
 	type Datum,
 	type Drawn,
 	draftFor,
-	drawFailures,
 	type Held,
 	type Holds,
+	heldPlaceholder,
 	holdReads,
 	holdsOf,
 	type Draft as Kept,
 	NO_HOLDS,
-	paintReads,
 	placeholderData,
 	planFrame,
 	planSelections,
@@ -282,21 +281,27 @@ export function useSelections<const V extends readonly unknown[]>(
 	readonly [K in keyof V]: Drawn<Unwrap<V[K]>>;
 } {
 	const plan = useMemo(() => planSelections(values), [values]);
-	useEffect(() => paintReads(plan.painted), [plan]);
 	return useQueries({
-		queries: plan.reads.map((r) => ({ ...r.options, placeholderData })),
+		queries: plan.queries(placeholderData),
 		combine: plan.draw,
 	}) as never;
 }
 
 // A leaf that stands its act blocked with the failed sentence of the
-// selection it reads (`phase` "failed") draws that failure itself, so it
-// registers as the read's holder for the dev check: no frame is needed to
-// draw it. It subscribes to nothing and draws no busy or stale flag; a read an
-// enclosing frame holds counts once more, which changes nothing a frame draws.
+// selection it reads (`phase` "failed") draws that failure itself, so it is an
+// observer carrying `heldPlaceholder`, the read's holder for the dev check: no
+// frame is needed to draw it. It notifies on nothing and draws no busy or stale
+// flag; a read an enclosing frame holds counts once more, which changes
+// nothing a frame draws.
 export function useDrawsFailure(values: readonly unknown[]): void {
 	const plan = useMemo(() => planSelections(values), [values]);
-	useEffect(() => drawFailures(plan.painted), [plan]);
+	useQueries({
+		queries: plan.painted.map((r) => ({
+			...r.options,
+			placeholderData: heldPlaceholder,
+			notifyOnChangeProps: [],
+		})),
+	});
 }
 
 // The one boolean a holder with no value of its own needs (a bar's filled act):
@@ -305,16 +310,12 @@ export function useDrawsFailure(values: readonly unknown[]): void {
 // value's.
 export function usePainted(values: readonly unknown[]): boolean {
 	const plan = useMemo(() => planSelections(values), [values]);
-	useEffect(() => paintReads(plan.painted), [plan]);
 	const combine = useMemo(
 		() => (results: Parameters<typeof plan.draw>[0]) =>
 			plan.draw(results).some((drawn) => drawn.painted),
 		[plan],
 	);
-	return useQueries({
-		queries: plan.reads.map((r) => ({ ...r.options, placeholderData })),
-		combine,
-	});
+	return useQueries({ queries: plan.queries(placeholderData), combine });
 }
 
 // The query hashes the frames above hold, identity only: it places flags (which
@@ -333,8 +334,8 @@ export function FrameHolds(props: { holds: Holds; children?: ReactNode }) {
 // changes (form, count, busy) and never on a value change. Pass a `derive` that
 // is stable (a module function): its identity is the combine's. The frame's
 // form comes from every non-quiet read of its own selection; it holds at most
-// one read, the first that no enclosing frame holds (the dev registry counts
-// it, and a second is a dev error), and returns `holds`, that hash with the
+// one read, the first that no enclosing frame holds (its observers carry
+// `heldPlaceholder`, which the dev check reads, and a second is a dev error), and returns `holds`, that hash with the
 // enclosing ones, for its body to publish through `FrameHolds`; `holding` says
 // it holds one. `retry` refetches the read it holds.
 export function useFrameRead<S>(
@@ -368,7 +369,7 @@ export function useFrameRead<S>(
 		[plan],
 	);
 	const state = useQueries({
-		queries: plan.reads.map((r) => ({ ...r.options, placeholderData })),
+		queries: plan.queries,
 		combine: plan.combine,
 	});
 	// The refetch itself, so a Retry draws its own pending until it settles.

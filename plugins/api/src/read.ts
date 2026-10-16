@@ -1,4 +1,6 @@
 import type {
+	Query,
+	QueryCache,
 	QueryClient,
 	QueryFunctionContext,
 	QueryKey,
@@ -110,9 +112,13 @@ export function isPlaceholder(v: unknown): boolean {
 	return v === P || (typeof v === "string" && v.includes(WAITING_CHAR));
 }
 
-// One constant function: TanStack compares a function `placeholderData` by
-// identity between option sets.
+// Two constant functions: TanStack compares a function `placeholderData` by
+// identity between option sets, and the dev check reads them back off a
+// query's observers. `placeholderData` marks an observer as a painter (a leaf
+// that draws the read), `heldPlaceholder` as a holder (a frame, or a leaf that
+// draws the failure itself). Both return the placeholder.
 export const placeholderData = (): unknown => P;
+export const heldPlaceholder = (): unknown => P;
 
 export function isSelection(v: unknown): v is Selection<unknown> {
 	return typeof v === "object" && v !== null && SELECTION in v;
@@ -325,7 +331,9 @@ export function withRead(target: any): any {
 // The pure core of both hooks. `reads` are the distinct queries the values
 // need, deduped by key (two observers of one key in one `QueriesObserver` warn);
 // `painted` are those some value uses plainly (the quiet ones are subscribed and
-// nothing more); `draw` maps their results back onto the values, in order.
+// nothing more); `queries` are the observers' options, the painted ones given
+// `placeholder` (a quiet read carries none, so the dev check never counts it);
+// `draw` maps their results back onto the values, in order.
 type SelectionResult = {
 	data: unknown;
 	isPlaceholderData: boolean;
@@ -344,9 +352,12 @@ function phaseOf(r: SelectionResult, read: Read<unknown>): DrawnPhase {
 	return !r.isEnabled || r.fetchStatus === "paused" ? "still" : "waiting";
 }
 
+type ObserverOptions = Read<unknown>["options"];
+
 export function planSelections(values: readonly unknown[]): {
 	reads: readonly Read<unknown>[];
 	painted: readonly Read<unknown>[];
+	queries: (placeholder: () => unknown) => ObserverOptions[];
 	draw: (results: readonly SelectionResult[]) => readonly Drawn<unknown>[];
 } {
 	const reads: Read<unknown>[] = [];
@@ -370,6 +381,12 @@ export function planSelections(values: readonly unknown[]): {
 	return {
 		reads,
 		painted: reads.filter((_, slot) => plain.has(slot)),
+		queries: (placeholder) =>
+			reads.map((r, slot) =>
+				plain.has(slot)
+					? { ...r.options, placeholderData: placeholder }
+					: r.options,
+			),
 		draw: (results) =>
 			values.map((value, i) => {
 				const p = plan[i];
@@ -467,6 +484,9 @@ export function planFrame<S>(
 	enclosing: Holds = NO_HOLDS,
 ): {
 	reads: readonly Read<unknown>[];
+	// The observers' options: every painted read carries `heldPlaceholder`, so
+	// the frame is a holder of each in the dev check, not a painter.
+	queries: ObserverOptions[];
 	held: Read<unknown> | undefined;
 	extra: readonly Read<unknown>[];
 	combine: (results: readonly (SelectionResult & HeldResult)[]) => S;
@@ -477,6 +497,7 @@ export function planFrame<S>(
 	);
 	return {
 		reads: plan.reads,
+		queries: plan.queries(heldPlaceholder),
 		held,
 		extra,
 		combine: (results) => {
@@ -559,12 +580,9 @@ export function draftFor<T>(
 	return draft && draft.key === key ? draft : null;
 }
 
-// Dev-only counts, by query hash, of the frames that hold a read and the
-// leaves that paint it. They exist to name one mistake at the moment it is
-// made: a leaf painting a read that no frame holds, so its failure draws
-// nowhere. A holder or painter registers in an effect and returns its release.
-const holders = new Map<string, number>();
-const painters = new Map<string, number>();
+// Dev checks read the query cache's own observers: a leaf that draws a read is
+// an observer whose `placeholderData` is `placeholderData`, a frame (or a leaf
+// that draws the failure itself) one whose is `heldPlaceholder`.
 export const dev = () => process.env.NODE_ENV !== "production";
 
 // What a frame publishes to its body: the hashes it and the frames around it
@@ -597,109 +615,41 @@ export function holdsOf(
 	return holds;
 }
 
-function count(counts: Map<string, number>, keys: readonly string[]) {
-	for (const key of keys) counts.set(key, (counts.get(key) ?? 0) + 1);
-	return () => {
-		for (const key of keys) counts.set(key, (counts.get(key) ?? 1) - 1);
-	};
-}
-
-// A painter arriving, or a holder leaving, changes what a failed read means,
-// so the watchers look again at those hashes, one tick later so the holders
-// that register in the same commit count.
-function counted(
-	counts: Map<string, number>,
-	keys: readonly string[],
-	recheck: "arrive" | "leave",
-) {
-	const release = count(counts, keys);
-	if (recheck === "arrive") recheckLater(keys);
-	return () => {
-		release();
-		if (recheck === "leave") recheckLater(keys);
-	};
-}
-
 // A frame holds one read. Given the frame's unheld non-quiet reads, the first is
 // the one it holds, so each further one is a mistake named by both keys: its
 // failure still draws (the form comes from every read) but its flags do not.
 // Sibling frames over one read are no mistake; each holds and fails.
-export function holdReads(reads: readonly Read<unknown>[]): () => void {
-	if (!dev()) return () => {};
+export function holdReads(reads: readonly Read<unknown>[]): void {
+	if (!dev()) return;
 	const keys = reads.map((r) => hashKey(r.options.queryKey));
 	for (const key of keys.slice(1)) {
 		console.error(
 			`A frame holds one read, and this one has a second: ${keys[0]} and ${key}. Give each read its own Pane, Section, Sheet or Form, or use \`or\` for a read that only names or orders.`,
 		);
 	}
-	return counted(holders, keys, "leave");
-}
-
-// A leaf that draws its own selection's failure (an act stands blocked with
-// the failed sentence) says so, so the dev check does not call that read
-// unheld. It holds no flag, so any number of reads may stand in a list.
-export function drawFailures(reads: readonly Read<unknown>[]): () => void {
-	if (!dev()) return () => {};
-	return counted(
-		holders,
-		reads.map((r) => hashKey(r.options.queryKey)),
-		"leave",
-	);
-}
-
-export function paintReads(reads: readonly Read<unknown>[]): () => void {
-	if (!dev()) return () => {};
-	return counted(
-		painters,
-		reads.map((r) => hashKey(r.options.queryKey)),
-		"arrive",
-	);
 }
 
 // A read that fails with no data while a leaf paints it and no frame holds it.
 // `QueryProvider` runs this in dev, over the query cache. Level-triggered: the
-// cache's error event says it, and so does a painter arriving or a holder
-// leaving over a read already failed (a leaf mounted late, a frame unmounted),
-// judged against the cache's own state. A failure is named once. An ambient
-// read (`meta: { ambient: true }`, the org rules) has no frame by design: its
-// failure leaves what it gates painted and inert.
-interface WatchedQuery {
-	queryHash: string;
-	meta?: Record<string, unknown>;
-	state: { data: unknown; status: string; errorUpdatedAt: number };
-}
-
-interface WatchedCache {
-	get: (hash: string) => WatchedQuery | undefined;
-	subscribe: (
-		listener: (event: {
-			type: string;
-			action?: { type: string };
-			query: WatchedQuery;
-		}) => void,
-	) => () => void;
-}
-
-const watchers = new Set<(keys: readonly string[]) => void>();
-
-function recheckLater(keys: readonly string[]) {
-	if (watchers.size === 0) return;
-	setTimeout(() => {
-		for (const check of watchers) check(keys);
-	}, 0);
-}
-
-export function watchUnheld(cache: WatchedCache): () => void {
+// cache's error event says it, and so do its observer events over a read
+// already failed (a painter arriving, a holder leaving), judged against the
+// query's own observers one tick later so the holders that mount in the same
+// commit count. A failure is named once. An ambient read (`meta: { ambient:
+// true }`, the org rules) has no frame by design: its failure leaves what it
+// gates painted and inert.
+export function watchUnheld(cache: QueryCache): () => void {
 	if (!dev()) return () => {};
 	const named = new Map<string, number>();
-	const report = (query: WatchedQuery) => {
+	const tagged = (query: Query, tag: () => unknown) =>
+		query.observers.some((o) => o.options.placeholderData === tag);
+	const report = (query: Query) => {
 		const key = query.queryHash;
 		if (
 			query.state.status !== "error" ||
 			query.meta?.["ambient"] === true ||
 			query.state.data !== undefined ||
-			(painters.get(key) ?? 0) === 0 ||
-			(holders.get(key) ?? 0) > 0 ||
+			!tagged(query, placeholderData) ||
+			tagged(query, heldPlaceholder) ||
 			named.get(key) === query.state.errorUpdatedAt
 		) {
 			return;
@@ -709,20 +659,23 @@ export function watchUnheld(cache: WatchedCache): () => void {
 			`The read ${key} failed and no frame holds it, so its failure draws nowhere. Give its Pane, Section, Sheet or Form \`read\`.`,
 		);
 	};
-	const check = (keys: readonly string[]) => {
-		for (const key of keys) {
-			const query = cache.get(key);
-			if (query) report(query);
-		}
-	};
-	watchers.add(check);
+	let stopped = false;
 	const unsubscribe = cache.subscribe((event) => {
-		if (event.type === "updated" && event.action?.type === "error") {
+		if (event.type === "updated" && event.action.type === "error") {
 			report(event.query);
+		} else if (
+			event.type === "observerAdded" ||
+			event.type === "observerRemoved"
+		) {
+			const hash = event.query.queryHash;
+			setTimeout(() => {
+				const query = stopped ? undefined : cache.get(hash);
+				if (query) report(query);
+			}, 0);
 		}
 	});
 	return () => {
-		watchers.delete(check);
+		stopped = true;
 		unsubscribe();
 	};
 }

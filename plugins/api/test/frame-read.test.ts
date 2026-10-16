@@ -11,13 +11,14 @@ import {
 	combine,
 	draftFor,
 	type Held,
+	heldPlaceholder,
 	holdReads,
 	holdsOf,
 	isRead,
 	moreOf,
-	paintReads,
 	placeholderData,
 	planFrame,
+	planSelections,
 	type Read,
 	read,
 	readKey,
@@ -273,25 +274,37 @@ test("a frame with two unheld reads logs one error naming both keys", () => {
 	const error = mock.method(console, "error", () => {});
 	const a = make("holders-a", async () => 1);
 	const b = make("holders-b", async () => 1);
-	const release = holdReads([a, b]);
+	holdReads([a, b]);
 	assert.equal(error.mock.callCount(), 1);
 	const message = String(error.mock.calls[0]?.arguments[0]);
 	assert.match(message, /holders-a/);
 	assert.match(message, /holders-b/);
-	release();
 	error.mock.restore();
 });
 
 test("sibling frames holding one read, or one frame holding one, log nothing", () => {
 	const error = mock.method(console, "error", () => {});
 	const a = make("holders-c", async () => 1);
-	const release = [holdReads([a]), holdReads([a]), holdReads([])];
-	release[0]?.();
-	holdReads([a])();
-	for (const r of release) r();
+	holdReads([a]);
+	holdReads([a]);
+	holdReads([]);
 	assert.equal(error.mock.callCount(), 0);
 	error.mock.restore();
 });
+
+// A leaf paints through `placeholderData`, a frame holds through
+// `heldPlaceholder`: the dev check reads the two off the query's observers.
+function observeAs(
+	client: QueryClient,
+	r: Read<unknown>,
+	tag: (() => unknown) | undefined,
+) {
+	const observer = new QueriesObserver(client, [
+		{ ...r.options, ...(tag && { placeholderData: tag }) },
+	]);
+	const stop = observer.subscribe(() => {});
+	return { stop };
+}
 
 test("a failure with painters and no holder raises an error naming the read", async () => {
 	const error = mock.method(console, "error", () => {});
@@ -302,31 +315,22 @@ test("a failure with painters and no holder raises an error naming the read", as
 	const fail = async () => {
 		throw new Error("no");
 	};
-	const run = async (key: string) => {
+	const run = async (key: string, ...tags: ((() => unknown) | undefined)[]) => {
 		const r = make(key, fail);
-		const observer = new QueriesObserver(client, [r.options]);
-		const unobserve = observer.subscribe(() => {});
+		const observers = tags.map((tag) => observeAs(client, r, tag));
 		await tick();
-		unobserve();
-		return r;
+		for (const o of observers) o.stop();
 	};
-	await run("nobody");
+	// An observer that is neither a painter nor a holder (a quiet read).
+	await run("nobody", undefined);
 	assert.equal(error.mock.callCount(), 0);
 
-	const painted = make("painted", fail);
-	const unpaint = paintReads([painted]);
-	await run("painted");
+	await run("painted", placeholderData);
 	assert.equal(error.mock.callCount(), 1);
 	assert.match(String(error.mock.calls[0]?.arguments[0]), /painted/);
 
-	const held = make("held", fail);
-	const unpaintHeld = paintReads([held]);
-	const unhold = holdReads([held]);
-	await run("held");
+	await run("held", placeholderData, heldPlaceholder);
 	assert.equal(error.mock.callCount(), 1);
-	unpaint();
-	unpaintHeld();
-	unhold();
 	stop();
 	error.mock.restore();
 });
@@ -342,32 +346,48 @@ test("a painter arriving after the failure raises the error once, and a holder i
 	};
 	const run = async (key: string) => {
 		const r = make(key, fail);
-		const observer = new QueriesObserver(client, [r.options]);
-		const unobserve = observer.subscribe(() => {});
+		const quiet = observeAs(client, r, undefined);
 		await tick();
-		return { r, unobserve };
+		return { r, quiet };
 	};
 	const late = await run("late");
 	assert.equal(error.mock.callCount(), 0);
-	const unpaint = [paintReads([late.r]), paintReads([late.r])];
+	const leaves = [
+		observeAs(client, late.r, placeholderData),
+		observeAs(client, late.r, placeholderData),
+	];
 	await tick();
 	assert.equal(error.mock.callCount(), 1);
 	assert.match(String(error.mock.calls[0]?.arguments[0]), /late/);
 
 	const spared = await run("spared");
-	const unpaintSpared = paintReads([spared.r]);
-	const unhold = holdReads([spared.r]);
+	const painter = observeAs(client, spared.r, placeholderData);
+	const holder = observeAs(client, spared.r, heldPlaceholder);
 	await tick();
 	assert.equal(error.mock.callCount(), 1);
 	// The holder leaving puts the read back among the unheld.
-	unhold();
+	holder.stop();
 	await tick();
 	assert.equal(error.mock.callCount(), 2);
-	for (const u of [...unpaint, unpaintSpared]) u();
-	late.unobserve();
-	spared.unobserve();
+	for (const o of [...leaves, painter, late.quiet, spared.quiet]) o.stop();
 	stop();
 	error.mock.restore();
+});
+
+test("a frame's observers carry heldPlaceholder, a quiet read's carry none", () => {
+	const a = make("tag-a", async () => 1);
+	const b = make("tag-b", async () => 1);
+	const plan = planFrame(
+		a,
+		(h) => h,
+		() => undefined,
+	);
+	assert.equal(plan.queries[0]?.placeholderData, heldPlaceholder);
+	const quiet = planSelections([combine([a, b.or(0)], (x) => x)]);
+	assert.deepEqual(
+		quiet.queries(placeholderData).map((q) => q.placeholderData),
+		[placeholderData, undefined],
+	);
 });
 
 const pageOf = (n: number, last = false) => ({

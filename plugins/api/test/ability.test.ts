@@ -10,7 +10,6 @@ import {
 	registerApiClient,
 } from "../src/ability-client.ts";
 import {
-	paintReads,
 	placeholderData,
 	planSelections,
 	read,
@@ -121,7 +120,6 @@ test("watchUnheld says nothing for an ambient failure, and names an ordinary one
 	});
 	const stop = watchUnheld(client.getQueryCache());
 	const rules = orgRules("org-4");
-	const unpaint = paintReads([rules]);
 	const { observer } = observe(client, rules);
 	const unobserve = observer.subscribe(() => {});
 	await tick();
@@ -133,15 +131,12 @@ test("watchUnheld says nothing for an ambient failure, and names an ordinary one
 			throw new Error("no");
 		},
 	});
-	const unpaintPlain = paintReads([plain]);
 	const other = observe(client, plain);
 	const unobservePlain = other.observer.subscribe(() => {});
 	await tick();
 	assert.equal(error.mock.callCount(), 1);
 	unobserve();
 	unobservePlain();
-	unpaint();
-	unpaintPlain();
 	stop();
 	error.mock.restore();
 });

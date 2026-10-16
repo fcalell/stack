@@ -1389,12 +1389,13 @@ a tick with no animation, never jumped to full.
   (`FrameHolds`, a context of query hashes, identity only, which `FrameBody` publishes to the body
   and which both verifies sweep for rule 11) places flags and nothing else: the frame that holds a
   read draws its busy, stale and paused lines, is `aria-busy` while it waits (the phone's
-  `accessibilityState.busy`), registers with the dev holder registry, and has Retry refetch the read
-  it holds. Sibling frames that draw one read each hold it and each fail in place; the repeated
+  `accessibilityState.busy`), carries `heldPlaceholder` on its observers (the dev holder, below), and
+  has Retry refetch the read it holds. Sibling frames that draw one read each hold it and each fail in place; the repeated
   line is accepted, and a read is never lifted into a frame around them. A second
   non-quiet read in one frame is a dev `console.error` naming both keys, and the frame holds the
   first. `selection.or(fallback)` is for enrichments (a name, a badge, a lane order): a read used
-  only through `or` is quiet, subscribed and never held, painted or registered, and its part gives
+  only through `or` is quiet, subscribed and never held or painted (its observer carries no
+  placeholder), and its part gives
   the fallback in every state but real data. A Sheet, a Pane's docked foot and docked sheet and a
   Thread's foot start with no holds. Acts paint by their own datum (`Drawn.phase`): a constant act
   is live in every form of the frame; a selection act paints while its read waits, stands still
@@ -2076,6 +2077,17 @@ a tick with no animation, never jumped to full.
   `scope`. `InputOtp` holds its `onComplete` promise with `useRun` and draws its checking line at
   once, without `ACT_DELAY`: a code is never typed twice, so there is no fast answer to spare the
   line for.
+- **The dev holders** are the query cache's own observers, with no registry of ours. A leaf that
+  draws a read is an observer whose `placeholderData` is plugin-api's `placeholderData`, the painter;
+  a frame (its held and extra reads) and a leaf that draws a failure itself (`useDrawsFailure`, one
+  `useQueries` with `notifyOnChangeProps: []`) carry a second constant, `heldPlaceholder`, which also
+  returns the placeholder, the holder. `watchUnheld` (run by `QueryProvider`) names a read that failed
+  with no data while its `query.observers` hold a painter and no holder. It judges on the cache's
+  error event and again on its `observerAdded` and `observerRemoved` events, one tick later so the
+  holders that mount in the same commit count; a late painter or a leaving holder is caught the same
+  way. A frame holding two reads is `holdReads`'s `console.error` alone. A quiet read's observer
+  carries neither constant. Rejected: a Map of counts registered in effects (a second source of
+  truth that the cache's observer list already is).
 - **The dev checks** (plugin-api `watchActs` and `heldAct`, run by `QueryProvider`) `console.error`
   on a mutation an `onAct` or a `change` save started without returning its promise, and on a
   mutation failure that no host marked as drawn (`drew`) within a macrotask, unless the mutation has
