@@ -1458,8 +1458,10 @@ a tick with no animation, never jumped to full.
   `useFrameRead(reply, turnOf)`, so a chunk renders it alone. `turnOf` names the form: `waiting`
   (a root asked for, no chunk yet, drawn as `WaitingReply`), `writing` (the message with
   `streaming`), `written`, and `stopped` (a failed or stale root: the partial message if any, then
-  a `StateLine` "The reply stopped." with Retry, which re-runs the stream); a selection reply draws
-  its value only and `none` is `null`. The turn steps aside when its key equals the last item's,
+  a `StateLine` "The reply stopped." with Retry, which re-runs the stream); a turn draws waiting and
+  stopped only when it holds its read (`root.held`), so a Thread whose items share the read, which
+  says the failure once, gets `none` for a waiting or failed root with no value and `written` for
+  a partial or stale one; a selection reply draws its value only and `none` is `null`. The turn steps aside when its key equals the last item's,
   which removes the double draw as history catches up. `replying` stays the app's boolean for a
   reply it does not stream. Thread's earlier-history paging is not built: no thread pages, and
   its anchor on a prepend went with it.

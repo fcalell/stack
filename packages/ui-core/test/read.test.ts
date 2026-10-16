@@ -325,6 +325,32 @@ test("a turn whose stream failed, or whose refresh did, is stopped with its part
 	);
 });
 
+test("a turn that does not hold its read draws its value alone", () => {
+	const drawn = { painted: false, value: "Hel" };
+	const unheld = (over: Partial<ReadResult>) => [root(over, false)];
+	assert.equal(turnOf({ reads: unheld(pending) }).form, "none");
+	assert.equal(
+		turnOf({
+			drawn: { painted: true, value: undefined },
+			reads: unheld(pending),
+		}).form,
+		"none",
+	);
+	assert.equal(turnOf({ reads: unheld(failure) }).form, "none");
+	assert.equal(
+		turnOf({ reads: unheld({ status: "error", error: "gone" }) }).form,
+		"none",
+	);
+	assert.deepEqual(turnOf({ drawn, reads: unheld(failure) }), {
+		form: "written",
+		value: "Hel",
+	});
+	assert.equal(
+		turnOf({ drawn, reads: unheld({ ...failure, isRefetchError: true }) }).form,
+		"written",
+	);
+});
+
 test("a stream that failed before it loaded keeps no placeholder as its partial value", () => {
 	assert.deepEqual(
 		turnOf({

@@ -253,22 +253,31 @@ function OneFailedRead() {
 	);
 }
 
-export const AFailedReadSharedByItemsAndReplyFetchesOncePerRetry: StoryObj = {
-	render: () => <OneFailedRead />,
-	beforeEach: () => {
-		fetches.count = 0;
-	},
-	play: async ({ canvas, userEvent }) => {
-		await waitFor(() => expect(fetches.count).toBeGreaterThan(0));
-		// A loop would keep fetching on its own.
-		await new Promise((resolve) => setTimeout(resolve, 600));
-		await expect(fetches.count).toBe(1);
-		// The items' failed form and the reply's stopped line each offer Retry.
-		await canvas.findAllByRole("button", { name: "Retry" });
-		await userEvent.click(canvas.getAllByRole("button", { name: "Retry" })[0]);
-		await waitFor(() => expect(fetches.count).toBe(2));
-		await canvas.findAllByRole("button", { name: "Retry" });
-		await new Promise((resolve) => setTimeout(resolve, 600));
-		await expect(fetches.count).toBe(2);
-	},
-};
+export const AFailedReadSharedByItemsAndReplyIsFailedOnceAndFetchesOncePerRetry: StoryObj =
+	{
+		render: () => <OneFailedRead />,
+		beforeEach: () => {
+			fetches.count = 0;
+		},
+		play: async ({ canvas, userEvent }) => {
+			await waitFor(() => expect(fetches.count).toBeGreaterThan(0));
+			// A loop would keep fetching on its own.
+			await new Promise((resolve) => setTimeout(resolve, 600));
+			await expect(fetches.count).toBe(1);
+			// The Thread holds the read: its failed form is the one Retry, and the
+			// reply, which does not hold it, says nothing.
+			await canvas.findByRole("button", { name: "Retry" });
+			await expect(
+				canvas.getAllByRole("button", { name: "Retry" }),
+			).toHaveLength(1);
+			await expect(canvas.queryByText("The reply stopped.")).toBeNull();
+			await userEvent.click(canvas.getByRole("button", { name: "Retry" }));
+			await waitFor(() => expect(fetches.count).toBe(2));
+			await canvas.findByRole("button", { name: "Retry" });
+			await expect(
+				canvas.getAllByRole("button", { name: "Retry" }),
+			).toHaveLength(1);
+			await new Promise((resolve) => setTimeout(resolve, 600));
+			await expect(fetches.count).toBe(2);
+		},
+	};
