@@ -53,6 +53,7 @@ import {
 import { ageShort } from "../../lib/age.ts";
 import { useClock } from "../../lib/clock.ts";
 import { CodeCut, Runs } from "../../lib/code.tsx";
+import { useMarksFold } from "../../lib/fold.ts";
 import { follow, navigate, useRoute } from "../../lib/navigate.ts";
 import { Painted } from "../../lib/paint.tsx";
 import {
@@ -82,7 +83,7 @@ import { ChangeMark } from "../status/change.tsx";
 import { StatusDot } from "../status/dot.tsx";
 import type { ListRowProps } from "./index.tsx";
 import { LockMark } from "./lock.tsx";
-import { WarningMark } from "./marks.tsx";
+import { MarkSlot, WarningMark } from "./marks.tsx";
 import { RowStatusMark } from "./status.tsx";
 
 const ROW = "relative flex items-center";
@@ -126,13 +127,14 @@ const TITLE_WHOLE = "min-w-0";
 const TITLE_CODE = "flex items-center min-w-0 overflow-hidden";
 // The end group is a line centred on the row, whichever lines the text group
 // holds, after the text group's floor (`ROW_TEXT_FLOOR`, the Pane head's two
-// fifths of the row): the end group takes what is left and its value and marks
-// are cut with an ellipsis to it, the chevron and the acts stand whole.
+// fifths of the row): the end group takes what is left; its value is cut with
+// an ellipsis to it, its marks stand whole or fold away, the chevron and the
+// acts stand whole.
 const END = "flex items-center self-center min-w-0";
 // A value and the marks together stand stacked, the value over the marks,
 // right-aligned, as one item of the end group; the marks are one line, a gap
 // apart, which no mark ever leaves.
-const MARKS = "flex items-center justify-end min-w-0 max-w-full";
+const MARKS = "relative flex items-center justify-end min-w-0 max-w-full";
 const CHIP_MARK = "flex min-w-0";
 const PAIR = "flex flex-col items-end min-w-0";
 const TRAILING = "min-w-0 max-w-full truncate";
@@ -542,6 +544,23 @@ export function ListRowBase<V extends string | null = string>({
 		floored && ROW_TEXT_FLOOR,
 		under && TEXT_UNDER,
 	);
+	const slots = [
+		status !== undefined && "status",
+		warning !== undefined && "warning",
+		lock !== undefined && "lock",
+		chip !== undefined && "chip",
+	].filter((kind) => kind !== false);
+	// Beside the text group's floor the marks that do not fit whole fold away,
+	// the last first; where the text has no floor they are not measured.
+	const fold = useMarksFold(marked && floored ? slots.length : 0, slots.join());
+	const slot = (kind: string, mark: ReactNode) =>
+		marked && floored ? (
+			<MarkSlot key={kind} at={slots.indexOf(kind)} shown={fold.shown}>
+				{mark}
+			</MarkSlot>
+		) : (
+			mark
+		);
 	const inline = { label: entry?.label ?? "" };
 	const entryReason = useReasonLine(painted ? undefined : entry?.act.blocked);
 	// The pressed reason of the act, which its button and its line both read:
@@ -570,19 +589,28 @@ export function ListRowBase<V extends string | null = string>({
 			</span>
 		);
 	const marks = marked ? (
-		<span className={cn(ROW_MARKS, MARKS)}>
-			{status ? <RowStatusMark status={status} painted={painted} /> : null}
-			{warning !== undefined ? (
-				<WarningMark label={warning} painted={painted} />
-			) : null}
-			{lock !== undefined ? (
-				<LockMark reason={lock} labelled painted={painted} />
-			) : null}
-			{chip ? (
-				<span className={CHIP_MARK}>
-					<ChipBase family={chip.family} label={chip.label} painted={painted} />
-				</span>
-			) : null}
+		<span ref={fold.group} className={cn(ROW_MARKS, MARKS)}>
+			{status
+				? slot("status", <RowStatusMark status={status} painted={painted} />)
+				: null}
+			{warning !== undefined
+				? slot("warning", <WarningMark label={warning} painted={painted} />)
+				: null}
+			{lock !== undefined
+				? slot("lock", <LockMark reason={lock} labelled painted={painted} />)
+				: null}
+			{chip
+				? slot(
+						"chip",
+						<span className={CHIP_MARK}>
+							<ChipBase
+								family={chip.family}
+								label={chip.label}
+								painted={painted}
+							/>
+						</span>,
+					)
+				: null}
 		</span>
 	) : null;
 	let shown: ReactNode = named;
@@ -659,6 +687,7 @@ export function ListRowBase<V extends string | null = string>({
 	return (
 		<div
 			{...item}
+			ref={fold.row}
 			inert={painted || undefined}
 			className={cn(
 				row({ lines, state: current ? "selected" : "rest" }),
@@ -685,7 +714,7 @@ export function ListRowBase<V extends string | null = string>({
 				</First>
 			) : null}
 			{!lined ? (
-				<span className={column}>
+				<span ref={fold.text} className={column}>
 					{titleLine}
 					{actLine}
 				</span>
@@ -754,7 +783,7 @@ export function ListRowBase<V extends string | null = string>({
 					{actLine}
 				</span>
 			) : (
-				<span className={column}>
+				<span ref={fold.text} className={column}>
 					{titleLine}
 					<span className={cn(ROW_META_LINE, META_LINE)}>
 						{painters ? (
@@ -824,7 +853,7 @@ export function ListRowBase<V extends string | null = string>({
 			{hasEnd ? (
 				<span className={cn(ROW_END, END, under && END_UNDER)}>
 					{value !== null && marks !== null ? (
-						<span className={PAIR}>
+						<span ref={fold.column} className={PAIR}>
 							{value}
 							{marks}
 						</span>

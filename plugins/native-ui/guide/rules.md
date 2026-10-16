@@ -219,7 +219,10 @@ A row's marks are named props, at most one each, in order: `status`, `warning` (
 string), `lock` (what it holds, a string, a glyph) and `chip`; the act that clears a warning is the
 row's `act`. The marks stand in the row's end group, one line, under the trailing value or beside
 it, never on the meta line, and none is ever dropped, so a row whose second line would hold only
-marks is one line. A status has one form, its `label`, truncating where the row is out of room. Keep a status word short; stack never shortens a label itself.
+marks is one line. A status has one form, its `label`, and a mark is never cut: the marks that do not
+all fit whole beside the text group's two fifths fold away, the last first, and are not drawn (they
+have no menu to go to; the screen reader still reads them), so the first mark of a narrow row stands
+alone. Put the mark that must be seen first. Keep a status word short; stack never shortens a label itself.
 
 Where a row, a fact or a field stands in a change set is its `change` (`ChangeKind`: `added`,
 `changed`, `removed`, `unchanged`, `stale`), one prop on `ListRow`, `DefinitionRow` and `FormField`
@@ -398,7 +401,7 @@ then the warning's label truncates, and last the first part truncates; the glyph
 is a text group (the title over the meta line) and an end group centred on the row: a trailing
 value, the marks, a pick, the chevron, the act and the more menu stand in it, in that order, never
 on the title's or the meta line's line; a value and marks together stand stacked, the value over
-the marks. The text group keeps two fifths of the row; the end group takes the rest. A row that opens (`href` or `onOpen`) ends in a chevron after its trailing value; a row
+the marks. The text group keeps two fifths of the row; the end group takes the rest, its value cut to it and its marks folding away, the last first. A row that opens (`href` or `onOpen`) ends in a chevron after its trailing value; a row
 with an `act`, `more`, a trailing pick or a tree's fold draws none, and neither does a static row. A row with nothing at its end draws no end group and reserves no room for one, so the rows of a list that end differently end at different x; give `more` only to the rows that have acts.
 A row with an `act` stands its end group on a line under its text, at the row's end, so give
 `act` the next step and let the row decide where it stands. A table's `selected` row washes in its

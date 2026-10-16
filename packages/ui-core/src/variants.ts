@@ -456,12 +456,12 @@ export const ROW_END = "gap-inside";
 // else stands in the row (a leading, a more act). The end group takes what is
 // left and its leaves truncate inside it.
 export const ROW_TEXT_FLOOR = "basis-2/5 shrink-0";
-// A list row's marks on its meta line, in order (a warning, a lock, a chip), a
-// gap apart. A row's status is not among them: it stands in the end group,
-// beside the trailing value or under it. They yield from the end: the chip
-// truncates first, then the lock's label (the glyph alone below `tablet`),
-// and the warning's label keeps. The warning's glyph is in `warn`, its label
-// in the meta ink.
+// A list row's marks, after its status in the end group, in order (a warning, a lock, a chip), a
+// gap apart. A row's status leads them, in the end group, beside the trailing
+// value or under it. They are never cut: those that do not all fit whole beside
+// the text group's floor fold away, the last first (`marksShown`), and the first
+// stands whatever the room. The lock's label shows from `tablet`, the glyph
+// alone below. The warning's glyph is in `warn`, its label in the meta ink.
 export const ROW_MARKS = "gap-inside";
 export const ROW_WARNING = "text-warn";
 export const ROW_ACTS = "gap-acts";

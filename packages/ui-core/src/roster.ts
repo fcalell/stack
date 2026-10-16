@@ -1098,7 +1098,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// (`ROW_TEXT`, `ROW_END`): the end group holds the trailing value, the
 		// status, a pick, the chevron or the acts, centred on the row, and a row
 		// with nothing at its end draws none. A value and a status together stand
-		// stacked in it, the value over the status.
+		// stacked in it, the value over the status. The marks stand whole or
+		// fold away, the last first (the first always stands), where they do not
+		// all fit beside the text group's floor.
 		// Below `tablet` of its page a row with an `act` stands its end group on a
 		// line of its own at the row's end, under the text, which beside it kept
 		// too little for its title and its marks. A `selected` row is the open

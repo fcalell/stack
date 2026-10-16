@@ -1413,6 +1413,12 @@ check("b-motion", "no size or place animates through layout", () => {
 const MEASURING: Record<string, string> = {
 	"components/pane/head.tsx":
 		"a Pane head's row, title and acts, whose layouts say how many acts fit beside the title's floor before the rest fold into the more menu",
+	"components/list-row/base.tsx":
+		"a list row's layout, its text group's, the column its marks stand in and each mark's, whose widths say how many marks fit whole beside the text group's floor before the rest fold away",
+	"components/list-row/marks.tsx":
+		"a mark's own layout, which is the width the row's fold counts",
+	"components/definition-row/index.tsx":
+		"a definition row's layout, its text group's and its status and lock's, which say whether the lock fits whole beside the text group's floor or folds away",
 	"lib/frame.ts":
 		"the toasts' box measured against the Shell's root, and the docked foot's region height (Yoga has no container units)",
 	"lib/room.tsx":

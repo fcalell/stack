@@ -1,4 +1,4 @@
-import { actsShown } from "@fcalell/ui-core/fold";
+import { actsShown, marksShown } from "@fcalell/ui-core/fold";
 import { useLayoutEffect, useRef, useState } from "react";
 
 /** The refs of a Pane head's row and how many of its `acts` stand in it: the rest fold into the head's more menu, the last first. The row is measured as it resizes (the head's only measure), its title's start and its acts' boxes read once per size, and `actsShown` decides from them. The count is set in the observer's own callback, before the frame paints, so a head never draws an act it then folds. */
@@ -48,4 +48,45 @@ export function useFold(acts: number, more: boolean) {
 		return () => resize.disconnect();
 	}, [acts, more]);
 	return { row, title, group, close, shown: Math.min(shown, acts) };
+}
+
+/** The refs of a list row's measured boxes and how many of its `marks` stand in its end group: the later ones fold away, not drawn, last first, and the first always stands. `key` names the marks the row holds, so the measure is taken again when they change. A mark is measured whole, drawn or not (a folded one stands out of the flow, unseen, so it keeps its width and its place in the row's content), and `marksShown` decides from them, in the observer's own callback, before the frame paints. */
+export function useMarksFold(marks: number, key: string) {
+	const row = useRef<HTMLDivElement>(null);
+	const text = useRef<HTMLSpanElement>(null);
+	const column = useRef<HTMLSpanElement>(null);
+	const group = useRef<HTMLSpanElement>(null);
+	const [shown, setShown] = useState(marks);
+	// biome-ignore lint/correctness/useExhaustiveDependencies: `key` names the marks the observer watches, which it must watch again when they change
+	useLayoutEffect(() => {
+		const box = row.current;
+		const end = group.current;
+		if (!marks || !box || !end) return;
+		const measure = () => {
+			if (!text.current) return;
+			const stand = column.current ?? end;
+			const style = getComputedStyle(box);
+			const inner =
+				box.clientWidth -
+				(Number.parseFloat(style.paddingInlineStart) || 0) -
+				(Number.parseFloat(style.paddingInlineEnd) || 0);
+			const widths = Array.from(end.children, (mark) =>
+				mark instanceof HTMLElement ? mark.offsetWidth : 0,
+			);
+			setShown(
+				marksShown({
+					row: inner,
+					fixed: inner - text.current.offsetWidth - stand.offsetWidth,
+					widths,
+					gap: Number.parseFloat(getComputedStyle(end).columnGap) || 0,
+				}),
+			);
+		};
+		const resize = new ResizeObserver(measure);
+		resize.observe(box);
+		for (const mark of end.children) resize.observe(mark);
+		measure();
+		return () => resize.disconnect();
+	}, [marks, key]);
+	return { row, text, column, group, shown: Math.min(shown, marks) };
 }

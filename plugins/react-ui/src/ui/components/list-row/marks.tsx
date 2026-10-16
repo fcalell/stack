@@ -1,5 +1,6 @@
 import { cn } from "@fcalell/ui-core/cn";
 import { ROW_MARKS, ROW_WARNING, text } from "@fcalell/ui-core/variants";
+import type { ReactNode } from "react";
 import { Painted } from "../../lib/paint.tsx";
 import { IconBase } from "../icon/index.tsx";
 
@@ -30,4 +31,26 @@ export function WarningMark(props: { label: string; painted?: boolean }) {
 			</span>
 		</span>
 	);
+}
+
+// Beside the text group's floor a mark stands whole in a slot of its own
+// (`useMarksFold` decides how many stand). The first gives way last, only where
+// it alone is wider than the room; a folded one is not drawn: out of the flow
+// and unseen, whole as it is, so it is measured and stays in the row's content
+// for a screen reader.
+const SLOT = "flex shrink-0";
+const SLOT_FIRST = "flex min-w-0";
+const SLOT_FOLDED = "absolute end-0 flex w-max opacity-0 pointer-events-none";
+
+/** The slot of the mark at place `at` of a row's marks, of which `shown` stand. Outside the package's exports. */
+export function MarkSlot(props: {
+	at: number;
+	shown: number;
+	children: ReactNode;
+}) {
+	const { at, shown, children } = props;
+	let form = SLOT;
+	if (at >= shown) form = SLOT_FOLDED;
+	else if (at === 0) form = SLOT_FIRST;
+	return <span className={form}>{children}</span>;
 }

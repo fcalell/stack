@@ -28,6 +28,7 @@ import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { useCopy } from "../../lib/copy";
+import { useMarksFold } from "../../lib/fold";
 import { Ink } from "../../lib/ink";
 import { navigate } from "../../lib/navigate";
 import { clipWhen, inertProps, Painted } from "../../lib/paint";
@@ -40,6 +41,7 @@ import { IconButtonBase } from "../icon-button/base";
 import { Link } from "../link";
 import type { DefinitionSlots } from "../list/index";
 import { LockMark } from "../list-row/lock";
+import { MarkSlot } from "../list-row/marks";
 import { HeldPicker } from "../picker/base";
 import type { PickOneProps } from "../picker/index";
 import { StatusBase } from "../status/base";
@@ -56,6 +58,9 @@ const HIT = "absolute inset-0 active:bg-wash-press";
 // centred on the row.
 const TEXT_GROWS = "grow";
 const END = "flex-row self-center items-center";
+// A status and a lock after it are the row's marks: they stand whole, the lock
+// folding away where the status leaves it no room (`useMarksFold`).
+const MARKS = "flex-row items-center min-w-0";
 // A label with nothing under it keeps a rows inset above and below, so one that
 // wraps has room; within the row's height a one-line label does not grow it.
 const ALONE = "py-rows";
@@ -328,9 +333,15 @@ export function DefinitionRowBase<V extends string | null = string>({
 			(said.value as string)
 		);
 	}
+	// The status and the lock are marks that fold, the lock first; a row with one
+	// of them has nothing to fold.
+	const marked = stands === END_STATUS && locked !== undefined;
+	const fold = useMarksFold(marked ? 2 : 0);
+	const lock = locked ? <LockMark painted={listed} /> : null;
 	return (
 		<View
 			{...inertProps(painted)}
+			onLayout={fold.onRow}
 			className={cn(
 				row({
 					lines: under ? "setting" : "one",
@@ -351,6 +362,7 @@ export function DefinitionRowBase<V extends string | null = string>({
 			{change ? <ChangeMark kind={change} painted={listed} /> : null}
 			<View
 				pointerEvents={shut}
+				onLayout={fold.onText}
 				className={cn(
 					ROW_TEXT,
 					stands === END_STATUS && ROW_TEXT_FLOOR,
@@ -375,8 +387,21 @@ export function DefinitionRowBase<V extends string | null = string>({
 					pointerEvents={open && !painted ? "box-none" : "auto"}
 					className={cn(ROW_END, END, stands)}
 				>
-					{valueNode}
-					{locked ? <LockMark painted={listed} /> : null}
+					{marked ? (
+						<View onLayout={fold.onColumn} className={cn(ROW_END, MARKS)}>
+							<MarkSlot at={0} shown={fold.shown} onMark={fold.onMark}>
+								{valueNode}
+							</MarkSlot>
+							<MarkSlot at={1} shown={fold.shown} onMark={fold.onMark}>
+								{lock}
+							</MarkSlot>
+						</View>
+					) : (
+						<>
+							{valueNode}
+							{lock}
+						</>
+					)}
 					{end}
 				</View>
 			) : null}

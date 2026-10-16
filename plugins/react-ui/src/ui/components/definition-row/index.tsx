@@ -28,6 +28,7 @@ import {
 import { memo, type ReactNode } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { useCopy } from "../../lib/copy.ts";
+import { useMarksFold } from "../../lib/fold.ts";
 import { follow } from "../../lib/navigate.ts";
 import { Painted } from "../../lib/paint.tsx";
 import { sameBy } from "../../lib/same-by.ts";
@@ -38,6 +39,7 @@ import { IconButton } from "../icon-button/index.tsx";
 import { Link } from "../link/index.tsx";
 import type { DefinitionSlots } from "../list/index.tsx";
 import { LockMark } from "../list-row/lock.tsx";
+import { MarkSlot } from "../list-row/marks.tsx";
 import { HeldPicker } from "../picker/base.tsx";
 import type { PickOneProps } from "../picker/index.tsx";
 import { StatusBase } from "../status/base.tsx";
@@ -82,6 +84,9 @@ const VALUE_STATUS = "flex min-w-0";
 const END_WHOLE = "shrink-0";
 const CONTROL = "flex shrink-0";
 const ACTS = "relative flex shrink-0";
+// A status and a lock after it are the row's marks: they stand whole, the lock
+// folding away where the status leaves it no room (`useMarksFold`).
+const MARKS = "relative flex items-center min-w-0";
 // The end group is a line, centred on the row.
 const END = "flex self-center items-center";
 // The chevron draws in the slot's ink (currentColor).
@@ -249,6 +254,11 @@ export function DefinitionRowBase<V extends string | null = string>({
 				<HeldPicker {...pick} fit="row" painted={painted} />
 			</span>
 		);
+	// The status and the lock are marks that fold, the lock first; a row with one
+	// of them has nothing to fold.
+	const marked = stands === END_STATUS && locked !== undefined;
+	const fold = useMarksFold(marked ? 2 : 0, "status,lock");
+	const lock = locked ? <LockMark painted={listed} /> : null;
 	const copy = copyable && waitsValue;
 	let end: ReactNode = null;
 	if (copy || copied !== undefined || act) {
@@ -320,6 +330,7 @@ export function DefinitionRowBase<V extends string | null = string>({
 		);
 	return (
 		<div
+			ref={fold.row}
 			inert={painted || undefined}
 			className={cn(
 				row({
@@ -333,6 +344,7 @@ export function DefinitionRowBase<V extends string | null = string>({
 		>
 			{change ? <ChangeMark kind={change} painted={listed} /> : null}
 			<span
+				ref={fold.text}
 				className={cn(
 					ROW_TEXT,
 					TEXT,
@@ -345,8 +357,21 @@ export function DefinitionRowBase<V extends string | null = string>({
 			</span>
 			{valueNode || locked || end ? (
 				<span className={cn(ROW_END, END, stands)}>
-					{valueNode}
-					{locked ? <LockMark painted={listed} /> : null}
+					{marked ? (
+						<span ref={fold.group} className={cn(ROW_END, MARKS)}>
+							<MarkSlot at={0} shown={fold.shown}>
+								{valueNode}
+							</MarkSlot>
+							<MarkSlot at={1} shown={fold.shown}>
+								{lock}
+							</MarkSlot>
+						</span>
+					) : (
+						<>
+							{valueNode}
+							{lock}
+						</>
+					)}
 					{end}
 				</span>
 			) : null}

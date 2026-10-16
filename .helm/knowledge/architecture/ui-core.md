@@ -539,7 +539,7 @@ a tick with no animation, never jumped to full.
   height and every act one press away. The count is `actsShown` in `@fcalell/ui-core/fold`, pure
   over the row, what stands beside the acts, one act's box and the gap, so both platforms fold at
   the same widths; the web measures with a `ResizeObserver` on the row (`useFold`, one entry of the
-  closed measure list) and the phone reads `onLayout`. The folded acts stand in the menu before the
+  closed measure list; a row's marks are `useMarksFold`, the second entry) and the phone reads `onLayout`. The folded acts stand in the menu before the
   head's own items, in their order; a folded act whose read waits is absent from it until it lands
   and one whose read ended stands blocked. A title whose read failed with no `.or` fallback draws
   nothing (`paints` is false for an ended read): the bar keeps its strip's height, its back or close
@@ -647,8 +647,9 @@ a tick with no animation, never jumped to full.
   holds an alignment is a group's gap or padding, never an empty element. The end group is held to
   the text group's floor, `ROW_TEXT_FLOOR` (`basis-2/5 shrink-0`, the Pane head's `TITLE_FLOOR`, one constant
   for every row kind): the text group keeps two fifths of the row's content width whatever else
-  stands in the row (a leading, a more act), the end group takes what is left, and its value and
-  marks are cut with an ellipsis to it while the chevron and the acts stand whole. A wrapped title (`wrap`) and an entry stand their change mark, tick and tree lane on the
+  stands in the row (a leading, a more act), the end group takes what is left, and its value is
+  cut with an ellipsis to it while the chevron and the acts stand whole. The marks are never cut:
+  they stand whole or fold away (below). A wrapped title (`wrap`) and an entry stand their change mark, tick and tree lane on the
   title's first line, as built, and the end group stands on the row's centre like any row's (an
   entry's own act, which is part of the entry line, stands where the entry does). A labelled `act`
   is not reserved: its width is its label's. A one-line title is cut by an ellipsis to the room the
@@ -1125,6 +1126,21 @@ a tick with no animation, never jumped to full.
   on load is accepted. The collections' pure logic (the tree, the table and option projections, the
   sort) is ui-core's `./list-state`, and a frame's state is `./read`'s, both imported by both
   platforms and tested without rendering.
+- A row's marks fold, never cut. Where the marks (`status`, `warning`, `lock`, `chip`, in that order)
+  do not all fit whole beside the text group's floor, the later ones fold away, the last first, and the
+  first always stands whole, the same rule as the Pane head's acts and one function: `itemsShown` in
+  `@fcalell/ui-core/fold`, which `actsShown` and `marksShown` both run, so a row folds at the same
+  widths on both platforms. A row's marks have nowhere to go (no menu stands for them), so a folded
+  mark is not drawn: it stands out of the flow, unseen (`opacity-0`, `absolute`), whole as it is, so
+  it is measured at its own width and stays in the row's content, which is what a screen reader reads
+  (a row names its marks in neither its name nor a description: they are its content, so a folded one
+  is read as it was). The web measures with `useMarksFold` (a `ResizeObserver` on the row and each
+  mark), the phone with its `onLayout` twin; `fixed` is the row less its text group and the column
+  the marks stand in, so the leading, the other end items and the gaps are counted without naming
+  them. Only a row with the text floor folds (not one with a labelled `act` or a pick, whose text
+  gives way first); the first mark gives way only where it alone is wider than the room, the one
+  place a mark is cut. A `DefinitionRow` with a status value and a lock folds the lock the same way. A trailing
+  value still cuts: it is not a mark.
 - A `ListRow` carries several marks as named props, not a `marks` record: `status`, `warning`,
   `lock`, `chip`, at most one each: the `warning`, `lock` and `chip` in that order on the meta line
   (`ROW_MARKS`), the `status` in the end group. `warning` is what
@@ -1168,8 +1184,8 @@ a tick with no animation, never jumped to full.
   status stands, so nothing shifts sideways when the word arrives. There is no `{ loading: true }`
   status: a row is wholly painted or wholly loaded, and the `status` slot, run over the placeholder,
   only says the row has one. A row's status has one form, its word: `StatusMark` is `{ state, label }`,
-  held in the end group, its word truncating only where the group, beside the text group's two fifths,
-  is out of room. Nothing measures the line, so no
+  held in the end group, its word whole wherever the group holds it beside the text group's two fifths
+  (it is the row's first mark, which always stands), truncating only where it alone is out of room. Nothing measures the line, so no
   second form can flip against the first. A canvas node's status is the same `StatusMark`, its dot beside its label. A `DefinitionRow`'s status value stays whole as well, the label
   wrapping to the room it leaves, the text group holding two fifths of the row.
 - A row, a fact or a field carries where it stands in a change set as one `change?: ChangeKind`

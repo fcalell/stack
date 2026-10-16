@@ -363,7 +363,7 @@ export const TextFloorBesideEverything: StoryObj = {
 			inner * 0.4 - Number.parseFloat(style.columnGap) - 1,
 		);
 		await expect(row.scrollWidth).toBeLessThanOrEqual(row.clientWidth);
-		await expect(canvas.getByText("Production")).toBeVisible();
+		// The status stands whole; the chip folds away (`ListRowMarksFold`).
 		await expect(canvas.getByText("Building")).toBeVisible();
 	},
 };

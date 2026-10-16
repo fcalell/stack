@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { actsShown, type FoldRoom, TITLE_FLOOR } from "../src/fold.ts";
+import {
+	actsShown,
+	type FoldRoom,
+	marksShown,
+	TITLE_FLOOR,
+} from "../src/fold.ts";
 import { ROW_TEXT_FLOOR } from "../src/variants.ts";
 
 // A 288 wide row, a 44 act, an 8 gap and a 52 lead: the title's floor takes
@@ -66,4 +71,38 @@ test("an overhang adds room, and no acts fold nothing", () => {
 	assert.equal(actsShown({ ...ROOM, row: 380 }), 2);
 	assert.equal(actsShown({ ...ROOM, row: 380, overhang: 40 }), 4);
 	assert.equal(actsShown({ ...ROOM, acts: 0 }), 0);
+});
+
+// A 288 wide row whose text group's floor takes 115.2; 100 is the leading and
+// the other end items, so 288 - 115.2 - 100 = 72.8 is left for the marks.
+test("a row's marks that fit stand whole, the later ones folding last first", () => {
+	const room = { row: 288, fixed: 100, gap: 8 };
+	// A status of 60 and a chip of 50: 60 + 8 + 50 = 118 does not fit 72.8.
+	assert.equal(marksShown({ ...room, widths: [60, 50] }), 1);
+	// Wider, both fit: 400 * 0.6 - 100 = 140.
+	assert.equal(marksShown({ ...room, row: 400, widths: [60, 50] }), 2);
+	// Three marks fold one at a time as the row narrows.
+	const shown = [250, 300, 350, 400, 450].map((row) =>
+		marksShown({ ...room, row, widths: [40, 40, 40] }),
+	);
+	assert.deepEqual(shown, [1, 1, 2, 3, 3]);
+});
+
+test("a row's first mark stands whatever the room, and the folded come back", () => {
+	// No room at all, and a first mark wider than the room: it still stands.
+	assert.equal(marksShown({ row: 100, fixed: 100, gap: 8, widths: [60] }), 1);
+	assert.equal(
+		marksShown({ row: 100, fixed: 100, gap: 8, widths: [90, 20] }),
+		1,
+	);
+	// A row with no marks shows none.
+	assert.equal(marksShown({ row: 288, fixed: 0, gap: 8, widths: [] }), 0);
+	const shown = [200, 260, 320, 400, 600].map((row) =>
+		marksShown({ row, fixed: 40, gap: 8, widths: [60, 50, 30] }),
+	);
+	assert.deepEqual(
+		shown,
+		[...shown].sort((a, b) => a - b),
+	);
+	assert.equal(shown.at(-1), 3);
 });

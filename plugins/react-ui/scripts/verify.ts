@@ -807,7 +807,7 @@ check("b-motion", "no size or place animates through layout", () => {
 // reads. A file not listed fails, and so does a listed file that stops.
 const MEASURING: Record<string, string> = {
 	"lib/fold.ts":
-		"useFold: a Pane head's acts that do not fit beside the title's floor fold into its more menu, which needs the row's width and the acts' boxes, so they are observed and measured",
+		"useFold: a Pane head's acts that do not fit beside the title's floor fold into its more menu, which needs the row's width and the acts' boxes, so they are observed and measured; useMarksFold: a list row's marks that do not all fit whole beside the text group's floor fold away, which needs the row's width, its text group's and each mark's, so they are observed and measured",
 	"lib/frame.ts":
 		"useFootRegion: a footed Pane or Thread in an auto-height column has no definite height, so its region is measured for the docked sheet",
 	"lib/page.ts":

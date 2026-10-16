@@ -46,6 +46,7 @@ import { useClock } from "../../lib/clock";
 import { cn } from "../../lib/cn";
 import { CodeCut, Runs } from "../../lib/code";
 import { FieldDisabled, FieldError } from "../../lib/field";
+import { useMarksFold } from "../../lib/fold";
 import { Ink } from "../../lib/ink";
 import { navigate, usePathname } from "../../lib/navigate";
 import { clipWhen, inertProps, Painted } from "../../lib/paint";
@@ -75,7 +76,7 @@ import { ChangeMark } from "../status/change";
 import { StatusDot } from "../status/dot";
 import type { ListRowProps } from "./index";
 import { LockMark } from "./lock";
-import { WarningMark } from "./marks";
+import { MarkSlot, WarningMark } from "./marks";
 import { RowStatusMark } from "./status";
 
 const ROW = "relative flex-row items-center";
@@ -507,6 +508,28 @@ export function ListRowBase<V extends string | null = string>({
 	// text group has no floor and gives way to it, as before.
 	const floored = act === undefined && !(trailing && "pick" in trailing);
 	const column = cn(ROW_TEXT, TEXT, floored && ROW_TEXT_FLOOR);
+	const slots = [
+		status !== undefined && "status",
+		warning !== undefined && "warning",
+		lock !== undefined && "lock",
+		chip !== undefined && "chip",
+	].filter((kind) => kind !== false);
+	// Beside the text group's floor the marks that do not fit whole fold away,
+	// the last first; where the text has no floor they are not measured.
+	const fold = useMarksFold(marked && floored ? slots.length : 0);
+	const slot = (kind: string, mark: ReactNode) =>
+		marked && floored ? (
+			<MarkSlot
+				key={kind}
+				at={slots.indexOf(kind)}
+				shown={fold.shown}
+				onMark={fold.onMark}
+			>
+				{mark}
+			</MarkSlot>
+		) : (
+			mark
+		);
 	const inline = { label: entry?.label ?? "" };
 	const entryReason = useReasonLine(painted ? undefined : entry?.act.blocked);
 	// The pressed reason of the act, which its button and its line both read:
@@ -541,17 +564,30 @@ export function ListRowBase<V extends string | null = string>({
 			</RNText>
 		);
 	const marks = marked ? (
-		<View pointerEvents="none" className={cn(ROW_MARKS, MARKS)}>
-			{status ? <RowStatusMark status={status} painted={painted} /> : null}
-			{warning !== undefined ? (
-				<WarningMark label={warning} painted={painted} />
-			) : null}
-			{lock !== undefined ? <LockMark painted={painted} /> : null}
-			{chip ? (
-				<View className={CHIP_MARK}>
-					<ChipBase family={chip.family} label={chip.label} painted={painted} />
-				</View>
-			) : null}
+		<View
+			pointerEvents="none"
+			onLayout={paired ? undefined : fold.onColumn}
+			className={cn(ROW_MARKS, MARKS)}
+		>
+			{status
+				? slot("status", <RowStatusMark status={status} painted={painted} />)
+				: null}
+			{warning !== undefined
+				? slot("warning", <WarningMark label={warning} painted={painted} />)
+				: null}
+			{lock !== undefined ? slot("lock", <LockMark painted={painted} />) : null}
+			{chip
+				? slot(
+						"chip",
+						<View className={CHIP_MARK}>
+							<ChipBase
+								family={chip.family}
+								label={chip.label}
+								painted={painted}
+							/>
+						</View>,
+					)
+				: null}
 		</View>
 	) : null;
 	const titleRole = rowTitle({ form: rowTitleForm(wrap, dim) });
@@ -585,6 +621,7 @@ export function ListRowBase<V extends string | null = string>({
 	return (
 		<View
 			{...inertProps(painted)}
+			onLayout={fold.onRow}
 			className={cn(
 				row({ lines, state: current ? "selected" : "rest" }),
 				top ? ROW_WHOLE : ROW,
@@ -619,7 +656,7 @@ export function ListRowBase<V extends string | null = string>({
 				</First>
 			) : null}
 			{!lined ? (
-				<View pointerEvents="none" className={column}>
+				<View pointerEvents="none" onLayout={fold.onText} className={column}>
 					{titled}
 					{actLine}
 				</View>
@@ -691,7 +728,7 @@ export function ListRowBase<V extends string | null = string>({
 					{actLine}
 				</View>
 			) : (
-				<View pointerEvents="none" className={column}>
+				<View pointerEvents="none" onLayout={fold.onText} className={column}>
 					{titled}
 					<View className={cn(ROW_META_LINE, META_LINE)}>
 						{painters ? (
@@ -766,7 +803,11 @@ export function ListRowBase<V extends string | null = string>({
 					className={cn(ROW_END, END, under && END_UNDER)}
 				>
 					{value !== null && marks !== null ? (
-						<View pointerEvents="none" className={PAIR}>
+						<View
+							pointerEvents="none"
+							onLayout={fold.onColumn}
+							className={PAIR}
+						>
 							{value}
 							{marks}
 						</View>
