@@ -595,6 +595,22 @@ function count(counts: Map<string, number>, keys: readonly string[]) {
 	};
 }
 
+// A painter arriving, or a holder leaving, changes what a failed read means,
+// so the watchers look again at those hashes, one tick later so the holders
+// that register in the same commit count.
+function counted(
+	counts: Map<string, number>,
+	keys: readonly string[],
+	recheck: "arrive" | "leave",
+) {
+	const release = count(counts, keys);
+	if (recheck === "arrive") recheckLater(keys);
+	return () => {
+		release();
+		if (recheck === "leave") recheckLater(keys);
+	};
+}
+
 // A frame holds one read. Given the frame's unheld non-quiet reads, the first is
 // the one it holds, so each further one is a mistake named by both keys: its
 // failure still draws (the form comes from every read) but its flags do not.
@@ -607,7 +623,7 @@ export function holdReads(reads: readonly Read<unknown>[]): () => void {
 			`A frame holds one read, and this one has a second: ${keys[0]} and ${key}. Give each read its own Pane, Section, Sheet or Form, or use \`or\` for a read that only names or orders.`,
 		);
 	}
-	return count(holders, keys);
+	return counted(holders, keys, "leave");
 }
 
 // A leaf that draws its own selection's failure (an act stands blocked with
@@ -615,51 +631,89 @@ export function holdReads(reads: readonly Read<unknown>[]): () => void {
 // unheld. It holds no flag, so any number of reads may stand in a list.
 export function drawFailures(reads: readonly Read<unknown>[]): () => void {
 	if (!dev()) return () => {};
-	return count(
+	return counted(
 		holders,
 		reads.map((r) => hashKey(r.options.queryKey)),
+		"leave",
 	);
 }
 
 export function paintReads(reads: readonly Read<unknown>[]): () => void {
 	if (!dev()) return () => {};
-	return count(
+	return counted(
 		painters,
 		reads.map((r) => hashKey(r.options.queryKey)),
+		"arrive",
 	);
 }
 
 // A read that fails with no data while a leaf paints it and no frame holds it.
-// `QueryProvider` runs this in dev, over the query cache. An ambient read
-// (`meta: { ambient: true }`, the org rules) has no frame by design: its
+// `QueryProvider` runs this in dev, over the query cache. Level-triggered: the
+// cache's error event says it, and so does a painter arriving or a holder
+// leaving over a read already failed (a leaf mounted late, a frame unmounted),
+// judged against the cache's own state. A failure is named once. An ambient
+// read (`meta: { ambient: true }`, the org rules) has no frame by design: its
 // failure leaves what it gates painted and inert.
-export function watchUnheld(cache: {
+interface WatchedQuery {
+	queryHash: string;
+	meta?: Record<string, unknown>;
+	state: { data: unknown; status: string; errorUpdatedAt: number };
+}
+
+interface WatchedCache {
+	get: (hash: string) => WatchedQuery | undefined;
 	subscribe: (
 		listener: (event: {
 			type: string;
 			action?: { type: string };
-			query: {
-				queryHash: string;
-				meta?: Record<string, unknown>;
-				state: { data: unknown };
-			};
+			query: WatchedQuery;
 		}) => void,
 	) => () => void;
-}): () => void {
+}
+
+const watchers = new Set<(keys: readonly string[]) => void>();
+
+function recheckLater(keys: readonly string[]) {
+	if (watchers.size === 0) return;
+	setTimeout(() => {
+		for (const check of watchers) check(keys);
+	}, 0);
+}
+
+export function watchUnheld(cache: WatchedCache): () => void {
 	if (!dev()) return () => {};
-	return cache.subscribe((event) => {
-		const key = event.query.queryHash;
+	const named = new Map<string, number>();
+	const report = (query: WatchedQuery) => {
+		const key = query.queryHash;
 		if (
-			event.type === "updated" &&
-			event.action?.type === "error" &&
-			event.query.meta?.["ambient"] !== true &&
-			event.query.state.data === undefined &&
-			(painters.get(key) ?? 0) > 0 &&
-			(holders.get(key) ?? 0) === 0
+			query.state.status !== "error" ||
+			query.meta?.["ambient"] === true ||
+			query.state.data !== undefined ||
+			(painters.get(key) ?? 0) === 0 ||
+			(holders.get(key) ?? 0) > 0 ||
+			named.get(key) === query.state.errorUpdatedAt
 		) {
-			console.error(
-				`The read ${key} failed and no frame holds it, so its failure draws nowhere. Give its Pane, Section, Sheet or Form \`read\`.`,
-			);
+			return;
+		}
+		named.set(key, query.state.errorUpdatedAt);
+		console.error(
+			`The read ${key} failed and no frame holds it, so its failure draws nowhere. Give its Pane, Section, Sheet or Form \`read\`.`,
+		);
+	};
+	const check = (keys: readonly string[]) => {
+		for (const key of keys) {
+			const query = cache.get(key);
+			if (query) report(query);
+		}
+	};
+	watchers.add(check);
+	const unsubscribe = cache.subscribe((event) => {
+		if (event.type === "updated" && event.action?.type === "error") {
+			report(event.query);
 		}
 	});
+	return () => {
+		watchers.delete(check);
+		unsubscribe();
+	};
 }

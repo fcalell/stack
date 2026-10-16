@@ -10,6 +10,7 @@ import { Sheet } from "@fcalell/plugin-react-ui/components/sheet";
 import { Stage } from "@fcalell/plugin-react-ui/showcase/frames/overlay-stage";
 import { readsAt } from "@fcalell/plugin-react-ui/showcase/waiting";
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { type ReactNode, useEffect, useState } from "react";
 import { expect, fn, spyOn, userEvent, waitFor, within } from "storybook/test";
 import { sectionOf } from "./support.ts";
 
@@ -326,6 +327,96 @@ export const APlainLeafOverAnUnheldReadStillLogs: StoryObj = {
 	render: () => <Banner sentence={plain.failing.at(() => "Heads up.")} />,
 	play: async () => {
 		await waitFor(() => expect(unheld(logged)).toHaveLength(1));
+	},
+};
+
+// A leaf that arrives after its read has already failed. A quiet leaf (`or`)
+// fetches the read from the start and paints nothing; the late block mounts
+// once the failure is in, so only the level check can see it.
+function Late(props: {
+	read: ReturnType<typeof lateRead>;
+	children: ReactNode;
+}) {
+	const [shown, setShown] = useState(false);
+	useEffect(() => {
+		const timer = setTimeout(() => setShown(true), 2500);
+		return () => clearTimeout(timer);
+	}, []);
+	return (
+		<>
+			<Banner sentence={props.read.at(() => "Quiet.").or("")} />
+			{shown ? props.children : <p>Not yet.</p>}
+		</>
+	);
+}
+// Its failure stays: a failed read refetches when an observer mounts, which
+// would name it afresh, so the late leaf is judged by the cache's level alone.
+const lateRead = (name: string) =>
+	read({
+		queryKey: ["showcase", "frame-holds", name],
+		queryFn: () => Promise.reject(new Error("The showcase read fails.")),
+		retry: false,
+		retryOnMount: false,
+	});
+const lateUnheld = lateRead("late-unheld");
+const lateHeld = lateRead("late-held");
+const lateAct = lateRead("late-act");
+const LATE_WAIT = { timeout: 8000 };
+
+export const ALeafMountedAfterItsUnheldReadFailedLogsOnce: StoryObj = {
+	beforeEach: watch,
+	render: () => (
+		<Late read={lateUnheld}>
+			<Banner sentence={lateUnheld.at(() => "Late.")} />
+		</Late>
+	),
+	play: async ({ canvas }) => {
+		await expect(unheld(logged)).toHaveLength(0);
+		await waitFor(
+			() => expect(canvas.queryByText("Not yet.")).toBeNull(),
+			LATE_WAIT,
+		);
+		await new Promise((done) => setTimeout(done, 800));
+		await expect(unheld(logged)).toHaveLength(1);
+	},
+};
+
+export const ALeafWhoseReadAFrameHoldsInTheSameCommitLogsNothing: StoryObj = {
+	beforeEach: watch,
+	render: () => (
+		<Late read={lateHeld}>
+			<Banner sentence={lateHeld.at(() => "Sibling.")} />
+			<Section title="Holder" read={lateHeld}>
+				<Banner sentence={lateHeld.at(() => "Descendant.")} />
+			</Section>
+		</Late>
+	),
+	play: async ({ canvas }) => {
+		await waitFor(
+			() => expect(canvas.queryByText("Not yet.")).toBeNull(),
+			LATE_WAIT,
+		);
+		await canvas.findByText("This didn't load.");
+		await new Promise((done) => setTimeout(done, 300));
+		await expect(unheld(logged)).toHaveLength(0);
+	},
+};
+
+export const AnActMountedAfterItsReadFailedLogsNothing: StoryObj = {
+	beforeEach: watch,
+	render: () => (
+		<Late read={lateAct}>
+			<Section title="Late act" act={lateAct.at(() => archive)} />
+		</Late>
+	),
+	play: async ({ canvas }) => {
+		await waitFor(
+			() => expect(canvas.queryByText("Not yet.")).toBeNull(),
+			LATE_WAIT,
+		);
+		await canvas.findByRole("button", { name: "This didn't load." });
+		await new Promise((done) => setTimeout(done, 300));
+		await expect(unheld(logged)).toHaveLength(0);
 	},
 };
 

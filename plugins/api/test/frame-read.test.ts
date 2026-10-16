@@ -331,6 +331,45 @@ test("a failure with painters and no holder raises an error naming the read", as
 	error.mock.restore();
 });
 
+test("a painter arriving after the failure raises the error once, and a holder in the same tick spares it", async () => {
+	const error = mock.method(console, "error", () => {});
+	const client = new QueryClient({
+		defaultOptions: { queries: { retry: false } },
+	});
+	const stop = watchUnheld(client.getQueryCache());
+	const fail = async () => {
+		throw new Error("no");
+	};
+	const run = async (key: string) => {
+		const r = make(key, fail);
+		const observer = new QueriesObserver(client, [r.options]);
+		const unobserve = observer.subscribe(() => {});
+		await tick();
+		return { r, unobserve };
+	};
+	const late = await run("late");
+	assert.equal(error.mock.callCount(), 0);
+	const unpaint = [paintReads([late.r]), paintReads([late.r])];
+	await tick();
+	assert.equal(error.mock.callCount(), 1);
+	assert.match(String(error.mock.calls[0]?.arguments[0]), /late/);
+
+	const spared = await run("spared");
+	const unpaintSpared = paintReads([spared.r]);
+	const unhold = holdReads([spared.r]);
+	await tick();
+	assert.equal(error.mock.callCount(), 1);
+	// The holder leaving puts the read back among the unheld.
+	unhold();
+	await tick();
+	assert.equal(error.mock.callCount(), 2);
+	for (const u of [...unpaint, unpaintSpared]) u();
+	late.unobserve();
+	spared.unobserve();
+	stop();
+	error.mock.restore();
+});
+
 const pageOf = (n: number, last = false) => ({
 	data: [n],
 	nextCursor: last ? null : String(n + 1),
