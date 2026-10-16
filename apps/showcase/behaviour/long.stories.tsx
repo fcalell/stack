@@ -458,10 +458,11 @@ function Wide(props: { count: number; width?: number }) {
 	);
 }
 
-// The cell of a row and column, by the cursor's own attributes.
+// The cell of a row and column: the row by the place it reads aloud (the head
+// is the first), the cell by the cursor's column.
 const cellOf = (root: ParentNode, row: number, column: number) =>
 	root.querySelector<HTMLElement>(
-		`td[data-row="${row}"][data-column="${column}"]`,
+		`tr[aria-rowindex="${row + 2}"] td[data-column="${column}"]`,
 	);
 const COLUMN_LAST = WIDE.length - 1;
 

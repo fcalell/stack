@@ -92,8 +92,14 @@ const treeItems = (root: ParentNode) => [
 	...root.querySelectorAll<HTMLElement>('[role="treeitem"]'),
 ];
 
-// The index of the visible row that holds focus.
-const at = () => Number(focused().dataset.index);
+// Every branch open, the rows in the order they stand.
+const ORDER = TREE.flatMap((branch) => [
+	branch.id,
+	...(branch.children ?? []).map((leaf) => leaf.id),
+]);
+
+// The index of the visible row that holds focus, from the key it carries.
+const at = () => ORDER.indexOf(focused().dataset.key ?? "");
 
 function Tree() {
 	return (
@@ -167,7 +173,7 @@ export const TreeWindows: Story = {
 		);
 		await userEvent.keyboard("{ArrowDown}");
 		await waitFor(() => expect(focused().textContent).toContain("Branch 2"));
-		await expect(at()).toBe(1);
+		await expect(focused().dataset.key).toBe("b1");
 	},
 };
 

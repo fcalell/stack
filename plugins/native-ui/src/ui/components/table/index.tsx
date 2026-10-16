@@ -69,6 +69,7 @@ import { MoreRow } from "../../lib/more";
 import { navigate } from "../../lib/navigate";
 import { clipWhen, inertProps, Painted } from "../../lib/paint";
 import { FrameBody, FrameLine, useCollection } from "../../lib/read";
+import { sameBy } from "../../lib/same-by";
 import { useWords } from "../../lib/words";
 import { Checkbox } from "../checkbox";
 import { CheckboxBase, HeldCheckbox } from "../checkbox/base";
@@ -421,7 +422,7 @@ const LeadRow = memo(function LeadRow(props: {
 			</Pressable>
 		</View>
 	);
-});
+}, sameBy("row"));
 
 // The half of a row that scrolls: the cells past the leading one.
 const RestRow = memo(function RestRow(props: {
@@ -459,7 +460,7 @@ const RestRow = memo(function RestRow(props: {
 			))}
 		</Pressable>
 	);
-});
+}, sameBy("row"));
 
 // A check cell: the cell is the target, so it owns the draft the box draws
 // and the press edits, and the edit's promise holds the viewer's tick.

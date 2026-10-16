@@ -35,6 +35,7 @@ import {
 	StateLine,
 	useCollection,
 } from "../../lib/read.tsx";
+import { sameBy } from "../../lib/same-by.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
 import { Scroller, useScroller, Window } from "../../lib/window.tsx";
 import { useWords } from "../../lib/words.tsx";
@@ -160,7 +161,10 @@ function ThreadItemBase<T>({
 
 // `memo` erases the generic its component takes, so the memoised item keeps
 // the base's own type.
-const ThreadItem = memo(ThreadItemBase) as typeof ThreadItemBase;
+const ThreadItem = memo(
+	ThreadItemBase,
+	sameBy("item"),
+) as typeof ThreadItemBase;
 
 // The turn being written, from its own subscription to the reply: a chunk
 // renders this and nothing else in the thread. A stream that failed keeps its

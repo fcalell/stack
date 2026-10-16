@@ -24,6 +24,7 @@ import {
 	paintBox,
 	useShown,
 } from "../../lib/paint";
+import { sameBy } from "../../lib/same-by";
 import type { MeterSlots } from "../list/index";
 import { CountLinks } from "./count-links";
 
@@ -196,7 +197,8 @@ export function MeterBase({
 // that changes one item renders that meter alone.
 function MeterItemBase<T>(props: {
 	item: T;
-	index: number;
+	/** A painted row's place, which varies its fillers; a loaded row takes none. */
+	index?: number;
 	meter: MeterSlots<T>;
 	painted: boolean;
 }) {
@@ -218,4 +220,7 @@ function MeterItemBase<T>(props: {
 	);
 }
 
-export const MeterItem = memo(MeterItemBase) as typeof MeterItemBase;
+export const MeterItem = memo(
+	MeterItemBase,
+	sameBy("item"),
+) as typeof MeterItemBase;

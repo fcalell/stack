@@ -413,3 +413,197 @@ export const ARefusedControlRendersItsLineAlone: StoryObj = {
 		await expect(sibling.n).toBe(beside);
 	},
 };
+
+// A row landing at the top moves every row below it, and a row's place is no
+// prop of its own: the rows below draw nothing again. Fifty rows stand, under
+// the window's count, so every one is mounted.
+const SHIFT_ROWS = 50;
+const shiftRan = new Map<string, number>();
+interface Task {
+	id: string;
+	name: string;
+	state: "running" | "done";
+}
+const TASKS: readonly Task[] = Array.from({ length: SHIFT_ROWS }, (_, at) => ({
+	id: `t${at}`,
+	name: `Task ${at}`,
+	state: "running",
+}));
+const tasks = read<readonly Task[]>({
+	queryKey: ["renders", "tasks"],
+	queryFn: () => Promise.resolve(TASKS),
+	staleTime: Number.POSITIVE_INFINITY,
+});
+const TASK_ROW = {
+	key: (each: Task) => each.id,
+	title: (each: Task) => {
+		shiftRan.set(each.id, (shiftRan.get(each.id) ?? 0) + 1);
+		return each.name;
+	},
+	status: (each: Task) => ({ state: each.state, label: each.state }),
+};
+
+function Tasks() {
+	const client = useQueryClient();
+	const set = (next: (now: readonly Task[]) => readonly Task[]) =>
+		client.setQueryData<readonly Task[]>(tasks.options.queryKey, (now) =>
+			next(now ?? TASKS),
+		);
+	return (
+		<>
+			<button
+				type="button"
+				onClick={() =>
+					set((now) => [
+						{ id: "new", name: "New task", state: "running" },
+						...now,
+					])
+				}
+			>
+				Insert
+			</button>
+			<button
+				type="button"
+				onClick={() =>
+					set((now) =>
+						now.map((each) =>
+							each.id === "t7" ? { ...each, state: "done" } : each,
+						),
+					)
+				}
+			>
+				Finish
+			</button>
+		</>
+	);
+}
+
+const taskList = (
+	<>
+		<Tasks />
+		<div className="h-[20rem]">
+			<Place>
+				<Pane title="Tasks">
+					<List items={tasks} row={TASK_ROW} />
+				</Pane>
+			</Place>
+		</div>
+	</>
+);
+
+export const ARowAtTheTopRendersThatRowAlone: StoryObj = {
+	render: () => taskList,
+	play: async ({ canvas, userEvent }) => {
+		await canvas.findByText("Task 49");
+		const before = new Map(shiftRan);
+		await userEvent.click(canvas.getByRole("button", { name: "Insert" }));
+		await canvas.findByText("New task");
+		await wait(100);
+		await expect(shiftRan.get("new")).toBe(1);
+		for (const { id } of TASKS)
+			await expect(shiftRan.get(id)).toBe(before.get(id));
+	},
+};
+
+export const AStatusChangeRendersThatRowAlone: StoryObj = {
+	render: () => taskList,
+	play: async ({ canvas, userEvent }) => {
+		await canvas.findByText("Task 49");
+		const before = new Map(shiftRan);
+		await userEvent.click(canvas.getByRole("button", { name: "Finish" }));
+		await canvas.findByText("done");
+		await wait(100);
+		for (const { id } of TASKS)
+			await expect(shiftRan.get(id)).toBe(
+				(before.get(id) ?? 0) + (id === "t7" ? 1 : 0),
+			);
+	},
+};
+
+// A tree's rows read their depth, fold and tab stop from the List, none from
+// their place among the visible rows: a status change on one leaf renders that
+// leaf and its branch (whose item holds it), no other row.
+interface Node {
+	id: string;
+	name: string;
+	state: "running" | "done";
+	children?: Node[];
+}
+const treeRan = new Map<string, number>();
+const NODES: readonly Node[] = Array.from({ length: 5 }, (_, at) => ({
+	id: `b${at}`,
+	name: `Branch ${at}`,
+	state: "running",
+	children: Array.from({ length: 5 }, (_, leaf) => ({
+		id: `b${at}-${leaf}`,
+		name: `Leaf ${at}.${leaf}`,
+		state: "running",
+	})),
+}));
+const nodes = read<readonly Node[]>({
+	queryKey: ["renders", "nodes"],
+	queryFn: () => Promise.resolve(NODES),
+	staleTime: Number.POSITIVE_INFINITY,
+});
+
+function Finish() {
+	const client = useQueryClient();
+	return (
+		<button
+			type="button"
+			onClick={() =>
+				client.setQueryData<readonly Node[]>(nodes.options.queryKey, (now) =>
+					(now ?? NODES).map((branch) => ({
+						...branch,
+						children: branch.children?.map((leaf) =>
+							leaf.id === "b2-3" ? { ...leaf, state: "done" } : leaf,
+						),
+					})),
+				)
+			}
+		>
+			Finish leaf
+		</button>
+	);
+}
+
+export const AStatusChangeInATreeRendersThatRowAndItsBranch: StoryObj = {
+	render: () => (
+		<>
+			<Finish />
+			<div className="h-[30rem]">
+				<Place>
+					<Pane title="Tree">
+						<List
+							items={nodes}
+							row={{
+								key: (each: Node) => each.id,
+								title: (each: Node) => {
+									treeRan.set(each.id, (treeRan.get(each.id) ?? 0) + 1);
+									return each.name;
+								},
+								status: (each: Node) => ({
+									state: each.state,
+									label: each.state,
+								}),
+								children: (each: Node) => each.children,
+							}}
+						/>
+					</Pane>
+				</Place>
+			</div>
+		</>
+	),
+	play: async ({ canvas, userEvent }) => {
+		await canvas.findByText("Leaf 4.4");
+		await wait(100);
+		const before = new Map(treeRan);
+		await userEvent.click(canvas.getByRole("button", { name: "Finish leaf" }));
+		await canvas.findByText("done");
+		await wait(100);
+		for (const [id, ran] of before)
+			await expect(treeRan.get(id)).toBe(
+				ran + (id === "b2-3" || id === "b2" ? 1 : 0),
+			);
+	},
+};

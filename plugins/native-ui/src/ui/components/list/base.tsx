@@ -56,6 +56,10 @@ export function ListBase<T, V extends string | null = string>(
 	const children = painted ? undefined : props.row?.children;
 	const framed = props.framed === true;
 	// A painted row's key is its place, the slots' keys being the placeholder's.
+	// Only a painted row takes its place as a prop (it varies the filler): a
+	// loaded row's place moves when a row lands above it, which would render
+	// every row below.
+	const paintedAt = (index: number) => (painted ? index : undefined);
 	const keyAt = (key: (item: T) => string, index: number) =>
 		painted ? `waiting-${index}` : key(items[index] as T);
 	// On a Group's card (framed) the card is the rows' box: each row after the
@@ -119,7 +123,7 @@ export function ListBase<T, V extends string | null = string>(
 					<ListRowItem
 						key={keyAt(row.key, index)}
 						item={item}
-						index={index}
+						index={paintedAt(index)}
 						row={row}
 						painted={painted}
 					/>
@@ -127,11 +131,10 @@ export function ListBase<T, V extends string | null = string>(
 			);
 		// Each row of the tree is given its depth and fold.
 		return frame(
-			treeRows(items, { key: row.key, children }, folded).map((each, index) => (
+			treeRows(items, { key: row.key, children }, folded).map((each) => (
 				<ListRowItem
 					key={each.key}
 					item={each.item}
-					index={index}
 					row={row}
 					painted={painted}
 					fold={fold}
@@ -149,7 +152,7 @@ export function ListBase<T, V extends string | null = string>(
 				<View key={keyAt(meter.key, index)} className={LIST_ITEM}>
 					<MeterItem
 						item={item}
-						index={index}
+						index={paintedAt(index)}
 						meter={meter}
 						painted={painted}
 					/>
@@ -164,7 +167,7 @@ export function ListBase<T, V extends string | null = string>(
 				<DefinitionItem
 					key={keyAt(definition.key, index)}
 					item={item}
-					index={index}
+					index={paintedAt(index)}
 					definition={definition}
 					painted={painted}
 				/>
@@ -177,7 +180,7 @@ export function ListBase<T, V extends string | null = string>(
 			<FileItem
 				key={keyAt(file.key, index)}
 				item={item}
-				index={index}
+				index={paintedAt(index)}
 				file={file}
 				painted={painted}
 			/>

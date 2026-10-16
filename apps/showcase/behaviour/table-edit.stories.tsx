@@ -97,9 +97,11 @@ export default {
 	render: () => <Members />,
 } satisfies Meta;
 
+// The cell of a row (by the place it reads aloud, the head being the first) and
+// a column.
 const cellAt = (row: number, column: number) => {
 	const cell = document.querySelector<HTMLElement>(
-		`td[data-row="${row}"][data-column="${column}"]`,
+		`tr[aria-rowindex="${row + 2}"] td[data-column="${column}"]`,
 	);
 	if (!cell) throw new Error(`no cell at ${row}, ${column}`);
 	return cell;

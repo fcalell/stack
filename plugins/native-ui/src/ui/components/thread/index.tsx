@@ -34,6 +34,7 @@ import {
 	StateLine,
 	useCollection,
 } from "../../lib/read";
+import { sameBy } from "../../lib/same-by";
 import { useWords } from "../../lib/words";
 import { Message } from "../message";
 import { MessageBase } from "../message/base";
@@ -167,7 +168,10 @@ function ThreadItemBase<T>({
 
 // `memo` erases the generic its component takes, so the memoised item keeps
 // the base's own type.
-const ThreadItem = memo(ThreadItemBase) as typeof ThreadItemBase;
+const ThreadItem = memo(
+	ThreadItemBase,
+	sameBy("item"),
+) as typeof ThreadItemBase;
 
 // The turn being written, from its own subscription to the reply: a chunk
 // renders this and nothing else in the thread. A stream that failed keeps its

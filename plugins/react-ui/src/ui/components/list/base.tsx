@@ -86,15 +86,17 @@ export function ListBase<T, V extends string | null = string>(
 	// a box inside it.
 	const wrap = useRef<HTMLDivElement>(null);
 	const treeBox = props.framed === true ? wrap : own;
-	// The visible row a key is moving the focus to; it stands mounted by then,
-	// the window keeping the tab stop's row, and takes the focus.
-	const [wanted, setWanted] = useState<{ index: number }>();
+	// The visible row a key is moving the focus to, by its key; it stands
+	// mounted by then, the window keeping the tab stop's row, and takes the focus.
+	const [wanted, setWanted] = useState<{ key: string }>();
 	// biome-ignore lint/correctness/useExhaustiveDependencies: only a new `wanted` is a move to focus
 	useLayoutEffect(() => {
 		if (!wanted) return;
 		treeBox.current
-			?.querySelector<HTMLElement>(`[data-index="${wanted.index}"]`)
-			?.focus();
+			?.querySelectorAll<HTMLElement>('[role="treeitem"]')
+			.forEach((each) => {
+				if (each.dataset.key === wanted.key) each.focus();
+			});
 	}, [wanted]);
 	const { drawn } = props;
 	const painted = drawn.painted;
@@ -106,6 +108,10 @@ export function ListBase<T, V extends string | null = string>(
 	const children = painted ? undefined : props.row?.children;
 	const framed = props.framed === true;
 	// A painted row's key is its place, the slots' keys being the placeholder's.
+	// Only a painted row takes its place as a prop (it varies the filler): a
+	// loaded row's place moves when a row lands above it, which would render
+	// every row below.
+	const paintedAt = (index: number) => (painted ? index : undefined);
 	const keyAt = (key: (item: T) => string, index: number) =>
 		painted ? `waiting-${index}` : key(items[index] as T);
 	// On a Group's card (framed) the card is the rows' box: they stand in it
@@ -191,7 +197,7 @@ export function ListBase<T, V extends string | null = string>(
 				<ListRowItem
 					key={keyOf(index)}
 					item={items[index] as T}
-					index={index}
+					index={paintedAt(index)}
 					row={row}
 					painted={painted}
 				/>
@@ -201,10 +207,12 @@ export function ListBase<T, V extends string | null = string>(
 		// fold the branches (the WAI-ARIA tree pattern, `treeMove`).
 		const visible = treeRows(items, { key: row.key, children }, folded);
 		const stop = treeStop(visible, active);
-		// A row knows its place among the visible ones (`data-index`), so a key
-		// moves by index over `visible`, whichever rows the window mounts.
-		const indexOf = (target: HTMLElement) =>
-			Number(target.closest<HTMLElement>('[role="treeitem"]')?.dataset.index);
+		// A row carries its key (`data-key`), so a key finds the row's place over
+		// `visible` when it is pressed, whichever rows the window mounts.
+		const indexOf = (target: HTMLElement) => {
+			const key = target.closest<HTMLElement>('[role="treeitem"]')?.dataset.key;
+			return visible.findIndex((each) => each.key === key);
+		};
 		const nav: TreeNav = {
 			role: "tree",
 			onKeyDown: (event) => {
@@ -218,7 +226,7 @@ export function ListBase<T, V extends string | null = string>(
 					// The tab stop moves first: the window keeps its row, mounted by
 					// this render if it was not, and the focus follows it there.
 					setActive(visible[move.focus]?.key);
-					setWanted({ index: move.focus });
+					setWanted({ key: visible[move.focus]?.key as string });
 				} else setFolded((keys) => folding(keys, move.fold, move.open));
 			},
 			onFocus: (event) => {
@@ -237,7 +245,6 @@ export function ListBase<T, V extends string | null = string>(
 					<ListRowItem
 						key={each.key}
 						item={each.item}
-						index={index}
 						row={row}
 						painted={painted}
 						fold={fold}
@@ -260,7 +267,7 @@ export function ListBase<T, V extends string | null = string>(
 			<div key={keyOf(index)} className={LIST_ITEM}>
 				<MeterItem
 					item={items[index] as T}
-					index={index}
+					index={paintedAt(index)}
 					meter={meter}
 					painted={painted}
 				/>
@@ -274,7 +281,7 @@ export function ListBase<T, V extends string | null = string>(
 			<DefinitionItem
 				key={keyOf(index)}
 				item={items[index] as T}
-				index={index}
+				index={paintedAt(index)}
 				definition={definition}
 				painted={painted}
 			/>
@@ -286,7 +293,7 @@ export function ListBase<T, V extends string | null = string>(
 		<FileItem
 			key={keyOf(index)}
 			item={items[index] as T}
-			index={index}
+			index={paintedAt(index)}
 			file={file}
 			painted={painted}
 		/>

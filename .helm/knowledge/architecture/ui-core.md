@@ -1534,7 +1534,11 @@ a tick with no animation, never jumped to full.
   wins, so a List in a portaled Sheet never windows against the Pane. `Window` is TanStack Virtual
   over it: the host gives `Window({ count, keyOf, row })` and the box the rows stand in, and
   `Window` builds `row(index)` only for the mounted indices, so the rest are never built or rendered
-  (each row kind is one `memo` component taking its item, index, descriptor and `painted`); below
+  (each row kind is one `memo` component taking its item, descriptor and `painted`, compared by
+  `sameBy("item")`: a read shares unchanged items only by position, so an item landing at the top
+  hands the rows below copies, and the compare is by value. A loaded row takes no place as a prop,
+  since a place moves when a row lands above it; a painted row alone takes `index`, which varies its
+  fillers); below
   the count or with no scroller it returns every row (crossing the count on a Show more keeps the
   same keys in the same parent, so nothing remounts) and otherwise the mounted slice
   between spacers (`aria-hidden`, a `tr` in a tbody, sized against the box's `row-gap`). Rows are
@@ -1550,10 +1554,12 @@ a tick with no animation, never jumped to full.
   meters and definitions), Group's list (its card is the box), Table at both widths (the narrow
   form is a ListBase; the grid's tbody takes `keep` as the cursor row and `spacer="tr"`, moves the
   cursor first and focuses in a layout effect so Ctrl+End reaches the last row, and carries
-  `aria-rowcount` and `aria-rowindex`), and Thread (the log is the scroller, its content div the
+  `aria-rowcount` and `aria-rowindex`; a cell carries its row's id in `data-row`, and a row
+  landing above re-renders the rows below it for their new `aria-rowindex`, as OptionList radios do
+  for `aria-posinset`), and Thread (the log is the scroller, its content div the
   box, `end` opens at the last rows; `replying`, `ReplyTurn` and the more row stand after the
-  window, so a token grows outside it), trees (the tab stop's row kept mounted, keys moving by
-  index over the visible rows, `treeRows` saying each row's place among its siblings for
+  window, so a token grows outside it), trees (the tab stop's row kept mounted, a row carrying its
+  key in `data-key` and the keys moving by the index that key has over the visible rows, `treeRows` saying each row's place among its siblings for
   `aria-setsize` and `aria-posinset`), an OptionList's groups (a memo `OptionRow` each; the checkboxes
   carry no set size, the radios their place in the group), a Picker's sheet and its desktop search
   list (Base UI's virtualized combobox, from `VIRTUAL_FROM` options, the highlight kept mounted and

@@ -30,6 +30,7 @@ import type { Closed } from "../../lib/closed.ts";
 import { useCopy } from "../../lib/copy.ts";
 import { follow } from "../../lib/navigate.ts";
 import { Painted } from "../../lib/paint.tsx";
+import { sameBy } from "../../lib/same-by.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButtonBase } from "../icon-button/base.tsx";
@@ -370,7 +371,8 @@ function CopyAct({ label, value }: { label: string; value: string }) {
 /** One definition row of a `List` from its item: it runs the slots itself and opens the item itself, so a refetch that changes one item renders that row alone. */
 function DefinitionItemBase<T>(props: {
 	item: T;
-	index: number;
+	/** A painted row's place, which varies its fillers; a loaded row takes none. */
+	index?: number;
 	definition: DefinitionSlots<T>;
 	painted: boolean;
 }) {
@@ -400,4 +402,5 @@ function DefinitionItemBase<T>(props: {
 
 export const DefinitionItem = memo(
 	DefinitionItemBase,
+	sameBy("item"),
 ) as typeof DefinitionItemBase;

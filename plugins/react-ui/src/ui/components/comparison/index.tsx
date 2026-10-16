@@ -13,6 +13,7 @@ import { memo, useRef } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { Painted } from "../../lib/paint.tsx";
 import { FrameBody, FrameLine, useCollection } from "../../lib/read.tsx";
+import { sameBy } from "../../lib/same-by.ts";
 import { Window } from "../../lib/window.tsx";
 import { ChipBase } from "../chip/base.tsx";
 import { Chip } from "../chip/index.tsx";
@@ -163,7 +164,7 @@ function FactBase<T>(props: {
 	);
 }
 
-const Fact = memo(FactBase) as typeof FactBase;
+const Fact = memo(FactBase, sameBy("item")) as typeof FactBase;
 
 // The head row: the corner over the labels, then the columns.
 const Head = memo(function Head(props: { columns: readonly string[] }) {

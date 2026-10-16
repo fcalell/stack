@@ -32,6 +32,7 @@ import { Ink } from "../../lib/ink";
 import { navigate } from "../../lib/navigate";
 import { clipWhen, inertProps, Painted } from "../../lib/paint";
 import type { Route } from "../../lib/route";
+import { sameBy } from "../../lib/same-by";
 import { useWords } from "../../lib/words";
 import { Icon } from "../icon";
 import { IconButton } from "../icon-button";
@@ -403,7 +404,8 @@ function CopyAct({ label, value }: { label: string; value: string }) {
 // alone.
 function DefinitionItemBase<T>(props: {
 	item: T;
-	index: number;
+	/** A painted row's place, which varies its fillers; a loaded row takes none. */
+	index?: number;
 	definition: DefinitionSlots<T>;
 	painted: boolean;
 }) {
@@ -433,4 +435,5 @@ function DefinitionItemBase<T>(props: {
 
 export const DefinitionItem = memo(
 	DefinitionItemBase,
+	sameBy("item"),
 ) as typeof DefinitionItemBase;

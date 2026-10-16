@@ -41,6 +41,7 @@ import {
 import { GroupName } from "../../lib/field.ts";
 import { PAINT_CONTROL, Painted } from "../../lib/paint.tsx";
 import { OptionsLine, useOptions } from "../../lib/read.tsx";
+import { sameBy } from "../../lib/same-by.ts";
 import { Window } from "../../lib/window.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { HeldCheckbox } from "../checkbox/base.tsx";
@@ -123,7 +124,6 @@ interface OptionRowProps<V extends string> {
 	option: Option<V>;
 	place: number;
 	size: number;
-	labelId: string;
 	chosen: boolean;
 	/** One choice (a radio) or several (a box). */
 	one: boolean;
@@ -146,7 +146,7 @@ function OptionRowBase<V extends string>(props: OptionRowProps<V>) {
 	const marked = rowsPaint
 		? option.description !== undefined
 		: meta || option.recommended;
-	const target = { labelledBy: props.labelId };
+	const target = { labelledBy: useId() };
 	return (
 		<div className={cn(SELECT_GROUP, GROUP)}>
 			{/* biome-ignore lint/a11y/noLabelWithoutControl: the Checkbox or the radio inside is its control */}
@@ -246,16 +246,13 @@ function OptionRowBase<V extends string>(props: OptionRowProps<V>) {
 	);
 }
 
-const OptionRow = memo(OptionRowBase) as typeof OptionRowBase;
+const OptionRow = memo(OptionRowBase, sameBy("option")) as typeof OptionRowBase;
 
 // One group of options: its label over its rows. The rows stand in a box of
 // their own, so a long group windows them (a label stays out of the box), the
 // radio that holds the tab stop kept mounted.
 function OptionGroupBox<V extends string>(props: {
 	group: { label?: string; options: readonly Option<V>[] };
-	/** The group's place among the list's, which names its rows' labels. */
-	at: number;
-	ids: string;
 	one: boolean;
 	rowsPaint: boolean;
 	painted: boolean;
@@ -263,7 +260,7 @@ function OptionGroupBox<V extends string>(props: {
 	toggle: (value: V) => void;
 	children?: ReactNode;
 }) {
-	const { group, at, ids, chosenValues } = props;
+	const { group, chosenValues } = props;
 	const box = useRef<HTMLDivElement>(null);
 	const first = chosenValues[0];
 	const { options } = group;
@@ -281,7 +278,6 @@ function OptionGroupBox<V extends string>(props: {
 				option={option}
 				place={place}
 				size={options.length}
-				labelId={`${ids}-${at}-${place}`}
 				chosen={chosen}
 				one={props.one}
 				rowsPaint={props.rowsPaint}
@@ -325,7 +321,6 @@ export function OptionListBase<V extends string = string, T = unknown>(
 	},
 ) {
 	const { children, draft } = props;
-	const ids = useId();
 	const named = use(GroupName);
 	// Waiting items paint the rows; ended ones say so in a line under them.
 	const { drawn: given, retry } = useOptions(props.items);
@@ -362,8 +357,6 @@ export function OptionListBase<V extends string = string, T = unknown>(
 		<OptionGroupBox<V>
 			key={group.label ?? at}
 			group={group}
-			at={at}
-			ids={ids}
 			one={one}
 			rowsPaint={rowsPaint}
 			painted={painted}

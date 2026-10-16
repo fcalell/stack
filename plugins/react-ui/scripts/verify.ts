@@ -970,9 +970,9 @@ const DATASET: Record<string, string> = {
 		"the root's pointer or keyboard mark, which the ring variants read",
 	"lib/media.ts": "the density pin a root names, which useTouch reads",
 	"components/table/index.tsx":
-		"a cell's row and column, which the grid's keyboard cursor reads back",
+		"a cell's row (by id) and column, which the grid's keyboard cursor reads back",
 	"components/list/base.tsx":
-		"a tree row's place among the visible ones, which its keys move by when the window leaves most rows unmounted",
+		"a tree row's key, which its keys find the row's place among the visible ones by when the window leaves most rows unmounted",
 	"components/picker/base.tsx":
 		"a sheet option's place among all the options, which its keys move by when the window leaves most rows unmounted",
 	"components/canvas/":

@@ -74,6 +74,7 @@ import { follow, navigate } from "../../lib/navigate.ts";
 import { usePageTablet } from "../../lib/page.ts";
 import { Painted } from "../../lib/paint.tsx";
 import { FrameBody, FrameLine, useCollection } from "../../lib/read.tsx";
+import { sameBy } from "../../lib/same-by.ts";
 import { Window } from "../../lib/window.tsx";
 import { useWords } from "../../lib/words.tsx";
 import { HeldCheckbox } from "../checkbox/base.tsx";
@@ -311,11 +312,11 @@ export function Table<T>(props: TableProps<T>) {
 // life, reading the grid's latest render, so a memoised row or cell never
 // re-renders for a new callback.
 interface GridActions {
-	start: (row: number, column: number) => void;
+	start: (row: string, column: number) => void;
 	done: () => void;
 	edit: (row: TableRecord, column: TableColumn, value: CellValue) => unknown;
 	click: (event: MouseEvent, row: TableRecord) => void;
-	home: (row: number, column: number) => HTMLElement | undefined;
+	home: (row: string, column: number) => HTMLElement | undefined;
 	tick: (row: TableRecord, on: boolean) => void;
 }
 
@@ -358,7 +359,6 @@ const Row = memo(function Row(props: {
 			{choosing ? (
 				<TickCell
 					row={row}
-					index={index}
 					name={name}
 					ticked={props.ticked}
 					tall={reason !== undefined}
@@ -373,7 +373,6 @@ const Row = memo(function Row(props: {
 				<Cell
 					key={column.key}
 					row={row}
-					index={index}
 					column={column}
 					place={place + shift}
 					leading={place === 0}
@@ -392,14 +391,13 @@ const Row = memo(function Row(props: {
 			))}
 		</tr>
 	);
-});
+}, sameBy("row"));
 
 // A row's tick cell: a Checkbox named by the leading cell's name, disabled
 // while the row is blocked. Frozen
 // first on touch, where the leading column freezes after it.
 function TickCell(props: {
 	row: TableRecord;
-	index: number;
 	name: string;
 	ticked: boolean;
 	tall: boolean;
@@ -409,7 +407,7 @@ function TickCell(props: {
 	here: boolean;
 	actions: GridActions;
 }) {
-	const { row, index, actions } = props;
+	const { row, actions } = props;
 	const box = cn(
 		TICK_BOX,
 		props.tall && TALL,
@@ -421,7 +419,7 @@ function TickCell(props: {
 	);
 	return (
 		<td
-			data-row={index}
+			data-row={row.id}
 			data-column={0}
 			data-choose=""
 			tabIndex={props.here ? 0 : -1}
@@ -451,7 +449,6 @@ function TickCell(props: {
 // pointer shows its control.
 const Cell = memo(function Cell(props: {
 	row: TableRecord;
-	index: number;
 	column: TableColumn;
 	// The cursor's column, counting the tick column first when there is one.
 	place: number;
@@ -471,7 +468,7 @@ const Cell = memo(function Cell(props: {
 	editing: Editing | undefined;
 	actions: GridActions;
 }) {
-	const { row, index, column, place, cell, control, actions } = props;
+	const { row, column, place, cell, control, actions } = props;
 	const [hovered, setHovered] = useState(false);
 	// A started edit's control mounts afresh over the one the pointer showed,
 	// so it mounts focused or open.
@@ -484,7 +481,7 @@ const Cell = memo(function Cell(props: {
 		label: column.label,
 		starts,
 		done: actions.done,
-		home: () => actions.home(index, place),
+		home: () => actions.home(row.id, place),
 	};
 	const box = cn(
 		TABLE_CELL,
@@ -500,7 +497,7 @@ const Cell = memo(function Cell(props: {
 	return (
 		// biome-ignore lint/a11y/useKeyWithClickEvents: the grid's keyboard is the table's, delegated over its cells
 		<td
-			data-row={index}
+			data-row={row.id}
 			data-column={place}
 			data-edit={control}
 			tabIndex={props.here ? 0 : -1}
@@ -509,7 +506,7 @@ const Cell = memo(function Cell(props: {
 			onClick={
 				live || !control || control === "checkbox"
 					? undefined
-					: () => actions.start(index, place)
+					: () => actions.start(row.id, place)
 			}
 			className={cn(
 				BODY_CELL,
@@ -590,8 +587,8 @@ function Grid(props: {
 	// control mounted afresh (focused, or a pick open), or `entered` when focus
 	// reached a control the pointer already showed.
 	const [editing, setEditing] = useState<"started" | "entered">();
-	const start = (row: number, column: number) => {
-		setCursor({ row, column });
+	const start = (id: string, column: number) => {
+		setCursor({ row: indexOf(id), column });
 		setEditing("started");
 	};
 	const at: Cursor = {
@@ -600,10 +597,17 @@ function Grid(props: {
 	};
 	const edits = props.onEdit !== undefined;
 
-	const cellAt = (row: number, column: number) =>
+	// A cell carries its row's id, not its place: a row landing above it
+	// would render every row below it with a new place.
+	const cellAt = (id: string, column: number) =>
 		frame.current?.querySelector<HTMLElement>(
-			`td[data-row="${row}"][data-column="${column}"]`,
+			`td[data-row="${CSS.escape(id)}"][data-column="${column}"]`,
 		);
+	const places = useMemo(
+		() => new Map(rows.map((each, place) => [each.id, place])),
+		[rows],
+	);
+	const indexOf = (id: string | undefined) => places.get(id ?? "") ?? -1;
 	// The cursor moves first and its cell takes focus once the row stands: a row
 	// the window had not mounted is kept by the cursor, drawn by this render.
 	const [wanted, setWanted] = useState<Cursor>();
@@ -617,7 +621,7 @@ function Grid(props: {
 	// biome-ignore lint/correctness/useExhaustiveDependencies: only a new `wanted` is a move to focus
 	useLayoutEffect(() => {
 		if (!wanted) return;
-		const cell = cellAt(wanted.row, wanted.column);
+		const cell = cellAt(rows[wanted.row]?.id ?? "", wanted.column);
 		if (!cell) return;
 		if (wanted.column <= shift) {
 			cell.focus();
@@ -641,7 +645,8 @@ function Grid(props: {
 		const target = event.target as HTMLElement;
 		const cell = target.closest<HTMLElement>("td[data-row]");
 		if (!cell || !frame.current?.contains(cell)) return;
-		const row = Number(cell.dataset.row);
+		const row = indexOf(cell.dataset.row);
+		if (row < 0) return;
 		const column = Number(cell.dataset.column);
 		const same = row === at.row && column === at.column;
 		// A focus on the cursor's own cell sets nothing.
@@ -663,7 +668,7 @@ function Grid(props: {
 		const target = event.target as HTMLElement;
 		const cell = target.closest<HTMLElement>("td[data-row]");
 		if (!cell) return;
-		const row = Number(cell.dataset.row);
+		const row = indexOf(cell.dataset.row);
 		const column = Number(cell.dataset.column);
 		const record = rows[row];
 		// The tick column has no field.
@@ -716,7 +721,7 @@ function Grid(props: {
 			return;
 		}
 		if (control) {
-			start(row, column);
+			start(record.id, column);
 			return;
 		}
 		if (place === 0 && event.key === "Enter") {

@@ -64,6 +64,7 @@ import {
 } from "../../lib/parts.ts";
 import { endedItems } from "../../lib/read.tsx";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
+import { sameBy } from "../../lib/same-by.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";
 import { AvatarBase } from "../avatar/base.tsx";
@@ -204,6 +205,8 @@ export interface RowTree {
 	/** The row's place among its siblings (`place` of `size`, from 1), which the rows a window leaves unmounted do not tell. */
 	size: number;
 	place: number;
+	/** The item's key, which the tree's keys find the row by. */
+	key: string;
 	fold: { open: boolean; onToggle: () => void } | undefined;
 	tabbable: boolean;
 }
@@ -648,7 +651,7 @@ export function ListRowBase<V extends string | null = string>({
 				"aria-setsize": tree.size,
 				"aria-posinset": tree.place,
 				"aria-expanded": tree.fold?.open,
-				"data-index": at,
+				"data-key": tree.key,
 				"aria-current": current ? ("page" as const) : undefined,
 				onKeyDown: opens ? openOnEnter : undefined,
 			}
@@ -879,8 +882,8 @@ function leadingOf<T>(slot: LeadingSlot<T>, item: T): RowLeading {
 /** What a `List` hands the ListRowItem it draws; no app sets it. */
 export interface ListRowItemProps<T, V extends string | null> {
 	item: T;
-	/** The item's place among the rows, which varies a painted row's fillers. */
-	index: number;
+	/** A painted row's place among the rows, which varies its fillers; a loaded row takes none, its place moving when a row lands above it. */
+	index?: number;
 	/** The slots, run inside the row over the item (over the placeholder while it is painted: a slot that throws there paints as the item itself). */
 	row: RowSlots<T, V>;
 	painted: boolean;
@@ -915,6 +918,7 @@ function ListRowItemBase<T, V extends string | null>({
 					depth,
 					size,
 					place,
+					key: row.key(item),
 					fold:
 						open === undefined
 							? undefined
@@ -951,4 +955,7 @@ function ListRowItemBase<T, V extends string | null>({
 }
 
 /** One row of a `List` from its item: it runs the slots itself and opens the item itself, so a refetch that changes one item renders that row alone. `memo` erases the generic, so the item keeps the base's own type. */
-export const ListRowItem = memo(ListRowItemBase) as typeof ListRowItemBase;
+export const ListRowItem = memo(
+	ListRowItemBase,
+	sameBy("item"),
+) as typeof ListRowItemBase;

@@ -17,6 +17,7 @@ import {
 import { memo } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { PAINT_BOX, Painted } from "../../lib/paint.tsx";
+import { sameBy } from "../../lib/same-by.ts";
 import type { MeterSlots } from "../list/index.tsx";
 import { CountLinks } from "./count-links.tsx";
 
@@ -182,7 +183,8 @@ export function MeterBase({
 /** One meter of a `List` from its item: it runs the slots itself, so a refetch that changes one item renders that meter alone. */
 function MeterItemBase<T>(props: {
 	item: T;
-	index: number;
+	/** A painted row's place, which varies its fillers; a loaded row takes none. */
+	index?: number;
 	meter: MeterSlots<T>;
 	painted: boolean;
 }) {
@@ -204,4 +206,7 @@ function MeterItemBase<T>(props: {
 	);
 }
 
-export const MeterItem = memo(MeterItemBase) as typeof MeterItemBase;
+export const MeterItem = memo(
+	MeterItemBase,
+	sameBy("item"),
+) as typeof MeterItemBase;

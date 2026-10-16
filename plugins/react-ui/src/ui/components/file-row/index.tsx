@@ -21,6 +21,7 @@ import { memo } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { follow, useRoute } from "../../lib/navigate.ts";
 import { Painted } from "../../lib/paint.tsx";
+import { sameBy } from "../../lib/same-by.ts";
 import { ChipBase } from "../chip/base.tsx";
 import { IconBase } from "../icon/index.tsx";
 import type { FileSlots } from "../list/index.tsx";
@@ -225,7 +226,8 @@ export function FileRowBase({
 /** One file row of a `List` from its item: it runs the slots itself and opens the item itself, so a refetch that changes one item renders that row alone. */
 function FileItemBase<T>(props: {
 	item: T;
-	index: number;
+	/** A painted row's place, which varies its fillers; a loaded row takes none. */
+	index?: number;
 	file: FileSlots<T>;
 	painted: boolean;
 }) {
@@ -248,4 +250,7 @@ function FileItemBase<T>(props: {
 	);
 }
 
-export const FileItem = memo(FileItemBase) as typeof FileItemBase;
+export const FileItem = memo(
+	FileItemBase,
+	sameBy("item"),
+) as typeof FileItemBase;
