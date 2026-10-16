@@ -381,3 +381,66 @@ export const ValuesEndTogetherTouch = touch(ValuesEndTogether);
 export const LabelWrapsTouch = touch(LabelWraps);
 export const LabelKeepsItsWordTouch = touch(LabelKeepsItsWord);
 export const StatusValueStaysWholeTouch = touch(StatusValueStaysWhole);
+
+// A fact's pick draws its chosen option at the row's end, whole: a Stead-length
+// value (a duration, a clock time, a cadence) is never cut with room to spare,
+// at the pane's 320 px and at a wide page, while an option too long for its
+// column, beside a label that wraps, still truncates inside it.
+const PICKS = [
+	{ label: "Idle after", value: "30 minutes" },
+	{ label: "Quiet from", value: "22:00" },
+	{ label: "Digest", value: "Every day" },
+];
+const LONG_OPTION = "An option far too long to fit the room its row leaves";
+
+function Picks() {
+	const [chosen, setChosen] = useState<Record<string, string>>({
+		...Object.fromEntries(PICKS.map((pick) => [pick.label, pick.value])),
+		[LABEL]: LONG_OPTION,
+	});
+	return (
+		<Group
+			items={[...PICKS, { label: LABEL, value: LONG_OPTION }].map((pick) => ({
+				key: pick.label,
+				row: (
+					<DefinitionRow
+						label={pick.label}
+						pick={{
+							label: pick.label,
+							options: [{ value: pick.value, label: pick.value }],
+							value: chosen[pick.label] ?? pick.value,
+							onChange: (next) => setChosen({ ...chosen, [pick.label]: next }),
+						}}
+					/>
+				),
+			}))}
+		/>
+	);
+}
+
+function wholeAt(width: number): StoryObj {
+	return {
+		render: () => (
+			<div style={{ width }} className="max-w-none">
+				<Picks />
+			</div>
+		),
+		play: async ({ canvas }) => {
+			for (const { value } of PICKS) {
+				const shown = canvas.getByText(value);
+				await expect(shown.scrollWidth).toBeLessThanOrEqual(shown.clientWidth);
+			}
+			const long = canvas.getByText(LONG_OPTION);
+			const row = rowOf(long);
+			await expect(long.scrollWidth).toBeGreaterThan(long.clientWidth);
+			await expect(box(long).right).toBeLessThanOrEqual(box(row).right + 0.5);
+			await expect(box(canvas.getByText(LABEL)).right).toBeLessThanOrEqual(
+				box(long).left + 0.5,
+			);
+		},
+	};
+}
+
+export const PickValueWhole320 = wholeAt(320);
+export const PickValueWhole1280 = wholeAt(1280);
+export const PickValueWhole1920 = wholeAt(1920);
