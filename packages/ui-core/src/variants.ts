@@ -432,8 +432,7 @@ export const CHECKBOX_MARK = "size-icon-meta text-on-accent";
 // A row's leading: one slot at the avatar's size, the dot or the glyph centred
 // in it, so the titles of a list share one x whatever leads them.
 export const ROW_LEADING = "size-avatar";
-// A row's first line: its title (an option's label, a definition's label)
-// and what trails it.
+// A row's first line: its title (an option's label) and what trails it.
 export const ROW_TITLE_LINE = "gap-inside";
 // A list row's trailing value (a time, a date), its figures at one width.
 export const ROW_TRAILING =
@@ -441,6 +440,17 @@ export const ROW_TRAILING =
 // A two-line row's meta line, one line: its marks keep their place at its
 // end and its parts truncate first, so every row keeps one height.
 export const ROW_META_LINE = "gap-x-inside";
+// A row is a flex group of two groups, and these are the two (each platform
+// sets the direction and the centring, which are overlays). Its text group is
+// the title or label over its description or meta line, a column that gives
+// way to its end group: below its own content, so its text wraps or truncates
+// inside the room the end group leaves. Its end group is what stands at the
+// row's end (a value, a status, a lock, a control, an act, a chevron), a line
+// centred on the row, its parts an inside apart. A row with no end item draws
+// no end group, so nothing reserves room for one; room that holds an alignment
+// is a group's gap or padding, never an empty element.
+export const ROW_TEXT = "min-w-0 shrink";
+export const ROW_END = "gap-inside";
 // A list row's marks on its meta line, in order (a status, a warning, a lock,
 // a chip), a gap apart, and its end acts. They yield from the end: the chip
 // truncates first, then the lock's label (the glyph alone below `tablet`),
@@ -458,11 +468,11 @@ export const ROW_STEPS = "gap-pair";
 // A list row's entry: the title, the input with its act and the error line a
 // pair apart, the error (`FIELD_ERROR_LINE`) under the input.
 export const ROW_ENTRY = "gap-pair";
-// A definition row: its text and its end acts a fields gap apart, over the
-// row's own gap.
+// A definition row: its change mark, its text group and its end group a
+// fields gap apart, over the row's own gap.
 export const DEFINITION_ROW = "gap-fields";
 // A definition row's link chevron, centred in the square of the icon act it
-// stands in for, so values with an act or a link end at one x.
+// stands in for, so rows that open and rows with an act end alike.
 export const DEFINITION_ROW_CHEVRON = "size-control-compact";
 // A lock glyph (`Lock` at the meta icon size) after a value, in a column's
 // head or on a row's meta line: the meta ink; what it follows stands an inside

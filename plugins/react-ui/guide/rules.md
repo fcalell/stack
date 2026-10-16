@@ -374,7 +374,7 @@ its child is.
 A `DefinitionRow` shows an in-place `switch` (the Switch's own props, named by the row's label) or an
 in-place `pick` (the Picker's props: `label`, `options`, `value`, `onChange`; `options` and `value` are each a constant or a
 selection, and the picker paints, inert, until they land; the row draws it at the row fit, named by the row's label) in place of
-its `value`, never more than one.
+its `value`, never more than one. A row's value, status, lock, control, act or chevron stand in one end group centred on the row, under a description too; a row with nothing at its end reserves none, so the values of rows that end differently end at different x.
 
 A `Section`'s head ends in its `act`, then its `more` (a `MenuItem[]`, destructive ones marked, shaped as a `ListRow`'s): a block's other acts (move, remove) stay on its head row beside the title, which never moves, and a foldable Section's more does not fold it. With a labelled `act` the pair wraps under the title on touch together.
 

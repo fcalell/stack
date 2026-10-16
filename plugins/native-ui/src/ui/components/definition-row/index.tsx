@@ -16,7 +16,8 @@ import {
 	DEFINITION_ROW,
 	DEFINITION_ROW_CHEVRON,
 	FIGURES,
-	ROW_TITLE_LINE,
+	ROW_END,
+	ROW_TEXT,
 	row,
 	text,
 	textStrong,
@@ -48,27 +49,28 @@ const ROW = "relative flex-row items-center";
 // The hit covers the row under its text and its acts, and takes the press
 // wash; the text lets a press through to it.
 const HIT = "absolute inset-0 active:bg-wash-press";
-const TEXT_BLOCK = "flex-1 min-w-0";
-const LINE = "flex-row items-center min-w-0";
+// The text group wraps its label to the room the end group leaves; it takes
+// the room left over unless the end group does. The end group is a line,
+// centred on the row.
+const TEXT_GROWS = "grow";
+const END = "flex-row self-center items-center";
 // A label with nothing under it keeps a rows inset above and below, so one that
 // wraps has room; within the row's height a one-line label does not grow it.
 const ALONE = "py-rows";
-// The label wraps to the room its value leaves.
-const LABEL = "shrink";
-// A string or a status gives way first: it takes the room the label leaves, ending at
-// the line's end; an identifier too long for it cuts in its middle, its stem
-// truncating to the room and its tail standing whole (`valueCut`); words are
-// one text run that truncates at its end.
+// A string or a status gives way before the label does: its end group takes
+// the room the label leaves and its value (basis 0, so it asks for none) fills
+// it, ending at the row's end. An identifier too long for it cuts in its
+// middle, its stem truncating to the room and its tail standing whole
+// (`valueCut`); words are one text run that truncates at its end.
+const END_CUT = "grow min-w-0 justify-end";
 const VALUE = "flex-1 min-w-0 flex-row justify-end";
 const STEM = "shrink";
 const TAIL = "shrink-0";
-// A control stands whole at the line's end, the label wrapping beside it.
-const CONTROL = "shrink-0 ms-auto flex-row";
+// A control stands whole at the row's end, the label wrapping beside it; so
+// does an act or a chevron with no value.
+const CONTROL = "shrink-0 flex-row";
 const ACTS = "relative flex-row shrink-0";
 const CHEVRON = "shrink-0 items-center justify-center";
-// A row with no act or link keeps that square empty, so every value in a Group
-// ends at one x.
-const NO_END = "shrink-0";
 
 export type DefinitionValue = DefinitionData;
 
@@ -196,14 +198,22 @@ export function DefinitionRowBase<V extends string | null = string>({
 	// read only once painted is ruled out.
 	const plain = listed || shown.painted ? undefined : shown.value;
 	const copied = copyable && typeof plain === "string" ? plain : undefined;
+	// A press on a row that opens goes through its text and its value to the hit
+	// under them.
+	const shut = open && !painted ? "none" : "auto";
+	// How the end group stands when the row is out of room: a string's or a
+	// status's takes the room the label leaves and is cut in it, a control's
+	// stands whole.
+	let stands = "";
 	let valueNode: ReactNode = null;
-	if (waitsValue && value !== undefined)
+	if (waitsValue && value !== undefined) {
+		stands = END_CUT;
 		valueNode = isStatus(shown.value as DefinitionValue | undefined) ? (
-			<View className={VALUE}>
+			<View pointerEvents={shut} className={VALUE}>
 				<StatusBase painted />
 			</View>
 		) : (
-			<View className={VALUE}>
+			<View pointerEvents={shut} className={VALUE}>
 				<RNText
 					numberOfLines={1}
 					{...clipWhen(true)}
@@ -217,12 +227,18 @@ export function DefinitionRowBase<V extends string | null = string>({
 				</RNText>
 			</View>
 		);
-	else if (typeof plain === "string") {
+	} else if (typeof plain === "string") {
+		stands = END_CUT;
 		const { stem, tail } = valueCut(plain);
 		const role = cn(text({ role: copied ? "code" : "meta" }), FIGURES);
 		// The two parts read as the one value.
 		valueNode = (
-			<View accessible accessibilityLabel={plain} className={VALUE}>
+			<View
+				accessible
+				accessibilityLabel={plain}
+				pointerEvents={shut}
+				className={VALUE}
+			>
 				<RNText numberOfLines={1} className={cn(role, STEM)}>
 					{stem}
 				</RNText>
@@ -233,13 +249,14 @@ export function DefinitionRowBase<V extends string | null = string>({
 				) : null}
 			</View>
 		);
-	} else if (isStatus(plain))
+	} else if (isStatus(plain)) {
+		stands = END_CUT;
 		valueNode = (
-			<View className={VALUE}>
+			<View pointerEvents={shut} className={VALUE}>
 				<StatusBase state={plain.status} label={plain.label} />
 			</View>
 		);
-	else if (toggle)
+	} else if (toggle)
 		valueNode = (
 			<View className={CONTROL}>
 				<HeldSwitch {...toggle} label={listed ? "" : label} painted={painted} />
@@ -252,7 +269,7 @@ export function DefinitionRowBase<V extends string | null = string>({
 			</View>
 		);
 	const copy = copyable && waitsValue;
-	let end: ReactNode;
+	let end: ReactNode = null;
 	if (copy || copied !== undefined || act) {
 		let acted: ReactNode = null;
 		if (act)
@@ -293,13 +310,6 @@ export function DefinitionRowBase<V extends string | null = string>({
 				</Ink.Provider>
 			</View>
 		);
-	else
-		end = (
-			<View
-				pointerEvents="none"
-				className={cn(DEFINITION_ROW_CHEVRON, NO_END)}
-			/>
-		);
 	let under: ReactNode;
 	if (locked) {
 		if (listed) under = <Painted role="sentence" at={at} />;
@@ -334,28 +344,32 @@ export function DefinitionRowBase<V extends string | null = string>({
 			) : null}
 			{change ? <ChangeMark kind={change} painted={listed} /> : null}
 			<View
-				pointerEvents={open && !painted ? "none" : "auto"}
-				className={TEXT_BLOCK}
+				pointerEvents={shut}
+				className={cn(ROW_TEXT, stands !== END_CUT && TEXT_GROWS)}
 			>
-				<View className={cn(ROW_TITLE_LINE, LINE)}>
-					<RNText
-						className={cn(
-							text({ role: "body" }),
-							textStrong({ role: "body" }),
-							LABEL,
-							!under && ALONE,
-						)}
-					>
-						{listed ? <Painted role="name" at={at} /> : label}
-					</RNText>
-					{valueNode}
-					{locked ? <LockMark painted={listed} /> : null}
-				</View>
+				<RNText
+					className={cn(
+						text({ role: "body" }),
+						textStrong({ role: "body" }),
+						!under && ALONE,
+					)}
+				>
+					{listed ? <Painted role="name" at={at} /> : label}
+				</RNText>
 				{under ? (
 					<RNText className={text({ role: "meta" })}>{under}</RNText>
 				) : null}
 			</View>
-			{end}
+			{valueNode || locked || end ? (
+				<View
+					pointerEvents={open && !painted ? "box-none" : "auto"}
+					className={cn(ROW_END, END, stands)}
+				>
+					{valueNode}
+					{locked ? <LockMark painted={listed} /> : null}
+					{end}
+				</View>
+			) : null}
 		</View>
 	);
 }

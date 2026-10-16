@@ -1092,8 +1092,8 @@ a tick with no animation, never jumped to full.
   filler in each declared text slot and a painted mark per declared `status`, `chip`, `warning`,
   `lock` or `change`; a FileRow's chip only when `file` declares `chip` and its change lane when it
   declares `change`; a Meter's line only when `meter` declares `meta` or `counts`; a
-  DefinitionRow's change lane, meta line (a description or a lock's reason) and end square (an act
-  or `copyable`, or a chevron) by the slots `definition` declares. A row is wholly painted or wholly
+  DefinitionRow's change lane, meta line (a description or a lock's reason) and end group (an act
+  or `copyable`, or a chevron, beside the value) by the slots `definition` declares. A row is wholly painted or wholly
   loaded, and a painted tree draws flat, since its depths are the data's. A painted row is inert and
   draws a chevron only where the `row` map declares `href` or `onOpen`, as the loaded rows would. A
   loaded string value too long for its room cuts in its middle (`list-state`'s `valueCut`: the stem
@@ -1150,7 +1150,7 @@ a tick with no animation, never jumped to full.
   on the meta line before the later parts and cut, its word truncating, only where the line is out of
   room beyond the first part's floor. Nothing measures the line, so no
   second form can flip against the first. A canvas node's status is the same `StatusMark`, its dot beside its label. A `DefinitionRow`'s status value stays whole as well, the label
-  wrapping to the room it leaves, held to three quarters of the line.
+  wrapping to the room it leaves, its end group held to three quarters of the row.
 - A row, a fact or a field carries where it stands in a change set as one `change?: ChangeKind`
   (`added`, `changed`, `removed`, `unchanged`, `stale`, in `descriptors.ts`, the one `ChangeKind`;
   the change cell's own kinds are the subset `ChangeCellKind`) across `ListRow`, `DefinitionRow` and
@@ -1245,6 +1245,22 @@ a tick with no animation, never jumped to full.
   `accessibilityState.expanded` is its state. A painted tree draws flat, since the data's own depths are unknown while it waits. `dim` composes by item: an off-path branch gives `dim`
   to its parent and each child, so the branch reads grey whole, its chevron staying in the meta ink
   and its rail the `edge` hairline. A Section counts a tree's top level, not every node.
+- A row is a flex group of two groups, `ROW_TEXT` and `ROW_END` in `variants.ts`, defined once for
+  every row kind on both platforms: the text group (the label or title over its description or meta
+  line, a column that gives way to its end group, `min-w-0 shrink`) and the end group (value,
+  status, lock, control, act, chevron, a line an inside apart, `gap-inside`), centred on the row, not
+  on the label's line, with or without a description. Direction and centring are each platform's
+  overlay. A row with nothing at its end draws no end group, so nothing reserves its room (the old
+  empty end square is gone: an alignment is a group's gap or padding, never an empty element), and
+  values of rows that end differently end at different x. `DefinitionRow` is the first on it: the
+  label wraps to the room its end group leaves, down to its longest word (the text group's floor,
+  `min-w-min`, its shrink 10^7), and gives way first to a status or a control; a string value gives
+  way before the label does, its end group taking the room the label leaves and its value (`w-0`, so
+  it asks for none) filling it, so a value is cut where it was cut before the groups. A status's end
+  group is capped at 3/4 of the row. On the phone the same groups hold it (the string's and the
+  status's end group `grow` over a `flex-1` value; a press on a row that opens goes through its
+  value, the end group `box-none`). `ListRow` and the other row kinds move onto it in the alignment
+  sweep.
 - A value outside its editable context reads locked on the fact's own row: `DefinitionRow.locked` is
   a `Lock` (`reason`, `href`), drawing the lock mark after the value and the reason as the row's
   meta line, the whole line an inline `Link` when `href` names what holds it ("Held by CR-12, Ana").
@@ -1562,7 +1578,7 @@ a tick with no animation, never jumped to full.
   own draws as it is. A painted DefinitionRow is the loaded row (`painted` is internal; its `value`
   and `description` take a `Datum`): the label constant, the value's slot filler or its control's
   box, the description's line painted, in the loaded DefinitionRow's boxes (the label's body line
-  box beside the switch's target-sized hit box on the title line, the description's meta line box
+  box beside the switch's target-sized hit box in the end group, the description's meta line box
   under it), so its height and its bars' centres are a one-line setting row's at either density. A
   Slider paints its label's and value's filler over its track's box. A `definition` list is facts and carries no count of its own.
 - A Meter, a FormField or a Slider is an `item` of a Group's `items`, in the entry box at the card's

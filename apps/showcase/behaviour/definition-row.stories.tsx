@@ -5,9 +5,9 @@ import { useState } from "react";
 import { expect, screen, waitFor } from "storybook/test";
 
 // A definition row at the pane's 320 px width, at the desktop density and, in
-// a 375 px phone, the touch one: a value of words is one text run, the values
-// of a Group end at one x whatever stands at the row's end, and a label wraps
-// beside a control.
+// a 375 px phone, the touch one: a value of words is one text run, whatever
+// stands at a row's end is centred on the row, and a label wraps beside a
+// control.
 const change = () => {};
 const ID = "SHA256:uNiVxQ0aB3dE8fGhIjKlMnOpQrStUvWxYz0123k3Qz";
 const LONG = "A value of words that is far too long for its room";
@@ -75,30 +75,45 @@ export const ValueWords: StoryObj = {
 	play: words,
 };
 
-// Every value ends at the line's end of its row, whatever the row's end holds,
-// and a two-line row's value stands on the label's line with its act centred
-// on the row.
+// A row is a text group and an end group: whatever stands at the row's end (a
+// value, a chevron, an act, a switch) is centred on the row, not on the label's
+// line, with or without a description, and a row with nothing there reserves no
+// room, so its value ends at the row's inset. Rows that end differently end
+// their values at different x.
 const ends: Play = async ({ canvas }) => {
-	const stems = ["Plain", "Linked", "Acted", "Copied"].map((name) =>
-		canvas.getByText(`${name} value`),
-	);
-	const first = box(stems[0] as HTMLElement).right;
-	for (const stem of stems) {
-		await expect(Math.abs(box(stem).right - first)).toBeLessThan(0.5);
-	}
-	const label = canvas.getByText("Described");
-	const row = rowOf(label);
-	const value = canvas.getByText("Described value");
-	await expect(Math.abs(middle(value) - middle(label))).toBeLessThan(1);
+	const on = async (value: Element, row: HTMLElement) =>
+		expect(Math.abs(middle(value) - middle(row))).toBeLessThan(1);
+	const plain = rowOf(canvas.getByText("Plain"));
+	// No chevron, no empty square: the value ends at the row's inset, where a
+	// chevron's row ends past it.
 	await expect(
-		Math.abs(
-			middle(canvas.getByRole("button", { name: "Rename" })) - middle(row),
-		),
+		box(plain).right - box(canvas.getByText("Plain value")).right,
+	).toBeLessThan(20);
+	await expect(box(canvas.getByText("Linked value")).right).toBeLessThan(
+		box(canvas.getByText("Plain value")).right - 8,
+	);
+	await expect(plain.querySelectorAll(":empty")).toHaveLength(0);
+	for (const name of ["Plain", "Linked", "Opens", "Plan", "Described"]) {
+		await on(canvas.getByText(`${name} value`), rowOf(canvas.getByText(name)));
+	}
+	await on(
+		canvas.getByRole("button", { name: "Rename" }),
+		rowOf(canvas.getByText("Described")),
+	);
+	const opens = rowOf(canvas.getByText("Opens"));
+	const chevron = opens.querySelector("svg");
+	if (!chevron) throw new Error("the row has no chevron");
+	await on(chevron, opens);
+	await expect(
+		Math.abs(middle(canvas.getByText("Opens value")) - middle(chevron)),
 	).toBeLessThan(1);
-	await expect(Math.abs(box(value).right - first)).toBeLessThan(0.5);
+	await on(
+		canvas.getByRole("switch", { name: "Switched" }),
+		rowOf(canvas.getByText("Switched")),
+	);
 };
 
-export const ValuesEndTogether: StoryObj = {
+export const EndsOnTheCentre: StoryObj = {
 	render: () => (
 		<Pane>
 			<Group
@@ -118,18 +133,25 @@ export const ValuesEndTogether: StoryObj = {
 						),
 					},
 					{
-						key: "acted",
+						key: "opens",
 						row: (
 							<DefinitionRow
-								label="Acted"
-								value="Acted value"
-								act={{ icon: "Pencil", label: "Edit", onAct: change }}
+								label="Opens"
+								description="A sentence under the label and the value."
+								value="Opens value"
+								href="#opens"
 							/>
 						),
 					},
 					{
-						key: "copied",
-						row: <DefinitionRow label="Copied" value="Copied value" copyable />,
+						key: "plan",
+						row: (
+							<DefinitionRow
+								label="Plan"
+								description="Your organisation manages it."
+								value="Plan value"
+							/>
+						),
 					},
 					{
 						key: "described",
@@ -142,11 +164,72 @@ export const ValuesEndTogether: StoryObj = {
 							/>
 						),
 					},
+					{
+						key: "switched",
+						row: (
+							<DefinitionRow
+								label="Switched"
+								description="A sentence under the label and the switch."
+								switch={{ checked: true, onChange: change }}
+							/>
+						),
+					},
 				]}
 			/>
 		</Pane>
 	),
 	play: ends,
+};
+
+// A value too long for its row is cut at its end, the label whole beside it,
+// and stays on the row's centre under a description; an identifier keeps its
+// end.
+const longValue: Play = async ({ canvas }) => {
+	const label = canvas.getByText("Note");
+	const value = canvas.getByText(LONG);
+	const row = rowOf(label);
+	await expect(value.scrollWidth).toBeGreaterThan(value.clientWidth);
+	await expect(box(value).right).toBeLessThanOrEqual(box(row).right + 0.5);
+	await expect(box(label).right).toBeLessThanOrEqual(box(value).left + 0.5);
+	await expect(Math.abs(middle(value) - middle(row))).toBeLessThan(1);
+	const key = canvas.getByText(/^SHA256/);
+	await expect(
+		Math.abs(middle(key) - middle(rowOf(canvas.getByText("Key")))),
+	).toBeLessThan(1);
+	await expect(canvas.getByText("k3Qz")).toBeVisible();
+};
+
+export const LongValueUnderADescription: StoryObj = {
+	render: () => (
+		<Pane>
+			<Group
+				items={[
+					{
+						key: "note",
+						row: (
+							<DefinitionRow
+								label="Note"
+								description="A sentence under the label and the value."
+								value={LONG}
+								href="#note"
+							/>
+						),
+					},
+					{
+						key: "key",
+						row: (
+							<DefinitionRow
+								label="Key"
+								description="A sentence under the label and the value."
+								value={ID}
+							/>
+						),
+					},
+				]}
+			/>
+		</Pane>
+	),
+	play: longValue,
 };
 
 // A sentence label wraps beside a switch that stays whole at the row's end and
@@ -377,7 +460,10 @@ export const ValuePicked: StoryObj = {
 };
 
 export const ValueWordsTouch = touch(ValueWords);
-export const ValuesEndTogetherTouch = touch(ValuesEndTogether);
+export const EndsOnTheCentreTouch = touch(EndsOnTheCentre);
+export const LongValueUnderADescriptionTouch = touch(
+	LongValueUnderADescription,
+);
 export const LabelWrapsTouch = touch(LabelWraps);
 export const LabelKeepsItsWordTouch = touch(LabelKeepsItsWord);
 export const StatusValueStaysWholeTouch = touch(StatusValueStaysWhole);

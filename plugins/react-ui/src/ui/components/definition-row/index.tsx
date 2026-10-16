@@ -18,7 +18,8 @@ import {
 	DEFINITION_ROW,
 	DEFINITION_ROW_CHEVRON,
 	FIGURES,
-	ROW_TITLE_LINE,
+	ROW_END,
+	ROW_TEXT,
 	row,
 	text,
 	textStrong,
@@ -49,35 +50,40 @@ const ROW_PRESS = "hover:bg-wash-hover active:bg-wash-press";
 // opens, and draws the ring inset at the row's edge.
 const HIT =
 	"after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-ring";
-const TEXT_BLOCK = "flex flex-col grow min-w-0";
-const LINE = "flex items-center min-w-0";
+// The text group wraps its label to the room the end group leaves, never
+// inside a word: its longest word is its floor, which the body's
+// `overflow-wrap: anywhere` would make a letter, so the label sets
+// `wrap-normal` and the group `min-w-min`. Its shrink dwarfs the end group's, so
+// it gives way first; it takes the room left over unless the end group does.
+const TEXT = "flex flex-col min-w-min shrink-10000000";
+const TEXT_GROWS = "grow";
+const LABEL = "wrap-normal";
 // A label with nothing under it keeps a rows inset above and below, so one that
 // wraps has room; within the row's height a one-line label does not grow it.
 const ALONE = "py-rows";
-// The label wraps to the room its value leaves, never inside a word: its
-// longest word is its floor, which the body's `overflow-wrap: anywhere` would
-// make a letter, so the label sets `wrap-normal`.
-const LABEL = "min-w-min wrap-normal shrink-10000000";
-// A string gives way first: it takes the room the label leaves, ending at the
-// line's end; an identifier too long for it cuts in its middle, its stem
+// A string gives way before the label does: its end group takes the room the
+// label leaves and its value, of no width of its own (`w-0`), fills it, ending
+// at the row's end. An identifier too long for it cuts in its middle, its stem
 // truncating to the room and its tail standing whole (`valueCut`); words are
 // one text run that truncates at its end.
-const VALUE = "flex basis-0 grow min-w-0 justify-end";
-// A status stays whole and the label wraps to the room it leaves, down to its
-// longest word: a status wider than three quarters of the line, or than the
-// room that word leaves, is cut. The label's shrink dwarfs the status's, so it
-// gives way first.
-const VALUE_STATUS = "flex min-w-0 ms-auto max-w-3/4";
+const END_CUT = "grow justify-end";
+const VALUE = "flex w-0 grow min-w-0 justify-end";
 const STEM = "min-w-0 truncate";
 const TAIL = "shrink-0";
-// A control stands whole at the line's end, the label wrapping beside it.
-const CONTROL = "flex shrink-0 ms-auto";
+// A status stays whole and the label wraps to the room it leaves, down to its
+// longest word: a status end group wider than three quarters of the row, or
+// than the room that word leaves, is cut.
+const END_STATUS = "min-w-0 max-w-3/4";
+const VALUE_STATUS = "flex min-w-0";
+// A control stands whole at the row's end, the label wrapping beside it; so
+// does an act or a chevron with no value.
+const END_WHOLE = "shrink-0";
+const CONTROL = "flex shrink-0";
 const ACTS = "relative flex shrink-0";
+// The end group is a line, centred on the row.
+const END = "flex self-center items-center";
 // The chevron draws in the slot's ink (currentColor).
 const CHEVRON = "flex shrink-0 items-center justify-center text-ink-meta";
-// A row with no act or link keeps that square empty, so every value in a Group
-// ends at one x.
-const NO_END = "shrink-0";
 
 /** What a definition shows: a string (a word or a short phrase) or a status. */
 export type DefinitionValue = DefinitionData;
@@ -149,7 +155,7 @@ function isStatus(
 	return typeof value === "object" && value !== null && "status" in value;
 }
 
-/** The change mark at the start, the label at body 500, wrapping to the room its value leaves, with the value at the line's end (an identifier too long for its room cut in its middle, the whole value still its text; a `switch` or a `pick` whole, centred beside the label), the description under both; an icon act, or a link's chevron in the act's square, at the row's end, the square empty on a row with neither, so every value in a Group ends at one x. A locked row draws a lock after its value and its reason under both in the description's place, the whole line a link with an `href`. A `value` or `description` that is a selection paints in its place, and the row is inert, until its read lands. */
+/** A flex row of two groups: the text group, the label at body 500 over the description (the label wraps to the room the end group leaves), and the end group, centred on the row, holding the value (a string cut at its end, an identifier too long for its room cut in its middle, the whole value still its text; a status stays whole, the label giving way; a `switch` or a `pick` whole), a locked row's lock, and an icon act or a link's chevron. The change mark leads. A row with nothing at its end draws no end group and reserves no room for one, so values end where their rows' ends do. A locked row's reason stands under the label in the description's place, the whole line a link with an `href`. A `value` or `description` that is a selection paints in its place, and the row is inert, until its read lands. */
 export function DefinitionRow<V extends string | null = string>(
 	fact: DefinitionRowProps<V>,
 ) {
@@ -186,9 +192,15 @@ export function DefinitionRowBase<V extends string | null = string>({
 	// read only once painted is ruled out.
 	const plain = listed || shown.painted ? undefined : shown.value;
 	const copied = copyable && typeof plain === "string" ? plain : undefined;
+	// How the end group stands when the row is out of room: a string value's
+	// takes the room the label leaves and is cut in it, a status's yields after
+	// the label has, a control's stands whole.
+	let stands = END_WHOLE;
 	let valueNode: ReactNode = null;
-	if (waitsValue && value !== undefined)
-		valueNode = isStatus(shown.value as DefinitionValue | undefined) ? (
+	if (waitsValue && value !== undefined) {
+		const status = isStatus(shown.value as DefinitionValue | undefined);
+		stands = status ? END_STATUS : END_CUT;
+		valueNode = status ? (
 			<span className={VALUE_STATUS}>
 				<StatusBase painted />
 			</span>
@@ -205,7 +217,8 @@ export function DefinitionRowBase<V extends string | null = string>({
 				</span>
 			</span>
 		);
-	else if (typeof plain === "string") {
+	} else if (typeof plain === "string") {
+		stands = END_CUT;
 		const { stem, tail } = valueCut(plain);
 		valueNode = (
 			<span
@@ -215,13 +228,14 @@ export function DefinitionRowBase<V extends string | null = string>({
 				{tail ? <span className={TAIL}>{tail}</span> : null}
 			</span>
 		);
-	} else if (isStatus(plain))
+	} else if (isStatus(plain)) {
+		stands = END_STATUS;
 		valueNode = (
 			<span className={VALUE_STATUS}>
 				<StatusBase state={plain.status} label={plain.label} />
 			</span>
 		);
-	else if (toggle)
+	} else if (toggle)
 		valueNode = (
 			<span className={CONTROL}>
 				<HeldSwitch {...toggle} label={listed ? "" : label} painted={painted} />
@@ -234,7 +248,7 @@ export function DefinitionRowBase<V extends string | null = string>({
 			</span>
 		);
 	const copy = copyable && waitsValue;
-	let end: ReactNode;
+	let end: ReactNode = null;
 	if (copy || copied !== undefined || act) {
 		let acted: ReactNode = null;
 		if (act)
@@ -264,8 +278,6 @@ export function DefinitionRowBase<V extends string | null = string>({
 				<Icon name="ChevronRight" />
 			</span>
 		);
-	else
-		end = <span aria-hidden className={cn(DEFINITION_ROW_CHEVRON, NO_END)} />;
 	let under: ReactNode;
 	if (locked) {
 		if (listed) under = <Painted role="sentence" at={at} />;
@@ -318,15 +330,17 @@ export function DefinitionRowBase<V extends string | null = string>({
 			)}
 		>
 			{change ? <ChangeMark kind={change} painted={listed} /> : null}
-			<span className={TEXT_BLOCK}>
-				<span className={cn(ROW_TITLE_LINE, LINE)}>
-					{title}
-					{valueNode}
-					{locked ? <LockMark painted={listed} /> : null}
-				</span>
+			<span className={cn(ROW_TEXT, TEXT, stands !== END_CUT && TEXT_GROWS)}>
+				{title}
 				{under ? <span className={text({ role: "meta" })}>{under}</span> : null}
 			</span>
-			{end}
+			{valueNode || locked || end ? (
+				<span className={cn(ROW_END, END, stands)}>
+					{valueNode}
+					{locked ? <LockMark painted={listed} /> : null}
+					{end}
+				</span>
+			) : null}
 		</div>
 	);
 }
