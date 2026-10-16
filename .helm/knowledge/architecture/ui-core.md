@@ -408,7 +408,7 @@ a tick with no animation, never jumped to full.
   Picker's list through its internal base. Rejected: a switcher menu of its own, a second list of
   the same rows. The Shell hands its `Switcher` descriptor down (`ShellSwitcher`), and each Pane
   draws the touch trigger from it, so the context changes only when the switcher does and a Shell
-  state change re-renders no Pane. A Picker stands outside a form; a form's pick is `Select`.
+  state change re-renders no Pane. A Picker is the one pick, bare or in a form: a `FormField`'s `picker` descriptor draws it at the form's field height, in the field's error and disabled states, titled by the field's label.
 - The app's mark is a config, not a prop (`react({ icon })`, 003-310). The react plugin derives the
   `icon` slot (`{ light, dark? }`, null with no icon) and react-ui contributes `MarkProvider`
   (`lib/mark.tsx`, order 1, beside the words) carrying `{ src, dark?, name: app.name }`; a `Shell`
@@ -604,7 +604,7 @@ a tick with no animation, never jumped to full.
   its entries once (`GROUP`: `divide-y divide-edge`), so no row carries one. That is
   web-only: `divide-*` is a child selector, which uniwind's compiler drops, so native has no
   divider utility yet and draws the hairline per entry. An option's row in a popover or a list of
-  choices (`Select`, `Menu`, `Picker`, `OptionList`) is its own form, `OPTION_ROW` (`px-control-x
+  choices (`Menu`, `Picker`, `OptionList`) is its own form, `OPTION_ROW` (`px-control-x
   rounded-row`, a rounded wash at the control's inset), laid over the row's cells in place of its
   `px-card`: the component says it, no ground tells the row, and `OPTION_GROUP_LABEL` and
   `OPTION_CHILDREN` stand at the same `control-x` inset. A touch sheet's option rows (the
@@ -793,7 +793,7 @@ a tick with no animation, never jumped to full.
   `--layer-<layer>` and read on the web as `z-(--layer-<layer>)`, since Tailwind's `z-*` reads no
   theme namespace. A sheet's scrim and layer, each popover's positioner and the toasts' layer each
   draw theirs, so a toast raised while a sheet or a `confirm()` is open stands over the scrim and
-  its dismiss takes the press. On the web every popup (a menu, a picker, a select, a tooltip, a sheet)
+  its dismiss takes the press. On the web every popup (a menu, a picker, a tooltip, a sheet)
   portals into `<body>` as Base UI does by default, never into the Shell's or the `Gate`'s `main`: a
   popup mounted in `main` drew its first frame offset by `main`'s origin and made the frame scroll
   sideways as it opened (verified by `PopupMountsInTheBody`). Only a showcase stage names a
@@ -1507,8 +1507,7 @@ a tick with no animation, never jumped to full.
   brought into view), Comparison (its facts behind a kept head row, with `aria-rowcount` and
   `aria-rowindex`, on the Group's `GroupCard`) and BarChart (past `VIRTUAL_FROM` bars it keeps a
   bar's width and scrolls sideways under its axis, its bars and times windowing along x through
-  `Window horizontal`). Not windowed: a standalone Select (Base UI's Select has no virtualization;
-  it would have to become a combobox) and painted forms (`PAINT_ROWS`, always below the count). Rows carry no settle names, so the settle and the shift check are unchanged. Accepted:
+  `Window horizontal`). Not windowed: painted forms (`PAINT_ROWS`, always below the count). Rows carry no settle names, so the settle and the shift check are unchanged. Accepted:
   find in page and print reach drawn rows only. The phone draws every row and its Thread keeps
   its inverted log; the design for it stays open in `states.md` §7 until a device measures it.
 - **The phone wires TanStack's managers.** `QueryProvider listen` takes `online` and `focus`
@@ -1521,7 +1520,7 @@ a tick with no animation, never jumped to full.
   on the web, a labelled group with a header on the phone, `FORM_GROUP` and `FORM_LEGEND`, the groups
   a `sections` step apart), a TypeScript-exclusive union a `steps` shape can join. Its `bar` is the
   ActionBar's own props, drawn in the foot (`FORM_FOOT` under a form of groups; stuck in a sheet on
-  the web); the form reads no child. A form's `read` frames all its fields and a group's `read` its own (`FormGroup.read`, `empty`): each group is a frame, so a page of a workspace group and a devices group reads each where it stands, and the bar follows the form's own read alone: its filled act paints while that read (or its sheet's) waits and stands blocked with the failed sentence once it ended, and a group's read never reaches it. A FormField's control is exactly one descriptor (`switch`, `checkbox`, `slider`, `select`,
+  the web); the form reads no child. A form's `read` frames all its fields and a group's `read` its own (`FormGroup.read`, `empty`): each group is a frame, so a page of a workspace group and a devices group reads each where it stands, and the bar follows the form's own read alone: its filled act paints while that read (or its sheet's) waits and stands blocked with the failed sentence once it ended, and a group's read never reaches it. A FormField's control is exactly one descriptor (`switch`, `checkbox`, `slider`,
   `options`, `segments`, `input`, `textArea`, `picker`: the component's own props less the label the field supplies) or its
   `children` for any other control, and the field's form comes from which is set; a DefinitionRow
   likewise takes an explicit `switch` or `pick` (an `OptionPick`, drawn as the Picker at the row fit,
@@ -1613,7 +1612,7 @@ a tick with no animation, never jumped to full.
   On the phone a first-mount claim (`FieldClaim`, a held `TextInput` the frame owns) goes to the
   first `Input` or `InputOtp` that mounts and to no second field beside it or one revealed while
   another is typed in. Programmatic focus opens no keyboard on mobile Safari; on the phone it does,
-  which suits a one-task page. A `Select` or `Picker` that reveals a typed field hands focus to that
+  which suits a one-task page. A `Picker` that reveals a typed field hands focus to that
   field, since a pick holds no typing focus. The mark is a prop (its first consumer); a
   `reactUi({ mark })` or `nativeUi({ mark })` config asset that the `Shell` draws too is the move
   when a second frame draws it.
@@ -1829,7 +1828,7 @@ a tick with no animation, never jumped to full.
   hide it, none on touch), so every icon act, popup triggers and the canvas zoom stack among
   them, gets it with no app change. The trigger's pressed look reads `aria-expanded`, not
   `data-popup-open`, which the tooltip's own trigger also sets. No popup of the roster locks the
-  page: `Select` and `Picker` pass `modal={false}` (Base UI's select defaults to a scroll lock that
+  page: `Picker` passes `modal={false}` (Base UI's select defaults to a scroll lock that
   changes the root's overflow and gutter and moves the page as the list opens), as `Menu` does; a
   sheet is modal by design.
 - The paint shows only for a read that lasts: `WAIT_DELAY` is 400 ms (`@fcalell/ui-core/paint`, one
@@ -1880,15 +1879,21 @@ a tick with no animation, never jumped to full.
   judge the failed forms) are not repeated per read, and the workbench keeps its five states over
   every read, with no per-read picker.
 - A cell no entry holds is shared, spelled by each component that draws
-  it: the type roles, the field box (`Input`, `Select`, `TextArea`, the Picker's field fit, the
+  it: the type roles, the field box (`Input`, `TextArea`, the Picker's field fit, the
   touch `MessageInput`), the row with its leading slot and its title and meta lines (`ListRow`,
   `FileRow`), the content frame, `FIGURES`, the option group and its label (`SELECT_GROUP`,
-  `OPTION_GROUP_LABEL`: `Select`, `Picker`, `OptionList`), the error line (`FIELD_ERROR_LINE`:
+  `OPTION_GROUP_LABEL`: `Picker`, `OptionList`), the error line (`FIELD_ERROR_LINE`:
   `FormField`, `ListRow`'s entry), the remove act's round hit box (`REMOVE_HIT`: `Chip`, an
   attachment's thumbnail), the line box, the popover, the paint (`PAINT`, spelled by each component that paints its own box), and the toasts' layer
   (`TOASTS`, which the Shell stands over its page).
-  `Select`, the single-choice field over `options`, is the field box (`FIELD`) whose open list is a
-  popover (`POPOVER`) of rows (`ROW`); on native it opens the same option sheet as `Picker`.
+  `Picker` is the one pick, of one option or several: the field box (`FIELD`)
+  whose open list is a popover (`POPOVER`) of rows (`ROW`), a search leading past six options, the
+  list windowed past `VIRTUAL_FROM`; on touch and on the phone the same rows in a sheet. Inside a
+  `FormField` (`picker`) the box is the form's field height (`FIELD` `fit: form`), the field's error
+  draws `edge-error`, its disabled state the disabled fill, `placeholder` stands in the placeholder's
+  ink while nothing is chosen (the field's label already stands over the box, so a pick in a form
+  with none says nothing), and the sheet is titled by the field's label. The list stands at the
+  popover's width or the trigger's when that is wider.
 - `FileInput` is the field box (`FIELD`) that chooses a file. Its value is `PickedFile` (`{ name,
   size, type, blob(), src? }`), one descriptor on both platforms so a consumer's upload code is one:
   the web wraps its `File` (`blob` resolves to it) and the phone the document picker's asset (`blob`
@@ -2063,7 +2068,7 @@ a tick with no animation, never jumped to full.
   let go on) return `unknown`; a promise holds the viewer's value, a selection's or a constant's,
   while the latest save pends (`useDraft.change(next, save)`, through `useHeldDraft` in `lib/act`,
   for a bare control, whose rejection toasts; a `FormField` hosts the save of its `switch`,
-  `checkbox`, `slider`, `select`, `options`, `segments`, `input`, `textArea` and `picker` through
+  `checkbox`, `slider`, `options`, `segments`, `input`, `textArea` and `picker` through
   `useFieldDraft`, holds the refusal line in its own state and clears it on the next change, and the
   control's Base takes the field's `draft`). Each change carries a sequence
   number and only the latest's outcome counts. Resolved, the hold waits for the refetch the save's
@@ -2073,7 +2078,7 @@ a tick with no animation, never jumped to full.
   whose Retry saves the same value. `change` returns the save's promise, never rejecting, so an
   act that saves again holds the run. No saving mark is drawn: the value is the optimistic one.
   Molecules pass the value through (`DefinitionRow` `switch` and `pick`, `Table` `onEdit`,
-  `FormField`). A Picker's and a Select's `options` and `value` are `Datum`s (platform props, as every data prop is), so the trigger paints, inert, while either waits, and DefinitionRow's `pick` takes the same props. ui-core's `OptionPick`/`MultiPick` stay constants: a rule's terms and the Shell's switcher are worded before anything draws, and an ItemHeader pick fact is data as a whole `Datum<Fact>`.
+  `FormField`). A Picker's `options` and `value` are `Datum`s (platform props, as every data prop is), so the trigger paints, inert, while either waits, and DefinitionRow's `pick` takes the same props. ui-core's `OptionPick`/`MultiPick` stay constants: a rule's terms and the Shell's switcher are worded before anything draws, and an ItemHeader pick fact is data as a whole `Datum<Fact>`.
   No stack helper touches the cache's `onMutate`; a `setQueryData` in an `onSuccess`
   stays the app's. Latest-wins is client-only: a mutation that cares about order gives itself a
   `scope`. `InputOtp` holds its `onComplete` promise with `useRun` and draws its checking line at
@@ -2240,7 +2245,7 @@ touch is a toolbar toggle, not a test run; `a11y.test` is `error`):
   that owns a widget behaviour the rubric's accessibility floor sets (an overlay's focus in and
   out, Escape and focus kept inside a modal; a composite's arrow keys and typeahead),
   each a play function driving the real component by keyboard. They cover Sheet and a `confirm()`
-  decision, a Sheet docked in a Pane's foot, Menu, Select, Picker, OptionList, SegmentedControl,
+  decision, a Sheet docked in a Pane's foot, Menu, Picker, OptionList, SegmentedControl,
   Table, List (tree), Slider, InputOtp and Gate; Place and Shell move no focus
   themselves (a Pane takes the keyboard on its first control when opened from another,
   `usePaneFocus`).
@@ -2303,10 +2308,10 @@ A failing assertion is a finding in the component: it stays failing until the co
 never weakened or skipped, and nothing is excluded from axe beyond the document-structure rules and
 the node buttons of a canvas that draws a run's path: `Canvas`'s dimmed frames
 (`.storybook/state-stories.tsx`) and the behaviour stories that draw a `path`. An open non-modal
-popup (Menu, Select, Picker, a Pane's more menu) has `[data-base-ui-focus-guard]` spans around
+popup (Menu, Picker, a Pane's more menu) has `[data-base-ui-focus-guard]` spans around
 it, focusable and `aria-hidden` by Base UI's design with no prop to drop them, so
 `aria-hidden-focus` flagged each open menu (serious, on every desktop menu) until Stead's critique
-(2026-10-11) asked for an open menu that audits clean (003-323). Menu, Picker and Select call
+(2026-10-11) asked for an open menu that audits clean (003-323). Menu and Picker call
 `useQuietGuards` (`lib/guards.ts`), one document observer for every mounted popup that takes
 `aria-hidden` off the guards as they appear: they stay in the tab order, so the Tab relay into and
 past the popup holds (each guard moves focus the moment it takes it), and they are empty spans with

@@ -767,7 +767,7 @@ export const SPACE_BASE = 4;
 // bar (a page header, a toolbar, an action bar); `rows` between rows in a menu
 // or a nav list (rows in a hairline list abut); `card` a card's inset;
 // `tile` a compact card's inset (a board card);
-// `float` a floating surface's inset (a select's list, a menu, a picker
+// `float` a floating surface's inset (a menu, a picker
 // popover), so a row's wash sits just inside its edge; `fields` between
 // fields; `sections` between sections of a page; `page` the page inset. A role never takes a width's name: `w-*` reads the spacing role first,
 // which would shadow the width.

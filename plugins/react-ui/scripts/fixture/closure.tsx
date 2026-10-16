@@ -47,7 +47,6 @@ import { Menu } from "@fcalell/plugin-react-ui/components/menu";
 import { OptionList } from "@fcalell/plugin-react-ui/components/option-list";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
 import { SegmentedControl } from "@fcalell/plugin-react-ui/components/segmented-control";
-import { Select } from "@fcalell/plugin-react-ui/components/select";
 import { Sheet } from "@fcalell/plugin-react-ui/components/sheet";
 import { Shell } from "@fcalell/plugin-react-ui/components/shell";
 import { Slider } from "@fcalell/plugin-react-ui/components/slider";
@@ -165,18 +164,9 @@ export const closure = (
 		<FileInput value={null} onChange={() => {}} accept={[".csv"]} class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<FileInput value={null} onChange={() => {}} accept={[".csv"]} classList={{}} />
-		<Select value="x" onChange={() => {}} options={[{ value: "x", label: "x" }]} placeholder="x" />
-		<Select onChange={() => {}} options={[{ label: "x", options: [{ value: null, label: "x" }] }]} />
+		<Picker label="x" options={[{ value: "x", label: "x" }]} onChange={() => {}} placeholder="x" />
 		{/* @ts-expect-error: a value outside the options */}
-		<Select value="y" onChange={() => {}} options={[{ value: "x", label: "x" }]} />
-		{/* @ts-expect-error: closed channel */}
-		<Select onChange={() => {}} options={[{ value: "x", label: "x" }]} className="x" />
-		{/* @ts-expect-error: closed channel */}
-		<Select onChange={() => {}} options={[{ value: "x", label: "x" }]} style={{ flex: 1 }} />
-		{/* @ts-expect-error: closed channel */}
-		<Select onChange={() => {}} options={[{ value: "x", label: "x" }]} class="x" />
-		{/* @ts-expect-error: closed channel */}
-		<Select onChange={() => {}} options={[{ value: "x", label: "x" }]} classList={{}} />
+		<Picker label="x" value="y" options={[{ value: "x", label: "x" }]} onChange={() => {}} />
 		<TextArea value="x" onChange={() => {}} />
 		{/* @ts-expect-error: closed channel */}
 		<TextArea value="x" onChange={() => {}} className="x" />

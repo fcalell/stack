@@ -41,8 +41,6 @@ import type { PickerProps } from "../picker";
 import { PickerBase } from "../picker/base";
 import type { SegmentedControlProps } from "../segmented-control";
 import { SegmentedControlBase } from "../segmented-control/base";
-import type { SelectProps } from "../select";
-import { SelectBase } from "../select/base";
 import type { SliderProps } from "../slider";
 import { SliderBase } from "../slider/base";
 import { ChangeMark } from "../status/change";
@@ -98,7 +96,6 @@ interface Controls<S extends string | null, O extends string, T> {
 	switch: Omit<SwitchProps, "label">;
 	checkbox: Omit<CheckboxProps, "label">;
 	slider: Omit<SliderProps, "label">;
-	select: SelectProps<S>;
 	options: OptionListProps<O, T>;
 	segments: Omit<SegmentedControlProps, "label">;
 }
@@ -109,7 +106,7 @@ type OneOf<C> = {
 }[keyof C];
 
 // The control is the one descriptor set (`input`, `textArea`, `picker`, `switch`, `checkbox`, `slider`,
-// `select`, `options`, `segments`: the component's own props, less the label
+// `options`, `segments`: the component's own props, less the label
 // the field supplies), which the field draws in its form: a switch at the
 // label's end, a checkbox ahead of it, any other under it; or any other
 // control as `children`. Unbound, the consumer gives the error and the
@@ -160,7 +157,6 @@ function kindOf(props: Body): ControlKind | undefined {
 	if (props.switch) return "switch";
 	if (props.checkbox) return "checkbox";
 	if (props.slider) return "slider";
-	if (props.select) return "select";
 	if (props.options) return "options";
 	if (props.segments) return "segments";
 	return undefined;
@@ -189,8 +185,6 @@ function savedOf(props: Body, kind: ControlKind | undefined): Datum<unknown> {
 			return props.checkbox?.checked;
 		case "slider":
 			return props.slider?.value;
-		case "select":
-			return props.select?.value;
 		case "options":
 			return props.options?.value;
 		case "segments":
@@ -206,8 +200,9 @@ function controlOf(
 	props: Body,
 	kind: ControlKind | undefined,
 	draft: Draft<unknown>,
+	error: string | undefined,
 ): ReactNode {
-	const { label } = props;
+	const { label, disabled } = props;
 	if (props.input)
 		return <InputBase {...props.input} draft={draft as Draft<string>} />;
 	if (props.textArea)
@@ -217,6 +212,7 @@ function controlOf(
 			<PickerBase<string | null>
 				{...props.picker}
 				label={label}
+				form={{ invalid: Boolean(error), disabled: disabled === true }}
 				draft={
 					draft as Draft<string | null | readonly (string | null)[] | undefined>
 				}
@@ -241,13 +237,6 @@ function controlOf(
 				{...props.slider}
 				draft={draft as Draft<number>}
 				label={label}
-			/>
-		);
-	if (props.select)
-		return (
-			<SelectBase
-				{...props.select}
-				draft={draft as Draft<string | null | undefined>}
 			/>
 		);
 	if (props.options)
@@ -347,7 +336,7 @@ function FieldBody(props: Body) {
 	}
 	const error = refused ?? (props.field ? props.field.error : props.error);
 	// A folded field draws no control, so the consumer's function is not called.
-	const control = folded ? null : controlOf(props, kind, draft);
+	const control = folded ? null : controlOf(props, kind, draft, error);
 	const form = kind ?? "field";
 	// What a group of controls is named by, one value per change.
 	const group = useMemo(() => ({ label }), [label]);
@@ -452,7 +441,7 @@ export function FormField<
 	T = unknown,
 >(props: FormFieldProps<V, S, O, T>) {
 	const { change, ...rest } = props;
-	// The descriptors are read at their widest: a `Select` over `S` is one over
+	// The descriptors are read at their widest: a `Picker` over `S` is one over
 	// `string | null` to the field that draws it.
 	const field = <FieldBody {...(rest as Body)} />;
 	if (change === undefined) return field;

@@ -43,8 +43,7 @@ the room of the rest. No prop turns it on or off. The scrollers are a `Pane`'s b
 body (docked or not), a `Gate`'s page and a `Thread`'s log, the nearest one winning, so a `List` in
 a `Sheet` windows against the `Sheet`. A `List` (rows, files, meters and definitions, flat), a
 `Group`'s list, a `Table` at both widths, a `Thread`, trees, an `OptionList`, a `Picker`'s options,
-a `Comparison` and a `BarChart` (sideways, at a fixed bar width) window; a standalone `Select` draws
-every option. A row is exactly one element. A collection that crosses the count
+a `Comparison` and a `BarChart` (sideways, at a fixed bar width) window. A row is exactly one element. A collection that crosses the count
 (a Show more) keeps the rows it drew. A part of your own that scrolls and holds a long collection
 provides `Scroller` (`lib/window`) with `useScroller`; one that draws its own rows from a long
 list uses `Window` (`lib/window`), given `count`, `keyOf`, `row(index)` (built only for the mounted indices) and the box the rows stand in.
@@ -107,7 +106,7 @@ transition duration is 0 ms.
 
 ## Auditing with axe
 
-Run every axe rule except the document-structure ones (landmarks, heading order, skip links): screen readers are not a target. Exclude nothing for an open popup: a Menu, a Picker or a Select takes `aria-hidden` off the focus guards Base UI draws around it (the spans that relay Tab between a trigger and its portaled popup, focusable and `aria-hidden` in Base UI 1.8.0, which `aria-hidden-focus` would flag; each moves focus the moment it takes it, so nothing rests on one), so an open menu audits clean.
+Run every axe rule except the document-structure ones (landmarks, heading order, skip links): screen readers are not a target. Exclude nothing for an open popup: a Menu or a Picker takes `aria-hidden` off the focus guards Base UI draws around it (the spans that relay Tab between a trigger and its portaled popup, focusable and `aria-hidden` in Base UI 1.8.0, which `aria-hidden-focus` would flag; each moves focus the moment it takes it, so nothing rests on one), so an open menu audits clean.
 
 ## Safe areas
 

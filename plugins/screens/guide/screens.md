@@ -224,7 +224,7 @@ single one runs alone:
 - Queries must come from `createApiQueryUtils` (`node_modules/@fcalell/plugin-api/guide/client.md`).
   Query utils built directly with oRPC's `createTanstackQueryUtils` send queries as `POST`, so a
   forced state never reaches them.
-- An open non-modal popup (a Menu, a Select, a Picker, a Pane's more menu) is judged like the
+- An open non-modal popup (a Menu, a Picker, a Pane's more menu) is judged like the
   rest of the page: the roster takes `aria-hidden` off Base UI's focus guards, so axe's
   `aria-hidden-focus` has nothing to flag and nothing is excluded.
 - The session is one fixed signed-in user with no app-specific session fields, and there is no

@@ -119,8 +119,7 @@ const SPACING_USE: Record<(typeof SPACING_ROLES)[number], string> = {
 	rows: "between rows in a menu or a nav list",
 	card: "a card's inset",
 	tile: "a compact card's inset: a board card",
-	float:
-		"a floating surface's inset: a select's list, a menu, a picker popover",
+	float: "a floating surface's inset: a menu, a picker popover",
 	fields: "between fields",
 	sections: "between sections of a page",
 	page: "the page inset",

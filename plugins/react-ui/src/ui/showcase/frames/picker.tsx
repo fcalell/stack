@@ -1,5 +1,6 @@
 import type { Option } from "@fcalell/ui-core/descriptors";
 import { useState } from "react";
+import { FormField } from "../../components/form-field/index.tsx";
 import { Group } from "../../components/group/index.tsx";
 import { ListRow } from "../../components/list-row/index.tsx";
 import { HeldPicker } from "../../components/picker/base.tsx";
@@ -160,6 +161,73 @@ function Bars() {
 	);
 }
 
+// A pick a `FormField` holds: the field's label over the box at the form's
+// field height, the placeholder in its ink while nothing is chosen, the field's
+// error and disabled states on the box; a pick of one, then of several, each
+// chosen and not.
+function Fielded(props: {
+	invalid?: boolean;
+	disabled?: boolean;
+	only?: boolean;
+}) {
+	const { invalid, disabled, only } = props;
+	const [roles, setRoles] = useState<Role[]>(["admin", "member"]);
+	const [none, setNone] = useState<Role[]>([]);
+	const error = invalid ? "Pick a role." : undefined;
+	return (
+		<div className="flex w-popover max-w-full flex-col gap-fields">
+			<FormField
+				label="Default role"
+				description="Given to anyone who joins."
+				error={error}
+				disabled={disabled}
+				picker={{
+					value: "admin",
+					onChange: change,
+					options: [...ROLES],
+					placeholder: "Choose a role",
+				}}
+			/>
+			{only ? null : (
+				<>
+					<FormField
+						label="Fallback role"
+						error={error}
+						disabled={disabled}
+						picker={{
+							onChange: change,
+							options: [...ROLES],
+							placeholder: "Choose a role",
+						}}
+					/>
+					<FormField
+						label="Allowed roles"
+						error={error}
+						disabled={disabled}
+						picker={{
+							value: roles,
+							onChange: setRoles,
+							options: [...ROLES],
+							placeholder: "Choose roles",
+						}}
+					/>
+					<FormField
+						label="Blocked roles"
+						error={error}
+						disabled={disabled}
+						picker={{
+							value: none,
+							onChange: setNone,
+							options: [...ROLES],
+							placeholder: "Choose roles",
+						}}
+					/>
+				</>
+			)}
+		</div>
+	);
+}
+
 // The trigger opens from the pointer: a popover's on its press down, a
 // sheet's on its click.
 function openFirst(stage: HTMLElement) {
@@ -202,23 +270,26 @@ export function drawPicker(frame: ShowcaseFrame) {
 				painted
 			/>,
 		);
-	// The error state, on the first cell: the picker over options that fail and
-	// answer not found, which no frame holds, so it says so itself.
-	if (frame.state === "error")
-		return isFirstCell(frame) ? (
-			<div className="flex w-popover max-w-full flex-col gap-sections">
-				{endedAt<Option>(frame.id, "error").map(({ title, items }) => (
-					<Picker
-						key={title}
-						label={title}
-						options={items}
-						value="admin"
-						onChange={change}
-					/>
-				))}
-			</div>
-		) : undefined;
 	const cell = frame.cell.name;
+	// The error state, on the first cell, adds the picker over options that fail
+	// and answer not found, which no frame holds, so it says so itself.
+	if (frame.state === "error")
+		return (
+			<div className="flex w-popover max-w-full flex-col gap-sections">
+				<Fielded invalid />
+				{isFirstCell(frame)
+					? endedAt<Option>(frame.id, "error").map(({ title, items }) => (
+							<Picker
+								key={title}
+								label={title}
+								options={items}
+								value="admin"
+								onChange={change}
+							/>
+						))
+					: null}
+			</div>
+		);
 	const row =
 		cell.startsWith("PICKER.fit.row") ||
 		cell === "WORD_ACT" ||
@@ -226,21 +297,29 @@ export function drawPicker(frame: ShowcaseFrame) {
 		cell.startsWith("ICON.fit.meta") ||
 		cell.startsWith("ROW.");
 	const bar = cell.startsWith("PICKER.fit.bar");
+	// The field's cells, and the disabled state of the rest, draw the picks a
+	// `FormField` holds.
+	const fielded =
+		cell === "FIELD.fit.form" ||
+		cell === "FIELD.state.error" ||
+		(frame.state === "disabled" && !row && !bar);
 	if (frame.state === "selected")
 		return (
 			<Stage contain={frame.density === "touch"} ready={openFirst}>
-				<div className="flex flex-col p-card">{opened(row, bar)}</div>
+				<div className="flex flex-col p-card">{opened(row, bar, fielded)}</div>
 			</Stage>
 		);
+	if (fielded) return <Fielded disabled={frame.state === "disabled"} />;
 	if (row) return <Members />;
 	return bar ? <Bars /> : <Triggers />;
 }
 
-// What the open state draws: the members' row picks, the bar fit's picks, or
-// the owner filter.
-function opened(row: boolean, bar: boolean) {
+// What the open state draws: the members' row picks, the bar fit's picks, a
+// field's pick, or the owner filter.
+function opened(row: boolean, bar: boolean, fielded: boolean) {
 	if (row) return <Members />;
 	if (bar) return <Bars />;
+	if (fielded) return <Fielded only />;
 	return (
 		<Picker
 			label="Owner"

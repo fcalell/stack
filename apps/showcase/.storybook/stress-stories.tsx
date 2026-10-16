@@ -55,7 +55,6 @@ const FLOOR: Record<string, number> = {
 	Prose: 8,
 	Rules: 6,
 	Section: 7,
-	Select: 60,
 	Sheet: 23,
 	StepCount: 7,
 	Table: 4,

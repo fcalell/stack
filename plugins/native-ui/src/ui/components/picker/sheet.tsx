@@ -166,7 +166,7 @@ function OptionText({
 	);
 }
 
-// The sheet a `Picker` and a `Select` open: a menu sheet titled `title`, its
+// The sheet a `Picker` opens: a menu sheet titled `title`, its
 // rows edge to edge at the card's inset under their group labels, the chosen
 // one ticked, a search leading them past six options (the sheet then stands
 // full height, `SheetBase` reading the search in its head) and an act (the act

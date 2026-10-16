@@ -166,7 +166,7 @@ function Settings() {
 									/>
 									<FormField
 										label="Default region"
-										select={{
+										picker={{
 											value: workspace.at((w) => w.region),
 											onChange: edit("region"),
 											options: REGIONS,
@@ -260,7 +260,7 @@ function Settings() {
 								<FormField
 									label="Build image"
 									description="New deploys build on it; running ones keep theirs."
-									select={{ options: IMAGES, value: image, onChange: setImage }}
+									picker={{ options: IMAGES, value: image, onChange: setImage }}
 								/>
 							),
 						},

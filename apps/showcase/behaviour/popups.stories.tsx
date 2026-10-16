@@ -1,7 +1,6 @@
-import { Field } from "@base-ui/react/field";
+import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Menu } from "@fcalell/plugin-react-ui/components/menu";
 import { Picker } from "@fcalell/plugin-react-ui/components/picker";
-import { Select } from "@fcalell/plugin-react-ui/components/select";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { expect, screen, waitFor } from "storybook/test";
@@ -20,12 +19,10 @@ function Page() {
 	return (
 		<div style={{ minHeight: "250vh" }}>
 			<Picker label="Pick" options={OPTIONS} value={pick} onChange={setPick} />
-			<Field.Root>
-				<Field.Label nativeLabel={false} render={<div />}>
-					Choose
-				</Field.Label>
-				<Select value={select} onChange={setSelect} options={OPTIONS} />
-			</Field.Root>
+			<FormField
+				label="Choose"
+				picker={{ value: select, onChange: setSelect, options: OPTIONS }}
+			/>
 			<Menu label="More" items={[{ label: "Rename", onAct: act }]} />
 		</div>
 	);
@@ -50,7 +47,7 @@ function layout(controls: readonly Element[]) {
 	};
 }
 
-// Opening and closing a Picker, a Select and a Menu leaves the page as it was:
+// Opening and closing a Picker, a field's Picker and a Menu leaves the page as it was:
 // no scroll lock, no gutter change, no control moved (a layout shift of 0).
 export const Opens: StoryObj = {
 	play: async ({ canvas, userEvent }) => {

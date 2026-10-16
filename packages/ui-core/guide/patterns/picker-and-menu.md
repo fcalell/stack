@@ -1,6 +1,6 @@
 # Picker and menu
 
-The range a picker, a select or a menu is measured against in a [design critique](../design-critique.md), and the
+The range a picker or a menu is measured against in a [design critique](../design-critique.md), and the
 executions behind it. Read the measurements as the [references](../references.md) page sets out.
 
 A dialect is the references' number where the system keeps its own; the [judging](../judging.md) page says which hold.

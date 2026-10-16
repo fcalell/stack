@@ -64,7 +64,6 @@ import { Rules } from "@fcalell/plugin-native-ui/components/rules";
 import { StepCount } from "@fcalell/plugin-native-ui/components/step-count";
 import { Stages } from "@fcalell/plugin-native-ui/components/stages";
 import { Chip } from "@fcalell/plugin-native-ui/components/chip";
-import { Select } from "@fcalell/plugin-native-ui/components/select";
 import { Table } from "@fcalell/plugin-native-ui/components/table";
 import { Menu } from "@fcalell/plugin-native-ui/components/menu";
 import type {
@@ -965,34 +964,9 @@ export const closure = (
 		<Chip label="a" family="red" placeholderTextColorClassName="text-ink-body" />
 		{/* @ts-expect-error: a family is one of the six */}
 		<Chip label="a" family={7} />
-		<Select value="a" onChange={noop} options={[{ value: "a", label: "a" }]} placeholder="a" />
-		{/* @ts-expect-error: closed channel */}
-		<Select options={[]} onChange={noop} className="x" />
-		{/* @ts-expect-error: closed channel */}
-		<Select options={[]} onChange={noop} style={{ flex: 1 }} />
-		{/* @ts-expect-error: closed channel */}
-		<Select options={[]} onChange={noop} class="x" />
-		{/* @ts-expect-error: closed channel */}
-		<Select options={[]} onChange={noop} classList={{}} />
-		{/* @ts-expect-error: closed channel */}
-		<Select options={[]} onChange={noop} colorClassName="text-ink-body" />
-		{/* @ts-expect-error: closed channel */}
-		<Select options={[]} onChange={noop} selectionColorClassName="text-ink-body" />
-		{/* @ts-expect-error: closed channel */}
-		<Select options={[]} onChange={noop} placeholderTextColorClassName="text-ink-body" />
+		<Picker label="a" options={[{ value: "a", label: "a" }]} onChange={noop} placeholder="a" />
 		<FormField label="a" field={text}>
 			{(control) => <Input kind="source" {...control} />}
-		</FormField>
-		<FormField label="a" field={role}>
-			{(control) => (
-				<Select
-					options={[
-						{ value: "owner", label: "a" },
-						{ value: "viewer", label: "a" },
-					]}
-					{...control}
-				/>
-			)}
 		</FormField>
 		<FormField label="a" field={text}>
 			{(control) => (

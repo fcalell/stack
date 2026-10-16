@@ -34,8 +34,6 @@ import { PickerBase } from "../picker/base.tsx";
 import type { PickerProps } from "../picker/index.tsx";
 import { SegmentedControlBase } from "../segmented-control/base.tsx";
 import type { SegmentedControlProps } from "../segmented-control/index.tsx";
-import { SelectBase } from "../select/base.tsx";
-import type { SelectProps } from "../select/index.tsx";
 import { SliderBase } from "../slider/base.tsx";
 import type { SliderProps } from "../slider/index.tsx";
 import { ChangeMark } from "../status/change.tsx";
@@ -89,7 +87,6 @@ interface Controls<S extends string | null, O extends string, T> {
 	switch: Omit<SwitchProps, "label">;
 	checkbox: Omit<CheckboxProps, "label">;
 	slider: Omit<SliderProps, "label">;
-	select: SelectProps<S>;
 	options: OptionListProps<O, T>;
 	segments: Omit<SegmentedControlProps, "label">;
 }
@@ -99,7 +96,7 @@ type OneOf<C> = {
 	[K in keyof C]: Pick<C, K> & Never<Omit<C, K>>;
 }[keyof C];
 
-/** One control with its label, its description and its error. The control is the one descriptor set (`input`, `textArea`, `picker`, `switch`, `checkbox`, `slider`, `select`, `options`, `segments`: the component's own props, less the label the field supplies), which the field draws in its form: a switch at the label's end, a checkbox ahead of it, any other under it; or any other control as `children`. Unbound, the consumer gives the error and the control; bound, the form's field gives both, and the control is a function of the field's value: `{(control) => <Input {...control} />}`. */
+/** One control with its label, its description and its error. The control is the one descriptor set (`input`, `textArea`, `picker`, `switch`, `checkbox`, `slider`, `options`, `segments`: the component's own props, less the label the field supplies), which the field draws in its form: a switch at the label's end, a checkbox ahead of it, any other under it; or any other control as `children`. Unbound, the consumer gives the error and the control; bound, the form's field gives both, and the control is a function of the field's value: `{(control) => <Input {...control} />}`. */
 export type FormFieldProps<
 	V = unknown,
 	S extends string | null = string,
@@ -149,7 +146,6 @@ function kindOf(props: Body): ControlKind | undefined {
 	if (props.switch) return "switch";
 	if (props.checkbox) return "checkbox";
 	if (props.slider) return "slider";
-	if (props.select) return "select";
 	if (props.options) return "options";
 	if (props.segments) return "segments";
 	return undefined;
@@ -176,8 +172,6 @@ function savedOf(props: Body, kind: ControlKind | undefined): Datum<unknown> {
 			return props.checkbox?.checked;
 		case "slider":
 			return props.slider?.value;
-		case "select":
-			return props.select?.value;
 		case "options":
 			return props.options?.value;
 		case "segments":
@@ -193,8 +187,9 @@ function controlOf(
 	props: Body,
 	kind: ControlKind | undefined,
 	draft: Draft<unknown>,
+	error: string | undefined,
 ): ReactNode {
-	const { label } = props;
+	const { label, disabled } = props;
 	if (props.input)
 		return <InputBase {...props.input} draft={draft as Draft<string>} />;
 	if (props.textArea)
@@ -204,6 +199,7 @@ function controlOf(
 			<PickerBase<string | null>
 				{...props.picker}
 				label={label}
+				form={{ invalid: Boolean(error), disabled: disabled === true }}
 				draft={
 					draft as Draft<string | null | readonly (string | null)[] | undefined>
 				}
@@ -237,13 +233,6 @@ function controlOf(
 				{...props.slider}
 				draft={draft as Draft<number>}
 				label={label}
-			/>
-		);
-	if (props.select)
-		return (
-			<SelectBase
-				{...props.select}
-				draft={draft as Draft<string | null | undefined>}
 			/>
 		);
 	if (props.options)
@@ -290,7 +279,7 @@ function FieldBody(props: Body) {
 	const { draft, refused } = useFieldDraft(savedOf(props, kind));
 	const error = refused ?? (props.field ? props.field.error : props.error);
 	// A folded field draws no control, so the consumer's function is not called.
-	const control = folded ? null : controlOf(props, kind, draft);
+	const control = folded ? null : controlOf(props, kind, draft, error);
 	const form: Form = kind ?? "field";
 	const root = useRef<HTMLDivElement>(null);
 	const wasFolded = useRef(folded);
@@ -317,8 +306,8 @@ function FieldBody(props: Body) {
 	const named = (
 		<Field.Label
 			// A trigger is a button: a label element would press it.
-			nativeLabel={form !== "select"}
-			render={form === "select" ? <div /> : undefined}
+			nativeLabel={form !== "picker"}
+			render={form === "picker" ? <div /> : undefined}
 			className={cn(
 				text({ role: "body" }),
 				textStrong({ role: "body" }),
@@ -427,7 +416,7 @@ export function FormField<
 	T = unknown,
 >(props: FormFieldProps<V, S, O, T>) {
 	const { change, ...rest } = props;
-	// The descriptors are read at their widest: a `Select` over `S` is one over
+	// The descriptors are read at their widest: a `Picker` over `S` is one over
 	// `string | null` to the field that draws it.
 	const field = <FieldBody {...(rest as Body)} />;
 	if (change === undefined) return field;

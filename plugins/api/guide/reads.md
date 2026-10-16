@@ -66,7 +66,7 @@ frame, and a read used only through `or` is quiet: subscribed, never held. A rea
 options, facts or text a component draws is never `or`.
 
 A read that a collection or an option control draws is that component's own: a `List`, `Table`,
-`Thread`, `Picker` or `Select` given a selection shows that read's state in its own box, whatever
+`Thread` or `Picker` given a selection shows that read's state in its own box, whatever
 stands above it.
 
 A query made with `read()` (and a channel made with `channelRead`) holds its first answer when the

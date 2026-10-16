@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 
-// Base UI draws focus guards around an open non-modal popup (a Menu, a Picker,
-// a Select): empty spans that relay Tab between the trigger and the portaled
+// Base UI draws focus guards around an open non-modal popup (a Menu, a Picker): empty spans that relay Tab between the trigger and the portaled
 // popup, `aria-hidden` and focusable at once, which axe's `aria-hidden-focus`
 // flags (serious) on every open menu. Each guard moves focus the moment it
 // takes it, so nothing rests on it, and no prop turns them off (Base UI 1.8.0).

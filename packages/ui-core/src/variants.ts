@@ -374,12 +374,12 @@ export const CHIPS_TRIGGER = "-my-hairline py-hairline";
 export const TEXT_AREA_VALUE = "min-h-text-area";
 // A one-time code's row of boxes and the digit in each.
 export const OTP = "gap-inside";
-// A group of options (a select's, a picker's, an option list's): its rows at
+// A group of options (a picker's, an option list's): its rows at
 // the rows rhythm.
 export const SELECT_GROUP = "gap-rows";
 // An option group's label over its rows, inset to the rows' text.
 export const OPTION_GROUP_LABEL = "px-control-x pt-pair";
-// An option's row in a popover or a list of choices (Select, Menu, Picker,
+// An option's row in a popover or a list of choices (Menu, Picker,
 // OptionList): a rounded wash at the control's inset, in place of the row's own
 // card inset. Unheld, drawn by each that has one.
 export const OPTION_ROW = "px-control-x rounded-row";
@@ -410,9 +410,6 @@ export const PICKER_VALUE =
 // The pick's popover at the popover's width (its ground and inset are
 // `POPOVER`'s).
 export const PICKER_POPOVER = "w-popover";
-// The select's list at the popover's width too (its ground and inset are
-// `POPOVER`'s); the trigger's width is its floor.
-export const SELECT_POPOVER = "w-popover";
 // A list of rules on the desktop: one grid whose rows are subgrids, so the
 // columns align across rows, a pair rhythm between rows and the inside gap
 // between terms. A rule's terms keep the inside gap on touch too, stacked in

@@ -29,8 +29,8 @@ import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 import type { InputKind, InputProps } from "./index.tsx";
 
-// The box draws the field's states, and a `Select`'s trigger draws the same
-// box: the value inside it is a bare line, so the focus ring is the box's and
+// The box draws the field's states, and a `Picker`'s trigger in a field draws
+// the same box: the value inside it is a bare line, so the focus ring is the box's and
 // the value's own is off. The box rings on its value's focus alone: an act
 // inside it rings inset on its own. The guard names the act, not the value,
 // so a showcase frame forced to focus still rings the box.

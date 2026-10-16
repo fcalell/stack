@@ -1743,7 +1743,7 @@ check("b-picker", "a picker draws its empty choice as a placeholder", () => {
 		resolve(COMPONENT_DIR, "picker", "base.tsx"),
 		"utf8",
 	);
-	// The option sheet a Picker and a Select open.
+	// The option sheet a Picker opens.
 	const sheet = readFileSync(
 		resolve(COMPONENT_DIR, "picker", "sheet.tsx"),
 		"utf8",

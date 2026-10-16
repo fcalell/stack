@@ -423,65 +423,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				sizes: ["otp", "spinner"],
 			},
 		},
-		// The trigger is the field box; the open list is a popover of rows under
-		// group labels (meta at 500), the highlighted row under the hover wash
-		// and the chosen one ticked, a description in meta under an option; an
-		// option's `blocked` reason replaces it in the disabled ink and the row
-		// takes no pick, until it is chosen. `value` and `options` are data: a
-		// selection paints the trigger, inert, until its read lands; options that
-		// have failed draw the failed sentence with Retry (or `missing`) in a line
-		// under the trigger.
-		Select: {
-			props: ["value", "onChange", "options", "placeholder"],
-			draws: [
-				"FIELD",
-				"FIELD_VALUE",
-				"FIELD_PLACEHOLDER",
-				"FIELD_GLYPH",
-				"POPOVER",
-				"SELECT_POPOVER",
-				"SELECT_GROUP",
-				"ROW.lines.one",
-				"ROW.lines.two",
-				"ROW.state.rest",
-				"ROW.state.highlighted",
-				"ROW.state.pressed",
-				"OPTION_ROW",
-				"ROW.state.selected",
-				"TEXT.role.meta",
-				"TEXT_STRONG.role.meta",
-				"BUTTON.act.quiet",
-				"BUTTON.fit.bar",
-				"BUTTON_LABEL.act.quiet",
-				"PAINT.kind.control",
-			],
-			holds: ["SELECT_POPOVER"],
-			states: ["rest", "hover", "focus", "selected", "disabled", "error"],
-			owns: {
-				roles: ["body", "code", "meta"],
-				colors: [
-					"skeleton",
-					"surface",
-					"edge",
-					"edge-hover",
-					"edge-error",
-					"ink-body",
-					"ink-meta",
-					"fill-disabled",
-					"ink-disabled",
-					"ring",
-					"raised",
-					"edge-raised",
-					"wash-hover",
-					"wash-press",
-					"wash-selected",
-				],
-				radii: ["control", "row", "popover"],
-				spacing: ["card", "inside", "control-x", "pair", "rows", "float"],
-				sizes: ["field", "control-compact", "row", "row-2", "popover"],
-				elevation: ["float"],
-			},
-		},
 		Slider: {
 			props: [
 				"label",
@@ -1459,7 +1400,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// A `change` draws the change mark in a lane ahead of the label (on a
 		// checkbox's line, ahead of the box), the kind's word its name.
 		// The control is the one descriptor set (`input`, `textArea`, `picker`,
-		// `switch`, `checkbox`, `slider`, `select`, `options`, `segments`: the
+		// `switch`, `checkbox`, `slider`, `options`, `segments`: the
 		// component's own props less the
 		// label the field supplies), whose form the field draws, or `children`
 		// for any other control. The label and the description are constants and
@@ -1481,7 +1422,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"switch",
 				"checkbox",
 				"slider",
-				"select",
 				"options",
 				"segments",
 				"children",
@@ -1747,7 +1687,15 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// which stays painted; the picker holds that read, so it needs no frame
 		// and draws no busy or stale flag.
 		Picker: {
-			props: ["label", "options", "value", "onChange", "fit", "act"],
+			props: [
+				"label",
+				"placeholder",
+				"options",
+				"value",
+				"onChange",
+				"fit",
+				"act",
+			],
 			draws: [
 				"PICKER",
 				"HAIRLINE",
@@ -1760,8 +1708,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"CHIP",
 				"CHIP_LABEL",
 				"FIELD.fit.bar",
+				"FIELD.fit.form",
 				"FIELD.trailing.none",
 				"FIELD.state.rest",
+				"FIELD.state.error",
 				"FIELD_VALUE.kind.text",
 				"FIELD_VALUE.kind.search",
 				"FIELD_PLACEHOLDER",
@@ -1799,6 +1749,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"surface",
 					"edge",
 					"edge-hover",
+					"edge-error",
+					"fill-disabled",
 					"raised",
 					"avatar-",
 					"chip-",
@@ -1811,6 +1763,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				spacing: ["inside", "pair", "float", "rows", "control-x", "card"],
 				sizes: [
 					"target",
+					"field",
 					"control-compact",
 					"popover",
 					"avatar",

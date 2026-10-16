@@ -1,6 +1,5 @@
 import { FormField } from "../../components/form-field/index.tsx";
 import { Section } from "../../components/section/index.tsx";
-import { Select } from "../../components/select/index.tsx";
 import { TextArea } from "../../components/text-area/index.tsx";
 import { isFirstCell, type ShowcaseFrame } from "../cells.ts";
 import { endedAt, itemsAt, waitingText } from "../waiting.ts";
@@ -83,7 +82,7 @@ const ENVIRONMENTS = [
 
 // A part is the rows a cell names, drawn in the frame's state: the topics it
 // lists, whether they stand under their group labels, which are checked, and
-// whether the first checked one opens the Select under it.
+// whether the first checked one opens the Picker under it.
 interface Part {
 	topics: readonly string[];
 	grouped?: boolean;
@@ -96,7 +95,7 @@ const PARTS = {
 	// states and rows every cell of the list stands on.
 	rows: { topics: ["mentions", "assigned"], chosen: ["mentions"] },
 	unchecked: { topics: ["mentions", "assigned"], chosen: [] },
-	// The checked row opens the Select the children hold.
+	// The checked row opens the Picker the children hold.
 	checked: {
 		topics: ["failed", "comments"],
 		chosen: ["failed"],
@@ -186,13 +185,14 @@ function Topics(props: {
 					value: [...part.chosen],
 					onChange: change,
 					children: part.opens ? (
-						<FormField label="Only for">
-							<Select
-								value="production"
-								onChange={change}
-								options={ENVIRONMENTS}
-							/>
-						</FormField>
+						<FormField
+							label="Only for"
+							picker={{
+								value: "production",
+								onChange: change,
+								options: ENVIRONMENTS,
+							}}
+						/>
 					) : null,
 				}}
 			/>

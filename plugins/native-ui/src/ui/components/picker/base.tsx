@@ -53,6 +53,8 @@ const ROW_OPEN = "bg-wash-press";
 const ROW_VALUE = "shrink";
 const OPEN_VALUE = "text-ink-body";
 const HIDDEN = "opacity-0";
+const DISABLED_FILL = "bg-fill-disabled";
+const DISABLED_INK = "text-ink-disabled";
 
 interface Several<V extends string | null> {
 	value: readonly V[];
@@ -83,6 +85,11 @@ interface Composed {
 	cell?: CellFit;
 	// Its data is not here: the trigger's box filled at its loaded size, its content not drawn, inert.
 	painted?: boolean;
+	// Set by a `FormField` around the pick: the box stands at the form's field
+	// height, `edge-error` when the field is in error and the disabled fill when
+	// it is disabled, and the field's label names the pick (so no `placeholder`
+	// falls back to it).
+	form?: { invalid: boolean; disabled: boolean };
 }
 
 // What every pick draws, on the `draft` its host holds: a field hosts the draft
@@ -109,7 +116,15 @@ export function PickerBase<V extends string | null = string>(
 			draft.change(next, () => given.onChange(next));
 		},
 	} as Drawn<V>;
-	const { label, fit = "field", act, chip, cell } = given;
+	const { label, placeholder, fit = "field", act, chip, cell, form } = given;
+	// What an empty box says: the hint, else what is picked (a field's own label
+	// stands over it already).
+	const hint = placeholder ?? (form ? undefined : label);
+	const fieldBox = field({
+		fit: form ? "form" : "bar",
+		state: form?.invalid ? "error" : "rest",
+	});
+	const disabled = form?.disabled === true;
 	const visible = useShown(painted);
 	const several = isSeveral(props) ? props : undefined;
 	const value = isSeveral(props) ? undefined : props.value;
@@ -134,7 +149,7 @@ export function PickerBase<V extends string | null = string>(
 		<Status state={current.status} label={current.label} />
 	) : null;
 	const row = fit === "row";
-	const ink = row && open ? "ink-body" : "ink-meta";
+	const ink = disabled ? "ink-disabled" : row && open ? "ink-body" : "ink-meta";
 	const glyph = current?.icon ? (
 		<Ink.Provider value={ink}>
 			<Icon name={current.icon} fit={row ? "meta" : "control"} />
@@ -155,7 +170,7 @@ export function PickerBase<V extends string | null = string>(
 					painted && HIDDEN,
 				)}
 			>
-				{current?.label ?? label}
+				{current?.label ?? hint}
 			</RNText>
 		);
 	else if (chip && current && current.value !== null)
@@ -173,21 +188,23 @@ export function PickerBase<V extends string | null = string>(
 					current === undefined && FIELD_PLACEHOLDER,
 					(current?.value ?? null) === null && PICKER_EMPTY,
 					FIELD_VALUE,
+					disabled && DISABLED_INK,
 					painted && HIDDEN,
 				)}
 			>
-				{current?.label ?? label}
+				{current?.label ?? hint}
 			</RNText>
 		);
 	// The chips of a pick of several each hold their own remove act, so the
 	// box is no press: the trigger that opens the sheet stands after them.
 	const trigger = several ? (
 		<View
-			{...inertProps(painted === true)}
+			{...inertProps(painted === true || disabled)}
 			className={cn(
-				field({ fit: "bar" }),
+				fieldBox,
 				picker({ fit: "bar" }),
 				SEVERAL_BOX,
+				disabled && DISABLED_FILL,
 				painted && paintControl(visible),
 			)}
 		>
@@ -219,10 +236,11 @@ export function PickerBase<V extends string | null = string>(
 							fieldValue({ kind: "text" }),
 							FIELD_PLACEHOLDER,
 							FIELD_VALUE,
+							disabled && DISABLED_INK,
 							painted && HIDDEN,
 						)}
 					>
-						{label}
+						{hint}
 					</RNText>
 				) : null}
 				<View className={painted ? HIDDEN : undefined}>
@@ -235,17 +253,19 @@ export function PickerBase<V extends string | null = string>(
 			accessibilityRole="button"
 			accessibilityLabel={cell?.label ?? label}
 			accessibilityValue={{ text: current?.label }}
-			accessibilityState={{ expanded: open }}
+			accessibilityState={{ expanded: open, disabled }}
+			disabled={disabled}
 			onPress={() => setOpen(true)}
 			{...inertProps(painted === true)}
 			className={cn(
 				row
 					? cn(WORD_ACT, picker({ fit }), ROW_TRIGGER, open && ROW_OPEN)
 					: cn(
-							field({ fit: "bar" }),
+							fieldBox,
 							picker({ fit }),
 							FIELD_TRIGGER,
 							(cell || fit === "bar") && FILL,
+							disabled && DISABLED_FILL,
 						),
 				painted && paintControl(visible),
 			)}
@@ -300,12 +320,13 @@ export function HeldPicker<V extends string | null = string>(
 export function HeldPicker<V extends string | null = string>(
 	props: PickerProps<V> & Composed,
 ) {
-	const { value, onChange, label, options, fit, act } = props;
+	const { value, onChange, label, placeholder, options, fit, act } = props;
 	return (
 		<PickerBase<V>
 			draft={useHeldDraft<V | readonly V[] | undefined>(value)}
 			onChange={onChange as (next: V | V[]) => unknown}
 			label={label}
+			placeholder={placeholder}
 			options={options}
 			fit={fit}
 			act={act}

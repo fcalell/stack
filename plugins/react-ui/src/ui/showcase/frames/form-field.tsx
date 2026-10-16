@@ -39,9 +39,9 @@ function Questions() {
 					"region",
 					REGIONS.find((option) => option.value === region)?.label,
 				)}
-				select={{
+				picker={{
 					value: region,
-					onChange: (next) => {
+					onChange: (next: string) => {
 						setRegion(next);
 						setEditing(undefined);
 					},
@@ -75,7 +75,7 @@ function Changes() {
 			<FormField
 				change="added"
 				label="Default region"
-				select={{
+				picker={{
 					value: "eu-central-1",
 					onChange: change,
 					options: REGIONS,
@@ -145,7 +145,7 @@ export function drawFormField(frame: ShowcaseFrame) {
 				description="Where new databases are created."
 				error={error ? "Pick where new databases are created." : undefined}
 				disabled={disabled}
-				select={{
+				picker={{
 					value: error ? undefined : "eu-central-1",
 					onChange: change,
 					options: REGIONS,

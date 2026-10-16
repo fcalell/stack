@@ -30,7 +30,7 @@ Thin evidence: no Linear, Vercel or Stripe settings screen was returned; Dub and
 ## In stack
 
 A setting saves in one of two places, and the pending and the failure are drawn in the same place
-either way. A control that saves as it changes (`Switch`, `Checkbox`, `Select`, `SegmentedControl`,
+either way. A control that saves as it changes (`Switch`, `Checkbox`, `SegmentedControl`,
 `Picker`, a `DefinitionRow` `switch` or `pick`, a `Table` cell) returns the save's promise from its
 handler, and a text field or a `Slider` from `onCommit` (Enter or blur, the thumb let go). The control
 shows the viewer's value while the latest save pends, with no saving mark and no flicker back while

@@ -93,7 +93,7 @@ ready the moment the promise settles, so the screen passes no `loading` and read
 rejection draws in the host's line (an `ActionBar`'s or a `Sheet`'s under the acts, a standing
 `Button`'s under itself), else in a failed toast whose Retry runs the whole act again; the sentence
 is the server's own refusal, else "That didn't go through." An act has no sentence of its own; catch nothing. A control that saves as the viewer changes it
-(`Switch`, `Select`, `Picker`, a `DefinitionRow` `switch` or `pick`, a field's `onCommit`) returns the
+(`Switch`, `Picker`, a `DefinitionRow` `switch` or `pick`, a field's `onCommit`) returns the
 save's promise: it holds the viewer's value while the latest save pends and puts it back, with the
 reason, on a refusal. An act pressed offline is refused at the press, and its host says "That didn't go through." with no Retry and nothing queued; the connection's reason is the offline banner's, once.
 

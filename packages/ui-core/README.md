@@ -299,7 +299,7 @@ control: icon to label, dot to text), `control-x` 12 / 16 (a control's inline pa
 (between paired elements: label over input, title over description), `acts` 8 / 8 (between the acts
 of a bar: a page header, a toolbar, an action bar), `rows` 2 / 4 (between rows in a menu or a nav
 list; rows in a hairline list abut), `card` 16 / 16 (a card's inset), `tile` 12 / 16 (a compact
-card's inset: a board card), `float` 4 / 4 (a floating surface's inset: a select's list, a menu, a
+card's inset: a board card), `float` 4 / 4 (a floating surface's inset: a menu, a
 picker popover), `fields` 16 / 24 (between fields), `sections` 32 / 40 (between sections of a page),
 `page` 24 / 16 (the page inset). A list bleeds by `card`, so its rows' text meets the title
 over it. Touch is the same roles one rung looser except the float inset and the acts gap, which
@@ -359,7 +359,7 @@ control), `row` 6 (a menu item, a highlighted row), `card` 8 (a card, a toast), 
 status, a switch). One hairline of 1 px draws region edges, row splits and field boundaries, as
 `--hairline`. The focus ring is `ring`, 2 px at a 2 px offset outside the box, so it never covers
 the control's own edge; inside a list it is drawn inward. A bordered box that takes typing or
-choosing (a field, the Select and Picker trigger) rings on its edge: `RING_EDGE_OFFSET_PX`, -1 px,
+choosing (a field, the Picker trigger) rings on its edge: `RING_EDGE_OFFSET_PX`, -1 px,
 centres the ring on the hairline.
 
 Widths are a short label's measure (a chip's label, a status word), the

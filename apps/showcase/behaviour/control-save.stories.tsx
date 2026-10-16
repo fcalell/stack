@@ -108,7 +108,7 @@ function Setting(props: { srv: Server<boolean>; field?: boolean }) {
 // The other descriptors a field hosts, each over a read and a save that refuses.
 function Descriptors(props: {
 	srv: Server<string>;
-	kind: "segments" | "select" | "options";
+	kind: "segments" | "options";
 }) {
 	const { srv, kind } = props;
 	const [value] = useState(() => srv.setting.at((s) => s.value));
@@ -122,13 +122,6 @@ function Descriptors(props: {
 			<FormField
 				label="Period"
 				segments={{ options: choices, value, onChange: save }}
-			/>
-		);
-	if (kind === "select")
-		return (
-			<FormField
-				label="Period"
-				select={{ options: choices, value, onChange: save }}
 			/>
 		);
 	return (
@@ -510,23 +503,5 @@ export const OptionsInAFieldRefuseIntoTheFieldsLine: StoryObj = {
 		await userEvent.click(canvas.getByRole("radio", { name: "Week" }));
 		await expect(await canvas.findByText("Not now.")).toBeVisible();
 		await waitFor(() => expect(day).toHaveAttribute("aria-checked", "true"));
-	},
-};
-
-const picking = refusing("day");
-
-export const ASelectInAFieldRefusesIntoTheFieldsLine: StoryObj = {
-	render: () => (
-		<Page>
-			<Descriptors srv={picking} kind="select" />
-		</Page>
-	),
-	play: async ({ canvas, userEvent }) => {
-		const trigger = await canvas.findByRole("combobox", { name: "Period" });
-		await waitFor(() => expect(trigger).toHaveTextContent("Day"));
-		await userEvent.click(trigger);
-		await userEvent.click(await screen.findByRole("option", { name: "Week" }));
-		await expect(await canvas.findByText("Not now.")).toBeVisible();
-		await waitFor(() => expect(trigger).toHaveTextContent("Day"));
 	},
 };

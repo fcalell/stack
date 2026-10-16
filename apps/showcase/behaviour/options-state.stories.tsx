@@ -1,7 +1,7 @@
 import { read } from "@fcalell/plugin-api/tanstack-query";
+import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { OptionList } from "@fcalell/plugin-react-ui/components/option-list";
 import { Picker } from "@fcalell/plugin-react-ui/components/picker";
-import { Select } from "@fcalell/plugin-react-ui/components/select";
 import { Toolbar } from "@fcalell/plugin-react-ui/components/toolbar";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect, fn, waitFor, within } from "storybook/test";
@@ -101,15 +101,18 @@ export const IdleOptionsPaintStillAndMissingOnesSayMissing: StoryObj = {
 	},
 };
 
-const selecting = healing();
+const picking = healing();
 const listing = healing();
 
-// A Select and an OptionList over failed options say it in their own line.
-export const ASelectAndAnOptionListSayTheirOptionsFailed: StoryObj = {
+// A field's Picker and an OptionList over failed options say it in their own line.
+export const AFieldsPickerAndAnOptionListSayTheirOptionsFailed: StoryObj = {
 	render: () => (
 		<div className="flex flex-col gap-sections">
-			<div data-testid="select">
-				<Select options={selecting.options} value="eu" onChange={fn()} />
+			<div data-testid="pick">
+				<FormField
+					label="Region"
+					picker={{ options: picking.options, value: "eu", onChange: fn() }}
+				/>
 			</div>
 			<div data-testid="list">
 				<OptionList
@@ -125,7 +128,7 @@ export const ASelectAndAnOptionListSayTheirOptionsFailed: StoryObj = {
 		</div>
 	),
 	play: async ({ canvas }) => {
-		for (const id of ["select", "list"]) {
+		for (const id of ["pick", "list"]) {
 			const box = within(await canvas.findByTestId(id));
 			await box.findByText("This didn't load.");
 			await expect(box.getByRole("button", { name: "Retry" })).toBeVisible();

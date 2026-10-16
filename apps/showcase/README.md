@@ -59,7 +59,7 @@ The roster is in Storybook, two kinds of story:
   browse one cell. Hover, press and focus are drawn nowhere: drive the real component in its story.
 - **Behaviour stories** (`behaviour/*.stories.tsx`, written by hand): the real component driven by
   keyboard, with a play function asserting the rubric's widget-behaviour floor: Sheet (and a
-  `confirm()` decision), Menu, Select, Picker, OptionList, SegmentedControl, Table (grid cursor),
+  `confirm()` decision), Menu, Picker, OptionList, SegmentedControl, Table (grid cursor),
   List (tree), Slider, InputOtp, Toast and Gate, and a Sheet docked as a Pane's `sheet`; Pane's focus
   move into a Pane that opens. Place and Shell own no focus move or key handling of their own, so
   they have none.

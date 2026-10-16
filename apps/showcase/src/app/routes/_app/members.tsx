@@ -154,7 +154,7 @@ function Invite(props: { open: boolean; onClose: () => void }) {
 						<FormField
 							label="Role"
 							description="What they can change."
-							select={{ options: ROLES, value: role, onChange: setRole }}
+							picker={{ options: ROLES, value: role, onChange: setRole }}
 						/>
 						<FormField
 							label="Permissions"
@@ -212,11 +212,11 @@ function Record(props: {
 									: "What they can change."
 							}
 							disabled={draft.role === "owner"}
-							select={{
+							picker={{
 								options:
 									draft.role === "owner" ? ROLE_OPTIONS : ROLE_OPTIONS.slice(1),
 								value: draft.role,
-								onChange: (role) => edit({ role }),
+								onChange: (role: Member["role"]) => edit({ role }),
 							}}
 						/>
 						<FormField label="Team">

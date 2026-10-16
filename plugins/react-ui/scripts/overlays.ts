@@ -60,7 +60,7 @@ export const OVERLAYS: readonly string[] = [
 	"gap-pair",
 	"gap-inside",
 	"not-has-[button:hover]:hover:border-edge-hover",
-	// Select
+	// Picker
 	"flex",
 	"flex-col",
 	"items-center",
@@ -69,11 +69,7 @@ export const OVERLAYS: readonly string[] = [
 	"bg-fill-disabled",
 	"text-ink-disabled",
 	"min-w-(--anchor-width)",
-	"data-popup-open:outline-2",
-	"data-popup-open:outline-offset-(--focus-ring-edge-offset)",
-	"data-popup-open:outline-ring",
 	"focus-visible:outline-offset-(--focus-ring-edge-offset)",
-	"px-control-x",
 	"pt-pair",
 	"outline-none",
 	"shrink-0",

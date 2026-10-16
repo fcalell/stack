@@ -100,13 +100,13 @@ and `style` as `?: never`) and declares exactly the roster's prop names.
   `aria-busy:`. The focus ring is the base `:focus-visible` rule in `globals.css`
   (`--focus-ring` in `--color-ring` at `--focus-ring-offset`), so a component spells nothing for
   it; a control inside a control rings inset with `focus-visible:-outline-offset-2`. A field box
-  (Input, TextArea, the OTP boxes, MessageInput, the Select and Picker trigger) rings on its edge
+  (Input, TextArea, the OTP boxes, MessageInput, the Picker trigger) rings on its edge
   (`--focus-ring-edge-offset`, -1 px), for the keyboard alone: a click draws the hover edge.
 - **Behaviour.** `@base-ui/react` supplies behaviour and accessibility (a button, a switch, a
   checkbox, a slider, a field, a select) through its per-component subpaths
   (`@base-ui/react/switch`); its parts take the component's classes, never Base UI's look.
 - **Composition.** A component that draws another's place takes its pattern, never a copy:
-  `Select`'s trigger is `Input`'s box (`BOX`, `BOX_HOVER`, `BOX_DISABLED`, exported from
+  A field's `Picker` trigger is `Input`'s box (`BOX`, `BOX_HOVER`, `BOX_DISABLED`, exported from
   `components/input`) and its open list a popover (`POPOVER`) of rows (`ROW`, `highlighted`
   under Base UI's highlight). An app's popups mount in the body; only a
   showcase stage provides a `PortalContainer` (`lib/portal`), so its popups draw the stage's mode

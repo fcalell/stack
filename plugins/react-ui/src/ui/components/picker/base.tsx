@@ -58,17 +58,18 @@ import { useWords } from "../../lib/words.tsx";
 import { Avatar } from "../avatar/index.tsx";
 import { Chip } from "../chip/index.tsx";
 import { Icon } from "../icon/index.tsx";
+import { BOX_DISABLED, BOX_HOVER } from "../input/base.tsx";
 import { Input } from "../input/index.tsx";
 import { SheetBase } from "../sheet/base.tsx";
 import { StatusDot } from "../status/dot.tsx";
 import { Status } from "../status/index.tsx";
 import type { PickerProps, PickOneProps, PickSeveralProps } from "./index.tsx";
 
-// A field-fit trigger is the field box at the bar fit; open, it keeps the
-// ring, as the `Select`'s does. It yields only past its line, so a long value
-// truncates before the chevron.
+// A field-fit trigger is the field box (at the bar fit, or a form's field
+// height in a `FormField`); open, it keeps the ring. It yields only past its
+// line, so a long value truncates before the chevron.
 const FIELD_TRIGGER =
-	"flex min-w-0 max-w-full items-center text-start hover:border-edge-hover focus-visible:outline-offset-(--focus-ring-edge-offset)";
+	"flex min-w-0 max-w-full items-center text-start focus-visible:outline-offset-(--focus-ring-edge-offset)";
 const FIELD_OPEN =
 	"outline-2 outline-offset-(--focus-ring-edge-offset) outline-ring";
 // In a table cell, or at the bar fit in a rule row, the trigger fills the
@@ -80,7 +81,7 @@ const PAINTED = cn(PAINT_CONTROL, "*:invisible");
 // A pick of several: the chips wrap in a run, and the trigger that opens the
 // list stands beside it, filling what the run leaves, its chevron at the box's
 // end; the run wraps, so the chevron never takes a line of its own.
-const SEVERAL_BOX = "flex items-stretch min-w-0 hover:border-edge-hover";
+const SEVERAL_BOX = "flex items-stretch min-w-0";
 const SEVERAL_RUN = "flex flex-wrap items-center gap-inside min-w-0";
 const SEVERAL_TRIGGER =
 	"flex grow shrink-0 items-center justify-end min-w-target max-w-full text-start";
@@ -94,8 +95,10 @@ const ROW_OPEN = "bg-wash-press text-ink-body";
 const ROW_VALUE = "truncate";
 const OPEN_VALUE = "text-ink-body";
 // The popover stops at the room Base UI measures below its trigger; its rows
-// scroll inside it, under a search that stays.
-const POPUP = "flex flex-col max-h-(--available-height)";
+// scroll inside it, under a search that stays. It stands at the popover's
+// width, or the trigger's when that is wider (Base UI sets it on the
+// positioner as `--anchor-width`).
+const POPUP = "flex flex-col min-w-(--anchor-width) max-h-(--available-height)";
 const POSITIONER = "z-(--layer-popover)";
 const LIST =
 	"flex flex-col gap-pair min-h-0 overflow-y-auto overscroll-contain";
@@ -345,6 +348,8 @@ interface Composed {
 	cell?: CellFit;
 	/** Its data is not here: the trigger's box filled at its loaded size, its content not drawn, inert, so no list opens. */
 	painted?: boolean;
+	/** Set by a `FormField` around the pick: the box stands at the form's field height, `edge-error` when the field is in error and the disabled fill when it is disabled, and the field's label names the pick (so no `placeholder` falls back to it). */
+	form?: { invalid: boolean; disabled: boolean };
 }
 
 /** The trigger and list every Picker renders, on the `draft` its host holds: a field hosts the draft of its picker and draws a rejection in its own line. Waiting options paint the trigger, and ended ones say so in a line under it. Outside the package's exports. */
@@ -369,7 +374,17 @@ export function PickerBase<V extends string | null = string>(
 			draft.change(next, () => given.onChange(next));
 		},
 	} as Drawn<V>;
-	const { label, fit = "field", act, drawn, chip, cell } = given;
+	const { label, placeholder, fit = "field", act, drawn, chip, cell } = given;
+	const { form } = given;
+	// What an empty box says: the hint, else what is picked (a field's own label
+	// stands over it already).
+	const hint = placeholder ?? (form ? undefined : label);
+	const fieldBox = field({
+		fit: form ? "form" : "bar",
+		state: form?.invalid ? "error" : "rest",
+	});
+	// The field box's hover edge yields to the error edge and the disabled fill.
+	const states = form?.disabled ? BOX_DISABLED : !form?.invalid && BOX_HOVER;
 	// A pick of several: its value is an array, which `Several` types as one.
 	const several = isSeveral(props) ? props : undefined;
 	const value = isSeveral(props) ? undefined : props.value;
@@ -437,7 +452,7 @@ export function PickerBase<V extends string | null = string>(
 				open && OPEN_VALUE,
 			)}
 		>
-			{current?.label ?? label}
+			{current?.label ?? hint}
 		</span>
 	);
 	const fieldShown =
@@ -454,7 +469,7 @@ export function PickerBase<V extends string | null = string>(
 					FIELD_VALUE,
 				)}
 			>
-				{status ?? current?.label ?? label}
+				{status ?? current?.label ?? hint}
 			</span>
 		);
 	// A removed chip hands focus to the next chip's remove act, else the
@@ -472,15 +487,16 @@ export function PickerBase<V extends string | null = string>(
 		<div
 			ref={box}
 			className={cn(
-				field({ fit: "bar" }),
+				fieldBox,
 				picker({ fit: "bar" }),
 				FIELD_GLYPH,
 				SEVERAL_BOX,
 				FILL,
 				open && FIELD_OPEN,
+				states,
 				painted && PAINTED,
 			)}
-			inert={painted || undefined}
+			inert={painted || form?.disabled || undefined}
 		>
 			{chosen.length > 0 ? (
 				<div ref={run} className={cn(CHIPS_RUN, SEVERAL_RUN)}>
@@ -508,7 +524,7 @@ export function PickerBase<V extends string | null = string>(
 							FIELD_VALUE,
 						)}
 					>
-						{label}
+						{hint}
 					</span>
 				) : null}
 				<Icon name="ChevronDown" fit="control" />
@@ -524,17 +540,19 @@ export function PickerBase<V extends string | null = string>(
 				type="button"
 				aria-label={named}
 				tabIndex={cell ? -1 : handed.tabIndex}
+				disabled={form?.disabled}
 				inert={painted || undefined}
 				className={cn(
 					fit === "row"
 						? cn(WORD_ACT, picker({ fit }), ROW_TRIGGER, open && ROW_OPEN)
 						: cn(
-								field({ fit: "bar" }),
+								fieldBox,
 								picker({ fit }),
 								FIELD_GLYPH,
 								FIELD_TRIGGER,
 								(cell || fit === "bar") && FILL,
 								open && FIELD_OPEN,
+								states,
 							),
 					painted && PAINTED,
 				)}
@@ -617,12 +635,13 @@ export function HeldPicker<V extends string | null = string>(
 export function HeldPicker<V extends string | null = string>(
 	props: PickerProps<V> & Composed,
 ) {
-	const { value, onChange, label, options, fit, act } = props;
+	const { value, onChange, label, placeholder, options, fit, act } = props;
 	return (
 		<PickerBase<V>
 			draft={useHeldDraft<V | readonly V[] | undefined>(value)}
 			onChange={onChange as (next: V | V[]) => unknown}
 			label={label}
+			placeholder={placeholder}
 			options={options}
 			fit={fit}
 			act={act}

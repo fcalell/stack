@@ -58,7 +58,7 @@ export const uiCoreGuide = [
 	},
 	{
 		page: "patterns/picker-and-menu",
-		trigger: "Composing or judging a picker, a select or a menu",
+		trigger: "Composing or judging a picker or a menu",
 	},
 	{
 		page: "patterns/sheet-and-confirm",
