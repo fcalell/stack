@@ -7,21 +7,17 @@ export const Route = createFileRoute("/welcome")({
 	component: Welcome,
 });
 
-// A first run outside the shell: a `Gate` with no title holding one
-// `empty` state, whose title is the page's `h1`.
+// A first run outside the shell: a titled `Gate` whose body is its acts.
 function Welcome() {
 	return (
 		<Gate
-			empty={{
-				icon: "Rocket",
-				title: "Deploy your first app",
-				sentence:
-					"Connect a repository and Acme builds and deploys every push to main.",
-				act: { label: "Connect a repository", onAct: act },
-				children: (
-					<Button act="secondary" label="Start from a template" onAct={act} />
-				),
-			}}
-		/>
+			title="Deploy your first app"
+			description={[
+				"Connect a repository and Acme builds and deploys every push to main.",
+			]}
+		>
+			<Button label="Connect a repository" onAct={act} />
+			<Button act="secondary" label="Start from a template" onAct={act} />
+		</Gate>
 	);
 }

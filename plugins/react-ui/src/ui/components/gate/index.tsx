@@ -12,7 +12,6 @@ import {
 import { type ReactNode, useEffect, useId, useRef } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { Runs } from "../../lib/code.tsx";
-import { EmptyBase, type GateFirstRun } from "../../lib/empty.tsx";
 import { focusFirst } from "../../lib/focus.ts";
 import { PageTitle } from "../../lib/frame.ts";
 import { HeadingContext } from "../../lib/heading.ts";
@@ -30,53 +29,36 @@ const FRAME = "flex flex-col h-dvh overflow-hidden";
 // The column stands in the page's middle while it fits: an auto margin, never
 // `justify-center`, which clips the top of a column taller than the page, so
 // it scrolls from its top instead, with a tab stop of its own while it scrolls
-// and holds nothing a keyboard reaches (`useScrolls`). On touch a typed step
-// stands at the top, for the keyboard; a first run holds no field and stays centred.
+// and holds nothing a keyboard reaches (`useScrolls`). On touch the step
+// stands at the top, for the keyboard.
 const PAGE =
 	"flex flex-col items-center grow min-h-0 overflow-y-auto focus-visible:-outline-offset-2";
-const COLUMN = "flex flex-col my-auto";
-const COLUMN_TYPED = "touch:my-0";
+const COLUMN = "flex flex-col my-auto touch:my-0";
 const STEP = "flex flex-col";
 
-interface GateBase extends Closed {
+/** A page outside the shell: what the product is, where the flow stands, what this step is. */
+export interface GateProps extends Closed {
 	/** A `Banner` standing first in the column, at its width. */
 	banner?: ReactNode;
-	/** The step's body, ahead of the `form`: a `Group`, an `OptionList`, a `List`, `Section`s. */
+	/** The page's one `h1` (a short phrase; wraps). */
+	title: string;
+	/** A meta line under the title, as runs: `{ strong }` runs draw at weight 500 (the address the step names) (a sentence; wraps). */
+	description?: Sentence;
+	/** Where an onboarding flow stands, a `StepCount` between the mark and the title. */
+	step?: { at: number; of: number };
+	/** The step's body, ahead of the `form`: a `Group`, an `OptionList`, a `List`, `Section`s, a first run's `Button`s. */
 	children?: ReactNode;
+	/** The step's form, drawn after the body in the column: its `bar` stands across it. */
+	form?: FormProps;
 }
 
-/** A page outside the shell: what the product is, where the flow stands, what this step is. */
-export type GateProps = GateBase &
-	(
-		| {
-				/** The page's one `h1` (a short phrase; wraps). Absent, the Gate is a first run: it draws no step stack and its `empty` is the page's `h1`. */
-				title: string;
-				/** A meta line under the title, as runs: `{ strong }` runs draw at weight 500 (the address the step names) (a sentence; wraps). */
-				description?: Sentence;
-				/** Where an onboarding flow stands, a `StepCount` between the mark and the title. */
-				step?: { at: number; of: number };
-				/** The step's form, drawn after the body in the column: its `bar` stands across it. */
-				form?: FormProps;
-				empty?: never;
-		  }
-		| {
-				title?: undefined;
-				description?: never;
-				step?: never;
-				form?: never;
-				/** The first run's one empty state, its title the page's `h1`: the mark, the title over the sentence, the act and its `children` stacked across the column. */
-				empty?: GateFirstRun;
-		  }
-	);
-
-/** A root frame for a page outside the shell (sign-in, a consent step): one centred column at the `auth` width on the surface. The banner stands first, then the step a sections gap under it: the app's mark when the app has an icon (a drawn lockup stands 40 px tall at every density), the `StepCount`, the title, the description and the body, one fields gap between each. On touch it spans the viewport inside the page inset and a typed step stands at the top. The first field of a step takes focus as the page opens and as `title` changes, and the `form`'s `ActionBar` draws `full`. It hosts `toast()` and `confirm()` as the `Shell` does, and its body's `Section`s title a level under the `h1`. With no `title` it is a first run: no step stack and no `h1` of its own, its `empty` is the page's `h1`, and the column stands centred down at every width, touch included. It draws no word of its own. */
+/** A root frame for a page outside the shell (sign-in, a consent step): one centred column at the `auth` width on the surface. The banner stands first, then the step a sections gap under it: the app's mark when the app has an icon (a drawn lockup stands 40 px tall at every density), the `StepCount`, the title, the description and the body, one fields gap between each. On touch it spans the viewport inside the page inset and the step stands at the top. The first field of a step takes focus as the page opens and as `title` changes, and the `form`'s `ActionBar` draws `full`. It hosts `toast()` and `confirm()` as the `Shell` does, and its body's `Section`s title a level under the `h1`. A first run is a titled Gate whose body is its `Button`s. It draws no word of its own. */
 export function Gate({
 	title,
 	description,
 	step,
 	banner,
 	form,
-	empty,
 	children,
 }: GateProps) {
 	const mark = useMark();
@@ -92,7 +74,7 @@ export function Gate({
 	}, [title]);
 	return (
 		<FrameHost>
-			<PageTitle value={title === undefined ? undefined : titleId}>
+			<PageTitle value={titleId}>
 				<HeadingContext value={2}>
 					<div className={FRAME}>
 						<FrameMain>
@@ -100,50 +82,36 @@ export function Gate({
 								<Scroller value={scroll.holder}>
 									<div
 										ref={body}
-										className={cn(
-											GATE_COLUMN,
-											GATE_FLOW,
-											COLUMN,
-											title !== undefined && COLUMN_TYPED,
-										)}
+										className={cn(GATE_COLUMN, GATE_FLOW, COLUMN)}
 									>
 										{banner}
-										{title === undefined ? (
-											<>
-												{empty ? (
-													<EmptyBase fit="first" tone="rest" {...empty} />
-												) : null}
-												{children}
-											</>
-										) : (
-											<div className={cn(GATE_STEP, STEP)}>
-												{mark ? (
-													<Lockup
-														mark={mark}
-														logo={GATE_LOGO}
-														className={GATE_MARK_ROW}
-													/>
-												) : null}
-												{step ? <StepCount at={step.at} of={step.of} /> : null}
-												<h1 id={titleId} className={text({ role: "title" })}>
-													{title}
-												</h1>
-												{description ? (
-													<p className={text({ role: "meta" })}>
-														<Runs runs={description} />
-													</p>
-												) : null}
-												{children}
-												{form ? (
-													<FormBody
-														key={title}
-														{...form}
-														bar={form.bar && { fit: "full", ...form.bar }}
-														in="auth"
-													/>
-												) : null}
-											</div>
-										)}
+										<div className={cn(GATE_STEP, STEP)}>
+											{mark ? (
+												<Lockup
+													mark={mark}
+													logo={GATE_LOGO}
+													className={GATE_MARK_ROW}
+												/>
+											) : null}
+											{step ? <StepCount at={step.at} of={step.of} /> : null}
+											<h1 id={titleId} className={text({ role: "title" })}>
+												{title}
+											</h1>
+											{description ? (
+												<p className={text({ role: "meta" })}>
+													<Runs runs={description} />
+												</p>
+											) : null}
+											{children}
+											{form ? (
+												<FormBody
+													key={title}
+													{...form}
+													bar={form.bar && { fit: "full", ...form.bar }}
+													in="auth"
+												/>
+											) : null}
+										</div>
 									</div>
 								</Scroller>
 							</div>

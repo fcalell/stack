@@ -666,24 +666,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// (runs with the strong one at 500) and the step's body, a fields gap
 		// between every part. It hosts
 		// `toast()` and `confirm()`. On touch it spans the viewport inside the page
-		// inset and a typed step stands at the top. The first field of a step takes
+		// inset and the step stands at the top. The first field of a step takes
 		// focus, and its `form` (a Form's props, drawn after the children) draws its
-		// `ActionBar` `full`. The title is
-		// optional: without it the Gate is a first run, drawing no step stack and no `h1`
-		// of its own (`step`, `description` and `form` come only with a title, the mark beside them), its
-		// `empty` the page's `h1` (the mark, the title at the title role over the
-		// sentence, the act the filled one and its children stacked across the
-		// column), the column centred down at every width.
+		// `ActionBar` `full`. The title is required, the page's one `h1`: a first run
+		// is a titled Gate whose children are its `Button`s.
 		Gate: {
-			props: [
-				"title",
-				"description",
-				"step",
-				"banner",
-				"form",
-				"empty",
-				"children",
-			],
+			props: ["title", "description", "step", "banner", "form", "children"],
 			draws: [
 				"GATE",
 				"GATE_COLUMN",
@@ -696,10 +684,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"TEXT.role.meta",
 				"TEXT.role.body",
 				"TEXT_STRONG.role.body",
-				"EMPTY_COLUMN",
-				"EMPTY_TEXT",
-				"EMPTY_MARK",
-				"ICON.fit.control",
 				"BUTTON.act.primary",
 				"BUTTON.fit.body",
 				"BUTTON_LABEL.act.primary",
@@ -713,7 +697,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"GATE_MARK_ROW",
 				"GATE_LOGO",
 			],
-			states: ["rest", "empty"],
+			states: ["rest"],
 			owns: {
 				roles: ["title", "meta", "body"],
 				colors: [

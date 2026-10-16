@@ -73,8 +73,7 @@ product's mark, an optional `StepCount`, the title, the description and the body
 area. It mounts the same `FrameHost` as the `Shell` (the sheets' provider, the toasts, `confirm()`)
 and hands `FieldClaim` (`./lib/field`) to its body: an `Input` or `InputOtp` that mounts in
 it takes focus unless a typing control of the column holds it. Its `form` (a `Form`'s props) is drawn
-in the column by the Gate (`components/form/base`, `in` the auth column), its `bar` set `full`; a
-first run's `empty` is drawn by `lib/empty`.
+in the column by the Gate (`components/form/base`, `in` the auth column), its `bar` set `full`.
 
 ## Verify
 

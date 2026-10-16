@@ -105,19 +105,17 @@ in it. It keeps the safe area and scrolls over the keyboard. An `Input` or `Inpu
 it takes focus unless a typing control of the column holds it, so the first field of a step takes
 it, and the `form`'s `bar` draws `full`; a new `title` is a new step, its form starting afresh. It draws no word of its own.
 
-A first run (no workspace yet, nothing to show) is a `Gate` with no `title` and an `empty`
-(`{ icon?, title?, sentence, act?, children? }`): the Gate draws no step stack and no header, the `empty`'s title is the page's header,
-its `act` the filled one and its secondary act a `<Button act="secondary" />` in its `children`, stacked under
-it. The column is centred down on the Gate's ground. `step` and `description` come only
-with a `title`.
+A first run (no workspace yet, nothing to show) is a titled `Gate` like any step: the `title` says
+what is missing, the `description` what the act makes, and the `children` are its `Button`s, the
+primary act first and the secondary one a `<Button act="secondary" />`. It has no icon; the app's
+mark leads it. The column stands at the top, like every step's. `title` is
+required, and there is no untitled form or `empty` on a `Gate`.
 
 ```tsx
-<Gate
-  empty={{
-    icon: "Rocket", title: "Deploy your first app", sentence: "…", act: connect,
-    children: <Button act="secondary" label="Start from a template" onAct={fromTemplate} />,
-  }}
-/>
+<Gate title="Deploy your first app" description={["Connect a repository and Acme builds and deploys every push to main."]}>
+  <Button label="Connect a repository" onAct={connect} />
+  <Button act="secondary" label="Start from a template" onAct={fromTemplate} />
+</Gate>
 ```
 
 ```tsx

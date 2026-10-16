@@ -1300,8 +1300,7 @@ a tick with no animation, never jumped to full.
 - The failed form is public as `Failed` (`sentence`, `act: Act`) for a failure that is no read (a
   mutation that opens a file): the alert mark, the hairline act with no plus, drawn by the same
   empty state's `failed` tone (`lib/empty`) that a frame renders through `FrameBody` for a failed
-  read, so the two cannot drift. A failed tone's act is the hairline one in every form, a first run's
-  included. Its act is a function act, never a `LinkAct` (a way back is a `Missing`). A frame's
+  read, so the two cannot drift. A failed tone's act is the hairline one in every form. Its act is a function act, never a `LinkAct` (a way back is a `Missing`). A frame's
   failed form says `readFailed` ("This didn't load."), never a sentence of the frame's own (a Pane, Section, Sheet, Form and a form's group take no `failed`: what failed to load is the frame's title and place, and a per-frame wording only repeats the generic line), and its Retry
   refetches the read it holds and pends while it does; a frame's empty form says `readEmpty`
   ("Nothing here yet.") or its `empty`. Rejected: a frame taking a mutation's result (a frame holds
@@ -1311,16 +1310,15 @@ a tick with no animation, never jumped to full.
   `Section`, a `Sheet`, a `Form` and a form's groups take `empty` (`Empty`: `{ sentence, act? }`) and
   draw it in place of their body, only when the frame's own `read` is empty. The read alone decides:
   a frame with no `read` has no `empty` (`PaneProps` and `SectionProps` are unions, so `read={maybe}`
-  with `empty` does not type-check), and it carries a sentence and an act, no icon, title or children. A first-run `Gate` takes `empty` as `GateFirstRun` (`icon`, `title`, `sentence`, `act`,
-  `children`), a page and not a read's empty state, which stays as it was. A collection draws its own
+  with `empty` does not type-check), and it carries a sentence and an act, no icon, title or children.
+  A first run is no empty state: it is a titled `Gate` (see the Gate), so the drawer has no title,
+  children or icon of its own (only a failed read's alert mark). A collection draws its own
   generic empty form. One drawer (`lib/empty`) takes an internal `fit` from whoever stands it, so
   nothing reads where it stands (the `PageTitle`, `SectionContext` and `GroundContext` reads are
-  gone): `page` (a Pane's: centred in what the body leaves, or at its top over its own children, the
-  act the filled one with the plus), `first` (a Gate's: the page's `h1` at `title`, the acts stacked
-  across the column), `frame` (a Section's, a Sheet's, a Form's and a group's, a collection's, and
+  gone): `page` (a Pane's: centred in what the body leaves, the act the filled one with the plus),
+  `frame` (a Section's, a Sheet's, a Form's and a group's, a collection's, and
   `Failed` and `Missing`: the `EMPTY_FRAME` hairline card and the act the hairline one, or one quiet
-  sentence at meta when only `sentence` is given). The drawer's title and children branches serve the
-  Gate's first run alone. `PageTitle` stays the id of the title that labels a Thread's log and a
+  sentence at meta when only `sentence` is given). `PageTitle` stays the id of the title that labels a Thread's log and a
   Table's grid, and nothing else.
 - A `Comparison` is a collection of facts with the List's source (`items`, a constant or a selection)
   and a `row` map over a fact's slots: `key`, `label`, `values` (one per column, in order), `chips`
@@ -1609,7 +1607,7 @@ a tick with no animation, never jumped to full.
   `sections` gap apart (`GATE_FLOW`): the `banner` (a `Banner`, first at the column's width), then
   the step (`GATE_STEP`, a `fields` gap between every part, so none is nearer another): the app's mark, the
   `StepCount`, the `title` at the `title` role, the page's one `h1`, its body's `Section`s a level
-  under, the `description`, and the body (a first run has no step stack: its wrapper draws no box). The `description` is a `Sentence`
+  under, the `description`, and the body. The `description` is a `Sentence`
   (`./descriptors`: runs, each a string or `{ strong }` at 500, the way a nested `Text strong`
   draws), data because composed regions are data; a lone string is no `Sentence`. The mark is no
   prop: it is the app's lockup (see "The app's mark"), a row (`GATE_MARK_ROW`) of the logo at the
@@ -1618,8 +1616,13 @@ a tick with no animation, never jumped to full.
   page inset; on the phone it keeps the safe area and its keyboard-aware scroll keeps the focused
   field and the submit act in view. It draws no word of its own. Its `form` prop (a Form's props) is drawn in the
   column by the Gate (`FORM in.auth`, no cell of its own: the column is the form's, as a sheet's body
-  is), with the bar's `fit` `full` (an explicit `fit` wins); a first run's `empty` is drawn in the
-  first-run form. Focus: the first field of a
+  is), with the bar's `fit` `full` (an explicit `fit` wins). The `title` is required, so every Gate
+  is a step with its `h1`; a first run (no workspace yet) is a Gate whose `title` and `description`
+  say what is missing and whose children are its `Button`s, the primary act first. It has no icon
+  of its own (the app's mark leads it), and on touch its column stands at the top like every
+  step's. Rejected: an untitled first-run form with an `empty` of its own (a second form of the
+  same page, with an `h1` the Gate did not draw, and `icon`, `title` and `children` branches in the
+  empty-state drawer that nothing else used). Focus: the first field of a
   step takes it. On the web the frame runs `focusFirst` (`lib/focus.ts`) over its column's typing
   controls once on mount and again whenever `title` changes, so a sign-in opens on its field and the
   step that replaces the body hands focus to its own; a step with no field leaves focus where it is.

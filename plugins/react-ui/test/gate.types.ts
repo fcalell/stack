@@ -23,20 +23,14 @@ gate({ title: "x", form: { bar: { acts: [act] } } });
 gate({ title: "x", form: { groups: [{ title: "x", fields: node }] } });
 // @ts-expect-error: a form's structure is children or groups, never both
 gate({ title: "x", form: { children: node, groups: [] } });
-// @ts-expect-error: a form comes only with a title
-gate({ form: {} });
-// no title: a first run, its empty state's title is the page's h1
+// @ts-expect-error: the title is required, a first run's too
 gate({});
+// @ts-expect-error: the title is required
 gate({ children: node });
-gate({ empty: { sentence: "x", title: "x", act, children: node } });
-// @ts-expect-error: the first run's empty state needs its sentence
-gate({ empty: { title: "x" } });
-// @ts-expect-error: an empty state is the first run's, a step has its title
+// @ts-expect-error: a first run is a titled gate, there is no empty state
 gate({ title: "x", empty: { sentence: "x" } });
-// @ts-expect-error: a lead comes only with a title
-gate({ description: ["x"] });
-// @ts-expect-error: a lead comes only with a title
-gate({ step: { at: 1, of: 2 } });
+// a first run is a title, a description and its buttons as children
+gate({ title: "x", description: ["x"], children: node });
 // @ts-expect-error: the product is the mark's name
 gate({ title: "x", product: "Acme" });
 // @ts-expect-error: the act is a Place's

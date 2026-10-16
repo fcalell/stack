@@ -127,7 +127,7 @@ A page with no sidebar or tab bar beside it (sign-in, a consent step) is a `Gate
 the mark and the title), `banner` (a `Banner`, first in the column), `form` (a `Form`'s props, drawn after
 the body in the auth column) and `children`, the step's body (a `Group`, an `OptionList`, a `List`, `Section`s). It is a root
 frame as the `Shell` is: one column at most the `auth` width, centred across and down the viewport
-(a typed step at the top on touch, spanning the viewport inside the page inset), the banner and the step
+(at the top on touch, spanning the viewport inside the page inset), the banner and the step
 a sections gap apart (the step's mark, count, title, description and body one fields gap apart), with `toast()` and `confirm()` standing in it. The body's `Section`s title a
 level under the `h1`. The first field of a step takes focus as the page opens and as `title`
 changes (a step with no field leaves focus where it is), and the `form`'s `bar` draws
@@ -136,19 +136,17 @@ logo at the avatar's size, then the app's name at the body role and 500), and wi
 a logo that fails to load leaves the name. An app that gives `react({ logo })` (its drawn lockup) has that one image
 in place of the icon and the name, 40 px tall at every density (the sidebar's stays at the avatar's height) and held to the column. It draws no word of its own.
 
-A first run (no workspace yet, nothing to show) is a `Gate` with no `title` and an `empty`
-(`{ icon?, title?, sentence, act?, children? }`): the Gate draws no step stack and no `h1`, the `empty`'s title is the page's `h1`, its
-`act` the filled one and its secondary act a `<Button act="secondary" />` in its `children`, stacked under it.
-The column is centred down at every width, touch included, on the Gate's ground. `step`
-and `description` come only with a `title`, and the mark with them.
+A first run (no workspace yet, nothing to show) is a titled `Gate` like any step: the `title` says
+what is missing, the `description` what the act makes, and the `children` are its `Button`s, the
+primary act first and the secondary one a `<Button act="secondary" />`. It has no icon; the app's
+mark leads it. The column is centred down the viewport while it fits and stands at the top on touch, like every step's. `title` is
+required, and there is no untitled form or `empty` on a `Gate`.
 
 ```tsx
-<Gate
-  empty={{
-    icon: "Rocket", title: "Deploy your first app", sentence: "…", act: connect,
-    children: <Button act="secondary" label="Start from a template" onAct={fromTemplate} />,
-  }}
-/>
+<Gate title="Deploy your first app" description={["Connect a repository and Acme builds and deploys every push to main."]}>
+  <Button label="Connect a repository" onAct={connect} />
+  <Button act="secondary" label="Start from a template" onAct={fromTemplate} />
+</Gate>
 ```
 
 ```tsx

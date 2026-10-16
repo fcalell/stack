@@ -20,21 +20,14 @@ function Step() {
 function FirstRun() {
 	return (
 		<Gate
-			empty={{
-				icon: "Rocket",
-				title: "Deploy your first app",
-				sentence:
-					"Connect a repository and Acme builds and deploys every push to main.",
-				act: { label: "Connect a repository", onAct: () => {} },
-				children: (
-					<Button
-						act="secondary"
-						label="Start from a template"
-						onAct={() => {}}
-					/>
-				),
-			}}
-		/>
+			title="Deploy your first app"
+			description={[
+				"Connect a repository and Acme builds and deploys every push to main.",
+			]}
+		>
+			<Button label="Connect a repository" onAct={() => {}} />
+			<Button act="secondary" label="Start from a template" onAct={() => {}} />
+		</Gate>
 	);
 }
 
@@ -53,9 +46,10 @@ export const FirstField: StoryObj = {
 	},
 };
 
-// An untitled Gate is a first run: its `empty` title is the page's one
-// h1, and the column stands centred across and down the viewport.
-async function expectCentred(canvasElement: HTMLElement, width: number) {
+// A first run is a titled Gate: its title is the page's one h1 and its
+// buttons are the body. The column stands centred across and down the
+// viewport while it fits, and at the top on touch, as every step does.
+async function expectColumn(canvasElement: HTMLElement, width: number) {
 	const { page } = await import("vitest/browser");
 	await page.viewport(width, 844);
 	await waitFor(() => expect(window.innerWidth).toBe(width));
@@ -64,25 +58,37 @@ async function expectCentred(canvasElement: HTMLElement, width: number) {
 	await expect(titles[0]).toHaveTextContent("Deploy your first app");
 	const column = titles[0]?.parentElement?.parentElement;
 	if (!column) throw new Error("the first run's column is not drawn");
-	await waitFor(() => {
-		const box = column.getBoundingClientRect();
-		const centre = {
-			x: box.left + box.width / 2,
-			y: box.top + box.height / 2,
-		};
-		expect(Math.abs(centre.x - window.innerWidth / 2)).toBeLessThan(1);
-		expect(Math.abs(centre.y - window.innerHeight / 2)).toBeLessThan(1);
-	});
+	return column;
 }
 
 export const FirstRunCentred: StoryObj = {
 	render: () => <FirstRun />,
-	play: ({ canvasElement }) => expectCentred(canvasElement, 1440),
+	play: async ({ canvasElement }) => {
+		const column = await expectColumn(canvasElement, 1440);
+		await waitFor(() => {
+			const box = column.getBoundingClientRect();
+			const centre = {
+				x: box.left + box.width / 2,
+				y: box.top + box.height / 2,
+			};
+			expect(Math.abs(centre.x - window.innerWidth / 2)).toBeLessThan(1);
+			expect(Math.abs(centre.y - window.innerHeight / 2)).toBeLessThan(1);
+		});
+	},
 };
 
-// Touch keeps a typed step at the top; a first run stays centred down.
-export const FirstRunCentredOnTouch: StoryObj = {
+// On touch the column stands at the top of the page, for the keyboard.
+export const FirstRunAtTopOnTouch: StoryObj = {
 	render: () => <FirstRun />,
 	globals: { density: "touch" },
-	play: ({ canvasElement }) => expectCentred(canvasElement, 390),
+	play: async ({ canvasElement }) => {
+		const column = await expectColumn(canvasElement, 390);
+		await waitFor(() => {
+			const box = column.getBoundingClientRect();
+			expect(
+				Math.abs(box.left + box.width / 2 - window.innerWidth / 2),
+			).toBeLessThan(1);
+			expect(box.top).toBeLessThan(window.innerHeight / 4);
+		});
+	},
 };
