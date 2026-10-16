@@ -509,6 +509,158 @@ export function checkFocus(focus: FocusMeasure | null): Finding[] {
 	];
 }
 
+// ── alignment ───────────────────────────────────────────────────────
+
+// The alignment rules are `align-*`: they report what a layout draws off the
+// group structure (a row is a text group and an end group, a line has one
+// baseline, nothing takes room and draws nothing) and fail a run only once
+// the walk's `ALIGN_FAILS` is set.
+
+// What a box was seen to draw, so a box that takes room and draws none of it
+// is found.
+export interface BoxMeasure extends Located {
+	width: number;
+	height: number;
+	// Taken out of the flow (absolute, fixed): it reserves no room.
+	outOfFlow: boolean;
+	text: boolean;
+	// A background colour or image, a border, a shadow or an outline, or a
+	// pseudo-element with content.
+	paints: boolean;
+	// An svg, an image, a canvas, a field: it draws itself.
+	replaced: boolean;
+	// Focusable or a control: its hit is the box.
+	interactive: boolean;
+	// Some descendant draws.
+	childrenDraw: boolean;
+}
+
+// A box in the flow, wider and taller than half a pixel, that draws nothing
+// and holds nothing that does: the empty end square, a spacer. Room that
+// holds an alignment is a group's gap or padding, never an element.
+export function checkDeadBoxes(boxes: BoxMeasure[]): Finding[] {
+	return boxes.flatMap((b) =>
+		!b.outOfFlow &&
+		b.width > TOLERANCE &&
+		b.height > TOLERANCE &&
+		!(b.text || b.paints || b.replaced || b.interactive || b.childrenDraw)
+			? [
+					{
+						rule: "align-dead",
+						path: b.path,
+						name: b.name,
+						measured: `an empty box ${px(b.width)} by ${px(b.height)} that draws nothing`,
+						expected: "no element that only reserves room",
+						fix: "remove the element; a group's gap or padding holds the room, and a row with no end item has no end group",
+					},
+				]
+			: [],
+	);
+}
+
+// What a row's end item stands at.
+export interface EndMeasure extends Located {
+	// The vertical centre of what it draws, from the page's top.
+	centre: number;
+}
+
+export interface RowMeasure extends Located {
+	kind: string;
+	// The row box's vertical centre.
+	centre: number;
+	// What is drawn beyond the text group: a value, a status, a control, a
+	// chevron.
+	ends: EndMeasure[];
+}
+
+// The row's end items stand on one centre, the row's own, to a pixel: a value
+// on the label's line beside a chevron on the row's middle is two.
+export function checkCentres(rows: RowMeasure[]): Finding[] {
+	return rows.flatMap((row) => {
+		if (row.ends.length === 0) return [];
+		const off = row.ends.filter((e) => Math.abs(e.centre - row.centre) > 1);
+		if (off.length === 0) return [];
+		const centres = row.ends.map((e) => `"${e.name}" ${px(e.centre)}`);
+		return [
+			{
+				rule: "align-centre",
+				path: row.path,
+				name: row.name,
+				measured: `${row.kind} centre ${px(row.centre)}, ends at ${centres.join(", ")}`,
+				expected: "every end item on the row's centre, within 1px",
+				fix: "put the end items in one end group centred on the row (align-self center), outside the text group's lines",
+			},
+		];
+	});
+}
+
+// A bare text run on a flex-row line: where its baseline stands and the box it
+// was read from.
+export interface RunMeasure extends Located {
+	// The flex item the run stands in: runs of one item share a line by
+	// construction and are not compared.
+	lane: number;
+	size: number;
+	// The glyph box (top and height) and the baseline, from the page's top.
+	top: number;
+	height: number;
+	baseline: number;
+}
+
+// Texts of different sizes on one line share a baseline, to a pixel: a count
+// centred by its line box beside a heading rides above the heading's
+// baseline. The runs are the bare texts of one flex row's items; two share a
+// line when they overlap by most of the smaller one's height (a value centred
+// over a title and its meta shares neither), and are compared when their sizes
+// differ.
+export function checkBaselines(runs: RunMeasure[]): Finding[] {
+	const found: Finding[] = [];
+	for (const [i, a] of runs.entries()) {
+		for (const b of runs.slice(i + 1)) {
+			if (a.lane === b.lane || Math.abs(a.size - b.size) < 1) continue;
+			const overlap =
+				Math.min(a.top + a.height, b.top + b.height) - Math.max(a.top, b.top);
+			if (overlap < 0.8 * Math.min(a.height, b.height)) continue;
+			const off = b.baseline - a.baseline;
+			if (Math.abs(off) <= 1) continue;
+			const [big, small] = a.size >= b.size ? [a, b] : [b, a];
+			const by = small.baseline - big.baseline;
+			found.push({
+				rule: "align-baseline",
+				path: small.path,
+				name: small.name,
+				measured: `${px(small.size)} text baseline ${px(Math.abs(by))} ${by > 0 ? "below" : "above"} the ${px(big.size)} "${big.name}" on its line`,
+				expected: "one baseline for the texts of a line",
+				fix: "align the line's items on the baseline (align-items baseline) instead of centring their boxes",
+			});
+		}
+	}
+	return found;
+}
+
+// An element laid out as a grid. The phone has no grid, so a layout that
+// mirrors it is flex groups; a grid is found wherever it is drawn.
+export interface GridMeasure extends Located {
+	display: string;
+}
+
+export function checkGrids(grids: GridMeasure[]): Finding[] {
+	return grids.flatMap((g) =>
+		g.display === "grid" || g.display === "inline-grid"
+			? [
+					{
+						rule: "align-grid",
+						path: g.path,
+						name: g.name,
+						measured: `display ${g.display}`,
+						expected: "flex only (the phone mirrors the layout)",
+						fix: "lay the groups out with flex: a row of a text group and an end group, a column of rows",
+					},
+				]
+			: [],
+	);
+}
+
 // ── report ──────────────────────────────────────────────────────────
 
 // The findings as the lines a failed assertion prints: one line per rule,

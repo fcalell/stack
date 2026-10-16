@@ -1,10 +1,15 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+	type BoxMeasure,
+	checkBaselines,
+	checkCentres,
 	checkClip,
+	checkDeadBoxes,
 	checkDigits,
 	checkFocus,
 	checkFonts,
+	checkGrids,
 	checkHeights,
 	checkRadii,
 	checkRegions,
@@ -13,6 +18,7 @@ import {
 	checkType,
 	format,
 	isBareNumber,
+	type RunMeasure,
 	type Tokens,
 } from "../src/ui/walk-checks.ts";
 
@@ -291,5 +297,107 @@ test("equal findings are one line with a count, in the order they were found", (
 	assert.match(
 		lines[1] ?? "",
 		/^root-margin: p "Box" measured margin 1px 0px 0px 0px/,
+	);
+});
+
+// A box that draws nothing: the empty end square of a row.
+const empty: BoxMeasure = {
+	...at,
+	width: 20,
+	height: 20,
+	outOfFlow: false,
+	text: false,
+	paints: false,
+	replaced: false,
+	interactive: false,
+	childrenDraw: false,
+};
+
+test("a box in the flow that takes room and draws nothing is found, one that draws anything or takes none is not", () => {
+	assert.deepEqual(rules(checkDeadBoxes([empty])), ["align-dead"]);
+	for (const draws of [
+		{ text: true },
+		{ paints: true },
+		{ replaced: true },
+		{ interactive: true },
+		{ childrenDraw: true },
+	])
+		assert.deepEqual(checkDeadBoxes([{ ...empty, ...draws }]), []);
+	// An overlay takes no room; a line or a speck is under half a pixel.
+	assert.deepEqual(checkDeadBoxes([{ ...empty, outOfFlow: true }]), []);
+	assert.deepEqual(checkDeadBoxes([{ ...empty, width: 0 }]), []);
+	assert.deepEqual(checkDeadBoxes([{ ...empty, height: 0.4 }]), []);
+	assert.deepEqual(
+		checkDeadBoxes([{ ...empty, width: 0.6, height: 0.6 }]).length,
+		1,
+	);
+});
+
+test("a row's end items stand on the row's centre to a pixel, or the row is found", () => {
+	const row = (centre: number, ...ends: number[]) => ({
+		...at,
+		kind: "row",
+		centre,
+		ends: ends.map((e, i) => ({ ...at, name: `end ${i}`, centre: e })),
+	});
+	assert.deepEqual(checkCentres([row(26, 26)]), []);
+	assert.deepEqual(checkCentres([row(26, 26.9, 25.2)]), []);
+	assert.deepEqual(checkCentres([row(26)]), []);
+	// The value rides the label's line while the chevron stands mid-row.
+	const found = checkCentres([row(26, 18, 26)]);
+	assert.deepEqual(rules(found), ["align-centre"]);
+	assert.match(found[0]?.measured ?? "", /centre 26px.*"end 0" 18px/);
+	// Both off the row's centre by the same amount are off the centre.
+	assert.deepEqual(rules(checkCentres([row(26, 18, 18)])), ["align-centre"]);
+});
+
+test("texts of different sizes on one line share a baseline, or the smaller is found", () => {
+	const run = (
+		size: number,
+		top: number,
+		height: number,
+		baseline: number,
+		lane: number,
+	): RunMeasure => ({
+		...at,
+		name: `${size}px`,
+		lane,
+		size,
+		top,
+		height,
+		baseline,
+	});
+	const heading = run(22, 0, 27, 21, 0);
+	// Centred by its line box, a 14px count's baseline rides 3px above.
+	const high = run(14, 5, 17, 18, 1);
+	const found = checkBaselines([heading, high]);
+	assert.deepEqual(rules(found), ["align-baseline"]);
+	assert.match(
+		found[0]?.measured ?? "",
+		/14px text baseline 3px above the 22px "22px"/,
+	);
+	// On the baseline (within a pixel) it passes.
+	assert.deepEqual(checkBaselines([heading, run(14, 4, 17, 20.5, 1)]), []);
+	// The same size, or the same lane, is no pair.
+	assert.deepEqual(checkBaselines([heading, run(22, 3, 27, 24, 1)]), []);
+	assert.deepEqual(checkBaselines([heading, { ...high, lane: 0 }]), []);
+	// A value centred between a title and its meta shares a line with neither.
+	const value = run(22, 9, 27, 30, 2);
+	assert.deepEqual(checkBaselines([run(14, 0, 17, 13, 0), value]), []);
+	// Its line is the one it overlaps by most of the smaller box.
+	assert.deepEqual(rules(checkBaselines([run(14, 8, 17, 21, 0), value])), [
+		"align-baseline",
+	]);
+});
+
+test("a grid or an inline grid is found, flex and block are not", () => {
+	const grid = (display: string) => ({ ...at, display });
+	assert.deepEqual(rules(checkGrids([grid("grid"), grid("inline-grid")])), [
+		"align-grid",
+		"align-grid",
+	]);
+	assert.deepEqual(
+		checkGrids([grid("flex"), grid("block"), grid("inline-flex")]),
+		[],
 	);
 });

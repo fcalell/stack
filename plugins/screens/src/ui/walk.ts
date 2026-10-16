@@ -5,27 +5,36 @@ import {
 	TYPE_ROLES,
 } from "@fcalell/ui-core/tokens";
 import {
+	type BoxMeasure,
 	type ClipMeasure,
+	checkBaselines,
+	checkCentres,
 	checkClip,
+	checkDeadBoxes,
 	checkDigits,
 	checkFocus,
 	checkFonts,
+	checkGrids,
 	checkHeights,
 	checkRadii,
 	checkRegions,
 	checkRootMargins,
 	checkSpacing,
 	checkType,
+	type EndMeasure,
 	type Finding,
 	type FocusMeasure,
 	type FontMeasure,
 	format,
+	type GridMeasure,
 	type HeightMeasure,
 	type Located,
 	type MarginMeasure,
 	type NumberMeasure,
 	type RadiusMeasure,
 	type RegionMeasure,
+	type RowMeasure,
+	type RunMeasure,
 	type SpacingMeasure,
 	type TextMeasure,
 	type Token,
@@ -132,6 +141,12 @@ export const EXCEPTIONS: Exception[] = [
 		selector: "input.text-code",
 		reason:
 			"a code field's input is the text line inside the field box, which holds the control height",
+	},
+	{
+		rule: "align-dead",
+		selector: "td > .min-h-row",
+		reason:
+			"a table's empty cell holds its column's room so the columns line up under the header: a cell with no value has nothing to draw",
 	},
 	{
 		rule: "control-height",
@@ -543,8 +558,20 @@ interface Group {
 	radii: RadiusMeasure[];
 }
 
-// Every finding on the page, or under `roots`.
+// Whether the alignment rules (`align-*`) fail a run: until the sweep has
+// fixed what they report, `findings()` leaves them out and `alignFindings()`
+// returns them for the report.
+export const ALIGN_FAILS: boolean = false;
+
+// Every finding on the page, or under `roots`: the alignment rules among them
+// once `ALIGN_FAILS` is set.
 export function findings(options: WalkOptions = {}): Finding[] {
+	return ALIGN_FAILS
+		? [...layoutFindings(options), ...alignFindings(options)]
+		: layoutFindings(options);
+}
+
+function layoutFindings(options: WalkOptions): Finding[] {
 	const roots = options.roots ?? [document.body];
 	const scoped = options.roots !== undefined;
 	const seen = drawn(roots);
@@ -789,4 +816,469 @@ export function focusCovered(): Finding[] {
 		measure = { covered: locate(hit, false).path, positioned };
 	}
 	return checkFocus({ ...locate(element), hit: measure });
+}
+
+// ── alignment ───────────────────────────────────────────────────────
+
+// What a row, a line and a box are held to (`align-*`): a row is a text group
+// and an end group centred on the row, a line of mixed sizes has one baseline,
+// nothing takes room and draws nothing, and the layout is flex alone.
+
+// The colour draws nothing: transparent, or an alpha of zero in either
+// notation the page's computed colours take.
+const clear = (color: string): boolean =>
+	color === "transparent" ||
+	/^rgba\(.*,\s*0\)$/.test(color) ||
+	/\/\s*0(\.0+)?%?\s*\)$/.test(color);
+
+// A box draws by itself: a background colour or image, a border that shows, a
+// shadow, an outline, or a pseudo-element with content (a rule or a ring).
+function paintsOwn(element: Element, style: CSSStyleDeclaration): boolean {
+	if (!clear(style.backgroundColor) || style.backgroundImage !== "none")
+		return true;
+	if (style.boxShadow !== "none") return true;
+	if (
+		["Top", "Right", "Bottom", "Left"].some((side) => {
+			const edge = `border-${side.toLowerCase()}`;
+			return (
+				px(style.getPropertyValue(`${edge}-width`)) > 0 &&
+				style.getPropertyValue(`${edge}-style`) !== "none" &&
+				!clear(style.getPropertyValue(`${edge}-color`))
+			);
+		})
+	)
+		return true;
+	if (px(style.outlineWidth) > 0 && style.outlineStyle !== "none") return true;
+	return (["::before", "::after"] as const).some((pseudo) => {
+		const content = getComputedStyle(element, pseudo).content;
+		return content !== "none" && content !== "normal";
+	});
+}
+
+// Elements that draw themselves, or are a table's own structure (an empty cell
+// is a column's room, not a spacer).
+const SELF_DRAWN = new Set([
+	...REPLACED,
+	"IFRAME",
+	"OBJECT",
+	"EMBED",
+	"METER",
+	"PROGRESS",
+	"AUDIO",
+	"HR",
+	"BR",
+	"TD",
+	"TH",
+	"TR",
+	"COL",
+	"COLGROUP",
+	"CAPTION",
+]);
+
+const INTERACTIVE_ROLES = new Set([
+	"button",
+	"switch",
+	"checkbox",
+	"radio",
+	"tab",
+	"combobox",
+	"slider",
+	"textbox",
+	"searchbox",
+	"spinbutton",
+	"menuitem",
+	"menuitemcheckbox",
+	"menuitemradio",
+	"option",
+	"link",
+	"treeitem",
+]);
+
+// Focusable, or a control: its hit is its box.
+function interactive(element: Element): boolean {
+	if (element instanceof HTMLElement && element.tabIndex >= 0) return true;
+	if (
+		element.matches(
+			"a[href], button, input, select, textarea, summary, [contenteditable]",
+		)
+	)
+		return true;
+	const role = element.getAttribute("role");
+	return role !== null && INTERACTIVE_ROLES.has(role);
+}
+
+const replaced = (element: Element): boolean =>
+	element instanceof SVGElement || SELF_DRAWN.has(element.tagName);
+
+const hasText = (element: Element): boolean =>
+	[...element.childNodes].some(
+		(node) => node.nodeType === Node.TEXT_NODE && node.nodeValue?.trim(),
+	);
+
+const outOfFlow = (style: CSSStyleDeclaration): boolean =>
+	style.position === "absolute" || style.position === "fixed";
+
+// Whether an element, or something in it, draws: text, paint, a picture, a
+// control. What is not displayed or fully transparent draws nothing, and an
+// element placed out of the flow still draws what it holds.
+function draws(element: Element, memo: Map<Element, boolean>): boolean {
+	const known = memo.get(element);
+	if (known !== undefined) return known;
+	const style = getComputedStyle(element);
+	let found = false;
+	if (style.display !== "none" && style.opacity !== "0") {
+		found =
+			style.display !== "contents" &&
+			style.visibility === "visible" &&
+			(hasText(element) ||
+				paintsOwn(element, style) ||
+				replaced(element) ||
+				interactive(element));
+		if (!found && !(element instanceof SVGElement))
+			found = [...element.children].some((child) => draws(child, memo));
+	}
+	memo.set(element, found);
+	return found;
+}
+
+// Every box in the flow under `roots` with what it draws, outermost empty box
+// first: one that is found is not entered, for what it holds is as empty.
+// `aria-hidden` is no excuse here: the empty end square is hidden from a screen
+// reader and still takes room.
+function boxes(roots: Element[]): BoxMeasure[] {
+	const out: BoxMeasure[] = [];
+	const memo = new Map<Element, boolean>();
+	const visit = (element: Element): void => {
+		if (SKIPPED.has(element.tagName) || element instanceof SVGElement) return;
+		const style = getComputedStyle(element);
+		if (style.display === "none" || style.opacity === "0") return;
+		if (style.display !== "contents" && style.visibility === "visible") {
+			const rect = element.getBoundingClientRect();
+			if (rect.width > 0.5 && rect.height > 0.5) {
+				const measure: BoxMeasure = {
+					...locate(element),
+					width: rect.width,
+					height: rect.height,
+					outOfFlow: outOfFlow(style),
+					text: hasText(element),
+					paints: paintsOwn(element, style),
+					replaced: replaced(element),
+					interactive: interactive(element),
+					childrenDraw: [...element.children].some((child) =>
+						draws(child, memo),
+					),
+				};
+				if (
+					checkDeadBoxes([measure]).length > 0 &&
+					!excepted("align-dead", element)
+				) {
+					out.push(measure);
+					return;
+				}
+			}
+		}
+		for (const child of element.children) visit(child);
+	};
+	for (const root of roots) visit(root);
+	return out;
+}
+
+// Every element of the page that is laid out as a grid.
+function grids(roots: Element[]): GridMeasure[] {
+	const out: GridMeasure[] = [];
+	const visit = (element: Element): void => {
+		if (SKIPPED.has(element.tagName) || element instanceof SVGElement) return;
+		const display = getComputedStyle(element).display;
+		if (display === "none") return;
+		if (
+			(display === "grid" || display === "inline-grid") &&
+			!excepted("align-grid", element)
+		)
+			out.push({ ...locate(element), display });
+		for (const child of element.children) visit(child);
+	};
+	for (const root of roots) visit(root);
+	return out;
+}
+
+const isRow = (style: CSSStyleDeclaration): boolean =>
+	/flex/.test(style.display) && !style.flexDirection.startsWith("column");
+
+// A drawn box's rectangle clipped by the clipping boxes it stands in.
+interface Box {
+	left: number;
+	right: number;
+	top: number;
+	bottom: number;
+}
+
+function clipTo(box: Box, clip: Box | undefined): Box | undefined {
+	if (!clip) return box;
+	const out = {
+		left: Math.max(box.left, clip.left),
+		right: Math.min(box.right, clip.right),
+		top: Math.max(box.top, clip.top),
+		bottom: Math.min(box.bottom, clip.bottom),
+	};
+	return out.right - out.left > 0.5 && out.bottom - out.top > 0.5
+		? out
+		: undefined;
+}
+
+const boxOf = (rect: DOMRect): Box => ({
+	left: rect.left,
+	right: rect.right,
+	top: rect.top,
+	bottom: rect.bottom,
+});
+
+// The union of the rectangles a text node's lines take.
+function textBox(node: Text): { box: Box; lines: number } | undefined {
+	const range = document.createRange();
+	range.selectNodeContents(node);
+	const rects = [...range.getClientRects()].filter(
+		(r) => r.width > 0 && r.height > 0,
+	);
+	const first = rects[0];
+	if (!first) return undefined;
+	return {
+		lines: rects.length,
+		box: rects.map(boxOf).reduce((a, b) => ({
+			left: Math.min(a.left, b.left),
+			right: Math.max(a.right, b.right),
+			top: Math.min(a.top, b.top),
+			bottom: Math.max(a.bottom, b.bottom),
+		})),
+	};
+}
+
+// What a row draws, in document order: each text, picture and painted box
+// (a chip, a switch, an avatar, a button) once, at the rectangle it shows
+// (clipped by the boxes that cut it, so a truncated label ends where its slot
+// does). Out-of-flow boxes (a row's hit overlay), what is not displayed and
+// the rows nested inside are left out.
+interface Leaf extends EndMeasure {
+	text: boolean;
+	left: number;
+}
+
+function leavesOf(row: Element): Array<Leaf & { right: number }> {
+	const out: Array<Leaf & { right: number }> = [];
+	const push = (
+		box: Box | undefined,
+		text: boolean,
+		at: Located,
+		name: string,
+	) => {
+		if (box)
+			out.push({
+				...at,
+				name,
+				text,
+				left: box.left,
+				right: box.right,
+				centre: (box.top + box.bottom) / 2,
+			});
+	};
+	const visit = (element: Element, clip: Box | undefined): void => {
+		const style = getComputedStyle(element);
+		if (style.display === "none" || style.opacity === "0") return;
+		if (outOfFlow(style) || (element !== row && rowKind(element) !== null))
+			return;
+		let inside = clip;
+		if (style.display !== "contents") {
+			const rect = element.getBoundingClientRect();
+			if (
+				(style.overflowX === "hidden" || style.overflowX === "clip") &&
+				(rect.width <= 1 || rect.height <= 1)
+			)
+				return;
+			if (style.visibility === "visible" && element !== row) {
+				if (replaced(element) || paintsOwn(element, style)) {
+					push(
+						clipTo(boxOf(rect), clip),
+						false,
+						locate(element),
+						nameOf(element) || `<${element.tagName.toLowerCase()}>`,
+					);
+					return;
+				}
+			}
+			if (style.overflowX === "hidden" || style.overflowX === "clip") {
+				inside = clipTo(boxOf(rect), clip);
+				if (!inside) return;
+			}
+		}
+		for (const node of element.childNodes) {
+			if (node instanceof Element) visit(node, inside);
+			else if (
+				node.nodeType === Node.TEXT_NODE &&
+				node.nodeValue?.trim() &&
+				style.visibility === "visible"
+			) {
+				const shown = textBox(node as Text);
+				if (shown)
+					push(
+						clipTo(shown.box, inside),
+						true,
+						locate(element),
+						(node.nodeValue ?? "").trim().replace(/\s+/g, " ").slice(0, 24),
+					);
+			}
+		}
+	};
+	visit(row, undefined);
+	return out;
+}
+
+// The rows on the page and what stands at the end of each: a row is a flex
+// row with a row's role, or one whose floor is a row token's (a control with
+// that floor is no row); its label is its first text, and its end items are
+// what draws beyond the label's right edge.
+function rows(seen: Seen[], scopes: Scopes): RowMeasure[] {
+	const out: RowMeasure[] = [];
+	for (const { element, style, rect } of seen) {
+		if (!isRow(style) || excepted("align-centre", element)) continue;
+		const kind = rowKind(element);
+		if (kind === null) {
+			const floor = px(style.minHeight);
+			if (
+				floor <= 0 ||
+				controlKind(element, style) !== null ||
+				!scopes
+					.of(element, style)
+					.tokens.rows.some((t) => Math.abs(t.px - floor) <= 0.5)
+			)
+				continue;
+		}
+		const leaves = leavesOf(element);
+		const label = leaves.find((leaf) => leaf.text);
+		if (!label) continue;
+		const ends = leaves.filter(
+			(leaf) => leaf !== label && leaf.left >= label.right - 0.5,
+		);
+		if (ends.length === 0) continue;
+		out.push({
+			...locate(element),
+			kind: kind ?? "row",
+			centre: rect.top + rect.height / 2,
+			ends: ends.map(({ path, name, centre }) => ({ path, name, centre })),
+		});
+	}
+	return out;
+}
+
+// The items of a flex container: its children in the flow (seen through
+// `display: contents`) and its bare text, which is an anonymous item.
+function itemsOf(container: Element): Node[] {
+	return [...container.childNodes].flatMap((node) => {
+		if (node.nodeType === Node.TEXT_NODE)
+			return node.nodeValue?.trim() ? [node] : [];
+		if (!(node instanceof Element)) return [];
+		const style = getComputedStyle(node);
+		if (style.display === "none") return [];
+		if (style.display === "contents") return itemsOf(node);
+		return outOfFlow(style) ? [] : [node];
+	});
+}
+
+const nestedRow = (element: Element, style: CSSStyleDeclaration): boolean =>
+	isRow(style) && itemsOf(element).length > 1;
+
+let ruler: CanvasRenderingContext2D | null | undefined;
+
+// A font's ascent: the glyph box's top sits this far above the baseline.
+function ascent(style: CSSStyleDeclaration): number {
+	ruler ??= document.createElement("canvas").getContext("2d");
+	if (!ruler) return 0;
+	ruler.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+	return ruler.measureText("x").fontBoundingBoxAscent;
+}
+
+// The bare texts of one flex item, each one line: not inside a box that paints
+// or is a control (a chip, a button), not in a row nested inside it (that row
+// is a line of its own).
+function runsOf(item: Node, lane: number): RunMeasure[] {
+	const out: RunMeasure[] = [];
+	const read = (node: Text, element: Element): void => {
+		const shown = textBox(node);
+		if (!shown) return;
+		if (shown.lines !== 1) return;
+		const style = getComputedStyle(element);
+		const top = shown.box.top;
+		out.push({
+			...locate(element),
+			name: (node.nodeValue ?? "").trim().replace(/\s+/g, " ").slice(0, 24),
+			lane,
+			size: px(style.fontSize),
+			top,
+			height: shown.box.bottom - top,
+			baseline: top + ascent(style),
+		});
+	};
+	const visit = (element: Element): void => {
+		const style = getComputedStyle(element);
+		if (style.display === "none" || style.opacity === "0") return;
+		if (outOfFlow(style)) return;
+		if (
+			style.display !== "contents" &&
+			(replaced(element) ||
+				(interactive(element) && element.tagName !== "A") ||
+				paintsOwn(element, style) ||
+				nestedRow(element, style))
+		)
+			return;
+		for (const child of element.childNodes) {
+			if (child instanceof Element) visit(child);
+			else if (
+				child.nodeType === Node.TEXT_NODE &&
+				child.nodeValue?.trim() &&
+				style.visibility === "visible"
+			)
+				read(child as Text, element);
+		}
+	};
+	if (item instanceof Element) visit(item);
+	else if (item.parentElement) read(item as Text, item.parentElement);
+	return out;
+}
+
+// The bare texts of each flex row's items, an item that is one line alone: an
+// item of two lines is a stack, and what stands beside it centres on the stack,
+// not on a line of it.
+function lines(seen: Seen[]): RunMeasure[][] {
+	const out: RunMeasure[][] = [];
+	for (const { element, style } of seen) {
+		if (
+			!isRow(style) ||
+			paintsOwn(element, style) ||
+			interactive(element) ||
+			excepted("align-baseline", element)
+		)
+			continue;
+		const lanes = itemsOf(element)
+			.map((item, lane) => runsOf(item, lane))
+			.filter((runs) => {
+				const tops = runs.map((r) => r.top);
+				const height = Math.min(...runs.map((r) => r.height));
+				return (
+					runs.length > 0 && Math.max(...tops) - Math.min(...tops) < height / 2
+				);
+			});
+		if (lanes.length > 1) out.push(lanes.flat());
+	}
+	return out;
+}
+
+// The alignment findings on the page, or under `roots`: what `findings()` adds
+// once `ALIGN_FAILS` is set, and what the sweep's report reads before.
+export function alignFindings(options: WalkOptions = {}): Finding[] {
+	const roots = options.roots ?? [document.body];
+	const seen = drawn(roots);
+	return [
+		...checkDeadBoxes(boxes(roots)),
+		...checkCentres(rows(seen, new Scopes())),
+		...lines(seen).flatMap(checkBaselines),
+		...checkGrids(grids(roots)),
+	];
 }

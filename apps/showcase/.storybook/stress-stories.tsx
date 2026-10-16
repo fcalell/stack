@@ -1,6 +1,8 @@
 import { showcaseFrames } from "@fcalell/plugin-react-ui/showcase/cells";
 import { type Draw, Frame } from "@fcalell/plugin-react-ui/showcase/frame";
 import {
+	ALIGN_FAILS,
+	alignFindings,
 	findings,
 	format,
 	rootMargins,
@@ -122,6 +124,10 @@ export function stressStories(component: string, draw?: Draw) {
 					...format(findings({ roots: frames() })),
 					...format(rootMargins(frames())),
 				];
+				// Report-only until the sweep has run (`ALIGN_FAILS`).
+				if (!ALIGN_FAILS)
+					for (const line of format(alignFindings({ roots: frames() })))
+						console.info(`${component} ${density}: ${line}`);
 				if (faults.length > 0) throw new Error(`\n${faults.join("\n")}`);
 			},
 		};

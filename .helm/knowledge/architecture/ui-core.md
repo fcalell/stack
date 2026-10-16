@@ -2279,7 +2279,7 @@ a control, a row or a chip (6, 6, 4) inside a card, a popover or a sheet (8) kee
 radii. A concentric inner radius, the outer's less the inset, would need the inner part to know its
 outer, a context or a CSS variable the outer sets (which is the same thing), and the numbers that
 would line up fall outside the rubric's ranges for a control, a row and a chip (decided 2026-10-13);
-the walk still holds every other nested pair to the outer less the inset. Behaviour stories call `walked()` (`behaviour/support.ts`) at the end
+the walk still holds every other nested pair to the outer less the inset. The alignment rules (`align-dead`, `align-centre`, `align-baseline`, `align-grid`: no box that takes room and draws nothing, a row's end items on its centre, one baseline to a line, flex alone) are report-only until the sweep has fixed what they find: `findings()` leaves them out unless `ALIGN_FAILS` (`walk.ts`) is set, `alignFindings()` returns them, and the screens run and the roster stress print them as `align-…` lines. Behaviour stories call `walked()` (`behaviour/support.ts`) at the end
 of a play function that ends in a state input reached (an open picker, a menu, a sheet, a dialog's
 returned focus, focus on the last act above the tab bar). The workbench's stories carry a tag per
 state (`state:loading`) and per checked global (`mode:dark`) so `--state` and `--mode` leave the

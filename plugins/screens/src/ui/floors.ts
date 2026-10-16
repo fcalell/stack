@@ -14,6 +14,8 @@ import { unpinned } from "./globals.ts";
 import { overflowError } from "./overflow.ts";
 import { compare, measure, type SectionBox } from "./shift.ts";
 import {
+	ALIGN_FAILS,
+	alignFindings,
 	densityMark,
 	findings,
 	format,
@@ -203,6 +205,11 @@ async function visit(loading: boolean): Promise<string[]> {
 			if (loading) waiting.set(width, measure());
 			marks.set(width, densityMark());
 			failures.push(...floorsAt(width, index === 0));
+			// Report-only until the sweep has run (`ALIGN_FAILS`): the alignment
+			// findings print, they do not fail the screen.
+			if (!ALIGN_FAILS)
+				for (const line of format(alignFindings()))
+					console.info(`at ${width}px, ${line}`);
 		}
 		if (loading) {
 			releaseHold();

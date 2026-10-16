@@ -14,7 +14,7 @@ check holds is edited in the check, with its one-line reason; an entry nothing m
 
 | # | Rule | Ask | Held by |
 | --- | --- | --- | --- |
-| 1 | A parent lays out its children with flex or grid; a child sets only its own flex or grid item properties. | Does an element place a sibling, or another component, by a margin, an offset or a fixed measure? | judged |
+| 1 | A parent lays out its children with flex, never grid, so the phone mirrors it; a child sets only its own flex item properties. | Does an element place a sibling, or another component, by a margin, an offset or a fixed measure? Is any element `display: grid`? | judged; render walk (`align-grid`, report-only until `ALIGN_FAILS`) |
 | 2 | A component's root carries no margin; the parent's gap spaces it, and the root's inset is its own padding. | Does a root carry a margin, a negative one cancelling a parent's inset included? | render walk (margin on a component root) |
 | 3 | A component styles its own box and the parts it draws: no selector (`[&>…]`, `[&_…]`, `*:`) reaches a child it does not own. | Does a class string select what another component draws? | judged |
 | 4 | Heights, gaps, insets and radii are the contract's values at the density; a surface inside another is rounded by the outer radius less its inset, except a control, a row or a chip (6, 6, 4) inside a card, a popover or a sheet (8), which keep their roles' radii as the walk's named exception. | Is each measured value the one the contract emits, and the inner radius the outer less the inset unless it is that exception? | render walk (contract heights, gaps, insets, radii, nested radii) |
@@ -22,6 +22,7 @@ check holds is edited in the check, with its one-line reason; an entry nothing m
 | 6 | A component adapts to its container with a container query or `flex-wrap`; the viewport reaches it only through the density (`touch:`). | Does a read of the window or a media query choose a form where the container decides? | `b-measure` for the read; judged for the class |
 | 7 | Nothing measures in JavaScript outside the closed list: the Canvas, the docked sheet's region, the Table's page width, the Thread's follow, `useScrolls`, the density and motion queries, and on native every layout read. | Does the file read a box, observe a size or match a media query, and is it listed with a reason? | `b-measure` |
 | 8 | A clipped flex item never shrinks below its content, and a clip hides nothing a layout error put there. | Is a clipped element shorter than its content, with no ellipsis or clamp to say so? | render walk (clipping) |
+| 21 | A row is a flex group of groups: a text group (label over description) and an end group (value, status, control, act, chevron) centred on the row; room that holds an alignment is a group's gap or padding, never an empty element, so a row with no end item reserves none; texts of different sizes on a line share a baseline. | Do a row's end items stand on its centre? Does an element take room and draw nothing? Does a count centred by its line box ride off its heading's baseline? | render walk (`align-centre`, `align-dead`, `align-baseline`; report-only until `ALIGN_FAILS`) |
 
 ## Reading
 

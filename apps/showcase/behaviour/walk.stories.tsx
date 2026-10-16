@@ -1,4 +1,5 @@
 import {
+	alignFindings,
 	densityMark,
 	findings,
 	focusCovered,
@@ -446,3 +447,170 @@ export const MarksTheDensityThePageDraws: StoryObj = {
 		}
 	},
 };
+
+// ── alignment ───────────────────────────────────────────────────────
+
+// The `align-*` rules are report-only until the sweep has run, so `findings()`
+// leaves them out and `alignFindings()` is what these canaries call: each bad
+// fixture must be found, once, by the rule named, and the clean one by none.
+function aligned(fixture: ReactNode, expected: string[]): StoryObj {
+	return {
+		parameters: { a11y: { test: "off" } },
+		render: () => <div data-walk>{fixture}</div>,
+		play: async ({ canvasElement }) => {
+			await document.fonts.ready;
+			const root = canvasElement.querySelector<HTMLElement>("[data-walk]");
+			if (!root) throw new Error("the fixture did not draw");
+			const found = alignFindings({ roots: [root] }).map((f) => f.rule);
+			await expect(found.sort()).toEqual([...expected].sort());
+		},
+	};
+}
+
+const META: CSSProperties = { fontSize: "var(--text-meta)" };
+const ROW: CSSProperties = {
+	display: "flex",
+	alignItems: "center",
+	gap: "var(--spacing-pair)",
+	minHeight: "var(--spacing-row-setting)",
+	boxSizing: "border-box",
+	paddingBlock: "var(--spacing-pair)",
+};
+const GROW: CSSProperties = { flex: "1 1 auto", minWidth: 0 };
+
+// A label over its description in a row, drawn as the row draws it today.
+const chevron = (
+	<svg
+		aria-hidden
+		width="16"
+		height="16"
+		viewBox="0 0 16 16"
+		style={{ flex: "none" }}
+	>
+		<title>chevron</title>
+		<path d="M6 3l5 5-5 5" stroke="currentColor" fill="none" />
+	</svg>
+);
+
+// The empty end square: a row with no chevron that still reserves one.
+export const CatchesAnEmptyEndSquare = aligned(
+	<div style={ROW}>
+		<span style={{ ...BODY, ...GROW }}>Stories</span>
+		<span aria-hidden style={{ width: 16, height: 16, flex: "none" }} />
+	</div>,
+	["align-dead"],
+);
+
+// The value on the label's line while the chevron stands mid-row.
+export const CatchesAValueOnTheLabelsLine = aligned(
+	<div style={ROW}>
+		<span style={{ ...GROW, display: "flex", flexDirection: "column" }}>
+			<span style={{ display: "flex", alignItems: "center" }}>
+				<span style={{ ...BODY, flex: "1 1 auto" }}>Domains</span>
+				<span style={BODY}>Local</span>
+			</span>
+			<span style={META}>Where the app is served from</span>
+		</span>
+		{chevron}
+	</div>,
+	["align-centre"],
+);
+
+// The same with no chevron: the value is the only end item, still off the
+// row's middle.
+export const CatchesALoneValueOnTheLabelsLine = aligned(
+	<div style={ROW}>
+		<span style={{ ...GROW, display: "flex", flexDirection: "column" }}>
+			<span style={{ display: "flex", alignItems: "center" }}>
+				<span style={{ ...BODY, flex: "1 1 auto" }}>Stories</span>
+				<span style={BODY}>2</span>
+			</span>
+			<span style={META}>Made from the epic</span>
+		</span>
+	</div>,
+	["align-centre"],
+);
+
+// A count centred by its line box rides above the heading's baseline.
+export const CatchesACountOffTheHeadingsBaseline = aligned(
+	<div style={{ display: "flex", alignItems: "center" }}>
+		<span style={{ fontSize: "var(--text-heading)" }}>Provenance</span>
+		<span style={META}>2</span>
+	</div>,
+	["align-baseline"],
+);
+
+export const CatchesAGrid = aligned(
+	<div style={{ display: "grid", gridTemplateColumns: "1fr auto" }}>
+		<span style={BODY}>Label</span>
+		<span style={BODY}>Value</span>
+	</div>,
+	["align-grid"],
+);
+
+export const CatchesAnInlineGrid = aligned(
+	<span style={{ display: "inline-grid" }}>
+		<span style={BODY}>Label</span>
+	</span>,
+	["align-grid"],
+);
+
+// The same rows drawn as groups: a text group and an end group centred on the
+// row, a count on the heading's baseline, and the things that look like dead
+// boxes and are not (a picture's wrapper, an overlay, visually hidden text, a
+// painted rule, a ring, a hidden element, an empty table cell).
+export const PassesRowsDrawnAsGroups = aligned(
+	<>
+		<div style={ROW}>
+			<span style={{ ...GROW, display: "flex", flexDirection: "column" }}>
+				<span style={BODY}>Domains</span>
+				<span style={META}>Where the app is served from</span>
+			</span>
+			<span style={{ ...BODY, flex: "none" }}>Local</span>
+			{chevron}
+		</div>
+		<div style={ROW}>
+			<span style={{ ...GROW, display: "flex", flexDirection: "column" }}>
+				<span style={BODY}>Stories</span>
+				<span style={META}>Made from the epic</span>
+			</span>
+			<span style={{ ...BODY, flex: "none" }}>2</span>
+		</div>
+		<div style={{ display: "flex", alignItems: "baseline" }}>
+			<span style={{ fontSize: "var(--text-heading)" }}>Provenance</span>
+			<span style={META}>2</span>
+		</div>
+		<div style={{ ...ROW, position: "relative" }}>
+			<span style={{ ...BODY, ...GROW }}>Open</span>
+			<span style={{ width: 16, height: 16, flex: "none" }}>{chevron}</span>
+			<span
+				aria-hidden
+				style={{ position: "absolute", inset: 0, width: "100%" }}
+			/>
+			<span
+				style={{
+					position: "absolute",
+					width: 1,
+					height: 1,
+					overflow: "hidden",
+					clip: "rect(0 0 0 0)",
+				}}
+			>
+				Open the row
+			</span>
+		</div>
+		<div style={{ borderTop: "1px solid gray", width: 40, height: 1 }} />
+		<div style={{ boxShadow: "0 0 0 2px gray", width: 10, height: 10 }} />
+		<div style={{ width: 20, height: 20, display: "none" }} />
+		<div style={{ width: 20, height: 20, visibility: "hidden" }} />
+		<table>
+			<tbody>
+				<tr>
+					<td style={BODY}>Name</td>
+					<td />
+				</tr>
+			</tbody>
+		</table>
+	</>,
+	[],
+);
