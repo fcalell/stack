@@ -30,7 +30,8 @@ interface Shared<V extends string | null> extends Closed {
 export interface PickOneProps<V extends string | null = string>
 	extends Shared<V> {
 	// A selection paints the trigger, inert, until its read lands and follows
-	// it until the viewer picks.
+	// it until the viewer picks. Once its read ended it stands empty and
+	// opening it says why instead.
 	value?: Datum<NoInfer<V>>;
 	// A promise it returns holds the viewer's value while it pends; a refusal
 	// puts it back, with its reason.

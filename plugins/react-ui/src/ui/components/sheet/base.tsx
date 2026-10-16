@@ -289,14 +289,20 @@ export function SheetBase({
 			{end}
 		</div>
 	);
-	// On the desktop a submit follows Cancel in the foot's bar.
+	// On the desktop a submit follows Cancel in the foot's bar, which stands it
+	// blocked once the read ended and draws the sentence on a press only.
 	const bar =
 		acts ??
-		(submit && !touch
-			? [{ label: words.cancel, onAct: onClose }, submit]
+		(offered && !touch
+			? [{ label: words.cancel, onAct: onClose }, offered]
 			: undefined);
 	const actionBar = bar ? (
-		<ActionBarBase acts={bar} acting={acting} painted={waiting} />
+		<ActionBarBase
+			acts={bar}
+			acting={acting}
+			painted={waiting}
+			ended={acts ? undefined : ended}
+		/>
 	) : null;
 	const footLine = foot ? (
 		<div className={FOOT_LINE}>

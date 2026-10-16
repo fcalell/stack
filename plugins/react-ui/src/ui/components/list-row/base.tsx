@@ -15,6 +15,7 @@ import type {
 	RowTrailing,
 } from "@fcalell/ui-core/descriptors";
 import { painting, paintText } from "@fcalell/ui-core/paint";
+import { endedReason } from "@fcalell/ui-core/read";
 import { pressStands } from "@fcalell/ui-core/reason";
 import { isCurrent } from "@fcalell/ui-core/route";
 import {
@@ -58,7 +59,7 @@ import {
 	partRuns,
 	partText,
 } from "../../lib/parts.ts";
-import { endedItems, endedReason } from "../../lib/read.tsx";
+import { endedItems } from "../../lib/read.tsx";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";

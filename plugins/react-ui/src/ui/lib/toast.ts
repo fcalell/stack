@@ -8,6 +8,8 @@ import { createContext } from "react";
 export interface ToastOptions {
 	state?: ToastState;
 	act?: Act;
+	/** Called once the toast has left, however it went. */
+	onGone?: () => void;
 }
 
 // The app's toast queue: `toast()` is called from anywhere, and the Shell
@@ -23,6 +25,7 @@ export function toast(sentence: string, options: ToastOptions = {}): void {
 	toasts.add({
 		description: sentence,
 		data: { sentence, ...options },
+		onRemove: options.onGone,
 		priority: options.state === "failed" ? "high" : "low",
 	});
 }

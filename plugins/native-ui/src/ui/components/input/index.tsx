@@ -13,7 +13,7 @@ export type InputKind =
 
 export interface InputProps extends Closed {
 	kind?: InputKind;
-	/** The value (text; one line, scrolls in the field). A selection paints the box, inert, until its read lands and follows it until the viewer types. */
+	/** The value (text; one line, scrolls in the field). A selection paints the box, inert, until its read lands and follows it until the viewer types. Once its read ended the control stands with no value and a change says why instead. */
 	value: Datum<string>;
 	onChange: (value: string) => void;
 	// Hears the commit; a promise it returns holds the viewer's value while it

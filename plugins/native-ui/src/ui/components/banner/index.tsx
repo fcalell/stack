@@ -5,6 +5,7 @@ import {
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
 import type { Act, IconName } from "@fcalell/ui-core/descriptors";
+import { endedReason } from "@fcalell/ui-core/read";
 import {
 	BANNER_MAIN,
 	BANNER_ROW,
@@ -19,7 +20,6 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
 import { inertProps, Painted } from "../../lib/paint";
-import { endedReason } from "../../lib/read";
 import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 import { type BannerInk, ButtonBase } from "../button/base";

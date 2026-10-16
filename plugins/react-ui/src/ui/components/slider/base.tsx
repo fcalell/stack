@@ -44,9 +44,11 @@ export function SliderBase({
 	step,
 	unit,
 }: Omit<SliderProps, "value"> & { draft: Draft<number> }) {
-	const painted = draft.painted;
-	// Painted, the thumb rests at the start: the value is the placeholder.
-	const at = painted ? min : draft.value;
+	// A read that ended leaves the track with no value, blocked.
+	const ended = draft.ended !== undefined;
+	const painted = draft.painted && !ended;
+	// Painted or ended, the thumb rests at the start: the value is the placeholder.
+	const at = draft.painted ? min : draft.value;
 	// The fill and the rest share the track less the thumb in proportion to
 	// the value, and the thumb, held at the same point with `edge` alignment (the
 	// pointer maps the track less the thumb), sits in the gap between them, so
@@ -58,7 +60,7 @@ export function SliderBase({
 			value={at}
 			onValueChange={(next) => {
 				draft.change(next);
-				onChange(next);
+				if (!ended) onChange(next);
 			}}
 			onValueCommitted={(next) => {
 				if (onCommit) draft.change(next, () => onCommit(next));
@@ -74,7 +76,7 @@ export function SliderBase({
 			render={(root, state) => (
 				<div
 					{...root}
-					aria-disabled={state.disabled || undefined}
+					aria-disabled={state.disabled || ended || undefined}
 					inert={painted || undefined}
 				/>
 			)}
@@ -82,7 +84,7 @@ export function SliderBase({
 			<div className={cn(SLIDER_HEAD, HEAD)}>
 				<Base.Label className={cn(SLIDER_LABEL, LABEL)}>{label}</Base.Label>
 				<Base.Value
-					className={cn(SLIDER_VALUE, VALUE, painted && "invisible")}
+					className={cn(SLIDER_VALUE, VALUE, draft.painted && "invisible")}
 				/>
 			</div>
 			<Base.Control
@@ -102,7 +104,7 @@ export function SliderBase({
 					className={cn(SLIDER_REST, REST)}
 					style={{ flexGrow: max - at }}
 				/>
-				<Base.Thumb className={cn(SLIDER_THUMB, THUMB)}>
+				<Base.Thumb className={cn(SLIDER_THUMB, THUMB, ended && "opacity-0")}>
 					<span className={WASH} />
 				</Base.Thumb>
 			</Base.Control>

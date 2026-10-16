@@ -1682,7 +1682,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// `blocked` reason replaces its description in the disabled ink and
 		// the option takes no pick, until it is in the value. `value` and
 		// `options` are data: a selection paints the trigger, inert and its
-		// content undrawn, until its read lands. Options that have failed draw the
+		// content undrawn, until its read lands. A `value` whose read ended leaves
+		// the box empty and blocked: opening it says the failed sentence and
+		// opens nothing. Options that have failed draw the
 		// failed sentence with Retry (or `missing`) in a line under the trigger,
 		// which stays painted; the picker holds that read, so it needs no frame
 		// and draws no busy or stale flag.
@@ -2731,7 +2733,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// or `counts` (links composed from `Link`), never both. A `mark` is a tick
 		// across the track at its value, the meter's near point. `label`, `value`
 		// and `max` are data: a selection paints in its place, the meter inert,
-		// until its read lands.
+		// until its read lands, and once its read ended the meter stands empty in
+		// the same box (no share, no fill; the label if its own read answered).
 		Meter: {
 			props: ["label", "value", "max", "meta", "counts", "mark"],
 			draws: [

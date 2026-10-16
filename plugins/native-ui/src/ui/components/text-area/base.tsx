@@ -38,11 +38,14 @@ export function TextAreaBase({
 	budget,
 	autoFocus,
 }: Omit<TextAreaProps, "value"> & { draft: Draft<string> }) {
-	const painted = draft.painted;
-	const typed = painted ? "" : draft.value;
+	// A read that ended leaves the box empty and blocked: a keystroke says why
+	// and changes nothing.
+	const ended = draft.ended !== undefined;
+	const painted = draft.painted && !ended;
+	const typed = draft.painted ? "" : draft.value;
 	const edit = (next: string) => {
 		draft.change(next);
-		onChange(next);
+		if (!ended) onChange(next);
 	};
 	const shown = useShown(painted);
 	const [moment] = useState(() => commitMoment<string>());
@@ -74,7 +77,7 @@ export function TextAreaBase({
 				autoFocus={autoFocus}
 				{...caret}
 				accessibilityLabel={name}
-				accessibilityState={{ disabled }}
+				accessibilityState={{ disabled: disabled || ended }}
 				editable={!disabled}
 				multiline
 				textAlignVertical="top"

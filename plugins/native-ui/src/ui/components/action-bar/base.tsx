@@ -1,5 +1,6 @@
 import { isThenable } from "@fcalell/plugin-api/acts";
 import type { Act, ChosenCount } from "@fcalell/ui-core/descriptors";
+import { pressStands } from "@fcalell/ui-core/reason";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
 	ACTION_BAR_ACTS,
@@ -13,7 +14,7 @@ import {
 	FIELD_ERROR_LINE,
 	text,
 } from "@fcalell/ui-core/variants";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import { type Acting, useAct } from "../../lib/act";
 import { cn } from "../../lib/cn";
@@ -145,19 +146,30 @@ export function ActionBarBase({
 	// A failure draws in the bar's kept line, so it never moves the act; the
 	// same line says the connection refused an act.
 	const acting = given ?? own;
-	// The filled act is the one a read's end blocks.
+	// The filled act is the one a read's end blocks. Its sentence is the body's
+	// already, so it draws on a press, not at rest.
 	const acts =
 		ended === undefined
 			? offered
 			: offered.map((act, at) =>
 					at === offered.length - 1 ? { ...act, blocked: ended } : act,
 				);
-	// The last blocked act's reason takes the line a failure would draw in.
-	const reason = acts.findLast((act) => act.blocked !== undefined)?.blocked;
+	const [pressedUnder, setPressedUnder] = useState<string>();
+	const pressed = pressStands(ended, pressedUnder);
+	const endedHost = useMemo(
+		() => ({ press: () => setPressedUnder(ended) }),
+		[ended],
+	);
+	// The last blocked act's reason takes the line a failure would draw in; the
+	// filled act's, once its read ended, does not.
+	const reason = (ended === undefined ? acts : acts.slice(0, -1)).findLast(
+		(act) => act.blocked !== undefined,
+	)?.blocked;
+	const said = reason ?? ended;
 	// The reason this bar last drew: once a line has drawn the bar keeps its box.
 	const [held, setHeld] = useState<string>();
 	const { leave } = useTouched();
-	if (reason !== undefined && held !== reason) setHeld(reason);
+	if (said !== undefined && held !== said) setHeld(said);
 	const lastAt = acts.length - 1;
 	// The press ends the form's edit before the filled act runs, so an act that
 	// navigates is not asked; a rejection puts the edit back.
@@ -190,21 +202,22 @@ export function ActionBarBase({
 			onAct: at === lastAt ? ending(act) : act.onAct,
 		});
 	// The bar under a `PendingBar` is drawn with no act that presses.
+	const shown = acting.line !== undefined || pressed;
 	const bar = (ghost: boolean) => (
 		<View
 			className={cn(actionBar({ fit: where }), chosen && ACTION_BAR_SELECTION)}
 		>
 			{chosen ? <Chosen chosen={chosen} /> : null}
-			<ReasonHostContext.Provider value={REASON_AT_REST}>
-				<View className={cn(ACTION_BAR_ACTS, ACTS)}>
-					{acts.map((act, at) => {
-						const last = at === lastAt;
-						const running = acting.pending === at;
-						return (
-							<ActInert.Provider
-								key={act.label}
-								value={ghost || (acting.holds && !running)}
-							>
+			<View className={cn(ACTION_BAR_ACTS, ACTS)}>
+				{acts.map((act, at) => {
+					const last = at === lastAt;
+					const running = acting.pending === at;
+					return (
+						<ReasonHostContext.Provider
+							key={act.label}
+							value={last && ended !== undefined ? endedHost : REASON_AT_REST}
+						>
+							<ActInert.Provider value={ghost || (acting.holds && !running)}>
 								<ButtonBase
 									act={kindOf(act, last)}
 									fit={FIT[where]}
@@ -215,25 +228,23 @@ export function ActionBarBase({
 									painted={last && painted}
 								/>
 							</ActInert.Provider>
-						);
-					})}
-				</View>
-			</ReasonHostContext.Provider>
+						</ReasonHostContext.Provider>
+					);
+				})}
+			</View>
 			{reason === undefined ? null : (
 				<RNText className={text({ role: "meta" })}>{reason}</RNText>
 			)}
 			{reason !== undefined ||
 			!(held !== undefined || kept || acting.line !== undefined) ? null : (
 				<RNText
-					accessibilityElementsHidden={acting.line === undefined}
-					importantForAccessibility={
-						acting.line === undefined ? "no-hide-descendants" : "auto"
-					}
+					accessibilityElementsHidden={!shown}
+					importantForAccessibility={shown ? "auto" : "no-hide-descendants"}
 					className={cn(
-						acting.pending === undefined
+						acting.pending === undefined && !pressed
 							? FIELD_ERROR_LINE
 							: text({ role: "meta" }),
-						acting.line === undefined && KEPT,
+						!shown && KEPT,
 					)}
 				>
 					{acting.line ?? held ?? NO_FAILURE}

@@ -697,7 +697,9 @@ a tick with no animation, never jumped to full.
   little room nothing the log draws, nor the Latest act at its foot, paints over the foot's head or
   the header.
   Its states are its
-  submit's: pending, blocked (the reason stands at rest under the act), and failed (the act ready again, the
+  submit's: pending, blocked (the reason stands at rest under the act; over a read that ended it does
+  not, since the body already says "This didn't load.", so the bar keeps its line unseen and the
+  press draws the sentence in it), and failed (the act ready again, the
   rejection's sentence in that same kept line: the `ActionBar` draws the host's `Acting.line` in
   `FIELD_ERROR_LINE`, the field error's cell and ink, in place of the reason when no act is blocked,
   and holds the line empty while neither shows, so a failure moves nothing; no `Banner`). The sheet
@@ -1412,7 +1414,19 @@ a tick with no animation, never jumped to full.
   read nothing from the Section, so no context carries a wait flag (structure rule 11: a context carries identity only). A body that is an app's own component draws as it is and reads with
   `useRead`. A control follows its selection until the viewer edits it (`useDraft`; a selection
   over another read drops the edit), so typed text outlives a refetch and no control flips on the
-  frame. Rejected: registration (a layout effect per collection, a second commit before paint), a
+  frame. A control whose value's read ended stands in its loaded box with no value (`Draft.ended`, set
+  from the selection's `failed` or `missing` phase; `painted` still says the value is absent): no
+  switch position, no segment, an empty pick, empty text, an empty meter, nothing moving, because the
+  box is the painted one without the fill. It is blocked like an ended act, and what blocks it is the
+  draft itself: `useHeldDraft` and `useFieldDraft` (`lib/act`) hand the control a `change` that
+  changes nothing and says `endedReason` (`readFailed`, or `missing`) where that control already
+  says a refused save, a failed toast for a bare control and the field's error line, kept until the
+  read answers, for a field. The controls write nothing for it beyond reading `ended` for their
+  look and skipping their separate `onChange` (a Slider's, an Input's); a Picker opens no list,
+  asking the draft to change instead. A Meter has nothing to press, so it only stands empty. This
+  is the rule a row that holds its own read follows (a failed row's label stays, its value slot
+  shows the failure, its description says it and pressing it retries); a control elsewhere is only
+  blocked. Rejected: registration (a layout effect per collection, a second commit before paint), a
   registration the head reads in render from a host object (the head renders before the body, so it
   would always be a render pass stale), and a context handing the body a wait flag (every part had
   to read it and keep a second tree for it). `SectionContext` is gone: a Section's `empty` is its
@@ -2070,7 +2084,8 @@ a tick with no animation, never jumped to full.
   for a bare control, whose rejection toasts; a `FormField` hosts the save of its `switch`,
   `checkbox`, `slider`, `options`, `segments`, `input`, `textArea` and `picker` through
   `useFieldDraft`, holds the refusal line in its own state and clears it on the next change, and the
-  control's Base takes the field's `draft`). Each change carries a sequence
+  control's Base takes the field's `draft`). Over a read that ended the draft blocks every change
+  and says the read's sentence in that same place instead (above). Each change carries a sequence
   number and only the latest's outcome counts. Resolved, the hold waits for the refetch the save's
   invalidation started on the control's own reads (a query-cache subscription; the write's
   `onSuccess` starts it synchronously), then follows its datum unless edited since. Rejected, the

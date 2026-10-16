@@ -41,11 +41,14 @@ export function TextAreaBase({
 	autoFocus,
 }: Omit<TextAreaProps, "value"> & { draft: Draft<string> }) {
 	useModality();
-	const painted = draft.painted;
-	const shown = painted ? "" : draft.value;
+	// A read that ended leaves the box empty and blocked: a keystroke says why
+	// and changes nothing.
+	const ended = draft.ended !== undefined;
+	const painted = draft.painted && !ended;
+	const shown = draft.painted ? "" : draft.value;
 	const edit = (next: string) => {
 		draft.change(next);
-		onChange(next);
+		if (!ended) onChange(next);
 	};
 	// A commit that returns its save's promise holds the value while it pends.
 	const save =
@@ -69,7 +72,7 @@ export function TextAreaBase({
 			// native control reads as disabled to a checker.
 			render={(control, state) => (
 				<div
-					aria-disabled={state.disabled || undefined}
+					aria-disabled={state.disabled || ended || undefined}
 					inert={painted || undefined}
 					className={cn(
 						textArea({ state: state.valid === false ? "error" : "rest" }),

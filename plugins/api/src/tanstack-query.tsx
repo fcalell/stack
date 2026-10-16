@@ -408,7 +408,10 @@ export function useMore(read: Read<unknown>): More {
 }
 
 export interface Draft<T> {
+	/** The value is not here (its read waits, stands still or ended): `value` is the placeholder. */
 	painted: boolean;
+	/** The read the value is a selection over ended: the control stands with no value and blocked, a change saying so instead of changing. */
+	ended: "failed" | "missing" | undefined;
 	value: T;
 	// A plain edit is kept over a selection until its read's key changes. A
 	// `save` that returns a promise holds `next` (a constant's too) instead, and
@@ -467,6 +470,12 @@ export function useDraft<T>(
 	};
 	return {
 		painted: !live && drawn.painted,
+		ended:
+			!live &&
+			drawn.painted &&
+			(drawn.phase === "failed" || drawn.phase === "missing")
+				? drawn.phase
+				: undefined,
 		value: live ? live.value : (drawn.value as T),
 		change,
 	};

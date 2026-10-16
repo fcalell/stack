@@ -6,7 +6,8 @@ import { HeldSwitch } from "./base";
 export interface SwitchProps extends Closed {
 	/** Whether it is on. */
 	// A selection paints the track, inert, until its read lands and follows it
-	// until the viewer flips it.
+	// until the viewer flips it. Once its read ended it stands with no value
+	// and a flip says why instead.
 	checked: Datum<boolean>;
 	/** Hears the next value when the viewer flips it. Return the save's promise and the viewer's value holds while it pends; a refusal puts it back, with its reason. */
 	onChange: (checked: boolean) => unknown;

@@ -19,7 +19,7 @@ const ON =
 const THUMB =
 	"transition-transform duration-fast ease-in-out data-disabled:bg-ink-disabled";
 
-/** The track and thumb every Switch renders, on the `draft` its host holds: a field hosts the draft of its switch and draws a rejection in its own line. `painted` is the track while its data is not here: filled, the thumb not drawn, inert. Outside the package's exports. */
+/** The track and thumb every Switch renders, on the `draft` its host holds: a field hosts the draft of its switch and draws a rejection in its own line. `painted` is the track while its data is not here: filled, the thumb not drawn, inert. A read that ended leaves the track unfilled with no thumb, blocked: a press says why and changes nothing. Outside the package's exports. */
 export function SwitchBase({
 	draft,
 	onChange,
@@ -29,8 +29,11 @@ export function SwitchBase({
 	draft: Draft<boolean>;
 	painted?: boolean;
 }) {
-	const painted = given || draft.painted;
-	const on = draft.value && !painted;
+	// A read that ended leaves the track standing with no thumb, blocked.
+	const ended = draft.ended !== undefined;
+	const painted = given || (draft.painted && !ended);
+	const absent = painted || ended;
+	const on = draft.value && !absent;
 	const state = on ? "on" : "off";
 	// A field around it disables it through Base UI's field context, which
 	// sets `disabled` and `data-disabled` on the hit box and the thumb.
@@ -46,6 +49,7 @@ export function SwitchBase({
 			}}
 			aria-label={label}
 			inert={painted || undefined}
+			aria-disabled={ended || undefined}
 			className={HIT}
 		>
 			<span
@@ -57,7 +61,7 @@ export function SwitchBase({
 				)}
 			>
 				<Base.Thumb
-					className={cn(switchThumb({ state }), THUMB, painted && "invisible")}
+					className={cn(switchThumb({ state }), THUMB, absent && "invisible")}
 				/>
 			</span>
 		</Base.Root>

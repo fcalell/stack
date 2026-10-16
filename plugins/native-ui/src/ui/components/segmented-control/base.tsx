@@ -37,7 +37,9 @@ export function SegmentedControlBase({
 	draft: Draft<string>;
 	painted?: boolean;
 }) {
-	const painted = given || draft.painted;
+	// A read that ended leaves the track with no segment chosen, blocked.
+	const ended = draft.ended !== undefined;
+	const painted = given || (draft.painted && !ended);
 	const named = useContext(GroupName);
 	const shown = useShown(painted);
 	return (
@@ -48,14 +50,14 @@ export function SegmentedControlBase({
 			className={cn(SEGMENTED_CONTROL, TRACK, painted && paintControl(shown))}
 		>
 			{options.map((option) => {
-				const chosen = !painted && option.value === draft.value;
+				const chosen = !(painted || ended) && option.value === draft.value;
 				const state = chosen ? "selected" : "idle";
 				return (
 					<Pressable
 						key={option.value}
 						accessibilityRole="radio"
 						accessibilityLabel={option.label}
-						accessibilityState={{ checked: chosen }}
+						accessibilityState={{ checked: chosen, disabled: ended }}
 						onPress={() => {
 							draft.change(option.value, () => onChange(option.value));
 						}}

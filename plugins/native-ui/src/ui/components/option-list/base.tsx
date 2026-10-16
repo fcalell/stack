@@ -115,9 +115,10 @@ export function OptionListBase<V extends string = string, T = unknown>(
 	// Waiting items paint the rows; ended ones say so in a line under them.
 	const { drawn: given, retry } = useOptions(props.items);
 	// The rows paint while their items wait; the marks paint too while the
-	// value does, the labels then standing.
+	// value does, the labels then standing. A value whose read ended leaves the
+	// marks empty and blocked: a press says why and chooses nothing.
 	const rowsPaint = given.painted;
-	const painted = rowsPaint || draft.painted;
+	const painted = rowsPaint || (draft.painted && draft.ended === undefined);
 	const shown = useShown(painted);
 	// The placeholder is no array, so a painted value is one choice.
 	const one = !Array.isArray(draft.value);

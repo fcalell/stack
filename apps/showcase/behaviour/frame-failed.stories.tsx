@@ -13,7 +13,8 @@ import { expect, waitFor } from "storybook/test";
 // A frame says no sentence of its own: a failed read draws "This didn't load."
 // with Retry in the frame's box, Pane, Section, Sheet, Form and a form's group
 // alike, and Retry reads again. Each story's read fails its first answer and
-// lands on the second.
+// lands on the second. A bar's filled act over the failed read stands blocked
+// and says why on a press only, never under the bar beside the body's line.
 export default { title: "Behaviour/Frame failed" } satisfies Meta;
 
 const ROW = { key: (name: string) => name, title: (name: string) => name };
@@ -35,19 +36,33 @@ function onceFailing(name: string) {
 	return { state, items };
 }
 
+const SENTENCE = "This didn't load.";
+
+// The sentences standing in view: a bar keeps its line unseen, which stays in
+// the tree.
+const seen = (canvas: { queryAllByText: (text: string) => HTMLElement[] }) =>
+	canvas
+		.queryAllByText(SENTENCE)
+		.filter((line) => getComputedStyle(line).visibility !== "hidden");
+
 function story(
 	name: string,
 	frame: (items: Read<readonly string[]>) => ReactNode,
-	// A bar's filled act stands blocked under the same sentence, once more.
-	said = 1,
+	// The name of a bar's filled act, which says the sentence once more on a press.
+	bar?: string,
 ): StoryObj {
 	const { state, items } = onceFailing(name);
 	return {
 		render: () => frame(items),
 		play: async ({ canvas, userEvent }) => {
 			await canvas.findAllByText("This didn't load.");
-			await expect(canvas.getAllByText("This didn't load.").length).toBe(said);
+			await expect(seen(canvas)).toHaveLength(1);
 			await expect(state.calls).toBe(1);
+			if (bar) {
+				await userEvent.click(canvas.getByRole("button", { name: bar }));
+				await waitFor(() => expect(seen(canvas)).toHaveLength(2));
+				await expect(state.calls).toBe(1);
+			}
 			await userEvent.click(canvas.getByRole("button", { name: "Retry" }));
 			await canvas.findByText("Landed");
 			await waitFor(() => expect(state.calls).toBe(2));
@@ -96,7 +111,26 @@ export const FormFailed = story(
 			{body(items)}
 		</Form>
 	),
-	2,
+	"Save",
+);
+
+export const SheetBarFailed = story(
+	"sheet-bar",
+	(items) => (
+		<Stage contain>
+			<Sheet
+				open
+				onClose={() => {}}
+				title="Details"
+				fit="pane"
+				read={items}
+				submit={{ label: "Save", onAct: () => {} }}
+			>
+				{body(items)}
+			</Sheet>
+		</Stage>
+	),
+	"Save",
 );
 
 export const FormGroupFailed = story("group", (items) => (

@@ -30,9 +30,12 @@ export function SliderBase({
 	unit,
 }: Omit<SliderProps, "value"> & { draft: Draft<number> }) {
 	const disabled = useContext(FieldDisabled);
-	const painted = draft.painted;
-	// Painted, the thumb rests at the start: the value is the placeholder.
-	const at = painted ? min : draft.value;
+	// A read that ended leaves the track with no value, blocked.
+	const ended = draft.ended !== undefined;
+	const painted = draft.painted && !ended;
+	// Painted or ended, the thumb rests at the start: the value is the
+	// placeholder.
+	const at = draft.painted ? min : draft.value;
 	const shown = useShown(painted);
 	const [pressed, setPressed] = useState(false);
 	// The track's width, which only a touch reads, so its layout renders nothing.
@@ -55,7 +58,7 @@ export function SliderBase({
 		const next = settle(min + ratio * (max - min));
 		reached.current = next;
 		draft.change(next);
-		onChange(next);
+		if (!ended) onChange(next);
 	}
 
 	// The thumb let go: the last value it reached is the one committed.
@@ -118,7 +121,7 @@ export function SliderBase({
 						SLIDER_VALUE,
 						"shrink-0",
 						disabled && "text-ink-disabled",
-						painted && "opacity-0",
+						draft.painted && "opacity-0",
 					)}
 				>
 					{formatted}
@@ -129,7 +132,7 @@ export function SliderBase({
 				accessible
 				accessibilityRole="adjustable"
 				accessibilityLabel={label}
-				accessibilityState={{ disabled }}
+				accessibilityState={{ disabled: disabled || ended }}
 				accessibilityValue={{ min, max, now: at }}
 				pointerEvents="box-only"
 				onLayout={(event) => {
@@ -158,6 +161,7 @@ export function SliderBase({
 								SLIDER_THUMB,
 								"relative shrink-0 overflow-hidden",
 								disabled && "border-edge bg-fill-disabled",
+								ended && "opacity-0",
 							)}
 						>
 							{active ? (

@@ -32,10 +32,13 @@ export function CheckboxBase({
 	target?: boolean;
 	painted?: boolean;
 }) {
-	const painted = given || draft.painted;
+	// A read that ended leaves the box empty and blocked.
+	const ended = draft.ended !== undefined;
+	const painted = given || (draft.painted && !ended);
+	const absent = painted || ended;
 	const value = draft.value;
 	const disabled = useContext(FieldDisabled);
-	const state = STATES[painted ? "false" : (`${value}` as const)];
+	const state = STATES[absent ? "false" : (`${value}` as const)];
 	if (target)
 		return (
 			<Box
@@ -50,7 +53,10 @@ export function CheckboxBase({
 			{...inertProps(painted === true)}
 			accessibilityRole="checkbox"
 			accessibilityLabel={label}
-			accessibilityState={{ checked: painted ? false : value, disabled }}
+			accessibilityState={{
+				checked: absent ? false : value,
+				disabled: disabled || ended,
+			}}
 			disabled={disabled}
 			onPress={() => {
 				const next = value !== true;

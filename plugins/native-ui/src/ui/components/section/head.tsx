@@ -11,6 +11,7 @@ import type {
 	Part,
 } from "@fcalell/ui-core/descriptors";
 import { paintText } from "@fcalell/ui-core/paint";
+import { endedReason } from "@fcalell/ui-core/read";
 import {
 	SECTION_ACTS,
 	SECTION_BODY,
@@ -26,13 +27,7 @@ import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
 import { clipWhen, Painted } from "../../lib/paint";
 import { partText } from "../../lib/parts";
-import {
-	BusyMark,
-	endedItems,
-	endedReason,
-	type Frame,
-	FrameLine,
-} from "../../lib/read";
+import { BusyMark, endedItems, type Frame, FrameLine } from "../../lib/read";
 import { useWords } from "../../lib/words";
 import { ButtonBase } from "../button/base";
 import { Count } from "../count";

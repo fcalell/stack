@@ -9,6 +9,8 @@ import { createContext, useSyncExternalStore } from "react";
 export interface ToastOptions {
 	state?: ToastState;
 	act?: Act;
+	// Called once the toast has left, however it went.
+	onGone?: () => void;
 }
 
 export interface ToastEntry extends ToastOptions {
@@ -35,9 +37,11 @@ export function toast(sentence: string, options: ToastOptions = {}): void {
 }
 
 export function dismissToast(id: number): void {
-	if (!entries.some((entry) => entry.id === id)) return;
+	const gone = entries.find((entry) => entry.id === id);
+	if (!gone) return;
 	entries = entries.filter((entry) => entry.id !== id);
 	emit();
+	gone.onGone?.();
 }
 
 function subscribe(listener: () => void): () => void {

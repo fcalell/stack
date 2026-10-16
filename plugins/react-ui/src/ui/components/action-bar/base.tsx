@@ -2,6 +2,7 @@ import { Button as BaseButton } from "@base-ui/react/button";
 import { isThenable } from "@fcalell/plugin-api/acts";
 import { cn } from "@fcalell/ui-core/cn";
 import type { Act } from "@fcalell/ui-core/descriptors";
+import { pressStands } from "@fcalell/ui-core/reason";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
 	ACTION_BAR_ACTS,
@@ -14,7 +15,7 @@ import {
 	type ButtonFit,
 	text,
 } from "@fcalell/ui-core/variants";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { type Acting, useAct } from "../../lib/act.ts";
 import { ActInert, SubmitContext } from "../../lib/form.ts";
 import { useTouch } from "../../lib/media.ts";
@@ -88,7 +89,7 @@ export interface ActionBarInternal {
 	acting?: Acting<number>;
 	/** The read the filled act submits waits or stands still: the act paints, inert, in its loaded box. */
 	painted?: boolean;
-	/** The read the filled act submits has ended: the act stands blocked under this reason, the failed sentence or `words.missing`. */
+	/** The read the filled act submits has ended: the act stands blocked under this reason, the failed sentence or `words.missing`. The body already says why, so the bar keeps its line unseen and draws the sentence on a press only. */
 	ended?: string;
 	/** The filled act is its form's submit button, so Enter in a field presses it. */
 	submits?: boolean;
@@ -138,7 +139,8 @@ export function ActionBarBase({
 	// A failure draws in the bar's kept line, so it never moves the act; the
 	// same line says the connection refused an act.
 	const acting = given ?? own;
-	// The filled act is the one a read's end blocks.
+	// The filled act is the one a read's end blocks. Its sentence is the body's
+	// already, so it draws on a press, not at rest.
 	const acts =
 		ended === undefined
 			? offered
@@ -148,10 +150,19 @@ export function ActionBarBase({
 	// The reason this bar last drew: once a line has drawn the bar keeps its box.
 	const [held, setHeld] = useState<string>();
 	const { leave } = useTouched();
+	const [pressedUnder, setPressedUnder] = useState<string>();
+	const pressed = pressStands(ended, pressedUnder);
+	const endedHost = useMemo(
+		() => ({ press: () => setPressedUnder(ended) }),
+		[ended],
+	);
 	// The last blocked act's reason stands at rest under the acts, in the line
-	// a failure would draw in.
-	const reason = acts.findLast((act) => act.blocked !== undefined)?.blocked;
-	if (reason !== undefined && held !== reason) setHeld(reason);
+	// a failure would draw in; the filled act's, once its read ended, does not.
+	const reason = (ended === undefined ? acts : acts.slice(0, -1)).findLast(
+		(act) => act.blocked !== undefined,
+	)?.blocked;
+	const said = reason ?? ended;
+	if (said !== undefined && held !== said) setHeld(said);
 	const lastAt = acts.length - 1;
 	// The tree holds the acts in drawn order, so Tab follows it: on touch the
 	// stack draws the filled act first.
@@ -189,13 +200,16 @@ export function ActionBarBase({
 		});
 	// The bar under a `PendingBar` is drawn with no act that submits or presses.
 	const buttons = (ghost: boolean) => (
-		<ReasonHostContext value={REASON_AT_REST}>
-			<div className={cn(ACTION_BAR_ACTS, ACTS[where])}>
-				{drawn.map(([act, at]) => {
-					const last = at === lastAt;
-					const running = acting.pending === at;
-					return (
-						<SubmitContext key={act.label} value={!ghost && last && submits}>
+		<div className={cn(ACTION_BAR_ACTS, ACTS[where])}>
+			{drawn.map(([act, at]) => {
+				const last = at === lastAt;
+				const running = acting.pending === at;
+				return (
+					<ReasonHostContext
+						key={act.label}
+						value={last && ended !== undefined ? endedHost : REASON_AT_REST}
+					>
+						<SubmitContext value={!ghost && last && submits}>
 							<ActInert value={ghost || (acting.holds && !running)}>
 								<ButtonBase
 									act={kindOf(act, last)}
@@ -208,10 +222,10 @@ export function ActionBarBase({
 								/>
 							</ActInert>
 						</SubmitContext>
-					);
-				})}
-			</div>
-		</ReasonHostContext>
+					</ReasonHostContext>
+				);
+			})}
+		</div>
 	);
 	// One act clears the rows while any are chosen, one chooses every row while
 	// some stand unchosen; the table's head tick is the second where it stands.
@@ -261,8 +275,8 @@ export function ActionBarBase({
 			!(held !== undefined || kept || acting.line !== undefined) ? null : (
 				<Reason
 					kept
-					failed={acting.pending === undefined}
-					shown={acting.line !== undefined}
+					failed={acting.pending === undefined && !pressed}
+					shown={acting.line !== undefined || pressed}
 				>
 					{acting.line ?? held ?? NO_FAILURE}
 				</Reason>

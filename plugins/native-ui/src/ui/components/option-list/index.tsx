@@ -33,7 +33,8 @@ export type OptionListShape<V extends string, T> = OptionSource<T, V> & {
 };
 
 // One choice: the chosen value or null. A selection paints the radios, inert,
-// until its read lands and follows it until the viewer chooses.
+// until its read lands and follows it until the viewer chooses. Once its
+// read ended the control stands with no value and a change says why instead.
 interface OneChoice<V extends string> {
 	value: Datum<NoInfer<V> | null>;
 	// Hears the option chosen. A promise it returns holds the viewer's value

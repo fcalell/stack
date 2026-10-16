@@ -47,9 +47,12 @@ export function CheckboxBase({
 	cell?: boolean;
 	painted?: boolean;
 }) {
-	const painted = given || draft.painted;
+	// A read that ended leaves the box empty and blocked.
+	const ended = draft.ended !== undefined;
+	const painted = given || (draft.painted && !ended);
+	const absent = painted || ended;
 	const value = draft.value;
-	const state = STATES[painted ? "false" : (`${value}` as const)];
+	const state = STATES[absent ? "false" : (`${value}` as const)];
 	// A field around it disables it through Base UI's field context, which
 	// sets `disabled` and `data-disabled` on the hit box and the mark.
 	// The hit box is a native button: on a span, Base UI reads the hidden
@@ -58,9 +61,10 @@ export function CheckboxBase({
 		<Base.Root
 			nativeButton
 			render={<button type="button" />}
-			checked={!painted && value === true}
-			indeterminate={!painted && value === "mixed"}
+			checked={!absent && value === true}
+			indeterminate={!absent && value === "mixed"}
 			inert={painted || undefined}
+			aria-disabled={ended || undefined}
 			onCheckedChange={(next) => {
 				draft.change(next, () => onChange(next));
 			}}

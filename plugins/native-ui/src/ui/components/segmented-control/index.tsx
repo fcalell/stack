@@ -13,7 +13,8 @@ export interface SegmentedControlProps extends Closed {
 	label: string;
 	options: readonly Segment[];
 	// A selection paints the track, inert, until its read lands and follows it
-	// until the viewer chooses.
+	// until the viewer chooses. Once its read ended it stands with no value
+	// and a choice says why instead.
 	value: Datum<string>;
 	// A promise it returns holds the viewer's value while it pends; a refusal
 	// puts it back, with its reason.

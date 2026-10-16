@@ -284,13 +284,14 @@ function CheckboxRow(props: {
 	children: ReactNode;
 }) {
 	const { checkbox, draft, label, disabled } = props;
+	const ended = draft.ended !== undefined;
 	const checked = draft.painted ? false : draft.value;
 	return (
 		<Pressable
-			{...inertProps(draft.painted)}
+			{...inertProps(draft.painted && !ended)}
 			accessibilityRole="checkbox"
 			accessibilityLabel={label}
-			accessibilityState={{ checked, disabled }}
+			accessibilityState={{ checked, disabled: disabled || ended }}
 			disabled={disabled}
 			onPress={() => {
 				const next = checked !== true;

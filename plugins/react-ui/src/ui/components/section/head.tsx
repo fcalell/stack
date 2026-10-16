@@ -13,6 +13,7 @@ import type {
 	Part,
 } from "@fcalell/ui-core/descriptors";
 import { paintText } from "@fcalell/ui-core/paint";
+import { endedReason } from "@fcalell/ui-core/read";
 import {
 	SECTION_ACTS,
 	SECTION_BODY,
@@ -29,7 +30,6 @@ import { partText } from "../../lib/parts.ts";
 import {
 	BusyMark,
 	endedItems,
-	endedReason,
 	type Frame,
 	FrameLine,
 } from "../../lib/read.tsx";

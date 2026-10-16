@@ -4,6 +4,8 @@
 // TanStack's `useQuery` satisfies `ReadResult`, but ui-core names only the
 // fields it reads, so it imports neither TanStack nor React.
 
+import type { Words } from "./tokens.ts";
+
 export interface ReadResult {
 	status: "pending" | "success" | "error";
 	fetchStatus: "fetching" | "paused" | "idle";
@@ -194,4 +196,13 @@ export function turnOf(held: Held): { form: TurnForm; value: unknown } {
 	if (value == null) return { form: "none", value };
 	if (s?.stale && holds) return { form: "stopped", value };
 	return { form: s?.streaming ? "writing" : "written", value };
+}
+
+// The reason an act or a control stands blocked under once the read it depends
+// on has ended (a frame's `form`, or a selection's `phase`): the failed
+// sentence, or `words.missing`. None while the read waits, stands still or
+// answered.
+export function endedReason(words: Words, phase?: string): string | undefined {
+	if (phase === "failed") return words.readFailed;
+	return phase === "missing" ? words.missing : undefined;
 }

@@ -14,7 +14,8 @@ const PRESSED = { off: "bg-switch-off-hover", on: "bg-toggle-on-hover" };
 // The track and thumb every Switch renders, on the `draft` its host holds: a
 // field hosts the draft of its switch and draws a rejection in its own line.
 // `painted` is the track while its data is not here: filled, the thumb not
-// drawn, inert. Outside the package's exports.
+// drawn, inert. A read that ended leaves the track unfilled with no thumb,
+// blocked: a press says why and changes nothing. Outside the package's exports.
 export function SwitchBase({
 	draft,
 	onChange,
@@ -24,17 +25,20 @@ export function SwitchBase({
 	draft: Draft<boolean>;
 	painted?: boolean;
 }) {
-	const painted = given || draft.painted;
+	// A read that ended leaves the track standing with no thumb, blocked.
+	const ended = draft.ended !== undefined;
+	const painted = given || (draft.painted && !ended);
+	const absent = painted || ended;
 	const disabled = useContext(FieldDisabled);
 	const shown = useShown(painted);
-	const on = draft.value && !painted;
+	const on = draft.value && !absent;
 	const state = on ? "on" : "off";
 	return (
 		<Pressable
 			{...inertProps(painted === true)}
 			accessibilityRole="switch"
 			accessibilityLabel={label}
-			accessibilityState={{ checked: on, disabled }}
+			accessibilityState={{ checked: on, disabled: disabled || ended }}
 			disabled={disabled}
 			onPress={() => {
 				draft.change(!on, () => onChange(!on));
@@ -55,7 +59,7 @@ export function SwitchBase({
 						className={cn(
 							switchThumb({ state }),
 							disabled && "bg-ink-disabled",
-							painted && "opacity-0",
+							absent && "opacity-0",
 						)}
 					/>
 				</View>

@@ -108,7 +108,10 @@ export function PickerBase<V extends string | null = string>(
 	// Waiting options paint the trigger as a waiting value does, and the sheet
 	// has no rows to open.
 	const { drawn: waiting, retry } = useOptions(given.options);
-	const painted = given.painted || draft.painted || waiting.painted;
+	// A value whose read ended leaves the box empty and blocked: opening it
+	// says why and opens nothing, so nothing can be picked.
+	const ended = draft.ended !== undefined;
+	const painted = given.painted || (draft.painted && !ended) || waiting.painted;
 	const props = {
 		...given,
 		value: draft.painted ? undefined : draft.value,
@@ -131,6 +134,10 @@ export function PickerBase<V extends string | null = string>(
 	// In a table cell the pick opens as its edit starts, and its sheet gone,
 	// its leave played, ends the edit.
 	const [open, setOpen] = useState(cell !== undefined);
+	const opens = () => {
+		if (ended) draft.change(undefined);
+		else setOpen(true);
+	};
 	const groups = useOptionGroups(waiting.painted ? NO_OPTIONS : waiting.value);
 	// Painted, the trigger shows the label alone, not drawn.
 	const current = painted
@@ -225,8 +232,8 @@ export function PickerBase<V extends string | null = string>(
 			<Pressable
 				accessibilityRole="button"
 				accessibilityLabel={label}
-				accessibilityState={{ expanded: open }}
-				onPress={() => setOpen(true)}
+				accessibilityState={{ expanded: open, disabled: ended }}
+				onPress={opens}
 				className={cn(CHIPS_TRIGGER, SEVERAL_TRIGGER)}
 			>
 				{chosen.length === 0 ? (
@@ -253,9 +260,9 @@ export function PickerBase<V extends string | null = string>(
 			accessibilityRole="button"
 			accessibilityLabel={cell?.label ?? label}
 			accessibilityValue={{ text: current?.label }}
-			accessibilityState={{ expanded: open, disabled }}
+			accessibilityState={{ expanded: open, disabled: disabled || ended }}
 			disabled={disabled}
-			onPress={() => setOpen(true)}
+			onPress={opens}
 			{...inertProps(painted === true)}
 			className={cn(
 				row

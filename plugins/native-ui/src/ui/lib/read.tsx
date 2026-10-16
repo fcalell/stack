@@ -8,7 +8,7 @@ import {
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
 import type { Act, MenuItem } from "@fcalell/ui-core/descriptors";
-import { frameOf } from "@fcalell/ui-core/read";
+import { endedReason, frameOf } from "@fcalell/ui-core/read";
 import type { Words } from "@fcalell/ui-core/tokens";
 import { text } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
@@ -61,15 +61,6 @@ export function useOptions<O>(options: Datum<O>) {
 		NO_FLAGS,
 	);
 	return { drawn: drawn as Drawn<O>, retry };
-}
-
-// The reason an act stands blocked under once the read it depends on has
-// ended (a frame's `form`, or a selection's `phase`): `words.readFailed`, or
-// `words.missing`. None while the read waits,
-// stands still or answered.
-export function endedReason(words: Words, phase?: string): string | undefined {
-	if (phase === "failed") return words.readFailed;
-	return phase === "missing" ? words.missing : undefined;
 }
 
 // The one blocked item a menu stands as while its read has ended: nothing

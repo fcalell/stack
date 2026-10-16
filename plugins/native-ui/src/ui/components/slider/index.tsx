@@ -7,7 +7,7 @@ import { SliderBase } from "./base";
 export interface SliderProps extends Closed {
 	/** What it sets, drawn over the track and naming the thumb (a short phrase; truncates). */
 	label: string;
-	/** The value, between `min` and `max`. A selection paints the track, inert, until its read lands and follows it until the viewer moves it. */
+	/** The value, between `min` and `max`. A selection paints the track, inert, until its read lands and follows it until the viewer moves it. Once its read ended the control stands with no value and a change says why instead. */
 	value: Datum<number>;
 	/** Hears each value the viewer moves it to. */
 	onChange: (value: number) => void;

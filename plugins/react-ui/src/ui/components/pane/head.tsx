@@ -10,6 +10,7 @@ import type {
 	Part,
 	Route,
 } from "@fcalell/ui-core/descriptors";
+import { endedReason } from "@fcalell/ui-core/read";
 import {
 	PAGE_HEAD,
 	PAGE_HEAD_ROOM,
@@ -25,7 +26,6 @@ import { partText } from "../../lib/parts.ts";
 import {
 	BusyMark,
 	endedItems,
-	endedReason,
 	type Frame,
 	FrameLine,
 } from "../../lib/read.tsx";

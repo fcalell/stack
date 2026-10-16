@@ -25,7 +25,7 @@ interface Shared<V extends string | null> extends Closed {
 /** A pick of one option. */
 export interface PickOneProps<V extends string | null = string>
 	extends Shared<V> {
-	/** The chosen option's value. A selection paints the trigger, inert, until its read lands and follows it until the viewer picks. */
+	/** The chosen option's value. A selection paints the trigger, inert, until its read lands and follows it until the viewer picks. Once its read ended the control stands with no value and a change says why instead. */
 	value?: Datum<NoInfer<V>>;
 	/** Hears the picked option's value. Return the save's promise and the viewer's value holds while it pends; a refusal puts it back, with its reason. */
 	onChange: (value: NoInfer<V>) => unknown;

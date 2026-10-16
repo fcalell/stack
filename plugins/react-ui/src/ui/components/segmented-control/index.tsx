@@ -15,7 +15,7 @@ export interface SegmentedControlProps extends Closed {
 	label: string;
 	/** The options in order. */
 	options: readonly Segment[];
-	/** The chosen option's value. A selection paints the track, inert, until its read lands and follows it until the viewer chooses. */
+	/** The chosen option's value. A selection paints the track, inert, until its read lands and follows it until the viewer chooses. Once its read ended the control stands with no value and a change says why instead. */
 	value: Datum<string>;
 	/** Hears the chosen option's value. Return the save's promise and the viewer's value holds while it pends; a refusal puts it back, with its reason. */
 	onChange: (value: string) => unknown;

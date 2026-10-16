@@ -37,7 +37,8 @@ sees the placeholder:
   the combine's.
 - `useDraft(datum, failed?)` is a field's value: it follows its selection until the viewer edits it,
   then holds the edit; a selection over another read drops the edit. A constant passes through
-  unchanged: the app owns it, and a value it changes shows. Saving a change is on
+  unchanged: the app owns it, and a value it changes shows. `ended` is `"failed"` or `"missing"` while the value's own read has ended (`painted` is then still
+  true, its value the placeholder): a control stands with no value and refuses its changes. Saving a change is on
   [acts and saves](./acts.md).
 
 ## What a frame draws

@@ -366,7 +366,10 @@ export function PickerBase<V extends string | null = string>(
 	// has no rows to open.
 	const { drawn: waiting, retry } = useOptions(given.options);
 	const options: PickOptions<V> = waiting.painted ? [] : waiting.value;
-	const painted = given.painted || draft.painted || waiting.painted;
+	// A value whose read ended leaves the box empty and blocked: opening it
+	// says why and opens nothing, so nothing can be picked.
+	const ended = draft.ended !== undefined;
+	const painted = given.painted || (draft.painted && !ended) || waiting.painted;
 	const props = {
 		...given,
 		value: draft.painted ? undefined : draft.value,
@@ -399,6 +402,10 @@ export function PickerBase<V extends string | null = string>(
 	const [open, setOpenState] = useState(cell?.starts ?? false);
 	const back = useRef(true);
 	const setOpen = (next: boolean, details?: { reason: string }) => {
+		if (ended && next) {
+			draft.change(undefined);
+			return;
+		}
 		setOpenState(next);
 		if (next) return;
 		back.current =
@@ -497,6 +504,7 @@ export function PickerBase<V extends string | null = string>(
 				painted && PAINTED,
 			)}
 			inert={painted || form?.disabled || undefined}
+			aria-disabled={ended || undefined}
 		>
 			{chosen.length > 0 ? (
 				<div ref={run} className={cn(CHIPS_RUN, SEVERAL_RUN)}>
@@ -542,6 +550,7 @@ export function PickerBase<V extends string | null = string>(
 				tabIndex={cell ? -1 : handed.tabIndex}
 				disabled={form?.disabled}
 				inert={painted || undefined}
+				aria-disabled={ended || undefined}
 				className={cn(
 					fit === "row"
 						? cn(WORD_ACT, picker({ fit }), ROW_TRIGGER, open && ROW_OPEN)

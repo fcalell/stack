@@ -4,6 +4,7 @@ import {
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
 import type { IconAct, MenuItem, Part } from "@fcalell/ui-core/descriptors";
+import { endedReason } from "@fcalell/ui-core/read";
 import {
 	PAGE_HEAD,
 	PAGE_HEAD_ROOM,
@@ -22,13 +23,7 @@ import { DistanceContext, ShellSwitcher } from "../../lib/frame";
 import { navigate } from "../../lib/navigate";
 import { inertProps, Painted } from "../../lib/paint";
 import { partText } from "../../lib/parts";
-import {
-	BusyMark,
-	endedItems,
-	endedReason,
-	type Frame,
-	FrameLine,
-} from "../../lib/read";
+import { BusyMark, endedItems, type Frame, FrameLine } from "../../lib/read";
 import type { Route } from "../../lib/route";
 import { useWords } from "../../lib/words";
 import { IconButton } from "../icon-button";

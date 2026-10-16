@@ -3,7 +3,7 @@ import { cn } from "@fcalell/ui-core/cn";
 import type { CountLink, MeterMark } from "@fcalell/ui-core/descriptors";
 import { formatterFor } from "@fcalell/ui-core/format";
 import { levelOf } from "@fcalell/ui-core/list-state";
-import { painting } from "@fcalell/ui-core/paint";
+import { type PaintRole, painting, paintText } from "@fcalell/ui-core/paint";
 import {
 	FIGURES,
 	METER,
@@ -63,7 +63,17 @@ export interface MeterInternal {
 	at?: number;
 }
 
-/** The label at body 500 with the share in percent at its end, the bar under them filling by the share in the meta ink, amber once near full (at its `mark` when it has one) and `danger` once over, the line under the bar: the meta, or the counts as links. A `label`, `value` or `max` that is a selection paints in its place, the meter inert, until its read lands. */
+// The slot of a value an ended read left out: the loaded line's height and
+// width held, nothing drawn, so the meter does not move.
+function Blank({ role, at }: { role: PaintRole; at: number }) {
+	return (
+		<span aria-hidden className="invisible">
+			{paintText(role, at)}
+		</span>
+	);
+}
+
+/** The label at body 500 with the share in percent at its end, the bar under them filling by the share in the meta ink, amber once near full (at its `mark` when it has one) and `danger` once over, the line under the bar: the meta, or the counts as links. A `label`, `value` or `max` that is a selection paints in its place, the meter inert, until its read lands; once its read ended the meter stands empty (no share, no fill, the label if its own read answered) in the same box. */
 export function Meter(meter: MeterProps) {
 	return <MeterBase {...meter} />;
 }
@@ -80,20 +90,29 @@ export function MeterBase({
 	at = 0,
 }: MeterProps & MeterInternal) {
 	const [l, v, m] = useSelections([label, value, max]);
-	const painted = listed || l.painted || v.painted || m.painted;
-	// The drawn numbers are read only once painted is ruled out: a placeholder
+	// A read that ended leaves the meter empty, unpainted: no share, no track
+	// fill, the label standing if its own read answered.
+	const ended = [l, v, m].some(
+		(one) => one.painted && (one.phase === "failed" || one.phase === "missing"),
+	);
+	const absent = listed || l.painted || v.painted || m.painted;
+	const painted = absent && !ended;
+	// The drawn numbers are read only once absence is ruled out: a placeholder
 	// is a function proxy.
-	const used = painted ? 0 : (v.value as number);
-	const limit = painted ? 0 : (m.value as number);
+	const used = absent ? 0 : (v.value as number);
+	const limit = absent ? 0 : (m.value as number);
 	const share = limit > 0 ? used / limit : 0;
 	const markShare = mark && limit > 0 ? mark.value / limit : undefined;
 	const percent = formatterFor("number", undefined, {
 		style: "percent",
 		maximumFractionDigits: 0,
 	}).format(share);
-	// A painted meter is no meter: its numbers are not here to be read.
-	const reads = painted
-		? { "aria-hidden": true }
+	// A painted meter is no meter: its numbers are not here to be read, and
+	// neither are an ended one's.
+	const reads = absent
+		? painted
+			? { "aria-hidden": true }
+			: {}
 		: {
 				role: "meter",
 				"aria-label": l.value as string,
@@ -113,10 +132,22 @@ export function MeterBase({
 							LABEL,
 						)}
 					>
-						{painted ? <Painted role="name" at={at} /> : (l.value as string)}
+						{painted ? (
+							<Painted role="name" at={at} />
+						) : l.painted ? (
+							<Blank role="name" at={at} />
+						) : (
+							(l.value as string)
+						)}
 					</span>
 					<span className={cn(text({ role: "meta" }), FIGURES, SHARE)}>
-						{painted ? <Painted role="figure" at={at} /> : percent}
+						{painted ? (
+							<Painted role="figure" at={at} />
+						) : absent ? (
+							<Blank role="figure" at={at} />
+						) : (
+							percent
+						)}
 					</span>
 				</div>
 				<div className={BAR}>

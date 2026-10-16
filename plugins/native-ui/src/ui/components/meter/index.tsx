@@ -2,7 +2,7 @@ import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
 import type { CountLink, MeterMark } from "@fcalell/ui-core/descriptors";
 import { formatterFor } from "@fcalell/ui-core/format";
 import { levelOf } from "@fcalell/ui-core/list-state";
-import { painting } from "@fcalell/ui-core/paint";
+import { painting, paintText } from "@fcalell/ui-core/paint";
 import {
 	FIGURES,
 	METER,
@@ -76,7 +76,9 @@ export interface MeterInternal {
 // them filling by the share in the meta ink, amber once near full (at its
 // `mark` when it has one) and `danger` once over, the line under the bar: the
 // meta, or the counts as links. A `label`, `value` or `max` that is a
-// selection paints in its place until its read lands. React Native has no
+// selection paints in its place until its read lands; once its read ended the
+// meter stands empty (no share, no fill, the label if its own read answered)
+// in the same box. React Native has no
 // meter role: it is a progress bar.
 export function Meter(meter: MeterProps) {
 	return <MeterBase {...meter} />;
@@ -95,20 +97,27 @@ export function MeterBase({
 	at = 0,
 }: MeterProps & MeterInternal) {
 	const [l, v, m] = useSelections([label, value, max]);
-	const painted = listed || l.painted || v.painted || m.painted;
+	// A read that ended leaves the meter empty, unpainted: no share, no track
+	// fill, the label standing if its own read answered.
+	const ended = [l, v, m].some(
+		(one) => one.painted && (one.phase === "failed" || one.phase === "missing"),
+	);
+	const absent = listed || l.painted || v.painted || m.painted;
+	const painted = absent && !ended;
 	const shown = useShown(painted);
-	// The drawn numbers are read only once painted is ruled out: a placeholder
+	// The drawn numbers are read only once absence is ruled out: a placeholder
 	// is a function proxy.
-	const used = painted ? 0 : (v.value as number);
-	const limit = painted ? 0 : (m.value as number);
+	const used = absent ? 0 : (v.value as number);
+	const limit = absent ? 0 : (m.value as number);
 	const share = limit > 0 ? used / limit : 0;
 	const markShare = mark && limit > 0 ? mark.value / limit : undefined;
 	const percent = formatterFor("number", undefined, {
 		style: "percent",
 		maximumFractionDigits: 0,
 	}).format(share);
-	// A painted meter is no progress bar: its numbers are not here to be read.
-	const reads = painted
+	// A painted meter is no progress bar: its numbers are not here to be read,
+	// and neither are an ended one's.
+	const reads = absent
 		? {}
 		: ({
 				accessibilityRole: "progressbar",
@@ -125,12 +134,34 @@ export function MeterBase({
 						text({ role: "body" }),
 						textStrong({ role: "body" }),
 						LABEL,
+						// A value an ended read left out keeps the loaded line's height
+						// and width, nothing drawn, so the meter does not move.
+						!painted && l.painted && "opacity-0",
 					)}
 				>
-					{painted ? <Painted role="name" at={at} /> : (l.value as string)}
+					{painted ? (
+						<Painted role="name" at={at} />
+					) : l.painted ? (
+						paintText("name", at)
+					) : (
+						(l.value as string)
+					)}
 				</RNText>
-				<RNText className={cn(text({ role: "meta" }), FIGURES, SHARE)}>
-					{painted ? <Painted role="figure" at={at} /> : percent}
+				<RNText
+					className={cn(
+						text({ role: "meta" }),
+						FIGURES,
+						SHARE,
+						!painted && absent && "opacity-0",
+					)}
+				>
+					{painted ? (
+						<Painted role="figure" at={at} />
+					) : absent ? (
+						paintText("figure", at)
+					) : (
+						percent
+					)}
 				</RNText>
 			</View>
 			<View className={BAR}>

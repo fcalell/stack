@@ -36,8 +36,10 @@ export function SegmentedControlBase({
 	draft: Draft<string>;
 	painted?: boolean;
 }) {
-	const painted = given || draft.painted;
-	const chosenValue = painted ? "" : draft.value;
+	// A read that ended leaves the track with no segment chosen, blocked.
+	const ended = draft.ended !== undefined;
+	const painted = given || (draft.painted && !ended);
+	const chosenValue = painted || ended ? "" : draft.value;
 	// A FormField around it names it with its visible label.
 	const named = use(GroupName);
 	return (
@@ -49,6 +51,7 @@ export function SegmentedControlBase({
 				draft.change(next as string, () => onChange(next as string))
 			}
 			inert={painted || undefined}
+			aria-disabled={ended || undefined}
 			className={cn(
 				SEGMENTED_CONTROL,
 				TRACK,

@@ -95,11 +95,14 @@ export function InputBase({
 	painted?: boolean;
 }) {
 	useModality();
-	const painted = given || draft.painted;
-	const shown = painted ? "" : draft.value;
+	// A read that ended leaves the box empty and blocked: a keystroke says why
+	// and changes nothing.
+	const ended = draft.ended !== undefined;
+	const painted = given || (draft.painted && !ended);
+	const shown = painted || ended ? "" : draft.value;
 	const edit = (next: string) => {
 		draft.change(next);
-		onChange(next);
+		if (!ended) onChange(next);
 	};
 	// A commit that returns its save's promise holds the value while it pends.
 	const save =
@@ -141,7 +144,7 @@ export function InputBase({
 				// biome-ignore lint/a11y/noStaticElementInteractions: the press forwards focus to the input inside, which the keyboard reaches on its own
 				<div
 					onMouseDown={focusValue}
-					aria-disabled={state.disabled || undefined}
+					aria-disabled={state.disabled || ended || undefined}
 					inert={painted || undefined}
 					className={cn(
 						field({

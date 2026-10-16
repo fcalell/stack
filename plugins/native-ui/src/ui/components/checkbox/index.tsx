@@ -4,7 +4,7 @@ import { HeldCheckbox } from "./base";
 
 /** A choice among others, on, off, or mixed over a set. */
 export interface CheckboxProps extends Closed {
-	/** Whether it is checked; `mixed` when some of the set it stands for are. A selection paints the box, inert, until its read lands and follows it until the viewer toggles it. */
+	/** Whether it is checked; `mixed` when some of the set it stands for are. A selection paints the box, inert, until its read lands and follows it until the viewer toggles it. Once its read ended the control stands with no value and a change says why instead. */
 	checked: Datum<boolean | "mixed">;
 	/** Hears the next value when the viewer toggles it; a mixed box checks. Return the save's promise and the viewer's value holds while it pends; a refusal puts it back, with its reason. */
 	onChange: (checked: boolean) => unknown;

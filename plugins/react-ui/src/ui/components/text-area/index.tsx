@@ -7,7 +7,7 @@ import { TextAreaBase } from "./base.tsx";
 export interface TextAreaProps extends Closed {
 	/** What is typed: `prose` (the default) or `source` (mono, a machine reads it). */
 	kind?: "prose" | "source";
-	/** The value (text; wraps). A selection paints the box, inert, until its read lands and follows it until the viewer types. */
+	/** The value (text; wraps). A selection paints the box, inert, until its read lands and follows it until the viewer types. Once its read ended the control stands with no value and a change says why instead. */
 	value: Datum<string>;
 	/** Hears every keystroke's value. */
 	onChange: (value: string) => void;

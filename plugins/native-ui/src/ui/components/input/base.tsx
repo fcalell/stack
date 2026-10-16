@@ -77,11 +77,14 @@ export function InputBase({
 	inline?: InlineFit;
 	painted?: boolean;
 }) {
-	const painted = given || draft.painted;
-	const typed = painted ? "" : draft.value;
+	// A read that ended leaves the box empty and blocked: a keystroke says why
+	// and changes nothing.
+	const ended = draft.ended !== undefined;
+	const painted = given || (draft.painted && !ended);
+	const typed = painted || ended ? "" : draft.value;
 	const edit = (next: string) => {
 		draft.change(next);
-		onChange(next);
+		if (!ended) onChange(next);
 	};
 	const shown = useShown(painted);
 	const words = useWords();
@@ -137,7 +140,7 @@ export function InputBase({
 					name ??
 					(search ? words.search : undefined)
 				}
-				accessibilityState={{ disabled }}
+				accessibilityState={{ disabled: disabled || ended }}
 				editable={!disabled}
 				className={cn(
 					fieldValue({ kind: surface }),

@@ -6,6 +6,7 @@ import {
 } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type { Act, IconName } from "@fcalell/ui-core/descriptors";
+import { endedReason } from "@fcalell/ui-core/read";
 import {
 	BANNER_MAIN,
 	BANNER_ROW,
@@ -17,7 +18,6 @@ import {
 import { useMemo } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { Painted } from "../../lib/paint.tsx";
-import { endedReason } from "../../lib/read.tsx";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";
