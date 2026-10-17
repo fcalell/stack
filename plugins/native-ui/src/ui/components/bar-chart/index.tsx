@@ -58,21 +58,24 @@ const ZERO = "absolute right-0 bottom-0 translate-y-1/2";
 const MAIN = "grow min-w-0";
 const PLOT = "relative";
 const GRID_BAND = "flex-1";
-// The gridlines stand behind the bars' regions, at the same height, so the
-// times under the bars are no part of the plot.
+// The gridlines stand behind the bars' regions, at the same height.
 const GRID = "absolute inset-x-0 top-0";
 const BARS = "relative flex-row";
-// A bar's slot: its region (the plot's height, the bar standing on its floor)
-// over its time, when it has one.
-const SLOT = "items-center flex-1 min-w-0";
-const REGION = "justify-end items-center w-full";
+// A bar's slot is its region: the plot's height, the bar standing on its
+// floor.
+const REGION = "justify-end items-center flex-1 min-w-0";
 const COLUMN = "w-2/3";
 // React Native paints a fill under its border, so a stacked part's clear
 // split line is its box's border with the fill inside it.
 const PART = "w-2/3 shrink-0";
 const PART_FILL = "flex-1";
-// The painted times stand at the plot's two ends.
-const TIMES_PAINTED = "flex-row justify-between";
+// The time line under the plot, painted or loaded: the first bar's time at
+// its start and the last bar's at its end, each whole.
+const TIMES = "flex-row";
+// A time takes up to half the line, so both stand whole at any real width and
+// only a text that cannot fit beside the other truncates.
+const TIME = "min-w-0 max-w-1/2";
+const TIME_END = "ms-auto";
 
 interface Figures {
 	// The head's and the keys' figures.
@@ -139,7 +142,7 @@ export interface BarSlots<T> {
 	value: (item: T) => number;
 	// The bar's parts' values by the chart's `keys`; a key it lacks is 0.
 	parts?: (item: T) => Readonly<Record<string, number>> | undefined;
-	/** The time drawn under the bar (a word; truncates). */
+	/** The time drawn under the plot's start (the first bar's) and end (the last bar's); no other bar's is read (a word; never wraps or cuts). */
 	at?: (item: T) => string | undefined;
 }
 
@@ -169,16 +172,16 @@ interface Bar {
 	key: string;
 	value: number;
 	parts?: Readonly<Record<string, number>>;
-	at?: string;
 }
 
 // The total (the last bar with `level`) at body 500 with its unit, the parts' keys under it, then the
 // axis beside the plot, its four gridlines a hairline each with its tick centred on it and the baseline with its 0, the columns in the
-// chip marks by part, a time under each bar that has one. While the `items`
+// chip marks by part, the first bar's time under the
+// plot's start and the last bar's under its end. While the `items`
 // selection's read waits, the total is a figure's filler, the legend stands
 // (its names and marks declared, its figures painted), the plot is one
-// painted box at its loaded height with the axis's lane kept and the times
-// are two fillers, the chart inert. The chart is a frame of its items: it
+// painted box at its loaded height with the axis's lane kept and the time
+// line is two fillers at its place, the chart inert. The chart is a frame of its items: it
 // draws the failed form with Retry, the missing form and the empty form in its
 // own box with the generic sentence, and the stale and paused line above
 // itself while it holds its read, whatever stands above it.
@@ -193,8 +196,13 @@ export function BarChart<T>(props: BarChartProps<T>) {
 		key: bar.key(item),
 		value: bar.value(item),
 		parts: bar.parts?.(item),
-		at: bar.at?.(item),
 	}));
+	// Only the ends are timed: the first bar's time at the plot's start, the
+	// last bar's at its end.
+	const first = items[0];
+	const last = items.length > 1 ? items[items.length - 1] : undefined;
+	const start = first === undefined ? undefined : bar.at?.(first);
+	const end = last === undefined ? undefined : bar.at?.(last);
 	const labels = keys ?? [];
 	const part = (bar: Bar, key: string) => bar.parts?.[key] ?? 0;
 	const peaks = series.map((bar) =>
@@ -309,75 +317,89 @@ export function BarChart<T>(props: BarChartProps<T>) {
 								</View>
 								<View className={BARS}>
 									{series.map((bar) => (
-										<View key={bar.key} className={SLOT}>
-											<View className={cn(CHART_GRID, REGION)}>
-												{keys ? (
-													// The first part stands on the baseline, each next one
-													// over it, split from it by a clear line.
-													keys
-														.map((key, at) =>
-															at > 0 ? (
+										<View key={bar.key} className={cn(CHART_GRID, REGION)}>
+											{keys ? (
+												// The first part stands on the baseline, each next one
+												// over it, split from it by a clear line.
+												keys
+													.map((key, at) =>
+														at > 0 ? (
+															<View
+																key={key}
+																className={cn(CHART_PART_SPLIT, PART)}
+																style={height(part(bar, key), top)}
+															>
 																<View
-																	key={key}
-																	className={cn(CHART_PART_SPLIT, PART)}
-																	style={height(part(bar, key), top)}
-																>
-																	<View
-																		className={cn(
-																			chartFill({ series: mark(at) }),
-																			PART_FILL,
-																		)}
-																	/>
-																</View>
-															) : (
-																<View
-																	key={key}
 																	className={cn(
 																		chartFill({ series: mark(at) }),
-																		PART,
+																		PART_FILL,
 																	)}
-																	style={height(part(bar, key), top)}
 																/>
-															),
-														)
-														.reverse()
-												) : (
-													<View
-														className={cn(
-															chartFill({ series: CHART_SERIES[0] }),
-															COLUMN,
-														)}
-														style={height(bar.value, top)}
-													/>
-												)}
-											</View>
-											{bar.at ? (
-												<RNText
-													numberOfLines={1}
+															</View>
+														) : (
+															<View
+																key={key}
+																className={cn(
+																	chartFill({ series: mark(at) }),
+																	PART,
+																)}
+																style={height(part(bar, key), top)}
+															/>
+														),
+													)
+													.reverse()
+											) : (
+												<View
 													className={cn(
-														text({ role: "meta" }),
-														FIGURES,
-														"pt-pair",
+														chartFill({ series: CHART_SERIES[0] }),
+														COLUMN,
 													)}
-												>
-													{bar.at}
-												</RNText>
-											) : null}
+													style={height(bar.value, top)}
+												/>
+											)}
 										</View>
 									))}
 								</View>
 							</View>
 						)}
 						{painted ? (
-							<View className={TIMES_PAINTED}>
-								{[0, 1].map((end) => (
+							<View className={TIMES}>
+								{[0, 1].map((at) => (
 									<RNText
-										key={end}
-										className={cn(text({ role: "meta" }), FIGURES)}
+										key={at}
+										className={cn(
+											text({ role: "meta" }),
+											FIGURES,
+											at === 1 && TIME_END,
+										)}
 									>
-										<Painted role="word" at={end} />
+										<Painted role="word" at={at} />
 									</RNText>
 								))}
+							</View>
+						) : start || end ? (
+							<View className={TIMES}>
+								{start ? (
+									<RNText
+										numberOfLines={1}
+										className={cn(text({ role: "meta" }), FIGURES, TIME)}
+									>
+										{start}
+									</RNText>
+								) : null}
+								{end ? (
+									<RNText
+										numberOfLines={1}
+										className={cn(
+											text({ role: "meta" }),
+											FIGURES,
+											TIME,
+											TIME_END,
+										)}
+									>
+										{end}
+									</RNText>
+								) : null}
 							</View>
 						) : null}
 					</View>

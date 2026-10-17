@@ -59,25 +59,27 @@ const ZERO = "absolute end-0 bottom-0 translate-y-1/2";
 const MAIN = "grow min-w-0";
 const COLUMN = "flex flex-col";
 // Past `VIRTUAL_FROM` bars the plot keeps a bar's width and scrolls sideways
-// under the axis, which stays; the bars and their times window along x.
+// under the axis, which stays; the bars window along x.
 const SCROLLS = "overflow-x-auto focus-visible:-outline-offset-2";
 const WIDE = "w-max min-w-full";
-const SLOT_WIDE = "w-target shrink-0";
+const BAR_WIDE = "w-target shrink-0";
 const PLOT = "relative";
-// The gridlines stand behind the bars' regions, at the same height, so the
-// times under the bars are no part of the plot.
+// The gridlines stand behind the bars' regions, at the same height.
 const GRID = "absolute inset-x-0 top-0 flex flex-col";
 const GRID_BAND = "flex-1";
 const BARS = "relative flex";
-// A bar's slot: its region (the plot's height, the bar standing on its floor)
-// over its time, when it has one.
-const SLOT = "flex flex-col items-center";
-const REGION = "flex flex-col justify-end items-center w-full";
-const SLOT_FIT = "flex-1 min-w-0";
+// A bar's slot is its region: the plot's height, the bar standing on its
+// floor.
+const REGION = "flex flex-col justify-end items-center";
+const BAR_FIT = "flex-1 min-w-0";
 const PART = "shrink-0";
-const TIME_TEXT = "pt-pair w-full max-w-measure-short text-center truncate";
-// The painted times stand at the plot's two ends.
-const TIMES_PAINTED = "flex justify-between";
+// The time line under the plot, painted or loaded: the first bar's time at
+// its start and the last bar's at its end, each whole.
+const TIMES = "flex";
+// A time takes up to half the line, so both stand whole at any real width and
+// only a text that cannot fit beside the other truncates.
+const TIME = "min-w-0 max-w-1/2 truncate";
+const TIME_END = "ms-auto";
 
 interface Figures {
 	// The head's and the keys' figures.
@@ -138,7 +140,7 @@ export interface BarSlots<T> {
 	value: (item: T) => number;
 	/** The bar's parts' values by the chart's `keys`; a key it lacks is 0. */
 	parts?: (item: T) => Readonly<Record<string, number>> | undefined;
-	/** The time drawn under the bar (a word; never wraps). */
+	/** The time drawn under the plot's start (the first bar's) and end (the last bar's); no other bar's is read (a word; never wraps or cuts). */
 	at?: (item: T) => string | undefined;
 }
 
@@ -163,7 +165,6 @@ interface Bar {
 	key: string;
 	value: number;
 	parts?: Readonly<Record<string, number>>;
-	at?: string;
 }
 
 const NONE: readonly never[] = [];
@@ -171,7 +172,8 @@ const NONE: readonly never[] = [];
 // A bar's part by key; a key it lacks is 0.
 const part = (bar: Bar, key: string) => bar.parts?.[key] ?? 0;
 
-// One bar's slot in the plot: the bar, or its parts stacked.
+// One bar's slot in the plot: the bar, or its parts stacked, standing on the
+// plot's floor.
 const BarSlot = memo(function BarSlot(props: {
 	bar: Bar;
 	keys: readonly string[] | undefined;
@@ -181,42 +183,35 @@ const BarSlot = memo(function BarSlot(props: {
 	const { bar, keys, top } = props;
 	const height = (value: number) => ({ height: `${(value / top) * 100}%` });
 	return (
-		<div className={cn(SLOT, props.wide ? SLOT_WIDE : SLOT_FIT)}>
-			<div className={cn(CHART_GRID, REGION)}>
-				{keys ? (
-					// The first part stands on the baseline, each next one over it, split
-					// from it by a clear line.
-					keys
-						.map((key, at) => (
-							<div
-								key={key}
-								className={cn(
-									chartFill({ series: mark(at) }),
-									at > 0 && CHART_PART_SPLIT,
-									"w-2/3",
-									PART,
-								)}
-								style={height(part(bar, key))}
-							/>
-						))
-						.reverse()
-				) : (
-					<div
-						className={cn(chartFill({ series: CHART_SERIES[0] }), "w-2/3")}
-						style={height(bar.value)}
-					/>
-				)}
-			</div>
-			{bar.at ? (
-				<span className={cn(text({ role: "meta" }), FIGURES, TIME_TEXT)}>
-					{bar.at}
-				</span>
-			) : null}
+		<div className={cn(CHART_GRID, REGION, props.wide ? BAR_WIDE : BAR_FIT)}>
+			{keys ? (
+				// The first part stands on the baseline, each next one over it, split
+				// from it by a clear line.
+				keys
+					.map((key, at) => (
+						<div
+							key={key}
+							className={cn(
+								chartFill({ series: mark(at) }),
+								at > 0 && CHART_PART_SPLIT,
+								"w-2/3",
+								PART,
+							)}
+							style={height(part(bar, key))}
+						/>
+					))
+					.reverse()
+			) : (
+				<div
+					className={cn(chartFill({ series: CHART_SERIES[0] }), "w-2/3")}
+					style={height(bar.value)}
+				/>
+			)}
 		</div>
 	);
 });
 
-/** The total (the last bar with `level`) at body 500 with its unit, the parts' keys under it, then the axis beside the plot, its four gridlines a hairline each with its tick centred on it and the baseline with its 0, the columns in the chip marks by part, a time under each bar that has one. From `VIRTUAL_FROM` bars the plot keeps a bar's width and scrolls sideways, the axis staying, and only the bars and times near the view are drawn. While the `items` selection's read waits, the total is a figure's filler, the legend stands (its names and marks declared, its figures painted), the plot is one painted box at its loaded height with the axis's lane kept and the times are two fillers, the chart inert. The chart is a frame of its items: it draws the failed form with Retry, the missing form and the empty form in its own box with the generic sentence, and the stale and paused line above itself while it holds its read, whatever stands above it. */
+/** The total (the last bar with `level`) at body 500 with its unit, the parts' keys under it, then the axis beside the plot, its four gridlines a hairline each with its tick centred on it and the baseline with its 0, the columns in the chip marks by part, the first bar's time under the plot's start and the last bar's under its end (no other bar's time is drawn). From `VIRTUAL_FROM` bars the plot keeps a bar's width and scrolls sideways, the axis staying, and only the bars near the view are drawn, the time line spanning the scrolled width so the last time stands whole at the end. While the `items` selection's read waits, the total is a figure's filler, the legend stands (its names and marks declared, its figures painted), the plot is one painted box at its loaded height with the axis's lane kept and the time line is two fillers at its place, the chart inert. The chart is a frame of its items: it draws the failed form with Retry, the missing form and the empty form in its own box with the generic sentence, and the stale and paused line above itself while it holds its read, whatever stands above it. */
 export function BarChart<T>(props: BarChartProps<T>) {
 	const { label, keys, unit, level } = props;
 	const { drawn, frame } = useCollection(props.items);
@@ -231,10 +226,15 @@ export function BarChart<T>(props: BarChartProps<T>) {
 				key: bar.key(item),
 				value: bar.value(item),
 				parts: bar.parts?.(item),
-				at: bar.at?.(item),
 			})),
 		[items, bar],
 	);
+	// Only the ends are timed: the first bar's time at the plot's start, the
+	// last bar's at its end.
+	const first = items[0];
+	const last = items.length > 1 ? items[items.length - 1] : undefined;
+	const start = first === undefined ? undefined : bar.at?.(first);
+	const end = last === undefined ? undefined : bar.at?.(last);
 	const labels = keys ?? [];
 	const peaks = series.map((bar) =>
 		keys ? keys.reduce((sum, key) => sum + part(bar, key), 0) : bar.value,
@@ -381,15 +381,41 @@ export function BarChart<T>(props: BarChartProps<T>) {
 									</div>
 								)}
 								{painted ? (
-									<div aria-hidden className={TIMES_PAINTED}>
-										{[0, 1].map((end) => (
+									<div aria-hidden className={TIMES}>
+										{[0, 1].map((at) => (
 											<span
-												key={end}
-												className={cn(text({ role: "meta" }), FIGURES)}
+												key={at}
+												className={cn(
+													text({ role: "meta" }),
+													FIGURES,
+													at === 1 && TIME_END,
+												)}
 											>
-												<Painted role="word" at={end} />
+												<Painted role="word" at={at} />
 											</span>
 										))}
+									</div>
+								) : start || end ? (
+									<div aria-hidden className={TIMES}>
+										{start ? (
+											<span
+												className={cn(text({ role: "meta" }), FIGURES, TIME)}
+											>
+												{start}
+											</span>
+										) : null}
+										{end ? (
+											<span
+												className={cn(
+													text({ role: "meta" }),
+													FIGURES,
+													TIME,
+													TIME_END,
+												)}
+											>
+												{end}
+											</span>
+										) : null}
 									</div>
 								) : null}
 							</div>

@@ -24,6 +24,7 @@ import {
 	chooseHead,
 	chooseReason,
 	chooseRow,
+	gridFloor,
 	isChangeCell,
 	isStatusCell,
 	type Sort,
@@ -68,7 +69,6 @@ import { useClock } from "../../lib/clock.ts";
 import type { Closed } from "../../lib/closed.ts";
 import type { CellFit } from "../../lib/field.ts";
 import { PageTitle } from "../../lib/frame.ts";
-import { useTouch } from "../../lib/media.ts";
 import { MoreRow } from "../../lib/more.tsx";
 import { follow, navigate } from "../../lib/navigate.ts";
 import { usePageTablet } from "../../lib/page.ts";
@@ -100,18 +100,18 @@ const FORM = "flex flex-col grow";
 // The grid is its own stacking context, so its frozen column stands over its
 // cells alone, never over a sheet.
 const FRAME = "flex flex-col isolate";
-// On touch every column stands at one width and the grid scrolls sideways
-// under its frozen leading column. A cell focused under that column scrolls
-// clear of it: the scroller's padding at its start is the frozen width (the
-// leading column's short measure, and the tick column's square before it).
-const SCROLLS =
-	"touch:overflow-x-auto touch:scroll-ps-(--container-measure-short)";
+// On every pointer the grid stands at least as wide as its columns' floors
+// (`gridFloor`) and scrolls sideways under its frozen leading column when the
+// page is narrower. A cell focused under that column scrolls clear of it: the
+// scroller's padding at its start is the frozen width (the leading column's
+// short measure, and the tick column's square before it).
+const SCROLLS = "overflow-x-auto scroll-ps-(--container-measure-short)";
 const SCROLLS_TICKED =
-	"touch:overflow-x-auto touch:scroll-ps-[calc(var(--container-measure-short)+var(--spacing-row))]";
+	"overflow-x-auto scroll-ps-[calc(var(--container-measure-short)+var(--spacing-row))]";
 // The painted next page of the narrow list stands a rows gap under the loaded
 // one's box.
 const MORE_PAGE = "pt-rows";
-const GRID = "w-full table-fixed touch:w-max";
+const GRID = "w-full table-fixed";
 const HEAD_CELL = "p-0 font-normal";
 const START = "text-start";
 const END = "text-end";
@@ -162,8 +162,8 @@ const FROZEN_CHOSEN_PRESS =
 	"group-hover/row:bg-wash-selected-hover group-active/row:bg-wash-press";
 const SORT_BAR = "flex items-center justify-end";
 
-// A desktop column's width: its measure, its share, or what the others
-// leave; a touch column stands at the short measure.
+// A column's width: its measure, its share, or what the others leave (never
+// less than the short measure, by the grid's floor).
 const WIDTH: Record<NonNullable<TableColumn["width"]>, string> = {
 	"measure-short": "w-measure-short",
 	measure: "w-measure",
@@ -173,7 +173,6 @@ const WIDTH: Record<NonNullable<TableColumn["width"]>, string> = {
 	"2/3": "w-2/3",
 	"3/4": "w-3/4",
 };
-const TOUCH_WIDTH = "touch:w-measure-short";
 
 interface TableBase<T> extends Closed {
 	/** The items the rows draw: constants, or a selection, which paints `PAINT_ROWS` rows until its read lands. A selection is the table's own frame: it holds its read and draws the failed, missing and empty forms in its own box whatever stands above it. */
@@ -235,7 +234,7 @@ function editOf(
 	return column ? cellEdit(column, at === 0, edits, row) : undefined;
 }
 
-/** From `tablet` of its page a grid: a header of sortable acts (the table sorts in its own state: newest or largest first, then turned over, then off) over one row per record, its leading cell the record's name (its row's change mark, when it has one, ahead of it and its warning after it); on touch every column stands at the short measure and the grid scrolls sideways under its frozen leading column. Its keyboard is a cell cursor (one Tab stop, the arrows, Home and End; Enter opens the row from its leading cell or edits an editable cell, Space ticks a check, Escape leaves an edit); a press on a row opens it, a press on an editable value edits it in place: typed in an `Input`, picked in a `Picker`, ticked in a `Checkbox`. Below `tablet` one `ListRow` per record (its leading cell the title, its change the row's mark, its age trailing, its status, warning and chip the marks, the other values its meta line) under the sort's pick. While the `items` selection's read waits, `PAINT_ROWS` rows stand in the columns the table declares (the slots are run over the placeholder), the header constant over them, each cell painted by its column's kind and the rows inert; the list below `tablet` paints the same records as its rows. The table is a frame of its items: it draws the failed form with Retry, the missing form and the empty form in its own box, and the stale and paused line above its rows while it holds its read, whatever stands above it. */
+/** From `tablet` of its page a grid: a header of sortable acts (the table sorts in its own state: newest or largest first, then turned over, then off) over one row per record, its leading cell the record's name (its row's change mark, when it has one, ahead of it and its warning after it); its columns never squeeze below the short measure (the grid stands at least `gridFloor` wide) and, when the page is narrower, the grid scrolls sideways on every pointer under its frozen leading column, whose hairline always shows. Its keyboard is a cell cursor (one Tab stop, the arrows, Home and End; Enter opens the row from its leading cell or edits an editable cell, Space ticks a check, Escape leaves an edit); a press on a row opens it, a press on an editable value edits it in place: typed in an `Input`, picked in a `Picker`, ticked in a `Checkbox`. Below `tablet` one `ListRow` per record (its leading cell the title, its change the row's mark, its age trailing, its status, warning and chip the marks, the other values its meta line) under the sort's pick. While the `items` selection's read waits, `PAINT_ROWS` rows stand in the columns the table declares (the slots are run over the placeholder), the header constant over them, each cell painted by its column's kind and the rows inert; the list below `tablet` paints the same records as its rows. The table is a frame of its items: it draws the failed form with Retry, the missing form and the empty form in its own box, and the stale and paused line above its rows while it holds its read, whatever stands above it. */
 export function Table<T>(props: TableProps<T>) {
 	const { columns, selected, onOpen, onEdit } = props;
 	const [place, wide] = usePageTablet();
@@ -333,7 +332,6 @@ const Row = memo(function Row(props: {
 	choosing: boolean;
 	ticked: boolean;
 	opens: boolean;
-	touch: boolean;
 	edits: boolean;
 	// The cursor's column in this row, else -1, and its edit.
 	cursor: number;
@@ -362,7 +360,6 @@ const Row = memo(function Row(props: {
 					name={name}
 					ticked={props.ticked}
 					tall={reason !== undefined}
-					frozen={props.touch}
 					chosen={chosen}
 					opens={opens}
 					here={props.cursor === 0}
@@ -379,7 +376,7 @@ const Row = memo(function Row(props: {
 					cell={row.cells[column.key]}
 					control={editOf(columns, place, props.edits, row)?.control}
 					locked={cellLocked(column, place === 0, props.edits, row)}
-					frozen={props.touch && place === 0}
+					frozen={place === 0}
 					shifted={choosing}
 					reason={reason}
 					chosen={chosen}
@@ -395,13 +392,12 @@ const Row = memo(function Row(props: {
 
 // A row's tick cell: a Checkbox named by the leading cell's name, disabled
 // while the row is blocked. Frozen
-// first on touch, where the leading column freezes after it.
+// first, the leading column freezing after it.
 function TickCell(props: {
 	row: TableRecord;
 	name: string;
 	ticked: boolean;
 	tall: boolean;
-	frozen: boolean;
 	chosen: boolean;
 	opens: boolean;
 	here: boolean;
@@ -411,11 +407,8 @@ function TickCell(props: {
 	const box = cn(
 		TICK_BOX,
 		props.tall && TALL,
-		props.frozen &&
-			tableFrozenCell({ state: props.chosen ? "selected" : "rest" }),
-		props.frozen &&
-			props.opens &&
-			(props.chosen ? FROZEN_CHOSEN_PRESS : FROZEN_PRESS),
+		tableFrozenCell({ state: props.chosen ? "selected" : "rest" }),
+		props.opens && (props.chosen ? FROZEN_CHOSEN_PRESS : FROZEN_PRESS),
 	);
 	return (
 		<td
@@ -423,10 +416,7 @@ function TickCell(props: {
 			data-column={0}
 			data-choose=""
 			tabIndex={props.here ? 0 : -1}
-			className={cn(
-				BODY_CELL,
-				props.frozen && cn(TABLE_FROZEN, FROZEN, FROZEN_AT),
-			)}
+			className={cn(BODY_CELL, TABLE_FROZEN, FROZEN, FROZEN_AT)}
 		>
 			{/* biome-ignore lint/a11y/noLabelWithoutControl: the Checkbox inside is the control */}
 			<label className={box}>
@@ -574,7 +564,6 @@ function Grid(props: {
 }) {
 	const { columns, rows, sort, painted, choose } = props;
 	const words = useWords();
-	const touch = useTouch();
 	// A tick column leads the cursor's columns: the leading cell is its
 	// column `shift`.
 	const shift = choose ? 1 : 0;
@@ -769,7 +758,6 @@ function Grid(props: {
 				key={index}
 				index={index}
 				columns={columns}
-				touch={touch}
 				choosing={choose !== undefined}
 			/>
 		) : (
@@ -782,7 +770,6 @@ function Grid(props: {
 				choosing={choose !== undefined}
 				ticked={ticked.has(row.id)}
 				opens={opens}
-				touch={touch}
 				edits={edits}
 				cursor={index === at.row ? at.column : -1}
 				editing={index === at.row ? editing : undefined}
@@ -806,6 +793,7 @@ function Grid(props: {
 					onFocus={onFocus}
 					onBlur={onBlur}
 					onKeyDown={onKeyDown}
+					style={{ minWidth: gridFloor(columns, choose !== undefined) }}
 					className={cn(TABLE, GRID)}
 				>
 					<Cols columns={columns} choosing={choose !== undefined} />
@@ -814,16 +802,10 @@ function Grid(props: {
 							{choose ? (
 								<th
 									scope="col"
-									className={cn(
-										HEAD_CELL,
-										touch && cn(TABLE_FROZEN, FROZEN, FROZEN_AT),
-									)}
+									className={cn(HEAD_CELL, cn(TABLE_FROZEN, FROZEN, FROZEN_AT))}
 								>
 									<div
-										className={cn(
-											TICK_BOX,
-											touch && tableFrozenCell({ state: "rest" }),
-										)}
+										className={cn(TICK_BOX, tableFrozenCell({ state: "rest" }))}
 									>
 										<Field.Root disabled={!reach}>
 											<Checkbox
@@ -842,7 +824,7 @@ function Grid(props: {
 									key={column.key}
 									column={column}
 									sort={sort}
-									frozen={touch && place === 0}
+									frozen={place === 0}
 									shifted={choose !== undefined}
 									onSort={() => props.onSort(column.key)}
 								/>
@@ -882,10 +864,7 @@ function Cols(props: { columns: readonly TableColumn[]; choosing: boolean }) {
 			{props.columns.map((column) => (
 				<col
 					key={column.key}
-					className={cn(
-						column.width ? WIDTH[column.width] : undefined,
-						TOUCH_WIDTH,
-					)}
+					className={column.width ? WIDTH[column.width] : undefined}
 				/>
 			))}
 		</colgroup>
@@ -898,7 +877,6 @@ function MorePage(props: {
 	columns: readonly TableColumn[];
 	choosing: boolean;
 }) {
-	const touch = useTouch();
 	return (
 		<div
 			aria-hidden
@@ -908,7 +886,10 @@ function MorePage(props: {
 				props.choosing ? SCROLLS_TICKED : SCROLLS,
 			)}
 		>
-			<table className={cn(TABLE, GRID)}>
+			<table
+				style={{ minWidth: gridFloor(props.columns, props.choosing) }}
+				className={cn(TABLE, GRID)}
+			>
 				<Cols columns={props.columns} choosing={props.choosing} />
 				<tbody>
 					{Array.from({ length: PAINT_ROWS }, (_, index) => (
@@ -917,7 +898,6 @@ function MorePage(props: {
 							key={index}
 							index={index}
 							columns={props.columns}
-							touch={touch}
 							choosing={props.choosing}
 						/>
 					))}
@@ -1252,30 +1232,19 @@ function PaintedCell(props: {
 function PaintedRow(props: {
 	index: number;
 	columns: readonly TableColumn[];
-	touch: boolean;
 	choosing: boolean;
 }) {
 	return (
 		<tr inert className={tableRow({ state: "rest" })}>
 			{props.choosing ? (
-				<td
-					className={cn(
-						BODY_CELL,
-						props.touch && cn(TABLE_FROZEN, FROZEN, FROZEN_AT),
-					)}
-				>
-					<div
-						className={cn(
-							TICK_BOX,
-							props.touch && tableFrozenCell({ state: "rest" }),
-						)}
-					>
+				<td className={cn(BODY_CELL, cn(TABLE_FROZEN, FROZEN, FROZEN_AT))}>
+					<div className={cn(TICK_BOX, tableFrozenCell({ state: "rest" }))}>
 						<HeldCheckbox checked={false} onChange={NOOP} label="" painted />
 					</div>
 				</td>
 			) : null}
 			{props.columns.map((column, place) => {
-				const frozen = props.touch && place === 0;
+				const frozen = place === 0;
 				return (
 					<td
 						key={column.key}

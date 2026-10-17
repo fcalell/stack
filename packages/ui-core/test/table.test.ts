@@ -6,6 +6,7 @@ import {
 	cellLocked,
 	changeKind,
 	changeMeta,
+	gridFloor,
 	isChangeCell,
 	isStatusCell,
 	order,
@@ -184,4 +185,30 @@ test("the rows a tick reaches are those with no blocked reason", () => {
 	const held = { ...record(), id: "b", blocked: "Owner" };
 	assert.deepEqual(ids(tickable([{ ...record(), id: "a" }, held])), ["a"]);
 	assert.deepEqual(tickable([held]), []);
+});
+
+test("a grid's floor sums the measures its columns keep, the unsized at the short one", () => {
+	const short = "var(--container-measure-short)";
+	assert.equal(
+		gridFloor([{}, {}, {}], false),
+		`calc(${short} + ${short} + ${short})`,
+	);
+	assert.equal(
+		gridFloor([{ width: "measure" }, { width: "measure-short" }], false),
+		`calc(var(--spacing-measure) + ${short})`,
+	);
+	assert.equal(gridFloor([], false), "calc(0px)");
+});
+
+test("a grid's floor counts the tick column's square and divides by what the fractions leave", () => {
+	const short = "var(--container-measure-short)";
+	assert.equal(gridFloor([{}], true), `calc(var(--spacing-row) + ${short})`);
+	assert.equal(
+		gridFloor([{ width: "1/3" }, { width: "measure-short" }, {}], false),
+		`calc((${short} + ${short}) / 0.666667)`,
+	);
+	assert.equal(
+		gridFloor([{ width: "1/2" }, { width: "1/2" }, {}], false),
+		`calc(${short})`,
+	);
 });

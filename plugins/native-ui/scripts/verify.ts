@@ -193,6 +193,7 @@ const NATIVE_OVERLAYS = [
 	"justify-start",
 	"left-0",
 	"left-full",
+	"max-w-1/2",
 	"max-w-4/5",
 	"max-w-full",
 	"max-w-measure-short",

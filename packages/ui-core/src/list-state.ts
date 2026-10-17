@@ -400,6 +400,46 @@ export function touchMeta(
 	];
 }
 
+// The share of the table's width a fractional column takes.
+const FRACTION: Record<string, number> = {
+	"1/4": 1 / 4,
+	"1/3": 1 / 3,
+	"1/2": 1 / 2,
+	"2/3": 2 / 3,
+	"3/4": 3 / 4,
+};
+
+// The least width a grid stands at, as a CSS length, so its columns never
+// squeeze below their floor and the scroller takes the rest: the columns that
+// keep a measure (a column with none is at the short one), the tick column
+// when the table chooses rows, and the fractions' complement of what is left,
+// so a fractional column stands at its share of the whole. The fractions are
+// plain numbers, so the division is valid CSS; fractions that fill the table
+// leave nothing to divide and the sum stands as it is.
+export function gridFloor(
+	columns: readonly Pick<TableColumn, "width">[],
+	choosing: boolean,
+): string {
+	const parts = choosing ? ["var(--spacing-row)"] : [];
+	let fractions = 0;
+	for (const { width } of columns) {
+		if (width !== undefined && width in FRACTION) {
+			fractions += FRACTION[width] as number;
+		} else {
+			parts.push(
+				width === "measure"
+					? "var(--spacing-measure)"
+					: "var(--container-measure-short)",
+			);
+		}
+	}
+	const sum = parts.length ? parts.join(" + ") : "0px";
+	const left = Number((1 - fractions).toFixed(6));
+	return fractions > 0 && left > 0
+		? `calc((${sum}) / ${left})`
+		: `calc(${sum})`;
+}
+
 // How a table's sort stands: the column and the way round it turns.
 export interface Sort {
 	key: string;

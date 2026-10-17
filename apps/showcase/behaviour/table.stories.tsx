@@ -144,13 +144,11 @@ const WIDE: TableColumn<Task>[] = [
 	})),
 ];
 
-// On touch the grid scrolls sideways under its frozen leading column, and a
-// cell the keyboard reaches scrolls clear of it by the scroller's padding at
-// its start: the cell never stands under the frozen column, and focusing the
-// frozen cell itself leaves the scroll where it is.
-export const FrozenColumnClearsTheFocus: StoryObj = {
-	tags: ["touch"],
-	globals: { density: "touch" },
+// The grid scrolls sideways on every pointer under its frozen leading column,
+// and a cell the keyboard reaches scrolls clear of it by the scroller's
+// padding at its start: the cell never stands under the frozen column, and
+// focusing the frozen cell itself leaves the scroll where it is.
+const clears: StoryObj = {
 	parameters: { layout: "fullscreen" },
 	render: () => (
 		<div
@@ -205,5 +203,72 @@ export const FrozenColumnClearsTheFocus: StoryObj = {
 		await userEvent.keyboard("{ArrowLeft}");
 		await expect(frozen).toHaveFocus();
 		await expect(scroller.scrollLeft).toBe(scrolled);
+	},
+};
+
+export const FrozenColumnClearsTheFocus: StoryObj = clears;
+
+export const FrozenColumnClearsTheFocusOnTouch: StoryObj = {
+	...clears,
+	tags: ["touch"],
+	globals: { density: "touch" },
+};
+
+// Columns that do not fit a reading Pane keep their floor and the grid
+// scrolls, on a fine pointer as on a touch one: no column squeezes below the
+// short measure, no cell's content is cut by its neighbours, and the leading
+// column stays frozen with its hairline.
+export const WideColumnsScroll: StoryObj = {
+	parameters: { layout: "fullscreen" },
+	render: () => (
+		<div
+			style={{
+				width: 1280,
+				height: 500,
+				display: "flex",
+				flexDirection: "column",
+			}}
+		>
+			<Place>
+				<Pane title="Cron tasks">
+					<Table
+						columns={WIDE}
+						items={TASKS}
+						row={{ id: (task) => task.id }}
+						onOpen={open}
+					/>
+				</Pane>
+			</Place>
+		</div>
+	),
+	play: async ({ canvas }) => {
+		const grid = canvas.getByRole("grid");
+		const scroller = grid.parentElement;
+		if (!scroller) throw new Error("the grid has no scroller");
+		await expect(scroller.scrollWidth).toBeGreaterThan(scroller.clientWidth);
+		const floor = (() => {
+			const probe = document.createElement("div");
+			probe.style.width = "var(--container-measure-short)";
+			document.body.append(probe);
+			const width = probe.getBoundingClientRect().width;
+			probe.remove();
+			return width;
+		})();
+		const heads = [...grid.querySelectorAll<HTMLElement>("thead th")];
+		await expect(heads).toHaveLength(WIDE.length);
+		for (const head of heads) {
+			await expect(head.getBoundingClientRect().width).toBeGreaterThanOrEqual(
+				floor - 0.5,
+			);
+		}
+		for (const cell of grid.querySelectorAll<HTMLElement>("tbody td > *")) {
+			await expect(cell.scrollWidth).toBeLessThanOrEqual(cell.clientWidth + 1);
+		}
+		const lead = grid.querySelector<HTMLElement>("tbody td");
+		if (!lead) throw new Error("no leading cell");
+		await expect(
+			getComputedStyle(lead.firstElementChild as Element).borderRightWidth,
+		).not.toBe("0px");
+		await expect(getComputedStyle(lead).position).toBe("sticky");
 	},
 };

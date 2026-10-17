@@ -878,8 +878,8 @@ a tick with no animation, never jumped to full.
   it in their own handlers. Enter and Escape focus the cell at once; the pick's list names the cell
   as its `finalFocus`, so Base UI hands focus back there once the list unmounts, after an option's
   own press has focused it, unless a press outside the list moved focus on. A painted status cell is the Status's own painted form (its internal base: the dot's box and a word's filler at its gap).
-  A read-only check cell draws a tick. Where the grid scrolls sideways its
-  leading column stays: the frozen cell on the surface
+  A read-only check cell draws a tick. The grid stands at least `gridFloor(columns, choosing)` wide (`list-state`: the measures its columns keep, an unsized column at the short measure, the tick column's square, over what the fractions leave), set as the table's `min-width`, so no column squeezes below its floor and the scroller takes the rest, on every pointer. The phone's table already scrolls its cells under the frozen leading half and needs nothing. Where the grid scrolls sideways its
+  leading column always stays, its hairline always drawn: the frozen cell on the surface
   (`TABLE_FROZEN`), its content carrying its end hairline and the row's wash (`TABLE_FROZEN_CELL`).
   A `change` column holds a `ChangeCell` (`{ before, after }`, either null), read only and sorted by
   its `after`. A kind beats a cell-level flag: the kind is how the Table types every cell, and the
@@ -949,7 +949,7 @@ a tick with no animation, never jumped to full.
   `data-page` mark of a Pane) in the layout phase and reads whether the page is `tablet`
   wide through one external store (`usePageTablet`), so the choice re-renders before paint; a Table
   outside a page draws the list.
-  On touch the grid's scroller carries `scroll-padding-inline-start` of the frozen width (the short
+  On every pointer the grid's scroller carries `scroll-padding-inline-start` of the frozen width (the short
   measure, and the tick column's square before it), and the cursor's cell takes focus with
   `preventScroll` then `scrollIntoView` at `nearest`, which honours that padding, so a cell never
   stands under the frozen column and nothing measures; a frozen cell scrolls nothing, since it stands
@@ -1307,8 +1307,8 @@ a tick with no animation, never jumped to full.
   recommended chip is its end group, centred on the row, so a row whose second line held only the
   chip is one line; the children under a chosen option stand in by the box's width (the group's
   margin) and the gap after it (the body's), no indent element. A `Slider`'s fill keeps the thumb's
-  width as its end margin, not a spacer. A `BarChart` bar's time is in the bar's own slot (a bar
-  with none draws none), the gridlines stand behind the slots' regions at the same height, and the
+  width as its end margin, not a spacer. A `BarChart` draws only its ends' times, in a line under
+  the plot (a chart whose ends have none draws no line), the gridlines stand behind the bars' regions at the same height, and the
   axis is drawn only with ticks (a waiting chart and a chart of zeros keep its lane as the body's
   padding). A `Pane` or `Sheet` with nothing to draw in its body draws no body box. The walk
   excepts a row's stacked value over its marks (the owner's open question, built on the
@@ -1425,7 +1425,7 @@ a tick with no animation, never jumped to full.
   not narrow a props union by `value: V | null` against `value: readonly V[]`, neither member
   being a literal type. Rejected: a `ChoiceList` beside it, the same rows under a second name.
 - A `BarChart` is a collection on the same decisions: `items` (a constant or a selection) and a `bar` map (`key`, `value`, `parts` by `keys`, `at`, each a function of the
-  item). Its head is the sum of its bars (a flow); `level` (the bars are a level, a fact only the
+  item; `at` is read from the first and last bars alone, for the time line under the plot, the first time start-aligned and the last end-aligned, never cut, interior times undrawn so they never crowd or truncate, and the line the same height painted and loaded). Its head is the sum of its bars (a flow); `level` (the bars are a level, a fact only the
   app holds, so no derivation) makes it the last bar's value and each key's last part. Its axis scale and head are `./chart`'s `chartScale` and `chartHead`,
   one pure answer for both platforms (with `unitOf`, the unit's form at the figure it follows:
   `unit` is a word, `{ one, other }` or `{ currency }`, whose figures carry the symbol and no word
@@ -1435,7 +1435,7 @@ a tick with no animation, never jumped to full.
   rounds up to, so a peak of 3 ticks 1, 2, 3 and never past its bars. Each tick is centred on its
   gridline and the baseline carries the 0, so the top tick reaches half a meta line above the plot
   and the body stands that far below the head (`tickReach`; the web's `1lh / 2`). Its `keys` are declared, so its painted form is the legend standing with its figures painted, the
-  total a painted figure and the plot one painted box at its loaded height, the time labels filler.
+  total a painted figure and the plot one painted box at its loaded height, the time line two fillers.
   Its failed and empty forms are its own.
 - A Section's rhythm has two steps: its head is paired to its body (`SECTION`, `pair`) and the body's own parts (a Prose, a Code, a Group, an ActionBar) stand the `fields` step apart
   (`SECTION_BODY`) wherever the Section sits, so a dense run of parts reads as parts; a Group keeps its
@@ -1610,7 +1610,7 @@ a tick with no animation, never jumped to full.
   list (Base UI's virtualized combobox, from `VIRTUAL_FROM` options, the highlight kept mounted and
   brought into view), Comparison (its facts behind a kept head row, with `aria-rowcount` and
   `aria-rowindex`, on the Group's `GroupCard`) and BarChart (past `VIRTUAL_FROM` bars it keeps a
-  bar's width and scrolls sideways under its axis, its bars and times windowing along x through
+  bar's width and scrolls sideways under its axis, its bars windowing along x through
   `Window horizontal`). Not windowed: painted forms (`PAINT_ROWS`, always below the count). Rows carry no settle names, so the settle and the shift check are unchanged. Accepted:
   find in page and print reach drawn rows only. The phone draws every row and its Thread keeps
   its inverted log; the design for it stays open in `states.md` §7 until a device measures it.

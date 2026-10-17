@@ -21,7 +21,7 @@ const BAR: BarSlots<Day> = {
 };
 
 // Board 54's build minutes, one a day from Sep 3, the first and last day
-// timed under their bars.
+// timed under the plot's ends.
 const MINUTES = [
 	40, 60, 70, 50, 20, 10, 50, 70, 80, 60, 70, 20, 10, 60, 90, 80, 70, 100, 30,
 	20, 70, 80, 110, 90, 80, 20, 10, 60, 70, 50,

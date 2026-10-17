@@ -1,4 +1,5 @@
 import { BarChart } from "@fcalell/plugin-react-ui/components/bar-chart";
+import { itemsAt } from "@fcalell/plugin-react-ui/showcase/waiting";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect, waitFor } from "storybook/test";
 
@@ -195,3 +196,152 @@ const sevenSeries = (mode: "light" | "dark"): StoryObj => ({
 });
 export const SevenSeriesStandApartLight = sevenSeries("light");
 export const SevenSeriesStandApartDark = sevenSeries("dark");
+
+// The time line draws the ends' times alone: the first bar's start-aligned,
+// the last bar's end-aligned, each whole at the plot's two ends; no bar
+// between them draws one.
+function Times(props: { width: number }) {
+	return (
+		<div style={{ width: props.width }}>
+			<BarChart
+				label="Spend per day this week"
+				items={DAYS}
+				bar={bar}
+				unit={{ currency: "USD" }}
+			/>
+		</div>
+	);
+}
+
+// The time line: the element holding the first and last time, and the two.
+function timeLine(root: HTMLElement) {
+	const line = [...root.querySelectorAll<HTMLElement>("[aria-hidden]")].find(
+		(each) => each.textContent === "MonSun",
+	);
+	if (!line) throw new Error("no time line");
+	const [first, last] = [...line.children] as HTMLElement[];
+	if (!first || !last) throw new Error("no ends");
+	return { line, first, last };
+}
+
+const timesWhole =
+	(width: number): StoryObj["play"] =>
+	async ({ canvasElement }) => {
+		await waitFor(() => expect(figure(canvasElement, "Mon")).toBeVisible());
+		const plot = canvasElement.querySelector("[role=img]");
+		if (!(plot instanceof HTMLElement)) throw new Error("no plot");
+		const { first, last } = timeLine(canvasElement);
+		// Whole: nothing cut, and the ends stand at the plot's ends.
+		for (const time of [first, last]) {
+			await expect(time.scrollWidth).toBeLessThanOrEqual(time.clientWidth + 1);
+		}
+		await expect(Math.abs(rect(first).left - rect(plot).left)).toBeLessThan(1);
+		await expect(Math.abs(rect(last).right - rect(plot).right)).toBeLessThan(1);
+		await expect(rect(last).right).toBeLessThanOrEqual(width);
+		// Interior days draw no time.
+		await expect(
+			[...canvasElement.querySelectorAll("span")].filter(
+				(span) => span.textContent === "Wed",
+			),
+		).toHaveLength(0);
+	};
+
+export const TimesAreWholeAt1280: StoryObj = {
+	parameters: { layout: "fullscreen" },
+	render: () => <Times width={1280} />,
+	play: timesWhole(1280),
+};
+
+export const TimesAreWholeAt320: StoryObj = {
+	parameters: { layout: "fullscreen" },
+	render: () => <Times width={320} />,
+	play: timesWhole(320),
+};
+
+// A chart of a hundred days and more scrolls sideways; at its end the last
+// time stands whole at the plot's end.
+const MANY: Day[] = Array.from({ length: 140 }, (_, at) => ({
+	day: `Day ${at + 1}`,
+	spend: (at % 9) + 1,
+	parts: {},
+}));
+
+export const LastTimeWholeAtTheEnd: StoryObj = {
+	parameters: { layout: "fullscreen" },
+	render: () => (
+		<div style={{ width: 320 }}>
+			<BarChart
+				label="Spend per day"
+				items={MANY}
+				bar={{ ...bar, at: (day: Day) => day.day }}
+			/>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const plot = await waitFor(() => {
+			const found = canvasElement.querySelector("[role=img]");
+			if (!(found instanceof HTMLElement)) throw new Error("no plot");
+			return found;
+		});
+		const scroller = canvasElement.querySelector<HTMLElement>("[tabindex='0']");
+		if (!scroller) throw new Error("no scroller");
+		await expect(scroller.scrollWidth).toBeGreaterThan(scroller.clientWidth);
+		scroller.scrollLeft = scroller.scrollWidth;
+		const last = await waitFor(() => {
+			const found = [...canvasElement.querySelectorAll("span")].find(
+				(span) => span.textContent === "Day 140",
+			);
+			if (!found) throw new Error("no last time");
+			return found;
+		});
+		await expect(last.scrollWidth).toBeLessThanOrEqual(last.clientWidth + 1);
+		await expect(rect(last).right).toBeLessThanOrEqual(
+			rect(scroller).right + 0.5,
+		);
+		await expect(rect(last).left).toBeGreaterThanOrEqual(
+			rect(scroller).left - 0.5,
+		);
+		await expect(Math.abs(rect(last).right - rect(plot).right)).toBeLessThan(1);
+	},
+};
+
+// Painted, the time line is two fillers at its place: it stands as high as
+// the loaded one, so the chart does not move when the data lands.
+export const TimeLineHoldsItsHeight: StoryObj = {
+	render: () => (
+		<div className="flex flex-col gap-sections w-sheet max-w-full">
+			<div data-testid="loaded">
+				<BarChart
+					label="Loaded"
+					items={itemsAt("bar-times/loaded", "rest", DAYS)}
+					bar={bar}
+				/>
+			</div>
+			<div data-testid="painted">
+				<BarChart
+					label="Painted"
+					items={itemsAt("bar-times/painted", "loading", DAYS)}
+					bar={bar}
+				/>
+			</div>
+		</div>
+	),
+	play: async ({ canvas }) => {
+		const loaded = canvas.getByTestId("loaded");
+		const painted = canvas.getByTestId("painted");
+		await waitFor(() => expect(loaded).toHaveTextContent("Sun"));
+		const line = (side: HTMLElement) => {
+			const found = [...side.querySelectorAll<HTMLElement>("[aria-hidden]")]
+				.reverse()
+				.find((each) => each.children.length === 2);
+			if (!found) throw new Error("no time line");
+			return found;
+		};
+		await expect(
+			Math.abs(rect(line(painted)).height - rect(line(loaded)).height),
+		).toBeLessThan(1);
+		await expect(
+			Math.abs(rect(painted).height - rect(loaded).height),
+		).toBeLessThan(2);
+	},
+};

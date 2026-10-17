@@ -305,7 +305,7 @@ export const ComparisonWindows: Story = {
 };
 
 // 1000 bars: the plot keeps a bar's width and scrolls sideways, and only the
-// bars and the times near its view stand.
+// bars near its view stand; the time line holds the ends' times alone.
 export const BarChartWindows: Story = {
 	render: () => (
 		<Stage>
@@ -332,8 +332,8 @@ export const BarChartWindows: Story = {
 			[...box.children].filter((child) => !child.hasAttribute("aria-hidden"));
 		await waitFor(() => expect(standing(bars).length).toBeLessThan(MOST));
 		await expect(standing(bars).length).toBeGreaterThan(0);
-		await expect(canvas.queryByText("D1000")).toBeNull();
 		await expect(canvas.getByText("D1")).toBeInTheDocument();
+		await expect(canvas.queryByText("D2")).toBeNull();
 
 		const view = scrollerOf(plot, "x");
 		await expect(view.scrollWidth).toBeGreaterThan(view.clientWidth * 10);
@@ -346,9 +346,8 @@ export const BarChartWindows: Story = {
 			{ timeout: 5000 },
 		);
 		await expect(standing(bars).length).toBeLessThan(MOST);
-		await expect(canvas.queryByText("D1")).toBeNull();
-		// A bar's time stands in its own slot, under the bar.
-		await expect(standing(bars).at(-1)).toHaveTextContent("D1000");
+		// No bar draws a time of its own: the last time ends the time line.
+		await expect(standing(bars).at(-1)?.textContent).toBe("");
 	},
 };
 
