@@ -169,6 +169,7 @@ const NATIVE_OVERLAYS = [
 	"border-t",
 	"bottom-0",
 	"flex-1",
+	"flex-col",
 	"flex-col-reverse",
 	"flex-row",
 	"flex-wrap",

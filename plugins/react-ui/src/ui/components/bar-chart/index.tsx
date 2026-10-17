@@ -45,6 +45,11 @@ const DOT = "shrink-0";
 // on the plot's top edge, keeps the pair gap from the head's last line.
 const BODY = "flex items-start pt-[calc(1lh/2)]";
 const AXIS = "flex flex-col shrink-0";
+// With no tick to draw (a waiting chart, a chart of nothing but zeros) the
+// axis is not drawn, and its lane and the gap after it are the body's padding
+// and the plot's margin, so the plot stands where it will.
+const NO_AXIS = "ps-figures";
+const NO_AXIS_MAIN = "ms-inside";
 const AXIS_BAND = "relative flex-1";
 // A tick centres on its gridline; the last band's bottom is the baseline,
 // whose tick is the zero.
@@ -59,17 +64,20 @@ const SCROLLS = "overflow-x-auto focus-visible:-outline-offset-2";
 const WIDE = "w-max min-w-full";
 const SLOT_WIDE = "w-target shrink-0";
 const PLOT = "relative";
-const GRID = "flex flex-col";
+// The gridlines stand behind the bars' regions, at the same height, so the
+// times under the bars are no part of the plot.
+const GRID = "absolute inset-x-0 top-0 flex flex-col";
 const GRID_BAND = "flex-1";
-const BARS = "absolute inset-0 flex";
-const SLOT = "flex flex-col justify-end items-center";
+const BARS = "relative flex";
+// A bar's slot: its region (the plot's height, the bar standing on its floor)
+// over its time, when it has one.
+const SLOT = "flex flex-col items-center";
+const REGION = "flex flex-col justify-end items-center w-full";
 const SLOT_FIT = "flex-1 min-w-0";
 const PART = "shrink-0";
-const TIMES = "flex";
-const TIME = "flex justify-center";
-const TIME_TEXT = "max-w-measure-short truncate";
+const TIME_TEXT = "pt-pair w-full max-w-measure-short text-center truncate";
 // The painted times stand at the plot's two ends.
-const TIMES_PAINTED = "justify-between";
+const TIMES_PAINTED = "flex justify-between";
 
 interface Figures {
 	// The head's and the keys' figures.
@@ -174,43 +182,34 @@ const BarSlot = memo(function BarSlot(props: {
 	const height = (value: number) => ({ height: `${(value / top) * 100}%` });
 	return (
 		<div className={cn(SLOT, props.wide ? SLOT_WIDE : SLOT_FIT)}>
-			{keys ? (
-				// The first part stands on the baseline, each next one over it, split
-				// from it by a clear line.
-				keys
-					.map((key, at) => (
-						<div
-							key={key}
-							className={cn(
-								chartFill({ series: mark(at) }),
-								at > 0 && CHART_PART_SPLIT,
-								"w-2/3",
-								PART,
-							)}
-							style={height(part(bar, key))}
-						/>
-					))
-					.reverse()
-			) : (
-				<div
-					className={cn(chartFill({ series: CHART_SERIES[0] }), "w-2/3")}
-					style={height(bar.value)}
-				/>
-			)}
-		</div>
-	);
-});
-
-// The time under one bar, when it has one.
-const BarTime = memo(function BarTime(props: {
-	at: string | undefined;
-	wide: boolean;
-}) {
-	return (
-		<div className={cn(TIME, props.wide ? SLOT_WIDE : SLOT_FIT)}>
-			{props.at ? (
+			<div className={cn(CHART_GRID, REGION)}>
+				{keys ? (
+					// The first part stands on the baseline, each next one over it, split
+					// from it by a clear line.
+					keys
+						.map((key, at) => (
+							<div
+								key={key}
+								className={cn(
+									chartFill({ series: mark(at) }),
+									at > 0 && CHART_PART_SPLIT,
+									"w-2/3",
+									PART,
+								)}
+								style={height(part(bar, key))}
+							/>
+						))
+						.reverse()
+				) : (
+					<div
+						className={cn(chartFill({ series: CHART_SERIES[0] }), "w-2/3")}
+						style={height(bar.value)}
+					/>
+				)}
+			</div>
+			{bar.at ? (
 				<span className={cn(text({ role: "meta" }), FIGURES, TIME_TEXT)}>
-					{props.at}
+					{bar.at}
 				</span>
 			) : null}
 		</div>
@@ -270,12 +269,14 @@ export function BarChart<T>(props: BarChartProps<T>) {
 			{word ? <span className={text({ role: "meta" })}>{word}</span> : null}
 		</div>
 	);
-	// A long chart keeps a bar's width and windows its bars and their times
-	// along x, in a scroller of its own around the plot.
+	// A long chart keeps a bar's width and windows its bars (each with its
+	// time) along x, in a scroller of its own around the plot.
 	const windowed = series.length >= VIRTUAL_FROM;
+	// The axis draws its ticks, which a chart of nothing (every bar zero) and a
+	// waiting one have none of.
+	const ticks = !painted && peak > 0;
 	const scroll = useScroller();
 	const bars = useRef<HTMLDivElement>(null);
-	const times = useRef<HTMLDivElement>(null);
 	return (
 		<FrameBody frame={frame} fit="frame">
 			<FrameLine frame={frame} />
@@ -300,37 +301,44 @@ export function BarChart<T>(props: BarChartProps<T>) {
 				) : (
 					totalLine
 				)}
-				<div className={cn(CHART_BODY, BODY, lineBox({ role: "meta" }))}>
-					<div aria-hidden className={cn(CHART_GRID, CHART_TICK_LANE, AXIS)}>
-						{Array.from({ length: bands }, (_, index) => (
-							<div
-								// biome-ignore lint/suspicious/noArrayIndexKey: a band is its index
-								key={index}
-								className={cn(
-									chartBand({ kind: "axis", rule: band(index, bands) }),
-									AXIS_BAND,
-								)}
-							>
-								{peak > 0 ? (
+				<div
+					className={cn(
+						CHART_BODY,
+						BODY,
+						lineBox({ role: "meta" }),
+						!ticks && NO_AXIS,
+					)}
+				>
+					{ticks ? (
+						<div aria-hidden className={cn(CHART_GRID, CHART_TICK_LANE, AXIS)}>
+							{Array.from({ length: bands }, (_, index) => (
+								<div
+									// biome-ignore lint/suspicious/noArrayIndexKey: a band is its index
+									key={index}
+									className={cn(
+										chartBand({ kind: "axis", rule: band(index, bands) }),
+										AXIS_BAND,
+									)}
+								>
 									<span className={cn(text({ role: "meta" }), FIGURES, TICK)}>
 										{tick.format(top - step * index)}
 									</span>
-								) : null}
-								{peak > 0 && index === bands - 1 ? (
-									<span className={cn(text({ role: "meta" }), FIGURES, ZERO)}>
-										{tick.format(0)}
-									</span>
-								) : null}
-							</div>
-						))}
-					</div>
+									{index === bands - 1 ? (
+										<span className={cn(text({ role: "meta" }), FIGURES, ZERO)}>
+											{tick.format(0)}
+										</span>
+									) : null}
+								</div>
+							))}
+						</div>
+					) : null}
 					<div
 						ref={scroll.ref}
 						// A plot that scrolls is a region the keyboard scrolls too.
 						{...(windowed
 							? { role: "group", "aria-label": label, tabIndex: 0 }
 							: {})}
-						className={cn(MAIN, windowed && SCROLLS)}
+						className={cn(MAIN, windowed && SCROLLS, !ticks && NO_AXIS_MAIN)}
 					>
 						<Scroller value={scroll.holder}>
 							<div className={cn(CHART_MAIN, COLUMN, windowed && WIDE)}>
@@ -372,36 +380,18 @@ export function BarChart<T>(props: BarChartProps<T>) {
 										</div>
 									</div>
 								)}
-								<div
-									ref={times}
-									aria-hidden
-									className={cn(TIMES, painted && TIMES_PAINTED)}
-								>
-									{painted ? (
-										[0, 1].map((end) => (
+								{painted ? (
+									<div aria-hidden className={TIMES_PAINTED}>
+										{[0, 1].map((end) => (
 											<span
 												key={end}
 												className={cn(text({ role: "meta" }), FIGURES)}
 											>
 												<Painted role="word" at={end} />
 											</span>
-										))
-									) : (
-										<Window
-											horizontal
-											count={series.length}
-											keyOf={(index) => (series[index] as Bar).key}
-											row={(index) => (
-												<BarTime
-													key={(series[index] as Bar).key}
-													at={(series[index] as Bar).at}
-													wide={windowed}
-												/>
-											)}
-											box={times}
-										/>
-									)}
-								</div>
+										))}
+									</div>
+								) : null}
 							</div>
 						</Scroller>
 					</div>

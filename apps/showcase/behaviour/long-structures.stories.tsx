@@ -328,12 +328,10 @@ export const BarChartWindows: Story = {
 		const plot = await canvas.findByRole("img", { name: "Requests" });
 		await frames();
 		const bars = plot.lastElementChild as HTMLElement;
-		const times = plot.parentElement?.lastElementChild as HTMLElement;
 		const standing = (box: HTMLElement) =>
 			[...box.children].filter((child) => !child.hasAttribute("aria-hidden"));
 		await waitFor(() => expect(standing(bars).length).toBeLessThan(MOST));
 		await expect(standing(bars).length).toBeGreaterThan(0);
-		await waitFor(() => expect(standing(times).length).toBeLessThan(MOST));
 		await expect(canvas.queryByText("D1000")).toBeNull();
 		await expect(canvas.getByText("D1")).toBeInTheDocument();
 
@@ -348,14 +346,9 @@ export const BarChartWindows: Story = {
 			{ timeout: 5000 },
 		);
 		await expect(standing(bars).length).toBeLessThan(MOST);
-		await expect(standing(times).length).toBeLessThan(MOST);
 		await expect(canvas.queryByText("D1")).toBeNull();
-		// The bars and the times stand over the same columns.
-		const lastBar = standing(bars).at(-1)?.getBoundingClientRect();
-		const lastTime = standing(times).at(-1)?.getBoundingClientRect();
-		await expect(
-			Math.abs((lastBar?.left ?? 0) - (lastTime?.left ?? 1)),
-		).toBeLessThan(1);
+		// A bar's time stands in its own slot, under the bar.
+		await expect(standing(bars).at(-1)).toHaveTextContent("D1000");
 	},
 };
 

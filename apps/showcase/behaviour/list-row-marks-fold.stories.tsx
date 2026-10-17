@@ -116,3 +116,52 @@ export const MarksReturnAsTheRowWidens: StoryObj = {
 		await expect(canvas.getByText("Building")).toBeVisible();
 	},
 };
+
+// A press on a passive mark opens the row: the hit under the end group gets
+// it, since the marks are click-through.
+const hitAtCentre = async (mark: HTMLElement) => {
+	const at = mark.getBoundingClientRect();
+	const found = document.elementFromPoint(
+		at.left + at.width / 2,
+		at.top + at.height / 2,
+	);
+	const hit = found?.closest("[data-hit]");
+	if (!hit) throw new Error("a press on the mark does not reach the hit");
+	await expect(hit.tagName).toBe("A");
+};
+
+export const AStatusLetsAPressThrough: StoryObj = {
+	render: () => (
+		<div style={{ width: 320 }} className="max-w-full">
+			<ListRow
+				title="Cache the build output"
+				href="/deploys/1"
+				status={{ state: "active", label: "Building" }}
+			/>
+		</div>
+	),
+	play: async ({ canvas }) => hitAtCentre(canvas.getByText("Building")),
+};
+export const AStatusLetsAPressThroughTouch = touch(
+	AStatusLetsAPressThrough,
+	320,
+);
+
+export const MarksBesideAValueLetAPressThrough: StoryObj = {
+	render: () => (
+		<div style={{ width: 320 }} className="max-w-full">
+			<ListRow
+				title="Cache the build output"
+				href="/deploys/1"
+				trailing={{ age: new Date(Date.now() - 2 * 60_000).toISOString() }}
+				status={{ state: "active", label: "Building" }}
+				chip={{ family: "teal", label: "Production" }}
+			/>
+		</div>
+	),
+	play: async ({ canvas }) => hitAtCentre(canvas.getByText("Building")),
+};
+export const MarksBesideAValueLetAPressThroughTouch = touch(
+	MarksBesideAValueLetAPressThrough,
+	320,
+);

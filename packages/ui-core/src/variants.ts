@@ -503,8 +503,11 @@ export const FORM_FIELD_SUMMARY_GLYPH = "text-ok";
 export const OPTION_LIST =
 	"gap-pair p-float rounded-card border border-edge bg-surface";
 export const OPTION_LINE = "gap-inside";
-export const OPTION_CHILDREN = "gap-inside px-control-x pb-pair";
-export const OPTION_INDENT = "size-check";
+export const OPTION_CHILDREN = "ms-check px-control-x pb-pair";
+// The children stand in past the box by the box's width (the group's margin)
+// and the gap after it (the body's): room is a margin on a box that draws,
+// never an empty element.
+export const OPTION_INDENT = "ms-inside";
 // The chosen radio's dot, centred in its ring.
 export const OPTION_RADIO_DOT = "size-dot rounded-full bg-toggle-on";
 // The segments' track: flush, so the control stands at a segment's height.
@@ -637,6 +640,9 @@ export const FILE_COUNT_YIELD = "basis-figures shrink-100000 min-w-min";
 // the label beside its chips.
 export const COMPARISON_ROW = "gap-pair min-h-row py-inside px-card";
 export const COMPARISON_LABEL = "gap-inside";
+// The values of a fact (or the head's columns): one group, a pair gap between
+// its cells, so a label and the group share the row like the columns do.
+export const COMPARISON_ROW_VALUES = "gap-pair";
 // Table: the grid hangs into the page inset by the cell's inset, so the
 // leading text meets the title over it; its columns read at body. A cell is
 // the row's height behind a transparent side border, so the `Input` that

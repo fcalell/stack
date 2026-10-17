@@ -2334,6 +2334,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"CHIP_LABEL.family.neutral",
 				"COMPARISON_LABEL",
 				"COMPARISON_ROW",
+				"COMPARISON_ROW_VALUES",
 				"STATUS",
 				"STATUS_DOT",
 				"STATUS_LABEL",
@@ -2345,7 +2346,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"PAINT.kind.box",
 				"PAINT.kind.glyphs",
 			],
-			holds: ["COMPARISON_ROW", "COMPARISON_LABEL"],
+			holds: ["COMPARISON_ROW", "COMPARISON_ROW_VALUES", "COMPARISON_LABEL"],
 			states: ["rest", "loading", "empty", "error"],
 			owns: {
 				roles: ["meta", "body", "caption"],

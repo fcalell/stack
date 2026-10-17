@@ -131,10 +131,13 @@ const TITLE_CODE = "flex items-center min-w-0 overflow-hidden";
 // an ellipsis to it, its marks stand whole or fold away, the chevron and the
 // acts stand whole.
 const END = "flex items-center self-center min-w-0";
+// The marks are passive, so they let a press through to the row's hit (the
+// folded ones are positioned, which would paint them over it).
 // A value and the marks together stand stacked, the value over the marks,
 // right-aligned, as one item of the end group; the marks are one line, a gap
 // apart, which no mark ever leaves.
-const MARKS = "relative flex items-center justify-end min-w-0 max-w-full";
+const MARKS =
+	"pointer-events-none relative flex items-center justify-end min-w-0 max-w-full";
 const CHIP_MARK = "flex min-w-0";
 const PAIR = "flex flex-col items-end min-w-0";
 const TRAILING = "min-w-0 max-w-full truncate";

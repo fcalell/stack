@@ -149,6 +149,18 @@ export const EXCEPTIONS: Exception[] = [
 			"a table's empty cell holds its column's room so the columns line up under the header: a cell with no value has nothing to draw",
 	},
 	{
+		rule: "align-dead",
+		selector: ":has(> div > section.opacity-0)",
+		reason:
+			"a canvas is transparent until it has measured its fit and fades in: its region holds it, not nothing",
+	},
+	{
+		rule: "align-centre",
+		selector: ":has(> * > .items-end.flex-col)",
+		reason:
+			"a row's value and its marks stand stacked, the value over the marks, in one item of its end group, which is centred on the row (the owner's open question on rows that stack two end values, built on its recommendation)",
+	},
+	{
 		rule: "control-height",
 		selector: ".py-hairline.-my-hairline",
 		reason:
@@ -926,7 +938,12 @@ function draws(element: Element, memo: Map<Element, boolean>): boolean {
 	if (known !== undefined) return known;
 	const style = getComputedStyle(element);
 	let found = false;
-	if (style.display !== "none" && style.opacity !== "0") {
+	// A box fading in (the paint's fade, transparent until its delay passes) is
+	// content on its way, not nothing.
+	if (
+		style.display !== "none" &&
+		(style.opacity !== "0" || style.animationName !== "none")
+	) {
 		found =
 			style.display !== "contents" &&
 			style.visibility === "visible" &&

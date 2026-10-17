@@ -36,6 +36,7 @@ import {
 	BusyMark,
 	FrameBody,
 	FrameLine,
+	hasBody,
 	submitOf,
 	useFrame,
 } from "../../lib/read.tsx";
@@ -114,7 +115,8 @@ const BODY =
 const FOOT =
 	"flex items-center rounded-b-sheet touch:flex-col touch:items-stretch touch:rounded-b-none";
 const FOOT_LINE = "flex items-center min-w-0 grow touch:grow-0";
-const SPACER = "grow touch:hidden";
+// With no line the foot's acts stand at its end: nothing stands for the line.
+const END_ONLY = "justify-end";
 
 /** What every sheet form draws: the public `Sheet`, the confirm and a touch `Menu`. Outside the package's exports. */
 export interface SheetBaseProps {
@@ -186,11 +188,11 @@ export function SheetBase({
 	// while it runs.
 	const acting = given ?? own;
 	// The body is the frame's: its failure and its emptiness stand in its place.
-	const body = (
+	const body = hasBody(frame, children) ? (
 		<FrameBody frame={frame} fit="frame" empty={empty}>
 			{children}
 		</FrameBody>
-	);
+	) : null;
 	const container = use(PortalContainer);
 	// A sheet in a stage (a container is named) stays non-modal beside the
 	// stage's others; in an app it is modal.
@@ -311,8 +313,8 @@ export function SheetBase({
 	) : null;
 	const footer =
 		footLine || actionBar ? (
-			<div className={cn(SHEET_FOOT, FOOT)}>
-				{footLine ?? <div className={SPACER} />}
+			<div className={cn(SHEET_FOOT, FOOT, !footLine && END_ONLY)}>
+				{footLine}
 				{actionBar}
 			</div>
 		) : null;

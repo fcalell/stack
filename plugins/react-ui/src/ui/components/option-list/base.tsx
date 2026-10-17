@@ -74,8 +74,9 @@ const DESCRIPTION_LINE = "flex flex-wrap items-center min-w-0";
 const RADIO =
 	"relative inline-flex shrink-0 items-center justify-center data-disabled:border-edge data-disabled:bg-fill-disabled";
 const CHILDREN = "flex";
-const INDENT = "shrink-0";
 const CHILDREN_BODY = "flex flex-col grow min-w-0";
+// The recommended chip stands at the row's end, centred on the row.
+const END = "flex shrink-0 items-center self-center";
 
 function groupsOf<V extends string>(
 	options: readonly Option<V>[] | readonly OptionGroup<V>[],
@@ -143,9 +144,7 @@ function OptionRowBase<V extends string>(props: OptionRowProps<V>) {
 	const blocked = optionBlocked(option, chosen);
 	const meta = blocked ?? option.description;
 	// A painted row is marked when the map declares a description.
-	const marked = rowsPaint
-		? option.description !== undefined
-		: meta || option.recommended;
+	const marked = rowsPaint ? option.description !== undefined : Boolean(meta);
 	const target = { labelledBy: useId() };
 	return (
 		<div className={cn(SELECT_GROUP, GROUP)}>
@@ -221,9 +220,6 @@ function OptionRowBase<V extends string>(props: OptionRowProps<V>) {
 										{meta}
 									</span>
 								) : null}
-								{option.recommended ? (
-									<Chip family="neutral" label={words.recommended} />
-								) : null}
 							</span>
 						</span>
 					) : (
@@ -235,11 +231,15 @@ function OptionRowBase<V extends string>(props: OptionRowProps<V>) {
 						</span>
 					)}
 				</span>
+				{option.recommended ? (
+					<span className={END}>
+						<Chip family="neutral" label={words.recommended} />
+					</span>
+				) : null}
 			</label>
 			{children ? (
 				<div className={cn(OPTION_CHILDREN, CHILDREN)}>
-					<span aria-hidden className={cn(OPTION_INDENT, INDENT)} />
-					<div className={CHILDREN_BODY}>{children}</div>
+					<div className={cn(OPTION_INDENT, CHILDREN_BODY)}>{children}</div>
 				</div>
 			) : null}
 		</div>

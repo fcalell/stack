@@ -20,8 +20,10 @@ const HEAD = "flex items-center justify-between";
 const LABEL = "truncate data-disabled:text-ink-disabled";
 const VALUE = "shrink-0 truncate data-disabled:text-ink-disabled";
 const TRACK = "group relative flex items-center";
+// The fill and the rest stand a thumb's width apart: the fill's end margin is
+// the thumb's room (the thumb itself is out of the flow), not an element.
 const FILL =
-	"grow group-hover:bg-toggle-on-hover group-active:bg-toggle-on-hover group-data-disabled:bg-ink-disabled";
+	"grow me-thumb group-hover:bg-toggle-on-hover group-active:bg-toggle-on-hover group-data-disabled:bg-ink-disabled";
 // Base UI places an edge-aligned thumb from a measure it takes after mount and
 // hides it until then, so the thumb stands by CSS from the value (`--share`,
 // the value's share of the range) on the first frame: the fill's width plus half
@@ -30,7 +32,6 @@ const THUMB =
 	"[inset-inline-start:calc((100%-var(--spacing-thumb))*var(--share)+var(--spacing-thumb)/2)]! visible! relative shrink-0 overflow-hidden has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ring data-disabled:border-edge data-disabled:bg-fill-disabled";
 const WASH =
 	"absolute inset-0 not-in-data-disabled:group-hover:bg-wash-hover not-in-data-disabled:group-active:bg-wash-press";
-const GAP = "shrink-0 size-thumb";
 const REST = "grow group-data-disabled:bg-edge";
 
 /** The label, value and track every Slider renders, on the `draft` its host holds: a field hosts the draft of its slider and draws a rejection in its own line. Painted, the label stands and the value and the track are filled, at the same height. Outside the package's exports. */
@@ -99,7 +100,6 @@ export function SliderBase({
 					className={cn(SLIDER_FILL, FILL)}
 					style={{ flexGrow: at - min }}
 				/>
-				<span className={GAP} />
 				<span
 					className={cn(SLIDER_REST, REST)}
 					style={{ flexGrow: max - at }}

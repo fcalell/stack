@@ -317,7 +317,7 @@ function Tasks(props: {
 		: [{ icon: "Plus" as const, label: "New task", onAct: act }];
 	return (
 		<Place>
-			<Pane title="Cron tasks" actions={actions} foot={foot} read={read}>
+			<Pane wide title="Cron tasks" actions={actions} foot={foot} read={read}>
 				{part.readOnly ? (
 					<Table columns={columns} items={shown} row={row} onOpen={act} />
 				) : (
@@ -555,7 +555,7 @@ export function drawTable(frame: ShowcaseFrame) {
 		return isFirstCell(frame) ? (
 			<Column>
 				<Place>
-					<Pane title="Cron tasks">
+					<Pane wide title="Cron tasks">
 						{endedAt<Task>(frame.id, frame.state).map(({ title, items }) => (
 							<Section key={title} title={title}>
 								<Table columns={COLUMNS} items={items} row={ROW} />

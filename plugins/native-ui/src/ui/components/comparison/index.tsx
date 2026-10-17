@@ -4,6 +4,7 @@ import { PAINT_ROWS } from "@fcalell/ui-core/paint";
 import {
 	COMPARISON_LABEL,
 	COMPARISON_ROW,
+	COMPARISON_ROW_VALUES,
 	FIGURES,
 	text,
 	textStrong,
@@ -19,7 +20,10 @@ import { Group, type GroupItem } from "../group";
 import { Status } from "../status";
 import { StatusBase } from "../status/base";
 
-const ROW = "flex-row flex-wrap items-baseline";
+// A row is the label on its own line over the values, which stand in one group
+// of equal columns that centres its cells on a line.
+const ROW = "flex-col";
+const VALUES = "flex-row items-center";
 const COLUMN = "flex-1 min-w-0";
 // The label stands on its own line over the values, beside its chips.
 const LABEL = "flex-row flex-wrap items-center w-full min-w-0";
@@ -89,14 +93,16 @@ function PaintedFact<T>(props: {
 					</View>
 				) : null}
 			</View>
-			{columns.map((column, index) => (
-				<RNText
-					key={column}
-					className={cn(text({ role: "body" }), FIGURES, COLUMN)}
-				>
-					<Painted role="phrase" at={at + index} />
-				</RNText>
-			))}
+			<View className={cn(COMPARISON_ROW_VALUES, VALUES)}>
+				{columns.map((column, index) => (
+					<RNText
+						key={column}
+						className={cn(text({ role: "body" }), FIGURES, COLUMN)}
+					>
+						<Painted role="phrase" at={at + index} />
+					</RNText>
+				))}
+			</View>
 		</View>
 	);
 }
@@ -136,14 +142,16 @@ function Fact<T>(props: {
 					</View>
 				) : null}
 			</View>
-			{columns.map((column, index) => (
-				<RNText
-					key={column}
-					className={cn(text({ role: "body" }), FIGURES, COLUMN)}
-				>
-					{values[index]}
-				</RNText>
-			))}
+			<View className={cn(COMPARISON_ROW_VALUES, VALUES)}>
+				{columns.map((column, index) => (
+					<RNText
+						key={column}
+						className={cn(text({ role: "body" }), FIGURES, COLUMN)}
+					>
+						{values[index]}
+					</RNText>
+				))}
+			</View>
 		</View>
 	);
 }
@@ -175,18 +183,20 @@ export function Comparison<T>(props: ComparisonProps<T>) {
 			}));
 	const header = (
 		<View className={cn(COMPARISON_ROW, ROW)}>
-			{columns.map((column) => (
-				<RNText
-					key={column}
-					className={cn(
-						text({ role: "meta" }),
-						textStrong({ role: "meta" }),
-						COLUMN,
-					)}
-				>
-					{column}
-				</RNText>
-			))}
+			<View className={cn(COMPARISON_ROW_VALUES, VALUES)}>
+				{columns.map((column) => (
+					<RNText
+						key={column}
+						className={cn(
+							text({ role: "meta" }),
+							textStrong({ role: "meta" }),
+							COLUMN,
+						)}
+					>
+						{column}
+					</RNText>
+				))}
+			</View>
 		</View>
 	);
 	return (

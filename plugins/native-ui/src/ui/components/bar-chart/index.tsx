@@ -45,6 +45,11 @@ const BODY = "flex-row items-start";
 // on the plot's top edge, keeps the pair gap from the head's last line.
 const REACH = { paddingTop: tickReach("touch") } as const;
 const AXIS = "shrink-0";
+// With no tick to draw (a waiting chart, a chart of nothing but zeros) the
+// axis is not drawn, and its lane and the gap after it are the body's padding
+// and the plot's margin, so the plot stands where it will.
+const NO_AXIS = "ps-figures";
+const NO_AXIS_MAIN = "ms-inside";
 const AXIS_BAND = "relative flex-1";
 // A tick centres on its gridline; the last band's bottom is the baseline,
 // whose tick is the zero.
@@ -53,17 +58,21 @@ const ZERO = "absolute right-0 bottom-0 translate-y-1/2";
 const MAIN = "grow min-w-0";
 const PLOT = "relative";
 const GRID_BAND = "flex-1";
-const BARS = "absolute inset-0 flex-row";
-const SLOT = "justify-end items-center flex-1 min-w-0";
+// The gridlines stand behind the bars' regions, at the same height, so the
+// times under the bars are no part of the plot.
+const GRID = "absolute inset-x-0 top-0";
+const BARS = "relative flex-row";
+// A bar's slot: its region (the plot's height, the bar standing on its floor)
+// over its time, when it has one.
+const SLOT = "items-center flex-1 min-w-0";
+const REGION = "justify-end items-center w-full";
 const COLUMN = "w-2/3";
 // React Native paints a fill under its border, so a stacked part's clear
 // split line is its box's border with the fill inside it.
 const PART = "w-2/3 shrink-0";
 const PART_FILL = "flex-1";
-const TIMES = "flex-row";
-const TIME = "items-center flex-1 min-w-0";
 // The painted times stand at the plot's two ends.
-const TIMES_PAINTED = "justify-between";
+const TIMES_PAINTED = "flex-row justify-between";
 
 interface Figures {
 	// The head's and the keys' figures.
@@ -225,6 +234,9 @@ export function BarChart<T>(props: BarChartProps<T>) {
 			) : null}
 		</View>
 	);
+	// The axis draws its ticks, which a chart of nothing (every bar zero) and a
+	// waiting one have none of.
+	const ticks = !painted && peak > 0;
 	return (
 		<FrameBody frame={frame} fit="frame">
 			<FrameLine frame={frame} />
@@ -249,39 +261,41 @@ export function BarChart<T>(props: BarChartProps<T>) {
 				) : (
 					totalLine
 				)}
-				<View className={cn(CHART_BODY, BODY)} style={REACH}>
-					<View className={cn(CHART_GRID, CHART_TICK_LANE, AXIS)}>
-						{Array.from({ length: bands }, (_, index) => (
-							<View
-								// biome-ignore lint/suspicious/noArrayIndexKey: a band is its index
-								key={index}
-								className={cn(
-									chartBand({ kind: "axis", rule: band(index, bands) }),
-									AXIS_BAND,
-								)}
-							>
-								{peak > 0 ? (
+				<View className={cn(CHART_BODY, BODY, !ticks && NO_AXIS)} style={REACH}>
+					{ticks ? (
+						<View className={cn(CHART_GRID, CHART_TICK_LANE, AXIS)}>
+							{Array.from({ length: bands }, (_, index) => (
+								<View
+									// biome-ignore lint/suspicious/noArrayIndexKey: a band is its index
+									key={index}
+									className={cn(
+										chartBand({ kind: "axis", rule: band(index, bands) }),
+										AXIS_BAND,
+									)}
+								>
 									<RNText
 										numberOfLines={1}
 										className={cn(text({ role: "meta" }), FIGURES, TICK)}
 									>
 										{tick(top - step * index)}
 									</RNText>
-								) : null}
-								{peak > 0 && index === bands - 1 ? (
-									<RNText className={cn(text({ role: "meta" }), FIGURES, ZERO)}>
-										{tick(0)}
-									</RNText>
-								) : null}
-							</View>
-						))}
-					</View>
-					<View className={cn(CHART_MAIN, MAIN)}>
+									{index === bands - 1 ? (
+										<RNText
+											className={cn(text({ role: "meta" }), FIGURES, ZERO)}
+										>
+											{tick(0)}
+										</RNText>
+									) : null}
+								</View>
+							))}
+						</View>
+					) : null}
+					<View className={cn(CHART_MAIN, MAIN, !ticks && NO_AXIS_MAIN)}>
 						{painted ? (
 							<View className={cn(CHART_GRID, paintBox(shown))} />
 						) : (
 							<View className={PLOT}>
-								<View className={CHART_GRID}>
+								<View className={cn(CHART_GRID, GRID)}>
 									{Array.from({ length: bands }, (_, index) => (
 										<View
 											// biome-ignore lint/suspicious/noArrayIndexKey: a band is its index
@@ -296,73 +310,76 @@ export function BarChart<T>(props: BarChartProps<T>) {
 								<View className={BARS}>
 									{series.map((bar) => (
 										<View key={bar.key} className={SLOT}>
-											{keys ? (
-												// The first part stands on the baseline, each next one
-												// over it, split from it by a clear line.
-												keys
-													.map((key, at) =>
-														at > 0 ? (
-															<View
-																key={key}
-																className={cn(CHART_PART_SPLIT, PART)}
-																style={height(part(bar, key), top)}
-															>
+											<View className={cn(CHART_GRID, REGION)}>
+												{keys ? (
+													// The first part stands on the baseline, each next one
+													// over it, split from it by a clear line.
+													keys
+														.map((key, at) =>
+															at > 0 ? (
 																<View
+																	key={key}
+																	className={cn(CHART_PART_SPLIT, PART)}
+																	style={height(part(bar, key), top)}
+																>
+																	<View
+																		className={cn(
+																			chartFill({ series: mark(at) }),
+																			PART_FILL,
+																		)}
+																	/>
+																</View>
+															) : (
+																<View
+																	key={key}
 																	className={cn(
 																		chartFill({ series: mark(at) }),
-																		PART_FILL,
+																		PART,
 																	)}
+																	style={height(part(bar, key), top)}
 																/>
-															</View>
-														) : (
-															<View
-																key={key}
-																className={cn(
-																	chartFill({ series: mark(at) }),
-																	PART,
-																)}
-																style={height(part(bar, key), top)}
-															/>
-														),
-													)
-													.reverse()
-											) : (
-												<View
-													className={cn(
-														chartFill({ series: CHART_SERIES[0] }),
-														COLUMN,
-													)}
-													style={height(bar.value, top)}
-												/>
-											)}
-										</View>
-									))}
-								</View>
-							</View>
-						)}
-						<View className={cn(TIMES, painted && TIMES_PAINTED)}>
-							{painted
-								? [0, 1].map((end) => (
-										<RNText
-											key={end}
-											className={cn(text({ role: "meta" }), FIGURES)}
-										>
-											<Painted role="word" at={end} />
-										</RNText>
-									))
-								: series.map((bar) => (
-										<View key={bar.key} className={TIME}>
+															),
+														)
+														.reverse()
+												) : (
+													<View
+														className={cn(
+															chartFill({ series: CHART_SERIES[0] }),
+															COLUMN,
+														)}
+														style={height(bar.value, top)}
+													/>
+												)}
+											</View>
 											{bar.at ? (
 												<RNText
 													numberOfLines={1}
-													className={cn(text({ role: "meta" }), FIGURES)}
+													className={cn(
+														text({ role: "meta" }),
+														FIGURES,
+														"pt-pair",
+													)}
 												>
 													{bar.at}
 												</RNText>
 											) : null}
 										</View>
 									))}
-						</View>
+								</View>
+							</View>
+						)}
+						{painted ? (
+							<View className={TIMES_PAINTED}>
+								{[0, 1].map((end) => (
+									<RNText
+										key={end}
+										className={cn(text({ role: "meta" }), FIGURES)}
+									>
+										<Painted role="word" at={end} />
+									</RNText>
+								))}
+							</View>
+						) : null}
 					</View>
 				</View>
 			</View>

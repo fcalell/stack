@@ -90,6 +90,18 @@ export function useSubmitOf(read?: Selection<unknown>) {
 	return { waiting: ended === undefined, ended };
 }
 
+// Whether a frame has a body to draw: its failed, missing or empty form, or
+// children that draw. A frame with neither draws no body box, since an empty
+// one only takes its padding.
+export function hasBody(frame: Frame, children: ReactNode): boolean {
+	return (
+		frame.form === "failed" ||
+		frame.form === "missing" ||
+		frame.form === "empty" ||
+		(children !== undefined && children !== null && children !== false)
+	);
+}
+
 // What a frame draws in place of its body, or its body: the failed, missing
 // and empty forms in the frame's `fit`; ready, waiting and idle are the loaded
 // tree, its leaves painting.

@@ -55,8 +55,9 @@ const DESCRIPTION_LINE = "flex-row flex-wrap items-center min-w-0";
 // The radio's dot centred in its ring.
 const RADIO = "shrink-0 items-center justify-center";
 const CHILDREN = "flex-row";
-const INDENT = "shrink-0";
 const CHILDREN_BODY = "flex-1 min-w-0";
+// The recommended chip stands at the row's end, centred on the row.
+const END = "flex-row shrink-0 items-center self-center";
 
 function groupsOf<V extends string>(
 	options: readonly Option<V>[] | readonly OptionGroup<V>[],
@@ -153,7 +154,7 @@ export function OptionListBase<V extends string = string, T = unknown>(
 						// A painted row is marked when the map declares a description.
 						const marked = rowsPaint
 							? option.description !== undefined
-							: meta || option.recommended;
+							: Boolean(meta);
 						return (
 							<Fragment key={option.value}>
 								<Pressable
@@ -236,9 +237,6 @@ export function OptionListBase<V extends string = string, T = unknown>(
 															{meta}
 														</RNText>
 													) : null}
-													{option.recommended ? (
-														<Chip family="neutral" label={words.recommended} />
-													) : null}
 												</View>
 											</View>
 										) : (
@@ -251,11 +249,17 @@ export function OptionListBase<V extends string = string, T = unknown>(
 											</RNText>
 										)}
 									</View>
+									{option.recommended ? (
+										<View className={END}>
+											<Chip family="neutral" label={words.recommended} />
+										</View>
+									) : null}
 								</Pressable>
 								{option.value === first && chosen && children ? (
 									<View className={cn(OPTION_CHILDREN, CHILDREN)}>
-										<View className={cn(OPTION_INDENT, INDENT)} />
-										<View className={CHILDREN_BODY}>{children}</View>
+										<View className={cn(OPTION_INDENT, CHILDREN_BODY)}>
+											{children}
+										</View>
 									</View>
 								) : null}
 							</Fragment>

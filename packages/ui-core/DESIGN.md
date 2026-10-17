@@ -1939,9 +1939,6 @@ components:
     height: "{spacing.meter}"
     rounded: "{rounded.chip}"
     backgroundColor: "{colors.fill-neutral-dark}"
-  option-indent:
-    height: "{spacing.check}"
-    width: "{spacing.check}"
   option-list:
     padding: "{spacing.float}"
     rounded: "{rounded.card}"
@@ -2518,7 +2515,7 @@ A docked sheet's body keeps `docked-floor` (144px on touch, 96px on the desktop)
 | `Diff` | content | `CONTENT_FRAME`, `DIFF_CODE`, `DIFF_GUTTER`, `DIFF_HANG`, `DIFF_HUNK`, `DIFF_LINE`, `DIFF_MARK`, `PAINT.kind.glyphs` | rest, loading, empty, error |
 | `ProseDiff` | content | `CONTENT_FRAME`, `PROSE_DIFF_BODY`, `PROSE_DIFF_RUN`, `PROSE_DIFF_TEXT`, `PAINT.kind.glyphs`, `TEXT.role.body` | rest, loading |
 | `FileRow` | content | `CHANGE_MARK`, `CHIP`, `CHIP_LABEL`, `FILE_COUNT`, `FILE_COUNT_YIELD`, `FILE_COUNTS`, `FILE_PATH`, `FILE_PATH_PART`, `ICON.fit.body`, `ICON.fit.meta`, `ROW.lines.one`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.state.rest`, `ROW.state.selected`, `ROW.state.selected-hover`, `ROW_LEADING`, `PAINT.kind.glyphs`, `PAINT.kind.box` | rest, hover, focus, active, selected, loading |
-| `Comparison` | content | `CHIP.family.neutral`, `CHIP.trailing.none`, `CHIP_LABEL.family.neutral`, `COMPARISON_LABEL`, `COMPARISON_ROW`, `STATUS`, `STATUS_DOT`, `STATUS_LABEL`, `STATUS_SPINNER`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body`, `TEXT_STRONG.role.meta`, `PAINT.kind.box`, `PAINT.kind.glyphs` | rest, loading, empty, error |
+| `Comparison` | content | `CHIP.family.neutral`, `CHIP.trailing.none`, `CHIP_LABEL.family.neutral`, `COMPARISON_LABEL`, `COMPARISON_ROW`, `COMPARISON_ROW_VALUES`, `STATUS`, `STATUS_DOT`, `STATUS_LABEL`, `STATUS_SPINNER`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body`, `TEXT_STRONG.role.meta`, `PAINT.kind.box`, `PAINT.kind.glyphs` | rest, loading, empty, error |
 | `Table` | content | `CHECKBOX`, `CHECKBOX_MARK`, `CHANGE_MARK`, `CHIP.family.teal`, `CHIP.trailing.none`, `CHIP_LABEL.family.teal`, `FIELD.fit.bar`, `FIELD.state.rest`, `FIELD.trailing.none`, `FIGURES`, `ICON.fit.body`, `ICON.fit.meta`, `LOCK_GLYPH`, `SPINNER`, `SPINNER_ARC`, `SPINNER_TRACK`, `STATUS`, `STATUS_DOT`, `STATUS_LABEL`, `STATUS_SPINNER`, `ROW_WARNING`, `TABLE`, `TABLE_CELL`, `TABLE_CHANGE`, `TABLE_NAME`, `TABLE_CHANGE_VALUE.kind.added`, `TABLE_CHANGE_VALUE.kind.after`, `TABLE_CHANGE_VALUE.kind.before`, `TABLE_CHANGE_VALUE.kind.removed`, `TABLE_FRAME`, `TABLE_FROZEN`, `TABLE_FROZEN_CELL`, `TABLE_HEAD`, `TABLE_HEAD_LABEL`, `TABLE_ROW`, `TEXT.role.body`, `TEXT.role.code`, `TEXT.role.meta`, `TEXT_STRONG.role.body`, `PAINT.kind.box`, `PAINT.kind.glyphs`, `PAINT.kind.control` | rest, hover, focus, active, loading, empty, error, selected, more |
 | `Rules` | content | `ICON.fit.meta`, `RULES`, `RULE_ROW`, `RULE_CARD`, `RULE_ARROW`, `TEXT.role.meta` | rest |
 | `Message` | content | `CHIP.family.neutral`, `CHIP_LABEL.family.neutral`, `IMAGE.fit.thumb`, `IMAGE_PICTURE.fit.thumb`, `MESSAGE_ATTACHMENTS`, `ICON.fit.meta`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `MESSAGE`, `MESSAGE_BUBBLE`, `MESSAGE_HEAD`, `MESSAGE_LINE`, `MESSAGE_OPEN`, `MESSAGE_ENTRY`, `MESSAGE_CARD`, `MESSAGE_CODE`, `MESSAGE_FOLD`, `PAINT.kind.glyphs`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT.role.code`, `TEXT_STRONG.role.body` | rest, hover, focus, active, loading |

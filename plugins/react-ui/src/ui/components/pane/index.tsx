@@ -23,7 +23,7 @@ import type { Empty } from "../../lib/empty.tsx";
 import { useFootFocus, usePaneFocus } from "../../lib/focus.ts";
 import { BackRoute, PageTitle, useFootRegion } from "../../lib/frame.ts";
 import { HeadingContext } from "../../lib/heading.ts";
-import { FrameBody, useFrame } from "../../lib/read.tsx";
+import { FrameBody, hasBody, useFrame } from "../../lib/read.tsx";
 import { useScrolls } from "../../lib/scrolls.ts";
 import { useSettleName } from "../../lib/settle.ts";
 import { Scroller, useScroller } from "../../lib/window.tsx";
@@ -133,6 +133,8 @@ export function Pane({
 		foot
 	);
 	const named = filler ? undefined : titleId;
+	// A page with nothing to draw in its body has none: an empty one is only its padding.
+	const bodied = hasBody(frame, children);
 	return (
 		<BackRoute value={back}>
 			<PageTitle value={named}>
@@ -154,28 +156,32 @@ export function Pane({
 							more={more}
 							frame={frame}
 						/>
-						<div ref={docked ? region.ref : undefined} className={REGION}>
-							<div
-								ref={scroll.ref}
-								className={cn(
-									PAGE_BODY,
-									BODY,
-									!wide && MEASURED,
-									docked && PAGE_BODY_OVER_FOOT,
-								)}
-							>
-								<Scroller value={scroll.holder}>
-									<FrameBody frame={frame} fit="page" empty={empty}>
-										{children}
-									</FrameBody>
-								</Scroller>
+						{bodied || docked ? (
+							<div ref={docked ? region.ref : undefined} className={REGION}>
+								{bodied ? (
+									<div
+										ref={scroll.ref}
+										className={cn(
+											PAGE_BODY,
+											BODY,
+											!wide && MEASURED,
+											docked && PAGE_BODY_OVER_FOOT,
+										)}
+									>
+										<Scroller value={scroll.holder}>
+											<FrameBody frame={frame} fit="page" empty={empty}>
+												{children}
+											</FrameBody>
+										</Scroller>
+									</div>
+								) : null}
+								{docked ? (
+									<div ref={dock} className={cn(FOOT_DOCKED, DOCKED)}>
+										<FrameHolds holds={NO_HOLDS}>{docked}</FrameHolds>
+									</div>
+								) : null}
 							</div>
-							{docked ? (
-								<div ref={dock} className={cn(FOOT_DOCKED, DOCKED)}>
-									<FrameHolds holds={NO_HOLDS}>{docked}</FrameHolds>
-								</div>
-							) : null}
-						</div>
+						) : null}
 					</section>
 				</HeadingContext>
 			</PageTitle>

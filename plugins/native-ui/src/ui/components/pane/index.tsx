@@ -17,7 +17,7 @@ import { cn } from "../../lib/cn";
 import type { Empty } from "../../lib/empty";
 import { BackRoute, FootReturn, useFootRegion } from "../../lib/frame";
 import { Lifted, Scroll } from "../../lib/hosts";
-import { FrameBody, useFrame } from "../../lib/read";
+import { FrameBody, hasBody, useFrame } from "../../lib/read";
 import type { Route } from "../../lib/route";
 import type { SheetProps } from "../sheet";
 import { SheetDocked } from "../sheet/docked";
@@ -116,18 +116,20 @@ export function Pane({
 					className={BODY}
 				>
 					<View className={BODY_WRAP}>
-						<Scroll
-							className={BODY}
-							contentContainerClassName={cn(
-								PAGE_BODY,
-								footed && PAGE_BODY_OVER_FOOT,
-								BODY_CONTENT,
-							)}
-						>
-							<FrameBody frame={frame} fit="page" empty={empty}>
-								{children}
-							</FrameBody>
-						</Scroll>
+						{hasBody(frame, children) ? (
+							<Scroll
+								className={BODY}
+								contentContainerClassName={cn(
+									PAGE_BODY,
+									footed && PAGE_BODY_OVER_FOOT,
+									BODY_CONTENT,
+								)}
+							>
+								<FrameBody frame={frame} fit="page" empty={empty}>
+									{children}
+								</FrameBody>
+							</Scroll>
+						) : null}
 						<ToastRoom />
 					</View>
 					{docked ? (

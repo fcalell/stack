@@ -1299,6 +1299,20 @@ a tick with no animation, never jumped to full.
   status's end group `grow` over a `flex-1` value; a press on a row that opens goes through its
   value, the end group `box-none`). `ListRow` and the other row kinds move onto it in the alignment
   sweep.
+- The rows that are not a text group and an end group stand on flex too, and a dead box (an empty
+  element that takes room and draws nothing) is gone from them. A `Comparison` fact is its label
+  cell and one values group (`COMPARISON_ROW_VALUES`, grown by its column count so the label and
+  each column share the row alike, the head standing in the same two), every cell centred on the
+  row; on touch the row is a column, the label over the values group. An `OptionList` row's
+  recommended chip is its end group, centred on the row, so a row whose second line held only the
+  chip is one line; the children under a chosen option stand in by the box's width (the group's
+  margin) and the gap after it (the body's), no indent element. A `Slider`'s fill keeps the thumb's
+  width as its end margin, not a spacer. A `BarChart` bar's time is in the bar's own slot (a bar
+  with none draws none), the gridlines stand behind the slots' regions at the same height, and the
+  axis is drawn only with ticks (a waiting chart and a chart of zeros keep its lane as the body's
+  padding). A `Pane` or `Sheet` with nothing to draw in its body draws no body box. The walk
+  excepts a row's stacked value over its marks (the owner's open question, built on the
+  recommendation) and a canvas fading in.
 - A value outside its editable context reads locked on the fact's own row: `DefinitionRow.locked` is
   a `Lock` (`reason`, `href`), drawing the lock mark after the value and the reason as the row's
   meta line, the whole line an inline `Link` when `href` names what holds it ("Held by CR-12, Ana").

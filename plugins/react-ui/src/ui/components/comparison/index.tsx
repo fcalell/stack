@@ -5,6 +5,7 @@ import { PAINT_ROWS } from "@fcalell/ui-core/paint";
 import {
 	COMPARISON_LABEL,
 	COMPARISON_ROW,
+	COMPARISON_ROW_VALUES,
 	FIGURES,
 	text,
 	textStrong,
@@ -21,15 +22,21 @@ import { GroupCard } from "../group/base.tsx";
 import { StatusBase } from "../status/base.tsx";
 import { Status } from "../status/index.tsx";
 
-const ROW = "flex items-baseline flex-wrap";
+// A row is the label's cell and the values' group, centred on the row; on
+// touch the label stands on its own line over the values, a column of two
+// lines whose values share a line of their own.
+const ROW = "flex items-center touch:flex-col touch:items-stretch";
 // The head's cell over the labels; on touch the label stands on its own line
 // over the values, so the corner leaves the layout.
 const CORNER = "basis-0 grow min-w-0 touch:hidden";
+// The values: equal columns, one flex group (grown by its column count, so a
+// label and a column share the room alike) that centres its cells on one line.
+const VALUES = "flex items-center basis-0 min-w-0 touch:basis-auto";
 // A word wider than its column hyphenates in the document's language before
 // it breaks; a wrapped value leaves no lone word on its last line.
 const COLUMN = "basis-0 grow min-w-0 hyphens-auto text-pretty";
 const LABEL =
-	"flex flex-wrap basis-0 grow min-w-0 items-center touch:basis-full";
+	"flex flex-wrap basis-0 grow min-w-0 items-center touch:grow-0 touch:basis-auto";
 const LABEL_TEXT = "min-w-0";
 // A chip or a verdict keeps its width beside a label that wraps.
 const MARK = "inline-flex shrink-0";
@@ -92,14 +99,19 @@ function PaintedFact<T>(props: {
 					</span>
 				) : null}
 			</span>
-			{columns.map((column, index) => (
-				<span
-					key={column}
-					className={cn(text({ role: "body" }), FIGURES, COLUMN)}
-				>
-					<Painted role="phrase" at={at + index} />
-				</span>
-			))}
+			<div
+				className={cn(COMPARISON_ROW_VALUES, VALUES)}
+				style={{ flexGrow: columns.length }}
+			>
+				{columns.map((column, index) => (
+					<span
+						key={column}
+						className={cn(text({ role: "body" }), FIGURES, COLUMN)}
+					>
+						<Painted role="phrase" at={at + index} />
+					</span>
+				))}
+			</div>
 		</div>
 	);
 }
@@ -150,16 +162,21 @@ function FactBase<T>(props: {
 					</span>
 				) : null}
 			</span>
-			{columns.map((column, index) => (
-				// biome-ignore lint/a11y/useSemanticElements: a Group's rows, which no native table element can hold
-				<span
-					key={column}
-					role="cell"
-					className={cn(text({ role: "body" }), FIGURES, COLUMN)}
-				>
-					{values[index]}
-				</span>
-			))}
+			<div
+				className={cn(COMPARISON_ROW_VALUES, VALUES)}
+				style={{ flexGrow: columns.length }}
+			>
+				{columns.map((column, index) => (
+					// biome-ignore lint/a11y/useSemanticElements: a Group's rows, which no native table element can hold
+					<span
+						key={column}
+						role="cell"
+						className={cn(text({ role: "body" }), FIGURES, COLUMN)}
+					>
+						{values[index]}
+					</span>
+				))}
+			</div>
 		</div>
 	);
 }
@@ -174,21 +191,26 @@ const Head = memo(function Head(props: { columns: readonly string[] }) {
 		<div role="row" aria-rowindex={1} className={cn(COMPARISON_ROW, ROW)}>
 			{/* biome-ignore lint/a11y/useSemanticElements: a Group's rows, which no native table element can hold */}
 			<span role="cell" className={CORNER} />
-			{props.columns.map((column) => (
-				// biome-ignore lint/a11y/useSemanticElements: a Group's rows, which no native table element can hold
-				// biome-ignore lint/a11y/useFocusableInteractive: a read header
-				<span
-					key={column}
-					role="columnheader"
-					className={cn(
-						text({ role: "meta" }),
-						textStrong({ role: "meta" }),
-						COLUMN,
-					)}
-				>
-					{column}
-				</span>
-			))}
+			<div
+				className={cn(COMPARISON_ROW_VALUES, VALUES)}
+				style={{ flexGrow: props.columns.length }}
+			>
+				{props.columns.map((column) => (
+					// biome-ignore lint/a11y/useSemanticElements: a Group's rows, which no native table element can hold
+					// biome-ignore lint/a11y/useFocusableInteractive: a read header
+					<span
+						key={column}
+						role="columnheader"
+						className={cn(
+							text({ role: "meta" }),
+							textStrong({ role: "meta" }),
+							COLUMN,
+						)}
+					>
+						{column}
+					</span>
+				))}
+			</div>
 		</div>
 	);
 });
