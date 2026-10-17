@@ -2012,6 +2012,13 @@ a tick with no animation, never jumped to full.
   `FormField`, `ListRow`'s entry), the remove act's round hit box (`REMOVE_HIT`: `Chip`, an
   attachment's thumbnail), the line box, the popover, the paint (`PAINT`, spelled by each component that paints its own box), and the toasts' layer
   (`TOASTS`, which the Shell stands over its page).
+  An element a pointer lands on is the target, whatever draws around it: its own rect is at least
+  24 CSS px (44 on touch), as the 2.5.8 floor measures it, so a drawn box smaller than the target
+  stands in a box the target's size and pulled back by the difference. A `Chip`'s remove is the
+  `REMOVE_HIT` disc inside such a button (the phone's `Pressable` takes a `hitSlop` of the same), a
+  field's value fills the box's height border included, and a `DefinitionRow`'s link label pads to
+  the target and pulls back, its after layer still covering the row. Axe's `target-size` passes a
+  22 px target whose 24 px circle meets no neighbour, so `Behaviour/TargetSize` holds the rects.
   `Picker` is the one pick, of one option or several: the field box (`FIELD`)
   whose open list is a popover (`POPOVER`) of rows (`ROW`), a search leading past six options, the
   list windowed past `VIRTUAL_FROM`; on touch and on the phone the same rows in a sheet. Inside a

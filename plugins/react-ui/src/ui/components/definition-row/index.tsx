@@ -68,6 +68,11 @@ const HIT =
 const TEXT = "flex flex-col min-w-min shrink-10000000";
 const TEXT_GROWS = "grow";
 const LABEL = "wrap-normal";
+// A link's label is a target the size of the target token (24 floor, 44 touch)
+// whatever its line: padded to it and pulled back by the same, so the text
+// stays where it stands.
+const BLEED =
+	"py-[calc((var(--spacing-target)-1lh)/2)] -my-[calc((var(--spacing-target)-1lh)/2)]";
 // A label with nothing under it keeps a rows inset above and below, so one that
 // wraps has room; within the row's height a one-line label does not grow it.
 const ALONE = "py-rows";
@@ -329,6 +334,7 @@ export function DefinitionRowBase<V extends string | null = string>({
 		LABEL,
 		!under && ALONE,
 		live && HIT,
+		live && BLEED,
 	);
 	const named = listed ? <Painted role="name" at={at} /> : label;
 	let title: ReactNode = <span className={name}>{named}</span>;

@@ -9,8 +9,13 @@ import { Icon } from "../icon/index.tsx";
 
 const BOX = "inline-flex items-center min-w-0";
 const LABEL = "truncate";
+// The remove act is a hit box the target's size (24 floor, 44 touch) pulled
+// back by what it has over the chip, so the chip keeps its height; the disc
+// inside it is the chip's height, and carries the washes and the focus ring.
 const REMOVE =
-	"inline-flex items-center justify-center shrink-0 hover:bg-wash-hover active:bg-wash-press focus-visible:-outline-offset-2";
+	"group inline-flex items-center justify-center shrink-0 min-h-target min-w-target -m-[calc((var(--spacing-target)-var(--spacing-chip))/2)] focus-visible:outline-none";
+const DISC =
+	"inline-flex items-center justify-center group-hover:bg-wash-hover group-active:bg-wash-press group-focus-visible:outline-2 group-focus-visible:-outline-offset-2 group-focus-visible:outline-ring";
 
 /** The pill every Chip renders. `painted` is the pill while its value is not here: its box filled at a word's length, inert. Outside the package's exports. */
 export function ChipBase({
@@ -46,13 +51,14 @@ export function ChipBase({
 		>
 			<span className={cn(chipLabel({ family }), LABEL)}>{label}</span>
 			{onRemove ? (
-				// A control inside the chip: its focus ring is drawn inset.
 				<BaseButton
 					aria-label={`${words.remove} ${label}`}
 					onClick={onRemove}
-					className={cn(REMOVE_HIT, REMOVE)}
+					className={REMOVE}
 				>
-					<Icon name="X" fit="meta" />
+					<span className={cn(REMOVE_HIT, DISC)}>
+						<Icon name="X" fit="meta" />
+					</span>
 				</BaseButton>
 			) : null}
 		</span>

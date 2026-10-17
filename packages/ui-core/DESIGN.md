@@ -2542,7 +2542,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Count` | `caption` | `skeleton`, `ink-meta` | `chip` | none | none | none |
 | `StepCount` | `meta` | `ink-meta`, `fill-neutral` | `chip` | `pair`, `inside` | `meter` | none |
 | `Status` | `meta` | `accent-ink`, `ink-meta`, `ok`, `warn`, `chip-amber`, `danger`, `skeleton` | `full`, `chip` | `inside` | `dot`, `spinner`, `measure-short`, `icon`, `icon-meta` | none |
-| `Chip` | `caption` | `skeleton`, `chip-`, `wash-hover`, `wash-press`, `ring` | `full` | `inside` | `chip`, `measure-short` | none |
+| `Chip` | `caption` | `skeleton`, `chip-`, `wash-hover`, `wash-press`, `ring` | `full` | `inside` | `chip`, `target`, `measure-short` | none |
 | `Input` | `body`, `code` | `skeleton`, `surface`, `edge`, `edge-hover`, `edge-error`, `ink-body`, `ink-meta`, `fill-disabled`, `ink-disabled`, `ring` | `control` | `inside`, `control-x` | `field`, `control-compact`, `measure-short` | none |
 | `FileInput` | `body`, `meta` | `surface`, `edge`, `edge-hover`, `edge-error`, `ink-body`, `ink-meta`, `fill-disabled`, `ink-disabled`, `ink-error`, `ring` | `control` | `inside`, `control-x`, `pair` | `field`, `icon-control`, `measure-short` | none |
 | `TextArea` | `body`, `code`, `caption` | `skeleton`, `surface`, `edge`, `edge-hover`, `edge-error`, `ink-body`, `ink-meta`, `ink-error`, `fill-disabled`, `ink-disabled`, `ring` | `control` | `rows`, `control-x`, `inside` | `text-area` | none |

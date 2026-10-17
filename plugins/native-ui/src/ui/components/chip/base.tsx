@@ -3,14 +3,17 @@ import type { ChipFamily } from "@fcalell/ui-core/tokens";
 import { chip, chipLabel, REMOVE_HIT } from "@fcalell/ui-core/variants";
 import { Pressable, Text as RNText, View } from "react-native";
 import { cn } from "../../lib/cn";
+import { tokenPx } from "../../lib/frame";
 import { Ink } from "../../lib/ink";
 import { inertProps, paintBox, useShown } from "../../lib/paint";
+import { useCSSVariable } from "../../lib/theme";
 import { useWords } from "../../lib/words";
 import { Icon } from "../icon";
 
 // A data value's tag on its family's soft ground, hugging its content; its
 // one act removes the value, a round hit box the chip's height closing its
-// right end. A lucide glyph takes a number and a colour, so the remove mark's
+// right end, which a hit slop widens to the target (44) without growing the
+// chip. A lucide glyph takes a number and a colour, so the remove mark's
 // size is resolved and its ink is the family's, which the web inherits.
 // `painted` is the pill while its value is not here: its box filled at a
 // word's length. Outside the package's exports.
@@ -27,6 +30,12 @@ export function ChipBase({
 }) {
 	const words = useWords();
 	const shown = useShown(painted);
+	const slop = Math.max(
+		0,
+		(tokenPx(useCSSVariable("--spacing-target")) -
+			tokenPx(useCSSVariable("--spacing-chip"))) /
+			2,
+	);
 	if (painted)
 		return (
 			<View
@@ -60,6 +69,7 @@ export function ChipBase({
 					accessibilityRole="button"
 					accessibilityLabel={`${words.remove} ${label}`}
 					onPress={onRemove}
+					hitSlop={slop}
 					className={cn(
 						REMOVE_HIT,
 						"items-center justify-center active:bg-wash-press",

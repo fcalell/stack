@@ -272,7 +272,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				colors: ["skeleton", "chip-", "wash-hover", "wash-press", "ring"],
 				radii: ["full"],
 				spacing: ["inside"],
-				sizes: ["chip", "measure-short"],
+				sizes: ["chip", "target", "measure-short"],
 			},
 		},
 		Input: {

@@ -39,8 +39,10 @@ export const BOX_HOVER = `hover:border-edge-hover ${POINTER_FOCUS_EDGE}`;
 // The in-field act answers its own pointer, so the box keeps its edge under it.
 export const BOX_HOVER_VALUE = `not-has-[button:hover]:hover:border-edge-hover ${POINTER_FOCUS_EDGE}`;
 export const BOX_DISABLED = "bg-fill-disabled text-ink-disabled";
+// The value fills the box's height, border included (as an act in the box
+// does), so the element a pointer lands on is the box's size, not a line's.
 const VALUE =
-	"min-w-0 grow truncate outline-none placeholder:text-ink-meta disabled:text-ink-disabled";
+	"min-w-0 grow self-stretch -my-hairline truncate outline-none placeholder:text-ink-meta disabled:text-ink-disabled";
 // A search box grows to fill the slot a toolbar gives it.
 const SEARCH_BOX = "grow";
 // A number in a table cell keeps the cell's end-aligned figures.

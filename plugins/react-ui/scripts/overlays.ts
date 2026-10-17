@@ -495,4 +495,12 @@ export const OVERLAYS: readonly string[] = [
 	"min-h-row-2",
 	"w-measure-short",
 	"w-measure",
+	// A target the size of the target token: Chip's remove, an Input's value,
+	// a DefinitionRow's link label
+	"-m-[calc((var(--spacing-target)-var(--spacing-chip))/2)]",
+	"-my-hairline",
+	"group-focus-visible:-outline-offset-2",
+	"group-focus-visible:outline-2",
+	"group-focus-visible:outline-ring",
+	"py-[calc((var(--spacing-target)-1lh)/2)]",
 ];
