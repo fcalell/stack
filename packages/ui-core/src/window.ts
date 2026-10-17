@@ -6,9 +6,10 @@
 // it is tested without a DOM.
 
 // Loaded rows from which a collection windows, under a scroller. Fewer
-// always draw whole, so a painted form (PAINT_ROWS) never windows. Tuned live
-// on the story's count control.
-export const VIRTUAL_FROM = 100;
+// always draw whole, so a painted form (PAINT_ROWS) never windows. Fifty is
+// about two screens of rows, one frame's mount work on a normal machine, so a
+// shorter collection keeps find in page and a longer one pays only for its view.
+export const VIRTUAL_FROM = 50;
 
 // Rows mounted past each edge of the scroller's view, so a fast scroll meets
 // drawn rows before measured ones.

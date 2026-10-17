@@ -96,16 +96,7 @@ export function paintText(role: PaintRole, at = 0): string {
 export function painting<T, R>(fn: (item: T) => R, item: T): R | T {
 	try {
 		return fn(item);
-	} catch (error) {
-		if (
-			typeof process !== "undefined" &&
-			process.env?.NODE_ENV !== "production"
-		) {
-			console.warn(
-				"A slot threw over a painted item; it paints instead.",
-				error,
-			);
-		}
+	} catch {
 		return item;
 	}
 }

@@ -317,7 +317,7 @@ export const ListWindows = windowed("list");
 export const GroupWindows = windowed("group");
 export const TableNarrowWindows = windowed("narrow");
 
-// 99 rows draw whole; 105 window, and the first row is the very node it was.
+// 49 rows draw whole; 55 window, and the first row is the very node it was.
 function crossing(kind: Kind): Story {
 	return {
 		args: { count: VIRTUAL_FROM - 1 },

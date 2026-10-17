@@ -1567,7 +1567,7 @@ a tick with no animation, never jumped to full.
   reply it does not stream. Thread's earlier-history paging is not built: no thread pages, and
   its anchor on a prepend went with it.
 - **A long collection windows on the web, with no prop.** `@fcalell/ui-core/window` holds the
-  count (`VIRTUAL_FROM`, 100 loaded rows, set from a render measurement kept in `states.md` §7),
+  count (`VIRTUAL_FROM`, 50 loaded rows: about two screens, one frame's work on a normal machine; the rule is kept in `states.md` §7),
   `OVERSCAN` (8 rows past each edge) and the node-tested arithmetic: `slotsOf` places the mounted
   runs of rows and one spacer for each run of unmounted ones (gap-exact), `ranged` adds the indices
   kept mounted to TanStack's range. react-ui's `lib/window` holds the rest. `Scroller` is a context
