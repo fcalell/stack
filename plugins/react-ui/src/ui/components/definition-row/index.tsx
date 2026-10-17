@@ -63,11 +63,13 @@ const HIT =
 // The text group wraps its label to the room the end group leaves, never
 // inside a word: its longest word is its floor, which the body's
 // `overflow-wrap: anywhere` would make a letter, so the label sets
-// `wrap-normal` and the group `min-w-min`. Its shrink dwarfs the end group's, so
-// it gives way first; it takes the room left over unless the end group does.
+// `wrap-normal` and the group `min-w-min`. Its shrink dwarfs the end group's,
+// so it gives way first; it takes the room left over unless the end group
+// does. A label that is a button starts where its description does
+// (`text-start`), not centred over it.
 const TEXT = "flex flex-col min-w-min shrink-10000000";
 const TEXT_GROWS = "grow";
-const LABEL = "wrap-normal";
+const LABEL = "wrap-normal text-start";
 // A link's label is a target the size of the target token (24 floor, 44 touch)
 // whatever its line: padded to it and pulled back by the same, so the text
 // stays where it stands.

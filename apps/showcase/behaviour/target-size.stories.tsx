@@ -144,11 +144,28 @@ export const MappingRow: StoryObj = {
 	},
 };
 
-// A definition row that opens: the label that is its link is the target.
+// Where a text's glyphs start, not its box.
+const textLeft = (root: HTMLElement, text: string) => {
+	const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+	for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+		if (node.textContent !== text) continue;
+		const range = document.createRange();
+		range.selectNodeContents(node);
+		return range.getBoundingClientRect().left;
+	}
+	throw new Error(`no text "${text}"`);
+};
+
+// A definition row that opens: the label that is its link is the target, and
+// a button's label starts where its description does.
 export const OpeningRow: StoryObj = {
 	render: () => <Definitions />,
 	play: async ({ canvasElement }) => {
 		await expect(small(canvasElement, floor())).toEqual([]);
+		await expect(textLeft(canvasElement, "Keys")).toBeCloseTo(
+			textLeft(canvasElement, "Used to sign in"),
+			0,
+		);
 	},
 };
 
