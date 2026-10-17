@@ -1,4 +1,7 @@
-import { useMutation } from "@fcalell/plugin-api/tanstack-query";
+import {
+	preload as start,
+	useMutation,
+} from "@fcalell/plugin-api/tanstack-query";
 import { FormField } from "@fcalell/plugin-native-ui/components/form-field";
 import { Input } from "@fcalell/plugin-native-ui/components/input";
 import { List } from "@fcalell/plugin-native-ui/components/list";
@@ -9,11 +12,19 @@ import { Sheet } from "@fcalell/plugin-native-ui/components/sheet";
 import { age } from "@fcalell/plugin-native-ui/lib/age";
 import { confirm } from "@fcalell/plugin-native-ui/lib/confirm";
 import type { Act } from "@fcalell/ui-core/descriptors";
+import type { QueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { orpc } from "../lib/api";
 
+// The one read the screen draws, built here so the route's `preload` and the
+// screen make the same query.
+const notesRead = () => orpc.notes.list.read();
+
+// A press on a link to this route starts the read before the push mounts it.
+export const preload = (client: QueryClient) => start(client, notesRead());
+
 export default function Notes() {
-	const notes = orpc.notes.list.read();
+	const notes = notesRead();
 	const create = useMutation(orpc.notes.create.mutationOptions());
 	const remove = useMutation(orpc.notes.remove.mutationOptions());
 	const [open, setOpen] = useState(false);

@@ -20,7 +20,7 @@ import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
-import { navigate, usePathname } from "../../lib/navigate";
+import { navigate, usePathname, useWarm } from "../../lib/navigate";
 import { clipWhen, inertProps, Painted } from "../../lib/paint";
 import type { Route } from "../../lib/route";
 import { sameBy } from "../../lib/same-by";
@@ -162,6 +162,7 @@ export function FileRowBase({
 	at = 0,
 }: FileRowProps & FileRowInternal) {
 	const pathname = usePathname();
+	const warm = useWarm();
 	const current = !painted && href !== undefined && isCurrent(href, pathname);
 	const open = href !== undefined ? () => navigate(href) : onOpen;
 	return (
@@ -177,6 +178,7 @@ export function FileRowBase({
 					accessibilityRole={href !== undefined ? "link" : "button"}
 					accessibilityLabel={path}
 					accessibilityState={{ selected: current }}
+					onPressIn={href !== undefined ? () => warm(href) : undefined}
 					onPress={open}
 					className={HIT}
 				/>

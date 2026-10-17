@@ -5,6 +5,7 @@ import {
 	prefixes,
 	routeTree,
 } from "virtual:stack-screens";
+import { useQueryClient } from "@fcalell/plugin-api/tanstack-query";
 import type { StoryObj } from "@storybook/react-vite";
 import {
 	createMemoryHistory,
@@ -15,11 +16,19 @@ import { useState } from "react";
 import { fixtureHandlers, type ScreenState } from "./answer.ts";
 import { routeUrl } from "./route.ts";
 
+// The story's client is made inside its providers, so the router is built
+// with a stand-in and `Screen` hands it the real one as its context.
+const standIn = { queryClient: undefined as never };
+
 // The app's real router at a route's URL, in a memory history: the URL is the
 // route's full path with its params filled from the fixtures. A first router
 // reads the full path, which only a built route knows.
 function routerAt(routeId: string) {
-	const probe = createRouter({ routeTree, history: createMemoryHistory() });
+	const probe = createRouter({
+		routeTree,
+		history: createMemoryHistory(),
+		context: standIn,
+	});
 	const route = (
 		probe.routesById as Record<string, { fullPath: string } | undefined>
 	)[routeId];
@@ -28,6 +37,7 @@ function routerAt(routeId: string) {
 	const router = createRouter({
 		routeTree,
 		history: createMemoryHistory({ initialEntries: [url] }),
+		context: standIn,
 	});
 	bindRouter(router);
 	return router;
@@ -35,7 +45,8 @@ function routerAt(routeId: string) {
 
 function Screen({ routeId }: { routeId: string }) {
 	const [router] = useState(() => routerAt(routeId));
-	return <RouterProvider router={router} />;
+	const queryClient = useQueryClient();
+	return <RouterProvider router={router} context={{ queryClient }} />;
 }
 
 // One screen of a route in one state: the app's router at the route's URL,

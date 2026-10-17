@@ -15,7 +15,7 @@ import {
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { navigate } from "../../lib/navigate";
+import { navigate, useWarm } from "../../lib/navigate";
 import { inertProps, Painted } from "../../lib/paint";
 import { CountLinks } from "../meter/count-links";
 
@@ -47,6 +47,7 @@ export interface StatsProps extends Closed {
 // laid last over it, so it stands on top of the cell's text.
 export function Stats({ items }: StatsProps) {
 	const figures = useSelections(items.map((item) => item.value));
+	const warm = useWarm();
 	const number = formatterFor("number");
 	return (
 		<View className={cn(STATS, CLIP)}>
@@ -84,6 +85,7 @@ export function Stats({ items }: StatsProps) {
 								<Pressable
 									accessibilityRole="link"
 									accessibilityLabel={item.label}
+									onPressIn={() => warm(href)}
 									onPress={() => navigate(href)}
 									className={HIT}
 								/>

@@ -19,7 +19,6 @@ import {
 	watchActs,
 } from "@fcalell/plugin-api/acts";
 import { registerOperationContext } from "@fcalell/plugin-api/client";
-import { bindClient } from "@fcalell/plugin-api/preload";
 import {
 	type EntityName,
 	handleMutationSuccess,
@@ -249,9 +248,6 @@ export function QueryProvider(props: QueryProviderProps) {
 			props.hold,
 		),
 	);
-	// In render, so it holds before the router's first load; assigning twice is
-	// harmless.
-	bindClient(client);
 	const { settle, listen } = props;
 	useEffect(
 		() => (settle ? settleReads(client, settle) : undefined),

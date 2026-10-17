@@ -262,6 +262,7 @@ export const react = plugin("react", {
 	requires: ["vite"],
 
 	dependencies: {
+		"@tanstack/react-query": "^5.100.2",
 		"@tanstack/react-router": "^1.170.40",
 	},
 	// The generated vite config imports them from the consumer, and Babel
@@ -400,6 +401,7 @@ export const react = plugin("react", {
 						...bindings,
 						{ source: "react", named: ["StrictMode"] },
 						{ source: "react-dom/client", named: ["createRoot"] },
+						{ source: "@tanstack/react-query", named: ["useQueryClient"] },
 						{
 							source: "@tanstack/react-router",
 							named: ["createRouter", "RouterProvider"],
@@ -408,13 +410,24 @@ export const react = plugin("react", {
 						{ source: "virtual:stack-providers", default: "Providers" },
 					],
 					body: [
-						"const router = createRouter({ routeTree, defaultPreloadStaleTime: 0 });",
+						// The query client is made inside `Providers`, so the router is built
+						// with a stand-in and `App` hands it the real one as its context.
+						"const router = createRouter({",
+						"\trouteTree,",
+						"\tdefaultPreloadStaleTime: 0,",
+						"\tcontext: { queryClient: undefined as never },",
+						"});",
 						...calls,
+						"",
+						"function App() {",
+						"\tconst queryClient = useQueryClient();",
+						"\treturn <RouterProvider router={router} context={{ queryClient }} />;",
+						"}",
 						"",
 						'createRoot(document.getElementById("app") as HTMLElement).render(',
 						"\t<StrictMode>",
 						"\t\t<Providers>",
-						"\t\t\t<RouterProvider router={router} />",
+						"\t\t\t<App />",
 						"\t\t</Providers>",
 						"\t</StrictMode>,",
 						");",

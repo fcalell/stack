@@ -73,7 +73,24 @@ navigates with `router` or `Link` from `expo-router`. Every one of these routes 
 writes the route types from the files under the routes directory, and `stack dev` rewrites them
 as a route file comes or goes, so an `href` to a path no file serves fails the type-check.
 
-A phone screen starts its reads as it mounts, under the push: nothing preloads on a press.
+A phone screen starts its reads as it mounts, under the push. A route that wants them under way
+sooner exports `preload`, built from the read its screen draws, as a web route's `loader` is:
+
+```tsx
+// src/app/projects/[id].tsx
+import { preload as start } from "@fcalell/plugin-api/tanstack-query";
+import type { QueryClient } from "@tanstack/react-query";
+
+const project = (id: string) => orpc.projects.get.read({ id });
+
+export const preload = (client: QueryClient, { id }: { id: string }) =>
+  start(client, project(id));
+```
+
+A finger landing on a row, `Link`, stat or fact that opens the route calls it with the app's query
+client and the href's params, so the push finds the read under way; navigation never waits on it.
+A press that lands on a button, a tab or a back arrow navigates without it. There is no prop on a
+link: the route's file is the only place it is written.
 
 ```tsx
 <Link href="/projects/12">Project 12</Link> // a route file serves it

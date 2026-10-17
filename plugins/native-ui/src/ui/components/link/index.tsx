@@ -8,7 +8,7 @@ import type { ReactNode } from "react";
 import { Pressable, Text as RNText } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { open } from "../../lib/navigate";
+import { open, useWarm } from "../../lib/navigate";
 
 // Inline is underlined at rest and plain under the press; standalone the
 // other way round. An inline link is a run of its line and takes the line's
@@ -31,10 +31,12 @@ export interface LinkProps extends Closed {
 // A navigation to another place, in accent ink.
 export function Link({ href, fit, children }: LinkProps) {
 	const place = fit ?? "inline";
+	const warm = useWarm();
 	if (place === "standalone")
 		return (
 			<Pressable
 				accessibilityRole="link"
+				onPressIn={() => warm(href)}
 				onPress={() => open(href)}
 				className={cn(LINK_TARGET, BOX)}
 			>
@@ -55,6 +57,7 @@ export function Link({ href, fit, children }: LinkProps) {
 		<RNText
 			accessibilityRole="link"
 			className={cn(link({ fit: place }), INLINE)}
+			onPressIn={() => warm(href)}
 			onPress={() => open(href)}
 		>
 			{children}

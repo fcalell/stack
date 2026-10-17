@@ -3,6 +3,7 @@ import { prefixes, previewGlobals } from "virtual:stack-screens";
 import type { Preview } from "@storybook/react-vite";
 import { mswLoader } from "msw-storybook-addon/csf3";
 import { mustBeMocked } from "./answer.ts";
+import { RememberClient } from "./client.tsx";
 import { applyGlobals, globalTypes, initialGlobals } from "./globals.ts";
 
 // The worker answers the app's procedures; a request outside it that reaches
@@ -33,6 +34,7 @@ const preview: Preview = {
 			// answers from drawing the next.
 			return (
 				<Providers key={context.id}>
+					<RememberClient />
 					<Story />
 				</Providers>
 			);

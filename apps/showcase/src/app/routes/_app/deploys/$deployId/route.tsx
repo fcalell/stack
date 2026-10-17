@@ -4,8 +4,9 @@ import { filesRead, logRead } from "../../../../components/deploy-changes.tsx";
 import { DeployRecord, deployRead } from "../../../../components/deploys.tsx";
 
 export const Route = createFileRoute("/_app/deploys/$deployId")({
-	loader: ({ params }) =>
+	loader: ({ context, params }) =>
 		preload(
+			context.queryClient,
 			deployRead(params.deployId),
 			filesRead(params.deployId),
 			logRead(params.deployId),

@@ -88,8 +88,22 @@ test("a peer's router binding is imported and called with the router, by source,
 	assert.match(entry, /import \{ bindA as bindOther \} from "peer\/a";/);
 	assert.match(
 		entry,
-		/const router = createRouter\(\{ routeTree, defaultPreloadStaleTime: 0 \}\);\nbindOther\(router\);\nbindB\(router\);\n\ncreateRoot/,
+		/\}\);\nbindOther\(router\);\nbindB\(router\);\n\nfunction App/,
 	);
+});
+
+test("the router takes the query client as its context, from the provider the app mounts", async () => {
+	const entry = (await artifacts()).get(".stack/entry.tsx") ?? "";
+	assert.match(
+		entry,
+		/import \{ useQueryClient \} from "@tanstack\/react-query";/,
+	);
+	assert.match(entry, /context: \{ queryClient: undefined as never \}/);
+	assert.match(
+		entry,
+		/function App\(\) \{\n\tconst queryClient = useQueryClient\(\);\n\treturn <RouterProvider router=\{router\} context=\{\{ queryClient \}\} \/>;/,
+	);
+	assert.match(entry, /<Providers>\n\t\t\t<App \/>/);
 });
 
 test("the head carries the app's name and the metadata options", async () => {

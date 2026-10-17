@@ -11,7 +11,7 @@ import { useState } from "react";
 import { orpc } from "../../lib/api.ts";
 
 export const Route = createFileRoute("/_app/home")({
-	loader: () => preload(orpc.tasks.list.read()),
+	loader: ({ context }) => preload(context.queryClient, orpc.tasks.list.read()),
 	component: Home,
 });
 

@@ -1,5 +1,4 @@
 import { previewGlobals } from "virtual:stack-screens";
-import { boundClient } from "@fcalell/plugin-api/preload";
 import type { Preview } from "@storybook/react-vite";
 import { expect, inject } from "vitest";
 import { page } from "vitest/browser";
@@ -10,6 +9,7 @@ import {
 	holdCalls,
 	release as releaseHold,
 } from "./answer.ts";
+import { storyClient } from "./client.tsx";
 import { unpinned } from "./globals.ts";
 import { overflowError } from "./overflow.ts";
 import { compare, measure, type SectionBox } from "./shift.ts";
@@ -258,7 +258,7 @@ async function resize(
 // runs only when a read can fail while another holds data.
 async function perRead(): Promise<string[]> {
 	const paths = called();
-	const client = boundClient();
+	const client = storyClient();
 	if (paths.length < 2 || !client) return [];
 	const reset = (path: readonly string[]) =>
 		client.resetQueries({ queryKey: [path] });

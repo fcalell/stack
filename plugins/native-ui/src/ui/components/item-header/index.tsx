@@ -21,7 +21,7 @@ import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
-import { navigate } from "../../lib/navigate";
+import { navigate, useWarm } from "../../lib/navigate";
 import { clipWhen, inertProps, Painted } from "../../lib/paint";
 import { META_CUT, partText } from "../../lib/parts";
 import type { Route } from "../../lib/route";
@@ -77,11 +77,13 @@ function factKey(fact: Fact): string {
 }
 
 function FactPart({ fact }: { fact: Fact }) {
+	const warm = useWarm();
 	if (typeof fact === "object" && "href" in fact) {
 		const { href } = fact;
 		return (
 			<Pressable
 				accessibilityRole="link"
+				onPressIn={() => warm(href)}
 				onPress={() => navigate(href)}
 				style={REACH}
 				className={cn(WORD_ACT, ITEM_FACT, OPEN)}

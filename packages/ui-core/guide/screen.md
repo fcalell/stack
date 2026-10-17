@@ -55,7 +55,9 @@ const projects = orpc.projects.list.read();
 
 On the web the route's `loader` warms what the screen reads (`preload`, see
 `node_modules/@fcalell/plugin-react/guide/routes.md`), so an open the viewer pointed at first draws
-loaded; a phone screen starts its reads as it mounts.
+loaded; a phone screen starts its reads as it mounts, or earlier when the route exports `preload`
+(`node_modules/@fcalell/plugin-expo/guide/routes.md`), which a finger landing on a row or link to it
+calls.
 
 **Check:** `pnpm check` passes.
 

@@ -48,7 +48,7 @@ import { CodeCut, Runs } from "../../lib/code";
 import { FieldDisabled, FieldError } from "../../lib/field";
 import { useMarksFold } from "../../lib/fold";
 import { Ink } from "../../lib/ink";
-import { navigate, usePathname } from "../../lib/navigate";
+import { navigate, usePathname, useWarm } from "../../lib/navigate";
 import { clipWhen, inertProps, Painted } from "../../lib/paint";
 import {
 	isCoded,
@@ -463,6 +463,7 @@ export function ListRowBase<V extends string | null = string>({
 }: Omit<ListRowProps<V>, "act" | "more"> & ListRowInternal) {
 	const words = useWords();
 	const pathname = usePathname();
+	const warm = useWarm();
 	// Over the placeholder the title is not a name.
 	const named = painted ? "" : partText(title);
 	const current =
@@ -633,6 +634,7 @@ export function ListRowBase<V extends string | null = string>({
 					accessibilityRole={href !== undefined ? "link" : "button"}
 					accessibilityLabel={named}
 					accessibilityState={{ selected: current }}
+					onPressIn={href !== undefined ? () => warm(href) : undefined}
 					onPress={open}
 					className={HIT}
 				/>

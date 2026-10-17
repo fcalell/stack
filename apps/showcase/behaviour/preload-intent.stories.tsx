@@ -1,12 +1,17 @@
-import { preload, read } from "@fcalell/plugin-api/tanstack-query";
+import {
+	preload,
+	read,
+	useQueryClient,
+} from "@fcalell/plugin-api/tanstack-query";
 import { List } from "@fcalell/plugin-react-ui/components/list";
 import { Pane } from "@fcalell/plugin-react-ui/components/pane";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { bindRouter } from "@fcalell/plugin-react-ui/lib/navigate";
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import type { QueryClient } from "@tanstack/react-query";
 import {
 	createMemoryHistory,
-	createRootRoute,
+	createRootRouteWithContext,
 	createRoute,
 	createRouter,
 	Outlet,
@@ -62,7 +67,9 @@ function Deploy(props: { id: string }) {
 }
 
 function makeRouter() {
-	const root = createRootRoute({ component: Outlet });
+	const root = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+		component: Outlet,
+	});
 	const list = createRoute({
 		getParentRoute: () => root,
 		path: "/deploys",
@@ -71,13 +78,15 @@ function makeRouter() {
 	const open = createRoute({
 		getParentRoute: () => list,
 		path: "$deployId",
-		loader: ({ params }) => preload(deployRead(params.deployId)),
+		loader: ({ context, params }) =>
+			preload(context.queryClient, deployRead(params.deployId)),
 		component: () => <Deploy id={open.useParams().deployId} />,
 	});
 	const router = createRouter({
 		routeTree: root.addChildren([list.addChildren([open])]),
 		history: createMemoryHistory({ initialEntries: ["/deploys"] }),
 		defaultPreloadStaleTime: 0,
+		context: { queryClient: undefined as never },
 	});
 	bindRouter(router);
 	return router;
@@ -91,7 +100,8 @@ function Page() {
 		router = makeRouter();
 		return router;
 	});
-	return <RouterProvider router={own} />;
+	const queryClient = useQueryClient();
+	return <RouterProvider router={own} context={{ queryClient }} />;
 }
 
 const painted = (root: ParentNode) => root.querySelector("[data-painted]");

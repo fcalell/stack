@@ -20,7 +20,12 @@ import { act } from "../../lib/act.ts";
 import { orpc } from "../../lib/api.ts";
 
 export const Route = createFileRoute("/_app/settings")({
-	loader: () => preload(orpc.settings.general.read(), orpc.devices.list.read()),
+	loader: ({ context }) =>
+		preload(
+			context.queryClient,
+			orpc.settings.general.read(),
+			orpc.devices.list.read(),
+		),
 	component: Settings,
 });
 

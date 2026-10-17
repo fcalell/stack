@@ -9,7 +9,8 @@ import { act } from "../../lib/act.ts";
 import { orpc } from "../../lib/api.ts";
 
 export const Route = createFileRoute("/_app/projects")({
-	loader: () => preload(...STAGES.map((one) => projectsOf(one.stage))),
+	loader: ({ context }) =>
+		preload(context.queryClient, ...STAGES.map((one) => projectsOf(one.stage))),
 	component: Projects,
 });
 

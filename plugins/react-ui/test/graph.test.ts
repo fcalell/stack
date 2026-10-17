@@ -238,10 +238,7 @@ test("the entry hands the router to react-ui's navigation, and not without route
 		entry,
 		/import \{ bindRouter \} from "@fcalell\/plugin-react-ui\/lib\/navigate";/,
 	);
-	assert.match(
-		entry,
-		/const router = createRouter\(\{ routeTree, defaultPreloadStaleTime: 0 \}\);\nbindRouter\(router\);/,
-	);
+	assert.match(entry, /\}\);\nbindRouter\(router\);/);
 	const off = (await artifacts({}, { routes: false })).get(".stack/entry.tsx");
 	assert.doesNotMatch(off ?? "", /bindRouter/);
 });
@@ -253,7 +250,7 @@ test("the entry sets react-ui's page for an unknown address on the router before
 		/import \{ bindNotFound \} from "@fcalell\/plugin-react-ui\/lib\/not-found";/,
 	);
 	const call = entry.indexOf("bindNotFound(router);");
-	assert.ok(entry.indexOf("createRouter({ routeTree })") < call, entry);
+	assert.ok(entry.indexOf("createRouter({") < call, entry);
 	assert.ok(call < entry.indexOf("<RouterProvider"), entry);
 	const off = (await artifacts({}, { routes: false })).get(".stack/entry.tsx");
 	assert.doesNotMatch(off ?? "", /bindNotFound/);

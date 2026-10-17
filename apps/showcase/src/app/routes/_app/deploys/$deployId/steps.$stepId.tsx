@@ -3,7 +3,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { DeployStep, deployRead } from "../../../../components/deploys.tsx";
 
 export const Route = createFileRoute("/_app/deploys/$deployId/steps/$stepId")({
-	loader: ({ params }) => preload(deployRead(params.deployId)),
+	loader: ({ context, params }) =>
+		preload(context.queryClient, deployRead(params.deployId)),
 	component: OpenStep,
 });
 

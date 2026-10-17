@@ -42,13 +42,14 @@ recipe (`node_modules/@fcalell/plugin-api/guide/add-a-procedure.md`). Page:
 const project = (id: string) => orpc.projects.get.read({ id });
 ```
 
-Warm it in the route's `loader` with `preload` from `@fcalell/plugin-api/tanstack-query`, and
-build the component's read through the same function. Hovering or focusing a link to the route
+Warm it in the route's `loader` with `preload` from `@fcalell/plugin-api/tanstack-query`, giving it
+the query client the loader finds in `context`, and build the component's read through the same
+function. Hovering or focusing a link to the route
 then preloads it. Page: [routes](./routes.md), preloading.
 
 ```tsx
 export const Route = createFileRoute("/projects/$projectId")({
-  loader: ({ params }) => preload(project(params.projectId)),
+  loader: ({ context, params }) => preload(context.queryClient, project(params.projectId)),
   component: Project,
 });
 ```

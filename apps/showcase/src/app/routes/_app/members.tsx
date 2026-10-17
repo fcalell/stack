@@ -27,7 +27,8 @@ import type { AppRouter } from "../../../../.stack/worker";
 import { orpc } from "../../lib/api.ts";
 
 export const Route = createFileRoute("/_app/members")({
-	loader: () => preload(orpc.members.list.read()),
+	loader: ({ context }) =>
+		preload(context.queryClient, orpc.members.list.read()),
 	component: Members,
 });
 

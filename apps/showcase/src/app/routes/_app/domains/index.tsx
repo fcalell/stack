@@ -9,7 +9,8 @@ import { act } from "../../../lib/act.ts";
 import { orpc } from "../../../lib/api.ts";
 
 export const Route = createFileRoute("/_app/domains/")({
-	loader: () => preload(orpc.domains.list.read()),
+	loader: ({ context }) =>
+		preload(context.queryClient, orpc.domains.list.read()),
 	component: Domains,
 });
 

@@ -8,7 +8,8 @@ import { act } from "../lib/act.ts";
 import { orpc } from "../lib/api.ts";
 
 export const Route = createFileRoute("/connect")({
-	loader: () => preload(orpc.workspaces.list.read()),
+	loader: ({ context }) =>
+		preload(context.queryClient, orpc.workspaces.list.read()),
 	component: Connect,
 });
 

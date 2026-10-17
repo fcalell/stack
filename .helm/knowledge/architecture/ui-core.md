@@ -1763,9 +1763,11 @@ a tick with no animation, never jumped to full.
   where `project` is a function both the loader and the component call, so a key is written once and
   components keep building their own reads (a route-level declaration of reads, handed down to them, would
   break that, and has nowhere to go in an app whose routes are empty files).
-  plugin-api's `preload(...selections)` starts each distinct read through the client `QueryProvider`
-  binds as it renders (`bindClient`: the router never sees the query client, and the last provider
-  rendered wins; unbound, it does nothing) and returns at once: `prefetchQuery` for a query,
+  plugin-api's `preload(client, ...selections)` starts each distinct read in the client it is given
+  (no module holds one, so two apps or two stories never share a cache: the web router carries the
+  client `QueryProvider` holds as its `context`, which plugin-react's mount fills from
+  `useQueryClient()` and each loader reads as `context.queryClient`, and the screens workbench's
+  decorator hands floors the story's) and returns at once: `prefetchQuery` for a query,
   `prefetchInfiniteQuery` for a pages read (its first page), nothing for a stream (no observer
   would ever abort it) or an idle read (`skipToken`, `enabled: false`, which would throw), and a
   failed prefetch resets to waiting when its leaf mounts, so the viewer sees painted, never failed.
@@ -1781,10 +1783,15 @@ a tick with no animation, never jumped to full.
   `defaultPreloadStaleTime: 0` so every intent reaches the loader and the query cache is the one
   authority on freshness. A loader returns nothing, so most opens are cache hits that draw loaded on
   the first frame, a read still in flight paints and settles, and a cold deep link paints (it also
-  starts its fetches beside the chunk's load). The phone preloads nothing: no list there opens a
-  record, expo-router has no loaders on native, and its `router.prefetch(href)` renders the target
-  in the background and needs a Stack; the path when a consumer arrives is native-ui's row and
-  `Link` `onPressIn` calling it, after a spike. A phone screen starts its reads as it mounts.
+  starts its fetches beside the chunk's load). The phone
+  has no loaders (expo-router's are server-side), and its `router.prefetch(href)` renders the target
+  in the background, so a phone route exports `preload(client, params)` from the read its screen
+  draws, and native-ui's `useWarm` (lib/navigate) calls it on a press-in: the Pressable of a row,
+  `Link`, a stat or a fact calls it with the app's `useQueryClient()`. `lib/warm` finds the route
+  file by asking expo-router's own store to match the href (a nested state naming a route per
+  layout, params with it) and walking its route tree alongside; a route with no `preload` starts
+  nothing, and a press on a Button, a tab or a back arrow (which expose `onAct` alone) navigates
+  without it. A phone screen starts its reads as it mounts.
 - A FileRow's own change is its `change` (a `ChangeKind`): the one change mark every row draws,
   in its lane before the glyph, a painted row reserving the lane when the `file` map declares `change`.
   The chip never carries it.

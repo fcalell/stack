@@ -30,7 +30,7 @@ import { cn } from "../../lib/cn";
 import { useCopy } from "../../lib/copy";
 import { useMarksFold } from "../../lib/fold";
 import { Ink } from "../../lib/ink";
-import { navigate } from "../../lib/navigate";
+import { navigate, useWarm } from "../../lib/navigate";
 import { clipWhen, inertProps, Painted } from "../../lib/paint";
 import { endedSentence, FailedMark, RetryMark, useRow } from "../../lib/read";
 import type { Route } from "../../lib/route";
@@ -200,6 +200,7 @@ export function DefinitionRowBase<V extends string | null = string>({
 	at = 0,
 }: DefinitionRowProps<V> & DefinitionRowInternal) {
 	const words = useWords();
+	const warm = useWarm();
 	const [shown, said] = useSelections([value, description]);
 	// The row is the frame of the reads it draws that no frame above holds: one
 	// that ended is the row's failed form, in place of its value, description
@@ -379,6 +380,9 @@ export function DefinitionRowBase<V extends string | null = string>({
 				<Pressable
 					accessibilityRole={href !== undefined && !ended ? "link" : "button"}
 					accessibilityLabel={failed ? `${words.retry} ${label}` : label}
+					onPressIn={
+						href !== undefined && !ended ? () => warm(href) : undefined
+					}
 					onPress={open}
 					className={HIT}
 				/>

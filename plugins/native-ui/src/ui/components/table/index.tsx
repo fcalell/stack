@@ -66,7 +66,7 @@ import { cn } from "../../lib/cn";
 import { type CellFit, FieldDisabled } from "../../lib/field";
 import { Ink } from "../../lib/ink";
 import { MoreRow } from "../../lib/more";
-import { navigate } from "../../lib/navigate";
+import { navigate, useWarm } from "../../lib/navigate";
 import { clipWhen, inertProps, Painted } from "../../lib/paint";
 import { FrameBody, FrameLine, useCollection } from "../../lib/read";
 import { sameBy } from "../../lib/same-by";
@@ -263,6 +263,7 @@ interface Editing {
 // new callback.
 interface GridActions {
 	open: (row: TableRecord) => void;
+	near: (row: TableRecord) => void;
 	start: (row: string, key: string) => void;
 	done: () => void;
 	edit: (row: string, key: string, value: CellValue) => unknown;
@@ -318,7 +319,10 @@ function pressOf(
 	return opens
 		? {
 				onPress: () => actions.open(row),
-				onPressIn: () => store.set(row.id),
+				onPressIn: () => {
+					store.set(row.id);
+					actions.near(row);
+				},
 				onPressOut: () => store.set(undefined),
 			}
 		: { disabled: true };
@@ -581,11 +585,16 @@ function Grid(props: {
 		lead ? shown(lead, row.cells[lead.key]) : row.id;
 	const latest = useRef(props);
 	latest.current = props;
+	const warm = useWarm();
 	const [actions] = useState<GridActions>(() => ({
 		open: (row) => {
 			const { onOpen } = latest.current;
 			if (onOpen) onOpen(row.id);
 			else if (row.href !== undefined) navigate(row.href);
+		},
+		near: (row) => {
+			if (latest.current.onOpen === undefined && row.href !== undefined)
+				warm(row.href);
 		},
 		start: (row, key) => setEditing({ row, key }),
 		done: () => setEditing(undefined),

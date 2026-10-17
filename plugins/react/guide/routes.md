@@ -23,7 +23,7 @@ src/app/routes/
 
 | Name | Means |
 | --- | --- |
-| `__root.tsx` | The one root route. `stack init` writes it rendering `<Outlet />`; app-wide providers and the app's frame go here |
+| `__root.tsx` | The one root route. `stack init` writes it rendering `<Outlet />`, with the query client as its router context; app-wide providers and the app's frame go here |
 | `index.tsx` | The directory's own URL |
 | `route.tsx` | The directory's layout: it renders `<Outlet />` where its children go |
 | `$name` | A path parameter, read with `Route.useParams()` |
@@ -51,7 +51,9 @@ function Project() {
 ## Preloading a route's data
 
 A route warms what its screen reads in its `loader`, through `preload` from
-`@fcalell/plugin-api/tanstack-query`. One function builds the read, and the loader and the
+`@fcalell/plugin-api/tanstack-query`, which takes the app's query client from the loader's
+`context` (the root route is made with `createRootRouteWithContext`, and the entry hands the router
+the client the providers hold). One function builds the read, and the loader and the
 component both call it, so the key is written once. The loader returns nothing, so navigation
 never waits on it; the component reads as it always does and finds the data already there.
 
@@ -59,7 +61,7 @@ never waits on it; the component reads as it always does and finds the data alre
 const project = (id: string) => orpc.projects.get.read({ id });
 
 export const Route = createFileRoute("/projects/$projectId")({
-  loader: ({ params }) => preload(project(params.projectId)),
+  loader: ({ context, params }) => preload(context.queryClient, project(params.projectId)),
   component: () => <ProjectPane id={Route.useParams().projectId} />,
 });
 ```

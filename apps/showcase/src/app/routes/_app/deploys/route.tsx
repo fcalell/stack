@@ -4,7 +4,7 @@ import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { DeployList, deploysPage } from "../../../components/deploys.tsx";
 
 export const Route = createFileRoute("/_app/deploys")({
-	loader: () => preload(deploysPage()),
+	loader: ({ context }) => preload(context.queryClient, deploysPage()),
 	component: DeploysPlace,
 });
 
