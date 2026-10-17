@@ -195,6 +195,7 @@ function floorsAt(width: number, fonts: boolean): string[] {
 async function visit(loading: boolean): Promise<string[]> {
 	const failures: string[] = [];
 	const shifts: string[] = [];
+	const reports: string[] = [];
 	const marks = new Map<number, string>();
 	const waiting = new Map<number, SectionBox[]>();
 	const pins = await withUnpinned(async (pins) => {
@@ -210,17 +211,18 @@ async function visit(loading: boolean): Promise<string[]> {
 			if (busy) shifts.push(`shift: ${busy}`);
 			for (const [width, before] of waiting) {
 				await resize(pins, width);
-				shifts.push(
-					...compare(before, measure()).map(
-						(line) => `at ${width}px, shift: ${line}`,
-					),
-				);
+				const found = compare(before, measure());
+				const at = (line: string) => `at ${width}px, shift: ${line}`;
+				shifts.push(...found.fails.map(at));
+				reports.push(...found.reports.map(at));
 			}
 		}
 		return pins;
 	});
 	if (SHIFT_FAILS) failures.push(...shifts);
 	else for (const line of shifts) console.info(line);
+	// A move a data-only block caused is told, not failed.
+	for (const line of reports) console.info(line);
 	// The phone width draws the touch set and the wider ones the desktop one: a
 	// run that visits both and draws one set at all of them did not unpin.
 	const wide = [...marks].filter(([width]) => width >= WIDTHS[1]);

@@ -593,8 +593,9 @@ draw nothing for it.
 
 A waiting screen is the loaded tree, never a second tree: a page's outline
 comes from its route and its data fills it. A `Section` stands whatever its data holds and draws its
-`empty` when there is none, never gated on the data's length; a Section that must stay optional stands
-after every Section that always stands, so its arrival moves nothing.
+`empty` when there is none, never gated on the data's length; a block that stands only with its data (a
+Banner, a PendingBar) stands where it reads best, and what is under it moves once when it arrives:
+the shift check reports that move and fails any other.
 
 ## Words are the config's, sentences are props
 

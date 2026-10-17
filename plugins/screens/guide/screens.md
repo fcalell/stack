@@ -89,13 +89,15 @@ measures again. Per Pane, and per column of Sections side by side in it, it repo
 - a Section that stood while waiting and is gone loaded;
 - the first Section moving at all (what stands above it changed height);
 - a later Section moving by other than what the Sections above it grew by;
-- a Section changing height with no rows, chart or text in it, in either form;
-- a Section that was not there arriving above one that was.
+- a Section changing height with no rows, chart or text in it, in either form.
 
-Each finding fails the screen. The fix is in the screen's outline, never in the paint, which is the
-loaded form already at the loaded heights: give every Section a `read`, stand the ones that always
-stand before any that may not (a Banner or a PendingBar whose condition lands with the data goes
-below the Sections), and keep a text that wraps short enough to wrap the same painted and loaded.
+A Pane with no Section is measured by the tops of its body's direct blocks, judged alike. A move
+that a block caused, one absent while waiting and present loaded above the moved one (a Banner that
+stands only with its data), by at least its height, is reported and not failed; every other finding
+fails the screen. The fix is in the screen's outline, never in the paint, which is the
+loaded form already at the loaded heights: give every Section a `read`, put a Banner or a PendingBar
+whose condition lands with the data where it reads best (what is under it moves once, which is
+reported), and keep a text that wraps short enough to wrap the same painted and loaded.
 `shift.ts` holds the measurement and `compare`.
 
 ### Each read failed

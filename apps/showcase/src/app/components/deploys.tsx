@@ -120,8 +120,9 @@ function DeployRows(props: { deploys: Datum<readonly Deploy[]> }) {
 	);
 }
 
-// The open deploy's body: its place and facts, its sections, then what it
-// waits on.
+// The open deploy's body: its place and facts, what it waits on, then its
+// sections. What it waits on stands only with the data, above the sections: the
+// shift check reports what its arrival moves.
 // The status the viewer picks is the app's own edit over the record's state.
 function Record(props: {
 	deploy: Selection<OpenDeploy>;
@@ -132,7 +133,7 @@ function Record(props: {
 	const [picked, setPicked] = useState<StatusState>();
 	const [cancelled, setCancelled] = useState(false);
 	const [until] = useState(() => new Date(Date.now() + 90_000));
-	// What the conditional parts below the sections stand on, once it lands.
+	// What the conditional parts above the sections stand on, once it lands.
 	const open = useRead(deploy);
 	const redeploying = open?.state === "active" && !cancelled;
 	const stateOf = (each: OpenDeploy) => picked ?? each.state;
@@ -158,6 +159,29 @@ function Record(props: {
 					deploy.at((each) => age(each.age)),
 				]}
 			/>
+			{open?.state === "failed" ? (
+				<Banner
+					kind="danger"
+					sentence="The build failed at Install: wrangler 4.12 needs Node 20."
+					act={{ label: "Open logs", onAct: act }}
+				/>
+			) : null}
+			{open && redeploying ? (
+				<>
+					<Banner sentence="The previous deploy serves traffic until this one is ready." />
+					<PendingBar
+						sentence={`Deploying ${open.commit} from ${open.branch}`}
+						until={until}
+						act={{
+							label: "Cancel",
+							onAct: () => {
+								setCancelled(true);
+								toast("Deploy cancelled", { state: "attention" });
+							},
+						}}
+					/>
+				</>
+			) : null}
 			<Section title="Summary">
 				<Group
 					items={[
@@ -244,31 +268,6 @@ function Record(props: {
 				deployId={props.deployId}
 				file={props.file}
 			/>
-			<DeployDetails deploy={deploy} />
-			{/* Below every Section: they stand only with the data, and a Section's heading does not move with what stands under it. */}
-			{open?.state === "failed" ? (
-				<Banner
-					kind="danger"
-					sentence="The build failed at Install: wrangler 4.12 needs Node 20."
-					act={{ label: "Open logs", onAct: act }}
-				/>
-			) : null}
-			{open && redeploying ? (
-				<>
-					<Banner sentence="The previous deploy serves traffic until this one is ready." />
-					<PendingBar
-						sentence={`Deploying ${open.commit} from ${open.branch}`}
-						until={until}
-						act={{
-							label: "Cancel",
-							onAct: () => {
-								setCancelled(true);
-								toast("Deploy cancelled", { state: "attention" });
-							},
-						}}
-					/>
-				</>
-			) : null}
 		</>
 	);
 }
@@ -534,6 +533,7 @@ export function DeployRecord(props: { deployId: string; file?: string }) {
 				deployId={props.deployId}
 				file={props.file}
 			/>
+			<DeployDetails deploy={deploy} />
 		</Pane>
 	);
 }

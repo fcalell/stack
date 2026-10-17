@@ -1974,8 +1974,9 @@ a tick with no animation, never jumped to full.
 - A page's outline comes from its route and its data fills it. A `Section` stands whatever its data
   holds, drawing its `empty` when there is none, so its arrival moves nothing; a Section per member
   iterates the domain the app knows (the usage windows, the leads), not the response; a waiting page
-  is the loaded tree painted, never a second tree; and a Section that must stay optional stands
-  after every Section that always stands, so its arrival moves nothing above it. Measured before
+  is the loaded tree painted, never a second tree; and a block that stands only with its data (a
+  Banner, a PendingBar) stands where it reads best, its arrival moving what is under it once, which
+  the shift check reports and does not fail. Measured before
   this held: every route that drew a waiting form (55 of 55) differed from its loaded form, 266 of 297
   regions, because Sections existed only once their data landed and a waiting row's bars came from a
   fixed width table. A consumer holds it by a check that no Section is gated on its data's length,
@@ -1983,7 +1984,9 @@ a tick with no animation, never jumped to full.
   screen's loading story holds its reads, measures every Section heading's top and height waiting
   and then loaded at 320, 1280 and 1920 px, per Pane and per column, and fails the screen when the
   first Section moves, a later one moves by other than what the Sections above it grew by, a Section
-  that stood is gone, or a Section with no rows, chart or text changes height; the guide's rules
+  that stood is gone, or a Section with no rows, chart or text changes height (a move that a block
+  absent while waiting and present loaded, above the moved one, accounts for is reported, not
+  failed; a Pane with no Section is measured by the tops of its body's direct blocks); the guide's rules
   page says how. The run also fails each read in turn: the answerer records the procedures the
   sidebar Data story called (nothing declares them), and for a screen of two or more it answers one
   procedure's GETs with a server error, resets its queries and runs the overflow, walk and console
