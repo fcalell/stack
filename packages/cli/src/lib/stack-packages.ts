@@ -94,6 +94,7 @@ export const STACK_PACKAGES = {
 		dir: "plugins/react-ui",
 		dependencies: [
 			"@fcalell/cli",
+			"@fcalell/plugin-api",
 			"@fcalell/plugin-auth",
 			"@fcalell/plugin-react",
 			"@fcalell/plugin-screens",
@@ -108,6 +109,7 @@ export const STACK_PACKAGES = {
 			"@fcalell/plugin-api",
 			"@fcalell/plugin-react",
 			"@fcalell/plugin-vite",
+			"@fcalell/ui-core",
 		],
 		// msw reaches the app as its own dependency (`stack add screens`); its
 		// postinstall only prints, the worker file is served from its package.
