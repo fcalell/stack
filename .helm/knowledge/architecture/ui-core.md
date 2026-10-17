@@ -1935,7 +1935,13 @@ a tick with no animation, never jumped to full.
   renders `IconButton` itself. The icon act's base also names the act: it wraps itself in a Base UI
   Tooltip (`TOOLTIP`, held by `IconButton`; 500 ms hover rest, keyboard focus, Escape and a press
   hide it, none on touch), so every icon act, popup triggers and the canvas zoom stack among
-  them, gets it with no app change. The trigger's pressed look reads `aria-expanded`, not
+  them, gets it with no app change. Text the frame cuts names itself the same way, by one
+  shared tooltip the frame host mounts (`shell/cut.tsx`; the same `TOOLTIP` and 500 ms rest, Escape,
+  a press, a scroll or leaving hides it, none on touch, in the ten-foot room or on the phone): one
+  delegated listener finds the nearest truncating ancestor (an ellipsis or a line clamp) of the
+  pointer or focus and shows its text only when it measures cut (`scrollWidth` past `clientWidth`,
+  `scrollHeight` for a clamp). It needs no prop or marker, and leaves an element with a native `title`
+  (the canvas node, a thumbnail) its own; that measure is one more file on `b-measure`'s list. The trigger's pressed look reads `aria-expanded`, not
   `data-popup-open`, which the tooltip's own trigger also sets. No popup of the roster locks the
   page: `Picker` passes `modal={false}` (Base UI's select defaults to a scroll lock that
   changes the root's overflow and gutter and moves the page as the list opens), as `Menu` does; a

@@ -110,7 +110,7 @@ corner, straddling the border so neither covers the icon. From zoom 1 down to ha
 carries the node's `title` beside it, on one line at the meta size (12 px or more), in body ink at 500, cut at the
 short measure, on the canvas's own ground so an edge never strikes through it; the name is
 drawn at the same size at any zoom, so the overview never shows text under the 12 px floor.
-Under half the glyph stands alone, with the `title` as its tooltip. A graph whose nodes stand too
+Under half the glyph stands alone, with the `title` as its tooltip (the native `title`, so the cut-text tooltip leaves it its own). A name cut at the short measure, and a group head cut to the frame's width, show whole in the cut-text tooltip when the pointer rests on them. A graph whose nodes stand too
 close for their names to clear each other at half raises that zoom to the lowest at which they
 clear, and one that cannot clear them under zoom 1 has no named overview: the glyph alone. Group
 heads stay under zoom 1, drawn at their own size on screen (a button a target tall, the meta role's size, cut to

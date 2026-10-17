@@ -7,7 +7,13 @@ import {
 	iconButton,
 	TOOLTIP,
 } from "@fcalell/ui-core/variants";
-import { type ComponentProps, type ReactElement, use, useContext } from "react";
+import {
+	type ComponentProps,
+	type ReactElement,
+	type ReactNode,
+	use,
+	useContext,
+} from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { FieldDisabled } from "../../lib/field.ts";
 import { spacing, useTouch } from "../../lib/media.ts";
@@ -37,7 +43,7 @@ const HIDDEN = "*:invisible";
 const POSITIONER = "z-(--layer-popover)";
 // The hover rest before the name shows, a beat longer than a pointer passing
 // over the act and short enough that a rested pointer is answered.
-const SHOW_AFTER = 500;
+export const SHOW_AFTER = 500;
 
 // The press a public IconButton maps from `onAct`, or the props a Base UI
 // trigger hands through its `render`: never a style channel.
@@ -116,9 +122,24 @@ function handedByDialog(event: Event): boolean {
 	);
 }
 
+/** The tooltip's popup: a name in the popover's ground, standing a pair off its anchor (the trigger inside a `Tooltip.Root`, else the `anchor` it is given). Outside the package's exports; the cut-text tooltip draws it too. */
+export function NamePopup(props: { anchor?: Element; children: ReactNode }) {
+	const container = use(PortalContainer);
+	return (
+		<Tooltip.Portal container={container}>
+			<Tooltip.Positioner
+				anchor={props.anchor}
+				className={POSITIONER}
+				sideOffset={() => spacing("pair")}
+			>
+				<Tooltip.Popup className={cn(TOOLTIP)}>{props.children}</Tooltip.Popup>
+			</Tooltip.Positioner>
+		</Tooltip.Portal>
+	);
+}
+
 function Named(props: { label: string; children: ReactElement }) {
 	const touch = useTouch();
-	const container = use(PortalContainer);
 	return (
 		<Tooltip.Root
 			disabled={touch}
@@ -137,14 +158,7 @@ function Named(props: { label: string; children: ReactElement }) {
 			}}
 		>
 			<Tooltip.Trigger delay={SHOW_AFTER} render={props.children} />
-			<Tooltip.Portal container={container}>
-				<Tooltip.Positioner
-					className={POSITIONER}
-					sideOffset={() => spacing("pair")}
-				>
-					<Tooltip.Popup className={cn(TOOLTIP)}>{props.label}</Tooltip.Popup>
-				</Tooltip.Positioner>
-			</Tooltip.Portal>
+			<NamePopup>{props.label}</NamePopup>
 		</Tooltip.Root>
 	);
 }

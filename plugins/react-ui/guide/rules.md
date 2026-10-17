@@ -677,6 +677,15 @@ a menu's more act, a sheet's close, the canvas's zoom stack), shows its `label` 
 a pointer rests on it for 500 ms, and as the keyboard reaches it; Escape, a press or leaving hides
 it (Escape still reaches the sheet the act stands in, which closes on that one press). Touch draws none. The label stays the accessible name, so never repeat it as a `title`.
 
+## Cut text names itself
+
+Text the frame cuts (a `truncate` ellipsis, a line clamp) shows its whole text in one shared
+tooltip, with no prop and no app change, so the app's own `truncate` text gets it too: a pointer
+resting on it for 500 ms, or the keyboard reaching it, shows the tooltip only when the text really
+is cut (`scrollWidth` past `clientWidth`, `scrollHeight` past `clientHeight` for a clamp); Escape,
+a press, a scroll or leaving hides it. Touch and the ten-foot room draw none. An element with a
+native `title` keeps its own, so never also rely on this for it. Phone: none (no hover).
+
 ## Words are the config's, sentences are props
 
 A word a component draws on its own comes from `reactUi({ words })`, read with

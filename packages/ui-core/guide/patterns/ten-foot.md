@@ -6,7 +6,7 @@ keeps the app's mode, so an app that draws one runs dark.
 
 ## Range
 
-on a 960-wide canvas (twice each number on a 1920 CSS px screen): body 15–16, supplemental text never under 12; controls at least 32; essential content 48 in from the sides and 27 from top and bottom; at most a phone's information; a glanceable figure 5–9× its label, one per region; focus unmistakable (a 1.025–1.1 scale or an outline outside the element), never a hover-only state; dark by default, no meaning carried by a subtle hue difference.
+on a 960-wide canvas (twice each number on a 1920 CSS px screen): body 15–16, supplemental text never under 12; controls at least 32; essential content 48 in from the sides and 27 from top and bottom; at most a phone's information; a glanceable figure 5–9× its label, one per region; focus unmistakable (a 1.025–1.1 scale or an outline outside the element), never a hover-only state; dark by default, no tooltips (the web's cut-text tooltip draws none in the room either), no meaning carried by a subtle hue difference.
 
 ## References
 

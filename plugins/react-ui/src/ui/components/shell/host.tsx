@@ -6,6 +6,7 @@ import { toasts } from "../../lib/toast.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Confirmations } from "../sheet/confirm.tsx";
 import { ToastList } from "../toast/layer.tsx";
+import { CutText } from "./cut.tsx";
 
 // The frame's `main` landmark: it stands the toasts' layer over the page.
 const MAIN = "relative flex flex-col grow min-h-0";
@@ -18,12 +19,13 @@ const MAIN = "relative flex flex-col grow min-h-0";
 const TOASTS_LAYER =
 	"absolute inset-0 bottom-[anchor(--docked-foot_top,0px)] z-(--layer-toasts) flex flex-col items-end justify-end pointer-events-none touch:items-center";
 
-/** What a root frame (the Shell, the Gate) mounts around itself: the `toast()` queue and the `confirm()` decisions. Outside the package's exports. */
+/** What a root frame (the Shell, the Gate) mounts around itself: the `toast()` queue, the `confirm()` decisions and the one tooltip for cut text. Outside the package's exports. */
 export function FrameHost({ children }: { children: ReactNode }) {
 	return (
 		<ToastControl.Provider toastManager={toasts}>
 			{children}
 			<Confirmations />
+			<CutText />
 		</ToastControl.Provider>
 	);
 }

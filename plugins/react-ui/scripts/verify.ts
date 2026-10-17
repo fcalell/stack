@@ -822,6 +822,8 @@ const MEASURING: Record<string, string> = {
 		"the settle reads reduced motion and the focused field to snap instead of move, and the running view transition",
 	"components/canvas/":
 		"the Canvas draws its nodes, edges and viewport from measured boxes",
+	"components/shell/cut.tsx":
+		"the one tooltip for cut text reads the element under the pointer or focus: its scrollWidth against its clientWidth (scrollHeight for a line clamp) says whether the text is cut, which CSS cannot report",
 	"components/thread/index.tsx":
 		"the log follows its end as messages arrive and the input grows",
 	"components/sheet/docked.tsx":
