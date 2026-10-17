@@ -358,7 +358,7 @@ the rows near the view and `OVERSCAN` (8) past each edge, spacers holding the ro
   an OptionList's groups, a Picker's sheet and its desktop search list (Base UI's virtualized
   combobox from `VIRTUAL_FROM` options), Comparison (its facts behind a kept head row) and
   BarChart (past `VIRTUAL_FROM` bars it keeps a bar's width and scrolls sideways under its axis,
-  windowing along x). A standalone Select does not window: Base UI's Select has no virtualization.
+  windowing along x). Select is gone (phase 9b): Picker is the one pick, and it windows.
   Painted forms are `PAINT_ROWS` (4) and never window, so "waiting rows fill the viewport" is cut. The focused row and a Table's cursor
   row stay mounted; the grid carries `aria-rowcount` and `aria-rowindex`. Find in page and print
   reach mounted rows only: the accepted cost. The virtualizer is the one scroll anchor; Thread
@@ -378,10 +378,11 @@ the rows near the view and `OVERSCAN` (8) past each edge, spacers holding the ro
   | 1000 | 161.9 ms | 859.7 ms |
 
   The dev build (Storybook dev) is 4 to 5 times slower still (4x: 100 rows 391 ms, 300 rows
-  1145 ms, 1000 rows 3277 ms). 100 rows exceed 16 ms, so the rule that set the measurement (lower the count to
-  the largest that fits) would give about 10. `VIRTUAL_FROM` stays 100 until the owner decides
-  that rule: at 10 rows a window draws less than a screen and every list over ten rows loses find
-  in page. The 16 ms frame is also a hard bar for a one-time mount, which a window pays on top of.
+  1145 ms, 1000 rows 3277 ms). A 16 ms frame would set about 10, which draws less than a screen
+  and takes find in page from every list over ten rows; it is also a hard bar for a one-time mount,
+  which a window pays on top of. The rule instead: `VIRTUAL_FROM` is 50, about two screens of rows
+  and one frame's mount work on a normal machine (15 ms at 1x), so a shorter collection keeps find
+  in page and a longer one pays only for its view (the owner, phase 9b).
 - **Phone (owed):** a recycling list cannot sit inside the Pane's ScrollView, and the Pane cannot
   know that a List deep in its children is long (rules 9, 11, 12). The spike decides between
   windowing on the Pane's own ScrollView through a scroller-identity context (mounts and unmounts,
@@ -496,17 +497,19 @@ sentence depends on the filter the app applied.
 ## 11. Navigation
 
 Built (phase 5). A route warms what its screen reads in its TanStack Router `loader`,
-`loader: ({ params }) => preload(project(params.projectId))`, over a handle that one function builds
+`loader: ({ context, params }) => preload(context.queryClient, project(params.projectId))`, over a
+handle that one function builds
 and the component calls too, so the key is written once. Components keep building their own reads;
-nothing is handed down from the route. `preload` starts each distinct read through the client
-`QueryProvider` holds and is never awaited, so a navigation is immediate: most opens are cache hits
+nothing is handed down from the route. `preload` starts each distinct read through the client it is
+given (the router's context carries `QueryProvider`'s) and is never awaited, so a navigation is immediate: most opens are cache hits
 and draw no waiting form, and a read that is still on its way shows the painted waiting form.
 Waiting remains for cold deep links and slow reads. On the web, one listener for the page
 (`pointerover` and `focusin` on a route anchor, held 50 ms) calls `router.preloadRoute`, which runs
-the loaders and fetches the route's code; a touch's `pointerover` is the press-in. The phone
-preloads nothing: its screens start their reads as they mount, and its press-in preload stays
-open with the owner (§15). The extra requests on hover are the
-accepted cost, and `staleTime` dedupes them.
+the loaders and fetches the route's code; a touch's `pointerover` is the press-in. On the phone a
+route module exports `preload` from the read function its screen uses, and every stack press to a
+route (Link and the row kinds) resolves its href to that module on press-in and calls it (phase
+9b), with no link prop. The extra requests on hover are the accepted cost, and `staleTime` dedupes
+them.
 
 ## 12. What goes away
 
@@ -793,8 +796,8 @@ Changed while building phase 7 (2026-10-15); where the sections above differ, th
 Deviations kept from the build:
 
 - **The count was measured and the plan's rule was not applied** (§7): 100 unwindowed rows take
-  83 ms under a 4x throttle, so the rule would set about 10. `VIRTUAL_FROM` is still 100, owed a
-  decision.
+  83 ms under a 4x throttle, so the rule would set about 10. Phase 9b set `VIRTUAL_FROM` to 50 on
+  its own rule (§7).
 - **`Scroller` holds a holder, not the element.** A Pane's collection mounts in the same commit
   that attaches the body, so a state-held element would be null in its first draw. `useScroller`
   gives one stable ref function (a `useCallback`, so a render never detaches the holder from
@@ -826,7 +829,7 @@ Deviations kept from the build:
 
 Open: `WAIT_DELAY` and `ACT_DELAY` (tuned live), and whether a minimum is needed after all; the phone's text bar as a nested `Text`
 (a device check); the phone's virtualizing libraries, its count and its Pane's scroll with a long
-collection (a spike on a device); and `VIRTUAL_FROM` itself (above).
+collection (a spike on a device).
 
 Changed while building phase 8 (2026-10-15); where the sections above differ, this list wins:
 
@@ -875,7 +878,7 @@ sections above differ, this list wins:
    Section given `empty` with no `read` does not type-check, and the icon, the title, the children
    and the no-read toggle are gone. Gate's first run keeps its title and children as
    `GateFirstRun`, a page and not a read's empty state. Canvas keeps its caption prop. Revises
-   phase 2 #8.
+   phase 2 #8. (Phase 9b removed both.)
 7. Heads are leaves: `PaneHead` and `SectionHead` subscribe to their title, acts, more and
    description, so one of them changing renders the head and nothing under the body.
    `usePainted(values)` is a `useQueries` whose `combine` answers one boolean.
@@ -918,30 +921,42 @@ Deviations kept from the build:
 - **BarChart past `VIRTUAL_FROM` bars keeps a bar's width and scrolls sideways under its axis**: a
   look change, awaiting the owner (below).
 - **A standalone Select does not window.** Base UI's Select has no virtualization; windowing it
-  would make it a combobox.
+  would make it a combobox. Phase 9b deleted Select.
 - **An OptionList's checkboxes carry no set size**; its radios carry their place in the group.
 - **A selection act over a read no frame holds** may log the dev no-holder error when that read fails:
   a blocked act is not registered as a holder.
 - **The one-read dev error is runtime only**, so Stead's console pass and stack's screens run are
   the net.
 
-Open with the owner (nothing below is built beyond what both answers share):
+Settled with the owner in phase 9b (2026-10-16), each built as answered:
 
-1. **Acts' own failure sentences.** Ruling 4 keeps the generic toast; the plan applied it to control
-   saves. Act sentences such as "The page was not saved." and "Could not end it." stay as built. If
-   the ruling covers them, they go.
-2. **What "blocked" looks like before a press.** Ruling 3 blocks offline acts, and stack cannot know
-   beforehand which acts need the server. Either (a) refused at its press, the act looking live
-   until then (built), or (b) a per-act flag draws it blocked before the press.
-3. **Collection sentences.** Either (a) collection frames take `empty?: Empty` and `failed?: string`,
-   drawn only from their own read, or (b) generic only (built).
-4. **Gate's first run.** Either (a) rename it `first` and keep its title and children, or (b)
-   reduce it to `{ sentence, act? }`. It stays as built, `GateFirstRun`.
-5. **Canvas's caption.** Either (a) rename it `hint`, a caption the app gives, or (b) drop it. It
-   stays as built.
-6. **The phone's press-in preload.** Either (a) `router.prefetch` with a press-in delay (it mounts
-   the whole screen), (b) a route `preload` export the phone link calls, or (c) none (built).
-7. **`VIRTUAL_FROM`** stays 100 against the measured rule of about 10 (§7).
-8. **BarChart's sideways scroll** for 100 or more bars is a look change; `bar-chart/index.tsx`
-   reverts if the owner rejects it.
-9. **The standalone Select** does not window; it would have to become a combobox.
+1. **Acts' own failure sentences** go: an act fails with the generic toast, and stack's acts lose
+   `failed` on both platforms. A refusal the server words for the viewer still shows its reason.
+2. **Offline acts** are refused at the press, as built; no per-act flag.
+3. **Collection sentences** stay generic, as built; a specific sentence comes from a Section that
+   holds the read with `empty`.
+4. **Gate's first run** is gone: a first run is a titled Gate with a description and buttons as
+   children. `GateFirstRun` and EmptyBase's title, children and icon go.
+5. **Canvas's caption** is gone, with its viewport reserve.
+6. **The phone's press-in preload** is (b), a route `preload` export the stack press calls (§11).
+7. **`VIRTUAL_FROM`** is 50 on the rule in §7.
+8. **BarChart's sideways scroll** stays as built; stack keeps its own BarChart.
+9. **Select** is deleted on both platforms; Picker is the one pick and windows.
+
+Changed while building phase 9b (2026-10-16 to 2026-10-17); where the sections above differ, this
+list wins:
+
+1. `preload(client, ...selections)` takes its client; `bindClient` and `boundClient` go. A web
+   root is `createRootRouteWithContext<{ queryClient: QueryClient }>()` and the generated mount
+   passes `context={{ queryClient }}`. The phone resolves a press's href through expo-router's own
+   route store rather than a second matcher, an internal surface pinned with expo-router.
+2. `painting()` is silent, as `guarded` already was: a selector that throws over the placeholder
+   paints and logs nothing, and over real data it throws.
+3. The React Compiler runs on the phone over the same sources as the web (`COMPILED_SOURCE`, one
+   filter the Vite config and the scaffolded `babel.config.cjs` both read).
+4. A row holds the read it draws and its frame does not (`useRow`), drawing waiting, failed (the
+   value slot's failure icon, "This didn't load.", the row retrying on press) and loaded in place.
+5. Deferred to the motion phase: the phone's paint delay is a JS timer per slot (`useShown` in
+   native `lib/paint.tsx`), so every painted slot renders a second time at 400 ms. It becomes a
+   Reanimated delay on the paint style together with the pulse that animates the same fill, built
+   once there rather than twice.
