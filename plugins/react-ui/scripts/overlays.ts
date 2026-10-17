@@ -417,6 +417,8 @@ export const OVERLAYS: readonly string[] = [
 	// BarChart: a long chart keeps a bar's width and scrolls sideways
 	"min-w-full",
 	"w-target",
+	// Shell
+	"size-0",
 	// Gate
 	"my-auto",
 	"touch:my-0",

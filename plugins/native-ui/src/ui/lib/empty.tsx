@@ -50,6 +50,9 @@ export function EmptyBase(props: {
 	fill?: boolean;
 }) {
 	const framed = props.fit === "frame";
+	// A missing form is the page's header, the title of the record that is not
+	// there never landing.
+	const role = props.tone === "missing" ? "header" : undefined;
 	// Only a failed read draws a mark: the alert.
 	const mark =
 		props.tone === "failed" ? (
@@ -64,11 +67,18 @@ export function EmptyBase(props: {
 	// unframed; a mark or an act keeps the frame, and a fill keeps the box it
 	// fills.
 	if (framed && !props.fill && !mark && !act)
-		return <RNText className={text({ role: "meta" })}>{props.sentence}</RNText>;
+		return (
+			<RNText accessibilityRole={role} className={text({ role: "meta" })}>
+				{props.sentence}
+			</RNText>
+		);
 	const create = props.tone === "rest";
 	const words = (
 		<View className={cn(EMPTY_TEXT, TEXT)}>
-			<RNText className={cn(text({ role: "meta" }), LINE)}>
+			<RNText
+				accessibilityRole={role}
+				className={cn(text({ role: "meta" }), LINE)}
+			>
 				{props.sentence}
 			</RNText>
 		</View>

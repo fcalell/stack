@@ -869,7 +869,11 @@ const CONTEXTS: Record<string, [ContextClass, string]> = {
 	],
 	"lib/portal.ts:PortalContainer": [
 		"portal",
-		"the one mount point a showcase stage provides for its popups",
+		"the one mount point a root frame or a showcase stage provides for its popups",
+	],
+	"lib/portal.ts:PortalSlot": [
+		"behaviour",
+		"the setter the frame's `main` hands its portal element to, which the frame host names for every popup",
 	],
 	"lib/heading.ts:HeadingContext": [
 		"data",
@@ -915,6 +919,10 @@ const CONTEXTS: Record<string, [ContextClass, string]> = {
 	"lib/frame.ts:BackRoute": [
 		"data",
 		"the route a Pane's back act returns to, where a read leads back",
+	],
+	"lib/frame.ts:PaneOverline": [
+		"data",
+		"the id of the record's overline, which names the Pane's region beside its title",
 	],
 	"lib/frame.ts:PageTitle": [
 		"data",

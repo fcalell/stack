@@ -18,8 +18,9 @@ import {
 	text,
 	WORD_ACT,
 } from "@fcalell/ui-core/variants";
-import { Fragment } from "react";
+import { Fragment, use } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { PaneOverline } from "../../lib/frame.ts";
 import { follow } from "../../lib/navigate.ts";
 import { Painted } from "../../lib/paint.tsx";
 import { META_CUT, partText } from "../../lib/parts.ts";
@@ -147,6 +148,7 @@ export function ItemHeader<V extends string | null = string>({
 	overline = [],
 	facts = [],
 }: ItemHeaderProps<V>) {
+	const overlineId = use(PaneOverline);
 	const drawn = useSelections([...overline, ...facts]);
 	// A part or a fact whose read ended draws nothing; the frame that holds the
 	// read says why.
@@ -157,7 +159,7 @@ export function ItemHeader<V extends string | null = string>({
 	return (
 		<div inert={painted || undefined} className={cn(ITEM_HEADER, HEAD)}>
 			{placed.length > 0 ? (
-				<p className={cn(text({ role: "meta" }), OVERLINE)}>
+				<p id={overlineId} className={cn(text({ role: "meta" }), OVERLINE)}>
 					{placed.map((part, at) => (
 						// biome-ignore lint/suspicious/noArrayIndexKey: the parts are a fixed list, in order
 						<Fragment key={at}>

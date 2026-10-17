@@ -5,11 +5,14 @@ import {
 	EMPTY_FRAME,
 	EMPTY_MARK,
 	EMPTY_TEXT,
+	text,
 } from "@fcalell/ui-core/variants";
+import { use } from "react";
 import { ButtonBase } from "../components/button/base.tsx";
 import { ButtonLink } from "../components/button/link.tsx";
 import { Icon } from "../components/icon/index.tsx";
 import { Text } from "../components/text/index.tsx";
+import { PageTitle } from "./frame.ts";
 
 // Alone in a page body it fills what the body leaves and centres there.
 const ALONE = "flex grow items-center justify-center";
@@ -19,6 +22,7 @@ const FILL = "grow items-center";
 const MARK = "inline-flex items-center justify-center shrink-0";
 const DANGER = "text-danger";
 const TEXT = "flex flex-col items-center";
+const MEASURE = "max-w-measure";
 
 /** What a frame says when the read it holds is empty: the sentence, and the act that makes the first one. It stands only for the frame's own read, so a frame given none has no empty state. */
 export interface Empty {
@@ -43,6 +47,14 @@ export function EmptyBase(props: {
 	fill?: boolean;
 }) {
 	const framed = props.fit === "frame";
+	// A missing form where no Pane has a title to head the page is the page's
+	// `h1`: the title of a record that is not there never lands.
+	const headed = props.tone === "missing" && use(PageTitle) === undefined;
+	const sentence = headed ? (
+		<h1 className={cn(text({ role: "meta" }), MEASURE)}>{props.sentence}</h1>
+	) : (
+		<Text role="meta">{props.sentence}</Text>
+	);
 	// Only a failed read draws a mark: the alert.
 	const mark =
 		props.tone === "failed" ? (
@@ -54,14 +66,9 @@ export function EmptyBase(props: {
 	// A Section that holds nothing and offers nothing says it as one sentence,
 	// unframed; a mark or an act keeps the frame, and a fill keeps the box it
 	// fills.
-	if (framed && !props.fill && !mark && !act)
-		return <Text role="meta">{props.sentence}</Text>;
+	if (framed && !props.fill && !mark && !act) return sentence;
 	const create = props.tone === "rest";
-	const words = (
-		<div className={cn(EMPTY_TEXT, TEXT)}>
-			<Text role="meta">{props.sentence}</Text>
-		</div>
-	);
+	const words = <div className={cn(EMPTY_TEXT, TEXT)}>{sentence}</div>;
 	if (framed)
 		return (
 			<div className={cn(EMPTY_FRAME, FRAME, props.fill && FILL)}>

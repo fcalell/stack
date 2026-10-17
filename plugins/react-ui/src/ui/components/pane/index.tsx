@@ -21,7 +21,12 @@ import { type ReactNode, useId, useRef, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import type { Empty } from "../../lib/empty.tsx";
 import { useFootFocus, usePaneFocus } from "../../lib/focus.ts";
-import { BackRoute, PageTitle, useFootRegion } from "../../lib/frame.ts";
+import {
+	BackRoute,
+	PageTitle,
+	PaneOverline,
+	useFootRegion,
+} from "../../lib/frame.ts";
 import { HeadingContext } from "../../lib/heading.ts";
 import { FrameBody, hasBody, useFrame } from "../../lib/read.tsx";
 import { useScrolls } from "../../lib/scrolls.ts";
@@ -110,6 +115,7 @@ export function Pane({
 	children,
 }: PaneProps) {
 	const titleId = useId();
+	const overlineId = useId();
 	const frame = useFrame(read);
 	const settle = useSettleName();
 	// The bar owns the title's subscription; the Pane asks only whether it is
@@ -138,52 +144,55 @@ export function Pane({
 	return (
 		<BackRoute value={back}>
 			<PageTitle value={named}>
-				<HeadingContext value={2}>
-					<section
-						ref={setPaneNode}
-						aria-labelledby={named}
-						aria-busy={(frame.holds && frame.form === "waiting") || undefined}
-						style={read === undefined ? undefined : settle}
-						data-page=""
-						data-cover={cover ? "" : undefined}
-						className={PANE}
-					>
-						<PaneHead
-							titleId={titleId}
-							title={title}
-							back={back}
-							actions={actions}
-							more={more}
-							frame={frame}
-						/>
-						{bodied || docked ? (
-							<div ref={docked ? region.ref : undefined} className={REGION}>
-								{bodied ? (
-									<div
-										ref={scroll.ref}
-										className={cn(
-											PAGE_BODY,
-											BODY,
-											!wide && MEASURED,
-											docked && PAGE_BODY_OVER_FOOT,
-										)}
-									>
-										<Scroller value={scroll.holder}>
-											<FrameBody frame={frame} fit="page" empty={empty}>
-												{children}
-											</FrameBody>
-										</Scroller>
-									</div>
-								) : null}
-								{docked ? (
-									<div ref={dock} className={cn(FOOT_DOCKED, DOCKED)}>
-										<FrameHolds holds={NO_HOLDS}>{docked}</FrameHolds>
-									</div>
-								) : null}
-							</div>
-						) : null}
-					</section>
-				</HeadingContext>
+				<PaneOverline value={overlineId}>
+					<HeadingContext value={2}>
+						<section
+							ref={setPaneNode}
+							// A record's overline leads its title in the name, when it holds one.
+							aria-labelledby={named && `${overlineId} ${named}`}
+							aria-busy={(frame.holds && frame.form === "waiting") || undefined}
+							style={read === undefined ? undefined : settle}
+							data-page=""
+							data-cover={cover ? "" : undefined}
+							className={PANE}
+						>
+							<PaneHead
+								titleId={titleId}
+								title={title}
+								back={back}
+								actions={actions}
+								more={more}
+								frame={frame}
+							/>
+							{bodied || docked ? (
+								<div ref={docked ? region.ref : undefined} className={REGION}>
+									{bodied ? (
+										<div
+											ref={scroll.ref}
+											className={cn(
+												PAGE_BODY,
+												BODY,
+												!wide && MEASURED,
+												docked && PAGE_BODY_OVER_FOOT,
+											)}
+										>
+											<Scroller value={scroll.holder}>
+												<FrameBody frame={frame} fit="page" empty={empty}>
+													{children}
+												</FrameBody>
+											</Scroller>
+										</div>
+									) : null}
+									{docked ? (
+										<div ref={dock} className={cn(FOOT_DOCKED, DOCKED)}>
+											<FrameHolds holds={NO_HOLDS}>{docked}</FrameHolds>
+										</div>
+									) : null}
+								</div>
+							) : null}
+						</section>
+					</HeadingContext>
+				</PaneOverline>
 			</PageTitle>
 		</BackRoute>
 	);

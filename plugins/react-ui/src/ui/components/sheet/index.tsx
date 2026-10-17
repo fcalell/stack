@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 import { useAct } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
 import type { Empty } from "../../lib/empty.tsx";
+import { PaneOverline } from "../../lib/frame.ts";
 import { FormBody } from "../form/base.tsx";
 import type { FormProps } from "../form/index.tsx";
 import { SheetBase } from "./base.tsx";
@@ -57,30 +58,33 @@ export function Sheet({
 	// The sheet's form has a bar of its own: one holder keeps the dismissal held
 	// while either the form's act or the sheet's runs.
 	const acting = useAct<number>("line");
+	// A sheet is not its Pane: an ItemHeader inside it names no Pane.
 	return (
-		<FrameHolds holds={NO_HOLDS}>
-			<SheetBase
-				acting={acting}
-				open={open}
-				onClose={onClose}
-				title={title}
-				description={description}
-				back={back}
-				submit={submit}
-				foot={foot}
-				fit={fit}
-				read={read}
-				empty={empty}
-			>
-				{form ? (
-					<>
-						{children}
-						<FormBody {...form} in="sheet" acting={acting} outer={read} />
-					</>
-				) : (
-					children
-				)}
-			</SheetBase>
-		</FrameHolds>
+		<PaneOverline value={undefined}>
+			<FrameHolds holds={NO_HOLDS}>
+				<SheetBase
+					acting={acting}
+					open={open}
+					onClose={onClose}
+					title={title}
+					description={description}
+					back={back}
+					submit={submit}
+					foot={foot}
+					fit={fit}
+					read={read}
+					empty={empty}
+				>
+					{form ? (
+						<>
+							{children}
+							<FormBody {...form} in="sheet" acting={acting} outer={read} />
+						</>
+					) : (
+						children
+					)}
+				</SheetBase>
+			</FrameHolds>
+		</PaneOverline>
 	);
 }

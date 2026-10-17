@@ -1,7 +1,8 @@
 import { Toast as ToastControl } from "@base-ui/react/toast";
 import { cn } from "@fcalell/ui-core/cn";
 import { TOASTS } from "@fcalell/ui-core/variants";
-import type { ReactNode } from "react";
+import { type ReactNode, use, useState } from "react";
+import { PortalContainer, PortalSlot } from "../../lib/portal.ts";
 import { toasts } from "../../lib/toast.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Confirmations } from "../sheet/confirm.tsx";
@@ -16,16 +17,27 @@ const MAIN = "relative flex flex-col grow min-h-0";
 // Their foot is the top of a docked foot (a Place's `foot`, a filling
 // Thread's input), which names itself the `--docked-foot` anchor: the layer
 // stands above it by layout as it grows, and at `main`'s foot without one.
+// The popups' mount: a point at the viewport's origin, so a popup's positioner
+// measures against the viewport as it would in the body (its first frame stands
+// where it settles), while the element itself stands in `main`, a landmark.
+const PORTAL = "fixed top-0 left-0 size-0";
 const TOASTS_LAYER =
 	"absolute inset-0 bottom-[anchor(--docked-foot_top,0px)] z-(--layer-toasts) flex flex-col items-end justify-end pointer-events-none touch:items-center";
 
 /** What a root frame (the Shell, the Gate) mounts around itself: the `toast()` queue, the `confirm()` decisions and the one tooltip for cut text. Outside the package's exports. */
 export function FrameHost({ children }: { children: ReactNode }) {
+	// The popups' container is an element of `main`, so it is state until the
+	// frame's `main` mounts it.
+	const [portal, setPortal] = useState<HTMLElement | null>(null);
 	return (
 		<ToastControl.Provider toastManager={toasts}>
-			{children}
-			<Confirmations />
-			<CutText />
+			<PortalContainer value={portal}>
+				<PortalSlot value={setPortal}>
+					{children}
+					<Confirmations />
+					<CutText />
+				</PortalSlot>
+			</PortalContainer>
 		</ToastControl.Provider>
 	);
 }
@@ -33,9 +45,11 @@ export function FrameHost({ children }: { children: ReactNode }) {
 /** The frame's `main`: its page and the toasts' layer over it. */
 export function FrameMain(props: { children: ReactNode }) {
 	const words = useWords();
+	const slot = use(PortalSlot);
 	return (
 		<main className={MAIN}>
 			{props.children}
+			<div ref={slot} className={PORTAL} />
 			<ToastControl.Viewport
 				aria-label={words.notifications}
 				className={cn(TOASTS, TOASTS_LAYER)}

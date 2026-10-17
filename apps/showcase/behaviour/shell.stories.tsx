@@ -271,11 +271,12 @@ function boxOf(element: Element): Box {
 	return { left, top, width, height };
 }
 
-// A popup opened in the Shell mounts in the body, not in `main`, so its
-// positioner measures against the viewport: its first frame stands where it
-// settles (a layer inside `main` drew it offset by `main`'s origin first), and
-// no scroll container of the Shell moves sideways while it opens.
-export const PopupMountsInTheBody: StoryObj = {
+// A popup opened in the Shell mounts in `main`, a landmark, at a point on the
+// viewport's origin, so its positioner measures against the viewport: its first
+// frame stands where it settles (a layer positioned by `main` drew it offset by
+// `main`'s origin first), and no scroll container of the Shell moves sideways
+// while it opens.
+export const PopupMountsInTheMain: StoryObj = {
 	parameters: { layout: "fullscreen" },
 	render: () => <Grants />,
 	play: async ({ canvas, userEvent }) => {
@@ -323,10 +324,7 @@ export const PopupMountsInTheBody: StoryObj = {
 				Math.abs((opening as Box)[key] - settled[key]),
 			).toBeLessThanOrEqual(1);
 		expect(sideways).toBe(0);
-		expect(list.closest("main")).toBeNull();
-		const portal = list.closest("body > *");
-		expect(portal).not.toBeNull();
-		expect(portal?.contains(canvas.getByRole("main"))).toBe(false);
+		expect(list.closest("main")).toBe(canvas.getByRole("main"));
 		await expect(await walked()).toEqual([]);
 	},
 };

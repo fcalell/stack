@@ -33,7 +33,7 @@ check holds is edited in the check, with its one-line reason; an entry nothing m
 | 11 | No context, `data-*` mark or `:has()` changes a component's form. Every `createContext` is in the closed list as `data`, `behaviour` or `portal`; a context that changes a child's form is not allowed (`HoldsContext` in plugin-api is identity that places flags, never a form, and both verifies sweep its file). The one exception: the Place's CSS hides the Panes before a covering Pane with `:has(~ [data-cover])`. | Does a descendant draw another tree, or another element, for a context it reads? Is every `dataset` in the closed list? | `b-context`, `b-dataset`; a CSS mark and `:has()` judged |
 | 12 | A child writes nothing its parent reads after paint (a registration, a lend, a fill); the parent decides from its props. | Does an effect set state in, or a ref of, a component above it? | judged |
 | 13 | A prop names what it chooses (`kind`, `form`, `fit`); none is called `type`. | Does a props type or a destructure carry `type`? | `b-type-prop` |
-| 14 | A popup mounts in the body; only a showcase stage provides where. | Does a popup mount inside a frame that clips or scrolls? | `b-context` (the one `portal` context); judged otherwise |
+| 14 | A popup mounts in the frame's one portal element inside its `main`; only a root frame or a showcase stage provides where. | Does a popup mount inside a frame that clips or scrolls? | `b-context` (the one `portal` context); judged otherwise |
 
 ## Waiting and figures
 

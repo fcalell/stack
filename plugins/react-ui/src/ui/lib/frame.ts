@@ -27,6 +27,11 @@ export const BackRoute = createContext<string | undefined>(undefined);
 // a Thread's log and a Table's grid take).
 export const PageTitle = createContext<string | undefined>(undefined);
 
+// The id the Pane gives its record's overline, so the Pane's region is named
+// by the overline and the title together: a record and a run beside it, both
+// titled after the unit, then differ by their overlines.
+export const PaneOverline = createContext<string | undefined>(undefined);
+
 // What a docked foot's region hands the docked `Sheet` it draws, in whole pixels:
 // `height` is the region the foot shares with what stands over it (a Thread
 // or a footed Pane), `chrome` the foot's own block padding and border and

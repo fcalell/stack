@@ -824,9 +824,12 @@ a tick with no animation, never jumped to full.
   theme namespace. A sheet's scrim and layer, each popover's positioner and the toasts' layer each
   draw theirs, so a toast raised while a sheet or a `confirm()` is open stands over the scrim and
   its dismiss takes the press. On the web every popup (a menu, a picker, a tooltip, a sheet)
-  portals into `<body>` as Base UI does by default, never into the Shell's or the `Gate`'s `main`: a
-  popup mounted in `main` drew its first frame offset by `main`'s origin and made the frame scroll
-  sideways as it opened (verified by `PopupMountsInTheBody`). Only a showcase stage names a
+  portals into one element the Shell's and the `Gate`'s `main` holds (`FrameHost` names it through
+  `PortalContainer`, `FrameMain` mounts it), so an open popup stands inside a landmark (axe `region`)
+  and not in `<body>` beside them. That element is a zero-size point fixed at the viewport's origin,
+  so a positioner measures against the viewport as it does in the body: a popup positioned by
+  `main` drew its first frame offset by `main`'s origin and made the frame scroll sideways as it
+  opened (verified by `PopupMountsInTheMain`). A showcase stage names its own
   `PortalContainer` (`lib/portal`), so its popups draw the stage's mode from its `.dark` class and a
   sheet in it stays non-modal; in an app a sheet is modal. The sheet's portal follows the root in
   DOM order and stands on `--layer-sheet`, the toasts' layer inside `main` on `--layer-toasts`, so
