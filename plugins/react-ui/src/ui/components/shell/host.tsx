@@ -20,7 +20,9 @@ const MAIN = "relative flex flex-col grow min-h-0";
 // The popups' mount: a point at the viewport's origin, so a popup's positioner
 // measures against the viewport as it would in the body (its first frame stands
 // where it settles), while the element itself stands in `main`, a landmark.
-const PORTAL = "fixed top-0 left-0 size-0";
+// Being fixed it is a stacking context, so it stands on the popover layer, the
+// top of the layers it holds: over the page and the tab bar, under the toasts.
+const PORTAL = "fixed top-0 left-0 size-0 z-(--layer-popover)";
 const TOASTS_LAYER =
 	"absolute inset-0 bottom-[anchor(--docked-foot_top,0px)] z-(--layer-toasts) flex flex-col items-end justify-end pointer-events-none touch:items-center";
 

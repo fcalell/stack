@@ -14,7 +14,7 @@ import { drawShell } from "@fcalell/plugin-react-ui/showcase/frames/shell";
 import type { PlaceSpec } from "@fcalell/ui-core/descriptors";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
-import { expect, screen, waitFor } from "storybook/test";
+import { expect, screen, waitFor, within } from "storybook/test";
 import { walked } from "./support.ts";
 
 const noop = () => {};
@@ -330,7 +330,8 @@ export const PopupMountsInTheMain: StoryObj = {
 };
 
 // The same picker opened in the Shell at the phone's width, where it opens a
-// sheet: the page with the sheet open keeps the rules.
+// sheet: the sheet stands over the tab bar (a press on any option lands on
+// it), and the page with the sheet open keeps the rules.
 export const PopupInTheShellOnAPhone: StoryObj = {
 	parameters: { layout: "fullscreen" },
 	globals: { density: "touch" },
@@ -342,6 +343,24 @@ export const PopupInTheShellOnAPhone: StoryObj = {
 		await waitFor(() =>
 			expect(list).toContainElement(document.activeElement as HTMLElement),
 		);
+		// The sheet slides in: each option comes to stand where a press lands on
+		// it, across the width of every tab it covers.
+		const tabs = within(
+			screen.getByRole("navigation", { name: /places/i }),
+		).getAllByRole("link");
+		for (const option of within(list).getAllByRole("option")) {
+			for (const tab of tabs) {
+				await waitFor(() => {
+					const { top, height } = option.getBoundingClientRect();
+					const { left, width } = tab.getBoundingClientRect();
+					const hit = document.elementFromPoint(
+						left + width / 2,
+						top + height / 2,
+					);
+					expect(option.contains(hit)).toBe(true);
+				});
+			}
+		}
 		await expect(await walked()).toEqual([]);
 	},
 };
