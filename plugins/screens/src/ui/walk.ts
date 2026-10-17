@@ -570,13 +570,11 @@ interface Group {
 	radii: RadiusMeasure[];
 }
 
-// Whether the alignment rules (`align-*`) fail a run: until the sweep has
-// fixed what they report, `findings()` leaves them out and `alignFindings()`
-// returns them for the report.
-export const ALIGN_FAILS: boolean = false;
+// Whether the alignment rules (`align-*`) fail a run: they do, and `findings()`
+// holds them with the layout rules; `alignFindings()` returns them alone.
+export const ALIGN_FAILS: boolean = true;
 
-// Every finding on the page, or under `roots`: the alignment rules among them
-// once `ALIGN_FAILS` is set.
+// Every finding on the page, or under `roots`, the alignment rules among them.
 export function findings(options: WalkOptions = {}): Finding[] {
 	return ALIGN_FAILS
 		? [...layoutFindings(options), ...alignFindings(options)]
@@ -967,6 +965,9 @@ function boxes(roots: Element[]): BoxMeasure[] {
 	const memo = new Map<Element, boolean>();
 	const visit = (element: Element): void => {
 		if (SKIPPED.has(element.tagName) || element instanceof SVGElement) return;
+		// A window's spacer stands for the rows outside the window: its room is
+		// theirs, drawn or not.
+		if (element.hasAttribute("data-spacer")) return;
 		const style = getComputedStyle(element);
 		if (style.display === "none" || style.opacity === "0") return;
 		if (style.display !== "contents" && style.visibility === "visible") {
@@ -1077,6 +1078,9 @@ function textBox(node: Text): { box: Box; lines: number } | undefined {
 interface Leaf extends EndMeasure {
 	text: boolean;
 	left: number;
+	top: number;
+	bottom: number;
+	element: Element;
 }
 
 function leavesOf(row: Element): Array<Leaf & { right: number }> {
@@ -1084,17 +1088,20 @@ function leavesOf(row: Element): Array<Leaf & { right: number }> {
 	const push = (
 		box: Box | undefined,
 		text: boolean,
-		at: Located,
+		element: Element,
 		name: string,
 	) => {
 		if (box)
 			out.push({
-				...at,
+				...locate(element),
 				name,
 				text,
 				left: box.left,
 				right: box.right,
+				top: box.top,
+				bottom: box.bottom,
 				centre: (box.top + box.bottom) / 2,
+				element,
 			});
 	};
 	const visit = (element: Element, clip: Box | undefined): void => {
@@ -1115,7 +1122,7 @@ function leavesOf(row: Element): Array<Leaf & { right: number }> {
 					push(
 						clipTo(boxOf(rect), clip),
 						false,
-						locate(element),
+						element,
 						nameOf(element) || `<${element.tagName.toLowerCase()}>`,
 					);
 					return;
@@ -1138,7 +1145,7 @@ function leavesOf(row: Element): Array<Leaf & { right: number }> {
 					push(
 						clipTo(shown.box, inside),
 						true,
-						locate(element),
+						element,
 						(node.nodeValue ?? "").trim().replace(/\s+/g, " ").slice(0, 24),
 					);
 			}
@@ -1146,6 +1153,16 @@ function leavesOf(row: Element): Array<Leaf & { right: number }> {
 	};
 	visit(row, undefined);
 	return out;
+}
+
+// The row's item that holds an element: the row's own child it stands in, or
+// the element itself where that child is only a wrapper that adds no box.
+function itemOf(row: Element, element: Element): Element {
+	if (element === row) return element;
+	let item = element;
+	while (item.parentElement && item.parentElement !== row)
+		item = item.parentElement;
+	return getComputedStyle(item).display === "contents" ? element : item;
 }
 
 // The rows on the page and what stands at the end of each: a row is a flex
@@ -1171,8 +1188,24 @@ function rows(seen: Seen[], scopes: Scopes): RowMeasure[] {
 		const leaves = leavesOf(element);
 		const label = leaves.find((leaf) => leaf.text);
 		if (!label) continue;
+		// The label's own group: what stands in it below its first line (a meta
+		// line running past the title) is its text, no end. An end item is
+		// beside the text, so the end group a narrow row wraps onto a line of
+		// its own, wholly under the text, is no end; one only off the row's
+		// middle still is.
+		const group = itemOf(element, label.element);
+		const first = leaves.find((leaf) => group.contains(leaf.element)) ?? label;
+		const under = (
+			group === element ? label.element : group
+		).getBoundingClientRect().bottom;
 		const ends = leaves.filter(
-			(leaf) => leaf !== label && leaf.left >= label.right - 0.5,
+			(leaf) =>
+				leaf !== label &&
+				leaf.left >= label.right - 0.5 &&
+				(group === element ||
+					!group.contains(leaf.element) ||
+					(leaf.centre >= first.top && leaf.centre <= first.bottom)) &&
+				leaf.top < under - 0.5,
 		);
 		if (ends.length === 0) continue;
 		out.push({
@@ -1288,7 +1321,7 @@ function lines(seen: Seen[]): RunMeasure[][] {
 }
 
 // The alignment findings on the page, or under `roots`: what `findings()` adds
-// once `ALIGN_FAILS` is set, and what the sweep's report reads before.
+// to the layout rules.
 export function alignFindings(options: WalkOptions = {}): Finding[] {
 	const roots = options.roots ?? [document.body];
 	const seen = drawn(roots);

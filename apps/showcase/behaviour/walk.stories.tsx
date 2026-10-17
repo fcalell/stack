@@ -450,9 +450,9 @@ export const MarksTheDensityThePageDraws: StoryObj = {
 
 // ── alignment ───────────────────────────────────────────────────────
 
-// The `align-*` rules are report-only until the sweep has run, so `findings()`
-// leaves them out and `alignFindings()` is what these canaries call: each bad
-// fixture must be found, once, by the rule named, and the clean one by none.
+// `alignFindings()` is the `align-*` rules of `findings()` alone, and what these
+// canaries call: each bad fixture must be found, once, by the rule named, and
+// the clean one by none.
 function aligned(fixture: ReactNode, expected: string[]): StoryObj {
 	return {
 		parameters: { a11y: { test: "off" } },
@@ -531,6 +531,16 @@ export const CatchesALoneValueOnTheLabelsLine = aligned(
 	["align-centre"],
 );
 
+// A one-line row whose chevron rides its top: off the middle, still beside
+// the text.
+export const CatchesAnEndItemAtTheRowsTop = aligned(
+	<div style={{ ...ROW, paddingBlock: 0 }}>
+		<span style={{ ...BODY, ...GROW }}>Domains</span>
+		<span style={{ alignSelf: "flex-start", display: "flex" }}>{chevron}</span>
+	</div>,
+	["align-centre"],
+);
+
 // A count centred by its line box rides above the heading's baseline.
 export const CatchesACountOffTheHeadingsBaseline = aligned(
 	<div style={{ display: "flex", alignItems: "center" }}>
@@ -553,6 +563,34 @@ export const CatchesAnInlineGrid = aligned(
 		<span style={BODY}>Label</span>
 	</span>,
 	["align-grid"],
+);
+
+// A text group's second line running past its first is no end item, a narrow
+// row's end group wrapped onto a line of its own under the text is not beside
+// it, and a window's spacer stands for rows outside the window.
+export const PassesATextGroupAWrappedEndGroupAndASpacer = aligned(
+	<>
+		<div style={ROW}>
+			<span style={{ ...GROW, display: "flex", flexDirection: "column" }}>
+				<span style={BODY}>Help</span>
+				<span style={META}>
+					Imported yesterday <span>· 212 pages</span>
+				</span>
+			</span>
+			<span style={{ ...BODY, flex: "none" }}>Import</span>
+		</div>
+		<div style={{ ...ROW, flexWrap: "wrap" }}>
+			<span style={{ ...BODY, flex: "1 1 0", minWidth: 0 }}>Help centre</span>
+			<span style={{ ...BODY, flex: "0 0 100%", textAlign: "right" }}>
+				Import
+			</span>
+		</div>
+		<div style={{ display: "flex" }}>
+			<div data-spacer aria-hidden style={{ width: 40, height: 20 }} />
+			<span style={BODY}>Bar</span>
+		</div>
+	</>,
+	[],
 );
 
 // The same rows drawn as groups: a text group and an end group centred on the

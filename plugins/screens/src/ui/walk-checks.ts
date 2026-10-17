@@ -513,8 +513,8 @@ export function checkFocus(focus: FocusMeasure | null): Finding[] {
 
 // The alignment rules are `align-*`: they report what a layout draws off the
 // group structure (a row is a text group and an end group, a line has one
-// baseline, nothing takes room and draws nothing) and fail a run only once
-// the walk's `ALIGN_FAILS` is set.
+// baseline, nothing takes room and draws nothing) and fail a run with the
+// walk's other rules (`ALIGN_FAILS`).
 
 // What a box was seen to draw, so a box that takes room and draws none of it
 // is found.

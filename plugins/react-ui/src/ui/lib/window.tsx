@@ -44,8 +44,10 @@ export function useScroller<T extends HTMLElement = HTMLElement>(
 
 // The height a row is taken to have until the first one is measured.
 const ESTIMATE = 48;
-// A spacer is out of the accessibility tree and is what `check` knows it by.
-const HIDDEN = { "aria-hidden": true } as const;
+// A spacer is out of the accessibility tree and is what `check` knows it by;
+// `data-spacer` tells the render walk it stands for rows outside the window,
+// so it is room by design and no dead box.
+const HIDDEN = { "aria-hidden": true, "data-spacer": true } as const;
 // How long a scroll is taken to run after its last event (ms).
 const SETTLED = 150;
 

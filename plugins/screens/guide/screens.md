@@ -150,14 +150,13 @@ a finding as `rule: element measured X, expected Y; fix: how`.
 | `tabular-digits` | a text that is only a number (digits with separators, a sign, a percent, a currency symbol or a unit of up to three letters) in a proportional face without `tabular-nums` |
 | `region-name` | a landmark region inside another of the same accessible name |
 
-Four more rules are `align-*`. They are report-only: `findings()` leaves them out until `ALIGN_FAILS`
-(`walk.ts`) is set, `alignFindings()` returns them, and a run prints them as `at <width>px, align-…`
-lines (a screen) or `<component> <density>: align-…` lines (the roster stress) without failing.
+Four more rules are `align-*`. They fail a run like the rest (`ALIGN_FAILS` in `walk.ts` is true);
+`alignFindings()` returns them alone.
 
 | Rule | A finding is |
 | --- | --- |
-| `align-dead` | a box in the flow, wider and taller than half a pixel, that draws nothing: no text, background, border, shadow or outline, no picture or control, nothing inside that draws (the empty end square of a row). Out-of-flow boxes, pictures, controls, table cells and fully transparent boxes are not found |
-| `align-centre` | a row (a flex row with a row role, or the floor of a row token) whose end items, the drawn leaves beyond its label's right edge, are more than 1 px off the row's vertical centre (a value on the label's line beside a chevron on the row's middle) |
+| `align-dead` | a box in the flow, wider and taller than half a pixel, that draws nothing: no text, background, border, shadow or outline, no picture or control, nothing inside that draws (the empty end square of a row). Out-of-flow boxes, a window's spacer (`data-spacer`), pictures, controls, table cells and fully transparent boxes are not found |
+| `align-centre` | a row (a flex row with a row role, or the floor of a row token) whose end items, the drawn leaves beside its label, beyond its right edge and not in the text group below its first line, are more than 1 px off the row's vertical centre (a value on the label's line beside a chevron on the row's middle) |
 | `align-baseline` | two bare texts of different sizes on one flex-row line whose baselines differ by more than 1 px (a count centred by its line box beside a heading). Texts inside a painted box or a control, an item of two lines and a nested row's own texts are left out |
 | `align-grid` | any element whose computed `display` is `grid` or `inline-grid`: the layout is flex alone, so the phone mirrors it |
 
