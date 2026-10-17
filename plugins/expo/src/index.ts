@@ -388,6 +388,9 @@ export const expo = plugin("expo", {
 		// React's types back the app's JSX (`react/jsx-runtime`); without it a
 		// consumer's `tsconfig.app.json` can't resolve the automatic runtime.
 		"@types/react": "~19.2.0",
+		// `babel.config.cjs` runs it over the app's code and @fcalell/* (Babel
+		// resolves the plugin from the consumer).
+		"babel-plugin-react-compiler": "^1.0.0",
 	},
 	// Expo cache + prebuild outputs (continuous native generation regenerates
 	// ios/ + android/ on demand via `stack expo prebuild`).

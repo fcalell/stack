@@ -48,6 +48,10 @@
 			"types": "./dist/lib/codegen.d.ts",
 			"default": "./dist/lib/codegen.js"
 		},
+		"./compiled-source": {
+			"types": "./dist/lib/compiled-source.d.ts",
+			"default": "./dist/lib/compiled-source.js"
+		},
 		"./discovery": {
 			"types": "./dist/lib/discovery.d.ts",
 			"default": "./dist/lib/discovery.js"

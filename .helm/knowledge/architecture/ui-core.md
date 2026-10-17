@@ -1019,9 +1019,10 @@ a tick with no animation, never jumped to full.
   so a thread's re-render (a keystroke in its input, a message arriving) skips every message already
   drawn. The showcase compiles the workspace's plugin source with the React Compiler, which memoises
   on its own, and a consumer's web build compiles its `node_modules` copy too (plugin-react's
-  `exclude` and the compiler's `sources` both let `@fcalell` paths through); the phone's copy
-  (`babel-preset-expo` never runs the compiler on `node_modules`) and the web dev server's
-  pre-bundled copy are not compiled, so these memos are explicit.
+  `exclude` and the compiler's `sources` both let `@fcalell` paths through); the phone compiles
+  the same set (its `babel.config.cjs` adds the compiler ahead of `babel-preset-expo`, which
+  compiles no dependency, with the filter from `@fcalell/cli/compiled-source`); the web dev
+  server's pre-bundled copy is not compiled, so these memos stay explicit.
 - A blocked act shows its reason once pressed or once its form or sheet is touched, except in an
   ActionBar, which draws the last blocked act's reason at rest under the acts (it hands its acts
   `REASON_AT_REST`, a host whose press shows nothing). The press is

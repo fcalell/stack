@@ -68,7 +68,8 @@ the file itself.
 - Write no `useMemo`, `useCallback` or `React.memo` for speed: the React Compiler memoizes
   every component and hook. Follow the Rules of React, which the compiler relies on. The build
   compiles your code and the `@fcalell` packages installed under `node_modules`, and no other
-  dependency; the dev server's pre-bundled copies of those packages run uncompiled.
+  dependency (the phone compiles the same set); the dev server's pre-bundled copies of those
+  packages run uncompiled.
 - Never write a Vite config, an `index.html` or an entry file: they are generated, and a change
   to them is an option on `react()`, `vite()` or a gap
   (`node_modules/@fcalell/cli/guide/gap.md`).

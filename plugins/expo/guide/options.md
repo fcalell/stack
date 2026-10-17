@@ -52,7 +52,10 @@ plugin while routing is on.
 - `app.config.ts` and `metro.config.js` re-export `.stack/app.config.cjs` and
   `.stack/metro.config.cjs`. Leave them as they are: change the config through `expo()`.
 - `babel.config.cjs` holds `babel-preset-expo`, which carries the transform the entry's
-  `require.context` needs. It is `.cjs` because the app's `package.json` is `type: module`.
+  `require.context` needs, and the React Compiler (`target: "19"`) over your code and the
+  `@fcalell` packages under `node_modules`, the set the web compiles, so write no `useMemo`,
+  `useCallback` or `React.memo` for speed here either. It is `.cjs` because the app's
+  `package.json` is `type: module`.
 - `eas.json` is yours: see [builds](./builds.md).
 - `src/lib/api.ts` is yours: see [the API client](./api-client.md).
 

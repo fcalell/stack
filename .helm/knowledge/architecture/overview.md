@@ -33,7 +33,7 @@ runtime export.
 | `@fcalell/plugin-vite` | Framework-agnostic Vite lifecycle (providers virtual module) | `vite()` |
 | `@fcalell/plugin-react` | React on the web: Vite + React Compiler, TanStack Router file routes, app entry, providers, HTML shell and `<head>` metadata | `react()` |
 | `@fcalell/plugin-react-ui` | Design system on the web: `.stack/app.css` from the ui-core contract on Tailwind v4, fonts, the mode script, words, the roster components over Base UI, and the showcase data Storybook draws the roster from | `reactUi()` |
-| `@fcalell/plugin-expo` | Expo/React Native: Metro + app config + expo-router entry + EAS commands | `expo()` |
+| `@fcalell/plugin-expo` | Expo/React Native: Metro + app config + expo-router entry + the React Compiler in `babel.config.cjs` (the filter is `@fcalell/cli/compiled-source`, shared with plugin-react) + EAS commands | `expo()` |
 | `@fcalell/plugin-screens` | The screens workbench: Storybook on the app's own Vite config serves every route in each query state from typed fixtures, answered by MSW in oRPC's wire format | `screens()` |
 | `@fcalell/plugin-native-ui` | Design system on the phone: the ui-core roster in React Native + Expo + uniwind, the phone layout at every width, fonts, words, native providers | `nativeUi()` |
 

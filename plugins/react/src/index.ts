@@ -8,6 +8,10 @@ import type {
 	TsImportSpec,
 } from "@fcalell/cli/ast";
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
+import {
+	COMPILED_SOURCE,
+	OTHER_DEPENDENCY,
+} from "@fcalell/cli/compiled-source";
 import { type AppPlugin, vite } from "@fcalell/plugin-vite";
 import {
 	aggregateEntry,
@@ -30,17 +34,6 @@ import {
 } from "./types.ts";
 
 const SOURCE = "react";
-
-// Stack's UI packages ship TypeScript source that a consumer installs under
-// `node_modules` (pnpm nests them as `.pnpm/@fcalell+<pkg>@.../node_modules/
-// @fcalell/<pkg>`). Two filters keep them out of the React Compiler's reach by
-// default, and both are widened to let `@fcalell` packages through while every
-// other dependency stays out: `@vitejs/plugin-react` leaves every
-// `/node_modules/` path out of Babel (`exclude`), and the compiler skips any
-// filename holding `node_modules` (`sources`, a positive test, so it is the
-// same pattern wrapped in a negative lookahead).
-const OTHER_DEPENDENCY = "/node_modules/(?!\\.pnpm/@fcalell\\+|@fcalell/)";
-const COMPILED_SOURCE = `^(?:(?!${OTHER_DEPENDENCY}).)*$`;
 
 function regExp(source: string): TsExpression {
 	return {
