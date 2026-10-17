@@ -32,6 +32,7 @@ import { useMarksFold } from "../../lib/fold";
 import { Ink } from "../../lib/ink";
 import { navigate } from "../../lib/navigate";
 import { clipWhen, inertProps, Painted } from "../../lib/paint";
+import { endedSentence, FailedMark, RetryMark, useRow } from "../../lib/read";
 import type { Route } from "../../lib/route";
 import { sameBy } from "../../lib/same-by";
 import { useWords } from "../../lib/words";
@@ -169,7 +170,12 @@ function isStatus(
 // under its acts. A locked row draws a lock after its value and its reason
 // under both in the description's place, the whole line a link with an
 // `href`. A `value` or `description` that is a selection paints in its place,
-// and the row takes no touch, until its read lands.
+// and the row takes no touch, until its read lands. The row is the frame of the
+// selections it draws: when one failed and no enclosing frame holds that read,
+// the label stays, the value slot shows the failure mark, the description reads
+// "This didn't load." and the end shows the retry icon (a chevron's place, or
+// the end group's when the row had none), and pressing the row retries; loaded,
+// it is what it was.
 export function DefinitionRow<V extends string | null = string>(
 	fact: DefinitionRowProps<V>,
 ) {
@@ -193,16 +199,29 @@ export function DefinitionRowBase<V extends string | null = string>({
 	painted: listed = false,
 	at = 0,
 }: DefinitionRowProps<V> & DefinitionRowInternal) {
+	const words = useWords();
 	const [shown, said] = useSelections([value, description]);
+	// The row is the frame of the reads it draws that no frame above holds: one
+	// that ended is the row's failed form, in place of its value, description
+	// and end; a read an enclosing frame holds is that frame's to say.
+	const { ended, busy, retry } = useRow([value, description]);
 	// Painted by the list, or by a datum of its own that waits: either way the
 	// row draws its loaded tree, each part the datum reaches in its filler, and
-	// takes no press. A datum whose read ended draws nothing (the label alone);
-	// the frame that holds the read says why.
-	const waitsValue = listed || paints(shown);
-	const waitsUnder = listed || paints(said);
+	// takes no press.
+	const waitsValue = !ended && (listed || paints(shown));
+	const waitsUnder = !ended && (listed || paints(said));
 	const painted = waitsValue || waitsUnder;
+	const failed = ended === "failed";
 	const opens = href !== undefined || onOpen !== undefined;
-	const open = href !== undefined ? () => navigate(href) : onOpen;
+	const open = failed
+		? () => {
+				if (!busy) void retry();
+			}
+		: ended
+			? undefined
+			: href !== undefined
+				? () => navigate(href)
+				: onOpen;
 	// A placeholder is a function proxy that no type test passes: the value is
 	// read only once painted is ruled out.
 	const plain = listed || shown.painted ? undefined : shown.value;
@@ -281,7 +300,11 @@ export function DefinitionRowBase<V extends string | null = string>({
 		);
 	const copy = copyable && waitsValue;
 	let end: ReactNode = null;
-	if (copy || copied !== undefined || act) {
+	if (ended) {
+		stands = "";
+		valueNode = <FailedMark />;
+		if (failed) end = <RetryMark busy={busy} />;
+	} else if (copy || copied !== undefined || act) {
 		let acted: ReactNode = null;
 		if (act)
 			acted = listed ? (
@@ -322,7 +345,8 @@ export function DefinitionRowBase<V extends string | null = string>({
 			</View>
 		);
 	let under: ReactNode;
-	if (locked) {
+	if (ended) under = endedSentence(words, ended);
+	else if (locked) {
 		if (listed) under = <Painted role="sentence" at={at} />;
 		else if (locked.href === undefined) under = locked.reason;
 		else under = <Link href={locked.href}>{locked.reason}</Link>;
@@ -335,9 +359,9 @@ export function DefinitionRowBase<V extends string | null = string>({
 	}
 	// The status and the lock are marks that fold, the lock first; a row with one
 	// of them has nothing to fold.
-	const marked = stands === END_STATUS && locked !== undefined;
+	const marked = !ended && stands === END_STATUS && locked !== undefined;
 	const fold = useMarksFold(marked ? 2 : 0);
-	const lock = locked ? <LockMark painted={listed} /> : null;
+	const lock = locked && !ended ? <LockMark painted={listed} /> : null;
 	return (
 		<View
 			{...inertProps(painted)}
@@ -353,8 +377,8 @@ export function DefinitionRowBase<V extends string | null = string>({
 		>
 			{open && !painted ? (
 				<Pressable
-					accessibilityRole={href !== undefined ? "link" : "button"}
-					accessibilityLabel={label}
+					accessibilityRole={href !== undefined && !ended ? "link" : "button"}
+					accessibilityLabel={failed ? `${words.retry} ${label}` : label}
 					onPress={open}
 					className={HIT}
 				/>
@@ -382,7 +406,7 @@ export function DefinitionRowBase<V extends string | null = string>({
 					<RNText className={text({ role: "meta" })}>{under}</RNText>
 				) : null}
 			</View>
-			{valueNode || locked || end ? (
+			{valueNode || lock || end ? (
 				<View
 					pointerEvents={open && !painted ? "box-none" : "auto"}
 					className={cn(ROW_END, END, stands)}

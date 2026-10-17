@@ -14,7 +14,7 @@ import {
 	textStrong,
 } from "@fcalell/ui-core/variants";
 import { memo } from "react";
-import { Text as RNText, View } from "react-native";
+import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import {
@@ -24,14 +24,20 @@ import {
 	paintBox,
 	useShown,
 } from "../../lib/paint";
+import { endedSentence, FailedMark, RetryMark, useRow } from "../../lib/read";
 import { sameBy } from "../../lib/same-by";
+import { useWords } from "../../lib/words";
 import type { MeterSlots } from "../list/index";
 import { CountLinks } from "./count-links";
 
-const STACK = "min-w-0";
+const STACK = "relative min-w-0";
 const HEAD = "flex-row items-center";
 const LABEL = "flex-1 min-w-0";
 const SHARE = "shrink-0";
+// A failed meter is one hit over all of it, after its content, taking the
+// press wash.
+const HIT = "absolute inset-0 active:bg-wash-press";
+const END = "flex-row shrink-0 items-center";
 const BAR = "relative";
 const TRACK = "overflow-hidden";
 const TICK = "absolute";
@@ -79,7 +85,10 @@ export interface MeterInternal {
 // meta, or the counts as links. A `label`, `value` or `max` that is a
 // selection paints in its place until its read lands; once its read ended the
 // meter stands empty (no share, no fill, the label if its own read answered)
-// in the same box. React Native has no
+// in the same box. The meter is the frame of the selections it draws: when one
+// failed and no enclosing frame holds that read, the label stays, the share
+// slot shows the failure mark and the retry icon, the line under the bar reads
+// "This didn't load." and pressing the meter retries. React Native has no
 // meter role: it is a progress bar.
 export function Meter(meter: MeterProps) {
 	return <MeterBase {...meter} />;
@@ -97,7 +106,9 @@ export function MeterBase({
 	painted: listed = false,
 	at = 0,
 }: MeterProps & MeterInternal) {
+	const words = useWords();
 	const [l, v, m] = useSelections([label, value, max]);
+	const { ended: held, busy, retry } = useRow([label, value, max]);
 	// A read that ended leaves the meter empty, unpainted: no share, no track
 	// fill, the label standing if its own read answered.
 	const ended = [l, v, m].some(
@@ -148,22 +159,29 @@ export function MeterBase({
 						(l.value as string)
 					)}
 				</RNText>
-				<RNText
-					className={cn(
-						text({ role: "meta" }),
-						FIGURES,
-						SHARE,
-						!painted && absent && "opacity-0",
-					)}
-				>
-					{painted ? (
-						<Painted role="figure" at={at} />
-					) : absent ? (
-						paintText("figure", at)
-					) : (
-						percent
-					)}
-				</RNText>
+				{held ? (
+					<View className={END}>
+						<FailedMark />
+						{held === "failed" ? <RetryMark busy={busy} /> : null}
+					</View>
+				) : (
+					<RNText
+						className={cn(
+							text({ role: "meta" }),
+							FIGURES,
+							SHARE,
+							!painted && absent && "opacity-0",
+						)}
+					>
+						{painted ? (
+							<Painted role="figure" at={at} />
+						) : absent ? (
+							paintText("figure", at)
+						) : (
+							percent
+						)}
+					</RNText>
+				)}
 			</View>
 			<View className={BAR}>
 				<View className={cn(METER_TRACK, TRACK, painted && paintBox(shown))}>
@@ -183,11 +201,27 @@ export function MeterBase({
 					/>
 				) : null}
 			</View>
-			{counts ? <CountLinks counts={counts} painted={painted} /> : null}
-			{meta ? (
+			{held ? (
+				<RNText className={text({ role: "meta" })}>
+					{endedSentence(words, held)}
+				</RNText>
+			) : counts ? (
+				<CountLinks counts={counts} painted={painted} />
+			) : null}
+			{!held && meta ? (
 				<RNText className={text({ role: "meta" })}>
 					{painted ? <Painted role="phrase" at={at} /> : meta}
 				</RNText>
+			) : null}
+			{held === "failed" ? (
+				<Pressable
+					accessibilityRole="button"
+					accessibilityLabel={`${words.retry} ${l.painted ? "" : (l.value as string)}`.trim()}
+					onPress={() => {
+						if (!busy) void retry();
+					}}
+					className={HIT}
+				/>
 			) : null}
 		</View>
 	);

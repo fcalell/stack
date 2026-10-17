@@ -1,3 +1,4 @@
+import { Button as BaseButton } from "@base-ui/react/button";
 import { type Datum, useSelections } from "@fcalell/plugin-api/tanstack-query";
 import { cn } from "@fcalell/ui-core/cn";
 import type { CountLink, MeterMark } from "@fcalell/ui-core/descriptors";
@@ -17,14 +18,27 @@ import {
 import { memo } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { PAINT_BOX, Painted } from "../../lib/paint.tsx";
+import {
+	endedSentence,
+	FailedMark,
+	RetryMark,
+	useRow,
+} from "../../lib/read.tsx";
 import { sameBy } from "../../lib/same-by.ts";
+import { useWords } from "../../lib/words.tsx";
 import type { MeterSlots } from "../list/index.tsx";
 import { CountLinks } from "./count-links.tsx";
 
 const STACK = "flex flex-col min-w-0";
+const ROOT = "relative";
 const HEAD = "flex items-center";
 const LABEL = "min-w-0 grow truncate";
 const SHARE = "shrink-0";
+// A failed meter's head is the retry: its after layer covers the meter, so
+// pressing anywhere on it retries, and draws the ring inset at its edge.
+const RETRY =
+	"flex min-w-0 grow items-center text-left after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-ring";
+const END = "flex shrink-0 items-center";
 const BAR = "relative";
 const TRACK = "overflow-hidden";
 const TICK = "absolute";
@@ -74,7 +88,7 @@ function Blank({ role, at }: { role: PaintRole; at: number }) {
 	);
 }
 
-/** The label at body 500 with the share in percent at its end, the bar under them filling by the share in the meta ink, amber once near full (at its `mark` when it has one) and `danger` once over, the line under the bar: the meta, or the counts as links. A `label`, `value` or `max` that is a selection paints in its place, the meter inert, until its read lands; once its read ended the meter stands empty (no share, no fill, the label if its own read answered) in the same box. */
+/** The label at body 500 with the share in percent at its end, the bar under them filling by the share in the meta ink, amber once near full (at its `mark` when it has one) and `danger` once over, the line under the bar: the meta, or the counts as links. A `label`, `value` or `max` that is a selection paints in its place, the meter inert, until its read lands; once its read ended the meter stands empty (no share, no fill, the label if its own read answered) in the same box. The meter is the frame of the selections it draws: when one failed and no enclosing frame holds that read, the label stays, the share slot shows the failure mark and the retry icon, the line under the bar reads "This didn't load." and pressing the meter retries. */
 export function Meter(meter: MeterProps) {
 	return <MeterBase {...meter} />;
 }
@@ -90,9 +104,12 @@ export function MeterBase({
 	painted: listed = false,
 	at = 0,
 }: MeterProps & MeterInternal) {
+	const words = useWords();
 	const [l, v, m] = useSelections([label, value, max]);
+	const { ended: held, busy, retry } = useRow([label, value, max]);
 	// A read that ended leaves the meter empty, unpainted: no share, no track
-	// fill, the label standing if its own read answered.
+	// fill, the label standing if its own read answered. Held by the meter, its
+	// failed form stands in the same box.
 	const ended = [l, v, m].some(
 		(one) => one.painted && (one.phase === "failed" || one.phase === "missing"),
 	);
@@ -121,35 +138,51 @@ export function MeterBase({
 				"aria-valuemax": limit,
 				"aria-valuenow": Math.min(used, limit),
 			};
+	const name = cn(text({ role: "body" }), textStrong({ role: "body" }), LABEL);
+	const named = painted ? (
+		<Painted role="name" at={at} />
+	) : l.painted ? (
+		<Blank role="name" at={at} />
+	) : (
+		(l.value as string)
+	);
+	// A failed meter's label is the retry; the rest are the label alone.
+	const title =
+		held === "failed" ? (
+			<BaseButton
+				onClick={() => {
+					if (!busy) void retry();
+				}}
+				aria-label={`${words.retry} ${l.painted ? "" : (l.value as string)}`.trim()}
+				className={cn(name, RETRY)}
+			>
+				{named}
+			</BaseButton>
+		) : (
+			<span className={name}>{named}</span>
+		);
 	return (
-		<div inert={painted || undefined} className={cn(METER, STACK)}>
+		<div inert={painted || undefined} className={cn(METER, STACK, ROOT)}>
 			{/* The role's children are presentational: the counts stand outside it, as links. */}
 			<div {...reads} className={cn(METER, STACK)}>
 				<div className={cn(METER_HEAD, HEAD)}>
-					<span
-						className={cn(
-							text({ role: "body" }),
-							textStrong({ role: "body" }),
-							LABEL,
-						)}
-					>
-						{painted ? (
-							<Painted role="name" at={at} />
-						) : l.painted ? (
-							<Blank role="name" at={at} />
-						) : (
-							(l.value as string)
-						)}
-					</span>
-					<span className={cn(text({ role: "meta" }), FIGURES, SHARE)}>
-						{painted ? (
-							<Painted role="figure" at={at} />
-						) : absent ? (
-							<Blank role="figure" at={at} />
-						) : (
-							percent
-						)}
-					</span>
+					{title}
+					{held ? (
+						<span className={END}>
+							<FailedMark />
+							{held === "failed" ? <RetryMark busy={busy} /> : null}
+						</span>
+					) : (
+						<span className={cn(text({ role: "meta" }), FIGURES, SHARE)}>
+							{painted ? (
+								<Painted role="figure" at={at} />
+							) : absent ? (
+								<Blank role="figure" at={at} />
+							) : (
+								percent
+							)}
+						</span>
+					)}
 				</div>
 				<div className={BAR}>
 					<div className={cn(METER_TRACK, TRACK, painted && PAINT_BOX)}>
@@ -170,8 +203,12 @@ export function MeterBase({
 					) : null}
 				</div>
 			</div>
-			{counts ? <CountLinks counts={counts} painted={painted} /> : null}
-			{meta ? (
+			{held ? (
+				<p className={text({ role: "meta" })}>{endedSentence(words, held)}</p>
+			) : counts ? (
+				<CountLinks counts={counts} painted={painted} />
+			) : null}
+			{!held && meta ? (
 				<p className={text({ role: "meta" })}>
 					{painted ? <Painted role="phrase" at={at} /> : meta}
 				</p>

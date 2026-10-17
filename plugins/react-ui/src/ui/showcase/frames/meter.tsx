@@ -3,7 +3,8 @@ import { Group } from "../../components/group/index.tsx";
 import { Meter, MeterBase } from "../../components/meter/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import { Slider } from "../../components/slider/index.tsx";
-import type { ShowcaseFrame } from "../cells.ts";
+import { isFirstCell, type ShowcaseFrame } from "../cells.ts";
+import { readsAt } from "../waiting.ts";
 import { Wide } from "./layout-context.tsx";
 import { isPaint } from "./painted.tsx";
 
@@ -141,6 +142,19 @@ const LEVELS: Record<string, ReactNode> = {
 	),
 };
 
+// The meters over a read that failed, no frame above holding it: each is the
+// failed form itself, one with a line under its bar and one with counts.
+function Failed(props: { id: string }) {
+	const failing = readsAt(props.id).failing;
+	const used = failing.at((rows) => rows.length);
+	return (
+		<>
+			<Meter label="Requests" value={used} max={1_000_000} meta="250k of 1M" />
+			<Meter label="Passing" value={used} max={42} counts={COUNTS} />
+		</>
+	);
+}
+
 // A `METER_FILL.level` cell draws the meters at that level, every other cell
 // the usage group; a `PAINT` cell draws each form of the line under the bar
 // (words, counts) loaded, with the same meter painted beside it.
@@ -172,5 +186,12 @@ export function drawMeter(frame: ShowcaseFrame) {
 			</Wide>
 		);
 	}
+	// The error state, on the first cell, draws the meters over a read that failed.
+	if (frame.state === "error")
+		return isFirstCell(frame) ? (
+			<Wide>
+				<Failed id={frame.id} />
+			</Wide>
+		) : undefined;
 	return <Wide>{LEVELS[frame.cell.name] ?? <Usage />}</Wide>;
 }

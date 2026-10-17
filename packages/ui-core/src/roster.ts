@@ -1287,8 +1287,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// `definition` map draws one per item. A one-word string value of more than eight characters too long for its
 		// room cuts in its middle (`valueCut`), the whole value its text. `value`
 		// and `description` are data: a selection paints in its place, the row
-		// inert, while its read waits (once it ended the part draws nothing, the
-		// label alone for a value), and a painted `List` paints the whole row
+		// inert, while its read waits. The row is the frame of the selections it
+		// draws: one that failed, with no frame above holding it, makes the failed
+		// form (the label stays; the value slot shows the alert; the line under
+		// the label reads `readFailed`; the chevron's place, or the end group's
+		// on a row with none, shows the retry icon, and pressing the row retries;
+		// loaded, it is the row again); a read a frame above holds is that frame's
+		// to say, and the row draws nothing of its own. A painted `List` paints the whole row
 		// (its label, value, description, lock and controls) at their roles. `switch` is the Switch's
 		// own props, named by the row's label and drawn centred beside it in place
 		// of `value`; `pick` is the Picker's one-pick props less `fit` and `act` (its
@@ -1344,7 +1349,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"PAINT.kind.control",
 			],
 			holds: ["DEFINITION_ROW", "DEFINITION_ROW_CHEVRON"],
-			states: PRESS,
+			states: [...PRESS, "error"],
 			owns: {
 				roles: ["body", "meta", "code"],
 				colors: [
@@ -2725,8 +2730,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// or `counts` (links composed from `Link`), never both. A `mark` is a tick
 		// across the track at its value, the meter's near point. `label`, `value`
 		// and `max` are data: a selection paints in its place, the meter inert,
-		// until its read lands, and once its read ended the meter stands empty in
-		// the same box (no share, no fill; the label if its own read answered).
+		// until its read lands. The meter is the frame of the selections it draws:
+		// one that failed, with no frame above holding it, makes the failed form in
+		// the same box (the label stays; the share slot shows the alert and the
+		// retry icon; the line under the bar reads `readFailed`; pressing the
+		// meter retries); a read a frame above holds is that frame's to say, and
+		// the meter stands empty (no share, no fill).
 		Meter: {
 			props: ["label", "value", "max", "meta", "counts", "mark"],
 			draws: [
@@ -2741,6 +2750,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"METER_HEAD",
 				"METER_MARK",
 				"METER_TRACK",
+				"DEFINITION_ROW_CHEVRON",
+				"ICON.fit.body",
+				"SPINNER",
+				"SPINNER_TRACK",
+				"SPINNER_ARC",
 				"TEXT.role.body",
 				"TEXT.role.meta",
 				"TEXT_STRONG.role.body",
@@ -2748,7 +2762,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"PAINT.kind.box",
 			],
 			holds: ["METER", "METER_HEAD", "METER_TRACK", "METER_FILL", "METER_MARK"],
-			states: ["rest"],
+			states: ["rest", "error"],
 			owns: {
 				roles: ["body", "meta"],
 				colors: [
@@ -2758,11 +2772,19 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"fill-neutral",
 					"chip-amber",
 					"danger",
+					"ring",
 					"skeleton",
 				],
-				radii: ["chip"],
+				radii: ["chip", "full"],
 				spacing: ["pair", "inside", "card"],
-				sizes: ["meter", "track", "target"],
+				sizes: [
+					"meter",
+					"track",
+					"target",
+					"control-compact",
+					"icon",
+					"spinner",
+				],
 			},
 		},
 		// A known sequence with a position in it, top to bottom on a hairline

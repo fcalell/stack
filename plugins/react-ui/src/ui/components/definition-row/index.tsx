@@ -31,6 +31,12 @@ import { useCopy } from "../../lib/copy.ts";
 import { useMarksFold } from "../../lib/fold.ts";
 import { follow } from "../../lib/navigate.ts";
 import { Painted } from "../../lib/paint.tsx";
+import {
+	endedSentence,
+	FailedMark,
+	RetryMark,
+	useRow,
+} from "../../lib/read.tsx";
 import { sameBy } from "../../lib/same-by.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Icon } from "../icon/index.tsx";
@@ -162,7 +168,7 @@ function isStatus(
 	return typeof value === "object" && value !== null && "status" in value;
 }
 
-/** A flex row of two groups: the text group, the label at body 500 over the description (the label wraps to the room the end group leaves), and the end group, centred on the row, holding the value (a string cut at its end, an identifier too long for its room cut in its middle, the whole value still its text; a status stays whole, the label giving way; a `switch` or a `pick` whole), a locked row's lock, and an icon act or a link's chevron. The change mark leads. A row with nothing at its end draws no end group and reserves no room for one, so values end where their rows' ends do. A locked row's reason stands under the label in the description's place, the whole line a link with an `href`. A `value` or `description` that is a selection paints in its place, and the row is inert, until its read lands. */
+/** A flex row of two groups: the text group, the label at body 500 over the description (the label wraps to the room the end group leaves), and the end group, centred on the row, holding the value (a string cut at its end, an identifier too long for its room cut in its middle, the whole value still its text; a status stays whole, the label giving way; a `switch` or a `pick` whole), a locked row's lock, and an icon act or a link's chevron. The change mark leads. A row with nothing at its end draws no end group and reserves no room for one, so values end where their rows' ends do. A locked row's reason stands under the label in the description's place, the whole line a link with an `href`. A `value` or `description` that is a selection paints in its place, and the row is inert, until its read lands. The row is the frame of the selections it draws: when one failed and no enclosing frame holds that read, the label stays, the value slot shows the failure mark, the description reads "This didn't load." and the end shows the retry icon (a chevron's place, or the end group's when the row had none), and pressing the row retries; loaded, it is what it was. */
 export function DefinitionRow<V extends string | null = string>(
 	fact: DefinitionRowProps<V>,
 ) {
@@ -185,16 +191,21 @@ export function DefinitionRowBase<V extends string | null = string>({
 	painted: listed = false,
 	at = 0,
 }: DefinitionRowProps<V> & DefinitionRowInternal) {
+	const words = useWords();
 	const [shown, said] = useSelections([value, description]);
+	// The row is the frame of the reads it draws that no frame above holds: one
+	// that ended is the row's failed form, in place of its value, description
+	// and end; a read an enclosing frame holds is that frame's to say.
+	const { ended, busy, retry } = useRow([value, description]);
 	// Painted by the list, or by a datum of its own that waits: either way the
 	// row draws its loaded tree, each part the datum reaches in its filler, and
-	// takes no press. A datum whose read ended draws nothing (the label alone);
-	// the frame that holds the read says why.
-	const waitsValue = listed || paints(shown);
-	const waitsUnder = listed || paints(said);
+	// takes no press.
+	const waitsValue = !ended && (listed || paints(shown));
+	const waitsUnder = !ended && (listed || paints(said));
 	const painted = waitsValue || waitsUnder;
 	const opens = href !== undefined || onOpen !== undefined;
-	const live = opens && !painted;
+	const failed = ended === "failed";
+	const live = failed || (opens && !painted && !ended);
 	// A placeholder is a function proxy that no type test passes: the value is
 	// read only once painted is ruled out.
 	const plain = listed || shown.painted ? undefined : shown.value;
@@ -256,12 +267,16 @@ export function DefinitionRowBase<V extends string | null = string>({
 		);
 	// The status and the lock are marks that fold, the lock first; a row with one
 	// of them has nothing to fold.
-	const marked = stands === END_STATUS && locked !== undefined;
+	const marked = !ended && stands === END_STATUS && locked !== undefined;
 	const fold = useMarksFold(marked ? 2 : 0, "status,lock");
-	const lock = locked ? <LockMark painted={listed} /> : null;
+	const lock = locked && !ended ? <LockMark painted={listed} /> : null;
 	const copy = copyable && waitsValue;
 	let end: ReactNode = null;
-	if (copy || copied !== undefined || act) {
+	if (ended) {
+		stands = END_WHOLE;
+		valueNode = <FailedMark />;
+		if (failed) end = <RetryMark busy={busy} />;
+	} else if (copy || copied !== undefined || act) {
 		let acted: ReactNode = null;
 		if (act)
 			acted = listed ? (
@@ -291,7 +306,8 @@ export function DefinitionRowBase<V extends string | null = string>({
 			</span>
 		);
 	let under: ReactNode;
-	if (locked) {
+	if (ended) under = endedSentence(words, ended);
+	else if (locked) {
 		if (listed) under = <Painted role="sentence" at={at} />;
 		else if (locked.href === undefined) under = locked.reason;
 		else
@@ -316,7 +332,19 @@ export function DefinitionRowBase<V extends string | null = string>({
 	);
 	const named = listed ? <Painted role="name" at={at} /> : label;
 	let title: ReactNode = <span className={name}>{named}</span>;
-	if (live && href !== undefined)
+	if (failed)
+		title = (
+			<BaseButton
+				onClick={() => {
+					if (!busy) void retry();
+				}}
+				aria-label={`${words.retry} ${label}`}
+				className={cn(name, "text-left")}
+			>
+				{named}
+			</BaseButton>
+		);
+	else if (live && href !== undefined)
 		title = (
 			<a href={href} onClick={follow} className={name}>
 				{named}
@@ -355,7 +383,7 @@ export function DefinitionRowBase<V extends string | null = string>({
 				{title}
 				{under ? <span className={text({ role: "meta" })}>{under}</span> : null}
 			</span>
-			{valueNode || locked || end ? (
+			{valueNode || lock || end ? (
 				<span className={cn(ROW_END, END, stands)}>
 					{marked ? (
 						<span ref={fold.group} className={cn(ROW_END, MARKS)}>

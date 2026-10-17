@@ -1493,10 +1493,24 @@ a tick with no animation, never jumped to full.
   says a refused save, a failed toast for a bare control and the field's error line, kept until the
   read answers, for a field. The controls write nothing for it beyond reading `ended` for their
   look and skipping their separate `onChange` (a Slider's, an Input's); a Picker opens no list,
-  asking the draft to change instead. A Meter has nothing to press, so it only stands empty. This
-  is the rule a row that holds its own read follows (a failed row's label stays, its value slot
-  shows the failure, its description says it and pressing it retries); a control elsewhere is only
-  blocked. Rejected: registration (a layout effect per collection, a second commit before paint), a
+  asking the draft to change instead. A control elsewhere is only blocked; a row is a frame (below).
+- A row is the frame of the selections it draws, as a collection is its items': a DefinitionRow's
+  `value` and `description`, a Meter's `label`, `value` and `max`. There is no `read` prop on a row.
+  `useRow` (`lib/read`, one per platform) combines the row's selections into one and takes
+  `useFrame` of it, so the row holds the one read no enclosing frame holds (`holding`; its observers
+  carry `heldPlaceholder`, so a row outside every frame is no dev no-holder error) and says `ended`
+  (`failed` or `missing`) only when it holds: a read the enclosing frame holds has already
+  replaced the body with its failed form, so the row says nothing and one line stands per surface.
+  The failed row is a form, not a state of its parts: the label stays; the value slot shows
+  `FailedMark` (the alert in `danger`); the description is `readFailed` (`missing` for a missing
+  read, which has no retry); the end shows `RetryMark` (the chevron's square, a spinner while the
+  retry runs) in the chevron's place or, on a row with no chevron, in the end group; the label is the
+  row's one hit (the after layer on the web, the Pressable on the phone) and its press is the
+  retry, the same `retry` a frame's Retry is, which refetches the read the row holds. Copy, act,
+  lock and a status give way to the form; waiting still paints. Loaded, the row is what it was, a
+  link again. A Meter's failed form puts the mark and the retry icon at its head's end, the sentence
+  under its bar in place of its meta or counts, and the whole meter is the hit. ListRow and FileRow
+  take no Datum props, so they have none of this. Rejected: registration (a layout effect per collection, a second commit before paint), a
   registration the head reads in render from a host object (the head renders before the body, so it
   would always be a render pass stale), and a context handing the body a wait flag (every part had
   to read it and keep a second tree for it). `SectionContext` is gone: a Section's `empty` is its

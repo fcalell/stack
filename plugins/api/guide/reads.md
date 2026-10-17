@@ -55,7 +55,10 @@ a Section inside it given `deploy.at(...)` holds nothing. A second such read in 
 dev `console.error` naming both keys (the frame holds the first); a leaf that needs two reads takes
 `combine`, and a region that draws two reads is two frames. Sibling frames that draw the same read
 each hold it and each fail in place, so a failure repeats in each; there is no lifting a shared read
-to an outer frame. In dev a read that fails with no data while a leaf draws it and no frame holds it
+to an outer frame. A row (`DefinitionRow`, `Meter`) is the frame of the selections it draws and takes
+no `read`: given a read no frame above holds, it draws its own failed form (label kept, "This didn't
+load.", a retry icon, a press that retries), and given one a frame above holds, it draws nothing of its
+own. In dev a read that fails with no data while a leaf draws it and no frame holds it
 raises `console.error` (give its Pane, Section, Sheet or Form `read`), judged on the query cache's
 own observers: a leaf is an observer carrying stack's `placeholderData`, a frame one carrying its
 `heldPlaceholder`, so a late leaf or a frame that unmounts is caught too. A read you hold with your own

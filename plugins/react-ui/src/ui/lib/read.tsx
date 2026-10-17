@@ -1,4 +1,5 @@
 import {
+	combine,
 	type Datum,
 	type Drawn,
 	FrameHolds,
@@ -7,11 +8,14 @@ import {
 	useFrameRead,
 	useSelections,
 } from "@fcalell/plugin-api/tanstack-query";
+import { cn } from "@fcalell/ui-core/cn";
 import type { Act, MenuItem } from "@fcalell/ui-core/descriptors";
 import { endedReason, frameOf } from "@fcalell/ui-core/read";
 import type { Words } from "@fcalell/ui-core/tokens";
-import type { ReactNode } from "react";
+import { DEFINITION_ROW_CHEVRON } from "@fcalell/ui-core/variants";
+import { type ReactNode, useMemo } from "react";
 import { ButtonBase } from "../components/button/base.tsx";
+import { Icon } from "../components/icon/index.tsx";
 import { MissingBase } from "../components/missing/base.tsx";
 import { Spinner } from "../components/spinner/index.tsx";
 import { Text } from "../components/text/index.tsx";
@@ -36,6 +40,48 @@ export function useCollection<T>(items: Datum<readonly T[]>) {
 	const [drawn] = useSelections([items] as const);
 	const frame = useFrame(isSelection(items) ? items : undefined);
 	return { drawn: drawn as Drawn<readonly T[]>, frame };
+}
+
+/** A row's subscription to the selections it draws (a definition's value and description, a meter's label, value and max): the row is their frame, as a collection is its items'. It holds the one read no enclosing frame holds, so a row outside every frame draws its own failure (`ended`: its read failed or is missing) and its retry, and a row whose read an enclosing frame holds draws nothing of its own: that frame's failed form stands once, in its place. `busy` is the retry running. */
+export function useRow(data: readonly unknown[]) {
+	// The selection is memoized by the list's identity, as `useSelections`' plan
+	// is (the React Compiler gives a literal list that identity).
+	const selection = useMemo(() => {
+		const drawn = data.filter(isSelection);
+		return drawn.length > 0 ? combine(drawn, () => null) : undefined;
+	}, [data]);
+	const frame = useFrame(selection);
+	const ended =
+		frame.holds && (frame.form === "failed" || frame.form === "missing")
+			? frame.form
+			: undefined;
+	return { ended, busy: frame.busy, retry: frame.retry };
+}
+
+/** The sentence a failed or missing row says under its label. */
+export function endedSentence(words: Words, ended: "failed" | "missing") {
+	return ended === "failed" ? words.readFailed : words.missing;
+}
+
+const FAILED_MARK = "inline-flex shrink-0 items-center text-danger";
+const RETRY_MARK = "flex shrink-0 items-center justify-center text-ink-meta";
+
+/** What a failed row draws in its value slot: the alert, in the danger ink. */
+export function FailedMark() {
+	return (
+		<span className={FAILED_MARK}>
+			<Icon name="CircleAlert" />
+		</span>
+	);
+}
+
+/** What a failed row draws at its end, where a chevron stands: the retry icon, in the chevron's square, a spinner while the retry runs. Pressing the row retries. */
+export function RetryMark({ busy }: { busy: boolean }) {
+	return (
+		<span className={cn(DEFINITION_ROW_CHEVRON, RETRY_MARK)}>
+			{busy ? <Spinner /> : <Icon name="RotateCw" />}
+		</span>
+	);
 }
 
 // A control holds its options' read and draws no flags of it: nothing about

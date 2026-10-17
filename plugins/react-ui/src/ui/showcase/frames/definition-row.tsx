@@ -4,7 +4,8 @@ import {
 	DefinitionRowBase,
 } from "../../components/definition-row/index.tsx";
 import { Group } from "../../components/group/index.tsx";
-import type { ShowcaseFrame } from "../cells.ts";
+import { isFirstCell, type ShowcaseFrame } from "../cells.ts";
+import { readsAt } from "../waiting.ts";
 import { Wide } from "./layout-context.tsx";
 import { isPaint } from "./painted.tsx";
 
@@ -269,6 +270,50 @@ function Changes() {
 	);
 }
 
+// The facts of a card whose read failed, no frame above holding it: each row
+// is the failed form itself, one that opens and one that does not, a counted
+// one beside them.
+function Failed(props: { id: string }) {
+	const failing = readsAt(props.id).failing;
+	return (
+		<Group
+			items={[
+				{
+					key: "region",
+					row: (
+						<DefinitionRow
+							label="Region"
+							description="Where the workspace runs."
+							value={failing.at((rows) => rows.join(", "))}
+							href="#region"
+						/>
+					),
+				},
+				{
+					key: "plan",
+					row: (
+						<DefinitionRow
+							label="Plan"
+							description="Your organisation manages it."
+							value={failing.at((rows) => rows.join(", "))}
+						/>
+					),
+				},
+				{
+					key: "knowledge",
+					row: (
+						<DefinitionRow
+							label="Knowledge"
+							value={failing.at((rows) => `${rows.length}`)}
+							href="#knowledge"
+						/>
+					),
+				},
+			]}
+		/>
+	);
+}
+
 // Every cell draws the settings group, a `STATUS_DOT.state` cell its status
 // row in that state, a `CHANGE_MARK` cell the change set's facts; a `PAINT`
 // cell draws a card of facts painted beside the loaded one.
@@ -282,6 +327,13 @@ export function drawDefinitionRow(frame: ShowcaseFrame) {
 			</Wide>
 		);
 	}
+	// The error state, on the first cell, draws the rows over a read that failed.
+	if (frame.state === "error")
+		return isFirstCell(frame) ? (
+			<Wide>
+				<Failed id={frame.id} />
+			</Wide>
+		) : undefined;
 	const [family, , value] = frame.cell.name.split(".");
 	// The third segment of a `STATUS_DOT.state` cell is a state key.
 	const status = family === "STATUS_DOT" ? (value as StatusState) : "done";
