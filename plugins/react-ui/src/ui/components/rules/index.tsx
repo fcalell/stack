@@ -24,13 +24,18 @@ import { HeldInput } from "../input/base.tsx";
 import { Picker } from "../picker/index.tsx";
 import { Text } from "../text/index.tsx";
 
-// From `tablet` the list is one grid of four columns (the terms share what
-// the arrow or operator and the remove act leave) and each row a subgrid, so
-// the columns align across rows. On touch each rule is a card of stacked
-// terms in a Group.
-const GRID = "grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto]";
-const ROW = "col-span-4 grid grid-cols-subgrid items-center";
-const ADD = "col-span-4 flex";
+// From `tablet` each rule is one flex row: its two terms share the row's
+// width equally (the same basis, so their columns align across rows), the
+// arrow or operator between them at a floor of the remove act's width, so
+// the short words and the arrow line up. A rule that cannot go keeps the
+// remove act's room as the row's end padding, so the terms stay aligned.
+// On touch each rule is a card of stacked terms in a Group.
+const LIST = "flex flex-col";
+const ROW = "flex items-center";
+const KEPT = "pe-[calc(var(--spacing-control-compact)+var(--spacing-inside))]";
+const TERM = "flex min-w-0 grow basis-0 *:grow";
+const MIDDLE = "min-w-control-compact";
+const ADD = "flex";
 const STACKED = "flex flex-col items-stretch";
 const STACK = "flex flex-col items-start gap-pair";
 const GROUP_SLOT = "self-stretch";
@@ -113,16 +118,16 @@ function RuleRow<V extends string | null>({
 			className={cn(
 				ruleArrow({ state: pairSet(terms) ? "set" : "unset" }),
 				MARK,
+				!touch && MIDDLE,
 			)}
 		>
 			<Icon name={touch ? "ArrowDown" : "ArrowRight"} fit="meta" />
 		</span>
 	) : (
-		<Text role="meta">{terms.operator}</Text>
+		<span className={cn(MARK, !touch && MIDDLE)}>
+			<Text role="meta">{terms.operator}</Text>
+		</span>
 	);
-	// The grid's fourth column stands empty for a rule that cannot go; a
-	// stacked card has no column to hold.
-	const absent = touch ? null : <span />;
 	const remove = onRemove ? (
 		<span data-rule-remove="" className={cn(MARK, touch && REMOVE_END)}>
 			<IconButton
@@ -132,22 +137,27 @@ function RuleRow<V extends string | null>({
 				onAct={onRemove}
 			/>
 		</span>
-	) : (
-		absent
-	);
+	) : null;
 	const Row = touch ? "div" : "li";
 	return (
 		<Row
 			role={touch ? "listitem" : undefined}
-			className={cn(RULE_ROW, touch ? cn(RULE_CARD, STACKED) : ROW)}
-		>
-			{terms.from ? (
-				<Term value={terms.from} />
-			) : (
-				<Picker fit="bar" {...terms.field} />
+			className={cn(
+				RULE_ROW,
+				touch ? cn(RULE_CARD, STACKED) : cn(ROW, !onRemove && KEPT),
 			)}
+		>
+			<span className={touch ? undefined : TERM}>
+				{terms.from ? (
+					<Term value={terms.from} />
+				) : (
+					<Picker fit="bar" {...terms.field} />
+				)}
+			</span>
 			{middle}
-			<Term value={terms.from ? terms.to : terms.value} />
+			<span className={touch ? undefined : TERM}>
+				<Term value={terms.from ? terms.to : terms.value} />
+			</span>
 			{remove}
 		</Row>
 	);
@@ -213,7 +223,7 @@ export function Rules<V extends string | null = string>({
 			</div>
 		);
 	return (
-		<ul ref={hold} className={cn(RULES, GRID)}>
+		<ul ref={hold} className={cn(RULES, LIST)}>
 			{rules.map((rule) => (
 				<Fragment key={rule.id}>{rowOf(rule)}</Fragment>
 			))}

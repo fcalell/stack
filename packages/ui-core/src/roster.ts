@@ -2527,7 +2527,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				roles: ["meta"],
 				colors: ["ink-meta", "ink-disabled"],
 				spacing: ["inside", "pair", "card"],
-				sizes: ["icon-meta"],
+				sizes: ["icon-meta", "control-compact"],
 			},
 		},
 		// Its props are a union on `author`: `you` and `other` take `name`,

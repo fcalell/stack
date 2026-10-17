@@ -50,9 +50,12 @@ export function measure(): SectionBox[] {
 		const heading = section.querySelector("h2,h3,h4,h5,h6");
 		if (!heading || heading.closest("section") !== section) continue;
 		if (section.hasAttribute("data-page")) continue;
-		// The title alone: the count beside it only exists once loaded.
+		// The title alone: the count beside it only exists once loaded, and the
+		// title and count stand in one group, so the first span holding no span.
 		const text =
-			(heading.querySelector("span") ?? heading).textContent?.trim() ?? "";
+			(
+				heading.querySelector("span:not(:has(span))") ?? heading
+			).textContent?.trim() ?? "";
 		const count = (seen.get(text) ?? 0) + 1;
 		seen.set(text, count);
 		const pane = section.closest("[data-page]");

@@ -345,9 +345,10 @@ a tick with no animation, never jumped to full.
   that leading glyph (a typed value has none and keeps the `text` kind), never Value/Field tabs,
   which would be a second control row over the 28 px row. The arrow is `ArrowRight` at `icon-meta`,
   faded (`RULE_ARROW {state: unset}`, `ink-disabled`) until both sides hold a value (`pairSet`).
-  From `tablet` the list is one grid of four columns (the terms share what the arrow or operator and
-  the remove act leave) with each row a subgrid, so the columns align across rows whichever shape a
-  row has; the rows sit at the bar fit (`control-compact`) with the `inside` gap (`RULES`,
+  From `tablet` each rule is a flex row: the two terms share the row's width on one basis, the arrow
+  or operator between them at the remove act's width as a floor, so the columns align across rows
+  whichever shape a row has; a rule that cannot go keeps the remove act's room as the row's end
+  padding, never an empty element (flex only: no CSS grid in react-ui); the rows sit at the bar fit (`control-compact`) with the `inside` gap (`RULES`,
   `RULE_ROW`). On touch the tree differs (`useTouch`): each rule is a card of stacked terms
   (`RULE_CARD`, the arrow `ArrowDown`) in a `Group`, the columns no longer aligning, and native
   always draws that form. Rejected: a `Table` picker-cell kind with an arrow column (the Table's
@@ -1588,7 +1589,7 @@ a tick with no animation, never jumped to full.
 - **The phone wires TanStack's managers.** `QueryProvider listen` takes `online` and `focus`
   setters, which native-ui passes (`lib/net.ts`: `expo-network`, `AppState`) the way it passes
   `settle`; without them the phone never pauses a read and never refetches on focus.
-  `folded` is the initial fold: the Section holds its fold from there and reads no later change. A foldable Section's chevron stands after its title (and count) inside the toggle, so every Section's heading starts at one left edge (003-327: with the chevron before it, a folded Section's heading stood 22 px right of an unfolded one's); the phone's Section still leads with it.
+  `folded` is the initial fold: the Section holds its fold from there and reads no later change. The count stands on the heading's baseline (the title and count are one baseline group; the busy mark and the chevron stay centred on the line, on web and phone). A foldable Section's chevron stands after its title (and count) inside the toggle, so every Section's heading starts at one left edge (003-327: with the chevron before it, a folded Section's heading stood 22 px right of an unfolded one's); the phone's Section still leads with it.
   
 - A Form's structure is its props, one of `children` (a flat run of FormFields, a `fields` step apart)
   or `groups` (`{ title, description?, lead?, fields, read?, empty?, failed? }`, each a `fieldset` with a `legend`
@@ -2065,11 +2066,11 @@ a tick with no animation, never jumped to full.
   `ACTION_BAR`'s two fits carry no cell: `end` and `full` differ in structure (an overlay) and in
   the `Button` fit the bar passes (`body`, `field`), and the matrix exists so the closed type is
   read off an axis like every other fit. `Columns` takes `fit` the same way: `board` (the default)
-  is a row of sections scrolling sideways from the page inset, each a grid track at the column width
-  (`*:w-column` on the web grid, no wrapper per section; the phone's sections stand at their own
+  is a row of sections scrolling sideways from the page inset, each a flex item at the column width
+  (`*:w-(--container-column)` on the web flex row, no wrapper per section; the phone's sections stand at their own
   width, a flex row), `half` is two to
   a row filling the body from the Pane's `page-desktop` width and stacking in order below it, at
-  the `sections` gap, with no bleed and no column width (a web grid overlay, no scroll region). The
+  the `sections` gap, with no bleed and no column width (a web flex overlay, no scroll region). The
   phone stacks both: it never reaches `desktop`.
 - A `Toolbar` reads none of its children: its `search` (`ToolbarSearch`) and `chips` (`ToolbarChip`,
   a `ChipMark` and its `onRemove`) are descriptors it draws as a `kind="search"` `Input` and

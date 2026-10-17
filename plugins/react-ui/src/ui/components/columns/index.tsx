@@ -4,16 +4,17 @@ import { type ReactNode, use } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { PageTitle } from "../../lib/frame.ts";
 
-// The board is a grid of one row: each child stands in a track at the column
-// width, the tracks sized by the grid and not by a wrapper each. The row
+// The board is one flex row: each child stands at the column width and does
+// not shrink, so no wrapper holds a track. The row
 // bleeds to the Pane's edge and insets its columns back to the page inset, so
 // it scrolls sideways edge to edge; the body clips past that edge, so its
 // focus ring draws inside it.
 const BOARD =
-	"grid grid-flow-col items-start overflow-x-auto -mx-page auto-cols-(--container-column) focus-visible:-outline-offset-2";
+	"flex items-start overflow-x-auto -mx-page *:w-(--container-column) *:shrink-0 focus-visible:-outline-offset-2";
 // The half fit stacks in one column, then stands two to a row from the
 // Pane's desktop width.
-const HALF = "grid grid-cols-1 page-desktop:grid-cols-2";
+const HALF =
+	"flex flex-col page-desktop:flex-row page-desktop:*:grow page-desktop:*:basis-0";
 
 /** Sections side by side: a board's columns scrolling sideways, or two to a row. */
 export interface ColumnsProps extends Closed {

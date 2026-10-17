@@ -37,7 +37,7 @@ const BAR: Record<ActionBarFit, string> = {
 };
 const ACTS: Record<ActionBarFit, string> = {
 	end: "flex flex-wrap items-center justify-end min-w-0 max-w-full touch:flex-col touch:items-stretch",
-	full: "grid grid-flow-col auto-cols-fr touch:flex touch:flex-col",
+	full: "flex *:grow *:basis-0 touch:flex-col touch:*:grow-0 touch:*:basis-auto",
 };
 const FIT: Record<ActionBarFit, ButtonFit> = { end: "body", full: "field" };
 // A selection bar's row: the count at the start and the acts at the end, or
@@ -48,11 +48,11 @@ const ROW: Record<ActionBarFit, string> = {
 	full: "flex flex-col self-stretch",
 };
 
-// A pending bar and the bar it stands over share one cell, so the cell is the
-// loaded bar's height at every density and wrap; the loaded bar stays under it
-// unseen, inert and out of the tree readers walk.
-const HOLD = "grid grid-cols-1";
-const CELL = "col-start-1 row-start-1";
+// A pending bar stands over the bar it replaces: the loaded bar holds the
+// row's height at every density and wrap, unseen, inert and out of the tree
+// readers walk, and the pending bar fills that box.
+const HOLD = "relative self-stretch";
+const OVER = "absolute inset-0";
 const GHOST = "invisible";
 
 // The count and its choose and clear acts stand a pair apart at the row's
@@ -286,10 +286,10 @@ export function ActionBarBase({
 	if (pending === undefined) return bar(false);
 	return (
 		<div className={HOLD}>
-			<div inert aria-hidden className={cn(CELL, GHOST)}>
+			<div inert aria-hidden className={GHOST}>
 				{bar(true)}
 			</div>
-			<div className={CELL}>
+			<div className={OVER}>
 				<PendingBar {...pending} />
 			</div>
 		</div>

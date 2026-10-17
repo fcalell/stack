@@ -149,7 +149,7 @@ export function drawMeter(frame: ShowcaseFrame) {
 		if (frame.state !== "rest") return undefined;
 		return (
 			<Wide>
-				<div className="grid grid-cols-2 gap-x-fields">
+				<div className="flex gap-x-fields *:min-w-0 *:grow *:basis-0">
 					<Meter label="Seats" value={1} max={12} meta="1 of 12 seats" />
 					<MeterBase
 						label="Seats"
@@ -159,7 +159,7 @@ export function drawMeter(frame: ShowcaseFrame) {
 						painted
 					/>
 				</div>
-				<div className="grid grid-cols-2 gap-x-fields">
+				<div className="flex gap-x-fields *:min-w-0 *:grow *:basis-0">
 					<Meter label="Passing" value={34} max={42} counts={COUNTS} />
 					<MeterBase
 						label="Passing"

@@ -191,8 +191,6 @@ export const OVERLAYS: readonly string[] = [
 	"overflow-hidden",
 	"overflow-x-auto",
 	"-mx-page",
-	"grid-cols-1",
-	"page-desktop:grid-cols-2",
 	"[&>:not(:last-child)]:relative",
 	"[&>:not(:last-child)]:after:absolute",
 	"[&>:not(:last-child)]:after:inset-x-0",
@@ -214,10 +212,7 @@ export const OVERLAYS: readonly string[] = [
 	"items-end",
 	"justify-end",
 	"min-w-0",
-	"grid",
-	"grid-flow-col",
 	"touch:w-full",
-	"touch:flex",
 	"touch:flex-col",
 	"touch:items-stretch",
 	"touch:flex-wrap",
@@ -254,7 +249,6 @@ export const OVERLAYS: readonly string[] = [
 	"text-ink-meta",
 	"h-lh",
 	"hidden",
-	"touch:flex",
 	"leading-meta",
 	"-my-[calc((var(--spacing-target)-1lh)/2)]",
 	// Banner, PendingBar
@@ -417,8 +411,6 @@ export const OVERLAYS: readonly string[] = [
 	"max-w-4/5",
 	"disabled:placeholder:text-ink-disabled",
 	"border-edge-hover",
-	"col-start-1",
-	"row-start-1",
 	"invisible",
 	"contents",
 	"flex-1",
@@ -435,13 +427,24 @@ export const OVERLAYS: readonly string[] = [
 	"object-contain",
 	"size-full",
 	"h-full",
+	// The Table's `role="grid"` is swept as a class: no component draws `display: grid`
+	"grid",
+	// Rules, Columns, ActionBar: flex rows whose children share a basis or hold a width
+	"*:grow",
+	"*:basis-0",
+	"*:shrink-0",
+	"*:w-(--container-column)",
+	"page-desktop:flex-row",
+	"page-desktop:*:grow",
+	"page-desktop:*:basis-0",
+	"touch:*:grow-0",
+	"touch:*:basis-auto",
 	// Rules
-	"col-span-4",
+	"min-w-control-compact",
+	// Section head
+	"h-[1lh]",
 	"items-stretch",
 	"self-end",
-	// the four columns (term, arrow, term, remove) size to their content or share what is left; no width token names an auto/fr template
-	"grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto]",
-	"grid-cols-subgrid",
 	// Stats
 	"page-tablet:basis-0",
 	// Canvas

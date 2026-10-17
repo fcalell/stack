@@ -410,11 +410,11 @@ export const PICKER_VALUE =
 // The pick's popover at the popover's width (its ground and inset are
 // `POPOVER`'s).
 export const PICKER_POPOVER = "w-popover";
-// A list of rules on the desktop: one grid whose rows are subgrids, so the
+// A list of rules on the desktop: rows of flex terms sharing one basis, so the
 // columns align across rows, a pair rhythm between rows and the inside gap
 // between terms. A rule's terms keep the inside gap on touch too, stacked in
 // its card (`RULE_CARD`'s inset, a `Group` holding the cards).
-export const RULES = "gap-x-inside gap-y-pair";
+export const RULES = "gap-y-pair";
 export const RULE_ROW = "gap-inside";
 export const RULE_CARD = "px-card py-pair";
 // A popover: raised on the float shadow inside its hairline, its rows inset

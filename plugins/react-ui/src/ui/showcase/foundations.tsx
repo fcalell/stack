@@ -172,7 +172,7 @@ function Panel(props: { mode?: Mode; children: ReactNode }) {
 // The same foundations twice, each panel scoped to its own mode.
 function Modes(props: { children: ReactNode }) {
 	return (
-		<div className="grid grid-cols-1 tablet:grid-cols-2 gap-fields">
+		<div className="flex flex-col tablet:flex-row gap-fields *:min-w-0 *:grow *:basis-0">
 			{MODES.map((mode) => (
 				<Panel key={mode} mode={mode}>
 					{props.children}
@@ -249,7 +249,10 @@ function Colour() {
 			{(Object.keys(COLOR_GROUPS) as ColorGroup[]).map((group) => (
 				<Group key={group} title={group}>
 					{colorRows(group).map((row) => (
-						<div key={row.join()} className="grid grid-cols-4 gap-pair">
+						<div
+							key={row.join()}
+							className="flex flex-wrap gap-pair *:min-w-0 *:basis-[calc((100%-3*var(--spacing-pair))/4)]"
+						>
 							{row.map((name) => (
 								<Swatch key={name} name={name} />
 							))}
@@ -258,7 +261,7 @@ function Colour() {
 				</Group>
 			))}
 			<Group title="inks on their grounds">
-				<div className="grid grid-cols-3 gap-pair">
+				<div className="flex flex-wrap gap-pair *:min-w-0 *:basis-[calc((100%-2*var(--spacing-pair))/3)]">
 					{PAIRS.map(([ink, ground]) => (
 						<div
 							key={`${ink}/${ground}`}
@@ -452,7 +455,7 @@ function States() {
 				))}
 			</Group>
 			<Group title="field">
-				<div className="grid grid-cols-2 gap-pair">
+				<div className="flex flex-wrap gap-pair *:min-w-0 *:basis-[calc((100%-var(--spacing-pair))/2)]">
 					{FIELD_STATES.map(([state, classes]) => (
 						<div
 							key={state}

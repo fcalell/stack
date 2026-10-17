@@ -43,6 +43,11 @@ const HEAD_ROW = "flex-row items-center";
 const WRAP = "flex-wrap";
 const TITLE_BLOCK = "grow min-w-0";
 const TITLE_LINE = "flex-row items-center min-w-0";
+// The heading and its count stand on one baseline, the sizes differing; the
+// busy mark and the chevron beside them stay centred on the line.
+// The heading gives way to its count and the line before it clips.
+const TITLE_WORD = "min-w-0 shrink";
+const NAME = "flex-row items-baseline min-w-0 shrink";
 const TOGGLE =
 	"flex-row items-center grow min-w-0 -ms-inside active:bg-wash-press";
 // The act and the more stand a row's act gap apart (`SECTION_ACTS`, as ListRow's).
@@ -141,10 +146,15 @@ export function SectionHead(props: {
 			: (shownMore.value ?? []);
 	const name = (
 		<>
-			<RNText numberOfLines={1} className={text({ role: "heading" })}>
-				{partText(title)}
-			</RNText>
-			{tally}
+			<View className={cn(SECTION_TITLE, NAME)}>
+				<RNText
+					numberOfLines={1}
+					className={cn(text({ role: "heading" }), TITLE_WORD)}
+				>
+					{partText(title)}
+				</RNText>
+				{tally}
+			</View>
 			<BusyMark frame={frame} />
 		</>
 	);

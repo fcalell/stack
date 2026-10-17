@@ -57,6 +57,11 @@ const TITLE_BLOCK = "flex flex-col grow shrink-10000000 min-w-0";
 const TITLE_LINE = "flex items-center min-w-0";
 const TITLE_FOLD = "flex min-w-0";
 const TITLE = "truncate";
+// The heading and its count stand on one baseline, the sizes differing; the
+// busy mark and the chevron beside them stay centred on the line. The group
+// is the heading's own line (`1lh` of the heading role), so a count that
+// arrives, its smaller box hanging lower under the baseline, never grows the head.
+const NAME = "flex items-baseline min-w-0 h-[1lh]";
 // The chevron draws in the toggle's ink (currentColor), stepping to the body
 // ink under the pointer.
 const TOGGLE =
@@ -178,10 +183,10 @@ export function SectionHead(props: {
 			: (shownMore.value ?? []);
 	const name = (
 		<>
-			<span className={cn(text({ role: "heading" }), TITLE)}>
-				{partText(title)}
+			<span className={cn(text({ role: "heading" }), SECTION_TITLE, NAME)}>
+				<span className={TITLE}>{partText(title)}</span>
+				{tally}
 			</span>
-			{tally}
 			<BusyMark frame={frame} />
 		</>
 	);
