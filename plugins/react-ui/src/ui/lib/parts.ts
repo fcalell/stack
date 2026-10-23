@@ -60,6 +60,12 @@ export function joinParts(parts: Runs, cut?: number): Run[] {
 // breaking after it.
 const DOT = "\u00A0· ";
 
+// A row's trailing value (an age, a count) joins the meta line as one more
+// part, but a short one: its dot binds to the word before it and to the value
+// after it, so the value wraps with that word and a line never starts or ends
+// on the dot (a bare `DOT` would leave a short value alone on a line of its own).
+export const META_TAIL = "\u00A0·\u00A0";
+
 // Parts as the runs of one text with a middle dot between them, a span of
 // code or a strong run its own run so it draws in its style. The dot is bound
 // to the part before it, so a wrapped line never starts on a dot, a part's own

@@ -66,8 +66,14 @@ const ACTS = "flex shrink-0 items-center gap-gap ms-auto touch:-me-icon-inset";
 // replace it, so the title would give way to the switcher or the acts to nothing.
 const TITLE = "flex grow items-center gap-gap";
 const NAME = "min-w-0 truncate";
+// A record's place stands whole beside its name: it keeps its own width up to
+// three fifths of the title and the name, which the body's head repeats whole,
+// gives way first, so a name that waits (its filler) never cuts the place's
+// word. The slash is a part of its own that is never cut.
+const WITHIN = "flex shrink-0 items-center max-w-3/5";
+const WITHIN_SEP = "shrink-0";
 
-/** A Pane's bar: the back act, the title, the context pick, the actions and more, and the line of its read's state. The bar is one line: the acts that do not fit beside the title's floor stand in the more menu, the last first, and then the context pick draws its dot and chevron alone (its word kept for a screen reader) before its word is cut. It subscribes to the title and the acts itself, so a title or an act's read landing renders the bar and nothing under the Pane's body. Outside the package's exports. */
+/** A Pane's bar: the back act, the title, the context pick, the actions and more, and the line of its read's state. The bar is one line: the acts that do not fit beside the title's floor stand in the more menu, the last first, and then the context pick draws its dot and chevron alone (its word kept for a screen reader) before its word is cut. It subscribes to the title and the acts itself, so a title or an act's read landing renders the bar and nothing under the Pane's body. A record's bar whose read failed or answered not found draws its place alone, with no slash, and none of the acts; its back or close act stands. Outside the package's exports. */
 export function PaneHead(props: {
 	/** Where a record lives, drawn before its name in the meta ink and parted from it by a slash; a selection paints in its place until it lands. */
 	within?: Datum<Run>;
@@ -99,6 +105,12 @@ export function PaneHead(props: {
 		state,
 		frame,
 	} = props;
+	// A record whose read failed or answered not found is not here, so the bar
+	// keeps where it lived and the way back and draws none of its acts: the page
+	// below it is the failed or missing form, whose Retry is the one act.
+	const gone =
+		within !== undefined &&
+		(frame.form === "failed" || frame.form === "missing");
 	const touch = useTouch();
 	const far = use(DistanceContext);
 	const words = useWords();
@@ -162,8 +174,8 @@ export function PaneHead(props: {
 			? []
 			: (overflowAt.value ?? []);
 	const fold = useFold(
-		built.length,
-		overflowAt.painted || own.length > 0,
+		gone ? 0 : built.length,
+		!gone && (overflowAt.painted || own.length > 0),
 		context !== undefined,
 	);
 	// The acts folded into the menu stand before its own, in their order; one
@@ -183,7 +195,7 @@ export function PaneHead(props: {
 			</span>
 		);
 	const overflow =
-		overflowAt.painted || items.length ? (
+		!gone && (overflowAt.painted || items.length) ? (
 			<MenuBase
 				label={words.more}
 				title={words.more}
@@ -195,6 +207,9 @@ export function PaneHead(props: {
 				}
 			/>
 		) : null;
+	// A name whose read ended draws nothing, so the slash after the place would
+	// dangle.
+	const nameless = name.painted && !paints(name);
 	// A painted title is filler, and a record's place is no heading: each stands
 	// as a paragraph of the title's own look.
 	const Title = titleId && !name.painted ? (`h${level}` as const) : "p";
@@ -211,13 +226,17 @@ export function PaneHead(props: {
 					className={cn(text({ role: "heading" }), PAGE_TITLE_FLOOR, TITLE)}
 				>
 					{within === undefined ? null : (
-						<span className={cn(text({ role: "body" }), PAGE_WITHIN, NAME)}>
-							{paints(place) ? (
-								<Painted role="word" />
-							) : place.painted ? null : (
-								<RunText runs={partRuns(place.value as Run)} />
+						<span className={cn(text({ role: "body" }), PAGE_WITHIN, WITHIN)}>
+							<span className={NAME}>
+								{paints(place) ? (
+									<Painted role="word" />
+								) : place.painted ? null : (
+									<RunText runs={partRuns(place.value as Run)} />
+								)}
+							</span>
+							{nameless ? null : (
+								<span className={cn(PAGE_WITHIN_SEP, WITHIN_SEP)}>/</span>
 							)}
-							<span className={PAGE_WITHIN_SEP}>/</span>
 						</span>
 					)}
 					<span className={NAME}>
@@ -243,7 +262,7 @@ export function PaneHead(props: {
 					</span>
 				) : null}
 				<span ref={fold.group} className={ACTS}>
-					{built.slice(0, fold.shown)}
+					{gone ? null : built.slice(0, fold.shown)}
 					{overflow}
 					{close}
 				</span>

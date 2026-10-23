@@ -59,7 +59,14 @@ import { ACT_FOLDED, ACT_SLOT, useMarksFold } from "../../lib/fold.ts";
 import { useTouch } from "../../lib/media.ts";
 import { follow, navigate, useRoute } from "../../lib/navigate.ts";
 import { Painted } from "../../lib/paint.tsx";
-import { filled, isCode, META_CUT, metaRuns, runsOf } from "../../lib/parts.ts";
+import {
+	filled,
+	isCode,
+	META_CUT,
+	META_TAIL,
+	metaRuns,
+	runsOf,
+} from "../../lib/parts.ts";
 import {
 	endedSentence,
 	FailedMark,
@@ -183,7 +190,9 @@ const CONTROL = "flex shrink-0";
 // it (`META_INLINE`); under a wrapped title (`wrap`) they take up to two lines
 // and end in an ellipsis at the end of the second (`META_LINES`): a part wraps
 // by its words and holds its separator (`metaRuns`), so a wrapped line never
-// starts on a dot. In the compact form they wrap whole (`META_FREE`). The marks (status, warning, lock, chip) are
+// starts on a dot; a compact row's trailing value is the last part on it, its
+// dot held to the word before and to the value (`META_TAIL`). In the compact
+// form they wrap whole (`META_FREE`). The marks (status, warning, lock, chip) are
 // not on it: they stand in the end group. A lone `{ code }` part is one line
 // that cuts in its middle; a painted line is one line.
 const META_LINES = "line-clamp-2 break-words";
@@ -241,14 +250,16 @@ function trailingWord(trailing: RowTrailing): ReactNode {
 		return (
 			<>
 				<Age moment={trailing.age} />
-				{trailing.beside === undefined ? null : ` · ${trailing.beside}`}
+				{trailing.beside === undefined
+					? null
+					: `${META_TAIL}${trailing.beside}`}
 			</>
 		);
 	if ("count" in trailing) return String(trailing.count);
 	return trailing.value;
 }
 
-/** The one row of a Section's sheet, whatever it holds. Its box is a line of three groups: a leading slot (the change mark, then the leading mark: a glyph, a status dot, an avatar, a type's mark or a tick; a tree's rails), a text group (the title over the meta line) and an end group, in one order: the trailing value, the marks (warning, lock, chip, ring or flag), the status, a switch, a pick, the act (an icon act, or a labelled act, which folds into the more menu where it does not fit beside the text group's floor), the copy act, the more act, a tree's fold. A row with a `label` stands in the sheet's two columns, the label in the first at the body role in the meta ink (a `code` label in the code role) in a column as wide as the widest label of the Pane, and the line in the second; on touch the line stands under the label. A row without one spans the sheet from its start. One lock mark: the meta glyph named by its reason, the reason beside it from `tablet`, a link to what holds the fact with an `href`, inert without one. A row that opens (`href` or `onOpen`) draws no chevron: it is one hit, washing under the pointer, current (the bar) when `selected` or at its `href`. A title truncates on one line unless `wrap`, whether the row has a label or not, and the meta stands after it when it fits and under it when the row is compact or narrow; the end group is centred on the row; an absent word is faint, a status is its compact pill at the title's start, a copyable code is the mono and, too long for its room, cut in its middle. The painted form is the loaded one with every part in its filler, inert. The row is the frame of the selections it draws (`title`, `meta`): one that failed, with no frame above holding it, makes the failed form (the label stays, the end shows the failure mark and the retry icon, the meta line reads "This didn't load.", and pressing the row retries). Outside the package's exports. */
+/** The one row of a Section's sheet, whatever it holds. Its box is a line of three groups: a leading slot (the change mark, then the leading mark: a glyph, a status dot, an avatar, a type's mark or a tick; a tree's rails), a text group (the title over the meta line) and an end group, in one order: the trailing value, the marks (warning, lock, chip, ring or flag), the status, a switch, a pick, the act (an icon act, or a labelled act, which folds into the more menu where it does not fit beside the text group's floor), the copy act, the more act, a tree's fold. A row with a `label` stands in the sheet's two columns, the label in the first at the body role in the meta ink (a `code` label in the code role) in a column as wide as the widest label of the Pane, and the line in the second; on touch the line stands under the label. A row without one spans the sheet from its start. One lock mark: the meta glyph named by its reason, the reason beside it from `tablet`, a link to what holds the fact with an `href`, inert without one. A row that opens (`href` or `onOpen`) draws no chevron: it is one hit, washing under the pointer, current (the bar) when `selected` or at its `href`. A title truncates on one line unless `wrap`, whether the row has a label or not, and the meta stands after it when it fits and under it when the row is compact or narrow; the end group is centred on the row; an absent word is faint, a status is its compact pill at the title's start, a copyable code is the mono and, too long for its room, cut in its middle. A status whose word does not fit beside the text group's floor stands as its dot alone, its word the dot's accessible name and, under the pointer, its tooltip. The painted form is the loaded one with every part in its filler, inert. The row is the frame of the selections it draws (`title`, `meta`): one that failed, with no frame above holding it, makes the failed form (the label stays, the end shows the failure mark and the retry icon, the meta line reads "This didn't load.", and pressing the row retries). Outside the package's exports. */
 export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	const {
 		change: kind,
@@ -616,7 +627,12 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 			) : (
 				<RunText runs={metaRuns(parts, META_CUT)} />
 			)}
-			{inMeta && trailing ? <> · {trailingWord(trailing)}</> : null}
+			{inMeta && trailing ? (
+				<>
+					{META_TAIL}
+					{trailingWord(trailing)}
+				</>
+			) : null}
 		</span>
 	);
 	// The control of a fact: its switch, in the end group, or the failure mark

@@ -56,7 +56,7 @@ how much a row carries and where things stand, never for colour, type, corners o
    name 20 at 500 in the mono, figure 24 at 500. Touch: body 16, meta 15, caption 15, name 24.
    A machine name (a field, an event, a key) is always the mono, bare in a row and a name, boxed
    only inside a sentence. A label (a field's, a row's) is the body role in the meta ink: it names, and the value it names stands in the body ink.
-8. **Ink.** Three: body, meta, faint. Colour carries state and type, never hierarchy.
+8. **Ink.** Three: body, meta, faint, each read as text at the floor's 4.5:1 on the table, the sheet and a tile, in both modes; the faint is a count, an absent word, an optional mark, under the meta ink. Only a disabled control's text (`ink-disabled`) is below the floor. Colour carries state and type, never hierarchy.
 9. **Rows.** One line on hairlines: its first-line box and the gap above and below it (32 px
    desktop, 44 touch), never a set height. The leading part is the type mark on its hue (`T`, `#`,
    `[]`, `{}`, `?`; or a status dot, an avatar), sized to itself in the row's gap rhythm; the

@@ -44,7 +44,14 @@ import { ACT_FOLDED, ACT_SLOT, useMarksFold } from "../../lib/fold";
 import { blockIn, FadingText, FadingView, lineIn } from "../../lib/motion";
 import { open as follow, usePathname, useWarm } from "../../lib/navigate";
 import { clipWhen, inertProps, Painted, PaintText } from "../../lib/paint";
-import { filled, isCode, META_CUT, metaRuns, runsOf } from "../../lib/parts";
+import {
+	filled,
+	isCode,
+	META_CUT,
+	META_TAIL,
+	metaRuns,
+	runsOf,
+} from "../../lib/parts";
 import { endedSentence, FailedMark, RetryMark, useRow } from "../../lib/read";
 import { sameBy } from "../../lib/same-by";
 import { useWords } from "../../lib/words";
@@ -124,8 +131,9 @@ const STEP_LABEL = "shrink";
 // The meta line is the meta parts alone, one run of text a middle dot apart,
 // which takes up to two lines and ends in an ellipsis at the end of the second:
 // a part wraps by its words and holds its separator (`metaRuns`), so a wrapped
-// line never starts on a dot, and a part that does not fit is cut where
-// the line ends. The marks (status, warning, lock, chip, marks) are not on it:
+// line never starts on a dot (a trailing value is the last part, its dot held
+// to the word before and to the value: `META_TAIL`), and a part that does not
+// fit is cut where the line ends. The marks (status, warning, lock, chip, marks) are not on it:
 // they stand in the end group. A lone `{ code }` part is one line that cuts in
 // its middle; a painted line is one line.
 const META_CODE = "flex-row shrink min-w-0";
@@ -164,7 +172,9 @@ function trailingWord(trailing: RowTrailing): ReactNode {
 		return (
 			<>
 				<Age moment={trailing.age} />
-				{trailing.beside === undefined ? null : ` · ${trailing.beside}`}
+				{trailing.beside === undefined
+					? null
+					: `${META_TAIL}${trailing.beside}`}
 			</>
 		);
 	if ("count" in trailing) return String(trailing.count);
@@ -513,7 +523,12 @@ export function RowBase<V extends string | null = string>(props: RowProps<V>) {
 	) : (
 		<RNText numberOfLines={2} className={metaRole}>
 			<RunText runs={metaRuns(parts, META_CUT)} />
-			{inMeta && trailing ? <> · {trailingWord(trailing)}</> : null}
+			{inMeta && trailing ? (
+				<>
+					{META_TAIL}
+					{trailingWord(trailing)}
+				</>
+			) : null}
 		</RNText>
 	);
 	const column = cn(ROW_TEXT, TEXT, floored && ROW_TEXT_FLOOR);

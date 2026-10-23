@@ -16,7 +16,7 @@ colors:
   scrim: "oklch(0.2 0.01 264 / 0.45)"
   ink-body: "oklch(0.2 0.008 264)"
   ink-meta: "oklch(0.45 0.012 264)"
-  ink-faint: "oklch(0.665 0.01 264)"
+  ink-faint: "oklch(0.53 0.01 264)"
   accent: "oklch(0.52 0.19 264)"
   on-accent: "oklch(1 0 0)"
   accent-soft: "oklch(0.95 0.023 264)"
@@ -114,7 +114,7 @@ colors:
   scrim-dark: "oklch(0 0 0 / 0.5)"
   ink-body-dark: "oklch(0.97 0.002 264)"
   ink-meta-dark: "oklch(0.76 0.01 264)"
-  ink-faint-dark: "oklch(0.506 0.01 264)"
+  ink-faint-dark: "oklch(0.63 0.01 264)"
   accent-dark: "oklch(0.54 0.19 264)"
   on-accent-dark: "oklch(1 0 0)"
   accent-soft-dark: "oklch(0.29 0.06 264)"
@@ -2241,12 +2241,12 @@ components:
     backgroundColor: "{colors.raised-dark}"
   item-pill:
     height: "{spacing.chip}"
-    rounded: "{rounded.full}"
+    rounded: "{rounded.chip}"
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink-body}"
   item-pill-dark:
     height: "{spacing.chip}"
-    rounded: "{rounded.full}"
+    rounded: "{rounded.chip}"
     backgroundColor: "{colors.surface-dark}"
     textColor: "{colors.ink-body-dark}"
   item-pill-glyph:
@@ -2676,7 +2676,7 @@ Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fi
 | `scrim` | `oklch(0.2 0.01 264 / 0.45)` | `oklch(0 0 0 / 0.5)` | the veil behind a dialog or a sheet |
 | `ink-body` | `oklch(0.2 0.008 264)` | `oklch(0.97 0.002 264)` | the primary line of anything |
 | `ink-meta` | `oklch(0.45 0.012 264)` | `oklch(0.76 0.01 264)` | a secondary line, a placeholder, a table header |
-| `ink-faint` | `oklch(0.665 0.01 264)` | `oklch(0.506 0.01 264)` | disabled text only |
+| `ink-faint` | `oklch(0.53 0.01 264)` | `oklch(0.63 0.01 264)` | a count, an absent word, an optional mark: text at 4.5:1 on `canvas`, `surface` and `group`, under `ink-meta` |
 | `accent` | `oklch(0.52 0.19 264)` | `oklch(0.54 0.19 264)` | the filled act |
 | `on-accent` | `oklch(1 0 0)` | `oklch(1 0 0)` | text on `accent` |
 | `accent-soft` | `oklch(0.95 0.023 264)` | `oklch(0.29 0.06 264)` | a tinted tile |
@@ -2746,7 +2746,7 @@ Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fi
 | `edge-hover` | `oklch(0.61 0.012 264)` | `oklch(0.575 0.01 264)` | a field's boundary under the pointer |
 | `edge-error` | `oklch(0.515 0.19 25)` | `oklch(0.71 0.178 25)` | a field's boundary in error |
 | `ink-error` | `oklch(0.515 0.19 25)` | `oklch(0.71 0.178 25)` | an error message |
-| `ink-disabled` | `oklch(0.665 0.01 264)` | `oklch(0.506 0.01 264)` | a disabled part's label |
+| `ink-disabled` | `oklch(0.665 0.01 264)` | `oklch(0.506 0.01 264)` | a disabled part's label, about 3:1, which WCAG exempts |
 | `act-accent` | `oklch(0.52 0.19 264)` | `oklch(0.54 0.19 264)` | the primary act's fill; `-hover`, `-press` and `-pending` its states |
 | `on-act-accent` | `oklch(1 0 0)` | `oklch(1 0 0)` | the primary act's label |
 | `act-accent-hover` | `oklch(0.458 0.167 264)` | `oklch(0.475 0.167 264)` | the primary act's fill; `-hover`, `-press` and `-pending` its states |

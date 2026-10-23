@@ -22,7 +22,6 @@ import {
 	type EndMeasure,
 	type Finding,
 	type FontMeasure,
-	format,
 	type GridMeasure,
 	type HeightMeasure,
 	type Located,

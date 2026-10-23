@@ -22,7 +22,7 @@ const DOT = "shrink-0";
 const BARE = "relative";
 const WORD_BARE = "absolute end-0 w-max opacity-0 pointer-events-none";
 
-/** What every status draws: the public `Status`, or `painted` (the dot's box and, unless `bare`, a word's filler while the status's data is not here, inert). A list row's status is `bare` where its word does not fit beside the text group's floor: the dot alone, the word kept for a screen reader and for the row to measure through `word`. A state chip (a status given its own word) is `compact` where a row holds it: the caption line between its hairlines. It is `round` where it stands in a pill of its own (a head's pick fact), so it nests as a pill inside it. Outside the package's exports. */
+/** What every status draws: the public `Status`, or `painted` (the dot's box and, unless `bare`, a word's filler while the status's data is not here, inert). A list row's status is `bare` where its word does not fit beside the text group's floor: the dot alone, the word kept for a screen reader and for the row to measure through `word`. A state chip (a status given its own word) is `compact` where a row holds it: the caption line between its hairlines. It is `round` where it stands in a pill of its own (a head's pick fact), so it nests as a pill inside it, or in a canvas's start or end node. Outside the package's exports. */
 export function StatusBase(
 	props:
 		| {

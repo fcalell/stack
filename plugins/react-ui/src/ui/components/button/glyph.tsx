@@ -175,12 +175,16 @@ export function NamePopup(props: {
 	);
 }
 
-/** A name shown as a tooltip over its trigger, off on touch. Outside the package's exports; a row's marks wear it too. */
-export function Named(props: { label: string; children: ReactElement }) {
+/** A name shown as a tooltip over its trigger, off on touch, or while `off` (a trigger that wears the name only some of the time keeps its place in the tree). Outside the package's exports; a row's marks wear it too. */
+export function Named(props: {
+	label: string;
+	off?: boolean;
+	children: ReactElement;
+}) {
 	const touch = useTouch();
 	return (
 		<Tooltip.Root
-			disabled={touch}
+			disabled={touch || props.off}
 			disableHoverablePopup
 			onOpenChange={(open, details) => {
 				if (!open) hid();

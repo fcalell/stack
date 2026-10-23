@@ -163,8 +163,9 @@ export function markFloors(
 }
 
 // Whether the first mark stands whole in the room the marks have. A status that
-// does not falls back to its dot alone (the word kept as its name), never a
-// word cut to a letter; the marks after it have folded already.
+// does not falls back to its dot alone (the word kept as its name, and shown as
+// a tooltip under the pointer on the web), never a word cut to a letter; the
+// marks after it have folded already.
 export function firstFits(room: MarksRoom): boolean {
 	const { row, fixed, widths } = room;
 	return (widths[0] ?? 0) <= row * (1 - TITLE_FLOOR) - fixed;

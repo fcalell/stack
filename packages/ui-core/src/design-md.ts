@@ -65,7 +65,8 @@ const COLOR_USE: Record<string, string> = {
 	scrim: "the veil behind a dialog or a sheet",
 	"ink-body": "the primary line of anything",
 	"ink-meta": "a secondary line, a placeholder, a table header",
-	"ink-faint": "disabled text only",
+	"ink-faint":
+		"a count, an absent word, an optional mark: text at 4.5:1 on `canvas`, `surface` and `group`, under `ink-meta`",
 	accent: "the filled act",
 	"on-accent": "text on `accent`",
 	"accent-soft": "a tinted tile",
@@ -93,7 +94,7 @@ const COLOR_USE: Record<string, string> = {
 	"edge-hover": "a field's boundary under the pointer",
 	"edge-error": "a field's boundary in error",
 	"ink-error": "an error message",
-	"ink-disabled": "a disabled part's label",
+	"ink-disabled": "a disabled part's label, about 3:1, which WCAG exempts",
 	"act-accent":
 		"the primary act's fill; `-hover`, `-press` and `-pending` its states",
 	"on-act-accent": "the primary act's label",
