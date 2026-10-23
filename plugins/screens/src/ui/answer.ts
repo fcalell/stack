@@ -151,10 +151,20 @@ export function fixtureGaps(): readonly string[] {
 let hold = Promise.resolve();
 let open = () => {};
 
+// The calls waiting on the hold now, which the run itself keeps in flight. A
+// new hold starts a set of its own: the last story's calls wait on a promise
+// nothing releases.
+let held = new Set<symbol>();
+
+export function heldReads(): number {
+	return held.size;
+}
+
 export function holdCalls(): void {
 	hold = new Promise<void>((resolve) => {
 		open = resolve;
 	});
+	held = new Set();
 	seen.clear();
 	gaps.clear();
 	failed = undefined;
@@ -191,7 +201,14 @@ export async function answer(
 			state = "error";
 	}
 	if (state === "loading") {
-		await hold;
+		const calls = held;
+		const call = Symbol(path.join("."));
+		calls.add(call);
+		try {
+			await hold;
+		} finally {
+			calls.delete(call);
+		}
 		state = "data";
 	}
 	if (state === "error")

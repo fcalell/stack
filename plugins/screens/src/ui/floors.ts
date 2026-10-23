@@ -7,6 +7,7 @@ import {
 	called,
 	failing,
 	fixtureGaps,
+	heldReads,
 	holdCalls,
 	release as releaseHold,
 } from "./answer.ts";
@@ -136,6 +137,28 @@ async function loaded(animations = true): Promise<string | undefined> {
 		held = waiting() ? 0 : held + 1;
 	}
 	await settle(animations);
+	return undefined;
+}
+
+// Whether a read is still on its way that the run does not hold: a mutation, a
+// frame route and a plugin's fixture answer at once, and what they bring draws
+// a frame or several later. A query fetching is held on the story's state or
+// it is on its way, so a count above the held calls is a read not yet landed.
+const answering = (): boolean => fetchingReads(storyClient()) > heldReads();
+
+// The waiting form of a loading story, once the reads the run does not hold
+// have landed and drawn: the page the held ones leave waiting, never one
+// caught between its first paint and what answers at once. Holds for a few
+// frames running, since an answer that lands can start a read the frame after.
+async function answered(): Promise<string | undefined> {
+	const end = performance.now() + LOAD_TIMEOUT;
+	for (let quiet = 0; quiet < STABLE_FRAMES; ) {
+		if (performance.now() > end)
+			return "a read the run does not hold is still fetching";
+		await frame();
+		quiet = answering() ? 0 : quiet + 1;
+	}
+	await settle(false);
 	return undefined;
 }
 
@@ -300,7 +323,11 @@ async function visit(
 	const pins = await withUnpinned(async (pins) => {
 		for (const [index, width] of widths().entries()) {
 			await resize(pins, width);
-			if (loading) waiting.set(width, measure());
+			if (loading) {
+				const busy = await answered();
+				if (busy) failures.push(`settle: ${busy}`);
+				waiting.set(width, measure());
+			}
 			marks.set(width, densityMark());
 			failures.push(...floorsAt(width, index === 0));
 			const path = shot(width);

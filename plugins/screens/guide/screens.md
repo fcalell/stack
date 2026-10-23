@@ -111,7 +111,9 @@ A part that lays itself out after its first paint (the Canvas measures, runs its
 ### The loading shift
 
 A Section stands whatever its data holds, so the page must not jump when the data arrives. In a
-Loading story the run measures each Section at each width while the calls are held, answers them,
+Loading story the run measures each Section at each width while the calls are held (and the reads
+it does not hold, a mutation or a frame route, have landed and drawn: no query fetching beyond the
+held ones, for a few frames running, then the size settled), answers them,
 waits until no query is fetching and nothing is `aria-busy` (a button's own busy excepted) and the page has settled, and
 measures again. Per Pane, each Section is judged against the Sections above it in its column (those whose horizontal extent overlaps its own and whose top is above its top), never against a Section beside it, so a two-column layout's columns are judged apart. It reports:
 

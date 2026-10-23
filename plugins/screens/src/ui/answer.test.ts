@@ -5,6 +5,7 @@ import {
 	channelAnswer,
 	emptyOf,
 	fixtureGaps,
+	heldReads,
 	holdCalls,
 	release,
 	type ScreenState,
@@ -81,6 +82,36 @@ const call = async (path: string, state: ScreenState, tree: unknown = app) => {
 test("a plugin-owned procedure answers data in every forced state", async () => {
 	for (const state of ["loading", "error", "notFound", "empty"] as const)
 		assert.equal(await call("flags/get", state), 200, state);
+});
+
+test("a loading query is held and counted until release, a call answered at once is not", async () => {
+	holdCalls();
+	const held = call("projects/list", "loading");
+	const answered = await Promise.all([
+		call("flags/get", "loading"),
+		answer(
+			new Request("http://x/rpc/projects/list", { method: "POST" }),
+			"/rpc",
+			app,
+			[plugin],
+			"loading",
+		).then((response) => response.status),
+	]);
+	assert.deepEqual(answered, [200, 200]);
+	assert.equal(heldReads(), 1);
+	release();
+	assert.equal(await held, 200);
+	assert.equal(heldReads(), 0);
+});
+
+test("a new hold forgets the calls of the last story", async () => {
+	holdCalls();
+	void call("projects/list", "loading");
+	await Promise.resolve();
+	assert.equal(heldReads(), 1);
+	holdCalls();
+	assert.equal(heldReads(), 0);
+	release();
 });
 
 test("an app-owned procedure follows the forced state", async () => {
