@@ -283,24 +283,21 @@ The roster is in Storybook. react-ui's `./showcase/cells`, `./showcase/frame` an
 `./showcase/frames/*` export the frame data, the `Frame` wrapper and one drawer per component;
 `.storybook/` imports them. A story is a component in one state drawing every cell through `Frame`,
 light and dark side by side. Pointer and focus states stay in the roster and draw no story (the web
-variants match only real pseudo-classes). The behaviour stories (`apps/showcase/behaviour/`) drive
-the real component by keyboard in a play function, the paint stories draw a part loaded beside it
-painted, the act stories press an act through its pending, failed and offline forms, `Motion
-tuning` is the one place every timing is tuned, and the generated `RosterStress` module draws each
-component's frames at desktop and at touch in a 320 px column with a 300-character word in every
-text slot. The Storybook preview fails any story that trips a dev check. Nothing runs them
-headlessly: `pnpm stories` opens them, and `stack screens test` is the one machine run.
+variants match only real pseudo-classes). `Motion tuning` (the phone app) is the one place every
+timing is tuned. The Storybook preview fails any story that trips a dev check. Nothing runs the
+stories headlessly: `pnpm stories` opens them, and `stack screens test`, run on the screens a change
+works on, is the one machine run.
 
 The screens run's floors are one preview annotation (`@fcalell/plugin-screens/floors`) that visits
 320 (touch set), 1280 (desktop set) and 1920 (where `wide` opens) and, per width, checks overflow and
-runs the render walk (`@fcalell/plugin-screens/walk`). The walk reads the contract off the page
+runs the render walk (`walk.ts` in plugin-screens). The walk reads the contract off the page
 (`--spacing-*`, `--text-*`, `--radius-*` at the element's own density), never from a copy. Its
-checks are pure functions, each with a canary in `behaviour/walk.stories.tsx`. What the contract
+checks are pure functions. What the contract
 itself draws off a rule is a named exception in `EXCEPTIONS` (`walk.ts`) with its reason, never a
 baseline; the standing one is a control, row or chip inside a card, popover or sheet, which keep
 their roles' radii (a concentric inner radius would need the inner part to know its outer). The
 alignment rules (`align-dead`, `align-centre`, `align-baseline`, `align-grid`) fail the run.
-Behaviour stories call `walked()` at the end of a play function. Workbench stories carry tags per
+Workbench stories carry tags per
 state (`state:loading`) and checked global (`mode:dark`) so `--state` and `--mode` filter them.
 
 A failing check is a finding in the component: it stays failing until the component is fixed,

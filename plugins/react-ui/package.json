@@ -71,7 +71,6 @@
 		"./showcase/tv": "./src/ui/showcase/tv.tsx",
 		"./showcase/cells": "./src/ui/showcase/cells.ts",
 		"./showcase/frame": "./src/ui/showcase/frame.tsx",
-		"./showcase/waiting": "./src/ui/showcase/waiting.ts",
 		"./showcase/frames/*": "./src/ui/showcase/frames/*.tsx"
 	},
 	"files": [

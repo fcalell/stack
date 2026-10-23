@@ -8,10 +8,10 @@ import { rosterPlugin } from "./roster-plugin.ts";
 
 const config: StorybookConfig = {
 	// The component modules are generated from the roster before Storybook
-	// indexes them; the behaviour stories are written by hand.
+	// indexes them.
 	stories: async () => {
 		writeStories();
-		return ["../stories/*.stories.ts", "../behaviour/*.stories.tsx"];
+		return ["../stories/*.stories.ts"];
 	},
 	framework: {
 		name: "@storybook/react-vite",

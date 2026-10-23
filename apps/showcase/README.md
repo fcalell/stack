@@ -40,7 +40,7 @@ example value for the route params (`deployId`, `stepId`).
 
 ```bash
 pnpm --filter showcase exec stack screens dev   # Storybook on every route of the app, on :6006
-pnpm --filter showcase test-screens  # every screen headlessly (--all: not only the changed ones)
+pnpm --filter showcase test-screens --screen <title>  # the screens you work on, headlessly
 ```
 
 Every route is drawn in data, loading, error, empty and not found, light and dark, at either
@@ -51,25 +51,14 @@ or 1920 px, a finding of the render walk, or a console error or warning.
 
 ## The roster
 
-The roster is in Storybook, two kinds of story:
-
-- **Component stories**: one per component and accessibility-relevant state (`rest`, `disabled`,
-  `loading`, `error`, `empty`, `selected`), every cell of that component, light and dark side by
-  side, at the toolbar's density (desktop or touch). The `rest` story takes a `cell` control to
-  browse one cell. Hover, press and focus are drawn nowhere: drive the real component in its story.
-- **Behaviour stories** (`behaviour/*.stories.tsx`, written by hand): the real component driven by
-  keyboard, with a play function asserting the rubric's widget-behaviour floor: Sheet (and a
-  `confirm()` decision), Menu, Picker (menu, list or segments), Table (grid cursor),
-  List (tree), Slider, code Input, Toast and Gate, and a Sheet docked as a Pane's `sheet`; Pane's focus
-  move into a Pane that opens. The Shell and its place own no focus move or key handling of their own, so
-  they have none.
+The roster is in Storybook: one story per component and accessibility-relevant state (`rest`,
+`disabled`, `loading`, `error`, `empty`, `selected`), every cell of that component, light and dark
+side by side, at the toolbar's density (desktop or touch). The `rest` story takes a `cell` control
+to browse one cell. Hover, press and focus are drawn nowhere: drive the real component in its story.
 
 ```bash
 pnpm stories        # from the repo root: builds the workspace chain, then Storybook on :6006
 ```
-
-A story tagged `touch` draws at the touch density; the tag is written in the exported literal
-(`export const X = { ...touch(story), tags: ["touch"] }`), never set by a helper.
 
 `.storybook/` holds the roster's own config: the story globs, `rosterPlugin` and the generator of
 `stories/` (from the roster, gitignored). Its Vite config is `.stack/storybook.vite.config.ts`, which

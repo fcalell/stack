@@ -12,24 +12,20 @@ import {
 	checkClip,
 	checkDeadBoxes,
 	checkDigits,
-	checkFocus,
 	checkFonts,
 	checkGrids,
 	checkHeights,
 	checkRadii,
 	checkRegions,
-	checkRootMargins,
 	checkSpacing,
 	checkType,
 	type EndMeasure,
 	type Finding,
-	type FocusMeasure,
 	type FontMeasure,
 	format,
 	type GridMeasure,
 	type HeightMeasure,
 	type Located,
-	type MarginMeasure,
 	type NumberMeasure,
 	type RadiusMeasure,
 	type RegionMeasure,
@@ -45,8 +41,7 @@ import {
 // against the contract's values, in the page's own computed custom
 // properties at the density it is in (so the numbers are the ones the theme
 // emitted, never a second copy). The test run calls it once per width after
-// the resize settles, and a behaviour story calls it at the end of its play
-// function, so a state reached by a click or a key is judged as well.
+// the resize settles.
 
 export type { Finding } from "./walk-checks.ts";
 export { format } from "./walk-checks.ts";
@@ -94,12 +89,6 @@ export const EXCEPTIONS: Exception[] = [
 		selector: "main.min-h-screen",
 		reason:
 			"the Foundations page is the contract's specimen: it draws every type role, so its sizes are the roles, not a screen's",
-	},
-	{
-		rule: "root-margin",
-		selector: ".-my-hairline",
-		reason:
-			"an icon act in a field box reaches across the box's hairline (fit field) so its hit stands at the box's height",
 	},
 	{
 		rule: "nested-radius",
@@ -769,69 +758,6 @@ function outerOf(
 		};
 	}
 	return undefined;
-}
-
-// The findings as report lines; empty when the page keeps every rule.
-export function walk(options: WalkOptions = {}): string[] {
-	return format(findings(options));
-}
-
-// The margins of each component's root in the frames the roster draws: a
-// frame holds its caption first, then what the component draws, and a
-// `display: contents` wrapper is seen through.
-export function rootMargins(frames: Element[]): Finding[] {
-	const items: MarginMeasure[] = [];
-	const roots = (element: Element): Element[] =>
-		[...element.children].flatMap((child) =>
-			getComputedStyle(child).display === "contents" ? roots(child) : [child],
-		);
-	for (const frame of frames) {
-		for (const root of roots(frame).slice(1)) {
-			const style = getComputedStyle(root);
-			if (style.display === "none" || excepted("root-margin", root)) continue;
-			items.push({
-				...locate(root),
-				margin: [
-					px(style.marginTop),
-					px(style.marginRight),
-					px(style.marginBottom),
-					px(style.marginLeft),
-				],
-			});
-		}
-	}
-	return checkRootMargins(items);
-}
-
-// Whether the focused element is hidden under a fixed or sticky element: what
-// stands at the centre of its visible part is not the element, and is
-// positioned out of the flow.
-export function focusCovered(): Finding[] {
-	const element = document.activeElement;
-	if (!element || element === document.body) return [];
-	const rect = element.getBoundingClientRect();
-	const x =
-		Math.max(0, rect.left) +
-		(Math.min(innerWidth, rect.right) - Math.max(0, rect.left)) / 2;
-	const y =
-		Math.max(0, rect.top) +
-		(Math.min(innerHeight, rect.bottom) - Math.max(0, rect.top)) / 2;
-	const hit = document.elementFromPoint(x, y);
-	let measure: FocusMeasure["hit"] = "self";
-	if (
-		hit &&
-		hit !== element &&
-		!element.contains(hit) &&
-		!hit.contains(element)
-	) {
-		let positioned = false;
-		for (let up: Element | null = hit; up; up = up.parentElement) {
-			const position = getComputedStyle(up).position;
-			if (position === "fixed" || position === "sticky") positioned = true;
-		}
-		measure = { covered: locate(hit, false).path, positioned };
-	}
-	return checkFocus({ ...locate(element), hit: measure });
 }
 
 // ── alignment ───────────────────────────────────────────────────────

@@ -52,12 +52,6 @@ export {
 // off what surrounds it: a frame paints `canvas`, the canvas's own ground.
 export const STAGE =
 	"flex flex-col h-[40rem] w-[56rem] max-w-full bg-surface p-page";
-// The behaviour stories' other two: tall enough for the whole workflow at scale
-// 1, and too small for the journey. Their classes live here, where the build
-// scans for them.
-export const TALL =
-	"flex flex-col h-[80rem] w-[56rem] max-w-full bg-surface p-page";
-export const SMALL = "flex flex-col h-[12rem] w-[20rem] bg-surface p-page";
 // A pane narrower than the journey and shorter than it, so a canvas opens at the
 // text floor, framed at its start, with the zoom stack over the graph's left.
 export const NARROW_STAGE =

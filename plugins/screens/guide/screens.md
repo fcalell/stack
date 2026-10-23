@@ -196,14 +196,8 @@ Four more rules are `align-*`. They fail a run like the rest (`ALIGN_FAILS` in `
 
 The walk leaves out what is not drawn: `display: none`, `visibility: hidden`, `aria-hidden`, a box under
 a pixel wide or high, and what a pixel-wide clipping box holds. It sees through `display: contents`.
-Its named exceptions are listed in one place, `EXCEPTIONS` in `@fcalell/plugin-screens/walk`, each with
+Its named exceptions are listed in one place, `EXCEPTIONS` in plugin-screens' `walk.ts`, each with
 its reason; a finding is fixed in the component or the screen, never baselined.
-
-A behaviour story calls the same walk after an input, so a state a click or a key reached is judged
-too: `findings()` and `format()` from `@fcalell/plugin-screens/walk` give the page's findings, and
-`findings({ roots })` the findings under some elements alone (the roster stress does this for one
-component's frames); `focusCovered()` reports the focused element when a fixed or sticky element covers it;
-`rootMargins(frames)` the roster frames' roots that carry a margin.
 
 ### Narrowing a run
 
@@ -233,7 +227,7 @@ exports serve, reruns every screen: it reaches no screen's module graph.
 | A colour, an ink or a surface; no token, theme or layout change | `--mode light` (or the app's default mode) |
 | Something behind one width variant (`touch:`, `page-tablet:`, a breakpoint) | that width: `--width 320` for `touch:`, `--width 1280,1920` for a `desktop:` or `wide:` |
 | A new screen | all its states, one mode, all widths: `--screen <it> --mode light` |
-| ui-core's tokens or theme, the app's CSS, a frame component (Shell, Place, Pane, Section) or a dependency bump | the full run: `--all` |
+| ui-core's tokens or theme, the app's CSS, a frame component (Shell, Place, Pane, Section) or a dependency bump | the screens you are working on, `--screen a,b`; never every screen as a gate |
 
 Combine the rows: a loading change on one screen's touch tree is
 `stack screens test --screen deploys --state loading --width 320 --mode light`.
@@ -255,17 +249,6 @@ edit, name it and one of each: `stack screens test --screen deploys --state data
 - A run writes over the files it takes and leaves the others; empty the directory first for a set
   from one run alone.
 - The shots are taken whether or not the screen passes its floors.
-
-### The component stories
-
-A component is judged in the showcase's Storybook (`pnpm exec vitest run` in `apps/showcase`), and a
-single one runs alone:
-
-- by file: `pnpm exec vitest run behaviour/picker.stories.tsx` (a behaviour story),
-  `pnpm exec vitest run stories/Picker.stories.ts` (the roster's states of one component);
-- by name: `-t "Popover"` filters the tests of the files given by their names;
-- the roster stress, which also runs the walk over the component's frames and the root-margin check,
-  for one component: `pnpm exec vitest run stories/RosterStress.stories.ts -t "^Picker( Touch)?$"`.
 
 ## Limits
 

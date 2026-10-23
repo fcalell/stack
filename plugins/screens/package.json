@@ -28,8 +28,7 @@
 		"./floors": "./src/ui/floors.ts",
 		"./msw": "./src/ui/msw.ts",
 		"./preview": "./src/ui/preview.tsx",
-		"./stories": "./src/ui/stories.tsx",
-		"./walk": "./src/ui/walk.ts"
+		"./stories": "./src/ui/stories.tsx"
 	},
 	"files": [
 		"dist",

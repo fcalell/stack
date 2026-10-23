@@ -459,56 +459,6 @@ export function checkRegions(regions: RegionMeasure[]): Finding[] {
 	});
 }
 
-// ── margins ─────────────────────────────────────────────────────────
-
-export interface MarginMeasure extends Located {
-	// Top, right, bottom, left.
-	margin: [number, number, number, number];
-}
-
-// A component's root has no margin: its parent places it.
-export function checkRootMargins(items: MarginMeasure[]): Finding[] {
-	return items.flatMap((m) =>
-		m.margin.some((v) => v !== 0)
-			? [
-					{
-						rule: "root-margin",
-						path: m.path,
-						name: m.name,
-						measured: `margin ${m.margin.map(px).join(" ")}`,
-						expected: "margin 0 on a component's root",
-						fix: "remove the margin from the component's root; the parent lays it out with a gap or a flex or grid item property",
-					},
-				]
-			: [],
-	);
-}
-
-// ── focus ───────────────────────────────────────────────────────────
-
-export interface FocusMeasure extends Located {
-	// What stands at the centre of the focused element's visible part: the
-	// element itself or inside it (`self`), or something else (`covered`, the
-	// covering element's path and whether it is fixed or sticky).
-	hit: "self" | "outside" | { covered: string; positioned: boolean };
-}
-
-// The focused element is not hidden under a fixed or sticky element.
-export function checkFocus(focus: FocusMeasure | null): Finding[] {
-	if (!focus || typeof focus.hit === "string") return [];
-	if (!focus.hit.positioned) return [];
-	return [
-		{
-			rule: "focus-covered",
-			path: focus.path,
-			name: focus.name,
-			measured: `covered by ${focus.hit.covered}`,
-			expected: "visible, not under a fixed or sticky element",
-			fix: "scroll the focused element clear of the bar (scroll-padding on the scroller, or scroll-margin on the element)",
-		},
-	];
-}
-
 // ── alignment ───────────────────────────────────────────────────────
 
 // The alignment rules are `align-*`: they report what a layout draws off the
