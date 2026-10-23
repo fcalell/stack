@@ -1,0 +1,373 @@
+import { cn } from "@fcalell/ui-core/cn";
+import type { Act, Option } from "@fcalell/ui-core/descriptors";
+import { SHELL_BANNER, SHELL_COLUMN } from "@fcalell/ui-core/variants";
+import { useEffect, useRef, useState } from "react";
+import { Banner } from "../../components/banner/index.tsx";
+import { FormField } from "../../components/form-field/index.tsx";
+import { Input } from "../../components/input/index.tsx";
+import { Pane } from "../../components/pane/index.tsx";
+import { Picker } from "../../components/picker/index.tsx";
+import { Section } from "../../components/section/index.tsx";
+import { ConfirmSheet } from "../../components/sheet/confirm.tsx";
+import { Sheet } from "../../components/sheet/index.tsx";
+import { Place } from "../../components/shell/place.tsx";
+import { Thread } from "../../components/thread/index.tsx";
+import type { ShowcaseFrame } from "../cells.ts";
+import { isHeld, readsAt } from "../waiting.ts";
+import { StandInRows } from "./layout-context.tsx";
+import { press, Stage } from "./overlay-stage.tsx";
+import { fail, hang } from "./pending.tsx";
+import { TURN, TURNS } from "./thread.tsx";
+
+const act = () => {};
+
+interface Question {
+	title: string;
+	options: Option[];
+}
+
+// The four questions a conversation asks before it acts, each a radio list.
+const QUESTIONS: Question[] = [
+	{
+		title: "Which environment?",
+		options: [
+			{ value: "production", label: "Production", recommended: true },
+			{ value: "staging", label: "Staging" },
+			{ value: "preview", label: "Preview" },
+		],
+	},
+	{
+		title: "Which build image?",
+		options: [
+			{ value: "node-20", label: "Node 20", recommended: true },
+			{ value: "node-18", label: "Node 18", description: "Leaves on Oct 12" },
+			{ value: "bun", label: "Bun" },
+		],
+	},
+	{
+		title: "When should it run?",
+		options: [
+			{ value: "now", label: "Now" },
+			{ value: "after", label: "After the migration" },
+			{ value: "hold", label: "Hold it until I say" },
+		],
+	},
+	{
+		title: "Who hears about it?",
+		options: [
+			{ value: "me", label: "Only me" },
+			{ value: "team", label: "The team", recommended: true },
+			{ value: "channel", label: "The #deploys channel" },
+		],
+	},
+];
+
+// A conversation filling its page with a four-question sheet docked in its
+// foot: each page a Section of one radio list, Back in the head from the
+// second, Next on the first three and Send on the last, at a phone's height
+// (844) under a banner. The body scrolls past two fifths of the region under
+// the banner and keeps three rows, the log giving way; closing returns the
+// input. Send's states open on the last page: blocked
+// before the last question is answered (its reason shown once pressed),
+// pending while it works, and failed, the act ready again with the error line
+// under it saying why, in the line the reason keeps.
+function DockedQuestions({ state }: { state: ShowcaseFrame["state"] }) {
+	const frame = useRef<HTMLDivElement>(null);
+	const [value, setValue] = useState("");
+	const [at, setAt] = useState(state === "rest" ? 0 : QUESTIONS.length - 1);
+	const [open, setOpen] = useState(true);
+	const [answers, setAnswers] = useState<(string | null)[]>(
+		QUESTIONS.map((_, i) =>
+			state === "pending" || state === "error"
+				? (QUESTIONS[i]?.options[0]?.value ?? null)
+				: null,
+		),
+	);
+	useEffect(() => {
+		if (!frame.current) return;
+		if (state === "disabled") pressSubmit(frame.current);
+		if (state === "pending" || state === "error")
+			pressNamed(frame.current, "Send");
+	}, [state]);
+	const question = QUESTIONS[at];
+	const last = at === QUESTIONS.length - 1;
+	const close = () => {
+		setOpen(false);
+		setAt(0);
+	};
+	const composer = {
+		value,
+		onChange: setValue,
+		onAttach: act,
+		placeholder: "Ask about this deploy",
+		onSend: () => setValue(""),
+	};
+	return (
+		<div
+			ref={frame}
+			className={cn(
+				SHELL_COLUMN,
+				"flex flex-col h-211 w-screen max-w-full overflow-hidden",
+			)}
+		>
+			<div className={SHELL_BANNER}>
+				<Banner
+					tone="attention"
+					sentence="You have used 46 of your 50 answers this month. Upgrade to keep asking."
+					act={{ label: "Upgrade", onAct: act }}
+				/>
+			</div>
+			<Place>
+				<Pane fill title="Assistant">
+					<Thread
+						items={TURNS}
+						message={TURN}
+						composer={composer}
+						sheet={
+							open && question
+								? {
+										open: true,
+										onClose: close,
+										back: at > 0 ? () => setAt(at - 1) : undefined,
+										title: `Question ${at + 1} of ${QUESTIONS.length}`,
+										description: "Before I redeploy",
+										submit: {
+											label: last ? "Send" : "Next",
+											onAct: last ? actOf(state, close) : () => setAt(at + 1),
+											blocked:
+												last && state === "disabled"
+													? "Choose who hears about it first."
+													: undefined,
+										},
+										children: (
+											<Section title={question.title}>
+												<Picker
+													fit="list"
+													label={question.title}
+													options={question.options}
+													value={answers[at] ?? null}
+													onChange={(next) =>
+														setAnswers(
+															answers.map((was, i) => (i === at ? next : was)),
+														)
+													}
+												/>
+											</Section>
+										),
+									}
+								: undefined
+						}
+					/>
+				</Pane>
+			</Place>
+		</div>
+	);
+}
+
+// A short form: one field, so the desktop sheet is a centred sheet.
+function OneField() {
+	const [value, setValue] = useState("production");
+	return (
+		<FormField label="Branch">
+			<Input value={value} onChange={setValue} />
+		</FormField>
+	);
+}
+
+// The submit's work by state: one that never settles while it pends, one the
+// server refuses on `error`.
+function actOf(state: ShowcaseFrame["state"], rest: () => void) {
+	if (state === "pending") return hang;
+	return state === "error" ? fail : rest;
+}
+
+function submitOf(state: ShowcaseFrame["state"]): Act {
+	return {
+		label: "Save",
+		onAct: actOf(state, act),
+		blocked: state === "disabled" ? "Add a description first." : undefined,
+	};
+}
+
+// A pressed act, found by its name.
+const pressNamed = (stage: HTMLElement, label: string) =>
+	requestAnimationFrame(() =>
+		press(
+			[...stage.querySelectorAll("button")].find(
+				(button) => button.textContent === label,
+			),
+		),
+	);
+
+// A blocked submit shows its reason once pressed.
+const pressSubmit = (stage: HTMLElement) =>
+	requestAnimationFrame(() =>
+		press(stage.querySelector('[aria-disabled="true"]:not([aria-busy])')),
+	);
+
+// The body's read by state: the data landed, the wait that holds the submit
+// painted and inert, the failure with its Retry in the body's place, and an
+// empty selection; busy, stale and paused hold the data beside their mark or line.
+function readOf(frame: ShowcaseFrame) {
+	const reads = readsAt(frame.id);
+	switch (frame.state) {
+		case "rest":
+			return reads.ready.at((rows) => rows);
+		case "loading":
+			return reads.waiting;
+		case "error":
+			return reads.failing;
+		case "empty":
+			return reads.empty.at((rows) => rows);
+		default:
+			return isHeld(frame.state) ? reads[frame.state] : undefined;
+	}
+}
+
+const NAME = {
+	value: "acme-web",
+	label: "Type acme-web to confirm",
+	blocked: "Type the project name to delete it.",
+};
+// The act's work never settles, so a pressed act stays pending.
+const CONFIRM = {
+	id: 0,
+	title: "Delete acme-web?",
+	sentence: "Its deploys, domains and logs go with it. This cannot be undone.",
+	cancel: "Keep the project",
+	act: {
+		label: "Delete project",
+		destructive: true,
+		onAct: () => new Promise<never>(() => {}),
+	},
+	confirmName: NAME,
+};
+
+// The name typed in, then the act pressed: the act runs its work.
+const pressSave = (stage: HTMLElement) => pressNamed(stage, "Save");
+
+const typeAndRun = (stage: HTMLElement) =>
+	requestAnimationFrame(() => {
+		const field = stage.querySelector("input");
+		if (!field) return;
+		Object.getOwnPropertyDescriptor(
+			HTMLInputElement.prototype,
+			"value",
+		)?.set?.call(field, NAME.value);
+		field.dispatchEvent(new Event("input", { bubbles: true }));
+		requestAnimationFrame(() =>
+			press(
+				[...stage.querySelectorAll("button")].find(
+					(button) => button.textContent === CONFIRM.act.label,
+				),
+			),
+		);
+	});
+
+// The desktop card (the bottom sheet on touch) in its four states (the failed
+// one a line under the act in the foot, under the head's act on touch) on its
+// form cell, a second page with back on the body icon act cell, the pane fit on the
+// pane cell (two Sections in its body, a sections gap apart; over a read it
+// is the data landed at rest, the submit painted and inert while it waits, the
+// failure with Retry in the body's place, and the empty sentence), and the confirm on the primary act cell: its typed name blocked
+// on `disabled` (the reason shown as the card's is), typed and its act
+// running on `pending`. The pane fit also draws busy, stale and paused over a
+// read that holds rows. The rows inside are context. The bar fit cell draws the
+// docked form, since the docked foot draws no matrix cell of its own: a
+// conversation with a four-question sheet in its foot at a phone's height.
+export function drawSheet(frame: ShowcaseFrame) {
+	const cell = frame.cell.name;
+	const { state } = frame;
+	if (isHeld(state) && cell !== "SHEET_DESKTOP.fit.pane") return undefined;
+	if (cell === "SHEET_DESKTOP.fit.form")
+		return (
+			<Stage
+				contain
+				ready={
+					state === "disabled"
+						? pressSubmit
+						: state === "pending" || state === "error"
+							? pressSave
+							: undefined
+				}
+			>
+				<Sheet
+					open
+					onClose={act}
+					title="Edit project"
+					description="acme-web · production"
+					submit={submitOf(state)}
+				>
+					<StandInRows />
+				</Sheet>
+			</Stage>
+		);
+	if (cell === "ICON_BUTTON.fit.body" && state === "rest")
+		return (
+			<Stage contain>
+				<Sheet
+					open
+					onClose={act}
+					back={act}
+					title="Production environment"
+					description="acme-web · what every production deploy reads"
+					submit={submitOf(state)}
+				>
+					<OneField />
+				</Sheet>
+			</Stage>
+		);
+	if (
+		cell === "SHEET_DESKTOP.fit.pane" &&
+		state !== "disabled" &&
+		state !== "pending"
+	)
+		return (
+			<Stage contain>
+				<Sheet
+					open
+					onClose={act}
+					title="Details"
+					description="acme-web · production"
+					submit={state === "rest" ? undefined : { label: "Save", onAct: act }}
+					fit="pane"
+					read={readOf(frame)}
+					empty={
+						state === "empty"
+							? { sentence: "Nothing to show for this deploy." }
+							: undefined
+					}
+				>
+					<Section title="Properties">
+						<StandInRows />
+					</Section>
+					<Section title="Activity">
+						<StandInRows />
+					</Section>
+				</Sheet>
+			</Stage>
+		);
+	if (cell === "BUTTON.fit.bar") return <DockedQuestions state={state} />;
+	if (cell === "BUTTON.act.primary")
+		return (
+			<Stage
+				contain
+				ready={
+					state === "disabled"
+						? pressSubmit
+						: state === "pending"
+							? typeAndRun
+							: undefined
+				}
+			>
+				<ConfirmSheet
+					open
+					onDone={act}
+					entry={
+						state === "rest" ? { ...CONFIRM, confirmName: undefined } : CONFIRM
+					}
+				/>
+			</Stage>
+		);
+	return undefined;
+}

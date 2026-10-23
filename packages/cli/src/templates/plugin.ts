@@ -1,0 +1,171 @@
+import { toWorkspaceSpecs } from "../lib/install.ts";
+import { toPascalCase as pascalCase, toCamelCase } from "../lib/naming.ts";
+import { PACKAGE_MANAGER, stackSpec } from "../lib/stack-packages.ts";
+
+interface PluginPackageJsonOptions {
+	name: string;
+	packageName: string;
+	// The plugin sits in stack's own workspace: it takes each stack package
+	// from the workspace and the root's package manager.
+	workspace: boolean;
+}
+
+export function pluginPackageJsonTemplate(
+	options: PluginPackageJsonOptions,
+): string {
+	const pkg = {
+		name: options.packageName,
+		version: "0.0.0",
+		type: "module",
+		sideEffects: false,
+		...(options.workspace ? {} : { packageManager: PACKAGE_MANAGER }),
+		exports: {
+			".": { types: "./dist/index.d.ts", default: "./dist/index.js" },
+			"./runtime": {
+				types: "./dist/worker/index.d.ts",
+				default: "./dist/worker/index.js",
+			},
+		},
+		files: ["dist", "src", "README.md"],
+		license: "MIT",
+		scripts: {
+			build: "tsc -p tsconfig.build.json",
+			prepare: "pnpm build",
+			"check-types": "tsc --noEmit --pretty",
+			lint: "biome check --write --unsafe",
+			check: "pnpm check-types && pnpm lint",
+		},
+		dependencies: {
+			"@fcalell/cli": stackSpec("@fcalell/cli"),
+		},
+		devDependencies: {
+			"@fcalell/typescript-config": stackSpec("@fcalell/typescript-config"),
+			typescript: "^5.9.3",
+		},
+	};
+
+	const manifest = options.workspace ? toWorkspaceSpecs(pkg) : pkg;
+	return `${JSON.stringify(manifest, null, "\t")}\n`;
+}
+
+export function pluginTsconfigTemplate(): string {
+	const config = {
+		extends: "@fcalell/typescript-config/node-tsx.json",
+		include: ["src"],
+	};
+	return `${JSON.stringify(config, null, "\t")}\n`;
+}
+
+export function pluginTsconfigBuildTemplate(): string {
+	const config = {
+		extends: ["./tsconfig.json", "@fcalell/typescript-config/build.json"],
+	};
+	return `${JSON.stringify(config, null, "\t")}\n`;
+}
+
+interface PluginIndexOptions {
+	name: string;
+	packageName: string;
+	label: string;
+}
+
+export function pluginIndexTemplate(options: PluginIndexOptions): string {
+	const { name, packageName, label } = options;
+	const varName = toCamelCase(name);
+	return `import { plugin, slot } from "@fcalell/cli";
+
+export interface ${pascalCase(name)}Options {
+\t// Add plugin-specific options here.
+}
+
+// Example slot this plugin owns. Other plugins contribute to it; this
+// plugin derives / composes the final value.
+const example = slot.list<string>({ source: "${name}", name: "example" });
+
+export const ${varName} = plugin("${name}", {
+\tlabel: "${label}",
+\tpackage: "${packageName}",
+
+\tslots: { example },
+
+\tdependencies: {
+\t\t"${packageName}": "^0.0.0",
+\t},
+
+\tcontributes: [
+\t\t// example.contribute(() => "hello"),
+\t],
+});
+`;
+}
+
+interface PluginRuntimeOptions {
+	name: string;
+}
+
+// Minimal RuntimePlugin stub so third-party plugins that want worker-side
+// behaviour have a starting point. The stub is intentionally no-op — authors
+// replace `context()` with their own logic.
+export function pluginRuntimeTemplate(options: PluginRuntimeOptions): string {
+	const { name } = options;
+	const varName = toCamelCase(name);
+	return `import type { RuntimePlugin } from "@fcalell/cli/runtime";
+
+export interface ${pascalCase(name)}RuntimeOptions {
+\t// Runtime options live here. They are plain values read at generate time
+\t// and inlined into .stack/worker.ts as JS literals.
+}
+
+export default function ${varName}Runtime(
+\t_options: ${pascalCase(name)}RuntimeOptions = {},
+): RuntimePlugin<"${name}"> {
+\treturn {
+\t\tname: "${name}",
+\t\tcontext() {
+\t\t\treturn {};
+\t\t},
+\t};
+}
+`;
+}
+
+interface PluginReadmeOptions {
+	name: string;
+	packageName: string;
+	label: string;
+}
+
+export function pluginReadmeTemplate(options: PluginReadmeOptions): string {
+	const { name, packageName, label } = options;
+	return `# ${packageName}
+
+${label} plugin for [\`@fcalell/stack\`](https://github.com/fcalell/stack).
+
+## Install
+
+\`\`\`bash
+pnpm add ${packageName}
+\`\`\`
+
+## Usage
+
+\`\`\`ts
+// stack.config.ts
+import { defineConfig } from "@fcalell/cli";
+import { ${toCamelCase(name)} } from "${packageName}";
+
+export default defineConfig({
+  plugins: [${toCamelCase(name)}()],
+});
+\`\`\`
+
+## Publishing
+
+1. Run \`pnpm check-types\`.
+2. Publish: \`pnpm publish --access public\` (\`prepare\` builds \`dist\` first).
+
+## License
+
+MIT
+`;
+}

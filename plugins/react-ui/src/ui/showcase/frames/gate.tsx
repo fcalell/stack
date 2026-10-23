@@ -1,0 +1,99 @@
+import { text } from "@fcalell/ui-core/variants";
+import { Banner } from "../../components/banner/index.tsx";
+import { Button } from "../../components/button/index.tsx";
+import { Gate } from "../../components/gate/index.tsx";
+import { confirm } from "../../lib/confirm.ts";
+import { type AppMark, MarkProvider } from "../../lib/mark.tsx";
+import { toast } from "../../lib/toast.ts";
+import type { ShowcaseFrame } from "../cells.ts";
+import { FILLED, GIVEN, KIND, SAVED } from "./form.tsx";
+import { StandInCard } from "./layout-context.tsx";
+
+// The app's mark as the generated providers mount it, inline so the frame
+// needs no asset pipeline: a logo for each mode.
+const logo = (ground: string, ink: string) =>
+	`data:image/svg+xml,${encodeURIComponent(
+		`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64"><rect width="64" height="64" rx="14" fill="${ground}"/><path d="M14 46 32 14l18 32h-9l-9-17-9 17z" fill="${ink}"/></svg>`,
+	)}`;
+export const MARK: AppMark = {
+	src: logo("#2f3a45", "#9fb7c9"),
+	dark: logo("#9fb7c9", "#2f3a45"),
+	name: "Acme",
+};
+// A logo that fails to load: the name stands alone.
+const BROKEN: AppMark = { src: "data:image/svg+xml,<", name: MARK.name };
+
+// The frame draws the page as the Shell's frames draw theirs, a viewport tall.
+const BOX = "flex flex-col gap-gap";
+
+// The held cells the frame names: the page, the column, the step and the mark; each case adds what it draws.
+const CELLS = "GATE · GATE_COLUMN · GATE_STEP · GATE_MARK · GATE_MARK_ROW";
+// What a cell's case adds, by cell.
+const CASES: Record<string, string> = {
+	"TEXT_STRONG.role.body": "a mark whose logo fails: its name alone",
+	"TEXT.role.meta": "toast() and confirm() from inside the gate",
+};
+
+// The two acts of the raising case, buttons in the body: one tells, one asks.
+// The decision's act tells once its work resolves, as the layouts' do.
+const remind = () => toast("We will ask again tomorrow.");
+const disconnect = () =>
+	confirm({
+		title: "Disconnect Acme?",
+		sentence:
+			"Its deploys stop reading from this workspace until you connect it again.",
+		act: {
+			label: "Disconnect",
+			destructive: true,
+			onAct: async () => toast("Acme disconnected"),
+		},
+	});
+
+// The title cell draws the whole gate: its banner, mark, step count, head and
+// a body of rows over a form of one pick and its bar, none of it a typing
+// control, so nothing takes focus on the frames page. The strong body cell draws it with a logo that
+// fails (the name draws in that cell), the meta cell with acts that
+// raise a toast and a decision, which the gate's own host draws.
+export function drawGate(frame: ShowcaseFrame) {
+	const cell = frame.cell.name;
+	const raises = cell === "TEXT.role.meta";
+	const named = cell === "TEXT_STRONG.role.body";
+	const note = CASES[cell];
+	return (
+		<div className={BOX}>
+			<p className={text({ role: "caption" })}>
+				{note ? `${CELLS} · ${note}` : CELLS}
+			</p>
+			<MarkProvider mark={named ? BROKEN : MARK}>
+				<Gate
+					step={{ at: 1, of: 2 }}
+					title="Choose a workspace"
+					description={["Signed in as ", { strong: "ana@acme.dev" }]}
+					banner={
+						<Banner tone="attention" sentence="This request has expired." />
+					}
+					form={{
+						act: SAVED,
+						given: {
+							...GIVEN,
+							title: FILLED.title,
+							seats: FILLED.seats,
+							urgent: FILLED.urgent,
+						},
+						values: { kind: FILLED.kind },
+						fields: { kind: KIND },
+						submit: { label: "Continue" },
+					}}
+				>
+					<StandInCard />
+					{raises ? (
+						<>
+							<Button act="secondary" label="Remind me later" onAct={remind} />
+							<Button act="destructive" label="Disconnect" onAct={disconnect} />
+						</>
+					) : null}
+				</Gate>
+			</MarkProvider>
+		</div>
+	);
+}

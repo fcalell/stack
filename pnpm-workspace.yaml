@@ -1,0 +1,13 @@
+packages:
+  - packages/*
+  - plugins/*
+  - apps/*
+
+allowBuilds:
+  esbuild: true
+  msw: false
+  workerd: true
+  "@parcel/watcher": false
+  "@prisma/client": false
+  better-sqlite3: true
+  dtrace-provider: false

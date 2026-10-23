@@ -1,0 +1,78 @@
+{
+	"name": "@fcalell/plugin-node",
+	"version": "0.0.0",
+	"type": "module",
+	"sideEffects": false,
+	"engines": {
+		"node": ">=24"
+	},
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./server": {
+			"types": "./dist/server/index.d.ts",
+			"default": "./dist/server/index.js"
+		},
+		"./ws": {
+			"types": "./dist/ws/index.d.ts",
+			"default": "./dist/ws/index.js"
+		},
+		"./client": {
+			"types": "./dist/client/index.d.ts",
+			"default": "./dist/client/index.js"
+		},
+		"./screens": {
+			"types": "./dist/screens.d.ts",
+			"default": "./dist/screens.js"
+		},
+		"./live": {
+			"types": "./dist/live/index.d.ts",
+			"default": "./dist/live/index.js"
+		}
+	},
+	"files": [
+		"dist",
+		"src",
+		"guide",
+		"README.md",
+		"tsconfig.json",
+		"tsconfig.build.json"
+	],
+	"license": "MIT",
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"prepare": "pnpm build",
+		"check-types": "tsc --noEmit --pretty",
+		"lint": "biome check --write --unsafe",
+		"check": "pnpm check-types && pnpm lint",
+		"clear": "rm -rf dist node_modules .turbo"
+	},
+	"dependencies": {
+		"@fcalell/cli": "workspace:*",
+		"@fcalell/plugin-api": "workspace:*",
+		"@fcalell/plugin-screens": "workspace:*",
+		"@fcalell/plugin-vite": "workspace:*",
+		"@hono/node-server": "^2.0.9",
+		"hono": "^4.12.23",
+		"ws": "^8.21.1",
+		"zod": "^4.3.6"
+	},
+	"peerDependencies": {
+		"@tanstack/react-query": "^5.100.2"
+	},
+	"peerDependenciesMeta": {
+		"@tanstack/react-query": {
+			"optional": true
+		}
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.4.16",
+		"@fcalell/typescript-config": "workspace:*",
+		"@tanstack/react-query": "^5.104.0",
+		"@types/node": "^25.5.0",
+		"@types/ws": "^8.18.1",
+		"typescript": "^5.9.3"
+	}
+}

@@ -1,0 +1,227 @@
+import { literalToProps, type TsExpression } from "@fcalell/cli/ast";
+import { routerPluginFor } from "@fcalell/plugin-react/codegen";
+import {
+	renderViteConfig,
+	type ViteConfigValues,
+} from "@fcalell/plugin-vite/node";
+import type { ScreensConfigValues } from "../types.ts";
+import { EXCLUDE_ENV, SHOTS_ENV, WIDTHS_ENV } from "./select.ts";
+
+// The app's fixtures module, beside the routes by convention.
+export const FIXTURES = "src/app/fixtures.ts";
+
+const ident = (name: string): TsExpression => ({ kind: "identifier", name });
+
+// The directory the generated config sits in, `.stack/`.
+const configDir: TsExpression = {
+	kind: "call",
+	callee: ident("fileURLToPath"),
+	args: [
+		{
+			kind: "new",
+			callee: ident("URL"),
+			args: [
+				{ kind: "string", value: "." },
+				{ kind: "member", object: ident("import.meta"), property: "url" },
+			],
+		},
+	],
+};
+
+// This package's own location: Vite 403s a path outside its workspace root, and
+// a workspace-linked stack checkout serves the preview from beside the app's.
+const ownRoot: TsExpression = {
+	kind: "call",
+	callee: ident("searchForWorkspaceRoot"),
+	args: [
+		{
+			kind: "call",
+			callee: ident("fileURLToPath"),
+			args: [
+				{
+					kind: "call",
+					callee: {
+						kind: "member",
+						object: ident("import.meta"),
+						property: "resolve",
+					},
+					args: [{ kind: "string", value: "@fcalell/plugin-screens" }],
+				},
+			],
+		},
+	],
+};
+
+// What every Storybook host changes in the app's own config; nothing here
+// reaches the app's `.stack/vite.config.ts`.
+//   - `clientHeaders` goes: `frame-ancestors 'none'` blocks Storybook's
+//     preview iframe.
+//   - No dev-server proxy and no port: the app's backend is never reached, and
+//     Storybook serves Vite itself.
+function hosted(values: ViteConfigValues): ViteConfigValues {
+	return { ...values, serverProxy: [], clientHeaders: {}, devServerPort: 0 };
+}
+
+// The Vite config the screens host runs on: the app's own, rendered from the
+// same slot values, with what a host that serves the app's screens changes.
+//   - `hosted`'s changes.
+//   - The router plugin, which the app's own config runs, and the screens
+//     plugin join: the route tree and fixtures, MSW's worker, and the
+//     dependency optimizer. The router plugin runs with `autoCodeSplitting`
+//     off: split modules (`?tsr-split=component`) are ids that fail
+//     `existsSync`, so Vitest's `--changed` walk drops them and a component's
+//     edit would reach no screen.
+export function renderScreensConfig(values: ScreensConfigValues): string {
+	const props = literalToProps({
+		fixtures: `../${FIXTURES}`,
+		routesDir: `../${values.routesDir}`,
+		entryImports: values.entryImports.flatMap((spec) =>
+			"sideEffect" in spec ? [spec.source] : [],
+		),
+		routerBindings: values.routerBindings.flatMap((spec) =>
+			"named" in spec
+				? spec.named.map((entry) => ({
+						source: spec.source,
+						name: typeof entry === "string" ? entry : entry.name,
+					}))
+				: [],
+		),
+		prefixes: values.prefixes,
+		handlerModules: values.handlerModules,
+		fixtureModules: values.fixtureModules,
+		previewGlobals: values.previewGlobals,
+	});
+	const plugin: TsExpression = {
+		kind: "call",
+		callee: ident("screensPlugin"),
+		args: [
+			{
+				kind: "object",
+				properties: [
+					{ key: "stackDir", value: configDir },
+					...Object.entries(props).map(([key, value]) => ({ key, value })),
+				],
+			},
+		],
+	};
+	const router = routerPluginFor({
+		...values.routerOptions,
+		autoCodeSplitting: false,
+	});
+	return renderViteConfig(
+		hosted({
+			...values,
+			configImports: [
+				...values.configImports,
+				...router.imports,
+				{ source: "node:url", named: ["fileURLToPath"] },
+				{ source: "@fcalell/plugin-screens/vite", named: ["screensPlugin"] },
+			],
+			pluginCalls: [router.call, ...values.pluginCalls, plugin],
+			fsAllow: [...values.fsAllow, ownRoot],
+			// The stories import `virtual:stack-screens` through this package,
+			// which `screensPlugin` serves.
+			optimizeExclude: [...values.optimizeExclude, "@fcalell/plugin-screens"],
+		}),
+	);
+}
+
+// The Vite config of a Storybook that draws components, not routes (the
+// showcase's roster): the app's own plugin calls, which hold no router plugin
+// (it needs the route files and rewrites the route tree), with `hosted`'s
+// changes and the dependency optimizer.
+export function renderComponentHostConfig(values: ViteConfigValues): string {
+	return renderViteConfig(
+		hosted({
+			...values,
+			configImports: [
+				...values.configImports,
+				{ source: "@fcalell/plugin-screens/vite", named: ["storybookHost"] },
+			],
+			pluginCalls: [
+				...values.pluginCalls,
+				{ kind: "call", callee: ident("storybookHost"), args: [] },
+			],
+		}),
+	);
+}
+
+// `.stack/screens/main.ts`: Storybook's config directory holds this one file.
+// The one for the test run (`.stack/screens-test/main.ts`) adds the floors.
+export function renderStorybookMain(options: { floors: boolean }): string {
+	return [
+		'import { screensMain } from "@fcalell/plugin-screens/storybook";',
+		"",
+		`export default screensMain({ floors: ${options.floors} });`,
+		"",
+	].join("\n");
+}
+
+// `.stack/screens.vitest.config.ts`: the screens host's own Vite config with
+// the Storybook test plugin on the test run's config directory, one browser
+// project. Each parallel page is one renderer, so two open at most. The CLI's
+// narrowing reaches it in the environment: the tags to leave out go to the
+// storybook plugin, and the widths and the screenshot directory to the
+// floors, which read them with `inject`. Without the environment (Vitest run
+// by hand) every story and every width run, and no screenshot is saved.
+export function renderVitestConfig(): string {
+	return `import { fileURLToPath } from "node:url";
+import { workspaceTriggers } from "@fcalell/plugin-screens/node";
+import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
+import { playwright } from "@vitest/browser-playwright";
+import { configDefaults, defineConfig } from "vitest/config";
+import screens from "./screens.vite.config.ts";
+
+// Playwright's own browser is the default; where none is installed,
+// \`CHROME_PATH\` names a Chrome to launch instead.
+const chrome = process.env.CHROME_PATH;
+
+const list = (value: string | undefined) =>
+	(value ?? "").split(",").filter(Boolean);
+const widths = list(process.env.${WIDTHS_ENV}).map(Number);
+const exclude = list(process.env.${EXCLUDE_ENV});
+const shots = process.env.${SHOTS_ENV} ?? "";
+
+export default defineConfig({
+	...screens,
+	test: {
+		// A change to a linked package's compiled side reaches no screen's module
+		// graph, so it reruns every screen.
+		forceRerunTriggers: [
+			...configDefaults.forceRerunTriggers,
+			...workspaceTriggers(fileURLToPath(new URL("..", import.meta.url))),
+		],
+		projects: [
+			{
+				extends: true,
+				plugins: [
+					storybookTest({
+						configDir: fileURLToPath(new URL("./screens-test", import.meta.url)),
+						tags: { exclude },
+					}),
+				],
+				test: {
+					name: "screens",
+					provide: { screensWidths: widths, screensShots: shots },
+					testTimeout: 120_000,
+					maxWorkers: 2,
+					browser: {
+						enabled: true,
+						headless: true,
+						// Reduced motion, so every transition snaps and a screen is
+						// judged at rest, as the run's walk expects.
+						provider: playwright({
+							contextOptions: { reducedMotion: "reduce" },
+							...(chrome ? { launchOptions: { executablePath: chrome } } : {}),
+						}),
+						instances: [
+							{ browser: "chromium", viewport: { width: 1280, height: 800 } },
+						],
+					},
+				},
+			},
+		],
+	},
+});
+`;
+}

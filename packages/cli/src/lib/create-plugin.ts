@@ -1,0 +1,531 @@
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+import type { z } from "zod";
+import type { ScaffoldSpec } from "../ast/index.ts";
+import type { AppConfig } from "../config.ts";
+import { cliSlots } from "./cli-slots.ts";
+import { StackError } from "./errors.ts";
+import { findPackageInfo } from "./package-info.ts";
+import type { Contribution, Slot } from "./slots.ts";
+
+// ── Callback marker ────────────────────────────────────────────────
+//
+// `__optional` discriminates required vs optional at the type level — when
+// the literal `true`, the callback is dropped from required handlers and
+// added to the optional map in `InferCallbackPayloads`.
+
+// `R` is the handler's whole return type, not the resolved value: a callback
+// the framework awaits declares `void | Promise<void>` (the default), one read
+// synchronously declares exactly what it may return. `R` sits in a function
+// return position, not directly on the property: inferring through an
+// optional property strips `undefined` from the union, which would collapse
+// a declared `string | undefined` to `string`.
+export interface CallbackMarker<T, R = void | Promise<void>> {
+	readonly __type?: T;
+	readonly __return?: () => R;
+	readonly __optional?: boolean;
+}
+
+export type OptionalCallbackMarker<
+	T,
+	R = void | Promise<void>,
+> = CallbackMarker<T, R> & {
+	readonly __optional: true;
+};
+
+interface CallbackFactory {
+	<
+		T extends Record<string, unknown>,
+		R = void | Promise<void>,
+	>(): CallbackMarker<T, R>;
+	optional: <
+		T extends Record<string, unknown>,
+		R = void | Promise<void>,
+	>() => OptionalCallbackMarker<T, R>;
+}
+
+export const callback = Object.assign(
+	<
+		T extends Record<string, unknown>,
+		R = void | Promise<void>,
+	>(): CallbackMarker<T, R> => ({}),
+	{
+		optional: <
+			T extends Record<string, unknown>,
+			R = void | Promise<void>,
+		>(): OptionalCallbackMarker<T, R> => ({ __optional: true }) as const,
+	},
+) as CallbackFactory;
+
+// ── CommandContext ─────────────────────────────────────────────────
+//
+// Plugin subcommands (`stack <plugin> <command>`) run after the slot graph
+// has been built. They receive a `resolve` helper so handlers can read
+// slot values without hand-wiring anything.
+
+export interface LogContext {
+	info(msg: string): void;
+	warn(msg: string): void;
+	success(msg: string): void;
+	error(msg: string): void;
+}
+
+export interface PromptContext {
+	text(msg: string, opts?: { default?: string }): Promise<string>;
+	confirm(msg: string): Promise<boolean>;
+	select<T>(msg: string, options: { label: string; value: T }[]): Promise<T>;
+	multiselect<T>(
+		msg: string,
+		options: { label: string; value: T }[],
+	): Promise<T[]>;
+}
+
+export interface CommandContext<TOptions> {
+	options: TOptions;
+	cwd: string;
+	resolve<T>(slot: Slot<T>): Promise<T>;
+	// Runs the pipeline `stack generate` runs, in process: every artifact is
+	// written and every postWrite hook has run when it resolves. `resolve` keeps
+	// answering from the graph built before.
+	generate(): Promise<void>;
+	log: LogContext;
+	prompt: PromptContext;
+}
+
+// ── Command definition ─────────────────────────────────────────────
+
+export interface FlagDefinition {
+	type: "boolean" | "string" | "number";
+	description: string;
+	default?: unknown;
+	alias?: string;
+}
+
+export interface CommandDefinition<TOptions, TFlags = Record<string, never>> {
+	description: string;
+	options?: { [K in keyof TFlags]: FlagDefinition };
+	handler(ctx: CommandContext<TOptions>, flags: TFlags): Promise<void>;
+}
+
+// ── Plugin definition ──────────────────────────────────────────────
+
+// The `self` helper passed to a function-form `contributes` array lets a
+// plugin reference its own slots without stamping the plugin name on every
+// slot declaration. `options` is the post-validation view (z.output) — every
+// schema default is guaranteed present, so contribution sites read
+// `self.options` with no cast. A module-level `slot.derived`/`slot.value`
+// (declared before `plugin()`, where `self` is out of scope) types its own
+// `compute`/`seed` by annotating the ctx — `ctx: ContributionCtx<XOptions>`.
+// A raw contribution ctx keeps `options: unknown` on purpose: a cross-plugin
+// contribution runs with the *contributing* plugin's options, so no single
+// type is sound there.
+export interface PluginSelf<TSlots, TResolvedOptions> {
+	slots: TSlots;
+	options: TResolvedOptions;
+	app: AppConfig;
+}
+
+type ContributionsInput<TSlots, TResolvedOptions> =
+	| Contribution<unknown>[]
+	| ((self: PluginSelf<TSlots, TResolvedOptions>) => Contribution<unknown>[]);
+
+export interface PluginDefinition<
+	TOptions,
+	TSlots extends Record<string, Slot<unknown>>,
+	TCallbacks extends Record<
+		string,
+		CallbackMarker<unknown, unknown> | OptionalCallbackMarker<unknown, unknown>
+	>,
+	TResolvedOptions = TOptions,
+> {
+	label: string;
+	// Explicit npm package name. When omitted, defaults to
+	// `@fcalell/plugin-${name}`. Third-party plugins published under a
+	// different namespace must set this so discovery can import them.
+	package?: string;
+
+	// Zod schema for plugin options. `createPlugin` parses the caller's
+	// options through it (applying defaults and surfacing errors as
+	// `StackError("PLUGIN_CONFIG_INVALID")`). The schema's *input* type
+	// (`z.input<typeof schema>`) flows into `TOptions` (the call signature)
+	// while its *output* type (`z.output<typeof schema>`, defaults applied)
+	// flows into `TResolvedOptions` and is surfaced as `self.options` /
+	// command `ctx.options`. Plugins don't redeclare either shape.
+	schema?: z.ZodType<TResolvedOptions, TOptions>;
+
+	// Presence-only dependency. Used for nicer error messages and init's and
+	// add's auto-pull; ordering is derived entirely from slot inputs, not from
+	// `requires`.
+	requires?: readonly Requirement[];
+
+	// Slots owned by this plugin. Exposed on the returned factory as
+	// `.slots` so other plugins can contribute to them.
+	slots?: TSlots;
+
+	// Contributions to any plugin's (own or otherwise) slots. Accepts either
+	// an array directly or a function that receives `self` so the plugin
+	// can reference its own slots without a circular reference problem.
+	contributes?: ContributionsInput<TSlots, TResolvedOptions>;
+
+	commands?: Record<
+		string,
+		CommandDefinition<TResolvedOptions, Record<string, unknown>>
+	>;
+
+	callbacks?: TCallbacks;
+
+	// Symmetric footprint declarations — auto-wired into `cliSlots.initDeps`
+	// / `cliSlots.initDevDeps` / `cliSlots.gitignore` / `cliSlots.removeDeps`
+	// / `cliSlots.removeDevDeps` by the plugin builder.
+	dependencies?: Record<string, string>;
+	devDependencies?: Record<string, string>;
+	gitignore?: readonly string[];
+
+	// The plugin's guide pages, each `guide/<page>.md` in its package, with the
+	// trigger that says when to open it. Auto-wired into `cliSlots.guide` under
+	// the plugin's name and package.
+	guide?: readonly { page: string; trigger: string }[];
+}
+
+// A sibling plugin that must be in the config: one by name, or exactly one
+// of several. The first `oneOf` entry is the default `stack init` and
+// `stack add` pick when the selection has none.
+export type Requirement = string | OneOfRequirement;
+
+export interface OneOfRequirement {
+	readonly oneOf: readonly [string, string, ...string[]];
+}
+
+// ── Internal CLI-facing descriptor ─────────────────────────────────
+
+// Everything the CLI needs to route subcommands and drive discovery. The
+// factory exposes this as `.cli` so existing call sites that read
+// `plugin.cli.name` / `plugin.cli.commands` keep working; `collect(ctx)` is
+// the new entry point for Phase D command code that builds the slot graph.
+export interface InternalCliPlugin<TOptions, TSlots, TResolvedOptions> {
+	name: string;
+	label: string;
+	package: string;
+	requires: readonly Requirement[];
+	callbacks: Record<
+		string,
+		CallbackMarker<unknown, unknown> | OptionalCallbackMarker<unknown, unknown>
+	>;
+	commands: Record<
+		string,
+		CommandDefinition<TResolvedOptions, Record<string, unknown>>
+	>;
+	dependencies: Record<string, string>;
+	devDependencies: Record<string, string>;
+	gitignore: readonly string[];
+	schema?: z.ZodType<TResolvedOptions, TOptions>;
+	// Plugin-scoped template / scaffold resolvers closed over the plugin's
+	// on-disk `templates/` dir. Commands wire these through `ctxForPlugin`
+	// so contributions can call `ctx.template("foo.tsx")` and get a URL
+	// pointing at the owning plugin's package, not the consumer's cwd.
+	template(name: string): URL;
+	scaffold(name: string, target: string): ScaffoldSpec;
+	// Per-config invocation: resolve the plugin's slots + contributions
+	// against the validated options carried by the plugin's `PluginConfig`.
+	// Returns the shape `buildGraph` consumes.
+	collect(ctx: CollectCtx<TResolvedOptions>): {
+		slots: TSlots;
+		contributes: Contribution<unknown>[];
+	};
+}
+
+// Arguments `collect()` needs to stamp the right `options` / `app` onto the
+// `self` helper passed to a function-form `contributes`.
+export interface CollectCtx<TResolvedOptions> {
+	app: AppConfig;
+	options: TResolvedOptions;
+}
+
+// ── Plugin factory type ────────────────────────────────────────────
+//
+// The returned factory is callable (`db({ dialect: "d1" })` → PluginConfig)
+// and exposes the plugin's metadata. `defineCallbacks` is only present when
+// callbacks were declared — narrowed via the same conditional intersection
+// pattern used before.
+
+type InferCallbackPayloads<
+	T extends Record<
+		string,
+		CallbackMarker<unknown, unknown> | OptionalCallbackMarker<unknown, unknown>
+	>,
+> = {
+	[K in keyof T as T[K] extends { readonly __optional: true }
+		? never
+		: K]: T[K] extends CallbackMarker<infer P, infer R>
+		? (payload: P) => R
+		: never;
+} & {
+	[K in keyof T as T[K] extends { readonly __optional: true }
+		? K
+		: never]?: T[K] extends CallbackMarker<infer P, infer R>
+		? (payload: P) => R
+		: never;
+};
+
+// A key the options do not declare maps to `never`, at every depth: inferring
+// the input as a type parameter skips the excess-property check that would
+// catch a typo. `unknown` options (a factory typed without its schema, an
+// option the schema leaves open) declare every key.
+type KnownKeys<I, T> = unknown extends T
+	? I
+	: I extends (...args: never[]) => unknown
+		? I
+		: I extends readonly unknown[]
+			? {
+					[K in keyof I]: KnownKeys<
+						I[K],
+						Extract<T, readonly unknown[]>[number]
+					>;
+				}
+			: I extends object
+				? {
+						[K in keyof I]: K extends keyof Extract<T, object>
+							? KnownKeys<I[K], Extract<T, object>[K]>
+							: never;
+					}
+				: I;
+
+// The call infers the caller's literal input `I` and keeps it on the entry as
+// the type-only `__input`, so a type derived from the config (auth's
+// `InferSession`) reads what was configured, not the resolved options' union.
+export type PluginFactory<
+	TName extends string,
+	TOptions,
+	TSlots extends Record<string, Slot<unknown>>,
+	TCallbacks extends Record<
+		string,
+		CallbackMarker<unknown, unknown> | OptionalCallbackMarker<unknown, unknown>
+	>,
+	TResolvedOptions = TOptions,
+> = (<const I extends TOptions = TOptions>(
+	...args: [options: I & KnownKeys<I, TOptions>] | []
+) => {
+	readonly __plugin: TName;
+	readonly __package: string;
+	readonly options: NonNullable<TResolvedOptions>;
+	readonly __input?: I;
+}) & {
+	name: TName;
+	package: string;
+	requires: readonly Requirement[];
+	slots: TSlots;
+	cli: InternalCliPlugin<TOptions, TSlots, TResolvedOptions>;
+} & (TCallbacks extends Record<string, never>
+		? // biome-ignore lint/complexity/noBannedTypes: `{}` is a non-restrictive intersection that preserves the LHS; `Record<string, never>` would destroy it and `object` adds an unwanted constraint
+			{}
+		: {
+				defineCallbacks: (
+					impl: InferCallbackPayloads<TCallbacks>,
+				) => InferCallbackPayloads<TCallbacks>;
+			});
+
+// ── plugin() ───────────────────────────────────────────────────────
+
+export function plugin<
+	TName extends string,
+	TOptions,
+	const TSlots extends Record<string, Slot<unknown>> = Record<string, never>,
+	TCallbacks extends Record<
+		string,
+		CallbackMarker<unknown, unknown> | OptionalCallbackMarker<unknown, unknown>
+	> = Record<string, never>,
+	TResolvedOptions = TOptions,
+>(
+	name: TName,
+	definition: PluginDefinition<TOptions, TSlots, TCallbacks, TResolvedOptions>,
+): PluginFactory<TName, TOptions, TSlots, TCallbacks, TResolvedOptions> {
+	const pkg = definition.package ?? `@fcalell/plugin-${name}`;
+	// Looked up on first use, never on import: a plugin imports its siblings
+	// before `stack init` installs them, and Node keeps a failed resolution
+	// for the rest of the process.
+	const packageInfo = () => findPackageInfo(pkg);
+	const hasCallbacks =
+		definition.callbacks !== undefined &&
+		Object.keys(definition.callbacks).length > 0;
+	const callbackTarget = `src/worker/plugins/${name}.ts`;
+	const requires = definition.requires ?? [];
+
+	const template = (templateName: string): URL => {
+		const root = packageInfo()?.root;
+		if (!root) {
+			throw new StackError(
+				`Plugin "${name}" attempted to resolve template ${JSON.stringify(templateName)} but its package "${pkg}" could not be located. Ensure it is installed in the consumer workspace.`,
+				"PLUGIN_CONFIG_INVALID",
+			);
+		}
+		return new URL(templateName, pathToFileURL(`${join(root, "templates")}/`));
+	};
+
+	const _scaffold = (templateName: string, target: string): ScaffoldSpec => ({
+		source: template(templateName),
+		target,
+		plugin: name,
+	});
+
+	const slots = (definition.slots ?? {}) as TSlots;
+
+	function autoContributions(): Contribution<unknown>[] {
+		const auto: Contribution<unknown>[] = [];
+
+		// Auto-wire dependency declarations into the CLI's init/remove slots.
+		// Plugins can still add extra contributions in `contributes` — nothing
+		// here is exclusive.
+		if (definition.dependencies) {
+			const deps = definition.dependencies;
+			auto.push(cliSlots.initDeps.contribute(() => ({ ...deps })));
+			auto.push(cliSlots.removeDeps.contribute(() => Object.keys(deps)));
+		}
+		if (definition.devDependencies) {
+			const devDeps = definition.devDependencies;
+			auto.push(cliSlots.initDevDeps.contribute(() => ({ ...devDeps })));
+			auto.push(cliSlots.removeDevDeps.contribute(() => Object.keys(devDeps)));
+		}
+		if (definition.gitignore && definition.gitignore.length > 0) {
+			const entries = [...definition.gitignore];
+			auto.push(cliSlots.gitignore.contribute(() => entries));
+		}
+		if (definition.guide && definition.guide.length > 0) {
+			const entries = definition.guide.map((e) => ({
+				domain: name,
+				package: pkg,
+				...e,
+			}));
+			auto.push(cliSlots.guide.contribute(() => entries));
+		}
+
+		// Auto-scaffold the callback file when the plugin declares both
+		// callbacks AND a `./runtime` subpath export. Callback → runtime
+		// wiring for the worker chain itself is performed by plugin-api in a
+		// separate contribution; this hook only ensures the callback file
+		// exists on disk after `stack init` / `stack add`.
+		if (hasCallbacks && packageInfo()?.pkgJson?.exports?.["./runtime"]) {
+			auto.push(
+				cliSlots.initScaffolds.contribute(
+					(): ScaffoldSpec => ({
+						source: template("callbacks.ts"),
+						target: callbackTarget,
+						plugin: name,
+					}),
+				),
+			);
+			auto.push(cliSlots.removeFiles.contribute(() => callbackTarget));
+		}
+
+		return auto;
+	}
+
+	function collect(ctx: CollectCtx<TResolvedOptions>): {
+		slots: TSlots;
+		contributes: Contribution<unknown>[];
+	} {
+		const userContribs: Contribution<unknown>[] =
+			typeof definition.contributes === "function"
+				? definition.contributes({
+						slots,
+						options: ctx.options,
+						app: ctx.app,
+					})
+				: (definition.contributes ?? []);
+
+		// Stamp the contributing plugin's name here, where it's authoritatively
+		// known — `collect()` runs once per owning plugin. For a cross-plugin
+		// contribution (e.g. db → cloudflare.slots.bindings) the owner is `name`
+		// ("db"), so the contribution fn later sees db's options, not the target's.
+		return {
+			slots,
+			contributes: [...userContribs, ...autoContributions()].map((c) => ({
+				...c,
+				plugin: name,
+			})),
+		};
+	}
+
+	const cli: InternalCliPlugin<TOptions, TSlots, TResolvedOptions> = {
+		name,
+		label: definition.label,
+		package: pkg,
+		requires,
+		callbacks: (definition.callbacks ?? {}) as Record<
+			string,
+			| CallbackMarker<unknown, unknown>
+			| OptionalCallbackMarker<unknown, unknown>
+		>,
+		commands: (definition.commands ?? {}) as Record<
+			string,
+			CommandDefinition<TResolvedOptions, Record<string, unknown>>
+		>,
+		dependencies: definition.dependencies ?? {},
+		devDependencies: definition.devDependencies ?? {},
+		gitignore: definition.gitignore ?? [],
+		schema: definition.schema,
+		template,
+		scaffold: _scaffold,
+		collect,
+	};
+
+	const configFactory = (options?: TOptions) => {
+		let validated: TResolvedOptions;
+		if (definition.schema) {
+			const result = definition.schema.safeParse(options ?? {});
+			if (!result.success) {
+				const summary = result.error.issues
+					.map((issue) => {
+						const path = issue.path.length ? issue.path.join(".") : "(root)";
+						return `${path}: ${issue.message}`;
+					})
+					.join("; ");
+				throw new StackError(
+					`Invalid options for plugin "${name}": ${summary}`,
+					"PLUGIN_CONFIG_INVALID",
+				);
+			}
+			validated = result.data as TResolvedOptions;
+		} else {
+			validated = (options ?? {}) as unknown as TResolvedOptions;
+		}
+		return {
+			__plugin: name as TName,
+			__package: pkg,
+			options: validated,
+		};
+	};
+
+	Object.defineProperty(configFactory, "name", {
+		value: name,
+		writable: false,
+		configurable: true,
+	});
+
+	const result = Object.assign(configFactory, {
+		package: pkg,
+		requires,
+		slots,
+		cli,
+	});
+
+	if (hasCallbacks) {
+		Object.assign(result, {
+			defineCallbacks: <T>(impl: T): T => impl,
+		});
+	}
+
+	return result as unknown as PluginFactory<
+		TName,
+		TOptions,
+		TSlots,
+		TCallbacks,
+		TResolvedOptions
+	>;
+}
+
+// ── ContributionCtx re-export ──────────────────────────────────────
+//
+// The slot-based contract uses `ContributionCtx` (declared in `#lib/slots`)
+// everywhere `RegisterContext` used to appear. Re-export it so callers that
+// import from `#lib/create-plugin` for a ctx type keep working.
+export type { ContributionCtx } from "./slots.ts";

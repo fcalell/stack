@@ -1,0 +1,139 @@
+{
+	"name": "@fcalell/plugin-react-ui",
+	"version": "0.0.0",
+	"type": "module",
+	"sideEffects": [
+		"**/*.css"
+	],
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./node/fonts": {
+			"types": "./dist/node/fonts.d.ts",
+			"default": "./dist/node/fonts.js"
+		},
+		"./node/canvas": {
+			"types": "./dist/node/canvas.d.ts",
+			"default": "./dist/node/canvas.js"
+		},
+		"./node/mode": {
+			"types": "./dist/node/mode.d.ts",
+			"default": "./dist/node/mode.js"
+		},
+		"./density": {
+			"types": "./dist/density.d.ts",
+			"default": "./dist/density.js"
+		},
+		"./globals.css": "./src/ui/globals.css",
+		"./components/banner": "./src/ui/components/banner/index.tsx",
+		"./components/bar-chart": "./src/ui/components/bar-chart/index.tsx",
+		"./components/button": "./src/ui/components/button/index.tsx",
+		"./components/canvas": "./src/ui/components/canvas/index.tsx",
+		"./components/card": "./src/ui/components/card/index.tsx",
+		"./components/code": "./src/ui/components/code/index.tsx",
+		"./components/columns": "./src/ui/components/columns/index.tsx",
+		"./components/diff": "./src/ui/components/diff/index.tsx",
+		"./components/form": "./src/ui/components/form/index.tsx",
+		"./components/gate": "./src/ui/components/gate/index.tsx",
+		"./components/image": "./src/ui/components/image/index.tsx",
+		"./components/input": "./src/ui/components/input/index.tsx",
+		"./components/pane": "./src/ui/components/pane/index.tsx",
+		"./components/picker": "./src/ui/components/picker/index.tsx",
+		"./components/prose": "./src/ui/components/prose/index.tsx",
+		"./components/rules": "./src/ui/components/rules/index.tsx",
+		"./components/section": "./src/ui/components/section/index.tsx",
+		"./components/sheet": "./src/ui/components/sheet/index.tsx",
+		"./components/shell": "./src/ui/components/shell/index.tsx",
+		"./components/slider": "./src/ui/components/slider/index.tsx",
+		"./components/stages": "./src/ui/components/stages/index.tsx",
+		"./components/stats": "./src/ui/components/stats/index.tsx",
+		"./components/switch": "./src/ui/components/switch/index.tsx",
+		"./components/table": "./src/ui/components/table/index.tsx",
+		"./components/text": "./src/ui/components/text/index.tsx",
+		"./components/thread": "./src/ui/components/thread/index.tsx",
+		"./components/toast": "./src/ui/components/toast/index.tsx",
+		"./components/toolbar": "./src/ui/components/toolbar/index.tsx",
+		"./lib/act": "./src/ui/lib/act.ts",
+		"./lib/age": "./src/ui/lib/age.ts",
+		"./lib/canvas-layout": "./src/ui/lib/canvas-layout.ts",
+		"./lib/clock": "./src/ui/lib/clock.ts",
+		"./lib/confirm": "./src/ui/lib/confirm.ts",
+		"./lib/mark": "./src/ui/lib/mark.tsx",
+		"./lib/media": "./src/ui/lib/media.ts",
+		"./lib/moment": "./src/ui/lib/moment.ts",
+		"./lib/navigate": "./src/ui/lib/navigate.ts",
+		"./lib/not-found": "./src/ui/lib/not-found.tsx",
+		"./lib/toast": "./src/ui/lib/toast.ts",
+		"./lib/words": "./src/ui/lib/words.tsx",
+		"./showcase/foundations": "./src/ui/showcase/foundations.tsx",
+		"./showcase/tv": "./src/ui/showcase/tv.tsx",
+		"./showcase/cells": "./src/ui/showcase/cells.ts",
+		"./showcase/frame": "./src/ui/showcase/frame.tsx",
+		"./showcase/waiting": "./src/ui/showcase/waiting.ts",
+		"./showcase/frames/*": "./src/ui/showcase/frames/*.tsx"
+	},
+	"files": [
+		"dist",
+		"src",
+		"guide",
+		"lint",
+		"README.md",
+		"tsconfig.json",
+		"tsconfig.build.json"
+	],
+	"license": "MIT",
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"prepare": "pnpm build",
+		"check-types": "tsc --noEmit --pretty",
+		"lint": "biome check --write --unsafe",
+		"check": "pnpm check-types && pnpm lint",
+		"clear": "rm -rf dist node_modules .turbo"
+	},
+	"peerDependencies": {
+		"@orpc/tanstack-query": "^1.14.4",
+		"@tanstack/react-query": "^5.100.2",
+		"react": "^19.3",
+		"react-dom": "^19.3"
+	},
+	"dependencies": {
+		"@base-ui/react": "^1.8.0",
+		"@fcalell/cli": "workspace:*",
+		"@fcalell/plugin-api": "workspace:*",
+		"@fcalell/plugin-auth": "workspace:*",
+		"@fcalell/plugin-react": "workspace:*",
+		"@fcalell/plugin-screens": "workspace:*",
+		"@fcalell/plugin-vite": "workspace:*",
+		"@fcalell/ui-core": "workspace:*",
+		"@fontsource-variable/ibm-plex-sans": "^5.3.0",
+		"@fontsource/ibm-plex-mono": "^5.3.0",
+		"@tailwindcss/vite": "^4.3.3",
+		"@tanstack/react-virtual": "~3.13.26",
+		"@types/d3-selection": "^3.0.11",
+		"@types/d3-zoom": "^3.0.8",
+		"d3-selection": "^3.0.0",
+		"d3-zoom": "^3.0.0",
+		"diff": "^8.0.2",
+		"elkjs": "^0.12.0",
+		"lucide": "^1.49.0",
+		"lucide-react": "^1.49.0",
+		"marked": "^18.0.7",
+		"tailwindcss": "^4.3.3",
+		"zod": "^4.3.6"
+	},
+	"devDependencies": {
+		"@fcalell/typescript-config": "workspace:*",
+		"@orpc/tanstack-query": "^1.14.4",
+		"@tailwindcss/cli": "^4.3.3",
+		"@tanstack/react-query": "^5.104.0",
+		"@types/node": "^25.5.0",
+		"@types/react": "^19.3.0",
+		"@types/react-dom": "^19.3.0",
+		"react": "^19.3.0",
+		"react-dom": "^19.3.0",
+		"typescript": "^5.9.3",
+		"vite": "^7.3.6"
+	}
+}

@@ -1,0 +1,102 @@
+{
+	"name": "@fcalell/cli",
+	"version": "0.0.0",
+	"type": "module",
+	"sideEffects": false,
+	"exports": {
+		".": {
+			"types": "./dist/config.d.ts",
+			"default": "./dist/config.js"
+		},
+		"./ast": {
+			"types": "./dist/ast/index.d.ts",
+			"default": "./dist/ast/index.js"
+		},
+		"./css": {
+			"types": "./dist/css.d.ts",
+			"default": "./dist/css.js"
+		},
+		"./specs": {
+			"types": "./dist/specs.d.ts",
+			"default": "./dist/specs.js"
+		},
+		"./errors": {
+			"types": "./dist/lib/errors.d.ts",
+			"default": "./dist/lib/errors.js"
+		},
+		"./slots": {
+			"types": "./dist/lib/slots.d.ts",
+			"default": "./dist/lib/slots.js"
+		},
+		"./cli-slots": {
+			"types": "./dist/lib/cli-slots.d.ts",
+			"default": "./dist/lib/cli-slots.js"
+		},
+		"./graph": {
+			"types": "./dist/lib/graph.d.ts",
+			"default": "./dist/lib/graph.js"
+		},
+		"./build-graph": {
+			"types": "./dist/lib/build-graph.d.ts",
+			"default": "./dist/lib/build-graph.js"
+		},
+		"./runtime": {
+			"types": "./dist/runtime.d.ts",
+			"default": "./dist/runtime.js"
+		},
+		"./codegen": {
+			"types": "./dist/lib/codegen.d.ts",
+			"default": "./dist/lib/codegen.js"
+		},
+		"./compiled-source": {
+			"types": "./dist/lib/compiled-source.d.ts",
+			"default": "./dist/lib/compiled-source.js"
+		},
+		"./write-artifact": {
+			"types": "./dist/lib/write-artifact.d.ts",
+			"default": "./dist/lib/write-artifact.js"
+		},
+		"./discovery": {
+			"types": "./dist/lib/discovery.d.ts",
+			"default": "./dist/lib/discovery.js"
+		}
+	},
+	"bin": {
+		"stack": "./dist/cli.js"
+	},
+	"files": [
+		"dist",
+		"src",
+		"guide",
+		"README.md",
+		"tsconfig.json",
+		"tsconfig.build.json"
+	],
+	"license": "MIT",
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"prepare": "pnpm build",
+		"check-types": "tsc --noEmit --pretty",
+		"lint": "biome check --write --unsafe",
+		"check": "pnpm check-types && pnpm lint",
+		"clear": "rm -rf dist node_modules .turbo"
+	},
+	"dependencies": {
+		"@clack/prompts": "^0.11.0",
+		"magicast": "^0.5.2",
+		"node-html-parser": "^7.1.0",
+		"picocolors": "^1.1.0",
+		"smol-toml": "^1.6.1",
+		"ts-morph": "^28.0.0",
+		"yaml": "^2.9.1"
+	},
+	"peerDependencies": {
+		"zod": "^4.0.0"
+	},
+	"devDependencies": {
+		"@fcalell/typescript-config": "workspace:*",
+		"@types/node": "^25.5.0",
+		"typescript": "^5.9.3",
+		"zod": "^4.3.6"
+	}
+}

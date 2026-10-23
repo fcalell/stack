@@ -1,0 +1,113 @@
+# Phone routes
+
+The phone app's screens are expo-router files under `src/app/` (or `expo({ routes: { appDir } })`).
+Each file's default export is the screen at its path. The generated entry, `.stack/entry.tsx`,
+mounts expo-router over that directory inside every provider the plugins contribute, so the app
+writes no `App` component and calls no `registerRootComponent`.
+
+| File | Route |
+| --- | --- |
+| `src/app/_layout.tsx` | Wraps every route: the root layout |
+| `src/app/index.tsx` | `/` |
+| `src/app/projects/index.tsx` | `/projects` |
+| `src/app/projects/[id].tsx` | `/projects/<id>`, the segment read with `useLocalSearchParams<{ id: string }>()` |
+| `src/app/projects/_layout.tsx` | Wraps the routes under `/projects` |
+
+## The root layout
+
+The root layout draws the `Shell` around the current route. Its `places` are the tab bar: past
+five, four tabs and a More tab listing the rest.
+
+```tsx
+// src/app/_layout.tsx
+import { Shell } from "@fcalell/plugin-native-ui/components/shell";
+import type { PlaceSpec } from "@fcalell/ui-core/descriptors";
+import { Stack } from "expo-router";
+
+const places: PlaceSpec[] = [
+  { route: "/", label: "Home", icon: "House" },
+  { route: "/projects", label: "Projects", icon: "Folder" },
+];
+
+export default function Layout() {
+  return (
+    <Shell places={places}>
+      <Stack screenOptions={{ headerShown: false, animation: "none" }}>
+        <Stack.Screen name="projects/[id]" options={{ animation: "slide_from_right" }} />
+      </Stack>
+    </Shell>
+  );
+}
+```
+
+The layout draws a `Stack`, not a `Slot`, so a pushed screen is animated: it slides over from the end
+and a pop slides it back, as the web's covering Pane does. A place's own screen has no animation (`"none"`):
+a place's root fades in on `fast` as it mounts, places being peers. List each pushed screen's route in
+a `Stack.Screen` with `animation: "slide_from_right"`.
+
+A place is current at its route and every route under it; `/` only at itself.
+
+## An address no route serves
+
+With `nativeUi()`, `stack generate` writes `src/app/+not-found.tsx` when the directory holds no
+`+not-found` file: the page for an unmatched address, drawn inside the root layout. It is yours
+from then on: replace its contents to draw another page, and it is never rewritten.
+
+## Places and panes
+
+A route renders its `Pane`; the `Shell` draws the place around the stack, with the tab bar under it. A
+route pushed over a tab's (a record, a form) renders its `Pane` the same way, its `back` the
+route it returns to: the stack animates the push and covers the tab bar while it stands. `cover`
+and `wide` change nothing on the phone.
+
+```tsx
+// src/app/projects/[id].tsx
+export default function ProjectScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const project = orpc.projects.get.read({ id });
+  return (
+    <Pane
+      read={project}
+      title={project.at((p) => p.name)}
+      record={{
+        within: "Projects",
+        overline: [project.at((p) => p.team)],
+        facts: [project.at((p) => p.owner)],
+      }}
+      back="/projects"
+    />
+  );
+}
+```
+
+## Navigating
+
+A roster `href`, `back` or place `route` navigates through expo-router on its own. App code
+navigates with `router` or `Link` from `expo-router`. Every one of these routes is typed: `stack generate`
+writes the route types from the files under the routes directory, and `stack dev` rewrites them
+as a route file comes or goes, so an `href` to a path no file serves fails the type-check.
+
+A phone screen starts its reads as it mounts, under the push. A route that wants them under way
+sooner exports `preload`, built from the read its screen draws, as a web route's `loader` is:
+
+```tsx
+// src/app/projects/[id].tsx
+import { preload as start } from "@fcalell/plugin-api/tanstack-query";
+import type { QueryClient } from "@tanstack/react-query";
+
+const project = (id: string) => orpc.projects.get.read({ id });
+
+export const preload = (client: QueryClient, { id }: { id: string }) =>
+  start(client, project(id));
+```
+
+A finger landing on a row, `Link`, stat or fact that opens the route calls it with the app's query
+client and the href's params, so the push finds the read under way; navigation never waits on it.
+A press that lands on a button, a tab or a back arrow navigates without it. There is no prop on a
+link: the route's file is the only place it is written.
+
+```tsx
+<Link href="/projects/12">Project 12</Link> // a route file serves it
+<Link href="/settings">Settings</Link> // fails the type-check: no route file
+<Pane title="Settings" back="/setings" /> // fails the type-check too
+```

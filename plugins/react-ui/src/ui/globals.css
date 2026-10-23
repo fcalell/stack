@@ -1,0 +1,224 @@
+/* The parts of the sheet only the web owns. The token contract — the `@theme`
+   map, the per-mode colors and the shadow utilities — is emitted into
+   `.stack/app.css` from `@fcalell/ui-core`, which also imports `tailwindcss`
+   before this file. Importing it again here would emit preflight twice. */
+
+/* `.stack/app.css` imports `tailwindcss` with `source(none)`, so no automatic
+   content detection runs; the component sources are declared explicitly,
+   relative to this file. */
+@source "./";
+
+/* The variant matrices are class strings inside `@fcalell/ui-core`, and a cva
+   composes them at runtime, so a build that never scans that package emits
+   nothing for a cell no component also spells literally. Two paths are listed
+   because the package sits one level away in an install and four in a
+   workspace checkout; Tailwind ignores a source path that does not exist. */
+@source "../../../ui-core/src";
+@source "../../../../packages/ui-core/src";
+
+@layer base {
+	:root {
+		color-scheme: light;
+	}
+
+	*,
+	*::before,
+	*::after {
+		border-color: var(--color-edge);
+	}
+
+	html {
+		font-family: var(--font-sans);
+		font-optical-sizing: auto;
+		font-synthesis: none;
+		-webkit-text-size-adjust: 100%;
+		text-size-adjust: 100%;
+	}
+
+	body {
+		background-color: var(--color-canvas);
+		color: var(--color-ink-body);
+		font-size: var(--text-body);
+		line-height: var(--leading-body);
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+		/* A word longer than its box breaks anywhere rather than pushing the box
+		   past its parent; the property inherits, so no slot spells it. A lane that
+		   must hold its figures sets `wrap-normal`; a single line truncates. */
+		overflow-wrap: anywhere;
+	}
+
+	h1,
+	h2,
+	h3 {
+		text-wrap: balance;
+	}
+
+	p {
+		text-wrap: pretty;
+	}
+
+	/* The ring is drawn outside the box at an offset, so it never covers the
+	   control's own edge. Components spell nothing for it; a control inside a
+	   control rings inset with `focus-visible:-outline-offset-2`. A bordered box
+	   that takes typing or choosing rings on its edge instead
+	   (`--focus-ring-edge-offset`), and for the keyboard alone (`lib/modality.ts`). */
+	:focus-visible {
+		outline: var(--focus-ring) solid var(--color-ring);
+		outline-offset: var(--focus-ring-offset);
+	}
+}
+
+@keyframes content-show {
+	from {
+		opacity: 0;
+		transform: scale(0.96);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+@keyframes content-hide {
+	from {
+		opacity: 1;
+		transform: scale(1);
+	}
+	to {
+		opacity: 0;
+		transform: scale(0.96);
+	}
+}
+
+/* A message that arrives at the end of a log rises a pair as it fades in
+   (`STREAM_IN`). */
+@keyframes stream-in {
+	from {
+		opacity: 0;
+		translate: 0 var(--spacing-gap);
+	}
+}
+
+/* The paint (`lib/paint.tsx`): a painted part's fill, drawn after the read has
+   run `--wait-delay`, so a read answered at once paints nothing. It fades in
+   (`paint-in`), then breathes (`pulse-fill`, the `PULSE` cell): the fill's own
+   alpha moves, never the box's opacity, so the fade and the breath do not
+   fight over it and the glyphs a text fill sits behind are not dimmed. All
+   fills share one phase (`lib/paint.tsx`). The delay holds under reduced
+   motion; the fade snaps there and the breath is `none`. */
+@media (prefers-reduced-motion: reduce) {
+	:root {
+		--pulse-name: none;
+	}
+}
+
+/* A frame whose read is idle or paused with no data stands still (`data-still`):
+   its painted form is drawn, but nothing is coming, so nothing breathes. */
+[data-still] {
+	--pulse-name: none;
+}
+
+/* A scrambled slot (`lib/scramble.tsx`, `theme.loading`) stands as the still
+   bar where nothing is coming: its generated glyphs are hidden and the fill
+   the scramble leaves off returns. Under reduced motion the same happens
+   through the cell's own `motion-safe` and the glyphs' `motion-reduce`. */
+[data-still] [data-scramble] {
+	background-color: var(--color-skeleton);
+}
+
+[data-still] [data-scrambling] {
+	display: none;
+}
+
+@keyframes paint-in {
+	from {
+		opacity: 0;
+	}
+}
+
+@keyframes pulse-fill {
+	50% {
+		background-color: color-mix(
+			in oklab,
+			var(--color-skeleton) var(--pulse-low),
+			transparent
+		);
+	}
+}
+
+/* A value that changes while shown (`lib/swap.tsx`, the SWAP cells): the new
+   one enters and the old leaves, each by opacity and a move the site names,
+   `--swap-y` the share of its own height (a figure's roll: 1 rises from below
+   and the old leaves up, -1 the reverse) and `--swap-scale` the size a mark
+   grows from. The rung is 0 under reduced motion, so the old one is gone and
+   the new one stands at once. */
+@keyframes swap-in {
+	from {
+		opacity: 0;
+		translate: 0 calc(var(--swap-y, 0) * 100%);
+		scale: var(--swap-scale, 1);
+	}
+}
+
+@keyframes swap-out {
+	to {
+		opacity: 0;
+		translate: 0 calc(var(--swap-y, 0) * -100%);
+		scale: var(--swap-scale, 1);
+	}
+}
+
+@theme {
+	--animate-paint: paint-in var(--transition-duration-base) var(--ease-out)
+		var(--wait-delay) both;
+	--animate-spinner-in: paint-in var(--transition-duration-fast) var(--ease-out)
+		both;
+	--animate-act-in: act-in var(--transition-duration-base) var(--ease-out)
+		var(--act-delay) both;
+	--animate-act-out: act-out var(--transition-duration-base) var(--ease-out)
+		var(--act-delay) both;
+}
+
+/* An act's pending look (`components/button`, `icon-button`): the act is inert
+   at the press and draws nothing until `--act-delay` has run, so an act the
+   server answers at once never flashes a spinner. Then the pending fill and
+   the spinner fade in (`act-in`) as the label and glyph fade out (`act-out`).
+   The delay holds under reduced motion; the fades snap there. */
+@keyframes act-in {
+	from {
+		opacity: 0;
+	}
+}
+
+@keyframes act-out {
+	to {
+		opacity: 0;
+	}
+}
+
+/* A pending bar's fill (`components/banner/pending.tsx`): the track's full width
+   scaled from `--from` (the share the run begins at) to full over `--ms`
+   milliseconds, at a constant pace, so the fill moves on the compositor and
+   holds full at the end. Inline, so `--ms` is read on the fill, not on the
+   root. Reduced motion has no animation: the bar sets the share itself. */
+@keyframes pending-fill {
+	from {
+		scale: var(--from) 1;
+	}
+	to {
+		scale: 1 1;
+	}
+}
+
+@theme inline {
+	--animate-pending-fill: pending-fill calc(var(--ms) * 1ms) linear forwards;
+}
+
+/* A painted text clips at its slot's edge where a loaded one ends in an
+   ellipsis: the filler is no words to be cut short, and a visible "…" on it
+   reads as data. `Painted` sits directly in its slot's text element. Unlayered,
+   so it stands over the `truncate` utility. */
+:has(> [data-painted]) {
+	text-overflow: clip;
+}

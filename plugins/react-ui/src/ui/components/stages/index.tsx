@@ -1,0 +1,201 @@
+import {
+	type Datum,
+	paints,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
+import { cn } from "@fcalell/ui-core/cn";
+import type { Stage, StageEnd, StepState } from "@fcalell/ui-core/descriptors";
+import { stagesShown } from "@fcalell/ui-core/list-state";
+import { type RailState, railBelow, WAITING } from "@fcalell/ui-core/stages";
+import {
+	BLOCK_IN,
+	FIGURES,
+	LINE_IN,
+	lineBox,
+	STAGE_CHECK,
+	STAGE_CROSS,
+	STAGE_ROW,
+	STAGE_WORDS,
+	stage,
+	stageMark,
+	stageRail,
+	text,
+} from "@fcalell/ui-core/variants";
+import type { ReactNode } from "react";
+import type { Closed } from "../../lib/closed.ts";
+import { moment } from "../../lib/moment.ts";
+import { PAINT_CONTROL, Painted } from "../../lib/paint.tsx";
+import { Swap } from "../../lib/swap.tsx";
+import { Icon } from "../icon/index.tsx";
+
+const LIST = "flex flex-col min-w-0";
+const ROW = "flex min-w-0";
+// The marks' column is the mark's width, the rail running down its middle,
+// and stands the row's full height over its vertical padding (`-my-gap`), so
+// the rail is one line from the first mark to the last: a rail-coloured
+// spacer of that padding above the mark, the mark's own line box in its two
+// halves around it, the rest below.
+const MARKS = "flex flex-col items-center shrink-0 w-icon-meta -my-gap";
+const MARK = "flex flex-col items-center h-lh shrink-0";
+const SHAPE = "shrink-0";
+// A glyph mark (the check on its disc, the cross) centres its icon.
+const GLYPH = "flex shrink-0";
+const RAIL = "grow w-0";
+const LEAD = "h-gap w-0 shrink-0";
+const WORDS = "flex flex-col min-w-0";
+
+/** A rail of fixed states. */
+export interface StagesProps extends Closed {
+	/** The stages in order, each done, current or later; a done or current one may carry the moment it was reached. A selection paints a rail of later stages, and the rail is inert, until its read lands. */
+	steps: Datum<readonly Stage[]>;
+	/** How the rail ended: the terminal row in place of every stage after the last done one, its reason under its label. */
+	ended?: StageEnd;
+}
+
+function Row(props: {
+	state: StepState | "ended";
+	mark: ReactNode;
+	last: boolean;
+	// The rail is waiting: its marks are painted.
+	painted?: boolean;
+	// The rail the row before runs down to this mark; none above the first.
+	above?: RailState;
+	current?: boolean;
+	// The terminal row replacing the later stages: a block, fading in as it
+	// mounts.
+	block?: boolean;
+	children: ReactNode;
+}) {
+	// A later label is meta text, so its mark stands on a meta line.
+	const role = props.state === "later" ? "meta" : "body";
+	const below = props.last
+		? undefined
+		: stageRail({ state: railBelow(props.state) });
+	return (
+		<li
+			aria-current={props.current ? "step" : undefined}
+			className={cn(STAGE_ROW, ROW, props.block && BLOCK_IN)}
+		>
+			<span className={MARKS}>
+				<span
+					className={cn(props.above && stageRail({ state: props.above }), LEAD)}
+				/>
+				<span className={cn(lineBox({ role }), MARK)}>
+					<span
+						className={cn(
+							props.above && stageRail({ state: props.above }),
+							RAIL,
+						)}
+					/>
+					{/* A stage that advances while shown is a mark change; a waiting rail's switch to its loaded one lands at once. */}
+					{props.painted ? (
+						props.mark
+					) : (
+						<Swap id={props.state} scale>
+							{props.mark}
+						</Swap>
+					)}
+					<span className={cn(below, RAIL)} />
+				</span>
+				{props.last ? null : <span className={cn(below, RAIL)} />}
+			</span>
+			<span className={cn(props.last ? undefined : STAGE_WORDS, WORDS)}>
+				{props.children}
+			</span>
+		</li>
+	);
+}
+
+/** Its stages top to bottom on a hairline rail joining their marks, solid through the done stages: a done one a disc with a check and its moment under the label, the current one a ring in the accent with its label at 500, a later one a hollow ring with its label in meta; an ended rail closes on a danger cross, its label and its reason in meta. */
+export function Stages({ steps, ended }: StagesProps) {
+	const [drawn] = useSelections([steps]);
+	const waits = paints(drawn);
+	// An ended read draws no stage; the frame that holds it says why.
+	let shown: readonly Stage[] = [];
+	if (waits) shown = WAITING;
+	else if (!drawn.painted)
+		shown = stagesShown(drawn.value, ended !== undefined);
+	const lastShown = shown.at(-1);
+	return (
+		<ol inert={waits || undefined} className={LIST}>
+			{shown.map((step, at) => {
+				const last = ended === undefined && at === shown.length - 1;
+				const before = shown[at - 1];
+				let mark = (
+					<span
+						aria-hidden
+						className={cn(stageMark({ state: "later" }), SHAPE)}
+					/>
+				);
+				if (waits)
+					mark = (
+						<span
+							aria-hidden
+							className={cn(
+								stageMark({ state: "later" }),
+								SHAPE,
+								PAINT_CONTROL,
+							)}
+						/>
+					);
+				else if (step.state === "done")
+					mark = (
+						<span
+							aria-hidden
+							className={cn(stageMark({ state: "done" }), STAGE_CHECK, GLYPH)}
+						>
+							<Icon name="Check" fit="meta" />
+						</span>
+					);
+				else if (step.state === "current")
+					mark = (
+						<span
+							aria-hidden
+							className={cn(stageMark({ state: "current" }), SHAPE)}
+						/>
+					);
+				return (
+					<Row
+						key={waits ? at : step.label}
+						state={step.state}
+						mark={mark}
+						painted={waits}
+						last={last}
+						above={before && railBelow(before.state)}
+						current={step.state === "current"}
+					>
+						<span className={stage({ state: step.state })}>
+							{waits ? <Painted role="name" at={at} /> : step.label}
+						</span>
+						{step.at ? (
+							<time
+								dateTime={step.at}
+								className={cn(text({ role: "meta" }), FIGURES, LINE_IN)}
+							>
+								{moment(step.at)}
+							</time>
+						) : null}
+					</Row>
+				);
+			})}
+			{ended ? (
+				<Row
+					state="ended"
+					mark={
+						<span aria-hidden className={cn(STAGE_CROSS, GLYPH)}>
+							<Icon name="X" fit="meta" />
+						</span>
+					}
+					last
+					block
+					above={lastShown && railBelow(lastShown.state)}
+				>
+					<span className={stage({ state: "ended" })}>{ended.label}</span>
+					{ended.reason ? (
+						<span className={text({ role: "meta" })}>{ended.reason}</span>
+					) : null}
+				</Row>
+			) : null}
+		</ol>
+	);
+}

@@ -1,0 +1,10 @@
+language js(typescript, jsx)
+
+// A picture is an `Image`, never an `<img>`.
+
+or {
+	`<img $props />`,
+	`<img $props>$c</img>`
+} as $el where {
+	register_diagnostic(span=$el, message="A picture is an Image, never an <img>")
+}

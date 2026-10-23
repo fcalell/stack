@@ -1,0 +1,22 @@
+language js(typescript, jsx)
+
+// An act whose `onAct` only calls `navigate(...)` is a link act, `{ label, href }`
+// (guide/rules.md, "A route act is a link"). The call may be an expression body
+// or the only statement of a block body, whatever its argument (a path or a
+// `{ to, params }`).
+or {
+	`onAct: () => navigate($route)`,
+	`onAct: () => { navigate($route) }`,
+	`onAct: () => { navigate($route); }`,
+	`onAct: () => { return navigate($route) }`,
+	`onAct: () => { return navigate($route); }`,
+	`onAct: function () { navigate($route) }`,
+	`onAct() { navigate($route) }`,
+	`onAct: async () => navigate($route)`,
+	`onAct: async () => { await navigate($route) }`,
+	`onAct={() => navigate($route)}`,
+	`onAct={() => { navigate($route) }}`,
+	`onAct={() => { navigate($route); }}`
+} as $act where {
+	register_diagnostic(span=$act, message="An act whose onAct only calls navigate(...) is a link act: give { label, href } (rules.md, A route act is a link)")
+}

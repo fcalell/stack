@@ -1,0 +1,448 @@
+import {
+	type Graph,
+	STATUSES,
+	WORKFLOW,
+} from "@fcalell/plugin-react-ui/showcase/frames/canvas";
+import { pathOrder } from "@fcalell/ui-core/canvas";
+import { WIDTH_VALUE } from "@fcalell/ui-core/tokens";
+import { expect, waitFor } from "storybook/test";
+import type { Point } from "./mouse.ts";
+
+// What the canvas's touch and overview stories read the page by. The first
+// layout of a page loads and starts ELK's worker, which takes longer than a
+// wait's default, and longer still when the whole suite loads the dev server at
+// once.
+export const LAID = { timeout: 60_000 };
+
+export const ORDER = pathOrder(WORKFLOW.nodes, WORKFLOW.edges);
+
+// Waits until an element's transitions have ended: a colour read mid-way is
+// not the one it settles on (a node answers on `fast`).
+export async function settled(element: Element) {
+	await waitFor(() =>
+		expect(
+			element.getAnimations().filter((one) => one instanceof CSSTransition),
+		).toHaveLength(0),
+	);
+}
+
+// Waits until the viewport has stopped travelling: the layer's transform the
+// same for three frames. `from` is anything inside the canvas, a zoom button
+// among them.
+export async function rested(from: Element) {
+	const layer = (
+		from.closest("section") ?? document
+	).querySelector<HTMLElement>("[data-layer]");
+	let last = "";
+	for (let same = 0; same < 3; ) {
+		await new Promise((done) => requestAnimationFrame(() => done(undefined)));
+		const now = layer?.style.transform ?? "";
+		same = now === last ? same + 1 : 0;
+		last = now;
+	}
+}
+
+export const rect = (element: Element) => element.getBoundingClientRect();
+
+export const centre = (box: DOMRect): Point => ({
+	x: box.left + box.width / 2,
+	y: box.top + box.height / 2,
+});
+
+// Two boxes with no area in common; a hundredth of a pixel is layout's own
+// rounding, where two glyphs touch at the lowest zoom.
+export const apart = (a: DOMRect, b: DOMRect) =>
+	a.right <= b.left + 0.01 ||
+	b.right <= a.left + 0.01 ||
+	a.bottom <= b.top + 0.01 ||
+	b.bottom <= a.top + 0.01;
+
+// The layer's transform, which the canvas writes by script.
+export function viewport(root: Element): {
+	scale: number;
+	x: number;
+	y: number;
+} {
+	const transform =
+		root.querySelector<HTMLElement>("[data-layer]")?.style.transform ?? "";
+	const [, x = "0", y = "0"] =
+		/translate\((-?[\d.e-]+)px,\s*(-?[\d.e-]+)px\)/.exec(transform) ?? [];
+	const [, scale = "1"] = /scale\(([\d.e-]+)\)/.exec(transform) ?? [];
+	return { scale: Number(scale), x: Number(x), y: Number(y) };
+}
+
+// The nodes' own boxes are the layer's buttons, in path order: a node's glyph
+// stands in a box of its own, in a `div`.
+export const cards = (root: Element) =>
+	root.querySelectorAll<HTMLElement>("[data-layer] > button");
+
+export function card(root: Element, id: string): HTMLElement {
+	const found = cards(root)[ORDER.indexOf(id)];
+	if (!found) throw new Error(`no button for the node ${id}`);
+	return found;
+}
+
+// The glyph buttons, in path order.
+export const glyphs = (root: Element) =>
+	root.querySelectorAll<HTMLElement>(
+		"[data-layer] > div:not([data-group]) > button",
+	);
+
+export const left = (element: HTMLElement) =>
+	Number.parseFloat(element.style.left);
+export const top = (element: HTMLElement) =>
+	Number.parseFloat(element.style.top);
+
+export const around = (a: number, b: number, within = 0.5) =>
+	Math.abs(a - b) <= within;
+
+// The room a first view or a fit may fill, read off the DOM as the viewport
+// does: the pane inset by a page on every side, and clear of the zoom stack on
+// the left and the act at the bottom by a `pair` beyond them.
+export function room(region: Element): DOMRect {
+	const pane = rect(region);
+	const page = px("page");
+	const pair = px("pair");
+	let left = page;
+	let bottom = page;
+	for (const part of region.querySelectorAll("[data-clear]")) {
+		const box = rect(part);
+		if (part.getAttribute("data-clear") === "left")
+			left = Math.max(left, box.right - pane.left + pair);
+		else bottom = Math.max(bottom, pane.bottom - box.top + pair);
+	}
+	return new DOMRect(
+		pane.left + left,
+		pane.top + page,
+		pane.width - left - page,
+		pane.height - page - bottom,
+	);
+}
+
+// How far a finger's touch adjustment reaches: Chrome snaps a tap to a button
+// within about this many px, so a tap meant for the ground stands clear of every
+// button by it.
+const SNAP = 32;
+
+// A point of the ground: the topmost element there is the region, its layer or
+// its grid, and no button stands within a finger's snap of it.
+export function groundPoint(region: Element): Point {
+	const pane = rect(region);
+	const buttons = [...region.querySelectorAll("button")].map(rect);
+	for (let y = pane.top + 20; y < pane.bottom - 20; y += 24)
+		for (let x = pane.right - 20; x > pane.left + 20; x -= 24) {
+			const found = document.elementFromPoint(x, y);
+			if (
+				found &&
+				(found === region ||
+					found.matches("[data-layer], [data-ground], [data-ground] *")) &&
+				buttons.every((box) => away({ x, y }, box) > SNAP)
+			)
+				return { x, y };
+		}
+	throw new Error("no ground in the region");
+}
+
+export const shift = (point: Point, x: number, y: number): Point => ({
+	x: point.x + x,
+	y: point.y + y,
+});
+
+// A spacing role's size in px at the density in force.
+export const px = (role: string): number =>
+	Number.parseFloat(
+		getComputedStyle(document.documentElement).getPropertyValue(
+			`--spacing-${role}`,
+		),
+	);
+
+// The lowest zoom at which two glyphs of `glyph` px stand `2 * pair` apart,
+// read off the laid-out cards: the glyph and that gap over the smallest centre
+// distance (the larger of the two axes) in the layer's own units, less the pair
+// the routing boxes round up by (`minZoomFor`).
+export function lowestZoom(root: Element, glyph: number): number {
+	const scale = viewport(root).scale;
+	const boxes = [...cards(root)].map((each) => centre(rect(each)));
+	let nearest = Number.POSITIVE_INFINITY;
+	boxes.forEach((one, index) => {
+		for (const two of boxes.slice(index + 1))
+			nearest = Math.min(
+				nearest,
+				Math.max(Math.abs(one.x - two.x), Math.abs(one.y - two.y)) / scale,
+			);
+	});
+	const pair = px("pair");
+	return Math.min(
+		1,
+		Math.max(0.1, (glyph + 2 * pair) / Math.max(nearest - pair, 1e-9)),
+	);
+}
+
+// Zooms out by the stack's button until it is spent: every node is then its
+// glyph, whatever scale the canvas opened at (a fit never goes under the floor).
+export async function zoomedOut(region: Element) {
+	const button = region.querySelector<HTMLElement>(
+		'button[aria-label="Zoom out"]',
+	);
+	if (!button) throw new Error("no Zoom out button");
+	for (let step = 0; step < 30; step++) button.click();
+	await rested(button);
+}
+
+// After Fit, and after Arrange's fit, no node's box (and no glyph) meets the
+// canvas's own chrome: the act and the zoom stack. A graph the pane cannot hold
+// at the floor is cut at the pane, framed at its start: only the start's card
+// stands clear of the chrome then.
+export function clear(root: Element) {
+	const chrome = [...root.querySelectorAll("[data-clear]")].map(rect);
+	if (chrome.length !== 2) throw new Error("the stack and the act stand");
+	// What is drawn: the cards at their own size, the glyphs under the floor (the
+	// cards keep their boxes there, unseen).
+	const all = viewport(root).scale < 1 ? glyphs(root) : cards(root);
+	const pane = rect(root);
+	const cut = [...all].some((node) => {
+		const box = rect(node);
+		return (
+			box.left < pane.left ||
+			box.right > pane.right ||
+			box.top < pane.top ||
+			box.bottom > pane.bottom
+		);
+	});
+	const drawn = cut ? [...all].slice(0, 1) : all;
+	for (const node of [...drawn].map(rect))
+		for (const part of chrome)
+			if (!apart(node, part))
+				throw new Error(
+					`a node at ${JSON.stringify(node)} is under the chrome at ${JSON.stringify(part)}`,
+				);
+}
+
+// A graph whose every node draws both its marks under the text floor: a status
+// (every state, the spinner among them) and a problem.
+export const MARKED: Graph = {
+	...STATUSES,
+	nodes: STATUSES.nodes.map((node) => ({
+		...node,
+		problem: "Missing the target",
+	})),
+};
+
+// No glyph's mark (the status dot, the spinner, the problem dot) meets its icon.
+export function marksClearTheIcon(root: Element) {
+	const forms = [...glyphs(root)];
+	if (forms.length === 0) throw new Error("no glyph is drawn");
+	for (const form of forms) {
+		const icon = form.querySelector("svg");
+		const marks = [
+			...form.querySelectorAll(":scope > span:not([data-name], [data-shape])"),
+		];
+		if (!icon || marks.length !== 2)
+			throw new Error("a glyph holds its icon and two marks");
+		for (const mark of marks)
+			if (!apart(rect(mark), rect(icon)))
+				throw new Error(
+					`a mark at ${JSON.stringify(rect(mark))} meets the icon at ${JSON.stringify(rect(icon))}`,
+				);
+	}
+}
+
+// A real Tab key press, over the Chrome DevTools Protocol that Vitest's Playwright
+// provider opens: a trusted key makes the focus it moves visible
+// (`:focus-visible`), which a scripted `focus()` or a synthetic key does not.
+// `vitest/browser` throws when it is imported outside a Vitest run, so it is
+// imported when a key is sent.
+export async function tabKey(shift = false) {
+	const { cdp } = await import("vitest/browser");
+	const key = {
+		key: "Tab",
+		code: "Tab",
+		windowsVirtualKeyCode: 9,
+		modifiers: shift ? 8 : 0,
+	};
+	await cdp().send("Input.dispatchKeyEvent", { type: "rawKeyDown", ...key });
+	await cdp().send("Input.dispatchKeyEvent", { type: "keyUp", ...key });
+	await new Promise((done) => requestAnimationFrame(() => done(undefined)));
+}
+
+// The names the overview draws beside the glyphs, in path order.
+export const names = (root: Element) =>
+	root.querySelectorAll<HTMLElement>("[data-layer] button > [data-name]");
+
+// A node's glyph button, by its id.
+export function glyph(root: Element, id: string): HTMLElement {
+	const found = glyphs(root)[ORDER.indexOf(id)];
+	if (!found) throw new Error(`no glyph for the node ${id}`);
+	return found;
+}
+
+// How far a point stands from a box: 0 on or inside it.
+const away = (at: Point, box: DOMRect) =>
+	Math.hypot(
+		Math.max(box.left - at.x, 0, at.x - box.right),
+		Math.max(box.top - at.y, 0, at.y - box.bottom),
+	);
+
+// An edge's route: its line, and its first and last points in the layer's flow
+// coordinates.
+export function routeEnds(
+	root: Element,
+	id: string,
+): { line: SVGPathElement; start: Point; end: Point } {
+	const line = root.querySelector(`[data-edge="${id}"] > path`);
+	if (!(line instanceof SVGPathElement))
+		throw new Error(`no route for the edge ${id}`);
+	const numbers = (line.getAttribute("d") ?? "").match(/-?\d+(?:\.\d+)?/g);
+	if (!numbers || numbers.length < 4)
+		throw new Error(`an unreadable route for ${id}`);
+	const [x0, y0] = numbers.map(Number);
+	return {
+		line,
+		start: { x: x0 ?? 0, y: y0 ?? 0 },
+		end: { x: Number(numbers.at(-2)), y: Number(numbers.at(-1)) },
+	};
+}
+
+// A group with an empty body, read off the DOM: its frame stands (and draws a
+// head button) at the head's height and the padding twice, a node's width wide;
+// the node before it in the path (the first button) stands above it and the
+// node after it (the second) below, and its edges meet it: the route into it
+// ends on the frame's top centre, the route out starts at its bottom centre.
+export function hollowHeld(
+	root: Element,
+	{ id, into, out }: { id: string; into?: string; out?: string },
+) {
+	const frame = root.querySelector(`[data-group="${id}"]`);
+	const head = frame?.querySelector("button");
+	if (!frame || !head) throw new Error(`no frame with a head for ${id}`);
+	const { scale, x, y } = viewport(root);
+	const pane = rect(root.querySelector("section") ?? root);
+	const box = rect(frame);
+	const measured = (label: string, found: number, wanted: number) => {
+		if (Math.abs(found - wanted) > 1.5)
+			throw new Error(`${label}: ${found.toFixed(1)}, wanted ${wanted}`);
+	};
+	measured(
+		"the frame's width",
+		box.width,
+		Number.parseFloat(WIDTH_VALUE.node) * scale,
+	);
+	measured(
+		"the frame's height",
+		box.height,
+		(rect(head).height + 2 * px("card")) * scale,
+	);
+	if (box.left < pane.left || box.right > pane.right || box.top < pane.top)
+		throw new Error("the frame stands outside the canvas");
+	const route = (edge: string, end: "start" | "end", at: Point) => {
+		const found = routeEnds(root, edge)[end];
+		measured(`${edge} ${end} x`, pane.left + x + found.x * scale, at.x);
+		measured(`${edge} ${end} y`, pane.top + y + found.y * scale, at.y);
+	};
+	if (into) route(into, "end", { x: box.left + box.width / 2, y: box.top });
+	if (out) route(out, "start", { x: box.left + box.width / 2, y: box.bottom });
+	if (into && out) {
+		const [first, second] = [
+			...root.querySelectorAll("[data-layer] > button"),
+		].map(rect);
+		if (!first || !second || first.bottom > box.top || second.top < box.bottom)
+			throw new Error("the group stands between its neighbours in the path");
+	}
+}
+
+// Under the text floor the routes and the frames follow the glyphs: every
+// edge's two ends lie on or within a `pair` of their glyphs' rects, a frame
+// holds its glyphs by the group padding, and every route is long enough to read
+// (a visible stretch of `2 * pair`, the gap the lowest zoom keeps).
+export function routesFollowTheGlyphs(root: Element, graph: Graph) {
+	const region = root.querySelector("section");
+	if (!region) throw new Error("no canvas");
+	const view = viewport(root);
+	const pane = rect(region);
+	const pair = px("pair");
+	// The frame's padding and its head hold their size on screen under the floor
+	// (they grow by the zoom's inverse), up to the step the routing box rounds to.
+	const pad = px("card");
+	// The frame's boxes round a glyph up to a step of a `pair` in the flow, half
+	// of it on each side, and a pixel is the stroke's and the border's; the
+	// padding's growth is that step over the glyph, of the padding.
+	const slack =
+		(pair * view.scale) / 2 + 1.5 + (pad * pair * view.scale) / px("control");
+	const onScreen = (x: number, y: number): Point => ({
+		x: pane.left + view.x + x * view.scale,
+		y: pane.top + view.y + y * view.scale,
+	});
+	for (const edge of graph.edges) {
+		const { line, start, end } = routeEnds(root, edge.id);
+		const ends: [Point, string][] = [
+			[onScreen(start.x, start.y), edge.from],
+			[onScreen(end.x, end.y), edge.to],
+		];
+		for (const [at, id] of ends) {
+			const gap = away(at, rect(glyph(root, id)));
+			if (gap > pair)
+				throw new Error(
+					`the edge ${edge.id} ends ${gap.toFixed(1)} px from the glyph of ${id}`,
+				);
+		}
+		const visible = line.getTotalLength() * view.scale;
+		if (visible < 2 * pair - 1)
+			throw new Error(
+				`the edge ${edge.id} is ${visible.toFixed(1)} px long on screen`,
+			);
+	}
+	const ids = new Set(graph.nodes.map((node) => node.id));
+	for (const group of graph.groups ?? []) {
+		const frame = root.querySelector(`[data-group="${group.id}"]`);
+		if (!frame) throw new Error(`no frame for the group ${group.id}`);
+		const box = rect(frame);
+		const members = group.holds.filter((held) => ids.has(held));
+		// A frame of nodes alone ends a padding under its lowest glyph.
+		if (members.length === group.holds.length) {
+			const lowest = Math.max(
+				...members.map((id) => rect(glyph(root, id)).bottom),
+			);
+			if (Math.abs(box.bottom - (lowest + pad)) > slack)
+				throw new Error(`the frame of ${group.id} stands off its glyphs`);
+		}
+		for (const id of members) {
+			const held = rect(glyph(root, id));
+			if (
+				box.left > held.left - pad + 1.5 ||
+				box.top > held.top - pad + 1.5 ||
+				box.right < held.right + pad - 1.5 ||
+				box.bottom < held.bottom + pad - 1.5
+			)
+				throw new Error(
+					`the frame of ${group.id} does not hold the glyph of ${id} by the padding: frame ${JSON.stringify(box)} glyph ${JSON.stringify(held)} pad ${pad} scale ${view.scale}`,
+				);
+		}
+	}
+}
+
+// Empty groups of a graph whose nodes all carry a position, read off the DOM:
+// no layout runs, so they stand in one row below the lowest node, their left
+// edge on the nodes' leftmost, one after another in the order of `ids`.
+export function hollowRow(root: Element, ids: readonly string[]) {
+	const cards = [...root.querySelectorAll("[data-layer] > button")].map(rect);
+	const frames = ids.map((id) => {
+		const frame = root.querySelector(`[data-group="${id}"]`);
+		if (!frame) throw new Error(`no frame for ${id}`);
+		return rect(frame);
+	});
+	const [first] = frames;
+	if (!first || cards.length === 0) throw new Error("no row to read");
+	const lowest = Math.max(...cards.map((c) => c.bottom));
+	const leftmost = Math.min(...cards.map((c) => c.left));
+	if (Math.abs(first.left - leftmost) > 1.5)
+		throw new Error(`the row starts at ${first.left}, nodes at ${leftmost}`);
+	frames.forEach((frame, index) => {
+		if (frame.top <= lowest)
+			throw new Error(`${ids[index]} does not stand below the nodes`);
+		if (Math.abs(frame.top - first.top) > 1.5)
+			throw new Error(`${ids[index]} is not in the row`);
+		const before = frames[index - 1];
+		if (before && frame.left <= before.right)
+			throw new Error(`${ids[index]} is not after ${ids[index - 1]}`);
+	});
+}

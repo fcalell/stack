@@ -1,0 +1,222 @@
+import { createHash, createHmac } from "node:crypto";
+import { existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { LOCAL_PERSIST } from "@fcalell/plugin-cloudflare";
+import type { DbOptions } from "../types.ts";
+import {
+	assertSqliteDriver,
+	runDrizzleKit,
+	writeDrizzleConfig,
+} from "./drizzle-kit.ts";
+import { migrationLockPath, withMigrationLock } from "./lock.ts";
+import { executeSql, MIGRATIONS_TABLE, migrationsApply } from "./wrangler.ts";
+
+// drizzle-kit neither creates the file's directory nor fails without it
+// (a push into a missing `./data` reports success and writes nothing), so
+// the directory is made first.
+function sqliteLocalUrl(cwd: string, options: DbOptions): string {
+	const url =
+		options.dialect === "sqlite" && options.path
+			? options.path
+			: ".db-kit/local.db";
+	mkdirSync(dirname(resolve(cwd, url)), { recursive: true });
+	return url;
+}
+
+// Where miniflare persists a local D1 under plugin-cloudflare's
+// `--persist-to`: one sqlite file per database id, named by miniflare's
+// deterministic durable-object id (`durableObjectNamespaceIdFromName`):
+// HMAC-SHA256 keyed on sha256("miniflare-D1DatabaseObject"), first 16 bytes
+// over the database id, then 16 bytes over that digest. Deriving the exact
+// filename (instead of globbing the dir) stays correct when old persist
+// state holds databases from a previous `databaseId`.
+const MINIFLARE_D1_DIR = `${LOCAL_PERSIST}/v3/d1/miniflare-D1DatabaseObject`;
+
+function miniflareD1Path(cwd: string, databaseId: string): string {
+	const key = createHash("sha256")
+		.update("miniflare-D1DatabaseObject")
+		.digest();
+	const nameHmac = createHmac("sha256", key)
+		.update(databaseId)
+		.digest()
+		.subarray(0, 16);
+	const hmac = createHmac("sha256", key)
+		.update(nameHmac)
+		.digest()
+		.subarray(0, 16);
+	const id = Buffer.concat([nameHmac, hmac]).toString("hex");
+	return join(cwd, MINIFLARE_D1_DIR, `${id}.sqlite`);
+}
+
+// The sqlite file the running `wrangler dev` worker reads. Miniflare creates
+// it lazily, so a fresh project materializes it with a no-op query first.
+function ensureMiniflareD1(cwd: string, databaseId: string): string {
+	const path = miniflareD1Path(cwd, databaseId);
+	if (existsSync(path)) return path;
+	executeSql(cwd, databaseId, "local", "SELECT 1");
+	if (!existsSync(path)) {
+		throw new Error(
+			"Could not materialize the local D1 database. Run `stack dev` once, then retry.",
+		);
+	}
+	return path;
+}
+
+// The committed `.sql` migrations, sorted so listings are deterministic.
+export function listMigrationFiles(cwd: string, options: DbOptions): string[] {
+	const dir = join(cwd, options.migrations ?? "./src/migrations");
+	if (!existsSync(dir)) return [];
+	return readdirSync(dir)
+		.filter((f) => f.endsWith(".sql"))
+		.sort();
+}
+
+// Whether the migrations dir holds at least one `.sql` file. Used to skip the
+// local d1 migrations-apply when the consumer hasn't generated a migration yet.
+export function migrationsExist(cwd: string, options: DbOptions): boolean {
+	return listMigrationFiles(cwd, options).length > 0;
+}
+
+export async function pushSchemaLocal(
+	cwd: string,
+	options: DbOptions,
+): Promise<void> {
+	// `drizzle-kit push` writes to the dev SQLite file; serialize cross-process
+	// to avoid SQLite's per-file lock surfacing as "database is locked" when
+	// `stack db push` is run while `stack dev`'s schema watcher fires.
+	assertSqliteDriver();
+	return withMigrationLock(migrationLockPath(cwd), async () => {
+		const configDir = join(cwd, ".db-kit");
+		mkdirSync(configDir, { recursive: true });
+
+		// The d1 dialect pushes into the exact miniflare sqlite the running
+		// `wrangler dev` worker reads (WS2.3), so a schema change is live
+		// without a restart. Migrations stay the remote deploy path; the local
+		// database is disposable (`stack db reset`).
+		const dbUrl =
+			options.dialect === "d1"
+				? ensureMiniflareD1(cwd, options.databaseId ?? "")
+				: sqliteLocalUrl(cwd, options);
+
+		const configPath = join(configDir, "drizzle.config.ts");
+		// `stack db apply` records into wrangler's migrations table in this same
+		// database. The schema declares no such table, so push would offer to
+		// drop it, behind a data-loss prompt nothing answers.
+		writeDrizzleConfig(configPath, {
+			schema: "./src/schema/index.ts",
+			dbCredentials: { url: dbUrl },
+			tablesFilter: [`!${MIGRATIONS_TABLE}`],
+		});
+
+		runDrizzleKit(cwd, ["push", "--config", configPath]);
+	});
+}
+
+export async function generateMigrations(
+	cwd: string,
+	options: DbOptions,
+): Promise<Array<{ name: string; sql: string }>> {
+	// The pre-fix race: this function snapshots the migrations dir, runs
+	// drizzle-kit generate, then snapshots again. A concurrent writer (e.g.
+	// `stack dev`'s schema watcher pushing schema, which can also trigger a
+	// migration write, or a parallel `stack db generate`) can drop a file
+	// into the dir mid-flight — the dir-snapshot diff would then attribute
+	// that file to *this* generate call's "new" set. Wrap the entire
+	// snapshot/generate/snapshot triple in an exclusive lock so no other
+	// migration-writing operation can interleave.
+	return withMigrationLock(migrationLockPath(cwd), async () => {
+		const migrationsDir = join(cwd, options.migrations ?? "./src/migrations");
+		const existingFiles = new Set<string>();
+		if (existsSync(migrationsDir)) {
+			for (const f of readdirSync(migrationsDir)) {
+				existingFiles.add(f);
+			}
+		}
+
+		const configDir = join(cwd, ".db-kit");
+		mkdirSync(configDir, { recursive: true });
+
+		const configPath = join(configDir, "drizzle-generate.config.ts");
+		writeDrizzleConfig(configPath, {
+			schema: "./src/schema/index.ts",
+			out: options.migrations ?? "./src/migrations",
+		});
+
+		runDrizzleKit(cwd, ["generate", "--config", configPath]);
+
+		const newMigrations: Array<{ name: string; sql: string }> = [];
+		if (existsSync(migrationsDir)) {
+			for (const entry of readdirSync(migrationsDir)) {
+				if (existingFiles.has(entry)) continue;
+				const sqlPath = join(migrationsDir, entry);
+				if (entry.endsWith(".sql")) {
+					newMigrations.push({
+						name: entry,
+						sql: readFileSync(sqlPath, "utf-8"),
+					});
+				}
+			}
+		}
+
+		return newMigrations;
+	});
+}
+
+export async function applyMigrationsRemote(
+	cwd: string,
+	options: DbOptions,
+): Promise<void> {
+	if (options.dialect === "sqlite") {
+		throw new Error("Remote migrations not supported for sqlite dialect");
+	}
+
+	const databaseName = options.databaseId;
+	if (!databaseName) {
+		throw new Error("Cannot apply remote migrations: no databaseId configured");
+	}
+
+	// Wrangler reads every file under `migrations_dir` to compute the
+	// pending list. Hold the lock so a concurrent `generateMigrations` can't
+	// write a half-flushed file into the dir while wrangler is enumerating.
+	return withMigrationLock(migrationLockPath(cwd), async () => {
+		migrationsApply(cwd, databaseName, "remote");
+	});
+}
+
+export async function applyMigrationsLocal(
+	cwd: string,
+	options: DbOptions,
+): Promise<void> {
+	// Both branches read the migrations dir; the sqlite branch additionally
+	// writes journal entries against the local DB. Serialize against any
+	// other migration-writing path under the same lock.
+	return withMigrationLock(migrationLockPath(cwd), async () => {
+		if (options.dialect === "sqlite") {
+			assertSqliteDriver();
+			const configDir = join(cwd, ".db-kit");
+			mkdirSync(configDir, { recursive: true });
+
+			const configPath = join(configDir, "drizzle-migrate.config.ts");
+			writeDrizzleConfig(configPath, {
+				schema: "./src/schema/index.ts",
+				out: options.migrations ?? "./src/migrations",
+				dbCredentials: { url: sqliteLocalUrl(cwd, options) },
+			});
+
+			runDrizzleKit(cwd, ["migrate", "--config", configPath]);
+			return;
+		}
+
+		const databaseName = options.databaseId;
+		if (!databaseName) {
+			throw new Error(
+				"Cannot apply local migrations: no databaseId configured",
+			);
+		}
+
+		// `localD1Flags()` (plugin-cloudflare's `--persist-to` and
+		// `.stack/wrangler.toml`) so the migration lands in the exact
+		// miniflare D1 that `wrangler dev` reads.
+		migrationsApply(cwd, databaseName, "local");
+	});
+}

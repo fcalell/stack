@@ -1,0 +1,8 @@
+language js(typescript, jsx)
+
+// An element of your own takes no `data-density`: a screen read from across a room declares `distance` on its `Place`.
+
+jsx_attribute(name=$n) as $a where {
+	$n <: r"data-density",
+	register_diagnostic(span=$a, message="Never a density of your own on an element: a screen read from across a room declares its distance, and a narrow desktop window pins <html> outside JSX")
+}

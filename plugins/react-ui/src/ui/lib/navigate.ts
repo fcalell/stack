@@ -1,0 +1,207 @@
+import type { Leave } from "@fcalell/ui-core/leave";
+import {
+	createContext,
+	type MouseEvent,
+	use,
+	useSyncExternalStore,
+} from "react";
+
+// The slice of the app's router that routing in place needs, typed
+// structurally so react-ui imports no router. The generated entry hands the
+// app's router to `bindRouter` right after creating it.
+export interface InPlaceRouter {
+	navigate(options: { href: string }): unknown;
+	preloadRoute(options: { href: string }): unknown;
+	subscribe(event: "onResolved", listener: () => void): unknown;
+	state: {
+		location: { href: string };
+		resolvedLocation?: { href: string };
+		// The route chain of the page drawn, root first.
+		matches?: readonly { routeId: string; pathname: string }[];
+	};
+	// The route tree by id: a route is a page when it has no children or one
+	// of them is its index (`path: "/"`).
+	routesById?: Record<
+		string,
+		{ children?: readonly { path?: string }[] | Record<string, unknown> }
+	>;
+	// A blocker resolves `true` to hold a navigation, as the router's own does.
+	history: {
+		block(blocker: {
+			blockerFn: () => Promise<boolean>;
+			enableBeforeUnload: () => boolean;
+		}): () => void;
+	};
+}
+
+// The page holds one router and one location listener, whatever reads the
+// route: every reader hears it through the set. Unbound (routes off, a
+// render outside the app's router) the location is read from the document
+// and an act loads it.
+let bound: InPlaceRouter | undefined;
+const readers = new Set<() => void>();
+const hear = () => {
+	for (const reader of readers) reader();
+};
+
+// How long a pointer or focus rests on a route's anchor before its route is
+// preloaded: TanStack's own intent delay, so a pass across a list loads
+// nothing and a rest on one row loads that row.
+const INTENT_DELAY = 50;
+let intent: ReturnType<typeof setTimeout> | undefined;
+let listening = false;
+
+// Every anchor stack draws is a plain `<a href>`, so one delegated listener
+// for the page covers them all, and TanStack's own `Link`, with no prop on
+// any component. A touch's `pointerover` fires as the finger lands, which is
+// the web's press-in. Any other intent in the window drops the pending one;
+// the bound router is read when the timer fires, so a rebind (the screens
+// workbench binds per story) adds no listener and never preloads into a stale
+// router. External, hash-only and current hrefs have nothing to load.
+function wantsRoute(event: Event): void {
+	clearTimeout(intent);
+	intent = undefined;
+	const link = (event.target as Element | null)?.closest?.("a[href]");
+	const href = link?.getAttribute("href");
+	if (!href || !isRoute(href) || href === drawn()) return;
+	intent = setTimeout(() => {
+		intent = undefined;
+		bound?.preloadRoute({ href });
+	}, INTENT_DELAY);
+}
+
+export function bindRouter(router: InPlaceRouter): void {
+	bound = router;
+	if (!listening) {
+		listening = true;
+		document.addEventListener("pointerover", wantsRoute);
+		document.addEventListener("focusin", wantsRoute);
+	}
+	router.subscribe("onResolved", hear);
+	hear();
+}
+
+// Bound, the router resolves a history move and `onResolved` tells the
+// readers, so the window's events are heard only while unbound.
+const hearWindow = () => {
+	if (!bound) hear();
+};
+
+function onLocation(notify: () => void): () => void {
+	if (readers.size === 0) {
+		addEventListener("popstate", hearWindow);
+		addEventListener("hashchange", hearWindow);
+	}
+	readers.add(notify);
+	return () => {
+		readers.delete(notify);
+		if (readers.size === 0) {
+			removeEventListener("popstate", hearWindow);
+			removeEventListener("hashchange", hearWindow);
+		}
+	};
+}
+
+const unheard = () => () => {};
+
+// Set by a Section around its rows: the route it read once, which each row
+// reads instead of subscribing on its own.
+export const ListedRoute = createContext<string | undefined>(undefined);
+
+// The route drawn: the router's resolved location, so a place's selection
+// flips with the page; unbound, the location's path, query and hash.
+function drawn(): string {
+	if (bound) return (bound.state.resolvedLocation ?? bound.state.location).href;
+	return location.pathname + location.search + location.hash;
+}
+
+// The current route: the location's path, its query and its hash.
+export function useRoute(): string {
+	const listed = use(ListedRoute);
+	const own = useSyncExternalStore(
+		listed === undefined ? onLocation : unheard,
+		drawn,
+		() => "/",
+	);
+	return listed ?? own;
+}
+
+// The route the page above this one is at: the nearest ancestor in the route
+// chain whose pathname differs from the page's own (a pathless layout, or a
+// layout the page shares its path with, is the page itself) and that is a page
+// itself. Unbound, or on a router that hands over no chain, or at the top of
+// the tree, it cannot be known.
+function parentOf(): string | undefined {
+	const matches = bound?.state.matches;
+	const routes = bound?.routesById;
+	if (!matches || !routes) return undefined;
+	const page = matches.at(-1)?.pathname;
+	for (let at = matches.length - 2; at >= 0; at--) {
+		const match = matches[at];
+		if (!match || match.pathname === page) continue;
+		const children = routes[match.routeId]?.children;
+		const list = Array.isArray(children)
+			? children
+			: Object.values(children ?? {});
+		if (
+			list.length === 0 ||
+			list.some((child) => (child as { path?: string }).path === "/")
+		)
+			return match.pathname;
+	}
+	return undefined;
+}
+
+// The route the page above this one is at, read with the route drawn so a
+// move re-reads it (see `parentOf`); `undefined` where the router cannot say.
+export function useParentRoute(): string | undefined {
+	useRoute();
+	return parentOf();
+}
+
+// An href from the app's root is a route; a scheme (`https:`, `mailto:`), a
+// protocol-relative `//` or a bare `#hash` is somewhere else.
+export function isRoute(href: string): boolean {
+	return /^\/(?!\/)/.test(href);
+}
+
+// Bound, a route opens in the router with no document load.
+export function navigate(route: string): void {
+	if (bound && isRoute(route)) bound.navigate({ href: route });
+	else location.assign(route);
+}
+
+// A form that stands edited holds its leave: bound, the router's history asks
+// before any navigation it makes (a push, a replace, the back button), the
+// question's answer deciding whether it goes ahead, and the page's unload is
+// held only while the form asks; unbound, the unload is all the page can hold,
+// since an act there loads the document. Returns the release.
+export function blockLeave(
+	leave: Leave,
+	ask: () => Promise<boolean>,
+): () => void {
+	if (bound) {
+		return bound.history.block({
+			blockerFn: async () => !(await leave.attempt(ask)),
+			enableBeforeUnload: leave.asks,
+		});
+	}
+	const unload = (event: BeforeUnloadEvent) => {
+		if (leave.asks()) event.preventDefault();
+	};
+	addEventListener("beforeunload", unload);
+	return () => removeEventListener("beforeunload", unload);
+}
+
+// An anchor's click: a plain primary click on a route of the app opens it in
+// place; every other click (modifier, middle, external, unbound) is the
+// browser's, so a new tab and a copied link keep working.
+export function follow(event: MouseEvent<HTMLAnchorElement>): void {
+	if (!bound || event.defaultPrevented) return;
+	if (event.button !== 0) return;
+	if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+	const href = event.currentTarget.getAttribute("href");
+	if (href === null || !isRoute(href)) return;
+	event.preventDefault();
+	navigate(href);
+}

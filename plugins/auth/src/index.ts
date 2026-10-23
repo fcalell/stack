@@ -1,0 +1,670 @@
+import type { ContributionCtx } from "@fcalell/cli";
+import { callback, plugin, slot } from "@fcalell/cli";
+import type { TsExpression, TsImportSpec } from "@fcalell/cli/ast";
+import { literalToProps } from "@fcalell/cli/ast";
+import { cliSlots } from "@fcalell/cli/cli-slots";
+import type { PluginRuntimeEntry } from "@fcalell/plugin-api";
+import { api } from "@fcalell/plugin-api";
+import { RESERVED_SLUGS } from "@fcalell/plugin-api/lib/slugify";
+import { cloudflare } from "@fcalell/plugin-cloudflare";
+import { db } from "@fcalell/plugin-db";
+import { screens } from "@fcalell/plugin-screens";
+import { defaultOrgStatements, getStatements } from "./access.ts";
+import type { AuthClientOptions, OrganizationAccess } from "./client.ts";
+import {
+	AUTH_PREFIX,
+	type AuthCallbackPayloads,
+	authOptionsSchema,
+	OAUTH_DISCOVERY_PREFIXES,
+	type ResolvedAuthOptions,
+	resolveSocialProviders,
+} from "./types.ts";
+
+const SOURCE = "auth";
+
+// The tables `@fcalell/plugin-auth/schema/oauth` exports, by export name, the
+// entity vocabulary `mcp` adds.
+const OAUTH_ENTITIES = [
+	"jwks",
+	"oauthAccessToken",
+	"oauthClient",
+	"oauthClientAssertion",
+	"oauthClientResource",
+	"oauthConsent",
+	"oauthRefreshToken",
+	"oauthResource",
+];
+
+// Canonical path for the consumer's auth callback file. Auto-scaffolded by
+// the plugin builder from `templates/callbacks.ts` when callbacks are
+// declared, so this is the single place to keep path + existence checks
+// in sync. Exposed on `auth.slots.callbackFile` so advanced consumers can
+// override without string drift.
+const CALLBACK_FILE = "src/worker/plugins/auth.ts";
+
+// The consumer's scope descriptors (`defineScope`), isomorphic so the worker
+// and the web import the same objects. With organizations on, the generated
+// worker hands the module to the runtime, which serves a `bySlug` lookup per
+// scope with a slug.
+const SCOPES_FILE = "src/shared/scopes.ts";
+const SCOPES_IDENTIFIER = "scopes";
+
+// `ac` carries `newRole`, a function no literal can hold, so only its
+// statements reach generated code, beside each role's grants: the worker and
+// the web client each rebuild the access control and the roles from them.
+function organizationAccess(
+	org: ResolvedAuthOptions["organization"],
+): OrganizationAccess | boolean {
+	if (typeof org !== "object") return Boolean(org);
+	const statements = getStatements(
+		org.ac as { statements?: Record<string, readonly string[]> } | undefined,
+	);
+	return {
+		...(statements ? { statements } : {}),
+		...(org.roles
+			? {
+					roles: org.roles as Record<string, Record<string, readonly string[]>>,
+				}
+			: {}),
+	};
+}
+
+async function wiresScopes(
+	ctx: { fileExists(path: string): Promise<boolean> },
+	options: ResolvedAuthOptions,
+): Promise<boolean> {
+	return Boolean(options.organization) && (await ctx.fileExists(SCOPES_FILE));
+}
+
+// ── Slot declarations ──────────────────────────────────────────────
+//
+// `runtimeOptions` is a DERIVED slot: its inputs are `api.slots.cors`,
+// `api.slots.devCorsOrigins` and `api.slots.devTargetOrigins`, so the graph
+// guarantees every origin contribution (including vite's localhost) is
+// resolved BEFORE this compute runs. Bug #5 (auth cors ordering) is structurally impossible here: no
+// payload to mutate, no handler ordering, just dataflow.
+
+// The addresses an organization's slug may not take, beside plugin-api's
+// `RESERVED_SLUGS`: an organization is served at `/<slug>`, so a slug that
+// names one of the app's own top-level routes would shadow it. A frontend
+// plugin contributes its routes' first segments; auth never reads a
+// frontend's routes itself.
+const reservedSlugs = slot.list<string>({
+	source: SOURCE,
+	name: "reservedSlugs",
+});
+
+const runtimeOptions = slot.derived({
+	source: SOURCE,
+	name: "runtimeOptions",
+	inputs: {
+		cors: api.slots.cors,
+		devCors: api.slots.devCorsOrigins,
+		devTargets: api.slots.devTargetOrigins,
+		reserved: reservedSlugs,
+		nativeScheme: api.slots.nativeScheme,
+	},
+	compute: async (
+		inp,
+		ctx: ContributionCtx<ResolvedAuthOptions>,
+	): Promise<Record<string, TsExpression>> => {
+		// Bug #1: empty-CORS contract. Better Auth silently treats
+		// `undefined` trustedOrigins as "allow nothing" on some paths and
+		// "fall back to baseURL" on others — both are footguns. Refuse to
+		// generate instead of emitting an ambiguous runtime; the error
+		// enumerates every way the consumer can supply origins.
+		if (inp.cors.length === 0) {
+			throw new Error(
+				"plugin-auth: cannot generate runtime — no trusted origins are available. " +
+					"Better Auth requires at least one trusted origin for CSRF protection. " +
+					"Fix by one of:\n" +
+					"  • set `app.domain` in stack.config.ts (derives https://<domain> + https://app.<domain>)\n" +
+					"  • set `app.origins: [...]` to supply the allow-list explicitly",
+			);
+		}
+
+		// Seed with every consumer-supplied option (secretVar, appUrlVar,
+		// cookies, session, user, organization). `literalToProps` produces a
+		// Record<string, TsExpression> so we can splice in derived keys below
+		// without re-literalising the whole object.
+		//   • `callbacks` — owned by api.slots.callbacks and spliced in by
+		//     api's codegen; a consumer passing it in options would collide.
+		const rawOptions = { ...(ctx.options as Record<string, unknown>) };
+		delete rawOptions.callbacks;
+		// `rateLimiter` — replace the full options object (limit/period are
+		// wrangler-binding config, enforced by the binding itself) with the
+		// binding names only, so the runtime knows which env keys to read for
+		// `_rateLimiter`. Schema defaults guarantee both are present.
+		rawOptions.rateLimiter = {
+			ip: { binding: ctx.options.rateLimiter.ip.binding },
+			email: { binding: ctx.options.rateLimiter.email.binding },
+			...(ctx.options.mcp
+				? { agent: { binding: ctx.options.rateLimiter.agent.binding } }
+				: {}),
+		};
+		// Baked only when on, so the runtime's context types the `oauth`
+		// capability from the literal.
+		if (!ctx.options.mcp) delete rawOptions.mcp;
+		// Bake resolved provider → env-var references (never the raw
+		// `true`/object input). Only var names are emitted; the runtime reads
+		// credentials from env. Drop the key entirely when no provider is set.
+		const resolvedProviders = resolveSocialProviders(
+			ctx.options.socialProviders,
+		);
+		if (Object.keys(resolvedProviders).length > 0) {
+			rawOptions.socialProviders = resolvedProviders;
+		} else {
+			delete rawOptions.socialProviders;
+		}
+		// Native (Expo) consumer: the runtime enables Better Auth's server-side
+		// expo() plugin. The deep-link scheme is consumed below.
+		const expoEnabled = ctx.options.expo === true;
+		if (!expoEnabled) delete rawOptions.expo;
+
+		// Passkeys: bake every derived default, so the runtime never guesses.
+		// `app.domain` is a registrable suffix of the derived origins, which
+		// WebAuthn requires of the relying-party id. `devOrigin` is the dev
+		// half: under STACK_DEV the runtime swaps in `rpID: "localhost"` and
+		// these origins, since a localhost ceremony matches neither production
+		// value.
+		const devOrigins = [...inp.devCors, ...inp.devTargets];
+		const passkey = ctx.options.passkey;
+		if (passkey) {
+			rawOptions.passkey = {
+				rpID: passkey.rpID ?? ctx.app.domain,
+				rpName: passkey.rpName ?? ctx.app.name,
+				origin: passkey.origin ?? inp.cors,
+				...(devOrigins.length > 0 ? { devOrigin: devOrigins } : {}),
+				...(passkey.authenticatorSelection
+					? { authenticatorSelection: passkey.authenticatorSelection }
+					: {}),
+			};
+		} else {
+			delete rawOptions.passkey;
+		}
+
+		if (typeof ctx.options.organization === "object") {
+			rawOptions.organization = organizationAccess(ctx.options.organization);
+		}
+		// The slugs the runtime refuses on organization create and update.
+		if (ctx.options.organization) {
+			rawOptions.reservedSlugs = [
+				...new Set([...RESERVED_SLUGS, ...inp.reserved]),
+			].sort();
+		}
+
+		const props = literalToProps(rawOptions);
+
+		// trustedOrigins: web CORS origins, plus the native deep-link scheme
+		// when `expo` is set: api's `nativeScheme`, the one the native app
+		// registers, and its wildcard. A custom scheme is not a valid HTTP CORS
+		// origin, so it flows here directly rather than through api.slots.cors
+		// — Better Auth's CSRF origin check rejects native requests otherwise,
+		// even for ID-token sign-in. Empty is structurally impossible (thrown
+		// above), so the consumer sees exactly what Better Auth sees at runtime.
+		const trustedOrigins = [...inp.cors];
+		if (expoEnabled) {
+			if (inp.nativeScheme === null) {
+				throw new Error(
+					"plugin-auth: `expo: true` trusts the native app's deep-link scheme, and no plugin contributes one. Add `expo()` to stack.config.ts.",
+				);
+			}
+			trustedOrigins.push(`${inp.nativeScheme}://`, `${inp.nativeScheme}://*`);
+		}
+		props.trustedOrigins = {
+			kind: "array",
+			items: trustedOrigins.map((o) => ({ kind: "string", value: o })),
+		};
+
+		// Dev-server origins ride separately and are applied by the runtime
+		// only under STACK_DEV; baking them in here is what let a production
+		// deploy trust localhost.
+		if (devOrigins.length > 0) {
+			props.devTrustedOrigins = {
+				kind: "array",
+				items: devOrigins.map((o) => ({ kind: "string", value: o })),
+			};
+		}
+
+		// A native client is always cross-site (custom scheme, no browser
+		// origin), so its cookies need sameSite=none in production too. Web
+		// consumers stay on the browser default; the runtime widens them to
+		// none in dev, where the vite origin and the worker are cross-origin
+		// and a lax cookie would be dropped. The runtime pairs sameSite=none
+		// with secure=true automatically.
+		if (expoEnabled) {
+			props.sameSite = { kind: "string", value: "none" };
+		}
+
+		// Paired with the namespace import contributed to
+		// `api.slots.workerImports` below.
+		if (await wiresScopes(ctx, ctx.options)) {
+			props.scopes = { kind: "identifier", name: SCOPES_IDENTIFIER };
+		}
+
+		return props;
+	},
+});
+
+// Canonical dev URL for `APP_URL`'s devDefault: the first frontend origin
+// (`api.slots.devCorsOrigins`: vite, metro, or the local entries of an
+// explicit `app.origins`), else the first deploy-target origin
+// (`api.slots.devTargetOrigins`: the node server, wrangler). Only an
+// explicit `app.origins` with no local entry leaves both empty, and then the
+// production domain is the value. Plugin-auth never imports a frontend or a
+// deploy target: the handoff is the shared slots.
+const appUrlDevDefault = slot.derived({
+	source: SOURCE,
+	name: "appUrlDevDefault",
+	inputs: {
+		devCors: api.slots.devCorsOrigins,
+		devTargets: api.slots.devTargetOrigins,
+	},
+	compute: (inp, ctx): string =>
+		inp.devCors[0] ?? inp.devTargets[0] ?? `https://${ctx.app.domain}`,
+});
+
+// Resolvable callback-file location. Value slot with a seed default;
+// consumers who restructure the worker layout can override via
+// `override: true` without the wiring silently breaking.
+const callbackFile = slot.value<string>({
+	source: SOURCE,
+	name: "callbackFile",
+	seed: () => CALLBACK_FILE,
+});
+
+// The resolved session-cookie prefix. "better-auth" is better-auth's own
+// default on both the server and the expo client, so an unset option still
+// yields a matching pair. Peer plugins (native-ui's generated auth-client
+// constants) read this instead of hardcoding a prefix that silently drops
+// every session cookie on mismatch.
+const cookiePrefix = slot.value<string, ResolvedAuthOptions>({
+	source: SOURCE,
+	name: "cookiePrefix",
+	seed: (ctx) => ctx.options.cookies?.prefix ?? "better-auth",
+});
+
+// The web client's flags, derived from the options so the client and the
+// server enable the same better-auth plugins. Seeded null and filled by
+// auth's own contribution, so a frontend reading it without auth in the
+// config sees null.
+export type AuthClientFlags = Required<Omit<AuthClientOptions, "baseURL">>;
+
+const clientFlags = slot.value<AuthClientFlags | null>({
+	source: SOURCE,
+	name: "clientFlags",
+	seed: () => null,
+});
+
+export const auth = plugin("auth", {
+	label: "Auth",
+
+	schema: authOptionsSchema,
+
+	requires: ["api", "db"],
+
+	// Payload shapes come from `AuthCallbackPayloads` (./types) — the single
+	// source shared with the worker runtime's `AuthCallbacks` interface
+	// (./worker/index.ts), so `defineCallbacks`'s inferred type and the
+	// worker-safe `AuthCallbacks` type consumers import from `./runtime` can
+	// never drift apart.
+	callbacks: {
+		// Required only while `emailOtp` is on; the runtime refuses to build
+		// better-auth without it then.
+		sendOTP: callback.optional<AuthCallbackPayloads["sendOTP"]>(),
+		// Required only while `magicLink` is on, as `sendOTP` is for `emailOtp`.
+		sendMagicLink: callback.optional<AuthCallbackPayloads["sendMagicLink"]>(),
+		sendInvitation: callback.optional<AuthCallbackPayloads["sendInvitation"]>(),
+		beforeDelete: callback.optional<AuthCallbackPayloads["beforeDelete"]>(),
+		sendDeleteVerification:
+			callback.optional<AuthCallbackPayloads["sendDeleteVerification"]>(),
+		// Read synchronously by better-auth, and `undefined` means "use the
+		// default generator for this request", so the return type is declared
+		// rather than left at the framework's awaited default.
+		generateOTP: callback.optional<
+			AuthCallbackPayloads["generateOTP"],
+			string | undefined
+		>(),
+	},
+
+	guide: [
+		{
+			page: "config",
+			trigger:
+				"Configuring auth: `auth()` options, its env vars, or the auth tables `src/schema/index.ts` re-exports",
+		},
+		{
+			page: "callbacks",
+			trigger:
+				"Writing `src/worker/plugins/auth.ts`: sending codes, magic links or invitations, account deletion, or a sign-in flow of your own",
+		},
+		{
+			page: "sign-in",
+			trigger:
+				"Adding OAuth, passkeys or magic links, or calling auth from the web or native client",
+		},
+		{
+			page: "mcp-oauth",
+			trigger:
+				"Letting an MCP client connect (`mcp: true`), verifying its access token, or revoking a grant",
+		},
+		{
+			page: "organizations",
+			trigger:
+				"Working with organizations, members, invitations, roles or organization slugs",
+		},
+		{
+			page: "scopes",
+			trigger:
+				"Declaring a tenancy level below the organization (`defineScope`)",
+		},
+		{
+			page: "abilities",
+			trigger:
+				"Gating access by a record's own data (an owner column, a per-record role)",
+		},
+		{ page: "add-a-role", trigger: "Adding a role or a permission" },
+		{
+			page: "protect-by-scope",
+			trigger:
+				"Restricting a procedure to the members of an organization or a scope",
+		},
+	],
+
+	slots: {
+		runtimeOptions,
+		appUrlDevDefault,
+		callbackFile,
+		cookiePrefix,
+		clientFlags,
+		reservedSlugs,
+	},
+
+	contributes: (self) => [
+		// Init prompts: cookie prefix + optional organization feature toggle.
+		// `app.name` is captured from the contribution ctx (the orchestrator
+		// only hands `prompt` into `ask`, so we close over the value here).
+		// `app.name` is the default cookie prefix:
+		// hardcoding "app" leaked the wrong value into every fresh project.
+		cliSlots.initPrompts.contribute((ctx) => {
+			const cookiePrefixDefault = ctx.app.name;
+			return {
+				plugin: "auth",
+				ask: async (rawCtx) => {
+					// ContributionCtx carries `prompt` in its CLI shape (the ask
+					// function is invoked by command code with the real ctx). We
+					// cast narrowly to read prompt without widening the public
+					// PromptSpec surface.
+					const c = rawCtx as {
+						prompt: {
+							text: (
+								msg: string,
+								opts?: { default?: string },
+							) => Promise<string>;
+							confirm: (msg: string) => Promise<boolean>;
+						};
+					};
+					const prefix = await c.prompt.text("Cookie prefix:", {
+						default: cookiePrefixDefault,
+					});
+					const organization = await c.prompt.confirm("Include organizations?");
+					return {
+						cookies: { prefix },
+						organization,
+					};
+				},
+			};
+		}),
+
+		// better-auth needs `node:async_hooks` at runtime, which the Workers
+		// runtime only exposes under `nodejs_compat`. Unconditional — every
+		// auth configuration needs it.
+		cloudflare.slots.compatibilityFlags.contribute(() => "nodejs_compat"),
+
+		// Rate limiter bindings for IP + email.
+		cloudflare.slots.bindings.contribute(() => [
+			{
+				kind: "rate_limiter" as const,
+				binding: self.options.rateLimiter.ip.binding,
+				simple: {
+					limit: self.options.rateLimiter.ip.limit,
+					period: self.options.rateLimiter.ip.period,
+				},
+			},
+			{
+				kind: "rate_limiter" as const,
+				binding: self.options.rateLimiter.email.binding,
+				simple: {
+					limit: self.options.rateLimiter.email.limit,
+					period: self.options.rateLimiter.email.period,
+				},
+			},
+			// One bucket per agent grant, bound only while agents connect.
+			...(self.options.mcp
+				? [
+						{
+							kind: "rate_limiter" as const,
+							binding: self.options.rateLimiter.agent.binding,
+							simple: {
+								limit: self.options.rateLimiter.agent.limit,
+								period: self.options.rateLimiter.agent.period,
+							},
+						},
+					]
+				: []),
+		]),
+
+		// Env: AUTH_SECRET + APP_URL (consumer-renameable via options).
+		// APP_URL's devDefault comes from `appUrlDevDefault`, the first
+		// frontend dev origin, else the deploy target's.
+		api.slots.env.contribute(async (ctx) => {
+			const devAppUrl = await ctx.resolve(self.slots.appUrlDevDefault);
+			// One client-id + client-secret entry per enabled OAuth provider, so
+			// the generated `.dev.vars` template prompts for real credentials.
+			const providerSecrets = Object.values(
+				resolveSocialProviders(self.options.socialProviders),
+			)
+				.filter((p): p is NonNullable<typeof p> => p !== undefined)
+				.flatMap((p) => [
+					{ name: p.clientIdVar, devDefault: "dev-oauth-client-id" },
+					{ name: p.clientSecretVar, devDefault: "dev-oauth-client-secret" },
+				]);
+			return [
+				{
+					// Dev default satisfies its own minLength so a fresh project
+					// serves out of the box; better-auth warns below 32 chars.
+					name: self.options.secretVar,
+					devDefault: "dev-secret-change-me-32-chars-minimum",
+					validate: { minLength: 32 },
+				},
+				{
+					name: self.options.appUrlVar,
+					devDefault: devAppUrl,
+					// `devLocalhost`: a non-local APP_URL while STACK_DEV is set
+					// means dev settings leaked into a deploy — refuse to serve.
+					validate: { url: true, devLocalhost: true },
+				},
+				...providerSecrets,
+			];
+		}),
+
+		// The auth surface is worker-owned but lives outside api's own
+		// prefix, so deploy targets (vite's dev proxy, the node server's mount
+		// table) only route it once it is declared here.
+		// With `mcp`, the two discovery documents an MCP client reads first
+		// are the worker's too.
+		api.slots.routePrefixes.contribute(() =>
+			self.options.mcp
+				? [AUTH_PREFIX, ...OAUTH_DISCOVERY_PREFIXES]
+				: AUTH_PREFIX,
+		),
+
+		// The screens workbench answers the session a signed-in screen reads, as
+		// the `auth.session` procedure and as better-auth's `get-session`;
+		// without `screens` in the config the slots resolve to nothing and these
+		// are no-ops.
+		screens.slots.handlerModules.contribute(
+			() => "@fcalell/plugin-auth/screens",
+		),
+		screens.slots.fixtureModules.contribute(
+			() => "@fcalell/plugin-auth/screens-fixtures",
+		),
+
+		// The MCP endpoint (api's `src/worker/mcp.ts`) authenticates through
+		// this provider, and answers at `/mcp`: no organization may take it.
+		api.slots.mcpAuth.contribute(() => (self.options.mcp ? true : undefined)),
+		self.slots.reservedSlugs.contribute(() =>
+			self.options.mcp ? "mcp" : undefined,
+		),
+
+		// The extension stays, as on the callbacks import: the node target runs
+		// the generated worker as written.
+		api.slots.workerImports.contribute(
+			async (ctx): Promise<TsImportSpec | undefined> =>
+				(await wiresScopes(ctx, self.options))
+					? { source: `../${SCOPES_FILE}`, namespace: SCOPES_IDENTIFIER }
+					: undefined,
+		),
+
+		self.slots.clientFlags.contribute(() => ({
+			passkey: self.options.passkey !== false,
+			emailOtp: self.options.emailOtp,
+			magicLink: self.options.magicLink,
+			organization: organizationAccess(self.options.organization),
+			mcp: self.options.mcp,
+		})),
+
+		// Worker runtime entry. Resolves `runtimeOptions` inside the
+		// contribution — the graph guarantees cors is fully-resolved before
+		// the derivation runs, so the emitted call carries baked-in
+		// trustedOrigins / sameSite values.
+		api.slots.pluginRuntimes.contribute(
+			async (ctx): Promise<PluginRuntimeEntry> => {
+				const options = await ctx.resolve(self.slots.runtimeOptions);
+				return {
+					plugin: "auth",
+					import: {
+						source: "@fcalell/plugin-auth/runtime",
+						default: "authRuntime",
+					},
+					identifier: "authRuntime",
+					options,
+				};
+			},
+		),
+
+		// Callbacks: wire the consumer's callback file onto the auth runtime
+		// entry whenever it exists. With `emailOtp` on, `sendOTP` is required,
+		// and with `magicLink` on, `sendMagicLink`, so a missing file is a misconfiguration: throwing here beats
+		// generating a worker that refuses its first request. Path is resolved
+		// via `auth.slots.callbackFile` so consumers who restructure the repo
+		// can point at a new location.
+		api.slots.callbacks.contribute(async (ctx) => {
+			const path = await ctx.resolve(self.slots.callbackFile);
+			const exists = await ctx.fileExists(path);
+			if (!exists) {
+				// Without a code or link sign-in no callback is required: skip
+				// wiring instead of forcing a dead file.
+				if (self.options.emailOtp === false && !self.options.magicLink)
+					return undefined;
+				const needs = [
+					...(self.options.emailOtp === false ? [] : ["`sendOTP`"]),
+					...(self.options.magicLink ? ["`sendMagicLink`"] : []),
+				].join(" and ");
+				throw new Error(
+					`plugin-auth: callback file \`${path}\` is missing. ` +
+						`The consumer implements ${needs} there. ` +
+						"Run `stack init` / `stack add auth` to scaffold the file, " +
+						"or turn the sign-in that needs it off.",
+				);
+			}
+			// Strip the `src/` prefix when computing the import source —
+			// generated worker sits at `.stack/worker.ts` and imports
+			// relative to itself. Consumers overriding `callbackFile` MUST
+			// keep the file under `src/` — enforced below.
+			if (!path.startsWith("src/")) {
+				throw new Error(
+					`plugin-auth: \`auth.slots.callbackFile\` must live under \`src/\` ` +
+						`(got \`${path}\`). The generated worker imports callbacks relative ` +
+						`to \`.stack/worker.ts\` and cannot reach paths outside \`src/\`.`,
+				);
+			}
+			// The extension stays: the Node target runs the generated worker as
+			// written, and ESM resolves no extensionless path.
+			const importSource = `../${path}`;
+			return {
+				auth: {
+					import: {
+						source: importSource,
+						default: "authCallbacks",
+					},
+					identifier: "authCallbacks",
+				},
+			};
+		}),
+
+		// RBAC action-name autocomplete for `procedure({ rbac: [...] })`.
+		// Contributed only when organization access control is enabled —
+		// `organization` absent/`false` leaves `api.slots.rbacStatements` at
+		// its `null` default (rbac still works, just without narrowed
+		// autocomplete). A custom `organization.ac` (a better-auth
+		// `createAccessControl(...)` result) is authoritative when supplied;
+		// otherwise fall back to the plugin's own default statements
+		// (`access.ts`'s `defaultOrgStatements`, backing `defaultOrgRoles`).
+		// Matches what `hasPermission` actually checks at runtime: better-auth
+		// authorizes off each role's own `.statements` (built from this same
+		// universe via `newRole`), never a separate `ac.statements` lookup — so
+		// the default-statements case is exactly the runtime-checked
+		// resource/action universe, not a guess.
+		api.slots.rbacStatements.contribute(() => {
+			const org = self.options.organization;
+			if (!org) return undefined;
+			const customStatements =
+				typeof org === "object"
+					? getStatements(
+							org.ac as
+								| { statements?: Record<string, readonly string[]> }
+								| undefined,
+						)
+					: undefined;
+			return customStatements ?? defaultOrgStatements;
+		}),
+
+		// Entity vocabulary handoff (WS3.2/WS1 fix)
+		// — auth owns these Drizzle tables (`../schema/index.ts`,
+		// `../schema/organization.ts`, `../schema/passkey.ts`, `../schema/oauth.ts`) but a consumer's `src/schema/index.ts`
+		// only ever `export *`s them, which `extractSchemaEntities`
+		// (plugin-db) deliberately can't see through. Contributing the export
+		// names directly here is what makes `procedure({ reads: ["member"] })`
+		// (auth's own `orgRules` procedure) — and a consumer's role-changing
+		// mutations declaring `writes: ["member"]` — type-check and actually
+		// participate in cache invalidation.
+		api.slots.entities.contribute(() => {
+			const names = ["account", "session", "user", "verification"];
+			if (self.options.organization) {
+				names.push("invitation", "member", "organization");
+			}
+			if (self.options.passkey) names.push("passkey");
+			if (self.options.mcp) names.push(...OAUTH_ENTITIES);
+			return names;
+		}),
+
+		// The scaffolded schema re-exports auth's tables, so they migrate with
+		// the app's own.
+		db.slots.schemaModules.contribute(() => {
+			const modules = ["@fcalell/plugin-auth/schema"];
+			if (self.options.organization) {
+				modules.push("@fcalell/plugin-auth/schema/organization");
+			}
+			if (self.options.passkey) {
+				modules.push("@fcalell/plugin-auth/schema/passkey");
+			}
+			if (self.options.mcp) {
+				modules.push("@fcalell/plugin-auth/schema/oauth");
+			}
+			return modules;
+		}),
+	],
+});
+
+export type { AuthOptions } from "./types.ts";

@@ -1,0 +1,202 @@
+{
+	"name": "@fcalell/ui-core",
+	"version": "0.0.0",
+	"type": "module",
+	"sideEffects": false,
+	"imports": {
+		"#*": "./src/*.ts"
+	},
+	"exports": {
+		"./tokens": {
+			"types": "./dist/tokens.d.ts",
+			"default": "./dist/tokens.js"
+		},
+		"./schema": {
+			"types": "./dist/schema.d.ts",
+			"default": "./dist/schema.js"
+		},
+		"./derive": {
+			"types": "./dist/derive.d.ts",
+			"default": "./dist/derive.js"
+		},
+		"./emit": {
+			"types": "./dist/emit.d.ts",
+			"default": "./dist/emit.js"
+		},
+		"./commit": {
+			"types": "./dist/commit.d.ts",
+			"default": "./dist/commit.js"
+		},
+		"./canvas": {
+			"types": "./dist/canvas.d.ts",
+			"default": "./dist/canvas.js"
+		},
+		"./chart": {
+			"types": "./dist/chart.d.ts",
+			"default": "./dist/chart.js"
+		},
+		"./clock": {
+			"types": "./dist/clock.d.ts",
+			"default": "./dist/clock.js"
+		},
+		"./reason": {
+			"types": "./dist/reason.d.ts",
+			"default": "./dist/reason.js"
+		},
+		"./format": {
+			"types": "./dist/format.d.ts",
+			"default": "./dist/format.js"
+		},
+		"./file": {
+			"types": "./dist/file.d.ts",
+			"default": "./dist/file.js"
+		},
+		"./cn": {
+			"types": "./dist/cn.d.ts",
+			"default": "./dist/cn.js"
+		},
+		"./variants": {
+			"types": "./dist/variants.d.ts",
+			"default": "./dist/variants.js"
+		},
+		"./descriptors": {
+			"types": "./dist/descriptors.d.ts",
+			"default": "./dist/descriptors.js"
+		},
+		"./roster": {
+			"types": "./dist/roster.d.ts",
+			"default": "./dist/roster.js"
+		},
+		"./route": {
+			"types": "./dist/route.d.ts",
+			"default": "./dist/route.js"
+		},
+		"./manifest": {
+			"types": "./dist/manifest.d.ts",
+			"default": "./dist/manifest.js"
+		},
+		"./leave": {
+			"types": "./dist/leave.d.ts",
+			"default": "./dist/leave.js"
+		},
+		"./action-bar": {
+			"types": "./dist/action-bar.d.ts",
+			"default": "./dist/action-bar.js"
+		},
+		"./controls": {
+			"types": "./dist/controls.d.ts",
+			"default": "./dist/controls.js"
+		},
+		"./form": {
+			"types": "./dist/form.d.ts",
+			"default": "./dist/form.js"
+		},
+		"./pick": {
+			"types": "./dist/pick.d.ts",
+			"default": "./dist/pick.js"
+		},
+		"./list-state": {
+			"types": "./dist/list-state.d.ts",
+			"default": "./dist/list-state.js"
+		},
+		"./prose": {
+			"types": "./dist/prose.d.ts",
+			"default": "./dist/prose.js"
+		},
+		"./line-diff": {
+			"types": "./dist/line-diff.d.ts",
+			"default": "./dist/line-diff.js"
+		},
+		"./stages": {
+			"types": "./dist/stages.d.ts",
+			"default": "./dist/stages.js"
+		},
+		"./banner": {
+			"types": "./dist/banner.d.ts",
+			"default": "./dist/banner.js"
+		},
+		"./read": {
+			"types": "./dist/read.d.ts",
+			"default": "./dist/read.js"
+		},
+		"./fold": {
+			"types": "./dist/fold.d.ts",
+			"default": "./dist/fold.js"
+		},
+		"./paint": {
+			"types": "./dist/paint.d.ts",
+			"default": "./dist/paint.js"
+		},
+		"./follow": {
+			"types": "./dist/follow.d.ts",
+			"default": "./dist/follow.js"
+		},
+		"./roll": {
+			"types": "./dist/roll.d.ts",
+			"default": "./dist/roll.js"
+		},
+		"./scramble": {
+			"types": "./dist/scramble.d.ts",
+			"default": "./dist/scramble.js"
+		},
+		"./arrive": {
+			"types": "./dist/arrive.d.ts",
+			"default": "./dist/arrive.js"
+		},
+		"./window": {
+			"types": "./dist/window.d.ts",
+			"default": "./dist/window.js"
+		},
+		"./streaming": {
+			"types": "./dist/streaming.d.ts",
+			"default": "./dist/streaming.js"
+		},
+		"./rules": {
+			"types": "./dist/rules.d.ts",
+			"default": "./dist/rules.js"
+		}
+	},
+	"files": [
+		"dist",
+		"src",
+		"scripts",
+		"guide",
+		"README.md",
+		"DESIGN.md",
+		"tsconfig.json",
+		"tsconfig.build.json"
+	],
+	"license": "MIT",
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"prepare": "pnpm build",
+		"check-types": "tsc --noEmit --pretty",
+		"lint": "biome check --write --unsafe",
+		"check": "pnpm check-types && pnpm lint",
+		"clear": "rm -rf dist node_modules .turbo",
+		"design-md": "tsx scripts/design-md.ts && design.md lint DESIGN.md",
+		"motion:apply": "tsx scripts/apply-motion.ts"
+	},
+	"dependencies": {
+		"class-variance-authority": "^0.7.1",
+		"clsx": "^2.1.1",
+		"diff": "^8.0.2",
+		"lucide": "^1.49.0",
+		"marked": "^18.0.7",
+		"tailwind-merge": "^3.5.0"
+	},
+	"peerDependencies": {
+		"zod": "^4.0.0"
+	},
+	"devDependencies": {
+		"@fcalell/cli": "workspace:*",
+		"@fcalell/typescript-config": "workspace:*",
+		"@google/design.md": "^0.4.0",
+		"@tailwindcss/cli": "^4.1.7",
+		"@types/node": "^25.5.0",
+		"tailwindcss": "^4.1.7",
+		"tsx": "^4.19.0",
+		"typescript": "^5.9.3",
+		"zod": "^4.3.6"
+	}
+}

@@ -1,0 +1,21 @@
+{
+	"name": "@fcalell/stack",
+	"private": true,
+	"scripts": {
+		"lint": "biome check --write --unsafe",
+		"check-types": "turbo run check-types",
+		"build": "turbo run build",
+		"check": "turbo run check-types && biome check",
+		"showcase": "turbo run build --filter=showcase^... && pnpm --filter showcase dev",
+		"clear": "pnpm -r --if-present run clear && rm -rf node_modules .turbo",
+		"stories": "turbo run build --filter=showcase^... && pnpm --filter showcase generate && pnpm --filter showcase storybook"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.4.16",
+		"turbo": "^2.8.17"
+	},
+	"packageManager": "pnpm@11.28.4",
+	"engines": {
+		"node": ">=24"
+	}
+}

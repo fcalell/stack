@@ -1,0 +1,173 @@
+# @fcalell/plugin-api
+
+API plugin for the `@fcalell/stack` framework. Wraps Hono + oRPC + Zod so consumers only define procedures. Provides the builder chain, procedure factory, typed RPC client, and slot-driven CLI hooks for dev/build/deploy.
+
+**Stack:** Hono + oRPC + Zod (all internal -- consumers don't import them)
+
+## Install
+
+```bash
+pnpm add @fcalell/plugin-api
+```
+
+## Guide
+
+Writing procedures, worker middleware, the client and its reads, acts and abilities, options, pagination and slugs lives in
+`guide/`, indexed into a consumer's `.stack/guide.md`:
+[`add-a-procedure.md`](./guide/add-a-procedure.md), [`procedures.md`](./guide/procedures.md),
+[`middleware.md`](./guide/middleware.md), [`client.md`](./guide/client.md),
+[`reads.md`](./guide/reads.md), [`pages-and-streams.md`](./guide/pages-and-streams.md),
+[`acts.md`](./guide/acts.md), [`abilities.md`](./guide/abilities.md),
+[`provider.md`](./guide/provider.md), [`mcp.md`](./guide/mcp.md), [`config.md`](./guide/config.md) and
+[`utilities.md`](./guide/utilities.md).
+
+## Plugin implementation
+
+Built with `plugin` from `@fcalell/cli`. Owns every fragment of `.stack/worker.ts` as a slot; peer plugins (`db`, `auth`, `vite`, …) contribute via the typed slot tokens below.
+
+```ts
+import { plugin, slot } from "@fcalell/cli";
+import { emitArtifact } from "@fcalell/cli/cli-slots";
+
+export const api = plugin("api", {
+  label: "API",
+  schema: apiOptionsSchema,
+  devDependencies: { wrangler: "^4.14.0" },
+  gitignore: [".wrangler", ".stack"],
+  slots: { workerImports, pluginRuntimes, /* ... */ workerSource },
+  contributes: (self) => [
+    emitArtifact(".stack/worker.ts", self.slots.workerSource),
+    // route barrel, dev process, route watcher, deploy step, remove cleanup …
+  ],
+});
+```
+
+### Owned slots
+
+| Slot | Kind | Purpose |
+|------|------|---------|
+| `api.slots.workerImports` | `list<TsImportSpec>` | Imports for `.stack/worker.ts` |
+| `api.slots.pluginRuntimes` | `list<PluginRuntimeEntry>` | `.use(xRuntime({...}))` entries; `db` and `auth` push here |
+| `api.slots.middlewareEntries` | `list<MiddlewareSpec>` | Hono middleware (phase-ordered); `after-context` mounts after context injection, every other phase before |
+| `api.slots.middlewareCalls` | `derived<MiddlewareCall[]>` | Sorted calls from `middlewareEntries`, each with the method that mounts it (`use` / `useAfterContext`) |
+| `api.slots.middlewareImports` | `derived<TsImportSpec[]>` | Deduplicated middleware imports |
+| `api.slots.routesHandler` | `value<{ identifier } \| null>` | Routes namespace identifier (seeded from `src/worker/routes` existence) |
+| `api.slots.mcpAuth` | `value<boolean>` (`override`, seed false) | Whether the worker holds an OAuth provider for MCP clients; auth contributes true under `auth({ mcp: true })`, and `src/worker/mcp.ts` is refused without it |
+| `api.slots.mcpMount` | `derived<{ identifier, name } \| null>` | The MCP endpoint's mount, set when `src/worker/mcp.ts` exists; refuses the file without `mcpAuth`, without routable files, or under `api({ prefix: "/mcp" })`; `/mcp` joins `routePrefixes` and the file's default export is `.handler`'s `mcp` |
+| `api.slots.corsOrigins` | `list<string>` | Extra production origins |
+| `api.slots.devCorsOrigins` | `list<string>` | Frontend dev origins (vite and expo push their localhost here, api the local entries of `app.origins`); applied only under `STACK_DEV` |
+| `api.slots.devTargetOrigins` | `list<string>` | Deploy-target dev origins (node and cloudflare push their dev process's localhost here); baked after `devCorsOrigins` as `createWorker({ devCors })`, applied only under `STACK_DEV` |
+| `api.slots.nativeScheme` | `value<string \| null>` | The native app's deep-link scheme (expo contributes it); null without a native app. auth trusts it, native-ui bakes it into the native auth client |
+| `api.slots.routePrefixes` | `list<string>` | URL prefixes the worker owns (api pushes its `prefix`, auth its `/api/auth`); deploy targets read this to mount or forward worker paths |
+| `api.slots.localOrigins` | `value<"dev" \| "deployed">` | Whether the local origins of `app.origins` are dev origins or the deployed list; a local deploy target (node on loopback) sets `deployed` |
+| `api.slots.cors` | `derived<string[]>` | Final production CORS list: `app.origins` minus local origins (kept under `localOrigins: deployed`), or `[https://domain, https://app.domain, ...corsOrigins]` |
+| `api.slots.callbacks` | `map<string, CallbackSpec>` | Plugin-name → callback identifier; spliced onto matching runtime |
+| `api.slots.env` | `list<EnvSpec>` (`uniqueBy: name`) | Env vars the worker reads (`{ name, devDefault, validate? }`), declared by the plugin that reads them (api contributes the consumer's `env` option); cloudflare renders `.dev.vars`, node sets unset vars to `devDefault` in the dev process |
+| `api.slots.envType` | `value<TsTypeRef \| null>` (`override`) | The type of the worker's `env`; cloudflare contributes the global `Env`, so `context.env` is typed on Cloudflare and `unknown` otherwise |
+| `api.slots.workerBase` | `derived<TsExpression>` | The `createWorker({...})` call expression; bakes `env` into `envChecks` and `envType` into its type argument |
+| `api.slots.workerSource` | `derived<string \| null>` | Final `.stack/worker.ts` source; null when no runtimes are present |
+| `api.slots.rbacStatements` | `value<Record<string, readonly string[]> \| null>` (`override`) | RBAC action statements for `procedure({ rbac })` / `procedure({ can })`'s type-level autocomplete; `auth` contributes from `organization.ac.statements` |
+| `api.slots.entities` | `list<string>` | Entity vocabulary for `procedure({ reads, writes })`'s type-level autocomplete, and (as `Entity` in `.stack/procedure.ts`) for the client's `invalidateForWrites` and `meta.reads` (sorted, deduplicated union); `db` contributes the consumer's Drizzle schema export names, `auth` contributes its own table names, `api` contributes the consumer's `entities` option |
+| `api.slots.procedureSource` | `derived<string \| null>` | Final `.stack/procedure.ts` source (`virtual:stack-procedure`'s target); null when no runtimes are present |
+
+### Lifecycle contributions
+
+| `cliSlots` slot | Behavior |
+|-----------------|----------|
+| `initScaffolds` | Wrangler.toml + base routes scaffold |
+| `artifactFiles` | Writes `.stack/worker.ts`, `.stack/procedure.ts` (when any runtime or route is present) and `src/worker/routes/index.ts` barrel |
+| `devProcesses` | Spawns `wrangler dev` (port 8787) |
+| `devWatchers` | Watches `src/worker/routes/**` and regenerates the barrel on add/unlink |
+| `deploySteps` | `wrangler deploy --config .stack/wrangler.toml` |
+| `removeFiles` | `src/worker/routes/` |
+
+### Runtime
+
+The `./runtime` export provides `createWorker()` for building the worker:
+
+```ts
+import createWorker from "@fcalell/plugin-api/runtime";
+
+// Takes plain ApiWorkerOptions -- no config dependency.
+// The generated worker passes origins derived from app.domain / app.origins.
+createWorker({ domain: "example.com", cors: ["https://example.com"], prefix: "/rpc" })
+```
+
+### The generated worker
+
+The CLI generates `.stack/worker.ts` automatically. The generated worker uses the builder chain with inlined options:
+
+```ts
+// .stack/worker.ts (generated)
+import createWorker from "@fcalell/plugin-api/runtime";
+import dbRuntime from "@fcalell/plugin-db/runtime";
+import * as schema from "../src/schema";
+import * as routes from "../src/worker/routes";
+
+const worker = createWorker({
+  domain: "example.com",
+  cors: ["https://example.com", "https://app.example.com"],
+})
+  .use(dbRuntime({ binding: "DB_MAIN", schema }))
+  .handler(routes);
+
+export type AppRouter = typeof worker._router;
+export default worker;
+```
+
+The builder chain (`createWorker(options).use(plugin).handler(routes)`) accumulates context from each `.use()` call. Every call starts from the base context: `env`, `httpRequest` (the raw HTTP `Request`), `reqHeaders`, `resHeaders`, `executionCtx` and the `_devMode` flag. A scope's row lands in the context under the scope's name, so `defineScope` refuses these keys, the ones plugin-db and plugin-auth add (`db`, `auth`, `tenancy`, `_rateLimiter`, `user`, `session`, and `oauth` with `mcp`), the MCP endpoint's verified caller (`_caller`) and the organization level's (`organization`, `member`). Each plugin's `routes()` registers its oRPC procedures, and the builder carries their type: `.handler()` returns `WorkerExport<TPluginRoutes & TRoutes>`, so `AppRouter` (`typeof worker._router`) includes the plugins' procedures, such as plugin-auth's `auth.orgRules`, beside the consumer's. The final `.handler()` creates a Hono app with CORS, logging, secure headers, and the oRPC handler mounted at the configured prefix. With `src/worker/mcp.ts` the generated call is `.handler(routes, { mcp, name })`, which also mounts `POST /mcp` after context injection (any other method is `405`): `oauth.verify` gates it, the `Origin` is checked, and each listed procedure runs in process as the grant's member with its `_caller` standing in for the cookie session.
+
+The CLI also generates `.stack/procedure.ts` -- the `virtual:stack-procedure` target route files import,
+mapped via a `paths` entry in the consumer's `tsconfig.json`. It rebuilds the same `.use()` chain (minus
+callbacks/handler) purely so TypeScript can infer the exact request context type -- the const is never exported or
+called further:
+
+```ts
+// .stack/procedure.ts (generated)
+import * as schema from "../src/schema";
+import createWorker from "@fcalell/plugin-api/runtime";
+import type { AppBuilder } from "@fcalell/plugin-api/runtime";
+import dbRuntime from "@fcalell/plugin-db/runtime";
+import { createProcedure } from "@fcalell/plugin-api/procedure";
+
+const __chain = createWorker({ ... }).use(dbRuntime({ binding: "DB_MAIN", schema }));
+
+type ContextOf<B> = B extends AppBuilder<infer C> ? C : never;
+type WorkerContext = ContextOf<typeof __chain>;
+type RbacStatements = Record<never, never>; // or auth's contributed statements
+type Entity = string; // or a contributed "projects" | "tasks" union
+
+export const procedure = createProcedure<WorkerContext, RbacStatements, Entity>();
+```
+
+### Schema
+
+A `cliSlots.postWrite` contribution writes `.stack/schema.ts` (`virtual:stack-schema`) after the barrel and `.stack/procedure.ts`: every procedure of `AppRouter` (the `.stack/worker.ts` default export's `_router`: the runtime plugins' routes, `auth.*` among them, and `src/worker/routes`) with its input as JSON Schema, its `kind` and its `scope` key (`null` when none). The router loads in a child node process, so a long-lived `stack dev` never writes a stale schema. plugin-vite serves the module to the web and plugin-expo's Metro config to the phone; the client reads it for scope ids and a `Form` for its fields.
+
+### Scope
+
+A procedure with a `scope` takes the scope's id in its input (`organizationId`) and stamps the key on its meta as `scope`. The route's `ScopeBoundary` registers the ids its layout resolved from the URL slug (a nested boundary extends the outer ones), and the utils `createApiQueryUtils` returns merge the registered id into the input of every call whose procedure names that scope key in `.stack/schema.ts`, and only that key (an explicit id wins), before the query key is built, so the key carries the id and the input type makes the scope key optional. A scoped call with no registered scope and no id throws before any request, naming the procedure and the key. A route `loader` names its ids or uses `scoped(orpc, ids)`. See `guide/client.md`.
+
+## Exports
+
+| Subpath | Purpose |
+|---------|---------|
+| `@fcalell/plugin-api` | `api()`, `ApiOptions`, `ApiError`, `Middleware`, `InferRouter` |
+| `@fcalell/plugin-api/runtime` | `createWorker()`, `AppBuilder`, `WorkerExport`, `ApiWorkerOptions`, `stackContext()`, `isForbiddenOrigin()` |
+| `@fcalell/plugin-api/mcp` | `defineMcp()`, `McpDefinition`, `ProcedurePath` -- what `src/worker/mcp.ts` default-exports |
+| `@fcalell/plugin-api/procedure` | `createProcedure()`, `Middleware`, `ProcedureConfig`, `STACK_READS_HEADER`, `STACK_WRITES_HEADER` -- what the generated `.stack/procedure.ts` (`virtual:stack-procedure`) imports |
+| `@fcalell/plugin-api/error` | `ApiError` -- worker-safe (no Node-only deps); import this from route files |
+| `@fcalell/cli/runtime` | `RuntimePlugin` |
+| `@fcalell/plugin-api/client` | `createClient()`, `RouterClient`, `ClientConfig` |
+| `@fcalell/plugin-api/tanstack-query` | `createQueryClient()`, `createApiQueryUtils()`, `ScopeBoundary`, `scoped()`, `QueryProvider`, `useAbility(organizationId, recordRules?)`, `ORG_RULES_QUERY_KEY`, `orgRulesQueryKey()`, query hooks -- native TanStack Query client (runtime-only) |
+| `@fcalell/plugin-api/query-invalidation` | `captureEntityHeaders()`, `invalidateForWrites()`, `handleMutationSuccess()`, `createEntityRegistry()`, `EntityName` -- framework-agnostic auto-invalidation core; `invalidateForWrites` takes the app's `Entity` names (type-only) |
+| `@fcalell/plugin-api/scope` | `registerScope()`, `mergeScope()`, `withScope()`, `scoped()`, `ScopeSchema` -- the registered route scope and the merge of a scoped procedure's key into utils inputs (runtime-only) |
+| `@fcalell/plugin-api/types` | `Procedure`, `RouterClient`, `ScopedRouterClient`, `ProcedureCall`, `InputOf`, `OutputOf`, `InferRouter` -- the types of the client |
+| `@fcalell/plugin-api/ability-client` | `composeAbility()`, `fetchOrgRules(organizationId)`, `registerApiClient()`, `ORG_RULES_QUERY_KEY`, `orgRulesQueryKey()`, `PackedRulesLike` -- framework-agnostic `useAbility()` core (runtime-only), consumed by `./tanstack-query` |
+| `@fcalell/plugin-api/schema` | `z` (Zod re-export), `ZodObject`, `ZodType`, `ZodRawShape`, `inputJsonSchema()` (a procedure's input as JSON Schema, also the MCP tool's), `routerSchema()` (every procedure of a router, the worker's `_router`: what `stack generate` writes to `.stack/schema.ts`) |
+| `@fcalell/plugin-api/lib/cursor` | `encodeCursor`, `decodeCursor`, `paginate`, `clampLimit`, constants |
+| `@fcalell/plugin-api/lib/slugify` | `slugify`, `isReservedSlug`, `createSlugify`, `RESERVED_SLUGS` |
+
+## License
+
+MIT

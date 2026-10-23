@@ -1,0 +1,252 @@
+import {
+	type Datum,
+	type Drawn,
+	paints,
+	useSelections,
+} from "@fcalell/plugin-api/tanstack-query";
+import { PAINT_ROWS } from "@fcalell/ui-core/paint";
+import { keyed, type Part, parts, safeHref } from "@fcalell/ui-core/prose";
+import {
+	PROSE,
+	PROSE_BLOCKS,
+	PROSE_CODESPAN,
+	PROSE_EMPHASIS,
+	PROSE_ITEM,
+	PROSE_LIST,
+	PROSE_PART,
+	PROSE_QUOTE,
+	PROSE_RULE,
+	PROSE_STRIKE,
+	proseMarker,
+	text,
+	textStrong,
+} from "@fcalell/ui-core/variants";
+import { lexer, type Token, type Tokens } from "marked";
+import { type ReactNode, useMemo } from "react";
+import { Text as RNText, View } from "react-native";
+import type { Closed } from "../../lib/closed";
+import { cn } from "../../lib/cn";
+import { ButtonLink } from "../button/link";
+import { Code } from "../code";
+import { PaintedProse } from "./painted";
+
+const COLUMN = "min-w-0";
+const ITEM = "flex-row";
+const BULLET = "shrink-0 text-center";
+const ORDINAL = "shrink-0 text-right";
+const ITEM_BODY = "flex-1 min-w-0";
+// A quote's text reads in the meta ink.
+const QUOTED = "text-ink-meta";
+
+export interface ProseProps extends Closed {
+	/** The text, in markdown: headings, paragraphs, lists, quotes, rules, inline code, links and fenced code (text; wraps). A selection paints one paragraph of `PAINT_ROWS` clipped lines until its read lands. */
+	markdown: Datum<string>;
+}
+
+function inline(tokens: readonly Token[] | undefined, parent: string) {
+	return keyed(tokens ?? [], parent).map(([token, key]) => run(token, key));
+}
+
+// A run is a Text nested in its paragraph's, so it takes the paragraph's
+// role and ink as the web's inline runs do.
+function run(token: Token, key: string): ReactNode {
+	switch (token.type) {
+		case "strong":
+			return (
+				<RNText key={key} className={textStrong({ role: "body" })}>
+					{inline((token as Tokens.Strong).tokens, key)}
+				</RNText>
+			);
+		case "em":
+			return (
+				<RNText key={key} className={PROSE_EMPHASIS}>
+					{inline((token as Tokens.Em).tokens, key)}
+				</RNText>
+			);
+		case "del":
+			return (
+				<RNText key={key} className={PROSE_STRIKE}>
+					{inline((token as Tokens.Del).tokens, key)}
+				</RNText>
+			);
+		// A nested Text draws its fill but no radius or padding: React Native
+		// lays an inline run out as glyphs, never as a box.
+		case "codespan":
+			return (
+				<RNText key={key} className={PROSE_CODESPAN}>
+					{(token as Tokens.Codespan).text}
+				</RNText>
+			);
+		case "link": {
+			const link = token as Tokens.Link;
+			const href = safeHref(link.href);
+			const words = inline(link.tokens, key);
+			return href ? (
+				<ButtonLink key={key} href={href} fit="inline">
+					{words}
+				</ButtonLink>
+			) : (
+				words
+			);
+		}
+		case "br":
+			return "\n";
+		case "image":
+			return (token as Tokens.Image).text;
+		case "text": {
+			const words = token as Tokens.Text;
+			return words.tokens ? inline(words.tokens, key) : words.text;
+		}
+		case "escape":
+			return (token as Tokens.Escape).text;
+		// Raw HTML is never interpreted: it reads as its own text.
+		default:
+			return token.raw;
+	}
+}
+
+function Paragraph(props: { tokens?: Token[]; quoted: boolean; id: string }) {
+	return (
+		<RNText className={cn(text({ role: "body" }), props.quoted && QUOTED)}>
+			{inline(props.tokens, props.id)}
+		</RNText>
+	);
+}
+
+function List(props: { list: Tokens.List; quoted: boolean; id: string }) {
+	const { list, quoted, id } = props;
+	const kind = list.ordered ? "ordered" : "bullet";
+	const first = typeof list.start === "number" ? list.start : 1;
+	return (
+		<View accessibilityRole="list" className={PROSE_LIST}>
+			{keyed(list.items, id).map(([item, key], index) => (
+				<View key={key} className={cn(PROSE_ITEM, ITEM)}>
+					<RNText
+						className={cn(
+							proseMarker({ list: kind }),
+							list.ordered ? ORDINAL : BULLET,
+						)}
+					>
+						{list.ordered ? `${first + index}.` : "•"}
+					</RNText>
+					<View className={cn(PROSE_LIST, ITEM_BODY)}>
+						{blocks(item.tokens, quoted, key)}
+					</View>
+				</View>
+			))}
+		</View>
+	);
+}
+
+function blocks(tokens: readonly Token[], quoted: boolean, parent: string) {
+	return keyed(tokens, parent).map(([token, key]) => {
+		switch (token.type) {
+			case "space":
+				return null;
+			case "paragraph":
+			case "text":
+				return (
+					<Paragraph
+						key={key}
+						tokens={(token as Tokens.Paragraph).tokens ?? [token]}
+						quoted={quoted}
+						id={key}
+					/>
+				);
+			case "code":
+				return <Code key={key} text={(token as Tokens.Code).text} copy />;
+			case "blockquote":
+				return (
+					<View key={key} className={PROSE_QUOTE}>
+						{blocks((token as Tokens.Blockquote).tokens, true, key)}
+					</View>
+				);
+			case "list":
+				return (
+					<List
+						key={key}
+						list={token as Tokens.List}
+						quoted={quoted}
+						id={key}
+					/>
+				);
+			case "hr":
+				return <View key={key} className={PROSE_RULE} />;
+			default:
+				return (
+					<Paragraph
+						key={key}
+						tokens={[{ type: "text", raw: token.raw, text: token.raw }]}
+						quoted={quoted}
+						id={key}
+					/>
+				);
+		}
+	});
+}
+
+function Blocks({ part }: { part: Part }) {
+	const nested = new Map(part.parts.map((each) => [each.key, each]));
+	return (
+		<View className={PROSE_BLOCKS}>
+			{keyed(part.blocks, part.key).map(([token, key]) => {
+				const held = token.type === "part" ? nested.get(token.raw) : undefined;
+				return held ? (
+					<Headed key={key} part={held} />
+				) : (
+					blocks([token], false, key)
+				);
+			})}
+		</View>
+	);
+}
+
+function Headed({ part }: { part: Part }) {
+	const top = (part.heading?.depth ?? 1) <= 2;
+	return (
+		<View className={PROSE_PART}>
+			<RNText
+				accessibilityRole="header"
+				className={
+					top
+						? text({ role: "heading" })
+						: cn(text({ role: "body" }), textStrong({ role: "body" }))
+				}
+			>
+				{inline(part.heading?.tokens, part.key)}
+			</RNText>
+			<Blocks part={part} />
+		</View>
+	);
+}
+
+// Markdown at the body role, its column at the measure: `#` and `##` head
+// its parts a sections gap apart at the heading role, `###` and deeper head a
+// part inside them at body 500; paragraphs, lists (the marker in its own
+// slot), quotes and rules a fields gap apart; inline code on the neutral
+// fill; a fenced block is a `Code` with its copy act. Raw HTML reads as its
+// own text; tables, task lists and images draw as text. A heading is a
+// header, which has no levels on the phone. While the `markdown` selection's
+// read waits, one paragraph of `PAINT_ROWS` clipped lines of filler stands in its column, inert.
+export function Prose({ markdown }: ProseProps) {
+	const [drawn] = useSelections([markdown] as const) as [Drawn<string>];
+	const source = drawn.painted ? undefined : drawn.value;
+	// The markdown lexes and folds once per text, and not while the prose paints.
+	const root = useMemo(
+		() => (source === undefined ? undefined : parts(lexer(source))),
+		[source],
+	);
+	// An ended read draws no text; the frame that holds it says why.
+	if (!root)
+		return paints(drawn) ? <PaintedProse rows={1} lines={PAINT_ROWS} /> : null;
+	return (
+		<View className={cn(PROSE, COLUMN)}>
+			{root.blocks.length > 0 ? <Blocks part={root} /> : null}
+			{root.parts
+				.filter((part) => (part.heading?.depth ?? 1) <= 2)
+				.map((part) => (
+					<Headed key={part.key} part={part} />
+				))}
+		</View>
+	);
+}

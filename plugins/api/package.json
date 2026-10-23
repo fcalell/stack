@@ -1,0 +1,148 @@
+{
+	"name": "@fcalell/plugin-api",
+	"version": "0.0.0",
+	"type": "module",
+	"sideEffects": false,
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./runtime": {
+			"types": "./dist/worker/index.d.ts",
+			"default": "./dist/worker/index.js"
+		},
+		"./procedure": {
+			"types": "./dist/procedure.d.ts",
+			"default": "./dist/procedure.js"
+		},
+		"./mcp": {
+			"types": "./dist/mcp.d.ts",
+			"default": "./dist/mcp.js"
+		},
+		"./error": {
+			"types": "./dist/error.d.ts",
+			"default": "./dist/error.js"
+		},
+		"./client": {
+			"types": "./dist/client.d.ts",
+			"default": "./dist/client.js"
+		},
+		"./ability-client": {
+			"types": "./dist/ability-client.d.ts",
+			"default": "./dist/ability-client.js"
+		},
+		"./wire": {
+			"types": "./dist/wire.d.ts",
+			"default": "./dist/wire.js"
+		},
+		"./preload": {
+			"types": "./dist/preload.d.ts",
+			"default": "./dist/preload.js"
+		},
+		"./read": {
+			"types": "./dist/read.d.ts",
+			"default": "./dist/read.js"
+		},
+		"./acts": {
+			"types": "./dist/acts.d.ts",
+			"default": "./dist/acts.js"
+		},
+		"./listen": {
+			"types": "./dist/listen.d.ts",
+			"default": "./dist/listen.js"
+		},
+		"./tanstack-query": "./src/tanstack-query.tsx",
+		"./query-invalidation": {
+			"types": "./dist/query-invalidation.d.ts",
+			"default": "./dist/query-invalidation.js"
+		},
+		"./schema": {
+			"types": "./dist/schema.d.ts",
+			"default": "./dist/schema.js"
+		},
+		"./scope": {
+			"types": "./dist/scope.d.ts",
+			"default": "./dist/scope.js"
+		},
+		"./types": {
+			"types": "./dist/types.d.ts",
+			"default": "./dist/types.js"
+		},
+		"./node/codegen": {
+			"types": "./dist/node/codegen.d.ts",
+			"default": "./dist/node/codegen.js"
+		},
+		"./node/types": {
+			"types": "./dist/node/types.d.ts",
+			"default": "./dist/node/types.js"
+		},
+		"./lib/cursor": {
+			"types": "./dist/lib/cursor.d.ts",
+			"default": "./dist/lib/cursor.js"
+		},
+		"./lib/slugify": {
+			"types": "./dist/lib/slugify.d.ts",
+			"default": "./dist/lib/slugify.js"
+		},
+		"./local-origin": {
+			"types": "./dist/lib/local-origin.d.ts",
+			"default": "./dist/lib/local-origin.js"
+		}
+	},
+	"files": [
+		"dist",
+		"src",
+		"guide",
+		"README.md",
+		"tsconfig.json",
+		"tsconfig.build.json"
+	],
+	"license": "MIT",
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"prepare": "pnpm build",
+		"check-types": "tsc --noEmit --pretty",
+		"test": "node --test src/scope.test.ts src/schema.test.ts src/read.test.ts",
+		"lint": "biome check --write --unsafe",
+		"check": "pnpm check-types && pnpm lint",
+		"clear": "rm -rf dist node_modules .turbo"
+	},
+	"dependencies": {
+		"@casl/ability": "^7.0.1",
+		"@fcalell/cli": "workspace:*",
+		"@modelcontextprotocol/client": "2.3.0",
+		"@modelcontextprotocol/server": "2.3.0",
+		"@orpc/client": "^1.14.4",
+		"@orpc/server": "^1.14.4",
+		"drizzle-orm": "^0.45.2",
+		"hono": "^4.12.23",
+		"slugify": "^1.6.9",
+		"zod": "^4.3.6"
+	},
+	"peerDependencies": {
+		"@orpc/tanstack-query": "^1.14.4",
+		"@tanstack/react-query": "^5.100.2",
+		"react": "^19.2.0"
+	},
+	"peerDependenciesMeta": {
+		"@orpc/tanstack-query": {
+			"optional": true
+		},
+		"@tanstack/react-query": {
+			"optional": true
+		},
+		"react": {
+			"optional": true
+		}
+	},
+	"devDependencies": {
+		"@fcalell/typescript-config": "workspace:*",
+		"@orpc/tanstack-query": "^1.14.4",
+		"@tanstack/react-query": "^5.104.0",
+		"@types/node": "^25.5.0",
+		"@types/react": "^19.2.16",
+		"react": "19.2.3",
+		"typescript": "^5.9.3"
+	}
+}

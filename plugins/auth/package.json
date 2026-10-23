@@ -1,0 +1,121 @@
+{
+	"name": "@fcalell/plugin-auth",
+	"version": "0.0.0",
+	"type": "module",
+	"sideEffects": false,
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./ability": {
+			"types": "./dist/ability/index.d.ts",
+			"default": "./dist/ability/index.js"
+		},
+		"./runtime": {
+			"types": "./dist/worker/index.d.ts",
+			"default": "./dist/worker/index.js"
+		},
+		"./schema": {
+			"types": "./dist/schema/index.d.ts",
+			"default": "./dist/schema/index.js"
+		},
+		"./schema/organization": {
+			"types": "./dist/schema/organization.d.ts",
+			"default": "./dist/schema/organization.js"
+		},
+		"./schema/oauth": {
+			"types": "./dist/schema/oauth.d.ts",
+			"default": "./dist/schema/oauth.js"
+		},
+		"./schema/passkey": {
+			"types": "./dist/schema/passkey.d.ts",
+			"default": "./dist/schema/passkey.js"
+		},
+		"./expo": "./src/expo.tsx",
+		"./client": {
+			"types": "./dist/client.d.ts",
+			"default": "./dist/client.js"
+		},
+		"./scope": {
+			"types": "./dist/scope.d.ts",
+			"default": "./dist/scope.js"
+		},
+		"./access": {
+			"types": "./dist/access.d.ts",
+			"default": "./dist/access.js"
+		},
+		"./infer": {
+			"types": "./dist/infer.d.ts",
+			"default": "./dist/infer.js"
+		},
+		"./screens": {
+			"types": "./dist/screens.d.ts",
+			"default": "./dist/screens.js"
+		},
+		"./screens-fixtures": {
+			"types": "./dist/screens-fixtures.d.ts",
+			"default": "./dist/screens-fixtures.js"
+		}
+	},
+	"files": [
+		"dist",
+		"src",
+		"guide",
+		"templates",
+		"README.md",
+		"tsconfig.json",
+		"tsconfig.build.json"
+	],
+	"license": "MIT",
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"prepare": "pnpm build",
+		"check-types": "tsc --noEmit --pretty",
+		"lint": "biome check --write --unsafe",
+		"check": "pnpm check-types && pnpm lint",
+		"clear": "rm -rf dist node_modules .turbo"
+	},
+	"dependencies": {
+		"@better-auth/cimd": "1.7.7",
+		"@better-auth/core": "1.7.7",
+		"@better-auth/expo": "1.7.7",
+		"@better-auth/mcp": "1.7.7",
+		"@better-auth/oauth-provider": "1.7.7",
+		"@better-auth/passkey": "1.7.7",
+		"@casl/ability": "^7.0.1",
+		"@fcalell/cli": "workspace:*",
+		"@fcalell/plugin-api": "workspace:*",
+		"@fcalell/plugin-cloudflare": "workspace:*",
+		"@fcalell/plugin-db": "workspace:*",
+		"@fcalell/plugin-screens": "workspace:*",
+		"@orpc/server": "^1.14.4",
+		"better-auth": "1.7.7",
+		"zod": "^4.3.6"
+	},
+	"peerDependencies": {
+		"@react-native-google-signin/google-signin": "^16.0.0",
+		"expo-apple-authentication": ">=56.0.0",
+		"react": "^19.2.0"
+	},
+	"peerDependenciesMeta": {
+		"@react-native-google-signin/google-signin": {
+			"optional": true
+		},
+		"expo-apple-authentication": {
+			"optional": true
+		},
+		"react": {
+			"optional": true
+		}
+	},
+	"devDependencies": {
+		"@fcalell/typescript-config": "workspace:*",
+		"@types/node": "^25.5.0",
+		"@react-native-google-signin/google-signin": "^16.1.2",
+		"@types/react": "^19.2.16",
+		"expo-apple-authentication": "~56.0.4",
+		"react": "19.2.3",
+		"typescript": "^5.9.3"
+	}
+}

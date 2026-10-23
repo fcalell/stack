@@ -1,0 +1,765 @@
+import { spawnSync } from "node:child_process";
+import { writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { join } from "node:path";
+import type { ContributionCtx } from "@fcalell/cli";
+import { plugin, slot } from "@fcalell/cli";
+import type {
+	MiddlewareSpec,
+	ProviderSpec,
+	TsImportSpec,
+} from "@fcalell/cli/ast";
+import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
+import type { GeneratedFile } from "@fcalell/cli/specs";
+import { api } from "@fcalell/plugin-api";
+import { cloudflare } from "@fcalell/plugin-cloudflare";
+import { z } from "zod";
+import {
+	aggregateEntry,
+	aggregateExpoConfig,
+	aggregateMetroConfig,
+} from "./node/codegen.ts";
+import {
+	hasNotFoundRoute,
+	NOT_FOUND_FILE,
+	notFoundRouteSource,
+} from "./node/not-found.ts";
+import { buildRoutesDts } from "./node/routes.ts";
+import {
+	type ExpoConfigPlugin,
+	type ExpoOptions,
+	expoOptionsSchema,
+	type MetroRequireSpec,
+	type MetroWrapperSpec,
+} from "./types.ts";
+
+const SOURCE = "expo";
+
+const DEFAULT_PORT = 8081;
+const DEFAULT_APP_DIR = "src/app";
+const DEFAULT_EAS_PROFILES = ["development", "preview", "production"];
+const DEFAULT_UPDATE_CHANNEL = "production";
+
+// The plugin depends on `expo` to read the SDK's version table, which names
+// the version of each native module the SDK is built against. Its `react` is
+// the version react-native's renderer accepts: any other React fails at
+// startup with "Incompatible React versions".
+const require = createRequire(import.meta.url);
+const expoVersion = z
+	.object({ version: z.string() })
+	.parse(require("expo/package.json")).version;
+const sdkModules = z
+	.record(z.string(), z.string())
+	.parse(require("expo/bundledNativeModules.json"));
+
+function sdkVersions(names: readonly string[]): Record<string, string> {
+	return Object.fromEntries(
+		names.map((name) => {
+			const version = sdkModules[name];
+			if (!version) {
+				throw new Error(`Expo ${expoVersion} names no version for ${name}.`);
+			}
+			return [name, version];
+		}),
+	);
+}
+
+// Version-gate telemetry (WS6.2): the Analytics Engine binding the gate
+// writes its walled / header-less counters to. The dataset name carries the
+// app slug — dataset names are account-global, and two apps sharing one
+// would mix their canaries.
+const VERSION_GATE_METRICS_BINDING = "VERSION_GATE_METRICS";
+
+function versionGateDataset(appName: string): string {
+	const slug = appName
+		.toLowerCase()
+		.replace(/[^a-z0-9_]+/g, "_")
+		.replace(/^_+|_+$/g, "")
+		.replace(/_{2,}/g, "_");
+	return `${slug || "stack_app"}_version_gate`;
+}
+
+// The gate is active only when a floor is configured; a dormant gate must
+// not appear in the emitted worker or claim a binding.
+function versionGateFloors(
+	minNativeBuild: { ios?: number; android?: number } | undefined,
+): { ios: number; android: number } | undefined {
+	const ios = minNativeBuild?.ios ?? 0;
+	const android = minNativeBuild?.android ?? 0;
+	if (!minNativeBuild || (ios === 0 && android === 0)) return undefined;
+	return { ios, android };
+}
+
+// The generated expo-router custom root. It calls `registerRootComponent` and
+// mounts the provider stack, so it must be the package's `main` to ever run.
+const ENTRY_ARTIFACT = ".stack/entry.tsx";
+
+// Mirrors the `expo-env.d.ts` Expo's own tooling writes at a project root: a
+// single reference that pulls Expo's ambient types into the app's TS program
+// (require.context for the router entry, EXPO_PUBLIC_* env vars, etc.).
+// Emitted into `.stack/` so the consumer's `tsconfig.app.json` includes it
+// without a hand-managed file.
+const EXPO_ENV_ARTIFACT = ".stack/expo-env.d.ts";
+const ROUTES_ARTIFACT = ".stack/routes.d.ts";
+const EXPO_ENV_DTS = '/// <reference types="expo/types" />\n';
+
+// ── Identifier helpers ─────────────────────────────────────────────
+
+function slugify(name: string): string {
+	return (
+		name
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, "-")
+			.replace(/^-+|-+$/g, "") || "app"
+	);
+}
+
+// The deep-link scheme the app config registers and api's `nativeScheme`
+// carries to its readers: the `scheme` option, else the app name's slug.
+function deepLinkScheme(ctx: {
+	options: ExpoOptions;
+	app: { name: string };
+}): string {
+	return ctx.options.scheme ?? slugify(ctx.app.name);
+}
+
+// Make a string a legal Java/Android package segment: alphanumerics only, and —
+// since a segment must start with a letter — prefix a leading digit with `a`
+// (e.g. "1foo" → "a1foo"). Empty input falls back to "app".
+function packageSegment(raw: string): string {
+	const cleaned = raw.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+	if (cleaned.length === 0) return "app";
+	return /^[0-9]/.test(cleaned) ? `a${cleaned}` : cleaned;
+}
+
+// A leaf segment safe for both an iOS bundle identifier and an Android package
+// (the latter forbids hyphens), derived from the app slug.
+function packageLeaf(slug: string): string {
+	return packageSegment(slug);
+}
+
+// Reverse a domain into a bundle-id prefix: "wenauti.app" → "app.wenauti".
+function reverseDomain(domain: string): string {
+	const segments = domain
+		.split(".")
+		.map((s) => s.replace(/[^a-zA-Z0-9]/g, ""))
+		.filter((s) => s.length > 0)
+		.map(packageSegment);
+	return segments.length > 0 ? segments.reverse().join(".") : "app";
+}
+
+// Compose the bundle identifier from the reversed domain + app leaf, collapsing
+// a doubled leaf when the domain's last label already equals the slug (e.g.
+// domain "wenauti.app" + slug "wenauti" → "app.wenauti", not the redundant
+// "app.wenauti.wenauti"). Generic domains ("example.com" → "com.example.myapp")
+// keep the leaf.
+function buildBundleId(domain: string, slug: string): string {
+	const prefix = reverseDomain(domain);
+	const leaf = packageLeaf(slug);
+	const labels = prefix.split(".");
+	if (labels[labels.length - 1] === leaf) return prefix;
+	return `${prefix}.${leaf}`;
+}
+
+// ── Slot declarations ──────────────────────────────────────────────
+//
+// plugin-expo owns the native bootstrap the way plugin-vite and the web
+// plugin own the web one: metro config, the Expo app config, the entry, and typed
+// routes. Peer plugins (native-ui, auth/expo, api/tanstack-query) contribute
+// into the list slots; the derived `*Config`/`*Source` slots compose them
+// into the files emitted under `.stack/`. Ordering is pure dataflow.
+
+const metroConfigImports = slot.list<MetroRequireSpec>({
+	source: SOURCE,
+	name: "metroConfigImports",
+	sortBy: (a, b) => a.module.localeCompare(b.module),
+});
+
+const metroPluginCalls = slot.list<MetroWrapperSpec>({
+	source: SOURCE,
+	name: "metroPluginCalls",
+	// `callee` names the wrapper applied around the config; two wrappers with
+	// the same name would emit duplicate `config = x(config, …)` lines.
+	uniqueBy: (w) => w.callee,
+});
+
+// Entries for the app.config `plugins` array (config plugins like
+// `"expo-router"` or `["expo-build-properties", { … }]`). Sorted by name so
+// the emitted array is independent of plugin iteration order.
+const expoConfigPlugins = slot.list<ExpoConfigPlugin>({
+	source: SOURCE,
+	name: "expoConfigPlugins",
+	sortBy: (a, b) => a.name.localeCompare(b.name),
+	uniqueBy: (p) => p.name,
+});
+
+// Providers wrapped around the expo-router root in entry.tsx — native-ui /
+// auth-expo / api-tanstack-query contribute here. Sorted ascending by `order`
+// so lower-order providers become outer wrappers.
+const providers = slot.list<ProviderSpec>({
+	source: SOURCE,
+	name: "providers",
+	sortBy: (a, b) => a.order - b.order,
+});
+
+const entryImports = slot.list<TsImportSpec>({
+	source: SOURCE,
+	name: "entryImports",
+	sortBy: (a, b) => a.source.localeCompare(b.source),
+});
+
+// Resolved Metro dev-server port. Defaults to Expo's 8081; flows into the
+// localhost CORS origin contributed to plugin-api.
+const devServerPort = slot.value<number, ExpoOptions>({
+	source: SOURCE,
+	name: "devServerPort",
+	seed: (ctx) => {
+		const opts = ctx.options;
+		return opts.port ?? DEFAULT_PORT;
+	},
+});
+
+// Resolved routes directory. `null` disables expo-router wiring entirely
+// (consumer passed `routes: false`). Drives entry.tsx's `require.context`
+// path and the expo-router config plugin.
+const routesPagesDir = slot.derived({
+	source: SOURCE,
+	name: "routesPagesDir",
+	compute: (_inputs, ctx: ContributionCtx<ExpoOptions>): string | null => {
+		const opts = ctx.options;
+		if (opts.routes === false) return null;
+		if (opts.routes && typeof opts.routes === "object") {
+			return opts.routes.appDir ?? DEFAULT_APP_DIR;
+		}
+		return DEFAULT_APP_DIR;
+	},
+});
+
+// The module whose default export is the page for an address no route serves:
+// a design system plugin contributes its own. With one, generate writes it as
+// the app's `+not-found` route unless the app has a route of its own there.
+const notFoundRoute = slot.value<string | null>({
+	source: SOURCE,
+	name: "notFoundRoute",
+	override: true,
+	seed: () => null,
+});
+
+// The route file generate writes for an unmatched address, in the app's routes
+// directory where expo-router reads it: null without a page, with routing off,
+// or while the app has a route there, whether its own or this one from an
+// earlier generate.
+const notFoundFile = slot.derived({
+	source: SOURCE,
+	name: "notFoundFile",
+	inputs: { module: notFoundRoute, pagesDir: routesPagesDir },
+	compute: (inp, ctx): GeneratedFile | null => {
+		if (inp.module === null || inp.pagesDir === null) return null;
+		if (hasNotFoundRoute(ctx.cwd, inp.pagesDir)) return null;
+		return {
+			path: `${inp.pagesDir}/${NOT_FOUND_FILE}`,
+			content: notFoundRouteSource(inp.module),
+		};
+	},
+});
+
+// EAS build profile names (`eas build --profile <name>`). Consumed by the
+// `expo build` command to validate the requested profile and pick a default.
+const easBuildProfiles = slot.value<string[], ExpoOptions>({
+	source: SOURCE,
+	name: "easBuildProfiles",
+	seed: (ctx) => {
+		const opts = ctx.options;
+		return opts.easProfiles ?? DEFAULT_EAS_PROFILES;
+	},
+});
+
+// Default EAS Update channel (`eas update --channel <name>`).
+const easUpdateChannel = slot.value<string, ExpoOptions>({
+	source: SOURCE,
+	name: "easUpdateChannel",
+	seed: (ctx) => {
+		const opts = ctx.options;
+		return opts.updateChannel ?? DEFAULT_UPDATE_CHANNEL;
+	},
+});
+
+// ── Derived sources ────────────────────────────────────────────────
+
+const metroConfig = slot.derived({
+	source: SOURCE,
+	name: "metroConfig",
+	inputs: { requires: metroConfigImports, wrappers: metroPluginCalls },
+	compute: (inp): string | null =>
+		aggregateMetroConfig({ requires: inp.requires, wrappers: inp.wrappers }),
+});
+
+const expoConfig = slot.derived({
+	source: SOURCE,
+	name: "expoConfig",
+	inputs: { plugins: expoConfigPlugins, pagesDir: routesPagesDir },
+	compute: (inp, ctx: ContributionCtx<ExpoOptions>): string | null => {
+		const slug = slugify(ctx.app.name);
+		const _opts = ctx.options;
+		const routesEnabled = inp.pagesDir !== null;
+		const bundleId = buildBundleId(ctx.app.domain, slug);
+		// expo-router is listed as a config plugin so its native deep-link setup
+		// runs during prebuild; only when routing is enabled.
+		const basePlugins: ExpoConfigPlugin[] = routesEnabled
+			? [{ name: "expo-router" }, ...inp.plugins]
+			: inp.plugins;
+		return aggregateExpoConfig({
+			name: ctx.app.name,
+			slug,
+			scheme: deepLinkScheme(ctx),
+			bundleIdentifier: bundleId,
+			androidPackage: bundleId,
+			plugins: basePlugins,
+		});
+	},
+});
+
+const entrySource = slot.derived({
+	source: SOURCE,
+	name: "entrySource",
+	inputs: { imports: entryImports, providers, pagesDir: routesPagesDir },
+	compute: (inp): string | null =>
+		aggregateEntry({
+			imports: inp.imports,
+			providers: inp.providers,
+			// entry.tsx lives in `.stack/`, so the app dir is one level up.
+			appContextPath: inp.pagesDir === null ? null : `../${inp.pagesDir}`,
+		}),
+});
+
+// The app's typed routes, `.stack/routes.d.ts`; null when routing is off.
+const routesDtsSource = slot.derived({
+	source: SOURCE,
+	name: "routesDtsSource",
+	inputs: { pagesDir: routesPagesDir },
+	compute: (inp, ctx): string | null =>
+		inp.pagesDir === null ? null : buildRoutesDts(ctx.cwd, inp.pagesDir),
+});
+
+// ── Command helpers ────────────────────────────────────────────────
+
+interface RunResult {
+	ok: boolean;
+}
+
+function runInherit(
+	command: string,
+	args: string[],
+	cwd: string,
+	env?: Record<string, string>,
+): RunResult {
+	const result = spawnSync(command, args, {
+		cwd,
+		stdio: "inherit",
+		env: { ...process.env, ...env },
+	});
+	return { ok: !result.error && result.status === 0 };
+}
+
+export const expo = plugin("expo", {
+	label: "Expo",
+
+	schema: expoOptionsSchema,
+
+	dependencies: {
+		expo: `~${expoVersion}`,
+		...sdkVersions([
+			"expo-router",
+			"react",
+			"react-native",
+			// `@fcalell/plugin-expo/client`'s `versionHeaders()` reads the compiled
+			// build number via `expo-application`, required for every generated
+			// `src/lib/api.ts`, not just consumers with a `minNativeBuild` floor.
+			"expo-application",
+			// Android's `userInterfaceStyle` needs it, or the app ignores the light
+			// and dark setting.
+			"expo-system-ui",
+			// The generated entry's `StatusBar`.
+			"expo-status-bar",
+		]),
+	},
+	devDependencies: {
+		"eas-cli": "^20.0.0",
+		// React's types back the app's JSX (`react/jsx-runtime`); without it a
+		// consumer's `tsconfig.app.json` can't resolve the automatic runtime.
+		"@types/react": "~19.2.0",
+		// `babel.config.cjs` runs it over the app's code and @fcalell/* (Babel
+		// resolves the plugin from the consumer).
+		"babel-plugin-react-compiler": "^1.0.0",
+	},
+	// Expo cache + prebuild outputs (continuous native generation regenerates
+	// ios/ + android/ on demand via `stack expo prebuild`).
+	gitignore: [".expo", "ios", "android"],
+
+	guide: [
+		{ page: "add-a-phone-screen", trigger: "Adding a screen to the phone app" },
+		{
+			page: "routes",
+			trigger:
+				"Writing a route file under `src/app`, the root layout, or navigating on the phone",
+		},
+		{
+			page: "options",
+			trigger:
+				"Changing `expo()` options, adding a native module, or touching `app.config.ts`, `metro.config.js` or `babel.config.cjs`",
+		},
+		{
+			page: "builds",
+			trigger:
+				"Running the phone app, editing `eas.json`, or building or updating it with EAS",
+		},
+		{
+			page: "phone-render",
+			trigger:
+				"Rendering the phone app on an emulator to judge a screen, or rebuilding it after a native change",
+		},
+		{
+			page: "phone-capture",
+			trigger:
+				"Capturing, measuring or holding a phone screen's states on the emulator",
+		},
+		{
+			page: "api-client",
+			trigger:
+				"Calling the API from the phone, or editing `src/lib/api.ts` or `EXPO_PUBLIC_API_URL`",
+		},
+		{
+			page: "native-auth",
+			trigger: "Signing in on the phone, or editing `src/lib/auth.ts`",
+		},
+		{
+			page: "version-gate",
+			trigger:
+				"Shipping an API change that old phone builds cannot handle (`minNativeBuild`), or the update wall",
+		},
+	],
+
+	slots: {
+		metroConfigImports,
+		metroPluginCalls,
+		expoConfigPlugins,
+		providers,
+		entryImports,
+		devServerPort,
+		routesPagesDir,
+		notFoundRoute,
+		notFoundFile,
+		easBuildProfiles,
+		easUpdateChannel,
+		metroConfig,
+		expoConfig,
+		entrySource,
+		routesDtsSource,
+	},
+
+	commands: {
+		dev: {
+			description: "Start the Metro dev server (expo start)",
+			options: {
+				clear: {
+					type: "boolean",
+					description: "Clear the Metro bundler cache before starting",
+					default: false,
+				},
+			},
+			handler: async (ctx, flags) => {
+				const port = await ctx.resolve(devServerPort);
+				const args = ["expo", "start", "--port", String(port)];
+				if (flags.clear) args.push("--clear");
+				// Expo's TypeScript setup rewrites the generated tsconfig.json
+				// (`extends`, `include`), which stack owns.
+				const { ok } = runInherit("npx", args, ctx.cwd, {
+					EXPO_NO_TYPESCRIPT_SETUP: "1",
+				});
+				if (!ok) throw new Error("expo start failed");
+			},
+		},
+		prebuild: {
+			description: "Generate native ios/ + android/ projects (expo prebuild)",
+			options: {
+				clean: {
+					type: "boolean",
+					description: "Delete existing native directories first",
+					default: false,
+				},
+				platform: {
+					type: "string",
+					description: "Restrict to a single platform (ios | android)",
+				},
+			},
+			handler: async (ctx, flags) => {
+				const args = ["expo", "prebuild"];
+				if (flags.clean) args.push("--clean");
+				if (typeof flags.platform === "string") {
+					args.push("--platform", flags.platform);
+				}
+				const { ok } = runInherit("npx", args, ctx.cwd);
+				if (!ok) throw new Error("expo prebuild failed");
+			},
+		},
+		build: {
+			description: "Create a native build with EAS Build (eas build)",
+			options: {
+				profile: {
+					type: "string",
+					description: "EAS build profile (defaults to the first configured)",
+				},
+				platform: {
+					type: "string",
+					description: "Target platform (ios | android | all)",
+					default: "all",
+				},
+			},
+			handler: async (ctx, flags) => {
+				const profiles = await ctx.resolve(easBuildProfiles);
+				const profile =
+					typeof flags.profile === "string" ? flags.profile : profiles[0];
+				if (!profile || !profiles.includes(profile)) {
+					throw new Error(
+						`Unknown EAS build profile "${profile}". Configured profiles: ${profiles.join(", ")}.`,
+					);
+				}
+				const platform =
+					typeof flags.platform === "string" ? flags.platform : "all";
+				const { ok } = runInherit(
+					"npx",
+					["eas", "build", "--profile", profile, "--platform", platform],
+					ctx.cwd,
+				);
+				if (!ok) throw new Error("eas build failed");
+			},
+		},
+		update: {
+			description: "Publish an OTA update with EAS Update (eas update)",
+			options: {
+				channel: {
+					type: "string",
+					description:
+						"EAS Update channel (defaults to the configured channel)",
+				},
+				message: {
+					type: "string",
+					description: "Update message",
+				},
+			},
+			handler: async (ctx, flags) => {
+				const defaultChannel = await ctx.resolve(easUpdateChannel);
+				const channel =
+					typeof flags.channel === "string" ? flags.channel : defaultChannel;
+				const args = ["eas", "update", "--channel", channel];
+				if (typeof flags.message === "string") {
+					args.push("--message", flags.message);
+				}
+				const { ok } = runInherit("npx", args, ctx.cwd);
+				if (!ok) throw new Error("eas update failed");
+			},
+		},
+	},
+
+	contributes: (self) => [
+		api.slots.nativeScheme.contribute(() => deepLinkScheme(self)),
+
+		// Contribute the Metro dev-server localhost origin to the dev-only CORS
+		// list unless the consumer has overridden `app.origins`. Predicate is
+		// `!== undefined` (not truthiness) so an explicit `app.origins: []`
+		// lockdown is honoured — mirrors plugin-vite + plugin-api.
+		api.slots.devCorsOrigins.contribute(async (ctx) => {
+			if (ctx.app.origins !== undefined) return undefined;
+			const port = await ctx.resolve(self.slots.devServerPort);
+			return `http://localhost:${port}`;
+		}),
+
+		// Client version gate (WS4): walls
+		// native builds below the configured floor with 426 Upgrade Required.
+		// Dormant (no contribution) when `minNativeBuild` is absent or both
+		// platforms are at the floor default of 0 — a dormant gate must not
+		// appear in the emitted worker at all. `after-cors`, `order: 0` so it
+		// runs before any other middleware (in particular before a
+		// rate-limit guard) — a walled client's retry storm must see 426,
+		// never a confusing 429.
+		api.slots.middlewareEntries.contribute(
+			async (ctx): Promise<MiddlewareSpec | undefined> => {
+				const floors = versionGateFloors(self.options.minNativeBuild);
+				if (!floors) return undefined;
+				const { ios, android } = floors;
+				// Scope: the worker's own prefixes, baked at codegen. A raw
+				// consumer route is the consumer's surface, not the framework's,
+				// and walling it would 426 a stale client on an endpoint that
+				// never spoke the version contract.
+				const prefixes = await ctx.resolve(api.slots.routePrefixes);
+				return {
+					imports: [
+						{
+							source: "@fcalell/plugin-expo/version-gate",
+							named: ["versionGate"],
+						},
+					],
+					call: {
+						kind: "call",
+						callee: { kind: "identifier", name: "versionGate" },
+						args: [
+							{
+								kind: "object",
+								properties: [
+									{ key: "ios", value: { kind: "number", value: ios } },
+									{
+										key: "android",
+										value: { kind: "number", value: android },
+									},
+									{
+										key: "prefixes",
+										value: {
+											kind: "array",
+											items: prefixes.map((prefix) => ({
+												kind: "string" as const,
+												value: prefix,
+											})),
+										},
+									},
+									{
+										key: "metricsBinding",
+										value: {
+											kind: "string",
+											value: VERSION_GATE_METRICS_BINDING,
+										},
+									},
+								],
+							},
+						],
+					},
+					phase: "after-cors",
+					order: 0,
+				};
+			},
+		),
+
+		// The gate's telemetry dataset (WS6.2), bound only while the gate is
+		// active. The runtime probes `env[VERSION_GATE_METRICS]` and stays
+		// silent when the binding is absent (node target, local dev without
+		// the section), so the contribution and the write path fail open
+		// independently.
+		cloudflare.slots.bindings.contribute((ctx) => {
+			if (!versionGateFloors(self.options.minNativeBuild)) return undefined;
+			return {
+				kind: "analytics_engine",
+				binding: VERSION_GATE_METRICS_BINDING,
+				dataset: versionGateDataset(ctx.app.name),
+			};
+		}),
+
+		// Emit the native artifacts; the entry is null (skipped) when routing
+		// is disabled. The two config files are `.cjs` (not `.js`): the root shims `require()` them through
+		// Node, and the consumer is `type: module`, so a `.js` would parse as ESM
+		// and break — see codegen's section headers.
+		emitArtifact(".stack/metro.config.cjs", self.slots.metroConfig),
+		emitArtifact(".stack/app.config.cjs", self.slots.expoConfig),
+		emitArtifact(ENTRY_ARTIFACT, self.slots.entrySource),
+		emitArtifact(ROUTES_ARTIFACT, self.slots.routesDtsSource),
+
+		// The page for an unmatched address: written once into the app's routes
+		// directory, never over a route of the app's.
+		cliSlots.artifactFiles.contribute(
+			async (ctx) => (await ctx.resolve(self.slots.notFoundFile)) ?? undefined,
+		),
+
+		// A route file added or removed during `stack dev` retypes the hrefs.
+		cliSlots.devWatchers.contribute(async (ctx) => {
+			const pagesDir = await ctx.resolve(self.slots.routesPagesDir);
+			if (pagesDir === null) return undefined;
+			return {
+				name: "routes",
+				paths: `${pagesDir}/**`,
+				debounce: 300,
+				handler(_path, type) {
+					if (type === "change") return;
+					writeFileSync(
+						join(ctx.cwd, ROUTES_ARTIFACT),
+						buildRoutesDts(ctx.cwd, pagesDir),
+					);
+				},
+			};
+		}),
+
+		// Merge consumer-declared config plugins into the app.config `plugins`
+		// array, and install their native npm deps. The supported path for
+		// native modules (apple-authentication, google-signin, camera,
+		// notifications, …) to reach a generated Expo app.
+		self.slots.expoConfigPlugins.contribute(() =>
+			(self.options.configPlugins ?? []).map((p) => ({
+				name: p.name,
+				options: p.options,
+			})),
+		),
+		cliSlots.initDeps.contribute(() => {
+			const deps: Record<string, string> = {};
+			for (const p of self.options.configPlugins ?? []) {
+				if (p.dependencies) Object.assign(deps, p.dependencies);
+			}
+			return Object.keys(deps).length > 0 ? deps : undefined;
+		}),
+
+		// Always emit the ambient-types reference: harmless without routing and
+		// needed by `tsconfig.app.json` whenever Expo is present.
+		cliSlots.artifactFiles.contribute(() => ({
+			path: EXPO_ENV_ARTIFACT,
+			content: EXPO_ENV_DTS,
+		})),
+
+		// Point the consumer's package.json `main` at the generated entry so
+		// expo-router actually mounts it (and the provider stack) — without this,
+		// expo-router falls back to its default entry and every contributed
+		// provider is dead. Write-once. Skipped when routing is disabled: a
+		// bare-RN consumer (`routes: false`) owns their own entry, and no
+		// `.stack/entry.tsx` is generated to point at.
+		cliSlots.packageJsonFields.contribute(async (ctx) => {
+			const pagesDir = await ctx.resolve(self.slots.routesPagesDir);
+			if (pagesDir === null) return undefined;
+			return { main: ENTRY_ARTIFACT };
+		}),
+
+		// Root-level config files the consumer owns. The metro + app.config
+		// shims re-export from `.stack/`; babel.config + eas.json are real
+		// consumer-edited files.
+		cliSlots.initScaffolds.contribute((ctx) =>
+			ctx.scaffold("metro.config.js.template", "metro.config.js"),
+		),
+		cliSlots.initScaffolds.contribute((ctx) =>
+			ctx.scaffold("app.config.ts.template", "app.config.ts"),
+		),
+		// babel.config is `.cjs`, not `.js`: Babel's own loader `require()`s it
+		// through Node, and the consumer is `type: module`, so a `module.exports`
+		// in a `.js` would be parsed as ESM and throw. `.cjs` is auto-discovered
+		// by Babel and unconditionally CommonJS.
+		cliSlots.initScaffolds.contribute((ctx) =>
+			ctx.scaffold("babel.config.cjs.template", "babel.config.cjs"),
+		),
+		cliSlots.initScaffolds.contribute((ctx) =>
+			ctx.scaffold("eas.json.template", "eas.json"),
+		),
+
+		// The scaffolded native API client (WS4): a typed oRPC client stamped
+		// with the version-gate headers on
+		// every request via `createVersionGatedFetch()`. Copy-once, like
+		// `plugin-native-ui`'s `lib-query.ts`/`lib-auth.ts`: an editable
+		// starter, not a generated artifact.
+		cliSlots.initScaffolds.contribute((ctx) =>
+			ctx.scaffold("lib-api.ts", "src/lib/api.ts"),
+		),
+
+		// Clean up the scaffolded root config files on `stack remove expo`.
+		cliSlots.removeFiles.contribute(() => [
+			"metro.config.js",
+			"app.config.ts",
+			"babel.config.cjs",
+			"eas.json",
+			"src/lib/api.ts",
+		]),
+	],
+});
+
+export type { ExpoOptions } from "./types.ts";

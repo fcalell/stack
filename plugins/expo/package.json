@@ -1,0 +1,65 @@
+{
+	"name": "@fcalell/plugin-expo",
+	"version": "0.0.0",
+	"type": "module",
+	"sideEffects": false,
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./client": {
+			"types": "./dist/client/index.d.ts",
+			"default": "./dist/client/index.js"
+		},
+		"./version-gate": {
+			"types": "./dist/worker/version-gate.d.ts",
+			"default": "./dist/worker/version-gate.js"
+		}
+	},
+	"files": [
+		"dist",
+		"src",
+		"templates",
+		"guide",
+		"README.md",
+		"tsconfig.json",
+		"tsconfig.build.json"
+	],
+	"license": "MIT",
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"prepare": "pnpm build",
+		"check-types": "tsc --noEmit --pretty",
+		"lint": "biome check --write --unsafe",
+		"check": "pnpm check-types && pnpm lint",
+		"clear": "rm -rf dist node_modules .turbo"
+	},
+	"dependencies": {
+		"@fcalell/cli": "workspace:*",
+		"@fcalell/plugin-api": "workspace:*",
+		"@fcalell/plugin-cloudflare": "workspace:*",
+		"expo": "~56.0.8",
+		"hono": "^4.12.23",
+		"zod": "^4.3.6"
+	},
+	"peerDependencies": {
+		"expo-application": ">=56.0.0",
+		"react-native": ">=0.85.0"
+	},
+	"peerDependenciesMeta": {
+		"expo-application": {
+			"optional": true
+		},
+		"react-native": {
+			"optional": true
+		}
+	},
+	"devDependencies": {
+		"@fcalell/typescript-config": "workspace:*",
+		"@types/node": "^25.5.0",
+		"expo-application": "~56.0.0",
+		"react-native": "0.85.3",
+		"typescript": "^5.9.3"
+	}
+}

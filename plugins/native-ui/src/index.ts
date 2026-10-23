@@ -1,0 +1,462 @@
+import { basename } from "node:path";
+import type { ContributionCtx } from "@fcalell/cli";
+import { plugin, slot, stackSpec } from "@fcalell/cli";
+import {
+	literalToProps,
+	type ProviderSpec,
+	type TsExpression,
+} from "@fcalell/cli/ast";
+import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
+import { api } from "@fcalell/plugin-api";
+import { auth } from "@fcalell/plugin-auth";
+import { expo } from "@fcalell/plugin-expo";
+import { deriveTheme } from "@fcalell/ui-core/derive";
+import { uiCoreGuide } from "@fcalell/ui-core/manifest";
+import { KNOB_DEFAULTS, LOADING_SLOTS } from "@fcalell/ui-core/tokens";
+import { aggregateGlobalCss } from "./node/codegen.ts";
+import {
+	type NativeFontEntry,
+	type NativeUiOptions,
+	nativeUiOptionsSchema,
+} from "./types.ts";
+
+const SOURCE = "native-ui";
+
+// Generated uniwind entry stylesheet + its build-time type output. Both land
+// under `.stack/` (already gitignored). The Metro wrapper paths are resolved
+// relative to Metro's projectRoot — the consumer root (see plugin-expo's
+// generated metro.config) — so they point back into `.stack/`. The stylesheet's
+// own `@source` roots stay relative to the file in `.stack/` (e.g. `../src`).
+const GLOBAL_CSS_ARTIFACT = ".stack/global.css";
+const NATIVE_AUTH_ARTIFACT = ".stack/native-auth.ts";
+const NATIVE_THEME_ARTIFACT = ".stack/native-theme.ts";
+const UNIWIND_CSS_ENTRY = "./.stack/global.css";
+const UNIWIND_DTS = "./.stack/uniwind-types.d.ts";
+
+// `@source` roots are relative to global.css (in `.stack/`). uniwind scans for
+// classNames from the stylesheet's directory, so without these it would only
+// see `.stack/` and miss the consumer app, this plugin's primitives, and the
+// matrix cell strings inside ui-core — a dependency package is never scanned
+// unless named.
+const SOURCES = [
+	"../src",
+	"../node_modules/@fcalell/plugin-native-ui/src",
+	"../node_modules/@fcalell/ui-core/src",
+];
+
+// The consumer configures the native clients in `src/lib/` (see the
+// native-provider-wiring decision); these defaults point the provider wiring at
+// that convention. Paths are relative to `.stack/entry.tsx`. Overridable via
+// options for non-conventional layouts.
+const DEFAULT_AUTH_MODULE = { source: "../src/lib/auth", export: "authClient" };
+const DEFAULT_QUERY_MODULE = {
+	source: "../src/lib/query",
+	export: "queryClient",
+};
+
+// `withUniwindConfig` must wrap every other Metro plugin (uniwind's
+// requirement). Metro wrappers apply ascending by `order`, so the highest order
+// is applied last = outermost.
+const UNIWIND_METRO_ORDER = 100;
+
+// ── Slot declarations ──────────────────────────────────────────────
+
+// The design contract, resolved once; one `theme` object themes both
+// platforms.
+const resolvedTheme = slot.derived({
+	source: SOURCE,
+	name: "resolvedTheme",
+	compute: (_inp, ctx: ContributionCtx<NativeUiOptions>) =>
+		deriveTheme(ctx.options.theme),
+});
+
+// The font files to embed: the consumer's `fonts` option or none.
+const fonts = slot.derived({
+	source: SOURCE,
+	name: "fonts",
+	compute: (_inp, ctx: ContributionCtx<NativeUiOptions>): NativeFontEntry[] =>
+		ctx.options.fonts ?? [],
+});
+
+// Extra CSS `@import`s aggregated into global.css (beyond tailwindcss+uniwind).
+const appCssImports = slot.list<string>({
+	source: SOURCE,
+	name: "appCssImports",
+});
+
+// Rendered `.stack/global.css`. Always emits — uniwind needs the entry file
+// whenever native-ui is in the config.
+const appCssSource = slot.derived({
+	source: SOURCE,
+	name: "appCssSource",
+	inputs: { resolved: resolvedTheme, imports: appCssImports },
+	compute: (inp): string | null =>
+		aggregateGlobalCss({
+			resolved: inp.resolved,
+			sources: SOURCES,
+			extraImports: inp.imports,
+		}),
+});
+
+// ── Provider specs ─────────────────────────────────────────────────
+//
+// Composed around `<ExpoRoot>` in `.stack/entry.tsx`, outer → inner by `order`.
+// GestureHandlerRootView must be outermost. The gorhom bottom-sheet modal host
+// is innermost, inside the gesture + safe-area context: gorhom draws a sheet's
+// content in its host, outside the screen that opened it, so every context a
+// sheet body reads (words, Query, Auth) wraps the host. It serves the screens
+// with no Shell; a Shell holds its own. No ThemeProvider: uniwind theming is
+// CSS-first (global `Uniwind.setTheme`), not context-based.
+
+const FLEX_FILL: TsExpression = {
+	kind: "object",
+	properties: [{ key: "flex", value: { kind: "number", value: 1 } }],
+};
+
+const gestureProvider: ProviderSpec = {
+	imports: [
+		{
+			source: "react-native-gesture-handler",
+			named: ["GestureHandlerRootView"],
+		},
+	],
+	wrap: {
+		identifier: "GestureHandlerRootView",
+		props: [{ name: "style", value: FLEX_FILL }],
+	},
+	order: 0,
+};
+
+const keyboardProvider: ProviderSpec = {
+	imports: [
+		{ source: "react-native-keyboard-controller", named: ["KeyboardProvider"] },
+	],
+	wrap: { identifier: "KeyboardProvider" },
+	order: 10,
+};
+
+const safeAreaProvider: ProviderSpec = {
+	imports: [
+		{ source: "react-native-safe-area-context", named: ["SafeAreaProvider"] },
+	],
+	wrap: { identifier: "SafeAreaProvider" },
+	order: 20,
+};
+
+const bottomSheetProvider: ProviderSpec = {
+	imports: [
+		{ source: "@gorhom/bottom-sheet", named: ["BottomSheetModalProvider"] },
+	],
+	wrap: { identifier: "BottomSheetModalProvider" },
+	order: 30,
+};
+
+// The consumer's words, wrapped around the app so every molecule reads them
+// through `useWords()`. Absent, the context's English default applies and no
+// provider is generated.
+function wordsProvider(opts: NativeUiOptions): ProviderSpec | undefined {
+	if (!opts.words) return undefined;
+	return {
+		imports: [
+			{
+				source: "@fcalell/plugin-native-ui/lib/words",
+				named: ["WordsProvider"],
+			},
+		],
+		wrap: {
+			identifier: "WordsProvider",
+			props: Object.entries(literalToProps({ words: opts.words })).map(
+				([name, value]) => ({ name, value }),
+			),
+		},
+		order: 25,
+	};
+}
+
+function queryProvider(opts: NativeUiOptions): ProviderSpec {
+	const mod = opts.queryClientModule ?? DEFAULT_QUERY_MODULE;
+	return {
+		imports: [
+			{
+				source: "@fcalell/plugin-api/tanstack-query",
+				named: ["QueryProvider"],
+			},
+			{
+				source: "@fcalell/ui-core/paint",
+				named: ["holdFor"],
+			},
+			{
+				source: "@fcalell/plugin-native-ui/lib/net",
+				named: ["listen"],
+			},
+			{ source: mod.source, named: [mod.export] },
+		],
+		wrap: {
+			identifier: "QueryProvider",
+			props: [
+				{ name: "client", value: { kind: "identifier", name: mod.export } },
+				// A read's first write lands no earlier than the minimum hold
+				// (`timings.waitMin`).
+				{ name: "hold", value: { kind: "identifier", name: "holdFor" } },
+				// The phone has no window events: the managers listen to the
+				// network and the app's foreground (`lib/net.ts`).
+				{ name: "listen", value: { kind: "identifier", name: "listen" } },
+			],
+		},
+		order: 26,
+	};
+}
+
+function authProvider(opts: NativeUiOptions): ProviderSpec {
+	const mod = opts.authClientModule ?? DEFAULT_AUTH_MODULE;
+	return {
+		imports: [
+			{ source: "@fcalell/plugin-auth/expo", named: ["AuthProvider"] },
+			{ source: mod.source, named: [mod.export] },
+		],
+		wrap: {
+			identifier: "AuthProvider",
+			props: [
+				{ name: "client", value: { kind: "identifier", name: mod.export } },
+			],
+		},
+		order: 27,
+	};
+}
+
+// Constants the scaffolded src/lib/auth.ts imports. Generated, so the
+// native client's scheme and cookie prefix always match what expo bakes into
+// the app config and what the worker sets on its session cookies. A
+// hand-copied literal fails silently on mismatch: the client filters
+// Set-Cookie by prefix, so every sign-in succeeds server-side while the
+// device never persists the session.
+const nativeAuthSource = slot.derived({
+	source: SOURCE,
+	name: "nativeAuthSource",
+	inputs: {
+		scheme: api.slots.nativeScheme,
+		cookiePrefix: auth.slots.cookiePrefix,
+	},
+	compute: (inp): string =>
+		[
+			"// Generated by @fcalell/plugin-native-ui. Do not edit.",
+			`export const scheme = ${JSON.stringify(inp.scheme)};`,
+			`export const cookiePrefix = ${JSON.stringify(inp.cookiePrefix)};`,
+			"",
+		].join("\n"),
+});
+
+// The theme's `defaultMode`, `loading` and `radius`, applied once at
+// startup: the mode a viewer starts in until the app sets another, ahead of
+// the system's, the glyph slots the app waits in the scramble (`setLoading`;
+// a slot left out pulses), and the room's radius when it is not the default
+// (`setRoomRadius`; the density sets carry theirs in the stylesheet). With
+// none of the three there is no file and uniwind follows the system.
+const nativeThemeSource = slot.derived({
+	source: SOURCE,
+	name: "nativeThemeSource",
+	inputs: { resolved: resolvedTheme },
+	compute: (inp): string | null => {
+		const scrambled = LOADING_SLOTS.filter(
+			(slot) => inp.resolved.loading[slot] === "scramble",
+		);
+		const radius =
+			inp.resolved.knobs.radius === KNOB_DEFAULTS.radius
+				? undefined
+				: inp.resolved.knobs.radius;
+		if (
+			!inp.resolved.defaultMode &&
+			scrambled.length === 0 &&
+			radius === undefined
+		)
+			return null;
+		return [
+			"// Generated by @fcalell/plugin-native-ui. Do not edit.",
+			...(inp.resolved.defaultMode
+				? ['import { Uniwind } from "uniwind";']
+				: []),
+			...(scrambled.length > 0
+				? ['import { setLoading } from "@fcalell/ui-core/paint";']
+				: []),
+			...(radius === undefined
+				? []
+				: [
+						'import { setRoomRadius } from "@fcalell/plugin-native-ui/lib/room";',
+					]),
+			"",
+			...(inp.resolved.defaultMode
+				? [`Uniwind.setTheme(${JSON.stringify(inp.resolved.defaultMode)});`]
+				: []),
+			...(scrambled.length > 0
+				? [
+						`setLoading({ ${scrambled.map((slot) => `${slot}: "scramble"`).join(", ")} });`,
+					]
+				: []),
+			...(radius === undefined ? [] : [`setRoomRadius(${radius});`]),
+			"",
+		].join("\n");
+	},
+});
+
+export const nativeUi = plugin("native-ui", {
+	label: "Native Design System",
+
+	schema: nativeUiOptionsSchema,
+
+	// Slot-graph dependency is expo (we contribute into its slots). api + auth
+	// are required because the wired Query/Auth providers import their native
+	// subpaths; presence-only, for a clear error if a consumer forgets them.
+	requires: ["expo", "api", "auth"],
+
+	guide: [
+		{
+			page: "rules",
+			trigger: "Writing or editing any `.tsx` of the phone app",
+		},
+		{
+			page: "reference",
+			trigger:
+				"Importing a phone component, or setting the theme, words or fonts, or the scaffolded query client",
+		},
+	],
+
+	// Consumer dependencies. Native module versions are Expo-SDK-56 ballpark;
+	// `expo install` reconciles exact versions at consumer setup.
+	dependencies: {
+		// The `@source` root pointing into ui-core only resolves when the package
+		// sits in the consumer's node_modules.
+		"@fcalell/ui-core": stackSpec("@fcalell/ui-core"),
+		uniwind: "^1.8.0",
+		"react-native-gesture-handler": "^3.0.0",
+		"react-native-reanimated": "^4.4.1",
+		"react-native-worklets": "^0.9.0",
+		"react-native-safe-area-context": "^5.6.0",
+		"react-native-keyboard-controller": "^1.18.0",
+		"@gorhom/bottom-sheet": "^5.2.14",
+		"lucide-react-native": "^1.49.0",
+		// lucide's required peer; also backs consumer brand glyphs. Without it a
+		// fresh consumer can't render any icon.
+		"react-native-svg": "^15.15.4",
+		"expo-font": "~56.0.0",
+		// The copy acts (Code, a row with a copy act) write the clipboard.
+		"expo-clipboard": "~56.0.3",
+		// Code's download act writes the text to a file and hands it to the share sheet.
+		"expo-file-system": "~56.0.7",
+		"expo-sharing": "~56.0.16",
+		// file `Input`'s Choose act opens the system document picker.
+		"expo-document-picker": "~56.0.4",
+		// `Thread`'s composer's attach act opens the photo library beside the files.
+		"expo-image-picker": "~56.0.16",
+		"expo-secure-store": "~56.0.0",
+		"@tanstack/react-query": "^5.101.0",
+		"@orpc/tanstack-query": "^1.14.4",
+		"@better-auth/expo": "1.7.7",
+		// @better-auth/expo's client statically imports expo-constants +
+		// expo-linking and dynamically imports expo-network + expo-web-browser.
+		// They're declared optional peers there, but Metro bundles every import
+		// (dynamic included), so a native consumer can't bundle without them.
+		"expo-constants": "~56.0.0",
+		"expo-linking": "~56.0.0",
+		"expo-network": "~56.0.0",
+		"expo-web-browser": "~56.0.0",
+	},
+
+	slots: {
+		nativeAuthSource,
+		nativeThemeSource,
+		resolvedTheme,
+		fonts,
+		appCssImports,
+		appCssSource,
+	},
+
+	contributes: (self) => [
+		// ── uniwind Metro integration ────────────────────────────────────
+		expo.slots.metroConfigImports.contribute(() => ({
+			names: ["withUniwindConfig"],
+			module: "uniwind/metro",
+		})),
+		expo.slots.metroPluginCalls.contribute(() => ({
+			callee: "withUniwindConfig",
+			options: { cssEntryFile: UNIWIND_CSS_ENTRY, dtsFile: UNIWIND_DTS },
+			order: UNIWIND_METRO_ORDER,
+		})),
+
+		// ── expo-font: embed contributed font files natively ──────────────
+		expo.slots.expoConfigPlugins.contribute(async (ctx) => {
+			const fontEntries = await ctx.resolve(self.slots.fonts);
+			const files = fontEntries.map((font) => font.source);
+			if (files.length === 0) return undefined;
+			return { name: "expo-font", options: { fonts: files } };
+		}),
+
+		// ── Provider composition (outer → inner) ─────────────────────────
+		expo.slots.providers.contribute(() => gestureProvider),
+		expo.slots.providers.contribute(() => keyboardProvider),
+		expo.slots.providers.contribute(() => safeAreaProvider),
+		expo.slots.providers.contribute(() => wordsProvider(self.options)),
+		expo.slots.providers.contribute(() => queryProvider(self.options)),
+		expo.slots.providers.contribute(() => authProvider(self.options)),
+		expo.slots.providers.contribute(() => bottomSheetProvider),
+
+		// The page for an address no route serves: expo writes it as the app's
+		// `+not-found` route unless the app has one of its own.
+		expo.slots.notFoundRoute.contribute(
+			() => "@fcalell/plugin-native-ui/lib/not-found",
+		),
+
+		// ── Emit the uniwind entry stylesheet ─────────────────────────────
+		emitArtifact(GLOBAL_CSS_ARTIFACT, self.slots.appCssSource),
+		emitArtifact(NATIVE_AUTH_ARTIFACT, self.slots.nativeAuthSource),
+		emitArtifact(NATIVE_THEME_ARTIFACT, self.slots.nativeThemeSource),
+		// ui-core is no plugin: each UI plugin indexes its guide pages.
+		cliSlots.guide.contribute(() => uiCoreGuide),
+		// The entry sits in `.stack/`, beside the files it imports. uniwind
+		// reads classes only from a stylesheet the app imports.
+		expo.slots.entryImports.contribute(() => ({
+			source: `./${basename(GLOBAL_CSS_ARTIFACT)}`,
+			sideEffect: true,
+		})),
+		expo.slots.entryImports.contribute(async (ctx) =>
+			(await ctx.resolve(self.slots.nativeThemeSource)) === null
+				? undefined
+				: { source: "./native-theme", sideEffect: true },
+		),
+
+		// ── Scaffold the native client modules the entry imports ──────────
+		//
+		// The generated `.stack/entry.tsx` imports `queryClient` / `authClient`
+		// from `src/lib/{query,auth}.ts` (the provider defaults above). Without a
+		// scaffold those files don't exist and the app won't compile, so seed
+		// editable starters — copy-once, like the auth callback file. Skipped
+		// when the consumer points a provider at their own module via
+		// `queryClientModule` / `authClientModule`; that path is theirs to own.
+		cliSlots.initScaffolds.contribute((ctx) => {
+			if (self.options.queryClientModule) return undefined;
+			return ctx.scaffold("lib-query.ts", "src/lib/query.ts");
+		}),
+		cliSlots.initScaffolds.contribute((ctx) => {
+			if (self.options.authClientModule) return undefined;
+			return ctx.scaffold("lib-auth.ts", "src/lib/auth.ts");
+		}),
+		cliSlots.removeFiles.contribute(() => [
+			"src/lib/query.ts",
+			"src/lib/auth.ts",
+		]),
+
+		// uniwind's global augmentation (className + the per-prop *ClassName
+		// variants) must load wherever native-ui's source is type-checked — the
+		// consumer compiles those `.tsx` directly (the plugin ships source, not
+		// declarations). Consumed by `stack init`'s tsconfig template via
+		// `cliSlots.tsconfigTypes`; own presence is the gate, so a plain Expo
+		// consumer without `nativeUi()` gets no dangling type reference.
+		cliSlots.tsconfigTypes.contribute(() => "uniwind/types"),
+	],
+});
+
+export type {
+	NativeFontEntry,
+	NativeUiOptions,
+	Theme,
+	Words,
+} from "./types.ts";

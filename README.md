@@ -1,0 +1,145 @@
+# @fcalell/stack
+
+A plugin-driven full-stack framework for Hono and Cloudflare Workers, with React on the web and React Native on the phone. The stack ships database, API, UI, and tooling behind a single `stack` CLI so a project only contains business logic.
+
+## What you get
+
+- **Database** — Drizzle ORM for Cloudflare D1 and SQLite (`@fcalell/plugin-db`).
+- **Auth** — Better Auth integration, RBAC, access control (`@fcalell/plugin-auth`).
+- **API** — Hono + oRPC behind a procedure builder with auth, rate limiting, and a typed client (`@fcalell/plugin-api`).
+- **Web** — React on Vite with TanStack Router file routes, the React Compiler, and the HTML shell (`@fcalell/plugin-react`).
+- **UI** — one design system, `@fcalell/ui-core`: on the web its stylesheet, fonts, words and showcase over Tailwind v4 (`@fcalell/plugin-react-ui`), on the phone its roster in React Native + uniwind (`@fcalell/plugin-native-ui`).
+- **Tooling** — One `stack` CLI for init, dev, build, deploy. TypeScript and Biome presets included.
+
+Consumers never install or import `drizzle-orm`, `hono`, `zod`, `vite`, or `tailwindcss` directly. Plugins wrap their domain and re-export only what is needed.
+
+## Quick start
+
+```bash
+pnpm add -D @fcalell/cli
+pnpm exec stack init my-app
+```
+
+`stack init` prompts for plugins and plugin-specific options, scaffolds the project, and generates `.stack/`. From inside the project:
+
+```bash
+stack dev               # plugin-driven dev (processes, watchers, schema push)
+stack dev --studio      # also launch Drizzle Studio
+stack build             # plugin-driven production build
+stack deploy            # migrations + wrangler
+stack db push           # plugin subcommands: stack <plugin> <command>
+```
+
+## Consumer example
+
+A minimal `stack.config.ts` is the single source of truth — a `domain`, a `plugins` array, and optional dev settings.
+
+```ts
+import { defineConfig } from "@fcalell/cli";
+import { db } from "@fcalell/plugin-db";
+import { auth } from "@fcalell/plugin-auth";
+import { api } from "@fcalell/plugin-api";
+import { vite } from "@fcalell/plugin-vite";
+import { react } from "@fcalell/plugin-react";
+
+export default defineConfig({
+  app: { name: "my-app", domain: "example.com" },
+  plugins: [
+    db({ dialect: "d1", databaseId: "9a619a0b-..." }),
+    auth({ cookies: { prefix: "myapp" }, organization: true }),
+    api(),
+    vite(),
+    react({ description: "My app" }),
+  ],
+});
+```
+
+Plugins coordinate through typed slots in a dataflow graph — each plugin contributes typed values into other plugins' slots and derives values from them, and the framework resolves the graph topologically once per command. The order of plugins in the array does not matter. Every plugin must be listed explicitly; `stack init` auto-adds missing dependencies (e.g. picking `native-ui` also adds `expo`).
+
+## CLI commands
+
+| Command | Purpose |
+|---------|---------|
+| `stack init [dir]` | Interactive project scaffold (pick plugins) |
+| `stack add <plugin>` | Add a plugin to an existing project |
+| `stack remove <plugin>` | Remove a plugin (checks dependents) |
+| `stack generate` | Regenerate `.stack/` files from config |
+| `stack dev [--studio]` | Plugin-driven dev |
+| `stack build` | Plugin-driven production build |
+| `stack deploy` | Plugin-driven deploy |
+| `stack <plugin> <command>` | Plugin-registered subcommand (e.g. `stack db push`) |
+| `stack plugin init <name>` | Scaffold a third-party plugin skeleton |
+
+## Packages
+
+| Package | Purpose |
+|---------|---------|
+| [`@fcalell/cli`](packages/cli) | `defineConfig()`, `plugin()`, `slot.*`, `stack` CLI, slot graph engine, codegen |
+| [`@fcalell/typescript-config`](packages/typescript-config) | Shared `tsconfig` presets |
+| [`@fcalell/biome-config`](packages/biome-config) | Shared Biome formatter and linter config |
+
+## Plugins
+
+| Plugin | Purpose | Factory |
+|--------|---------|---------|
+| [`@fcalell/plugin-db`](plugins/db) | Drizzle ORM clients (D1/SQLite), schema tooling, migrations | `db()` |
+| [`@fcalell/plugin-auth`](plugins/auth) | Better Auth integration, RBAC, access control | `auth()` |
+| [`@fcalell/plugin-api`](plugins/api) | Hono + oRPC, procedure builder, typed client | `api()` |
+| [`@fcalell/plugin-vite`](plugins/vite) | Framework-agnostic Vite lifecycle | `vite()` |
+| [`@fcalell/plugin-react`](plugins/react) | React on the web: Vite + React Compiler, TanStack Router file routes, the app entry, providers, and the HTML shell with its `<head>` metadata | `react()` |
+| [`@fcalell/plugin-react-ui`](plugins/react-ui) | The design system on the web: `.stack/app.css` from the ui-core contract on Tailwind v4, fonts, the mode script, words, and the showcase data Storybook draws the roster from | `reactUi()` |
+| [`@fcalell/plugin-expo`](plugins/expo) | Expo/React Native — Metro + app config + expo-router entry + EAS commands | `expo()` |
+| [`@fcalell/plugin-native-ui`](plugins/native-ui) | The design system on the phone: the ui-core roster in React Native + Expo + uniwind, the phone layout at every width, fonts, words | `nativeUi()` |
+
+See each plugin's README for config options, commands, event handlers, and runtime exports.
+
+## Designing screens
+
+A consumer's screens are its own, designed in code by ui-core's screen recipe
+(`packages/ui-core/guide/screen.md`): composed from the installed `@fcalell/ui-core` roster,
+judged beside the anchor screen the voice page pins (`packages/ui-core/guide/voice.md`), signed off
+on the render. A part the roster
+cannot compose takes the nearest one it can; only a bug or a missing feature that matters is
+reported as a gap (the CLI's `gap.md`). Details:
+[consumer-project](docs/architecture/consumer-project.md#designing-screens).
+
+## The guide
+
+Every package ships how to build on it as `guide/*.md`, versioned with the consumer's pin.
+`stack generate` writes `.stack/guide.md`, an index of every page with the trigger that says
+when to open it, and `stack init` makes the consumer's `CLAUDE.md` import it, so a session
+loads only the page a step needs.
+
+## Writing a plugin
+
+Third-party plugins are first-class. Scaffold one with:
+
+```bash
+pnpm exec stack plugin init my-plugin
+pnpm exec stack plugin init my-plugin --package @acme/stack-plugin-foo --dir ./packages/my-plugin
+```
+
+The scaffold produces a `plugin()`-based skeleton and a runtime stub exported from `./runtime`. Publish it under any npm name — consumers add it to `stack.config.ts` like any built-in plugin.
+
+## Repository commands
+
+```bash
+pnpm check            # Type-check every package, then lint (Biome)
+pnpm build            # Compile every package's src/ to dist/ and build the apps
+pnpm showcase         # Build the showcase's dependencies and serve it on :3000
+pnpm stories          # Storybook for the roster, on :6006
+```
+
+Every package ships compiled JavaScript in `dist/` for what Node runs (Node strips no types under
+`node_modules`); `.tsx`, `.css` and `src/ui/` entries stay source for the consumer's bundler.
+`pnpm install` builds everything through each package's `prepare`, so a `link:` consumer sees
+`dist/` after an install here, and `pnpm turbo run build` after a source change. Taking stack from
+GitHub: [consumer-project](docs/architecture/consumer-project.md#from-github).
+
+## Architecture
+
+The architecture reference is in [`docs/architecture/`](docs/architecture/overview.md): the packages and dependency graph, the slot graph and catalog, command procedures, the runtime, the generated-file layout, the ui-core design contract, coding conventions and plugin authoring. What the framework is for is in [`docs/product.md`](docs/product.md).
+
+## License
+
+MIT

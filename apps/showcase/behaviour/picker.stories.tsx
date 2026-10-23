@@ -1,0 +1,695 @@
+import { read } from "@fcalell/plugin-api/tanstack-query";
+import { Pane } from "@fcalell/plugin-react-ui/components/pane";
+import { Picker } from "@fcalell/plugin-react-ui/components/picker";
+import { Section } from "@fcalell/plugin-react-ui/components/section";
+import { Toolbar } from "@fcalell/plugin-react-ui/components/toolbar";
+import { Place } from "@fcalell/plugin-react-ui/showcase/frames/place";
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { useState } from "react";
+import { expect, screen, waitFor, within } from "storybook/test";
+import { hover, type Point } from "./mouse.ts";
+import { focused, walked } from "./support.ts";
+
+const ROLES = [
+	{ value: "owner", label: "Owner" },
+	{ value: "admin", label: "Admin" },
+	{ value: "member", label: "Member" },
+	{ value: "viewer", label: "Viewer" },
+];
+
+function Role() {
+	const [role, setRole] = useState("member");
+	return (
+		<Picker label="Role" options={ROLES} value={role} onChange={setRole} />
+	);
+}
+
+export default {
+	title: "Behaviour/Picker",
+	render: () => <Role />,
+} satisfies Meta;
+
+// The picker's list takes focus when it opens, moves by the arrow keys and
+// typeahead, Enter picks, and Escape closes it and returns focus to the
+// trigger.
+export const Popover: StoryObj = {
+	play: async ({ canvas, userEvent }) => {
+		const trigger = canvas.getByRole("combobox", { name: /Role/ });
+		await userEvent.click(trigger);
+		const list = await screen.findByRole("listbox");
+		await waitFor(() => expect(list).toContainElement(focused()));
+		const options = screen.getAllByRole("option");
+		await expect(options[2]).toHaveAttribute("aria-selected", "true");
+		await userEvent.keyboard("{ArrowDown}");
+		await waitFor(() => expect(options[3]).toHaveAttribute("data-highlighted"));
+		// The open picker keeps the rules.
+		await expect(await walked()).toEqual([]);
+		await userEvent.keyboard("a");
+		await waitFor(() => expect(options[1]).toHaveAttribute("data-highlighted"));
+		await userEvent.keyboard("{Enter}");
+		await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
+		await expect(trigger).toHaveTextContent("Admin");
+		await waitFor(() => expect(trigger).toHaveFocus());
+		await userEvent.click(trigger);
+		await screen.findByRole("listbox");
+		await userEvent.keyboard("{Escape}");
+		await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
+		await waitFor(() => expect(trigger).toHaveFocus());
+		// Closed, with focus back on the trigger.
+		await expect(await walked()).toEqual([]);
+	},
+};
+
+// The same for an open picker: no focus guard is `aria-hidden`.
+export const OpenPickerHasNoHiddenFocusable: StoryObj = {
+	play: async ({ canvas, userEvent }) => {
+		await userEvent.click(canvas.getByRole("combobox", { name: /Role/ }));
+		await screen.findByRole("listbox");
+		const guards = [...document.querySelectorAll("[data-base-ui-focus-guard]")];
+		await expect(guards.length).toBeGreaterThan(0);
+		await waitFor(() =>
+			expect(
+				document.querySelectorAll("[data-base-ui-focus-guard][aria-hidden]"),
+			).toHaveLength(0),
+		);
+	},
+};
+
+const OWNERS = [
+	{ value: "ana", label: "Ana Ruiz" },
+	{ value: "ben", label: "Ben Kaya" },
+	{ value: "chen", label: "Chen Wu" },
+	{ value: "dana", label: "Dana Moss" },
+	{ value: "ema", label: "Ema Okafor" },
+	{ value: "felix", label: "Felix Varga" },
+	{ value: "gus", label: "Gus Lund" },
+];
+
+function Owner() {
+	const [owner, setOwner] = useState("ana");
+	return (
+		<Picker label="Owner" options={OWNERS} value={owner} onChange={setOwner} />
+	);
+}
+
+// A pick past six options leads its list with a search; "No matches" stands
+// only while the typed search matches no option.
+export const Search: StoryObj = {
+	render: () => <Owner />,
+	play: async ({ canvas, userEvent }) => {
+		await userEvent.click(canvas.getByRole("combobox", { name: /Owner/ }));
+		await screen.findByRole("listbox");
+		await expect(screen.queryByText("No matches")).toBeNull();
+		await userEvent.keyboard("zzz");
+		await screen.findByText("No matches");
+		await userEvent.keyboard("{Backspace}{Backspace}{Backspace}");
+		await waitFor(() => expect(screen.queryByText("No matches")).toBeNull());
+		await expect(screen.getAllByRole("option")).toHaveLength(OWNERS.length);
+	},
+};
+
+function Trailing() {
+	const [role, setRole] = useState("member");
+	return (
+		<Section
+			items={[
+				{
+					key: "ben-kaya",
+					leading: { avatar: { name: "Ben Kaya" } },
+					title: "Ben Kaya",
+					meta: ["ben@acme.app"],
+					pick: {
+						label: "Ben's role",
+						options: ROLES,
+						value: role,
+						onChange: setRole,
+					},
+				},
+			]}
+		/>
+	);
+}
+
+// A row's trailing pick stands at the viewport's end: its list hangs from its
+// start and shifts back inside the viewport.
+export const RowEnd: StoryObj = {
+	render: () => <Trailing />,
+	play: async ({ canvas, userEvent }) => {
+		await userEvent.click(canvas.getByRole("combobox", { name: /Ben's role/ }));
+		const list = await screen.findByRole("listbox");
+		await waitFor(() => {
+			const rect = list.getBoundingClientRect();
+			expect(rect.left).toBeGreaterThanOrEqual(0);
+			expect(rect.right).toBeLessThanOrEqual(innerWidth);
+		});
+	},
+};
+
+// A row's trailing pick is a control: its box, and so its hover wash, its press
+// and open fill and its focus ring, stands at the control radius (6 px), never
+// a pill.
+function rowRadius(touch: boolean): StoryObj {
+	return {
+		render: () => <Trailing />,
+		...(touch
+			? {
+					globals: {
+						density: "touch",
+						viewport: { value: "phone", isRotated: false },
+					},
+					parameters: {
+						viewport: {
+							options: {
+								phone: {
+									name: "Phone",
+									styles: { width: "390px", height: "812px" },
+									type: "mobile",
+								},
+							},
+						},
+					},
+				}
+			: {}),
+		play: async ({ canvas, userEvent }) => {
+			// On touch the pick opens a sheet, so its trigger is a button.
+			const trigger = canvas.getByRole(touch ? "button" : "combobox", {
+				name: /Ben's role/,
+			});
+			const radius = () => getComputedStyle(trigger).borderTopLeftRadius;
+			await expect(radius()).toBe("6px");
+			if (!touch) {
+				// The focus ring is the box's own outline, which follows its radius.
+				await userEvent.tab();
+				await expect(trigger).toHaveFocus();
+				await expect(getComputedStyle(trigger).outlineStyle).toBe("solid");
+				await expect(getComputedStyle(trigger).outlineWidth).toBe("2px");
+				const rest = getComputedStyle(trigger).backgroundColor;
+				const box = trigger.getBoundingClientRect();
+				await hover({
+					x: box.left + box.width / 2,
+					y: box.top + box.height / 2,
+				});
+				await waitFor(() =>
+					expect(getComputedStyle(trigger).backgroundColor).not.toBe(rest),
+				);
+				await expect(radius()).toBe("6px");
+			}
+			await userEvent.click(trigger);
+			await screen.findByRole("listbox");
+			await expect(trigger).toHaveAttribute("data-popup-open");
+			await expect(radius()).toBe("6px");
+		},
+	};
+}
+
+export const RowRadius = rowRadius(false);
+export const RowRadiusTouch = { ...rowRadius(true), tags: ["touch"] };
+
+const AGENTS = [
+	{ value: "writer", label: "Writer", description: "Drafts the brief" },
+	{ value: "reviewer", label: "Reviewer", blocked: "Lacks brief.flag" },
+	{ value: "editor", label: "Editor", blocked: "Asks for edit" },
+	{ value: "planner", label: "Planner" },
+];
+
+function Agents(props: { width: number }) {
+	const [agent, setAgent] = useState("writer");
+	const [agents, setAgents] = useState(["editor"]);
+	return (
+		<div
+			style={{ width: props.width, maxWidth: "100%" }}
+			className="flex flex-col gap-gap"
+		>
+			<Picker
+				label="Agent"
+				options={AGENTS}
+				value={agent}
+				onChange={setAgent}
+			/>
+			<Picker
+				label="Agents"
+				options={AGENTS}
+				value={agents}
+				onChange={setAgents}
+			/>
+		</div>
+	);
+}
+
+// A blocked option's reason replaces its description in the disabled ink, the
+// arrows reach it but Enter and a press pick nothing; in a pick of several a
+// blocked option in the value is a chip that removes, and once removed it is
+// blocked again.
+function blocks(width: number): StoryObj {
+	return {
+		render: () => <Agents width={width} />,
+		play: async ({ canvas, userEvent }) => {
+			const trigger = canvas.getByRole("combobox", { name: "Agent" });
+			await userEvent.click(trigger);
+			const list = await screen.findByRole("listbox");
+			const options = screen.getAllByRole("option");
+			const [writer, reviewer, editor, planner] = options;
+			await expect(reviewer).toHaveAttribute("aria-disabled", "true");
+			await expect(writer).not.toHaveAttribute("aria-disabled");
+			const reason = within(list).getByText("Lacks brief.flag");
+			await expect(getComputedStyle(reason).color).not.toBe(
+				getComputedStyle(within(list).getByText("Drafts the brief")).color,
+			);
+			await expect(reviewer?.getBoundingClientRect().height).toBeCloseTo(
+				writer?.getBoundingClientRect().height ?? 0,
+				1,
+			);
+			await waitFor(() => expect(list).toContainElement(focused()));
+			await userEvent.keyboard("{ArrowDown}");
+			await waitFor(() => expect(reviewer).toHaveAttribute("data-highlighted"));
+			// A key landing on a blocked row shows the ring and no fill.
+			await expect(getComputedStyle(reviewer as Element).outlineStyle).not.toBe(
+				"none",
+			);
+			await expect(getComputedStyle(reviewer as Element).backgroundColor).toBe(
+				getComputedStyle(planner as Element).backgroundColor,
+			);
+			await userEvent.keyboard("{Enter}");
+			await expect(screen.getByRole("listbox")).toBeInTheDocument();
+			await expect(trigger).toHaveTextContent("Writer");
+			await userEvent.keyboard("{ArrowDown}{ArrowDown}");
+			await waitFor(() => expect(planner).toHaveAttribute("data-highlighted"));
+			await userEvent.keyboard("{Enter}");
+			await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
+			await expect(trigger).toHaveTextContent("Planner");
+			await userEvent.click(trigger);
+			await screen.findByRole("listbox");
+			await userEvent.click(editor as HTMLElement);
+			await userEvent.click(reviewer as HTMLElement);
+			await expect(screen.getByRole("listbox")).toBeInTheDocument();
+			await expect(trigger).toHaveTextContent("Planner");
+			// The pointer on a blocked row draws no highlight fill, as on a rest row.
+			if (width >= 1440) {
+				const box = (reviewer as Element).getBoundingClientRect();
+				const at: Point = {
+					x: box.left + box.width / 2,
+					y: box.top + box.height / 2,
+				};
+				await hover(at);
+				// The planner's highlight is leaving: its fill eases out on `fast`.
+				await waitFor(() =>
+					expect(getComputedStyle(reviewer as Element).backgroundColor).toBe(
+						getComputedStyle(planner as Element).backgroundColor,
+					),
+				);
+			}
+			await userEvent.keyboard("{Escape}");
+			await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
+			const remove = canvas.getByRole("button", { name: "Remove Editor" });
+			await userEvent.click(remove);
+			await waitFor(() =>
+				expect(
+					canvas.queryByRole("button", { name: "Remove Editor" }),
+				).toBeNull(),
+			);
+			await userEvent.click(canvas.getByRole("combobox", { name: "Agents" }));
+			const several = await screen.findByRole("listbox");
+			await within(several).findByText("Asks for edit");
+		},
+	};
+}
+
+// A searchable list (a pick past six options) marks the key's position with
+// the wash on enabled rows; a blocked row takes no wash, so a key landing on it
+// shows the ring alone, on the same ground as a rest row.
+const SEARCHED = OWNERS.map((owner) =>
+	owner.value === "dana" ? { ...owner, blocked: "On leave until June" } : owner,
+);
+export const BlockedSearch1440: StoryObj = {
+	render: () => {
+		const [owner, setOwner] = useState("ana");
+		return (
+			<div style={{ width: 1440, maxWidth: "100%" }}>
+				<Picker
+					label="Owner"
+					options={SEARCHED}
+					value={owner}
+					onChange={setOwner}
+				/>
+			</div>
+		);
+	},
+	play: async ({ canvas, userEvent }) => {
+		const trigger = canvas.getByRole("combobox", { name: "Owner" });
+		await userEvent.click(trigger);
+		const list = await screen.findByRole("listbox");
+		// The popover fades in on the base rung.
+		await waitFor(() =>
+			expect(within(list).getByRole("option", { name: /Dana/ })).toBeVisible(),
+		);
+		await userEvent.keyboard("{ArrowDown}{ArrowDown}{ArrowDown}");
+		const dana = within(list).getByRole("option", { name: /Dana/ });
+		const rest = within(list).getByRole("option", { name: /Felix/ });
+		await waitFor(() => expect(dana).toHaveAttribute("data-highlighted"));
+		await expect(dana).toHaveAttribute("aria-disabled", "true");
+		await expect(
+			Number.parseFloat(getComputedStyle(dana).outlineWidth),
+		).toBeGreaterThan(0);
+		await expect(getComputedStyle(dana).outlineStyle).not.toBe("none");
+		await expect(getComputedStyle(dana).backgroundColor).toBe(
+			getComputedStyle(rest).backgroundColor,
+		);
+		// An enabled row the key lands on keeps its wash and its ring.
+		await userEvent.keyboard("{ArrowDown}");
+		const ema = within(list).getByRole("option", { name: /Ema/ });
+		await waitFor(() => expect(ema).toHaveAttribute("data-highlighted"));
+		await expect(getComputedStyle(ema).backgroundColor).not.toBe(
+			getComputedStyle(rest).backgroundColor,
+		);
+		await userEvent.keyboard("{Escape}");
+	},
+};
+
+export const Blocked320 = blocks(320);
+export const Blocked1440 = blocks(1440);
+
+// The touch sheet's rows are buttons: a blocked row is aria-disabled, shows
+// its reason in its own ink at the described row's height and picks nothing;
+// the sheet opens on the chosen row. A blocked option in a pick of several's
+// value is an enabled row with no reason, and once unticked it is blocked again.
+export const BlockedSheet: StoryObj = {
+	render: () => <Agents width={320} />,
+	tags: ["touch"],
+	globals: {
+		density: "touch",
+		viewport: { value: "narrow", isRotated: false },
+	},
+	parameters: {
+		viewport: {
+			options: {
+				narrow: {
+					name: "Narrow",
+					styles: { width: "320px", height: "700px" },
+					type: "mobile",
+				},
+			},
+		},
+	},
+	play: async ({ canvas, userEvent }) => {
+		const trigger = canvas.getByRole("button", { name: "Agent" });
+		await userEvent.click(trigger);
+		const list = await screen.findByRole("listbox", { name: "Agent" });
+		const [writer, reviewer, editor, planner] =
+			within(list).getAllByRole("option");
+		await expect(reviewer).toHaveAttribute("aria-disabled", "true");
+		await expect(editor).toHaveAttribute("aria-disabled", "true");
+		await expect(writer).not.toHaveAttribute("aria-disabled");
+		await expect(planner).not.toHaveAttribute("aria-disabled");
+		const reason = within(list).getByText("Lacks brief.flag");
+		await expect(getComputedStyle(reason).color).not.toBe(
+			getComputedStyle(within(list).getByText("Drafts the brief")).color,
+		);
+		await expect(reviewer?.getBoundingClientRect().height).toBeCloseTo(
+			writer?.getBoundingClientRect().height ?? 0,
+			1,
+		);
+		await waitFor(() => expect(focused()).toBe(writer));
+		// An arrow onto a blocked row rings it and draws no fill.
+		await userEvent.keyboard("{ArrowDown}");
+		await waitFor(() => expect(focused()).toBe(reviewer));
+		await expect(
+			Number.parseFloat(getComputedStyle(reviewer as Element).outlineWidth),
+		).toBeGreaterThan(0);
+		await expect(getComputedStyle(reviewer as Element).outlineStyle).not.toBe(
+			"none",
+		);
+		await expect(getComputedStyle(reviewer as Element).backgroundColor).toBe(
+			getComputedStyle(planner as Element).backgroundColor,
+		);
+		await userEvent.click(reviewer as HTMLElement);
+		await expect(screen.getByRole("listbox")).toBeInTheDocument();
+		await expect(trigger).toHaveTextContent("Writer");
+		await userEvent.click(planner as HTMLElement);
+		await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
+		await expect(trigger).toHaveTextContent("Planner");
+
+		await userEvent.click(canvas.getByRole("button", { name: "Agents" }));
+		const several = await screen.findByRole("listbox", { name: "Agents" });
+		const [, , chosen] = within(several).getAllByRole("option");
+		await expect(chosen).toHaveAttribute("aria-selected", "true");
+		await expect(chosen).not.toHaveAttribute("aria-disabled");
+		await expect(within(several).queryByText("Asks for edit")).toBeNull();
+		await userEvent.click(chosen as HTMLElement);
+		await waitFor(() =>
+			expect(chosen).toHaveAttribute("aria-disabled", "true"),
+		);
+		await within(several).findByText("Asks for edit");
+		await userEvent.click(chosen as HTMLElement);
+		await expect(chosen).toHaveAttribute("aria-selected", "false");
+	},
+};
+
+function Pair() {
+	const [repo, setRepo] = useState<"web" | "api">("web");
+	const [lead, setLead] = useState("ana");
+	// A toolbar stands at its body's own inset, so the pair stands in a Pane as
+	// a page draws it; flush with the window's edge, Base UI's collision padding
+	// would push a list off the trigger's start.
+	return (
+		<Place>
+			<Pane title="Repositories">
+				<Toolbar>
+					<Picker
+						label="Repo"
+						options={[
+							{ value: "web", label: "web" },
+							{ value: "api", label: "api" },
+						]}
+						value={repo}
+						onChange={setRepo}
+					/>
+					<Picker
+						label="Lead"
+						options={OWNERS}
+						value={lead}
+						onChange={setLead}
+					/>
+				</Toolbar>
+			</Pane>
+		</Place>
+	);
+}
+
+// A pick in a toolbar's start hangs its list from its own start edge: the
+// first and the one after it, a short list and a searching one.
+export const Start: StoryObj = {
+	render: () => <Pair />,
+	play: async ({ canvas, userEvent }) => {
+		// The two triggers stand on one line with room beside them.
+		const [repo, lead] = [/Repo/, /Lead/].map((name) =>
+			canvas.getByRole("combobox", { name }),
+		);
+		expect(
+			Math.abs(
+				(repo?.getBoundingClientRect().top ?? 0) -
+					(lead?.getBoundingClientRect().top ?? 1),
+			),
+		).toBeLessThan(2);
+		for (const name of [/Repo/, /Lead/]) {
+			const trigger = canvas.getByRole("combobox", { name });
+			await userEvent.click(trigger);
+			const list = await screen.findByRole("listbox");
+			const popup = list.closest("[data-side]") ?? list;
+			await waitFor(() =>
+				expect(
+					Math.abs(
+						popup.getBoundingClientRect().left -
+							trigger.getBoundingClientRect().left,
+					),
+				).toBeLessThan(2),
+			);
+			await userEvent.keyboard("{Escape}");
+			await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
+		}
+	},
+};
+
+// A pick in a toolbar that is set reads its label, a colon and its value, so
+// "Change" stands as "Work type: Change" beside a "Change set" filter; unset it
+// reads its label alone, a row's trailing pick and a rule's pick read their
+// value alone, and the trigger's name stays the label.
+const WORK_TYPES = [
+	{ value: "new", label: "New" },
+	{ value: "change", label: "Change" },
+];
+function Filters() {
+	const [type, setType] = useState<string>();
+	return (
+		<Toolbar>
+			<Picker
+				label="Work type"
+				options={WORK_TYPES}
+				value={type}
+				onChange={setType}
+			/>
+			<Picker
+				label="Role"
+				options={ROLES}
+				value="admin"
+				onChange={() => {}}
+				fit="bar"
+			/>
+		</Toolbar>
+	);
+}
+export const ASetToolbarPickReadsItsLabelAndValue: StoryObj = {
+	render: () => <Filters />,
+	play: async ({ canvas, userEvent }) => {
+		const trigger = () => canvas.getByRole("combobox", { name: "Work type" });
+		await expect(trigger()).toHaveTextContent(/^Work type$/);
+		await userEvent.click(trigger());
+		await userEvent.click(
+			await screen.findByRole("option", { name: "Change" }),
+		);
+		await waitFor(() =>
+			expect(trigger()).toHaveTextContent(/^Work type: Change$/),
+		);
+		// The bar fit reads its value alone.
+		await expect(
+			canvas.getByRole("combobox", { name: "Role" }),
+		).toHaveTextContent(/^Admin$/);
+	},
+};
+
+// A toolbar pick showing everything, its current option the `null` one that
+// clears ({ value: null, label: "All kinds" }), reads its label alone in the
+// placeholder's ink, as an unset pick does; the list still offers the option,
+// and picking another reads "Kind: Report".
+const KINDS = [
+	{ value: null, label: "All kinds" },
+	{ value: "report", label: "Report" },
+];
+function Everything() {
+	const [kind, setKind] = useState<string | null>(null);
+	return (
+		<Toolbar>
+			<Picker label="Kind" options={KINDS} value={kind} onChange={setKind} />
+			<Picker
+				label="Work type"
+				options={WORK_TYPES}
+				value={undefined}
+				onChange={() => {}}
+			/>
+			<Picker label="Role" options={ROLES} value="admin" onChange={() => {}} />
+		</Toolbar>
+	);
+}
+export const AnEmptyChoiceInAToolbarReadsItsLabelAlone: StoryObj = {
+	render: () => <Everything />,
+	play: async ({ canvas, userEvent }) => {
+		const trigger = () => canvas.getByRole("combobox", { name: "Kind" });
+		const ink = (name: string) =>
+			getComputedStyle(
+				canvas.getByRole("combobox", { name }).querySelector("span") as Element,
+			).color;
+		await expect(trigger()).toHaveTextContent(/^Kind$/);
+		// The placeholder's ink (an unset pick's), not a set pick's.
+		await expect(ink("Kind")).toBe(ink("Work type"));
+		await expect(ink("Kind")).not.toBe(ink("Role"));
+		await userEvent.click(trigger());
+		await userEvent.click(
+			await screen.findByRole("option", { name: "Report" }),
+		);
+		await waitFor(() => expect(trigger()).toHaveTextContent(/^Kind: Report$/));
+		await expect(ink("Kind")).toBe(ink("Role"));
+		// The list still offers the empty option as the way to clear.
+		await userEvent.click(trigger());
+		await userEvent.click(
+			await screen.findByRole("option", { name: "All kinds" }),
+		);
+		await waitFor(() => expect(trigger()).toHaveTextContent(/^Kind$/));
+		await expect(ink("Kind")).toBe(ink("Work type"));
+	},
+};
+
+// A pick over reads that have not landed paints, inert and its content
+// undrawn; once they land it draws the value they hold, and the viewer picks
+// from the options they hold.
+export const SelectionsPaintThenDraw: StoryObj = {
+	render: () => {
+		let land: () => void = () => {};
+		const gate = new Promise<void>((done) => {
+			land = done;
+		});
+		const record = read({
+			queryKey: ["picker-selections", "record"],
+			queryFn: async () => {
+				await gate;
+				return { role: "admin", roles: ROLES };
+			},
+		});
+		return (
+			<>
+				<button type="button" onClick={land}>
+					Land
+				</button>
+				<Section
+					items={[
+						{
+							label: "Role",
+							pick: {
+								label: "Role",
+								options: record.at((r) => r.roles),
+								value: record.at((r) => r.role),
+								onChange: () => {},
+							},
+						},
+					]}
+				/>
+			</>
+		);
+	},
+	play: async ({ canvas, userEvent }) => {
+		const trigger = canvas.getByRole("combobox", { name: /Role/ });
+		await expect(trigger).toHaveAttribute("inert");
+		await expect(trigger).not.toHaveTextContent("Admin");
+		await userEvent.click(canvas.getByRole("button", { name: "Land" }));
+		await waitFor(() => expect(trigger).not.toHaveAttribute("inert"));
+		await expect(trigger).toHaveTextContent("Admin");
+		await userEvent.click(trigger);
+		const options = await screen.findAllByRole("option");
+		await expect(options).toHaveLength(4);
+		await expect(options[1]).toHaveAttribute("aria-selected", "true");
+	},
+};
+
+// An option's own chip keeps its word whole: the long label truncates before
+// it, in the list and on the trigger once chosen.
+const SETS = [
+	{
+		value: "a",
+		label: "Track store searches, store pages and every consent change",
+		chip: { family: "amber" as const, label: "Draft" },
+	},
+	{ value: "b", label: "Live" },
+];
+
+function Sets() {
+	const [set, setSet] = useState("a");
+	return (
+		<div style={{ width: 260 }} className="max-w-none">
+			<Picker label="Context" options={SETS} value={set} onChange={setSet} />
+		</div>
+	);
+}
+
+export const OptionChipStaysWhole: StoryObj = {
+	render: () => <Sets />,
+	play: async ({ canvas, userEvent }) => {
+		await document.fonts.ready;
+		const whole = (element: HTMLElement) =>
+			expect(element.scrollWidth).toBeLessThanOrEqual(element.clientWidth);
+		const trigger = canvas.getByRole("combobox", { name: /Context/ });
+		await whole(within(trigger).getByText("Draft"));
+		await userEvent.click(trigger);
+		const list = await screen.findByRole("listbox");
+		await whole(within(list).getByText("Draft"));
+		const label = within(list).getByText(/^Track store searches/);
+		await expect(label.scrollWidth).toBeGreaterThan(label.clientWidth);
+	},
+};
