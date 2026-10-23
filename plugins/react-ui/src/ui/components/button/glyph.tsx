@@ -21,7 +21,7 @@ import type { Closed } from "../../lib/closed.ts";
 import { FieldDisabled } from "../../lib/field.ts";
 import { spacing, useTouch } from "../../lib/media.ts";
 import { follow } from "../../lib/navigate.ts";
-import { PAINT_CONTROL } from "../../lib/paint.tsx";
+import { PAINT_BOX } from "../../lib/paint.tsx";
 import { PortalContainer } from "../../lib/portal.ts";
 import { hid } from "../../lib/rest.ts";
 import { Swap } from "../../lib/swap.tsx";
@@ -43,8 +43,11 @@ const DISABLED = "aria-disabled:text-ink-disabled";
 const FADE_OUT = "animate-act-out";
 const SPINNER_LAYER =
 	"absolute inset-0 flex items-center justify-center animate-act-in";
-// Painted, the glyph keeps its place and is not drawn.
-const HIDDEN = "*:invisible";
+// Painted, the glyph keeps its place and is filled in its own box, the button
+// around it staying as bare as the loaded one: an icon act is a glyph, so its
+// waiting form is a glyph's worth of fill where it will stand, never a filled
+// button.
+const PAINT_GLYPH = cn(PAINT_BOX, "rounded-chip *:invisible");
 // The name draws over a sheet's scrim and under the toasts, with the popovers.
 const POSITIONER = "z-(--layer-popover)";
 // The hover rest before the name shows, a beat longer than a pointer passing
@@ -76,7 +79,7 @@ export function IconButtonBase({
 	pending?: boolean;
 	// Its frame clips (a Code's): the focus ring is drawn inset, so the clip never cuts it.
 	inset?: boolean;
-	// Its data is not here: the box filled, the glyph not drawn, inert.
+	// Its data is not here: the glyph's box filled, the glyph not drawn, inert.
 	painted?: boolean;
 	// A disclosure: the glyph is the chevron down, turned a quarter while it is closed, so it turns where a swapped glyph would pop.
 	open?: boolean;
@@ -86,7 +89,7 @@ export function IconButtonBase({
 	const disabled =
 		useContext(FieldDisabled) || handed.disabled === true || pending === true;
 	const inset = framed || fit === "field";
-	const look = painted ? PAINT_CONTROL : disabled ? DISABLED : PRESS;
+	const look = painted ? undefined : disabled ? DISABLED : PRESS;
 	return (
 		<Named label={label}>
 			<BaseButton
@@ -103,10 +106,15 @@ export function IconButtonBase({
 					inset && INSET,
 					// A running act keeps the rest ink under its spinner and takes no wash.
 					pending ? undefined : look,
-					painted && HIDDEN,
 				)}
 			>
-				<span className={cn("inline-flex", pending && FADE_OUT)}>
+				<span
+					className={cn(
+						"inline-flex",
+						pending && FADE_OUT,
+						painted && PAINT_GLYPH,
+					)}
+				>
 					{open === undefined ? (
 						// A glyph swapped while shown (a copy act's check) is a mark change.
 						<Swap id={icon} scale>

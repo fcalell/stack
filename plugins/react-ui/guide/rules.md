@@ -86,7 +86,7 @@ takes an `Act` for a labelled act (a `Banner`'s, a row's
 `act`, a `Toast`'s, a `Canvas`'s, an `empty`'s) it takes a `LinkAct`,
 `{ label, href }`, and a menu (a `more`'s entries) takes `{ label, href }` as an entry; so do a `Pane`'s `actions` (`IconLinkAct`), a Section's `empty` act, a band's and a row's icon act, and the act of a `Picker` or the shell's switcher ("New organization"). It is
 drawn as an `<a href>` in the look of the act it stands for (the hairline Button; quiet in a
-`Banner`; the filled create act with its plus in an `empty`), so a new tab, a copied link and a middle
+`Banner`; the outlined button under its sentence in an `empty`), so a new tab, a copied link and a middle
 click work, a plain click opens the route through the router, and a rest on it preloads the route
 like any anchor. It runs nothing: it never pends and has no `destructive` or
 `quiet`; with a `blocked` reason it draws inert and gives the reason, as a blocked act does (a link whose page is missing); where a row's act folds into the more menu it folds as a link entry. An act beside a heading or a title is an icon act (`IconAct`, or `IconLinkAct` for a route): a `Section`'s `act` takes nothing else, its words standing in its tooltip and accessible name. A
@@ -204,10 +204,11 @@ is the hold of an open change set and draws the lock. A `chip` column's `cell` r
 `family`) or `{ label, family }` for a hue of its own.
 
 A record that is not there is the `Pane`'s own `read` answering not found, never a Pane's or a
-Section's `empty`: the `Pane` fills its page with the missing form, the sentence in the meta ink and
-the `Pane`'s `back` after it as the accent link in the same line. Give the `Pane` a `noun`
+Section's `empty`: the `Pane` fills its page with the missing form, an empty's one form (voice
+decision 15): the sentence in the meta ink over the `Pane`'s `back` as an outlined button, both
+centred. Give the `Pane` a `noun`
 (`noun="project"`) and the sentence names the kind: "Couldn't find this project."; without one it
-is "Couldn't find this.". An `empty`'s act is the same link. A frame says "This didn't load." with
+is "Couldn't find this.". An `empty`'s act stands the same way. A frame says "This didn't load." with
 Retry whatever failed, and takes no sentence of its own.
 
 ## A picked file's `src` is revoked by you
