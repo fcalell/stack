@@ -35,6 +35,12 @@ through it. `AuthCallbacks<Env>` types it with the worker's `Env`; bare `AuthCal
 
 ## Rules
 
+- The scaffold is a stub: each callback logs its code or link in dev and throws
+  (`sendOTP is not implemented: edit src/worker/plugins/auth.ts`) when `STACK_DEV` is not `1`, so a
+  deployed stub never writes a sign-in code to the logs. `stack deploy` refuses while the stub's
+  `// TODO` marker line stays for a callback the options require (`sendOTP` with `emailOtp`,
+  `sendMagicLink` with `magicLink`, `sendInvitation` with `organization`): implement the send, then
+  delete the marker.
 - Import only `@fcalell/plugin-auth/runtime` here, never the package root: the file is bundled
   into the worker, and the root drags in the plugin's Node-only codegen.
 - With `emailOtp` or `magicLink` on, a missing file fails `stack generate`, and a file without
@@ -87,4 +93,4 @@ Before writing one, check [sign-in](./sign-in.md): a flow every app needs is a g
 (`node_modules/@fcalell/cli/guide/gap.md`).
 
 **Check:** `stack generate`, then `pnpm check` passes, and under `pnpm dev` a sign-in code
-reaches `sendOTP`.
+reaches `sendOTP`; `stack deploy` no longer stops at the `// TODO` marker.

@@ -3,6 +3,7 @@ import { callback, plugin, slot } from "@fcalell/cli";
 import type { TsExpression, TsImportSpec } from "@fcalell/cli/ast";
 import { literalToProps } from "@fcalell/cli/ast";
 import { cliSlots } from "@fcalell/cli/cli-slots";
+import { StackError } from "@fcalell/cli/errors";
 import type { PluginRuntimeEntry } from "@fcalell/plugin-api";
 import { api } from "@fcalell/plugin-api";
 import { RESERVED_SLUGS } from "@fcalell/plugin-api/lib/slugify";
@@ -10,6 +11,11 @@ import { cloudflare } from "@fcalell/plugin-cloudflare";
 import { db } from "@fcalell/plugin-db";
 import { screens } from "@fcalell/plugin-screens";
 import { defaultOrgStatements, getStatements } from "./access.ts";
+import {
+	pendingCallbacks,
+	requiredCallbacks,
+	stubbedCallbacksMessage,
+} from "./callback-stubs.ts";
 import type { AuthClientOptions, OrganizationAccess } from "./client.ts";
 import {
 	AUTH_PREFIX,
@@ -601,6 +607,24 @@ export const auth = plugin("auth", {
 					identifier: "authCallbacks",
 				},
 			};
+		}),
+
+		// Pre-deploy guard: the scaffolded callbacks only log a code in dev and
+		// throw elsewhere, so a deploy that still carries a stub's TODO marker
+		// for a callback the options require would ship an app nobody can sign
+		// in to. A missing file is `api.slots.callbacks`' error, not this one's.
+		cliSlots.deployChecks.contribute(async (ctx) => {
+			const path = await ctx.resolve(self.slots.callbackFile);
+			if (!(await ctx.fileExists(path))) return undefined;
+			const pending = pendingCallbacks(
+				await ctx.readFile(path),
+				requiredCallbacks(self.options),
+			);
+			if (pending.length === 0) return undefined;
+			throw new StackError(
+				stubbedCallbacksMessage(path, pending),
+				"AUTH_CALLBACK_STUB",
+			);
 		}),
 
 		// RBAC action-name autocomplete for `procedure({ rbac: [...] })`.

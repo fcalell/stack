@@ -292,6 +292,28 @@ function isDevMode(env: Record<string, unknown>): boolean {
 	return env.STACK_DEV === "1";
 }
 
+function appOrigin(url: unknown): string[] {
+	try {
+		return typeof url === "string" ? [new URL(url).origin] : [];
+	} catch {
+		return [];
+	}
+}
+
+// The origins the instance trusts, which a sign-in link's redirect is held to:
+// the baked list, plus the dev-server origins under STACK_DEV. The instance
+// is built with the list alone: Better Auth trusts its own base URL besides,
+// so a redirect check names that origin too.
+function trustedOriginsOf(
+	options: Pick<AuthRuntimeInput, "trustedOrigins" | "devTrustedOrigins">,
+	env: Record<string, unknown>,
+): string[] {
+	return [
+		...(options.trustedOrigins ?? []),
+		...(isDevMode(env) ? (options.devTrustedOrigins ?? []) : []),
+	];
+}
+
 // With email OTP on, better-auth would issue codes nobody receives.
 // The code and field error an organization slug the app's routes hold is
 // refused with. A form reads `fieldErrors` off the answer, as it reads an
@@ -551,7 +573,7 @@ function buildAuth(
 	// baked value stands (none for native consumers, the browser default
 	// otherwise).
 	const devOrigins = isDevMode(env) ? (options.devTrustedOrigins ?? []) : [];
-	const trustedOrigins = [...(options.trustedOrigins ?? []), ...devOrigins];
+	const trustedOrigins = trustedOriginsOf(options, env);
 	const sameSite = devOrigins.length > 0 ? "none" : options.sameSite;
 
 	const instance = betterAuth({
@@ -1088,9 +1110,14 @@ export default function authRuntime<TOptions extends AuthRuntimeInput>(
 				...(rateLimiter.ip || rateLimiter.email
 					? { _rateLimiter: rateLimiter }
 					: {}),
+				_trustedOrigins: [
+					...trustedOriginsOf(options, e),
+					...appOrigin(e[options.appUrlVar]),
+				],
 			} as {
 				auth: AuthInstance<TOptions>;
 				_rateLimiter?: { ip?: RateLimitBinding; email?: RateLimitBinding };
+				_trustedOrigins?: readonly string[];
 			} & TenancyContext<TOptions> &
 				OAuthContext<TOptions>;
 		},

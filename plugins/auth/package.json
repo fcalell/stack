@@ -1,6 +1,20 @@
 {
 	"name": "@fcalell/plugin-auth",
-	"version": "0.0.0",
+	"version": "0.1.0",
+	"description": "Authentication for @fcalell/stack: Better Auth with email codes, magic links, OAuth, passkeys, organizations, roles and record abilities.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/fcalell/stack.git",
+		"directory": "plugins/auth"
+	},
+	"homepage": "https://github.com/fcalell/stack/tree/master/plugins/auth#readme",
+	"publishConfig": {
+		"access": "public"
+	},
+	"engines": {
+		"node": ">=24"
+	},
 	"type": "module",
 	"sideEffects": false,
 	"exports": {
@@ -65,16 +79,21 @@
 		"templates",
 		"README.md",
 		"tsconfig.json",
-		"tsconfig.build.json"
+		"tsconfig.build.json",
+		"LICENSE",
+		"!src/**/*.test.ts",
+		"!src/**/__fixtures__",
+		"!dist/**/*.test.*"
 	],
-	"license": "MIT",
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",
 		"prepare": "pnpm build",
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
-		"clear": "rm -rf dist node_modules .turbo"
+		"clear": "rm -rf dist node_modules .turbo",
+		"prepublishOnly": "pnpm build",
+		"test": "node --test 'src/**/*.test.ts'"
 	},
 	"dependencies": {
 		"@better-auth/cimd": "1.7.7",
@@ -84,11 +103,11 @@
 		"@better-auth/oauth-provider": "1.7.7",
 		"@better-auth/passkey": "1.7.7",
 		"@casl/ability": "^7.0.1",
-		"@fcalell/cli": "workspace:*",
-		"@fcalell/plugin-api": "workspace:*",
-		"@fcalell/plugin-cloudflare": "workspace:*",
-		"@fcalell/plugin-db": "workspace:*",
-		"@fcalell/plugin-screens": "workspace:*",
+		"@fcalell/cli": "workspace:^",
+		"@fcalell/plugin-api": "workspace:^",
+		"@fcalell/plugin-cloudflare": "workspace:^",
+		"@fcalell/plugin-db": "workspace:^",
+		"@fcalell/plugin-screens": "workspace:^",
 		"@orpc/server": "^1.14.4",
 		"better-auth": "1.7.7",
 		"zod": "^4.3.6"
@@ -110,7 +129,7 @@
 		}
 	},
 	"devDependencies": {
-		"@fcalell/typescript-config": "workspace:*",
+		"@fcalell/typescript-config": "workspace:^",
 		"@types/node": "^25.5.0",
 		"@react-native-google-signin/google-signin": "^16.1.2",
 		"@types/react": "^19.2.16",

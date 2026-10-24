@@ -24,7 +24,12 @@ and the recipes [`add-a-role.md`](./guide/add-a-role.md) and
 Built with `plugin` from `@fcalell/cli`; requires `api` and `db`. Callbacks are declared with
 `callback.optional<AuthCallbackPayloads[...]>()`, the payload types `AuthCallbacks` in
 `./runtime` derives from too, so the two never drift. `sendOTP` is required at runtime while
-`emailOtp` is on, `sendMagicLink` while `magicLink` is.
+`emailOtp` is on, `sendMagicLink` while `magicLink` is. The scaffolded stubs log in dev and throw
+outside it, and a `deployChecks` contribution refuses `stack deploy` while a required callback
+still carries its `// TODO` marker (`src/callback-stubs.ts`). The magic-link procedures hold
+`callbackURL`, `newUserCallbackURL` and `errorCallbackURL` to a path on the app or a trusted
+origin (`src/worker/callback-url.ts`), the check Better Auth's own skips for a call without a
+request.
 
 ### Owned slots
 
@@ -56,6 +61,7 @@ dev, where the frontend and the worker are cross-origin.
 | `screens.slots.handlerModules` | `@fcalell/plugin-auth/screens`: MSW handlers answering `GET */api/auth/get-session` with a signed-in session typed by Better Auth's `Session` and `User`; unread without `screens` in the config |
 | `screens.slots.fixtureModules` | `@fcalell/plugin-auth/screens-fixtures`: a fixtures tree answering `auth.session` with the same user and session (`src/screens-session.ts` holds them once); unread without `screens` in the config |
 | `cliSlots.initPrompts` | Cookie prefix and organization toggle |
+| `cliSlots.deployChecks` | Refuses the deploy while a required callback in the callback file still holds its scaffold `// TODO` marker |
 | `cliSlots.initScaffolds`, `cliSlots.removeFiles` (auto) | `src/worker/plugins/auth.ts` from `templates/callbacks.ts` |
 
 ### Runtime

@@ -97,6 +97,7 @@ const RESERVED = new Set([
 	"auth",
 	"tenancy",
 	"_rateLimiter",
+	"_trustedOrigins",
 	"user",
 	"session",
 	"organization",

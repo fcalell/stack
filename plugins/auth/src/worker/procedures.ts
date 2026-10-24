@@ -8,6 +8,7 @@ import type { role as buildAcRole } from "better-auth/plugins/access";
 import type { emailOTP } from "better-auth/plugins/email-otp";
 import type { magicLink } from "better-auth/plugins/magic-link";
 import type { DefaultOrganizationPlugin } from "better-auth/plugins/organization";
+import { unsafeCallbackField } from "./callback-url.ts";
 import { emailKey } from "./email-key.ts";
 import type {
 	AcceptedInvitation,
@@ -55,6 +56,7 @@ export type AuthProcedureFactory = ProcedureFactory<
 		auth: { api: FullApi };
 		_rateLimiter?: { ip?: RateLimitBinding; email?: RateLimitBinding };
 		_devMode?: boolean;
+		_trustedOrigins?: readonly string[];
 	},
 	Record<string, readonly string[]>
 >;
@@ -129,6 +131,33 @@ async function limitEmail(
 	if (!success) {
 		throw new ORPCError("TOO_MANY_REQUESTS", {
 			message: "Rate limit exceeded. Please try again later.",
+		});
+	}
+}
+
+// The calls here run on the server API without the request, which skips
+// better-auth's origin check; a redirect the member's link carries is checked
+// here against the origins the instance trusts (a path on the app always
+// passes). With none known, only paths pass.
+const REDIRECT_FIELDS = [
+	"callbackURL",
+	"newUserCallbackURL",
+	"errorCallbackURL",
+] as const;
+
+function assertRedirects(
+	context: { _trustedOrigins?: readonly string[] },
+	input: Partial<Record<(typeof REDIRECT_FIELDS)[number], string | undefined>>,
+): void {
+	const field = unsafeCallbackField(
+		input,
+		REDIRECT_FIELDS,
+		context._trustedOrigins ?? [],
+	);
+	if (field) {
+		throw new ORPCError("BAD_REQUEST", {
+			message: `\`${field}\` must be a path on this app or a URL on a trusted origin.`,
+			data: { code: "INVALID_CALLBACK_URL", field },
 		});
 	}
 }
@@ -275,6 +304,7 @@ export function magicLinkProcedures(factory: AuthProcedureFactory) {
 				}),
 			)
 			.mutation(async ({ input, context }) => {
+				assertRedirects(context, input);
 				await limitEmail(context, input.email);
 				return callAuth(context, (options) =>
 					context.auth.api.signInMagicLink({ ...options, body: input }),
@@ -299,6 +329,7 @@ export function magicLinkOauthProcedures(factory: AuthProcedureFactory) {
 				}),
 			)
 			.mutation(async ({ input: { oauthQuery, ...input }, context }) => {
+				assertRedirects(context, input);
 				await limitEmail(context, input.email);
 				return callAuth<
 					Awaited<ReturnType<FullApi["signInMagicLink"]>> | OAuthRedirect
