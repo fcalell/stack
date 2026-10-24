@@ -43,22 +43,22 @@ import { PaneHead } from "./head.tsx";
 
 // A Pane is a column of its place's row and the size container what stands
 // in it decides its form by (a Table its grid). Each Pane but the last holds
-// the list width and gives way to its floor as the Place narrows, never sized
-// by what it holds, so nothing moves as its rows land; the last takes the
-// rest, never under the list width once a Pane stands before it. A hairline
-// parts each from the next. Two Panes stand while the first keeps its floor
-// (`region-min`, 240 px) and the last the list width (520 px): 760 px, within
-// `tablet` (768) of the Place. A third stands from `wide` (1200), where the two
-// before the last keep 340 px each, room for a labelled row beside its label;
-// at `desktop` they would keep 250 px, which leaves a definition's value a
-// letter's column. So below `tablet` only the last stands, below `wide` the
+// the list width and gives way to its floor (`region-min`, 340 px, room for a
+// labelled row beside its label) as the Place narrows, never sized by what it
+// holds, so nothing moves as its rows land; the last takes the rest, the list
+// width (520 px) once a Pane stands before it, yielding to the one before's
+// floor where the Place has not room for both (down to 428 px at `tablet`,
+// still past any phone width a record is built at). A hairline parts each from
+// the next. Two Panes stand from `tablet` (768) of the Place and a third from
+// `wide` (1200), where the two before the last keep their floor beside the
+// last's list width. So below `tablet` only the last stands, below `wide` the
 // last two, and never more than three, the oldest folding first. A Pane standing before a covering one is hidden: both
 // keep it mounted, so its scroll and typed text survive, and out of the tab
 // order. It marks itself `data-page`, which a Table reads its width by, and
 // "last" is the last Pane, not the last child: a Sheet in the Place leaves its
 // focus guards after it.
 const PANE =
-	"@container/page group/pane flex flex-col min-h-0 w-list min-w-region-min shrink border-e border-edge [&:not(:has(~[data-page]))]:grow [&:not(:has(~[data-page]))]:basis-0 [&:not(:has(~[data-page]))]:min-w-0 [&:not(:has(~[data-page]))]:border-e-0 place-tablet:[[data-page]~&:not(:has(~[data-page]))]:min-w-list place-max-tablet:[&:has(~[data-page])]:hidden place-max-wide:[&:has(~[data-page]~[data-page])]:hidden [&:has(~[data-page]~[data-page]~[data-page])]:hidden [&:has(~[data-cover])]:hidden";
+	"@container/page group/pane flex flex-col min-h-0 w-list min-w-region-min shrink border-e border-edge [&:not(:has(~[data-page]))]:grow [&:not(:has(~[data-page]))]:basis-0 [&:not(:has(~[data-page]))]:min-w-0 [&:not(:has(~[data-page]))]:border-e-0 place-tablet:[[data-page]~&:not(:has(~[data-page]))]:min-w-[min(var(--container-list),calc(100%-var(--container-region-min)))] place-max-tablet:[&:has(~[data-page])]:hidden place-max-wide:[&:has(~[data-page]~[data-page])]:hidden [&:has(~[data-page]~[data-page]~[data-page])]:hidden [&:has(~[data-cover])]:hidden";
 // The body scrolls under the fixed head, taking a tab stop only while it
 // scrolls with nothing tabbable inside. What stands in it stands within the
 // reading width at its start, so a label stays near its value and a Save near the

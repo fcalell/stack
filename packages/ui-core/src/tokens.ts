@@ -1113,7 +1113,7 @@ export const WIDTH_VALUE: Record<Width, string> = {
 	sidebar: "220px",
 	list: "520px",
 	pane: "320px",
-	"region-min": "240px",
+	"region-min": "340px",
 	reading: "720px",
 	column: "300px",
 	node: "240px",

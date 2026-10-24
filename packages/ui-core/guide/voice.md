@@ -99,7 +99,7 @@ how much a row carries and where things stand, never for colour, type, corners o
     empty read). Absent facts say nothing. A first run is a Gate.
 16. **Motion.** None on a navigation, a read landing or a list changing. Hover and press ease on
     `instant`. A layer enters and leaves on its rung. A wait is the spinner or the pulse.
-17. **Widths.** A Pane that stands before another holds 520 px, giving way to 240 px, and the last Pane never under 520 px beside one, so a Place stands two Panes from `tablet` (768 px) and three from `wide` (1200 px, where the two before the last keep 340 px each), never more, the oldest folding first; a record's parts stand within
+17. **Widths.** A Pane that stands before another holds 520 px, giving way to 340 px, and the last Pane holds 520 px beside one, yielding to that floor, so a Place stands two Panes from `tablet` (768 px, the first 340 px and the last 428 px) and three from `wide` (1200 px, the two before the last at 340 px each), never more, the oldest folding first; a record's parts stand within
     720 px; a list page is `wide`; running text keeps its 58-character measure.
 18. **Accent.** One blue (hue 264), on the primary act, the current bar, the focus ring, links and
     checked controls. Status hues are fixed: `ok` green, `warn` amber, `danger` red.
