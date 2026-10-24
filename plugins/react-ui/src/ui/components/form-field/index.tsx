@@ -16,6 +16,8 @@ import {
 	DEFINITION_NAME_AREA,
 	DEFINITION_UNDER,
 	DEFINITION_VALUE,
+	FIELD_ALONE,
+	FIELD_ALONE_LINE,
 	FIELD_ERROR_LINE,
 	FIELD_OPTIONAL,
 	FIELD_OPTIONAL_BOX,
@@ -31,7 +33,7 @@ import {
 import { type ReactNode, useEffect, useId, useMemo, useRef } from "react";
 import { useFieldDraft } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
-import { GroupName } from "../../lib/field.ts";
+import { type FieldedKey, FieldOwned, GroupName } from "../../lib/field.ts";
 import { focusFirst } from "../../lib/focus.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Button } from "../button/index.tsx";
@@ -66,6 +68,8 @@ const SUMMARY_ANSWER = "min-w-0 grow truncate";
 // then the control filling the line, or a toggle at its end), the description
 // or the error under the control.
 const LABEL = "wrap-normal";
+// A toggle placed alone stands at the end of its name's line.
+const NAME_GROWS = "grow";
 interface FormFieldBase extends Closed {
 	/** Where the field stands in a change set: its mark ahead of the field, on its label's line. */
 	change?: ChangeKind;
@@ -81,24 +85,25 @@ interface FormFieldBase extends Closed {
 	answered?: Answered;
 }
 
-// A pick's props less what the field supplies (its label, and the fit a
-// descriptor names), each of its forms keeping its own value and handler.
-type PickerLess<P, K extends string = "label"> = P extends unknown
+// A pick's props less what the field supplies (its label, description,
+// optional word and error, and the fit a descriptor names), each of its forms
+// keeping its own value and handler.
+type PickerLess<P, K extends string = FieldedKey> = P extends unknown
 	? Omit<P, K>
 	: never;
 
 // The control descriptors, each the component's own props less what the field
-// supplies (its label). Exactly one is set, or `children` draws any other
-// control.
+// supplies (its label, description, optional word and error). Exactly one is
+// set, or `children` draws any other control.
 interface Controls<S extends string | null, O extends string, T> {
 	input: TextInputProps;
 	textArea: ProseProps;
 	picker: PickerLess<PickerMenuProps<S>>;
-	switch: Omit<SwitchProps, "label">;
+	switch: Omit<SwitchProps, FieldedKey>;
 	checkbox: Omit<CheckboxProps, "label">;
-	slider: Omit<SliderProps, "label">;
-	options: PickerLess<PickerListProps<O, T>, "label" | "fit">;
-	segments: PickerLess<PickerSegmentsProps, "label" | "fit">;
+	slider: Omit<SliderProps, FieldedKey>;
+	options: PickerLess<PickerListProps<O, T>, FieldedKey | "fit">;
+	segments: PickerLess<PickerSegmentsProps, FieldedKey | "fit">;
 }
 type ControlKind = keyof Controls<string, string, unknown>;
 type Never<C> = { [K in keyof C]?: never };
@@ -142,11 +147,13 @@ export type FormFieldProps<
 	);
 
 // The props a field body reads, its descriptors at their widest.
-type Body = FormFieldBase & {
+export type Body = FormFieldBase & {
 	change?: ChangeKind;
 	field?: FieldBinding<unknown>;
 	error?: string;
 	children?: ReactNode | ((control: FieldControl<unknown>) => ReactNode);
+	/** A control placed alone: no form's label column to share, so the name stands over the control (`FIELD_ALONE`). */
+	alone?: boolean;
 } & Partial<Controls<string | null, string, unknown>>;
 
 // The one descriptor set, if any.
@@ -265,23 +272,31 @@ function controlOf(
 			/>
 		);
 	if (kind !== undefined) return null;
+	// The field names what it holds: a control among its children draws no
+	// field of its own.
 	const { field, children } = props;
-	if (typeof children !== "function") return children;
-	return field
-		? children({
+	if (typeof children !== "function")
+		return <FieldOwned value>{children}</FieldOwned>;
+	return field ? (
+		<FieldOwned value>
+			{children({
 				value: field.value,
 				onChange: field.onChange,
 				onCommit: field.onCommit,
-			})
-		: null;
+			})}
+		</FieldOwned>
+	) : null;
 }
 
 // The field itself, one definition row: the label in the label column, the
-// control in the value line, the description (meta) or the error under it.
-// Base UI's field wires the label, the description, the error, the validity
-// and the disabled state into the control.
-function FieldBody(props: Body) {
-	const { label, description, optional, disabled, answered, change } = props;
+// control in the value line, the description (meta) or the error under it;
+// placed alone (`alone`), the label over the control. Base UI's field wires
+// the label, the description, the error, the validity and the disabled state
+// into the control. Outside the package's exports: a control placed alone
+// draws itself through it.
+export function FieldBody(props: Body) {
+	const { label, description, optional, disabled, answered, change, alone } =
+		props;
 	const words = useWords();
 	const folded = answered !== undefined;
 	// One name for the field folded or not, so the browser moves the summary
@@ -313,13 +328,13 @@ function FieldBody(props: Body) {
 	}, [folded]);
 	const labelId = useId();
 	// What a group of controls is named by.
-	const group = useMemo(() => ({ labelledBy: labelId }), [labelId]);
+	const groupName = useMemo(() => ({ labelledBy: labelId }), [labelId]);
 	// A toggle stands at the value line's end; any other control fills it.
 	const atEnd = form === "switch" || form === "checkbox";
 	const area = form === "textArea";
 	// An optional field on one line: its word hangs under a name as high as the
 	// control (a text area's name hangs from its top, a slider names itself).
-	const stacked = optional === true && !area && form !== "slider";
+	const stacked = optional === true && !area && form !== "slider" && !alone;
 	// The name on the first line, the word `optional` under it.
 	const labelled = optional ? (
 		<span>
@@ -334,7 +349,8 @@ function FieldBody(props: Body) {
 	const name = cn(
 		text({ role: "body" }),
 		DEFINITION_NAME,
-		area && DEFINITION_NAME_AREA,
+		area && !alone && DEFINITION_NAME_AREA,
+		alone && atEnd && NAME_GROWS,
 		LABEL,
 		stacked && FIELD_OPTIONAL_NAME,
 		disabled && DISABLED,
@@ -391,6 +407,62 @@ function FieldBody(props: Body) {
 				/>
 			</div>
 		);
+	if (alone) {
+		const group = form === "options" || form === "segments";
+		const head =
+			form === "slider" ? (
+				mark
+			) : (
+				<div className={FIELD_ALONE_LINE}>
+					{mark}
+					{group ? (
+						<p id={labelId} className={name}>
+							{labelled}
+						</p>
+					) : (
+						named
+					)}
+					{atEnd ? (
+						<span className={cn(ROW_END, END_GROUP)}>{control}</span>
+					) : null}
+				</div>
+			);
+		const body = group ? (
+			<GroupName value={groupName}>{control}</GroupName>
+		) : atEnd ? null : (
+			control
+		);
+		// A group takes no field context, so its line under is its own.
+		if (group)
+			return (
+				<div ref={root} className={FIELD_ALONE}>
+					{head}
+					{body}
+					{error || description ? (
+						<p
+							key={error}
+							className={
+								error ? cn(FIELD_ERROR_LINE, LINE_IN) : text({ role: "meta" })
+							}
+						>
+							{error ?? description}
+						</p>
+					) : null}
+				</div>
+			);
+		return (
+			<Field.Root
+				ref={root}
+				invalid={Boolean(error)}
+				disabled={disabled}
+				className={FIELD_ALONE}
+			>
+				{head}
+				{body}
+				{said}
+			</Field.Root>
+		);
+	}
 	if (form === "options" || form === "segments") {
 		const title = (
 			<p id={labelId} className={name}>
@@ -428,7 +500,7 @@ function FieldBody(props: Body) {
 				>
 					{mark}
 					<div className={DEFINITION_VALUE}>
-						<GroupName value={group}>{control}</GroupName>
+						<GroupName value={groupName}>{control}</GroupName>
 					</div>
 				</div>
 				{under}

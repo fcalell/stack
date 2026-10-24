@@ -56,7 +56,7 @@ export function ConfirmSheet(props: {
 		>
 			{name ? (
 				<FormField label={name.label}>
-					<Input value={typed} onChange={setTyped} />
+					<Input label={name.label} value={typed} onChange={setTyped} />
 				</FormField>
 			) : null}
 		</SheetBase>

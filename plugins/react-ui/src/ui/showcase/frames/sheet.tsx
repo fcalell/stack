@@ -169,7 +169,7 @@ function OneField() {
 	const [value, setValue] = useState("production");
 	return (
 		<FormField label="Branch">
-			<Input value={value} onChange={setValue} />
+			<Input label="Branch" value={value} onChange={setValue} />
 		</FormField>
 	);
 }

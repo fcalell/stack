@@ -6,6 +6,7 @@ import { FormField } from "../../components/form-field/index.tsx";
 import { HeldInput } from "../../components/input/base.tsx";
 import { Input, type InputKind } from "../../components/input/index.tsx";
 import { Pane } from "../../components/pane/index.tsx";
+import { FieldOwned } from "../../lib/field.ts";
 import type { ShowcaseFrame } from "../cells.ts";
 import { waitingText } from "../waiting.ts";
 import { beside, isPaint, labelled } from "./painted.tsx";
@@ -69,7 +70,9 @@ function drawLine(frame: ShowcaseFrame) {
 	if (isPaint(frame))
 		return beside(
 			frame,
-			labelled(<Input value={VALUES.text} onChange={change} />),
+			labelled(
+				<Input label="Workspace" value={VALUES.text} onChange={change} />,
+			),
 			labelled(<HeldInput value={VALUES.text} onChange={change} painted />),
 		);
 	const name = frame.cell.name;
@@ -86,27 +89,30 @@ function drawLine(frame: ShowcaseFrame) {
 	const unit = name === "FIELD.trailing.none";
 	const kind = unit ? "number" : (KINDS[name] ?? "text");
 	return (
-		<Field.Root
-			invalid={frame.state === "error" || name === "FIELD.state.error"}
-			disabled={frame.state === "disabled"}
-		>
-			{kind === "search" ? null : (
-				<Field.Label className={text({ role: "body" })}>
-					Workspace URL
-				</Field.Label>
-			)}
-			<Input
-				kind={kind}
-				value={VALUES[kind]}
-				onChange={change}
-				unit={unit ? "ms" : undefined}
-				act={
-					name === "FIELD.trailing.act"
-						? { icon: "Copy", label: "Copy", onAct: change }
-						: undefined
-				}
-			/>
-		</Field.Root>
+		<FieldOwned value>
+			<Field.Root
+				invalid={frame.state === "error" || name === "FIELD.state.error"}
+				disabled={frame.state === "disabled"}
+			>
+				{kind === "search" ? null : (
+					<Field.Label className={text({ role: "body" })}>
+						Workspace URL
+					</Field.Label>
+				)}
+				<Input
+					label="Workspace URL"
+					kind={kind}
+					value={VALUES[kind]}
+					onChange={change}
+					unit={unit ? "ms" : undefined}
+					act={
+						name === "FIELD.trailing.act"
+							? { icon: "Copy", label: "Copy", onAct: change }
+							: undefined
+					}
+				/>
+			</Field.Root>
+		</FieldOwned>
 	);
 }
 
@@ -123,8 +129,22 @@ function drawProse(frame: ShowcaseFrame) {
 		// wrapping row would leave to its content.
 		return frame.state === "rest" ? (
 			<div className="flex flex-col gap-section">
-				{labelled(<Input kind="prose" value={SHORT} onChange={change} />)}
-				{labelled(<Input kind="prose" value={waitingText} onChange={change} />)}
+				{labelled(
+					<Input
+						label="Workspace"
+						kind="prose"
+						value={SHORT}
+						onChange={change}
+					/>,
+				)}
+				{labelled(
+					<Input
+						label="Workspace"
+						kind="prose"
+						value={waitingText}
+						onChange={change}
+					/>,
+				)}
 			</div>
 		) : undefined;
 	const name = frame.cell.name;
@@ -161,7 +181,13 @@ function drawProse(frame: ShowcaseFrame) {
 										frame.state === "error" ? "Not valid markdown." : undefined
 									}
 								>
-									<Input kind="prose" source value={SOURCE} onChange={change} />
+									<Input
+										label="Source"
+										kind="prose"
+										source
+										value={SOURCE}
+										onChange={change}
+									/>
 								</FormField>
 							</FormBody>
 						</Pane>
@@ -171,18 +197,23 @@ function drawProse(frame: ShowcaseFrame) {
 		);
 	const over = name === "TEXT_AREA_BUDGET.state.error";
 	return (
-		<Field.Root
-			invalid={frame.state === "error" || name === "TEXT_AREA.state.error"}
-			disabled={frame.state === "disabled"}
-		>
-			<Field.Label className={text({ role: "body" })}>Description</Field.Label>
-			<Input
-				kind="prose"
-				value={over ? LONG : SHORT}
-				onChange={change}
-				budget={over ? 20 : 200}
-			/>
-		</Field.Root>
+		<FieldOwned value>
+			<Field.Root
+				invalid={frame.state === "error" || name === "TEXT_AREA.state.error"}
+				disabled={frame.state === "disabled"}
+			>
+				<Field.Label className={text({ role: "body" })}>
+					Description
+				</Field.Label>
+				<Input
+					label="Description"
+					kind="prose"
+					value={over ? LONG : SHORT}
+					onChange={change}
+					budget={over ? 20 : 200}
+				/>
+			</Field.Root>
+		</FieldOwned>
 	);
 }
 
@@ -211,6 +242,7 @@ function Typed() {
 	const [code, setCode] = useState("48190");
 	return (
 		<Input
+			label="Code"
 			kind="code"
 			length={6}
 			value={code}
@@ -232,20 +264,28 @@ function drawCode(frame: ShowcaseFrame) {
 		return undefined;
 	const pending = frame.state === "pending";
 	return (
-		<Field.Root
-			invalid={
-				frame.state === "error" || frame.cell.name === "OTP_BOX.state.error"
-			}
-		>
-			<Field.Label className={text({ role: "body" })}>Code</Field.Label>
-			{pending ? (
-				<Checking>
-					<Typed />
-				</Checking>
-			) : (
-				<Input kind="code" length={6} value="481" onChange={change} />
-			)}
-		</Field.Root>
+		<FieldOwned value>
+			<Field.Root
+				invalid={
+					frame.state === "error" || frame.cell.name === "OTP_BOX.state.error"
+				}
+			>
+				<Field.Label className={text({ role: "body" })}>Code</Field.Label>
+				{pending ? (
+					<Checking>
+						<Typed />
+					</Checking>
+				) : (
+					<Input
+						label="Code"
+						kind="code"
+						length={6}
+						value="481"
+						onChange={change}
+					/>
+				)}
+			</Field.Root>
+		</FieldOwned>
 	);
 }
 
@@ -286,6 +326,7 @@ function drawFile(frame: ShowcaseFrame) {
 			disabled={frame.state === "disabled"}
 		>
 			<Input
+				label="Leads file"
 				kind="file"
 				value={empty ? null : CHOSEN}
 				onChange={change}

@@ -333,6 +333,7 @@ function Library(props: { frame: ShowcaseFrame }) {
 					></Section>
 					<FormField label="Add host">
 						<Input
+							label="Add host"
 							value=""
 							onChange={act}
 							placeholder="docs.example.org"

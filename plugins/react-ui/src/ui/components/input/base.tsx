@@ -135,7 +135,9 @@ export function InputBase({
 			autoCapitalize={which === "text" ? undefined : "off"}
 			spellCheck={which === "text" ? undefined : false}
 			placeholder={placeholder ?? (search ? words.search : undefined)}
-			aria-label={search ? words.search : (cell?.label ?? inline?.label)}
+			aria-label={
+				cell?.label ?? inline?.label ?? (search ? words.search : undefined)
+			}
 			tabIndex={cell ? -1 : undefined}
 			autoFocus={autoFocus ?? (cell?.starts || inline?.focus)}
 			ref={autoFocus ? caretAtEnd : undefined}

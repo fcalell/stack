@@ -138,6 +138,7 @@ function Approaches(props: { checked: boolean; painted?: boolean }) {
 					children: (
 						<FormField label="Note">
 							<Input
+								label="Note"
 								kind="prose"
 								value=""
 								onChange={change}

@@ -1420,6 +1420,7 @@ function PickRows<V extends string | null>(
 			{props.searching ? (
 				<div className={SEARCH_SLOT}>
 					<Input
+						label={words.search}
 						kind="search"
 						value={search}
 						onChange={setSearch}

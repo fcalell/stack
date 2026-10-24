@@ -14,6 +14,27 @@ export interface LabelFit {
 	labelledBy?: string;
 }
 
+/** What every control takes as a field: its name, and what a field draws around it. */
+export interface Fielded {
+	/** What it holds, the control's name (a short phrase; wraps). Placed alone the control draws as its field, this over it; where an owner names it (a `Form`'s field, a `Toolbar`), and at a bar fit that reads it in its box, it is the accessible name. */
+	label: string;
+	/** Under the control placed alone (a sentence; wraps). */
+	description?: string;
+	/** The value may be left empty: the word `optional` stands under the label. */
+	optional?: boolean;
+	/** The message that takes the description's place, the control drawn in error (a sentence; wraps). A save the server refused stands there on its own until the next change. */
+	error?: string;
+}
+
+/** The keys a `FormField` supplies to the control it draws. */
+export type FieldedKey = keyof Fielded;
+
+// Set by an owner that names the controls standing in it (a `FormField`'s
+// children, a `Toolbar`'s acts): a control there draws no field of its own,
+// its `label` only its accessible name. Anywhere else a control placed alone
+// draws its field (`FieldBody` with `alone`).
+export const FieldOwned = createContext(false);
+
 // Set by a `FormField` around a group of controls (a list Picker, a
 // segments Picker): the id of its label, which names the group. No field
 // context reaches the controls inside, so each keeps its own name.

@@ -182,8 +182,22 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// an act that removes it. The web's file box also takes a dropped file,
 		// ringed while one is over it. A file of another type is refused in a line
 		// under the box and never reaches `onChange`.
+		// Every control is a field, named by its `label`, one drawer for them
+		// all (the `FormField` body): placed alone it draws its field, the name
+		// over the control a gap apart (`FIELD_ALONE`; a toggle at the end of its
+		// name's line, `FIELD_ALONE_LINE`; a slider's head is its name) with the
+		// word `optional` under the name, and the `description` or the `error` (a
+		// refused save's reason, until the next change) under the control. Where
+		// an owner names it (a Form's field, a Toolbar) and at a fit that reads
+		// the label in its box (`search`, a Picker's `bar`, `row` and `pill`), the
+		// label is its accessible name and nothing is drawn around it. A place's
+		// tabs are links, no control, and take none.
 		Input: {
 			props: [
+				"label",
+				"description",
+				"optional",
+				"error",
 				"kind",
 				"value",
 				"onChange",
@@ -199,6 +213,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"accept",
 			],
 			draws: [
+				"FIELD_ALONE",
+				"FIELD_ALONE_LINE",
+				"DEFINITION_NAME",
+				"FIELD_OPTIONAL",
 				"FIELD",
 				"FIELD_VALUE",
 				"FIELD_PLACEHOLDER",
@@ -248,9 +266,14 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				sizes: ["icon-control", "measure-short", "otp", "spinner", "text-area"],
 			},
 		},
+		// A number along a range, its name and value over the track: a field as
+		// every control is (`Input`), its head the name.
 		Slider: {
 			props: [
 				"label",
+				"description",
+				"optional",
+				"error",
 				"value",
 				"onChange",
 				"onCommit",
@@ -260,6 +283,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"unit",
 			],
 			draws: [
+				"FIELD_ALONE",
+				"FIELD_ERROR_LINE",
 				"SLIDER",
 				"SLIDER_HEAD",
 				"SLIDER_LABEL",
@@ -293,12 +318,28 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				sizes: ["target", "track", "thumb", "measure-short"],
 			},
 		},
-		// The one boolean control: a track and its thumb, drawn alone inside a
-		// target-sized hit box. The tick a row, a table's cell or an option draws
+		// The one boolean control: a track and its thumb, drawn inside a
+		// target-sized hit box, a field as every control is (`Input`). The tick a row, a table's cell or an option draws
 		// for a choice among others is that owner's part, with its `mixed` state.
 		Switch: {
-			props: ["checked", "onChange", "label"],
-			draws: ["SWITCH", "SWITCH_THUMB", "PAINT.kind.control"],
+			props: [
+				"label",
+				"description",
+				"optional",
+				"error",
+				"checked",
+				"onChange",
+			],
+			draws: [
+				"FIELD_ALONE",
+				"FIELD_ALONE_LINE",
+				"DEFINITION_NAME",
+				"FIELD_OPTIONAL",
+				"FIELD_ERROR_LINE",
+				"SWITCH",
+				"SWITCH_THUMB",
+				"PAINT.kind.control",
+			],
 			states: [...PRESS, "disabled", "selected"],
 			motion: ["answer", "toggle", "wait"],
 			owns: {
@@ -1220,10 +1261,14 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// `fit: segments` stands a few options as one row of segments, the chosen
 		// one under the selection wash; a segment given an `href` and no value is
 		// a link, the one whose href is the location's path or its nearest parent
-		// the selected one, and a press opens it.
+		// the selected one, and a press opens it. A field as every control is
+		// (`Input`): the field fit, a list and choice segments draw it alone.
 		Picker: {
 			props: [
 				"label",
+				"description",
+				"optional",
+				"error",
 				"placeholder",
 				"options",
 				"items",
@@ -1235,6 +1280,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"children",
 			],
 			draws: [
+				"FIELD_ALONE",
+				"FIELD_ALONE_LINE",
+				"DEFINITION_NAME",
+				"FIELD_OPTIONAL",
+				"FIELD_ERROR_LINE",
 				"FIELD_QUIET",
 				"PICKER",
 				"HAIRLINE",

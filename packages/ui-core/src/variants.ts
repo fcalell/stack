@@ -561,6 +561,12 @@ export const DEFINITION_NAME_AREA =
 	"mt-[calc(var(--spacing-gap)+var(--spacing-hairline))] touch:mt-0";
 export const DEFINITION_VALUE = "min-w-0 grow";
 export const DEFINITION_ABSENT = "text-ink-faint";
+// A control placed alone is its field: no form's label column to share, so
+// its name stands over it, a gap apart, as a definition row stands on touch,
+// and the description or the error under it. A switch or a checkbox stands on
+// its name's line, at its end.
+export const FIELD_ALONE = "flex flex-col gap-gap min-w-0";
+export const FIELD_ALONE_LINE = "flex items-center gap-gap min-w-0";
 // A failed row's retry mark (a definition row's, a meter's): the retry glyph,
 // and the spinner that takes its place once the retry runs, centred in one
 // square, so the swap moves nothing.

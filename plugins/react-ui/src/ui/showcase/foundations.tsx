@@ -460,7 +460,7 @@ function States() {
 					))}
 					<div data-field="disabled">
 						<FormField label="disabled" disabled>
-							<Input value="disabled" onChange={() => {}} />
+							<Input label="disabled" value="disabled" onChange={() => {}} />
 						</FormField>
 					</div>
 				</div>

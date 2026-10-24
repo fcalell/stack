@@ -2,6 +2,7 @@ import { Field } from "@base-ui/react/field";
 import { cn } from "@fcalell/ui-core/cn";
 import { text } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
+import { FieldOwned } from "../../lib/field.ts";
 import type { ShowcaseFrame } from "../cells.ts";
 
 /** Whether the frame draws a `PAINT` cell: an atom's painted form beside its loaded one. */
@@ -31,11 +32,13 @@ export function beside(
 // control truncates as it does beside its painted form.
 export function labelled(control: ReactNode) {
 	return (
-		<Field.Root className="flex flex-col min-w-0 max-w-full">
-			<Field.Label className={cn(text({ role: "body" }), "truncate")}>
-				Workspace
-			</Field.Label>
-			{control}
-		</Field.Root>
+		<FieldOwned value>
+			<Field.Root className="flex flex-col min-w-0 max-w-full">
+				<Field.Label className={cn(text({ role: "body" }), "truncate")}>
+					Workspace
+				</Field.Label>
+				{control}
+			</Field.Root>
+		</FieldOwned>
 	);
 }

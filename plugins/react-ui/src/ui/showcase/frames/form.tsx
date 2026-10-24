@@ -1,8 +1,5 @@
-import { Field } from "@base-ui/react/field";
 import type { Selection } from "@fcalell/plugin-api/tanstack-query";
-import { cn } from "@fcalell/ui-core/cn";
 import type { Can, FormFields } from "@fcalell/ui-core/form";
-import { text, textStrong } from "@fcalell/ui-core/variants";
 import { type ReactNode, useEffect, useRef } from "react";
 import { FormBody } from "../../components/form/base.tsx";
 import { Form as Derived } from "../../components/form/index.tsx";
@@ -15,24 +12,20 @@ import { isPaint } from "./painted.tsx";
 
 const change = () => {};
 const never = () => new Promise<void>(() => {});
-const LABEL = cn(text({ role: "body" }), textStrong({ role: "body" }));
 
-// A labelled field, standing in for `FormField`.
+// A field placed alone: its label over it, the description under it.
 export function Labelled(props: {
 	label: string;
 	value: string;
 	description?: string;
 }) {
 	return (
-		<Field.Root className="flex flex-col gap-gap min-w-0">
-			<Field.Label className={LABEL}>{props.label}</Field.Label>
-			<Input value={props.value} onChange={change} />
-			{props.description ? (
-				<Field.Description className={text({ role: "meta" })}>
-					{props.description}
-				</Field.Description>
-			) : null}
-		</Field.Root>
+		<Input
+			label={props.label}
+			description={props.description}
+			value={props.value}
+			onChange={change}
+		/>
 	);
 }
 

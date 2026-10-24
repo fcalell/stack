@@ -28,6 +28,7 @@ function Questions() {
 		<>
 			<FormField label="Workspace name" answered={fold("name", name)}>
 				<Input
+					label="Workspace name"
 					value={name}
 					onChange={setName}
 					onCommit={() => setEditing(undefined)}
@@ -55,6 +56,7 @@ function Questions() {
 				answered={fold("contact", contact)}
 			>
 				<Input
+					label="Billing contact"
 					value={contact}
 					onChange={setContact}
 					onCommit={() => setEditing(undefined)}
@@ -70,7 +72,7 @@ function Changes() {
 	return (
 		<>
 			<FormField change="changed" label="Workspace URL">
-				<Input value="acme-inc" onChange={change} />
+				<Input label="Workspace URL" value="acme-inc" onChange={change} />
 			</FormField>
 			<FormField
 				change="added"
@@ -83,7 +85,7 @@ function Changes() {
 				}}
 			/>
 			<FormField change="removed" label="Billing contact">
-				<Input value="ana@acme.app" onChange={change} />
+				<Input label="Billing contact" value="ana@acme.app" onChange={change} />
 			</FormField>
 			<FormField
 				change="unchanged"
@@ -113,13 +115,13 @@ export function drawFormField(frame: ShowcaseFrame) {
 					label="Workspace URL"
 					description="Changing it breaks links."
 				>
-					<Input value="acme-inc" onChange={change} />
+					<Input label="Workspace URL" value="acme-inc" onChange={change} />
 				</FormField>
 				<FormField
 					label="Workspace URL"
 					description="Changing it breaks links."
 				>
-					<Input value={waitingText} onChange={change} />
+					<Input label="Workspace URL" value={waitingText} onChange={change} />
 				</FormField>
 			</Wide>
 		) : undefined;
@@ -138,7 +140,11 @@ export function drawFormField(frame: ShowcaseFrame) {
 				error={error ? "Use lowercase letters, digits and dashes." : undefined}
 				disabled={disabled}
 			>
-				<Input value={error ? "acme inc" : "acme-inc"} onChange={change} />
+				<Input
+					label="Workspace URL"
+					value={error ? "acme inc" : "acme-inc"}
+					onChange={change}
+				/>
 			</FormField>
 			<FormField
 				label="Default region"

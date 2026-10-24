@@ -15,6 +15,7 @@ import {
 import type { ReactNode } from "react";
 import { CHIP_LINES } from "../../lib/chip-lines.ts";
 import type { Closed } from "../../lib/closed.ts";
+import { FieldOwned } from "../../lib/field.ts";
 import { useTouch } from "../../lib/media.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Chip } from "../chip/index.tsx";
@@ -73,6 +74,7 @@ export function Toolbar({
 				{search ? (
 					<div className={TOOLBAR_SEARCH}>
 						<Input
+							label={words.search}
 							kind="search"
 							value={search.value}
 							onChange={search.onChange}
@@ -93,7 +95,8 @@ export function Toolbar({
 								/>
 							))
 						)}
-						{children}
+						{/* The strip names the controls in its acts: each reads its label as its name. */}
+						<FieldOwned value>{children}</FieldOwned>
 					</div>
 				) : null}
 			</div>

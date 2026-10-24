@@ -1,7 +1,10 @@
 import type { Datum } from "@fcalell/plugin-api/tanstack-query";
 import type { PickedFile } from "@fcalell/ui-core/descriptors";
+import { use } from "react";
 import type { IconAct } from "../../lib/act.ts";
 import type { Closed } from "../../lib/closed.ts";
+import { type Fielded, FieldOwned } from "../../lib/field.ts";
+import { FieldBody } from "../form-field/index.tsx";
 import { HeldInput } from "./base.tsx";
 import { CodeField } from "./code.tsx";
 import { FileField } from "./file.tsx";
@@ -76,15 +79,18 @@ export interface FilePickProps extends Closed {
 	accept: readonly string[];
 }
 
-/** What is typed or picked, by `kind`: a line of text (the default), `prose`, a one-time `code`, or a `file`. Each kind takes the props only it can use. */
-export type InputProps =
-	| TextInputProps
-	| (ProseProps & { kind: "prose" })
-	| (CodeInputProps & { kind: "code" })
-	| (FilePickProps & { kind: "file" });
+/** What is typed or picked, by `kind`: a line of text (the default), `prose`, a one-time `code`, or a `file`. Each kind takes the props only it can use, and every kind its field's: its `label`, and the `description`, `optional` and `error` it draws placed alone. */
+export type InputProps = Fielded &
+	(
+		| TextInputProps
+		| (ProseProps & { kind: "prose" })
+		| (CodeInputProps & { kind: "code" })
+		| (FilePickProps & { kind: "file" })
+	);
 
-/** The control a `FormField` labels, describes and marks in error. A line of text is a field box on the surface: hairline at rest, `edge-hover` under the pointer, the ring on focus, `edge-error` when its `FormField` is in error, the disabled fill when it is disabled; in a `Table` cell it stands at the bar fit, named by the cell; in a `Row`'s entry or a `Rules` term, named by its label. `prose` grows with its value from three lines, the budget's count under it. `code` is a row of digit boxes over one input; the box the next digit lands in rings on focus. `file` is a box that is the act: empty it reads Choose file, chosen it shows the file's name and size with an act that removes it; a file dropped on the box is taken as one chosen, and a file of another type is refused in a line under the box, which clears on the next pick. */
-export function Input(props: InputProps) {
+// The control alone, named by its label: where an owner draws the field
+// around it, and a search, which names itself in its box.
+function Bare({ props, label }: { props: InputProps; label: string }) {
 	switch (props.kind) {
 		case "prose":
 			return <HeldProse {...props} />;
@@ -93,6 +99,31 @@ export function Input(props: InputProps) {
 		case "file":
 			return <FileField {...props} />;
 		default:
-			return <HeldInput {...props} />;
+			return <HeldInput {...props} inline={{ label }} />;
+	}
+}
+
+/** A field, named by its `label`: placed alone it draws its label over the box and its `description`, or its `error` (a refused save's reason too, until the next change), under it; in a `Form`'s field or a `Toolbar` the owner names it and nothing is drawn around it, and a `search` names itself. A line of text is a field box on the surface: hairline at rest, `edge-hover` under the pointer, the ring on focus, `edge-error` when its `FormField` is in error, the disabled fill when it is disabled; in a `Table` cell it stands at the bar fit, named by the cell; in a `Row`'s entry or a `Rules` term, named by its label. `prose` grows with its value from three lines, the budget's count under it. `code` is a row of digit boxes over one input; the box the next digit lands in rings on focus. `file` is a box that is the act: empty it reads Choose file, chosen it shows the file's name and size with an act that removes it; a file dropped on the box is taken as one chosen, and a file of another type is refused in a line under the box, which clears on the next pick. */
+export function Input(allProps: InputProps) {
+	const { label, description, optional, error, ...props } = allProps;
+	const owned = use(FieldOwned);
+	const control = props as InputProps;
+	if (owned || control.kind === "search")
+		return <Bare props={control} label={label} />;
+	const field = { label, description, optional, error, alone: true };
+	switch (control.kind) {
+		case "prose": {
+			const { kind: _, ...prose } = control;
+			return <FieldBody {...field} textArea={prose} />;
+		}
+		case "code":
+		case "file":
+			return (
+				<FieldBody {...field}>
+					<Bare props={control} label={label} />
+				</FieldBody>
+			);
+		default:
+			return <FieldBody {...field} input={control} />;
 	}
 }

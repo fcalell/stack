@@ -530,6 +530,7 @@ function controlOf(
 			return {
 				children: (
 					<Input
+						label={spec.label}
 						kind="code"
 						length={derived.length ?? 0}
 						value={(value ?? "") as string}
@@ -560,6 +561,7 @@ function controlOf(
 			return {
 				children: (
 					<Input
+						label={spec.label}
 						kind="file"
 						value={(value ?? null) as PickedFile | null}
 						onChange={(file) => {
