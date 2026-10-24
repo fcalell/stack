@@ -15,5 +15,10 @@
 		"isolatedModules": true
 	},
 	"include": ["${configDir}/src"],
-	"exclude": ["${configDir}/src/ui", "${configDir}/src/**/*.tsx"]
+	"exclude": [
+		"${configDir}/src/ui",
+		"${configDir}/src/**/*.tsx",
+		"${configDir}/src/**/*.test.ts",
+		"${configDir}/src/**/__fixtures__"
+	]
 }

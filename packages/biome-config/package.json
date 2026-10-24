@@ -1,13 +1,30 @@
 {
 	"name": "@fcalell/biome-config",
-	"version": "0.0.0",
-	"private": true,
-	"sideEffects": false,
+	"version": "0.1.0",
+	"description": "Shared Biome formatter and linter configuration for the @fcalell/stack framework.",
 	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/fcalell/stack.git",
+		"directory": "packages/biome-config"
+	},
+	"homepage": "https://github.com/fcalell/stack/tree/master/packages/biome-config#readme",
+	"publishConfig": {
+		"access": "public"
+	},
+	"engines": {
+		"node": ">=24"
+	},
+	"sideEffects": false,
 	"exports": {
 		"./shared.json": "./shared.json"
 	},
 	"scripts": {
 		"clear": "rm -rf node_modules .turbo"
-	}
+	},
+	"files": [
+		"shared.json",
+		"README.md",
+		"LICENSE"
+	]
 }
