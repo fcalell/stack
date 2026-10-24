@@ -52,10 +52,11 @@ const FILLS =
 	"[role=list],[role=table],[role=grid],ul,ol,table,li,svg,canvas,[role=img],p";
 
 // Rows are not always a list in the markup: a run of two or more siblings
-// drawn alike (same tag, same classes) is rows as well.
+// drawn alike (same tag, same classes) is rows as well, the block's own
+// children included (a bare sheet's rows are its children).
 function holdsRows(section: Element): boolean {
 	if (section.querySelector(FILLS)) return true;
-	for (const parent of section.querySelectorAll("*")) {
+	for (const parent of [section, ...section.querySelectorAll("*")]) {
 		const kinds = new Set<string>();
 		for (const child of parent.children) {
 			const kind = `${child.tagName}.${child.className}`;
