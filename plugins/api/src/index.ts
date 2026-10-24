@@ -707,7 +707,7 @@ export const api = plugin("api", {
 			return {
 				imports: [
 					{
-						source: "../src/worker/middleware",
+						source: "../src/worker/middleware.ts",
 						default: "middleware",
 					},
 				],
@@ -726,7 +726,7 @@ export const api = plugin("api", {
 			return {
 				imports: [
 					{
-						source: "../src/worker/middleware.context",
+						source: "../src/worker/middleware.context.ts",
 						default: "contextMiddleware",
 					},
 				],

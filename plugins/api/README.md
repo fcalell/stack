@@ -7,7 +7,7 @@ API plugin for the `@fcalell/stack` framework. Wraps Hono + oRPC + Zod so consum
 ## Install
 
 ```bash
-pnpm add @fcalell/plugin-api
+stack add api
 ```
 
 ## Guide

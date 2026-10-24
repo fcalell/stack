@@ -1,6 +1,20 @@
 {
 	"name": "@fcalell/plugin-api",
-	"version": "0.0.0",
+	"version": "0.1.0",
+	"description": "API plugin for @fcalell/stack: Hono + oRPC + Zod behind a procedure builder and a typed client.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/fcalell/stack.git",
+		"directory": "plugins/api"
+	},
+	"homepage": "https://github.com/fcalell/stack/tree/master/plugins/api#readme",
+	"publishConfig": {
+		"access": "public"
+	},
+	"engines": {
+		"node": ">=24"
+	},
 	"type": "module",
 	"sideEffects": false,
 	"exports": {
@@ -96,21 +110,25 @@
 		"guide",
 		"README.md",
 		"tsconfig.json",
-		"tsconfig.build.json"
+		"tsconfig.build.json",
+		"LICENSE",
+		"!src/**/*.test.ts",
+		"!src/**/__fixtures__",
+		"!dist/**/*.test.*"
 	],
-	"license": "MIT",
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",
 		"prepare": "pnpm build",
 		"check-types": "tsc --noEmit --pretty",
-		"test": "node --test src/scope.test.ts src/schema.test.ts src/read.test.ts",
+		"test": "node --test 'src/**/*.test.ts'",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
-		"clear": "rm -rf dist node_modules .turbo"
+		"clear": "rm -rf dist node_modules .turbo",
+		"prepublishOnly": "pnpm build"
 	},
 	"dependencies": {
 		"@casl/ability": "^7.0.1",
-		"@fcalell/cli": "workspace:*",
+		"@fcalell/cli": "workspace:^",
 		"@modelcontextprotocol/client": "2.3.0",
 		"@modelcontextprotocol/server": "2.3.0",
 		"@orpc/client": "^1.14.4",
@@ -137,7 +155,7 @@
 		}
 	},
 	"devDependencies": {
-		"@fcalell/typescript-config": "workspace:*",
+		"@fcalell/typescript-config": "workspace:^",
 		"@orpc/tanstack-query": "^1.14.4",
 		"@tanstack/react-query": "^5.104.0",
 		"@types/node": "^25.5.0",

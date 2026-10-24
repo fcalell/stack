@@ -7,7 +7,6 @@ import {
 } from "@orpc/server/plugins";
 import { type Context, Hono, type MiddlewareHandler } from "hono";
 import { cors } from "hono/cors";
-import { logger } from "hono/logger";
 import { secureHeaders } from "hono/secure-headers";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { McpDefinition } from "../mcp.ts";
@@ -18,6 +17,7 @@ import {
 } from "../procedure.ts";
 import { STACK_EXPOSED_HEADERS, STACK_NOT_FOUND_HEADER } from "../wire.ts";
 import { buildMcpTools, createMcpEndpoint, createMcpRoute } from "./mcp.ts";
+import { requestLogger } from "./request-log.ts";
 
 export type { InferRouter } from "../types.ts";
 
@@ -480,7 +480,7 @@ function createAppBuilder<
 					}),
 				);
 			}
-			app.use("*", logger());
+			app.use("*", requestLogger());
 			app.use("*", secureHeaders());
 
 			// Framework liveness route registered BEFORE the
