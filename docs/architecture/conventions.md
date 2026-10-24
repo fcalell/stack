@@ -21,8 +21,8 @@ A package ships JavaScript for everything Node runs, because Node refuses to str
 `node_modules`. Its `tsconfig.build.json` extends its own `tsconfig.json` plus
 `@fcalell/typescript-config/build.json`, which compiles `src/` to `dist/` under `nodenext` (an
 extensionless relative import fails the build) and leaves out `src/ui/` and `.tsx`. Scripts:
-`"build": "tsc -p tsconfig.build.json"` and `"prepare": "pnpm build"`, which builds a git-pinned
-install; `files` lists `dist` and `src`; `clear` removes `dist`.
+`"build": "tsc -p tsconfig.build.json"` and `"prepare": "pnpm build"`, which builds a checkout's
+install (a `link:` or git one; a published package ships `dist` already); `files` lists `dist` and `src`; `clear` removes `dist`.
 
 Each `exports` entry a bundler compiles (`.tsx`, `.css`, anything under `src/ui/`, the
 `./components/*` and `./lib/*` patterns) points at source; every other entry is

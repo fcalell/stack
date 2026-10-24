@@ -216,92 +216,83 @@ Every package ships JavaScript in `dist/` for everything Node runs: Node refuses
 under `node_modules` (`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`) and has no flag for it.
 Bundler-compiled entries (`.tsx`, `.css`, `src/ui/`) resolve to source.
 
-### From GitHub
+### From npm
 
-A consumer takes each package as a subdirectory of stack's repository, with no commit in the spec:
+A consumer takes each package from the npm registry as a caret range of the CLI's own version,
+since every package is published together at one version:
 
 ```json
-"@fcalell/plugin-db": "github:fcalell/stack#path:/plugins/db"
+"@fcalell/plugin-db": "^0.1.0"
 ```
 
-The consumer's `pnpm-lock.yaml` is the pin: pnpm resolves the spec to the default branch's commit
-once and installs that commit until `pnpm update "@fcalell/*"` moves every stack package to the
-latest commit together. The CLI's table (`packages/cli/src/lib/stack-packages.ts`) maps each
-first-party package to its spec and lists its first-party `dependencies`; `stack init` and
-`stack add` write every `@fcalell/*` spec from it, and a plugin's own `dependencies` take a stack
-package's spec through `stackSpec` from `@fcalell/cli`.
+The consumer's `pnpm-lock.yaml` is the pin: pnpm resolves the range once and installs that version
+until `pnpm update "@fcalell/*"` moves every stack package to the latest together. The CLI's table
+(`packages/cli/src/lib/stack-packages.ts`) maps each first-party package to its directory in
+stack's repository and lists its first-party `dependencies`; `stack init` and `stack add` write
+every `@fcalell/*` spec from it, and a plugin's own `dependencies` take a stack package's spec
+through `stackSpec` from `@fcalell/cli`. `stackSpec` reads the version off the CLI's own
+`package.json`, so the specs a consumer gets are those of the CLI that wrote them.
 
 A package only a plugin's own host loads is not that plugin's dependency: `@fcalell/plugin-screens`
-keeps Storybook, its addons, MSW, oRPC's server, Vitest and Playwright as optional peers of its package and lists the
+keeps Storybook, its addons, MSW, Vitest and Playwright as optional peers of its package (oRPC's client and server are its own dependencies) and lists the
 same ranges as its `devDependencies`, which `stack add screens` writes into the app's
 `package.json`. An app with auth or react-ui, which depend on the package for its slots, installs
 none of them: they are optional because pnpm auto-installs a missing peer that is not. The host
 resolves each from the app's root, and the list matches the manifest's
 `peerDependencies`.
 
-pnpm fetches the commit, installs the whole stack workspace in the clone (with the root's pinned
-pnpm) and runs the package's `prepare`; that install runs every workspace project's `prepare` in
-dependency order, so the package and its `@fcalell/*` dependencies are built before pnpm packs
-the package's `files`. Each git package does this in its own clone, so a first install builds the
-workspace once per stack package. Each built package's `files` also carries its `tsconfig.json`
-and `tsconfig.build.json`, so a consumer whose install runs no script (nixpkgs' pnpm fetcher) can
-run `tsc -p tsconfig.build.json` itself over the packed sources, with `typescript` and
-`@fcalell/typescript-config` resolved from the consumer's root. The consumer's
-`pnpm-workspace.yaml`, which `stack init` and `stack add` write (at the root of the consumer's own
-pnpm workspace when the app is a project of one, where the install runs too), carries:
+A published package ships its built `dist/`, and its `@fcalell/*` dependencies are ordinary ranges
+npm resolves. No install runs a stack `prepare`, so stack needs no `overrides`, no
+`blockExoticSubdeps`, no concurrency settings and no `allowBuilds` key of its own. The
+consumer's `pnpm-workspace.yaml`, which `stack init` and `stack add` write (at the root of the
+consumer's own pnpm workspace when the app is a project of one, where the install runs too),
+carries only the build-script verdicts of the third-party packages the install brings:
 
 ```yaml
-overrides:                       # every stack package the consumer's reach, by `dependencies`
-  "@fcalell/cli": github:fcalell/stack#path:/packages/cli
-  "@fcalell/plugin-api": github:fcalell/stack#path:/plugins/api
-  "@fcalell/plugin-vite": github:fcalell/stack#path:/plugins/vite
-blockExoticSubdeps: false        # the git packages depend on each other by git spec
-allowBuilds:                     # each git package's prepare, then the verdicts of those packages
-  "@fcalell/cli@git+https://github.com/fcalell/stack.git": true
-  "@fcalell/plugin-api@git+https://github.com/fcalell/stack.git": true
-  "@fcalell/plugin-vite@git+https://github.com/fcalell/stack.git": true
+allowBuilds:
   esbuild: true
   workerd: true
-childConcurrency: 1              # one git package's prepare at a time
-networkConcurrency: 2
 ```
 
-The overrides cover the closure over `dependencies`, not `requires`: a vite-only app installs
-plugin-api through plugin-vite. A consumer that pins a commit in its specs
-(`github:fcalell/stack#<sha>&path:/plugins/api`) gets every spec and override the CLI writes at that
-commit, so one install never holds two commits of a stack package. They exist because a git tarball keeps the `workspace:*` ranges
-between stack packages; a published npm version resolves them and the overrides go. A git
-package's `allowBuilds` key is its name plus the repository's `git+https` URL, which approves
-every commit; pnpm 11.15 is the first to match a `github:` tarball by it, so stack and its
-consumers run pnpm 11.15 or later. The bare name and the `github:` spec are refused, and the hint
-in pnpm's `GIT_DEP_PREPARE_NOT_ALLOWED` names only the commit-pinned `codeload` key.
 pnpm 11 refuses an install that meets a build script `allowBuilds` gives no verdict
 (`strictDepBuilds`). Each verdict is a stack package's own data, its `builds` in the CLI's table
 (plugin-auth's `better-sqlite3: true`, the CLI's `esbuild` and `workerd` for the wrangler its
 template writes), so the yaml written with the first install already carries every verdict of
-the packages that install brings, before any plugin loads. Inside stack's workspace the
-checkout's root `pnpm-workspace.yaml` carries the same verdicts by hand.
-Each prepare is a full workspace install, and several at once can exhaust the machine's
-memory (one at a time adds about 4 GB); the two concurrency settings run them one at a time and
-go with the overrides.
+the packages that install brings, before any plugin loads. The verdicts cover the closure over
+`dependencies`, not `requires`. Inside stack's workspace the checkout's root `pnpm-workspace.yaml`
+carries the same verdicts by hand. pnpm stays the recommended package manager (the scaffold pins
+it in `packageManager`), and a missing `pnpm` fails the install with the command that provides it
+(`corepack enable`), not a bare exit signal.
 
-### By `link:`
+### From a checkout
 
-A `link:` consumer resolves the stack checkout's `dist/` too, so the checkout is built first and
-rebuilt after a source change: `pnpm install` there runs every `prepare`, and
-`pnpm turbo run build` rebuilds.
+A consumer that works against a stack checkout links it with `link:`. The checkout resolves its
+`dist/`, so it is built first and rebuilt after a source change: `pnpm install` there runs every
+`prepare`, and `pnpm turbo run build` rebuilds.
 
 The app's `@fcalell/cli` spec names the mode: when it is `link:<path>`, `stack add` (and every
 install the CLI runs) rewrites each stack package's spec to `link:` from the same checkout, its
 path relative to the app (`link:../stack/plugins/screens`). The app's `pnpm-workspace.yaml` takes
-only the third-party build verdicts in `allowBuilds`: no overrides, git-package keys,
-`blockExoticSubdeps` or concurrency settings, since nothing is installed from git.
+only the third-party build verdicts in `allowBuilds`, as from npm.
+
+The git route remains for an unpublished checkout: a CLI whose version is `0.0.0` (stack's own
+repository, never published at that version) writes each spec as a subdirectory of the repository,
+`github:fcalell/stack#path:/plugins/db` (at `#<sha>&path:/plugins/db` when the app's specs pin a
+commit, so one install never holds two commits of a stack package). A git tarball keeps the
+`workspace:*` ranges between stack packages and runs the package's `prepare`, so the yaml also
+overrides every stack package the app's `dependencies` reach to its spec, sets
+`blockExoticSubdeps: false` (the git packages depend on one another by git spec), approves each
+package's `prepare` by `"<name>@git+https://github.com/fcalell/stack.git": true` (pnpm 11.15 or
+later; the bare name and the `github:` spec are refused), and sets `childConcurrency: 1` and
+`networkConcurrency: 2`, since each prepare is a full workspace install and several at once can
+exhaust the machine's memory. The mode follows the CLI's version alone: a published CLI never
+writes these.
 
 ### Inside stack's workspace
 
 An app in stack's own checkout (a directory the root `pnpm-workspace.yaml` globs name, such as
 `apps/<name>`) is a workspace project and takes each stack package as `workspace:*`, the way
-`apps/showcase` does. `stack init` and `stack add` tell this from a GitHub install by pnpm's own
+`apps/showcase` does. `stack init` and `stack add` tell this from an npm install by pnpm's own
 rule: the nearest `pnpm-workspace.yaml` above the app is its workspace, and when its `packages`
 globs name both the app and the running `@fcalell/cli`, the CLI rewrites every `@fcalell/*` spec
 in the app's `package.json` to `workspace:*`, writes no `pnpm-workspace.yaml` in the app, and
@@ -314,16 +305,16 @@ root's unless it extends it, and Biome 2.4 takes `//` only as a lone `extends` s
 `check` script and no `packageManager`, so the app lints and formats under the checkout's root
 configs and runs the root's pnpm as `apps/showcase` does: Biome refuses a second root config
 below the checkout's. Anywhere else,
-including a directory under the checkout that no glob names, the app installs from GitHub.
+including a directory under the checkout that no glob names, the app installs from npm.
 `stack plugin init` applies the same rule to the plugin it scaffolds (`plugins/<name>` by
 default): inside the workspace its manifest takes each stack package as `workspace:*` and no
-`packageManager`, and it writes no `pnpm-workspace.yaml`; elsewhere it writes the GitHub specs
+`packageManager`, and it writes no `pnpm-workspace.yaml`; elsewhere it writes the npm specs
 and its own `pnpm-workspace.yaml`.
 
 ## The guide
 
 "How to build on stack" ships as markdown inside each package, `guide/<page>.md`, so a consumer
-reads the pages of the commit it pins, never newer ones. A plugin lists its pages with
+reads the pages of the version it installs, never newer ones. A plugin lists its pages with
 `plugin({ guide })`, each with a load trigger: when a step should open the page, never what the
 page holds. `stack generate` writes `.stack/guide.md`, an index of every page of every plugin in
 the config plus the CLI's own (what stack provides, config, commands, what a gap is), and
@@ -345,7 +336,7 @@ no frontmatter, so a headless job that loads no Claude Code settings reads the s
 ## Designing screens
 
 A consumer's screens are its own: stack composes no product screen. ui-core's screen recipe
-designs each in code: compose from the contract and roster installed at the consumer's pin
+designs each in code: compose from the contract and roster installed at the consumer's version
 (`node_modules/@fcalell/ui-core/DESIGN.md` and `src/roster.ts`), open the anchor screen the voice
 page pins, draw every state the spec names, then stand the render beside the anchor screen and ask
 which looks better; rework until the answer is "ours" or "the same", and fcalell signs off on the
@@ -354,8 +345,8 @@ render. There are no artboards.
 A consumer works within stack's constraints: a part stack has no exact shape for takes the
 nearest one it provides, named as a known limit, never a local workaround that rebuilds stack.
 Only a bug or a missing feature the consumer cannot ship without is a gap, so the gap list stays
-a list of what matters rather than every polish a render could take. When stack's latest commit
-already has it, the fix is moving the consumer's pin; otherwise the consumer reports the gap to fcalell (the CLI's `gap.md`),
+a list of what matters rather than every polish a render could take. When stack's latest release
+already has it, the fix is moving the consumer's version; otherwise the consumer opens an issue on the stack repository (the CLI's `gap.md`),
 and only the work that cannot ship without it waits.
 
 ## Lint

@@ -29,7 +29,7 @@ stack <plugin> <command>     # Plugin subcommands (e.g. stack db push)
 | `stack <plugin> <command>` | Plugin's own `commands[name].handler(ctx)` — `ctx.resolve(slot)` is the escape hatch to pull arbitrary slot values |
 
 `stack init` first writes `package.json` (only when missing) and `pnpm-workspace.yaml`, every
-`@fcalell/*` spec from the CLI's table ([consumer-project](./consumer-project.md#from-github)),
+`@fcalell/*` spec from the CLI's table ([consumer-project](./consumer-project.md#from-npm)),
 and installs: a plugin loads only once installed, and its `requires` is known only once loaded.
 One-of requirements (api's server target) settle after the named closure, so a plugin any
 selected plugin names meets them. One still unmet is asked by interactive `init` and takes the
@@ -89,7 +89,7 @@ instead of spawning the CLI; `resolve` keeps answering from the graph built befo
 
 ## Screens
 
-`stack screens dev [--port 6006]` runs `ctx.generate()` (the route tree, the stylesheet, the screens files and the story files must exist), then Storybook on the config directory `.stack/screens/`, whose Vite config is `.stack/screens.vite.config.ts`. The story files in `stack-screens/` at the app root, one per route, are its stories. The Storybook packages are the app's own (`stack add screens` writes them as `devDependencies`, see [consumer-project](./consumer-project.md#from-github)); the handler runs the `storybook` the app installs and the config resolves its framework and addon from the app. The handler resolves no slot: both screens files are `generate` artifacts, `screens.slots.viteConfig` and `storybookMain`. A Storybook of the app's own that draws components (the showcase's roster) runs on a third, `.stack/storybook.vite.config.ts`, which its own config writes by calling `writeStorybookConfig` from `@fcalell/plugin-screens/node`; `generate` never writes it and no command serves it.
+`stack screens dev [--port 6006]` runs `ctx.generate()` (the route tree, the stylesheet, the screens files and the story files must exist), then Storybook on the config directory `.stack/screens/`, whose Vite config is `.stack/screens.vite.config.ts`. The story files in `stack-screens/` at the app root, one per route, are its stories. The Storybook packages are the app's own (`stack add screens` writes them as `devDependencies`, see [consumer-project](./consumer-project.md#from-npm)); the handler runs the `storybook` the app installs and the config resolves its framework and addon from the app. The handler resolves no slot: both screens files are `generate` artifacts, `screens.slots.viteConfig` and `storybookMain`. A Storybook of the app's own that draws components (the showcase's roster) runs on a third, `.stack/storybook.vite.config.ts`, which its own config writes by calling `writeStorybookConfig` from `@fcalell/plugin-screens/node`; `generate` never writes it and no command serves it.
 
 `stack screens test [--all | --changed <ref>] [--shots <dir>]` runs `ctx.generate()` and then the app's own `vitest run --config .stack/screens.vitest.config.ts --passWithNoTests`, adding `--changed` (with the ref when given) unless `--all`: Vitest reruns the story files whose import graph holds a file with uncommitted changes, or one changed since the ref (`<ref>...HEAD` plus uncommitted). It runs on `.stack/screens-test/`, the same Storybook config plus the floors (`@fcalell/plugin-screens/floors`): axe with every rule on (`region` and `target-size` included), no horizontal overflow at 320, 1280 and 1920 px (`horizontal overflow at <w>px: scrollWidth <n>`), and no `console.error`, `console.warn` or window `error`. A test is a story, named for the screen's title, the state and the mode (`Screens/projects/$id`, `Data, dark`). With `--shots`, the floors also save a PNG of each story at each width into the directory (`<dir>/<screen>/<story>-<width>.png`).
 
@@ -97,4 +97,4 @@ A story's forced state (loading, error, empty, not found) answers a query only; 
 
 ## Limits
 
-- Every install builds the stack workspace once per git package (see [consumer-project](./consumer-project.md#from-github)), so a first `stack init` takes about eight minutes, one prepare at a time.
+- A published CLI installs stack from npm, which builds nothing (see [consumer-project](./consumer-project.md#from-npm)). Only an unpublished checkout (version `0.0.0`) installs from git, which builds the stack workspace once per git package (see [consumer-project](./consumer-project.md#from-a-checkout)), so its first `stack init` takes about eight minutes, one prepare at a time.
